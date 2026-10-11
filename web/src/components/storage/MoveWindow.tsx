@@ -14,8 +14,8 @@ import { DOMAIN_LABEL } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
 import { useStorageLocations } from "../../lib/useStorageLocations";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
-import { SelectDot } from "../backups/SelectMark";
 import { Button } from "../Button";
+import { RadioMark } from "../RadioMark";
 import { IconForward } from "../glyphs";
 import { IconClose } from "../navGlyphs";
 import { LocationMark } from "./LocationMark";
@@ -143,7 +143,7 @@ export function MoveWindow({
                   onClick={() => pick(candidate)}
                   className={`flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5 text-start hover:bg-carbon-surface3 ${picked ? "ring-2 ring-accent" : ""}`}
                 >
-                  <SelectDot checked={picked} />
+                  <RadioMark on={picked} />
                   <LocationMark location={candidate} />
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="truncate text-sm font-semibold text-carbon-text">{candidate.name}</span>
@@ -160,7 +160,7 @@ export function MoveWindow({
       {to && !plan && !problem && <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>}
       {plan && (
         <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 rounded-control bg-carbon-background px-3 py-2">
             <code dir="ltr" className={CODE}>
               {plan.from}
             </code>

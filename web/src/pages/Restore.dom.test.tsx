@@ -140,6 +140,11 @@ describe("the entries", () => {
     expect(entries().queryByText("bombvault")).toBeNull();
   });
 
+  it("keep the count in words on a phone instead of turning into chips", async () => {
+    await renderPage();
+    expect(tile(en["nav.containers"]).textContent).toBe(en["nav.containers"] + countText(en["restorePage.tileCount"], "en", 2));
+  });
+
   it("cannot be picked while they have no backup", async () => {
     await renderPage();
     expect(entry("gitea").disabled).toBe(true);

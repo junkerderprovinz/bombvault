@@ -93,7 +93,7 @@ describe("the choice", () => {
 
   it("says how many datasets no item covers, or that the server does not answer", async () => {
     await open("choose");
-    expect(choice(/^A ZFS dataset/).textContent).toContain("3 datasets on the host are in no item");
+    expect(choice(/^A ZFS dataset/).textContent).toContain("3 datasets on the host are in no entry");
 
     cleanup();
     calls.zfsHostDatasets.mockResolvedValue({ ...HOST, available: false, code: "ssh-auth" });
@@ -141,7 +141,7 @@ describe("the folder form", () => {
     await open("files");
     fireEvent.click(found().getByRole("button", { name: /^media/ }));
     fireEvent.change(screen.getByRole("textbox", { name: /^Exclude patterns/ }), { target: { value: "*.tmp\n\n cache/ " } });
-    fireEvent.click(screen.getByRole("switch", { name: "Include in schedule" }));
+    fireEvent.click(screen.getByRole("switch", { name: "On schedule" }));
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
     expect(fake.callsTo("createFileSet")).toEqual([
@@ -149,6 +149,13 @@ describe("the folder form", () => {
     ]);
     expect(onAdded).toHaveBeenCalledTimes(1);
     expect(screen.getByText("Media created")).toBeTruthy();
+  });
+
+  it("names its rows as the entry page does, with the storage locations under their own name", async () => {
+    await open("files");
+    expect(screen.getByRole("switch", { name: "On schedule" })).toBeTruthy();
+    expect(screen.getByText("Storage locations")).toBeTruthy();
+    expect(screen.queryByText("Placement")).toBeNull();
   });
 
   it("keeps the window open and says why when the server refuses the set", async () => {

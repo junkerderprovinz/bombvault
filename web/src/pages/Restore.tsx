@@ -205,7 +205,7 @@ function Way({
     <button
       type="button"
       onClick={onOpen}
-      className="group flex w-full items-center gap-3 rounded-control p-2 text-start transition-colors hover:bg-carbon-surface2"
+      className="group flex w-full items-center gap-3.5 rounded-control px-1.5 py-3 text-start transition-colors hover:bg-carbon-surface2"
     >
       <span
         className={`flex h-9 w-9 flex-none items-center justify-center rounded-control [&_svg]:h-[18px] [&_svg]:w-[18px] ${
@@ -354,7 +354,7 @@ export function Restore() {
             </div>
           ) : (
             <>
-              <TileRow label={t("restorePage.tiles")} newId="restore-tiles">
+              <TileRow label={t("restorePage.tiles")} newId="restore-tiles" chips={false}>
                 {ENTRY_KINDS.filter((k) => entries.some((item) => item.kind === k))
                   .sort((a, b) => TILE_ORDER.indexOf(a) - TILE_ORDER.indexOf(b))
                   .map((k) => {
@@ -368,6 +368,7 @@ export function Restore() {
                         label={t(KIND_LABEL[k])}
                         sub={t("restorePage.tileCount", count)}
                         count={count}
+                        chip={false}
                         onClick={() => setKind(kind === k ? null : k)}
                       />
                     );
@@ -456,7 +457,7 @@ export function Restore() {
           />
         </Card>
         <Card title={t("restorePage.otherSources")} hueIndex={nextHue()}>
-          <div className="flex flex-col">
+          <Rows>
             <Way
               glyph={<IconFolder />}
               name={t("restorePage.oldFolder")}
@@ -469,7 +470,7 @@ export function Restore() {
               sub={t("restorePage.appdataHint")}
               onOpen={() => setSource("appdata")}
             />
-          </div>
+          </Rows>
         </Card>
       </div>
 

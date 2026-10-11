@@ -290,7 +290,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           label={t("folder.browseTitle")}
           labelKey="folder.browseTitle"
           glyph={<IconFolder />}
-          tone="accent"
+          tone="subtle"
           hueIndex={hueIndex}
           onClick={handleOpen}
           className="glim-btn-wrap shrink-0"

@@ -113,7 +113,7 @@ export function OwnChoiceCard({
           const uses = places(placeNames(t, entry.view, offered));
           const usual = places(placeNames(t, defaultView(row, offered), offered));
           return (
-            <li key={`${domain}:${entry.item.key}`} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0">
+            <li key={`${domain}:${entry.item.key}`} className="group flex flex-wrap items-center gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0">
               <span
                 aria-hidden="true"
                 className="glim-hue inline-flex h-10 w-10 flex-none items-center justify-center rounded-control bg-carbon-surface2"
@@ -134,14 +134,17 @@ export function OwnChoiceCard({
                 </span>
               </div>
               {followChange(entry.view) ? (
-                <Button
-                  label={t("storage.choice.follow")}
-                  labelKey="storage.choice.follow"
-                  glyph={<IconRefresh />}
-                  tone="neutral"
-                  disabled={busy}
-                  onClick={() => void follow(entry, row, offered)}
-                />
+                // A pointer finds the action on the row it rests on; touch has nothing to rest on.
+                <span className="flex pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100">
+                  <Button
+                    label={t("storage.choice.follow")}
+                    labelKey="storage.choice.follow"
+                    glyph={<IconRefresh />}
+                    tone="neutral"
+                    disabled={busy}
+                    onClick={() => void follow(entry, row, offered)}
+                  />
+                </span>
               ) : (
                 <InfoBubble tip={lockHint(t, "home-fixed", viewHomeLabel(t, host, entry.view, offered))} />
               )}

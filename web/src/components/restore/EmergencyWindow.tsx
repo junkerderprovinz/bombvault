@@ -51,8 +51,9 @@ import { IconBack, IconForward } from "../glyphs";
 import { IconCheck, IconDownload, IconRestore } from "../navGlyphs";
 import { DiscoverFindings } from "../placement/DiscoverFindings";
 import { ProgressBar } from "../ProgressBar";
+import { RadioMark } from "../RadioMark";
 import { SourceToggle, type RepoSource } from "../SourceToggle";
-import { Rows } from "../storage/rows";
+import { Rows, SettingRow } from "../storage/rows";
 import { Toggle } from "../Toggle";
 import { DumpOnlyRow } from "./DumpOnlyRow";
 import { EmergencyAccess } from "./EmergencyAccess";
@@ -96,13 +97,7 @@ function Choice({ on, title, sub, onPick }: { on: boolean; title: string; sub: s
         on ? "ring-accent" : "ring-transparent"
       }`}
     >
-      <span
-        className={`flex h-[18px] w-[18px] flex-none items-center justify-center rounded-pill border-2 ${
-          on ? "border-accent" : "border-carbon-textMuted"
-        }`}
-      >
-        {on && <span className="h-2 w-2 rounded-pill bg-accent" />}
-      </span>
+      <RadioMark on={on} />
       <span className="flex min-w-0 flex-col">
         <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{title}</span>
         <span className="text-xs text-carbon-textMuted wrap-anywhere">{sub}</span>
@@ -607,10 +602,9 @@ export function EmergencyWindow({
           )}
           {useBackup && settings && configPhase !== "restarting" && (
             <>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-carbon-text">{t("recovery.configSourceLabel")}</span>
+              <SettingRow label={t("recovery.configSourceLabel")}>
                 <SourceToggle source={configSource} onChange={setConfigSource} disabled={configBusy} />
-              </div>
+              </SettingRow>
               {configSource === "local" ? (
                 <FolderBrowser
                   label={t("recovery.configLocalPath")}

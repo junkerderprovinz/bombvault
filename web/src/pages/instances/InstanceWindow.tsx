@@ -15,6 +15,7 @@ export function InstanceWindow({
   hint,
   facts,
   footer,
+  wide = false,
   onClose,
   children,
 }: {
@@ -25,6 +26,8 @@ export function InstanceWindow({
    *  title and this line, without it by the title as a notch. */
   facts?: ReactNode;
   footer: ReactNode;
+  /** Room for a grid of tiles, four to a row. */
+  wide?: boolean;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -82,7 +85,7 @@ export function InstanceWindow({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="glim-modal-card relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-card bg-carbon-surface shadow-2xl outline-none"
+        className={`glim-modal-card relative flex max-h-[90vh] w-full ${wide ? "max-w-[66.25rem]" : "max-w-3xl"} flex-col rounded-card bg-carbon-surface shadow-2xl outline-none`}
       >
         {facts ? (
           <div className="flex flex-col gap-1 px-6 pt-6">

@@ -286,6 +286,7 @@ export function AddLocationWindow({
     <InstanceWindow
       title={t("storage.add.title")}
       hint={t("storage.listHint")}
+      wide
       onClose={onClose}
       footer={
         shown === 1 ? (

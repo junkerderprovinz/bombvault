@@ -171,43 +171,52 @@ export function FolderAddForm({
         </section>
       )}
 
-      <label className="flex flex-wrap items-center justify-between gap-3">
-        <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-          {t("files.name")}
-          <InfoBubble tip={t("backups.add.nameHint")} />
-        </span>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t("backups.add.namePlaceholder")}
-          spellCheck={false}
-          autoComplete="off"
-          className={`w-56 max-w-full ${FIELD}`}
+      <div className="flex flex-col divide-y divide-carbon-border/60 [&>*]:py-3 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
+        <label className="flex flex-wrap items-center justify-between gap-3">
+          <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+            {t("files.name")}
+            <InfoBubble tip={t("backups.add.nameHint")} />
+          </span>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t("backups.add.namePlaceholder")}
+            spellCheck={false}
+            autoComplete="off"
+            className={`w-56 max-w-full ${FIELD}`}
+          />
+        </label>
+
+        <FolderBrowser inDialog label={t("files.path")} value={path} hostMountRoot={hostMountRoot} onChange={setPath} hint={t("files.pathHint")} />
+
+        <ToggleRow
+          checked={enabled}
+          onChange={setEnabled}
+          label={t("entry.settings.inSchedule")}
+          hint={t("schedule.pausedHint")
+            .replace("{everything}", t("settings.everythingTitle"))
+            .replace("{backupNow}", t("containers.backupNow"))}
         />
-      </label>
 
-      <FolderBrowser inDialog label={t("files.path")} value={path} hostMountRoot={hostMountRoot} onChange={setPath} hint={t("files.pathHint")} />
+        <PlacementDraft value={placement} onChange={setPlacement} />
 
-      <ToggleRow checked={enabled} onChange={setEnabled} label={t("files.enabled")} />
-
-      <PlacementDraft value={placement} onChange={setPlacement} />
-
-      <label className="flex flex-col gap-1.5">
-        <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-          {t("files.excludes")}
-          <InfoBubble tip={t("files.excludesHint")} />
-        </span>
-        <textarea
-          value={excludes}
-          onChange={(e) => setExcludes(e.target.value)}
-          spellCheck={false}
-          rows={3}
-          placeholder={"*.tmp\ncache/"}
-          dir="ltr"
-          className={`font-mono text-start ${FIELD}`}
-        />
-      </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+            {t("files.excludes")}
+            <InfoBubble tip={t("files.excludesHint")} />
+          </span>
+          <textarea
+            value={excludes}
+            onChange={(e) => setExcludes(e.target.value)}
+            spellCheck={false}
+            rows={3}
+            placeholder={"*.tmp\ncache/"}
+            dir="ltr"
+            className={`font-mono text-start ${FIELD}`}
+          />
+        </label>
+      </div>
     </>
   );
 

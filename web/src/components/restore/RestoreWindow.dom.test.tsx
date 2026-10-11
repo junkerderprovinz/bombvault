@@ -406,6 +406,28 @@ describe("the recommended backup", () => {
   });
 });
 
+describe("the backup row", () => {
+  it("names the backup with a capital, as the rail does", async () => {
+    await open(entryOf("container"));
+    const picker = within(dialog()).getByRole("combobox", { name: en["restoreWindow.backup"] });
+    expect(picker.textContent).toMatch(/^Today /);
+  });
+
+  it("compares the chosen backup with an older one in a window above it", async () => {
+    await open(entryOf("container"));
+    await press(within(dialog()).getByRole("button", { name: en["snapshot.compare"] }));
+    const windows = screen.getAllByRole("dialog");
+    expect(windows).toHaveLength(2);
+    expect(windows[1].getAttribute("aria-label")).toBe(en["entry.compare.title"]);
+  });
+
+  it("offers no comparison for an entry with one backup", async () => {
+    const one = { ...timelineState("containers"), rows: timelineState("containers").rows.slice(0, 1) };
+    await open(entryOf("container"), { timeline: one });
+    expect(within(dialog()).queryByRole("button", { name: en["snapshot.compare"] })).toBeNull();
+  });
+});
+
 describe("a VM", () => {
   it("comes back next to the original or over it, as a whole", async () => {
     await open(entryOf("vm"));

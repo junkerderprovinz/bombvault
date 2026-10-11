@@ -25,14 +25,20 @@ export function StepBar({
       items={steps.map((name, i) => ({
         id: String(i + 1),
         label: name,
-        icon:
-          i + 1 < current ? (
-            <IconCheck />
-          ) : (
-            <span aria-hidden="true" className="tabular-nums">
-              {i + 1}
-            </span>
-          ),
+        icon: (
+          <span
+            aria-hidden="true"
+            className={`inline-flex h-5 w-5 flex-none items-center justify-center rounded-full text-xs font-semibold tabular-nums [&_svg]:h-3 [&_svg]:w-3 ${
+              i + 1 < current
+                ? "bg-statusOkBg text-statusOk"
+                : i + 1 === current
+                  ? "bg-black/15"
+                  : "bg-carbon-surface3 text-carbon-textSub"
+            }`}
+          >
+            {i + 1 < current ? <IconCheck /> : i + 1}
+          </span>
+        ),
         disabled: i + 1 > reach,
       }))}
       label={label}

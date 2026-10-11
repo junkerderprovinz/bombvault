@@ -108,7 +108,7 @@ export function PlacementDraft({
   return (
     <div className="flex flex-col gap-1.5">
       <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-        {t("placement.title")}
+        {t("storage.title")}
         <InfoBubble tip={t("placement.titleHint")} />
       </span>
       <PlacementBar

@@ -29,7 +29,8 @@ export function SettingRow({
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
-      <div className="flex min-w-0 flex-col gap-0.5">
+      {/* A long note wraps beside the control instead of pushing it onto a line of its own. */}
+      <div className={`flex min-w-0 flex-col gap-0.5 ${note ? "flex-1 basis-56" : ""}`}>
         <span className="flex items-center gap-1.5 text-sm text-carbon-text">
           <span className="min-w-0 wrap-break-word">{label}</span>
           {hint && <InfoBubble tip={hint} />}
