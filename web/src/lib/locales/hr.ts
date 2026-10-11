@@ -5,6 +5,8 @@ const hr: Partial<Translations> = {
   "language.label": "Jezik",
   "theme.dark": "Tamna",
   "theme.light": "Svijetla",
+  "theme.system": "Sustav",
+  "theme.systemHint": "Prati uređaj: tamna kad je uređaj u tamnom načinu, svijetla kad je u svijetlom.",
 
   // Nav
   "nav.overview": "Pregled",

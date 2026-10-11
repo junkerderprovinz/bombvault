@@ -5,6 +5,8 @@ const id: Partial<Translations> = {
   "language.label": "Bahasa",
   "theme.dark": "Gelap",
   "theme.light": "Terang",
+  "theme.system": "Sistem",
+  "theme.systemHint": "Mengikuti perangkat: gelap saat perangkat gelap, terang saat perangkat terang.",
 
   // Nav
   "nav.overview": "Ringkasan",

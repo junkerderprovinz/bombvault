@@ -5,6 +5,8 @@ const fa: Partial<Translations> = {
   "language.label": "زبان",
   "theme.dark": "تیره",
   "theme.light": "روشن",
+  "theme.system": "سیستم",
+  "theme.systemHint": "از دستگاه پیروی می‌کند: اگر دستگاه تیره باشد تیره و اگر روشن باشد روشن.",
 
   // Nav
   "nav.overview": "بررسی اجمالی",

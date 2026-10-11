@@ -5,6 +5,8 @@ const sl: Partial<Translations> = {
   "language.label": "Jezik",
   "theme.dark": "Temna",
   "theme.light": "Svetla",
+  "theme.system": "Sistemska",
+  "theme.systemHint": "Sledi napravi: temna, ko je naprava temna, in svetla, ko je svetla.",
 
   // Nav
   "nav.overview": "Pregled",

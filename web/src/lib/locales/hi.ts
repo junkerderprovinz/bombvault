@@ -5,6 +5,8 @@ const hi: Partial<Translations> = {
   "language.label": "भाषा",
   "theme.dark": "डार्क",
   "theme.light": "लाइट",
+  "theme.system": "सिस्टम",
+  "theme.systemHint": "डिवाइस के अनुसार: डिवाइस डार्क हो तो डार्क, लाइट हो तो लाइट।",
 
   // Nav
   "nav.overview": "अवलोकन",

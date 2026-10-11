@@ -5,6 +5,8 @@ const ms: Partial<Translations> = {
   "language.label": "Bahasa",
   "theme.dark": "Gelap",
   "theme.light": "Cerah",
+  "theme.system": "Sistem",
+  "theme.systemHint": "Mengikut peranti: gelap apabila peranti gelap, cerah apabila peranti cerah.",
 
   // Nav
   "nav.overview": "Ikhtisar",

@@ -5,6 +5,8 @@ const cs: Partial<Translations> = {
   "language.label": "Jazyk",
   "theme.dark": "Tmavý",
   "theme.light": "Světlý",
+  "theme.system": "Systémový",
+  "theme.systemHint": "Řídí se zařízením: tmavý, když je zařízení tmavé, a světlý, když je světlé.",
 
   // Nav
   "nav.overview": "Přehled",

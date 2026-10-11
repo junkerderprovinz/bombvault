@@ -5,6 +5,8 @@ const vi: Partial<Translations> = {
   "language.label": "Ngôn ngữ",
   "theme.dark": "Tối",
   "theme.light": "Sáng",
+  "theme.system": "Hệ thống",
+  "theme.systemHint": "Theo thiết bị: tối khi thiết bị tối, sáng khi thiết bị sáng.",
 
   // Nav
   "nav.overview": "Tổng quan",

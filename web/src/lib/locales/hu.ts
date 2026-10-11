@@ -5,6 +5,8 @@ const hu: Partial<Translations> = {
   "language.label": "Nyelv",
   "theme.dark": "Sötét",
   "theme.light": "Világos",
+  "theme.system": "Rendszer",
+  "theme.systemHint": "Az eszközt követi: sötét, ha az eszköz sötét, és világos, ha világos.",
 
   // Nav
   "nav.overview": "Áttekintés",

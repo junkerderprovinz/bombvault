@@ -4,8 +4,8 @@ import { getTheme, setTheme } from "../../lib/theme";
 import { useState } from "react";
 import { useT } from "../../lib/i18n";
 
-/** ThemePicker chooses the light or the dark theme, or leaves it to the
- *  device. */
+/** ThemePicker chooses the dark or the light theme, or leaves it to the
+ *  device, which is also the way back from a choice once made. */
 export function ThemePicker({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [theme, setThemeState] = useState(getTheme);
 
@@ -49,9 +49,9 @@ export function ThemePicker({ t }: { t: ReturnType<typeof useT>["t"] }) {
   return (
     <Selector
       items={[
-        { id: "light", label: t("theme.light"), icon: sunIcon },
         { id: "dark", label: t("theme.dark"), icon: moonIcon },
-        { id: "system", label: t("settings.tab.system"), icon: systemIcon },
+        { id: "light", label: t("theme.light"), icon: sunIcon },
+        { id: "system", label: t("theme.system"), tip: t("theme.systemHint"), icon: systemIcon },
       ]}
       label={t("settings.theme")}
       hueOffset={HUE_OFFSET.theme}

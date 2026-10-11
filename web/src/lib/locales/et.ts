@@ -5,6 +5,8 @@ const et: Partial<Translations> = {
   "language.label": "Keel",
   "theme.dark": "Tume",
   "theme.light": "Hele",
+  "theme.system": "Süsteem",
+  "theme.systemHint": "Järgib seadet: tume, kui seade on tume, ja hele, kui seade on hele.",
 
   // Nav
   "nav.overview": "Ülevaade",

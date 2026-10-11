@@ -5,6 +5,8 @@ const ar: Partial<Translations> = {
   "language.label": "اللغة",
   "theme.dark": "داكن",
   "theme.light": "فاتح",
+  "theme.system": "النظام",
+  "theme.systemHint": "يتبع الجهاز: داكن إذا كان الجهاز داكنًا، وفاتح إذا كان فاتحًا.",
 
   // Nav
   "nav.overview": "نظرة عامة",

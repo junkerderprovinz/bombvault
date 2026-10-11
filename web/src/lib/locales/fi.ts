@@ -5,6 +5,8 @@ const fi: Partial<Translations> = {
   "language.label": "Kieli",
   "theme.dark": "Tumma",
   "theme.light": "Vaalea",
+  "theme.system": "Järjestelmä",
+  "theme.systemHint": "Seuraa laitetta: tumma, kun laite on tumma, ja vaalea, kun laite on vaalea.",
 
   // Nav
   "nav.overview": "Yleiskatsaus",

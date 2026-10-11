@@ -5,6 +5,8 @@ const bg: Partial<Translations> = {
   "language.label": "Език",
   "theme.dark": "Тъмна",
   "theme.light": "Светла",
+  "theme.system": "Системна",
+  "theme.systemHint": "Следва устройството: тъмна, когато устройството е тъмно, и светла, когато е светло.",
 
   // Nav
   "nav.overview": "Преглед",

@@ -5,6 +5,8 @@ const zh: Partial<Translations> = {
   "language.label": "语言",
   "theme.dark": "深色",
   "theme.light": "浅色",
+  "theme.system": "系统",
+  "theme.systemHint": "跟随设备：设备为深色时用深色，为浅色时用浅色。",
 
   // Nav
   "nav.overview": "概览",

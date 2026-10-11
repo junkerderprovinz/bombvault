@@ -89,6 +89,7 @@ const testMatch = [
   "whats-new.spec.ts",
   "restore.spec.ts",
   "welcome.spec.ts",
+  "look-help.spec.ts",
 ];
 
 for (const spec of testMatch) {

@@ -5,6 +5,8 @@ const is: Partial<Translations> = {
   "language.label": "Tungumál",
   "theme.dark": "Dökkt",
   "theme.light": "Ljóst",
+  "theme.system": "Kerfi",
+  "theme.systemHint": "Fylgir tækinu: dökkt þegar tækið er dökkt og ljóst þegar það er ljóst.",
 
   // Nav
   "nav.overview": "Yfirlit",

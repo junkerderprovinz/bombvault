@@ -1535,6 +1535,14 @@ body {
 /* A mark whose layers do not survive one ink brings the brand's own
    single-colour version for the hover. */
 .glim-mark-hover { display: none; }
+/* The house marks open: the envelope and the manual's book show their open
+   drawing on the focus as well, and under a finger, where nothing hovers. */
+.glim-brand-tile:focus-visible .glim-house-mark .glim-mark-rest { display: none; }
+.glim-brand-tile:focus-visible .glim-house-mark .glim-mark-hover { display: block; }
+@media (hover: none) {
+  .glim-brand-tile:active .glim-house-mark .glim-mark-rest { display: none; }
+  .glim-brand-tile:active .glim-house-mark .glim-mark-hover { display: block; }
+}
 
 /* The About card's marks at rest. A published brand colour fails on one of
    the two grounds, so they take the adjusted theme tokens, and the house mark
@@ -1734,7 +1742,7 @@ body {
 
 /* Half the second line's height down, so the name alone sits in the middle. */
 .glim-readme-btn-name:not(:only-child) {
-  translate: 0 0.4375rem;
+  translate: 0 calc(0.75rem * 1.15 / 2);
 }
 
 .glim-readme-btn-sub {

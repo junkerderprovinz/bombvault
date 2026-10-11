@@ -5,6 +5,8 @@ const ru: Partial<Translations> = {
   "language.label": "Язык",
   "theme.dark": "Тёмная",
   "theme.light": "Светлая",
+  "theme.system": "Системная",
+  "theme.systemHint": "Следует за устройством: тёмная, когда устройство тёмное, и светлая, когда светлое.",
 
   // Nav
   "nav.overview": "Обзор",

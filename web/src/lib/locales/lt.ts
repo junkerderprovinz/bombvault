@@ -5,6 +5,8 @@ const lt: Partial<Translations> = {
   "language.label": "Kalba",
   "theme.dark": "Tamsi",
   "theme.light": "Šviesi",
+  "theme.system": "Sistema",
+  "theme.systemHint": "Seka įrenginį: tamsi, kai įrenginys tamsus, ir šviesi, kai įrenginys šviesus.",
 
   // Nav
   "nav.overview": "Apžvalga",
