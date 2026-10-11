@@ -1,9 +1,10 @@
 import { useState } from "react";
-import type { FollowedSetting, StorageLocation, StorageLocationSection } from "../../lib/api";
+import type { DestinationConnectionEdit, FollowedSetting, StorageLocation, StorageLocationSection } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { pushSaveWarnings } from "../../lib/placementCodes";
 import {
   followLocation,
+  saveConnection,
   saveLocation,
   saveSection,
   writable,
@@ -14,6 +15,7 @@ import {
   type SectionPatch,
 } from "../../lib/storageWrites";
 import { useToast } from "../../lib/toast";
+import { credSetsChanged } from "../../lib/useCloudCredSets";
 import { destinationsChanged } from "../../lib/useDestinations";
 import { reposChanged } from "../../lib/useNamedRepos";
 import { offsiteTargetsChanged } from "../../lib/useOffsiteTargets";
@@ -33,6 +35,9 @@ export interface LocationEdit {
   saveSection: (section: StorageLocationSection, patch: SectionPatch) => Promise<boolean>;
   /** Gives back everything a section holds for itself. */
   followAll: (section: StorageLocationSection) => void;
+  /** Changes how a destination is reached. The answer comes back whole, so
+   *  the caller can say why the server refused. */
+  saveConnection: (change: DestinationConnectionEdit) => Promise<SaveAnswer>;
   busy: boolean;
 }
 
@@ -42,14 +47,14 @@ export function useLocationEdit(location: StorageLocation, records: LocationReco
   const [busy, setBusy] = useState(false);
   const settings = writable(location, records);
 
-  async function write(run: () => Promise<SaveAnswer>, done: string): Promise<boolean> {
+  async function attempt(run: () => Promise<SaveAnswer>): Promise<SaveAnswer> {
     setBusy(true);
     const res = await run().catch((e: unknown): SaveAnswer => ({ ok: false, error: e instanceof Error ? e.message : undefined }));
     setBusy(false);
-    if (!res.ok) {
-      push(res.error ?? t("settings.error"), "fail");
-      return false;
-    }
+    return res;
+  }
+
+  function taken(res: SaveAnswer, done: string) {
     push(done, "success");
     pushSaveWarnings(push, t, res.warnings);
     // The location is one view of rows other readers hold as well.
@@ -57,6 +62,15 @@ export function useLocationEdit(location: StorageLocation, records: LocationReco
     destinationsChanged();
     offsiteTargetsChanged();
     reposChanged();
+  }
+
+  async function write(run: () => Promise<SaveAnswer>, done: string): Promise<boolean> {
+    const res = await attempt(run);
+    if (!res.ok) {
+      push(res.error ?? t("settings.error"), "fail");
+      return false;
+    }
+    taken(res, done);
     return true;
   }
 
@@ -70,6 +84,15 @@ export function useLocationEdit(location: StorageLocation, records: LocationReco
     saveSection: (section, patch) =>
       write(() => saveSection(location, records, section, patch), t("dest.saved").replace("{name}", () => location.name)),
     followAll: (section) => void write(() => followLocation(location, records, section, section.own), t("storage.own.resetDone")),
+    saveConnection: async (change) => {
+      const res = await attempt(() => saveConnection(location, change));
+      if (res.ok) {
+        taken(res, t("dest.saved").replace("{name}", () => location.name));
+        // A changed sign-in is written into the credential set behind it.
+        credSetsChanged();
+      }
+      return res;
+    },
     busy,
   };
 }

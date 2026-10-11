@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
-import { Button } from "../../components/Button";
-import { DropdownListbox } from "../../components/DropdownListbox";
-import { InfoBubble } from "../../components/InfoBubble";
-import { NumberField } from "../../components/NumberField";
-import type { useT } from "../../lib/i18n";
+import { useT } from "../../lib/i18n";
 import { useStreaming, type StreamingNumberKey, type StreamingState } from "../../lib/useStreaming";
-import { Card, ToggleRow } from "./shared";
+import { Card, ToggleRow } from "../../pages/settings/shared";
+import { SelectDot } from "../backups/SelectMark";
+import { Button } from "../Button";
+import { DropdownListbox } from "../DropdownListbox";
+import { InfoBubble } from "../InfoBubble";
+import { NumberField } from "../NumberField";
 
 const NUMBER_FIELDS: { key: StreamingNumberKey; label: "streaming.threshold" | "streaming.limit" | "streaming.hold"; hint: "streaming.thresholdHint" | "streaming.limitHint" | "streaming.holdHint"; max: number }[] = [
   { key: "thresholdMbit", label: "streaming.threshold", hint: "streaming.thresholdHint", max: 10000 },
@@ -15,7 +16,7 @@ const NUMBER_FIELDS: { key: StreamingNumberKey; label: "streaming.threshold" | "
 
 /** StreamingFields are the media servers and the three numbers that say when
  *  a stream counts and how far a copy slows down for it. */
-export function StreamingFields({ t, state }: { t: ReturnType<typeof useT>["t"]; state: StreamingState }) {
+function StreamingFields({ t, state }: { t: ReturnType<typeof useT>["t"]; state: StreamingState }) {
   const { cfg, candidates, setNumber, toggleServer } = state;
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef<HTMLButtonElement>(null);
@@ -66,7 +67,7 @@ export function StreamingFields({ t, state }: { t: ReturnType<typeof useT>["t"];
                       checked ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
                     }`}
                   >
-                    <input type="checkbox" checked={checked} readOnly tabIndex={-1} className="pointer-events-none" style={{ accentColor: "var(--accent)" }} />
+                    <SelectDot checked={checked} />
                     <span className="min-w-0 flex-1 truncate">{c.name}</span>
                     {c.hostNetwork && <span className="shrink-0 text-caption text-statusWarn">{t("streaming.hostNetwork")}</span>}
                   </button>
@@ -117,36 +118,34 @@ export function StreamingFields({ t, state }: { t: ReturnType<typeof useT>["t"];
   );
 }
 
-// StreamingCard lets off-site copies give way to a media server's streams.
-// The media servers it picks also decide when such a container counts as idle
-// for a backup that waits for it.
-export function StreamingCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
+/**
+ * StreamingCard lets off-site copies give way to a media server's streams.
+ * The media servers it picks also decide when such a container counts as idle
+ * for a backup that waits for it. It is left out when the settings cannot be
+ * read.
+ */
+export function StreamingCard({ hueIndex }: { hueIndex: number }) {
+  const { t } = useT();
   const state = useStreaming(t);
   const { cfg, failed, streaming, busy, shake, pulse, toggle } = state;
-
-  if (failed) return null;
-  // Drawn before its settings arrive, so a search result that opens this page
-  // finds the card to mark.
-  if (!cfg) return <Card title={t("streaming.title")} hint={t("streaming.hint")} hueIndex={hueIndex}>{null}</Card>;
-
+  if (failed || !cfg) return null;
   return (
-    <Card title={t("streaming.title")} hint={t("streaming.hint")} hueIndex={hueIndex}>
+    <Card title={t("storage.streaming.title")} hint={t("storage.streaming.hint")} hueIndex={hueIndex}>
       <ToggleRow
         label={t("streaming.toggle")}
-        hint={t("streaming.toggleHint")}
+        hint={t("storage.streaming.toggleHint")}
         checked={cfg.enabled}
-        onChange={(v) => void toggle(v)}
+        onChange={(next) => void toggle(next)}
         disabled={busy}
         shakeNonce={shake}
         pulseNonce={pulse}
       />
       {cfg.enabled && streaming && (
         <p className="text-xs text-statusWarn" role="status">
-          {t("streaming.now").replace("{name}", streaming)}
+          {t("streaming.now").replace("{name}", () => streaming)}
         </p>
       )}
-
-      <StreamingFields t={t} state={state} />
+      {cfg.enabled && <StreamingFields t={t} state={state} />}
     </Card>
   );
 }

@@ -7,10 +7,10 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import type { FlowCounts, FlowLine, FlowRow } from "../../lib/storageFlow";
 import { DOMAIN_LABEL, locationRoute } from "../../lib/storageLocations";
 import { Card } from "../../pages/settings/shared";
-import { InfoBubble } from "../InfoBubble";
 import { Selector } from "../Selector";
 import { FlowPicture } from "./FlowPicture";
 import { LocationMark } from "./LocationMark";
+import { PausedDefault } from "./PausedDefault";
 import { DomainGlyph } from "./rows";
 import { useStorageFlow, type PlacementDefaults } from "./useStorageFlow";
 
@@ -187,10 +187,7 @@ export function FlowCard({
             <FlowSwitches rows={rows} busy={flow.busy} onToggle={flow.toggle} />
           )}
           {flow.paused.map((domain) => (
-            <p key={domain} className="flex items-center justify-center gap-1.5 text-xs text-statusWarn">
-              {t(DOMAIN_LABEL[domain])}: {t("placementDefaults.paused")}
-              <InfoBubble tip={t("placementDefaults.pausedHint").replace("{domain}", () => t(DOMAIN_LABEL[domain]))} />
-            </p>
+            <PausedDefault key={domain} domain={domain} />
           ))}
         </div>
       )}

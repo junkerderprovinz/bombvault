@@ -319,6 +319,49 @@ const PROVIDERS = [
   provider("gdrive", "Google Drive", "cloud", "rclone", { auth: "token" }),
 ];
 
+function field(name: string, over: Record<string, unknown> = {}) {
+  return { name, help: "", required: false, secret: false, password: false, advanced: false, essential: true, default: "", ...over };
+}
+
+// The form rclone describes for the Storage Box, as far as a test fills it.
+const BACKENDS = {
+  storagebox: {
+    name: "sftp",
+    description: "",
+    options: [field("host", { required: true }), field("user"), field("pass", { password: true }), field("port", { essential: false })],
+  },
+};
+
+const RCLONE_SECTIONS = [
+  {
+    name: "storagebox",
+    type: "sftp",
+    options: [
+      { name: "host", value: "u123456.your-storagebox.de" },
+      { name: "user", value: "u123456" },
+      { name: "pass", hidden: true },
+    ],
+  },
+  { name: "nas", type: "smb", options: [{ name: "host", value: "nas.local" }] },
+];
+
+/** What removing the Storage Box detaches: one part per section that copies to it. */
+function part(domain: string, entries: number, backups: number, primary = false) {
+  return {
+    domain,
+    targetId: `t-box-${domain}`,
+    repo: `rclone:storagebox:bombvault/${domain === "config" ? "selfbackup" : domain}`,
+    primary,
+    appendOnly: false,
+    entries,
+    backups,
+    listedAt: NOW - 3600,
+    lastCopyAt: NOW - 3600,
+  };
+}
+
+export const REMOVAL = { sections: [part("containers", 7, 62, true), part("flash", 1, 14), part("config", 1, 9)] };
+
 const CRED_SETS = [
   { id: "set-b2", name: "B2 Fotos", s3KeyId: "0034f9e8d7c6", s3Region: "eu-central-003", restUser: "", s3StorageClass: "", s3SecretSet: true, restPasswordSet: false },
 ];
@@ -326,6 +369,9 @@ const CRED_SETS = [
 export interface Staged {
   /** Every write the page sent, in order. */
   writes: { method: string; path: string; body: unknown }[];
+  /** What the server answers to a changed connection. A test replaces it to
+   *  stage a refusal. */
+  connection: Record<string, unknown>;
 }
 
 /**
@@ -334,7 +380,7 @@ export interface Staged {
  * a test asserts on the request and not on a second read.
  */
 export async function stageStorage(page: Page, width: number, lang = "de"): Promise<Staged> {
-  const staged: Staged = { writes: [] };
+  const staged: Staged = { writes: [], connection: { ok: true, warnings: [] } };
   const record = (route: Route, answer: unknown) => {
     const request = route.request();
     staged.writes.push({ method: request.method(), path: new URL(request.url()).pathname, body: request.postDataJSON() });
@@ -369,6 +415,10 @@ export async function stageStorage(page: Page, width: number, lang = "de"): Prom
     (url) => url.pathname.startsWith("/api/offsite/destinations"),
     (route) => {
       const { pathname } = new URL(route.request().url());
+      if (pathname.endsWith("/connection")) return record(route, staged.connection);
+      if (pathname.endsWith("/removal")) {
+        return route.request().method() === "POST" ? record(route, { ok: true }) : route.fulfill({ json: { ok: true, removal: REMOVAL } });
+      }
       if (route.request().method() === "PUT") return record(route, { ok: true, warnings: [] });
       if (pathname.includes("/domains/")) return record(route, { ok: true, created: true, target: target("t-new", pathname.split("/").pop() ?? "", "b2") });
       if (route.request().method() === "POST") return record(route, { ok: true, destination: { ...destination(B2, "new"), name: "Rest server" } });
@@ -379,7 +429,11 @@ export async function stageStorage(page: Page, width: number, lang = "de"): Prom
     if (route.request().method() === "POST") return record(route, { ok: true });
     return route.fulfill({ json: { ok: true, sets: CRED_SETS } });
   });
-  await page.route("**/api/rclone", (route) => route.fulfill({ json: { ok: true, remotes: ["storagebox", "nas"] } }));
+  await page.route("**/api/rclone", (route) =>
+    route.fulfill({ json: { ok: true, remotes: ["storagebox", "nas"], sections: RCLONE_SECTIONS } }),
+  );
+  // A path that was really saved would move the harness's own repositories.
+  await page.route("**/api/settings", (route) => (route.request().method() === "PUT" ? record(route, { ok: true }) : route.fallback()));
   // Without Docker the harness has no media servers to offer.
   await page.route("**/api/settings/streaming", (route) =>
     route.fulfill({
@@ -423,7 +477,7 @@ export async function stageStorage(page: Page, width: number, lang = "de"): Prom
         json: { ok: true, added: [{ targetId: "t-box-containers", name: STORAGE_BOX.name, snapshots: 12, uncheckable: [] }], dropped: [] },
       }),
   );
-  await page.route("**/api/offsite/providers", (route) => route.fulfill({ json: { ok: true, providers: PROVIDERS, backends: {} } }));
+  await page.route("**/api/offsite/providers", (route) => route.fulfill({ json: { ok: true, providers: PROVIDERS, backends: BACKENDS } }));
   await page.route("**/api/offsite/group-receivers", (route) =>
     route.fulfill({ json: { ok: true, receivers: [{ memberId: "m-tower", name: "tower-2", url: "https://tower-2.local:8000", needsAddress: false }] } }),
   );

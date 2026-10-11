@@ -1,14 +1,19 @@
-import type { Compression } from "../../lib/api";
+import { useState } from "react";
+import type { Compression, OffsiteDomain } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { STORAGE_CLASSES } from "../../lib/storageClasses";
+import { DOMAIN_LABEL } from "../../lib/storageLocations";
 import { storageClassOf } from "../../lib/storageWrites";
 import { Card } from "../../pages/settings/shared";
+import { Button } from "../Button";
 import { COMPRESSION_MODES } from "../CompressionSelector";
+import { IconPencil } from "../navGlyphs";
 import { SelectField } from "../SelectField";
 import { Selector } from "../Selector";
 import { Toggle } from "../Toggle";
 import { TextSetting } from "./fields";
-import { Deviations, Rows, SettingRow } from "./rows";
+import { Deviations, DomainGlyph, Rows, SettingRow } from "./rows";
+import { SectionPathWindow } from "./SectionPathWindow";
 import type { LocationEdit } from "./useLocationEdit";
 
 // How restic reaches a backend, for the ones the wizard explains as well.
@@ -24,10 +29,10 @@ function compressionLabel(mode: Compression): TranslationKey {
 
 /**
  * ConnectionCard says what a storage location is and where it lies, and holds
- * the settings that belong to the place as a whole. The address itself is
- * shown and not edited: a location that moved would start empty.
+ * the settings that belong to the place as a whole. The address is changed
+ * in a window of its own, which `onChange` opens where the location has one.
  */
-export function ConnectionCard({ edit, hueIndex }: { edit: LocationEdit; hueIndex: number }) {
+export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdit; onChange?: () => void; hueIndex: number }) {
   const { t } = useT();
   const { location, records, can, save, follow, busy } = edit;
   const local = location.backend === "local";
@@ -37,6 +42,7 @@ export function ConnectionCard({ edit, hueIndex }: { edit: LocationEdit; hueInde
   const storageClass = storageClassOf(location, records);
   const routeHint = ROUTE_HINT[location.backend];
   const whereHint = local ? (perSection ? t("storage.folderHint") : undefined) : routeHint && t(routeHint);
+  const [pathOf, setPathOf] = useState<OffsiteDomain | null>(null);
 
   return (
     <Card title={t("storage.connection")} hueIndex={hueIndex}>
@@ -72,7 +78,34 @@ export function ConnectionCard({ edit, hueIndex }: { edit: LocationEdit; hueInde
           <code dir="ltr" className="min-w-0 break-all text-start font-mono text-xs text-carbon-textSub">
             {location.where}
           </code>
+          {onChange && (
+            <Button label={t("storage.add.change")} labelKey="storage.add.change" glyph={<IconPencil />} tone="neutral" onClick={onChange} />
+          )}
         </SettingRow>
+        {location.object === "path" && (
+          <ul className="my-3 flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3 first:mt-0 last:mb-0">
+            {location.sections.map((section) => (
+              <li key={section.domain} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="flex items-center gap-2 text-sm text-carbon-text">
+                    <DomainGlyph domain={section.domain} />
+                    {t(DOMAIN_LABEL[section.domain])}
+                  </span>
+                  <code dir="ltr" className="break-all text-start font-mono text-xs text-carbon-textMuted">
+                    {section.where}
+                  </code>
+                </span>
+                <Button
+                  label={t("storage.add.change")}
+                  labelKey="storage.add.change"
+                  glyph={<IconPencil />}
+                  tone="neutral"
+                  onClick={() => setPathOf(section.domain)}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
 
         {location.compression !== undefined && (
           <SettingRow label={t("settings.compression")} hint={t("storage.compressionHint")}>
@@ -129,6 +162,7 @@ export function ConnectionCard({ edit, hueIndex }: { edit: LocationEdit; hueInde
           </SettingRow>
         )}
       </Rows>
+      {pathOf && <SectionPathWindow domain={pathOf} onClose={() => setPathOf(null)} />}
     </Card>
   );
 }

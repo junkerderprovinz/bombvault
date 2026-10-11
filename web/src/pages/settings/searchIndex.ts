@@ -191,6 +191,28 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       rows: [{ key: "tile.sidebar.show", hint: "tile.sidebar.showHint" }],
     },
     {
+      title: "storage.title",
+      rows: [],
+      body: [
+        "storage.add.title",
+        "storage.connection",
+        "storage.folder",
+        "storage.credentials",
+        "storage.protected",
+        "storage.copy.title",
+        "storage.keep.title",
+        "storage.rules.title",
+        "storage.flow.title",
+        "storage.choice.title",
+        "storage.streaming.title",
+        "streaming.toggle",
+        "streaming.servers",
+        "streaming.threshold",
+        "streaming.limit",
+        "streaming.hold",
+      ],
+    },
+    {
       title: "repos.title",
       hint: "repos.intro",
       rows: [
@@ -200,55 +222,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "repos.enabled" },
         { key: "repos.name" },
         { key: "repos.location", hint: "repos.locationHint" },
-      ],
-    },
-    {
-      title: "placementDefaults.title",
-      hint: "placementDefaults.hint",
-      rows: [
-        { key: "placement.title" },
-        { key: "placement.segLocal" },
-        { key: "placement.storedOn" },
-        { key: "placementDefaults.apply" },
-        { key: "placementDefaults.confirm" },
-      ],
-      body: ["placementDefaults.paused", "placementDefaults.pausedHint"],
-    },
-    {
-      title: "settings.paths",
-      hint: "settings.pathsHint",
-      rows: [
-        { key: "settings.containersPath" },
-        { key: "settings.vmsPath" },
-        { key: "settings.flashPath" },
-        { key: "settings.configPath" },
-        { key: "settings.filesPath" },
-        { key: "settings.zfsPath" },
-        { key: "settings.compression", hint: "settings.compressionInfo" },
-      ],
-    },
-    {
-      title: "settings.retentionLocalTitle",
-      hint: "settings.retentionHint",
-      rows: [
-        { key: "retentionPreview.sharedPolicy" },
-        ...KEEP_RULE_ROWS,
-        { key: "settings.ownRetentionTitle", hint: "settings.ownRetentionHint" },
-        { key: "settings.ownRetention", hint: "settings.ownRetentionToggleHint" },
-        ...SOURCE_ROWS("settings.ownRetentionToggleHint"),
-      ],
-      body: ["settings.retentionCombineInfo"],
-    },
-    {
-      title: "settings.ownRetentionTitle",
-      hint: "settings.ownRetentionHint",
-      rows: [
-        { key: "settings.ownRetention", hint: "settings.ownRetentionToggleHint" },
-        { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
-        { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
-        { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
-        { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
-        { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
       ],
     },
     {
@@ -271,11 +244,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "retentionPreview.sourceLabel" },
         { key: "retentionPreview.show" },
       ],
-    },
-    {
-      title: "dest.title",
-      hint: "dest.hint",
-      rows: [{ key: "dest.add" }, { key: "dest.name" }, { key: "offsite.immutable" }],
     },
     {
       title: "offsite.copyDomainTitle",
@@ -319,17 +287,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       rows: [{ key: "settings.limitUpload" }, { key: "settings.limitDownload" }],
     },
     {
-      title: "streaming.title",
-      hint: "streaming.hint",
-      rows: [
-        { key: "streaming.toggle", hint: "streaming.toggleHint" },
-        { key: "streaming.servers", hint: "streaming.serversHint" },
-        { key: "streaming.threshold", hint: "streaming.thresholdHint" },
-        { key: "streaming.limit", hint: "streaming.limitHint" },
-        { key: "streaming.hold", hint: "streaming.holdHint" },
-      ],
-    },
-    {
       title: "rclone.title",
       hint: "rclone.hint",
       rows: [
@@ -361,7 +318,11 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "tile.restore.folders",
       hint: "tile.restore.foldersHint",
-      rows: [{ key: "settings.restoreFolder", hint: "settings.restoreFolderHint" }],
+      rows: [
+        { key: "settings.restoreFolder", hint: "settings.restoreFolderHint" },
+        { key: "tile.restore.perSection", hint: "tile.restore.perSectionHint" },
+        { key: "tile.restore.exception" },
+      ],
     },
     {
       title: "settings.registriesTitle",

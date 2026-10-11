@@ -28,7 +28,6 @@ export function DiscoverFindings({
   const [connected, setConnected] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [enabledTargets, setEnabledTargets] = useState<Set<string> | null>(null);
-  const where = [t("nav.settings"), t("storage.title"), t("placementDefaults.title")].join(", ");
 
   useEffect(() => {
     let active = true;
@@ -68,7 +67,7 @@ export function DiscoverFindings({
         <p className="text-sm text-statusWarn">
           {t("discover.paused")
             .replace("{domains}", () => formatList(lang, paused.map((d) => domainLabel(t, d))))
-            .replace("{where}", () => where)}
+            .replace("{where}", () => t("storage.title"))}
         </p>
       )}
       {leftOpen.length > 0 && (

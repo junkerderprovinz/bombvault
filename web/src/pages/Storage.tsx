@@ -14,6 +14,7 @@ import { AddLocationWindow } from "../components/storage/AddLocationWindow";
 import { FlowCard } from "../components/storage/FlowCard";
 import { LocationMark } from "../components/storage/LocationMark";
 import { OwnChoiceCard } from "../components/storage/OwnChoiceCard";
+import { StreamingCard } from "../components/storage/StreamingCard";
 import { Vessel } from "../components/storage/Vessel";
 import type { StorageLocation } from "../lib/api";
 import { useT } from "../lib/i18n";
@@ -26,9 +27,7 @@ import { subscribeOffsiteTargets } from "../lib/useOffsiteTargets";
 import { useOwnChoices } from "../lib/useOwnChoices";
 import { usePlacementDefaults } from "../lib/usePlacementDefaults";
 import { storageLocationsChanged, useStorageLocations } from "../lib/useStorageLocations";
-import { useStreaming } from "../lib/useStreaming";
-import { Card, ToggleRow, hueCounter } from "./settings/shared";
-import { StreamingFields } from "./settings/StreamingCard";
+import { Card, hueCounter } from "./settings/shared";
 
 function LocationRow({ location }: { location: StorageLocation }) {
   const { t, lang } = useT();
@@ -74,27 +73,6 @@ function LocationRow({ location }: { location: StorageLocation }) {
         </span>
       </div>
     </li>
-  );
-}
-
-function StreamingCard({ hueIndex }: { hueIndex: number }) {
-  const { t } = useT();
-  const state = useStreaming(t);
-  const { cfg, failed, busy, shake, pulse, toggle } = state;
-  if (failed || !cfg) return null;
-  return (
-    <Card title={t("storage.streaming.title")} hint={t("storage.streaming.hint")} hueIndex={hueIndex}>
-      <ToggleRow
-        label={t("streaming.toggle")}
-        hint={t("storage.streaming.toggleHint")}
-        checked={cfg.enabled}
-        onChange={(next) => void toggle(next)}
-        disabled={busy}
-        shakeNonce={shake}
-        pulseNonce={pulse}
-      />
-      {cfg.enabled && <StreamingFields t={t} state={state} />}
-    </Card>
   );
 }
 

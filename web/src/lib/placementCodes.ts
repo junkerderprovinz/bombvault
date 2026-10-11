@@ -35,6 +35,8 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "rest-path-too-deep": "placementCode.restPathTooDeep",
   "repo-wrong-key": "placementCode.repoWrongKey",
   "repo-unopened": "placementCode.repoUnopened",
+  "destination-holds-backups": "placementCode.destinationHoldsBackups",
+  "backups-not-there": "placementCode.backupsNotThere",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {
