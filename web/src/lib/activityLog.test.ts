@@ -148,6 +148,11 @@ describe("buildLogLines", () => {
     expect(failed.status).toBe("failed");
   });
 
+  it("shows the kind of a key event it has no name for and does not call it a backup", () => {
+    const [line] = buildLogLines([makeRun({ targetId: "key", kind: "keydeposit", target: "", domain: "" })], {}, [], resolveName, 2_000_000);
+    expect(line.text).toBe("keydeposit");
+  });
+
   it("names the links a restore left out", () => {
     const run = makeRun({
       kind: "restore",
