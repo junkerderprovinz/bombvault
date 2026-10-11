@@ -1889,7 +1889,6 @@ const is: Partial<Translations> = {
   "vm.blocks.reason.no_space": "of lítið laust pláss í appdata",
   "vm.blocks.reason.job_failed": "libvirt ræsti ekki afritið",
   "vm.ssh.title": "SSH á hýsil",
-  "vm.ssh.desc": "Afritun sýndarvéla og ZFS keyrir skipanir sínar á þessum þjóni í gegnum SSH (ekki tengipunkt). Heimilaðu þennan lykil í Unraid, prófaðu svo.",
   "vm.ssh.host": "Hýsill",
   "vm.ssh.publicKey": "Opinber lykill: bættu við /root/.ssh/authorized_keys í Unraid",
   "common.copy": "Afrita",
@@ -1898,12 +1897,7 @@ const is: Partial<Translations> = {
   "vm.ssh.test": "Prófa tengingu",
   "vm.ssh.testNoLibvirt": "Tengt. libvirt er ekki aðgengilegt, en aðeins afritun sýndarvéla þarf það.",
   "vm.ssh.testFail": "Tenging mistókst",
-  "vm.ssh.setupTitle": "Setja upp (einu sinni)",
-  "vm.ssh.step1": "Afritaðu skipunina hér að neðan og keyrðu hana í Unraid-flugstöðinni til að heimila þennan lykil (lifir af endurræsingar).",
-  "vm.ssh.step2": "Stilltu breytu gámsins „Host SSH: Address“ á staðarnets-IP-tölu Unraid þíns (t.d. 192.168.x.x); með einföldu bridge-netkerfi virkar host.docker.internal líka.",
-  "vm.ssh.step3": "Smelltu á Prófa tengingu. Þegar það er grænt, virkjaðu sýndarvélar eða ZFS-gagnasöfn undir Svæðum.",
   "vm.ssh.copyCmd": "Afrita skipun",
-  "vm.ssh.guide": "Fullkominn uppsetningar- og netleiðbeiningar",
 
   // Guided Recovery tab
   // Step 1

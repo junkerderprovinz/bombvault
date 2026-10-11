@@ -1889,7 +1889,6 @@ const lt: Partial<Translations> = {
   "vm.blocks.reason.no_space": "per mažai laisvos vietos appdata",
   "vm.blocks.reason.job_failed": "libvirt nepaleido kopijos",
   "vm.ssh.title": "Pagrindinio kompiuterio SSH",
-  "vm.ssh.desc": "VM ir ZFS atsarginės kopijos vykdo savo komandas šiame serveryje per SSH (be prijungimo). Autorizuokite šį raktą Unraid, tada patikrinkite.",
   "vm.ssh.host": "Pagrindinis kompiuteris",
   "vm.ssh.publicKey": "Viešasis raktas: pridėkite prie Unraid /root/.ssh/authorized_keys",
   "common.copy": "Kopijuoti",
@@ -1898,12 +1897,7 @@ const lt: Partial<Translations> = {
   "vm.ssh.test": "Tikrinti ryšį",
   "vm.ssh.testNoLibvirt": "Prisijungta. libvirt nepasiekiamas, bet jo reikia tik VM atsarginėms kopijoms.",
   "vm.ssh.testFail": "Ryšys nepavyko",
-  "vm.ssh.setupTitle": "Nustatyti (vieną kartą)",
-  "vm.ssh.step1": "Nukopijuokite žemiau esančią komandą ir paleiskite ją Unraid terminale, kad autorizuotumėte šį raktą (išlieka po paleidimo iš naujo).",
-  "vm.ssh.step2": "Nustatykite konteinerio kintamąjį „Host SSH: Address“ į savo Unraid vietinio tinklo IP (pvz., 192.168.x.x); esant paprastam bridge tinklui taip pat veikia host.docker.internal.",
-  "vm.ssh.step3": "Spustelėkite Tikrinti ryšį. Kai bus žalia, įjunkite VM arba ZFS duomenų rinkinius skiltyje Sritys.",
   "vm.ssh.copyCmd": "Kopijuoti komandą",
-  "vm.ssh.guide": "Išsamus nustatymo ir tinklo vadovas",
 
   // Guided Recovery tab
   // Step 1

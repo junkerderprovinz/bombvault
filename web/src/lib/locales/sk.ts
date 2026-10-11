@@ -1889,7 +1889,6 @@ const sk: Partial<Translations> = {
   "vm.blocks.reason.no_space": "málo voľného miesta v appdata",
   "vm.blocks.reason.job_failed": "libvirt zálohu nespustil",
   "vm.ssh.title": "SSH hostiteľa",
-  "vm.ssh.desc": "Zálohy VM a ZFS spúšťajú svoje príkazy na tomto serveri cez SSH (bez pripojenia). Autorizujte tento kľúč v Unraid, potom otestujte.",
   "vm.ssh.host": "Hostiteľ",
   "vm.ssh.publicKey": "Verejný kľúč: pridajte do Unraid /root/.ssh/authorized_keys",
   "common.copy": "Kopírovať",
@@ -1898,12 +1897,7 @@ const sk: Partial<Translations> = {
   "vm.ssh.test": "Otestovať pripojenie",
   "vm.ssh.testNoLibvirt": "Pripojené. libvirt nie je dostupný, potrebujú ho však len zálohy VM.",
   "vm.ssh.testFail": "Pripojenie zlyhalo",
-  "vm.ssh.setupTitle": "Nastaviť (jednorazovo)",
-  "vm.ssh.step1": "Skopírujte nižšie uvedený príkaz a spustite ho v termináli Unraid, aby ste autorizovali tento kľúč (prežije reštarty).",
-  "vm.ssh.step2": "Nastavte premennú kontajnera „Host SSH: Address“ na IP vašej lokálnej siete Unraid (napr. 192.168.x.x); pri jednoduchom bridge sieťovaní funguje aj host.docker.internal.",
-  "vm.ssh.step3": "Kliknite na Otestovať pripojenie. Keď bude zelené, zapnite VM alebo Dátové sady ZFS v časti Domény.",
   "vm.ssh.copyCmd": "Kopírovať príkaz",
-  "vm.ssh.guide": "Kompletná príručka nastavenia a sieťovania",
 
   // Guided Recovery tab
   // Step 1

@@ -1889,7 +1889,6 @@ const et: Partial<Translations> = {
   "vm.blocks.reason.no_space": "appdata-s on liiga vähe vaba ruumi",
   "vm.blocks.reason.job_failed": "libvirt ei käivitanud varundust",
   "vm.ssh.title": "Hosti SSH",
-  "vm.ssh.desc": "VM-ide ja ZFS-i varundused käivitavad oma käsud selles serveris üle SSH (haakimist pole). Luba see võti Unraidis, seejärel testi.",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "Avalik võti: lisa Unraidi faili /root/.ssh/authorized_keys",
   "common.copy": "Kopeeri",
@@ -1898,12 +1897,7 @@ const et: Partial<Translations> = {
   "vm.ssh.test": "Testi ühendust",
   "vm.ssh.testNoLibvirt": "Ühendatud. libvirt pole kättesaadav, seda vajavad ainult VM-ide varundused.",
   "vm.ssh.testFail": "Ühendus ebaõnnestus",
-  "vm.ssh.setupTitle": "Seadista (ühekordselt)",
-  "vm.ssh.step1": "Kopeeri allolev käsk ja käivita see Unraidi terminalis, et see võti lubada (jääb alles ka taaskäivituste järel).",
-  "vm.ssh.step2": "Määra konteineri muutuja „Host SSH: Address” sinu Unraidi kohaliku võrgu IP-ks (nt 192.168.x.x); lihtsa bridge-võrgu korral toimib ka host.docker.internal.",
-  "vm.ssh.step3": "Klõpsa Testi ühendust. Kui see on roheline, luba VM-id või ZFS-i andmekogumid valdkondade all.",
   "vm.ssh.copyCmd": "Kopeeri käsk",
-  "vm.ssh.guide": "Täielik seadistus- ja võrgujuhend",
 
   // Guided Recovery tab
   // Step 1

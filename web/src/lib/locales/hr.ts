@@ -1889,7 +1889,6 @@ const hr: Partial<Translations> = {
   "vm.blocks.reason.no_space": "premalo slobodnog mjesta u appdata",
   "vm.blocks.reason.job_failed": "libvirt nije pokrenuo kopiju",
   "vm.ssh.title": "SSH domaćina",
-  "vm.ssh.desc": "Sigurnosne kopije VM-ova i ZFS-a izvršavaju svoje naredbe na ovom poslužitelju putem SSH-a (bez montiranja). Ovlastite ovaj ključ u Unraidu, zatim testirajte.",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "Javni ključ: dodajte u Unraid /root/.ssh/authorized_keys",
   "common.copy": "Kopiraj",
@@ -1898,12 +1897,7 @@ const hr: Partial<Translations> = {
   "vm.ssh.test": "Testiraj vezu",
   "vm.ssh.testNoLibvirt": "Povezano. libvirt nije dostupan, a trebaju ga samo sigurnosne kopije VM-ova.",
   "vm.ssh.testFail": "Veza nije uspjela",
-  "vm.ssh.setupTitle": "Postavi (jednokratno)",
-  "vm.ssh.step1": "Kopirajte naredbu ispod i pokrenite je u Unraid terminalu za ovlaštenje ovog ključa (preživljava ponovna pokretanja).",
-  "vm.ssh.step2": "Postavite varijablu kontejnera „Host SSH: Address” na LAN IP vašeg Unraida (npr. 192.168.x.x); kod jednostavnog bridge umrežavanja radi i host.docker.internal.",
-  "vm.ssh.step3": "Kliknite Testiraj vezu. Kad je zeleno, omogućite VM-ove ili ZFS skupove podataka pod Domene.",
   "vm.ssh.copyCmd": "Kopiraj naredbu",
-  "vm.ssh.guide": "Potpuni vodič za postavljanje i umrežavanje",
 
   // Guided Recovery tab
   // Step 1

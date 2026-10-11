@@ -1889,7 +1889,6 @@ const hi: Partial<Translations> = {
   "vm.blocks.reason.no_space": "appdata में बहुत कम खाली जगह",
   "vm.blocks.reason.job_failed": "libvirt ने बैकअप शुरू नहीं किया",
   "vm.ssh.title": "होस्ट SSH",
-  "vm.ssh.desc": "VM बैकअप और ZFS बैकअप अपने कमांड इस सर्वर पर SSH (बिना माउंट के) के ज़रिए चलाते हैं। Unraid पर इस कुंजी को अधिकृत करें, फिर जाँचें।",
   "vm.ssh.host": "होस्ट",
   "vm.ssh.publicKey": "पब्लिक की: इसे Unraid के /root/.ssh/authorized_keys में जोड़ें",
   "common.copy": "कॉपी करें",
@@ -1898,12 +1897,7 @@ const hi: Partial<Translations> = {
   "vm.ssh.test": "कनेक्शन जाँचें",
   "vm.ssh.testNoLibvirt": "कनेक्ट हो गया। libvirt तक पहुँच नहीं है, और इसकी ज़रूरत सिर्फ़ VM बैकअप को है।",
   "vm.ssh.testFail": "कनेक्शन विफल हुआ",
-  "vm.ssh.setupTitle": "सेट अप करें (एक बार)",
-  "vm.ssh.step1": "नीचे दिया कमांड कॉपी करें और इस कुंजी को अधिकृत करने के लिए Unraid टर्मिनल में चलाएँ (यह रीबूट के बाद भी बना रहता है)।",
-  "vm.ssh.step2": "कंटेनर के \"Host SSH: Address\" वैरिएबल को अपने Unraid LAN IP पर सेट करें (जैसे 192.168.x.x); सरल ब्रिज नेटवर्किंग में host.docker.internal भी काम करता है।",
-  "vm.ssh.step3": "Test connection पर क्लिक करें। हरा होने पर, Domains के अंतर्गत VM या ZFS डेटासेट सक्षम करें।",
   "vm.ssh.copyCmd": "कमांड कॉपी करें",
-  "vm.ssh.guide": "पूरी सेटअप और नेटवर्किंग गाइड",
 
   // Guided Recovery tab
   // Step 1

@@ -1889,7 +1889,6 @@ const eu: Partial<Translations> = {
   "vm.blocks.reason.no_space": "leku libre gutxiegi appdata-n",
   "vm.blocks.reason.job_failed": "libvirt-ek ez du babeskopia abiarazi",
   "vm.ssh.title": "Ostalariaren SSH",
-  "vm.ssh.desc": "MBen eta ZFSren babeskopiek beren komandoak zerbitzari honetan exekutatzen dituzte SSH bidez (muntaketarik gabe). Baimendu gako hau Unraid-en, gero probatu.",
   "vm.ssh.host": "Ostalaria",
   "vm.ssh.publicKey": "Gako publikoa: gehitu Unraid-en /root/.ssh/authorized_keys fitxategian",
   "common.copy": "Kopiatu",
@@ -1898,12 +1897,7 @@ const eu: Partial<Translations> = {
   "vm.ssh.test": "Probatu konexioa",
   "vm.ssh.testNoLibvirt": "Konektatuta. libvirt ez dago eskuragarri, eta MBen babeskopiek soilik behar dute.",
   "vm.ssh.testFail": "Konexioak huts egin du",
-  "vm.ssh.setupTitle": "Konfiguratu (behin bakarrik)",
-  "vm.ssh.step1": "Kopiatu beheko komandoa eta exekutatu Unraid-en terminalean gako hau baimentzeko (berrabiarazteek bizirauten dute).",
-  "vm.ssh.step2": "Ezarri edukiontziaren «Host SSH: Address» aldagaia zure Unraid LANeko IP helbidera (adib. 192.168.x.x); bridge sare soilarekin host.docker.internal-ek ere balio du.",
-  "vm.ssh.step3": "Klikatu Probatu konexioa. Berdea denean, gaitu MB edo ZFS datu-multzoak Domeinuen azpian.",
   "vm.ssh.copyCmd": "Kopiatu komandoa",
-  "vm.ssh.guide": "Konfigurazio- eta sare-gida osoa",
 
   // Guided Recovery tab
   // Step 1

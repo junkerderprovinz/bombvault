@@ -1889,7 +1889,6 @@ const bg: Partial<Translations> = {
   "vm.blocks.reason.no_space": "твърде малко свободно място в appdata",
   "vm.blocks.reason.job_failed": "libvirt не стартира архивирането",
   "vm.ssh.title": "SSH към хоста",
-  "vm.ssh.desc": "Архивирането на ВМ и на ZFS изпълнява командите си на този сървър през SSH (без монтиране). Упълномощи този ключ на Unraid, после тествай.",
   "vm.ssh.host": "Хост",
   "vm.ssh.publicKey": "Публичен ключ — добави към /root/.ssh/authorized_keys на Unraid",
   "common.copy": "Копирай",
@@ -1898,12 +1897,7 @@ const bg: Partial<Translations> = {
   "vm.ssh.test": "Провери връзката",
   "vm.ssh.testNoLibvirt": "Свързано. libvirt не е достъпен, а той е нужен само за архивирането на ВМ.",
   "vm.ssh.testFail": "Връзката е неуспешна",
-  "vm.ssh.setupTitle": "Настрой (еднократно)",
-  "vm.ssh.step1": "Копирай командата по-долу и я изпълни в терминала на Unraid, за да упълномощиш този ключ (оцелява при рестарт).",
-  "vm.ssh.step2": "Задай променливата „Host SSH: Address“ на контейнера на IP адреса на твоя Unraid в локалната мрежа (напр. 192.168.x.x); при просто bridge мрежово свързване работи и host.docker.internal.",
-  "vm.ssh.step3": "Кликни Провери връзката. Щом стане зелено, активирай ВМ или Набори данни ZFS под Области.",
   "vm.ssh.copyCmd": "Копирай командата",
-  "vm.ssh.guide": "Пълно ръководство за настройка и мрежа",
 
   // Guided Recovery tab
   // Step 1

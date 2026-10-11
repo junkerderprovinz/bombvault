@@ -1889,7 +1889,6 @@ const id: Partial<Translations> = {
   "vm.blocks.reason.no_space": "ruang kosong di appdata terlalu sedikit",
   "vm.blocks.reason.job_failed": "libvirt tidak memulai pencadangan",
   "vm.ssh.title": "SSH host",
-  "vm.ssh.desc": "Pencadangan VM dan ZFS menjalankan perintahnya di server ini melalui SSH (tanpa mount). Otorisasi kunci ini di Unraid, lalu uji.",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "Kunci publik: tambahkan ke /root/.ssh/authorized_keys milik Unraid",
   "common.copy": "Salin",
@@ -1898,12 +1897,7 @@ const id: Partial<Translations> = {
   "vm.ssh.test": "Uji koneksi",
   "vm.ssh.testNoLibvirt": "Terhubung. libvirt tidak dapat dijangkau, dan hanya pencadangan VM yang membutuhkannya.",
   "vm.ssh.testFail": "Koneksi gagal",
-  "vm.ssh.setupTitle": "Siapkan (satu kali)",
-  "vm.ssh.step1": "Salin perintah di bawah dan jalankan di terminal Unraid untuk mengotorisasi kunci ini (bertahan setelah reboot).",
-  "vm.ssh.step2": "Atur variabel container \"Host SSH: Address\" ke IP LAN Unraid Anda (mis. 192.168.x.x); pada jaringan bridge sederhana, host.docker.internal juga berfungsi.",
-  "vm.ssh.step3": "Klik Uji koneksi. Setelah hijau, aktifkan VM atau Dataset ZFS di bawah Domain.",
   "vm.ssh.copyCmd": "Salin perintah",
-  "vm.ssh.guide": "Panduan penyiapan & jaringan lengkap",
 
   // Guided Recovery tab
   // Step 1

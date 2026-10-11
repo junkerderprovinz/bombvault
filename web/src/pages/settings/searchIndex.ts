@@ -532,11 +532,11 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
     {
       title: "vm.ssh.title",
-      hint: "vm.ssh.desc",
+      hint: "vm.ssh.cardHint",
       rows: [
-        { key: "vm.ssh.host" },
-        { key: "vm.ssh.publicKey" },
-        { key: "vm.ssh.setupTitle" },
+        { key: "vm.ssh.host", hint: "vm.ssh.hostHint" },
+        { key: "vm.ssh.keyLabel", hint: "vm.ssh.keyHint" },
+        { key: "settings.widgetSetup" },
       ],
     },
   ],

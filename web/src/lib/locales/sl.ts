@@ -1883,7 +1883,6 @@ const sl: Partial<Translations> = {
   "vm.blocks.reason.no_space": "premalo prostora v appdata",
   "vm.blocks.reason.job_failed": "libvirt ni zagnal kopije",
   "vm.ssh.title": "SSH gostitelja",
-  "vm.ssh.desc": "Varnostne kopije VM-jev in ZFS izvajajo svoje ukaze na tem strežniku prek SSH (brez priklopne točke). Ta ključ pooblasti na Unraidu, nato preizkusi.",
   "vm.ssh.host": "Gostitelj",
   "vm.ssh.publicKey": "Javni ključ: dodaj v Unraid /root/.ssh/authorized_keys",
   "common.copy": "Kopiraj",
@@ -1892,12 +1891,7 @@ const sl: Partial<Translations> = {
   "vm.ssh.test": "Preizkusi povezavo",
   "vm.ssh.testNoLibvirt": "Povezano. libvirt ni dosegljiv, potrebujejo pa ga le varnostne kopije VM-jev.",
   "vm.ssh.testFail": "Povezava ni uspela",
-  "vm.ssh.setupTitle": "Nastavitev (enkratno)",
-  "vm.ssh.step1": "Kopiraj spodnji ukaz in ga zaženi v Unraidovem terminalu za pooblastitev tega ključa (preživi ponovne zagone).",
-  "vm.ssh.step2": "Spremenljivko vsebnika \"Host SSH: Address\" nastavi na svoj Unraid LAN IP (npr. 192.168.x.x); pri preprostem bridge omrežju deluje tudi host.docker.internal.",
-  "vm.ssh.step3": "Klikni Preizkusi povezavo. Ko je zelena, omogoči VM-je ali Nabore podatkov ZFS pod Domene.",
   "vm.ssh.copyCmd": "Kopiraj ukaz",
-  "vm.ssh.guide": "Popoln vodnik za nastavitev in omrežje",
 
   // Guided Recovery tab
   "recovery.stepConfig": "Obnovi lastne nastavitve BombVaulta",

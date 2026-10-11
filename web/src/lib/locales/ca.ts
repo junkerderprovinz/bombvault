@@ -1889,7 +1889,6 @@ const ca: Partial<Translations> = {
   "vm.blocks.reason.no_space": "poc espai lliure a appdata",
   "vm.blocks.reason.job_failed": "libvirt no ha iniciat la còpia",
   "vm.ssh.title": "SSH de l'amfitrió",
-  "vm.ssh.desc": "Les còpies de MV i de ZFS executen les seves ordres en aquest servidor per SSH (sense muntatge). Autoritza aquesta clau a Unraid, després prova-ho.",
   "vm.ssh.host": "Amfitrió",
   "vm.ssh.publicKey": "Clau pública: afegeix-la a /root/.ssh/authorized_keys d'Unraid",
   "common.copy": "Copia",
@@ -1898,12 +1897,7 @@ const ca: Partial<Translations> = {
   "vm.ssh.test": "Prova la connexió",
   "vm.ssh.testNoLibvirt": "Connectat. libvirt no és accessible, i només el necessiten les còpies de MV.",
   "vm.ssh.testFail": "Connexió fallida",
-  "vm.ssh.setupTitle": "Configura (un cop)",
-  "vm.ssh.step1": "Copia l'ordre de sota i executa-la al terminal d'Unraid per autoritzar aquesta clau (sobreviu els reinicis).",
-  "vm.ssh.step2": "Configura la variable «Host SSH: Address» del contenidor amb la IP LAN del teu Unraid (p. ex. 192.168.x.x); amb xarxa bridge simple també funciona host.docker.internal.",
-  "vm.ssh.step3": "Fes clic a Prova la connexió. Un cop verd, activa les MV o els Conjunts de dades ZFS a Dominis.",
   "vm.ssh.copyCmd": "Copia l'ordre",
-  "vm.ssh.guide": "Guia completa de configuració i xarxa",
 
   // Guided Recovery tab
   // Step 1

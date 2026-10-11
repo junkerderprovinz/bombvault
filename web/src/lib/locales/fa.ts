@@ -1889,7 +1889,6 @@ const fa: Partial<Translations> = {
   "vm.blocks.reason.no_space": "فضای خالی appdata خیلی کم است",
   "vm.blocks.reason.job_failed": "libvirt پشتیبان‌گیری را شروع نکرد",
   "vm.ssh.title": "SSH میزبان",
-  "vm.ssh.desc": "پشتیبان‌گیری ماشین مجازی و ZFS دستورهای خود را از طریق SSH روی این سرور اجرا می‌کنند (بدون اتصال). این کلید را در Unraid مجاز کنید، سپس آزمایش کنید.",
   "vm.ssh.host": "میزبان",
   "vm.ssh.publicKey": "کلید عمومی: به /root/.ssh/authorized_keys در Unraid اضافه کنید",
   "common.copy": "کپی",
@@ -1898,12 +1897,7 @@ const fa: Partial<Translations> = {
   "vm.ssh.test": "آزمایش اتصال",
   "vm.ssh.testNoLibvirt": "متصل شد. libvirt در دسترس نیست و فقط پشتیبان‌گیری ماشین مجازی به آن نیاز دارد.",
   "vm.ssh.testFail": "اتصال ناموفق بود",
-  "vm.ssh.setupTitle": "راه‌اندازی (یک‌بار)",
-  "vm.ssh.step1": "دستور زیر را کپی کرده و در ترمینال Unraid اجرا کنید تا این کلید مجاز شود (پس از راه‌اندازی مجدد باقی می‌ماند).",
-  "vm.ssh.step2": "متغیر «Host SSH: Address» کانتینر را روی IP شبکه محلی Unraid خود تنظیم کنید (مثلاً 192.168.x.x)؛ در شبکه bridge ساده، host.docker.internal هم کار می‌کند.",
-  "vm.ssh.step3": "روی آزمایش اتصال کلیک کنید. وقتی سبز شد، ماشین‌های مجازی یا مجموعه‌داده‌های ZFS را زیر حوزه‌ها فعال کنید.",
   "vm.ssh.copyCmd": "کپی دستور",
-  "vm.ssh.guide": "راهنمای کامل راه‌اندازی و شبکه",
 
   // Guided Recovery tab
   // Step 1

@@ -1883,7 +1883,6 @@ const sr: Partial<Translations> = {
   "vm.blocks.reason.no_space": "премало слободног простора у appdata",
   "vm.blocks.reason.job_failed": "libvirt није покренуо копију",
   "vm.ssh.title": "SSH домаћина",
-  "vm.ssh.desc": "Резервно копирање ВМ-ова и ZFS-а покреће своје наредбе на овом серверу преко SSH-а (без тачке монтирања). Овласти овај кључ на Unraid-у, па тестирај.",
   "vm.ssh.host": "Хост",
   "vm.ssh.publicKey": "Јавни кључ — додај у Unraid /root/.ssh/authorized_keys",
   "common.copy": "Копирај",
@@ -1892,12 +1891,7 @@ const sr: Partial<Translations> = {
   "vm.ssh.test": "Тестирај везу",
   "vm.ssh.testNoLibvirt": "Повезано. libvirt није доступан, а потребан је само за резервне копије ВМ-ова.",
   "vm.ssh.testFail": "Веза није успела",
-  "vm.ssh.setupTitle": "Подешавање (једнократно)",
-  "vm.ssh.step1": "Копирај доњу команду и покрени је у Unraid терминалу да овластиш овај кључ (преживљава поновна покретања).",
-  "vm.ssh.step2": "Промењиву контејнера \"Host SSH: Address\" подеси на свој Unraid LAN IP (нпр. 192.168.x.x); код једноставног bridge умрежавања ради и host.docker.internal.",
-  "vm.ssh.step3": "Кликни Тестирај везу. Када буде зелено, омогући ВМ-ове или ZFS скупове података под Домене.",
   "vm.ssh.copyCmd": "Копирај команду",
-  "vm.ssh.guide": "Потпуни водич за подешавање и умрежавање",
 
   // Guided Recovery tab
   "recovery.stepConfig": "Врати сопствена подешавања BombVault-а",

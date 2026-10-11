@@ -1889,7 +1889,6 @@ const lv: Partial<Translations> = {
   "vm.blocks.reason.no_space": "appdata par maz brīvas vietas",
   "vm.blocks.reason.job_failed": "libvirt nesāka dublēšanu",
   "vm.ssh.title": "Resursdatora SSH",
-  "vm.ssh.desc": "VM un ZFS rezerves kopēšana izpilda savas komandas šajā serverī caur SSH (bez piesaistes). Autorizējiet šo atslēgu Unraid, tad pārbaudiet.",
   "vm.ssh.host": "Saimniekdators",
   "vm.ssh.publicKey": "Publiskā atslēga: pievienojiet Unraid /root/.ssh/authorized_keys",
   "common.copy": "Kopēt",
@@ -1898,12 +1897,7 @@ const lv: Partial<Translations> = {
   "vm.ssh.test": "Pārbaudīt savienojumu",
   "vm.ssh.testNoLibvirt": "Savienots. libvirt nav sasniedzams, bet tas vajadzīgs tikai VM rezerves kopēšanai.",
   "vm.ssh.testFail": "Savienojums neizdevās",
-  "vm.ssh.setupTitle": "Iestatīt (vienreiz)",
-  "vm.ssh.step1": "Nokopējiet zemāk esošo komandu un palaidiet to Unraid terminālī, lai autorizētu šo atslēgu (saglabājas pēc restartēšanas).",
-  "vm.ssh.step2": "Iestatiet konteinera mainīgo „Host SSH: Address” uz jūsu Unraid LAN IP (piem., 192.168.x.x); vienkāršā bridge tīklā darbojas arī host.docker.internal.",
-  "vm.ssh.step3": "Noklikšķiniet uz Pārbaudīt savienojumu. Kad tas ir zaļš, iespējojiet VM vai ZFS datu kopas sadaļā Domēni.",
   "vm.ssh.copyCmd": "Kopēt komandu",
-  "vm.ssh.guide": "Pilnīga iestatīšanas un tīkla rokasgrāmata",
 
   // Guided Recovery tab
   // Step 1

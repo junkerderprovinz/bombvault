@@ -1889,7 +1889,6 @@ const gl: Partial<Translations> = {
   "vm.blocks.reason.no_space": "pouco espazo libre en appdata",
   "vm.blocks.reason.job_failed": "libvirt non iniciou a copia",
   "vm.ssh.title": "SSH do host",
-  "vm.ssh.desc": "As copias de MV e de ZFS executan as súas ordes neste servidor por SSH (sen montaxe). Autoriza esta clave en Unraid, despois próbao.",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "Clave pública: engádea a /root/.ssh/authorized_keys de Unraid",
   "common.copy": "Copiar",
@@ -1898,12 +1897,7 @@ const gl: Partial<Translations> = {
   "vm.ssh.test": "Probar conexión",
   "vm.ssh.testNoLibvirt": "Conectado. libvirt non é accesible, e só o precisan as copias de MV.",
   "vm.ssh.testFail": "Conexión fallida",
-  "vm.ssh.setupTitle": "Configurar (unha vez)",
-  "vm.ssh.step1": "Copia a orde de abaixo e execútaa no terminal de Unraid para autorizar esta clave (sobrevive aos reinicios).",
-  "vm.ssh.step2": "Configura a variable «Host SSH: Address» do contedor coa IP LAN do teu Unraid (p. ex. 192.168.x.x); cunha rede bridge simple tamén funciona host.docker.internal.",
-  "vm.ssh.step3": "Preme en Probar conexión: cando estea en verde, activa MV ou Conxuntos de datos ZFS en Dominios.",
   "vm.ssh.copyCmd": "Copiar orde",
-  "vm.ssh.guide": "Guía completa de configuración e rede",
 
   // Guided Recovery tab
   // Step 1

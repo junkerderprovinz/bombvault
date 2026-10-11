@@ -3,7 +3,7 @@
 // notifications need only SSH, so a host without libvirt must read as
 // connected rather than failed, with the libvirt gap named for VM backups.
 import { afterEach, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { I18nProvider, en, useT } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import type { OkEnvelope } from "../../lib/api";
@@ -85,14 +85,31 @@ it("turns the button red with Not connected and a cross, shakes it and gives the
   expect(reason.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
 
-// jsdom lays nothing out, so the tokens stand in for the geometry: a flex
-// item keeps its content's width unless it may shrink, and the command then
-// ran out of the card on the right.
-it("wraps the authorize command inside its box instead of running out of the card", async () => {
+it("shows the host and the public key as rows, the key with a copy button", async () => {
   await runTest();
-  const command = document.querySelector("pre")!;
-  expect(command.textContent).toContain("ssh-ed25519 AAAA bombvault");
-  expect(command.className).toContain("min-w-0");
-  expect(command.className).toContain("whitespace-pre-wrap");
-  expect(command.className).toContain("break-all");
+  const host = screen.getByText(en["vm.ssh.host"]).closest("[data-search-row]")!;
+  expect(host.textContent).toContain("tower");
+  const key = screen.getByText(en["vm.ssh.keyLabel"]).closest("[data-search-row]") as HTMLElement;
+  expect(key.querySelector("code")?.textContent).toBe("ssh-ed25519 AAAA bombvault");
+  expect(within(key).getByRole("button", { name: en["common.copy"] })).toBeTruthy();
+});
+
+it("walks through the setup in four steps, copying the command first and testing last", async () => {
+  await runTest();
+  const steps = within(screen.getByRole("list")).getAllByRole("listitem");
+  expect(steps).toHaveLength(4);
+  expect(within(steps[0]).getByRole("button", { name: en["vm.ssh.copyCmd"] })).toBeTruthy();
+  expect(steps[1].textContent).toBe(en["vm.ssh.stepTerminal"]);
+  expect(steps[2].textContent).toBe(en["vm.ssh.stepPaste"]);
+  expect(within(steps[3]).getByRole("button", { name: en["verdict.connected"] })).toBeTruthy();
+  // The command goes to the clipboard, so its text stays off the page.
+  expect(document.querySelector("pre")).toBeNull();
+});
+
+it("opens the full guide from a button at the end of the setup", async () => {
+  await runTest();
+  const open = vi.spyOn(window, "open").mockReturnValue(null);
+  fireEvent.click(screen.getByRole("button", { name: en["vm.ssh.fullGuide"] }));
+  expect(open.mock.calls[0][0]).toContain("vm-backup-ssh-setup.md");
+  open.mockRestore();
 });
