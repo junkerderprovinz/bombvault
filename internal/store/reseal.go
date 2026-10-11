@@ -52,9 +52,15 @@ type columnQuerier interface {
 	Query(query string, args ...any) (*sql.Rows, error)
 }
 
+// quoteIdent spells a table or column name so that SQLite reads it as a name
+// whatever it contains. The schema of a database that is not the live one is
+// somebody's input like the rest of the file.
+func quoteIdent(name string) string {
+	return `"` + strings.ReplaceAll(name, `"`, `""`) + `"`
+}
+
 func tableColumns(q columnQuerier, table string) ([]string, error) {
-	//nolint:gosec // G202: table comes from sqlite_master or is a literal of this package
-	rows, err := q.Query(`SELECT name FROM pragma_table_info('` + table + `')`)
+	rows, err := q.Query(`SELECT name FROM pragma_table_info(?)`, table)
 	if err != nil {
 		return nil, err
 	}
@@ -148,8 +154,9 @@ func ResealDatabase(db *sql.DB, reseal func(c SealedColumn, sealed []byte) []byt
 		value []byte
 	}
 	for _, c := range cols {
-		//nolint:gosec // G202: table and column come from the schema of db
-		rows, err := tx.Query(`SELECT rowid, ` + c.Column + ` FROM ` + c.Table + ` WHERE length(` + c.Column + `) > 0`)
+		table, column := quoteIdent(c.Table), quoteIdent(c.Column)
+		//nolint:gosec // G202: the names come from the schema of db and are quoted
+		rows, err := tx.Query(`SELECT rowid, ` + column + ` FROM ` + table + ` WHERE length(` + column + `) > 0`)
 		if err != nil {
 			return fmt.Errorf("ResealDatabase %s.%s: %w", c.Table, c.Column, err)
 		}
@@ -181,8 +188,8 @@ func ResealDatabase(db *sql.DB, reseal func(c SealedColumn, sealed []byte) []byt
 			if c.Text {
 				stored = base64.StdEncoding.EncodeToString(out)
 			}
-			//nolint:gosec // G202: table and column come from the schema of db
-			if _, err := tx.Exec(`UPDATE `+c.Table+` SET `+c.Column+` = ? WHERE rowid = ?`, stored, x.rowid); err != nil {
+			//nolint:gosec // G202: the names come from the schema of db and are quoted
+			if _, err := tx.Exec(`UPDATE `+table+` SET `+column+` = ? WHERE rowid = ?`, stored, x.rowid); err != nil {
 				return fmt.Errorf("ResealDatabase %s.%s: %w", c.Table, c.Column, err)
 			}
 		}
