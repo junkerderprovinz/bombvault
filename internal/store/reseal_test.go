@@ -260,3 +260,45 @@ func TestNamesInAStagedSchemaAreReadAsNamesAndNeverRun(t *testing.T) {
 		t.Fatalf("the value behind the column name was not sealed again: %d, %v", left, err)
 	}
 }
+
+func TestAResealLeavesNoOldSealedBytesInTheFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "staged.sqlite")
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Large enough to take overflow pages, which a rewrite frees and leaves
+	// as they were.
+	old := bytes.Repeat([]byte("old-ciphertext-"), 600)
+	for _, stmt := range []string{`PRAGMA journal_mode = WAL`, `CREATE TABLE things (v_enc BLOB)`} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := db.Exec(`INSERT INTO things VALUES (?)`, old); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	db, err = store.OpenStaged(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.ResealDatabase(db, func(store.SealedColumn, []byte) []byte { return []byte("new") }); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CloseStaged(db); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{path, path + "-wal"} {
+		content, err := os.ReadFile(name) //nolint:gosec // test file
+		if err != nil {
+			continue
+		}
+		if bytes.Contains(content, []byte("old-ciphertext-old-ciphertext-")) {
+			t.Fatalf("%s still holds the bytes sealed under the old key", filepath.Base(name))
+		}
+	}
+}
