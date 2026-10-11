@@ -124,12 +124,20 @@ type places struct {
 	root []string
 	// remotes holds the options of each rclone remote by its lowercased name.
 	remotes map[string]map[string]string
+	// pools are the Unraid pool names the host's pool configs list.
+	pools map[string]bool
 }
+
+// poolConfigs is where Unraid keeps one config per pool, named after it.
+var poolConfigs = "/boot/config/pools/*.cfg"
 
 // placesNow reads what naming a place takes from the settings as they stand. A
 // config that cannot be read leaves every rclone place unnamed.
 func (s *Service) placesNow() places {
-	p := places{root: pathElements(filepath.ToSlash(realPath(filepath.Clean(s.cfg.HostMountRoot))))}
+	p := places{
+		root:  pathElements(filepath.ToSlash(realPath(filepath.Clean(s.cfg.HostMountRoot)))),
+		pools: poolsIn(poolConfigs),
+	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return p
@@ -138,6 +146,15 @@ func (s *Service) placesNow() places {
 		p.remotes = rcloneOptions(conf)
 	}
 	return p
+}
+
+func poolsIn(glob string) map[string]bool {
+	files, _ := filepath.Glob(glob)
+	pools := map[string]bool{}
+	for _, f := range files {
+		pools[strings.TrimSuffix(filepath.Base(f), ".cfg")] = true
+	}
+	return pools
 }
 
 func rcloneOptions(conf string) map[string]map[string]string {
@@ -228,20 +245,49 @@ func accountOf(opts map[string]string) string {
 // the user share with and without the cache, the array disks and the cache.
 var unraidShare = regexp.MustCompile(`^(user|user0|disk[0-9]+|cache)$`)
 
+// notPools are the folders under /mnt that hold no share of their own.
+var notPools = []string{"user", "user0", "disks", "remotes", "addons", "rootshare"}
+
 func (p places) local(loc string) place {
 	dir := realPath(filepath.Clean(loc))
 	elems := pathElements(filepath.ToSlash(dir))
 	at := -1
-	if len(p.root) > 0 && len(elems) > len(p.root) && slices.Equal(elems[:len(p.root)], p.root) && !unraidShare.MatchString(p.root[len(p.root)-1]) {
+	if len(p.root) > 0 && len(elems) > len(p.root) && slices.Equal(elems[:len(p.root)], p.root) && !p.holdsShares(p.root[len(p.root)-1], "") {
 		at = len(p.root)
 	} else if i := slices.Index(elems, "mnt"); i >= 0 && i+1 < len(elems) {
 		at = i + 1
 	}
-	if at >= 0 && unraidShare.MatchString(elems[at]) {
+	if at < 0 {
+		return place{elems: elems, dir: dir}
+	}
+	mnt := dir
+	for range len(elems) - at {
+		mnt = filepath.Dir(mnt)
+	}
+	if p.holdsShares(elems[at], mnt) {
 		elems = slices.Clone(elems)
 		elems[at] = "user"
 	}
 	return place{elems: elems, dir: dir}
+}
+
+// holdsShares reports whether the folder name under mnt holds Unraid shares
+// that the user folder also shows: user0, an array disk, the cache, a pool the
+// host's configs list, or any other folder of an mnt that has a user folder,
+// since Unraid puts nothing there but pools.
+func (p places) holdsShares(name, mnt string) bool {
+	if unraidShare.MatchString(name) || p.pools[name] {
+		return true
+	}
+	if mnt == "" || slices.Contains(notPools, name) {
+		return false
+	}
+	user, err := os.Stat(filepath.Join(mnt, "user"))
+	if err != nil || !user.IsDir() {
+		return false
+	}
+	pool, err := os.Stat(filepath.Join(mnt, name))
+	return err == nil && pool.IsDir()
 }
 
 // realPath resolves the symlinks of the longest part of path that exists and

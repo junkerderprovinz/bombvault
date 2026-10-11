@@ -73,3 +73,27 @@ func TestADirectoryAndASymlinkToItAreOnePlace(t *testing.T) {
 		t.Fatalf("%s and its symlinked spelling name two places: %+v and %+v", dir, a, b)
 	}
 }
+
+func TestAPoolSpellsTheSameShareAsTheUserFolder(t *testing.T) {
+	mnt := filepath.Join(t.TempDir(), "mnt")
+	for _, dir := range []string{"user", "ssd", "disks"} {
+		if err := os.MkdirAll(filepath.Join(mnt, dir), 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	configs := t.TempDir()
+	if err := os.WriteFile(filepath.Join(configs, "fast.cfg"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	places := places{pools: poolsIn(filepath.Join(configs, "*.cfg"))}
+	user, _ := places.of(filepath.Join(mnt, "user", "backups", "vms"))
+
+	for _, pool := range []string{"ssd", "fast"} {
+		if p, _ := places.of(filepath.Join(mnt, pool, "backups", "vms")); !p.same(user) {
+			t.Errorf("the share on the pool %s names another place than the user folder: %+v", pool, p)
+		}
+	}
+	if p, _ := places.of(filepath.Join(mnt, "disks", "backups", "vms")); p.same(user) {
+		t.Errorf("an unassigned disk names the same place as the user share: %+v", p)
+	}
+}
