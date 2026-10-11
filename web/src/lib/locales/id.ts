@@ -795,8 +795,6 @@ const id: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "URL ping",
   "notify.healthchecksLifecycle": "Healthchecks di-ping selama seluruh siklus hidup pencadangan (mulai, berhasil, dan gagal) kapan pun URL diatur, terlepas dari pengaturan 'beri notifikasi saat' di atas, sehingga pemeriksaan tetap hijau saat berhasil bahkan dengan notifikasi hanya-gagal.",
-  "notify.hcPerDomain": "Pemeriksaan per domain",
-  "notify.hcPerDomainHint": "Biarkan bidang kosong untuk menggunakan URL global di atas. Domain dengan URL-nya sendiri mendapatkan pemeriksaannya sendiri, dengan waktu berjalan dan riwayatnya sendiri.",
   "notify.scheduledSummary": "Ringkas eksekusi terjadwal",
   "notify.scheduledSummaryHint": "Kirim SATU ringkasan untuk setiap eksekusi pencadangan terjadwal (mis. \"42 dari 45 berhasil\") alih-alih pesan terpisah untuk setiap container/VM. Healthchecks sudah diringkas. Pencadangan manual tetap memberi notifikasi per item.",
   "notify.notifyOnUpdate": "Beri notifikasi saat pembaruan container",
@@ -842,7 +840,6 @@ const id: Partial<Translations> = {
   "verify.failed": "Verifikasi gagal",
   "verify.last": "Terakhir diverifikasi {time}",
   "verify.never": "Belum pernah diverifikasi",
-  "verify.auto": "Pemeriksaan pemulihan otomatis",
   "verify.subsetPct": "Sampel data (%)",
   "verify.hint": "Secara berkala membaca sampel acak data cadangan untuk membuktikan bahwa data itu utuh dan dapat dipulihkan.",
   "verify.shield": "terverifikasi",
@@ -1236,11 +1233,6 @@ const id: Partial<Translations> = {
   "schedule.paused": "Jadwal dijeda",
   "schedule.pausedHint": "Eksekusi terjadwal dan {everything} melewati item ini. “{backupNow}” tetap berfungsi.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "Penggantian jadwal",
-  "schedule.overrideUsesDefault": "Menggunakan jadwal domain",
-  "schedule.overrideEdit": "Atur penggantian",
-  "schedule.overrideHint": "Kosong menggunakan jadwal domain.",
-  "schedule.overrideSaved": "Penggantian tersimpan",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const id: Partial<Translations> = {
   "settings.search.notShown": "{name} sedang tidak tampil di layar. Ini muncul setelah fitur terkait diaktifkan.",
   "settings.schedulesOffsite": "Jadwal replikasi off-site",
   "settings.schedulesSelfBackup": "Jadwal cadangan mandiri",
-  "settings.schedulesChecks": "Jadwal pemeriksaan pemulihan",
-  "settings.tamperTestSchedule": "Jadwal uji sabotase",
   "settings.tamperScheduleInactive": "Tidak aktif: tidak ada repositori off-site yang ditandai sebagai append-only, jadi jadwal ini tidak pernah berjalan. Tandai repositori off-site sebagai append-only di pengaturan off-site-nya sendiri untuk mengaktifkannya.",
   "settings.everythingTitle": "Cadangkan Semua",
   "settings.everythingDuplicateWarning": "Container, VM, Flash, folder, dataset ZFS, dan cadangan mandiri dicadangkan dua kali selama jadwal ini dan jadwal masing-masing sama-sama aktif: sekali di sini dan sekali di jadwalnya sendiri. Matikan domain yang tidak ingin dicadangkan dua kali.",
@@ -1983,7 +1973,6 @@ const id: Partial<Translations> = {
   "filter.button": "Filter",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "Ringkasan mingguan",
   "settings.digestHint": "Satu pesan ringkasan per minggu: jumlah eksekusi, data cadangan baru, keterkinian off-site, dan kegagalan teratas, dikirim melalui saluran notifikasi di atas.",
   "settings.digestToggle": "Ringkasan mingguan",
   // Missed-schedule catch-up + overdue-backup watchdog

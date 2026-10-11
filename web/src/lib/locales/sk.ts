@@ -795,8 +795,6 @@ const sk: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "URL pingu",
   "notify.healthchecksLifecycle": "Healthchecks sa pinguje počas celého životného cyklu zálohovania (začiatok, úspech a zlyhanie), kedykoľvek je nastavená URL, bez ohľadu na vyššie uvedené nastavenie „upozorniť pri“, takže kontrola zostáva zelená pri úspechu aj s upozorneniami iba pri zlyhaní.",
-  "notify.hcPerDomain": "Kontroly pre jednotlivé domény",
-  "notify.hcPerDomainHint": "Nechajte pole prázdne, aby ste použili vyššie uvedenú globálnu URL. Doména s vlastnou URL dostane vlastnú kontrolu s vlastným časom behu a históriou.",
   "notify.scheduledSummary": "Zhrnúť naplánované behy",
   "notify.scheduledSummaryHint": "Poslať JEDNO zhrnutie za každý naplánovaný beh zálohovania (napr. „42 z 45 úspešných“) namiesto samostatnej správy pre každý kontajner/VM. Healthchecks sa už zhŕňa. Manuálne zálohy naďalej upozorňujú za jednotlivé položky.",
   "notify.notifyOnUpdate": "Upozorniť pri aktualizácii kontajnera",
@@ -842,7 +840,6 @@ const sk: Partial<Translations> = {
   "verify.failed": "Overenie zlyhalo",
   "verify.last": "Naposledy overené {time}",
   "verify.never": "Nikdy neoverené",
-  "verify.auto": "Automatické kontroly obnovenia",
   "verify.subsetPct": "Vzorka dát (%)",
   "verify.hint": "Pravidelne číta náhodnú vzorku dát zálohy, aby dokázala, že sú neporušené a obnoviteľné.",
   "verify.shield": "overené",
@@ -1236,11 +1233,6 @@ const sk: Partial<Translations> = {
   "schedule.paused": "Plán pozastavený",
   "schedule.pausedHint": "Plánované spustenia a {everything} túto položku preskočia. „{backupNow}“ funguje ďalej.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "Prepísanie plánu",
-  "schedule.overrideUsesDefault": "Používa plán domény",
-  "schedule.overrideEdit": "Nastaviť prepísanie",
-  "schedule.overrideHint": "Prázdne používa plán domény.",
-  "schedule.overrideSaved": "Prepísanie uložené",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const sk: Partial<Translations> = {
   "settings.search.notShown": "{name} teraz nie je na obrazovke. Zobrazí sa hneď, ako sa zapne funkcia, ku ktorej patrí.",
   "settings.schedulesOffsite": "Plány externej replikácie",
   "settings.schedulesSelfBackup": "Plán vlastnej zálohy",
-  "settings.schedulesChecks": "Plán kontroly obnovenia",
-  "settings.tamperTestSchedule": "Plán testu neoprávnenej manipulácie",
   "settings.tamperScheduleInactive": "Neaktívne: žiadny externý repozitár nie je označený ako len-na-pridávanie, takže tento plán nikdy nebeží. Označte externý repozitár ako len-na-pridávanie v jeho vlastných externých nastaveniach, aby ste ho zapli.",
   "settings.everythingTitle": "Kompletná záloha",
   "settings.everythingDuplicateWarning": "Kontajnery, VM, Flash, priečinky, dátové sady ZFS a vlastná záloha sa zálohujú dvakrát, kým sú súčasne zapnuté tento plán aj ich vlastný: raz tu a raz vo vlastnom pláne. Vypnite oblasti, ktoré nechcete zálohovať dvakrát.",
@@ -1983,7 +1973,6 @@ const sk: Partial<Translations> = {
   "filter.button": "Filtre",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "Týždenný súhrn",
   "settings.digestHint": "Jedna súhrnná správa za týždeň: počet behov, nové dáta zálohy, aktuálnosť externého úložiska a najväčšie zlyhania, odoslaná prostredníctvom vyššie uvedených kanálov upozornení.",
   "settings.digestToggle": "Týždenný súhrn",
   // Missed-schedule catch-up + overdue-backup watchdog

@@ -889,8 +889,6 @@ export const en = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "Ping URL",
   "notify.healthchecksLifecycle": "Healthchecks is pinged for the whole backup lifecycle (start, success and failure) whenever a URL is set, independent of the 'notify on' setting above, so the check stays green on success even with failure-only notifications.",
-  "notify.hcPerDomain": "Per-domain checks",
-  "notify.hcPerDomainHint": "Leave a field blank to use the global URL above. A domain with its own URL gets its own check, with its own runtime and history.",
   "notify.scheduledSummary": "Summarise scheduled runs",
   "notify.scheduledSummaryHint": "Send ONE summary per scheduled backup run (e.g. \"42 of 45 succeeded\") instead of a separate message for every container/VM. Healthchecks is already summarised. Manual backups still notify per item.",
   "notify.notifyOnUpdate": "Notify on container update",
@@ -941,7 +939,6 @@ export const en = {
   "verify.failed": "Verification failed",
   "verify.last": "Last verified {time}",
   "verify.never": "Never verified",
-  "verify.auto": "Automatic restore checks",
   "verify.subsetPct": "Data sample (%)",
   "verify.hint": "Periodically reads a random sample of backup data to prove it is intact and restorable.",
   "verify.shield": "verified",
@@ -1462,11 +1459,6 @@ export const en = {
   "schedule.paused": "Schedule paused",
   "schedule.pausedHint": "Scheduled runs and {everything} skip this item. “{backupNow}” still works.",
   // Per-item schedule overrides (#121)
-  "schedule.overrideTitle": "Schedule override",
-  "schedule.overrideUsesDefault": "Uses the domain schedule",
-  "schedule.overrideEdit": "Set override",
-  "schedule.overrideHint": "Empty uses the domain schedule.",
-  "schedule.overrideSaved": "Override saved",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -2255,8 +2247,6 @@ export const en = {
   "settings.tab.system": "System",
   "settings.schedulesOffsite": "Off-site replication schedules",
   "settings.schedulesSelfBackup": "Self-backup schedule",
-  "settings.schedulesChecks": "Restore-check schedule",
-  "settings.tamperTestSchedule": "Tamper-test schedule",
   "settings.tamperScheduleInactive": "Inactive: no off-site repo is marked append-only, so this schedule never runs. Mark an off-site repo as append-only in its off-site settings to enable it.",
   // The full backup: one pass over all six domains.
   "settings.everythingTitle": "Full backup",
@@ -2267,7 +2257,6 @@ export const en = {
   "filter.button": "Filters",
 
   // Settings — weekly digest card, backup-engine cache card, revoke-all sessions
-  "settings.digestTitle": "Weekly digest",
   "settings.digestHint": "One summary message per week: run counts, new backup data, off-site currency and the top failures, sent through the notification channels above.",
   "settings.digestToggle": "Weekly digest",
   // Settings — missed-schedule catch-up (schedules tab) + overdue-backup watchdog (notifications tab)
@@ -4796,6 +4785,18 @@ export const en = {
   "schedules.orderHint": "Scheduled runs and the full backup back up containers and VMs in this order. Drag an entry into place or use the arrows. Every move is saved right away.",
   "schedules.updates": "Updates after the backup",
   "settings.everythingName": "the full backup",
+  "notify.healthchecksHint": "A service like Healthchecks.io raises the alarm when BombVault stops checking in. A section can get its own address.",
+  "notify.hcRuleAll": "All sections ping this URL.",
+  "notify.hcRuleOthers": "All other sections ping this URL.",
+  "verify.autoChecks": "Automatic checks",
+  "verify.trialRestore": "Trial restore",
+  "verify.trialRestoreHint": "Restores a sample as a test on a regular basis. “Off” turns it off.",
+  "verify.subsetPctHint": "How much of the data packs each trial restore reads and restores. More is more thorough and takes longer.",
+  "verify.tamper": "Check delete protection",
+  "verify.tamperHint": "Checks regularly that the off-site storage locations with delete protection still refuse deletes. “Off” turns it off.",
+  "entry.settings.ownPlan": "Own plan",
+  "entry.settings.ownPlanHint": "Without its own plan, the entry runs on its section's plan or in the full backup, as set under Settings › Schedule.",
+  "entry.settings.plan": "Plan",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -5598,8 +5599,6 @@ export const de: Translations = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "Ping-URL",
   "notify.healthchecksLifecycle": "Healthchecks wird über den ganzen Backup-Lebenszyklus gepingt (Start, Erfolg und Fehler), sobald eine URL gesetzt ist, unabhängig von der 'Benachrichtigen bei'-Einstellung oben, damit die Prüfung auch bei nur-Fehler-Benachrichtigungen bei Erfolg grün bleibt.",
-  "notify.hcPerDomain": "Prüfungen pro Domäne",
-  "notify.hcPerDomainHint": "Lass ein Feld leer, um die globale URL oben zu verwenden. Eine Domäne mit eigener URL erhält ihre eigene Prüfung, mit eigener Laufzeit und Historie.",
   "notify.scheduledSummary": "Geplante Läufe zusammenfassen",
   "notify.scheduledSummaryHint": "EINE Zusammenfassung pro geplantem Backup-Lauf senden (z. B. 42 von 45 erfolgreich) statt einer eigenen Nachricht für jeden Container/jede VM. Healthchecks wird bereits zusammengefasst. Manuelle Backups benachrichtigen weiterhin pro Objekt.",
   "notify.notifyOnUpdate": "Bei Container-Update benachrichtigen",
@@ -5645,7 +5644,6 @@ export const de: Translations = {
   "verify.failed": "Verifizierung fehlgeschlagen",
   "verify.last": "Zuletzt geprüft {time}",
   "verify.never": "Nie geprüft",
-  "verify.auto": "Automatische Restore-Prüfungen",
   "verify.subsetPct": "Datenstichprobe (%)",
   "verify.hint": "Liest regelmäßig eine zufällige Stichprobe der Backup-Daten, um zu beweisen, dass sie intakt und wiederherstellbar sind.",
   "verify.shield": "verifiziert",
@@ -6048,11 +6046,6 @@ export const de: Translations = {
   "schedule.paused": "Zeitplan pausiert",
   "schedule.pausedHint": "Geplante Läufe und das {everything} lassen diesen Eintrag aus. „{backupNow}“ geht weiterhin.",
   // Pro-Element-Zeitpläne (#121)
-  "schedule.overrideTitle": "Zeitplan-Überschreibung",
-  "schedule.overrideUsesDefault": "Nutzt den Domänen-Zeitplan",
-  "schedule.overrideEdit": "Überschreibung festlegen",
-  "schedule.overrideHint": "Leer nutzt den Domänen-Zeitplan.",
-  "schedule.overrideSaved": "Überschreibung gespeichert",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -6794,8 +6787,6 @@ export const de: Translations = {
   "settings.tab.system": "System",
   "settings.schedulesOffsite": "Off-site-Replikations-Zeitpläne",
   "settings.schedulesSelfBackup": "Selbstbackup-Zeitplan",
-  "settings.schedulesChecks": "Wiederherstellungs-Prüfplan",
-  "settings.tamperTestSchedule": "Tamper-Test-Zeitplan",
   "settings.tamperScheduleInactive": "Inaktiv: kein Off-site-Repo ist als append-only markiert, daher läuft dieser Zeitplan nie. Markiere ein Off-site-Repo in dessen Off-site-Einstellungen als append-only, um ihn zu aktivieren.",
   // Gesamt-Backup: ein Durchlauf über alle sechs Domänen, unabhängig von ihren eigenen Zeitplänen
   "settings.everythingTitle": "Gesamt-Backup",
@@ -6806,7 +6797,6 @@ export const de: Translations = {
   "filter.button": "Filter",
 
   // Einstellungen — Wochenbericht-Karte, Backup-Engine-Cache, Alle-Sitzungen-Abmeldung
-  "settings.digestTitle": "Wochenbericht",
   "settings.digestHint": "Eine Zusammenfassung pro Woche: Anzahl der Läufe, neue Backup-Daten, Off-site-Aktualität und die wichtigsten Fehler, gesendet über die oben konfigurierten Benachrichtigungskanäle.",
   "settings.digestToggle": "Wochenbericht",
   // Einstellungen — Nachholen verpasster Zeitpläne (Zeitpläne-Tab) + Wächter für überfällige Backups (Benachrichtigungen-Tab)
@@ -9310,6 +9300,18 @@ export const de: Translations = {
   "schedules.orderHint": "In dieser Reihenfolge sichern geplante Läufe und das Gesamt-Backup Container und VMs. Zieh einen Eintrag an seinen Platz oder nimm die Pfeile. Jede Änderung wird sofort gespeichert.",
   "schedules.updates": "Updates nach der Sicherung",
   "settings.everythingName": "Gesamt-Backup",
+  "notify.healthchecksHint": "Ein Dienst wie Healthchecks.io schlägt Alarm, wenn BombVault sich nicht mehr meldet. Ein Bereich kann eine eigene Adresse bekommen.",
+  "notify.hcRuleAll": "Alle Bereiche pingen diese URL.",
+  "notify.hcRuleOthers": "Alle anderen Bereiche pingen diese URL.",
+  "verify.autoChecks": "Automatische Prüfungen",
+  "verify.trialRestore": "Probe-Wiederherstellung",
+  "verify.trialRestoreHint": "Stellt regelmäßig eine Stichprobe testweise wieder her. „Aus“ schaltet sie ab.",
+  "verify.subsetPctHint": "Welcher Anteil der Datenpakete bei jeder Probe gelesen und wiederhergestellt wird. Mehr ist gründlicher und dauert länger.",
+  "verify.tamper": "Löschschutz prüfen",
+  "verify.tamperHint": "Prüft regelmäßig, ob die Off-site-Speicherorte mit Löschschutz das Löschen weiterhin verweigern. „Aus“ schaltet es ab.",
+  "entry.settings.ownPlan": "Eigener Plan",
+  "entry.settings.ownPlanHint": "Ohne eigenen Plan läuft der Eintrag nach dem Plan seines Bereichs oder im Gesamt-Backup, wie unter Einstellungen › Zeitplan eingestellt.",
+  "entry.settings.plan": "Plan",
 };
 
 // ---------------------------------------------------------------------------

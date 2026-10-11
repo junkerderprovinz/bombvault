@@ -795,8 +795,6 @@ const lt: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "Ping URL",
   "notify.healthchecksLifecycle": "Healthchecks siunčiamas ping per visą atsarginio kopijavimo gyvavimo ciklą (pradžią, sėkmę ir nesėkmę), kai tik nustatytas URL, nepriklausomai nuo aukščiau esančio nustatymo „pranešti kai“, kad patikra liktų žalia sėkmės atveju net esant tik-nesėkmės pranešimams.",
-  "notify.hcPerDomain": "Patikros pagal sritį",
-  "notify.hcPerDomainHint": "Palikite lauką tuščią, kad naudotumėte aukščiau esantį bendrą URL. Sritis su savo URL gauna savo patikrą, su savo vykdymo laiku ir istorija.",
   "notify.scheduledSummary": "Apibendrinti suplanuotus vykdymus",
   "notify.scheduledSummaryHint": "Siųsti VIENĄ suvestinę kiekvienam suplanuotam atsarginio kopijavimo vykdymui (pvz., „42 iš 45 sėkmingai“), o ne atskirą pranešimą kiekvienam konteineriui/VM. Healthchecks jau apibendrinamas. Rankinės atsarginės kopijos ir toliau praneša apie kiekvieną elementą.",
   "notify.notifyOnUpdate": "Pranešti atnaujinus konteinerį",
@@ -842,7 +840,6 @@ const lt: Partial<Translations> = {
   "verify.failed": "Patikra nepavyko",
   "verify.last": "Paskutinį kartą patikrinta {time}",
   "verify.never": "Niekada netikrinta",
-  "verify.auto": "Automatinės atkūrimo patikros",
   "verify.subsetPct": "Duomenų imtis (%)",
   "verify.hint": "Periodiškai nuskaito atsitiktinę atsarginio kopijavimo duomenų imtį, kad įrodytų, jog jie yra nepažeisti ir atkuriami.",
   "verify.shield": "patikrinta",
@@ -1236,11 +1233,6 @@ const lt: Partial<Translations> = {
   "schedule.paused": "Tvarkaraštis pristabdytas",
   "schedule.pausedHint": "Suplanuoti paleidimai ir {everything} praleidžia šį elementą. „{backupNow}“ vis dar veikia.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "Tvarkaraščio nepaisymas",
-  "schedule.overrideUsesDefault": "Naudoja srities tvarkaraštį",
-  "schedule.overrideEdit": "Nustatyti nepaisymą",
-  "schedule.overrideHint": "Tuščia naudoja srities tvarkaraštį.",
-  "schedule.overrideSaved": "Nepaisymas išsaugotas",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const lt: Partial<Translations> = {
   "settings.search.notShown": "Šiuo metu ekrane nerodoma: {name}. Tai atsiranda, kai įjungiama funkcija, kuriai tai priklauso.",
   "settings.schedulesOffsite": "Nuotolinio replikavimo tvarkaraščiai",
   "settings.schedulesSelfBackup": "Savarankiškos atsargos tvarkaraštis",
-  "settings.schedulesChecks": "Atkūrimo patikros tvarkaraštis",
-  "settings.tamperTestSchedule": "Klastojimo testo tvarkaraštis",
   "settings.tamperScheduleInactive": "Neaktyvus: nė viena nuotolinė saugykla nepažymėta kaip tik-pridėjimo, todėl šis tvarkaraštis niekada nevykdomas. Kad jį įjungtumėte, pažymėkite nuotolinę saugyklą kaip tik-pridėjimo jos pačios nuotolinės saugyklos nustatymuose.",
   "settings.everythingTitle": "Pilna atsarginė kopija",
   "settings.everythingDuplicateWarning": "Konteineriai, VM, Flash, aplankai, ZFS duomenų rinkiniai ir savarankiška atsarga kopijuojami du kartus, kol vienu metu įjungtas ir šis tvarkaraštis, ir jų pačių: vieną kartą čia ir vieną kartą pagal jų pačių tvarkaraštį. Išjunkite sritis, kurių nenorite kopijuoti du kartus.",
@@ -1983,7 +1973,6 @@ const lt: Partial<Translations> = {
   "filter.button": "Filtrai",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "Savaitinė suvestinė",
   "settings.digestHint": "Viena suvestinė žinutė per savaitę: vykdymų skaičius, nauji atsarginio kopijavimo duomenys, nuotolinis aktualumas ir pagrindinės nesėkmės, siunčiama aukščiau esančiais pranešimų kanalais.",
   "settings.digestToggle": "Savaitinė suvestinė",
   // Missed-schedule catch-up + overdue-backup watchdog

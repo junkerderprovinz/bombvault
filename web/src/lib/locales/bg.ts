@@ -795,8 +795,6 @@ const bg: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "URL за пинг",
   "notify.healthchecksLifecycle": "Healthchecks се пинга през целия жизнен цикъл на архивирането — старт, успех и грешка — щом е зададен URL, независимо от настройката „уведоми при“ по-горе, така че проверката остава зелена при успех дори при известия само за грешки.",
-  "notify.hcPerDomain": "Проверки по област",
-  "notify.hcPerDomainHint": "Остави поле празно, за да използваш глобалния URL по-горе. Област със собствен URL получава собствена проверка, с собствено време на изпълнение и история.",
   "notify.scheduledSummary": "Обобщавай планираните изпълнения",
   "notify.scheduledSummaryHint": "Изпращай ЕДНО обобщение за всяко планирано изпълнение на архивиране (напр. „42 от 45 успешни“) вместо отделно съобщение за всеки контейнер/ВМ. Healthchecks вече се обобщава. Ръчните архивирания продължават да уведомяват за всеки елемент.",
   "notify.notifyOnUpdate": "Уведоми при обновление на контейнер",
@@ -842,7 +840,6 @@ const bg: Partial<Translations> = {
   "verify.failed": "Проверката е неуспешна",
   "verify.last": "Последно проверено {time}",
   "verify.never": "Никога проверено",
-  "verify.auto": "Автоматични проверки за възстановяване",
   "verify.subsetPct": "Извадка от данните (%)",
   "verify.hint": "Периодично чете произволна извадка от данните на архивирането, за да докаже, че са непокътнати и възстановими.",
   "verify.shield": "проверено",
@@ -1236,11 +1233,6 @@ const bg: Partial<Translations> = {
   "schedule.paused": "Графикът е на пауза",
   "schedule.pausedHint": "Планираните изпълнения и {everything} пропускат този елемент. „{backupNow}“ продължава да работи.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "Замяна на графика",
-  "schedule.overrideUsesDefault": "Използва графика на областта",
-  "schedule.overrideEdit": "Задай замяна",
-  "schedule.overrideHint": "Празно използва графика на областта.",
-  "schedule.overrideSaved": "Замяната е запазена",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const bg: Partial<Translations> = {
   "settings.search.notShown": "{name} не се показва точно сега. Появява се, щом свързаната функция бъде включена.",
   "settings.schedulesOffsite": "Графици за репликация извън обекта",
   "settings.schedulesSelfBackup": "График на самобекъпа",
-  "settings.schedulesChecks": "График на проверките за възстановяване",
-  "settings.tamperTestSchedule": "График на теста за манипулация",
   "settings.tamperScheduleInactive": "Неактивен — нито едно хранилище извън обекта не е маркирано като само-добавящо, затова този график никога не се изпълнява. Маркирай хранилище извън обекта като само-добавящо в собствените му настройки извън обекта, за да го активираш.",
   "settings.everythingTitle": "Пълен бекъп",
   "settings.everythingDuplicateWarning": "Контейнерите, ВМ, Flash, папките, наборите данни ZFS и самобекъпът се архивират по два пъти, докато този график и техният собствен са включени едновременно: веднъж тук и веднъж по техния собствен график. Изключи областите, които не искаш да се дублират.",
@@ -1983,7 +1973,6 @@ const bg: Partial<Translations> = {
   "filter.button": "Филтри",
 
   // Settings — weekly digest card, backup-engine cache card, revoke-all sessions
-  "settings.digestTitle": "Седмично обобщение",
   "settings.digestHint": "Едно обобщаващо съобщение на седмица: брой изпълнения, нови данни за архивиране, актуалност извън обекта и водещите грешки — изпратено чрез каналите за известия по-горе.",
   "settings.digestToggle": "Седмично обобщение",
   // Missed-schedule catch-up + overdue-backup watchdog

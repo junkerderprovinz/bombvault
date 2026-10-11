@@ -328,6 +328,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "notify.notifyOnUpdate", hint: "notify.notifyOnUpdateHint" },
         { key: "settings.watchdogToggle", hint: "settings.watchdogHint" },
         { key: "notify.unraid", hint: "notify.unraidHint" },
+        { key: "settings.digestToggle", hint: "settings.digestHint" },
       ],
     },
     {
@@ -356,21 +357,8 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
     {
       title: "notify.healthchecksTitle",
-      rows: [
-        { key: "notify.healthchecks", hint: "notify.healthchecksLifecycle" },
-        { key: "notify.hcPerDomain", hint: "notify.hcPerDomainHint" },
-        { key: "nav.containers" },
-        { key: "nav.vms" },
-        { key: "nav.flash" },
-        { key: "nav.config" },
-        { key: "nav.files" },
-        { key: "nav.zfs" },
-      ],
-    },
-    {
-      title: "settings.digestTitle",
-      hint: "settings.digestHint",
-      rows: [{ key: "settings.digestToggle" }],
+      hint: "notify.healthchecksHint",
+      rows: [{ key: "notify.healthchecks", hint: "notify.healthchecksLifecycle" }, { key: "exceptions.add" }],
     },
   ],
 
@@ -386,16 +374,15 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       ],
     },
     {
-      title: "verify.auto",
-      hint: "verify.hint",
+      title: "verify.autoChecks",
       rows: [
-        { key: "verify.auto" },
+        { key: "verify.trialRestore", hint: "verify.trialRestoreHint" },
         { key: "settings.offsiteDrills", hint: "settings.offsiteDrillsHelp" },
         { key: "settings.startTest", hint: "settings.startTestHelp" },
-        { key: "verify.subsetPct" },
+        { key: "verify.subsetPct", hint: "verify.subsetPctHint" },
+        { key: "verify.tamper", hint: "verify.tamperHint" },
       ],
     },
-    { title: "settings.schedulesChecks", rows: [] },
     {
       title: "anomaly.settings.title",
       hint: "anomaly.settings.hint",

@@ -795,8 +795,6 @@ const ms: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "URL ping",
   "notify.healthchecksLifecycle": "Healthchecks di-ping sepanjang keseluruhan kitaran hayat sandaran (permulaan, kejayaan dan kegagalan), apabila URL ditetapkan, tanpa mengira tetapan 'beritahu apabila' di atas, supaya semakan kekal hijau apabila berjaya walaupun dengan pemberitahuan gagal-sahaja.",
-  "notify.hcPerDomain": "Semakan setiap domain",
-  "notify.hcPerDomainHint": "Biarkan medan kosong untuk menggunakan URL global di atas. Domain dengan URL sendiri mendapat semakannya sendiri, dengan masa larian dan sejarahnya sendiri.",
   "notify.scheduledSummary": "Ringkaskan larian berjadual",
   "notify.scheduledSummaryHint": "Hantar SATU ringkasan bagi setiap larian sandaran berjadual (cth. \"42 daripada 45 berjaya\") dan bukannya mesej berasingan untuk setiap bekas/VM. Healthchecks sudah diringkaskan. Sandaran manual terus memberitahu setiap item.",
   "notify.notifyOnUpdate": "Beritahu apabila bekas dikemas kini",
@@ -842,7 +840,6 @@ const ms: Partial<Translations> = {
   "verify.failed": "Pengesahan gagal",
   "verify.last": "Terakhir disahkan {time}",
   "verify.never": "Tidak pernah disahkan",
-  "verify.auto": "Semakan pemulihan automatik",
   "verify.subsetPct": "Sampel data (%)",
   "verify.hint": "Secara berkala membaca sampel rawak data sandaran untuk membuktikan ia utuh dan boleh dipulihkan.",
   "verify.shield": "disahkan",
@@ -1236,11 +1233,6 @@ const ms: Partial<Translations> = {
   "schedule.paused": "Jadual dijeda",
   "schedule.pausedHint": "Larian berjadual dan {everything} melangkau item ini. “{backupNow}” masih berfungsi.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "Penggantian jadual",
-  "schedule.overrideUsesDefault": "Menggunakan jadual domain",
-  "schedule.overrideEdit": "Tetapkan penggantian",
-  "schedule.overrideHint": "Kosong menggunakan jadual domain.",
-  "schedule.overrideSaved": "Penggantian disimpan",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const ms: Partial<Translations> = {
   "settings.search.notShown": "{name} tidak dipaparkan pada skrin sekarang. Ia dipaparkan sebaik sahaja ciri yang berkaitan dihidupkan.",
   "settings.schedulesOffsite": "Jadual replikasi luar tapak",
   "settings.schedulesSelfBackup": "Jadual sandaran sendiri",
-  "settings.schedulesChecks": "Jadual semakan pemulihan",
-  "settings.tamperTestSchedule": "Jadual ujian gangguan",
   "settings.tamperScheduleInactive": "Tidak aktif: tiada repositori luar tapak ditandakan sebagai tambah-sahaja, jadi jadual ini tidak sekali-kali berjalan. Tandakan repositori luar tapak sebagai tambah-sahaja dalam tetapan luar tapaknya sendiri untuk mendayakannya.",
   "settings.everythingTitle": "Sandar Semua",
   "settings.everythingDuplicateWarning": "Bekas, VM, Flash, folder, set data ZFS dan sandaran sendiri disandarkan dua kali selama jadual ini dan jadual masing-masing kedua-duanya dihidupkan: sekali di sini dan sekali mengikut jadual sendiri. Matikan domain yang tidak mahu disandarkan dua kali.",
@@ -1983,7 +1973,6 @@ const ms: Partial<Translations> = {
   "filter.button": "Penapis",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "Ringkasan mingguan",
   "settings.digestHint": "Satu mesej ringkasan setiap minggu: bilangan larian, data sandaran baharu, ketepatan masa luar tapak dan kegagalan utama, dihantar melalui saluran pemberitahuan di atas.",
   "settings.digestToggle": "Ringkasan mingguan",
   // Missed-schedule catch-up + overdue-backup watchdog

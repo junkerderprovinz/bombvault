@@ -795,8 +795,6 @@ const et: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "Pingi URL",
   "notify.healthchecksLifecycle": "Healthchecksile saadetakse ping kogu varunduse elutsükli jooksul (algus, õnnestumine ja viga), kui URL on seadistatud, sõltumata ülalolevast „teavita” seadest, nii jääb kontroll õnnestumisel roheliseks isegi ainult-vea teavituste korral.",
-  "notify.hcPerDomain": "Kontrollid valdkonna kaupa",
-  "notify.hcPerDomainHint": "Jäta väli tühjaks, et kasutada ülalolevat globaalset URL-i. Oma URL-iga valdkond saab oma kontrolli, oma töötlusaja ja ajalooga.",
   "notify.scheduledSummary": "Koonda plaanitud käivitused",
   "notify.scheduledSummaryHint": "Saada ÜKS kokkuvõte iga plaanitud varunduskäivituse kohta (nt „42 45-st õnnestus”) eraldi sõnumi asemel iga konteineri/VM-i kohta. Healthchecks on juba koondatud. Käsitsi varundused teavitavad endiselt üksuse kaupa.",
   "notify.notifyOnUpdate": "Teavita konteineri uuendusest",
@@ -842,7 +840,6 @@ const et: Partial<Translations> = {
   "verify.failed": "Kontroll ebaõnnestus",
   "verify.last": "Viimati kontrollitud {time}",
   "verify.never": "Pole kunagi kontrollitud",
-  "verify.auto": "Automaatsed taastekontrollid",
   "verify.subsetPct": "Andmevalim (%)",
   "verify.hint": "Loeb perioodiliselt juhuslikku valimit varundatud andmetest, et tõestada nende terviklikkust ja taastatavust.",
   "verify.shield": "kontrollitud",
@@ -1236,11 +1233,6 @@ const et: Partial<Translations> = {
   "schedule.paused": "Ajakava peatatud",
   "schedule.pausedHint": "Ajastatud käivitused ja {everything} jätavad selle kirje vahele. „{backupNow}“ töötab edasi.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "Ajakava ülekirjutus",
-  "schedule.overrideUsesDefault": "Kasutab valdkonna ajakava",
-  "schedule.overrideEdit": "Määra ülekirjutus",
-  "schedule.overrideHint": "Tühi kasutab valdkonna ajakava.",
-  "schedule.overrideSaved": "Ülekirjutus salvestatud",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const et: Partial<Translations> = {
   "settings.search.notShown": "{name} ei ole praegu ekraanil. See ilmub, niipea kui sellega seotud funktsioon on sisse lülitatud.",
   "settings.schedulesOffsite": "Välise replitseerimise ajakavad",
   "settings.schedulesSelfBackup": "Iseenda varunduse ajakava",
-  "settings.schedulesChecks": "Taastekontrolli ajakava",
-  "settings.tamperTestSchedule": "Manipuleerimistesti ajakava",
   "settings.tamperScheduleInactive": "Passiivne: ükski väline hoidla pole märgitud ainult-lisamiseks, seega see ajakava ei käivitu kunagi. Märgi väline hoidla selle enda välistes seadetes ainult-lisamiseks, et see lubada.",
   "settings.everythingTitle": "Täisvarundus",
   "settings.everythingDuplicateWarning": "Konteinereid, VM-e, Flashi, kaustu, ZFS-i andmekogumeid ja iseenda varundust varundatakse kaks korda seni, kuni nii see ajakava kui ka nende oma on sisse lülitatud: üks kord siin ja üks kord nende enda ajakava järgi. Lülita välja valdkonnad, mida sa ei taha topelt varundada.",
@@ -1983,7 +1973,6 @@ const et: Partial<Translations> = {
   "filter.button": "Filtrid",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "Nädalakokkuvõte",
   "settings.digestHint": "Üks kokkuvõtvane sõnum nädalas: käivituste arv, uued varundatud andmed, väline ajakohasus ja peamised vead, saadetud ülaltoodud teavituskanalite kaudu.",
   "settings.digestToggle": "Nädalakokkuvõte",
   // Missed-schedule catch-up + overdue-backup watchdog

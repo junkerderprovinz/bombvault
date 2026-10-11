@@ -795,8 +795,6 @@ const sr: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "URL за ping",
   "notify.healthchecksLifecycle": "Healthchecks добија ping за читав циклус резервног копирања — почетак, успех и грешку — кад год је URL подешен, независно од горње поставке 'обавештавај при', тако да провера остаје зелена при успеху чак и уз обавештења само при грешци.",
-  "notify.hcPerDomain": "Провере по домени",
-  "notify.hcPerDomainHint": "Остави поље празно да користиш горњи општи URL. Домена са сопственим URL-ом добија сопствену проверу, са сопственим временом извршавања и историјом.",
   "notify.scheduledSummary": "Сажми заказана извршавања",
   "notify.scheduledSummaryHint": "За свако заказано извршавање резервне копије пошаљи ЈЕДАН сажетак (нпр. \"42 од 45 успешно\") уместо посебне поруке за сваки контејнер/ВМ. Healthchecks је већ сажет. Ручне резервне копије и даље обавештавају по ставци.",
   "notify.notifyOnUpdate": "Обавести при ажурирању контејнера",
@@ -842,7 +840,6 @@ const sr: Partial<Translations> = {
   "verify.failed": "Провера није успела",
   "verify.last": "Последњи пут проверено {time}",
   "verify.never": "Никада проверено",
-  "verify.auto": "Аутоматске провере враћања",
   "verify.subsetPct": "Узорак података (%)",
   "verify.hint": "Периодично чита насумични узорак података резервне копије да докаже да су нетакнути и да се могу вратити.",
   "verify.shield": "проверено",
@@ -1231,11 +1228,6 @@ const sr: Partial<Translations> = {
   "schedule.resume": "Настави распоред",
   "schedule.paused": "Распоред паузиран",
   "schedule.pausedHint": "Заказана извршавања и {everything} прескачу ову ставку. „{backupNow}“ и даље ради.",
-  "schedule.overrideTitle": "Преписивање распореда",
-  "schedule.overrideUsesDefault": "Користи распоред домене",
-  "schedule.overrideEdit": "Подеси преписивање",
-  "schedule.overrideHint": "Празно користи распоред домене.",
-  "schedule.overrideSaved": "Преписивање сачувано",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1959,8 +1951,6 @@ const sr: Partial<Translations> = {
   "settings.search.notShown": "{name} тренутно није на екрану. Приказује се чим се укључи функција којој припада.",
   "settings.schedulesOffsite": "Распореди дуплирања на спољну копију",
   "settings.schedulesSelfBackup": "Распоред сопствене резервне копије",
-  "settings.schedulesChecks": "Распоред провера враћања",
-  "settings.tamperTestSchedule": "Распоред теста непроменљивости",
   "settings.tamperScheduleInactive": "Неактивно — ниједан спољни репозиторијум није означен као само-додајући, па се овај распоред никада не извршава. Да га омогућиш, у његовим подешавањима спољне копије означи спољни репозиторијум као само-додајући.",
   "settings.everythingTitle": "Потпуна резервна копија",
   "settings.everythingDuplicateWarning": "Контејнери, ВМ-ови, Flash, фасцикле, ZFS скупови података и сопствена резервна копија копирају се двапут док су истовремено укључени и овај распоред и њихов сопствени: једном овде и једном по сопственом распореду. Искључи подручја која не желиш да се копирају двапут.",
@@ -1969,7 +1959,6 @@ const sr: Partial<Translations> = {
   "filter.button": "Филтери",
 
   // Settings — weekly digest card, backup-engine cache card, revoke-all sessions
-  "settings.digestTitle": "Недељни сажетак",
   "settings.digestHint": "Једна сажета порука недељно: бројеви извршавања, нови подаци резервних копија, ажурност спољне копије и највеће грешке — послато преко горе подешених обавештајних канала.",
   "settings.digestToggle": "Недељни сажетак",
   "settings.catchUpMissed": "Надокнади пропуштене резервне копије после покретања",

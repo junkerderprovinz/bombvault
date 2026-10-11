@@ -795,8 +795,6 @@ const gl: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "URL de ping",
   "notify.healthchecksLifecycle": "Faise ping a Healthchecks durante todo o ciclo de vida da copia (inicio, éxito e erro) sempre que haxa unha URL configurada, independentemente do axuste «notificar en» de arriba, así a comprobación queda verde en éxito mesmo con notificacións só de erro.",
-  "notify.hcPerDomain": "Comprobacións por dominio",
-  "notify.hcPerDomainHint": "Deixa un campo baleiro para usar a URL global de arriba. Un dominio coa súa propia URL recibe a súa propia comprobación, co seu propio tempo de execución e historial.",
   "notify.scheduledSummary": "Resumir as execucións programadas",
   "notify.scheduledSummaryHint": "Envía UN resumo por cada execución de copia programada (p. ex. «42 de 45 correctas») en vez dunha mensaxe separada por cada contedor/MV. Healthchecks xa se resume. As copias manuais seguen notificando por elemento.",
   "notify.notifyOnUpdate": "Notificar ao actualizar un contedor",
@@ -842,7 +840,6 @@ const gl: Partial<Translations> = {
   "verify.failed": "Verificación fallida",
   "verify.last": "Última verificación {time}",
   "verify.never": "Nunca verificado",
-  "verify.auto": "Comprobacións automáticas de restauración",
   "verify.subsetPct": "Mostra de datos (%)",
   "verify.hint": "Le periodicamente unha mostra aleatoria dos datos de copia para demostrar que están intactos e son restaurables.",
   "verify.shield": "verificado",
@@ -1236,11 +1233,6 @@ const gl: Partial<Translations> = {
   "schedule.paused": "Horario en pausa",
   "schedule.pausedHint": "As execucións programadas e {everything} saltan este elemento. «{backupNow}» segue funcionando.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "Substitución de horario",
-  "schedule.overrideUsesDefault": "Usa o horario do dominio",
-  "schedule.overrideEdit": "Configurar substitución",
-  "schedule.overrideHint": "Baleiro usa o horario do dominio.",
-  "schedule.overrideSaved": "Substitución gardada",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const gl: Partial<Translations> = {
   "settings.search.notShown": "{name} non aparece en pantalla agora mesmo. Móstrase en canto se active a función á que pertence.",
   "settings.schedulesOffsite": "Horarios de replicación externa",
   "settings.schedulesSelfBackup": "Horario da autocopia",
-  "settings.schedulesChecks": "Horario de comprobacións de restauración",
-  "settings.tamperTestSchedule": "Horario da proba de manipulación",
   "settings.tamperScheduleInactive": "Inactivo: ningún repositorio externo está marcado como só-engadir, así que este horario nunca se executa. Marca un repositorio externo como só-engadir na súa propia configuración externa para activalo.",
   "settings.everythingTitle": "Copia completa",
   "settings.everythingDuplicateWarning": "Os contedores, as MV, o Flash, os cartafoles, os conxuntos de datos ZFS e a autocopia cópianse dúas veces mentres esta planificación e a súa propia estean activas ao mesmo tempo: unha vez aquí e outra na súa. Desactiva os ámbitos que non queiras duplicar.",
@@ -1983,7 +1973,6 @@ const gl: Partial<Translations> = {
   "filter.button": "Filtros",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "Resumo semanal",
   "settings.digestHint": "Unha mensaxe de resumo por semana: número de execucións, novos datos de copia, actualidade externa e os principais erros, enviada polas canles de notificación de arriba.",
   "settings.digestToggle": "Resumo semanal",
   // Missed-schedule catch-up + overdue-backup watchdog

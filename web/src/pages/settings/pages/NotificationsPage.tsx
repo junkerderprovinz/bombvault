@@ -1,10 +1,21 @@
 import { useState } from "react";
-import { CadenceBuilder } from "../../../components/CadenceBuilder";
-import { ScheduleRow } from "../../../components/ScheduleBadge";
+import { PlanButton } from "../../../components/PlanButton";
+import { SettingRow } from "../../../components/storage/rows";
+import type { Settings } from "../../../lib/api";
+import type { EntryKind } from "../../../lib/backupEntry";
 import { useT } from "../../../lib/i18n";
 import { NotifyCard } from "../NotifyCard";
-import { Card, ToggleRow, hueCounter, type SaveState } from "../shared";
+import { ToggleRow, hueCounter, type SaveState } from "../shared";
 import { useSettings } from "../settingsStore";
+
+const SECTION_SWITCH: [EntryKind, keyof Settings][] = [
+  ["container", "containersEnabled"],
+  ["vm", "vmsEnabled"],
+  ["flash", "flashEnabled"],
+  ["files", "filesEnabled"],
+  ["zfs", "zfsEnabled"],
+  ["config", "configEnabled"],
+];
 
 export function NotificationsPage() {
   const { t } = useT();
@@ -20,79 +31,55 @@ export function NotificationsPage() {
     fieldShake,
   } = useSettings();
 
-  // Weekly digest and overdue-backup watchdog on the notifications page.
   const [, setDigestSaveState] = useState<SaveState>("idle");
   const [, setDigestSaveError] = useState<string | null>(null);
 
   const [, setWatchdogSaveState] = useState<SaveState>("idle");
   const [, setWatchdogSaveError] = useState<string | null>(null);
 
+  // The digest has a switch and a cadence of its own; its plan shows both, with
+  // Off for the switch.
+  function setDigest(plan: string) {
+    const patch: Partial<Settings> =
+      plan === "off" ? { digestEnabled: false } : { digestEnabled: true, digestSchedule: plan };
+    setSettings((prev) => (prev ? { ...prev, ...patch } : prev));
+    debouncedSave("digestSchedule", () => void save(patch, setDigestSaveState, setDigestSaveError));
+  }
+
   const nextHue = hueCounter();
+  const firstHue = nextHue();
 
   return (
-    <>
-      <NotifyCard
-        t={t}
-        platformKind={platformKind}
-        hueIndex={nextHue()}
-        channelsHueIndex={nextHue()}
-        healthchecksHueIndex={nextHue()}
-      >
-        {/* A fixed daily check at 09:00 that sends one notification per overdue
-            episode; a new successful backup re-arms it. */}
-        <ToggleRow
-          label={t("settings.watchdogToggle")}
-          hint={t("settings.watchdogHint")}
-          checked={settings.watchdogEnabled}
-          onChange={(v) => void autoSaveToggle("watchdogEnabled", v, setWatchdogSaveState, setWatchdogSaveError)}
-          disabled={fieldBusy.watchdogEnabled}
-          shakeNonce={fieldShake.watchdogEnabled}
-          pulseNonce={fieldPulse.watchdogEnabled}
-          hueIndex={2}
-        />
-      </NotifyCard>
-
-      {/* Weekly digest: one summary message per week through the channels
-          above. One hueIdx feeds both the heading and the time picker. */}
-      {(() => {
-        const hueIdx = nextHue();
-        return (
-          <Card title={t("settings.digestTitle")} hint={t("settings.digestHint")} hueIndex={hueIdx}>
-            <ToggleRow
-              label={t("settings.digestToggle")}
-              checked={settings.digestEnabled}
-              onChange={(v) => void autoSaveToggle("digestEnabled", v, setDigestSaveState, setDigestSaveError)}
-              disabled={fieldBusy.digestEnabled}
-              shakeNonce={fieldShake.digestEnabled}
-              pulseNonce={fieldPulse.digestEnabled}
-            />
-            {/* `enabled` follows digestEnabled: the on/off is a separate
-                toggle here, not the cadence string's own "off" mode. */}
-            <ScheduleRow schedule={settings.digestSchedule} enabled={settings.digestEnabled} />
-            {/* The editor goes with the toggle above, as in
-                RestoreChecksSection: an editor greyed because a switch
-                elsewhere is off offers an edit nobody can make. The badge
-                stays either way, so switching the report off still shows what
-                would have run. */}
-            {settings.digestEnabled && (
-            <div className="rounded-card bg-carbon-surface2 p-4">
-              <CadenceBuilder
-                label={t("settings.schedule")}
-                value={settings.digestSchedule}
-                onChange={(v) => {
-                  setSettings((prev) => (prev ? { ...prev, digestSchedule: v } : prev));
-                  debouncedSave("digestSchedule", () =>
-                    void save({ digestSchedule: v }, setDigestSaveState, setDigestSaveError)
-                  );
-                }}
-                hueIndex={hueIdx}
-              />
-            </div>
-            )}
-          </Card>
-        );
-      })()}
-
-    </>
+    <NotifyCard
+      t={t}
+      platformKind={platformKind}
+      hueIndex={firstHue}
+      channelsHueIndex={nextHue()}
+      healthchecksHueIndex={nextHue()}
+      sections={SECTION_SWITCH.filter(([, on]) => settings[on]).map(([kind]) => kind)}
+      tail={
+        <SettingRow label={t("settings.digestToggle")} hint={t("settings.digestHint")}>
+          <PlanButton
+            label={t("settings.digestToggle")}
+            value={settings.digestEnabled ? settings.digestSchedule : "off"}
+            onChange={setDigest}
+            hueIndex={firstHue}
+          />
+        </SettingRow>
+      }
+    >
+      {/* A fixed daily check at 09:00 that sends one notification per overdue
+          episode; a new successful backup re-arms it. */}
+      <ToggleRow
+        label={t("settings.watchdogToggle")}
+        hint={t("settings.watchdogHint")}
+        checked={settings.watchdogEnabled}
+        onChange={(v) => void autoSaveToggle("watchdogEnabled", v, setWatchdogSaveState, setWatchdogSaveError)}
+        disabled={fieldBusy.watchdogEnabled}
+        shakeNonce={fieldShake.watchdogEnabled}
+        pulseNonce={fieldPulse.watchdogEnabled}
+        hueIndex={2}
+      />
+    </NotifyCard>
   );
 }

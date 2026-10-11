@@ -795,8 +795,6 @@ const lv: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "Ping URL",
   "notify.healthchecksLifecycle": "Healthchecks tiek pingots visā rezerves kopēšanas dzīves cikla laikā (sākums, veiksme un neveiksme), jebkurā brīdī, kad iestatīts URL, neatkarīgi no iepriekš minētā iestatījuma 'paziņot par', lai pārbaude paliktu zaļa veiksmes gadījumā pat ar tikai-neveiksmes paziņojumiem.",
-  "notify.hcPerDomain": "Pārbaudes katram domēnam",
-  "notify.hcPerDomainHint": "Atstājiet lauku tukšu, lai izmantotu iepriekš minēto globālo URL. Domēns ar savu URL saņem savu pārbaudi ar savu izpildes laiku un vēsturi.",
   "notify.scheduledSummary": "Apkopot ieplānotos izpildījumus",
   "notify.scheduledSummaryHint": "Sūtīt VIENU kopsavilkumu katram ieplānotam rezerves kopēšanas izpildījumam (piem., „42 no 45 veiksmīgi”) atsevišķa ziņojuma vietā katram konteinerim/VM. Healthchecks jau ir apkopots. Manuālās rezerves kopijas turpina ziņot par katru vienumu.",
   "notify.notifyOnUpdate": "Paziņot par konteinera atjaunināšanu",
@@ -842,7 +840,6 @@ const lv: Partial<Translations> = {
   "verify.failed": "Pārbaude neizdevās",
   "verify.last": "Pēdējo reizi pārbaudīts {time}",
   "verify.never": "Nekad nav pārbaudīts",
-  "verify.auto": "Automātiskas atjaunošanas pārbaudes",
   "verify.subsetPct": "Datu paraugs (%)",
   "verify.hint": "Periodiski nolasa nejaušu rezerves kopēšanas datu paraugu, lai pierādītu, ka tie ir neskarti un atjaunojami.",
   "verify.shield": "pārbaudīts",
@@ -1236,11 +1233,6 @@ const lv: Partial<Translations> = {
   "schedule.paused": "Grafiks apturēts",
   "schedule.pausedHint": "Ieplānotie izpildījumi un {everything} šo vienumu izlaiž. “{backupNow}” joprojām darbojas.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "Grafika aizstāšana",
-  "schedule.overrideUsesDefault": "Izmanto domēna grafiku",
-  "schedule.overrideEdit": "Iestatīt aizstāšanu",
-  "schedule.overrideHint": "Tukšs izmanto domēna grafiku.",
-  "schedule.overrideSaved": "Aizstāšana saglabāta",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const lv: Partial<Translations> = {
   "settings.search.notShown": "Šobrīd ekrānā nerādās: {name}. Tas parādās, tiklīdz tiek ieslēgta funkcija, kurai tas pieder.",
   "settings.schedulesOffsite": "Attālinātas replicēšanas grafiki",
   "settings.schedulesSelfBackup": "Pašrezerves grafiks",
-  "settings.schedulesChecks": "Atjaunošanas pārbaudes grafiks",
-  "settings.tamperTestSchedule": "Manipulācijas testa grafiks",
   "settings.tamperScheduleInactive": "Neaktīvs: neviens attālinātais repozitorijs nav atzīmēts kā tikai-pievienot, tāpēc šis grafiks nekad neizpildās. Lai to iespējotu, atzīmējiet attālinātu repozitoriju kā tikai-pievienot tā attālinātajos iestatījumos.",
   "settings.everythingTitle": "Pilna rezerves kopija",
   "settings.everythingDuplicateWarning": "Konteineri, VM, Flash, mapes, ZFS datu kopas un pašrezerve tiek dublēti divreiz, kamēr vienlaikus ir ieslēgts gan šis grafiks, gan to pašu grafiks: vienreiz šeit un vienreiz pēc to pašu grafika. Izslēdziet jomas, kuras nevēlaties dublēt divreiz.",
@@ -1983,7 +1973,6 @@ const lv: Partial<Translations> = {
   "filter.button": "Filtri",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "Iknedēļas kopsavilkums",
   "settings.digestHint": "Viens kopsavilkuma ziņojums nedēļā: izpildījumu skaits, jauni rezerves kopēšanas dati, attālinātā aktualitāte un galvenās neveiksmes, nosūtīts, izmantojot iepriekš minētos paziņojumu kanālus.",
   "settings.digestToggle": "Iknedēļas kopsavilkums",
   // Missed-schedule catch-up + overdue-backup watchdog

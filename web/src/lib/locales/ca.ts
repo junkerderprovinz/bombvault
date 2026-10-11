@@ -795,8 +795,6 @@ const ca: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "URL de ping",
   "notify.healthchecksLifecycle": "Healthchecks rep un ping durant tot el cicle de vida de la còpia (inici, èxit i error) sempre que hi hagi una URL configurada, independentment de la configuració «notifica en» de dalt, així la comprovació queda verda en èxit fins i tot amb notificacions només d'error.",
-  "notify.hcPerDomain": "Comprovacions per domini",
-  "notify.hcPerDomainHint": "Deixa un camp buit per usar la URL global de dalt. Un domini amb la seva pròpia URL rep la seva pròpia comprovació, amb el seu propi temps d'execució i historial.",
   "notify.scheduledSummary": "Resumeix les execucions programades",
   "notify.scheduledSummaryHint": "Envia UN resum per cada execució de còpia programada (p. ex. «42 de 45 correctes») en comptes d'un missatge separat per cada contenidor/MV. Healthchecks ja es resumeix. Les còpies manuals segueixen notificant per element.",
   "notify.notifyOnUpdate": "Notifica en actualitzar un contenidor",
@@ -842,7 +840,6 @@ const ca: Partial<Translations> = {
   "verify.failed": "Verificació fallida",
   "verify.last": "Última verificació {time}",
   "verify.never": "Mai verificat",
-  "verify.auto": "Comprovacions automàtiques de restauració",
   "verify.subsetPct": "Mostra de dades (%)",
   "verify.hint": "Llegeix periòdicament una mostra aleatòria de dades de còpia per demostrar que estan intactes i són restaurables.",
   "verify.shield": "verificat",
@@ -1236,11 +1233,6 @@ const ca: Partial<Translations> = {
   "schedule.paused": "Horari en pausa",
   "schedule.pausedHint": "Les execucions programades i {everything} se salten aquest element. «{backupNow}» continua funcionant.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "Substitució d'horari",
-  "schedule.overrideUsesDefault": "Fa servir l'horari del domini",
-  "schedule.overrideEdit": "Configura substitució",
-  "schedule.overrideHint": "Buit fa servir l'horari del domini.",
-  "schedule.overrideSaved": "Substitució desada",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const ca: Partial<Translations> = {
   "settings.search.notShown": "{name} no es mostra ara mateix. Apareix quan la funció a què pertany estigui activada.",
   "settings.schedulesOffsite": "Horaris de replicació externa",
   "settings.schedulesSelfBackup": "Horari de l'autocòpia",
-  "settings.schedulesChecks": "Horari de comprovacions de restauració",
-  "settings.tamperTestSchedule": "Horari de la prova de manipulació",
   "settings.tamperScheduleInactive": "Inactiu: cap repositori extern està marcat com a només-afegir, així que aquest horari mai s'executa. Marca un repositori extern com a només-afegir a la seva pròpia configuració externa per activar-lo.",
   "settings.everythingTitle": "Còpia completa",
   "settings.everythingDuplicateWarning": "Els contenidors, les MV, el Flash, les carpetes, els conjunts de dades ZFS i l'autocòpia es copien dues vegades mentre aquesta planificació i la seva pròpia estiguin totes dues actives: un cop aquí i un cop a la seva. Desactiva els àmbits que no vulguis duplicar.",
@@ -1983,7 +1973,6 @@ const ca: Partial<Translations> = {
   "filter.button": "Filtres",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "Resum setmanal",
   "settings.digestHint": "Un missatge resum per setmana: nombre d'execucions, dades noves de còpia, actualitat externa i els principals errors, enviat mitjançant els canals de notificació de dalt.",
   "settings.digestToggle": "Resum setmanal",
   // Missed-schedule catch-up + overdue-backup watchdog

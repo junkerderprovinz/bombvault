@@ -795,8 +795,6 @@ const is: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "Ping-slóð",
   "notify.healthchecksLifecycle": "Healthchecks er sent ping yfir allan lífsferil afritunarinnar (upphaf, árangur og mistök) hvenær sem slóð er stillt, óháð stillingunni „tilkynna þegar“ hér að ofan, svo athugunin er áfram græn þegar tekst jafnvel með tilkynningum sem eru aðeins fyrir mistök.",
-  "notify.hcPerDomain": "Athuganir fyrir hvert svæði",
-  "notify.hcPerDomainHint": "Skildu reit eftir autt til að nota heildarslóðina hér að ofan. Svæði með eigin slóð fær eigin athugun, með eigin keyrslutíma og sögu.",
   "notify.scheduledSummary": "Draga saman áætlaðar keyrslur",
   "notify.scheduledSummaryHint": "Sendu EITT samandregið yfirlit fyrir hverja áætlaða afritunarkeyrslu (t.d. „42 af 45 tókst“) í stað sérstaks skilaboðs fyrir hvern gám/sýndarvél. Healthchecks er þegar dregið saman. Handvirk afrit senda áfram tilkynningu fyrir hvern hlut.",
   "notify.notifyOnUpdate": "Tilkynna við uppfærslu gáms",
@@ -842,7 +840,6 @@ const is: Partial<Translations> = {
   "verify.failed": "Staðfesting mistókst",
   "verify.last": "Síðast staðfest {time}",
   "verify.never": "Aldrei staðfest",
-  "verify.auto": "Sjálfvirkar endurheimtaraþanganir",
   "verify.subsetPct": "Gagnaúrtak (%)",
   "verify.hint": "Les reglulega tilviljunarkennt úrtak af afritunargögnum til að sanna að þau séu heil og endurheimtanleg.",
   "verify.shield": "staðfest",
@@ -1236,11 +1233,6 @@ const is: Partial<Translations> = {
   "schedule.paused": "Hlé á tímaáætlun",
   "schedule.pausedHint": "Tímasettar keyrslur og {everything} sleppa þessum hlut. „{backupNow}“ virkar áfram.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "Yfirskrifun tímaáætlunar",
-  "schedule.overrideUsesDefault": "Notar tímaáætlun svæðisins",
-  "schedule.overrideEdit": "Stilla yfirskrifun",
-  "schedule.overrideHint": "Autt notar tímaáætlun svæðisins.",
-  "schedule.overrideSaved": "Yfirskrifun vistuð",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const is: Partial<Translations> = {
   "settings.search.notShown": "{name} sést ekki á skjánum núna. Það birtist um leið og eiginleikinn sem það tilheyrir er kveiktur.",
   "settings.schedulesOffsite": "Tímaáætlanir fjarlægrar afritunar",
   "settings.schedulesSelfBackup": "Tímaáætlun sjálfvirkrar afritunar",
-  "settings.schedulesChecks": "Tímaáætlun endurheimtaraþanganir",
-  "settings.tamperTestSchedule": "Tímaáætlun átroðsluprófunar",
   "settings.tamperScheduleInactive": "Óvirkt. Ekkert fjarlægt geymslusafn er merkt sem aðeins-bæta-við, svo þessi tímaáætlun keyrir aldrei. Merktu fjarlægt geymslusafn sem aðeins-bæta-við í eigin fjarlægum stillingum þess til að virkja hana.",
   "settings.everythingTitle": "Heildarafritun",
   "settings.everythingDuplicateWarning": "Gámar, sýndarvélar, Flash, möppur, ZFS-gagnasöfn og sjálfvirka afritunin eru afrituð tvisvar á meðan bæði þessi áætlun og þeirra eigin eru kveikt: einu sinni hér og einu sinni í þeirra eigin áætlun. Slökktu á þeim sviðum sem þú vilt ekki afrita tvisvar.",
@@ -1983,7 +1973,6 @@ const is: Partial<Translations> = {
   "filter.button": "Síur",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "Vikuyfirlit",
   "settings.digestHint": "Eitt samandregið skilaboð á viku: fjöldi keyrslna, ný afritunargögn, fjarlæg uppfærsla og helstu mistök, send í gegnum tilkynningaleiðirnar hér að ofan.",
   "settings.digestToggle": "Vikuyfirlit",
   // Missed-schedule catch-up + overdue-backup watchdog

@@ -795,8 +795,6 @@ const eu: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "Ping URLa",
   "notify.healthchecksLifecycle": "Healthchecks-i ping bat bidaltzen zaio babeskopiaren bizi-ziklo osoan zehar (hasiera, arrakasta eta errorea), URL bat ezarrita dagoen bitartean, goiko «jakinarazi» ezarpenetik independenteki, horrela egiaztapena berde mantentzen da arrakastan, errore soileko jakinarazpenekin ere.",
-  "notify.hcPerDomain": "Domeinuko egiaztapenak",
-  "notify.hcPerDomainHint": "Utzi eremu bat hutsik goiko URL globala erabiltzeko. Bere URLa duen domeinu batek bere egiaztapena jasotzen du, bere denbora eta historiarekin.",
   "notify.scheduledSummary": "Laburbildu programatutako exekuzioak",
   "notify.scheduledSummaryHint": "Bidali laburpen BAT programatutako babeskopia-exekuzio bakoitzeko (adib. «42/45 arrakastatsu») edukiontzi/MB bakoitzarentzat mezu bereizi baten ordez. Healthchecks jada laburbilduta dago. Eskuzko babeskopiek elementuko jakinarazten jarraitzen dute.",
   "notify.notifyOnUpdate": "Jakinarazi edukiontzia eguneratzean",
@@ -842,7 +840,6 @@ const eu: Partial<Translations> = {
   "verify.failed": "Egiaztapenak huts egin du",
   "verify.last": "Azken egiaztapena {time}",
   "verify.never": "Inoiz egiaztatu gabe",
-  "verify.auto": "Berrezarpen-egiaztapen automatikoak",
   "verify.subsetPct": "Datu-lagina (%)",
   "verify.hint": "Aldizka babeskopiaren datu-lagin ausazko bat irakurtzen du, osorik eta berrezargarri direla frogatzeko.",
   "verify.shield": "egiaztatuta",
@@ -1236,11 +1233,6 @@ const eu: Partial<Translations> = {
   "schedule.paused": "Egutegia pausatuta",
   "schedule.pausedHint": "Programatutako exekuzioek eta {everything} atalak elementu hau saltatzen dute. “{backupNow}” ekintzak lanean jarraitzen du.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "Egutegi-gainidazketa",
-  "schedule.overrideUsesDefault": "Domeinuaren egutegia erabiltzen du",
-  "schedule.overrideEdit": "Ezarri gainidazketa",
-  "schedule.overrideHint": "Hutsik badago domeinuaren egutegia erabiltzen du.",
-  "schedule.overrideSaved": "Gainidazketa gordeta",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const eu: Partial<Translations> = {
   "settings.search.notShown": "{name} ez dago une honetan pantailan. Dagokion eginbidea piztuta dagoenean agertzen da.",
   "settings.schedulesOffsite": "Kanpoko errepikapenaren egutegiak",
   "settings.schedulesSelfBackup": "Autobabeskopiaren egutegia",
-  "settings.schedulesChecks": "Berrezarpen-egiaztapenaren egutegia",
-  "settings.tamperTestSchedule": "Manipulazio-probaren egutegia",
   "settings.tamperScheduleInactive": "Inaktiboa: ez dago gehitu-soilik gisa markatutako kanpoko biltegirik, beraz egutegi hau ez da inoiz exekutatzen. Markatu kanpoko biltegi bat gehitu-soilik gisa bere kanpoko ezarpenetan aktibatzeko.",
   "settings.everythingTitle": "Babeskopia osoa",
   "settings.everythingDuplicateWarning": "Edukiontziak, MBak, Flasha, karpetak, ZFS datu-multzoak eta autobabeskopia bi aldiz babesten dira plangintza hau eta beren plangintza aldi berean aktibo dauden bitartean: behin hemen eta behin berenean. Itzali bikoiztu nahi ez dituzun eremuak.",
@@ -1983,7 +1973,6 @@ const eu: Partial<Translations> = {
   "filter.button": "Iragazkiak",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "Asteko laburpena",
   "settings.digestHint": "Laburpen-mezu bat astean: exekuzio-kopurua, babeskopia-datu berriak, kanpoko eguneratasuna eta errore nagusiak, goiko jakinarazpen-kanalen bidez bidalita.",
   "settings.digestToggle": "Asteko laburpena",
   // Missed-schedule catch-up + overdue-backup watchdog

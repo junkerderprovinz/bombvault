@@ -63,12 +63,12 @@ export function plansOf(settings: Settings, next: ScheduleNext[], t: (k: Transla
     });
   }
   if (settings.drillsEnabled) {
-    plans.push({ key: "drills", kind: "probe", label: t("verify.auto"), cadence: settings.drillsSchedule, next: fire("drill", "") });
+    plans.push({ key: "drills", kind: "probe", label: t("verify.trialRestore"), cadence: settings.drillsSchedule, next: fire("drill", "") });
   }
   plans.push({
     key: "tamper",
     kind: "check",
-    label: t("settings.tamperTestSchedule"),
+    label: t("verify.tamper"),
     cadence: settings.tamperTestSchedule,
     next: fire("tamper", ""),
   });

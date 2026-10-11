@@ -795,8 +795,6 @@ const sl: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "URL za ping",
   "notify.healthchecksLifecycle": "Healthchecks dobi ping za celoten cikel varnostnega kopiranja (začetek, uspeh in napako), kadarkoli je nastavljen URL, ne glede na zgornjo nastavitev 'obveščaj ob', tako da preverjanje ob uspehu ostane zeleno tudi pri obvestilih samo ob napaki.",
-  "notify.hcPerDomain": "Preverjanja po domenah",
-  "notify.hcPerDomainHint": "Pusti polje prazno, da uporabiš zgornji splošni URL. Domena z lastnim URL-jem dobi lastno preverjanje, z lastnim časom izvajanja in zgodovino.",
   "notify.scheduledSummary": "Povzemi načrtovane zagone",
   "notify.scheduledSummaryHint": "Za vsak načrtovan zagon varnostnega kopiranja pošlji EN povzetek (npr. \"42 od 45 uspešnih\") namesto ločenega sporočila za vsak vsebnik/VM. Healthchecks je že povzet. Ročne varnostne kopije še vedno obveščajo po posameznem elementu.",
   "notify.notifyOnUpdate": "Obvesti ob posodobitvi vsebnika",
@@ -842,7 +840,6 @@ const sl: Partial<Translations> = {
   "verify.failed": "Preverjanje ni uspelo",
   "verify.last": "Nazadnje preverjeno {time}",
   "verify.never": "Nikoli preverjeno",
-  "verify.auto": "Samodejna preverjanja obnovitve",
   "verify.subsetPct": "Vzorec podatkov (%)",
   "verify.hint": "Občasno prebere naključni vzorec podatkov varnostne kopije, da dokaže, da je nedotaknjen in obnovljiv.",
   "verify.shield": "preverjeno",
@@ -1231,11 +1228,6 @@ const sl: Partial<Translations> = {
   "schedule.resume": "Nadaljuj urnik",
   "schedule.paused": "Urnik zaustavljen",
   "schedule.pausedHint": "Načrtovani zagoni in {everything} ta element preskočijo. „{backupNow}“ še vedno deluje.",
-  "schedule.overrideTitle": "Preglasitev urnika",
-  "schedule.overrideUsesDefault": "Uporablja urnik domene",
-  "schedule.overrideEdit": "Nastavi preglasitev",
-  "schedule.overrideHint": "Prazno uporabi urnik domene.",
-  "schedule.overrideSaved": "Preglasitev shranjena",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1959,8 +1951,6 @@ const sl: Partial<Translations> = {
   "settings.search.notShown": "{name} trenutno ni na zaslonu. Prikaže se, ko se vklopi funkcija, ki ji pripada.",
   "settings.schedulesOffsite": "Urniki podvajanja na zunanjo kopijo",
   "settings.schedulesSelfBackup": "Urnik lastne varnostne kopije",
-  "settings.schedulesChecks": "Urnik preverjanj obnovitve",
-  "settings.tamperTestSchedule": "Urnik preizkusa nespremenljivosti",
   "settings.tamperScheduleInactive": "Nedejavno: noben zunanji repozitorij ni označen kot samo-dodajajoč, zato ta urnik nikoli ne teče. Da ga omogočiš, v njegovih nastavitvah zunanje kopije označi zunanji repozitorij kot samo-dodajajočega.",
   "settings.everythingTitle": "Popolna varnostna kopija",
   "settings.everythingDuplicateWarning": "Vsebniki, VM-ji, Flash, mape, nabori podatkov ZFS in lastna varnostna kopija se varnostno kopirajo dvakrat, dokler sta hkrati vklopljena ta urnik in njihov lastni: enkrat tukaj in enkrat po lastnem urniku. Izklopi področja, ki jih ne želiš kopirati dvakrat.",
@@ -1969,7 +1959,6 @@ const sl: Partial<Translations> = {
   "filter.button": "Filtri",
 
   // Settings — weekly digest card, backup-engine cache card, revoke-all sessions
-  "settings.digestTitle": "Tedenski povzetek",
   "settings.digestHint": "Eno povzetno sporočilo na teden: števci zagonov, novi podatki varnostnih kopij, ažurnost zunanje kopije in največje napake, poslano prek zgornjih obvestilnih kanalov.",
   "settings.digestToggle": "Tedenski povzetek",
   "settings.catchUpMissed": "Po zagonu nadoknadi zamujene varnostne kopije",

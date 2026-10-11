@@ -795,8 +795,6 @@ const hr: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "URL za ping",
   "notify.healthchecksLifecycle": "Healthchecks se pinga tijekom cijelog životnog ciklusa sigurnosne kopije (početak, uspjeh i greška), kad god je postavljen URL, neovisno o gore navedenoj postavci 'obavijesti kod', tako da provjera ostaje zelena kod uspjeha čak i uz obavijesti samo za greške.",
-  "notify.hcPerDomain": "Provjere po domeni",
-  "notify.hcPerDomainHint": "Ostavite polje prazno za korištenje globalnog URL-a iznad. Domena s vlastitim URL-om dobiva vlastitu provjeru, sa svojim vremenom izvršavanja i poviješću.",
   "notify.scheduledSummary": "Sažmi zakazana izvršavanja",
   "notify.scheduledSummaryHint": "Šalje JEDAN sažetak po svakom zakazanom izvršavanju sigurnosne kopije (npr. „42 od 45 uspješno”) umjesto zasebne poruke za svaki kontejner/VM. Healthchecks je već sažet. Ručne sigurnosne kopije i dalje obavještavaju po stavci.",
   "notify.notifyOnUpdate": "Obavijesti pri ažuriranju kontejnera",
@@ -842,7 +840,6 @@ const hr: Partial<Translations> = {
   "verify.failed": "Provjera nije uspjela",
   "verify.last": "Posljednja provjera {time}",
   "verify.never": "Nikad provjereno",
-  "verify.auto": "Automatske provjere vraćanja",
   "verify.subsetPct": "Uzorak podataka (%)",
   "verify.hint": "Periodički čita nasumični uzorak podataka sigurnosne kopije kako bi dokazao da su cjeloviti i da se mogu vratiti.",
   "verify.shield": "provjereno",
@@ -1236,11 +1233,6 @@ const hr: Partial<Translations> = {
   "schedule.paused": "Raspored pauziran",
   "schedule.pausedHint": "Planirana izvođenja i {everything} preskaču ovu stavku. „{backupNow}“ i dalje radi.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "Nadjačavanje rasporeda",
-  "schedule.overrideUsesDefault": "Koristi raspored domene",
-  "schedule.overrideEdit": "Postavi nadjačavanje",
-  "schedule.overrideHint": "Prazno koristi raspored domene.",
-  "schedule.overrideSaved": "Nadjačavanje spremljeno",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const hr: Partial<Translations> = {
   "settings.search.notShown": "{name} trenutačno se ne prikazuje na zaslonu. Prikazuje se čim se uključi značajka kojoj pripada.",
   "settings.schedulesOffsite": "Rasporedi izvanmrežnog repliciranja",
   "settings.schedulesSelfBackup": "Raspored samostalne sigurnosne kopije",
-  "settings.schedulesChecks": "Raspored provjere vraćanja",
-  "settings.tamperTestSchedule": "Raspored testa neovlaštene izmjene",
   "settings.tamperScheduleInactive": "Neaktivno: nijedan izvanmrežni repozitorij nije označen kao samo-dodavanje, pa se ovaj raspored nikad ne izvršava. Označite izvanmrežni repozitorij kao samo-dodavanje u njegovim izvanmrežnim postavkama za omogućavanje.",
   "settings.everythingTitle": "Potpuna sigurnosna kopija",
   "settings.everythingDuplicateWarning": "Kontejneri, VM-ovi, Flash, mape, ZFS skupovi podataka i samostalna sigurnosna kopija kopiraju se dvaput dok su istodobno uključeni i ovaj raspored i njihov vlastiti: jednom ovdje i jednom po vlastitom rasporedu. Isključite područja koja ne želite kopirati dvaput.",
@@ -1983,7 +1973,6 @@ const hr: Partial<Translations> = {
   "filter.button": "Filtri",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "Tjedni sažetak",
   "settings.digestHint": "Jedna sažeta poruka tjedno: broj izvršavanja, novi podaci sigurnosne kopije, izvanmrežna ažurnost i najveći neuspjesi, poslana putem gore navedenih kanala obavijesti.",
   "settings.digestToggle": "Tjedni sažetak",
   // Missed-schedule catch-up + overdue-backup watchdog

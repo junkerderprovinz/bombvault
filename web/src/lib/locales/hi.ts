@@ -795,8 +795,6 @@ const hi: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "पिंग URL",
   "notify.healthchecksLifecycle": "जब भी URL सेट हो, Healthchecks को पूरे बैकअप जीवनचक्र में पिंग किया जाता है (शुरुआत, सफलता और विफलता), ऊपर वाली 'notify on' सेटिंग से स्वतंत्र रूप से, ताकि केवल-विफलता सूचनाओं के साथ भी सफलता पर जाँच हरी बनी रहे।",
-  "notify.hcPerDomain": "प्रति-डोमेन जाँच",
-  "notify.hcPerDomainHint": "ऊपर वाला ग्लोबल URL उपयोग करने के लिए किसी फ़ील्ड को खाली छोड़ें। अपने URL वाले डोमेन को अपनी जाँच मिलती है, अपने रनटाइम और इतिहास के साथ।",
   "notify.scheduledSummary": "शेड्यूल किए गए रन का सारांश दें",
   "notify.scheduledSummaryHint": "हर कंटेनर/VM के लिए अलग मैसेज के बजाय, हर शेड्यूल किए गए बैकअप रन के लिए एक ही सारांश भेजें (जैसे \"42 में से 45 सफल\")। Healthchecks पहले से ही सारांशित होता है। मैनुअल बैकअप अब भी प्रति-आइटम सूचित करते हैं।",
   "notify.notifyOnUpdate": "कंटेनर अपडेट पर सूचित करें",
@@ -842,7 +840,6 @@ const hi: Partial<Translations> = {
   "verify.failed": "सत्यापन विफल हुआ",
   "verify.last": "आख़िरी सत्यापन {time}",
   "verify.never": "कभी सत्यापित नहीं हुआ",
-  "verify.auto": "स्वचालित रीस्टोर जाँच",
   "verify.subsetPct": "डेटा नमूना (%)",
   "verify.hint": "यह साबित करने के लिए कि बैकअप डेटा बरकरार और रीस्टोर योग्य है, समय-समय पर उसका एक यादृच्छिक नमूना पढ़ता है।",
   "verify.shield": "सत्यापित",
@@ -1236,11 +1233,6 @@ const hi: Partial<Translations> = {
   "schedule.paused": "शेड्यूल रुका हुआ है",
   "schedule.pausedHint": "तय समय की रन और {everything} इस आइटम को छोड़ देते हैं। “{backupNow}” फिर भी काम करता है।",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "शेड्यूल ओवरराइड",
-  "schedule.overrideUsesDefault": "डोमेन शेड्यूल का उपयोग करता है",
-  "schedule.overrideEdit": "ओवरराइड सेट करें",
-  "schedule.overrideHint": "खाली होने पर डोमेन शेड्यूल उपयोग होता है।",
-  "schedule.overrideSaved": "ओवरराइड सहेजा गया",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const hi: Partial<Translations> = {
   "settings.search.notShown": "{name} अभी स्क्रीन पर नहीं है। स्क्रीन पर आने के लिए इससे जुड़ी सुविधा का चालू होना ज़रूरी है।",
   "settings.schedulesOffsite": "ऑफ़-साइट रेप्लिकेशन शेड्यूल",
   "settings.schedulesSelfBackup": "सेल्फ़-बैकअप शेड्यूल",
-  "settings.schedulesChecks": "रीस्टोर-जाँच शेड्यूल",
-  "settings.tamperTestSchedule": "छेड़छाड़-टेस्ट शेड्यूल",
   "settings.tamperScheduleInactive": "निष्क्रिय: किसी भी ऑफ़-साइट रिपॉज़िटरी को अपेंड-ओनली के रूप में चिह्नित नहीं किया गया है, इसलिए यह शेड्यूल कभी नहीं चलता। इसे सक्षम करने के लिए किसी ऑफ़-साइट रिपॉज़िटरी को उसकी अपनी ऑफ़-साइट सेटिंग्स में अपेंड-ओनली चिह्नित करें।",
   "settings.everythingTitle": "सब कुछ बैकअप",
   "settings.everythingDuplicateWarning": "जब तक यह शेड्यूल और उनका अपना शेड्यूल, दोनों चालू हैं, तब तक कंटेनर, VM, फ़्लैश, फ़ोल्डर, ZFS डेटासेट और सेल्फ़-बैकअप का बैकअप दो बार लिया जाता है: एक बार यहाँ और एक बार उनके अपने शेड्यूल पर। जिन डोमेन का बैकअप दोहराना नहीं चाहते, उन्हें बंद कर दें।",
@@ -1983,7 +1973,6 @@ const hi: Partial<Translations> = {
   "filter.button": "फ़िल्टर",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "साप्ताहिक सारांश",
   "settings.digestHint": "प्रति सप्ताह एक सारांश संदेश: रन की संख्या, नया बैकअप डेटा, ऑफ़-साइट की समयबद्धता और मुख्य विफलताएँ, ऊपर सेट किए गए सूचना चैनलों से भेजी जाती हैं।",
   "settings.digestToggle": "साप्ताहिक सारांश",
   // Missed-schedule catch-up + overdue-backup watchdog

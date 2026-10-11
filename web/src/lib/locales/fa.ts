@@ -795,8 +795,6 @@ const fa: Partial<Translations> = {
   "notify.healthchecksTitle": "Healthchecks",
   "notify.healthchecks": "نشانی پینگ",
   "notify.healthchecksLifecycle": "هرگاه نشانی‌ای تنظیم شده باشد، در سراسر چرخه عمر پشتیبان‌گیری (شروع، موفقیت و خطا) به Healthchecks پینگ زده می‌شود، مستقل از تنظیم «اعلان بده در» بالا، تا آن بررسی حتی با اعلان‌های فقط-خطا هم در حالت موفقیت سبز بماند.",
-  "notify.hcPerDomain": "بررسی‌ها به‌ازای هر حوزه",
-  "notify.hcPerDomainHint": "یک فیلد را خالی بگذارید تا از نشانی سراسری بالا استفاده شود. حوزه‌ای با نشانی خودش، بررسی و زمان اجرا و تاریخچه خودش را دارد.",
   "notify.scheduledSummary": "خلاصه‌سازی اجراهای زمان‌بندی‌شده",
   "notify.scheduledSummaryHint": "به‌جای پیام جداگانه برای هر کانتینر/ماشین مجازی، یک خلاصه واحد برای هر اجرای پشتیبان‌گیری زمان‌بندی‌شده بفرست (مثلاً «۴۲ از ۴۵ موفق»). Healthchecks از قبل خلاصه‌شده است. پشتیبان‌گیری‌های دستی همچنان به‌ازای هر مورد اعلان می‌دهند.",
   "notify.notifyOnUpdate": "اعلان هنگام به‌روزرسانی کانتینر",
@@ -842,7 +840,6 @@ const fa: Partial<Translations> = {
   "verify.failed": "بررسی ناموفق بود",
   "verify.last": "آخرین بررسی {time}",
   "verify.never": "هرگز بررسی نشده",
-  "verify.auto": "بررسی‌های خودکار بازیابی",
   "verify.subsetPct": "نمونه داده (٪)",
   "verify.hint": "به‌طور دوره‌ای یک نمونه تصادفی از داده‌های پشتیبان را می‌خواند تا ثابت کند سالم و قابل بازیابی هستند.",
   "verify.shield": "تأییدشده",
@@ -1236,11 +1233,6 @@ const fa: Partial<Translations> = {
   "schedule.paused": "زمان‌بندی متوقف است",
   "schedule.pausedHint": "اجراهای زمان‌بندی‌شده و {everything} این مورد را رد می‌کنند. «{backupNow}» همچنان کار می‌کند.",
   // Per-item schedule overrides
-  "schedule.overrideTitle": "جایگزینی زمان‌بندی",
-  "schedule.overrideUsesDefault": "از زمان‌بندی حوزه استفاده می‌کند",
-  "schedule.overrideEdit": "تنظیم جایگزین",
-  "schedule.overrideHint": "خالی بودن، زمان‌بندی حوزه را استفاده می‌کند.",
-  "schedule.overrideSaved": "جایگزینی ذخیره شد",
 
   // Auth / Login
   "auth.loginTitle": "BombVault",
@@ -1972,8 +1964,6 @@ const fa: Partial<Translations> = {
   "settings.search.notShown": "{name} در حال حاضر روی صفحه نیست. وقتی ویژگی مربوط به آن روشن باشد نشان داده می‌شود.",
   "settings.schedulesOffsite": "زمان‌بندی‌های همانندسازی خارج از محل",
   "settings.schedulesSelfBackup": "زمان‌بندی پشتیبان‌گیری خودکار",
-  "settings.schedulesChecks": "زمان‌بندی بررسی بازیابی",
-  "settings.tamperTestSchedule": "زمان‌بندی آزمایش دستکاری",
   "settings.tamperScheduleInactive": "غیرفعال: هیچ مخزن خارج از محلی به‌عنوان فقط-افزودنی علامت‌گذاری نشده، پس این زمان‌بندی هرگز اجرا نمی‌شود. برای فعال‌سازی، یک مخزن خارج از محل را در تنظیمات خارج از محل خودش به‌عنوان فقط-افزودنی علامت بزنید.",
   "settings.everythingTitle": "پشتیبان‌گیری کامل",
   "settings.everythingDuplicateWarning": "تا زمانی که این زمان‌بندی و زمان‌بندی خودِ آن‌ها هر دو روشن باشند، کانتینرها، ماشین‌های مجازی، فلش، پوشه‌ها، مجموعه‌داده‌های ZFS و پشتیبان‌گیری خودکار دو بار پشتیبان‌گیری می‌شوند: یک بار اینجا و یک بار در زمان‌بندی خودشان. حوزه‌هایی را که نمی‌خواهید دوباره پشتیبان‌گیری شوند خاموش کنید.",
@@ -1983,7 +1973,6 @@ const fa: Partial<Translations> = {
   "filter.button": "فیلترها",
 
   // Settings — weekly digest, backup-engine cache, revoke-all sessions
-  "settings.digestTitle": "خلاصه هفتگی",
   "settings.digestHint": "یک پیام خلاصه در هفته: تعداد اجراها، داده‌های پشتیبان جدید، به‌روز بودن خارج از محل و خطاهای اصلی، از طریق کانال‌های اعلان بالا ارسال می‌شود.",
   "settings.digestToggle": "خلاصه هفتگی",
   // Missed-schedule catch-up + overdue-backup watchdog
