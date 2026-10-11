@@ -3082,6 +3082,10 @@ const nl: Partial<Translations> = {
   // New target
   "newTarget.intro": "Bij zijn eerste back-up ontvangt {target} elk item dat niet op Lokaal staat.",
   "newTarget.moved": "De nieuwe locatie van {target} ontvangt de volledige geschiedenis.",
+  "newTarget.movedEmpty": "Op de nieuwe locatie van {target} staan nog geen back-ups, dus die ontvangt de volledige geschiedenis. Als je alleen de weg naar dezelfde opslag hebt veranderd, leidt deze locatie niet naar de oude repository.",
+  "newTarget.movedPartly": "De nieuwe locatie van {target} ontvangt wat er nog ontbreekt.",
+  "newTarget.movedHeld": "De nieuwe locatie van {target} heeft deze geschiedenis al, dus er wordt niets opnieuw verzonden.",
+  "newTarget.held": "Al aanwezig: {n}",
   "newTarget.itemsContainers": "Items en projectmappen: {n}",
   "newTarget.items": "Items: {n}",
   "newTarget.snapshots": "Back-ups: tot {n}",

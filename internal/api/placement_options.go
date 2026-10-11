@@ -8,9 +8,15 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
+
+// movedTargetListTimeout bounds the listing of a moved target's new location,
+// which the question about the move waits for.
+const movedTargetListTimeout = 20 * time.Second
 
 type excludedItem struct {
 	Identity string   `json:"identity"`
@@ -163,6 +169,11 @@ type targetPreview struct {
 	Snapshots        int            `json:"snapshots"`
 	Bytes            *int64         `json:"bytes"`
 	Unreadable       []string       `json:"unreadable"`
+	// Held is how many of Snapshots a moved target's new location holds
+	// already, nil when the target is not moving or the location did not list.
+	Held *int `json:"held"`
+
+	counted []restic.Snapshot
 }
 
 // placementDomainQuery reads ?domain of a placement route that takes it as a
@@ -225,6 +236,7 @@ func (s *Service) newTargetPreview(ctx context.Context, domain, targetID string,
 		}
 		pv.Items++
 		pv.Snapshots += len(listing.ByIdentity[id])
+		pv.counted = append(pv.counted, listing.ByIdentity[id]...)
 		if s.homeKindOf(settings, domain, homes[id], named) == homeLocal {
 			measured = false
 		}
@@ -259,12 +271,43 @@ func (h *Handler) handleNewTargetPreview(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "repo is required"})
 		return
 	}
-	pv, err := h.svc.newTargetPreview(r.Context(), domain, r.URL.Query().Get("target"), nil)
+	targetID := r.URL.Query().Get("target")
+	pv, err := h.svc.newTargetPreview(r.Context(), domain, targetID, nil)
 	if err != nil {
 		placementFail(w, err, nil)
 		return
 	}
+	pv.Held = h.svc.heldAtNewLocation(r.Context(), targetID, r.URL.Query().Get("repo"), pv.counted)
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"preview": pv}))
+}
+
+// heldAtNewLocation counts the snapshots of counted that the target would find
+// at loc. A target pointed at another address of the storage it already uses
+// sends nothing again, and the question about the move should say so instead
+// of announcing the whole history.
+func (s *Service) heldAtNewLocation(ctx context.Context, targetID, loc string, counted []restic.Snapshot) *int {
+	if targetID == "" {
+		return nil
+	}
+	loc = strings.TrimSpace(loc)
+	t, ok, err := s.store.GetOffsiteTarget(targetID)
+	if err != nil || !ok || sameRepoLocation(loc, strings.TrimSpace(t.Repo)) {
+		return nil
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(ctx, movedTargetListTimeout)
+	defer cancel()
+	t.Repo = loc
+	held, err := s.listTarget(ctx, settings, t)
+	if err != nil {
+		log.Printf("api: listing the new location of off-site target %q: %v", t.Name, scrubError(err)) //nolint:gosec // G706: the name is %q-quoted, the error scrubbed
+		return nil
+	}
+	n := len(counted) - len(restic.PendingCopyIDs(counted, held))
+	return &n
 }
 
 type newTargetRow struct {

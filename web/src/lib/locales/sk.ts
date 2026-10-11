@@ -3093,6 +3093,10 @@ const sk: Partial<Translations> = {
   // New target
   "newTarget.intro": "Pri prvom behu dostane {target} každú položku, ktorá nie je nastavená na Lokálny.",
   "newTarget.moved": "Nové umiestnenie {target} dostane celú históriu.",
+  "newTarget.movedEmpty": "Na novom umiestnení {target} zatiaľ nie sú žiadne zálohy, takže dostane celú históriu. Ak si zmenil len cestu k tomu istému úložisku, toto umiestnenie nevedie k starému repozitáru.",
+  "newTarget.movedPartly": "Nové umiestnenie {target} dostane to, čo mu ešte chýba.",
+  "newTarget.movedHeld": "Nové umiestnenie {target} už túto históriu má, takže sa nič znova neposiela.",
+  "newTarget.held": "Už tam je: {n}",
   "newTarget.itemsContainers": "Položky a priečinky projektu: {n}",
   "newTarget.items": "Položky: {n}",
   "newTarget.snapshots": "Zálohy: až {n}",

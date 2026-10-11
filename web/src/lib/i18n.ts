@@ -2464,6 +2464,11 @@ export const en = {
   // New target
   "newTarget.intro": "At its first run {target} receives every item not set to Local.",
   "newTarget.moved": "The new location of {target} receives the whole history.",
+  "newTarget.movedEmpty":
+    "The new location of {target} holds no backups yet, so it receives the whole history. If you only changed how you reach the same storage, this location does not lead to the old repository.",
+  "newTarget.movedPartly": "The new location of {target} receives what it does not hold yet.",
+  "newTarget.movedHeld": "The new location of {target} holds this history already, so nothing is sent again.",
+  "newTarget.held": "Already there: {n}",
   "newTarget.itemsContainers": "Items and project folders: {n}",
   "newTarget.items": "Items: {n}",
   "newTarget.snapshots": "Snapshots: up to {n}",
@@ -7032,6 +7037,11 @@ export const de: Translations = {
   // New target
   "newTarget.intro": "Beim ersten Lauf bekommt {target} jeden Eintrag, der nicht auf Lokal steht.",
   "newTarget.moved": "Der neue Ort von {target} bekommt den ganzen Verlauf.",
+  "newTarget.movedEmpty":
+    "Am neuen Ort von {target} liegen noch keine Sicherungen, er bekommt also den ganzen Verlauf. Hast du nur den Weg zum selben Speicher geändert, führt dieser Ort nicht zum alten Repository.",
+  "newTarget.movedPartly": "Der neue Ort von {target} bekommt, was ihm noch fehlt.",
+  "newTarget.movedHeld": "Der neue Ort von {target} hat diesen Verlauf schon, es wird nichts erneut gesendet.",
+  "newTarget.held": "Schon dort: {n}",
   "newTarget.itemsContainers": "Einträge und Projektordner: {n}",
   "newTarget.items": "Einträge: {n}",
   "newTarget.snapshots": "Snapshots: bis zu {n}",

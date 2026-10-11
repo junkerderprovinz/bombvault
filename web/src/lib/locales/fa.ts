@@ -3093,6 +3093,10 @@ const fa: Partial<Translations> = {
   // New target
   "newTarget.intro": "در اولین اجرا، {target} هر مورد که روی محلی تنظیم نشده را دریافت می‌کند.",
   "newTarget.moved": "مکان جدید {target} کل تاریخچه را دریافت می‌کند.",
+  "newTarget.movedEmpty": "مکان جدید {target} هنوز هیچ پشتیبانی ندارد، پس کل تاریخچه را دریافت می‌کند. اگر فقط مسیر رسیدن به همان فضای ذخیره‌سازی را عوض کرده‌ای، این مکان به مخزن قدیمی نمی‌رسد.",
+  "newTarget.movedPartly": "مکان جدید {target} فقط آنچه را هنوز ندارد دریافت می‌کند.",
+  "newTarget.movedHeld": "مکان جدید {target} این تاریخچه را از قبل دارد، پس چیزی دوباره ارسال نمی‌شود.",
+  "newTarget.held": "از قبل آنجاست: {n}",
   "newTarget.itemsContainers": "موردها و پوشه‌های پروژه: {n}",
   "newTarget.items": "موردها: {n}",
   "newTarget.snapshots": "پشتیبان‌ها: تا {n}",

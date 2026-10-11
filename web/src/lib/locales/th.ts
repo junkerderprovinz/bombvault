@@ -3084,6 +3084,10 @@ const th: Partial<Translations> = {
   // New target
   "newTarget.intro": "ในการทำงานครั้งแรก {target} จะได้รับทุกรายการที่ไม่ได้ตั้งเป็นในเครื่อง",
   "newTarget.moved": "ตำแหน่งใหม่ของ {target} จะได้รับประวัติทั้งหมด",
+  "newTarget.movedEmpty": "ตำแหน่งใหม่ของ {target} ยังไม่มีข้อมูลสำรอง จึงจะได้รับประวัติทั้งหมด หากคุณเปลี่ยนเพียงเส้นทางไปยังที่เก็บข้อมูลเดิม ตำแหน่งนี้ไม่ได้นำไปสู่คลังเก่า",
+  "newTarget.movedPartly": "ตำแหน่งใหม่ของ {target} จะได้รับเฉพาะสิ่งที่ยังไม่มี",
+  "newTarget.movedHeld": "ตำแหน่งใหม่ของ {target} มีประวัตินี้อยู่แล้ว จึงไม่มีการส่งซ้ำ",
+  "newTarget.held": "มีอยู่แล้ว: {n}",
   "newTarget.itemsContainers": "รายการและโฟลเดอร์โปรเจกต์: {n}",
   "newTarget.items": "รายการ: {n}",
   "newTarget.snapshots": "ข้อมูลสำรอง: สูงสุด {n}",

@@ -3093,6 +3093,10 @@ const ca: Partial<Translations> = {
   // New target
   "newTarget.intro": "En la seva primera execució, {target} rep tots els elements que no estan establerts a Local.",
   "newTarget.moved": "La nova ubicació de {target} rep tot l'historial.",
+  "newTarget.movedEmpty": "La nova ubicació de {target} encara no té còpies de seguretat, així que rep tot l'historial. Si només has canviat com arribes al mateix emmagatzematge, aquesta ubicació no porta al repositori antic.",
+  "newTarget.movedPartly": "La nova ubicació de {target} rep el que encara no té.",
+  "newTarget.movedHeld": "La nova ubicació de {target} ja té aquest historial, així que no es torna a enviar res.",
+  "newTarget.held": "Ja hi és: {n}",
   "newTarget.itemsContainers": "Elements i carpetes de projecte: {n}",
   "newTarget.items": "Elements: {n}",
   "newTarget.snapshots": "Còpies: fins a {n}",

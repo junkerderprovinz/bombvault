@@ -3081,6 +3081,10 @@ const es: Partial<Translations> = {
   // New target
   "newTarget.intro": "En su primera ejecución, {target} recibe todos los elementos que no están en Local.",
   "newTarget.moved": "La nueva ubicación de {target} recibe todo el historial.",
+  "newTarget.movedEmpty": "La nueva ubicación de {target} aún no tiene copias de seguridad, así que recibe todo el historial. Si solo cambiaste cómo llegas al mismo almacenamiento, esta ubicación no lleva al repositorio antiguo.",
+  "newTarget.movedPartly": "La nueva ubicación de {target} recibe lo que aún le falta.",
+  "newTarget.movedHeld": "La nueva ubicación de {target} ya tiene este historial, así que no se vuelve a enviar nada.",
+  "newTarget.held": "Ya está allí: {n}",
   "newTarget.itemsContainers": "Elementos y carpetas de proyecto: {n}",
   "newTarget.items": "Elementos: {n}",
   "newTarget.snapshots": "Copias: hasta {n}",

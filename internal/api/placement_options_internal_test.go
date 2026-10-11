@@ -78,6 +78,51 @@ func TestAMovedTargetLeavesOutWhatAlreadySkipsIt(t *testing.T) {
 	}
 }
 
+func TestAMovedTargetCountsWhatItsNewLocationHoldsAlready(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "rest:http://10.0.0.5:8000/bv")
+	f.container("nginx", "")
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"), snap("aaaa0002", 200, "container:nginx"), snap("aaaa0003", 300, "container:nginx"))
+	f.hold("rest:http://nas.vpn:8000/bv",
+		copied("cccc0001", "aaaa0001", 100, "container:nginx"), copied("cccc0002", "aaaa0002", 200, "container:nginx"))
+
+	pv := f.newTargetPreview("domain=containers&repo=rest:http://nas.vpn:8000/bv&target=" + b2.ID)
+	if pv["snapshots"] != float64(3) || pv["held"] != float64(2) {
+		t.Fatalf("preview = %v, want 3 snapshots, 2 of them held at the new location", pv)
+	}
+}
+
+func TestAMovedTargetWhoseNewLocationHoldsNothingSaysSo(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "rest:http://10.0.0.5:8000/bv")
+	f.container("nginx", "")
+	f.hold(f.domainPath("containers"), snap("aaaa0001", 100, "container:nginx"))
+
+	pv := f.newTargetPreview("domain=containers&repo=rest:http://nas.vpn:8000/other&target=" + b2.ID)
+	if pv["held"] != float64(0) {
+		t.Fatalf("held = %v, want 0", pv["held"])
+	}
+}
+
+func TestTheHeldCountIsLeftOutWhenNothingMovesOrTheNewLocationDoesNotList(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "rest:http://10.0.0.5:8000/bv")
+	f.container("nginx", "")
+	f.hold(f.domainPath("containers"), snap("aaaa0001", 100, "container:nginx"))
+	f.eng.listErr = map[string]error{"rest:http://nas.vpn:8000/bv": errors.New("dial tcp: i/o timeout")}
+
+	for _, query := range []string{
+		"repo=rest:http://10.0.0.5:8000/bv/&target=" + b2.ID,
+		"repo=rest:http://nas.vpn:8000/bv&target=" + b2.ID,
+		"repo=rest:http://nas.vpn:8000/bv",
+	} {
+		if pv := f.newTargetPreview("domain=containers&" + query); pv["held"] != nil {
+			t.Errorf("%s: held = %v, want none", query, pv["held"])
+		}
+	}
+}
+
 func TestTheSizeIsLeftOutWhenANamedRepositoryHoldsCountedItems(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS Keller", "nas")

@@ -57,7 +57,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     getNewTargetPreview: () =>
       Promise.resolve({
         ok: true,
-        preview: { items: 3, formerlyExcluded: [], defaultExcludes: false, snapshots: 40, bytes: null, unreadable: [] },
+        preview: { items: 3, formerlyExcluded: [], defaultExcludes: false, snapshots: 40, bytes: null, unreadable: [], held: null },
       }),
     listOffsiteTargets: () => {
       listTargetCalls++;

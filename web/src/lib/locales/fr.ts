@@ -3083,6 +3083,10 @@ const fr: Partial<Translations> = {
   // New target
   "newTarget.intro": "À sa première exécution, {target} reçoit tous les éléments qui ne sont pas réglés sur Local.",
   "newTarget.moved": "Le nouvel emplacement de {target} reçoit tout l'historique.",
+  "newTarget.movedEmpty": "Le nouvel emplacement de {target} ne contient encore aucune sauvegarde, il reçoit donc tout l'historique. Si tu as seulement changé la façon d'atteindre le même stockage, cet emplacement ne mène pas à l'ancien dépôt.",
+  "newTarget.movedPartly": "Le nouvel emplacement de {target} reçoit ce qui lui manque encore.",
+  "newTarget.movedHeld": "Le nouvel emplacement de {target} contient déjà cet historique, rien n'est donc renvoyé.",
+  "newTarget.held": "Déjà sur place : {n}",
   "newTarget.itemsContainers": "Éléments et dossiers de projet : {n}",
   "newTarget.items": "Éléments : {n}",
   "newTarget.snapshots": "Sauvegardes : jusqu'à {n}",

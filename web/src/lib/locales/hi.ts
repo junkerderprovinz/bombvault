@@ -3093,6 +3093,10 @@ const hi: Partial<Translations> = {
   // New target
   "newTarget.intro": "पहली बार चलने पर {target} हर वह प्रविष्टि पाता है, जो लोकल पर सेट नहीं है।",
   "newTarget.moved": "{target} की नई जगह पूरा इतिहास पाती है।",
+  "newTarget.movedEmpty": "{target} की नई जगह पर अभी कोई बैकअप नहीं है, इसलिए उसे पूरा इतिहास मिलता है। अगर आपने केवल उसी स्टोरेज तक पहुँचने का रास्ता बदला है, तो यह जगह पुराने रिपॉज़िटरी तक नहीं ले जाती।",
+  "newTarget.movedPartly": "{target} की नई जगह को वही मिलता है जो उसके पास अभी नहीं है।",
+  "newTarget.movedHeld": "{target} की नई जगह पर यह इतिहास पहले से है, इसलिए कुछ भी दोबारा नहीं भेजा जाता।",
+  "newTarget.held": "पहले से वहाँ: {n}",
   "newTarget.itemsContainers": "प्रविष्टियाँ और प्रोजेक्ट फ़ोल्डर: {n}",
   "newTarget.items": "प्रविष्टियाँ: {n}",
   "newTarget.snapshots": "बैकअप: अधिकतम {n}",

@@ -114,7 +114,7 @@ export function defaultImpact(over?: Partial<DefaultImpact>): DefaultImpact {
 }
 
 export function targetPreview(over?: Partial<TargetPreview>): TargetPreview {
-  return { items: 15, formerlyExcluded: [], defaultExcludes: false, snapshots: 420, bytes: null, unreadable: [], ...over };
+  return { items: 15, formerlyExcluded: [], defaultExcludes: false, snapshots: 420, bytes: null, unreadable: [], held: null, ...over };
 }
 
 export function uploadEstimate(over?: Partial<UploadEstimate>): UploadEstimate {

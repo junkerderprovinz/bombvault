@@ -3084,6 +3084,10 @@ const ro: Partial<Translations> = {
   // New target
   "newTarget.intro": "La prima rulare, {target} primește fiecare element care nu este setat pe Local.",
   "newTarget.moved": "Noua locație a {target} primește întregul istoric.",
+  "newTarget.movedEmpty": "Noua locație a {target} nu are încă copii de rezervă, așa că primește întregul istoric. Dacă ai schimbat doar calea către același spațiu de stocare, această locație nu duce la depozitul vechi.",
+  "newTarget.movedPartly": "Noua locație a {target} primește ce îi lipsește încă.",
+  "newTarget.movedHeld": "Noua locație a {target} are deja acest istoric, așa că nu se trimite nimic din nou.",
+  "newTarget.held": "Deja acolo: {n}",
   "newTarget.itemsContainers": "Elemente și foldere de proiect: {n}",
   "newTarget.items": "Elemente: {n}",
   "newTarget.snapshots": "Copii de rezervă: până la {n}",

@@ -3083,6 +3083,10 @@ const no: Partial<Translations> = {
   // New target
   "newTarget.intro": "Ved sin første kjøring mottar {target} hvert element som ikke er satt til Lokal.",
   "newTarget.moved": "Den nye plasseringen til {target} mottar hele historikken.",
+  "newTarget.movedEmpty": "Den nye plasseringen til {target} har ingen sikkerhetskopier ennå, så den mottar hele historikken. Hvis du bare endret veien til den samme lagringen, fører ikke denne plasseringen til det gamle repositoriet.",
+  "newTarget.movedPartly": "Den nye plasseringen til {target} mottar det den fortsatt mangler.",
+  "newTarget.movedHeld": "Den nye plasseringen til {target} har allerede denne historikken, så ingenting sendes på nytt.",
+  "newTarget.held": "Allerede der: {n}",
   "newTarget.itemsContainers": "Elementer og prosjektmapper: {n}",
   "newTarget.items": "Elementer: {n}",
   "newTarget.snapshots": "Sikkerhetskopier: opptil {n}",

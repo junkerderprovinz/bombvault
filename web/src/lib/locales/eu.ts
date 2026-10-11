@@ -3093,6 +3093,10 @@ const eu: Partial<Translations> = {
   // New target
   "newTarget.intro": "Lehen aldiz exekutatzean, {target}(e)k Lokala ez duen elementu oro jasotzen du.",
   "newTarget.moved": "{target}(r)en kokapen berriak historia osoa jasotzen du.",
+  "newTarget.movedEmpty": "{target}(r)en kokapen berrian ez dago babeskopiarik oraindik, beraz historia osoa jasotzen du. Biltegiratze berera iristeko bidea bakarrik aldatu baduzu, kokapen honek ez darama biltegi zaharrera.",
+  "newTarget.movedPartly": "{target}(r)en kokapen berriak falta zaiona jasotzen du.",
+  "newTarget.movedHeld": "{target}(r)en kokapen berriak badu historia hau dagoeneko, beraz ez da ezer berriro bidaltzen.",
+  "newTarget.held": "Dagoeneko han: {n}",
   "newTarget.itemsContainers": "Elementuak eta proiektu-karpetak: {n}",
   "newTarget.items": "Elementuak: {n}",
   "newTarget.snapshots": "Babeskopiak: gehienez {n}",
