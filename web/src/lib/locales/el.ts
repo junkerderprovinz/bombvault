@@ -4182,6 +4182,7 @@ const el: Partial<Translations> = {
   "firstSteps.sections": "Επιλέξτε ενότητες",
   "firstSteps.sectionsSub": "Τι αντιγράφεται",
   "firstSteps.sectionsHint": "Ενεργοποιήστε ό,τι πρέπει να αντιγράφει το BombVault.",
+  "firstSteps.nightly": "Οι ενότητες που ενεργοποιείτε εδώ εκτελούνται κάθε νύχτα και μπορείτε να το αλλάξετε από {where}.",
   "firstSteps.locationSub": "Πού πηγαίνουν τα αντίγραφα",
   "firstSteps.locationHint": "Πού πηγαίνουν τα αντίγραφα ασφαλείας. Ασφαλέστερος είναι ένας δεύτερος προορισμός εκτός χώρου σας, όπως ένα Storage Box ή το Backblaze B2.",
   "firstSteps.backup": "Πρώτο αντίγραφο ασφαλείας",

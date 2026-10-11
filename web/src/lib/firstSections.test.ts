@@ -1,0 +1,79 @@
+import { describe, expect, it } from "vitest";
+
+import type { Settings } from "./api";
+import { NIGHTLY, SECTIONS, scheduleChosen, switchSection } from "./firstSections";
+
+/** The settings of a new install: containers on, nothing scheduled. */
+function settings(over: Partial<Settings> = {}): Settings {
+  return {
+    containersEnabled: true,
+    vmsEnabled: false,
+    flashEnabled: false,
+    filesEnabled: false,
+    zfsEnabled: false,
+    configEnabled: false,
+    containersSchedule: "off",
+    vmsSchedule: "off",
+    flashSchedule: "off",
+    filesSchedule: "off",
+    zfsSchedule: "off",
+    configSchedule: "off",
+    everythingSchedule: "off",
+    ...over,
+  } as Settings;
+}
+
+const section = (kind: string) => SECTIONS.find((s) => s.kind === kind)!;
+
+describe("the nightly schedule", () => {
+  it("is the daily run the schedule editor starts from", () => {
+    expect(NIGHTLY).toBe("daily 02:00");
+  });
+});
+
+describe("switchSection", () => {
+  it("switches a section on together with a nightly schedule when nothing runs it", () => {
+    expect(switchSection(settings(), section("flash"), true)).toEqual({ flashEnabled: true, flashSchedule: NIGHTLY });
+  });
+
+  it("takes an empty schedule for none", () => {
+    expect(switchSection(settings({ vmsSchedule: "" }), section("vm"), true)).toEqual({ vmsEnabled: true, vmsSchedule: NIGHTLY });
+  });
+
+  it("keeps the schedule a section already has", () => {
+    const weekly = settings({ filesSchedule: "weekly Sun 04:00" });
+    expect(switchSection(weekly, section("files"), true)).toEqual({ filesEnabled: true });
+  });
+
+  it("adds no schedule to a section the Backup Everything schedule runs", () => {
+    const covered = settings({ everythingSchedule: "daily 01:00" });
+    expect(switchSection(covered, section("zfs"), true)).toEqual({ zfsEnabled: true });
+  });
+
+  it("takes the nightly schedule back when the section is switched off", () => {
+    const on = settings({ flashEnabled: true, flashSchedule: NIGHTLY });
+    expect(switchSection(on, section("flash"), false)).toEqual({ flashEnabled: false, flashSchedule: "off" });
+  });
+
+  it("leaves another schedule alone when the section is switched off", () => {
+    const weekly = settings({ filesEnabled: true, filesSchedule: "weekly Sun 04:00" });
+    expect(switchSection(weekly, section("files"), false)).toEqual({ filesEnabled: false });
+    expect(switchSection(settings(), section("container"), false)).toEqual({ containersEnabled: false });
+  });
+});
+
+describe("scheduleChosen", () => {
+  it("gives the nightly schedule to the sections that are on and that nothing runs", () => {
+    const chosen = settings({ flashEnabled: true, configEnabled: true, configSchedule: "weekly Mon 05:00" });
+    expect(scheduleChosen(chosen)).toEqual({ containersSchedule: NIGHTLY, flashSchedule: NIGHTLY });
+  });
+
+  it("leaves the sections that are off without a schedule", () => {
+    expect(scheduleChosen(settings())).toEqual({ containersSchedule: NIGHTLY });
+  });
+
+  it("writes nothing where every section that is on has a schedule", () => {
+    expect(scheduleChosen(settings({ containersSchedule: "daily 03:00" }))).toEqual({});
+    expect(scheduleChosen(settings({ everythingSchedule: "daily 01:00" }))).toEqual({});
+  });
+});

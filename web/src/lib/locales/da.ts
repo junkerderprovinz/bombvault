@@ -4182,6 +4182,7 @@ const da: Partial<Translations> = {
   "firstSteps.sections": "Vælg områder",
   "firstSteps.sectionsSub": "Hvad der sikkerhedskopieres",
   "firstSteps.sectionsHint": "Slå til, hvad BombVault skal sikkerhedskopiere.",
+  "firstSteps.nightly": "De områder, der er slået til her, kører hver nat, og det kan du ændre under {where}.",
   "firstSteps.locationSub": "Hvor sikkerhedskopierne havner",
   "firstSteps.locationHint": "Hvor sikkerhedskopierne havner. Sikrest er en ekstra destination uden for huset, for eksempel en Storage Box eller Backblaze B2.",
   "firstSteps.backup": "Første sikkerhedskopi",

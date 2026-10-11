@@ -4190,6 +4190,7 @@ const bg: Partial<Translations> = {
   "firstSteps.sections": "Избери раздели",
   "firstSteps.sectionsSub": "Какво се архивира",
   "firstSteps.sectionsHint": "Включи какво да архивира BombVault.",
+  "firstSteps.nightly": "Включените тук раздели се изпълняват всяка нощ, а можеш да го промениш в {where}.",
   "firstSteps.locationSub": "Къде отиват архивите",
   "firstSteps.locationHint": "Къде отиват архивите. Най-сигурна е втора дестинация извън дома, например Storage Box или Backblaze B2.",
   "firstSteps.backup": "Първо архивиране",

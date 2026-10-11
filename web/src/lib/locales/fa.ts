@@ -4190,6 +4190,7 @@ const fa: Partial<Translations> = {
   "firstSteps.sections": "انتخاب بخش‌ها",
   "firstSteps.sectionsSub": "از چه چیزی پشتیبان گرفته می‌شود",
   "firstSteps.sectionsHint": "آنچه BombVault باید پشتیبان بگیرد را روشن کنید.",
+  "firstSteps.nightly": "بخش‌هایی که اینجا روشن می‌کنید هر شب اجرا می‌شوند و می‌توانید آن را در {where} تغییر دهید.",
   "firstSteps.locationSub": "پشتیبان‌ها کجا می‌روند",
   "firstSteps.locationHint": "پشتیبان‌ها کجا می‌روند. امن‌ترین حالت یک مقصد دوم بیرون از محل است، مثل Storage Box یا Backblaze B2.",
   "firstSteps.backup": "نخستین پشتیبان‌گیری",

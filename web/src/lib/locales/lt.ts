@@ -4190,6 +4190,7 @@ const lt: Partial<Translations> = {
   "firstSteps.sections": "Pasirink sritis",
   "firstSteps.sectionsSub": "Kas kopijuojama",
   "firstSteps.sectionsHint": "Įjunk tai, ką BombVault turi kopijuoti.",
+  "firstSteps.nightly": "Čia įjungtos sritys vykdomos kiekvieną naktį, o tai gali pakeisti čia: {where}.",
   "firstSteps.locationSub": "Kur keliauja kopijos",
   "firstSteps.locationHint": "Kur keliauja atsarginės kopijos. Saugiausia antra paskirties vieta ne namuose, pavyzdžiui, Storage Box ar Backblaze B2.",
   "firstSteps.backup": "Pirmoji atsarginė kopija",

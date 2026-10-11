@@ -4185,6 +4185,7 @@ const hu: Partial<Translations> = {
   "firstSteps.sections": "Válaszd ki a területeket",
   "firstSteps.sectionsSub": "Mit mentünk",
   "firstSteps.sectionsHint": "Kapcsold be, amit a BombVaultnak mentenie kell.",
+  "firstSteps.nightly": "Az itt bekapcsolt területek minden éjjel lefutnak, ezt itt módosíthatod: {where}.",
   "firstSteps.locationSub": "Hová kerülnek a mentések",
   "firstSteps.locationHint": "Hová kerülnek a mentések. A legbiztonságosabb egy második célhely házon kívül, például egy Storage Box vagy a Backblaze B2.",
   "firstSteps.backup": "Első mentés",

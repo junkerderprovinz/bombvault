@@ -4182,6 +4182,7 @@ const sv: Partial<Translations> = {
   "firstSteps.sections": "Välj områden",
   "firstSteps.sectionsSub": "Vad som säkerhetskopieras",
   "firstSteps.sectionsHint": "Slå på det BombVault ska säkerhetskopiera.",
+  "firstSteps.nightly": "Områdena som är påslagna här körs varje natt, och det kan du ändra under {where}.",
   "firstSteps.locationSub": "Vart säkerhetskopiorna går",
   "firstSteps.locationHint": "Vart säkerhetskopiorna går. Säkrast är ett andra mål utanför huset, till exempel en Storage Box eller Backblaze B2.",
   "firstSteps.backup": "Första säkerhetskopian",
