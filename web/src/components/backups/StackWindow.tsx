@@ -16,6 +16,7 @@ import { Button } from "../Button";
 import { IconBack, IconForward } from "../glyphs";
 import { IconContainers, IconRestore } from "../navGlyphs";
 import { ProgressBar } from "../ProgressBar";
+import { RadioMark } from "../RadioMark";
 import { RestoreCancelButton } from "../RestoreCancelButton";
 import { RestoreCheckPanel } from "../restore/RestoreCheckPanel";
 import { RuntimeRetry } from "../restore/RuntimeRetry";
@@ -215,13 +216,7 @@ export function StackWindow({
                     on ? "ring-accent" : "ring-transparent"
                   }`}
                 >
-                  <span
-                    className={`flex h-[18px] w-[18px] flex-none items-center justify-center rounded-pill border-2 ${
-                      on ? "border-accent" : "border-carbon-textMuted"
-                    }`}
-                  >
-                    {on && <span className="h-2 w-2 rounded-pill bg-accent" />}
-                  </span>
+                  <RadioMark on={on} />
                   <span className="flex min-w-0 flex-col">
                     <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{s.project}</span>
                     <span className="text-xs text-carbon-textMuted wrap-anywhere">{membersLine(s, t)}</span>
