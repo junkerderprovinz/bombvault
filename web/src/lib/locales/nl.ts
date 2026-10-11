@@ -2686,7 +2686,6 @@ const nl: Partial<Translations> = {
   "relay.notSeesContent": "Wat je instanties elkaar sturen. Dat is end-to-end versleuteld.",
   "relay.notSeesBackups": "Je back-ups. Via de relay gaan alleen status, commando's en koppeling.",
   "relay.saveError": "Kon de relay-instelling niet opslaan.",
-  "relay.selfAddressLabel": "Deze instantie in je netwerk",
   "relay.selfAddressTip": "Overgenomen uit je browser zodra je inlogt. Pas het aan als er een reverse proxy of een andere poort tussen je browser en deze instantie zit.",
   "relay.selfAddressError": "Het adres van deze instantie kon niet worden opgeslagen.",
   "relay.sees.title": "Wat de relay ziet",

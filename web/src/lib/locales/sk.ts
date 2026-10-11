@@ -1626,7 +1626,6 @@ const sk: Partial<Translations> = {
   "relay.notSeesContent": "Čo si vaše inštancie navzájom posielajú. Je to šifrované z konca na koniec.",
   "relay.notSeesBackups": "Vaše zálohy. Cez relay prechádza len stav, príkazy a párovanie.",
   "relay.saveError": "Nastavenie relay sa nepodarilo uložiť.",
-  "relay.selfAddressLabel": "Táto inštancia vo vašej sieti",
   "relay.selfAddressTip": "Zistené z vášho prehliadača pri prihlásení. Zmeňte ju, ak medzi vaším prehliadačom a touto inštanciou stojí reverzný proxy alebo iný port.",
   "relay.selfAddressError": "Adresu tejto inštancie sa nepodarilo uložiť.",
   "relay.sees.title": "Čo vidí Relay",

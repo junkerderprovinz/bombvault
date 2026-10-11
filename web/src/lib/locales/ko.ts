@@ -2678,7 +2678,6 @@ const ko: Partial<Translations> = {
   "relay.notSeesContent": "인스턴스끼리 주고받는 내용입니다. 종단 간 암호화되어 있습니다.",
   "relay.notSeesBackups": "백업입니다. 릴레이를 거치는 것은 상태, 명령, 페어링뿐입니다.",
   "relay.saveError": "릴레이 설정을 저장할 수 없습니다.",
-  "relay.selfAddressLabel": "네트워크상의 이 인스턴스",
   "relay.selfAddressTip": "로그인할 때 브라우저에서 가져옵니다. 브라우저와 이 인스턴스 사이에 리버스 프록시나 다른 포트가 있다면 변경하세요.",
   "relay.selfAddressError": "이 인스턴스의 주소를 저장할 수 없습니다.",
   "relay.sees.title": "릴레이가 보는 것",

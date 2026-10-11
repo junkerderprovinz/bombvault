@@ -2688,7 +2688,6 @@ const hu: Partial<Translations> = {
   "relay.notSeesContent": "Amit a példányaid egymásnak küldenek. Ez végpontok között titkosított.",
   "relay.notSeesBackups": "A biztonsági mentéseid. A relay-en csak az állapot, a parancsok és a párosítás megy át.",
   "relay.saveError": "A relay-beállítást nem sikerült elmenteni.",
-  "relay.selfAddressLabel": "Ez a példány a hálózatodon",
   "relay.selfAddressTip": "A böngésződből származik, amint bejelentkezel. Módosítsd, ha reverse proxy vagy más port van a böngésződ és ez a példány között.",
   "relay.selfAddressError": "Nem sikerült elmenteni ennek a példánynak a címét.",
   "relay.sees.title": "Mit lát a relay",

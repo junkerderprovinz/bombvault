@@ -2687,7 +2687,6 @@ const tr: Partial<Translations> = {
   "relay.notSeesContent": "Örneklerinin birbirine gönderdiği şey. Bu uçtan uca şifrelenir.",
   "relay.notSeesBackups": "Yedeklerin. Röleden yalnızca durum, komutlar ve eşleştirme geçer.",
   "relay.saveError": "Röle ayarı kaydedilemedi.",
-  "relay.selfAddressLabel": "Ağındaki bu örnek",
   "relay.selfAddressTip": "Oturum açtığında tarayıcından öğrenilir. Tarayıcın ile bu örnek arasında bir ters proxy veya farklı bir port varsa değiştir.",
   "relay.selfAddressError": "Bu örneğin adresi kaydedilemedi.",
   "relay.sees.title": "Rölenin gördüğü",

@@ -1626,7 +1626,6 @@ const ca: Partial<Translations> = {
   "relay.notSeesContent": "El que les teves instàncies s'envien entre elles. Està xifrat d'extrem a extrem.",
   "relay.notSeesBackups": "Les teves còpies de seguretat. Només l'estat, les ordres i l'aparellament passen pel repetidor.",
   "relay.saveError": "No s'ha pogut desar la configuració del repetidor.",
-  "relay.selfAddressLabel": "Aquesta instància a la teva xarxa",
   "relay.selfAddressTip": "S'obté del teu navegador quan inicies la sessió. Canvia-la si un proxy invers o un port diferent se situa entre el teu navegador i aquesta instància.",
   "relay.selfAddressError": "No s'ha pogut desar l'adreça d'aquesta instància.",
   "relay.sees.title": "Què veu el repetidor",

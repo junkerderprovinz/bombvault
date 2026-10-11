@@ -2687,7 +2687,6 @@ const he: Partial<Translations> = {
   "relay.notSeesContent": "מה שהמופעים שלך שולחים זה לזה. זה מוצפן מקצה לקצה.",
   "relay.notSeesBackups": "הגיבויים שלך. רק סטטוס, פקודות והצימוד עוברים דרך הממסר.",
   "relay.saveError": "לא ניתן היה לשמור את הגדרת הממסר.",
-  "relay.selfAddressLabel": "המופע הזה ברשת שלך",
   "relay.selfAddressTip": "נלמד מהדפדפן שלך כשאתה מתחבר. שנה אותה אם פרוקסי הפוך או פורט אחר עומדים בין הדפדפן שלך למופע הזה.",
   "relay.selfAddressError": "לא ניתן היה לשמור את הכתובת של המופע הזה.",
   "relay.sees.title": "מה הממסר רואה",

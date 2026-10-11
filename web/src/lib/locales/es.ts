@@ -2685,7 +2685,6 @@ const es: Partial<Translations> = {
   "relay.notSeesContent": "Lo que tus instancias se envían entre sí. Está cifrado de extremo a extremo.",
   "relay.notSeesBackups": "Tus copias de seguridad. Por el repetidor solo pasan el estado, los comandos y el emparejamiento.",
   "relay.saveError": "No se pudo guardar el ajuste del repetidor.",
-  "relay.selfAddressLabel": "Esta instancia en tu red",
   "relay.selfAddressTip": "Se obtiene de tu navegador al iniciar sesión. Cámbiala si un proxy inverso o un puerto distinto se interpone entre tu navegador y esta instancia.",
   "relay.selfAddressError": "No se pudo guardar la dirección de esta instancia.",
   "relay.sees.title": "Qué ve el repetidor",

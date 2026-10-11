@@ -2678,7 +2678,6 @@ const zh: Partial<Translations> = {
   "relay.notSeesContent": "你的实例之间互相发送的内容。它是端到端加密的。",
   "relay.notSeesBackups": "你的备份。经过中继的只有状态、命令和配对。",
   "relay.saveError": "无法保存中继设置。",
-  "relay.selfAddressLabel": "这台实例在你的网络中",
   "relay.selfAddressTip": "登录时从你的浏览器中获取。如果你的浏览器和这台实例之间有反向代理或不同的端口，请修改它。",
   "relay.selfAddressError": "无法保存这台实例的地址。",
   "relay.sees.title": "中继能看到什么",

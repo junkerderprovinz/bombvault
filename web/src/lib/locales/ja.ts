@@ -2678,7 +2678,6 @@ const ja: Partial<Translations> = {
   "relay.notSeesContent": "インスタンス同士がやり取りする内容です。エンドツーエンドで暗号化されています。",
   "relay.notSeesBackups": "バックアップです。リレーを通るのはステータス、コマンド、ペアリングだけです。",
   "relay.saveError": "リレー設定を保存できませんでした。",
-  "relay.selfAddressLabel": "ネットワーク上のこのインスタンス",
   "relay.selfAddressTip": "サインイン時にブラウザから取得されます。ブラウザとこのインスタンスの間にリバースプロキシや別のポートがある場合は変更してください。",
   "relay.selfAddressError": "このインスタンスのアドレスを保存できませんでした。",
   "relay.sees.title": "リレーに見えるもの",

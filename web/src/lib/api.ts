@@ -5907,6 +5907,10 @@ export interface GroupState extends OkEnvelope {
   /** selfAddress was set by hand and stops being replaced by a newly
    *  learned one. */
   selfAddressManual: boolean;
+  /** What this instance found out about itself: its addresses on the local
+   *  network and its host name. A server that does not report them leaves the
+   *  field out. */
+  ownAddresses?: string[];
 }
 
 /** Why a phrase did not decode, with the word at fault. */

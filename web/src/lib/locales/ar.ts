@@ -2688,7 +2688,6 @@ const ar: Partial<Translations> = {
   "relay.notSeesContent": "ما ترسله مثيلاتك لبعضها البعض. وهو مشفّر من طرف إلى طرف.",
   "relay.notSeesBackups": "نسخك الاحتياطية. لا يمر عبر المُرحِّل سوى الحالة والأوامر والاقتران.",
   "relay.saveError": "تعذّر حفظ إعداد المُرحِّل.",
-  "relay.selfAddressLabel": "هذا المثيل على شبكتك",
   "relay.selfAddressTip": "يُستمد من متصفحك عند تسجيل الدخول. غيّره إذا كان وكيل عكسي أو منفذ مختلف يقف بين متصفحك وهذا المثيل.",
   "relay.selfAddressError": "تعذّر حفظ عنوان هذا المثيل.",
   "relay.sees.title": "ما يراه المُرحِّل",

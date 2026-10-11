@@ -2687,7 +2687,6 @@ const sv: Partial<Translations> = {
   "relay.notSeesContent": "Det dina instanser skickar till varandra. Det är totalsträckskrypterat.",
   "relay.notSeesBackups": "Dina säkerhetskopior. Genom reläet går bara status, kommandon och parkoppling.",
   "relay.saveError": "Kunde inte spara reläinställningen.",
-  "relay.selfAddressLabel": "Den här instansen på ditt nätverk",
   "relay.selfAddressTip": "Hämtas från din webbläsare när du loggar in. Ändra den om en omvänd proxy eller en annan port står mellan din webbläsare och den här instansen.",
   "relay.selfAddressError": "Det gick inte att spara den här instansens adress.",
   "relay.sees.title": "Vad reläet ser",

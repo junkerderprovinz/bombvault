@@ -1626,7 +1626,6 @@ const fa: Partial<Translations> = {
   "relay.notSeesContent": "چیزی که نمونه‌هایت برای هم می‌فرستند. آن سرتاسر رمزگذاری‌شده است.",
   "relay.notSeesBackups": "پشتیبان‌های تو. فقط وضعیت، دستورها و جفت‌سازی از رله عبور می‌کنند.",
   "relay.saveError": "تنظیم رله ذخیره نشد.",
-  "relay.selfAddressLabel": "این نمونه در شبکه‌ات",
   "relay.selfAddressTip": "هنگام ورود از مرورگرت گرفته می‌شود. اگر یک پراکسی معکوس یا پورت دیگری بین مرورگرت و این نمونه قرار دارد، عوضش کن.",
   "relay.selfAddressError": "نشانی این نمونه ذخیره نشد.",
   "relay.sees.title": "آنچه رله می‌بیند",

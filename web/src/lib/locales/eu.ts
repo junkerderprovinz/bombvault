@@ -1626,7 +1626,6 @@ const eu: Partial<Translations> = {
   "relay.notSeesContent": "Zure instantziek elkarri bidaltzen dietena. Muturretik muturrera enkriptatuta dago.",
   "relay.notSeesBackups": "Zure babeskopiak. Bitartekaritik egoera, aginduak eta parekatzea baino ez dira igarotzen.",
   "relay.saveError": "Ezin izan da bitartekariaren ezarpena gorde.",
-  "relay.selfAddressLabel": "Instantzia hau zure sarean",
   "relay.selfAddressTip": "Zure nabigatzailetik jasotzen da saioa hasten duzunean. Aldatu, alderantzizko proxy bat edo beste ataka bat zure nabigatzailearen eta instantzia honen artean badago.",
   "relay.selfAddressError": "Ezin izan da instantzia honen helbidea gorde.",
   "relay.sees.title": "Zer ikusten duen bitartekariak",

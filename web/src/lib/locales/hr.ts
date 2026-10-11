@@ -1626,7 +1626,6 @@ const hr: Partial<Translations> = {
   "relay.notSeesContent": "Ono što si vaše instance međusobno šalju. To je šifrirano od kraja do kraja.",
   "relay.notSeesBackups": "Vaše sigurnosne kopije. Kroz relej prolaze samo status, naredbe i uparivanje.",
   "relay.saveError": "Postavka releja nije se mogla spremiti.",
-  "relay.selfAddressLabel": "Ova instanca u vašoj mreži",
   "relay.selfAddressTip": "Preuzeto iz vašeg preglednika prilikom prijave. Promijenite je ako se reverse proxy ili drugi port nalazi između vašeg preglednika i ove instance.",
   "relay.selfAddressError": "Adresu ove instance nije bilo moguće spremiti.",
   "relay.sees.title": "Što relej vidi",

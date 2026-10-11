@@ -1626,7 +1626,6 @@ const gl: Partial<Translations> = {
   "relay.notSeesContent": "O que as túas instancias se envían entre si. Está cifrado de extremo a extremo.",
   "relay.notSeesBackups": "As túas copias de seguridade. Polo relé só pasan o estado, as ordes e o emparellamento.",
   "relay.saveError": "Non se puido gardar o axuste do relé.",
-  "relay.selfAddressLabel": "Esta instancia na túa rede",
   "relay.selfAddressTip": "Obtido do teu navegador cando inicias sesión. Cámbiao se un proxy inverso ou un porto distinto se atopa entre o teu navegador e esta instancia.",
   "relay.selfAddressError": "Non se puido gardar o enderezo desta instancia.",
   "relay.sees.title": "Que ve o relé",

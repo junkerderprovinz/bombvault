@@ -2687,7 +2687,6 @@ const no: Partial<Translations> = {
   "relay.notSeesContent": "Det instansene dine sender til hverandre. Det er ende-til-ende-kryptert.",
   "relay.notSeesBackups": "Sikkerhetskopiene dine. Gjennom relayet går bare status, kommandoer og paring.",
   "relay.saveError": "Kunne ikke lagre relay-innstillingen.",
-  "relay.selfAddressLabel": "Denne instansen i nettverket ditt",
   "relay.selfAddressTip": "Hentet fra nettleseren din når du logger inn. Endre den hvis en reverse proxy eller en annen port ligger mellom nettleseren din og denne instansen.",
   "relay.selfAddressError": "Fikk ikke lagret adressen til denne instansen.",
   "relay.sees.title": "Hva relayet ser",

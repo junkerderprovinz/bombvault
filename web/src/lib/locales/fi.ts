@@ -2687,7 +2687,6 @@ const fi: Partial<Translations> = {
   "relay.notSeesContent": "Mitä instanssisi lähettävät toisilleen. Se on päästä päähän salattu.",
   "relay.notSeesBackups": "Varmuuskopiosi. Releen kautta kulkee vain tila, komennot ja pariliitos.",
   "relay.saveError": "Releen asetusta ei voitu tallentaa.",
-  "relay.selfAddressLabel": "Tämä instanssi verkossasi",
   "relay.selfAddressTip": "Selvitetään selaimestasi, kun kirjaudut sisään. Vaihda se, jos käänteinen välityspalvelin tai eri portti on selaimesi ja tämän instanssin välissä.",
   "relay.selfAddressError": "Tämän instanssin osoitetta ei voitu tallentaa.",
   "relay.sees.title": "Mitä rele näkee",

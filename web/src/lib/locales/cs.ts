@@ -2685,7 +2685,6 @@ const cs: Partial<Translations> = {
   "relay.notSeesContent": "Co si vaše instance navzájem posílají. Je to šifrované z konce do konce.",
   "relay.notSeesBackups": "Vaše zálohy. Přes přeposílač jde jen stav, příkazy a párování.",
   "relay.saveError": "Nepodařilo se uložit nastavení přeposílače.",
-  "relay.selfAddressLabel": "Tato instance ve vaší síti",
   "relay.selfAddressTip": "Zjistí se z vašeho prohlížeče při přihlášení. Změňte ji, pokud mezi vaším prohlížečem a touto instancí stojí reverzní proxy nebo jiný port.",
   "relay.selfAddressError": "Nepodařilo se uložit adresu této instance.",
   "relay.sees.title": "Co přeposílač vidí",

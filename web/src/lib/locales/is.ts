@@ -1626,7 +1626,6 @@ const is: Partial<Translations> = {
   "relay.notSeesContent": "Það sem tilvikin þín senda hvert öðru. Það er dulkóðað enda á milli.",
   "relay.notSeesBackups": "Afritin þín. Aðeins staða, skipanir og pörun fara í gegnum relayið.",
   "relay.saveError": "Ekki tókst að vista relay-stillinguna.",
-  "relay.selfAddressLabel": "Þetta tilvik á netinu þínu",
   "relay.selfAddressTip": "Fengið úr vafranum þínum um leið og þú skráir þig inn. Breyttu því ef reverse proxy eða annar gátt er á milli vafrans þíns og þessa tilviks.",
   "relay.selfAddressError": "Ekki tókst að vista heimilisfang þessa tilviks.",
   "relay.sees.title": "Hvað relayið sér",

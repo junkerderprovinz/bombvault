@@ -2687,7 +2687,6 @@ const pt: Partial<Translations> = {
   "relay.notSeesContent": "O que as suas instâncias enviam entre si. Está encriptado de ponta a ponta.",
   "relay.notSeesBackups": "As suas cópias de segurança. Pelo relay só passam o estado, os comandos e o emparelhamento.",
   "relay.saveError": "Não foi possível guardar a definição do relay.",
-  "relay.selfAddressLabel": "Esta instância na sua rede",
   "relay.selfAddressTip": "Obtido do seu navegador quando inicia sessão. Altere-o se houver um proxy inverso ou uma porta diferente entre o seu navegador e esta instância.",
   "relay.selfAddressError": "Não foi possível guardar o endereço desta instância.",
   "relay.sees.title": "O que o relay vê",

@@ -2687,7 +2687,6 @@ const fr: Partial<Translations> = {
   "relay.notSeesContent": "Ce que vos instances s'envoient entre elles. C'est chiffré de bout en bout.",
   "relay.notSeesBackups": "Vos sauvegardes. Seuls le statut, les commandes et l'appairage passent par le relais.",
   "relay.saveError": "Impossible d'enregistrer le réglage du relais.",
-  "relay.selfAddressLabel": "Cette instance sur votre réseau",
   "relay.selfAddressTip": "Récupérée depuis votre navigateur lors de la connexion. Modifiez-la si un proxy inverse ou un port différent se trouve entre votre navigateur et cette instance.",
   "relay.selfAddressError": "Impossible d'enregistrer l'adresse de cette instance.",
   "relay.sees.title": "Ce que voit le relais",

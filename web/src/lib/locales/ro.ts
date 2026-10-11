@@ -2688,7 +2688,6 @@ const ro: Partial<Translations> = {
   "relay.notSeesContent": "Ce își trimit instanțele tale una alteia. E criptat integral, de la un capăt la altul.",
   "relay.notSeesBackups": "Copiile tale de rezervă. Prin relay trec doar starea, comenzile și împerecherea.",
   "relay.saveError": "Setarea de relay nu a putut fi salvată.",
-  "relay.selfAddressLabel": "Această instanță în rețeaua ta",
   "relay.selfAddressTip": "Preluată din browserul tău când te conectezi. Schimbă-o dacă un proxy invers sau un port diferit se află între browserul tău și această instanță.",
   "relay.selfAddressError": "Adresa acestei instanțe nu a putut fi salvată.",
   "relay.sees.title": "Ce vede relay-ul",

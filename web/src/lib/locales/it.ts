@@ -2687,7 +2687,6 @@ const it: Partial<Translations> = {
   "relay.notSeesContent": "Ciò che le tue istanze si scambiano. È crittografato end-to-end.",
   "relay.notSeesBackups": "I tuoi backup. Attraverso il relay passano solo stato, comandi e associazione.",
   "relay.saveError": "Impossibile salvare l'impostazione del relay.",
-  "relay.selfAddressLabel": "Questa istanza sulla tua rete",
   "relay.selfAddressTip": "Ripreso dal tuo browser quando accedi. Modificalo se un reverse proxy o una porta diversa si trova tra il tuo browser e questa istanza.",
   "relay.selfAddressError": "Impossibile salvare l'indirizzo di questa istanza.",
   "relay.sees.title": "Cosa vede il relay",

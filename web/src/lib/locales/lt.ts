@@ -1626,7 +1626,6 @@ const lt: Partial<Translations> = {
   "relay.notSeesContent": "Ką jūsų egzemplioriai siunčia vienas kitam. Tai užšifruota ištisai.",
   "relay.notSeesBackups": "Jūsų atsarginės kopijos. Per relay eina tik būsena, komandos ir susiejimas.",
   "relay.saveError": "Nepavyko išsaugoti relay nustatymo.",
-  "relay.selfAddressLabel": "Šis egzempliorius jūsų tinkle",
   "relay.selfAddressTip": "Gauta iš jūsų naršyklės prisijungiant. Pakeiskite, jei tarp jūsų naršyklės ir šio egzemplioriaus yra reverse proxy arba kitas prievadas.",
   "relay.selfAddressError": "Nepavyko išsaugoti šio egzemplioriaus adreso.",
   "relay.sees.title": "Ką mato relay",

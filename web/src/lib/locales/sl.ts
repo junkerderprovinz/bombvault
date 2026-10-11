@@ -1620,7 +1620,6 @@ const sl: Partial<Translations> = {
   "relay.notSeesContent": "Kar si tvoje instance pošiljajo med sabo. To je šifrirano od konca do konca.",
   "relay.notSeesBackups": "Tvoje varnostne kopije. Prek relaya gredo samo stanje, ukazi in seznanjanje.",
   "relay.saveError": "Nastavitve relaya ni bilo mogoče shraniti.",
-  "relay.selfAddressLabel": "Ta instanca v tvojem omrežju",
   "relay.selfAddressTip": "Prebran iz tvojega brskalnika ob prijavi. Spremeni ga, če med tvojim brskalnikom in to instanco stoji reverse proxy ali druga vrata.",
   "relay.selfAddressError": "Naslova te instance ni bilo mogoče shraniti.",
   "relay.sees.title": "Kaj vidi Relay",

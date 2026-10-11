@@ -2684,7 +2684,6 @@ const pl: Partial<Translations> = {
   "relay.notSeesContent": "To, co twoje instancje wysyłają sobie nawzajem. Jest to szyfrowane end-to-end.",
   "relay.notSeesBackups": "Twoje kopie zapasowe. Przez relay przechodzi tylko status, polecenia i parowanie.",
   "relay.saveError": "Nie udało się zapisać ustawienia relay.",
-  "relay.selfAddressLabel": "Ta instancja w twojej sieci",
   "relay.selfAddressTip": "Odczytywany z przeglądarki przy logowaniu. Zmień go, jeśli między twoją przeglądarką a tą instancją stoi reverse proxy albo inny port.",
   "relay.selfAddressError": "Nie udało się zapisać adresu tej instancji.",
   "relay.sees.title": "Co widzi Relay",

@@ -2678,7 +2678,6 @@ const vi: Partial<Translations> = {
   "relay.notSeesContent": "Những gì các phiên bản của bạn gửi cho nhau. Nó được mã hóa đầu cuối.",
   "relay.notSeesBackups": "Bản sao lưu của bạn. Chỉ có trạng thái, lệnh và ghép nối đi qua relay.",
   "relay.saveError": "Không thể lưu cài đặt relay.",
-  "relay.selfAddressLabel": "Phiên bản này trên mạng của bạn",
   "relay.selfAddressTip": "Được lấy từ trình duyệt của bạn khi bạn đăng nhập. Hãy đổi nó nếu có một reverse proxy hoặc một cổng khác nằm giữa trình duyệt của bạn và phiên bản này.",
   "relay.selfAddressError": "Không thể lưu địa chỉ của phiên bản này.",
   "relay.sees.title": "Những gì relay thấy",

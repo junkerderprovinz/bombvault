@@ -1626,7 +1626,6 @@ const et: Partial<Translations> = {
   "relay.notSeesContent": "Mida su eksemplarid üksteisele saadavad. See on otsast lõpuni krüptitud.",
   "relay.notSeesBackups": "Su varukoopiad. Edastaja kaudu käivad ainult olek, käsud ja sidumine.",
   "relay.saveError": "Edastaja seadistust ei õnnestunud salvestada.",
-  "relay.selfAddressLabel": "See eksemplar sinu võrgus",
   "relay.selfAddressTip": "Saadakse sinu brauserist, kui sisse logid. Muuda seda, kui pöördproksi või muu port jääb sinu brauseri ja selle eksemplari vahele.",
   "relay.selfAddressError": "Selle eksemplari aadressi ei õnnestunud salvestada.",
   "relay.sees.title": "Mida edastaja näeb",

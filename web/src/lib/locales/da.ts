@@ -2687,7 +2687,6 @@ const da: Partial<Translations> = {
   "relay.notSeesContent": "Det dine instanser sender til hinanden. Det er ende-til-ende-krypteret.",
   "relay.notSeesBackups": "Dine sikkerhedskopier. Kun status, kommandoer og parring går gennem videresenderen.",
   "relay.saveError": "Kunne ikke gemme videresender-indstillingen.",
-  "relay.selfAddressLabel": "Denne instans på dit netværk",
   "relay.selfAddressTip": "Hentes fra din browser, når du logger ind. Skift den, hvis en reverse proxy eller en anden port står mellem din browser og denne instans.",
   "relay.selfAddressError": "Kunne ikke gemme denne instans' adresse.",
   "relay.sees.title": "Hvad videresenderen ser",

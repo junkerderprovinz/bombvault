@@ -1626,7 +1626,6 @@ const lv: Partial<Translations> = {
   "relay.notSeesContent": "To, ko jūsu instances sūta viena otrai. Tas ir šifrēts no gala līdz galam.",
   "relay.notSeesBackups": "Jūsu dublējumus. Caur relay iet tikai statuss, komandas un pārošana.",
   "relay.saveError": "Neizdevās saglabāt relay iestatījumu.",
-  "relay.selfAddressLabel": "Šī instance jūsu tīklā",
   "relay.selfAddressTip": "Iegūta no jūsu pārlūkprogrammas, kad piesakāties. Mainiet to, ja starp jūsu pārlūkprogrammu un šo instanci ir reverse proxy vai cits ports.",
   "relay.selfAddressError": "Neizdevās saglabāt šīs instances adresi.",
   "relay.sees.title": "Ko redz relay",

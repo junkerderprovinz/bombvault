@@ -1626,7 +1626,6 @@ const ms: Partial<Translations> = {
   "relay.notSeesContent": "Apa yang instans anda hantar antara satu sama lain. Ia disulitkan hujung ke hujung.",
   "relay.notSeesBackups": "Sandaran anda. Hanya status, arahan dan gandingan melalui relay.",
   "relay.saveError": "Tetapan relay gagal disimpan.",
-  "relay.selfAddressLabel": "Instans ini pada rangkaian anda",
   "relay.selfAddressTip": "Diambil daripada pelayar anda semasa anda log masuk. Ubah jika reverse proxy atau port lain berada antara pelayar anda dengan instans ini.",
   "relay.selfAddressError": "Alamat instans ini gagal disimpan.",
   "relay.sees.title": "Apa yang dilihat relay",

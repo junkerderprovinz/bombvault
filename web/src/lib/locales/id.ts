@@ -1626,7 +1626,6 @@ const id: Partial<Translations> = {
   "relay.notSeesContent": "Apa yang dikirim instance Anda satu sama lain. Itu dienkripsi ujung ke ujung.",
   "relay.notSeesBackups": "Backup Anda. Hanya status, perintah, dan pemasangan yang melewati relay.",
   "relay.saveError": "Pengaturan relay gagal disimpan.",
-  "relay.selfAddressLabel": "Instance ini di jaringan Anda",
   "relay.selfAddressTip": "Diambil dari browser Anda saat masuk. Ubah jika ada reverse proxy atau port berbeda antara browser Anda dan instance ini.",
   "relay.selfAddressError": "Alamat instance ini gagal disimpan.",
   "relay.sees.title": "Apa yang dilihat relay",
