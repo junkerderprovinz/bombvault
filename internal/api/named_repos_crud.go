@@ -101,7 +101,13 @@ func (h *Handler) handleListNamedRepos(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "repos": h.namedRepoViews(rows)})
+	views := h.namedRepoViews(rows)
+	if isPaired(r) {
+		for i := range views {
+			views[i].Repo = scrubRepoLocation(views[i].Repo)
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "repos": views})
 }
 
 // namedRepoBody is the create/update payload. Pointers on update so a form that

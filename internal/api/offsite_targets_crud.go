@@ -276,7 +276,13 @@ func (h *Handler) handleListOffsiteTargets(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"targets": offsiteTargetsToViews(targets)}))
+	views := offsiteTargetsToViews(targets)
+	if isPaired(r) {
+		for i := range views {
+			views[i].Repo = scrubRepoLocation(views[i].Repo)
+		}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"targets": views}))
 }
 
 // handleCreateOffsiteTarget adds an additional off-site target. An id or
