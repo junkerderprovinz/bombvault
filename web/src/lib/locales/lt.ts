@@ -1963,7 +1963,6 @@ const lt: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Savarankiškos atsargos tvarkaraštis",
   "settings.tamperScheduleInactive": "Neaktyvus: nė viena nuotolinė saugykla nepažymėta kaip tik-pridėjimo, todėl šis tvarkaraštis niekada nevykdomas. Kad jį įjungtumėte, pažymėkite nuotolinę saugyklą kaip tik-pridėjimo jos pačios nuotolinės saugyklos nustatymuose.",
   "settings.everythingTitle": "Pilna atsarginė kopija",
-  "settings.everythingDuplicateWarning": "Konteineriai, VM, Flash, aplankai, ZFS duomenų rinkiniai ir savarankiška atsarga kopijuojami du kartus, kol vienu metu įjungtas ir šis tvarkaraštis, ir jų pačių: vieną kartą čia ir vieną kartą pagal jų pačių tvarkaraštį. Išjunkite sritis, kurių nenorite kopijuoti du kartus.",
   "settings.everythingStarted": "Paleista. Serveryje vykdoma iš eilės per kiekvieną sritį; rezultatą matysi veiklos žurnale.",
   "settings.everythingAlreadyRunning": "Pilna atsarginė kopija jau vykdoma.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const lt: Partial<Translations> = {
   "files.effectiveOwn": "Vykdoma {when}, savas tvarkaraštis",
   "files.effectiveDomain": "Vykdoma {when}, iš {domain}",
   "files.effectiveEverything": "Vykdoma {when}, su {domain}",
-  "files.effectiveBoth": "Vykdoma du kartus: {when} ir {when2}",
   "files.pathMissing": "Aplankas nerastas",
   "files.noPath": "Aplankas nenustatytas",
   "files.noPathHint": "Atkurta iš atsarginių kopijų be aplanko. Nustatykite aplanką, kad vėl kopijuotumėte. Atkūrimas į aplanką jau veikia.",

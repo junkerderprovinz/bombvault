@@ -1464,7 +1464,6 @@ const tr: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Kendi kendine yedekleme zamanlaması",
   "settings.tamperScheduleInactive": "Etkin değil. Hiçbir site dışı depo append-only olarak işaretlenmediği için bu zamanlama asla çalışmaz. Etkinleştirmek için bir site dışı depoyu kendi site dışı ayarlarında append-only olarak işaretle.",
   "settings.everythingTitle": "Tam yedekleme",
-  "settings.everythingDuplicateWarning": "Bu zamanlama ile kendi zamanlamaları aynı anda açıkken konteynerler, VM'ler, flash, klasörler, ZFS veri kümeleri ve öz yedek iki kez yedeklenir: bir kez burada, bir kez de kendi zamanlamalarında. Yedeğinin ikiye katlanmasını istemediğiniz alanları kapatın.",
   "settings.everythingStarted": "Başlatıldı. Sunucuda her alanı sırayla işler; sonucu Etkinlik Günlüğü'nden takip et.",
   "settings.everythingAlreadyRunning": "Zaten bir tam yedekleme çalışıyor.",
   // Filter drawer trigger (v5 redesign)
@@ -1510,7 +1509,6 @@ const tr: Partial<Translations> = {
   "files.effectiveOwn": "{when} çalışır, kendi zamanlaması",
   "files.effectiveDomain": "{when} çalışır, {domain} kaynağından",
   "files.effectiveEverything": "{when} çalışır, {domain} ile",
-  "files.effectiveBoth": "İki kez çalışır: {when} ve {when2}",
   "files.pathMissing": "Klasör bulunamadı",
   "files.noPath": "Klasör ayarlanmadı",
   "files.noPathHint": "Klasör olmadan yedeklerden yeniden oluşturuldu. Yeniden yedeklemek için bir klasör ayarlayın. Bir klasöre geri yükleme şimdiden çalışıyor.",

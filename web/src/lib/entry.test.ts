@@ -29,7 +29,7 @@ function item(over: Partial<BackupItem> = {}): BackupItem {
     name: "plex",
     included: true,
     paused: false,
-    effectiveSchedule: { kind: "everything", spec: "daily@03:00", alsoSpec: "" },
+    effectiveSchedule: { kind: "everything", spec: "daily@03:00" },
     lastBackup: at(0),
     lastRunStatus: "success",
     sourceBytes: 1024,
@@ -96,7 +96,7 @@ describe("the line under the name", () => {
   it("tells a paused entry from one whose schedule is off", () => {
     expect(entryReason(item({ lastBackup: 0, included: false }))).toEqual({ is: "pausedNever" });
     expect(
-      entryReason(item({ lastBackup: 0, effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "domain-off" } })),
+      entryReason(item({ lastBackup: 0, effectiveSchedule: { kind: "none", spec: "", reason: "domain-off" } })),
     ).toEqual({ is: "notScheduled" });
   });
 

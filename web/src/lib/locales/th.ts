@@ -1465,7 +1465,6 @@ const th: Partial<Translations> = {
   "settings.schedulesSelfBackup": "กำหนดการสำรองข้อมูลตัวเอง",
   "settings.tamperScheduleInactive": "ไม่ทำงาน ไม่มีรีพอสิทอรีนอกสถานที่ใดถูกทำเครื่องหมายเป็น append-only จึงทำให้กำหนดการนี้ไม่ทำงานเลย ทำเครื่องหมายรีพอสิทอรีนอกสถานที่เป็น append-only ในการตั้งค่านอกสถานที่ของมันเพื่อเปิดใช้งาน",
   "settings.everythingTitle": "สำรองข้อมูลทั้งหมด",
-  "settings.everythingDuplicateWarning": "ตราบใดที่ทั้งกำหนดการนี้และกำหนดการของแต่ละโดเมนเปิดใช้งานพร้อมกัน Containers, VMs, Flash, โฟลเดอร์ ชุดข้อมูล ZFS และการสำรองข้อมูลตัวเองจะถูกสำรองสองครั้ง คือครั้งหนึ่งที่นี่ และอีกครั้งตามกำหนดการของตัวเอง ปิดโดเมนที่ไม่ต้องการให้สำรองซ้ำ",
   "settings.everythingStarted": "เริ่มแล้ว จะทำงานบนเซิร์ฟเวอร์ทีละโดเมนตามลำดับ ติดตามผลลัพธ์ได้ที่บันทึกกิจกรรม",
   "settings.everythingAlreadyRunning": "มีการสำรองข้อมูลทั้งหมดกำลังทำงานอยู่แล้ว",
   // Filter drawer trigger (v5 redesign)
@@ -1511,7 +1510,6 @@ const th: Partial<Translations> = {
   "files.effectiveOwn": "ทำงาน {when} ตามกำหนดการของตัวเอง",
   "files.effectiveDomain": "ทำงาน {when} จาก {domain}",
   "files.effectiveEverything": "ทำงาน {when} พร้อมกับ {domain}",
-  "files.effectiveBoth": "ทำงานสองครั้ง: {when} และ {when2}",
   "files.pathMissing": "ไม่พบโฟลเดอร์",
   "files.noPath": "ยังไม่ได้กำหนดโฟลเดอร์",
   "files.noPathHint": "สร้างขึ้นใหม่จากการสำรองข้อมูลโดยไม่มีโฟลเดอร์ กำหนดโฟลเดอร์เพื่อสำรองข้อมูลอีกครั้ง การกู้คืนไปยังโฟลเดอร์ใช้งานได้แล้ว",

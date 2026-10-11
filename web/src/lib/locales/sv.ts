@@ -1464,7 +1464,6 @@ const sv: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Schema för självsäkerhetskopiering",
   "settings.tamperScheduleInactive": "Inaktivt: inget off-site-repo är markerat som append-only, så det här schemat körs aldrig. Markera ett off-site-repo som append-only i dess off-site-inställningar för att aktivera det.",
   "settings.everythingTitle": "Total säkerhetskopia",
-  "settings.everythingDuplicateWarning": "Containers, VMs, flash, mappar, ZFS-datauppsättningar och auto-säkerhetskopian säkerhetskopieras två gånger så länge både det här schemat och deras eget är påslagna: en gång här och en gång på sitt eget schema. Stäng av de domäner du inte vill ha dubblerade.",
   "settings.everythingStarted": "Startad. Den körs på servern genom varje domän i tur och ordning; följ Aktivitetsloggen för resultatet.",
   "settings.everythingAlreadyRunning": "En total säkerhetskopia pågår redan.",
   // Filter drawer trigger (v5 redesign)
@@ -1510,7 +1509,6 @@ const sv: Partial<Translations> = {
   "files.effectiveOwn": "Körs {when}, eget schema",
   "files.effectiveDomain": "Körs {when}, från {domain}",
   "files.effectiveEverything": "Körs {when}, med {domain}",
-  "files.effectiveBoth": "Körs två gånger: {when} och {when2}",
   "files.pathMissing": "Mappen hittades inte",
   "files.noPath": "Ingen mapp angiven",
   "files.noPathHint": "Återuppbyggd från säkerhetskopior utan mapp. Ange en mapp för att säkerhetskopiera igen. Återställning till en mapp fungerar redan.",

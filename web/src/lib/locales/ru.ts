@@ -1461,7 +1461,6 @@ const ru: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Расписание самокопирования",
   "settings.tamperScheduleInactive": "Неактивно — ни один внешний репозиторий не помечен как append-only, поэтому это расписание никогда не запускается. Пометьте внешний репозиторий как append-only в его внешних настройках, чтобы включить его.",
   "settings.everythingTitle": "Полный бэкап",
-  "settings.everythingDuplicateWarning": "Контейнеры, виртуальные машины, Flash, папки, наборы данных ZFS и автобэкап копируются дважды, пока одновременно включены это расписание и их собственное: один раз здесь и один раз по своему расписанию. Отключите домены, которые не нужно копировать дважды.",
   "settings.everythingStarted": "Запущено — выполняется на сервере по очереди для каждого домена; результат смотрите в Журнале активности.",
   "settings.everythingAlreadyRunning": "Полный бэкап уже выполняется.",
   // Filter drawer trigger (v5 redesign)
@@ -1507,7 +1506,6 @@ const ru: Partial<Translations> = {
   "files.effectiveOwn": "Выполняется {when}, собственное расписание",
   "files.effectiveDomain": "Выполняется {when}, из {domain}",
   "files.effectiveEverything": "Выполняется {when}, вместе с {domain}",
-  "files.effectiveBoth": "Выполняется дважды: {when} и {when2}",
   "files.pathMissing": "Папка не найдена",
   "files.noPath": "Папка не задана",
   "files.noPathHint": "Восстановлен из резервных копий без папки. Задайте папку, чтобы снова выполнять резервное копирование — восстановление в папку уже работает.",

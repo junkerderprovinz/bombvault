@@ -1963,7 +1963,6 @@ const ms: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Jadual sandaran sendiri",
   "settings.tamperScheduleInactive": "Tidak aktif: tiada repositori luar tapak ditandakan sebagai tambah-sahaja, jadi jadual ini tidak sekali-kali berjalan. Tandakan repositori luar tapak sebagai tambah-sahaja dalam tetapan luar tapaknya sendiri untuk mendayakannya.",
   "settings.everythingTitle": "Sandar Semua",
-  "settings.everythingDuplicateWarning": "Bekas, VM, Flash, folder, set data ZFS dan sandaran sendiri disandarkan dua kali selama jadual ini dan jadual masing-masing kedua-duanya dihidupkan: sekali di sini dan sekali mengikut jadual sendiri. Matikan domain yang tidak mahu disandarkan dua kali.",
   "settings.everythingStarted": "Dimulakan. Ia berjalan pada pelayan melalui setiap domain secara bergilir; lihat log aktiviti untuk hasilnya.",
   "settings.everythingAlreadyRunning": "Proses Sandar Semua sedang berjalan.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const ms: Partial<Translations> = {
   "files.effectiveOwn": "Berjalan {when}, jadual sendiri",
   "files.effectiveDomain": "Berjalan {when}, daripada {domain}",
   "files.effectiveEverything": "Berjalan {when}, bersama {domain}",
-  "files.effectiveBoth": "Berjalan dua kali: {when} dan {when2}",
   "files.pathMissing": "Folder tidak dijumpai",
   "files.noPath": "Tiada folder ditetapkan",
   "files.noPathHint": "Dibina semula daripada sandaran tanpa folder. Tetapkan folder untuk menyandarkan semula. Pemulihan ke folder sudah berfungsi.",

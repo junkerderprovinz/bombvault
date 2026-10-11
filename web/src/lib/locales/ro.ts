@@ -1465,7 +1465,6 @@ const ro: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Programare de auto-backup",
   "settings.tamperScheduleInactive": "Inactiv: niciun repo off-site nu este marcat ca append-only, așa că această programare nu rulează niciodată. Marchează un repo off-site ca append-only în setările sale off-site pentru a o activa.",
   "settings.everythingTitle": "Backup total",
-  "settings.everythingDuplicateWarning": "Containerele, VM-urile, flash-ul, folderele, seturile de date ZFS și auto-backup-ul sunt salvate de două ori cât timp sunt active în același timp și această programare, și cea proprie: o dată aici și o dată în programarea proprie. Dezactivează domeniile pe care nu vrei să le dublezi.",
   "settings.everythingStarted": "Pornit. Rulează pe server prin fiecare domeniu, pe rând; urmărește Jurnalul de activitate pentru rezultat.",
   "settings.everythingAlreadyRunning": "Un backup total este deja în curs.",
   // Filter drawer trigger (v5 redesign)
@@ -1511,7 +1510,6 @@ const ro: Partial<Translations> = {
   "files.effectiveOwn": "Rulează {when}, program propriu",
   "files.effectiveDomain": "Rulează {when}, din {domain}",
   "files.effectiveEverything": "Rulează {when}, cu {domain}",
-  "files.effectiveBoth": "Rulează de două ori: {when} și {when2}",
   "files.pathMissing": "Folderul nu a fost găsit",
   "files.noPath": "Niciun folder setat",
   "files.noPathHint": "Reconstruit din copiile de rezervă fără folder. Setați un folder pentru a-l copia din nou. Restaurarea într-un folder funcționează deja.",

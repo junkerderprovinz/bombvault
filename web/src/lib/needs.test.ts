@@ -10,7 +10,7 @@ function item(over: Partial<BackupItem>): BackupItem {
     name: "plex",
     included: true,
     paused: false,
-    effectiveSchedule: { kind: "domain", spec: "daily 03:00", alsoSpec: "" },
+    effectiveSchedule: { kind: "domain", spec: "daily 03:00" },
     lastBackup: 1_700_000_000,
     lastRunStatus: "success",
     sourceBytes: 1,
@@ -42,7 +42,7 @@ const leftOut = {
   included: false,
   lastBackup: 0,
   lastRunStatus: "",
-  effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+  effectiveSchedule: { kind: "none", spec: "", reason: "excluded" },
 } as const;
 
 /** A copy to a storage location that has failed since it last worked. */

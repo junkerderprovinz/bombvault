@@ -1465,7 +1465,6 @@ const hu: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Önmentési ütemezés",
   "settings.tamperScheduleInactive": "Inaktív: egyetlen telephelyen kívüli repó sincs append-only-ként megjelölve, ezért ez az ütemezés soha nem fut le. Jelölj meg egy telephelyen kívüli repót append-only-ként annak telephelyen kívüli beállításaiban, hogy engedélyezd.",
   "settings.everythingTitle": "Teljes biztonsági mentés",
-  "settings.everythingDuplicateWarning": "A konténerek, a VM-ek, a flash, a mappák, a ZFS-adatkészletek és az önmentés kétszer készül el, amíg egyszerre be van kapcsolva ez az ütemezés és a sajátjuk is: egyszer itt, egyszer a saját ütemezésük szerint. Kapcsold ki azokat a területeket, amelyeket nem akarsz duplán menteni.",
   "settings.everythingStarted": "Elindult. A szerveren sorban lefut minden területen; az eredményt a Tevékenységnaplóban követheted.",
   "settings.everythingAlreadyRunning": "Már fut egy teljes biztonsági mentés.",
   // Filter drawer trigger (v5 redesign)
@@ -1511,7 +1510,6 @@ const hu: Partial<Translations> = {
   "files.effectiveOwn": "Fut {when}, saját ütemezés",
   "files.effectiveDomain": "Fut {when}, innen: {domain}",
   "files.effectiveEverything": "Fut {when}, ezzel: {domain}",
-  "files.effectiveBoth": "Kétszer fut: {when} és {when2}",
   "files.pathMissing": "A mappa nem található",
   "files.noPath": "Nincs mappa beállítva",
   "files.noPathHint": "Mappa nélkül, biztonsági mentésekből újjáépítve. Állíts be egy mappát az újbóli mentéshez. A mappába való visszaállítás már most működik.",

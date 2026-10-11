@@ -34,7 +34,7 @@ const ITEMS = [
   { kind: "vm", key: "win11", name: "Windows 11", included: true },
 ].map((item) => ({
   paused: false,
-  effectiveSchedule: { kind: "everything", spec: "daily 03:00", alsoSpec: "" },
+  effectiveSchedule: { kind: "everything", spec: "daily 03:00" },
   lastBackup: 0,
   lastRunStatus: "",
   sourceBytes: null,

@@ -1462,7 +1462,6 @@ const cs: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Plán vlastního zálohování",
   "settings.tamperScheduleInactive": "Neaktivní: žádný repozitář mimo lokalitu není označen jako append-only, takže tento plán nikdy neběží. Označ repozitář mimo lokalitu jako append-only v jeho nastavení mimo lokalitu, abys ho aktivoval.",
   "settings.everythingTitle": "Záloha všeho",
-  "settings.everythingDuplicateWarning": "Kontejnery, VMs, flash, složky, datové sady ZFS i autozáloha se zálohují dvakrát, dokud jsou zapnuté zároveň tento plán i jejich vlastní: jednou zde a jednou ve vlastním plánu. Vypněte oblasti, které nechcete zálohovat dvakrát.",
   "settings.everythingStarted": "Spuštěno. Poběží na serveru postupně přes všechny oblasti; výsledek sleduj v protokolu aktivit.",
   "settings.everythingAlreadyRunning": "Záloha všeho už probíhá.",
   // Filter drawer trigger (v5 redesign)
@@ -1508,7 +1507,6 @@ const cs: Partial<Translations> = {
   "files.effectiveOwn": "Běží {when}, vlastní plán",
   "files.effectiveDomain": "Běží {when}, z {domain}",
   "files.effectiveEverything": "Běží {when}, s {domain}",
-  "files.effectiveBoth": "Běží dvakrát: {when} a {when2}",
   "files.pathMissing": "Složka nenalezena",
   "files.noPath": "Složka není nastavena",
   "files.noPathHint": "Obnoveno ze záloh bez složky. Nastavte složku, aby se sada znovu zálohovala. Obnova do složky funguje už teď.",

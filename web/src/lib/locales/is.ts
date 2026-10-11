@@ -1963,7 +1963,6 @@ const is: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Tímaáætlun sjálfvirkrar afritunar",
   "settings.tamperScheduleInactive": "Óvirkt. Ekkert fjarlægt geymslusafn er merkt sem aðeins-bæta-við, svo þessi tímaáætlun keyrir aldrei. Merktu fjarlægt geymslusafn sem aðeins-bæta-við í eigin fjarlægum stillingum þess til að virkja hana.",
   "settings.everythingTitle": "Heildarafritun",
-  "settings.everythingDuplicateWarning": "Gámar, sýndarvélar, Flash, möppur, ZFS-gagnasöfn og sjálfvirka afritunin eru afrituð tvisvar á meðan bæði þessi áætlun og þeirra eigin eru kveikt: einu sinni hér og einu sinni í þeirra eigin áætlun. Slökktu á þeim sviðum sem þú vilt ekki afrita tvisvar.",
   "settings.everythingStarted": "Ræst. Hún keyrir á þjóninum gegnum hvert svið í röð; útkomuna sérðu í virknidagbókinni.",
   "settings.everythingAlreadyRunning": "Heildarafritun er þegar í gangi.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const is: Partial<Translations> = {
   "files.effectiveOwn": "Keyrir {when}, eigin áætlun",
   "files.effectiveDomain": "Keyrir {when}, úr {domain}",
   "files.effectiveEverything": "Keyrir {when}, með {domain}",
-  "files.effectiveBoth": "Keyrir tvisvar: {when} og {when2}",
   "files.pathMissing": "Mappa fannst ekki",
   "files.noPath": "Engin mappa stillt",
   "files.noPathHint": "Endurbyggt úr afritum án möppu. Stilltu möppu til að afrita aftur. Endurheimt í möppu virkar þegar.",

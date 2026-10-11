@@ -1963,7 +1963,6 @@ const lv: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Pašrezerves grafiks",
   "settings.tamperScheduleInactive": "Neaktīvs: neviens attālinātais repozitorijs nav atzīmēts kā tikai-pievienot, tāpēc šis grafiks nekad neizpildās. Lai to iespējotu, atzīmējiet attālinātu repozitoriju kā tikai-pievienot tā attālinātajos iestatījumos.",
   "settings.everythingTitle": "Pilna rezerves kopija",
-  "settings.everythingDuplicateWarning": "Konteineri, VM, Flash, mapes, ZFS datu kopas un pašrezerve tiek dublēti divreiz, kamēr vienlaikus ir ieslēgts gan šis grafiks, gan to pašu grafiks: vienreiz šeit un vienreiz pēc to pašu grafika. Izslēdziet jomas, kuras nevēlaties dublēt divreiz.",
   "settings.everythingStarted": "Palaists. Serverī darbojas pēc kārtas caur katru jomu; iznākumu redzēsi darbības žurnālā.",
   "settings.everythingAlreadyRunning": "Pilna rezerves kopija jau notiek.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const lv: Partial<Translations> = {
   "files.effectiveOwn": "Darbojas {when}, savs grafiks",
   "files.effectiveDomain": "Darbojas {when}, no {domain}",
   "files.effectiveEverything": "Darbojas {when}, kopā ar {domain}",
-  "files.effectiveBoth": "Darbojas divreiz: {when} un {when2}",
   "files.pathMissing": "Mape nav atrasta",
   "files.noPath": "Mape nav iestatīta",
   "files.noPathHint": "Atjaunots no rezerves kopijām bez mapes. Iestatiet mapi, lai atkal dublētu. Atjaunošana mapē jau darbojas.",

@@ -10,7 +10,7 @@ function item(over: Partial<BackupItem>): BackupItem {
     name: "plex",
     included: true,
     paused: false,
-    effectiveSchedule: { kind: "domain", spec: "daily 03:00", alsoSpec: "" },
+    effectiveSchedule: { kind: "domain", spec: "daily 03:00" },
     lastBackup: 1_700_000_000,
     lastRunStatus: "success",
     sourceBytes: 1,
@@ -21,7 +21,7 @@ function item(over: Partial<BackupItem>): BackupItem {
 }
 
 const never = { lastBackup: 0, lastRunStatus: "" };
-const excluded = { included: false, effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" } } as const;
+const excluded = { included: false, effectiveSchedule: { kind: "none", spec: "", reason: "excluded" } } as const;
 
 describe("tallyEntries", () => {
   it("counts all six kinds", () => {

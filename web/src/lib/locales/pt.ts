@@ -1464,7 +1464,6 @@ const pt: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Agendamento de auto-backup",
   "settings.tamperScheduleInactive": "Inativo: nenhum repo externo está marcado como append-only, por isso este agendamento nunca é executado. Marca um repo externo como append-only nas suas definições externas para o ativar.",
   "settings.everythingTitle": "Backup total",
-  "settings.everythingDuplicateWarning": "Os containers, as VMs, o flash, as pastas, os conjuntos de dados ZFS e o auto-backup são copiados duas vezes enquanto este agendamento e o próprio de cada um estiverem ambos ativos: uma vez aqui e outra no agendamento próprio. Desative os domínios que não quiser duplicar.",
   "settings.everythingStarted": "Iniciado. Corre no servidor por cada domínio, um a um; acompanha o Registo de atividade para o resultado.",
   "settings.everythingAlreadyRunning": "Já há um backup total em andamento.",
   // Filter drawer trigger (v5 redesign)
@@ -1510,7 +1509,6 @@ const pt: Partial<Translations> = {
   "files.effectiveOwn": "Executa {when}, horário próprio",
   "files.effectiveDomain": "Executa {when}, a partir de {domain}",
   "files.effectiveEverything": "Executa {when}, com {domain}",
-  "files.effectiveBoth": "Executa duas vezes: {when} e {when2}",
   "files.pathMissing": "Pasta não encontrada",
   "files.noPath": "Nenhuma pasta definida",
   "files.noPathHint": "Reconstruído a partir dos backups sem pasta. Defina uma pasta para voltar a fazer backup. Restaurar para uma pasta já funciona.",

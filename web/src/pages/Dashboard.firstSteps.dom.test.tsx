@@ -43,7 +43,7 @@ const SECTIONS = {
   everythingSchedule: "off",
 } as Partial<Settings>;
 
-const unscheduled = { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" } as const;
+const unscheduled = { kind: "none", spec: "", reason: "schedule-off" } as const;
 
 /** A container that was found, is in no schedule and has never been backed up. */
 const found = (key: string, over: Parameters<typeof item>[0] = {}) =>
@@ -454,7 +454,7 @@ describe("the third step, the first backup", () => {
 
   it("counts what waits and what no schedule reaches, and lists the entries", async () => {
     server.items = [
-      found("plex", { included: true, effectiveSchedule: { kind: "domain", spec: "daily 03:00", alsoSpec: "" } }),
+      found("plex", { included: true, effectiveSchedule: { kind: "domain", spec: "daily 03:00" } }),
       found("gitea"),
       found("immich"),
     ];

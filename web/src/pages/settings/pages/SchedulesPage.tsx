@@ -8,7 +8,6 @@ import { KIND_LABEL, KindGlyph } from "../../../components/backups/kinds";
 import { Button } from "../../../components/Button";
 import { EXACT_CADENCE_MODES } from "../../../components/CadenceBuilder";
 import { BackupOrderPanel } from "../../../components/containers/BackupOrderPanel";
-import { Note } from "../../../components/entry/Note";
 import { Exceptions } from "../../../components/Exceptions";
 import { IconSchedules, IconTrash } from "../../../components/navGlyphs";
 import { NumberField } from "../../../components/NumberField";
@@ -147,6 +146,7 @@ export function SchedulesPage() {
 
   const fullOn = scheduleStatus(settings.everythingSchedule) !== "off";
   const ownPlans = sections.filter((s) => scheduleStatus(settings[s.schedule]) !== "off");
+  const inFull = sections.filter((s) => !ownPlans.includes(s));
   const ownCopies = sections.filter((s) => settings[s.offsite].trim() !== "");
   const fullHue = nextHue();
 
@@ -154,15 +154,17 @@ export function SchedulesPage() {
     <>
       <WeekCard settings={settings} hueIndex={nextHue()} />
 
-      <Card title={t("settings.everythingTitle")} hint={t("schedules.fullHint")} hueIndex={fullHue}>
+      <Card title={t("settings.everythingTitle")} hint={t("schedules.fullCardHint")} hueIndex={fullHue}>
         <div>
           <SettingRow
             label={t("schedules.whenRuns")}
             hint={t("schedules.whenRunsHint")}
             note={
-              fullOn
-                ? t("schedules.includes").replace("{sections}", formatList(lang, sections.map((s) => label(s.kind))))
-                : t("schedules.fullOff")
+              !fullOn
+                ? t("schedules.fullOff")
+                : inFull.length > 0
+                  ? t("schedules.includes").replace("{sections}", formatList(lang, inFull.map((s) => label(s.kind))))
+                  : t("schedules.fullAllOwn")
             }
           >
             <PlanButton
@@ -212,11 +214,11 @@ export function SchedulesPage() {
         (() => {
           const hue = nextHue();
           return (
-            <Card title={t("schedules.plans")} hint={t("schedules.plansHint")} hueIndex={hue}>
+            <Card title={t("schedules.plans")} hint={t("schedules.plansCardHint")} hueIndex={hue}>
               <Exceptions
                 label={t("schedules.plans")}
                 taken={ownPlans.map(asException)}
-                free={sections.filter((s) => !ownPlans.includes(s)).map(asException)}
+                free={inFull.map(asException)}
                 rule={t(ownPlans.length > 0 ? "schedules.plansRuleOthers" : "schedules.plansRuleAll")}
                 control={(kind) => (
                   <PlanButton
@@ -229,7 +231,6 @@ export function SchedulesPage() {
                 onAdd={(kind) => scheduleField(section(kind).schedule, NEW_SECTION_PLAN)}
                 onRemove={(kind) => scheduleField(section(kind).schedule, "off")}
               />
-              {fullOn && ownPlans.length > 0 && <Note tone="warn">{t("settings.everythingDuplicateWarning")}</Note>}
               <SubCard title={t("schedules.offsite")}>
                 <Exceptions
                   label={t("schedules.offsite")}

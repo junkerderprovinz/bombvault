@@ -1455,7 +1455,6 @@ const ko: Partial<Translations> = {
   "settings.schedulesSelfBackup": "자체 백업 일정",
   "settings.tamperScheduleInactive": "비활성: append-only로 표시된 오프사이트 저장소가 없어 이 일정은 실행되지 않습니다. 활성화하려면 오프사이트 저장소의 오프사이트 설정에서 append-only로 표시하세요.",
   "settings.everythingTitle": "전체 백업",
-  "settings.everythingDuplicateWarning": "이 일정과 각 영역 고유 일정이 모두 켜져 있는 동안에는 컨테이너, VM, 플래시, 폴더, ZFS 데이터세트, 셀프 백업이 두 번 백업됩니다. 한 번은 여기에서, 한 번은 각자의 일정에서 실행됩니다. 중복하고 싶지 않은 영역은 꺼 두세요.",
   "settings.everythingStarted": "시작됨. 서버에서 모든 영역을 순서대로 처리합니다. 결과는 활동 로그에서 확인하세요.",
   "settings.everythingAlreadyRunning": "전체 백업이 이미 실행 중입니다.",
   // Filter drawer trigger (v5 redesign)
@@ -1501,7 +1500,6 @@ const ko: Partial<Translations> = {
   "files.effectiveOwn": "{when} 실행, 자체 일정",
   "files.effectiveDomain": "{when} 실행, {domain}에서",
   "files.effectiveEverything": "{when} 실행, {domain}와 함께",
-  "files.effectiveBoth": "두 번 실행됩니다: {when} 및 {when2}",
   "files.pathMissing": "폴더를 찾을 수 없음",
   "files.noPath": "폴더가 설정되지 않음",
   "files.noPathHint": "폴더 정보 없이 백업에서 재구성되었습니다. 다시 백업하려면 폴더를 설정하세요. 폴더로 복원은 지금도 가능합니다.",

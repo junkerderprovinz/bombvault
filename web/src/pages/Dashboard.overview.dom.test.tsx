@@ -34,7 +34,7 @@ const leftOut = {
   included: false,
   lastBackup: 0,
   lastRunStatus: "",
-  effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+  effectiveSchedule: { kind: "none", spec: "", reason: "excluded" },
 } as const;
 
 beforeEach(() => {

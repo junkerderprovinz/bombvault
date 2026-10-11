@@ -59,7 +59,7 @@ function member(name: string, over: Partial<BackupItem> = {}): BackupItem {
     name,
     included: true,
     paused: false,
-    effectiveSchedule: { kind: "everything", spec: "daily@03:00", alsoSpec: "" },
+    effectiveSchedule: { kind: "everything", spec: "daily@03:00" },
     lastBackup: 1,
     lastRunStatus: "success",
     sourceBytes: 1,

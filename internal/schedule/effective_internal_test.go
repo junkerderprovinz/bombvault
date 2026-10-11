@@ -57,9 +57,6 @@ func TestEffectiveOwnReportsTheOverrideTheUserTyped(t *testing.T) {
 	if got.Spec != "daily 03:00" {
 		t.Fatalf("spec must be the override as typed, got %q", got.Spec)
 	}
-	if got.AlsoSpec != "" {
-		t.Fatalf("an own entry is excluded from both other runs, got a second spec %q", got.AlsoSpec)
-	}
 }
 
 func TestEffectiveNoneForAnExplicitOffOverride(t *testing.T) {
@@ -90,16 +87,13 @@ func TestEffectiveEverythingWhenTheFoldersScheduleIsOff(t *testing.T) {
 	}
 }
 
-func TestEffectiveBothNamesTwoSchedulesNotOne(t *testing.T) {
+func TestEffectiveSectionPlanTakesTheSetOutOfTheFullBackup(t *testing.T) {
 	s := baseSettings()
 	s.FilesSchedule = "weekly mon 02:00"
 	s.EverythingSchedule = "daily 05:00"
 	got := EffectiveFileSetSchedule(set(true, ""), s)
-	if got.Kind != EffectiveBoth {
-		t.Fatalf("two schedules covering one set is a double backup, got %q", got.Kind)
-	}
-	if got.Spec != "weekly mon 02:00" || got.AlsoSpec != "daily 05:00" {
-		t.Fatalf("both cadences must be named, got %q and %q", got.Spec, got.AlsoSpec)
+	if got.Kind != EffectiveDomain || got.Spec != "weekly mon 02:00" {
+		t.Fatalf("a section with its own plan runs only on it, got %q / %q", got.Kind, got.Spec)
 	}
 }
 
@@ -124,18 +118,18 @@ func TestEffectiveTreatsAnUnparseableCadenceAsNotRunning(t *testing.T) {
 	}
 }
 
-// TestBothSchedulesBackUpEveryIncludedFolderTwice checks that with both the
-// Folders and the Backup Everything schedule on, every included set without an
-// override is backed up by both.
-func TestBothSchedulesBackUpEveryIncludedFolderTwice(t *testing.T) {
+// TestASectionPlanBacksUpEveryIncludedFolderOnce checks that with both the
+// Folders plan and the full backup on, every included set without an override
+// runs on the Folders plan alone.
+func TestASectionPlanBacksUpEveryIncludedFolderOnce(t *testing.T) {
 	s := baseSettings()
 	s.FilesSchedule = "weekly mon 02:00"
 	s.EverythingSchedule = "daily 05:00"
 	for _, name := range []string{"ISO", "My_Backups", "data", "dockhand"} {
 		fs := store.FileSet{ID: name, Name: name, Enabled: true}
 		got := EffectiveFileSetSchedule(fs, s)
-		if got.Kind != EffectiveBoth {
-			t.Fatalf("%s: expected a double backup, got %q", name, got.Kind)
+		if got.Kind != EffectiveDomain {
+			t.Fatalf("%s: expected the Folders plan alone, got %q", name, got.Kind)
 		}
 	}
 }
@@ -153,8 +147,8 @@ func TestExcludedFoldersAreNotBackedUpByAnySchedule(t *testing.T) {
 		}
 	}
 	kept := store.FileSet{ID: "My_Backups", Name: "My_Backups", Enabled: true}
-	if got := EffectiveFileSetSchedule(kept, s); got.Kind != EffectiveBoth {
-		t.Fatalf("My_Backups: expected a double backup, got %q", got.Kind)
+	if got := EffectiveFileSetSchedule(kept, s); got.Kind != EffectiveDomain {
+		t.Fatalf("My_Backups: expected the Folders plan alone, got %q", got.Kind)
 	}
 }
 

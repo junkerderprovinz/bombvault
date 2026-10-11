@@ -24,7 +24,7 @@ const leftOut = {
   included: false,
   lastBackup: 0,
   lastRunStatus: "",
-  effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+  effectiveSchedule: { kind: "none", spec: "", reason: "excluded" },
 } as const;
 
 const setBackupDeclined = vi.mocked(api.setBackupDeclined);
@@ -138,7 +138,7 @@ describe("NeedsCard", () => {
       name: "gitea",
       included: false,
       lastBackup: 0,
-      effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+      effectiveSchedule: { kind: "none", spec: "", reason: "excluded" },
     });
     renderCard([{ is: "unprotected", item: gitea }]);
 
@@ -186,7 +186,7 @@ describe("NeedsCard", () => {
   });
 
   it("offers to leave out an entry that has no switch of its own as well", () => {
-    const flash = item({ kind: "flash", key: "flash", name: "flash", lastBackup: 0, effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" } });
+    const flash = item({ kind: "flash", key: "flash", name: "flash", lastBackup: 0, effectiveSchedule: { kind: "none", spec: "", reason: "schedule-off" } });
     renderCard([{ is: "unprotected", item: flash }]);
 
     const row = within(screen.getByTestId("need-unprotected"));
@@ -201,7 +201,7 @@ describe("NeedsCard", () => {
       key: "flash",
       name: "flash",
       lastBackup: 0,
-      effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" },
+      effectiveSchedule: { kind: "none", spec: "", reason: "schedule-off" },
     });
     renderCard([{ is: "unprotected", item: flash }]);
 

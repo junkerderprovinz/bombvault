@@ -4308,13 +4308,10 @@ export interface FileSetView {
  *  - "none":       nothing backs it up automatically
  *  - "own":        its own per-item entry, on `spec`
  *  - "domain":     the Folders schedule, on `spec`
- *  - "everything": only the Backup Everything pass, on `spec`
- *  - "both":       the Folders schedule AND Backup Everything, so twice a cycle
- *                  (`spec` and `alsoSpec`) */
+ *  - "everything": only the full backup, on `spec` */
 export interface EffectiveSchedule {
-  kind: "none" | "own" | "domain" | "everything" | "both";
+  kind: "none" | "own" | "domain" | "everything";
   spec: string;
-  alsoSpec: string;
   /** Why nothing runs, for "none". Every reason but "schedule-invalid" is a
    *  setting someone chose. */
   reason?: "domain-off" | "excluded" | "override-off" | "schedule-off" | "schedule-invalid";

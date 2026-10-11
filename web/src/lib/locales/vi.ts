@@ -1455,7 +1455,6 @@ const vi: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Lịch tự sao lưu",
   "settings.tamperScheduleInactive": "Không hoạt động. Không có kho off-site nào được đánh dấu là append-only, vì vậy lịch này không bao giờ chạy. Đánh dấu một kho off-site là append-only trong phần cài đặt off-site của kho đó để bật lịch này.",
   "settings.everythingTitle": "Sao lưu toàn bộ",
-  "settings.everythingDuplicateWarning": "Containers, VMs, flash, thư mục, tập dữ liệu ZFS và bản tự sao lưu sẽ được sao lưu hai lần khi lịch trình này và lịch trình riêng của chúng cùng bật: một lần ở đây và một lần theo lịch trình riêng. Hãy tắt những miền mà bạn không muốn sao lưu trùng lặp.",
   "settings.everythingStarted": "Đã bắt đầu. Chạy trên máy chủ lần lượt qua từng miền; theo dõi Nhật ký hoạt động để biết kết quả.",
   "settings.everythingAlreadyRunning": "Đã có một lượt sao lưu toàn bộ đang chạy.",
   // Filter drawer trigger (v5 redesign)
@@ -1501,7 +1500,6 @@ const vi: Partial<Translations> = {
   "files.effectiveOwn": "Chạy {when}, lịch riêng",
   "files.effectiveDomain": "Chạy {when}, từ {domain}",
   "files.effectiveEverything": "Chạy {when}, cùng với {domain}",
-  "files.effectiveBoth": "Chạy hai lần: {when} và {when2}",
   "files.pathMissing": "Không tìm thấy thư mục",
   "files.noPath": "Chưa đặt thư mục",
   "files.noPathHint": "Được dựng lại từ các bản sao lưu mà không có thư mục. Đặt một thư mục để sao lưu lại. Khôi phục vào thư mục đã hoạt động ngay.",

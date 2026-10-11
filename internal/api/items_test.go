@@ -293,12 +293,12 @@ func TestListItemsScheduledAndPausedStates(t *testing.T) {
 		included, paused bool
 		schedule         map[string]any
 	}{
-		{"container/plex", true, false, map[string]any{"kind": "both", "spec": "daily 02:30", "alsoSpec": "daily 05:00"}},
-		{"container/archive", true, true, map[string]any{"kind": "none", "spec": "", "alsoSpec": "", "reason": "override-off"}},
-		{"container/excluded", false, false, map[string]any{"kind": "none", "spec": "", "alsoSpec": "", "reason": "excluded"}},
-		{"files/" + docs.ID, true, false, map[string]any{"kind": "own", "spec": "weekly sun 06:00", "alsoSpec": ""}},
-		{"flash/flash", true, false, map[string]any{"kind": "everything", "spec": "daily 05:00", "alsoSpec": ""}},
-		{"config/config", true, false, map[string]any{"kind": "both", "spec": "daily 06:00", "alsoSpec": "daily 05:00"}},
+		{"container/plex", true, false, map[string]any{"kind": "domain", "spec": "daily 02:30"}},
+		{"container/archive", true, true, map[string]any{"kind": "none", "spec": "", "reason": "override-off"}},
+		{"container/excluded", false, false, map[string]any{"kind": "none", "spec": "", "reason": "excluded"}},
+		{"files/" + docs.ID, true, false, map[string]any{"kind": "own", "spec": "weekly sun 06:00"}},
+		{"flash/flash", true, false, map[string]any{"kind": "everything", "spec": "daily 05:00"}},
+		{"config/config", true, false, map[string]any{"kind": "domain", "spec": "daily 06:00"}},
 	}
 	for _, c := range cases {
 		row := rows[c.id]

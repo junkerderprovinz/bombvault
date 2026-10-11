@@ -27,7 +27,7 @@ const found = (key: string, over: Parameters<typeof item>[0] = {}) =>
     included: false,
     lastBackup: 0,
     lastRunStatus: "",
-    effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" },
+    effectiveSchedule: { kind: "none", spec: "", reason: "schedule-off" },
     ...over,
   });
 
@@ -138,7 +138,7 @@ describe("the three steps on the welcome page", () => {
     expect(within(step("backup")).queryByText(en["firstSteps.backupSub"])).toBeNull();
 
     cleanup();
-    server.items = [found("plex", { included: true, effectiveSchedule: { kind: "domain", spec: "daily 02:00", alsoSpec: "" } })];
+    server.items = [found("plex", { included: true, effectiveSchedule: { kind: "domain", spec: "daily 02:00" } })];
     await open();
     expect(within(step("backup")).getByText(en["firstSteps.backupSub"])).toBeTruthy();
   });

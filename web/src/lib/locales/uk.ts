@@ -1461,7 +1461,6 @@ const uk: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Розклад самокопіювання",
   "settings.tamperScheduleInactive": "Неактивно — жоден зовнішній репозиторій не позначений як append-only, тому цей розклад ніколи не запускається. Познач зовнішній репозиторій як append-only в його зовнішніх налаштуваннях, щоб увімкнути його.",
   "settings.everythingTitle": "Повний бекап",
-  "settings.everythingDuplicateWarning": "Контейнери, віртуальні машини, Flash, папки, набори даних ZFS й автобекап копіюються двічі, поки одночасно ввімкнено цей розклад і їхній власний: один раз тут і один раз за власним розкладом. Вимкніть домени, які не потрібно копіювати двічі.",
   "settings.everythingStarted": "Запущено — виконується на сервері по черзі для кожного домену; результат дивись у Журналі активності.",
   "settings.everythingAlreadyRunning": "Повний бекап вже виконується.",
   // Filter drawer trigger (v5 redesign)
@@ -1507,7 +1506,6 @@ const uk: Partial<Translations> = {
   "files.effectiveOwn": "Виконується {when}, власний розклад",
   "files.effectiveDomain": "Виконується {when}, з {domain}",
   "files.effectiveEverything": "Виконується {when}, разом із {domain}",
-  "files.effectiveBoth": "Виконується двічі: {when} та {when2}",
   "files.pathMissing": "Папку не знайдено",
   "files.noPath": "Папку не задано",
   "files.noPathHint": "Відновлено з резервних копій без папки. Задайте папку, щоб знову створювати копії — відновлення до папки вже працює.",

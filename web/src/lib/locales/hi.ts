@@ -1963,7 +1963,6 @@ const hi: Partial<Translations> = {
   "settings.schedulesSelfBackup": "सेल्फ़-बैकअप शेड्यूल",
   "settings.tamperScheduleInactive": "निष्क्रिय: किसी भी ऑफ़-साइट रिपॉज़िटरी को अपेंड-ओनली के रूप में चिह्नित नहीं किया गया है, इसलिए यह शेड्यूल कभी नहीं चलता। इसे सक्षम करने के लिए किसी ऑफ़-साइट रिपॉज़िटरी को उसकी अपनी ऑफ़-साइट सेटिंग्स में अपेंड-ओनली चिह्नित करें।",
   "settings.everythingTitle": "सब कुछ बैकअप",
-  "settings.everythingDuplicateWarning": "जब तक यह शेड्यूल और उनका अपना शेड्यूल, दोनों चालू हैं, तब तक कंटेनर, VM, फ़्लैश, फ़ोल्डर, ZFS डेटासेट और सेल्फ़-बैकअप का बैकअप दो बार लिया जाता है: एक बार यहाँ और एक बार उनके अपने शेड्यूल पर। जिन डोमेन का बैकअप दोहराना नहीं चाहते, उन्हें बंद कर दें।",
   "settings.everythingStarted": "शुरू हो गया। यह सर्वर पर बारी-बारी से हर डोमेन से गुज़रता है; परिणाम एक्टिविटी लॉग में देखें।",
   "settings.everythingAlreadyRunning": "सब कुछ बैकअप पहले से चल रहा है।",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const hi: Partial<Translations> = {
   "files.effectiveOwn": "{when} चलता है, अपनी अनुसूची",
   "files.effectiveDomain": "{when} चलता है, {domain} से",
   "files.effectiveEverything": "{when} चलता है, {domain} के साथ",
-  "files.effectiveBoth": "दो बार चलता है: {when} और {when2}",
   "files.pathMissing": "फ़ोल्डर नहीं मिला",
   "files.noPath": "कोई फ़ोल्डर सेट नहीं किया गया",
   "files.noPathHint": "बिना फ़ोल्डर वाले बैकअप से फिर से बनाया गया। फिर से बैकअप लेने के लिए एक फ़ोल्डर सेट करें। किसी फ़ोल्डर में रीस्टोर करना पहले से काम करता है।",

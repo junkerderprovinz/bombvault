@@ -252,8 +252,7 @@ function neverRuns(item: BackupItem): boolean {
 // Entries with the same schedule stand together, and what never runs comes last.
 function compareSchedule(a: BackupItem, b: BackupItem): number {
   if (neverRuns(a) || neverRuns(b)) return Number(neverRuns(a)) - Number(neverRuns(b));
-  const spec = (item: BackupItem) => `${item.effectiveSchedule.spec} ${item.effectiveSchedule.alsoSpec}`;
-  return spec(a).localeCompare(spec(b));
+  return a.effectiveSchedule.spec.localeCompare(b.effectiveSchedule.spec);
 }
 
 // An address orders by its numbers, so .9 stands before .10. Entries without

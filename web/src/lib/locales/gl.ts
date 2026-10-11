@@ -1963,7 +1963,6 @@ const gl: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Horario da autocopia",
   "settings.tamperScheduleInactive": "Inactivo: ningún repositorio externo está marcado como só-engadir, así que este horario nunca se executa. Marca un repositorio externo como só-engadir na súa propia configuración externa para activalo.",
   "settings.everythingTitle": "Copia completa",
-  "settings.everythingDuplicateWarning": "Os contedores, as MV, o Flash, os cartafoles, os conxuntos de datos ZFS e a autocopia cópianse dúas veces mentres esta planificación e a súa propia estean activas ao mesmo tempo: unha vez aquí e outra na súa. Desactiva os ámbitos que non queiras duplicar.",
   "settings.everythingStarted": "Iniciada: execútase no servidor pasando por cada ámbito por quendas; consulta o rexistro de actividade para ver o resultado.",
   "settings.everythingAlreadyRunning": "Xa se está a executar unha copia completa.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const gl: Partial<Translations> = {
   "files.effectiveOwn": "Execútase {when}, horario propio",
   "files.effectiveDomain": "Execútase {when}, desde {domain}",
   "files.effectiveEverything": "Execútase {when}, con {domain}",
-  "files.effectiveBoth": "Execútase dúas veces: {when} e {when2}",
   "files.pathMissing": "Cartafol non atopado",
   "files.noPath": "Non hai cartafol configurado",
   "files.noPathHint": "Reconstruído desde copias sen cartafol. Configura un cartafol para volver copiar. Restaurar nun cartafol xa funciona.",

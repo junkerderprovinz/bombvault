@@ -1463,7 +1463,6 @@ const nl: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Zelf-back-upschema",
   "settings.tamperScheduleInactive": "Inactief: geen enkele off-site repo is gemarkeerd als append-only, dus dit schema wordt nooit uitgevoerd. Markeer een off-site repo als append-only in de bijbehorende off-site-instellingen om het te activeren.",
   "settings.everythingTitle": "Volledige back-up",
-  "settings.everythingDuplicateWarning": "Containers, VM's, flash, mappen, ZFS-datasets en de zelf-back-up krijgen twee back-ups zolang deze planning en hun eigen planning allebei aanstaan: één keer hier en één keer in hun eigen planning. Zet de domeinen uit die je niet dubbel wilt back-uppen.",
   "settings.everythingStarted": "Gestart. Draait op de server achtereenvolgens door elk domein; volg het Activiteitenlogboek voor het resultaat.",
   "settings.everythingAlreadyRunning": "Er loopt al een volledige back-up.",
   // Filter drawer trigger (v5 redesign)
@@ -1509,7 +1508,6 @@ const nl: Partial<Translations> = {
   "files.effectiveOwn": "Draait {when}, eigen planning",
   "files.effectiveDomain": "Draait {when}, uit {domain}",
   "files.effectiveEverything": "Draait {when}, met {domain}",
-  "files.effectiveBoth": "Draait twee keer: {when} en {when2}",
   "files.pathMissing": "Map niet gevonden",
   "files.noPath": "Geen map ingesteld",
   "files.noPathHint": "Opnieuw opgebouwd uit back-ups zonder map. Stel een map in om weer te back-uppen. Herstellen naar een map werkt nu al.",

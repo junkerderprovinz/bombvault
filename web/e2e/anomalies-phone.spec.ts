@@ -856,7 +856,7 @@ test("the More sheet counts the open findings and the bar marks its trigger whil
     name: "nextcloud",
     included: true,
     paused: false,
-    effectiveSchedule: { kind: "domain", spec: "daily 03:00", alsoSpec: "" },
+    effectiveSchedule: { kind: "domain", spec: "daily 03:00" },
     lastBackup: Math.floor(Date.now() / 1000) - 3600,
     lastRunStatus: "success",
     sourceBytes: 1024,

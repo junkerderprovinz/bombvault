@@ -1464,7 +1464,6 @@ const he: Partial<Translations> = {
   "settings.schedulesSelfBackup": "תזמון גיבוי עצמי",
   "settings.tamperScheduleInactive": "לא פעיל: אף מאגר מחוץ לאתר אינו מסומן כ-append-only, ולכן תזמון זה לעולם לא פועל. סמן מאגר מחוץ לאתר כ-append-only בהגדרות מחוץ לאתר שלו כדי להפעיל אותו.",
   "settings.everythingTitle": "גיבוי מלא",
-  "settings.everythingDuplicateWarning": "ה-Containers, ה-VMs, ה-Flash, התיקיות, מערכי הנתונים של ZFS והגיבוי העצמי מגובים פעמיים כל עוד לוח הזמנים הזה ולוח הזמנים שלהם פעילים בו-זמנית: פעם אחת כאן ופעם אחת בלוח שלהם. כבה את התחומים שאינך רוצה לגבות פעמיים.",
   "settings.everythingStarted": "התחיל. הוא רץ על השרת בכל תחום בתורו; עקוב אחרי יומן הפעילות לתוצאה.",
   "settings.everythingAlreadyRunning": "גיבוי מלא כבר רץ.",
   // Filter drawer trigger (v5 redesign)
@@ -1510,7 +1509,6 @@ const he: Partial<Translations> = {
   "files.effectiveOwn": "פועל {when}, לוח זמנים משלו",
   "files.effectiveDomain": "פועל {when}, מתוך {domain}",
   "files.effectiveEverything": "פועל {when}, יחד עם {domain}",
-  "files.effectiveBoth": "פועל פעמיים: {when} ו-{when2}",
   "files.pathMissing": "התיקייה לא נמצאה",
   "files.noPath": "לא הוגדרה תיקייה",
   "files.noPathHint": "שוחזר מגיבויים ללא תיקייה. הגדר תיקייה כדי לגבות שוב. שחזור לתיקייה עובד כבר עכשיו.",

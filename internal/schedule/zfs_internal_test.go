@@ -282,7 +282,7 @@ func TestEffectiveZFSDatasetSchedule(t *testing.T) {
 			name:     "domain and everything",
 			item:     store.ZFSDataset{Enabled: true},
 			settings: store.Settings{ZFSEnabled: true, ZFSSchedule: "daily 03:00", EverythingSchedule: "daily 02:00"},
-			want:     EffectiveBoth,
+			want:     EffectiveDomain,
 		},
 	}
 	for _, tc := range cases {

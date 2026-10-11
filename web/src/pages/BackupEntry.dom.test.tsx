@@ -313,7 +313,7 @@ describe("the state of the entry", () => {
         {
           ...IMMICH,
           included: false,
-          effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+          effectiveSchedule: { kind: "none", spec: "", reason: "excluded" },
           backupDeclined: true,
         },
       ],

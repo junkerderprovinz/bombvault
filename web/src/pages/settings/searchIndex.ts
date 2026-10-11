@@ -118,7 +118,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     { title: "tile.week.title", hint: "tile.week.hint", rows: [] },
     {
       title: "settings.everythingTitle",
-      hint: "schedules.fullHint",
+      hint: "schedules.fullCardHint",
       rows: [
         { key: "schedules.whenRuns", hint: "schedules.whenRunsHint" },
         { key: "settings.catchUpMissed", hint: "settings.catchUpMissedHint" },
@@ -129,7 +129,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
     {
       title: "schedules.plans",
-      hint: "schedules.plansHint",
+      hint: "schedules.plansCardHint",
       rows: [{ key: "exceptions.add" }, { key: "schedules.offsite" }],
     },
     {

@@ -1963,7 +1963,6 @@ const fa: Partial<Translations> = {
   "settings.schedulesSelfBackup": "زمان‌بندی پشتیبان‌گیری خودکار",
   "settings.tamperScheduleInactive": "غیرفعال: هیچ مخزن خارج از محلی به‌عنوان فقط-افزودنی علامت‌گذاری نشده، پس این زمان‌بندی هرگز اجرا نمی‌شود. برای فعال‌سازی، یک مخزن خارج از محل را در تنظیمات خارج از محل خودش به‌عنوان فقط-افزودنی علامت بزنید.",
   "settings.everythingTitle": "پشتیبان‌گیری کامل",
-  "settings.everythingDuplicateWarning": "تا زمانی که این زمان‌بندی و زمان‌بندی خودِ آن‌ها هر دو روشن باشند، کانتینرها، ماشین‌های مجازی، فلش، پوشه‌ها، مجموعه‌داده‌های ZFS و پشتیبان‌گیری خودکار دو بار پشتیبان‌گیری می‌شوند: یک بار اینجا و یک بار در زمان‌بندی خودشان. حوزه‌هایی را که نمی‌خواهید دوباره پشتیبان‌گیری شوند خاموش کنید.",
   "settings.everythingStarted": "آغاز شد: روی سرور به‌ترتیب از هر حوزه عبور می‌کند؛ نتیجه را در گزارش فعالیت ببین.",
   "settings.everythingAlreadyRunning": "یک پشتیبان‌گیری کامل هم‌اکنون در حال اجراست.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const fa: Partial<Translations> = {
   "files.effectiveOwn": "{when} اجرا می‌شود، زمان‌بندی خودش",
   "files.effectiveDomain": "{when} اجرا می‌شود، از {domain}",
   "files.effectiveEverything": "{when} اجرا می‌شود، همراه با {domain}",
-  "files.effectiveBoth": "دو بار اجرا می‌شود: {when} و {when2}",
   "files.pathMissing": "پوشه پیدا نشد",
   "files.noPath": "پوشه‌ای تنظیم نشده",
   "files.noPathHint": "از پشتیبان‌های بدون پوشه بازسازی شده. برای پشتیبان‌گیری دوباره، پوشه‌ای تنظیم کنید. بازیابی در یک پوشه از قبل کار می‌کند.",

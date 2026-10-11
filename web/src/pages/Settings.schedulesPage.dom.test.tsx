@@ -50,7 +50,7 @@ function item(over: Partial<BackupItem>): BackupItem {
     name: "tank/appdata",
     included: true,
     paused: false,
-    effectiveSchedule: { kind: "everything", spec: "daily 03:00", alsoSpec: "" },
+    effectiveSchedule: { kind: "everything", spec: "daily 03:00" },
     lastBackup: 0,
     lastRunStatus: "",
     sourceBytes: null,
@@ -149,11 +149,17 @@ afterEach(() => {
 });
 
 describe("the full backup", () => {
-  it("reads as one plan sentence and names the sections it takes along", async () => {
+  it("reads as one plan sentence and names only the sections without a plan of their own", async () => {
     await renderPage();
     const full = card("settings.everythingTitle");
     expect(within(full).getByRole("button", { name: /full backup.*daily at 3:00/i })).toBeTruthy();
-    expect(within(full).getByText(/^Includes: Folders, ZFS(,)? and Self-backup$/)).toBeTruthy();
+    expect(within(full).getByText(/^Includes: Folders and ZFS$/)).toBeTruthy();
+  });
+
+  it("says when every section runs on a plan of its own", async () => {
+    settingsOnServer = baseSettings({ filesSchedule: "daily 01:00", zfsSchedule: "daily 01:30" });
+    await renderPage();
+    expect(within(card("settings.everythingTitle")).getByText(en["schedules.fullAllOwn"])).toBeTruthy();
   });
 
   it("says that only own plans run while it is off", async () => {
@@ -180,9 +186,9 @@ describe("plans per section", () => {
     expect(within(plans).getByText(en["schedules.plansRuleOthers"])).toBeTruthy();
   });
 
-  it("warns that a section with its own plan is also in the full backup", async () => {
+  it("has no warning about a double backup, since a section with its own plan leaves the full backup", async () => {
     await renderPage();
-    expect(within(card("schedules.plans")).getByText(en["settings.everythingDuplicateWarning"])).toBeTruthy();
+    expect(within(card("schedules.plans")).queryByText(/backed up twice/)).toBeNull();
   });
 
   it("gives a section back to the full backup when its exception is removed", async () => {
@@ -226,7 +232,7 @@ describe("scheduled entries", () => {
   });
 
   it("switches an entry in and out of the schedule from its section's window", async () => {
-    itemsOnServer = [item({ included: false, effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" } })];
+    itemsOnServer = [item({ included: false, effectiveSchedule: { kind: "none", spec: "", reason: "excluded" } })];
     await renderPage();
     const row = document.querySelector<HTMLElement>("[data-kind=\"zfs\"]")!;
     fireEvent.click(within(row).getByRole("button", { name: en["schedules.entriesButton"] }));

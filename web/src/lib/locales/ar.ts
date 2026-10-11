@@ -1465,7 +1465,6 @@ const ar: Partial<Translations> = {
   "settings.schedulesSelfBackup": "جدول النسخ الاحتياطي الذاتي",
   "settings.tamperScheduleInactive": "غير نشط: لا يوجد مستودع خارج الموقع مُعلَّم كـ append-only، لذا لا يعمل هذا الجدول الزمني أبدًا. علّم مستودعًا خارج الموقع كـ append-only ضمن إعداداته الخاصة بالتخزين خارج الموقع لتفعيله.",
   "settings.everythingTitle": "نسخ احتياطي شامل",
-  "settings.everythingDuplicateWarning": "تُنسخ Containers وVMs وFlash والمجلدات ومجموعات بيانات ZFS والنسخ الذاتي مرتين طالما أن هذا الجدول الزمني وجدولها الخاص مفعّلان معًا: مرة هنا ومرة في جدولها الخاص. عطّل النطاقات التي لا تريد تكرارها.",
   "settings.everythingStarted": "بدأ. يعمل على الخادم عبر كل نطاق بالترتيب؛ راقب سجل النشاط لمعرفة النتيجة.",
   "settings.everythingAlreadyRunning": "هناك عملية نسخ احتياطي شامل قيد التشغيل بالفعل.",
   // Filter drawer trigger (v5 redesign)
@@ -1511,7 +1510,6 @@ const ar: Partial<Translations> = {
   "files.effectiveOwn": "يعمل {when}، جدوله الخاص",
   "files.effectiveDomain": "يعمل {when}، من {domain}",
   "files.effectiveEverything": "يعمل {when}، مع {domain}",
-  "files.effectiveBoth": "يعمل مرتين: {when} و{when2}",
   "files.pathMissing": "المجلد غير موجود",
   "files.noPath": "لم يُحدَّد مجلد",
   "files.noPathHint": "أُعيد بناؤه من النسخ الاحتياطية دون مجلد. حدِّد مجلداً لنسخه احتياطياً من جديد. الاستعادة إلى مجلد تعمل بالفعل.",

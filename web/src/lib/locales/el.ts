@@ -1464,7 +1464,6 @@ const el: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Προγραμματισμός αυτο-αντιγράφου",
   "settings.tamperScheduleInactive": "Ανενεργό: κανένα αποθετήριο εκτός τόπου δεν είναι επισημασμένο ως append-only, επομένως αυτός ο προγραμματισμός δεν εκτελείται ποτέ. Επισήμανε ένα αποθετήριο εκτός τόπου ως append-only στις ρυθμίσεις εκτός τόπου του για να τον ενεργοποιήσεις.",
   "settings.everythingTitle": "Πλήρες αντίγραφο ασφαλείας",
-  "settings.everythingDuplicateWarning": "Τα Containers, τα VMs, το Flash, οι φάκελοι, τα σύνολα δεδομένων ZFS και το αυτο-αντίγραφο λαμβάνονται δύο φορές όσο είναι ενεργά ταυτόχρονα αυτό το χρονοδιάγραμμα και το δικό τους: μία φορά εδώ και μία φορά στο δικό τους. Απενεργοποιήστε τους τομείς που δεν θέλετε να διπλασιάζονται.",
   "settings.everythingStarted": "Ξεκίνησε. Εκτελείται στον διακομιστή σε κάθε τομέα με τη σειρά· παρακολούθησε το Αρχείο καταγραφής δραστηριότητας για το αποτέλεσμα.",
   "settings.everythingAlreadyRunning": "Ένα πλήρες αντίγραφο εκτελείται ήδη.",
   // Filter drawer trigger (v5 redesign)
@@ -1510,7 +1509,6 @@ const el: Partial<Translations> = {
   "files.effectiveOwn": "Εκτελείται {when}, δικό του πρόγραμμα",
   "files.effectiveDomain": "Εκτελείται {when}, από {domain}",
   "files.effectiveEverything": "Εκτελείται {when}, με {domain}",
-  "files.effectiveBoth": "Εκτελείται δύο φορές: {when} και {when2}",
   "files.pathMissing": "Ο φάκελος δεν βρέθηκε",
   "files.noPath": "Δεν έχει οριστεί φάκελος",
   "files.noPathHint": "Ανακατασκευάστηκε από αντίγραφα χωρίς φάκελο. Ορίστε έναν φάκελο για να δημιουργούνται ξανά αντίγραφα. Η επαναφορά σε φάκελο λειτουργεί ήδη.",

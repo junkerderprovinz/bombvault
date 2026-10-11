@@ -49,11 +49,6 @@ export function useScheduleSentence(): (
           tone: chosen ? "text-carbon-textMuted" : "text-statusFail",
         };
       }
-      case "both":
-        return {
-          text: t("files.effectiveBoth").replace("{when}", when).replace("{when2}", cadence(effective.alsoSpec)),
-          tone: "text-statusWarn",
-        };
       case "own":
         return { text: t("files.effectiveOwn").replace("{when}", when), tone: "text-carbon-textSub" };
       // The names come from translation keys, so the sentence matches the

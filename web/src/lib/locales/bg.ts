@@ -1963,7 +1963,6 @@ const bg: Partial<Translations> = {
   "settings.schedulesSelfBackup": "График на самобекъпа",
   "settings.tamperScheduleInactive": "Неактивен — нито едно хранилище извън обекта не е маркирано като само-добавящо, затова този график никога не се изпълнява. Маркирай хранилище извън обекта като само-добавящо в собствените му настройки извън обекта, за да го активираш.",
   "settings.everythingTitle": "Пълен бекъп",
-  "settings.everythingDuplicateWarning": "Контейнерите, ВМ, Flash, папките, наборите данни ZFS и самобекъпът се архивират по два пъти, докато този график и техният собствен са включени едновременно: веднъж тук и веднъж по техния собствен график. Изключи областите, които не искаш да се дублират.",
   "settings.everythingStarted": "Стартирано — изпълнява се на сървъра последователно през всяка област; резултатът се вижда в дневника на дейностите.",
   "settings.everythingAlreadyRunning": "Вече се изпълнява пълен бекъп.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const bg: Partial<Translations> = {
   "files.effectiveOwn": "Изпълнява се {when}, собствен график",
   "files.effectiveDomain": "Изпълнява се {when}, от {domain}",
   "files.effectiveEverything": "Изпълнява се {when}, с {domain}",
-  "files.effectiveBoth": "Изпълнява се два пъти: {when} и {when2}",
   "files.pathMissing": "Папката не е намерена",
   "files.noPath": "Не е зададена папка",
   "files.noPathHint": "Пресъздаден от архивирания без папка. Задай папка, за да архивираш отново — възстановяването в папка вече работи.",

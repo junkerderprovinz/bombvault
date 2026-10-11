@@ -1455,7 +1455,6 @@ const zh: Partial<Translations> = {
   "settings.schedulesSelfBackup": "自备份计划",
   "settings.tamperScheduleInactive": "未激活。没有任何异地仓库被标记为 append-only，因此此计划永远不会运行。在其异地设置中将某个异地仓库标记为 append-only 即可启用。",
   "settings.everythingTitle": "全部备份",
-  "settings.everythingDuplicateWarning": "当此计划与各个域自己的计划同时启用时，容器、虚拟机、闪存、文件夹、ZFS 数据集和自我备份都会被备份两次：一次在这里，一次在各自的计划中。请关闭不需要重复备份的域。",
   "settings.everythingStarted": "已开始，将在服务器上依次处理每个域；请在活动日志中查看结果。",
   "settings.everythingAlreadyRunning": "已有一个全部备份正在运行。",
   // Filter drawer trigger (v5 redesign)
@@ -1501,7 +1500,6 @@ const zh: Partial<Translations> = {
   "files.effectiveOwn": "{when} 运行，使用自己的计划",
   "files.effectiveDomain": "{when} 运行，来自{domain}",
   "files.effectiveEverything": "{when} 运行，随{domain}一起",
-  "files.effectiveBoth": "运行两次：{when} 和 {when2}",
   "files.pathMissing": "找不到文件夹",
   "files.noPath": "未设置文件夹",
   "files.noPathHint": "从没有文件夹信息的备份中重建。设置文件夹后即可再次备份。恢复到文件夹现在就可用。",

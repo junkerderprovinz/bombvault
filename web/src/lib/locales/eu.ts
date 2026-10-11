@@ -1963,7 +1963,6 @@ const eu: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Autobabeskopiaren egutegia",
   "settings.tamperScheduleInactive": "Inaktiboa: ez dago gehitu-soilik gisa markatutako kanpoko biltegirik, beraz egutegi hau ez da inoiz exekutatzen. Markatu kanpoko biltegi bat gehitu-soilik gisa bere kanpoko ezarpenetan aktibatzeko.",
   "settings.everythingTitle": "Babeskopia osoa",
-  "settings.everythingDuplicateWarning": "Edukiontziak, MBak, Flasha, karpetak, ZFS datu-multzoak eta autobabeskopia bi aldiz babesten dira plangintza hau eta beren plangintza aldi berean aktibo dauden bitartean: behin hemen eta behin berenean. Itzali bikoiztu nahi ez dituzun eremuak.",
   "settings.everythingStarted": "Abiarazita: zerbitzarian exekutatzen ari da eremu bakoitzetik txandaka; emaitza jarduera-erregistroan ikusiko duzu.",
   "settings.everythingAlreadyRunning": "Babeskopia oso bat martxan dago jada.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const eu: Partial<Translations> = {
   "files.effectiveOwn": "{when} exekutatzen da, bere ordutegia",
   "files.effectiveDomain": "{when} exekutatzen da, {domain}(e)tik",
   "files.effectiveEverything": "{when} exekutatzen da, {domain}(r)ekin",
-  "files.effectiveBoth": "Bi aldiz exekutatzen da: {when} eta {when2}",
   "files.pathMissing": "Karpeta ez da aurkitu",
   "files.noPath": "Karpetarik ez da ezarri",
   "files.noPathHint": "Karpetarik gabeko babeskopietatik berreraikita. Ezarri karpeta bat berriz babesteko. Karpeta batean berrezartzea jada funtzionatzen du.",

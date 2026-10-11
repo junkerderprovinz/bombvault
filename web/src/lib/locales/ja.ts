@@ -1455,7 +1455,6 @@ const ja: Partial<Translations> = {
   "settings.schedulesSelfBackup": "セルフバックアップスケジュール",
   "settings.tamperScheduleInactive": "非アクティブ：append-only としてマークされたオフサイトリポジトリがないため、このスケジュールは実行されません。有効にするには、オフサイトリポジトリのオフサイト設定で append-only としてマークしてください。",
   "settings.everythingTitle": "全体バックアップ",
-  "settings.everythingDuplicateWarning": "このスケジュールと各ドメイン自身のスケジュールが両方とも有効な間、コンテナ、VM、フラッシュ、フォルダー、ZFS データセット、セルフバックアップは 2 回バックアップされます。1 回はここで、もう 1 回はそれぞれのスケジュールで実行されます。重複させたくないドメインはオフにしてください。",
   "settings.everythingStarted": "開始しました。サーバー上で各ドメインを順番に処理します。結果はアクティビティログで確認してください。",
   "settings.everythingAlreadyRunning": "全体バックアップはすでに実行中です。",
   // Filter drawer trigger (v5 redesign)
@@ -1501,7 +1500,6 @@ const ja: Partial<Translations> = {
   "files.effectiveOwn": "{when} に実行、独自のスケジュール",
   "files.effectiveDomain": "{when} に実行、{domain} から",
   "files.effectiveEverything": "{when} に実行、{domain} と一緒に",
-  "files.effectiveBoth": "2回実行されます: {when} と {when2}",
   "files.pathMissing": "フォルダーが見つかりません",
   "files.noPath": "フォルダー未設定",
   "files.noPathHint": "フォルダー情報なしでバックアップから再構築されました。再びバックアップするにはフォルダーを設定してください。フォルダーへの復元は今すぐ使えます。",

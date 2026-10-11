@@ -1963,7 +1963,6 @@ const sk: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Plán vlastnej zálohy",
   "settings.tamperScheduleInactive": "Neaktívne: žiadny externý repozitár nie je označený ako len-na-pridávanie, takže tento plán nikdy nebeží. Označte externý repozitár ako len-na-pridávanie v jeho vlastných externých nastaveniach, aby ste ho zapli.",
   "settings.everythingTitle": "Kompletná záloha",
-  "settings.everythingDuplicateWarning": "Kontajnery, VM, Flash, priečinky, dátové sady ZFS a vlastná záloha sa zálohujú dvakrát, kým sú súčasne zapnuté tento plán aj ich vlastný: raz tu a raz vo vlastnom pláne. Vypnite oblasti, ktoré nechcete zálohovať dvakrát.",
   "settings.everythingStarted": "Spustené. Beží na serveri postupne cez každú oblasť; výsledok uvidíš v denníku aktivít.",
   "settings.everythingAlreadyRunning": "Kompletná záloha už prebieha.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const sk: Partial<Translations> = {
   "files.effectiveOwn": "Beží {when}, vlastný plán",
   "files.effectiveDomain": "Beží {when}, z {domain}",
   "files.effectiveEverything": "Beží {when}, s {domain}",
-  "files.effectiveBoth": "Beží dvakrát: {when} a {when2}",
   "files.pathMissing": "Priečinok sa nenašiel",
   "files.noPath": "Priečinok nie je nastavený",
   "files.noPathHint": "Znova zostavené zo záloh bez priečinka. Nastavte priečinok, aby ste znova zálohovali. Obnovenie do priečinka už funguje.",

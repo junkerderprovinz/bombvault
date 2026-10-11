@@ -1464,7 +1464,6 @@ const fi: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Itsevarmuuskopioinnin aikataulu",
   "settings.tamperScheduleInactive": "Ei aktiivinen. Mikään etärepo ei ole merkitty append-only-tilaan, joten tämä aikataulu ei koskaan käynnisty. Merkitse etärepo append-only-tilaan sen etäasetuksissa ottaaksesi sen käyttöön.",
   "settings.everythingTitle": "Täysvarmuuskopio",
-  "settings.everythingDuplicateWarning": "Kontit, VMs, flash, kansiot, ZFS-tietojoukot ja itsevarmuuskopio varmuuskopioidaan kahdesti niin kauan kuin sekä tämä aikataulu että niiden oma ovat päällä: kerran täällä ja kerran omalla aikataulullaan. Kytke pois ne osa-alueet, joita et halua kahdentaa.",
   "settings.everythingStarted": "Käynnistetty. Se etenee palvelimella osa-alue kerrallaan; seuraa tulosta Toimintalokista.",
   "settings.everythingAlreadyRunning": "Täysvarmuuskopio on jo käynnissä.",
   // Filter drawer trigger (v5 redesign)
@@ -1510,7 +1509,6 @@ const fi: Partial<Translations> = {
   "files.effectiveOwn": "Suoritetaan {when}, oma aikataulu",
   "files.effectiveDomain": "Suoritetaan {when}, lähteestä {domain}",
   "files.effectiveEverything": "Suoritetaan {when}, yhdessä {domain}",
-  "files.effectiveBoth": "Suoritetaan kahdesti: {when} ja {when2}",
   "files.pathMissing": "Kansiota ei löydy",
   "files.noPath": "Kansiota ei asetettu",
   "files.noPathHint": "Rakennettu uudelleen varmuuskopioista ilman kansiota. Aseta kansio, jotta varmuuskopiointi onnistuu taas. Palautus kansioon toimii jo nyt.",

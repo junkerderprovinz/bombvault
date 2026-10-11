@@ -1963,7 +1963,6 @@ const id: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Jadwal cadangan mandiri",
   "settings.tamperScheduleInactive": "Tidak aktif: tidak ada repositori off-site yang ditandai sebagai append-only, jadi jadwal ini tidak pernah berjalan. Tandai repositori off-site sebagai append-only di pengaturan off-site-nya sendiri untuk mengaktifkannya.",
   "settings.everythingTitle": "Cadangkan Semua",
-  "settings.everythingDuplicateWarning": "Container, VM, Flash, folder, dataset ZFS, dan cadangan mandiri dicadangkan dua kali selama jadwal ini dan jadwal masing-masing sama-sama aktif: sekali di sini dan sekali di jadwalnya sendiri. Matikan domain yang tidak ingin dicadangkan dua kali.",
   "settings.everythingStarted": "Dimulai. Berjalan di server melewati setiap domain secara bergantian; lihat log aktivitas untuk hasilnya.",
   "settings.everythingAlreadyRunning": "Proses Cadangkan Semua sudah berjalan.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const id: Partial<Translations> = {
   "files.effectiveOwn": "Berjalan {when}, jadwal sendiri",
   "files.effectiveDomain": "Berjalan {when}, dari {domain}",
   "files.effectiveEverything": "Berjalan {when}, bersama {domain}",
-  "files.effectiveBoth": "Berjalan dua kali: {when} dan {when2}",
   "files.pathMissing": "Folder tidak ditemukan",
   "files.noPath": "Tidak ada folder yang diatur",
   "files.noPathHint": "Dibangun ulang dari cadangan tanpa folder. Atur folder untuk mencadangkan lagi. Pemulihan ke folder sudah berfungsi.",

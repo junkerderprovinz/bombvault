@@ -1461,7 +1461,6 @@ const pl: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Harmonogram samodzielnej kopii",
   "settings.tamperScheduleInactive": "Nieaktywny: żadne repo off-site nie jest oznaczone jako append-only, więc ten harmonogram nigdy się nie uruchamia. Oznacz repo off-site jako append-only w jego ustawieniach off-site, aby go włączyć.",
   "settings.everythingTitle": "Pełna kopia",
-  "settings.everythingDuplicateWarning": "Kontenery, maszyny wirtualne, flash, foldery, zbiory danych ZFS i autokopia są kopiowane dwa razy, dopóki jednocześnie włączony jest ten harmonogram i ich własny: raz tutaj i raz we własnym harmonogramie. Wyłącz domeny, których nie chcesz kopiować podwójnie.",
   "settings.everythingStarted": "Uruchomiono. Działa na serwerze kolejno przez każdą domenę; sprawdź wynik w Dzienniku aktywności.",
   "settings.everythingAlreadyRunning": "Pełna kopia już trwa.",
   // Filter drawer trigger (v5 redesign)
@@ -1507,7 +1506,6 @@ const pl: Partial<Translations> = {
   "files.effectiveOwn": "Działa {when}, własny harmonogram",
   "files.effectiveDomain": "Działa {when}, z {domain}",
   "files.effectiveEverything": "Działa {when}, z {domain}",
-  "files.effectiveBoth": "Działa dwa razy: {when} i {when2}",
   "files.pathMissing": "Nie znaleziono folderu",
   "files.noPath": "Nie ustawiono folderu",
   "files.noPathHint": "Odbudowany z kopii zapasowych bez folderu. Ustaw folder, aby znów tworzyć kopie. Przywracanie do folderu działa już teraz.",

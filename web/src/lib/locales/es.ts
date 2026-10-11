@@ -1462,7 +1462,6 @@ const es: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Programación de autocopia",
   "settings.tamperScheduleInactive": "Inactivo: ningún repo externo está marcado como append-only, así que esta programación nunca se ejecuta. Marca un repo externo como append-only en su configuración externa para activarla.",
   "settings.everythingTitle": "Copia total",
-  "settings.everythingDuplicateWarning": "Los contenedores, las VMs, el flash, las carpetas, los conjuntos de datos ZFS y la autocopia se copian dos veces mientras este calendario y el suyo propio estén activos a la vez: una vez aquí y otra en el suyo. Desactiva los dominios que no quieras duplicar.",
   "settings.everythingStarted": "Iniciado: se ejecuta en el servidor por cada dominio en turno; consulta el Registro de actividad para ver el resultado.",
   "settings.everythingAlreadyRunning": "Ya hay una copia total en curso.",
   // Filter drawer trigger (v5 redesign)
@@ -1508,7 +1507,6 @@ const es: Partial<Translations> = {
   "files.effectiveOwn": "Se ejecuta {when}, horario propio",
   "files.effectiveDomain": "Se ejecuta {when}, desde {domain}",
   "files.effectiveEverything": "Se ejecuta {when}, con {domain}",
-  "files.effectiveBoth": "Se ejecuta dos veces: {when} y {when2}",
   "files.pathMissing": "Carpeta no encontrada",
   "files.noPath": "Sin carpeta definida",
   "files.noPathHint": "Reconstruido desde las copias sin carpeta. Define una carpeta para volver a copiarlo. Restaurar en una carpeta ya funciona.",

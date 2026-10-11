@@ -1963,7 +1963,6 @@ const ca: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Horari de l'autocòpia",
   "settings.tamperScheduleInactive": "Inactiu: cap repositori extern està marcat com a només-afegir, així que aquest horari mai s'executa. Marca un repositori extern com a només-afegir a la seva pròpia configuració externa per activar-lo.",
   "settings.everythingTitle": "Còpia completa",
-  "settings.everythingDuplicateWarning": "Els contenidors, les MV, el Flash, les carpetes, els conjunts de dades ZFS i l'autocòpia es copien dues vegades mentre aquesta planificació i la seva pròpia estiguin totes dues actives: un cop aquí i un cop a la seva. Desactiva els àmbits que no vulguis duplicar.",
   "settings.everythingStarted": "Iniciada. S'executa al servidor passant per cada àmbit per torns; consulta el registre d'activitat per veure'n el resultat.",
   "settings.everythingAlreadyRunning": "Ja s'està executant una còpia completa.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const ca: Partial<Translations> = {
   "files.effectiveOwn": "S'executa {when}, horari propi",
   "files.effectiveDomain": "S'executa {when}, des de {domain}",
   "files.effectiveEverything": "S'executa {when}, amb {domain}",
-  "files.effectiveBoth": "S'executa dues vegades: {when} i {when2}",
   "files.pathMissing": "Carpeta no trobada",
   "files.noPath": "Cap carpeta configurada",
   "files.noPathHint": "Reconstruït des de còpies sense carpeta. Configura una carpeta per tornar a copiar. Restaurar a una carpeta ja funciona.",

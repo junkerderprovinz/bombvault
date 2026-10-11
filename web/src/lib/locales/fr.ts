@@ -1464,7 +1464,6 @@ const fr: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Planning d'auto-sauvegarde",
   "settings.tamperScheduleInactive": "Inactif : aucun dépôt hors site n'est marqué comme append-only, donc ce planning ne s'exécute jamais. Marque un dépôt hors site comme append-only dans ses paramètres hors site pour l'activer.",
   "settings.everythingTitle": "Sauvegarde complète",
-  "settings.everythingDuplicateWarning": "Les conteneurs, les VMs, le flash, les dossiers, les jeux de données ZFS et l'auto-sauvegarde sont sauvegardés deux fois tant que ce planning et le leur sont actifs en même temps : une fois ici et une fois dans le leur. Désactivez les domaines que vous ne voulez pas dupliquer.",
   "settings.everythingStarted": "Démarré : elle s'exécute sur le serveur domaine par domaine ; consulte le Journal d'activité pour connaître le résultat.",
   "settings.everythingAlreadyRunning": "Une sauvegarde complète est déjà en cours.",
   // Filter drawer trigger (v5 redesign)
@@ -1510,7 +1509,6 @@ const fr: Partial<Translations> = {
   "files.effectiveOwn": "S'exécute {when}, planning propre",
   "files.effectiveDomain": "S'exécute {when}, depuis {domain}",
   "files.effectiveEverything": "S'exécute {when}, avec {domain}",
-  "files.effectiveBoth": "S'exécute deux fois : {when} et {when2}",
   "files.pathMissing": "Dossier introuvable",
   "files.noPath": "Aucun dossier défini",
   "files.noPathHint": "Reconstruit depuis les sauvegardes sans dossier. Définissez un dossier pour le sauvegarder à nouveau. La restauration dans un dossier fonctionne déjà.",

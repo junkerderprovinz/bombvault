@@ -1464,7 +1464,6 @@ const da: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Tidsplan for selv-sikkerhedskopiering",
   "settings.tamperScheduleInactive": "Inaktiv: intet off-site-repo er markeret som append-only, så denne tidsplan kører aldrig. Markér et off-site-repo som append-only i dets off-site-indstillinger for at aktivere den.",
   "settings.everythingTitle": "Fuld sikkerhedskopi",
-  "settings.everythingDuplicateWarning": "Containere, VMs, flash, mapper, ZFS-datasæt og auto-sikkerhedskopien bliver sikkerhedskopieret to gange, så længe både denne tidsplan og deres egen er slået til: én gang her og én gang på deres egen. Slå de områder fra, du ikke vil have dubleret.",
   "settings.everythingStarted": "Startet. Den kører på serveren gennem hvert område i rækkefølge; se Aktivitetsloggen for resultatet.",
   "settings.everythingAlreadyRunning": "Der kører allerede en fuld sikkerhedskopi.",
   // Filter drawer trigger (v5 redesign)
@@ -1510,7 +1509,6 @@ const da: Partial<Translations> = {
   "files.effectiveOwn": "Kører {when}, egen plan",
   "files.effectiveDomain": "Kører {when}, fra {domain}",
   "files.effectiveEverything": "Kører {when}, med {domain}",
-  "files.effectiveBoth": "Kører to gange: {when} og {when2}",
   "files.pathMissing": "Mappen blev ikke fundet",
   "files.noPath": "Ingen mappe angivet",
   "files.noPathHint": "Genopbygget fra sikkerhedskopier uden mappe. Angiv en mappe for at sikkerhedskopiere igen. Gendannelse til en mappe virker allerede.",

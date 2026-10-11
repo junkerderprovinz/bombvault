@@ -1963,7 +1963,6 @@ const hr: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Raspored samostalne sigurnosne kopije",
   "settings.tamperScheduleInactive": "Neaktivno: nijedan izvanmrežni repozitorij nije označen kao samo-dodavanje, pa se ovaj raspored nikad ne izvršava. Označite izvanmrežni repozitorij kao samo-dodavanje u njegovim izvanmrežnim postavkama za omogućavanje.",
   "settings.everythingTitle": "Potpuna sigurnosna kopija",
-  "settings.everythingDuplicateWarning": "Kontejneri, VM-ovi, Flash, mape, ZFS skupovi podataka i samostalna sigurnosna kopija kopiraju se dvaput dok su istodobno uključeni i ovaj raspored i njihov vlastiti: jednom ovdje i jednom po vlastitom rasporedu. Isključite područja koja ne želite kopirati dvaput.",
   "settings.everythingStarted": "Pokrenuto. Na poslužitelju teče redom kroz svako područje; ishod se vidi u zapisniku aktivnosti.",
   "settings.everythingAlreadyRunning": "Potpuna sigurnosna kopija već je u tijeku.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const hr: Partial<Translations> = {
   "files.effectiveOwn": "Pokreće se {when}, vlastiti raspored",
   "files.effectiveDomain": "Pokreće se {when}, iz {domain}",
   "files.effectiveEverything": "Pokreće se {when}, uz {domain}",
-  "files.effectiveBoth": "Pokreće se dvaput: {when} i {when2}",
   "files.pathMissing": "Mapa nije pronađena",
   "files.noPath": "Nije postavljena mapa",
   "files.noPathHint": "Ponovno izgrađeno iz sigurnosnih kopija bez mape. Postavite mapu za ponovnu sigurnosnu kopiju. Vraćanje u mapu već radi.",

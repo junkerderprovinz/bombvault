@@ -32,7 +32,7 @@ function entry(over: Partial<Entry>): Entry {
     name: "plex",
     included: false,
     paused: false,
-    effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" },
+    effectiveSchedule: { kind: "none", spec: "", reason: "schedule-off" },
     lastBackup: 0,
     lastRunStatus: "",
     sourceBytes: null,
@@ -126,7 +126,7 @@ async function stage(page: Page, items: Entry[] = FOUND, includeRefused = ""): P
       const spec = saved[`${item.kind}sSchedule`];
       if (!inSchedule.has(item.kind) || item.self) return item;
       const runs = typeof spec === "string" && spec !== "off";
-      return { ...item, included: true, effectiveSchedule: runs ? { kind: "domain", spec, alsoSpec: "" } : item.effectiveSchedule };
+      return { ...item, included: true, effectiveSchedule: runs ? { kind: "domain", spec } : item.effectiveSchedule };
     });
   await page.route(
     (url) => url.pathname === "/api/items",
@@ -263,7 +263,7 @@ test("the welcome page promises nightly backups once an entry is in a schedule",
   await expect(step(page, "backup")).not.toContainText("After that it runs by itself every night");
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
-  const scheduled = { kind: "domain", spec: "daily 02:00", alsoSpec: "" };
+  const scheduled = { kind: "domain", spec: "daily 02:00" };
   await stage(page, [entry({ included: true, effectiveSchedule: scheduled }), ...FOUND.slice(1)]);
   await openApp(page);
   await expect(step(page, "backup")).toContainText("After that it runs by itself every night");

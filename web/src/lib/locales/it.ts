@@ -1464,7 +1464,6 @@ const it: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Pianificazione di auto-backup",
   "settings.tamperScheduleInactive": "Inattivo. Nessun repo off-site è contrassegnato come append-only, quindi questa pianificazione non viene mai eseguita. Contrassegna un repo off-site come append-only nelle sue impostazioni off-site per attivarla.",
   "settings.everythingTitle": "Backup totale",
-  "settings.everythingDuplicateWarning": "Container, VM, flash, cartelle, dataset ZFS e auto-backup vengono salvati due volte finché questo calendario e il loro restano attivi entrambi: una volta qui e una volta nel loro. Disattiva i domini che non vuoi duplicare.",
   "settings.everythingStarted": "Avviato. Viene eseguito sul server attraverso ogni dominio in sequenza; controlla il Registro attività per il risultato.",
   "settings.everythingAlreadyRunning": "È già in corso un backup totale.",
   // Filter drawer trigger (v5 redesign)
@@ -1510,7 +1509,6 @@ const it: Partial<Translations> = {
   "files.effectiveOwn": "Viene eseguito {when}, pianificazione propria",
   "files.effectiveDomain": "Viene eseguito {when}, da {domain}",
   "files.effectiveEverything": "Viene eseguito {when}, con {domain}",
-  "files.effectiveBoth": "Viene eseguito due volte: {when} e {when2}",
   "files.pathMissing": "Cartella non trovata",
   "files.noPath": "Nessuna cartella impostata",
   "files.noPathHint": "Ricostruito dai backup senza cartella. Imposta una cartella per eseguirne di nuovo il backup. Il ripristino in una cartella funziona già.",

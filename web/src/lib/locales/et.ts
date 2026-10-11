@@ -1963,7 +1963,6 @@ const et: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Iseenda varunduse ajakava",
   "settings.tamperScheduleInactive": "Passiivne: ükski väline hoidla pole märgitud ainult-lisamiseks, seega see ajakava ei käivitu kunagi. Märgi väline hoidla selle enda välistes seadetes ainult-lisamiseks, et see lubada.",
   "settings.everythingTitle": "Täisvarundus",
-  "settings.everythingDuplicateWarning": "Konteinereid, VM-e, Flashi, kaustu, ZFS-i andmekogumeid ja iseenda varundust varundatakse kaks korda seni, kuni nii see ajakava kui ka nende oma on sisse lülitatud: üks kord siin ja üks kord nende enda ajakava järgi. Lülita välja valdkonnad, mida sa ei taha topelt varundada.",
   "settings.everythingStarted": "Käivitatud: see töötab serveris järjest läbi iga valdkonna; tulemust näed tegevuslogis.",
   "settings.everythingAlreadyRunning": "Täisvarundus juba käib.",
   // Filter drawer trigger
@@ -2010,7 +2009,6 @@ const et: Partial<Translations> = {
   "files.effectiveOwn": "Käivitub {when}, oma ajakava",
   "files.effectiveDomain": "Käivitub {when}, allikast {domain}",
   "files.effectiveEverything": "Käivitub {when}, koos {domain}",
-  "files.effectiveBoth": "Käivitub kaks korda: {when} ja {when2}",
   "files.pathMissing": "Kausta ei leitud",
   "files.noPath": "Kausta pole määratud",
   "files.noPathHint": "Ehitatud üles varundustest ilma kaustata. Määra kaust taasvarundamiseks. Taastamine kausta töötab juba.",
