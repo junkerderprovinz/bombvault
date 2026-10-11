@@ -8,6 +8,7 @@ import {
   type StorageLocation,
 } from "./api";
 import { anyActive, useProgress } from "./progress";
+import { storageRunning } from "./storageRuns";
 import type { LocationRecords } from "./storageWrites";
 
 const STORAGE_LOCATIONS_CHANGED = "bv:storage-locations-changed";
@@ -36,11 +37,13 @@ function useWriteCount(): [number, () => void] {
 
 /**
  * useReloadCount also counts the end of a backup or a copy, which moves the
- * fill level and the last copy.
+ * fill level and the last copy, and the end of a move or a deletion, which
+ * takes a section or a whole location away.
  */
 function useReloadCount(): [number, () => void] {
   const [count, bump] = useWriteCount();
-  const running = anyActive(useProgress()).active;
+  const progress = useProgress();
+  const running = anyActive(progress).active || storageRunning(progress);
   const wasRunning = useRef(running);
 
   useEffect(() => {

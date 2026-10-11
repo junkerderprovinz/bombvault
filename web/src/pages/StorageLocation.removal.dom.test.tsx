@@ -4,13 +4,15 @@
  *
  * The window says which sections stop backing up to the place before
  * anything is removed, and sends back exactly what it showed, so the server
- * can refuse a removal whose sections changed in between.
+ * can refuse a removal whose sections changed in between. Deleting the
+ * backups there is a second way with a reading of its own, and it waits for
+ * the location's name and for a yes to every entry that loses its only backup.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
-import type { Destination, DestinationRemoval, RemovalSection, Settings, StorageLocation } from "../lib/api";
+import type { Destination, DestinationErasure, DestinationRemoval, ErasureSection, RemovalSection, Settings, StorageLocation } from "../lib/api";
 import { I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 
@@ -32,6 +34,8 @@ vi.mock("../lib/api", async (importOriginal) => {
     listDestinations: vi.fn(),
     previewDestinationRemoval: vi.fn(),
     removeDestination: vi.fn(),
+    previewDestinationErasure: vi.fn(),
+    eraseDestination: vi.fn(),
     getSettings: vi.fn(),
     getProviders: vi.fn(),
     getCloud: vi.fn(),
@@ -44,6 +48,8 @@ const api = await import("../lib/api");
 const getStorageLocation = vi.mocked(api.getStorageLocation);
 const previewDestinationRemoval = vi.mocked(api.previewDestinationRemoval);
 const removeDestination = vi.mocked(api.removeDestination);
+const previewDestinationErasure = vi.mocked(api.previewDestinationErasure);
+const eraseDestination = vi.mocked(api.eraseDestination);
 
 const { StorageLocationPage } = await import("./StorageLocation");
 
@@ -99,6 +105,29 @@ const PREVIEW: DestinationRemoval = {
   ],
 };
 
+function repo(over: Partial<ErasureSection>): ErasureSection {
+  return { domain: "containers", targetId: "t-containers", repo: "rclone:storagebox:bombvault/containers", backups: 62, entries: 7, ...over };
+}
+
+const ERASURE: DestinationErasure = {
+  removal: PREVIEW,
+  sections: [
+    repo({}),
+    repo({ domain: "flash", targetId: "t-flash", repo: "rclone:storagebox:bombvault/flash", backups: 14, entries: 1, kept: "append-only" }),
+    repo({ domain: "vms", targetId: "t-vms", repoId: "r1", repo: "rclone:storagebox:bombvault/vms", backups: 9, entries: 2, kept: "in-use" }),
+    repo({ domain: "files", targetId: "t-files", repo: "rclone:storagebox:bombvault/files", backups: 0, entries: 0, kept: "unreadable" }),
+    repo({ domain: "zfs", targetId: "", repo: "rclone:storagebox:bombvault/zfs", backups: 6, entries: 1 }),
+  ],
+  backups: 68,
+  entries: 8,
+  backupsOnlyThere: 5,
+  lastCopies: [
+    { domain: "containers", identity: "container:plex", backups: 4 },
+    { domain: "zfs", identity: "zfs:tank/media", backups: 1 },
+  ],
+  key: "erase:box",
+};
+
 async function renderPage(loc: StorageLocation = BOX) {
   getStorageLocation.mockResolvedValue({ ok: true, location: loc });
   await act(async () => {
@@ -142,6 +171,8 @@ beforeEach(() => {
   vi.mocked(api.getRcloneSections).mockResolvedValue({ ok: true, sections: [] });
   previewDestinationRemoval.mockResolvedValue({ ok: true, removal: PREVIEW });
   removeDestination.mockResolvedValue({ ok: true });
+  previewDestinationErasure.mockResolvedValue({ ok: true, erasure: ERASURE });
+  eraseDestination.mockResolvedValue({ ok: true, started: true, erasure: ERASURE });
 });
 
 afterEach(() => {
@@ -169,12 +200,14 @@ describe("removing a destination", () => {
     expect(rows[1].textContent).toContain("1 entry · 1 backup");
   });
 
-  it("offers one way only: nothing in the window deletes what is stored there", async () => {
+  it("offers two ways and starts on the one that keeps the backups", async () => {
     await renderPage();
     const dialog = await openRemoval();
 
-    expect(within(dialog).queryByRole("radio")).toBeNull();
-    expect(dialog.textContent).not.toMatch(/delete the backups/i);
+    const ways = within(dialog).getAllByRole("radio");
+    expect(ways.map((way) => way.getAttribute("aria-checked"))).toEqual(["true", "false"]);
+    expect(ways[1].textContent).toContain("Remove storage location and delete the backups there");
+    expect(previewDestinationErasure).not.toHaveBeenCalled();
   });
 
   it("leaves the counts out for a section whose repository was never listed", async () => {
@@ -240,6 +273,183 @@ describe("removing a destination", () => {
 
     expect(within(dialog).getByText("database is locked")).toBeTruthy();
     expect((within(dialog).getByRole("button", { name: "Remove storage location" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe("removing a destination and deleting the backups there", () => {
+  async function openDeletion(): Promise<HTMLElement> {
+    const dialog = await openRemoval();
+    await click(within(dialog).getAllByRole("radio")[1]);
+    await act(async () => {});
+    return dialog;
+  }
+  const erase = (dialog: HTMLElement) => within(dialog).getByRole("button", { name: "Remove and delete" }) as HTMLButtonElement;
+  const typeName = (dialog: HTMLElement, name: string) =>
+    act(async () => {
+      fireEvent.change(within(dialog).getByLabelText("Type Storage Box to confirm"), { target: { value: name } });
+    });
+
+  it("reads what would be deleted only once that way is picked", async () => {
+    await renderPage();
+    const dialog = await openDeletion();
+
+    expect(previewDestinationErasure).toHaveBeenCalledTimes(1);
+    expect(previewDestinationErasure).toHaveBeenCalledWith("box");
+    expect(within(dialog).getAllByRole("radio").map((way) => way.getAttribute("aria-checked"))).toEqual(["false", "true"]);
+    expect(within(dialog).queryByText("These sections stop backing up here")).toBeNull();
+  });
+
+  it("lists every repository with what is deleted from it or why it stays", async () => {
+    await renderPage();
+    const dialog = await openDeletion();
+
+    const rows = within(within(dialog).getAllByRole("list")[0]).getAllByRole("listitem");
+    expect(rows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining("Containers"),
+      expect.stringContaining("Flash"),
+      expect.stringContaining("VMs, direct repository"),
+      expect.stringContaining("Folders"),
+      expect.stringContaining("ZFS"),
+    ]);
+    expect(rows[0].textContent).toContain("7 entries · 62 backups");
+    expect(rows[1].textContent).toContain("Stays: delete protection refuses the deletion.");
+    expect(rows[2].textContent).toContain("Stays: entries still back up straight to it.");
+    expect(rows[3].textContent).toContain("Stays: it could not be read.");
+    expect(within(rows[4]).getByLabelText(/moved to another storage location and left this repository behind/)).toBeTruthy();
+  });
+
+  it("sums what is deleted and says how much of it is nowhere else", async () => {
+    await renderPage();
+    const dialog = await openDeletion();
+
+    expect(within(dialog).getByText("68 backups · 8 entries · 5 of them are nowhere else")).toBeTruthy();
+  });
+
+  it("names the entries that lose their only backup", async () => {
+    await renderPage();
+    const dialog = await openDeletion();
+
+    const last = within(dialog).getByText("These entries lose their only backup:").parentElement!;
+    expect(within(last).getAllByRole("listitem").map((row) => row.textContent)).toEqual(["plexContainers · 4 backups", "tank/mediaZFS · 1 backup"]);
+  });
+
+  it("waits for the location's name and for the switch that includes those entries", async () => {
+    await renderPage();
+    const dialog = await openDeletion();
+    expect(erase(dialog).disabled).toBe(true);
+
+    await typeName(dialog, "Storage Box");
+    expect(erase(dialog).disabled).toBe(true);
+
+    await click(within(dialog).getByRole("switch", { name: "Delete these as well" }));
+    expect(erase(dialog).disabled).toBe(false);
+
+    await typeName(dialog, "storage box");
+    expect(erase(dialog).disabled).toBe(true);
+  });
+
+  it("needs only the name where no entry loses its only backup", async () => {
+    previewDestinationErasure.mockResolvedValue({ ok: true, erasure: { ...ERASURE, lastCopies: [] } });
+    await renderPage();
+    const dialog = await openDeletion();
+
+    expect(within(dialog).queryByRole("switch")).toBeNull();
+    await typeName(dialog, "Storage Box");
+    expect(erase(dialog).disabled).toBe(false);
+  });
+
+  it("sends the removal it read and the names of those entries, and returns to the list", async () => {
+    await renderPage();
+    const dialog = await openDeletion();
+    await typeName(dialog, "Storage Box");
+    await click(within(dialog).getByRole("switch", { name: "Delete these as well" }));
+
+    await click(erase(dialog));
+
+    expect(eraseDestination).toHaveBeenCalledWith("box", ERASURE.removal, ["container:plex", "zfs:tank/media"]);
+    expect(removeDestination).not.toHaveBeenCalled();
+    expect(screen.getByText("the list")).toBeTruthy();
+    expect(screen.getByText(/The backups in Storage Box are being deleted in the background/)).toBeTruthy();
+  });
+
+  it("shows the entries as they are when the server found more of them, and asks again", async () => {
+    const now: DestinationErasure = { ...ERASURE, lastCopies: [...ERASURE.lastCopies, { domain: "vms", identity: "vm:win11", backups: 2 }] };
+    eraseDestination.mockResolvedValueOnce({ ok: false, code: "last-copies", error: "entries would lose their only backup", erasure: now });
+    await renderPage();
+    const dialog = await openDeletion();
+    await typeName(dialog, "Storage Box");
+    await click(within(dialog).getByRole("switch", { name: "Delete these as well" }));
+
+    await click(erase(dialog));
+
+    expect(within(dialog).getByText(/the list changed since it was shown/)).toBeTruthy();
+    expect(within(dialog).getByText("win11")).toBeTruthy();
+    expect(within(dialog).getByRole("switch", { name: "Delete these as well" }).getAttribute("aria-checked")).toBe("false");
+    expect(erase(dialog).disabled).toBe(true);
+  });
+
+  it("reads again when the sections changed since the reading", async () => {
+    eraseDestination.mockResolvedValueOnce({ ok: false, code: "stale", error: "stale", removal: { sections: [] } });
+    await renderPage();
+    const dialog = await openDeletion();
+    await typeName(dialog, "Storage Box");
+    await click(within(dialog).getByRole("switch", { name: "Delete these as well" }));
+
+    await click(erase(dialog));
+    await act(async () => {});
+
+    expect(within(dialog).getByText("The numbers changed since they were shown. Check them again.")).toBeTruthy();
+    expect(previewDestinationErasure).toHaveBeenCalledTimes(2);
+  });
+
+  it("says to wait while a backup of one of the sections runs", async () => {
+    eraseDestination.mockResolvedValueOnce({ ok: false, code: "domain-busy", error: "busy" });
+    await renderPage();
+    const dialog = await openDeletion();
+    await typeName(dialog, "Storage Box");
+    await click(within(dialog).getByRole("switch", { name: "Delete these as well" }));
+
+    await click(erase(dialog));
+
+    expect(within(dialog).getByText("A backup is running. Choose again once it has finished.")).toBeTruthy();
+    expect(screen.queryByText("the list")).toBeNull();
+  });
+
+  it("says what to do instead where nothing can be deleted", async () => {
+    const kept: ErasureSection[] = [{ ...ERASURE.sections[1] }];
+    previewDestinationErasure.mockResolvedValue({ ok: true, erasure: { ...ERASURE, sections: kept, backups: 0, entries: 0, backupsOnlyThere: 0, lastCopies: [] } });
+    await renderPage();
+    const dialog = await openDeletion();
+
+    expect(within(dialog).getByText(/None of the backups here can be deleted.*keep the backups instead/)).toBeTruthy();
+    expect(within(dialog).queryByLabelText("Type Storage Box to confirm")).toBeNull();
+    expect(erase(dialog).disabled).toBe(true);
+  });
+
+  it("says why the reading failed and reads again when the way is picked again", async () => {
+    previewDestinationErasure.mockResolvedValueOnce({ ok: false, error: "the remote did not answer" });
+    await renderPage();
+    const dialog = await openDeletion();
+    expect(within(dialog).getByText("the remote did not answer")).toBeTruthy();
+    expect(erase(dialog).disabled).toBe(true);
+
+    await click(within(dialog).getAllByRole("radio")[0]);
+    await click(within(dialog).getAllByRole("radio")[1]);
+    await act(async () => {});
+
+    expect(within(dialog).queryByText("the remote did not answer")).toBeNull();
+    expect(within(dialog).getByText("What is deleted")).toBeTruthy();
+  });
+
+  it("goes back to keeping the backups without deleting anything", async () => {
+    await renderPage();
+    const dialog = await openDeletion();
+
+    await click(within(dialog).getAllByRole("radio")[0]);
+    await click(within(dialog).getByRole("button", { name: "Remove storage location" }));
+
+    expect(removeDestination).toHaveBeenCalledWith("box", PREVIEW);
+    expect(eraseDestination).not.toHaveBeenCalled();
   });
 });
 

@@ -172,6 +172,11 @@ describe("anyActive", () => {
       stage: "dbdump",
     });
   });
+
+  it("leaves the move of a section out, which runs beside the backups", () => {
+    expect(anyActive({ "move:t-box-flash": { phase: "replicate", active: true } })).toEqual({ active: false });
+    expect(anyActive({ "offsite:flash": { phase: "replicate", active: true } }).active).toBe(true);
+  });
 });
 
 describe("parseProgressFrame counts", () => {

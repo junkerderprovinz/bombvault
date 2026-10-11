@@ -12,6 +12,8 @@ describe("placementErrorText", () => {
       "copy-rule-taken", "domain-busy", "has-backups", "stale", "repo-invalid", "default-repo-missing",
       "nested-location", "foreign-domain", "mirrored-field", "companion-taken", "exclusion-unsaved",
       "home-uncheckable", "rest-path-too-deep", "repo-wrong-key", "repo-unopened",
+      "destination-holds-backups", "backups-not-there", "last-copies", "nothing-to-erase",
+      "move-same-place", "move-section-there", "move-direct-repo", "move-sign-in", "move-running",
     ];
     for (const code of codes) {
       const text = placementErrorText(t, "en", { ok: false, error: "server text", code }, "settings.error");
