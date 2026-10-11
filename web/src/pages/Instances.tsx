@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
+import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { IconEye, IconInfo, IconLink } from "../components/glyphs";
 import { IconReceiver } from "../components/navGlyphs";
@@ -250,17 +251,19 @@ export function Instances() {
   );
   const sections = useMemo(() => (settings ? backedUpSections(settings) : []), [settings]);
   const state = useInstances(modules);
-  const { servers } = useReplicaServers();
+  const { servers: zfsServers } = useReplicaServers();
   const { instances, unplaced } = useMemo(() => buildInstances(state.data), [state.data]);
   const receiver = modules?.receiver ?? false;
   // With all three modules off the page is only the way into pairing, and
   // the home of the ZFS servers if there are any.
   const grouped = modules !== null && (modules.fleet || modules.receiver || modules.pull);
   const shown = grouped ? instances : [];
+  const servers = shown.filter((i) => !i.app);
+  const phones = shown.filter((i) => i.app);
   const zfs = modules?.zfs ?? false;
   const nodes = useMemo(
-    () => (grouped ? groupNodes(instances, zfs ? servers : [], t) : []),
-    [grouped, instances, servers, zfs, t],
+    () => (grouped ? groupNodes(instances, zfs ? zfsServers : [], t) : []),
+    [grouped, instances, zfsServers, zfs, t],
   );
 
   // Bookmarks and support answers carry these hashes. Pairing lives in
@@ -280,9 +283,23 @@ export function Instances() {
     window.history.replaceState(null, "", window.location.pathname);
   }, [navigate, receiver]);
 
-  const openPairing = () => navigate("/settings/pairing");
   const opened = shown.find((i) => i.key === detailsOf);
   const hasUnplaced = unplaced.received.length + unplaced.pulls.length + unplaced.offers.length > 0;
+
+  const peerCard = (inst: Instance, index: number) =>
+    modules && (
+      <PeerCard
+        key={inst.key}
+        instance={inst}
+        peers={shown}
+        index={index}
+        modules={modules}
+        sections={sections}
+        state={state}
+        hot={hot === inst.key}
+        onDetails={() => setDetailsOf(inst.key)}
+      />
+    );
 
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
@@ -312,19 +329,7 @@ export function Instances() {
                 onOpenServer={() => setServerOpen(true)}
               />
             )}
-            {shown.map((inst, i) => (
-              <PeerCard
-                key={inst.key}
-                instance={inst}
-                peers={shown}
-                index={i + 1}
-                modules={modules}
-                sections={sections}
-                state={state}
-                hot={hot === inst.key}
-                onDetails={() => setDetailsOf(inst.key)}
-              />
-            ))}
+            {servers.map((inst, i) => peerCard(inst, i + 1))}
             {shown.length === 0 && (
               <div
                 data-instance="none"
@@ -332,21 +337,15 @@ export function Instances() {
               >
                 <b className="font-semibold text-carbon-text">{t("instances.emptyTitle")}</b>
                 <p className="text-sm text-carbon-textSub">{t("instances.emptyLead")}</p>
-                <Button label={t("instances.pair")} labelKey="instances.pair" glyph={<IconLink />} tone="accent" onClick={openPairing} />
               </div>
             )}
-            {modules.zfs && <ZFSServerCards replicas={state.data.replicas} firstIndex={shown.length + 1} hot={hot} />}
+            {modules.zfs && <ZFSServerCards replicas={state.data.replicas} firstIndex={servers.length + 1} hot={hot} />}
+            {phones.map((inst, i) => peerCard(inst, servers.length + (modules.zfs ? zfsServers.length : 0) + i + 1))}
           </div>
         </div>
       )}
 
       {grouped && !state.loading && hasUnplaced && <UnplacedCard unplaced={unplaced} state={state} hueIndex={0} />}
-
-      {modules && !state.loading && shown.length > 0 && (
-        <div className="flex justify-end">
-          <Button label={t("instances.pair")} labelKey="instances.pair" glyph={<IconLink />} tone="accent" onClick={openPairing} />
-        </div>
-      )}
 
       {opened && modules && (
         <PeerDetails
@@ -366,6 +365,11 @@ export function Instances() {
             void state.reloadServer();
           }}
         />
+      )}
+      {modules && !state.loading && (
+        <PageActions>
+          <PageAction primary label={t("instances.pair")} glyph={<IconLink />} onClick={() => navigate("/settings/pairing")} />
+        </PageActions>
       )}
     </div>
   );

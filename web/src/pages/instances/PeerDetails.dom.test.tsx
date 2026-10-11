@@ -330,8 +330,30 @@ describe("what the instance does for this server", () => {
     expect(within(dialog).getAllByRole("switch").map((sw) => sw.getAttribute("aria-checked"))).toEqual(["false", "true"]);
     await click(within(dialog).getAllByRole("switch")[0]);
     await click(within(dialog).getByRole("button", { name: en["settings.save"] }));
-    expect(asked).toEqual([["m1", "receiver", { sections: ["flash", "containers"] }]]);
+    expect(asked).toEqual([["m1", "receiver", { sections: ["flash", "containers"], store: "rest" }]]);
     expect(await screen.findByText(en["folders.saved"])).toBeTruthy();
+  });
+
+  it("keeps the place of a Receiver that is on", async () => {
+    await open({ roles: by({ receiver: allowed({ store: "share" }) }) });
+    await click(within(row("receiver")).getByRole("button", { name: en["instances.role.change"] }));
+    const dialog = screen.getByRole("dialog", { name: "attic as Receiver" });
+    const choices = within(dialog).getAllByRole("radio");
+    expect(choices.map((c) => [c.getAttribute("aria-checked"), (c as HTMLButtonElement).disabled])).toEqual([
+      ["false", true],
+      ["true", true],
+    ]);
+    await click(within(dialog).getByRole("button", { name: en["settings.save"] }));
+    expect(asked[0][2]).toMatchObject({ store: "share" });
+  });
+
+  it("lets a request that still waits name another place", async () => {
+    await open({ roles: by({ receiver: roleRequest() }) });
+    await click(within(row("receiver")).getByRole("button", { name: en["instances.role.change"] }));
+    const dialog = screen.getByRole("dialog", { name: "attic as Receiver" });
+    await click(within(dialog).getByRole("radio", { name: en["rcloneRemote.share"] }));
+    await click(within(dialog).getByRole("button", { name: en["settings.save"] }));
+    expect(asked[0][2]).toMatchObject({ store: "share" });
   });
 
   it("shows the storage it offered, to accept or decline", async () => {
@@ -353,6 +375,12 @@ describe("requests from the instance", () => {
     expect(asks[0].textContent).toContain("attic wants to keep its off-site copies here: Containers, Flash");
     expect(asks[1].textContent).toContain("attic wants this server to fetch its backups: VMs");
     expect(within(asks[0] as HTMLElement).getByText(en["instances.request"]).tagName).toBe("SPAN");
+  });
+
+  it("says when a Receiver is asked to keep the copies on a share", async () => {
+    await open({ roles: forPeer({ receiver: roleRequest({ store: "share" }) }, { asks: 1 }) });
+    const ask = serves().querySelector('[data-request="receiver"]')!;
+    expect(ask.textContent).toContain(`Containers, Flash · ${en["rcloneRemote.share"]}`);
   });
 
   it("allows a Fetcher with the sections it showed, then asks what to fetch", async () => {

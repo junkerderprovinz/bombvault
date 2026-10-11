@@ -7,6 +7,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { Button } from "../components/Button";
 import { FindingLine, type SettleFindings } from "../components/anomalies/FindingLine";
+import { findingPlace } from "../components/anomalies/findingPlace";
 import { FindingWindow } from "../components/anomalies/FindingWindow";
 import { LearningRings } from "../components/anomalies/LearningRings";
 import { MonitoringWindow } from "../components/anomalies/MonitoringWindow";
@@ -19,10 +20,12 @@ import {
   acknowledgeAnomalies,
   getAnomalies,
   getSettings,
+  listStorageLocations,
   markAnomaliesExpected,
   type AnomalySeverity,
   type AnomalyView,
   type Settings,
+  type StorageLocation,
 } from "../lib/api";
 import {
   ANOMALY_CHANGED_EVENT,
@@ -133,6 +136,19 @@ export function Anomalies() {
       })
       .catch(() => undefined);
   }, []);
+
+  // A finding about a disk leads to the storage location on it, so the
+  // locations are read once such a finding is on the page.
+  const [locations, setLocations] = useState<StorageLocation[]>([]);
+  const aboutDisk = open.list.some((a) => a.scopeKind === "volume") || closed.list.some((a) => a.scopeKind === "volume");
+  useEffect(() => {
+    if (!aboutDisk) return;
+    listStorageLocations()
+      .then((res) => {
+        if (res.ok && res.locations) setLocations(res.locations);
+      })
+      .catch(() => undefined);
+  }, [aboutDisk]);
 
   const globals: AnomalyGlobals = {
     sensitivity: settings?.anomalySensitivity ?? "balanced",
@@ -280,6 +296,7 @@ export function Anomalies() {
                   closed={view === "closed"}
                   lead={i === 0}
                   siblings={siblings.length > 1 ? siblings : undefined}
+                  place={findingPlace(a, locations)}
                   onSettle={settle}
                   onDetails={(comparing) => setShownWindow({ kind: "finding", id: a.id, comparing })}
                 />
@@ -320,6 +337,7 @@ export function Anomalies() {
           a={windowFinding}
           t={t}
           comparing={shownWindow.comparing}
+          place={findingPlace(windowFinding, locations)}
           onCompare={() => setShownWindow({ ...shownWindow, comparing: true })}
           onMonitoring={
             byTarget.has(windowFinding.targetId)

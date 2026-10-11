@@ -10,9 +10,11 @@ import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
 import { KindGlyph } from "../../components/backups/kinds";
 import { IconPlay, IconSave, IconUpload } from "../../components/glyphs";
+import { Selector } from "../../components/Selector";
+import { SettingRow } from "../../components/storage/rows";
 import { useReplicaServers } from "../../components/zfs/replica/replicaStore";
 import { askRole, patchZFSReplica, withdrawRole } from "../../lib/api";
-import type { RequestedRole, RoleSection, ZFSReplicaTarget } from "../../lib/api";
+import type { RequestedRole, RoleSection, RoleStore, ZFSReplicaTarget } from "../../lib/api";
 import type { EntryKind } from "../../lib/backupEntry";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
@@ -108,17 +110,20 @@ export function RoleAskDialog({
   const [picked, setPicked] = useState<RoleSection[]>(() =>
     editing ? sent.sections : role === "receiver" ? sections.filter((s) => s !== "zfs") : sections.slice(0, 1),
   );
+  const [store, setStore] = useState<RoleStore>(sent?.store === "share" ? "share" : "rest");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const named = (key: TranslationKey) => t(key).replaceAll("{peer}", () => instance.name);
   const title = named("instances.role.asTitle").replace("{role}", t(ROLES[role].label));
+  // An instance too old to answer has its receiving server and nothing else.
+  const picksStore = role === "receiver" && answers;
 
   async function send() {
     if (picked.length === 0) return setError(t("instances.role.needSection"));
     setError(null);
     setBusy(true);
     try {
-      const res = await askRole(instance.memberId, role, { sections: picked });
+      const res = await askRole(instance.memberId, role, picksStore ? { sections: picked, store } : { sections: picked });
       if (!res.ok) {
         setError(res.error ?? t("instances.role.saveError"));
         return;
@@ -183,6 +188,30 @@ export function RoleAskDialog({
           </div>
         ))}
       </div>
+      {picksStore && (
+        <SettingRow
+          label={named("instances.role.where")}
+          hint={t("instances.role.whereTip")}
+          note={store === "rest" ? t("instances.role.storeRestNote") : undefined}
+        >
+          <Selector
+            items={[
+              { id: "rest", label: named("instances.role.storeRest") },
+              { id: "share", label: t("rcloneRemote.share") },
+            ]}
+            label={named("instances.role.where")}
+            select="one"
+            activation="manual"
+            inline
+            pairsOnPhone
+            hueOffset={sections.length}
+            active={store}
+            onChange={(id) => setStore(id as RoleStore)}
+            // What was allowed was allowed for the place it named.
+            disabled={sent?.state === "allowed"}
+          />
+        </SettingRow>
+      )}
       {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
     </RoleDialog>
   );

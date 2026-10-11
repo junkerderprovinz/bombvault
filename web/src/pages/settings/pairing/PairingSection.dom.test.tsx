@@ -395,9 +395,23 @@ describe("the badge and the members", () => {
     const rows = within(screen.getByTestId("members")).getAllByRole("listitem");
     expect(rows.map((r) => r.textContent)).toEqual([
       `cellar${en["instances.thisInstance"]}${en["pairing.paired"]}`,
-      `attic${en["pairing.paired"]}${en["pairing.viaRelay"]}`,
-      `garage${en["pairing.paired"]}${en["pairing.direct"]}`,
+      `attic${en["pairing.paired"]} · ${en["pairing.viaRelay"]}`,
+      `garage${en["pairing.paired"]} · ${en["pairing.direct"]}`,
     ]);
+  });
+
+  it("takes another group's phrase while paired, and leaves this group only once the words are sent", async () => {
+    await renderTab();
+    fireEvent.click(within(phraseCard()).getByRole("button", { name: en["pairing.notFirstButton"] }));
+    const field = within(dialog()).getByLabelText(en["pairing.enterLabel"]);
+    expect(left).toBe(0);
+    expect(joined).toEqual([]);
+    fireEvent.change(field, { target: { value: PHRASE } });
+    await act(async () => {
+      fireEvent.click(pairButton());
+    });
+    expect(left).toBe(0);
+    expect(joined).toEqual([PHRASE]);
   });
 
   it("keeps the members out of the phrase card, which says what the words are for", async () => {
@@ -415,7 +429,7 @@ describe("the badge and the members", () => {
     });
     await renderTab();
     const row = within(screen.getByTestId("members")).getAllByRole("listitem")[1];
-    expect(row.textContent).toBe(`Pixel 8${en["fleet.kindAndroid"]}${en["pairing.paired"]}${en["pairing.viaRelay"]}`);
+    expect(row.textContent).toBe(`Pixel 8${en["fleet.kindAndroid"]}${en["pairing.paired"]} · ${en["pairing.viaRelay"]}`);
   });
 
   it("shows the words again only after the password in a window", async () => {

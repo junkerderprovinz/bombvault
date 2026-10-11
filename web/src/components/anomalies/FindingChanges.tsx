@@ -1,10 +1,11 @@
-// Where a finding's backup differs from the last good one: which folders lost,
-// gained or changed files. Showing it is what asks the server to compare.
+// Where a finding's backup differs from the last good one: a table of the
+// folders that lost, gained or changed files. Showing it is what asks the
+// server to compare.
 
 import { useEffect, useState } from "react";
 
 import type { TranslateAnomaly } from "../../lib/anomalies";
-import { getAnomalyChanges, type AnomalyChanges, type AnomalyView, type ChangeFolder } from "../../lib/api";
+import { getAnomalyChanges, type AnomalyChanges, type AnomalyView } from "../../lib/api";
 import { humanBytes } from "../../lib/forecast";
 import { isolateLtr } from "../../lib/ltrFragments";
 import { formatTs } from "../../lib/reltime";
@@ -88,72 +89,70 @@ export function FindingChanges({ a, t }: { a: AnomalyView; t: TranslateAnomaly }
       )}
       {failed === null && summary && (
         <>
-          <TotalLine total={summary.total} t={t} />
+          <ChangeTable summary={summary} t={t} />
           {summary.focus && (
-            <p className="text-caption text-carbon-text wrap-anywhere">
+            <p className="text-caption text-carbon-textSub wrap-anywhere">
               {t("anomaly.changes.focus").replace("{path}", isolateLtr(`${summary.focus}/`))}
             </p>
           )}
-          {summary.regenerable && <p className="text-caption text-carbon-textSub">{t("anomaly.changes.regenerable")}</p>}
-          {summary.partial && <p className="text-caption text-statusWarn">{t("breakdown.partial")}</p>}
-          <ChangeRows folders={summary.folders} other={summary.other} t={t} />
+          {summary.regenerable && (
+            <p className="rounded-control bg-carbon-surface3 px-3 py-2 text-caption text-carbon-textSub">
+              {t("anomaly.changes.regenerable")}
+            </p>
+          )}
+          {summary.partial && (
+            <p className="rounded-control bg-statusWarnBg px-3 py-2 text-caption text-statusWarn">{t("breakdown.partial")}</p>
+          )}
         </>
       )}
     </div>
   );
 }
 
-function TotalLine({ total, t }: { total: ChangeFolder; t: TranslateAnomaly }) {
-  const files = total.removedFiles + total.addedFiles + total.changedFiles;
-  if (files === 0) return <p className="text-caption text-carbon-textSub">{t("anomaly.changes.none")}</p>;
-  return (
-    <p className="flex flex-wrap items-baseline gap-x-3 text-caption">
-      <span className="text-carbon-textSub">{t("breakdown.files", files)}</span>
-      <ChangeFigures f={total} t={t} />
-    </p>
-  );
-}
+const CELL = "border-t border-carbon-surface3 py-1.5 pe-2 align-top";
+const FIGURE = `${CELL} whitespace-nowrap tabular-nums`;
 
-function ChangeRows({ folders, other, t }: { folders: ChangeFolder[]; other?: ChangeFolder; t: TranslateAnomaly }) {
+/** Each folder with what went away, came in and changed. A cell stays empty
+ *  where nothing did. */
+function ChangeTable({ summary, t }: { summary: NonNullable<AnomalyChanges["summary"]>; t: TranslateAnomaly }) {
+  const { total, folders, other } = summary;
+  if (total.removedFiles + total.addedFiles + total.changedFiles === 0) {
+    return <p className="text-caption text-carbon-textSub">{t("anomaly.changes.none")}</p>;
+  }
   const rows = other ? [...folders, other] : folders;
   if (rows.length === 0) return null;
+  const heads = ["storage.folder", "anomaly.changes.col.removed", "anomaly.changes.col.added", "anomaly.changes.col.changed"] as const;
   return (
-    <ul className="flex flex-col gap-1">
-      {rows.map((f) => (
-        <li key={f.path ? `dir:${f.path}` : "rest"} className="flex flex-wrap items-baseline gap-x-3 text-caption">
-          {f.path ? (
-            <span dir="ltr" className="min-w-[8rem] flex-1 truncate font-mono text-carbon-text text-start">
-              {f.path}/
-            </span>
-          ) : (
-            <span className="min-w-[8rem] flex-1 text-carbon-textMuted">{t("anomaly.changes.rest")}</span>
-          )}
-          <ChangeFigures f={f} t={t} />
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/** What went away, came in and changed, each only when there is some. */
-function ChangeFigures({ f, t }: { f: ChangeFolder; t: TranslateAnomaly }) {
-  return (
-    <>
-      {f.removedFiles > 0 && (
-        <span className="shrink-0 tabular-nums text-carbon-text">
-          {t("anomaly.changes.removed").replace("{size}", humanBytes(f.removedBytes))}
-        </span>
-      )}
-      {f.addedFiles > 0 && (
-        <span className="shrink-0 tabular-nums text-accentText">
-          {t("anomaly.changes.added").replace("{size}", humanBytes(f.addedBytes))}
-        </span>
-      )}
-      {f.changedFiles > 0 && (
-        <span className="shrink-0 tabular-nums text-carbon-textSub">
-          {t("breakdown.new").replace("{size}", humanBytes(f.changedBytes))}
-        </span>
-      )}
-    </>
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-[13px]">
+        <thead>
+          <tr>
+            {heads.map((key) => (
+              <th key={key} scope="col" className="pb-1.5 pe-2 pt-1 text-start font-medium text-carbon-textMuted">
+                {t(key)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((f) => (
+            <tr key={f.path ? `dir:${f.path}` : "rest"}>
+              <th scope="row" className={`${CELL} text-start font-normal`}>
+                {f.path ? (
+                  <bdi dir="ltr" className="font-mono text-xs text-carbon-text wrap-anywhere">
+                    {f.path}/
+                  </bdi>
+                ) : (
+                  <span className="text-carbon-textSub">{t("anomaly.changes.rest")}</span>
+                )}
+              </th>
+              <td className={FIGURE}>{f.removedFiles > 0 && humanBytes(f.removedBytes)}</td>
+              <td className={FIGURE}>{f.addedFiles > 0 && humanBytes(f.addedBytes)}</td>
+              <td className={FIGURE}>{f.changedFiles > 0 && t("breakdown.files", f.changedFiles)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -174,7 +174,7 @@ describe("ZFS page anomalies", () => {
     await renderPage();
     await screen.findByRole("link", { name: badgeLabel(ROOT, 1) });
     fireEvent.click(screen.getByRole("button", { name: en["common.edit"] }));
-    expect(screen.getByRole("combobox", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
+    expect(screen.getByRole("radiogroup", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
   });
 
   it("opens the restore panel on the dataset's last good backup and marks the emptied one", async () => {

@@ -3917,10 +3917,10 @@ body {
   justify-content: center;
   gap: 12px 32px;
 }
-/* The legend wraps below before it would squeeze the wide picture out. */
+/* The legend stays beside the picture while the narrow one fits there. */
 .glim-net-pics {
   container: glim-net-pics / inline-size;
-  flex: 1 1 35rem;
+  flex: 1 1 20rem;
   min-width: 0;
   max-width: 760px;
 }
@@ -4054,6 +4054,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 .glim-net-key-glyph {
   display: inline-flex;

@@ -32,11 +32,22 @@ function Row({ netKey, hot, glyph, name, mark, badge }: { netKey: string; hot: b
         hot ? " glim-net-entry-hot" : ""
       }`}
     >
-      <span className="shrink-0 text-carbon-textMuted [&>svg]:h-4.5 [&>svg]:w-4.5">{glyph}</span>
-      <span className="min-w-0 text-sm font-semibold text-carbon-text wrap-anywhere md:truncate">{name}</span>
-      {mark && <span className="shrink-0 text-caption font-semibold uppercase tracking-widest text-carbon-textMuted">{mark}</span>}
-      {badge && <span className="ms-auto flex shrink-0 items-center gap-2">{badge}</span>}
+      <span className="shrink-0 text-accentText [&>svg]:h-4.5 [&>svg]:w-4.5">{glyph}</span>
+      <span className="min-w-0 flex-1 text-sm font-semibold text-carbon-text wrap-anywhere md:truncate">{name}</span>
+      {mark && <span className="shrink-0 text-caption uppercase tracking-[.12em] text-carbon-textMuted">{mark}</span>}
+      {badge && <span className="flex shrink-0 items-center gap-2">{badge}</span>}
     </li>
+  );
+}
+
+/** Paired is a state of the member and nothing to press, so it is a dot and
+ *  words, followed by how the member is reached. */
+function PairedState({ via, t }: { via?: string; t: T }) {
+  return (
+    <span className="inline-flex items-center gap-2 whitespace-nowrap text-[13px] text-carbon-textSub">
+      <i aria-hidden="true" className="h-[7px] w-[7px] flex-none rounded-full bg-statusOkSolid" />
+      {via ? `${t("pairing.paired")} · ${via}` : t("pairing.paired")}
+    </span>
   );
 }
 
@@ -57,12 +68,7 @@ function MemberRow({ m, hot, t }: { m: GroupMember; hot: boolean; t: T }) {
       }
       name={m.name || m.id}
       mark={phone ? t("fleet.kindAndroid") : undefined}
-      badge={
-        <>
-          <Badge tone="ok">{t("pairing.paired")}</Badge>
-          <span className="text-xs text-carbon-textSub">{m.direct ? t("pairing.direct") : t("pairing.viaRelay")}</span>
-        </>
-      }
+      badge={<PairedState via={m.direct ? t("pairing.direct") : t("pairing.viaRelay")} t={t} />}
     />
   );
 }
@@ -140,8 +146,8 @@ export function GroupCard({
           mark={t("instances.thisInstance")}
           badge={
             badge && (
-              <span data-testid="pair-state">
-                <Badge tone={badge.tone}>{t(badge.key)}</Badge>
+              <span data-testid="pair-state" className="flex">
+                {stage === "paired" ? <PairedState t={t} /> : <Badge tone={badge.tone}>{t(badge.key)}</Badge>}
               </span>
             )
           }
@@ -161,9 +167,11 @@ export function GroupCard({
             <IconZFS />
           </span>
           <span className="flex min-w-0 flex-[1_1_12rem] flex-col gap-0.5">
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-carbon-text">
+            <span className="text-sm font-semibold text-carbon-text">
               {t("pairing.group.zfsTitle")}
-              <InfoBubble tip={t("pairing.group.zfsTip")} />
+              <span className="ms-1.5 inline-flex align-middle">
+                <InfoBubble tip={t("pairing.group.zfsTip")} />
+              </span>
             </span>
             <span className="text-xs text-carbon-textMuted wrap-anywhere">
               {servers.length > 0 ? servers.map((s) => s.name).join(", ") : t("pairing.group.zfsNone")}

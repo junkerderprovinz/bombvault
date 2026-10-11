@@ -283,9 +283,11 @@ describe("the instances grid", () => {
     expect(removed).toEqual(["p1"]);
   });
 
-  it("opens pairing in Settings from the button under the cards", async () => {
+  it("opens pairing in Settings from the page's own action, the one filled button", async () => {
     await renderPage();
-    await click(screen.getByRole("button", { name: en["instances.pair"] }));
+    const pair = within(screen.getByTestId("page-actions")).getByRole("button", { name: en["instances.pair"] });
+    expect(pair.className).toContain("bg-accent");
+    await click(pair);
     expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
   });
 
@@ -429,11 +431,37 @@ describe("the role tiles of a paired instance", () => {
     ]);
     await click(switches[1]);
     await click(within(dialog).getByRole("button", { name: en["instances.role.send"] }));
-    expect(asked).toEqual([["m1", "receiver", { sections: ["containers"] }]]);
+    expect(asked).toEqual([["m1", "receiver", { sections: ["containers"], store: "rest" }]]);
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByText("DXP480T has to allow the request first.")).toBeTruthy();
     expect(tile("m1", "receiver").getAttribute("data-state")).toBe("waiting");
     expect(tile("m1", "receiver").textContent).toContain(en["instances.role.waiting"]);
+  });
+
+  it("ask a Receiver where it keeps the copies: its receiving server unless a share is picked", async () => {
+    await renderPage();
+    await click(tile("m1", "receiver"));
+    const dialog = screen.getByRole("dialog", { name: "DXP480T as Receiver" });
+    const where = within(dialog).getByRole("radiogroup", { name: "Where on DXP480T" });
+    const choices = within(where).getAllByRole("radio");
+    expect(choices.map((c) => [c.textContent, c.getAttribute("aria-checked")])).toEqual([
+      ["DXP480T's receiving server", "true"],
+      [en["rcloneRemote.share"], "false"],
+    ]);
+    expect(within(dialog).getByText(en["instances.role.storeRestNote"])).toBeTruthy();
+    await click(choices[1]);
+    expect(within(dialog).queryByText(en["instances.role.storeRestNote"])).toBeNull();
+    await click(within(dialog).getByRole("button", { name: en["instances.role.send"] }));
+    expect(asked[0][2]).toMatchObject({ store: "share" });
+  });
+
+  it("ask a Fetcher for its sections only, since it keeps nothing for this server", async () => {
+    await renderPage();
+    await click(tile("m1", "fetcher"));
+    const dialog = screen.getByRole("dialog", { name: "DXP480T as Fetcher" });
+    expect(within(dialog).queryByRole("radiogroup")).toBeNull();
+    await click(within(dialog).getByRole("button", { name: en["instances.role.send"] }));
+    expect(asked[0][2]).not.toHaveProperty("store");
   });
 
   it("send nothing without a section", async () => {
@@ -634,13 +662,14 @@ describe("an empty group", () => {
     expect(card("none").textContent).toContain(en["instances.emptyTitle"]);
     expect(card("none").textContent).toContain(en["instances.emptyLead"]);
     expect(screen.queryByTestId("net-picture")).toBeNull();
-    await click(screen.getByRole("button", { name: en["instances.pair"] }));
-    expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
+    expect(within(card("none")).queryByRole("button")).toBeNull();
   });
 
-  it("offers pairing once, not on the card and under it", async () => {
+  it("offers pairing once, as the page's action and not on the card", async () => {
     await renderPage();
     expect(screen.getAllByRole("button", { name: en["instances.pair"] })).toHaveLength(1);
+    await click(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["instances.pair"] }));
+    expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
   });
 });
 
@@ -689,6 +718,13 @@ describe("ZFS servers without BombVault", () => {
     expect(nas.textContent).toContain("backup/bombvault-replica");
     await click(within(nas).getByRole("button", { name: en["instances.open"] }));
     expect(screen.getByTestId("where").textContent).toBe("/instances/zfs/nas");
+  });
+
+  it("stand before the phones, which come last", async () => {
+    members = [groupMember({ id: "m3", name: "Pixel 8", kind: "android", address: "", direct: false, relay: true }), M1];
+    peers = [peer({ id: "p3", memberId: "m3", name: "Pixel 8", kind: "android", direct: false, relay: true, lastPollDomains: [] }), peer({})];
+    await renderPage();
+    expect(cards().map((c) => c.getAttribute("data-instance"))).toEqual(["self", "m1", "zfs:nas", "m3"]);
   });
 
   it("say Connected when the server answered the last time it was asked", async () => {

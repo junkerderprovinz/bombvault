@@ -10,7 +10,7 @@ import { InfoBubble } from "../../../components/InfoBubble";
 import { RevealInput } from "../../../components/RevealInput";
 import { IconDisclosure } from "../../../components/IconDisclosure";
 import { IconEye, IconRefresh, IconSignOut } from "../../../components/glyphs";
-import { IconCheck, IconClose, IconCopy } from "../../../components/navGlyphs";
+import { IconCheck, IconClose, IconCopy, IconPencil } from "../../../components/navGlyphs";
 import {
   createPhrase,
   joinGroup,
@@ -437,6 +437,16 @@ export function PhraseCard({
 
   const foot = (
     <div className="flex flex-wrap items-center justify-end gap-2">
+      {stage === "paired" && (
+        <Button
+          label={t("pairing.notFirstButton")}
+          labelKey="pairing.notFirstButton"
+          glyph={<IconPencil />}
+          tone="neutral"
+          onClick={() => setShown("enter")}
+          disabled={busy}
+        />
+      )}
       <Button
         label={t("pairing.show")}
         labelKey="pairing.show"
