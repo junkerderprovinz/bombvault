@@ -117,7 +117,6 @@ const lt: Partial<Translations> = {
   "takeover.reason.composeService": "ta pati Compose tarnyba",
   "takeover.reason.templateLineage": "Unraid pervadino šabloną",
   "takeover.reason.libvirtUuid": "ta pati VM (UUID)",
-  "takeover.backups": "one={n} kopija|few={n} kopijos|many={n} kopijos|other={n} kopijų",
   "takeover.accept": "Perimti",
   "takeover.decline": "Ne šis",
   "takeover.confirm": "Perimti {old}? Nustatymai pereis įrašui {new}. {history} Nuo tada saugojimo politika abiejų kopijas skaičiuos kartu. Susiejimą vėliau galėsi atšaukti.",

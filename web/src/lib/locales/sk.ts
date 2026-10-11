@@ -117,7 +117,6 @@ const sk: Partial<Translations> = {
   "takeover.reason.composeService": "rovnaká služba Compose",
   "takeover.reason.templateLineage": "Unraid premenoval šablónu",
   "takeover.reason.libvirtUuid": "rovnaký VM (UUID)",
-  "takeover.backups": "one={n} záloha|few={n} zálohy|many={n} zálohy|other={n} záloh",
   "takeover.accept": "Prevziať",
   "takeover.decline": "Tento nie",
   "takeover.confirm": "Prevziať {old}? Nastavenia prejdú na {new}. {history} Zásada uchovávania potom bude počítať zálohy oboch spolu. Prepojenie môžeš neskôr zrušiť.",

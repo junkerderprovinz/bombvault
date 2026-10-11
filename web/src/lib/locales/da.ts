@@ -115,7 +115,6 @@ const da: Partial<Translations> = {
   "takeover.reason.composeService": "samme Compose-tjeneste",
   "takeover.reason.templateLineage": "Unraid har omdøbt skabelonen",
   "takeover.reason.libvirtUuid": "samme VM (UUID)",
-  "takeover.backups": "one={n} sikkerhedskopi|other={n} sikkerhedskopier",
   "takeover.accept": "Overtag",
   "takeover.decline": "Ikke denne",
   "takeover.confirm": "Overtag {old}? Indstillingerne flyttes til {new}. {history} Derefter tæller opbevaringen sikkerhedskopierne fra begge sammen. Du kan ophæve koblingen senere.",

@@ -115,7 +115,6 @@ const fi: Partial<Translations> = {
   "takeover.reason.composeService": "sama Compose-palvelu",
   "takeover.reason.templateLineage": "Unraid nimesi mallin uudelleen",
   "takeover.reason.libvirtUuid": "sama VM (UUID)",
-  "takeover.backups": "one={n} varmuuskopio|other={n} varmuuskopiota",
   "takeover.accept": "Ota haltuun",
   "takeover.decline": "Ei tämä",
   "takeover.confirm": "Otetaanko {old} haltuun? Asetukset siirtyvät merkinnälle {new}. {history} Siitä lähtien säilytyskäytäntö laskee molempien varmuuskopiot yhteen. Voit purkaa linkityksen myöhemmin.",

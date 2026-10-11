@@ -115,7 +115,6 @@ const sv: Partial<Translations> = {
   "takeover.reason.composeService": "samma Compose-tjänst",
   "takeover.reason.templateLineage": "Unraid döpte om mallen",
   "takeover.reason.libvirtUuid": "samma VM (UUID)",
-  "takeover.backups": "one={n} säkerhetskopia|other={n} säkerhetskopior",
   "takeover.accept": "Ta över",
   "takeover.decline": "Inte den här",
   "takeover.confirm": "Ta över {old}? Inställningarna flyttas till {new}. {history} Därefter räknar lagringspolicyn säkerhetskopiorna från båda tillsammans. Du kan ångra kopplingen senare.",

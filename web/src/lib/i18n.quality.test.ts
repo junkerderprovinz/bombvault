@@ -161,11 +161,23 @@ describe("no sentence lives in two keys", () => {
 });
 
 describe("German keeps one name for each thing", () => {
-  // The German UI says Backup and Snapshot throughout. A single dialog that
-  // switches to Sicherung and Schnappschuss reads like a different action.
-  it("calls a snapshot a Snapshot and the cancel action a Backup", () => {
+  // A dialog that switches between Sicherung and Backup, or Snapshot and
+  // Schnappschuss, reads like a different action. Backup survives only in the
+  // names the navigation and the Schedule page show, and in the plugin's name.
+  it("calls a backup a Sicherung and a snapshot a Snapshot", () => {
+    const fixedNames = /Gesamt-Backup|Selbstbackup|Appdata\.Backup|BACKUP_/g;
     const odd = Object.entries(de)
-      .filter(([key, value]) => /Schnappschuss/.test(value) || (key.startsWith("backup.cancel") && /Sicherung/.test(value)))
+      .filter(([, value]) => /Schnappschuss/.test(value) || /Backup/.test(value.replace(fixedNames, "")))
+      .map(([key, value]) => `${key}: ${value}`);
+    expect(odd).toEqual([]);
+  });
+
+  it("calls a backed-up thing an Eintrag, a domain a Bereich and a destination a Speicherort", () => {
+    // These two speak of elements on the screen, not of entries.
+    const screenElements = new Set(["settings.discoHint", "settings.rainbowReactiveHint"]);
+    const odd = Object.entries(de)
+      .filter(([key]) => !screenElements.has(key))
+      .filter(([, value]) => /Domäne|\bElement|Off-site-Ziel|Ablage/.test(value))
       .map(([key, value]) => `${key}: ${value}`);
     expect(odd).toEqual([]);
   });

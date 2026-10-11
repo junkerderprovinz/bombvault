@@ -115,7 +115,6 @@ const th: Partial<Translations> = {
   "takeover.reason.composeService": "บริการ Compose เดียวกัน",
   "takeover.reason.templateLineage": "Unraid เปลี่ยนชื่อเทมเพลตของรายการนี้",
   "takeover.reason.libvirtUuid": "VM เดียวกัน (UUID)",
-  "takeover.backups": "ข้อมูลสำรอง {n} รายการ",
   "takeover.accept": "รับช่วงต่อ",
   "takeover.decline": "ไม่ใช่รายการนี้",
   "takeover.confirm": "รับช่วงต่อ {old} หรือไม่? การตั้งค่าของรายการนั้นจะย้ายไปที่ {new} {history} หลังจากนั้น นโยบายการเก็บรักษาจะนับข้อมูลสำรองของทั้งสองรายการรวมกัน คุณยกเลิกการเชื่อมโยงได้ในภายหลัง",

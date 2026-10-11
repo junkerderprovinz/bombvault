@@ -117,7 +117,6 @@ const lv: Partial<Translations> = {
   "takeover.reason.composeService": "tas pats Compose pakalpojums",
   "takeover.reason.templateLineage": "Unraid pārdēvēja veidni",
   "takeover.reason.libvirtUuid": "tā pati VM (UUID)",
-  "takeover.backups": "zero={n} rezerves kopiju|one={n} rezerves kopija|other={n} rezerves kopijas",
   "takeover.accept": "Pārņemt",
   "takeover.decline": "Ne šis",
   "takeover.confirm": "Pārņemt {old}? Iestatījumi pāries uz {new}. {history} No tā brīža saglabāšanas politika abu rezerves kopijas skaitīs kopā. Sasaisti vēlāk varēsiet atsaukt.",

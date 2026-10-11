@@ -117,7 +117,6 @@ const fa: Partial<Translations> = {
   "takeover.reason.composeService": "همان سرویس Compose",
   "takeover.reason.templateLineage": "Unraid نام قالب آن را تغییر داد",
   "takeover.reason.libvirtUuid": "همان ماشین مجازی (UUID)",
-  "takeover.backups": "{n} پشتیبان",
   "takeover.accept": "ادغام",
   "takeover.decline": "این نیست",
   "takeover.confirm": "{old} ادغام شود؟ تنظیمات آن به {new} منتقل می‌شود. {history} از آن پس، سیاست نگه‌داری پشتیبان‌های هر دو را با هم حساب می‌کند. بعداً می‌توانی این پیوند را لغو کنی.",

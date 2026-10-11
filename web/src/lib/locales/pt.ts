@@ -114,7 +114,6 @@ const pt: Partial<Translations> = {
   "takeover.reason.composeService": "mesmo serviço Compose",
   "takeover.reason.templateLineage": "O Unraid renomeou o modelo",
   "takeover.reason.libvirtUuid": "mesma VM (UUID)",
-  "takeover.backups": "one={n} backup|many={n} de backups|other={n} backups",
   "takeover.accept": "Adotar",
   "takeover.decline": "Não é esta",
   "takeover.confirm": "Adotar {old}? As definições passam para {new}. {history} A partir daí, a retenção conta os backups das duas em conjunto. Podes desfazer a associação mais tarde.",

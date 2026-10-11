@@ -114,7 +114,6 @@ const pl: Partial<Translations> = {
   "takeover.reason.composeService": "ta sama usługa Compose",
   "takeover.reason.templateLineage": "Unraid zmienił nazwę szablonu",
   "takeover.reason.libvirtUuid": "ta sama VM (UUID)",
-  "takeover.backups": "one={n} kopia zapasowa|few={n} kopie zapasowe|many={n} kopii zapasowych|other={n} kopii zapasowych",
   "takeover.accept": "Przejmij",
   "takeover.decline": "Nie ten",
   "takeover.confirm": "Przejąć {old}? Ustawienia przejdą na {new}. {history} Od tej pory polityka retencji liczy kopie obu wpisów razem. Powiązanie możesz później cofnąć.",

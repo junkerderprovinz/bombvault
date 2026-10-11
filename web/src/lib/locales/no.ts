@@ -114,7 +114,6 @@ const no: Partial<Translations> = {
   "takeover.reason.composeService": "samme Compose-tjeneste",
   "takeover.reason.templateLineage": "Unraid har gitt malen nytt navn",
   "takeover.reason.libvirtUuid": "samme VM (UUID)",
-  "takeover.backups": "one={n} sikkerhetskopi|other={n} sikkerhetskopier",
   "takeover.accept": "Ta over",
   "takeover.decline": "Ikke denne",
   "takeover.confirm": "Ta over {old}? Innstillingene flyttes til {new}. {history} Deretter teller oppbevaringen sikkerhetskopiene fra begge sammen. Du kan oppheve koblingen senere.",

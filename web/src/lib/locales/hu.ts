@@ -115,7 +115,6 @@ const hu: Partial<Translations> = {
   "takeover.reason.composeService": "ugyanaz a Compose-szolgáltatás",
   "takeover.reason.templateLineage": "az Unraid átnevezte a sablonját",
   "takeover.reason.libvirtUuid": "ugyanaz a VM (UUID)",
-  "takeover.backups": "{n} biztonsági mentés",
   "takeover.accept": "Átvétel",
   "takeover.decline": "Nem ez az",
   "takeover.confirm": "Átveszed a(z) {old} elemet? A beállításai átkerülnek ide: {new}. {history} Ettől kezdve a megőrzési szabályok mindkét elem biztonsági mentéseit együtt számolják. Az összekapcsolást később visszavonhatod.",

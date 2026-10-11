@@ -115,7 +115,6 @@ const el: Partial<Translations> = {
   "takeover.reason.composeService": "ίδια υπηρεσία Compose",
   "takeover.reason.templateLineage": "το Unraid μετονόμασε το πρότυπό του",
   "takeover.reason.libvirtUuid": "ίδιο VM (UUID)",
-  "takeover.backups": "one={n} αντίγραφο|other={n} αντίγραφα",
   "takeover.accept": "Μεταφορά",
   "takeover.decline": "Δεν ταιριάζει",
   "takeover.confirm": "Μεταφορά του {old}; Οι ρυθμίσεις του περνούν στο {new}. {history} Από εκεί και πέρα, η πολιτική διατήρησης μετρά μαζί τα αντίγραφα και των δύο. Μπορείτε να αναιρέσετε τη σύνδεση αργότερα.",

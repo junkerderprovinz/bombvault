@@ -114,7 +114,6 @@ const ro: Partial<Translations> = {
   "takeover.reason.composeService": "același serviciu Compose",
   "takeover.reason.templateLineage": "Unraid și-a redenumit șablonul",
   "takeover.reason.libvirtUuid": "același VM (UUID)",
-  "takeover.backups": "one={n} copie de rezervă|few={n} copii de rezervă|other={n} de copii de rezervă",
   "takeover.accept": "Preia",
   "takeover.decline": "Nu aceasta",
   "takeover.confirm": "Preiei {old}? Setările trec la {new}. {history} De atunci încolo, regulile de retenție numără împreună copiile de rezervă ale ambelor elemente. Poți anula legătura mai târziu.",

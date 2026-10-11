@@ -115,7 +115,6 @@ const ja: Partial<Translations> = {
   "takeover.reason.composeService": "同じ Compose サービス",
   "takeover.reason.templateLineage": "Unraid によるテンプレート名の変更",
   "takeover.reason.libvirtUuid": "同じ VM (UUID)",
-  "takeover.backups": "{n} 件のバックアップ",
   "takeover.accept": "引き継ぐ",
   "takeover.decline": "該当しない",
   "takeover.confirm": "{old} を引き継ぎますか？設定は {new} に移ります。{history}以後、保持ポリシーは両方のバックアップをまとめて数えます。このリンクは後で解除できます。",

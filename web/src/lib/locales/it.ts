@@ -115,7 +115,6 @@ const it: Partial<Translations> = {
   "takeover.reason.composeService": "stesso servizio Compose",
   "takeover.reason.templateLineage": "Unraid ha rinominato il suo modello",
   "takeover.reason.libvirtUuid": "stessa VM (UUID)",
-  "takeover.backups": "{n} backup",
   "takeover.accept": "Adotta",
   "takeover.decline": "Non è questa",
   "takeover.confirm": "Adottare {old}? Le sue impostazioni passano a {new}. {history} Da quel momento la conservazione conta insieme i backup di entrambe. Puoi annullare il collegamento in seguito.",

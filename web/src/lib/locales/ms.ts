@@ -117,7 +117,6 @@ const ms: Partial<Translations> = {
   "takeover.reason.composeService": "perkhidmatan Compose yang sama",
   "takeover.reason.templateLineage": "Unraid menamakan semula templatnya",
   "takeover.reason.libvirtUuid": "VM yang sama (UUID)",
-  "takeover.backups": "{n} sandaran",
   "takeover.accept": "Ambil alih",
   "takeover.decline": "Bukan yang ini",
   "takeover.confirm": "Ambil alih {old}? Tetapannya berpindah ke {new}. {history} Selepas itu, polisi pengekalan mengira sandaran kedua-duanya bersama. Pautan ini boleh dibuat asal kemudian.",
