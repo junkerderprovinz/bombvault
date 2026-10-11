@@ -305,17 +305,24 @@ func (s *Service) emergencyByID(id string) (*emergencySession, error) {
 	return sess, nil
 }
 
-// ownRepositorySince reports whether this server created or opened for a
-// backup, at or after since, a local repository that is none of the places
-// sess names. The runs of an entry go when the entry is deleted, and its
+// backedUpSince reports whether this server wrote a backup at or after since:
+// a run says so, or a repository that is none of places was created or
+// opened for one. The runs of an entry go when the entry is deleted, and its
 // repository stays.
-func (s *Service) ownRepositorySince(sess *emergencySession, since int64) (bool, error) {
+func (s *Service) backedUpSince(places []emergencyPlace, since int64) (bool, error) {
+	written, err := s.store.BackupsWrittenSince(since)
+	if err != nil || written {
+		return written, err
+	}
 	repos, err := s.store.RepoEstablishedSince(since)
 	if err != nil {
 		return false, err
 	}
 	named := map[string]bool{}
-	for _, p := range sess.places {
+	for _, p := range places {
+		if restic.IsRemoteRepo(p.Location) {
+			named[p.Location] = true
+		}
 		if p.Folder != "" {
 			if resolved, err := s.resolveRepo(p.Folder); err == nil {
 				named[resolved] = true
@@ -323,6 +330,16 @@ func (s *Service) ownRepositorySince(sess *emergencySession, since int64) (bool,
 		}
 	}
 	return slices.ContainsFunc(repos, func(repo string) bool { return !named[repo] }), nil
+}
+
+// emergencyPlaces are the places the emergency in progress names, none
+// without one.
+func (s *Service) emergencyPlaces() []emergencyPlace {
+	sess, err := s.currentEmergency()
+	if err != nil {
+		return nil
+	}
+	return sess.places
 }
 
 // adoptionRefusal says why the key of sess may not be taken over, nil when it
@@ -347,15 +364,9 @@ func (s *Service) adoptionRefusal(sess *emergencySession, running bool) error {
 	if now.state == backupKeyLocked {
 		return nil
 	}
-	written, err := s.store.BackupsWrittenSince(now.adoptedAt)
+	written, err := s.backedUpSince(sess.places, now.adoptedAt)
 	if err != nil {
 		return err
-	}
-	if !written {
-		written, err = s.ownRepositorySince(sess, now.adoptedAt)
-		if err != nil {
-			return err
-		}
 	}
 	if written {
 		return errAdoptOwnBackups
@@ -388,7 +399,7 @@ func (s *Service) EmergencyState() (emergencyView, error) {
 	view := emergencyView{BackupKey: now.state}
 	if now.state != backupKeyOwn {
 		view.Source, view.AdoptedAt = now.source, now.adoptedAt
-		written, err := s.store.BackupsWrittenSince(now.adoptedAt)
+		written, err := s.backedUpSince(s.emergencyPlaces(), now.adoptedAt)
 		if err != nil {
 			return emergencyView{}, err
 		}
@@ -569,7 +580,7 @@ func (s *Service) UndoAdoption() error {
 	}
 	now := s.currentBackupKey()
 	if now.state != backupKeyOwn {
-		written, err := s.store.BackupsWrittenSince(now.adoptedAt)
+		written, err := s.backedUpSince(s.emergencyPlaces(), now.adoptedAt)
 		if err != nil {
 			return err
 		}

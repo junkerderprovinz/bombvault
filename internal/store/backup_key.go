@@ -96,7 +96,7 @@ func (r *Repo) BackupsWrittenSince(since int64) (bool, error) {
 	return n > 0, nil
 }
 
-// RepoEstablishedSince lists the local repositories this install created or
+// RepoEstablishedSince lists the repositories this install created or
 // opened for a backup at or after since. They outlive the runs of an entry
 // that was deleted.
 func (r *Repo) RepoEstablishedSince(since int64) ([]string, error) {

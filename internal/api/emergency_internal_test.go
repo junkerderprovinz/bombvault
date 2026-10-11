@@ -407,3 +407,19 @@ func TestUndoingAnAdoptionPutsTheEncryptionSettingBack(t *testing.T) {
 		t.Fatal("the undo left encryption on, which the adoption had switched on")
 	}
 }
+
+func TestAnUndoKeepsAnAdoptedKeyARepositoryWasOpenedWith(t *testing.T) {
+	for _, repo := range []string{"s3:s3.example.com/new-bucket", "backups/new"} {
+		f := newPlacementFixture(t)
+		f.emergency("POST", "/api/emergency/read", map[string]any{"kit": kitOfTheOldInstall(t)})
+		if res, _ := f.emergency("POST", "/api/emergency/adopt", nil); res["ok"] != true {
+			t.Fatalf("adopt: %v", res)
+		}
+		// A backup under the adopted key whose entry, and with it the run,
+		// was deleted.
+		f.svc.markRepoEstablished(repo)
+		if res, _ := f.emergency("POST", "/api/emergency/undo", nil); res["ok"] != false {
+			t.Errorf("an undo with %s created under the adopted key: %v", repo, res)
+		}
+	}
+}
