@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { finishPasswordReset, getAuth, startPasswordReset } from "../lib/api";
+import { finishPasswordReset, getAuth, startPasswordReset, type PasswordResetRemoved } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useReveal } from "../lib/useReveal";
 import { Button } from "./Button";
@@ -11,8 +11,8 @@ const FIELD =
 const LABEL = "text-xs text-carbon-textSub font-medium";
 
 // PasswordResetForm takes the code BombVault wrote to its container log and a
-// new password. The caller asks for the code before showing it, so the form
-// never appears while the log is still empty.
+// new password, then lists what the reset removed. The caller asks for the code
+// before showing it, so the form never appears while the log is still empty.
 export function PasswordResetForm({
   onDone,
   onBack,
@@ -30,6 +30,7 @@ export function PasswordResetForm({
   const [minLen, setMinLen] = useState(12);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [removed, setRemoved] = useState<PasswordResetRemoved | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -59,18 +60,16 @@ export function PasswordResetForm({
     try {
       const res = await finishPasswordReset(code, password);
       if (res.ok) {
-        onDone();
+        if (res.removed) setRemoved(res.removed);
+        else onDone();
         return;
       }
-      if (res.code === "resetCodeExpired") {
-        // The message promises a new code, so it has to be in the log first.
+      if (res.code === "resetCodeRejected") {
+        // The answer does not say whether the code expired, and the message
+        // promises a new one for that case. Asking again writes one only when
+        // none is live.
         await startPasswordReset();
-        setCode("");
-        setError(t("auth.resetCodeExpired"));
-        return;
-      }
-      if (res.code === "resetCodeInvalid") {
-        setError(t("auth.resetCodeInvalid"));
+        setError(t("auth.resetCodeRejected"));
         return;
       }
       setError(res.error ?? t("auth.saveError"));
@@ -79,6 +78,29 @@ export function PasswordResetForm({
     } finally {
       setBusy(false);
     }
+  }
+
+  if (removed) {
+    const keysGone = removed.passkeys + removed.apiTokens + removed.mcpKeys > 0;
+    // The owner has to know that the passkeys are gone, or the next sign-in
+    // looks for a key that no longer exists.
+    return (
+      <div className="flex flex-col gap-4" role="status">
+        <p className="text-sm font-semibold text-carbon-text">{t("auth.resetDoneTitle")}</p>
+        <div className="flex flex-col gap-1.5">
+          <p className={LABEL}>{t("auth.resetDoneIntro")}</p>
+          <ul className="list-disc pl-5 text-sm text-carbon-text flex flex-col gap-1">
+            <li>{t("auth.resetDoneSessions")}</li>
+            {removed.twoFactor && <li>{t("auth.twoFactorOffNow")}</li>}
+            {removed.passkeys > 0 && <li>{t("auth.resetDonePasskeys", removed.passkeys)}</li>}
+            {removed.apiTokens > 0 && <li>{t("auth.resetDoneApiTokens", removed.apiTokens)}</li>}
+            {removed.mcpKeys > 0 && <li>{t("auth.resetDoneMcpKeys", removed.mcpKeys)}</li>}
+          </ul>
+        </div>
+        {keysGone && <p className={LABEL}>{t("auth.resetDoneHint")}</p>}
+        <Button label={t("common.done")} labelKey="common.done" tone="accent" type="button" onClick={onDone} />
+      </div>
+    );
   }
 
   return (
@@ -96,7 +118,7 @@ export function PasswordResetForm({
           autoComplete="one-time-code"
           autoCapitalize="characters"
           spellCheck={false}
-          placeholder="XXXX-XXXX"
+          placeholder="XXXX-XXXX-XXXX"
           className={`w-full uppercase tracking-[0.2em] placeholder:tracking-[0.2em] ${FIELD}`}
         />
       </div>

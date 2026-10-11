@@ -418,6 +418,11 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 	if name == "" {
 		name = "Passkey"
 	}
+	release, ok := h.holdSignIn(w, r, "registering a passkey")
+	if !ok {
+		return
+	}
+	defer release()
 	saved, err := h.store.AddPasskey(store.Passkey{
 		Name:         name,
 		CredentialID: cred.ID,

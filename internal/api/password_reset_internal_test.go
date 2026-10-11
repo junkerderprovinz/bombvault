@@ -3,9 +3,12 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -21,7 +24,9 @@ const (
 	resetNewPass    = "correct horse battery"
 )
 
-var loggedResetCode = regexp.MustCompile(`RESET CODE: ([2-9A-Z]{4}-[2-9A-Z]{4})`)
+var loggedResetCode = regexp.MustCompile(`RESET CODE: ([2-9A-Z]{4}(?:-[2-9A-Z]{4})+)`)
+
+const wrongResetCode = "2222-2222-2222"
 
 // newResetHandler is a handler with a login password and a buffer in place of
 // the container log.
@@ -31,6 +36,7 @@ func newResetHandler(t *testing.T) (*Handler, *store.Repo, *bytes.Buffer) {
 	enableAuth(t, h, repo)
 	out := &bytes.Buffer{}
 	h.resetOut = out
+	h.mcp = newMCPState()
 	return h, repo, out
 }
 
@@ -51,10 +57,15 @@ func askForResetCode(t *testing.T, h *Handler, out *bytes.Buffer) string {
 
 func finishReset(t *testing.T, h *Handler, code, password string) (map[string]any, *http.Response) {
 	t.Helper()
+	return finishResetFrom(t, h, "10.0.0.1:1", code, password)
+}
+
+func finishResetFrom(t *testing.T, h *Handler, addr, code, password string) (map[string]any, *http.Response) {
+	t.Helper()
 	r := httptest.NewRequest(http.MethodPost, resetFinishPath,
 		strings.NewReader(`{"code":"`+code+`","password":"`+password+`"}`))
 	r.Header.Set("Content-Type", "application/json")
-	r.RemoteAddr = "10.0.0.1:1"
+	r.RemoteAddr = addr
 	w := httptest.NewRecorder()
 	h.handleFinishPasswordReset(w, r)
 	var body map[string]any
@@ -156,6 +167,7 @@ func TestResetEndsEveryOtherSession(t *testing.T) {
 		t.Fatal(err)
 	}
 	old := secret.NewSessionToken(h.cfg.AppKey, before.AuthPasswordHash, before.SessionEpoch, sessionTTL)
+	phone := secret.NewPairedSessionToken(h.cfg.AppKey, before.AuthPasswordHash, before.SessionEpoch, sessionTTL)
 	code := askForResetCode(t, h, out)
 
 	finishReset(t, h, code, resetNewPass)
@@ -167,6 +179,9 @@ func TestResetEndsEveryOtherSession(t *testing.T) {
 	if secret.ValidSessionToken(h.cfg.AppKey, after.AuthPasswordHash, after.SessionEpoch, old) {
 		t.Fatal("a session from before the reset is still valid")
 	}
+	if secret.ValidSessionToken(h.cfg.AppKey, after.AuthPasswordHash, after.SessionEpoch, phone) {
+		t.Fatal("a paired phone's session from before the reset is still valid")
+	}
 }
 
 func TestAWrongResetCodeChangesNothing(t *testing.T) {
@@ -177,9 +192,9 @@ func TestAWrongResetCodeChangesNothing(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	body, res := finishReset(t, h, "2222-2222", resetNewPass)
+	body, res := finishReset(t, h, wrongResetCode, resetNewPass)
 
-	if body["ok"] != false || body["code"] != "resetCodeInvalid" {
+	if body["ok"] != false || body["code"] != "resetCodeRejected" {
 		t.Fatalf("a wrong code must be refused as invalid: %v", body)
 	}
 	if len(res.Cookies()) != 0 {
@@ -201,7 +216,7 @@ func TestAResetCodeWorksOnce(t *testing.T) {
 
 	body, _ := finishReset(t, h, code, "another long password")
 
-	if body["ok"] != false || body["code"] != "resetCodeExpired" {
+	if body["ok"] != false || body["code"] != "resetCodeRejected" {
 		t.Fatalf("a spent code must be refused: %v", body)
 	}
 	if !signsIn(t, h, resetNewPass) {
@@ -216,7 +231,7 @@ func TestAResetCodeExpires(t *testing.T) {
 
 	body, _ := finishReset(t, h, code, resetNewPass)
 
-	if body["ok"] != false || body["code"] != "resetCodeExpired" {
+	if body["ok"] != false || body["code"] != "resetCodeRejected" {
 		t.Fatalf("an expired code must be refused: %v", body)
 	}
 	if !signsIn(t, h, "hunter2") {
@@ -224,17 +239,46 @@ func TestAResetCodeExpires(t *testing.T) {
 	}
 }
 
-func TestWrongGuessesSpendTheResetCode(t *testing.T) {
+func TestAResetCodeHasSixtyBits(t *testing.T) {
+	h, _, out := newResetHandler(t)
+
+	code := strings.ReplaceAll(askForResetCode(t, h, out), "-", "")
+
+	if len(code) != 12 {
+		t.Fatalf("code %q has %d symbols, want 12 of five bits each", code, len(code))
+	}
+}
+
+// Anybody who reaches the login page can send wrong codes, so they must not
+// be able to use up the code the owner is reading off the log.
+func TestWrongGuessesLeaveTheResetCodeAlone(t *testing.T) {
 	h, _, out := newResetHandler(t)
 	code := askForResetCode(t, h, out)
-	for range resetCodeTries {
-		h.reset.guess("2222-2222")
+	for i := range 3 * loginMaxFails {
+		finishResetFrom(t, h, fmt.Sprintf("192.0.2.%d:1", i), wrongResetCode, resetNewPass)
 	}
 
 	body, _ := finishReset(t, h, code, resetNewPass)
 
-	if body["ok"] != false || body["code"] != "resetCodeExpired" {
-		t.Fatalf("the code must be gone after %d wrong guesses: %v", resetCodeTries, body)
+	if body["ok"] != true {
+		t.Fatalf("the owner's code must still work after wrong guesses: %v", body)
+	}
+}
+
+// Behind a reverse proxy without TRUSTED_PROXY every caller shares the proxy's
+// address, and with it one throttle bucket.
+func TestAStrangerBehindTheSameProxyCannotBlockTheRightResetCode(t *testing.T) {
+	h, _, out := newResetHandler(t)
+	code := askForResetCode(t, h, out)
+	for range loginMaxFails {
+		postJSON(t, h.handleLogin, "/api/login", `{"password":"not the password"}`, "10.0.0.1:2", nil)
+		finishResetFrom(t, h, "10.0.0.1:3", wrongResetCode, resetNewPass)
+	}
+
+	body, res := finishResetFrom(t, h, "10.0.0.1:4", code, resetNewPass)
+
+	if res.StatusCode != http.StatusOK || body["ok"] != true {
+		t.Fatalf("status %d, %v: the right code must pass a throttle strangers filled", res.StatusCode, body)
 	}
 }
 
@@ -242,13 +286,150 @@ func TestAWrongResetCodeCountsTowardsTheThrottle(t *testing.T) {
 	h, _, out := newResetHandler(t)
 	askForResetCode(t, h, out)
 	for range loginMaxFails {
-		finishReset(t, h, "2222-2222", resetNewPass)
+		finishReset(t, h, wrongResetCode, resetNewPass)
 	}
 
-	_, res := finishReset(t, h, "2222-2222", resetNewPass)
+	_, res := finishReset(t, h, wrongResetCode, resetNewPass)
 
 	if res.StatusCode != http.StatusTooManyRequests {
 		t.Fatalf("status = %d, want the login throttle to answer", res.StatusCode)
+	}
+}
+
+// A caller must not learn from the answer whether a code is live.
+func TestAWrongAnExpiredAndNoResetCodeGetTheSameAnswer(t *testing.T) {
+	h, _, out := newResetHandler(t)
+	code := askForResetCode(t, h, out)
+
+	wrong, wrongRes := finishResetFrom(t, h, "192.0.2.1:1", wrongResetCode, resetNewPass)
+	h.reset.expires = time.Now().Add(-time.Second)
+	expired, expiredRes := finishResetFrom(t, h, "192.0.2.2:1", code, resetNewPass)
+	none, noneRes := finishResetFrom(t, h, "192.0.2.3:1", code, resetNewPass)
+
+	if !reflect.DeepEqual(wrong, expired) || !reflect.DeepEqual(wrong, none) {
+		t.Fatalf("answers differ:\nwrong   %v\nexpired %v\nnone    %v", wrong, expired, none)
+	}
+	if wrongRes.StatusCode != expiredRes.StatusCode || wrongRes.StatusCode != noneRes.StatusCode {
+		t.Fatalf("statuses differ: %d %d %d", wrongRes.StatusCode, expiredRes.StatusCode, noneRes.StatusCode)
+	}
+}
+
+// An intruder's password change that passed its session check before the
+// owner's reset must not land after it and keep the instance.
+func TestAPasswordChangeCheckedBeforeAResetDoesNotOverwriteIt(t *testing.T) {
+	h, repo, out := newResetHandler(t)
+	hash, epoch, _ := h.authEnabled()
+	checked := authGeneration{hash: hash, epoch: epoch}
+	code := askForResetCode(t, h, out)
+	if body, _ := finishReset(t, h, code, resetNewPass); body["ok"] != true {
+		t.Fatalf("reset: %v", body)
+	}
+	intruders, err := secret.HashPassword(h.cfg.AppKey, "the intruder's password")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = h.storePassword(checked, intruders)
+
+	if !errors.Is(err, errLoginChanged) {
+		t.Fatalf("err = %v, want the change refused", err)
+	}
+	s, err := repo.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.AuthPasswordHash == intruders || !signsIn(t, h, resetNewPass) {
+		t.Fatal("the change overwrote the password the reset set")
+	}
+}
+
+// giveIntruderAWayIn registers what somebody signed in could have left behind:
+// a passkey, an API token, an MCP key, an OAuth grant and an OAuth code that
+// is still waiting to be exchanged.
+func giveIntruderAWayIn(t *testing.T, h *Handler, repo *store.Repo) {
+	t.Helper()
+	if _, err := repo.AddPasskey(store.Passkey{Name: "Intruder", CredentialID: []byte("cred"), PublicKey: []byte("pub"), RPID: "backup.example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.CreateAPIToken("tok1", "Script", "digest-tok", "hint", "check", false, 1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.CreateMCPKey("key1", "Assistant", "", "digest-key", "hint", "check", false, 1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.CreateOAuthGrant(store.OAuthGrant{ID: "grant1", Label: "Cloud", OAuthClient: "client", Resource: "r", Check: "c"}, 1); err != nil {
+		t.Fatal(err)
+	}
+	h.mcp.oauth.putCode("code-digest", &oauthCode{clientID: "client", expires: time.Now().Add(time.Minute)}, time.Now())
+}
+
+func TestResetRemovesEveryPasskeyAndRevokesEveryKey(t *testing.T) {
+	h, repo, out := newResetHandler(t)
+	giveIntruderAWayIn(t, h, repo)
+	code := askForResetCode(t, h, out)
+
+	body, _ := finishReset(t, h, code, resetNewPass)
+
+	if body["ok"] != true {
+		t.Fatalf("reset: %v", body)
+	}
+	if keys, err := repo.ListPasskeys(); err != nil || len(keys) != 0 {
+		t.Fatalf("passkeys after the reset: %v %v", keys, err)
+	}
+	rows, err := repo.ListMCPKeys()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, k := range rows {
+		if k.RevokedAt == 0 {
+			t.Errorf("%s %s is still active", k.Kind, k.ID)
+		}
+	}
+	if len(h.mcp.oauth.codes) != 0 {
+		t.Error("an OAuth code allowed before the reset can still be exchanged")
+	}
+	want := map[string]any{"passkeys": 1.0, "apiTokens": 1.0, "mcpKeys": 2.0, "twoFactor": false}
+	if !reflect.DeepEqual(body["removed"], want) {
+		t.Errorf("removed = %v, want %v", body["removed"], want)
+	}
+}
+
+// A passkey whose registration passed its session check while the reset ran
+// must either be added before the reset removes every passkey or not at all.
+func TestAResetWaitsForAPasskeyBeingAdded(t *testing.T) {
+	h, repo, out := newResetHandler(t)
+	code := askForResetCode(t, h, out)
+	r := httptest.NewRequest(http.MethodPost, "/api/auth/passkey/register/finish", nil)
+	r.Header = sessionOf(h)
+	release, ok := h.holdSignIn(httptest.NewRecorder(), r, "registering a passkey")
+	if !ok {
+		t.Fatal("a signed-in session must be allowed to add a passkey")
+	}
+	reset := httptest.NewRequest(http.MethodPost, resetFinishPath,
+		strings.NewReader(`{"code":"`+code+`","password":"`+resetNewPass+`"}`))
+	reset.Header.Set("Content-Type", "application/json")
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		h.handleFinishPasswordReset(httptest.NewRecorder(), reset)
+	}()
+
+	select {
+	case <-done:
+		t.Fatal("the reset ran while a passkey was being added")
+	case <-time.After(100 * time.Millisecond):
+	}
+	if _, err := repo.AddPasskey(store.Passkey{Name: "Late", CredentialID: []byte("late"), PublicKey: []byte("pub"), RPID: "backup.example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	release()
+	<-done
+
+	if keys, err := repo.ListPasskeys(); err != nil || len(keys) != 0 {
+		t.Fatalf("a passkey added during the reset survived it: %v %v", keys, err)
+	}
+	if _, ok := h.holdSignIn(httptest.NewRecorder(), r, "registering a passkey"); ok {
+		t.Fatal("the session from before the reset may still add a passkey")
 	}
 }
 

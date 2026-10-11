@@ -70,9 +70,14 @@ type Handler struct {
 	// stdout itself and not the logger: the logger feeds the log ring, the ring
 	// is copied into the diagnostics bundle, and a bundle gets attached to bug
 	// reports.
-	resetMu  sync.Mutex
-	reset    passwordReset
-	resetOut io.Writer
+	// mintMu keeps a password reset apart from whatever adds a way in. The
+	// reset holds it to write; adding a passkey, a key, a token or an OAuth
+	// grant holds it to read and checks the session under it (holdSignIn).
+	mintMu       sync.RWMutex
+	resetMu      sync.Mutex
+	reset        passwordReset
+	resetRefused resetRefusals
+	resetOut     io.Writer
 
 	loginMu    sync.Mutex
 	loginFails map[string][]time.Time

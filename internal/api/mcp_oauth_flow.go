@@ -345,6 +345,10 @@ func (h *Handler) handleOAuthConsent(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(errOAuthOff, "oauth-off"))
 		return
 	}
+	// A code is a grant waiting to be picked up, so a reset must not run
+	// between the session check and the code going into the map it clears.
+	h.mintMu.RLock()
+	defer h.mintMu.RUnlock()
 	session, ok := h.operatorSession(r)
 	if !ok {
 		writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "authentication required"})
@@ -431,6 +435,13 @@ func (s *oauthState) putCode(digest string, c *oauthCode, now time.Time) bool {
 	}
 	s.codes[digest] = c
 	return true
+}
+
+// dropCodes forgets every code that has not been exchanged yet.
+func (s *oauthState) dropCodes() {
+	s.mu.Lock()
+	clear(s.codes)
+	s.mu.Unlock()
 }
 
 // redeem hands out a code once. A code that was already redeemed answers with
@@ -572,6 +583,10 @@ func writeOAuthTokens(w http.ResponseWriter, access, refresh string) {
 }
 
 func (h *Handler) exchangeOAuthCode(w http.ResponseWriter, r *http.Request, client store.OAuthClient, resource string) {
+	// Held from redeeming the code to storing the grant, so a reset either
+	// drops the code first or revokes the grant after.
+	h.mintMu.RLock()
+	defer h.mintMu.RUnlock()
 	now := h.mcp.now()
 	f := r.PostForm
 	code, replayed := h.mcp.oauth.redeem(secret.HashOAuthSecret(h.cfg.AppKey, "code", f.Get("code")),

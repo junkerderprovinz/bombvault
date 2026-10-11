@@ -290,9 +290,14 @@ func (h *Handler) handleCreateMCPKey(w http.ResponseWriter, r *http.Request) {
 		Client          string `json:"client"`
 		CanStartBackups *bool  `json:"canStartBackups"`
 	}
-	if !decodeBody(w, r, &body) || !h.requireSignIn(w, r, "creating an MCP key") {
+	if !decodeBody(w, r, &body) {
 		return
 	}
+	release, ok := h.holdSignIn(w, r, "creating an MCP key")
+	if !ok {
+		return
+	}
+	defer release()
 	if body.Client != "" && !mcpClientID.MatchString(body.Client) {
 		writeJSON(w, http.StatusOK, failEnvelope(errMCPKeyClient))
 		return

@@ -16,14 +16,17 @@ import (
 )
 
 // A forgotten login password is reset with a code that BombVault writes to its
-// own container log. Reading that log takes access to the Docker host, which is
-// root on it already, so the code proves more than the password did.
+// own container log. Whoever can read that log can reset the password: root on
+// the host, but also a log viewer such as Dozzle, anything given the Docker
+// socket read-only and a log shipper that forwards container output. Somebody
+// who only reaches the web interface never sees the code.
 const (
 	resetCodeTTL = 10 * time.Minute
-	// A code holds 40 bits, so five tries leave a guess no chance worth
-	// counting.
-	resetCodeTries = 5
-	resetCodeLen   = 8
+	// A code holds 60 bits, which nobody finds in ten minutes at any rate
+	// HTTP allows. That is why a wrong guess does not spend it: a code that a
+	// few guesses killed would let anybody who reaches the login page keep the
+	// owner from ever using one.
+	resetCodeLen = 12
 	// resetCodeAlphabet has no 0, O, 1 or I, which look alike in a log window.
 	// Its 32 symbols take five bits of a random byte each without bias.
 	resetCodeAlphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
@@ -35,7 +38,6 @@ const (
 type passwordReset struct {
 	code    string
 	expires time.Time
-	tries   int
 }
 
 func newPasswordReset() (passwordReset, error) {
@@ -46,41 +48,78 @@ func newPasswordReset() (passwordReset, error) {
 	for i, b := range buf {
 		buf[i] = resetCodeAlphabet[b&31]
 	}
-	return passwordReset{code: string(buf), expires: time.Now().Add(resetCodeTTL), tries: resetCodeTries}, nil
+	return passwordReset{code: string(buf), expires: time.Now().Add(resetCodeTTL)}, nil
 }
 
 // printResetCode writes the code as a block of its own in bold yellow, set
 // off like the ready line, so it stands out between the timestamped lines of a
 // busy log.
 func printResetCode(w io.Writer, code string) {
-	_, _ = fmt.Fprintf(w, "\n  \033[1;33m▶ PASSWORD RESET CODE: %s-%s\033[0m\n"+
+	_, _ = fmt.Fprintf(w, "\n  \033[1;33m▶ PASSWORD RESET CODE: %s-%s-%s\033[0m\n"+
 		"    Valid for %d minutes. Enter it on the login page.\n"+
 		"    If nobody here asked for a reset, ignore this. The password is unchanged.\n\n",
-		code[:4], code[4:], int(resetCodeTTL.Minutes()))
+		code[:4], code[4:8], code[8:], int(resetCodeTTL.Minutes()))
 }
 
 func (p *passwordReset) live() bool {
 	return p.code != "" && time.Now().Before(p.expires)
 }
 
-// guess reports whether typed is the code and spends the code if it is. A
-// wrong guess costs one try. live is false when there was no code to guess at:
-// none was asked for, it expired, or its tries are used up.
-func (p *passwordReset) guess(typed string) (ok, live bool) {
-	if !p.live() {
+// noResetCode stands in for the code while none is live, so a guess costs the
+// same comparison either way. It has the length of a code and symbols no code
+// has.
+const noResetCode = "000000000000"
+
+// guess reports whether typed is the live code and spends the code if it is.
+// A wrong guess leaves the code as it was. stale reports that no code was live
+// to guess at, which only the log is told.
+func (p *passwordReset) guess(typed string) (ok, stale bool) {
+	stale = !p.live()
+	want := p.code
+	if stale {
 		*p = passwordReset{}
-		return false, false
+		want = noResetCode
 	}
-	// The log prints the code in capitals with a dash in the middle.
+	// The log prints the code in capitals in groups of four.
 	typed = strings.ToUpper(strings.NewReplacer("-", "", " ", "").Replace(typed))
-	if subtle.ConstantTimeCompare([]byte(typed), []byte(p.code)) == 1 {
+	if subtle.ConstantTimeCompare([]byte(typed), []byte(want)) == 1 && !stale {
 		*p = passwordReset{}
-		return true, true
+		return true, false
 	}
-	if p.tries--; p.tries == 0 {
-		*p = passwordReset{}
+	return false, stale
+}
+
+// resetRefusals counts refused reset codes for a log line written at most
+// once a minute, so somebody guessing shows in the log without filling it.
+type resetRefusals struct {
+	wrong, stale int
+	reported     time.Time
+}
+
+func (c *resetRefusals) add(stale bool) {
+	if stale {
+		c.stale++
+	} else {
+		c.wrong++
 	}
-	return false, true
+	if time.Since(c.reported) < time.Minute {
+		return
+	}
+	log.Printf("api: refused %d wrong password reset code(s) and %d entered while no code was live since the last report", c.wrong, c.stale)
+	*c = resetRefusals{reported: time.Now()}
+}
+
+// holdSignIn is requireSignIn for a request that adds a way into the
+// instance. It holds off a password reset until release is called, so what the
+// request adds either exists before the reset removes it or is refused because
+// the reset ended its session.
+func (h *Handler) holdSignIn(w http.ResponseWriter, r *http.Request, action string) (release func(), ok bool) {
+	h.mintMu.RLock()
+	if !h.requireSignIn(w, r, action) {
+		h.mintMu.RUnlock()
+		return nil, false
+	}
+	return h.mintMu.RUnlock, true
 }
 
 // handleStartPasswordReset handles POST /api/auth/reset. It writes a code to
@@ -113,11 +152,11 @@ func (h *Handler) handleFinishPasswordReset(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "authentication is not enabled"})
 		return
 	}
-	key := h.loginClientKey(r)
-	if h.loginThrottled(key) {
-		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
-		return
-	}
+	// A bucket of its own, which only wrong codes reach. Behind a reverse proxy
+	// every caller shares one address, so a throttle in front of the right
+	// code would let anybody keep the owner out; the code's sixty bits are what
+	// stops a guesser.
+	key := "reset|" + h.loginClientKey(r)
 
 	var body struct {
 		Code     string `json:"code"`
@@ -138,15 +177,18 @@ func (h *Handler) handleFinishPasswordReset(w http.ResponseWriter, r *http.Reque
 	}
 
 	h.resetMu.Lock()
-	ok, live := h.reset.guess(body.Code)
-	h.resetMu.Unlock()
-	if !live {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "resetCodeExpired", "error": "that code is no longer valid"})
-		return
-	}
+	ok, stale := h.reset.guess(body.Code)
 	if !ok {
+		h.resetRefused.add(stale)
+	}
+	h.resetMu.Unlock()
+	if !ok {
+		if h.loginThrottled(key) {
+			writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
+			return
+		}
 		h.recordLoginFail(key)
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "resetCodeInvalid", "error": "that code is not right"})
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "resetCodeRejected", "error": "that code is wrong or has expired"})
 		return
 	}
 
@@ -155,13 +197,67 @@ func (h *Handler) handleFinishPasswordReset(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	h.mintMu.Lock()
+	removed, epoch, err := h.resetLogin(hash)
+	h.mintMu.Unlock()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	h.recordLoginSuccess(key)
+	log.Printf("api: the login password was reset with a code from the container log: %d passkey(s) removed, "+
+		"%d API token(s) and %d MCP key(s) or OAuth grant(s) revoked, every other session ended",
+		removed.Passkeys, removed.APITokens, removed.MCPKeys)
+
+	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
+	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"removed": removed}))
+}
+
+// resetRemoved is what a reset took away, for the page the owner sees next.
+type resetRemoved struct {
+	Passkeys  int64 `json:"passkeys"`
+	APITokens int   `json:"apiTokens"`
+	MCPKeys   int   `json:"mcpKeys"`
+	TwoFactor bool  `json:"twoFactor"`
+}
+
+// resetLogin leaves whoever holds the code alone in the instance: every key,
+// token, OAuth grant and passkey goes, then the password, the second factor
+// and every session. The caller holds mintMu, so nothing can be added in
+// between. The keys go first, so a failure never leaves them beside a new
+// password.
+func (h *Handler) resetLogin(hash string) (resetRemoved, string, error) {
+	var removed resetRemoved
+	rows, err := h.store.ListMCPKeys()
+	if err != nil {
+		return removed, "", err
+	}
+	for _, k := range rows {
+		switch {
+		case k.RevokedAt != 0:
+		case k.Kind == store.MCPKindAPI:
+			removed.APITokens++
+		default:
+			removed.MCPKeys++
+		}
+	}
+	if _, err := h.store.RevokeAllMCPKeys("password-reset", time.Now().Unix()); err != nil {
+		return removed, "", err
+	}
+	h.mcp.oauth.dropCodes()
+	if removed.Passkeys, err = h.store.DeleteAllPasskeys(); err != nil {
+		return removed, "", err
+	}
+
 	epoch := ""
-	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
+	_, err = h.store.MutateSettings(func(s *store.Settings) error {
 		next, err := newSessionEpoch()
 		if err != nil {
 			return err
 		}
 		s.AuthPasswordHash = hash
+		removed.TwoFactor = s.TOTPEnabled
 		// Whoever lost the password may have lost the authenticator with it.
 		s.TOTPEnabled = false
 		s.TOTPSecret = ""
@@ -169,14 +265,6 @@ func (h *Handler) handleFinishPasswordReset(w http.ResponseWriter, r *http.Reque
 		s.SessionEpoch = next
 		epoch = next
 		return nil
-	}); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	h.recordLoginSuccess(key)
-	log.Printf("api: the login password was reset with a code from the container log")
-
-	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
-	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	})
+	return removed, epoch, err
 }
