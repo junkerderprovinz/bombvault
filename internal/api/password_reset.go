@@ -107,6 +107,19 @@ func (c *resetRefusals) add(stale bool) {
 	*c = resetRefusals{reported: time.Now()}
 }
 
+// holdSignIn is requireSignIn for a request that adds a way into the
+// instance. It holds off a password reset until release is called, so what the
+// request adds either exists before the reset removes it or is refused because
+// the reset ended its session.
+func (h *Handler) holdSignIn(w http.ResponseWriter, r *http.Request, action string) (release func(), ok bool) {
+	h.mintMu.RLock()
+	if !h.requireSignIn(w, r, action) {
+		h.mintMu.RUnlock()
+		return nil, false
+	}
+	return h.mintMu.RUnlock, true
+}
+
 // handleStartPasswordReset handles POST /api/auth/reset. It writes a code to
 // the container log unless one is still live, so asking again neither floods
 // the log nor takes the code away from whoever is typing it.
@@ -182,13 +195,67 @@ func (h *Handler) handleFinishPasswordReset(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	h.mintMu.Lock()
+	removed, epoch, err := h.resetLogin(hash)
+	h.mintMu.Unlock()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	h.recordLoginSuccess(key)
+	log.Printf("api: the login password was reset with a code from the container log: %d passkey(s) removed, "+
+		"%d API token(s) and %d MCP key(s) or OAuth grant(s) revoked, every other session ended",
+		removed.Passkeys, removed.APITokens, removed.MCPKeys)
+
+	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
+	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"removed": removed}))
+}
+
+// resetRemoved is what a reset took away, for the page the owner sees next.
+type resetRemoved struct {
+	Passkeys  int64 `json:"passkeys"`
+	APITokens int   `json:"apiTokens"`
+	MCPKeys   int   `json:"mcpKeys"`
+	TwoFactor bool  `json:"twoFactor"`
+}
+
+// resetLogin leaves whoever holds the code alone in the instance: every key,
+// token, OAuth grant and passkey goes, then the password, the second factor
+// and every session. The caller holds mintMu, so nothing can be added in
+// between. The keys go first, so a failure never leaves them beside a new
+// password.
+func (h *Handler) resetLogin(hash string) (resetRemoved, string, error) {
+	var removed resetRemoved
+	rows, err := h.store.ListMCPKeys()
+	if err != nil {
+		return removed, "", err
+	}
+	for _, k := range rows {
+		switch {
+		case k.RevokedAt != 0:
+		case k.Kind == store.MCPKindAPI:
+			removed.APITokens++
+		default:
+			removed.MCPKeys++
+		}
+	}
+	if _, err := h.store.RevokeAllMCPKeys("password-reset", time.Now().Unix()); err != nil {
+		return removed, "", err
+	}
+	h.mcp.oauth.dropCodes()
+	if removed.Passkeys, err = h.store.DeleteAllPasskeys(); err != nil {
+		return removed, "", err
+	}
+
 	epoch := ""
-	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
+	_, err = h.store.MutateSettings(func(s *store.Settings) error {
 		next, err := newSessionEpoch()
 		if err != nil {
 			return err
 		}
 		s.AuthPasswordHash = hash
+		removed.TwoFactor = s.TOTPEnabled
 		// Whoever lost the password may have lost the authenticator with it.
 		s.TOTPEnabled = false
 		s.TOTPSecret = ""
@@ -196,14 +263,6 @@ func (h *Handler) handleFinishPasswordReset(w http.ResponseWriter, r *http.Reque
 		s.SessionEpoch = next
 		epoch = next
 		return nil
-	}); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	h.recordLoginSuccess(key)
-	log.Printf("api: the login password was reset with a code from the container log")
-
-	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
-	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	})
+	return removed, epoch, err
 }

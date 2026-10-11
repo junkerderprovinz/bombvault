@@ -64,9 +64,14 @@ func (h *Handler) handleCreateAPIToken(w http.ResponseWriter, r *http.Request) {
 		Label           string `json:"label"`
 		CanStartBackups bool   `json:"canStartBackups"`
 	}
-	if !decodeBody(w, r, &body) || !h.requireSignIn(w, r, "creating an API token") {
+	if !decodeBody(w, r, &body) {
 		return
 	}
+	release, ok := h.holdSignIn(w, r, "creating an API token")
+	if !ok {
+		return
+	}
+	defer release()
 	if !h.mcpKeysAllowedFrom(r) {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyNeedsPassword, "mcp-key-needs-password"))
 		return

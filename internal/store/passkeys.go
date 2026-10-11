@@ -159,6 +159,16 @@ func (r *Repo) RenamePasskey(id, name string) error {
 	return nil
 }
 
+// DeleteAllPasskeys removes every credential and returns how many there were.
+func (r *Repo) DeleteAllPasskeys() (int64, error) {
+	res, err := r.db.Exec(`DELETE FROM passkeys`)
+	if err != nil {
+		return 0, fmt.Errorf("DeleteAllPasskeys: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	return n, nil
+}
+
 // DeletePasskey removes a credential. Deleting a missing one is not an error.
 func (r *Repo) DeletePasskey(id string) error {
 	if _, err := r.db.Exec(`DELETE FROM passkeys WHERE id = ?`, id); err != nil {
