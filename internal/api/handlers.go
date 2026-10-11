@@ -5421,20 +5421,26 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		}
 
 		// The session of a paired phone reaches what pairedRoutes lists. A
-		// path that matches no route is left to the mux to answer.
+		// path that matches no route is left to the mux to answer, and
+		// behind anything but a mux the gate cannot tell, so it refuses.
 		if secret.PairedSessionToken(c.Value) {
-			if mux, ok := next.(*http.ServeMux); ok {
-				if _, pattern := mux.Handler(r); pattern != "" && !pairedRoutes[pattern] {
-					refusePaired(w)
-					return
-				}
+			mux, ok := next.(*http.ServeMux)
+			if !ok {
+				refusePaired(w)
+				return
 			}
-			r = withPaired(r)
+			if _, pattern := mux.Handler(r); pattern != "" && !pairedRoutes[pattern] {
+				refusePaired(w)
+				return
+			}
+			next.ServeHTTP(w, withPaired(r))
+			return
 		}
 
-		// This request came from a signed-in browser, so its Host header is
-		// what actually reaches this instance: the one address worth
-		// learning as where members should send it direct calls.
+		// This request came from a browser signed in with the password, so
+		// its Host header is what actually reaches this instance: the one
+		// address worth learning as where members should send it direct
+		// calls. Whoever holds the group's words could name any host.
 		if h.svc != nil {
 			h.svc.learnDirectURL(r)
 		}

@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -25,8 +26,7 @@ import (
 var routeBuilders = []string{"mountAPIV1", "peerMux"}
 
 // registeredRoutes reads every pattern the package registers on a mux from
-// its source: a string literal, or a literal joined to a string constant of
-// the package.
+// its source.
 func registeredRoutes(t *testing.T) []string {
 	t.Helper()
 	fset := token.NewFileSet()
@@ -34,7 +34,6 @@ func registeredRoutes(t *testing.T) []string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	consts := map[string]ast.Expr{}
 	var parsed []*ast.File
 	for _, name := range files {
 		if strings.HasSuffix(name, "_test.go") {
@@ -49,20 +48,99 @@ func registeredRoutes(t *testing.T) []string {
 			t.Fatal(err)
 		}
 		parsed = append(parsed, f)
-		for _, decl := range f.Decls {
-			gen, ok := decl.(*ast.GenDecl)
-			if !ok || gen.Tok != token.CONST {
-				continue
+	}
+	return routesIn(t, fset, parsed)
+}
+
+// isServeMux reports whether a type expression is *http.ServeMux.
+func isServeMux(e ast.Expr) bool {
+	star, ok := e.(*ast.StarExpr)
+	if !ok {
+		return false
+	}
+	sel, ok := star.X.(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+	pkg, ok := sel.X.(*ast.Ident)
+	return ok && pkg.Name == "http" && sel.Sel.Name == "ServeMux"
+}
+
+// isNewServeMux reports whether an expression is a call to http.NewServeMux.
+func isNewServeMux(e ast.Expr) bool {
+	call, ok := e.(*ast.CallExpr)
+	if !ok {
+		return false
+	}
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+	pkg, ok := sel.X.(*ast.Ident)
+	return ok && pkg.Name == "http" && sel.Sel.Name == "NewServeMux"
+}
+
+// muxNames are the names a function holds a *http.ServeMux under: its
+// parameters and variables of that type, and the struct fields of the files.
+func muxNames(fn *ast.FuncDecl, fields map[string]bool) map[string]bool {
+	names := maps.Clone(fields)
+	for _, p := range fn.Type.Params.List {
+		if isServeMux(p.Type) {
+			for _, n := range p.Names {
+				names[n.Name] = true
 			}
-			for _, spec := range gen.Specs {
-				vs := spec.(*ast.ValueSpec)
-				for i, n := range vs.Names {
-					if i < len(vs.Values) {
-						consts[n.Name] = vs.Values[i]
-					}
+		}
+	}
+	ast.Inspect(fn.Body, func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.AssignStmt:
+			for i, rhs := range x.Rhs {
+				if id, ok := x.Lhs[i].(*ast.Ident); ok && isNewServeMux(rhs) {
+					names[id.Name] = true
+				}
+			}
+		case *ast.ValueSpec:
+			for i, n := range x.Names {
+				if isServeMux(x.Type) || (i < len(x.Values) && isNewServeMux(x.Values[i])) {
+					names[n.Name] = true
 				}
 			}
 		}
+		return true
+	})
+	return names
+}
+
+// routesIn reads the patterns registered on any *http.ServeMux in files: a
+// string literal, or a literal joined to a string constant of the files.
+func routesIn(t *testing.T, fset *token.FileSet, files []*ast.File) []string {
+	t.Helper()
+	consts := map[string]ast.Expr{}
+	fields := map[string]bool{}
+	for _, f := range files {
+		ast.Inspect(f, func(n ast.Node) bool {
+			switch x := n.(type) {
+			case *ast.GenDecl:
+				if x.Tok != token.CONST {
+					return true
+				}
+				for _, spec := range x.Specs {
+					vs := spec.(*ast.ValueSpec)
+					for i, n := range vs.Names {
+						if i < len(vs.Values) {
+							consts[n.Name] = vs.Values[i]
+						}
+					}
+				}
+			case *ast.Field:
+				if isServeMux(x.Type) {
+					for _, n := range x.Names {
+						fields[n.Name] = true
+					}
+				}
+			}
+			return true
+		})
 	}
 	var value func(ast.Expr) (string, bool)
 	value = func(e ast.Expr) (string, bool) {
@@ -83,12 +161,13 @@ func registeredRoutes(t *testing.T) []string {
 		return "", false
 	}
 	var out []string
-	for _, f := range parsed {
+	for _, f := range files {
 		for _, decl := range f.Decls {
 			fn, ok := decl.(*ast.FuncDecl)
 			if !ok || fn.Body == nil {
 				continue
 			}
+			muxes := muxNames(fn, fields)
 			ast.Inspect(fn.Body, func(n ast.Node) bool {
 				call, ok := n.(*ast.CallExpr)
 				if !ok || len(call.Args) != 2 {
@@ -98,7 +177,14 @@ func registeredRoutes(t *testing.T) []string {
 				if !ok || (sel.Sel.Name != "HandleFunc" && sel.Sel.Name != "Handle") {
 					return true
 				}
-				if recv, ok := sel.X.(*ast.Ident); !ok || recv.Name != "mux" {
+				var recv string
+				switch x := sel.X.(type) {
+				case *ast.Ident:
+					recv = x.Name
+				case *ast.SelectorExpr:
+					recv = x.Sel.Name
+				}
+				if !muxes[recv] {
 					return true
 				}
 				pattern, ok := value(call.Args[0])
@@ -115,6 +201,34 @@ func registeredRoutes(t *testing.T) []string {
 	}
 	slices.Sort(out)
 	return out
+}
+
+func TestRoutesAreFoundOnAMuxOfAnyName(t *testing.T) {
+	const src = `package api
+
+type server struct{ routes *http.ServeMux }
+
+func a() {
+	m := http.NewServeMux()
+	m.HandleFunc("GET /a", nil)
+}
+
+func b(r *http.ServeMux) { r.Handle("GET /b", nil) }
+
+func (s *server) c() {
+	var inner *http.ServeMux
+	inner.HandleFunc("GET /c", nil)
+	s.routes.HandleFunc("GET /d", nil)
+}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "routes.go", src, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := routesIn(t, fset, []*ast.File{f}), []string{"GET /a", "GET /b", "GET /c", "GET /d"}; !slices.Equal(got, want) {
+		t.Fatalf("routes = %v, want %v", got, want)
+	}
 }
 
 // pairedRefused are the routes the session of a paired phone is refused on
