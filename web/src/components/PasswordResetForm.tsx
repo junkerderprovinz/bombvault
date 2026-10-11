@@ -91,7 +91,7 @@ export function PasswordResetForm({
           <p className={LABEL}>{t("auth.resetDoneIntro")}</p>
           <ul className="list-disc pl-5 text-sm text-carbon-text flex flex-col gap-1">
             <li>{t("auth.resetDoneSessions")}</li>
-            {removed.twoFactor && <li>{t("auth.resetDoneTwoFactor")}</li>}
+            {removed.twoFactor && <li>{t("auth.twoFactorOffNow")}</li>}
             {removed.passkeys > 0 && <li>{t("auth.resetDonePasskeys", removed.passkeys)}</li>}
             {removed.apiTokens > 0 && <li>{t("auth.resetDoneApiTokens", removed.apiTokens)}</li>}
             {removed.mcpKeys > 0 && <li>{t("auth.resetDoneMcpKeys", removed.mcpKeys)}</li>}
