@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
@@ -67,6 +68,9 @@ func (s *Service) askZFSReceive(ctx context.Context, item store.ZFSDataset, rene
 	req := peerZFSReceiveRequest{
 		InstanceID: g.InstanceID, Name: instanceDisplayName(settings), Item: item.ID, Dataset: item.Dataset,
 		Members: members, Keep: item.Replica.Keep, Renew: renew,
+	}
+	if req.peerProof, err = s.signCall(keydeposit.ProofZFSReceive, item.Replica.TargetID, req.signed()); err != nil {
+		return store.ZFSReplicaPeer{}, err
 	}
 	var ans peerZFSReceiveAnswer
 	if err := s.callMember(ctx, item.Replica.TargetID, http.MethodPost, "/api/group/peer/zfs-receive", req, &ans); err != nil {

@@ -25,6 +25,7 @@ const (
 	ProofPairing       = "pairing"
 	ProofReceiverLogin = "receiver-login"
 	ProofRelease       = "release"
+	ProofZFSReceive    = "zfs-receive"
 )
 
 // Claim is what an install says and signs. Counter only ever grows, so a call
