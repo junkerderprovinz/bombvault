@@ -47,7 +47,6 @@ const bg: Partial<Translations> = {
   "about.mail": "Имейл",
 
   // Dashboard
-  "dashboard.title": "Табло",
   "dashboard.summaryHealth": "Точка за възстановяване",
   "dashboard.summaryNextBackup": "Следващо архивиране",
   "dashboard.summaryNextIn": "след {countdown}",
@@ -1984,7 +1983,6 @@ const bg: Partial<Translations> = {
   "vm.ssh.guide": "Пълно ръководство за настройка и мрежа",
 
   // Guided Recovery tab
-  "nav.recovery": "Възстановяване",
   // Step 1
   "recovery.step1": "Може ли BombVault да прочете архивиранията ти?",
   "recovery.appKeyExplain": "За да прочете съществуващи архивирания, този контейнер се нуждае от СЪЩИЯ APP_KEY, който е използвал преди — той е в твоя комплект за възстановяване. Задай го в шаблона на Unraid контейнера, ако вече не е зададен, после провери отново.",
@@ -2045,8 +2043,6 @@ const bg: Partial<Translations> = {
   "recovery.kitHint": "Изтегли и съхрани комплекта си за възстановяване на сигурно място — той съдържа ключа за криптиране и точните restic команди за възстановяване дори без BombVault.",
   "recovery.kitDownload": "Изтегли комплект за възстановяване",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Възстановяваш от предишен сървър или след пресъздаване? Възстанови съществуващите си архивирания.",
-  "recovery.freshNudgeCta": "Към Възстановяване",
 
   // Settings — section tabs
   "settings.tab.general": "Общи",

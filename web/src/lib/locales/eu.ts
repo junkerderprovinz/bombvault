@@ -47,7 +47,6 @@ const eu: Partial<Translations> = {
   "about.mail": "E-posta",
 
   // Dashboard
-  "dashboard.title": "Panela",
   "dashboard.summaryHealth": "Berreskuratze-puntua",
   "dashboard.summaryNextBackup": "Hurrengo babeskopia",
   "dashboard.summaryNextIn": "{countdown} barru",
@@ -1984,7 +1983,6 @@ const eu: Partial<Translations> = {
   "vm.ssh.guide": "Konfigurazio- eta sare-gida osoa",
 
   // Guided Recovery tab
-  "nav.recovery": "Berreskuratzea",
   // Step 1
   "recovery.step1": "BombVaultek zure babeskopiak irakur ditzake?",
   "recovery.appKeyExplain": "Dauden babeskopiak irakurtzeko, edukiontzi honek lehen erabili zuen APP_KEY BERA behar du. Zure berreskuratze-kitan dago. Ezarri Unraid edukiontziaren txantiloian jada ez badago, eta egiaztatu berriz.",
@@ -2045,8 +2043,6 @@ const eu: Partial<Translations> = {
   "recovery.kitHint": "Deskargatu eta gorde zure berreskuratze-kita toki seguru batean: zifratze-gakoa eta BombVaultik gabe ere berrezartzeko behar diren restic komando zehatzak ditu.",
   "recovery.kitDownload": "Deskargatu berreskuratze-kita",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Aurreko zerbitzari batetik edo berreraikitze baten ondoren berrezartzen? Berrezarri zure dauden babeskopiak.",
-  "recovery.freshNudgeCta": "Joan Berreskuratzera",
 
   // Settings — section tabs
   "settings.tab.general": "Orokorra",

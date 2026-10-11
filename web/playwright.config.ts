@@ -93,6 +93,7 @@ const testMatch = [
   "storage.spec.ts",
   "backup-entry.spec.ts",
   "overview.spec.ts",
+  "welcome.spec.ts",
 ];
 
 for (const spec of testMatch) {

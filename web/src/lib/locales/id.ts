@@ -47,7 +47,6 @@ const id: Partial<Translations> = {
   "about.mail": "Surel",
 
   // Dashboard
-  "dashboard.title": "Dasbor",
   "dashboard.summaryHealth": "Titik pemulihan",
   "dashboard.summaryNextBackup": "Cadangan berikutnya",
   "dashboard.summaryNextIn": "dalam {countdown}",
@@ -1984,7 +1983,6 @@ const id: Partial<Translations> = {
   "vm.ssh.guide": "Panduan penyiapan & jaringan lengkap",
 
   // Guided Recovery tab
-  "nav.recovery": "Pemulihan",
   // Step 1
   "recovery.step1": "Bisakah BombVault membaca cadangan Anda?",
   "recovery.appKeyExplain": "Untuk membaca cadangan yang ada, container ini memerlukan APP_KEY YANG SAMA seperti yang digunakan sebelumnya. Ada di kit pemulihan Anda. Atur di template container Unraid jika belum, lalu periksa ulang.",
@@ -2045,8 +2043,6 @@ const id: Partial<Translations> = {
   "recovery.kitHint": "Unduh dan simpan kit pemulihan Anda di tempat yang aman. Berisi kunci enkripsi dan perintah restic yang tepat untuk memulihkan bahkan tanpa BombVault.",
   "recovery.kitDownload": "Unduh kit pemulihan",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Memulihkan dari server sebelumnya atau setelah membangun ulang? Pulihkan cadangan Anda yang sudah ada.",
-  "recovery.freshNudgeCta": "Buka Pemulihan",
 
   // Settings — section tabs
   "settings.tab.general": "Umum",

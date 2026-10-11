@@ -43,11 +43,9 @@ const it: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Riscontro",
   "about.mail": "Email",
-  "nav.recovery": "Ripristino",
   "nav.config": "Auto-backup",
 
   // Dashboard
-  "dashboard.title": "Dashboard",
   "dashboard.summaryHealth": "Punto di ripristino",
   "dashboard.summaryNextBackup": "Prossimo backup",
   "dashboard.summaryNextIn": "tra {countdown}",
@@ -1007,8 +1005,6 @@ const it: Partial<Translations> = {
   "recovery.step5": "Il tuo kit di ripristino",
   "recovery.kitHint": "Scarica e conserva il tuo kit di ripristino in un luogo sicuro. Contiene la chiave di crittografia e i comandi restic esatti per ripristinare anche senza BombVault.",
   "recovery.kitDownload": "Scarica il kit di ripristino",
-  "recovery.freshNudge": "Stai ripristinando da un server precedente o da una ricostruzione? Recupera i tuoi backup esistenti.",
-  "recovery.freshNudgeCta": "Vai a Ripristino",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "Ripristina le impostazioni di BombVault",

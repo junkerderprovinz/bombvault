@@ -43,11 +43,9 @@ const th: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "ความเห็น",
   "about.mail": "อีเมล",
-  "nav.recovery": "การกู้คืน",
   "nav.config": "สำรองข้อมูลตัวเอง",
 
   // Dashboard
-  "dashboard.title": "แดชบอร์ด",
   "dashboard.summaryHealth": "จุดกู้คืน",
   "dashboard.summaryNextBackup": "การสำรองข้อมูลครั้งถัดไป",
   "dashboard.summaryNextIn": "ในอีก {countdown}",
@@ -1010,8 +1008,6 @@ const th: Partial<Translations> = {
   "recovery.step5": "ชุดกู้คืนของคุณ",
   "recovery.kitHint": "ดาวน์โหลดและเก็บชุดกู้คืนของคุณไว้ในที่ปลอดภัย ประกอบด้วยคีย์เข้ารหัสและคำสั่ง restic ที่แน่นอนสำหรับการกู้คืนแม้ไม่มี BombVault",
   "recovery.kitDownload": "ดาวน์โหลดชุดกู้คืน",
-  "recovery.freshNudge": "กำลังกู้คืนจากเซิร์ฟเวอร์เดิมหรือการสร้างใหม่? กู้คืนการสำรองข้อมูลที่มีอยู่ของคุณ",
-  "recovery.freshNudgeCta": "ไปที่การกู้คืน",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "กู้คืนการตั้งค่าของ BombVault เอง",

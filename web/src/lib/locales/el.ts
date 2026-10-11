@@ -43,11 +43,9 @@ const el: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Σχόλια",
   "about.mail": "Email",
-  "nav.recovery": "Ανάκτηση",
   "nav.config": "Αυτο-αντίγραφο",
 
   // Dashboard
-  "dashboard.title": "Πίνακας ελέγχου",
   "dashboard.summaryHealth": "Σημείο επαναφοράς",
   "dashboard.summaryNextBackup": "Επόμενο αντίγραφο ασφαλείας",
   "dashboard.summaryNextIn": "σε {countdown}",
@@ -1007,8 +1005,6 @@ const el: Partial<Translations> = {
   "recovery.step5": "Το κιτ ανάκτησής σας",
   "recovery.kitHint": "Κατεβάστε και αποθηκεύστε το κιτ ανάκτησής σας σε ασφαλές μέρος. Περιέχει το κλειδί κρυπτογράφησης και τις ακριβείς εντολές restic για επαναφορά ακόμη και χωρίς το BombVault.",
   "recovery.kitDownload": "Λήψη κιτ ανάκτησης",
-  "recovery.freshNudge": "Κάνετε επαναφορά από προηγούμενο διακομιστή ή μετά από ανακατασκευή; Ανακτήστε τα υπάρχοντα αντίγραφά σας.",
-  "recovery.freshNudgeCta": "Μετάβαση στην Ανάκτηση",
 
   // Config backup (BombVault's own settings)
   "config.title": "Αυτο-αντίγραφο",

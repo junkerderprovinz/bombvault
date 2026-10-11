@@ -15,6 +15,8 @@ export const ATTENTION_CHANGED_EVENT = "bv:attention-changed";
 export interface Attention {
   /** What waits for the person. The overview lists it, the navigation counts it. */
   needs: Need[];
+  /** The entries are read and none of them has a backup yet. */
+  fresh: boolean;
   items: BackupItems;
   /** The runs of GET /api/runs, newest first. */
   runs: Run[];
@@ -29,7 +31,8 @@ const idle = () => undefined;
 
 export const AttentionContext = createContext<Attention & { watch: () => () => void }>({
   needs: [],
-  items: { items: [], loaded: false, failed: false, reload: idle },
+  fresh: false,
+  items: { items: [], reported: [], loaded: false, failed: false, reload: idle },
   runs: [],
   runsReady: false,
   runsFailed: false,
@@ -40,6 +43,8 @@ export const AttentionContext = createContext<Attention & { watch: () => () => v
 // The count has a context of its own, so the navigation is not drawn again
 // with every poll that leaves it as it was.
 export const AttentionCountContext = createContext(0);
+
+export const FreshInstallContext = createContext(false);
 
 /**
  * useAttention is for the page that shows the lists themselves. While it is
@@ -56,4 +61,10 @@ export function useAttention(): Attention {
 /** useAttentionCount is how many things need the person. */
 export function useAttentionCount(): number {
   return useContext(AttentionCountContext);
+}
+
+/** useFreshInstall is true from the moment the entries are read until the
+ *  first of them has a backup. */
+export function useFreshInstall(): boolean {
+  return useContext(FreshInstallContext);
 }

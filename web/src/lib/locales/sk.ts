@@ -47,7 +47,6 @@ const sk: Partial<Translations> = {
   "about.mail": "E-mail",
 
   // Dashboard
-  "dashboard.title": "Prehľad",
   "dashboard.summaryHealth": "Bod obnovenia",
   "dashboard.summaryNextBackup": "Ďalšia záloha",
   "dashboard.summaryNextIn": "o {countdown}",
@@ -1984,7 +1983,6 @@ const sk: Partial<Translations> = {
   "vm.ssh.guide": "Kompletná príručka nastavenia a sieťovania",
 
   // Guided Recovery tab
-  "nav.recovery": "Obnova",
   // Step 1
   "recovery.step1": "Dokáže BombVault prečítať vaše zálohy?",
   "recovery.appKeyExplain": "Na čítanie existujúcich záloh tento kontajner potrebuje ROVNAKÝ APP_KEY, aký sa používal predtým. Je vo vašej súprave na obnovenie. Nastavte ho v šablóne kontajnera Unraid, ak ešte nie je nastavený, potom znova skontrolujte.",
@@ -2045,8 +2043,6 @@ const sk: Partial<Translations> = {
   "recovery.kitHint": "Stiahnite si a uchovávajte svoju súpravu na obnovenie na bezpečnom mieste. Obsahuje šifrovací kľúč a presné príkazy restic na obnovenie aj bez BombVault.",
   "recovery.kitDownload": "Stiahnuť súpravu na obnovenie",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Obnovujete z predchádzajúceho servera alebo po opätovnom zostavení? Obnovte svoje existujúce zálohy.",
-  "recovery.freshNudgeCta": "Prejsť na Obnovu",
 
   // Settings — section tabs
   "settings.tab.general": "Všeobecné",

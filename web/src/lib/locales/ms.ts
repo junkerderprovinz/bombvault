@@ -47,7 +47,6 @@ const ms: Partial<Translations> = {
   "about.mail": "E-mel",
 
   // Dashboard
-  "dashboard.title": "Papan Pemuka",
   "dashboard.summaryHealth": "Titik pemulihan",
   "dashboard.summaryNextBackup": "Sandaran seterusnya",
   "dashboard.summaryNextIn": "dalam {countdown}",
@@ -1984,7 +1983,6 @@ const ms: Partial<Translations> = {
   "vm.ssh.guide": "Panduan persediaan & rangkaian lengkap",
 
   // Guided Recovery tab
-  "nav.recovery": "Pemulihan",
   // Step 1
   "recovery.step1": "Bolehkah BombVault membaca sandaran anda?",
   "recovery.appKeyExplain": "Untuk membaca sandaran sedia ada, bekas ini memerlukan APP_KEY YANG SAMA seperti yang digunakan sebelum ini. Ia ada dalam kit pemulihan anda. Tetapkannya dalam templat bekas Unraid jika belum lagi, kemudian semak semula.",
@@ -2045,8 +2043,6 @@ const ms: Partial<Translations> = {
   "recovery.kitHint": "Muat turun dan simpan kit pemulihan anda di tempat yang selamat. Ia mengandungi kunci penyulitan dan arahan restic yang tepat untuk memulihkan walaupun tanpa BombVault.",
   "recovery.kitDownload": "Muat turun kit pemulihan",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Memulihkan daripada pelayan sebelumnya atau selepas pembinaan semula? Pulihkan sandaran sedia ada anda.",
-  "recovery.freshNudgeCta": "Pergi ke Pemulihan",
 
   // Settings — section tabs
   "settings.tab.general": "Umum",

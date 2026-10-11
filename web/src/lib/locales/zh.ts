@@ -43,11 +43,9 @@ const zh: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "反馈",
   "about.mail": "邮件",
-  "nav.recovery": "恢复",
   "nav.config": "自我备份",
 
   // Dashboard
-  "dashboard.title": "仪表板",
   "dashboard.summaryHealth": "恢复点",
   "dashboard.summaryNextBackup": "下次备份",
   "dashboard.summaryNextIn": "{countdown}后",
@@ -998,8 +996,6 @@ const zh: Partial<Translations> = {
   "recovery.step5": "你的恢复工具包",
   "recovery.kitHint": "下载并将你的恢复工具包妥善保存在安全的地方。它包含加密密钥以及即使没有 BombVault 也能恢复的精确 restic 命令。",
   "recovery.kitDownload": "下载恢复工具包",
-  "recovery.freshNudge": "正在从旧服务器或重建中恢复？恢复你现有的备份。",
-  "recovery.freshNudgeCta": "前往恢复",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "还原 BombVault 自身的设置",

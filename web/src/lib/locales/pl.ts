@@ -43,10 +43,8 @@ const pl: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Uwagi",
   "about.mail": "E-mail",
-  "nav.recovery": "Odzyskiwanie",
 
   // Dashboard
-  "dashboard.title": "Panel",
   "dashboard.summaryHealth": "Punkt przywracania",
   "dashboard.summaryNextBackup": "Następna kopia zapasowa",
   "dashboard.summaryNextIn": "za {countdown}",
@@ -999,8 +997,6 @@ const pl: Partial<Translations> = {
   "recovery.step5": "Twój zestaw odzyskiwania",
   "recovery.kitHint": "Pobierz i przechowuj swój zestaw odzyskiwania w bezpiecznym miejscu. Zawiera klucz szyfrowania i dokładne polecenia restic do przywrócenia nawet bez BombVault.",
   "recovery.kitDownload": "Pobierz zestaw odzyskiwania",
-  "recovery.freshNudge": "Przywracasz z poprzedniego serwera lub po ponownej instalacji? Odzyskaj swoje istniejące kopie zapasowe.",
-  "recovery.freshNudgeCta": "Przejdź do Odzyskiwania",
 
   // Config recovery step (restore BombVault's own settings)
   "recovery.stepConfig": "Przywróć własne ustawienia BombVault",

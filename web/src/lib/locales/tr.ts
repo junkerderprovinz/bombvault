@@ -43,11 +43,9 @@ const tr: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Geri bildirim",
   "about.mail": "E-posta",
-  "nav.recovery": "Kurtarma",
   "nav.config": "Öz yedek",
 
   // Dashboard
-  "dashboard.title": "Kontrol Paneli",
   "dashboard.summaryHealth": "Kurtarma noktası",
   "dashboard.summaryNextBackup": "Sonraki yedek",
   "dashboard.summaryNextIn": "{countdown} sonra",
@@ -1007,8 +1005,6 @@ const tr: Partial<Translations> = {
   "recovery.step5": "Kurtarma kitiniz",
   "recovery.kitHint": "Kurtarma kitinizi indirin ve güvenli bir yerde saklayın. Şifreleme anahtarını ve BombVault olmadan bile geri yüklemek için gereken tam restic komutlarını içerir.",
   "recovery.kitDownload": "Kurtarma kitini indir",
-  "recovery.freshNudge": "Önceki bir sunucudan ya da yeniden kurulumdan mı geri yüklüyorsunuz? Mevcut yedeklerinizi kurtarın.",
-  "recovery.freshNudgeCta": "Kurtarma'ya git",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "BombVault'un kendi ayarlarını geri yükle",

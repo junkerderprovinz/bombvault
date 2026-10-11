@@ -78,7 +78,7 @@ describe("the cards a browser sees first", () => {
   });
 
   it("start with what needs the person once something does", async () => {
-    server.items = [item({ key: "gitea", name: "gitea", ...leftOut })];
+    server.items = [item(), item({ key: "gitea", name: "gitea", ...leftOut })];
     await renderPage();
 
     expect(shownCards()).toEqual(["needs", "protection", "targets", "history"]);
@@ -91,7 +91,7 @@ describe("the cards a browser sees first", () => {
   });
 
   it("put protection and the storage locations side by side and the others across", async () => {
-    server.items = [item({ key: "gitea", ...leftOut })];
+    server.items = [item(), item({ key: "gitea", ...leftOut })];
     await renderPage();
 
     expect(ALL.slice(0, 4).map((id) => cell(id).getAttribute("data-span"))).toEqual(["6", "3", "3", "6"]);
@@ -108,7 +108,7 @@ describe("a layout from before the six-column grid", () => {
 
   it("keeps its order and its hidden cards, with the new cards where they belong", async () => {
     store(old);
-    server.items = [item({ key: "gitea", ...leftOut })];
+    server.items = [item(), item({ key: "gitea", ...leftOut })];
     await renderPage();
 
     expect(shownCards()).toEqual(["needs", "protection", "targets", "summary", "history", "storage", "coverage", "anomalies"]);
@@ -440,7 +440,7 @@ describe("the overview on a phone", () => {
 
   it("stands the cards in one order for everybody, with the next run and the repositories under what needs the person", async () => {
     store({ v: 2, order: [...ALL].reverse(), hidden: ["spike", "stats", "summary", "storage", "heatmap"], widths: {}, heights: {} });
-    server.items = [item({ key: "gitea", ...leftOut })];
+    server.items = [item(), item({ key: "gitea", ...leftOut })];
     await renderPage();
 
     expect(shownCards()).toEqual(["needs", "nextRun", "storageGlance", "protection", "targets", "history", "anomalies", "coverage"]);
@@ -465,7 +465,7 @@ describe("the overview on a phone", () => {
 
 describe("the colour engine", () => {
   it("gives every card a palette position, on a desktop and on a phone", async () => {
-    server.items = [item({ key: "gitea", ...leftOut })];
+    server.items = [item(), item({ key: "gitea", ...leftOut })];
     server.locations = [location()];
     for (const desktop of [true, false]) {
       setDesktop(desktop);

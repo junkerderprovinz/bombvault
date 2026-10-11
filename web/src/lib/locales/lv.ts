@@ -47,7 +47,6 @@ const lv: Partial<Translations> = {
   "about.mail": "E-pasts",
 
   // Dashboard
-  "dashboard.title": "Vadības panelis",
   "dashboard.summaryHealth": "Atjaunošanas punkts",
   "dashboard.summaryNextBackup": "Nākamā rezerves kopija",
   "dashboard.summaryNextIn": "pēc {countdown}",
@@ -1984,7 +1983,6 @@ const lv: Partial<Translations> = {
   "vm.ssh.guide": "Pilnīga iestatīšanas un tīkla rokasgrāmata",
 
   // Guided Recovery tab
-  "nav.recovery": "Atkopšana",
   // Step 1
   "recovery.step1": "Vai BombVault var nolasīt jūsu rezerves kopijas?",
   "recovery.appKeyExplain": "Lai nolasītu esošās rezerves kopijas, šim konteinerim nepieciešams TĀDS PATS APP_KEY, kāds izmantots iepriekš. Tas atrodas jūsu atkopšanas komplektā. Iestatiet to Unraid konteinera veidnē, ja tas vēl nav iestatīts, un pēc tam pārbaudiet vēlreiz.",
@@ -2045,8 +2043,6 @@ const lv: Partial<Translations> = {
   "recovery.kitHint": "Lejupielādējiet un glabājiet savu atkopšanas komplektu drošā vietā. Tajā ir šifrēšanas atslēga un precīzas restic komandas atjaunošanai pat bez BombVault.",
   "recovery.kitDownload": "Lejupielādēt atkopšanas komplektu",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Atjaunojat no iepriekšēja servera vai pēc atkārtotas izveides? Atjaunojiet savas esošās rezerves kopijas.",
-  "recovery.freshNudgeCta": "Doties uz Atkopšanu",
 
   // Settings — section tabs
   "settings.tab.general": "Vispārīgi",

@@ -43,11 +43,9 @@ const vi: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Góp ý",
   "about.mail": "Email",
-  "nav.recovery": "Khôi phục",
   "nav.config": "Tự sao lưu",
 
   // Dashboard
-  "dashboard.title": "Tổng quan",
   "dashboard.summaryHealth": "Điểm khôi phục",
   "dashboard.summaryNextBackup": "Bản sao lưu tiếp theo",
   "dashboard.summaryNextIn": "sau {countdown}",
@@ -998,8 +996,6 @@ const vi: Partial<Translations> = {
   "recovery.step5": "Bộ khôi phục của bạn",
   "recovery.kitHint": "Tải xuống và cất giữ bộ khôi phục của bạn ở nơi an toàn. Nó chứa khóa mã hóa và các lệnh restic chính xác để khôi phục ngay cả khi không có BombVault.",
   "recovery.kitDownload": "Tải bộ khôi phục",
-  "recovery.freshNudge": "Đang khôi phục từ một máy chủ trước đây hoặc sau khi dựng lại? Hãy khôi phục các bản sao lưu hiện có của bạn.",
-  "recovery.freshNudgeCta": "Đến Khôi phục",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "Khôi phục cài đặt của chính BombVault",

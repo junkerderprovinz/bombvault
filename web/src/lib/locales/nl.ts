@@ -43,10 +43,8 @@ const nl: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Feedback",
   "about.mail": "E-mail",
-  "nav.recovery": "Herstel",
 
   // Dashboard
-  "dashboard.title": "Dashboard",
   "dashboard.summaryHealth": "Herstelpunt",
   "dashboard.summaryNextBackup": "Volgende back-up",
   "dashboard.summaryNextIn": "over {countdown}",
@@ -978,8 +976,6 @@ const nl: Partial<Translations> = {
   "recovery.step5": "Je herstelkit",
   "recovery.kitHint": "Download je herstelkit en bewaar hem op een veilige plek. Hij bevat de encryptiesleutel en de exacte restic-commando's om te herstellen, zelfs zonder BombVault.",
   "recovery.kitDownload": "Herstelkit downloaden",
-  "recovery.freshNudge": "Herstellen vanaf een vorige server of na een herinstallatie? Herstel je bestaande back-ups.",
-  "recovery.freshNudgeCta": "Ga naar Herstel",
 
   // Config recovery step (restore BombVault's own settings)
   "recovery.stepConfig": "BombVaults eigen instellingen herstellen",

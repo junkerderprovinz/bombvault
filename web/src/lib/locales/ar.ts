@@ -43,11 +43,9 @@ const ar: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "ملاحظات",
   "about.mail": "بريد إلكتروني",
-  "nav.recovery": "الاستعادة",
   "nav.config": "النسخ الذاتي",
 
   // Dashboard
-  "dashboard.title": "لوحة التحكم",
   "dashboard.summaryHealth": "نقطة الاستعادة",
   "dashboard.summaryNextBackup": "النسخة الاحتياطية التالية",
   "dashboard.summaryNextIn": "خلال {countdown}",
@@ -1010,8 +1008,6 @@ const ar: Partial<Translations> = {
   "recovery.step5": "حقيبة الاستعادة الخاصة بك",
   "recovery.kitHint": "نزّل حقيبة الاستعادة واحفظها في مكان آمن. تحتوي على مفتاح التشفير وأوامر restic الدقيقة للاستعادة حتى بدون BombVault.",
   "recovery.kitDownload": "تنزيل حقيبة الاستعادة",
-  "recovery.freshNudge": "تستعيد من خادم سابق أو بعد إعادة بناء؟ استعد نسخك الاحتياطية الموجودة.",
-  "recovery.freshNudgeCta": "الانتقال إلى الاستعادة",
 
   // Config backup (BombVault's own settings)
   "config.title": "النسخ الذاتي",

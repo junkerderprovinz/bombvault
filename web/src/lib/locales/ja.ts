@@ -43,11 +43,9 @@ const ja: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "ご意見",
   "about.mail": "メール",
-  "nav.recovery": "リカバリー",
   "nav.config": "セルフバックアップ",
 
   // Dashboard
-  "dashboard.title": "ダッシュボード",
   "dashboard.summaryHealth": "復元ポイント",
   "dashboard.summaryNextBackup": "次回のバックアップ",
   "dashboard.summaryNextIn": "{countdown}後",
@@ -998,8 +996,6 @@ const ja: Partial<Translations> = {
   "recovery.step5": "リカバリーキット",
   "recovery.kitHint": "リカバリーキットをダウンロードして安全な場所に保管してください。暗号化キーと、BombVault がなくても復元できる正確な restic コマンドが含まれています。",
   "recovery.kitDownload": "リカバリーキットをダウンロード",
-  "recovery.freshNudge": "以前のサーバーや再構築からの復元ですか？既存のバックアップを復元しましょう。",
-  "recovery.freshNudgeCta": "リカバリーへ移動",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "BombVault 自身の設定を復元",

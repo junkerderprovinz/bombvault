@@ -5,6 +5,8 @@ import { listedItems } from "./backupList";
 
 export interface BackupItems {
   items: BackupItem[];
+  /** Every row the server sent, also those of a switched-off kind that `items` leaves out. */
+  reported: BackupItem[];
   loaded: boolean;
   /** The last read failed. A list read before stays in place. */
   failed: boolean;
@@ -17,7 +19,7 @@ export interface BackupItems {
  * server a round trip to libvirt.
  */
 export function useBackupItems(): BackupItems {
-  const [state, setState] = useState({ items: [] as BackupItem[], loaded: false, failed: false });
+  const [state, setState] = useState({ items: [] as BackupItem[], reported: [] as BackupItem[], loaded: false, failed: false });
 
   // Only the newest read may land, or a slow answer would bring back a list
   // that a later one has already replaced.
@@ -27,8 +29,13 @@ export function useBackupItems(): BackupItems {
     listItems()
       .then((res) => {
         if (n !== read.current) return;
-        if (res.ok) setState({ items: listedItems(res.items), loaded: true, failed: false });
-        else setState((s) => ({ ...s, failed: true }));
+        if (!res.ok) {
+          setState((s) => ({ ...s, failed: true }));
+          return;
+        }
+        // A server with nothing to list sends null.
+        const reported = res.items ?? [];
+        setState({ items: listedItems(reported), reported, loaded: true, failed: false });
       })
       .catch(() => {
         if (n === read.current) setState((s) => ({ ...s, failed: true }));

@@ -43,11 +43,9 @@ const fi: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Palautetta",
   "about.mail": "Sähköposti",
-  "nav.recovery": "Palautus",
   "nav.config": "Itsevarmuuskopio",
 
   // Dashboard
-  "dashboard.title": "Kojelauta",
   "dashboard.summaryHealth": "Palautuspiste",
   "dashboard.summaryNextBackup": "Seuraava varmuuskopio",
   "dashboard.summaryNextIn": "{countdown} kuluttua",
@@ -1007,8 +1005,6 @@ const fi: Partial<Translations> = {
   "recovery.step5": "Palautuspakettisi",
   "recovery.kitHint": "Lataa ja säilytä palautuspakettisi turvallisessa paikassa. Se sisältää salausavaimen ja tarkat restic-komennot palauttamiseen jopa ilman BombVaultia.",
   "recovery.kitDownload": "Lataa palautuspaketti",
-  "recovery.freshNudge": "Palautatko aiemmalta palvelimelta tai uudelleenrakennuksesta? Palauta olemassa olevat varmuuskopiosi.",
-  "recovery.freshNudgeCta": "Siirry Palautukseen",
 
   // Config backup (BombVault's own settings)
   "config.title": "Itsevarmuuskopio",

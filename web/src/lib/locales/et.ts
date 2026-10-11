@@ -47,7 +47,6 @@ const et: Partial<Translations> = {
   "about.mail": "E-kiri",
 
   // Dashboard
-  "dashboard.title": "Töölaud",
   "dashboard.summaryHealth": "Taastepunkt",
   "dashboard.summaryNextBackup": "Järgmine varundus",
   "dashboard.summaryNextIn": "{countdown} pärast",
@@ -1984,7 +1983,6 @@ const et: Partial<Translations> = {
   "vm.ssh.guide": "Täielik seadistus- ja võrgujuhend",
 
   // Guided Recovery tab
-  "nav.recovery": "Taastamine",
   // Step 1
   "recovery.step1": "Kas BombVault suudab su varundusi lugeda?",
   "recovery.appKeyExplain": "Olemasolevate varunduste lugemiseks vajab see konteiner SAMA APP_KEY-d, mida varem kasutati. See on sinu taastekomplektis. Määra see Unraidi konteineri mallis, kui see pole veel tehtud, ja kontrolli uuesti.",
@@ -2045,8 +2043,6 @@ const et: Partial<Translations> = {
   "recovery.kitHint": "Laadi alla ja hoia oma taastekomplekt turvalises kohas: see sisaldab krüpteeringu võtit ja täpseid restic käske taastamiseks isegi ilma BombVaultita.",
   "recovery.kitDownload": "Laadi alla taastekomplekt",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Taastad varasemast serverist või pärast ülesehitust? Taasta oma olemasolevad varundused.",
-  "recovery.freshNudgeCta": "Mine Taastamise juurde",
 
   // Settings — section tabs
   "settings.tab.general": "Üldine",

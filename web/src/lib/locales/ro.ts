@@ -43,10 +43,8 @@ const ro: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Feedback",
   "about.mail": "E-mail",
-  "nav.recovery": "Recuperare",
 
   // Dashboard
-  "dashboard.title": "Panou principal",
   "dashboard.summaryHealth": "Punct de restaurare",
   "dashboard.summaryNextBackup": "Următorul backup",
   "dashboard.summaryNextIn": "în {countdown}",
@@ -983,8 +981,6 @@ const ro: Partial<Translations> = {
   "recovery.step5": "Kitul tău de recuperare",
   "recovery.kitHint": "Descarcă și păstrează kitul de recuperare într-un loc sigur. Conține cheia de criptare și comenzile restic exacte pentru a restaura chiar și fără BombVault.",
   "recovery.kitDownload": "Descarcă kitul de recuperare",
-  "recovery.freshNudge": "Restaurezi de pe un server anterior sau după o reinstalare? Recuperează-ți copiile de rezervă existente.",
-  "recovery.freshNudgeCta": "Mergi la Recuperare",
 
   // Config recovery step (restore BombVault's own settings)
   "recovery.stepConfig": "Restaurează propriile setări ale BombVault",

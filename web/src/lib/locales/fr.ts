@@ -43,11 +43,9 @@ const fr: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Retour",
   "about.mail": "E-mail",
-  "nav.recovery": "Récupération",
   "nav.config": "Auto-sauvegarde",
 
   // Dashboard
-  "dashboard.title": "Tableau de bord",
   "dashboard.summaryHealth": "Point de restauration",
   "dashboard.summaryNextBackup": "Prochaine sauvegarde",
   "dashboard.summaryNextIn": "dans {countdown}",
@@ -1007,8 +1005,6 @@ const fr: Partial<Translations> = {
   "recovery.step5": "Votre kit de récupération",
   "recovery.kitHint": "Téléchargez et conservez votre kit de récupération en lieu sûr : il contient la clé de chiffrement et les commandes restic exactes pour restaurer même sans BombVault.",
   "recovery.kitDownload": "Télécharger le kit de récupération",
-  "recovery.freshNudge": "Vous restaurez depuis un serveur précédent ou une réinstallation ? Récupérez vos sauvegardes existantes.",
-  "recovery.freshNudgeCta": "Aller à Récupération",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "Restaurer les propres réglages de BombVault",

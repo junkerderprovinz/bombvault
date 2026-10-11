@@ -43,11 +43,9 @@ const da: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Tilbagemelding",
   "about.mail": "E-mail",
-  "nav.recovery": "Gendannelse",
   "nav.config": "Auto-sikkerhedskopi",
 
   // Dashboard
-  "dashboard.title": "Oversigt",
   "dashboard.summaryHealth": "Gendannelsespunkt",
   "dashboard.summaryNextBackup": "Næste sikkerhedskopi",
   "dashboard.summaryNextIn": "om {countdown}",
@@ -1007,8 +1005,6 @@ const da: Partial<Translations> = {
   "recovery.step5": "Dit gendannelseskit",
   "recovery.kitHint": "Download og opbevar dit gendannelseskit et sikkert sted. Det indeholder krypteringsnøglen og de præcise restic-kommandoer til at gendanne selv uden BombVault.",
   "recovery.kitDownload": "Download gendannelseskit",
-  "recovery.freshNudge": "Gendanner du fra en tidligere server eller en genopbygning? Gendan dine eksisterende sikkerhedskopier.",
-  "recovery.freshNudgeCta": "Gå til Gendannelse",
 
   // Config backup (BombVault's own settings)
   "config.title": "Auto-sikkerhedskopi",

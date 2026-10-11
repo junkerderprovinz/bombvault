@@ -1943,7 +1943,7 @@ export default function Recovery() {
 
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
-      <PageTitle>{t("nav.recovery")}</PageTitle>
+      <PageTitle>{t("nav.restore")}</PageTitle>
 
       <StepCard n={1} title={t("recovery.step1")} hint={t("recovery.appKeyExplain")} state={readableState} hueIndex={nextHue()}>
         <VerdictLine verdict={readVerdict} />

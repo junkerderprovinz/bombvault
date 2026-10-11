@@ -47,7 +47,6 @@ const hi: Partial<Translations> = {
   "about.mail": "ईमेल",
 
   // Dashboard
-  "dashboard.title": "डैशबोर्ड",
   "dashboard.summaryHealth": "पुनर्प्राप्ति बिंदु",
   "dashboard.summaryNextBackup": "अगला बैकअप",
   "dashboard.summaryNextIn": "{countdown} में",
@@ -1984,7 +1983,6 @@ const hi: Partial<Translations> = {
   "vm.ssh.guide": "पूरी सेटअप और नेटवर्किंग गाइड",
 
   // Guided Recovery tab
-  "nav.recovery": "रिकवरी",
   // Step 1
   "recovery.step1": "क्या BombVault आपके बैकअप पढ़ सकता है?",
   "recovery.appKeyExplain": "मौजूदा बैकअप पढ़ने के लिए, इस कंटेनर को पहले जैसा वही APP_KEY चाहिए। यह आपकी रिकवरी किट में है। अगर पहले से नहीं है तो इसे Unraid कंटेनर टेम्पलेट में सेट करें, फिर फिर से जाँचें।",
@@ -2045,8 +2043,6 @@ const hi: Partial<Translations> = {
   "recovery.kitHint": "अपनी रिकवरी किट को कहीं सुरक्षित जगह डाउनलोड करके रखें। इसमें एन्क्रिप्शन कुंजी और BombVault के बिना भी रीस्टोर करने के लिए ठीक-ठीक restic कमांड हैं।",
   "recovery.kitDownload": "रिकवरी किट डाउनलोड करें",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "किसी पुराने सर्वर से या फिर से बनाने के बाद रीस्टोर कर रहे हैं? अपने मौजूदा बैकअप रीस्टोर करें।",
-  "recovery.freshNudgeCta": "Recovery पर जाएँ",
 
   // Settings — section tabs
   "settings.tab.general": "सामान्य",

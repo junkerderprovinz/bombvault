@@ -43,11 +43,9 @@ const es: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Comentarios",
   "about.mail": "Correo",
-  "nav.recovery": "Recuperación",
   "nav.config": "Autocopia",
 
   // Dashboard
-  "dashboard.title": "Panel",
   "dashboard.summaryHealth": "Punto de recuperación",
   "dashboard.summaryNextBackup": "Próxima copia",
   "dashboard.summaryNextIn": "en {countdown}",
@@ -1015,8 +1013,6 @@ const es: Partial<Translations> = {
   "recovery.step5": "Tu kit de recuperación",
   "recovery.kitHint": "Descarga y guarda tu kit de recuperación en un lugar seguro. Contiene la clave de cifrado y los comandos restic exactos para restaurar incluso sin BombVault.",
   "recovery.kitDownload": "Descargar kit de recuperación",
-  "recovery.freshNudge": "¿Restaurando desde un servidor anterior o una reconstrucción? Recupera tus copias existentes.",
-  "recovery.freshNudgeCta": "Ir a Recuperación",
 
   // Config backup (BombVault's own settings)
   "config.title": "Autocopia",

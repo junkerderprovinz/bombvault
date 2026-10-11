@@ -47,7 +47,6 @@ const ca: Partial<Translations> = {
   "about.mail": "Correu",
 
   // Dashboard
-  "dashboard.title": "Tauler",
   "dashboard.summaryHealth": "Punt de recuperació",
   "dashboard.summaryNextBackup": "Pròxima còpia",
   "dashboard.summaryNextIn": "d’aquí a {countdown}",
@@ -1984,7 +1983,6 @@ const ca: Partial<Translations> = {
   "vm.ssh.guide": "Guia completa de configuració i xarxa",
 
   // Guided Recovery tab
-  "nav.recovery": "Recuperació",
   // Step 1
   "recovery.step1": "Pot BombVault llegir les teves còpies?",
   "recovery.appKeyExplain": "Per llegir còpies existents, aquest contenidor necessita la MATEIXA APP_KEY que feia servir abans. És al teu kit de recuperació. Configura-la a la plantilla del contenidor Unraid si encara no ho està, i torna a comprovar.",
@@ -2045,8 +2043,6 @@ const ca: Partial<Translations> = {
   "recovery.kitHint": "Descarrega i guarda el teu kit de recuperació en un lloc segur. Conté la clau de xifratge i les ordres restic exactes per restaurar fins i tot sense BombVault.",
   "recovery.kitDownload": "Descarrega el kit de recuperació",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Restaurant des d'un servidor anterior o després d'una reconstrucció? Recupera les teves còpies existents.",
-  "recovery.freshNudgeCta": "Ves a Recuperació",
 
   // Settings — section tabs
   "settings.tab.general": "General",

@@ -43,11 +43,9 @@ const ko: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "의견",
   "about.mail": "메일",
-  "nav.recovery": "복구",
   "nav.config": "셀프 백업",
 
   // Dashboard
-  "dashboard.title": "대시보드",
   "dashboard.summaryHealth": "복원 지점",
   "dashboard.summaryNextBackup": "다음 백업",
   "dashboard.summaryNextIn": "{countdown} 후",
@@ -998,8 +996,6 @@ const ko: Partial<Translations> = {
   "recovery.step5": "복구 키트",
   "recovery.kitHint": "복구 키트를 다운로드하여 안전한 곳에 보관하세요. 암호화 키와 BombVault 없이도 복원할 수 있는 정확한 restic 명령이 들어 있습니다.",
   "recovery.kitDownload": "복구 키트 다운로드",
-  "recovery.freshNudge": "이전 서버나 재구축에서 복원하시나요? 기존 백업을 복구하세요.",
-  "recovery.freshNudgeCta": "복구로 이동",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "BombVault 자체 설정 복원",

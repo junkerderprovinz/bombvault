@@ -47,7 +47,6 @@ const is: Partial<Translations> = {
   "about.mail": "Tölvupóstur",
 
   // Dashboard
-  "dashboard.title": "Stjórnborð",
   "dashboard.summaryHealth": "Endurheimtupunktur",
   "dashboard.summaryNextBackup": "Næsta afritun",
   "dashboard.summaryNextIn": "eftir {countdown}",
@@ -1984,7 +1983,6 @@ const is: Partial<Translations> = {
   "vm.ssh.guide": "Fullkominn uppsetningar- og netleiðbeiningar",
 
   // Guided Recovery tab
-  "nav.recovery": "Endurheimt",
   // Step 1
   "recovery.step1": "Getur BombVault lesið afritin þín?",
   "recovery.appKeyExplain": "Til að lesa fyrirliggjandi afrit þarf þessi gámur SAMA APP_KEY og var notaður áður. Það er í endurheimtarpakkanum þínum. Stilltu það í Unraid-gámasniðmátinu ef það er ekki þegar gert, athugaðu svo aftur.",
@@ -2045,8 +2043,6 @@ const is: Partial<Translations> = {
   "recovery.kitHint": "Sæktu og geymdu endurheimtarpakkann þinn á öruggum stað. Hann inniheldur dulkóðunarlykilinn og nákvæmar restic-skipanir til að endurheimta jafnvel án BombVault.",
   "recovery.kitDownload": "Sækja endurheimtarpakka",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Ertu að endurheimta frá fyrri netþjóni eða eftir endurbyggingu? Endurheimtu fyrirliggjandi afritin þín.",
-  "recovery.freshNudgeCta": "Fara í Endurheimt",
 
   // Settings — section tabs
   "settings.tab.general": "Almennt",

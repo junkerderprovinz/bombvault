@@ -47,7 +47,6 @@ const gl: Partial<Translations> = {
   "about.mail": "Correo",
 
   // Dashboard
-  "dashboard.title": "Panel",
   "dashboard.summaryHealth": "Punto de recuperación",
   "dashboard.summaryNextBackup": "Próxima copia",
   "dashboard.summaryNextIn": "en {countdown}",
@@ -1984,7 +1983,6 @@ const gl: Partial<Translations> = {
   "vm.ssh.guide": "Guía completa de configuración e rede",
 
   // Guided Recovery tab
-  "nav.recovery": "Recuperación",
   // Step 1
   "recovery.step1": "Pode BombVault ler as túas copias?",
   "recovery.appKeyExplain": "Para ler copias existentes, este contedor precisa o MESMO APP_KEY que usaba antes: está no teu kit de recuperación. Configúrao no modelo de contedor de Unraid se aínda non o está, e volve comprobar.",
@@ -2045,8 +2043,6 @@ const gl: Partial<Translations> = {
   "recovery.kitHint": "Descarga e garda o teu kit de recuperación nun lugar seguro: contén a clave de cifrado e as ordes restic exactas para restaurar mesmo sen BombVault.",
   "recovery.kitDownload": "Descargar kit de recuperación",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Restaurando desde un servidor anterior ou despois dunha reconstrución? Restaura as túas copias existentes.",
-  "recovery.freshNudgeCta": "Ir a Recuperación",
 
   // Settings — section tabs
   "settings.tab.general": "Xeral",

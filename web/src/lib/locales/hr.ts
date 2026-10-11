@@ -47,7 +47,6 @@ const hr: Partial<Translations> = {
   "about.mail": "E-pošta",
 
   // Dashboard
-  "dashboard.title": "Nadzorna ploča",
   "dashboard.summaryHealth": "Točka vraćanja",
   "dashboard.summaryNextBackup": "Sljedeća sigurnosna kopija",
   "dashboard.summaryNextIn": "za {countdown}",
@@ -1984,7 +1983,6 @@ const hr: Partial<Translations> = {
   "vm.ssh.guide": "Potpuni vodič za postavljanje i umrežavanje",
 
   // Guided Recovery tab
-  "nav.recovery": "Oporavak",
   // Step 1
   "recovery.step1": "Može li BombVault pročitati vaše sigurnosne kopije?",
   "recovery.appKeyExplain": "Za čitanje postojećih sigurnosnih kopija ovom kontejneru treba ISTI APP_KEY koji je koristio prije. Nalazi se u vašem kompletu za oporavak. Postavite ga u Unraid predlošku kontejnera ako još nije postavljen, zatim ponovno provjerite.",
@@ -2045,8 +2043,6 @@ const hr: Partial<Translations> = {
   "recovery.kitHint": "Preuzmite i pohranite svoj komplet za oporavak na sigurno mjesto. Sadrži ključ za enkripciju i točne restic naredbe za vraćanje čak i bez BombVaulta.",
   "recovery.kitDownload": "Preuzmi komplet za oporavak",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Vraćate podatke s prethodnog poslužitelja ili nakon ponovne izgradnje? Vratite svoje postojeće sigurnosne kopije.",
-  "recovery.freshNudgeCta": "Idi na Oporavak",
 
   // Settings — section tabs
   "settings.tab.general": "Opće",

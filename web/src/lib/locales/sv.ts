@@ -43,11 +43,9 @@ const sv: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Synpunkter",
   "about.mail": "E-post",
-  "nav.recovery": "Återställning",
   "nav.config": "Auto-säkerhetskopia",
 
   // Dashboard
-  "dashboard.title": "Översikt",
   "dashboard.summaryHealth": "Återställningspunkt",
   "dashboard.summaryNextBackup": "Nästa säkerhetskopia",
   "dashboard.summaryNextIn": "om {countdown}",
@@ -1007,8 +1005,6 @@ const sv: Partial<Translations> = {
   "recovery.step5": "Ditt återställningskit",
   "recovery.kitHint": "Ladda ner och förvara ditt återställningskit på ett säkert ställe. Det innehåller krypteringsnyckeln och de exakta restic-kommandona för att återställa även utan BombVault.",
   "recovery.kitDownload": "Ladda ner återställningskit",
-  "recovery.freshNudge": "Återställer du från en tidigare server eller en ombyggnad? Återställ dina befintliga säkerhetskopior.",
-  "recovery.freshNudgeCta": "Gå till Återställning",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "Återställ BombVaults egna inställningar",

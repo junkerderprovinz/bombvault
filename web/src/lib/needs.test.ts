@@ -90,12 +90,29 @@ describe("needsOf", () => {
   });
 
   it("lists the recovery kit while it is due", () => {
-    expect(needsOf({ ...nothing, kitDue: true })).toEqual([{ is: "recoveryKit" }]);
+    expect(needsOf({ ...nothing, items: [item({})], kitDue: true })).toEqual([{ is: "recoveryKit" }]);
+  });
+
+  it("asks for neither a schedule nor the recovery kit before the first backup", () => {
+    const fresh = [item({ key: "gitea", ...leftOut }), item({ key: "plex", lastBackup: 0, lastRunStatus: "" })];
+    expect(needsOf({ ...nothing, items: fresh, kitDue: true })).toEqual([]);
+    expect(needsOf({ ...nothing, kitDue: true })).toEqual([]);
+  });
+
+  it("still lists a failure and a finding before the first backup", () => {
+    const gitea = item({ key: "gitea", ...leftOut, runs: [{ id: "r1", kind: "backup", status: "failed", startedAt: 100 }] });
+    const needs = needsOf({
+      items: [gitea],
+      runs: [run({ id: "r1", targetId: "gitea" })],
+      anomalies: [finding("a", "warning")],
+      kitDue: true,
+    });
+    expect(needs.map((n) => n.is)).toEqual(["failedRun", "anomaly"]);
   });
 
   it("orders failures, entries, findings and the kit", () => {
     const needs = needsOf({
-      items: [item({ key: "gitea", ...leftOut })],
+      items: [item({}), item({ key: "gitea", ...leftOut })],
       runs: [run({ id: "r1" })],
       anomalies: [finding("a", "warning")],
       kitDue: true,

@@ -230,6 +230,6 @@ for (const route of VM_ROUTES) {
 test("desktop dashboard keeps the customizable grid chrome", async ({ page }, testInfo) => {
   test.skip(!DESKTOP_PROJECTS.has(testInfo.project.name), "desktop-only: the desktop-invariance contract");
   await page.goto("/dashboard");
-  await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Customize" })).toBeVisible();
 });

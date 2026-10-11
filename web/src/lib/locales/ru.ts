@@ -43,10 +43,8 @@ const ru: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Отзыв",
   "about.mail": "Эл. почта",
-  "nav.recovery": "Восстановление",
 
   // Dashboard
-  "dashboard.title": "Панель",
   "dashboard.summaryHealth": "Точка восстановления",
   "dashboard.summaryNextBackup": "Следующая резервная копия",
   "dashboard.summaryNextIn": "через {countdown}",
@@ -999,8 +997,6 @@ const ru: Partial<Translations> = {
   "recovery.step5": "Ваш набор для восстановления",
   "recovery.kitHint": "Скачайте и храните ваш набор для восстановления в надёжном месте — он содержит ключ шифрования и точные команды restic для восстановления даже без BombVault.",
   "recovery.kitDownload": "Скачать набор для восстановления",
-  "recovery.freshNudge": "Восстанавливаете с предыдущего сервера или после пересборки? Восстановите ваши существующие резервные копии.",
-  "recovery.freshNudgeCta": "Перейти к восстановлению",
 
   // Config recovery step (restore BombVault's own settings)
   "recovery.stepConfig": "Восстановите собственные настройки BombVault",

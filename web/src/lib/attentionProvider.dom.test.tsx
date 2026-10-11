@@ -15,7 +15,7 @@ const listItems = vi.mocked(api.listItems);
 const getAnomalySummary = vi.mocked(api.getAnomalySummary);
 const getAnomalies = vi.mocked(api.getAnomalies);
 
-const { ATTENTION_CHANGED_EVENT, useAttention, useAttentionCount } = await import("./attention");
+const { ATTENTION_CHANGED_EVENT, useAttention, useAttentionCount, useFreshInstall } = await import("./attention");
 const { AttentionProvider, recoveryKitDue } = await import("./attentionProvider");
 const { AnomalyProvider } = await import("./useAnomalies");
 
@@ -55,7 +55,13 @@ function leftOut(name: string, over: Partial<BackupItem> = {}): BackupItem {
   };
 }
 
-const items = (list: BackupItem[]) => ({ ok: true, items: list, unlisted: [] });
+const backedUp = leftOut("plex", { lastBackup: 1_700_000_000 });
+
+/** The entries of an install that has a backup of plex. */
+const items = (list: BackupItem[]) => ({ ok: true, items: [backedUp, ...list], unlisted: [] });
+
+/** The entries of an install before its first backup. */
+const freshItems = (list: BackupItem[]) => ({ ok: true, items: list, unlisted: [] });
 
 function summary(open: AnomalySummary["open"], enabled = true): AnomalySummary {
   return {
@@ -93,6 +99,10 @@ describe("AttentionProvider", () => {
     return <output>{useAttentionCount()}</output>;
   }
 
+  function Fresh() {
+    return <i data-testid="fresh">{String(useFreshInstall())}</i>;
+  }
+
   /** A page that lists what the navigation counts. */
   function Page() {
     const { needs } = useAttention();
@@ -114,6 +124,7 @@ describe("AttentionProvider", () => {
 
   const shown = () => screen.getByRole("status").textContent;
   const listed = () => screen.getByTestId("listed").textContent;
+  const fresh = () => screen.getByTestId("fresh").textContent;
 
   beforeEach(() => {
     listRuns.mockReset().mockResolvedValue({ ok: true, runs: [] });
@@ -264,6 +275,68 @@ describe("AttentionProvider", () => {
     expect(shown()).toBe("1");
     expect(listRuns).toHaveBeenCalledTimes(2);
     expect(listItems).toHaveBeenCalledTimes(2);
+  });
+
+  it("reports a first start once the entries are read, until one of them has a backup", async () => {
+    listItems.mockResolvedValue(freshItems([leftOut("gitea")]));
+    render(
+      <AttentionProvider settings={kitDue}>
+        <Count />
+        <Fresh />
+      </AttentionProvider>
+    );
+    expect(fresh()).toBe("false");
+    await waitFor(() => expect(fresh()).toBe("true"));
+    expect(shown()).toBe("0");
+
+    listItems.mockResolvedValue(freshItems([leftOut("gitea", { lastBackup: 1_700_000_500 })]));
+    act(() => {
+      window.dispatchEvent(new Event("bv:settings-changed"));
+    });
+    await waitFor(() => expect(fresh()).toBe("false"));
+    expect(shown()).toBe("1");
+  });
+
+  it("takes a server with nothing to list for a first start", async () => {
+    listItems.mockResolvedValue({ ok: true, items: null as unknown as BackupItem[], unlisted: ["container"] });
+    render(
+      <AttentionProvider settings={kitStored}>
+        <Fresh />
+      </AttentionProvider>
+    );
+    await waitFor(() => expect(fresh()).toBe("true"));
+  });
+
+  it("forgets a ticked-off first step once the install has a backup", async () => {
+    const { rememberSectionsChosen, sectionsChosen } = await import("./firstSteps");
+    rememberSectionsChosen();
+    listItems.mockResolvedValue(freshItems([leftOut("gitea")]));
+    render(
+      <AttentionProvider settings={kitStored}>
+        <Fresh />
+      </AttentionProvider>
+    );
+    await waitFor(() => expect(fresh()).toBe("true"));
+    expect(sectionsChosen()).toBe(true);
+
+    listItems.mockResolvedValue(items([]));
+    act(() => {
+      window.dispatchEvent(new Event("bv:settings-changed"));
+    });
+    await waitFor(() => expect(fresh()).toBe("false"));
+    expect(sectionsChosen()).toBe(false);
+  });
+
+  it("does not take a list that never arrived for a first start", async () => {
+    listItems.mockRejectedValue(new Error("offline"));
+    render(
+      <AttentionProvider settings={kitStored}>
+        <Fresh />
+      </AttentionProvider>
+    );
+    await waitFor(() => expect(listItems).toHaveBeenCalled());
+    await act(async () => {});
+    expect(fresh()).toBe("false");
   });
 
   it("reads the runs at the activity log's rate while a page shows them", async () => {

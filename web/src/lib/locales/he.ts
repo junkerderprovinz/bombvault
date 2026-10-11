@@ -43,11 +43,9 @@ const he: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "משוב",
   "about.mail": "אימייל",
-  "nav.recovery": "התאוששות",
   "nav.config": "גיבוי עצמי",
 
   // Dashboard
-  "dashboard.title": "לוח בקרה",
   "dashboard.summaryHealth": "נקודת שחזור",
   "dashboard.summaryNextBackup": "הגיבוי הבא",
   "dashboard.summaryNextIn": "בעוד {countdown}",
@@ -1007,8 +1005,6 @@ const he: Partial<Translations> = {
   "recovery.step5": "ערכת השחזור שלך",
   "recovery.kitHint": "הורד ואחסן את ערכת השחזור שלך במקום בטוח. היא מכילה את מפתח ההצפנה ואת פקודות ה-restic המדויקות לשחזור גם ללא BombVault.",
   "recovery.kitDownload": "הורד ערכת שחזור",
-  "recovery.freshNudge": "משחזר משרת קודם או מהתקנה מחדש? שחזר את הגיבויים הקיימים שלך.",
-  "recovery.freshNudgeCta": "עבור להתאוששות",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "שחזר את ההגדרות של BombVault עצמו",

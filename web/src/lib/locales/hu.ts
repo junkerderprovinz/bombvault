@@ -43,11 +43,9 @@ const hu: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Visszajelzés",
   "about.mail": "E-mail",
-  "nav.recovery": "Helyreállítás",
   "nav.config": "Önmentés",
 
   // Dashboard
-  "dashboard.title": "Irányítópult",
   "dashboard.summaryHealth": "Visszaállítási pont",
   "dashboard.summaryNextBackup": "Következő biztonsági mentés",
   "dashboard.summaryNextIn": "{countdown} múlva",
@@ -1010,8 +1008,6 @@ const hu: Partial<Translations> = {
   "recovery.step5": "A helyreállítási csomagod",
   "recovery.kitHint": "Töltsd le és tárold a helyreállítási csomagodat biztonságos helyen. Tartalmazza a titkosítási kulcsot és a pontos restic parancsokat a visszaállításhoz BombVault nélkül is.",
   "recovery.kitDownload": "Helyreállítási csomag letöltése",
-  "recovery.freshNudge": "Egy korábbi szerverről vagy újraépítésből állítasz vissza? Állítsd vissza a meglévő biztonsági mentéseidet.",
-  "recovery.freshNudgeCta": "Ugrás a Helyreállításhoz",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "BombVault saját beállításainak visszaállítása",

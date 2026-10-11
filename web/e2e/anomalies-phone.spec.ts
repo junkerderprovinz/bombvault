@@ -801,6 +801,26 @@ test("the More sheet counts the open findings and the bar marks its trigger whil
   await page.route("**/api/anomalies/summary", (route) =>
     route.fulfill({ json: { ok: true, summary: summary({ open }) } }),
   );
+  // Before the first backup the navigation carries no counts, so the install
+  // has one.
+  const backedUp = {
+    kind: "container",
+    key: "nextcloud",
+    name: "nextcloud",
+    included: true,
+    paused: false,
+    effectiveSchedule: { kind: "domain", spec: "daily 03:00", alsoSpec: "" },
+    lastBackup: Math.floor(Date.now() / 1000) - 3600,
+    lastRunStatus: "success",
+    sourceBytes: 1024,
+    state: "running",
+    installed: true,
+    runs: [],
+  };
+  await page.route(
+    (url) => url.pathname === "/api/items",
+    (route) => route.fulfill({ json: { ok: true, items: [backedUp], unlisted: [] } }),
+  );
   await page.goto("/containers");
 
   const more = page.getByRole("button", { name: "Mehr", exact: true });

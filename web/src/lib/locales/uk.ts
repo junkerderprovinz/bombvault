@@ -43,11 +43,9 @@ const uk: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Відгук",
   "about.mail": "Ел. пошта",
-  "nav.recovery": "Відновлення",
   "nav.config": "Автобекап",
 
   // Dashboard
-  "dashboard.title": "Панель",
   "dashboard.summaryHealth": "Точка відновлення",
   "dashboard.summaryNextBackup": "Наступна резервна копія",
   "dashboard.summaryNextIn": "через {countdown}",
@@ -1002,8 +1000,6 @@ const uk: Partial<Translations> = {
   "recovery.step5": "Ваш набір для відновлення",
   "recovery.kitHint": "Завантажте й зберігайте свій набір для відновлення в безпечному місці — він містить ключ шифрування й точні команди restic для відновлення навіть без BombVault.",
   "recovery.kitDownload": "Завантажити набір для відновлення",
-  "recovery.freshNudge": "Відновлюєтеся з попереднього сервера чи після перебудови? Відновіть свої наявні резервні копії.",
-  "recovery.freshNudgeCta": "Перейти до Відновлення",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "Відновіть власні налаштування BombVault",

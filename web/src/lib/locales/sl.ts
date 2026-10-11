@@ -47,7 +47,6 @@ const sl: Partial<Translations> = {
   "about.mail": "E-pošta",
 
   // Dashboard
-  "dashboard.title": "Nadzorna plošča",
   "dashboard.summaryHealth": "Obnovitvena točka",
   "dashboard.summaryNextBackup": "Naslednja varnostna kopija",
   "dashboard.summaryNextIn": "čez {countdown}",
@@ -1978,7 +1977,6 @@ const sl: Partial<Translations> = {
   "vm.ssh.guide": "Popoln vodnik za nastavitev in omrežje",
 
   // Guided Recovery tab
-  "nav.recovery": "Obnova",
   "recovery.step1": "Ali lahko BombVault prebere tvoje varnostne kopije?",
   "recovery.appKeyExplain": "Za branje obstoječih varnostnih kopij ta vsebnik potrebuje ISTI APP_KEY, kot ga je uporabljal prej. Najdeš ga v svojem obnovitvenem kompletu. Nastavi ga v Unraidovi predlogi vsebnika, če še ni, nato znova preveri.",
   "recovery.appKeyRemedy": "Šifrirni ključ se ne ujema s temi varnostnimi kopijami. V predlogi vsebnika nastavi izvirni APP_KEY (iz svojega obnovitvenega kompleta), nato znova preveri.",
@@ -2032,8 +2030,6 @@ const sl: Partial<Translations> = {
   "recovery.step5": "Tvoj obnovitveni komplet",
   "recovery.kitHint": "Prenesi in shrani svoj obnovitveni komplet nekje varno. Vsebuje šifrirni ključ in natančne ukaze restic za obnovitev tudi brez BombVaulta.",
   "recovery.kitDownload": "Prenesi obnovitveni komplet",
-  "recovery.freshNudge": "Obnavljaš iz prejšnjega strežnika ali po ponovni izdelavi? Obnovi svoje obstoječe varnostne kopije.",
-  "recovery.freshNudgeCta": "Pojdi na Obnovo",
 
   // Settings — section tabs + schedule group headings + subtitle
   "settings.tab.general": "Splošno",

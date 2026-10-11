@@ -43,11 +43,9 @@ const cs: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Zpětná vazba",
   "about.mail": "E-mail",
-  "nav.recovery": "Obnova",
   "nav.config": "Autozáloha",
 
   // Dashboard
-  "dashboard.title": "Přehled",
   "dashboard.summaryHealth": "Bod obnovení",
   "dashboard.summaryNextBackup": "Další záloha",
   "dashboard.summaryNextIn": "za {countdown}",
@@ -1005,8 +1003,6 @@ const cs: Partial<Translations> = {
   "recovery.step5": "Vaše sada pro obnovu",
   "recovery.kitHint": "Stáhněte si sadu pro obnovu a uložte ji na bezpečné místo. Obsahuje šifrovací klíč a přesné příkazy restic pro obnovu i bez BombVaultu.",
   "recovery.kitDownload": "Stáhnout sadu pro obnovu",
-  "recovery.freshNudge": "Obnovujete z předchozího serveru nebo po přestavbě? Obnovte své existující zálohy.",
-  "recovery.freshNudgeCta": "Přejít na Obnovu",
 
   // Config backup (BombVault's own settings)
   "config.title": "Autozáloha",

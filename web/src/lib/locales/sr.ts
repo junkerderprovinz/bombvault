@@ -47,7 +47,6 @@ const sr: Partial<Translations> = {
   "about.mail": "Е-пошта",
 
   // Dashboard
-  "dashboard.title": "Контролна табла",
   "dashboard.summaryHealth": "Тачка враћања",
   "dashboard.summaryNextBackup": "Следећа резервна копија",
   "dashboard.summaryNextIn": "за {countdown}",
@@ -1978,7 +1977,6 @@ const sr: Partial<Translations> = {
   "vm.ssh.guide": "Потпуни водич за подешавање и умрежавање",
 
   // Guided Recovery tab
-  "nav.recovery": "Опоравак",
   "recovery.step1": "Може ли BombVault да прочита твоје резервне копије?",
   "recovery.appKeyExplain": "Да прочита постојеће резервне копије, овом контејнеру треба ИСТИ APP_KEY који је коришћен раније — налази се у твом комплету за опоравак. Подеси га у Unraid шаблону контејнера ако већ није, па поново провери.",
   "recovery.appKeyRemedy": "Кључ за шифровање не поклапа се са овим резервним копијама. Подеси оригинални APP_KEY (из свог комплета за опоравак) у шаблону контејнера, па поново провери.",
@@ -2032,8 +2030,6 @@ const sr: Partial<Translations> = {
   "recovery.step5": "Твој комплет за опоравак",
   "recovery.kitHint": "Преузми и сачувај свој комплет за опоравак негде безбедно — садржи кључ за шифровање и тачне restic команде за враћање чак и без BombVault-а.",
   "recovery.kitDownload": "Преузми комплет за опоравак",
-  "recovery.freshNudge": "Опорављаш се са претходног сервера или после поновне израде? Опорави своје постојеће резервне копије.",
-  "recovery.freshNudgeCta": "Иди на Опоравак",
 
   // Settings — section tabs + schedule group headings + subtitle
   "settings.tab.general": "Опште",

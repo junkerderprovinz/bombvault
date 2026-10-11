@@ -43,10 +43,8 @@ const no: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Tilbakemelding",
   "about.mail": "E-post",
-  "nav.recovery": "Gjenoppretting",
 
   // Dashboard
-  "dashboard.title": "Dashboard",
   "dashboard.summaryHealth": "Gjenopprettingspunkt",
   "dashboard.summaryNextBackup": "Neste sikkerhetskopi",
   "dashboard.summaryNextIn": "om {countdown}",
@@ -1004,8 +1002,6 @@ const no: Partial<Translations> = {
   "recovery.step5": "Gjenopprettingssettet ditt",
   "recovery.kitHint": "Last ned og oppbevar gjenopprettingssettet ditt et trygt sted. Det inneholder krypteringsnøkkelen og de nøyaktige restic-kommandoene for å gjenopprette selv uten BombVault.",
   "recovery.kitDownload": "Last ned gjenopprettingssett",
-  "recovery.freshNudge": "Gjenoppretter du fra en tidligere server eller en ny installasjon? Gjenopprett dine eksisterende sikkerhetskopier.",
-  "recovery.freshNudgeCta": "Gå til Gjenoppretting",
 
   // Config recovery step (restore BombVault's own settings)
   "recovery.stepConfig": "Gjenopprett BombVaults egne innstillinger",

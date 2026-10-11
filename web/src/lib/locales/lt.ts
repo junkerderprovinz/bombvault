@@ -47,7 +47,6 @@ const lt: Partial<Translations> = {
   "about.mail": "El. paštas",
 
   // Dashboard
-  "dashboard.title": "Skydelis",
   "dashboard.summaryHealth": "Atkūrimo taškas",
   "dashboard.summaryNextBackup": "Kita atsarginė kopija",
   "dashboard.summaryNextIn": "po {countdown}",
@@ -1984,7 +1983,6 @@ const lt: Partial<Translations> = {
   "vm.ssh.guide": "Išsamus nustatymo ir tinklo vadovas",
 
   // Guided Recovery tab
-  "nav.recovery": "Atkūrimas",
   // Step 1
   "recovery.step1": "Ar BombVault gali perskaityti jūsų atsargines kopijas?",
   "recovery.appKeyExplain": "Norint perskaityti esamas atsargines kopijas, šiam konteineriui reikia TO PATIES APP_KEY, kurį jis naudojo anksčiau. Jis yra jūsų atkūrimo rinkinyje. Nustatykite jį Unraid konteinerio šablone, jei dar nenustatytas, tada patikrinkite dar kartą.",
@@ -2045,8 +2043,6 @@ const lt: Partial<Translations> = {
   "recovery.kitHint": "Atsisiųskite ir laikykite savo atkūrimo rinkinį saugioje vietoje. Jame yra šifravimo raktas ir tikslios restic komandos atkūrimui net be BombVault.",
   "recovery.kitDownload": "Atsisiųsti atkūrimo rinkinį",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Atkuriate iš ankstesnio serverio arba po pakartotinio kūrimo? Atkurkite savo esamas atsargines kopijas.",
-  "recovery.freshNudgeCta": "Eiti į Atkūrimą",
 
   // Settings — section tabs
   "settings.tab.general": "Bendra",

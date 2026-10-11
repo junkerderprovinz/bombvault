@@ -1,6 +1,8 @@
 import { createElement, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { listRuns, type AnomalyView, type Run, type Settings } from "./api";
-import { ATTENTION_CHANGED_EVENT, AttentionContext, AttentionCountContext } from "./attention";
+import { ATTENTION_CHANGED_EVENT, AttentionContext, AttentionCountContext, FreshInstallContext } from "./attention";
+import { forgetFirstSteps } from "./firstSteps";
+import { isFreshInstall } from "./freshInstall";
 import { needsOf } from "./needs";
 import { useAnomalySummary, useOpenAnomalies } from "./useAnomalies";
 import { useBackupItems } from "./useBackupItems";
@@ -93,14 +95,22 @@ export function AttentionProvider({ settings, children }: { settings: Settings |
     () => needsOf({ items: items.items, runs, anomalies, kitDue }),
     [items.items, runs, anomalies, kitDue]
   );
+  const fresh = items.loaded && isFreshInstall(items.items);
+  useEffect(() => {
+    if (items.loaded && !fresh) forgetFirstSteps();
+  }, [items.loaded, fresh]);
   const value = useMemo(
-    () => ({ needs, items, runs, runsReady, runsFailed, refreshRuns, watch }),
-    [needs, items, runs, runsReady, runsFailed, refreshRuns, watch]
+    () => ({ needs, fresh, items, runs, runsReady, runsFailed, refreshRuns, watch }),
+    [needs, fresh, items, runs, runsReady, runsFailed, refreshRuns, watch]
   );
 
   return createElement(
     AttentionContext.Provider,
     { value },
-    createElement(AttentionCountContext.Provider, { value: needs.length }, children)
+    createElement(
+      AttentionCountContext.Provider,
+      { value: needs.length },
+      createElement(FreshInstallContext.Provider, { value: fresh }, children)
+    )
   );
 }
