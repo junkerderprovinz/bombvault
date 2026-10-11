@@ -4,10 +4,12 @@ import {
   loginWithPasskey,
   passkeyStatus,
   passkeysAvailableInBrowser,
+  startPasswordReset,
 } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { RevealInput } from "../components/RevealInput";
 import { Button } from "../components/Button";
+import { PasswordResetForm } from "../components/PasswordResetForm";
 import { useReveal } from "../lib/useReveal";
 
 interface LoginPageProps {
@@ -93,6 +95,28 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     }
   }
 
+  // The reset form shows only after the server has written a code to its log,
+  // so the form never asks for a code that does not exist.
+  const [resetting, setResetting] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
+
+  async function forgotPassword() {
+    setResetBusy(true);
+    setError(null);
+    try {
+      const res = await startPasswordReset();
+      if (res.ok) {
+        setResetting(true);
+        return;
+      }
+      setError(res.error ?? t("auth.loginError"));
+    } catch {
+      setError(t("auth.loginError"));
+    } finally {
+      setResetBusy(false);
+    }
+  }
+
   const submitDisabled = busy || password === "" || (needCode && code.trim() === "");
 
   return (
@@ -123,80 +147,94 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           </h1>
         </div>
 
-        <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="bv-password"
-              className="text-xs text-carbon-textSub font-medium"
-            >
-              {t("auth.passwordLabel")}
-            </label>
-            <RevealInput
-              {...reveal}
-              id="bv-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoFocus
-              autoComplete="current-password"
-              wrapperClassName="w-full"
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-2 glim-field-focus"
-            />
-          </div>
-
-          {/* Second factor, once the password has been accepted. */}
-          {needCode && (
+        {resetting ? (
+          <PasswordResetForm onDone={onLogin} onBack={() => setResetting(false)} />
+        ) : (
+          <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label
-                htmlFor="bv-code"
+                htmlFor="bv-password"
                 className="text-xs text-carbon-textSub font-medium"
               >
-                {t("auth.codeLabel")}
+                {t("auth.passwordLabel")}
               </label>
-              <input
-                id="bv-code"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+              <RevealInput
+                {...reveal}
+                id="bv-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 autoFocus
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder="000000"
-                className="w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-2 tracking-[0.35em] glim-field-focus"
+                autoComplete="current-password"
+                wrapperClassName="w-full"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-2 glim-field-focus"
               />
-              <p className="text-xs text-carbon-textSub">{t("auth.codeHint")}</p>
             </div>
-          )}
 
-          {error && (
-            <p className="text-xs text-statusFail" role="alert">
-              {error}
-            </p>
-          )}
+            {/* Second factor, once the password has been accepted. */}
+            {needCode && (
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="bv-code"
+                  className="text-xs text-carbon-textSub font-medium"
+                >
+                  {t("auth.codeLabel")}
+                </label>
+                <input
+                  id="bv-code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  autoFocus
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  placeholder="000000"
+                  className="w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-2 tracking-[0.35em] glim-field-focus"
+                />
+                <p className="text-xs text-carbon-textSub">{t("auth.codeHint")}</p>
+              </div>
+            )}
 
-          <Button
-            label={t("auth.signIn")}
-            labelKey="auth.signIn"
-            tone="accent"
-            type="submit"
-            disabled={submitDisabled}
-            busy={busy}
-            title={busy ? t("auth.signingIn") : undefined}
-          />
+            {error && (
+              <p className="text-xs text-statusFail" role="alert">
+                {error}
+              </p>
+            )}
 
-          {/* Below the password, which always works. Hidden rather than
-              disabled where it cannot work: a disabled control on a login
-              screen reads as "you are locked out". */}
-          {passkeyOffer && !needCode && (
             <Button
-              label={t("auth.signInWithPasskey")}
-              labelKey="auth.signInWithPasskey"
-              tone="neutral"
-              type="button"
-              onClick={() => void signInWithPasskey()}
-              disabled={busy || passkeyBusy}
-              busy={passkeyBusy}
+              label={t("auth.signIn")}
+              labelKey="auth.signIn"
+              tone="accent"
+              type="submit"
+              disabled={submitDisabled}
+              busy={busy}
+              title={busy ? t("auth.signingIn") : undefined}
             />
-          )}
-        </form>
+
+            {/* Below the password, which always works. Hidden rather than
+                disabled where it cannot work: a disabled control on a login
+                screen reads as "you are locked out". */}
+            {passkeyOffer && !needCode && (
+              <Button
+                label={t("auth.signInWithPasskey")}
+                labelKey="auth.signInWithPasskey"
+                tone="neutral"
+                type="button"
+                onClick={() => void signInWithPasskey()}
+                disabled={busy || passkeyBusy}
+                busy={passkeyBusy}
+              />
+            )}
+
+            <Button
+              label={t("auth.forgotPassword")}
+              labelKey="auth.forgotPassword"
+              tone="subtle"
+              type="button"
+              onClick={() => void forgotPassword()}
+              disabled={busy || resetBusy}
+              busy={resetBusy}
+            />
+          </form>
+        )}
       </div>
     </div>
   );

@@ -5231,6 +5231,22 @@ export function login(password: string, code?: string): Promise<LoginResponse> {
   });
 }
 
+/** POST /api/auth/reset: has BombVault write a reset code to its container
+ *  log. The code itself never comes back here. */
+export function startPasswordReset(): Promise<OkEnvelope> {
+  return fetchJSON("/api/auth/reset", { method: "POST", body: "{}" });
+}
+
+/** POST /api/auth/reset/finish: sets the password with the code from the log
+ *  and signs this browser in. A refusal carries the code "resetCodeInvalid" or
+ *  "resetCodeExpired". */
+export function finishPasswordReset(code: string, password: string): Promise<OkEnvelope> {
+  return fetchJSON("/api/auth/reset/finish", {
+    method: "POST",
+    body: JSON.stringify({ code, password }),
+  });
+}
+
 /** POST /api/logout — clears the bv_session cookie. Client-side only: the
  *  stateless token stays valid until expiry. Revocation is a different thing
  *  and lives elsewhere now: setting a password rotates the session epoch. */
