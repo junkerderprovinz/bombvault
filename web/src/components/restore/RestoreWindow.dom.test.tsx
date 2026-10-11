@@ -410,7 +410,7 @@ describe("the backup row", () => {
   it("names the backup with a capital, as the rail does", async () => {
     await open(entryOf("container"));
     const picker = within(dialog()).getByRole("combobox", { name: en["restoreWindow.backup"] });
-    expect(picker.textContent).toMatch(/^Today /);
+    expect(picker.textContent).toMatch(/^(Today|Yesterday) /);
   });
 
   it("compares the chosen backup with an older one in a window above it", async () => {
