@@ -14,6 +14,12 @@ import { Selector, MAX_PINNED_WIDTH, MIN_PINNED_WIDTH, type SelectorItem } from 
 import { RAINBOW_OFF, applyRainbow } from "../lib/appearance";
 import { setLabelMode } from "../lib/controls";
 
+const screenWidth = vi.hoisted(() => ({ desktop: true }));
+vi.mock("../lib/useMediaQuery", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/useMediaQuery")>()),
+  useIsDesktop: () => screenWidth.desktop,
+}));
+
 const ITEMS: SelectorItem[] = [
   { id: "a", label: "Alpha" },
   { id: "b", label: "Beta" },
@@ -235,19 +241,23 @@ describe("Selector hue opt-out", () => {
 });
 
 describe("Selector under a coarse pointer", () => {
-  it("grows a text segment to the button height, which a glyph segment has already", () => {
-    render(
-      <Selector
-        items={[ITEMS[0], { id: "g", label: "Glyph", icon: <svg /> }]}
-        label="Test strip"
-        active="a"
-        onChange={() => {}}
-      />
-    );
-    expect(screen.getByRole("tab", { name: "Alpha" }).className).toContain("pointer-coarse:min-h-(--btn-h)");
+  const mixed = [ITEMS[0], { id: "g", label: "Glyph", icon: <svg /> }];
+
+  it("grows every segment of a well to the key height, text and glyph alike", () => {
+    render(<Selector items={mixed} label="Test strip" active="a" onChange={() => {}} />);
+    for (const name of ["Alpha", "Glyph"]) {
+      const cls = screen.getByRole("tab", { name }).className.split(/\s+/);
+      expect(cls).toContain("pointer-coarse:min-h-(--btn-h-key)");
+      expect(cls).not.toContain("pointer-coarse:min-h-(--btn-h)");
+    }
+  });
+
+  it("grows a chip's text segment to the button height, which its glyph segment has already", () => {
+    render(<Selector items={mixed} label="Test strip" active="a" onChange={() => {}} variant="chip" />);
+    expect(screen.getByRole("tab", { name: "Alpha" }).className.split(/\s+/)).toContain("pointer-coarse:min-h-(--btn-h)");
     const glyph = screen.getByRole("tab", { name: "Glyph" }).className;
     expect(glyph).toContain("glim-seg-btn");
-    expect(glyph).not.toContain("pointer-coarse:min-h-(--btn-h)");
+    expect(glyph).not.toContain("pointer-coarse:min-h");
   });
 });
 
@@ -301,6 +311,46 @@ const perRow = (el: HTMLElement) => {
   const share = /^1 0 calc\(([\d.]+)\*/.exec(el.style.flex);
   return share ? Math.round(1 / parseFloat(share[1])) : null;
 };
+
+describe("Selector on a phone", () => {
+  afterEach(() => {
+    screenWidth.desktop = true;
+  });
+
+  function hugging(room: number, variant: "well" | "chip" = "well") {
+    const restore = layOut(room, oneLine(90, 106, 64));
+    try {
+      render(
+        <div data-room>
+          <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} inline variant={variant} />
+        </div>,
+      );
+      return ["a", "b", "c"].map((id) => seg(id).style.flex);
+    } finally {
+      restore();
+    }
+  }
+
+  it("pins a hugging well to its widest label, so a strip on one row stays short of its box", () => {
+    screenWidth.desktop = false;
+    expect(hugging(400)).toEqual(["1 0 106px", "1 0 106px", "1 0 106px"]);
+    expect(classes(screen.getByRole("tablist"))).toContain("w-fit");
+  });
+
+  it("wraps a hugging well into even rows that take the box", () => {
+    screenWidth.desktop = false;
+    // Two of the three fit a row, so the rows go two and one, each half of it.
+    expect(hugging(230)).toEqual(["1 0 113px", "1 0 113px", "1 0 113px"]);
+    cleanup();
+    // One to a row, each the whole row, with no floor to stop it short.
+    expect(hugging(150)).toEqual(["1 0 150px", "1 0 150px", "1 0 150px"]);
+  });
+
+  it("leaves a chip strip hugging its labels", () => {
+    screenWidth.desktop = false;
+    expect(hugging(230, "chip")).toEqual(["1 0 auto", "1 0 auto", "1 0 auto"]);
+  });
+});
 
 describe("Selector width", () => {
   it("spans its box at both scales and in both stylings", () => {
@@ -448,7 +498,7 @@ describe("Selector equalWidth", () => {
         </div>,
       );
       // Four to a row leave each the full floor, however narrow the labels.
-      for (const item of eight) expect(seg(item.id).style.flex).toBe(`0 0 ${MIN_PINNED_WIDTH}px`);
+      for (const item of eight) expect(seg(item.id).style.flex).toBe(`1 0 ${MIN_PINNED_WIDTH}px`);
       expect(screen.getByRole("tablist").style.maxWidth).toBe(`${4 * MIN_PINNED_WIDTH + 3 * 3.2 + 1}px`);
     } finally {
       restore();
@@ -649,16 +699,16 @@ describe("Selector well at both scales", () => {
 
     expect(bigList).toBe(smallList);
 
-    // The segment differs by two sanctioned riders: the pinning classes the
-    // big scale carries, and the touch height of the small one, which the big
-    // scale's fixed height already clears. They are stripped before the
-    // byte-identity compare, so the guard keeps catching any third divergence.
+    // The segment differs by one sanctioned rider, the pinning classes the big
+    // scale carries. They are stripped before the byte-identity compare, so the
+    // guard keeps catching any second divergence. Both scales take the touch
+    // height, since the big scale's fixed height stays under it.
     const PIN = ["text-center", "h-[var(--badge-md)]"];
-    const TOUCH = "pointer-coarse:min-h-(--btn-h)";
+    const TOUCH = "pointer-coarse:min-h-(--btn-h-key)";
     const strip = (s: string) =>
       s
         .split(/\s+/)
-        .filter((c) => !PIN.includes(c) && c !== TOUCH)
+        .filter((c) => !PIN.includes(c))
         .join(" ");
     expect(strip(bigTab)).toBe(strip(smallTab));
     for (const c of PIN) {
@@ -666,7 +716,7 @@ describe("Selector well at both scales", () => {
       expect(smallTab.split(/\s+/)).not.toContain(c);
     }
     expect(smallTab.split(/\s+/)).toContain(TOUCH);
-    expect(bigTab.split(/\s+/)).not.toContain(TOUCH);
+    expect(bigTab.split(/\s+/)).toContain(TOUCH);
   });
 
   it("without equalWidth a strip has no pinned width or fixed height", () => {
