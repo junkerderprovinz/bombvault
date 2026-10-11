@@ -128,6 +128,15 @@ func (s *Service) planMove(ctx context.Context, targetID, destID string) (movePl
 	if filepath.ToSlash(plan.src) == filepath.ToSlash(plan.dst) {
 		return movePlan{}, errMoveSamePlace
 	}
+	// A copy on a home repository is no second copy, and one on or around
+	// another target or destination is emptied with it.
+	live, err := s.liveRepos(settings)
+	if err != nil {
+		return movePlan{}, err
+	}
+	if overlapsLive(s.placesNow(), plan.dst, live, t.ID, d.ID) {
+		return movePlan{}, errNestedLocation
+	}
 	arrived := t
 	arrived.Repo, arrived.CredsRef, arrived.StorageClass = to, d.CredsRef, d.StorageClass
 	plan.srcMode, plan.mode = s.offsiteModeForTarget(settings, t), s.offsiteModeForTarget(settings, arrived)

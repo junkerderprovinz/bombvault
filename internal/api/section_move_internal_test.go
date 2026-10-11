@@ -232,6 +232,26 @@ func TestAMoveIsRefusedWhereItCannotBeDone(t *testing.T) {
 	}
 }
 
+func TestAMoveOntoARepositoryInUseIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, vms := boxWithVMs(f)
+	home := f.destination("Home", "backups")
+	vault := f.destination("Vault", vaultRepo)
+	f.vm("win", f.namedRepo("Vault vms", vaultRepo+"/vms").ID)
+
+	for _, dest := range []store.OffsiteTarget{home, vault} {
+		if res := f.movePreview(vms, dest); res["code"] != "nested-location" {
+			t.Fatalf("moving the copy onto a repository entries back up to at %s = %v, want nested-location", dest.Name, res)
+		}
+		if res := f.do("POST", "/api/offsite/targets/"+vms.ID+"/move", map[string]any{"to": dest.ID}); res["ok"] != false {
+			t.Fatalf("the refused move started: %v", res)
+		}
+	}
+	if len(f.eng.copies) != 0 {
+		t.Fatalf("a refused move copied %+v", f.eng.copies)
+	}
+}
+
 func TestTwoPlacesOfOneKindUnderDifferentSignInsCannotBeMovedBetween(t *testing.T) {
 	f := newPlacementFixture(t)
 	ctx := context.Background()
