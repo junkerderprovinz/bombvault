@@ -37,6 +37,10 @@ describe("runTargetText", () => {
     expect(runTargetText(t, makeRun({}))).toBe("settings.everythingTitle");
   });
 
+  it("names the target of what happened to the backup key, which the server leaves without a name", () => {
+    expect(runTargetText(t, makeRun({ targetId: "key", kind: "keyadopt", domain: "", target: "" }))).toBe("run.targetKey");
+  });
+
   it("leaves ordinary runs on their own target name", () => {
     expect(runTargetText(t, makeRun({ domain: "container", target: "plex" }))).toBe("plex");
   });

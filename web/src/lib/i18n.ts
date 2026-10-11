@@ -4499,6 +4499,13 @@ export const en = {
   "firstSteps.waiting": "one={n} waiting for the first backup|other={n} waiting for the first backup",
   "firstSteps.notProtected": "one={n} not protected|other={n} not protected",
   "firstSteps.more": "one=and {n} more|other=and {n} more",
+  "run.kindKeyRead": "Key tried",
+  "run.kindKeyAdopt": "Key taken over",
+  "run.kindKeySignIns": "Sign-ins taken over",
+  "run.kindKeySettings": "Settings taken over",
+  "run.kindKeyUndo": "Takeover undone",
+  "run.targetKey": "Backup key",
+  "activityLog.lineKeyRefused": "{what} refused: {error}",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -8716,6 +8723,13 @@ export const de: Translations = {
   "firstSteps.waiting": "one={n} wartet auf die erste Sicherung|other={n} warten auf die erste Sicherung",
   "firstSteps.notProtected": "one={n} nicht geschützt|other={n} nicht geschützt",
   "firstSteps.more": "one=und {n} weiterer|other=und {n} weitere",
+  "run.kindKeyRead": "Schlüssel geprüft",
+  "run.kindKeyAdopt": "Schlüssel übernommen",
+  "run.kindKeySignIns": "Zugangsdaten übernommen",
+  "run.kindKeySettings": "Einstellungen übernommen",
+  "run.kindKeyUndo": "Übernahme rückgängig gemacht",
+  "run.targetKey": "Sicherungsschlüssel",
+  "activityLog.lineKeyRefused": "{what} abgelehnt: {error}",
 };
 
 // ---------------------------------------------------------------------------

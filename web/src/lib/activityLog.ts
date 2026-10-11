@@ -12,6 +12,7 @@ import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
 import type { CountUnit } from "./progress";
 import type { TranslationKey } from "./i18n";
+import { KEY_RUN_KIND } from "./runKind";
 import { isWarningNote, RESTORED_WITHOUT_LINKS, RESTORED_WITHOUT_RUNTIME, restoreNotes, runReason, runReasonParts } from "./runReason";
 
 /** Picks a line's glyph and colour in ActivityLog.tsx. */
@@ -420,6 +421,14 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
 } {
   const duration = formatDuration((run.finishedAt ?? run.startedAt) - run.startedAt);
   const domainText = domainLabel(resolveName, domain);
+
+  const keyEvent = KEY_RUN_KIND[run.kind];
+  if (keyEvent) {
+    const what = resolveName(keyEvent);
+    return run.status === "failed"
+      ? { status: "failed", text: resolveName("activityLog.lineKeyRefused", { what, error: reasonText(run.error, resolveName) }) }
+      : { status: "success", text: what };
+  }
 
   if (run.kind === "prune") {
     return run.status === "success"
