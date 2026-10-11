@@ -194,6 +194,8 @@ export const server = {
   platform: "unraid",
   /** Why the server refuses to save the settings, "" while it saves them. */
   saveRefused: "",
+  /** Why the server refuses to take every entry of a kind into the schedule. */
+  includeRefused: "",
   /** Every call to a function that changes something, by its name. */
   calls: [] as { name: string; args: unknown[] }[],
 };
@@ -210,6 +212,7 @@ export function resetServer(): void {
     settings: {},
     platform: "unraid",
     saveRefused: "",
+    includeRefused: "",
     calls: [],
   });
 }
@@ -235,6 +238,17 @@ function summary(): AnomalySummary {
     backfill: { slots: 0, done: 0, failed: 0, filled: 0, withoutSummary: 0 },
     unmeasuredVolumes: [],
   } as AnomalySummary;
+}
+
+// Takes every entry of a kind into the schedule or out of it, as the server
+// does for the containers and the VMs its host lists.
+function includeAll(name: string, kind: BackupItem["kind"], include: boolean) {
+  server.calls.push({ name, args: [include] });
+  if (server.includeRefused) return Promise.resolve({ ok: false, error: server.includeRefused });
+  if (Array.isArray(server.items)) {
+    server.items = server.items.map((entry) => (entry.kind === kind && !entry.self ? { ...entry, included: include } : entry));
+  }
+  return Promise.resolve({ ok: true });
 }
 
 /** stagedApi replaces every call the overview makes with one that reads `server`. */
@@ -273,6 +287,8 @@ export function stagedApi<M extends object>(actual: M): M {
     backupEverythingNow: record("backupEverythingNow", { ok: true, started: true }),
     backupNow: record("backupNow"),
     setInclude: record("setInclude"),
+    setIncludeAll: (include: boolean) => includeAll("setIncludeAll", "container", include),
+    setVMIncludeAll: (include: boolean) => includeAll("setVMIncludeAll", "vm", include),
     ackRecoveryKit: (...args: unknown[]) => {
       server.kitDue = false;
       return record("ackRecoveryKit")(...args);

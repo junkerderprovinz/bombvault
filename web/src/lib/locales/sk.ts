@@ -4074,6 +4074,8 @@ const sk: Partial<Translations> = {
   "firstSteps.sections": "Vyber oblasti",
   "firstSteps.sectionsSub": "Čo sa zálohuje",
   "firstSteps.sectionsHint": "Zapni, čo má BombVault zálohovať.",
+  "firstSteps.choose": "Vybrať",
+  "firstSteps.chooseHint": "Otvorí zoznam týchto položiek, v ktorom „{action}“ jednu vynechá.",
   "firstSteps.nightly": "Oblasti zapnuté tu bežia každú noc a zmeniť to môžeš v {where}.",
   "firstSteps.locationSub": "Kam idú zálohy",
   "firstSteps.locationHint": "Kam idú zálohy. Najbezpečnejší je druhý cieľ mimo domova, napríklad Storage Box alebo Backblaze B2.",

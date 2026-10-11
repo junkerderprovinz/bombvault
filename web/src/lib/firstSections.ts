@@ -1,9 +1,11 @@
-// What the first steps write to the settings when a section is switched: the
-// switch itself, and a nightly schedule for a section nothing runs yet.
+// What the first steps write when a section is switched or the step is ticked
+// off: the switch itself, a nightly schedule for a section nothing runs yet,
+// and the found containers and VMs taken into that schedule.
 
 import { DEFAULT_CADENCE, buildCadenceString } from "../components/CadenceBuilder";
-import type { Settings } from "./api";
+import { setIncludeAll, setVMIncludeAll, type BackupItem, type OkEnvelope, type Settings } from "./api";
 import type { EntryKind } from "./backupEntry";
+import { isGone } from "./backupList";
 
 type SectionKey = "containers" | "vms" | "flash" | "files" | "zfs" | "config";
 
@@ -56,4 +58,31 @@ export function switchSection(settings: Settings, section: Section, on: boolean)
 export function scheduleChosen(settings: Settings): Partial<Settings> {
   const left = SECTIONS.filter((section) => settings[section.enabled] && unscheduled(settings, section));
   return Object.fromEntries(left.map((section) => [section.schedule, NIGHTLY]));
+}
+
+/** The kinds whose entries are found on the host and stand outside the
+ *  schedule until somebody takes them in. */
+export const FOUND_KINDS = ["container", "vm"] as const;
+
+export type FoundKind = (typeof FOUND_KINDS)[number];
+
+export const INCLUDE_FOUND: Record<FoundKind, () => Promise<OkEnvelope>> = {
+  container: () => setIncludeAll(true),
+  vm: () => setVMIncludeAll(true),
+};
+
+/**
+ * kindsToInclude names the kinds whose found entries the first steps take
+ * into the schedule: the section is on and not one of its entries is in yet.
+ * Where some are, somebody has chosen, and the choice stands. A kind in
+ * `taken` was taken in once, so entries that are all out again were paused.
+ */
+export function kindsToInclude(settings: Settings, reported: BackupItem[], taken: readonly string[]): FoundKind[] {
+  return FOUND_KINDS.filter((kind) => {
+    const section = SECTIONS.find((s) => s.kind === kind)!;
+    const found = reported.filter((item) => item.kind === kind && !item.self && !isGone(item));
+    return (
+      settings[section.enabled] && !taken.includes(kind) && found.length > 0 && found.every((item) => !item.included)
+    );
+  });
 }

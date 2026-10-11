@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { Settings } from "./api";
-import { NIGHTLY, SECTIONS, scheduleChosen, switchSection } from "./firstSections";
+import type { BackupItem, Settings } from "./api";
+import { NIGHTLY, SECTIONS, kindsToInclude, scheduleChosen, switchSection } from "./firstSections";
 
 /** The settings of a new install: containers on, nothing scheduled. */
 function settings(over: Partial<Settings> = {}): Settings {
@@ -75,5 +75,43 @@ describe("scheduleChosen", () => {
   it("writes nothing where every section that is on has a schedule", () => {
     expect(scheduleChosen(settings({ containersSchedule: "daily 03:00" }))).toEqual({});
     expect(scheduleChosen(settings({ everythingSchedule: "daily 01:00" }))).toEqual({});
+  });
+});
+
+describe("kindsToInclude", () => {
+  const entry = (over: Partial<BackupItem>) => ({ kind: "container", key: "plex", included: false, ...over }) as BackupItem;
+  const both = settings({ vmsEnabled: true });
+
+  it("names the kinds that are on and of whose found entries none is in the schedule", () => {
+    const reported = [entry({}), entry({ key: "gitea" }), entry({ kind: "vm", key: "win11" })];
+    expect(kindsToInclude(both, reported, [])).toEqual(["container", "vm"]);
+  });
+
+  it("leaves out a kind that was taken in once, though all its entries are out again", () => {
+    const reported = [entry({}), entry({ key: "gitea" }), entry({ kind: "vm", key: "win11" })];
+    expect(kindsToInclude(both, reported, ["container"])).toEqual(["vm"]);
+    expect(kindsToInclude(both, reported, ["container", "vm"])).toEqual([]);
+  });
+
+  it("leaves out a kind whose section is off", () => {
+    const reported = [entry({}), entry({ kind: "vm", key: "win11", kindDisabled: true })];
+    expect(kindsToInclude(settings(), reported, [])).toEqual(["container"]);
+  });
+
+  it("leaves a kind alone once somebody has taken one of its entries in", () => {
+    const reported = [entry({ included: true }), entry({ key: "gitea" }), entry({ kind: "vm", key: "win11" })];
+    expect(kindsToInclude(both, reported, [])).toEqual(["vm"]);
+  });
+
+  it("asks for nothing where nothing was found", () => {
+    const reported = [entry({ key: "bombvault", self: true }), entry({ key: "old-wiki", installed: false })];
+    expect(kindsToInclude(both, reported, [])).toEqual([]);
+    expect(kindsToInclude(both, [], [])).toEqual([]);
+  });
+
+  it("never names a kind whose entries are added by hand", () => {
+    const all = settings({ filesEnabled: true, zfsEnabled: true, flashEnabled: true, configEnabled: true });
+    const reported = [entry({ kind: "files", key: "set-1" }), entry({ kind: "zfs", key: "zfs-1" }), entry({ kind: "flash", key: "flash" })];
+    expect(kindsToInclude(all, reported, [])).toEqual([]);
   });
 });

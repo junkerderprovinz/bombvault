@@ -4066,6 +4066,8 @@ const th: Partial<Translations> = {
   "firstSteps.sections": "เลือกส่วนที่จะสำรอง",
   "firstSteps.sectionsSub": "สิ่งที่จะถูกสำรอง",
   "firstSteps.sectionsHint": "เปิดสิ่งที่ BombVault ควรสำรองข้อมูล",
+  "firstSteps.choose": "เลือก",
+  "firstSteps.chooseHint": "เปิดรายการเหล่านี้ ซึ่ง \"{action}\" จะข้ามได้หนึ่งรายการ",
   "firstSteps.nightly": "ส่วนที่เปิดไว้ที่นี่จะทำงานทุกคืน และคุณเปลี่ยนได้ที่ {where}",
   "firstSteps.locationSub": "ปลายทางของข้อมูลสำรอง",
   "firstSteps.locationHint": "ปลายทางของข้อมูลสำรอง ที่ปลอดภัยที่สุดคือปลายทางที่สองนอกสถานที่ เช่น Storage Box หรือ Backblaze B2",

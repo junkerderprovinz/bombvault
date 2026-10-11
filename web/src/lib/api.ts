@@ -1907,6 +1907,18 @@ export function setScheduleCadence(
   });
 }
 
+/**
+ * POST /api/containers/schedule-include takes every installed container into
+ * the schedule, or all of them out. Taking them out also takes the entries of
+ * containers that are gone off the schedule (#232).
+ */
+export function setIncludeAll(include: boolean): Promise<OkEnvelope> {
+  return fetchJSON("/api/containers/schedule-include", {
+    method: "POST",
+    body: JSON.stringify({ include }),
+  });
+}
+
 /** One container's explicit manual backup position (#119). */
 export interface ContainerOrder {
   container: string;
@@ -4076,6 +4088,14 @@ export function setVMScheduleCadence(
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
     method: "PATCH",
     body: JSON.stringify({ scheduleCadence }),
+  });
+}
+
+/** setIncludeAll for the VMs: POST /api/vms/schedule-include. */
+export function setVMIncludeAll(include: boolean): Promise<OkEnvelope> {
+  return fetchJSON("/api/vms/schedule-include", {
+    method: "POST",
+    body: JSON.stringify({ include }),
   });
 }
 

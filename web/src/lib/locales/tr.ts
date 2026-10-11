@@ -4064,6 +4064,8 @@ const tr: Partial<Translations> = {
   "firstSteps.sections": "Bölümleri seçin",
   "firstSteps.sectionsSub": "Nelerin yedeklendiği",
   "firstSteps.sectionsHint": "BombVault'un neyi yedekleyeceğini açın.",
+  "firstSteps.choose": "Seç",
+  "firstSteps.chooseHint": "Bu girdilerin listesini açar; \"{action}\" ile birini dışarıda bırakabilirsiniz.",
   "firstSteps.nightly": "Burada açılan bölümler her gece çalışır, bunu {where} altında değiştirebilirsiniz.",
   "firstSteps.locationSub": "Yedeklerin gittiği yer",
   "firstSteps.locationHint": "Yedeklerin gittiği yer. En güvenlisi evin dışında ikinci bir hedeftir, örneğin bir Storage Box ya da Backblaze B2.",

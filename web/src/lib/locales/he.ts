@@ -4064,6 +4064,8 @@ const he: Partial<Translations> = {
   "firstSteps.sections": "בחירת אזורים",
   "firstSteps.sectionsSub": "מה מגובה",
   "firstSteps.sectionsHint": "הפעל את מה ש-BombVault צריך לגבות.",
+  "firstSteps.choose": "בחירה",
+  "firstSteps.chooseHint": "פותח את רשימת הפריטים האלה, שבה \"{action}\" מדלג על אחד מהם.",
   "firstSteps.nightly": "האזורים שהופעלו כאן רצים בכל לילה, ואפשר לשנות זאת תחת {where}.",
   "firstSteps.locationSub": "לאן הגיבויים הולכים",
   "firstSteps.locationHint": "לאן הגיבויים הולכים. הכי בטוח יעד שני מחוץ לבית, כמו Storage Box או Backblaze B2.",

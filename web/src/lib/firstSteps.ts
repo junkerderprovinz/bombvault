@@ -91,11 +91,32 @@ export function rememberSectionsChosen(): void {
   }
 }
 
+const INCLUDED = "bombvault.firstSteps.included";
+
+/** includedKinds are the kinds whose found entries the first steps took into
+ *  the schedule from this browser. */
+export function includedKinds(): string[] {
+  try {
+    return (localStorage.getItem(INCLUDED) ?? "").split(",").filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+export function rememberIncluded(kind: string): void {
+  try {
+    localStorage.setItem(INCLUDED, [...new Set([...includedKinds(), kind])].join(","));
+  } catch {
+    // Without storage the kind is taken in again with the next step.
+  }
+}
+
 /** forgetFirstSteps keeps a finished first start from answering for a new
  *  install that is later reached at the same address. */
 export function forgetFirstSteps(): void {
   try {
     localStorage.removeItem(SECTIONS_CHOSEN);
+    localStorage.removeItem(INCLUDED);
   } catch {
     // Nothing was stored where storage is unavailable.
   }

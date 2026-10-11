@@ -4055,6 +4055,8 @@ const ko: Partial<Translations> = {
   "firstSteps.sections": "섹션 선택",
   "firstSteps.sectionsSub": "백업할 대상",
   "firstSteps.sectionsHint": "BombVault가 백업할 항목을 켜세요.",
+  "firstSteps.choose": "선택",
+  "firstSteps.chooseHint": "이 항목들의 목록을 엽니다. 하나를 제외하려면 \"{action}\" 기능을 사용합니다.",
   "firstSteps.nightly": "여기서 켠 섹션은 매일 밤 실행되며, {where}에서 바꿀 수 있습니다.",
   "firstSteps.locationSub": "백업이 저장되는 위치",
   "firstSteps.locationHint": "백업이 저장되는 위치입니다. 가장 안전한 방법은 외부에 두 번째 대상을 두는 것이며, 예를 들어 Storage Box나 Backblaze B2가 있습니다.",

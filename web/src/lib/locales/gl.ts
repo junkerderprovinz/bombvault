@@ -4074,6 +4074,8 @@ const gl: Partial<Translations> = {
   "firstSteps.sections": "Escolle as seccións",
   "firstSteps.sectionsSub": "Que se copia",
   "firstSteps.sectionsHint": "Activa o que BombVault debe copiar.",
+  "firstSteps.choose": "Escoller",
+  "firstSteps.chooseHint": "Abre a lista destas entradas, onde «{action}» deixa unha fóra.",
   "firstSteps.nightly": "As seccións activadas aquí execútanse cada noite, e podes cambialo en {where}.",
   "firstSteps.locationSub": "A onde van as copias",
   "firstSteps.locationHint": "A onde van as copias de seguridade. O máis seguro é un segundo destino fóra da casa, como unha Storage Box ou Backblaze B2.",

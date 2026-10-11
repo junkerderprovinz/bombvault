@@ -1,28 +1,39 @@
 // The card a new install keeps on its overview until the first backup has
 // finished: the three steps, and what the next one asks for.
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { KIND_LABEL, KindGlyph, entryName } from "../../components/backups/kinds";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { IconForward } from "../../components/glyphs";
-import { IconAdd } from "../../components/navGlyphs";
+import { IconAdd, IconPencil } from "../../components/navGlyphs";
 import { StepMark } from "../../components/StepMark";
 import { AddLocationWindow } from "../../components/storage/AddLocationWindow";
 import { Toggle } from "../../components/Toggle";
 import { getSettings, putSettings, type Settings, type StorageLocation } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
 import type { EntryKind } from "../../lib/backupEntry";
-import { entryTarget, protection } from "../../lib/backupList";
-import { SECTIONS, scheduleChosen, switchSection, type Section } from "../../lib/firstSections";
-import { foundSentence, type Found, type StepState } from "../../lib/firstSteps";
+import { entryTarget, protection, tilePath } from "../../lib/backupList";
+import {
+  FOUND_KINDS,
+  INCLUDE_FOUND,
+  SECTIONS,
+  kindsToInclude,
+  scheduleChosen,
+  switchSection,
+  type FoundKind,
+  type Section,
+} from "../../lib/firstSections";
+import { foundSentence, includedKinds, rememberIncluded, type Found, type StepState } from "../../lib/firstSteps";
 import type { useT } from "../../lib/i18n";
 import { formatList } from "../../lib/placement";
 import type { Tally } from "../../lib/protectionTally";
 import { flowDomains } from "../../lib/storageFlow";
 import { useToast } from "../../lib/toast";
+import type { BackupItems } from "../../lib/useBackupItems";
 import { useFirstSteps } from "../../lib/useFirstSteps";
+import { useIsDesktop } from "../../lib/useMediaQuery";
 import { usePlacementDefaults } from "../../lib/usePlacementDefaults";
 import { Card } from "./Card";
 
@@ -37,7 +48,7 @@ const HINT = "text-sm text-carbon-textSub";
  * step changes. A refused switch, such as VMs without a connection to the
  * host, goes back and says why.
  */
-function useSections(t: T) {
+function useSections(t: T, items: BackupItems) {
   const { push } = useToast();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
@@ -56,19 +67,10 @@ function useSections(t: T) {
     return () => window.removeEventListener("bv:settings-changed", read);
   }, [read]);
 
-  // The whole object is written, so it is read first: a setting saved
-  // elsewhere since the card was drawn must not be put back.
-  async function save(change: (now: Settings) => Partial<Settings>): Promise<boolean> {
+  async function attempt(work: () => Promise<unknown>): Promise<boolean> {
     setSaving(true);
     try {
-      const now = await getSettings();
-      if (!now.ok) throw new Error();
-      const patch = change(now.settings);
-      if (Object.keys(patch).length > 0) {
-        const res = await putSettings({ ...now.settings, ...patch });
-        if (!res.ok) throw new Error(res.error);
-        window.dispatchEvent(new Event("bv:settings-changed"));
-      }
+      await work();
       return true;
     } catch (err) {
       push((err instanceof Error && err.message) || t("settings.error"), "fail");
@@ -78,14 +80,42 @@ function useSections(t: T) {
     }
   }
 
+  // The whole object is written, so it is read first: a setting saved
+  // elsewhere since the card was drawn must not be put back.
+  async function write(change: (now: Settings) => Partial<Settings>): Promise<Settings> {
+    const now = await getSettings();
+    if (!now.ok) throw new Error();
+    const patch = change(now.settings);
+    if (Object.keys(patch).length === 0) return now.settings;
+    const next = { ...now.settings, ...patch };
+    const res = await putSettings(next);
+    if (!res.ok) throw new Error(res.error);
+    window.dispatchEvent(new Event("bv:settings-changed"));
+    return next;
+  }
+
   async function flip(section: Section, on: boolean) {
     setSettings((s) => s && { ...s, [section.enabled]: on });
-    if (await save((now) => switchSection(now, section, on))) return;
+    if (await attempt(() => write((now) => switchSection(now, section, on)))) return;
     setSettings((s) => s && { ...s, [section.enabled]: !on });
     setRefused((n) => ({ ...n, [section.kind]: (n[section.kind] ?? 0) + 1 }));
   }
 
-  return { settings, saving, refused, flip, schedule: () => save(scheduleChosen) };
+  /** Gives the sections that are on their schedule and takes what was found
+   *  into it, so the first backup and every later one hold it. */
+  const prepare = () =>
+    attempt(async () => {
+      const now = await write(scheduleChosen);
+      const kinds = kindsToInclude(now, items.reported, includedKinds());
+      for (const kind of kinds) {
+        const res = await INCLUDE_FOUND[kind]();
+        if (!res.ok) throw new Error(res.error);
+        rememberIncluded(kind);
+      }
+      if (kinds.length > 0) items.reload();
+    });
+
+  return { settings, saving, refused, flip, prepare };
 }
 
 function Step({
@@ -135,7 +165,15 @@ function SectionSwitches({
   found: Found;
   t: T;
 }) {
-  const { saving, refused, flip } = sections;
+  const navigate = useNavigate();
+  // A phone has no room for the word beside the switch.
+  const isDesktop = useIsDesktop();
+  const { saving, refused, flip, prepare } = sections;
+  // The list can leave an entry out only once it is in the schedule.
+  const choose = async (kind: FoundKind) => {
+    if (await prepare()) navigate(tilePath(kind));
+  };
+  const pause = t("firstSteps.chooseHint").replace("{action}", () => t("schedule.pause"));
   const line: Partial<Record<EntryKind, string | false>> = {
     container: found.container > 0 && t("firstSteps.foundCount", found.container),
     vm: found.vm > 0 && t("firstSteps.foundCount", found.vm),
@@ -144,31 +182,48 @@ function SectionSwitches({
 
   return (
     <div className="grid gap-2 md:grid-cols-2">
-      {SECTIONS.map((section, i) => (
-        <div
-          key={section.kind}
-          data-section={section.kind}
-          style={hueVars(i) as CSSProperties}
-          className="glim-hue flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5"
-        >
-          <span className="glim-row-glyph flex h-[34px] w-[34px] flex-none items-center justify-center rounded-control bg-carbon-surface3 [&_svg]:h-[18px] [&_svg]:w-[18px]">
-            <KindGlyph kind={section.kind} />
-          </span>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <span className="text-sm font-semibold text-carbon-text">{t(KIND_LABEL[section.kind])}</span>
-            {line[section.kind] && <span className="text-[13px] text-carbon-textMuted">{line[section.kind]}</span>}
+      {SECTIONS.map((section, i) => {
+        const choosable =
+          settings[section.enabled] && FOUND_KINDS.find((kind) => kind === section.kind && found[kind] > 0);
+        return (
+          <div
+            key={section.kind}
+            data-section={section.kind}
+            style={hueVars(i) as CSSProperties}
+            className="glim-hue flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5"
+          >
+            <span className="glim-row-glyph flex h-[34px] w-[34px] flex-none items-center justify-center rounded-control bg-carbon-surface3 [&_svg]:h-[18px] [&_svg]:w-[18px]">
+              <KindGlyph kind={section.kind} />
+            </span>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="text-sm font-semibold text-carbon-text">{t(KIND_LABEL[section.kind])}</span>
+              {line[section.kind] && <span className="text-[13px] text-carbon-textMuted">{line[section.kind]}</span>}
+            </div>
+            {choosable && (
+              <Button
+                label={t("firstSteps.choose")}
+                labelKey="firstSteps.choose"
+                title={pause}
+                glyph={<IconPencil />}
+                tone="subtle"
+                variant={isDesktop ? "default" : "icon"}
+                glyphOnly={!isDesktop}
+                disabled={saving}
+                onClick={() => void choose(choosable)}
+              />
+            )}
+            <Toggle
+              key={refused[section.kind]}
+              hideLabel
+              label={t(KIND_LABEL[section.kind])}
+              checked={settings[section.enabled]}
+              onChange={(on) => void flip(section, on)}
+              disabled={saving}
+              className={refused[section.kind] ? "glim-shake" : undefined}
+            />
           </div>
-          <Toggle
-            key={refused[section.kind]}
-            hideLabel
-            label={t(KIND_LABEL[section.kind])}
-            checked={settings[section.enabled]}
-            onChange={(on) => void flip(section, on)}
-            disabled={saving}
-            className={refused[section.kind] ? "glim-shake" : undefined}
-          />
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -225,16 +280,15 @@ function AddLocation({ locations, onClose }: { locations: StorageLocation[]; onC
  * page's own action starts.
  */
 export function FirstStepsCard({ tally, t, lang, hueIndex }: { tally: Tally; t: T; lang: string; hueIndex: number }) {
-  const { states, found, locations, added, chooseSections } = useFirstSteps();
-  const sections = useSections(t);
+  const { states, found, items, locations, added, chooseSections } = useFirstSteps();
+  const sections = useSections(t, items);
   const [adding, setAdding] = useState(false);
   const sentence = foundSentence(found, t, lang);
   const { settings } = sections;
   const switchedOn = SECTIONS.filter(({ enabled }) => settings?.[enabled]).map(({ kind }) => t(KIND_LABEL[kind]));
   const where = `${t("nav.settings")} › ${t("settings.schedule")}`;
-  // The step is ticked off only once the sections that are on have a schedule.
   const next = async () => {
-    if (await sections.schedule()) chooseSections();
+    if (await sections.prepare()) chooseSections();
   };
 
   return (

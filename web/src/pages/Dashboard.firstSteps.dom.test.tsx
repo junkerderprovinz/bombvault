@@ -3,8 +3,9 @@
 // next, what it asks for, and when the card goes.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { useLocation } from "react-router-dom";
 
-import type { Settings } from "../lib/api";
+import type { BackupItem, Settings } from "../lib/api";
 import { NIGHTLY } from "../lib/firstSections";
 import { en } from "../lib/i18n";
 import { Dashboard } from "./Dashboard";
@@ -44,9 +45,9 @@ const SECTIONS = {
 
 const unscheduled = { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" } as const;
 
-/** A container that was found and has never been backed up. */
+/** A container that was found, is in no schedule and has never been backed up. */
 const found = (key: string, over: Parameters<typeof item>[0] = {}) =>
-  item({ key, name: key, lastBackup: 0, lastRunStatus: "", effectiveSchedule: unscheduled, ...over });
+  item({ key, name: key, included: false, lastBackup: 0, lastRunStatus: "", effectiveSchedule: unscheduled, ...over });
 
 const storageBox = location({
   id: "destination:1",
@@ -56,8 +57,20 @@ const storageBox = location({
   sections: [],
 });
 
+function Where() {
+  const at = useLocation();
+  return <p data-testid="where">{at.pathname + at.search}</p>;
+}
+
 async function renderPage() {
-  render(inApp(<Dashboard />));
+  render(
+    inApp(
+      <>
+        <Dashboard />
+        <Where />
+      </>
+    )
+  );
   await act(async () => {});
 }
 
@@ -67,6 +80,9 @@ const states = () => steps().map((li) => li.getAttribute("data-state"));
 const section = (kind: string) => document.querySelector<HTMLElement>(`[data-section='${kind}']`)!;
 const flip = (kind: string) => within(section(kind)).getByRole("switch");
 const saved = () => server.calls.filter((call) => call.name === "putSettings").map((call) => call.args[0] as Settings);
+const called = () => server.calls.map((call) => call.name);
+const next = () => within(steps()[0]).getByRole("button", { name: en["zfs.replica.add.next"] });
+const where = () => screen.getByTestId("where").textContent;
 
 beforeEach(() => {
   resetServer();
@@ -279,6 +295,125 @@ describe("the first step, choosing the sections", () => {
   });
 });
 
+describe("the entries the first step takes into the schedule", () => {
+  it("are the found containers when Next ticks the step off, after the schedule is saved", async () => {
+    await renderPage();
+
+    fireEvent.click(next());
+    await act(async () => {});
+
+    expect(called()).toEqual(["putSettings", "setIncludeAll"]);
+    expect(server.calls[1].args).toEqual([true]);
+    expect(states()).toEqual(["done", "next", "open"]);
+  });
+
+  it("are the VMs too once their section is on", async () => {
+    server.settings = { ...SECTIONS, vmsEnabled: true };
+    server.items = [found("plex"), found("win11", { kind: "vm" })];
+    await renderPage();
+
+    fireEvent.click(next());
+    await act(async () => {});
+
+    expect(called()).toEqual(["putSettings", "setIncludeAll", "setVMIncludeAll"]);
+  });
+
+  it("are left as they are where somebody has taken one in or left one out already", async () => {
+    server.items = [found("plex", { included: true }), found("gitea", { included: false })];
+    await renderPage();
+
+    fireEvent.click(next());
+    await act(async () => {});
+
+    expect(called()).toEqual(["putSettings"]);
+    expect(states()).toEqual(["done", "next", "open"]);
+  });
+
+  it("are none on a server that reports no container", async () => {
+    server.items = [];
+    await renderPage();
+
+    fireEvent.click(next());
+    await act(async () => {});
+
+    expect(called()).toEqual(["putSettings"]);
+  });
+
+  it("keep the step open and say why when they cannot be taken in", async () => {
+    server.includeRefused = "list containers: the Docker socket did not answer";
+    await renderPage();
+
+    fireEvent.click(next());
+    await act(async () => {});
+
+    expect(states()).toEqual(["next", "open", "open"]);
+    expect(screen.getByText("list containers: the Docker socket did not answer")).toBeTruthy();
+  });
+
+  it("are not touched by a switch", async () => {
+    await renderPage();
+
+    fireEvent.click(flip("container"));
+    await act(async () => {});
+    fireEvent.click(flip("container"));
+    await act(async () => {});
+
+    expect(called()).toEqual(["putSettings", "putSettings"]);
+  });
+});
+
+describe("choosing single entries from the first step", () => {
+  const choose = (kind: string) => within(section(kind)).queryByRole("button", { name: new RegExp("^" + en["firstSteps.choose"]) });
+
+  it("is offered for a section that is on and has found entries", async () => {
+    await renderPage();
+
+    expect(choose("container")).toBeTruthy();
+    expect(choose("vm")).toBeNull();
+    expect(choose("flash")).toBeNull();
+    expect(choose("config")).toBeNull();
+  });
+
+  it("takes the entries into the schedule first and then opens their list", async () => {
+    await renderPage();
+
+    fireEvent.click(choose("container")!);
+    await act(async () => {});
+
+    expect(called()).toEqual(["putSettings", "setIncludeAll"]);
+    expect(where()).toBe("/backups?kind=container");
+  });
+
+  it("does not take the entries in again with Next after every one of them was paused in the list", async () => {
+    await renderPage();
+    fireEvent.click(choose("container")!);
+    await act(async () => {});
+    expect(called()).toEqual(["putSettings", "setIncludeAll"]);
+
+    server.items = (server.items as BackupItem[]).map((entry) => ({ ...entry, included: false }));
+    act(() => {
+      window.dispatchEvent(new Event("bv:settings-changed"));
+    });
+    await act(async () => {});
+    fireEvent.click(next());
+    await act(async () => {});
+
+    expect(called()).toEqual(["putSettings", "setIncludeAll"]);
+    expect(states()).toEqual(["done", "next", "open"]);
+  });
+
+  it("stays on the overview when the entries cannot be taken in", async () => {
+    server.includeRefused = "the Docker socket did not answer";
+    await renderPage();
+
+    fireEvent.click(choose("container")!);
+    await act(async () => {});
+
+    expect(where()).toBe("/dashboard");
+    expect(screen.getByText("the Docker socket did not answer")).toBeTruthy();
+  });
+});
+
 describe("the second step, adding a storage location", () => {
   beforeEach(() => window.localStorage.setItem(CHOSEN, "1"));
 
@@ -318,7 +453,7 @@ describe("the third step, the first backup", () => {
 
   it("counts what waits and what no schedule reaches, and lists the entries", async () => {
     server.items = [
-      found("plex", { effectiveSchedule: { kind: "domain", spec: "daily 03:00", alsoSpec: "" } }),
+      found("plex", { included: true, effectiveSchedule: { kind: "domain", spec: "daily 03:00", alsoSpec: "" } }),
       found("gitea"),
       found("immich"),
     ];
