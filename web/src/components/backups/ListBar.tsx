@@ -110,7 +110,7 @@ export function ListBar({
   t: T;
 }) {
   return (
-    <div className="relative flex flex-wrap items-center justify-end gap-2">
+    <div data-new="backups-bar" className="relative flex flex-wrap items-center justify-end gap-2">
       <FilterPopover label={t("filter.button")} active={isFiltered(view)} align="row-end">
         <ChipFilter
           label={t("filter.schedule")}

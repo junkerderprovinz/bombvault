@@ -309,7 +309,7 @@ export function Anomalies() {
       {view === "open" &&
         !chosen &&
         (itemsFailed ? (
-          <Card title={t("anomaly.learn.title")} hint={t("anomaly.learn.hint")} hueIndex={TILES.length + 1}>
+          <Card title={t("anomaly.learn.title")} hint={t("anomaly.learn.hint")} hueIndex={TILES.length + 1} newId="anomalies-rings">
             {/* A listing that never arrived says nothing about what is watched,
                 so it must not look like an empty one. */}
             <div className="flex flex-col items-start gap-2">
@@ -320,7 +320,7 @@ export function Anomalies() {
         ) : (
           !itemsLoading &&
           items.length > 0 && (
-            <Card title={t("anomaly.learn.title")} hint={t("anomaly.learn.hint")} hueIndex={TILES.length + 1}>
+            <Card title={t("anomaly.learn.title")} hint={t("anomaly.learn.hint")} hueIndex={TILES.length + 1} newId="anomalies-rings">
               <LearningRings
                 items={items}
                 t={t}
@@ -395,6 +395,7 @@ function SeverityTiles({
     <div
       role="group"
       aria-label={t("anomaly.filter.severity")}
+      data-new="anomalies-tiles"
       className="grid grid-cols-2 gap-2 rounded-card bg-carbon-surface p-3 md:grid-cols-4"
     >
       {TILES.map(({ severity, label, glyph }, i) => {

@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 // The Info page: the versions of what BombVault is built from, the check for
-// a newer release, and the ways to get help. The check runs on the server and
-// can be refused, and the bug report can be too; both refusals have to reach
-// the person in words.
+// a newer release, the ways to get help and the list of what the last update
+// changed. The check runs on the server and can be refused, and the bug report
+// can be too; both refusals have to reach the person in words.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, waitFor, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../../lib/i18n";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
 
@@ -34,7 +35,9 @@ async function renderPage() {
   await act(async () => {
     render(
       <I18nProvider>
-        <InfoPage />
+        <MemoryRouter>
+          <InfoPage />
+        </MemoryRouter>
       </I18nProvider>
     );
   });
@@ -184,6 +187,15 @@ describe("the Help card", () => {
     await waitFor(() => expect(pushed).toHaveLength(1));
     expect(pushed[0].message).toContain("login password");
     expect(pushed[0].severity).toBe("fail");
+  });
+});
+
+describe("the list of what is new", () => {
+  it("stands between Help and About, where the settings search finds it by its name", async () => {
+    await renderPage();
+    const titles = [...document.querySelectorAll("[data-search-card]")].map((el) => el.getAttribute("data-search-card"));
+    expect(titles).toEqual([en["about.version"], en["tile.info.help"], en["whatsNew.title"], en["about.title"]]);
+    expect(within(card(en["whatsNew.title"])).getByRole("switch", { name: en["whatsNew.show"] })).toBeTruthy();
   });
 });
 

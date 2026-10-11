@@ -7,10 +7,11 @@ import { TileGlyph, tileHue, tileLabel } from "./kinds";
 type T = (key: TranslationKey, n?: number) => string;
 
 /** The box a row of tiles stands in. Below 600px the tiles are one row of
- *  chips, so what follows starts near the top of a phone. */
-export function TileRow({ label, children }: { label: string; children: ReactNode }) {
+ *  chips, so what follows starts near the top of a phone. `newId` is the
+ *  change in lib/whatsNew.ts the row is. */
+export function TileRow({ label, newId, children }: { label: string; newId?: string; children: ReactNode }) {
   return (
-    <div role="group" aria-label={label} className="rounded-card bg-carbon-surface p-3 max-[600px]:p-2">
+    <div role="group" aria-label={label} data-new={newId} className="rounded-card bg-carbon-surface p-3 max-[600px]:p-2">
       <div className="flex flex-wrap gap-2 max-[860px]:grid max-[860px]:grid-cols-2 max-[600px]:flex max-[600px]:flex-nowrap max-[600px]:gap-1.5 max-[600px]:overflow-x-auto max-[600px]:[scrollbar-width:none]">
         {children}
       </div>
@@ -71,7 +72,7 @@ export function KindTiles({
   t: T;
 }) {
   return (
-    <TileRow label={t("backups.tiles")}>
+    <TileRow label={t("backups.tiles")} newId="backups-tiles">
       {tiles.map(({ tile, count }) => (
         <KindTile
           key={tile}

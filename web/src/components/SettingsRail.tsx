@@ -93,6 +93,7 @@ export function SettingsRail({ items, active, label, onReorder }: SettingsRailPr
   return (
     <nav
       aria-label={label}
+      data-new="settings-tiles"
       // Sticky at the scroller's top, so the rail stays put while the page
       // scrolls past it. On desktop it moves out of the page padding to 4px
       // from the sidebar, the room the focus ring and a lifted tile's shadow

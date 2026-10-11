@@ -219,7 +219,7 @@ export function WeekCard({ settings, hueIndex }: { settings: Settings; hueIndex:
   }
 
   return (
-    <Card title={t("tile.week.title")} hint={t("tile.week.hint")} hueIndex={hueIndex}>
+    <Card title={t("tile.week.title")} hint={t("tile.week.hint")} hueIndex={hueIndex} newId="settings-week">
       <div className="glim-week-scroll">
         <div className="glim-week-grid">
           <div className="glim-week-row">

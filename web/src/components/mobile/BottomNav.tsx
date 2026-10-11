@@ -191,6 +191,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
           <button
             type="button"
             ref={moreTip.ref}
+            data-new-way="more"
             onClick={() => setMoreOpen(true)}
             aria-label={showLabel ? undefined : t("nav.more")}
             aria-describedby={moreTip.describedBy}

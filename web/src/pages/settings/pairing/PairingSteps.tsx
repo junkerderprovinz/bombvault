@@ -87,7 +87,7 @@ export function PairingSteps({ t, hues }: { t: T; hues: [number, number, number]
     },
   ];
   return (
-    <section aria-label={t("pairing.howTitle")}>
+    <section aria-label={t("pairing.howTitle")} data-new="pairing-steps">
       {/* The step cards' number badges straddle their top edge, so stacked
           cards keep more room between them than a card gap. */}
       <div ref={grid} className="relative grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-6">
@@ -99,7 +99,7 @@ export function PairingSteps({ t, hues }: { t: T; hues: [number, number, number]
               <div data-step-frame className="glim-pic mx-auto w-full max-w-[280px]">
                 <StepPicture step={(i + 1) as 1 | 2 | 3} t={t} />
               </div>
-              <p className="text-carbon-textMuted">{s.body}</p>
+              <p className="text-carbon-textMuted wrap-break-word hyphens-auto">{s.body}</p>
             </div>
           </StepCard>
         ))}

@@ -86,6 +86,7 @@ const testMatch = [
   "old-links.spec.ts",
   "entry-kinds-phone.spec.ts",
   "overview.spec.ts",
+  "whats-new.spec.ts",
   "restore.spec.ts",
   "welcome.spec.ts",
 ];

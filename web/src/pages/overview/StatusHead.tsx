@@ -42,7 +42,7 @@ const STATION_LABEL: Record<Station, TranslationKey> = {
 
 function RingFrame({ children, centre, tone }: { children: ReactNode; centre: ReactNode; tone: string }) {
   return (
-    <span className="relative block h-16 w-16 flex-none">
+    <span data-new="overview-head" className="relative block h-16 w-16 flex-none">
       {/* A circle's stroke starts at three o'clock; the turn puts the first
           part at the top. */}
       <svg viewBox="0 0 64 64" aria-hidden="true" className="block h-full w-full -rotate-90 overflow-visible fill-none stroke-[6]">

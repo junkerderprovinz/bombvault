@@ -639,6 +639,11 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       rows: [{ key: "tile.info.manual" }, { key: "tile.info.bugReport" }],
       body: ["about.report"],
     },
+    {
+      title: "whatsNew.title",
+      hint: "whatsNew.hint",
+      rows: [{ key: "whatsNew.show" }, { key: "whatsNew.showAll" }, { key: "whatsNew.markAll" }],
+    },
     { title: "about.title", rows: [], body: ["about.body"] },
   ],
 };

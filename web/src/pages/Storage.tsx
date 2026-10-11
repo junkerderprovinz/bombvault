@@ -34,7 +34,10 @@ function LocationRow({ location }: { location: StorageLocation }) {
   const navigate = useNavigate();
   const route = locationRoute(location.id);
   return (
-    <li className="relative -mx-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control px-2 py-3 hover:bg-carbon-hover">
+    <li
+      data-new-way="location"
+      className="relative -mx-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control px-2 py-3 hover:bg-carbon-hover"
+    >
       <LocationMark location={location} />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         {/* The link's box is stretched over the row, so the whole row opens
@@ -94,7 +97,7 @@ export function StoragePage() {
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
       <PageTitle>{t("storage.title")}</PageTitle>
-      <Card title={t("storage.title")} hint={t("storage.listHint")} hueIndex={nextHue()}>
+      <Card title={t("storage.title")} hint={t("storage.listHint")} hueIndex={nextHue()} newId="storage-list">
         {failed && !loaded ? (
           // A list that never arrived says nothing about what is stored where,
           // so it must not look like an empty one.

@@ -18,6 +18,7 @@ import { useT, type TranslationKey } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { AboutGive, GLIMSTONE_REPO, GLIMSTONE_VERSION, REPO, ReportButtons, releaseUrl } from "../AboutCard";
 import { Card, hueCounter } from "../shared";
+import { WhatsNewCard } from "../WhatsNewCard";
 
 const DOCS = "https://junkerderprovinz.github.io/bombvault/";
 
@@ -156,7 +157,7 @@ export function InfoPage() {
 
   return (
     <>
-      <Card title={t("about.version")} hint={t("tile.info.versionHint")} hueIndex={nextHue()}>
+      <Card title={t("about.version")} hint={t("tile.info.versionHint")} hueIndex={nextHue()} newId="settings-version">
         <Rows>
           <SettingRow label="BombVault">
             {versions?.bombvault ? <Version version={versions.bombvault} repo={REPO} /> : unknown}
@@ -198,6 +199,8 @@ export function InfoPage() {
           />
         </div>
       </Card>
+
+      <WhatsNewCard hueIndex={nextHue()} />
 
       <Card title={t("about.title")} hueIndex={nextHue()}>
         <AboutGive />

@@ -6,9 +6,11 @@ import { getSettings, getAuth, getHealth, type Settings } from "../lib/api";
 import { useIsDesktop } from "../lib/useMediaQuery";
 import { LoginPage } from "../pages/Login";
 import { WhatsNewDialog } from "../components/WhatsNewDialog";
+import { WhatsNewDots } from "../components/WhatsNewDots";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { AttentionProvider } from "../lib/attentionProvider";
 import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
+import { beginWhatsNew } from "../lib/whatsNewStore";
 
 // The last BombVault version this browser has seen. The "What's new" dialog
 // opens once when the running version differs.
@@ -234,6 +236,7 @@ export function Layout() {
           } catch {
             /* ignore */
           }
+          beginWhatsNew(last);
           setWhatsNewVersion(tag);
         }
       })
@@ -359,6 +362,7 @@ export function Layout() {
               />
             </>
           )}
+          <WhatsNewDots />
           {whatsNewVersion && (
             <WhatsNewDialog version={whatsNewVersion} onClose={() => setWhatsNewVersion(null)} />
           )}
