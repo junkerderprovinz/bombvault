@@ -1411,7 +1411,14 @@ func (r Restic) runIn(ctx context.Context, dir string, args []string, m Mode) ([
 		// TTY or RESTIC_PROGRESS_FPS is set. Our stdout is a pipe, so without this
 		// restic prints only the final summary and the bar would never fill.
 		cmd.Env = append(env, "RESTIC_PROGRESS_FPS=3")
+		// Of the commands that run with a sink, backup alone prints status
+		// lines. A forget on the same context is no silence worth measuring.
+		ended := func() {}
+		if subcommand(args) == "backup" {
+			ended = reporting(ctx)
+		}
 		out, err = runStreaming(cmd, args, sink, WatcherFrom(ctx))
+		ended()
 	} else {
 		cmd.Env = env
 		out, err = runBuffered(ctx, cmd, args)
@@ -2519,6 +2526,7 @@ func (r Restic) BackupFromCommand(ctx context.Context, repo, stdinPath string, t
 
 	start := time.Now()
 	watch := WatcherFrom(ctx)
+	defer reporting(ctx)()
 	out, stderr, err := scanLinesStderr(cmd, args, func(line []byte) {
 		if watch == nil {
 			return

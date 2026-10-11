@@ -47,6 +47,13 @@ type stallGuard struct {
 	// started is false until the first observation, so the guard never measures
 	// silence from a zero-valued baseline it never saw.
 	started bool
+	// calls counts the restic commands in flight that print status lines, and
+	// idle is true from the end of the last one until the next begins.
+	// Retention, the statistics and the off-site copy run in between and print
+	// no counters, so their silence says nothing: a copy that takes five hours
+	// is healthy, and cancelling it after two would leave it unfinished forever.
+	calls int
+	idle  bool
 }
 
 // stallDecision is what the guard concluded from one observation.
@@ -94,8 +101,29 @@ func (g *stallGuard) tick(now time.Time) stallDecision {
 	return g.decideLocked(now)
 }
 
+// call is told when a restic command that prints status lines starts and when
+// it has ended. The clock restarts with a command, so one that wedges before
+// its first status line is still caught.
+func (g *stallGuard) call(running bool, now time.Time) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if !running {
+		if g.calls--; g.calls == 0 {
+			g.idle = true
+		}
+		return
+	}
+	g.calls++
+	if g.idle {
+		g.idle, g.lastMove, g.warned = false, now, false
+	}
+}
+
 // decideLocked is the shared verdict; callers hold g.mu.
 func (g *stallGuard) decideLocked(now time.Time) stallDecision {
+	if g.idle {
+		return stallDecision{}
+	}
 	silent := now.Sub(g.lastMove)
 	d := stallDecision{silent: silent}
 	if g.cancelAfter > 0 && silent >= g.cancelAfter {
@@ -180,6 +208,7 @@ func armStallGuard(ctx context.Context, cancel context.CancelCauseFunc, label st
 	act := func(d stallDecision) { g.act(d, cancel, label) }
 
 	watched := restic.WithWatcher(ctx, func(p restic.Progress) { act(g.observe(p, time.Now())) })
+	watched = restic.WithCallWatcher(watched, func(running bool) { g.call(running, time.Now()) })
 
 	go func() {
 		t := time.NewTicker(stallTickInterval)

@@ -121,6 +121,39 @@ func WithAddedWatcher(ctx context.Context, w ProgressWatcher) context.Context {
 	})
 }
 
+// CallWatcher is told when a restic call that prints status lines starts (true)
+// and when it has ended (false). Between two such calls only commands without
+// counters run, so a watcher that measures silence stops its clock there.
+type CallWatcher func(running bool)
+
+type callWatcherKey struct{}
+
+// WithCallWatcher returns a context carrying w. A nil watcher returns ctx
+// unchanged.
+func WithCallWatcher(ctx context.Context, w CallWatcher) context.Context {
+	if w == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, callWatcherKey{}, w)
+}
+
+// CallWatcherFrom returns the call watcher on ctx, or nil.
+func CallWatcherFrom(ctx context.Context) CallWatcher {
+	w, _ := ctx.Value(callWatcherKey{}).(CallWatcher)
+	return w
+}
+
+// reporting tells the call watcher on ctx that a call which prints status lines
+// has started, and returns the func that tells it the call is over.
+func reporting(ctx context.Context) func() {
+	w := CallWatcherFrom(ctx)
+	if w == nil {
+		return func() {}
+	}
+	w(true)
+	return func() { w(false) }
+}
+
 // WatcherFrom returns the watcher on ctx, or nil.
 func WatcherFrom(ctx context.Context) ProgressWatcher {
 	w, _ := ctx.Value(watcherKey{}).(ProgressWatcher)

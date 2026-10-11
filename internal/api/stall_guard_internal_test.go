@@ -233,3 +233,53 @@ func TestCancelIsRefusedOnceTheStallGuardStoppedTheBackup(t *testing.T) {
 		t.Fatalf("the stalled backup's error %v reads as cancelled by the user", err)
 	}
 }
+
+// Retention, the statistics and the off-site copy run after the backup command
+// and print no counters. A copy that takes five hours is not a stall.
+func TestStallGuardRestsOnceTheBackupCommandHasEnded(t *testing.T) {
+	g := newStallGuard(30*time.Minute, 2*time.Hour, at(0))
+	g.call(true, at(0))
+	g.observe(restic.Progress{BytesDone: 1000}, at(1))
+	g.call(false, at(2))
+
+	if d := g.tick(at(5 * 3600)); d.warn || d.cancel {
+		t.Fatalf("five hours after the backup command ended: %+v, want the guard at rest", d)
+	}
+}
+
+func TestStallGuardCountsAgainFromTheStartOfTheNextCommand(t *testing.T) {
+	g := newStallGuard(30*time.Minute, 2*time.Hour, at(0))
+	g.call(true, at(0))
+	g.observe(restic.Progress{BytesDone: 1000}, at(1))
+	g.call(false, at(2))
+	next := 5 * 3600
+	g.call(true, at(next))
+
+	if d := g.tick(at(next + 60*60)); d.cancel {
+		t.Fatalf("one hour into the second command: %+v, want no cancel yet", d)
+	}
+	if d := g.tick(at(next + 121*60)); !d.cancel {
+		t.Fatalf("two hours of silence inside the second command: %+v, want a cancel", d)
+	}
+}
+
+func TestStallGuardKeepsCountingWhileAnotherCommandStillRuns(t *testing.T) {
+	g := newStallGuard(30*time.Minute, 2*time.Hour, at(0))
+	g.call(true, at(0))
+	g.call(true, at(0))
+	g.observe(restic.Progress{BytesDone: 1000}, at(1))
+	g.call(false, at(2))
+
+	if d := g.tick(at(121 * 60)); !d.cancel {
+		t.Fatalf("one of two commands is still running and silent: %+v, want a cancel", d)
+	}
+}
+
+func TestArmedContextTellsTheGuardWhenACommandStartsAndEnds(t *testing.T) {
+	ctx, cancel := context.WithCancelCause(context.Background())
+	defer cancel(nil)
+
+	if restic.CallWatcherFrom(armStallGuard(ctx, cancel, "backup")) == nil {
+		t.Fatal("the guard cannot tell a running backup command from the copy after it")
+	}
+}
