@@ -376,7 +376,8 @@ describe("the status head", () => {
     const row = within(within(cell("needs")).getByTestId("need-failed-copy"));
     expect(row.getByText(/^Storage Box · Containers · since /)).toBeTruthy();
 
-    fireEvent.click(row.getByRole("button", { name: en["errorPanel.resolve"] }));
+    fireEvent.click(row.getByRole("button", { name: en["nav.more"] }));
+    fireEvent.click(screen.getByRole("menuitem", { name: en["errorPanel.resolve"] }));
     await act(async () => {});
 
     expect(head().getByText(en["overview.head.allGood"])).toBeTruthy();
@@ -547,7 +548,8 @@ describe("an entry the person said not to back up", () => {
     await renderPage();
     expect(head().getByText("1 thing needs you")).toBeTruthy();
 
-    fireEvent.click(within(cell("needs")).getByRole("button", { name: en["backups.decline"] }));
+    fireEvent.click(within(cell("needs")).getByRole("button", { name: en["nav.more"] }));
+    fireEvent.click(screen.getByRole("menuitem", { name: en["backups.decline"] }));
     await act(async () => {});
 
     expect(head().getByText(en["overview.head.allGood"])).toBeTruthy();

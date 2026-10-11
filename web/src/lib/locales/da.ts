@@ -272,8 +272,6 @@ const da: Partial<Translations> = {
 
   // Settings
   "settings.title": "Indstillinger",
-  "settings.encryptionOn": "Aktiveret (adgangskode afledt fra APP_KEY)",
-  "settings.encryptionOff": "Deaktiveret (ingen adgangskode)",
   "settings.encryptionPasswordWhere":
     "Den adgangskode skriver du aldrig: BombVault udleder den af APP_KEY ved hvert kald. Selve værdien står i dit gendannelsessæt som den udledte restic-adgangskode, og det er den, du skal bruge for at køre restic manuelt mod et arkiv.",
   "settings.encryptionHint":
@@ -2417,7 +2415,6 @@ const da: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Forpassede tidsplaner",
   "settings.catchUpMissed": "Indhent forpassede sikkerhedskopieringer efter start",
   "settings.catchUpMissedHint": "Hvis serveren var slukket, da en tidsplan skulle køre, køres den sikkerhedskopiering cirka to minutter efter, at BombVault er startet.",
-  "settings.watchdogTitle": "Vagthund for forsinkede sikkerhedskopier",
   "settings.watchdogHint": "Tjekker én gang om dagen, om en aktiveret sikkerhedskopi er forsinket (ældre end det dobbelte af sin tidsplan), og sender én notifikation pr. hændelse via kanalerne ovenfor.",
   "settings.watchdogToggle": "Giv besked, når sikkerhedskopier er forsinkede",
   "settings.coresLabel": "CPU-tråde (0 = alle)",
@@ -3381,7 +3378,6 @@ const da: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Bruger de kanaler, der er sat op under Notifikationer. Hvert element kan ændre det under Afvigelser, Elementer. Gentagne fejl i sikkerhedskopier og dumps og mislykkede planlagte gendannelsestjek sender allerede deres egen besked og sendes derfor ikke en gang til.",
   "anomaly.settings.notifyMuted": "Der sendes ingenting lige nu: notifikationer er slået fra, eller der er ingen kanal sat op.",
   "anomaly.settings.openNotifications": "Åbn indstillinger for notifikationer",
-  "anomaly.settings.notifyCrossLink": "Hvilke afvigelser der sender en notifikation, indstilles under Integritet, Afvigelser.",
   "anomaly.settings.holdToggle": "Behold gamle sikkerhedskopier, når en kilde skrumper kraftigt eller omskrives",
   "anomaly.settings.holdHint": "Tre fund sætter sletningen af gamle sikkerhedskopier på pause: en kilde, der pludselig er næsten tom, en, der er blevet meget mindre, og en sikkerhedskopi, der har gemt de fleste data igen, sådan som ransomware ser ud. Opbevaringen ville ellers slette de gode ældre sikkerhedskopier én kørsel ad gangen. Mens sådan en afvigelse er åben, bevares de gamle sikkerhedskopier af netop det element (eller det databasedump eller ZFS-datasæt); alt andet ryddes op som normalt. Kvittér for afvigelsen eller markér den som forventet for at fortsætte.",
   "anomaly.settings.backfill": "Historik læst fra repositories: {done} af {slots}",

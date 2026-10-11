@@ -337,8 +337,6 @@ const sl: Partial<Translations> = {
 
   // Settings
   "settings.title": "Nastavitve",
-  "settings.encryptionOn": "Omogočeno (geslo izpeljano iz APP_KEY)",
-  "settings.encryptionOff": "Onemogočeno (brez gesla)",
   "settings.encryptionPasswordWhere":
     "Tega gesla nikoli ne vnašate: BombVault ga ob vsakem klicu izpelje iz APP_KEY. Sama vrednost je v vašem kompletu za obnovitev kot izpeljano geslo restic in prav to potrebujete za ročni zagon restic nad shrambo.",
   "settings.encryptionHint": "Šifriranje se za repozitorij določi ob njegovem nastanku, zato ta nastavitev odloča le o NOVEM repozitoriju. Pri že obstoječem BombVault način prebere kar iz repozitorija. Glej stran Obnova. Sprememba nasproti obstoječemu repozitoriju povzroči le, da ga restic ne more odpreti.",
@@ -1994,7 +1992,6 @@ const sl: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Zamujeni urniki",
   "settings.catchUpMissed": "Po zagonu nadoknadi zamujene varnostne kopije",
   "settings.catchUpMissedHint": "Če je bil strežnik izklopljen, ko je bila zapadla varnostna kopija po urniku, zaženi to varnostno kopiranje približno dve minuti po zagonu BombVaulta.",
-  "settings.watchdogTitle": "Nadzornik zamujenih varnostnih kopij",
   "settings.watchdogHint": "Enkrat na dan preveri, ali je katera koli omogočena varnostna kopija zamujena (starejša kot dvakratnik svojega urnika), in za vsak dogodek pošlje eno obvestilo prek zgoraj nastavljenih kanalov.",
   "settings.watchdogToggle": "Obvesti, ko varnostne kopije zamujajo",
   "settings.coresLabel": "Niti CPU (0 = vse)",
@@ -3375,7 +3372,6 @@ const sl: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Uporablja kanale, nastavljene v Obvestila. Vsak element lahko to spremeni v Anomalije, Elementi. Ponavljajoče se napake kopij in izvozov ter neuspela načrtovana preverjanja obnovitve že pošljejo svoje sporočilo, zato se ne pošljejo drugič.",
   "anomaly.settings.notifyMuted": "Trenutno se ne pošilja nič: obvestila so izklopljena ali ni nastavljen noben kanal.",
   "anomaly.settings.openNotifications": "Odpri nastavitve obvestil",
-  "anomaly.settings.notifyCrossLink": "Katere anomalije pošljejo obvestilo, se nastavi v Celovitost, Anomalije.",
   "anomaly.settings.holdToggle": "Ohrani stare kopije, ko se vir močno skrči ali je prepisan",
   "anomaly.settings.holdHint": "Tri najdbe ustavijo brisanje starih kopij: vir, ki je nenadoma skoraj prazen, vir, ki je postal precej manjši, in kopija, ki je znova shranila večino podatkov, kakor je videti izsiljevalski program. Hramba bi sicer brisala dobre starejše kopije eno za drugo. Dokler je taka anomalija odprta, ostanejo stare kopije samo tega elementa (ali tega izvoza baze podatkov ali nabora podatkov ZFS); vse drugo se počisti kot običajno. Za nadaljevanje potrdi anomalijo ali jo označi kot pričakovano.",
   "anomaly.settings.backfill": "Zgodovina, prebrana iz repozitorijev: {done} od {slots}",

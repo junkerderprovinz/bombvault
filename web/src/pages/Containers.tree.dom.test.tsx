@@ -5,7 +5,7 @@
 // localStorage without refetching.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { I18nProvider, useT } from "../lib/i18n";
+import { I18nProvider, en, useT } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { BrowseResponse, ContainerMountsResponse, MountInfo } from "../lib/api";
 
@@ -1071,10 +1071,9 @@ describe("Reset selection, narrowing note and hint copy", () => {
     expect(patches[1].opts).toEqual({ selectionSource: "tree" });
   });
 
-  it("the hint points to Reset selection instead of claiming that unticking everything reverts to the default", async () => {
-    await renderEditor();
-    expect(screen.getByText(/Unticking everything is blocked; use Reset selection to return to the automatic appdata default\.$/)).toBeTruthy();
-    expect(screen.queryByText(/reverts to the automatic appdata default/)).toBeNull();
+  it("the hint points to Reset selection instead of claiming that unticking everything reverts to the default", () => {
+    expect(en["folders.hint"]).toMatch(/Unticking everything is blocked; use Reset selection to return to the automatic appdata default\.$/);
+    expect(en["folders.hint"]).not.toMatch(/reverts to the automatic appdata default/);
   });
 
   it("the narrowing note is transient: closing and reopening the section clears it (no server-side include-count history)", async () => {

@@ -3,6 +3,7 @@ import { Badge, type BadgeSize } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { ConfirmPrompt } from "../../components/ConfirmPrompt";
 import { IconDisclosure } from "../../components/IconDisclosure";
+import { IconLink } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
 import { RevealInput } from "../../components/RevealInput";
 import { ReadmeButton } from "../../components/ReadmeButton";
@@ -29,6 +30,7 @@ import { mcpUrl, type McpSnippetInput } from "../../lib/mcpSnippets";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useOwnLogin } from "../../lib/useOwnLogin";
+import { InstanceWindow } from "../instances/InstanceWindow";
 import { McpClientDialog, type FreshKey } from "./McpClientDialog";
 import { ClientMark } from "./McpClientMark";
 import { keyLogId, McpKeyLog } from "./McpKeyLog";
@@ -125,6 +127,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   const [fresh, setFresh] = useState<FreshKey | null>(null);
   const [keyVisible, setKeyVisible] = useState(true);
   const [dialog, setDialog] = useState<McpClient | null>(null);
+  const [choosing, setChoosing] = useState(false);
   const [renaming, setRenaming] = useState("");
   const [draft, setDraft] = useState("");
   const [revokedOpen, setRevokedOpen] = useState(false);
@@ -329,13 +332,17 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   const endpoint = mcpUrl(snippetBase);
 
   function clientButton(c: McpClient) {
+    const open = () => {
+      setChoosing(false);
+      setDialog(c);
+    };
     const name = c === OTHER_CLIENT ? t("mcp.otherClient") : c.name;
     return (
       <ReadmeButton
         key={c.id}
         tile={c.tile}
         className={c.lift ? "glim-mark-lift" : undefined}
-        parts={[{ name, sub: c.kind ? t(KIND_LABEL[c.kind]) : undefined, onClick: () => setDialog(c) }]}
+        parts={[{ name, sub: c.kind ? t(KIND_LABEL[c.kind]) : undefined, onClick: open }]}
         mark={<ClientMark client={c} />}
       />
     );
@@ -507,27 +514,19 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
 
       {data !== null && !failed && (
         <>
-          <div className="flex flex-col gap-2.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+          <div data-search-row={t("mcp.snippetsLabel")} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <span className="flex items-center gap-1.5 text-sm text-carbon-text">
               {t("mcp.snippetsLabel")}
               <InfoBubble tip={t("mcp.connectHint")} />
             </span>
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <span className="text-[length:var(--text-caption)] font-medium uppercase tracking-[0.06em] text-carbon-textMuted">
-                  {t("mcp.groupLocal")}
-                </span>
-                <div className="glim-readme-btn-rows">{LOCAL_CLIENTS.map(clientButton)}</div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <span className="flex items-center gap-1.5 text-[length:var(--text-caption)] font-medium uppercase tracking-[0.06em] text-carbon-textMuted">
-                  {t("mcp.groupCloud")}
-                  <InfoBubble tip={t("mcp.cloudWarning")} />
-                </span>
-                <div className="glim-readme-btn-rows">{CLOUD_CLIENTS.map(clientButton)}</div>
-              </div>
-              <div className="glim-readme-btn-rows">{clientButton(OTHER_CLIENT)}</div>
-            </div>
+            <Button
+              label={t("mcp.chooseClient")}
+              labelKey="mcp.chooseClient"
+              glyph={<IconLink />}
+              tone="subtle"
+              onClick={() => setChoosing(true)}
+              hueIndex={hueIndex}
+            />
           </div>
 
           {keys.length > 0 && (
@@ -712,6 +711,30 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
         </>
       )}
 
+      {choosing && (
+        <InstanceWindow
+          title={t("mcp.chooseClient")}
+          footer={<Button label={t("common.close")} labelKey="common.close" tone="subtle" onClick={() => setChoosing(false)} />}
+          onClose={() => setChoosing(false)}
+        >
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <span className="text-[length:var(--text-caption)] font-medium uppercase tracking-[0.06em] text-carbon-textMuted">
+                {t("mcp.groupLocal")}
+              </span>
+              <div className="glim-readme-btn-rows">{LOCAL_CLIENTS.map(clientButton)}</div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="flex items-center gap-1.5 text-[length:var(--text-caption)] font-medium uppercase tracking-[0.06em] text-carbon-textMuted">
+                {t("mcp.groupCloud")}
+                <InfoBubble tip={t("mcp.cloudWarning")} />
+              </span>
+              <div className="glim-readme-btn-rows">{CLOUD_CLIENTS.map(clientButton)}</div>
+            </div>
+            <div className="glim-readme-btn-rows">{clientButton(OTHER_CLIENT)}</div>
+          </div>
+        </InstanceWindow>
+      )}
       {dialog !== null && data !== null && (
         <McpClientDialog
           key={dialog.id}

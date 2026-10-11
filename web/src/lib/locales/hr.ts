@@ -337,8 +337,6 @@ const hr: Partial<Translations> = {
 
   // Settings
   "settings.title": "Postavke",
-  "settings.encryptionOn": "Omogućeno (lozinka izvedena iz APP_KEY)",
-  "settings.encryptionOff": "Onemogućeno (bez lozinke)",
   "settings.encryptionPasswordWhere":
     "Tu lozinku nikada ne upisujete: BombVault je pri svakom pozivu izvodi iz APP_KEY. Sama vrijednost nalazi se u vašem kompletu za oporavak kao izvedena restic lozinka i upravo je ona potrebna za ručno pokretanje restic nad spremištem.",
   "settings.encryptionHint": "Šifriranje se za repozitorij utvrđuje pri njegovu stvaranju, pa ova postavka odlučuje samo o NOVOM repozitoriju. Za već postojeći BombVault način očitava s samog repozitorija. Vidi stranicu Vraćanje. Promjena nasuprot postojećem repozitoriju samo sprječava restic da ga otvori.",
@@ -2009,7 +2007,6 @@ const hr: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Propušteni rasporedi",
   "settings.catchUpMissed": "Nadoknadi propuštene sigurnosne kopije nakon pokretanja",
   "settings.catchUpMissedHint": "Ako je poslužitelj bio isključen kad je raspored dospio, pokrenite tu sigurnosnu kopiju otprilike dvije minute nakon pokretanja BombVaulta.",
-  "settings.watchdogTitle": "Nadzornik zakašnjelih sigurnosnih kopija",
   "settings.watchdogHint": "Jednom dnevno provjerava je li neka omogućena sigurnosna kopija zakašnjela (starija od dvostrukog trajanja njezinog rasporeda) i šalje jednu obavijest po incidentu putem gore konfiguriranih kanala.",
   "settings.watchdogToggle": "Obavijesti kad su sigurnosne kopije zakašnjele",
   "settings.coresLabel": "CPU niti (0 = sve)",
@@ -3391,7 +3388,6 @@ const hr: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Koristi kanale postavljene u Obavijesti. Svaka stavka to može promijeniti u Anomalije, Stavke. Ponovljeni neuspjesi kopija i ispisa te neuspjele zakazane provjere vraćanja već šalju vlastitu poruku, pa se ne šalju drugi put.",
   "anomaly.settings.notifyMuted": "Trenutno se ništa ne šalje: obavijesti su isključene ili nije postavljen nijedan kanal.",
   "anomaly.settings.openNotifications": "Otvori postavke obavijesti",
-  "anomaly.settings.notifyCrossLink": "Koje anomalije šalju obavijest postavlja se u Cjelovitost, Anomalije.",
   "anomaly.settings.holdToggle": "Zadrži stare kopije kad se izvor naglo smanji ili bude prepisan",
   "anomaly.settings.holdHint": "Tri nalaza zaustavljaju brisanje starih kopija: izvor koji je odjednom gotovo prazan, izvor koji je postao mnogo manji i kopija koja je ponovno spremila većinu podataka, kako izgleda ransomware. Zadržavanje bi inače brisalo dobre starije kopije jednu po jednu. Dok je takva anomalija otvorena, zadržavaju se stare kopije samo te stavke (ili tog ispisa baze podataka ili ZFS skupa podataka); sve ostalo čisti se kao i obično. Potvrdi anomaliju ili je označi kao očekivanu za nastavak.",
   "anomaly.settings.backfill": "Povijest pročitana iz repozitorija: {done} od {slots}",

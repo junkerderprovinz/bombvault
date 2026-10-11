@@ -337,8 +337,6 @@ const sk: Partial<Translations> = {
 
   // Settings
   "settings.title": "Nastavenia",
-  "settings.encryptionOn": "Zapnuté (heslo odvodené z APP_KEY)",
-  "settings.encryptionOff": "Vypnuté (bez hesla)",
   "settings.encryptionPasswordWhere":
     "Toto heslo nikdy nezadávate: BombVault ho pri každom volaní odvodzuje z APP_KEY. Samotná hodnota je vo vašej sade na obnovu ako odvodené restic heslo a práve tú potrebujete na ručné spustenie restic nad repozitárom.",
   "settings.encryptionHint": "Šifrovanie je pre repozitár dané pri jeho vytvorení, takže toto nastavenie rozhoduje len o NOVOM repozitári. Pri už existujúcom si BombVault režim prečíta priamo z repozitára. Pozri stránku Obnova. Zmena oproti existujúcemu repozitáru len spôsobí, že ho restic neotvorí.",
@@ -2009,7 +2007,6 @@ const sk: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Zmeškané plány",
   "settings.catchUpMissed": "Dobehnúť zmeškané zálohy po spustení",
   "settings.catchUpMissedHint": "Ak bol server vypnutý, keď bol plán splatný, spustite túto zálohu asi dve minúty po spustení BombVault.",
-  "settings.watchdogTitle": "Hliadač zálohy po termíne",
   "settings.watchdogHint": "Raz denne kontroluje, či je nejaká zapnutá záloha po termíne (staršia ako dvojnásobok jej plánu), a posiela jedno upozornenie na incident prostredníctvom vyššie nakonfigurovaných kanálov.",
   "settings.watchdogToggle": "Upozorniť, keď sú zálohy po termíne",
   "settings.coresLabel": "Vlákna CPU (0 = všetky)",
@@ -3391,7 +3388,6 @@ const sk: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Používa kanály nastavené v Upozornenia. Každá položka to môže zmeniť v Anomálie, Položky. Opakované zlyhania záloh a výpisov a neúspešné plánované kontroly obnovy už posielajú vlastnú správu, takže sa neposielajú druhýkrát.",
   "anomaly.settings.notifyMuted": "Momentálne sa nič neposiela: upozornenia sú vypnuté alebo nie je nastavený žiadny kanál.",
   "anomaly.settings.openNotifications": "Otvoriť nastavenia upozornení",
-  "anomaly.settings.notifyCrossLink": "Ktoré anomálie posielajú upozornenie, sa nastavuje v Integrita, Anomálie.",
   "anomaly.settings.holdToggle": "Ponechať staré zálohy, keď sa zdroj prudko zmenší alebo je prepísaný",
   "anomaly.settings.holdHint": "Tri nálezy pozastavia mazanie starých záloh: zdroj, ktorý je náhle takmer prázdny, zdroj, ktorý sa výrazne zmenšil, a záloha, ktorá znova uložila väčšinu údajov, ako to vyzerá po ransomvéri. Uchovávanie by inak mazalo dobré staršie zálohy jednu po druhej. Kým je taká anomália otvorená, zostávajú staré zálohy iba tejto položky (alebo tohto výpisu databázy či dátovej sady ZFS); všetko ostatné sa čistí ako zvyčajne. Potvrď anomáliu alebo ju označ ako očakávanú a mazanie bude pokračovať.",
   "anomaly.settings.backfill": "História načítaná z repozitárov: {done} z {slots}",

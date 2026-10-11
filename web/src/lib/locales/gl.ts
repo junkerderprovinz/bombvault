@@ -337,8 +337,6 @@ const gl: Partial<Translations> = {
 
   // Settings
   "settings.title": "Configuración",
-  "settings.encryptionOn": "Activado (contrasinal derivado de APP_KEY)",
-  "settings.encryptionOff": "Desactivado (sen contrasinal)",
   "settings.encryptionPasswordWhere":
     "Esa contrasinal nunca a escribes: BombVault derívaa da APP_KEY en cada chamada. O valor está no teu kit de recuperación, como contrasinal restic derivada, e é o que precisas para executar restic a man contra un repositorio.",
   "settings.encryptionHint": "O cifrado fíxase por repositorio ao crealo, así que este axuste só decide como se fai un repositorio NOVO. Para un que xa existe, BombVault le o modo do propio repositorio. Mira a páxina de Restauración. Cambialo fronte a un repositorio existente só impide que restic o abra.",
@@ -2009,7 +2007,6 @@ const gl: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Horarios perdidos",
   "settings.catchUpMissed": "Recuperar copias perdidas despois de arrancar",
   "settings.catchUpMissedHint": "Se o servidor estaba apagado cando tocaba un horario, executa esa copia uns dous minutos despois de arrancar BombVault.",
-  "settings.watchdogTitle": "Vixilante de copias vencidas",
   "settings.watchdogHint": "Comproba unha vez ao día se algunha copia activada está vencida (máis antiga que o dobre do seu horario) e envía unha notificación por incidencia polas canles configuradas arriba.",
   "settings.watchdogToggle": "Notificar cando as copias estean vencidas",
   "settings.coresLabel": "Fíos de CPU (0 = todos)",
@@ -3391,7 +3388,6 @@ const gl: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Usa as canles configuradas en Notificacións. Cada elemento pode cambialo en Anomalías, Elementos. Os fallos repetidos de copias e volcados e as comprobacións de restauración programadas fallidas xa envían a súa propia mensaxe, así que non se envían unha segunda vez.",
   "anomaly.settings.notifyMuted": "Agora mesmo non se envía nada: as notificacións están desactivadas ou non hai ningunha canle configurada.",
   "anomaly.settings.openNotifications": "Abrir os axustes de notificacións",
-  "anomaly.settings.notifyCrossLink": "Que anomalías envían unha notificación axústase en Integridade, Anomalías.",
   "anomaly.settings.holdToggle": "Conservar as copias antigas cando unha orixe se reduce moito ou se reescribe",
   "anomaly.settings.holdHint": "Tres achados deteñen o borrado de copias antigas: unha orixe que de súpeto está case baleira, unha que se volveu moito máis pequena e unha copia que volveu gardar a maior parte dos datos, que é o aspecto dun ransomware. A retención borraría as boas copias antigas dunha en unha. Mentres unha anomalía así estea aberta, consérvanse as copias antigas só dese elemento (ou dese volcado de base de datos ou conxunto de datos ZFS); todo o demais límpase coma sempre. Confirma a anomalía ou márcaa como agardada para retomalo.",
   "anomaly.settings.backfill": "Historial lido dos repositorios: {done} de {slots}",

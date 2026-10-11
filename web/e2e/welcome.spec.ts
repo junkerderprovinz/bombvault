@@ -241,9 +241,9 @@ test("a section switched on in the first steps gets a nightly schedule, and lose
   const staged = await stage(page);
   await page.goto("/dashboard");
   const card = page.getByTestId("first-steps");
-  const selfBackup = card.getByRole("switch", { name: "Self-Backup" });
+  const selfBackup = card.getByRole("switch", { name: "Self-backup" });
   await expect(selfBackup).toHaveAttribute("aria-checked", "false");
-  await expect(card).toContainText("The sections switched on here run every night, which you can change under Settings › Schedule.");
+  await expect(card.getByLabel("The sections switched on here run every night, which you can change under Settings › Schedule.")).toBeVisible();
 
   await selfBackup.click();
   await expect(selfBackup).toHaveAttribute("aria-checked", "true");

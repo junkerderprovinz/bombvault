@@ -272,8 +272,6 @@ const cs: Partial<Translations> = {
 
   // Settings
   "settings.title": "Nastavení",
-  "settings.encryptionOn": "Povoleno (heslo odvozeno z APP_KEY)",
-  "settings.encryptionOff": "Vypnuto (bez hesla)",
   "settings.encryptionPasswordWhere":
     "Toto heslo nikdy nezadáváte: BombVault je při každém volání odvozuje z APP_KEY. Samotná hodnota je ve vaší sadě pro obnovu jako odvozené heslo restic a právě tu potřebujete, chcete-li restic spustit nad úložištěm ručně.",
   "settings.encryptionHint":
@@ -2415,7 +2413,6 @@ const cs: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Zmeškané plány",
   "settings.catchUpMissed": "Dohnat zmeškané zálohy po startu",
   "settings.catchUpMissedHint": "Pokud byl server vypnutý, když měl plán proběhnout, spustí se tato záloha přibližně dvě minuty po startu aplikace BombVault.",
-  "settings.watchdogTitle": "Hlídač zpožděných záloh",
   "settings.watchdogHint": "Jednou denně kontroluje, zda některá zapnutá záloha není po termínu (starší než dvojnásobek jejího plánu), a přes výše nastavené kanály odešle jedno oznámení na incident.",
   "settings.watchdogToggle": "Upozornit, když jsou zálohy po termínu",
   "settings.coresLabel": "Vlákna CPU (0 = vše)",
@@ -3379,7 +3376,6 @@ const cs: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Používá kanály nastavené v Oznámení. Každá položka to může změnit v Anomálie, Položky. Opakovaná selhání záloh a výpisů a neúspěšné plánované kontroly obnovy už posílají vlastní zprávu, takže se neposílají podruhé.",
   "anomaly.settings.notifyMuted": "Teď se nic neodesílá: oznámení jsou vypnutá nebo není nastaven žádný kanál.",
   "anomaly.settings.openNotifications": "Otevřít nastavení oznámení",
-  "anomaly.settings.notifyCrossLink": "Které anomálie posílají oznámení, se nastavuje v Integrita, Anomálie.",
   "anomaly.settings.holdToggle": "Ponechat staré zálohy, když se zdroj prudce zmenší nebo je přepsán",
   "anomaly.settings.holdHint": "Tři nálezy pozastaví mazání starých záloh: zdroj, který je náhle téměř prázdný, zdroj, který se hodně zmenšil, a záloha, která znovu uložila většinu dat, jak to vypadá po ransomwaru. Uchovávání by jinak mazalo dobré starší zálohy jednu po druhé. Dokud je taková anomálie otevřená, zůstávají staré zálohy právě této položky (nebo tohoto výpisu databáze či datové sady ZFS); vše ostatní se čistí jako obvykle. Potvrď anomálii nebo ji označ jako očekávanou a mazání bude pokračovat.",
   "anomaly.settings.backfill": "Historie načtená z repozitářů: {done} z {slots}",

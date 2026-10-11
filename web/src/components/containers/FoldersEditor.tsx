@@ -576,8 +576,7 @@ export function FoldersEditor({
   if (!open) return null;
 
   return (
-    <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
-      <p className="text-xs text-carbon-textMuted">{t("folders.hint")}</p>
+    <div className="rounded-card bg-carbon-background p-3 flex flex-col gap-2">
       {/* A compose member's project folder is missing from this list, which
           would read as "nothing to back up". It is backed up once for the
           whole stack (issue #189), and this says so where someone would look

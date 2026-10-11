@@ -308,7 +308,7 @@ describe("the tiles", () => {
   it("offer a kind that is switched on before it has an entry, and none for the self-backup", async () => {
     await renderPage();
     expect(tile("ZFS").textContent).toContain("0 entries");
-    expect(tiles().queryByRole("button", { name: /^Self-Backup/ })).toBeNull();
+    expect(tiles().queryByRole("button", { name: /^Self-backup/ })).toBeNull();
   });
 
   it("drop a kind that is off and has nothing, and the Not installed tile when nothing is gone", async () => {

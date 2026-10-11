@@ -37,7 +37,20 @@ export function NotificationsPage() {
         hueIndex={nextHue()}
         channelsHueIndex={nextHue()}
         healthchecksHueIndex={nextHue()}
-      />
+      >
+        {/* A fixed daily check at 09:00 that sends one notification per overdue
+            episode; a new successful backup re-arms it. */}
+        <ToggleRow
+          label={t("settings.watchdogToggle")}
+          hint={t("settings.watchdogHint")}
+          checked={settings.watchdogEnabled}
+          onChange={(v) => void autoSaveToggle("watchdogEnabled", v, setWatchdogSaveState, setWatchdogSaveError)}
+          disabled={fieldBusy.watchdogEnabled}
+          shakeNonce={fieldShake.watchdogEnabled}
+          pulseNonce={fieldPulse.watchdogEnabled}
+          hueIndex={2}
+        />
+      </NotifyCard>
 
       {/* Weekly digest: one summary message per week through the channels
           above. One hueIdx feeds both the heading and the time picker. */}
@@ -80,19 +93,6 @@ export function NotificationsPage() {
         );
       })()}
 
-      {/* Overdue-backup watchdog: a fixed daily check at 09:00 that sends one
-          notification per overdue episode through the channels above; a new
-          successful backup re-arms it. */}
-      <Card title={t("settings.watchdogTitle")} hint={t("settings.watchdogHint")} hueIndex={nextHue()}>
-        <ToggleRow
-          label={t("settings.watchdogToggle")}
-          checked={settings.watchdogEnabled}
-          onChange={(v) => void autoSaveToggle("watchdogEnabled", v, setWatchdogSaveState, setWatchdogSaveError)}
-          disabled={fieldBusy.watchdogEnabled}
-          shakeNonce={fieldShake.watchdogEnabled}
-          pulseNonce={fieldPulse.watchdogEnabled}
-        />
-      </Card>
     </>
   );
 }

@@ -1,14 +1,14 @@
-import { Link } from "react-router-dom";
 import { TestButton, VerdictLine } from "../../components/TestButton";
 import { NumberField } from "../../components/NumberField";
 import { SelectField } from "../../components/SelectField";
 import { Card, ToggleRow, type SaveState } from "./shared";
+import { PageSentence } from "./SidebarTile";
 import { InfoBubble } from "../../components/InfoBubble";
 import { RevealInput } from "../../components/RevealInput";
 import { Selector } from "../../components/Selector";
 import { getNotify, setNotify, testNotify, type NotifyConfig } from "../../lib/api";
 import { tLtr } from "../../lib/ltrFragments";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useReveal } from "../../lib/useReveal";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
@@ -53,6 +53,7 @@ export function NotifyCard({
   hueIndex,
   channelsHueIndex,
   healthchecksHueIndex,
+  children,
 }: {
   t: ReturnType<typeof useT>["t"];
   // The detected or overridden platform kind ("unraid" | "generic" |
@@ -61,6 +62,8 @@ export function NotifyCard({
   hueIndex?: number;
   channelsHueIndex?: number;
   healthchecksHueIndex?: number;
+  /** Rows of the first card that the page keeps itself, after the update row. */
+  children?: ReactNode;
 }) {
   const { push } = useToast();
   const [cfg, setCfg] = useState<NotifyConfig>(emptyNotify);
@@ -183,6 +186,9 @@ export function NotifyCard({
   const selectCls =
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 glim-field-focus-well";
   const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
+  // A channel's own fields stand under its switch, set in by a step.
+  const fieldCls = "flex flex-wrap items-center justify-between gap-x-4 gap-y-1 ps-4 text-sm text-carbon-text";
+  const fieldInputCls = "w-full sm:w-80";
 
   return (
     <>
@@ -192,8 +198,8 @@ export function NotifyCard({
       {loadErr && <span className="text-xs text-statusFail">{t("settings.notLoadedNoSave")}</span>}
       {/* A span, not a <label>: a label wrapping a multi-segment control
           hands its click and its name to the first segment. */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-carbon-textSub">{t("notify.on")}</span>
+      <div data-search-row={t("notify.on")} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <span className="text-sm text-carbon-text">{t("notify.on")}</span>
         <Selector
           key={fieldShake.on}
           items={[
@@ -210,7 +216,8 @@ export function NotifyCard({
           // lighting no segment at all.
           active={cfg.on || "never"}
           onChange={(id) => setImmediate("on", id)}
-          className={`flex-1${fieldShake.on ? " glim-shake" : ""}`}
+          inline
+          className={fieldShake.on ? "glim-shake" : undefined}
         />
       </div>
 
@@ -230,13 +237,14 @@ export function NotifyCard({
         hueIndex={1}
         shakeNonce={fieldShake.notifyOnUpdate}
       />
+      {children}
       {/* Unraid native notifications, delivered over the host SSH connection. */}
       <ToggleRow
         label={t("notify.unraid")}
         hint={t("notify.unraidHint")}
         checked={cfg.unraid}
         onChange={(v) => setImmediate("unraid", v)}
-        hueIndex={2}
+        hueIndex={3}
         shakeNonce={fieldShake.unraid}
       />
 
@@ -250,19 +258,14 @@ export function NotifyCard({
         </div>
       )}
 
-      <Link to="/settings/integrity#anomalies" className="text-xs text-accentText hover:underline">
-        {t("anomaly.settings.notifyCrossLink")}
-      </Link>
+      <PageSentence text="notify.anomaliesWhere" page="activityLog.typeVerify" to="/settings/integrity#anomalies" />
 
       <VerdictLine verdict={test.verdict} />
-      <div className="flex items-center gap-3 pt-1 flex-wrap">
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <TestButton
           label={t("notify.test")}
           labelKey="notify.test"
           words="delivery"
-          // Sending a test is what tells you a channel is wired up, so it
-          // carries the card.
-          tone="accent"
           test={test}
           onClick={handleTest}
         />
@@ -273,7 +276,8 @@ export function NotifyCard({
       {/* Each channel's toggle also gates the backend send, and its fields
           hide while it is off. The four channel toggles form one group for
           hueIndex, in the order they appear. */}
-      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
+      <div className="flex flex-col divide-y divide-carbon-border/60 [&>*]:py-3 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
+      <div className="flex flex-col gap-2">
         <ToggleRow
           label={t("notify.webhookChannel")}
           checked={cfg.webhookEnabled}
@@ -283,13 +287,13 @@ export function NotifyCard({
         />
         {cfg.webhookEnabled && (
           <>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.webhook")}
               <input key={fieldShake.webhookUrl} value={cfg.webhookUrl} onChange={(e) => set("webhookUrl", e.target.value)} spellCheck={false}
                 placeholder="https://discord.com/api/webhooks/..." dir="ltr"
-                className={`${inputCls} text-start${fieldShake.webhookUrl ? " glim-shake" : ""}`} />
+                className={`${inputCls} ${fieldInputCls} text-start${fieldShake.webhookUrl ? " glim-shake" : ""}`} />
             </label>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.webhookFormat")}
               <SelectField
                 key={fieldShake.webhookFormat}
@@ -303,7 +307,7 @@ export function NotifyCard({
                   { value: "gotify", label: "Gotify" },
                   { value: "ntfy", label: "ntfy" },
                 ]}
-                className={`${selectCls}${fieldShake.webhookFormat ? " glim-shake" : ""}`}
+                className={`${selectCls} ${fieldInputCls}${fieldShake.webhookFormat ? " glim-shake" : ""}`}
               />
             </label>
           </>
@@ -312,7 +316,7 @@ export function NotifyCard({
 
       {/* Apprise posts to a user-run apprise-api server, which reaches
           Apprise's 100+ services without bundling Python. */}
-      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2">
         <ToggleRow
           label={t("notify.apprise")}
           hint={tLtr(t, "notify.appriseHint")}
@@ -323,22 +327,22 @@ export function NotifyCard({
         />
         {cfg.appriseEnabled && (
           <>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.appriseUrl")}
               <input key={fieldShake.appriseUrl} value={cfg.appriseUrl} onChange={(e) => set("appriseUrl", e.target.value)} spellCheck={false}
                 placeholder="http://apprise:8000/notify/bombvault" dir="ltr"
-                className={`${inputCls} text-start${fieldShake.appriseUrl ? " glim-shake" : ""}`} />
+                className={`${inputCls} ${fieldInputCls} text-start${fieldShake.appriseUrl ? " glim-shake" : ""}`} />
             </label>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.appriseTags")}
               <input key={fieldShake.appriseTags} value={cfg.appriseTags} onChange={(e) => set("appriseTags", e.target.value)} spellCheck={false}
-                placeholder="backups,homelab" className={`${inputCls}${fieldShake.appriseTags ? " glim-shake" : ""}`} />
+                placeholder="backups,homelab" className={`${inputCls} ${fieldInputCls}${fieldShake.appriseTags ? " glim-shake" : ""}`} />
             </label>
           </>
         )}
       </div>
 
-      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2">
         <ToggleRow
           label={t("notify.matrix")}
           checked={cfg.matrixEnabled}
@@ -348,29 +352,29 @@ export function NotifyCard({
         />
         {cfg.matrixEnabled && (
           <>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.matrixHomeserver")}
               <input key={fieldShake.matrixHomeserver} value={cfg.matrixHomeserver} onChange={(e) => set("matrixHomeserver", e.target.value)} spellCheck={false}
                 placeholder="https://matrix.org" dir="ltr"
-                className={`${inputCls} text-start${fieldShake.matrixHomeserver ? " glim-shake" : ""}`} />
+                className={`${inputCls} ${fieldInputCls} text-start${fieldShake.matrixHomeserver ? " glim-shake" : ""}`} />
             </label>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.matrixToken")}
               <RevealInput {...revealMatrixToken} key={fieldShake.matrixToken} value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
-                placeholder={secretSet.matrix ? t("cloud.secretSet") : ""} wrapperClassName="w-full"
-                className={`${inputCls}${fieldShake.matrixToken ? " glim-shake" : ""}`} />
+                placeholder={secretSet.matrix ? t("cloud.secretSet") : ""} wrapperClassName={fieldInputCls}
+                className={`${inputCls} w-full${fieldShake.matrixToken ? " glim-shake" : ""}`} />
             </label>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.matrixRoom")}
               <input key={fieldShake.matrixRoom} value={cfg.matrixRoom} onChange={(e) => set("matrixRoom", e.target.value)} spellCheck={false}
                 placeholder="!abcdef:matrix.org" dir="ltr"
-                className={`${inputCls} text-start${fieldShake.matrixRoom ? " glim-shake" : ""}`} />
+                className={`${inputCls} ${fieldInputCls} text-start${fieldShake.matrixRoom ? " glim-shake" : ""}`} />
             </label>
           </>
         )}
       </div>
 
-      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2">
         <ToggleRow
           label={t("notify.smtp")}
           checked={cfg.smtpEnabled}
@@ -380,18 +384,18 @@ export function NotifyCard({
         />
         {cfg.smtpEnabled && (
           <>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.smtpHost")}
               <input key={fieldShake.smtpHost} value={cfg.smtpHost} onChange={(e) => set("smtpHost", e.target.value)} spellCheck={false}
-                placeholder="smtp.example.com" dir="ltr" className={`${inputCls} text-start${fieldShake.smtpHost ? " glim-shake" : ""}`} />
+                placeholder="smtp.example.com" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start${fieldShake.smtpHost ? " glim-shake" : ""}`} />
             </label>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.smtpPort")}
               {/* The steppers read min/max to know when to grey out. */}
               <NumberField key={fieldShake.smtpPort} value={cfg.smtpPort} onChange={(e) => set("smtpPort", Number(e.target.value) || 0)} spellCheck={false}
-                min={1} max={65535} placeholder="587" className={`${inputCls}${fieldShake.smtpPort ? " glim-shake" : ""}`} />
+                min={1} max={65535} placeholder="587" className={`${inputCls} ${fieldInputCls}${fieldShake.smtpPort ? " glim-shake" : ""}`} />
             </label>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.smtpTls")}
               <SelectField
                 key={fieldShake.smtpTls}
@@ -403,52 +407,53 @@ export function NotifyCard({
                   { value: "tls", label: "TLS (implicit)" },
                   { value: "none", label: "None" },
                 ]}
-                className={`${selectCls}${fieldShake.smtpTls ? " glim-shake" : ""}`}
+                className={`${selectCls} ${fieldInputCls}${fieldShake.smtpTls ? " glim-shake" : ""}`}
               />
             </label>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.smtpUser")}
               <input key={fieldShake.smtpUsername} value={cfg.smtpUsername} onChange={(e) => set("smtpUsername", e.target.value)} spellCheck={false}
-                dir="ltr" className={`${inputCls} text-start${fieldShake.smtpUsername ? " glim-shake" : ""}`} />
+                dir="ltr" className={`${inputCls} ${fieldInputCls} text-start${fieldShake.smtpUsername ? " glim-shake" : ""}`} />
             </label>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.smtpPass")}
               <RevealInput {...revealSmtpPassword} key={fieldShake.smtpPassword} value={cfg.smtpPassword} onChange={(e) => set("smtpPassword", e.target.value)} spellCheck={false}
-                placeholder={secretSet.smtp ? t("cloud.secretSet") : ""} wrapperClassName="w-full"
-                className={`${inputCls}${fieldShake.smtpPassword ? " glim-shake" : ""}`} />
+                placeholder={secretSet.smtp ? t("cloud.secretSet") : ""} wrapperClassName={fieldInputCls}
+                className={`${inputCls} w-full${fieldShake.smtpPassword ? " glim-shake" : ""}`} />
             </label>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.smtpFrom")}
               <input key={fieldShake.smtpFrom} value={cfg.smtpFrom} onChange={(e) => set("smtpFrom", e.target.value)} spellCheck={false}
-                placeholder="bombvault@example.com" dir="ltr" className={`${inputCls} text-start${fieldShake.smtpFrom ? " glim-shake" : ""}`} />
+                placeholder="bombvault@example.com" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start${fieldShake.smtpFrom ? " glim-shake" : ""}`} />
             </label>
-            <label className={labelCls}>
+            <label className={fieldCls}>
               {t("notify.smtpTo")}
               <input key={fieldShake.smtpTo} value={cfg.smtpTo} onChange={(e) => set("smtpTo", e.target.value)} spellCheck={false}
-                placeholder="admin@example.com" dir="ltr" className={`${inputCls} text-start${fieldShake.smtpTo ? " glim-shake" : ""}`} />
+                placeholder="admin@example.com" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start${fieldShake.smtpTo ? " glim-shake" : ""}`} />
             </label>
           </>
         )}
+      </div>
       </div>
     </Card>
 
     <Card title={t("notify.healthchecksTitle")} hueIndex={healthchecksHueIndex}>
       {/* The InfoBubble is a button, so clicking it inside the label opens
           the bubble rather than focusing the input. */}
-      <label className={labelCls}>
-        <span className="flex items-center gap-1">
+      <label data-search-row={t("notify.healthchecks")} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm text-carbon-text">
+        <span className="flex items-center gap-1.5">
           {t("notify.healthchecks")}
           <InfoBubble tip={t("notify.healthchecksLifecycle")} />
         </span>
         <input key={fieldShake.healthchecksUrl} value={cfg.healthchecksUrl} onChange={(e) => set("healthchecksUrl", e.target.value)} spellCheck={false}
-          placeholder="https://hc-ping.com/your-uuid" className={`${inputCls}${fieldShake.healthchecksUrl ? " glim-shake" : ""}`} />
+          placeholder="https://hc-ping.com/your-uuid" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start${fieldShake.healthchecksUrl ? " glim-shake" : ""}`} />
       </label>
 
       {/* Per-domain ping URLs; a blank one falls back to the global URL.
           These edit one entry of a nested map rather than a top-level key,
           so they bypass set() and a failure reverts only that domain's
           entry. */}
-      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
+      <div className="flex flex-col gap-2">
         <span className="flex items-center gap-1 text-xs font-medium text-carbon-textSub">
           {t("notify.hcPerDomain")}
           <InfoBubble tip={t("notify.hcPerDomainHint")} />

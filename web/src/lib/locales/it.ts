@@ -272,8 +272,6 @@ const it: Partial<Translations> = {
 
   // Settings
   "settings.title": "Impostazioni",
-  "settings.encryptionOn": "Abilitata (password derivata da APP_KEY)",
-  "settings.encryptionOff": "Disabilitata (nessuna password)",
   "settings.encryptionPasswordWhere":
     "Questa password non la digiti mai: BombVault la deriva dall'APP_KEY a ogni chiamata. Il valore sta nel tuo kit di ripristino, come password restic derivata, ed è ciò che serve per lanciare restic a mano su un repository.",
   "settings.encryptionHint":
@@ -2417,7 +2415,6 @@ const it: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Pianificazioni mancate",
   "settings.catchUpMissed": "Recupera i backup mancati dopo l'avvio",
   "settings.catchUpMissedHint": "Se il server era spento quando una pianificazione era prevista, quel backup viene eseguito circa due minuti dopo l'avvio di BombVault.",
-  "settings.watchdogTitle": "Controllo backup in ritardo",
   "settings.watchdogHint": "Controlla una volta al giorno se un backup attivo è in ritardo (più vecchio del doppio della sua pianificazione) e invia una notifica per incidente tramite i canali configurati sopra.",
   "settings.watchdogToggle": "Notifica quando i backup sono in ritardo",
   "settings.coresLabel": "Thread CPU (0 = tutti)",
@@ -3381,7 +3378,6 @@ const it: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Usa i canali configurati in Notifiche. Ogni elemento può cambiarlo in Anomalie, Elementi. Gli errori ripetuti di backup e dump e i controlli di ripristino pianificati falliti inviano già un loro messaggio, quindi non vengono inviati una seconda volta.",
   "anomaly.settings.notifyMuted": "Al momento non viene inviato nulla: le notifiche sono disattivate o non è configurato nessun canale.",
   "anomaly.settings.openNotifications": "Apri le impostazioni delle notifiche",
-  "anomaly.settings.notifyCrossLink": "Quali anomalie inviano una notifica si imposta in Integrità, Anomalie.",
   "anomaly.settings.holdToggle": "Conserva i backup vecchi quando una sorgente si riduce molto o viene riscritta",
   "anomaly.settings.holdHint": "Tre riscontri sospendono l'eliminazione dei backup vecchi: una sorgente improvvisamente quasi vuota, una diventata molto più piccola e un backup che ha salvato di nuovo la maggior parte dei dati, come appare un ransomware. Altrimenti la conservazione eliminerebbe i buoni backup più vecchi uno alla volta. Finché un'anomalia del genere è aperta, vengono conservati i backup vecchi solo di quell'elemento (o di quel dump del database o dataset ZFS); tutto il resto viene ripulito come sempre. Conferma la presa visione dell'anomalia o contrassegnala come attesa per riprendere.",
   "anomaly.settings.backfill": "Storia letta dai repository: {done} di {slots}",

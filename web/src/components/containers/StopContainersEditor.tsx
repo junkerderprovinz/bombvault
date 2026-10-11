@@ -98,8 +98,7 @@ export function StopContainersEditor({
   const sortedSelected = [...selected].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 
   return (
-    <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
-      <p className="text-xs text-carbon-textMuted">{t("stophook.hint")}</p>
+    <div className="rounded-card bg-carbon-background p-3 flex flex-col gap-2">
       {/* Neutral chrome: the hue marks controls that act, and this one holds
           a value. */}
       <div className="inline-block">

@@ -337,8 +337,6 @@ const lv: Partial<Translations> = {
 
   // Settings
   "settings.title": "Iestatījumi",
-  "settings.encryptionOn": "Iespējota (parole iegūta no APP_KEY)",
-  "settings.encryptionOff": "Atspējota (bez paroles)",
   "settings.encryptionPasswordWhere":
     "Šo paroli jūs nekad neievadāt: BombVault to katrā izsaukumā atvasina no APP_KEY. Pati vērtība ir jūsu atkopšanas komplektā kā atvasinātā restic parole, un tieši tā ir vajadzīga, lai restic palaistu pret krātuvi manuāli.",
   "settings.encryptionHint": "Šifrēšana krātuvei tiek noteikta tās izveides brīdī, tāpēc šis iestatījums nosaka tikai to, kā tiek izveidota JAUNA krātuve. Jau esošai krātuvei BombVault režīmu nolasa no pašas krātuves. Skati Atjaunošanas lapu. Mainot to esošai krātuvei, restic to vienkārši vairs nevarēs atvērt.",
@@ -2009,7 +2007,6 @@ const lv: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Nokavēti grafiki",
   "settings.catchUpMissed": "Panākt nokavētās rezerves kopijas pēc palaišanas",
   "settings.catchUpMissedHint": "Ja serveris bija izslēgts, kad grafiks bija jāizpilda, palaidiet šo rezerves kopiju apmēram divas minūtes pēc BombVault palaišanas.",
-  "settings.watchdogTitle": "Nokavēto rezerves kopiju uzraugs",
   "settings.watchdogHint": "Reizi dienā pārbauda, vai kāda iespējota rezerves kopija ir nokavēta (vecāka par divkāršu tās grafika laiku), un nosūta vienu paziņojumu par katru gadījumu, izmantojot iepriekš konfigurētos kanālus.",
   "settings.watchdogToggle": "Paziņot, kad rezerves kopijas ir nokavētas",
   "settings.coresLabel": "CPU pavedieni (0 = visi)",
@@ -3391,7 +3388,6 @@ const lv: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Izmanto kanālus, kas iestatīti sadaļā Paziņojumi. Katrs vienums to var mainīt sadaļā Anomālijas, Vienumi. Atkārtotas dublējumu un izgāzumu kļūmes un neizdevušās plānotās atjaunošanas pārbaudes jau sūta savu ziņu, tāpēc otrreiz tās netiek sūtītas.",
   "anomaly.settings.notifyMuted": "Pašlaik nekas netiek sūtīts: paziņojumi ir izslēgti vai nav iestatīts neviens kanāls.",
   "anomaly.settings.openNotifications": "Atvērt paziņojumu iestatījumus",
-  "anomaly.settings.notifyCrossLink": "Kuras anomālijas sūta paziņojumu, iestata sadaļā Integritāte, Anomālijas.",
   "anomaly.settings.holdToggle": "Saglabāt vecos dublējumus, kad avots strauji sarūk vai tiek pārrakstīts",
   "anomaly.settings.holdHint": "Trīs atradumi aptur veco dublējumu dzēšanu: avots, kas pēkšņi ir gandrīz tukšs, avots, kas kļuvis daudz mazāks, un dublējums, kas no jauna saglabāja lielāko datu daļu, kā izskatās izspiedējvīruss. Citādi glabāšanas politika dzēstu labos vecākos dublējumus pa vienam. Kamēr šāda anomālija ir atvērta, tiek saglabāti tikai šī vienuma (vai šī datubāzes izgāzuma vai ZFS datu kopas) vecie dublējumi; viss pārējais tiek tīrīts kā parasti. Lai turpinātu, apstiprini anomāliju vai atzīmē to kā gaidītu.",
   "anomaly.settings.backfill": "No krātuvēm nolasītā vēsture: {done} no {slots}",

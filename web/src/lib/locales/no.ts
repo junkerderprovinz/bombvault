@@ -271,8 +271,6 @@ const no: Partial<Translations> = {
 
   // Settings
   "settings.title": "Innstillinger",
-  "settings.encryptionOn": "Aktivert (passord utledet fra APP_KEY)",
-  "settings.encryptionOff": "Deaktivert (intet passord)",
   "settings.encryptionPasswordWhere":
     "Dette passordet skriver du aldri: BombVault utleder det fra APP_KEY ved hvert kall. Selve verdien står i gjenopprettingssettet ditt som det utledede restic-passordet, og det er den du trenger for å kjøre restic manuelt mot et arkiv.",
   "settings.encryptionHint":
@@ -2417,7 +2415,6 @@ const no: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Tapte tidsplaner",
   "settings.catchUpMissed": "Ta igjen tapte sikkerhetskopier etter oppstart",
   "settings.catchUpMissedHint": "Hvis serveren var av da en tidsplan skulle kjøre, kjøres den sikkerhetskopien omtrent to minutter etter at BombVault har startet.",
-  "settings.watchdogTitle": "Vaktbikkje for forsinkede sikkerhetskopier",
   "settings.watchdogHint": "Sjekker én gang om dagen om en aktivert sikkerhetskopi er forsinket (eldre enn det dobbelte av tidsplanen) og sender ett varsel per hendelse via kanalene ovenfor.",
   "settings.watchdogToggle": "Varsle når sikkerhetskopier er forsinket",
   "settings.coresLabel": "CPU-tråder (0 = alle)",
@@ -3381,7 +3378,6 @@ const no: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Bruker kanalene som er satt opp under Varsler. Hvert element kan endre dette under Avvik, Elementer. Gjentatte feil i sikkerhetskopier og dumper og mislykkede planlagte gjenopprettingssjekker sender allerede sin egen melding, så de sendes ikke en gang til.",
   "anomaly.settings.notifyMuted": "Ingenting sendes nå: varsler er slått av, eller ingen kanal er satt opp.",
   "anomaly.settings.openNotifications": "Åpne varselinnstillinger",
-  "anomaly.settings.notifyCrossLink": "Hvilke avvik som sender varsel, stilles inn under Integritet, Avvik.",
   "anomaly.settings.holdToggle": "Behold gamle sikkerhetskopier når en kilde krymper kraftig eller skrives om",
   "anomaly.settings.holdHint": "Tre funn stanser slettingen av gamle sikkerhetskopier: en kilde som plutselig er nesten tom, en som har blitt mye mindre, og en sikkerhetskopi som lagret det meste av dataene på nytt, slik løsepengevirus ser ut. Ellers ville oppbevaringen slettet de gode eldre sikkerhetskopiene én etter én. Så lenge et slikt avvik er åpent, beholdes de gamle sikkerhetskopiene av bare det elementet (eller den databasedumpen eller det ZFS-datasettet); alt annet ryddes som vanlig. Kvitter avviket eller merk det som forventet for å fortsette.",
   "anomaly.settings.backfill": "Historikk lest fra repositorier: {done} av {slots}",

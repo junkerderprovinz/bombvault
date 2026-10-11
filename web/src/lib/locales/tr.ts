@@ -272,8 +272,6 @@ const tr: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ayarlar",
-  "settings.encryptionOn": "Etkin (parola APP_KEY'den türetildi)",
-  "settings.encryptionOff": "Devre dışı (parola yok)",
   "settings.encryptionPasswordWhere":
     "Bu parolayı hiçbir zaman yazmazsınız: BombVault her çağrıda APP_KEY değerinden türetir. Değerin kendisi kurtarma setinizde, türetilmiş restic parolası olarak durur ve bir depoya elle restic çalıştırmak için gereken tam olarak budur.",
   "settings.encryptionHint":
@@ -2417,7 +2415,6 @@ const tr: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Kaçırılan zamanlamalar",
   "settings.catchUpMissed": "Başlangıçtan sonra kaçırılan yedeklemeleri telafi et",
   "settings.catchUpMissedHint": "Bir zamanlamanın vakti geldiğinde sunucu kapalıysa, o yedekleme BombVault başladıktan yaklaşık iki dakika sonra çalıştırılır.",
-  "settings.watchdogTitle": "Geciken yedekleme bekçisi",
   "settings.watchdogHint": "Etkin bir yedeklemenin gecikip gecikmediğini (zamanlamasının iki katından eski olup olmadığını) günde bir kez denetler ve olay başına bir bildirimi yukarıda yapılandırılan kanallardan gönderir.",
   "settings.watchdogToggle": "Yedeklemeler geciktiğinde bildir",
   "settings.coresLabel": "CPU iş parçacığı (0 = tümü)",
@@ -3381,7 +3378,6 @@ const tr: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Bildirimler altında ayarlanan kanalları kullanır. Her öge bunu Anormallikler, Ögeler altında değiştirebilir. Tekrarlanan yedek ve döküm hataları ile başarısız zamanlanmış geri yükleme denetimleri zaten kendi mesajını gönderir, bu yüzden ikinci kez gönderilmez.",
   "anomaly.settings.notifyMuted": "Şu anda hiçbir şey gönderilmiyor: bildirimler kapalı ya da hiç kanal ayarlanmamış.",
   "anomaly.settings.openNotifications": "Bildirim ayarlarını aç",
-  "anomaly.settings.notifyCrossLink": "Hangi anormalliklerin bildirim göndereceği Bütünlük, Anormallikler altında ayarlanır.",
   "anomaly.settings.holdToggle": "Bir kaynak sert biçimde küçüldüğünde veya yeniden yazıldığında eski yedekleri tut",
   "anomaly.settings.holdHint": "Üç bulgu eski yedeklerin silinmesini durdurur: birden neredeyse boşalan bir kaynak, çok küçülen bir kaynak ve verinin çoğunu yeniden kaydeden bir yedek; sonuncusu fidye yazılımının görünüşüdür. Yoksa saklama iyi eski yedekleri teker teker silerdi. Böyle bir anormallik açık kaldıkça yalnızca o ögenin (ya da o veritabanı dökümünün veya ZFS veri kümesinin) eski yedekleri tutulur; geri kalan her şey her zamanki gibi temizlenir. Devam etmek için anormalliği onayla ya da beklenen olarak işaretle.",
   "anomaly.settings.backfill": "Depolardan okunan geçmiş: {done} / {slots}",

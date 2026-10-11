@@ -272,8 +272,6 @@ const fi: Partial<Translations> = {
 
   // Settings
   "settings.title": "Asetukset",
-  "settings.encryptionOn": "Käytössä (salasana johdettu APP_KEY:stä)",
-  "settings.encryptionOff": "Ei käytössä (ei salasanaa)",
   "settings.encryptionPasswordWhere":
     "Tätä salasanaa et koskaan kirjoita: BombVault johtaa sen APP_KEY-avaimesta jokaisella kutsulla. Arvo itsessään on palautuspaketissasi johdettuna restic-salasanana, ja juuri sitä tarvitset ajaaksesi resticiä käsin arkistoa vasten.",
   "settings.encryptionHint":
@@ -2417,7 +2415,6 @@ const fi: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Väliin jääneet aikataulut",
   "settings.catchUpMissed": "Aja väliin jääneet varmuuskopiot käynnistyksen jälkeen",
   "settings.catchUpMissedHint": "Jos palvelin oli sammuksissa, kun aikataulun mukainen ajo oli määrä alkaa, kyseinen varmuuskopio ajetaan noin kaksi minuuttia BombVaultin käynnistymisen jälkeen.",
-  "settings.watchdogTitle": "Myöhästyneiden varmuuskopioiden valvonta",
   "settings.watchdogHint": "Tarkistaa kerran päivässä, onko jokin käytössä oleva varmuuskopio myöhässä (vanhempi kuin kaksi kertaa sen aikataulu), ja lähettää yhden ilmoituksen tapausta kohden yllä määritettyjen kanavien kautta.",
   "settings.watchdogToggle": "Ilmoita, kun varmuuskopiot ovat myöhässä",
   "settings.coresLabel": "CPU-säikeet (0 = kaikki)",
@@ -3381,7 +3378,6 @@ const fi: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Käyttää kohdassa Ilmoitukset määritettyjä kanavia. Jokainen kohde voi muuttaa tätä kohdassa Poikkeamat, Kohteet. Toistuvat varmuuskopioiden ja vedosten epäonnistumiset sekä epäonnistuneet ajastetut palautustarkistukset lähettävät jo oman viestinsä, joten niitä ei lähetetä toista kertaa.",
   "anomaly.settings.notifyMuted": "Juuri nyt mitään ei lähetetä: ilmoitukset ovat pois päältä tai yhtään kanavaa ei ole määritetty.",
   "anomaly.settings.openNotifications": "Avaa ilmoitusasetukset",
-  "anomaly.settings.notifyCrossLink": "Mitkä poikkeamat lähettävät ilmoituksen, asetetaan kohdassa Eheys, Poikkeamat.",
   "anomaly.settings.holdToggle": "Säilytä vanhat varmuuskopiot, kun lähde kutistuu jyrkästi tai kirjoitetaan uudelleen",
   "anomaly.settings.holdHint": "Kolme havaintoa keskeyttää vanhojen varmuuskopioiden poiston: lähde, joka on yhtäkkiä lähes tyhjä, lähde, joka on kutistunut paljon, ja varmuuskopio, joka tallensi suurimman osan tiedoista uudelleen, miltä kiristysohjelma näyttää. Säilytys poistaisi muuten hyvät vanhemmat varmuuskopiot yksi kerrallaan. Niin kauan kuin tällainen poikkeama on avoinna, vain sen kohteen (tai sen tietokantavedoksen tai ZFS-tietojoukon) vanhat varmuuskopiot säilytetään; kaikki muu siivotaan tavalliseen tapaan. Kuittaa poikkeama tai merkitse se odotetuksi jatkaaksesi.",
   "anomaly.settings.backfill": "Säilöistä luettu historia: {done} / {slots}",

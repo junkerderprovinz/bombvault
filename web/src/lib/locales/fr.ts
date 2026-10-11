@@ -272,8 +272,6 @@ const fr: Partial<Translations> = {
 
   // Settings
   "settings.title": "Paramètres",
-  "settings.encryptionOn": "Activé (mot de passe dérivé de APP_KEY)",
-  "settings.encryptionOff": "Désactivé (sans mot de passe)",
   "settings.encryptionPasswordWhere":
     "Vous ne saisissez jamais ce mot de passe : BombVault le dérive de l'APP_KEY à chaque appel. La valeur elle-même figure dans votre kit de récupération, sous le mot de passe restic dérivé, et c'est ce qu'il vous faut pour lancer restic à la main sur un dépôt.",
   "settings.encryptionHint":
@@ -2417,7 +2415,6 @@ const fr: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Plannings manqués",
   "settings.catchUpMissed": "Rattraper les sauvegardes manquées après le démarrage",
   "settings.catchUpMissedHint": "Si le serveur était éteint quand un planning devait s'exécuter, cette sauvegarde est lancée environ deux minutes après le démarrage de BombVault.",
-  "settings.watchdogTitle": "Surveillance des sauvegardes en retard",
   "settings.watchdogHint": "Vérifie une fois par jour si une sauvegarde activée est en retard (plus ancienne que le double de son planning) et envoie une notification par incident via les canaux configurés ci-dessus.",
   "settings.watchdogToggle": "Notifier quand des sauvegardes sont en retard",
   "settings.coresLabel": "Threads CPU (0 = tous)",
@@ -3381,7 +3378,6 @@ const fr: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Utilise les canaux configurés dans Notifications. Chaque élément peut le modifier dans Anomalies, Éléments. Les échecs répétés de sauvegardes et de dumps ainsi que les contrôles de restauration planifiés en échec envoient déjà leur propre message, ils ne sont donc pas envoyés une seconde fois.",
   "anomaly.settings.notifyMuted": "Rien n'est envoyé pour le moment : les notifications sont désactivées ou aucun canal n'est configuré.",
   "anomaly.settings.openNotifications": "Ouvrir les réglages des notifications",
-  "anomaly.settings.notifyCrossLink": "Les anomalies qui envoient une notification se règlent dans Intégrité, Anomalies.",
   "anomaly.settings.holdToggle": "Garder les anciennes sauvegardes quand une source rétrécit fortement ou est réécrite",
   "anomaly.settings.holdHint": "Trois constats suspendent la suppression des anciennes sauvegardes : une source soudain presque vide, une source devenue beaucoup plus petite, et une sauvegarde qui a réenregistré la plupart des données, ce à quoi ressemble un rançongiciel. La rétention supprimerait sinon les bonnes sauvegardes anciennes une à une. Tant qu'une telle anomalie est ouverte, les anciennes sauvegardes de ce seul élément (ou de ce dump de base de données ou jeu de données ZFS) sont conservées ; tout le reste est nettoyé comme d'habitude. Accusez réception de l'anomalie ou marquez-la comme attendue pour reprendre.",
   "anomaly.settings.backfill": "Historique lu dans les dépôts : {done} sur {slots}",

@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import { en } from "../lib/i18n";
-import { statusLabel } from "../lib/runDisplay";
 import { Dashboard } from "./Dashboard";
 import { FakeEventSource, installMatchMedia, resetServer, run, server } from "./overview/overview.testsupport";
 import { inApp } from "./overview/overviewApp.testsupport";
@@ -16,8 +15,6 @@ vi.mock("../lib/api", async (importOriginal) => {
   const { stagedApi } = await import("./overview/overview.testsupport");
   return stagedApi(await importOriginal<typeof import("../lib/api")>());
 });
-
-const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as Parameters<typeof statusLabel>[1];
 
 beforeEach(() => {
   resetServer();
@@ -78,7 +75,8 @@ describe("the runs of the history card", () => {
     const rows = card.getAllByRole("listitem");
     expect(rows).toHaveLength(2);
     expect(within(rows[0]).getByRole("button", { name: "immich" })).toBeTruthy();
-    expect(within(rows[0]).getByText(statusLabel("failed", t))).toBeTruthy();
+    expect(within(rows[0]).getByText(en["run.statusFailed"])).toBeTruthy();
+    expect(within(rows[1]).getByText(en["run.statusSuccess"])).toBeTruthy();
     expect(within(rows[0]).getByText(/restic exited 1/).closest("span[class]")!.className).toContain("text-statusFail");
     expect(within(rows[1]).getByText(en["run.kindDbDump"])).toBeTruthy();
   });
@@ -125,6 +123,8 @@ describe("the log of the history card", () => {
 
     expect(card.getByTestId("activity-log")).toBeTruthy();
     expect(card.queryByRole("listitem")).toBeNull();
+    // The day filter belongs to the list and leaves with it.
+    expect(card.queryByRole("combobox", { name: en["run.filterDay"] })).toBeNull();
   });
 
   it("opens for a link to one run and goes back to the list with the link cleared", async () => {

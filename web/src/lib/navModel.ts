@@ -78,7 +78,9 @@ export function moreDestinations(settings: Settings | null, pins: NavPins): NavD
 }
 
 /** onDestination reports whether a path is the destination or a page below it,
- *  which is how a link to it decides that it is the current one. */
+ *  which is how a link to it decides that it is the current one. The welcome
+ *  page of a new install stands in for the overview. */
 export function onDestination(pathname: string, d: NavDestination): boolean {
+  if (pathname === "/welcome") return d.to === "/dashboard";
   return pathname === d.to || pathname.startsWith(`${d.to}/`);
 }

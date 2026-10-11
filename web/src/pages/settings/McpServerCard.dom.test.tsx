@@ -130,9 +130,14 @@ afterEach(() => {
   Reflect.deleteProperty(navigator, "clipboard");
 });
 
-/** The client button of the picker, by the name and kind it announces, once
- *  the first load has drawn the picker. */
-function clientButton(name: string, kind?: string): Promise<HTMLElement> {
+/** Opens the window of clients once the first load has drawn its button. */
+async function openPicker(): Promise<void> {
+  if (!screen.queryByRole("dialog")) fireEvent.click(await screen.findByRole("button", { name: en["mcp.chooseClient"] }));
+}
+
+/** The client button of the picker, by the name and kind it announces. */
+async function clientButton(name: string, kind?: string): Promise<HTMLElement> {
+  await openPicker();
   return screen.findByRole("button", { name: kind ? `${name} ${kind}` : name });
 }
 
@@ -205,8 +210,19 @@ describe("the MCP card without a key", () => {
 });
 
 describe("the client picker", () => {
+  it("waits behind its button and gives way to the client's setup", async () => {
+    await renderCard(payload());
+    await screen.findByRole("button", { name: en["mcp.chooseClient"] });
+    expect(screen.queryByText(en["mcp.groupLocal"])).toBeNull();
+
+    const dialog = await openClient("Claude Code", en["mcp.kindTerminal"]);
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(within(dialog).queryByText(en["mcp.groupLocal"])).toBeNull();
+  });
+
   it("lists the clients on this computer, then the cloud ones, then Other client", async () => {
     await renderCard(payload());
+    await openPicker();
     await screen.findByText(en["mcp.groupLocal"]);
 
     const names = screen
@@ -233,6 +249,7 @@ describe("the client picker", () => {
     expect(bubbles).toHaveLength(1);
     expect(bubbles[0].getAttribute("aria-label")).toBe(en["mcp.connectHint"]);
 
+    await openPicker();
     const cloud = screen.getByText(en["mcp.groupCloud"]);
     expect([...cloud.querySelectorAll("[aria-label]")].map((b) => b.getAttribute("aria-label"))).toEqual([
       en["mcp.cloudWarning"],

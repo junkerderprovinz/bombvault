@@ -16,7 +16,6 @@ import {
   type LabelMode,
 } from "../../../lib/controls";
 import { labelModeChanged } from "../../../lib/useLabelMode";
-import { InfoBubble } from "../../../components/InfoBubble";
 import { Badge } from "../../../components/Badge";
 import { useT, type TranslationKey } from "../../../lib/i18n";
 import { ColorPickerSwatch } from "../../../components/ColorPickerPopover";
@@ -205,17 +204,22 @@ export function LookPage() {
           answer differs: a rail reduced to glyphs narrows the whole page, tabs
           do not, and action buttons are a matter of density. */}
       <Card title={t("settings.labels")} hint={t("settings.labelsHint")} hueIndex={nextHue()}>
-        <div className="flex flex-col gap-4">
+        <Rows>
           {CONTROL_AXES.map((axis) => (
-            <div key={axis} className="flex flex-col gap-1">
-              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                {t(`settings.labels.${axis}` as TranslationKey)}
-                {/* Layout mounts the rail or the bar, never both, so each of
-                    those two rows is dead on the other width and says so.
-                    Buttons and tabs need no hint: they answer everywhere. */}
-                {axis === "bottombar" && <InfoBubble tip={t("settings.axisBottombarHint")} />}
-                {axis === "sidebar" && <InfoBubble tip={t("settings.axisSidebarHint")} />}
-              </span>
+            <SettingRow
+              key={axis}
+              label={t(`settings.labels.${axis}` as TranslationKey)}
+              // Layout mounts the rail or the bar, never both, so each of
+              // those two rows is dead on the other width and says so.
+              // Buttons and tabs need no hint: they answer everywhere.
+              hint={
+                axis === "bottombar"
+                  ? t("settings.axisBottombarHint")
+                  : axis === "sidebar"
+                    ? t("settings.axisSidebarHint")
+                    : undefined
+              }
+            >
               <Selector
                 items={LABEL_MODES.map((m) => ({
                   id: m,
@@ -231,18 +235,11 @@ export function LookPage() {
                   // under the selector instead of only after a reload.
                   labelModeChanged();
                 }}
-                size="lg"
-                equalWidth
-                // Each row starts one colour further along the palette, so two
-                // selectors never repeat the same colour down the page.
-                // Offsetting by the row index rather than by the row count
-                // keeps the rows adjacent in the palette, so the block still
-                // reads as one group rather than unrelated strips. Every other
-                // start in the settings tree comes out of the same table.
+                inline
               />
-            </div>
+            </SettingRow>
           ))}
-        </div>
+        </Rows>
       </Card>
 
       {/* Accent colour and rainbow mode share one card. Turning the rainbow

@@ -337,8 +337,6 @@ const et: Partial<Translations> = {
 
   // Settings
   "settings.title": "Seaded",
-  "settings.encryptionOn": "Lubatud (parool tuletatud APP_KEY-st)",
-  "settings.encryptionOff": "Keelatud (parooli pole)",
   "settings.encryptionPasswordWhere":
     "Seda parooli sa kunagi ei sisesta: BombVault tuletab selle igal kutsel APP_KEY-st. Väärtus ise on sinu taastekomplektis tuletatud restic paroolina ja just seda on vaja, et resticit käsitsi hoidla vastu käivitada.",
   "settings.encryptionHint": "Krüpteerimine määratakse hoidlale selle loomisel, seega otsustab see säte ainult UUE hoidla üle. Juba olemasoleva puhul loeb BombVault režiimi hoidlast endast. Vaata Taastamise lehte. Selle muutmine olemasoleva hoidla suhtes lihtsalt takistab resticul seda avada.",
@@ -2009,7 +2007,6 @@ const et: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Vahelejäänud ajakavad",
   "settings.catchUpMissed": "Tee vahelejäänud varundused pärast käivitumist järele",
   "settings.catchUpMissedHint": "Kui server oli väljas, kui ajakava oli tähtajal, käivita see varundus umbes kaks minutit pärast BombVaulti käivitumist.",
-  "settings.watchdogTitle": "Hilinenud varunduste valvur",
   "settings.watchdogHint": "Kontrollib kord päevas, kas mõni lubatud varundus on hilinenud (vanem kui kaks korda tema ajakava), ja saadab intsidendi kohta ühe teavituse ülalseadistatud kanalite kaudu.",
   "settings.watchdogToggle": "Teavita hilinenud varundustest",
   "settings.coresLabel": "CPU lõimed (0 = kõik)",
@@ -3391,7 +3388,6 @@ const et: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Kasutab jaotises Teavitused seadistatud kanaleid. Iga element saab seda muuta jaotises Kõrvalekalded, Elemendid. Korduvad varundus- ja tõmmisetõrked ning ebaõnnestunud ajastatud taastekontrollid saadavad juba oma sõnumi, seega neid teist korda ei saadeta.",
   "anomaly.settings.notifyMuted": "Praegu ei saadeta midagi: teavitused on välja lülitatud või ühtki kanalit pole seadistatud.",
   "anomaly.settings.openNotifications": "Ava teavituste seaded",
-  "anomaly.settings.notifyCrossLink": "Millised kõrvalekalded teavituse saadavad, määratakse jaotises Terviklikkus, Kõrvalekalded.",
   "anomaly.settings.holdToggle": "Jäta vanad varukoopiad alles, kui allikas järsult kahaneb või kirjutatakse üle",
   "anomaly.settings.holdHint": "Kolm leidu peatavad vanade varukoopiate kustutamise: allikas, mis on äkki peaaegu tühi, allikas, mis on palju väiksemaks jäänud, ja varukoopia, mis salvestas suurema osa andmetest uuesti, nagu näeb välja lunavara. Säilitamine kustutaks muidu head vanemad varukoopiad ükshaaval. Kuni selline kõrvalekalle on avatud, jäävad alles ainult selle üksuse (või selle andmebaasitõmmise või ZFS-andmestiku) vanad varukoopiad; kõik muu puhastatakse nagu tavaliselt. Jätkamiseks kinnita kõrvalekalle või märgi see oodatuks.",
   "anomaly.settings.backfill": "Hoidlatest loetud ajalugu: {done} / {slots}",

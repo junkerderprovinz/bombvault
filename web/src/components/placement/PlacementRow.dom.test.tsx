@@ -87,7 +87,7 @@ describe("PlacementRow", () => {
     renderRow(placementView({ segment: "local", skip: ["*"] }));
     const local = await button("Local");
     expect(local.getAttribute("aria-pressed")).toBe("true");
-    expect(within(screen.getByRole("group", { name: "Placement" })).getAllByRole("button")).toEqual([local]);
+    expect(within(screen.getByRole("group", { name: "Storage locations" })).getAllByRole("button")).toEqual([local]);
     fireEvent.click(local);
     expect(await screen.findByText(en["placement.lastButton"])).toBeTruthy();
     expect(fake.callsTo("setItemPlacement")).toEqual([]);
@@ -105,7 +105,7 @@ describe("PlacementRow", () => {
     renderRow(placementView());
     const local = await button("Local");
     local.focus();
-    const bar = screen.getByRole("group", { name: "Placement" });
+    const bar = screen.getByRole("group", { name: "Storage locations" });
     for (const key of ["ArrowRight", "ArrowRight", "ArrowLeft", "End", "Home"]) fireEvent.keyDown(bar, { key });
     expect(document.activeElement).toBe(local);
     expect(fake.callsTo("setItemPlacement")).toEqual([]);
@@ -115,7 +115,7 @@ describe("PlacementRow", () => {
     renderRow(placementView());
     const b2 = await button("B2");
     b2.focus();
-    fireEvent.keyDown(screen.getByRole("group", { name: "Placement" }), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("group", { name: "Storage locations" }), { key: "Enter" });
     fireEvent.click(b2);
     await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { copies: { skip: ["*"] } }]]));
   });
@@ -148,7 +148,7 @@ describe("PlacementRow", () => {
     fireEvent.click(await button("B2"));
     expect(await screen.findByText("A backup is running. Choose again once it has finished.")).toBeTruthy();
     expect((await button("B2")).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByRole("group", { name: "Placement" }).closest(".glim-shake")).not.toBeNull();
+    expect(screen.getByRole("group", { name: "Storage locations" }).closest(".glim-shake")).not.toBeNull();
   });
 
   it("warns when copies are on and every ticked target is switched off", async () => {
@@ -362,13 +362,13 @@ describe("PlacementRow", () => {
   it("shows only its sentence when the placement cannot be read", async () => {
     renderRow(placementView({ unreadable: true, segment: "", repoKind: "" }));
     expect(await screen.findByText("Placement could not be read")).toBeTruthy();
-    expect(screen.queryByRole("group", { name: "Placement" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "Storage locations" })).toBeNull();
   });
 
   it("shows only its sentence when the domain's options cannot be read", async () => {
     fake.reply("getPlacementOptions", { ok: false, error: "the repository list could not be read" });
     renderRow(placementView());
     expect(await screen.findByText("Placement could not be read")).toBeTruthy();
-    expect(screen.queryByRole("group", { name: "Placement" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "Storage locations" })).toBeNull();
   });
 });

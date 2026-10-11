@@ -1,18 +1,20 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { RetentionNote } from "../../components/anomalies/FindingLine";
+import { HeldMark } from "../../components/anomalies/FindingLine";
+import { ActionMenu, type MenuAction } from "../../components/backups/ActionMenu";
 import { KIND_SCHEDULE_LABEL, entryName } from "../../components/backups/kinds";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { useScheduleSentence } from "../../components/EffectiveScheduleLine";
 import { IconClearSelection, IconEye, IconRefresh } from "../../components/glyphs";
-import { IconBackupNow, IconCheck, IconDownload, IconRecovery } from "../../components/navGlyphs";
+import { IconBackupNow, IconCheck, IconDownload, IconMore, IconRecovery } from "../../components/navGlyphs";
 import { anomalyEntryName, anomalySentence } from "../../lib/anomalies";
 import {
   ApiError,
   ackFailedCopies,
   ackRecoveryKit,
+  ackRuns,
   downloadRecoveryKit,
   replicateOffsite,
   type AnomalyView,
@@ -32,6 +34,7 @@ import { runKindLabel } from "../../lib/runKind";
 import { isOwnReason, RunReasonText } from "../../lib/runReason";
 import { DOMAIN_LABEL, locationRoute } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
+import { useIsDesktop } from "../../lib/useMediaQuery";
 import { useDeclineBackup } from "../../lib/useDeclineBackup";
 import { Card } from "./Card";
 
@@ -61,7 +64,7 @@ function Row({
     <li
       data-testid={testid}
       data-new={newId}
-      className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-carbon-border py-3 first:border-t-0 first:pt-0 last:pb-0"
+      className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-carbon-border py-3 first:border-t-0"
     >
       <span
         aria-hidden="true"
@@ -76,13 +79,38 @@ function Row({
   );
 }
 
-const SUB = "text-sm text-carbon-textSub wrap-break-word";
+// On a phone a row keeps to one line of detail; the rest is a tap away on its page.
+const SUB = "text-sm text-carbon-textSub wrap-break-word max-md:truncate";
 // The height a finger needs, for the actions of a row on a touch screen.
 const TOUCH = "pointer-coarse:[--btn-h:2.75rem]";
 // Two long labels or three actions share a phone's row only cut short, so
 // each keeps the width of its label and the row breaks instead.
 const WRAPPING = `${TOUCH} max-md:basis-auto!`;
 const NAME_LINK = "min-w-0 wrap-anywhere hover:underline";
+
+/** The actions a row needs less often, behind one button. */
+function More({ label, actions }: { label: string; actions: MenuAction[] }) {
+  const { t } = useT();
+  const anchor = useRef<HTMLSpanElement>(null);
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <span ref={anchor} className="flex">
+        <Button
+          className={WRAPPING}
+          label={t("nav.more")}
+          labelKey="nav.more"
+          glyph={<IconMore />}
+          ariaExpanded={open}
+          onClick={() => setOpen((was) => !was)}
+        />
+      </span>
+      {open && anchor.current && (
+        <ActionMenu label={label} actions={actions} place={{ anchor: anchor.current }} onClose={() => setOpen(false)} />
+      )}
+    </>
+  );
+}
 
 function FailedRunRow({
   run,
@@ -98,6 +126,19 @@ function FailedRunRow({
   const { push } = useToast();
   const [starting, setStarting] = useState(false);
   const name = runTargetText(t, run);
+  const repeatable = !!item && REPEATABLE.has(run.kind);
+
+  function resolve() {
+    ackRuns({ ids: [run.id] })
+      .then((res) => {
+        if (res.ok) window.dispatchEvent(new Event(ATTENTION_CHANGED_EVENT));
+        else push(t("common.saveFailed"), "fail");
+      })
+      .catch((err) => push(err instanceof Error ? err.message : t("common.saveFailed"), "fail"));
+  }
+
+  const viewErrors: MenuAction = { id: "errors", label: t("overview.needs.viewErrors"), glyph: <IconEye />, onSelect: onErrors };
+  const resolved: MenuAction = { id: "resolve", label: t("errorPanel.resolve"), glyph: <IconCheck />, onSelect: resolve };
 
   async function retry(entry: BackupItem) {
     setStarting(true);
@@ -131,9 +172,9 @@ function FailedRunRow({
       }
       actions={
         <>
-          {item && REPEATABLE.has(run.kind) && (
+          {repeatable ? (
             <Button
-              className={TOUCH}
+              className={WRAPPING}
               label={t("breakdown.retry")}
               labelKey="breakdown.retry"
               glyph={<IconRefresh />}
@@ -141,14 +182,16 @@ function FailedRunRow({
               disabled={starting}
               busy={starting}
             />
+          ) : (
+            <Button
+              className={WRAPPING}
+              label={t("overview.needs.viewErrors")}
+              labelKey="overview.needs.viewErrors"
+              glyph={<IconEye />}
+              onClick={onErrors}
+            />
           )}
-          <Button
-            className={TOUCH}
-            label={t("overview.needs.viewErrors")}
-            labelKey="overview.needs.viewErrors"
-            glyph={<IconEye />}
-            onClick={onErrors}
-          />
+          <More label={name} actions={repeatable ? [resolved, viewErrors] : [resolved]} />
         </>
       }
     >
@@ -191,6 +234,7 @@ function UnprotectedRow({ item, t, onChanged }: { item: BackupItem; t: T; onChan
           <Link to={entryTarget(item)} className={NAME_LINK}>
             {entryName(item, t)}
           </Link>
+          {item.lastBackup === 0 && <Badge tone="neutral">{t("overview.needs.new")}</Badge>}
           <Badge tone="warn">{t("backups.status.notProtected")}</Badge>
         </>
       }
@@ -215,14 +259,18 @@ function UnprotectedRow({ item, t, onChanged }: { item: BackupItem; t: T; onChan
               onClick={() => navigate(entryTarget(item))}
             />
           )}
-          <Button
-            className={WRAPPING}
-            label={t("backups.decline")}
-            labelKey="backups.decline"
-            glyph={<IconClearSelection />}
-            onClick={() => void decline(item, entryName(item, t))}
-            disabled={saving || declining}
-            busy={declining}
+          <More
+            label={entryName(item, t)}
+            actions={[
+              {
+                id: "decline",
+                label: t("backups.decline"),
+                glyph: <IconClearSelection />,
+                onSelect: () => {
+                  if (!saving && !declining) void decline(item, entryName(item, t));
+                },
+              },
+            ]}
           />
         </>
       }
@@ -282,28 +330,18 @@ function FailedCopyRow({ need, t, lang }: { need: Need & { is: "failedCopy" }; t
         <>
           <Button
             className={WRAPPING}
-            label={t("breakdown.retry")}
-            labelKey="breakdown.retry"
-            glyph={<IconRefresh />}
-            onClick={() => void retry()}
-            disabled={busy !== null}
-            busy={busy === "retry"}
-          />
-          <Button
-            className={WRAPPING}
             label={t("zfs.replica.view")}
             labelKey="zfs.replica.view"
             glyph={<IconEye />}
             onClick={() => navigate(route)}
+            busy={busy !== null}
           />
-          <Button
-            className={WRAPPING}
-            label={t("errorPanel.resolve")}
-            labelKey="errorPanel.resolve"
-            glyph={<IconCheck />}
-            onClick={() => void resolve()}
-            disabled={busy !== null}
-            busy={busy === "resolve"}
+          <More
+            label={t("overview.needs.copyFailed")}
+            actions={[
+              { id: "retry", label: t("breakdown.retry"), glyph: <IconRefresh />, onSelect: () => void retry() },
+              { id: "resolve", label: t("errorPanel.resolve"), glyph: <IconCheck />, onSelect: () => void resolve() },
+            ]}
           />
         </>
       }
@@ -330,9 +368,12 @@ function AnomalyRow({ finding, t, lang }: { finding: AnomalyView; t: T; lang: st
       testid="need-anomaly"
       tone={finding.severity === "critical" ? "fail" : "warn"}
       title={
-        <Link to={target} className={NAME_LINK}>
-          {t("overview.needs.anomalyAt").replace("{name}", anomalyEntryName(finding, t))}
-        </Link>
+        <>
+          <Link to={target} className={NAME_LINK}>
+            {t("overview.needs.anomalyAt").replace("{name}", anomalyEntryName(finding, t))}
+          </Link>
+          {finding.retentionHeld && <HeldMark tip={t("anomaly.retentionPaused")} />}
+        </>
       }
       actions={
         <Button
@@ -345,7 +386,6 @@ function AnomalyRow({ finding, t, lang }: { finding: AnomalyView; t: T; lang: st
       }
     >
       <p className={SUB}>{anomalySentence(finding, t, lang)}</p>
-      {finding.retentionHeld && <RetentionNote t={t} />}
     </Row>
   );
 }
@@ -374,6 +414,7 @@ function KeyLockedRow({ t }: { t: T }) {
 
 function RecoveryKitRow({ t }: { t: T }) {
   const { push } = useToast();
+  const desktop = useIsDesktop();
   const [storing, setStoring] = useState(false);
   // What the server answered instead of the kit, such as its refusal while
   // no login password is set.
@@ -405,15 +446,22 @@ function RecoveryKitRow({ t }: { t: T }) {
             glyph={<IconDownload />}
             onClick={() => void downloadRecoveryKit().then(setRefused)}
           />
-          <Button
-            className={TOUCH}
-            label={t("recovery.stored")}
-            labelKey="recovery.stored"
-            glyph={<IconCheck />}
-            onClick={stored}
-            disabled={storing}
-            busy={storing}
-          />
+          {desktop ? (
+            <Button
+              className={TOUCH}
+              label={t("recovery.stored")}
+              labelKey="recovery.stored"
+              glyph={<IconCheck />}
+              onClick={stored}
+              disabled={storing}
+              busy={storing}
+            />
+          ) : (
+            <More
+              label={t("recovery.nagTitle")}
+              actions={[{ id: "stored", label: t("recovery.stored"), glyph: <IconCheck />, onSelect: stored }]}
+            />
+          )}
         </>
       }
     >

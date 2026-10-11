@@ -337,8 +337,6 @@ const is: Partial<Translations> = {
 
   // Settings
   "settings.title": "Stillingar",
-  "settings.encryptionOn": "Virkt (lykilorð fengið úr APP_KEY)",
-  "settings.encryptionOff": "Óvirkt (ekkert lykilorð)",
   "settings.encryptionPasswordWhere":
     "Þetta lykilorð slærð þú aldrei inn: BombVault leiðir það af APP_KEY í hvert sinn. Gildið sjálft er í endurheimtarpakkanum þínum, skráð sem leitt restic-lykilorð, og það er einmitt það sem þarf til að keyra restic handvirkt á safn.",
   "settings.encryptionHint": "Dulkóðunin er ákveðin fyrir hvert safn þegar það er búið til, svo þessi stilling ræður aðeins hvernig NÝTT safn verður til. Fyrir safn sem er þegar til les BombVault haminn beint af safninu. Sjá Endurheimt-síðuna. Að breyta þessu gagnvart safni sem er til gerir aðeins að verkum að restic getur ekki opnað það.",
@@ -2009,7 +2007,6 @@ const is: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Misst af tímaáætlunum",
   "settings.catchUpMissed": "Vinna upp afrit sem misfórust eftir ræsingu",
   "settings.catchUpMissedHint": "Ef netþjónninn var slökktur þegar tímaáætlun var á gjalddaga, keyrðu það afrit um það bil tveimur mínútum eftir að BombVault ræsist.",
-  "settings.watchdogTitle": "Eftirlit með afritum sem eru á gjalddaga",
   "settings.watchdogHint": "Athugar einu sinni á dag hvort virkjað afrit sé komið á gjalddaga (eldra en tvöfalt lengd tímaáætlunar þess) og sendir eina tilkynningu fyrir hvert tilvik í gegnum leiðirnar sem eru stilltar hér að ofan.",
   "settings.watchdogToggle": "Tilkynna þegar afrit eru á gjalddaga",
   "settings.coresLabel": "CPU þræðir (0 = allir)",
@@ -3391,7 +3388,6 @@ const is: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Notar rásirnar sem eru stilltar undir Tilkynningar. Hver eining getur breytt þessu undir Frávik, Einingar. Endurteknar bilanir í afritum og gagnagrunnsafritum og misheppnaðar áætlaðar endurheimtarathuganir senda nú þegar eigin skilaboð og eru því ekki sendar í annað sinn.",
   "anomaly.settings.notifyMuted": "Ekkert er sent eins og er: tilkynningar eru slökktar eða engin rás er stillt.",
   "anomaly.settings.openNotifications": "Opna stillingar tilkynninga",
-  "anomaly.settings.notifyCrossLink": "Hvaða frávik senda tilkynningu er stillt undir Heilleiki, Frávik.",
   "anomaly.settings.holdToggle": "Geyma gömul afrit þegar uppspretta minnkar mikið eða er endurskrifuð",
   "anomaly.settings.holdHint": "Þrjár niðurstöður stöðva eyðingu gamalla afrita: uppspretta sem er skyndilega nær tóm, uppspretta sem hefur minnkað mikið og afrit sem vistaði meirihluta gagnanna aftur, eins og gíslatökuforrit lítur út. Annars myndi varðveislan eyða góðu eldri afritunum einu í einu. Á meðan slíkt frávik er opið eru gömul afrit einungis þeirrar einingar (eða þess gagnagrunnsafrits eða ZFS gagnasafns) geymd; allt annað er hreinsað eins og venjulega. Kvittaðu fyrir frávikið eða merktu það sem væntanlegt til að halda áfram.",
   "anomaly.settings.backfill": "Saga lesin úr geymslum: {done} af {slots}",

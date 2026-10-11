@@ -272,8 +272,6 @@ const he: Partial<Translations> = {
 
   // Settings
   "settings.title": "הגדרות",
-  "settings.encryptionOn": "מופעל (סיסמה נגזרת מ-APP_KEY)",
-  "settings.encryptionOff": "מושבת (ללא סיסמה)",
   "settings.encryptionPasswordWhere":
     "את הסיסמה הזו אינך מקליד לעולם: BombVault גוזר אותה מה-APP_KEY בכל קריאה. הערך עצמו נמצא בערכת השחזור שלך, כסיסמת restic הנגזרת, וזה בדיוק מה שדרוש כדי להריץ restic ידנית מול מאגר.",
   "settings.encryptionHint":
@@ -2417,7 +2415,6 @@ const he: Partial<Translations> = {
   "settings.missedSchedulesTitle": "תזמונים שהוחמצו",
   "settings.catchUpMissed": "השלם גיבויים שהוחמצו לאחר ההפעלה",
   "settings.catchUpMissedHint": "אם השרת היה כבוי כשתזמון הגיע, הגיבוי הזה ירוץ כשתי דקות לאחר עליית BombVault.",
-  "settings.watchdogTitle": "שומר גיבויים באיחור",
   "settings.watchdogHint": "בודק פעם ביום אם גיבוי פעיל כלשהו באיחור (ישן מכפליים מהתזמון שלו) ושולח התראה אחת לכל אירוע דרך הערוצים שהוגדרו למעלה.",
   "settings.watchdogToggle": "התראה כשגיבויים באיחור",
   "settings.coresLabel": "תהליכוני מעבד (0 = הכול)",
@@ -3381,7 +3378,6 @@ const he: Partial<Translations> = {
   "anomaly.settings.notifyHint": "משתמש בערוצים שהוגדרו תחת התראות. כל פריט יכול לשנות זאת תחת חריגות, פריטים. כשלים חוזרים של גיבויים ותמונות מסד נתונים ובדיקות שחזור מתוזמנות שנכשלו כבר שולחים הודעה משלהם, ולכן לא נשלחים פעם שנייה.",
   "anomaly.settings.notifyMuted": "כרגע לא נשלח דבר: ההתראות כבויות או שלא הוגדר ערוץ.",
   "anomaly.settings.openNotifications": "לפתוח את הגדרות ההתראות",
-  "anomaly.settings.notifyCrossLink": "אילו חריגות שולחות התראה נקבע תחת שלמות, חריגות.",
   "anomaly.settings.holdToggle": "לשמור גיבויים ישנים כשמקור מתכווץ בחדות או נכתב מחדש",
   "anomaly.settings.holdHint": "שלושה ממצאים עוצרים את מחיקת הגיבויים הישנים: מקור שפתאום כמעט ריק, מקור שהצטמק מאוד, וגיבוי ששמר מחדש את רוב הנתונים, כפי שנראית תוכנת כופר. אחרת מדיניות השמירה הייתה מוחקת את הגיבויים הישנים והתקינים אחד אחד. כל עוד חריגה כזו פתוחה, נשמרים הגיבויים הישנים של הפריט הזה בלבד (או של תמונת מסד הנתונים הזו או של מערך הנתונים ZFS הזה); כל השאר מנוקה כרגיל. אשר את החריגה או סמן אותה כצפויה כדי להמשיך.",
   "anomaly.settings.backfill": "היסטוריה שנקראה מהמאגרים: {done} מתוך {slots}",

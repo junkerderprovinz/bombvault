@@ -76,7 +76,7 @@ export function PageSentence({ text, page, to }: { text: TranslationKey; page: T
   return (
     <p className="text-xs text-carbon-textMuted">
       {before}
-      <Link to={to} className="text-accentText underline-offset-2 hover:underline">
+      <Link to={to} className="underline decoration-carbon-border underline-offset-[3px] hover:text-carbon-text">
         {t(page)}
       </Link>
       {after}

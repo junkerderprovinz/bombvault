@@ -258,13 +258,3 @@ export function HeldMark({ tip }: { tip: string }) {
     </>
   );
 }
-
-/** Old backups of the series stay until the finding is settled. */
-export function RetentionNote({ t }: { t: TranslateAnomaly }) {
-  return (
-    <p className="inline-flex items-center gap-1 self-start text-xs text-statusWarn">
-      {t("anomaly.retentionKept")}
-      <InfoBubble tip={t("anomaly.retentionPaused")} />
-    </p>
-  );
-}

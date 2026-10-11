@@ -272,8 +272,6 @@ const zh: Partial<Translations> = {
 
   // Settings
   "settings.title": "设置",
-  "settings.encryptionOn": "已启用（密码来自 APP_KEY）",
-  "settings.encryptionOff": "已禁用（无密码）",
   "settings.encryptionPasswordWhere":
     "这个密码你从不需要输入：BombVault 每次调用时都从 APP_KEY 派生它。值本身写在你的恢复包里，标为派生的 restic 密码，手动对仓库运行 restic 时需要的正是它。",
   "settings.encryptionHint":
@@ -2408,7 +2406,6 @@ const zh: Partial<Translations> = {
   "settings.missedSchedulesTitle": "错过的计划",
   "settings.catchUpMissed": "启动后补做错过的备份",
   "settings.catchUpMissedHint": "如果计划到期时服务器处于关机状态，该备份会在 BombVault 启动约两分钟后执行。",
-  "settings.watchdogTitle": "备份逾期监控",
   "settings.watchdogHint": "每天检查一次是否有已启用的备份逾期（超过其计划间隔的两倍），并通过上方配置的渠道为每次事件发送一条通知。",
   "settings.watchdogToggle": "备份逾期时通知",
   "settings.coresLabel": "CPU 线程数 (0 = 全部)",
@@ -3372,7 +3369,6 @@ const zh: Partial<Translations> = {
   "anomaly.settings.notifyHint": "使用在“通知”中设置的渠道。每个对象都可以在“异常”的“对象”中更改。反复失败的备份和转储以及失败的计划恢复检查已经会发送自己的消息，因此不会再发送第二次。",
   "anomaly.settings.notifyMuted": "目前不会发送任何内容：通知已关闭，或尚未设置渠道。",
   "anomaly.settings.openNotifications": "打开通知设置",
-  "anomaly.settings.notifyCrossLink": "哪些异常会发送通知，在“完整性”的“异常”中设置。",
   "anomaly.settings.holdToggle": "当源急剧缩小或被重写时保留旧备份",
   "anomaly.settings.holdHint": "三种发现会暂停删除旧备份：突然几乎为空的源、变得小得多的源，以及把大部分数据重新存储了一遍的备份，这正是勒索软件的样子。否则保留策略会一次一个地删掉完好的旧备份。只要这样的异常未关闭，就只保留该对象（或该数据库转储、该 ZFS 数据集）的旧备份；其余一切照常清理。确认此异常或将其标记为预期之内即可恢复删除。",
   "anomaly.settings.backfill": "已从存储库读取的历史：{done}/{slots}",

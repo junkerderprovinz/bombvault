@@ -337,8 +337,6 @@ const lt: Partial<Translations> = {
 
   // Settings
   "settings.title": "Nustatymai",
-  "settings.encryptionOn": "Įjungta (slaptažodis gaunamas iš APP_KEY)",
-  "settings.encryptionOff": "Išjungta (be slaptažodžio)",
   "settings.encryptionPasswordWhere":
     "Šio slaptažodžio niekada nerašote: BombVault jį išveda iš APP_KEY kiekvieno iškvietimo metu. Pati reikšmė yra jūsų atkūrimo rinkinyje kaip išvestas restic slaptažodis, ir būtent jo reikia norint paleisti restic rankiniu būdu prieš saugyklą.",
   "settings.encryptionHint": "Šifravimas saugyklai nustatomas ją kuriant, todėl šis nustatymas lemia tik NAUJOS saugyklos sukūrimą. Jau esamai saugyklai BombVault režimą nuskaito iš pačios saugyklos. Žr. Atkūrimo puslapį. Pakeitus tai esamos saugyklos atžvilgiu, restic tiesiog nebegalės jos atverti.",
@@ -2009,7 +2007,6 @@ const lt: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Praleisti tvarkaraščiai",
   "settings.catchUpMissed": "Atlikti praleistas atsargines kopijas po paleidimo",
   "settings.catchUpMissedHint": "Jei serveris buvo išjungtas, kai tvarkaraščio terminas buvo suėjęs, vykdykite tą atsarginę kopiją maždaug po dviejų minučių nuo BombVault paleidimo.",
-  "settings.watchdogTitle": "Vėluojančių atsarginių kopijų sergėtojas",
   "settings.watchdogHint": "Kartą per dieną tikrina, ar kuri nors įjungta atsarginė kopija vėluoja (senesnė nei du kartus jos tvarkaraščio laikas), ir siunčia po vieną pranešimą kiekvienam atvejui aukščiau sukonfigūruotais kanalais.",
   "settings.watchdogToggle": "Pranešti, kai atsarginės kopijos vėluoja",
   "settings.coresLabel": "CPU gijos (0 = visos)",
@@ -3391,7 +3388,6 @@ const lt: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Naudoja kanalus, nustatytus skiltyje Pranešimai. Kiekvienas elementas gali tai pakeisti skiltyje Anomalijos, Elementai. Pasikartojančios kopijų ir iškrovų nesėkmės bei nepavykusios suplanuotos atkūrimo patikros jau siunčia savo pranešimą, todėl antrą kartą nesiunčiamos.",
   "anomaly.settings.notifyMuted": "Šiuo metu nieko nesiunčiama: pranešimai išjungti arba nenustatytas joks kanalas.",
   "anomaly.settings.openNotifications": "Atidaryti pranešimų nustatymus",
-  "anomaly.settings.notifyCrossLink": "Kurios anomalijos siunčia pranešimą, nustatoma skiltyje Vientisumas, Anomalijos.",
   "anomaly.settings.holdToggle": "Išsaugoti senas kopijas, kai šaltinis smarkiai sumažėja arba yra perrašomas",
   "anomaly.settings.holdHint": "Trys radiniai sustabdo senų kopijų trynimą: šaltinis, kuris staiga beveik tuščias, šaltinis, kuris gerokai sumažėjo, ir kopija, kuri iš naujo išsaugojo daugumą duomenų, kaip atrodo išpirkos reikalaujanti programa. Kitaip saugojimo taisyklė trintų geras senesnes kopijas po vieną. Kol tokia anomalija atvira, išsaugomos tik to elemento (arba tos duomenų bazės iškrovos ar ZFS duomenų rinkinio) senos kopijos; visa kita valoma kaip įprasta. Kad tęstų, patvirtink anomaliją arba pažymėk ją kaip laukiamą.",
   "anomaly.settings.backfill": "Istorija, nuskaityta iš saugyklų: {done} iš {slots}",

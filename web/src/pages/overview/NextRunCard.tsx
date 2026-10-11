@@ -1,10 +1,9 @@
 import type { CSSProperties } from "react";
 import type { DomainStatus, ScheduleNext } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
-import type { useT } from "../../lib/i18n";
-import { formatDuration, formatTs } from "../../lib/reltime";
+import { useT } from "../../lib/i18n";
+import { formatDuration, formatRecent } from "../../lib/reltime";
 import { MobileSectionLabel } from "../../components/mobile/MobileSectionLabel";
-import { IconBackupNow } from "../../components/Sidebar";
 import { SummaryCell } from "./SummaryCell";
 
 /**
@@ -86,6 +85,7 @@ export function NextRunCard({
   // is sanctioned: soft tint + accent-derived text on the phone face's one
   // icon and the countdown chip (accentSoft backdrop + accentText chip),
   // never a solid accent fill.
+  const { lang } = useT();
   const { at, ms } = nextBackupFireAt(scheduleNext, domains);
   const countdown = Number.isFinite(ms)
     ? t("dashboard.summaryNextIn").replace(
@@ -103,19 +103,11 @@ export function NextRunCard({
             <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
           ) : at ? (
             <>
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card bg-accentSoft text-accentText">
-                <IconBackupNow />
-              </span>
               <span className="min-w-0 flex-1">
-                {/* Schedule name (14px ≈ text-sm / 600) + when · what meta (12px).
-                    "what" is the run kind the scheduler entry names; the card
-                    labels a backup fire, so run.kindBackup is the honest kind. */}
-                <span className="block truncate text-sm font-semibold text-carbon-text">
-                  {scheduleDomainLabel(t, at.domain)}
+                <span className="block truncate text-base font-semibold tabular-nums text-carbon-text first-letter:uppercase">
+                  {formatRecent(Math.round(ms / 1000), lang)}
                 </span>
-                <span className="mt-0.5 block truncate text-xs text-carbon-textMuted">
-                  {t("run.kindBackup")} · {formatTs(Math.round(ms / 1000))}
-                </span>
+                <span className="mt-0.5 block truncate text-xs text-carbon-textMuted">{scheduleDomainLabel(t, at.domain)}</span>
               </span>
               {countdown && (
                 <span className="shrink-0 rounded-pill bg-accentSoft px-2 py-1 text-xs font-semibold text-accentText">

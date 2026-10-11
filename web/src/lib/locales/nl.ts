@@ -272,8 +272,6 @@ const nl: Partial<Translations> = {
 
   // Settings
   "settings.title": "Instellingen",
-  "settings.encryptionOn": "Ingeschakeld (wachtwoord afgeleid van APP_KEY)",
-  "settings.encryptionOff": "Uitgeschakeld (geen wachtwoord)",
   "settings.encryptionPasswordWhere":
     "Dat wachtwoord typ je nooit: BombVault leidt het bij elke aanroep af uit de APP_KEY. De waarde zelf staat in je herstelpakket, als het afgeleide restic-wachtwoord, en dat heb je nodig om restic met de hand op een repository te draaien.",
   "settings.encryptionHint": "Versleuteling ligt per repository vast bij het aanmaken, dus deze instelling bepaalt alleen hoe een NIEUWE repository wordt gemaakt. Voor een bestaande leest BombVault de modus van de repository zelf. Zie de pagina Herstel. Dit wijzigen bij een bestaande repository zorgt er alleen voor dat restic hem niet meer kan openen.",
@@ -2416,7 +2414,6 @@ const nl: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Gemiste schema's",
   "settings.catchUpMissed": "Gemiste back-ups na de start inhalen",
   "settings.catchUpMissedHint": "Stond de server uit toen een schema moest draaien, dan wordt die back-up ongeveer twee minuten na de start van BombVault alsnog uitgevoerd.",
-  "settings.watchdogTitle": "Waakhond voor achterstallige back-ups",
   "settings.watchdogHint": "Controleert eenmaal per dag of een ingeschakelde back-up achterstallig is (ouder dan tweemaal zijn schema) en stuurt per incident een melding via de hierboven geconfigureerde kanalen.",
   "settings.watchdogToggle": "Melden wanneer back-ups achterstallig zijn",
   "settings.coresLabel": "CPU-threads (0 = alle)",
@@ -3380,7 +3377,6 @@ const nl: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Gebruikt de kanalen die onder Meldingen zijn ingesteld. Elk item kan dit wijzigen onder Anomalieën, Items. Herhaaldelijk mislukte back-ups en dumps en mislukte geplande herstelcontroles sturen al een eigen bericht en worden daarom niet nog eens gestuurd.",
   "anomaly.settings.notifyMuted": "Er wordt nu niets verstuurd: meldingen staan uit of er is geen kanaal ingesteld.",
   "anomaly.settings.openNotifications": "Meldingsinstellingen openen",
-  "anomaly.settings.notifyCrossLink": "Welke anomalieën een melding sturen, stel je in onder Integriteit, Anomalieën.",
   "anomaly.settings.holdToggle": "Oude back-ups bewaren als een bron sterk krimpt of wordt herschreven",
   "anomaly.settings.holdHint": "Drie bevindingen zetten het verwijderen van oude back-ups stil: een bron die plotseling bijna leeg is, een die veel kleiner is geworden, en een back-up die de meeste gegevens opnieuw heeft opgeslagen, zoals ransomware eruitziet. Anders zou de bewaring de goede oudere back-ups één voor één verwijderen. Zolang zo'n anomalie open is, blijven de oude back-ups van alleen dat item (of die databasedump of die ZFS-dataset) bewaard; al het andere wordt zoals gewoonlijk opgeschoond. Bevestig de anomalie of markeer hem als verwacht om verder te gaan.",
   "anomaly.settings.backfill": "Geschiedenis gelezen uit repositories: {done} van {slots}",

@@ -337,8 +337,6 @@ const eu: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ezarpenak",
-  "settings.encryptionOn": "Gaituta (APP_KEY-tik eratorritako pasahitza)",
-  "settings.encryptionOff": "Desgaituta (pasahitzik gabe)",
   "settings.encryptionPasswordWhere":
     "Pasahitz hori ez duzu inoiz idazten: BombVault-ek APP_KEY-tik eratortzen du dei bakoitzean. Balioa bera zure berreskurapen-kitean dago, eratorritako restic pasahitz gisa, eta hori behar duzu restic eskuz exekutatzeko biltegi baten aurka.",
   "settings.encryptionHint": "Zifratzea biltegi bakoitzeko finkatzen da sortzean, beraz ezarpen honek biltegi BERRI bat nola sortzen den baino ez du erabakitzen. Dagoeneko dagoen batentzat, BombVault-ek modua biltegitik bertatik irakurtzen du. Ikus Berrezarpen orria. Hau dagoen biltegi baten aurka aldatzeak restic-ek ireki ez dezan eragiten du, besterik ez.",
@@ -2009,7 +2007,6 @@ const eu: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Galdutako egutegiak",
   "settings.catchUpMissed": "Berreskuratu galdutako babeskopiak abio ondoren",
   "settings.catchUpMissedHint": "Zerbitzaria itzalita bazegoen egutegi bat noiz zen orduan, exekutatu babeskopia hori BombVault abiarazi eta bi minutu inguru geroago.",
-  "settings.watchdogTitle": "Atzeratutako babeskopien zaindaria",
   "settings.watchdogHint": "Egunero behin egiaztatzen du gaitutako babeskopiaren bat atzeratuta dagoen (bere egutegia baino bi bider zaharragoa), eta gorabehera bakoitzeko jakinarazpen bat bidaltzen du goian konfiguratutako kanalen bidez.",
   "settings.watchdogToggle": "Jakinarazi babeskopiak atzeratuta daudenean",
   "settings.coresLabel": "CPU hariak (0 = denak)",
@@ -3391,7 +3388,6 @@ const eu: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Jakinarazpenak atalean konfiguratutako kanalak erabiltzen ditu. Elementu bakoitzak alda dezake Anomaliak, Elementuak atalean. Babeskopien eta iraulketen hutsegite errepikatuek eta programatutako leheneratze-egiaztapen hutsek beren mezua bidaltzen dute jada, beraz ez dira bigarren aldiz bidaltzen.",
   "anomaly.settings.notifyMuted": "Oraingoz ez da ezer bidaltzen: jakinarazpenak itzalita daude edo ez dago kanalik konfiguratuta.",
   "anomaly.settings.openNotifications": "Ireki jakinarazpenen ezarpenak",
-  "anomaly.settings.notifyCrossLink": "Zein anomaliak bidaltzen duten jakinarazpena Osotasuna, Anomaliak atalean ezartzen da.",
   "anomaly.settings.holdToggle": "Gorde babeskopia zaharrak iturburu bat asko txikitzen denean edo berridazten denean",
   "anomaly.settings.holdHint": "Hiru aurkikuntzak geldiarazten dute babeskopia zaharren ezabatzea: bat-batean ia hutsik dagoen iturburua, askoz txikiagoa bihurtu dena, eta datu gehienak berriro gorde dituen babeskopia, ransomwarearen itxura duena. Atxikipenak bestela babeskopia zahar onak banan-banan ezabatuko lituzke. Horrelako anomalia bat irekita dagoen bitartean, elementu horren (edo datu-base iraulketa edo ZFS datu-multzo horren) babeskopia zaharrak soilik gordetzen dira; gainerakoa ohi bezala garbitzen da. Berretsi anomalia edo markatu espero zena bezala jarraitzeko.",
   "anomaly.settings.backfill": "Biltegietatik irakurritako historia: {done} / {slots}",

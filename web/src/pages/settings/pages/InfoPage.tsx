@@ -34,7 +34,7 @@ const REFUSED: Record<UpdateCheckRefusal, TranslationKey> = {
  *  none and shows the number alone. */
 function Version({ version, repo }: { version: string; repo?: string }) {
   const href = repo ? releaseUrl(repo, version) : "";
-  const number = "font-mono text-sm tabular-nums";
+  const number = "text-sm tabular-nums";
   if (!href) return <span className={`${number} text-carbon-textSub`}>{version}</span>;
   return (
     // Under a coarse pointer the padding widens the target and the negative

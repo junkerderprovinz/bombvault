@@ -272,8 +272,6 @@ const es: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ajustes",
-  "settings.encryptionOn": "Habilitado (contraseña derivada de APP_KEY)",
-  "settings.encryptionOff": "Deshabilitado (sin contraseña)",
   "settings.encryptionPasswordWhere":
     "Nunca escribes esa contraseña: BombVault la deriva de la APP_KEY en cada llamada. El valor está en tu kit de recuperación, como la contraseña restic derivada, y es lo que necesitas para ejecutar restic a mano contra un repositorio.",
   "settings.encryptionHint":
@@ -2415,7 +2413,6 @@ const es: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Programaciones perdidas",
   "settings.catchUpMissed": "Recuperar copias perdidas tras el arranque",
   "settings.catchUpMissedHint": "Si el servidor estaba apagado cuando tocaba una programación, esa copia se ejecuta unos dos minutos después de que arranque BombVault.",
-  "settings.watchdogTitle": "Vigilancia de copias atrasadas",
   "settings.watchdogHint": "Comprueba una vez al día si alguna copia activada está atrasada (más antigua que el doble de su programación) y envía una notificación por incidente a través de los canales configurados arriba.",
   "settings.watchdogToggle": "Notificar cuando haya copias atrasadas",
   "settings.coresLabel": "Hilos de CPU (0 = todos)",
@@ -3379,7 +3376,6 @@ const es: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Usa los canales configurados en Notificaciones. Cada elemento puede cambiarlo en Anomalías, Elementos. Los fallos repetidos de copias y volcados y las comprobaciones de restauración programadas fallidas ya envían su propio mensaje, así que no se envían una segunda vez.",
   "anomaly.settings.notifyMuted": "Ahora mismo no se envía nada: las notificaciones están desactivadas o no hay ningún canal configurado.",
   "anomaly.settings.openNotifications": "Abrir los ajustes de notificaciones",
-  "anomaly.settings.notifyCrossLink": "Qué anomalías envían una notificación se ajusta en Integridad, Anomalías.",
   "anomaly.settings.holdToggle": "Conservar las copias antiguas cuando un origen se reduce mucho o se reescribe",
   "anomaly.settings.holdHint": "Tres hallazgos detienen el borrado de copias antiguas: un origen que de repente está casi vacío, uno que se ha vuelto mucho más pequeño y una copia que ha vuelto a guardar la mayor parte de los datos, que es el aspecto de un ransomware. La retención borraría las buenas copias antiguas de una en una. Mientras una anomalía así esté abierta, se conservan las copias antiguas solo de ese elemento (o de ese volcado de base de datos o conjunto de datos ZFS); todo lo demás se limpia como siempre. Confirma la anomalía o márcala como esperada para reanudarlo.",
   "anomaly.settings.backfill": "Historial leído de los repositorios: {done} de {slots}",

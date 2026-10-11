@@ -337,8 +337,6 @@ const ca: Partial<Translations> = {
 
   // Settings
   "settings.title": "Configuració",
-  "settings.encryptionOn": "Activat (contrasenya derivada de APP_KEY)",
-  "settings.encryptionOff": "Desactivat (sense contrasenya)",
   "settings.encryptionPasswordWhere":
     "Aquesta contrasenya no la escrius mai: BombVault la deriva de l'APP_KEY a cada crida. El valor és al teu kit de recuperació, com a contrasenya restic derivada, i és el que necessites per executar restic a mà contra un dipòsit.",
   "settings.encryptionHint": "El xifratge es fixa per repositori quan es crea, així que aquest paràmetre només decideix com es fa un repositori NOU. Per a un que ja existeix, BombVault llegeix el mode del repositori mateix. Mira la pàgina de Restauració. Canviar-ho davant d'un repositori existent només impedeix que restic l'obri.",
@@ -2009,7 +2007,6 @@ const ca: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Horaris perduts",
   "settings.catchUpMissed": "Recupera còpies perdudes després d'engegar",
   "settings.catchUpMissedHint": "Si el servidor estava apagat quan un horari havia d'executar-se, fes aquesta còpia uns dos minuts després d'engegar BombVault.",
-  "settings.watchdogTitle": "Vigilant de còpies vençudes",
   "settings.watchdogHint": "Comprova un cop al dia si alguna còpia activada està vençuda (més antiga que el doble del seu horari) i envia una notificació per incident mitjançant els canals configurats a dalt.",
   "settings.watchdogToggle": "Notifica quan les còpies estiguin vençudes",
   "settings.coresLabel": "Fils de CPU (0 = tots)",
@@ -3391,7 +3388,6 @@ const ca: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Fa servir els canals configurats a Notificacions. Cada element ho pot canviar a Anomalies, Elements. Els errors repetits de còpies i bolcats i les comprovacions de restauració programades fallides ja envien el seu propi missatge, així que no s'envien una segona vegada.",
   "anomaly.settings.notifyMuted": "Ara mateix no s'envia res: les notificacions estan desactivades o no hi ha cap canal configurat.",
   "anomaly.settings.openNotifications": "Obre la configuració de notificacions",
-  "anomaly.settings.notifyCrossLink": "Quines anomalies envien una notificació es defineix a Integritat, Anomalies.",
   "anomaly.settings.holdToggle": "Conserva les còpies antigues quan una font s'encongeix molt o es reescriu",
   "anomaly.settings.holdHint": "Tres troballes aturen l'esborrat de còpies antigues: una font que de sobte és gairebé buida, una que s'ha fet molt més petita i una còpia que ha tornat a desar la major part de les dades, que és l'aspecte d'un ransomware. La retenció esborraria les bones còpies antigues d'una en una. Mentre una anomalia així estigui oberta, es conserven les còpies antigues només d'aquell element (o d'aquell bolcat de base de dades o conjunt de dades ZFS); tota la resta es neteja com sempre. Confirma l'anomalia o marca-la com a esperada per reprendre-ho.",
   "anomaly.settings.backfill": "Historial llegit dels repositoris: {done} de {slots}",

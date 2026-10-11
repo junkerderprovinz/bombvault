@@ -266,10 +266,11 @@ test.describe("the grid of the overview", () => {
     const row = page.getByTestId("need-failed-copy");
     await expect(row).toContainText("Off-site copy failed");
     await expect(row).toContainText("Storage Box · Containers and Flash · since ");
-    await expect(row.getByRole("button", { name: "Try again" })).toBeVisible();
+    await expect(row.getByRole("button", { name: "View" })).toBeVisible();
     await expect(row.getByRole("link", { name: "Off-site copy failed" })).toHaveAttribute("href", "/storage/destination%3Abox");
 
-    await row.getByRole("button", { name: "Resolve" }).click();
+    await row.getByRole("button", { name: "More" }).click();
+    await page.getByRole("menuitem", { name: "Resolve" }).click();
 
     await expect(row).toHaveCount(0);
     expect(acked).toEqual(["t-box-containers", "t-box-flash"]);
@@ -304,7 +305,8 @@ test.describe("the grid of the overview", () => {
     await expect(head).toContainText("7 of 8 protected");
     await expect(row.getByRole("button", { name: "Start backing up" })).toBeVisible();
 
-    await row.getByRole("button", { name: "Don't back up" }).click();
+    await row.getByRole("button", { name: "More" }).click();
+    await page.getByRole("menuitem", { name: "Don't back up" }).click();
 
     await expect(row).toHaveCount(0);
     await expect(head).toContainText("4 things need you");

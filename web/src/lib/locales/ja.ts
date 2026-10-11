@@ -272,8 +272,6 @@ const ja: Partial<Translations> = {
 
   // Settings
   "settings.title": "設定",
-  "settings.encryptionOn": "有効（APP_KEY からパスワードを導出）",
-  "settings.encryptionOff": "無効（パスワードなし）",
   "settings.encryptionPasswordWhere":
     "このパスワードを入力することはありません。BombVault が呼び出しのたびに APP_KEY から導出します。値そのものはリカバリキットに「導出された restic パスワード」として載っており、リポジトリに対して restic を手動で実行するときに必要になるのはこれです。",
   "settings.encryptionHint":
@@ -2408,7 +2406,6 @@ const ja: Partial<Translations> = {
   "settings.missedSchedulesTitle": "実行されなかったスケジュール",
   "settings.catchUpMissed": "起動後に実行されなかったバックアップを実行する",
   "settings.catchUpMissedHint": "スケジュールの予定時刻にサーバーが停止していた場合、そのバックアップは BombVault の起動から約 2 分後に実行されます。",
-  "settings.watchdogTitle": "バックアップ遅延の見張り",
   "settings.watchdogHint": "有効なバックアップが遅延していないか（スケジュールの 2 倍より古くないか）を 1 日 1 回確認し、上で設定したチャンネルからインシデントごとに 1 件通知します。",
   "settings.watchdogToggle": "バックアップが遅延したら通知",
   "settings.coresLabel": "CPU スレッド数 (0 = すべて)",
@@ -3372,7 +3369,6 @@ const ja: Partial<Translations> = {
   "anomaly.settings.notifyHint": "「通知」で設定したチャネルを使います。項目ごとに「異常」の「項目」で変えられます。繰り返すバックアップやダンプの失敗、失敗した定期リストアチェックはそれぞれ独自に通知するので、二重には送りません。",
   "anomaly.settings.notifyMuted": "現在は何も送信されません。通知がオフか、チャネルが設定されていません。",
   "anomaly.settings.openNotifications": "通知の設定を開く",
-  "anomaly.settings.notifyCrossLink": "どの異常で通知を送るかは「整合性」の「異常」で設定します。",
   "anomaly.settings.holdToggle": "ソースが急に縮んだり書き換えられたりしたら古いバックアップを残す",
   "anomaly.settings.holdHint": "3 つの検出結果で古いバックアップの削除が止まります。突然ほぼ空になったソース、大きく縮んだソース、そしてデータの大部分を保存し直したバックアップで、最後のものはランサムウェアの典型的な痕跡です。そうしないと、保持ポリシーが正常な古いバックアップを 1 回ずつ消していきます。こうした異常が未解決の間は、その項目だけ (またはそのデータベースダンプや ZFS データセットだけ) の古いバックアップが残り、ほかはいつもどおり整理されます。再開するには異常を確認済みにするか、想定どおりと印を付けてください。",
   "anomaly.settings.backfill": "リポジトリから読んだ履歴: {slots} 件中 {done} 件",

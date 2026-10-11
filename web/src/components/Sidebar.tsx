@@ -1,9 +1,9 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect, type CSSProperties } from "react";
 import { logout, type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { hueVars } from "../lib/appearance";
-import { sidebarDestinations, type NavDestination } from "../lib/navModel";
+import { onDestination, sidebarDestinations, type NavDestination } from "../lib/navModel";
 import { useNavCounts, type NavCount as Count } from "../lib/navCounts";
 import { useNavPins } from "../lib/navPins";
 
@@ -141,6 +141,7 @@ function NavItem({ destination, hueIndex, count }: NavItem) {
   // A row whose text is hidden names itself in the tooltip bubble. Reactive
   // mode needs none, since hovering brings the word back.
   const tooltip = useTipBubble(showLabel || reactive ? undefined : label);
+  const here = onDestination(useLocation().pathname, destination);
   return (
     <>
       <NavLink
@@ -149,7 +150,7 @@ function NavItem({ destination, hueIndex, count }: NavItem) {
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
         className={({ isActive }) =>
-          `${navBase} relative ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
+          `${navBase} relative ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon ${isActive || here ? `${navActive} glim-active` : navInactive}`
         }
         style={
           {

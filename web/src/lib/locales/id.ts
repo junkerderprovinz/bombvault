@@ -337,8 +337,6 @@ const id: Partial<Translations> = {
 
   // Settings
   "settings.title": "Pengaturan",
-  "settings.encryptionOn": "Diaktifkan (kata sandi diturunkan dari APP_KEY)",
-  "settings.encryptionOff": "Dinonaktifkan (tanpa kata sandi)",
   "settings.encryptionPasswordWhere":
     "Kata sandi itu tidak pernah Anda ketik: BombVault menurunkannya dari APP_KEY pada setiap panggilan. Nilainya sendiri ada di kit pemulihan Anda, tercantum sebagai kata sandi restic turunan, dan itulah yang diperlukan untuk menjalankan restic secara manual terhadap sebuah repositori.",
   "settings.encryptionHint": "Enkripsi ditetapkan per repositori saat dibuat, jadi pengaturan ini hanya menentukan bagaimana repositori BARU dibuat. Untuk yang sudah ada, BombVault membaca modenya langsung dari repositori itu. Lihat halaman Pemulihan. Mengubahnya terhadap repositori yang sudah ada hanya membuat restic tidak bisa membukanya.",
@@ -2009,7 +2007,6 @@ const id: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Jadwal terlewat",
   "settings.catchUpMissed": "Kejar cadangan yang terlewat setelah dimulai",
   "settings.catchUpMissedHint": "Jika server mati saat jadwal jatuh tempo, jalankan cadangan itu sekitar dua menit setelah BombVault dimulai.",
-  "settings.watchdogTitle": "Pengawas cadangan terlambat",
   "settings.watchdogHint": "Memeriksa sekali sehari apakah ada cadangan yang diaktifkan yang terlambat (lebih tua dari dua kali jadwalnya) dan mengirim satu notifikasi per insiden melalui saluran yang dikonfigurasi di atas.",
   "settings.watchdogToggle": "Beri notifikasi saat cadangan terlambat",
   "settings.coresLabel": "Utas CPU (0 = semua)",
@@ -3391,7 +3388,6 @@ const id: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Memakai saluran yang diatur di Notifikasi. Setiap item bisa mengubahnya di Anomali, Item. Kegagalan cadangan dan dump yang berulang serta pemeriksaan pemulihan terjadwal yang gagal sudah mengirim pesannya sendiri, jadi tidak dikirim untuk kedua kalinya.",
   "anomaly.settings.notifyMuted": "Saat ini tidak ada yang dikirim: notifikasi dimatikan atau belum ada saluran yang diatur.",
   "anomaly.settings.openNotifications": "Buka pengaturan notifikasi",
-  "anomaly.settings.notifyCrossLink": "Anomali mana yang mengirim notifikasi diatur di Integritas, Anomali.",
   "anomaly.settings.holdToggle": "Simpan cadangan lama saat sumber menyusut tajam atau ditulis ulang",
   "anomaly.settings.holdHint": "Tiga temuan menghentikan penghapusan cadangan lama: sumber yang tiba-tiba hampir kosong, sumber yang jauh mengecil, dan cadangan yang menyimpan ulang sebagian besar data, seperti tampilan ransomware. Tanpa itu retensi akan menghapus cadangan lama yang baik satu per satu. Selama anomali seperti itu terbuka, hanya cadangan lama item itu (atau dump basis data atau dataset ZFS itu) yang disimpan; yang lain dibersihkan seperti biasa. Konfirmasi anomali atau tandai sebagai diharapkan untuk melanjutkan.",
   "anomaly.settings.backfill": "Riwayat yang dibaca dari repositori: {done} dari {slots}",

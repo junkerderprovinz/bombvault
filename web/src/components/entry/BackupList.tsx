@@ -120,7 +120,7 @@ function Row({
       id={rowElementId(row.key)}
       data-testid="entry-backup"
       onClick={() => onOpen({ key: row.key })}
-      className={`flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-1.5 rounded-control px-3 py-2.5 hover:bg-carbon-surface3 ${
+      className={`group flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-1.5 rounded-control px-3 py-2.5 hover:bg-carbon-surface3 ${
         marked ? "bg-carbon-surface3" : "bg-carbon-surface2"
       }`}
     >
@@ -169,8 +169,13 @@ function Row({
         {size != null && humanBytes(size)}
       </span>
       {/* The menu is drawn outside the row, and a press in it would otherwise
-          reach the row and open the backup. */}
-      <span className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+          reach the row and open the backup. With a mouse the buttons come in
+          with the pointer or the focus, and stay while their menu is open. */}
+      <span
+        data-testid="entry-backup-actions"
+        className="flex items-center gap-1.5 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100 pointer-fine:has-[[aria-expanded=true]]:opacity-100"
+        onClick={(e) => e.stopPropagation()}
+      >
         <RowMenu row={row} timeline={timeline} onAct={(action) => onAct(row, action)} />
         {/* A phone opens the backup with a tap on its row. */}
         <span className="max-md:hidden">

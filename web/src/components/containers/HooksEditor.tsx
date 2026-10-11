@@ -47,8 +47,7 @@ export function HooksEditor({
   if (!open) return null;
 
   return (
-    <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
-      <p className="text-xs text-carbon-textMuted">{t("hooks.hint")}</p>
+    <div className="rounded-card bg-carbon-background p-3 flex flex-col gap-2">
       <label className="flex flex-col gap-1">
         <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
         <input value={pre} onChange={(e) => {
