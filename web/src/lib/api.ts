@@ -6182,6 +6182,20 @@ export type DepositRefusal =
 
 type DepositAnswer<T> = Omit<OkEnvelope, "code"> & { code?: DepositRefusal } & T;
 
+/** fetchKeyAction sends a call that hands out or creates key material. The
+ *  server refuses one outright with a 403 and a sentence, as it does for the
+ *  recovery kit on an instance without a login password, and the sentence is
+ *  the answer. Any other failure is thrown as fetchJSON throws it. */
+async function fetchKeyAction<T>(path: string, options: RequestInit): Promise<T> {
+  const res = await fetch(path, { ...options, headers: { "Content-Type": "application/json" } });
+  if (res.status === 403) {
+    const body = (await res.json().catch(() => null)) as { error?: string } | null;
+    if (body?.error) return { ok: false, error: body.error } as T;
+  }
+  if (!res.ok) throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
+  return res.json() as Promise<T>;
+}
+
 /** GET /api/group/deposits. */
 export function listDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>> {
   return fetchJSON("/api/group/deposits");
@@ -6192,7 +6206,7 @@ export function listDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>> 
  *  with the first deposit only and is stored nowhere, so it has to be shown
  *  and written down then. */
 export function askKeeper(memberId: string): Promise<DepositAnswer<{ keeper?: KeeperRole; code?: string }>> {
-  return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "PUT" });
+  return fetchKeyAction(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "PUT" });
 }
 
 /** DELETE /api/group/members/{id}/roles/keeper: takes the deposit back.
@@ -6205,7 +6219,7 @@ export function withdrawKeeper(memberId: string): Promise<DepositAnswer<{ told?:
 /** POST /api/group/deposit/code: replaces the recovery code and seals every
  *  keeper's deposit for the new one. The answer is the one time it is shown. */
 export function newDepositCode(): Promise<DepositAnswer<{ code?: string }>> {
-  return fetchJSON("/api/group/deposit/code", { method: "POST" });
+  return fetchKeyAction("/api/group/deposit/code", { method: "POST" });
 }
 
 /** POST /api/group/deposit/renew: sends the keepers a fresh deposit where the
@@ -6220,7 +6234,7 @@ export function decideRelease(
   id: string,
   decision: "allow" | "refuse",
 ): Promise<DepositAnswer<{ state?: ReleaseState }>> {
-  return fetchJSON(`/api/group/deposits/releases/${encodeURIComponent(id)}`, {
+  return fetchKeyAction(`/api/group/deposits/releases/${encodeURIComponent(id)}`, {
     method: "POST",
     body: JSON.stringify({ decision }),
   });
