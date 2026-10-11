@@ -5,6 +5,8 @@ const he: Partial<Translations> = {
   "language.label": "שפה",
   "theme.dark": "כהה",
   "theme.light": "בהיר",
+  "theme.system": "מערכת",
+  "theme.systemHint": "עוקב אחר המכשיר: כהה כשהמכשיר כהה, בהיר כשהוא בהיר.",
 
   // Nav
   "nav.overview": "סקירה",

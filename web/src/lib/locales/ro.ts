@@ -5,6 +5,8 @@ const ro: Partial<Translations> = {
   "language.label": "Limbă",
   "theme.dark": "Întunecat",
   "theme.light": "Luminos",
+  "theme.system": "Sistem",
+  "theme.systemHint": "Urmează dispozitivul: întunecat când dispozitivul este întunecat, luminos când este luminos.",
 
   // Nav
   "nav.overview": "Prezentare",

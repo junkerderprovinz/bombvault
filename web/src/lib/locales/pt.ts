@@ -5,6 +5,8 @@ const pt: Partial<Translations> = {
   "language.label": "Idioma",
   "theme.dark": "Escuro",
   "theme.light": "Claro",
+  "theme.system": "Sistema",
+  "theme.systemHint": "Segue o dispositivo: escuro quando o dispositivo é escuro, claro quando é claro.",
 
   // Nav
   "nav.overview": "Visão geral",

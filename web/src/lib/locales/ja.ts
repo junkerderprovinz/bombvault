@@ -5,6 +5,8 @@ const ja: Partial<Translations> = {
   "language.label": "言語",
   "theme.dark": "ダーク",
   "theme.light": "ライト",
+  "theme.system": "システム",
+  "theme.systemHint": "デバイスに合わせます。デバイスがダークならダーク、ライトならライトになります。",
 
   // Nav
   "nav.overview": "概要",

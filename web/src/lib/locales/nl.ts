@@ -5,6 +5,8 @@ const nl: Partial<Translations> = {
   "language.label": "Taal",
   "theme.dark": "Donker",
   "theme.light": "Licht",
+  "theme.system": "Systeem",
+  "theme.systemHint": "Volgt het apparaat: donker als het apparaat donker is, licht als het licht is.",
 
   // Nav
   "nav.overview": "Overzicht",

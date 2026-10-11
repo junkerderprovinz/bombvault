@@ -5,6 +5,8 @@ const lv: Partial<Translations> = {
   "language.label": "Valoda",
   "theme.dark": "Tumša",
   "theme.light": "Gaiša",
+  "theme.system": "Sistēma",
+  "theme.systemHint": "Seko ierīcei: tumša, kad ierīce ir tumša, un gaiša, kad tā ir gaiša.",
 
   // Nav
   "nav.overview": "Pārskats",

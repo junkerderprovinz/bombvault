@@ -5,6 +5,8 @@ const tr: Partial<Translations> = {
   "language.label": "Dil",
   "theme.dark": "Koyu",
   "theme.light": "Açık",
+  "theme.system": "Sistem",
+  "theme.systemHint": "Cihazı izler: cihaz koyuysa koyu, açıksa açık.",
 
   // Nav
   "nav.overview": "Genel bakış",

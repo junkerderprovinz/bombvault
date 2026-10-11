@@ -5,6 +5,8 @@ const ko: Partial<Translations> = {
   "language.label": "언어",
   "theme.dark": "어둡게",
   "theme.light": "밝게",
+  "theme.system": "시스템",
+  "theme.systemHint": "기기를 따릅니다. 기기가 어두우면 어둡게, 밝으면 밝게 표시됩니다.",
 
   // Nav
   "nav.overview": "개요",

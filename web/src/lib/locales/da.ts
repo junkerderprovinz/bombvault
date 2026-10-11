@@ -5,6 +5,8 @@ const da: Partial<Translations> = {
   "language.label": "Sprog",
   "theme.dark": "Mørkt",
   "theme.light": "Lyst",
+  "theme.system": "System",
+  "theme.systemHint": "Følger enheden: mørkt, når enheden er mørk, og lyst, når den er lys.",
 
   // Nav
   "nav.overview": "Oversigt",

@@ -5,6 +5,8 @@ const el: Partial<Translations> = {
   "language.label": "Γλώσσα",
   "theme.dark": "Σκοτεινό",
   "theme.light": "Φωτεινό",
+  "theme.system": "Σύστημα",
+  "theme.systemHint": "Ακολουθεί τη συσκευή: σκοτεινό όταν η συσκευή είναι σκοτεινή και φωτεινό όταν είναι φωτεινή.",
 
   // Nav
   "nav.overview": "Επισκόπηση",

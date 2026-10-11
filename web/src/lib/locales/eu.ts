@@ -5,6 +5,8 @@ const eu: Partial<Translations> = {
   "language.label": "Hizkuntza",
   "theme.dark": "Iluna",
   "theme.light": "Argia",
+  "theme.system": "Sistema",
+  "theme.systemHint": "Gailuari jarraitzen dio: iluna gailua iluna bada, eta argia argia bada.",
 
   // Nav
   "nav.overview": "Laburpena",

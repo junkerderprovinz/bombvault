@@ -5,6 +5,8 @@ const th: Partial<Translations> = {
   "language.label": "ภาษา",
   "theme.dark": "มืด",
   "theme.light": "สว่าง",
+  "theme.system": "ระบบ",
+  "theme.systemHint": "ทำตามอุปกรณ์: มืดเมื่ออุปกรณ์เป็นโหมดมืด สว่างเมื่ออุปกรณ์สว่าง",
 
   // Nav
   "nav.overview": "ภาพรวม",
