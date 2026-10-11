@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"time"
@@ -93,4 +94,88 @@ func (r *Repo) BackupsWrittenSince(since int64) (bool, error) {
 		return false, fmt.Errorf("BackupsWrittenSince: %w", err)
 	}
 	return n > 0, nil
+}
+
+// RepoEstablishedSince lists the local repositories this install created or
+// opened for a backup at or after since. They outlive the runs of an entry
+// that was deleted.
+func (r *Repo) RepoEstablishedSince(since int64) ([]string, error) {
+	rows, err := r.db.Query(`SELECT repo FROM established_repos WHERE created_at >= ? ORDER BY repo`, since)
+	if err != nil {
+		return nil, fmt.Errorf("RepoEstablishedSince: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	var out []string
+	for rows.Next() {
+		var repo string
+		if err := rows.Scan(&repo); err != nil {
+			return nil, fmt.Errorf("RepoEstablishedSince: %w", err)
+		}
+		out = append(out, repo)
+	}
+	return out, rows.Err()
+}
+
+// ReplacedSignIns are the shared cloud sign-in and the rclone config an
+// install had before an emergency stored a kit's over them, in the form the
+// settings hold them. An empty one is a sign-in the install did not have.
+type ReplacedSignIns struct {
+	CloudConf  string
+	RcloneConf string
+}
+
+func sealedOrNull(stored string) (any, error) {
+	if stored == "" {
+		return nil, nil
+	}
+	return base64.StdEncoding.DecodeString(stored)
+}
+
+// KeepReplacedSignIns remembers what the install had, unless it remembers
+// already: a second store during the same emergency would otherwise record
+// the kit's sign-ins as the install's own.
+func (r *Repo) KeepReplacedSignIns(before ReplacedSignIns) error {
+	cloud, err := sealedOrNull(before.CloudConf)
+	if err != nil {
+		return fmt.Errorf("KeepReplacedSignIns: %w", err)
+	}
+	rclone, err := sealedOrNull(before.RcloneConf)
+	if err != nil {
+		return fmt.Errorf("KeepReplacedSignIns: %w", err)
+	}
+	_, err = r.db.Exec(`INSERT INTO replaced_sign_ins (id, cloud_conf_enc, rclone_conf_enc, replaced_at) VALUES (1, ?, ?, ?)
+		ON CONFLICT (id) DO NOTHING`, cloud, rclone, time.Now().Unix())
+	if err != nil {
+		return fmt.Errorf("KeepReplacedSignIns: %w", err)
+	}
+	return nil
+}
+
+// ReplacedSignIns returns what KeepReplacedSignIns remembered, found false
+// when no emergency replaced anything.
+func (r *Repo) ReplacedSignIns() (ReplacedSignIns, bool, error) {
+	var cloud, rclone []byte
+	err := r.db.QueryRow(`SELECT cloud_conf_enc, rclone_conf_enc FROM replaced_sign_ins WHERE id = 1`).Scan(&cloud, &rclone)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ReplacedSignIns{}, false, nil
+	}
+	if err != nil {
+		return ReplacedSignIns{}, false, fmt.Errorf("ReplacedSignIns: %w", err)
+	}
+	out := ReplacedSignIns{}
+	if len(cloud) > 0 {
+		out.CloudConf = base64.StdEncoding.EncodeToString(cloud)
+	}
+	if len(rclone) > 0 {
+		out.RcloneConf = base64.StdEncoding.EncodeToString(rclone)
+	}
+	return out, true, nil
+}
+
+// ClearReplacedSignIns forgets them, once the emergency is finished or undone.
+func (r *Repo) ClearReplacedSignIns() error {
+	if _, err := r.db.Exec(`DELETE FROM replaced_sign_ins`); err != nil {
+		return fmt.Errorf("ClearReplacedSignIns: %w", err)
+	}
+	return nil
 }

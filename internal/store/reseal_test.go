@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -207,5 +208,55 @@ func TestAnAdoptedKeyAndTheLoginGoIntoAnOlderDatabase(t *testing.T) {
 	}
 	if !slices.Equal(names, []string{"live key"}) {
 		t.Fatalf("the passkeys are %v, want the live one alone", names)
+	}
+}
+
+func TestNamesInAStagedSchemaAreReadAsNamesAndNeverRun(t *testing.T) {
+	dir := t.TempDir()
+	staged := filepath.Join(dir, "staged.sqlite")
+	outside := filepath.ToSlash(filepath.Join(dir, "written-by-the-restore.sqlite"))
+	hostile := `x'); COMMIT; ATTACH DATABASE '` + outside + `' AS a; CREATE TABLE a.t(x); INSERT INTO a.t VALUES (1); DETACH DATABASE a; BEGIN; --`
+	quoted := func(name string) string { return `"` + strings.ReplaceAll(name, `"`, `""`) + `"` }
+
+	db, err := sql.Open("sqlite", staged)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, stmt := range []string{
+		`CREATE TABLE ` + quoted(hostile) + ` (v_enc BLOB)`,
+		`INSERT INTO ` + quoted(hostile) + ` VALUES (x'01')`,
+		`CREATE TABLE plain (` + quoted(`v" FROM plain; DROP TABLE plain; --_enc`) + ` BLOB)`,
+		`INSERT INTO plain VALUES (x'02')`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	db, err = store.OpenStaged(staged)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close() //nolint:errcheck // test database
+	var seen [][]byte
+	err = store.ResealDatabase(db, func(_ store.SealedColumn, sealed []byte) []byte {
+		seen = append(seen, sealed)
+		return []byte{0xff}
+	})
+	if err != nil {
+		t.Fatalf("ResealDatabase: %v", err)
+	}
+	if _, err := os.Stat(outside); err == nil {
+		t.Fatal("a table name of the staged database ran as SQL and wrote a file")
+	}
+	if len(seen) != 2 {
+		t.Fatalf("the sealed values behind the two names: %v", seen)
+	}
+	var left int
+	if err := db.QueryRow(`SELECT count(*) FROM plain WHERE ` + quoted(`v" FROM plain; DROP TABLE plain; --_enc`) + ` = x'ff'`).Scan(&left); err != nil || left != 1 {
+		t.Fatalf("the value behind the column name was not sealed again: %d, %v", left, err)
 	}
 }

@@ -290,7 +290,7 @@ func (h *Handler) handleCreateMCPKey(w http.ResponseWriter, r *http.Request) {
 		Client          string `json:"client"`
 		CanStartBackups *bool  `json:"canStartBackups"`
 	}
-	if !decodeBody(w, r, &body) {
+	if !decodeBody(w, r, &body) || !h.requireSignIn(w, r, "creating an MCP key") {
 		return
 	}
 	if body.Client != "" && !mcpClientID.MatchString(body.Client) {
@@ -365,7 +365,7 @@ func (h *Handler) handleUpdateMCPKey(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleRotateMCPKey(w http.ResponseWriter, r *http.Request) {
 	id, ok := mcpKeyIDParam(w, r)
-	if !ok {
+	if !ok || !h.requireSignIn(w, r, "replacing a key") {
 		return
 	}
 	if !h.mcpKeysAllowedFrom(r) {

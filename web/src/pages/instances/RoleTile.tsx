@@ -26,6 +26,7 @@ export const ROLE_STATE_KEY: Record<RoleState, TranslationKey> = {
 const DEPOSIT_STATE_KEY: Record<DepositState, TranslationKey> = {
   held: "instances.role.on",
   stale: "keeper.state.stale",
+  changed: "keeper.state.changed",
   declined: "keeper.state.declined",
 };
 

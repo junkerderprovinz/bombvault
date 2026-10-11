@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -2914,6 +2915,64 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
 ) WITHOUT ROWID;`,
 	},
 	{
+		// The recovery kit prints each name and location on a line of its
+		// own, so one that spans lines would read back as another entry or
+		// another key. The database refuses them whichever way they come in.
+		version: oneLineMigration,
+		name:    "one_line_names_and_locations",
+		sql:     oneLineTriggers(),
+	},
+	{
+		// The key an install proves its deposits with to the members that
+		// keep them. It is made with the first deposit and stays for good.
+		version:          depositProofMigration,
+		name:             "key_deposit_signer",
+		alreadySatisfied: tablePresent("key_deposit_signer"),
+		sql: `CREATE TABLE IF NOT EXISTS key_deposit_signer (
+  id         INTEGER PRIMARY KEY CHECK (id = 1),
+  seed_enc   BLOB    NOT NULL,
+  counter    INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+);`,
+	},
+	{
+		// What names the APP_KEY this database was last run with, by which a
+		// settings restore tells whose settings it has in front of it.
+		version:          depositProofMigration + 1,
+		name:             "key_check",
+		alreadySatisfied: tablePresent("key_check"),
+		sql: `CREATE TABLE IF NOT EXISTS key_check (
+  id    INTEGER PRIMARY KEY CHECK (id = 1),
+  value TEXT    NOT NULL
+);`,
+	},
+	{
+		// The sign-ins this server had before an emergency stored those of a
+		// recovery kit over them, so that an undo can put them back. A NULL
+		// column is a sign-in the server did not have.
+		version:          depositProofMigration + 2,
+		name:             "replaced_sign_ins",
+		alreadySatisfied: tablePresent("replaced_sign_ins"),
+		sql: `CREATE TABLE IF NOT EXISTS replaced_sign_ins (
+  id              INTEGER PRIMARY KEY CHECK (id = 1),
+  cloud_conf_enc  BLOB,
+  rclone_conf_enc BLOB,
+  replaced_at     INTEGER NOT NULL
+);`,
+	},
+	{
+		// The version of BombVault that last opened this database, which an
+		// older one that refuses the database names.
+		version:          depositProofMigration + 3,
+		name:             "schema_writer",
+		alreadySatisfied: tablePresent("schema_writer"),
+		sql: `CREATE TABLE IF NOT EXISTS schema_writer (
+  id      INTEGER PRIMARY KEY CHECK (id = 1),
+  version TEXT    NOT NULL,
+  at      INTEGER NOT NULL
+);`,
+	},
+	{
 		// The key of another install's backups, sealed under this install's
 		// own. Without a row the install backs up under its own key.
 		version:          keyRolesMigration,
@@ -2961,10 +3020,11 @@ CREATE INDEX IF NOT EXISTS idx_key_releases_requester ON key_releases(requester_
 	},
 	{
 		// This install's own side of its deposits: the public half of its
-		// recovery code, and which member holds what was last sealed.
-		version:          keyRolesMigration + 3,
-		name:             "key_deposits_sent",
-		alreadySatisfied: tablePresent("key_deposits_sent"),
+		// recovery code, and which member holds what was last sealed. Each
+		// statement leaves a table that is there alone, and a probe for one
+		// of the two would skip the other.
+		version: keyRolesMigration + 3,
+		name:    "key_deposits_sent",
 		sql: `CREATE TABLE IF NOT EXISTS key_deposit_identity (
   id         INTEGER PRIMARY KEY CHECK (id = 1),
   recipient  BLOB    NOT NULL,
@@ -2984,6 +3044,34 @@ CREATE TABLE IF NOT EXISTS key_deposits_sent (
 		name:             "backup_key_notes",
 		alreadySatisfied: columnPresent("backup_key", "lost"),
 		sql:              backupKeyNotes,
+	},
+	{
+		// The keeper's side of that proof, and what the install remembers of
+		// the bytes its keeper took, to tell when the keeper holds others.
+		version:          keyHardeningMigration,
+		name:             "key_deposit_proofs",
+		alreadySatisfied: columnPresent("key_deposits_sent", "changed_at"),
+		sql: `ALTER TABLE key_deposits ADD COLUMN owner_key BLOB NOT NULL DEFAULT x'';
+ALTER TABLE key_deposits ADD COLUMN counter INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE key_deposits_sent ADD COLUMN held_digest TEXT NOT NULL DEFAULT '';
+ALTER TABLE key_deposits_sent ADD COLUMN changed_at INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		// The public half of the recovery code, sealed. Whoever reads it in
+		// the clear can seal a deposit of their own making that the code
+		// opens.
+		version:          keyHardeningMigration + 1,
+		name:             "key_deposit_recipient_enc",
+		alreadySatisfied: columnPresent("key_deposit_identity", "recipient_enc"),
+		sql:              `ALTER TABLE key_deposit_identity ADD COLUMN recipient_enc BLOB NOT NULL DEFAULT x'';`,
+	},
+	{
+		// The name a deposit had when it was asked for, which the record of
+		// the request keeps after the deposit is deleted.
+		version:          keyHardeningMigration + 2,
+		name:             "key_releases_owner_name",
+		alreadySatisfied: columnPresent("key_releases", "owner_name"),
+		sql:              `ALTER TABLE key_releases ADD COLUMN owner_name TEXT NOT NULL DEFAULT '';`,
 	},
 }
 
@@ -3095,6 +3183,57 @@ const restoreFolderMigration = 325
 // declinedMigration numbers the entries nobody wants backed up, 335.
 const declinedMigration = 335
 
+// oneLineMigration numbers the guard against line breaks in what the recovery
+// kit prints, 336.
+const oneLineMigration = 336
+
+// depositProofMigration numbers the key an install proves its deposits with,
+// 337, the check value of the APP_KEY, 338, the sign-ins an emergency
+// replaced, 339, and the version that last opened the database, 340.
+const depositProofMigration = 337
+
+// keyHardeningMigration numbers what was added to the tables of
+// keyRolesMigration afterwards, from 350.
+const keyHardeningMigration = 350
+
+// oneLineColumns are the names and locations the recovery kit prints.
+var oneLineColumns = []struct {
+	table string
+	cols  []string
+}{
+	{"offsite_targets", []string{"name", "repo"}},
+	{"mesh_offers", []string{"from_name", "suggested_domain", "repo", "rest_user"}},
+	{"file_sets", []string{"name"}},
+	{"settings", []string{
+		"containers_path", "vms_path", "flash_path", "config_path", "files_path", "zfs_path",
+		"containers_offsite", "vms_offsite", "flash_offsite", "config_offsite", "files_offsite", "zfs_offsite",
+	}},
+}
+
+// ErrLineBreakText is what the database says when it refuses a name or a
+// location that spans lines.
+const ErrLineBreakText = "a name or a location must be on one line"
+
+// oneLineTriggers refuses a line break in oneLineColumns on insert and on
+// every update that changes the value. A value stored before the guard stays
+// until somebody corrects it, so that saving something else still works.
+func oneLineTriggers() string {
+	var b strings.Builder
+	for _, t := range oneLineColumns {
+		var fresh, changed []string
+		for _, c := range t.cols {
+			broken := fmt.Sprintf("(instr(coalesce(NEW.%[1]s, ''), char(10)) + instr(coalesce(NEW.%[1]s, ''), char(13)) > 0)", c)
+			fresh = append(fresh, broken)
+			changed = append(changed, fmt.Sprintf("(NEW.%[1]s IS NOT OLD.%[1]s AND %[2]s)", c, broken))
+		}
+		fmt.Fprintf(&b, "CREATE TRIGGER IF NOT EXISTS one_line_%[1]s_insert BEFORE INSERT ON %[1]s WHEN %[2]s BEGIN SELECT RAISE(ABORT, '%[3]s'); END;\n",
+			t.table, strings.Join(fresh, " OR "), ErrLineBreakText)
+		fmt.Fprintf(&b, "CREATE TRIGGER IF NOT EXISTS one_line_%[1]s_update BEFORE UPDATE OF %[2]s ON %[1]s WHEN %[3]s BEGIN SELECT RAISE(ABORT, '%[4]s'); END;\n",
+			t.table, strings.Join(t.cols, ", "), strings.Join(changed, " OR "), ErrLineBreakText)
+	}
+	return b.String()
+}
+
 // keyRolesMigration numbers the adopted backup key, 345 and 349, and the key
 // deposits a group member keeps, 346 to 348.
 const keyRolesMigration = 345
@@ -3117,6 +3256,9 @@ func Migrate(db *sql.DB) error {
 	)`)
 	if err != nil {
 		return fmt.Errorf("migrate: create schema_migrations: %w", err)
+	}
+	if err := refuseNewerDatabase(db); err != nil {
+		return err
 	}
 	for _, r := range misnumbered {
 		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version = ? AND name = ?`, r.version, r.name); err != nil {
@@ -3173,6 +3315,75 @@ func Migrate(db *sql.DB) error {
 		if err := tx.Commit(); err != nil {
 			return fmt.Errorf("migrate: commit v%d: %w", m.version, err)
 		}
+	}
+	return nil
+}
+
+// NewerDatabaseError is a database a newer version of BombVault migrated. An
+// older one would read and write it as if the newer tables and columns were
+// not there: backups under the wrong key, settings that look lost.
+type NewerDatabaseError struct {
+	// Version and Name are the newest migration the database carries.
+	Version int
+	Name    string
+	// Writer is the version of BombVault that last opened the database,
+	// empty when it is from before that was recorded.
+	Writer string
+}
+
+func (e *NewerDatabaseError) Error() string {
+	if e.Writer == "" {
+		return fmt.Sprintf("the database carries migration %d (%s), which this version does not know, so a newer version of BombVault wrote it. Start that version or a newer one with this data folder; nothing in the database was changed",
+			e.Version, e.Name)
+	}
+	return fmt.Sprintf("the database was last opened by BombVault %s and carries migration %d (%s), which this version does not know. Start BombVault %s or newer with this data folder; nothing in the database was changed",
+		e.Writer, e.Version, e.Name, e.Writer)
+}
+
+// refuseNewerDatabase returns a NewerDatabaseError for a database that carries
+// a migration above the newest this build knows under a name it does not
+// know. A known name under another number is a migration that was renumbered
+// when its branch was merged, and stays allowed.
+func refuseNewerDatabase(db *sql.DB) error {
+	newest, known := 0, map[string]bool{}
+	for _, m := range migrations {
+		newest = max(newest, m.version)
+		known[m.name] = true
+	}
+	rows, err := db.Query(`SELECT version, name FROM schema_migrations WHERE version > ? ORDER BY version DESC`, newest)
+	if err != nil {
+		return fmt.Errorf("migrate: check for a newer database: %w", err)
+	}
+	var e NewerDatabaseError
+	for rows.Next() && e.Name == "" {
+		var version int
+		var name string
+		if err := rows.Scan(&version, &name); err != nil {
+			rows.Close() //nolint:errcheck,gosec // the scan error is the one to report
+			return fmt.Errorf("migrate: check for a newer database: %w", err)
+		}
+		if !known[name] {
+			e.Version, e.Name = version, name
+		}
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("migrate: check for a newer database: %w", err)
+	}
+	if e.Name == "" {
+		return nil
+	}
+	// A database that has no such table yet names no writer.
+	_ = db.QueryRow(`SELECT version FROM schema_writer WHERE id = 1`).Scan(&e.Writer)
+	return &e
+}
+
+// RecordWriter notes the version of BombVault that opened the database, so
+// an older one that is started on it later can name it.
+func (r *Repo) RecordWriter(version string) error {
+	_, err := r.db.Exec(`INSERT INTO schema_writer (id, version, at) VALUES (1, ?, ?)
+		ON CONFLICT (id) DO UPDATE SET version = excluded.version, at = excluded.at`, version, time.Now().Unix())
+	if err != nil {
+		return fmt.Errorf("RecordWriter: %w", err)
 	}
 	return nil
 }

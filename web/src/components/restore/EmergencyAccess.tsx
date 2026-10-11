@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type Dispatch, type ReactNode, type SetSta
 import { createPortal } from "react-dom";
 import {
   adoptEmergencyKey,
-  finishEmergency,
+  cancelEmergency,
   getEmergency,
   getGroup,
   readEmergencyKey,
@@ -18,10 +18,12 @@ import {
   type OkEnvelope,
   type Settings,
 } from "../../lib/api";
-import { PLACE_LABEL, minutesLeft, placeAdvice, placeName, refusalText, sessionKeyInUse, takenOver } from "../../lib/emergency";
+import { PLACE_LABEL, minutesLeft, placeAdvice, placeName, refusalText, replacedText, sessionKeyInUse, takenOver } from "../../lib/emergency";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import type { EmergencyWay } from "../../lib/restorePlan";
 import { useConfirm } from "../../lib/useConfirm";
+import { useOwnLogin } from "../../lib/useOwnLogin";
+import { formatRecent } from "../../lib/reltime";
 import { useReveal } from "../../lib/useReveal";
 import { CloudCard } from "../../pages/settings/CloudCard";
 import { RcloneCard } from "../../pages/settings/RcloneCard";
@@ -164,8 +166,9 @@ export function EmergencyAccess({
   /** Leads to the page where this install joins a group. */
   onPairing?: () => void;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { confirm, confirmDialog } = useConfirm();
+  const ownLogin = useOwnLogin();
   // A request for a deposit that waits in the group is where the person
   // left off, so the window opens on that way.
   const [waitingAt] = useState(() => askedDeposit()?.memberName ?? null);
@@ -217,6 +220,7 @@ export function EmergencyAccess({
       if (res.emergency) onEmergency(res.emergency);
       if (res.ok) setRefusal(null);
       else if (res.code === "emergency-ended") await ended();
+      else if (ownLogin.handled(res) || res.code === "sign-ins-exist") setRefusal(null);
       else setRefusal({ code: res.code, said: res.error });
       return res;
     } catch (err) {
@@ -257,21 +261,28 @@ export function EmergencyAccess({
     );
   }
 
-  async function adopt() {
+  async function adopt(id: string) {
     const yes = await confirm(t("emergency.adoptAsk"), { confirmLabel: t("emergency.adopt"), confirmLabelKey: "snapshots.restore" });
-    if (yes) await ask(adoptEmergencyKey);
+    if (yes) await ask(() => adoptEmergencyKey(id));
   }
 
-  async function saveSignIns() {
-    const res = await ask(storeEmergencySignIns);
+  // This server's own sign-ins are replaced only once the person agrees, and
+  // undoing the takeover puts them back.
+  async function saveSignIns(current: NonNullable<typeof session>) {
+    let res = await ask(() => storeEmergencySignIns(current.id, false));
+    if (res?.code === "sign-ins-exist") {
+      const question = t("emergency.signInsReplaceAsk").replace("{list}", () => replacedText(t, lang, current.replaces));
+      if (!(await confirm(question, { confirmLabel: t("emergency.signInsReplace"), confirmLabelKey: "common.confirm" }))) return;
+      res = await ask(() => storeEmergencySignIns(current.id, true));
+    }
     if (res?.ok) setSignInsSaved(true);
   }
 
   // Nothing was stored, so the key only has to leave the server's memory.
-  async function anotherWay() {
-    await ask(finishEmergency);
+  async function anotherWay(id: string, next: EmergencyWay | null = null) {
+    await ask(() => cancelEmergency(id));
     forgetSecrets();
-    setWay(null);
+    setWay(next);
   }
 
   const refused = refusal && <Note tone="fail">{refusalText(t, refusal.code, refusal.said)}</Note>;
@@ -297,6 +308,31 @@ export function EmergencyAccess({
           <TimeLeft expiresAt={session.expiresAt} onEnd={() => void ended()} />
         </p>
         {inUse && !taken && <Note tone="neutral">{t("emergency.code.adopt-same-key")}</Note>}
+        {session.kit.server && (
+          <p data-testid="emergency-kit" className="text-sm text-carbon-text">
+            {(session.kit.writtenAt ? t("emergency.kitOf") : t("emergency.kitOfUndated"))
+              .replace("{server}", () => session.kit.server ?? "")
+              .replace("{when}", () => formatRecent(session.kit.writtenAt ?? 0, lang))}
+          </p>
+        )}
+        {!taken && session.kit.newerWith && (
+          <Note tone="warn">
+            <span className="flex flex-wrap items-center gap-3">
+              <span className="min-w-0 flex-1 basis-56">
+                {t("emergency.newerWith")
+                  .replaceAll("{member}", () => session.kit.newerWith ?? "")
+                  .replace("{server}", () => session.kit.server || t("emergency.thisServer"))}
+              </span>
+              <Button
+                label={t("emergency.askNewer").replace("{member}", () => session.kit.newerWith ?? "")}
+                labelKey={null}
+                glyph={<IconFleet />}
+                onClick={() => void anotherWay(session.id, "group")}
+                disabled={busy}
+              />
+            </span>
+          </Note>
+        )}
 
         <Section title={t("storage.title")}>
           {session.places.length === 0 ? (
@@ -334,12 +370,17 @@ export function EmergencyAccess({
                 label={t("emergency.signInsSave")}
                 labelKey={null}
                 glyph={<IconCheck />}
-                onClick={() => void saveSignIns()}
+                onClick={() => void saveSignIns(session)}
                 disabled={busy || signInsSaved}
                 busy={busy}
               />
               {signInsSaved && <span className="text-sm text-statusOk">{t("emergency.signInsSaved")}</span>}
             </div>
+            {!signInsSaved && (session.replaces.cloudSignIn || session.replaces.rcloneConfig) && (
+              <p className="text-xs text-carbon-textMuted">
+                {t("emergency.signInsReplaces").replace("{list}", () => replacedText(t, lang, session.replaces))}
+              </p>
+            )}
           </Section>
         )}
         {inUse && needsSignIn && (
@@ -356,7 +397,7 @@ export function EmergencyAccess({
               labelKey={null}
               glyph={<IconBack />}
               tone="subtle"
-              onClick={() => void anotherWay()}
+              onClick={() => void anotherWay(session.id)}
               disabled={busy}
             />
           </div>
@@ -369,13 +410,14 @@ export function EmergencyAccess({
               labelKey={null}
               glyph={<IconKey />}
               tone="accent"
-              onClick={() => void adopt()}
+              onClick={() => void adopt(session.id)}
               disabled={busy || session.refusal !== undefined}
               busy={busy}
             />,
             footer
           )}
         {confirmDialog}
+        {ownLogin.dialog}
       </>
     );
   }

@@ -28,8 +28,8 @@ vi.mock("../../lib/api", async (importOriginal) => {
 const { EmergencyGroup } = await import("./EmergencyGroup");
 
 const UPDATED = "2026-09-14T03:00:00Z";
-const TOWER: OfferedDeposit = { memberId: "m-nas", memberName: "nas", ownerId: "o-tower", ownerName: "tower", updatedAt: UPDATED };
-const CABIN: OfferedDeposit = { memberId: "m-nas", memberName: "nas", ownerId: "o-cabin", ownerName: "cabin", updatedAt: UPDATED };
+const TOWER: OfferedDeposit = { memberId: "m-nas", memberName: "nas", ownerId: "o-tower", ownerName: "tower", updatedAt: UPDATED, newest: true };
+const CABIN: OfferedDeposit = { memberId: "m-nas", memberName: "nas", ownerId: "o-cabin", ownerName: "cabin", updatedAt: UPDATED, newest: true };
 const CODE = "ABCDE-FGHJK-MNPQR-STVWX";
 const ASKED_KEY = "bv-emergency-asked";
 
@@ -108,6 +108,18 @@ describe("the deposits of the group", () => {
     expect(rows.map((row) => row.textContent)).toEqual([expect.stringContaining("cabin"), expect.stringContaining("tower")]);
     const when = formatRecent(Math.floor(Date.parse(UPDATED) / 1000), "en");
     expect(rows[1].textContent).toContain(en["emergency.group.deposit"].replace("{keeper}", "nas").replace("{when}", when));
+  });
+
+  it("mark one that is older than a deposit of the same server another member keeps", async () => {
+    listOfferedDeposits.mockResolvedValue({
+      ok: true,
+      deposits: [{ ...TOWER, newest: false }, { ...TOWER, memberId: "m-attic", memberName: "attic", newest: true }],
+      silent: [],
+    });
+    await open();
+    const rows = screen.getAllByTestId("emergency-deposit");
+    expect(rows[0].textContent).toContain(en["emergency.group.older"]);
+    expect(rows[1].textContent).not.toContain(en["emergency.group.older"]);
   });
 
   it("name the members that did not answer", async () => {

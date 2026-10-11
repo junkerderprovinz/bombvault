@@ -156,6 +156,23 @@ describe("runReason", () => {
   });
 });
 
+describe("a refused run about a key", () => {
+  it.each([
+    ["adopt-busy", "emergency.code.adopt-busy"],
+    ["kit-ambiguous", "emergency.code.kit-ambiguous"],
+    ["release-limit", "emergency.code.release-limit"],
+    ["deposit-changed", "deposit.code.deposit-changed"],
+    ["release-decided", "deposit.code.release-decided"],
+    ["own-login-needed", "secrets.ownLoginNeeded"],
+  ])("says the stored code %s as its sentence", (code, key) => {
+    expect(runReason(code, t)).toBe(key);
+  });
+
+  it("keeps the sentence an older run stored", () => {
+    expect(runReason("this is not a BombVault recovery kit", t)).toBe("this is not a BombVault recovery kit");
+  });
+});
+
 describe("RunReasonText", () => {
   it("isolates the detail and leaves the head to the page direction", () => {
     const parts = children(RunReasonText({ reason: "database dump failed: the dump tool reported an error: ERROR 1045", t }));

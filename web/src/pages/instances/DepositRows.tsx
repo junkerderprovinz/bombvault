@@ -14,6 +14,7 @@ import { useT } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { ROLES } from "./RoleTile";
 import type { InstancesState } from "./useInstances";
 
@@ -34,14 +35,16 @@ export function ReleaseRequests({ releases, state }: { releases: DepositRelease[
   const { t } = useT();
   const { push } = useToast();
   const [busy, setBusy] = useState("");
+  const ownLogin = useOwnLogin();
   const waiting = releases.filter((r) => r.state === "asked");
 
   async function decide(release: DepositRelease, decision: "allow" | "refuse") {
     setBusy(`${release.id}:${decision}`);
     try {
       const res = await decideRelease(release.id, decision);
-      if (!res.ok) push(depositSentence(t, res), "fail");
-      else {
+      if (!res.ok) {
+        if (!ownLogin.handled(res)) push(depositSentence(t, res), "fail");
+      } else {
         const done = decision === "allow" ? "keeper.release.allowed" : "keeper.release.refused";
         push(t(done).replaceAll("{requester}", () => release.requesterName || release.requesterId), "success");
       }
@@ -106,6 +109,7 @@ export function ReleaseRequests({ releases, state }: { releases: DepositRelease[
           </div>
         );
       })}
+      {ownLogin.dialog}
     </>
   );
 }

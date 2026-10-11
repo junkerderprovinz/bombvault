@@ -203,6 +203,7 @@ export function EmergencyGroup({
                       .replace("{keeper}", () => d.memberName)
                       .replace("{when}", () => formatRecent(Math.floor(Date.parse(d.updatedAt) / 1000), lang))}
                   </span>
+                  {!d.newest && <span className="text-xs text-statusWarn wrap-anywhere">{t("emergency.group.older")}</span>}
                 </div>
                 <Button
                   label={t("emergency.group.choose")}

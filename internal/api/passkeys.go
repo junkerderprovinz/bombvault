@@ -314,7 +314,7 @@ func (h *Handler) handlePasskeyStatus(w http.ResponseWriter, r *http.Request) {
 // handlePasskeyRegisterBegin serves POST /api/auth/passkey/register/begin.
 // Behind authGate: enrolling a key is something only a signed-in operator does.
 func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "registering a passkey") {
+	if !h.requireAuthForSecrets(w, r, "registering a passkey") {
 		return
 	}
 	wa, rpID, err := h.webAuthnFor(r)
@@ -367,7 +367,7 @@ func credentialDescriptors(creds []webauthn.Credential) []protocol.CredentialDes
 // The credential is the browser's own answer, handed to the library verbatim:
 // re-encoding it here would mean re-implementing the parsing that validates it.
 func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "registering a passkey") {
+	if !h.requireAuthForSecrets(w, r, "registering a passkey") {
 		return
 	}
 	var body struct {

@@ -55,6 +55,12 @@ func (s *Service) handlePeerMeshOffer(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "offer repo must not be empty"})
 		return
 	}
+	// A repository of the offer ends up in the recovery kit, where a second
+	// line would read as an entry of its own.
+	if spansLines(repo, strings.TrimSpace(in.FromName), strings.TrimSpace(in.SuggestedDomain), strings.TrimSpace(in.RESTUser), in.RESTPassword) {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "every value of an offer must be on one line"})
+		return
+	}
 	enc, err := secret.Encrypt(s.cfg.AppKey, []byte(in.RESTPassword))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))

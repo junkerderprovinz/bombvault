@@ -48,8 +48,10 @@ its mountpoint. ZFS properties are not part of the backup.
 
 // zfsKitSection is the recovery kit's ZFS chapter: the fixed explanation, one
 // line per item with the repository its snapshots are in, and the restic
-// commands that get the files back without BombVault.
-func (s *Service) zfsKitSection(settings store.Settings) string {
+// commands that get the files back without BombVault. oneLine is false when
+// something an item prints spans lines, which a kit must not carry.
+func (s *Service) zfsKitSection(settings store.Settings) (section string, oneLine bool) {
+	oneLine = true
 	var b strings.Builder
 	b.WriteString(zfsKitIntro)
 
@@ -60,19 +62,21 @@ func (s *Service) zfsKitSection(settings store.Settings) string {
 	if len(items) > 0 {
 		b.WriteString("\nItems configured on this server:\n")
 		for _, d := range items {
-			fmt.Fprintf(&b, "- %s: repository %s", d.Dataset, s.zfsKitRepo(settings, d))
+			repo, detail := s.zfsKitRepo(settings, d), s.zfsKitItemDetail(d)
+			oneLine = oneLine && !spansLines(d.Dataset, repo, d.LastHostMountpoint, detail)
+			fmt.Fprintf(&b, "- %s: repository %s", d.Dataset, repo)
 			if d.LastHostMountpoint != "" {
 				fmt.Fprintf(&b, ", mounted at %s", d.LastHostMountpoint)
 			}
 			b.WriteString("\n")
-			if detail := s.zfsKitItemDetail(d); detail != "" {
+			if detail != "" {
 				fmt.Fprintf(&b, "  (%s)\n", detail)
 			}
 		}
 	}
 
 	b.WriteString(zfsKitCommands)
-	return b.String()
+	return b.String(), oneLine
 }
 
 // zfsKitRepo names where an item's snapshots are, by the name the user gave a

@@ -27,6 +27,7 @@ import type {
   VM,
 } from "../../lib/api";
 import { I18nProvider, countText, en } from "../../lib/i18n";
+import { formatRecent } from "../../lib/reltime";
 import type { EmergencyStep, EmergencyWay } from "../../lib/restorePlan";
 import { RESTORE_NO_RUNTIME } from "../../lib/runReason";
 import { ToastProvider } from "../../lib/toast";
@@ -100,9 +101,10 @@ const putSettings = vi.fn((settings: unknown) => {
   void settings;
   return Promise.resolve({ ok: true });
 });
-const restoreConfig = vi.fn((snapshot: string, source?: string) => {
+const restoreConfig = vi.fn((snapshot: string, source?: string, emergency?: string) => {
   void snapshot;
   void source;
+  void emergency;
   return Promise.resolve({ ok: true, staged: true, autoRestart: false });
 });
 const discoverAll = vi.fn(() =>
@@ -130,9 +132,14 @@ const KIT_PLACES: EmergencyPlace[] = [
   { domain: "files", kind: "local", location: "/mnt/disks/usb/files", state: "missing" },
 ];
 
+const SESSION = "sess-1";
+
 function session(over: Partial<EmergencySession> = {}): EmergencySession {
   return {
+    id: SESSION,
     source: "kit",
+    kit: { server: "tower", writtenAt: 1_789_000_000 },
+    replaces: { cloudSignIn: false, rcloneConfig: false },
     encrypted: true,
     places: KIT_PLACES,
     expiresAt: Math.floor(Date.now() / 1000) + 1800,
@@ -167,9 +174,9 @@ const readEmergencyKey = vi.fn((key: string, places: string[], creds?: CloudCred
   };
   return answer();
 });
-const adoptEmergencyKey = vi.fn(() => {
+const adoptEmergencyKey = vi.fn((id: string) => {
   const current = emergencyOnServer.session;
-  if (!current) return refused("emergency-ended");
+  if (!current || id !== current.id) return refused("emergency-ended");
   emergencyOnServer = {
     backupKey: "adopted",
     source: current.source,
@@ -179,9 +186,24 @@ const adoptEmergencyKey = vi.fn(() => {
   };
   return answer();
 });
-const storeEmergencySignIns = vi.fn(() => answer());
-const finishEmergency = vi.fn(() => {
+// The kit's sign-ins reach the place that needed one, which the server tries
+// again. Over this server's own it asks first.
+const storeEmergencySignIns = vi.fn((id: string, replace = false) => {
+  const current = emergencyOnServer.session;
+  if (!current || id !== current.id) return refused("emergency-ended");
+  if ((current.replaces.cloudSignIn || current.replaces.rcloneConfig) && !replace) return refused("sign-ins-exist");
+  const places = current.places.map((place) => (place.state === "sign-in" ? { ...place, state: "readable" as const } : place));
+  emergencyOnServer = { ...emergencyOnServer, session: { ...current, places } };
+  return answer();
+});
+const finishEmergency = vi.fn((id: string) => {
+  void id;
   emergencyOnServer = { ...emergencyOnServer, session: undefined, lost: undefined };
+  return answer();
+});
+const cancelEmergency = vi.fn((id: string) => {
+  void id;
+  emergencyOnServer = { ...emergencyOnServer, session: undefined };
   return answer();
 });
 // Whether this install is in a group, and what the group answers a request
@@ -231,15 +253,16 @@ vi.mock("../../lib/api", async (importOriginal) => {
     getEmergency: () => answer(),
     readEmergencyKit: (...a: unknown[]) => readEmergencyKit(...(a as [string, string?])),
     readEmergencyKey: (...a: unknown[]) => readEmergencyKey(...(a as [string, string[], CloudCreds?])),
-    adoptEmergencyKey: () => adoptEmergencyKey(),
-    storeEmergencySignIns: () => storeEmergencySignIns(),
-    finishEmergency: () => finishEmergency(),
+    adoptEmergencyKey: (id: string) => adoptEmergencyKey(id),
+    storeEmergencySignIns: (id: string, replace?: boolean) => storeEmergencySignIns(id, replace),
+    finishEmergency: (id: string) => finishEmergency(id),
+    cancelEmergency: (id: string) => cancelEmergency(id),
     undoEmergency: () => undoEmergency(),
     getGroup: () => Promise.resolve({ ok: true, active: inGroup, members: [] }),
     listOfferedDeposits: () =>
       Promise.resolve({
         ok: true,
-        deposits: [{ memberId: "m-nas", memberName: "nas", ownerId: "o-tower", ownerName: "tower", updatedAt: "2026-09-14T03:00:00Z" }],
+        deposits: [{ memberId: "m-nas", memberName: "nas", ownerId: "o-tower", ownerName: "tower", updatedAt: "2026-09-14T03:00:00Z", newest: true }],
         silent: [],
       }),
     emergencyFromGroup: (...a: unknown[]) => emergencyFromGroup(...(a as [string, string, string, boolean])),
@@ -255,7 +278,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     restore: (...a: unknown[]) => restore(...(a as [string, string, boolean])),
     restoreVM: (...a: unknown[]) => restoreVM(...(a as [string])),
     restoreFileSet: (...a: unknown[]) => restoreFileSet(...(a as [string])),
-    restoreConfig: (snapshot: string, source?: string) => restoreConfig(snapshot, source),
+    restoreConfig: (snapshot: string, source?: string, emergency?: string) => restoreConfig(snapshot, source, emergency),
     checkRestore: () => Promise.resolve({ ok: true, ready: true, checks: [], plan: null }),
     fileSetSnapshots: () =>
       Promise.resolve({ ok: true, snapshots: [{ id: "f-old", time: "2026-09-01T03:00:00Z" }, { id: "f-new", time: "2026-09-20T03:00:00Z" }] }),
@@ -551,7 +574,8 @@ describe("taking the key over", () => {
     expect(await screen.findByText(en["emergency.code.adopt-own-backups"])).toBeTruthy();
     expect(button(en["emergency.adopt"]).disabled).toBe(true);
     await press(button(en["restorePage.oldFolder"]));
-    expect(finishEmergency).toHaveBeenCalled();
+    expect(cancelEmergency).toHaveBeenCalledWith(SESSION);
+    expect(finishEmergency).not.toHaveBeenCalled();
     expect(onOldFolder).toHaveBeenCalledTimes(1);
   });
 
@@ -607,6 +631,108 @@ describe("taking the key over", () => {
   });
 });
 
+describe("what the kit says about itself", () => {
+  it("names the server it was written for and when, before anything is taken over", async () => {
+    await open();
+    await readKit();
+    const when = formatRecent(1_789_000_000, "en");
+    expect(screen.getByTestId("emergency-kit").textContent).toBe(en["emergency.kitOf"].replace("{server}", "tower").replace("{when}", when));
+  });
+
+  it("names a member that keeps a newer deposit and leads to asking that one", async () => {
+    inGroup = true;
+    readEmergencyKit.mockImplementationOnce(() => {
+      emergencyOnServer = { ...emergencyOnServer, session: session({ source: "group", kit: { ownerId: "o-tower", server: "tower", writtenAt: 1_789_000_000, newerWith: "attic" } }) };
+      return answer();
+    });
+    await open();
+    await upload("kit");
+    expect(await screen.findByText(en["emergency.newerWith"].replaceAll("{member}", "attic").replace("{server}", "tower"))).toBeTruthy();
+    await press(button(en["emergency.askNewer"].replace("{member}", "attic")));
+    expect(cancelEmergency).toHaveBeenCalledWith(SESSION);
+    expect(adoptEmergencyKey).not.toHaveBeenCalled();
+    expect(way("emergency.way.group").getAttribute("aria-checked")).toBe("true");
+    expect(await screen.findByText("tower")).toBeTruthy();
+  });
+
+  it("says nothing of itself for a typed key", async () => {
+    await open();
+    await press(way("emergency.way.key"));
+    readEmergencyKey.mockImplementationOnce(() => {
+      emergencyOnServer = { ...emergencyOnServer, session: session({ source: "typed", kit: {} }) };
+      return answer();
+    });
+    fireEvent.change(screen.getByLabelText(en["emergency.key"]), { target: { value: OLD_KEY } });
+    await press(button(en["emergency.connect"]));
+    await waitFor(() => expect(places().length).toBeGreaterThan(0));
+    expect(screen.queryByTestId("emergency-kit")).toBeNull();
+  });
+});
+
+describe("the sign-ins of the kit", () => {
+  it("are tried on the places again once saved, which then say what they answered", async () => {
+    await open();
+    await takeOver();
+    expect(within(places()[2]).getByText(en["emergency.place.sign-in"])).toBeTruthy();
+    await press(button(en["emergency.signInsSave"]));
+    expect(storeEmergencySignIns).toHaveBeenCalledWith(SESSION, false);
+    expect(await screen.findByText(en["emergency.signInsSaved"])).toBeTruthy();
+    expect(within(places()[2]).getByText(en["emergency.place.readable"])).toBeTruthy();
+  });
+
+  it("replace this server's own only after the person agrees, naming which", async () => {
+    readEmergencyKit.mockImplementationOnce(() => {
+      emergencyOnServer = { ...emergencyOnServer, session: session({ rcloneConfig: true, replaces: { cloudSignIn: true, rcloneConfig: true } }) };
+      return answer();
+    });
+    await open();
+    await upload("kit");
+    await waitFor(() => expect(places()).toHaveLength(4));
+    await press(button(en["emergency.adopt"]));
+    await press(within(screen.getAllByRole("dialog").at(-1)!).getByRole("button", { name: en["emergency.adopt"] }));
+    await screen.findByText(new RegExp(en["emergency.adopted"]));
+    const list = `${en["emergency.replaces.cloud"]} and ${en["emergency.replaces.rclone"]}`;
+    expect(screen.getByText(en["emergency.signInsReplaces"].replace("{list}", list))).toBeTruthy();
+
+    await press(button(en["emergency.signInsSave"]));
+    expect(storeEmergencySignIns).toHaveBeenCalledTimes(1);
+    const ask = screen.getAllByRole("dialog").at(-1)!;
+    expect(ask.textContent).toContain(en["emergency.signInsReplaceAsk"].replace("{list}", list));
+    expect(screen.queryByText(en["emergency.code.sign-ins-exist"])).toBeNull();
+    await press(within(ask).getByRole("button", { name: en["common.cancel"] }));
+    expect(storeEmergencySignIns).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(en["emergency.signInsSaved"])).toBeNull();
+
+    await press(button(en["emergency.signInsSave"]));
+    await press(within(screen.getAllByRole("dialog").at(-1)!).getByRole("button", { name: en["emergency.signInsReplace"] }));
+    expect(storeEmergencySignIns).toHaveBeenLastCalledWith(SESSION, true);
+    expect(await screen.findByText(en["emergency.signInsSaved"])).toBeTruthy();
+  });
+});
+
+describe("a step the phone app's session may not take", () => {
+  it("asks for a sign-in at this instance instead of saying it was refused", async () => {
+    adoptEmergencyKey.mockImplementationOnce(() => refused("own-login-needed"));
+    await open();
+    await readKit();
+    await press(button(en["emergency.adopt"]));
+    await press(within(screen.getAllByRole("dialog").at(-1)!).getByRole("button", { name: en["emergency.adopt"] }));
+    const ask = screen.getAllByRole("dialog").at(-1)!;
+    expect(ask.textContent).toContain(en["secrets.ownLoginNeeded"]);
+    expect(within(ask).getByRole("button", { name: en["secrets.signInHere"] })).toBeTruthy();
+    expect(screen.queryByText(/server said own-login-needed/)).toBeNull();
+  });
+
+  it("says that a backup or restore has to end first", async () => {
+    adoptEmergencyKey.mockImplementationOnce(() => refused("adopt-busy"));
+    await open();
+    await readKit();
+    await press(button(en["emergency.adopt"]));
+    await press(within(screen.getAllByRole("dialog").at(-1)!).getByRole("button", { name: en["emergency.adopt"] }));
+    expect(await screen.findByText(en["emergency.code.adopt-busy"])).toBeTruthy();
+  });
+});
+
 describe("the time an emergency has", () => {
   it("is counted down, and the window goes back to the start when it is over", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -653,7 +779,8 @@ describe("leaving the window", () => {
     await open();
     await readKit();
     await press(button(en["common.cancel"]));
-    expect(finishEmergency).toHaveBeenCalledTimes(1);
+    expect(cancelEmergency).toHaveBeenCalledWith(SESSION);
+    expect(finishEmergency).not.toHaveBeenCalled();
     expect(undoEmergency).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -662,7 +789,7 @@ describe("leaving the window", () => {
     await open();
     await readKit();
     await press(button(en["emergency.another"]));
-    expect(finishEmergency).toHaveBeenCalledTimes(1);
+    expect(cancelEmergency).toHaveBeenCalledWith(SESSION);
     await waitFor(() => expect(places()).toHaveLength(0));
     expect(way("emergency.way.kit").getAttribute("aria-checked")).toBe("false");
     expect(onClose).not.toHaveBeenCalled();
@@ -685,7 +812,7 @@ describe("leaving the window", () => {
     await takeOver();
     await press(button(en["common.cancel"]));
     await press(button(en["emergency.keep"]));
-    expect(finishEmergency).toHaveBeenCalledTimes(1);
+    expect(finishEmergency).toHaveBeenCalledWith(SESSION);
     expect(undoEmergency).not.toHaveBeenCalled();
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
@@ -718,7 +845,8 @@ describe("leaving the window", () => {
     await press(within(screen.getAllByRole("dialog").at(-1)!).getByRole("button", { name: en["emergency.adopt"] }));
     expect(await screen.findByText(new RegExp(en["emergency.code.adopt-in-use"]))).toBeTruthy();
     await press(button(en["common.cancel"]));
-    expect(finishEmergency).toHaveBeenCalledTimes(1);
+    expect(finishEmergency).toHaveBeenCalledWith(SESSION);
+    expect(cancelEmergency).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
@@ -727,7 +855,7 @@ describe("the settings", () => {
   it("are brought back from the place that was named, and say when the restart is left to the user", async () => {
     await open("settings");
     await press(button(en["emergency.settingsGo"]));
-    await waitFor(() => expect(restoreConfig).toHaveBeenCalledWith("latest", undefined));
+    await waitFor(() => expect(restoreConfig).toHaveBeenCalledWith("latest", undefined, undefined));
     expect(putSettings.mock.calls[0][0]).toMatchObject({ configPath: "backups/config" });
     expect(await screen.findByText(en["recovery.configManualRestart"])).toBeTruthy();
     expect(screen.queryByText(new RegExp(en["emergency.loginStays"]))).toBeNull();
@@ -739,7 +867,7 @@ describe("the settings", () => {
     await press(next());
     expect(screen.getByText(new RegExp(en["emergency.loginStays"]))).toBeTruthy();
     await press(button(en["emergency.settingsGo"]));
-    await waitFor(() => expect(restoreConfig).toHaveBeenCalledWith("latest", undefined));
+    await waitFor(() => expect(restoreConfig).toHaveBeenCalledWith("latest", undefined, SESSION));
     expect(putSettings.mock.calls[0][0]).toMatchObject({ configPath: "old/config" });
   });
 

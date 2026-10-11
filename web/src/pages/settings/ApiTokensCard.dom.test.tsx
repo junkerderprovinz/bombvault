@@ -2,7 +2,7 @@
 // A token the card hands out is gone from the server once the panel closes, so
 // the cases worth pinning are the ones where it must refuse to mint, the one
 // place the token shows, and the log naming routes rather than MCP tools.
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { en } from "../../lib/i18n";
@@ -95,6 +95,17 @@ describe("ApiTokensCard", () => {
 
     fireEvent.click(screen.getByRole("button", { name: new RegExp(en["mcp.dismissKey"]) }));
     await waitFor(() => expect(screen.queryByDisplayValue("bvapi_secret")).toBeNull());
+  });
+
+  it("asks for a sign-in at this instance when the phone app's session may not create a token", async () => {
+    await renderCard(payload());
+    createApiToken.mockResolvedValue({ ok: false, code: "own-login-needed", error: "sign in at this instance's web interface" });
+    fireEvent.change(await screen.findByLabelText(en["api.labelLabel"]), { target: { value: "Uptime Kuma" } });
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(en["api.createToken"]) }));
+    const ask = await screen.findByRole("dialog");
+    expect(ask.textContent).toContain(en["secrets.ownLoginNeeded"]);
+    expect(within(ask).getByRole("button", { name: en["secrets.signInHere"] })).toBeTruthy();
+    expect(screen.queryByText("sign in at this instance's web interface")).toBeNull();
   });
 
   it("refuses to mint from a public-looking name without a password", async () => {

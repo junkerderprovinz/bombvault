@@ -135,7 +135,7 @@ func TestSettingsOfTheOldInstallComeBackUnderThisServersKey(t *testing.T) {
 	}
 	staged := f.stage(old)
 
-	if err := f.svc.takeOverStagedSettings(context.Background()); err != nil {
+	if err := f.svc.takeOverStagedSettings(f.inEmergency()); err != nil {
 		t.Fatalf("takeOverStagedSettings: %v", err)
 	}
 
@@ -180,7 +180,7 @@ func TestNothingSealedUnderTheOldKeyIsLeftInTheRestoredSettings(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.emergency("POST", "/api/emergency/read", map[string]any{"kit": kit})
 	staged := f.stage(settingsOfTheOldInstall(t, oldKey))
-	if err := f.svc.takeOverStagedSettings(context.Background()); err != nil {
+	if err := f.svc.takeOverStagedSettings(f.inEmergency()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -212,7 +212,7 @@ func TestNothingSealedUnderTheOldKeyIsLeftInTheRestoredSettings(t *testing.T) {
 func TestSettingsOfAnotherKeyAreRefusedOutsideAnEmergency(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.stage(settingsOfTheOldInstall(t, oldKey))
-	if err := f.svc.takeOverStagedSettings(context.Background()); !errors.Is(err, errSettingsOtherKey) {
+	if err := f.svc.takeOverStagedSettings(f.inEmergency()); !errors.Is(err, errSettingsOtherKey) {
 		t.Fatalf("settings of another key without an emergency: %v, want %v", err, errSettingsOtherKey)
 	}
 
@@ -241,7 +241,7 @@ func TestOwnSettingsFromBeforeAnAdoptionKeepTheAdoptedKey(t *testing.T) {
 	f.adopt(oldKey, own)
 	staged := f.stage(settingsOfTheOldInstall(t, own))
 
-	if err := f.svc.takeOverStagedSettings(context.Background()); err != nil {
+	if err := f.svc.takeOverStagedSettings(f.inEmergency()); err != nil {
 		t.Fatal(err)
 	}
 	svc, _, _ := fileInstall(t, staged, own)
@@ -323,7 +323,7 @@ func TestBackupsMadeUnderAnotherKeyAreReadAndWrittenAfterTheAdoption(t *testing.
 	if err := fresh.ReadEmergency(ctx, emergencyRead{Kit: kit}); err != nil {
 		t.Fatal(err)
 	}
-	if err := fresh.AdoptEmergencyKey(); err != nil {
+	if err := fresh.AdoptEmergencyKey(fresh.emergency.id); err != nil {
 		t.Fatalf("adopt: %v", err)
 	}
 	now, err := fresh.store.GetSettings()
@@ -408,7 +408,7 @@ func TestARestoreNamesTheSealedValuesItCouldNotBringOver(t *testing.T) {
 	f.emergency("POST", "/api/emergency/read", map[string]any{"kit": kit})
 	f.emergency("POST", "/api/emergency/adopt", nil)
 	staged := f.stage(old)
-	if err := f.svc.takeOverStagedSettings(context.Background()); err != nil {
+	if err := f.svc.takeOverStagedSettings(f.inEmergency()); err != nil {
 		t.Fatal(err)
 	}
 	want := sealedLoss{Count: 2, Kinds: map[string]int{sealedRegistry: 1, sealedPeers: 1}}

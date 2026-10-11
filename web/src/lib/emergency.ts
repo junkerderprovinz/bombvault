@@ -2,7 +2,16 @@
 // of each place the key was tried on, why a step was refused, and what of the
 // places goes into this server's settings.
 
-import type { DepositRefusal, EmergencyPlace, EmergencyRefusal, EmergencyState, ReleaseState, SealedLoss, Settings } from "./api";
+import type {
+  DepositRefusal,
+  EmergencyPlace,
+  EmergencyRefusal,
+  EmergencySession,
+  EmergencyState,
+  ReleaseState,
+  SealedLoss,
+  Settings,
+} from "./api";
 import type { TranslationKey } from "./i18n";
 import { DOMAIN_LABEL } from "./storageLocations";
 
@@ -10,7 +19,8 @@ type T = (key: TranslationKey, n?: number) => string;
 
 /** A refusal of the emergency, of the request for a deposit in the group, or
  *  of the settings restore that follows. "release-decided" is left out: only
- *  the instance that keeps a deposit is told so. */
+ *  the instance that keeps a deposit is told so. The two refusals for the
+ *  session are said by useOwnLogin's sentences. */
 export type EmergencyCode = EmergencyRefusal | Exclude<DepositRefusal, "release-decided"> | "settings-other-key";
 
 const REFUSAL: Record<EmergencyCode, TranslationKey> = {
@@ -37,7 +47,21 @@ const REFUSAL: Record<EmergencyCode, TranslationKey> = {
   "member-gone": "emergency.code.member-gone",
   "member-silent": "emergency.code.member-silent",
   "keeper-too-old": "emergency.code.keeper-too-old",
+  "adopt-busy": "emergency.code.adopt-busy",
+  "sign-ins-exist": "emergency.code.sign-ins-exist",
+  "kit-ambiguous": "emergency.code.kit-ambiguous",
+  "keeper-full": "deposit.code.keeper-full",
+  "deposit-owner": "deposit.code.deposit-owner",
+  "deposit-unreadable": "deposit.code.deposit-unreadable",
+  "deposit-busy": "deposit.code.deposit-busy",
+  "password-not-set": "secrets.passwordNotSet",
+  "own-login-needed": "secrets.ownLoginNeeded",
 };
+
+/** refusalKey is the sentence of a refusal code this client knows. */
+export function refusalKey(code: string): TranslationKey | undefined {
+  return REFUSAL[code as EmergencyCode];
+}
 
 /** refusalText is the sentence of a refusal code. A code this client does not
  *  know shows what the server said. */
@@ -155,6 +179,18 @@ export function sessionKeyInUse(state: EmergencyState | null): boolean {
 /** The emergency in progress took its key over. */
 export function takenOver(state: EmergencyState | null): boolean {
   return sessionKeyInUse(state) && state?.backupKey === "adopted";
+}
+
+const REPLACED_LABEL: Record<keyof EmergencySession["replaces"], TranslationKey> = {
+  cloudSignIn: "emergency.replaces.cloud",
+  rcloneConfig: "emergency.replaces.rclone",
+};
+
+/** replacedText names this server's own sign-ins that the kit's would
+ *  replace, in a list. */
+export function replacedText(t: T, lang: string, replaces: EmergencySession["replaces"]): string {
+  const kinds = (Object.keys(REPLACED_LABEL) as (keyof EmergencySession["replaces"])[]).filter((kind) => replaces[kind]);
+  return new Intl.ListFormat(lang, { type: "conjunction" }).format(kinds.map((kind) => t(REPLACED_LABEL[kind])));
 }
 
 const LOSS_LABEL: Record<keyof SealedLoss["kinds"], TranslationKey> = {

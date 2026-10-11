@@ -99,7 +99,11 @@ func seedSource(t *testing.T, h *Handler, st *store.Repo) {
 func doExport(t *testing.T, h *Handler, query string) ([]byte, settingsExport) {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	h.handleExportSettings(rec, httptest.NewRequest(http.MethodGet, "/api/settings/export"+query, nil))
+	r := httptest.NewRequest(http.MethodGet, "/api/settings/export"+query, nil)
+	if signedIn := sessionOf(h); signedIn != nil {
+		r.Header = signedIn
+	}
+	h.handleExportSettings(rec, r)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("export status = %d", rec.Code)
 	}

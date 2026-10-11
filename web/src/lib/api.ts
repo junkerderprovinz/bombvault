@@ -768,6 +768,35 @@ async function fetchJSON<T>(
   return res.json() as Promise<T>;
 }
 
+/** What a route that makes or hands out key material answers a 403 with:
+ *  the server has no login password, or the session is the one a paired phone
+ *  got for the group's words. After the second, signing in at this instance
+ *  (login) and sending the same request again goes through. */
+export type SecretsRefusal = "password-not-set" | "own-login-needed";
+
+/** fetchJSON for the routes that can answer with a SecretsRefusal: that 403
+ *  comes back as the answer, with its code, and every other failure throws. */
+async function fetchKeyJSON<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(path, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options?.headers ?? {}),
+    },
+  });
+  if (res.status === 403) {
+    const body = (await res.json().catch(() => null)) as { code?: string } | null;
+    if (body?.code === "password-not-set" || body?.code === "own-login-needed") {
+      return body as T;
+    }
+    throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
+  }
+  if (!res.ok) {
+    throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
+  }
+  return res.json() as Promise<T>;
+}
+
 // ---------------------------------------------------------------------------
 // API functions
 // ---------------------------------------------------------------------------
@@ -4213,15 +4242,18 @@ export function backupEverythingNow(): Promise<OkEnvelope & { started?: boolean 
  * `autoRestart` is true when a container restart was scheduled, false when Docker
  * was unreachable and the user must restart the container manually. On a restore
  * error the 200 body carries {ok:false, error} (an APP_KEY / encryption mismatch
- * surfaces as a scrubbed message). Consumed by the Recovery tab (Task 13).
+ * surfaces as a scrubbed message). `emergency` is the id of the emergency
+ * the restore belongs to: only with it are settings of the old install taken
+ * over, and a stale id is refused with code "emergency-ended".
  */
 export function restoreConfig(
   snapshot: string,
-  source?: string
-): Promise<OkEnvelope & { staged?: boolean; autoRestart?: boolean; lost?: SealedLoss }> {
+  source?: string,
+  emergency?: string
+): Promise<Omit<OkEnvelope, "code"> & { code?: EmergencyRefusal; staged?: boolean; autoRestart?: boolean; lost?: SealedLoss }> {
   return fetchJSON("/api/config/restore", {
     method: "POST",
-    body: JSON.stringify({ snapshot, source }),
+    body: JSON.stringify({ snapshot, source, emergency: emergency ?? "" }),
   });
 }
 
@@ -5233,17 +5265,24 @@ export interface RecoveryKitFacts {
   encrypted: boolean;
   hasKey: boolean;
   locations: RecoveryKitLocation[];
+  /** The name of the server that wrote the kit. A kit of an older version
+   *  names none. */
+  server?: string;
+  /** When the kit was written, in Unix seconds. */
+  writtenAt?: number;
 }
 
 /** Why a kit cannot be used: it is sealed with age and came without the
  *  identity that opens it, it is another file, its key does not give the
- *  password printed beside it, it names no key, what was pasted is no age
- *  identity, or the identity is not the one the kit was sealed for. */
+ *  password printed beside it, it names no key, it names a key or a section
+ *  twice, what was pasted is no age identity, or the identity is not the one
+ *  the kit was sealed for. */
 export type RecoveryKitRefusal =
   | "kit-sealed"
   | "not-a-kit"
   | "kit-key-broken"
   | "kit-no-key"
+  | "kit-ambiguous"
   | "kit-identity"
   | "kit-not-for-identity";
 
@@ -5292,12 +5331,24 @@ export type EmergencyRefusal =
   | "adopt-in-use"
   | "emergency-key"
   | "backup-key-locked"
+  | "adopt-busy"
+  | "sign-ins-exist"
+  | SecretsRefusal
   | RecoveryKitRefusal;
 
 /** The emergency in progress. It lives in the server's memory for 30 minutes
  *  and ends on finish, on cancel and with a restart. */
 export interface EmergencySession {
+  /** Names this emergency. Every request that acts on it carries it, and one
+   *  that names an emergency another read replaced gets "emergency-ended". */
+  id: string;
   source: "kit" | "typed" | "group";
+  /** Whose kit the emergency reads and how old it is, to show before
+   *  anything is taken over. Empty for a typed key. `ownerId` is set for a
+   *  deposit, whose `server` and `writtenAt` were sealed into it by that
+   *  install. `newerWith` names a member that lists a newer deposit of the
+   *  same install than the one that was opened. */
+  kit: { ownerId?: string; server?: string; writtenAt?: number; newerWith?: string };
   encrypted: boolean;
   places: EmergencyPlace[];
   /** Unix seconds. */
@@ -5306,6 +5357,9 @@ export interface EmergencySession {
    *  storeEmergencySignIns saves. */
   cloudSignIn: boolean;
   rcloneConfig: boolean;
+  /** Which of this server's own sign-ins storing the kit's would replace.
+   *  With either true, storeEmergencySignIns needs `replace`. */
+  replaces: { cloudSignIn: boolean; rcloneConfig: boolean };
   /** What adopting would be refused with, absent when it would go through. */
   refusal?: EmergencyRefusal;
 }
@@ -5357,27 +5411,38 @@ export function readEmergencyKey(key: string, places: string[], creds?: CloudCre
 }
 
 /** POST /api/emergency/adopt: makes the key of the emergency the key of this
- *  server's backups and sets whether repositories carry a password. */
-export function adoptEmergencyKey(): Promise<EmergencyAnswer> {
-  return fetchJSON("/api/emergency/adopt", { method: "POST" });
+ *  server's backups and sets whether repositories carry a password. A paired
+ *  phone's session gets "own-login-needed". */
+export function adoptEmergencyKey(session: string): Promise<EmergencyAnswer> {
+  return fetchKeyJSON("/api/emergency/adopt", { method: "POST", body: JSON.stringify({ session }) });
 }
 
 /** POST /api/emergency/sign-ins: saves the shared cloud sign-in and the
- *  rclone config the kit carries. */
-export function storeEmergencySignIns(): Promise<EmergencyAnswer> {
-  return fetchJSON("/api/emergency/sign-ins", { method: "POST" });
+ *  rclone config the kit carries and answers with the places looked into
+ *  again. Over sign-ins this server has of its own it answers
+ *  "sign-ins-exist" unless `replace` is set; undoEmergency puts them back. */
+export function storeEmergencySignIns(session: string, replace = false): Promise<EmergencyAnswer> {
+  return fetchKeyJSON("/api/emergency/sign-ins", { method: "POST", body: JSON.stringify({ session, replace }) });
 }
 
 /** POST /api/emergency/finish: ends the emergency and keeps what it took
- *  over. */
-export function finishEmergency(): Promise<EmergencyAnswer> {
-  return fetchJSON("/api/emergency/finish", { method: "POST" });
+ *  over. After the restart a settings restore ends in, no emergency is left
+ *  and the call only clears `lost`; the session it names is then ignored. */
+export function finishEmergency(session: string): Promise<EmergencyAnswer> {
+  return fetchJSON("/api/emergency/finish", { method: "POST", body: JSON.stringify({ session }) });
 }
 
-/** DELETE /api/emergency: ends the emergency and puts the server back under
- *  its own key, refused with "adopt-in-use" once backups were written. */
+/** DELETE /api/emergency?session=: cancels the emergency before anything is
+ *  taken over. It stores and undoes nothing. */
+export function cancelEmergency(session: string): Promise<EmergencyAnswer> {
+  return fetchJSON(`/api/emergency?session=${encodeURIComponent(session)}`, { method: "DELETE" });
+}
+
+/** POST /api/emergency/undo: puts the server back under its own key and its
+ *  own sign-ins and ends any emergency, refused with "adopt-in-use" once
+ *  backups were written and "adopt-busy" while one runs. */
 export function undoEmergency(): Promise<EmergencyAnswer> {
-  return fetchJSON("/api/emergency", { method: "DELETE" });
+  return fetchKeyJSON("/api/emergency/undo", { method: "POST" });
 }
 
 /** POST /api/foreign/close — drop the session immediately (call on
@@ -5847,10 +5912,11 @@ export interface GroupState extends OkEnvelope {
   /** selfAddress was set by hand and stops being replaced by a newly
    *  learned one. */
   selfAddressManual: boolean;
-  /** What this instance found out about itself: its addresses on the local
-   *  network and its host name. A server that does not report them leaves the
-   *  field out. */
-  ownAddresses?: string[];
+  /** The addresses this instance found for itself, read-only: its IPv4
+   *  addresses on the local network (no loopback, no link-local, no
+   *  container bridges), then its mDNS host name ("bombvault.local") while
+   *  it announces itself. */
+  ownAddresses: string[];
 }
 
 /** Why a phrase did not decode, with the word at fault. */
@@ -5984,9 +6050,12 @@ export interface MemberRoles {
   /** False for a member from before role requests: asking it takes effect at
    *  once, since nobody there can answer. */
   answers: boolean;
-  /** False for a member too old to keep a key deposit. The server always
-   *  sends it. */
+  /** False for a member too old to keep a key deposit, and for one out of
+   *  reach. The server always sends it. */
   canKeep?: boolean;
+  /** Whether the member can keep this instance's deposit, telling a member
+   *  that is too old from one that is out of reach, whose version is unknown. */
+  keep: "yes" | "too-old" | "unreachable";
   /** What the member does for this instance. */
   byMember: RoleSide;
   /** What this instance does for the member. */
@@ -6056,10 +6125,16 @@ export function decideRole(
   });
 }
 
-/** Where a key deposit stands: the keeper holds it, its content changed and
- *  the fresh one has not reached the keeper, or the keeper deleted it and
- *  takes a new one only when a person asks again. */
-export type DepositState = "held" | "stale" | "declined";
+/** Where a key deposit stands. "held": the keeper has the current one.
+ *  "stale": the keeper has an older one, because the kit says something else
+ *  since or the recovery code is another; the next renewal sends the fresh
+ *  one. "changed" (on this instance's own deposits only): the keeper holds,
+ *  under this instance's id, something this instance did not send. Either a
+ *  fresh deposit is on its way, or somebody else made the one there and the
+ *  keeper takes none from this instance until a person on the keeper deletes
+ *  it. "declined": the keeper deleted it and takes a new one only when a
+ *  person asks again. */
+export type DepositState = "held" | "stale" | "changed" | "declined";
 
 /** The keeper role in one direction. Under `byMember` it is this instance's
  *  deposit with the member and `at` when it was last sent. Under `forMember`
@@ -6069,6 +6144,11 @@ export interface KeeperRole {
   state: DepositState;
   at: string;
   asks?: number;
+  /** Under `byMember`: when the member was last found holding something this
+   *  instance did not send, or nothing. Absent for never. The deposit is sent
+   *  again at once, so `state` says what became of it: "held" when the member
+   *  took it, "changed" while it has not. */
+  changedAt?: string;
 }
 
 /** A request to hand a deposit out, as the keeper answers it. "released"
@@ -6079,7 +6159,8 @@ export type ReleaseState = "asked" | "allowed" | "declined" | "released" | "expi
 
 /** What the keeper's person sees of a request: who asks, for whose deposit,
  *  since when this instance has had the asking instance in its group ("" for
- *  never listed), and how often it asked. */
+ *  never listed), and how often it asked. `ownerName` is the name the
+ *  deposit had when it was asked for, kept after the deposit is deleted. */
 export interface DepositRelease {
   id: string;
   ownerId: string;
@@ -6099,15 +6180,26 @@ export interface DepositRelease {
  *  recovery code was made, "" while it has none. */
 export interface Deposits {
   codeSince: string;
-  sent: { memberId: string; name: string; state: DepositState; sentAt: string }[];
+  /** `changedAt` as in KeeperRole, "" for never. */
+  sent: { memberId: string; name: string; state: DepositState; sentAt: string; changedAt: string }[];
   kept: { ownerId: string; ownerName: string; state: DepositState; createdAt: string; updatedAt: string }[];
   /** Newest first, answered ones included. */
   releases: DepositRelease[];
 }
 
+/** What a refused run of the key events (kinds "key...") carries as its
+ *  error: one of these codes, to be shown in the reader's language. Runs
+ *  written before carry an English sentence instead, which is shown as it
+ *  is. */
+export type KeyRunRefusal = EmergencyRefusal | DepositRefusal | RecoveryKitRefusal;
+
 /** Why a deposit call was refused: the member is too old to keep one, it
  *  keeps none of that server, the keeper's person declined, this server asked
- *  more than three times in an hour, the deposit is of a newer version, the
+ *  more than three times in an hour or all instances together more than six
+ *  times, the member keeps as many deposits as it takes ("keeper-full"), what
+ *  the code opened says another install sealed it ("deposit-owner") or is no
+ *  deposit ("deposit-unreadable"), too many codes are being tried at once
+ *  ("deposit-busy", try again shortly), the deposit is of a newer version, the
  *  code is not twenty characters, the code does not open the deposit, the
  *  member is out of reach or did not answer, the backup key is locked, or the
  *  request was answered before. */
@@ -6122,23 +6214,14 @@ export type DepositRefusal =
   | "member-gone"
   | "member-silent"
   | "backup-key-locked"
-  | "release-decided";
+  | "release-decided"
+  | "keeper-full"
+  | "deposit-owner"
+  | "deposit-unreadable"
+  | "deposit-busy"
+  | SecretsRefusal;
 
 type DepositAnswer<T> = Omit<OkEnvelope, "code"> & { code?: DepositRefusal } & T;
-
-/** fetchKeyAction sends a call that hands out or creates key material. The
- *  server refuses one outright with a 403 and a sentence, as it does for the
- *  recovery kit on an instance without a login password, and the sentence is
- *  the answer. Any other failure is thrown as fetchJSON throws it. */
-async function fetchKeyAction<T>(path: string, options: RequestInit): Promise<T> {
-  const res = await fetch(path, { ...options, headers: { "Content-Type": "application/json" } });
-  if (res.status === 403) {
-    const body = (await res.json().catch(() => null)) as { error?: string } | null;
-    if (body?.error) return { ok: false, error: body.error } as T;
-  }
-  if (!res.ok) throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
-  return res.json() as Promise<T>;
-}
 
 /** GET /api/group/deposits. */
 export function listDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>> {
@@ -6146,24 +6229,26 @@ export function listDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>> 
 }
 
 /** PUT /api/group/members/{id}/roles/keeper: gives the member this instance's
- *  deposit. `code` is the recovery code, in four groups of five; it comes
+ *  deposit. `recoveryCode` is the recovery code, in four groups of five; it comes
  *  with the first deposit only and is stored nowhere, so it has to be shown
- *  and written down then. */
-export function askKeeper(memberId: string): Promise<DepositAnswer<{ keeper?: KeeperRole; code?: string }>> {
-  return fetchKeyAction(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "PUT" });
+ *  and written down then. Answers a SecretsRefusal without a login password
+ *  or with a paired phone's session. */
+export function askKeeper(memberId: string): Promise<DepositAnswer<{ keeper?: KeeperRole; recoveryCode?: string }>> {
+  return fetchKeyJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "PUT" });
 }
 
 /** DELETE /api/group/members/{id}/roles/keeper: takes the deposit back.
  *  `told` is false when the member could not be reached. With the last
- *  keeper gone the recovery code is void. */
-export function withdrawKeeper(memberId: string): Promise<DepositAnswer<{ told?: boolean }>> {
-  return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "DELETE" });
+ *  keeper gone the recovery code is void, and `codeGone` says so. */
+export function withdrawKeeper(memberId: string): Promise<DepositAnswer<{ told?: boolean; codeGone?: boolean }>> {
+  return fetchKeyJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "DELETE" });
 }
 
 /** POST /api/group/deposit/code: replaces the recovery code and seals every
- *  keeper's deposit for the new one. The answer is the one time it is shown. */
-export function newDepositCode(): Promise<DepositAnswer<{ code?: string }>> {
-  return fetchKeyAction("/api/group/deposit/code", { method: "POST" });
+ *  keeper's deposit for the new one. The answer is the one time it is shown.
+ *  Answers a SecretsRefusal like askKeeper. */
+export function newDepositCode(): Promise<DepositAnswer<{ recoveryCode?: string }>> {
+  return fetchKeyJSON("/api/group/deposit/code", { method: "POST" });
 }
 
 /** POST /api/group/deposit/renew: sends the keepers a fresh deposit where the
@@ -6173,12 +6258,14 @@ export function renewDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>>
 }
 
 /** POST /api/group/deposits/releases/{id}: the keeper's person allows or
- *  refuses a request. An unknown id is a 404. */
+ *  refuses a request. An unknown id is a 404. Allowing answers a
+ *  SecretsRefusal like askKeeper; refusing answers "own-login-needed" to a
+ *  paired phone's session and goes through without a login password. */
 export function decideRelease(
   id: string,
   decision: "allow" | "refuse",
 ): Promise<DepositAnswer<{ state?: ReleaseState }>> {
-  return fetchKeyAction(`/api/group/deposits/releases/${encodeURIComponent(id)}`, {
+  return fetchKeyJSON(`/api/group/deposits/releases/${encodeURIComponent(id)}`, {
     method: "POST",
     body: JSON.stringify({ decision }),
   });
@@ -6197,6 +6284,8 @@ export interface OfferedDeposit {
   ownerId: string;
   ownerName: string;
   updatedAt: string;
+  /** False when another member lists a newer deposit of the same install. */
+  newest: boolean;
 }
 
 /** GET /api/emergency/deposits: asks every member in reach which deposits it
@@ -7684,7 +7773,8 @@ export function answerOAuthConsent(
   });
 }
 
-/** The answer to creating or replacing a key: the secret, shown once. */
+/** The answer to creating or replacing a key: the secret, shown once. To the
+ *  session of a paired phone the code is "own-login-needed". */
 export interface McpKeySecretResponse extends OkEnvelope {
   key?: string;
   item?: McpKeyView;
@@ -7726,7 +7816,7 @@ export function createMcpKey(
   canStartBackups: boolean,
   client: string
 ): Promise<McpKeySecretResponse> {
-  return fetchJSON("/api/mcp/keys", {
+  return fetchKeyJSON("/api/mcp/keys", {
     method: "POST",
     body: JSON.stringify({ label, canStartBackups, client }),
   });
@@ -7743,7 +7833,7 @@ export function updateMcpKey(
 }
 
 export function rotateMcpKey(id: string): Promise<McpKeySecretResponse> {
-  return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}/rotate`, { method: "POST" });
+  return fetchKeyJSON(`/api/mcp/keys/${encodeURIComponent(id)}/rotate`, { method: "POST" });
 }
 
 export function revokeMcpKey(id: string): Promise<OkEnvelope> {
@@ -7778,7 +7868,7 @@ export function listApiTokens(): Promise<ApiTokensResponse> {
 }
 
 export function createApiToken(label: string, canStartBackups: boolean): Promise<McpKeySecretResponse> {
-  return fetchJSON("/api/tokens", {
+  return fetchKeyJSON("/api/tokens", {
     method: "POST",
     body: JSON.stringify({ label, canStartBackups }),
   });
@@ -7795,7 +7885,7 @@ export function updateApiToken(
 }
 
 export function rotateApiToken(id: string): Promise<McpKeySecretResponse> {
-  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}/rotate`, { method: "POST" });
+  return fetchKeyJSON(`/api/tokens/${encodeURIComponent(id)}/rotate`, { method: "POST" });
 }
 
 export function revokeApiToken(id: string): Promise<OkEnvelope> {

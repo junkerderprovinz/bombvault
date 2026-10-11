@@ -68,18 +68,19 @@ func TestAPhoneOnTheInstancesPageSignsInWithoutThePassword(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ask := func(id string) (int, peerSessionResponse) {
+	ask := func(sender, id string) (int, peerSessionResponse) {
 		status, body := h.svc.servePeer(context.Background(), relay.ProxyCall{
 			Method: http.MethodPost,
 			Path:   "/api/group/peer/session",
 			Body:   []byte(`{"instanceId":"` + id + `"}`),
+			Sender: sender,
 		})
 		var resp peerSessionResponse
 		_ = json.Unmarshal(body, &resp)
 		return status, resp
 	}
 
-	status, resp := ask("phone")
+	status, resp := ask("phone", "phone")
 	if status != http.StatusOK || !resp.Needed || resp.Name != h.sessionCookieNameFor() {
 		t.Fatalf("status %d, answer %+v", status, resp)
 	}
@@ -87,8 +88,13 @@ func TestAPhoneOnTheInstancesPageSignsInWithoutThePassword(t *testing.T) {
 		t.Fatal("the session the phone got does not sign in")
 	}
 
-	if status, _ := ask("another-instance"); status != http.StatusForbidden {
+	if status, _ := ask("another-instance", "another-instance"); status != http.StatusForbidden {
 		t.Fatalf("a member that is not a listed phone got status %d", status)
+	}
+	for _, sender := range []string{"another-instance", ""} {
+		if status, resp := ask(sender, "phone"); status != http.StatusForbidden || resp.Value != "" {
+			t.Fatalf("a call from %q that names the phone got status %d", sender, status)
+		}
 	}
 }
 
@@ -98,7 +104,7 @@ func TestAPhoneNeedsNoSessionWhereThereIsNoPassword(t *testing.T) {
 	if _, err := h.store.CreateFleetPeer(store.FleetPeer{MemberID: "phone", Name: "Phone", Kind: "android", Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
-	status, body := h.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/session", Body: []byte(`{"instanceId":"phone"}`)})
+	status, body := h.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/session", Body: []byte(`{"instanceId":"phone"}`), Sender: "phone"})
 	if status != http.StatusOK || !strings.Contains(string(body), `"needed":false`) {
 		t.Fatalf("status %d: %s", status, body)
 	}

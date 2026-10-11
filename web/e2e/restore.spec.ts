@@ -338,7 +338,18 @@ interface StagedEmergency {
  *  answered the request with. */
 const keeper = { allows: false };
 
-const KIT_SESSION = { encrypted: true, places: KIT_PLACES, expiresAt: NOW + 1800, cloudSignIn: true, rcloneConfig: true };
+const SESSION = "sess-e2e";
+
+const KIT_SESSION = {
+  id: SESSION,
+  kit: { server: "tower", writtenAt: NOW - 2 * DAY },
+  encrypted: true,
+  places: KIT_PLACES,
+  expiresAt: NOW + 1800,
+  cloudSignIn: true,
+  rcloneConfig: true,
+  replaces: { cloudSignIn: false, rcloneConfig: false },
+};
 
 /**
  * Stages the emergency of another install: the key the server backs up under
@@ -355,6 +366,9 @@ async function stageEmergency(page: Page, start: StagedEmergency = { backupKey: 
       const step = `${request.method()} ${new URL(request.url()).pathname.replace("/api/emergency", "") || "/"}`;
       if (request.method() !== "GET") asked.push(step);
       const refuse = (code: string) => route.fulfill({ json: { ok: false, code, error: code } });
+      // Every step after the read names the emergency it acts on.
+      const named = request.method() === "DELETE" ? new URL(request.url()).searchParams.get("session") : request.postDataJSON()?.session;
+      if (["POST /adopt", "POST /sign-ins", "POST /finish", "DELETE /"].includes(step) && named !== SESSION) return refuse("emergency-ended");
       switch (step) {
         case "POST /read": {
           const body = request.postDataJSON() as { kit?: string; identity?: string };
@@ -367,7 +381,7 @@ async function stageEmergency(page: Page, start: StagedEmergency = { backupKey: 
           return route.fulfill({
             json: {
               ok: true,
-              deposits: [{ memberId: "m-nas", memberName: "nas", ownerId: "o-tower", ownerName: "tower", updatedAt: new Date((NOW - DAY) * 1000).toISOString() }],
+              deposits: [{ memberId: "m-nas", memberName: "nas", ownerId: "o-tower", ownerName: "tower", updatedAt: new Date((NOW - DAY) * 1000).toISOString(), newest: true }],
               silent: ["dachboden"],
             },
           });
@@ -381,10 +395,17 @@ async function stageEmergency(page: Page, start: StagedEmergency = { backupKey: 
         case "POST /adopt":
           state = { backupKey: "adopted", source: "kit", adoptedAt: NOW, undoable: true, session: { ...state.session, refusal: "adopt-same-key" } };
           break;
+        case "POST /sign-ins": {
+          // The places are tried again with the kit's sign-ins.
+          const tried = KIT_PLACES.map((place) => (place.state === "sign-in" ? { ...place, state: "readable" } : place));
+          state = { ...state, session: { ...state.session, places: tried } };
+          break;
+        }
         case "POST /finish":
+        case "DELETE /":
           state = { ...state, session: undefined };
           break;
-        case "DELETE /":
+        case "POST /undo":
           state = { backupKey: "own", undoable: false };
           break;
       }
@@ -598,6 +619,7 @@ test("the emergency reads a sealed recovery kit, takes its key over when told to
   await expect(wizard(page).getByText("Sein Schlüssel öffnet 2 von 4 Speicherorten.")).toBeVisible();
   await expect(wizard(page).getByText(/Noch ist nichts gespeichert\. Der Schlüssel bleibt noch 30 Minuten/)).toBeVisible();
   await expect(page.getByTestId("emergency-place").nth(2)).toContainText("Zugang fehlt");
+  await expect(wizard(page).getByTestId("emergency-kit")).toHaveText(/^Recovery-Kit von tower, geschrieben /);
   await expect(wizard(page).getByRole("button", { name: "Weiter" })).toHaveCount(0);
   expect(asked).toEqual(["POST /read", "POST /read"]);
 
@@ -607,7 +629,8 @@ test("the emergency reads a sealed recovery kit, takes its key over when told to
   await question.getByRole("button", { name: "Schlüssel übernehmen" }).click();
   await expect(wizard(page).getByText(/^Schlüssel übernommen\./)).toBeVisible();
   await wizard(page).getByRole("button", { name: "Zugangsdaten speichern" }).click();
-  await expect(wizard(page).getByText("Zugangsdaten gespeichert.")).toBeVisible();
+  await expect(wizard(page).getByText("Zugangsdaten gespeichert, die Speicherorte wurden neu geprüft.")).toBeVisible();
+  await expect(page.getByTestId("emergency-place").nth(2)).toContainText("lesbar");
 
   await wizard(page).getByRole("button", { name: "Weiter" }).click();
   await expect(wizard(page).getByText(/Die Anmeldung dieses Servers bleibt/)).toBeVisible();
@@ -618,7 +641,7 @@ test("the emergency reads a sealed recovery kit, takes its key over when told to
   await expect(wizard(page).getByText(/Dieser Server hat den Schlüssel übernommen\./)).toBeVisible();
   await wizard(page).getByRole("button", { name: "Übernahme rückgängig machen" }).click();
   await expect(wizard(page)).toBeHidden();
-  expect(asked).toEqual(["POST /read", "POST /read", "POST /adopt", "POST /sign-ins", "DELETE /"]);
+  expect(asked).toEqual(["POST /read", "POST /read", "POST /adopt", "POST /sign-ins", "POST /undo"]);
   await expect(page.getByTestId("key-adopted")).toHaveCount(0);
 });
 

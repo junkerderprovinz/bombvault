@@ -129,6 +129,7 @@ export function memberRoles(over: Partial<MemberRoles> = {}): MemberRoles {
     reachable: true,
     answers: true,
     canKeep: true,
+    keep: "yes",
     byMember: roleSide(),
     forMember: roleSide(),
     asks: 0,

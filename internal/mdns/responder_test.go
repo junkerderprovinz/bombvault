@@ -43,3 +43,12 @@ func TestDockerAndLibvirtBridgesAreLeftOut(t *testing.T) {
 		}
 	}
 }
+
+func TestTheAddressesAHostAnnouncesAreIPv4AndNeitherLoopbackNorLinkLocal(t *testing.T) {
+	for _, a := range Addresses() {
+		ip, err := netip.ParseAddr(a)
+		if err != nil || !ip.Is4() || ip.IsLoopback() || ip.IsLinkLocalUnicast() {
+			t.Errorf("an address the host would show: %q", a)
+		}
+	}
+}

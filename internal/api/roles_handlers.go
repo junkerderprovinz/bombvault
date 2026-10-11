@@ -83,8 +83,12 @@ type memberRolesView struct {
 	// Answers is false for a member from before role requests: asking it
 	// takes effect at once, since nobody there can answer.
 	Answers bool `json:"answers"`
-	// CanKeep is false for a member too old to keep a key deposit.
-	CanKeep   bool         `json:"canKeep"`
+	// CanKeep is false for a member too old to keep a key deposit, and for
+	// one out of reach, whose version is unknown. Keep tells the two apart.
+	CanKeep bool `json:"canKeep"`
+	// Keep is whether the member can keep this instance's deposit: "yes",
+	// "too-old", or "unreachable" when it is out of reach.
+	Keep      string       `json:"keep"`
 	ByMember  roleSideView `json:"byMember"`
 	ForMember roleSideView `json:"forMember"`
 	// Asks counts the member's requests that wait for an answer here.
@@ -127,6 +131,13 @@ func (v *zfsRoleView) add(id, dataset, state string) *zfsRoleView {
 	return v
 }
 
+// Whether a member can keep a deposit, as memberRolesView.Keep says it.
+const (
+	keepYes         = "yes"
+	keepTooOld      = "too-old"
+	keepUnreachable = "unreachable"
+)
+
 // rolesOverview reads the three roles for every member in both directions:
 // the members in reach, and those a request, a receive slot or a replica
 // target still names.
@@ -135,7 +146,7 @@ func (s *Service) rolesOverview() ([]memberRolesView, selfRolesView, error) {
 	entry := func(id, name string) *memberRolesView {
 		e := byID[id]
 		if e == nil {
-			e = &memberRolesView{MemberID: id, Answers: true}
+			e = &memberRolesView{MemberID: id, Answers: true, Keep: keepUnreachable}
 			byID[id] = e
 		}
 		if e.Name == "" {
@@ -149,7 +160,10 @@ func (s *Service) rolesOverview() ([]memberRolesView, selfRolesView, error) {
 		}
 		e := entry(m.ID, m.Name)
 		e.Reachable, e.Answers = true, !predatesRoleRequests(m.Version)
-		e.CanKeep = e.Answers
+		e.CanKeep, e.Keep = e.Answers, keepYes
+		if !e.CanKeep {
+			e.Keep = keepTooOld
+		}
 	}
 
 	reqs, err := s.store.ListRoleRequests()

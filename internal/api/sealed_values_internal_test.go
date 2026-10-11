@@ -28,6 +28,9 @@ const (
 // base64 text is listed in store.SealedSettingsText.
 var sealSites = map[string]string{
 	"sealDefinition":         keptOutside,
+	"depositSeed":            "key_deposit_signer.seed_enc",
+	"depositRecipient":       "key_deposit_identity.recipient_enc",
+	"newDepositIdentity":     "key_deposit_identity.recipient_enc",
 	"takeOverStagedSettings": keptOutside,
 	"finishTakeover":         "backup_key.key_enc",
 	"AdoptEmergencyKey":      "backup_key.key_enc",
@@ -71,9 +74,20 @@ func sealingFunctions(t *testing.T) []string {
 		if err != nil {
 			return err
 		}
+		// The package is found by its path, so that an import under another
+		// name does not hide a call.
+		secretName := ""
+		for _, imp := range file.Imports {
+			if strings.HasSuffix(strings.Trim(imp.Path.Value, `"`), "/internal/secret") {
+				secretName = "secret"
+				if imp.Name != nil {
+					secretName = imp.Name.Name
+				}
+			}
+		}
 		for _, decl := range file.Decls {
 			fn, ok := decl.(*ast.FuncDecl)
-			if !ok || fn.Body == nil {
+			if !ok || fn.Body == nil || secretName == "" {
 				continue
 			}
 			ast.Inspect(fn.Body, func(n ast.Node) bool {
@@ -85,7 +99,7 @@ func sealingFunctions(t *testing.T) []string {
 				if !ok {
 					return true
 				}
-				if pkg, ok := sel.X.(*ast.Ident); ok && pkg.Name == "secret" && sel.Sel.Name == "Encrypt" {
+				if pkg, ok := sel.X.(*ast.Ident); ok && pkg.Name == secretName && sel.Sel.Name == "Encrypt" {
 					found[fn.Name.Name] = true
 				}
 				return true

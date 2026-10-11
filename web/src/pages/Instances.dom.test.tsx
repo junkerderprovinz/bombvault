@@ -137,13 +137,13 @@ vi.mock("../lib/api", async (importOriginal) => {
         sent: [...depositList.sent.filter((d) => d.memberId !== memberId), sentDeposit({ memberId, name: "DXP480T" })],
       };
       roles = roles.map((r) => (r.memberId === memberId ? { ...r, byMember: { ...r.byMember, keeper } } : r));
-      return Promise.resolve({ ok: true, keeper, ...(first ? { code: CODE } : {}) });
+      return Promise.resolve({ ok: true, keeper, ...(first ? { recoveryCode: CODE } : {}) });
     },
     withdrawKeeper: (memberId: string) => {
       keeperWithdrawn.push(memberId);
       depositList = { ...depositList, sent: depositList.sent.filter((d) => d.memberId !== memberId) };
       roles = roles.map((r) => (r.memberId === memberId ? { ...r, byMember: { ...r.byMember, keeper: null } } : r));
-      return Promise.resolve({ ok: true, told: keeperTold });
+      return Promise.resolve({ ok: true, told: keeperTold, codeGone: depositList.sent.length === 0 });
     },
     listMeshOffers: () => answer("listMeshOffers", { ok: true, offers }),
     listReceivedRepos: () => answer("listReceivedRepos", { ok: true, repos: received }),
@@ -598,7 +598,7 @@ describe("the role tiles of a paired instance", () => {
 });
 
 describe("the key keeper tile", () => {
-  const keeps = (state: "held" | "stale" | "declined", over: Partial<MemberRoles> = {}) =>
+  const keeps = (state: "held" | "stale" | "changed" | "declined", over: Partial<MemberRoles> = {}) =>
     memberRoles({ name: "DXP480T", byMember: roleSide({ keeper: { state, at: new Date((NOW_S - 3600) * 1000).toISOString() } }), ...over });
   const dialog = () => screen.getByRole("dialog", { name: "DXP480T as Key keeper" });
 
@@ -611,6 +611,43 @@ describe("the key keeper tile", () => {
       ["off", en["instances.role.keeper"] + en["keeper.state.declined"]],
     ]);
     expect(tile("m2", "keeper").className).toContain("outline-dashed");
+  });
+
+  it("says when the instance holds something this server did not send", async () => {
+    roles = [keeps("changed")];
+    await renderPage();
+    expect(tile("m1", "keeper").getAttribute("data-state")).toBe("waiting");
+    expect(tile("m1", "keeper").textContent).toBe(en["instances.role.keeper"] + en["keeper.state.changed"]);
+  });
+
+  it("tells an instance that could not be asked apart from one that is too old", async () => {
+    roles = [
+      memberRoles({ name: "DXP480T", canKeep: false, keep: "too-old" }),
+      memberRoles({ memberId: "m2", name: "barn", canKeep: false, reachable: false, keep: "unreachable" }),
+    ];
+    await renderPage();
+    expect(tile("m1", "keeper").textContent).toBe(en["instances.role.keeper"] + en["keeper.tile.tooOld"]);
+    expect(tile("m2", "keeper").textContent).toBe(en["instances.role.keeper"] + en["keeper.tile.unreachable"]);
+    expect(tile("m2", "keeper").getAttribute("data-state")).toBe("off");
+  });
+
+  it("asks for a sign-in at this instance when the phone app's session may not make a deposit", async () => {
+    keeperRefusal = "own-login-needed";
+    await renderPage();
+    await click(tile("m1", "keeper"));
+    await click(within(dialog()).getByRole("button", { name: en["keeper.make"] }));
+    const ask = question();
+    expect(ask.textContent).toContain(en["secrets.ownLoginNeeded"]);
+    expect(within(ask).getByRole("button", { name: en["secrets.signInHere"] })).toBeTruthy();
+    expect(within(dialog()).queryByText("the server's own words")).toBeNull();
+  });
+
+  it("says what is missing when no login password is set", async () => {
+    keeperRefusal = "password-not-set";
+    await renderPage();
+    await click(tile("m1", "keeper"));
+    await click(within(dialog()).getByRole("button", { name: en["keeper.make"] }));
+    expect(within(dialog()).getByText(en["secrets.passwordNotSet"])).toBeTruthy();
   });
 
   it("says in two sentences what a key keeper is when the pointer rests on it", async () => {
@@ -669,7 +706,7 @@ describe("the key keeper tile", () => {
   });
 
   it("tells an instance that is too old to update first, and sends nothing", async () => {
-    roles = [memberRoles({ name: "DXP480T", canKeep: false })];
+    roles = [memberRoles({ name: "DXP480T", canKeep: false, keep: "too-old" })];
     await renderPage();
     expect(tile("m1", "keeper").getAttribute("data-state")).toBe("off");
     await click(tile("m1", "keeper"));
@@ -715,6 +752,7 @@ describe("the key keeper tile", () => {
     await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
     expect(keeperWithdrawn).toEqual(["m1"]);
     expect(tile("m1", "keeper").getAttribute("data-state")).toBe("off");
+    expect(screen.getByText(en["keeper.codeGone"])).toBeTruthy();
   });
 
   it("does not speak of the code while another keeper still holds a deposit", async () => {
@@ -724,6 +762,9 @@ describe("the key keeper tile", () => {
     await click(tile("m1", "keeper"));
     expect(question().textContent).toContain("This server asks DXP480T to delete the deposit.");
     expect(question().textContent).not.toContain("only keeper");
+    await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
+    expect(keeperWithdrawn).toEqual(["m1"]);
+    expect(screen.queryByText(en["keeper.codeGone"])).toBeNull();
   });
 
   it("says where to delete the deposit by hand when the keeper did not hear of it", async () => {

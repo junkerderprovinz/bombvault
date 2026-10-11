@@ -24,6 +24,7 @@ import {
   scorecardDue,
   SCORECARD_STALE_S,
   tooOldToKeep,
+  unreachableToKeep,
   type InstancesData,
 } from "./instancesModel";
 
@@ -167,10 +168,17 @@ describe("the roles an instance plays for this server", () => {
 
   it("calls an instance too old to keep a deposit only when the instance answered and said so", () => {
     const of = (over: Parameters<typeof roles>[0]) => buildInstances(data({ roles: [roles(over)] })).instances[0];
-    expect(tooOldToKeep(of({ canKeep: false }))).toBe(true);
-    expect(tooOldToKeep(of({ canKeep: true }))).toBe(false);
-    expect(tooOldToKeep(of({ canKeep: false, reachable: false }))).toBe(false);
+    expect(tooOldToKeep(of({ canKeep: false, keep: "too-old" }))).toBe(true);
+    expect(tooOldToKeep(of({ canKeep: true, keep: "yes" }))).toBe(false);
+    expect(tooOldToKeep(of({ canKeep: false, reachable: false, keep: "unreachable" }))).toBe(false);
     expect(tooOldToKeep(buildInstances(data()).instances[0])).toBe(false);
+  });
+
+  it("tells an instance that could not be asked apart from one that is too old", () => {
+    const of = (over: Parameters<typeof roles>[0]) => buildInstances(data({ roles: [roles(over)] })).instances[0];
+    expect(unreachableToKeep(of({ canKeep: false, reachable: false, keep: "unreachable" }))).toBe(true);
+    expect(unreachableToKeep(of({ canKeep: false, keep: "too-old" }))).toBe(false);
+    expect(unreachableToKeep(of({ keep: "yes" }))).toBe(false);
   });
 
   it("takes them from what the member does for this server, not the other way round", () => {

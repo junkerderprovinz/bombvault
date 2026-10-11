@@ -96,7 +96,7 @@ class Relay(
     suspend fun call(target: String, method: String, path: String, body: ByteArray? = null): Pair<Int, ByteArray> {
         val ws = socket ?: throw IOException("relay not connected")
         val rid = randomHex(16)
-        val call = JSONObject().put("method", method).put("path", path).put("id", rid).put("sent", System.currentTimeMillis() / 1000)
+        val call = JSONObject().put("method", method).put("path", path).put("id", rid).put("sent", System.currentTimeMillis() / 1000).put("sender", id)
         body?.let { call.put("body", b64(it)) }
         val sealed = seal(keys.frameKey, "proxy-request\u0000$rid\u0000$target", call.toString().toByteArray())
         val answer = CompletableDeferred<JSONObject>()

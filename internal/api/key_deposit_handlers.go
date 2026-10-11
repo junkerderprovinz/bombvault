@@ -34,13 +34,17 @@ type keeperRoleView struct {
 	State string `json:"state"`
 	At    string `json:"at"`
 	Asks  int    `json:"asks,omitempty"`
+	// ChangedAt is when the member was last found holding something this
+	// install did not send, on the side of what the member keeps.
+	ChangedAt string `json:"changedAt,omitempty"`
 }
 
 type sentDepositView struct {
-	MemberID string `json:"memberId"`
-	Name     string `json:"name"`
-	State    string `json:"state"`
-	SentAt   string `json:"sentAt"`
+	MemberID  string `json:"memberId"`
+	Name      string `json:"name"`
+	State     string `json:"state"`
+	SentAt    string `json:"sentAt"`
+	ChangedAt string `json:"changedAt"`
 }
 
 type keptDepositView struct {
@@ -107,8 +111,24 @@ func (s *Service) depositsOverview() (depositsView, error) {
 	if err != nil {
 		return view, err
 	}
+	// A keeper holds an older deposit from the moment the kit says something
+	// else, which is before the next renewal finds out.
+	current := ""
+	if found && len(sent) > 0 {
+		if recipient, err := s.depositRecipient(identity); err == nil {
+			if _, digest, err := s.depositContent(recipient); err == nil {
+				current = digest
+			}
+		}
+	}
 	for _, d := range sent {
-		view.Sent = append(view.Sent, sentDepositView{MemberID: d.MemberID, Name: d.MemberName, State: d.State, SentAt: unixRFC3339(d.SentAt)})
+		if d.State == store.DepositHeld && current != "" && d.Digest != current {
+			d.State = store.DepositStale
+		}
+		view.Sent = append(view.Sent, sentDepositView{
+			MemberID: d.MemberID, Name: d.MemberName, State: d.State,
+			SentAt: unixRFC3339(d.SentAt), ChangedAt: unixRFC3339(d.ChangedAt),
+		})
 	}
 	kept, err := s.store.KeptDeposits()
 	if err != nil {
@@ -146,7 +166,7 @@ func (s *Service) depositsOverview() (depositsView, error) {
 	}
 	for _, k := range releases {
 		view.Releases = append(view.Releases, releaseView{
-			ID: k.ID, OwnerID: k.OwnerID, OwnerName: owners[k.OwnerID],
+			ID: k.ID, OwnerID: k.OwnerID, OwnerName: cmp.Or(k.OwnerName, owners[k.OwnerID]),
 			RequesterID: k.RequesterID, RequesterName: k.RequesterName, State: releaseState(k, now),
 			AskedAt: unixRFC3339(k.AskedAt), DecidedAt: unixRFC3339(k.DecidedAt), ReleasedAt: unixRFC3339(k.ReleasedAt),
 			KnownSince: unixRFC3339(known[k.RequesterID]),
@@ -165,7 +185,7 @@ func (s *Service) addKeeperRoles(entry func(id, name string) *memberRolesView) e
 		return err
 	}
 	for _, d := range view.Sent {
-		entry(d.MemberID, d.Name).ByMember.Keeper = &keeperRoleView{State: d.State, At: d.SentAt}
+		entry(d.MemberID, d.Name).ByMember.Keeper = &keeperRoleView{State: d.State, At: d.SentAt, ChangedAt: d.ChangedAt}
 	}
 	for _, d := range view.Kept {
 		entry(d.OwnerID, d.OwnerName).ForMember.Keeper = &keeperRoleView{State: d.State, At: d.UpdatedAt}
@@ -198,7 +218,7 @@ func (h *Handler) handleListDeposits(w http.ResponseWriter, _ *http.Request) {
 // given this install's deposit. The answer carries the recovery code when
 // this made it, which is the one time it is shown.
 func (h *Handler) askKeeper(w http.ResponseWriter, r *http.Request) {
-	if !crossOriginGuard(w, r) {
+	if !crossOriginGuard(w, r) || !h.requireAuthForSecrets(w, r, "depositing the key") {
 		return
 	}
 	state, code, err := h.svc.MakeDeposit(r.Context(), r.PathValue("id"))
@@ -209,30 +229,30 @@ func (h *Handler) askKeeper(w http.ResponseWriter, r *http.Request) {
 	}
 	answer := map[string]any{"keeper": keeperRoleView{State: state, At: unixRFC3339(time.Now().Unix())}}
 	if code != "" {
-		answer["code"] = code
+		answer["recoveryCode"] = code
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(answer))
 }
 
 // withdrawKeeper serves DELETE /api/group/members/{id}/roles/keeper.
 func (h *Handler) withdrawKeeper(w http.ResponseWriter, r *http.Request) {
-	if !crossOriginGuard(w, r) {
+	if !crossOriginGuard(w, r) || !h.requireSignIn(w, r, "taking a deposit back") {
 		return
 	}
-	told, err := h.svc.WithdrawDeposit(r.Context(), r.PathValue("id"))
+	told, codeGone, err := h.svc.WithdrawDeposit(r.Context(), r.PathValue("id"))
 	h.svc.keyEvent(r.Context(), keyEventWithdraw, err)
 	if err != nil {
 		depositFail(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"told": told}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"told": told, "codeGone": codeGone}))
 }
 
 // handleNewDepositCode replaces the recovery code and answers with the new
 // one, which is shown this once.
 // POST /api/group/deposit/code
 func (h *Handler) handleNewDepositCode(w http.ResponseWriter, r *http.Request) {
-	if !crossOriginGuard(w, r) {
+	if !crossOriginGuard(w, r) || !h.requireAuthForSecrets(w, r, "making a new recovery code") {
 		return
 	}
 	code, err := h.svc.NewDepositCode(r.Context())
@@ -241,7 +261,7 @@ func (h *Handler) handleNewDepositCode(w http.ResponseWriter, r *http.Request) {
 		depositFail(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"code": code}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"recoveryCode": code}))
 }
 
 // handleRenewDeposits sends the keepers a fresh deposit where the content
@@ -255,7 +275,9 @@ func (h *Handler) handleRenewDeposits(w http.ResponseWriter, r *http.Request) {
 	h.handleListDeposits(w, r)
 }
 
-// handleDecideRelease allows or refuses a request for a deposit.
+// handleDecideRelease allows or refuses a request for a deposit. Neither is
+// for the session of a paired phone, and allowing, which hands key material
+// out, is for nobody on a server without a login password.
 // POST /api/group/deposits/releases/{id}
 func (h *Handler) handleDecideRelease(w http.ResponseWriter, r *http.Request) {
 	var body struct {
@@ -266,6 +288,12 @@ func (h *Handler) handleDecideRelease(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.Decision != "allow" && body.Decision != "refuse" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the decision must be allow or refuse"})
+		return
+	}
+	if body.Decision == "allow" && !h.requireAuthForSecrets(w, r, "allowing a deposit to be handed out") {
+		return
+	}
+	if !h.requireSignIn(w, r, "answering a request for a deposit") {
 		return
 	}
 	req, err := h.svc.DecideRelease(r.Context(), r.PathValue("id"), body.Decision == "allow")
@@ -298,12 +326,16 @@ func (h *Handler) handleDropKeptDeposit(w http.ResponseWriter, r *http.Request) 
 }
 
 // offeredDeposit is a deposit a member keeps, as a new install chooses from.
+// Newest is false for one that another member lists a newer deposit of the
+// same install than.
 type offeredDeposit struct {
 	MemberID   string `json:"memberId"`
 	MemberName string `json:"memberName"`
 	OwnerID    string `json:"ownerId"`
 	OwnerName  string `json:"ownerName"`
 	UpdatedAt  string `json:"updatedAt"`
+	Newest     bool   `json:"newest"`
+	counter    int64
 }
 
 // OfferedDeposits asks every member in reach which deposits it keeps. silent
@@ -322,8 +354,16 @@ func (s *Service) OfferedDeposits(ctx context.Context) (offered []offeredDeposit
 		for _, d := range list.Deposits {
 			offered = append(offered, offeredDeposit{
 				MemberID: m.ID, MemberName: m.Name, OwnerID: d.OwnerID, OwnerName: d.OwnerName, UpdatedAt: unixRFC3339(d.UpdatedAt),
+				counter: d.Counter,
 			})
 		}
+	}
+	newest := map[string]int64{}
+	for _, d := range offered {
+		newest[d.OwnerID] = max(newest[d.OwnerID], d.counter)
+	}
+	for i, d := range offered {
+		offered[i].Newest = d.counter == newest[d.OwnerID]
 	}
 	slices.SortFunc(offered, func(a, b offeredDeposit) int {
 		return cmp.Or(cmp.Compare(a.OwnerName, b.OwnerName), cmp.Compare(a.MemberName, b.MemberName))
@@ -367,17 +407,42 @@ func (s *Service) EmergencyFromGroup(ctx context.Context, memberID, ownerID, cod
 	if err != nil {
 		return store.ReleaseAllowed, err
 	}
-	kit, err := readRecoveryKit(string(plain))
+	content, err := keydeposit.Unpack(plain)
 	if err != nil {
 		return store.ReleaseAllowed, err
 	}
-	if err := s.beginEmergencyFromKit(ctx, kit, store.KeyFromGroup); err != nil {
+	// The keeper says whose deposit it hands over. What counts is what the
+	// install sealed into it.
+	if content.OwnerID != ownerID {
+		return store.ReleaseAllowed, errDepositOtherOwner
+	}
+	kit, err := readRecoveryKit(content.Kit)
+	if err != nil {
+		return store.ReleaseAllowed, err
+	}
+	kit.Server, kit.WrittenAt = content.OwnerName, content.SealedAt
+	origin := kitOrigin{OwnerID: content.OwnerID, NewerWith: s.newerDepositWith(ctx, ownerID, content.Counter)}
+	if err := s.beginEmergencyFromKit(ctx, kit, store.KeyFromGroup, origin); err != nil {
 		return store.ReleaseAllowed, err
 	}
 	s.emergencyMu.Lock()
 	s.collected = nil
 	s.emergencyMu.Unlock()
 	return store.ReleaseAllowed, nil
+}
+
+// newerDepositWith names a member that lists a deposit of ownerID newer than
+// the one with counter, empty when there is none. A keeper that was out of
+// reach at the last renewal holds an older one, and so does a keeper that
+// hands back one it should have replaced.
+func (s *Service) newerDepositWith(ctx context.Context, ownerID string, counter int64) string {
+	offered, _ := s.OfferedDeposits(ctx)
+	for _, d := range offered {
+		if d.OwnerID == ownerID && d.counter > counter {
+			return d.MemberName
+		}
+	}
+	return ""
 }
 
 // collectDeposit returns the deposit once the keeper hands it over. Until

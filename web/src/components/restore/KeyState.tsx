@@ -7,6 +7,7 @@ import { refusalText } from "../../lib/emergency";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { Button } from "../Button";
 import { Note } from "./EmergencyParts";
 
@@ -21,6 +22,7 @@ export function KeyState({ state, onChanged }: { state: EmergencyState | null; o
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [undoing, setUndoing] = useState(false);
+  const ownLogin = useOwnLogin();
 
   if (!state || state.backupKey === "own") return null;
   if (state.backupKey === "locked") return <Note tone="fail">{t("emergency.code.backup-key-locked")}</Note>;
@@ -34,7 +36,7 @@ export function KeyState({ state, onChanged }: { state: EmergencyState | null; o
       if (res.ok) {
         push(t("emergency.undone"), "success");
         window.dispatchEvent(new Event(ATTENTION_CHANGED_EVENT));
-      } else push(refusalText(t, res.code, res.error), "fail");
+      } else if (!ownLogin.handled(res)) push(refusalText(t, res.code, res.error), "fail");
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
@@ -57,6 +59,7 @@ export function KeyState({ state, onChanged }: { state: EmergencyState | null; o
         <p className="text-xs text-carbon-textMuted">{t("emergency.code.adopt-in-use")}</p>
       )}
       {confirmDialog}
+      {ownLogin.dialog}
     </div>
   );
 }

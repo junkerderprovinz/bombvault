@@ -3284,8 +3284,8 @@ func (h *Handler) handleDetectEncryption(w http.ResponseWriter, r *http.Request)
 // when auth is disabled instead of handing the master key to any LAN client.
 // The body is the owner's own recovery document and carries the real repo
 // locations (no path scrubbing here), and it is never logged.
-func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
-	if !h.requireAuthForSecrets(w, "downloading the recovery kit") {
+func (h *Handler) handleRecoveryKit(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAuthForSecrets(w, r, "downloading the recovery kit") {
 		return
 	}
 	// The seal decision is made BEFORE the kit is built, from ONE settings read,
@@ -4395,14 +4395,47 @@ func (h *Handler) authEnabled() (hash, epoch string, on bool) {
 // A store read error blocks too (authEnabled reports auth OFF then), which is
 // the safe direction.
 //
+// The session has to be one a person signed in for. The one a paired phone is
+// given for the group's words opens the pages and stops here, so the words
+// alone never reach a key.
+//
 // action names what is being refused, e.g. "downloading the recovery kit".
-func (h *Handler) requireAuthForSecrets(w http.ResponseWriter, action string) bool {
-	if _, _, on := h.authEnabled(); on {
+func (h *Handler) requireAuthForSecrets(w http.ResponseWriter, r *http.Request, action string) bool {
+	if _, _, on := h.authEnabled(); !on {
+		writeJSON(w, http.StatusForbidden, map[string]any{
+			"ok":    false,
+			"error": "set a login password before " + action,
+			"code":  codeNoPassword,
+		})
+		return false
+	}
+	return h.requireSignIn(w, r, action)
+}
+
+// The codes a 403 carries when a request needs more than its session: a login
+// password has to be set first, or the person has to sign in themselves.
+const (
+	codeNoPassword     = "password-not-set"
+	codeOwnLoginNeeded = "own-login-needed"
+)
+
+// requireSignIn refuses the session of a paired phone where a password is
+// set. Signing in through POST /api/login and sending the request again is
+// how the caller gets past it. Without a password there is no sign-in to
+// tell apart, and it lets every request through.
+func (h *Handler) requireSignIn(w http.ResponseWriter, r *http.Request, action string) bool {
+	hash, epoch, on := h.authEnabled()
+	if !on {
+		return true
+	}
+	c, err := h.sessionCookie(r)
+	if err == nil && !secret.PairedSessionToken(c.Value) && secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value) {
 		return true
 	}
 	writeJSON(w, http.StatusForbidden, map[string]any{
 		"ok":    false,
-		"error": "set a login password before " + action,
+		"error": "sign in at this instance's web interface before " + action,
+		"code":  codeOwnLoginNeeded,
 	})
 	return false
 }
@@ -4978,6 +5011,11 @@ func (h *Handler) handleLogoutAll(w http.ResponseWriter, _ *http.Request) {
 // handleSetPassword handles POST /api/auth/password.
 // Body: {password string} — empty string disables auth.
 func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
+	// A paired phone's session that could set the password would be a
+	// signed-in one a request later.
+	if !h.requireSignIn(w, r, "changing the password") {
+		return
+	}
 	var body struct {
 		Password string `json:"password"`
 	}
@@ -5099,7 +5137,7 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 // handleTOTPConfirm sees a working code, so an enrolment abandoned halfway
 // leaves the login exactly as it was.
 func (h *Handler) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "setting up two-factor authentication") {
+	if !h.requireAuthForSecrets(w, r, "setting up two-factor authentication") {
 		return
 	}
 	s, err := h.store.GetSettings()
@@ -5158,7 +5196,7 @@ func (h *Handler) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 // The recovery codes are shown exactly once, here. They are stored hashed, so
 // this response is the only chance to write them down, and the frontend says so.
 func (h *Handler) handleTOTPConfirm(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "setting up two-factor authentication") {
+	if !h.requireAuthForSecrets(w, r, "setting up two-factor authentication") {
 		return
 	}
 	var body struct {
@@ -5210,7 +5248,7 @@ func (h *Handler) handleTOTPConfirm(w http.ResponseWriter, r *http.Request) {
 // off. It requires a current code or a recovery code, so that a session someone
 // walked away from cannot be used to quietly remove the factor.
 func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "changing two-factor authentication") {
+	if !h.requireAuthForSecrets(w, r, "changing two-factor authentication") {
 		return
 	}
 	var body struct {
@@ -5583,6 +5621,9 @@ func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Source   string `json:"source"`
 		Snapshot string `json:"snapshot"`
+		// Emergency is the id of the emergency this restore belongs to. With
+		// it the settings are taken to be the old install's.
+		Emergency string `json:"emergency"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -5590,7 +5631,11 @@ func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
 	// The source rides the BODY here (not ?source=), so normalize it explicitly —
 	// same contract as sourceParam, incl. the "offsite:<id>" per-target form.
 	source := normalizeSource(body.Source)
-	started, auto, err := h.svc.StartRestoreConfig(r.Context(), body.Snapshot, source)
+	started, auto, err := h.svc.StartRestoreConfig(forEmergency(r.Context(), body.Emergency), body.Snapshot, source)
+	if code := emergencyCode(err); code != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error(), "code": code})
+		return
+	}
 	if err != nil {
 		restoreFail(w, source, err)
 		return

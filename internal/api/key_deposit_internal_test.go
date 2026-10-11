@@ -116,7 +116,7 @@ func TestAKeeperHoldsADepositItCannotRead(t *testing.T) {
 	groupOf(t, tower, attic)
 
 	out := deposit(t, tower, attic)
-	code, _ := out["code"].(string)
+	code, _ := out["recoveryCode"].(string)
 	keeper, _ := out["keeper"].(map[string]any)
 	if out["ok"] != true || !codeShape.MatchString(code) || keeper["state"] != store.DepositHeld {
 		t.Fatalf("deposit: %v", out)
@@ -149,16 +149,20 @@ func TestAKeeperHoldsADepositItCannotRead(t *testing.T) {
 	if err != nil {
 		t.Fatalf("the deposit does not open with its code: %v", err)
 	}
-	if kit, err := readRecoveryKit(string(plain)); err != nil || kit.appKey != tower.appKey {
+	content, err := keydeposit.Unpack(plain)
+	if err != nil {
+		t.Fatalf("what the code opens: %v", err)
+	}
+	if kit, err := readRecoveryKit(content.Kit); err != nil || kit.appKey != tower.appKey {
 		t.Fatalf("the deposit is not the owner's kit: %v", err)
 	}
 
 	// The owner keeps the public half and the salt, not the code.
 	identity, found, err := tower.st.DepositIdentity()
-	if err != nil || !found || len(identity.Recipient) != 32 {
+	if err != nil || !found || len(identity.RecipientEnc) == 0 {
 		t.Fatalf("the owner's identity: %+v, %v, %v", identity, found, err)
 	}
-	if again := deposit(t, tower, attic); again["ok"] != true || again["code"] != nil {
+	if again := deposit(t, tower, attic); again["ok"] != true || again["recoveryCode"] != nil {
 		t.Fatalf("a second deposit made a second code: %v", again)
 	}
 
@@ -187,7 +191,7 @@ func TestADepositIsRenewedWithoutTheCode(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	groupOf(t, tower, attic)
-	code, _ := deposit(t, tower, attic)["code"].(string)
+	code, _ := deposit(t, tower, attic)["recoveryCode"].(string)
 	first, _ := kept(t, attic, tower)
 
 	tower.svc.RenewDeposits(context.Background())
@@ -241,7 +245,7 @@ func TestADepositTheKeeperDeletedComesBackOnlyWhenAPersonAsks(t *testing.T) {
 		t.Fatal("a renewal put a deposit back that the keeper had deleted")
 	}
 
-	if out := deposit(t, tower, attic); out["ok"] != true || out["code"] != nil {
+	if out := deposit(t, tower, attic); out["ok"] != true || out["recoveryCode"] != nil {
 		t.Fatalf("asking again: %v", out)
 	}
 	if held, _ := kept(t, attic, tower); held.State != store.DepositHeld || len(held.Deposit) == 0 {
@@ -315,7 +319,7 @@ func goneTower(t *testing.T) (attic, fresh *instance, towerID, towerKey, code st
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic = newInstance(t, "attic", strings.Repeat("b2", 32))
 	phrase, relayURL := groupOf(t, tower, attic)
-	code, _ = deposit(t, tower, attic)["code"].(string)
+	code, _ = deposit(t, tower, attic)["recoveryCode"].(string)
 	towerID = tower.id(t)
 	tower.svc.StopGroup()
 
@@ -424,6 +428,9 @@ func TestADepositGoesToNobodyWithoutMembershipOrAnAllow(t *testing.T) {
 	unnamed := peerCallAs(t, attic, "", "/api/group/peer/deposit/release", ask)
 	if unnamed["ok"] != false || unnamed["deposit"] != nil {
 		t.Fatalf("a call that names no member: %v", unnamed)
+	}
+	if stranger := peerCallAs(t, attic, strings.Repeat("9", 32), "/api/group/peer/deposit/release", ask); stranger["ok"] != false || len(releasesOn(t, attic)) != 0 {
+		t.Fatalf("a call from an id that is no member: %v", stranger)
 	}
 	waiting := peerCallAs(t, attic, fresh.id(t), "/api/group/peer/deposit/release", ask)
 	if waiting["state"] != store.ReleaseAsked || waiting["deposit"] != nil || waiting["salt"] != nil {

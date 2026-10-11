@@ -14,6 +14,7 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { hueCounter } from "../settings/shared";
 import { KeptDeposits, ReleaseRequests } from "./DepositRows";
 import { InstanceWindow, WindowCard } from "./InstanceWindow";
@@ -23,10 +24,11 @@ import type { InstancesState } from "./useInstances";
 
 type Sent = Deposits["sent"][number];
 
-const STATE_TONE: Partial<Record<string, BadgeTone>> = { held: "ok", declined: "neutral" };
+const STATE_TONE: Partial<Record<string, BadgeTone>> = { held: "ok", changed: "fail", declined: "neutral" };
 
 const DEPOSIT_HELP: Partial<Record<DepositState, TranslationKey>> = {
   stale: "keeper.staleText",
+  changed: "keeper.changedText",
   declined: "keeper.declinedText",
 };
 
@@ -41,20 +43,21 @@ export function KeyDepositWindow({ state, onClose }: { state: InstancesState; on
   const { t } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const ownLogin = useOwnLogin();
   const [busy, setBusy] = useState("");
   const [code, setCode] = useState<string | null>(null);
   const { codeSince, sent, kept, releases } = state.deposits;
   const nextHue = hueCounter();
   const waiting = releases.some((r) => r.state === "asked");
 
-  /** Sends one call and shows the recovery code if it made one. An answer
-   *  that is ok carries the code in the field a refusal names its reason in. */
-  async function run(key: string, call: () => Promise<{ ok: boolean; code?: string; error?: string }>) {
+  /** Sends one call and shows the recovery code if it made one. */
+  async function run(key: string, call: () => Promise<{ ok: boolean; code?: string; error?: string; recoveryCode?: string }>) {
     setBusy(key);
     try {
       const res = await call();
-      if (!res.ok) push(depositSentence(t, res), "fail");
-      else if (res.code) setCode(res.code);
+      if (!res.ok) {
+        if (!ownLogin.handled(res)) push(depositSentence(t, res), "fail");
+      } else if (res.recoveryCode) setCode(res.recoveryCode);
     } catch (err) {
       push(err instanceof Error ? err.message : t("instances.role.saveError"), "fail");
     } finally {
@@ -159,6 +162,7 @@ export function KeyDepositWindow({ state, onClose }: { state: InstancesState; on
       </WindowCard>
 
       {confirmDialog}
+      {ownLogin.dialog}
       {code && <RecoveryCodeDialog code={code} onDone={() => setCode(null)} />}
     </InstanceWindow>
   );
