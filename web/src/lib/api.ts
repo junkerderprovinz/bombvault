@@ -6566,9 +6566,10 @@ export function getPhonePairing(): Promise<{ ok: boolean; on?: boolean; error?: 
   return fetchJSON("/api/auth/phone-pairing");
 }
 
-/** PUT /api/auth/phone-pairing switches pairing of phones on or off. */
-export function setPhonePairing(on: boolean): Promise<{ ok: boolean; on?: boolean; error?: string }> {
-  return fetchJSON("/api/auth/phone-pairing", { method: "PUT", body: JSON.stringify({ on }) });
+/** PUT /api/auth/phone-pairing switches pairing of phones on or off. A session
+ *  that is not a person's own sign-in gets the refusal back with its code. */
+export function setPhonePairing(on: boolean): Promise<{ ok: boolean; on?: boolean; error?: string; code?: string }> {
+  return fetchKeyJSON("/api/auth/phone-pairing", { method: "PUT", body: JSON.stringify({ on }) });
 }
 
 /** POST /api/auth/totp/setup — mint a secret and return the QR payload. The

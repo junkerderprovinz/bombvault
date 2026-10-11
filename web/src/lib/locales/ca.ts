@@ -181,6 +181,7 @@ const ca: Partial<Translations> = {
   "backup.cancelTooLate": "La còpia de {name} ja ha escrit el seu punt de restauració i torna a iniciar els contenidors. Ja no es pot cancel·lar.",
   "backup.cancelNotRunning": "La còpia de {name} ja havia acabat. No hi havia res a cancel·lar.",
   "runReason.cancelled": "Cancel·lat per l'usuari",
+  "runReason.ownDataFolder": "Això escriuria a la carpeta de dades de BombVault o a una carpeta que la conté. Tria una altra carpeta.",
   "restore.cancelConfirmSafe": "Vols cancel·lar la restauració? La carpeta de sortida parcial es deixa tal com està.",
   "restore.cancelConfirmInPlace": "{name} s'està restaurant. Cancel·lar deixarà aquesta restauració a mig fer. Potser hauràs de tornar-la a fer. Vols cancel·lar igualment?",
   "restore.cancelling": "Cancel·lant…",

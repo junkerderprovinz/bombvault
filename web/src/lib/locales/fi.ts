@@ -150,6 +150,7 @@ const fi: Partial<Translations> = {
   "backup.cancelTooLate": "Kohteen {name} varmuuskopio on jo kirjoittanut palautuspisteensä ja käynnistää kontit uudelleen. Sitä ei voi enää peruuttaa.",
   "backup.cancelNotRunning": "Kohteen {name} varmuuskopiointi oli jo päättynyt. Peruutettavaa ei ollut.",
   "runReason.cancelled": "Käyttäjä peruutti",
+  "runReason.ownDataFolder": "Tämä kirjoittaisi BombVaultin omaan datakansioon tai kansioon, joka sisältää sen. Valitse toinen kansio.",
   "restore.cancelConfirmSafe": "Peruutetaanko palautus? Osittain kirjoitettu kohdekansio jätetään ennalleen.",
   "restore.cancelConfirmInPlace": "{name} on kesken palautuksen. Peruutus jättää tämän palautuksen keskeneräiseksi. Se on ehkä suoritettava uudelleen. Peruutetaanko silti?",
   "restore.cancelling": "Peruutetaan…",

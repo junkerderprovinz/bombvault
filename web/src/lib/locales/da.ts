@@ -150,6 +150,7 @@ const da: Partial<Translations> = {
   "backup.cancelTooLate": "Sikkerhedskopien af {name} har allerede skrevet sit gendannelsespunkt og starter containerne igen. Den kan ikke længere annulleres.",
   "backup.cancelNotRunning": "Sikkerhedskopien af {name} var allerede færdig. Der var intet at annullere.",
   "runReason.cancelled": "Annulleret af brugeren",
+  "runReason.ownDataFolder": "Det ville skrive i BombVaults egen datamappe eller i en mappe, der indeholder den. Vælg en anden mappe.",
   "restore.cancelConfirmSafe": "Annuller gendannelsen? Den delvist skrevne målmappe bevares som den er.",
   "restore.cancelConfirmInPlace": "{name} er midt i en gendannelse. Annullering efterlader denne gendannelse ufuldstændig. Du skal muligvis køre den igen. Annuller alligevel?",
   "restore.cancelling": "Annullerer…",

@@ -181,6 +181,7 @@ const sk: Partial<Translations> = {
   "backup.cancelTooLate": "Záloha {name} už zapísala svoj bod obnovenia a znova spúšťa kontajnery. Už ju nemožno zrušiť.",
   "backup.cancelNotRunning": "Záloha {name} už bola hotová. Nebolo čo zrušiť.",
   "runReason.cancelled": "Zrušené používateľom",
+  "runReason.ownDataFolder": "Týmto by sa zapisovalo do dátového priečinka BombVault alebo do priečinka, ktorý ho obsahuje. Vyberte iný priečinok.",
   "restore.cancelConfirmSafe": "Zrušiť obnovenie? Čiastočne zapísaný výstupný priečinok zostane bez zmeny.",
   "restore.cancelConfirmInPlace": "{name} sa práve obnovuje. Zrušením zostane toto obnovenie nedokončené. Možno ho budeš musieť spustiť znova. Napriek tomu zrušiť?",
   "restore.cancelling": "Ruší sa…",

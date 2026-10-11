@@ -150,6 +150,7 @@ const ja: Partial<Translations> = {
   "backup.cancelTooLate": "{name} のバックアップはすでに復元ポイントを書き込み、コンテナを再起動しています。もう中止できません。",
   "backup.cancelNotRunning": "{name} のバックアップはすでに終わっていました。中止するものはありませんでした。",
   "runReason.cancelled": "ユーザーが中止しました",
+  "runReason.ownDataFolder": "BombVault 自身のデータフォルダー、またはそれを含むフォルダーに書き込むことになります。別のフォルダーを選んでください。",
   "restore.cancelConfirmSafe": "復元をキャンセルしますか？途中まで書き込まれた出力フォルダーはそのまま残ります。",
   "restore.cancelConfirmInPlace": "{name} は復元の途中です。キャンセルするとこの復元は不完全なまま残ります。もう一度実行が必要になる場合があります。それでもキャンセルしますか？",
   "restore.cancelling": "キャンセル中…",

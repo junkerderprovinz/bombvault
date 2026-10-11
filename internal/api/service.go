@@ -9911,6 +9911,10 @@ func truncateRunErr(err error) string {
 	if err == nil {
 		return ""
 	}
+	// The page translates the reason by its exact text, which a wrap would hide.
+	if errors.Is(err, errOwnData) {
+		return store.ReasonOwnData
+	}
 	msg := err.Error()
 	if bypass, ok := scrubBypassMessage(err); ok {
 		// An import bounds its own cause, and its folder paths must stay whole.

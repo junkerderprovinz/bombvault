@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // targetEngine records where each restore would have written.
@@ -119,5 +121,14 @@ func TestTheDataFolderIsFoundOnEveryMountThatShowsIt(t *testing.T) {
 		if !slices.Contains(got, want) {
 			t.Errorf("%s is missing from %v", want, got)
 		}
+	}
+}
+
+func TestARefusedRestoreRecordsTheReasonThePageTranslates(t *testing.T) {
+	if got := truncateRunErr(fmt.Errorf("restore plex: %w", errOwnData)); got != store.ReasonOwnData {
+		t.Fatalf("the run records %q, want the reason %q", got, store.ReasonOwnData)
+	}
+	if out := failEnvelope(fmt.Errorf("set up the receiver: %w", errOwnData)); out["code"] != codeOwnData {
+		t.Fatalf("the refusal carries no code the page maps: %v", out)
 	}
 }

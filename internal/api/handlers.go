@@ -67,6 +67,9 @@ func okEnvelope(extra map[string]any) map[string]any {
 // repo path or secret leaks to the client (defense-in-depth; the restic/docker
 // adapters already scrub their own errors).
 func failEnvelope(err error) map[string]any {
+	if errors.Is(err, errOwnData) {
+		return codedFailEnvelope(err, codeOwnData)
+	}
 	return map[string]any{"ok": false, "error": scrubError(err)}
 }
 

@@ -150,6 +150,7 @@ const zh: Partial<Translations> = {
   "backup.cancelTooLate": "{name} 的备份已写入其恢复点，正在重新启动容器，已无法取消。",
   "backup.cancelNotRunning": "{name} 的备份已经结束，没有可取消的内容。",
   "runReason.cancelled": "已由用户取消",
+  "runReason.ownDataFolder": "这会写入 BombVault 自己的数据文件夹或包含它的文件夹。请选择其他文件夹。",
   "restore.cancelConfirmSafe": "取消还原？部分已写入的输出文件夹将保持原样。",
   "restore.cancelConfirmInPlace": "{name} 正在还原中。取消会使本次还原处于未完成状态，可能需要再次运行。仍要取消吗？",
   "restore.cancelling": "正在取消…",

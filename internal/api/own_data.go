@@ -11,9 +11,14 @@ import (
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-var errOwnData = errors.New("this would write into BombVault's own data folder or a folder that holds it; choose another folder")
+// codeOwnData is the code a refusal by errOwnData carries, which the page
+// turns into a sentence in its language.
+const codeOwnData = "own-data-folder"
+
+var errOwnData = errors.New(store.ReasonOwnData)
 
 // ownDataGuard is the engine every restore of the service runs through. It
 // refuses a restore before restic writes anything when the folder it writes

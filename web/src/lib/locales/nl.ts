@@ -150,6 +150,7 @@ const nl: Partial<Translations> = {
   "backup.cancelTooLate": "De back-up van {name} heeft zijn herstelpunt al geschreven en start de containers weer. Annuleren kan niet meer.",
   "backup.cancelNotRunning": "De back-up van {name} was al klaar. Er viel niets te annuleren.",
   "runReason.cancelled": "Geannuleerd door de gebruiker",
+  "runReason.ownDataFolder": "Dit zou schrijven in de eigen gegevensmap van BombVault of in een map die die bevat. Kies een andere map.",
   "restore.cancelConfirmSafe": "Herstel annuleren? De gedeeltelijk geschreven doelmap blijft ongewijzigd.",
   "restore.cancelConfirmInPlace": "{name} wordt momenteel hersteld. Annuleren laat dit herstel onvolledig achter. Je moet het mogelijk opnieuw uitvoeren. Toch annuleren?",
   "restore.cancelling": "Annuleren…",

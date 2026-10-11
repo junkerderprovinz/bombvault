@@ -150,6 +150,7 @@ const hu: Partial<Translations> = {
   "backup.cancelTooLate": "A(z) {name} biztonsági mentése már megírta a visszaállítási pontját, és újraindítja a konténereket. Már nem szakítható meg.",
   "backup.cancelNotRunning": "A(z) {name} biztonsági mentése már befejeződött. Nem volt mit megszakítani.",
   "runReason.cancelled": "A felhasználó megszakította",
+  "runReason.ownDataFolder": "Ez a BombVault saját adatmappájába vagy az azt tartalmazó mappába írna. Válasszon másik mappát.",
   "restore.cancelConfirmSafe": "Megszakítod a visszaállítást? A részlegesen kiírt célmappa változatlanul megmarad.",
   "restore.cancelConfirmInPlace": "A(z) {name} visszaállítása folyamatban van. A megszakítás félbehagyja ezt a visszaállítást. Lehet, hogy újra kell futtatni. Mégis megszakítod?",
   "restore.cancelling": "Megszakítás…",

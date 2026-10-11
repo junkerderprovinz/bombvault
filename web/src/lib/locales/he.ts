@@ -150,6 +150,7 @@ const he: Partial<Translations> = {
   "backup.cancelTooLate": "הגיבוי של {name} כבר כתב את נקודת השחזור שלו ומפעיל מחדש את הקונטיינרים. כבר אי אפשר לבטל אותו.",
   "backup.cancelNotRunning": "הגיבוי של {name} כבר הסתיים. לא היה מה לבטל.",
   "runReason.cancelled": "בוטל על ידי המשתמש",
+  "runReason.ownDataFolder": "פעולה זו תכתוב לתיקיית הנתונים של BombVault או לתיקייה שמכילה אותה. בחרו תיקייה אחרת.",
   "restore.cancelConfirmSafe": "לבטל את השחזור? תיקיית הפלט החלקית תישאר כפי שהיא.",
   "restore.cancelConfirmInPlace": "{name} נמצא באמצע שחזור. ביטול ישאיר את השחזור הזה חלקי, ייתכן שיהיה צורך להריץ אותו שוב. לבטל בכל זאת?",
   "restore.cancelling": "מבטל…",

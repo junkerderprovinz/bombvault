@@ -150,6 +150,7 @@ const fr: Partial<Translations> = {
   "backup.cancelTooLate": "La sauvegarde de {name} a déjà écrit son point de restauration et redémarre ses conteneurs. Elle ne peut plus être annulée.",
   "backup.cancelNotRunning": "La sauvegarde de {name} était déjà terminée. Il n'y avait rien à annuler.",
   "runReason.cancelled": "Annulé par l'utilisateur",
+  "runReason.ownDataFolder": "Cela écrirait dans le dossier de données de BombVault ou dans un dossier qui le contient. Choisissez un autre dossier.",
   "restore.cancelConfirmSafe": "Annuler la restauration ? Le dossier de sortie partiel est laissé tel quel.",
   "restore.cancelConfirmInPlace": "{name} est en cours de restauration. L'annuler laisse cette restauration incomplète. Vous devrez peut-être la relancer. Annuler quand même ?",
   "restore.cancelling": "Annulation…",

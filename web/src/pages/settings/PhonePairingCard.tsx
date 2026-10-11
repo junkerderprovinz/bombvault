@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getPhonePairing, setPhonePairing } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { secretsSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { Card, ToggleRow } from "./shared";
 
@@ -32,7 +33,7 @@ export function PhonePairingCard({ hueIndex }: { hueIndex: number }) {
         setOn(next);
         push(t("settings.saved"), "success");
       } else {
-        push(res.error ?? t("auth.saveError"), "fail");
+        push(secretsSentence(t, res.code) ?? res.error ?? t("auth.saveError"), "fail");
       }
     } catch {
       push(t("auth.saveError"), "fail");

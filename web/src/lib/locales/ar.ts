@@ -150,6 +150,7 @@ const ar: Partial<Translations> = {
   "backup.cancelTooLate": "كتب النسخ الاحتياطي لـ {name} نقطة الاستعادة الخاصة به بالفعل ويعيد تشغيل حاوياته الآن. لم يعد من الممكن إلغاؤه.",
   "backup.cancelNotRunning": "كان النسخ الاحتياطي لـ {name} قد انتهى بالفعل. لم يكن هناك ما يُلغى.",
   "runReason.cancelled": "أُلغي من قبل المستخدم",
+  "runReason.ownDataFolder": "سيؤدي هذا إلى الكتابة في مجلد بيانات BombVault نفسه أو في مجلد يحتويه. اختر مجلدًا آخر.",
   "restore.cancelConfirmSafe": "إلغاء الاستعادة؟ سيبقى مجلد الإخراج الجزئي كما هو.",
   "restore.cancelConfirmInPlace": "{name} قيد الاستعادة حاليًا. الإلغاء يترك هذه الاستعادة غير مكتملة. قد يلزم تنفيذها مرة أخرى. الإلغاء على أي حال؟",
   "restore.cancelling": "جارٍ الإلغاء…",

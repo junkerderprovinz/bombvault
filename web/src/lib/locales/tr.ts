@@ -150,6 +150,7 @@ const tr: Partial<Translations> = {
   "backup.cancelTooLate": "{name} yedeklemesi geri yükleme noktasını zaten yazdı ve konteynerleri yeniden başlatıyor. Artık iptal edilemez.",
   "backup.cancelNotRunning": "{name} yedeklemesi zaten bitmişti. İptal edilecek bir şey yoktu.",
   "runReason.cancelled": "Kullanıcı iptal etti",
+  "runReason.ownDataFolder": "Bu, BombVault'un kendi veri klasörüne veya onu içeren bir klasöre yazar. Başka bir klasör seçin.",
   "restore.cancelConfirmSafe": "Geri yükleme iptal edilsin mi? Kısmen yazılan hedef klasör olduğu gibi bırakılır.",
   "restore.cancelConfirmInPlace": "{name} geri yükleme aşamasında. İptal etmek bu geri yüklemeyi yarım bırakır. Onu yeniden çalıştırmanız gerekebilir. Yine de iptal edilsin mi?",
   "restore.cancelling": "İptal ediliyor…",
