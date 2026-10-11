@@ -24,12 +24,15 @@ export function VerifyTab({
   runs,
   anomaly,
   anomalyEnabled,
+  onRestore,
   nextHue,
 }: {
   entry: Entry;
   runs: Run[];
   anomaly?: AnomalyItem;
   anomalyEnabled: boolean;
+  /** Opens the restore window on the backup a run wrote. */
+  onRestore: (run: Run) => void;
   nextHue: () => number;
 }) {
   const { t } = useT();
@@ -78,7 +81,7 @@ export function VerifyTab({
       </Card>
 
       <Card title={t("run.recentTitle")} hint={t("entry.verify.runsHint")} hueIndex={nextHue()}>
-        <EntryRuns runs={runs} dataset={detail.kind === "zfs" ? detail.dataset : undefined} />
+        <EntryRuns runs={runs} dataset={detail.kind === "zfs" ? detail.dataset : undefined} onRestore={onRestore} />
       </Card>
 
       <Card

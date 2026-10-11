@@ -71,7 +71,6 @@ const testMatch = [
   "touch-tree.spec.ts",
   "list-ergonomics.spec.ts",
   "run-detail-visibility.spec.ts",
-  "recovery-phone.spec.ts",
   "anomalies-phone.spec.ts",
   "dashboard-phone.spec.ts",
   "instances-phone.spec.ts",
@@ -87,6 +86,7 @@ const testMatch = [
   "old-links.spec.ts",
   "entry-kinds-phone.spec.ts",
   "overview.spec.ts",
+  "restore.spec.ts",
   "welcome.spec.ts",
 ];
 

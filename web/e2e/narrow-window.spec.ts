@@ -29,7 +29,7 @@ const PAGES = [
   "/backups/container/immich?tab=verify",
   "/storage",
   "/instances",
-  "/recovery",
+  "/restore",
   "/settings",
 ];
 

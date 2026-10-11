@@ -82,7 +82,7 @@ for (const width of [320, 360]) {
     await page.getByTestId("entry-backup").first().click();
     const window = page.getByRole("dialog", { name: "Unraid-Flash wiederherstellen" });
     await expect(window.getByRole("tab", { name: "Storage Box" })).toBeVisible();
-    await expect(window.getByRole("button", { name: "Download (.zip)" })).toBeVisible();
+    await expect(window.getByRole("button", { name: "Als ZIP herunterladen" })).toBeVisible();
     await expectInsideScreen(page, width);
   });
 

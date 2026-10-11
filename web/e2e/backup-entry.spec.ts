@@ -505,7 +505,7 @@ test("the Backups tab shows the history, the storage locations and the list a re
   await rows.first().click({ position: { x: 16, y: 16 } });
   const restore = page.getByRole("dialog", { name: "immich wiederherstellen" });
   await expect(restore).toBeVisible();
-  await restore.getByRole("button", { name: "Schließen" }).click();
+  await restore.getByRole("button", { name: "Abbrechen" }).click();
   await expect(restore).toBeHidden();
 });
 

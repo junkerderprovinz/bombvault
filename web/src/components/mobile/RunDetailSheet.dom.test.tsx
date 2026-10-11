@@ -754,4 +754,27 @@ describe("RunDetailSheet", () => {
     const logCard = document.body.querySelector("div.font-mono.text-xs") as HTMLElement;
     expect(logCard.className).toContain("px-4");
   });
+
+  it("leads to the restore of the backup a run wrote, where the host can open it", () => {
+    const onRestore = vi.fn();
+    render(
+      <I18nProvider>
+        <RunDetailSheet run={DONE_RUN} open onClose={() => {}} onRestore={onRestore} />
+      </I18nProvider>
+    );
+    fireEvent.click(screen.getByRole("button", { name: en["restore.open"] }));
+    expect(onRestore).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers no restore for a run that left no backup, or where the host cannot open one", () => {
+    const failed = render(
+      <I18nProvider>
+        <RunDetailSheet run={makeRun({ status: "failed", snapshotId: "" })} open onClose={() => {}} onRestore={() => {}} />
+      </I18nProvider>
+    );
+    expect(screen.queryByRole("button", { name: en["restore.open"] })).toBeNull();
+    failed.unmount();
+    renderSheet(DONE_RUN);
+    expect(screen.queryByRole("button", { name: en["restore.open"] })).toBeNull();
+  });
 });

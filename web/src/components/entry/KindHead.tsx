@@ -8,6 +8,7 @@ import type { Entry, EntryTab } from "../../lib/entry";
 import { useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
 import { relativeTime } from "../../lib/reltime";
+import { emergencyPath } from "../../lib/restorePlan";
 import { useToast } from "../../lib/toast";
 import { zfsCodeSentence, zfsFixKey } from "../../lib/zfsCodes";
 import { Button } from "../Button";
@@ -163,7 +164,7 @@ export function KindHead({ entry, tab, onChanged }: { entry: Entry; tab: EntryTa
               label={t("entry.config.toRecovery")}
               labelKey="entry.config.toRecovery"
               glyph={<IconRecovery />}
-              onClick={() => navigate("/recovery")}
+              onClick={() => navigate(emergencyPath("settings"))}
             />
           }
         >
