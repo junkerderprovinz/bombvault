@@ -4210,6 +4210,7 @@ const hi: Partial<Translations> = {
   "firstSteps.sections": "सेक्शन चुनें",
   "firstSteps.sectionsSub": "किसका बैकअप लिया जाएगा",
   "firstSteps.sectionsHint": "वह चालू करें जिसका BombVault को बैकअप लेना है।",
+  "firstSteps.nightly": "यहाँ चालू किए गए सेक्शन हर रात चलते हैं, जिसे आप {where} में बदल सकते हैं।",
   "firstSteps.locationSub": "बैकअप कहाँ जाते हैं",
   "firstSteps.locationHint": "बैकअप कहाँ जाते हैं। सबसे सुरक्षित है घर से बाहर एक दूसरा गंतव्य, जैसे Storage Box या Backblaze B2।",
   "firstSteps.backup": "पहला बैकअप",

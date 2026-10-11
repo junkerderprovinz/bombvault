@@ -4193,6 +4193,7 @@ const vi: Partial<Translations> = {
   "firstSteps.sections": "Chọn các mục",
   "firstSteps.sectionsSub": "Những gì được sao lưu",
   "firstSteps.sectionsHint": "Bật những gì BombVault cần sao lưu.",
+  "firstSteps.nightly": "Các mục bật ở đây chạy mỗi đêm, và bạn có thể đổi trong {where}.",
   "firstSteps.locationSub": "Nơi lưu các bản sao lưu",
   "firstSteps.locationHint": "Nơi lưu các bản sao lưu. An toàn nhất là một đích thứ hai ngoài nhà, chẳng hạn Storage Box hoặc Backblaze B2.",
   "firstSteps.backup": "Bản sao lưu đầu tiên",

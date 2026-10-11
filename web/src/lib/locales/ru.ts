@@ -4197,6 +4197,7 @@ const ru: Partial<Translations> = {
   "firstSteps.sections": "Выбери разделы",
   "firstSteps.sectionsSub": "Что копируется",
   "firstSteps.sectionsHint": "Включи то, что BombVault должен копировать.",
+  "firstSteps.nightly": "Включённые здесь разделы выполняются каждую ночь, а изменить это можно в {where}.",
   "firstSteps.locationSub": "Куда попадают копии",
   "firstSteps.locationHint": "Куда попадают резервные копии. Надёжнее всего второе место назначения вне дома, например Storage Box или Backblaze B2.",
   "firstSteps.backup": "Первая резервная копия",

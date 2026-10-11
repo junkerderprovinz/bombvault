@@ -4194,6 +4194,7 @@ const sr: Partial<Translations> = {
   "firstSteps.sections": "Изабери одељке",
   "firstSteps.sectionsSub": "Шта се копира",
   "firstSteps.sectionsHint": "Укључи оно што BombVault треба да копира.",
+  "firstSteps.nightly": "Одељци укључени овде извршавају се сваке ноћи, а то можеш да промениш у {where}.",
   "firstSteps.locationSub": "Куда иду резервне копије",
   "firstSteps.locationHint": "Куда иду резервне копије. Најсигурније је друго одредиште ван куће, на пример Storage Box или Backblaze B2.",
   "firstSteps.backup": "Прва резервна копија",

@@ -4202,6 +4202,7 @@ const fi: Partial<Translations> = {
   "firstSteps.sections": "Valitse osiot",
   "firstSteps.sectionsSub": "Mitä varmuuskopioidaan",
   "firstSteps.sectionsHint": "Kytke päälle se, mitä BombVaultin pitää varmuuskopioida.",
+  "firstSteps.nightly": "Täällä päälle kytketyt osiot ajetaan joka yö, ja voit muuttaa tätä kohdassa {where}.",
   "firstSteps.locationSub": "Minne varmuuskopiot menevät",
   "firstSteps.locationHint": "Minne varmuuskopiot menevät. Turvallisin on toinen kohde kodin ulkopuolella, kuten Storage Box tai Backblaze B2.",
   "firstSteps.backup": "Ensimmäinen varmuuskopio",

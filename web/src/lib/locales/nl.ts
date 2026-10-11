@@ -4199,6 +4199,7 @@ const nl: Partial<Translations> = {
   "firstSteps.sections": "Kies onderdelen",
   "firstSteps.sectionsSub": "Waarvan een back-up wordt gemaakt",
   "firstSteps.sectionsHint": "Zet aan waarvan BombVault een back-up moet maken.",
+  "firstSteps.nightly": "De onderdelen die je hier aanzet, draaien elke nacht en dat kun je wijzigen onder {where}.",
   "firstSteps.locationSub": "Waar de back-ups naartoe gaan",
   "firstSteps.locationHint": "Waar de back-ups naartoe gaan. Het veiligst is een tweede bestemming buiten de deur, zoals een Storage Box of Backblaze B2.",
   "firstSteps.backup": "Eerste back-up",
