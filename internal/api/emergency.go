@@ -44,8 +44,8 @@ const (
 )
 
 var (
-	errNoEmergency      = errors.New("the emergency has ended or was never started: show the key again")
-	errAdoptOwnBackups  = errors.New("this server has backups of its own, and taking over another key would leave them unreadable. Read the old backups from their folder without taking them over instead, under Settings, Restore")
+	errNoEmergency      = errors.New("the emergency has ended or was never started. Show the key again")
+	errAdoptOwnBackups  = errors.New("this server has backups of its own, and taking over another key would leave them unreadable. To read the old backups without taking them over, open their folder under Settings, Restore")
 	errAdoptSameKey     = errors.New("this server already backs up under that key, so there is nothing to take over")
 	errAdoptNothingRead = errors.New("the key opens none of the places it was tried on, so it was not taken over")
 	errAdoptInUse       = errors.New("backups were written under the key that was taken over, so it stays")
@@ -325,19 +325,31 @@ func (s *Service) ReadEmergency(ctx context.Context, in emergencyRead) error {
 		if err != nil {
 			return err
 		}
-		if !kit.HasKey {
-			return errKitHasNoKey
-		}
-		sess.source, sess.backupKey, sess.sealingKey = store.KeyFromKit, kit.appKey, kit.sealingKey
-		sess.encrypted, sess.creds, sess.rcloneConf = kit.Encrypted, kit.creds, kit.rcloneConf
-		for _, loc := range kit.Locations {
-			sess.places = append(sess.places, emergencyPlace{kitLocation: loc})
-		}
+		return s.beginEmergencyFromKit(ctx, kit, store.KeyFromKit)
 	}
 	if sess.places == nil {
 		sess.places = []emergencyPlace{}
 	}
 	s.probePlaces(ctx, sess, typed)
+	s.beginEmergency(sess)
+	return nil
+}
+
+// beginEmergencyFromKit starts an emergency from a recovery kit, whether it
+// was uploaded or came out of a deposit.
+func (s *Service) beginEmergencyFromKit(ctx context.Context, kit recoveryKit, source string) error {
+	if !kit.HasKey {
+		return errKitHasNoKey
+	}
+	sess := &emergencySession{
+		source: source, backupKey: kit.appKey, sealingKey: kit.sealingKey,
+		encrypted: kit.Encrypted, creds: kit.creds, rcloneConf: kit.rcloneConf,
+		places: []emergencyPlace{},
+	}
+	for _, loc := range kit.Locations {
+		sess.places = append(sess.places, emergencyPlace{kitLocation: loc})
+	}
+	s.probePlaces(ctx, sess, false)
 	s.beginEmergency(sess)
 	return nil
 }

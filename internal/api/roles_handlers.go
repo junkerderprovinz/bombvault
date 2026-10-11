@@ -24,6 +24,7 @@ func (h *Handler) registerRoleRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /api/group/members/{id}/roles/{role}", h.handleAskRole)
 	mux.HandleFunc("DELETE /api/group/members/{id}/roles/{role}", h.handleWithdrawRole)
 	mux.HandleFunc("POST /api/group/roles/requests/{id}", h.handleDecideRole)
+	h.registerDepositRoutes(mux)
 }
 
 // roleRequestView is a Receiver or Fetcher request as a card shows it.
@@ -63,12 +64,13 @@ type zfsRoleView struct {
 	Items []zfsRoleItemView `json:"items"`
 }
 
-// roleSideView holds the three roles in one direction. A role nobody asked
+// roleSideView holds the four roles in one direction. A role nobody asked
 // for is null.
 type roleSideView struct {
 	Receiver *roleRequestView `json:"receiver"`
 	Fetcher  *roleRequestView `json:"fetcher"`
 	ZFS      *zfsRoleView     `json:"zfs"`
+	Keeper   *keeperRoleView  `json:"keeper"`
 }
 
 // memberRolesView is what one member's card draws its tiles and its request
@@ -80,7 +82,9 @@ type memberRolesView struct {
 	Reachable bool   `json:"reachable"`
 	// Answers is false for a member from before role requests: asking it
 	// takes effect at once, since nobody there can answer.
-	Answers   bool         `json:"answers"`
+	Answers bool `json:"answers"`
+	// CanKeep is false for a member too old to keep a key deposit.
+	CanKeep   bool         `json:"canKeep"`
 	ByMember  roleSideView `json:"byMember"`
 	ForMember roleSideView `json:"forMember"`
 	// Asks counts the member's requests that wait for an answer here.
@@ -92,12 +96,13 @@ type roleHolderView struct {
 	Name     string `json:"name"`
 }
 
-// selfRolesView lists for whom this instance is Receiver, Fetcher and ZFS
-// server.
+// selfRolesView lists for whom this instance is Receiver, Fetcher, ZFS server
+// and keeper of a key deposit.
 type selfRolesView struct {
 	Receiver []roleHolderView `json:"receiver"`
 	Fetcher  []roleHolderView `json:"fetcher"`
 	ZFS      []roleHolderView `json:"zfs"`
+	Keeper   []roleHolderView `json:"keeper"`
 }
 
 // zfsRoleStates orders the states of a ZFS role's items by which one the
@@ -144,6 +149,7 @@ func (s *Service) rolesOverview() ([]memberRolesView, selfRolesView, error) {
 		}
 		e := entry(m.ID, m.Name)
 		e.Reachable, e.Answers = true, !predatesRoleRequests(m.Version)
+		e.CanKeep = e.Answers
 	}
 
 	reqs, err := s.store.ListRoleRequests()
@@ -188,6 +194,10 @@ func (s *Service) rolesOverview() ([]memberRolesView, selfRolesView, error) {
 		}
 	}
 
+	if err := s.addKeeperRoles(entry); err != nil {
+		return nil, selfRolesView{}, err
+	}
+
 	peers, err := s.store.ListFleetPeers()
 	if err != nil {
 		return nil, selfRolesView{}, err
@@ -205,7 +215,7 @@ func (s *Service) rolesOverview() ([]memberRolesView, selfRolesView, error) {
 	slices.SortFunc(members, func(a, b memberRolesView) int {
 		return cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.MemberID, b.MemberID))
 	})
-	self := selfRolesView{Receiver: []roleHolderView{}, Fetcher: []roleHolderView{}, ZFS: []roleHolderView{}}
+	self := selfRolesView{Receiver: []roleHolderView{}, Fetcher: []roleHolderView{}, ZFS: []roleHolderView{}, Keeper: []roleHolderView{}}
 	for _, m := range members {
 		holder := roleHolderView{MemberID: m.MemberID, Name: m.Name}
 		if r := m.ForMember.Receiver; r != nil && r.State == store.RoleAllowed {
@@ -216,6 +226,9 @@ func (s *Service) rolesOverview() ([]memberRolesView, selfRolesView, error) {
 		}
 		if z := m.ForMember.ZFS; z != nil && z.State == store.ZFSReceiveAllowed {
 			self.ZFS = append(self.ZFS, holder)
+		}
+		if k := m.ForMember.Keeper; k != nil && k.State == store.DepositHeld {
+			self.Keeper = append(self.Keeper, holder)
 		}
 	}
 	return members, self, nil
@@ -233,6 +246,7 @@ func (s *Service) refreshSentRolesSoon() {
 		ctx, cancel := context.WithTimeout(s.StopContext(), time.Minute)
 		defer cancel()
 		s.refreshSentRoles(ctx)
+		s.RenewDeposits(ctx)
 	}()
 }
 
@@ -252,6 +266,10 @@ func (h *Handler) handleListRoles(w http.ResponseWriter, _ *http.Request) {
 // changes the sections of a request already sent.
 // PUT /api/group/members/{id}/roles/{role}
 func (h *Handler) handleAskRole(w http.ResponseWriter, r *http.Request) {
+	if r.PathValue("role") == roleKeeper {
+		h.askKeeper(w, r)
+		return
+	}
 	var body struct {
 		Sections []string `json:"sections"`
 		Store    string   `json:"store"`
@@ -283,6 +301,10 @@ func (h *Handler) handleAskRole(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/group/members/{id}/roles/{role}
 func (h *Handler) handleWithdrawRole(w http.ResponseWriter, r *http.Request) {
 	role := r.PathValue("role")
+	if role == roleKeeper {
+		h.withdrawKeeper(w, r)
+		return
+	}
 	if role != store.RoleReceiver && role != store.RoleFetcher {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the role must be receiver or fetcher"})
 		return

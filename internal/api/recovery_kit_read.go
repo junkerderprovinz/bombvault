@@ -18,10 +18,10 @@ var (
 	// errKitSealed is a kit downloaded while export encryption was on. It is
 	// sealed for the person's own age key, of which the server holds only the
 	// public half, so nobody but them can open it.
-	errKitSealed    = errors.New("this recovery kit is sealed with your age key, which BombVault does not have: paste the age identity it was sealed for along with it, or decrypt it first (age -d -i <key file> bombvault-recovery-kit.md.age) and upload the result")
+	errKitSealed    = errors.New("this recovery kit is sealed with your age key, which BombVault does not have. Paste the age identity it was sealed for with it, or decrypt it first (age -d -i <key file> bombvault-recovery-kit.md.age) and upload the result")
 	errNotAKit      = errors.New("this is not a BombVault recovery kit")
 	errKitKeyBroken = errors.New("the APP_KEY in this recovery kit does not give the repository password beside it, so one of the two was changed or mistyped")
-	errKitHasNoKey  = errors.New("this recovery kit names no key: it was written without encryption by a version that left the key out")
+	errKitHasNoKey  = errors.New("this recovery kit names no key. A version that left the key out wrote it for a server without encryption")
 )
 
 // The kinds of place a recovery kit lists.
@@ -192,7 +192,7 @@ func (c *CloudCreds) set(name, value string) {
 }
 
 var (
-	errKitIdentity       = errors.New("that is not an age identity: paste the line that starts with AGE-SECRET-KEY-1, or decrypt the kit yourself and upload the result")
+	errKitIdentity       = errors.New("that is not an age identity. Paste the line that starts with AGE-SECRET-KEY-1, or decrypt the kit yourself and upload the result")
 	errKitNotForIdentity = errors.New("this age identity does not open the kit")
 )
 

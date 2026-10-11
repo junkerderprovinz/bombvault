@@ -553,6 +553,13 @@ type Service struct {
 	// takeoverLoss is what the last settings restore of another install could
 	// not bring over, for the answer of the request that ran it.
 	takeoverLoss *sealedLoss
+	// collected is a deposit a keeper handed over that the recovery code has
+	// not opened yet.
+	collected *collectedDeposit
+
+	// depositMu keeps two sends of this install's deposit apart, so the keeper
+	// ends up with the one sealed last.
+	depositMu sync.Mutex
 
 	// backupKeyMu guards the backup key as currentBackupKey last read it.
 	backupKeyMu   sync.Mutex
