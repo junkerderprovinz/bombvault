@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -223,6 +224,9 @@ func (s *Service) MoveSection(ctx context.Context, plan movePlan, startedAt int6
 	if len(left) > 0 {
 		return store.Settings{}, errMoveMissing
 	}
+	if err := s.alignCopies(ctx, plan); err != nil {
+		return store.Settings{}, err
+	}
 	if err := s.engine.Check(ctx, plan.dst, plan.mode); err != nil {
 		return store.Settings{}, fmt.Errorf("check %s: %w", plan.To, err)
 	}
@@ -246,6 +250,55 @@ func (s *Service) MoveSection(ctx context.Context, plan movePlan, startedAt int6
 		}
 	}
 	return settings, nil
+}
+
+// alignCopies gives each copy at the new place the tags its original carries.
+// restic copy skips a backup the new place already holds, so a copy from an
+// earlier attempt keeps the tags of before a rename. Paths cannot be changed,
+// and a copy with other paths than its original stops the move.
+func (s *Service) alignCopies(ctx context.Context, plan movePlan) error {
+	src, err := s.listRepo(ctx, plan.src, plan.srcMode)
+	if err != nil {
+		return fmt.Errorf("list %s: %w", plan.From, err)
+	}
+	dst, err := s.listRepo(ctx, plan.dst, plan.mode)
+	if err != nil {
+		return fmt.Errorf("list %s: %w", plan.To, err)
+	}
+	copies := map[string]restic.Snapshot{}
+	for _, sn := range dst {
+		copies[restic.Identity(sn)] = sn
+	}
+	for _, sn := range ofSection(src, plan.Domain) {
+		c, ok := copies[restic.Identity(sn)]
+		if !ok || !sameSet(c.Paths, sn.Paths) {
+			return errMoveMissing
+		}
+		add := setMinus(sn.Tags, c.Tags)
+		remove := setMinus(c.Tags, sn.Tags)
+		if len(add)+len(remove) == 0 {
+			continue
+		}
+		if err := s.engine.Tag(ctx, plan.dst, []string{c.ID}, add, remove, plan.mode); err != nil {
+			return fmt.Errorf("tag the copies at %s: %w", plan.To, err)
+		}
+	}
+	return nil
+}
+
+func sameSet(a, b []string) bool {
+	return len(setMinus(a, b)) == 0 && len(setMinus(b, a)) == 0
+}
+
+// setMinus is what a holds and b does not.
+func setMinus(a, b []string) []string {
+	var out []string
+	for _, v := range a {
+		if !slices.Contains(b, v) {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // copyPending copies what the new place lacks, a block of backups per restic

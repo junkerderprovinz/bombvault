@@ -140,6 +140,39 @@ func TestAMoveCopiesTheHistoryAndThenPointsTheSectionAtTheNewPlace(t *testing.T)
 	}
 }
 
+func TestACopyFromAnEarlierMoveTakesTheTagsOfItsOriginal(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	f.hold(vaultRepo+"/vms", copied("v1", "a1", 100, "vm:win", "vm:windows"))
+
+	f.move(vms, vault)
+
+	for _, sn := range f.snapsAt(vaultRepo + "/vms") {
+		if sn.ID == "v1" && !slices.Equal(sn.Tags, []string{"vm:win"}) {
+			t.Fatalf("the copy of a1 carries %v, want the tags a1 carries", sn.Tags)
+		}
+	}
+	if got := f.stored(vms.ID); got.DestinationID != vault.ID {
+		t.Fatalf("the target reads %+v, want it at Vault", got)
+	}
+}
+
+func TestACopyWithOtherPathsThanItsOriginalStopsTheMove(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	other := copied("v1", "a1", 100, "vm:win")
+	other.Paths = []string{"/somewhere/else"}
+	f.hold(vaultRepo+"/vms", other)
+
+	f.move(vms, vault)
+
+	if got := f.stored(vms.ID); got.DestinationID != box.ID {
+		t.Fatalf("the target reads %+v, want it still at Box", got)
+	}
+}
+
 func TestAMoveThatFailsItsCheckLeavesTheSectionWhereItIs(t *testing.T) {
 	f := newPlacementFixture(t)
 	box, vms := boxWithVMs(f)
