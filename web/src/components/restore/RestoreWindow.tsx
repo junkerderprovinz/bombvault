@@ -32,6 +32,7 @@ import { formatRecent } from "../../lib/reltime";
 import {
   backsUpFirst,
   defaultWhere,
+  emergencyPath,
   findingsOf,
   recommend,
   recommendationWhy,
@@ -88,9 +89,6 @@ export interface RestoreAsk {
   dataset?: string;
 }
 
-/** Where the emergency window opens on the settings of BombVault itself. */
-export const SETTINGS_RESCUE_PATH = "/restore?emergency=settings";
-
 /** ZFS: the member states that make writing into the live dataset impossible. */
 const NOT_WRITABLE = new Set(["gone", "not-mounted", "not-visible"]);
 
@@ -127,7 +125,7 @@ function SelfRestoreNote({ onClose }: { onClose: () => void }) {
             tone="accent"
             onClick={() => {
               onClose();
-              navigate(SETTINGS_RESCUE_PATH);
+              navigate(emergencyPath("settings"));
             }}
           />
         </>
@@ -551,7 +549,7 @@ function RestoreForm({
             : state.phase === "success"
               ? "common.done"
               : state.phase === "cancelled"
-                ? "restoreWindow.cancelled"
+                ? "run.statusCancelled"
                 : "restoreWindow.notDone"
         )}
         onClose={onClose}

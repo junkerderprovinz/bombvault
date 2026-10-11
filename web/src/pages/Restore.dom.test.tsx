@@ -32,6 +32,9 @@ vi.mock("../lib/api", async (importOriginal) => {
     checkRestore: vi.fn(),
     cancelRestore: vi.fn(),
     listDbDumps: vi.fn(),
+    detectEncryption: vi.fn(async () => ({ ok: false })),
+    getVMSSH: vi.fn(async () => ({ ok: false })),
+    getRclone: vi.fn(async () => ({ ok: false })),
   };
 });
 
@@ -83,11 +86,11 @@ function Elsewhere() {
   return <p>{`at ${pathname}`}</p>;
 }
 
-async function renderPage() {
+async function renderPage(path = "/restore") {
   await act(async () => {
     render(
       <I18nProvider>
-        <MemoryRouter initialEntries={["/restore"]}>
+        <MemoryRouter initialEntries={[path]}>
           <Routes>
             <Route path="/restore" element={<Restore />} />
             <Route path="*" element={<Elsewhere />} />
@@ -300,5 +303,30 @@ describe("a restore that runs", () => {
     progress = { "container:immich": { phase: "backup", percent: 42, active: true, lastSeen: Date.now() } };
     await renderPage();
     expect(screen.queryByTestId("running-restore")).toBeNull();
+  });
+});
+
+describe("the emergency", () => {
+  const wizard = () => screen.queryByRole("dialog", { name: en["emergency.title"] });
+  const PATHS = { containersPath: "", vmsPath: "", flashPath: "", filesPath: "", zfsPath: "", configPath: "", configOffsite: "" };
+  const OFFSITE = { containersOffsite: "", vmsOffsite: "", flashOffsite: "", filesOffsite: "", zfsOffsite: "" };
+
+  beforeEach(() => serveEntries(mocks, { settings: { ...PATHS, ...OFFSITE } }));
+
+  it("opens its window from the card and from the corner of the page", async () => {
+    await renderPage();
+    expect(wizard()).toBeNull();
+    await press(screen.getByRole("button", { name: new RegExp(`^${en["restorePage.emergencyWay"]}`) }));
+    expect(wizard()).not.toBeNull();
+    await press(within(wizard()!).getByRole("button", { name: en["common.cancel"] }));
+    expect(wizard()).toBeNull();
+
+    await press(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["entry.config.startRecovery"] }));
+    expect(within(wizard()!).getByText(en["recovery.step1"])).toBeTruthy();
+  });
+
+  it("opens on the step a link names", async () => {
+    await renderPage("/restore?emergency=settings");
+    expect(within(wizard()!).getByText(en["emergency.settingsIntro"])).toBeTruthy();
   });
 });

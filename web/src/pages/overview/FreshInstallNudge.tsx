@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { DomainStatus } from "../../lib/api";
 import { isFreshInstall } from "../../lib/freshInstall";
+import { emergencyPath } from "../../lib/restorePlan";
 import type { useT } from "../../lib/i18n";
 import { Button } from "../../components/Button";
 
@@ -38,7 +39,7 @@ export function FreshInstallNudge({
             Under 48rem it takes the link-as-control height the Config and
             Flash destination links carry, so it stays a touch target. */}
         <Link
-          to="/recovery"
+          to={emergencyPath("access")}
           className="self-start inline-flex items-center gap-1 rounded-pill bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity max-md:min-h-[2.75rem]"
         >
           {t("recovery.freshNudgeCta")} <span className="inline-block rtl:-scale-x-100">→</span>

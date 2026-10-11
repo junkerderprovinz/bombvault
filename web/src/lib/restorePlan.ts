@@ -168,3 +168,17 @@ export function recommendationWhy(recommendation: Recommendation, t: Translate, 
   if (!finding) return t("restoreWindow.whyNewest");
   return t("restoreWindow.whyBefore").replace("{finding}", () => anomalyShortLine(finding, t, lang).text);
 }
+
+export const EMERGENCY_STEPS = ["access", "settings", "selection", "restore"] as const;
+
+export type EmergencyStep = (typeof EMERGENCY_STEPS)[number];
+
+/** The step a link asks for in ?emergency=, or null for no window. */
+export function parseEmergencyStep(value: string | null): EmergencyStep | null {
+  return EMERGENCY_STEPS.find((step) => step === value) ?? null;
+}
+
+/** Where the Restore page opens the emergency window on a step. */
+export function emergencyPath(step: EmergencyStep): string {
+  return `/restore?emergency=${step}`;
+}

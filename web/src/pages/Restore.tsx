@@ -1,19 +1,22 @@
 // The Restore page. Most restores bring one entry back to one moment, so the
 // page opens on the entries and the backups of the one that is picked. The
 // rare ways, the emergency and the other sources, wait at the bottom.
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { KIND_LABEL, KindGlyph, entryName, kindHue } from "../components/backups/kinds";
 import { KindTile, TileRow } from "../components/backups/KindTiles";
 import { Button } from "../components/Button";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { IconArchive, IconSearch } from "../components/glyphs";
+import { IconArchive, IconForward, IconSearch } from "../components/glyphs";
 import { InstanceWindow } from "./instances/InstanceWindow";
-import { IconRestore } from "../components/navGlyphs";
+import { IconRecovery, IconRestore } from "../components/navGlyphs";
+import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { ProgressBar } from "../components/ProgressBar";
 import { BackupRail } from "../components/restore/BackupRail";
+import { EmergencyScene } from "../components/restore/EmergencyScene";
+import { EmergencyWindow } from "../components/restore/EmergencyWindow";
 import { PlaceChecks } from "../components/restore/PlaceChecks";
 import { RestoreWindow, type RestoreAsk } from "../components/restore/RestoreWindow";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
@@ -27,7 +30,7 @@ import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { anyActive, useProgress, type ProgressState } from "../lib/progress";
 import { formatRecent } from "../lib/reltime";
-import { findingsOf, recommend, recommendationWhy } from "../lib/restorePlan";
+import { findingsOf, parseEmergencyStep, recommend, recommendationWhy } from "../lib/restorePlan";
 import { useOpenAnomalies } from "../lib/useAnomalies";
 import { useEntry } from "../lib/useEntry";
 import { useTimeline } from "../lib/useTimeline";
@@ -177,8 +180,49 @@ function RunningCard({
   );
 }
 
+/** One of the rare ways to restore, as a row that opens its window. */
+function Way({
+  glyph,
+  name,
+  sub,
+  warn = false,
+  onOpen,
+}: {
+  glyph: ReactNode;
+  name: string;
+  sub: string;
+  /** The emergency stands out from the ways that are only rare. */
+  warn?: boolean;
+  onOpen: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group flex w-full items-center gap-3 rounded-control p-2 text-start transition-colors hover:bg-carbon-surface2"
+    >
+      <span
+        className={`flex h-9 w-9 flex-none items-center justify-center rounded-control [&_svg]:h-[18px] [&_svg]:w-[18px] ${
+          warn ? "bg-statusWarnBg text-statusWarn" : "bg-carbon-surface2 text-accentText group-hover:bg-carbon-surface3"
+        }`}
+      >
+        {glyph}
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{name}</span>
+        <span className="text-xs text-carbon-textMuted wrap-anywhere">{sub}</span>
+      </span>
+      <span className="flex-none text-carbon-textMuted rtl:-scale-x-100 [&_svg]:h-3.5 [&_svg]:w-3.5">
+        <IconForward />
+      </span>
+    </button>
+  );
+}
+
 export function Restore() {
   const { t, lang } = useT();
+  const [params, setParams] = useSearchParams();
+  const emergency = parseEmergencyStep(params.get("emergency"));
   const progress = useProgress();
   const { list: openFindings } = useOpenAnomalies();
 
@@ -241,6 +285,8 @@ export function Restore() {
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
       <PageTitle>{t("nav.restore")}</PageTitle>
+
+      {emergency && <EmergencyWindow start={emergency} onClose={() => setParams({}, { replace: true })} />}
 
       {failed ? (
         <div className="flex flex-col items-start gap-2">
@@ -348,6 +394,28 @@ export function Restore() {
           )}
         </>
       )}
+
+      <div className="grid gap-6 md:grid-cols-2 md:gap-10">
+        <Card title={t("restorePage.emergency")} hueIndex={nextHue()}>
+          <EmergencyScene words />
+          <Way
+            glyph={<IconRecovery />}
+            name={t("restorePage.emergencyWay")}
+            sub={t("restorePage.emergencyWayHint")}
+            warn
+            onOpen={() => setParams({ emergency: "access" })}
+          />
+        </Card>
+      </div>
+
+      <PageActions>
+        <PageAction
+          primary
+          label={t("entry.config.startRecovery")}
+          glyph={<IconRecovery />}
+          onClick={() => setParams({ emergency: "access" })}
+        />
+      </PageActions>
     </div>
   );
 }
