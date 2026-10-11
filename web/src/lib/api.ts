@@ -6191,7 +6191,7 @@ export interface Deposits {
  *  error: one of these codes, to be shown in the reader's language. Runs
  *  written before carry an English sentence instead, which is shown as it
  *  is. */
-export type KeyRunRefusal = EmergencyRefusal | DepositRefusal | RecoveryKitRefusal;
+export type KeyRunRefusal = EmergencyRefusal | DepositRefusal | RecoveryKitRefusal | "deposit-changed" | "settings-other-key";
 
 /** Why a deposit call was refused: the member is too old to keep one, it
  *  keeps none of that server, the keeper's person declined, this server asked
