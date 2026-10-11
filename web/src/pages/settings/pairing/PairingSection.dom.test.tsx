@@ -738,6 +738,26 @@ describe("relay card", () => {
     expect(selfAddressCalls).toEqual(["https://192.168.1.55:3443"]);
   });
 
+  it("heads the field with Known addresses, and lists nothing above it while the server reports no address of its own", async () => {
+    await renderTab();
+    const input = screen.getByLabelText(new RegExp("^" + en["pairing.knownAddresses"])) as HTMLInputElement;
+    expect(input).toBe(screen.getByTestId("self-address-input"));
+    expect(screen.queryByTestId("own-addresses")).toBeNull();
+    expect(screen.queryByText(en["pairing.foundAddresses"])).toBeNull();
+  });
+
+  it("lists the addresses the instance found by itself above the field, as lines nobody can edit", async () => {
+    group = makeGroup({ ownAddresses: ["192.168.1.20", "10.8.0.3", "tower.local"] });
+    await renderTab();
+    const list = screen.getByTestId("own-addresses");
+    expect([...list.children].map((li) => li.textContent)).toEqual(["192.168.1.20", "10.8.0.3", "tower.local"]);
+    expect(list.querySelector("input, button, [contenteditable]")).toBeNull();
+    expect(screen.getByText(en["pairing.foundAddresses"])).toBeTruthy();
+    const input = screen.getByTestId("self-address-input");
+    expect(list.compareDocumentPosition(input) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect((input as HTMLInputElement).value).toBe("https://192.168.1.20:3443");
+  });
+
   it("warns that an address without TLS carries the relay key in plain text", async () => {
     group = makeGroup({ relay: { ...makeGroup().relay, mode: "own", url: "wss://relay.example.org" } });
     await renderTab();

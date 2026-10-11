@@ -1,8 +1,11 @@
 // @vitest-environment jsdom
 // The Instances page is a picture of the group above a grid of cards: this
 // server first, then every paired instance and every ZFS server reached over
-// SSH. The tiles on a card switch what the instance does for this server,
-// read from the roles the server keeps. Each module adds what it knows and
+// SSH. Both stand on the page itself, with no card around them. The tiles on
+// a card switch what the instance does for this server, read from the roles
+// the server keeps. The key keeper is the fourth of them:
+// its tile gives the instance this server's key deposit and shows the
+// recovery code the one time there is one. Each module adds what it knows and
 // nothing is asked of a module that is off. The page asks again by itself who
 // is connected, and fetches a connected member's scorecard once it has gone
 // stale.
@@ -12,6 +15,8 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { I18nProvider, countText, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type {
+  DepositRefusal,
+  Deposits,
   FleetPeer,
   GroupMember,
   MemberRoles,
@@ -26,6 +31,7 @@ import type {
   ZFSReplicaServer,
 } from "../lib/api";
 import {
+  deposits,
   fleetPeer,
   groupMember,
   memberRoles,
@@ -35,6 +41,7 @@ import {
   receivedRepo,
   roleRequest,
   roleSide,
+  sentDeposit,
   zfsRole,
 } from "./instances/instances.testsupport";
 import { receiveRequest, replica, server } from "../components/zfs/replica/replica.testsupport";
@@ -59,6 +66,13 @@ let pulls: PullSourceView[];
 let offers: MeshOffer[];
 let itemReplica: ZFSReplica;
 let askAnswer: Partial<RoleRequest>;
+let depositList: Deposits;
+let keeperRefusal: DepositRefusal | "" | null;
+let keeperTold: boolean;
+const CODE = "K7QF2-M9XRT-4HPLD-W3NVC";
+const SINCE = new Date(2026, 2, 9, 12).toISOString();
+const keeperAsked: string[] = [];
+const keeperWithdrawn: string[] = [];
 const calls: string[] = [];
 const polled: string[] = [];
 const removed: string[] = [];
@@ -108,6 +122,28 @@ vi.mock("../lib/api", async (importOriginal) => {
       withdrawn.push([memberId, role]);
       roles = roles.map((r) => (r.memberId === memberId ? { ...r, byMember: { ...r.byMember, [role]: null } } : r));
       return Promise.resolve({ ok: true, told: true });
+    },
+    listDeposits: () => answer("listDeposits", { ok: true, deposits: depositList }),
+    askKeeper: (memberId: string) => {
+      keeperAsked.push(memberId);
+      if (keeperRefusal !== null) {
+        return Promise.resolve({ ok: false, ...(keeperRefusal && { code: keeperRefusal }), error: "the server's own words" });
+      }
+      const first = depositList.codeSince === "";
+      const keeper = { state: "held" as const, at: new Date().toISOString() };
+      depositList = {
+        ...depositList,
+        codeSince: first ? SINCE : depositList.codeSince,
+        sent: [...depositList.sent.filter((d) => d.memberId !== memberId), sentDeposit({ memberId, name: "DXP480T" })],
+      };
+      roles = roles.map((r) => (r.memberId === memberId ? { ...r, byMember: { ...r.byMember, keeper } } : r));
+      return Promise.resolve({ ok: true, keeper, ...(first ? { code: CODE } : {}) });
+    },
+    withdrawKeeper: (memberId: string) => {
+      keeperWithdrawn.push(memberId);
+      depositList = { ...depositList, sent: depositList.sent.filter((d) => d.memberId !== memberId) };
+      roles = roles.map((r) => (r.memberId === memberId ? { ...r, byMember: { ...r.byMember, keeper: null } } : r));
+      return Promise.resolve({ ok: true, told: keeperTold });
     },
     listMeshOffers: () => answer("listMeshOffers", { ok: true, offers }),
     listReceivedRepos: () => answer("listReceivedRepos", { ok: true, repos: received }),
@@ -198,7 +234,7 @@ beforeEach(() => {
   peersOk = true;
   roles = [memberRoles({ name: "DXP480T" })];
   rolesOk = true;
-  selfRoles = { receiver: [], fetcher: [], zfs: [] };
+  selfRoles = { receiver: [], fetcher: [], zfs: [], keeper: [] };
   serverRuns = false;
   requests = [];
   servers = [];
@@ -207,6 +243,11 @@ beforeEach(() => {
   offers = [];
   itemReplica = replica({ target: { kind: "none", id: "" } });
   askAnswer = {};
+  depositList = deposits();
+  keeperRefusal = null;
+  keeperTold = true;
+  keeperAsked.length = 0;
+  keeperWithdrawn.length = 0;
   calls.length = 0;
   polled.length = 0;
   removed.length = 0;
@@ -230,6 +271,28 @@ describe("the instances grid", () => {
     expect(all[0].textContent).toContain(en["instances.thisInstance"]);
     expect(all[0].textContent).toContain("v9.2.1");
     expect(all[1].textContent).not.toContain(en["instances.thisInstance"]);
+  });
+
+  it("stands on the page with the picture, with no card around the cards", async () => {
+    await renderPage();
+    const grid = card("self").parentElement as HTMLElement;
+    expect(grid.closest(".rounded-card")).toBeNull();
+    expect(grid.parentElement).toBe(screen.getByRole("heading", { level: 1 }).parentElement);
+    expect(screen.getByTestId("net-picture").closest(".rounded-card")?.parentElement).toBe(grid);
+    for (const key of ["self", "m1"]) expect(card(key).classList.contains("bg-carbon-surface")).toBe(true);
+  });
+
+  it("gives every card the next colour of the page, and the rows without an instance the one after the last card", async () => {
+    flags.zfsEnabled = true;
+    servers = [server()];
+    members = [M1, groupMember({ id: "m3", name: "Pixel 8", kind: "android", address: "", direct: false, relay: true })];
+    peers = [peer({}), peer({ id: "p3", memberId: "m3", name: "Pixel 8", kind: "android", direct: false, relay: true, lastPollDomains: [] })];
+    received = [receivedRepo({ id: "old", name: "Office off-site", memberId: "", needsPairing: true })];
+    await renderPage();
+    const hue = (el: HTMLElement) => el.style.getPropertyValue("--item-hue");
+    expect(cards().map(hue)).toEqual(["var(--rb-0)", "var(--rb-1)", "var(--rb-2)", "var(--rb-3)"]);
+    const unplaced = screen.getByText(en["instances.unplaced.title"]).closest(".glim-notch-card") as HTMLElement;
+    expect(hue(unplaced)).toBe("var(--rb-4)");
   });
 
   it("shows where each instance is reached, without the scheme", async () => {
@@ -332,7 +395,7 @@ describe("requests from another instance", () => {
 });
 
 describe("this server's own card", () => {
-  it("says for whom this server is Receiver, Fetcher and ZFS server, as the server reports it", async () => {
+  it("says for whom this server is Receiver, Fetcher, ZFS server and Key keeper, as the server reports it", async () => {
     selfRoles = {
       receiver: [
         { memberId: "m1", name: "DXP480T" },
@@ -340,12 +403,14 @@ describe("this server's own card", () => {
       ],
       fetcher: [],
       zfs: [{ memberId: "m9", name: "" }],
+      keeper: [{ memberId: "m2", name: "barn" }],
     };
     await renderPage();
     expect(tiles(card("self"))).toEqual({
       receiver: en["receiver.title"] + "for DXP480T, barn",
       fetcher: en["instances.role.fetcher"] + en["instances.forNoOne"],
       zfs: en["zfs.replica.servers.title"] + "for m9",
+      keeper: en["instances.role.keeper"] + "for barn",
     });
     expect(card("self").querySelector("button[data-role]")).toBeNull();
   });
@@ -356,6 +421,21 @@ describe("this server's own card", () => {
     await renderPage();
     expect(tiles(card("self")).receiver).toBe(en["receiver.title"] + en["instances.forNoOne"]);
     expect(tiles(card("self")).fetcher).toBe(en["instances.role.fetcher"] + en["instances.forNoOne"]);
+  });
+
+  it("opens the key deposits only while there is one on either side", async () => {
+    await renderPage();
+    expect(within(card("self")).queryByRole("button", { name: en["keeper.window.title"] })).toBeNull();
+    cleanup();
+    depositList = deposits({ codeSince: SINCE, sent: [sentDeposit({ name: "DXP480T" })] });
+    await renderPage();
+    await click(within(card("self")).getByRole("button", { name: en["keeper.window.title"] }));
+    const opened = screen.getByRole("dialog", { name: en["keeper.window.title"] });
+    expect(within(opened).getByTestId("code-since").textContent).toBe(
+      en["keeper.own.codeSince"].replace("{date}", new Date(SINCE).toLocaleDateString()),
+    );
+    await click(within(opened).getByRole("button", { name: en["common.done"] }));
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("opens the receiving server only while this server runs one", async () => {
@@ -389,6 +469,7 @@ describe("the role tiles of a paired instance", () => {
       receiver: en["receiver.title"] + en["instances.role.on"],
       fetcher: en["instances.role.fetcher"] + en["instances.role.waiting"],
       zfs: en["zfs.replica.servers.title"] + en["zfs.replica.servers.off"],
+      keeper: en["instances.role.keeper"] + en["zfs.replica.servers.off"],
     });
     expect([tile("m1", "receiver"), tile("m1", "fetcher"), tile("m1", "zfs")].map((b) => b.getAttribute("data-state"))).toEqual([
       "on",
@@ -414,7 +495,7 @@ describe("the role tiles of a paired instance", () => {
 
   it("leave out the ZFS server while this server has no ZFS section and no replica there", async () => {
     await renderPage();
-    expect(Object.keys(tiles(card("m1")))).toEqual(["receiver", "fetcher"]);
+    expect(Object.keys(tiles(card("m1")))).toEqual(["receiver", "fetcher", "keeper"]);
   });
 
   it("ask for a role that is off: the sections this server backs up, without ZFS data at first", async () => {
@@ -513,6 +594,151 @@ describe("the role tiles of a paired instance", () => {
     await click(within(question()).getByRole("button", { name: en["common.cancel"] }));
     expect(withdrawn).toEqual([]);
     expect(tile("m1", "receiver").getAttribute("data-state")).toBe("on");
+  });
+});
+
+describe("the key keeper tile", () => {
+  const keeps = (state: "held" | "stale" | "declined", over: Partial<MemberRoles> = {}) =>
+    memberRoles({ name: "DXP480T", byMember: roleSide({ keeper: { state, at: new Date((NOW_S - 3600) * 1000).toISOString() } }), ...over });
+  const dialog = () => screen.getByRole("dialog", { name: "DXP480T as Key keeper" });
+
+  it("is filled while the instance holds the deposit, and says when the deposit is behind or was deleted there", async () => {
+    roles = [keeps("held"), keeps("stale", { memberId: "m2", name: "barn" }), keeps("declined", { memberId: "m3", name: "shed" })];
+    await renderPage();
+    expect(["m1", "m2", "m3"].map((key) => [tile(key, "keeper").getAttribute("data-state"), tile(key, "keeper").textContent])).toEqual([
+      ["on", en["instances.role.keeper"] + en["instances.role.on"]],
+      ["waiting", en["instances.role.keeper"] + en["keeper.state.stale"]],
+      ["off", en["instances.role.keeper"] + en["keeper.state.declined"]],
+    ]);
+    expect(tile("m2", "keeper").className).toContain("outline-dashed");
+  });
+
+  it("says in two sentences what a key keeper is when the pointer rests on it", async () => {
+    await renderPage();
+    fireEvent.mouseEnter(tile("m1", "keeper"));
+    expect(screen.getByRole("tooltip").textContent).toBe(en["instances.role.keeperTip"]);
+    expect(en["instances.role.keeperTip"].match(/\.( |$)/g)).toHaveLength(2);
+  });
+
+  it("says what the deposit is and what the day it is used takes, before anything is sent", async () => {
+    await renderPage();
+    await click(tile("m1", "keeper"));
+    expect(dialog().textContent).toContain("DXP480T gets a sealed copy of this server's recovery kit and cannot open it.");
+    expect([...within(dialog()).getByTestId("keeper-needs").children].map((li) => li.textContent)).toEqual([
+      en["keeper.need.words"],
+      en["keeper.need.code"],
+      "Access to DXP480T's interface, where someone has to press Allow",
+    ]);
+    expect(dialog().textContent).toContain("Without the code nobody can open the copy, DXP480T included.");
+    await click(within(dialog()).getByRole("button", { name: en["common.cancel"] }));
+    expect(keeperAsked).toEqual([]);
+    expect(tile("m1", "keeper").getAttribute("data-state")).toBe("off");
+  });
+
+  it("shows the recovery code of a first deposit once, and does not close before it is written down", async () => {
+    await renderPage();
+    await click(tile("m1", "keeper"));
+    await click(within(dialog()).getByRole("button", { name: en["keeper.make"] }));
+    expect(keeperAsked).toEqual(["m1"]);
+    const shown = screen.getByRole("dialog", { name: en["keeper.code.title"] });
+    expect([...within(shown).getByTestId("recovery-code").children].map((li) => li.textContent)).toEqual(CODE.split("-"));
+    expect(shown.textContent).toContain(en["keeper.code.lead"]);
+    expect(shown.textContent).toContain(en["keeper.code.lost"]);
+    const done = within(shown).getByRole("button", { name: en["common.done"] }) as HTMLButtonElement;
+    expect(done.disabled).toBe(true);
+    fireEvent.keyDown(document, { key: "Escape" });
+    fireEvent.mouseDown(shown.closest(".glim-modal-backdrop")!);
+    expect(screen.getByRole("dialog", { name: en["keeper.code.title"] })).toBeTruthy();
+    await click(within(shown).getByRole("switch", { name: en["keeper.code.written"] }));
+    expect(done.disabled).toBe(false);
+    await click(done);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.body.textContent).not.toContain("K7QF2");
+    expect(tile("m1", "keeper").getAttribute("data-state")).toBe("on");
+  });
+
+  it("makes a later deposit for the code this server has, and shows none", async () => {
+    depositList = deposits({ codeSince: SINCE, sent: [sentDeposit({ memberId: "m2", name: "barn" })] });
+    await renderPage();
+    await click(tile("m1", "keeper"));
+    expect(within(dialog()).getByTestId("keeper-needs").children[1].textContent).toBe(en["keeper.need.codeHave"]);
+    await click(within(dialog()).getByRole("button", { name: en["keeper.make"] }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByText("DXP480T keeps this server's key deposit now.")).toBeTruthy();
+    expect(tile("m1", "keeper").getAttribute("data-state")).toBe("on");
+  });
+
+  it("tells an instance that is too old to update first, and sends nothing", async () => {
+    roles = [memberRoles({ name: "DXP480T", canKeep: false })];
+    await renderPage();
+    expect(tile("m1", "keeper").getAttribute("data-state")).toBe("off");
+    await click(tile("m1", "keeper"));
+    expect(dialog().textContent).toContain("DXP480T runs a version that cannot keep a key deposit. Update it first.");
+    expect(within(dialog()).queryByRole("button", { name: en["keeper.make"] })).toBeNull();
+    await click(within(dialog()).getByRole("button", { name: en["common.close"] }));
+    expect(keeperAsked).toEqual([]);
+  });
+
+  it("says why a deposit was refused, and stays open", async () => {
+    keeperRefusal = "member-silent";
+    await renderPage();
+    await click(tile("m1", "keeper"));
+    await click(within(dialog()).getByRole("button", { name: en["keeper.make"] }));
+    expect(within(dialog()).getByText(en["deposit.code.member-silent"])).toBeTruthy();
+    expect(tile("m1", "keeper").getAttribute("data-state")).toBe("off");
+  });
+
+  it("says in the server's words why a deposit may not be made, when the refusal has no code", async () => {
+    keeperRefusal = "";
+    await renderPage();
+    await click(tile("m1", "keeper"));
+    await click(within(dialog()).getByRole("button", { name: en["keeper.make"] }));
+    expect(within(dialog()).getByText("the server's own words")).toBeTruthy();
+  });
+
+  it("shows a deposit in a state it does not know as one that is there, in the server's word", async () => {
+    roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ keeper: { state: "someday" as "held", at: "" } }) })];
+    await renderPage();
+    expect(tile("m1", "keeper").getAttribute("data-state")).toBe("waiting");
+    expect(tile("m1", "keeper").textContent).toBe(en["instances.role.keeper"] + "someday");
+  });
+
+  it("takes the deposit back after saying that the last keeper takes the recovery code with it", async () => {
+    roles = [keeps("held")];
+    depositList = deposits({ codeSince: SINCE, sent: [sentDeposit({ name: "DXP480T" })] });
+    await renderPage();
+    await click(tile("m1", "keeper"));
+    expect(question().textContent).toContain("Stop using DXP480T as Key keeper?");
+    expect(question().textContent).toContain("This server asks DXP480T to delete the deposit.");
+    expect(question().textContent).toContain("DXP480T is the only keeper.");
+    expect(keeperWithdrawn).toEqual([]);
+    await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
+    expect(keeperWithdrawn).toEqual(["m1"]);
+    expect(tile("m1", "keeper").getAttribute("data-state")).toBe("off");
+  });
+
+  it("does not speak of the code while another keeper still holds a deposit", async () => {
+    roles = [keeps("held")];
+    depositList = deposits({ codeSince: SINCE, sent: [sentDeposit({ name: "DXP480T" }), sentDeposit({ memberId: "m2", name: "barn" })] });
+    await renderPage();
+    await click(tile("m1", "keeper"));
+    expect(question().textContent).toContain("This server asks DXP480T to delete the deposit.");
+    expect(question().textContent).not.toContain("only keeper");
+  });
+
+  it("says where to delete the deposit by hand when the keeper did not hear of it", async () => {
+    roles = [keeps("held")];
+    keeperTold = false;
+    await renderPage();
+    await click(tile("m1", "keeper"));
+    await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
+    expect(screen.getByText("DXP480T could not be reached and still holds the deposit. Delete it there, under Instances, Key deposit.")).toBeTruthy();
+  });
+
+  it("is not part of the net picture, whose arrows are where the backups go", async () => {
+    roles = [keeps("held")];
+    await renderPage();
+    expect(screen.getByTestId("net-picture").querySelectorAll(".glim-net-wide [data-lane]")).toHaveLength(0);
   });
 });
 
@@ -807,6 +1033,7 @@ describe("keeping the grid current", () => {
     });
     expect(called("listFleetPeers")).toBeGreaterThan(before[0]);
     expect(called("listRoles")).toBeGreaterThan(before[1]);
+    expect(called("listDeposits")).toBe(2);
     expect(screen.queryByRole("button", { name: /poll/i })).toBeNull();
   });
 

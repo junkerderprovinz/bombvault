@@ -1,14 +1,16 @@
 // The Instances page at phone width and on the desktop, staged at the route
 // layer with every module switched on (a fresh harness database has them off
-// and lists nothing). On the phones: the 24px rhythm, and with every remove
+// and lists nothing). The picture and the cards stand on the page, with no
+// card around them. On the phones: the 24px rhythm, and with every remove
 // armed and an instance's window opened with everything in it, no pan, no
 // control past the viewport or its card, no text cut short and no stray
 // backtick, in the net picture, the grid, the window, its dialogs and the
 // empty state. On the desktop: the 40px rhythm, cards of one size, the net
-// picture in the arrangement that fits, a role asked for from its tile, and the
-// addresses /receiver, /pull and /fleet with their hash forms.
+// picture in the arrangement that fits, a role asked for from its tile, a key
+// deposit made with its recovery code shown once, and the addresses /receiver,
+// /pull and /fleet with their hash forms.
 // German, because its labels run longest.
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -308,20 +310,22 @@ const roleRequest = (id: string, state: string, sections: string[]) => ({
   decidedBy: state === "asked" ? "" : "person",
 });
 
-const NO_ROLES = { receiver: null, fetcher: null, zfs: null };
+const NO_ROLES = { receiver: null, fetcher: null, zfs: null, keeper: null };
 
 // The first member holds every state a tile and a row can show. The second
-// runs a release from before role requests.
+// runs a release from before role requests, too old to keep a key deposit.
 const ROLES = [
   {
     memberId: MEMBER,
     name: MEMBER_NAME,
     reachable: true,
     answers: true,
+    canKeep: true,
     byMember: {
       receiver: roleRequest("rr1", "allowed", ["containers", "vms", "flash"]),
       fetcher: roleRequest("rr2", "asked", ["containers"]),
       zfs: { state: "allowed", items: [{ id: "z1", dataset: "cache/appdata", state: "allowed" }] },
+      keeper: { state: "held", at: iso(3 * 3600) },
     },
     forMember: {
       receiver: roleRequest("rr3", "asked", ["containers", "vms", "files", "flash", "zfs", "config"]),
@@ -333,17 +337,66 @@ const ROLES = [
           { id: "q2", dataset: "cache/domains", state: "allowed" },
         ],
       },
+      keeper: { state: "held", at: iso(5 * 3600), asks: 1 },
     },
-    asks: 2,
+    asks: 3,
   },
-  { memberId: "member-2", name: "Büro Linz", reachable: true, answers: false, byMember: NO_ROLES, forMember: NO_ROLES, asks: 0 },
+  { memberId: "member-2", name: "Büro Linz", reachable: true, answers: false, canKeep: false, byMember: NO_ROLES, forMember: NO_ROLES, asks: 0 },
 ];
 
 const SELF_ROLES = {
   receiver: [],
   fetcher: [{ memberId: MEMBER, name: MEMBER_NAME }],
   zfs: [{ memberId: MEMBER, name: MEMBER_NAME }],
+  keeper: [{ memberId: MEMBER, name: MEMBER_NAME }],
 };
+
+const CODE = "K7QF2-M9XRT-4HPLD-W3NVC";
+
+const release = (id: string, over: Record<string, unknown>) => ({
+  id,
+  ownerId: "member-2",
+  ownerName: "Büro Linz",
+  requesterId: MEMBER,
+  requesterName: MEMBER_NAME,
+  state: "asked",
+  askedAt: iso(900),
+  decidedAt: "",
+  releasedAt: "",
+  knownSince: iso(200 * 86400),
+  requests: 1,
+  requestsLastHour: 1,
+  ...over,
+});
+
+// Every state a keeper's line and a kept deposit can show, a request from an
+// instance this server knows and one from an instance it has never seen.
+const DEPOSITS = {
+  codeSince: iso(40 * 86400),
+  sent: [
+    { memberId: MEMBER, name: MEMBER_NAME, state: "held", sentAt: iso(3 * 3600) },
+    { memberId: "member-5", name: "Nachbarschafts-Tower Familie Oberhuber", state: "stale", sentAt: iso(9 * 86400) },
+    { memberId: "member-6", name: "Ferienhaus Wolfgangsee", state: "declined", sentAt: iso(70 * 86400) },
+  ],
+  kept: [
+    { ownerId: MEMBER, ownerName: MEMBER_NAME, state: "held", createdAt: iso(30 * 86400), updatedAt: iso(5 * 3600) },
+    { ownerId: "member-2", ownerName: "Büro Linz", state: "held", createdAt: iso(12 * 86400), updatedAt: iso(26 * 3600) },
+    { ownerId: "member-6", ownerName: "Ferienhaus Wolfgangsee", state: "declined", createdAt: iso(80 * 86400), updatedAt: iso(70 * 86400) },
+  ],
+  releases: [
+    release("rel1", {}),
+    release("rel2", {
+      requesterId: "member-9",
+      requesterName: "buero-linz-neuinstallation-2026",
+      knownSince: "",
+      requests: 7,
+      requestsLastHour: 3,
+    }),
+    release("rel3", { state: "released", releasedAt: iso(86400) }),
+  ],
+};
+
+const NO_DEPOSITS = { codeSince: "", sent: [], kept: [], releases: [] };
 
 const REPLICA = {
   target: { kind: "peer", id: MEMBER },
@@ -398,8 +451,9 @@ async function stage(page: Page, { empty = false }: Staged = {}): Promise<void> 
   await json("**/api/group/roles", {
     ok: true,
     members: empty ? [] : ROLES,
-    self: empty ? { receiver: [], fetcher: [], zfs: [] } : SELF_ROLES,
+    self: empty ? { receiver: [], fetcher: [], zfs: [], keeper: [] } : SELF_ROLES,
   });
+  await json("**/api/group/deposits", { ok: true, deposits: empty ? NO_DEPOSITS : DEPOSITS });
   await json("**/api/group/members/*/repos", { ok: true, instanceName: MEMBER_NAME, repos: MEMBER_REPOS });
   await json("**/api/zfs/receive/requests", empty ? [] : ZFS_REQUESTS);
   await json("**/api/zfs/replica/local-pools", [{ name: "sicherung", sizeBytes: 8 * 1024 ** 4, freeBytes: 3.1 * 1024 ** 4 }]);
@@ -496,13 +550,33 @@ async function expectFits(page: Page, scope: string, { desktop = false } = {}): 
   expect(found!.backtick, "a stray backtick renders on the page").toBe(false);
 }
 
-async function expectDialogFits(page: Page, title: string, options?: { desktop?: boolean }): Promise<void> {
-  const dialog = page.getByRole("dialog", { name: title });
+async function expectDialogFits(page: Page, title: string | Locator, options?: { desktop?: boolean }): Promise<void> {
+  const dialog = typeof title === "string" ? page.getByRole("dialog", { name: title }) : title;
   await expect(dialog).toBeVisible();
   await settle(page);
   await dialog.evaluate((el) => el.setAttribute("data-probe", ""));
   await expectFits(page, "[data-probe]", options);
   await dialog.evaluate((el) => el.removeAttribute("data-probe"));
+}
+
+/** The cards and the picture above them stand on the page: none has a card
+ *  around it, and each is as wide as the page's own column lets it be. */
+async function expectOnPage(page: Page): Promise<void> {
+  const found = await page.evaluate(() => {
+    const title = document.querySelector("#bv-main h1")!.getBoundingClientRect();
+    const cards = [...document.querySelectorAll<HTMLElement>("#bv-main [data-instance]")];
+    const picture = document.querySelector<HTMLElement>('#bv-main [data-testid="net-picture"]')?.closest<HTMLElement>(".rounded-card");
+    const lefts = cards.map((el) => Math.round(el.getBoundingClientRect().left));
+    return {
+      framed: cards.filter((el) => el.parentElement?.closest(".rounded-card")).length,
+      pictureFramed: Boolean(picture?.parentElement?.closest(".rounded-card")),
+      inset: Math.round(Math.min(...lefts) - title.left),
+      pictureInset: picture ? Math.round(picture.getBoundingClientRect().left - title.left) : 0,
+    };
+  });
+  expect(found, "a card stands around the cards or the picture").toMatchObject({ framed: 0, pictureFramed: false });
+  expect(Math.abs(found.inset), "the cards are set in from the page's edge").toBeLessThanOrEqual(1);
+  expect(Math.abs(found.pictureInset), "the picture is set in from the page's edge").toBeLessThanOrEqual(1);
 }
 
 const pageGap = (page: Page) =>
@@ -515,10 +589,11 @@ for (const width of [320, 360]) {
   test(`grid @ ${width}px: every remove armed, nothing pans, clips or is cut short`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
     await openPage(page, width);
-    // Two requests and a storage offer wait. The count is a readout, and the
-    // Details button beside it is the way in.
-    await expect(card(page, MEMBER).getByText("3 Anfragen", { exact: true })).toBeVisible();
-    await expect(card(page, MEMBER).getByRole("button", { name: "3 Anfragen" })).toHaveCount(0);
+    // Two role requests, a request to hand out a key deposit and a storage
+    // offer wait. The count is a readout, and the Details button beside it is
+    // the way in.
+    await expect(card(page, MEMBER).getByText("4 Anfragen", { exact: true })).toBeVisible();
+    await expect(card(page, MEMBER).getByRole("button", { name: "4 Anfragen" })).toHaveCount(0);
     await expect(card(page, "zfs:nas")).toBeVisible();
     await expect(card(page, "zfs:nas").getByText("Verbunden", { exact: true })).toBeVisible();
     // A phone has room for one side of the net picture only.
@@ -532,19 +607,25 @@ for (const width of [320, 360]) {
 
     expect(await pageGap(page)).toBe("24px");
     await expectFits(page, "#bv-main");
+    await expectOnPage(page);
     // The inventory lists each source with its date and size in view, and not
     // as a table whose last columns scroll out of the card.
     await expect(page.locator("#bv-main table")).toHaveCount(0);
     await expect(page.locator("#bv-main").getByText("49.4 GB", { exact: true })).toHaveCount(1);
-    // Three tiles share a card's width, however long the names of the roles.
-    const tiles = await card(page, "self")
-      .locator("[data-role]")
-      .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
-    expect(new Set(tiles).size, "the role tiles left their row").toBe(1);
+    // Four tiles stand two by two, each pair sharing the card's width however
+    // long the names of the roles.
+    for (const key of ["self", MEMBER]) {
+      const tiles = await card(page, key)
+        .locator("[data-role]")
+        .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+      expect(tiles, `the role tiles of ${key} left their rows`).toEqual([tiles[0], tiles[0], tiles[2], tiles[2]]);
+      expect(tiles[2]).toBeGreaterThan(tiles[0]);
+    }
     const states = await card(page, MEMBER)
       .locator("button[data-role]")
       .evaluateAll((els) => els.map((el) => `${el.getAttribute("data-role")}:${el.getAttribute("data-state")}`));
-    expect(states).toEqual(["receiver:on", "fetcher:waiting", "zfs:on"]);
+    expect(states).toEqual(["receiver:on", "fetcher:waiting", "zfs:on", "keeper:on"]);
+    await expect(card(page, MEMBER).locator('[data-role="keeper"]')).toHaveText("SchlüsselhüterAktiv");
   });
 
   test(`an instance's window @ ${width}px: everything open, nothing pans, clips or is cut short`, async ({ page }, testInfo) => {
@@ -559,8 +640,13 @@ for (const width of [320, 360]) {
     await expect(win.getByText("Gesamt", { exact: true })).toHaveCount(2);
     // Each role has its switch, and what the instance asks for stands with
     // the ZFS request in one list.
-    await expect(win.getByRole("region", { name: /^Was Schwiegereltern/ }).getByRole("switch")).toHaveCount(3);
+    await expect(win.getByRole("region", { name: /^Was Schwiegereltern/ }).getByRole("switch")).toHaveCount(4);
     await expect(win.getByText("möchte seine Off-site-Kopien hier ablegen")).toBeVisible();
+    // Its request to hand out a key deposit waits in the same list, and the
+    // deposit this server keeps for it stands with what was allowed.
+    await expect(win.locator("[data-release]")).toHaveCount(1);
+    await expect(win.locator('[data-release="rel1"]')).toContainText("fragt nach der Schlüssel-Hinterlegung von Büro Linz");
+    await expect(win.locator("[data-kept]")).toHaveCount(1);
     await expect(win.locator('[data-request="fetcher"]').getByRole("button", { name: "Freigabe entziehen" })).toBeVisible();
     await win.evaluate((el) => el.setAttribute("data-probe", ""));
     await armRemoves(page, "[data-probe]");
@@ -607,6 +693,59 @@ for (const width of [320, 360]) {
     await expect(page.getByRole("dialog", { name: "Empfangsserver" }).getByText("schwiegereltern-tower-gmunden-keller")).toBeVisible();
   });
 
+  test(`the key deposits @ ${width}px fit the screen, the recovery code included`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
+    await page.route("**/api/group/deposit/code", (route) => route.fulfill({ json: { ok: true, code: CODE } }));
+    await openPage(page, width);
+    await card(page, "self").getByRole("button", { name: "Schlüssel-Hinterlegung" }).click();
+    const win = page.getByRole("dialog", { name: "Schlüssel-Hinterlegung" });
+    await expect(win.locator("[data-keeper]")).toHaveCount(3);
+    await expect(win.locator("[data-kept]")).toHaveCount(3);
+    await expect(win.locator("[data-release]")).toHaveCount(2);
+    await expect(win.locator('[data-release="rel2"]').getByText("Hier noch nie gesehen")).toBeVisible();
+    await expectDialogFits(page, "Schlüssel-Hinterlegung");
+
+    await win.getByRole("button", { name: "Neuen Code erstellen" }).click();
+    await expectDialogFits(page, "Bestätigen");
+    await page.getByRole("dialog", { name: "Bestätigen" }).getByRole("button", { name: "Neuen Code erstellen" }).click();
+    // The window's own name ends in its hint, which speaks of the code too.
+    const code = page.getByRole("dialog", { name: "Wiederherstellungscode", exact: true });
+    await expect(code.getByTestId("recovery-code").locator("li")).toHaveText(CODE.split("-"));
+    await expectDialogFits(page, code);
+    await expect(code.getByRole("button", { name: "Fertig" })).toBeDisabled();
+    await code.getByRole("switch", { name: "Ich habe den Code aufgeschrieben" }).click();
+    await code.getByRole("button", { name: "Fertig" }).click();
+    await expect(code).toHaveCount(0);
+  });
+
+  test(`the key keeper's dialogs @ ${width}px fit the screen`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
+    await openPage(page, width);
+    // An instance too old to keep a deposit says so in place of the dialog.
+    await card(page, "member-2").locator('button[data-role="keeper"]').click();
+    const old = page.getByRole("dialog", { name: "Büro Linz als Schlüsselhüter" });
+    await expect(old).toContainText("Aktualisiere Büro Linz zuerst.");
+    await expectDialogFits(page, "Büro Linz als Schlüsselhüter");
+    await old.getByRole("button", { name: "Schließen" }).click();
+
+    // Once it is current, the dialog says what the deposit is and what the
+    // day it is used takes.
+    await page.route("**/api/group/roles", (route) =>
+      route.fulfill({ json: { ok: true, members: [ROLES[0], { ...ROLES[1], answers: true, canKeep: true }], self: SELF_ROLES } }),
+    );
+    await page.reload();
+    await card(page, "member-2").locator('button[data-role="keeper"]').click();
+    const dialog = page.getByRole("dialog", { name: "Büro Linz als Schlüsselhüter" });
+    await expect(dialog.getByTestId("keeper-needs").locator("li")).toHaveCount(3);
+    await expectDialogFits(page, "Büro Linz als Schlüsselhüter");
+    await dialog.getByRole("button", { name: "Abbrechen" }).click();
+
+    // Taking a deposit back says what that means before anything is sent.
+    await card(page, MEMBER).locator('button[data-role="keeper"]').click();
+    await expect(page.getByRole("dialog", { name: "Bestätigen" })).toContainText("die Hinterlegung zu löschen");
+    await expectDialogFits(page, "Bestätigen");
+  });
+
   test(`an empty group @ ${width}px: nothing pans or clips`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
     await openPage(page, width, { empty: true });
@@ -614,6 +753,7 @@ for (const width of [320, 360]) {
     await expect(page.getByRole("button", { name: "Instanz koppeln" })).toHaveCount(1);
     expect(await pageGap(page)).toBe("24px");
     await expectFits(page, "#bv-main");
+    await expectOnPage(page);
     await page.getByRole("button", { name: "Instanz koppeln" }).click();
     await expect(page).toHaveURL(/\/settings\/pairing$/);
   });
@@ -627,6 +767,7 @@ test("the grid on the desktop keeps the 40px rhythm and cards of one size", asyn
 
   expect(await pageGap(page)).toBe("40px");
   await expectFits(page, "#bv-main", { desktop: true });
+  await expectOnPage(page);
 
   const boxes = await page.locator("#bv-main [data-instance]").evaluateAll((els) =>
     els.map((el) => {
@@ -679,6 +820,96 @@ test("a Receiver is asked where it keeps the copies", async ({ page }, testInfo)
   expect(sent).toEqual([expect.objectContaining({ store: "share" })]);
 });
 
+test("a key deposit is made from its tile, and the recovery code stays until it is written down", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "the flow runs once, on the desktop");
+  const sent: string[] = [];
+  let deposits: unknown = NO_DEPOSITS;
+  let members: unknown[] = [{ ...ROLES[0], byMember: { ...ROLES[0].byMember, keeper: null } }, ROLES[1]];
+  await page.route("**/api/group/members/*/roles/keeper", async (route) => {
+    sent.push(`${route.request().method()} ${new URL(route.request().url()).pathname}`);
+    const keeper = { state: "held", at: iso(0) };
+    deposits = { ...NO_DEPOSITS, codeSince: iso(0), sent: [{ memberId: MEMBER, name: MEMBER_NAME, state: "held", sentAt: iso(0) }] };
+    members = [{ ...ROLES[0], byMember: { ...ROLES[0].byMember, keeper } }, ROLES[1]];
+    await route.fulfill({ json: { ok: true, keeper, code: CODE } });
+  });
+  await openPage(page, testInfo.project.use.viewport!.width);
+  await page.route("**/api/group/roles", (route) => route.fulfill({ json: { ok: true, members, self: SELF_ROLES } }));
+  await page.route("**/api/group/deposits", (route) => route.fulfill({ json: { ok: true, deposits } }));
+  await page.reload();
+  const tile = card(page, MEMBER).locator('button[data-role="keeper"]');
+  await expect(tile).toHaveAttribute("data-state", "off");
+  // With no deposit on either side the window has nothing to show yet.
+  await expect(card(page, "self").getByRole("button", { name: "Schlüssel-Hinterlegung" })).toHaveCount(0);
+
+  // The tile is one of four, in the form of the others.
+  const sizes = await card(page, MEMBER)
+    .locator("button[data-role]")
+    .evaluateAll((els) => els.map((el) => `${Math.round(el.getBoundingClientRect().width)}x${Math.round(el.getBoundingClientRect().height)}`));
+  expect(sizes).toHaveLength(4);
+  expect(new Set(sizes).size, "the role tiles differ in size").toBe(1);
+
+  await tile.click();
+  const dialog = page.getByRole("dialog", { name: `${MEMBER_NAME} als Schlüsselhüter` });
+  await expect(dialog.getByTestId("keeper-needs").locator("li")).toHaveCount(3);
+  await expectDialogFits(page, `${MEMBER_NAME} als Schlüsselhüter`, { desktop: true });
+  await dialog.getByRole("button", { name: "Hinterlegen" }).click();
+  expect(sent).toEqual([`PUT /api/group/members/${MEMBER}/roles/keeper`]);
+
+  const code = page.getByRole("dialog", { name: "Wiederherstellungscode" });
+  await expect(code.getByTestId("recovery-code").locator("li")).toHaveText(CODE.split("-"));
+  await expectDialogFits(page, "Wiederherstellungscode", { desktop: true });
+  // The four groups stand in one row and are the largest text of the window.
+  const groups = await code
+    .getByTestId("recovery-code")
+    .locator("li")
+    .evaluateAll((els) => els.map((el) => ({ top: Math.round(el.getBoundingClientRect().top), size: parseFloat(getComputedStyle(el).fontSize) })));
+  expect(new Set(groups.map((g) => g.top)).size).toBe(1);
+  expect(groups[0].size).toBeGreaterThanOrEqual(20);
+  const done = code.getByRole("button", { name: "Fertig" });
+  await expect(done).toBeDisabled();
+  await page.keyboard.press("Escape");
+  await page.mouse.click(5, 5);
+  await expect(code).toBeVisible();
+  await code.getByRole("switch", { name: "Ich habe den Code aufgeschrieben" }).click();
+  await done.click();
+  await expect(code).toHaveCount(0);
+  await expect(page.getByText("K7QF2")).toHaveCount(0);
+  await expect(tile).toHaveAttribute("data-state", "on");
+  await expect(card(page, "self").getByRole("button", { name: "Schlüssel-Hinterlegung" })).toBeVisible();
+});
+
+test("the key deposits on the desktop: every line fits, and a request is allowed", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
+  const sent: unknown[] = [];
+  await page.route("**/api/group/deposits/releases/*", async (route) => {
+    sent.push([new URL(route.request().url()).pathname, route.request().postDataJSON()]);
+    await route.fulfill({ json: { ok: true, state: "allowed" } });
+  });
+  await openPage(page, testInfo.project.use.viewport!.width);
+  await card(page, "self").getByRole("button", { name: "Schlüssel-Hinterlegung" }).click();
+  const win = page.getByRole("dialog", { name: "Schlüssel-Hinterlegung" });
+  await expect(win.getByTestId("code-since")).toContainText("Wiederherstellungscode erstellt am");
+  await expect(win.locator("[data-keeper]")).toHaveText([/Aktiv/, /Veraltet.*Jetzt senden/, /Dort gelöscht.*Erneut anfragen/]);
+  // An answered request is not listed, and the one from an unknown instance says so.
+  await expect(win.locator("[data-release]")).toHaveCount(2);
+  const unknown = win.locator('[data-release="rel2"]');
+  await expect(unknown).toContainText("Hier noch nie gesehen");
+  await expect(unknown).toContainText("7 Anfragen von dort bisher, 3 in der letzten Stunde");
+  await expect(win.locator('[data-release="rel1"]')).toContainText("Hier zuerst gesehen am");
+  await expectDialogFits(page, "Schlüssel-Hinterlegung", { desktop: true });
+
+  await unknown.getByRole("button", { name: "Erlauben" }).click();
+  expect(sent).toEqual([["/api/group/deposits/releases/rel2", { decision: "allow" }]]);
+  await expect(page.getByText("kann die Hinterlegung innerhalb von 30 Minuten abholen")).toBeVisible();
+
+  // Deleting a kept deposit asks first, and the question is no red one.
+  await win.locator('[data-kept="member-2"]').getByRole("button", { name: "Löschen" }).click();
+  const question = page.getByRole("dialog", { name: "Bestätigen" });
+  await expect(question).toContainText("Schlüssel-Hinterlegung von Büro Linz löschen?");
+  await expectDialogFits(page, "Bestätigen", { desktop: true });
+  await question.getByRole("button", { name: "Abbrechen" }).click();
+});
+
 test("the net picture on the desktop shows the group with an arrow per role", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await openPage(page, testInfo.project.use.viewport!.width);
@@ -698,6 +929,7 @@ test("the net picture on the desktop shows the group with an arrow per role", as
     await expect(picture.getByRole("button", { name })).toBeVisible();
   }
   const lanes = await picture.locator(`[data-net="${MEMBER}"] [data-lane]`).evaluateAll((els) => els.map((el) => el.getAttribute("data-lane")));
+  // The key deposit both instances hold for each other is no arrow.
   expect(lanes).toEqual(["out:receiver:on", "out:fetcher:waiting", "out:zfs:on", "in:receiver:waiting", "in:fetcher:on", "in:zfs:waiting"]);
   await expect(page.locator("#bv-main .glim-net-key")).toContainText("Wartet auf Freigabe");
   // An arrow that waits is dashed, one that is on is solid.

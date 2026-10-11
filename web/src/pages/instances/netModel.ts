@@ -2,7 +2,7 @@
 // paired or connected around it, and one arrow per role between two of them.
 import type { MemberRoles, RoleSide, ZFSReplicaServer } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
-import { ROLE_KINDS, roleState, type Instance, type RoleKind } from "./instancesModel";
+import { FLOW_ROLES, roleState, type Instance, type RoleKind } from "./instancesModel";
 
 export type NetNodeKind = "peer" | "zfs" | "phone";
 
@@ -31,7 +31,7 @@ export interface NetNode {
 export function netFlows(roles: MemberRoles | undefined): NetFlow[] {
   if (!roles) return [];
   const along = (side: RoleSide, dir: NetFlow["dir"]): NetFlow[] =>
-    ROLE_KINDS.flatMap((role) => {
+    FLOW_ROLES.flatMap((role) => {
       const state = roleState(side, role);
       return state === "off" ? [] : [{ dir, role, waiting: state === "waiting" }];
     });

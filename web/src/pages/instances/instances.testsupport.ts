@@ -1,4 +1,6 @@
 import type {
+  DepositRelease,
+  Deposits,
   FleetPeer,
   GroupMember,
   MemberRoles,
@@ -117,7 +119,7 @@ export function zfsRole(state: ZFSRole["state"], datasets: string[] = ["tank/app
 }
 
 export function roleSide(over: Partial<RoleSide> = {}): RoleSide {
-  return { receiver: null, fetcher: null, zfs: null, ...over };
+  return { receiver: null, fetcher: null, zfs: null, keeper: null, ...over };
 }
 
 export function memberRoles(over: Partial<MemberRoles> = {}): MemberRoles {
@@ -126,6 +128,7 @@ export function memberRoles(over: Partial<MemberRoles> = {}): MemberRoles {
     name: "attic",
     reachable: true,
     answers: true,
+    canKeep: true,
     byMember: roleSide(),
     forMember: roleSide(),
     asks: 0,
@@ -133,4 +136,36 @@ export function memberRoles(over: Partial<MemberRoles> = {}): MemberRoles {
   };
 }
 
-export const NO_SELF_ROLES: SelfRoles = { receiver: [], fetcher: [], zfs: [] };
+export const NO_SELF_ROLES: SelfRoles = { receiver: [], fetcher: [], zfs: [], keeper: [] };
+
+const iso = (unix: number) => new Date(unix * 1000).toISOString();
+
+export function deposits(over: Partial<Deposits> = {}): Deposits {
+  return { codeSince: "", sent: [], kept: [], releases: [], ...over };
+}
+
+export function sentDeposit(over: Partial<Deposits["sent"][number]> = {}): Deposits["sent"][number] {
+  return { memberId: "m1", name: "attic", state: "held", sentAt: iso(NOW_S - 3600), ...over };
+}
+
+export function keptDeposit(over: Partial<Deposits["kept"][number]> = {}): Deposits["kept"][number] {
+  return { ownerId: "m1", ownerName: "attic", state: "held", createdAt: iso(NOW_S - 86400 * 30), updatedAt: iso(NOW_S - 3600), ...over };
+}
+
+export function depositRelease(over: Partial<DepositRelease> = {}): DepositRelease {
+  return {
+    id: "rel1",
+    ownerId: "m1",
+    ownerName: "attic",
+    requesterId: "m9",
+    requesterName: "new-attic",
+    state: "asked",
+    askedAt: iso(NOW_S - 120),
+    decidedAt: "",
+    releasedAt: "",
+    knownSince: "",
+    requests: 1,
+    requestsLastHour: 1,
+    ...over,
+  };
+}

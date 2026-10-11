@@ -8,13 +8,15 @@ import { ReplicaStatePill } from "../../components/zfs/replica/ReplicaStatePill"
 import { ZFSReceiveRequests } from "../../components/zfs/replica/ZFSReceiveRequests";
 import { isRunning } from "../../components/zfs/replica/replicaModel";
 import { checkFleetPeer, updateFleetPeer } from "../../lib/api";
-import type { PullSourceView, ReceivedRepoStatus, RoleRequest, RoleSection } from "../../lib/api";
+import { unixOf } from "../../components/zfs/replica/replicaModel";
+import type { KeeperRole, PullSourceView, ReceivedRepoStatus, RoleRequest, RoleSection } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { hueCounter, ToggleRow } from "../settings/shared";
 import { Facts } from "./InstanceCard";
 import { InstanceWindow, WindowCard } from "./InstanceWindow";
+import { depositHelp } from "./KeyDepositWindow";
 import { MeshOffers, ProposeMeshDialog } from "./MeshOffers";
 import { domainLabelKey, PeerScorecard } from "./PeerScorecard";
 import { PullDialog, PullSourceCard } from "./PullSourceCard";
@@ -23,7 +25,7 @@ import { RemoveInstanceButton } from "./RemoveInstanceButton";
 import { useRoleSwitch } from "./RoleDialogs";
 import { RoleRequests } from "./RoleRequests";
 import { ROLES, ROLE_STATE_KEY } from "./RoleTile";
-import { ROLE_KINDS, withoutScheme, type Instance, type RoleKind, type RoleState } from "./instancesModel";
+import { ROLE_KINDS, tooOldToKeep, withoutScheme, type Instance, type RoleKind, type RoleState } from "./instancesModel";
 import type { InstancesState, Modules } from "./useInstances";
 
 function RoleRow({
@@ -36,7 +38,8 @@ function RoleRow({
   role: RoleKind;
   state: RoleState;
   onToggle: () => void;
-  onChange: () => void;
+  /** Opens what the role covers. A role that covers nothing has none. */
+  onChange?: () => void;
   children: ReactNode;
 }) {
   const { t } = useT();
@@ -54,7 +57,7 @@ function RoleRow({
         {children}
       </span>
       <span className="flex items-center gap-2">
-        {state !== "off" && (
+        {state !== "off" && onChange && (
           <Button
             label={t("instances.role.change")}
             labelKey="instances.role.change"
@@ -153,6 +156,22 @@ export function PeerDetails({
     }
   }
 
+  /** What the key keeper's row says: where the deposit stands there, and
+   *  what to do when it is not current. */
+  function keeperLine(keeper: KeeperRole | null | undefined): ReactNode {
+    if (!keeper) return tooOldToKeep(instance) ? named("keeper.tooOld") : t(ROLE_STATE_KEY.off);
+    const help = depositHelp(keeper.state);
+    return (
+      <Facts
+        items={[
+          keeper.state === "held" && named("keeper.holds"),
+          t("keeper.sent").replace("{when}", () => relativeTime(t, unixOf(keeper.at))),
+          help && named(help),
+        ]}
+      />
+    );
+  }
+
   const shownRoles = ROLE_KINDS.filter((k) => k !== "zfs" || modules.zfs || instance.roles?.byMember.zfs);
   const canOffer = modules.fleet && peer !== undefined && paired;
 
@@ -189,9 +208,18 @@ export function PeerDetails({
           <MeshOffers offers={instance.offers} onChanged={() => void state.reloadOffers()} />
           <ul className="flex flex-col gap-4">
             {shownRoles.map((k) => (
-              <RoleRow key={k} role={k} state={roles.states[k]} onToggle={() => roles.toggle(k)} onChange={() => roles.change(k)}>
-                {k !== "zfs" && (
+              <RoleRow
+                key={k}
+                role={k}
+                state={roles.states[k]}
+                onToggle={() => roles.toggle(k)}
+                onChange={k === "keeper" ? undefined : () => roles.change(k)}
+              >
+                {(k === "receiver" || k === "fetcher") && (
                   <span className="text-xs text-carbon-textMuted wrap-anywhere">{requestLine(instance.roles?.byMember[k], k)}</span>
+                )}
+                {k === "keeper" && (
+                  <span className="text-xs text-carbon-textMuted wrap-anywhere">{keeperLine(instance.roles?.byMember.keeper)}</span>
                 )}
                 {k === "zfs" && instance.replicas.length === 0 && (
                   <span className="text-xs text-carbon-textMuted">
