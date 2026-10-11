@@ -312,6 +312,8 @@ export function BackupRow({
   return (
     <li
       data-testid="backup-row"
+      data-new="backups-row"
+      data-new-way="entry"
       data-picked={picked || undefined}
       onClick={(e) => {
         if (!taken(e)) navigate(target);

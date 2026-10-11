@@ -316,7 +316,7 @@ export function EntryMenu({
 
   return (
     <>
-      <span ref={anchor} className="flex">
+      <span ref={anchor} data-new="entry-menu" className="flex">
         <Button
           label={t("nav.more")}
           labelKey="nav.more"

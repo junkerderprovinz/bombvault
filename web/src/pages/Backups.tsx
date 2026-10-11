@@ -517,7 +517,7 @@ export function Backups() {
 
       {list && !failed && (
         <PageActions>
-          <span ref={moreButton} className="flex">
+          <span ref={moreButton} data-new="backups-actions" className="flex">
             <PageAction
               label={t("nav.more")}
               glyph={<IconMore />}

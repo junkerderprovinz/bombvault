@@ -23,7 +23,7 @@ export function KindTiles({
   t: T;
 }) {
   return (
-    <div role="group" aria-label={t("backups.tiles")} className="rounded-card bg-carbon-surface p-3 max-[600px]:p-2">
+    <div role="group" aria-label={t("backups.tiles")} data-new="backups-tiles" className="rounded-card bg-carbon-surface p-3 max-[600px]:p-2">
       <div className="flex flex-wrap gap-2 max-[860px]:grid max-[860px]:grid-cols-2 max-[600px]:flex max-[600px]:flex-nowrap max-[600px]:gap-1.5 max-[600px]:overflow-x-auto max-[600px]:[scrollbar-width:none]">
         {tiles.map(({ tile, count }) => {
           const on = tile === chosen;

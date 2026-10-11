@@ -127,7 +127,7 @@ function ScheduleCard({
     .replace("{backupNow}", t("containers.backupNow"));
 
   return (
-    <Card title={t("entry.settings.schedule")} hueIndex={hueIndex}>
+    <Card title={t("entry.settings.schedule")} hueIndex={hueIndex} newId="entry-defaults">
       {setIncluded && (
         <IncludeToggle
           name={item.key}

@@ -188,6 +188,66 @@
   padding-bottom: calc(1rem + var(--page-actions-clearance, 0px));
 }
 
+/* What is new after an update (components/WhatsNewDots.tsx): a dot on each
+   changed element and on what leads to it, in a layer above windows and below
+   bubbles. The green is the state colour and stays it in every colour mode,
+   and the ring in the page's ground keeps it legible on any surface. */
+.glim-new-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+}
+.glim-new-dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background-color: var(--status-ok-solid);
+  box-shadow:
+    0 0 0 2px var(--carbon-bg),
+    0 0 10px 3px color-mix(in srgb, var(--status-ok-solid) 80%, transparent);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.glim-new-dot:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+/* A finger needs more than twelve pixels to hit. */
+@media (pointer: coarse) {
+  .glim-new-dot::before {
+    content: "";
+    position: absolute;
+    inset: -14px;
+  }
+}
+/* The same dot in the list of changes, where it marks a line and is nothing
+   to press. A change that was seen loses the colour. */
+.glim-new-dot-still {
+  position: static;
+  flex: none;
+  margin: 0;
+  pointer-events: none;
+}
+.glim-new-dot-seen {
+  background-color: var(--carbon-text-muted);
+  box-shadow: none;
+}
+@keyframes glim-new-glow {
+  50% {
+    box-shadow:
+      0 0 0 2px var(--carbon-bg),
+      0 0 18px 7px color-mix(in srgb, var(--status-ok-solid) 50%, transparent);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="off"]) .glim-new-dot:not(.glim-new-dot-still) {
+    animation: glim-new-glow var(--motion-breathe-dur, 1400ms) ease-in-out infinite;
+  }
+}
+
 /* The glyph tile of a list row (components/backups/BackupRow.tsx). It takes
    the row's ink, which rainbow turns into the row's hue, and fills with the
    accent while the row is hovered, holds the focus or is picked. Reactive

@@ -368,7 +368,9 @@ export function Instances() {
       )}
       {modules && !state.loading && (
         <PageActions>
-          <PageAction primary label={t("instances.pair")} glyph={<IconLink />} onClick={() => navigate("/settings/pairing")} />
+          <span data-new="instances-pair" className="flex">
+            <PageAction primary label={t("instances.pair")} glyph={<IconLink />} onClick={() => navigate("/settings/pairing")} />
+          </span>
         </PageActions>
       )}
     </div>

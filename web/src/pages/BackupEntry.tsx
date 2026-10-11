@@ -187,7 +187,7 @@ function Loaded({
         {gone && <Note>{t(item.kind === "vm" ? "entry.gone.vm" : "entry.gone.container")}</Note>}
         {!self && <KindHead entry={entry} tab={tab} onChanged={reload} />}
         {!self && (
-          <div className="mt-2 max-w-xl">
+          <div data-new-way="entry-tabs" className="mt-2 max-w-xl">
             <Selector
               items={ENTRY_TABS.map((id) => {
                 const Glyph = TAB_GLYPH[id];
