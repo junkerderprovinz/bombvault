@@ -4209,7 +4209,6 @@ const vi: Partial<Translations> = {
   "whatsNew.backupsRow": "Mỗi dòng chỉ hiện một trạng thái, phần còn lại nằm trong bong bóng bên cạnh tên. Chọn dòng như chọn tệp: Ctrl+nhấp, Shift+nhấp hoặc nhấn giữ.",
   "whatsNew.backupsActions": "Hành động chính của trang nổi ở góc dưới bên phải. “Thêm” chứa những hành động ít dùng.",
   "whatsNew.entryPage": "Mỗi mục có một trang riêng. Bản sao lưu, cài đặt và tính toàn vẹn của nó là ba tab.",
-  "whatsNew.entryMenu": "Các hành động ít dùng của một mục nằm dưới “Thêm”.",
   "whatsNew.entryDefaults": "Một mục theo lịch trình và đích sao lưu mặc định cho đến khi bạn đặt riêng cho nó ở đây.",
   "whatsNew.restoreTiles": "“Khôi phục” là một trang cho mọi thứ. Chọn một miền hoặc tìm một mục, rồi chọn một bản sao lưu trên dòng thời gian của nó.",
   "whatsNew.restoreWhere": "Một cửa sổ hỏi khôi phục gì và về đâu. “Bên cạnh bản gốc” đưa một bản sao trở lại và để bản gốc nguyên như cũ.",

@@ -4228,7 +4228,6 @@ const id: Partial<Translations> = {
   "whatsNew.backupsRow": "Satu baris menampilkan satu status, sisanya ada di gelembung di samping nama. Pilih baris seperti memilih file: Ctrl+klik, Shift+klik, atau tekan lama.",
   "whatsNew.backupsActions": "Aksi utama sebuah halaman melayang di kanan bawah. “Lainnya” menyimpan aksi yang jarang dipakai.",
   "whatsNew.entryPage": "Setiap entri punya halamannya sendiri. Cadangan, pengaturan, dan integritasnya adalah tiga tab.",
-  "whatsNew.entryMenu": "Aksi yang jarang dipakai pada sebuah entri ada di “Lainnya”.",
   "whatsNew.entryDefaults": "Sebuah entri mengikuti jadwal dan tujuan bawaan sampai mendapat miliknya sendiri di sini.",
   "whatsNew.restoreTiles": "“Pemulihan” adalah satu halaman untuk semuanya. Pilih sebuah domain atau cari entri, lalu pilih cadangan di linimasanya.",
   "whatsNew.restoreWhere": "Satu jendela menanyakan apa yang dipulihkan dan ke mana. “Di samping aslinya” mengembalikan salinan dan membiarkan aslinya apa adanya.",

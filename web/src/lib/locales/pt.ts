@@ -4218,7 +4218,6 @@ const pt: Partial<Translations> = {
   "whatsNew.backupsRow": "Uma linha mostra um só estado, e o resto está no balão ao lado do nome. Escolhe as linhas como ficheiros: Ctrl+clique, Shift+clique ou um toque longo.",
   "whatsNew.backupsActions": "A ação principal de uma página flutua em baixo à direita. «Mais» guarda as raras.",
   "whatsNew.entryPage": "Cada entrada tem a sua própria página. Os seus backups, as suas definições e a sua integridade são três abas.",
-  "whatsNew.entryMenu": "As ações raras de uma entrada estão em «Mais».",
   "whatsNew.entryDefaults": "Uma entrada segue o agendamento e o destino predefinidos até ter aqui os seus.",
   "whatsNew.restoreTiles": "«Restauração» é uma só página para tudo. Escolhe um domínio ou procura uma entrada, e depois escolhe um backup na sua linha cronológica.",
   "whatsNew.restoreWhere": "Uma janela pergunta o que restaurar e para onde. «Ao lado do original» traz de volta uma cópia e deixa o original como está.",

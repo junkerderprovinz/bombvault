@@ -4218,7 +4218,6 @@ const fr: Partial<Translations> = {
   "whatsNew.backupsRow": "Une ligne montre un seul statut, et le reste est dans la bulle à côté du nom. Sélectionnez les lignes comme des fichiers : Ctrl+clic, Shift+clic ou un appui long.",
   "whatsNew.backupsActions": "L'action principale d'une page flotte en bas à droite. « Plus » regroupe les actions rares.",
   "whatsNew.entryPage": "Chaque élément a sa propre page. Ses sauvegardes, ses paramètres et son intégrité sont trois onglets.",
-  "whatsNew.entryMenu": "Les actions rares d'un élément se trouvent sous « Plus ».",
   "whatsNew.entryDefaults": "Un élément suit le planning et la destination par défaut jusqu'à ce qu'il reçoive les siens ici.",
   "whatsNew.restoreTiles": "« Restauration » est une seule page pour tout. Choisissez un domaine ou cherchez un élément, puis choisissez une sauvegarde sur sa chronologie.",
   "whatsNew.restoreWhere": "Une fenêtre demande quoi restaurer et où. « À côté de l'original » ramène une copie et laisse l'original tel quel.",

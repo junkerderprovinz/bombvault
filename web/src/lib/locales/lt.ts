@@ -4228,7 +4228,6 @@ const lt: Partial<Translations> = {
   "whatsNew.backupsRow": "Eilutė rodo vieną būseną, o likusi dalis yra debesėlyje šalia pavadinimo. Eilutes pasirink kaip failus: Ctrl+spustelėjimas, Shift+spustelėjimas arba ilgas paspaudimas.",
   "whatsNew.backupsActions": "Pagrindinis puslapio veiksmas kybo apačioje dešinėje. „Daugiau“ slepia retus.",
   "whatsNew.entryPage": "Kiekvienas įrašas turi savo puslapį. Jo atsarginės kopijos, nustatymai ir vientisumas yra trys skirtukai.",
-  "whatsNew.entryMenu": "Reti įrašo veiksmai yra po „Daugiau“.",
   "whatsNew.entryDefaults": "Įrašas laikosi numatytojo tvarkaraščio ir paskirties vietos, kol čia gauna savus.",
   "whatsNew.restoreTiles": "„Atkūrimas“ yra vienas puslapis viskam. Pasirink sritį arba ieškok įrašo, tada jo laiko juostoje pasirink atsarginę kopiją.",
   "whatsNew.restoreWhere": "Vienas langas klausia, ką atkurti ir kur. „Šalia originalo“ grąžina kopiją, o originalą palieka kaip yra.",

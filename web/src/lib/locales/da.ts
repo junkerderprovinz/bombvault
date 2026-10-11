@@ -4218,7 +4218,6 @@ const da: Partial<Translations> = {
   "whatsNew.backupsRow": "En række viser én status, og resten står i boblen ved siden af navnet. Vælg rækker som filer: Ctrl+klik, Shift+klik eller et langt tryk.",
   "whatsNew.backupsActions": "Sidens hovedhandling flyder nederst til højre. »Mere« rummer de sjældne.",
   "whatsNew.entryPage": "Hver post har sin egen side. Dens sikkerhedskopier, indstillinger og integritet er tre faner.",
-  "whatsNew.entryMenu": "En posts sjældne handlinger ligger under »Mere«.",
   "whatsNew.entryDefaults": "En post følger standardtidsplanen og standarddestinationen, til den får sine egne her.",
   "whatsNew.restoreTiles": "»Gendannelse« er én side til alt. Vælg et domæne eller søg efter en post, og vælg så en sikkerhedskopi på dens tidslinje.",
   "whatsNew.restoreWhere": "Ét vindue spørger, hvad der skal gendannes, og hvorhen. »Ved siden af originalen« henter en kopi tilbage og lader originalen være, som den er.",

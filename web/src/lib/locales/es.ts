@@ -4216,7 +4216,6 @@ const es: Partial<Translations> = {
   "whatsNew.backupsRow": "Una fila muestra un solo estado, y el resto está en el globo junto al nombre. Elige filas como archivos: Ctrl+clic, Shift+clic o una pulsación larga.",
   "whatsNew.backupsActions": "La acción principal de una página flota abajo a la derecha. «Más» guarda las poco frecuentes.",
   "whatsNew.entryPage": "Cada elemento tiene su propia página. Sus copias de seguridad, sus ajustes y su integridad son tres pestañas.",
-  "whatsNew.entryMenu": "Las acciones poco frecuentes de un elemento están en «Más».",
   "whatsNew.entryDefaults": "Un elemento sigue el calendario y el destino predeterminados hasta que aquí tenga los suyos.",
   "whatsNew.restoreTiles": "«Restauración» es una sola página para todo. Elige un dominio o busca un elemento, y luego elige una copia de seguridad en su línea de tiempo.",
   "whatsNew.restoreWhere": "Una ventana pregunta qué restaurar y adónde. «Junto al original» recupera una copia y deja el original como está.",

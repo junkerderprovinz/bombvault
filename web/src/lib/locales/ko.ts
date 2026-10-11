@@ -4209,7 +4209,6 @@ const ko: Partial<Translations> = {
   "whatsNew.backupsRow": "행에는 상태가 하나만 표시되고 나머지는 이름 옆 말풍선에 있습니다. 행은 파일처럼 선택하세요. Ctrl+클릭, Shift+클릭 또는 길게 누르기입니다.",
   "whatsNew.backupsActions": "페이지의 주요 작업은 오른쪽 아래에 떠 있습니다. 자주 쓰지 않는 작업은 “더보기”에 있습니다.",
   "whatsNew.entryPage": "항목마다 전용 페이지가 있습니다. 백업, 설정, 무결성이 탭 세 개입니다.",
-  "whatsNew.entryMenu": "항목에서 자주 쓰지 않는 작업은 “더보기”에 있습니다.",
   "whatsNew.entryDefaults": "항목은 여기서 자체 설정을 정하기 전까지 기본 일정과 대상을 따릅니다.",
   "whatsNew.restoreTiles": "“복원”은 모든 것을 한 페이지에서 처리합니다. 도메인을 고르거나 항목을 검색한 다음, 그 타임라인에서 백업을 고르세요.",
   "whatsNew.restoreWhere": "창 하나가 무엇을 어디로 복원할지 묻습니다. “원본 옆에”는 사본을 되돌리고 원본은 그대로 둡니다.",

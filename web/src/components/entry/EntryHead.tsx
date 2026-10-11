@@ -107,7 +107,7 @@ function AnomalyState({ anomaly, enabled }: { anomaly?: AnomalyItem; enabled: bo
 
 /**
  * EntryHead is the top of an entry's page: the glyph of its kind, its name,
- * one line that says how it is doing, its state and its rare actions. While a
+ * one line that says how it is doing, its state and its actions. While a
  * backup or restore of the entry runs, the state gives way to the run.
  */
 export function EntryHead({

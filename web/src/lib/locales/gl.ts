@@ -4228,7 +4228,6 @@ const gl: Partial<Translations> = {
   "whatsNew.backupsRow": "Unha fila amosa un só estado, e o resto está no globo xunto ao nome. Escolle as filas como ficheiros: Ctrl+clic, Shift+clic ou unha pulsación longa.",
   "whatsNew.backupsActions": "A acción principal dunha páxina flota abaixo á dereita. «Máis» garda as pouco frecuentes.",
   "whatsNew.entryPage": "Cada elemento ten a súa propia páxina. As súas copias de seguridade, a súa configuración e a súa integridade son tres lapelas.",
-  "whatsNew.entryMenu": "As accións pouco frecuentes dun elemento están en «Máis».",
   "whatsNew.entryDefaults": "Un elemento segue o horario e o destino predeterminados ata que aquí teña os seus.",
   "whatsNew.restoreTiles": "«Restauración» é unha soa páxina para todo. Escolle un dominio ou busca un elemento, e despois escolle unha copia de seguridade na súa liña do tempo.",
   "whatsNew.restoreWhere": "Unha xanela pregunta que restaurar e onde. «Xunto ao orixinal» recupera unha copia e deixa o orixinal como está.",

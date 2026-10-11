@@ -519,43 +519,35 @@ describe("the actions of the corner", () => {
   });
 });
 
-describe("the menu beside the name", () => {
+describe("the actions beside the name", () => {
   const menuItems = () =>
-    within(screen.getByRole("menu"))
-      .getAllByRole("menuitem")
+    within(document.querySelector<HTMLElement>('[data-new="entry-menu"]')!)
+      .getAllByRole("button")
       .map((item) => item.textContent);
 
-  async function openMenu() {
-    await press(screen.getAllByRole("button", { name: en["nav.more"] })[0]);
-  }
-
   async function choose(action: string) {
-    await openMenu();
-    await press(within(screen.getByRole("menu")).getByRole("menuitem", { name: action }));
+    await press(within(document.querySelector<HTMLElement>('[data-new="entry-menu"]')!).getByRole("button", { name: action }));
   }
 
   it("offers a running container its export and no removal", async () => {
     await renderPage("/backups/container/immich");
-    await openMenu();
     expect(menuItems()).toEqual([en["entry.menu.exportContainer"]]);
   });
 
   it("offers a VM its export and the delete of its local backups", async () => {
     await renderPage("/backups/vm/win11");
-    await openMenu();
     expect(menuItems()).toEqual([en["entry.menu.exportVM"], en["entry.deleteLocal"]]);
   });
 
   it("offers the flash drive its newest backup as an export and as a ZIP", async () => {
     getTimeline.mockResolvedValue(timelineOf([backupRun("r0", 0)]));
     await renderPage("/backups/flash/flash");
-    await openMenu();
     expect(menuItems()).toEqual([en["entry.menu.exportNewest"], en["entry.flashDownloadNewest"]]);
   });
 
-  it("has no menu where there is nothing to do", async () => {
+  it("has no actions where there is nothing to do", async () => {
     await renderPage("/backups/config/config");
-    expect(screen.queryByRole("button", { name: en["nav.more"] })).toBeNull();
+    expect(document.querySelector('[data-new="entry-menu"]')).toBeNull();
   });
 
   it("writes a running container into the export folder and names it", async () => {
@@ -622,8 +614,7 @@ describe("the menu beside the name", () => {
 
 describe("removing an entry", () => {
   async function choose(action: string) {
-    await press(screen.getAllByRole("button", { name: en["nav.more"] })[0]);
-    await press(within(screen.getByRole("menu")).getByRole("menuitem", { name: action }));
+    await press(within(document.querySelector<HTMLElement>('[data-new="entry-menu"]')!).getByRole("button", { name: action }));
   }
 
   const ways = () => within(screen.getByRole("dialog")).getAllByRole("radio");

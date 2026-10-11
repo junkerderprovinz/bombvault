@@ -4216,7 +4216,6 @@ const cs: Partial<Translations> = {
   "whatsNew.backupsRow": "Řádek ukazuje jeden stav, zbytek je v bublině vedle názvu. Řádky vybíráš jako soubory: Ctrl+klik, Shift+klik nebo dlouhé podržení.",
   "whatsNew.backupsActions": "Hlavní akce stránky se vznáší vpravo dole. „Více“ skrývá ty vzácné.",
   "whatsNew.entryPage": "Každá položka má vlastní stránku. Její zálohy, nastavení a integrita jsou tři záložky.",
-  "whatsNew.entryMenu": "Vzácné akce položky jsou pod „Více“.",
   "whatsNew.entryDefaults": "Položka se řídí výchozím plánem a cílem, dokud tu nedostane vlastní.",
   "whatsNew.restoreTiles": "„Obnova“ je jedna stránka pro všechno. Vyber doménu nebo vyhledej položku a pak zvol zálohu na její časové ose.",
   "whatsNew.restoreWhere": "Jedno okno se ptá, co obnovit a kam. „Vedle originálu“ vrátí kopii a originál nechá, jak je.",

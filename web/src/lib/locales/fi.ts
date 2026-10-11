@@ -4218,7 +4218,6 @@ const fi: Partial<Translations> = {
   "whatsNew.backupsRow": "Rivi näyttää yhden tilan, ja loput on nimen vieressä olevassa kuplassa. Valitse rivejä kuin tiedostoja: Ctrl+napsautus, Shift+napsautus tai pitkä painallus.",
   "whatsNew.backupsActions": "Sivun päätoiminto kelluu oikeassa alakulmassa. ”Lisää” kokoaa harvinaiset.",
   "whatsNew.entryPage": "Jokaisella kohteella on oma sivunsa. Sen varmuuskopiot, asetukset ja eheys ovat kolme välilehteä.",
-  "whatsNew.entryMenu": "Kohteen harvinaiset toiminnot ovat kohdassa ”Lisää”.",
   "whatsNew.entryDefaults": "Kohde noudattaa oletusaikataulua ja oletustallennuskohdetta, kunnes se saa tässä omansa.",
   "whatsNew.restoreTiles": "”Palautus” on yksi sivu kaikelle. Valitse toimialue tai hae kohdetta ja valitse sitten varmuuskopio sen aikajanalta.",
   "whatsNew.restoreWhere": "Yksi ikkuna kysyy, mitä palautetaan ja minne. ”Alkuperäisen viereen” tuo takaisin kopion ja jättää alkuperäisen ennalleen.",

@@ -150,15 +150,14 @@ async function confirmWith(name: string) {
   await press(within(await screen.findByRole("dialog")).getByRole("button", { name }));
 }
 
-/** Opens the menu beside the entry's name, which stands before the menu of any backup. */
+/** The actions beside the entry's name. */
 async function openMenu() {
-  await press(screen.getAllByRole("button", { name: en["nav.more"] })[0]);
-  return within(screen.getByRole("menu"));
+  return within(document.querySelector<HTMLElement>('[data-new="entry-menu"]')!);
 }
 
 /** Opens the window that takes the entry off the list. */
 async function openRemoval() {
-  await press((await openMenu()).getByRole("menuitem", { name: en["zfs.removeMissing"] }));
+  await press((await openMenu()).getByRole("button", { name: en["zfs.removeMissing"] }));
   return screen.findByRole("dialog");
 }
 
@@ -262,7 +261,7 @@ describe("the head of a ZFS entry", () => {
     expect(screen.getByText("/mnt/tank/appdata")).toBeTruthy();
     const corner = within(screen.getByTestId("page-actions"));
     expect(corner.getByRole("button", { name: en["containers.backupNow"] })).toBeTruthy();
-    expect((await openMenu()).getByRole("menuitem", { name: en["zfs.removeMissing"] })).toBeTruthy();
+    expect((await openMenu()).getByRole("button", { name: en["zfs.removeMissing"] })).toBeTruthy();
   });
 
   it("shows the failed run and not the check that says everything is fine", async () => {
@@ -309,11 +308,11 @@ describe("the head of a ZFS entry", () => {
     expect(pushed).toContainEqual({ message: en["zfs.sweepDone"], severity: "success" });
   });
 
-  it("says that the root is gone, with the way to remove the item in its menu", async () => {
+  it("says that the root is gone, with the way to remove the item beside its name", async () => {
     serve({ lastCheckCode: "not-found", lastRunStatus: "" });
     await renderPage();
     expect(screen.getByText(en["zfs.code.not-found"])).toBeTruthy();
-    expect((await openMenu()).getByRole("menuitem", { name: en["zfs.removeMissing"] })).toBeTruthy();
+    expect((await openMenu()).getByRole("button", { name: en["zfs.removeMissing"] })).toBeTruthy();
   });
 });
 

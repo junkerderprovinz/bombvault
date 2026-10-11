@@ -4215,7 +4215,6 @@ const pl: Partial<Translations> = {
   "whatsNew.backupsRow": "Wiersz pokazuje jeden status, a resztę ma w dymku obok nazwy. Wiersze zaznaczasz jak pliki: Ctrl+kliknięcie, Shift+kliknięcie albo długie naciśnięcie.",
   "whatsNew.backupsActions": "Główna akcja strony unosi się w prawym dolnym rogu. „Więcej” skrywa te rzadkie.",
   "whatsNew.entryPage": "Każda pozycja ma własną stronę. Jej kopie zapasowe, ustawienia i integralność to trzy zakładki.",
-  "whatsNew.entryMenu": "Rzadkie akcje pozycji są pod „Więcej”.",
   "whatsNew.entryDefaults": "Pozycja stosuje domyślny harmonogram i miejsce docelowe, dopóki nie dostanie tu własnych.",
   "whatsNew.restoreTiles": "„Przywracanie” to jedna strona do wszystkiego. Wybierz domenę albo wyszukaj pozycję, a potem wybierz kopię zapasową na jej osi czasu.",
   "whatsNew.restoreWhere": "Jedno okno pyta, co przywrócić i dokąd. „Obok oryginału” przywraca kopię, a oryginał zostawia, jak jest.",

@@ -4209,7 +4209,6 @@ const zh: Partial<Translations> = {
   "whatsNew.backupsRow": "每行只显示一个状态，其余内容在名称旁边的气泡里。像选文件一样选择行：Ctrl+点击、Shift+点击或长按。",
   "whatsNew.backupsActions": "页面的主要操作浮在右下角。不常用的操作在“更多”里。",
   "whatsNew.entryPage": "每个条目都有自己的页面。它的备份、设置和完整性是三个标签页。",
-  "whatsNew.entryMenu": "条目的不常用操作在“更多”里。",
   "whatsNew.entryDefaults": "条目会沿用默认的计划和目标，直到你在这里给它设置自己的。",
   "whatsNew.restoreTiles": "“恢复”是一个适用于所有内容的页面。选一个域或搜索某个条目，然后在它的时间线上选一个备份。",
   "whatsNew.restoreWhere": "一个窗口会询问恢复什么、恢复到哪里。“放在原件旁边”会放回一份副本，原件保持不变。",

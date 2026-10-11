@@ -4559,7 +4559,6 @@ export const en = {
   "whatsNew.backupsRow": "A row shows one status, and the rest is in the bubble beside its name. Pick rows like files: Ctrl+click, Shift+click or a long press.",
   "whatsNew.backupsActions": "A page's main action floats at the bottom right. More holds the rare ones.",
   "whatsNew.entryPage": "Every entry has a page of its own. Its backups, its settings and its checks are three tabs.",
-  "whatsNew.entryMenu": "The rare actions of an entry are under More.",
   "whatsNew.entryDefaults": "An entry follows the default schedule and storage location until it gets its own here.",
   "whatsNew.restoreTiles": "Restore is one page for everything. Pick a section or search for an entry, then choose a backup on its timeline.",
   "whatsNew.restoreWhere": "One window asks what to restore and where to. Next to the original brings back a copy and leaves the original as it is.",
@@ -4807,6 +4806,7 @@ export const en = {
   "settings.widgetStep3": "The widget then shows the activity log and the next scheduled run. The widget page itself is in English only.",
   "settings.widgetMissing": "If the tile is missing after installing, switch it on in the dashboard's widget settings.",
   "settings.widgetCa": "The plugin is also in the Community Applications, see {page}.",
+  "whatsNew.entryActions": "An entry's actions are buttons beside its name.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -9084,7 +9084,6 @@ export const de: Translations = {
   "whatsNew.backupsRow": "Eine Zeile zeigt einen Status, alles Weitere steht in der Blase neben dem Namen. Zeilen wählst du wie Dateien aus: Strg+Klick, Umschalt+Klick oder langer Druck.",
   "whatsNew.backupsActions": "Die Hauptaktion einer Seite schwebt unten rechts. Unter Mehr stehen die seltenen.",
   "whatsNew.entryPage": "Jeder Eintrag hat eine eigene Seite. Seine Sicherungen, Einstellungen und Prüfungen sind drei Reiter.",
-  "whatsNew.entryMenu": "Die seltenen Aktionen eines Eintrags stehen unter Mehr.",
   "whatsNew.entryDefaults": "Ein Eintrag folgt dem Zeitplan und dem Speicherort der Vorgabe, bis er hier eigene bekommt.",
   "whatsNew.restoreTiles": "Die Wiederherstellung ist eine Seite für alles. Wähl einen Bereich oder such einen Eintrag, dann nimm eine Sicherung aus seiner Zeitleiste.",
   "whatsNew.restoreWhere": "Ein Fenster fragt, was zurückkommt und wohin. Neben das Original holt eine Kopie zurück und lässt das Original, wie es ist.",
@@ -9332,6 +9331,7 @@ export const de: Translations = {
   "settings.widgetStep3": "Das Widget zeigt dann das Aktivitätslog und den nächsten geplanten Lauf. Die Widget-Seite selbst ist nur auf Englisch.",
   "settings.widgetMissing": "Falls die Kachel nach dem Installieren fehlt, schalte sie in der Widget-Verwaltung des Dashboards ein.",
   "settings.widgetCa": "Das Plugin steht auch in den Community Applications, siehe {page}.",
+  "whatsNew.entryActions": "Die Aktionen eines Eintrags sind Knöpfe neben seinem Namen.",
 };
 
 // ---------------------------------------------------------------------------

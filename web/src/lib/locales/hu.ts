@@ -4219,7 +4219,6 @@ const hu: Partial<Translations> = {
   "whatsNew.backupsRow": "Egy sor egyetlen állapotot mutat, a többi a név melletti buborékban van. A sorokat úgy jelölheted ki, mint a fájlokat: Ctrl+kattintás, Shift+kattintás vagy hosszú érintés.",
   "whatsNew.backupsActions": "Az oldal fő művelete jobb lent lebeg. A „Több” alatt vannak a ritkák.",
   "whatsNew.entryPage": "Minden elemnek saját oldala van. A mentései, a beállításai és az integritása három fül.",
-  "whatsNew.entryMenu": "Egy elem ritka műveletei a „Több” alatt vannak.",
   "whatsNew.entryDefaults": "Egy elem az alapértelmezett ütemezést és célt követi, amíg itt nem kap sajátot.",
   "whatsNew.restoreTiles": "A „Visszaállítás” egy oldal mindenre. Válassz tartományt vagy keress egy elemet, majd válassz mentést az idővonalán.",
   "whatsNew.restoreWhere": "Egy ablak megkérdezi, mit állítson vissza, és hová. Az „Az eredeti mellé” egy másolatot hoz vissza, az eredetit pedig békén hagyja.",

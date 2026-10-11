@@ -4218,7 +4218,6 @@ const it: Partial<Translations> = {
   "whatsNew.backupsRow": "Una riga mostra un solo stato, e il resto è nel fumetto accanto al nome. Seleziona le righe come i file: Ctrl+clic, Shift+clic o una pressione prolungata.",
   "whatsNew.backupsActions": "L'azione principale di una pagina fluttua in basso a destra. «Altro» raccoglie quelle rare.",
   "whatsNew.entryPage": "Ogni elemento ha una pagina tutta sua. I suoi backup, le sue impostazioni e la sua integrità sono tre tab.",
-  "whatsNew.entryMenu": "Le azioni rare di un elemento sono sotto «Altro».",
   "whatsNew.entryDefaults": "Un elemento segue il calendario e la destinazione predefiniti finché qui non ne ha di propri.",
   "whatsNew.restoreTiles": "«Ripristino» è un'unica pagina per tutto. Scegli un dominio o cerca un elemento, poi scegli un backup sulla sua linea temporale.",
   "whatsNew.restoreWhere": "Una finestra chiede cosa ripristinare e dove. «Accanto all'originale» riporta una copia e lascia l'originale com'è.",

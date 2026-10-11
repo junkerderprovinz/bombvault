@@ -4228,7 +4228,6 @@ const lv: Partial<Translations> = {
   "whatsNew.backupsRow": "Rinda rāda vienu statusu, bet pārējais ir burbulī blakus nosaukumam. Rindas atlasi kā failus: Ctrl+klikšķis, Shift+klikšķis vai ilgs pieskāriens.",
   "whatsNew.backupsActions": "Lapas galvenā darbība peld apakšējā labajā stūrī. “Vēl” glabā retās.",
   "whatsNew.entryPage": "Katram ierakstam ir sava lapa. Tā rezerves kopijas, iestatījumi un integritāte ir trīs cilnes.",
-  "whatsNew.entryMenu": "Reti lietotās ieraksta darbības ir zem “Vēl”.",
   "whatsNew.entryDefaults": "Ieraksts seko noklusējuma grafikam un mērķim, kamēr šeit iegūst savus.",
   "whatsNew.restoreTiles": "“Atjaunošana” ir viena lapa visam. Izvēlies domēnu vai meklē ierakstu, tad tā laika joslā izvēlies rezerves kopiju.",
   "whatsNew.restoreWhere": "Viens logs jautā, ko atjaunot un kur. “Blakus oriģinālam” atgriež kopiju un atstāj oriģinālu, kāds tas ir.",

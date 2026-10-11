@@ -4218,7 +4218,6 @@ const no: Partial<Translations> = {
   "whatsNew.backupsRow": "En rad viser én status, og resten står i boblen ved siden av navnet. Velg rader som filer: Ctrl+klikk, Shift+klikk eller et langt trykk.",
   "whatsNew.backupsActions": "Hovedhandlingen på en side flyter nederst til høyre. «Mer» rommer de sjeldne.",
   "whatsNew.entryPage": "Hver oppføring har sin egen side. Sikkerhetskopiene, innstillingene og integriteten er tre faner.",
-  "whatsNew.entryMenu": "De sjeldne handlingene for en oppføring ligger under «Mer».",
   "whatsNew.entryDefaults": "En oppføring følger standard tidsplan og standardmål til den får sine egne her.",
   "whatsNew.restoreTiles": "«Gjenoppretting» er én side for alt. Velg et domene eller søk etter en oppføring, og velg så en sikkerhetskopi på tidslinjen.",
   "whatsNew.restoreWhere": "Ett vindu spør hva som skal gjenopprettes og hvor. «Ved siden av originalen» henter tilbake en kopi og lar originalen være som den er.",

@@ -4228,7 +4228,6 @@ const hr: Partial<Translations> = {
   "whatsNew.backupsRow": "Redak prikazuje jedan status, a ostalo je u oblačiću kraj imena. Retke biraš kao datoteke: Ctrl+klik, Shift+klik ili dugi pritisak.",
   "whatsNew.backupsActions": "Glavna radnja stranice lebdi dolje desno. „Više“ čuva rijetke.",
   "whatsNew.entryPage": "Svaka stavka ima svoju stranicu. Njezine sigurnosne kopije, postavke i cjelovitost tri su jezička.",
-  "whatsNew.entryMenu": "Rijetke radnje stavke nalaze se pod „Više“.",
   "whatsNew.entryDefaults": "Stavka slijedi zadani raspored i odredište dok ovdje ne dobije svoje.",
   "whatsNew.restoreTiles": "„Vraćanje“ je jedna stranica za sve. Odaberi domenu ili potraži stavku, pa odaberi sigurnosnu kopiju na njezinoj vremenskoj crti.",
   "whatsNew.restoreWhere": "Jedan prozor pita što vratiti i kamo. „Pokraj izvornika“ vraća kopiju, a izvornik ostavlja kakav jest.",

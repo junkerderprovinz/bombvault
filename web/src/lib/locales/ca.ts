@@ -4228,7 +4228,6 @@ const ca: Partial<Translations> = {
   "whatsNew.backupsRow": "Una fila mostra un sol estat, i la resta és a la bafarada al costat del nom. Tria les files com si fossin fitxers: Ctrl+clic, Shift+clic o una pulsació llarga.",
   "whatsNew.backupsActions": "L'acció principal d'una pàgina flota a baix a la dreta. «Més» té les poc habituals.",
   "whatsNew.entryPage": "Cada element té la seva pàgina. Les còpies de seguretat, la configuració i la integritat són tres pestanyes.",
-  "whatsNew.entryMenu": "Les accions poc habituals d'un element són a «Més».",
   "whatsNew.entryDefaults": "Un element segueix l'horari i la destinació per defecte fins que aquí en té de propis.",
   "whatsNew.restoreTiles": "«Restauració» és una sola pàgina per a tot. Tria un domini o cerca un element, i després tria una còpia de seguretat a la seva cronologia.",
   "whatsNew.restoreWhere": "Una finestra pregunta què es restaura i on. «Al costat de l'original» recupera una còpia i deixa l'original com està.",

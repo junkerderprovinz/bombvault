@@ -4228,7 +4228,6 @@ const eu: Partial<Translations> = {
   "whatsNew.backupsRow": "Errenkada batek egoera bakarra erakusten du, eta gainerakoa izenaren ondoko burbuilan dago. Aukeratu errenkadak fitxategiak bezala: Ctrl+klik, Shift+klik edo sakatze luzea.",
   "whatsNew.backupsActions": "Orriaren ekintza nagusia behean eskuinean flotatzen du. «Gehiago» aukerak arraroak biltzen ditu.",
   "whatsNew.entryPage": "Elementu bakoitzak bere orria du. Haren babeskopiak, ezarpenak eta osotasuna hiru fitxa dira.",
-  "whatsNew.entryMenu": "Elementu baten ekintza arraroak «Gehiago» aukeran daude.",
   "whatsNew.entryDefaults": "Elementu batek lehenetsitako egutegia eta helmuga jarraitzen ditu, hemen berea izan arte.",
   "whatsNew.restoreTiles": "«Berrezarpena» orri bakarra da dena egiteko. Aukeratu domeinu bat edo bilatu elementu bat, eta gero hautatu babeskopia bat haren denbora-lerroan.",
   "whatsNew.restoreWhere": "Leiho batek galdetzen du zer berrezarri eta nora. «Jatorrizkoaren ondoan» aukerak kopia bat ekartzen du eta jatorrizkoa dagoen bezala uzten du.",

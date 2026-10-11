@@ -4217,7 +4217,6 @@ const nl: Partial<Translations> = {
   "whatsNew.backupsRow": "Een rij toont één status en de rest staat in de bubbel naast de naam. Kies rijen zoals bestanden: Ctrl+klik, Shift+klik of een lange druk.",
   "whatsNew.backupsActions": "De hoofdactie van een pagina zweeft rechtsonder. “Meer” bevat de zeldzame.",
   "whatsNew.entryPage": "Elk item heeft een eigen pagina. De back-ups, instellingen en integriteit ervan zijn drie tabbladen.",
-  "whatsNew.entryMenu": "De zeldzame acties van een item staan onder “Meer”.",
   "whatsNew.entryDefaults": "Een item volgt de standaardplanning en bestemming totdat het hier een eigen krijgt.",
   "whatsNew.restoreTiles": "“Herstel” is één pagina voor alles. Kies een domein of zoek een item en kies dan een back-up op de tijdlijn ervan.",
   "whatsNew.restoreWhere": "Eén venster vraagt wat er wordt hersteld en waarheen. “Naast het origineel” brengt een kopie terug en laat het origineel zoals het is.",

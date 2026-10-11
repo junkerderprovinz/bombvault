@@ -4228,7 +4228,6 @@ const et: Partial<Translations> = {
   "whatsNew.backupsRow": "Rida näitab ühte olekut, ülejäänu on nime kõrval mullis. Ridu valid nagu faile: Ctrl+klõps, Shift+klõps või pikk vajutus.",
   "whatsNew.backupsActions": "Lehe põhitegevus hõljub all paremal. „Rohkem“ hoiab harvaesinevaid.",
   "whatsNew.entryPage": "Igal kirjel on oma leht. Selle varundused, seaded ja terviklikkus on kolm vahelehte.",
-  "whatsNew.entryMenu": "Kirje harvaesinevad tegevused on nupu „Rohkem“ all.",
   "whatsNew.entryDefaults": "Kirje järgib vaikimisi ajakava ja sihtkohta, kuni saab siin omad.",
   "whatsNew.restoreTiles": "„Taastamine“ on üks leht kõige jaoks. Vali valdkond või otsi kirjet, siis vali varundus selle ajajoonelt.",
   "whatsNew.restoreWhere": "Üks aken küsib, mida taastada ja kuhu. „Originaali kõrvale“ toob tagasi koopia ja jätab originaali nagu see on.",

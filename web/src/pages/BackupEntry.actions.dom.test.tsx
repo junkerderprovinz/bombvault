@@ -164,15 +164,14 @@ async function confirmWith(name: string) {
   await press(within(await screen.findByRole("dialog")).getByRole("button", { name }));
 }
 
-/** Opens the menu beside the entry's name. These entries list no backup, so no row has one. */
+/** The actions beside the entry's name. */
 async function openMenu() {
-  await press(button(en["nav.more"]));
-  return within(screen.getByRole("menu"));
+  return within(document.querySelector<HTMLElement>('[data-new="entry-menu"]')!);
 }
 
 async function choose(action: string) {
   const menu = await openMenu();
-  await press(menu.getByRole("menuitem", { name: action }));
+  await press(menu.getByRole("button", { name: action }));
 }
 
 /** The entries the link window offers to take over. */
@@ -349,8 +348,8 @@ describe("a container that is gone", () => {
     serveEntries(mocks, without());
     await renderPage("/backups/container/pihole");
     const menu = await openMenu();
-    expect(menu.queryByRole("menuitem", { name: en["containers.deleteBackups"] })).toBeNull();
-    await press(menu.getByRole("menuitem", { name: en["vms.removeEntry"] }));
+    expect(menu.queryByRole("button", { name: en["containers.deleteBackups"] })).toBeNull();
+    await press(menu.getByRole("button", { name: en["vms.removeEntry"] }));
     await confirmWith(en["vms.removeEntry"]);
     await waitFor(() => expect(forgetContainer).toHaveBeenCalledWith("pihole"));
     expect(deleteBackups).not.toHaveBeenCalled();
@@ -360,8 +359,8 @@ describe("a container that is gone", () => {
   it("offers Delete all backups, not Remove entry, once it has backups", async () => {
     await renderPage("/backups/container/pihole");
     const menu = await openMenu();
-    expect(menu.queryByRole("menuitem", { name: en["vms.removeEntry"] })).toBeNull();
-    await press(menu.getByRole("menuitem", { name: en["containers.deleteBackups"] }));
+    expect(menu.queryByRole("button", { name: en["vms.removeEntry"] })).toBeNull();
+    await press(menu.getByRole("button", { name: en["containers.deleteBackups"] }));
     await confirmWith(en["containers.deleteBackups"]);
     await waitFor(() => expect(deleteBackups).toHaveBeenCalledWith("pihole"));
     expect(forgetContainer).not.toHaveBeenCalled();
@@ -375,7 +374,7 @@ describe("a container that is gone", () => {
     });
     await renderPage("/backups/container/pihole");
     expect(screen.queryByText(en["takeover.looksLike"].replace("{old}", "pihole-old"))).toBeNull();
-    expect((await openMenu()).queryByRole("menuitem", { name: en["entry.menu.link"] })).toBeNull();
+    expect((await openMenu()).queryByRole("button", { name: en["entry.menu.link"] })).toBeNull();
   });
 });
 
@@ -393,8 +392,8 @@ describe("a VM that is gone", () => {
     serveEntries(mocks, { items: [{ ...OLD_VM, lastBackup: 0 }], vms: [goneVM({ lastBackup: null })] });
     await renderPage(path);
     const menu = await openMenu();
-    expect(menu.queryByRole("menuitem", { name: en["containers.deleteBackups"] })).toBeNull();
-    await press(menu.getByRole("menuitem", { name: en["vms.removeEntry"] }));
+    expect(menu.queryByRole("button", { name: en["containers.deleteBackups"] })).toBeNull();
+    await press(menu.getByRole("button", { name: en["vms.removeEntry"] }));
     await confirmWith(en["vms.removeEntry"]);
     await waitFor(() => expect(forgetVM).toHaveBeenCalledWith(OLD_VM_KEY));
     expect(deleteBackupsVM).not.toHaveBeenCalled();
@@ -405,8 +404,8 @@ describe("a VM that is gone", () => {
     serveEntries(mocks, { items: [OLD_VM], vms: [goneVM()] });
     await renderPage(path);
     const menu = await openMenu();
-    expect(menu.queryByRole("menuitem", { name: en["vms.removeEntry"] })).toBeNull();
-    await press(menu.getByRole("menuitem", { name: en["containers.deleteBackups"] }));
+    expect(menu.queryByRole("button", { name: en["vms.removeEntry"] })).toBeNull();
+    await press(menu.getByRole("button", { name: en["containers.deleteBackups"] }));
     await confirmWith(en["containers.deleteBackups"]);
     await waitFor(() => expect(deleteBackupsVM).toHaveBeenCalledWith(OLD_VM_KEY, "local"));
     expect(forgetVM).not.toHaveBeenCalled();
@@ -500,7 +499,7 @@ describe("taking over the entry of a renamed container", () => {
 
   it("offers no link to an entry that has backups of its own", async () => {
     await renderPage("/backups/container/immich");
-    expect((await openMenu()).queryByRole("menuitem", { name: en["entry.menu.link"] })).toBeNull();
+    expect((await openMenu()).queryByRole("button", { name: en["entry.menu.link"] })).toBeNull();
   });
 
   // An entry rebuilt from the storage carries its former names before its first run.
@@ -508,7 +507,7 @@ describe("taking over the entry of a renamed container", () => {
     serveEntries(mocks, { containers: [fresh({ aliases: ["gitea-old"] }), gone("lidarr-old")] });
     await renderPage("/backups/container/gitea?tab=settings");
     expect(button(en["takeover.unlinkName"].replace("{old}", "gitea-old"))).toBeTruthy();
-    expect((await openMenu()).queryByRole("menuitem", { name: en["entry.menu.link"] })).toBeNull();
+    expect((await openMenu()).queryByRole("button", { name: en["entry.menu.link"] })).toBeNull();
   });
 });
 
@@ -610,9 +609,9 @@ describe("saying that an entry is not to be backed up", () => {
     await renderPage("/backups/container/gitea");
     expect(headLine("entry.reason.declined")).toBeNull();
     const menu = await openMenu();
-    expect(menu.queryByRole("menuitem", { name: en["backups.accept"] })).toBeNull();
+    expect(menu.queryByRole("button", { name: en["backups.accept"] })).toBeNull();
 
-    await press(menu.getByRole("menuitem", { name: en["backups.decline"] }));
+    await press(menu.getByRole("button", { name: en["backups.decline"] }));
 
     expect(setBackupDeclined).toHaveBeenCalledWith("container", "gitea", true);
     await waitFor(() => expect(headLine("entry.reason.declined")).toBeTruthy());
@@ -631,9 +630,9 @@ describe("saying that an entry is not to be backed up", () => {
     await renderPage("/backups/container/gitea");
     expect(headLine("entry.reason.declined")).toBeTruthy();
     const menu = await openMenu();
-    expect(menu.queryByRole("menuitem", { name: en["backups.decline"] })).toBeNull();
+    expect(menu.queryByRole("button", { name: en["backups.decline"] })).toBeNull();
 
-    await press(menu.getByRole("menuitem", { name: en["backups.accept"] }));
+    await press(menu.getByRole("button", { name: en["backups.accept"] }));
 
     expect(setBackupDeclined).toHaveBeenCalledWith("container", "gitea", false);
     await waitFor(() => expect(headLine("entry.reason.declined")).toBeNull());
@@ -643,27 +642,27 @@ describe("saying that an entry is not to be backed up", () => {
   it("stands before the removals of the menu", async () => {
     serveEntries(mocks, { items: [{ ...PHOTOS, included: false, effectiveSchedule: NO_SCHEDULE }] });
     await renderPage(`/backups/files/${SET_ID}`);
-    const names = (await openMenu()).getAllByRole("menuitem").map((entry) => entry.textContent);
+    const names = (await openMenu()).getAllByRole("button").map((entry) => entry.textContent);
     expect(names.slice(-2)).toEqual([en["backups.decline"], en["zfs.removeMissing"]]);
   });
 
   it("is not offered while a schedule reaches the entry", async () => {
     await renderPage("/backups/container/immich");
     const menu = await openMenu();
-    expect(menu.queryByRole("menuitem", { name: en["backups.decline"] })).toBeNull();
-    expect(menu.queryByRole("menuitem", { name: en["backups.accept"] })).toBeNull();
+    expect(menu.queryByRole("button", { name: en["backups.decline"] })).toBeNull();
+    expect(menu.queryByRole("button", { name: en["backups.accept"] })).toBeNull();
   });
 
   it("is not offered for an entry whose container is gone", async () => {
     serveEntries(mocks, { items: [{ ...PIHOLE, effectiveSchedule: NO_SCHEDULE }] });
     await renderPage("/backups/container/pihole");
-    expect((await openMenu()).queryByRole("menuitem", { name: en["backups.decline"] })).toBeNull();
+    expect((await openMenu()).queryByRole("button", { name: en["backups.decline"] })).toBeNull();
   });
 
   it("gives the flash drive a menu when nothing else would be in it", async () => {
     serveEntries(mocks, { items: [{ ...FLASH, lastBackup: 0, lastRunStatus: "", effectiveSchedule: NO_SCHEDULE }] });
     await renderPage("/backups/flash/flash");
-    const names = (await openMenu()).getAllByRole("menuitem").map((entry) => entry.textContent);
+    const names = (await openMenu()).getAllByRole("button").map((entry) => entry.textContent);
     expect(names).toEqual([en["backups.decline"]]);
   });
 

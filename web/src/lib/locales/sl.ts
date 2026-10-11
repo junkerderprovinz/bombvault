@@ -4212,7 +4212,6 @@ const sl: Partial<Translations> = {
   "whatsNew.backupsRow": "Vrstica prikazuje en status, ostalo je v oblačku ob imenu. Vrstice izbiraš kot datoteke: Ctrl+klik, Shift+klik ali dolg pritisk.",
   "whatsNew.backupsActions": "Glavno dejanje strani lebdi spodaj desno. „Več“ hrani redka.",
   "whatsNew.entryPage": "Vsak vnos ima svojo stran. Njegove varnostne kopije, nastavitve in celovitost so trije zavihki.",
-  "whatsNew.entryMenu": "Redka dejanja vnosa so pod „Več“.",
   "whatsNew.entryDefaults": "Vnos sledi privzetemu urniku in cilju, dokler tu ne dobi svojih.",
   "whatsNew.restoreTiles": "„Obnova“ je ena stran za vse. Izberi domeno ali poišči vnos, nato na njegovi časovnici izberi varnostno kopijo.",
   "whatsNew.restoreWhere": "Eno okno vpraša, kaj obnoviti in kam. „Ob izvirniku“ vrne kopijo, izvirnik pa pusti, kot je.",

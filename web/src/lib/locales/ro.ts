@@ -4219,7 +4219,6 @@ const ro: Partial<Translations> = {
   "whatsNew.backupsRow": "Un rând arată o singură stare, iar restul este în balonul de lângă nume. Alege rândurile ca pe fișiere: Ctrl+clic, Shift+clic sau o apăsare lungă.",
   "whatsNew.backupsActions": "Acțiunea principală a unei pagini plutește în dreapta jos. „Mai mult” le ține pe cele rare.",
   "whatsNew.entryPage": "Fiecare intrare are pagina ei. Copiile de rezervă, setările și integritatea ei sunt trei file.",
-  "whatsNew.entryMenu": "Acțiunile rare ale unei intrări sunt sub „Mai mult”.",
   "whatsNew.entryDefaults": "O intrare urmează programarea și destinația implicite până primește aici propriile ei.",
   "whatsNew.restoreTiles": "„Restaurare” este o singură pagină pentru toate. Alege un domeniu sau caută o intrare, apoi alege o copie de rezervă pe cronologia ei.",
   "whatsNew.restoreWhere": "O fereastră întreabă ce se restaurează și unde. „Lângă original” aduce înapoi o copie și lasă originalul cum este.",

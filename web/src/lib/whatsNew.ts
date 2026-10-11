@@ -44,7 +44,7 @@ export const CHANGES: Change[] = [
   { id: "backups-actions", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsActions" },
 
   { id: "entry-page", page: ENTRY, go: "/backups", where: ["backups.title", "whatsNew.page.entry"], way: ["/backups", "entry"], text: "whatsNew.entryPage" },
-  { id: "entry-menu", page: ENTRY, go: "/backups", where: ["backups.title", "whatsNew.page.entry"], way: ["/backups", "entry"], text: "whatsNew.entryMenu" },
+  { id: "entry-menu", page: ENTRY, go: "/backups", where: ["backups.title", "whatsNew.page.entry"], way: ["/backups", "entry"], text: "whatsNew.entryActions" },
   {
     id: "entry-defaults",
     page: ENTRY,

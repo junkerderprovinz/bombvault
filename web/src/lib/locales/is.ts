@@ -4228,7 +4228,6 @@ const is: Partial<Translations> = {
   "whatsNew.backupsRow": "Lína sýnir eina stöðu og restin er í blöðrunni við hlið nafnsins. Veldu línur eins og skrár: Ctrl+smellur, Shift+smellur eða löng snerting.",
   "whatsNew.backupsActions": "Aðalaðgerð síðu svífur neðst til hægri. „Meira“ geymir sjaldgæfu aðgerðirnar.",
   "whatsNew.entryPage": "Hver færsla hefur sína eigin síðu. Afrit hennar, stillingar og heilleiki eru þrír flipar.",
-  "whatsNew.entryMenu": "Sjaldgæfar aðgerðir færslu eru undir „Meira“.",
   "whatsNew.entryDefaults": "Færsla fylgir sjálfgefinni tímaáætlun og áfangastað þar til hún fær sitt eigið hér.",
   "whatsNew.restoreTiles": "„Endurheimt“ er ein síða fyrir allt. Veldu svæði eða leitaðu að færslu og veldu svo afrit á tímalínu hennar.",
   "whatsNew.restoreWhere": "Einn gluggi spyr hvað á að endurheimta og hvert. „Við hlið upprunalega“ sækir afrit og lætur upprunalega vera eins og það er.",

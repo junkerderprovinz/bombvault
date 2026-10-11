@@ -24,12 +24,12 @@ import { useDeclineBackup } from "../../lib/useDeclineBackup";
 import { useIsDesktop } from "../../lib/useMediaQuery";
 import { containerTakeover, vmTakeover, type TakeoverEntry } from "../../lib/useTakeOver";
 import { STOP_ACK_KEY } from "../BackupButton";
-import { ActionMenu, type MenuAction } from "../backups/ActionMenu";
+import type { MenuAction } from "../backups/ActionMenu";
 import { ZFSConnectionWindow } from "../backups/ZFSConnectionWindow";
 import { Button } from "../Button";
 import { IconClearSelection, IconLink, IconSelectAll } from "../glyphs";
 import { RunDetailSheet } from "../mobile/RunDetailSheet";
-import { IconBackupNow, IconDownload, IconMore, IconRestore, IconTrash, IconZFS } from "../navGlyphs";
+import { IconBackupNow, IconDownload, IconRestore, IconTrash, IconZFS } from "../navGlyphs";
 import { PageAction } from "../PageActions";
 import { PauseButton } from "../SchedulePause";
 import type { TimelineState } from "./BackupPlaces";
@@ -196,13 +196,12 @@ export function EntryCorner({
 type MenuWindow = "link" | "export" | "exportNewest" | "connection" | "remove";
 
 /**
- * EntryMenu holds the actions an entry needs seldom, behind one button beside
- * its name: linking it to the entry it was before a rename, exporting it,
- * saying that it is not to be backed up, and taking it or its backups away.
- * Which of them exist depends on the kind, and the removals are the ones the
- * server has for that kind.
+ * EntryHeadActions are the buttons beside an entry's name: linking it to the
+ * entry it was before a rename, exporting it, saying that it is not to be
+ * backed up, and taking it or its backups away. Which of them exist depends on
+ * the kind, and the removals are the ones the server has for that kind.
  */
-export function EntryMenu({
+export function EntryHeadActions({
   entry,
   name,
   timeline,
@@ -222,8 +221,6 @@ export function EntryMenu({
   const { t } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
-  const anchor = useRef<HTMLSpanElement>(null);
-  const [open, setOpen] = useState(false);
   const [shown, setShown] = useState<MenuWindow | null>(null);
   const [busy, setBusy] = useState(false);
   const { item, detail } = entry;
@@ -339,20 +336,18 @@ export function EntryMenu({
 
   return (
     <>
-      <span ref={anchor} data-new="entry-menu" className="flex">
-        <Button
-          label={t("nav.more")}
-          labelKey="nav.more"
-          glyph={<IconMore />}
-          ariaExpanded={open}
-          disabled={busy || deciding}
-          busy={busy || deciding}
-          onClick={() => setOpen((was) => !was)}
-        />
+      <span data-new="entry-menu" className="flex flex-wrap items-center justify-end gap-2 max-md:justify-start">
+        {actions.map((action) => (
+          <Button
+            key={action.id}
+            label={action.label}
+            labelKey={null}
+            glyph={action.glyph}
+            disabled={busy || deciding}
+            onClick={action.onSelect}
+          />
+        ))}
       </span>
-      {open && anchor.current && (
-        <ActionMenu label={name} actions={actions} place={{ anchor: anchor.current }} onClose={() => setOpen(false)} />
-      )}
       {confirmDialog}
       {shown === "link" && takeover && (
         <LinkWindow

@@ -4228,7 +4228,6 @@ const ms: Partial<Translations> = {
   "whatsNew.backupsRow": "Satu baris menunjukkan satu status, dan selebihnya ada dalam gelembung di sebelah nama. Pilih baris seperti memilih fail: Ctrl+klik, Shift+klik atau tekan lama.",
   "whatsNew.backupsActions": "Tindakan utama sesebuah halaman terapung di bahagian bawah kanan. “Lagi” menyimpan tindakan yang jarang digunakan.",
   "whatsNew.entryPage": "Setiap entri mempunyai halamannya sendiri. Sandaran, tetapan dan integritinya ialah tiga tab.",
-  "whatsNew.entryMenu": "Tindakan jarang digunakan bagi sesebuah entri ada di bawah “Lagi”.",
   "whatsNew.entryDefaults": "Sesebuah entri mengikut jadual dan destinasi lalai sehingga ia mendapat miliknya sendiri di sini.",
   "whatsNew.restoreTiles": "“Pemulihan” ialah satu halaman untuk semuanya. Pilih sebuah domain atau cari entri, kemudian pilih sandaran pada garis masanya.",
   "whatsNew.restoreWhere": "Satu tetingkap bertanya apa yang dipulihkan dan ke mana. “Di sebelah asal” mengembalikan salinan dan membiarkan yang asal seperti sedia ada.",

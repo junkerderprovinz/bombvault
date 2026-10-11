@@ -4218,7 +4218,6 @@ const tr: Partial<Translations> = {
   "whatsNew.backupsRow": "Bir satır tek bir durum gösterir, gerisi adın yanındaki balonda yer alır. Satırları dosyalar gibi seç: Ctrl+tıklama, Shift+tıklama ya da uzun basma.",
   "whatsNew.backupsActions": "Sayfanın ana eylemi sağ altta durur. “Diğer” nadir olanları barındırır.",
   "whatsNew.entryPage": "Her girdinin kendi sayfası vardır. Yedekleri, ayarları ve bütünlüğü üç sekmedir.",
-  "whatsNew.entryMenu": "Bir girdinin nadir eylemleri “Diğer” altındadır.",
   "whatsNew.entryDefaults": "Bir girdi, burada kendi zamanlamasını ve hedefini alana kadar varsayılan olanları izler.",
   "whatsNew.restoreTiles": "“Geri yükleme” her şey için tek bir sayfadır. Bir etki alanı seç ya da bir girdi ara, sonra zaman çizelgesinden bir yedek seç.",
   "whatsNew.restoreWhere": "Tek bir pencere neyin nereye geri yükleneceğini sorar. “Orijinalin yanına” bir kopyayı geri getirir ve orijinali olduğu gibi bırakır.",

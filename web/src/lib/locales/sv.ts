@@ -4218,7 +4218,6 @@ const sv: Partial<Translations> = {
   "whatsNew.backupsRow": "En rad visar en enda status, och resten finns i pratbubblan vid namnet. Markera rader som filer: Ctrl+klick, Shift+klick eller ett långt tryck.",
   "whatsNew.backupsActions": "Sidans huvudåtgärd svävar nere till höger. ”Mer” rymmer de sällsynta.",
   "whatsNew.entryPage": "Varje post har en egen sida. Dess säkerhetskopior, inställningar och integritet är tre flikar.",
-  "whatsNew.entryMenu": "En posts sällsynta åtgärder finns under ”Mer”.",
   "whatsNew.entryDefaults": "En post följer standardschemat och standardmålet tills den får egna här.",
   "whatsNew.restoreTiles": "”Återställning” är en enda sida för allt. Välj en domän eller sök efter en post och välj sedan en säkerhetskopia på dess tidslinje.",
   "whatsNew.restoreWhere": "Ett fönster frågar vad som ska återställas och vart. ”Bredvid originalet” hämtar tillbaka en kopia och låter originalet vara som det är.",

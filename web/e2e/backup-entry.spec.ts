@@ -615,14 +615,13 @@ test("the menu of a backup marks it, compares it and exports it", async ({ page 
   await expect(exported.getByRole("button", { name: "Export abbrechen" })).toBeVisible();
 });
 
-test("the menu beside the name takes a folder set off the list in one of two ways", async ({ page }, testInfo) => {
-  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+test("the buttons beside the name take a folder set off the list in one of two ways", async ({ page }) => {
   await stage(page);
   await openEntry(page, `/backups/files/${SET_ID}`, "Fotos");
 
-  await page.getByRole("button", { name: "Mehr" }).first().click();
-  await expect(page.getByRole("menu").getByRole("menuitem")).toHaveText(["Neueste Sicherung exportieren", "Aus der Liste entfernen"]);
-  await page.getByRole("menuitem", { name: "Aus der Liste entfernen" }).click();
+  const actions = page.locator('[data-new="entry-menu"]');
+  await expect(actions.getByRole("button")).toHaveText(["Neueste Sicherung exportieren", "Aus der Liste entfernen"]);
+  await actions.getByRole("button", { name: "Aus der Liste entfernen" }).click();
   const remove = page.getByRole("dialog", { name: "Fotos aus der Liste nehmen?" });
   await expect(remove.getByRole("radio")).toHaveCount(2);
   await expect(remove.getByRole("button", { name: "Aus der Liste nehmen" })).toBeVisible();
