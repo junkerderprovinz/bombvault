@@ -171,7 +171,7 @@ func probePathWritable(deps Deps) (string, error) {
 	}
 	// A remote (rclone/SFTP) repo has no local dir to probe.
 	if strings.Contains(p, ":") && !filepath.IsAbs(p) {
-		return fmt.Sprintf("remote repo (%s), not probed", p), nil
+		return "remote repo, not probed", nil
 	}
 	dir := filepath.Clean(p)
 	for {

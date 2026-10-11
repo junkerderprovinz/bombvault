@@ -126,6 +126,35 @@ func TestDiagnosticsCarriesTheMembersSupportNeeds(t *testing.T) {
 	}
 }
 
+func TestDiagnosticsCarriesNoPasswordANameHolds(t *testing.T) {
+	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	cookie := loginCookie(t, h, "correct horse battery staple")
+	if _, err := st.MutateSettings(func(s *store.Settings) error {
+		s.InstanceName = "https://bob:hunter2@nas.local"
+		s.ContainersPath = "rest:https://bob:hunter2@nas.local:8000/containers"
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	vm, err := st.UpsertVMTarget(store.VMTarget{Name: "bob:hunter2@nas"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.StartRun(vm.ID, "backup"); err != nil {
+		t.Fatal(err)
+	}
+
+	w := getRaw(t, h, "/api/diagnostics", cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body = %s", w.Code, w.Body.String())
+	}
+	for name, body := range zipMembers(t, w.Body.Bytes()) {
+		if strings.Contains(body, "hunter2") {
+			t.Errorf("%s carries the password a name or a location holds", name)
+		}
+	}
+}
+
 func memberNames(m map[string]string) []string {
 	out := make([]string, 0, len(m))
 	for k := range m {

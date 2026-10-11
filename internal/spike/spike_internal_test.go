@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -63,5 +64,15 @@ func TestProbeZFSReportsWhatTheHostAnswered(t *testing.T) {
 	}
 	if _, err := probeZFS(Deps{ZFSTest: func() (string, error) { return "", errors.New("ssh-auth") }}); err == nil {
 		t.Fatal("a failing connection test must fail the probe")
+	}
+}
+
+func TestARemoteRepositoryIsReportedWithoutItsLocation(t *testing.T) {
+	msg, err := probePathWritable(Deps{ContainerPath: "rest:https://bob:hunter2@nas.local:8000/containers"})
+	if err != nil {
+		t.Fatalf("probePathWritable: %v", err)
+	}
+	if strings.Contains(msg, "hunter2") || strings.Contains(msg, "nas.local") {
+		t.Fatalf("the check names the repository: %q", msg)
 	}
 }

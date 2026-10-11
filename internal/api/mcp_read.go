@@ -58,7 +58,7 @@ func (h *Handler) toolGetHealth(ctx context.Context, _ *mcp.CallToolRequest) (*m
 	return mcpOK(map[string]any{
 		"ok":                true,
 		"version":           Version,
-		"instanceName":      settings.InstanceName,
+		"instanceName":      scrubRepoLocation(settings.InstanceName),
 		"serverTime":        time.Now().Unix(),
 		"backupRunning":     h.svc.BackupInProgress(),
 		"everythingRunning": h.svc.EverythingInProgress(),

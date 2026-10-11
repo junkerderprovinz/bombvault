@@ -9319,19 +9319,12 @@ func (s *Service) refName(r domainRepoRef) string {
 	return shortRepoName(r.Loc)
 }
 
-// scrubSafeName makes an operator's free-text repository name survive the error
-// scrubber. The name goes into skip lists, verify wrappers and run rows, all of
-// which leave through scrubError, whose absolute-path regex redacts any
-// slash-led token - so a repository called "NAS/cold" reached the screen as
-// "NAS[path]", matching nothing in the picker.
-//
-// Slashes become a middle dot rather than being dropped: the whole point of the
-// name is that the operator recognises it, and "NAS · cold" still reads as the
-// thing they typed. The same trap is why shortRepoName returns a single path
-// segment, and it was documented in this package twice before it was reproduced
-// here.
+// scrubSafeName makes an operator's free-text repository name safe to show:
+// a password the name holds is taken out, and a slash, which the error
+// scrubber would turn into "[path]", becomes a middle dot, so "NAS/cold" still
+// reads as the name the operator typed.
 func scrubSafeName(name string) string {
-	name = strings.TrimSpace(name)
+	name = scrubRepoLocation(strings.TrimSpace(name))
 	if !strings.ContainsAny(name, `/\`) {
 		return name
 	}

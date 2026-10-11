@@ -390,7 +390,7 @@ func (s *Service) offsiteTargetNames(rows []store.Anomaly) map[string]string {
 	}
 	out := make(map[string]string, len(targets))
 	for _, t := range targets {
-		out[t.ID] = t.Name
+		out[t.ID] = scrubRepoLocation(t.Name)
 	}
 	return out
 }
@@ -605,7 +605,7 @@ func anomalyViewOf(row store.Anomaly, items map[string]anomalyItemRef, targets m
 		FirstSeenAt: row.FirstSeenAt, LastSeenAt: row.LastSeenAt,
 		RecoveredAt: row.RecoveredAt, ResolvedAt: row.ResolvedAt,
 		AckedAt: row.AckedAt, ClearedAt: row.ClearedAt,
-		AckNote: row.AckNote, NotifiedAt: row.NotifiedAt,
+		AckNote: scrubRepoLocation(row.AckNote), NotifiedAt: row.NotifiedAt,
 		Expectable:    anomalyExpectable(row.Metric),
 		RetentionHeld: anomalyHolds(row, settings),
 		StillPresent:  row.ClearedAt == 0 && (row.State == "acknowledged" || row.State == "expected"),
