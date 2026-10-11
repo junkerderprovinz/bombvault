@@ -33,7 +33,16 @@ function useSpan(): (run: Run) => string {
  * took and what it added. A run opens with everything recorded about it. A
  * ZFS run opens on what happened to each dataset of its tree.
  */
-export function EntryRuns({ runs, dataset }: { runs: Run[]; dataset?: ZFSDatasetView }) {
+export function EntryRuns({
+  runs,
+  dataset,
+  onRestore,
+}: {
+  runs: Run[];
+  dataset?: ZFSDatasetView;
+  /** Opens the restore window on the backup a run wrote. */
+  onRestore?: (run: Run) => void;
+}) {
   const { t } = useT();
   const { byRunId } = useOpenAnomalies();
   const span = useSpan();
@@ -99,7 +108,19 @@ export function EntryRuns({ runs, dataset }: { runs: Run[]; dataset?: ZFSDataset
             <ZFSRunDetailView run={open} item={dataset} t={t} />
           </AnomalyWindow>
         ) : (
-          <RunDetailSheet run={open} open windowed onClose={() => setOpenId(null)} />
+          <RunDetailSheet
+            run={open}
+            open
+            windowed
+            onClose={() => setOpenId(null)}
+            onRestore={
+              onRestore &&
+              (() => {
+                setOpenId(null);
+                onRestore(open);
+              })
+            }
+          />
         ))}
     </>
   );

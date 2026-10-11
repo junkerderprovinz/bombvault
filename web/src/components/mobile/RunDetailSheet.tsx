@@ -23,6 +23,7 @@ import { useVisibilityGate } from "../../lib/useVisibilityGate";
 import { loadErrorMessage } from "../../lib/errors";
 import { useConfirm } from "../../lib/useConfirm";
 import { useIsDesktop } from "../../lib/useMediaQuery";
+import { runRestorePath } from "../../lib/restoreRequest";
 import { AnomalyWindow } from "../anomalies/AnomalyWindow";
 import { Badge } from "../Badge";
 import { CheckDraw } from "../CheckDraw";
@@ -106,6 +107,9 @@ export interface RunDetailSheetProps {
   /** At desktop widths, show the run in a window over the page instead of a
    *  sheet over the whole screen. */
   windowed?: boolean;
+  /** Opens the restore window on the backup this run wrote. Offered where
+   *  the host can lead there and the run left a backup. */
+  onRestore?: () => void;
 }
 
 /** The sheet, or with `windowed` at desktop widths a window that carries the
@@ -343,7 +347,7 @@ function SheetActionRow({
   );
 }
 
-export function RunDetailSheet({ run, open, onClose, windowed = false }: RunDetailSheetProps) {
+export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore }: RunDetailSheetProps) {
   const { t } = useT();
   const browseId = useId();
   const inFlight = isInFlight(run);
@@ -597,9 +601,11 @@ export function RunDetailSheet({ run, open, onClose, windowed = false }: RunDeta
   // widened to the cutout. The inner
   // rounded cards keep their own px-4: they inset from the slot, not from
   // the screen.
+  const restorable = onRestore !== undefined && runRestorePath(run) !== null;
   const footerContent =
-    browseSupported || verifyDomain ? (
+    browseSupported || verifyDomain || restorable ? (
       <div className="flex flex-col gap-2 py-4">
+        {restorable && <SheetActionRow label={t("restore.open")} onClick={onRestore} tone="neutral" hueIndex={3} />}
         <div className={browseSupported && verifyDomain ? "grid grid-cols-2 gap-2" : "flex"}>
           {browseSupported && (
             <SheetActionRow

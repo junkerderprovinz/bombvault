@@ -1,6 +1,7 @@
 // The overview: one sentence on how the backups are doing, then the cards.
 // The first card lists what needs the person, the others can be arranged.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { RunDetailSheet } from "../components/mobile/RunDetailSheet";
@@ -17,6 +18,7 @@ import { cardSpan, useDashboardLayout } from "../lib/dashboardLayout";
 import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { anyActive, useProgress } from "../lib/progress";
+import { runRestorePath } from "../lib/restoreRequest";
 import { tallyEntries } from "../lib/protectionTally";
 import { failedRunsNeedingAttention } from "../lib/runFailures";
 import { useAnomalySummary } from "../lib/useAnomalies";
@@ -56,6 +58,7 @@ function liveRunIn(runs: Run[]): Run | undefined {
 
 export function Dashboard() {
   const { t, lang } = useT();
+  const navigate = useNavigate();
   const isDesktop = useIsDesktop();
   const progress = useProgress();
   const { needs, items: backupItems, runs, runsReady, runsFailed, refreshRuns } = useAttention();
@@ -489,6 +492,10 @@ export function Dashboard() {
           onClose={() => {
             sheetDismissed.current = true;
             setSheetOpen(false);
+          }}
+          onRestore={() => {
+            const path = runRestorePath(displayedRun);
+            if (path) navigate(path);
           }}
         />
       )}
