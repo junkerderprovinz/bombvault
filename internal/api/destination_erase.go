@@ -1,0 +1,516 @@
+package api
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log"
+	"maps"
+	"net/http"
+	"path/filepath"
+	"slices"
+	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/progress"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
+)
+
+// Why the backups of a section stay where they are when a destination is
+// emptied.
+const (
+	// erasureKeptAppendOnly is a repository BombVault may only add to.
+	erasureKeptAppendOnly = "append-only"
+	// erasureKeptInUse is a direct repository that entries still back up to. It
+	// outlives the destination as a repository of its own.
+	erasureKeptInUse = "in-use"
+	// erasureKeptUnreadable is a repository that could not be listed, so nobody
+	// can say what deleting from it would take.
+	erasureKeptUnreadable = "unreadable"
+)
+
+var (
+	errLastCopiesUnnamed = errors.New("entries would lose their only backup and the request does not name them; check the list again")
+	errNothingToErase    = errors.New("none of the backups at this destination can be deleted")
+)
+
+// forgetChunk is how many snapshots one restic forget is handed, which keeps
+// its command line short however much a repository holds.
+const forgetChunk = 200
+
+// destinationErasure is what deleting the backups at a destination takes away,
+// before the destination itself is removed.
+type destinationErasure struct {
+	// Removal is what removing the destination detaches. A request to delete
+	// sends it back, so nothing is deleted for sections that changed since.
+	Removal  destinationRemoval `json:"removal"`
+	Sections []erasureSection   `json:"sections"`
+	// Backups and Entries count what loses a copy over the sections that are
+	// emptied. BackupsOnlyThere are the backups among them that no other place
+	// BombVault could read holds.
+	Backups          int `json:"backups"`
+	Entries          int `json:"entries"`
+	BackupsOnlyThere int `json:"backupsOnlyThere"`
+	// LastCopies are the entries left without any backup. A request has to
+	// name each of them.
+	LastCopies []erasureEntry `json:"lastCopies"`
+	// Key is the progress key the running deletion reports under and is
+	// cancelled by.
+	Key string `json:"key"`
+}
+
+// erasureSection is one repository at the destination: the copy of a section,
+// or the direct repository of its target when RepoID is set.
+type erasureSection struct {
+	Domain   string `json:"domain"`
+	TargetID string `json:"targetId"`
+	RepoID   string `json:"repoId,omitempty"`
+	Repo     string `json:"repo"`
+	Backups  int    `json:"backups"`
+	Entries  int    `json:"entries"`
+	// Kept is one of the erasureKept reasons, empty for a repository that is
+	// emptied.
+	Kept string `json:"kept,omitempty"`
+}
+
+// erasureEntry is an entry by the identity its backups carry, such as
+// container:plex.
+type erasureEntry struct {
+	Domain   string `json:"domain"`
+	Identity string `json:"identity"`
+	Backups  int    `json:"backups"`
+}
+
+// erasureRepo is what emptying one section's repository needs.
+type erasureRepo struct {
+	domain string
+	target store.OffsiteTarget
+	// direct marks the target's direct repository, whose backups no listing of
+	// the target counts.
+	direct bool
+	loc    string
+	mode   restic.Mode
+	snaps  []restic.Snapshot
+	owners map[string]snapshotOwner
+}
+
+type erasurePlan struct {
+	destinationErasure
+	repos []erasureRepo
+}
+
+// entryOf names the entry a backup belongs to: its settled owner, or the
+// identity tag it carries where the domain settles none.
+func entryOf(sn restic.Snapshot, owners map[string]snapshotOwner) string {
+	if owner := owners[sn.ID].Owner; owner != "" {
+		return owner
+	}
+	if tags := identityTags([]restic.Snapshot{sn}); len(tags) > 0 {
+		return itemTag(tags[0])
+	}
+	return ""
+}
+
+// ofSection keeps the backups BombVault wrote for the domain. A repository can
+// hold other domains' backups and ones written by hand, and those are nobody's
+// to delete here.
+func ofSection(snaps []restic.Snapshot, domain string) []restic.Snapshot {
+	var out []restic.Snapshot
+	for _, sn := range snaps {
+		if len(domainIdentityTags(identityTags([]restic.Snapshot{sn}), domain)) > 0 {
+			out = append(out, sn)
+		}
+	}
+	return out
+}
+
+// heldElsewhere is what the places outside a destination hold of a domain.
+type heldElsewhere struct{ entries, backups map[string]bool }
+
+// heldOutside lists the domain's repositories and its targets at other
+// destinations. A place that cannot be read counts as holding nothing, which
+// errs towards calling a copy the last one. emptied are the locations the
+// deletion empties, which are no other place.
+func (s *Service) heldOutside(ctx context.Context, settings store.Settings, domain, destinationID string, oc ownerContext, emptied map[string]bool) heldElsewhere {
+	held := heldElsewhere{entries: map[string]bool{}, backups: map[string]bool{}}
+	add := func(snaps []restic.Snapshot) {
+		snaps = ofSection(snaps, domain)
+		owners := oc.owners(snaps)
+		for _, sn := range snaps {
+			held.entries[entryOf(sn, owners)] = true
+			held.backups[restic.Identity(sn)] = true
+		}
+	}
+	homes, _, err := s.domainReposInUse(settings, domain)
+	if err != nil {
+		log.Printf("api: erase: the %s repositories do not resolve and count as empty: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+	}
+	for _, home := range homes {
+		if emptied[filepath.ToSlash(home.Loc)] {
+			continue
+		}
+		snaps, err := s.listRepo(ctx, home.Loc, s.primaryModeFor(settings, domain, home.Loc))
+		if err != nil {
+			log.Printf("api: erase: %s could not be listed and counts as empty: %v", shortRepoName(home.Loc), scrubError(err)) //nolint:gosec // G706: the location is shortened and the error scrubbed
+			continue
+		}
+		add(snaps)
+	}
+	targets, err := s.store.OffsiteTargetsForDomain(domain)
+	if err != nil {
+		log.Printf("api: erase: the other %s targets could not be read and count as empty: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+	}
+	for _, t := range targets {
+		if t.DestinationID == destinationID {
+			continue
+		}
+		if loc, err := s.resolveRepo(t.Repo); err != nil || emptied[filepath.ToSlash(loc)] {
+			continue
+		}
+		snaps, err := s.listTarget(ctx, settings, t)
+		if err != nil {
+			log.Printf("api: erase: %s could not be listed and counts as empty: %v", placementTargetName(t), scrubError(err)) //nolint:gosec // G706: the name is the row's own and the error scrubbed
+			continue
+		}
+		add(snaps)
+	}
+	return held
+}
+
+// planErasure lists every repository at the destination and works out what
+// deleting its backups takes away. Nothing is deleted.
+func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return erasurePlan{}, fmt.Errorf("read settings: %w", err)
+	}
+	_, removal, err := s.destinationRemovalPreview(id)
+	if err != nil {
+		return erasurePlan{}, err
+	}
+	targets, err := s.store.DestinationTargets(id)
+	if err != nil {
+		return erasurePlan{}, err
+	}
+	plan := erasurePlan{destinationErasure: destinationErasure{
+		Removal: removal, Sections: []erasureSection{}, LastCopies: []erasureEntry{}, Key: "erase:" + id,
+	}}
+	contexts := map[string]ownerContext{}
+	for _, t := range targets {
+		if _, known := contexts[t.Domain]; !known {
+			if contexts[t.Domain], err = s.ownerContextFor(t.Domain); err != nil {
+				return erasurePlan{}, err
+			}
+		}
+		kept := ""
+		if t.Immutable {
+			kept = erasureKeptAppendOnly
+		}
+		plan.add(ctx, s, settings, contexts[t.Domain], t, store.OffsiteTarget{}, kept)
+
+		direct, found, err := s.store.CompanionFor(t.ID)
+		if err != nil {
+			return erasurePlan{}, err
+		}
+		if !found {
+			continue
+		}
+		use, err := s.namedRepoUse(direct.ID)
+		if err != nil {
+			return erasurePlan{}, err
+		}
+		kept = ""
+		switch {
+		case use.InUse():
+			kept = erasureKeptInUse
+		case direct.Immutable:
+			kept = erasureKeptAppendOnly
+		}
+		plan.add(ctx, s, settings, contexts[t.Domain], t, direct, kept)
+	}
+	plan.count(ctx, s, settings, id, contexts)
+	return plan, nil
+}
+
+// add lists one repository of a target, its copy or its direct repository,
+// and appends it as a section. One that cannot be listed is kept.
+func (p *erasurePlan) add(ctx context.Context, s *Service, settings store.Settings, oc ownerContext, t, direct store.OffsiteTarget, kept string) {
+	raw := t.Repo
+	if direct.ID != "" {
+		raw = direct.Repo
+	}
+	section := erasureSection{Domain: t.Domain, TargetID: t.ID, RepoID: direct.ID, Repo: scrubRepoLocation(raw), Kept: kept}
+	repo := erasureRepo{domain: t.Domain, target: t, direct: direct.ID != ""}
+	loc, err := s.resolveRepo(raw)
+	if err == nil {
+		repo.loc, repo.mode = loc, s.offsiteModeForTarget(settings, t)
+		if repo.direct {
+			repo.mode = s.primaryModeFor(settings, t.Domain, loc)
+		}
+		var all []restic.Snapshot
+		if all, err = s.listRepo(ctx, loc, repo.mode); err == nil {
+			repo.snaps = ofSection(all, t.Domain)
+			repo.owners = oc.owners(repo.snaps)
+		}
+	}
+	if err != nil && section.Kept == "" {
+		section.Kept = erasureKeptUnreadable
+	}
+	entries := map[string]bool{}
+	for _, sn := range repo.snaps {
+		entries[entryOf(sn, repo.owners)] = true
+	}
+	section.Backups, section.Entries = len(repo.snaps), len(entries)
+	p.Sections = append(p.Sections, section)
+	p.repos = append(p.repos, repo)
+}
+
+// count fills in the totals over the sections that are emptied and finds the
+// entries nothing else holds a backup of.
+func (p *erasurePlan) count(ctx context.Context, s *Service, settings store.Settings, id string, contexts map[string]ownerContext) {
+	emptied := map[string]bool{}
+	for i, section := range p.Sections {
+		if section.Kept == "" {
+			emptied[filepath.ToSlash(p.repos[i].loc)] = true
+		}
+	}
+	outside := map[string]heldElsewhere{}
+	last := map[string]*erasureEntry{}
+	entries := map[string]bool{}
+	for i, section := range p.Sections {
+		if section.Kept != "" {
+			continue
+		}
+		repo := p.repos[i]
+		held, known := outside[repo.domain]
+		if !known {
+			held = s.heldOutside(ctx, settings, repo.domain, id, contexts[repo.domain], emptied)
+			outside[repo.domain] = held
+		}
+		p.Backups += len(repo.snaps)
+		for _, sn := range repo.snaps {
+			entry := entryOf(sn, repo.owners)
+			entries[entry] = true
+			if !held.backups[restic.Identity(sn)] {
+				p.BackupsOnlyThere++
+			}
+			if held.entries[entry] {
+				continue
+			}
+			if last[entry] == nil {
+				last[entry] = &erasureEntry{Domain: repo.domain, Identity: entry}
+			}
+			last[entry].Backups++
+		}
+	}
+	p.Entries = len(entries)
+	for _, identity := range slices.Sorted(maps.Keys(last)) {
+		p.LastCopies = append(p.LastCopies, *last[identity])
+	}
+}
+
+// erasureRefused is a refusal decided on a fresh listing. It carries what the
+// deletion would take as it stands.
+type erasureRefused struct {
+	err error
+	now destinationErasure
+}
+
+func (e *erasureRefused) Error() string { return e.err.Error() }
+func (e *erasureRefused) Unwrap() error { return e.err }
+
+// StartDestinationErasure deletes the backups at a destination and then
+// removes it, in the background. expect is the removal that was shown and
+// named the entries the person agreed to leave without any backup. Every
+// section of the destination stays locked until the run ends, so no copy
+// lands there in between. removed runs once the destination is gone.
+func (s *Service) StartDestinationErasure(ctx context.Context, id string, expect destinationRemoval, named []string, removed func(store.Settings)) (destinationErasure, error) {
+	targets, err := s.store.DestinationTargets(id)
+	if err != nil {
+		return destinationErasure{}, err
+	}
+	var unlocks []func()
+	unlock := func() {
+		for _, u := range unlocks {
+			u()
+		}
+	}
+	locked := map[string]bool{}
+	for _, t := range targets {
+		if locked[t.Domain] {
+			continue
+		}
+		u, ok := s.tryLockDomainFor(t.Domain, "delete")
+		if !ok {
+			unlock()
+			return destinationErasure{}, errDomainBusy
+		}
+		locked[t.Domain] = true
+		unlocks = append(unlocks, u)
+	}
+	plan, err := s.planErasure(ctx, id)
+	if err == nil {
+		err = plan.refusal(expect, named)
+	}
+	if err != nil {
+		unlock()
+		return destinationErasure{}, err
+	}
+
+	go func() {
+		defer s.recoverOperation("erase destination", nil, nil)
+		defer unlock()
+		tctx, tcancel := context.WithTimeout(context.WithoutCancel(ctx), 24*time.Hour)
+		defer tcancel()
+		rctx, cancel := context.WithCancel(tctx)
+		defer cancel()
+		s.registerCancel(plan.Key, cancel)
+		defer s.unregisterCancel(plan.Key)
+
+		_, startedAt := s.progBegin(rctx, plan.Key, "maintenance")
+		err := s.runErasure(rctx, plan, startedAt)
+		if err == nil {
+			var settings store.Settings
+			if settings, err = s.RemoveDestination(id, plan.Removal); err == nil {
+				removed(settings)
+			}
+		}
+		s.progEnd(plan.Key, "maintenance", err == nil, startedAt)
+		if err != nil {
+			log.Printf("api: erase destination: %v", scrubError(err)) //nolint:gosec // G706: the error is scrubbed
+		}
+	}()
+	return plan.destinationErasure, nil
+}
+
+// refusal says why a planned deletion must not start, nil when it may.
+func (p erasurePlan) refusal(expect destinationRemoval, named []string) error {
+	if !p.Removal.same(expect) {
+		return &removalChangedErr{now: p.Removal}
+	}
+	if !slices.ContainsFunc(p.Sections, func(sec erasureSection) bool { return sec.Kept == "" }) {
+		return &erasureRefused{err: errNothingToErase, now: p.destinationErasure}
+	}
+	for _, entry := range p.LastCopies {
+		if !slices.Contains(named, entry.Identity) {
+			return &erasureRefused{err: errLastCopiesUnnamed, now: p.destinationErasure}
+		}
+	}
+	return nil
+}
+
+// runErasure empties one repository after the other and stops at the first
+// that fails, so a destination that still holds backups is not removed. Each
+// is recorded as a prune of its section.
+func (s *Service) runErasure(ctx context.Context, plan erasurePlan, startedAt int64) error {
+	var todo []erasureRepo
+	for i, section := range plan.Sections {
+		if section.Kept == "" {
+			todo = append(todo, plan.repos[i])
+		}
+	}
+	for done, repo := range todo {
+		s.publishProgress(progress.Event{
+			Key: plan.Key, Phase: "maintenance", Active: true, StartedAt: startedAt,
+			Percent: 100 * float64(done) / float64(len(todo)), Done: int64(done), Total: int64(len(todo)), Unit: "repositories",
+		})
+		runID, rErr := s.startRun(ctx, domainRunTargetID(repo.domain), "prune")
+		if rErr != nil {
+			log.Printf("api: erase %s: the run is not recorded: %v", repo.domain, rErr) //nolint:gosec // G706: domain is a fixed literal
+		}
+		err := s.emptyRepo(ctx, repo)
+		if runID != "" {
+			status := "success"
+			switch {
+			case errors.Is(err, context.Canceled):
+				status = "cancelled"
+			case err != nil:
+				status = "failed"
+			}
+			if fErr := s.store.FinishRun(runID, status, "", 0, truncateRunErr(err)); fErr != nil {
+				log.Printf("api: erase %s: the run is not closed: %v", repo.domain, fErr) //nolint:gosec // G706: domain is a fixed literal
+			}
+		}
+		if err != nil {
+			return fmt.Errorf("%s at %s: %w", repo.domain, shortRepoName(repo.loc), err)
+		}
+	}
+	return nil
+}
+
+// emptyRepo forgets the section's backups and prunes once. What the target
+// was last seen holding goes with them, so a run that ends early leaves no
+// copies listed that are gone.
+func (s *Service) emptyRepo(ctx context.Context, repo erasureRepo) error {
+	for ids := range slices.Chunk(snapshotIDs(repo.snaps), forgetChunk) {
+		forget := func() error { return s.engine.Forget(ctx, repo.loc, ids, false, repo.mode) }
+		if err := s.retryAfterUnlock(ctx, repo.loc, repo.mode, forget); err != nil {
+			return fmt.Errorf("forget backups: %w", err)
+		}
+	}
+	if len(repo.snaps) == 0 {
+		return nil
+	}
+	if !repo.direct && validPlacementDomain(repo.domain) {
+		if err := s.store.RecordTargetListing(repo.domain, repo.target.ID, time.Now().Unix(), nil); err != nil {
+			log.Printf("api: erase %s: the copies seen at %s stay listed: %v", repo.domain, placementTargetName(repo.target), err) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
+		}
+	}
+	if err := s.engine.Prune(ctx, repo.loc, repo.mode); err != nil {
+		return fmt.Errorf("prune: %w", err)
+	}
+	return nil
+}
+
+// handleDestinationErasurePreview says what deleting the backups at a
+// destination would take away.
+// GET /api/offsite/destinations/{id}/erasure
+func (h *Handler) handleDestinationErasurePreview(w http.ResponseWriter, r *http.Request) {
+	plan, err := h.svc.planErasure(r.Context(), r.PathValue("id"))
+	if errors.Is(err, store.ErrNotDestination) {
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"erasure": plan.destinationErasure}))
+}
+
+// handleEraseDestination starts deleting the backups at a destination and
+// removing it afterwards. The body carries the removal that was shown and the
+// identities of the entries that may lose their only backup. A refusal on a
+// fresh listing carries that listing.
+// POST /api/offsite/destinations/{id}/erasure
+func (h *Handler) handleEraseDestination(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Expect     destinationRemoval `json:"expect"`
+		LastCopies []string           `json:"lastCopies"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	// A removed primary target took the section's off-site settings with it,
+	// and the scheduler reads those.
+	removed := func(settings store.Settings) {
+		if err := h.scheduler.ReloadWithGates(settings, h.dueGates()); err != nil {
+			log.Printf("api: erase destination: the scheduler did not reload: %v", err)
+		}
+	}
+	erasure, err := h.svc.StartDestinationErasure(r.Context(), r.PathValue("id"), body.Expect, body.LastCopies, removed)
+	var changed *removalChangedErr
+	var refused *erasureRefused
+	switch {
+	case errors.Is(err, store.ErrNotDestination):
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": err.Error()})
+	case errors.As(err, &changed):
+		placementFail(w, err, map[string]any{"removal": changed.now})
+	case errors.As(err, &refused):
+		placementFail(w, err, map[string]any{"erasure": refused.now})
+	case err != nil:
+		placementFail(w, err, nil)
+	default:
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "erasure": erasure}))
+	}
+}

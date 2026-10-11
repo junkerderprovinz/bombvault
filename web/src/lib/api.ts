@@ -6681,6 +6681,67 @@ export function removeDestination(
   });
 }
 
+/** One repository at a destination whose backups are to be deleted: the copy
+ *  of a section, or the direct repository of its target when `repoId` is set.
+ *  `kept` says why its backups stay: BombVault may only add to it, entries
+ *  still back up to it, or it could not be listed. */
+export interface ErasureSection {
+  domain: OffsiteDomain;
+  targetId: string;
+  repoId?: string;
+  repo: string;
+  backups: number;
+  entries: number;
+  kept?: "append-only" | "in-use" | "unreadable";
+}
+
+/** An entry by the identity its backups carry, such as "container:plex". */
+export interface ErasureEntry {
+  domain: OffsiteDomain;
+  identity: string;
+  backups: number;
+}
+
+/** What deleting the backups at a destination takes away before the
+ *  destination is removed. The totals cover the sections that are emptied. */
+export interface DestinationErasure {
+  /** What removing the destination detaches, sent back with the request. */
+  removal: DestinationRemoval;
+  sections: ErasureSection[];
+  backups: number;
+  entries: number;
+  /** The backups among them that no other place BombVault could read holds. */
+  backupsOnlyThere: number;
+  /** The entries left without any backup. The request has to name each. */
+  lastCopies: ErasureEntry[];
+  /** The progress key the run reports under and is cancelled by. */
+  key: string;
+}
+
+/** GET /api/offsite/destinations/{id}/erasure. It lists every repository at
+ *  the destination and the other places of its sections, so it takes as long
+ *  as they take to answer. */
+export function previewDestinationErasure(id: string): Promise<OkEnvelope & { erasure?: DestinationErasure }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/erasure`);
+}
+
+/** POST /api/offsite/destinations/{id}/erasure: deletes the backups at a
+ *  destination in the background and removes it once they are gone. `expect`
+ *  is `erasure.removal` as it was shown and `lastCopies` the identities of the
+ *  entries that may lose their only backup. A refusal carries the code "stale"
+ *  with `removal`, or "last-copies" or "nothing-to-erase" with `erasure`, each
+ *  as it stands, or "domain-busy" while a section is being backed up. */
+export function eraseDestination(
+  id: string,
+  expect: DestinationRemoval,
+  lastCopies: string[]
+): Promise<OkEnvelope & { started?: boolean; removal?: DestinationRemoval; erasure?: DestinationErasure }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/erasure`, {
+    method: "POST",
+    body: JSON.stringify({ expect, lastCopies }),
+  });
+}
+
 /** Hangs a target typed in by hand on the destination its repository lies
  *  under, keeping the repository. */
 export function adoptIntoDestination(id: string, targetId: string): Promise<OkEnvelope & { destination?: Destination }> {

@@ -480,15 +480,17 @@ type placementEngine struct {
 	// initStaysShut lists locations where Init succeeds and the repository
 	// still does not open afterwards.
 	initStaysShut map[string]bool
-	copies        []copyCall
-	forgets       []forgetCall
-	deletes       []forgetIDsCall
-	prunes        []string
-	tags          []tagCall
-	diffs         []string                       // "from->to" of each DiffStream call
-	diffChanges   map[string][]restic.DiffChange // what a DiffStream call reports, by "from->to"
-	files         map[string][]restic.FileEntry  // what a snapshot lists, by its id
-	ensured       []string                       // Init calls: the repositories EnsureRepo had to create
+	// forgetErr fails a Forget by ids at this location and forgets nothing.
+	forgetErr   map[string]error
+	copies      []copyCall
+	forgets     []forgetCall
+	deletes     []forgetIDsCall
+	prunes      []string
+	tags        []tagCall
+	diffs       []string                       // "from->to" of each DiffStream call
+	diffChanges map[string][]restic.DiffChange // what a DiffStream call reports, by "from->to"
+	files       map[string][]restic.FileEntry  // what a snapshot lists, by its id
+	ensured     []string                       // Init calls: the repositories EnsureRepo had to create
 	// onSnapshots, when set, runs synchronously after every Snapshots call, so a
 	// test can rewrite state a caller already captured before it listed.
 	onSnapshots func()
@@ -624,6 +626,9 @@ func (e *placementEngine) Forget(_ context.Context, repo string, ids []string, _
 	defer e.mu.Unlock()
 	key := filepath.ToSlash(repo)
 	e.deletes = append(e.deletes, forgetIDsCall{Repo: key, IDs: slices.Clone(ids)})
+	if err := e.forgetErr[key]; err != nil {
+		return err
+	}
 	e.snaps[key] = slices.DeleteFunc(e.snaps[key], func(sn restic.Snapshot) bool {
 		return slices.ContainsFunc(ids, func(id string) bool { return strings.HasPrefix(sn.ID, id) })
 	})

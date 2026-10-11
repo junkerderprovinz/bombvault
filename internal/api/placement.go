@@ -84,6 +84,8 @@ var placementCodes = []struct {
 	{errSnapshotMissing, "snapshot-missing"},
 	{errDestinationHoldsBackups, "destination-holds-backups"},
 	{errBackupsNotThere, "backups-not-there"},
+	{errLastCopiesUnnamed, "last-copies"},
+	{errNothingToErase, "nothing-to-erase"},
 }
 
 // placementCode returns the code the interface translates err by, "" for none.

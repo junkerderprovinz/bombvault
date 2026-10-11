@@ -341,6 +341,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/offsite/destinations/{id}", h.handleDeleteDestination)
 	mux.HandleFunc("GET /api/offsite/destinations/{id}/removal", h.handleDestinationRemovalPreview)
 	mux.HandleFunc("POST /api/offsite/destinations/{id}/removal", h.handleRemoveDestination)
+	mux.HandleFunc("GET /api/offsite/destinations/{id}/erasure", h.handleDestinationErasurePreview)
+	mux.HandleFunc("POST /api/offsite/destinations/{id}/erasure", h.handleEraseDestination)
 	mux.HandleFunc("POST /api/offsite/destinations/{id}/domains/{domain}", h.handleDestinationForDomain)
 	mux.HandleFunc("POST /api/offsite/destinations/{id}/adopt/{target}", h.handleAdoptIntoDestination)
 	mux.HandleFunc("POST /api/offsite/destinations/{id}/primary/{domain}", h.handlePrimaryFromDestination)
