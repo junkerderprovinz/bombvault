@@ -37,6 +37,13 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "repo-unopened": "placementCode.repoUnopened",
   "destination-holds-backups": "placementCode.destinationHoldsBackups",
   "backups-not-there": "placementCode.backupsNotThere",
+  "last-copies": "placementCode.lastCopies",
+  "nothing-to-erase": "placementCode.nothingToErase",
+  "move-same-place": "placementCode.moveSamePlace",
+  "move-section-there": "placementCode.moveSectionThere",
+  "move-direct-repo": "placementCode.moveDirectRepo",
+  "move-sign-in": "placementCode.moveSignIn",
+  "move-running": "placementCode.moveRunning",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {
