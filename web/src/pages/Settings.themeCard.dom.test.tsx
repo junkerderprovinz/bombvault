@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// ThemePicker, the Light, Dark and System segments on the Look page. A click
+// ThemePicker, the Dark, Light and System segments on the Look page. A click
 // goes through lib/theme.ts, which stores the choice and paints the page.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
@@ -53,11 +53,11 @@ afterEach(() => {
 });
 
 describe("ThemePicker", () => {
-  it("offers Light, Dark and System under the name Theme", () => {
+  it("offers Dark, Light and System, in that order, under the name Theme", () => {
     localStorage.setItem(STORAGE_KEY, "light");
     renderCard();
     const picker = screen.getByRole("tablist", { name: "Theme" });
-    expect(within(picker).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Light", "Dark", "System"]);
+    expect(within(picker).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Dark", "Light", "System"]);
   });
 
   it("the segment matching the current mode is the one marked selected", () => {

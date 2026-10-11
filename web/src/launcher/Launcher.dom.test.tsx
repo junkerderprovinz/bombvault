@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { Bridge, Fetched, LauncherState, Request } from "./bridge";
 import { Launcher } from "./Launcher";
@@ -169,6 +169,30 @@ describe("Launcher", () => {
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     fireEvent.click(screen.getByRole("switch", { name: "Follow the first server" }));
     expect(screen.getByText(/no longer follows the server/)).toBeTruthy();
+  });
+
+  it("offers Dark, Light and System for the theme, and starts on System", async () => {
+    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Settings" }));
+
+    const theme = within(screen.getByRole("radiogroup", { name: "Theme" })).getAllByRole("radio");
+    expect(theme.map((option) => option.textContent)).toEqual(["Dark", "Light", "System"]);
+    expect(theme.map((option) => option.getAttribute("aria-checked"))).toEqual(["false", "false", "true"]);
+  });
+
+  it("goes back to the device's theme when System is picked after a choice", async () => {
+    localStorage.setItem("bv-theme", "light");
+    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Settings" }));
+    const theme = screen.getByRole("radiogroup", { name: "Theme" });
+    expect(within(theme).getByRole("radio", { name: "Light" }).getAttribute("aria-checked")).toBe("true");
+
+    fireEvent.click(within(theme).getByRole("radio", { name: "System" }));
+
+    expect(localStorage.getItem("bv-theme")).toBe("system");
+    expect(within(theme).getByRole("radio", { name: "System" }).getAttribute("aria-checked")).toBe("true");
   });
 
   it("opens the whole log from the activity card and shows one server at a time", async () => {

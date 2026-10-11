@@ -57,6 +57,8 @@ export const en = {
   "language.label": "Language",
   "theme.dark": "Dark",
   "theme.light": "Light",
+  "theme.system": "System",
+  "theme.systemHint": "Follows the device: dark when the device is dark, light when it is light.",
 
   // Nav
   "nav.overview": "Overview",
@@ -4558,6 +4560,8 @@ export const de: Translations = {
   "language.label": "Sprache",
   "theme.dark": "Dunkel",
   "theme.light": "Hell",
+  "theme.system": "System",
+  "theme.systemHint": "Folgt dem Gerät: dunkel, wenn das Gerät dunkel ist, und hell, wenn es hell ist.",
 
   "nav.overview": "Übersicht",
   "nav.attentionCountAria": "Sachen, die dich brauchen: {n}",

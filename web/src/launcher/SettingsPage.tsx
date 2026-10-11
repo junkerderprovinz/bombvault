@@ -17,7 +17,7 @@ import { applyStoredDisco, discoTap, getDisco, setDisco } from "../lib/disco";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, stormTap, type MotionIntensity } from "../lib/motion";
 import { SHAPES, getShape, leafTap, setShape, type Shape } from "../lib/shape";
-import { getResolvedTheme, getTheme, setTheme, type ResolvedTheme } from "../lib/theme";
+import { getResolvedTheme, getTheme, setTheme, type Theme } from "../lib/theme";
 import { useConfirm } from "../lib/useConfirm";
 import type { AppInfo } from "./bridge";
 import { Flag } from "./flags";
@@ -198,7 +198,7 @@ export function SettingsPage({
   useEffect(() => () => window.clearTimeout(copiedTimer.current), []);
 
   const [follows, setFollows] = useState(isFollowing);
-  const [theme, setThemeLocal] = useState<ResolvedTheme>(getResolvedTheme);
+  const [theme, setThemeLocal] = useState<Theme>(getTheme);
   const [shape, setShapeLocal] = useState<Shape>(getShape);
   const [accent, setAccentLocal] = useState(getAccent);
   const [presets, setPresetsLocal] = useState(getAccentPresets);
@@ -217,7 +217,7 @@ export function SettingsPage({
   // A followed look, or the phone's own given back, replaces what the page shows.
   useEffect(() => {
     const reread = () => {
-      setThemeLocal(getResolvedTheme());
+      setThemeLocal(getTheme());
       setShapeLocal(getShape());
       setAccentLocal(getAccent());
       setPresetsLocal(getAccentPresets());
@@ -316,11 +316,12 @@ export function SettingsPage({
           <Well
             label={t("settings.theme")}
             options={[
-              { value: "light", label: t("theme.light") },
               { value: "dark", label: t("theme.dark") },
+              { value: "light", label: t("theme.light") },
+              { value: "system", label: t("theme.system") },
             ]}
             value={theme}
-            onPick={(v: ResolvedTheme) => {
+            onPick={(v: Theme) => {
               setTheme(v);
               setThemeLocal(v);
               takeOver();

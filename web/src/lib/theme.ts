@@ -64,16 +64,6 @@ export function setTheme(theme: Theme): void {
   paint(theme);
 }
 
-/** Flips between dark and light, always landing on an explicit choice rather
- * than "system". After the first toggle there is no way back to "system" short
- * of clearing localStorage; a third state would need its own icon and i18n
- * key. */
-export function toggleTheme(): ResolvedTheme {
-  const next: ResolvedTheme = getResolvedTheme() === "dark" ? "light" : "dark";
-  setTheme(next);
-  return next;
-}
-
 /** Subscribes `onChange` to OS dark/light flips whatever the stored preference;
  * callers that care only while on "system" check getTheme() themselves.
  * Returns the unsubscribe. */
