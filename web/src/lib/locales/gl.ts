@@ -1269,7 +1269,6 @@ const gl: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Duración",
   "containers.searchPlaceholder": "Buscar contedores…",
-  "vms.searchPlaceholder": "Buscar MV…",
   "filter.all": "Todos",
   "filter.scheduled": "Programados",
   "filter.notScheduled": "Non programados",
@@ -1472,21 +1471,14 @@ const gl: Partial<Translations> = {
   "containers.loadFailed": "Non se puideron cargar os contedores",
   "containers.backupStartFailed": "Non se puido iniciar a copia",
   "containers.updateSettingFailed": "Non se puido cambiar a opción",
-  "vms.loadFailed": "Non se puideron cargar as MV",
   "config.loadSettingsFailed": "Non se puido cargar a configuración actual",
   "dashboard.loadRunsFailed": "Non se puideron cargar as execucións",
 
   // VMs page
-  "vms.title": "Máquinas virtuais",
-  "vms.empty": "Non se atopou ningunha MV. Está en execución libvirt/KVM?",
-  "vms.backupSelected": "Copiar as seleccionadas",
-  "vms.restoreSelected": "Restaurar as seleccionadas (última)",
   "vms.restoreSelectedConfirm": "Restaurar a copia MÁIS RECENTE das MV seleccionadas? Cada MV apágase, substitúense os seus ficheiros de disco e a MV restáurase.",
-  "vms.notInstalledHint": "Estas MV xa non están definidas no host pero aínda teñen copias. Restáuraas para recuperalas, ou usa o panel de Copias para explorar as súas instantáneas.",
   "vms.removeEntry": "Eliminar entrada",
   "vms.removeEntryConfirm": "Eliminar a entrada desta MV da lista? As súas copias, se as hai, non se eliminan.",
   "vms.deleteBackupsConfirm": "Eliminar todas as copias desta MV? As instantáneas elimínanse do repositorio para sempre e non se poden recuperar.",
-  "vms.discoverHint": "MV eliminada de Unraid (ou perdida despois dunha reinstalación)? Reconstrúe a súa entrada de copia desde o almacenamento para poder restauraa.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Descargar (.zip)",

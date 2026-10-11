@@ -1269,7 +1269,6 @@ const sk: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Trvanie",
   "containers.searchPlaceholder": "Hľadať kontajnery…",
-  "vms.searchPlaceholder": "Hľadať VM…",
   "filter.all": "Všetky",
   "filter.scheduled": "Naplánované",
   "filter.notScheduled": "Nenaplánované",
@@ -1472,21 +1471,14 @@ const sk: Partial<Translations> = {
   "containers.loadFailed": "Kontajnery sa nepodarilo načítať",
   "containers.backupStartFailed": "Zálohu sa nepodarilo spustiť",
   "containers.updateSettingFailed": "Nastavenie sa nepodarilo zmeniť",
-  "vms.loadFailed": "VM sa nepodarilo načítať",
   "config.loadSettingsFailed": "Aktuálne nastavenia sa nepodarilo načítať",
   "dashboard.loadRunsFailed": "Behy sa nepodarilo načítať",
 
   // VMs page
-  "vms.title": "Virtuálne stroje",
-  "vms.empty": "Nenašli sa žiadne VM. Beží libvirt/KVM?",
-  "vms.backupSelected": "Zálohovať vybrané",
-  "vms.restoreSelected": "Obnoviť vybrané (najnovšie)",
   "vms.restoreSelectedConfirm": "Obnoviť NAJNOVŠIU zálohu vybraných VM? Každý VM sa vypne, jeho súbory diskov sa nahradia a VM sa obnoví.",
-  "vms.notInstalledHint": "Tieto VM už nie sú definované na hostiteľovi, no stále majú zálohy. Obnovte ich, aby ste ich získali späť, alebo použite panel Zálohy na prehľadávanie ich snímok.",
   "vms.removeEntry": "Odstrániť záznam",
   "vms.removeEntryConfirm": "Odstrániť záznam tohto VM zo zoznamu? Jeho zálohy, ak existujú, sa neodstránia.",
   "vms.deleteBackupsConfirm": "Odstrániť všetky zálohy tohto VM? Snímky sa natrvalo odstránia z repozitára a nebude ich možné obnoviť.",
-  "vms.discoverHint": "VM odstránený z Unraid (alebo stratený po opätovnej inštalácii)? Obnovte jeho záznam zálohovania z úložiska, aby ste ho mohli obnoviť.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Stiahnuť (.zip)",

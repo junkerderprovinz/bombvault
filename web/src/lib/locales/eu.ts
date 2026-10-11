@@ -1269,7 +1269,6 @@ const eu: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Iraupena",
   "containers.searchPlaceholder": "Bilatu edukiontziak…",
-  "vms.searchPlaceholder": "Bilatu MB…",
   "filter.all": "Denak",
   "filter.scheduled": "Programatuta",
   "filter.notScheduled": "Programatu gabe",
@@ -1472,21 +1471,14 @@ const eu: Partial<Translations> = {
   "containers.loadFailed": "Ezin izan dira edukiontziak kargatu",
   "containers.backupStartFailed": "Ezin izan da babeskopia abiarazi",
   "containers.updateSettingFailed": "Ezin izan da ezarpena aldatu",
-  "vms.loadFailed": "Ezin izan dira MBak kargatu",
   "config.loadSettingsFailed": "Ezin izan dira uneko ezarpenak kargatu",
   "dashboard.loadRunsFailed": "Ezin izan dira exekuzioak kargatu",
 
   // VMs page
-  "vms.title": "Makina birtualak",
-  "vms.empty": "Ez da MBrik aurkitu. libvirt/KVM exekutatzen ari da?",
-  "vms.backupSelected": "Egin hautatutakoen babeskopia",
-  "vms.restoreSelected": "Berrezarri hautatutakoak (azkena)",
   "vms.restoreSelectedConfirm": "Hautatutako MBen babeskopia BERRIENA berrezarri nahi duzu? MB bakoitza itzali, disko-fitxategiak ordezkatu eta MB berrezartzen da.",
-  "vms.notInstalledHint": "MB hauek jada ez daude ostalarian definituta baina oraindik badituzte babeskopiak. Berrezarri itzazu berreskuratzeko, edo erabili Babeskopiak panela beren argazkiak arakatzeko.",
   "vms.removeEntry": "Kendu sarrera",
   "vms.removeEntryConfirm": "MB honen sarrera zerrendatik kendu nahi duzu? Bere babeskopiak, badago, ez dira ezabatzen.",
   "vms.deleteBackupsConfirm": "MB honen babeskopia guztiak ezabatu nahi dituzu? Argazkiak betiko ezabatzen dira biltegitik eta ezin dira berreskuratu.",
-  "vms.discoverHint": "MB Unraid-etik ezabatuta (edo birinstalazio baten ondoren galduta)? Berreraiki bere babeskopia-sarrera biltegitik berrezarri ahal izateko.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Deskargatu (.zip)",

@@ -1269,7 +1269,6 @@ const ms: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Tempoh",
   "containers.searchPlaceholder": "Cari bekas…",
-  "vms.searchPlaceholder": "Cari VM…",
   "filter.all": "Semua",
   "filter.scheduled": "Berjadual",
   "filter.notScheduled": "Tidak berjadual",
@@ -1472,21 +1471,14 @@ const ms: Partial<Translations> = {
   "containers.loadFailed": "Gagal memuatkan bekas",
   "containers.backupStartFailed": "Gagal memulakan sandaran",
   "containers.updateSettingFailed": "Gagal mengemas kini tetapan",
-  "vms.loadFailed": "Gagal memuatkan VM",
   "config.loadSettingsFailed": "Tetapan semasa tidak dapat dimuatkan",
   "dashboard.loadRunsFailed": "Gagal memuatkan larian",
 
   // VMs page
-  "vms.title": "Mesin Maya",
-  "vms.empty": "Tiada VM dijumpai. Adakah libvirt/KVM berjalan?",
-  "vms.backupSelected": "Sandarkan yang dipilih",
-  "vms.restoreSelected": "Pulihkan yang dipilih (terkini)",
   "vms.restoreSelectedConfirm": "Pulihkan sandaran TERKINI VM yang dipilih? Setiap VM akan dimatikan, fail cakeranya digantikan, dan VM dipulihkan.",
-  "vms.notInstalledHint": "VM ini tidak lagi ditakrifkan pada hos tetapi masih mempunyai sandaran. Pulihkan mereka untuk mendapatkannya semula, atau gunakan panel Sandaran untuk menyemak imbas snapshot mereka.",
   "vms.removeEntry": "Alih keluar entri",
   "vms.removeEntryConfirm": "Alih keluar entri VM ini daripada senarai? Sandarannya, jika ada, tidak dipadamkan.",
   "vms.deleteBackupsConfirm": "Padam semua sandaran VM ini? Snapshot dipadamkan secara kekal daripada repositori dan tidak boleh dipulihkan.",
-  "vms.discoverHint": "VM dipadamkan daripada Unraid (atau hilang selepas pemasangan semula)? Bina semula entri sandarannya daripada storan supaya anda boleh memulihkannya.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Muat turun (.zip)",

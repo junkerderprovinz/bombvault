@@ -560,16 +560,10 @@ const hu: Partial<Translations> = {
   "auth.disableCodePrompt": "A kikapcsoláshoz írj be egy aktuális kódot",
   "auth.passwordMinHint": "Legalább {n} karakter.",
   // VMs page
-  "vms.title": "Virtuális gépek",
-  "vms.empty": "Nem találhatók VM-ek. Fut a libvirt/KVM?",
-  "vms.backupSelected": "Kijelöltek biztonsági mentése",
-  "vms.restoreSelected": "Kijelöltek visszaállítása (legújabb)",
   "vms.restoreSelectedConfirm": "Visszaállítja a kijelölt VM-ek LEGÚJABB biztonsági mentését? Minden VM leáll, a lemezfájlok kicserélődnek, és a VM visszaáll.",
-  "vms.notInstalledHint": "Ezek a VM-ek már nincsenek definiálva a hoszton, de még vannak biztonsági mentéseik. Állítsa vissza őket, vagy tekintse meg pillanatképeiket a Mentések panelen.",
   "vms.removeEntry": "Bejegyzés eltávolítása",
   "vms.removeEntryConfirm": "Eltávolítod ennek a VM-nek a bejegyzését a listából? A meglévő biztonsági mentések nem törlődnek.",
   "vms.deleteBackupsConfirm": "Törli a VM összes biztonsági mentését? A pillanatképek véglegesen eltávolításra kerülnek a tárolóból, és nem lehet visszavonni.",
-  "vms.discoverHint": "Törölted a VM-et az Unraidből (vagy elveszett egy újratelepítés után)? Építsd újra a biztonsági mentési bejegyzését a tárhelyről, hogy visszaállíthasd.",
 
   // Container / VM state badge labels
   "state.created":      "Létrehozva",
@@ -863,7 +857,6 @@ const hu: Partial<Translations> = {
   "containers.loadFailed": "A konténerek betöltése sikertelen",
   "containers.backupStartFailed": "A biztonsági mentés indítása sikertelen",
   "containers.updateSettingFailed": "A beállítás módosítása sikertelen",
-  "vms.loadFailed": "A VM-ek betöltése sikertelen",
   "config.loadSettingsFailed": "A jelenlegi beállítások nem tölthetők be",
   "dashboard.loadRunsFailed": "A futások betöltése sikertelen",
 
@@ -1279,7 +1272,6 @@ const hu: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Időtartam",
   "containers.searchPlaceholder": "Konténerek keresése…",
-  "vms.searchPlaceholder": "VM-ek keresése…",
   "filter.all": "Összes",
   "filter.scheduled": "Ütemezett",
   "filter.notScheduled": "Nincs ütemezve",

@@ -1267,7 +1267,6 @@ const sr: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Трајање",
   "containers.searchPlaceholder": "Претражи контејнере…",
-  "vms.searchPlaceholder": "Претражи ВМ-ове…",
   "filter.all": "Сви",
   "filter.scheduled": "Заказано",
   "filter.notScheduled": "Није заказано",
@@ -1467,21 +1466,14 @@ const sr: Partial<Translations> = {
   "containers.loadFailed": "Учитавање контејнера није успело",
   "containers.backupStartFailed": "Покретање резервне копије није успело",
   "containers.updateSettingFailed": "Промена подешавања није успела",
-  "vms.loadFailed": "Учитавање ВМ-ова није успело",
   "config.loadSettingsFailed": "Тренутна подешавања нису могла да се учитају",
   "dashboard.loadRunsFailed": "Учитавање извршавања није успело",
 
   // VMs page
-  "vms.title": "Виртуелне машине",
-  "vms.empty": "ВМ-ови нису пронађени. Да ли libvirt/KVM ради?",
-  "vms.backupSelected": "Направи резервну копију изабраних",
-  "vms.restoreSelected": "Врати изабране (најновије)",
   "vms.restoreSelectedConfirm": "Вратим НАЈНОВИЈУ резервну копију изабраних ВМ-ова? Сваки ВМ се гаси, датотеке диска му се замењују и ВМ се враћа.",
-  "vms.notInstalledHint": "Ови ВМ-ови више нису дефинисани на хосту, али и даље имају резервне копије. Врати их да их повратиш или користи панел Резервне копије да прегледаш њихове снимке.",
   "vms.removeEntry": "Уклони унос",
   "vms.removeEntryConfirm": "Уклоним унос овог ВМ-а са листе? Његове резервне копије, ако постоје, се не бришу.",
   "vms.deleteBackupsConfirm": "Избришем све резервне копије овог ВМ-а? Снимци се трајно уклањају из репозиторијума и то се не може поништити.",
-  "vms.discoverHint": "ВМ избрисан из Unraid-а (или изгубљен након поновне инсталације)? Поново изгради његов унос резервне копије из складишта да га можеш вратити.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Преузми (.zip)",

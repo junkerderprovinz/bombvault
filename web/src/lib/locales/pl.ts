@@ -554,16 +554,10 @@ const pl: Partial<Translations> = {
   "auth.disableCodePrompt": "Wpisz aktualny kod, aby wyłączyć",
   "auth.passwordMinHint": "one=Co najmniej {n} znak.|few=Co najmniej {n} znaki.|many=Co najmniej {n} znaków.|other=Co najmniej {n} znaków.",
   // VMs page
-  "vms.title": "Maszyny wirtualne",
-  "vms.empty": "Nie znaleziono maszyn wirtualnych. Czy libvirt/KVM działa?",
-  "vms.backupSelected": "Utwórz kopię zaznaczonych",
-  "vms.restoreSelected": "Przywróć zaznaczone (najnowsze)",
   "vms.restoreSelectedConfirm": "Przywrócić NAJNOWSZĄ kopię zapasową zaznaczonych maszyn wirtualnych? Każda zostanie wyłączona, pliki dysku zastąpione i maszyna przywrócona.",
-  "vms.notInstalledHint": "Te maszyny wirtualne nie są już zdefiniowane na hoście, ale nadal mają kopie zapasowe. Przywróć je lub użyj panelu Kopie zapasowe, aby przeglądać migawki.",
   "vms.removeEntry": "Usuń wpis",
   "vms.removeEntryConfirm": "Usunąć wpis tej maszyny z listy? Ewentualne kopie nie zostaną usunięte.",
   "vms.deleteBackupsConfirm": "Usunąć wszystkie kopie zapasowe tej maszyny? Migawki zostaną trwale usunięte z repozytorium i nie można tego cofnąć.",
-  "vms.discoverHint": "Maszyna wirtualna usunięta z Unraida (lub utracona po ponownej instalacji)? Odbuduj jej wpis kopii zapasowej z magazynu, aby ją przywrócić.",
 
   // Container / VM state badge labels
   "state.created":      "Utworzony",
@@ -855,7 +849,6 @@ const pl: Partial<Translations> = {
   "containers.loadFailed": "Nie udało się załadować kontenerów",
   "containers.backupStartFailed": "Nie udało się uruchomić kopii zapasowej",
   "containers.updateSettingFailed": "Nie udało się zmienić ustawienia",
-  "vms.loadFailed": "Nie udało się załadować maszyn wirtualnych",
   "config.loadSettingsFailed": "Nie udało się załadować bieżących ustawień",
   "dashboard.loadRunsFailed": "Nie udało się załadować uruchomień",
 
@@ -1267,7 +1260,6 @@ const pl: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Czas trwania",
   "containers.searchPlaceholder": "Szukaj kontenerów…",
-  "vms.searchPlaceholder": "Szukaj VM…",
   "filter.all": "Wszystkie",
   "filter.scheduled": "Zaplanowane",
   "filter.notScheduled": "Bez harmonogramu",

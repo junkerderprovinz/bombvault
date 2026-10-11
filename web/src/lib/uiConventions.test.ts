@@ -475,7 +475,7 @@ ruleTester.run("user-message-is-translated", rules["user-message-is-translated"]
     // Messages resolved through t() before they are shown.
     `push(t("common.deleteFailed"), "fail");`,
     `setError(res.error ?? t("common.loadBackupsFailed"));`,
-    `setError(err instanceof Error ? err.message : t("vms.loadFailed"));`,
+    `setError(err instanceof Error ? err.message : t("backups.loadFailed"));`,
     `push(res.error ?? t("common.discoverFailed"), "fail");`,
     // `??` and `?:` tails that are values, not sentences, which is what the
     // capital-plus-space test lets through.

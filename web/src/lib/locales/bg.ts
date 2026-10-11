@@ -1269,7 +1269,6 @@ const bg: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Продължителност",
   "containers.searchPlaceholder": "Търси контейнери…",
-  "vms.searchPlaceholder": "Търси ВМ…",
   "filter.all": "Всички",
   "filter.scheduled": "Планирани",
   "filter.notScheduled": "Непланирани",
@@ -1472,21 +1471,14 @@ const bg: Partial<Translations> = {
   "containers.loadFailed": "Контейнерите не можаха да се заредят",
   "containers.backupStartFailed": "Архивирането не можа да бъде стартирано",
   "containers.updateSettingFailed": "Настройката не можа да бъде променена",
-  "vms.loadFailed": "ВМ не можаха да се заредят",
   "config.loadSettingsFailed": "Текущите настройки не можаха да се заредят",
   "dashboard.loadRunsFailed": "Изпълненията не можаха да се заредят",
 
   // VMs page
-  "vms.title": "Виртуални машини",
-  "vms.empty": "Не са намерени ВМ. Работи ли libvirt/KVM?",
-  "vms.backupSelected": "Архивирай избраните",
-  "vms.restoreSelected": "Възстанови избраните (последно)",
   "vms.restoreSelectedConfirm": "Да възстановя ли НАЙ-НОВОТО архивиране на избраните ВМ? Всяка ВМ се изключва, дисковите ѝ файлове се заменят и ВМ се възстановява.",
-  "vms.notInstalledHint": "Тези ВМ вече не са дефинирани на хоста, но все още имат архивирания. Възстанови ги, за да ги възстановиш, или използвай панела Архивирания, за да разгледаш снапшотите им.",
   "vms.removeEntry": "Премахни записа",
   "vms.removeEntryConfirm": "Да премахна ли записа на тази ВМ от списъка? Архивиранията ѝ, ако има такива, не се изтриват.",
   "vms.deleteBackupsConfirm": "Да изтрия ли всички архивирания на тази ВМ? Снапшотите се премахват завинаги от хранилището и не могат да бъдат възстановени.",
-  "vms.discoverHint": "ВМ, изтрита от Unraid (или изгубена след преинсталация)? Възстанови записа ѝ за архивиране от хранилището, за да можеш да я възстановиш.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Изтегли (.zip)",

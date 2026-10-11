@@ -560,16 +560,10 @@ const el: Partial<Translations> = {
   "auth.disableCodePrompt": "Καταχώρισε έναν τρέχοντα κωδικό για απενεργοποίηση",
   "auth.passwordMinHint": "one=Τουλάχιστον {n} χαρακτήρας.|other=Τουλάχιστον {n} χαρακτήρες.",
   // VMs page
-  "vms.title": "Εικονικές μηχανές",
-  "vms.empty": "Δεν βρέθηκαν VMs. Τρέχει το libvirt/KVM;",
-  "vms.backupSelected": "Δημιουργία αντιγράφου επιλεγμένων",
-  "vms.restoreSelected": "Επαναφορά επιλεγμένων (τελευταίο)",
   "vms.restoreSelectedConfirm": "Επαναφορά του ΤΕΛΕΥΤΑΙΟΥ αντιγράφου των επιλεγμένων VMs; Κάθε VM τερματίζεται, τα αρχεία δίσκου αντικαθίστανται και το VM επαναφέρεται.",
-  "vms.notInstalledHint": "Αυτά τα VMs δεν ορίζονται πλέον στον host αλλά έχουν αντίγραφα ασφαλείας. Επαναφέρετέ τα ή χρησιμοποιήστε τον πίνακα Αντιγράφων για να δείτε τα στιγμιότυπά τους.",
   "vms.removeEntry": "Αφαίρεση καταχώρισης",
   "vms.removeEntryConfirm": "Αφαίρεση της καταχώρισης αυτής της VM από τη λίστα; Τυχόν αντίγραφα δεν διαγράφονται.",
   "vms.deleteBackupsConfirm": "Διαγραφή όλων των αντιγράφων αυτής της VM; Τα στιγμιότυπα αφαιρούνται μόνιμα από το αποθετήριο και δεν μπορούν να ανακτηθούν.",
-  "vms.discoverHint": "Διαγράφηκε το VM από το Unraid (ή χάθηκε μετά από επανεγκατάσταση); Ανακατασκευάστε την εγγραφή αντιγράφου από τον αποθηκευτικό χώρο για να το επαναφέρετε.",
 
   // Container / VM state badge labels
   "state.created":      "Δημιουργήθηκε",
@@ -863,7 +857,6 @@ const el: Partial<Translations> = {
   "containers.loadFailed": "Αποτυχία φόρτωσης containers",
   "containers.backupStartFailed": "Αποτυχία έναρξης του αντιγράφου",
   "containers.updateSettingFailed": "Αποτυχία ενημέρωσης της ρύθμισης",
-  "vms.loadFailed": "Αποτυχία φόρτωσης VMs",
   "config.loadSettingsFailed": "Δεν ήταν δυνατή η φόρτωση των τρεχουσών ρυθμίσεων",
   "dashboard.loadRunsFailed": "Αποτυχία φόρτωσης εκτελέσεων",
 
@@ -1287,7 +1280,6 @@ const el: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Διάρκεια",
   "containers.searchPlaceholder": "Αναζήτηση κοντέινερ…",
-  "vms.searchPlaceholder": "Αναζήτηση VM…",
   "filter.all": "Όλα",
   "filter.scheduled": "Προγραμματισμένο",
   "filter.notScheduled": "Μη προγραμματισμένο",

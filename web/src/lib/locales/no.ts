@@ -557,16 +557,10 @@ const no: Partial<Translations> = {
   "auth.disableCodePrompt": "Skriv inn en gyldig kode for å slå det av",
   "auth.passwordMinHint": "Minst {n} tegn.",
   // VMs page
-  "vms.title": "Virtuelle maskiner",
-  "vms.empty": "Ingen VM-er funnet. Kjører libvirt/KVM?",
-  "vms.backupSelected": "Sikkerhetskopier valgte",
-  "vms.restoreSelected": "Gjenopprett valgte (nyeste)",
   "vms.restoreSelectedConfirm": "Gjenopprette den NYESTE sikkerhetskopien av valgte VM-er? Hver VM slås av, diskfiler erstattes og VM-en gjenopprettes.",
-  "vms.notInstalledHint": "Disse VM-ene er ikke lenger definert på hosten, men har fortsatt sikkerhetskopier. Gjenopprett dem eller bruk Sikkerhetskopier-panelet til å bla gjennom snapshots.",
   "vms.removeEntry": "Fjern oppføring",
   "vms.removeEntryConfirm": "Fjerne denne VM-ens oppføring fra listen? Eventuelle sikkerhetskopier slettes ikke.",
   "vms.deleteBackupsConfirm": "Slette alle sikkerhetskopier av denne VM-en? Snapshotene fjernes permanent fra repositoriet og kan ikke angres.",
-  "vms.discoverHint": "VM slettet fra Unraid (eller mistet etter en reinstallasjon)? Bygg opp sikkerhetskopioppføringen på nytt fra lageret for å gjenopprette den.",
 
   // Container / VM state badge labels
   "state.created":      "Opprettet",
@@ -860,7 +854,6 @@ const no: Partial<Translations> = {
   "containers.loadFailed": "Kunne ikke laste kontainerne",
   "containers.backupStartFailed": "Kunne ikke starte sikkerhetskopieringen",
   "containers.updateSettingFailed": "Kunne ikke oppdatere innstillingen",
-  "vms.loadFailed": "Kunne ikke laste VM-ene",
   "config.loadSettingsFailed": "Kunne ikke laste de gjeldende innstillingene",
   "dashboard.loadRunsFailed": "Kunne ikke laste kjøringene",
 
@@ -1272,7 +1265,6 @@ const no: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Varighet",
   "containers.searchPlaceholder": "Søk containere…",
-  "vms.searchPlaceholder": "Søk VM-er…",
   "filter.all": "Alle",
   "filter.scheduled": "Planlagt",
   "filter.notScheduled": "Ikke planlagt",

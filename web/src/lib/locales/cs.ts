@@ -560,16 +560,10 @@ const cs: Partial<Translations> = {
   "auth.disableCodePrompt": "Pro vypnutí zadej aktuální kód",
   "auth.passwordMinHint": "one=Nejméně {n} znak.|few=Nejméně {n} znaky.|many=Nejméně {n} znaku.|other=Nejméně {n} znaků.",
   // VMs page
-  "vms.title": "Virtuální stroje",
-  "vms.empty": "Žádné VMs nenalezeny. Běží libvirt/KVM?",
-  "vms.backupSelected": "Zálohovat vybrané",
-  "vms.restoreSelected": "Obnovit vybrané (nejnovější)",
   "vms.restoreSelectedConfirm": "Obnovit NEJNOVĚJŠÍ zálohu vybraných VM? Každý VM bude vypnut, jeho diskové soubory nahrazeny a VM obnoven.",
-  "vms.notInstalledHint": "Tyto VM již nejsou definovány na hostiteli, ale stále mají zálohy. Obnovte je nebo procházejte jejich snímky v panelu Zálohy.",
   "vms.removeEntry": "Odebrat položku",
   "vms.removeEntryConfirm": "Odebrat položku tohoto VM ze seznamu? Případné zálohy se nesmažou.",
   "vms.deleteBackupsConfirm": "Smazat všechny zálohy tohoto VM? Snímky budou trvale odstraněny z repozitáře a tuto akci nelze vrátit zpět.",
-  "vms.discoverHint": "Virtuální stroj smazaný z Unraidu (nebo ztracený po přeinstalaci)? Znovu sestavte jeho zálohovací záznam z úložiště, abyste jej mohli obnovit.",
 
   // Container / VM state badge labels
   "state.created":      "Vytvořeno",
@@ -861,7 +855,6 @@ const cs: Partial<Translations> = {
   "containers.loadFailed": "Nepodařilo se načíst kontejnery",
   "containers.backupStartFailed": "Nepodařilo se spustit zálohu",
   "containers.updateSettingFailed": "Nepodařilo se změnit nastavení",
-  "vms.loadFailed": "Nepodařilo se načíst VMs",
   "config.loadSettingsFailed": "Nepodařilo se načíst aktuální nastavení",
   "dashboard.loadRunsFailed": "Nepodařilo se načíst běhy",
 
@@ -1285,7 +1278,6 @@ const cs: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Doba trvání",
   "containers.searchPlaceholder": "Hledat kontejnery…",
-  "vms.searchPlaceholder": "Hledat VM…",
   "filter.all": "Vše",
   "filter.scheduled": "Naplánováno",
   "filter.notScheduled": "Neplánováno",

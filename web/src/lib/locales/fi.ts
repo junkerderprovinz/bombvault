@@ -560,16 +560,10 @@ const fi: Partial<Translations> = {
   "auth.disableCodePrompt": "Syötä nykyinen koodi poistaaksesi käytöstä",
   "auth.passwordMinHint": "one=Vähintään {n} merkki.|other=Vähintään {n} merkkiä.",
   // VMs page
-  "vms.title": "Virtuaalikoneet",
-  "vms.empty": "VM:iä ei löydy. Onko libvirt/KVM käynnissä?",
-  "vms.backupSelected": "Varmuuskopioi valitut",
-  "vms.restoreSelected": "Palauta valitut (uusin)",
   "vms.restoreSelectedConfirm": "Palautetaanko valittujen VM:ien UUSIN varmuuskopio? Jokainen VM sammutetaan, sen levytiedostot korvataan ja VM palautetaan.",
-  "vms.notInstalledHint": "Näitä VM:iä ei enää ole määritetty isännällä, mutta niillä on edelleen varmuuskopioita. Palauta ne tai selaa niiden tilannekuvia Varmuuskopiot-paneelissa.",
   "vms.removeEntry": "Poista merkintä",
   "vms.removeEntryConfirm": "Poistetaanko tämän VM:n merkintä listalta? Mahdollisia varmuuskopioita ei poisteta.",
   "vms.deleteBackupsConfirm": "Poistetaanko kaikki tämän VM:n varmuuskopiot? Tilannekuvat poistetaan pysyvästi arkistosta, eikä toimintoa voi peruuttaa.",
-  "vms.discoverHint": "Poistettiinko virtuaalikone Unraidista (tai katosiko se uudelleenasennuksessa)? Rakenna sen varmuuskopiomerkintä uudelleen tallennustilasta palauttaaksesi sen.",
 
   // Container / VM state badge labels
   "state.created":      "Luotu",
@@ -863,7 +857,6 @@ const fi: Partial<Translations> = {
   "containers.loadFailed": "Konttien lataus epäonnistui",
   "containers.backupStartFailed": "Varmuuskopioinnin käynnistys epäonnistui",
   "containers.updateSettingFailed": "Asetuksen päivitys epäonnistui",
-  "vms.loadFailed": "VM:ien lataus epäonnistui",
   "config.loadSettingsFailed": "Nykyisiä asetuksia ei voitu ladata",
   "dashboard.loadRunsFailed": "Ajojen lataus epäonnistui",
 
@@ -1287,7 +1280,6 @@ const fi: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Kesto",
   "containers.searchPlaceholder": "Hae kontteja…",
-  "vms.searchPlaceholder": "Hae virtuaalikoneita…",
   "filter.all": "Kaikki",
   "filter.scheduled": "Aikataulutettu",
   "filter.notScheduled": "Ei aikataulutettu",

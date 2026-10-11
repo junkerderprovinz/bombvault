@@ -560,16 +560,10 @@ const tr: Partial<Translations> = {
   "auth.disableCodePrompt": "Kapatmak için güncel bir kod gir",
   "auth.passwordMinHint": "En az {n} karakter.",
   // VMs page
-  "vms.title": "Sanal Makineler",
-  "vms.empty": "VM bulunamadı. libvirt/KVM çalışıyor mu?",
-  "vms.backupSelected": "Seçilenleri yedekle",
-  "vms.restoreSelected": "Seçilenleri geri yükle (son)",
   "vms.restoreSelectedConfirm": "Seçili VM'lerin EN SON yedeği geri yüklensin mi? Her VM kapatılır, disk dosyaları değiştirilir ve VM geri yüklenir.",
-  "vms.notInstalledHint": "Bu VM'ler artık hostta tanımlı değil ancak yedekleri mevcut. Geri yükleyin veya anlık görüntülerini Yedekler panelinden inceleyin.",
   "vms.removeEntry": "Girişi kaldır",
   "vms.removeEntryConfirm": "Bu VM'nin girişi listeden kaldırılsın mı? Varsa yedekleri silinmez.",
   "vms.deleteBackupsConfirm": "Bu VM'nin tüm yedekleri silinsin mi? Anlık görüntüler depodan kalıcı olarak kaldırılır ve geri alınamaz.",
-  "vms.discoverHint": "VM Unraid'den silindi mi (ya da yeniden kurulumdan sonra kayboldu mu)? Geri yükleyebilmek için yedek kaydını depolamadan yeniden oluşturun.",
 
   // Container / VM state badge labels
   "state.created":      "Oluşturuldu",
@@ -863,7 +857,6 @@ const tr: Partial<Translations> = {
   "containers.loadFailed": "Konteynerler yüklenemedi",
   "containers.backupStartFailed": "Yedekleme başlatılamadı",
   "containers.updateSettingFailed": "Ayar güncellenemedi",
-  "vms.loadFailed": "VM'ler yüklenemedi",
   "config.loadSettingsFailed": "Mevcut ayarlar yüklenemedi",
   "dashboard.loadRunsFailed": "Çalışmalar yüklenemedi",
 
@@ -1287,7 +1280,6 @@ const tr: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Süre",
   "containers.searchPlaceholder": "Konteyner ara…",
-  "vms.searchPlaceholder": "VM ara…",
   "filter.all": "Tümü",
   "filter.scheduled": "Zamanlanmış",
   "filter.notScheduled": "Zamanlanmamış",

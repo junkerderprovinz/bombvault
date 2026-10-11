@@ -557,16 +557,10 @@ const ro: Partial<Translations> = {
   "auth.disableCodePrompt": "Introdu un cod curent pentru a o opri",
   "auth.passwordMinHint": "one=Cel puțin {n} caracter.|few=Cel puțin {n} caractere.|other=Cel puțin {n} de caractere.",
   // VMs page
-  "vms.title": "Mașini virtuale",
-  "vms.empty": "Nu s-au găsit VM-uri. Rulează libvirt/KVM?",
-  "vms.backupSelected": "Copiază selectatele",
-  "vms.restoreSelected": "Restaurează selectatele (cel mai recent)",
   "vms.restoreSelectedConfirm": "Restaurați CEL MAI RECENT backup al VM-urilor selectate? Fiecare VM este oprit, fișierele de disc înlocuite și VM-ul restaurat.",
-  "vms.notInstalledHint": "Aceste VM-uri nu mai sunt definite pe gazdă, dar încă au copii de rezervă. Restaurați-le sau navigați în panoul Copii de rezervă pentru a vedea instantaneele.",
   "vms.removeEntry": "Elimină intrarea",
   "vms.removeEntryConfirm": "Elimini intrarea acestei VM din listă? Eventualele backupuri nu sunt șterse.",
   "vms.deleteBackupsConfirm": "Ștergeți toate copiile de rezervă ale acestei VM? Instantaneele sunt eliminate permanent din depozit și nu pot fi anulate.",
-  "vms.discoverHint": "VM ștearsă din Unraid (sau pierdută după o reinstalare)? Reconstruiește intrarea ei de backup din stocare pentru a o putea restaura.",
 
   // Container / VM state badge labels
   "state.created":      "Creat",
@@ -860,7 +854,6 @@ const ro: Partial<Translations> = {
   "containers.loadFailed": "Încărcarea containerelor a eșuat",
   "containers.backupStartFailed": "Pornirea copiei de rezervă a eșuat",
   "containers.updateSettingFailed": "Actualizarea setării a eșuat",
-  "vms.loadFailed": "Încărcarea VM-urilor a eșuat",
   "config.loadSettingsFailed": "Nu s-au putut încărca setările curente",
   "dashboard.loadRunsFailed": "Încărcarea rulărilor a eșuat",
 
@@ -1275,7 +1268,6 @@ const ro: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Durată",
   "containers.searchPlaceholder": "Caută containere…",
-  "vms.searchPlaceholder": "Caută VM-uri…",
   "filter.all": "Toate",
   "filter.scheduled": "Programat",
   "filter.notScheduled": "Neprogramat",

@@ -1269,7 +1269,6 @@ const et: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Kestus",
   "containers.searchPlaceholder": "Otsi konteinereid…",
-  "vms.searchPlaceholder": "Otsi VM-e…",
   "filter.all": "Kõik",
   "filter.scheduled": "Plaanitud",
   "filter.notScheduled": "Plaanimata",
@@ -1472,21 +1471,14 @@ const et: Partial<Translations> = {
   "containers.loadFailed": "Konteinerite laadimine ebaõnnestus",
   "containers.backupStartFailed": "Varunduse käivitamine ebaõnnestus",
   "containers.updateSettingFailed": "Seadistuse muutmine ebaõnnestus",
-  "vms.loadFailed": "VM-ide laadimine ebaõnnestus",
   "config.loadSettingsFailed": "Praeguseid seadeid ei õnnestunud laadida",
   "dashboard.loadRunsFailed": "Käivituste laadimine ebaõnnestus",
 
   // VMs page
-  "vms.title": "Virtuaalmasinad",
-  "vms.empty": "VM-e ei leitud. Kas libvirt/KVM töötab?",
-  "vms.backupSelected": "Varunda valitud",
-  "vms.restoreSelected": "Taasta valitud (uusim)",
   "vms.restoreSelectedConfirm": "Kas taastada valitud VM-ide UUSIM varundus? Iga VM lülitatakse välja, tema kettafailid asendatakse ja VM taastatakse.",
-  "vms.notInstalledHint": "Neid VM-e pole enam hostil defineeritud, kuid neil on ikka varundusi. Taasta need taasteks või kasuta Varunduste paneeli nende hetktõmmiste sirvimiseks.",
   "vms.removeEntry": "Eemalda kirje",
   "vms.removeEntryConfirm": "Kas eemaldada selle VM-i kirje loendist? Selle varundusi (kui neid on) ei kustutata.",
   "vms.deleteBackupsConfirm": "Kas kustutada selle VM-i kõik varundused? Hetktõmmised eemaldatakse hoidlast jäädavalt ja neid ei saa taastada.",
-  "vms.discoverHint": "VM Unraidist kustutatud (või kaotatud pärast uuesti paigaldamist)? Ehita selle varunduse kirje salvestusruumist uuesti üles, et saaksid selle taastada.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Laadi alla (.zip)",

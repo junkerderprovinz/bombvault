@@ -1269,7 +1269,6 @@ const lt: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Trukmė",
   "containers.searchPlaceholder": "Ieškoti konteinerių…",
-  "vms.searchPlaceholder": "Ieškoti VM…",
   "filter.all": "Visi",
   "filter.scheduled": "Suplanuota",
   "filter.notScheduled": "Neplanuota",
@@ -1472,21 +1471,14 @@ const lt: Partial<Translations> = {
   "containers.loadFailed": "Nepavyko įkelti konteinerių",
   "containers.backupStartFailed": "Nepavyko pradėti atsarginės kopijos kūrimo",
   "containers.updateSettingFailed": "Nepavyko pakeisti nustatymo",
-  "vms.loadFailed": "Nepavyko įkelti VM",
   "config.loadSettingsFailed": "Nepavyko įkelti dabartinių nustatymų",
   "dashboard.loadRunsFailed": "Nepavyko įkelti vykdymų",
 
   // VMs page
-  "vms.title": "Virtualiosios mašinos",
-  "vms.empty": "VM nerasta. Ar veikia libvirt/KVM?",
-  "vms.backupSelected": "Kopijuoti pažymėtas",
-  "vms.restoreSelected": "Atkurti pažymėtas (naujausią)",
   "vms.restoreSelectedConfirm": "Atkurti NAUJAUSIĄ pažymėtų VM kopiją? Kiekviena VM bus išjungta, jos disko failai pakeisti, o VM atkurta.",
-  "vms.notInstalledHint": "Šios VM jau nebeapibrėžtos pagrindiniame kompiuteryje, bet vis dar turi atsarginių kopijų. Atkurkite jas, kad jas susigrąžintumėte, arba naudokite Atsarginių kopijų skydelį, kad peržiūrėtumėte jų momentines kopijas.",
   "vms.removeEntry": "Pašalinti įrašą",
   "vms.removeEntryConfirm": "Pašalinti šios VM įrašą iš sąrašo? Jos atsarginės kopijos, jei tokių yra, netrinamos.",
   "vms.deleteBackupsConfirm": "Ištrinti visas šios VM atsargines kopijas? Momentinės kopijos negrįžtamai pašalinamos iš saugyklos ir jų nebus galima atkurti.",
-  "vms.discoverHint": "VM ištrinta iš Unraid (arba prarasta po pakartotinio diegimo)? Atkurkite jos atsarginio kopijavimo įrašą iš saugyklos, kad galėtumėte ją atkurti.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Atsisiųsti (.zip)",

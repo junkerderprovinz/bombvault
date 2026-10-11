@@ -112,7 +112,6 @@ export default [
             // Same 1152px cap. See PAGE_SHELL_RESPONSIVE in pageShell.ts.
             "Dashboard.tsx": "PAGE_SHELL_RESPONSIVE",
             "Containers.tsx": "PAGE_SHELL_RESPONSIVE",
-            "VMs.tsx": "PAGE_SHELL_RESPONSIVE",
             "Recovery.tsx": "PAGE_SHELL_RESPONSIVE",
             "Anomalies.tsx": "PAGE_SHELL_RESPONSIVE",
             "BackupEntry.tsx": "PAGE_SHELL_RESPONSIVE",

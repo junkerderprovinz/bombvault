@@ -1269,7 +1269,6 @@ const hi: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "अवधि",
   "containers.searchPlaceholder": "कंटेनर खोजें…",
-  "vms.searchPlaceholder": "VM खोजें…",
   "filter.all": "सभी",
   "filter.scheduled": "शेड्यूल किए गए",
   "filter.notScheduled": "शेड्यूल नहीं किए गए",
@@ -1472,21 +1471,14 @@ const hi: Partial<Translations> = {
   "containers.loadFailed": "कंटेनर लोड नहीं हो पाए",
   "containers.backupStartFailed": "बैकअप शुरू नहीं हो पाया",
   "containers.updateSettingFailed": "सेटिंग अपडेट नहीं हो पाई",
-  "vms.loadFailed": "VM लोड नहीं हो पाईं",
   "config.loadSettingsFailed": "मौजूदा सेटिंग्स लोड नहीं हो पाईं",
   "dashboard.loadRunsFailed": "रन लोड नहीं हो पाए",
 
   // VMs page
-  "vms.title": "वर्चुअल मशीनें",
-  "vms.empty": "कोई VM नहीं मिली। क्या libvirt/KVM चल रहा है?",
-  "vms.backupSelected": "चयनित का बैकअप लें",
-  "vms.restoreSelected": "चयनित को रीस्टोर करें (नवीनतम)",
   "vms.restoreSelectedConfirm": "चयनित VM का सबसे नया बैकअप रीस्टोर करें? हर VM बंद होगी, उसकी डिस्क फ़ाइलें बदली जाएँगी और VM रीस्टोर हो जाएगी।",
-  "vms.notInstalledHint": "ये VM अब होस्ट पर परिभाषित नहीं हैं लेकिन इनके बैकअप अभी भी मौजूद हैं। इन्हें रिकवर करने के लिए रीस्टोर करें, या इनके स्नैपशॉट देखने के लिए Backups पैनल का उपयोग करें।",
   "vms.removeEntry": "एंट्री हटाएँ",
   "vms.removeEntryConfirm": "इस VM की एंट्री सूची से हटाएँ? इसके बैकअप, अगर हैं, हटाए नहीं जाते।",
   "vms.deleteBackupsConfirm": "इस VM के सभी बैकअप हटाएँ? स्नैपशॉट रिपॉज़िटरी से स्थायी रूप से हटा दिए जाते हैं और इन्हें वापस नहीं लाया जा सकता।",
-  "vms.discoverHint": "VM Unraid से हटा दी गई (या फिर से इंस्टॉल करने के बाद खो गई)? इसे रीस्टोर करने के लिए स्टोरेज से इसकी बैकअप एंट्री फिर से बनाएँ।",
 
   // Flash (Unraid USB) backup
   "flash.download": "डाउनलोड करें (.zip)",

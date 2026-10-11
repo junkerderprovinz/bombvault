@@ -560,16 +560,10 @@ const es: Partial<Translations> = {
   "auth.disableCodePrompt": "Introduce un código actual para desactivarla",
   "auth.passwordMinHint": "one=Al menos {n} carácter.|many=Al menos {n} de caracteres.|other=Al menos {n} caracteres.",
   // VMs page
-  "vms.title": "Máquinas virtuales",
-  "vms.empty": "No se encontraron VMs. ¿Está activo libvirt/KVM?",
-  "vms.backupSelected": "Copiar selección",
-  "vms.restoreSelected": "Restaurar selección (última)",
   "vms.restoreSelectedConfirm": "¿Restaurar la ÚLTIMA copia de las VMs seleccionadas? Cada VM se apaga, sus archivos de disco se reemplazan y la VM se restaura.",
-  "vms.notInstalledHint": "Estas VMs ya no están definidas en el host pero aún tienen copias. Restáuralas para recuperarlas, o usa el panel de Copias para ver sus instantáneas.",
   "vms.removeEntry": "Eliminar entrada",
   "vms.removeEntryConfirm": "¿Quitar la entrada de esta VM de la lista? Sus copias, si las hay, no se eliminan.",
   "vms.deleteBackupsConfirm": "¿Eliminar todas las copias de esta VM? Las instantáneas se eliminan permanentemente del repositorio y no se puede deshacer.",
-  "vms.discoverHint": "¿Eliminaste la VM de Unraid (o se perdió tras reinstalar)? Reconstruye su entrada de copia desde el almacenamiento para poder restaurarla.",
 
   // Container / VM state badge labels
   "state.created":      "Creado",
@@ -863,7 +857,6 @@ const es: Partial<Translations> = {
   "containers.loadFailed": "Error al cargar los contenedores",
   "containers.backupStartFailed": "No se pudo iniciar la copia",
   "containers.updateSettingFailed": "No se pudo cambiar el ajuste",
-  "vms.loadFailed": "Error al cargar las VMs",
   "config.loadSettingsFailed": "No se pudieron cargar los ajustes actuales",
   "dashboard.loadRunsFailed": "Error al cargar las ejecuciones",
 
@@ -1285,7 +1278,6 @@ const es: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Duración",
   "containers.searchPlaceholder": "Buscar contenedores…",
-  "vms.searchPlaceholder": "Buscar VMs…",
   "filter.all": "Todos",
   "filter.scheduled": "Programado",
   "filter.notScheduled": "Sin programar",

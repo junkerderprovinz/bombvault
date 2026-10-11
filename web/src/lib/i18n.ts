@@ -1509,7 +1509,6 @@ export const en = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Duration",
   "containers.searchPlaceholder": "Search containers…",
-  "vms.searchPlaceholder": "Search VMs…",
   "filter.all": "All",
   "filter.scheduled": "Scheduled",
   "filter.notScheduled": "Not scheduled",
@@ -1753,21 +1752,14 @@ export const en = {
   "containers.loadFailed": "Failed to load containers",
   "containers.backupStartFailed": "Failed to start backup",
   "containers.updateSettingFailed": "Failed to update setting",
-  "vms.loadFailed": "Failed to load VMs",
   "config.loadSettingsFailed": "Could not load current settings",
   "dashboard.loadRunsFailed": "Failed to load runs",
 
   // VMs page
-  "vms.title": "Virtual Machines",
-  "vms.empty": "No VMs found. Is libvirt/KVM running?",
-  "vms.backupSelected": "Back up selected",
-  "vms.restoreSelected": "Restore selected (latest)",
   "vms.restoreSelectedConfirm": "Restore the LATEST backup of the selected VMs? Each VM is shut off, its disk files replaced, and the VM restored.",
-  "vms.notInstalledHint": "These VMs are no longer defined on the host but still have backups. Restore them to recover, or use the Backups panel to browse their snapshots.",
   "vms.removeEntry": "Remove entry",
   "vms.removeEntryConfirm": "Remove this VM's entry from the list? Its backups, if any, are not deleted.",
   "vms.deleteBackupsConfirm": "Delete all backups of this VM? The snapshots are permanently removed from the repository and cannot be undone.",
-  "vms.discoverHint": "VM deleted from Unraid (or lost after a reinstall)? Rebuild its backup entry from storage so you can restore it.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Download (.zip)",
@@ -5728,7 +5720,6 @@ export const de: Translations = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Dauer",
   "containers.searchPlaceholder": "Container suchen…",
-  "vms.searchPlaceholder": "VMs suchen…",
   "filter.all": "Alle",
   "filter.scheduled": "Geplant",
   "filter.notScheduled": "Nicht geplant",
@@ -5932,21 +5923,14 @@ export const de: Translations = {
   "containers.loadFailed": "Container konnten nicht geladen werden",
   "containers.backupStartFailed": "Sicherung konnte nicht gestartet werden",
   "containers.updateSettingFailed": "Einstellung konnte nicht geändert werden",
-  "vms.loadFailed": "VMs konnten nicht geladen werden",
   "config.loadSettingsFailed": "Aktuelle Einstellungen konnten nicht geladen werden",
   "dashboard.loadRunsFailed": "Läufe konnten nicht geladen werden",
 
   // VMs page
-  "vms.title": "Virtuelle Maschinen",
-  "vms.empty": "Keine VMs gefunden. Läuft libvirt/KVM?",
-  "vms.backupSelected": "Auswahl sichern",
-  "vms.restoreSelected": "Auswahl wiederherstellen (neuestes)",
   "vms.restoreSelectedConfirm": "Das NEUESTE Backup der ausgewählten VMs wiederherstellen? Jede VM wird heruntergefahren, ihre Disk-Dateien ersetzt und die VM wiederhergestellt.",
-  "vms.notInstalledHint": "Diese VMs sind nicht mehr auf dem Host definiert, haben aber noch Backups. Stelle sie wieder her oder sieh ihre Snapshots im Backups-Panel ein.",
   "vms.removeEntry": "Eintrag entfernen",
   "vms.removeEntryConfirm": "Den Eintrag dieser VM aus der Liste entfernen? Vorhandene Backups werden nicht gelöscht.",
   "vms.deleteBackupsConfirm": "Alle Backups dieser VM löschen? Die Snapshots werden dauerhaft aus dem Repository entfernt und können nicht wiederhergestellt werden.",
-  "vms.discoverHint": "VM aus Unraid gelöscht (oder nach einer Neuinstallation verloren)? Baue ihren Backup-Eintrag aus dem Speicher neu auf, um sie wiederherzustellen.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Download (.zip)",

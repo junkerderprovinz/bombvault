@@ -560,16 +560,10 @@ const ja: Partial<Translations> = {
   "auth.disableCodePrompt": "オフにするには現在のコードを入力してください",
   "auth.passwordMinHint": "{n} 文字以上にしてください。",
   // VMs page
-  "vms.title": "仮想マシン",
-  "vms.empty": "VM が見つかりません。libvirt/KVM は実行中ですか？",
-  "vms.backupSelected": "選択をバックアップ",
-  "vms.restoreSelected": "選択を復元（最新）",
   "vms.restoreSelectedConfirm": "選択した VM の最新バックアップを復元しますか？各 VM がシャットオフされ、ディスクファイルが置き換えられ、VM が復元されます。",
-  "vms.notInstalledHint": "これらの VM はホストで定義されていませんが、バックアップが残っています。復元するか、バックアップパネルでスナップショットを参照してください。",
   "vms.removeEntry": "エントリを削除",
   "vms.removeEntryConfirm": "このVMのエントリを一覧から削除しますか？バックアップがあっても削除されません。",
   "vms.deleteBackupsConfirm": "このVMのバックアップをすべて削除しますか？スナップショットはリポジトリから完全に削除され、元に戻せません。",
-  "vms.discoverHint": "Unraid から VM を削除した(または再インストールで失った)場合は、ストレージからバックアップエントリを再構築すると復元できます。",
 
   // Container / VM state badge labels
   "state.created":      "作成済み",
@@ -854,7 +848,6 @@ const ja: Partial<Translations> = {
   "containers.loadFailed": "コンテナを読み込めませんでした",
   "containers.backupStartFailed": "バックアップを開始できませんでした",
   "containers.updateSettingFailed": "設定を変更できませんでした",
-  "vms.loadFailed": "VM を読み込めませんでした",
   "config.loadSettingsFailed": "現在の設定を読み込めませんでした",
   "dashboard.loadRunsFailed": "実行履歴を読み込めませんでした",
 
@@ -1267,7 +1260,6 @@ const ja: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "所要時間",
   "containers.searchPlaceholder": "コンテナを検索…",
-  "vms.searchPlaceholder": "VM を検索…",
   "filter.all": "すべて",
   "filter.scheduled": "スケジュール済み",
   "filter.notScheduled": "未スケジュール",

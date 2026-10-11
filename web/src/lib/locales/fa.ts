@@ -1269,7 +1269,6 @@ const fa: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "مدت زمان",
   "containers.searchPlaceholder": "جست‌وجوی کانتینرها…",
-  "vms.searchPlaceholder": "جست‌وجوی ماشین‌های مجازی…",
   "filter.all": "همه",
   "filter.scheduled": "زمان‌بندی‌شده",
   "filter.notScheduled": "زمان‌بندی‌نشده",
@@ -1472,21 +1471,14 @@ const fa: Partial<Translations> = {
   "containers.loadFailed": "بارگذاری کانتینرها ناموفق بود",
   "containers.backupStartFailed": "شروع پشتیبان‌گیری ناموفق بود",
   "containers.updateSettingFailed": "تغییر تنظیم ناموفق بود",
-  "vms.loadFailed": "بارگذاری ماشین‌های مجازی ناموفق بود",
   "config.loadSettingsFailed": "تنظیمات فعلی بارگذاری نشد",
   "dashboard.loadRunsFailed": "بارگذاری اجراها ناموفق بود",
 
   // VMs page
-  "vms.title": "ماشین‌های مجازی",
-  "vms.empty": "هیچ ماشین مجازی‌ای پیدا نشد. آیا libvirt/KVM در حال اجراست؟",
-  "vms.backupSelected": "پشتیبان‌گیری از موارد انتخاب‌شده",
-  "vms.restoreSelected": "بازیابی موارد انتخاب‌شده (آخرین نسخه)",
   "vms.restoreSelectedConfirm": "جدیدترین پشتیبان ماشین‌های مجازی انتخاب‌شده بازیابی شود؟ هر ماشین مجازی خاموش می‌شود، فایل‌های دیسکش جایگزین می‌شوند و ماشین مجازی بازیابی می‌شود.",
-  "vms.notInstalledHint": "این ماشین‌های مجازی دیگر روی میزبان تعریف نشده‌اند اما همچنان پشتیبان دارند. برای بازیابی آن‌ها را بازگردانید، یا از پنل پشتیبان‌ها برای مرور اسنپ‌شات‌هایشان استفاده کنید.",
   "vms.removeEntry": "حذف رکورد",
   "vms.removeEntryConfirm": "رکورد این ماشین مجازی از فهرست حذف شود؟ پشتیبان‌های آن، در صورت وجود، حذف نمی‌شوند.",
   "vms.deleteBackupsConfirm": "همه پشتیبان‌های این ماشین مجازی حذف شوند؟ اسنپ‌شات‌ها برای همیشه از مخزن حذف می‌شوند و قابل بازگردانی نیستند.",
-  "vms.discoverHint": "ماشین مجازی از Unraid حذف شده (یا پس از نصب مجدد گم شده)؟ رکورد پشتیبان آن را از فضای ذخیره‌سازی بازسازی کنید تا بتوانید بازیابی‌اش کنید.",
 
   // Flash (Unraid USB) backup
   "flash.download": "دانلود (.zip)",

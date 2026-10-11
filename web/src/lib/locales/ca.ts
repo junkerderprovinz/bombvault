@@ -1269,7 +1269,6 @@ const ca: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Durada",
   "containers.searchPlaceholder": "Cerca contenidors…",
-  "vms.searchPlaceholder": "Cerca MV…",
   "filter.all": "Tots",
   "filter.scheduled": "Programats",
   "filter.notScheduled": "No programats",
@@ -1472,21 +1471,14 @@ const ca: Partial<Translations> = {
   "containers.loadFailed": "No s'han pogut carregar els contenidors",
   "containers.backupStartFailed": "No s'ha pogut iniciar la còpia",
   "containers.updateSettingFailed": "No s'ha pogut actualitzar l'opció",
-  "vms.loadFailed": "No s'han pogut carregar les MV",
   "config.loadSettingsFailed": "No s'ha pogut carregar la configuració actual",
   "dashboard.loadRunsFailed": "No s'han pogut carregar les execucions",
 
   // VMs page
-  "vms.title": "Màquines virtuals",
-  "vms.empty": "No s'ha trobat cap MV. S'està executant libvirt/KVM?",
-  "vms.backupSelected": "Fes còpia dels seleccionats",
-  "vms.restoreSelected": "Restaura els seleccionats (últim)",
   "vms.restoreSelectedConfirm": "Vols restaurar la còpia MÉS RECENT de les MV seleccionades? Cada MV s'atura, es substitueixen els seus fitxers de disc i la MV es restaura.",
-  "vms.notInstalledHint": "Aquestes MV ja no estan definides a l'amfitrió però encara tenen còpies. Restaura-les per recuperar-les, o fes servir el panell de Còpies per veure els seus instantanis.",
   "vms.removeEntry": "Elimina l'entrada",
   "vms.removeEntryConfirm": "Vols eliminar l'entrada d'aquesta MV de la llista? Les seves còpies, si n'hi ha, no s'eliminen.",
   "vms.deleteBackupsConfirm": "Vols eliminar totes les còpies d'aquesta MV? Els instantanis s'eliminen permanentment del repositori i no es poden recuperar.",
-  "vms.discoverHint": "MV eliminada d'Unraid (o perduda després d'una reinstal·lació)? Reconstrueix la seva entrada de còpia des de l'emmagatzematge per poder-la restaurar.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Descarrega (.zip)",

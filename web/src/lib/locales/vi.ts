@@ -560,16 +560,10 @@ const vi: Partial<Translations> = {
   "auth.disableCodePrompt": "Nhập một mã hiện tại để tắt",
   "auth.passwordMinHint": "Ít nhất {n} ký tự.",
   // VMs page
-  "vms.title": "Máy ảo",
-  "vms.empty": "Không tìm thấy VMs. libvirt/KVM có đang chạy không?",
-  "vms.backupSelected": "Sao lưu đã chọn",
-  "vms.restoreSelected": "Khôi phục đã chọn (mới nhất)",
   "vms.restoreSelectedConfirm": "Khôi phục bản sao lưu MỚI NHẤT của các VMs đã chọn? Mỗi VM sẽ bị tắt, các tệp đĩa được thay thế và VM được khôi phục.",
-  "vms.notInstalledHint": "Các VMs này không còn được định nghĩa trên máy chủ nhưng vẫn còn bản sao lưu. Khôi phục hoặc duyệt snapshot trong bảng Bản sao lưu.",
   "vms.removeEntry": "Xóa mục",
   "vms.removeEntryConfirm": "Xóa mục của VM này khỏi danh sách? Mọi bản sao lưu hiện có sẽ không bị xóa.",
   "vms.deleteBackupsConfirm": "Xóa tất cả bản sao lưu của VM này? Các snapshot sẽ bị xóa vĩnh viễn khỏi kho và không thể hoàn tác.",
-  "vms.discoverHint": "Đã xóa máy ảo khỏi Unraid (hoặc mất sau khi cài lại)? Dựng lại mục sao lưu của nó từ bộ lưu trữ để có thể khôi phục.",
 
   // Container / VM state badge labels
   "state.created":      "Đã tạo",
@@ -854,7 +848,6 @@ const vi: Partial<Translations> = {
   "containers.loadFailed": "Không tải được containers",
   "containers.backupStartFailed": "Không bắt đầu được việc sao lưu",
   "containers.updateSettingFailed": "Không cập nhật được cài đặt",
-  "vms.loadFailed": "Không tải được VMs",
   "config.loadSettingsFailed": "Không thể tải cài đặt hiện tại",
   "dashboard.loadRunsFailed": "Không tải được các lần chạy",
 
@@ -1278,7 +1271,6 @@ const vi: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Thời lượng",
   "containers.searchPlaceholder": "Tìm kiếm container…",
-  "vms.searchPlaceholder": "Tìm kiếm VM…",
   "filter.all": "Tất cả",
   "filter.scheduled": "Đã lên lịch",
   "filter.notScheduled": "Chưa lên lịch",

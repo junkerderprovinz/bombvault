@@ -560,16 +560,10 @@ const sv: Partial<Translations> = {
   "auth.disableCodePrompt": "Ange en aktuell kod för att slå av det",
   "auth.passwordMinHint": "Minst {n} tecken.",
   // VMs page
-  "vms.title": "Virtuella maskiner",
-  "vms.empty": "Inga VMs hittades. Körs libvirt/KVM?",
-  "vms.backupSelected": "Säkerhetskopiera markerade",
-  "vms.restoreSelected": "Återställ markerade (senaste)",
   "vms.restoreSelectedConfirm": "Återställa den SENASTE säkerhetskopian av markerade VMs? Varje VM stängs av, dess diskfiler ersätts och VM:en återställs.",
-  "vms.notInstalledHint": "Dessa VMs är inte längre definierade på värden men har fortfarande säkerhetskopior. Återställ dem eller bläddra bland deras ögonblicksbilder i panelen Säkerhetskopior.",
   "vms.removeEntry": "Ta bort post",
   "vms.removeEntryConfirm": "Ta bort den här VM:ens post från listan? Eventuella säkerhetskopior raderas inte.",
   "vms.deleteBackupsConfirm": "Ta bort alla säkerhetskopior för den här VM:en? Ögonblicksbilderna tas bort permanent från arkivet och kan inte ångras.",
-  "vms.discoverHint": "VM borttagen från Unraid (eller förlorad efter en ominstallation)? Bygg om dess säkerhetskopiepost från lagringen så att du kan återställa den.",
 
   // Container / VM state badge labels
   "state.created":      "Skapad",
@@ -863,7 +857,6 @@ const sv: Partial<Translations> = {
   "containers.loadFailed": "Kunde inte läsa in containrarna",
   "containers.backupStartFailed": "Kunde inte starta säkerhetskopieringen",
   "containers.updateSettingFailed": "Kunde inte uppdatera inställningen",
-  "vms.loadFailed": "Kunde inte läsa in VMs",
   "config.loadSettingsFailed": "Kunde inte läsa in de aktuella inställningarna",
   "dashboard.loadRunsFailed": "Kunde inte läsa in körningarna",
 
@@ -1287,7 +1280,6 @@ const sv: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Varaktighet",
   "containers.searchPlaceholder": "Sök containrar…",
-  "vms.searchPlaceholder": "Sök VM…",
   "filter.all": "Alla",
   "filter.scheduled": "Schemalagd",
   "filter.notScheduled": "Ej schemalagd",

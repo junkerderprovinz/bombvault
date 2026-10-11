@@ -560,16 +560,10 @@ const zh: Partial<Translations> = {
   "auth.disableCodePrompt": "输入当前验证码以关闭",
   "auth.passwordMinHint": "至少 {n} 个字符。",
   // VMs page
-  "vms.title": "虚拟机",
-  "vms.empty": "未找到虚拟机。libvirt/KVM 是否正在运行？",
-  "vms.backupSelected": "备份已选项",
-  "vms.restoreSelected": "还原已选项（最新）",
   "vms.restoreSelectedConfirm": "还原所选虚拟机的最新备份？每台虚拟机将关闭，磁盘文件被替换，虚拟机随后被还原。",
-  "vms.notInstalledHint": "这些虚拟机已不再在主机上定义，但仍有备份。请还原它们，或在备份面板中浏览其快照。",
   "vms.removeEntry": "移除条目",
   "vms.removeEntryConfirm": "将此虚拟机的条目从列表中移除？现有备份不会被删除。",
   "vms.deleteBackupsConfirm": "删除此虚拟机的所有备份？快照将从仓库中永久移除且无法撤销。",
-  "vms.discoverHint": "从 Unraid 中删除了虚拟机（或重装后丢失）？从存储中重建它的备份条目即可恢复。",
 
   // Container / VM state badge labels
   "state.created":      "已创建",
@@ -854,7 +848,6 @@ const zh: Partial<Translations> = {
   "containers.loadFailed": "加载容器失败",
   "containers.backupStartFailed": "启动备份失败",
   "containers.updateSettingFailed": "更新设置失败",
-  "vms.loadFailed": "加载虚拟机失败",
   "config.loadSettingsFailed": "无法加载当前设置",
   "dashboard.loadRunsFailed": "加载运行记录失败",
 
@@ -1278,7 +1271,6 @@ const zh: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "时长",
   "containers.searchPlaceholder": "搜索容器…",
-  "vms.searchPlaceholder": "搜索虚拟机…",
   "filter.all": "全部",
   "filter.scheduled": "已计划",
   "filter.notScheduled": "未计划",

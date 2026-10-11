@@ -557,16 +557,10 @@ const uk: Partial<Translations> = {
   "auth.disableCodePrompt": "Введи поточний код, щоб вимкнути",
   "auth.passwordMinHint": "one=Щонайменше {n} символ.|few=Щонайменше {n} символи.|many=Щонайменше {n} символів.|other=Щонайменше {n} символа.",
   // VMs page
-  "vms.title": "Віртуальні машини",
-  "vms.empty": "Віртуальних машин не знайдено. Чи запущено libvirt/KVM?",
-  "vms.backupSelected": "Створити копію вибраних",
-  "vms.restoreSelected": "Відновити вибрані (найновіше)",
   "vms.restoreSelectedConfirm": "Відновити НАЙНОВІШУ резервну копію вибраних VM? Кожна VM буде вимкнена, файли дисків замінено та VM відновлено.",
-  "vms.notInstalledHint": "Ці VM більше не визначені на хості, але резервні копії збереглися. Відновіть їх або відкрийте панель Резервних копій для перегляду знімків.",
   "vms.removeEntry": "Видалити запис",
   "vms.removeEntryConfirm": "Прибрати запис цієї ВМ зі списку? Наявні копії не видаляються.",
   "vms.deleteBackupsConfirm": "Видалити всі резервні копії цієї ВМ? Знімки будуть безповоротно видалені з репозиторію.",
-  "vms.discoverHint": "ВМ видалено з Unraid (або втрачено після перевстановлення)? Відновіть її резервний запис зі сховища, щоб відновити її.",
 
   // Container / VM state badge labels
   "state.created":      "Створено",
@@ -858,7 +852,6 @@ const uk: Partial<Translations> = {
   "containers.loadFailed": "Не вдалося завантажити контейнери",
   "containers.backupStartFailed": "Не вдалося запустити резервне копіювання",
   "containers.updateSettingFailed": "Не вдалося змінити налаштування",
-  "vms.loadFailed": "Не вдалося завантажити віртуальні машини",
   "config.loadSettingsFailed": "Не вдалося завантажити поточні налаштування",
   "dashboard.loadRunsFailed": "Не вдалося завантажити запуски",
 
@@ -1282,7 +1275,6 @@ const uk: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Тривалість",
   "containers.searchPlaceholder": "Пошук контейнерів…",
-  "vms.searchPlaceholder": "Пошук ВМ…",
   "filter.all": "Всі",
   "filter.scheduled": "Заплановано",
   "filter.notScheduled": "Без розкладу",

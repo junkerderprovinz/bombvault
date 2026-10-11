@@ -560,16 +560,10 @@ const ko: Partial<Translations> = {
   "auth.disableCodePrompt": "끄려면 현재 코드를 입력하세요",
   "auth.passwordMinHint": "{n}자 이상이어야 합니다.",
   // VMs page
-  "vms.title": "가상 머신",
-  "vms.empty": "VM을 찾을 수 없습니다. libvirt/KVM이 실행 중인가요?",
-  "vms.backupSelected": "선택 항목 백업",
-  "vms.restoreSelected": "선택 항목 복원 (최신)",
   "vms.restoreSelectedConfirm": "선택한 VM의 최신 백업을 복원하시겠습니까? 각 VM이 종료되고, 디스크 파일이 교체되며, VM이 복원됩니다.",
-  "vms.notInstalledHint": "이 VM은 더 이상 호스트에 정의되어 있지 않지만 백업이 있습니다. 복원하거나 백업 패널에서 스냅샷을 탐색하세요.",
   "vms.removeEntry": "항목 제거",
   "vms.removeEntryConfirm": "이 VM의 항목을 목록에서 제거할까요? 백업이 있어도 삭제되지 않습니다.",
   "vms.deleteBackupsConfirm": "이 VM의 모든 백업을 삭제하시겠습니까? 스냅샷이 저장소에서 영구적으로 제거되며 되돌릴 수 없습니다.",
-  "vms.discoverHint": "Unraid에서 VM을 삭제했나요(또는 재설치 후 잃어버렸나요)? 저장소에서 백업 항목을 재구성하면 복원할 수 있습니다.",
 
   // Container / VM state badge labels
   "state.created":      "생성됨",
@@ -854,7 +848,6 @@ const ko: Partial<Translations> = {
   "containers.loadFailed": "컨테이너를 불러오지 못했습니다",
   "containers.backupStartFailed": "백업을 시작하지 못했습니다",
   "containers.updateSettingFailed": "설정을 변경하지 못했습니다",
-  "vms.loadFailed": "VM을 불러오지 못했습니다",
   "config.loadSettingsFailed": "현재 설정을 불러올 수 없습니다",
   "dashboard.loadRunsFailed": "실행 기록을 불러오지 못했습니다",
 
@@ -1267,7 +1260,6 @@ const ko: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "소요 시간",
   "containers.searchPlaceholder": "컨테이너 검색…",
-  "vms.searchPlaceholder": "VM 검색…",
   "filter.all": "전체",
   "filter.scheduled": "예약됨",
   "filter.notScheduled": "예약 안 됨",

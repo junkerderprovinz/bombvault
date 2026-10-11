@@ -560,16 +560,10 @@ const th: Partial<Translations> = {
   "auth.disableCodePrompt": "กรอกรหัสปัจจุบันเพื่อปิด",
   "auth.passwordMinHint": "อย่างน้อย {n} ตัวอักษร",
   // VMs page
-  "vms.title": "เครื่องเสมือน",
-  "vms.empty": "ไม่พบ VMs libvirt/KVM กำลังทำงานอยู่หรือไม่?",
-  "vms.backupSelected": "สำรองข้อมูลที่เลือก",
-  "vms.restoreSelected": "กู้คืนที่เลือก (ล่าสุด)",
   "vms.restoreSelectedConfirm": "กู้คืนการสำรองข้อมูลล่าสุดของ VMs ที่เลือก? แต่ละ VM จะถูกปิด แทนที่ไฟล์ดิสก์ และกู้คืน",
-  "vms.notInstalledHint": "VMs เหล่านี้ไม่ได้กำหนดบนโฮสต์แล้ว แต่ยังมีการสำรองข้อมูลอยู่ กู้คืนหรือเรียกดูสแนปช็อตในแผงการสำรองข้อมูล",
   "vms.removeEntry": "ลบรายการ",
   "vms.removeEntryConfirm": "นำรายการของ VM นี้ออกจากรายการหรือไม่? ข้อมูลสำรองที่มีอยู่จะไม่ถูกลบ",
   "vms.deleteBackupsConfirm": "ลบการสำรองข้อมูลทั้งหมดของ VM นี้? สแนปช็อตจะถูกลบออกจากรีพอสิทอรีอย่างถาวรและไม่สามารถยกเลิกได้",
-  "vms.discoverHint": "ลบ VM ออกจาก Unraid แล้ว (หรือหายไปหลังติดตั้งใหม่)? สร้างรายการสำรองข้อมูลของมันใหม่จากที่จัดเก็บเพื่อให้คุณกู้คืนได้",
 
   // Container / VM state badge labels
   "state.created":      "สร้างแล้ว",
@@ -863,7 +857,6 @@ const th: Partial<Translations> = {
   "containers.loadFailed": "โหลด Containers ไม่สำเร็จ",
   "containers.backupStartFailed": "เริ่มการสำรองข้อมูลไม่สำเร็จ",
   "containers.updateSettingFailed": "อัปเดตการตั้งค่าไม่สำเร็จ",
-  "vms.loadFailed": "โหลด VMs ไม่สำเร็จ",
   "config.loadSettingsFailed": "ไม่สามารถโหลดการตั้งค่าปัจจุบันได้",
   "dashboard.loadRunsFailed": "โหลดการทำงานไม่สำเร็จ",
 
@@ -1290,7 +1283,6 @@ const th: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "ระยะเวลา",
   "containers.searchPlaceholder": "ค้นหาคอนเทนเนอร์…",
-  "vms.searchPlaceholder": "ค้นหา VM…",
   "filter.all": "ทั้งหมด",
   "filter.scheduled": "มีตารางเวลา",
   "filter.notScheduled": "ไม่มีตารางเวลา",

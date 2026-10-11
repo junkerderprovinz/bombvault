@@ -554,16 +554,10 @@ const nl: Partial<Translations> = {
   "auth.disableCodePrompt": "Voer een actuele code in om het uit te schakelen",
   "auth.passwordMinHint": "one=Minimaal {n} teken.|other=Minimaal {n} tekens.",
   // VMs page
-  "vms.title": "Virtuele machines",
-  "vms.empty": "Geen VM's gevonden. Draait libvirt/KVM?",
-  "vms.backupSelected": "Selectie back-uppen",
-  "vms.restoreSelected": "Selectie herstellen (nieuwste)",
   "vms.restoreSelectedConfirm": "De NIEUWSTE back-up van de geselecteerde VM's herstellen? Elke VM wordt uitgeschakeld, de schijfbestanden vervangen en de VM hersteld.",
-  "vms.notInstalledHint": "Deze VM's zijn niet meer gedefinieerd op de host, maar hebben nog back-ups. Herstel ze of gebruik het back-uppaneel om hun snapshots te bekijken.",
   "vms.removeEntry": "Vermelding verwijderen",
   "vms.removeEntryConfirm": "De vermelding van deze VM uit de lijst verwijderen? Eventuele back-ups worden niet verwijderd.",
   "vms.deleteBackupsConfirm": "Alle back-ups van deze VM verwijderen? De snapshots worden permanent uit de repository verwijderd en kunnen niet ongedaan worden gemaakt.",
-  "vms.discoverHint": "VM verwijderd uit Unraid (of kwijt na een herinstallatie)? Bouw de back-upvermelding opnieuw op vanuit de opslag om hem te kunnen herstellen.",
 
   // Container / VM state badge labels
   "state.created":      "Aangemaakt",
@@ -857,7 +851,6 @@ const nl: Partial<Translations> = {
   "containers.loadFailed": "Kon de containers niet laden",
   "containers.backupStartFailed": "Kon de back-up niet starten",
   "containers.updateSettingFailed": "Kon de instelling niet bijwerken",
-  "vms.loadFailed": "Kon de VM's niet laden",
   "config.loadSettingsFailed": "Kon de huidige instellingen niet laden",
   "dashboard.loadRunsFailed": "Kon de uitvoeringen niet laden",
 
@@ -1269,7 +1262,6 @@ const nl: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Duur",
   "containers.searchPlaceholder": "Containers zoeken…",
-  "vms.searchPlaceholder": "VM's zoeken…",
   "filter.all": "Alle",
   "filter.scheduled": "Gepland",
   "filter.notScheduled": "Niet gepland",

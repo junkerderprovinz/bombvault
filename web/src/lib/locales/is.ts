@@ -1269,7 +1269,6 @@ const is: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Tímalengd",
   "containers.searchPlaceholder": "Leita að gámum…",
-  "vms.searchPlaceholder": "Leita að sýndarvélum…",
   "filter.all": "Allir",
   "filter.scheduled": "Áætlað",
   "filter.notScheduled": "Ekki áætlað",
@@ -1472,21 +1471,14 @@ const is: Partial<Translations> = {
   "containers.loadFailed": "Ekki tókst að hlaða gámum",
   "containers.backupStartFailed": "Ekki tókst að hefja afritun",
   "containers.updateSettingFailed": "Ekki tókst að uppfæra stillinguna",
-  "vms.loadFailed": "Ekki tókst að hlaða sýndarvélum",
   "config.loadSettingsFailed": "Ekki tókst að hlaða núverandi stillingum",
   "dashboard.loadRunsFailed": "Ekki tókst að hlaða keyrslum",
 
   // VMs page
-  "vms.title": "Sýndarvélar",
-  "vms.empty": "Engar sýndarvélar fundust. Er libvirt/KVM í keyrslu?",
-  "vms.backupSelected": "Afrita valdar",
-  "vms.restoreSelected": "Endurheimta valdar (nýjasta)",
   "vms.restoreSelectedConfirm": "Endurheimta NÝJASTA afritið af völdum sýndarvélum? Hver sýndarvél er slökkt, diskaskrám hennar skipt út og sýndarvélin endurheimt.",
-  "vms.notInstalledHint": "Þessar sýndarvélar eru ekki lengur skilgreindar á hýslinum en eiga samt afrit. Endurheimtu þær til að ná þeim aftur, eða notaðu Afrit-spjaldið til að skoða snapshottin þeirra.",
   "vms.removeEntry": "Fjarlægja færslu",
   "vms.removeEntryConfirm": "Fjarlægja færslu þessarar sýndarvélar úr listanum? Afritum hennar, ef einhver eru, er ekki eytt.",
   "vms.deleteBackupsConfirm": "Eyða öllum afritum þessarar sýndarvélar? Snapshottin eru fjarlægð varanlega úr geymslusafninu og verður ekki afturkallað.",
-  "vms.discoverHint": "Sýndarvél eytt úr Unraid (eða týnd eftir endurinnsetningu)? Endurbyggðu afritafærslu hennar úr geymslunni svo þú getir endurheimt hana.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Sækja (.zip)",

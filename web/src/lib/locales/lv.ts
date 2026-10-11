@@ -1269,7 +1269,6 @@ const lv: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Ilgums",
   "containers.searchPlaceholder": "Meklēt konteinerus…",
-  "vms.searchPlaceholder": "Meklēt VM…",
   "filter.all": "Visi",
   "filter.scheduled": "Ieplānoti",
   "filter.notScheduled": "Nav ieplānoti",
@@ -1472,21 +1471,14 @@ const lv: Partial<Translations> = {
   "containers.loadFailed": "Neizdevās ielādēt konteinerus",
   "containers.backupStartFailed": "Neizdevās sākt rezerves kopēšanu",
   "containers.updateSettingFailed": "Neizdevās mainīt iestatījumu",
-  "vms.loadFailed": "Neizdevās ielādēt VM",
   "config.loadSettingsFailed": "Neizdevās ielādēt pašreizējos iestatījumus",
   "dashboard.loadRunsFailed": "Neizdevās ielādēt izpildījumus",
 
   // VMs page
-  "vms.title": "Virtuālās mašīnas",
-  "vms.empty": "VM nav atrastas. Vai darbojas libvirt/KVM?",
-  "vms.backupSelected": "Dublēt atlasītās",
-  "vms.restoreSelected": "Atjaunot atlasītās (jaunāko)",
   "vms.restoreSelectedConfirm": "Atjaunot atlasīto VM JAUNĀKO rezerves kopiju? Katra VM tiks izslēgta, tās diska faili aizstāti un VM atjaunota.",
-  "vms.notInstalledHint": "Šīs VM vairs nav definētas saimniekdatorā, bet joprojām satur rezerves kopijas. Atjaunojiet tās, lai tās atgūtu, vai izmantojiet Rezerves kopiju paneli, lai pārlūkotu to momentuzņēmumus.",
   "vms.removeEntry": "Noņemt ierakstu",
   "vms.removeEntryConfirm": "Noņemt šīs VM ierakstu no saraksta? Tās rezerves kopijas, ja tādas ir, netiek dzēstas.",
   "vms.deleteBackupsConfirm": "Dzēst visas šīs VM rezerves kopijas? Momentuzņēmumi tiek neatgriezeniski noņemti no repozitorija, un tos nevarēs atjaunot.",
-  "vms.discoverHint": "VM izdzēsta no Unraid (vai pazaudēta pēc atkārtotas instalēšanas)? Atjaunojiet tās rezerves kopēšanas ierakstu no krātuves, lai varētu to atjaunot.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Lejupielādēt (.zip)",

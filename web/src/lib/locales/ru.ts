@@ -554,16 +554,10 @@ const ru: Partial<Translations> = {
   "auth.disableCodePrompt": "Введите текущий код, чтобы выключить",
   "auth.passwordMinHint": "one=Не менее {n} символа.|few=Не менее {n} символов.|many=Не менее {n} символов.|other=Не менее {n} символа.",
   // VMs page
-  "vms.title": "Виртуальные машины",
-  "vms.empty": "Виртуальных машин не найдено. Запущен ли libvirt/KVM?",
-  "vms.backupSelected": "Создать копию выбранных",
-  "vms.restoreSelected": "Восстановить выбранные (последнее)",
   "vms.restoreSelectedConfirm": "Восстановить ПОСЛЕДНЮЮ резервную копию выбранных VM? Каждая VM будет выключена, файлы дисков заменены и VM восстановлена.",
-  "vms.notInstalledHint": "Эти VM больше не определены на хосте, но резервные копии сохранились. Восстановите их или откройте панель Резервных копий для просмотра снимков.",
   "vms.removeEntry": "Удалить запись",
   "vms.removeEntryConfirm": "Убрать запись этой ВМ из списка? Имеющиеся копии не удаляются.",
   "vms.deleteBackupsConfirm": "Удалить все резервные копии этой ВМ? Снимки будут безвозвратно удалены из репозитория.",
-  "vms.discoverHint": "ВМ удалена из Unraid (или потеряна после переустановки)? Пересоберите её запись резервной копии из хранилища, чтобы восстановить.",
 
   // Container / VM state badge labels
   "state.created":      "Создан",
@@ -855,7 +849,6 @@ const ru: Partial<Translations> = {
   "containers.loadFailed": "Не удалось загрузить контейнеры",
   "containers.backupStartFailed": "Не удалось запустить резервное копирование",
   "containers.updateSettingFailed": "Не удалось изменить настройку",
-  "vms.loadFailed": "Не удалось загрузить виртуальные машины",
   "config.loadSettingsFailed": "Не удалось загрузить текущие настройки",
   "dashboard.loadRunsFailed": "Не удалось загрузить запуски",
 
@@ -1267,7 +1260,6 @@ const ru: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Длительность",
   "containers.searchPlaceholder": "Поиск контейнеров…",
-  "vms.searchPlaceholder": "Поиск ВМ…",
   "filter.all": "Все",
   "filter.scheduled": "Запланировано",
   "filter.notScheduled": "Без расписания",

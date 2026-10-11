@@ -1269,7 +1269,6 @@ const id: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Durasi",
   "containers.searchPlaceholder": "Cari container…",
-  "vms.searchPlaceholder": "Cari VM…",
   "filter.all": "Semua",
   "filter.scheduled": "Terjadwal",
   "filter.notScheduled": "Tidak terjadwal",
@@ -1472,21 +1471,14 @@ const id: Partial<Translations> = {
   "containers.loadFailed": "Container gagal dimuat",
   "containers.backupStartFailed": "Pencadangan gagal dimulai",
   "containers.updateSettingFailed": "Pengaturan gagal diperbarui",
-  "vms.loadFailed": "VM gagal dimuat",
   "config.loadSettingsFailed": "Pengaturan saat ini tidak dapat dimuat",
   "dashboard.loadRunsFailed": "Eksekusi gagal dimuat",
 
   // VMs page
-  "vms.title": "Mesin Virtual",
-  "vms.empty": "Tidak ada VM yang ditemukan. Apakah libvirt/KVM berjalan?",
-  "vms.backupSelected": "Cadangkan yang dipilih",
-  "vms.restoreSelected": "Pulihkan yang dipilih (terbaru)",
   "vms.restoreSelectedConfirm": "Pulihkan cadangan TERBARU dari VM yang dipilih? Setiap VM akan dimatikan, file disknya diganti, dan VM dipulihkan.",
-  "vms.notInstalledHint": "VM ini tidak lagi didefinisikan di host tetapi masih memiliki cadangan. Pulihkan untuk mengembalikannya, atau gunakan panel Cadangan untuk menjelajahi snapshot-nya.",
   "vms.removeEntry": "Hapus entri",
   "vms.removeEntryConfirm": "Hapus entri VM ini dari daftar? Cadangannya, jika ada, tidak dihapus.",
   "vms.deleteBackupsConfirm": "Hapus semua cadangan VM ini? Snapshot dihapus secara permanen dari repositori dan tidak dapat dipulihkan.",
-  "vms.discoverHint": "VM dihapus dari Unraid (atau hilang setelah pemasangan ulang)? Bangun kembali entri cadangannya dari penyimpanan agar Anda dapat memulihkannya.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Unduh (.zip)",

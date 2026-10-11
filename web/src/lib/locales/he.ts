@@ -560,16 +560,10 @@ const he: Partial<Translations> = {
   "auth.disableCodePrompt": "הזן קוד עדכני כדי לכבות",
   "auth.passwordMinHint": "one=לפחות תו אחד.|two=לפחות שני תווים.|other=לפחות {n} תווים.",
   // VMs page
-  "vms.title": "מכונות וירטואליות",
-  "vms.empty": "לא נמצאו VMs. האם libvirt/KVM פועל?",
-  "vms.backupSelected": "גבה את הנבחרים",
-  "vms.restoreSelected": "שחזר את הנבחרים (אחרון)",
   "vms.restoreSelectedConfirm": "לשחזר את הגיבוי האחרון של ה-VMs הנבחרים? כל VM יכובה, קבצי הדיסק יוחלפו וה-VM ישוחזר.",
-  "vms.notInstalledHint": "ה-VMs האלו אינם מוגדרים עוד במארח אך עדיין קיימים להם גיבויים. שחזר אותם או עיין ב-snapshots שלהם בלוח הגיבויים.",
   "vms.removeEntry": "הסר רשומה",
   "vms.removeEntryConfirm": "להסיר את הרשומה של מכונה זו מהרשימה? גיבויים קיימים לא יימחקו.",
   "vms.deleteBackupsConfirm": "למחוק את כל הגיבויים של המכונה הווירטואלית הזו? ה-snapshots יוסרו לצמיתות מהמאגר ולא ניתן לבטל פעולה זו.",
-  "vms.discoverHint": "המכונה הווירטואלית נמחקה מ-Unraid (או אבדה לאחר התקנה מחדש)? בנה מחדש את רשומת הגיבוי שלה מהאחסון כדי לשחזר אותה.",
 
   // Container / VM state badge labels
   "state.created":      "נוצר",
@@ -863,7 +857,6 @@ const he: Partial<Translations> = {
   "containers.loadFailed": "טעינת המכלים נכשלה",
   "containers.backupStartFailed": "לא ניתן היה להתחיל את הגיבוי",
   "containers.updateSettingFailed": "לא ניתן היה לעדכן את ההגדרה",
-  "vms.loadFailed": "טעינת ה-VMs נכשלה",
   "config.loadSettingsFailed": "לא ניתן היה לטעון את ההגדרות הנוכחיות",
   "dashboard.loadRunsFailed": "טעינת ההרצות נכשלה",
 
@@ -1276,7 +1269,6 @@ const he: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "משך",
   "containers.searchPlaceholder": "חיפוש מכלים…",
-  "vms.searchPlaceholder": "חיפוש מכונות וירטואליות…",
   "filter.all": "הכל",
   "filter.scheduled": "מתוזמן",
   "filter.notScheduled": "לא מתוזמן",

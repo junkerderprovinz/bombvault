@@ -557,16 +557,10 @@ const pt: Partial<Translations> = {
   "auth.disableCodePrompt": "Introduz um código atual para a desligar",
   "auth.passwordMinHint": "one=Pelo menos {n} caractere.|many=Pelo menos {n} de caracteres.|other=Pelo menos {n} caracteres.",
   // VMs page
-  "vms.title": "Máquinas virtuais",
-  "vms.empty": "Nenhuma VM encontrada. O libvirt/KVM está em execução?",
-  "vms.backupSelected": "Fazer backup da seleção",
-  "vms.restoreSelected": "Restaurar seleção (último)",
   "vms.restoreSelectedConfirm": "Restaurar o ÚLTIMO backup das VMs selecionadas? Cada VM é desligada, os seus ficheiros de disco substituídos e a VM restaurada.",
-  "vms.notInstalledHint": "Estas VMs já não estão definidas no host mas ainda têm backups. Restaure-as para as recuperar, ou use o painel de Backups para ver os seus instantâneos.",
   "vms.removeEntry": "Remover entrada",
   "vms.removeEntryConfirm": "Remover a entrada desta VM da lista? Os backups, se houver, não são excluídos.",
   "vms.deleteBackupsConfirm": "Eliminar todos os backups desta VM? Os instantâneos são removidos permanentemente do repositório e a ação não pode ser revertida.",
-  "vms.discoverHint": "VM excluída do Unraid (ou perdida após uma reinstalação)? Reconstrua sua entrada de backup a partir do armazenamento para poder restaurá-la.",
 
   // Container / VM state badge labels
   "state.created":      "Criado",
@@ -860,7 +854,6 @@ const pt: Partial<Translations> = {
   "containers.loadFailed": "Falha ao carregar os containers",
   "containers.backupStartFailed": "Falha ao iniciar o backup",
   "containers.updateSettingFailed": "Falha ao atualizar a definição",
-  "vms.loadFailed": "Falha ao carregar as VMs",
   "config.loadSettingsFailed": "Não foi possível carregar as definições atuais",
   "dashboard.loadRunsFailed": "Falha ao carregar as execuções",
 
@@ -1272,7 +1265,6 @@ const pt: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Duração",
   "containers.searchPlaceholder": "Procurar contentores…",
-  "vms.searchPlaceholder": "Procurar VMs…",
   "filter.all": "Todos",
   "filter.scheduled": "Agendado",
   "filter.notScheduled": "Não agendado",

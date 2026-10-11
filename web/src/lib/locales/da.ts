@@ -560,16 +560,10 @@ const da: Partial<Translations> = {
   "auth.disableCodePrompt": "Indtast en aktuel kode for at slå det fra",
   "auth.passwordMinHint": "Mindst {n} tegn.",
   // VMs page
-  "vms.title": "Virtuelle maskiner",
-  "vms.empty": "Ingen VMs fundet. Kører libvirt/KVM?",
-  "vms.backupSelected": "Sikkerhedskopier valgte",
-  "vms.restoreSelected": "Gendan valgte (nyeste)",
   "vms.restoreSelectedConfirm": "Gendanne den NYESTE sikkerhedskopi af de valgte VMs? Hver VM slukkes, dens diskfiler erstattes og VM'en gendannes.",
-  "vms.notInstalledHint": "Disse VMs er ikke længere defineret på værten, men har stadig sikkerhedskopier. Gendan dem, eller gennemse deres øjebliksbilleder i panelet Sikkerhedskopier.",
   "vms.removeEntry": "Fjern post",
   "vms.removeEntryConfirm": "Fjern denne VM's post fra listen? Eventuelle sikkerhedskopier slettes ikke.",
   "vms.deleteBackupsConfirm": "Slet alle sikkerhedskopier af denne VM? Øjebliksbillederne fjernes permanent fra arkivet og kan ikke fortrydes.",
-  "vms.discoverHint": "VM slettet fra Unraid (eller mistet efter geninstallation)? Genopbyg dens sikkerhedskopipost fra lageret, så du kan gendanne den.",
 
   // Container / VM state badge labels
   "state.created":      "Oprettet",
@@ -863,7 +857,6 @@ const da: Partial<Translations> = {
   "containers.loadFailed": "Kunne ikke indlæse containerne",
   "containers.backupStartFailed": "Kunne ikke starte sikkerhedskopieringen",
   "containers.updateSettingFailed": "Kunne ikke opdatere indstillingen",
-  "vms.loadFailed": "Kunne ikke indlæse VMs",
   "config.loadSettingsFailed": "Kunne ikke indlæse de aktuelle indstillinger",
   "dashboard.loadRunsFailed": "Kunne ikke indlæse kørslerne",
 
@@ -1287,7 +1280,6 @@ const da: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Varighed",
   "containers.searchPlaceholder": "Søg containere…",
-  "vms.searchPlaceholder": "Søg VM'er…",
   "filter.all": "Alle",
   "filter.scheduled": "Planlagt",
   "filter.notScheduled": "Ikke planlagt",

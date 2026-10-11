@@ -560,16 +560,10 @@ const fr: Partial<Translations> = {
   "auth.disableCodePrompt": "Saisissez un code actuel pour la désactiver",
   "auth.passwordMinHint": "one=Au moins {n} caractère.|many=Au moins {n} caractères.|other=Au moins {n} caractères.",
   // VMs page
-  "vms.title": "Machines virtuelles",
-  "vms.empty": "Aucune VM trouvée. libvirt/KVM est-il actif ?",
-  "vms.backupSelected": "Sauvegarder la sélection",
-  "vms.restoreSelected": "Restaurer la sélection (dernier)",
   "vms.restoreSelectedConfirm": "Restaurer la DERNIÈRE sauvegarde des VMs sélectionnées ? Chaque VM est arrêtée, ses fichiers disque remplacés et la VM restaurée.",
-  "vms.notInstalledHint": "Ces VMs ne sont plus définies sur l'hôte mais ont encore des sauvegardes. Restaurez-les pour les récupérer, ou utilisez le panneau Sauvegardes pour parcourir leurs instantanés.",
   "vms.removeEntry": "Supprimer l'entrée",
   "vms.removeEntryConfirm": "Retirer l'entrée de cette VM de la liste ? Ses sauvegardes éventuelles ne sont pas supprimées.",
   "vms.deleteBackupsConfirm": "Supprimer toutes les sauvegardes de cette VM ? Les instantanés sont supprimés définitivement du dépôt et cette action est irréversible.",
-  "vms.discoverHint": "VM supprimée d'Unraid (ou perdue après une réinstallation) ? Reconstruisez son entrée de sauvegarde depuis le stockage pour pouvoir la restaurer.",
 
   // Container / VM state badge labels
   "state.created":      "Créé",
@@ -863,7 +857,6 @@ const fr: Partial<Translations> = {
   "containers.loadFailed": "Échec du chargement des conteneurs",
   "containers.backupStartFailed": "Échec du démarrage de la sauvegarde",
   "containers.updateSettingFailed": "Échec de la mise à jour du paramètre",
-  "vms.loadFailed": "Échec du chargement des VMs",
   "config.loadSettingsFailed": "Impossible de charger les paramètres actuels",
   "dashboard.loadRunsFailed": "Échec du chargement des exécutions",
 
@@ -1276,7 +1269,6 @@ const fr: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Durée",
   "containers.searchPlaceholder": "Rechercher des conteneurs…",
-  "vms.searchPlaceholder": "Rechercher des VMs…",
   "filter.all": "Tous",
   "filter.scheduled": "Planifié",
   "filter.notScheduled": "Non planifié",

@@ -1269,7 +1269,6 @@ const hr: Partial<Translations> = {
   // Domain filters + dashboard duration
   "dashboard.duration": "Trajanje",
   "containers.searchPlaceholder": "Pretraži kontejnere…",
-  "vms.searchPlaceholder": "Pretraži VM-ove…",
   "filter.all": "Svi",
   "filter.scheduled": "Zakazano",
   "filter.notScheduled": "Nije zakazano",
@@ -1472,21 +1471,14 @@ const hr: Partial<Translations> = {
   "containers.loadFailed": "Kontejneri se nisu mogli učitati",
   "containers.backupStartFailed": "Sigurnosna kopija se nije mogla pokrenuti",
   "containers.updateSettingFailed": "Postavka se nije mogla promijeniti",
-  "vms.loadFailed": "VM-ovi se nisu mogli učitati",
   "config.loadSettingsFailed": "Trenutne postavke se nisu mogle učitati",
   "dashboard.loadRunsFailed": "Izvršavanja se nisu mogla učitati",
 
   // VMs page
-  "vms.title": "Virtualni strojevi",
-  "vms.empty": "Nije pronađen nijedan VM. Radi li libvirt/KVM?",
-  "vms.backupSelected": "Sigurnosno kopiraj odabrane",
-  "vms.restoreSelected": "Vrati odabrane (najnovije)",
   "vms.restoreSelectedConfirm": "Vratiti NAJNOVIJU sigurnosnu kopiju odabranih VM-ova? Svaki VM se gasi, njegove diskovne datoteke zamjenjuju i VM se vraća.",
-  "vms.notInstalledHint": "Ovi VM-ovi više nisu definirani na hostu, ali još imaju sigurnosne kopije. Vratite ih za oporavak, ili koristite panel Sigurnosnih kopija za pregled njihovih snimki.",
   "vms.removeEntry": "Ukloni unos",
   "vms.removeEntryConfirm": "Ukloniti unos ovog VM-a s popisa? Njegove sigurnosne kopije, ako postoje, ne brišu se.",
   "vms.deleteBackupsConfirm": "Izbrisati sve sigurnosne kopije ovog VM-a? Snimke se trajno uklanjaju iz repozitorija i ne mogu se vratiti.",
-  "vms.discoverHint": "VM izbrisan iz Unraida (ili izgubljen nakon ponovne instalacije)? Ponovno izgradite njegov unos sigurnosne kopije iz pohrane kako biste ga mogli vratiti.",
 
   // Flash (Unraid USB) backup
   "flash.download": "Preuzmi (.zip)",

@@ -4015,18 +4015,6 @@ export function setVMScheduleCadence(
   });
 }
 
-/**
- * POST /api/vms/schedule-include — one-click set the "include in schedule" flag
- * for every VM on the host (true = include all, false = exclude all). Excluding
- * also takes not-installed entries off the schedule (#232).
- */
-export function setVMIncludeAll(include: boolean): Promise<OkEnvelope> {
-  return fetchJSON("/api/vms/schedule-include", {
-    method: "POST",
-    body: JSON.stringify({ include }),
-  });
-}
-
 /** PATCH /api/vms/{name} — set the backup method ("graceful" | "live"). */
 export function setVMMethod(name: string, method: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {

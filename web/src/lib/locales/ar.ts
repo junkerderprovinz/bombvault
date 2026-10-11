@@ -560,16 +560,10 @@ const ar: Partial<Translations> = {
   "auth.disableCodePrompt": "أدخل رمزًا حاليًا للتعطيل",
   "auth.passwordMinHint": "zero={n} حرف على الأقل.|one=حرف واحد على الأقل.|two=حرفان على الأقل.|few={n} أحرف على الأقل.|many={n} حرفاً على الأقل.|other={n} حرف على الأقل.",
   // VMs page
-  "vms.title": "الآلات الافتراضية",
-  "vms.empty": "لم يُعثر على VMs. هل libvirt/KVM يعمل؟",
-  "vms.backupSelected": "نسخ المحدَّد احتياطياً",
-  "vms.restoreSelected": "استعادة المحدَّد (الأحدث)",
   "vms.restoreSelectedConfirm": "استعادة أحدث نسخة احتياطية للـ VMs المحددة؟ سيُوقف كل VM وتُستبدل ملفات القرص ويُستعاد.",
-  "vms.notInstalledHint": "هذه الـ VMs لم تعد محددة على المضيف لكن لا تزال لديها نسخ احتياطية. استعدها أو تصفح لقطاتها في لوحة النسخ الاحتياطية.",
   "vms.removeEntry": "إزالة الإدخال",
   "vms.removeEntryConfirm": "إزالة إدخال هذا الجهاز الظاهري من القائمة؟ لن تُحذف أي نسخ احتياطية موجودة.",
   "vms.deleteBackupsConfirm": "حذف جميع النسخ الاحتياطية لهذا الجهاز الظاهري؟ ستُزال اللقطات نهائياً من المستودع ولا يمكن التراجع عن ذلك.",
-  "vms.discoverHint": "هل حُذفت الجهاز الظاهري من Unraid (أو فُقد بعد إعادة التثبيت)؟ أعد بناء إدخال النسخ الاحتياطي من التخزين لاستعادته.",
 
   // Container / VM state badge labels
   "state.created":      "تم الإنشاء",
@@ -863,7 +857,6 @@ const ar: Partial<Translations> = {
   "containers.loadFailed": "فشل تحميل الحاويات",
   "containers.backupStartFailed": "فشل بدء النسخ الاحتياطي",
   "containers.updateSettingFailed": "فشل تحديث الإعداد",
-  "vms.loadFailed": "فشل تحميل VMs",
   "config.loadSettingsFailed": "تعذّر تحميل الإعدادات الحالية",
   "dashboard.loadRunsFailed": "فشل تحميل التشغيلات",
 
@@ -1290,7 +1283,6 @@ const ar: Partial<Translations> = {
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "المدة",
   "containers.searchPlaceholder": "بحث في الحاويات…",
-  "vms.searchPlaceholder": "بحث في الأجهزة الافتراضية…",
   "filter.all": "الكل",
   "filter.scheduled": "مجدوَل",
   "filter.notScheduled": "غير مجدوَل",
