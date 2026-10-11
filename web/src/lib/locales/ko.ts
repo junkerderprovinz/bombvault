@@ -150,6 +150,7 @@ const ko: Partial<Translations> = {
   "backup.cancelTooLate": "{name} 백업은 이미 복원 지점을 기록했고 컨테이너를 다시 시작하는 중입니다. 더 이상 취소할 수 없습니다.",
   "backup.cancelNotRunning": "{name} 백업은 이미 끝났습니다. 취소할 것이 없었습니다.",
   "runReason.cancelled": "사용자가 취소함",
+  "runReason.ownDataFolder": "BombVault 자체 데이터 폴더나 그것을 포함하는 폴더에 쓰게 됩니다. 다른 폴더를 선택하세요.",
   "restore.cancelConfirmSafe": "복원을 취소할까요? 일부만 기록된 출력 폴더는 그대로 유지됩니다.",
   "restore.cancelConfirmInPlace": "{name}이(가) 복원 중입니다. 취소하면 이 복원이 불완전한 상태로 남습니다. 다시 실행해야 할 수도 있습니다. 그래도 취소할까요?",
   "restore.cancelling": "취소하는 중…",

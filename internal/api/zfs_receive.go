@@ -15,9 +15,11 @@ import (
 	"net/http"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
@@ -61,6 +63,13 @@ type peerZFSReceiveRequest struct {
 	Members    []string             `json:"members"`
 	Keep       store.ZFSReplicaKeep `json:"keep"`
 	Renew      bool                 `json:"renew"`
+	peerProof
+}
+
+// signed is what the source signs of a request: an allowed slot's token goes
+// to whoever names its source and item.
+func (in peerZFSReceiveRequest) signed() []byte {
+	return callPayload(in.InstanceID, in.Item, in.Dataset, strconv.FormatBool(in.Renew))
 }
 
 // peerZFSReceiveAnswer is the slot's state, and for an allowed slot what the
@@ -91,6 +100,14 @@ func (s *Service) handlePeerZFSReceive(w http.ResponseWriter, r *http.Request) {
 	in.Members = slices.Compact(in.Members)
 	if msg := peerZFSReceiveRefusal(in); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	if asker, ok := s.roleAsker(r); !ok || asker != in.InstanceID {
+		refuseUnnamedPeer(w)
+		return
+	}
+	if err := s.verifyMember(r.Context(), in.InstanceID, keydeposit.ProofZFSReceive, in.signed(), in.peerProof); err != nil {
+		writeJSON(w, http.StatusForbidden, failEnvelope(err))
 		return
 	}
 	on, err := s.receiverOn()

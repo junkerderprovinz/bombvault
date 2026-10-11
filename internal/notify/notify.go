@@ -21,6 +21,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/redact"
 )
 
 // redactErr drops the request URL from a *url.Error before it is logged,
@@ -285,6 +287,8 @@ func Send(ctx context.Context, c Config, domain string, ev Event) {
 	if !c.Active() {
 		return
 	}
+	// A name in a message can hold a password somebody typed into it.
+	ev.Title, ev.Message = redact.Credentials(ev.Title), redact.Credentials(ev.Message)
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
 	defer cancel()
 	client := &http.Client{Timeout: sendTimeout}
@@ -396,7 +400,7 @@ func PingDomainResult(ctx context.Context, c Config, domain string, ok bool, sum
 	if !ok {
 		phase = "fail"
 	}
-	if err := pingHealthchecksBody(ctx, client, hcURL, phase, summary); err != nil {
+	if err := pingHealthchecksBody(ctx, client, hcURL, phase, redact.Credentials(summary)); err != nil {
 		log.Printf("notify: healthchecks domain result: %v", redactErr(err))
 	}
 }

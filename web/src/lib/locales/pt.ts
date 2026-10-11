@@ -149,6 +149,7 @@ const pt: Partial<Translations> = {
   "backup.cancelTooLate": "O backup de {name} já escreveu o seu ponto de restauração e está a iniciar de novo os contentores. Já não pode ser cancelado.",
   "backup.cancelNotRunning": "O backup de {name} já tinha terminado. Não havia nada para cancelar.",
   "runReason.cancelled": "Cancelado pelo utilizador",
+  "runReason.ownDataFolder": "Isto escreveria na pasta de dados do BombVault ou numa pasta que a contém. Escolha outra pasta.",
   "restore.cancelConfirmSafe": "Cancelar o restauro? A pasta de saída parcial é mantida como está.",
   "restore.cancelConfirmInPlace": "{name} está a meio de um restauro. Cancelar deixa este restauro incompleto. Poderá ser necessário executá-lo novamente. Cancelar mesmo assim?",
   "restore.cancelling": "A cancelar…",

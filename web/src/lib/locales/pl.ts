@@ -150,6 +150,7 @@ const pl: Partial<Translations> = {
   "backup.cancelTooLate": "Kopia {name} zapisała już swój punkt przywracania i ponownie uruchamia kontenery. Nie można jej już anulować.",
   "backup.cancelNotRunning": "Kopia {name} była już zakończona. Nie było czego anulować.",
   "runReason.cancelled": "Anulowane przez użytkownika",
+  "runReason.ownDataFolder": "To zapisałoby dane w folderze danych BombVault lub w folderze, który go zawiera. Wybierz inny folder.",
   "restore.cancelConfirmSafe": "Anulować przywracanie? Częściowo zapisany folder docelowy pozostanie bez zmian.",
   "restore.cancelConfirmInPlace": "{name} jest w trakcie przywracania. Anulowanie pozostawi to przywracanie niedokończone. Być może trzeba będzie je uruchomić ponownie. Anulować mimo to?",
   "restore.cancelling": "Anulowanie…",

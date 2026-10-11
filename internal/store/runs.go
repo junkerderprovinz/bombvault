@@ -252,6 +252,10 @@ const (
 	// ReasonStalled begins the reason of a backup the stall guard cancelled.
 	// StalledReason writes the whole sentence.
 	ReasonStalled = "stopped by the stall guard"
+
+	// ReasonOwnData is written for a restore refused because it would write
+	// into BombVault's own data folder or a folder that holds it.
+	ReasonOwnData = "this would write into BombVault's own data folder or a folder that holds it; choose another folder"
 )
 
 // StalledReason is the reason of a backup the stall guard cancelled after

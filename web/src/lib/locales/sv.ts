@@ -150,6 +150,7 @@ const sv: Partial<Translations> = {
   "backup.cancelTooLate": "Säkerhetskopieringen av {name} har redan skrivit sin återställningspunkt och startar containrarna igen. Den kan inte längre avbrytas.",
   "backup.cancelNotRunning": "Säkerhetskopieringen av {name} var redan klar. Det fanns inget att avbryta.",
   "runReason.cancelled": "Avbruten av användaren",
+  "runReason.ownDataFolder": "Det här skulle skriva i BombVaults egen datamapp eller i en mapp som innehåller den. Välj en annan mapp.",
   "restore.cancelConfirmSafe": "Avbryta återställningen? Den delvis skrivna målmappen lämnas som den är.",
   "restore.cancelConfirmInPlace": "{name} håller på att återställas. Att avbryta lämnar den här återställningen ofullständig. Du kan behöva köra den igen. Avbryta ändå?",
   "restore.cancelling": "Avbryter…",

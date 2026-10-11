@@ -16,6 +16,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
@@ -66,6 +67,9 @@ func okEnvelope(extra map[string]any) map[string]any {
 // repo path or secret leaks to the client (defense-in-depth; the restic/docker
 // adapters already scrub their own errors).
 func failEnvelope(err error) map[string]any {
+	if errors.Is(err, errOwnData) {
+		return codedFailEnvelope(err, codeOwnData)
+	}
 	return map[string]any{"ok": false, "error": scrubError(err)}
 }
 
@@ -4153,9 +4157,9 @@ func (h *Handler) runViews(runs []store.Run) []runView {
 	keys := h.mcpKeysBehind(runs)
 	views := make([]runView, 0, len(runs))
 	for _, r := range runs {
-		v := runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID], Bottleneck: runBottleneck(r.Load)}
+		v := runView{Run: r, Target: scrubRepoLocation(name[r.TargetID]), Domain: domain[r.TargetID], Bottleneck: runBottleneck(r.Load)}
 		if key, ok := keys[r.StartedViaKey]; ok {
-			v.StartedViaLabel = key.Label
+			v.StartedViaLabel = scrubRepoLocation(key.Label)
 			v.StartedViaRevoked = key.RevokedAt > 0
 		}
 		views = append(views, v)
@@ -4960,25 +4964,36 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+var errRecoveryCodeSpent = errors.New("the recovery code was spent")
+
 // secondFactorOK checks code against the time-based secret and, failing that,
-// against the single-use recovery codes. A recovery code that matches is SPENT
-// here (removed from the stored list) before this returns true.
+// against the single-use recovery codes. A recovery code that matches is spent
+// here, removed from the stored list, before this returns true.
 func (h *Handler) secondFactorOK(s *store.Settings, code string) bool {
 	if sec, err := h.decryptTOTPSecret(s.TOTPSecret); err == nil && sec != "" {
 		if secret.ValidTOTP(sec, code, time.Now()) {
 			return true
 		}
 	}
-	stored := decodeRecoveryCodes(s.TOTPRecovery)
-	idx := secret.MatchRecoveryCode(h.cfg.AppKey, code, stored)
-	if idx < 0 {
+	if secret.MatchRecoveryCode(h.cfg.AppKey, code, decodeRecoveryCodes(s.TOTPRecovery)) < 0 {
 		return false
 	}
-	remaining := append(append([]string{}, stored[:idx]...), stored[idx+1:]...)
+	// The code is matched again against the codes as stored, so two logins
+	// that read them at once cannot both spend one code or bring back the
+	// code the other spent.
+	var remaining []string
 	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
+		stored := decodeRecoveryCodes(st.TOTPRecovery)
+		idx := secret.MatchRecoveryCode(h.cfg.AppKey, code, stored)
+		if idx < 0 {
+			return errRecoveryCodeSpent
+		}
+		remaining = append(append([]string{}, stored[:idx]...), stored[idx+1:]...)
 		st.TOTPRecovery = encodeRecoveryCodes(remaining)
 		return nil
-	}); err != nil {
+	}); errors.Is(err, errRecoveryCodeSpent) {
+		return false
+	} else if err != nil {
 		// The code was correct, but it could not be burned. Refuse the login:
 		// a recovery code that survives its own use is a permanent password.
 		log.Printf("api: login: spending recovery code: %v", err)
@@ -5243,8 +5258,11 @@ func (h *Handler) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
+		// A factor armed in another tab since the read above stays armed.
+		if st.TOTPEnabled {
+			return errLoginChanged
+		}
 		st.TOTPSecret = sealed
-		st.TOTPEnabled = false
 		return nil
 	}); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -5352,6 +5370,11 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
+		// The code was checked against the secret read above. A factor set up
+		// anew since then is not the one it proves.
+		if st.TOTPSecret != s.TOTPSecret {
+			return errLoginChanged
+		}
 		st.TOTPEnabled = false
 		st.TOTPSecret = ""
 		st.TOTPRecovery = ""
@@ -6190,9 +6213,17 @@ func (h *Handler) handleMkdir(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	// os.Mkdir (not MkdirAll) so an existing folder is reported instead of silently
-	// reused; then force 0755 in case a strict umask stripped the mode.
-	if err := os.Mkdir(abs, 0o755); err != nil { //nolint:gosec // G301: a backup destination on a user-visible share must be operator-readable
+	// The folder is made through the root, like handleBrowse reads, so a link
+	// in the path cannot place it outside Host Data. Mkdir rather than MkdirAll
+	// reports an existing folder; the chmod undoes what a strict umask strips.
+	root, err := os.OpenRoot(h.cfg.HostMountRoot)
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "could not create folder"})
+		return
+	}
+	defer root.Close() //nolint:errcheck // a directory handle
+	rel := filepath.FromSlash(sub)
+	if err := root.Mkdir(rel, 0o755); err != nil {
 		if os.IsExist(err) {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a folder with that name already exists"})
 			return
@@ -6201,7 +6232,7 @@ func (h *Handler) handleMkdir(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "could not create folder"})
 		return
 	}
-	_ = os.Chmod(abs, 0o755) //nolint:gosec // G302: see above — must be readable by the non-root share user
+	_ = root.Chmod(rel, 0o755) //nolint:gosec // G302: a backup destination on a user-visible share must be operator-readable
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "path": sub, "name": name})
 }
 

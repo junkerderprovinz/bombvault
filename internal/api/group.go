@@ -117,7 +117,7 @@ func (s *Service) applyGroup() {
 // instanceDisplayName is the name other members show this instance under.
 func instanceDisplayName(settings store.Settings) string {
 	if name := strings.TrimSpace(settings.InstanceName); name != "" {
-		return name
+		return scrubRepoLocation(name)
 	}
 	return "BombVault"
 }
@@ -490,7 +490,7 @@ func (s *Service) pairableRepos(settings store.Settings) ([]pairableRepo, error)
 	}
 	for _, t := range targets {
 		if loc := strings.TrimSpace(t.Repo); loc != "" && !isRcloneLocation(loc) {
-			out = append(out, pairableRepo{Domain: t.Domain, Name: t.Name, Location: scrubRepoLocation(loc)})
+			out = append(out, pairableRepo{Domain: t.Domain, Name: scrubRepoLocation(t.Name), Location: scrubRepoLocation(loc)})
 		}
 	}
 	return out, nil

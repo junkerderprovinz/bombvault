@@ -181,6 +181,7 @@ const gl: Partial<Translations> = {
   "backup.cancelTooLate": "A copia de {name} xa escribiu o seu punto de restauración e está a iniciar de novo os contedores. Xa non se pode cancelar.",
   "backup.cancelNotRunning": "A copia de {name} xa rematara. Non había nada que cancelar.",
   "runReason.cancelled": "Cancelado pola persoa usuaria",
+  "runReason.ownDataFolder": "Isto escribiría no cartafol de datos de BombVault ou nun cartafol que o contén. Escolle outro cartafol.",
   "restore.cancelConfirmSafe": "Cancelar a restauración? O cartafol de saída parcial déixase tal cal.",
   "restore.cancelConfirmInPlace": "{name} está a restaurarse. Cancelar deixará esta restauración a medias, quizais teñas que executala de novo. Cancelar de todos os xeitos?",
   "restore.cancelling": "Cancelando…",

@@ -305,7 +305,7 @@ function ReceiverServerDialog({
     try {
       const r = await setUpReceiverServer({ folder: folder.trim(), port, host: host.trim() });
       if (!r.ok || !r.server) {
-        push(r.error ?? t("receiver.server.setUpFailed"), "fail");
+        push(r.code === "own-data-folder" ? t("runReason.ownDataFolder") : (r.error ?? t("receiver.server.setUpFailed")), "fail");
         return;
       }
       onDone(r.server, { password: r.password ?? "", template: r.template ?? "none" });

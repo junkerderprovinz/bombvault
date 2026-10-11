@@ -181,6 +181,7 @@ const lv: Partial<Translations> = {
   "backup.cancelTooLate": "{name} dublējums jau ir ierakstījis savu atjaunošanas punktu un atkal palaiž konteinerus. To vairs nevar atcelt.",
   "backup.cancelNotRunning": "{name} dublējums jau bija beidzies. Nebija ko atcelt.",
   "runReason.cancelled": "Atcēla lietotājs",
+  "runReason.ownDataFolder": "Tas rakstītu BombVault datu mapē vai mapē, kas to satur. Izvēlieties citu mapi.",
   "restore.cancelConfirmSafe": "Atcelt atjaunošanu? Daļēji ierakstītā izvades mape tiek atstāta nemainīta.",
   "restore.cancelConfirmInPlace": "{name} pašlaik tiek atjaunots. Atceļot, šī atjaunošana paliks nepabeigta. Iespējams, būs jāizpilda vēlreiz. Vai tik un tā atcelt?",
   "restore.cancelling": "Atceļ…",

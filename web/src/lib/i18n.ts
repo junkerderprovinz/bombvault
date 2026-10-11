@@ -236,6 +236,7 @@ export const en = {
   "backup.cancelTooLate": "The backup of {name} has already written its restore point and is starting its containers again. It can no longer be cancelled.",
   "backup.cancelNotRunning": "The backup of {name} had already finished. There was nothing to cancel.",
   "runReason.cancelled": "Cancelled by the user",
+  "runReason.ownDataFolder": "This would write into BombVault's own data folder or a folder that holds it. Choose another folder.",
   "restore.cancelConfirmSafe": "Cancel the restore? The partial output folder is left as-is.",
   "restore.cancelConfirmInPlace":
     "{name} is mid-restore. Cancelling leaves this restore partial. You may need to restore it again. Cancel anyway?",
@@ -5009,6 +5010,7 @@ export const de: Translations = {
   "backup.cancelTooLate": "Die Sicherung von {name} hat ihren Wiederherstellungspunkt schon geschrieben und startet die Container wieder. Abbrechen geht jetzt nicht mehr.",
   "backup.cancelNotRunning": "Die Sicherung von {name} war schon fertig. Es gab nichts abzubrechen.",
   "runReason.cancelled": "Von der Benutzerin abgebrochen",
+  "runReason.ownDataFolder": "Das würde in den Datenordner von BombVault schreiben oder in einen Ordner, der ihn enthält. Wähl einen anderen Ordner.",
   "restore.cancelConfirmSafe": "Wiederherstellung abbrechen? Der bereits geschriebene Zielordner bleibt unverändert erhalten.",
   "restore.cancelConfirmInPlace":
     "{name} wird gerade wiederhergestellt. Ein Abbruch lässt diese Wiederherstellung unvollständig zurück. Möglicherweise musst du sie erneut ausführen. Trotzdem abbrechen?",

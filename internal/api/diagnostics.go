@@ -382,6 +382,7 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 	} else {
 		exp := settingsExport{Settings: buildSettingsView(s)}
 		redactExportLocations(&exp)
+		exp.Settings.InstanceName = scrubRepoLocation(exp.Settings.InstanceName)
 		add("settings.json", exp.Settings, nil)
 	}
 

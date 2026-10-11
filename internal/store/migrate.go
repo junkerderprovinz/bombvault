@@ -3108,6 +3108,23 @@ ALTER TABLE key_deposits_sent ADD COLUMN changed_at INTEGER NOT NULL DEFAULT 0;`
 ALTER TABLE targets ADD COLUMN update_after_backup_own INTEGER NOT NULL DEFAULT 0;
 UPDATE targets SET update_after_backup_own = 1 WHERE update_after_backup = 1;`,
 	},
+	{
+		// The members this install knew when it first started with this
+		// table, before members signed their calls. Only these may still call
+		// unsigned, so a member that turns up later cannot pass for an old one
+		// by saying so.
+		version:          legacyMembersMigration,
+		name:             "legacy_members",
+		alreadySatisfied: tablePresent("legacy_members"),
+		sql: `CREATE TABLE IF NOT EXISTS legacy_members (
+  member_id TEXT PRIMARY KEY
+);
+INSERT OR IGNORE INTO legacy_members (member_id)
+SELECT member_id FROM fleet_peers WHERE member_id <> '' AND kind = ''
+UNION SELECT member_id FROM receiver_logins WHERE member_id <> ''
+UNION SELECT member_id FROM received_repos WHERE member_id <> ''
+UNION SELECT member_id FROM pull_sources WHERE member_id <> '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3235,6 +3252,9 @@ const keyHardeningMigration = 350
 // updateEveryContainerMigration numbers the switch that updates every
 // container after its backup, 355.
 const updateEveryContainerMigration = 355
+
+// legacyMembersMigration numbers the members that may call unsigned, 356.
+const legacyMembersMigration = 356
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

@@ -181,6 +181,7 @@ const ms: Partial<Translations> = {
   "backup.cancelTooLate": "Sandaran {name} sudah menulis titik pemulihannya dan sedang memulakan semula bekasnya. Ia tidak boleh dibatalkan lagi.",
   "backup.cancelNotRunning": "Sandaran {name} sudah selesai. Tiada apa-apa untuk dibatalkan.",
   "runReason.cancelled": "Dibatalkan oleh pengguna",
+  "runReason.ownDataFolder": "Ini akan menulis ke dalam folder data BombVault sendiri atau folder yang mengandunginya. Pilih folder lain.",
   "restore.cancelConfirmSafe": "Batalkan pemulihan? Folder output yang separuh siap dibiarkan seadanya.",
   "restore.cancelConfirmInPlace": "{name} sedang dipulihkan. Membatalkan akan meninggalkan pemulihan ini tidak lengkap. Anda mungkin perlu menjalankannya semula. Tetap batalkan?",
   "restore.cancelling": "Membatalkan…",

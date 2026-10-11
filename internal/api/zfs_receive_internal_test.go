@@ -6,6 +6,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -20,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -467,16 +469,34 @@ func TestAFolderOfAnotherInstanceTakesNothing(t *testing.T) {
 	}
 }
 
+var receiveAskCounter atomic.Int64
+
+// askReceive sends req to in through the peer route as the member it names,
+// signed with a key in pins for that member.
+func askReceive(t *testing.T, in *instance, req peerZFSReceiveRequest) (int, []byte) {
+	t.Helper()
+	seed := sha256.Sum256([]byte(req.InstanceID))
+	if err := in.st.PinMemberKey(req.InstanceID, keydeposit.OwnerKey(seed[:])); err != nil {
+		t.Fatal(err)
+	}
+	counter := time.Now().UnixMilli() + receiveAskCounter.Add(1)
+	req.peerProof = peerProof{
+		Key: keydeposit.OwnerKey(seed[:]), Counter: counter,
+		Proof: keydeposit.Prove(seed[:], keydeposit.Claim{Action: keydeposit.ProofZFSReceive, OwnerID: req.InstanceID, KeeperID: in.id(t), Counter: counter, Deposit: req.signed()}),
+	}
+	body, _ := json.Marshal(req)
+	return in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/zfs-receive", Body: body, Sender: req.InstanceID})
+}
+
 // askSlot records a request of instance peer, named tower, for dataset
 // straight through the peer route and returns the slot's id.
 func askSlot(t *testing.T, in *instance, peer, dataset string) string {
 	t.Helper()
 	item := strings.Repeat(peer[:1], 32)
-	body, _ := json.Marshal(peerZFSReceiveRequest{
+	status, raw := askReceive(t, in, peerZFSReceiveRequest{
 		InstanceID: peer, Name: "tower", Item: item, Dataset: dataset,
 		Members: []string{dataset}, Keep: store.DefaultZFSReplicaKeep,
 	})
-	status, raw := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/zfs-receive", Body: body})
 	if status != http.StatusOK {
 		t.Fatalf("ask = %d %s", status, raw)
 	}
@@ -588,11 +608,10 @@ func receiveSlots(t *testing.T, in *instance, pool *fakePool) (ids, tokens []str
 	in.svc.SetHostSSH(pool)
 	switchReceiver(t, in, true)
 	for i, ds := range []string{"cache/appdata", "cache/system"} {
-		body, _ := json.Marshal(peerZFSReceiveRequest{
+		status, raw := askReceive(t, in, peerZFSReceiveRequest{
 			InstanceID: "0a0a0a0a", Name: "tower", Item: strings.Repeat(string(rune('a'+i)), 32), Dataset: ds,
 			Members: []string{ds}, Keep: store.DefaultZFSReplicaKeep,
 		})
-		status, raw := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/zfs-receive", Body: body})
 		var ans peerZFSReceiveAnswer
 		if status != http.StatusOK || json.Unmarshal(raw, &ans) != nil || ans.State != store.ZFSReceiveAsked {
 			t.Fatalf("ask %s = %d %s", ds, status, raw)
@@ -669,6 +688,21 @@ func TestASlotAnswersOnlyItsOwnTokenAndMembers(t *testing.T) {
 	}
 }
 
+func TestASlotGoesOnlyToTheMemberThatSignsForIt(t *testing.T) {
+	r := newReceiveRig(t)
+	r.allowed(t, [5]int{1, 0, 0, 0, 0})
+	item := r.item(t)
+	ask := peerZFSReceiveRequest{InstanceID: r.src.id(t), Name: "tower", Item: item.ID, Dataset: item.Dataset,
+		Members: []string{item.Dataset}, Keep: item.Replica.Keep}
+	body, _ := json.Marshal(ask)
+	for name, sender := range map[string]string{"another member": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b", "no sender": "", "the source unsigned": r.src.id(t)} {
+		_, raw := r.dst.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/zfs-receive", Body: body, Sender: sender})
+		if strings.Contains(string(raw), `"token"`) {
+			t.Errorf("%s asking in the source's name got the slot: %s", name, raw)
+		}
+	}
+}
+
 func TestTheReceiveRouteRefusesARequestItCannotHonour(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
 	switchReceiver(t, in, true)
@@ -685,8 +719,7 @@ func TestTheReceiveRouteRefusesARequestItCannotHonour(t *testing.T) {
 		req := good
 		req.Members = slices.Clone(good.Members)
 		spoil(&req)
-		body, _ := json.Marshal(req)
-		_, raw := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/zfs-receive", Body: body})
+		_, raw := askReceive(t, in, req)
 		if strings.Contains(string(raw), `"ok":true`) {
 			t.Errorf("%s was recorded: %s", name, raw)
 		}

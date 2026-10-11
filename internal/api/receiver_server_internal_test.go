@@ -359,6 +359,19 @@ func TestReceiverFormIsChecked(t *testing.T) {
 	}
 }
 
+func TestAReceiverNeverGetsTheDataFolderOrAFolderThatHoldsIt(t *testing.T) {
+	f := newReceiverFixture(t)
+	f.svc.cfg.DataDir = filepath.Join(f.mount, "user", "appdata", "bombvault")
+	for _, folder := range []string{"user/appdata/bombvault", "user/appdata", "user", "user/appdata/bombvault/repos"} {
+		if _, err := f.svc.SetUpReceiver(context.Background(), receiverServerInput{Folder: folder, Port: 8000}); err == nil {
+			t.Errorf("a receiver in %s was set up", folder)
+		}
+	}
+	if len(f.docker.created) != 0 {
+		t.Fatal("a refused folder must create nothing")
+	}
+}
+
 func TestTheTemplateIsOfferedAsADownloadWithoutTheFlashDrive(t *testing.T) {
 	f := newReceiverFixture(t)
 	f.svc.cfg.FlashTemplatesDir = filepath.Join(t.TempDir(), "missing", "templates-user")

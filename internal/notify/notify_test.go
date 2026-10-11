@@ -614,3 +614,26 @@ func TestSendOnUnsetNotifiesFailures(t *testing.T) {
 		})
 	}
 }
+
+func TestAPasswordInANameIsNotSentOnAnyChannel(t *testing.T) {
+	var bodies []string
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		bodies = append(bodies, r.Header.Get("X-Title")+string(b))
+	}))
+	defer srv.Close()
+	ev := notify.Event{Title: "BombVault (https://bob:hunter2@nas.local)", Message: `backup of "bob:hunter2@nas" failed`, OK: false}
+	for _, format := range []string{"json", "discord", "ntfy", "gotify", "slack"} {
+		notify.Send(context.Background(), notify.Config{On: "always", WebhookEnabled: true, WebhookURL: srv.URL, WebhookFormat: format}, "", ev)
+	}
+	notify.Send(context.Background(), notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL}, "", ev)
+	notify.Send(context.Background(), notify.Config{On: "always", MatrixEnabled: true, MatrixHomeserver: srv.URL, MatrixRoom: "!r:x", MatrixToken: "t"}, "", ev)
+	if len(bodies) == 0 {
+		t.Fatal("nothing was sent")
+	}
+	for _, b := range bodies {
+		if strings.Contains(b, "hunter2") {
+			t.Errorf("a notification carries the password: %s", b)
+		}
+	}
+}

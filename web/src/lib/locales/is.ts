@@ -181,6 +181,7 @@ const is: Partial<Translations> = {
   "backup.cancelTooLate": "Afritun á {name} hefur þegar skrifað endurheimtarpunktinn sinn og ræsir gámana aftur. Ekki er lengur hægt að hætta við hana.",
   "backup.cancelNotRunning": "Afritun á {name} var þegar lokið. Það var ekkert til að hætta við.",
   "runReason.cancelled": "Hætt við af notanda",
+  "runReason.ownDataFolder": "Þetta myndi skrifa í gagnamöppu BombVault eða í möppu sem inniheldur hana. Veldu aðra möppu.",
   "restore.cancelConfirmSafe": "Hætta við endurheimtina? Hálfkláruð úttaksmappan er skilin eftir óbreytt.",
   "restore.cancelConfirmInPlace": "{name} er í miðri endurheimt. Ef hætt er við skilst endurheimtin eftir hálfkláruð. Þú gætir þurft að keyra hana aftur. Hætta samt við?",
   "restore.cancelling": "Hætti við…",

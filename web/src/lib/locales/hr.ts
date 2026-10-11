@@ -181,6 +181,7 @@ const hr: Partial<Translations> = {
   "backup.cancelTooLate": "Sigurnosna kopija za {name} već je zapisala svoju točku vraćanja i ponovno pokreće kontejnere. Više se ne može otkazati.",
   "backup.cancelNotRunning": "Sigurnosna kopija za {name} već je bila gotova. Nije bilo ničega za otkazati.",
   "runReason.cancelled": "Otkazao korisnik",
+  "runReason.ownDataFolder": "Ovo bi pisalo u BombVaultovu mapu s podacima ili u mapu koja je sadrži. Odaberite drugu mapu.",
   "restore.cancelConfirmSafe": "Otkazati vraćanje? Djelomično zapisana izlazna mapa ostaje nepromijenjena.",
   "restore.cancelConfirmInPlace": "{name} se trenutačno vraća. Otkazivanje će ostaviti ovo vraćanje nedovršenim. Možda ćete ga morati ponovno pokrenuti. Ipak otkazati?",
   "restore.cancelling": "Otkazivanje…",

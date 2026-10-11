@@ -181,6 +181,7 @@ const sl: Partial<Translations> = {
   "backup.cancelTooLate": "Varnostna kopija za {name} je točko za obnovitev že zapisala in znova zaganja vsebnike. Preklicati je ni več mogoče.",
   "backup.cancelNotRunning": "Varnostna kopija za {name} je bila že končana. Ni bilo česa preklicati.",
   "runReason.cancelled": "Preklical uporabnik",
+  "runReason.ownDataFolder": "To bi pisalo v BombVaultovo mapo s podatki ali v mapo, ki jo vsebuje. Izberite drugo mapo.",
   "restore.cancelConfirmSafe": "Prekličem obnovitev? Delna izhodna mapa ostane nespremenjena.",
   "restore.cancelConfirmInPlace": "{name} je sredi obnovitve. Preklic pusti to obnovitev nedokončano. Morda jo boš moral znova zagnati. Vseeno prekličem?",
   "restore.cancelling": "Preklic…",

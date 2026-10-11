@@ -70,7 +70,7 @@ func (h *Handler) haConfig(s store.MQTTSettings) homeassistant.Config {
 func (h *Handler) haDevice() homeassistant.Device {
 	name := "BombVault"
 	if s, err := h.store.GetSettings(); err == nil && s.InstanceName != "" {
-		name = "BombVault (" + s.InstanceName + ")"
+		name = "BombVault (" + scrubRepoLocation(s.InstanceName) + ")"
 	}
 	return homeassistant.Device{Name: name, Version: Version}
 }

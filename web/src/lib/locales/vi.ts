@@ -150,6 +150,7 @@ const vi: Partial<Translations> = {
   "backup.cancelTooLate": "Bản sao lưu {name} đã ghi điểm khôi phục của nó và đang khởi động lại các container. Không thể hủy nữa.",
   "backup.cancelNotRunning": "Bản sao lưu {name} đã xong từ trước. Không có gì để hủy.",
   "runReason.cancelled": "Người dùng đã hủy",
+  "runReason.ownDataFolder": "Thao tác này sẽ ghi vào thư mục dữ liệu của chính BombVault hoặc thư mục chứa nó. Hãy chọn thư mục khác.",
   "restore.cancelConfirmSafe": "Hủy khôi phục? Thư mục đầu ra đã ghi một phần sẽ được giữ nguyên.",
   "restore.cancelConfirmInPlace": "{name} đang khôi phục dở dang. Việc hủy sẽ khiến lần khôi phục này không hoàn tất. Bạn có thể cần chạy lại. Vẫn hủy chứ?",
   "restore.cancelling": "Đang hủy…",

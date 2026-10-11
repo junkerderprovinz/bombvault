@@ -2268,6 +2268,23 @@ func TestBrowseRejectsAbsolutePath(t *testing.T) {
 	}
 }
 
+func TestMkdirStaysInsideTheMountRootThroughALink(t *testing.T) {
+	root, outside := t.TempDir(), t.TempDir()
+	h := newBrowseRouter(t, root)
+	if w, m := doJSON(t, h, http.MethodPost, "/api/browse/mkdir", `{"path":"","name":"backups"}`); w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("a plain new folder = %d %v", w.Code, m)
+	}
+	if err := os.Symlink(outside, filepath.Join(root, "away")); err != nil {
+		t.Skipf("no symlinks here: %v", err)
+	}
+	if _, m := doJSON(t, h, http.MethodPost, "/api/browse/mkdir", `{"path":"away","name":"n"}`); m["ok"] != false {
+		t.Fatalf("a folder through a link out of the root = %v", m)
+	}
+	if _, err := os.Stat(filepath.Join(outside, "n")); !os.IsNotExist(err) {
+		t.Fatalf("the folder was made outside the root: %v", err)
+	}
+}
+
 // ensure context import is used (Router handlers run under request context).
 var _ = context.Background
 

@@ -106,14 +106,24 @@ func (s *Service) verifyMember(ctx context.Context, memberID, action string, pay
 
 // verifyCaller is verifyMember for the routes members older than role
 // requests call as well. Such a member signs nothing, and its call counts as
-// before as long as no key is pinned for it.
+// before while it is one this install knew before members signed.
 func (s *Service) verifyCaller(ctx context.Context, caller group.Member, action string, payload []byte, p peerProof) error {
-	if len(p.Key) == 0 && predatesRoleRequests(caller.Version) {
-		if _, pinned, err := s.store.MemberKey(caller.ID); err != nil || !pinned {
+	if len(p.Key) == 0 {
+		if old, err := s.legacyMember(caller); err != nil || old {
 			return err
 		}
 	}
 	return s.verifyMember(ctx, caller.ID, action, payload, p)
+}
+
+// legacyMember reports whether m is a member older than role requests. What
+// the member says about its version only counts for one this install knew
+// before members signed, so a member met later cannot pass for one.
+func (s *Service) legacyMember(m group.Member) (bool, error) {
+	if !predatesRoleRequests(m.Version) {
+		return false, nil
+	}
+	return s.store.LegacyMember(m.ID)
 }
 
 // handleForgetMemberKey drops the key pinned for a member, for when it is not

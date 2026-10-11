@@ -181,6 +181,7 @@ const id: Partial<Translations> = {
   "backup.cancelTooLate": "Pencadangan {name} sudah menulis titik pemulihannya dan sedang menyalakan kembali containernya. Pencadangan ini tidak bisa dibatalkan lagi.",
   "backup.cancelNotRunning": "Pencadangan {name} sudah selesai. Tidak ada yang perlu dibatalkan.",
   "runReason.cancelled": "Dibatalkan oleh pengguna",
+  "runReason.ownDataFolder": "Ini akan menulis ke folder data milik BombVault atau ke folder yang memuatnya. Pilih folder lain.",
   "restore.cancelConfirmSafe": "Batalkan pemulihan? Folder keluaran yang sebagian selesai dibiarkan apa adanya.",
   "restore.cancelConfirmInPlace": "{name} sedang dalam proses pemulihan. Membatalkan akan membuat pemulihan ini tidak lengkap. Anda mungkin perlu menjalankannya lagi. Tetap batalkan?",
   "restore.cancelling": "Membatalkan…",

@@ -149,6 +149,7 @@ const ro: Partial<Translations> = {
   "backup.cancelTooLate": "Copia pentru {name} și-a scris deja punctul de restaurare și pornește din nou containerele. Nu mai poate fi anulată.",
   "backup.cancelNotRunning": "Copia pentru {name} se terminase deja. Nu era nimic de anulat.",
   "runReason.cancelled": "Anulat de utilizator",
+  "runReason.ownDataFolder": "Aceasta ar scrie în dosarul de date al BombVault sau într-un dosar care îl conține. Alege alt dosar.",
   "restore.cancelConfirmSafe": "Anulezi restaurarea? Folderul de ieșire parțial este lăsat așa cum este.",
   "restore.cancelConfirmInPlace": "{name} este în curs de restaurare. Anularea lasă această restaurare incompletă. S-ar putea să fie nevoie să o execuți din nou. Anulezi oricum?",
   "restore.cancelling": "Se anulează…",
