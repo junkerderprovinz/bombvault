@@ -20,39 +20,26 @@ var errPeerNotAsked = errors.New("this instance has not asked that one to keep o
 var errPasswordHeld = errors.New("that instance has not released its restic password to this one: it first has to ask this instance to be its Receiver or Fetcher")
 
 // peerCaller names the member behind a call to a route older than role
-// requests. A member that states who it is counts as that member. One too old
-// to say so on a call through a relay is recognised only while it is the one
-// such member in the group, since any other of them could have sent the call.
+// requests. A call that does not name its sender is refused: an old member's
+// call through a relay names none, and nothing tells it from anyone else's.
 func (s *Service) peerCaller(r *http.Request) (group.Member, bool) {
-	members := s.pairing().Members()
-	if sender, ok := s.roleAsker(r); ok {
-		for _, m := range members {
-			if m.ID == sender {
-				return m, true
-			}
-		}
-		return group.Member{ID: sender}, true
-	}
-	if peerSender(r) != "" {
+	sender, ok := s.roleAsker(r)
+	if !ok {
 		return group.Member{}, false
 	}
-	var older []group.Member
-	for _, m := range members {
-		if m.Kind == "" && predatesRoleRequests(m.Version) {
-			older = append(older, m)
+	for _, m := range s.pairing().Members() {
+		if m.ID == sender {
+			return m, true
 		}
 	}
-	if len(older) != 1 {
-		return group.Member{}, false
-	}
-	return older[0], true
+	return group.Member{ID: sender}, true
 }
 
 // noteOldReceiverAsk records a request for a member that asked for a receiver
 // login the way instances did before role requests, so a person here finds it
 // and can allow it. The member cannot say which sections it will send.
 func (s *Service) noteOldReceiverAsk(caller group.Member, name string) {
-	if !predatesRoleRequests(caller.Version) {
+	if old, err := s.legacyMember(caller); err != nil || !old {
 		return
 	}
 	_, err := s.store.AskRoleRequest(store.RoleRequest{
@@ -106,8 +93,11 @@ func (s *Service) retellRoleAnswer(ctx context.Context, memberID, role string) {
 // than role requests, which gave its password without being asked for leave.
 func (s *Service) grantOldMember(memberID, role string) error {
 	m, ok := s.reachableMember(memberID)
-	if !ok || !predatesRoleRequests(m.Version) {
+	if !ok {
 		return nil
+	}
+	if old, err := s.legacyMember(m); err != nil || !old {
+		return err
 	}
 	return s.store.GrantRoleRequest(store.RoleRequest{
 		Direction: store.RoleRequestIn, MemberID: m.ID, MemberName: m.Name, Role: role, Sections: allRoleSections,

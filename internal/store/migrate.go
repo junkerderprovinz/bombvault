@@ -3097,6 +3097,22 @@ ALTER TABLE key_deposits_sent ADD COLUMN changed_at INTEGER NOT NULL DEFAULT 0;`
   off INTEGER NOT NULL
 );`,
 	},
+	{
+		// The members this install knew when it first ran a release whose
+		// members sign their calls. Only these may still call unsigned, so a
+		// member that turns up later cannot pass for an old one by saying so.
+		version:          keyHardeningMigration + 5,
+		name:             "legacy_members",
+		alreadySatisfied: tablePresent("legacy_members"),
+		sql: `CREATE TABLE IF NOT EXISTS legacy_members (
+  member_id TEXT PRIMARY KEY
+);
+INSERT OR IGNORE INTO legacy_members (member_id)
+SELECT member_id FROM fleet_peers WHERE member_id <> '' AND kind = ''
+UNION SELECT member_id FROM receiver_logins WHERE member_id <> ''
+UNION SELECT member_id FROM received_repos WHERE member_id <> ''
+UNION SELECT member_id FROM pull_sources WHERE member_id <> '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3218,7 +3234,8 @@ const depositProofMigration = 337
 
 // keyHardeningMigration numbers what was added to the tables of
 // keyRolesMigration afterwards, from 350, the keys members sign with, 353,
-// and the switch for pairing phones, 354.
+// the switch for pairing phones, 354, and the members that may call unsigned,
+// 355.
 const keyHardeningMigration = 350
 
 // oneLineColumns are the names and locations the recovery kit prints.
