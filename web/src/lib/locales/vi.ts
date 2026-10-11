@@ -3951,7 +3951,6 @@ const vi: Partial<Translations> = {
   "overview.summary.hint": "Snapshot cũ nhất trong mọi phần, khi nào bản sao lưu tiếp theo chạy và bản gần nhất diễn ra thế nào.",
   "overview.stats.hint": "Được đếm như ở mọi nơi: các mục của những phần đang bật và vẫn còn được cài đặt. Container của chính BombVault không phải là một mục.",
   "overview.coverage.hint": "Mọi thứ trên máy chủ này mà không bản sao lưu theo lịch nào bao phủ. Các phần đang tắt không được tính.",
-  "overview.coverage.countHint": "Được đếm như ở mọi nơi: các mục của những phần đang bật và vẫn còn được cài đặt. Bên dưới là mọi thứ mà lần chạy theo lịch tiếp theo không bao phủ, kể cả các dataset đơn lẻ.",
   "overview.spike.hint": "Những gì BombVault chạm tới và cần trên máy chủ.",
   "overview.customizeHint": "Có thể kéo thẻ bằng thanh của nó để sắp xếp lại, đổi kích thước bằng chấm ở góc dưới hoặc ẩn những thẻ không cần. Được lưu trong trình duyệt này.",
   "overview.widthStep": "Chiều rộng {w}, kích thước tiếp theo",

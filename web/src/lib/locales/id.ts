@@ -3970,7 +3970,6 @@ const id: Partial<Translations> = {
   "overview.summary.hint": "Snapshot tertua di semua bagian, kapan cadangan berikutnya berjalan, dan bagaimana hasil yang terakhir.",
   "overview.stats.hint": "Dihitung seperti di mana pun: entri dari bagian yang aktif dan masih terpasang. Container BombVault sendiri bukan entri.",
   "overview.coverage.hint": "Semua yang ada di server ini dan tidak tercakup oleh cadangan terjadwal mana pun. Bagian yang nonaktif tidak dihitung.",
-  "overview.coverage.countHint": "Dihitung seperti di mana pun: entri dari bagian yang aktif dan masih terpasang. Di bawah ini semua yang tidak tercakup proses terjadwal berikutnya, termasuk dataset tunggal.",
   "overview.spike.hint": "Apa saja yang dijangkau dan dibutuhkan BombVault di host.",
   "overview.customizeHint": "Kartu bisa diseret lewat bilahnya untuk mengatur urutan, diubah ukurannya lewat titik di sudut bawahnya, atau disembunyikan jika tidak diperlukan. Disimpan di browser ini.",
   "overview.widthStep": "Lebar {w}, ukuran berikutnya",

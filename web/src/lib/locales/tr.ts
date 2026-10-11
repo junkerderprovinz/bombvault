@@ -3960,7 +3960,6 @@ const tr: Partial<Translations> = {
   "overview.summary.hint": "Tüm bölümlerdeki en eski anlık görüntü, sonraki yedeğin ne zaman çalışacağı ve sonuncunun nasıl geçtiği.",
   "overview.stats.hint": "Her yerde olduğu gibi sayılır: açık bölümlerin hâlâ kurulu olan girdileri. BombVault'un kendi konteyneri girdi değildir.",
   "overview.coverage.hint": "Bu sunucudaki, hiçbir zamanlanmış yedeğin kapsamadığı her şey. Kapalı bölümler sayılmaz.",
-  "overview.coverage.countHint": "Her yerde olduğu gibi sayılır: açık bölümlerin hâlâ kurulu olan girdileri. Aşağıda sonraki zamanlanmış çalıştırmanın kapsamadığı her şey var, tekil veri kümeleri dahil.",
   "overview.spike.hint": "BombVault'un ana makinede ulaştığı ve ihtiyaç duyduğu şeyler.",
   "overview.customizeHint": "Kart çubuğundan sürüklenerek sıralanır, alt köşesindeki noktadan yeniden boyutlandırılır veya gerekmiyorsa gizlenir. Bu tarayıcıda kaydedilir.",
   "overview.widthStep": "Genişlik {w}, sonraki boyut",

@@ -3960,7 +3960,6 @@ const fi: Partial<Translations> = {
   "overview.summary.hint": "Vanhin tilannevedos kaikissa osioissa, milloin seuraava varmuuskopio ajetaan ja miten viimeisin meni.",
   "overview.stats.hint": "Lasketaan kuten muuallakin: käytössä olevien osioiden kohteet, jotka ovat yhä asennettuina. BombVaultin oma kontti ei ole kohde.",
   "overview.coverage.hint": "Kaikki tällä palvelimella, jota mikään ajastettu varmuuskopio ei kata. Pois päältä olevia osioita ei lasketa.",
-  "overview.coverage.countHint": "Lasketaan kuten muuallakin: käytössä olevien osioiden kohteet, jotka ovat yhä asennettuina. Alla on kaikki, mitä seuraava ajastettu ajo ei kata, myös yksittäiset datasetit.",
   "overview.spike.hint": "Mihin BombVault ylettyy ja mitä se tarvitsee isännällä.",
   "overview.customizeHint": "Korttia voi vetää sen palkista järjestyksen muuttamiseksi, sen kokoa voi muuttaa alakulman pisteestä ja tarpeettoman voi piilottaa. Tallennetaan tähän selaimeen.",
   "overview.widthStep": "Leveys {w}, seuraava koko",

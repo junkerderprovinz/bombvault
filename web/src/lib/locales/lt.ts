@@ -3970,7 +3970,6 @@ const lt: Partial<Translations> = {
   "overview.summary.hint": "Seniausia momentinė kopija visuose skyriuose, kada vyks kita atsarginė kopija ir kaip sekėsi paskutinei.",
   "overview.stats.hint": "Skaičiuojama kaip visur: įjungtų skyrių įrašai, kurie vis dar įdiegti. Paties BombVault konteineris nėra įrašas.",
   "overview.coverage.hint": "Viskas šiame serveryje, ko nepaiso jokia suplanuota atsarginė kopija. Išjungti skyriai neįskaičiuojami.",
-  "overview.coverage.countHint": "Skaičiuojama kaip visur: įjungtų skyrių įrašai, kurie vis dar įdiegti. Žemiau pateikta viskas, ko nepaiso kitas suplanuotas vykdymas, įskaitant pavienius duomenų rinkinius.",
   "overview.spike.hint": "Ką BombVault pasiekia ir ko jam reikia pagrindiniame kompiuteryje.",
   "overview.customizeHint": "Kortelę galima tempti už juostos, kad pasikeistų tvarka, dydį keisti tašku apatiniame kampe, o nereikalingą paslėpti. Išsaugoma šioje naršyklėje.",
   "overview.widthStep": "Plotis {w}, kitas dydis",

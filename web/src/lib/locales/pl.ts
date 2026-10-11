@@ -3957,7 +3957,6 @@ const pl: Partial<Translations> = {
   "overview.summary.hint": "Najstarsza migawka ze wszystkich sekcji, kiedy ruszy następna kopia i jak poszła ostatnia.",
   "overview.stats.hint": "Liczone jak wszędzie: pozycje włączonych sekcji, które nadal są zainstalowane. Własny kontener BombVault nie jest pozycją.",
   "overview.coverage.hint": "Wszystko na tym serwerze, czego nie obejmuje żadna zaplanowana kopia. Wyłączone sekcje się nie liczą.",
-  "overview.coverage.countHint": "Liczone jak wszędzie: pozycje włączonych sekcji, które nadal są zainstalowane. Poniżej jest wszystko, czego nie obejmie następny zaplanowany przebieg, także pojedyncze datasety.",
   "overview.spike.hint": "Do czego BombVault sięga na hoście i czego potrzebuje.",
   "overview.customizeHint": "Kartę można przeciągać za pasek, aby zmienić kolejność, zmieniać jej rozmiar punktem w dolnym rogu albo ukryć, jeśli niepotrzebna. Zapisano w tej przeglądarce.",
   "overview.widthStep": "Szerokość {w}, następny rozmiar",

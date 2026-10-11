@@ -3970,7 +3970,6 @@ const eu: Partial<Translations> = {
   "overview.summary.hint": "Atal guztietako argazki zaharrena, hurrengo babeskopia noiz exekutatuko den eta azkenak nola joan zen.",
   "overview.stats.hint": "Beste toki guztietan bezala kontatzen da: aktibatutako atalen elementuak, oraindik instalatuta daudenak. BombVaulten edukiontzia ez da elementua.",
   "overview.coverage.hint": "Zerbitzari honetan programatutako babeskopiaren batek estaltzen ez duen guztia. Desaktibatutako atalak ez dira kontatzen.",
-  "overview.coverage.countHint": "Beste toki guztietan bezala kontatzen da: aktibatutako atalen elementuak, oraindik instalatuta daudenak. Azpian hurrengo programatutako exekuzioak estaltzen ez duen guztia dago, datu-multzo bakarrak barne.",
   "overview.spike.hint": "BombVaultek ostalarian zer erdiesten duen eta zer behar duen.",
   "overview.customizeHint": "Txartel bat bere barratik arrastatu daiteke berrordenatzeko, behealdeko izkinako puntuan tamaina alda daiteke, edo ezkutatu behar ez bada. Nabigatzaile honetan gordetzen da.",
   "overview.widthStep": "Zabalera {w}, hurrengo tamaina",

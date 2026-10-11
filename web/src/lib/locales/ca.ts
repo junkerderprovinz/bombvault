@@ -3970,7 +3970,6 @@ const ca: Partial<Translations> = {
   "overview.summary.hint": "L'instantani més antic de totes les seccions, quan s'executarà la propera còpia i com va anar l'última.",
   "overview.stats.hint": "Es compta com arreu: els elements de les seccions activades que encara són instal·lats. El contenidor de BombVault no és un element.",
   "overview.coverage.hint": "Tot el que hi ha en aquest servidor i que cap còpia planificada cobreix. Les seccions desactivades no compten.",
-  "overview.coverage.countHint": "Es compta com arreu: els elements de les seccions activades que encara són instal·lats. A sota hi ha tot el que la propera execució planificada no cobreix, també conjunts de dades individuals.",
   "overview.spike.hint": "Què abasta BombVault i què necessita al host.",
   "overview.customizeHint": "Es pot arrossegar una targeta per la barra per reordenar-la, canviar-ne la mida des del punt de la cantonada inferior o amagar la que no calgui. Es desa en aquest navegador.",
   "overview.widthStep": "Amplada {w}, mida següent",

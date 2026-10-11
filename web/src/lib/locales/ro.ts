@@ -3962,7 +3962,6 @@ const ro: Partial<Translations> = {
   "overview.summary.hint": "Cel mai vechi instantaneu din toate secțiunile, când rulează următorul backup și cum a decurs ultimul.",
   "overview.stats.hint": "Se numără ca peste tot: intrările secțiunilor activate care sunt încă instalate. Containerul BombVault nu este o intrare.",
   "overview.coverage.hint": "Tot ce se află pe acest server și nu este acoperit de niciun backup programat. Secțiunile dezactivate nu se numără.",
-  "overview.coverage.countHint": "Se numără ca peste tot: intrările secțiunilor activate care sunt încă instalate. Mai jos este tot ce următoarea rulare programată nu acoperă, inclusiv dataseturi individuale.",
   "overview.spike.hint": "Ce atinge BombVault și de ce are nevoie pe gazdă.",
   "overview.customizeHint": "Un card se trage de bara lui pentru a-l reordona, se redimensionează din punctul din colțul de jos sau se ascunde dacă nu e necesar. Salvat în acest browser.",
   "overview.widthStep": "Lățime {w}, dimensiunea următoare",

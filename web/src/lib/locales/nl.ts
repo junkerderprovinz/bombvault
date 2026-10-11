@@ -3959,7 +3959,6 @@ const nl: Partial<Translations> = {
   "overview.summary.hint": "De oudste snapshot over alle secties, wanneer de volgende back-up draait en hoe de laatste ging.",
   "overview.stats.hint": "Geteld zoals overal: items van de ingeschakelde secties die nog geïnstalleerd zijn. De eigen container van BombVault is geen item.",
   "overview.coverage.hint": "Alles op deze server dat geen geplande back-up dekt. Uitgeschakelde secties tellen niet mee.",
-  "overview.coverage.countHint": "Geteld zoals overal: items van de ingeschakelde secties die nog geïnstalleerd zijn. Hieronder staat alles wat de volgende geplande run niet dekt, ook losse datasets.",
   "overview.spike.hint": "Wat BombVault op de host bereikt en nodig heeft.",
   "overview.customizeHint": "Een kaart sleep je aan zijn balk om de volgorde te wijzigen, het formaat wijzig je met de stip in de hoek linksonder en wat je niet nodig hebt kun je verbergen. Opgeslagen in deze browser.",
   "overview.widthStep": "Breedte {w}, volgend formaat",

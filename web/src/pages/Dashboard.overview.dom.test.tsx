@@ -511,6 +511,44 @@ describe("the status head", () => {
   });
 });
 
+describe("an entry the person said not to back up", () => {
+  const scratch = item({ key: "scratch", name: "scratch", ...leftOut });
+
+  it("is in no count, and the card of what is not backed up names it as excluded", async () => {
+    store({ v: 2, order: ALL, hidden: [], widths: {}, heights: {} });
+    server.domains = [domain()];
+    server.items = [item(), { ...scratch, backupDeclined: true }];
+    await renderPage();
+
+    expect(head().getByText(en["overview.head.allGood"])).toBeTruthy();
+    expect(head().getByText(new RegExp(ratio(1, 1)))).toBeTruthy();
+    expect(shownCards()).not.toContain("needs");
+    expect(within(cell("protection")).getByText(new RegExp(ratio(1, 1)))).toBeTruthy();
+    const excluded = within(cell("coverage")).getByTestId("coverage-declined");
+    expect(excluded.textContent).toBe(`scratch${en["coverage.reason.declined"]}`);
+    expect(within(cell("coverage")).queryByText(en["coverage.allProtected"])).toBeNull();
+  });
+
+  it("leaves the list when the person says so and comes back with Undo", async () => {
+    server.domains = [domain()];
+    server.items = [item(), scratch];
+    await renderPage();
+    expect(head().getByText("1 thing needs you")).toBeTruthy();
+
+    fireEvent.click(within(cell("needs")).getByRole("button", { name: en["backups.decline"] }));
+    await act(async () => {});
+
+    expect(head().getByText(en["overview.head.allGood"])).toBeTruthy();
+    expect(shownCards()).not.toContain("needs");
+
+    fireEvent.click(screen.getByRole("button", { name: en["takeover.undo"] }));
+    await act(async () => {});
+
+    expect(head().getByText("1 thing needs you")).toBeTruthy();
+    expect(within(cell("needs")).getByRole("link", { name: "scratch" })).toBeTruthy();
+  });
+});
+
 describe("one count on every card", () => {
   it("is the same in the head, on the protection card, on the coverage card and in the statistics", async () => {
     store({ v: 2, order: ALL, hidden: [], widths: {}, heights: {} });

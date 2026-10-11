@@ -3970,7 +3970,6 @@ const gl: Partial<Translations> = {
   "overview.summary.hint": "A instantánea máis antiga de todas as seccións, cando se executa a próxima copia e como foi a última.",
   "overview.stats.hint": "Cóntase como en todas partes: elementos das seccións activadas que seguen instalados. O contedor de BombVault non é un elemento.",
   "overview.coverage.hint": "Todo o que hai neste servidor e non cobre ningunha copia programada. As seccións desactivadas non contan.",
-  "overview.coverage.countHint": "Cóntase como en todas partes: elementos das seccións activadas que seguen instalados. Embaixo está todo o que a próxima execución programada non cobre, incluídos datasets soltos.",
   "overview.spike.hint": "O que BombVault alcanza e precisa no host.",
   "overview.customizeHint": "Unha tarxeta arrástrase pola súa barra para reordenala, redimensiónase co punto da esquina inferior ou ocúltase se non fai falta. Gárdase neste navegador.",
   "overview.widthStep": "Largura {w}, seguinte tamaño",

@@ -660,6 +660,61 @@ test("an entry that is gone offers its newest backup instead of a new one", asyn
   await expect(page.getByRole("dialog", { name: "pihole wiederherstellen" })).toBeVisible();
 });
 
+test("the menu sets an entry aside that no schedule reaches, and takes that back", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  const sent: boolean[] = [];
+  const scratch = () =>
+    item({
+      key: "scratch",
+      included: false,
+      effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+      lastBackup: 0,
+      lastRunStatus: "",
+      backupDeclined: sent[sent.length - 1] ?? false,
+    });
+  await page.route(
+    (url) => url.pathname === "/api/containers",
+    (route) =>
+      route.fulfill({
+        json: {
+          ok: true,
+          containers: [...CONTAINERS, container({ name: "scratch", includeInSchedule: false, lastBackup: null, lastBackupStarted: null })],
+        },
+      }),
+  );
+  await page.route(
+    (url) => url.pathname.startsWith("/api/items/container/scratch"),
+    (route) => {
+      const request = route.request();
+      if (request.url().endsWith("/declined")) sent.push(request.postDataJSON().declined);
+      else if (request.method() !== "GET") return route.continue();
+      return route.fulfill({ json: { ok: true, item: scratch() } });
+    },
+  );
+  await openEntry(page, "/backups/container/scratch", "scratch");
+
+  const excluded = page.getByText("Ausgenommen, BombVault sichert ihn nicht", { exact: false });
+  const more = page.getByRole("button", { name: "Mehr" }).first();
+  await expect(excluded).toHaveCount(0);
+  await expect(page.getByText("Zeitplan pausiert, noch keine Sicherung", { exact: false })).toBeVisible();
+
+  await more.click();
+  await expect(page.getByRole("menuitem", { name: "Nicht mehr ausnehmen" })).toHaveCount(0);
+  await page.getByRole("menuitem", { name: "Nicht sichern" }).click();
+
+  await expect(excluded).toBeVisible();
+  await expect(page.getByText("Nicht geschützt", { exact: true })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "scratch wird nicht gesichert" })).toBeVisible();
+
+  await more.click();
+  await expect(page.getByRole("menuitem", { name: "Nicht sichern" })).toHaveCount(0);
+  await page.getByRole("menuitem", { name: "Nicht mehr ausnehmen" }).click();
+
+  await expect(excluded).toHaveCount(0);
+  expect(sent).toEqual([true, false]);
+});
+
 test("an entry the server does not know says so", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
   await stage(page);

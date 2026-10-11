@@ -3960,7 +3960,6 @@ const sv: Partial<Translations> = {
   "overview.summary.hint": "Den äldsta ögonblicksbilden i alla avsnitt, när nästa säkerhetskopia körs och hur den senaste gick.",
   "overview.stats.hint": "Räknas som överallt: poster i de påslagna avsnitten som fortfarande är installerade. BombVaults egen container är ingen post.",
   "overview.coverage.hint": "Allt på den här servern som ingen schemalagd säkerhetskopia täcker. Avstängda avsnitt räknas inte.",
-  "overview.coverage.countHint": "Räknas som överallt: poster i de påslagna avsnitten som fortfarande är installerade. Nedan står allt som nästa schemalagda körning inte täcker, även enskilda datamängder.",
   "overview.spike.hint": "Vad BombVault når och behöver på värden.",
   "overview.customizeHint": "Ett kort kan dras i sitt fält för att ändra ordning, få ändrad storlek med punkten i det nedre hörnet eller döljas om det inte behövs. Sparas i den här webbläsaren.",
   "overview.widthStep": "Bredd {w}, nästa storlek",

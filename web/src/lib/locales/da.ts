@@ -3960,7 +3960,6 @@ const da: Partial<Translations> = {
   "overview.summary.hint": "Det ældste øjebliksbillede på tværs af alle sektioner, hvornår næste sikkerhedskopi kører, og hvordan den seneste gik.",
   "overview.stats.hint": "Tælles som alle andre steder: poster i de aktive sektioner, der stadig er installeret. BombVaults egen container er ikke en post.",
   "overview.coverage.hint": "Alt på denne server, som ingen planlagt sikkerhedskopi dækker. Slåede-fra sektioner tælles ikke med.",
-  "overview.coverage.countHint": "Tælles som alle andre steder: poster i de aktive sektioner, der stadig er installeret. Nedenfor står alt, som næste planlagte kørsel ikke dækker, også enkelte datasæt.",
   "overview.spike.hint": "Hvad BombVault kan nå og har brug for på værten.",
   "overview.customizeHint": "Et kort kan trækkes i sin bjælke for at ændre rækkefølgen, få ændret størrelse ved prikken i det nederste hjørne eller skjules, hvis det ikke skal bruges. Gemmes i denne browser.",
   "overview.widthStep": "Bredde {w}, næste størrelse",

@@ -3960,7 +3960,6 @@ const fr: Partial<Translations> = {
   "overview.summary.hint": "L'instantané le plus ancien de toutes les sections, l'heure de la prochaine sauvegarde et le déroulement de la dernière.",
   "overview.stats.hint": "Compté comme partout : les éléments des sections activées qui sont encore installés. Le conteneur de BombVault n'est pas un élément.",
   "overview.coverage.hint": "Tout ce qui se trouve sur ce serveur et qu'aucune sauvegarde planifiée ne couvre. Les sections désactivées ne comptent pas.",
-  "overview.coverage.countHint": "Compté comme partout : les éléments des sections activées qui sont encore installés. Ci-dessous figure tout ce que la prochaine exécution planifiée ne couvre pas, y compris les datasets isolés.",
   "overview.spike.hint": "Ce que BombVault atteint et requiert sur l'hôte.",
   "overview.customizeHint": "Une carte se déplace par sa barre pour changer l'ordre, se redimensionne avec le point de son coin inférieur ou se masque si elle est inutile. Enregistré dans ce navigateur.",
   "overview.widthStep": "Largeur {w}, taille suivante",

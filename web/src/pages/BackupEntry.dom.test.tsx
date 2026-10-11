@@ -307,6 +307,24 @@ describe("reading the entry", () => {
 });
 
 describe("the state of the entry", () => {
+  it("says of an entry the person set aside that it is excluded and not protected", async () => {
+    serveEntries(mocks, {
+      items: [
+        {
+          ...IMMICH,
+          included: false,
+          effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+          backupDeclined: true,
+        },
+      ],
+      containers: [containerView({ includeInSchedule: false })],
+    });
+    await renderPage("/backups/container/immich");
+    expect(screen.getByText(en["entry.reason.declined"], { exact: false })).toBeTruthy();
+    expect(screen.getByText(en["backups.status.notProtected"])).toBeTruthy();
+    expect(screen.queryByText(en["ransomware.protGreen"])).toBeNull();
+  });
+
   it("puts the reason of a failed run under the head", async () => {
     serveEntries(mocks, {
       items: [{ ...IMMICH, lastRunStatus: "failed" }],

@@ -3970,7 +3970,6 @@ const et: Partial<Translations> = {
   "overview.summary.hint": "Vanim hetktõmmis kõigis jaotistes, millal järgmine varundus käivitub ja kuidas viimane läks.",
   "overview.stats.hint": "Loetakse nagu mujalgi: sisselülitatud jaotiste kirjed, mis on veel installitud. BombVaulti enda konteiner ei ole kirje.",
   "overview.coverage.hint": "Kõik selles serveris, mida ükski ajastatud varundus ei kata. Väljalülitatud jaotisi ei loeta.",
-  "overview.coverage.countHint": "Loetakse nagu mujalgi: sisselülitatud jaotiste kirjed, mis on veel installitud. All on kõik, mida järgmine ajastatud käivitus ei kata, sealhulgas üksikud andmekogumid.",
   "overview.spike.hint": "Mida BombVault hostis kätte saab ja vajab.",
   "overview.customizeHint": "Kaarti saab lohistada selle ribast ümberkorraldamiseks, suurust muuta alumise nurga täpist või peita, mida pole vaja. Salvestatakse selles brauseris.",
   "overview.widthStep": "Laius {w}, järgmine suurus",

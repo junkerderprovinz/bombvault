@@ -3960,7 +3960,6 @@ const no: Partial<Translations> = {
   "overview.summary.hint": "Det eldste øyeblikksbildet på tvers av alle seksjoner, når neste sikkerhetskopi kjører og hvordan den siste gikk.",
   "overview.stats.hint": "Telles som alle andre steder: oppføringer i de aktive seksjonene som fortsatt er installert. BombVaults egen container er ikke en oppføring.",
   "overview.coverage.hint": "Alt på denne serveren som ingen planlagt sikkerhetskopi dekker. Avslåtte seksjoner telles ikke med.",
-  "overview.coverage.countHint": "Telles som alle andre steder: oppføringer i de aktive seksjonene som fortsatt er installert. Under står alt som neste planlagte kjøring ikke dekker, også enkeltstående datasett.",
   "overview.spike.hint": "Hva BombVault når og trenger på verten.",
   "overview.customizeHint": "Et kort kan dras i linjen for å endre rekkefølgen, få endret størrelse med prikken i det nederste hjørnet eller skjules hvis det ikke trengs. Lagres i denne nettleseren.",
   "overview.widthStep": "Bredde {w}, neste størrelse",

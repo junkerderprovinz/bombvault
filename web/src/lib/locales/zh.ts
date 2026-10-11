@@ -3951,7 +3951,6 @@ const zh: Partial<Translations> = {
   "overview.summary.hint": "所有部分中最旧的快照、下次备份的运行时间，以及上次备份的结果。",
   "overview.stats.hint": "与其他地方的统计方式相同：已开启部分中仍已安装的条目。BombVault 自己的容器不算条目。",
   "overview.coverage.hint": "此服务器上没有任何计划备份覆盖的所有内容。已关闭的部分不计入。",
-  "overview.coverage.countHint": "与其他地方的统计方式相同：已开启部分中仍已安装的条目。下方列出下一次计划运行未覆盖的所有内容，包括单个数据集。",
   "overview.spike.hint": "BombVault 在主机上能访问到的内容以及所需的条件。",
   "overview.customizeHint": "可以拖动卡片的标题栏来调整顺序，拖动右下角的圆点来调整大小，也可以隐藏不需要的卡片。保存在此浏览器中。",
   "overview.widthStep": "宽度 {w}，下一个尺寸",

@@ -3960,7 +3960,6 @@ const pt: Partial<Translations> = {
   "overview.summary.hint": "O instantâneo mais antigo de todas as secções, quando corre o próximo backup e como correu o último.",
   "overview.stats.hint": "Contado como em todo o lado: entradas das secções ativadas que continuam instaladas. O contentor do BombVault não é uma entrada.",
   "overview.coverage.hint": "Tudo o que existe neste servidor e que nenhum backup agendado cobre. As secções desativadas não contam.",
-  "overview.coverage.countHint": "Contado como em todo o lado: entradas das secções ativadas que continuam instaladas. Em baixo está tudo o que a próxima execução agendada não cobre, incluindo datasets isolados.",
   "overview.spike.hint": "O que o BombVault alcança e precisa no anfitrião.",
   "overview.customizeHint": "Um cartão arrasta-se pela barra para mudar a ordem, redimensiona-se pelo ponto do canto inferior ou oculta-se se não for preciso. Guardado neste navegador.",
   "overview.widthStep": "Largura {w}, tamanho seguinte",

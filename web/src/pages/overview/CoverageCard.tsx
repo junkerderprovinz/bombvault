@@ -3,6 +3,7 @@ import type { TranslationKey, useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
 import type { Tally } from "../../lib/protectionTally";
 import { zfsCodeSentence, zfsFixKey } from "../../lib/zfsCodes";
+import { entryName } from "../../components/backups/kinds";
 import { InfoBubble } from "../../components/InfoBubble";
 import { Card } from "./Card";
 
@@ -16,7 +17,8 @@ import { Card } from "./Card";
  *
  * The ratio above the list counts entries as every other card does. The list
  * itself comes from GET /api/coverage, which knows why the next scheduled run
- * leaves something out.
+ * leaves something out. That answer leaves out what the person said not to
+ * back up, so those entries are added from the list of entries.
  */
 export function CoverageCard({
   t,
@@ -50,6 +52,7 @@ export function CoverageCard({
   const rows = (coverage?.domains ?? [])
     .filter((d) => d.enabled)
     .flatMap((d) => d.unprotected.map((i) => ({ ...i, domain: d.domain })));
+  const nothingLeftOut = rows.length === 0 && tally.declined.length === 0;
 
   return (
     <Card title={t("coverage.title")} hint={t("overview.coverage.hint")} hueIndex={hueIndex}>
@@ -59,9 +62,9 @@ export function CoverageCard({
         <div className="flex flex-col gap-2">
           <p className="flex items-center gap-1.5 text-base font-semibold tabular-nums text-carbon-text">
             {t("coverage.ratio").replace("{protected}", String(tally.ok)).replace("{total}", String(tally.total))}
-            <InfoBubble tip={t("overview.coverage.countHint")} />
+            <InfoBubble tip={t("overview.coverage.counted")} />
           </p>
-          {rows.length === 0 && <p className="text-sm text-carbon-textSub">{t("coverage.allProtected")}</p>}
+          {nothingLeftOut && <p className="text-sm text-carbon-textSub">{t("coverage.allProtected")}</p>}
           <ul className="flex flex-col gap-1">
             {rows.map((r) => (
               <li key={r.domain + ":" + r.name} className="flex flex-wrap items-baseline gap-x-2">
@@ -73,6 +76,12 @@ export function CoverageCard({
                 {r.neverBackedUp && (
                   <span className="text-xs text-statusWarn">{t("coverage.neverBackedUp")}</span>
                 )}
+              </li>
+            ))}
+            {tally.declined.map((item) => (
+              <li key={`${item.kind}:${item.key}`} data-testid="coverage-declined" className="flex flex-wrap items-baseline gap-x-2">
+                <span className="min-w-0 text-sm text-carbon-text wrap-anywhere">{entryName(item, t)}</span>
+                <span className="text-xs text-carbon-textSub">{t("coverage.reason.declined")}</span>
               </li>
             ))}
           </ul>

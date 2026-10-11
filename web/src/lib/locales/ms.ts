@@ -3970,7 +3970,6 @@ const ms: Partial<Translations> = {
   "overview.summary.hint": "Snapshot paling lama merentas semua bahagian, bila sandaran seterusnya berjalan dan bagaimana yang terakhir berlalu.",
   "overview.stats.hint": "Dikira seperti di tempat lain: entri bahagian yang dihidupkan yang masih dipasang. Bekas BombVault sendiri bukan entri.",
   "overview.coverage.hint": "Semua yang ada pada pelayan ini dan tidak dilindungi oleh sebarang sandaran berjadual. Bahagian yang dimatikan tidak dikira.",
-  "overview.coverage.countHint": "Dikira seperti di tempat lain: entri bahagian yang dihidupkan yang masih dipasang. Di bawah ialah semua yang tidak dilindungi oleh larian berjadual seterusnya, termasuk dataset tunggal.",
   "overview.spike.hint": "Apa yang boleh dicapai dan diperlukan BombVault pada hos.",
   "overview.customizeHint": "Kad boleh diseret pada bar untuk menyusun semula, saiznya diubah pada titik di sudut bawah, dan yang tidak diperlukan boleh disembunyikan. Disimpan dalam pelayar ini.",
   "overview.widthStep": "Lebar {w}, saiz seterusnya",

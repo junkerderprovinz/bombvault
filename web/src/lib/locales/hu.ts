@@ -3962,7 +3962,6 @@ const hu: Partial<Translations> = {
   "overview.summary.hint": "A legrégebbi pillanatkép az összes szakaszban, mikor fut a következő mentés, és hogyan sikerült az utolsó.",
   "overview.stats.hint": "Úgy számít, mint mindenhol: a bekapcsolt szakaszok még telepített elemei. A BombVault saját konténere nem elem.",
   "overview.coverage.hint": "Minden, ami ezen a szerveren van, és amit egyetlen ütemezett mentés sem fed le. A kikapcsolt szakaszok nem számítanak.",
-  "overview.coverage.countHint": "Úgy számít, mint mindenhol: a bekapcsolt szakaszok még telepített elemei. Alatta minden, amit a következő ütemezett futás nem fed le, az önálló datasetek is.",
   "overview.spike.hint": "Mit ér el és mire van szüksége a BombVaultnak a gazdagépen.",
   "overview.customizeHint": "A kártya a sávjánál fogva húzható az átrendezéshez, a méretét az alsó sarokban lévő pont módosítja, a feleslegeset el lehet rejteni. Ebben a böngészőben tárolódik.",
   "overview.widthStep": "Szélesség {w}, következő méret",

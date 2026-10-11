@@ -3958,7 +3958,6 @@ const cs: Partial<Translations> = {
   "overview.summary.hint": "Nejstarší snímek ze všech sekcí, kdy poběží další záloha a jak dopadla poslední.",
   "overview.stats.hint": "Počítá se jako všude: položky zapnutých sekcí, které jsou stále nainstalované. Vlastní kontejner BombVaultu položkou není.",
   "overview.coverage.hint": "Vše na tomto serveru, co žádná plánovaná záloha nepokrývá. Vypnuté sekce se nepočítají.",
-  "overview.coverage.countHint": "Počítá se jako všude: položky zapnutých sekcí, které jsou stále nainstalované. Níže je vše, co další plánovaný běh nepokryje, včetně jednotlivých datasetů.",
   "overview.spike.hint": "Co BombVault na hostiteli dosáhne a potřebuje.",
   "overview.customizeHint": "Kartu lze přesouvat za její lištu, měnit její velikost tečkou v dolním rohu nebo skrýt, co není potřeba. Uloženo v tomto prohlížeči.",
   "overview.widthStep": "Šířka {w}, další velikost",

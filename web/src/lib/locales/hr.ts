@@ -3970,7 +3970,6 @@ const hr: Partial<Translations> = {
   "overview.summary.hint": "Najstarija snimka u svim odjeljcima, kada se pokreće sljedeća sigurnosna kopija i kako je prošla zadnja.",
   "overview.stats.hint": "Broji se kao svugdje: stavke uključenih odjeljaka koje su još instalirane. BombVaultov vlastiti kontejner nije stavka.",
   "overview.coverage.hint": "Sve na ovom poslužitelju što nijedna zakazana sigurnosna kopija ne pokriva. Isključeni odjeljci se ne broje.",
-  "overview.coverage.countHint": "Broji se kao svugdje: stavke uključenih odjeljaka koje su još instalirane. Ispod je sve što sljedeće zakazano izvođenje ne pokriva, uključujući pojedinačne datasetove.",
   "overview.spike.hint": "Što BombVault doseže i treba na hostu.",
   "overview.customizeHint": "Kartica se povlači za traku radi promjene redoslijeda, veličina joj se mijenja točkom u donjem kutu, a nepotrebne se mogu sakriti. Sprema se u ovom pregledniku.",
   "overview.widthStep": "Širina {w}, sljedeća veličina",

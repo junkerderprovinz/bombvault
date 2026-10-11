@@ -3970,7 +3970,6 @@ const lv: Partial<Translations> = {
   "overview.summary.hint": "Vecākais momentuzņēmums visās sadaļās, kad tiks veikta nākamā rezerves kopija un kā izdevās pēdējā.",
   "overview.stats.hint": "Skaita kā visur: ieslēgto sadaļu ieraksti, kas vēl ir instalēti. Paša BombVault konteiners nav ieraksts.",
   "overview.coverage.hint": "Viss šajā serverī, ko neaptver neviena ieplānota rezerves kopija. Izslēgtās sadaļas netiek skaitītas.",
-  "overview.coverage.countHint": "Skaita kā visur: ieslēgto sadaļu ieraksti, kas vēl ir instalēti. Zemāk ir viss, ko nākamā ieplānotā izpilde neaptver, ieskaitot atsevišķas datu kopas.",
   "overview.spike.hint": "Ko BombVault sasniedz un kas tam vajadzīgs resursdatorā.",
   "overview.customizeHint": "Kartīti var vilkt aiz tās joslas, lai mainītu secību, mainīt tās izmēru ar punktu apakšējā stūrī vai paslēpt to, kas nav vajadzīgs. Saglabājas šajā pārlūkā.",
   "overview.widthStep": "Platums {w}, nākamais izmērs",

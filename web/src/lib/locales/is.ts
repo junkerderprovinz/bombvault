@@ -3970,7 +3970,6 @@ const is: Partial<Translations> = {
   "overview.summary.hint": "Elsta skyndimyndin í öllum hlutum, hvenær næsta afrit keyrir og hvernig það síðasta gekk.",
   "overview.stats.hint": "Talið eins og alls staðar: færslur virkra hluta sem enn eru uppsettar. Eigin gámur BombVault er ekki færsla.",
   "overview.coverage.hint": "Allt á þessum netþjóni sem ekkert tímasett afrit nær yfir. Slökktir hlutar eru ekki taldir með.",
-  "overview.coverage.countHint": "Talið eins og alls staðar: færslur virkra hluta sem enn eru uppsettar. Fyrir neðan er allt sem næsta tímasetta keyrsla nær ekki yfir, líka stök gagnasöfn.",
   "overview.spike.hint": "Hvað BombVault nær til og þarf á hýsilnum.",
   "overview.customizeHint": "Spjald er dregið á stikunni til að raða upp á nýtt, stærðinni er breytt með punktinum í neðra horninu og því sem ekki þarf er hægt að fela. Vistað í þessum vafra.",
   "overview.widthStep": "Breidd {w}, næsta stærð",

@@ -3954,7 +3954,6 @@ const sl: Partial<Translations> = {
   "overview.summary.hint": "Najstarejši posnetek v vseh razdelkih, kdaj se zažene naslednja varnostna kopija in kako je šla zadnja.",
   "overview.stats.hint": "Šteje se kot povsod: vnosi vklopljenih razdelkov, ki so še nameščeni. BombVaultov lastni vsebnik ni vnos.",
   "overview.coverage.hint": "Vse na tem strežniku, česar ne zajema nobena načrtovana varnostna kopija. Izklopljeni razdelki se ne štejejo.",
-  "overview.coverage.countHint": "Šteje se kot povsod: vnosi vklopljenih razdelkov, ki so še nameščeni. Spodaj je vse, česar naslednje načrtovano izvajanje ne zajame, tudi posamezni nabori podatkov.",
   "overview.spike.hint": "Do česa BombVault seže in kaj potrebuje na gostitelju.",
   "overview.customizeHint": "Kartico lahko povlečete za vrstico za spremembo vrstnega reda, velikost spremenite s piko v spodnjem kotu, nepotrebno pa skrijete. Shranjeno v tem brskalniku.",
   "overview.widthStep": "Širina {w}, naslednja velikost",

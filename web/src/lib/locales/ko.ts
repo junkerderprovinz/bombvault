@@ -3951,7 +3951,6 @@ const ko: Partial<Translations> = {
   "overview.summary.hint": "모든 섹션에서 가장 오래된 스냅샷, 다음 백업 실행 시각, 마지막 백업 결과.",
   "overview.stats.hint": "다른 곳과 같은 방식으로 집계합니다. 켜져 있는 섹션 중 아직 설치된 항목이 대상이며, BombVault 자체 컨테이너는 항목이 아닙니다.",
   "overview.coverage.hint": "이 서버에 있으면서 예약된 백업이 포함하지 않는 모든 것. 꺼진 섹션은 집계하지 않습니다.",
-  "overview.coverage.countHint": "다른 곳과 같은 방식으로 집계합니다. 켜져 있는 섹션 중 아직 설치된 항목이 대상입니다. 아래에는 다음 예약 실행이 포함하지 않는 모든 것이 표시되며, 개별 데이터셋도 포함됩니다.",
   "overview.spike.hint": "BombVault가 호스트에서 접근하는 대상과 필요로 하는 것.",
   "overview.customizeHint": "카드는 막대를 끌어 순서를 바꾸고, 오른쪽 아래 모서리의 점으로 크기를 조절하며, 필요 없는 카드는 숨길 수 있습니다. 이 브라우저에 저장됩니다.",
   "overview.widthStep": "너비 {w}, 다음 크기",
