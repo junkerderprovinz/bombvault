@@ -482,6 +482,8 @@ type placementEngine struct {
 	initStaysShut map[string]bool
 	// forgetErr fails a Forget by ids at this location and forgets nothing.
 	forgetErr   map[string]error
+	checks      []string         // the repositories Check ran on
+	checkErr    map[string]error // Check fails here
 	copies      []copyCall
 	forgets     []forgetCall
 	deletes     []forgetIDsCall
@@ -633,6 +635,14 @@ func (e *placementEngine) Forget(_ context.Context, repo string, ids []string, _
 		return slices.ContainsFunc(ids, func(id string) bool { return strings.HasPrefix(sn.ID, id) })
 	})
 	return nil
+}
+
+func (e *placementEngine) Check(_ context.Context, repo string, _ restic.Mode) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	key := filepath.ToSlash(repo)
+	e.checks = append(e.checks, key)
+	return e.checkErr[key]
 }
 
 func (e *placementEngine) Prune(_ context.Context, repo string, _ restic.Mode) error {

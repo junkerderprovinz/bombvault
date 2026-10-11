@@ -2531,6 +2531,51 @@ export function tamperTestOffsiteTarget(
   return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}/tamper-test`, { method: "POST" });
 }
 
+/** What moving a section's copy to another destination copies. `backups` is
+ *  what the old place holds of the section, `pending` how many of them the new
+ *  place lacks. `key` is the progress key the run reports under and is
+ *  cancelled by. */
+export interface SectionMove {
+  domain: OffsiteDomain;
+  targetId: string;
+  from: string;
+  to: string;
+  backups: number;
+  pending: number;
+  key: string;
+}
+
+/** Why a move cannot be done: the section is there already, the destination
+ *  has the section from before, entries back up straight to the old place,
+ *  both places need different sign-ins of one kind, or a move of the section
+ *  is running. */
+export type SectionMoveRefusal =
+  | "move-same-place"
+  | "move-section-there"
+  | "move-direct-repo"
+  | "move-sign-in"
+  | "move-running";
+
+type SectionMoveAnswer = Omit<OkEnvelope, "code"> & { code?: SectionMoveRefusal; move?: SectionMove };
+
+/** GET /api/offsite/targets/{id}/move?to=: what moving the section's copy to
+ *  the destination `to` would copy. It lists both places. An unknown target or
+ *  destination is a 404. */
+export function previewSectionMove(targetId: string, to: string): Promise<SectionMoveAnswer> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(targetId)}/move?to=${encodeURIComponent(to)}`);
+}
+
+/** POST /api/offsite/targets/{id}/move: copies the section's backups to the
+ *  destination `to` in the background and points the section there once the
+ *  new place holds them all and passes its check. The old place is only read.
+ *  A move started again goes on with what is missing. */
+export function moveSection(targetId: string, to: string): Promise<SectionMoveAnswer & { started?: boolean }> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(targetId)}/move`, {
+    method: "POST",
+    body: JSON.stringify({ to }),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Remote primary repositories (issue #152)
 //

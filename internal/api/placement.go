@@ -86,6 +86,11 @@ var placementCodes = []struct {
 	{errBackupsNotThere, "backups-not-there"},
 	{errLastCopiesUnnamed, "last-copies"},
 	{errNothingToErase, "nothing-to-erase"},
+	{errMoveSamePlace, "move-same-place"},
+	{errMoveSignIn, "move-sign-in"},
+	{errMoveRunning, "move-running"},
+	{store.ErrTargetHasDirectRepo, "move-direct-repo"},
+	{store.ErrDomainHasDestinationTarget, "move-section-there"},
 }
 
 // placementCode returns the code the interface translates err by, "" for none.
