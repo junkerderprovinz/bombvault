@@ -362,6 +362,34 @@ function part(domain: string, entries: number, backups: number, primary = false)
 
 export const REMOVAL = { sections: [part("containers", 7, 62, true), part("flash", 1, 14), part("config", 1, 9)] };
 
+function emptied(domain: string, entries: number, backups: number, kept?: string) {
+  const { targetId, repo } = part(domain, entries, backups);
+  return { domain, targetId, repo, entries, backups, ...(kept ? { kept } : {}) };
+}
+
+/** What deleting the backups at the Storage Box takes away: flash is
+ *  append-only there and stays, and one container has no other backup. */
+export const ERASURE = {
+  removal: REMOVAL,
+  sections: [emptied("containers", 7, 62), emptied("flash", 1, 14, "append-only"), emptied("config", 1, 9)],
+  backups: 71,
+  entries: 8,
+  backupsOnlyThere: 12,
+  lastCopies: [{ domain: "containers", identity: "container:paperless", backups: 12 }],
+  key: "erase:box",
+};
+
+/** What moving the flash copy from the Storage Box to B2 copies. */
+export const MOVE = {
+  domain: "flash",
+  targetId: "t-box-flash",
+  from: "rclone:storagebox:bombvault/flash",
+  to: "s3:https://s3.eu-central-003.backblazeb2.com/bv-fotos/flash",
+  backups: 14,
+  pending: 14,
+  key: "move:t-box-flash",
+};
+
 const CRED_SETS = [
   { id: "set-b2", name: "B2 Fotos", s3KeyId: "0034f9e8d7c6", s3Region: "eu-central-003", restUser: "", s3StorageClass: "", s3SecretSet: true, restPasswordSet: false },
 ];
@@ -372,6 +400,8 @@ export interface Staged {
   /** What the server answers to a changed connection. A test replaces it to
    *  stage a refusal. */
   connection: Record<string, unknown>;
+  /** What the server answers to the question what a move would copy. */
+  move: Record<string, unknown>;
 }
 
 /**
@@ -380,7 +410,7 @@ export interface Staged {
  * a test asserts on the request and not on a second read.
  */
 export async function stageStorage(page: Page, width: number, lang = "de"): Promise<Staged> {
-  const staged: Staged = { writes: [], connection: { ok: true, warnings: [] } };
+  const staged: Staged = { writes: [], connection: { ok: true, warnings: [] }, move: { ok: true, move: MOVE } };
   const record = (route: Route, answer: unknown) => {
     const request = route.request();
     staged.writes.push({ method: request.method(), path: new URL(request.url()).pathname, body: request.postDataJSON() });
@@ -407,7 +437,11 @@ export async function stageStorage(page: Page, width: number, lang = "de"): Prom
   await page.route(
     (url) => url.pathname.startsWith("/api/offsite/targets/"),
     (route) => {
-      if (route.request().method() === "PUT") return record(route, { ok: true, warnings: [] });
+      const method = route.request().method();
+      if (new URL(route.request().url()).pathname.endsWith("/move")) {
+        return method === "POST" ? record(route, { ok: true, started: true, move: MOVE }) : route.fulfill({ json: staged.move });
+      }
+      if (method === "PUT") return record(route, { ok: true, warnings: [] });
       return record(route, { ok: true, reachable: true, initialized: true, testable: true, protected: true });
     },
   );
@@ -416,6 +450,11 @@ export async function stageStorage(page: Page, width: number, lang = "de"): Prom
     (route) => {
       const { pathname } = new URL(route.request().url());
       if (pathname.endsWith("/connection")) return record(route, staged.connection);
+      if (pathname.endsWith("/erasure")) {
+        return route.request().method() === "POST"
+          ? record(route, { ok: true, started: true, erasure: ERASURE })
+          : route.fulfill({ json: { ok: true, erasure: ERASURE } });
+      }
       if (pathname.endsWith("/removal")) {
         return route.request().method() === "POST" ? record(route, { ok: true }) : route.fulfill({ json: { ok: true, removal: REMOVAL } });
       }

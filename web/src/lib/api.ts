@@ -5969,6 +5969,8 @@ export interface RoleSide {
   receiver: RoleRequest | null;
   fetcher: RoleRequest | null;
   zfs: ZFSRole | null;
+  /** The key deposit. The server always sends it, null for none. */
+  keeper?: KeeperRole | null;
 }
 
 export interface MemberRoles {
@@ -5978,6 +5980,9 @@ export interface MemberRoles {
   /** False for a member from before role requests: asking it takes effect at
    *  once, since nobody there can answer. */
   answers: boolean;
+  /** False for a member too old to keep a key deposit. The server always
+   *  sends it. */
+  canKeep?: boolean;
   /** What the member does for this instance. */
   byMember: RoleSide;
   /** What this instance does for the member. */
@@ -5996,6 +6001,8 @@ export interface SelfRoles {
   receiver: RoleHolder[];
   fetcher: RoleHolder[];
   zfs: RoleHolder[];
+  /** The members whose key deposit this instance keeps. */
+  keeper?: RoleHolder[];
 }
 
 /** GET /api/group/roles - every member's roles in both directions. */
@@ -6042,6 +6049,167 @@ export function decideRole(
   return fetchJSON(`/api/group/roles/requests/${encodeURIComponent(id)}`, {
     method: "POST",
     body: JSON.stringify(decision),
+  });
+}
+
+/** Where a key deposit stands: the keeper holds it, its content changed and
+ *  the fresh one has not reached the keeper, or the keeper deleted it and
+ *  takes a new one only when a person asks again. */
+export type DepositState = "held" | "stale" | "declined";
+
+/** The keeper role in one direction. Under `byMember` it is this instance's
+ *  deposit with the member and `at` when it was last sent. Under `forMember`
+ *  it is the member's deposit kept here, `at` when it last arrived, and
+ *  `asks` how many requests to hand it out wait for an answer. */
+export interface KeeperRole {
+  state: DepositState;
+  at: string;
+  asks?: number;
+}
+
+/** A request to hand a deposit out, as the keeper answers it. "released"
+ *  means the deposit went to the instance that asked. "expired" is a request
+ *  nobody answered within a day, or one allowed and not collected within 30
+ *  minutes. */
+export type ReleaseState = "asked" | "allowed" | "declined" | "released" | "expired";
+
+/** What the keeper's person sees of a request: who asks, for whose deposit,
+ *  since when this instance has had the asking instance in its group ("" for
+ *  never listed), and how often it asked. */
+export interface DepositRelease {
+  id: string;
+  ownerId: string;
+  ownerName: string;
+  requesterId: string;
+  requesterName: string;
+  state: ReleaseState;
+  askedAt: string;
+  decidedAt: string;
+  releasedAt: string;
+  knownSince: string;
+  requests: number;
+  requestsLastHour: number;
+}
+
+/** Both sides of the key deposits. `codeSince` is when this instance's
+ *  recovery code was made, "" while it has none. */
+export interface Deposits {
+  codeSince: string;
+  sent: { memberId: string; name: string; state: DepositState; sentAt: string }[];
+  kept: { ownerId: string; ownerName: string; state: DepositState; createdAt: string; updatedAt: string }[];
+  /** Newest first, answered ones included. */
+  releases: DepositRelease[];
+}
+
+/** Why a deposit call was refused: the member is too old to keep one, it
+ *  keeps none of that server, the keeper's person declined, this server asked
+ *  more than three times in an hour, the deposit is of a newer version, the
+ *  code is not twenty characters, the code does not open the deposit, the
+ *  member is out of reach or did not answer, the backup key is locked, or the
+ *  request was answered before. */
+export type DepositRefusal =
+  | "keeper-too-old"
+  | "deposit-none"
+  | "release-declined"
+  | "release-limit"
+  | "deposit-version"
+  | "deposit-code-shape"
+  | "deposit-code"
+  | "member-gone"
+  | "member-silent"
+  | "backup-key-locked"
+  | "release-decided";
+
+type DepositAnswer<T> = Omit<OkEnvelope, "code"> & { code?: DepositRefusal } & T;
+
+/** GET /api/group/deposits. */
+export function listDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>> {
+  return fetchJSON("/api/group/deposits");
+}
+
+/** PUT /api/group/members/{id}/roles/keeper: gives the member this instance's
+ *  deposit. `code` is the recovery code, in four groups of five; it comes
+ *  with the first deposit only and is stored nowhere, so it has to be shown
+ *  and written down then. */
+export function askKeeper(memberId: string): Promise<DepositAnswer<{ keeper?: KeeperRole; code?: string }>> {
+  return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "PUT" });
+}
+
+/** DELETE /api/group/members/{id}/roles/keeper: takes the deposit back.
+ *  `told` is false when the member could not be reached. With the last
+ *  keeper gone the recovery code is void. */
+export function withdrawKeeper(memberId: string): Promise<DepositAnswer<{ told?: boolean }>> {
+  return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "DELETE" });
+}
+
+/** POST /api/group/deposit/code: replaces the recovery code and seals every
+ *  keeper's deposit for the new one. The answer is the one time it is shown. */
+export function newDepositCode(): Promise<DepositAnswer<{ code?: string }>> {
+  return fetchJSON("/api/group/deposit/code", { method: "POST" });
+}
+
+/** POST /api/group/deposit/renew: sends the keepers a fresh deposit where the
+ *  content changed. The server also does this by itself every 15 minutes. */
+export function renewDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>> {
+  return fetchJSON("/api/group/deposit/renew", { method: "POST" });
+}
+
+/** POST /api/group/deposits/releases/{id}: the keeper's person allows or
+ *  refuses a request. An unknown id is a 404. */
+export function decideRelease(
+  id: string,
+  decision: "allow" | "refuse",
+): Promise<DepositAnswer<{ state?: ReleaseState }>> {
+  return fetchJSON(`/api/group/deposits/releases/${encodeURIComponent(id)}`, {
+    method: "POST",
+    body: JSON.stringify({ decision }),
+  });
+}
+
+/** DELETE /api/group/deposits/{ownerId}: the keeper deletes a member's
+ *  deposit. The member sees it as declined at its next renewal. */
+export function dropKeptDeposit(ownerId: string): Promise<DepositAnswer<object>> {
+  return fetchJSON(`/api/group/deposits/${encodeURIComponent(ownerId)}`, { method: "DELETE" });
+}
+
+/** A deposit a member of the group keeps, as a new install chooses from. */
+export interface OfferedDeposit {
+  memberId: string;
+  memberName: string;
+  ownerId: string;
+  ownerName: string;
+  updatedAt: string;
+}
+
+/** GET /api/emergency/deposits: asks every member in reach which deposits it
+ *  keeps. `silent` names the members that did not answer, older ones among
+ *  them. */
+export function listOfferedDeposits(): Promise<OkEnvelope & { deposits?: OfferedDeposit[]; silent?: string[] }> {
+  return fetchJSON("/api/emergency/deposits");
+}
+
+/** POST /api/emergency/group: the group way into an emergency. `ask` true is
+ *  the person pressing the button and opens a request on the keeper; `ask`
+ *  false looks where the request stands and is what to poll with. `release`
+ *  "asked" waits for the keeper's person, "allowed" comes with the started
+ *  emergency, and "unasked", "expired" or "released" need a new ask. The code
+ *  is used on this server and is not sent to the keeper. A wrong code answers
+ *  "deposit-code" and can be typed again without a new request. */
+export function emergencyFromGroup(
+  memberId: string,
+  ownerId: string,
+  code: string,
+  ask: boolean,
+): Promise<
+  Omit<OkEnvelope, "code"> & {
+    code?: DepositRefusal | EmergencyRefusal;
+    release?: ReleaseState | "unasked";
+    emergency?: EmergencyState;
+  }
+> {
+  return fetchJSON("/api/emergency/group", {
+    method: "POST",
+    body: JSON.stringify({ memberId, ownerId, code, ask }),
   });
 }
 
@@ -6202,6 +6370,22 @@ export function login(password: string, code?: string): Promise<LoginResponse> {
   return fetchJSON("/api/login", {
     method: "POST",
     body: JSON.stringify(code ? { password, code } : { password }),
+  });
+}
+
+/** POST /api/auth/reset: has BombVault write a reset code to its container
+ *  log. The code itself never comes back here. */
+export function startPasswordReset(): Promise<OkEnvelope> {
+  return fetchJSON("/api/auth/reset", { method: "POST", body: "{}" });
+}
+
+/** POST /api/auth/reset/finish: sets the password with the code from the log
+ *  and signs this browser in. A refusal carries the code "resetCodeInvalid" or
+ *  "resetCodeExpired". */
+export function finishPasswordReset(code: string, password: string): Promise<OkEnvelope> {
+  return fetchJSON("/api/auth/reset/finish", {
+    method: "POST",
+    body: JSON.stringify({ code, password }),
   });
 }
 

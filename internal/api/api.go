@@ -1,7 +1,9 @@
 package api
 
 import (
+	"io"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -64,6 +66,14 @@ type Handler struct {
 	passkeyMu         sync.Mutex
 	passkeyCeremonies map[string]passkeyCeremony
 
+	// The live password reset code, and where it is written. resetOut is
+	// stdout itself and not the logger: the logger feeds the log ring, the ring
+	// is copied into the diagnostics bundle, and a bundle gets attached to bug
+	// reports.
+	resetMu  sync.Mutex
+	reset    passwordReset
+	resetOut io.Writer
+
 	loginMu    sync.Mutex
 	loginFails map[string][]time.Time
 	// loginSweepCalls counts loginThrottled calls since the last full sweep of
@@ -99,6 +109,7 @@ func NewHandler(
 		svc:       svc,
 		scheduler: scheduler,
 		probes:    probes,
+		resetOut:  os.Stdout,
 		// Same gate queries main.go wires for the initial reload. A settings
 		// save re-arms the scheduler through this handler, so a divergence here
 		// would mean the gates changed meaning the first time a user pressed a
@@ -173,6 +184,8 @@ func (h *Handler) Router() http.Handler {
 	// session may revoke every other session (epoch rotation).
 	mux.HandleFunc("POST /api/logout-all", h.handleLogoutAll)
 	mux.HandleFunc("POST /api/auth/password", h.handleSetPassword)
+	mux.HandleFunc("POST /api/auth/reset", h.handleStartPasswordReset)
+	mux.HandleFunc("POST /api/auth/reset/finish", h.handleFinishPasswordReset)
 	// The second factor. All three sit behind authGate like any other setting:
 	// arming, proving and removing a factor are things only a signed-in
 	// operator does, and the disable route additionally demands a live code.

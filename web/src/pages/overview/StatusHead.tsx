@@ -238,7 +238,8 @@ export function StatusHead({
     title = pass
       ? t("overview.head.pass").replace("{done}", String(pass.done)).replace("{total}", String(pass.total))
       : t(copying ? "overview.head.copying" : "overview.head.backingUp");
-    const name = run && <b className="font-semibold text-carbon-text">{runName(run, t)}</b>;
+    const named = run ? runName(run, t) : "";
+    const name = named && <b className="font-semibold text-carbon-text">{named}</b>;
     const [before, after] = t("overview.head.passItem").split("{name}");
     line = !run ? (
       t("overview.head.preparing")
@@ -253,7 +254,7 @@ export function StatusHead({
         {name}
         {run.step && (
           <>
-            {" · "}
+            {named && " · "}
             {t("overview.head.copyStep")
               .replace("{index}", String(run.step.index))
               .replace("{total}", String(run.step.total))}

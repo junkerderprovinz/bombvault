@@ -20,6 +20,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   return {
     ...actual,
     listItems: vi.fn(),
+    getBackupItem: vi.fn(),
     listContainers: vi.fn(),
     listVMs: vi.fn(),
     listFileSets: vi.fn(),
@@ -53,6 +54,7 @@ vi.mock("../lib/progress", async (importOriginal) => {
 const api = await import("../lib/api");
 const mocks = {
   listItems: vi.mocked(api.listItems),
+  getBackupItem: vi.mocked(api.getBackupItem),
   listContainers: vi.mocked(api.listContainers),
   listVMs: vi.mocked(api.listVMs),
   listFileSets: vi.mocked(api.listFileSets),
@@ -270,6 +272,34 @@ describe("the backups of the picked entry", () => {
     await waitFor(() =>
       expect(vi.mocked(api.checkRestore).mock.calls.at(-1)?.[0]).toMatchObject({ snapshotId: RUNS[1].snapshotId })
     );
+  });
+
+  it("can still be restored from an entry the person said not to back up", async () => {
+    const setAside = {
+      ...IMMICH,
+      included: false,
+      effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+      backupDeclined: true,
+    } as const;
+    serveEntries(mocks, { items: [setAside] });
+    await renderPage();
+    expect(entry("immich").disabled).toBe(false);
+    expect(railRows()).toHaveLength(3);
+
+    await press(within(railRows()[0]).getByRole("button", { name: en["snapshots.restore"] }));
+
+    expect(mocks.getBackupItem).toHaveBeenCalledWith("container", "immich");
+    expect(await screen.findByRole("dialog", { name: en["entry.restore.title"].replace("{name}", "immich") })).toBeTruthy();
+  });
+
+  it("say that the entry is gone when the server no longer knows it once its window opens", async () => {
+    await renderPage();
+    mocks.getBackupItem.mockRejectedValue(new api.ApiError(404, "not found"));
+
+    await press(within(railRows()[0]).getByRole("button", { name: en["snapshots.restore"] }));
+
+    const window = await screen.findByRole("dialog", { name: en["entry.restore.title"].replace("{name}", "immich") });
+    expect(within(window).getByText(en["entry.missing"])).toBeTruthy();
   });
 
   it("open the restore window on Enter", async () => {

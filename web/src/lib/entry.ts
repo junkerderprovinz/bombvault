@@ -85,6 +85,7 @@ export function withPlacement(entry: Entry, placement: PlacementView): Entry {
  *  its name. */
 export type EntryReason =
   | { is: "gone" }
+  | { is: "declined" }
   | { is: "lastFailed"; lastGood: number }
   | { is: "lastBackup"; at: number }
   | { is: "pausedNever" }
@@ -93,6 +94,7 @@ export type EntryReason =
 
 export function entryReason(item: BackupItem): EntryReason {
   if (isGone(item)) return { is: "gone" };
+  if (item.backupDeclined) return { is: "declined" };
   if (item.lastBackup > 0) {
     return item.lastRunStatus === "failed"
       ? { is: "lastFailed", lastGood: item.lastBackup }

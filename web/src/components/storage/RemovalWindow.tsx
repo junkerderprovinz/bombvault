@@ -1,7 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
+  eraseDestination,
+  previewDestinationErasure,
   previewDestinationRemoval,
   removeDestination,
+  type DestinationErasure,
   type DestinationRemoval,
   type OkEnvelope,
   type StorageLocation,
@@ -10,42 +13,60 @@ import { useT } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
 import { objectId } from "../../lib/storageFlow";
-import { DOMAIN_LABEL } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
 import { credSetsChanged } from "../../lib/useCloudCredSets";
 import { destinationsChanged } from "../../lib/useDestinations";
 import { offsiteTargetsChanged } from "../../lib/useOffsiteTargets";
 import { storageLocationsChanged } from "../../lib/useStorageLocations";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
+import { SelectDot } from "../backups/SelectMark";
 import { Button } from "../Button";
-import { InfoBubble } from "../InfoBubble";
 import { IconClose, IconTrash } from "../navGlyphs";
-import { DomainGlyph } from "./rows";
+import { DetachedList, ErasureDetails, erasable } from "./removalParts";
 
-type Answer = OkEnvelope & { removal?: DestinationRemoval };
+type Answer = OkEnvelope & { removal?: DestinationRemoval; erasure?: DestinationErasure };
 
 function failed(e: unknown): Answer {
   return { ok: false, error: e instanceof Error ? e.message : undefined };
 }
 
-/** One way to remove a location, with what it means for what is stored there. */
-function Way({ title, text, children }: { title: string; text: string; children: ReactNode }) {
+type How = "keep" | "delete";
+
+/** One way to remove a location. What it means for the backups there shows
+ *  once it is the way picked. */
+function Way({
+  title,
+  text,
+  picked,
+  onPick,
+  children,
+}: {
+  title: string;
+  text: string;
+  picked: boolean;
+  onPick: () => void;
+  children: ReactNode;
+}) {
   return (
-    <section className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-4">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-sm font-semibold text-carbon-text">{title}</h3>
-        <p className="text-xs leading-relaxed text-carbon-textSub">{text}</p>
-      </div>
-      {children}
+    <section className={`flex flex-col gap-3 rounded-card bg-carbon-surface2 p-4 ${picked ? "ring-2 ring-accent" : ""}`}>
+      <button type="button" role="radio" aria-checked={picked} onClick={onPick} className="flex items-start gap-3 rounded-control text-start">
+        <SelectDot checked={picked} className="mt-0.5" />
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className="text-sm font-semibold text-carbon-text">{title}</span>
+          <span className="text-xs leading-relaxed text-carbon-textSub">{text}</span>
+        </span>
+      </button>
+      {picked && children}
     </section>
   );
 }
 
 /**
- * RemovalWindow takes a destination away after showing which sections stop
- * backing up to it. The server removes only what was shown: when the sections
- * changed in between, it answers with them as they are, and the window asks
- * again.
+ * RemovalWindow takes a destination away in one of two ways: it only detaches
+ * the sections and leaves the backups there, or it deletes the backups first.
+ * Either way the server acts only on what was shown: when the sections or the
+ * entries that lose their only backup changed in between, it answers with
+ * them as they are, and the window asks again.
  */
 export function RemovalWindow({
   location,
@@ -59,7 +80,14 @@ export function RemovalWindow({
   const { t, lang } = useT();
   const { push } = useToast();
   const id = objectId(location);
+  const [how, setHow] = useState<How>("keep");
   const [removal, setRemoval] = useState<DestinationRemoval | null>(null);
+  const [erasure, setErasure] = useState<DestinationErasure | null>(null);
+  // Counts the readings of what would be deleted. None is taken before the
+  // way is picked, because a reading lists every repository at the destination.
+  const [readings, setReadings] = useState(0);
+  const [typed, setTyped] = useState("");
+  const [lastToo, setLastToo] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -78,6 +106,38 @@ export function RemovalWindow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  useEffect(() => {
+    if (readings === 0) return;
+    let alive = true;
+    void previewDestinationErasure(id)
+      .catch(failed)
+      .then((res) => {
+        if (!alive) return;
+        if (res.ok && res.erasure) setErasure(res.erasure);
+        else setProblem(res.error ?? t("settings.error"));
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, readings]);
+
+  function pick(next: How) {
+    setHow(next);
+    setProblem(null);
+    if (next === "delete" && !erasure) setReadings((n) => n + 1);
+  }
+
+  function announce(done: string) {
+    push(done, "success");
+    storageLocationsChanged();
+    destinationsChanged();
+    offsiteTargetsChanged();
+    placementChanged();
+    credSetsChanged();
+    onRemoved();
+  }
+
   async function remove() {
     if (!removal) return;
     setBusy(true);
@@ -88,14 +148,31 @@ export function RemovalWindow({
       setProblem(placementErrorText(t, lang, res, "settings.error"));
       return;
     }
-    push(t("storage.remove.done").replace("{name}", () => location.name), "success");
-    storageLocationsChanged();
-    destinationsChanged();
-    offsiteTargetsChanged();
-    placementChanged();
-    credSetsChanged();
-    onRemoved();
+    announce(t("storage.remove.done").replace("{name}", () => location.name));
   }
+
+  async function erase() {
+    if (!erasure) return;
+    setBusy(true);
+    const named = lastToo ? erasure.lastCopies.map((entry) => entry.identity) : [];
+    const res = await eraseDestination(id, erasure.removal, named).catch(failed);
+    setBusy(false);
+    if (!res.ok) {
+      setProblem(placementErrorText(t, lang, res, "settings.error"));
+      setLastToo(false);
+      if (res.erasure) setErasure(res.erasure);
+      else if (res.removal) {
+        // The sections changed, so what would be deleted has to be read again.
+        setErasure(null);
+        setReadings((n) => n + 1);
+      }
+      return;
+    }
+    announce(t("storage.remove.erasing").replace("{name}", () => location.name));
+  }
+
+  const deleting = how === "delete";
+  const confirmed = erasure !== null && erasable(erasure) && typed === location.name && (erasure.lastCopies.length === 0 || lastToo);
 
   return (
     <InstanceWindow
@@ -105,51 +182,43 @@ export function RemovalWindow({
       footer={
         <>
           <Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconClose />} tone="neutral" onClick={onClose} />
-          <Button
-            label={t("storage.remove.action")}
-            labelKey="storage.remove.action"
-            glyph={<IconTrash />}
-            tone="accent"
-            busy={busy}
-            disabled={busy || !removal}
-            onClick={() => void remove()}
-          />
+          {deleting ? (
+            <Button
+              label={t("storage.remove.deleteAction")}
+              labelKey="storage.remove.deleteAction"
+              glyph={<IconTrash />}
+              tone="accent"
+              busy={busy}
+              disabled={busy || !confirmed}
+              onClick={() => void erase()}
+            />
+          ) : (
+            <Button
+              label={t("storage.remove.action")}
+              labelKey="storage.remove.action"
+              glyph={<IconTrash />}
+              tone="accent"
+              busy={busy}
+              disabled={busy || !removal}
+              onClick={() => void remove()}
+            />
+          )}
         </>
       }
     >
-      <Way title={t("storage.remove.keep")} text={t("storage.remove.keepText")}>
-        {!removal && !problem && <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>}
-        {removal && removal.sections.length === 0 && <p className="text-xs text-carbon-textMuted">{t("storage.rules.none")}</p>}
-        {removal && removal.sections.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-semibold uppercase tracking-widest text-carbon-textSub">{t("storage.remove.detached")}</span>
-            <ul className="flex flex-col divide-y divide-carbon-border/60">
-              {removal.sections.map((section) => (
-                <li key={section.targetId} className="flex items-start gap-3 py-2.5 first:pt-0 last:pb-0">
-                  <span className="mt-0.5 flex">
-                    <DomainGlyph domain={section.domain} />
-                  </span>
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-                      {t(DOMAIN_LABEL[section.domain])}
-                      {section.primary && <InfoBubble tip={t("storage.remove.primary")} />}
-                    </span>
-                    <span dir="ltr" className="break-all text-start font-mono text-xs text-carbon-textMuted">
-                      {section.repo}
-                    </span>
-                    {section.listedAt > 0 && (
-                      <span className="text-xs text-carbon-textMuted">
-                        {t("backups.tile.count", section.entries)} · {t("entry.places.count", section.backups)}
-                      </span>
-                    )}
-                    {section.direct?.kept && <span className="text-xs text-carbon-textSub">{t("storage.remove.directKept")}</span>}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </Way>
+      <div role="radiogroup" aria-label={t("storage.remove.action")} className="flex flex-col gap-3">
+        <Way title={t("storage.remove.keep")} text={t("storage.remove.keepText")} picked={!deleting} onPick={() => pick("keep")}>
+          {removal ? <DetachedList removal={removal} /> : !problem && <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>}
+        </Way>
+        <Way title={t("storage.remove.delete")} text={t("storage.remove.deleteText")} picked={deleting} onPick={() => pick("delete")}>
+          {erasure ? (
+            <ErasureDetails erasure={erasure} name={location.name} typed={typed} onType={setTyped} lastToo={lastToo} onLastToo={setLastToo} />
+          ) : (
+            !problem && <p className="text-sm text-carbon-textSub">{t("storage.remove.reading")}</p>
+          )}
+          {erasure && !erasable(erasure) && <p className="text-xs text-statusWarn">{t("placementCode.nothingToErase")}</p>}
+        </Way>
+      </div>
       {problem && <p className="text-xs text-statusWarn wrap-break-word">{problem}</p>}
     </InstanceWindow>
   );

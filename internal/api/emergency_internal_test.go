@@ -351,3 +351,38 @@ func TestASealedKitOpensWithItsIdentityWhichReachesNoLog(t *testing.T) {
 	}
 	f.keyRuns(identity.String(), stranger.String(), broken, oldKey)
 }
+
+func TestUndoingAnAdoptionPutsTheEncryptionSettingBack(t *testing.T) {
+	kit := kitOfTheOldInstall(t)
+	f := newPlacementFixture(t)
+	if _, err := f.st.MutateSettings(func(s *store.Settings) error { s.EncryptionEnabled = false; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	encryption := func() bool {
+		t.Helper()
+		settings, err := f.st.GetSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return settings.EncryptionEnabled
+	}
+
+	f.emergency("POST", "/api/emergency/read", map[string]any{"kit": kit})
+	f.emergency("POST", "/api/emergency/adopt", nil)
+	if !encryption() {
+		t.Fatal("adopting from a kit with encryption on left the setting off")
+	}
+	// A second key over the first must not take the first one's setting for
+	// the one to put back.
+	f.emergency("POST", "/api/emergency/read", map[string]any{"key": strings.Repeat("e", 64), "places": []string{"backups/vms"}})
+	if res, _ := f.emergency("POST", "/api/emergency/adopt", nil); res["ok"] != true {
+		t.Fatalf("second adoption: %v", res)
+	}
+
+	if res, _ := f.emergency("DELETE", "/api/emergency", nil); res["ok"] != true {
+		t.Fatalf("undo: %v", res)
+	}
+	if encryption() {
+		t.Fatal("the undo left encryption on, which the adoption had switched on")
+	}
+}

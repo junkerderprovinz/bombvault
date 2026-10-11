@@ -27,6 +27,9 @@ type fleetStatusResponse struct {
 	// poll over the relay doubles as the address exchange: whichever side
 	// calls the other first hands its own address along for free.
 	DirectURL string `json:"directUrl,omitempty"`
+	// Capabilities names what this instance can do for a member beyond what
+	// its version line says, such as keeping a key deposit.
+	Capabilities []string `json:"capabilities,omitempty"`
 }
 
 // syncFleetPeers gives every reachable member a Fleet row. A row from before

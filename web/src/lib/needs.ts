@@ -55,15 +55,19 @@ function failedCopies(locations: StorageLocation[]): Need[] {
 /**
  * needsOf lists what waits for the person, most urgent first. An entry whose
  * last run failed stands once, as that failure, also when it has no backup.
+ * An entry the person said not to back up waits for nobody, a failed run of
+ * it included.
  * Before the first backup the entries without a schedule and the recovery kit
  * are the first steps, not something that went wrong.
  */
 export function needsOf({ items, runs, locations, anomalies, kitDue, keyLocked = false }: NeedsInput): Need[] {
-  const failed = failedRunsNeedingAttention(runs).map((run): Need & { is: "failedRun" } => ({
-    is: "failedRun",
-    run,
-    item: items.find((item) => item.runs.some((r) => r.id === run.id)),
-  }));
+  const failed = failedRunsNeedingAttention(runs)
+    .map((run): Need & { is: "failedRun" } => ({
+      is: "failedRun",
+      run,
+      item: items.find((item) => item.runs.some((r) => r.id === run.id)),
+    }))
+    .filter((need) => !need.item?.backupDeclined);
   const fresh = isFreshInstall(items);
   const withFailure = new Set(failed.map((need) => need.item));
   const unprotected = fresh

@@ -84,8 +84,8 @@ func TestResealDatabaseRewritesBothFormsAndLeavesNoLogBehind(t *testing.T) {
 		t.Fatal(err)
 	}
 	var seen []string
-	err = store.ResealDatabase(db, func(sealed []byte) []byte {
-		seen = append(seen, string(sealed))
+	err = store.ResealDatabase(db, func(c store.SealedColumn, sealed []byte) []byte {
+		seen = append(seen, c.Table+"."+c.Column+"="+string(sealed))
 		rest, ok := bytes.CutPrefix(sealed, []byte("old:"))
 		if !ok {
 			return nil
@@ -99,7 +99,7 @@ func TestResealDatabaseRewritesBothFormsAndLeavesNoLogBehind(t *testing.T) {
 		t.Fatal(err)
 	}
 	slices.Sort(seen)
-	if !slices.Equal(seen, []string{"old:cloud", "old:group"}) {
+	if !slices.Equal(seen, []string{"group_state.secret_enc=old:group", "settings.cloud_conf=old:cloud"}) {
 		t.Fatalf("the sealed values shown were %q, want the cloud sign-in and the group secret alone", seen)
 	}
 	for _, suffix := range []string{"-wal", "-shm"} {
@@ -158,7 +158,7 @@ func TestAnAdoptedKeyAndTheLoginGoIntoAnOlderDatabase(t *testing.T) {
 	if has, err := store.HasAdoptedKey(db); err != nil || has {
 		t.Fatalf("a database without the table has an adopted key: %v, %v", has, err)
 	}
-	if err := store.SetAdoptedKeyIn(db, []byte("sealed"), store.KeyFromKit); err != nil {
+	if err := store.SetAdoptedKeyIn(db, []byte("sealed"), store.KeyFromKit, `{"count":2}`); err != nil {
 		t.Fatal(err)
 	}
 	if has, err := store.HasAdoptedKey(db); err != nil || !has {
@@ -182,7 +182,7 @@ func TestAnAdoptedKeyAndTheLoginGoIntoAnOlderDatabase(t *testing.T) {
 	}
 	r := store.New(reopened)
 	key, found, err := r.AdoptedKey()
-	if err != nil || !found || string(key.KeyEnc) != "sealed" || key.Source != store.KeyFromKit {
+	if err != nil || !found || string(key.KeyEnc) != "sealed" || key.Source != store.KeyFromKit || key.Lost != `{"count":2}` || key.EncryptionBefore != nil {
 		t.Fatalf("the adopted key reads back as %+v, %v, %v", key, found, err)
 	}
 	settings, err := r.GetSettings()

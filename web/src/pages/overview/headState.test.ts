@@ -146,6 +146,11 @@ describe("liveRunOf", () => {
     expect(run).toMatchObject({ kind: null, name: "containers", station: "copy", percent: 38, step: { index: 2, total: 4 } });
   });
 
+  it("follows the move of a section like a copy, without a section to name", () => {
+    const run = liveRunOf({ "move:t-box-flash": live({ phase: "replicate", percent: 0, snapshotIndex: 3, snapshotTotal: 12 }) });
+    expect(run).toMatchObject({ kind: null, name: "", station: "copy", step: { index: 3, total: 12 } });
+  });
+
   it("leaves a restore and maintenance alone", () => {
     expect(liveRunOf({ "container:plex": live({ phase: "restore" }), "prune:containers": live({ phase: "maintenance" }) })).toBeNull();
   });

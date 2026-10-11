@@ -6,7 +6,7 @@ import { KIND_SCHEDULE_LABEL, entryName } from "../../components/backups/kinds";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { useScheduleSentence } from "../../components/EffectiveScheduleLine";
-import { IconEye, IconRefresh } from "../../components/glyphs";
+import { IconClearSelection, IconEye, IconRefresh } from "../../components/glyphs";
 import { IconBackupNow, IconCheck, IconDownload, IconRecovery } from "../../components/navGlyphs";
 import { anomalyEntryName, anomalySentence } from "../../lib/anomalies";
 import {
@@ -32,6 +32,7 @@ import { runKindLabel } from "../../lib/runKind";
 import { isOwnReason, RunReasonText } from "../../lib/runReason";
 import { DOMAIN_LABEL, locationRoute } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
+import { useDeclineBackup } from "../../lib/useDeclineBackup";
 import { Card } from "./Card";
 
 type T = ReturnType<typeof useT>["t"];
@@ -74,7 +75,7 @@ function Row({
 const SUB = "text-sm text-carbon-textSub wrap-break-word";
 // The height a finger needs, for the actions of a row on a touch screen.
 const TOUCH = "pointer-coarse:[--btn-h:2.75rem]";
-// Three actions share a phone's row only with their labels cut short, so
+// Two long labels or three actions share a phone's row only cut short, so
 // each keeps the width of its label and the row breaks instead.
 const WRAPPING = `${TOUCH} max-md:basis-auto!`;
 const NAME_LINK = "min-w-0 wrap-anywhere hover:underline";
@@ -161,6 +162,7 @@ function UnprotectedRow({ item, t, onChanged }: { item: BackupItem; t: T; onChan
   const [saving, setSaving] = useState(false);
   const include = item.included ? undefined : ENTRY_KIND[item.kind].setIncluded;
   const why = sentence(item.effectiveSchedule, KIND_SCHEDULE_LABEL[item.kind]);
+  const { decline, busy: declining } = useDeclineBackup(onChanged);
 
   async function start(setIncluded: NonNullable<typeof include>) {
     setSaving(true);
@@ -188,25 +190,36 @@ function UnprotectedRow({ item, t, onChanged }: { item: BackupItem; t: T; onChan
         </>
       }
       actions={
-        include ? (
+        <>
+          {include ? (
+            <Button
+              className={WRAPPING}
+              label={t("overview.needs.include")}
+              labelKey="overview.needs.include"
+              glyph={<IconBackupNow />}
+              onClick={() => void start(include)}
+              disabled={saving || declining}
+              busy={saving}
+            />
+          ) : (
+            <Button
+              className={WRAPPING}
+              label={t("zfs.replica.view")}
+              labelKey="zfs.replica.view"
+              glyph={<IconEye />}
+              onClick={() => navigate(entryTarget(item))}
+            />
+          )}
           <Button
-            className={TOUCH}
-            label={t("overview.needs.include")}
-            labelKey="overview.needs.include"
-            glyph={<IconBackupNow />}
-            onClick={() => void start(include)}
-            disabled={saving}
-            busy={saving}
+            className={WRAPPING}
+            label={t("backups.decline")}
+            labelKey="backups.decline"
+            glyph={<IconClearSelection />}
+            onClick={() => void decline(item, entryName(item, t))}
+            disabled={saving || declining}
+            busy={declining}
           />
-        ) : (
-          <Button
-            className={TOUCH}
-            label={t("zfs.replica.view")}
-            labelKey="zfs.replica.view"
-            glyph={<IconEye />}
-            onClick={() => navigate(entryTarget(item))}
-          />
-        )
+        </>
       }
     >
       {why && <p className={SUB}>{why.text}</p>}
@@ -409,6 +422,8 @@ function RecoveryKitRow({ t }: { t: T }) {
  * NeedsCard lists what waits for the person, each with the action that
  * settles it: a backup key that does not open, a failed run, an entry
  * nothing backs up, a failed off-site copy, an anomaly, the recovery kit.
+ * An entry nothing backs up can also be left that way, which takes it off
+ * the list.
  */
 export function NeedsCard({
   needs,
@@ -420,7 +435,7 @@ export function NeedsCard({
   hueIndex?: number;
   /** Opens the window in which failures are read and marked as resolved. */
   onErrors: () => void;
-  /** An entry was taken into the schedule. */
+  /** An entry was taken into the schedule or set aside. */
   onItemsChanged: () => void;
 }) {
   const { t, lang } = useT();

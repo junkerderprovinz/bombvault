@@ -496,6 +496,23 @@ describe("the entries that are not backed up like the rest", () => {
     expect(within(row("sonarr")).getByLabelText("Schedule paused.")).toBeTruthy();
   });
 
+  it("dims an entry the person said not to back up, says so in its bubble and still counts it on its tile", async () => {
+    serve([
+      entry({ key: "plex" }),
+      entry({
+        key: "scratch",
+        included: false,
+        effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+        backupDeclined: true,
+      }),
+    ]);
+    await renderPage();
+    expect(row("scratch").className).toContain("opacity-55");
+    expect(within(row("scratch")).getByLabelText(`${en["entry.reason.declined"]}.`, { exact: false })).toBeTruthy();
+    expect(within(row("scratch")).getByText(en["backups.status.notProtected"])).toBeTruthy();
+    expect(tile("Containers").textContent).toContain("2 entries");
+  });
+
   it("says why an entry in the schedule still never runs", async () => {
     serve([entry({ key: "plex", effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" } })]);
     await renderPage();

@@ -110,6 +110,23 @@ describe("needsOf", () => {
     expect(needsOf({ ...nothing, items: [item({}), gitea] })).toEqual([{ is: "unprotected", item: gitea }]);
   });
 
+  it("does not list an entry the person said not to back up", () => {
+    const backedUp = item({ key: "immich" });
+    const scratch = item({ key: "scratch", ...leftOut, backupDeclined: true });
+    expect(needsOf({ ...nothing, items: [backedUp, scratch] })).toEqual([]);
+  });
+
+  it("does not list a failed run of an entry the person said not to back up", () => {
+    const backedUp = item({ key: "immich" });
+    const scratch = item({
+      key: "scratch",
+      ...leftOut,
+      backupDeclined: true,
+      runs: [{ id: "r1", kind: "backup", status: "failed", startedAt: 100 }],
+    });
+    expect(needsOf({ ...nothing, items: [backedUp, scratch], runs: [run({ id: "r1", targetId: "scratch" })] })).toEqual([]);
+  });
+
   it("does not list an entry that only waits for its first scheduled run", () => {
     expect(needsOf({ ...nothing, items: [item({ lastBackup: 0, lastRunStatus: "" })] })).toEqual([]);
   });

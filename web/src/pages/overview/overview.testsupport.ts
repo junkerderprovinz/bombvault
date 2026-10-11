@@ -292,6 +292,14 @@ export function stagedApi<M extends object>(actual: M): M {
     backupEverythingNow: record("backupEverythingNow", { ok: true, started: true }),
     backupNow: record("backupNow"),
     setInclude: record("setInclude"),
+    setBackupDeclined: vi.fn((kind: string, key: string, declined: boolean) => {
+      if (Array.isArray(server.items)) {
+        server.items = server.items.map((item) =>
+          item.kind === kind && item.key === key ? { ...item, backupDeclined: declined } : item
+        );
+      }
+      return record("setBackupDeclined")(kind, key, declined);
+    }),
     setIncludeAll: (include: boolean) => includeAll("setIncludeAll", "container", include),
     setVMIncludeAll: (include: boolean) => includeAll("setVMIncludeAll", "vm", include),
     ackRecoveryKit: (...args: unknown[]) => {

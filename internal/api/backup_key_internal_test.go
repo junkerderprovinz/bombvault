@@ -34,7 +34,7 @@ func (f *placementFixture) adopt(key, sealedWith string) {
 	if err != nil {
 		f.t.Fatal(err)
 	}
-	if err := f.st.SetAdoptedKey(enc, store.KeyFromKit); err != nil {
+	if err := f.st.SetAdoptedKey(enc, store.KeyFromKit, true); err != nil {
 		f.t.Fatal(err)
 	}
 	f.svc.forgetBackupKey()

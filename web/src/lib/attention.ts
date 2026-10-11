@@ -72,3 +72,12 @@ export function useAttentionCount(): number {
 export function useFreshInstall(): boolean {
   return useContext(FreshInstallContext);
 }
+
+/**
+ * useEntriesReload is for a page that changes whether an entry needs the
+ * person. Calling what it returns brings the count up to date at once, where
+ * it would otherwise wait for the next run to end.
+ */
+export function useEntriesReload(): () => void {
+  return useContext(AttentionContext).items.reload;
+}
