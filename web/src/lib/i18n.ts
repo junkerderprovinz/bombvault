@@ -4797,6 +4797,8 @@ export const en = {
   "entry.settings.ownPlan": "Own plan",
   "entry.settings.ownPlanHint": "Without its own plan, the entry runs on its section's plan or in the full backup, as set under Settings › Schedule.",
   "entry.settings.plan": "Plan",
+  "zfs.commands": "Commands around the snapshot",
+  "zfs.connection.view": "View connection",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -9312,6 +9314,8 @@ export const de: Translations = {
   "entry.settings.ownPlan": "Eigener Plan",
   "entry.settings.ownPlanHint": "Ohne eigenen Plan läuft der Eintrag nach dem Plan seines Bereichs oder im Gesamt-Backup, wie unter Einstellungen › Zeitplan eingestellt.",
   "entry.settings.plan": "Plan",
+  "zfs.commands": "Befehle rund um den Snapshot",
+  "zfs.connection.view": "Verbindung ansehen",
 };
 
 // ---------------------------------------------------------------------------

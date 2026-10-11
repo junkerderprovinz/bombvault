@@ -238,11 +238,11 @@ describe("the cards of each kind", () => {
     expect(screen.queryByRole("tree")).toBeNull();
   });
 
-  it("gives a ZFS entry its datasets and no storage location bar", async () => {
+  it("gives a ZFS entry its datasets, its repository and no storage location bar", async () => {
     await renderSettings(`zfs/${ZFS_ID}`);
     expect(within(card(en["entry.settings.zfs"])).getByText(en["zfs.children"])).toBeTruthy();
     expect(screen.queryByText(en["placement.title"])).toBeNull();
-    expect(cardTitles()).not.toContain(en["entry.settings.repository"]);
+    expect(within(card(en["entry.settings.repository"])).getByText(en["zfs.repo"])).toBeTruthy();
   });
 
   it.each([

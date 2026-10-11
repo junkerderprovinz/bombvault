@@ -20,6 +20,7 @@ import { dumpRuns, updateWarnKey } from "../../lib/dbdump";
 import type { Entry } from "../../lib/entry";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
+import { zfsCodeSentence } from "../../lib/zfsCodes";
 import { tLtr } from "../../lib/ltrFragments";
 import { lockHint, viewHomeLabel } from "../../lib/placement";
 import { useHostLabel } from "../../lib/useHostLabel";
@@ -48,6 +49,7 @@ import { IconPencil } from "../navGlyphs";
 import { PlacementFlow } from "../placement/PlacementFlow";
 import { PlacementRow } from "../placement/PlacementRow";
 import { PlanButton } from "../PlanButton";
+import { RepoPicker } from "../RepoPicker";
 import { SettingRow } from "../storage/rows";
 import { VMBlockToggle } from "../VMBlockToggle";
 import { VMMethodSelect } from "../vms/VMMethodSelect";
@@ -400,22 +402,34 @@ function ZFSCards({
   nextHue: () => number;
 }) {
   const { t } = useT();
+  const { push } = useToast();
   // What detection has learned about each dataset stands beside it in the list.
   const series = new Map((anomaly?.datasets ?? []).map((s) => [s.part, s]));
+  const [busy, setBusy] = useState(false);
+
+  async function saveRepo(repo: string) {
+    setBusy(true);
+    try {
+      const res = await patchZFSDataset(dataset.id, { repo });
+      if (res.ok) onChanged();
+      else push(res.code ? zfsCodeSentence(t, res.code) : (res.error ?? t("settings.error")), "fail");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <>
+      <Card title={t("entry.settings.repository")} hueIndex={nextHue()}>
+        <RepoPicker value={dataset.repo} onChange={(repo) => void saveRepo(repo)} locked={dataset.lastBackup > 0} disabled={busy} row />
+      </Card>
       <Card title={t("entry.settings.zfs")} hueIndex={nextHue()}>
-        <ZFSItemSettings
-          item={dataset}
-          t={t}
-          onChanged={onChanged}
-          anomalyEnabled={false}
-          series={series}
-          embedded
-        />
-        {dataset.safetyCount > 0 && <ZFSSafetySection item={dataset} t={t} onRefresh={onChanged} />}
+        <ZFSItemSettings item={dataset} t={t} onChanged={onChanged} series={series} />
       </Card>
       <ReplicaCard itemId={dataset.id} name={dataset.dataset} />
+      {dataset.safetyCount > 0 && <ZFSSafetySection item={dataset} t={t} onRefresh={onChanged} hueIndex={nextHue()} />}
     </>
   );
 }

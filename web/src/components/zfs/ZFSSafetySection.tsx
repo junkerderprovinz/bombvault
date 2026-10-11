@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { deleteZFSSafetySnapshot, listZFSSafetySnapshots } from "../../lib/api";
 import type { ZFSDatasetView, ZFSSafetySnapshot } from "../../lib/api";
 import { humanBytes } from "../../lib/forecast";
@@ -7,8 +7,8 @@ import { relativeTime } from "../../lib/reltime";
 import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
 import { Button } from "../Button";
-import { IconDisclosure } from "../IconDisclosure";
-import { InfoBubble } from "../InfoBubble";
+import { Card } from "../../pages/settings/shared";
+import { Note } from "../entry/Note";
 import { IconTrash } from "../Sidebar";
 import { failText } from "./failText";
 
@@ -16,10 +16,21 @@ type T = ReturnType<typeof useT>["t"];
 
 const DAY = 24 * 60 * 60;
 
-export function ZFSSafetySection({ item, t, onRefresh }: { item: ZFSDatasetView; t: T; onRefresh: () => void }) {
+/** ZFSSafetySection is the card of the safety snapshots a restore left in the
+ *  item's datasets, each with the way to delete it. */
+export function ZFSSafetySection({
+  item,
+  t,
+  onRefresh,
+  hueIndex,
+}: {
+  item: ZFSDatasetView;
+  t: T;
+  onRefresh: () => void;
+  hueIndex?: number;
+}) {
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
-  const [open, setOpen] = useState(false);
   const [snapshots, setSnapshots] = useState<ZFSSafetySnapshot[]>([]);
 
   const title = t("zfs.safety.title", item.safetyCount);
@@ -30,11 +41,7 @@ export function ZFSSafetySection({ item, t, onRefresh }: { item: ZFSDatasetView;
       .catch(() => undefined);
   }
 
-  function handleOpen() {
-    const next = !open;
-    setOpen(next);
-    if (next) load();
-  }
+  useEffect(load, [item.id, item.safetyCount]);
 
   async function handleDelete(snap: ZFSSafetySnapshot) {
     const question = t("zfs.safety.deleteConfirm")
@@ -57,24 +64,11 @@ export function ZFSSafetySection({ item, t, onRefresh }: { item: ZFSDatasetView;
   const old = item.safetyOldestAt > 0 && Date.now() / 1000 - item.safetyOldestAt > 30 * DAY;
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={handleOpen}
-          className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text pointer-coarse:min-h-11"
-        >
-          <IconDisclosure open={open} />
-          {title}
-        </button>
-        <InfoBubble tip={t("zfs.safety.hint")} />
-      </div>
-      {old && <p className="text-xs text-statusWarn">{t("zfs.safety.old")}</p>}
-      {open && (
-        <ul aria-label={title} className="flex flex-col gap-1">
+    <Card title={title} hint={t("zfs.safety.hint")} hueIndex={hueIndex}>
+      {old && <Note tone="warn">{t("zfs.safety.old")}</Note>}
+      <ul aria-label={title} className="flex flex-col divide-y divide-carbon-border/60">
           {snapshots.map((snap) => (
-            <li key={`${snap.dataset}@${snap.name}`} className="flex items-center gap-2 text-xs">
+            <li key={`${snap.dataset}@${snap.name}`} className="flex items-center gap-2 py-2 text-xs first:pt-0 last:pb-0">
               <span dir="ltr" className="font-mono text-carbon-textSub text-start truncate max-md:whitespace-normal max-md:wrap-anywhere">
                 {t("zfs.safety.row")
                   .replace("{dataset}", `${snap.dataset}@${snap.name}`)
@@ -85,16 +79,15 @@ export function ZFSSafetySection({ item, t, onRefresh }: { item: ZFSDatasetView;
                 label={t("common.delete")}
                 labelKey="common.delete"
                 glyph={<IconTrash />}
-                tone="accent"
                 variant="icon"
+                glyphOnly
                 onClick={() => void handleDelete(snap)}
                 className="ms-auto shrink-0"
               />
             </li>
           ))}
-        </ul>
-      )}
+      </ul>
       {confirmDialog}
-    </div>
+    </Card>
   );
 }

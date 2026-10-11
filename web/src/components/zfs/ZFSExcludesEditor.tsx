@@ -2,11 +2,9 @@ import { useEffect, useState } from "react";
 import { patchZFSDataset, previewZFSExcludes } from "../../lib/api";
 import type { ZFSDatasetView, ZFSExcludePreviewRow } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { tLtr } from "../../lib/ltrFragments";
 import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { useToast } from "../../lib/toast";
 import { zfsCodeSentence } from "../../lib/zfsCodes";
-import { InfoBubble } from "../InfoBubble";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -58,17 +56,13 @@ export function ZFSExcludesEditor({ item, t, onSaved }: { item: ZFSDatasetView; 
 
   return (
     <div className="flex flex-col gap-1">
-      <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-        {t("zfs.excludes")}
-        <InfoBubble tip={tLtr(t, "zfs.excludesHint")} />
-      </span>
       <textarea
         dir="ltr"
         rows={4}
         value={text}
         onChange={(e) => handleChange(e.target.value)}
         aria-label={t("zfs.excludes")}
-        className="rounded-control bg-carbon-surface2 p-2 font-mono text-xs text-carbon-text text-start"
+        className="rounded-control bg-carbon-surface3 p-2 font-mono text-xs text-carbon-text text-start glim-field-focus"
       />
       {refusal && <p className="text-xs text-statusFail">{refusal}</p>}
       {rows.map((row) => (

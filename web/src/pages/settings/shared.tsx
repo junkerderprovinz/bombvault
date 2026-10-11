@@ -94,10 +94,13 @@ export function Card({
 
 /** SubCard groups related rows inside a card under a small heading, so they
  *  stay in view instead of hiding behind a click. */
-export function SubCard({ title, children }: { title: string; children: React.ReactNode }) {
+export function SubCard({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col rounded-card bg-carbon-surface2 px-4 pb-3">
-      <h3 className="pb-2 pt-3 text-xs font-semibold uppercase tracking-[.14em] text-carbon-textMuted">{title}</h3>
+      <h3 className="flex items-center gap-1.5 pb-2 pt-3 text-xs font-semibold uppercase tracking-[.14em] text-carbon-textMuted">
+        {title}
+        {hint && <InfoBubble tip={hint} />}
+      </h3>
       {children}
     </section>
   );

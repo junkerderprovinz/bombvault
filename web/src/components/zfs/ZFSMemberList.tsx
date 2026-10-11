@@ -60,45 +60,51 @@ export function ZFSMemberList({
   targetId?: string;
 }) {
   return (
-    <ul className="flex flex-col gap-1">
+    <ul className="flex flex-col divide-y divide-carbon-border/60">
       {members.map((m) => {
         const off = excluded?.has(m.dataset) ?? false;
         const outcome = off ? "excluded" : m.outcome;
         const memberKey = zfsMemberKey(outcome);
         const fixKey = memberKey ? null : zfsFixKey(outcome);
         const structure = isStructure(m);
+        // A state the reader has to act on reads as a sentence under the name;
+        // everything else is a pill at the end of the row.
+        const pill = memberKey || structure || outcome === "zvol";
         const label = memberKey
           ? t(memberKey)
           : structure
             ? t("zfs.member.structure")
             : zfsCodeSentence(t, outcome, { hostMountpoint: m.hostMountpoint });
-        const tone = memberKey || structure || outcome === "zvol" ? "text-carbon-textMuted" : "text-statusWarn";
         return (
           <li
             key={m.dataset}
-            className="flex items-center gap-2 text-xs max-md:flex-wrap"
-            style={{ paddingInlineStart: `${depthOf(m.relPath) * 12}px` }}
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-xs first:pt-0 last:pb-0"
+            style={{ paddingInlineStart: `${depthOf(m.relPath) * 14}px` }}
           >
-            <span dir="ltr" className="font-mono text-carbon-textSub text-start truncate max-md:whitespace-normal max-md:wrap-anywhere">
-              {m.relPath === "" ? root : m.relPath}
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span dir="ltr" className="font-mono text-carbon-text text-start wrap-anywhere">
+                {m.relPath === "" ? root : m.dataset}
+              </span>
+              {!pill && (
+                <span className="flex items-center gap-1 text-statusWarn">
+                  {label}
+                  {fixKey && <InfoBubble tip={tLtr(t, fixKey)} />}
+                </span>
+              )}
             </span>
+            <DatasetAnomalies dataset={m.dataset} info={series?.get(m.dataset)} targetId={targetId} t={t} />
             {m.isNew && (
               <Badge tone="active" size="small">
                 {t("zfs.member.new")}
               </Badge>
             )}
-            <span className={tone}>{label}</span>
-            {fixKey && <InfoBubble tip={tLtr(t, fixKey)} />}
-            <DatasetAnomalies dataset={m.dataset} info={series?.get(m.dataset)} targetId={targetId} t={t} />
+            {pill && (
+              <Badge tone={outcome === "backed-up" ? "ok" : "neutral"} size="small">
+                {label}
+              </Badge>
+            )}
             {onToggle && m.relPath !== "" && m.outcome !== "zvol" && (
-              <Toggle
-                hideLabel
-                label={m.dataset}
-                checked={!off}
-                disabled={busy}
-                onChange={(next) => onToggle(m.dataset, next)}
-                className="ms-auto"
-              />
+              <Toggle hideLabel label={m.dataset} checked={!off} disabled={busy} onChange={(next) => onToggle(m.dataset, next)} />
             )}
           </li>
         );
