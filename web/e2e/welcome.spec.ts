@@ -61,8 +61,20 @@ const FAILED_RUN = {
   domain: "container",
 };
 
-async function stage(page: Page, items: unknown[] = FOUND): Promise<void> {
+interface Staged {
+  /** The settings the page saved last. */
+  saved: () => Record<string, unknown>;
+}
+
+async function stage(page: Page, items: unknown[] = FOUND): Promise<Staged> {
+  // The harness database serves every project of the run, so what the first
+  // steps save stays here and is read back from here.
+  let saved: Record<string, unknown> = {};
   await page.route("**/api/settings", async (route) => {
+    if (route.request().method() === "PUT") {
+      saved = route.request().postDataJSON();
+      return route.fulfill({ json: { ok: true } });
+    }
     if (route.request().method() !== "GET") return route.continue();
     const res = await route.fetch();
     const body = await res.json();
@@ -70,7 +82,7 @@ async function stage(page: Page, items: unknown[] = FOUND): Promise<void> {
       json: {
         ...body,
         platform: "unraid",
-        settings: { ...body.settings, anomalyEnabled: true, encryptionEnabled: true, recoveryKitAck: false },
+        settings: { ...body.settings, anomalyEnabled: true, encryptionEnabled: true, recoveryKitAck: false, ...saved },
       },
     });
   });
@@ -106,6 +118,7 @@ async function stage(page: Page, items: unknown[] = FOUND): Promise<void> {
   // must not replace it while the page boots.
   await page.route("**/api/display-prefs*", (route) => route.abort());
   await page.addInitScript(() => window.localStorage.setItem("bv-lang", "en"));
+  return { saved: () => saved };
 }
 
 const step = (page: Page, name: string) => page.locator(`[data-step='${name}']`);
@@ -182,8 +195,40 @@ test("Let's go leads to the first steps, Back returns, and a reload stays where 
   await expect(page.getByRole("button", { name: "Let's go" })).toBeVisible();
 });
 
-test("Next ticks off the first step, here and on the welcome page", async ({ page }) => {
+test("a section switched on in the first steps gets a nightly schedule, and loses it when switched off", async ({ page }) => {
+  const staged = await stage(page);
+  await page.goto("/dashboard");
+  const card = page.getByTestId("first-steps");
+  const selfBackup = card.getByRole("switch", { name: "Self-Backup" });
+  await expect(selfBackup).toHaveAttribute("aria-checked", "false");
+  await expect(card).toContainText("The sections switched on here run every night, which you can change under Settings › Schedule.");
+
+  await selfBackup.click();
+  await expect(selfBackup).toHaveAttribute("aria-checked", "true");
+  await expect.poll(() => staged.saved().configSchedule).toBe("daily 02:00");
+  expect(staged.saved().configEnabled).toBe(true);
+  // Containers were on before and nobody switched them.
+  expect(staged.saved().containersSchedule).toBe("off");
+
+  await selfBackup.click();
+  await expect(selfBackup).toHaveAttribute("aria-checked", "false");
+  await expect.poll(() => staged.saved().configSchedule).toBe("off");
+});
+
+test("the welcome page promises nightly backups once an entry is in a schedule", async ({ page }) => {
   await stage(page);
+  await openApp(page);
+  await expect(step(page, "backup")).not.toContainText("After that it runs by itself every night");
+
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  const scheduled = { kind: "domain", spec: "daily 02:00", alsoSpec: "" };
+  await stage(page, [entry({ effectiveSchedule: scheduled }), ...FOUND.slice(1)]);
+  await openApp(page);
+  await expect(step(page, "backup")).toContainText("After that it runs by itself every night");
+});
+
+test("Next ticks off the first step, here and on the welcome page", async ({ page }) => {
+  const staged = await stage(page);
   await page.goto("/dashboard");
   const card = page.getByTestId("first-steps");
   const steps = card.locator("li[data-state]");
@@ -193,6 +238,8 @@ test("Next ticks off the first step, here and on the welcome page", async ({ pag
   await steps.nth(0).getByRole("button", { name: "Next" }).click();
 
   await expect(steps.nth(0)).toHaveAttribute("data-state", "done");
+  // The section that was on from the start gets its schedule here.
+  expect(staged.saved().containersSchedule).toBe("daily 02:00");
   await expect(steps.nth(1)).toHaveAttribute("data-state", "next");
   await expect(steps.nth(1).getByRole("button", { name: "Add storage location" })).toBeVisible();
 

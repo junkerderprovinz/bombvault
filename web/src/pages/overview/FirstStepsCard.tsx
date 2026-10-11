@@ -15,6 +15,7 @@ import { getSettings, putSettings, type Settings, type StorageLocation } from ".
 import { hueVars } from "../../lib/appearance";
 import type { EntryKind } from "../../lib/backupEntry";
 import { entryTarget, protection } from "../../lib/backupList";
+import { SECTIONS, scheduleChosen, switchSection, type Section } from "../../lib/firstSections";
 import { foundSentence, type Found, type StepState } from "../../lib/firstSteps";
 import type { useT } from "../../lib/i18n";
 import { formatList } from "../../lib/placement";
@@ -27,31 +28,20 @@ import { Card } from "./Card";
 
 type T = ReturnType<typeof useT>["t"];
 
-type SectionSetting = "containersEnabled" | "vmsEnabled" | "flashEnabled" | "filesEnabled" | "zfsEnabled" | "configEnabled";
-
-const SECTIONS: { kind: EntryKind; setting: SectionSetting }[] = [
-  { kind: "container", setting: "containersEnabled" },
-  { kind: "vm", setting: "vmsEnabled" },
-  { kind: "flash", setting: "flashEnabled" },
-  { kind: "files", setting: "filesEnabled" },
-  { kind: "zfs", setting: "zfsEnabled" },
-  { kind: "config", setting: "configEnabled" },
-];
-
 const SHOWN_WAITING = 4;
 
 const HINT = "text-sm text-carbon-textSub";
 
 /**
- * useSections reads which sections are switched on and switches one. A
- * refused switch, such as VMs without a connection to the host, goes back
- * and says why.
+ * useSections reads which sections are switched on and saves what the first
+ * step changes. A refused switch, such as VMs without a connection to the
+ * host, goes back and says why.
  */
 function useSections(t: T) {
   const { push } = useToast();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
-  const [refused, setRefused] = useState<Partial<Record<SectionSetting, number>>>({});
+  const [refused, setRefused] = useState<Partial<Record<EntryKind, number>>>({});
 
   const read = useCallback(() => {
     getSettings()
@@ -66,26 +56,36 @@ function useSections(t: T) {
     return () => window.removeEventListener("bv:settings-changed", read);
   }, [read]);
 
-  async function flip(setting: SectionSetting, on: boolean) {
+  // The whole object is written, so it is read first: a setting saved
+  // elsewhere since the card was drawn must not be put back.
+  async function save(change: (now: Settings) => Partial<Settings>): Promise<boolean> {
     setSaving(true);
-    setSettings((s) => s && { ...s, [setting]: on });
     try {
-      // The whole object is written, so it is read first: a setting saved
-      // elsewhere since the card was drawn must not be put back.
       const now = await getSettings();
-      const res = now.ok ? await putSettings({ ...now.settings, [setting]: on }) : now;
-      if (!res.ok) throw new Error(res.error);
-      window.dispatchEvent(new Event("bv:settings-changed"));
+      if (!now.ok) throw new Error();
+      const patch = change(now.settings);
+      if (Object.keys(patch).length > 0) {
+        const res = await putSettings({ ...now.settings, ...patch });
+        if (!res.ok) throw new Error(res.error);
+        window.dispatchEvent(new Event("bv:settings-changed"));
+      }
+      return true;
     } catch (err) {
-      setSettings((s) => s && { ...s, [setting]: !on });
-      setRefused((n) => ({ ...n, [setting]: (n[setting] ?? 0) + 1 }));
       push((err instanceof Error && err.message) || t("settings.error"), "fail");
+      return false;
     } finally {
       setSaving(false);
     }
   }
 
-  return { settings, saving, refused, flip };
+  async function flip(section: Section, on: boolean) {
+    setSettings((s) => s && { ...s, [section.enabled]: on });
+    if (await save((now) => switchSection(now, section, on))) return;
+    setSettings((s) => s && { ...s, [section.enabled]: !on });
+    setRefused((n) => ({ ...n, [section.kind]: (n[section.kind] ?? 0) + 1 }));
+  }
+
+  return { settings, saving, refused, flip, schedule: () => save(scheduleChosen) };
 }
 
 function Step({
@@ -144,28 +144,28 @@ function SectionSwitches({
 
   return (
     <div className="grid gap-2 md:grid-cols-2">
-      {SECTIONS.map(({ kind, setting }, i) => (
+      {SECTIONS.map((section, i) => (
         <div
-          key={kind}
-          data-section={kind}
+          key={section.kind}
+          data-section={section.kind}
           style={hueVars(i) as CSSProperties}
           className="glim-hue flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5"
         >
           <span className="glim-row-glyph flex h-[34px] w-[34px] flex-none items-center justify-center rounded-control bg-carbon-surface3 [&_svg]:h-[18px] [&_svg]:w-[18px]">
-            <KindGlyph kind={kind} />
+            <KindGlyph kind={section.kind} />
           </span>
           <div className="flex min-w-0 flex-1 flex-col">
-            <span className="text-sm font-semibold text-carbon-text">{t(KIND_LABEL[kind])}</span>
-            {line[kind] && <span className="text-[13px] text-carbon-textMuted">{line[kind]}</span>}
+            <span className="text-sm font-semibold text-carbon-text">{t(KIND_LABEL[section.kind])}</span>
+            {line[section.kind] && <span className="text-[13px] text-carbon-textMuted">{line[section.kind]}</span>}
           </div>
           <Toggle
-            key={refused[setting]}
+            key={refused[section.kind]}
             hideLabel
-            label={t(KIND_LABEL[kind])}
-            checked={settings[setting]}
-            onChange={(on) => void flip(setting, on)}
+            label={t(KIND_LABEL[section.kind])}
+            checked={settings[section.enabled]}
+            onChange={(on) => void flip(section, on)}
             disabled={saving}
-            className={refused[setting] ? "glim-shake" : undefined}
+            className={refused[section.kind] ? "glim-shake" : undefined}
           />
         </div>
       ))}
@@ -230,7 +230,12 @@ export function FirstStepsCard({ tally, t, lang, hueIndex }: { tally: Tally; t: 
   const [adding, setAdding] = useState(false);
   const sentence = foundSentence(found, t, lang);
   const { settings } = sections;
-  const switchedOn = SECTIONS.filter(({ setting }) => settings?.[setting]).map(({ kind }) => t(KIND_LABEL[kind]));
+  const switchedOn = SECTIONS.filter(({ enabled }) => settings?.[enabled]).map(({ kind }) => t(KIND_LABEL[kind]));
+  const where = `${t("nav.settings")} › ${t("settings.schedule")}`;
+  // The step is ticked off only once the sections that are on have a schedule.
+  const next = async () => {
+    if (await sections.schedule()) chooseSections();
+  };
 
   return (
     <div data-testid="first-steps" className="flex">
@@ -239,12 +244,14 @@ export function FirstStepsCard({ tally, t, lang, hueIndex }: { tally: Tally; t: 
           <Step n={1} state={states.sections} title={t("firstSteps.sections")} summary={formatList(lang, switchedOn)} t={t}>
             <p className={HINT}>{[sentence, t("firstSteps.sectionsHint")].filter(Boolean).join(" ")}</p>
             {settings && <SectionSwitches sections={sections} settings={settings} found={found} t={t} />}
-            <div className="flex justify-end">
+            <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+              <p className={`min-w-0 flex-1 basis-64 ${HINT}`}>{t("firstSteps.nightly").replace("{where}", () => where)}</p>
               <Button
                 label={t("zfs.replica.add.next")}
                 labelKey="zfs.replica.add.next"
                 glyph={<IconForward />}
-                onClick={chooseSections}
+                disabled={sections.saving}
+                onClick={() => void next()}
               />
             </div>
           </Step>

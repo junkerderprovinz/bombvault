@@ -55,6 +55,11 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
     retentionKeepMonthly: 6,
     retentionKeepYearly: 0,
     ownRetention: {},
+    offsiteRetentionKeepLast: 0,
+    offsiteRetentionKeepDaily: 14,
+    offsiteRetentionKeepWeekly: 0,
+    offsiteRetentionKeepMonthly: 12,
+    offsiteRetentionKeepYearly: 0,
     ownOffsiteRetention: {},
     compression: {
       containers: "auto", vms: "auto", flash: "auto", config: "auto", files: "auto", zfs: "auto",
@@ -319,12 +324,11 @@ describe("importing settings while an edit is still inside its debounce", () => 
   });
 });
 
-describe("the yearly retention rule", () => {
+describe("the yearly off-site retention rule", () => {
   it("saves its count next to the other keep rules", async () => {
     await renderPage();
     await gotoPage("storage");
 
-    // The local rules come first, the off-site ones follow.
     const label = screen.getAllByText(en["settings.retentionYearly"])[0].closest("label");
     const input = label?.querySelector("input") as HTMLInputElement;
     expect(input.value).toBe("0");
@@ -337,24 +341,7 @@ describe("the yearly retention rule", () => {
 
     await waitFor(() => expect(putCalls).toHaveLength(1));
     const sent = putCalls[0].body;
-    expect(sent.retentionKeepYearly).toBe(3);
-    expect(sent.retentionKeepMonthly).toBe(6);
-  });
-});
-
-describe("a repository's compression", () => {
-  it("saves the choice at once, for that repository only", async () => {
-    await renderPage();
-    await gotoPage("storage");
-
-    const max = screen.getAllByText(en["settings.compression.max"])[0].closest("button") as HTMLButtonElement;
-    await act(async () => {
-      fireEvent.click(max);
-    });
-
-    await waitFor(() => expect(putCalls).toHaveLength(1));
-    const sent = putCalls[0].body.compression;
-    expect(sent.containers).toBe("max");
-    expect(sent.vms).toBe("auto");
+    expect(sent.offsiteRetentionKeepYearly).toBe(3);
+    expect(sent.offsiteRetentionKeepMonthly).toBe(12);
   });
 });

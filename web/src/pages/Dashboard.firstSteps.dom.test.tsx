@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import type { Settings } from "../lib/api";
+import { NIGHTLY } from "../lib/firstSections";
 import { en } from "../lib/i18n";
 import { Dashboard } from "./Dashboard";
 import { FakeEventSource, installMatchMedia, item, location, resetServer, server } from "./overview/overview.testsupport";
@@ -32,6 +33,13 @@ const SECTIONS = {
   filesEnabled: false,
   zfsEnabled: false,
   configEnabled: false,
+  containersSchedule: "off",
+  vmsSchedule: "off",
+  flashSchedule: "off",
+  filesSchedule: "off",
+  zfsSchedule: "off",
+  configSchedule: "off",
+  everythingSchedule: "off",
 } as Partial<Settings>;
 
 const unscheduled = { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" } as const;
@@ -158,8 +166,57 @@ describe("the first step, choosing the sections", () => {
     await act(async () => {});
 
     expect(saved()).toHaveLength(1);
-    expect(saved()[0]).toMatchObject({ ...SECTIONS, flashEnabled: true, defaultLanguage: "fr" });
+    expect(saved()[0]).toMatchObject({ ...SECTIONS, flashEnabled: true, flashSchedule: NIGHTLY, defaultLanguage: "fr" });
     expect(flip("flash").getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("gives a section it switches on a nightly schedule in the same save", async () => {
+    await renderPage();
+
+    fireEvent.click(flip("config"));
+    await act(async () => {});
+
+    expect(saved()).toHaveLength(1);
+    expect(saved()[0]).toMatchObject({ configEnabled: true, configSchedule: NIGHTLY, containersSchedule: "off" });
+  });
+
+  it("keeps the schedule of a section that has one", async () => {
+    server.settings = { ...SECTIONS, filesSchedule: "weekly Sun 04:00" };
+    await renderPage();
+
+    fireEvent.click(flip("files"));
+    await act(async () => {});
+
+    expect(saved()[0]).toMatchObject({ filesEnabled: true, filesSchedule: "weekly Sun 04:00" });
+  });
+
+  it("takes the nightly schedule back when the section is switched off again", async () => {
+    await renderPage();
+
+    fireEvent.click(flip("flash"));
+    await act(async () => {});
+    fireEvent.click(flip("flash"));
+    await act(async () => {});
+
+    expect(saved()).toHaveLength(2);
+    expect(saved()[1]).toMatchObject({ flashEnabled: false, flashSchedule: "off" });
+  });
+
+  it("leaves a schedule somebody set alone when the section is switched off", async () => {
+    server.settings = { ...SECTIONS, containersSchedule: "weekly Sun 04:00" };
+    await renderPage();
+
+    fireEvent.click(flip("container"));
+    await act(async () => {});
+
+    expect(saved()[0]).toMatchObject({ containersEnabled: false, containersSchedule: "weekly Sun 04:00" });
+  });
+
+  it("says that what is switched on runs every night and where that is changed", async () => {
+    await renderPage();
+
+    const line = en["firstSteps.nightly"].replace("{where}", `${en["nav.settings"]} › ${en["settings.schedule"]}`);
+    expect(within(steps()[0]).getByText(line)).toBeTruthy();
   });
 
   it("puts a switch back and says why when the server refuses", async () => {
@@ -173,10 +230,44 @@ describe("the first step, choosing the sections", () => {
     expect(screen.getByText("no SSH connection to the VM host")).toBeTruthy();
   });
 
+  it("schedules the sections that are on when Next ticks the step off", async () => {
+    await renderPage();
+
+    fireEvent.click(within(steps()[0]).getByRole("button", { name: en["zfs.replica.add.next"] }));
+    await act(async () => {});
+
+    expect(saved()).toHaveLength(1);
+    expect(saved()[0]).toMatchObject({ containersSchedule: NIGHTLY, vmsSchedule: "off", flashSchedule: "off" });
+    expect(states()).toEqual(["done", "next", "open"]);
+  });
+
+  it("saves nothing with Next where the sections that are on have a schedule", async () => {
+    server.settings = { ...SECTIONS, containersSchedule: "daily 04:30" };
+    await renderPage();
+
+    fireEvent.click(within(steps()[0]).getByRole("button", { name: en["zfs.replica.add.next"] }));
+    await act(async () => {});
+
+    expect(saved()).toHaveLength(0);
+    expect(states()).toEqual(["done", "next", "open"]);
+  });
+
+  it("stays on the first step and says why when the schedule cannot be saved", async () => {
+    server.saveRefused = "the settings could not be written";
+    await renderPage();
+
+    fireEvent.click(within(steps()[0]).getByRole("button", { name: en["zfs.replica.add.next"] }));
+    await act(async () => {});
+
+    expect(states()).toEqual(["next", "open", "open"]);
+    expect(screen.getByText("the settings could not be written")).toBeTruthy();
+  });
+
   it("is ticked off with Next, shows what is switched on and stays ticked off after a reload", async () => {
     await renderPage();
 
     fireEvent.click(within(steps()[0]).getByRole("button", { name: en["zfs.replica.add.next"] }));
+    await act(async () => {});
 
     expect(states()).toEqual(["done", "next", "open"]);
     expect(steps()[0].textContent).toContain(en["nav.containers"]);

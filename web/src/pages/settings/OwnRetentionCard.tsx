@@ -25,55 +25,27 @@ const RULES = [
   ["keepYearly", "settings.retentionYearly", "settings.retentionYearlyInfo"],
 ] as const;
 
-export type RetentionScope = "local" | "offsite";
-
-// What each section reads and writes, and the words it uses.
-const SCOPES = {
-  local: {
-    shared: {
-      keepLast: "retentionKeepLast",
-      keepDaily: "retentionKeepDaily",
-      keepWeekly: "retentionKeepWeekly",
-      keepMonthly: "retentionKeepMonthly",
-      keepYearly: "retentionKeepYearly",
-    },
-    own: "ownRetention",
-    title: "settings.retentionLocalTitle",
-    hints: ["settings.retentionHint", "settings.retentionCombineInfo"],
-    perSourceHint: "settings.ownRetentionHint",
-    toggle: "settings.ownRetentionFor",
-    toggleHint: "settings.ownRetentionToggleHint",
-  },
-  offsite: {
-    shared: {
-      keepLast: "offsiteRetentionKeepLast",
-      keepDaily: "offsiteRetentionKeepDaily",
-      keepWeekly: "offsiteRetentionKeepWeekly",
-      keepMonthly: "offsiteRetentionKeepMonthly",
-      keepYearly: "offsiteRetentionKeepYearly",
-    },
-    own: "ownOffsiteRetention",
-    title: "settings.retentionOffsiteTitle",
-    hints: ["settings.retentionOffsiteHint", "settings.retentionCombineInfo", "settings.retentionImmutableNotPruned"],
-    perSourceHint: "settings.ownOffsiteRetentionHint",
-    toggle: "settings.ownOffsiteRetentionFor",
-    toggleHint: "settings.ownOffsiteRetentionToggleHint",
-  },
+const SHARED = {
+  keepLast: "offsiteRetentionKeepLast",
+  keepDaily: "offsiteRetentionKeepDaily",
+  keepWeekly: "offsiteRetentionKeepWeekly",
+  keepMonthly: "offsiteRetentionKeepMonthly",
+  keepYearly: "offsiteRetentionKeepYearly",
 } as const;
 
-type Own = Settings["ownRetention"];
+const HINTS = ["settings.retentionOffsiteHint", "settings.retentionCombineInfo", "settings.retentionImmutableNotPruned"] as const;
+
+type Own = Settings["ownOffsiteRetention"];
 type T = ReturnType<typeof useT>["t"];
 
-/** The shared policy of a section, which a source starts from when it gets
- *  its own. */
-function sharedKeep(s: Settings, scope: RetentionScope): RetentionKeep {
-  const keys = SCOPES[scope].shared;
+/** The shared off-site policy, which a source starts from when it gets its own. */
+function sharedKeep(s: Settings): RetentionKeep {
   return {
-    keepLast: s[keys.keepLast],
-    keepDaily: s[keys.keepDaily],
-    keepWeekly: s[keys.keepWeekly],
-    keepMonthly: s[keys.keepMonthly],
-    keepYearly: s[keys.keepYearly],
+    keepLast: s[SHARED.keepLast],
+    keepDaily: s[SHARED.keepDaily],
+    keepWeekly: s[SHARED.keepWeekly],
+    keepMonthly: s[SHARED.keepMonthly],
+    keepYearly: s[SHARED.keepYearly],
   };
 }
 
@@ -100,14 +72,13 @@ function KeepFields({ keep, onChange, t }: { keep: RetentionKeep; onChange: (k: 
 }
 
 /**
- * The keep rules of the local or the off-site copies: the shared ones, and
- * below them a switch per source that gives it rules of its own. A source's
- * map is saved whole on every change, so its debounce runs under one key and
- * a switch drops the edit it would otherwise race. children stand under the
+ * The keep rules of the built-in off-site copies: the shared ones, and below
+ * them a switch per source that gives it rules of its own. A source's map is
+ * saved whole on every change, so its debounce runs under one key and a
+ * switch drops the edit it would otherwise race. children stand under the
  * switches.
  */
 export function RetentionRulesCard({
-  scope,
   settings,
   setSettings,
   save,
@@ -117,7 +88,6 @@ export function RetentionRulesCard({
   hueIndex,
   children,
 }: {
-  scope: RetentionScope;
   settings: Settings;
   setSettings: React.Dispatch<React.SetStateAction<Settings | null>>;
   save: (patch: Partial<Settings>) => Promise<boolean>;
@@ -130,13 +100,12 @@ export function RetentionRulesCard({
   const [busy, setBusy] = useState<Partial<Record<OffsiteDomain, boolean>>>({});
   const [shake, setShake] = useState<Partial<Record<OffsiteDomain, number>>>({});
   const [pulse, setPulse] = useState<Partial<Record<OffsiteDomain, number>>>({});
-  const text = SCOPES[scope];
-  const ownKey = text.own;
+  const ownKey = "ownOffsiteRetention";
   const own = settings[ownKey];
 
   function editShared(keep: RetentionKeep) {
     const patch: Partial<Settings> = {};
-    for (const [rule, field] of Object.entries(text.shared) as [keyof RetentionKeep, keyof Settings][]) {
+    for (const [rule, field] of Object.entries(SHARED) as [keyof RetentionKeep, keyof Settings][]) {
       if (keep[rule] === settings[field]) continue;
       Object.assign(patch, { [field]: keep[rule] });
       // Keyed by field name, so typing in one cell never resets another
@@ -150,7 +119,7 @@ export function RetentionRulesCard({
     cancelDebounce(ownKey);
     const before = own;
     const next: Own = { ...own };
-    if (on) next[domain] = sharedKeep(settings, scope);
+    if (on) next[domain] = sharedKeep(settings);
     else delete next[domain];
     setSettings((prev) => (prev ? { ...prev, [ownKey]: next } : prev));
     setBusy((b) => ({ ...b, [domain]: true }));
@@ -171,13 +140,13 @@ export function RetentionRulesCard({
   }
 
   return (
-    <Card title={t(text.title)} hint={text.hints.map((k) => t(k)).join(" ")} hueIndex={hueIndex}>
+    <Card title={t("settings.retentionOffsiteTitle")} hint={HINTS.map((k) => t(k)).join(" ")} hueIndex={hueIndex}>
       <span className="text-sm text-carbon-text">{t("retentionPreview.sharedPolicy")}</span>
-      <KeepFields keep={sharedKeep(settings, scope)} onChange={editShared} t={t} />
+      <KeepFields keep={sharedKeep(settings)} onChange={editShared} t={t} />
 
       <span className="mt-2 flex items-center gap-1 text-sm text-carbon-text">
         {t("settings.ownRetentionTitle")}
-        <InfoBubble tip={t(text.perSourceHint)} />
+        <InfoBubble tip={t("settings.ownOffsiteRetentionHint")} />
       </span>
       {SOURCES.map(({ domain, labelKey }, i) => {
         const keep = own[domain];
@@ -185,8 +154,8 @@ export function RetentionRulesCard({
           <div key={domain} className="flex flex-col gap-3">
             <ToggleRow
               label={t(labelKey)}
-              accessibleName={t(text.toggle).replace("{source}", t(labelKey))}
-              hint={t(text.toggleHint)}
+              accessibleName={t("settings.ownOffsiteRetentionFor").replace("{source}", t(labelKey))}
+              hint={t("settings.ownOffsiteRetentionToggleHint")}
               checked={keep !== undefined}
               onChange={(v) => void toggle(domain, v)}
               disabled={busy[domain]}
@@ -200,15 +169,13 @@ export function RetentionRulesCard({
       })}
 
       {children}
-      {scope === "offsite" && <p className="text-sm text-carbon-textSub">{t("settings.retentionOffsiteScope")}</p>}
-      {scope === "offsite" && (
-        <Link
-          to="/settings/storage#offsite"
-          className="w-fit text-sm text-accentText hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-(--btn-h) pointer-coarse:items-center"
-        >
-          {t("settings.retentionExtraTargets")}
-        </Link>
-      )}
+      <p className="text-sm text-carbon-textSub">{t("settings.retentionOffsiteScope")}</p>
+      <Link
+        to="/settings/storage#offsite"
+        className="w-fit text-sm text-accentText hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-(--btn-h) pointer-coarse:items-center"
+      >
+        {t("settings.retentionExtraTargets")}
+      </Link>
     </Card>
   );
 }

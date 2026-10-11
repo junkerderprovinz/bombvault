@@ -50,28 +50,23 @@ describe("the settings index in English", () => {
       .map((h) => `${h.item.page}: ${h.item.cardName ?? ""}`);
   const copyCards = (hits: string[]) => hits.filter((h) => h.startsWith("storage: Off-site copy"));
 
-  it("leads the yearly rule to both retention cards and to each off-site destination", () => {
+  it("leads the yearly rule to the off-site retention card and to each off-site destination", () => {
     const hits = where("keep yearly");
-    expect(hits).toContain(`storage: ${en["settings.retentionLocalTitle"]}`);
     expect(hits).toContain(`storage: ${en["settings.retentionOffsiteTitle"]}`);
     expect(copyCards(hits)).toHaveLength(6);
     expect(hits.every((h) => h.startsWith("storage: "))).toBe(true);
   });
 
-  it("leads compression to the backup paths, the named repositories and each off-site destination", () => {
+  it("leads compression to the named repositories and each off-site destination", () => {
     const hits = where("compression");
-    expect(hits).toContain(`storage: ${en["settings.paths"]}`);
     expect(hits).toContain(`storage: ${en["repos.title"]}`);
     expect(copyCards(hits)).toHaveLength(6);
   });
 
-  it("leads each source's own rules to their retention card, by the phrase and by the source's name", () => {
-    const local = `storage: ${en["settings.retentionLocalTitle"]}`;
+  it("leads each source's own off-site rules to the retention card, by the phrase and by the source's name", () => {
     const offsite = `storage: ${en["settings.retentionOffsiteTitle"]}`;
-    expect(where("own keep rules")).toContain(local);
     expect(where("own off-site keep rules")).toContain(offsite);
-    expect(where("own off-site keep rules")).not.toContain(local);
-    expect(where(en["nav.vms"])).toEqual(expect.arrayContaining([local, offsite]));
+    expect(where(en["nav.vms"])).toContain(offsite);
     expect(where("additional off-site targets keep")).toEqual([offsite]);
   });
 
@@ -93,22 +88,20 @@ describe("the settings index in English", () => {
     expect(where("for at least")).toContain(`schedules: ${en["idle.title"]}`);
   });
 
-  it("leads Streaming first and its limits to the Storage locations page", () => {
-    const top = search(items, "streaming first")[0];
-    expect(top.item.page).toBe("storage");
-    expect(top.item.name).toBe(en["streaming.title"]);
-    expect(where("upload limit while streaming")).toEqual([`storage: ${en["streaming.title"]}`]);
-    expect(where("media servers")).toContain(`storage: ${en["streaming.title"]}`);
-    expect(where("back to normal")).toContain(`storage: ${en["streaming.title"]}`);
+  it("leads what stands on the Storage locations page to the row that opens it", () => {
+    const row = (query: string) =>
+      search(items, query)
+        .filter((h) => h.item.page === "storage" && h.item.tier === 1)
+        .map((h) => h.item.name);
+    for (const query of ["streaming", "media servers", "how long to keep", "add storage location", "rules per section"]) {
+      expect(row(query), query).toContain(en["storage.title"]);
+    }
   });
 
-  it("finds the idle and streaming rows by the words behind their (i)", () => {
+  it("finds the idle rows by the words behind their (i)", () => {
     const cpu = search(items, "docker stats").find((h) => h.item.page === "schedules");
     expect(cpu?.inHint).toBe(true);
     expect(cpu?.item.name).toBe(en["idle.cpu"]);
-    const servers = search(items, "image name").filter((h) => h.item.cardName === en["streaming.title"]);
-    expect(servers.map((h) => h.item.name)).toContain(en["streaming.servers"]);
-    expect(servers.every((h) => h.inHint)).toBe(true);
   });
 
   it("leads the API tokens, Home Assistant and the mDNS switch to the Integrations page", () => {

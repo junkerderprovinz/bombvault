@@ -96,7 +96,7 @@ async function renderRetention() {
   await act(async () => {
     render(<RouterProvider router={router} />);
   });
-  await screen.findByRole("heading", { name: new RegExp(`^${en["settings.retentionLocalTitle"]}`) });
+  await screen.findByRole("heading", { name: new RegExp(`^${en["settings.retentionOffsiteTitle"]}`) });
   return router;
 }
 
@@ -104,7 +104,6 @@ function card(name: string): HTMLElement {
   return document.querySelector(`[data-search-card="${name}"]`) as HTMLElement;
 }
 
-const LOCAL = en["settings.retentionLocalTitle"];
 const OFFSITE = en["settings.retentionOffsiteTitle"];
 const PREVIEW = en["restore.preview"];
 
@@ -134,26 +133,21 @@ afterEach(() => {
 });
 
 describe("the retention cards of the Storage locations tile", () => {
-  it("draws a Local retention, an Off-site retention and a Preview card in a row", async () => {
+  it("draws the Off-site retention card and the Preview card in a row, and no card for the local rules", async () => {
     await renderRetention();
     const cards = [...document.querySelectorAll("[data-search-card]")].map((c) => c.getAttribute("data-search-card"));
-    const at = cards.indexOf(LOCAL);
-    expect(cards.slice(at, at + 3)).toEqual([LOCAL, OFFSITE, PREVIEW]);
+    const at = cards.indexOf(OFFSITE);
+    expect(cards.slice(at, at + 2)).toEqual([OFFSITE, PREVIEW]);
+    expect(screen.getAllByText(en["settings.retentionYearly"])).toHaveLength(1);
   });
 
-  it("shows each card's shared rules and a switch per source, named by the source", async () => {
+  it("shows the shared rules and a switch per source, named by the source", async () => {
     await renderRetention();
-    expect(within(card(LOCAL)).getAllByRole("spinbutton").map((f) => (f as HTMLInputElement).value)).toEqual(["5", "7", "4", "6", "0"]);
     expect(within(card(OFFSITE)).getAllByRole("spinbutton").map((f) => (f as HTMLInputElement).value)).toEqual(["0", "0", "0", "12", "0"]);
-    for (const [name, sentence] of [
-      [LOCAL, en["settings.ownRetentionFor"]],
-      [OFFSITE, en["settings.ownOffsiteRetentionFor"]],
-    ] as const) {
-      const switches = within(card(name)).getAllByRole("switch");
-      expect(switches).toHaveLength(6);
-      expect(switches[0].getAttribute("aria-label")).toBe(sentence.replace("{source}", en["nav.containers"]));
-      expect(within(card(name)).getByText(en["nav.containers"])).toBeTruthy();
-    }
+    const switches = within(card(OFFSITE)).getAllByRole("switch");
+    expect(switches).toHaveLength(6);
+    expect(switches[0].getAttribute("aria-label")).toBe(en["settings.ownOffsiteRetentionFor"].replace("{source}", en["nav.containers"]));
+    expect(within(card(OFFSITE)).getByText(en["nav.containers"])).toBeTruthy();
   });
 
   it("unfolds a source's off-site fields under its switch and saves them as its own off-site rules", async () => {
@@ -170,7 +164,6 @@ describe("the retention cards of the Storage locations tile", () => {
     });
     expect(putCalls[0].ownRetention).toEqual({});
     expect(within(card(OFFSITE)).getAllByRole("spinbutton")).toHaveLength(10);
-    expect(within(card(LOCAL)).getAllByRole("spinbutton")).toHaveLength(5);
   });
 
   it("has one preview, on its own card, asking about both copies", async () => {
@@ -195,15 +188,13 @@ describe("the retention cards of the Storage locations tile", () => {
     expect(router.state.location.pathname).toBe("/settings/storage");
   });
 
-  it("puts the OR rule in both rules cards' (i) and the append-only note in the off-site one", async () => {
+  it("puts the OR rule and the append-only note in the rules card's (i)", async () => {
     await renderRetention();
     const tips = (name: string) =>
       [...card(name).querySelectorAll("h2 [aria-label]")].map((el) => el.getAttribute("aria-label") ?? "").join(" ");
-    expect(tips(LOCAL)).toContain(en["settings.retentionCombineInfo"]);
-    expect(tips(LOCAL)).toContain(en["settings.retentionHint"]);
     expect(tips(OFFSITE)).toContain(en["settings.retentionCombineInfo"]);
     expect(tips(OFFSITE)).toContain(en["settings.retentionImmutableNotPruned"]);
-    for (const key of ["settings.retentionCombineInfo", "settings.retentionHint", "settings.retentionImmutableNotPruned"] as const) {
+    for (const key of ["settings.retentionCombineInfo", "settings.retentionImmutableNotPruned"] as const) {
       expect(screen.queryByText(en[key])).toBeNull();
     }
   });

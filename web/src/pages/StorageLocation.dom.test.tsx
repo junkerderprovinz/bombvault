@@ -44,7 +44,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     getCloud: vi.fn(),
     getCloudCredSets: vi.fn(),
     setCloudCredSets: vi.fn(),
-    getRclone: vi.fn(),
+    getRcloneSections: vi.fn(),
     testOffsiteTarget: vi.fn(),
     tamperTestOffsiteTarget: vi.fn(),
   };
@@ -63,7 +63,7 @@ const putSettings = vi.mocked(api.putSettings);
 const getProviders = vi.mocked(api.getProviders);
 const getCloud = vi.mocked(api.getCloud);
 const getCloudCredSets = vi.mocked(api.getCloudCredSets);
-const getRclone = vi.mocked(api.getRclone);
+const getRcloneSections = vi.mocked(api.getRcloneSections);
 const testOffsiteTarget = vi.mocked(api.testOffsiteTarget);
 const tamperTestOffsiteTarget = vi.mocked(api.tamperTestOffsiteTarget);
 
@@ -236,7 +236,13 @@ beforeEach(() => {
   getProviders.mockResolvedValue({ ok: true, providers: PROVIDERS });
   getCloud.mockResolvedValue({ ok: true, restUser: "tower" });
   getCloudCredSets.mockResolvedValue({ ok: true, sets: [] });
-  getRclone.mockResolvedValue({ ok: true, remotes: ["storagebox", "nas"] });
+  getRcloneSections.mockResolvedValue({
+    ok: true,
+    sections: [
+      { name: "storagebox", type: "sftp", options: [{ name: "host", value: "u123.your-storagebox.de" }, { name: "pass", hidden: true }] },
+      { name: "nas", type: "smb", options: [] },
+    ],
+  });
   testOffsiteTarget.mockResolvedValue({ ok: true, reachable: true, initialized: true });
   tamperTestOffsiteTarget.mockResolvedValue({ ok: true, testable: true, protected: true });
 });
@@ -257,8 +263,28 @@ describe("a destination", () => {
     expect(await screen.findByText("Hetzner Storage Box · Used by Containers and Flash")).toBeTruthy();
     expect(screen.getByText("268.0 GB of 1.0 TB")).toBeTruthy();
     expect(cardTitles()).toEqual(["Connection", "rclone.conf", "Delete protection", "Copy", "How long to keep", "Rules per section"]);
-    expect(within(card("rclone.conf")).getByText("[storagebox]")).toBeTruthy();
-    expect(within(card("rclone.conf")).getByText("storagebox · nas")).toBeTruthy();
+  });
+
+  it("shows its section of the rclone.conf without the secret, and nothing to type into", async () => {
+    await renderPage("destination:box");
+
+    const conf = card("rclone.conf");
+    expect(within(conf).getByText("[storagebox]")).toBeTruthy();
+    expect(within(conf).getByLabelText("[storagebox]").textContent).toBe(
+      ["type = sftp", "host = u123.your-storagebox.de", "pass = hidden"].join("\n")
+    );
+    expect(within(conf).getByText("storagebox · nas")).toBeTruthy();
+    expect(within(conf).queryByRole("textbox")).toBeNull();
+    expect(within(conf).queryByRole("button")).toBeNull();
+  });
+
+  it("names the remote alone when the config has no such section", async () => {
+    getRcloneSections.mockResolvedValue({ ok: true, sections: [{ name: "nas", type: "smb", options: [] }] });
+    await renderPage("destination:box");
+
+    const conf = card("rclone.conf");
+    expect(within(conf).getByText("[storagebox]")).toBeTruthy();
+    expect(within(conf).queryByLabelText("[storagebox]")).toBeNull();
   });
 
   it("asks the remote for its room once the page is up", async () => {
@@ -420,10 +446,20 @@ describe("a folder on this host", () => {
   it("has only the cards a folder has", async () => {
     await renderPage("path:abc");
 
-    expect(cardTitles()).toEqual(["Connection", "How long to keep", "Rules per section"]);
+    expect(cardTitles()).toEqual(["Connection", "Delete protection", "How long to keep", "Rules per section"]);
     expect(screen.getByText("Local folder · Used by Containers and VMs")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Test connection" })).toBeNull();
     expect(getStorageLocation).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows delete protection without a switch and says why", async () => {
+    await renderPage("path:abc");
+
+    const protection = card("Delete protection");
+    expect(within(protection).queryByRole("switch")).toBeNull();
+    expect(within(protection).getByText("Delete protection (append-only)")).toBeTruthy();
+    expect(within(protection).getByLabelText(/A folder on this server cannot refuse deletion/)).toBeTruthy();
+    expect(within(protection).queryByText("Who prunes")).toBeNull();
   });
 
   it("saves the shared local rule into the settings, without a question and without the switch for one", async () => {
@@ -468,7 +504,22 @@ describe("a named repository", () => {
     expect(within(card("How long to keep")).getByText("Balanced")).toBeTruthy();
   });
 
-  it("saves delete protection through the repository's route", async () => {
+  it("has no switch to protect a repository in a folder of this host", async () => {
+    await renderPage("repo:archive");
+
+    expect(within(card("Delete protection")).queryByRole("switch")).toBeNull();
+  });
+
+  it("can switch off the protection a local repository already carries, through the repository's route", async () => {
+    stage({ ...ARCHIVE, protection: { immutable: true, testable: false } }, []);
+    await renderPage("repo:archive");
+
+    await click(within(card("Delete protection")).getByRole("switch", { name: "Delete protection (append-only)" }));
+    expect(updateRepo).toHaveBeenCalledWith("archive", { immutable: false });
+  });
+
+  it("saves delete protection of a remote repository through the repository's route", async () => {
+    stage({ ...ARCHIVE, kind: "offsite", backend: "sftp", where: "sftp:nas:/archive" }, []);
     await renderPage("repo:archive");
 
     await click(within(card("Delete protection")).getByRole("switch", { name: "Delete protection (append-only)" }));
