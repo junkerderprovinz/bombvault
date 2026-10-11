@@ -28,7 +28,7 @@ import { I18nProvider, countText, en } from "../lib/i18n";
 import { isolateLtr } from "../lib/ltrFragments";
 import { placementChanged } from "../lib/placementEvents";
 import { AnomalyProvider } from "../lib/useAnomalies";
-import { TANK, ZFS_ID, backupRun, serveEntries, watched, zfsView } from "./backupEntry.testsupport";
+import { TANK, ZFS_ID, backupRun, serveEntries, timelineOf, watched, zfsView } from "./backupEntry.testsupport";
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -48,6 +48,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     getAnomalyItems: vi.fn(),
     getAnomalyItemSeries: vi.fn(),
     getItemChecks: vi.fn(),
+    getTimeline: vi.fn(),
     getSizeBreakdown: vi.fn(),
     getZFSReplica: vi.fn(),
     zfsHostDatasets: vi.fn(),
@@ -80,6 +81,7 @@ const mocks = {
 const getAnomalies = vi.mocked(api.getAnomalies);
 const getAnomalySummary = vi.mocked(api.getAnomalySummary);
 const getAnomalyItems = vi.mocked(api.getAnomalyItems);
+const getTimeline = vi.mocked(api.getTimeline);
 const zfsRestorePoints = vi.mocked(api.zfsRestorePoints);
 const zfsRunMembers = vi.mocked(api.zfsRunMembers);
 const listZFSSafetySnapshots = vi.mocked(api.listZFSSafetySnapshots);
@@ -145,6 +147,18 @@ const runRows = () => screen.queryAllByTestId("entry-run");
 
 async function confirmWith(name: string) {
   await press(within(await screen.findByRole("dialog")).getByRole("button", { name }));
+}
+
+/** Opens the menu beside the entry's name, which stands before the menu of any backup. */
+async function openMenu() {
+  await press(screen.getAllByRole("button", { name: en["nav.more"] })[0]);
+  return within(screen.getByRole("menu"));
+}
+
+/** Opens the window that takes the entry off the list. */
+async function openRemoval() {
+  await press((await openMenu()).getByRole("menuitem", { name: en["zfs.removeMissing"] }));
+  return screen.findByRole("dialog");
 }
 
 function member(over: Partial<ZFSMemberView> = {}): ZFSMemberView {
@@ -217,6 +231,7 @@ beforeEach(() => {
   getAnomalyItems.mockResolvedValue({ ok: true, items: [] });
   vi.mocked(api.getAnomalyItemSeries).mockResolvedValue({ ok: true, series: [] });
   vi.mocked(api.getItemChecks).mockResolvedValue({ ok: true, items: [] });
+  getTimeline.mockResolvedValue({ ok: true, places: [], rows: [] });
   vi.mocked(api.getSizeBreakdown).mockResolvedValue({
     ok: true,
     breakdown: { state: "none", path: "", size: 0, files: 0, added: 0, children: [] },
@@ -246,7 +261,7 @@ describe("the head of a ZFS entry", () => {
     expect(screen.getByText("/mnt/tank/appdata")).toBeTruthy();
     const corner = within(screen.getByTestId("page-actions"));
     expect(corner.getByRole("button", { name: en["containers.backupNow"] })).toBeTruthy();
-    expect(button(en["zfs.removeMissing"])).toBeTruthy();
+    expect((await openMenu()).getByRole("menuitem", { name: en["zfs.removeMissing"] })).toBeTruthy();
   });
 
   it("shows the failed run and not the check that says everything is fine", async () => {
@@ -293,23 +308,24 @@ describe("the head of a ZFS entry", () => {
     expect(pushed).toContainEqual({ message: en["zfs.sweepDone"], severity: "success" });
   });
 
-  it("says that the root is gone, with the way to remove the item beside it", async () => {
+  it("says that the root is gone, with the way to remove the item in its menu", async () => {
     serve({ lastCheckCode: "not-found", lastRunStatus: "" });
     await renderPage();
     expect(screen.getByText(en["zfs.code.not-found"])).toBeTruthy();
-    expect(button(en["zfs.removeMissing"])).toBeTruthy();
+    expect((await openMenu()).getByRole("menuitem", { name: en["zfs.removeMissing"] })).toBeTruthy();
   });
 });
 
 describe("removing a ZFS entry", () => {
+  const SAFETY_TOO = countText(en["entry.remove.safety"], "en", 2);
+
   it("leaves for the list and says how many safety snapshots stayed behind", async () => {
     serve({ safetyCount: 2 });
     deleteZFSDataset.mockResolvedValue({ ok: true, safetyRemaining: 2 } as never);
     await renderPage();
-    await press(button(en["zfs.removeMissing"]));
-    const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByRole("switch", { name: en["zfs.deleteSafetyToo"] })).toBeTruthy();
-    await press(within(dialog).getByRole("button", { name: en["zfs.removeMissing"] }));
+    const dialog = await openRemoval();
+    expect(within(dialog).getByRole("switch", { name: SAFETY_TOO })).toBeTruthy();
+    await press(within(dialog).getByRole("button", { name: en["entry.remove.keepGo"] }));
     await waitFor(() => expect(deleteZFSDataset).toHaveBeenCalledWith(ZFS_ID, false));
     expect(pushed).toContainEqual({ message: countText(en["zfs.deleteKeptSafety"], "en", 2), severity: "warn" });
     expect(await screen.findByText("at /backups?kind=zfs")).toBeTruthy();
@@ -318,18 +334,17 @@ describe("removing a ZFS entry", () => {
   it("takes the safety snapshots along when asked", async () => {
     serve({ safetyCount: 2 });
     await renderPage();
-    await press(button(en["zfs.removeMissing"]));
-    const dialog = await screen.findByRole("dialog");
-    await press(within(dialog).getByRole("switch", { name: en["zfs.deleteSafetyToo"] }));
-    await press(within(dialog).getByRole("button", { name: en["zfs.removeMissing"] }));
+    const dialog = await openRemoval();
+    await press(within(dialog).getByRole("switch", { name: SAFETY_TOO }));
+    await press(within(dialog).getByRole("button", { name: en["entry.remove.keepGo"] }));
     await waitFor(() => expect(deleteZFSDataset).toHaveBeenCalledWith(ZFS_ID, true));
   });
 
   it("says why a removal the server turned away did nothing", async () => {
     deleteZFSDataset.mockRejectedValue(new api.ApiError(409, "HTTP 409 Conflict"));
     await renderPage();
-    await press(button(en["zfs.removeMissing"]));
-    await confirmWith(en["zfs.removeMissing"]);
+    await openRemoval();
+    await confirmWith(en["entry.remove.keepGo"]);
     await waitFor(() => expect(pushed).toContainEqual({ message: "HTTP 409 Conflict", severity: "fail" }));
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(ROOT);
   });
@@ -343,9 +358,10 @@ describe("the backups of a ZFS entry", () => {
     expect(screen.getByText("At 2 sites")).toBeTruthy();
   });
 
-  it("are restored from the panel of the tree", async () => {
+  it("are restored from the panel of the tree, which a backup of the list opens", async () => {
+    getTimeline.mockResolvedValue(timelineOf([zfsRun("r1")]));
     await renderPage();
-    await press(button(en["snapshots.title"]));
+    await press(screen.getByTestId("entry-backup"));
     expect(
       await screen.findByRole("group", { name: en["zfs.restore.title"].replace("{dataset}", ROOT) })
     ).toBeTruthy();
@@ -576,7 +592,7 @@ describe("what anomaly detection knows about a ZFS entry", () => {
   it("offers the item's own sensitivity on the Verify tab", async () => {
     await renderPage("?tab=verify");
     expect(
-      await within(card(en["anomaly.title"])).findByRole("combobox", { name: en["anomaly.items.sensitivity"] })
+      await within(card(en["anomaly.title"])).findByRole("radiogroup", { name: en["anomaly.items.sensitivity"] })
     ).toBeTruthy();
   });
 

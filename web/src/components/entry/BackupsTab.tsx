@@ -4,7 +4,6 @@ import {
   zfsHostDatasets,
   type DBDumpView,
   type Run,
-  type TimelineRow,
   type ZFSDatasetView,
   type ZFSHostDataset,
 } from "../../lib/api";
@@ -55,23 +54,19 @@ function KeepLine() {
   );
 }
 
-/** ZFSRestoreWindow opens one run of a ZFS entry in the panel that restores
- *  a dataset tree. */
+/** ZFSRestoreWindow opens a ZFS entry's panel, which restores a dataset tree,
+ *  on the backup that was asked for. */
 function ZFSRestoreWindow({
   entry,
   dataset,
   name,
-  row,
-  timeline,
-  request,
+  preselect,
   onClose,
 }: {
   entry: Entry;
   dataset: ZFSDatasetView;
   name: string;
-  row: TimelineRow;
-  timeline: TimelineState;
-  request: RestoreRequest;
+  preselect: RestoreRequest;
   onClose: () => void;
 }) {
   const { t } = useT();
@@ -86,17 +81,6 @@ function ZFSRestoreWindow({
       })
       .catch(() => undefined);
   }, []);
-
-  // A finding names one dataset's backup. Any other way in names the run.
-  const asked = request.snapshot && rowHolds(row, request.snapshot);
-  const preselect: RestoreRequest = asked
-    ? request
-    : {
-        snapshot: newestId(actionMark(row, timeline.places)),
-        at: rowTime(row),
-        dump: false,
-        dataset: "",
-      };
 
   return (
     <AnomalyWindow title={t("entry.restore.title").replace("{name}", () => name)} onClose={onClose}>
@@ -166,6 +150,20 @@ export function BackupsTab({
   const restoreFolder = settings.restoreFolder || DEFAULT_RESTORE_FOLDER;
   const done = () => setActing(null);
 
+  // A finding names one dataset's backup, and the panel opens on it or, where
+  // it is gone, on the nearest one and says so. A row names its run.
+  let zfsPreselect: RestoreRequest | null = null;
+  if (opened && wanted && (opened.key === wanted || (openedRow && rowHolds(openedRow, wanted)))) {
+    zfsPreselect = request;
+  } else if (openedRow) {
+    zfsPreselect = {
+      snapshot: newestId(actionMark(openedRow, places)),
+      at: rowTime(openedRow),
+      dump: false,
+      dataset: "",
+    };
+  }
+
   function locate(run: Run) {
     const row = rowOfRun(rows, run);
     if (!row) return;
@@ -212,7 +210,8 @@ export function BackupsTab({
         <div hidden={view !== "backups"} className="flex flex-col gap-4">
           {loading && <p className="text-sm text-carbon-textMuted">{t("common.loadingBackups")}</p>}
           {error !== null && <p className="text-sm text-statusFail">{error || t("common.loadBackupsFailed")}</p>}
-          {wanted && places.length > 0 && pending.length === 0 && (
+          {/* A ZFS entry says this in its panel, which opens on the nearest backup. */}
+          {wanted && detail.kind !== "zfs" && places.length > 0 && pending.length === 0 && (
             <MissingRestorePoint
               requested={wanted}
               requestedAt={request.at}
@@ -266,15 +265,13 @@ export function BackupsTab({
         )}
       </Card>
 
-      {opened && openedRow && detail.kind === "zfs" && (
+      {opened && zfsPreselect && detail.kind === "zfs" && (
         <ZFSRestoreWindow
-          key={openedRow.key}
+          key={opened.key}
           entry={entry}
           dataset={detail.dataset}
           name={name}
-          row={openedRow}
-          timeline={timeline}
-          request={request}
+          preselect={zfsPreselect}
           onClose={() => onOpen(null)}
         />
       )}
