@@ -49,7 +49,7 @@ describe("PlacementBar", () => {
     renderBar(placementView({ skip: ["t-hz"] }));
     expect(screen.queryByRole("radiogroup")).toBeNull();
     expect(screen.queryByRole("tablist")).toBeNull();
-    expect(screen.getByRole("group", { name: "Placement" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Storage locations" })).toBeTruthy();
     expect(pressed("Local")).toBe("true");
     expect(pressed("B2")).toBe("true");
     expect(pressed("Hetzner")).toBe("false");
@@ -133,8 +133,8 @@ describe("PlacementBar", () => {
   it("chooses nothing while the arrow keys move along it", () => {
     const { onLocal, onTarget } = renderBar(placementView());
     screen.getByRole("button", { name: "Local" }).focus();
-    fireEvent.keyDown(screen.getByRole("group", { name: "Placement" }), { key: "ArrowRight" });
-    fireEvent.keyDown(screen.getByRole("group", { name: "Placement" }), { key: "End" });
+    fireEvent.keyDown(screen.getByRole("group", { name: "Storage locations" }), { key: "ArrowRight" });
+    fireEvent.keyDown(screen.getByRole("group", { name: "Storage locations" }), { key: "End" });
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Hetzner" }));
     expect(onLocal).not.toHaveBeenCalled();
     expect(onTarget).not.toHaveBeenCalled();

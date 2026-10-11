@@ -4,7 +4,9 @@ import { useT } from "../lib/i18n";
 import { useToast } from "../lib/toast";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
+import { IconPause } from "./glyphs";
 import { InfoBubble } from "./InfoBubble";
+import { IconSchedules } from "./navGlyphs";
 
 // The card-level face of an item's "Include in schedule" switch. Both write
 // the same stored flag, and the page keeps that flag in its list, so the
@@ -46,15 +48,12 @@ export function PauseButton({ paused, save, onSaved, corner = false }: PauseButt
     }
   }
 
-  // The glyph set has a play mark but no pause mark, so both states stay in
-  // words: a button that turned from a word into a symbol on click would read
-  // as two different controls.
   return (
     <Button
       key={shake}
       label={paused ? t("schedule.resume") : t("schedule.pause")}
       labelKey={paused ? "schedule.resume" : "schedule.pause"}
-      glyph={undefined}
+      glyph={paused ? <IconSchedules /> : <IconPause />}
       tone={corner ? "subtle" : "neutral"}
       onClick={() => void handleClick()}
       disabled={busy}

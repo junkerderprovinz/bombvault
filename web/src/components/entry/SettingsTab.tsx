@@ -19,6 +19,7 @@ import { isGone } from "../../lib/backupList";
 import { dumpRuns, updateWarnKey } from "../../lib/dbdump";
 import type { Entry } from "../../lib/entry";
 import { useT } from "../../lib/i18n";
+import { tLtr } from "../../lib/ltrFragments";
 import { lockHint, viewHomeLabel } from "../../lib/placement";
 import { useHostLabel } from "../../lib/useHostLabel";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
@@ -235,13 +236,13 @@ function ContainerCards({
         </div>
         <IdleWaitLine name={container.name} />
       </Card>
-      <Card title={t("folders.title")} hueIndex={nextHue()}>
+      <Card title={t("folders.title")} hint={t("folders.hint")} hueIndex={nextHue()}>
         <FoldersEditor name={container.name} stack={container.stack} open t={t} lastBackup={container.lastBackup} />
       </Card>
-      <Card title={t("excludes.title")} hueIndex={nextHue()}>
+      <Card title={t("excludes.title")} hint={tLtr(t, "excludes.hint")} hueIndex={nextHue()}>
         <ExcludesEditor name={container.name} initial={container.excludes ?? []} open t={t} />
       </Card>
-      <Card title={t("stophook.title")} hueIndex={nextHue()}>
+      <Card title={t("stophook.title")} hint={t("stophook.hint")} hueIndex={nextHue()}>
         <StopContainersEditor
           name={container.name}
           initial={container.stopContainers ?? []}
@@ -250,7 +251,7 @@ function ContainerCards({
           t={t}
         />
       </Card>
-      <Card title={t("entry.settings.hooks")} hueIndex={nextHue()}>
+      <Card title={t("entry.settings.hooks")} hint={t("hooks.hint")} hueIndex={nextHue()}>
         <HooksEditor name={container.name} initialPre={container.preHook} initialPost={container.postHook} open t={t} />
       </Card>
       {aliases.length > 0 && (

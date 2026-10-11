@@ -5,7 +5,7 @@ import { humanBytes } from "../../lib/forecast";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { InfoBubble } from "../InfoBubble";
 import { Button } from "../Button";
-import { tLtr, withLtrFragments, withLtrPlaceholder, EXCLUDES_HINT_LTR_FRAGMENTS } from "../../lib/ltrFragments";
+import { tLtr, withLtrPlaceholder } from "../../lib/ltrFragments";
 import { useToast } from "../../lib/toast";
 import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { IconSearch } from "../glyphs";
@@ -250,10 +250,7 @@ export function ExcludesEditor({
   if (!open) return null;
 
   return (
-    <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
-      <p className="text-xs text-carbon-textMuted">
-        {withLtrFragments(t("excludes.hint"), EXCLUDES_HINT_LTR_FRAGMENTS)}
-      </p>
+    <div className="rounded-card bg-carbon-background p-3 flex flex-col gap-2">
       <textarea
         value={text}
         onChange={(e) => {

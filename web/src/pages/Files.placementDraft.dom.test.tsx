@@ -36,7 +36,7 @@ function Harness({ initial }: { initial: FileSetView | null }) {
 
 async function openAdd() {
   renderWithProviders(<Harness initial={null} />);
-  await screen.findByRole("group", { name: "Placement" });
+  await screen.findByRole("group", { name: "Storage locations" });
 }
 
 function fillAndSave() {
@@ -133,7 +133,7 @@ describe("editing a folder set", () => {
   it("has no placement field and never sends a location", async () => {
     const set = { id: "set1", ...BASE, lastBackup: 0, pathExists: true, placement: placementView() } as FileSetView;
     renderWithProviders(<Harness initial={set} />);
-    expect(screen.queryByRole("group", { name: "Placement" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "Storage locations" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(patchFileSet).toHaveBeenCalledTimes(1));
     expect(patchFileSet.mock.calls[0]).toEqual(["set1", BASE]);

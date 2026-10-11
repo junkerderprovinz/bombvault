@@ -151,6 +151,15 @@ describe("the checks", () => {
     expect(probeItem).toHaveBeenCalledWith("tg-immich");
   });
 
+  it("stand as rows that name the check, say what it found and explain it in a bubble", async () => {
+    await renderVerify("container/immich");
+    const checks = within(card(en["entry.verify.checks"]));
+    const probe = (await checks.findByText(/Restore checked/)).closest("[data-search-row]") as HTMLElement;
+    expect(probe.getAttribute("data-search-row")).toBe(en["overview.check.drill"]);
+    expect(within(probe).getByLabelText(en["checks.probeHint"])).toBeTruthy();
+    expect(within(probe).getByRole("button", { name: en["checks.probeNow"] })).toBeTruthy();
+  });
+
   it("offer the start test for a container and for nothing else", async () => {
     getItemChecks.mockResolvedValue({
       ok: true,
