@@ -7,6 +7,7 @@ import {
   discoverAll,
   downloadRecoveryKit,
   fileSetSnapshots,
+  cancelEmergency,
   finishEmergency,
   getEmergency,
   getSettings,
@@ -38,6 +39,7 @@ import { EMERGENCY_STEPS, emergencyPath, restoreFolderFor, type EmergencyStep, t
 import { isRuntimeRefusal } from "../../lib/runReason";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { checkRestoreOnce, restoreBlockReason } from "../../lib/useRestoreCheck";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { ToggleRow } from "../../pages/settings/shared";
@@ -167,6 +169,7 @@ export function EmergencyWindow({
   // later step can read a backup yet.
   const undecided = session !== undefined && !sessionKeyInUse(emergency);
   const [leaving, setLeaving] = useState(false);
+  const ownLogin = useOwnLogin();
   // Where the first step puts its own way forward while a key is undecided.
   const [accessFoot, setAccessFoot] = useState<HTMLElement | null>(null);
 
@@ -257,20 +260,22 @@ export function EmergencyWindow({
     return true;
   }
 
-  // Closing ends the emergency. A key that was only shown leaves the
-  // server's memory, and one that was taken over is kept unless the person
-  // undoes it, which works until the first backup under it.
+  // Closing ends the emergency. A key that was only shown is cancelled and
+  // leaves the server's memory, and one that was taken over is kept unless
+  // the person undoes it, which works until the first backup under it.
   function leave() {
     if (taken && emergency?.undoable) {
       setLeaving(true);
       return;
     }
-    if (session) void finishEmergency().catch(() => undefined);
+    if (session) void (taken ? finishEmergency(session.id) : cancelEmergency(session.id)).catch(() => undefined);
     onClose();
   }
 
-  async function keepAndClose() {
-    await finishEmergency().catch(() => undefined);
+  // After the restart a settings restore ends in there is no session, and
+  // finishing only clears what the restore could not bring over.
+  async function finish() {
+    await finishEmergency(session?.id ?? "").catch(() => undefined);
     onClose();
   }
 
@@ -279,7 +284,7 @@ export function EmergencyWindow({
       const res = await undoEmergency();
       if (res.emergency) setEmergency(res.emergency);
       if (!res.ok) {
-        push(refusalText(t, res.code, res.error), "fail");
+        if (!ownLogin.handled(res)) push(refusalText(t, res.code, res.error), "fail");
         setLeaving(false);
         // A backup ran since the window read whether the key can be given back.
         const now = await getEmergency();
@@ -291,11 +296,6 @@ export function EmergencyWindow({
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
     }
-  }
-
-  async function done() {
-    await finishEmergency().catch(() => undefined);
-    onClose();
   }
 
   async function restoreOwnSettings() {
@@ -319,7 +319,9 @@ export function EmergencyWindow({
         const detail = check.state.phase === "error" ? check.state.error : failed?.detail;
         return fail(failed?.id === "key" ? t("emergency.keyRemedy") : [blocked, detail].filter(Boolean).join(" "));
       }
-      const res = await restoreConfig("latest", offsite ? "offsite" : undefined);
+      // With an emergency the settings are the old install's, which the
+      // server takes over under this server's key and login.
+      const res = await restoreConfig("latest", offsite ? "offsite" : undefined, session?.id);
       if (!res.ok) return fail(res.code ? refusalText(t, res.code, res.error) : isKeyMismatch(res.error) ? t("emergency.keyRemedy") : (res.error ?? t("settings.error")));
       if (res.lost) setEmergency((prev) => (prev ? { ...prev, lost: res.lost } : prev));
       // Without a staged snapshot the restart would apply nothing.
@@ -537,7 +539,7 @@ export function EmergencyWindow({
         labelKey={finished ? "common.done" : "common.close"}
         glyph={finished ? <IconCheck /> : undefined}
         tone="accent"
-        onClick={() => void (finished ? done() : onClose())}
+        onClick={() => void (finished ? finish() : onClose())}
       />
     );
   }
@@ -546,7 +548,7 @@ export function EmergencyWindow({
       <>
         <Button label={t("common.back")} labelKey="common.back" glyph={<IconBack />} tone="subtle" onClick={() => setLeaving(false)} />
         <Button label={t("emergency.undo")} labelKey={null} onClick={() => void undoAndClose()} />
-        <Button label={t("emergency.keep")} labelKey={null} glyph={<IconCheck />} tone="accent" onClick={() => void keepAndClose()} />
+        <Button label={t("emergency.keep")} labelKey={null} glyph={<IconCheck />} tone="accent" onClick={() => void finish()} />
       </>
     );
   }
@@ -575,7 +577,7 @@ export function EmergencyWindow({
           onOldFolder={
             onOldFolder &&
             (() => {
-              void finishEmergency().catch(() => undefined);
+              if (session) void cancelEmergency(session.id).catch(() => undefined);
               onOldFolder();
             })
           }
@@ -815,6 +817,7 @@ export function EmergencyWindow({
         </>
       )}
       {confirmDialog}
+      {ownLogin.dialog}
     </InstanceWindow>
   );
 }
