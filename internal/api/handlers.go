@@ -877,6 +877,11 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	for i := range views {
 		views[i].Placement = placements[views[i].Name]
 	}
+	if isPaired(r) {
+		for i := range views {
+			views[i].PreHook, views[i].PostHook = "", ""
+		}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "containers": views})
 }
 
@@ -2578,13 +2583,19 @@ func scrubGetSettingsSecrets(v settingsView) settingsView {
 	return v
 }
 
-func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
+func (h *Handler) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 	s, err := h.store.GetSettings()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	view := scrubGetSettingsSecrets(toView(s))
+	if isPaired(r) {
+		// A section's own path can be a remote location with its sign-in.
+		for _, p := range []*string{&view.ContainersPath, &view.VMsPath, &view.FlashPath, &view.ConfigPath, &view.FilesPath, &view.ZFSPath} {
+			*p = scrubRepoLocation(*p)
+		}
+	}
 	view.RestoreFolders = restoreFolders(s)
 	// Registry credentials (#106) live encrypted in the settings row, so toView
 	// (a pure store.Settings mapping) can't decode them — fill the view here.
@@ -5365,6 +5376,18 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 				"error": "authentication required",
 			})
 			return
+		}
+
+		// The session of a paired phone reaches what pairedRoutes lists. A
+		// path that matches no route is left to the mux to answer.
+		if secret.PairedSessionToken(c.Value) {
+			if mux, ok := next.(*http.ServeMux); ok {
+				if _, pattern := mux.Handler(r); pattern != "" && !pairedRoutes[pattern] {
+					refusePaired(w)
+					return
+				}
+			}
+			r = withPaired(r)
 		}
 
 		// This request came from a signed-in browser, so its Host header is

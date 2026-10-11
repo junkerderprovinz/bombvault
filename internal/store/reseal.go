@@ -124,9 +124,14 @@ func OpenStaged(path string) (*sql.DB, error) {
 	return db, nil
 }
 
-// CloseStaged folds the write-ahead log of db into its file and closes it.
+// CloseStaged rebuilds db, folds its write-ahead log into the file and closes
+// it. The values a settings restore sealed again or replaced leave their old
+// form on pages that are free afterwards, and the rebuild drops those pages.
 func CloseStaged(db *sql.DB) error {
-	_, err := db.Exec(`PRAGMA wal_checkpoint(TRUNCATE)`)
+	_, err := db.Exec(`VACUUM`)
+	if err == nil {
+		_, err = db.Exec(`PRAGMA wal_checkpoint(TRUNCATE)`)
+	}
 	if cErr := db.Close(); err == nil {
 		err = cErr
 	}
