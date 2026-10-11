@@ -1,4 +1,4 @@
-# VM Backup over SSH — Setup & Networking
+# VM Backup over SSH: Setup & Networking
 
 BombVault backs up KVM/libvirt VMs **without mounting any libvirt path**. It runs
 `virsh` **on the Unraid host over SSH** (`qemu+ssh://`), reads/writes VM **disks**
@@ -6,12 +6,12 @@ through the existing Host Data mount (`/mnt` → `/host/user`), and transfers th
 UEFI **NVRAM** over SSH. Because nothing libvirt-owned is bind-mounted, BombVault
 can never interfere with the Unraid VM Manager.
 
-This guide is the exact configuration. Container backup needs none of this — it
+This guide is the exact configuration. Container backup needs none of this; it
 is only for VM backup.
 
 **Also used by ZFS datasets.** ZFS dataset backups run their `zfs` commands over
 the same SSH link, with the same key, host and user. Once VM backup connects,
-the ZFS page connects too; nothing else needs setting up for it. See
+ZFS dataset entries connect too; nothing else needs setting up for them. See
 [ZFS datasets](https://junkerderprovinz.github.io/bombvault/zfs-datasets/).
 
 ---
@@ -36,13 +36,13 @@ host's LAN IP (Step 3 B).
 
 ---
 
-## Step 1 — Enable SSH on the Unraid host
+## Step 1: Enable SSH on the Unraid host
 
 1. **Settings → Management Access → Use SSH = Yes.**
-2. If you changed the **SSH port** (e.g. to a non-default port), note it — you'll set
+2. If you changed the **SSH port** (e.g. to a non-default port), note it; you'll set
    `Host SSH: Port` to match.
 
-## Step 2 — Authorize BombVault's public key (persistent)
+## Step 2: Authorize BombVault's public key (persistent)
 
 Unraid's `/root` is tmpfs (wiped on reboot), so the key must also live on the
 flash. From the **Unraid terminal**:
@@ -57,9 +57,9 @@ chmod 600 /root/.ssh/authorized_keys
 
 Unraid 6.9+ restores `/boot/config/ssh/root.pubkeys` into root's
 `authorized_keys` at every boot, so this survives reboots. The authorization is
-**host/port independent** — it applies to any `root` login.
+**host/port independent**: it applies to any `root` login.
 
-## Step 3 — Networking (this is the part that varies)
+## Step 3: Networking (this is the part that varies)
 
 BombVault must be able to open a TCP connection from the container to the host's
 SSH port. Pick the row matching your setup:
@@ -79,7 +79,7 @@ A container on `br0.x` cannot reach the host via `host.docker.internal`
 3. If the container's network and the host are on **different VLANs**, allow the
    route on your router/firewall: `container VLAN → host-IP : SSH-port (tcp)`.
 4. If the host LAN IP is unreachable, use the host's **shim** IP on the
-   container's subnet — find it on the host with
+   container's subnet; find it on the host with
    `ip -4 addr show | grep -B2 <container-subnet>`.
 
 ### Verify reachability (before anything else)
@@ -89,10 +89,10 @@ docker exec BombVault timeout 6 bash -c 'echo > /dev/tcp/192.168.x.x/<port>' && 
 ```
 `OPEN` = the path works. `UNREACHABLE` = fix networking (Step 3) before going on.
 
-## Step 4 — Set the variables & test
+## Step 4: Set the variables & test
 
 1. **Docker → BombVault → Edit** → set `Host SSH: Address` (+ `Host SSH: Port` if not 22)
-   → **Apply**. *(If the variables don't appear, re-import the template — Unraid
+   → **Apply**. *(If the variables don't appear, re-import the template, because Unraid
    keeps an existing container's saved config.)*
 2. **Settings → Integrations → Host SSH → Test connection** → green.
    Or from the terminal (the exact call BombVault makes):
@@ -101,12 +101,13 @@ docker exec BombVault timeout 6 bash -c 'echo > /dev/tcp/192.168.x.x/<port>' && 
    ```
    → lists your VMs.
 
-## Step 5 — Per-VM method
+## Step 5: Per-VM method
 
-In the **VMs** tab each VM has a method:
-- **Graceful (shutdown)** — default; shuts the VM down, backs up the disks,
+Each VM has a **Method** in the **VM** card on its page's Settings tab (open the VM
+under **Backups**):
+- **Graceful (shutdown)**: default; shuts the VM down, backs up the disks,
   restarts it. Always consistent.
-- **Live snapshot** — backs up a running VM via an external snapshot +
+- **Live snapshot**: backs up a running VM via an external snapshot +
   `blockcommit`. Requirements: the **qemu guest agent** installed in the VM
   (for a quiesced, app-consistent snapshot) and the disk on **`/mnt/cache`** or
   `/mnt/diskX` (not `/mnt/user`). On a shut-off VM, live automatically falls back
@@ -115,7 +116,7 @@ In the **VMs** tab each VM has a method:
 ## Changed blocks only
 
 A VM with qcow2 disks can be backed up by reading only what changed. Switch on
-**Changed blocks only** on the VM's card, and BombVault uses libvirt's backup API
+**Changed blocks only** in the same card, and BombVault uses libvirt's backup API
 instead of the method above:
 
 - It starts a pull-mode backup job (`virsh backup-begin`) that creates a
@@ -177,11 +178,11 @@ take up to 4 GiB under `/config`.
 
 The steps above (SSH enable, key authorization, networking, per-VM method)
 are written for Unraid, but the same `qemu+ssh://` mechanism works against
-any reachable libvirtd — including TrueNAS Scale, which has shipped libvirt-
+any reachable libvirtd, including TrueNAS Scale, which has shipped libvirt-
 based VMs again since 25.04.2. Five things differ on TrueNAS: the connection
 string needs an explicit override (1) and root SSH needs enabling (2) before
 anything works at all, and three further differences affect what a backup
-actually captures — zvol-backed disks (3), vTPM state (4), and how TrueNAS
+actually captures: zvol-backed disks (3), vTPM state (4), and how TrueNAS
 names its libvirt domains (5).
 
 ### 1. TrueNAS's libvirtd socket is non-standard
@@ -195,7 +196,7 @@ the built-string form has no way to express:
 LIBVIRT_URI=qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock
 ```
 
-When `LIBVIRT_URI` is set, BombVault uses it **verbatim** — `LIBVIRT_HOST`,
+When `LIBVIRT_URI` is set, BombVault uses it **verbatim**: `LIBVIRT_HOST`,
 `LIBVIRT_SSH_USER`, and `LIBVIRT_SSH_PORT` are ignored for the connection
 string itself. They don't need to be set at all: for every one of them that is
 unset, BombVault takes the host, user and port from the URI for its own SSH
@@ -211,7 +212,7 @@ Step 2 above (authorizing BombVault's public key for `root`) requires root
 SSH login, which TrueNAS Scale turns off out of the box starting with 24.10.
 Either:
 
-- **System Settings → General → Login As Root with Password** — enable it,
+- **System Settings → General → Login As Root with Password**: enable it,
   then authorize BombVault's public key the same way Step 2 describes, using
   `<user>` = `root` in the `LIBVIRT_URI` above; or
 - create a sudo-capable admin account (with an API key, per TrueNAS's own
@@ -221,8 +222,8 @@ Either:
 ### Caveat: direct `virsh` changes are invisible to TrueNAS's middleware
 
 TrueNAS's own middleware (the layer behind its VM UI) is the intended control
-path for its VMs. A `virsh` command run directly over this SSH link — which
-is exactly what BombVault's VM backup/restore does — bypasses that
+path for its VMs. A `virsh` command run directly over this SSH link (which
+is exactly what BombVault's VM backup/restore does) bypasses that
 middleware, and TrueNAS may reconcile or overwrite state it didn't originate
 (sourced from TrueNAS's publicly documented middleware behavior, not
 independently verified against a running instance). This is the same risk
@@ -237,7 +238,7 @@ stock `qemu:///system` URI fails on TrueNAS with `Failed to connect socket to
 call with `?socket=/run/truenas_libvirt/libvirt-sock` lists domains normally.
 Also confirmed on that box: TrueNAS names each libvirt domain `<id>_<name>`
 (for example `1_bvzvol`) and puts the display name you typed in the UI into
-the domain's `<title>`, which is the pairing BombVault's fleet view relies on.
+the domain's `<title>`, which is the pairing BombVault's VM list relies on.
 
 What is still *not* verified here is the middleware-reconciliation risk
 described just above: it remains sourced from TrueNAS's documented behaviour,
@@ -245,7 +246,7 @@ not from an observed incident.
 
 ### 3. VM disks backed by zvols (raw block devices)
 
-TrueNAS Scale VM disks are commonly **zvols** — ZFS-backed block devices
+TrueNAS Scale VM disks are commonly **zvols**: ZFS-backed block devices
 (`/dev/zvol/<pool>/<dataset>`), not qcow2 files. BombVault's existing VM disk
 backup (the mechanism described above and throughout this document) assumes
 file-based disk images that restic can back up directly by path; a zvol needs
@@ -253,26 +254,26 @@ a fundamentally different mechanism, since restic cannot back up a raw block
 device the way it backs up a file.
 
 BombVault detects a block-device-backed disk from the domain XML itself
-(libvirt's own `<source dev="...">` vs `<source file="...">` distinction —
+(libvirt's own `<source dev="...">` vs `<source file="...">` distinction,
 no guessing), and the backup/restore orchestrators (`BackupVMGraceful`,
 `BackupVMLive`, `RestoreVM`) ARE wired to invoke, for such a disk, ZFS's own
 tools instead of a plain file backup:
 
-1. `zfs snapshot <dataset>@<name>` — a point-in-time consistency point, taken
+1. `zfs snapshot <dataset>@<name>`: a point-in-time consistency point, taken
    over the same SSH connection as every other command on this page (no local
    ZFS/zvol access inside the BombVault container).
 2. `zfs send <dataset>@<name>`, streamed over that SSH connection straight
    into the restic backup (no local staging file, however large the zvol).
-3. `zfs destroy <dataset>@<name>` — always run afterward, success or failure;
+3. `zfs destroy <dataset>@<name>`: always run afterward, success or failure;
    the snapshot is a consistency point, not the backup artifact.
 
 Restoring a zvol is a **separate, defensive path** from restoring a
 file-based disk: `zfs receive` into an EXISTING dataset can destroy live
 data, so a restore always lands on a **freshly-named dataset**
-(`<pool>/<dataset>-bombvault-restore-<timestamp>`) — **never** the original.
+(`<pool>/<dataset>-bombvault-restore-<timestamp>`), **never** the original.
 Promoting that fresh dataset over the live original (so the VM actually boots
 from the restored data) is a **deliberate, manual, documented follow-up step
-for the operator** — BombVault never automates renaming/overwriting a live
+for the operator**: BombVault never automates renaming/overwriting a live
 zvol. After a restore completes, decide independently (per your own ZFS
 layout and running state of the original VM) whether/how to `zfs rename` the
 restored dataset into place, generally after shutting the VM down and
@@ -280,9 +281,9 @@ pointing its domain XML at the new dataset (or renaming the restored dataset
 to the original's name once the original has been renamed aside).
 
 **Cross-instance restore (fleet mesh / disaster recovery) needs an explicit
-destination pool.** A cross-instance VM restore — restoring onto a DIFFERENT
+destination pool.** A cross-instance VM restore (restoring onto a different
 BombVault instance than the one that took the backup, the normal
-disaster-recovery case — remaps a file-backed disk onto a chosen destination
+disaster-recovery case) remaps a file-backed disk onto a chosen destination
 FOLDER on the receiving box. A zvol-backed disk cannot be remapped the same
 way: its `zfs receive` target is a ZFS **dataset**, and the destination folder
 carries no pool information at all. Without an explicit destination pool,
@@ -290,13 +291,13 @@ BombVault refuses the restore up front with a clear error rather than
 attempting `zfs receive` against the SOURCE box's pool name (which almost
 certainly does not exist on the destination) and failing deep inside that
 call. Supply the destination pool via the foreign-restore API's `zvolPool`
-parameter (`POST /api/foreign/restore`) — every zvol disk's dataset is then
+parameter (`POST /api/foreign/restore`): every zvol disk's dataset is then
 rebased onto that pool, keeping the rest of its path (e.g.
 `tank/vms/win10/disk0` restoring onto pool `flashpool` lands under
 `flashpool/vms/win10/disk0-bombvault-restore-<timestamp>`, subject to the same
-manual promote step described above). **There is no UI field for this yet —
-it is reachable via a direct API call only; wiring it into the Recovery UI's
-foreign-restore form is a follow-up.** A same-instance restore is unaffected
+manual promote step described above). **The From an old backup folder window on the
+Restore page has no field for this, so it is reachable through a direct API
+call only.** A same-instance restore is unaffected
 either way: it always restores onto its own box's pool, which by definition
 already exists there.
 
@@ -352,7 +353,7 @@ constructs the ZFS-over-SSH adapter this mechanism needs; the design gap
 around multiple restic snapshots per VM backup is closed by a shared
 `vmrun:<runID>` correlation tag added to every snapshot ONE backup
 invocation produces (the file-backed snapshot's existing `vm:<name>` tag,
-plus one `vm:<name>:zvol:<dev>` tag per block disk) — restore resolves a
+plus one `vm:<name>:zvol:<dev>` tag per block disk); restore resolves a
 target `Run` row and then asks restic for every snapshot sharing that run's
 `vmrun:` tag, restoring the file-backed snapshot as before and each zvol
 snapshot to its corresponding dataset. Retention is applied once per
@@ -360,12 +361,12 @@ identity tag actually present, reusing restic's existing per-tag `--keep-*`
 policy engine unchanged. A Run predating this tag (or a file-only VM's
 backup, which never gets a `vmrun:` tag since its single snapshot is already
 unambiguous) falls back to exactly the pre-existing single-tag resolution.
-This closes the gap the previous revision of this document described —
+This closes the gap the previous revision of this document described. It is
 still unit-tested only, see the hardware-verification caveat above.
 
 ### 4. vTPM state (Secure-Boot/Windows-11-class guests)
 
-A TrueNAS Scale VM can also have a **vTPM** (virtual TPM) device — required
+A TrueNAS Scale VM can also have a **vTPM** (virtual TPM) device, required
 for Secure Boot and for Windows 11 guests. Its state lives **outside** the
 domain's disk and NVRAM, so a backup that only captures those two would leave
 a restored Secure-Boot/vTPM guest unable to boot correctly (a fresh, empty
@@ -375,7 +376,7 @@ BombVault parses a domain's `<tpm>` element (`internal/virshcli`) the same
 way it already parses `<os><nvram>`. libvirt's schema supports several `<tpm>`
 backend types, but only the **passthrough** shape
 (`<backend type='passthrough'><device path='...'/></backend>`) is documented
-to carry an explicit path directly in the domain XML — and that shape is a
+to carry an explicit path directly in the domain XML, and that shape is a
 real hardware TPM chip, not the kind of vTPM TrueNAS actually provisions. The
 **emulated** (software) vTPM TrueNAS uses for Secure Boot/Windows 11 guests
 does not, per libvirt's public documentation, expose its swtpm state
@@ -384,12 +385,12 @@ carry a UNIX socket path and is plausibly how TrueNAS's middleware wires its
 vTPM, but its exact attribute layout as rendered by TrueNAS is **not
 confirmed against real hardware**. Rather than guess at either shape,
 BombVault's parser recognizes only the well-documented passthrough case and
-otherwise reports "no TPM path found" — the same clean, non-erroring degrade
+otherwise reports "no TPM path found": the same clean, non-erroring degrade
 a BIOS domain (no `<nvram>`) already gets. TrueNAS's own documented,
 fixed-path convention for vTPM state
 (`/var/db/system/vm/tpm/{id}_{name}_tpm_state`, mirroring its NVRAM
 convention at `/var/db/system/vm/nvram/{id}_{name}_VARS.fd`) exists in code
-(`virshcli.TPMFixedPath`) as an explicit, documented fallback — but it is
+(`virshcli.TPMFixedPath`) as an explicit, documented fallback, but it is
 **not called anywhere automatically**, deliberately: reconstructing it is
 only ever correct once a caller has confirmed it's actually talking to
 TrueNAS Scale and knows the VM's real numeric id, neither of which the parser
@@ -399,15 +400,15 @@ than silently guess a possibly-wrong path.
 **Exactly how deep this is wired today (verified by reading the real code,
 not assumed):** NVRAM's own *real*, production-reachable capture/restore
 mechanism is entirely the SSH-based one described at the top of this
-document — read over SSH into the VM's stored definition at backup time,
+document: read over SSH into the VM's stored definition at backup time,
 written back over SSH just before `virsh define` at restore time, both
 best-effort and non-fatal (a failed read/write only logs a warning; the
 backup/restore itself never fails because of it). That mechanism lives
 entirely in the service layer (`internal/api/service.go`). One layer below
 it, `internal/backup/vm_orchestrator.go` *also* carries a second,
 separate, path-list-based NVRAM mechanism (`VMBackupDeps.NVRAMPath` /
-`VMRestoreDeps.NVRAMPath` — the path is simply added to the same restic
-backup/restore call as the disk images) — but reading the real
+`VMRestoreDeps.NVRAMPath`; the path is simply added to the same restic
+backup/restore call as the disk images), but reading the real
 `BackupVM`/`RestoreVM` code in `service.go` shows it **never populates
 that field**; it is exercised only by `vm_orchestrator.go`'s own direct unit
 tests, not by a real backup/restore today. This is a pre-existing situation,
@@ -416,10 +417,10 @@ not something introduced for TPM.
 TPM support matches that same layer precisely, introducing no new gap and no
 new looseness: `VMBackupDeps.TPMPath` / `VMRestoreDeps.TPMPath` are wired into
 the exact same real call sites the existing `NVRAMPath` field already uses
-(`runVMGraceful`, `runVMLive`, `runVMRestore` in `vm_orchestrator.go` —
+(`runVMGraceful`, `runVMLive`, `runVMRestore` in `vm_orchestrator.go`,
 included in the same restic path list, validated by the same restore
 path-safety guard), proven by unit tests that assert the actual paths restic
-receives — though, same as NVRAM's own path-list mechanism, this
+receives, though, same as NVRAM's own path-list mechanism, this
 orchestrator-level field is exercised only by that package's own tests, not
 by a real backup/restore.
 
@@ -427,28 +428,28 @@ by a real backup/restore.
 bytes:** `service.go`'s existing inline SSH read/write, described at the top
 of this document, reads `domain.TPMPath` into a `TPMBytes []byte` field on
 the VM's stored definition alongside `NVRAMBytes`, and writes it back over
-SSH just before `virsh define` at restore time — the same best-effort,
+SSH just before `virsh define` at restore time, the same best-effort,
 non-fatal treatment NVRAM already gets (a failed read/write only logs a
 warning). Empty-safe: skipped entirely when the domain has no `<tpm>`
 element (`TPMPath == ""`) or SSH capture failed, exactly like NVRAM.
 
-**⚠ Like the zvol mechanism above, this is REASONED from libvirt's and
-TrueNAS's public documentation and is UNIT-TESTED ONLY** — it has never been
+**⚠ Like the zvol mechanism above, this is reasoned from libvirt's and
+TrueNAS's public documentation and is unit-tested only**: it has never been
 exercised against a real TrueNAS Scale box with a real vTPM-enabled guest.
 NVRAM-only (Unraid) VM backup/restore is completely unaffected: TPM handling
 is purely additive, and a domain with no `<tpm>` element parses and
 backs up/restores byte-identically to before this feature existed.
 
-### 5. TrueNAS names its libvirt domains differently — VMs may show up under an unfamiliar name
+### 5. TrueNAS names its libvirt domains differently, so VMs may show up under an unfamiliar name
 
 Unraid's libvirt domain name is simply the VM's name, so the name you see in
-BombVault's **VMs** tab is the name you chose. TrueNAS derives the domain
+BombVault's **Backups** list is the name you chose. TrueNAS derives the domain
 name instead, and has changed how twice:
 
 | TrueNAS version | libvirt domain name | Where the name you chose lives |
 |---|---|---|
-| 25.10 "Goldeye" | `{id}_{name}` — e.g. `1_debian` | in the domain name, behind an `{id}_` prefix |
-| 26 | the VM's bare **UUID** — e.g. `550e8400-e29b-41d4-a716-446655440000` | only in the domain XML's `<title>` element |
+| 25.10 "Goldeye" | `{id}_{name}`, e.g. `1_debian` | in the domain name, behind an `{id}_` prefix |
+| 26 | the VM's bare **UUID**, e.g. `550e8400-e29b-41d4-a716-446655440000` | only in the domain XML's `<title>` element |
 
 BombVault's libvirt wrapper (`internal/virshcli`) recognizes both shapes and
 resolves a friendly name for each: it strips the `{id}_` prefix on 25.10, and
@@ -458,7 +459,7 @@ call fails.
 
 **What you will actually see today:** on a host BombVault detects (or is
 configured, via `PLATFORM=truenas`) as TrueNAS, the VM list **displays** the
-resolved friendly name — so on TrueNAS 25.10 your VMs show as `debian`
+resolved friendly name, so on TrueNAS 25.10 your VMs show as `debian`
 rather than `1_debian`, and on TrueNAS 26 they show their domain XML
 `<title>` rather than the bare UUID (falling back to the UUID itself if
 there is no `<title>`). This is presentation-only: internally, every lookup
@@ -471,7 +472,7 @@ the raw domain name is the identifier every `virsh` command legitimately
 takes, so backup and restore operate on the right VM either way. The one
 practical consequence beyond cosmetics is on TrueNAS 26, where a VM's saved
 BombVault settings (backup method, schedule membership) are still keyed to
-the raw UUID — if TrueNAS ever re-creates the VM and issues a new UUID, the
+the raw UUID: if TrueNAS ever re-creates the VM and issues a new UUID, the
 saved settings will not follow it and the VM will reappear as a new,
 unconfigured entry, even though its displayed name looks unchanged. That
 matching gap is unaffected by this display feature and remains open.
@@ -482,11 +483,11 @@ platform-gated, so an ordinary Unraid VM named literally `10_Windows` is
 classified exactly like a real TrueNAS 25.10 domain. `ListVMs` guards against
 that by checking the detected platform explicitly (`Kind() ==
 platform.KindTrueNAS`) before ever preferring the resolved friendly name over
-the raw one — on Unraid the shape-classifier's output is never consulted, so
+the raw one. On Unraid the shape-classifier's output is never consulted, so
 a coincidentally-TrueNAS-shaped Unraid VM name displays unchanged.
 
-**⚠ Like the two mechanisms above, this is REASONED from TrueNAS's public
-documentation and is UNIT-TESTED ONLY** — the naming schemes have not been
+**⚠ Like the two mechanisms above, this is reasoned from TrueNAS's public
+documentation and is unit-tested only**: the naming schemes have not been
 confirmed against a real TrueNAS 25.10 or 26 box. Unraid is unaffected:
 an ordinary hand-chosen domain name matches neither shape and passes through
 unchanged.
@@ -498,10 +499,10 @@ unchanged.
 | Symptom | Cause / fix |
 |---|---|
 | Test hangs then fails | Host unreachable: re-check Step 3 (network/VLAN/firewall) and `Host SSH: Address`/`Port`. |
-| `Permission denied (publickey)` despite the key being in `authorized_keys` | sshd **StrictModes** rejects the key file because of bad ownership/modes on a parent dir — common when `/root/.ssh` is symlinked to the **FAT flash** (`/boot/config/ssh/...`), which is world-writable. The host log shows `Authentication refused: bad ownership or modes for directory ...`. Fix: add `StrictModes no` to the host's sshd config **in the global section (before any `Match` block)**, then `/etc/rc.d/rc.sshd restart`. Persist it (see below) — Unraid regenerates `/etc/ssh/sshd_config` on boot. |
-| `Permission denied (publickey)` (key truly missing) | Key not authorized — redo Step 2; confirm SSH is enabled. |
+| `Permission denied (publickey)` despite the key being in `authorized_keys` | sshd **StrictModes** rejects the key file because of bad ownership/modes on a parent dir, common when `/root/.ssh` is symlinked to the **FAT flash** (`/boot/config/ssh/...`), which is world-writable. The host log shows `Authentication refused: bad ownership or modes for directory ...`. Fix: add `StrictModes no` to the host's sshd config **in the global section (before any `Match` block)**, then `/etc/rc.d/rc.sshd restart`. Persist it (see below), because Unraid regenerates `/etc/ssh/sshd_config` on boot. |
+| `Permission denied (publickey)` (key truly missing) | Key not authorized: redo Step 2; confirm SSH is enabled. |
 | `Host key verification failed` | `docker exec BombVault rm -f /config/ssh/known_hosts`, then retry. |
-| `/dev/tcp/...` = UNREACHABLE | The container cannot reach the host SSH port — Step 3 (custom-network host access, VLAN routing, or use the shim/LAN IP). |
+| `/dev/tcp/...` = UNREACHABLE | The container cannot reach the host SSH port; see Step 3 (custom-network host access, VLAN routing, or use the shim/LAN IP). |
 | Variables missing in Edit | Re-import the template; an existing container keeps its old saved config. |
 
 ## Persistence across reboot
@@ -510,10 +511,10 @@ Unraid regenerates `/etc/ssh/sshd_config` on every boot, so host-side SSH tweaks
 must be persisted:
 
 - **SSH port** persists in `/boot/config/ident.cfg` (set via the Unraid GUI).
-- **`StrictModes no`** (if you needed it above) does NOT persist — re-apply it at
+- **`StrictModes no`** (if you needed it above) does not persist; re-apply it at
   boot from `/boot/config/go`:
   ```sh
-  # /boot/config/go — keep SSH key auth working with flash-based authorized_keys
+  # /boot/config/go: keep SSH key auth working with flash-based authorized_keys
   ( for i in $(seq 1 30); do [ -f /etc/ssh/sshd_config ] && break; sleep 2; done
     grep -q '^StrictModes no' /etc/ssh/sshd_config || \
       sed -i '0,/^Match /s/^Match /StrictModes no\n&/' /etc/ssh/sshd_config
@@ -528,7 +529,7 @@ must be persisted:
 
 ## Security
 
-The authorized key grants **root on the host** — the same trust level as the
+The authorized key grants **root on the host**, the same trust level as the
 `docker.sock` BombVault already uses. Keep BombVault on a trusted network. The
 key is ed25519, stored `0600` in appdata; the host key is pinned. All host
 commands are argv-separated (no remote shell) and the SSH connection uses

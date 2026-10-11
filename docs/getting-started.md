@@ -10,7 +10,7 @@ This page walks you from a fresh Unraid box to your first backup.
 | **Restic repo location** | A local path (recommended: your array or cache), SMB, NFS, or any rclone backend. |
 | **Docker socket** | Mounted by the template automatically (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | Mounted whole by the template automatically (`/boot` to `/host/boot`). Powers flash backup and lets a restored container reappear as a normal, editable Unraid app. |
-| **KVM VMs** (opt-in) | VM backup talks to libvirt over SSH, no libvirt mount. Set it up in Settings (see [Configuration](configuration.md)). |
+| **KVM VMs** (opt-in) | VM backup talks to libvirt over SSH, no libvirt mount. Set it up under **Settings, Integrations, Host SSH** (see [Configuration](configuration.md)). |
 | **ZFS datasets** (opt-in) | The same SSH link as VM backups, `zfs` on the host, and Host Data mapped as `/mnt` with access mode Read/Write - Slave, the template default. See [ZFS datasets](zfs-datasets.md). |
 | **Android app** (optional) | Android 10 or later, paired with servers on version 9.7.0 or later. See [Android app](android.md). |
 
@@ -37,14 +37,14 @@ The easiest path is **Community Applications**.
 Not on Unraid? BombVault also runs as a plain container on any Docker host (this is also what powers containers-only support on TrueNAS Scale, ahead of its own app-catalog entry).
 
 1. Grab the ready-to-edit [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) from the repo.
-2. Set `APP_KEY` (see below) and point the Host Data volume at your real data root — the file's comments walk through both.
+2. Set `APP_KEY` (see below) and point the Host Data volume at your real data root. The file's comments walk through both.
 3. `docker compose up -d`, then open `https://<host-ip>:3443/`.
 
 What's different from Unraid:
 
-- **No flash/USB domain.** There is no boot USB to capture or restore, so the Flash domain in Settings has nothing to do here. Instead, the Folders domain offers a one-click **Add preset: Host system config** suggestion (a starting `/etc` file set you review and edit before saving) as a practical, generic equivalent.
+- **No Flash section.** There is no boot USB to capture or restore, so the Flash section has nothing to do here. Instead, **Add** on the Backups page offers **System configuration** as a folder suggestion: a starting `/etc` folder set you review and edit before saving.
 - **No Unraid-native notifications.** BombVault's own in-app notification channels (webhook, off-site failure alerts, etc.) work as normal; only the Unraid-specific push to its native notification system is skipped, since there is no such system to push to.
-- **VM backup is opt-in and needs a separate libvirtd host reachable over SSH** — see the commented-out block in the compose file. There is no VM manager built into a generic Docker host itself.
+- **VM backup is opt-in and needs a separate libvirtd host reachable over SSH.** See the commented-out block in the compose file. There is no VM manager built into a generic Docker host itself.
 - **No dashboard widget.** The BombVault Widget is an Unraid plugin, so that step is skipped as well.
 - **Finding a container's data.** Without Unraid's `appdata` convention, a container's data folder is found from the segments in `DATA_ROOT_SEGMENTS`, Docker named volumes, a Compose project's working directory and the `bombvault.data` label (see [Backup source detection](configuration.md#backup-source-detection)). Named volumes and the `/etc` preset only reach paths inside the Host Data mount, so point Host Data at a common ancestor that also covers Docker's data root.
 - **`PLATFORM`.** Set it to `generic` or `truenas`. Left unset, BombVault detects Unraid by its own marker on the flash mount and treats anything else as generic, and the Unraid-only steps are skipped instead of tried and failing.
@@ -64,34 +64,45 @@ openssl rand -hex 32
 Paste the result into the `APP_KEY` field of the template (Unraid), or the `APP_KEY` environment variable in `docker-compose.yml` (generic Docker host).
 
 !!! danger "Do not lose your APP_KEY"
-    Losing `APP_KEY` makes your encrypted backups unrecoverable. Store it somewhere safe and separate from the server. Once BombVault is running, use its one-click **encryption-key recovery kit** (see [Off-site & recovery](offsite-recovery.md)) to save the full recovery bundle.
+    Losing `APP_KEY` makes your encrypted backups unrecoverable. Store it somewhere safe and separate from the server. Once BombVault is running, set a login password and download the **recovery kit** under **Settings, Restore** (see [Off-site & recovery](offsite-recovery.md#recovery-kit)). It holds the key, every storage location and the restic commands.
 
 The template also mounts the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`) for you. Backup *sources* and *destinations* both live under Host Data. For the full variable reference and the off-site setup, see [Configuration](configuration.md).
 
 ## First run
 
-![The dashboard after a first backup: what is protected, what runs next, and a live log.](assets/screenshots/dashboard.png)
+![The overview after a first backup: what needs you, the protection of each section, the storage locations and the history.](assets/screenshots/dashboard.png)
 
-*The dashboard after a first backup: what is protected, what runs next, and a live log.*
+*The overview after a first backup: what needs you, the protection of each section, the storage locations and the history.*
 
-1. Open the web UI at `https://<your-unraid-ip>:3443` (self-signed certificate out of the box).
-2. In **Settings**, enable the backup domains you want (Containers, VMs, Flash, Self-Backup, Folders, ZFS datasets) and pick an accent colour.
-3. On the **Containers** tab, pick a container and click **Back up now** to make your first restore point. Repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` and are created on the first backup.
-4. Set up scheduling from **Settings, Schedules**. There is a one-click *Include all in schedule* for containers and VMs.
+1. Open the web UI at `https://<your-unraid-ip>:3443` (self-signed certificate out of the box). A new install opens on **Welcome to BombVault**, which lists what BombVault found on the server.
+2. Choose **Let's go**. The overview then shows the **First steps** card with three steps:
+    1. **Choose sections**: switch on what BombVault backs up (Containers, VMs, Flash, Folders, ZFS datasets, Self-backup). **Choose** opens the list of a section's entries, where **Pause schedule** leaves one out. The sections you switch on here run every night, which you change under **Settings, Schedule**.
+    2. **Add storage location**: where the backups go. A local folder is enough to start. Safest is a second storage location off the premises, such as a Storage Box or Backblaze B2. Local repositories default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` and are created on the first backup.
+    3. **First backup**: after that it runs by itself every night.
+3. Open **Backups** to see every entry in one list. **Back up everything now** starts a run over all switched-on sections, and **Back up now** on an entry's page backs up just that one.
+
+Used BombVault before? **Restore from a backup** on the welcome page opens the Restore page, where the **Emergency wizard** brings back the settings, containers, VMs and folders of a lost server. See [Off-site & recovery](offsite-recovery.md#emergency).
 
 !!! tip "Optional: pick a backup order"
-    If some containers should always be backed up before others (for example a database before the app that uses it), open the **Backup order** panel on the Containers page and drag them into the sequence you want. Scheduled and multi-select runs then follow it; anything you leave unordered is backed up most-overdue-first, as before.
+    If some containers should always be backed up before others (for example a database before the app that uses it), open the **Order** card under **Settings, Schedule** and drag them into the sequence you want. Scheduled runs and the full backup then follow it; anything you leave unordered is backed up most-overdue-first.
 
-!!! note "Host Integration Check"
-    Open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces, so you can confirm the container is wired up correctly before you rely on it.
+!!! note "Host integration check"
+    The **Host Integration** card on the overview probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces, so you can confirm the container is wired up correctly before you rely on it. It waits under **Customize** until you add it.
 
-## Simple vs Advanced
+## Finding your way {#navigation}
 
-![Settings has no Save button: every change is written as you make it.](assets/screenshots/settings.png)
+![Settings as tiles, with the cards of the chosen tile beside them. Every change is written as you make it.](assets/screenshots/settings.png)
 
-*Settings has no Save button: every change is written as you make it.*
+*Settings as tiles, with the cards of the chosen tile beside them. Every change is written as you make it.*
 
-By default the interface shows only the essentials (back up, restore, schedule). Use the **Simple view / Advanced view** switch in the sidebar to reveal the expert controls: retention, off-site copy, pre/post hooks, file-level restore, notifications, Prometheus metrics and the integrity/maintenance tools. It is a per-browser preference and off by default, so newcomers get a clean UI and power users get everything.
+The sidebar has five entries: **Overview**, **Anomalies** (while anomaly detection is on), **Backups**, **Restore** and, below **Sign out**, **Settings**. A page's main action floats at the bottom right, and **More** holds the rare ones. On a phone the bar holds Overview, Backups, Restore and Settings, and **More** has the rest.
+
+- **Backups** lists every container, VM, folder set, the flash drive, every ZFS dataset and the self-backup as entries. Tiles above the list pick a kind, and **Filters**, **Sort** and **Search** narrow it down. Every entry has a page of its own with three tabs: **Backups**, **Settings** and **Verify**.
+- **Restore** is one page for everything: pick a section, search for an entry and choose a backup. The Emergency wizard and the other sources start here too.
+- **Settings** are fourteen tiles: General, Look, Schedule, Storage locations, Restore, Notifications, Verify, Security, Instances, Pairing, Integrations, Apps, System and Info. Press `/` or Ctrl+K to search them all, also by the names pages had in earlier versions. Drag the tiles into your own order under **Look**.
+- **Storage locations** and **Instances** are settings tiles with pages of their own. **Also show in the sidebar** on their tile pins them to the sidebar.
+
+Nothing has a Save button and nothing folds out: rare things have a card of their own or a window, and explanations sit in the (i) bubbles. After an update, green dots mark what changed. A click hides a dot, and **Settings, Info, New** lists every change with **Go there**.
 
 ## Building from source {#build-from-source}
 
@@ -106,12 +117,12 @@ golangci-lint run ./...
 go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signed certificate
 ```
 
-The interface build is needed for `go run` too. The repository tracks only an empty marker under `web/dist`, so without `npm --prefix web run build` the binary embeds nothing and answers `500 SPA index not found`, which is expected. Docker, libvirt and Unraid cannot be tested in CI, so check mounts, restic and the VM SSH link on a real host with the Host Integration Check (`/spike`) before you open a pull request.
+The interface build is needed for `go run` too. The repository tracks only an empty marker under `web/dist`, so without `npm --prefix web run build` the binary embeds nothing and answers `500 SPA index not found`, which is expected. Docker, libvirt and Unraid cannot be tested in CI, so check mounts, restic and the VM SSH link on a real host with the overview's **Host Integration** card (or `GET /api/spike`) before you open a pull request.
 
 ## Next steps
 
 - Browse the full **[Features](features.md)**.
 - Put every server of your group on your phone with the **[Android app](android.md)**.
-- Add one or more **[Off-site & recovery](offsite-recovery.md)** replicas (each domain can ship to several destinations at once) and save your recovery kit.
+- Add one or more storage locations off the premises (each section can copy to several at once) and save your recovery kit, as described under **[Off-site & recovery](offsite-recovery.md)**.
 - Cloning a setup or moving to a new box? Carry your whole configuration over with the **Export / import settings** card. See [Configuration](configuration.md#portable-settings-export-and-import).
 - Hit a snag? See **[Troubleshooting](troubleshooting.md)**.

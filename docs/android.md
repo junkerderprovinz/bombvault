@@ -1,6 +1,6 @@
 # Android app
 
-The Android app puts every BombVault server of your group on your phone. It starts on a list of your servers with the activity log of all of them on top, the same lines the Dashboard shows, and opens the phone view of whichever server you tap. The app backs nothing up itself.
+The Android app puts every BombVault server of your group on your phone. It starts on a list of your servers with the activity log of all of them on top, the same lines the overview shows, and opens the phone view of whichever server you tap. The app backs nothing up itself.
 
 ## Getting the app {#install}
 
@@ -24,12 +24,16 @@ The phone then joins the group like another instance. It reads what runs on each
 
 ## Signed in on a paired phone {#sign-in}
 
-A phone paired with your group opens each of its servers already signed in. Before it loads a page, it asks that server over the group for a session, and a server hands one only to a member that is a phone. A server added by its address asks for the password, as in a browser. Anyone with the twelve words can already open every backup of the group, so pairing grants nothing new.
+A phone paired with your group opens each of its servers already signed in. Before it loads a page, it asks that server over the group for a session, and a server hands one only to a member that is a phone. A server added by its address asks for the password, as in a browser.
+
+A paired phone does not get everything a password does. Its session reaches a fixed list of what the app shows: the overview, the runs and the activity log, the backups to look at, start and restore, the anomalies to read and the Instances page to look at. Storage locations and commands come back with their addresses and secrets removed. A restore that replaces the original backs up the current state first. Keys, the recovery kit, key deposits, settings and deleting backups stay with a sign-in at the server itself, and everything else answers that it needs that sign-in.
+
+The switch for this is **Phones can pair with the group's twelve words** on the **Android app** card under **Settings, Security**. A password reset turns it off and signs every phone out, until you turn it back on there.
 
 ## Servers outside a group {#other-servers}
 
 - **Add server** takes the address you open BombVault with in a browser, such as `192.168.1.10:3443`. Without `http://` or `https://` in front, the app uses https.
-- Servers that announce themselves on the local network are listed under **On this network** and open with one tap. They do this while **Find on the network** is switched on under Settings, Integrations. A server in another network or behind a VPN does not show up there.
+- Servers that announce themselves on the local network are listed under **On this network** and open with one tap. They do this while **Find on the network** is switched on in the **Services** card under **Settings, Integrations**. A server in another network or behind a VPN does not show up there.
 - A self-signed certificate is trusted once by its SHA-256 fingerprint. When the server later shows a different one, the app warns you and opens it only after you trust the new certificate.
 
 ## The phone on the Instances page {#instances}
