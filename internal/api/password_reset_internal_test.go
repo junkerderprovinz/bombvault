@@ -258,6 +258,23 @@ func TestWrongGuessesLeaveTheResetCodeAlone(t *testing.T) {
 	}
 }
 
+// Behind a reverse proxy without TRUSTED_PROXY every caller shares the proxy's
+// address, and with it one throttle bucket.
+func TestAStrangerBehindTheSameProxyCannotBlockTheRightResetCode(t *testing.T) {
+	h, _, out := newResetHandler(t)
+	code := askForResetCode(t, h, out)
+	for range loginMaxFails {
+		postJSON(t, h.handleLogin, "/api/login", `{"password":"not the password"}`, "10.0.0.1:2", nil)
+		finishResetFrom(t, h, "10.0.0.1:3", wrongResetCode, resetNewPass)
+	}
+
+	body, res := finishResetFrom(t, h, "10.0.0.1:4", code, resetNewPass)
+
+	if res.StatusCode != http.StatusOK || body["ok"] != true {
+		t.Fatalf("status %d, %v: the right code must pass a throttle strangers filled", res.StatusCode, body)
+	}
+}
+
 func TestAWrongResetCodeCountsTowardsTheThrottle(t *testing.T) {
 	h, _, out := newResetHandler(t)
 	askForResetCode(t, h, out)
