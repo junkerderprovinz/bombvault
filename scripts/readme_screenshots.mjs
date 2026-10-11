@@ -28,40 +28,77 @@ const docs = join(root, "docs", "assets", "screenshots");
 const [sender, receiver] = process.argv.slice(2);
 if (!sender || !receiver) throw new Error("usage: node scripts/readme_screenshots.mjs <sender url> <receiver url>");
 
+// Scrolls the card holding the given text to the top of whatever scrolls
+// around it, the page or an open window.
+async function cardToTop(tab, text) {
+  await tab
+    .getByText(text, { exact: true })
+    .first()
+    .evaluate((el) => {
+      const card = el.closest(".rounded-card") ?? el;
+      card.style.scrollMarginTop = "20px";
+      card.scrollIntoView();
+    });
+}
+
 // `shown` is the address the window's bar prints, matching the example
-// servers of the app's store pictures rather than the demo's own.
+// servers of the app's store pictures rather than the demo's own. Each shot
+// wears another of the accent presets.
 const SHOTS = [
   {
     file: "dashboard.png",
     base: sender,
     path: "/dashboard",
     shown: "192.168.1.20:3443",
+    accent: "#FCC419",
     caption: "All your backups at a glance, <em>before you need one</em>",
   },
   {
     file: "recovery.png",
     base: sender,
-    path: "/recovery",
+    path: "/restore",
     shown: "192.168.1.20:3443",
+    accent: "#1D99F3",
     caption: "Server gone? <em>Bring it all back.</em>",
+    // A container with few snapshots keeps its rail short enough for the
+    // emergency card below it to fit.
+    prepare: async (tab) => {
+      await tab.getByText("immich", { exact: true }).first().click();
+      await tab.mouse.move(VIEW_W / 2, VIEW_H / 2);
+      await tab.mouse.wheel(0, 4000);
+    },
   },
   {
     file: "containers.png",
     base: sender,
-    path: "/containers",
+    path: "/backups?kind=container",
     shown: "192.168.1.20:3443",
-    caption: "Each container gets <em>its own switch</em>",
-    // BombVault's own card comes first and only says it does not back itself up.
-    scrollTo: "homeassistant",
+    accent: "#6FDC8C",
+    caption: "Every container, <em>every run in view</em>",
   },
-  { file: "settings.png", base: sender, path: "/settings", shown: "192.168.1.20:3443", caption: "No Save button. <em>It just saves.</em>" },
+  {
+    file: "settings.png",
+    base: sender,
+    path: "/settings/look",
+    shown: "192.168.1.20:3443",
+    accent: "#BE95FF",
+    caption: "No Save button. <em>It just saves.</em>",
+  },
   {
     file: "receiver.png",
     base: receiver,
     path: "/instances",
     shown: "10.8.0.2:3443",
+    accent: "#FF832B",
     caption: "Trust the copy. <em>Check it yourself.</em>",
-    open: "Details",
+    // The sender's card opens its window, and the received repository in it
+    // opens its inventory.
+    prepare: async (tab) => {
+      await tab.getByRole("button", { name: "Details" }).first().click();
+      await tab.getByRole("button", { name: "Details" }).nth(1).click();
+      await tab.waitForFunction(() => !/Loading/.test(document.body.innerText), null, { timeout: 60000 });
+      await cardToTop(tab, "Deep check (read data)");
+    },
   },
 ];
 const SUB = "BombVault for Unraid and Docker";
@@ -90,27 +127,25 @@ const bree = dataUrl(
 const lato = dataUrl(await cached("Lato-Regular.ttf", "https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf"), "font/ttf");
 const logo = dataUrl(readFileSync(join(root, "web", "public", "logo-light.svg")), "image/svg+xml");
 
-async function page(browser, { base, path, scrollTo, open }) {
-  const ctx = await browser.newContext({ viewport: { width: VIEW_W, height: VIEW_H }, deviceScaleFactor: 2, colorScheme: "dark" });
+async function page(browser, { base, path, accent, prepare }) {
+  // A demo instance answers on its own self-signed certificate.
+  const ctx = await browser.newContext({
+    viewport: { width: VIEW_W, height: VIEW_H },
+    deviceScaleFactor: 2,
+    colorScheme: "dark",
+    locale: "en-US",
+    ignoreHTTPSErrors: true,
+  });
+  await ctx.addInitScript((hex) => localStorage.setItem("bv-accent", hex), accent);
   const tab = await ctx.newPage();
   await tab.goto(base + path);
   await tab.waitForSelector("main");
   await tab.evaluate(() => document.fonts.ready);
   // The cards fill in from their own requests after the first paint.
   await tab.waitForTimeout(2500);
-  if (open) await tab.getByRole("button", { name: open }).first().click();
-  if (scrollTo) {
-    await tab
-      .getByText(scrollTo, { exact: true })
-      .first()
-      .evaluate((el) => {
-        const card = el.closest(".rounded-card") ?? el;
-        card.style.scrollMarginTop = "20px";
-        card.scrollIntoView();
-      });
-  }
+  if (prepare) await prepare(tab);
   await tab.waitForFunction(() => !/Loading/.test(document.body.innerText), null, { timeout: 60000 });
-  if (open || scrollTo) await tab.waitForTimeout(800);
+  if (prepare) await tab.waitForTimeout(800);
   const png = await tab.screenshot();
   await ctx.close();
   return png;
