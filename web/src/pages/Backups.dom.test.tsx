@@ -690,6 +690,27 @@ describe("the page actions", () => {
     expect(listItems).toHaveBeenCalledTimes(2);
   });
 
+  it("say that a rebuilt ZFS item stays switched off until it was checked", async () => {
+    discoverAll.mockResolvedValue({
+      containers: 0,
+      vms: 0,
+      files: 0,
+      zfs: 2,
+      skipped: [],
+      skippedNeedsAction: false,
+      paused: [],
+      leftOpen: [],
+      directRepos: [],
+    });
+    await renderPage();
+    await openMore();
+    await chooseFromMenu("Discover backups");
+    expect(pushed).toEqual([
+      { message: "Storage locations searched: 2 new entries found.", severity: "success" },
+      { message: "Rebuilt 2 ZFS items. They stay switched off until you check them.", severity: "success" },
+    ]);
+  });
+
   it("say so when the search finds nothing new, and pass a failure on", async () => {
     const none = { containers: 0, vms: 0, files: 0, zfs: 0, skipped: [], skippedNeedsAction: false, paused: [], leftOpen: [], directRepos: [] };
     discoverAll.mockResolvedValueOnce(none).mockResolvedValueOnce({ ...none, error: "wrong key" });

@@ -259,6 +259,8 @@ export function Backups() {
       const count = found.containers + found.vms + found.files + found.zfs;
       if (found.error) push(found.error, "fail");
       else push(count > 0 ? t("backups.discover.found", count) : t("backups.discover.none"), "success");
+      // The count does not say that a rebuilt ZFS item stays off until it was checked.
+      if (found.zfs > 0) push(t("zfs.discovered", found.zfs), "success");
       await load();
     } catch (err) {
       push(err instanceof Error ? err.message : t("common.discoverFailed"), "fail");
