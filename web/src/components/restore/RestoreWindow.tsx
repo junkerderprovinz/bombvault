@@ -934,7 +934,7 @@ function RestoreForm({
 
           {!listed && where && (
             <>
-              <div className="flex flex-col gap-2">
+              <div data-new="restore-where" className="flex flex-col gap-2">
                 <h3 className="text-xs font-semibold uppercase tracking-widest text-carbon-textSub">{t("restoreWindow.where")}</h3>
                 <div role="radiogroup" aria-label={t("restoreWindow.where")} className="flex flex-col gap-2">
                   {wheres.map((w) => {

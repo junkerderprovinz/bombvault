@@ -25,7 +25,8 @@ const found = (pattern: RegExp) => new Set(CODE.flatMap((source) => [...source.m
 
 // A card takes its mark as a prop, every other element as the attribute.
 const MARKED = found(/(?:data-new|newId)="([^"$]+)"/g);
-const WAYS = found(/data-new-way="([^"$]+)"/g);
+// A way that only one of several rows carries is written as a condition.
+const WAYS = found(/data-new-way=(?:\{[^}"]*)?"([^"$]+)"/g);
 // A link on the way is written with the path it leads to.
 const LINKED = found(/\bto[=:]\s*\{?[`"](\/[^`"$]*)[`"]/g);
 const SETTINGS_PAGES = found(/\{ id: "(\w+)", label: "[\w.]+", icon:/g);

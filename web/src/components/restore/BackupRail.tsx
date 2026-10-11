@@ -177,6 +177,7 @@ export function BackupRail({
                 {on && recommended && <p className="text-xs text-carbon-textMuted">{why}</p>}
               </div>
               <div
+                data-new-way={on ? "restore-window" : undefined}
                 className={`ms-auto max-md:w-full max-md:[&_button]:w-full max-md:[&_button]:justify-center${
                   on ? "" : " md:opacity-0 md:focus-within:opacity-100 md:group-hover:opacity-100"
                 }`}

@@ -322,7 +322,7 @@ export function Restore() {
             </div>
           ) : (
             <>
-              <TileRow label={t("restorePage.tiles")}>
+              <TileRow label={t("restorePage.tiles")} newId="restore-tiles">
                 {ENTRY_KINDS.filter((k) => entries.some((item) => item.kind === k))
                   .sort((a, b) => TILE_ORDER.indexOf(a) - TILE_ORDER.indexOf(b))
                   .map((k) => {
@@ -412,7 +412,7 @@ export function Restore() {
       )}
 
       <div className="grid gap-6 md:grid-cols-2 md:gap-10">
-        <Card title={t("restorePage.emergency")} hueIndex={nextHue()}>
+        <Card title={t("restorePage.emergency")} hueIndex={nextHue()} newId="restore-emergency">
           <EmergencyScene words />
           <Way
             glyph={<IconRecovery />}

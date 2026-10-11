@@ -36,6 +36,7 @@ const TO_STORAGE: WayStep[] = ["/settings", "/settings/storage", "/storage"];
 export const CHANGES: Change[] = [
   { id: "overview-head", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], text: "whatsNew.overviewHead" },
   { id: "overview-customize", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], wide: true, text: "whatsNew.overviewCustomize" },
+  { id: "overview-decline", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], text: "whatsNew.overviewDecline" },
 
   { id: "backups-tiles", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsTiles" },
   { id: "backups-bar", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsBar" },
@@ -53,6 +54,10 @@ export const CHANGES: Change[] = [
     text: "whatsNew.entryDefaults",
   },
 
+  { id: "restore-tiles", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreTiles" },
+  { id: "restore-where", page: "/restore", where: ["nav.restore"], way: ["/restore", "restore-window"], text: "whatsNew.restoreWhere" },
+  { id: "restore-emergency", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreEmergency" },
+
   { id: "anomalies-tiles", page: "/anomalies", where: ["nav.anomalies"], way: ["/anomalies"], text: "whatsNew.anomaliesTiles" },
   { id: "anomalies-rings", page: "/anomalies", where: ["nav.anomalies"], way: ["/anomalies"], text: "whatsNew.anomaliesRings" },
 
@@ -65,6 +70,14 @@ export const CHANGES: Change[] = [
     where: ["storage.title", "whatsNew.page.location"],
     way: [...TO_STORAGE, "location"],
     text: "whatsNew.locationKeep",
+  },
+  {
+    id: "location-move",
+    page: LOCATION,
+    go: "/storage",
+    where: ["storage.title", "whatsNew.page.location"],
+    way: [...TO_STORAGE, "location"],
+    text: "whatsNew.locationMove",
   },
 
   {

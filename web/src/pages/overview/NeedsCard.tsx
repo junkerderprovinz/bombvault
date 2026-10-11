@@ -46,16 +46,20 @@ function Row({
   children,
   actions,
   testid,
+  newId,
 }: {
   tone: "fail" | "warn";
   title: ReactNode;
   children: ReactNode;
   actions: ReactNode;
   testid: string;
+  /** The change the row shows after an update, for the dot that marks it. */
+  newId?: string;
 }) {
   return (
     <li
       data-testid={testid}
+      data-new={newId}
       className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-carbon-border py-3 first:border-t-0 first:pt-0 last:pb-0"
     >
       <span
@@ -179,6 +183,7 @@ function UnprotectedRow({ item, t, onChanged }: { item: BackupItem; t: T; onChan
   return (
     <Row
       testid="need-unprotected"
+      newId="overview-decline"
       tone="warn"
       title={
         <>

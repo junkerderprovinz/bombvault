@@ -206,13 +206,15 @@ export function RulesCard({ edit, hueIndex }: { edit: LocationEdit; hueIndex: nu
                   )}
                 </div>
                 {movable && !run && (
-                  <Button
-                    label={t("storage.move.action")}
-                    labelKey="storage.move.action"
-                    glyph={<IconForward />}
-                    tone="neutral"
-                    onClick={() => setMoving(section.domain)}
-                  />
+                  <span data-new="location-move" className="flex">
+                    <Button
+                      label={t("storage.move.action")}
+                      labelKey="storage.move.action"
+                      glyph={<IconForward />}
+                      tone="neutral"
+                      onClick={() => setMoving(section.domain)}
+                    />
+                  </span>
                 )}
                 {sectionSettings(location, records, section).length > 0 && (
                   <Button
