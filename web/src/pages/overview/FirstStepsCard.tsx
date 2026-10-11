@@ -25,7 +25,7 @@ import {
   type FoundKind,
   type Section,
 } from "../../lib/firstSections";
-import { foundSentence, type Found, type StepState } from "../../lib/firstSteps";
+import { foundSentence, includedKinds, rememberIncluded, type Found, type StepState } from "../../lib/firstSteps";
 import type { useT } from "../../lib/i18n";
 import { formatList } from "../../lib/placement";
 import type { Tally } from "../../lib/protectionTally";
@@ -106,10 +106,11 @@ function useSections(t: T, items: BackupItems) {
   const prepare = () =>
     attempt(async () => {
       const now = await write(scheduleChosen);
-      const kinds = kindsToInclude(now, items.reported);
+      const kinds = kindsToInclude(now, items.reported, includedKinds());
       for (const kind of kinds) {
         const res = await INCLUDE_FOUND[kind]();
         if (!res.ok) throw new Error(res.error);
+        rememberIncluded(kind);
       }
       if (kinds.length > 0) items.reload();
     });

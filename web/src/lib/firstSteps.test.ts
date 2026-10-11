@@ -5,8 +5,10 @@ import type { BackupItem, StorageLocation } from "./api";
 import {
   addedLocations,
   forgetFirstSteps,
+  includedKinds,
   foundOnServer,
   foundSentence,
+  rememberIncluded,
   rememberSectionsChosen,
   sectionsChosen,
   stepStates,
@@ -117,5 +119,23 @@ describe("the mark of the first step", () => {
     expect(sectionsChosen()).toBe(true);
     forgetFirstSteps();
     expect(sectionsChosen()).toBe(false);
+  });
+});
+
+describe("the kinds the first steps took into the schedule", () => {
+  beforeEach(() => localStorage.clear());
+
+  it("are none on a new browser", () => {
+    expect(includedKinds()).toEqual([]);
+  });
+
+  it("are kept once each and forgotten with the first steps", () => {
+    rememberIncluded("container");
+    rememberIncluded("vm");
+    rememberIncluded("container");
+    expect(includedKinds()).toEqual(["container", "vm"]);
+
+    forgetFirstSteps();
+    expect(includedKinds()).toEqual([]);
   });
 });

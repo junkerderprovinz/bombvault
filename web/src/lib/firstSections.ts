@@ -74,12 +74,15 @@ export const INCLUDE_FOUND: Record<FoundKind, () => Promise<OkEnvelope>> = {
 /**
  * kindsToInclude names the kinds whose found entries the first steps take
  * into the schedule: the section is on and not one of its entries is in yet.
- * Where some are, somebody has chosen, and the choice stands.
+ * Where some are, somebody has chosen, and the choice stands. A kind in
+ * `taken` was taken in once, so entries that are all out again were paused.
  */
-export function kindsToInclude(settings: Settings, reported: BackupItem[]): FoundKind[] {
+export function kindsToInclude(settings: Settings, reported: BackupItem[], taken: readonly string[]): FoundKind[] {
   return FOUND_KINDS.filter((kind) => {
     const section = SECTIONS.find((s) => s.kind === kind)!;
     const found = reported.filter((item) => item.kind === kind && !item.self && !isGone(item));
-    return settings[section.enabled] && found.length > 0 && found.every((item) => !item.included);
+    return (
+      settings[section.enabled] && !taken.includes(kind) && found.length > 0 && found.every((item) => !item.included)
+    );
   });
 }

@@ -72,8 +72,12 @@ const FAILED_RUN = {
 interface Staged {
   /** The settings the page saved last. */
   saved: () => Record<string, unknown>;
-  /** The kinds whose entries the page took into the schedule. */
+  /** The kinds whose entries the page asked to take into the schedule, one
+   *  for each request. */
   included: () => string[];
+  /** Takes every entry out of the schedule again, as pausing each in the
+   *  list does. */
+  pauseAll: () => void;
   /** Whether the page asked the server to back up everything. */
   fired: () => boolean;
 }
@@ -99,6 +103,7 @@ async function stage(page: Page, items: Entry[] = FOUND, includeRefused = ""): P
     });
   });
   const included: string[] = [];
+  const inSchedule = new Set<string>();
   let fired = false;
   for (const [path, kind] of [
     ["containers", "container"],
@@ -107,6 +112,7 @@ async function stage(page: Page, items: Entry[] = FOUND, includeRefused = ""): P
     await page.route(`**/api/${path}/schedule-include`, (route) => {
       if (includeRefused) return route.fulfill({ json: { ok: false, error: includeRefused } });
       included.push(kind);
+      inSchedule.add(kind);
       return route.fulfill({ json: { ok: true } });
     });
   }
@@ -118,7 +124,7 @@ async function stage(page: Page, items: Entry[] = FOUND, includeRefused = ""): P
   const listed = () =>
     items.map((item) => {
       const spec = saved[`${item.kind}sSchedule`];
-      if (!included.includes(item.kind) || item.self) return item;
+      if (!inSchedule.has(item.kind) || item.self) return item;
       const runs = typeof spec === "string" && spec !== "off";
       return { ...item, included: true, effectiveSchedule: runs ? { kind: "domain", spec, alsoSpec: "" } : item.effectiveSchedule };
     });
@@ -154,7 +160,7 @@ async function stage(page: Page, items: Entry[] = FOUND, includeRefused = ""): P
   // must not replace it while the page boots.
   await page.route("**/api/display-prefs*", (route) => route.abort());
   await page.addInitScript(() => window.localStorage.setItem("bv-lang", "en"));
-  return { saved: () => saved, included: () => included, fired: () => fired };
+  return { saved: () => saved, included: () => included, pauseAll: () => inSchedule.clear(), fired: () => fired };
 }
 
 const step = (page: Page, name: string) => page.locator(`[data-step='${name}']`);
@@ -314,6 +320,23 @@ test("Choose takes the found entries in and opens their list, where one can be l
   await expect(page).toHaveURL(/\/backups\?kind=container$/);
   expect(staged.included()).toEqual(["container"]);
   expect(staged.saved().containersSchedule).toBe("daily 02:00");
+});
+
+test("entries that were all paused after Choose stay out when Next is pressed", async ({ page }) => {
+  const staged = await stage(page);
+  await page.goto("/dashboard");
+  await page.getByTestId("first-steps").locator("[data-section='container']").getByRole("button", { name: /^Choose/ }).click();
+  await expect(page).toHaveURL(/\/backups\?kind=container$/);
+  expect(staged.included()).toEqual(["container"]);
+
+  staged.pauseAll();
+  await page.goto("/dashboard");
+  const steps = page.getByTestId("first-steps").locator("li[data-state]");
+  await expect(steps.nth(0).getByRole("switch", { name: "Containers" })).toBeVisible();
+  await steps.nth(0).getByRole("button", { name: "Next" }).click();
+
+  await expect(steps.nth(0)).toHaveAttribute("data-state", "done");
+  expect(staged.included()).toEqual(["container"]);
 });
 
 test("the first step stays open and says why when the entries cannot be taken in", async ({ page }) => {

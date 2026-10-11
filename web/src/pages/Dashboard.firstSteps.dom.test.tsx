@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useLocation } from "react-router-dom";
 
-import type { Settings } from "../lib/api";
+import type { BackupItem, Settings } from "../lib/api";
 import { NIGHTLY } from "../lib/firstSections";
 import { en } from "../lib/i18n";
 import { Dashboard } from "./Dashboard";
@@ -382,6 +382,24 @@ describe("choosing single entries from the first step", () => {
 
     expect(called()).toEqual(["putSettings", "setIncludeAll"]);
     expect(where()).toBe("/backups?kind=container");
+  });
+
+  it("does not take the entries in again with Next after every one of them was paused in the list", async () => {
+    await renderPage();
+    fireEvent.click(choose("container")!);
+    await act(async () => {});
+    expect(called()).toEqual(["putSettings", "setIncludeAll"]);
+
+    server.items = (server.items as BackupItem[]).map((entry) => ({ ...entry, included: false }));
+    act(() => {
+      window.dispatchEvent(new Event("bv:settings-changed"));
+    });
+    await act(async () => {});
+    fireEvent.click(next());
+    await act(async () => {});
+
+    expect(called()).toEqual(["putSettings", "setIncludeAll"]);
+    expect(states()).toEqual(["done", "next", "open"]);
   });
 
   it("stays on the overview when the entries cannot be taken in", async () => {
