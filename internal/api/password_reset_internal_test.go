@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -305,6 +306,35 @@ func TestAWrongAnExpiredAndNoResetCodeGetTheSameAnswer(t *testing.T) {
 	}
 	if wrongRes.StatusCode != expiredRes.StatusCode || wrongRes.StatusCode != noneRes.StatusCode {
 		t.Fatalf("statuses differ: %d %d %d", wrongRes.StatusCode, expiredRes.StatusCode, noneRes.StatusCode)
+	}
+}
+
+// An intruder's password change that passed its session check before the
+// owner's reset must not land after it and keep the instance.
+func TestAPasswordChangeCheckedBeforeAResetDoesNotOverwriteIt(t *testing.T) {
+	h, repo, out := newResetHandler(t)
+	hash, epoch, _ := h.authEnabled()
+	checked := authGeneration{hash: hash, epoch: epoch}
+	code := askForResetCode(t, h, out)
+	if body, _ := finishReset(t, h, code, resetNewPass); body["ok"] != true {
+		t.Fatalf("reset: %v", body)
+	}
+	intruders, err := secret.HashPassword(h.cfg.AppKey, "the intruder's password")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = h.storePassword(checked, intruders)
+
+	if !errors.Is(err, errLoginChanged) {
+		t.Fatalf("err = %v, want the change refused", err)
+	}
+	s, err := repo.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.AuthPasswordHash == intruders || !signsIn(t, h, resetNewPass) {
+		t.Fatal("the change overwrote the password the reset set")
 	}
 }
 
