@@ -1,51 +1,36 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getBackupOrder, setBackupOrder } from "../../lib/api";
 import type { Container, ContainerOrder } from "../../lib/api";
 import { IconTipButton } from "../IconTipButton";
 import { useT } from "../../lib/i18n";
-import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { useReorder } from "../../lib/dragLift";
-import { hueVars } from "../../lib/appearance";
 import { useToast } from "../../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
-const BACKUP_ORDER_COLLAPSED_KEY = "bombvault.backupOrderCollapsed";
-
 // BackupOrderPanel arranges the order scheduled and batch backups run in. The
 // orderable set is the installed, schedule-included containers without
 // BombVault itself. It loads the saved order once, then follows containers
-// coming and going without discarding a reorder in progress. Save stores the
-// displayed sequence as the explicit order; clearing stores an empty list,
-// which returns every container to the most-overdue-first tiebreak.
+// coming and going. Every move stores the displayed sequence as the explicit
+// order; clearing stores an empty list, which returns every container to the
+// most-overdue-first tiebreak.
 export function BackupOrderPanel({
   containers,
   t,
-  hueIndex,
+  heading,
 }: {
   containers: Container[];
   t: T;
-  /** Rainbow position of this panel's heading and accent. The caller resolves
-   *  it during its own render: a counter called from this component's body
-   *  would run after every sibling had already taken its slot. Omit for a
-   *  panel that stands alone. */
-  hueIndex?: number;
+  /** The heading of the list inside the card that holds it. */
+  heading: string;
 }) {
   const [savedOrder, setSavedOrder] = useState<ContainerOrder[] | null>(null);
   const [names, setNames] = useState<string[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
-  const [shakeSave, setShakeSave] = useState(0);
   const [shakeReset, setShakeReset] = useState(0);
   const hydrated = useRef(false);
-  const [collapsed, setCollapsed] = useState(() => {
-    try {
-      return localStorage.getItem(BACKUP_ORDER_COLLAPSED_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
 
   useEffect(() => {
     getBackupOrder()
@@ -82,14 +67,12 @@ export function BackupOrderPanel({
   }, [containers, savedOrder]);
 
   function move(index: number, dir: -1 | 1) {
-    setNames((prev) => {
-      const to = index + dir;
-      if (to < 0 || to >= prev.length) return prev;
-      const next = [...prev];
-      [next[index], next[to]] = [next[to], next[index]];
-      return next;
-    });
-    setSaveState("idle");
+    const to = index + dir;
+    if (to < 0 || to >= names.length) return;
+    const next = [...names];
+    [next[index], next[to]] = [next[to], next[index]];
+    setNames(next);
+    void persist(next, "move");
   }
 
   // A row is carried by its grip and lands in its gap; the arrows are the
@@ -104,25 +87,12 @@ export function BackupOrderPanel({
     enabled: saveState !== "saving",
     onReorder: (next) => {
       setNames(next);
-      setSaveState("idle");
+      void persist(next, "move");
     },
   });
 
-  function toggleCollapsed() {
-    setCollapsed((v) => {
-      const next = !v;
-      try {
-        localStorage.setItem(BACKUP_ORDER_COLLAPSED_KEY, next ? "1" : "0");
-      } catch {
-        /* Without storage (private mode, quota) the choice is not kept. */
-      }
-      return next;
-    });
-  }
-
-  async function persist(order: string[], via: "save" | "reset") {
+  async function persist(order: string[], via: "move" | "reset") {
     setSaveState("saving");
-    const bumpShake = via === "save" ? setShakeSave : setShakeReset;
     try {
       const res = await setBackupOrder(order);
       if (res.ok) {
@@ -130,11 +100,11 @@ export function BackupOrderPanel({
         push(t("backupOrder.saved"), "success");
       } else {
         push(res.error ?? t("backupOrder.saveError"), "fail");
-        bumpShake((n) => n + 1);
+        if (via === "reset") setShakeReset((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("backupOrder.saveError"), "fail");
-      bumpShake((n) => n + 1);
+      if (via === "reset") setShakeReset((n) => n + 1);
     } finally {
       setSaveState("idle");
     }
@@ -151,53 +121,9 @@ export function BackupOrderPanel({
   if (savedOrder === null) return null;
 
   return (
-    // glim-notch-card only wires the hover reveal of the heading notch;
-    // glim-hue is what redefines the accent, so the Save button takes the
-    // panel's hue too. mt-4 makes up for the heading badge, which sits half
-    // above the box and would otherwise eat into the page's gap above it.
-    <div
-      className={`relative glim-notch-card bg-carbon-surface rounded-card p-4 mt-4 flex flex-col gap-3${
-        hueIndex !== undefined ? " glim-hue" : ""
-      }`}
-      style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
-    >
-      {/* A heading badge is absolutely positioned, so a sibling in the h2
-          would render underneath it. The count goes inside the badge. */}
-      <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>
-          {t("backupOrder.title")}
-          {names.length > 0 && (
-            <span className="ms-1.5 font-normal normal-case tracking-normal tabular-nums opacity-80">
-              ({names.length})
-            </span>
-          )}
-        </Badge>
-      </h2>
-      {/* While collapsed the button holds only the aria-hidden chevron, so
-          the aria-label is what names it. */}
-      <button
-        type="button"
-        onClick={toggleCollapsed}
-        aria-expanded={!collapsed}
-        aria-label={t("backupOrder.title")}
-        className="flex w-full items-start gap-2 text-start"
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 12 12"
-          fill="none"
-          aria-hidden="true"
-          className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "rtl:rotate-180" : "rotate-90"}`}
-        >
-          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-        </svg>
-        {!collapsed && (
-          <span className="min-w-0 flex-1 text-xs text-carbon-textMuted">{t("backupOrder.hint")}</span>
-        )}
-      </button>
-      {!collapsed &&
-        (names.length === 0 ? (
+    <section className="flex flex-col gap-3">
+      <h3 className="text-sm font-medium text-carbon-text">{heading}</h3>
+      {names.length === 0 ? (
           <p className="text-xs text-carbon-textMuted">{t("backupOrder.empty")}</p>
         ) : (
           <>
@@ -266,19 +192,9 @@ export function BackupOrderPanel({
                   shakeReset ? " glim-shake" : ""
                 }`}
               />
-              <Button
-                key={shakeSave}
-                label={t("backupOrder.save")}
-                labelKey="backupOrder.save"
-                tone="accent"
-                onClick={() => void persist(names, "save")}
-                disabled={saveState === "saving"}
-                busy={saveState === "saving"}
-                className={shakeSave ? "glim-shake" : ""}
-              />
             </div>
           </>
-        ))}
-    </div>
+      )}
+    </section>
   );
 }

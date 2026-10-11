@@ -572,8 +572,9 @@ test("settings storage on a phone: a repository shows its whole name and address
 test("settings schedules on a phone: the every-N-days field shows three digits beside its steppers", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the steppers sit side by side under a coarse pointer");
   await openPage(page, 320, "schedules", "Zeitplan");
+  await page.getByRole("button", { name: /^Container: / }).click();
 
-  const room = await page.locator("input.glim-num").evaluateAll((inputs) => {
+  const room = await page.getByRole("dialog", { name: "Container" }).locator("input.glim-num").evaluateAll((inputs) => {
     const input = inputs.find((el) => (el as HTMLInputElement).value === "120") as HTMLInputElement | undefined;
     if (!input) return null;
     const style = getComputedStyle(input);

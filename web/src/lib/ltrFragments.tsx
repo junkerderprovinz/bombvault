@@ -209,6 +209,7 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "flash.pluginRestored": FLASH_PLUGIN_PATH_LTR_FRAGMENTS,
   "api.hint": API_BASE_LTR_FRAGMENTS,
   "api.addressHint": API_DESCRIPTION_LTR_FRAGMENTS,
+  "api.descriptionHint": API_DESCRIPTION_LTR_FRAGMENTS,
   "placementCode.restPathTooDeep": REST_PATH_EXAMPLE_LTR_FRAGMENTS,
 } as const satisfies Record<string, readonly string[]>;
 

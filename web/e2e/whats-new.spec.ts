@@ -285,9 +285,8 @@ test("a container's page carries its dots, and the tab leads to the one on its s
   await picture(page, `entry-container-settings-${testInfo.project.name}`);
 
   await marked(page, "entry-menu").scrollIntoViewIfNeeded();
-  await marked(page, "entry-menu").getByRole("button").click();
-  await expect(page.getByRole("menu")).toBeVisible();
-  await picture(page, `entry-container-menu-${testInfo.project.name}`);
+  await expect(marked(page, "entry-menu").getByRole("button", { name: "Export container" })).toBeVisible();
+  await picture(page, `entry-container-actions-${testInfo.project.name}`);
 });
 
 test("a change its page has nothing for is no longer promised, and is back when the page draws it", async ({ page }, testInfo) => {

@@ -9,10 +9,23 @@ import { Selector } from "../../components/Selector";
 import { getNotify, setNotify, testNotify, type NotifyConfig } from "../../lib/api";
 import { tLtr } from "../../lib/ltrFragments";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { KIND_LABEL, KindGlyph } from "../../components/backups/kinds";
+import { Exceptions } from "../../components/Exceptions";
+import type { EntryKind } from "../../lib/backupEntry";
 import { useReveal } from "../../lib/useReveal";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { useTestVerdict } from "../../lib/useTestVerdict";
+
+// The key of each section in the map of its own ping URLs.
+const HC_KEY: Record<EntryKind, string> = {
+  container: "container",
+  vm: "VM",
+  flash: "flash",
+  files: "files",
+  zfs: "zfs",
+  config: "config",
+};
 
 // emptyNotify is the default notification config shown before the saved one loads.
 const emptyNotify: NotifyConfig = {
@@ -53,7 +66,9 @@ export function NotifyCard({
   hueIndex,
   channelsHueIndex,
   healthchecksHueIndex,
+  sections,
   children,
+  tail,
 }: {
   t: ReturnType<typeof useT>["t"];
   // The detected or overridden platform kind ("unraid" | "generic" |
@@ -62,9 +77,15 @@ export function NotifyCard({
   hueIndex?: number;
   channelsHueIndex?: number;
   healthchecksHueIndex?: number;
+  /** The sections that are switched on, which can each get a ping URL of their own. */
+  sections: EntryKind[];
   /** Rows of the first card that the page keeps itself, after the update row. */
   children?: ReactNode;
+  /** Rows of the first card that the page keeps itself, after the Unraid switch. */
+  tail?: ReactNode;
 }) {
+  // A section added as an exception keeps its row while its URL is still blank.
+  const [addedHc, setAddedHc] = useState<string[]>([]);
   const { push } = useToast();
   const [cfg, setCfg] = useState<NotifyConfig>(emptyNotify);
   const [, setState] = useState<SaveState>("idle");
@@ -185,7 +206,6 @@ export function NotifyCard({
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus-well";
   const selectCls =
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 glim-field-focus-well";
-  const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
   // A channel's own fields stand under its switch, set in by a step.
   const fieldCls = "flex flex-wrap items-center justify-between gap-x-4 gap-y-1 ps-4 text-sm text-carbon-text";
   const fieldInputCls = "w-full sm:w-80";
@@ -257,6 +277,8 @@ export function NotifyCard({
           {tLtr(t, "notify.unraidPlatformMismatch").replace("{platform}", platformKind)}
         </div>
       )}
+
+      {tail}
 
       <PageSentence text="notify.anomaliesWhere" page="activityLog.typeVerify" to="/settings/integrity#anomalies" />
 
@@ -437,7 +459,7 @@ export function NotifyCard({
       </div>
     </Card>
 
-    <Card title={t("notify.healthchecksTitle")} hueIndex={healthchecksHueIndex}>
+    <Card title={t("notify.healthchecksTitle")} hint={t("notify.healthchecksHint")} hueIndex={healthchecksHueIndex}>
       {/* The InfoBubble is a button, so clicking it inside the label opens
           the bubble rather than focusing the input. */}
       <label data-search-row={t("notify.healthchecks")} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm text-carbon-text">
@@ -449,57 +471,60 @@ export function NotifyCard({
           placeholder="https://hc-ping.com/your-uuid" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start${fieldShake.healthchecksUrl ? " glim-shake" : ""}`} />
       </label>
 
-      {/* Per-domain ping URLs; a blank one falls back to the global URL.
-          These edit one entry of a nested map rather than a top-level key,
-          so they bypass set() and a failure reverts only that domain's
-          entry. */}
-      <div className="flex flex-col gap-2">
-        <span className="flex items-center gap-1 text-xs font-medium text-carbon-textSub">
-          {t("notify.hcPerDomain")}
-          <InfoBubble tip={t("notify.hcPerDomainHint")} />
-        </span>
-        {(
-          [
-            ["container", t("nav.containers")],
-            ["VM", t("nav.vms")],
-            ["flash", t("nav.flash")],
-            ["config", t("nav.config")],
-            ["files", t("nav.files")],
-            ["zfs", t("nav.zfs")],
-          ] as const
-        ).map(([key, label]) => (
-          <label key={key} className={labelCls}>
-            {label}
-            <input
-              key={fieldShake[`hc-${key}`]}
-              value={cfg.healthchecksByDomain?.[key] ?? ""}
-              onChange={(e) => {
-                const v = e.target.value;
-                const nextMap = { ...cfg.healthchecksByDomain, [key]: v };
-                setCfg((c) => ({ ...c, healthchecksByDomain: nextMap }));
-                debounced(`hc-${key}`, () => {
-                  void persistNotify({ healthchecksByDomain: nextMap }).then((ok) => {
-                    if (!ok) {
-                      setCfg((c) => ({
-                        ...c,
-                        healthchecksByDomain: {
-                          ...c.healthchecksByDomain,
-                          [key]: lastGoodRef.current.healthchecksByDomain?.[key] ?? "",
-                        },
-                      }));
-                      bumpShake(`hc-${key}`);
-                    }
-                  });
-                });
-              }}
-              spellCheck={false}
-              placeholder="https://hc-ping.com/your-uuid"
-              dir="ltr"
-              className={`${inputCls} text-start${fieldShake[`hc-${key}`] ? " glim-shake" : ""}`}
-            />
-          </label>
-        ))}
-      </div>
+      {(() => {
+        const own = (kind: EntryKind) => {
+          const key = HC_KEY[kind];
+          return (cfg.healthchecksByDomain?.[key] ?? "") !== "" || addedHc.includes(key);
+        };
+        const asSection = (kind: EntryKind) => ({ id: kind, label: t(KIND_LABEL[kind]), glyph: <KindGlyph kind={kind} /> });
+        const taken = sections.filter(own);
+        // These edit one entry of a nested map rather than a top-level key, so
+        // they bypass set() and a failure reverts only that section's entry.
+        const setHc = (key: string, v: string, wait: boolean) => {
+          const nextMap = { ...cfg.healthchecksByDomain, [key]: v };
+          setCfg((c) => ({ ...c, healthchecksByDomain: nextMap }));
+          const persist = () =>
+            void persistNotify({ healthchecksByDomain: nextMap }).then((ok) => {
+              if (ok) return;
+              setCfg((c) => ({
+                ...c,
+                healthchecksByDomain: { ...c.healthchecksByDomain, [key]: lastGoodRef.current.healthchecksByDomain?.[key] ?? "" },
+              }));
+              bumpShake(`hc-${key}`);
+            });
+          if (wait) debounced(`hc-${key}`, persist);
+          else persist();
+        };
+        return (
+          <Exceptions
+            label={t("notify.healthchecksTitle")}
+            taken={taken.map(asSection)}
+            free={sections.filter((kind) => !own(kind)).map(asSection)}
+            rule={t(taken.length > 0 ? "notify.hcRuleOthers" : "notify.hcRuleAll")}
+            control={(kind) => {
+              const key = HC_KEY[kind as EntryKind];
+              return (
+                <input
+                  key={fieldShake[`hc-${key}`]}
+                  value={cfg.healthchecksByDomain?.[key] ?? ""}
+                  onChange={(e) => setHc(key, e.target.value, true)}
+                  aria-label={`${t("notify.healthchecks")}: ${t(KIND_LABEL[kind as EntryKind])}`}
+                  spellCheck={false}
+                  placeholder="https://hc-ping.com/your-uuid"
+                  dir="ltr"
+                  className={`${inputCls} ${fieldInputCls} text-start${fieldShake[`hc-${key}`] ? " glim-shake" : ""}`}
+                />
+              );
+            }}
+            onAdd={(kind) => setAddedHc((a) => [...a, HC_KEY[kind as EntryKind]])}
+            onRemove={(kind) => {
+              const key = HC_KEY[kind as EntryKind];
+              setAddedHc((a) => a.filter((k) => k !== key));
+              if ((cfg.healthchecksByDomain?.[key] ?? "") !== "") setHc(key, "", false);
+            }}
+          />
+        );
+      })()}
     </Card>
     </>
   );

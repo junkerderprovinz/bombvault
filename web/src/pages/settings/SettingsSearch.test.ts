@@ -113,10 +113,10 @@ describe("the settings index in English", () => {
   it("leads the API tokens, Home Assistant and the mDNS switch to the Integrations page", () => {
     expect(search(items, "api tokens")[0].item.page).toBe("integrations");
     expect(where("token name")).toEqual([`integrations: ${en["api.title"]}`]);
-    expect(where("mqtt broker")).toContain(`integrations: ${en["ha.title"]}`);
-    expect(where("buttons start backups")).toEqual([`integrations: ${en["ha.title"]}`]);
-    expect(where("topic prefix")).toEqual([`integrations: ${en["ha.title"]}`]);
-    expect(where("announce on the local network")).toEqual([`integrations: ${en["mdns.title"]}`]);
+    expect(where("mqtt broker")).toContain(`integrations: ${en["integrations.services"]}`);
+    expect(where("buttons start backups")).toEqual([`integrations: ${en["integrations.services"]}`]);
+    expect(where("topic prefix")).toEqual([`integrations: ${en["integrations.services"]}`]);
+    expect(where("announce on the local network")).toEqual([`integrations: ${en["integrations.services"]}`]);
   });
 
   it("finds the API, Home Assistant and mDNS rows by the words behind their (i)", () => {
@@ -126,7 +126,7 @@ describe("the settings index in English", () => {
     const port = search(items, "8883").find((h) => h.item.page === "integrations");
     expect(port?.item.name).toBe(en["ha.tls"]);
     const local = search(items, "bombvault.local").filter((h) => h.item.page === "integrations");
-    expect(local.map((h) => h.item.name)).toContain(en["mdns.title"]);
+    expect(local.map((h) => h.item.name)).toContain(en["mdns.enable"]);
   });
 
   it("leads what moved to the tile that holds it", () => {
@@ -135,8 +135,8 @@ describe("the settings index in English", () => {
     expect(where(en["settings.registryHost"])).toEqual([`restore: ${en["settings.registriesTitle"]}`]);
     expect(where(en["settings.cacheLimitLabel"])).toEqual([`system: ${en["tile.system.performance"]}`]);
     expect(where(en["export.encrypt.enable"])).toEqual([`system: ${en["settingsIO.title"]}`]);
-    expect(where(en["settings.restartHealthWait"])).toEqual([`schedules: ${en["settings.restartHealthTitle"]}`]);
-    expect(where(en["settings.pruneImageAfterUpdate"])).toEqual([`schedules: ${en["settings.imageMaintenanceTitle"]}`]);
+    expect(where(en["settings.restartHealthWait"])).toEqual([`schedules: ${en["schedules.order"]}`]);
+    expect(where(en["settings.pruneImageAfterUpdate"])).toEqual([`schedules: ${en["schedules.updates"]}`]);
     expect(where(en["pull.title"])).toContain(`instances: ${en["tile.instances.modules"]}`);
     expect(where(en["tile.info.bugReport"])).toEqual([`info: ${en["tile.info.help"]}`]);
     expect(search(items, en["tile.crypt.title"])[0].item.page).toBe("security");

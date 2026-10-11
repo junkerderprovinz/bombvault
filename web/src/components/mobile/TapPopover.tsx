@@ -102,6 +102,9 @@ export interface TapPopoverProps {
    *  gaps, min/max width) is the consumer's; this component owns the chrome
    *  (fixed anchoring, elevation, surface colour, radius, entrance). */
   panelClassName?: string;
+  /** Keeps the 44px touch floor on the trigger. A trigger that also renders on
+   *  a desktop sizes itself through the button tokens instead. */
+  touchFloor?: boolean;
 }
 
 export function TapPopover({
@@ -115,6 +118,7 @@ export function TapPopover({
   open: openProp,
   onOpenChange,
   panelClassName = "",
+  touchFloor = true,
 }: TapPopoverProps) {
   const [openState, setOpenState] = useState(false);
   const isControlled = openProp !== undefined;
@@ -198,9 +202,7 @@ export function TapPopover({
       title={triggerLabel}
       style={triggerStyle}
       onClick={() => setOpen(!open)}
-      // min-h-11/min-w-11 is the 44px touch floor: this component only ever
-      // renders below the breakpoint, so the floor is unconditional here.
-      className={`inline-flex min-h-11 min-w-11 items-center justify-center ${triggerClassName}`}
+      className={`inline-flex items-center justify-center ${touchFloor ? "min-h-11 min-w-11 " : ""}${triggerClassName}`}
     >
       {trigger}
     </button>

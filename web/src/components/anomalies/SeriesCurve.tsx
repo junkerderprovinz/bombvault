@@ -20,6 +20,7 @@ import { humanBytes } from "../../lib/forecast";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { isolateLtr } from "../../lib/ltrFragments";
 import { formatMillis } from "../../lib/reltime";
+import { formatNumber } from "../../lib/numberFormat";
 
 type Tone = "fail" | "warn" | "accent" | "quiet";
 
@@ -58,7 +59,7 @@ function titleKey({ series, quantity }: CurveSource): TranslationKey {
 
 function formatValue(quantity: CurveQuantity, value: number): string {
   if (quantity === "resticMs") return isolateLtr(formatMillis(value));
-  if (quantity === "sourceFiles") return isolateLtr(Math.round(value).toLocaleString());
+  if (quantity === "sourceFiles") return isolateLtr(formatNumber(Math.round(value)));
   return isolateLtr(humanBytes(value));
 }
 
@@ -68,7 +69,7 @@ function shortDate(unix: number): string {
 
 /** The usual range in words, or how long it takes until there is one. */
 function rangeText({ quantity: q }: CurveSource, t: TranslateAnomaly): string | null {
-  if (q.learning && !q.band) return t("anomaly.curve.learning").replace("{needed}", q.needed.toLocaleString());
+  if (q.learning && !q.band) return t("anomaly.curve.learning").replace("{needed}", formatNumber(q.needed));
   const low = q.band?.low ? formatValue(q.quantity, q.band.low.threshold) : null;
   const high = q.band?.high ? formatValue(q.quantity, q.band.high.threshold) : null;
   if (low && high) return t("anomaly.curve.between").replace("{low}", low).replace("{high}", high);

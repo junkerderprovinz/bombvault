@@ -18,7 +18,7 @@ export interface SelectOption<T extends string> {
 }
 
 /** The rounded filled triangle NumberField's steppers use. */
-function Arrow() {
+export function SelectArrow() {
   return (
     <svg viewBox="0 0 10 6" width="10" height="6" aria-hidden="true" className="shrink-0 opacity-70">
       {/* bv-convention-exception: user-message-is-translated -- SVG path data,
@@ -109,7 +109,7 @@ export function SelectField<T extends string>({
             </span>
           ))}
         </span>
-        <Arrow />
+        <SelectArrow />
       </button>
       <DropdownListbox
         open={open}

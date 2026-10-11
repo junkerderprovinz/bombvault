@@ -1,10 +1,9 @@
 // A control dimmed by a decision taken elsewhere has to say who is in charge.
 // Dimming alone suits a control reporting on itself, such as an arrow at the
 // end of its range. A control whose value still applies while another setting
-// overrides it (the accent swatches under rainbow mode, the domain schedules
-// while "use the Containers schedule" is on) stays visible and dimmed, with an
-// InfoBubble shown under the same condition. Without the bubble the control
-// looks broken.
+// overrides it (the accent swatches under rainbow mode) stays visible and
+// dimmed, with an InfoBubble shown under the same condition. Without the
+// bubble the control looks broken.
 //
 // The check runs per component, so one section's bubble cannot cover for a
 // sibling that lost its own.
@@ -39,7 +38,7 @@ function code(text: string): string {
 /**
  * Returns the flag a `disabled={...}` expression takes from elsewhere, or null.
  * A flag counts when it looks like a feature switch (a settings field,
- * `...Enabled`, `rainbowOn`, `syncSchedules`) and is not declared in this file;
+ * `...Enabled`, `rainbowOn`) and is not declared in this file;
  * a flag computed here, like NumberField's `enabled`, is the component's own
  * state. An expression mentioning `busy` is a row saving itself and never
  * counts, even as `fieldBusy.digestEnabled`.
@@ -109,7 +108,7 @@ describe("a control dimmed by a decision elsewhere names who is in charge", () =
     }
 
     // A scan that finds nothing, say after a prop rename, would pass silently.
-    expect(checked).toBeGreaterThanOrEqual(5);
+    expect(checked).toBeGreaterThanOrEqual(2);
     expect(offenders).toEqual([]);
   });
 });

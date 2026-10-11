@@ -29,6 +29,7 @@ import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { Rows, SettingRow } from "../storage/rows";
 import { SeriesCurve } from "./SeriesCurve";
+import { formatNumber } from "../../lib/numberFormat";
 
 function typicalSize(t: TranslateAnomaly, sourceBytes: number, resticMs: number): string {
   return t("anomaly.items.typicalSize")
@@ -41,8 +42,8 @@ export function learningProgressText(t: TranslateAnomaly, learning: AnomalyItem[
   if (learning.noData) return t("anomaly.noData");
   if (learning.samples >= learning.needed) return t("anomaly.learningDone");
   return t("anomaly.learningProgress")
-    .replace("{n}", learning.samples.toLocaleString())
-    .replace("{needed}", learning.needed.toLocaleString());
+    .replace("{n}", formatNumber(learning.samples))
+    .replace("{needed}", formatNumber(learning.needed));
 }
 
 /** The figures of a series that has one rule set rather than all of them. */
@@ -83,10 +84,10 @@ function LearningState({ t, item }: { t: TranslateAnomaly; item: AnomalyItem }) 
       </Badge>
       <InfoBubble
         tip={t("anomaly.items.learningDetail")
-          .replace("{newData}", learning.newData.toLocaleString())
-          .replace("{source}", learning.source.toLocaleString())
-          .replace("{duration}", learning.duration.toLocaleString())
-          .replace("{needed}", learning.needed.toLocaleString())}
+          .replace("{newData}", formatNumber(learning.newData))
+          .replace("{source}", formatNumber(learning.source))
+          .replace("{duration}", formatNumber(learning.duration))
+          .replace("{needed}", formatNumber(learning.needed))}
       />
     </span>
   );
@@ -132,7 +133,7 @@ export function ItemMonitoring({
         <ItemAnomalySettings item={item} enabled={enabled} globals={globals} bare t={t} />
         <SettingRow
           label={t("anomaly.learn.title")}
-          hint={t("anomaly.learningHint").replace("{needed}", item.learning.needed.toLocaleString())}
+          hint={t("anomaly.learningHint").replace("{needed}", formatNumber(item.learning.needed))}
         >
           <LearningState t={t} item={item} />
         </SettingRow>

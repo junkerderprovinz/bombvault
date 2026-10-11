@@ -19,15 +19,18 @@ import { isGone } from "../../lib/backupList";
 import { dumpRuns, updateWarnKey } from "../../lib/dbdump";
 import type { Entry } from "../../lib/entry";
 import { useT } from "../../lib/i18n";
+import { useToast } from "../../lib/toast";
+import { zfsCodeSentence } from "../../lib/zfsCodes";
 import { tLtr } from "../../lib/ltrFragments";
 import { lockHint, viewHomeLabel } from "../../lib/placement";
 import { useHostLabel } from "../../lib/useHostLabel";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { containerTakeover, vmTakeover, type TakeoverEntry } from "../../lib/useTakeOver";
 import { FlashZipExportCard } from "../../pages/settings/FlashZipExportCard";
-import { Card } from "../../pages/settings/shared";
+import { Card, ToggleRow } from "../../pages/settings/shared";
 import { KIND_SCHEDULE_LABEL } from "../backups/kinds";
 import { Button } from "../Button";
+import type { CadenceMode } from "../CadenceBuilder";
 import { ConfigSettingsCard } from "../config/ConfigSettingsCard";
 import { ExcludesEditor } from "../containers/ExcludesEditor";
 import { FoldersEditor } from "../containers/FoldersEditor";
@@ -42,10 +45,11 @@ import { FormerNames } from "../FormerNames";
 import { IdleWaitLine, IdleWaitRow } from "../IdleWaitRow";
 import { IncludeToggle } from "../IncludeToggle";
 import { InfoBubble } from "../InfoBubble";
-import { ItemScheduleOverride } from "../ItemScheduleOverride";
 import { IconPencil } from "../navGlyphs";
 import { PlacementFlow } from "../placement/PlacementFlow";
 import { PlacementRow } from "../placement/PlacementRow";
+import { PlanButton } from "../PlanButton";
+import { RepoPicker } from "../RepoPicker";
 import { SettingRow } from "../storage/rows";
 import { VMBlockToggle } from "../VMBlockToggle";
 import { VMMethodSelect } from "../vms/VMMethodSelect";
@@ -65,6 +69,11 @@ const SAVE_CADENCE: Partial<Record<Entry["item"]["kind"], (key: string, cadence:
   zfs: (id, scheduleCadence) => patchZFSDataset(id, { scheduleCadence }),
 };
 
+// What an entry's own plan starts from. The server refuses Every N days for
+// one, since nothing records when it last ran, and Off is the switch above it.
+const NEW_OWN_PLAN = "daily 03:00";
+const OWN_PLAN_MODES: CadenceMode[] = ["daily", "weekly", "cron"];
+
 // The switch rows of a container hug the end of the old card's corner. In a
 // card of their own they span it, label at the start and switch at the end.
 const SPAN_ROWS = "flex flex-col gap-4 [&>div]:items-stretch";
@@ -83,6 +92,11 @@ function ownCadence(entry: Entry): string {
     default:
       return "";
   }
+}
+
+// A stored "off" pauses the entry and is no plan of its own.
+function hasOwnPlan(cadence: string): boolean {
+  return cadence !== "" && cadence !== "off";
 }
 
 function placementOf(entry: Entry): PlacementView | null {
@@ -118,14 +132,37 @@ function ScheduleCard({
   hueIndex: number;
 }) {
   const { t } = useT();
+  const { push } = useToast();
   const { item, detail, settings } = entry;
   const spec = ENTRY_KIND[item.kind];
+  const [own, setOwn] = useState(() => ownCadence(entry));
+  const [busy, setBusy] = useState(false);
   const setIncluded = spec.setIncluded;
   const saveCadence = SAVE_CADENCE[item.kind];
   const placement = placementOf(entry);
   const pausedHint = t("schedule.pausedHint")
-    .replace("{everything}", t("settings.everythingTitle"))
+    .replace("{everything}", t("settings.everythingName"))
     .replace("{backupNow}", t("containers.backupNow"));
+
+  async function saveOwn(cadence: string) {
+    if (!saveCadence) return;
+    const before = own;
+    setOwn(cadence);
+    setBusy(true);
+    try {
+      const res = await saveCadence(item.key, cadence);
+      if (res.ok) onChanged();
+      else {
+        setOwn(before);
+        push(res.error ?? t("schedule.updateFailed"), "fail");
+      }
+    } catch (err) {
+      setOwn(before);
+      push(err instanceof Error ? err.message : t("schedule.updateFailed"), "fail");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <Card title={t("entry.settings.schedule")} hueIndex={hueIndex} newId="entry-defaults">
@@ -140,15 +177,26 @@ function ScheduleCard({
         />
       )}
       {saveCadence && settings.perItemSchedules && !isGone(item) && (
-        <ItemScheduleOverride
-          name={name}
-          initial={ownCadence(entry)}
-          onSave={async (cadence) => {
-            const res = await saveCadence(item.key, cadence);
-            if (res.ok) onChanged();
-            return res;
-          }}
-        />
+        <>
+          <ToggleRow
+            label={t("entry.settings.ownPlan")}
+            hint={t("entry.settings.ownPlanHint")}
+            checked={hasOwnPlan(own)}
+            disabled={busy}
+            onChange={(on) => void saveOwn(on ? NEW_OWN_PLAN : "")}
+          />
+          {hasOwnPlan(own) && (
+            <SettingRow label={t("entry.settings.plan")}>
+              <PlanButton
+                label={`${t("entry.settings.plan")}: ${name}`}
+                value={own}
+                modes={OWN_PLAN_MODES}
+                onChange={(cadence) => void saveOwn(cadence)}
+                hueIndex={hueIndex}
+              />
+            </SettingRow>
+          )}
+        </>
       )}
       <EffectiveScheduleLine effective={item.effectiveSchedule} domainLabelKey={KIND_SCHEDULE_LABEL[item.kind]} />
       {placement && spec.placementDomain && (
@@ -354,22 +402,34 @@ function ZFSCards({
   nextHue: () => number;
 }) {
   const { t } = useT();
+  const { push } = useToast();
   // What detection has learned about each dataset stands beside it in the list.
   const series = new Map((anomaly?.datasets ?? []).map((s) => [s.part, s]));
+  const [busy, setBusy] = useState(false);
+
+  async function saveRepo(repo: string) {
+    setBusy(true);
+    try {
+      const res = await patchZFSDataset(dataset.id, { repo });
+      if (res.ok) onChanged();
+      else push(res.code ? zfsCodeSentence(t, res.code) : (res.error ?? t("settings.error")), "fail");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <>
+      <Card title={t("entry.settings.repository")} hueIndex={nextHue()}>
+        <RepoPicker value={dataset.repo} onChange={(repo) => void saveRepo(repo)} locked={dataset.lastBackup > 0} disabled={busy} row />
+      </Card>
       <Card title={t("entry.settings.zfs")} hueIndex={nextHue()}>
-        <ZFSItemSettings
-          item={dataset}
-          t={t}
-          onChanged={onChanged}
-          anomalyEnabled={false}
-          series={series}
-          embedded
-        />
-        {dataset.safetyCount > 0 && <ZFSSafetySection item={dataset} t={t} onRefresh={onChanged} />}
+        <ZFSItemSettings item={dataset} t={t} onChanged={onChanged} series={series} />
       </Card>
       <ReplicaCard itemId={dataset.id} name={dataset.dataset} />
+      {dataset.safetyCount > 0 && <ZFSSafetySection item={dataset} t={t} onRefresh={onChanged} hueIndex={nextHue()} />}
     </>
   );
 }

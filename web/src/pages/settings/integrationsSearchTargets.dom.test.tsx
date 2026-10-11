@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // A settings search result opens the Integrations page and marks the card at
-// once, so the API, Home Assistant and mDNS cards have to be there before their
-// settings arrive, and their switches have to be found by name once they have.
+// once, so the API card and the services card have to be there before their
+// settings arrive, and their rows have to be found by name once they have.
 import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -22,7 +22,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
         ? Promise.resolve({
             ok: true,
             settings: {
-              enabled: false,
+              enabled: true,
               host: "",
               port: 1883,
               username: "",
@@ -43,8 +43,9 @@ vi.mock("../../lib/api", async (importOriginal) => {
 });
 
 const { ApiTokensCard } = await import("./ApiTokensCard");
-const { HomeAssistantCard } = await import("./HomeAssistantCard");
-const { NetworkCard } = await import("./NetworkCard");
+const { HomeAssistantRows } = await import("./HomeAssistantRows");
+const { MdnsRow } = await import("./MdnsRow");
+const { Card } = await import("./shared");
 
 async function renderCards() {
   let container!: HTMLElement;
@@ -54,8 +55,10 @@ async function renderCards() {
         <I18nProvider>
           <ToastProvider>
             <ApiTokensCard passwordSet={false} />
-            <HomeAssistantCard />
-            <NetworkCard />
+            <Card title={en["integrations.services"]}>
+              <HomeAssistantRows />
+              <MdnsRow />
+            </Card>
           </ToastProvider>
         </I18nProvider>
       </MemoryRouter>
@@ -69,21 +72,21 @@ afterEach(() => {
   loaded = false;
 });
 
-it("offers the API, Home Assistant and mDNS cards as search targets while their settings load", async () => {
+it("offers the API and the services cards as search targets while their settings load", async () => {
   const root = await renderCards();
-  for (const card of [en["api.title"], en["ha.title"], en["mdns.title"]]) {
+  for (const card of [en["api.title"], en["integrations.services"]]) {
     expect(jumpTarget(root, { card })?.getAttribute("data-search-card")).toBe(card);
   }
 });
 
-it("finds the Home Assistant and mDNS switches by name once their settings are read", async () => {
+it("finds the Home Assistant and mDNS rows by name once their settings are read", async () => {
   loaded = true;
   const root = await renderCards();
   for (const [card, row] of [
-    ["ha.title", "ha.enable"],
-    ["ha.title", "ha.tls"],
-    ["ha.title", "ha.buttons"],
-    ["mdns.title", "mdns.enable"],
+    ["integrations.services", "ha.title"],
+    ["integrations.services", "ha.tls"],
+    ["integrations.services", "ha.buttons"],
+    ["integrations.services", "mdns.enable"],
   ] as const) {
     expect(jumpTarget(root, { card: en[card], row: en[row] })?.getAttribute("data-search-row")).toBe(en[row]);
   }

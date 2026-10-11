@@ -150,15 +150,14 @@ async function confirmWith(name: string) {
   await press(within(await screen.findByRole("dialog")).getByRole("button", { name }));
 }
 
-/** Opens the menu beside the entry's name, which stands before the menu of any backup. */
+/** The actions beside the entry's name. */
 async function openMenu() {
-  await press(screen.getAllByRole("button", { name: en["nav.more"] })[0]);
-  return within(screen.getByRole("menu"));
+  return within(document.querySelector<HTMLElement>('[data-new="entry-menu"]')!);
 }
 
 /** Opens the window that takes the entry off the list. */
 async function openRemoval() {
-  await press((await openMenu()).getByRole("menuitem", { name: en["zfs.removeMissing"] }));
+  await press((await openMenu()).getByRole("button", { name: en["zfs.removeMissing"] }));
   return screen.findByRole("dialog");
 }
 
@@ -262,7 +261,7 @@ describe("the head of a ZFS entry", () => {
     expect(screen.getByText("/mnt/tank/appdata")).toBeTruthy();
     const corner = within(screen.getByTestId("page-actions"));
     expect(corner.getByRole("button", { name: en["containers.backupNow"] })).toBeTruthy();
-    expect((await openMenu()).getByRole("menuitem", { name: en["zfs.removeMissing"] })).toBeTruthy();
+    expect((await openMenu()).getByRole("button", { name: en["zfs.removeMissing"] })).toBeTruthy();
   });
 
   it("shows the failed run and not the check that says everything is fine", async () => {
@@ -309,11 +308,11 @@ describe("the head of a ZFS entry", () => {
     expect(pushed).toContainEqual({ message: en["zfs.sweepDone"], severity: "success" });
   });
 
-  it("says that the root is gone, with the way to remove the item in its menu", async () => {
+  it("says that the root is gone, with the way to remove the item beside its name", async () => {
     serve({ lastCheckCode: "not-found", lastRunStatus: "" });
     await renderPage();
     expect(screen.getByText(en["zfs.code.not-found"])).toBeTruthy();
-    expect((await openMenu()).getByRole("menuitem", { name: en["zfs.removeMissing"] })).toBeTruthy();
+    expect((await openMenu()).getByRole("button", { name: en["zfs.removeMissing"] })).toBeTruthy();
   });
 });
 
@@ -384,6 +383,26 @@ describe("the settings of a ZFS entry", () => {
     expect(probeZFSDataset).toHaveBeenCalledWith(ZFS_ID);
   });
 
+  it("add a container to stop for the snapshot from the list of containers", async () => {
+    const settings = await renderSettings();
+    await press(settings.getByRole("button", { name: en["zfs.stopContainersPlaceholder"] }));
+    const option = (await screen.findAllByRole("option"))[0];
+    const name = option.textContent ?? "";
+    await press(option);
+    expect(patchZFSDataset).toHaveBeenCalledWith(ZFS_ID, { stopContainers: [name] });
+  });
+
+  it("open the connection to the server from its row", async () => {
+    const settings = await renderSettings();
+    await press(settings.getByRole("button", { name: en["zfs.connection.view"] }));
+    expect(await screen.findByRole("dialog", { name: en["zfs.connection.title"] })).toBeTruthy();
+  });
+
+  it("pick the repository in a card of its own", async () => {
+    await renderPage("?tab=settings");
+    expect(within(card(en["entry.settings.repository"])).getByRole("combobox", { name: en["zfs.repo"] })).toBeTruthy();
+  });
+
   it("use no native select", async () => {
     await renderSettings();
     expect(document.querySelector("select")).toBeNull();
@@ -428,16 +447,15 @@ describe("the safety snapshots of a ZFS entry", () => {
   };
   const title = countText(en["zfs.safety.title"], "en", 1);
 
-  async function openList() {
+  async function showList() {
     listZFSSafetySnapshots.mockResolvedValue({ ok: true, snapshots: [SNAPSHOT] } as never);
     await renderPage("?tab=settings");
-    await press(button(title));
     return screen.findByRole("list", { name: title });
   }
 
-  it("are listed and deleted one at a time", async () => {
+  it("are listed in a card of their own and deleted one at a time", async () => {
     serve({ safetyCount: 1 });
-    const list = await openList();
+    const list = await showList();
     expect(listZFSSafetySnapshots).toHaveBeenCalledWith(ZFS_ID);
     expect(within(list).getByText(/bombvault-prerestore-20260101120000/)).toBeTruthy();
     await press(within(list).getByRole("button", { name: en["common.delete"] }));
@@ -451,7 +469,7 @@ describe("the safety snapshots of a ZFS entry", () => {
       serve({ safetyCount: 0, safetyOldestAt: 0 });
       return { ok: true };
     }) as never);
-    const list = await openList();
+    const list = await showList();
     expect(screen.getByText(en["zfs.safety.old"])).toBeTruthy();
     await press(within(list).getByRole("button", { name: en["common.delete"] }));
     await confirmWith(en["common.delete"]);

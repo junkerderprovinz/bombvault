@@ -76,10 +76,10 @@ test("a yes starts the pass, and its run opens as a sheet", async ({ page }, tes
   const staged = await open(page);
 
   await action(page).tap();
-  await page.getByRole("dialog", { name: "Confirm" }).getByRole("button", { name: "Backup Everything" }).tap();
+  await page.getByRole("dialog", { name: "Confirm" }).getByRole("button", { name: "Full backup" }).tap();
 
   // The watch polls every two seconds, so the run takes a few to appear.
-  const sheet = page.getByRole("dialog", { name: "Backup · Backup Everything" });
+  const sheet = page.getByRole("dialog", { name: "Backup · Full backup" });
   await expect(sheet).toBeVisible({ timeout: 15_000 });
   await expect(sheet.getByText("Running").first()).toBeVisible();
   expect(staged.fired()).toBe(true);
@@ -99,7 +99,7 @@ test("on a desktop the action starts at once and the run opens as a window", asy
 
   await action(page).click();
 
-  const window = page.getByRole("dialog", { name: "Backup · Backup Everything" });
+  const window = page.getByRole("dialog", { name: "Backup · Full backup" });
   await expect(window).toBeVisible({ timeout: 15_000 });
   expect(staged.fired()).toBe(true);
   await expect(page.getByRole("dialog", { name: "Confirm" })).toHaveCount(0);

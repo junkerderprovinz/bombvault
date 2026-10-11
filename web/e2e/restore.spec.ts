@@ -495,7 +495,7 @@ test("the page opens on the entry that needs a restore, with its backups on the 
   await expect(rows(page).nth(1)).toContainText("Empfohlen");
   await expect(rows(page).nth(0)).toContainText("Nach der Anomalie");
   await expect(rows(page).nth(1)).toContainText("Storage Box");
-  await expect(rows(page).nth(1)).toContainText("66.0 MB");
+  await expect(rows(page).nth(1)).toContainText("66,0 MB");
   await expect(rows(page).nth(3)).toContainText("vor dem Update");
 });
 

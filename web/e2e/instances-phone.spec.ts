@@ -612,7 +612,7 @@ for (const width of [320, 360]) {
     // The inventory lists each source with its date and size in view, and not
     // as a table whose last columns scroll out of the card.
     await expect(page.locator("#bv-main table")).toHaveCount(0);
-    await expect(page.locator("#bv-main").getByText("49.4 GB", { exact: true })).toHaveCount(1);
+    await expect(page.locator("#bv-main").getByText("49,4 GB", { exact: true })).toHaveCount(1);
     // Four tiles stand two by two, each pair sharing the card's width however
     // long the names of the roles.
     for (const key of ["self", MEMBER]) {

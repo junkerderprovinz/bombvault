@@ -2,9 +2,6 @@ import { useT } from "../lib/i18n";
 import { Badge, type BadgeTone } from "./Badge";
 import { InfoBubble } from "./InfoBubble";
 
-// The schedule badge lives in its own file rather than in Settings.tsx because
-// ItemScheduleOverride.tsx needs it too, and Settings.tsx imports that file.
-
 export type ScheduleStatus = "active" | "paused" | "off";
 
 export function scheduleStatus(schedule: string): ScheduleStatus {

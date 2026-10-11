@@ -100,7 +100,7 @@ describe("the anomalies entry", () => {
     // The default normalizer turns the group separator into a plain space,
     // which is the difference this asserts.
     const count = await within(entry).findByLabelText(
-      en["anomaly.navCountAria"].replace("{n}", (1200).toLocaleString()),
+      en["anomaly.navCountAria"].replace("{n}", "1,200"),
       { normalizer: (text) => text }
     );
     expect(count.textContent).toBe("1200");

@@ -91,6 +91,7 @@ const testMatch = [
   "restore.spec.ts",
   "welcome.spec.ts",
   "look-help.spec.ts",
+  "schedules.spec.ts",
 ];
 
 for (const spec of testMatch) {

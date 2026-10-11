@@ -1,7 +1,7 @@
 // The sentences a reader sees. The backend sends numbers and ids only, so
 // every wording, unit and label is decided here, and a metric the tables have
 // no sentence for still has to say something.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   anomalyDeviation,
   anomalyDomainsLabel,
@@ -187,13 +187,13 @@ const CASES: [string, AnomalyView, TranslationKey, string[]][] = [
       details: { collapse: true },
     }),
     "anomaly.sentence.filesCollapse",
-    ["plex", "3", (12000).toLocaleString()],
+    ["plex", "3", "12,000"],
   ],
   [
     "a dropped file count",
     view({ metric: "source_files_shrink", observed: 9000, expected: 12000 }),
     "anomaly.sentence.filesShrink",
-    ["plex", (9000).toLocaleString(), (12000).toLocaleString()],
+    ["plex", "9,000", "12,000"],
   ],
   [
     "a slower backup",
@@ -358,7 +358,19 @@ describe("anomalySentence", () => {
     expect(sentence).toContain(isolateLtr("1.0 KB"));
     expect(sentence).toContain(isolateLtr("1.0 GB"));
     const files = view({ metric: "source_files_shrink", observed: 0, expected: 2057 });
-    expect(anomalySentence(files, t, "en")).toContain(isolateLtr((2057).toLocaleString()));
+    expect(anomalySentence(files, t, "en")).toContain(isolateLtr("2,057"));
+  });
+
+  it("writes a count the way the page's language does", () => {
+    vi.stubGlobal("document", { documentElement: { lang: "de" } });
+    try {
+      const files = view({ metric: "source_files_shrink", observed: 9000, expected: 12000 });
+      expect(anomalySentence(files, t, "de")).toContain(isolateLtr("12.000"));
+      const shrink = view({ metric: "source_bytes_shrink", observed: 1024, expected: 1024 ** 3 });
+      expect(anomalySentence(shrink, t, "de")).toContain(isolateLtr("1,0 GB"));
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("names the dataset of a ZFS row, not the pool item", () => {

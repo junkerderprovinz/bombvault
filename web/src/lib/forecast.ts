@@ -4,14 +4,15 @@
 // I18nProvider.
 
 import type { StorageForecast } from "./api";
+import { formatNumber, oneDecimal } from "./numberFormat";
 
 /** ResolveForecast translates a key and fills its {placeholder} params. The app
  *  passes a closure over useT()'s t; tests pass a stub. */
 export type ResolveForecast = (key: string, params?: Record<string, string>) => string;
 
 /** humanBytes formats a byte count with a binary (1024) unit and one decimal,
- *  like every storage figure on the dashboard. Zero and negatives collapse to
- *  "0 B"; a signed display is up to the caller. */
+ *  in the page's language: 1.2 GB in English, 1,2 GB in German. Zero and
+ *  negatives collapse to "0 B"; a signed display is up to the caller. */
 export function humanBytes(n: number): string {
   if (!n || n <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
@@ -21,7 +22,7 @@ export function humanBytes(n: number): string {
     v /= 1024;
     i++;
   }
-  return `${i === 0 ? v : v.toFixed(1)} ${units[i]}`;
+  return `${i === 0 ? formatNumber(v) : oneDecimal(v)} ${units[i]}`;
 }
 
 /** Below this many weeksToFull the projection renders in the warn token. */

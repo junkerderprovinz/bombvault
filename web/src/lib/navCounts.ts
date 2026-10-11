@@ -2,6 +2,7 @@ import { useAttentionCount, useFreshInstall } from "./attention";
 import { useT } from "./i18n";
 import type { NavCountKind } from "./navModel";
 import { useLoudAnomalies } from "./useAnomalies";
+import { formatNumber } from "./numberFormat";
 
 export interface NavCount {
   value: number;
@@ -26,12 +27,12 @@ export function useNavCounts(): Record<NavCountKind, NavCount> {
   return {
     attention: {
       value: attention,
-      label: t("nav.attentionCountAria").replace("{n}", attention.toLocaleString()),
+      label: t("nav.attentionCountAria").replace("{n}", formatNumber(attention)),
       tone: "fail",
     },
     anomalies: {
       value: anomalies.count,
-      label: t("anomaly.navCountAria").replace("{n}", anomalies.count.toLocaleString()),
+      label: t("anomaly.navCountAria").replace("{n}", formatNumber(anomalies.count)),
       tone: anomalies.tone,
     },
   };

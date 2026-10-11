@@ -38,6 +38,9 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
     flashSchedule: "off",
     filesSchedule: "off",
     configSchedule: "off",
+    drillsEnabled: false,
+    drillsSchedule: "weekly Sun 05:00",
+    tamperTestSchedule: "off",
     retentionKeepLast: 5,
     retentionKeepDaily: 7,
     retentionKeepWeekly: 4,
@@ -195,9 +198,9 @@ describe("the Anomalies card on the Integrity page", () => {
     await waitFor(() => expect(scrolled.map((el) => el.id)).toContain("anomalies"));
   });
 
-  it("comes after the restore-check schedule, so the checks and their schedule stay together", async () => {
+  it("comes after the automatic checks", async () => {
     await renderAt("/settings/integrity");
-    const schedule = screen.getByRole("heading", { name: en["settings.schedulesChecks"] });
+    const schedule = screen.getByRole("heading", { name: en["verify.autoChecks"] });
     const anomalies = document.getElementById("anomalies");
     expect(anomalies).not.toBeNull();
     expect(schedule.compareDocumentPosition(anomalies!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

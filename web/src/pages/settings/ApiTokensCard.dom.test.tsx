@@ -87,8 +87,9 @@ describe("ApiTokensCard", () => {
     createApiToken.mockResolvedValue({ ok: true, key: "bvapi_secret", item: token({ id: "t2", hint: "cret" }) });
     listApiTokens.mockResolvedValue(payload({ tokens: [token({ id: "t2", hint: "cret" })] }));
 
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(en["api.createToken"]) }));
     fireEvent.change(await screen.findByLabelText(en["api.labelLabel"]), { target: { value: "Uptime Kuma" } });
-    fireEvent.click(screen.getByRole("button", { name: new RegExp(en["api.createToken"]) }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: new RegExp(en["api.createToken"]) }));
 
     await waitFor(() => expect(createApiToken).toHaveBeenCalledWith("Uptime Kuma", false));
     expect(await screen.findByDisplayValue("bvapi_secret")).toBeTruthy();
@@ -100,9 +101,11 @@ describe("ApiTokensCard", () => {
   it("asks for a sign-in at this instance when the phone app's session may not create a token", async () => {
     await renderCard(payload());
     createApiToken.mockResolvedValue({ ok: false, code: "own-login-needed", error: "sign in at this instance's web interface" });
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(en["api.createToken"]) }));
     fireEvent.change(await screen.findByLabelText(en["api.labelLabel"]), { target: { value: "Uptime Kuma" } });
-    fireEvent.click(screen.getByRole("button", { name: new RegExp(en["api.createToken"]) }));
-    const ask = await screen.findByRole("dialog");
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: new RegExp(en["api.createToken"]) }));
+    await waitFor(() => expect(screen.getAllByRole("dialog")).toHaveLength(2));
+    const ask = screen.getAllByRole("dialog")[1];
     expect(ask.textContent).toContain(en["secrets.ownLoginNeeded"]);
     expect(within(ask).getByRole("button", { name: en["secrets.signInHere"] })).toBeTruthy();
     expect(screen.queryByText("sign in at this instance's web interface")).toBeNull();

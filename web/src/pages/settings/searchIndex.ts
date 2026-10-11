@@ -117,58 +117,36 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
   schedules: [
     { title: "tile.week.title", hint: "tile.week.hint", rows: [] },
     {
-      title: "settings.schedulesOptions",
-      rows: [
-        { key: "settings.perItemSchedules", hint: "settings.perItemSchedulesHint" },
-        { key: "jobs.syncSchedules", hint: "jobs.syncSchedulesHint" },
-      ],
-    },
-    {
       title: "settings.everythingTitle",
-      hint: "settings.everythingHint",
+      hint: "schedules.fullHint",
       rows: [
-        { key: "hooks.title", hint: "settings.everythingHooksHint" },
-        { key: "hooks.pre" },
-        { key: "hooks.post" },
-      ],
-    },
-    { title: "jobs.containersSection", hint: "containers.scheduleHint", rows: [] },
-    { title: "jobs.vmsSection", hint: "jobs.vmIncludeHint", rows: [] },
-    { title: "jobs.flashSection", hint: "jobs.flashScheduleHint", rows: [] },
-    { title: "jobs.filesSection", hint: "jobs.filesIncludeHint", rows: [{ key: "files.enabled" }] },
-    { title: "jobs.zfsSection", hint: "jobs.zfsIncludeHint", rows: [{ key: "files.enabled" }] },
-    {
-      title: "settings.schedulesOffsite",
-      rows: [
-        { key: "nav.containers" },
-        { key: "nav.vms" },
-        { key: "nav.flash" },
-        { key: "nav.config" },
-        { key: "nav.files" },
-        { key: "nav.zfs" },
+        { key: "schedules.whenRuns", hint: "schedules.whenRunsHint" },
+        { key: "settings.catchUpMissed", hint: "settings.catchUpMissedHint" },
+        { key: "schedules.hooks" },
+        { key: "schedules.hookPre", hint: "schedules.hookPreHint" },
+        { key: "schedules.hookPost", hint: "schedules.hookPostHint" },
       ],
     },
     {
-      title: "settings.schedulesSelfBackup",
-      hint: "config.scheduleHint",
-      rows: [{ key: "settings.schedulesSelfBackup" }],
+      title: "schedules.plans",
+      hint: "schedules.plansHint",
+      rows: [{ key: "exceptions.add" }, { key: "schedules.offsite" }],
     },
     {
-      title: "settings.missedSchedulesTitle",
-      rows: [{ key: "settings.catchUpMissed", hint: "settings.catchUpMissedHint" }],
+      title: "schedules.entries",
+      hint: "schedules.entriesHint",
+      rows: [{ key: "schedules.perItem", hint: "schedules.perItemHint" }],
     },
-    { title: "backupOrder.title", hint: "backupOrder.hint", rows: [] },
-    { title: "vmBackupOrder.title", hint: "vmBackupOrder.hint", rows: [] },
     {
-      title: "settings.restartHealthTitle",
+      title: "schedules.order",
+      hint: "schedules.orderHint",
       rows: [
         { key: "settings.restartHealthWait", hint: "settings.restartHealthWaitHint" },
         { key: "settings.restartHealthTimeoutLabel", hint: "settings.restartHealthTimeoutHint" },
       ],
     },
     {
-      title: "settings.imageMaintenanceTitle",
-      hint: "settings.imageMaintenanceHint",
+      title: "schedules.updates",
       rows: [
         { key: "settings.pruneImageAfterUpdate", hint: "settings.pruneImageAfterUpdateHint" },
         { key: "settings.reconcileUnraidStatus", hint: "settings.reconcileUnraidStatusHint" },
@@ -350,6 +328,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "notify.notifyOnUpdate", hint: "notify.notifyOnUpdateHint" },
         { key: "settings.watchdogToggle", hint: "settings.watchdogHint" },
         { key: "notify.unraid", hint: "notify.unraidHint" },
+        { key: "settings.digestToggle", hint: "settings.digestHint" },
       ],
     },
     {
@@ -378,21 +357,8 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
     {
       title: "notify.healthchecksTitle",
-      rows: [
-        { key: "notify.healthchecks", hint: "notify.healthchecksLifecycle" },
-        { key: "notify.hcPerDomain", hint: "notify.hcPerDomainHint" },
-        { key: "nav.containers" },
-        { key: "nav.vms" },
-        { key: "nav.flash" },
-        { key: "nav.config" },
-        { key: "nav.files" },
-        { key: "nav.zfs" },
-      ],
-    },
-    {
-      title: "settings.digestTitle",
-      hint: "settings.digestHint",
-      rows: [{ key: "settings.digestToggle" }],
+      hint: "notify.healthchecksHint",
+      rows: [{ key: "notify.healthchecks", hint: "notify.healthchecksLifecycle" }, { key: "exceptions.add" }],
     },
   ],
 
@@ -408,16 +374,15 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       ],
     },
     {
-      title: "verify.auto",
-      hint: "verify.hint",
+      title: "verify.autoChecks",
       rows: [
-        { key: "verify.auto" },
+        { key: "verify.trialRestore", hint: "verify.trialRestoreHint" },
         { key: "settings.offsiteDrills", hint: "settings.offsiteDrillsHelp" },
         { key: "settings.startTest", hint: "settings.startTestHelp" },
-        { key: "verify.subsetPct" },
+        { key: "verify.subsetPct", hint: "verify.subsetPctHint" },
+        { key: "verify.tamper", hint: "verify.tamperHint" },
       ],
     },
-    { title: "settings.schedulesChecks", rows: [] },
     {
       title: "anomaly.settings.title",
       hint: "anomaly.settings.hint",
@@ -540,12 +505,13 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "api.labelLabel" },
         { key: "mcp.allowStart", hint: "api.allowStartHint" },
         { key: "api.newTokenTitle", hint: "mcp.showOnce" },
+        { key: "api.description", hint: "api.descriptionHint" },
       ],
     },
     {
-      title: "ha.title",
-      hint: "ha.hint",
+      title: "integrations.services",
       rows: [
+        { key: "ha.title", hint: "ha.hint" },
         { key: "ha.enable" },
         { key: "ha.host" },
         { key: "notify.smtpPort" },
@@ -554,16 +520,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "ha.prefix", hint: "ha.prefixHint" },
         { key: "ha.tls", hint: "ha.tlsHint" },
         { key: "ha.buttons", hint: "ha.buttonsHint" },
-      ],
-    },
-    {
-      title: "mdns.title",
-      hint: "mdns.hint",
-      rows: [{ key: "mdns.enable" }],
-    },
-    {
-      title: "settings.metrics",
-      rows: [
+        { key: "mdns.enable", hint: "mdns.hint" },
         { key: "settings.metricsEnable", hint: "settings.metricsHint" },
         { key: "settings.metricsToken" },
       ],
@@ -571,7 +528,11 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "settings.widget",
       hint: "settings.widgetHint",
-      rows: [{ key: "settings.widgetToken" }],
+      rows: [
+        { key: "settings.widgetToken", hint: "settings.widgetAccess" },
+        { key: "settings.dashTile", hint: "settings.dashTileHint" },
+        { key: "settings.widgetSetup" },
+      ],
     },
     {
       title: "vm.ssh.title",

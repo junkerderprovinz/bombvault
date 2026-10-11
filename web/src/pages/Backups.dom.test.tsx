@@ -518,7 +518,7 @@ describe("the entries that are not backed up like the rest", () => {
     await renderPage();
     expect(
       within(row("plex")).getByLabelText(
-        "Not backed up automatically: neither the Containers schedule nor Backup Everything is on."
+        "Not backed up automatically: neither the Containers schedule nor the full backup is on."
       )
     ).toBeTruthy();
   });

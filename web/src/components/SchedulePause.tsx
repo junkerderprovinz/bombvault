@@ -70,7 +70,7 @@ export function PausedBadge({ explained = true }: { explained?: boolean }) {
   const { t } = useT();
   // The hint names both actions by their own labels, so it follows a rename.
   const tip = t("schedule.pausedHint")
-    .replace("{everything}", t("settings.everythingTitle"))
+    .replace("{everything}", t("settings.everythingName"))
     .replace("{backupNow}", t("containers.backupNow"));
   return (
     <Badge tone="neutral">

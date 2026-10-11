@@ -52,7 +52,7 @@ type Rule = [RegExp, () => ReactNode];
 
 const RULES: Rule[] = [
   // Backups and restores, the app's own verbs, before anything generic.
-  [/backupNow|backupAll|backupSelected|runNow|backupOrder\.save/i, () => <IconBackupNow />],
+  [/backupNow|backupAll|backupSelected|runNow/i, () => <IconBackupNow />],
   // "restor" also catches the "restoring" keys shown while a run is in flight.
   [/restor|recreate|rebuild/i, () => <IconRestore />],
   [/replicate|sync|refreshStatus|pollNow/i, () => <IconSync />],
