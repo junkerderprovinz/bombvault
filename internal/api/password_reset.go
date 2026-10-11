@@ -110,11 +110,11 @@ func (h *Handler) handleFinishPasswordReset(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "authentication is not enabled"})
 		return
 	}
-	key := h.loginClientKey(r)
-	if h.loginThrottled(key) {
-		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
-		return
-	}
+	// A bucket of its own, which only wrong codes reach. Behind a reverse proxy
+	// every caller shares one address, so a throttle in front of the right
+	// code would let anybody keep the owner out; the code's sixty bits are what
+	// stops a guesser.
+	key := "reset|" + h.loginClientKey(r)
 
 	var body struct {
 		Code     string `json:"code"`
@@ -142,6 +142,10 @@ func (h *Handler) handleFinishPasswordReset(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if !ok {
+		if h.loginThrottled(key) {
+			writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
+			return
+		}
 		h.recordLoginFail(key)
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "resetCodeInvalid", "error": "that code is not right"})
 		return
