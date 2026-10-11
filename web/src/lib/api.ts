@@ -5237,10 +5237,25 @@ export function startPasswordReset(): Promise<OkEnvelope> {
   return fetchJSON("/api/auth/reset", { method: "POST", body: "{}" });
 }
 
+/** What a password reset took away besides the old password. Every other
+ *  session ends as well. */
+export interface PasswordResetRemoved {
+  passkeys: number;
+  apiTokens: number;
+  /** MCP keys and the grants of clients signed in through OAuth. */
+  mcpKeys: number;
+  /** Whether two-factor authentication was on and is now off. */
+  twoFactor: boolean;
+}
+
+export interface PasswordResetResult extends OkEnvelope {
+  removed?: PasswordResetRemoved;
+}
+
 /** POST /api/auth/reset/finish: sets the password with the code from the log
  *  and signs this browser in. A wrong, expired or missing code is refused
  *  with the code "resetCodeRejected", the same for all three. */
-export function finishPasswordReset(code: string, password: string): Promise<OkEnvelope> {
+export function finishPasswordReset(code: string, password: string): Promise<PasswordResetResult> {
   return fetchJSON("/api/auth/reset/finish", {
     method: "POST",
     body: JSON.stringify({ code, password }),
@@ -6134,7 +6149,8 @@ export interface McpKeyView {
     | "code-replay"
     | "client"
     | "oauth-off"
-    | "oauth-moved";
+    | "oauth-moved"
+    | "password-reset";
   /** The run history still names this key, so purging it would orphan those rows. */
   inUse: boolean;
   unusable: "" | "app-key-changed";

@@ -36,6 +36,7 @@ func newResetHandler(t *testing.T) (*Handler, *store.Repo, *bytes.Buffer) {
 	enableAuth(t, h, repo)
 	out := &bytes.Buffer{}
 	h.resetOut = out
+	h.mcp = newMCPState()
 	return h, repo, out
 }
 
@@ -335,6 +336,96 @@ func TestAPasswordChangeCheckedBeforeAResetDoesNotOverwriteIt(t *testing.T) {
 	}
 	if s.AuthPasswordHash == intruders || !signsIn(t, h, resetNewPass) {
 		t.Fatal("the change overwrote the password the reset set")
+	}
+}
+
+// giveIntruderAWayIn registers what somebody signed in could have left behind:
+// a passkey, an API token, an MCP key, an OAuth grant and an OAuth code that
+// is still waiting to be exchanged.
+func giveIntruderAWayIn(t *testing.T, h *Handler, repo *store.Repo) {
+	t.Helper()
+	if _, err := repo.AddPasskey(store.Passkey{Name: "Intruder", CredentialID: []byte("cred"), PublicKey: []byte("pub"), RPID: "backup.example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.CreateAPIToken("tok1", "Script", "digest-tok", "hint", "check", false, 1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.CreateMCPKey("key1", "Assistant", "", "digest-key", "hint", "check", false, 1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.CreateOAuthGrant(store.OAuthGrant{ID: "grant1", Label: "Cloud", OAuthClient: "client", Resource: "r", Check: "c"}, 1); err != nil {
+		t.Fatal(err)
+	}
+	h.mcp.oauth.putCode("code-digest", &oauthCode{clientID: "client", expires: time.Now().Add(time.Minute)}, time.Now())
+}
+
+func TestResetRemovesEveryPasskeyAndRevokesEveryKey(t *testing.T) {
+	h, repo, out := newResetHandler(t)
+	giveIntruderAWayIn(t, h, repo)
+	code := askForResetCode(t, h, out)
+
+	body, _ := finishReset(t, h, code, resetNewPass)
+
+	if body["ok"] != true {
+		t.Fatalf("reset: %v", body)
+	}
+	if keys, err := repo.ListPasskeys(); err != nil || len(keys) != 0 {
+		t.Fatalf("passkeys after the reset: %v %v", keys, err)
+	}
+	rows, err := repo.ListMCPKeys()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, k := range rows {
+		if k.RevokedAt == 0 {
+			t.Errorf("%s %s is still active", k.Kind, k.ID)
+		}
+	}
+	if len(h.mcp.oauth.codes) != 0 {
+		t.Error("an OAuth code allowed before the reset can still be exchanged")
+	}
+	want := map[string]any{"passkeys": 1.0, "apiTokens": 1.0, "mcpKeys": 2.0, "twoFactor": false}
+	if !reflect.DeepEqual(body["removed"], want) {
+		t.Errorf("removed = %v, want %v", body["removed"], want)
+	}
+}
+
+// A passkey whose registration passed its session check while the reset ran
+// must either be added before the reset removes every passkey or not at all.
+func TestAResetWaitsForAPasskeyBeingAdded(t *testing.T) {
+	h, repo, out := newResetHandler(t)
+	code := askForResetCode(t, h, out)
+	r := httptest.NewRequest(http.MethodPost, "/api/auth/passkey/register/finish", nil)
+	r.Header = sessionOf(h)
+	release, ok := h.holdSignIn(httptest.NewRecorder(), r)
+	if !ok {
+		t.Fatal("a signed-in session must be allowed to add a passkey")
+	}
+	reset := httptest.NewRequest(http.MethodPost, resetFinishPath,
+		strings.NewReader(`{"code":"`+code+`","password":"`+resetNewPass+`"}`))
+	reset.Header.Set("Content-Type", "application/json")
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		h.handleFinishPasswordReset(httptest.NewRecorder(), reset)
+	}()
+
+	select {
+	case <-done:
+		t.Fatal("the reset ran while a passkey was being added")
+	case <-time.After(100 * time.Millisecond):
+	}
+	if _, err := repo.AddPasskey(store.Passkey{Name: "Late", CredentialID: []byte("late"), PublicKey: []byte("pub"), RPID: "backup.example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	release()
+	<-done
+
+	if keys, err := repo.ListPasskeys(); err != nil || len(keys) != 0 {
+		t.Fatalf("a passkey added during the reset survived it: %v %v", keys, err)
+	}
+	if _, ok := h.holdSignIn(httptest.NewRecorder(), r); ok {
+		t.Fatal("the session from before the reset may still add a passkey")
 	}
 }
 

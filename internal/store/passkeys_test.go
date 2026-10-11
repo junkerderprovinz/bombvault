@@ -102,3 +102,21 @@ func TestPasskeysForRPFiltersByAddress(t *testing.T) {
 		t.Errorf("ListPasskeys returned %d rows, want both", len(all))
 	}
 }
+
+func TestDeleteAllPasskeysCountsWhatItRemoved(t *testing.T) {
+	r := newPasskeyRepo(t)
+	for _, id := range []string{"a", "b"} {
+		if _, err := r.AddPasskey(Passkey{Name: id, CredentialID: []byte(id), PublicKey: []byte("pub"), RPID: "backup.example.com"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	n, err := r.DeleteAllPasskeys()
+
+	if err != nil || n != 2 {
+		t.Fatalf("DeleteAllPasskeys = %d, %v, want 2", n, err)
+	}
+	if left, err := r.ListPasskeys(); err != nil || len(left) != 0 {
+		t.Fatalf("left behind: %v %v", left, err)
+	}
+}

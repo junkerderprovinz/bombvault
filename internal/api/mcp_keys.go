@@ -293,6 +293,11 @@ func (h *Handler) handleCreateMCPKey(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	release, ok := h.holdSignIn(w, r)
+	if !ok {
+		return
+	}
+	defer release()
 	if body.Client != "" && !mcpClientID.MatchString(body.Client) {
 		writeJSON(w, http.StatusOK, failEnvelope(errMCPKeyClient))
 		return

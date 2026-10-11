@@ -67,6 +67,11 @@ func (h *Handler) handleCreateAPIToken(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	release, ok := h.holdSignIn(w, r)
+	if !ok {
+		return
+	}
+	defer release()
 	if !h.mcpKeysAllowedFrom(r) {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyNeedsPassword, "mcp-key-needs-password"))
 		return

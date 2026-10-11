@@ -81,6 +81,30 @@ describe("LoginPage, a forgotten password", () => {
     expect(finishPasswordReset).toHaveBeenCalledWith("ABCD-EFGH-JKLM", "correct horse battery");
   });
 
+  it("says what the reset removed before it signs in", async () => {
+    finishPasswordReset.mockResolvedValue({
+      ok: true,
+      removed: { passkeys: 2, apiTokens: 1, mcpKeys: 0, twoFactor: true },
+    });
+    const onLogin = vi.fn();
+    render(<LoginPage onLogin={onLogin} />);
+    await openReset();
+
+    await fillAndSubmit("ABCD-EFGH-JKLM", "correct horse battery");
+
+    const status = await screen.findByRole("status");
+    expect(status.textContent).toContain("2 passkeys removed");
+    expect(status.textContent).toContain("1 API token revoked");
+    expect(status.textContent).toContain(en["auth.resetDoneTwoFactor"]);
+    expect(status.textContent).not.toContain("MCP");
+    expect(status.textContent).toContain(en["auth.resetDoneHint"]);
+    expect(onLogin).not.toHaveBeenCalled();
+
+    await press(en["common.done"]);
+
+    expect(onLogin).toHaveBeenCalledTimes(1);
+  });
+
   it("sends nothing while the two passwords differ", async () => {
     render(<LoginPage onLogin={vi.fn()} />);
     await openReset();
