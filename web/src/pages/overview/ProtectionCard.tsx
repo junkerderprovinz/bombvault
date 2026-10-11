@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { KIND_LABEL } from "../../components/backups/kinds";
 import { formatCadence } from "../../components/CadenceBuilder";
-import { IconForward } from "../../components/glyphs";
+import { IconForward, IconSearch } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
 import { IconCloud, IconLocal, IconRestore } from "../../components/navGlyphs";
 import type { useT } from "../../lib/i18n";
@@ -122,11 +122,14 @@ export function ProtectionCard({
   loading,
   failed,
   hueIndex,
+  found,
   onOpen,
 }: {
   t: T;
   lang: string;
   sections: Section[];
+  /** What the server reports that could be backed up, as a sentence. */
+  found?: string | null;
   loading: boolean;
   /** The sections never arrived. */
   failed: boolean;
@@ -162,6 +165,15 @@ export function ProtectionCard({
               <SectionRow key={section.kind} section={section} t={t} lang={lang} onOpen={() => onOpen(section)} />
             ))}
           </ul>
+          {found && (
+            <p data-testid="protection-found" className="flex items-center gap-2 px-1.5 pt-4 text-xs text-carbon-textMuted">
+              <span className="flex flex-none [&_svg]:h-3.5 [&_svg]:w-3.5">
+                <IconSearch />
+              </span>
+              <span className="min-w-0 flex-1">{found}</span>
+              <InfoBubble tip={t("overview.protection.foundTip")} />
+            </p>
+          )}
         </div>
       )}
     </Card>

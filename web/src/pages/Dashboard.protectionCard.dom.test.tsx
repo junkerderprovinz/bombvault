@@ -35,6 +35,20 @@ beforeEach(resetServer);
 afterEach(cleanup);
 
 describe("ProtectionCard", () => {
+  it("ends with what the server reports, and why that is more than it backs up", () => {
+    renderCard(sections([domain()]), { found: "BombVault found 4 containers." });
+
+    const line = screen.getByTestId("protection-found");
+    expect(line.textContent).toContain("BombVault found 4 containers.");
+    expect(within(line).getByLabelText(en["overview.protection.foundTip"])).toBeTruthy();
+  });
+
+  it("leaves the line out when the server reports nothing", () => {
+    renderCard(sections([domain()]), { found: null });
+
+    expect(screen.queryByTestId("protection-found")).toBeNull();
+  });
+
   it("gives every section four dots, one per check", () => {
     renderCard(sections([domain(), domain({ domain: "vms" })]));
 

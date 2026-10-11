@@ -15,7 +15,9 @@ import type { CoverageReport, DomainStatus, Run, ScheduleNext } from "../lib/api
 import { useAttention } from "../lib/attention";
 import type { EntryKind } from "../lib/backupEntry";
 import { cardSpan, useDashboardLayout } from "../lib/dashboardLayout";
+import { foundOnServer, foundSentence } from "../lib/firstSteps";
 import { useT } from "../lib/i18n";
+import { usePlatform } from "../lib/useHostLabel";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { anyActive, useProgress } from "../lib/progress";
 import { runRestorePath } from "../lib/restoreRequest";
@@ -39,6 +41,7 @@ import { ProtectionWindow } from "./overview/ProtectionWindow";
 import { SpikeCard } from "./overview/SpikeCard";
 import { StatCardsRow } from "./overview/StatCardsRow";
 import { headlineOf, liveRunOf, passOf, passRuns } from "./overview/headState";
+import { PassWindow } from "./overview/PassWindow";
 import { StatusHead } from "./overview/StatusHead";
 import { StorageCard } from "./overview/StorageCard";
 import { SummaryTier } from "./overview/SummaryTier";
@@ -63,6 +66,7 @@ export function Dashboard() {
   const progress = useProgress();
   const { needs, fresh, items: backupItems, runs, runsReady, runsFailed, refreshRuns, locations } = useAttention();
   const anomalySummary = useAnomalySummary().summary;
+  const platform = usePlatform();
   const trial = useTrialRestore(t("verify.failed"));
 
   // The run window is opened by a row of the history, by the status head
@@ -284,6 +288,7 @@ export function Dashboard() {
           loading={!ready}
           failed={statusMissing}
           hueIndex={hue}
+          found={foundSentence(foundOnServer(backupItems.reported, platform), t, lang)}
           onOpen={(section) => setOpenSection(section.kind)}
         />
       ),
@@ -472,7 +477,18 @@ export function Dashboard() {
 
       {arranging && <HiddenTray cards={hiddenCards} t={t} onShow={toggleHidden} />}
 
-      {displayedRun && (
+      {displayedRun && sheetOpen && displayedRun.domain === "everything" && pass ? (
+        <PassWindow
+          t={t}
+          pass={pass}
+          run={liveRun}
+          done={passRuns(runs)}
+          onClose={() => {
+            sheetDismissed.current = true;
+            setSheetOpen(false);
+          }}
+        />
+      ) : displayedRun && (
         <RunDetailSheet
           windowed
           run={displayedRun}

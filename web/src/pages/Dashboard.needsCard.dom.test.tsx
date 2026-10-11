@@ -43,6 +43,12 @@ function Where() {
   return <output>{pathname + search}</output>;
 }
 
+/** Picks an action from the row's More menu. */
+function fromMore(row: ReturnType<typeof within>, name: string) {
+  fireEvent.click(row.getByRole("button", { name: en["nav.more"] }));
+  fireEvent.click(screen.getByRole("menuitem", { name }));
+}
+
 function renderCard(needs: Need[]) {
   render(
     inApp(
@@ -90,10 +96,25 @@ describe("NeedsCard", () => {
 
   it("opens the failures from a failed run", () => {
     renderCard([{ is: "failedRun", run: run({ id: "r1", status: "failed" }), item: item() }]);
+    const row = within(screen.getByTestId("need-failed-run"));
+    expect(row.queryByRole("button", { name: en["overview.needs.viewErrors"] })).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: en["overview.needs.viewErrors"] }));
+    fromMore(row, en["overview.needs.viewErrors"]);
 
     expect(onErrors).toHaveBeenCalledOnce();
+  });
+
+  it("marks a failed run as resolved and says that the list has changed", async () => {
+    const changed = vi.fn();
+    window.addEventListener(ATTENTION_CHANGED_EVENT, changed);
+    renderCard([{ is: "failedRun", run: run({ id: "r1", status: "failed" }), item: item() }]);
+
+    fromMore(within(screen.getByTestId("need-failed-run")), en["errorPanel.resolve"]);
+    await act(async () => {});
+
+    expect(called("ackRuns")).toEqual([[{ ids: ["r1"] }]]);
+    expect(changed).toHaveBeenCalledOnce();
+    window.removeEventListener(ATTENTION_CHANGED_EVENT, changed);
   });
 
   it("does not offer to repeat a failed restore", () => {
@@ -123,6 +144,7 @@ describe("NeedsCard", () => {
 
     const row = within(screen.getByTestId("need-unprotected"));
     expect(row.getByText(en["backups.status.notProtected"])).toBeTruthy();
+    expect(row.getByText(en["overview.needs.new"])).toBeTruthy();
 
     fireEvent.click(row.getByRole("button", { name: en["overview.needs.include"] }));
     await act(async () => {});
@@ -137,7 +159,7 @@ describe("NeedsCard", () => {
     const row = within(screen.getByTestId("need-unprotected"));
     expect(row.getByRole("button", { name: en["overview.needs.include"] })).toBeTruthy();
 
-    fireEvent.click(row.getByRole("button", { name: en["backups.decline"] }));
+    fromMore(row, en["backups.decline"]);
     await act(async () => {});
 
     expect(called("setBackupDeclined")).toEqual([["container", "gitea", true]]);
@@ -155,7 +177,7 @@ describe("NeedsCard", () => {
     setBackupDeclined.mockResolvedValueOnce({ ok: false, error: "a schedule backs this entry up", code: "scheduled" });
     renderCard([{ is: "unprotected", item: item({ key: "gitea", name: "gitea", ...leftOut }) }]);
 
-    fireEvent.click(screen.getByRole("button", { name: en["backups.decline"] }));
+    fromMore(within(screen.getByTestId("need-unprotected")), en["backups.decline"]);
     await act(async () => {});
 
     expect(screen.getByText("a schedule backs this entry up")).toBeTruthy();
@@ -169,7 +191,8 @@ describe("NeedsCard", () => {
 
     const row = within(screen.getByTestId("need-unprotected"));
     expect(row.getByRole("button", { name: en["zfs.replica.view"] })).toBeTruthy();
-    expect(row.getByRole("button", { name: en["backups.decline"] })).toBeTruthy();
+    fireEvent.click(row.getByRole("button", { name: en["nav.more"] }));
+    expect(screen.getByRole("menuitem", { name: en["backups.decline"] })).toBeTruthy();
   });
 
   it("leads to the entry where switching it on would change nothing", () => {
@@ -201,7 +224,7 @@ describe("NeedsCard", () => {
   it("tries a failed copy again for each of its sections", async () => {
     renderCard([failedBox()]);
 
-    fireEvent.click(within(screen.getByTestId("need-failed-copy")).getByRole("button", { name: en["breakdown.retry"] }));
+    fromMore(within(screen.getByTestId("need-failed-copy")), en["breakdown.retry"]);
     await act(async () => {});
 
     expect(called("replicateOffsite")).toEqual([["containers"], ["flash"]]);
@@ -221,7 +244,7 @@ describe("NeedsCard", () => {
     window.addEventListener(ATTENTION_CHANGED_EVENT, changed);
     renderCard([failedBox()]);
 
-    fireEvent.click(within(screen.getByTestId("need-failed-copy")).getByRole("button", { name: en["errorPanel.resolve"] }));
+    fromMore(within(screen.getByTestId("need-failed-copy")), en["errorPanel.resolve"]);
     await act(async () => {});
 
     expect(called("ackFailedCopies")).toEqual([[["t-containers", "t-flash"]]]);
@@ -235,7 +258,7 @@ describe("NeedsCard", () => {
     const row = within(screen.getByTestId("need-anomaly"));
     const link = row.getByRole("link", { name: en["overview.needs.anomalyAt"].replace("{name}", "immich") });
     expect(link.getAttribute("href")).toBe("/anomalies?scope=item:tg-immich");
-    expect(row.getByText(en["anomaly.retentionKept"])).toBeTruthy();
+    expect(row.getByLabelText(en["anomaly.retentionPaused"])).toBeTruthy();
     expect(row.getByRole("button", { name: en["overview.needs.check"] })).toBeTruthy();
   });
 

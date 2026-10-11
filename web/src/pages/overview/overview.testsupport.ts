@@ -308,6 +308,7 @@ export function stagedApi<M extends object>(actual: M): M {
     },
     downloadRecoveryKit: record("downloadRecoveryKit", null),
     replicateOffsite: record("replicateOffsite"),
+    ackRuns: record("ackRuns", { ok: true, count: 1 }),
     ackFailedCopies: (targetIds: string[]) => {
       if (Array.isArray(server.locations)) {
         server.locations = server.locations.map((place) => ({

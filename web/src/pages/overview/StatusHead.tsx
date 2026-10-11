@@ -180,7 +180,8 @@ function DoneStack({ runs, t }: { runs: Run[]; t: T }) {
   );
 }
 
-function runName(run: LiveRun, t: T): string {
+/** liveRunName is how the head names the entry a run is on. */
+export function liveRunName(run: LiveRun, t: T): string {
   if (run.kind) return run.name || t(run.kind === "flash" ? "backups.name.flash" : "backups.name.config");
   const kind = kindOfDomain(run.name);
   return kind ? t(KIND_LABEL[kind]) : run.name;
@@ -238,7 +239,7 @@ export function StatusHead({
     title = pass
       ? t("overview.head.pass").replace("{done}", String(pass.done)).replace("{total}", String(pass.total))
       : t(copying ? "overview.head.copying" : "overview.head.backingUp");
-    const named = run ? runName(run, t) : "";
+    const named = run ? liveRunName(run, t) : "";
     const name = named && <b className="font-semibold text-carbon-text">{named}</b>;
     const [before, after] = t("overview.head.passItem").split("{name}");
     line = !run ? (
