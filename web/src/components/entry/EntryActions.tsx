@@ -345,6 +345,7 @@ export function EntryHeadActions({
             glyph={action.glyph}
             disabled={busy || deciding}
             onClick={action.onSelect}
+            className="glim-btn-wrap"
           />
         ))}
       </span>
