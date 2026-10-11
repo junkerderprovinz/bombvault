@@ -1,0 +1,1 @@
+Die App selbst ist unverändert. Die Dashboards kommen von deinem Server, und dort bricht BombVault 9.9.3 eine lange Off-site-Kopie nicht mehr nach zwei Stunden ab.
