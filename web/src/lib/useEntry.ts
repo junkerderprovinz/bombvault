@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ApiError,
+  getBackupItem,
   getSettings,
   listContainers,
   listFileSets,
   listItemRuns,
-  listItems,
   listVMs,
   listZFSDatasets,
   type PlacementView,
@@ -86,16 +87,19 @@ async function readDetail(kind: EntryKind, key: string): Promise<EntryDetail | n
 
 /**
  * readEntry is the one read behind an entry's page, and null for an entry
- * that does not exist. The server lists entries only as a whole, so the entry
- * is picked out of the list of all items and the list of its kind. A route
- * for one entry replaces the body of this function and nothing else.
+ * that does not exist. The row comes from the entry's own route. What the
+ * page shows beyond the row has no such route and is picked out of the list
+ * of the entry's kind.
  */
 async function readEntry(kind: EntryKind, key: string): Promise<Entry | null> {
-  const [items, detail, settings] = await Promise.all([listItems(), readDetail(kind, key), getSettings()]);
-  if (!items.ok || !settings.ok) throw new ReadFailed();
-  const item = items.items.find((i) => i.kind === kind && i.key === key);
-  if (!item || !detail) return null;
-  return { item, detail, settings: settings.settings, hostMountRoot: settings.hostMountRoot };
+  const row = getBackupItem(kind, key).catch((err: unknown) => {
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
+  });
+  const [found, detail, settings] = await Promise.all([row, readDetail(kind, key), getSettings()]);
+  if (!found || !detail) return null;
+  if (!found.ok || !found.item || !settings.ok) throw new ReadFailed();
+  return { item: found.item, detail, settings: settings.settings, hostMountRoot: settings.hostMountRoot };
 }
 
 // Enough for the two weeks of the history and the list of recent runs.

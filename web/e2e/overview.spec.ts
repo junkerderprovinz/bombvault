@@ -3,7 +3,17 @@
 // the page reads is staged at the route layer (overview.ts).
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { DRILL_DETAIL, EVERYTHING_RUN, FAILING_BOX, RUNS, openOverview, settle, stageOverview } from "./overview";
+import {
+  DRILL_DETAIL,
+  EVERYTHING_RUN,
+  FAILING_BOX,
+  ITEMS,
+  RUNS,
+  UNPROTECTED_NAME,
+  openOverview,
+  settle,
+  stageOverview,
+} from "./overview";
 import { LOCATIONS, STORAGE_BOX } from "./storage";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -265,6 +275,50 @@ test.describe("the grid of the overview", () => {
     expect(acked).toEqual(["t-box-containers", "t-box-flash"]);
     await expect(page.getByTestId("status-head")).toContainText("5 things need you");
     await expect(count(5)).toBeVisible();
+  });
+
+  test("leaves an entry nothing backs up that way on request, and counts it again after Undo", async ({ page }) => {
+    const sent: boolean[] = [];
+    const declined = () => sent[sent.length - 1] ?? false;
+    await page.route(
+      (url) => url.pathname === "/api/items",
+      (route) =>
+        route.fulfill({
+          json: {
+            ok: true,
+            items: ITEMS.map((item) => (item.key === UNPROTECTED_NAME ? { ...item, backupDeclined: declined() } : item)),
+            unlisted: [],
+          },
+        }),
+    );
+    await page.route(`**/api/items/container/${UNPROTECTED_NAME}/declined`, (route) => {
+      sent.push(route.request().postDataJSON().declined);
+      return route.fulfill({ json: { ok: true } });
+    });
+    await openOverview(page);
+
+    const head = page.getByTestId("status-head");
+    const count = (n: number) => page.getByLabel(`Things that need you: ${n}`).first();
+    const row = page.getByTestId("need-unprotected");
+    await expect(head).toContainText("5 things need you");
+    await expect(head).toContainText("7 of 8 protected");
+    await expect(row.getByRole("button", { name: "Start backing up" })).toBeVisible();
+
+    await row.getByRole("button", { name: "Don't back up" }).click();
+
+    await expect(row).toHaveCount(0);
+    await expect(head).toContainText("4 things need you");
+    await expect(count(4)).toBeVisible();
+    await expect(head).toContainText("7 of 7 protected");
+    const toast = page.getByRole("status").filter({ hasText: `${UNPROTECTED_NAME} will not be backed up` });
+    await expect(toast).toBeVisible();
+
+    await toast.getByRole("button", { name: "Undo" }).click();
+
+    await expect(row).toBeVisible();
+    await expect(head).toContainText("5 things need you");
+    await expect(count(5)).toBeVisible();
+    expect(sent).toEqual([true, false]);
   });
 });
 

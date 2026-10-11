@@ -50,6 +50,28 @@ describe("tallyEntries", () => {
     expect(tally.entries.map((e) => e.key)).toEqual(["plex"]);
   });
 
+  it("leaves out what the person said not to back up and lists it apart", () => {
+    const set = item({ key: "scratch", ...never, ...excluded, backupDeclined: true });
+    const tally = tallyEntries([item({}), set, item({ key: "left-out", ...never, ...excluded })]);
+    expect(tally).toMatchObject({ total: 2, ok: 1, none: 1 });
+    expect(tally.declined).toEqual([set]);
+  });
+
+  it("does not count an entry set aside as protected by the backups it still has", () => {
+    const tally = tallyEntries([item({ ...excluded, backupDeclined: true })]);
+    expect(tally).toMatchObject({ total: 0, ok: 0, none: 0 });
+    expect(tally.declined).toHaveLength(1);
+  });
+
+  it("lists nothing as set aside that is gone or of a switched-off kind", () => {
+    const tally = tallyEntries([
+      item({ key: "old", installed: false, backupDeclined: true }),
+      item({ kind: "vm", key: "win", kindDisabled: true, backupDeclined: true }),
+    ]);
+    expect(tally.declined).toEqual([]);
+    expect(tally.gone).toBe(1);
+  });
+
   it("leaves out BombVault's own container", () => {
     expect(tallyEntries([item({ key: "bombvault", self: true, ...never, ...excluded })]).total).toBe(0);
   });

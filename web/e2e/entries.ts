@@ -255,6 +255,16 @@ export async function stageEntries(page: Page, staged: Staged): Promise<void> {
     );
 
   await get("/api/items", { ok: true, items: staged.items, unlisted: [] });
+  await page.route(
+    (url) => /^\/api\/items\/[^/]+\/[^/]+$/.test(url.pathname),
+    (route) => {
+      if (route.request().method() !== "GET") return route.continue();
+      const [kind, key] = new URL(route.request().url()).pathname.split("/").slice(3).map(decodeURIComponent);
+      const item = staged.items.find((i) => i.kind === kind && i.key === key);
+      if (item) return route.fulfill({ json: { ok: true, item } });
+      return route.fulfill({ status: 404, json: { ok: false, error: "no such item", code: "not-found" } });
+    },
+  );
   await get("/api/containers", { ok: true, containers: staged.containers ?? [] });
   await get("/api/vms", { ok: true, vms: staged.vms ?? [] });
   await get("/api/files", { ok: true, fileSets: staged.fileSets ?? [] });

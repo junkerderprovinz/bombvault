@@ -21,6 +21,7 @@ import { AnomalyProvider } from "../lib/useAnomalies";
 import { DESKTOP_QUERY } from "../lib/useMediaQuery";
 import { reposChanged } from "../lib/useNamedRepos";
 import {
+  FLASH,
   GITEA,
   IMMICH,
   PHOTOS,
@@ -41,7 +42,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
-    listItems: vi.fn(),
+    getBackupItem: vi.fn(),
     listContainers: vi.fn(),
     listVMs: vi.fn(),
     listFileSets: vi.fn(),
@@ -68,14 +69,21 @@ vi.mock("../lib/api", async (importOriginal) => {
     forgetVM: vi.fn(),
     takeOverContainer: vi.fn(),
     takeOverVM: vi.fn(),
+    setBackupDeclined: vi.fn(),
   };
 });
 
-vi.mock("../lib/toast", () => ({ useToast: () => ({ push: () => {} }) }));
+const pushed: { message: string; action?: { label: string; onClick: () => void } }[] = [];
+vi.mock("../lib/toast", () => ({
+  useToast: () => ({
+    push: (message: string, _severity?: string, action?: { label: string; onClick: () => void }) =>
+      pushed.push({ message, action }),
+  }),
+}));
 
 const api = await import("../lib/api");
 const mocks = {
-  listItems: vi.mocked(api.listItems),
+  getBackupItem: vi.mocked(api.getBackupItem),
   listContainers: vi.mocked(api.listContainers),
   listVMs: vi.mocked(api.listVMs),
   listFileSets: vi.mocked(api.listFileSets),
@@ -94,6 +102,7 @@ const forgetContainer = vi.mocked(api.forgetContainer);
 const forgetVM = vi.mocked(api.forgetVM);
 const takeOverContainer = vi.mocked(api.takeOverContainer);
 const takeOverVM = vi.mocked(api.takeOverVM);
+const setBackupDeclined = vi.mocked(api.setBackupDeclined);
 
 const { BackupEntryPage } = await import("./BackupEntry");
 
@@ -187,6 +196,7 @@ function goneVM(over: Partial<VM> = {}): VM {
 
 beforeEach(() => {
   desktop = true;
+  pushed.length = 0;
   localStorage.clear();
   vi.stubGlobal("EventSource", NoopEventSource);
   vi.stubGlobal(
@@ -467,11 +477,11 @@ describe("taking over the entry of a renamed container", () => {
   it("takes the suggested entry over and reads the entry again", async () => {
     serveEntries(mocks, { containers: [fresh({ renameFrom: "gitea-old", renameReason: "appdata-bind" })] });
     await renderPage("/backups/container/gitea");
-    const before = mocks.listItems.mock.calls.length;
+    const before = mocks.getBackupItem.mock.calls.length;
     await press(await screen.findByRole("button", { name: en["takeover.accept"] }));
     await confirmWith(en["takeover.accept"]);
     await waitFor(() => expect(takeOverContainer).toHaveBeenCalledWith("gitea", "gitea-old"));
-    await waitFor(() => expect(mocks.listItems.mock.calls.length).toBeGreaterThan(before));
+    await waitFor(() => expect(mocks.getBackupItem.mock.calls.length).toBeGreaterThan(before));
   });
 
   it("offers to link by hand the entries whose container is gone, and no other", async () => {
@@ -578,6 +588,93 @@ describe("a read older than a placement write", () => {
     await act(async () => reads.answer(2, answer(true)));
     await act(async () => reads.answer(1, answer(false)));
     expect(screen.getByText(en["placement.ownCopies"])).toBeTruthy();
+  });
+});
+
+describe("saying that an entry is not to be backed up", () => {
+  const NO_SCHEDULE = { kind: "none", spec: "", alsoSpec: "", reason: "excluded" } as const;
+  const gitea = (declined: boolean): Staged => ({
+    items: [{ ...GITEA, effectiveSchedule: NO_SCHEDULE, backupDeclined: declined }],
+  });
+  /** The server keeps the answer, so the next read of the entry shows it. */
+  const serveAnswer = () =>
+    setBackupDeclined.mockImplementation(async (_kind, _key, declined) => {
+      serveEntries(mocks, gitea(declined));
+      return { ok: true };
+    });
+  const headLine = (key: "entry.reason.declined" | "entry.reason.pausedNever") => screen.queryByText(en[key], { exact: false });
+
+  it("is offered for an entry no schedule reaches, shows in the head at once and can be undone", async () => {
+    serveEntries(mocks, gitea(false));
+    serveAnswer();
+    await renderPage("/backups/container/gitea");
+    expect(headLine("entry.reason.declined")).toBeNull();
+    const menu = await openMenu();
+    expect(menu.queryByRole("menuitem", { name: en["backups.accept"] })).toBeNull();
+
+    await press(menu.getByRole("menuitem", { name: en["backups.decline"] }));
+
+    expect(setBackupDeclined).toHaveBeenCalledWith("container", "gitea", true);
+    await waitFor(() => expect(headLine("entry.reason.declined")).toBeTruthy());
+    expect(pushed.at(-1)?.message).toBe(en["backups.declined"].replace("{name}", "gitea"));
+    expect(pushed.at(-1)?.action?.label).toBe(en["takeover.undo"]);
+
+    await act(async () => pushed.at(-1)!.action!.onClick());
+
+    expect(setBackupDeclined).toHaveBeenLastCalledWith("container", "gitea", false);
+    await waitFor(() => expect(headLine("entry.reason.pausedNever")).toBeTruthy());
+  });
+
+  it("can be taken back from the menu of an entry set aside", async () => {
+    serveEntries(mocks, gitea(true));
+    serveAnswer();
+    await renderPage("/backups/container/gitea");
+    expect(headLine("entry.reason.declined")).toBeTruthy();
+    const menu = await openMenu();
+    expect(menu.queryByRole("menuitem", { name: en["backups.decline"] })).toBeNull();
+
+    await press(menu.getByRole("menuitem", { name: en["backups.accept"] }));
+
+    expect(setBackupDeclined).toHaveBeenCalledWith("container", "gitea", false);
+    await waitFor(() => expect(headLine("entry.reason.declined")).toBeNull());
+    expect(pushed).toEqual([]);
+  });
+
+  it("stands before the removals of the menu", async () => {
+    serveEntries(mocks, { items: [{ ...PHOTOS, included: false, effectiveSchedule: NO_SCHEDULE }] });
+    await renderPage(`/backups/files/${SET_ID}`);
+    const names = (await openMenu()).getAllByRole("menuitem").map((entry) => entry.textContent);
+    expect(names.slice(-2)).toEqual([en["backups.decline"], en["zfs.removeMissing"]]);
+  });
+
+  it("is not offered while a schedule reaches the entry", async () => {
+    await renderPage("/backups/container/immich");
+    const menu = await openMenu();
+    expect(menu.queryByRole("menuitem", { name: en["backups.decline"] })).toBeNull();
+    expect(menu.queryByRole("menuitem", { name: en["backups.accept"] })).toBeNull();
+  });
+
+  it("is not offered for an entry whose container is gone", async () => {
+    serveEntries(mocks, { items: [{ ...PIHOLE, effectiveSchedule: NO_SCHEDULE }] });
+    await renderPage("/backups/container/pihole");
+    expect((await openMenu()).queryByRole("menuitem", { name: en["backups.decline"] })).toBeNull();
+  });
+
+  it("gives the flash drive a menu when nothing else would be in it", async () => {
+    serveEntries(mocks, { items: [{ ...FLASH, lastBackup: 0, lastRunStatus: "", effectiveSchedule: NO_SCHEDULE }] });
+    await renderPage("/backups/flash/flash");
+    const names = (await openMenu()).getAllByRole("menuitem").map((entry) => entry.textContent);
+    expect(names).toEqual([en["backups.decline"]]);
+  });
+
+  it("says what the server answered when it will not set the entry aside", async () => {
+    serveEntries(mocks, gitea(false));
+    setBackupDeclined.mockResolvedValue({ ok: false, code: "scheduled", error: "a schedule backs this entry up" });
+    await renderPage("/backups/container/gitea");
+
+    await choose(en["backups.decline"]);
+
+    expect(pushed.map((toast) => toast.message)).toEqual(["a schedule backs this entry up"]);
   });
 });
 

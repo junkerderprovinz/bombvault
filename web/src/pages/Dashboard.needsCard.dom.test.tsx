@@ -6,6 +6,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 
 import { useLocation } from "react-router-dom";
 
+import * as api from "../lib/api";
 import { ATTENTION_CHANGED_EVENT } from "../lib/attention";
 import { en } from "../lib/i18n";
 import type { Need } from "../lib/needs";
@@ -19,6 +20,14 @@ vi.mock("../lib/api", async (importOriginal) => {
   return stagedApi(await importOriginal<typeof import("../lib/api")>());
 });
 
+const leftOut = {
+  included: false,
+  lastBackup: 0,
+  lastRunStatus: "",
+  effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+} as const;
+
+const setBackupDeclined = vi.mocked(api.setBackupDeclined);
 const onErrors = vi.fn();
 const onItemsChanged = vi.fn();
 
@@ -119,6 +128,47 @@ describe("NeedsCard", () => {
 
     expect(called("setInclude")).toEqual([["gitea", true]]);
     expect(onItemsChanged).toHaveBeenCalledOnce();
+  });
+
+  it("leaves an entry out of the backups for good and offers the way back", async () => {
+    const gitea = item({ key: "gitea", name: "gitea", ...leftOut });
+    renderCard([{ is: "unprotected", item: gitea }]);
+    const row = within(screen.getByTestId("need-unprotected"));
+    expect(row.getByRole("button", { name: en["overview.needs.include"] })).toBeTruthy();
+
+    fireEvent.click(row.getByRole("button", { name: en["backups.decline"] }));
+    await act(async () => {});
+
+    expect(called("setBackupDeclined")).toEqual([["container", "gitea", true]]);
+    expect(onItemsChanged).toHaveBeenCalledOnce();
+    expect(screen.getByText(en["backups.declined"].replace("{name}", "gitea"))).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: en["takeover.undo"] }));
+    await act(async () => {});
+
+    expect(called("setBackupDeclined")[1]).toEqual(["container", "gitea", false]);
+    expect(onItemsChanged).toHaveBeenCalledTimes(2);
+  });
+
+  it("says so when the server will not leave an entry out, and reads the entries again", async () => {
+    setBackupDeclined.mockResolvedValueOnce({ ok: false, error: "a schedule backs this entry up", code: "scheduled" });
+    renderCard([{ is: "unprotected", item: item({ key: "gitea", name: "gitea", ...leftOut }) }]);
+
+    fireEvent.click(screen.getByRole("button", { name: en["backups.decline"] }));
+    await act(async () => {});
+
+    expect(screen.getByText("a schedule backs this entry up")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["takeover.undo"] })).toBeNull();
+    expect(onItemsChanged).toHaveBeenCalledOnce();
+  });
+
+  it("offers to leave out an entry that has no switch of its own as well", () => {
+    const flash = item({ kind: "flash", key: "flash", name: "flash", lastBackup: 0, effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" } });
+    renderCard([{ is: "unprotected", item: flash }]);
+
+    const row = within(screen.getByTestId("need-unprotected"));
+    expect(row.getByRole("button", { name: en["zfs.replica.view"] })).toBeTruthy();
+    expect(row.getByRole("button", { name: en["backups.decline"] })).toBeTruthy();
   });
 
   it("leads to the entry where switching it on would change nothing", () => {

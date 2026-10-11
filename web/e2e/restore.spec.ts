@@ -177,6 +177,16 @@ async function stage(page: Page, theme: "dark" | "light" = "dark"): Promise<void
     );
 
   await json("/api/items", { ok: true, items: ITEMS, unlisted: [] });
+  await page.route(
+    (url) => /^\/api\/items\/[^/]+\/[^/]+$/.test(url.pathname),
+    (route) => {
+      if (route.request().method() !== "GET") return route.continue();
+      const [kind, key] = new URL(route.request().url()).pathname.split("/").slice(3).map(decodeURIComponent);
+      const found = ITEMS.find((i: Record<string, unknown>) => i.kind === kind && i.key === key);
+      if (found) return route.fulfill({ json: { ok: true, item: found } });
+      return route.fulfill({ status: 404, json: { ok: false, error: "no such item", code: "not-found" } });
+    },
+  );
   await json("/api/containers", { ok: true, containers: CONTAINERS });
   await json("/api/vms", {
     ok: true,
