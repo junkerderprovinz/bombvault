@@ -30,7 +30,7 @@ const ROUTES = [
   "/backups/flash/flash",
   "/storage",
   "/containers",
-  "/recovery",
+  "/restore",
   "/instances",
   "/receiver",
   "/fleet",

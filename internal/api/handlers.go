@@ -4214,7 +4214,7 @@ func (h *Handler) handleStatus(w http.ResponseWriter, _ *http.Request) {
 	// ranks cadence strings at all — it reads the scheduler's real fire times
 	// from GET /api/schedule/next, where the pass is already one entry among the
 	// rest (#187) — and nothing else ever read the field, so it is gone.
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"domains": domains}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"domains": domains, "backupKey": h.svc.currentBackupKey().state}))
 }
 
 // handleScheduleNext returns the next fire time for every currently registered
@@ -6612,8 +6612,10 @@ func (h *Handler) handleForeignOpen(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Location string `json:"location"`
 		Key      string `json:"key"`
-		// Kit is the other instance's recovery kit, sent in place of Key.
-		Kit string `json:"kit"`
+		// Kit is the other instance's recovery kit, sent in place of Key, and
+		// Identity the age identity that opens a sealed one.
+		Kit      string `json:"kit"`
+		Identity string `json:"identity"`
 		// Creds are the FOREIGN repository's own backend credentials, required
 		// for a remote location and used for this session only (#185). They are
 		// never persisted: OpenForeign does not write Settings.
@@ -6622,7 +6624,7 @@ func (h *Handler) handleForeignOpen(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	key, err := foreignKeyOf(body.Key, body.Kit)
+	key, err := foreignKeyOf(body.Key, body.Kit, body.Identity)
 	if err != nil {
 		kitFail(w, err)
 		return

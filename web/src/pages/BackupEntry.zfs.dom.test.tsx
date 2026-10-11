@@ -27,6 +27,7 @@ import { ENTRY_ROUTE } from "../lib/backupEntry";
 import { I18nProvider, countText, en } from "../lib/i18n";
 import { isolateLtr } from "../lib/ltrFragments";
 import { placementChanged } from "../lib/placementEvents";
+import { formatRecent } from "../lib/reltime";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { TANK, ZFS_ID, backupRun, serveEntries, timelineOf, watched, zfsView } from "./backupEntry.testsupport";
 
@@ -358,13 +359,12 @@ describe("the backups of a ZFS entry", () => {
     expect(screen.getByText("At 2 sites")).toBeTruthy();
   });
 
-  it("are restored from the panel of the tree, which a backup of the list opens", async () => {
+  it("are restored from the window a backup of the list opens, which offers the datasets of the tree", async () => {
     getTimeline.mockResolvedValue(timelineOf([zfsRun("r1")]));
     await renderPage();
     await press(screen.getByTestId("entry-backup"));
-    expect(
-      await screen.findByRole("group", { name: en["zfs.restore.title"].replace("{dataset}", ROOT) })
-    ).toBeTruthy();
+    const restore = await screen.findByRole("dialog", { name: en["entry.restore.title"].replace("{name}", ROOT) });
+    expect(within(restore).getByRole("combobox", { name: en["zfs.restore.dataset"] })).toBeTruthy();
     expect(zfsRestorePoints).toHaveBeenCalledWith(ZFS_ID, expect.anything());
   });
 });
@@ -564,19 +564,35 @@ function point(stamp: string, time: number, childSnapshot: string): ZFSRestorePo
 const EMPTIED_AT = 1_789_086_400;
 const GOOD_AT = 1_789_000_000;
 const localTime = (at: number) => new Date(at * 1000).toLocaleString();
+/** A backup as the restore window names it in its list. */
+const listed = (at: number) => formatRecent(at, "en");
+
+/** The timeline of the tree: one row per run under its stamp, which holds the
+ *  snapshot of every dataset. */
+function treeTimeline(points: ZFSRestorePoint[]) {
+  return {
+    ...timelineOf([]),
+    rows: points.map((p) => ({
+      key: p.stamp,
+      time: new Date(p.time * 1000).toISOString(),
+      places: [{ place: "local", snapshotIds: p.members.map((m) => m.snapshotId), tags: [] }],
+    })),
+  };
+}
+
+const restoreWindow = () => screen.findByRole("dialog", { name: en["entry.restore.title"].replace("{name}", ROOT) });
 
 describe("what anomaly detection knows about a ZFS entry", () => {
   beforeEach(() => {
     serve({ members: [member(), plex()] });
     getAnomalySummary.mockResolvedValue({ ok: true, summary: { enabled: true, generation: 1 } } as never);
     getAnomalyItems.mockResolvedValue({ ok: true, items: [watchedTree()] });
-    zfsRestorePoints.mockResolvedValue({
-      ok: true,
-      points: [
-        point("bombvault-20260921030000", EMPTIED_AT, "child-emptied"),
-        point("bombvault-20260920030000", GOOD_AT, "child-good"),
-      ],
-    } as never);
+    const points = [
+      point("bombvault-20260921030000", EMPTIED_AT, "child-emptied"),
+      point("bombvault-20260920030000", GOOD_AT, "child-good"),
+    ];
+    zfsRestorePoints.mockResolvedValue({ ok: true, points } as never);
+    getTimeline.mockResolvedValue(treeTimeline(points));
   });
 
   const badge = (name: string, n: number) => en["anomaly.itemBadgeAria"].replace("{name}", name).replace("{n}", String(n));
@@ -614,32 +630,36 @@ describe("what anomaly detection knows about a ZFS entry", () => {
       lastRunAt: EMPTIED_AT,
       lastGood: { runId: "r1", snapshotId: "child-good", at: GOOD_AT },
       flaggedSnapshots: ["child-emptied"],
+      details: {},
     } as unknown as AnomalyView;
     getAnomalies.mockResolvedValue({ ok: true, anomalies: [finding], nextCursor: "" });
     await renderPage(`?restore=child-good&dataset=${encodeURIComponent(CHILD)}`);
 
-    const panel = await screen.findByRole("group", { name: en["zfs.restore.title"].replace("{dataset}", ROOT) });
-    const pointField = await within(panel).findByRole("combobox", { name: en["zfs.restore.point"] });
-    expect(pointField.textContent).toContain(localTime(GOOD_AT));
-    expect(within(panel).getByRole("combobox", { name: en["zfs.restore.dataset"] }).textContent).toContain(CHILD);
+    const panel = await restoreWindow();
+    const backupField = within(panel).getByRole("combobox", { name: en["restoreWindow.backup"] });
+    expect(backupField.textContent).toContain(listed(GOOD_AT));
+    const datasetField = within(panel).getByRole("combobox", { name: en["zfs.restore.dataset"] });
+    await waitFor(() => expect(datasetField.textContent).toContain(CHILD));
     expect(within(panel).queryByText(en["anomaly.snapshotFlagged"])).toBeNull();
 
-    await press(pointField);
+    await press(backupField);
     await press(
       await screen.findByRole("option", {
-        name: new RegExp(localTime(EMPTIED_AT).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+        name: new RegExp(listed(EMPTIED_AT).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
       })
     );
     expect(await within(panel).findByText(en["anomaly.snapshotFlagged"])).toBeTruthy();
+    expect(datasetField.textContent).toContain(CHILD);
   });
 
   it("says that the linked backup is gone and opens on the nearest one", async () => {
     await renderPage(`?restore=child-pruned&at=1788990000&dataset=${encodeURIComponent(CHILD)}`);
 
-    const panel = await screen.findByRole("group", { name: en["zfs.restore.title"].replace("{dataset}", ROOT) });
-    const pointField = await within(panel).findByRole("combobox", { name: en["zfs.restore.point"] });
-    expect(pointField.textContent).toContain(localTime(GOOD_AT));
-    expect(within(panel).getByRole("combobox", { name: en["zfs.restore.dataset"] }).textContent).toContain(CHILD);
+    const panel = await restoreWindow();
+    const backupField = within(panel).getByRole("combobox", { name: en["restoreWindow.backup"] });
+    expect(backupField.textContent).toContain(listed(GOOD_AT));
+    const datasetField = within(panel).getByRole("combobox", { name: en["zfs.restore.dataset"] });
+    await waitFor(() => expect(datasetField.textContent).toContain(CHILD));
     const notice = within(panel).getByRole("status");
     expect(notice.textContent).toContain(en["restore.missingPoint"].replace("{date}", isolateLtr(localTime(1_788_990_000))));
     expect(notice.textContent).toContain(en["restore.nearestPoint"].replace("{date}", isolateLtr(localTime(GOOD_AT))));

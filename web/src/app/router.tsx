@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Layout } from "./Layout";
 import { Dashboard } from "../pages/Dashboard";
 import { Welcome } from "../pages/Welcome";
@@ -11,13 +11,19 @@ import { ZFSServer } from "../pages/ZFSServer";
 import { StoragePage } from "../pages/Storage";
 import { StorageLocationPage } from "../pages/StorageLocation";
 import { SettingsPage } from "../pages/Settings";
-import Recovery from "../pages/Recovery";
+import { Restore } from "../pages/Restore";
 import { GlyphSheet } from "../pages/Glyphs";
 import { OAuthConsent } from "../pages/OAuthConsent";
 import { ENTRY_KIND, ENTRY_KINDS, ENTRY_LIST_PATH, ENTRY_ROUTE } from "../lib/backupEntry";
 import { mcpShipped } from "../lib/mcpSwitch";
 import { I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
+
+/** Sends an address that moved to its new place and keeps what the link asked for. */
+function MovedTo({ to }: { to: string }) {
+  const { search } = useLocation();
+  return <Navigate to={`${to}${search}`} replace />;
+}
 
 export function AppRouter() {
   return (
@@ -53,7 +59,8 @@ export function AppRouter() {
               <Route path="/fleet" element={<Navigate to="/instances" replace />} />
               <Route path="/storage" element={<StoragePage />} />
               <Route path="/storage/:id" element={<StorageLocationPage />} />
-              <Route path="/recovery" element={<Recovery />} />
+              <Route path="/restore" element={<Restore />} />
+              <Route path="/recovery" element={<MovedTo to="/restore" />} />
               {/* Schedules are a Settings page; /jobs stays for existing links. */}
               <Route path="/jobs" element={<Navigate to="/settings/schedules" replace />} />
               <Route path="/settings/:page?" element={<SettingsPage />} />

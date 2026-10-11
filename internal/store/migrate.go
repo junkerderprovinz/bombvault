@@ -2913,6 +2913,14 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
   PRIMARY KEY (kind, key)
 ) WITHOUT ROWID;`,
 	},
+	{
+		// The key of another install's backups, sealed under this install's
+		// own. Without a row the install backs up under its own key.
+		version:          keyRolesMigration,
+		name:             "backup_key",
+		alreadySatisfied: tablePresent("backup_key"),
+		sql:              backupKeyTable,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3022,6 +3030,10 @@ const restoreFolderMigration = 325
 
 // declinedMigration numbers the entries nobody wants backed up, 335.
 const declinedMigration = 335
+
+// keyRolesMigration numbers the adopted backup key, 345, and the key deposits
+// a group member keeps, 346 to 348.
+const keyRolesMigration = 345
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

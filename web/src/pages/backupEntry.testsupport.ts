@@ -246,6 +246,8 @@ export const SETTINGS = {
 
 export interface EntryMocks {
   getBackupItem: Mock;
+  /** For a page that lists the entries before it opens one. */
+  listItems?: Mock;
   listContainers: Mock;
   listVMs: Mock;
   listFileSets: Mock;
@@ -278,6 +280,7 @@ export function serveEntries(mocks: EntryMocks, staged: Staged = {}): void {
     const item = items.find((i) => i.kind === kind && i.key === key);
     return item ? Promise.resolve({ ok: true, item }) : Promise.reject(new ApiError(404, "not found"));
   });
+  mocks.listItems?.mockResolvedValue({ ok: true, items, unlisted: [] });
   mocks.listContainers.mockResolvedValue({
     ok: true,
     containers: replaced(CONTAINERS, staged.containers, (a, b) => a.name === b.name),

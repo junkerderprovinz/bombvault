@@ -3,9 +3,9 @@
 // this host lacks, and offers the recreate again without them.
 import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { Run } from "../lib/api";
-import { I18nProvider, en } from "../lib/i18n";
-import { ToastProvider } from "../lib/toast";
+import type { Run } from "../../lib/api";
+import { I18nProvider, en } from "../../lib/i18n";
+import { ToastProvider } from "../../lib/toast";
 
 class NoopEventSource {
   onmessage: ((e: MessageEvent) => void) | null = null;
@@ -15,7 +15,7 @@ class NoopEventSource {
 }
 (globalThis as unknown as { EventSource: unknown }).EventSource = NoopEventSource;
 
-const fake = await vi.hoisted(async () => (await import("../lib/placement.testsupport")).createPlacementApi());
+const fake = await vi.hoisted(async () => (await import("../../lib/placement.testsupport")).createPlacementApi());
 
 let runs: Run[] = [];
 const restore = vi.fn((name: string, ...rest: unknown[]) => {
@@ -41,8 +41,8 @@ const restore = vi.fn((name: string, ...rest: unknown[]) => {
   return Promise.resolve({ ok: true, started: true });
 });
 
-vi.mock("../lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../lib/api")>();
+vi.mock("../../lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../lib/api")>();
   return {
     ...actual,
     ...fake.api,
@@ -65,9 +65,9 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-const { RestorePanel } = await import("./RestorePanel");
+const { RecreateButton } = await import("./RecreateButton");
 
-const t = ((key: string) => en[key as keyof typeof en] ?? key) as unknown as Parameters<typeof RestorePanel>[0]["t"];
+const t = ((key: string) => en[key as keyof typeof en] ?? key) as unknown as Parameters<typeof RecreateButton>[0]["t"];
 
 afterEach(() => {
   cleanup();
@@ -79,7 +79,7 @@ it("recreates again without the GPU and runtime when asked", async () => {
     render(
       <I18nProvider>
         <ToastProvider>
-          <RestorePanel name="plex" t={t} open installed={false} />
+          <RecreateButton name="plex" source="local" t={t} />
         </ToastProvider>
       </I18nProvider>,
     );

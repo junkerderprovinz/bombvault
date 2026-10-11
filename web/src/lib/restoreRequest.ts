@@ -2,6 +2,9 @@
 // on the entry's page as ?restore=<snapshot>&at=<time>, and that page opens
 // the backup with what can be done with it.
 
+import type { Run } from "./api";
+import { entryKey, entryPath, kindOfDomain } from "./backupEntry";
+
 export type RestoreRequest = {
   /** The snapshot to offer first, "" without a request. */
   snapshot: string;
@@ -23,4 +26,17 @@ export function readRestoreRequest(search: string): RestoreRequest {
     dump: params.get("dump") === "1",
     dataset: params.get("dataset") ?? "",
   };
+}
+
+/**
+ * runRestorePath is the restore link of the backup a run wrote, or null for
+ * a run that left none: one that failed, or one that was no backup.
+ */
+export function runRestorePath(run: Run): string | null {
+  const kind = kindOfDomain(run.domain);
+  const wrote = (run.kind === "backup" || run.kind === "import") && run.status === "success" && run.snapshotId !== "";
+  if (!kind || !wrote) return null;
+  const key = entryKey(kind, { name: run.target, id: run.targetId });
+  const params = new URLSearchParams({ restore: run.snapshotId, at: String(run.finishedAt ?? run.startedAt) });
+  return `${entryPath(kind, key)}?${params.toString()}`;
 }

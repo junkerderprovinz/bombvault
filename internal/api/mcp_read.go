@@ -121,6 +121,7 @@ func (h *Handler) toolGetStatus(ctx context.Context, _ *mcp.CallToolRequest) (*m
 		"waitingForIdle":    waiting,
 		"backupRunning":     h.svc.BackupInProgress(),
 		"everythingRunning": h.svc.EverythingInProgress(),
+		"backupKey":         h.svc.currentBackupKey().state,
 	}), nil
 }
 

@@ -2643,6 +2643,11 @@ body {
 @property --radius-control { syntax: '<length>'; inherits: true; initial-value: 0px; }
 @property --radius-pill { syntax: '<length>'; inherits: true; initial-value: 0px; }
 
+/* The clock of a picture that plays as one pass: it runs from 0 to 1, and
+   every part works out from it where it stands. At rest it sits near the end
+   of the pass, so a picture that does not play shows its last frame. */
+@property --glim-t { syntax: '<number>'; inherits: true; initial-value: .93; }
+
 /* The drag lift ("Reordering by dragging"). The held item floats under the
    pointer (.glim-drag-lift), the others slide aside while it passes
    (.glim-drag-shift), and on release it slides into the gap they left
@@ -3026,6 +3031,24 @@ body {
   }
   :root:not([data-motion="off"]) .glim-lock-gone {
     animation: glim-lock-gone var(--motion-scene-dur, 6s) linear infinite;
+  }
+
+  /* A picture on the clock plays one pass after the other. The emergency
+     has four stations to get through and takes half as long again. */
+  :root:not([data-motion="off"]) .glim-clock {
+    animation: glim-clock var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-clock-long {
+    animation-duration: calc(var(--motion-scene-dur, 6s) * 1.5);
+  }
+  :root:not([data-motion="off"]) .glim-rail-handle {
+    transition: top var(--motion-tab-dur, 220ms) ease-out;
+  }
+  :root:not([data-motion="off"]) .glim-rail-held .glim-rail-handle {
+    transition: none;
+  }
+  :root:not([data-motion="off"]) .glim-rail-pulse::after {
+    animation: glim-rail-pulse calc(var(--motion-ring-dur, 500ms) * 3) ease-out var(--motion-ring-dur, 500ms) 1;
   }
 
   /* The pictures in the settings. A marked pack lights up as the scan passes
@@ -3501,6 +3524,174 @@ body {
    longer than the pass of a picture that tells one. */
 .glim-dump { --dump-dur: calc(var(--motion-scene-dur, 6s) * 1.8); }
 
+/* Parts of a picture on the clock. --at is the share of the pass at which a
+   part shows or sets off, --until the share at which it goes again, and
+   --land the share at which a moving part arrives. */
+.glim-clock-show {
+  opacity: calc(
+    clamp(0, (var(--glim-t) - var(--at, 0)) * 50, 1) * clamp(0, (var(--until, .98) - var(--glim-t)) * 50, 1)
+  );
+}
+.glim-clock-wait {
+  opacity: calc(clamp(0, (var(--at, 0) - var(--glim-t)) * 50, 1) / 2);
+}
+.glim-clock-dim {
+  opacity: calc(.5 + clamp(0, (var(--glim-t) - var(--at, 0)) * 50, 1) / 2);
+}
+.glim-clock-pop {
+  scale: calc(.4 + .6 * clamp(0, (var(--glim-t) - var(--at, 0)) * 30, 1));
+}
+.glim-clock-fly {
+  --fly: clamp(0, (var(--glim-t) - var(--at, 0)) / (var(--land, 1) - var(--at, 0)), 1);
+  translate:
+    calc(var(--from-x, 0px) * (1 - var(--fly)))
+    calc(var(--from-y, 0px) * (1 - var(--fly)) - var(--motion-scene-hop, 0px) * var(--fly) * (1 - var(--fly)));
+  rotate: calc(var(--turn, 0deg) * var(--fly));
+}
+.glim-clock-grow { scale: calc(.3 + .7 * var(--fly)); }
+.glim-clock-fold { scale: 1 calc(1 - var(--fly)); }
+.glim-clock-unfold { scale: 1 var(--fly); }
+.glim-clock-ring {
+  --fly: clamp(0, (var(--glim-t) - var(--at, 0)) / (var(--land, 1) - var(--at, 0)), 1);
+  scale: calc(1 + var(--fly) / 2);
+  opacity: calc(clamp(0, (var(--glim-t) - var(--at, 0)) * 100, 1) * (1 - var(--fly)) * .6);
+}
+
+/* Where a restore puts what it brings back, one small picture per target. */
+.glim-target-box {
+  rx: calc(var(--radius-control) / 2);
+  fill: var(--carbon-surface3);
+}
+.glim-target-box-fresh {
+  fill: var(--accent-soft);
+  stroke: var(--pic);
+  stroke-width: 1.5;
+}
+.glim-target-word {
+  fill: var(--carbon-text);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+.glim-target-file {
+  fill: var(--carbon-surface);
+  stroke: var(--carbon-text-sub);
+}
+.glim-target-file-line {
+  fill: none;
+  stroke: var(--carbon-text-muted);
+}
+.glim-target-folder { fill: var(--pic); }
+.glim-target-folder-back { opacity: .5; }
+.glim-target-tray {
+  fill: none;
+  stroke: var(--carbon-text-sub);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.glim-target-zip {
+  fill: none;
+  stroke: var(--pic);
+  stroke-width: 1.6;
+}
+.glim-target-dot { fill: var(--pic); }
+.glim-target-kept { fill: var(--status-ok-solid); }
+.glim-target-tick {
+  fill: none;
+  stroke: var(--carbon-bg);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The emergency in four stations. A station that waits shows faintly what
+   it will do, and the words under the picture follow its clock. */
+.glim-rescue-station { fill: var(--carbon-surface2); }
+.glim-rescue-ring {
+  fill: none;
+  stroke: var(--pic);
+  stroke-width: 2;
+}
+.glim-rescue-track {
+  fill: none;
+  stroke: var(--carbon-text-muted);
+  stroke-opacity: .5;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 2 6;
+}
+.glim-rescue-track-lit {
+  stroke: var(--pic);
+  stroke-opacity: 1;
+  stroke-dasharray: none;
+}
+.glim-rescue-fill { fill: var(--pic); }
+.glim-rescue-cut {
+  fill: none;
+  stroke: var(--carbon-surface2);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.glim-rescue-cut-dot { fill: var(--carbon-surface2); }
+.glim-rescue-shackle {
+  fill: none;
+  stroke: var(--pic);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.glim-rescue-glyph { color: var(--accent-text); }
+.glim-rescue-glyph-wait { color: var(--carbon-text-muted); }
+.glim-rescue-ok {
+  fill: var(--status-ok-solid);
+  stroke: var(--carbon-surface);
+  stroke-width: 2;
+}
+.glim-rescue-tick {
+  fill: none;
+  stroke: var(--carbon-bg);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.glim-rescue-word {
+  --on: calc(clamp(0, (var(--glim-t) - var(--at, 0)) * 50, 1) * clamp(0, (.98 - var(--glim-t)) * 50, 1));
+  --done: calc(clamp(0, (var(--glim-t) - var(--until, 1)) * 50, 1) * clamp(0, (.98 - var(--glim-t)) * 50, 1));
+  color: color-mix(
+    in srgb,
+    var(--carbon-text-sub) calc(var(--done) * 100%),
+    color-mix(in srgb, var(--carbon-text) calc(var(--on) * 100%), var(--carbon-text-muted))
+  );
+}
+.glim-rescue-word > b {
+  background: color-mix(
+    in srgb,
+    var(--status-ok-bg) calc(var(--done) * 100%),
+    color-mix(in srgb, var(--pic) calc(var(--on) * 100%), var(--carbon-surface2))
+  );
+  color: color-mix(
+    in srgb,
+    var(--status-ok-text) calc(var(--done) * 100%),
+    color-mix(in srgb, var(--carbon-surface) calc(var(--on) * 100%), var(--carbon-text-sub))
+  );
+}
+
+/* The backups of an entry on a rail. The handle rests on the chosen one and
+   follows the pointer while it is held. */
+.glim-rail-handle {
+  box-shadow: 0 0 0 4px var(--carbon-surface), 0 2px 6px rgb(0 0 0 / .35);
+  touch-action: none;
+}
+.glim-rail-pulse::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid var(--status-ok-solid);
+  opacity: 0;
+}
+
 /* The pictures in the settings: a backup as a hundred packs, the sandbox of a
    trial restore, and what encryption leaves at a storage location. */
 .glim-pack {
@@ -3748,6 +3939,14 @@ body {
 
 @keyframes glim-scene-stream {
   to { stroke-dashoffset: -18; }
+}
+@keyframes glim-clock {
+  from { --glim-t: 0; }
+  to   { --glim-t: 1; }
+}
+@keyframes glim-rail-pulse {
+  from { opacity: .9; transform: none; }
+  to   { opacity: 0; transform: scale(2.6); }
 }
 /* A parcel waits at its source, crosses in a fifth of the pass and stays at
    the storage location until the pass ends. Movement and fade run as two

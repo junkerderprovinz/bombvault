@@ -55,7 +55,7 @@ export function destinations(settings: Settings | null, pins: NavPins): NavDesti
     { to: "/dashboard", labelKey: "nav.overview", icon: IconDashboard, count: "attention", sidebar: true, footer: false, phone: true, bar: true },
     { to: "/anomalies", labelKey: "nav.anomalies", icon: IconAnomalies, count: "anomalies", sidebar: detection, footer: false, phone: detection, bar: false },
     { to: "/backups", labelKey: "backups.title", icon: IconArchive, sidebar: true, footer: false, phone: true, bar: true },
-    { to: "/recovery", labelKey: "nav.restore", icon: IconTabRecovery, sidebar: true, footer: false, phone: true, bar: true },
+    { to: "/restore", labelKey: "nav.restore", icon: IconTabRecovery, sidebar: true, footer: false, phone: true, bar: true },
     // The two Settings pages that can be pinned to the sidebar. A phone always
     // lists the storage locations, which keeps its More sheet from ever
     // opening empty.
