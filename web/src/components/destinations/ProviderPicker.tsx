@@ -45,7 +45,7 @@ export function ProviderGroupHeading({
   tip: string;
 }) {
   return (
-    <h4 className="flex flex-wrap items-center gap-2 text-sm font-semibold text-carbon-text">
+    <h4 className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-widest text-carbon-textSub">
       {title}
       {fit && (
         <Badge tone={fit.tone} size="small">
