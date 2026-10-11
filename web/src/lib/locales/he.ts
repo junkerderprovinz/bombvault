@@ -486,8 +486,6 @@ const he: Partial<Translations> = {
   "auth.resetCodeLabel": "קוד מיומן הקונטיינר",
   "auth.resetCodeTip": "BombVault כתב קוד ליומן הקונטיינר שלו. ב-Unraid: לשונית Docker, הסמל של BombVault, ואז Logs. קוד תקף ל-10 דקות. האיפוס מכבה גם את האימות הדו-שלבי.",
   "auth.newPassword": "סיסמה חדשה",
-  "auth.resetCodeInvalid": "הקוד הזה אינו נכון",
-  "auth.resetCodeExpired": "הקוד הזה כבר אינו תקף. יש קוד חדש ביומן.",
   "auth.twoFactorOn": "פעיל. בנוסף לסיסמה נדרש קוד.",
   "auth.twoFactorOff": "כבוי. הסיסמה לבדה מספיקה לכניסה.",
   "auth.twoFactorNeedsPassword": "הגדר תחילה סיסמת כניסה.",

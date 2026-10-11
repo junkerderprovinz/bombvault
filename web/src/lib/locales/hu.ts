@@ -486,8 +486,6 @@ const hu: Partial<Translations> = {
   "auth.resetCodeLabel": "Kód a konténer naplójából",
   "auth.resetCodeTip": "A BombVault kódot írt a konténere naplójába. Unraidben: Docker fül, BombVault ikon, Logs. Egy kód 10 percig érvényes. A visszaállítás a kétlépcsős azonosítást is kikapcsolja.",
   "auth.newPassword": "Új jelszó",
-  "auth.resetCodeInvalid": "Ez a kód nem jó",
-  "auth.resetCodeExpired": "Ez a kód már nem érvényes. A naplóban van egy új.",
   "auth.twoFactorOn": "Bekapcsolva. A jelszó mellett kód is kell.",
   "auth.twoFactorOff": "Kikapcsolva. A jelszó önmagában beléptet.",
   "auth.twoFactorNeedsPassword": "Előbb állíts be belépési jelszót.",

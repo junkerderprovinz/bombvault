@@ -486,8 +486,6 @@ const zh: Partial<Translations> = {
   "auth.resetCodeLabel": "容器日志中的验证码",
   "auth.resetCodeTip": "BombVault 已将一个验证码写入它的容器日志。在 Unraid 中：Docker 标签页，BombVault 图标，Logs。验证码 10 分钟内有效。重置还会关闭两步验证。",
   "auth.newPassword": "新密码",
-  "auth.resetCodeInvalid": "该验证码不正确",
-  "auth.resetCodeExpired": "该验证码已失效。日志中有一个新的验证码。",
   "auth.twoFactorOn": "已开启。除了密码还需要验证码。",
   "auth.twoFactorOff": "已关闭。仅用密码即可登录。",
   "auth.twoFactorNeedsPassword": "请先设置登录密码。",

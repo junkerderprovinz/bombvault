@@ -1312,8 +1312,6 @@ const is: Partial<Translations> = {
   "auth.resetCodeLabel": "Kóði úr annál gámsins",
   "auth.resetCodeTip": "BombVault skrifaði kóða í annál gámsins síns. Í Unraid: flipinn Docker, BombVault-táknið, Logs. Kóði gildir í 10 mínútur. Endurstillingin slekkur líka á tveggja þátta auðkenningu.",
   "auth.newPassword": "Nýtt lykilorð",
-  "auth.resetCodeInvalid": "Þessi kóði er ekki réttur",
-  "auth.resetCodeExpired": "Þessi kóði gildir ekki lengur. Nýr kóði er í annálnum.",
   "auth.twoFactorOn": "Kveikt. Kóða þarf til viðbótar við lykilorðið.",
   "auth.twoFactorOff": "Slökkt. Lykilorðið eitt og sér skráir inn.",
   "auth.twoFactorNeedsPassword": "Settu fyrst innskráningarlykilorð.",

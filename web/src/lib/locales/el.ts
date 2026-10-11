@@ -486,8 +486,6 @@ const el: Partial<Translations> = {
   "auth.resetCodeLabel": "Κωδικός από το αρχείο καταγραφής του container",
   "auth.resetCodeTip": "Το BombVault έγραψε έναν κωδικό στο αρχείο καταγραφής του container του. Στο Unraid: καρτέλα Docker, εικονίδιο BombVault, Logs. Ο κωδικός ισχύει για 10 λεπτά. Η επαναφορά απενεργοποιεί και την ταυτοποίηση δύο παραγόντων.",
   "auth.newPassword": "Νέος κωδικός πρόσβασης",
-  "auth.resetCodeInvalid": "Αυτός ο κωδικός δεν είναι σωστός",
-  "auth.resetCodeExpired": "Αυτός ο κωδικός δεν ισχύει πλέον. Υπάρχει νέος στο αρχείο καταγραφής.",
   "auth.twoFactorOn": "Ενεργή. Εκτός από το συνθηματικό χρειάζεται και κωδικός.",
   "auth.twoFactorOff": "Ανενεργή. Μόνο το συνθηματικό αρκεί για σύνδεση.",
   "auth.twoFactorNeedsPassword": "Όρισε πρώτα συνθηματικό σύνδεσης.",

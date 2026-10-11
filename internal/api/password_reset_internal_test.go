@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -187,7 +188,7 @@ func TestAWrongResetCodeChangesNothing(t *testing.T) {
 
 	body, res := finishReset(t, h, wrongResetCode, resetNewPass)
 
-	if body["ok"] != false || body["code"] != "resetCodeInvalid" {
+	if body["ok"] != false || body["code"] != "resetCodeRejected" {
 		t.Fatalf("a wrong code must be refused as invalid: %v", body)
 	}
 	if len(res.Cookies()) != 0 {
@@ -209,7 +210,7 @@ func TestAResetCodeWorksOnce(t *testing.T) {
 
 	body, _ := finishReset(t, h, code, "another long password")
 
-	if body["ok"] != false || body["code"] != "resetCodeExpired" {
+	if body["ok"] != false || body["code"] != "resetCodeRejected" {
 		t.Fatalf("a spent code must be refused: %v", body)
 	}
 	if !signsIn(t, h, resetNewPass) {
@@ -224,7 +225,7 @@ func TestAResetCodeExpires(t *testing.T) {
 
 	body, _ := finishReset(t, h, code, resetNewPass)
 
-	if body["ok"] != false || body["code"] != "resetCodeExpired" {
+	if body["ok"] != false || body["code"] != "resetCodeRejected" {
 		t.Fatalf("an expired code must be refused: %v", body)
 	}
 	if !signsIn(t, h, "hunter2") {
@@ -286,6 +287,24 @@ func TestAWrongResetCodeCountsTowardsTheThrottle(t *testing.T) {
 
 	if res.StatusCode != http.StatusTooManyRequests {
 		t.Fatalf("status = %d, want the login throttle to answer", res.StatusCode)
+	}
+}
+
+// A caller must not learn from the answer whether a code is live.
+func TestAWrongAnExpiredAndNoResetCodeGetTheSameAnswer(t *testing.T) {
+	h, _, out := newResetHandler(t)
+	code := askForResetCode(t, h, out)
+
+	wrong, wrongRes := finishResetFrom(t, h, "192.0.2.1:1", wrongResetCode, resetNewPass)
+	h.reset.expires = time.Now().Add(-time.Second)
+	expired, expiredRes := finishResetFrom(t, h, "192.0.2.2:1", code, resetNewPass)
+	none, noneRes := finishResetFrom(t, h, "192.0.2.3:1", code, resetNewPass)
+
+	if !reflect.DeepEqual(wrong, expired) || !reflect.DeepEqual(wrong, none) {
+		t.Fatalf("answers differ:\nwrong   %v\nexpired %v\nnone    %v", wrong, expired, none)
+	}
+	if wrongRes.StatusCode != expiredRes.StatusCode || wrongRes.StatusCode != noneRes.StatusCode {
+		t.Fatalf("statuses differ: %d %d %d", wrongRes.StatusCode, expiredRes.StatusCode, noneRes.StatusCode)
 	}
 }
 

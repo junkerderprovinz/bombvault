@@ -1312,8 +1312,6 @@ const lt: Partial<Translations> = {
   "auth.resetCodeLabel": "Kodas iš konteinerio žurnalo",
   "auth.resetCodeTip": "BombVault įrašė kodą į savo konteinerio žurnalą. Unraid: skirtukas Docker, BombVault piktograma, Logs. Kodas galioja 10 minučių. Nustatymas iš naujo taip pat išjungia dviejų veiksnių autentifikavimą.",
   "auth.newPassword": "Naujas slaptažodis",
-  "auth.resetCodeInvalid": "Šis kodas neteisingas",
-  "auth.resetCodeExpired": "Šis kodas nebegalioja. Žurnale yra naujas.",
   "auth.twoFactorOn": "Įjungta. Be slaptažodžio reikia ir kodo.",
   "auth.twoFactorOff": "Išjungta. Prisijungti pakanka slaptažodžio.",
   "auth.twoFactorNeedsPassword": "Pirmiausia nustatyk prisijungimo slaptažodį.",

@@ -486,8 +486,6 @@ const tr: Partial<Translations> = {
   "auth.resetCodeLabel": "Konteyner günlüğündeki kod",
   "auth.resetCodeTip": "BombVault, konteyner günlüğüne bir kod yazdı. Unraid'de: Docker sekmesi, BombVault simgesi, Logs. Kod 10 dakika geçerlidir. Sıfırlama, iki adımlı doğrulamayı da kapatır.",
   "auth.newPassword": "Yeni parola",
-  "auth.resetCodeInvalid": "Bu kod doğru değil",
-  "auth.resetCodeExpired": "Bu kod artık geçerli değil. Günlükte yeni bir kod var.",
   "auth.twoFactorOn": "Açık. Parolanın yanı sıra bir kod gerekiyor.",
   "auth.twoFactorOff": "Kapalı. Yalnızca parola ile giriş yapılır.",
   "auth.twoFactorNeedsPassword": "Önce bir giriş parolası belirle.",

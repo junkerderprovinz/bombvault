@@ -1312,8 +1312,6 @@ const eu: Partial<Translations> = {
   "auth.resetCodeLabel": "Edukiontziaren erregistroko kodea",
   "auth.resetCodeTip": "BombVaultek kode bat idatzi du bere edukiontziaren erregistroan. Unraiden: Docker fitxa, BombVault ikonoa, Logs. Kode batek 10 minutuz balio du. Berrezartzeak bi faktoreko autentifikazioa ere desaktibatzen du.",
   "auth.newPassword": "Pasahitz berria",
-  "auth.resetCodeInvalid": "Kode hori ez da zuzena",
-  "auth.resetCodeExpired": "Kode horrek ez du balio jada. Berri bat dago erregistroan.",
   "auth.twoFactorOn": "Piztuta. Pasahitzaz gain kode bat behar da.",
   "auth.twoFactorOff": "Itzalita. Pasahitzarekin bakarrik sartzen da.",
   "auth.twoFactorNeedsPassword": "Ezarri lehenik saioa hasteko pasahitz bat.",

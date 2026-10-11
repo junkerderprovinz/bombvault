@@ -482,8 +482,6 @@ const pl: Partial<Translations> = {
   "auth.resetCodeLabel": "Kod z dziennika kontenera",
   "auth.resetCodeTip": "BombVault zapisał kod w dzienniku swojego kontenera. W Unraid: karta Docker, ikona BombVault, Logs. Kod jest ważny 10 minut. Reset wyłącza też uwierzytelnianie dwuskładnikowe.",
   "auth.newPassword": "Nowe hasło",
-  "auth.resetCodeInvalid": "Ten kod nie jest poprawny",
-  "auth.resetCodeExpired": "Ten kod już nie jest ważny. W dzienniku jest nowy.",
   "auth.twoFactorOn": "Włączone. Oprócz hasła potrzebny jest kod.",
   "auth.twoFactorOff": "Wyłączone. Samo hasło wystarczy do zalogowania.",
   "auth.twoFactorNeedsPassword": "Najpierw ustaw hasło logowania.",

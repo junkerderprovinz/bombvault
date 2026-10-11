@@ -486,8 +486,6 @@ const cs: Partial<Translations> = {
   "auth.resetCodeLabel": "Kód z logu kontejneru",
   "auth.resetCodeTip": "BombVault zapsal kód do logu svého kontejneru. V Unraidu: karta Docker, ikona BombVault, Logs. Kód platí 10 minut. Obnovení také vypne dvoufaktorové ověření.",
   "auth.newPassword": "Nové heslo",
-  "auth.resetCodeInvalid": "Tento kód není správný",
-  "auth.resetCodeExpired": "Tento kód už neplatí. V logu je nový.",
   "auth.twoFactorOn": "Zapnuto. Kromě hesla je potřeba kód.",
   "auth.twoFactorOff": "Vypnuto. K přihlášení stačí samotné heslo.",
   "auth.twoFactorNeedsPassword": "Nejprve nastav přihlašovací heslo.",

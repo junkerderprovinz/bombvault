@@ -1312,8 +1312,6 @@ const id: Partial<Translations> = {
   "auth.resetCodeLabel": "Kode dari log kontainer",
   "auth.resetCodeTip": "BombVault telah menulis kode ke log kontainernya. Di Unraid: tab Docker, ikon BombVault, Logs. Kode berlaku selama 10 menit. Pengaturan ulang juga mematikan autentikasi dua faktor.",
   "auth.newPassword": "Kata sandi baru",
-  "auth.resetCodeInvalid": "Kode itu tidak benar",
-  "auth.resetCodeExpired": "Kode itu sudah tidak berlaku. Ada kode baru di log.",
   "auth.twoFactorOn": "Aktif. Selain kata sandi diperlukan sebuah kode.",
   "auth.twoFactorOff": "Nonaktif. Kata sandi saja sudah cukup untuk masuk.",
   "auth.twoFactorNeedsPassword": "Atur kata sandi masuk terlebih dahulu.",

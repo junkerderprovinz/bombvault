@@ -62,15 +62,12 @@ export function PasswordResetForm({
         onDone();
         return;
       }
-      if (res.code === "resetCodeExpired") {
-        // The message promises a new code, so it has to be in the log first.
+      if (res.code === "resetCodeRejected") {
+        // The answer does not say whether the code expired, and the message
+        // promises a new one for that case. Asking again writes one only when
+        // none is live.
         await startPasswordReset();
-        setCode("");
-        setError(t("auth.resetCodeExpired"));
-        return;
-      }
-      if (res.code === "resetCodeInvalid") {
-        setError(t("auth.resetCodeInvalid"));
+        setError(t("auth.resetCodeRejected"));
         return;
       }
       setError(res.error ?? t("auth.saveError"));

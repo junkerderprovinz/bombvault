@@ -1312,8 +1312,6 @@ const et: Partial<Translations> = {
   "auth.resetCodeLabel": "Kood konteineri logist",
   "auth.resetCodeTip": "BombVault kirjutas koodi oma konteineri logisse. Unraidis: vahekaart Docker, BombVaulti ikoon, Logs. Kood kehtib 10 minutit. Lähtestamine lülitab välja ka kaheastmelise autentimise.",
   "auth.newPassword": "Uus parool",
-  "auth.resetCodeInvalid": "See kood ei ole õige",
-  "auth.resetCodeExpired": "See kood enam ei kehti. Logis on uus.",
   "auth.twoFactorOn": "Sees. Lisaks paroolile on vaja koodi.",
   "auth.twoFactorOff": "Väljas. Sisselogimiseks piisab paroolist.",
   "auth.twoFactorNeedsPassword": "Määra kõigepealt sisselogimisparool.",

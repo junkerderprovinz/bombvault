@@ -486,8 +486,6 @@ const vi: Partial<Translations> = {
   "auth.resetCodeLabel": "Mã từ nhật ký container",
   "auth.resetCodeTip": "BombVault đã ghi một mã vào nhật ký container của nó. Trên Unraid: thẻ Docker, biểu tượng BombVault, Logs. Mã có hiệu lực trong 10 phút. Việc đặt lại cũng tắt xác thực hai yếu tố.",
   "auth.newPassword": "Mật khẩu mới",
-  "auth.resetCodeInvalid": "Mã này không đúng",
-  "auth.resetCodeExpired": "Mã này không còn hiệu lực. Có mã mới trong nhật ký.",
   "auth.twoFactorOn": "Đang bật. Ngoài mật khẩu còn cần một mã.",
   "auth.twoFactorOff": "Đang tắt. Chỉ mật khẩu là đủ để đăng nhập.",
   "auth.twoFactorNeedsPassword": "Hãy đặt mật khẩu đăng nhập trước.",

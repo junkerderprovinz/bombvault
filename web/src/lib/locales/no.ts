@@ -483,8 +483,6 @@ const no: Partial<Translations> = {
   "auth.resetCodeLabel": "Kode fra containerloggen",
   "auth.resetCodeTip": "BombVault har skrevet en kode i containerloggen sin. I Unraid: fanen Docker, BombVault-ikonet, Logs. En kode er gyldig i 10 minutter. Tilbakestillingen slår også av tofaktorautentisering.",
   "auth.newPassword": "Nytt passord",
-  "auth.resetCodeInvalid": "Den koden er ikke riktig",
-  "auth.resetCodeExpired": "Den koden er ikke gyldig lenger. Det står en ny i loggen.",
   "auth.twoFactorOn": "På. Det kreves en kode i tillegg til passordet.",
   "auth.twoFactorOff": "Av. Passordet alene logger inn.",
   "auth.twoFactorNeedsPassword": "Sett et påloggingspassord først.",
