@@ -62,7 +62,8 @@ function useDashPlugin(t: T) {
       });
   }
 
-  useEffect(refresh, []); // eslint-disable-line react-hooks/exhaustive-deps -- status check on mount only
+  // The status is checked once, when the card mounts.
+  useEffect(refresh, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function run(op: "install" | "remove") {
     setBusy(op);
