@@ -94,8 +94,11 @@ type emergencyView struct {
 	AdoptedAt int64  `json:"adoptedAt,omitempty"`
 	// Undoable says DELETE /api/emergency would put the server back under its
 	// own key: one was taken over and no backup was written under it.
-	Undoable bool                  `json:"undoable"`
-	Session  *emergencySessionView `json:"session,omitempty"`
+	Undoable bool `json:"undoable"`
+	// Lost names what the old install had stored sealed that the settings
+	// restore could not bring over, until POST /api/emergency/finish.
+	Lost    *sealedLoss           `json:"lost,omitempty"`
+	Session *emergencySessionView `json:"session,omitempty"`
 }
 
 type emergencySessionView struct {
@@ -266,6 +269,11 @@ func (s *Service) EmergencyState() (emergencyView, error) {
 			return emergencyView{}, err
 		}
 		view.Undoable = !written
+		adopted, _, err := s.store.AdoptedKey()
+		if err != nil {
+			return emergencyView{}, err
+		}
+		view.Lost = readSealedLoss(adopted.Lost)
 	}
 	sess, err := s.currentEmergency()
 	if err != nil {
@@ -349,7 +357,11 @@ func (s *Service) AdoptEmergencyKey() error {
 	if err != nil {
 		return err
 	}
-	if err := s.store.SetAdoptedKey(enc, sess.source); err != nil {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	if err := s.store.SetAdoptedKey(enc, sess.source, settings.EncryptionEnabled); err != nil {
 		return err
 	}
 	s.forgetBackupKey()
@@ -372,10 +384,22 @@ func (s *Service) UndoAdoption() error {
 		if written {
 			return errAdoptInUse
 		}
+		adopted, _, err := s.store.AdoptedKey()
+		if err != nil {
+			return err
+		}
 		if err := s.store.ClearAdoptedKey(); err != nil {
 			return err
 		}
 		s.forgetBackupKey()
+		if before := adopted.EncryptionBefore; before != nil {
+			if _, err := s.store.MutateSettings(func(settings *store.Settings) error {
+				settings.EncryptionEnabled = *before
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
 	}
 	s.endEmergency(nil)
 	return nil
@@ -450,7 +474,7 @@ func (h *Handler) handleEmergencyFinish(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	h.svc.endEmergency(nil)
-	h.answerEmergency(w, r.Context(), "", nil)
+	h.answerEmergency(w, r.Context(), "", h.store.ClearAdoptedLoss())
 }
 
 // handleEmergencySignIns serves POST /api/emergency/sign-ins.

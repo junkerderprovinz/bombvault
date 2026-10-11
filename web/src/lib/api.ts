@@ -4249,7 +4249,7 @@ export function backupEverythingNow(): Promise<OkEnvelope & { started?: boolean 
 export function restoreConfig(
   snapshot: string,
   source?: string
-): Promise<OkEnvelope & { staged?: boolean; autoRestart?: boolean }> {
+): Promise<OkEnvelope & { staged?: boolean; autoRestart?: boolean; lost?: SealedLoss }> {
   return fetchJSON("/api/config/restore", {
     method: "POST",
     body: JSON.stringify({ snapshot, source }),
@@ -5401,13 +5401,27 @@ export interface EmergencySession {
   refusal?: EmergencyRefusal;
 }
 
+/** What the old install had stored sealed that a settings restore during an
+ *  emergency could not bring over, by kind. The person enters those again.
+ *  "peers" are the passwords, logins and tokens of paired instances. */
+export interface SealedLoss {
+  count: number;
+  kinds: Partial<
+    Record<"cloud" | "rclone" | "registry" | "notifications" | "home-assistant" | "group" | "peers" | "other", number>
+  >;
+}
+
 /** The key the backups are under and the emergency in progress. `undoable`
- *  says a key was taken over and no backup was written under it yet. */
+ *  says a key was taken over and no backup was written under it yet; undoing
+ *  also puts the encryption setting back to what it was. `lost` stays until
+ *  finishEmergency, also across the restart a settings restore ends in, and
+ *  restoreConfig answers with the same list. */
 export interface EmergencyState {
   backupKey: "own" | "adopted" | "locked";
   source?: "kit" | "typed" | "group";
   adoptedAt?: number;
   undoable: boolean;
+  lost?: SealedLoss;
   session?: EmergencySession;
 }
 

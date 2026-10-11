@@ -2921,6 +2921,12 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
 		alreadySatisfied: tablePresent("backup_key"),
 		sql:              backupKeyTable,
 	},
+	{
+		version:          keyRolesMigration + 4,
+		name:             "backup_key_notes",
+		alreadySatisfied: columnPresent("backup_key", "lost"),
+		sql:              backupKeyNotes,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3031,8 +3037,8 @@ const restoreFolderMigration = 325
 // declinedMigration numbers the entries nobody wants backed up, 335.
 const declinedMigration = 335
 
-// keyRolesMigration numbers the adopted backup key, 345, and the key deposits
-// a group member keeps, 346 to 348.
+// keyRolesMigration numbers the adopted backup key, 345 and 349, and the key
+// deposits a group member keeps, 346 to 348.
 const keyRolesMigration = 345
 
 // Migrate applies any pending forward-only migrations to db.
