@@ -770,9 +770,9 @@ async function fetchJSON<T>(
 
 /** What a route that makes or hands out key material answers a 403 with:
  *  the server has no login password, or the session is the one a paired phone
- *  got for the group's words. After the second, signing in with the password
+ *  got for the group's words. After the second, signing in at this instance
  *  (login) and sending the same request again goes through. */
-export type SecretsRefusal = "password-not-set" | "sign-in-needed";
+export type SecretsRefusal = "password-not-set" | "own-login-needed";
 
 /** fetchJSON for the routes that can answer with a SecretsRefusal: that 403
  *  comes back as the answer, with its code, and every other failure throws. */
@@ -786,7 +786,7 @@ async function fetchKeyJSON<T>(path: string, options?: RequestInit): Promise<T> 
   });
   if (res.status === 403) {
     const body = (await res.json().catch(() => null)) as { code?: string } | null;
-    if (body?.code === "password-not-set" || body?.code === "sign-in-needed") {
+    if (body?.code === "password-not-set" || body?.code === "own-login-needed") {
       return body as T;
     }
     throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
@@ -5450,7 +5450,7 @@ export function readEmergencyKey(key: string, places: string[], creds?: CloudCre
 
 /** POST /api/emergency/adopt: makes the key of the emergency the key of this
  *  server's backups and sets whether repositories carry a password. A paired
- *  phone's session gets "sign-in-needed". */
+ *  phone's session gets "own-login-needed". */
 export function adoptEmergencyKey(): Promise<EmergencyAnswer> {
   return fetchKeyJSON("/api/emergency/adopt", { method: "POST" });
 }
@@ -6249,7 +6249,7 @@ export function askKeeper(memberId: string): Promise<DepositAnswer<{ keeper?: Ke
  *  `told` is false when the member could not be reached. With the last
  *  keeper gone the recovery code is void. */
 export function withdrawKeeper(memberId: string): Promise<DepositAnswer<{ told?: boolean }>> {
-  return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "DELETE" });
+  return fetchKeyJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "DELETE" });
 }
 
 /** POST /api/group/deposit/code: replaces the recovery code and seals every
@@ -6267,7 +6267,8 @@ export function renewDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>>
 
 /** POST /api/group/deposits/releases/{id}: the keeper's person allows or
  *  refuses a request. An unknown id is a 404. Allowing answers a
- *  SecretsRefusal like askKeeper; refusing never does. */
+ *  SecretsRefusal like askKeeper; refusing answers "own-login-needed" to a
+ *  paired phone's session and goes through without a login password. */
 export function decideRelease(
   id: string,
   decision: "allow" | "refuse",
@@ -7778,7 +7779,8 @@ export function answerOAuthConsent(
   });
 }
 
-/** The answer to creating or replacing a key: the secret, shown once. */
+/** The answer to creating or replacing a key: the secret, shown once. To the
+ *  session of a paired phone the code is "own-login-needed". */
 export interface McpKeySecretResponse extends OkEnvelope {
   key?: string;
   item?: McpKeyView;
@@ -7820,7 +7822,7 @@ export function createMcpKey(
   canStartBackups: boolean,
   client: string
 ): Promise<McpKeySecretResponse> {
-  return fetchJSON("/api/mcp/keys", {
+  return fetchKeyJSON("/api/mcp/keys", {
     method: "POST",
     body: JSON.stringify({ label, canStartBackups, client }),
   });
@@ -7837,7 +7839,7 @@ export function updateMcpKey(
 }
 
 export function rotateMcpKey(id: string): Promise<McpKeySecretResponse> {
-  return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}/rotate`, { method: "POST" });
+  return fetchKeyJSON(`/api/mcp/keys/${encodeURIComponent(id)}/rotate`, { method: "POST" });
 }
 
 export function revokeMcpKey(id: string): Promise<OkEnvelope> {
@@ -7872,7 +7874,7 @@ export function listApiTokens(): Promise<ApiTokensResponse> {
 }
 
 export function createApiToken(label: string, canStartBackups: boolean): Promise<McpKeySecretResponse> {
-  return fetchJSON("/api/tokens", {
+  return fetchKeyJSON("/api/tokens", {
     method: "POST",
     body: JSON.stringify({ label, canStartBackups }),
   });
@@ -7889,7 +7891,7 @@ export function updateApiToken(
 }
 
 export function rotateApiToken(id: string): Promise<McpKeySecretResponse> {
-  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}/rotate`, { method: "POST" });
+  return fetchKeyJSON(`/api/tokens/${encodeURIComponent(id)}/rotate`, { method: "POST" });
 }
 
 export function revokeApiToken(id: string): Promise<OkEnvelope> {

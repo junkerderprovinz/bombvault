@@ -64,7 +64,7 @@ func (h *Handler) handleCreateAPIToken(w http.ResponseWriter, r *http.Request) {
 		Label           string `json:"label"`
 		CanStartBackups bool   `json:"canStartBackups"`
 	}
-	if !decodeBody(w, r, &body) {
+	if !decodeBody(w, r, &body) || !h.requireSignIn(w, r, "creating an API token") {
 		return
 	}
 	if !h.mcpKeysAllowedFrom(r) {

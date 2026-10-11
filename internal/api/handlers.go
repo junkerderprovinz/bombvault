@@ -4413,15 +4413,16 @@ func (h *Handler) requireAuthForSecrets(w http.ResponseWriter, r *http.Request, 
 }
 
 // The codes a 403 carries when a request needs more than its session: a login
-// password has to be set first, or the person has to sign in with it.
+// password has to be set first, or the person has to sign in themselves.
 const (
-	codeNoPassword   = "password-not-set"
-	codeSignInNeeded = "sign-in-needed"
+	codeNoPassword     = "password-not-set"
+	codeOwnLoginNeeded = "own-login-needed"
 )
 
 // requireSignIn refuses the session of a paired phone where a password is
 // set. Signing in through POST /api/login and sending the request again is
-// how the caller gets past it.
+// how the caller gets past it. Without a password there is no sign-in to
+// tell apart, and it lets every request through.
 func (h *Handler) requireSignIn(w http.ResponseWriter, r *http.Request, action string) bool {
 	hash, epoch, on := h.authEnabled()
 	if !on {
@@ -4433,8 +4434,8 @@ func (h *Handler) requireSignIn(w http.ResponseWriter, r *http.Request, action s
 	}
 	writeJSON(w, http.StatusForbidden, map[string]any{
 		"ok":    false,
-		"error": "sign in with the password before " + action,
-		"code":  codeSignInNeeded,
+		"error": "sign in at this instance's web interface before " + action,
+		"code":  codeOwnLoginNeeded,
 	})
 	return false
 }

@@ -141,10 +141,10 @@ func TestTheTwelveWordsAloneNeitherAllowAReleaseNorReachTheKit(t *testing.T) {
 			t.Fatalf("the paired session reads the page with %d", code)
 		}
 		code, out := attic.do(t, http.MethodPost, "/api/group/deposits/releases/"+waiting[0].ID, map[string]any{"decision": "allow"})
-		if code != http.StatusForbidden || out["code"] != codeSignInNeeded {
+		if code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
 			t.Fatalf("allow with the paired session: %d %v", code, out)
 		}
-		if code, out := attic.do(t, http.MethodGet, "/api/recovery-kit", nil); code != http.StatusForbidden || out["code"] != codeSignInNeeded {
+		if code, out := attic.do(t, http.MethodGet, "/api/recovery-kit", nil); code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
 			t.Fatalf("the kit with the paired session: %d %v", code, out)
 		}
 	})
@@ -181,13 +181,19 @@ func TestAPairedSessionOpensThePagesAndStopsAtKeysAndTheLogin(t *testing.T) {
 			{http.MethodPost, "/api/auth/totp/setup", map[string]any{}},
 			{http.MethodPost, "/api/auth/passkey/register/begin", map[string]any{}},
 			{http.MethodPut, "/api/group/members/" + tower.id(t) + "/roles/keeper", map[string]any{}},
+			{http.MethodDelete, "/api/group/members/" + tower.id(t) + "/roles/keeper", map[string]any{}},
+			{http.MethodPost, "/api/group/deposits/releases/any", map[string]any{"decision": "refuse"}},
+			{http.MethodPost, "/api/tokens", map[string]any{"label": "mine"}},
+			{http.MethodPost, "/api/mcp/keys", map[string]any{"label": "mine"}},
+			{http.MethodPost, "/api/tokens/0123456789abcdef0123456789abcdef/rotate", map[string]any{}},
+			{http.MethodPost, "/api/mcp/keys/0123456789abcdef0123456789abcdef/rotate", map[string]any{}},
 			{http.MethodPost, "/api/group/deposit/code", map[string]any{}},
 			{http.MethodPost, "/api/emergency/adopt", map[string]any{}},
 			{http.MethodPost, "/api/emergency/sign-ins", map[string]any{}},
 			{http.MethodDelete, "/api/emergency", map[string]any{}},
 		} {
 			code, out := attic.do(t, route.method, route.path, route.body)
-			if code != http.StatusForbidden || out["code"] != codeSignInNeeded {
+			if code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
 				t.Errorf("%s %s with a paired session: %d %v", route.method, route.path, code, out)
 			}
 		}
@@ -199,7 +205,7 @@ func TestAPairedSessionOpensThePagesAndStopsAtKeysAndTheLogin(t *testing.T) {
 	if !secret.VerifyPassword(attic.appKey, testPassword, settings.AuthPasswordHash) {
 		t.Fatal("the password changed")
 	}
-	if code, out := attic.do(t, http.MethodPost, "/api/group/deposit/code", map[string]any{}); code != http.StatusOK || out["code"] == codeSignInNeeded {
+	if code, out := attic.do(t, http.MethodPost, "/api/group/deposit/code", map[string]any{}); code != http.StatusOK || out["code"] == codeOwnLoginNeeded {
 		t.Fatalf("a signed-in session is asked to sign in: %d %v", code, out)
 	}
 }

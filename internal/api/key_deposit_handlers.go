@@ -234,7 +234,7 @@ func (h *Handler) askKeeper(w http.ResponseWriter, r *http.Request) {
 
 // withdrawKeeper serves DELETE /api/group/members/{id}/roles/keeper.
 func (h *Handler) withdrawKeeper(w http.ResponseWriter, r *http.Request) {
-	if !crossOriginGuard(w, r) {
+	if !crossOriginGuard(w, r) || !h.requireSignIn(w, r, "taking a deposit back") {
 		return
 	}
 	told, err := h.svc.WithdrawDeposit(r.Context(), r.PathValue("id"))
@@ -273,8 +273,9 @@ func (h *Handler) handleRenewDeposits(w http.ResponseWriter, r *http.Request) {
 	h.handleListDeposits(w, r)
 }
 
-// handleDecideRelease allows or refuses a request for a deposit. Allowing
-// hands key material out and takes a signed-in person; refusing does not.
+// handleDecideRelease allows or refuses a request for a deposit. Neither is
+// for the session of a paired phone, and allowing, which hands key material
+// out, is for nobody on a server without a login password.
 // POST /api/group/deposits/releases/{id}
 func (h *Handler) handleDecideRelease(w http.ResponseWriter, r *http.Request) {
 	var body struct {
@@ -288,6 +289,9 @@ func (h *Handler) handleDecideRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if body.Decision == "allow" && !h.requireAuthForSecrets(w, r, "allowing a deposit to be handed out") {
+		return
+	}
+	if !h.requireSignIn(w, r, "answering a request for a deposit") {
 		return
 	}
 	req, err := h.svc.DecideRelease(r.Context(), r.PathValue("id"), body.Decision == "allow")

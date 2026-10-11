@@ -193,11 +193,13 @@ func (h *Handler) openConsent(session, ticket string, now time.Time) (consentTic
 }
 
 // operatorSession returns the session cookie of a signed-in operator. authGate
-// has checked it already; the value is what a consent ticket is bound to.
+// has checked it already; the value is what a consent ticket is bound to. The
+// session of a paired phone is none: its consent would hand out a sign-in
+// that outlives it.
 func (h *Handler) operatorSession(r *http.Request) (string, bool) {
 	hash, epoch, on := h.authEnabled()
 	c, err := h.sessionCookie(r)
-	if !on || err != nil || !secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value) {
+	if !on || err != nil || secret.PairedSessionToken(c.Value) || !secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value) {
 		return "", false
 	}
 	return c.Value, true
