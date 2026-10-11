@@ -23,7 +23,7 @@ const (
 	backupKeyLocked = "locked"
 )
 
-var errBackupKeyLocked = errors.New("the key of the backups this server took over does not open, because APP_KEY changed after it was adopted. Upload the recovery kit again under Settings, Restore, or set APP_KEY back to what it was")
+var errBackupKeyLocked = errors.New("the key of the backups this server took over does not open, because APP_KEY changed after it was adopted. Upload the recovery kit again on the Restore page under Emergency, or set APP_KEY back to what it was")
 
 // lockedPassword stands in for the restic password while the backup key is
 // locked. It opens no repository, so nothing is read or written under the

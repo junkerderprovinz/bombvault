@@ -214,3 +214,25 @@ func TestASettingsRestoreBelongsToAnEmergencyOnlyWhenItNamesIt(t *testing.T) {
 		t.Fatalf("a restore that names the emergency: %v", err)
 	}
 }
+
+func TestARefusedKeyRunKeepsItsCodeForThePage(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.emergency("POST", "/api/emergency/read", map[string]any{"kit": "not a kit at all"})
+	f.emergency("POST", "/api/emergency/adopt", map[string]any{"session": "gone"})
+	rows, err := f.db.Query(`SELECT kind, coalesce(error, '') FROM runs WHERE target_id = ? AND status = 'failed' ORDER BY rowid`, store.KeyTargetID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close() //nolint:errcheck // test query
+	var got []string
+	for rows.Next() {
+		var kind, why string
+		if err := rows.Scan(&kind, &why); err != nil {
+			t.Fatal(err)
+		}
+		got = append(got, kind+" "+why)
+	}
+	if strings.Join(got, ",") != "keyread not-a-kit,keyadopt emergency-ended" {
+		t.Fatalf("the refused runs read %v", got)
+	}
+}

@@ -123,7 +123,7 @@ func (s *Service) RecordKeyCheck() error {
 	return s.store.SetKeyCheck(secret.KeyCheck(s.cfg.AppKey))
 }
 
-var errSettingsOtherKey = errors.New("these settings were sealed with the APP_KEY of another server, which its recovery kit names. Start the emergency with that kit under Settings, Restore, then restore the settings again")
+var errSettingsOtherKey = errors.New("these settings were sealed with the APP_KEY of another server, which its recovery kit names. Start the emergency with that kit on the Restore page under Emergency, then restore the settings again")
 
 // takeOverStagedSettings makes a staged settings database usable under this
 // server's APP_KEY before the next boot swaps it in.

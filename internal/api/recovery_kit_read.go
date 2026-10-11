@@ -305,24 +305,31 @@ func foreignKeyOf(typed, kitText, identity string) (string, error) {
 	return kit.appKey, nil
 }
 
-func kitFail(w http.ResponseWriter, err error) {
-	code := ""
+// kitCode is the code a refusal to read a kit answers with, empty for an
+// error that is none.
+func kitCode(err error) string {
 	switch {
 	case errors.Is(err, errKitSealed):
-		code = "kit-sealed"
+		return "kit-sealed"
 	case errors.Is(err, errNotAKit):
-		code = "not-a-kit"
+		return "not-a-kit"
 	case errors.Is(err, errKitKeyBroken):
-		code = "kit-key-broken"
+		return "kit-key-broken"
 	case errors.Is(err, errKitHasNoKey):
-		code = "kit-no-key"
+		return "kit-no-key"
 	case errors.Is(err, errKitAmbiguous):
-		code = "kit-ambiguous"
+		return "kit-ambiguous"
 	case errors.Is(err, errKitIdentity):
-		code = "kit-identity"
+		return "kit-identity"
 	case errors.Is(err, errKitNotForIdentity):
-		code = "kit-not-for-identity"
-	default:
+		return "kit-not-for-identity"
+	}
+	return ""
+}
+
+func kitFail(w http.ResponseWriter, err error) {
+	code := kitCode(err)
+	if code == "" {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

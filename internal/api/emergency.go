@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"log"
@@ -45,7 +46,7 @@ const (
 
 var (
 	errNoEmergency      = errors.New("the emergency has ended or was never started. Show the key again")
-	errAdoptOwnBackups  = errors.New("this server has backups of its own, and taking over another key would leave them unreadable. To read the old backups without taking them over, open their folder under Settings, Restore")
+	errAdoptOwnBackups  = errors.New("this server has backups of its own, and taking over another key would leave them unreadable. To read the old backups without taking them over, open them from the Restore page")
 	errAdoptSameKey     = errors.New("this server already backs up under that key, so there is nothing to take over")
 	errAdoptNothingRead = errors.New("the key opens none of the places it was tried on, so it was not taken over")
 	errAdoptInUse       = errors.New("backups were written under the key that was taken over, so it stays")
@@ -166,13 +167,20 @@ func emergencyCode(err error) string {
 	return ""
 }
 
+// keyRefusalCode is the code a refusal of a key route answers with, empty for
+// an error that has none.
+func keyRefusalCode(err error) string {
+	return cmp.Or(emergencyCode(err), depositCode(err), kitCode(err))
+}
+
 // keyEvent writes one line about a key into the activity log, as a run of its
 // own kind on a target of its own, and into the server log. It carries what
-// happened and why it failed, never a key.
+// happened and why it failed, never a key. A refusal with a code is stored as
+// the code, so that the page says it in the reader's language.
 func (s *Service) keyEvent(ctx context.Context, kind string, err error) {
 	status, why := "success", ""
 	if err != nil {
-		status, why = "failed", truncateRunErr(err)
+		status, why = "failed", cmp.Or(keyRefusalCode(err), truncateRunErr(err))
 		log.Printf("api: %s refused: %s", kind, scrubError(err)) //nolint:gosec // G706: kind is a fixed literal and the error scrubbed
 	} else {
 		log.Printf("api: %s", kind) //nolint:gosec // G706: kind is a fixed literal
