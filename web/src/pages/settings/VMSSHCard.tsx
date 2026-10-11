@@ -73,7 +73,7 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
       <SubCard title={t("settings.widgetSetup")}>
         <ol className="flex list-decimal flex-col gap-2 ps-5 text-sm text-carbon-text">
           <li>
-            <span className="inline-flex flex-wrap items-center gap-2">
+            <span className="flex flex-wrap items-center gap-2">
               {t("vm.ssh.stepCopy")}
               <Button
                 label={t("vm.ssh.copyCmd")}
@@ -82,6 +82,7 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
                 onClick={() => void copy(authorizeCommand(pub))}
                 disabled={!pub}
                 hueIndex={hueIndex}
+                className="glim-btn-wrap"
               />
             </span>
           </li>
@@ -89,9 +90,16 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
           <li>{t("vm.ssh.stepPaste")}</li>
           <li>
             <VerdictLine verdict={test.verdict} />
-            <span className="inline-flex flex-wrap items-center gap-2">
+            <span className="flex flex-wrap items-center gap-2">
               {t("vm.ssh.stepTest")}
-              <TestButton label={t("vm.ssh.test")} labelKey="vm.ssh.test" test={test} onClick={handleTest} hueIndex={hueIndex} />
+              <TestButton
+                label={t("vm.ssh.test")}
+                labelKey="vm.ssh.test"
+                test={test}
+                onClick={handleTest}
+                hueIndex={hueIndex}
+                className="glim-btn-wrap"
+              />
             </span>
           </li>
         </ol>
@@ -100,6 +108,7 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
             label={t("vm.ssh.fullGuide")}
             labelKey="vm.ssh.fullGuide"
             glyph={<IconInfo />}
+            className="glim-btn-wrap"
             onClick={() => window.open(GUIDE_URL, "_blank", "noopener,noreferrer")}
           />
         </div>
