@@ -4185,6 +4185,8 @@ const ro: Partial<Translations> = {
   "firstSteps.sections": "Alege secțiunile",
   "firstSteps.sectionsSub": "Ce se copiază",
   "firstSteps.sectionsHint": "Activează ce trebuie să copieze BombVault.",
+  "firstSteps.choose": "Alege",
+  "firstSteps.chooseHint": "Deschide lista acestor intrări, unde „{action}” exclude una.",
   "firstSteps.nightly": "Secțiunile activate aici rulează în fiecare noapte, iar acest lucru îl poți schimba în {where}.",
   "firstSteps.locationSub": "Unde ajung copiile",
   "firstSteps.locationHint": "Unde ajung copiile de rezervă. Cel mai sigur este o a doua destinație în afara locului, de exemplu un Storage Box sau Backblaze B2.",

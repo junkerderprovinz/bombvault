@@ -4190,6 +4190,8 @@ const ms: Partial<Translations> = {
   "firstSteps.sections": "Pilih bahagian",
   "firstSteps.sectionsSub": "Apa yang disandarkan",
   "firstSteps.sectionsHint": "Hidupkan apa yang perlu disandarkan oleh BombVault.",
+  "firstSteps.choose": "Pilih",
+  "firstSteps.chooseHint": "Membuka senarai entri ini, tempat \"{action}\" mengecualikan satu.",
   "firstSteps.nightly": "Bahagian yang dihidupkan di sini dijalankan setiap malam, dan anda boleh mengubahnya di {where}.",
   "firstSteps.locationSub": "Ke mana sandaran dihantar",
   "firstSteps.locationHint": "Ke mana sandaran dihantar. Yang paling selamat ialah destinasi kedua di luar premis, seperti Storage Box atau Backblaze B2.",

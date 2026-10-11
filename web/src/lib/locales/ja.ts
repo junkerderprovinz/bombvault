@@ -4173,6 +4173,8 @@ const ja: Partial<Translations> = {
   "firstSteps.sections": "対象を選ぶ",
   "firstSteps.sectionsSub": "バックアップするもの",
   "firstSteps.sectionsHint": "BombVault にバックアップさせるものをオンにします。",
+  "firstSteps.choose": "選ぶ",
+  "firstSteps.chooseHint": "これらの項目の一覧を開きます。「{action}」で1件を除外できます。",
   "firstSteps.nightly": "ここでオンにした対象は毎晩実行されます。変更は{where}で行えます。",
   "firstSteps.locationSub": "バックアップの保存先",
   "firstSteps.locationHint": "バックアップの保存先です。外部に 2 つ目の保存先を用意すると安全です。Storage Box や Backblaze B2 などが使えます。",

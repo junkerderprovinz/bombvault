@@ -4190,6 +4190,8 @@ const ca: Partial<Translations> = {
   "firstSteps.sections": "Tria les seccions",
   "firstSteps.sectionsSub": "De què es fa còpia",
   "firstSteps.sectionsHint": "Activa el que BombVault ha de copiar.",
+  "firstSteps.choose": "Tria",
+  "firstSteps.chooseHint": "Obre la llista d'aquestes entrades, on «{action}» n'exclou una.",
   "firstSteps.nightly": "Les seccions activades aquí s'executen cada nit, i ho pots canviar a {where}.",
   "firstSteps.locationSub": "On van les còpies",
   "firstSteps.locationHint": "On van les còpies de seguretat. El més segur és una segona destinació fora de casa, com una Storage Box o Backblaze B2.",

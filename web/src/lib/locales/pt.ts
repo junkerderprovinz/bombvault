@@ -4182,6 +4182,8 @@ const pt: Partial<Translations> = {
   "firstSteps.sections": "Escolhe as secções",
   "firstSteps.sectionsSub": "De que se faz backup",
   "firstSteps.sectionsHint": "Ativa aquilo de que o BombVault deve fazer backup.",
+  "firstSteps.choose": "Escolher",
+  "firstSteps.chooseHint": "Abre a lista destas entradas, onde «{action}» deixa uma de fora.",
   "firstSteps.nightly": "As secções ativadas aqui são executadas todas as noites, e podes alterá-lo em {where}.",
   "firstSteps.locationSub": "Para onde vão os backups",
   "firstSteps.locationHint": "Para onde vão os backups. O mais seguro é um segundo destino fora de casa, como uma Storage Box ou o Backblaze B2.",

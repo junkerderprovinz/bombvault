@@ -4177,6 +4177,8 @@ const uk: Partial<Translations> = {
   "firstSteps.sections": "Обери розділи",
   "firstSteps.sectionsSub": "Що копіюється",
   "firstSteps.sectionsHint": "Увімкни те, що BombVault має копіювати.",
+  "firstSteps.choose": "Обрати",
+  "firstSteps.chooseHint": "Відкриває список цих записів, де «{action}» виключає один.",
   "firstSteps.nightly": "Увімкнені тут розділи виконуються щоночі, а змінити це можна в {where}.",
   "firstSteps.locationSub": "Куди потрапляють копії",
   "firstSteps.locationHint": "Куди потрапляють резервні копії. Найнадійніше мати друге місце призначення поза домом, наприклад Storage Box або Backblaze B2.",

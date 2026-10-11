@@ -4190,6 +4190,8 @@ const lv: Partial<Translations> = {
   "firstSteps.sections": "Izvēlies sadaļas",
   "firstSteps.sectionsSub": "Kas tiek kopēts",
   "firstSteps.sectionsHint": "Ieslēdz to, ko BombVault jākopē.",
+  "firstSteps.choose": "Izvēlēties",
+  "firstSteps.chooseHint": "Atver šo ierakstu sarakstu, kurā „{action}” vienu izlaiž.",
   "firstSteps.nightly": "Šeit ieslēgtās sadaļas darbojas katru nakti, un to vari mainīt sadaļā {where}.",
   "firstSteps.locationSub": "Kurp iet rezerves kopijas",
   "firstSteps.locationHint": "Kurp iet rezerves kopijas. Drošākais ir otrs mērķis ārpus mājām, piemēram, Storage Box vai Backblaze B2.",

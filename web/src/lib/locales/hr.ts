@@ -4190,6 +4190,8 @@ const hr: Partial<Translations> = {
   "firstSteps.sections": "Odaberite odjeljke",
   "firstSteps.sectionsSub": "Što se sigurnosno kopira",
   "firstSteps.sectionsHint": "Uključite ono što BombVault treba sigurnosno kopirati.",
+  "firstSteps.choose": "Odaberi",
+  "firstSteps.chooseHint": "Otvara popis ovih stavki, gdje „{action}” jednu izostavlja.",
   "firstSteps.nightly": "Odjeljci uključeni ovdje izvode se svake noći, a to možete promijeniti u {where}.",
   "firstSteps.locationSub": "Kamo idu sigurnosne kopije",
   "firstSteps.locationHint": "Kamo idu sigurnosne kopije. Najsigurnije je drugo odredište izvan kuće, na primjer Storage Box ili Backblaze B2.",

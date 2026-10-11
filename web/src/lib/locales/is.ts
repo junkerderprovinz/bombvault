@@ -4190,6 +4190,8 @@ const is: Partial<Translations> = {
   "firstSteps.sections": "Veldu svæði",
   "firstSteps.sectionsSub": "Hvað er afritað",
   "firstSteps.sectionsHint": "Kveiktu á því sem BombVault á að afrita.",
+  "firstSteps.choose": "Velja",
+  "firstSteps.chooseHint": "Opnar listann yfir þessar færslur, þar sem „{action}“ sleppir einni.",
   "firstSteps.nightly": "Svæðin sem kveikt er á hér keyra á hverri nóttu og þú getur breytt því undir {where}.",
   "firstSteps.locationSub": "Hvert afritin fara",
   "firstSteps.locationHint": "Hvert afritin fara. Öruggast er annar áfangastaður utan heimilisins, til dæmis Storage Box eða Backblaze B2.",

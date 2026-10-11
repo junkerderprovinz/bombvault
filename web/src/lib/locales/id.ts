@@ -4190,6 +4190,8 @@ const id: Partial<Translations> = {
   "firstSteps.sections": "Pilih bagian",
   "firstSteps.sectionsSub": "Apa yang dicadangkan",
   "firstSteps.sectionsHint": "Aktifkan apa yang harus dicadangkan BombVault.",
+  "firstSteps.choose": "Pilih",
+  "firstSteps.chooseHint": "Membuka daftar entri ini, tempat \"{action}\" mengecualikan salah satunya.",
   "firstSteps.nightly": "Bagian yang diaktifkan di sini berjalan setiap malam, dan Anda dapat mengubahnya di {where}.",
   "firstSteps.locationSub": "Ke mana cadangan disimpan",
   "firstSteps.locationHint": "Ke mana cadangan disimpan. Yang paling aman adalah tujuan kedua di luar lokasi, seperti Storage Box atau Backblaze B2.",

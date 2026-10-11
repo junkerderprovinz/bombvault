@@ -4173,6 +4173,8 @@ const zh: Partial<Translations> = {
   "firstSteps.sections": "选择板块",
   "firstSteps.sectionsSub": "备份哪些内容",
   "firstSteps.sectionsHint": "打开希望 BombVault 备份的内容。",
+  "firstSteps.choose": "选择",
+  "firstSteps.chooseHint": "打开这些条目的列表，其中“{action}”可排除其中一个。",
   "firstSteps.nightly": "在这里打开的板块会每晚运行，你可以在 {where} 中更改。",
   "firstSteps.locationSub": "备份存放的位置",
   "firstSteps.locationHint": "备份存放的位置。最安全的做法是在异地再设一个目标，例如 Storage Box 或 Backblaze B2。",

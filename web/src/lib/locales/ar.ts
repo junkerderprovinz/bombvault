@@ -4185,6 +4185,8 @@ const ar: Partial<Translations> = {
   "firstSteps.sections": "اختر الأقسام",
   "firstSteps.sectionsSub": "ما الذي سيُنسخ احتياطيًا",
   "firstSteps.sectionsHint": "فعّل ما تريد أن ينسخه BombVault احتياطيًا.",
+  "firstSteps.choose": "اختيار",
+  "firstSteps.chooseHint": "يفتح قائمة هذه العناصر، حيث يستبعد «{action}» عنصرًا واحدًا.",
   "firstSteps.nightly": "الأقسام المفعّلة هنا تعمل كل ليلة، ويمكنك تغيير ذلك من {where}.",
   "firstSteps.locationSub": "وجهة النسخ الاحتياطية",
   "firstSteps.locationHint": "إلى أين تذهب النسخ الاحتياطية. الأكثر أمانًا وجهة ثانية خارج موقعك، مثل Storage Box أو Backblaze B2.",

@@ -4190,6 +4190,8 @@ const eu: Partial<Translations> = {
   "firstSteps.sections": "Aukeratu atalak",
   "firstSteps.sectionsSub": "Zer babeskopiatzen den",
   "firstSteps.sectionsHint": "Aktibatu BombVault-ek zer babeskopiatu behar duen.",
+  "firstSteps.choose": "Aukeratu",
+  "firstSteps.chooseHint": "Sarrera hauen zerrenda irekitzen du; han «{action}» aukerak bat kanpoan uzten du.",
   "firstSteps.nightly": "Hemen aktibatutako atalak gauero exekutatzen dira, eta {where} atalean alda dezakezu.",
   "firstSteps.locationSub": "Babeskopiak nora doazen",
   "firstSteps.locationHint": "Babeskopiak nora doazen. Seguruena kanpoko bigarren helmuga bat da, adibidez Storage Box edo Backblaze B2.",

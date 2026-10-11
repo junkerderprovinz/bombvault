@@ -4190,6 +4190,8 @@ const et: Partial<Translations> = {
   "firstSteps.sections": "Vali jaotised",
   "firstSteps.sectionsSub": "Mida varundatakse",
   "firstSteps.sectionsHint": "Lülita sisse, mida BombVault peab varundama.",
+  "firstSteps.choose": "Vali",
+  "firstSteps.chooseHint": "Avab nende kirjete loendi, kus „{action}“ jätab ühe välja.",
   "firstSteps.nightly": "Siin sisse lülitatud jaotised töötavad iga öö ja seda saad muuta kohas {where}.",
   "firstSteps.locationSub": "Kuhu varundused lähevad",
   "firstSteps.locationHint": "Kuhu varundused lähevad. Kõige turvalisem on teine sihtkoht kodust väljas, näiteks Storage Box või Backblaze B2.",
