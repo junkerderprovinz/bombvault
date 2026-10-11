@@ -53,7 +53,7 @@ func newPasswordReset() (passwordReset, error) {
 // off like the ready line, so it stands out between the timestamped lines of a
 // busy log.
 func printResetCode(w io.Writer, code string) {
-	fmt.Fprintf(w, "\n  \033[1;33m▶ PASSWORD RESET CODE: %s-%s\033[0m\n"+
+	_, _ = fmt.Fprintf(w, "\n  \033[1;33m▶ PASSWORD RESET CODE: %s-%s\033[0m\n"+
 		"    Valid for %d minutes. Enter it on the login page.\n"+
 		"    If nobody here asked for a reset, ignore this. The password is unchanged.\n\n",
 		code[:4], code[4:], int(resetCodeTTL.Minutes()))
