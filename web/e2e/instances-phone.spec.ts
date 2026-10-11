@@ -1,6 +1,7 @@
 // The Instances page at phone width and on the desktop, staged at the route
 // layer with every module switched on (a fresh harness database has them off
-// and lists nothing). On the phones: the 24px rhythm, and with every remove
+// and lists nothing). The picture and the cards stand on the page, with no
+// card around them. On the phones: the 24px rhythm, and with every remove
 // armed and an instance's window opened with everything in it, no pan, no
 // control past the viewport or its card, no text cut short and no stray
 // backtick, in the net picture, the grid, the window, its dialogs and the
@@ -558,6 +559,26 @@ async function expectDialogFits(page: Page, title: string | Locator, options?: {
   await dialog.evaluate((el) => el.removeAttribute("data-probe"));
 }
 
+/** The cards and the picture above them stand on the page: none has a card
+ *  around it, and each is as wide as the page's own column lets it be. */
+async function expectOnPage(page: Page): Promise<void> {
+  const found = await page.evaluate(() => {
+    const title = document.querySelector("#bv-main h1")!.getBoundingClientRect();
+    const cards = [...document.querySelectorAll<HTMLElement>("#bv-main [data-instance]")];
+    const picture = document.querySelector<HTMLElement>('#bv-main [data-testid="net-picture"]')?.closest<HTMLElement>(".rounded-card");
+    const lefts = cards.map((el) => Math.round(el.getBoundingClientRect().left));
+    return {
+      framed: cards.filter((el) => el.parentElement?.closest(".rounded-card")).length,
+      pictureFramed: Boolean(picture?.parentElement?.closest(".rounded-card")),
+      inset: Math.round(Math.min(...lefts) - title.left),
+      pictureInset: picture ? Math.round(picture.getBoundingClientRect().left - title.left) : 0,
+    };
+  });
+  expect(found, "a card stands around the cards or the picture").toMatchObject({ framed: 0, pictureFramed: false });
+  expect(Math.abs(found.inset), "the cards are set in from the page's edge").toBeLessThanOrEqual(1);
+  expect(Math.abs(found.pictureInset), "the picture is set in from the page's edge").toBeLessThanOrEqual(1);
+}
+
 const pageGap = (page: Page) =>
   page
     .getByRole("heading", { level: 1 })
@@ -586,6 +607,7 @@ for (const width of [320, 360]) {
 
     expect(await pageGap(page)).toBe("24px");
     await expectFits(page, "#bv-main");
+    await expectOnPage(page);
     // The inventory lists each source with its date and size in view, and not
     // as a table whose last columns scroll out of the card.
     await expect(page.locator("#bv-main table")).toHaveCount(0);
@@ -731,6 +753,7 @@ for (const width of [320, 360]) {
     await expect(page.getByRole("button", { name: "Instanz koppeln" })).toHaveCount(1);
     expect(await pageGap(page)).toBe("24px");
     await expectFits(page, "#bv-main");
+    await expectOnPage(page);
     await page.getByRole("button", { name: "Instanz koppeln" }).click();
     await expect(page).toHaveURL(/\/settings\/pairing$/);
   });
@@ -744,6 +767,7 @@ test("the grid on the desktop keeps the 40px rhythm and cards of one size", asyn
 
   expect(await pageGap(page)).toBe("40px");
   await expectFits(page, "#bv-main", { desktop: true });
+  await expectOnPage(page);
 
   const boxes = await page.locator("#bv-main [data-instance]").evaluateAll((els) =>
     els.map((el) => {

@@ -1,7 +1,9 @@
 // Instances shows the pairing group: a picture of who does what for whom,
 // then a grid of cards with this server first, every paired instance and
-// every ZFS server reached over SSH. A card's tiles switch what the instance
-// does for this server, and its Details window holds everything else.
+// every ZFS server reached over SSH. The picture and the cards stand on the
+// page itself, since a card around them would frame each of them twice. A
+// card's tiles switch what the instance does for this server, and its Details
+// window holds everything else.
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -284,6 +286,7 @@ export function Instances() {
   const servers = shown.filter((i) => !i.app);
   const phones = shown.filter((i) => i.app);
   const zfs = modules?.zfs ?? false;
+  const zfsCards = zfs ? zfsServers.length : 0;
   const nodes = useMemo(
     () => (grouped ? groupNodes(instances, zfs ? zfsServers : [], t) : []),
     [grouped, instances, zfsServers, zfs, t],
@@ -338,40 +341,41 @@ export function Instances() {
       ))}
 
       {modules && !state.loading && (
-        <div className="rounded-card bg-carbon-surface p-3 md:p-6 glim-content-fade">
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,24rem),1fr))] items-stretch gap-4" {...handlers}>
-            {grouped && state.self && nodes.length > 0 && (
-              <div className="col-span-full rounded-card bg-carbon-surface2 px-3 py-3 md:px-5 md:py-4">
-                <NetPicture selfName={state.self.name} nodes={nodes} hot={hot} />
-              </div>
-            )}
-            {grouped && state.self && (
-              <SelfCard
-                self={state.self}
-                served={state.selfRoles}
-                receiverServer={state.receiverServer}
-                hot={hot === "self"}
-                onOpenServer={() => setServerOpen(true)}
-                onOpenDeposits={hasDeposits ? () => setDepositsOpen(true) : undefined}
-              />
-            )}
-            {servers.map((inst, i) => peerCard(inst, i + 1))}
-            {shown.length === 0 && (
-              <div
-                data-instance="none"
-                className="flex flex-col items-center justify-center gap-3 rounded-card border-[1.5px] border-dashed border-carbon-border px-5 py-7 text-center"
-              >
-                <b className="font-semibold text-carbon-text">{t("instances.emptyTitle")}</b>
-                <p className="text-sm text-carbon-textSub">{t("instances.emptyLead")}</p>
-              </div>
-            )}
-            {modules.zfs && <ZFSServerCards replicas={state.data.replicas} firstIndex={servers.length + 1} hot={hot} />}
-            {phones.map((inst, i) => peerCard(inst, servers.length + (modules.zfs ? zfsServers.length : 0) + i + 1))}
-          </div>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,24rem),1fr))] items-stretch gap-4 glim-content-fade" {...handlers}>
+          {grouped && state.self && nodes.length > 0 && (
+            <div className="col-span-full rounded-card bg-carbon-surface px-3 py-3 md:px-5 md:py-4 [--net-ground:var(--carbon-surface)]">
+              <NetPicture selfName={state.self.name} nodes={nodes} hot={hot} />
+            </div>
+          )}
+          {grouped && state.self && (
+            <SelfCard
+              self={state.self}
+              served={state.selfRoles}
+              receiverServer={state.receiverServer}
+              hot={hot === "self"}
+              onOpenServer={() => setServerOpen(true)}
+              onOpenDeposits={hasDeposits ? () => setDepositsOpen(true) : undefined}
+            />
+          )}
+          {servers.map((inst, i) => peerCard(inst, i + 1))}
+          {shown.length === 0 && (
+            <div
+              data-instance="none"
+              className="flex flex-col items-center justify-center gap-3 rounded-card border-[1.5px] border-dashed border-carbon-border px-5 py-7 text-center"
+            >
+              <b className="font-semibold text-carbon-text">{t("instances.emptyTitle")}</b>
+              <p className="text-sm text-carbon-textSub">{t("instances.emptyLead")}</p>
+            </div>
+          )}
+          {modules.zfs && <ZFSServerCards replicas={state.data.replicas} firstIndex={servers.length + 1} hot={hot} />}
+          {phones.map((inst, i) => peerCard(inst, servers.length + zfsCards + i + 1))}
         </div>
       )}
 
-      {grouped && !state.loading && hasUnplaced && <UnplacedCard unplaced={unplaced} state={state} hueIndex={0} />}
+      {/* The hue goes on from the last card of the grid. */}
+      {grouped && !state.loading && hasUnplaced && (
+        <UnplacedCard unplaced={unplaced} state={state} hueIndex={1 + servers.length + zfsCards + phones.length} />
+      )}
 
       {opened && modules && (
         <PeerDetails

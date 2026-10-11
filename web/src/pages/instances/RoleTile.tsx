@@ -40,7 +40,7 @@ const FILL: Record<RoleState, string> = {
   // A request that still waits is filled like an active role and wears a
   // dashed inner line until the other side allows it.
   waiting: "bg-accent text-accentContrast outline-dashed outline-[1.5px] -outline-offset-[5px] outline-accentContrast",
-  off: "bg-carbon-surface3 text-carbon-textMuted",
+  off: "bg-carbon-surface2 text-carbon-textMuted",
 };
 
 /** RoleTile is one role on an instance's card: filled while it is on or
@@ -78,7 +78,7 @@ export function RoleTile({
         >
           {t(label)}
         </span>
-        <span className="text-dense leading-[1.3]">{detail ?? t(ROLE_STATE_KEY[state])}</span>
+        <span className="text-dense leading-[1.3] wrap-anywhere">{detail ?? t(ROLE_STATE_KEY[state])}</span>
       </span>
     </>
   );

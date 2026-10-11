@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 // The Instances page is a picture of the group above a grid of cards: this
 // server first, then every paired instance and every ZFS server reached over
-// SSH. The tiles on a card switch what the instance does for this server,
-// read from the roles the server keeps. The key keeper is the fourth of them:
+// SSH. Both stand on the page itself, with no card around them. The tiles on
+// a card switch what the instance does for this server, read from the roles
+// the server keeps. The key keeper is the fourth of them:
 // its tile gives the instance this server's key deposit and shows the
 // recovery code the one time there is one. Each module adds what it knows and
 // nothing is asked of a module that is off. The page asks again by itself who
@@ -270,6 +271,28 @@ describe("the instances grid", () => {
     expect(all[0].textContent).toContain(en["instances.thisInstance"]);
     expect(all[0].textContent).toContain("v9.2.1");
     expect(all[1].textContent).not.toContain(en["instances.thisInstance"]);
+  });
+
+  it("stands on the page with the picture, with no card around the cards", async () => {
+    await renderPage();
+    const grid = card("self").parentElement as HTMLElement;
+    expect(grid.closest(".rounded-card")).toBeNull();
+    expect(grid.parentElement).toBe(screen.getByRole("heading", { level: 1 }).parentElement);
+    expect(screen.getByTestId("net-picture").closest(".rounded-card")?.parentElement).toBe(grid);
+    for (const key of ["self", "m1"]) expect(card(key).classList.contains("bg-carbon-surface")).toBe(true);
+  });
+
+  it("gives every card the next colour of the page, and the rows without an instance the one after the last card", async () => {
+    flags.zfsEnabled = true;
+    servers = [server()];
+    members = [M1, groupMember({ id: "m3", name: "Pixel 8", kind: "android", address: "", direct: false, relay: true })];
+    peers = [peer({}), peer({ id: "p3", memberId: "m3", name: "Pixel 8", kind: "android", direct: false, relay: true, lastPollDomains: [] })];
+    received = [receivedRepo({ id: "old", name: "Office off-site", memberId: "", needsPairing: true })];
+    await renderPage();
+    const hue = (el: HTMLElement) => el.style.getPropertyValue("--item-hue");
+    expect(cards().map(hue)).toEqual(["var(--rb-0)", "var(--rb-1)", "var(--rb-2)", "var(--rb-3)"]);
+    const unplaced = screen.getByText(en["instances.unplaced.title"]).closest(".glim-notch-card") as HTMLElement;
+    expect(hue(unplaced)).toBe("var(--rb-4)");
   });
 
   it("shows where each instance is reached, without the scheme", async () => {
