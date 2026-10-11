@@ -262,7 +262,7 @@ Wszystko, co czyta asystent, trafia do dostawcy AI, który za nim stoi: nazwy el
 | `retention_guard` | Kolejna kopia przez MCP zostawiłaby w oknie "zachowaj ostatnie N" tylko punkty przywracania z MCP albo element dostał już 4 kopie przez MCP w ciągu ostatnich 24 godzin, licząc nieudane i anulowane. W pierwszym przypadku miejsce zrobi następna zaplanowana kopia, w drugim element zwolni się 24 godziny po najstarszej z tych kopii. W interfejsie WWW możesz ją uruchomić w każdej chwili. |
 | `rate_limited` | Klucz zużył swoje 12 uruchomień na tę godzinę. |
 | `not_permitted` przy uruchomieniu | Klucz może tylko czytać. Włącz w karcie **Pozwól uruchamiać kopie**; ponowne łączenie nie jest potrzebne. Przy anulowaniu oznacza to, że przebiegu nie uruchomił ten klucz. |
-| `domain_off` | Ten rodzaj kopii jest wyłączony w ustawieniach. |
+| `domain_off` | Ta sekcja jest wyłączona w **Ustawienia, Ogólne**. |
 | `not_found` | BombVault nie chroni tego elementu. Najpierw dodaj go w interfejsie WWW; MCP nigdy nie tworzy konfiguracji. |
 | Klient nie znajduje serwera autoryzacji | Logowanie przez OAuth jest wyłączone, nie ustawiono hasła logowania albo proxy nie przepuszcza `/.well-known/` do BombVault. |
 | Strona zgody zgłasza niezarejestrowany adres powrotu | Klient wysłał adres powrotu, którego nie zarejestrował. Usuń łącznik w kliencie i dodaj go ponownie. |

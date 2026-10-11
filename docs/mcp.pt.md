@@ -48,7 +48,7 @@ Os inícios pela [API](api.md#errors) e a partir do [Home Assistant](api.md#home
 3. Liga **Permitir iniciar cópias** para uma chave que deva poder iniciar cópias; sem isso só pode ler. Podes mudar isto mais tarde no mosaico da chave, e a alteração vale a partir do pedido seguinte do assistente, sem nova ligação.
 4. Clica em **Criar chave**. A chave é mostrada uma vez. O BombVault guarda apenas uma impressão digital dela e não a pode mostrar outra vez, por isso copia-a agora. Se fechares o diálogo antes de o cliente ter usado a chave, o cartão continua a mostrá-la até confirmares que a copiaste.
 
-Sem palavra-passe de início de sessão, a própria interface web está aberta a toda a sua rede, e quem a conseguir abrir também pode criar uma chave. O cartão avisa disso. Se abrir o BombVault com um nome que parece público (por exemplo `bombvault.example.com` atrás de um proxy inverso) e não houver palavra-passe de início de sessão, a partir desse endereço não é possível criar nem substituir chaves, para que nenhuma página da Internet consiga levar o seu navegador a criar uma. Defina uma palavra-passe de início de sessão, ou abra o BombVault pelo endereço IP ou por um nome local como `tower` ou `tower.local`.
+Sem palavra-passe de início de sessão, a própria interface web está aberta a toda a sua rede, e quem a conseguir abrir também pode criar uma chave. O cartão avisa disso. Se abrir o BombVault com um nome que parece público (por exemplo `bombvault.example.com` atrás de um proxy inverso) e não houver palavra-passe de início de sessão, a partir desse endereço não é possível criar nem substituir chaves, para que nenhuma página da Internet consiga levar o seu navegador a criar uma. Define uma palavra-passe de início de sessão, ou abra o BombVault pelo endereço IP ou por um nome local como `tower` ou `tower.local`.
 
 ## As suas chaves e o registo delas {#keys}
 
@@ -123,11 +123,11 @@ Com o certificado próprio do BombVault (ver [TLS e certificados](#tls)), o coma
 claude mcp add bombvault --scope user -e "NODE_EXTRA_CA_CERTS=<path of the downloaded bombvault-cert.pem>" -- npx -y mcp-remote@latest https://192.168.1.10:3443/mcp --header-file "<path of the file with your key>"
 ```
 
-Verifique a ligação com `/mcp` dentro do Claude Code. `--scope user` torna o BombVault disponível em todos os seus projetos. O Claude Code guarda só o caminho do ficheiro da chave, por isso a chave não aparece no comando nem no histórico da shell, nem na lista de processos. Guarde o ficheiro onde mais ninguém o possa ler, e fora de qualquer pasta de que faça commit. `@latest` faz o `npx` ir buscar um `mcp-remote` atual; caso contrário seria usado um mais antigo instalado globalmente, que não conhece `--header-file`.
+Verifica a ligação com `/mcp` dentro do Claude Code. `--scope user` torna o BombVault disponível em todos os seus projetos. O Claude Code guarda só o caminho do ficheiro da chave, por isso a chave não aparece no comando nem no histórico da shell, nem na lista de processos. Guarda o ficheiro onde mais ninguém o possa ler, e fora de qualquer pasta de que faça commit. `@latest` faz o `npx` ir buscar um `mcp-remote` atual; caso contrário seria usado um mais antigo instalado globalmente, que não conhece `--header-file`.
 
 Não escreva `${BOMBVAULT_MCP_KEY}` nos argumentos do `mcp-remote` para o Claude Code. O Claude Code substitui essa referência a partir do seu próprio ambiente antes de iniciar o `mcp-remote`, por isso a chave acaba na linha de comandos desse processo, onde outros programas e utilizadores do computador a podem ler.
 
-Sem Node.js, e só atrás de um certificado em que o seu computador confia, o Claude Code consegue ligar-se sozinho. Coloque um `.mcp.json` na pasta do projeto:
+Sem Node.js, e só atrás de um certificado em que o seu computador confia, o Claude Code consegue ligar-se sozinho. Coloca um `.mcp.json` na pasta do projeto:
 
 ```json
 {
@@ -143,11 +143,11 @@ Sem Node.js, e só atrás de um certificado em que o seu computador confia, o Cl
 }
 ```
 
-Defina `BOMBVAULT_MCP_KEY` onde o Claude Code arranca, por exemplo em `"env"` no `~/.claude/settings.json` ou no perfil da sua shell, editado num editor de texto em vez de escrito na linha de comandos. Aqui a referência é segura, porque o Claude Code não inicia um segundo processo que a leve consigo. O certificado próprio do BombVault não funciona desta forma: a ligação que o próprio Claude Code abre recusa-o, mesmo com `NODE_EXTRA_CA_CERTS` definido. Nunca faça commit de um `.mcp.json` com a chave escrita lá dentro.
+Define `BOMBVAULT_MCP_KEY` onde o Claude Code arranca, por exemplo em `"env"` no `~/.claude/settings.json` ou no perfil da sua shell, editado num editor de texto em vez de escrito na linha de comandos. Aqui a referência é segura, porque o Claude Code não inicia um segundo processo que a leve consigo. O certificado próprio do BombVault não funciona desta forma: a ligação que o próprio Claude Code abre recusa-o, mesmo com `NODE_EXTRA_CA_CERTS` definido. Nunca faça commit de um `.mcp.json` com a chave escrita lá dentro.
 
 ### Claude Desktop {#claude-desktop}
 
-O Claude Desktop chega ao BombVault através do `mcp-remote`, que precisa de Node.js nesse computador. Guarde primeiro a chave num ficheiro de texto próprio, numa única linha, como descrito para o [Claude Code](#claude-code). Abra o ficheiro de configuração no Claude Desktop em **Settings, Developer, Edit Config**. Fica em `%APPDATA%\Claude\claude_desktop_config.json` no Windows e em `~/Library/Application Support/Claude/claude_desktop_config.json` no macOS. Acrescente a entrada do cartão dentro de `"mcpServers"`, ao lado dos servidores que já lá estejam, e reinicie o Claude Desktop:
+O Claude Desktop chega ao BombVault através do `mcp-remote`, que precisa de Node.js nesse computador. Guarda primeiro a chave num ficheiro de texto próprio, numa única linha, como descrito para o [Claude Code](#claude-code). Abre o ficheiro de configuração no Claude Desktop em **Settings, Developer, Edit Config**. Fica em `%APPDATA%\Claude\claude_desktop_config.json` no Windows e em `~/Library/Application Support/Claude/claude_desktop_config.json` no macOS. Acrescente a entrada do cartão dentro de `"mcpServers"`, ao lado dos servidores que já lá estejam, e reinicie o Claude Desktop:
 
 ```json
 {
@@ -165,8 +165,8 @@ O Claude Desktop chega ao BombVault através do `mcp-remote`, que precisa de Nod
 
 - `NODE_EXTRA_CA_CERTS` só está lá para o certificado próprio do BombVault. Atrás de um certificado em que o seu computador já confia, retire-o.
 - `--allow-http` só é acrescentado para um endereço `http://` simples.
-- No Windows, escreva os caminhos com barras normais, por exemplo `C:/Users/sam/bombvault-key.txt`, porque uma barra invertida sozinha não é JSON válido. Mantenha o caminho do ficheiro da chave sem espaços: o Claude Desktop no Windows passa ao `npx` um caminho com um espaço em dois pedaços.
-- A configuração só indica o ficheiro da chave, por isso a chave não aparece nela nem na lista de processos. Guarde o ficheiro onde mais ninguém o possa ler.
+- No Windows, escreva os caminhos com barras normais, por exemplo `C:/Users/sam/bombvault-key.txt`, porque uma barra invertida sozinha não é JSON válido. Mantém o caminho do ficheiro da chave sem espaços: o Claude Desktop no Windows passa ao `npx` um caminho com um espaço em dois pedaços.
+- A configuração só indica o ficheiro da chave, por isso a chave não aparece nela nem na lista de processos. Guarda o ficheiro onde mais ninguém o possa ler.
 
 ### Clientes na nuvem {#cloud-clients}
 
@@ -237,7 +237,7 @@ Atrás de um proxy, cada pedido traz o endereço do proxy. Cinco chaves erradas 
 - Enquanto não houver palavra-passe de início de sessão, não é possível criar chaves a partir de um nome de anfitrião que pareça público.
 - Cada cópia que um assistente inicia, e as execuções de prune e de cópia externa que daí resultam, fica marcada "via MCP" com o nome da chave no registo de atividade, no painel de erros e na notificação da cópia.
 - Cada chamada a uma ferramenta é escrita no registo do contentor com o id da chave e os seus últimos quatro caracteres (nunca o nome) e contada em `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
-- Restaurar uma cópia da configuração revoga todas as chaves, porque a base de dados restaurada pode conter chaves que revogou depois de ela ter sido guardada. Crie chaves novas a seguir.
+- Restaurar uma cópia da configuração revoga todas as chaves, porque a base de dados restaurada pode conter chaves que revogou depois de ela ter sido guardada. Cria chaves novas a seguir.
 - Uma chave deixa de funcionar quando `APP_KEY` muda (uma reinstalação, ou um restauro noutro contentor). O cartão deteta isso e marca a chave, e **Substituir chave** volta a dar-lhe um segredo válido.
 - Trata uma chave como uma palavra-passe. Um cliente que não consegue ler a chave de uma variável de ambiente, de um pedido ou de um ficheiro da chave guarda-a em texto simples na sua configuração ou nas suas definições, e o diálogo dele diz isso. Num computador em que confias menos, prefere uma chave só de leitura.
 
@@ -251,18 +251,18 @@ Tudo o que um assistente lê vai para o fornecedor de IA por trás dele: nomes d
 |---|---|
 | `404` | Não há nenhuma chave ativa e a autenticação por OAuth está desligada, ou o caminho está errado, como `/api/mcp`. O endpoint é `/mcp`. |
 | `401` | A chave falta, está mal escrita, revogada ou substituída. Pode ser que um proxy descarte o cabeçalho `Authorization` (experimente `X-API-Key`). Se o cartão marcar a chave como já não válida, `APP_KEY` mudou: substitua a chave. |
-| `403` | O pedido veio de uma página de navegador de outra origem. Use um cliente de secretária ou de linha de comandos. |
+| `403` | O pedido veio de uma página de navegador de outra origem. Usa um cliente de secretária ou de linha de comandos. |
 | `405` em GET | Normal. O ponto de ligação só aceita `POST`. |
 | `400` "Accept must contain both 'application/json' and 'text/event-stream'" | O cliente é demasiado antigo para Streamable HTTP. Atualize-o. |
 | `400` "batch requests are not accepted" | O cliente envia lotes JSON-RPC. Envie uma mensagem por pedido. |
 | `429` | Demasiadas chaves erradas deste endereço, ou mais de 120 pedidos por minuto com uma chave. Espere um minuto e verifique se o assistente está preso num ciclo. |
 | Erros com "certificate", "self-signed" ou "unable to verify" | O cliente não confia no certificado do BombVault. Ver [TLS e certificados](#tls). |
-| `busy` | Outra cópia ou uma tarefa de manutenção ocupa esse domínio. Tente de novo quando terminar. |
+| `busy` | Outra cópia ou uma tarefa de manutenção ocupa esse domínio. Tenta de novo quando terminar. |
 | `cooldown` | Este elemento, este domínio ou o Backup total foi iniciado fora da interface web há menos de 15 minutos. |
 | `retention_guard` | Mais uma cópia MCP deixaria só pontos de restauro vindos de MCP numa janela "manter os últimos N", ou o elemento já recebeu 4 cópias por MCP nas últimas 24 horas, contando as que falharam e as canceladas. No primeiro caso a próxima cópia agendada abre espaço; no segundo o elemento fica livre outra vez 24 horas depois da mais antiga dessas cópias. Em qualquer dos casos pode iniciá-la na interface web. |
 | `rate_limited` | A chave gastou os seus 12 inícios desta hora. |
-| `not_permitted` num início | A chave é só de leitura. Ligue **Permitir iniciar cópias** no cartão; não é preciso voltar a ligar. Num cancelamento significa que a execução não foi iniciada por esta chave. |
-| `domain_off` | Esse tipo de cópia está desligado nas definições. |
+| `not_permitted` num início | A chave é só de leitura. Liga **Permitir iniciar cópias** no cartão; não é preciso voltar a ligar. Num cancelamento significa que a execução não foi iniciada por esta chave. |
+| `domain_off` | Essa secção está desligada em **Definições, Geral**. |
 | `not_found` | O BombVault não protege esse elemento. Acrescente-o primeiro na interface web; o MCP nunca cria configuração. |
 | O cliente não encontra o servidor de autorização | A autenticação por OAuth está desligada, não há palavra-passe de acesso, ou o proxy não deixa passar `/.well-known/` até ao BombVault. |
 | A página de consentimento diz que o endereço de regresso não está registado | O cliente enviou um endereço de regresso que não registou. Remove o conector no cliente e volta a adicioná-lo. |

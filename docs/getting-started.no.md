@@ -10,7 +10,7 @@ Denne siden tar deg fra en ny Unraid-boks til din første sikkerhetskopi.
 | **Plassering for restic-repo** | En lokal sti (anbefalt: array-et eller cachen din), SMB, NFS eller en hvilken som helst rclone-backend. |
 | **Docker-socket** | Monteres automatisk av malen (`/var/run/docker.sock`). |
 | **Unraid-flash** (`/boot`) | Monteres i sin helhet automatisk av malen (`/boot` til `/host/boot`). Driver flash-sikkerhetskopiering og lar en gjenopprettet container dukke opp igjen som en normal, redigerbar Unraid-app. |
-| **KVM-VM-er** (valgfritt) | VM-sikkerhetskopiering snakker med libvirt over SSH, ingen libvirt-montering. Sett det opp i Innstillinger (se [Konfigurasjon](configuration.md)). |
+| **KVM-VM-er** (valgfritt) | VM-sikkerhetskopiering snakker med libvirt over SSH, ingen libvirt-montering. Sett det opp under **Innstillinger, Integrasjoner, Verts-SSH** (se [Konfigurasjon](configuration.md)). |
 | **ZFS-datasett** (valgfritt) | Den samme SSH-forbindelsen som for VM-sikkerhetskopier, `zfs` på verten og Host Data tilordnet som `/mnt` med tilgangsmodusen Read/Write - Slave, malens standard. Se [ZFS-datasett](zfs-datasets.md). |
 | **Android-app** (valgfritt) | Android 10 eller nyere, paret med servere på versjon 9.7.0 eller nyere. Se [Android-app](android.md). |
 
@@ -37,12 +37,12 @@ Den enkleste veien er **Community Applications**.
 Ikke Unraid? BombVault kjører også som en vanlig container på hvilken som helst Docker-vert (det er også det som bærer containerstøtten på TrueNAS Scale, i påvente av en egen oppføring i app-katalogen der).
 
 1. Hent den redigeringsklare [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) fra arkivet.
-2. Sett `APP_KEY` (se nedenfor) og pek Host Data-volumet mot din virkelige datarot: kommentarene i filen går gjennom begge deler.
+2. Sett `APP_KEY` (se nedenfor) og pek Host Data-volumet mot din virkelige datarot. Kommentarene i filen går gjennom begge deler.
 3. `docker compose up -d`, åpne deretter `https://<vert-ip>:3443/`.
 
 Hva som er annerledes enn på Unraid:
 
-- **Ingen flash-/USB-domene.** Det finnes ingen oppstarts-USB å fange inn eller gjenopprette, så Flash-domenet i innstillingene har ingenting å gjøre her. I stedet tilbyr Mapper-domenet ettklikksforslaget **Legg til forhåndsinnstilling: vertssystemets konfigurasjon** (et sett `/etc`-filer å begynne med, som du går gjennom og redigerer før du lagrer) som praktisk generisk motstykke.
+- **Ikke noe Flash-område.** Det finnes ingen oppstarts-USB å fange inn eller gjenopprette, så Flash-området har ingenting å gjøre her. I stedet tilbyr **Legg til** på siden Sikkerhetskopier **Systemkonfigurasjon** som mappeforslag: et mappesett med `/etc` å begynne med, som du går gjennom og redigerer før du lagrer.
 - **Ingen Unraid-egne varsler.** BombVaults egne varselkanaler (webhook, varsler om mislykket off-site og lignende) virker som vanlig; bare den Unraid-spesifikke meldingen til dens eget varselsystem utelates, siden et slikt system ikke finnes her.
 - **Sikkerhetskopiering av virtuelle maskiner er valgfri og trenger en egen libvirtd-vert som er nåbar over SSH.** Se den utkommenterte blokken i compose-filen. En generisk Docker-vert har ingen innebygd VM-håndtering.
 - **Ingen dashboard-widget.** BombVault Widget er en Unraid-plugin, så det trinnet hoppes også over.
@@ -64,34 +64,45 @@ openssl rand -hex 32
 Lim resultatet inn i `APP_KEY`-feltet i malen (Unraid), eller i miljøvariabelen `APP_KEY` i `docker-compose.yml` (generisk Docker-vert).
 
 !!! danger "Ikke mist APP_KEY-en din"
-    Å miste `APP_KEY` gjør de krypterte sikkerhetskopiene dine umulige å gjenopprette. Oppbevar den et trygt sted og adskilt fra serveren. Når BombVault kjører, bruk dens ett-klikks **gjenopprettingssett for krypteringsnøkkel** (se [Ekstern lagring og gjenoppretting](offsite-recovery.md)) for å lagre hele gjenopprettingspakken.
+    Å miste `APP_KEY` gjør de krypterte sikkerhetskopiene dine umulige å gjenopprette. Oppbevar den et trygt sted og adskilt fra serveren. Når BombVault kjører, sett et påloggingspassord og last ned **gjenopprettingssettet** under **Innstillinger, Gjenoppretting** (se [Ekstern lagring og gjenoppretting](offsite-recovery.md#recovery-kit)). Det inneholder nøkkelen, hvert mål og restic-kommandoene.
 
 Malen monterer også Docker-socketen, flashen (`/boot`) og **Host Data**-roten (`/mnt`) for deg. Sikkerhetskopi-*kilder* og -*destinasjoner* ligger begge under Host Data. For den fullstendige variabelreferansen og oppsettet for ekstern lagring, se [Konfigurasjon](configuration.md).
 
 ## Første kjøring
 
-![Panelet etter en første sikkerhetskopi: hva som er beskyttet, hva som kjører neste gang, og en levende logg.](assets/screenshots/dashboard.png)
+![Oversikten etter en første sikkerhetskopi: hva som krever oppmerksomhet, beskyttelsen av hvert område, målene og historikken.](assets/screenshots/dashboard.png)
 
-*Panelet etter en første sikkerhetskopi: hva som er beskyttet, hva som kjører neste gang, og en levende logg.*
+*Oversikten etter en første sikkerhetskopi: hva som krever oppmerksomhet, beskyttelsen av hvert område, målene og historikken.*
 
-1. Åpne webgrensesnittet på `https://<your-unraid-ip>:3443` (selvsignert sertifikat rett ut av boksen).
-2. I **Innstillinger**, aktiver sikkerhetskopidomenene du vil ha (Kontainere, VM-er, Flash, Auto-sikkerhetskopi, Mapper, ZFS-datasett) og velg en aksentfarge.
-3. På **Containere**-fanen, velg en container og klikk **Sikkerhetskopier nå** for å lage ditt første gjenopprettingspunkt. Repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` og opprettes ved den første sikkerhetskopieringen.
-4. Sett opp planlegging fra **Innstillinger, Tidsplaner**. Det finnes en ett-klikks *Inkluder alle i tidsplan* for containere og VM-er.
+1. Åpne webgrensesnittet på `https://<your-unraid-ip>:3443` (selvsignert sertifikat rett ut av boksen). En ny installasjon åpner på **Velkommen til BombVault**, som viser hva BombVault fant på serveren.
+2. Velg **Kom i gang**. Oversikten viser da kortet **Første steg** med tre steg:
+    1. **Velg områder**: slå på det BombVault skal sikkerhetskopiere (Kontainere, VM-er, Flash, Mapper, ZFS-datasett, Auto-sikkerhetskopi). **Velg** åpner listen over elementene i et område, der **Sett tidsplanen på pause** lar ett stå utenfor. Områdene du slår på her, kjører hver natt, og det endrer du under **Innstillinger, Tidsplan**.
+    2. **Legg til mål**: hvor sikkerhetskopiene havner. En lokal mappe er nok til å begynne med. Tryggest er et ekstra mål utenfor huset, for eksempel en Storage Box eller Backblaze B2. Lokale repositorier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` og opprettes ved den første sikkerhetskopieringen.
+    3. **Første sikkerhetskopi**: etter det kjører den av seg selv hver natt.
+3. Åpne **Sikkerhetskopier** for å se hvert element i én liste. **Sikkerhetskopier alt nå** starter en kjøring over alle områdene som er slått på, og **Sikkerhetskopier nå** på siden til et element sikkerhetskopierer bare det ene.
+
+Har du brukt BombVault før? **Gjenopprett fra en sikkerhetskopi** på velkomstsiden åpner siden Gjenoppretting, der **Nødveiviser** henter tilbake innstillingene, containerne, VM-ene og mappene til en tapt server. Se [Ekstern lagring og gjenoppretting](offsite-recovery.md#emergency).
 
 !!! tip "Valgfritt: velg en sikkerhetskopieringsrekkefølge"
-    Hvis noen containere alltid skal sikkerhetskopieres før andre (for eksempel en database før appen som bruker den), åpne **Rekkefølge for sikkerhetskopiering**-panelet på Kontainere-siden og dra dem inn i rekkefølgen du ønsker. Planlagte og flervalgs-kjøringer følger den deretter; alt du lar stå urangert, sikkerhetskopieres mest-forfalt-først, som før.
+    Hvis noen containere alltid skal sikkerhetskopieres før andre (for eksempel en database før appen som bruker den), åpne kortet **Rekkefølge** under **Innstillinger, Tidsplan** og dra dem inn i rekkefølgen du ønsker. Planlagte kjøringer og full sikkerhetskopi følger den deretter; alt du lar stå urangert, sikkerhetskopieres mest-forfalt-først.
 
 !!! note "Host-integrasjonssjekk"
-    Åpne `/spike` i webgrensesnittet etter at containeren har startet. Den sonderer hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer manglende deler, slik at du kan bekrefte at containeren er riktig koblet opp før du stoler på den.
+    Kortet **Host-integrasjon** på oversikten sonderer hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer manglende deler, slik at du kan bekrefte at containeren er riktig koblet opp før du stoler på den. Det venter under **Tilpass** til du legger det til.
 
-## Enkel vs. Avansert
+## Finn frem {#navigation}
 
-![Innstillingene har ingen Lagre-knapp: hver endring skrives mens du gjør den.](assets/screenshots/settings.png)
+![Innstillinger som fliser, med kortene til den valgte flisen ved siden av. Hver endring skrives mens du gjør den.](assets/screenshots/settings.png)
 
-*Innstillingene har ingen Lagre-knapp: hver endring skrives mens du gjør den.*
+*Innstillinger som fliser, med kortene til den valgte flisen ved siden av. Hver endring skrives mens du gjør den.*
 
-Som standard viser grensesnittet bare det essensielle (sikkerhetskopier, gjenopprett, planlegg). Bruk **Enkel visning / Avansert visning**-bryteren i sidefeltet for å avdekke ekspertkontrollene: oppbevaring, ekstern kopi, pre/post-hooks, gjenoppretting på filnivå, varsler, Prometheus-metrikker og integritets-/vedlikeholdsverktøyene. Det er en innstilling per nettleser og av som standard, så nykommere får et rent grensesnitt og erfarne brukere får alt.
+Sidefeltet har fem oppføringer: **Oversikt**, **Avvik** (så lenge avviksdeteksjon er på), **Sikkerhetskopier**, **Gjenoppretting** og, under **Logg ut**, **Innstillinger**. Hovedhandlingen på en side flyter nederst til høyre, og **Mer** rommer de sjeldne. På en telefon har linjen Oversikt, Sikkerhetskopier, Gjenoppretting og Innstillinger, og **Mer** har resten.
+
+- **Sikkerhetskopier** lister hver container, VM, mappesett, flashen, hvert ZFS-datasett og auto-sikkerhetskopien som elementer. Fliser over listen velger et slag, og **Filtre**, **Sorter** og **Søk** snevrer den inn. Hvert element har en egen side med tre faner: **Sikkerhetskopier**, **Innstillinger** og **Integritet**.
+- **Gjenoppretting** er én side for alt: velg et område, søk etter et element og velg en sikkerhetskopi. Nødveiviseren og de andre kildene starter også her.
+- **Innstillinger** er fjorten fliser: Generelt, Utseende, Tidsplan, Mål, Gjenoppretting, Varsler, Verifisering, Sikkerhet, Instanser, Paring, Integrasjoner, Apper, System og Info. Trykk `/` eller Ctrl+K for å søke i alle, også etter navnene sidene hadde i tidligere versjoner. Dra flisene i din egen rekkefølge under **Utseende**.
+- **Mål** og **Instanser** er innstillingsfliser med egne sider. **Vis også i sidefeltet** på flisen deres fester dem til sidefeltet.
+
+Ingenting har en Lagre-knapp og ingenting folder seg ut: sjeldne ting har et eget kort eller et vindu, og forklaringer står i (i)-boblene. Etter en oppdatering markerer grønne prikker det som er endret. Et klikk skjuler en prikk, og **Innstillinger, Info, Nytt** lister hver endring med **Gå dit**.
 
 ## Bygge fra kildekode {#build-from-source}
 
@@ -106,12 +117,12 @@ golangci-lint run ./...
 go run ./cmd/bombvault         # leverer https://localhost:3443 med et selvsignert sertifikat
 ```
 
-Grensesnittbygget trengs også for `go run`. Arkivet inneholder bare en tom markør under `web/dist`, så uten `npm --prefix web run build` bygger binærfilen ikke inn noe og svarer `500 SPA index not found`, og det er forventet. Docker, libvirt og Unraid kan ikke testes i CI, så sjekk monteringer, restic og SSH-forbindelsen for VM-er på en ekte vert med host-integrasjonssjekken (`/spike`) før du åpner en pull request.
+Grensesnittbygget trengs også for `go run`. Arkivet inneholder bare en tom markør under `web/dist`, så uten `npm --prefix web run build` bygger binærfilen ikke inn noe og svarer `500 SPA index not found`, og det er forventet. Docker, libvirt og Unraid kan ikke testes i CI, så sjekk monteringer, restic og SSH-forbindelsen for VM-er på en ekte vert med kortet **Host-integrasjon** på oversikten (eller `GET /api/spike`) før du åpner en pull request.
 
 ## Neste steg
 
 - Bla gjennom alle **[Funksjoner](features.md)**.
 - Ha alle servere i gruppen din på telefonen med **[Android-appen](android.md)**.
-- Legg til én eller flere **[Ekstern lagring og gjenoppretting](offsite-recovery.md)**-replikaer (hvert domene kan sende til flere destinasjoner samtidig) og lagre gjenopprettingssettet ditt.
+- Legg til ett eller flere mål utenfor huset (hvert område kan kopiere til flere samtidig) og lagre gjenopprettingssettet ditt, som beskrevet under **[Ekstern lagring og gjenoppretting](offsite-recovery.md)**.
 - Kloner du et oppsett eller flytter til en ny boks? Ta med hele konfigurasjonen din via kortet **Eksporter / importer innstillinger**. Se [Konfigurasjon](configuration.md#portable-settings-export-and-import).
 - Støtt på et problem? Se **[Feilsøking](troubleshooting.md)**.

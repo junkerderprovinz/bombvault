@@ -262,7 +262,7 @@ Todo lo que lee un asistente va al proveedor de IA que tiene detrás: nombres de
 | `retention_guard` | Una copia MCP más dejaría solo puntos de restauración de MCP en una ventana de "conservar los últimos N", o el elemento ya recibió 4 copias por MCP en las últimas 24 horas, contando las fallidas y las canceladas. En el primer caso la próxima copia programada hace sitio; en el segundo el elemento vuelve a estar libre 24 horas después de la más antigua de esas copias. En ambos casos puedes iniciarla desde la interfaz web. |
 | `rate_limited` | La clave ha gastado sus 12 inicios de esta hora. |
 | `not_permitted` al iniciar | La clave es de solo lectura. Activa **Permitir iniciar copias** en la tarjeta; no hace falta reconectar. Al cancelar significa que esta clave no inició la ejecución. |
-| `domain_off` | Ese tipo de copia está desactivado en los ajustes. |
+| `domain_off` | Esa sección está desactivada en **Ajustes, General**. |
 | `not_found` | BombVault no protege ese elemento. Añádelo primero en la interfaz web; MCP nunca crea configuración. |
 | El cliente no encuentra el servidor de autorización | El inicio de sesión con OAuth está desactivado, no hay contraseña de acceso, o el proxy no deja pasar `/.well-known/` hasta BombVault. |
 | La página de consentimiento dice que la dirección de vuelta no está registrada | El cliente envió una dirección de vuelta que no registró. Quita el conector en el cliente y vuelve a añadirlo. |

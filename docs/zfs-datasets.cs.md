@@ -1,6 +1,6 @@
 # Datové sady ZFS
 
-Stránka **ZFS** zálohuje datové sady ZFS. Položka je jedna datová sada spolu se všemi datovými sadami pod ní. Pro každou zálohu pořídí BombVault jediný snímek ZFS celého stromu, takže každá datová sada v něm je zachycena ve stejném okamžiku. Poté z tohoto snímku přečte soubory každé datové sady, uloží je pomocí resticu stejně jako složku a snímek hned potom odstraní. Zálohy jsou deduplikované, každou z nich můžete procházet a lze obnovit jednotlivé soubory.
+Datové sady ZFS jsou položky v seznamu **Zálohy**, stejně jako kontejnery a VM. Položka je jedna datová sada spolu se všemi datovými sadami pod ní. Pro každou zálohu pořídí BombVault jediný snímek ZFS celého stromu, takže každá datová sada v něm je zachycena ve stejném okamžiku. Poté z tohoto snímku přečte soubory každé datové sady, uloží je pomocí resticu stejně jako složku a snímek hned potom odstraní. Zálohy jsou deduplikované, každou z nich můžete procházet a lze obnovit jednotlivé soubory.
 
 Záloha nikdy neposílá proud do restic a nikdy nevrací datovou sadu do dřívějšího stavu. BombVault ničí jen snímky, které sám vytvořil. Volitelná [replika](#replica) je jediné místo, které používá `zfs send`: kopíruje datové sady na druhý server ZFS a zálohy se nedotýká.
 
@@ -11,24 +11,24 @@ Záloha nikdy neposílá proud do restic a nikdy nevrací datovou sadu do dřív
 - **Host Data namapované jako `/mnt` s Access Mode Read/Write - Slave.** To je výchozí hodnota šablony. Snímek datové sady se ve složce `.zfs/snapshot` datové sady objeví až po spuštění BombVaultu, takže kontejner musí dostávat připojení, která hostitel vytvoří později.
 - **Datové sady připojené pod `/mnt`.** Na Unraidu jsou pooly pod `/mnt/<pool>`, takže to už platí.
 
-Zapněte doménu v **Nastavení, Obecné** (Datové sady ZFS). Stránka ZFS pak zobrazí kartu **Spojení s tímto serverem**. Otestuje spojení SSH, uvede uživatele a hostitele, ke kterým se připojuje, a řekne, co chybí, když něco chybí. Kontrola integrace s hostitelem (`/spike`) ukazuje stejný výsledek.
+Sekci zapneš v **Nastavení, Obecné** (Datové sady ZFS). **Připojení ZFS k tomuto serveru** pod **Více** na stránce Zálohy pak otevře **Spojení s tímto serverem**. Otestuje spojení SSH, uvede uživatele a hostitele, ke kterým se připojuje, a řekne, co chybí, když něco chybí. Když spojení nefunguje, seznam Záloh to oznámí s **Zobrazit připojení** a stejný výsledek ukazuje karta **Integrace hostitele** v Přehledu.
 
 ## Položky a podřízené datové sady {#items-and-children}
 
-Na stránce ZFS otevřete **Přidat datové sady**. Seznam pochází ze serveru. Vyberte datovou sadu, která je nejvýše z toho, co chcete zálohovat, například `cache/appdata`, a položka pokryje ji i každou datovou sadu pod ní.
+Na stránce Zálohy zvol **Přidat** a pak **Datová sada ZFS**. Seznam pochází ze serveru. Vyber datovou sadu, která je nejvýše z toho, co chceš zálohovat, například `cache/appdata`, a položka pokryje ji i každou datovou sadu pod ní.
 
 - **Nové podřízené datové sady se přidávají samy.** Datová sada vytvořená později pod položkou se zálohuje při dalším běhu a ten ji uvede jako novou. Její první záloha ji jednou přečte celou; potom se čtou jen změny.
-- **Jednotlivé podřízené sady můžete vynechat.** Vypněte jednu v nastavení položky a bude vynechána i se vším pod ní. Vynechaná podřízená sada, která už na serveru neexistuje, je tak označena a lze ji ze seznamu odebrat.
-- **Podřízené sady, které nelze přečíst, se přeskakují, nikdy potichu.** Běh je vypíše, položka ukáže, kolik jich bylo přeskočeno, a karta pokrytí na přehledu počítá každou z nich jako nechráněnou. Běh přesto zálohuje vše ostatní a kvůli přeskočené sadě neselže. Důvody jsou v [tabulce kódů důvodů](#reason-codes): datová sada, která není připojená, má `canmount=off`, přípojný bod `legacy` nebo žádný, nenačtený šifrovací klíč, vypnutý přístup ke snímkům nebo přípojný bod, který BombVault nevidí.
+- **Jednotlivé podřízené sady můžeš vynechat.** Vypni jednu na záložce Nastavení položky a bude vynechána i se vším pod ní. Vynechaná podřízená sada, která už na serveru neexistuje, je tak označena a lze ji ze seznamu odebrat.
+- **Podřízené sady, které nelze přečíst, se přeskakují, nikdy potichu.** Běh je vypíše, položka ukáže, kolik jich bylo přeskočeno, a karta **Nezálohováno** v Přehledu počítá každou z nich jako nechráněnou. Běh přesto zálohuje vše ostatní a kvůli přeskočené sadě neselže. Důvody jsou v [tabulce kódů důvodů](#reason-codes): datová sada, která není připojená, má `canmount=off`, přípojný bod `legacy` nebo žádný, nenačtený šifrovací klíč, vypnutý přístup ke snímkům nebo přípojný bod, který BombVault nevidí.
 - **Přeskočená datová sada nestrhne své podřízené sady s sebou.** Datová sada s `canmount=off`, která obsahuje jen jiné datové sady, se přeskočí (zobrazí se jako "jen struktura") a její připojené podřízené sady se zálohují. Šifrovaná datová sada s nenačteným klíčem se přeskočí spolu s podřízenými sadami, které sdílejí její klíč.
 - **Podřízené sady, které jsou disky VM nebo systémová data, začínají vypnuté** v dialogu přidání, s důvodem vedle přepínače. Přidání celého poolu vyžaduje potvrzení, které vypíše, co obsahuje.
 
 ### Svazky {#volumes}
 
-Svazek (zvol) obsahuje virtuální disk místo souborů a stránka ZFS žádný nezálohuje.
+Svazek (zvol) obsahuje virtuální disk místo souborů a položka ZFS ho nikdy nezálohuje.
 
-- Svazek, který používá VM, se zálohuje s touto VM na stránce **VMs**.
-- Svazek, který nepoužívá žádná VM (iSCSI extent, odpojený disk), **BombVault nezálohuje**. Dialog přidání a stránka ZFS takové svazky spočítají a uvedou to. Pozdější verze je bude zálohovat.
+- Svazek, který používá VM, se zálohuje s touto VM.
+- Svazek, který nepoužívá žádná VM (iSCSI extent, odpojený disk), **BombVault nezálohuje**. Okno přidání a stránka Zálohy takové svazky spočítají a uvedou to. Pozdější verze je bude zálohovat.
 
 Svazky ve stromu položky se při každém běhu přeskočí a uvedou.
 
@@ -53,26 +53,25 @@ Co se stane, když se něco pokazí:
 - Zastavení počká, až doběhne probíhající záloha kontejneru (až 30 minut u ručního běhu, až do časového limitu zálohy u plánovaného), aby oba nikdy současně nezastavovaly a nespouštěly stejný kontejner.
 - Než se zastaví první kontejner, BombVault si zapíše, které zastavuje. Pokud je BombVault během okna ukončen, při příštím spuštění tyto kontejnery znovu spustí, pošle oznámení a položka ukáže červenou poznámku u každého kontejneru, který se nepodařilo spustit.
 
-Automatické výpisy databází (viz [Funkce](features.md)) běží s vlastní zálohou kontejneru na stránce **Kontejnery**, ne s položkou ZFS. Databáze, jejíž kontejner se zálohuje jen přes jeho datovou sadu, výpis nedostane, takže jí zde zadejte příkaz.
+Automatické výpisy databází (viz [Funkce](features.md)) běží s vlastní zálohou kontejneru, ne s položkou ZFS. Databáze, jejíž kontejner se zálohuje jen přes jeho datovou sadu, výpis nedostane, takže jí zde zadej příkaz.
 
-Kontejner může být současně na tomto seznamu i na stránce **Kontejnery**. Jeho data se pak ukládají dvakrát, do dvou repozitářů, a **Záloha všeho** ho zastaví dvakrát. Položka na to upozorní.
+Kontejner může být na tomto seznamu a zároveň se zálohovat jako kontejner. Jeho data se pak ukládají dvakrát, do dvou repozitářů, a úplná záloha ho zastaví dvakrát. Položka na to upozorní.
 
 ## Obnova {#restore}
 
-Otevřete **Zálohy** u položky, vyberte zálohu a pak datovou sadu. Výchozí je nejvyšší datová sada položky.
+Otevři položku a zvol **Obnovit**, nebo ji vyber na stránce **Obnova**. Okno obnovy se zeptá na zálohu a pak na **Datová sada**. Výchozí je nejvyšší datová sada položky. Pod **Co** obnovíš všechno, nebo jen soubory a složky, které vybereš. **Kam** nabízí:
 
 - **Obnovit do datové sady.** Soubory ze zálohy se zapíší do přípojného bodu datové sady. Soubory se stejným názvem se přepíšou, ostatní zůstanou. Datová sada se nikdy nevrací do dřívějšího stavu ani nenahrazuje. BombVault zkontroluje, že je datová sada připojená, viditelná a zapisovatelná, jednou před začátkem a znovu těsně před zápisem. Tam, kde je uvnitř připojená podřízená sada, se nic nezapisuje: ta si ponechá své soubory, vlastníka a oprávnění a obnoví se ze své vlastní zálohy.
-- **Obnovit do složky.** Vyberte složku pod `/mnt`. BombVault zkontroluje, že složka leží na připojeném poolu nebo sdílené složce a že je dost volného místa. Funguje to bez spojení SSH i pro datové sady, které už neexistují.
-- **Do nové datové sady.** Zadej datovou sadu, která ještě neexistuje. BombVault ji vytvoří s vlastnostmi ZFS uloženými v záloze a obnoví do ní, viz [Obnova jako nová datová sada](#new-dataset).
-- **Vybrat soubory** (pokročilé): zapsat zpět do datové sady jen soubory a složky, které vyberete.
-- **Všechny datové sady této zálohy** (pokročilé): každou datovou sadu stromu do vlastní podsložky vybrané složky. Datové sady, které byly v této záloze přeskočeny, se uvedou.
-- **Z jiného serveru:** stránka **Obnova** obnovuje z repozitáře jiného BombVaultu, vždy do složky: všechny datové sady jedné zálohy, každou do vlastní podsložky, nebo jednu datovou sadu stromu, celou nebo vybrané soubory.
+- **Do složky.** Vyber složku pod `/mnt`. BombVault zkontroluje, že složka leží na připojeném poolu nebo sdílené složce a že je dost volného místa. Funguje to bez spojení SSH i pro datové sady, které už neexistují.
+- **Do nové datové sady.** Zadej datovou sadu, která ještě neexistuje; okno navrhne `<dataset>-restored`. BombVault ji vytvoří s vlastnostmi ZFS uloženými v záloze a obnoví do ní, viz [Obnova jako nová datová sada](#new-dataset).
+
+Když jako datovou sadu zvolíš **Všechny datové sady této zálohy**, zapíše se každá datová sada stromu do vlastní podsložky vybrané složky. Datové sady, které byly v této záloze přeskočeny, se uvedou. Pro obnovu z repozitáře jiného BombVaultu použij **Ze staré složky se zálohami** na stránce Obnova; vždy obnovuje do složky: všechny datové sady jedné zálohy, každou do vlastní podsložky, nebo jednu datovou sadu stromu, celou nebo vybrané soubory.
 
 Seznam kontejnerů k zastavení z položky se nabízí i pro obnovu do datové sady. Tyto kontejnery zůstanou zastavené po celou dobu obnovy a zálohy kontejnerů mezitím čekají.
 
 ### Bezpečnostní snímek {#safety-snapshot}
 
-Než BombVault zapíše do datové sady, pořídí snímek ZFS jen této datové sady s názvem `bombvault-prerestore-<čas>`. Ve výchozím stavu je zapnutý; jeho vypnutí vyžaduje druhé potvrzení. Nelze-li snímek pořídit, nic se neobnoví.
+Než BombVault zapíše do datové sady, pořídí snímek ZFS jen této datové sady s názvem `bombvault-prerestore-<čas>`. **Nejdřív si nechat ZFS snímek současného stavu** je ve výchozím stavu zapnuto; jeho vypnutí vyžaduje druhé potvrzení. Nelze-li snímek pořídit, nic se neobnoví.
 
 BombVault bezpečnostní snímek nikdy sám nesmaže. Položka je vypíše s jejich stářím a velikostí, každý s akcí **Smazat**, a varuje, když je nejstarší starší než 30 dní, protože drží v poolu smazaná a změněná data.
 
@@ -108,16 +107,16 @@ Replika je kopie datových sad položky na druhém serveru ZFS. BombVault ji udr
 
 Replika nikdy nenahrazuje zálohu. Starší verze, jednotlivé soubory i kontrola se dál berou ze záloh a replika drží jen tolik snímků, kolik nastavíte. Aktuální replika se počítá jako kopie mimo lokalitu, ale položka s replikou a bez zálohy zůstává oranžová.
 
-Zapnete ji na kartě **Replica** v nastavení položky. Tam vyberete, kam replika půjde, kdy se spouští (**After every backup** nebo **Own plan**) a kolik snímků zůstane na cíli. Karta vypisuje každou datovou sadu a každý svazek s jeho stavem a **Replikovat nyní** spustí běh. Běh repliky má vlastní zámek, takže dlouhý první přenos nikdy nezdrží zálohy.
+Zapneš ji na kartě **Replika** na záložce Nastavení položky. Tam vybereš, kam replika půjde, kdy se spouští (**Po každé záloze** nebo **Vlastní plán**) a kolik snímků zůstane na cíli. Karta vypisuje každou datovou sadu a každý svazek s jeho stavem a **Replikovat teď** spustí běh. Běh repliky má vlastní zámek, takže dlouhý první přenos nikdy nezdrží zálohy.
 
 ### Odeslání na server ZFS {#replica-push}
 
 Přijímat může každý stroj se ZFS a SSH, například druhý Unraid nebo TrueNAS. BombVault tam běžet nemusí.
 
-1. Otevřete **Instance, Servery ZFS** a klikněte na **Přidat server ZFS**.
+1. V **Nastavení, Párování** zvol **Připojit přes SSH** v **Server ZFS bez BombVault**, nebo **Přidat server ZFS** na kartě **Replika** položky.
 2. Zadejte adresu, uživatele a port. Dialog ukáže veřejný klíč BombVaultu. Přidejte ho do `~/.ssh/authorized_keys` uživatele na serveru. V Unraidu je to v **Settings, Users, root, SSH keys**.
 3. Otestujte spojení. Dialog pak vypíše pooly serveru. Vyberte jeden a nastavte kořen, který je ve výchozím stavu `<pool>/bombvault-replica`.
-4. Vyberte nový server na kartě **Replica** položky.
+4. Vyber nový server na kartě **Replika** položky. Server pak má na stránce Instance vlastní kartu a **Otevřít** vede na jeho stránku.
 
 S rootem není potřeba nic dalšího. Vlastní uživatel potřebuje tato oprávnění na poolu cíle, která dialog také ukazuje:
 
@@ -139,8 +138,8 @@ BombVault si při prvním připojení uloží klíč hostitele, který server uk
 
 Spárovaný BombVault umí repliku přijmout sám. Nikdo nedostane přístup SSH k druhému hostiteli a do souboru `authorized_keys` se nepřidává žádný klíč.
 
-1. Na kartě **Replica** položky vyberte jako cíl spárovanou instanci. Karta ukazuje **Čeká na schválení**, dokud neodpoví.
-2. Na přijímající instanci otevřete **Instance**, pak **Příjem**. Karta **ZFS** vypíše žádost. Vyberte pool a kořen na tom serveru a kolik snímků zůstane, potom stiskněte **Allow** nebo **Decline**.
+1. Na kartě **Replika** položky vyber jako cíl spárovanou instanci, nebo na kartě té instance na stránce Instance zapni roli **Server ZFS** a vyber tam položky ZFS. Karta ukazuje **Čeká na schválení**, dokud neodpoví.
+2. Na přijímající instanci otevři **Instance**. Žádost se ukáže na kartě odesílající instance jako odznak a vypisují ji její **Podrobnosti**. Vyber pool a kořen na tom serveru a kolik snímků zůstane, potom stiskni **Povolit** nebo **Odmítnout**.
 3. Po **Allow** zdroj odesílá podle vlastního plánu, jako u každého jiného cíle.
 
 Přijímající instance přijme jen to, co schválení pokrývá: datové sady položky, do vlastního kořene. Příkaz `zfs receive` spouští sama a zdroj tam nemůže nic smazat ani vrátit zpět. Kopie tedy přežije i zdroj, který někdo převzal. Přijímající instance si drží vlastní uchovávání. Zdroj při žádosti jen navrhne pravidlo.
@@ -171,7 +170,7 @@ Na zdroji drží BombVault jen poslední snímek repliky a k tomu záložku pro 
 
 ### Použití repliky {#replica-use}
 
-Otevřete záložku **Zálohy** položky a klikněte na řádek repliky na kartě **Storage locations**. List vypíše snímky na cíli a ukáže příkazy s vašimi skutečnými názvy.
+Otevři záložku **Zálohy** položky a klikni na řádek **Replika ZFS** mezi místy, která drží její snímky. List vypíše snímky na cíli a ukáže příkazy s tvými skutečnými názvy.
 
 Chcete-li se podívat na starý stav, naklonujte snímek na cíli. Klon nezabírá místo, dokud se něco nezmění, a replika zůstane nedotčená:
 
@@ -212,13 +211,13 @@ Podřízená sada, která byla vyprázdněna, sotva změní součet velkého str
 
 Datová sada, kterou předchozí běh zálohoval a kterou tento běh nemohl přečíst, se počítá jako vyprázdněná, pokud se výběr položky nezměnil. To pokrývá nenačtený klíč, nepřipojenou datovou sadu i sadu, která ze stromu zmizela. Podřízená sada, kterou sami vyloučíte, mění výběr, takže její historie začne znovu. Dokud je otevřené zjištění o ztracených datech, uchovávání ponechá staré zálohy právě této datové sady a zbytek stromu pročistí jako obvykle.
 
-Na stránce **Anomálie** má každá datová sada vlastní řádek v panelu položky, který se otevře přes **Sledování** na kartě položky, nebo z jejího řádku na kartě **Nic otevřeného**, když u položky nic otevřeného není. Strom položky na této stránce ukazuje otevřená zjištění u každé datové sady. Odkaz ve zjištění otevře panel obnovy položky u poslední dobré zálohy datové sady. Zda běh doběhne, se posuzuje pro celou položku, protože běh uspěje nebo selže jako celek.
+Každá datová sada má vlastní řádek ve sledování položky, které se otevře přes **Sledování** na stránce **Anomálie** a je na záložce **Integrita** položky. Otevřená zjištění se ukazují u každé datové sady. Odkaz ve zjištění otevře okno obnovy u poslední dobré zálohy datové sady. Zda běh doběhne, se posuzuje pro celou položku, protože běh uspěje nebo selže jako celek.
 
 Samotné kontroly popisuje [Funkce](features.md). Asistent připojený přes [server MCP](mcp.md) může vypsat body obnovy položky ZFS, spustit její zálohu a číst zjištění, ale potvrzení zjištění probíhá na stránce **Anomálie**.
 
 ## Kódy důvodů {#reason-codes}
 
-Stránka, historie běhů a oznámení pojmenují problém jedním z těchto kódů. U většiny je řešení uvedeno i vedle na stránce.
+Stránka položky, historie běhů a oznámení pojmenují problém jedním z těchto kódů. U většiny je řešení uvedeno i vedle na stránce.
 
 | Kód | Význam | Co dělat |
 |---|---|---|
@@ -226,7 +225,7 @@ Stránka, historie běhů a oznámení pojmenují problém jedním z těchto kó
 | `host-placeholder` | Host SSH: Address je stále vzorová hodnota a `host.docker.internal` také neodpověděl. | Nastavte Host SSH: Address na IP adresu LAN tohoto serveru. |
 | `host-fallback` | Host SSH: Address je stále vzorová hodnota a `host.docker.internal` funguje. | Nic, nebo nastavte IP adresu LAN. |
 | `ssh-unreachable` | Server není přes SSH dosažitelný. | Zkontrolujte adresu a port a zda je SSH zapnuté. |
-| `ssh-auth` | Server odmítl klíč BombVaultu. | Spusťte jednou na serveru příkaz zobrazený na kartě spojení. |
+| `ssh-auth` | Server odmítl klíč BombVaultu. | Spusť jednou na serveru příkaz zobrazený pod **Spojení s tímto serverem**. |
 | `zfs-not-found` | Hostitel SSH nemá příkaz `zfs`. | Nasměrujte Host SSH: Address na stroj, kterému pooly patří. |
 | `zfs-permission` | Uživatel SSH nesmí spustit tento příkaz zfs. | Použijte root, nebo viz [TrueNAS SCALE](#truenas). |
 | `uri-mismatch` | `LIBVIRT_URI` uvádí jiného hostitele nebo uživatele než pole SSH. | Sjednoťte je, nebo pole SSH vyprázdněte, aby obojí pocházelo z URI. |
@@ -274,7 +273,7 @@ Stránka, historie běhů a oznámení pojmenují problém jedním z těchto kó
 
 ### Kontrola toho, co kontejner vidí {#mountinfo}
 
-**Vyzkoušet přístup ke snímkům** u položky pořídí skutečný snímek jejího stromu, hledá ho v BombVaultu pro každou datovou sadu a zase ho odstraní. Je to nejrychlejší způsob, jak ověřit celou cestu před prvním plánovaným během.
+**Vyzkoušet přístup ke snímkům** na záložce Nastavení položky pořídí skutečný snímek jejího stromu, hledá ho v BombVaultu pro každou datovou sadu a zase ho odstraní. Je to nejrychlejší způsob, jak ověřit celou cestu před prvním plánovaným během.
 
 Chcete-li se podívat sami, spusťte na serveru:
 

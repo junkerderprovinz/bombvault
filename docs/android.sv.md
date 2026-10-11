@@ -24,12 +24,16 @@ Telefonen går sedan med i gruppen som ännu en instans. Den läser via gruppen 
 
 ## Inloggad på en parkopplad telefon {#sign-in}
 
-En telefon som är parkopplad med din grupp öppnar varje server i gruppen redan inloggad. Innan den laddar en sida ber den servern om en session via gruppen, och en server lämnar bara ut en till en medlem som är en telefon. En server som har lagts till med sin adress frågar efter lösenordet, precis som i en webbläsare. Den som har de tolv orden kan redan öppna varje säkerhetskopia i gruppen, så parkopplingen ger inget nytt.
+En telefon som är parkopplad med din grupp öppnar varje server i gruppen redan inloggad. Innan den laddar en sida ber den servern om en session via gruppen, och en server lämnar bara ut en till en medlem som är en telefon. En server som har lagts till med sin adress frågar efter lösenordet, precis som i en webbläsare.
+
+En parkopplad telefon får inte allt som ett lösenord ger. Dess session når en fast lista över det appen visar: översikten, körningarna och aktivitetsloggen, säkerhetskopiorna att titta på, start och återställning, avvikelserna att läsa och sidan Instanser att titta på. Mål och kommandon når den utan adresser och hemligheter. En återställning som ersätter originalet säkerhetskopierar först det nuvarande läget. Nycklar, återställningskitet, nyckeldepositioner, inställningar och borttagning av säkerhetskopior kräver en inloggning på servern själv, och allt annat svarar att det behöver den inloggningen.
+
+Reglaget för detta är **Telefoner kan parkopplas med gruppens tolv ord** på kortet **Android-app** under **Inställningar, Säkerhet**. En återställning av lösenordet stänger av det och loggar ut alla telefoner, tills du slår på det igen där.
 
 ## Servrar utanför en grupp {#other-servers}
 
 - **Lägg till server** tar adressen du öppnar BombVault med i en webbläsare, till exempel `192.168.1.10:3443`. Utan `http://` eller `https://` framför använder appen https.
-- Servrar som annonserar sig i det lokala nätverket listas under **I det här nätverket** och öppnas med ett tryck. Det gör de så länge **Hitta i nätverket** är påslaget under Inställningar, Integrationer. En server i ett annat nätverk eller bakom ett VPN syns inte där.
+- Servrar som annonserar sig i det lokala nätverket listas under **I det här nätverket** och öppnas med ett tryck. Det gör de så länge **Hitta i nätverket** är påslaget på kortet **Tjänster** under **Inställningar, Integrationer**. En server i ett annat nätverk eller bakom ett VPN syns inte där.
 - Ett självsignerat certifikat betros en gång utifrån sitt SHA-256-fingeravtryck. Om servern senare visar ett annat varnar appen dig och öppnar servern först när du litar på det nya certifikatet.
 
 ## Telefonen på Instanser-sidan {#instances}

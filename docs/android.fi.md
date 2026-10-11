@@ -1,6 +1,6 @@
 # Android-sovellus
 
-Android-sovellus tuo ryhmäsi kaikki BombVault-palvelimet puhelimeesi. Se avautuu palvelinluetteloon, jonka yläpuolella on kaikkien palvelinten toimintaloki, samat rivit kuin Kojelaudassa, ja avaa napauttamasi palvelimen puhelinnäkymän. Sovellus itse ei varmuuskopioi mitään.
+Android-sovellus tuo ryhmäsi kaikki BombVault-palvelimet puhelimeesi. Se avautuu palvelinluetteloon, jonka yläpuolella on kaikkien palvelinten toimintaloki, samat rivit kuin yleiskatsauksessa, ja avaa napauttamasi palvelimen puhelinnäkymän. Sovellus itse ei varmuuskopioi mitään.
 
 ## Sovelluksen hankkiminen {#install}
 
@@ -24,12 +24,16 @@ Puhelin liittyy sitten ryhmään kuin mikä tahansa muu instanssi. Se lukee ryhm
 
 ## Kirjautuneena pariliitetyllä puhelimella {#sign-in}
 
-Ryhmääsi pariliitetty puhelin avaa jokaisen ryhmän palvelimen valmiiksi kirjautuneena. Ennen sivun lataamista se pyytää ryhmän kautta palvelimelta istunnon, ja palvelin antaa sellaisen vain jäsenelle, joka on puhelin. Osoitteella lisätty palvelin kysyy salasanaa kuten selaimessa. Kuka tahansa, joka tietää kaksitoista sanaa, voi jo nyt avata jokaisen ryhmän varmuuskopion, joten pariliitos ei anna mitään uutta.
+Ryhmääsi pariliitetty puhelin avaa jokaisen ryhmän palvelimen valmiiksi kirjautuneena. Ennen sivun lataamista se pyytää ryhmän kautta palvelimelta istunnon, ja palvelin antaa sellaisen vain jäsenelle, joka on puhelin. Osoitteella lisätty palvelin kysyy salasanaa kuten selaimessa.
+
+Pariliitetty puhelin ei saa kaikkea, minkä salasana antaa. Sen istunto yltää kiinteään luetteloon siitä, mitä sovellus näyttää: yleiskatsaus, ajot ja toimintaloki, katseltavat varmuuskopiot, käynnistys ja palautus, luettavat poikkeamat ja katseltava Ilmentymät-sivu. Kohteet ja komennot tulevat sille ilman osoitteitaan ja salaisuuksiaan. Palautus, joka korvaa alkuperäisen, varmuuskopioi ensin nykytilan. Avaimet, palautuspaketti, avaintalletukset, asetukset ja varmuuskopioiden poistaminen vaativat kirjautumisen itse palvelimella, ja kaikki muu vastaa tarvitsevansa sen kirjautumisen.
+
+Kytkin tähän on **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** **Android-sovellus**-kortissa kohdassa **Asetukset, Turvallisuus**. Salasanan nollaus kytkee sen pois ja kirjaa jokaisen puhelimen ulos, kunnes kytket sen siellä takaisin päälle.
 
 ## Ryhmän ulkopuoliset palvelimet {#other-servers}
 
 - **Lisää palvelin** ottaa osoitteen, jolla avaat BombVaultin selaimessa, kuten `192.168.1.10:3443`. Jos alussa ei ole `http://` tai `https://`, sovellus käyttää https:ää.
-- Lähiverkossa itsestään ilmoittavat palvelimet näkyvät kohdassa **Tässä verkossa** ja avautuvat yhdellä napautuksella. Ne ilmoittavat itsestään niin kauan kuin **Löydä verkosta** on päällä kohdassa Asetukset, Integraatiot. Toisessa verkossa tai VPN:n takana oleva palvelin ei näy siellä.
+- Lähiverkossa itsestään ilmoittavat palvelimet näkyvät kohdassa **Tässä verkossa** ja avautuvat yhdellä napautuksella. Ne ilmoittavat itsestään niin kauan kuin **Löydä verkosta** on päällä **Palvelut**-kortissa kohdassa **Asetukset, Integraatiot**. Toisessa verkossa tai VPN:n takana oleva palvelin ei näy siellä.
 - Itse allekirjoitettuun varmenteeseen luotetaan kerran sen SHA-256-sormenjäljen perusteella. Jos palvelin myöhemmin näyttää eri varmenteen, sovellus varoittaa sinua ja avaa sen vasta, kun luotat uuteen varmenteeseen.
 
 ## Puhelin Ilmentymät-sivulla {#instances}

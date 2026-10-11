@@ -1,117 +1,130 @@
 # Copia externa y recuperación
 
 !!! note "Las copias externas esperan tras una reconstrucción"
-    Cuando el paso 4 reconstruye entradas sin los ajustes antiguos, la replicación externa de esos dominios se pausa hasta que se confirme el valor predeterminado de ubicación. Consulta [Ubicación por elemento](#placement).
+    Cuando el Asistente de emergencia o **Descubrir copias** reconstruye elementos sin los ajustes antiguos, las copias externas de esas secciones se pausan hasta que se confirma su valor predeterminado. Consulta [Tras una reconstrucción](#after-a-rebuild).
 
-Las copias locales te protegen de un contenedor perdido o de una mala actualización. La replicación externa y un kit de recuperación probado te protegen de la pérdida de toda la máquina, del ransomware o de un incendio. Esta página cubre la replicación externa, cómo hacer esa copia a prueba de manipulaciones, cómo demostrar que puedes restaurar y cómo recuperarte cuando el propio BombVault ha desaparecido.
+Las copias locales te protegen de un contenedor perdido o de una mala actualización. Las copias externas y un kit de recuperación probado te protegen de la máquina entera, del ransomware o de un incendio. Esta página cubre los destinos y las copias externas, cómo hacer que una copia sea a prueba de manipulación, cómo demostrar que puedes restaurar, el emparejamiento de varios servidores y cómo recuperarlo todo cuando BombVault mismo ya no está.
 
-## Replicación externa
+## Copias externas {#off-site-copies}
 
-Conserva la copia local rápida y añade una o varias réplicas externas. Define un repo por dominio en la página **Ajustes, Externo**. BombVault replica ahí las nuevas instantáneas con `restic copy` en modo de mejor esfuerzo, de modo que un contratiempo externo nunca hace fallar la copia local. En esta forma el repo local sigue siendo el primario y el repo externo es una réplica, pero el repo primario de un dominio no tiene por qué ser local; consulta [Repositorios primarios remotos](#remote-primary-repositories) más abajo para copiar directamente a S3, rest-server, etc. en lugar de replicar hacia allí.
+Conserva la copia local rápida y añade uno o varios destinos fuera del local. BombVault copia allí las nuevas instantáneas con `restic copy` en modo de mejor esfuerzo, así que un contratiempo externo nunca hace fallar la copia local. En esta forma el repo local sigue siendo el primario y el repo externo es una copia, pero el repo primario de una sección no tiene por qué ser local; consulta más abajo [Repositorios primarios remotos](#remote-primary-repositories) para copiar directamente a S3, un rest-server y similares en lugar de copiar a ellos.
 
-- **Varios destinos externos por dominio.** Cada dominio (contenedores, VMs, flash, config, conjuntos de archivos y conjuntos de datos ZFS) puede replicarse a varios destinos externos a la vez, no solo a uno, de modo que puedes mantener, por ejemplo, un rest-server en la máquina de un amigo y un bucket S3 en paralelo. Añade destinos adicionales en Ajustes, Externo, cada uno con su propio repositorio, clase de almacenamiento S3, marca append-only, retención y presupuesto de crecimiento. Una configuración externa única existente se traslada intacta como el primer destino, y cada destino de un dominio se replica según el calendario externo de ese dominio.
-- **Calendario externo por dominio** (editado junto a todos los demás calendarios en Ajustes, Programaciones): déjalo en blanco para replicar tras cada copia local, o establece una cadencia (por ejemplo `weekly Sun 03:00`) para enviar fuera del sitio con menos frecuencia de la que copias localmente. Un botón **Replicar ahora** cubre las ejecuciones bajo demanda.
-- La **retención externa** vive en Ajustes, Retención para que puedas conservar las copias externas más tiempo como archivo. Deja la política toda a cero para no recortar nunca automáticamente las instantáneas externas.
-- Los **límites de ancho de banda** (Ajustes, Externo) limitan la velocidad de subida/bajada de restic para que la replicación no sature tu WAN.
-- Un **indicador de replicación** muestra qué dominio se está replicando mientras se ejecuta (en su página y en el Panel). Es un indicador activo, no una barra de porcentaje, porque `restic copy` no expone ningún progreso legible por máquina.
+  - **Varios destinos por sección.** Cada sección (contenedores, VMs, flash, autocopia, carpetas y conjuntos de datos ZFS) puede copiar a varios destinos externos a la vez, de modo que puedes mantener, por ejemplo, un rest-server en casa de un amigo y un bucket S3 en paralelo. La tarjeta **Destinos por sección** de la página Destinos activa o desactiva cada línea de una sección a un destino.
+  - **Cuándo se copia.** La tarjeta **Copiar** de un destino fija **Cuándo copiar**: **Después de cada copia**, o según un plan propio que reúne las instantáneas y copia a horas fijas. En **Ajustes, Calendario, Copias externas por sección**, **Excepción** da a una sección su propio plan de copia. **Replicar ahora** en la tarjeta **Copia externa** de una sección, en **Ajustes, Destinos**, inicia una copia a demanda.
+  - **La retención** se fija por destino en **Cuánto tiempo conservar**, así que puedes conservar las copias externas más tiempo como archivo. La copia en el campo externo de una sección sigue la tarjeta **Retención externa** de **Ajustes, Destinos**; déjala toda a cero para no recortar nunca automáticamente las instantáneas externas.
+  - **Los límites de ancho de banda** (**Ancho de banda externo** en **Ajustes, Destinos**, o la tarjeta **Copiar** de un destino) limitan la velocidad de subida/bajada de restic para que las copias no saturen tu WAN.
+  - Mientras se ejecuta una copia, la cabecera de estado del resumen dice **Copia externa en curso**. Es un indicador activo, no una barra de porcentaje, porque `restic copy` no expone un progreso legible por máquina.
 
 !!! note "Restaurar desde cualquier lugar"
-    Cada contenedor, VM, conjunto de archivos, el flash y la configuración de la app listan sus copias de seguridad como una única línea de tiempo a través de todos los lugares donde reside una copia. Una copia enviada a B2 aparece una sola vez, marcada con cada lugar que la tiene. Una restauración toma el primer lugar al que puede llegar, empezando por el repositorio en el que se escribe el elemento, y puedes elegir otro lugar por fila. Los lugares externos solo se leen cuando los abres. Borrar en un lugar comprueba primero los demás y dice si era la última copia.
+    Cada elemento lista sus copias como una sola línea de tiempo por todos los lugares donde hay una copia, en su pestaña **Copias de seguridad**. Una copia replicada en B2 aparece una vez, marcada con cada lugar que la guarda. Una restauración toma el primer lugar al que puede llegar, empezando por el repositorio donde se escribe el elemento, y puedes elegir otro lugar por copia. Los destinos externos se leen solo cuando pulsas **Comprobar**, porque listar el almacenamiento en la nube tarda. Borrar en un lugar comprueba antes los demás y dice si era la última copia.
 
 ## Destinos {#destinations}
 
-Ajustes, Externo empieza con **Destinos**: los lugares a los que van las copias externas, configurados una sola vez para todos los dominios. Después, un destino aparece como un botón en la fila **Ubicación** de cada dominio y elemento. La primera vez que se marca para un dominio, BombVault crea el repositorio de ese dominio en una carpeta debajo, por ejemplo `rclone:onedrive:BombVault/containers`. Flash, Autocopia y los conjuntos de datos ZFS no tienen fila **Ubicación**, así que su sección externa ofrece en su lugar **Añadir desde** y el nombre del destino.
+Un destino es un lugar al que van las copias: una carpeta local, un recurso compartido, un servidor propio o un servicio en la nube. Se configura una vez y sirve a todas las secciones. Abre **Destinos** desde su mosaico de ajustes, o activa allí **Mostrar también en la barra lateral** para fijarlo.
 
-**Añadir destino** abre un asistente de cinco pasos:
+**Añadir destino** abre una ventana en cuatro pasos:
 
-1. **¿Adónde deben ir las copias?** Cada servicio aparece con su logotipo, en cuatro grupos: servicios de almacenamiento con buckets S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 y otros), tu propio servidor S3 (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), tu propio servidor y recursos compartidos (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, una ruta montada) y almacenamiento en la nube (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud y el resto de lo que admite rclone). Cada uno indica lo adecuado que es para copias de seguridad: las unidades en la nube se ralentizan con muchas peticiones, así que la primera copia y la purga tardan más allí.
-2. **Iniciar sesión en**. Los campos dependen del servicio: una clave de acceso para S3, un usuario y una contraseña para WebDAV y SMB, una contraseña de aplicación cuando la verificación en dos pasos bloquea la normal, la clave SSH pública de BombVault para SFTP y el Storage Box, o un token para los servicios que inician sesión a través de un navegador. Para estos, el asistente muestra un comando `rclone authorize` que se ejecuta en un ordenador con navegador; el token que imprime se pega en el campo. **Probar conexión** comprueba el inicio de sesión antes de guardar nada.
-3. **Elige una carpeta.** El asistente enumera las carpetas del destino, con **Nueva carpeta** para crear una y el espacio libre cuando el servicio lo indica. Una carpeta vacía es lo más seguro.
-4. **Protección contra borrado.** El asistente dice con claridad lo que puede hacer el servicio. Un rest-server en modo append-only rechaza el borrado, y la prueba de manipulación lo comprueba. Un bucket S3 puede conservar versiones antiguas con versionado y object lock, algo que BombVault todavía no puede comprobar. Una unidad en la nube no puede rechazar el borrado en absoluto: quien entre en el servidor entra también en esa copia. Activa **Inmutable (append-only)** solo donde el otro extremo rechace de verdad el borrado; BombVault no purga nunca allí.
-5. **Para una emergencia.** El kit de recuperación enumera cada destino con el repositorio de cada dominio que hay debajo. El inicio de sesión vuelve con la copia de los ajustes de BombVault; en una instalación limpia sin ella, configura el destino de nuevo en el mismo sitio.
+1. **Proveedor.** Cada servicio aparece con su logotipo, con un buscador encima, en grupos: servicios de almacenamiento con buckets S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 y otros), tu propio servidor S3 (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), tu propio servidor y recursos compartidos (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, una ruta montada), almacenamiento en la nube (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud y el resto que admite rclone) y los servidores receptores de tu grupo. Cada uno dice lo bien que sirve para copias: las unidades en la nube se ralentizan con muchas peticiones, así que la primera copia y la poda tardan más allí.
+2. **Acceso.** Los campos dependen del servicio: una clave de acceso para S3, un usuario y una contraseña para WebDAV y SMB, una contraseña de aplicación donde la verificación en dos pasos bloquea la normal, la clave pública SSH de BombVault para SFTP y la Storage Box, o un token para servicios que inician sesión mediante un navegador. Para estos, la ventana muestra un comando `rclone authorize` que se ejecuta en un ordenador con navegador; el token que imprime va en el campo. **Probar** comprueba el acceso antes de guardar nada. Después la ventana lista las carpetas del destino, con **Nueva carpeta** para crear una y el espacio libre cuando el servicio lo informa. Una carpeta vacía es lo más seguro; BombVault pone en ella una carpeta por sección.
+3. **Protección.** La ventana dice sin rodeos lo que puede hacer el servicio. Un rest-server en modo append-only rechaza el borrado, y la prueba de manipulación lo comprueba. Un bucket S3 puede conservar versiones antiguas con el versionado y el bloqueo de objetos, algo que BombVault todavía no puede comprobar. Una unidad en la nube no puede rechazar el borrado en absoluto: quien entra en el servidor entra también en esa copia. Activa **Protección contra borrado (append-only)** solo donde el otro extremo rechaza de verdad el borrado; BombVault no poda entonces nunca allí. **Para una emergencia** dice lo que guarda el kit de recuperación para este destino.
+4. **Para qué secciones.** Elige las secciones que copian aquí. La primera copia trae todo el historial. Los elementos que eligieron sus propios destinos no reciben el nuevo por sí solos, y la ventana los nombra.
 
-Los servicios S3 usan el backend S3 propio de restic, lo que permite aplicar una clase de almacenamiento y object lock. Todos los demás servicios pasan por el rclone que incluye BombVault, y su remoto aparece entonces en el rclone.conf de Ajustes, Acceso a la nube. Una exportación de ajustes incluye los destinos; con las credenciales incluidas, también su inicio de sesión.
+Los servicios S3 pasan por el propio backend S3 de restic, que es lo que permite aplicar una clase de almacenamiento y el bloqueo de objetos. Todos los demás servicios pasan por el rclone que incluye BombVault, y su remoto aparece entonces en la tarjeta **Externo (rclone)** de **Ajustes, Destinos**. Una exportación de ajustes lleva los destinos; con las credenciales incluidas lleva también su acceso.
 
-Un servidor receptor que ejecuta otra instancia de tu grupo aparece en el asistente en **De tu grupo**; consulta [Servidor receptor](#receiving-server).
+Cada destino tiene una página propia:
 
-El destino externo que un dominio crea a partir de un destino toma el nombre del destino, su ubicación, ubicación, credenciales, clase de almacenamiento e interruptor de inmutable. Su retención, compresión y presupuesto de crecimiento siguen siendo por dominio, y su ubicación no se puede mover porque ahí está el repositorio del dominio. **Añadir un destino solo para este dominio**, bajo cada dominio, sigue aceptando una URL de repositorio escrita a mano.
+- **Conexión** con su nombre, el interruptor **Disponible** (desactivado significa que BombVault ya no escribe aquí, y los elementos que copian aquí fallan con un mensaje claro en lugar de acabar en otro sitio), la carpeta, la compresión, la clase de almacenamiento y **Fuera del local**. **Cambiar conexión** prueba y guarda una dirección o un acceso nuevos.
+- **Credenciales**: el conjunto compartido o uno propio.
+- **Protección contra borrado**, con **Probar la protección contra borrado ahora** y quién poda esta copia.
+- **Copiar**: cuándo copiar, y los límites de subida y bajada.
+- **Cuánto tiempo conservar**: **Corto**, **Equilibrado**, **Largo** o **Valores propios**, con una línea de tiempo de las copias que conserva la regla. **Preguntar antes de conservar menos** pregunta antes de que una regla más corta borre copias cuya única copia está aquí.
+- **Reglas por sección**: el repositorio, la retención o la compresión propios de una sección en este destino. **Cambiar reglas** las abre, y **Volver al destino** devuelve una sección a lo del destino.
+- **Ya está bajo este destino**: secciones cuya dirección escrita a mano está en una carpeta de este destino. Adoptar una deja el repositorio donde está; el acceso, la clase de almacenamiento y la protección contra borrado pasan entonces a ser los del destino. BombVault comprueba antes que el acceso del destino abre el repositorio, y se niega a poner un repositorio append-only bajo un destino que no lo es.
+- Un recipiente que muestra cuánto se ha llenado el destino, con la marca de cuando está lleno y cuántas semanas quedan al ritmo de crecimiento de las últimas semanas. Un destino que no informa de su tamaño dice **Tamaño desconocido**.
 
-El campo off-site de un dominio, su copia principal, también puede seguir a un destino. Debajo del campo hay un botón **Usar** por cada destino al que el dominio aún no copia. Mueve la copia principal a la carpeta del dominio bajo ese destino, y la copia toma entonces el nombre, las credenciales, la clase de almacenamiento y el interruptor de inmutable del destino, mientras que su retención sigue en la página Retención. A partir de ahí el campo muestra la ubicación bloqueada. **Escribir una ubicación** la desbloquea, y guardar una ubicación escrita a mano termina el vínculo.
+Un servidor receptor que ejecuta otra instancia de tu grupo aparece entre los proveedores como **De tu grupo**; consulta [Servidor receptor](#receiving-server).
 
-Un destino externo escrito a mano cuyo repositorio está en una carpeta de un destino puede unirse a él. El destino lista esos destinos externos en **Ya está bajo este destino**, y **Asumir** cuelga uno de él. El destino externo conserva su repositorio, sus snapshots, su retención y su ubicación, y toma el nombre, las credenciales, la clase de almacenamiento y el interruptor de inmutable del destino. BombVault comprueba primero que el inicio de sesión del destino abre el repositorio, y se niega a poner un destino externo append-only bajo un destino que no lo es. El principal de un dominio que se asume se queda en el campo off-site de ese dominio.
+### Mover y eliminar {#move-remove}
+
+- **Mover** lleva la copia de una sección a otro destino, con todo su historial. Todo se queda en el sitio antiguo; BombVault no borra nada allí. El traslado se ejecuta en segundo plano y puede tardar: unos 9 minutos por cada 100 GB entre discos locales, horas por un enlace lento. El resumen lo muestra mientras dura.
+- **Eliminar destino** ofrece dos vías. **Eliminar destino y conservar las copias** deja de escribir allí y deja las copias en su sitio; puedes leerlas después en **Restauración, De una carpeta de copias antigua**. **Eliminar destino y borrar las copias de seguridad de allí** primero lee lo que hay guardado y lo lista: qué copias se van, cuáles de ellas no están en ningún otro sitio y qué repositorios se quedan porque la protección contra borrado lo rechaza, hay elementos que aún copian directamente a ellos, otro destino o sección guarda allí sus copias, o no se pudieron leer. Los elementos que perderían su única copia se listan aparte y se conservan salvo que marques **Borrar también estas**. Confirmas escribiendo el nombre del destino, y el borrado se ejecuta en segundo plano.
+- Borrar las copias de un destino requiere una contraseña de inicio de sesión y haber iniciado sesión en la instancia. Sin contraseña el destino aún se puede eliminar, solo que sus copias no se pueden borrar desde aquí.
 
 ## Ubicación por elemento {#placement}
 
-Cada tarjeta de contenedor, VM y conjunto de archivos tiene una fila de botones de **Ubicación**: **Local** y un botón por cada destino externo del dominio, seguidos de los destinos bajo los que el dominio aún no tiene ningún destino externo. Los botones encendidos reciben las copias de seguridad del elemento.
+La tarjeta **Calendario y destino** de la pestaña Ajustes de un elemento tiene una fila de botones: **Local** y un botón por cada destino externo de la sección. Los botones encendidos reciben las copias del elemento.
 
-- Con **Local** encendido, el elemento se escribe en el repositorio que se muestra bajo **Almacenado en** y se copia a cada otro destino encendido. Apaga un destino y no recibe nada nuevo de este elemento. Local solo no copia a ningún sitio, lo que conviene a datos que ya tienen una segunda copia, por ejemplo un recurso compartido que vive en un NAS.
-- Con **Local** apagado, el elemento se escribe directamente en el repositorio directo del primer destino encendido y se copia desde allí a los demás destinos encendidos. La primera vez, un diálogo crea ese repositorio directo.
-- Un botón de destino crea el destino externo del dominio bajo ese destino y lo enciende solo para este elemento. Todos los demás elementos empiezan sin copia allí.
-- Un botón se queda encendido, porque una copia de seguridad necesita un sitio al que ir. Para dejar algo fuera de las copias de seguridad, exclúyelo.
+- Con **Local** encendido, el elemento se escribe en el repositorio indicado en **Almacenado en** y se copia a cada otro destino encendido. Apaga un destino y no recibe nada nuevo de este elemento. Local solo no copia a ningún sitio, lo que conviene a datos que ya tienen una segunda copia, por ejemplo un recurso compartido que vive en un NAS.
+- Con **Local** apagado, el elemento se escribe directamente en el repositorio directo del primer destino encendido y se copia desde allí a los demás encendidos. La primera vez, un diálogo crea ese repositorio directo.
+- Un botón siempre queda encendido, porque una copia necesita un sitio al que ir. Para dejar un elemento fuera de las copias, usa **No copiar**.
 
-La ubicación queda fija desde la primera copia de seguridad del elemento, porque BombVault nunca mueve copias entre repositorios. Las copias pueden cambiar en cualquier momento. Un destino que deja de recibir un elemento conserva las copias que tiene y las recorta a su propia retención en la siguiente ejecución externa del dominio; **Borrar en B2** en la tarjeta las elimina de inmediato. Cuando algunas de esas copias no existen en ningún otro lugar, la confirmación las enumera por fecha y pide el nombre del elemento. De los destinos de solo añadir no se puede borrar.
+La ubicación queda fija desde la primera copia del elemento, porque BombVault nunca mueve copias entre repositorios; la tarjeta **Repositorio** de la pestaña Ajustes la nombra. Las copias pueden cambiar en cualquier momento. Un destino que deja de recibir un elemento conserva las copias que tiene y las recorta según su propia retención en la siguiente ejecución externa de la sección. En los destinos append-only no se puede borrar.
 
-Bajo la fila, la tarjeta dice adónde va el elemento y qué hay realmente ahí: cuántas sedes lo tienen, cuándo se vio cada destino por última vez, y si se cumple 3-2-1. Una sede es el servidor con los datos originales, cada destino externo y cada repositorio marcado **Fuera del local**. BombVault comprueba copias y sedes; no comprueba la parte de "dos soportes" de 3-2-1.
+Bajo la fila, la tarjeta dice adónde va el elemento y qué hay realmente: cuántas sedes lo guardan, cuándo se vio por última vez cada destino y si se cumple 3-2-1. Una sede es el servidor con los datos originales, cada destino externo y cada repositorio marcado **Fuera del local**. BombVault comprueba copias y sedes; no comprueba la parte de los "dos soportes" del 3-2-1.
 
-### Valores predeterminados de ubicación
+### Valores predeterminados por sección {#placement-defaults}
 
-Ajustes, Almacenamiento, **Valores predeterminados de ubicación** tiene una fila por dominio con los mismos botones. Las copias se aplican de inmediato a cada elemento sin elección propia, y a las carpetas de proyecto de las pilas de Compose. La ubicación se aplica a un elemento nuevo en su primera copia de seguridad; cambiarla no mueve ninguna copia. Antes de guardar, la fila nombra cada destino que gana o pierde elementos y cuántas instantáneas supone eso. **Aplicar a elementos sin copias de seguridad** devuelve al valor predeterminado a todo elemento que aún no tiene copia de seguridad.
+La tarjeta **Destinos por sección** de la página Destinos es el valor predeterminado de cada sección. En el gráfico cada línea es una copia, y un clic en una línea o en un punto la activa o desactiva; las líneas discontinuas están desactivadas. **Gráfico / Interruptores** muestra lo mismo como filas de botones. Las copias se aplican al instante a cada elemento sin elección propia y a las carpetas de proyecto de los stacks Compose. El destino se aplica a un elemento nuevo en su primera copia; cambiarlo no mueve ninguna copia. Antes de guardar, BombVault nombra cada destino que gana o pierde elementos y cuántas instantáneas supone.
 
-Un destino externo nuevo recibe todo elemento que no esté en Local. El diálogo que lo añade dice cuántos elementos son y, cuando se sabe, cuánto historial supone eso, y ofrece dejar fuera los elementos ya excluidos de otros destinos.
+Los elementos que copian a un sitio distinto del de su sección están en la tarjeta **Elección propia**, cada uno con **Seguir el valor por defecto**. Las copias nuevas van entonces a los destinos de la sección, y las anteriores se quedan donde están.
+
+Un destino externo nuevo recibe cada elemento que no está fijado en Local. La ventana que lo añade dice cuántos elementos y, si se sabe, cuánto historial son.
 
 ### Repositorios directos
 
-Apagar Local para un elemento, de modo que un destino sin repositorio directo pasa a ser su hogar, abre un diálogo con una ubicación sugerida junto al destino, por ejemplo `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, y una prueba de conexión que no crea nada. **Crear y usar** crea el repositorio y apunta el elemento a él. Un repositorio directo toma la clave, la clase de almacenamiento, los límites, la configuración de solo añadir y la retención del destino, y cambia con ellos; la tarjeta Repositorios lo muestra de solo lectura. Cuando una clave nueva del destino no puede abrirlo, el repositorio directo conserva la clave que tiene y el guardado lo dice. Un elemento en un repositorio directo se copia desde allí a los demás destinos encendidos, nunca al destino al que pertenece el repositorio. Sus instantáneas llevan la etiqueta `bv:direct`, y las demás pasadas de retención las conservan, así que un repositorio directo que perdió su enlace con su destino nunca envejece por las reglas locales. Se accede a B2 a través de su punto de conexión S3, introduciendo el ID de clave y la clave de aplicación como credenciales de S3; una clave limitada a la carpeta propia del destino no puede alcanzar la carpeta contigua a ella, así que limita la clave a la carpeta superior al destino en su lugar.
+Apagar Local en un elemento, de modo que un destino sin repositorio directo pase a ser su hogar, abre un diálogo con una ubicación sugerida junto al destino, por ejemplo `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, y una prueba de conexión que no crea nada. **Crear y usar** crea el repositorio y apunta el elemento a él. Un repositorio directo toma la clave, la clase de almacenamiento, los límites, el ajuste append-only y la retención del destino, y cambia con ellos; la tarjeta Repositorios lo muestra en solo lectura. Cuando una clave nueva del destino no puede abrirlo, el repositorio directo conserva la clave que tiene y el guardado lo dice. Un elemento en un repositorio directo se copia desde allí a los demás destinos encendidos, nunca al destino al que pertenece el repositorio. Sus instantáneas llevan la etiqueta `bv:direct`, y cualquier otra pasada de retención las conserva, de modo que un repositorio directo que perdió su vínculo con su destino nunca envejece por las reglas locales. B2 se alcanza a través de su punto de conexión S3, con el ID de clave y la clave de aplicación como credenciales S3; una clave limitada a la propia carpeta del destino no puede llegar a la carpeta vecina, así que limita la clave a la carpeta superior.
 
 ### Fuera del local
 
-Un repositorio con nombre puede marcarse como **Fuera del local** en la tarjeta Repositorios. Los repositorios remotos empiezan marcados; desactívalo para un rest-server en el mismo edificio. La marca solo cuenta para las sedes y el 3-2-1 en las tarjetas. No cambia ninguna copia.
+Un destino o un repositorio con nombre puede marcarse como **Fuera del local**. Los remotos empiezan marcados; desactívalo para un rest-server en el mismo edificio. La marca solo cuenta sedes y 3-2-1 en las tarjetas. No cambia ninguna copia.
 
-### Tras una reconstrucción
+Una réplica ZFS es una copia fuera del local, pero no una copia con historial. Solo conserva las instantáneas que fijas, y las versiones antiguas y los archivos sueltos siguen saliendo de las copias de seguridad. Va de un servidor ZFS directamente al otro, por SSH a un servidor ZFS o al punto de recepción de una instancia emparejada. El grupo de emparejamiento solo transporta la solicitud. Consulta [Réplica](zfs-datasets.md#replica).
 
-Las elecciones de copia viven en los propios ajustes de BombVault. Tras una reconstrucción mediante Descubrir copias sin un `/config` restaurado, desaparecen, y copiar todo enviaría de nuevo a B2 los elementos que habías dejado fuera. Por eso la replicación externa de cada dominio reconstruido se pausa. El Panel lo muestra en ámbar, y Valores predeterminados de ubicación ofrece **Confirmar valor predeterminado** con una vista previa de lo que copia la siguiente ejecución y los nombres en las copias de seguridad que no tienen entrada, que puedes dejar fuera ahí. Solo la confirmación termina la pausa; importar un archivo de ajustes trae de vuelta reglas y valores predeterminados pero no la termina.
+### Tras una reconstrucción {#after-a-rebuild}
+
+Las elecciones de copia viven en los ajustes propios de BombVault. Tras una reconstrucción con **Descubrir copias** o con el Asistente de emergencia sin los ajustes restaurados, han desaparecido, y copiarlo todo enviaría de nuevo a B2 los elementos que habías dejado fuera. Por eso las copias externas de cada sección reconstruida se pausan. El resumen lo indica, y la tarjeta **Destinos por sección** ofrece **Confirmar valor predeterminado** con una vista previa de lo que copiará la siguiente ejecución y de los nombres en las copias que no tienen elemento, que puedes dejar fuera allí. Solo la confirmación termina la pausa; importar un archivo de ajustes recupera reglas y valores predeterminados pero no la termina.
 
 ## Repositorios primarios remotos {#remote-primary-repositories}
 
-La ruta de copia de un dominio (Ajustes, Almacenamiento) no se limita a una carpeta local: apúntala directamente a un remoto de restic (`s3:...`, `rest:http://host:8000/repo`, `sftp:usuario@host:/repo`, `rclone:remoto:bucket/ruta`) y BombVault copia allí directamente, sin copia local aparte y sin paso de replicación. Es una forma realmente distinta de la replicación fuera de sede de más arriba: allí el repositorio local es el primario y el de fuera de sede es un archivo suyo en la medida de lo posible; aquí el repositorio remoto **es** el primario, y es la única copia mientras no configures además una replicación fuera de sede (o un segundo remoto) para ese dominio.
+La propia ruta de una sección no se limita a una carpeta local: apúntala directamente a un remoto de restic (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) y BombVault copia directamente allí, sin copia local aparte ni paso de copia. Es una forma diferente de las copias externas anteriores: allí el repo local es el primario y el repo externo es un archivo de mejor esfuerzo; aquí el repo remoto **es** el primario, y es la única copia salvo que además copies esa sección a otro destino.
 
-Cada uno de los seis campos de ruta (Contenedores, VMs, Flash, Autocopia, Carpetas, Conjuntos de datos ZFS) lleva justo al lado un conmutador **Local / Remoto**:
+La ruta de cada sección (Contenedores, VMs, Flash, Autocopia, Carpetas, Conjuntos de datos ZFS) se fija en la página del destino **Carpeta local**: **Cambiar** junto a la sección en su tarjeta **Conexión** abre una ventana con un conmutador **Local / Remoto**:
 
 - **Local** muestra el explorador de carpetas de siempre.
-- **Remoto** lo cambia por un campo de URL sencillo, más un botón que abre el mismo diálogo de prueba de conexión y credenciales que usan los destinos fuera de sede, configurado para este primario. Desde ahí obtienes:
+- **Remoto** lo sustituye por un campo de URL sencillo y los ajustes de conexión que usa un destino externo, configurados para este primario. Desde ahí obtienes:
     - **Una prueba de conexión** contra la ruta real, antes de confiar en ella.
-    - **Límites de ancho de banda** (subida y bajada) para que una copia programada hacia un primario remoto no sature tu enlace WAN: los mismos parámetros de restic `--limit-upload` y `--limit-download` que usa la replicación fuera de sede, aplicados a la propia copia.
-    - **Protección append-only (inmutabilidad)**, verificada con la misma prueba activa de manipulación (una sonda DELETE real contra el otro extremo) que reciben los destinos fuera de sede. Con ella activada, BombVault se niega a podar el repositorio: como detrás no hay copia local aparte, las credenciales de esta máquina no deben poder borrar la única copia de la copia de seguridad.
+    - **Límites de ancho de banda** (subida/bajada) para que una copia programada a un primario remoto no sature tu WAN: los mismos indicadores `--limit-upload`/`--limit-download` de restic que usan las copias externas, aplicados a la propia copia.
+    - **Protección append-only**, verificada con la misma prueba de manipulación activa (un sondeo DELETE real contra el otro extremo) que reciben los destinos externos. Con ella activada, BombVault se niega a podar el propio repo, ya que no hay una copia local aparte detrás y las credenciales de esta máquina no deben poder borrar la única copia de la copia de seguridad.
     - **Una alarma de presupuesto de crecimiento**, tomada de la misma tendencia de tamaño del repositorio que la tarjeta Almacenamiento ya sigue.
 
-Nada de esto es obligatorio: una ruta remota escrita a mano y sin ajustes de seguridad guardados copia exactamente como siempre (ancho de banda ilimitado, podable, sin alarma de presupuesto). El diálogo de seguridad está ahí para cuando quieras las mismas protecciones que recibe una copia fuera de sede, sin tener que crear un destino fuera de sede solo para eso.
+Nada de esto es obligatorio: una ruta remota escrita a mano sin ajustes de seguridad guardados copia sin límites, se puede podar y no tiene alarma de presupuesto. Los ajustes de seguridad están para cuando quieres las mismas protecciones que recibe una copia externa, sin necesitar un destino aparte solo para obtenerlas.
 
 !!! note "Las credenciales de nube y REST se comparten"
-    Un primario remoto se autentica con las mismas credenciales S3/REST configuradas en Ajustes, Acceso a la nube, Credenciales de nube compartidas. No hay un almacén de credenciales aparte para los repositorios primarios.
+    Un primario remoto se autentica con las credenciales de nube compartidas que se configuran en **Ajustes, Destinos**; no hay un almacén de credenciales aparte para los repos primarios.
 
 ### SMB y WebDAV sin montaje en el host {#smb-webdav}
 
-Ajustes, Acceso a la nube, rclone tiene un formulario para un recurso compartido de Windows o Samba y para un servidor WebDAV (Nextcloud, ownCloud, SharePoint o cualquier otro). Rellena un nombre corto, el host y el recurso compartido (SMB) o la URL y el tipo de servidor (WebDAV), el usuario y la contraseña, y BombVault escribe la sección de rclone por ti. rclone ofusca la contraseña por su cuenta antes de guardarla; añadir un destino con un nombre que ya existe sustituye esa sección en lugar de añadir una segunda.
+La tarjeta **Externo (rclone)** de **Ajustes, Destinos** tiene un formulario para un recurso compartido de Windows o Samba y para un servidor WebDAV (Nextcloud, ownCloud, SharePoint u otro). Rellena un nombre corto, el host y el recurso compartido (SMB) o la URL y el tipo de servidor (WebDAV), el usuario y la contraseña, y BombVault escribe la sección de rclone por ti. rclone ofusca la contraseña antes de guardarla; añadir uno con un nombre que ya existe reemplaza esa sección en lugar de añadir una segunda. **Añadir destino** ofrece SMB y WebDAV como proveedores con los mismos campos.
 
-El formulario responde con la ubicación final, por ejemplo `rclone:nas:backups`. Ponla en una Ruta de copia o en un destino externo y añade una subcarpeta si quieres (`rclone:nas:backups/bombvault`). El recurso compartido es el primer segmento de la ruta, no parte del nombre.
+El formulario responde con la ubicación terminada, por ejemplo `rclone:nas:backups`. Úsala como ruta de una sección o como destino y añade una subcarpeta si quieres una (`rclone:nas:backups/bombvault`). El recurso compartido es el primer segmento de la ruta, no parte del nombre.
 
-Esta es mejor vía que montar el recurso compartido en Unraid: restic desaconseja tener un repositorio en un recurso CIFS montado, y aquí no se monta nada. NFS no está en el formulario porque ni restic ni rclone tienen un backend NFS; para NFS, monta la exportación en el host y apunta una Ruta de copia a ella.
+Es mejor vía que montar el recurso compartido en Unraid: restic desaconseja guardar un repositorio en un recurso CIFS montado, y aquí no se monta nada. NFS no está en el formulario porque ni restic ni rclone tienen un backend NFS; para NFS, monta la exportación en el host y úsala como carpeta local.
 
-## Externo inmutable (append-only)
+## Protección contra borrado (append-only)
 
-Marca un repo externo como append-only para que el ransomware, o un host comprometido, no puedan eliminar ni reescribir tus copias. El otro extremo (un `restic/rest-server` ejecutándose en modo `--append-only`) lo **impone**. BombVault solo lo **verifica** y nunca muestra verde basándose únicamente en una afirmación de configuración.
+Activa la protección contra borrado en un destino externo para que el ransomware, o un host comprometido, no pueda borrar ni reescribir tus copias. El otro extremo (un `restic/rest-server` en modo `--append-only`) la **hace cumplir**. BombVault solo la **verifica** y nunca muestra verde por una mera declaración de configuración. Una carpeta de este servidor no puede negarse a borrar, porque quien controla BombVault controla también la carpeta, así que los destinos locales no ofrecen el interruptor.
 
-El asistente de **configuración externa guiada** te lleva desde la elección del backend (rest-server / rclone / S3), pasando por un fragmento de despliegue de rest-server listo para pegar, una prueba de conexión, el conmutador inmutable (que ejecuta la prueba de manipulación de inmediato) y una estrategia de retención, de modo que el externo append-only es alcanzable sin editar configuraciones a mano.
+La vía más rápida a una copia append-only es un BombVault emparejado con un [servidor receptor](#receiving-server): ejecuta el rest-server por ti, en modo append-only.
 
 !!! note "Un borrado correcto en `/locks/` es lo esperado"
     Append-only no significa que ya no se pueda borrar nada. restic tiene que tomar y liberar sus propios bloqueos, así que `/locks/` sigue siendo escribible y borrable a propósito. Las instantáneas y los datos que hay detrás, que es justo lo que buscaría un ransomware, no se pueden eliminar. Si compruebas tú mismo el lado remoto, un borrado que funcione bajo `/locks/` es el comportamiento correcto y no un agujero.
 
-!!! warning "Los repos inmutables nunca se podan desde esta máquina"
-    Un externo inmutable nunca poda deliberadamente las instantáneas antiguas. Establece para él una **alarma de presupuesto de crecimiento** para que recibas un aviso antes de que el tamaño del repo se descontrole.
+!!! warning "Los repos append-only nunca se podan desde esta máquina"
+    Un destino append-only nunca poda instantáneas antiguas desde aquí; podar es cosa del otro extremo. Define una **alarma de presupuesto de crecimiento** para que te avisen antes de que el tamaño del repo se desboque.
 
 ## Prueba de manipulación
 
-BombVault demuestra periódicamente la garantía append-only intentando realmente un borrado contra el repo externo, dirigido a un objeto inexistente:
+BombVault demuestra periódicamente la garantía append-only intentando realmente un borrado contra el repo externo, dirigido a un objeto inexistente. **Probar la protección contra borrado ahora** en la página de un destino la ejecuta a demanda, y **Comprobar la protección contra borrado** en **Ajustes, Verificación, Comprobaciones automáticas** la ejecuta según un calendario.
 
 - **Rechazado** significa protegido.
 - **Aceptado** significa no protegido.
@@ -123,131 +136,160 @@ Un cambio real de protegido a no protegido dispara una única alerta.
 
 BombVault ofrece dos niveles de prueba de que tus copias son realmente restaurables, no solo de que están presentes.
 
-- **Ensayos de verificación de restauración (local).** BombVault ejecuta periódicamente `restic check --read-data-subset` (acotado, nunca una restauración completa que llene el disco) y muestra una insignia de *Restaurabilidad verificada* por dominio. La cadencia vive en Ajustes, Programaciones; la insignia en Ajustes, Integridad.
-- **Ensayos de DR (externo).** BombVault restaura un objetivo real desde el repo externo en un entorno de pruebas desechable, lo verifica archivo por archivo y byte por byte, y luego limpia. Esto demuestra que puedes recuperarte desde el externo, no solo que el repo responde.
+- **Ensayos de verificación de restauración (locales).** BombVault ejecuta periódicamente `restic check --read-data-subset` (acotado, nunca una restauración completa que llene el disco). La cadencia está en **Ajustes, Verificación, Comprobaciones automáticas**, y la tarjeta **Comprobar las copias** del mismo mosaico muestra el resultado.
+- **Restauración de prueba (externa).** BombVault restaura un objetivo real desde el repo externo en un entorno de pruebas aislado, lo verifica archivo por archivo y byte por byte, y luego limpia. Esto demuestra que puedes recuperarte desde el externo, no solo que el repo responde.
 
-El **cuadro de mando de protección contra ransomware** en el Panel lo resume en una postura verde / ámbar / rojo por dominio, con una lista de comprobación con marca de antigüedad (externo configurado, append-only verificado, replicación al día, ensayo de restauración superado, cifrado activado, estrategia de poda definida). Cada fila roja enlaza directamente con la solución, y la tarjeta solo se pone verde con hechos verificados.
+La tarjeta **Estado de protección** del resumen lo resume por sección en cuatro comprobaciones: una copia actual en este servidor, una copia externa, la protección contra borrado allí y una restauración de prueba desde allí. Un clic en una sección muestra los detalles, y la tarjeta solo se pone en verde con hechos verificados.
 
 ## Emparejamiento de instancias {#pairing}
 
-Los receptores, las fuentes de recogida, la página de Instancias y Mesh externo hablan todos con otro BombVault. Lo hacen como miembros de un grupo de emparejamiento, y una instancia se une al grupo con doce palabras.
+Varios BombVault trabajan juntos como un grupo: se muestran el estado de protección unos a otros, asumen roles unos para otros y pueden guardarse la clave unos a otros. Una instancia se une al grupo con doce palabras.
 
-En la primera instancia, abre **Ajustes → Emparejamiento** y pulsa **Generar frase** en las tarjetas de emparejamiento. Aparecen doce palabras en una ventana con un botón **Copiar**. En cada una de las demás instancias, abre el mismo lugar, pulsa **Introducir frase** y pégalas o escríbelas, o pulsa **Pegar** en esa ventana. Una palabra que no está en la lista se indica con su posición mientras escribes, y la última palabra lleva una suma de comprobación, así que una palabra mal escrita o intercambiada se detecta antes de que se complete el emparejamiento. Genera la frase en una sola instancia: dos instancias que crean cada una una frase forman dos grupos separados. Si nadie aparece en un minuto, la pestaña ofrece dos salidas: volver a mostrar las palabras para introducirlas allí, o introducir las palabras de la otra instancia y unirte a su grupo en un solo paso. Emparejar funciona sin contraseña de acceso, pero configura una: sin ella, cualquiera que pueda abrir esta interfaz web puede leer las palabras y conseguir, a través del grupo, la contraseña de restic de cada instancia que hay en él. La tarjeta de emparejamiento lo indica hasta que se configura una contraseña. Con una contraseña, volver a mostrar la frase la pide. **Salir del grupo** saca de nuevo a una instancia.
+En la primera instancia abre **Ajustes, Emparejamiento** y pulsa **Generar frase**. Tres tarjetas de pasos muestran cómo va. Doce palabras aparecen en una ventana con un botón **Copiar**. En cada una de las demás instancias abre el mismo sitio, pulsa **Introducir frase** y pégalas o escríbelas, o pulsa **Pegar** en esa ventana. Una palabra que no está en la lista se nombra con su posición mientras escribes, y la última palabra lleva una suma de comprobación, así que una palabra mal escrita o cambiada de sitio se detecta antes de emparejar nada. Genera la frase en una sola instancia: dos instancias que generen una forman dos grupos separados. Si nadie aparece en un minuto, la página ofrece dos salidas: mostrar de nuevo las palabras para introducirlas allí, o introducir las palabras de la otra instancia y unirse a su grupo en un solo paso. El emparejamiento funciona sin contraseña de inicio de sesión, pero define una: sin ella cualquiera que pueda abrir la interfaz web puede leer las palabras y, a través del grupo, pedir roles que entregan la contraseña restic de las instancias que hay en él. La tarjeta de emparejamiento lo dice hasta que se define una contraseña. Con contraseña, mostrar de nuevo la frase la pide. **Salir del grupo** saca de nuevo a una instancia.
 
 Cualquiera que conozca las palabras puede unirse al grupo, así que trátalas como una contraseña.
 
-**Cómo se encuentran los miembros entre sí.** Cada instancia aprende su propia dirección en la red desde tu navegador en el momento en que inicias sesión, mostrada en la tarjeta del repetidor como **Esta instancia en tu red**; corrígela ahí si un proxy inverso o un puerto inusual se interpone. En la misma red los miembros anuncian esa dirección por multicast y hablan directamente, y donde el multicast no puede cruzar una red de contenedores, como la red bridge por defecto de Docker, una instancia busca en su propia subred a las demás con una llamada firmada que solo un miembro del grupo puede responder, así que el emparejamiento sigue completándose en segundos sin repetidor. Si no aparece nada, **¿No la encuentras?**, debajo de la tarjeta de emparejamiento, acepta una dirección a mano, para otra subred o un puerto no estándar. Las instancias en redes distintas pasan por un repetidor, elegido en la misma pestaña:
+**Cómo se alcanzan los miembros.** Cada instancia aprende su propia dirección en la red desde tu navegador en cuanto inicias sesión, listada en **Direcciones conocidas** de la página de emparejamiento junto con las que la instancia encontró por sí misma; corrígela allí si un proxy inverso o un puerto poco habitual está delante. En la misma red los miembros anuncian esa dirección por multidifusión y hablan directamente, y donde la multidifusión no puede cruzar una red de contenedores, como el bridge por defecto de Docker, una instancia busca en cambio en su propia subred a las demás con una llamada firmada que solo un miembro del grupo puede responder, de modo que el emparejamiento termina en segundos sin relay. Si no aparece nada, **¿No la encuentras?** admite una dirección a mano, para otra subred o un puerto no estándar. Las instancias en redes distintas pasan por un relay, elegido en la misma página; sus cuatro formas traen cada una una imagen:
 
 - **Repetidor del proyecto** (el predeterminado): `parleyport.halleluja.design`, el mismo repetidor que usa también KnightLoader. Nada que configurar.
-- **Repetidor propio**: el contenedor [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) de las Unraid Community Apps, o una de tus instancias que ya sea accesible desde fuera con **Actuar como repetidor** activado. Esa instancia responde entonces en `/relay/connect` en su propia dirección, detrás del proxy inverso y el certificado que ya tiene, y deja entrar solo a tu grupo. Introduce la dirección del repetidor en cada instancia que deba usarlo.
+- **Relay propio**: el contenedor [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) de las Community Apps de Unraid (también en **Ajustes, Apps**), o una de tus instancias que ya sea accesible desde fuera con **Actuar como repetidor** activado. Esa instancia responde entonces en `/relay/connect` en su propia dirección, tras el proxy inverso y el certificado que ya tiene, y deja entrar solo a tu grupo. Introduce la dirección del relay en cada instancia que deba usarlo.
 - **Sin repetidor**: los miembros se encuentran automáticamente solo en la misma red, y en ningún otro sitio.
 
-**Lo que ve el repetidor.** Cada llamada entre miembros va sellada con AES-256-GCM bajo una clave derivada de las doce palabras, y esa clave nunca sale de tus instancias. El repetidor conoce un hash que agrupa las conexiones, para qué instancia es un mensaje, qué tamaño tiene y cuándo pasa. Una llamada directa en la red local va sellada del mismo modo y además firmada, así que nada depende del certificado autofirmado que ofrece una instancia.
+**Qué ve el relay.** Cada llamada entre miembros va sellada con AES-256-GCM bajo una clave derivada de las doce palabras, y esa clave nunca sale de tus instancias. El relay conoce un hash que agrupa las conexiones, para qué instancia es un mensaje, su tamaño y cuándo pasa. Una llamada directa en la red local se sella igual y además se firma, de modo que nada depende del certificado autofirmado que sirve una instancia. Las llamadas que entregan algo (respuestas de rol, una contraseña restic, accesos de receptor, depósitos de claves) también se firman con una clave del miembro que las envía, fijada al verla por primera vez; consulta [Modelo de seguridad](configuration.md#security-model).
 
-**Lo que viaja por el grupo.** Los cuadros de mando de la página de Instancias, una petición de comprobar un dominio ahora, las ofertas Mesh externo, y lo que necesita un receptor o una fuente de recogida: las ubicaciones del repositorio de la otra instancia y su contraseña restic. Los datos de copia nunca lo hacen; siguen yendo directos a los backends de restic. Tampoco la APP_KEY: la contraseña restic abre los repositorios de esa instancia y nada más, ni sus secretos guardados, ni sesiones, ni códigos de recuperación.
+**Qué viaja por el grupo.** El estado de protección de la página Instancias, una petición de comprobar una sección ahora, las solicitudes de rol y sus respuestas, las ofertas de destino y lo que necesita un receptor o un recolector una vez permitido su rol: las ubicaciones de repositorio de la otra instancia y su contraseña restic. Los datos de copia nunca; siguen yendo directos a los backends de restic. La APP_KEY tampoco: la contraseña restic abre los repositorios de esa instancia y nada más, ni sus secretos guardados, sesiones o códigos de recuperación.
 
-**Entradas de antes del emparejamiento.** Las instancias añadidas con un token de fleet, y los receptores y fuentes de recogida configurados con la APP_KEY de la otra instancia, se mantienen tras la actualización y quedan marcados como **Emparejar de nuevo**. Los receptores y fuentes de recogida siguen funcionando: en su primer arranque, BombVault sustituye cada APP_KEY guardada por la contraseña restic derivada de ella. Empareja ambas instancias, luego edita la entrada y elige su instancia. Una instancia así retoma su tarjeta anterior en cuanto aparece en el grupo una instancia con el mismo nombre.
+**Elementos anteriores al emparejamiento.** Las instancias añadidas con un token de flota, y los repositorios recibidos y las fuentes de recogida configurados con la APP_KEY de la otra instancia, se quedan tras la actualización y se marcan **Emparejar de nuevo**. Siguen funcionando: en su primer arranque BombVault sustituye cada APP_KEY guardada por la contraseña restic derivada de ella. Empareja las dos instancias, edita luego el elemento y elige su instancia. Hasta entonces esos elementos están en la tarjeta **Sin instancia** de la página Instancias.
 
-El único lugar que todavía acepta una APP_KEY a mano es [Restaurar desde otro repo de BombVault](#restore-from-another-bombvault-repo), para el caso en que la otra instancia haya desaparecido y no pueda responder en un grupo.
+El único sitio que aún acepta una APP_KEY a mano es [De una carpeta de copias antigua](#restore-from-another-bombvault-repo), para el caso en que la otra instancia ya no existe y no puede responder en un grupo.
 
-## Panel receptor (el lado receptor)
+## Instancias y roles {#roles}
 
-![El lado receptor, vigilado en solo lectura, con una comprobación de integridad hecha en esta máquina.](assets/screenshots/receiver.png)
+La página **Instancias** (un mosaico de ajustes que se puede fijar en la barra lateral) muestra el grupo como una red de quién hace qué para quién, con una tarjeta para esta instancia y una para cada otro miembro, los móviles Android y los servidores ZFS. **Emparejar una instancia** flota abajo a la derecha. Qué partes están activas se fija en **Ajustes, Instancias, Varios servidores**: **Instancias**, **Receptor** y **Recogida**.
 
-*El lado receptor, vigilado en solo lectura, con una comprobación de integridad hecha en esta máquina.*
+Cada tarjeta muestra el estado de protección del miembro y sus roles como mosaicos. Un rol es algo que una instancia hace para otra:
 
-Todo lo anterior es el lado *emisor*. En la máquina que **recibe** copias externas inmutables de otro BombVault, el panel receptor te ofrece monitorización independiente y de solo lectura de esos repositorios en el hardware receptor, de modo que un fallo silencioso en el otro extremo no pase desapercibido.
+- **Receptor** guarda las copias externas de este servidor en un rest-server en modo append-only. Este servidor envía tras cada copia y no puede borrar nada allí, ni aunque alguien lo tome.
+- **Recolector** recoge las copias de este servidor según su propio calendario. Este servidor no tiene que estar despierto para ello.
+- **Servidor ZFS** acepta las réplicas ZFS de este servidor. Cada elemento ZFS lo elige en **Réplica** en sus ajustes.
+- **Guardián de claves** guarda una copia sellada del kit de recuperación de este servidor. Consulta [Guardián de claves](#key-keeper).
 
-Activa el conmutador **Receptor** en Ajustes para revelar una pestaña **Receptor**. Está desactivado por defecto; actívalo solo en una máquina que realmente reciba copias externas inmutables. Después registra un repositorio recibido (de solo lectura, abierto con la contraseña restic de la instancia emisora, que llega a través del [grupo de emparejamiento](#pairing)) para obtener:
+Activar un rol envía una solicitud, y no empieza nada hasta que alguien en la otra instancia pulsa **Permitir**. La solicitud aparece en la tarjeta de esa instancia como una insignia, y sus **Detalles** la listan con **Permitir** y **Rechazar**; un rol permitido se puede revocar allí en cualquier momento. Una línea discontinua en la red es un rol que aún espera. Una instancia con BombVault 9.x no puede responder a una solicitud, así que un rol está activo allí en cuanto lo activas, y una solicitud de una instancia 9.x espera **Permitir** aquí.
 
-- **Un inventario de instantáneas agrupado por fuente**, para que puedas ver exactamente qué contenedores, VMs y conjuntos de archivos han llegado.
-- **Última recepción** por fuente, para que sepas cómo de fresca es cada una.
+**Detalles** en una tarjeta abre el resto: los repositorios recibidos y las fuentes de recogida de ese miembro, las ofertas de destino, la supervisión, **Eliminar** y **Olvidar la clave**.
+
+## Receptor y recolector {#receiver}
+
+![Una copia externa recibida en los detalles de una instancia, vigilada en solo lectura, con una comprobación de integridad ejecutada en este hardware.](assets/screenshots/receiver.png)
+
+*Una copia externa recibida en los detalles de una instancia, vigilada en solo lectura, con una comprobación de integridad ejecutada en este hardware.*
+
+En la máquina que **recibe** copias append-only de otro BombVault, los repositorios recibidos te dan supervisión independiente y de solo lectura en el hardware receptor, de modo que un fallo silencioso en el otro extremo no pase inadvertido. Activa **Receptor** en **Ajustes, Instancias**, abre luego los **Detalles** de la instancia emisora en la página Instancias y añade el repositorio recibido (solo lectura, abierto con la contraseña restic de la instancia emisora, que recibe a través del [grupo de emparejamiento](#pairing)). Obtienes:
+
+- **Un inventario agrupado por fuente**, para ver exactamente qué contenedores, VMs y conjuntos de carpetas han llegado.
+- **Última recepción** por fuente, para saber lo fresca que está cada una.
 - **Un `restic check` independiente** ejecutado en el hardware receptor, de modo que la integridad se verifica donde los datos realmente residen, no solo en el emisor.
 - **Un interruptor de hombre muerto:** una alerta cuando una fuente deja de enviar dentro de una ventana que tú defines.
 - **Alertas de integridad:** una alerta cuando una comprobación del lado receptor falla.
 
-El Receptor es estrictamente de solo lectura. Nunca escribe en el repositorio recibido, de modo que nunca puede romper la garantía append-only en la que confía el emisor.
+El receptor es estrictamente de solo lectura. Nunca escribe en el repositorio recibido, así que nunca puede romper la garantía append-only en la que confía el emisor.
+
+Un recolector funciona al revés: con **Recogida** activada, una instancia lee las copias de otro miembro en su propio repositorio según su propio calendario. Sus fuentes también están en los detalles de ese miembro.
 
 ### Servidor receptor {#receiving-server}
 
-La máquina receptora también puede ejecutar el rest-server al que copian las demás. **Configurar servidor receptor**, arriba en la pestaña **Receptor**, pide una carpeta en un recurso compartido, con **Nueva carpeta** para crear una, y un puerto (8000, salvo que lo use otro contenedor). BombVault entonces:
+La máquina receptora también puede ejecutar el rest-server al que copian las demás. Se configura la primera vez que permites una solicitud de **Receptor** que lo pide: la ventana dice que el servidor necesita un servidor receptor y pide una carpeta en un recurso compartido, con **Nueva carpeta** para crear una, y un puerto (8000 salvo que otro contenedor lo use). BombVault entonces:
 
 1. se niega a seguir si ya existe un contenedor llamado `rest-server` o si otro contenedor ocupa el puerto;
 2. descarga `restic/rest-server` y lo inicia a través del socket de Docker en modo append-only, con repositorios privados y un archivo de inicios de sesión en la carpeta;
 3. escribe su plantilla de Unraid en la unidad flash, de modo que el contenedor siga siendo editable en la pestaña Docker, u ofrece la plantilla como descarga cuando la unidad flash no está al alcance;
 4. ejecuta la prueba de manipulación contra él y muestra si rechaza los borrados.
 
-Las instancias de tu grupo encuentran entonces el servidor en el asistente de destinos, en **De tu grupo**, con el nombre de la máquina receptora. Cada instancia recibe un inicio de sesión propio la primera vez que elige el servidor y solo escribe en su propia carpeta allí. La tarjeta enumera esos inicios de sesión, y **Revocar acceso** quita uno; lo que esa instancia ya copió se queda en la carpeta. La configuración crea además un inicio de sesión para alguien ajeno al grupo, cuya contraseña la tarjeta muestra una sola vez.
+Las instancias de tu grupo encuentran entonces el servidor entre los proveedores en **De tu grupo**, con el nombre de la máquina receptora, y el rol **Receptor** lo ofrece como la opción segura. Cada instancia recibe un acceso propio la primera vez que usa el servidor, y escribe solo en su propia carpeta allí. Con **Receptor** activado en **Ajustes, Instancias**, la tarjeta **Servidor receptor** de esta instancia vuelve a abrir el servidor. Su ventana lista los accesos en **Socios con acceso**, y **Revocar acceso** quita uno; lo que esa instancia ya copió se queda en la carpeta. La configuración también crea un **Acceso fuera del grupo**, cuya contraseña la ventana muestra una sola vez.
 
-Una instancia que solo llega a la máquina receptora a través del relay no puede usar el servidor, porque el relay no transporta copias de seguridad. Añade antes la dirección de la máquina receptora en **Ajustes → Emparejamiento**. Cuando BombVault se ejecuta en una dirección IP propia (en br0, por ejemplo), rellena **Dirección para los socios**, porque el servidor escucha en la dirección del host.
+Una instancia que llega a la máquina receptora solo a través del relay no puede usar el servidor, porque el relay no transporta copias. Añade antes la dirección de la máquina receptora en la página de emparejamiento. Cuando BombVault se ejecuta en una IP propia (en br0, por ejemplo), rellena **Dirección para socios**, porque el servidor escucha en la dirección del host.
 
 ## Ejemplo completo: dos equipos Unraid, de principio a fin
 
-Lo anterior describe las piezas. Esto es una instalación completa con valores reales, porque las piezas se montan mejor cuando uno las ha visto montadas una vez.
+Todo lo anterior describe las piezas. Esta es una configuración completa, porque las piezas son más fáciles de montar cuando las has visto montadas una vez.
 
-Dos equipos: **TOWER** ejecuta los contenedores y envía las copias, **VAULT** las recibe e impone la inmutabilidad. Sustituye por tus propios nombres, direcciones y rutas de recurso compartido.
+Dos máquinas: **TOWER** ejecuta los contenedores y envía las copias; **VAULT** las recibe y hace cumplir append-only. Sustituye por tus propios nombres, direcciones y rutas de recursos compartidos.
 
-**1. En VAULT, levanta el servidor append-only.** En BombVault en TOWER ve a *Ajustes → Externo → Configurar*, elige **rest-server** y genera la receta. Copia la pestaña **Plantilla de Unraid (XML)**, guárdala en VAULT como `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, luego *Docker → Add Container* y elige **rest-server** en la lista de plantillas. Antes de arrancarlo, escribe la línea `htpasswd` mostrada en `/mnt/user/appdata/rest-server/.htpasswd` en VAULT. La contraseña de un solo uso se muestra una vez y nunca se guarda: cópiala ahora. Esa línea lleva la misma contraseña, ya cifrada con bcrypt para ti: el texto en claro va en las credenciales REST de TOWER, la línea cifrada en el `.htpasswd` de VAULT. No tienes que cifrar nada tú.
+**1. Empareja las dos máquinas.** En TOWER abre **Ajustes, Emparejamiento**, pulsa **Generar frase** e introduce las doce palabras en VAULT con **Introducir frase**. Define antes una contraseña de inicio de sesión en ambas.
 
-    Deja `--append-only` en el campo OPTIONS. Es el sentido de todo esto: sin él, VAULT vuelve a ser un recurso compartido normal.
+**2. En TOWER, pide a VAULT que sea el receptor.** En la página Instancias, activa **Receptor** en la tarjeta de VAULT, elige las secciones y **el servidor receptor de VAULT** como lugar, y envía la solicitud.
 
-**2. En TOWER, apunta el repositorio externo hacia él.** La URL del repositorio sigue el patrón que imprime la receta:
+**3. En VAULT, permítelo.** La página Instancias de VAULT muestra la solicitud en la tarjeta de TOWER. Pulsa **Permitir**. La primera vez, VAULT pide una carpeta para su servidor receptor, como `user/appdata/rest-server`, inicia el rest-server en modo append-only y ejecuta contra él la prueba de manipulación.
 
-    rest:http://VAULT:8000/bombvault-containers/containers
+**4. De vuelta en TOWER.** A partir de entonces TOWER copia a VAULT tras cada copia, y el nuevo destino aparece en la página Destinos de TOWER con su protección contra borrado.
 
-El primer segmento de la ruta es el usuario htpasswd, el segundo el repositorio. Introduce el usuario y la contraseña generados como credenciales REST del destino y ejecuta la **prueba de conexión**.
-
-**3. En TOWER, activa «Inmutable».** La prueba de manipulación se ejecuta de inmediato y debe decir *protegido*. Qué significan las respuestas:
+Lo que responde la prueba de manipulación:
 
 | Resultado | Qué ocurrió |
 | --- | --- |
 | **protegido** | VAULT rechazó el borrado. Es el único estado que aprueba. |
-| **NO protegido** | VAULT aceptó un borrado. Falta `--append-only` o se ha quitado. |
+| **no protegido** | VAULT aceptó un borrado. Falta `--append-only` o se quitó. |
 | **no concluyente** | Ninguna de las dos. Normalmente la URL no es la que usa restic, o las credenciales han cambiado. No se registra nada ni se dispara ninguna alerta. |
 
-**4. En VAULT, observa lo que llega.** Empareja los dos equipos ([Emparejamiento de instancias](#pairing)), activa *Ajustes → General → Receptor*, abre la pestaña **Receptor** y registra el repositorio en solo lectura con TOWER como instancia emisora.
+**5. Observa lo que llega, si quieres.** Activa **Receptor** en **Ajustes, Instancias** en VAULT, abre los **Detalles** de TOWER y añade el repositorio recibido. VAULT recibe la contraseña restic de TOWER a través del grupo; nadie escribe una clave.
 
-!!! warning "La ubicación es una ruta **dentro** del contenedor, escrita relativa al montaje del host"
-    Introduce `user/appdata/rest-server/bombvault-containers/containers`, **no** `/mnt/user/appdata/…`. BombVault se ejecuta en un contenedor donde el `/mnt` del host está montado en otro sitio; una ruta absoluta del host no existe ahí. Si pegas una, BombVault ahora te indica la ruta relativa que debes usar.
+**6. Hazlo mutuo.** Repite los pasos en el otro sentido: VAULT pide a TOWER que sea su receptor. Cada máquina hace entonces cumplir append-only para la otra, y ninguna puede borrar las copias de la otra.
 
-    VAULT recibe la contraseña restic de TOWER a través del grupo al guardar; nadie escribe una clave.
+También sirve un rest-server que ejecutes a mano: añádelo con **Añadir destino** como rest-server, con el usuario y la contraseña de su `.htpasswd`, y activa la protección contra borrado. Mantén `--append-only` en sus opciones; sin él el otro extremo vuelve a ser un recurso compartido corriente.
 
-**5. Hazlo mutuo, si quieres.** Repite los mismos cinco pasos en sentido contrario: un rest-server en TOWER que reciba la copia de VAULT. Entonces cada equipo impone la inmutabilidad al otro, y ninguno puede borrar las copias del otro.
+!!! warning "Una ruta local es una ruta dentro del contenedor"
+    Donde BombVault pide una carpeta de este servidor, introdúcela relativa al montaje del host, como `user/appdata/rest-server/bombvault-containers`, no `/mnt/user/appdata/...`. BombVault se ejecuta en un contenedor, donde el `/mnt` del host está montado en otro sitio; una ruta absoluta del host no existe dentro de él. Si pegas una, BombVault te dice la ruta relativa que debes usar en su lugar.
 
-## Recuperación guiada
+## Asistente de emergencia {#emergency}
 
-Una pestaña **Recuperación** dedicada guía una instalación nueva o reconstruida a través del caso de desastre, en un solo lugar:
+El **Asistente de emergencia** recupera un servidor que ya no existe o que se ha vuelto a instalar. Empieza en la página **Restauración**, en **Emergencia**, y desde **Restaurar desde una copia** en la página de bienvenida de una instalación nueva. Se ejecuta en cuatro pasos: **Acceso**, **Ajustes**, **Selección** y **Restauración**.
 
-1. **Restaura primero los propios ajustes de BombVault**, de modo que las rutas de copia, los destinos externos y las credenciales que necesita el resto del flujo vengan rellenados de antemano (aplicado mediante un autoreinicio a través del socket de Docker, de modo que la base de datos de ajustes en ejecución nunca se sobrescribe bajo un descriptor abierto).
-2. **Comprueba que BombVault puede leer tus copias** (la trampa de la clave de cifrado por adelantado).
-3. Te permite **apuntar a tu repo existente** (local o externo).
-4. **Descubre** los contenedores, VMs, conjuntos de archivos y conjuntos de datos ZFS almacenados en él.
-5. **Restaura los contenedores y las VMs de una vez** (dejados detenidos, para que los inicies deliberadamente) y lista los conjuntos de archivos y los elementos ZFS para restaurarlos uno a uno; los elementos ZFS vuelven desactivados. Tu kit de recuperación está a un clic de distancia.
+1. **Acceso.** Muestra a BombVault la clave de las copias antiguas, de una de tres maneras:
+    - **Subir kit de recuperación**: el archivo que descargaste durante la configuración. Contiene la clave y todos los destinos, y BombVault rellena el resto a partir de él. Un kit sellado con age pide la identidad para la que se selló; se usa una vez y no se guarda.
+    - **A través del grupo**: una instancia de tu grupo guarda la clave como depósito. Necesitas las doce palabras del grupo, tu código de depósito y a alguien en esa instancia. Consulta [Guardián de claves](#key-keeper).
+    - **Escribir la clave**: la `APP_KEY` del servidor antiguo, y dónde están sus copias.
+
+    BombVault prueba entonces la clave en cada destino y dice de cada uno si es legible, no se encuentra, está bloqueado con otra clave, no es alcanzable o aún le falta el acceso. Todavía no se ha guardado nada, y la clave permanece en memoria durante un tiempo limitado. **Adoptar la clave** hace que este servidor escriba sus copias con esa clave a partir de ahora; **Deshacer la adopción** vuelve a su propia clave hasta que se ha ejecutado la primera copia. Un servidor que ya tiene copias propias rechaza la adopción y remite a [De una carpeta de copias antigua](#restore-from-another-bombvault-repo). **Guardar credenciales** guarda los accesos que lleva el kit para destinos remotos, y pregunta antes de reemplazar accesos que este servidor ya tiene.
+2. **Ajustes.** **Recuperar ajustes** restaura los ajustes propios de BombVault desde la autocopia más reciente: destinos, credenciales, calendarios y reglas. BombVault se reinicia para aplicarlos, a través del socket de Docker, de modo que la base de datos de ajustes en uso nunca se sobrescribe con un manejador abierto, y el asistente continúa solo después. El inicio de sesión de este servidor se conserva: sigues entrando con la contraseña que usas ahora. Los secretos que tenía guardados el servidor antiguo y que no se pueden adoptar se listan, para que los introduzcas de nuevo.
+3. **Selección.** BombVault revisa tus copias y lista los contenedores, VMs, conjuntos de carpetas y conjuntos de datos ZFS que encuentra. La copia más reciente viene preseleccionada en todas partes. Lo que este servidor aún tiene empieza desactivado, porque una restauración lo reemplazaría. Los conjuntos de carpetas ya no saben de dónde vinieron tras una reconstrucción, así que van a una carpeta que eliges.
+4. **Restauración.** Todo lo seleccionado vuelve de una vez, dejado detenido si quieres iniciar tú mismo cada contenedor y VM, que es lo más seguro tras una pérdida total. Después descarga un kit de recuperación nuevo: el antiguo pertenece a la instalación anterior.
 
 !!! tip "Migración planificada frente a desastre"
-    La recuperación guiada restaura los propios ajustes de BombVault desde una copia. Para un traslado *planificado* a una máquina nueva, puedes en su lugar llevar tu configuración directamente con la tarjeta **Exportar / importar ajustes** (un archivo JSON portátil). Consulta [Configuración](configuration.md#portable-settings-export-and-import).
+    El Asistente de emergencia restaura los ajustes propios de BombVault desde una copia. Para un traslado *planificado* a una máquina nueva, puedes llevar tu configuración directamente con la tarjeta **Exportar / importar ajustes** (un archivo JSON portátil). Consulta [Configuración](configuration.md#portable-settings-export-and-import).
 
-### Restaurar desde otro repo de BombVault {#restore-from-another-bombvault-repo}
+### De una carpeta de copias antigua {#restore-from-another-bombvault-repo}
 
-Una tarjeta aparte en la pestaña **Recuperación** abre el repo de una instancia *distinta* de BombVault (un recurso compartido montado bajo `/mnt`, o una URL remota) con **la `APP_KEY` de esa instancia**, en una sesión única y de solo lectura. Explora los contenedores, VMs y conjuntos de archivos almacenados ahí, elige una instantánea y restáurala, y el objeto restaurado se convierte en un contenedor, VM o conjunto de archivos local normal. Nunca se escribe nada en el otro repo, y tus propios ajustes de copia quedan intactos (la sesión vive en memoria y expira por sí sola). Mover un contenedor del servidor A al servidor B ya no significa reapuntar los ajustes de tu repo y revertirlos después. Esta tarjeta es de un solo uso: abre una sesión, restaura lo que eliges y se olvida de la otra instancia. Si en cambio quieres un arreglo permanente, en el que esta máquina trae según una programación las instantáneas de otra instancia a su propio repositorio, eso es la pestaña **Recogida** de la página **Instancias**.
+**De una carpeta de copias antigua** en **Otras fuentes** de la página Restauración abre el repositorio de una instancia de BombVault *distinta* (un recurso compartido montado bajo `/mnt`, o una dirección remota) con el kit de recuperación de esa instancia o con su `APP_KEY` escrita, en una sesión única de solo lectura. Explora los contenedores, VMs, conjuntos de carpetas y conjuntos de datos ZFS guardados allí, elige una instantánea y restáurala, y el objeto restaurado pasa a ser un contenedor, una VM o un conjunto de carpetas locales normales. Nunca se escribe nada en el otro repositorio, y tus propios ajustes de copia quedan intactos (la sesión vive en memoria y caduca sola). Mover un contenedor del servidor A al servidor B no significa reapuntar tus ajustes de repo y revertirlos después. Esta ventana es de un solo uso: abre una sesión, restaura lo que eliges y olvida la otra instancia. Si quieres en cambio un arreglo permanente, en el que esta máquina trae las instantáneas de otra instancia a su propio repositorio según un calendario, eso es el rol **Recolector** en la página Instancias.
 
 Un contenedor cuya red no existe en este servidor, como una red `br0` de Unraid en un host Docker normal, muestra un selector de red bajo su fila. BombVault lo crea en la red que elijas, junto con sus otras redes. La IP fija y la dirección MAC pertenecían a la red antigua y se descartan, así que las asigna la nueva red.
 
-## Kit de recuperación de la clave de cifrado
+## Guardián de claves {#key-keeper}
+
+Un guardián de claves es una instancia de tu grupo que guarda una copia sellada del kit de recuperación de este servidor. No puede abrir la copia por sí misma. Si este servidor se pierde algún día, una instalación nueva que se una a tu grupo pide la copia al guardián y la abre con tu código de depósito.
+
+1. En la página Instancias, activa **Guardián de claves** en la tarjeta de la instancia que debe guardarla, y elige **Depositar**. Hacer un depósito requiere una contraseña de inicio de sesión.
+2. Este servidor muestra el **Código de depósito** una sola vez: veinte letras y dígitos en cuatro grupos de cinco. Anótalo y confirma con **He anotado el código**. Este servidor no guarda el código, solo lo que necesita para sellar un depósito para él.
+3. El guardián ya tiene el depósito, y este servidor lo renueva cuando cambia el kit. **Depósito de claves** en la tarjeta de esta instancia lista el **Depósito de este servidor** con cada guardián y su estado, y **Depósitos que guarda este servidor** para los de otros. **Crear un código nuevo** sustituye el código; cada guardián pasa al nuevo cuando recibe el depósito nuevo.
+
+Ese día necesitas tres cosas: las doce palabras de tu grupo, el código de depósito y acceso a la interfaz del guardián, donde alguien tiene que pulsar **Permitir**. En el Asistente de emergencia elige **A través del grupo**, escoge el depósito, pídelo y escribe el código de depósito. El código se usa en el servidor nuevo y no se envía al guardián. En el guardián, la solicitud aparece en **Depósito de claves** con quién la pide, si esa instancia se vio alguna vez allí y cuántas veces ha pedido; **Permitir** entrega la copia sellada, y permitir requiere una contraseña de inicio de sesión. La instalación nueva tiene 30 minutos para recogerla tras el Permitir, una solicitud que nadie responde caduca al cabo de un día, y una instancia que pide demasiado a menudo tiene que esperar una hora.
+
+Sin el código nadie puede abrir la copia, el guardián incluido. Si pierdes el código, crea uno nuevo mientras este servidor siga funcionando; si el servidor ya ha desaparecido, el kit de recuperación y la APP_KEY escrita siguen sirviendo. El guardián puede borrar un depósito en cualquier momento, y el propietario tiene entonces que pedirlo de nuevo.
+
+## Kit de recuperación {#recovery-kit}
 
 Esta es la pieza que hace posible la recuperación ante desastres incluso cuando no hay ningún BombVault en ejecución.
 
-Un clic descarga la **clave maestra**, la **contraseña restic derivada** y las **ubicaciones y comandos exactos del repo**, para que puedas restaurar directamente con la CLI de restic en cualquier máquina. Un recordatorio del Panel insiste hasta que lo hayas guardado.
+**Descargar kit de recuperación** en la tarjeta **Para emergencias** de **Ajustes, Restauración** te da la **clave**, la **contraseña de restic derivada**, cada **destino** con el repositorio de cada sección, los accesos que una instalación nueva necesita para llegar a ellos y los **comandos exactos de restic**, para que puedas restaurar directamente con la CLI de restic en cualquier máquina. Requiere una contraseña de inicio de sesión. El kit imprime la clave también con el cifrado desactivado, porque las definiciones de contenedores y VMs siempre se sellan con ella. Tras una adopción imprime la clave de copias adoptada y la APP_KEY de este servidor, que una instalación nueva necesita solo para recuperar los ajustes. Una tarjeta **Guarda tu kit de recuperación** en el resumen te lo recuerda hasta que lo has guardado.
 
 !!! danger "Guarda el kit de recuperación fuera del servidor"
-    El kit contiene el secreto que descifra tus copias. Guárdalo en un lugar seguro y separado del servidor (un gestor de contraseñas, una copia impresa en una caja fuerte). Si pierdes tanto BombVault como `APP_KEY` sin kit de recuperación, tus copias cifradas no se pueden recuperar.
+    El kit contiene el secreto que descifra tus copias. Guárdalo en un lugar seguro y separado del servidor (un gestor de contraseñas, una copia impresa en una caja fuerte). Si pierdes BombVault y `APP_KEY` sin kit de recuperación y sin depósito de claves, tus copias cifradas no se pueden recuperar.
 
 !!! warning "La instantánea más reciente no siempre es la que hay que restaurar"
-    Desde restic 0.17, `restic snapshots` muestra el tamaño de cada instantánea. Tras una pérdida de datos, la instantánea más reciente puede ser la vaciada, así que no restaures una instantánea mucho más pequeña que las anteriores. Tras un ransomware puede ser la cifrada, con el tamaño habitual. Si BombVault sigue funcionando, mira antes su página **Anomalías**: indica la última copia buena. Una restauración no necesita ningún dato de anomalías de BombVault, y la pausa de retención solo conserva más instantáneas, nunca menos.
+    Desde restic 0.17, `restic snapshots` muestra el tamaño de cada instantánea. Tras una pérdida de datos la instantánea más reciente puede ser la vaciada, así que no restaures una instantánea mucho más pequeña que las anteriores. Tras un ransomware puede ser la cifrada, con el tamaño habitual. Si BombVault sigue funcionando, mira primero su página **Anomalías**: nombra la última copia buena, y la ventana de restauración la preselecciona. Una restauración no necesita ningún dato de anomalías de BombVault, y la pausa de retención solo conserva más instantáneas.
 
 ### Sellar el kit
 
-Si has activado el cifrado age para las exportaciones sencillas (Ajustes), el kit también se sella con él y se descarga como `bombvault-recovery-kit.md.age`. Está en ASCII armor y no en binario, así que sigue siendo texto: pegarlo en un gestor de contraseñas o imprimirlo funciona exactamente igual que antes, solo que el contenido es ilegible sin tu clave.
+Si has activado **Cifrar exportaciones con age** en **Ajustes, Sistema**, el kit también se sella con ella y se descarga como `bombvault-recovery-kit.md.age`. Está en ASCII blindado en lugar de binario, así que sigue siendo texto: pegarlo en un gestor de contraseñas o imprimirlo funciona exactamente como antes, solo que el contenido es ilegible sin tu clave.
 
 !!! warning "No guardes la clave age dentro del kit"
     Necesitas tu clave age **privada** para abrir un kit sellado. Guárdala en un sitio que no dependa del propio kit, o tendrás dos cosas que recuperar en lugar de una. Sellar compensa cuando el kit se guarda en un sitio que no controlas del todo (un gestor de contraseñas compartido, notas en la nube, una copia impresa en una oficina); un kit en tu propia caja fuerte ya está protegido por la caja fuerte.
@@ -256,7 +298,7 @@ Si has activado el cifrado age para las exportaciones sencillas (Ajustes), el ki
 
 ### Si no tienes el kit a mano
 
-La contraseña no se guarda en ningún sitio, se **calcula** a partir de la `APP_KEY`. Con la clave y una shell puedes reproducirla tú mismo:
+La contraseña no se guarda en ningún sitio, se **calcula** a partir de la clave de las copias, así que puedes reproducirla tú mismo solo con la clave y un shell:
 
 ```sh
 printf 'bombvault:restic-repo' \
@@ -264,16 +306,16 @@ printf 'bombvault:restic-repo' \
   | cut -d' ' -f1
 ```
 
-Es un HMAC-SHA256 sobre la cadena fija `bombvault:restic-repo`, con los bytes crudos de la `APP_KEY` hexadecimal como clave, impreso como 64 caracteres hexadecimales en minúscula. El mismo valor está en el kit, como contraseña restic derivada; esto es para el día en que el kit esté en otro sitio que tú.
+Es HMAC-SHA256 sobre la cadena fija `bombvault:restic-repo`, con clave en los bytes en bruto de la `APP_KEY` hexadecimal, impreso como 64 caracteres hexadecimales en minúscula. El mismo valor está en el kit, listado como la contraseña de restic derivada; esto es para el día en que el kit esté en un sitio donde tú no estás. En un servidor que adoptó las copias de otro, usa la clave de copias adoptada, que es la antigua APP_KEY de ese servidor.
 
 !!! warning "Para un repositorio recibido, usa la clave de la instancia EMISORA"
-    Un repositorio que llegó aquí por replicación fuera de sede lo creó la máquina que lo envió, con **su** `APP_KEY`. Derivar desde la clave de la máquina receptora produce una contraseña que restic rechaza, lo que se lee exactamente como un repositorio corrupto sin serlo. Esa es la razón habitual de que `restic check` sobre un repositorio recibido pida la contraseña una y otra vez.
+    Un repositorio que llegó aquí mediante una copia externa lo creó la máquina que lo envió, con **su** clave. Derivar de la clave de la máquina receptora produce una contraseña que restic rechazará, lo que se parece exactamente a un repositorio corrupto y no lo es. Esta es la razón habitual por la que `restic check` en un repo recibido pide la contraseña una y otra vez.
 
 Como las definiciones de recuperación viven **dentro** de cada repo (`<repo>/def`, `<repo>/vm-def`), una carpeta de repo copiada es totalmente autocontenida, de modo que el kit más el repo es todo lo que una restauración desde cero necesita.
 
 ## Recuperar un volcado de base de datos {#database-dumps}
 
-Un volcado de base de datos es un punto de restauración propio en el repositorio de contenedores, con la etiqueta `dbdump:<container>` y un único archivo, `/dbdump/<container>.sql`. BombVault los lista, los descarga y los importa en **Copias**; abajo están los mismos pasos solo con restic, para el día en que BombVault no esté.
+Un volcado de base de datos es un punto de restauración propio en el repositorio de contenedores, etiquetado `dbdump:<contenedor>`, que contiene el único archivo `/dbdump/<contenedor>.sql`. BombVault los lista, descarga e importa en la pestaña **Copias de seguridad** del contenedor; a continuación están los mismos pasos solo con restic, para el día en que BombVault no esté.
 
 ```sh
 restic -r <repo> snapshots --tag dbdump:<container>

@@ -1,6 +1,6 @@
 # Ứng dụng Android
 
-Ứng dụng Android đưa mọi máy chủ BombVault trong nhóm của bạn lên điện thoại. Khi mở, ứng dụng hiện danh sách máy chủ, phía trên là nhật ký hoạt động của tất cả các máy, gồm đúng những dòng mà Bảng điều khiển hiển thị, và chạm vào máy chủ nào thì giao diện điện thoại của máy chủ đó sẽ mở ra. Bản thân ứng dụng không sao lưu gì cả.
+Ứng dụng Android đưa mọi máy chủ BombVault trong nhóm của bạn lên điện thoại. Khi mở, ứng dụng hiện danh sách máy chủ, phía trên là nhật ký hoạt động của tất cả các máy, gồm đúng những dòng mà Tổng quan hiển thị, và chạm vào máy chủ nào thì giao diện điện thoại của máy chủ đó sẽ mở ra. Bản thân ứng dụng không sao lưu gì cả.
 
 ## Tải ứng dụng {#install}
 
@@ -24,12 +24,17 @@ Sau đó điện thoại gia nhập nhóm như một phiên bản khác. Nó đ�
 
 ## Đăng nhập trên điện thoại đã ghép nối {#sign-in}
 
-Một điện thoại đã ghép nối với nhóm của bạn mở từng máy chủ của nhóm ở trạng thái đã đăng nhập sẵn. Trước khi tải một trang, nó xin máy chủ đó một phiên qua nhóm, và máy chủ chỉ cấp phiên cho thành viên là điện thoại. Máy chủ được thêm bằng địa chỉ sẽ hỏi mật khẩu, giống như trong trình duyệt. Ai có mười hai từ thì vốn đã mở được mọi bản sao lưu của nhóm, nên việc ghép nối không cấp thêm quyền gì mới.
+Một điện thoại đã ghép nối với nhóm của bạn mở từng máy chủ của nhóm với trạng thái đã đăng nhập sẵn. Trước khi tải một trang, nó xin máy chủ đó một phiên qua nhóm, và máy chủ chỉ trao phiên cho một thành viên là điện thoại. Máy chủ được thêm bằng địa chỉ sẽ hỏi mật khẩu, như trong trình duyệt.
+
+Một điện thoại đã ghép nối không nhận được mọi thứ mà mật khẩu mang lại. Phiên của nó chỉ chạm tới một danh sách cố định những gì ứng dụng hiển thị: Tổng quan, các lần chạy và nhật ký hoạt động, các bản sao lưu để xem, bắt đầu và khôi phục, các bất thường để đọc và trang Phiên bản để xem. Các đích sao lưu và lệnh được trả về với địa chỉ và bí mật đã bị lược bỏ. Một lần khôi phục thay thế bản gốc sẽ sao lưu trạng thái hiện tại trước. Khóa, bộ khôi phục, bản gửi khóa, cài đặt và việc xóa bản sao lưu vẫn cần đăng nhập ngay tại máy chủ, còn mọi thứ khác đều trả lời rằng cần đăng nhập đó.
+
+Công tắc cho việc này là **Điện thoại có thể ghép nối bằng mười hai từ của nhóm** trên thẻ **Ứng dụng Android** trong **Cài đặt, Bảo mật**. Việc đặt lại mật khẩu tắt nó và đăng xuất mọi điện thoại, cho đến khi bạn bật lại ở đó.
 
 ## Máy chủ ngoài nhóm {#other-servers}
 
 - **Thêm máy chủ** nhận địa chỉ bạn dùng để mở BombVault trong trình duyệt, chẳng hạn `192.168.1.10:3443`. Nếu không có `http://` hay `https://` ở đầu, ứng dụng dùng https.
-- Các máy chủ tự thông báo trên mạng cục bộ được liệt kê dưới **Trên mạng này** và mở được bằng một lần chạm. Máy chủ làm việc này khi **Tìm trên mạng** đang bật trong Cài đặt, Tích hợp. Máy chủ ở mạng khác hoặc nằm sau VPN sẽ không hiện ở đây.
+- Các máy chủ tự thông báo trên mạng cục bộ được liệt kê dưới **Trên mạng này** và mở được bằng một lần chạm. Máy chủ làm việc này khi **Tìm trên mạng** đang bật trong thẻ **Dịch vụ** dưới **Cài đặt, Tích hợp**. Máy chủ ở mạng khác hoặc nằm sau VPN sẽ không hiện ở đây.
+
 - Chứng chỉ tự ký được tin cậy một lần theo dấu vân tay SHA-256 của nó. Nếu sau này máy chủ đưa ra một chứng chỉ khác, ứng dụng sẽ cảnh báo bạn và chỉ mở máy chủ sau khi bạn tin cậy chứng chỉ mới.
 
 ## Điện thoại trên trang Phiên bản {#instances}

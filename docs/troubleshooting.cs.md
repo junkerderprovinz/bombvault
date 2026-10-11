@@ -4,7 +4,7 @@ Krátké FAQ. Kompletní tabulku řešení problémů na straně hostitele pro V
 
 ## Něco není správně zapojeno
 
-Otevřete `/spike` ve webovém rozhraní. Kontrola integrace hostitele prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části. Začněte zde, než budete předpokládat chybu: chybějící připojení nebo nedosažitelný hostitel se objeví okamžitě.
+Přidej kartu **Integrace hostitele** do Přehledu pod **Přizpůsobit**. Kontrola integrace hostitele prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části a **Zkontrolovat nyní** ji spustí znovu. Začni zde, než budeš předpokládat chybu: chybějící připojení nebo nedosažitelný hostitel se objeví okamžitě.
 
 ## Nemohu se dostat k webovému rozhraní
 
@@ -12,7 +12,19 @@ BombVault obsluhuje HTTPS rovnou z krabice na portu `3443` (samopodepsaný certi
 
 ## Ztratil jsem svůj APP_KEY
 
-`APP_KEY` odvozuje heslo k restic repozitáři. Bez něj (a bez sady pro obnovu šifrovacího klíče) nelze šifrované zálohy obnovit. Proto vás Přehled popohání ke stažení sady pro obnovu. Viz [Mimo lokalitu a obnova](offsite-recovery.md). Vygenerujte klíč pomocí `openssl rand -hex 32` a uložte jej mimo server, dříve než se budete spoléhat na jakoukoli zálohu.
+`APP_KEY` odvozuje heslo k restic repozitáři. Bez něj, bez sady pro obnovu a bez úschovy klíče ve tvé skupině nelze šifrované zálohy obnovit. Proto Přehled ukazuje **Ulož si sadu pro obnovu**, dokud ji nestáhneš. Viz [Mimo lokalitu a obnova](offsite-recovery.md#recovery-kit). Vygeneruj klíč pomocí `openssl rand -hex 32` a ulož jej mimo server, dříve než se budeš spoléhat na jakoukoli zálohu.
+
+## Zapomněl jsem přihlašovací heslo
+
+Zvol **Zapomenuté heslo?** na přihlašovací stránce. BombVault zapíše kód o 12 znacích do logu svého kontejneru (na Unraidu: záložka Docker, ikona BombVault, **Logs**). Zadej ho s novým heslem do 10 minut. Reset také vypne dvoufázové ověření, odstraní všechny passkeys, zruší všechny API tokeny, klíče MCP a přihlášení OAuth, ukončí všechny ostatní relace a vypne párování telefonů. Passkeys přidej znovu v **Nastavení, Zabezpečení**, párování telefonů tam zase zapni a nové tokeny a klíče vytvoř tam, kde je ještě potřebuješ. Viz [Bezpečnostní model](configuration.md#login).
+
+## Zálohy se zastavily a hlásí, že klíč už nejde otevřít
+
+Tento server převzal v Nouzovém průvodci zálohovací klíč jiného serveru a `APP_KEY` se potom změnil. Převzatý klíč je zapečetěný starým APP_KEY, takže ho BombVault neotevře a raději nezálohuje nic, než aby zapisoval špatným klíčem. Pojmenuje ho **Vyžaduje pozornost** v Přehledu. Nastav APP_KEY zpět na původní hodnotu, nebo znovu nahraj sadu pro obnovu na stránce Obnova pod **Nouze**.
+
+## Telefon skončí na přihlašovací stránce
+
+Spárovaný telefon dostane relaci přes skupinu jen tehdy, když je v **Nastavení, Zabezpečení** zapnuto **Telefony se mohou spárovat s dvanácti slovy skupiny**. Reset hesla ho vypne. Aplikace starší než server také nedostane relaci, dokud se neaktualizuje. Server přidaný podle adresy se na heslo ptá vždy.
 
 ## Záloha VM se nepřipojí
 
@@ -29,11 +41,11 @@ Záloha VM komunikuje s libvirt přes SSH, nikdy přes připojení.
 
 ## Záloha selhala s "repository is already locked"
 
-Toto je obvykle osiřelý restic zámek zanechaný, když byl kontejner aktualizován nebo restartován uprostřed operace. BombVault detekuje prokazatelně osiřelý zámek, násilně jej vyčistí a jednou zopakuje, automaticky. Pokud přetrvává, použijte **Nastavení, Integrita, Odemknout** pro postiženou doménu k ručnímu vyčištění zaseklého zámku. Skutečný problém se stále objeví, místo aby byl skryt. Po restartu BombVault čeká, dokud takový zámek nebude deset minut bez obnovení. Restic, který ještě běží, třeba v druhém BombVaultu nad stejným repozitářem, svůj zámek obnovuje každých pět minut.
+Toto je obvykle osiřelý restic zámek zanechaný, když byl kontejner aktualizován nebo restartován uprostřed operace. BombVault detekuje prokazatelně osiřelý zámek, násilně jej vyčistí a jednou zopakuje, automaticky. Pokud přetrvává, otevři kartu **Zkontrolovat zálohy** v **Nastavení, Ověření** a zvol **Odemknout** pod **Více** na řádku postižené sekce k ručnímu vyčištění zaseklého zámku. Skutečný problém se stále objeví, místo aby byl skryt. Po restartu BombVault čeká, dokud takový zámek nebude deset minut bez obnovení. Restic, který ještě běží, třeba v druhém BombVaultu nad stejným repozitářem, svůj zámek obnovuje každých pět minut.
 
 ## Moje kopie mimo lokalitu neproběhla po záloze
 
-Replikace mimo lokalitu je na základě nejlepší snahy záměrně, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Zkontrolujte plán mimo lokalitu pro danou doménu (Nastavení, Plány): prázdný plán replikuje po každé místní záloze, zatímco kadence odesílá méně často. Použijte **Replikovat nyní** na stránce Mimo lokalitu pro běh na vyžádání a sledujte indikátor replikace na Přehledu.
+Replikace mimo lokalitu je na základě nejlepší snahy záměrně, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Zkontroluj, kdy cíl kopíruje: jeho karta **Kopírovat** říká **Po každé záloze** nebo uvádí vlastní plán a **Nastavení, Plán, Kopie mimo lokalitu podle oblastí** může dát sekci vlastní plán. Použij **Replikovat nyní** na kartě sekce **Kopie mimo lokalitu** v **Nastavení, Cíle** pro běh na vyžádání a sleduj hlavičku stavu v Přehledu, která za běhu říká **Probíhá kopie mimo lokalitu**. Neúspěšná kopie se ukáže pod **Vyžaduje pozornost**.
 
 ## Obnova se přerušila dříve, než začala
 
@@ -41,7 +53,7 @@ Než se cokoli zastaví nebo odebere, obnova spustí předletovou kontrolu konfl
 
 ## Prostý export selhal místo zapsání souboru
 
-Pokud je šifrování age zapnuto (Nastavení), ale není nastaven platný příjemce, export selže s jasnou chybou místo zapsání prostého textu. Přidejte platného příjemce (veřejný klíč age nebo veřejný klíč SSH), nebo vypněte šifrování, pokud zamýšlíte, aby export byl prostý text. Viz [Funkce](features.md).
+Pokud je **Šifrovat exporty pomocí age** zapnuto v **Nastavení, Systém**, ale není nastaven platný příjemce, export selže s jasnou chybou místo zapsání prostého textu. Přidej platného příjemce (veřejný klíč age nebo veřejný klíč SSH), nebo vypni šifrování, pokud zamýšlíš, aby export byl prostý text. Viz [Funkce](features.md).
 
 ## Dump databáze selhal
 
@@ -67,11 +79,11 @@ Každý problém nese kód důvodu v hranatých závorkách a stránka [Datové 
 
 - **`snapshot-loop`**: snímek se k BombVaultu nedostal, protože Host Data nepředává nová připojení. Uprav kontejner, nastav Access Mode u Host Data na Read/Write - Slave a restartuj BombVault.
 - **`key-not-loaded`**: šifrovaná datová sada bez načteného klíče se přeskočí. Načti klíč pomocí `zfs load-key` a připoj sadu; příští záloha ji zahrne.
-- **`ssh-auth`**: server odmítl klíč BombVaultu. Karta připojení na stránce ZFS ukazuje příkaz, který ho povolí; spusť ho jednou na serveru.
+- **`ssh-auth`**: server odmítl klíč BombVaultu. **Připojení ZFS k tomuto serveru**, které otevře **Zobrazit připojení** na stránce Zálohy, ukazuje příkaz, který ho povolí; spusť ho jednou na serveru.
 
 ## Položka zůstává na "Učí se N/10"
 
-Většina kontrol anomálií začíná po 10 úspěšných zálohách položky a počítání začne znovu po **Označit jako očekávané** a po změně výběru položky. Položka bez plánu se neučí a kontejner bez appdata se nemá z čeho učit, což říká i jeho odznak.
+Většina kontrol anomálií začíná po 10 úspěšných zálohách položky a počítání začne znovu po **Označit jako očekávané** a po změně výběru položky. Položka bez plánu se neučí a kontejner bez appdata se nemá z čeho učit, což říká i jeho odznak. **Průběh učení** na stránce Anomálie ukazuje u každé položky prstenec o deseti dílech.
 
 ## Uchovávání přestalo mazat staré zálohy jedné položky
 
@@ -83,7 +95,7 @@ Stejná příčina: čištění nechá staré zálohy položky s takovou anomál
 
 ## Import historie hlásí, že repozitář nešlo přečíst
 
-Po aktualizaci BombVault jednou načte velikosti dřívějších záloh z každého repozitáře. Repozitář, který v tu chvíli nebyl dostupný, například nefunkční vzdálený cíl nebo nepřipojená sdílená složka, je uveden na kartě **Anomálie** v **Nastavení, Integrita** a zkouší se znovu jednou denně. Jeho položky se mezitím učí z nových záloh.
+Po aktualizaci BombVault jednou načte velikosti dřívějších záloh z každého repozitáře. Repozitář, který v tu chvíli nebyl dostupný, například nefunkční vzdálený cíl nebo nepřipojená sdílená složka, je uveden na kartě **Anomálie** v **Nastavení, Ověření** a zkouší se znovu jednou denně. Jeho položky se mezitím učí z nových záloh.
 
 ## Varování o místě na disku nesouhlasí s přehledem Unraidu
 
@@ -95,7 +107,7 @@ Stránka [Server MCP](mcp.md#troubleshooting) uvádí, co znamená každý stavo
 
 ## Kontejner se stále restartuje nebo vypadá unhealthy
 
-BombVault hlásí healthy/unhealthy ze svého vlastního `/api/health`. Nástroj pro automatické hojení (například Autoheal) jej může restartovat automaticky, pokud se engine kdy zasekne. Zkontrolujte log kontejneru a report `/spike` pro základní příčinu.
+BombVault hlásí healthy/unhealthy ze svého vlastního `/api/health`. Nástroj pro automatické hojení (například Autoheal) jej může restartovat automaticky, pokud se engine kdy zasekne. Zkontroluj log kontejneru a kartu **Integrace hostitele** pro základní příčinu.
 
 ## Stále zaseknutí?
 

@@ -24,12 +24,16 @@ Derefter går telefonen med i gruppen som endnu en instans. Den læser via grupp
 
 ## Logget ind på en parret telefon {#sign-in}
 
-En telefon, der er parret med din gruppe, åbner hver af gruppens servere allerede logget ind. Før den indlæser en side, beder den serveren om en session via gruppen, og en server udleverer kun en session til et medlem, der er en telefon. En server, der er tilføjet med sin adresse, beder om adgangskoden, ligesom i en browser. Alle, der har de tolv ord, kan allerede åbne alle gruppens sikkerhedskopier, så parring giver ikke adgang til noget nyt.
+En telefon, der er parret med din gruppe, åbner hver af gruppens servere allerede logget ind. Før den indlæser en side, beder den serveren om en session via gruppen, og en server udleverer kun en session til et medlem, der er en telefon. En server, der er tilføjet med sin adresse, beder om adgangskoden, ligesom i en browser. 
+
+En parret telefon får ikke alt, hvad en adgangskode giver. Dens session når en fast liste over det, appen viser: oversigten, kørslerne og aktivitetsloggen, sikkerhedskopierne til at se på, starte og gendanne, anomalierne til at læse og siden Instanser til at se på. Destinationer og kommandoer kommer tilbage uden deres adresser og hemmeligheder. En gendannelse, der erstatter originalen, tager først en sikkerhedskopi af den aktuelle tilstand. Nøgler, gendannelseskittet, nøgledeponeringer, indstillinger og sletning af sikkerhedskopier kræver fortsat en login på selve serveren, og alt andet svarer, at det kræver denne login.
+
+Kontakten hedder **Telefoner kan parre med gruppens tolv ord** og sidder i kortet **Android-app** under **Indstillinger, Sikkerhed**. En nulstilling af adgangskoden slår den fra og logger alle telefoner ud, indtil du slår den til igen der.
 
 ## Servere uden for en gruppe {#other-servers}
 
 - **Tilføj server** tager den adresse, du åbner BombVault med i en browser, for eksempel `192.168.1.10:3443`. Uden `http://` eller `https://` foran bruger appen https.
-- Servere, der annoncerer sig selv på det lokale netværk, vises under **På dette netværk** og åbnes med ét tryk. Det gør de, så længe **Find på netværket** er slået til under Indstillinger, Integrationer. En server på et andet netværk eller bag en VPN dukker ikke op der.
+- Servere, der annoncerer sig selv på det lokale netværk, vises under **På dette netværk** og åbnes med ét tryk. Det gør de, så længe **Find på netværket** er slået til i kortet **Tjenester** under **Indstillinger, Integrationer**. En server på et andet netværk eller bag en VPN dukker ikke op der.
 - Et selvsigneret certifikat bliver stolet på én gang ud fra sit SHA-256-fingeraftryk. Viser serveren senere et andet, advarer appen dig og åbner den først, når du stoler på det nye certifikat.
 
 ## Telefonen på Instanser-siden {#instances}

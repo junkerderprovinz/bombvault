@@ -1,6 +1,6 @@
 # API ja integraatiot
 
-BombVaultissa on pieni HTTP-API skripteille, kojelaudoille ja kotiautomaatiolle. Se lukee samoja asioita, joita kojelauta näyttää, ja voi käynnistää varmuuskopion. Kaikki muu, kuten palautukset, kopioiden poistaminen ja asetukset, pysyy käyttöliittymässä.
+BombVaultissa on pieni HTTP-API skripteille, kojelaudoille ja kotiautomaatiolle. Se lukee samoja asioita, joita yleiskatsaus näyttää, ja voi käynnistää varmuuskopion. Kaikki muu, kuten palautukset, kopioiden poistaminen ja asetukset, pysyy käyttöliittymässä.
 
 ## Tokenit {#tokens}
 
@@ -73,7 +73,7 @@ BombVault tarjoaa näiden reittien kuvauksen osoitteessa `/api/v1/openapi.json` 
 
 BombVault voi näkyä Home Assistantissa laitteena MQTT-löydön kautta. Home Assistant tarvitsee MQTT-integraationsa ja välittäjän, esimerkiksi Mosquitto-lisäosan. Omaa komponenttia ei tarvita.
 
-1. Avaa BombVaultissa **Asetukset, Integraatiot, Home Assistant**.
+1. Avaa BombVaultissa **Asetukset, Integraatiot** ja etsi **Home Assistant** **Palvelut**-kortista.
 2. Anna välittäjän osoite ja portti sekä käyttäjänimi ja salasana, jos se niitä pyytää. Kytke **Käytä TLS:ää** päälle, jos välittäjä käyttää TLS:ää, yleensä portissa 8883; sen varmenteen on oltava voimassa antamallesi osoitteelle. Jos muutat osoitetta, porttia tai käyttäjänimeä, anna salasana uudelleen: BombVault ei anna tallennettua salasanaa toiselle välittäjälle tai käyttäjälle.
 3. Kytke **Yhdistä Home Assistantiin** päälle ja napsauta **Tallenna**. Kortti näyttää, kun yhteys on muodostettu.
 
@@ -96,7 +96,7 @@ BombVault lukee tilansa 15 sekunnin välein ja julkaisee sen, kun jokin on muutt
 
 ## Löydä BombVault verkosta {#mdns}
 
-BombVault ilmoittaa käyttöliittymänsä lähiverkossa mDNS:llä, joka on Bonjourin ja Avahin taustalla oleva protokolla. Selain löytää sen silloin osoitteesta `https://bombvault.local:3443` tai `HTTP_ONLY`-tilassa osoitteesta `http://bombvault.local:3000`, ja palveluselaimet listaavat sen verkkopalveluna alatyypillä `_bombvault`. TXT-tietueissa ovat versio ja polku. Kytkin on kohdassa **Asetukset, Integraatiot, Löydä verkosta**, ja se on oletuksena päällä. Jos toinen laite käyttää jo nimeä, BombVault ottaa nimen `bombvault-2.local` ja niin edelleen, ja kortti näyttää saadun osoitteen. Kun BombVault pysähtyy tai kytket ilmoituksen pois, se kertoo siitä verkolle, ja selaimet poistavat merkinnän heti.
+BombVault ilmoittaa käyttöliittymänsä lähiverkossa mDNS:llä, joka on Bonjourin ja Avahin taustalla oleva protokolla. Selain löytää sen silloin osoitteesta `https://bombvault.local:3443` tai `HTTP_ONLY`-tilassa osoitteesta `http://bombvault.local:3000`, ja palveluselaimet listaavat sen verkkopalveluna alatyypillä `_bombvault`. TXT-tietueissa ovat versio ja polku. Kytkin on **Löydä verkosta** **Palvelut**-kortissa kohdassa **Asetukset, Integraatiot**, ja se on oletuksena päällä. Jos toinen laite käyttää jo nimeä, BombVault ottaa nimen `bombvault-2.local` ja niin edelleen, ja kortti näyttää saadun osoitteen. Kun BombVault pysähtyy tai kytket ilmoituksen pois, se kertoo siitä verkolle, ja selaimet poistavat merkinnän heti.
 
 Se, ulottuuko ilmoitus verkkoosi, riippuu siitä, miten kontti on kytketty:
 

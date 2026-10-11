@@ -10,7 +10,7 @@ Cette page vous accompagne depuis une machine Unraid vierge jusqu'à votre premi
 | **Emplacement du dépôt restic** | Un chemin local (recommandé : votre matrice ou votre cache), SMB, NFS, ou n'importe quel backend rclone. |
 | **Socket Docker** | Monté automatiquement par le modèle (`/var/run/docker.sock`). |
 | **Flash Unraid** (`/boot`) | Montée entièrement par le modèle automatiquement (`/boot` vers `/host/boot`). Alimente la sauvegarde flash et permet à un conteneur restauré de réapparaître comme une application Unraid normale et modifiable. |
-| **VMs KVM** (optionnel) | La sauvegarde de VM dialogue avec libvirt via SSH, sans montage libvirt. Configurez-la dans les Paramètres (voir [Configuration](configuration.md)). |
+| **VMs KVM** (optionnel) | La sauvegarde de VM dialogue avec libvirt via SSH, sans montage libvirt. Configurez-la sous **Paramètres, Intégrations, SSH de l'hôte** (voir [Configuration](configuration.md)). |
 | **Jeux de données ZFS** (optionnel) | La même liaison SSH que pour les sauvegardes de VM, `zfs` sur l'hôte, et Host Data mappé sur `/mnt` avec le mode d'accès Read/Write - Slave, la valeur par défaut du modèle. Voir [Jeux de données ZFS](zfs-datasets.md). |
 | **Application Android** (facultative) | Android 10 ou ultérieur, appairée avec des serveurs en version 9.7.0 ou ultérieure. Voir [Application Android](android.md). |
 
@@ -37,12 +37,12 @@ Le chemin le plus simple est **Community Applications**.
 Pas sur Unraid ? BombVault fonctionne aussi comme simple conteneur sur n'importe quel hôte Docker (c'est également ce qui assure la prise en charge des conteneurs sur TrueNAS Scale, avant son entrée dédiée au catalogue d'applications).
 
 1. Récupérez le fichier [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml), prêt à éditer, depuis le dépôt.
-2. Définissez `APP_KEY` (voir plus bas) et pointez le volume Host Data vers votre véritable racine de données : les commentaires du fichier détaillent les deux.
+2. Définissez `APP_KEY` (voir plus bas) et pointez le volume Host Data vers votre véritable racine de données. Les commentaires du fichier détaillent les deux.
 3. `docker compose up -d`, puis ouvrez `https://<ip-hôte>:3443/`.
 
 Ce qui change par rapport à Unraid :
 
-- **Pas de domaine flash/USB.** Il n'y a pas de clé de démarrage à capturer ou à restaurer, le domaine Flash des paramètres n'a donc rien à faire ici. À la place, le domaine Dossiers propose une suggestion en un clic, **Ajouter un préréglage : configuration système de l'hôte** (un jeu de fichiers `/etc` de départ, que vous relisez et modifiez avant d'enregistrer), comme équivalent générique utile.
+- **Pas de section Flash.** Il n'y a pas de clé de démarrage à capturer ou à restaurer, la section Flash n'a donc rien à faire ici. À la place, **Ajouter** sur la page Sauvegardes propose **Configuration du système** comme suggestion de dossiers : un jeu de dossiers `/etc` de départ, que vous relisez et modifiez avant d'enregistrer.
 - **Pas de notifications natives Unraid.** Les canaux de notification propres à BombVault (webhook, alertes d'échec hors site, etc.) fonctionnent normalement ; seule la remontée spécifique au système de notification d'Unraid est omise, puisqu'un tel système n'existe pas ici.
 - **La sauvegarde de VM est optionnelle et exige un hôte libvirtd distinct joignable en SSH.** Voyez le bloc commenté du fichier compose. Un hôte Docker générique n'embarque aucun gestionnaire de VM.
 - **Pas de widget de tableau de bord.** Le BombVault Widget est un plugin Unraid, cette étape est donc omise elle aussi.
@@ -64,34 +64,45 @@ openssl rand -hex 32
 Collez le résultat dans le champ `APP_KEY` du modèle (Unraid), ou dans la variable d'environnement `APP_KEY` de `docker-compose.yml` (hôte Docker générique).
 
 !!! danger "Ne perdez pas votre APP_KEY"
-    Perdre `APP_KEY` rend vos sauvegardes chiffrées irrécupérables. Conservez-le en lieu sûr et à l'écart du serveur. Une fois BombVault en fonctionnement, utilisez son **kit de récupération de clé de chiffrement** en un clic (voir [Sauvegarde hors site et récupération](offsite-recovery.md)) pour sauvegarder l'ensemble du paquet de récupération.
+    Perdre `APP_KEY` rend vos sauvegardes chiffrées irrécupérables. Conservez-le en lieu sûr et à l'écart du serveur. Une fois BombVault en fonctionnement, définissez un mot de passe de connexion et téléchargez le **kit de récupération** sous **Paramètres, Restauration** (voir [Sauvegarde hors site et récupération](offsite-recovery.md#recovery-kit)). Il contient la clé, toutes les destinations et les commandes restic.
 
 Le modèle monte aussi pour vous le socket Docker, la flash (`/boot`) et la racine **Host Data** (`/mnt`). Les *sources* et les *destinations* de sauvegarde vivent toutes deux sous Host Data. Pour la référence complète des variables et la configuration hors site, voir [Configuration](configuration.md).
 
 ## Première exécution
 
-![Le tableau de bord après une première sauvegarde : ce qui est protégé, ce qui suit, et un journal en direct.](assets/screenshots/dashboard.png)
+![L'aperçu après une première sauvegarde : ce qui vous attend, la protection de chaque section, les destinations et l'historique.](assets/screenshots/dashboard.png)
 
-*Le tableau de bord après une première sauvegarde : ce qui est protégé, ce qui suit, et un journal en direct.*
+*L'aperçu après une première sauvegarde : ce qui vous attend, la protection de chaque section, les destinations et l'historique.*
 
-1. Ouvrez l'interface web à `https://<votre-ip-unraid>:3443` (certificat auto-signé par défaut).
-2. Dans **Paramètres**, activez les domaines de sauvegarde souhaités (Conteneurs, VMs, Flash, Auto-sauvegarde, Dossiers, Jeux de données ZFS) et choisissez une couleur d'accentuation.
-3. Dans l'onglet **Conteneurs**, choisissez un conteneur et cliquez sur **Sauvegarder maintenant** pour créer votre premier point de restauration. Les chemins de dépôt ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` et sont créés à la première sauvegarde.
-4. Configurez la planification depuis **Paramètres, Plannings**. Il existe une option en un clic pour *Tout inclure dans le planning* pour les conteneurs et les VMs.
+1. Ouvrez l'interface web à `https://<votre-ip-unraid>:3443` (certificat auto-signé par défaut). Une nouvelle installation s'ouvre sur **Bienvenue dans BombVault**, qui énumère ce que BombVault a trouvé sur le serveur.
+2. Choisissez **C'est parti**. L'aperçu affiche alors la carte **Premiers pas** avec trois étapes :
+    1. **Choisir les sections** : activez ce que BombVault sauvegarde (Conteneurs, VMs, Flash, Dossiers, Jeux de données ZFS, Auto-sauvegarde). **Choisir** ouvre la liste des éléments d'une section, où **Suspendre le planning** en laisse un de côté. Les sections activées ici s'exécutent chaque nuit, ce que vous modifiez sous **Paramètres, Planning**.
+    2. **Ajouter une destination** : où vont les sauvegardes. Un dossier local suffit pour commencer. Le plus sûr est une seconde destination hors des locaux, comme une Storage Box ou Backblaze B2. Les dépôts locaux ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` et sont créés à la première sauvegarde.
+    3. **Première sauvegarde** : ensuite, elle s'exécute toute seule chaque nuit.
+3. Ouvrez **Sauvegardes** pour voir tous les éléments dans une seule liste. **Tout sauvegarder maintenant** lance une exécution sur toutes les sections activées, et **Sauvegarder maintenant** sur la page d'un élément ne sauvegarde que celui-ci.
+
+Vous avez déjà utilisé BombVault ? **Restaurer depuis une sauvegarde** sur la page de bienvenue ouvre la page Restauration, où l'**Assistant d'urgence** ramène les réglages, les conteneurs, les VMs et les dossiers d'un serveur perdu. Voir [Sauvegarde hors site et récupération](offsite-recovery.md#emergency).
 
 !!! tip "Optionnel : choisir un ordre de sauvegarde"
-    Si certains conteneurs doivent toujours être sauvegardés avant d'autres (par exemple une base de données avant l'application qui l'utilise), ouvrez le panneau **Ordre des sauvegardes** sur la page Conteneurs et faites-les glisser dans la séquence voulue. Les exécutions planifiées et multi-sélection la suivent alors ; tout ce que vous laissez sans ordre est sauvegardé du plus en retard au moins en retard, comme avant.
+    Si certains conteneurs doivent toujours être sauvegardés avant d'autres (par exemple une base de données avant l'application qui l'utilise), ouvrez la carte **Ordre** sous **Paramètres, Planning** et faites-les glisser dans la séquence voulue. Les exécutions planifiées et la sauvegarde complète la suivent alors ; tout ce que vous laissez sans ordre est sauvegardé du plus en retard au moins en retard.
 
 !!! note "Vérification d'intégration hôte"
-    Ouvrez `/spike` dans l'interface web après le démarrage du conteneur. Il sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante, afin que vous puissiez confirmer que le conteneur est correctement branché avant de vous y fier.
+    La carte **Intégration hôte** de l'aperçu sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante, afin que vous puissiez confirmer que le conteneur est correctement branché avant de vous y fier. Elle attend sous **Personnaliser** que vous l'ajoutiez.
 
-## Simple vs Avancé
+## S'y retrouver {#navigation}
 
-![Les réglages n'ont pas de bouton Enregistrer : chaque changement est écrit au moment où vous le faites.](assets/screenshots/settings.png)
+![Les paramètres en tuiles, avec les cartes de la tuile choisie à côté. Chaque changement est écrit au moment où vous le faites.](assets/screenshots/settings.png)
 
-*Les réglages n'ont pas de bouton Enregistrer : chaque changement est écrit au moment où vous le faites.*
+*Les paramètres en tuiles, avec les cartes de la tuile choisie à côté. Chaque changement est écrit au moment où vous le faites.*
 
-Par défaut, l'interface ne montre que l'essentiel (sauvegarder, restaurer, planifier). Utilisez le commutateur **Vue simple / Vue avancée** dans la barre latérale pour révéler les contrôles experts : rétention, copie hors site, hooks pré/post, restauration au niveau fichier, notifications, métriques Prometheus et les outils d'intégrité/maintenance. C'est une préférence par navigateur, désactivée par défaut, afin que les nouveaux venus obtiennent une interface épurée et que les utilisateurs avancés obtiennent tout.
+La barre latérale compte cinq entrées : **Aperçu**, **Anomalies** (tant que la détection d'anomalies est activée), **Sauvegardes**, **Restauration** et, sous **Se déconnecter**, **Paramètres**. L'action principale d'une page flotte en bas à droite, et **Plus** contient les rares. Sur un téléphone, la barre contient Aperçu, Sauvegardes, Restauration et Paramètres, et **Plus** a le reste.
+
+- **Sauvegardes** liste comme éléments chaque conteneur, chaque VM, chaque jeu de dossiers, la clé flash, chaque jeu de données ZFS et l'auto-sauvegarde. Des tuiles au-dessus de la liste choisissent un type, et **Filtres**, **Trier** et **Rechercher** l'affinent. Chaque élément a une page à lui avec trois onglets : **Sauvegardes**, **Paramètres** et **Intégrité**.
+- **Restauration** est une seule page pour tout : choisissez une section, cherchez un élément et choisissez une sauvegarde. L'Assistant d'urgence et les autres sources commencent aussi ici.
+- **Paramètres** sont quatorze tuiles : Général, Apparence, Planning, Destinations, Restauration, Notifications, Vérification, Sécurité, Instances, Appairage, Intégrations, Applications, Système et Info. Appuyez sur `/` ou Ctrl+K pour les chercher toutes, y compris par les noms que les pages portaient dans les versions précédentes. Faites glisser les tuiles dans l'ordre de votre choix sous **Apparence**.
+- **Destinations** et **Instances** sont des tuiles de paramètres avec des pages à elles. **Afficher aussi dans la barre latérale** sur leur tuile les épingle à la barre latérale.
+
+Rien n'a de bouton Enregistrer et rien ne se déplie : les choses rares ont une carte à elles ou une fenêtre, et les explications se trouvent dans les bulles (i). Après une mise à jour, des points verts marquent ce qui a changé. Un clic masque un point, et **Paramètres, Info, Nouveautés** liste chaque changement avec **Y aller**.
 
 ## Compiler depuis les sources {#build-from-source}
 
@@ -106,12 +117,12 @@ golangci-lint run ./...
 go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signed certificate
 ```
 
-La compilation de l'interface est nécessaire aussi pour `go run`. Le dépôt ne suit qu'un marqueur vide sous `web/dist` : sans `npm --prefix web run build`, le binaire n'intègre rien et répond `500 SPA index not found`, ce qui est normal. Docker, libvirt et Unraid ne peuvent pas être testés en CI : vérifiez donc les montages, restic et la liaison SSH des VM sur un vrai hôte avec la vérification d'intégration hôte (`/spike`) avant d'ouvrir une pull request.
+La compilation de l'interface est nécessaire aussi pour `go run`. Le dépôt ne suit qu'un marqueur vide sous `web/dist` : sans `npm --prefix web run build`, le binaire n'intègre rien et répond `500 SPA index not found`, ce qui est normal. Docker, libvirt et Unraid ne peuvent pas être testés en CI : vérifiez donc les montages, restic et la liaison SSH des VM sur un vrai hôte avec la carte **Intégration hôte** de l'aperçu (ou `GET /api/spike`) avant d'ouvrir une pull request.
 
 ## Étapes suivantes
 
 - Parcourez l'ensemble des **[Fonctionnalités](features.md)**.
 - Mettez tous les serveurs de votre groupe sur votre téléphone avec l'**[application Android](android.md)**.
-- Ajoutez un ou plusieurs réplicas **[Sauvegarde hors site et récupération](offsite-recovery.md)** (chaque domaine peut expédier vers plusieurs destinations à la fois) et sauvegardez votre kit de récupération.
+- Ajoutez une ou plusieurs destinations hors des locaux (chaque section peut copier vers plusieurs à la fois) et sauvegardez votre kit de récupération, comme décrit sous **[Sauvegarde hors site et récupération](offsite-recovery.md)**.
 - Vous clonez une configuration ou migrez vers une nouvelle machine ? Emportez toute votre configuration avec la carte **Exporter / importer les paramètres**. Voir [Configuration](configuration.md#portable-settings-export-and-import).
 - Un souci ? Voir **[Dépannage](troubleshooting.md)**.

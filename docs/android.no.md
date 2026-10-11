@@ -1,6 +1,6 @@
 # Android-app
 
-Android-appen gir deg alle BombVault-servere i gruppen din på telefonen. Den starter med en liste over serverne dine med aktivitetsloggen for alle øverst, de samme linjene som Dashboardet viser, og åpner telefonvisningen for serveren du trykker på. Appen tar ingen sikkerhetskopier selv.
+Android-appen gir deg alle BombVault-servere i gruppen din på telefonen. Den starter med en liste over serverne dine med aktivitetsloggen for alle øverst, de samme linjene som oversikten viser, og åpner telefonvisningen for serveren du trykker på. Appen tar ingen sikkerhetskopier selv.
 
 ## Skaff deg appen {#install}
 
@@ -24,12 +24,15 @@ Deretter blir telefonen med i gruppen som enda en instans. Den leser via gruppen
 
 ## Pålogget på en paret telefon {#sign-in}
 
-En telefon som er paret med gruppen din, åpner hver server i gruppen allerede pålogget. Før den laster en side, ber den serveren om en økt via gruppen, og en server gir bare ut en økt til et medlem som er en telefon. En server som er lagt til med adressen sin, spør etter passordet, slik som i en nettleser. Alle som har de tolv ordene, kan allerede åpne alle sikkerhetskopiene i gruppen, så paringen gir ikke tilgang til noe nytt.
+En telefon som er paret med gruppen din, åpner hver server i gruppen allerede pålogget. Før den laster en side, ber den serveren om en økt via gruppen, og en server gir bare ut en økt til et medlem som er en telefon. En server som er lagt til med adressen sin, spør etter passordet, slik som i en nettleser.
+En paret telefon får ikke alt et passord gir. Økten når en fast liste over det appen viser: oversikten, kjøringene og aktivitetsloggen, sikkerhetskopiene man kan se på, starte og gjenopprette, avvikene man kan lese og Instanser-siden man kan se på. Mål og kommandoer kommer tilbake uten adresser og hemmeligheter. En gjenoppretting som erstatter originalen, tar først en sikkerhetskopi av dagens tilstand. Nøkler, gjenopprettingssettet, nøkkeldeponeringer, innstillinger og sletting av sikkerhetskopier hører til en pålogging på selve serveren, og alt annet svarer at det trenger den påloggingen.
+
+Bryteren for dette er **Telefoner kan pare med gruppens tolv ord** i kortet **Android-app** under **Innstillinger, Sikkerhet**. En tilbakestilling av passordet slår den av og logger alle telefoner ut, til du slår den på igjen der.
 
 ## Servere utenfor en gruppe {#other-servers}
 
 - **Legg til server** tar adressen du åpner BombVault med i en nettleser, for eksempel `192.168.1.10:3443`. Uten `http://` eller `https://` foran bruker appen https.
-- Servere som annonserer seg selv på det lokale nettverket, vises under **På dette nettverket** og åpnes med ett trykk. Det gjør de så lenge **Finn på nettverket** er slått på under Innstillinger, Integrasjoner. En server i et annet nettverk eller bak en VPN dukker ikke opp der.
+- Servere som annonserer seg selv på det lokale nettverket, vises under **På dette nettverket** og åpnes med ett trykk. Det gjør de så lenge **Finn på nettverket** er slått på i kortet **Tjenester** under **Innstillinger, Integrasjoner**. En server i et annet nettverk eller bak en VPN dukker ikke opp der.
 - Et selvsignert sertifikat blir klarert én gang ut fra SHA-256-fingeravtrykket. Viser serveren senere et annet, advarer appen deg og åpner serveren først når du stoler på det nye sertifikatet.
 
 ## Telefonen på Instanser-siden {#instances}

@@ -1,6 +1,6 @@
 # Aplicação Android
 
-A aplicação Android leva todos os servidores BombVault do seu grupo para o telemóvel. Abre numa lista dos seus servidores com o registo de atividade de todos eles no topo, as mesmas linhas que o Painel mostra, e abre a vista de telemóvel do servidor em que tocar. A aplicação não faz nenhum backup por si.
+A aplicação Android leva todos os servidores BombVault do teu grupo para o telemóvel. Abre numa lista dos teus servidores com o registo de atividade de todos eles no topo, as mesmas linhas que a visão geral mostra, e abre a vista de telemóvel do servidor em que tocares. A aplicação não faz nenhum backup por si.
 
 ## Obter a aplicação {#install}
 
@@ -24,17 +24,20 @@ A partir daí o telemóvel junta-se ao grupo como mais uma instância. Lê o que
 
 ## Sessão iniciada num telemóvel emparelhado {#sign-in}
 
-Um telemóvel emparelhado com o seu grupo abre cada um dos seus servidores já com sessão iniciada. Antes de carregar uma página, pede uma sessão a esse servidor através do grupo, e um servidor só a concede a um membro que seja um telemóvel. Um servidor adicionado pelo endereço pede a palavra-passe, como num browser. Quem tiver as doze palavras já consegue abrir todos os backups do grupo, por isso o emparelhamento não concede nada de novo.
+Um telemóvel emparelhado com o teu grupo abre cada um dos servidores já com sessão iniciada. Antes de carregar uma página, pede uma sessão a esse servidor através do grupo, e um servidor só a concede a um membro que seja um telemóvel. Um servidor adicionado pelo endereço pede a palavra-passe, como num browser.
+Um telemóvel emparelhado não recebe tudo o que uma palavra-passe dá. A sessão dele chega a uma lista fixa do que a aplicação mostra: a visão geral, as execuções e o registo de atividade, os backups para ver, iniciar e restaurar, as anomalias para ler e a página Instâncias para ver. Os destinos e os comandos voltam sem os endereços e os segredos. Um restauro que substitui o original faz primeiro backup do estado atual. As chaves, o kit de recuperação, os depósitos de chaves, as definições e a eliminação de backups ficam com um início de sessão no próprio servidor, e tudo o resto responde que precisa desse início de sessão.
+
+O interruptor para isto é **Os telemóveis podem emparelhar com as doze palavras do grupo**, no cartão **App Android** em **Definições, Segurança**. Uma reposição da palavra-passe desativa-o e termina a sessão de todos os telemóveis, até o voltares a ativar aí.
 
 ## Servidores fora de um grupo {#other-servers}
 
 - **Adicionar servidor** aceita o endereço com que abre o BombVault num browser, por exemplo `192.168.1.10:3443`. Sem `http://` ou `https://` à frente, a aplicação usa https.
-- Os servidores que se anunciam na rede local aparecem em **Nesta rede** e abrem com um toque. Fazem-no enquanto **Encontrar na rede** estiver ligado em Definições, Integrações. Um servidor noutra rede ou atrás de uma VPN não aparece aí.
-- Um certificado autoassinado é aceite uma vez pela sua impressão digital SHA-256. Se mais tarde o servidor mostrar outro, a aplicação avisa-o e só o abre depois de confiar no novo certificado.
+- Os servidores que se anunciam na rede local aparecem em **Nesta rede** e abrem com um toque. Fazem-no enquanto **Encontrar na rede** estiver ligado no cartão **Serviços** em **Definições, Integrações**. Um servidor noutra rede ou atrás de uma VPN não aparece aí.
+- Um certificado autoassinado é aceite uma vez pela sua impressão digital SHA-256. Se mais tarde o servidor mostrar outro, a aplicação avisa-te e só o abre depois de confiares no novo certificado.
 
 ## O telemóvel na página Instâncias {#instances}
 
-O telemóvel recebe um cartão próprio na página Instâncias de cada servidor do grupo, marcado como aplicação Android e com o nome que deu ao telemóvel. Não tem scorecard porque não faz backups, e **Remover** retira-o da página.
+O telemóvel recebe um cartão próprio na página Instâncias de cada servidor do grupo, marcado como aplicação Android e com o nome que deste ao telemóvel. Não tem scorecard porque não faz backups, e **Remover** retira-o da página.
 
 ## Definições {#settings}
 

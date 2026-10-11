@@ -24,12 +24,16 @@ Telefon se pak připojí ke skupině jako další instance. Co na jednotlivých 
 
 ## Přihlášení na spárovaném telefonu {#sign-in}
 
-Telefon spárovaný s vaší skupinou otevře každý z jejích serverů rovnou přihlášený. Před načtením stránky si u daného serveru přes skupinu vyžádá relaci a server ji vydá jen členovi, který je telefonem. Server přidaný podle adresy se zeptá na heslo, stejně jako v prohlížeči. Kdo zná dvanáct slov, může už tak otevřít každou zálohu skupiny, takže párování nedává nic nového.
+Telefon spárovaný s vaší skupinou otevře každý z jejích serverů rovnou přihlášený. Před načtením stránky si u daného serveru přes skupinu vyžádá relaci a server ji vydá jen členovi, který je telefonem. Server přidaný podle adresy se zeptá na heslo, stejně jako v prohlížeči. 
+
+Spárovaný telefon nedostane všechno, co dává heslo. Jeho relace sahá k pevnému seznamu toho, co aplikace ukazuje: přehled, běhy a protokol aktivit, zálohy k prohlížení, spuštění a obnově, anomálie ke čtení a stránku Instance k prohlížení. Cíle a příkazy se vrací bez adres a tajemství. Obnova, která nahrazuje originál, nejdřív zazálohuje aktuální stav. Klíče, sada pro obnovu, úschova klíčů, nastavení a mazání záloh zůstávají u přihlášení přímo na serveru a všechno ostatní odpoví, že toto přihlášení potřebuje.
+
+Přepínač je **Telefony se mohou spárovat s dvanácti slovy skupiny** v kartě **Aplikace pro Android** v části **Nastavení, Zabezpečení**. Reset hesla ho vypne a odhlásí všechny telefony, dokud ho tam zase nezapneš.
 
 ## Servery mimo skupinu {#other-servers}
 
 - **Přidat server** přijímá adresu, kterou BombVault otevíráte v prohlížeči, například `192.168.1.10:3443`. Bez `http://` nebo `https://` na začátku použije aplikace https.
-- Servery, které se ohlašují v místní síti, jsou uvedené pod **V této síti** a otevřou se jedním klepnutím. Ohlašují se, dokud je v Nastavení, Integrace zapnuto **Najít v síti**. Server v jiné síti nebo za VPN se tam neobjeví.
+- Servery, které se ohlašují v místní síti, jsou uvedené pod **V této síti** a otevřou se jedním klepnutím. Ohlašují se, dokud je zapnuto **Najít v síti** v kartě **Služby** v části **Nastavení, Integrace**. Server v jiné síti nebo za VPN se tam neobjeví.
 - Samopodepsanému certifikátu se důvěřuje jednou podle jeho otisku SHA-256. Když server později ukáže jiný, aplikace vás upozorní a otevře ho až poté, co novému certifikátu důvěřujete.
 
 ## Telefon na stránce Instance {#instances}

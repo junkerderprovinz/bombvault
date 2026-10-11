@@ -262,7 +262,7 @@ Vše, co asistent přečte, odchází k poskytovateli umělé inteligence za ní
 | `retention_guard` | Další záloha přes MCP by v okně "ponechat posledních N" nechala jen body obnovy z MCP, nebo položka už za posledních 24 hodin dostala 4 zálohy přes MCP, včetně neúspěšných a zrušených. V prvním případě udělá místo další naplánovaná záloha, ve druhém je položka znovu volná 24 hodin po nejstarší z těchto záloh. Ve webovém rozhraní ji můžete spustit kdykoli. |
 | `rate_limited` | Klíč vyčerpal svých 12 spuštění pro tuto hodinu. |
 | `not_permitted` při spuštění | Klíč smí jen číst. Zapněte v kartě **Povolit spouštění záloh**; nové připojení není potřeba. U zrušení to znamená, že běh nespustil tento klíč. |
-| `domain_off` | Tento druh zálohy je v nastavení vypnutý. |
+| `domain_off` | Tato sekce je vypnutá v **Nastavení, Obecné**. |
 | `not_found` | BombVault tuto položku nechrání. Nejdřív ji přidejte ve webovém rozhraní; MCP nikdy nevytváří konfiguraci. |
 | Klient nenajde autorizační server | Přihlášení přes OAuth je vypnuté, není nastavené přihlašovací heslo, nebo proxy nepouští `/.well-known/` k BombVault. |
 | Stránka se souhlasem hlásí neregistrovanou návratovou adresu | Klient poslal návratovou adresu, kterou nezaregistroval. Odeber konektor v klientovi a přidej ho znovu. |

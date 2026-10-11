@@ -10,7 +10,7 @@ Ta strona przeprowadzi Cię od świeżej maszyny Unraid do Twojej pierwszej kopi
 | **Lokalizacja repozytorium restic** | Ścieżka lokalna (zalecane: Twoja macierz lub cache), SMB, NFS lub dowolny backend rclone. |
 | **Gniazdo Docker** | Montowane automatycznie przez szablon (`/var/run/docker.sock`). |
 | **Flash Unraid** (`/boot`) | Montowany w całości automatycznie przez szablon (`/boot` do `/host/boot`). Zasila kopię flash i pozwala przywróconemu kontenerowi pojawić się ponownie jako normalna, edytowalna aplikacja Unraid. |
-| **Maszyny wirtualne KVM** (opcjonalnie) | Kopia VM komunikuje się z libvirt przez SSH, bez montowania libvirt. Skonfiguruj to w Ustawieniach (zobacz [Konfiguracja](configuration.md)). |
+| **Maszyny wirtualne KVM** (opcjonalnie) | Kopia VM komunikuje się z libvirt przez SSH, bez montowania libvirt. Skonfiguruj to w **Ustawienia, Integracje, SSH hosta** (zobacz [Konfiguracja](configuration.md)). |
 | **Zbiory danych ZFS** (opcjonalnie) | To samo połączenie SSH co przy kopiach VM, `zfs` na hoście oraz Host Data zmapowane jako `/mnt` z trybem dostępu Read/Write - Slave, domyślnym w szablonie. Zobacz [Zbiory danych ZFS](zfs-datasets.md). |
 | **Aplikacja na Androida** (opcjonalnie) | Android 10 lub nowszy, sparowana z serwerami w wersji 9.7.0 lub nowszej. Zobacz [Aplikacja na Androida](android.md). |
 
@@ -37,12 +37,12 @@ Najprostsza droga to **Community Applications**.
 Nie Unraid? BombVault działa też jako zwykły kontener na dowolnym hoście Dockera (na tym opiera się również obsługa kontenerów na TrueNAS Scale, zanim pojawi się tam własny wpis w katalogu aplikacji).
 
 1. Pobierz z repozytorium gotowy do edycji plik [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml).
-2. Ustaw `APP_KEY` (patrz niżej) i skieruj wolumen Host Data na swój prawdziwy katalog danych: komentarze w pliku prowadzą przez jedno i drugie.
+2. Ustaw `APP_KEY` (patrz niżej) i skieruj wolumen Host Data na swój prawdziwy katalog danych. Komentarze w pliku prowadzą przez jedno i drugie.
 3. `docker compose up -d`, a następnie otwórz `https://<ip-hosta>:3443/`.
 
 Czym różni się to od Unraida:
 
-- **Brak domeny flash/USB.** Nie ma pendrive'a rozruchowego do zabezpieczenia ani odtworzenia, więc domena Flash w ustawieniach nie ma tu nic do roboty. Zamiast tego domena Foldery proponuje jednym kliknięciem **Dodaj predefiniowany zestaw: konfiguracja systemu hosta** (początkowy zestaw plików `/etc`, który przeglądasz i poprawiasz przed zapisaniem), jako praktyczny ogólny odpowiednik.
+- **Brak sekcji Flash.** Nie ma pendrive'a rozruchowego do zabezpieczenia ani odtworzenia, więc sekcja Flash nie ma tu nic do roboty. Zamiast tego **Dodaj** na stronie Kopie zapasowe proponuje **Konfiguracja systemu** jako podpowiedź folderu: początkowy zestaw folderów z `/etc`, który przeglądasz i poprawiasz przed zapisaniem.
 - **Brak natywnych powiadomień Unraida.** Własne kanały powiadomień BombVaulta (webhook, alerty o nieudanej replikacji poza siedzibę i tak dalej) działają normalnie; pomijane jest tylko wysłanie do systemu powiadomień Unraida, bo takiego systemu tutaj nie ma.
 - **Kopia maszyn wirtualnych jest opcjonalna i wymaga osobnego hosta libvirtd dostępnego przez SSH.** Zobacz zakomentowany blok w pliku compose. Zwykły host Dockera sam w sobie nie ma menedżera maszyn wirtualnych.
 - **Brak widżetu na pulpicie.** BombVault Widget to wtyczka Unraida, więc ten krok również jest pomijany.
@@ -64,34 +64,45 @@ openssl rand -hex 32
 Wklej wynik do pola `APP_KEY` w szablonie (Unraid) albo do zmiennej środowiskowej `APP_KEY` w `docker-compose.yml` (zwykły host Docker).
 
 !!! danger "Nie zgub swojego APP_KEY"
-    Utrata `APP_KEY` sprawia, że zaszyfrowane kopie zapasowe stają się nieodzyskiwalne. Przechowuj go w bezpiecznym miejscu, oddzielnie od serwera. Gdy BombVault już działa, użyj jego funkcji **zestaw odzyskiwania klucza szyfrowania** dostępnej za jednym kliknięciem (zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md)), aby zapisać pełny pakiet odzyskiwania.
+    Utrata `APP_KEY` sprawia, że zaszyfrowane kopie zapasowe stają się nieodzyskiwalne. Przechowuj go w bezpiecznym miejscu, oddzielnie od serwera. Gdy BombVault już działa, ustaw hasło logowania i pobierz **zestaw odzyskiwania** w **Ustawienia, Przywracanie** (zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md#recovery-kit)). Zawiera klucz, każde miejsce docelowe i polecenia restic.
 
 Szablon montuje też za Ciebie gniazdo Docker, flash (`/boot`) oraz katalog główny **Host Data** (`/mnt`). Zarówno *źródła*, jak i *cele* kopii zapasowych znajdują się pod Host Data. Pełny opis zmiennych oraz konfigurację poza siedzibą znajdziesz w [Konfiguracja](configuration.md).
 
 ## Pierwsze uruchomienie
 
-![Pulpit po pierwszej kopii: co jest chronione, co uruchomi się dalej i dziennik na żywo.](assets/screenshots/dashboard.png)
+![Przegląd po pierwszej kopii: co wymaga uwagi, ochrona każdej sekcji, miejsca docelowe i historia.](assets/screenshots/dashboard.png)
 
-*Pulpit po pierwszej kopii: co jest chronione, co uruchomi się dalej i dziennik na żywo.*
+*Przegląd po pierwszej kopii: co wymaga uwagi, ochrona każdej sekcji, miejsca docelowe i historia.*
 
-1. Otwórz interfejs webowy pod adresem `https://<your-unraid-ip>:3443` (certyfikat samopodpisany od razu po instalacji).
-2. W **Ustawieniach** włącz domeny kopii zapasowych, których chcesz używać (Containers, Maszyny wirtualne, Flash, Autokopia, Foldery, Zbiory danych ZFS) i wybierz kolor akcentu.
-3. W zakładce **Kontenery** wybierz kontener i kliknij **Utwórz kopię teraz**, aby stworzyć swój pierwszy punkt przywracania. Ścieżki repozytoriów domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` i są tworzone przy pierwszej kopii.
-4. Skonfiguruj harmonogramowanie w **Ustawienia, Harmonogramy**. Dostępna jest funkcja *Uwzględnij wszystkie w harmonogramie* za jednym kliknięciem dla kontenerów i VM.
+1. Otwórz interfejs webowy pod adresem `https://<your-unraid-ip>:3443` (certyfikat samopodpisany od razu po instalacji). Nowa instalacja otwiera się na ekranie **Witamy w BombVault**, który wymienia to, co BombVault znalazł na serwerze.
+2. Wybierz **Zaczynamy**. Przegląd pokaże wtedy kartę **Pierwsze kroki** z trzema krokami:
+    1. **Wybierz sekcje**: włącz to, co BombVault ma kopiować (Containers, Maszyny wirtualne, Flash, Foldery, Zbiory danych ZFS, Autokopia). **Wybierz** otwiera listę elementów sekcji, na której **Wstrzymaj harmonogram** pomija jedną z nich. Sekcje włączone tutaj działają co noc, co zmienisz w **Ustawienia, Harmonogram**.
+    2. **Dodaj miejsce docelowe**: dokąd trafiają kopie zapasowe. Na początek wystarczy folder lokalny. Najbezpieczniej mieć drugie miejsce docelowe poza domem, na przykład Storage Box albo Backblaze B2. Repozytoria lokalne domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` i są tworzone przy pierwszej kopii.
+    3. **Pierwsza kopia zapasowa**: potem działa sama co noc.
+3. Otwórz **Kopie zapasowe**, aby zobaczyć każdy element na jednej liście. **Utwórz kopię wszystkiego teraz** uruchamia przebieg po wszystkich włączonych sekcjach, a **Utwórz kopię teraz** na stronie elementu kopiuje tylko tę jedną.
+
+Używasz już BombVault? **Przywróć z kopii zapasowej** na stronie powitalnej otwiera stronę Przywracanie, gdzie **Kreator awaryjny** przywraca ustawienia, kontenery, maszyny wirtualne i foldery utraconego serwera. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md#emergency).
 
 !!! tip "Opcjonalnie: wybierz kolejność kopii zapasowych"
-    Jeśli niektóre kontenery powinny być zawsze kopiowane przed innymi (na przykład baza danych przed aplikacją, która z niej korzysta), otwórz panel **Kolejność kopii zapasowych** na stronie Containers i przeciągnij je w wybraną sekwencję. Uruchomienia zaplanowane i wielokrotnego wyboru będą jej przestrzegać; wszystko, co pozostawisz bez kolejności, jest kopiowane od najbardziej zaległych, jak poprzednio.
+    Jeśli niektóre kontenery powinny być zawsze kopiowane przed innymi (na przykład baza danych przed aplikacją, która z niej korzysta), otwórz kartę **Kolejność** w **Ustawienia, Harmonogram** i przeciągnij je w wybraną sekwencję. Uruchomienia zaplanowane i pełna kopia będą jej przestrzegać; wszystko, co pozostawisz bez kolejności, jest kopiowane od najbardziej zaległych.
 
 !!! note "Sprawdzenie integracji z hostem"
-    Otwórz `/spike` w interfejsie webowym po uruchomieniu kontenera. Sonduje ono każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy, więc możesz potwierdzić, że kontener jest poprawnie połączony, zanim na nim polegasz.
+    Karta **Integracja z hostem** w przeglądzie sonduje każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy, więc możesz potwierdzić, że kontener jest poprawnie połączony, zanim na nim polegasz. Czeka w **Dostosuj**, aż ją dodasz.
 
-## Prosty vs Zaawansowany
+## Poruszanie się po aplikacji {#navigation}
 
-![Ustawienia nie mają przycisku Zapisz: każda zmiana jest zapisywana od razu.](assets/screenshots/settings.png)
+![Ustawienia jako kafelki, obok nich karty wybranego kafelka. Każda zmiana jest zapisywana, gdy ją wprowadzasz.](assets/screenshots/settings.png)
 
-*Ustawienia nie mają przycisku Zapisz: każda zmiana jest zapisywana od razu.*
+*Ustawienia jako kafelki, obok nich karty wybranego kafelka. Każda zmiana jest zapisywana, gdy ją wprowadzasz.*
 
-Domyślnie interfejs pokazuje tylko rzeczy podstawowe (tworzenie kopii, przywracanie, harmonogram). Użyj przełącznika **Widok prosty / Widok zaawansowany** w panelu bocznym, aby odsłonić kontrolki dla ekspertów: przechowywanie, kopię poza siedzibą, haki pre/post, przywracanie na poziomie plików, powiadomienia, metryki Prometheus oraz narzędzia integralności/konserwacji. To preferencja per przeglądarka, domyślnie wyłączona, więc nowicjusze dostają czysty interfejs, a użytkownicy zaawansowani mają wszystko.
+Pasek boczny ma pięć pozycji: **Przegląd**, **Anomalie** (gdy wykrywanie anomalii jest włączone), **Kopie zapasowe**, **Przywracanie** i, pod **Wyloguj się**, **Ustawienia**. Główna akcja strony unosi się w prawym dolnym rogu, a **Więcej** zawiera te rzadkie. Na telefonie pasek ma Przegląd, Kopie zapasowe, Przywracanie i Ustawienia, a **Więcej** resztę.
+
+- **Kopie zapasowe** wymieniają każdy kontener, maszynę wirtualną, zestaw folderów, nośnik flash, każdy zbiór danych ZFS i autokopię jako elementy. Kafelki nad listą wybierają rodzaj, a **Filtry**, **Sortuj** i **Szukaj** zawężają listę. Każdy element ma własną stronę z trzema kartami: **Kopie zapasowe**, **Ustawienia** i **Integralność**.
+- **Przywracanie** to jedna strona dla wszystkiego: wybierz sekcję, wyszukaj element i wybierz kopię zapasową. Kreator awaryjny i inne źródła zaczynają się tutaj też.
+- **Ustawienia** to czternaście kafelków: Ogólne, Wygląd, Harmonogram, Miejsca docelowe, Przywracanie, Powiadomienia, Weryfikacja, Bezpieczeństwo, Instancje, Parowanie, Integracje, Aplikacje, System i Info. Naciśnij `/` lub Ctrl+K, aby przeszukać je wszystkie, także po nazwach, które strony miały we wcześniejszych wersjach. Przeciągnij kafelki w swoją kolejność w **Wygląd**.
+- **Miejsca docelowe** i **Instancje** to kafelki ustawień z własnymi stronami. **Pokaż także na pasku bocznym** na ich kafelku przypina je do paska bocznego.
+
+Nic nie ma przycisku Zapisz i nic się nie rozwija: rzadkie rzeczy mają własną kartę albo okno, a wyjaśnienia są w dymkach (i). Po aktualizacji zielone kropki oznaczają, co się zmieniło. Kliknięcie ukrywa kropkę, a **Ustawienia, Info, Nowości** wymienia każdą zmianę z **Przejdź tam**.
 
 ## Budowanie ze źródeł {#build-from-source}
 
@@ -106,12 +117,12 @@ golangci-lint run ./...
 go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signed certificate
 ```
 
-Zbudowanie interfejsu jest potrzebne także dla `go run`. Repozytorium śledzi pod `web/dist` tylko pusty znacznik, więc bez `npm --prefix web run build` binarka niczego nie osadza i odpowiada `500 SPA index not found`, czego należy się spodziewać. Dockera, libvirt i Unraida nie da się przetestować w CI, więc przed otwarciem pull requesta sprawdź montowania, restic i połączenie SSH do VM na prawdziwym hoście za pomocą Sprawdzenia integracji z hostem (`/spike`).
+Zbudowanie interfejsu jest potrzebne także dla `go run`. Repozytorium śledzi pod `web/dist` tylko pusty znacznik, więc bez `npm --prefix web run build` binarka niczego nie osadza i odpowiada `500 SPA index not found`, czego należy się spodziewać. Dockera, libvirt i Unraida nie da się przetestować w CI, więc przed otwarciem pull requesta sprawdź montowania, restic i połączenie SSH do VM na prawdziwym hoście za pomocą karty **Integracja z hostem** w przeglądzie (lub `GET /api/spike`).
 
 ## Kolejne kroki
 
 - Przejrzyj pełne **[Funkcje](features.md)**.
 - Przenieś wszystkie serwery swojej grupy na telefon dzięki **[aplikacji na Androida](android.md)**.
-- Dodaj jedną lub więcej replik **[Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md)** (każda domena może wysyłać do kilku celów naraz) i zapisz swój zestaw odzyskiwania.
+- Dodaj jedno lub więcej miejsc docelowych poza domem (każda sekcja może kopiować do kilku naraz) i zapisz swój zestaw odzyskiwania, jak opisano w **[Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md)**.
 - Klonujesz konfigurację lub przenosisz się na nową maszynę? Przenieś całą swoją konfigurację za pomocą karty **Eksport / import ustawień**. Zobacz [Konfiguracja](configuration.md#portable-settings-export-and-import).
 - Napotkałeś problem? Zobacz **[Rozwiązywanie problemów](troubleshooting.md)**.

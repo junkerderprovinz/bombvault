@@ -4,7 +4,7 @@ Egy rövid GYIK. A teljes VM-SSH hoszt-oldali hibaelhárítási táblázatért (
 
 ## Valami nincs helyesen bekötve
 
-Nyisd meg a `/spike` oldalt a webes felületen. A hosztintegráció-ellenőrzés minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat. Itt kezdd, mielőtt hibát feltételeznél: egy hiányzó csatolás vagy egy elérhetetlen hoszt azonnal megjelenik.
+Add hozzá az áttekintéshez a **Hosztintegráció** kártyát a **Testreszabás** alatt. A hosztintegráció-ellenőrzés minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat, az **Ellenőrzés most** pedig újra lefuttatja. Itt kezdd, mielőtt hibát feltételeznél: egy hiányzó csatolás vagy egy elérhetetlen hoszt azonnal megjelenik.
 
 ## Nem érem el a webes felületet
 
@@ -12,7 +12,19 @@ A BombVault alapból HTTPS-t szolgál ki a `3443` porton (önaláírt tanúsítv
 
 ## Elveszítettem az APP_KEY-t
 
-Az `APP_KEY` származtatja a restic tároló jelszavát. Nélküle (és a titkosításikulcs-helyreállító csomag nélkül) a titkosított mentések nem állíthatók helyre. Ezért nyaggat az irányítópult, hogy töltsd le a helyreállítási csomagot. Lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md). Generálj egy kulcsot az `openssl rand -hex 32` paranccsal, és tárold a szerveren kívül, mielőtt bármely mentésre hagyatkoznál.
+Az `APP_KEY` származtatja a restic tároló jelszavát. Nélküle, a helyreállítási csomag nélkül és a csoportodban lévő kulcsletét nélkül a titkosított mentések nem állíthatók helyre. Ezért mutatja az áttekintés a **Mentsd el a helyreállítási csomagot** feliratot, amíg le nem töltötted. Lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md#recovery-kit). Generálj egy kulcsot az `openssl rand -hex 32` paranccsal, és tárold a szerveren kívül, mielőtt bármely mentésre hagyatkoznál.
+
+## Elfelejtettem a bejelentkezési jelszót
+
+Válaszd az **Elfelejtetted a jelszót?** gombot a bejelentkezési oldalon. A BombVault egy 12 karakteres kódot ír a konténere naplójába (Unraidben: Docker fül, BombVault ikon, **Logs**). Add meg 10 percen belül egy új jelszóval. A visszaállítás a kétlépcsős azonosítást is kikapcsolja, eltávolít minden hozzáférési kulcsot, visszavon minden API-tokent, MCP-kulcsot és OAuth-bejelentkezést, lezár minden más munkamenetet, és kikapcsolja a telefonok párosítását. Add hozzá újra a hozzáférési kulcsaidat a **Beállítások, Biztonság** alatt, kapcsold be ott újra a telefonok párosítását, és hozz létre új tokeneket és kulcsokat ott, ahol még szükséged van rájuk. Lásd: [Biztonsági modell](configuration.md#login).
+
+## A mentések leálltak, és azt írják, hogy a kulcs már nem nyitható ki
+
+Ez a szerver a Vészvarázslóban átvette egy másik szerver mentési kulcsát, és utána az `APP_KEY` megváltozott. Az átvett kulcs a régi APP_KEY-jel van lezárva, így a BombVault nem tudja kinyitni, és inkább semmit sem ment, mintsem rossz kulccsal írjon. Az áttekintésen a **Figyelmet igényel** megnevezi. Állítsd vissza az APP_KEY-t arra, ami volt, vagy töltsd fel újra a helyreállítási csomagot a Visszaállítás oldalon a **Vészhelyzet** alatt.
+
+## Egy telefon a bejelentkezési oldalra érkezik
+
+Egy párosított telefon csak addig kapja meg a munkamenetét a csoporton át, amíg a **Beállítások, Biztonság** alatt be van kapcsolva ez: **A telefonok párosíthatók a csoport tizenkét szavával**. A jelszó visszaállítása kikapcsolja. A szervernél régebbi alkalmazás sem kap munkamenetet, amíg nem frissül. A cím szerint hozzáadott szerver mindig jelszót kér.
 
 ## A VM-mentés nem csatlakozik
 
@@ -29,11 +41,11 @@ Az élő pillanatképekhez szükség van a qemu guest agent telepítésére a VM
 
 ## Egy mentés a "repository is already locked" hibával hiúsult meg
 
-Ez általában egy árva restic zárolás, amely akkor maradt hátra, amikor a konténert egy művelet közben frissítették vagy újraindították. A BombVault észlel egy bizonyíthatóan árva zárolást, kényszerítve törli és egyszer újrapróbálja, automatikusan. Ha továbbra is fennáll, használd a **Beállítások, Integritás, Feloldás** funkciót az érintett tartományhoz, hogy kézzel törölj egy elavult zárolást. Egy valódi probléma továbbra is felszínre kerül, ahelyett hogy elrejtenék. Újraindítás után a BombVault megvárja, hogy egy ilyen zárolás tíz percig ne frissüljön. A még futó restic, például egy második BombVaultban ugyanazon a tárolón, ötpercenként frissíti a zárolását.
+Ez általában egy árva restic zárolás, amely akkor maradt hátra, amikor a konténert egy művelet közben frissítették vagy újraindították. A BombVault észlel egy bizonyíthatóan árva zárolást, kényszerítve törli és egyszer újrapróbálja, automatikusan. Ha továbbra is fennáll, nyisd meg a **Mentések ellenőrzése** kártyát a **Beállítások, Ellenőrzés** alatt, és az érintett szakasz sorában válaszd a **Feloldás** lehetőséget a **Több** alatt, hogy kézzel törölj egy elavult zárolást. Egy valódi probléma továbbra is felszínre kerül, ahelyett hogy elrejtenék. Újraindítás után a BombVault megvárja, hogy egy ilyen zárolás tíz percig ne frissüljön. A még futó restic, például egy második BombVaultban ugyanazon a tárolón, ötpercenként frissíti a zárolását.
 
 ## A telephelyen kívüli másolatom nem történt meg egy mentés után
 
-A telephelyen kívüli replikáció szándékosan legjobb szándék szerinti, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. Ellenőrizd az adott tartomány telephelyen kívüli ütemezését (Beállítások, Ütemezések): egy üres ütemezés minden helyi mentés után replikál, míg egy ütem ritkábban szállít. Használd a **Replikálás most** gombot a Telephelyen kívüli oldalon egy igény szerinti futáshoz, és figyeld a replikációs jelzőt az irányítópulton.
+A telephelyen kívüli replikáció szándékosan legjobb szándék szerinti, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. Ellenőrizd, mikor másol a cél: a **Másolás** kártyáján az áll, hogy **Minden biztonsági mentés után**, vagy saját tervet nevez meg, és a **Beállítások, Ütemezés, Telephelyen kívüli másolatok szakaszonként** saját tervet adhat egy szakasznak. Használd a **Replikálás most** gombot a szakasz **Külső másolat** kártyáján a **Beállítások, Célok** alatt egy igény szerinti futáshoz, és figyeld az áttekintés állapotfejlécét, amely futás közben azt írja: **Telephelyen kívüli másolás folyamatban**. A sikertelen másolat a **Figyelmet igényel** alatt jelenik meg.
 
 ## Egy visszaállítás megszakadt, mielőtt elindult volna
 
@@ -41,7 +53,7 @@ Mielőtt bármit is leállítanának vagy eltávolítanának, a visszaállítás
 
 ## Egy egyszerű export meghiúsult ahelyett, hogy fájlt írt volna
 
-Ha az age-titkosítás be van kapcsolva (Beállítások), de nincs beállítva érvényes címzett, egy export világos hibával leáll, ahelyett hogy nyílt szöveget írna. Adj hozzá egy érvényes címzettet (egy age nyilvános kulcs vagy egy SSH nyilvános kulcs), vagy kapcsold ki a titkosítást, ha az exportot nyílt szövegnek szánod. Lásd: [Funkciók](features.md).
+Ha az **Exportok titkosítása age-dzsel** be van kapcsolva a **Beállítások, Rendszer** alatt, de nincs beállítva érvényes címzett, egy export világos hibával leáll, ahelyett hogy nyílt szöveget írna. Adj hozzá egy érvényes címzettet (egy age nyilvános kulcs vagy egy SSH nyilvános kulcs), vagy kapcsold ki a titkosítást, ha az exportot nyílt szövegnek szánod. Lásd: [Funkciók](features.md).
 
 ## Egy adatbázis-dump sikertelen volt
 
@@ -67,11 +79,11 @@ Minden problémához szögletes zárójelben ok-kód tartozik, és a [ZFS-adatk�
 
 - **`snapshot-loop`**: a pillanatkép nem jutott el a BombVaulthoz, mert a Host Data nem adja tovább az új csatolásokat. Szerkeszd a konténert, állítsd a Host Data Access Mode értékét Read/Write - Slave-re, és indítsd újra a BombVaultot.
 - **`key-not-loaded`**: a titkosított adatkészletet, amelynek kulcsa nincs betöltve, kihagyja. Töltsd be a kulcsot a `zfs load-key` paranccsal, és csatold az adatkészletet; a következő mentés már tartalmazza.
-- **`ssh-auth`**: a kiszolgáló elutasította a BombVault kulcsát. A ZFS oldal kapcsolatkártyája mutatja a parancsot, amely engedélyezi; futtasd egyszer a kiszolgálón.
+- **`ssh-auth`**: a kiszolgáló elutasította a BombVault kulcsát. A **ZFS-kapcsolat ehhez a kiszolgálóhoz** ablak, amelyet a Biztonsági mentések oldalon a **Kapcsolat megtekintése** nyit meg, mutatja a parancsot, amely engedélyezi; futtasd egyszer a kiszolgálón.
 
 ## Egy elem "Tanul N/10" állapotban marad
 
-A legtöbb anomália-ellenőrzés egy elem 10 sikeres mentése után indul, és a számlálás újraindul a **Jelölés várhatóként** után és az elem kijelölésének módosulása után. Az ütemezés nélküli elem nem tanul, egy appdata nélküli konténernek pedig nincs miből tanulnia, amit a jelvénye is mutat.
+A legtöbb anomália-ellenőrzés egy elem 10 sikeres mentése után indul, és a számlálás újraindul a **Jelölés várhatóként** után és az elem kijelölésének módosulása után. Az ütemezés nélküli elem nem tanul, egy appdata nélküli konténernek pedig nincs miből tanulnia, amit a jelvénye is mutat. A **Tanulási folyamat** az Anomáliák oldalon elemenként tíz részből álló gyűrűt mutat.
 
 ## A megőrzés nem törli többé egy elem régi mentéseit
 
@@ -83,7 +95,7 @@ Ugyanaz az ok: a tisztítás békén hagyja az ilyen anomáliájú elem régi me
 
 ## Az előzmények importja szerint egy tárolót nem sikerült beolvasni
 
-Frissítés után a BombVault egyszer beolvassa a korábbi mentések méretét minden tárolóból. Az a tároló, amely akkor nem volt elérhető, például egy leállt külső cél vagy egy fel nem csatolt megosztás, megjelenik a **Beállítások, Integritás** alatti **Anomáliák** kártyán, és naponta egyszer újrapróbálja. Addig az elemei az új mentésekből tanulnak.
+Frissítés után a BombVault egyszer beolvassa a korábbi mentések méretét minden tárolóból. Az a tároló, amely akkor nem volt elérhető, például egy leállt külső cél vagy egy fel nem csatolt megosztás, megjelenik a **Beállítások, Ellenőrzés** alatti **Anomáliák** kártyán, és naponta egyszer újrapróbálja. Addig az elemei az új mentésekből tanulnak.
 
 ## A lemezterület-figyelmeztetés nem egyezik az Unraid irányítópulttal
 
@@ -95,7 +107,7 @@ Az [MCP-kiszolgáló](mcp.md#troubleshooting) oldal leírja, mit jelentenek az M
 
 ## A konténer folyamatosan újraindul vagy egészségtelennek tűnik
 
-A BombVault a saját `/api/health`-jéből jelent egészségeset/egészségtelent. Egy automatikus gyógyító eszköz (mint az Autoheal) automatikusan újraindíthatja, ha a motor valaha beragadna. Ellenőrizd a konténer naplóját és a `/spike` jelentést a mögöttes okért.
+A BombVault a saját `/api/health`-jéből jelent egészségeset/egészségtelent. Egy automatikus gyógyító eszköz (mint az Autoheal) automatikusan újraindíthatja, ha a motor valaha beragadna. Ellenőrizd a konténer naplóját és a **Hosztintegráció** kártyát a mögöttes okért.
 
 ## Még mindig elakadtál?
 

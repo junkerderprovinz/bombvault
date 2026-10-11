@@ -262,7 +262,7 @@ Kaikki, mitä avustaja lukee, menee sen takana olevalle tekoälypalvelun tarjoaj
 | `retention_guard` | Vielä yksi MCP-varmuuskopio jättäisi "säilytä viimeiset N" -ikkunaan vain MCP:n tekemiä palautuspisteitä, tai kohde on jo saanut 4 varmuuskopiota MCP:n kautta viimeisten 24 tunnin aikana, epäonnistuneet ja perutut mukaan lukien. Ensimmäisessä tapauksessa seuraava ajastettu varmuuskopio tekee tilaa, toisessa kohde vapautuu 24 tuntia vanhimman niistä jälkeen. Verkkokäyttöliittymästä voit käynnistää sen milloin tahansa. |
 | `rate_limited` | Avain on käyttänyt tämän tunnin 12 käynnistystään. |
 | `not_permitted` käynnistyksessä | Avain saa vain lukea. Kytke **Salli varmuuskopioiden käynnistys** päälle kortissa; uutta yhteyttä ei tarvita. Peruutuksessa se tarkoittaa, että tämä avain ei käynnistänyt ajoa. |
-| `domain_off` | Se varmuuskopiolaji on kytketty pois asetuksista. |
+| `domain_off` | Se osio on kytketty pois kohdassa **Asetukset, Yleiset**. |
 | `not_found` | BombVault ei suojaa sitä kohdetta. Lisää se ensin verkkokäyttöliittymässä; MCP ei koskaan luo asetuksia. |
 | Asiakas ei löydä valtuutuspalvelinta | OAuth-kirjautuminen on pois päältä, kirjautumissalasanaa ei ole asetettu, tai välityspalvelin ei päästä polkua `/.well-known/` läpi BombVaultiin. |
 | Suostumussivu kertoo, ettei paluuosoitetta ole rekisteröity | Asiakas lähetti paluuosoitteen, jota se ei ole rekisteröinyt. Poista liitin asiakkaasta ja lisää se uudelleen. |

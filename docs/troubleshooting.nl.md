@@ -4,7 +4,7 @@ Een korte FAQ. Voor de volledige VM-via-SSH-tabel voor probleemoplossing aan de 
 
 ## Er is iets niet correct aangesloten
 
-Open `/spike` in de web-UI. De controle van hostintegratie test elke mount en CLI (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt eventuele ontbrekende onderdelen. Begin hier voordat je een bug veronderstelt: een ontbrekende mount of een onbereikbare host duikt meteen op.
+Voeg de kaart **Host-integratie** toe aan het overzicht onder **Aanpassen**. De controle van hostintegratie test elke mount en CLI (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt eventuele ontbrekende onderdelen, en **Nu controleren** draait haar opnieuw. Begin hier voordat je een bug veronderstelt: een ontbrekende mount of een onbereikbare host duikt meteen op.
 
 ## Ik kan de web-UI niet bereiken
 
@@ -12,7 +12,19 @@ BombVault serveert HTTPS out of the box op poort `3443` (zelfondertekend certifi
 
 ## Ik ben mijn APP_KEY kwijt
 
-`APP_KEY` leidt het wachtwoord van de restic-repository af. Zonder deze (en zonder de herstelkit voor de encryptiesleutel) kunnen versleutelde back-ups niet worden hersteld. Daarom zeurt het Dashboard je om de herstelkit te downloaden. Zie [Off-site en herstel](offsite-recovery.md). Genereer een sleutel met `openssl rand -hex 32` en bewaar hem buiten de server voordat je op enige back-up vertrouwt.
+`APP_KEY` leidt het wachtwoord van de restic-repository af. Zonder deze, zonder de herstelkit en zonder een bewaarkopie van de sleutel in je groep kunnen versleutelde back-ups niet worden hersteld. Daarom toont het overzicht **Bewaar je herstelkit** totdat je hem hebt gedownload. Zie [Off-site en herstel](offsite-recovery.md#recovery-kit). Genereer een sleutel met `openssl rand -hex 32` en bewaar hem buiten de server voordat je op enige back-up vertrouwt.
+
+## Ik ben het inlogwachtwoord vergeten
+
+Kies **Wachtwoord vergeten?** op de loginpagina. BombVault schrijft een code van 12 tekens naar het log van zijn container (op Unraid: tabblad Docker, BombVault-pictogram, **Logs**). Typ die binnen 10 minuten samen met een nieuw wachtwoord. De reset zet ook tweefactorauthenticatie uit, verwijdert elke passkey, trekt elk API-token, elke MCP-sleutel en elke OAuth-aanmelding in, beëindigt alle andere sessies en schakelt telefoonkoppeling uit. Voeg je passkeys opnieuw toe onder **Instellingen, Beveiliging**, schakel de telefoonkoppeling daar weer in en maak nieuwe tokens en sleutels aan waar je ze nog nodig hebt. Zie [Beveiligingsmodel](configuration.md#login).
+
+## Back-ups zijn gestopt en melden dat de sleutel niet meer te openen is
+
+Deze server heeft in de Noodassistent de back-upsleutel van een andere server overgenomen, en daarna is `APP_KEY` gewijzigd. De overgenomen sleutel is verzegeld met de oude APP_KEY, dus BombVault kan hem niet openen en maakt liever geen back-ups dan dat het met de verkeerde sleutel schrijft. **Aandacht nodig** in het overzicht noemt het. Zet APP_KEY terug naar wat hij was, of upload de herstelkit opnieuw op de pagina Herstel onder **Noodgeval**.
+
+## Een telefoon belandt op de loginpagina
+
+Een gekoppelde telefoon krijgt zijn sessie via de groep alleen zolang **Telefoons kunnen koppelen met de twaalf woorden van de groep** aanstaat onder **Instellingen, Beveiliging**. Een wachtwoordreset zet het uit. Een app die ouder is dan de server krijgt ook geen sessie totdat hij is bijgewerkt. Een server die je via zijn adres hebt toegevoegd vraagt altijd om het wachtwoord.
 
 ## VM-back-up wil geen verbinding maken
 
@@ -29,11 +41,11 @@ Live snapshots hebben de qemu guest agent geïnstalleerd in de VM nodig en de sc
 
 ## Een back-up mislukte met "repository is already locked"
 
-Dit is meestal een verweesde restic-lock die achterblijft wanneer de container werd bijgewerkt of herstart midden in een operatie. BombVault detecteert een aantoonbaar verweesde lock, wist hem geforceerd en probeert automatisch één keer opnieuw. Als het aanhoudt, gebruik **Instellingen, Integriteit, Ontgrendelen** voor het betrokken domein om een verouderde lock met de hand te wissen. Een echt probleem komt nog steeds boven in plaats van verborgen te worden. Na een herstart wacht BombVault tot zo'n lock tien minuten niet is vernieuwd. Een restic die nog draait, bijvoorbeeld in een tweede BombVault op dezelfde repository, vernieuwt zijn lock elke vijf minuten.
+Dit is meestal een verweesde restic-lock die achterblijft wanneer de container werd bijgewerkt of herstart midden in een operatie. BombVault detecteert een aantoonbaar verweesde lock, wist hem geforceerd en probeert automatisch één keer opnieuw. Als het aanhoudt, open de kaart **Back-ups controleren** onder **Instellingen, Verificatie** en kies **Ontgrendelen** onder **Meer** in de rij van het betrokken onderdeel om een verouderde lock met de hand te wissen. Een echt probleem komt nog steeds boven in plaats van verborgen te worden. Na een herstart wacht BombVault tot zo'n lock tien minuten niet is vernieuwd. Een restic die nog draait, bijvoorbeeld in een tweede BombVault op dezelfde repository, vernieuwt zijn lock elke vijf minuten.
 
 ## Mijn off-site kopie is niet gemaakt na een back-up
 
-Off-site replicatie is opzettelijk best-effort, dus een off-site hapering laat de lokale back-up nooit mislukken. Controleer de off-site planning voor dat domein (Instellingen, Schema's): een lege planning repliceert na elke lokale back-up, terwijl een cadans minder vaak stuurt. Gebruik **Nu repliceren** op de pagina Off-site voor een run op aanvraag, en let op de replicatie-indicator op het Dashboard.
+Off-site replicatie is opzettelijk best-effort, dus een off-site hapering laat de lokale back-up nooit mislukken. Controleer wanneer de bestemming kopieert: de kaart **Kopiëren** zegt **Na elke back-up** of noemt een eigen plan, en **Instellingen, Planning, Off-site-kopieën per domein** kan een onderdeel een eigen plan geven. Gebruik **Nu repliceren** in de kaart **Off-site kopie** van het onderdeel onder **Instellingen, Bestemmingen** voor een run op aanvraag, en let op de statuskop van het overzicht, die **Off-site-kopie loopt** zegt zolang het loopt. Een mislukte kopie staat onder **Aandacht nodig**.
 
 ## Een herstel brak af voordat het begon
 
@@ -41,7 +53,7 @@ Voordat er iets wordt gestopt of verwijderd, draait herstel een pre-flight confl
 
 ## Een platte export mislukte in plaats van een bestand te schrijven
 
-Als age-versleuteling aan is (Instellingen) maar er geen geldige ontvanger is ingesteld, mislukt een export met een duidelijke fout in plaats van platte tekst te schrijven. Voeg een geldige ontvanger toe (een age-publieke sleutel of een SSH-publieke sleutel), of zet versleuteling uit als je bedoelt dat de export platte tekst is. Zie [Functies](features.md).
+Als **Exports versleutelen met age** aan staat onder **Instellingen, Systeem** maar er geen geldige ontvanger is ingesteld, mislukt een export met een duidelijke fout in plaats van platte tekst te schrijven. Voeg een geldige ontvanger toe (een age-publieke sleutel of een SSH-publieke sleutel), of zet versleuteling uit als je bedoelt dat de export platte tekst is. Zie [Functies](features.md).
 
 ## Een databasedump is mislukt
 
@@ -67,11 +79,11 @@ Elk probleem heeft een redencode tussen vierkante haken, en de pagina [ZFS-datas
 
 - **`snapshot-loop`**: de snapshot bereikte BombVault niet, omdat Host Data nieuwe koppelingen niet doorgeeft. Bewerk de container, zet de Access Mode van Host Data op Read/Write - Slave en herstart BombVault.
 - **`key-not-loaded`**: een versleutelde dataset waarvan de sleutel niet geladen is, wordt overgeslagen. Laad de sleutel met `zfs load-key` en koppel de dataset aan; de volgende back-up neemt hem mee.
-- **`ssh-auth`**: de server weigerde de sleutel van BombVault. De verbindingskaart op de ZFS-pagina toont de opdracht die hem toestaat; voer die één keer uit op de server.
+- **`ssh-auth`**: de server weigerde de sleutel van BombVault. **ZFS-verbinding met deze server**, te openen met **Verbinding bekijken** op de pagina Back-ups, toont de opdracht die hem toestaat; voer die één keer uit op de server.
 
 ## Een item blijft op "Leert N/10" staan
 
-De meeste anomaliecontroles beginnen na 10 geslaagde back-ups van een item, en de telling begint opnieuw na **Als verwacht markeren** en nadat de selectie van het item is gewijzigd. Een item zonder planning leert niet, en een container zonder appdata heeft niets om van te leren, wat zijn badge ook zegt.
+De meeste anomaliecontroles beginnen na 10 geslaagde back-ups van een item, en de telling begint opnieuw na **Als verwacht markeren** en nadat de selectie van het item is gewijzigd. Een item zonder planning leert niet, en een container zonder appdata heeft niets om van te leren, wat zijn badge ook zegt. **Leervoortgang** op de pagina Anomalieën toont per item een ring van tien delen.
 
 ## Retentie verwijdert geen oude back-ups meer van één item
 
@@ -83,7 +95,7 @@ Dezelfde oorzaak: opschonen laat de oude back-ups van een item met zo'n anomalie
 
 ## De geschiedenisimport meldt dat een repository niet gelezen kon worden
 
-Na de update leest BombVault één keer de groottes van eerdere back-ups uit elke repository. Een repository die op dat moment niet bereikbaar was, zoals een uitgevallen off-site-doel of een share die niet gekoppeld was, staat op de kaart **Anomalieën** onder **Instellingen, Integriteit** en wordt één keer per dag opnieuw geprobeerd. Zijn items leren intussen van nieuwe back-ups.
+Na de update leest BombVault één keer de groottes van eerdere back-ups uit elke repository. Een repository die op dat moment niet bereikbaar was, zoals een uitgevallen off-site-doel of een share die niet gekoppeld was, staat op de kaart **Anomalieën** onder **Instellingen, Verificatie** en wordt één keer per dag opnieuw geprobeerd. Zijn items leren intussen van nieuwe back-ups.
 
 ## De waarschuwing over schijfruimte klopt niet met het Unraid-dashboard
 
@@ -95,7 +107,7 @@ De pagina [MCP-server](mcp.md#troubleshooting) zet op een rij wat elke statuscod
 
 ## De container blijft herstarten of ziet er unhealthy uit
 
-BombVault meldt healthy/unhealthy vanuit zijn eigen `/api/health`. Een auto-heal-tool (zoals Autoheal) kan hem automatisch herstarten als de engine ooit vastloopt. Controleer het containerlog en het `/spike`-rapport voor de onderliggende oorzaak.
+BombVault meldt healthy/unhealthy vanuit zijn eigen `/api/health`. Een auto-heal-tool (zoals Autoheal) kan hem automatisch herstarten als de engine ooit vastloopt. Controleer het containerlog en de kaart **Host-integratie** voor de onderliggende oorzaak.
 
 ## Nog steeds vast?
 

@@ -1,6 +1,6 @@
 # Aplikacja na Androida
 
-Aplikacja na Androida przenosi na telefon wszystkie serwery BombVault z Twojej grupy. Startuje od listy Twoich serwerów, nad którą widać dziennik aktywności ich wszystkich, te same wiersze, które pokazuje Panel, i otwiera widok telefoniczny serwera, który stukniesz. Sama aplikacja nie tworzy żadnych kopii zapasowych.
+Aplikacja na Androida przenosi na telefon wszystkie serwery BombVault z Twojej grupy. Startuje od listy Twoich serwerów, nad którą widać dziennik aktywności ich wszystkich, te same wiersze, które pokazuje przegląd, i otwiera widok telefoniczny serwera, który stukniesz. Sama aplikacja nie tworzy żadnych kopii zapasowych.
 
 ## Instalacja aplikacji {#install}
 
@@ -24,17 +24,20 @@ Telefon dołącza wtedy do grupy jak kolejna instancja. To, co działa na każdy
 
 ## Logowanie na sparowanym telefonie {#sign-in}
 
-Telefon sparowany z Twoją grupą otwiera każdy z jej serwerów od razu zalogowany. Zanim załaduje stronę, prosi ten serwer przez grupę o sesję, a serwer wydaje ją tylko członkowi, który jest telefonem. Serwer dodany po adresie pyta o hasło, tak jak w przeglądarce. Kto zna dwanaście słów, i tak może otworzyć każdą kopię zapasową grupy, więc parowanie nie daje nic nowego.
+Telefon sparowany z Twoją grupą otwiera każdy z jej serwerów od razu zalogowany. Zanim załaduje stronę, prosi ten serwer przez grupę o sesję, a serwer wydaje ją tylko członkowi, który jest telefonem. Serwer dodany po adresie pyta o hasło, tak jak w przeglądarce.
+Sparowany telefon nie dostaje wszystkiego, co daje hasło. Jego sesja sięga do stałej listy tego, co pokazuje aplikacja: przeglądu, uruchomień i dziennika aktywności, kopii zapasowych do podejrzenia, uruchomienia i przywrócenia, anomalii do przeczytania oraz strony Instancje do podejrzenia. Miejsca docelowe i polecenia wracają bez adresów i sekretów. Przywrócenie, które zastępuje oryginał, najpierw tworzy kopię zapasową bieżącego stanu. Klucze, zestaw odzyskiwania, depozyty kluczy, ustawienia i usuwanie kopii zapasowych zostają przy logowaniu na samym serwerze, a wszystko inne odpowiada, że potrzebuje tego logowania.
+
+Przełącznik tego ustawienia to **Telefony mogą się sparować z dwunastoma słowami grupy** w karcie **Aplikacja na Androida** w **Ustawienia, Bezpieczeństwo**. Zresetowanie hasła wyłącza go i wylogowuje wszystkie telefony, dopóki nie włączysz go tam z powrotem.
 
 ## Serwery spoza grupy {#other-servers}
 
 - **Dodaj serwer** przyjmuje adres, pod którym otwierasz BombVault w przeglądarce, na przykład `192.168.1.10:3443`. Bez `http://` lub `https://` na początku aplikacja używa https.
-- Serwery, które ogłaszają się w sieci lokalnej, są wymienione w sekcji **W tej sieci** i otwierają się jednym stuknięciem. Ogłaszają się, dopóki w Ustawienia, Integracje włączone jest **Znajdź w sieci**. Serwer w innej sieci albo za VPN się tam nie pojawi.
+- Serwery, które ogłaszają się w sieci lokalnej, są wymienione w sekcji **W tej sieci** i otwierają się jednym stuknięciem. Ogłaszają się, dopóki w karcie **Usługi** w **Ustawienia, Integracje** włączone jest **Znajdź w sieci**. Serwer w innej sieci albo za VPN się tam nie pojawi.
 - Certyfikatowi samopodpisanemu ufa się raz, na podstawie jego odcisku SHA-256. Gdy serwer później pokaże inny, aplikacja Cię ostrzeże i otworzy go dopiero wtedy, gdy zaufasz nowemu certyfikatowi.
 
 ## Telefon na stronie Instancje {#instances}
 
-Telefon dostaje własną kartę na stronie Instancje każdego serwera w grupie, oznaczoną jako aplikacja na Androida i nazwaną tak, jak nazwałeś telefon. Nie ma karty wyników, bo niczego nie kopiuje, a **Usuń** zdejmuje go ze strony.
+Telefon dostaje własną kartę na stronie Instancje każdego serwera w grupie, oznaczoną jako aplikacja na Androida i z nazwą nadaną telefonowi. Nie ma karty wyników, bo niczego nie kopiuje, a **Usuń** zdejmuje go ze strony.
 
 ## Ustawienia {#settings}
 

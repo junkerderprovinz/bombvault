@@ -1,20 +1,20 @@
 # Android uygulaması
 
-Android uygulaması, grubunuzdaki tüm BombVault sunucularını telefonunuza getirir. Sunucularınızın listesiyle açılır, listenin üstünde hepsinin etkinlik günlüğü durur (Kontrol Paneli'nin gösterdiği satırların aynısı) ve dokunduğunuz sunucunun telefon görünümünü açar. Uygulamanın kendisi hiçbir şeyi yedeklemez.
+Android uygulaması, grubundaki tüm BombVault sunucularını telefonuna getirir. Sunucularının listesiyle açılır, listenin üstünde hepsinin etkinlik günlüğü durur (genel bakışın gösterdiği satırların aynısı) ve dokunduğun sunucunun telefon görünümünü açar. Uygulamanın kendisi hiçbir şeyi yedeklemez.
 
 ## Uygulamayı edinme {#install}
 
-- **Ayarlar, Uygulamalar:** Android uygulamasının kartı, sunucunuzun çalıştırdığı sürümün APK'sını ve telefondan taranacak bir QR kodu sunar.
-- **APK:** her sürümün sayfasında `bombvault-android.apk` bulunur ve [bu bağlantı](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) her zaman en son derlemeyi indirir. Android 10 veya üstü gerekir; Android, dosyayı açtığınız uygulamanın uygulama yükleyip yükleyemeyeceğini bir kez sorar.
-- **Google Play:** uygulama, herkese açılabilene kadar kapalı testte. Google Play, yeni bir geliştirici hesabının uygulamasını ancak en az 12 test kullanıcısı onu 14 gün boyunca yüklü tuttuktan sonra listeler. Yardım etmek isterseniz [test grubuna](https://groups.google.com/g/arrowloop-testers) katılın, [test sayfasını](https://play.google.com/apps/testing/bombvault.halleluja.design) açın, **Test kullanıcısı ol** düğmesine dokunun ve BombVault'u Google Play'den yükleyin.
+- **Ayarlar, Uygulamalar:** Android uygulamasının kartı, sunucunun çalıştırdığı sürümün APK'sını ve telefondan taranacak bir QR kodu sunar.
+- **APK:** her sürümün sayfasında `bombvault-android.apk` bulunur ve [bu bağlantı](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) her zaman en son derlemeyi indirir. Android 10 veya üstü gerekir; Android, dosyayı açtığın uygulamanın uygulama yükleyip yükleyemeyeceğini bir kez sorar.
+- **Google Play:** uygulama, herkese açılabilene kadar kapalı testte. Google Play, yeni bir geliştirici hesabının uygulamasını ancak en az 12 test kullanıcısı onu 14 gün boyunca yüklü tuttuktan sonra listeler. Yardım etmek istersen [test grubuna](https://groups.google.com/g/arrowloop-testers) katıl, [test sayfasını](https://play.google.com/apps/testing/bombvault.halleluja.design) aç, **Test kullanıcısı ol** düğmesine dokun ve BombVault'u Google Play'den yükle.
 - **F-Droid:** kaydı daha sonra gelecek.
 
-Uygulamayı 9.7.0 veya daha yeni sürümdeki sunucularla eşleştirin. Daha eski sürümdeki bir sunucu aynı grupta olabilir, ancak telefonu sıradan bir örnek olarak gösterir ve uygulama o sunucunun etkinliğini ancak oturum açtıktan sonra okur.
+Uygulamayı 9.7.0 veya daha yeni sürümdeki sunucularla eşleştir. Daha eski sürümdeki bir sunucu aynı grupta olabilir, ancak telefonu sıradan bir örnek olarak gösterir ve uygulama o sunucunun etkinliğini ancak oturum açtıktan sonra okur.
 
 ## QR koduyla eşleştirme {#pairing}
 
-1. Grubunuzdaki herhangi bir sunucuda **Ayarlar, Eşleştirme**'yi açın ve **İfadeyi göster**'i seçin. On iki kelime, yanlarında bir QR koduyla görünür.
-2. Uygulamada **QR kodu tara**'ya dokunun ve telefonu koda tutun. Kelimeleri yapıştırabilir ya da yazabilirsiniz de.
+1. Grubundaki herhangi bir sunucuda **Ayarlar, Eşleştirme**'yi aç ve **İfadeyi göster**'i seç. On iki kelime, yanlarında bir QR koduyla görünür.
+2. Uygulamada **QR kodu tara**'ya dokun ve telefonu koda tut. Kelimeleri yapıştırabilir ya da yazabilirsin de.
 3. Uygulama, bir şey kaydetmeden önce o grubun sunucularını listeler. **N tanesini de ekle** hepsini birden ekler.
 
 Telefon bundan sonra gruba başka bir örnek gibi katılır. Her sunucuda neyin çalıştığını oturum açmadan grup üzerinden okur: evde doğrudan, evden uzaktayken röle üzerinden. Grubun kendisinin nasıl çalıştığı [Örnekleri eşleştirme](offsite-recovery.md#pairing) bölümünde anlatılıyor.
@@ -24,24 +24,29 @@ Telefon bundan sonra gruba başka bir örnek gibi katılır. Her sunucuda neyin 
 
 ## Eşleştirilmiş telefonda oturum {#sign-in}
 
-Grubunuzla eşleştirilmiş bir telefon, grubun her sunucusunu oturum açılmış olarak açar. Bir sayfayı yüklemeden önce o sunucudan grup üzerinden bir oturum ister ve sunucu oturumu yalnızca telefon olan bir üyeye verir. Adresiyle eklenen bir sunucu, tarayıcıda olduğu gibi parola ister. On iki kelimeyi bilen biri grubun her yedeğini zaten açabilir, dolayısıyla eşleştirme yeni bir yetki vermez.
+Grubunla eşleştirilmiş bir telefon, grubun her sunucusunu oturum açılmış olarak açar. Bir sayfayı yüklemeden önce o sunucudan grup üzerinden bir oturum ister ve sunucu oturumu yalnızca telefon olan bir üyeye verir. Adresiyle eklenen bir sunucu, tarayıcıda olduğu gibi parola ister.
+
+Eşleştirilmiş bir telefon, bir parolanın verdiği her şeyi almaz. Oturumu, uygulamanın gösterdiklerinden oluşan sabit bir listeye erişir: genel bakış, çalışmalar ve etkinlik günlüğü, bakılacak yedekler, başlatma ve geri yükleme, okunacak anormallikler ve bakılacak Örnekler sayfası. Hedefler ve komutlar, adresleri ve gizli bilgileri çıkarılmış olarak döner. Orijinali değiştiren bir geri yükleme önce mevcut durumu yedekler. Anahtarlar, kurtarma kiti, anahtar emanetleri, ayarlar ve yedekleri silme, sunucunun kendisindeki bir oturum açmayla kalır; geri kalan her şey bu oturum açmaya ihtiyaç duyduğunu söyler.
+
+Bunun anahtarı, **Ayarlar, Güvenlik** altındaki **Android uygulaması** kartında **Telefonlar grubun on iki kelimesiyle eşleşebilir**'dir. Bir parola sıfırlama onu kapatır ve her telefonun oturumunu sonlandırır; sen orada tekrar açana kadar böyle kalır.
 
 ## Grup dışındaki sunucular {#other-servers}
 
-- **Sunucu ekle**, BombVault'u tarayıcıda açtığınız adresi alır, örneğin `192.168.1.10:3443`. Başında `http://` ya da `https://` yoksa uygulama https kullanır.
-- Yerel ağda kendini duyuran sunucular **Bu ağda** altında listelenir ve tek dokunuşla açılır. Bunu, Ayarlar, Entegrasyonlar altında **Ağda bul** açık olduğu sürece yaparlar. Başka bir ağdaki ya da bir VPN arkasındaki sunucu orada görünmez.
-- Kendinden imzalı bir sertifikaya SHA-256 parmak iziyle bir kez güvenilir. Sunucu daha sonra farklı bir sertifika gösterirse uygulama sizi uyarır ve sunucuyu ancak yeni sertifikaya güvendikten sonra açar.
+- **Sunucu ekle**, BombVault'u tarayıcıda açtığın adresi alır, örneğin `192.168.1.10:3443`. Başında `http://` ya da `https://` yoksa uygulama https kullanır.
+- Yerel ağda kendini duyuran sunucular **Bu ağda** altında listelenir ve tek dokunuşla açılır. Bunu, **Ayarlar, Entegrasyonlar** altındaki **Hizmetler** kartında **Ağda bul** açık olduğu sürece yaparlar. Başka bir ağdaki ya da bir VPN arkasındaki sunucu orada görünmez.
+
+- Kendinden imzalı bir sertifikaya SHA-256 parmak iziyle bir kez güvenilir. Sunucu daha sonra farklı bir sertifika gösterirse uygulama seni uyarır ve sunucuyu ancak yeni sertifikaya güvendikten sonra açar.
 
 ## Örnekler sayfasında telefon {#instances}
 
-Telefon, gruptaki her sunucunun Örnekler sayfasında kendi kartını alır; kart Android uygulaması olarak işaretlenir ve telefona verdiğiniz adı taşır. Hiçbir şeyi yedeklemediği için karnesi yoktur ve **Kaldır** onu sayfadan çıkarır.
+Telefon, gruptaki her sunucunun Örnekler sayfasında kendi kartını alır; kart Android uygulaması olarak işaretlenir ve telefona verdiğin adı taşır. Hiçbir şeyi yedeklemediği için karnesi yoktur ve **Kaldır** onu sayfadan çıkarır.
 
 ## Ayarlar {#settings}
 
 Artı işaretinin yanındaki dişli, uygulamanın ayarlarını açar:
 
 - dil ve telefonun Örnekler sayfasında gösterdiği ad (boş bırakılırsa telefonun modeli kullanılır),
-- siz kendinizinkini ayarlayana kadar listedeki ilk sunucuyu izleyen görünüm, ve kendi ayarı olan animasyonlar,
+- sen kendininkini ayarlayana kadar listedeki ilk sunucuyu izleyen görünüm, ve kendi ayarı olan animasyonlar,
 - bir sorun bildirirken kopyalanacak bir rapor; içinde adres, ad ya da ifade yoktur,
 - gizlilik politikasıyla birlikte Hakkında kartı,
 - **Tüm sunucuları kaldır**: tüm sunucuları uygulamadan kaldırır ve gruptan ayrılır. Sunucuların kendisinde hiçbir şey değişmez.

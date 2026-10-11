@@ -4,7 +4,7 @@ En kort FAQ. För den fullständiga felsökningstabellen för VM-över-SSH på v
 
 ## Något är inte korrekt inkopplat
 
-Öppna `/spike` i webbgränssnittet. Värdintegrationskontrollen sonderar varje montering och CLI (Docker-socket, libvirt, restic, qemu-img, rclone) och rapporterar eventuella saknade delar. Börja här innan du antar att det är ett fel: en saknad montering eller en onåbar värd dyker upp omedelbart.
+Lägg till kortet **Värdintegration** på översikten under **Anpassa**. Värdintegrationskontrollen sonderar varje montering och CLI (Docker-socket, libvirt, restic, qemu-img, rclone) och rapporterar eventuella saknade delar, och **Kontrollera nu** kör den igen. Börja här innan du antar ett fel: en saknad montering eller en onåbar värd syns direkt.
 
 ## Jag kan inte nå webbgränssnittet
 
@@ -12,7 +12,19 @@ BombVault serverar HTTPS direkt ur lådan på port `3443` (självsignerat certif
 
 ## Jag förlorade min APP_KEY
 
-`APP_KEY` härleder restic-repositoriets lösenord. Utan den (och utan återställningskitet för krypteringsnyckeln) kan krypterade säkerhetskopior inte återställas. Det är därför Översikten tjatar på dig att ladda ner återställningskitet. Se [Off-site och återställning](offsite-recovery.md). Generera en nyckel med `openssl rand -hex 32` och förvara den bort från servern innan du förlitar dig på någon säkerhetskopia.
+`APP_KEY` härleder restic-arkivets lösenord. Utan den, utan återställningskitet och utan en nyckeldeposition i din grupp går krypterade säkerhetskopior inte att återställa. Därför visar översikten **Spara ditt återställningskit** tills du har laddat ner det. Se [Off-site och återställning](offsite-recovery.md#recovery-kit). Skapa en nyckel med `openssl rand -hex 32` och förvara den utanför servern innan du förlitar dig på någon säkerhetskopia.
+
+## Jag har glömt inloggningslösenordet
+
+Välj **Glömt lösenordet?** på inloggningssidan. BombVault skriver en kod på 12 tecken i sin containerlogg (i Unraid: fliken Docker, BombVault-ikonen, **Logs**). Skriv in den med ett nytt lösenord inom 10 minuter. Återställningen stänger också av tvåfaktorsautentisering, tar bort alla lösennycklar, återkallar alla API-token, MCP-nycklar och OAuth-inloggningar, avslutar alla andra sessioner och stänger av parkopplingen av telefoner. Lägg till dina lösennycklar igen under **Inställningar, Säkerhet**, slå på parkopplingen av telefoner där igen och skapa nya token och nycklar där du fortfarande behöver dem. Se [Säkerhetsmodell](configuration.md#login).
+
+## Säkerhetskopiorna har stannat och säger att nyckeln inte längre går att öppna
+
+Den här servern tog över en annan servers säkerhetskopienyckel i Nödguiden, och `APP_KEY` ändrades efteråt. Den övertagna nyckeln är förseglad med den gamla APP_KEY, så BombVault kan inte öppna den och säkerhetskopierar ingenting i stället för att skriva med fel nyckel. **Behöver uppmärksamhet** på översikten namnger den. Sätt tillbaka APP_KEY till det den var, eller ladda upp återställningskitet igen på sidan Återställning under **Nödläge**.
+
+## En telefon hamnar på inloggningssidan
+
+En parkopplad telefon får sin session via gruppen bara så länge **Telefoner kan parkopplas med gruppens tolv ord** är på under **Inställningar, Säkerhet**. En återställning av lösenordet stänger av det. En app som är äldre än servern får heller ingen session förrän den uppdaterats. En server som lagts till med sin adress frågar alltid efter lösenordet.
 
 ## VM-säkerhetskopiering ansluter inte
 
@@ -29,11 +41,11 @@ Live-ögonblicksbilder behöver qemu-gästagenten installerad i VM:en och disken
 
 ## En säkerhetskopiering misslyckades med "repository is already locked"
 
-Detta är oftast ett övergivet restic-lås som lämnats kvar när containern uppdaterades eller startades om mitt i en operation. BombVault upptäcker ett bevisligen övergivet lås, tvingar bort det och gör om en gång, automatiskt. Om det kvarstår, använd **Inställningar, Integritet, Lås upp** för den drabbade domänen för att rensa ett fastnat lås för hand. Ett äkta problem dyker fortfarande upp istället för att döljas. Efter en omstart väntar BombVault tills ett sådant lås har gått tio minuter utan att förnyas. En restic som fortfarande körs, till exempel i en andra BombVault mot samma repository, förnyar sitt lås var femte minut.
+Det här är oftast ett föräldralöst restic-lås som blev kvar när containern uppdaterades eller startades om mitt i en operation. BombVault upptäcker ett bevisat föräldralöst lås, rensar det med tvång och försöker en gång till, automatiskt. Om det består, öppna kortet **Kontrollera säkerhetskopior** under **Inställningar, Verifiering** och välj **Lås upp** under **Mer** på det berörda avsnittets rad för att rensa ett gammalt lås för hand. Ett verkligt problem dyker ändå upp i stället för att döljas. Efter en omstart väntar BombVault tills ett sådant lås gått tio minuter utan förnyelse. Ett restic som fortfarande körs, till exempel i en andra BombVault på samma arkiv, förnyar sitt lås var femte minut.
 
 ## Min off-site-kopia hände inte efter en säkerhetskopiering
 
-Off-site-replikering är best-effort by design, så att en off-site-hicka aldrig misslyckar den lokala säkerhetskopian. Kontrollera off-site-schemat för den domänen (Inställningar, Scheman): ett tomt schema replikerar efter varje lokal säkerhetskopiering, medan en kadens skickar mer sällan. Använd **Replikera nu** på Off-site-sidan för en körning på begäran, och håll koll på replikeringsindikatorn på Översikten.
+Off-site-replikering är best-effort av design, så ett off-site-hickande får aldrig den lokala säkerhetskopian att misslyckas. Kontrollera när målet kopierar: dess kort **Kopiera** säger **Efter varje säkerhetskopia** eller namnger en egen plan, och **Inställningar, Schema, Externa kopior per område** kan ge ett avsnitt en egen plan. Använd **Replikera nu** i avsnittets off-site-kopiakort under **Inställningar, Mål** för en körning på begäran, och titta på översiktens statushuvud, som säger **Extern kopiering pågår** medan den körs. En misslyckad kopiering syns under **Behöver uppmärksamhet**.
 
 ## En återställning avbröts innan den startade
 
@@ -41,7 +53,7 @@ Innan något stoppas eller tas bort kör återställningen en konfliktkontroll f
 
 ## En vanlig export misslyckades istället för att skriva en fil
 
-Om age-kryptering är på (Inställningar) men ingen giltig mottagare är satt misslyckas en export med ett tydligt fel istället för att skriva klartext. Lägg till en giltig mottagare (en age-publik nyckel eller en SSH-publik nyckel), eller stäng av kryptering om du avser att exporten ska vara klartext. Se [Funktioner](features.md).
+Om **Kryptera exporter med age** är på under **Inställningar, System** men ingen giltig mottagare är angiven misslyckas en export med ett tydligt fel i stället för att skriva klartext. Lägg till en giltig mottagare (en publik age-nyckel eller en publik SSH-nyckel), eller stäng av krypteringen om du avser att exporten ska vara klartext. Se [Funktioner](features.md).
 
 ## En databasdump misslyckades
 
@@ -67,23 +79,23 @@ Varje problem har en orsakskod inom hakparenteser, och sidan [ZFS-datauppsättni
 
 - **`snapshot-loop`**: ögonblicksbilden nådde inte BombVault eftersom Host Data inte skickar vidare nya monteringar. Redigera containern, sätt Access Mode för Host Data till Read/Write - Slave och starta om BombVault.
 - **`key-not-loaded`**: en krypterad uppsättning vars nyckel inte är laddad hoppas över. Ladda nyckeln med `zfs load-key` och montera uppsättningen; nästa säkerhetskopia tar med den.
-- **`ssh-auth`**: servern avvisade BombVaults nyckel. Anslutningskortet på ZFS-sidan visar kommandot som godkänner den; kör det en gång på servern.
+- **`ssh-auth`**: servern avvisade BombVaults nyckel. **ZFS-anslutning till den här servern**, öppnad med **Visa anslutningen** på sidan Säkerhetskopior, visar kommandot som auktoriserar den; kör det en gång på servern.
 
-## Ett objekt står kvar på "Lär sig N/10"
+## En post fastnar på "Lär sig N/10"
 
-De flesta avvikelsekontroller börjar efter 10 lyckade säkerhetskopior av ett objekt, och räkningen börjar om efter **Markera som väntad** och efter att objektets urval har ändrats. Ett objekt utan schema lär sig inte, och en container utan appdata har inget att lära sig av, vilket dess märke också säger.
+De flesta avvikelsekontroller startar efter 10 lyckade säkerhetskopior av en post, och räkningen börjar om efter **Markera som väntad** och efter att postens urval ändrats. En post som inte är schemalagd lär sig inte, och en container utan appdata har inget att lära sig av, vilket dess märke säger. **Inlärningsförlopp** på sidan Avvikelser visar en ring av tio delar per post.
 
-## Gallringen har slutat ta bort gamla säkerhetskopior för ett objekt
+## Retention slutade radera gamla säkerhetskopior av en post
 
-En öppen kritisk avvikelse håller kvar dem: objektets källa är nästan tom, har krympt kraftigt, eller en säkerhetskopia har sparat det mesta av datan på nytt. Öppna avvikelsen från märket på objektet. Om data saknas eller har krypterats, återställ först från den länkade senaste bra säkerhetskopian. Kvittera sedan avvikelsen, eller markera den som väntad om ändringen var din, så gallrar nästa körning som vanligt. Förhandsvisningen av gallringen markerar ett sådant objekt som behållet. För ett ZFS-objekt behåller bara den datauppsättning som avvikelsen nämner sina gamla säkerhetskopior; trädets övriga datauppsättningar gallras som vanligt.
+En öppen kritisk avvikelse håller kvar dem: postens källa är nästan tom, har krympt kraftigt eller en säkerhetskopia lagrade det mesta av dess data igen. Öppna avvikelsen från märket på posten. Om data saknas eller krypterats, återställ först från den länkade sista goda säkerhetskopian. Kvittera sedan avvikelsen, eller markera den som väntad om ändringen var din, så gallrar nästa körning som vanligt. Retentionsförhandsvisningen markerar en sådan post som behållen. För en ZFS-post behåller bara datauppsättningen som nämns i avvikelsen sina gamla säkerhetskopior, och trädets övriga datauppsättningar gallras som vanligt.
 
-## Manuell rensning säger att vissa objekt behölls
+## Manuell rensning säger att vissa poster behölls
 
-Samma orsak: rensningen låter de gamla säkerhetskopiorna för ett objekt med en sådan avvikelse vara och nämner objektet i sitt meddelande. Allt annat rensas som vanligt.
+Samma orsak: rensningen lämnar gamla säkerhetskopior av en post med en sådan avvikelse ifred och namnger posten i sitt meddelande. Allt annat rensas som vanligt.
 
 ## Historikimporten säger att ett repository inte kunde läsas
 
-Efter uppgraderingen läser BombVault en gång storleken på tidigare säkerhetskopior ur varje repository. Ett repository som inte gick att nå då, till exempel ett externt mål som låg nere eller en share som inte var monterad, listas i kortet **Avvikelser** under **Inställningar, Integritet** och prövas igen en gång om dagen. Under tiden lär sig dess objekt av nya säkerhetskopior.
+Efter uppgraderingen läser BombVault storlekarna på tidigare säkerhetskopior från varje arkiv en gång. Ett arkiv det inte kunde nå då, till exempel ett off-site-mål som låg nere eller en resurs som inte var monterad, räknas på kortet **Avvikelser** under **Inställningar, Verifiering** och försöks igen en gång om dagen. Dess poster lär sig under tiden av nya säkerhetskopior.
 
 ## Varningen om diskutrymme stämmer inte med Unraids instrumentpanel
 
@@ -95,7 +107,7 @@ Sidan [MCP-server](mcp.md#troubleshooting) visar vad varje statuskod och varje n
 
 ## Containern startar om hela tiden eller ser osund ut
 
-BombVault rapporterar frisk/osund från sin egen `/api/health`. Ett auto-heal-verktyg (som Autoheal) kan starta om den automatiskt om motorn någonsin skulle kärva. Kontrollera containerloggen och `/spike`-rapporten för den underliggande orsaken.
+BombVault rapporterar frisk/ofrisk från sitt eget `/api/health`. Ett autoläkningsverktyg (som Autoheal) kan starta om den automatiskt om motorn någonsin hänger sig. Kontrollera containerloggen och kortet **Värdintegration** för den underliggande orsaken.
 
 ## Fortfarande fast?
 

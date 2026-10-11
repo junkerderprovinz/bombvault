@@ -2,29 +2,33 @@
 
 **Dina Unraid-data, förseglade i ett valv. Släpp en säkerhetskopia. Detonera en återställning.**
 
-BombVault är en självhostad, Unraid-nativ webbapp för **säkerhetskopiering och fullständig katastrofåterställning** av dina Docker-containrar och KVM/libvirt-VM:ar. Den körs som en enda multi-arch Docker-container, ger dig ett modernt webbgränssnitt som följer systemets ljusa/mörka temainställning, och sköter hela livscykeln: säkerhetskopiera, schemalägg, verifiera och återställ.
+BombVault är en självhostad, Unraid-nativ webbapp för **säkerhetskopiering och fullständig katastrofåterställning** av dina Docker-containrar och KVM/libvirt-VM:ar. Den körs som en enda multi-arch Docker-container, ger dig ett webbgränssnitt med mörkt, ljust eller systemets tema, och sköter hela livscykeln: säkerhetskopiera, schemalägg, verifiera och återställ.
 
 Återställningar är automatiska. Containrar dyker upp igen i Unraids Docker-flik precis som förut, och VM:ar återdefinieras i VM Manager med sina diskar och UEFI NVRAM återkopplade. Ingen manuell ominstallation, ingen omkonfiguration, inget krångel.
 
 Drivs av [restic](https://restic.net), så varje säkerhetskopia är deduplicerad, inkrementell och alltid krypterad.
 
 !!! note "Skydda din APP_KEY"
-    BombVault härleder restic-repositoriets lösenord från en 32-byte hemlighet vid namn `APP_KEY`. Att förlora den gör krypterade säkerhetskopior oåterställbara. Generera en med `openssl rand -hex 32` och förvara den på en säker plats. Se [Konfiguration](configuration.md).
+    BombVault härleder restic-repositoriets lösenord från en 32-byte hemlighet vid namn `APP_KEY`. Att förlora den, tillsammans med återställningskitet, gör krypterade säkerhetskopior oåterställbara. Generera en med `openssl rand -hex 32` och förvara den på en säker plats. Se [Konfiguration](configuration.md).
 
 ## Vad BombVault skyddar
 
-| Domän | Vad som sparas |
+Varje container, VM, mappuppsättning, flashenheten, varje ZFS-datauppsättning och BombVaults egna inställningar är en **post** med en egen sida. Poster av samma slag bildar ett **avsnitt**, som du slår på under **Inställningar, Allmänt**.
+
+| Avsnitt | Vad som sparas |
 |---|---|
-| **Docker-containrar** | Appdata-katalogen plus containerdefinitionen (image, miljövariabler, portar, etiketter, volymer). |
-| **KVM / libvirt-VM:ar** | VM-diskavbild(er), XML-definitionen och UEFI NVRAM, säkerhetskopierade över SSH (ingen libvirt-montering). |
-| **Unraid-flash** | Hela USB-flashen (`/boot`): OS, licens, array-config, resurser, nätverks- och plugin-config. |
-| **App-konfiguration** | BombVaults egen `/config`: dess inställningsdatabas, off-site-uppgifter och libvirt-SSH-nyckelparet. |
-| **Filer och mappar** | Namngivna **filuppsättningar**, valfri mapp på servern, var och en med valfria exkluderingsmönster per uppsättning. |
+| **Containers** | Appdata-katalogen plus containerdefinitionen (image, miljövariabler, portar, etiketter, volymer). |
+| **VMs** | VM-diskavbild(er), XML-definitionen och UEFI NVRAM, säkerhetskopierade över SSH (ingen libvirt-montering). |
+| **Flash** | Hela USB-flashen (`/boot`): OS, licens, array-config, resurser, nätverks- och plugin-config. |
+| **Auto-säkerhetskopia** | BombVaults egen `/config`: dess inställningsdatabas, inloggningsuppgifterna för dess mål och libvirt-SSH-nyckelparet. |
+| **Mappar** | Valfri mapp på servern som en mappuppsättning, var och en med valfria exkluderingsmönster. |
 | **ZFS-datauppsättningar** | En datauppsättning med alla uppsättningar under den, läst från en ZFS-ögonblicksbild och sparad som en mapp. Se [ZFS-datauppsättningar](zfs-datasets.md). |
 
 ## Återställning är stjärnan
 
 Efter att data har kopierats tillbaka från restic-ögonblicksbilden spelar BombVault upp den sparade containerdefinitionen mot Docker-API:et, så containern dyker upp igen i Unraids Docker-flik som om den alltid hade varit där (samma image, samma inställningar, samma portmappningar). VM:ar får sin XML återdefinierad över SSH och sina diskar och UEFI NVRAM återkopplade, även efter att VM:en har raderats.
+
+Ett enda fönster återställer alla slags poster. Som standard väljer det **Bredvid originalet**, som tar tillbaka säkerhetskopian som en kopia och lämnar originalet orört. **Ersätt originalet** säkerhetskopierar först det nuvarande läget, så en återställning går att ångra. En mapp eller en ny ZFS-datauppsättning är de andra målen.
 
 När en säkerhetskopiering stoppar beroende containrar kommer de tillbaka i rätt ordning: BombVault startar om dem i deras Compose-`depends_on`-ordning och väntar på att var och en rapporterar frisk innan de som är beroende av den startas, så att inget rusar iväg före en databas eller en gateway som ännu inte är uppe. Se [Funktioner](features.md).
 
@@ -33,7 +37,7 @@ När en säkerhetskopiering stoppar beroende containrar kommer de tillbaka i rä
 ```
 Browser --HTTPS--> BombVault container
                    |- Go binary: JSON API + embedded React UI
-                   |- Background worker (per-domain scheduler + job executor)
+                   |- Background worker (per-section scheduler + job executor)
                    |
                    |- /var/run/docker.sock  -> Docker API (container stop/inspect/recreate)
                    |- qemu+ssh://host       -> libvirt / KVM on the HOST over SSH (no mount)
@@ -51,7 +55,7 @@ BombVault är orkestrerings- och gränssnittslagret, inte lagringsmotorn. All fa
 
 Ny här? Gå till **[Kom igång](getting-started.md)** för att installera BombVault på Unraid via Community Applications och köra din första säkerhetskopiering. Utforska sedan alla **[Funktioner](features.md)**, finjustera din **[Konfiguration](configuration.md)** och sätt upp **[Off-site och återställning](offsite-recovery.md)**.
 
-Off-site kan fördela till flera mål per domän samtidigt, en skrivskyddad **mottagarpanel** övervakar de kopiorna på boxen som tar emot dem, och du kan flytta hela din konfiguration till en ny box med kortet **Exportera / importera inställningar**. Se [Off-site och återställning](offsite-recovery.md) och [Konfiguration](configuration.md#portable-settings-export-and-import).
+Varje avsnitt kan kopiera till flera mål samtidigt, en parkopplad BombVault kan hålla dina off-site-kopior på en server som vägrar radering, och **Nödguide** tar tillbaka en förlorad server från dess återställningskit, via din grupp eller med den inskrivna nyckeln. Om du vill flytta din konfiguration till en ny box använder du kortet **Exportera / importera inställningar**. Se [Off-site och återställning](offsite-recovery.md) och [Konfiguration](configuration.md#portable-settings-export-and-import).
 
 **[Android-appen](android.md)** ger dig alla servrar i din grupp i telefonen, med aktivitetsloggen för dem alla på en skärm.
 
@@ -75,4 +79,4 @@ Namnet och varumärket omfattas inte av licensen. AGPL täcker endast källkoden
 - **Ärenden:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Root-likvärdig kontroll över värden"
-    Via Docker-socketen kan BombVault stoppa, ta bort och återskapa containrar och läsa/skriva appdata, och för VM-säkerhetskopiering loggar den in på värden över SSH för att köra `virsh`. Vem som helst som kan nå dess webbgränssnitt har i praktiken root på värden. Kör BombVault endast på ett betrott, icke-exponerat nätverk, och aktivera den valfria lösenordsspärren (Inställningar, Säkerhet) när off-site- eller oföränderliga säkerhetskopior används. Se [Konfiguration](configuration.md) för hela säkerhetsmodellen.
+    Via Docker-socketen kan BombVault stoppa, ta bort och återskapa containrar och läsa/skriva appdata, och för VM-säkerhetskopiering loggar den in på värden över SSH för att köra `virsh`. Vem som helst som kan nå dess webbgränssnitt har i praktiken root på värden. Kör BombVault endast på ett betrott, icke-exponerat nätverk, och sätt ett inloggningslösenord under **Inställningar, Säkerhet**. Återställningskitet, nyckeldepositioner och borttagning av säkerhetskopior på ett mål kräver ett. Se [Konfiguration](configuration.md#security-model) för hela säkerhetsmodellen.

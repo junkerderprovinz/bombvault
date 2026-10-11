@@ -4,7 +4,7 @@ Un scurt FAQ. Pentru tabelul complet de depanare pe partea de gazdă pentru VM-p
 
 ## Ceva nu este cablat corect
 
-Deschide `/spike` în interfața web. Verificarea integrării cu gazda sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă. Începe aici înainte de a presupune o eroare: o montare lipsă sau o gazdă inaccesibilă apare imediat.
+Adaugă cardul **Integrare gazdă** în prezentare, la **Personalizează**. Verificarea integrării gazdei sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă, iar **Verifică acum** o rulează din nou. Începe de aici înainte să presupui o eroare: o montare lipsă sau o gazdă inaccesibilă apare imediat.
 
 ## Nu pot ajunge la interfața web
 
@@ -12,7 +12,19 @@ BombVault servește HTTPS din start pe portul `3443` (certificat auto-semnat), d
 
 ## Mi-am pierdut APP_KEY
 
-`APP_KEY` derivă parola depozitului restic. Fără el (și fără kitul de recuperare a cheii de criptare), backupurile criptate nu pot fi recuperate. De aceea panoul principal insistă să descarci kitul de recuperare. Vezi [Off-site și recuperare](offsite-recovery.md). Generează o cheie cu `openssl rand -hex 32` și stoch-o în afara serverului înainte să te bazezi pe vreun backup.
+`APP_KEY` derivă parola depozitului restic. Fără el, fără kitul de recuperare și fără o depunere de cheie în grupul tău, copiile de rezervă criptate nu pot fi recuperate. De aceea prezentarea arată **Salvează-ți kitul de recuperare** până îl descarci. Vezi [Off-site și recuperare](offsite-recovery.md#recovery-kit). Generează o cheie cu `openssl rand -hex 32` și păstreaz-o în afara serverului înainte să te bazezi pe orice copie.
+
+## Am uitat parola de conectare
+
+Alege **Ai uitat parola?** pe pagina de autentificare. BombVault scrie un cod de 12 caractere în jurnalul containerului său (în Unraid: fila Docker, pictograma BombVault, **Logs**). Tastează-l cu o parolă nouă în 10 minute. Resetarea dezactivează și autentificarea în doi pași, elimină toate cheile de acces, revocă toate tokenurile API, cheile MCP și autentificările OAuth, încheie toate celelalte sesiuni și oprește împerecherea telefoanelor. Adaugă din nou cheile de acces la **Setări, Securitate**, pornește tot acolo împerecherea telefoanelor și creează tokenuri și chei noi unde mai ai nevoie de ele. Vezi [Model de securitate](configuration.md#login).
+
+## Copiile s-au oprit și spun că cheia nu mai poate fi deschisă
+
+Acest server a preluat cheia de copii a altui server în Asistentul de urgență, iar `APP_KEY` a fost schimbat după aceea. Cheia preluată este sigilată cu vechiul APP_KEY, așa că BombVault nu o poate deschide și nu face nicio copie, în loc să scrie cu cheia greșită. **Necesită atenție** din prezentare o numește. Pune APP_KEY la loc, cum era, sau încarcă din nou kitul de recuperare pe pagina Restaurare, la **Urgență**.
+
+## Un telefon ajunge pe pagina de autentificare
+
+Un telefon împerecheat primește sesiunea prin grup doar cât timp **Telefoanele se pot împerechea cu cele douăsprezece cuvinte ale grupului** este pornit la **Setări, Securitate**. O resetare a parolei îl oprește. O aplicație mai veche decât serverul nu primește nici ea sesiune până se actualizează. Un server adăugat după adresă cere mereu parola.
 
 ## Backupul VM nu se conectează
 
@@ -29,11 +41,11 @@ Instantaneele live au nevoie de qemu guest agent instalat în VM și de discul p
 
 ## Un backup a eșuat cu "repository is already locked"
 
-Acesta este de obicei un blocaj restic orfan lăsat în urmă când containerul a fost actualizat sau repornit în mijlocul unei operațiuni. BombVault detectează un blocaj dovedibil orfan, îl forțează să se elibereze și reîncearcă o dată, automat. Dacă persistă, folosește **Setări, Integritate, Unlock** pentru domeniul afectat pentru a elibera manual un blocaj rămas. O problemă reală tot iese la suprafață în loc să fie ascunsă. După o repornire, BombVault așteaptă până când o astfel de blocare a stat zece minute fără reîmprospătare. Un restic care încă rulează, de exemplu într-un al doilea BombVault pe același depozit, își reîmprospătează blocarea la fiecare cinci minute.
+De obicei este un lock restic orfan rămas când containerul a fost actualizat sau repornit în mijlocul unei operațiuni. BombVault detectează un lock dovedit orfan, îl curăță forțat și reîncearcă o dată, automat. Dacă persistă, deschide cardul **Verifică copiile de rezervă** de la **Setări, Verificare** și alege **Deblochează** la **Mai mult**, în rândul secțiunii afectate, ca să ștergi manual un lock vechi. O problemă reală tot iese la iveală, nu este ascunsă. După o repornire BombVault așteaptă până când un astfel de lock a stat zece minute fără reîmprospătare. Un restic care încă rulează, de exemplu într-un al doilea BombVault pe același depozit, își reîmprospătează lockul la fiecare cinci minute.
 
 ## Copia mea off-site nu s-a întâmplat după un backup
 
-Replicarea off-site este best-effort prin design, așa că o problemă off-site nu eșuează niciodată backupul local. Verifică programarea off-site pentru acel domeniu (Setări, Programări): o programare goală replică după fiecare backup local, în timp ce o cadență trimite mai rar. Folosește **Replică acum** pe pagina Extern pentru o rulare la cerere și urmărește indicatorul de replicare pe panoul principal.
+Replicarea off-site este best-effort prin concepție, așa că un sughiț off-site nu face niciodată să eșueze copia locală. Verifică când copiază destinația: cardul ei **Copiază** spune **După fiecare copie de rezervă** sau numește un plan propriu, iar **Setări, Programare, Copii externe pe domenii** poate da unei secțiuni un plan propriu. Folosește **Replică acum** în cardul de copie off-site al secțiunii de la **Setări, Destinații** pentru o rulare la cerere și urmărește antetul de stare din prezentare, care spune **Copierea off-site rulează** cât timp rulează. O copiere eșuată apare la **Necesită atenție**.
 
 ## O restaurare s-a oprit înainte de a începe
 
@@ -41,7 +53,7 @@ Replicarea off-site este best-effort prin design, așa că o problemă off-site 
 
 ## Un export în clar a eșuat în loc să scrie un fișier
 
-Dacă criptarea age este activată (Setări) dar niciun destinatar valid nu este setat, un export eșuează cu o eroare clară în loc să scrie text în clar. Adaugă un destinatar valid (o cheie publică age sau o cheie publică SSH), sau dezactivează criptarea dacă intenționezi ca exportul să fie în clar. Vezi [Funcționalități](features.md).
+Dacă **Criptează exporturile cu age** este pornit la **Setări, Sistem**, dar nu este setat niciun destinatar valid, un export eșuează cu o eroare clară în loc să scrie text simplu. Adaugă un destinatar valid (o cheie publică age sau o cheie publică SSH) sau oprește criptarea dacă vrei ca exportul să fie text simplu. Vezi [Funcționalități](features.md).
 
 ## Un dump de bază de date a eșuat
 
@@ -67,23 +79,23 @@ Fiecare problemă are un cod de motiv între paranteze drepte, iar pagina [Setur
 
 - **`snapshot-loop`**: instantaneul nu a ajuns la BombVault, pentru că Host Data nu transmite montările noi. Editează containerul, setează Access Mode pentru Host Data la Read/Write - Slave și repornește BombVault.
 - **`key-not-loaded`**: un set de date criptat a cărui cheie nu este încărcată este sărit. Încarcă cheia cu `zfs load-key` și montează setul; următorul backup îl include.
-- **`ssh-auth`**: serverul a refuzat cheia BombVault. Cardul de conexiune de pe pagina ZFS arată comanda care o autorizează; rulează-o o dată pe server.
+- **`ssh-auth`**: serverul a refuzat cheia BombVault. **Conexiune ZFS la acest server**, deschisă cu **Vezi conexiunea** pe pagina Copii de rezervă, arată comanda care o autorizează; rulează-o o dată pe server.
 
-## Un element rămâne la "Învață N/10"
+## Un element rămâne la „Învață N/10”
 
-Majoritatea verificărilor de anomalii încep după 10 backupuri reușite ale unui element, iar numărătoarea reîncepe după **Marchează ca așteptată** și după ce selecția elementului s-a schimbat. Un element fără programare nu învață, iar un container fără appdata nu are din ce învăța, lucru pe care îl spune și insigna lui.
+Majoritatea verificărilor de anomalii pornesc după 10 copii reușite ale unui element, iar numărătoarea reîncepe după **Marchează ca așteptată** și după ce selecția elementului s-a schimbat. Un element care nu este programat nu învață, iar un container fără appdata nu are de unde învăța, lucru pe care îl spune insigna lui. **Progresul învățării** de pe pagina Anomalii arată un inel din zece părți pe element.
 
-## Retenția nu mai șterge backupurile vechi ale unui element
+## Retenția a încetat să șteargă copiile vechi ale unui element
 
-Le ține o anomalie critică deschisă: sursa elementului este aproape goală, s-a micșorat mult sau un backup a salvat din nou cea mai mare parte a datelor. Deschide anomalia din insigna elementului. Dacă lipsesc date sau au fost criptate, restaurează mai întâi din ultimul backup bun indicat. Apoi confirmă anomalia sau marcheaz-o ca așteptată dacă schimbarea a fost a ta, iar următoarea rulare curăță ca de obicei. Previzualizarea retenției marchează un astfel de element ca păstrat. La un element ZFS doar setul de date numit în anomalie își păstrează backupurile vechi; celelalte seturi ale arborelui sunt curățate ca de obicei.
+O anomalie critică deschisă le ține: sursa elementului este aproape goală, s-a micșorat brusc sau o copie a stocat din nou cea mai mare parte din datele ei. Deschide anomalia din insigna elementului. Dacă lipsesc date sau au fost criptate, restaurează mai întâi din ultima copie bună la care trimite. Apoi confirmă anomalia sau marcheaz-o ca așteptată dacă schimbarea a fost a ta, iar rularea următoare curăță ca de obicei. Previzualizarea retenției marchează un astfel de element ca păstrat. Pentru un element ZFS doar setul de date numit în anomalie își păstrează copiile vechi, iar celelalte seturi de date din arbore sunt curățate ca de obicei.
 
 ## Curățarea manuală spune că unele elemente au fost păstrate
 
-Aceeași cauză: curățarea lasă în pace backupurile vechi ale unui element cu o astfel de anomalie și îl numește în mesajul ei. Restul este curățat ca de obicei.
+Aceeași cauză: curățarea lasă în pace copiile vechi ale unui element cu o asemenea anomalie și numește elementul în mesajul ei. Tot restul este curățat ca de obicei.
 
 ## Importul istoricului spune că un depozit nu a putut fi citit
 
-După actualizare, BombVault citește o dată dimensiunile backupurilor anterioare din fiecare depozit. Un depozit care nu era accesibil atunci, de exemplu o destinație externă căzută sau un share nemontat, apare în cardul **Anomalii** din **Setări, Integritate** și este reîncercat o dată pe zi. Între timp, elementele lui învață din backupurile noi.
+După actualizare, BombVault citește o dată dimensiunile copiilor anterioare din fiecare depozit. Un depozit pe care nu l-a putut atinge atunci, de exemplu o destinație off-site căzută sau o partajare nemontată, este numărat în cardul **Anomalii** de la **Setări, Verificare** și reîncercat o dată pe zi. Elementele lui învață între timp din copiile noi.
 
 ## Avertismentul despre spațiul pe disc nu se potrivește cu panoul Unraid
 
@@ -95,7 +107,7 @@ Pagina [Server MCP](mcp.md#troubleshooting) explică ce înseamnă fiecare cod d
 
 ## Containerul se tot repornește sau pare nesănătos
 
-BombVault raportează sănătos/nesănătos din propriul `/api/health`. Un instrument de auto-vindecare (precum Autoheal) îl poate reporni automat dacă motorul se blochează vreodată. Verifică jurnalul containerului și raportul `/spike` pentru cauza de bază.
+BombVault raportează sănătos/nesănătos din propriul `/api/health`. Un instrument de auto-vindecare (precum Autoheal) îl poate reporni automat dacă motorul se blochează vreodată. Verifică jurnalul containerului și cardul **Integrare gazdă** pentru cauza de fond.
 
 ## Tot blocat?
 

@@ -4,7 +4,7 @@ Um FAQ curto. Para a tabela completa de resolução de problemas do lado do host
 
 ## Alguma coisa não está corretamente ligada
 
-Abra `/spike` na interface web. A verificação de integração com o host sonda cada montagem e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e reporta quaisquer peças em falta. Comece por aqui antes de assumir um bug: uma montagem em falta ou um host inacessível aparece de imediato.
+Adiciona o cartão **Integração com o host** à visão geral em **Personalizar**. A verificação de integração com o host sonda cada montagem e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e reporta quaisquer peças em falta, e **Verificar agora** executa-a de novo. Começa por aqui antes de assumir um bug: uma montagem em falta ou um host inacessível aparece de imediato.
 
 ## Não consigo alcançar a interface web
 
@@ -12,14 +12,26 @@ O BombVault serve HTTPS logo de início na porta `3443` (certificado autoassinad
 
 ## Perdi a minha APP_KEY
 
-A `APP_KEY` deriva a palavra-passe do repositório restic. Sem ela (e sem o kit de recuperação da chave de encriptação), os backups encriptados não podem ser recuperados. É por isso que o Painel insiste para que transfira o kit de recuperação. Consulte [Externo e recuperação](offsite-recovery.md). Gere uma chave com `openssl rand -hex 32` e guarde-a fora do servidor antes de depender de qualquer backup.
+A `APP_KEY` deriva a palavra-passe do repositório restic. Sem ela, sem o kit de recuperação e sem um depósito da chave no teu grupo, os backups encriptados não podem ser recuperados. É por isso que a visão geral mostra **Guarda o teu kit de recuperação** até o descarregares. Consulta [Externo e recuperação](offsite-recovery.md#recovery-kit). Gera uma chave com `openssl rand -hex 32` e guarde-a fora do servidor antes de depender de qualquer backup.
+
+## Esqueci-me da palavra-passe de início de sessão
+
+Escolhe **Esqueceste-te da palavra-passe?** na página de início de sessão. O BombVault escreve um código de 12 caracteres no registo do seu container (no Unraid: separador Docker, ícone do BombVault, **Logs**). Escreve-o com uma palavra-passe nova no prazo de 10 minutos. A reposição também desliga a autenticação de dois fatores, remove todas as passkeys, revoga todos os tokens de API, chaves MCP e inícios de sessão OAuth, termina todas as outras sessões e desliga o emparelhamento de telemóveis. Volta a adicionar as tuas passkeys em **Definições, Segurança**, liga aí de novo o emparelhamento de telemóveis e cria tokens e chaves novos onde ainda precisares deles. Consulta [Modelo de segurança](configuration.md#login).
+
+## Os backups pararam e dizem que a chave já não pode ser aberta
+
+Este servidor assumiu a chave de backup de outro servidor no Assistente de emergência, e a `APP_KEY` foi alterada depois. A chave assumida está selada com a APP_KEY antiga, por isso o BombVault não a consegue abrir e prefere não fazer backups a escrever com a chave errada. **Precisa de atenção** na visão geral indica-o. Repõe a APP_KEY no que era, ou carrega o kit de recuperação outra vez na página Restauração em **Emergência**.
+
+## Um telemóvel vai parar à página de início de sessão
+
+Um telemóvel emparelhado só recebe a sessão através do grupo enquanto **Os telemóveis podem emparelhar com as doze palavras do grupo** estiver ligado em **Definições, Segurança**. Uma reposição da palavra-passe desliga-o. Uma aplicação mais antiga do que o servidor também não recebe sessão até ser atualizada. Um servidor adicionado pelo endereço pede sempre a palavra-passe.
 
 ## O backup de VM não se liga
 
 O backup de VM comunica com o libvirt por SSH, nunca por uma montagem.
 
-- Confirme que o SSH está ativado no host e que a chave pública do BombVault está autorizada em `/root/.ssh/authorized_keys` (Definições, Integrações, SSH do anfitrião mostra a chave e um botão **Testar ligação**).
-- Numa rede `br0.x` personalizada, defina `LIBVIRT_HOST` para o IP LAN do seu Unraid (o container não consegue alcançar o host via `host.docker.internal` aí). Ative **Settings, Docker, Host access to custom networks**.
+- Confirma que o SSH está ativado no host e que a chave pública do BombVault está autorizada em `/root/.ssh/authorized_keys` (Definições, Integrações, SSH do anfitrião mostra a chave e um botão **Testar ligação**).
+- Numa rede `br0.x` personalizada, defina `LIBVIRT_HOST` para o IP LAN do seu Unraid (o container não consegue alcançar o host via `host.docker.internal` aí). Ativa **Settings, Docker, Host access to custom networks**.
 - Se alterou a porta SSH do Unraid, defina `LIBVIRT_SSH_PORT` para corresponder.
 - O diagnóstico completo passo a passo (teste de alcance, encaminhamento de VLAN, `Permission denied (publickey)`, `Host key verification failed`) está no [guia de backup de VM por SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
@@ -29,11 +41,11 @@ Os instantâneos a quente precisam do agente convidado qemu instalado na VM e do
 
 ## Um backup falhou com "repository is already locked"
 
-Isto é geralmente um bloqueio restic órfão deixado para trás quando o container foi atualizado ou reiniciado a meio de uma operação. O BombVault deteta um bloqueio comprovadamente órfão, força a sua limpeza e reexperimenta uma vez, automaticamente. Se persistir, use **Definições, Integridade, Desbloquear** para o domínio afetado para limpar um bloqueio preso à mão. Um problema genuíno continua a vir ao de cima em vez de ser escondido. Depois de um reinício, o BombVault espera até esse bloqueio passar dez minutos sem ser renovado. Um restic ainda em execução, por exemplo num segundo BombVault no mesmo repositório, renova o bloqueio a cada cinco minutos.
+Isto é geralmente um bloqueio restic órfão deixado para trás quando o container foi atualizado ou reiniciado a meio de uma operação. O BombVault deteta um bloqueio comprovadamente órfão, força a sua limpeza e reexperimenta uma vez, automaticamente. Se persistir, abre o cartão **Verificar os backups** em **Definições, Verificação** e escolhe **Desbloquear** em **Mais** na linha da secção afetada para limpar um bloqueio preso à mão. Um problema genuíno continua a vir ao de cima em vez de ser escondido. Depois de um reinício, o BombVault espera até esse bloqueio passar dez minutos sem ser renovado. Um restic ainda em execução, por exemplo num segundo BombVault no mesmo repositório, renova o bloqueio a cada cinco minutos.
 
 ## A minha cópia externa não aconteceu após um backup
 
-A replicação externa é de melhor esforço por conceção, por isso um percalço externo nunca faz o backup local falhar. Verifique o agendamento externo para esse domínio (Definições, Agendamentos): um agendamento em branco replica após cada backup local, enquanto uma cadência envia com menos frequência. Use **Replicar agora** na página Externo para uma execução a pedido, e observe o indicador de replicação no Painel.
+A replicação externa é de melhor esforço por conceção, por isso um percalço externo nunca faz o backup local falhar. Verifica quando o destino copia: o cartão **Copiar** diz **Depois de cada backup** ou indica um plano próprio, e **Definições, Agendamento, Cópias externas por domínio** pode dar a uma secção um plano próprio. Usa **Replicar agora** no cartão **Cópia externa** da secção em **Definições, Destinos** para uma execução a pedido, e observa o cabeçalho de estado da visão geral, que diz **Cópia externa em curso** enquanto corre. Uma cópia falhada aparece em **Precisa de atenção**.
 
 ## Um restauro abortou antes de começar
 
@@ -41,7 +53,7 @@ Antes de qualquer coisa ser parada ou removida, o restauro corre uma verificaç�
 
 ## Uma exportação simples falhou em vez de escrever um ficheiro
 
-Se a encriptação age estiver ligada (Definições) mas não estiver definido nenhum destinatário válido, uma exportação falha com um erro claro em vez de escrever texto simples. Adicione um destinatário válido (uma chave pública age ou uma chave pública SSH), ou desligue a encriptação se pretender que a exportação seja texto simples. Consulte [Funcionalidades](features.md).
+Se **Cifrar exportações com age** estiver ligado em **Definições, Sistema** mas não estiver definido nenhum destinatário válido, uma exportação falha com um erro claro em vez de escrever texto simples. Adiciona um destinatário válido (uma chave pública age ou uma chave pública SSH), ou desliga a encriptação se pretenderes que a exportação seja texto simples. Consulta [Funcionalidades](features.md).
 
 ## Um dump de base de dados falhou
 
@@ -66,24 +78,24 @@ Para a repor à mão: para o container, muda o nome da pasta de dados atual para
 Cada problema tem um código de motivo entre parênteses retos, e a página [Conjuntos de dados ZFS](zfs-datasets.md#reason-codes) lista-os todos com a solução. Os três mais comuns:
 
 - **`snapshot-loop`**: o instantâneo não chegou ao BombVault porque o Host Data não passa as novas montagens. Edite o container, ponha o Access Mode do Host Data em Read/Write - Slave e reinicie o BombVault.
-- **`key-not-loaded`**: um conjunto cifrado cuja chave não está carregada é ignorado. Carregue a chave com `zfs load-key` e monte o conjunto; a próxima cópia inclui-o.
-- **`ssh-auth`**: o servidor recusou a chave do BombVault. O cartão de ligação da página ZFS mostra o comando que a autoriza; execute-o uma vez no servidor.
+- **`key-not-loaded`**: um conjunto cifrado cuja chave não está carregada é ignorado. Carrega a chave com `zfs load-key` e monte o conjunto; a próxima cópia inclui-o.
+- **`ssh-auth`**: o servidor recusou a chave do BombVault. **Ligação ZFS a este servidor**, que se abre com **Ver ligação** na página Backups, mostra o comando que a autoriza; executa-o uma vez no servidor.
 
-## Um elemento fica em "A aprender N/10"
+## Uma entrada fica em "A aprender N/10"
 
-A maioria das verificações de anomalias começa após 10 backups bem-sucedidos de um elemento, e a contagem recomeça após **Marcar como esperada** e depois de a seleção do elemento mudar. Um elemento sem agendamento não aprende, e um contentor sem appdata não tem com que aprender, como indica o seu distintivo.
+A maioria das verificações de anomalias começa após 10 backups bem-sucedidos de uma entrada, e a contagem recomeça após **Marcar como esperada** e depois de a seleção da entrada mudar. Uma entrada sem agendamento não aprende, e um container sem appdata não tem com que aprender, como indica o seu distintivo. **Progresso da aprendizagem** na página Anomalias mostra um anel de dez partes por entrada.
 
-## A retenção deixou de apagar os backups antigos de um elemento
+## A retenção deixou de apagar os backups antigos de uma entrada
 
-Uma anomalia crítica aberta está a segurá-los: a origem do elemento está quase vazia, encolheu muito, ou um backup voltou a guardar a maior parte dos dados. Abra a anomalia a partir do distintivo do elemento. Se faltarem dados ou tiverem sido cifrados, restaure primeiro a partir do último backup bom indicado. Depois confirme a anomalia, ou marque-a como esperada se a alteração foi sua, e a execução seguinte limpa como de costume. A pré-visualização da retenção assinala esse elemento como mantido. Num elemento ZFS só o conjunto de dados indicado na anomalia mantém os backups antigos; os outros conjuntos da árvore são limpos como de costume.
+Uma anomalia crítica aberta está a segurá-los: a origem da entrada está quase vazia, encolheu muito, ou um backup voltou a guardar a maior parte dos dados. Abre a anomalia a partir do distintivo da entrada. Se faltarem dados ou tiverem sido cifrados, restaura primeiro a partir do último backup bom indicado. Depois confirma a anomalia, ou marca-a como esperada se a alteração foi tua, e a execução seguinte limpa como de costume. A pré-visualização da retenção assinala essa entrada como mantida. Numa entrada ZFS só o conjunto de dados indicado na anomalia mantém os backups antigos; os outros conjuntos da árvore são limpos como de costume.
 
-## A limpeza manual diz que alguns elementos foram mantidos
+## A limpeza manual diz que algumas entradas foram mantidas
 
-A mesma causa: a limpeza deixa em paz os backups antigos de um elemento com uma anomalia destas e indica-o na sua mensagem. Tudo o resto é limpo como de costume.
+A mesma causa: a limpeza deixa em paz os backups antigos de uma entrada com uma anomalia destas e indica-a na sua mensagem. Tudo o resto é limpo como de costume.
 
 ## A importação do histórico diz que um repositório não pôde ser lido
 
-Depois da atualização, o BombVault lê uma vez o tamanho dos backups anteriores de cada repositório. Um repositório que não estava acessível nesse momento, como um destino externo em baixo ou uma partilha não montada, aparece no cartão **Anomalias** em **Definições, Integridade** e é tentado de novo uma vez por dia. Entretanto, os seus elementos aprendem com os backups novos.
+Depois da atualização, o BombVault lê uma vez o tamanho dos backups anteriores de cada repositório. Um repositório que não estava acessível nesse momento, como um destino externo em baixo ou uma partilha não montada, aparece no cartão **Anomalias** em **Definições, Verificação** e é tentado de novo uma vez por dia. Entretanto, as suas entradas aprendem com os backups novos.
 
 ## O aviso de espaço em disco não coincide com o painel do Unraid
 
@@ -95,10 +107,10 @@ A página [Servidor MCP](mcp.md#troubleshooting) explica o que significa cada c�
 
 ## O container continua a reiniciar ou parece não-saudável
 
-O BombVault reporta saudável/não-saudável a partir do seu próprio `/api/health`. Uma ferramenta de auto-recuperação (como o Autoheal) pode reiniciá-lo automaticamente se o motor alguma vez encravar. Verifique o registo do container e o relatório `/spike` para a causa subjacente.
+O BombVault reporta saudável/não-saudável a partir do seu próprio `/api/health`. Uma ferramenta de auto-recuperação (como o Autoheal) pode reiniciá-lo automaticamente se o motor alguma vez encravar. Verifica o registo do container e o cartão **Integração com o host** para a causa subjacente.
 
 ## Ainda preso?
 
 - Leia as páginas completas de [Configuração](configuration.md) e [Externo e recuperação](offsite-recovery.md).
-- Pergunte na [thread de suporte do Unraid](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/).
-- Abra uma [issue no GitHub](https://github.com/junkerderprovinz/bombvault/issues).
+- Pergunta na [thread de suporte do Unraid](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/).
+- Abre uma [issue no GitHub](https://github.com/junkerderprovinz/bombvault/issues).

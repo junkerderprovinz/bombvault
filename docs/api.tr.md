@@ -1,6 +1,6 @@
 # API ve entegrasyonlar
 
-BombVault'un betikler, panolar ve ev otomasyonu için küçük bir HTTP API'si var. Panonun gösterdiklerini okur ve bir yedekleme başlatabilir. Geri yükleme, yedek silme ve ayarlar gibi her şey web arayüzünde kalır.
+BombVault'un betikler, panolar ve ev otomasyonu için küçük bir HTTP API'si var. Genel bakışın gösterdiklerini okur ve bir yedekleme başlatabilir. Geri yükleme, yedek silme ve ayarlar gibi her şey web arayüzünde kalır.
 
 ## Belirteçler {#tokens}
 
@@ -23,12 +23,12 @@ Giriş parolası yoksa web arayüzünü açabilen herkes belirteç de oluşturab
 | `GET /api/v1/health` | Sürüm, örnek adı, yedekleme çalışıyor mu ve bu belirteç neler yapabilir | okuma |
 | `GET /api/v1/status` | Alan başına koruma durumu: son başarılı yedek, beklenen aralık, denetimler, sonraki planlı çalışmalar | okuma |
 | `GET /api/v1/activity` | Şu anda ne çalışıyor, aşama ve yüzdesiyle | okuma |
-| `GET /api/v1/items` | Her korunan öğe, zamanlaması, bir yedeğin neyi durdurduğu ve son yedeğiyle; tek alan için `?domain=` | okuma |
+| `GET /api/v1/items` | Her korunan öge, zamanlaması, bir yedeğin neyi durdurduğu ve son yedeğiyle; tek alan için `?domain=` | okuma |
 | `GET /api/v1/runs` | Çalışma geçmişi, en yenisi önce; filtreler `limit`, `domain`, `item`, `status`, `kind`, `since` | okuma |
 | `GET /api/v1/anomalies` | Açık olanların özetiyle anomaliler; filtreler `state`, `severity`, `domain`, `limit` | okuma |
 | `GET /api/v1/anomalies/{id}` | Tek bir anomali | okuma |
 | `GET /api/v1/storage/{domain}` | Bir alanın her deposu için boyut geçmişi, haftalık büyüme ve boş alan | okuma |
-| `POST /api/v1/backups` | Tek bir öğeyi (`{"domain":"containers","item":"plex"}`) veya bütün bir alanı (`{"domain":"vms"}`) yedekler | başlatma |
+| `POST /api/v1/backups` | Tek bir ögeyi (`{"domain":"containers","item":"plex"}`) veya bütün bir alanı (`{"domain":"vms"}`) yedekler | başlatma |
 | `POST /api/v1/backups/everything` | Tam yedeklemeyi çalıştırır | başlatma |
 | `POST /api/v1/runs/{id}/cancel` | Bu belirtecin başlattığı, süren bir yedeklemeyi iptal eder | başlatma |
 
@@ -59,11 +59,11 @@ Hata, uygun durum koduyla `{"error": {"code": "...", "message": "..."}}` olarak 
 | 400 | `invalid_argument`, `ambiguous` | Bir bağımsız değişken eksik veya yanlış |
 | 401 | `no_token`, `invalid_token` | Belirteç yok ya da etkin değil |
 | 403 | `not_permitted`, `forbidden_origin` | Belirteç yalnızca okuyabilir ya da çalışmayı o başlatmadı ya da istek başka bir kaynaktan (origin) gelen bir sayfadan geldi |
-| 404 | `not_found` | Böyle bir öğe, çalışma veya anomali yok |
+| 404 | `not_found` | Böyle bir öge, çalışma veya anomali yok |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Başka bir şey çalışıyor, alan kapalı ya da yapılacak bir şey yok |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Bir sınır isteği bekletiyor; `Retry-After` ne zaman yeniden deneneceğini söyler |
 
-Başlatmalar [MCP üzerinden başlatmalarla](mcp.md#starting-backups) aynı sınırlara tabidir: belirteç başına saatte 12, aynı öğenin iki başlatması arasında 15 dakika, bir öğe için 24 saatte en çok 4 başlatma ve saklama koruması. Son üçü MCP ve API üzerinden ve Home Assistant'tan başlatmaları birlikte sayar. Bir belirteç dakikada 120 istek yapabilir. Bir adresten beş başarısız deneme o adresi bir dakika kilitler.
+Başlatmalar [MCP üzerinden başlatmalarla](mcp.md#starting-backups) aynı sınırlara tabidir: belirteç başına saatte 12, aynı ögenin iki başlatması arasında 15 dakika, bir öge için 24 saatte en çok 4 başlatma ve saklama koruması. Son üçü MCP ve API üzerinden ve Home Assistant'tan başlatmaları birlikte sayar. Bir belirteç dakikada 120 istek yapabilir. Bir adresten beş başarısız deneme o adresi bir dakika kilitler.
 
 ## OpenAPI {#openapi}
 
@@ -73,7 +73,7 @@ BombVault bu yolların açıklamasını `/api/v1/openapi.json` adresinde sunar (
 
 BombVault, MQTT keşfi sayesinde Home Assistant'ta bir cihaz olarak görünebilir. Home Assistant'ın bunun için MQTT entegrasyonuna ve bir aracıya, örneğin Mosquitto eklentisine ihtiyacı vardır. Ayrı bir bileşen gerekmez.
 
-1. BombVault'ta **Ayarlar, Entegrasyonlar, Home Assistant** bölümünü aç.
+1. BombVault'ta **Ayarlar, Entegrasyonlar** altını aç ve **Hizmetler** kartında **Home Assistant**'ı bul.
 2. Aracının adresini ve bağlantı noktasını, isterse kullanıcı adını ve parolayı gir. Aracı TLS kullanıyorsa, genellikle 8883 numaralı bağlantı noktasında, **TLS kullan** seçeneğini aç; sertifikası girdiğin adres için geçerli olmalı. Adresi, bağlantı noktasını ya da kullanıcı adını değiştirirsen parolayı yeniden gir: BombVault kayıtlı parolayı başka bir aracıya ya da kullanıcıya iletmez.
 3. **Home Assistant'a bağlan** seçeneğini aç ve **Kaydet** düğmesine tıkla. Kart, bağlantı kurulduğunda bunu gösterir.
 
@@ -96,7 +96,7 @@ BombVault durumunu her 15 saniyede bir okur ve bir şey değiştiğinde `<önek>
 
 ## BombVault'u ağda bulmak {#mdns}
 
-BombVault, web arayüzünü yerel ağda Bonjour ve Avahi'nin ardındaki protokol olan mDNS ile duyurur. Böylece bir tarayıcı ona `https://bombvault.local:3443` adresinden, `HTTP_ONLY` ile `http://bombvault.local:3000` adresinden ulaşır ve hizmet tarayıcıları onu `_bombvault` alt türüyle bir web hizmeti olarak listeler. TXT kayıtları sürümü ve yolu taşır. Anahtar **Ayarlar, Entegrasyonlar, Ağda bul** altındadır ve varsayılan olarak açıktır. Ad başka bir cihaz tarafından kullanılıyorsa BombVault `bombvault-2.local` gibi bir sonraki adı alır ve kart aldığı adresi gösterir. BombVault durduğunda ya da duyuruyu kapattığında bunu ağa bildirir, tarayıcılar da kaydı hemen kaldırır.
+BombVault, web arayüzünü yerel ağda Bonjour ve Avahi'nin ardındaki protokol olan mDNS ile duyurur. Böylece bir tarayıcı ona `https://bombvault.local:3443` adresinden, `HTTP_ONLY` ile `http://bombvault.local:3000` adresinden ulaşır ve hizmet tarayıcıları onu `_bombvault` alt türüyle bir web hizmeti olarak listeler. TXT kayıtları sürümü ve yolu taşır. Anahtar, **Ayarlar, Entegrasyonlar** altındaki **Hizmetler** kartında **Ağda bul**'dur ve varsayılan olarak açıktır. Ad başka bir cihaz tarafından kullanılıyorsa BombVault `bombvault-2.local` gibi bir sonraki adı alır ve kart aldığı adresi gösterir. BombVault durduğunda ya da duyuruyu kapattığında bunu ağa bildirir, tarayıcılar da kaydı hemen kaldırır.
 
 Duyurunun ağına ulaşıp ulaşmadığı konteynerin nasıl bağlandığına bağlıdır:
 

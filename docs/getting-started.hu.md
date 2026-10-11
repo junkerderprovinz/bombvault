@@ -10,7 +10,7 @@ Ez az oldal végigvezet egy friss Unraid-géptől az első mentésedig.
 | **Restic tároló helye** | Helyi útvonal (ajánlott: a tömböd vagy a gyorsítótárad), SMB, NFS vagy bármely rclone backend. |
 | **Docker socket** | A sablon automatikusan csatolja (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | A sablon automatikusan, teljes egészében csatolja (`/boot` a `/host/boot` alá). Ez teszi lehetővé a flash-mentést, és azt, hogy egy visszaállított konténer normál, szerkeszthető Unraid-alkalmazásként jelenjen meg újra. |
-| **KVM VM-ek** (opcionális) | A VM-mentés SSH-n keresztül kommunikál a libvirttel, nincs libvirt-csatolás. Állítsd be a Beállításokban (lásd: [Konfiguráció](configuration.md)). |
+| **KVM VM-ek** (opcionális) | A VM-mentés SSH-n keresztül kommunikál a libvirttel, nincs libvirt-csatolás. Állítsd be a **Beállítások, Integrációk, Gazdagép SSH** alatt (lásd: [Konfiguráció](configuration.md)). |
 | **ZFS-adatkészletek** (opcionális) | Ugyanaz az SSH-kapcsolat, mint a VM-mentéseknél, `zfs` a hoszton, és a Host Data `/mnt`-ként leképezve, Read/Write - Slave hozzáférési móddal, ami a sablon alapértelmezése. Lásd: [ZFS-adatkészletek](zfs-datasets.md). |
 | **Android-alkalmazás** (nem kötelező) | Android 10 vagy újabb, 9.7.0-s vagy újabb verziójú szerverekkel párosítva. Lásd: [Android-alkalmazás](android.md). |
 
@@ -37,12 +37,12 @@ A legegyszerűbb út a **Community Applications**.
 Nem Unraid? A BombVault sima konténerként is fut bármelyik Docker-gazdagépen (ez hordozza a TrueNAS Scale konténertámogatását is, még az ottani alkalmazáskatalógus saját bejegyzése előtt).
 
 1. Töltsd le a tárolóból a szerkesztésre kész [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) fájlt.
-2. Állítsd be az `APP_KEY` értékét (lásd lent), és irányítsd a Host Data kötetet a valódi adatgyökeredre: a fájl megjegyzései mindkettőt végigvezetik.
+2. Állítsd be az `APP_KEY` értékét (lásd lent), és irányítsd a Host Data kötetet a valódi adatgyökeredre. A fájl megjegyzései mindkettőt végigvezetik.
 3. `docker compose up -d`, majd nyisd meg a `https://<gazdagép-ip>:3443/` címet.
 
 Miben más ez, mint az Unraid:
 
-- **Nincs flash/USB tartomány.** Nincs indító pendrive, amit el kellene menteni vagy vissza kellene állítani, így a beállítások Flash tartományának itt nincs dolga. Helyette a Mappák tartomány egy kattintással felkínálja az **Előbeállítás hozzáadása: gazdagép rendszerkonfigurációja** javaslatot (egy induló `/etc` fájlkészlet, amit mentés előtt átnézel és szerkesztesz), gyakorlatias általános megfelelőként.
+- **Nincs Flash szakasz.** Nincs indító pendrive, amit el kellene menteni vagy vissza kellene állítani, így a Flash szakasznak itt nincs dolga. Helyette a **Biztonsági mentések** oldalon a **Hozzáadás** felkínálja a **Rendszerkonfiguráció** mappajavaslatot: egy induló `/etc` mappakészletet, amit mentés előtt átnézel és szerkesztesz.
 - **Nincsenek Unraid-natív értesítések.** A BombVault saját értesítési csatornái (webhook, külső telephelyi hiba riasztásai és így tovább) a szokott módon működnek; csak az Unraid saját értesítési rendszerébe küldés marad el, mert ilyen rendszer itt nincs.
 - **A virtuális gépek mentése választható, és külön, SSH-n elérhető libvirtd gazdagépet igényel.** Lásd a compose fájl kikommentezett blokkját. Egy általános Docker-gazdagépben magában nincs virtuálisgép-kezelő.
 - **Nincs irányítópult-widget.** A BombVault Widget egy Unraid-bővítmény, így ez a lépés is kimarad.
@@ -64,34 +64,45 @@ openssl rand -hex 32
 Illeszd be az eredményt a sablon `APP_KEY` mezőjébe (Unraid), vagy a `docker-compose.yml` `APP_KEY` környezeti változójába (általános Docker-gép).
 
 !!! danger "Ne veszítsd el az APP_KEY-t"
-    Az `APP_KEY` elvesztése visszaállíthatatlanná teszi a titkosított mentéseidet. Tárold biztonságos helyen, a szervertől elkülönítve. Amint a BombVault fut, használd az egykattintásos **titkosításikulcs-helyreállító csomagját** (lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md)) a teljes helyreállítási csomag elmentéséhez.
+    Az `APP_KEY` elvesztése visszaállíthatatlanná teszi a titkosított mentéseidet. Tárold biztonságos helyen, a szervertől elkülönítve. Amint a BombVault fut, állíts be bejelentkezési jelszót, és töltsd le a **Helyreállítási csomagot** a **Beállítások, Visszaállítás** alatt (lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md#recovery-kit)). Ebben ott van a kulcs, minden cél és a restic parancsai.
 
 A sablon ezen felül csatolja a Docker socketet, a flasht (`/boot`) és a **Host Data** gyökeret (`/mnt`) is helyetted. A mentési *források* és *célok* egyaránt a Host Data alatt találhatók. A teljes változó-referenciáért és a telephelyen kívüli beállításért lásd: [Konfiguráció](configuration.md).
 
 ## Első futtatás
 
-![A műszerfal az első mentés után: mi védett, mi fut legközelebb, és egy élő napló.](assets/screenshots/dashboard.png)
+![Az áttekintés az első mentés után: mi igényel figyelmet, az egyes szakaszok védelme, a célok és az előzmények.](assets/screenshots/dashboard.png)
 
-*A műszerfal az első mentés után: mi védett, mi fut legközelebb, és egy élő napló.*
+*Az áttekintés az első mentés után: mi igényel figyelmet, az egyes szakaszok védelme, a célok és az előzmények.*
 
-1. Nyisd meg a webes felületet a `https://<your-unraid-ip>:3443` címen (alapból önaláírt tanúsítvánnyal).
-2. A **Beállításokban** engedélyezd a kívánt mentési tartományokat (Konténerek, VM-ek, Flash, Önmentés, Mappák, ZFS-adatkészletek), és válassz egy kiemelőszínt.
-3. A **Konténerek** fülön válassz egy konténert, és kattints a **Mentés most** gombra az első visszaállítási pont létrehozásához. A tároló útvonalai alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre.
-4. Állítsd be az ütemezést a **Beállítások, Ütemezések** alatt. A konténerekhez és VM-ekhez van egykattintásos *Mind az ütemezésbe* lehetőség.
+1. Nyisd meg a webes felületet a `https://<your-unraid-ip>:3443` címen (alapból önaláírt tanúsítvánnyal). Egy új telepítés az **Üdv a BombVaultban** oldalon nyílik meg, amely felsorolja, mit talált a BombVault a szerveren.
+2. Válaszd a **Kezdjük** gombot. Az áttekintésen ekkor megjelenik az **Első lépések** kártya három lépéssel:
+    1. **Válaszd ki a szakaszokat**: kapcsold be, amit a BombVault ment (Konténerek, VM-ek, Flash, Mappák, ZFS-adatkészletek, Önmentés). A **Kiválasztás** megnyitja a szakasz elemeinek listáját, ahol az **Ütemezés szüneteltetése** kihagy egyet. Az itt bekapcsolt szakaszok minden éjjel futnak, ezt a **Beállítások, Ütemezés** alatt változtathatod.
+    2. **Cél hozzáadása**: ide kerülnek a mentések. Egy helyi mappa elég az induláshoz. A legbiztonságosabb egy második cél telephelyen kívül, például egy Storage Box vagy a Backblaze B2. A helyi tárolók alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre.
+    3. **Első mentés**: ezután magától fut minden éjjel.
+3. Nyisd meg a **Biztonsági mentések** oldalt, ott minden elem egy listában van. Az **Összes mentése most** a bekapcsolt szakaszok mindegyikén elindít egy futást, egy elem oldalán a **Biztonsági mentés most** csak azt az egyet menti.
+
+Használtad már a BombVaultot? A **Visszaállítás mentésből** az üdvözlő oldalon megnyitja a Visszaállítás oldalt, ahol a **Vészvarázsló** visszahozza egy elveszett szerver beállításait, konténereit, VM-jeit és mappáit. Lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md#emergency).
 
 !!! tip "Opcionális: válassz mentési sorrendet"
-    Ha egyes konténereket mindig más konténerek előtt kell menteni (például egy adatbázist az azt használó alkalmazás előtt), nyisd meg a **Mentések sorrendje** panelt a Konténerek oldalon, és húzd őket a kívánt sorrendbe. Az ütemezett és a többszörös kijelöléses futások ezt követik; amit rendezetlenül hagysz, azt a korábbi módon a legrégebben esedékes elve szerint menti.
+    Ha egyes konténereket mindig más konténerek előtt kell menteni (például egy adatbázist az azt használó alkalmazás előtt), nyisd meg a **Sorrend** kártyát a **Beállítások, Ütemezés** alatt, és húzd őket a kívánt sorrendbe. Az ütemezett futások és a teljes mentés ezt követik; amit rendezetlenül hagysz, azt a legrégebben esedékes elve szerint menti.
 
-!!! note "Hosztellenőrzés"
-    A konténer elindulása után nyisd meg a `/spike` oldalt a webes felületen. Ez minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat, így megbizonyosodhatsz róla, hogy a konténer helyesen van bekötve, mielőtt rá hagyatkoznál.
+!!! note "Hosztintegráció-ellenőrzés"
+    Az áttekintés **Hosztintegráció** kártyája minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat, így megbizonyosodhatsz róla, hogy a konténer helyesen van bekötve, mielőtt rá hagyatkoznál. A **Testreszabás** alatt vár, amíg hozzáadod.
 
-## Egyszerű vs Speciális
+## Eligazodás {#navigation}
 
-![A beállításoknak nincs Mentés gombja: minden változás azonnal kiíródik.](assets/screenshots/settings.png)
+![A beállítások csempékként, mellettük a kiválasztott csempe kártyái. Minden változás azonnal kiíródik.](assets/screenshots/settings.png)
 
-*A beállításoknak nincs Mentés gombja: minden változás azonnal kiíródik.*
+*A beállítások csempékként, mellettük a kiválasztott csempe kártyái. Minden változás azonnal kiíródik.*
 
-Alapértelmezetten a felület csak a lényeget mutatja (mentés, visszaállítás, ütemezés). Használd az **Egyszerű nézet / Speciális nézet** kapcsolót az oldalsávban a szakértői vezérlők felfedéséhez: megőrzés, telephelyen kívüli másolat, mentés előtti/utáni horgok, fájlszintű visszaállítás, értesítések, Prometheus-metrikák és az integritási/karbantartási eszközök. Ez böngészőnkénti beállítás, és alapból ki van kapcsolva, így az újoncok tiszta felületet, a haladók pedig mindent megkapnak.
+Az oldalsávnak öt eleme van: **Áttekintés**, **Anomáliák** (amíg az anomáliafelismerés be van kapcsolva), **Biztonsági mentések**, **Visszaállítás**, és a **Kijelentkezés** alatt a **Beállítások**. Egy oldal fő művelete lebeg a jobb alsó sarokban, a ritka műveleteket a **Több** gyűjti. Telefonon a sáv az Áttekintést, a Biztonsági mentéseket, a Visszaállítást és a Beállításokat tartalmazza, a többit a **Több** adja.
+
+- A **Biztonsági mentések** elemekként listázza az összes konténert, VM-et, mappakészletet, a flasht, minden ZFS-adatkészletet és az önmentést. A lista feletti csempék fajtát választanak, a **Szűrők**, a **Rendezés** és a **Keresés** szűkít. Minden elemnek saját oldala van három füllel: **Biztonsági mentések**, **Beállítások** és **Integritás**.
+- A **Visszaállítás** egyetlen oldal mindenhez: válassz szakaszt, keress egy elemet, és válassz egy mentést. A Vészvarázsló és a többi forrás is innen indul.
+- A **Beállítások** tizennégy csempe: Általános, Megjelenés, Ütemezés, Célok, Visszaállítás, Értesítések, Ellenőrzés, Biztonság, Példányok, Párosítás, Integrációk, Alkalmazások, Rendszer és Információ. A `/` vagy a Ctrl+K lenyomásával mindben kereshetsz, a korábbi verziókban használt oldalnevekre is. A csempéket a **Megjelenés** alatt húzhatod saját sorrendbe.
+- A **Célok** és a **Példányok** beállítási csempék, saját oldalakkal. A csempéjükön a **Mutatás az oldalsávban is** kitűzi őket az oldalsávra.
+
+Semminek nincs Mentés gombja, és semmi sem hajlik szét: a ritka dolgoknak saját kártyájuk vagy ablakuk van, a magyarázatok pedig az (i) buborékokban vannak. Frissítés után zöld pontok jelzik, mi változott. Egy kattintás elrejti a pontot, a **Beállítások, Információ, Újdonságok** pedig minden változást felsorol az **Ugrás oda** gombbal.
 
 ## Fordítás forráskódból {#build-from-source}
 
@@ -106,12 +117,12 @@ golangci-lint run ./...
 go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signed certificate
 ```
 
-A felület fordítása a `go run`-hoz is kell. A repó a `web/dist` alatt csak egy üres jelölőfájlt követ, így `npm --prefix web run build` nélkül a bináris semmit sem ágyaz be, és `500 SPA index not found` választ ad, ami várható. A Docker, a libvirt és az Unraid nem tesztelhető CI-ben, ezért mielőtt pull requestet nyitsz, ellenőrizd a csatolásokat, a resticet és a VM SSH-kapcsolatát egy valódi hoszton a Hosztellenőrzéssel (`/spike`).
+A felület fordítása a `go run`-hoz is kell. A repó a `web/dist` alatt csak egy üres jelölőfájlt követ, így `npm --prefix web run build` nélkül a bináris semmit sem ágyaz be, és `500 SPA index not found` választ ad, ami várható. A Docker, a libvirt és az Unraid nem tesztelhető CI-ben, ezért mielőtt pull requestet nyitsz, ellenőrizd a csatolásokat, a resticet és a VM SSH-kapcsolatát egy valódi hoszton az áttekintés **Hosztintegráció** kártyájával (vagy a `GET /api/spike` hívással).
 
 ## Következő lépések
 
 - Böngészd a teljes **[Funkciók](features.md)** oldalt.
 - Vidd a csoportod összes szerverét a telefonodra az **[Android-alkalmazással](android.md)**.
-- Adj hozzá egy vagy több **[Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md)** replikát (minden tartomány egyszerre több célra is szállíthat), és mentsd el a helyreállítási csomagodat.
-- Egy beállítást klónozol, vagy új gépre költözöl? Vidd át a teljes konfigurációdat az **Beállítások exportálása / importálása** kártyával. Lásd: [Konfiguráció](configuration.md#portable-settings-export-and-import).
+- Adj hozzá egy vagy több telephelyen kívüli célt (minden szakasz egyszerre több célra is másolhat), és mentsd el a helyreállítási csomagodat, ahogy a **[Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md)** leírja.
+- Egy beállítást klónozol, vagy új gépre költözöl? Vidd át a teljes konfigurációdat a **Beállítások exportálása / importálása** kártyával. Lásd: [Konfiguráció](configuration.md#portable-settings-export-and-import).
 - Elakadtál? Lásd: **[Hibaelhárítás](troubleshooting.md)**.

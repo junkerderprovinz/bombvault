@@ -10,7 +10,7 @@ Trang này dẫn bạn đi từ một máy Unraid mới tinh đến bản sao l�
 | **Vị trí kho restic** | Một đường dẫn cục bộ (khuyến nghị: mảng hoặc cache của bạn), SMB, NFS, hoặc bất kỳ backend rclone nào. |
 | **Docker socket** | Được template gắn kết tự động (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | Được template gắn kết toàn bộ tự động (`/boot` tới `/host/boot`). Nó cấp năng lượng cho việc sao lưu flash và cho phép một container đã khôi phục xuất hiện lại như một ứng dụng Unraid bình thường, có thể chỉnh sửa. |
-| **KVM VM** (tùy chọn tham gia) | Sao lưu VM kết nối libvirt qua SSH, không gắn kết libvirt. Hãy thiết lập trong Cài đặt (xem [Cấu hình](configuration.md)). |
+| **KVM VM** (tùy chọn tham gia) | Sao lưu VM kết nối libvirt qua SSH, không gắn kết libvirt. Hãy thiết lập tại **Cài đặt, Tích hợp, SSH máy chủ** (xem [Cấu hình](configuration.md)). |
 | **Tập dữ liệu ZFS** (tùy chọn tham gia) | Cùng liên kết SSH như sao lưu VM, `zfs` trên máy chủ, và Host Data được ánh xạ thành `/mnt` với chế độ truy cập Read/Write - Slave, là mặc định của template. Xem [Tập dữ liệu ZFS](zfs-datasets.md). |
 | **Ứng dụng Android** (không bắt buộc) | Android 10 trở lên, ghép nối với các máy chủ phiên bản 9.7.0 trở lên. Xem [Ứng dụng Android](android.md). |
 
@@ -37,14 +37,14 @@ Cách dễ nhất là qua **Community Applications**.
 Không dùng Unraid? BombVault cũng chạy như một container bình thường trên bất kỳ máy chủ Docker nào (đây cũng là nền cho hỗ trợ container trên TrueNAS Scale, trước khi có mục riêng trong danh mục ứng dụng ở đó).
 
 1. Lấy tệp [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) đã sẵn sàng chỉnh sửa từ kho mã.
-2. Đặt `APP_KEY` (xem bên dưới) và trỏ volume Host Data tới gốc dữ liệu thật của bạn: các ghi chú trong tệp hướng dẫn cả hai.
+2. Đặt `APP_KEY` (xem bên dưới) và trỏ volume Host Data tới gốc dữ liệu thật của bạn. Các ghi chú trong tệp hướng dẫn cả hai.
 3. `docker compose up -d`, rồi mở `https://<ip-máy-chủ>:3443/`.
 
 Khác gì so với Unraid:
 
-- **Không có miền flash/USB.** Không có USB khởi động để thu giữ hay khôi phục, nên miền Flash trong phần cài đặt ở đây không có việc gì làm. Thay vào đó, miền Thư mục đưa ra gợi ý một cú nhấp **Thêm bộ định sẵn: cấu hình hệ thống máy chủ** (một bộ tệp `/etc` khởi đầu để bạn xem lại và sửa trước khi lưu), như bản tương đương chung và thiết thực.
+- **Không có phần Flash.** Không có USB khởi động để thu giữ hay khôi phục, nên phần Flash ở đây không có việc gì làm. Thay vào đó, **Thêm** trên trang Bản sao lưu đưa ra **Cấu hình hệ thống** làm gợi ý thư mục: một bộ thư mục `/etc` khởi đầu để bạn xem lại và sửa trước khi lưu.
 - **Không có thông báo gốc của Unraid.** Các kênh thông báo riêng của BombVault (webhook, cảnh báo hỏng bản sao ngoại vi và những thứ tương tự) vẫn chạy bình thường; chỉ việc đẩy sang hệ thống thông báo riêng của Unraid là được bỏ qua, vì ở đây không có hệ thống đó.
-- **Sao lưu máy ảo là tùy chọn và cần một máy chủ libvirtd riêng, tới được qua SSH.** Xem khối bị chú thích trong tệp compose. Bản thân một máy chủ Docker thông thường không có sẵn trình quản lý máy ảo.
+- **Sao lưu VM là tùy chọn và cần một máy chủ libvirtd riêng, tới được qua SSH.** Xem khối bị chú thích trong tệp compose. Bản thân một máy chủ Docker thông thường không có sẵn trình quản lý VM.
 - **Không có widget bảng điều khiển.** BombVault Widget là một plugin Unraid, nên bước đó cũng được bỏ qua.
 - **Tìm dữ liệu của một container.** Không có quy ước `appdata` của Unraid, thư mục dữ liệu của một container được tìm từ các đoạn trong `DATA_ROOT_SEGMENTS`, volume có tên của Docker, thư mục làm việc của một dự án Compose và nhãn `bombvault.data` (xem [Nhận diện nguồn sao lưu](configuration.md#backup-source-detection)). Volume có tên và bộ định sẵn `/etc` chỉ tới được các đường dẫn bên trong điểm gắn Host Data, nên hãy trỏ Host Data tới một thư mục cha chung bao gồm cả thư mục gốc dữ liệu của Docker.
 - **`PLATFORM`.** Đặt thành `generic` hoặc `truenas`. Nếu để trống, BombVault nhận ra Unraid nhờ dấu hiệu riêng của Unraid trên điểm gắn flash và coi mọi trường hợp khác là máy chủ thông thường, và các bước chỉ dành cho Unraid được bỏ qua thay vì thử rồi thất bại.
@@ -64,34 +64,45 @@ openssl rand -hex 32
 Dán kết quả vào trường `APP_KEY` của template (Unraid), hoặc biến môi trường `APP_KEY` trong `docker-compose.yml` (máy chủ Docker thông thường).
 
 !!! danger "Đừng đánh mất APP_KEY của bạn"
-    Đánh mất `APP_KEY` khiến các bản sao lưu đã mã hóa của bạn không thể khôi phục được. Hãy cất giữ nó ở nơi an toàn và tách biệt khỏi máy chủ. Sau khi BombVault chạy, hãy dùng **bộ khôi phục khóa mã hóa** một cú nhấp của nó (xem [Off-site & khôi phục](offsite-recovery.md)) để lưu trọn gói khôi phục đầy đủ.
+    Đánh mất `APP_KEY` khiến các bản sao lưu đã mã hóa của bạn không thể khôi phục được. Hãy cất giữ nó ở nơi an toàn và tách biệt khỏi máy chủ. Khi BombVault đã chạy, hãy đặt mật khẩu đăng nhập và tải **bộ khôi phục** trong **Cài đặt, Khôi phục** (xem [Off-site & khôi phục](offsite-recovery.md#recovery-kit)). Bộ này chứa khóa, mọi đích sao lưu và các lệnh restic.
 
 Template cũng gắn kết Docker socket, flash (`/boot`) và gốc **Host Data** (`/mnt`) cho bạn. Cả *nguồn* và *đích* sao lưu đều nằm dưới Host Data. Để xem tham chiếu biến đầy đủ và thiết lập off-site, xem [Cấu hình](configuration.md).
 
 ## Lần chạy đầu tiên
 
-![Bảng điều khiển sau bản sao lưu đầu tiên: cái gì được bảo vệ, cái gì chạy tiếp, và một nhật ký trực tiếp.](assets/screenshots/dashboard.png)
+![Tổng quan sau bản sao lưu đầu tiên: những gì cần bạn xử lý, mức bảo vệ của từng phần, các đích sao lưu và lịch sử.](assets/screenshots/dashboard.png)
 
-*Bảng điều khiển sau bản sao lưu đầu tiên: cái gì được bảo vệ, cái gì chạy tiếp, và một nhật ký trực tiếp.*
+*Tổng quan sau bản sao lưu đầu tiên: những gì cần bạn xử lý, mức bảo vệ của từng phần, các đích sao lưu và lịch sử.*
 
-1. Mở giao diện web tại `https://<your-unraid-ip>:3443` (chứng chỉ tự ký ngay từ đầu).
-2. Trong **Cài đặt**, bật các miền sao lưu bạn muốn (Containers, VMs, Flash, Tự sao lưu, Thư mục, Tập dữ liệu ZFS) và chọn một màu nhấn.
-3. Ở tab **Containers**, chọn một container và nhấp **Sao lưu ngay** để tạo điểm khôi phục đầu tiên của bạn. Các đường dẫn kho mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` và được tạo ở lần sao lưu đầu tiên.
-4. Thiết lập lập lịch từ **Cài đặt, Lịch trình**. Có một tùy chọn *Đưa tất cả vào lịch trình* một cú nhấp cho container và VM.
+1. Mở giao diện web tại `https://<your-unraid-ip>:3443` (chứng chỉ tự ký ngay từ đầu). Một bản cài mới mở ra trang **Chào mừng bạn đến với BombVault**, liệt kê những gì BombVault đã tìm thấy trên máy chủ.
+2. Chọn **Bắt đầu thôi**. Trang Tổng quan khi đó hiện thẻ **Bước đầu tiên** với ba bước:
+    1. **Chọn các mục**: bật những gì BombVault sao lưu (Containers, VMs, Flash, Thư mục, Tập dữ liệu ZFS, Tự sao lưu). **Chọn** mở danh sách các mục của một phần, nơi **Tạm dừng lịch trình** loại một mục ra. Các phần bạn bật ở đây chạy mỗi đêm, và bạn đổi điều đó trong **Cài đặt, Lịch trình**.
+    2. **Thêm đích**: nơi lưu các bản sao lưu. Một thư mục cục bộ là đủ để bắt đầu. An toàn nhất là một đích thứ hai ngoài cơ sở, chẳng hạn Storage Box hoặc Backblaze B2. Các kho cục bộ mặc định nằm ở `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` và được tạo ở lần sao lưu đầu tiên.
+    3. **Bản sao lưu đầu tiên**: sau đó nó tự chạy mỗi đêm.
+3. Mở **Bản sao lưu** để xem mọi mục trong một danh sách. **Sao lưu tất cả ngay** bắt đầu một lượt chạy trên mọi phần đã bật, còn **Sao lưu ngay** trên trang của một mục chỉ sao lưu riêng mục đó.
+
+Đã dùng BombVault trước đây? **Khôi phục từ bản sao lưu** trên trang chào mở trang Khôi phục, nơi **Trình hướng dẫn khẩn cấp** đưa cài đặt, container, VM và thư mục của một máy chủ bị mất trở lại. Xem [Off-site & khôi phục](offsite-recovery.md#emergency).
 
 !!! tip "Tùy chọn: chọn một thứ tự sao lưu"
-    Nếu một số container luôn cần được sao lưu trước những cái khác (ví dụ một cơ sở dữ liệu trước ứng dụng dùng nó), hãy mở bảng **Thứ tự sao lưu** trên trang Containers và kéo chúng vào trình tự bạn muốn. Các lần chạy theo lịch và chọn nhiều sau đó sẽ tuân theo thứ tự này; bất cứ cái nào bạn để không sắp xếp sẽ được sao lưu theo thứ tự quá hạn nhất trước, như trước đây.
+    Nếu một số container luôn cần được sao lưu trước những cái khác (ví dụ một cơ sở dữ liệu trước ứng dụng dùng nó), hãy mở thẻ **Thứ tự** trong **Cài đặt, Lịch trình** và kéo chúng vào trình tự bạn muốn. Các lần chạy theo lịch và lần sao lưu toàn bộ sau đó sẽ tuân theo thứ tự này; bất cứ cái nào bạn để không xếp thứ tự thì được sao lưu theo kiểu quá hạn lâu nhất trước.
 
 !!! note "Kiểm tra tích hợp máy chủ"
-    Mở `/spike` trong giao diện web sau khi container khởi động. Nó kiểm thử mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu, để bạn có thể xác nhận container được kết nối đúng cách trước khi tin cậy nó.
+    Thẻ **Tích hợp máy chủ** trên Tổng quan kiểm tra mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu, để bạn có thể xác nhận container được kết nối đúng cách trước khi tin cậy nó. Thẻ này nằm chờ trong **Tùy chỉnh** cho đến khi bạn thêm nó.
 
-## Đơn giản so với Nâng cao
+## Tìm đường {#navigation}
 
-![Phần cài đặt không có nút Lưu: mỗi thay đổi được ghi ngay khi bạn thực hiện.](assets/screenshots/settings.png)
+![Cài đặt dưới dạng các ô, với các thẻ của ô được chọn bên cạnh. Mỗi thay đổi được ghi ngay khi bạn thực hiện.](assets/screenshots/settings.png)
 
-*Phần cài đặt không có nút Lưu: mỗi thay đổi được ghi ngay khi bạn thực hiện.*
+*Cài đặt dưới dạng các ô, với các thẻ của ô được chọn bên cạnh. Mỗi thay đổi được ghi ngay khi bạn thực hiện.*
 
-Theo mặc định, giao diện chỉ hiển thị những thứ thiết yếu (sao lưu, khôi phục, lên lịch). Dùng công tắc **Chế độ xem đơn giản / Chế độ xem nâng cao** trong thanh bên để hé lộ các điều khiển chuyên gia: lưu giữ, bản sao off-site, hook trước/sau, khôi phục ở cấp tập tin, thông báo, số liệu Prometheus và các công cụ toàn vẹn/bảo trì. Đây là một tùy chọn theo từng trình duyệt và tắt theo mặc định, nên người mới có giao diện gọn gàng còn người dùng chuyên sâu có đủ mọi thứ.
+Thanh bên có năm mục: **Tổng quan**, **Bất thường** (khi bật phát hiện bất thường), **Bản sao lưu**, **Khôi phục** và, bên dưới **Đăng xuất**, **Cài đặt**. Hành động chính của một trang nổi ở dưới cùng bên phải, còn **Thêm** chứa những hành động hiếm dùng. Trên điện thoại, thanh chứa Tổng quan, Bản sao lưu, Khôi phục và Cài đặt, còn **Thêm** có phần còn lại.
+
+- **Bản sao lưu** liệt kê mọi container, VM, bộ thư mục, ổ flash, mọi tập dữ liệu ZFS và mục tự sao lưu. Các ô phía trên danh sách chọn một loại, còn **Bộ lọc**, **Sắp xếp** và **Tìm kiếm** thu hẹp danh sách. Mỗi mục có một trang riêng với ba tab: **Bản sao lưu**, **Cài đặt** và **Toàn vẹn**.
+- **Khôi phục** là một trang cho mọi thứ: chọn một phần, tìm một mục và chọn một bản sao lưu. Trình hướng dẫn khẩn cấp và các nguồn khác cũng bắt đầu từ đây.
+- **Cài đặt** gồm mười bốn ô: Chung, Giao diện, Lịch trình, Đích sao lưu, Khôi phục, Thông báo, Xác minh, Bảo mật, Phiên bản, Ghép nối, Tích hợp, Ứng dụng, Hệ thống và Thông tin. Nhấn `/` hoặc Ctrl+K để tìm trong tất cả, kể cả theo tên mà các trang từng có ở các phiên bản trước. Kéo các ô vào thứ tự riêng của bạn trong **Giao diện**.
+- **Đích sao lưu** và **Phiên bản** là các ô cài đặt có trang riêng. **Hiện cả trong thanh bên** trên ô của chúng ghim chúng vào thanh bên.
+
+Không có gì có nút Lưu và không có gì bung ra: những thứ hiếm dùng có thẻ riêng hoặc một cửa sổ, và phần giải thích nằm trong các bong bóng (i). Sau một bản cập nhật, các chấm xanh đánh dấu những gì đã đổi. Một cú nhấp sẽ ẩn chấm, và **Cài đặt, Thông tin, Mới** liệt kê mọi thay đổi kèm **Đi tới đó**.
 
 ## Dựng từ mã nguồn {#build-from-source}
 
@@ -106,12 +117,13 @@ golangci-lint run ./...
 go run ./cmd/bombvault         # phục vụ https://localhost:3443 với chứng chỉ tự ký
 ```
 
-`go run` cũng cần bản dựng giao diện. Kho mã chỉ theo dõi một tệp đánh dấu rỗng dưới `web/dist`, nên nếu không chạy `npm --prefix web run build` thì tệp nhị phân không nhúng gì và trả lời `500 SPA index not found`, điều này là bình thường. Docker, libvirt và Unraid không thể kiểm thử trong CI, nên hãy kiểm tra các điểm gắn kết, restic và liên kết SSH của VM trên một máy chủ thật bằng Kiểm tra tích hợp máy chủ (`/spike`) trước khi mở một pull request.
+`go run` cũng cần bản dựng giao diện. Kho mã chỉ theo dõi một tệp đánh dấu rỗng dưới `web/dist`, nên nếu không chạy `npm --prefix web run build` thì tệp nhị phân không nhúng gì và trả lời `500 SPA index not found`, điều này là bình thường. Docker, libvirt và Unraid không thể kiểm thử trong CI, nên trước khi mở pull request, hãy kiểm tra các điểm gắn kết, restic và liên kết SSH của VM trên một máy chủ thật bằng thẻ **Tích hợp máy chủ** của Tổng quan (hoặc `GET /api/spike`).
 
 ## Bước tiếp theo
 
 - Duyệt đầy đủ **[Tính năng](features.md)**.
 - Đưa mọi máy chủ trong nhóm của bạn lên điện thoại với **[Ứng dụng Android](android.md)**.
-- Thêm một hoặc nhiều bản sao **[Off-site & khôi phục](offsite-recovery.md)** (mỗi miền có thể gửi tới nhiều đích cùng lúc) và lưu bộ khôi phục của bạn.
+- Thêm một hoặc nhiều đích sao lưu ngoài cơ sở (mỗi phần có thể sao chép tới nhiều đích cùng lúc) và lưu bộ khôi phục của bạn, như mô tả trong **[Off-site & khôi phục](offsite-recovery.md)**.
+
 - Nhân bản một thiết lập hay chuyển sang một máy mới? Mang toàn bộ cấu hình của bạn theo với thẻ **Xuất / nhập cài đặt**. Xem [Cấu hình](configuration.md#portable-settings-export-and-import).
 - Gặp trục trặc? Xem **[Khắc phục sự cố](troubleshooting.md)**.

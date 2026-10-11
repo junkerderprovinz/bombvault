@@ -7,18 +7,18 @@ BombVault có sẵn một máy chủ cho Model Context Protocol (MCP), giao th�
 | Công cụ | Chức năng | Loại |
 |---|---|---|
 | `get_health` | Phiên bản, tên phiên bản cài đặt, có đang sao lưu không và khóa này được phép làm gì | đọc |
-| `get_status` | Trạng thái bảo vệ theo từng miền: lần sao lưu thành công gần nhất, khoảng thời gian dự kiến, các lần xác minh và kiểm tra off-site, các lần chạy theo lịch tiếp theo, các bản sao lưu đang chờ ứng dụng rảnh, và với container là lần kiểm tra khởi động gần nhất | đọc |
+| `get_status` | Trạng thái bảo vệ theo từng phần: lần sao lưu thành công gần nhất, khoảng thời gian dự kiến, các lần xác minh và kiểm tra off-site, các lần chạy theo lịch tiếp theo, các bản sao lưu đang chờ ứng dụng rảnh, và với container là lần kiểm tra khởi động gần nhất | đọc |
 | `get_coverage` | Những gì BombVault bảo vệ và không bảo vệ, kèm lý do cho từng mục | đọc |
 | `list_items` | Mọi container, VM và bộ thư mục được bảo vệ, ổ flash và cấu hình ứng dụng, kèm lịch, những gì một lần sao lưu sẽ dừng, lần sao lưu gần nhất và thời gian của nó; container cơ sở dữ liệu còn cho biết bản dump gần nhất; các dataset ZFS cũng được liệt kê, kèm kết quả lần kiểm tra gần nhất; mỗi mục kèm lần kiểm tra khôi phục gần nhất, còn container kèm lần kiểm tra khởi động gần nhất hoặc lý do không thể kiểm tra; container được tạo lại với cài đặt khác kể từ lần sao lưu gần nhất liệt kê những gì đã đổi | đọc |
-| `list_runs` | Lịch sử chạy, mới nhất trước, lọc được theo miền, mục, trạng thái, loại và thời gian; lần sao lưu chậm do một thứ kìm lại sẽ nêu tên thứ đó | đọc |
+| `list_runs` | Lịch sử chạy, mới nhất trước, lọc được theo phần, mục, trạng thái, loại và thời gian; lần sao lưu chậm do một thứ kìm lại sẽ nêu tên thứ đó | đọc |
 | `list_restore_points` | Các điểm khôi phục của một mục trong kho chính của nó, và với container thì có cả các bản dump cơ sở dữ liệu; một dataset ZFS có một điểm khôi phục cho mỗi lần sao lưu, kèm snapshot của mọi dataset bên dưới nó | đọc |
 | `get_activity` | Những gì đang chạy ngay lúc này, kèm giai đoạn và phần trăm | đọc |
-| `get_storage_stats` | Lịch sử dung lượng kho chính của một miền và mức tăng mỗi tuần, cùng dung lượng đã dùng, còn trống và tổng trên ổ đĩa hoặc nơi lưu từ xa của từng kho | đọc |
+| `get_storage_stats` | Lịch sử dung lượng kho chính của một phần và mức tăng mỗi tuần, cùng dung lượng đã dùng, còn trống và tổng trên ổ đĩa hoặc nơi lưu từ xa của từng kho | đọc |
 | `get_size_breakdown` | Thư mục và tệp nào chiếm chỗ trong bản sao lưu mới nhất của một container, VM hoặc bộ thư mục, và lần sao lưu gần nhất đã thêm bao nhiêu | đọc |
-| `list_anomalies` | Những bất thường mà BombVault nhận thấy trong các bản sao lưu, lọc được theo trạng thái, mức độ nghiêm trọng và miền, kèm bản tóm tắt những mục còn mở | đọc |
+| `list_anomalies` | Những bất thường mà BombVault nhận thấy trong các bản sao lưu, lọc được theo trạng thái, mức độ nghiêm trọng và phần, kèm bản tóm tắt những mục còn mở | đọc |
 | `get_anomaly` | Một trong các phát hiện đó, kèm ghi chú để lại khi xác nhận | đọc |
 | `start_backup` | Sao lưu ngay một mục | bắt đầu |
-| `start_domain_backup` | Sao lưu mọi mục được bảo vệ trong một miền | bắt đầu |
+| `start_domain_backup` | Sao lưu mọi mục được bảo vệ trong một phần | bắt đầu |
 | `start_backup_everything` | Chạy lượt Sao lưu toàn bộ | bắt đầu |
 | `cancel_backup` | Hủy một lần sao lưu đang chạy do khóa này bắt đầu | hủy |
 
@@ -33,11 +33,11 @@ Lần sao lưu do trợ lý bắt đầu giống hệt lần sao lưu do giao di
 Vì sao lưu làm dừng dịch vụ và đẩy các điểm khôi phục cũ ra ngoài, việc bắt đầu qua MCP có giới hạn:
 
 - 12 lần sao lưu được bắt đầu mỗi giờ cho mỗi khóa.
-- 15 phút giữa hai lần bắt đầu qua MCP của cùng một mục, cùng một miền hoặc Sao lưu toàn bộ.
+- 15 phút giữa hai lần bắt đầu qua MCP của cùng một mục, cùng một phần hoặc Sao lưu toàn bộ.
 - Tối đa 4 lần bắt đầu qua MCP cho cùng một mục trong 24 giờ.
-- **Bảo vệ lưu giữ.** Khi một miền giữ một số lượng điểm khôi phục cố định (chỉ "giữ N bản gần nhất", không có quy tắc theo ngày, tuần hay tháng, ở máy cục bộ hay ở đích off-site), mỗi lần sao lưu mới sẽ đẩy bản cũ nhất ra ngoài. Khi đó BombVault từ chối việc bắt đầu qua MCP cho một mục mà N-1 lần sao lưu thành công gần nhất đều được bắt đầu qua MCP. Nhờ vậy, trong tập được giữ luôn còn ít nhất một điểm khôi phục do lịch hoặc do bạn tạo. Với "giữ 1 bản gần nhất", trợ lý hoàn toàn không thể sao lưu mục đó. Lần sao lưu theo lịch tiếp theo sẽ lại tạo chỗ trống. Chỉ riêng một quy tắc theo năm được tính như "giữ 1 bản gần nhất", vì nó chỉ giữ một điểm khôi phục cho năm hiện tại.
+- **Bảo vệ lưu giữ.** Khi một phần giữ một số lượng điểm khôi phục cố định (chỉ "giữ N bản gần nhất", không có quy tắc theo ngày, tuần hay tháng, ở máy cục bộ hay ở đích off-site), mỗi lần sao lưu mới sẽ đẩy bản cũ nhất ra ngoài. Khi đó BombVault từ chối việc bắt đầu qua MCP cho một mục mà N-1 lần sao lưu thành công gần nhất đều được bắt đầu qua MCP. Nhờ vậy, trong tập được giữ luôn còn ít nhất một điểm khôi phục do lịch hoặc do bạn tạo. Với "giữ 1 bản gần nhất", trợ lý hoàn toàn không thể sao lưu mục đó. Lần sao lưu theo lịch tiếp theo sẽ lại tạo chỗ trống. Chỉ riêng một quy tắc theo năm được tính như "giữ 1 bản gần nhất", vì nó chỉ giữ một điểm khôi phục cho năm hiện tại.
 
-Khi bắt đầu một miền hoặc Sao lưu toàn bộ, các mục bị một giới hạn giữ lại sẽ bị bỏ qua và được nêu tên trong câu trả lời. Không giới hạn nào trong số này áp dụng cho giao diện web và lịch. Hạn mức mỗi giờ nằm trong bộ nhớ, nên khởi động lại BombVault sẽ đặt nó về không.
+Khi bắt đầu một phần hoặc Sao lưu toàn bộ, các mục bị một giới hạn giữ lại sẽ bị bỏ qua và được nêu tên trong câu trả lời. Không giới hạn nào trong số này áp dụng cho giao diện web và lịch. Hạn mức mỗi giờ nằm trong bộ nhớ, nên khởi động lại BombVault sẽ đặt nó về không.
 
 Các lần bắt đầu qua [API](api.md#errors) và từ [Home Assistant](api.md#home-assistant) được tính chung với các lần bắt đầu qua MCP trong cùng giới hạn cho mỗi mục và trong cơ chế bảo vệ lưu giữ.
 
@@ -257,12 +257,13 @@ Mọi thứ trợ lý đọc đều được gửi tới nhà cung cấp AI đ�
 | `400` "batch requests are not accepted" | Máy khách gửi yêu cầu gộp JSON-RPC. Hãy gửi một thông điệp cho mỗi yêu cầu. |
 | `429` | Quá nhiều khóa sai từ địa chỉ này, hoặc hơn 120 yêu cầu mỗi phút với một khóa. Đợi một phút và kiểm tra xem trợ lý có bị kẹt trong vòng lặp không. |
 | Lỗi có "certificate", "self-signed" hoặc "unable to verify" | Máy khách không tin cậy chứng chỉ của BombVault. Xem [TLS và chứng chỉ](#tls). |
-| `busy` | Một lần sao lưu khác hoặc tác vụ bảo trì đang chiếm miền đó. Thử lại khi nó xong. |
-| `cooldown` | Mục này, miền này hoặc Sao lưu toàn bộ đã được bắt đầu từ bên ngoài giao diện web chưa đầy 15 phút trước. |
+| `busy` | Một lần sao lưu khác hoặc tác vụ bảo trì đang chiếm phần đó. Thử lại khi nó xong. |
+| `cooldown` | Mục này, phần này hoặc Sao lưu toàn bộ đã được bắt đầu từ bên ngoài giao diện web chưa đầy 15 phút trước. |
 | `retention_guard` | Thêm một lần sao lưu qua MCP nữa sẽ khiến khoảng "giữ N bản gần nhất" chỉ còn các điểm khôi phục từ MCP, hoặc mục đó đã được sao lưu qua MCP 4 lần trong 24 giờ qua, tính cả các lần thất bại và bị hủy. Ở trường hợp đầu, lần sao lưu theo lịch tiếp theo sẽ tạo chỗ trống; ở trường hợp sau, mục đó được bắt đầu lại sau 24 giờ kể từ lần sao lưu cũ nhất trong số đó. Trong giao diện web, bạn có thể bắt đầu nó bất cứ lúc nào. |
 | `rate_limited` | Khóa đã dùng hết 12 lần bắt đầu của giờ này. |
 | `not_permitted` khi bắt đầu | Khóa chỉ được đọc. Bật **Cho phép bắt đầu sao lưu** trong thẻ; không cần kết nối lại. Khi hủy, nó có nghĩa là lần chạy đó không do khóa này bắt đầu. |
-| `domain_off` | Loại sao lưu đó đang tắt trong cài đặt. |
+| `domain_off` | Phần đó đang tắt trong **Cài đặt, Chung**. |
+
 | `not_found` | BombVault không bảo vệ mục đó. Hãy thêm nó trong giao diện web trước; MCP không bao giờ tạo cấu hình. |
 | Máy khách không tìm thấy máy chủ ủy quyền | Đăng nhập qua OAuth đang tắt, chưa đặt mật khẩu đăng nhập, hoặc proxy không cho `/.well-known/` đi qua tới BombVault. |
 | Trang đồng ý báo địa chỉ quay về chưa đăng ký | Máy khách gửi một địa chỉ quay về mà nó chưa đăng ký. Xóa trình kết nối trong máy khách rồi thêm lại. |

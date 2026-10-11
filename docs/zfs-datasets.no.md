@@ -1,6 +1,6 @@
 # ZFS-datasett
 
-Siden **ZFS** tar sikkerhetskopi av ZFS-datasett. Et element er ett datasett sammen med alle datasett under det. For hver sikkerhetskopi tar BombVault ett ZFS-øyeblikksbilde av hele treet, slik at hvert datasett i det fanges i samme øyeblikk. Deretter leser det filene i hvert datasett fra det øyeblikksbildet, lagrer dem med restic på samme måte som en mappe og fjerner øyeblikksbildet rett etterpå. Sikkerhetskopiene er deduplisert, du kan bla gjennom hver av dem, og enkeltfiler kan gjenopprettes.
+ZFS-datasett er elementer i listen **Sikkerhetskopier**, som containere og VM-er. Et element er ett datasett sammen med hvert datasett under det. For hver sikkerhetskopi tar BombVault ett ZFS-øyeblikksbilde av hele treet, så hvert datasett i det fanges i samme øyeblikk. Deretter leser det filene til hvert datasett fra det øyeblikksbildet og lagrer dem med restic, på samme måte som en mappe, og fjerner øyeblikksbildet rett etterpå. Sikkerhetskopiene er deduplisert, du kan bla gjennom hver av dem, og enkeltfiler kan gjenopprettes.
 
 Sikkerhetskopien sender aldri en strøm inn i restic og ruller aldri et datasett tilbake. BombVault sletter bare øyeblikksbilder det har laget selv. Den valgfrie [replikaen](#replica) er det eneste stedet som bruker `zfs send`: den kopierer datasettene til en andre ZFS-server og rører ikke sikkerhetskopien.
 
@@ -11,24 +11,24 @@ Sikkerhetskopien sender aldri en strøm inn i restic og ruller aldri et datasett
 - **Host Data mappet som `/mnt` med Access Mode Read/Write - Slave.** Det er malens standard. Øyeblikksbildet av et datasett dukker først opp i datasettets mappe `.zfs/snapshot` etter at BombVault har startet, så containeren må motta monteringene verten lager senere.
 - **Datasettene montert under `/mnt`.** På Unraid ligger pools under `/mnt/<pool>`, så det er allerede tilfellet.
 
-Slå på domenet under **Innstillinger, Generelt** (ZFS-datasett). ZFS-siden viser da kortet **Forbindelse til denne serveren**. Det tester SSH-forbindelsen, nevner brukeren og verten det kobler til, og sier hva som mangler når noe mangler. Vertsintegrasjonssjekken (`/spike`) viser samme resultat.
+Slå på området under **Innstillinger, Generelt** (ZFS-datasett). **ZFS-tilkobling til denne serveren** under **Mer** på siden Sikkerhetskopier åpner da **Forbindelse til denne serveren**. Det tester SSH-forbindelsen, navngir brukeren og verten det kobler til, og sier hva som mangler når noe mangler. Er forbindelsen nede, sier listen Sikkerhetskopier det med **Vis tilkoblingen**, og kortet **Host-integrasjon** på oversikten viser det samme resultatet.
 
 ## Elementer og underdatasett {#items-and-children}
 
-Åpne **Legg til datasett** på ZFS-siden. Listen kommer fra serveren. Velg datasettet som ligger øverst i det du vil sikkerhetskopiere, for eksempel `cache/appdata`, og elementet dekker det og alle datasett under det.
+Velg **Legg til** på siden Sikkerhetskopier, deretter **Et ZFS-datasett**. Listen kommer fra serveren. Velg datasettet øverst i det du vil sikkerhetskopiere, for eksempel `cache/appdata`, så dekker elementet det og hvert datasett under det.
 
 - **Nye underdatasett blir med av seg selv.** Et datasett som opprettes senere under elementet, sikkerhetskopieres ved neste kjøring, og den kjøringen nevner det som nytt. Den første sikkerhetskopien leser det helt én gang; deretter leses bare endringer.
-- **Du kan utelate enkelte underdatasett.** Slå et av i elementets innstillinger, så blir det utelatt sammen med alt under det. Et utelatt underdatasett som ikke lenger finnes på serveren, merkes slik og kan fjernes fra listen.
-- **Underdatasett som ikke kan leses, hoppes over, aldri i stillhet.** Kjøringen lister dem, elementet viser hvor mange som ble hoppet over, og dekningskortet på dashbordet teller hvert av dem som ubeskyttet. Kjøringen sikkerhetskopierer likevel alt annet og feiler ikke på grunn av et underdatasett som ble hoppet over. Årsakene står i [tabellen over årsakskoder](#reason-codes): et datasett som ikke er montert, har `canmount=off`, et `legacy`- eller ikke noe monteringspunkt, en krypteringsnøkkel som ikke er lastet, avslått tilgang til øyeblikksbilder eller et monteringspunkt BombVault ikke ser.
+- **Du kan utelate enkelte underdatasett.** Slå et av på fanen Innstillinger til elementet, så utelates det sammen med alt under. Et utelatt underdatasett som ikke lenger finnes på serveren, merkes som det og kan fjernes fra listen.
+- **Underdatasett som ikke kan leses, hoppes over, aldri i stillhet.** Kjøringen lister dem, elementet viser hvor mange som ble hoppet over, og kortet **Ikke sikkerhetskopiert** på oversikten teller hvert av dem som ubeskyttet. Kjøringen sikkerhetskopierer fortsatt alt annet og feiler ikke på grunn av et underdatasett som ble hoppet over. Årsakene står i [tabellen med årsakskoder](#reason-codes): et datasett som ikke er montert, har `canmount=off`, et `legacy`- eller ikke noe monteringspunkt, en krypteringsnøkkel som ikke er lastet, øyeblikksbildetilgang slått av, eller et monteringspunkt BombVault ikke kan se.
 - **Et datasett som hoppes over, tar ikke med seg underdatasettene sine.** Et datasett med `canmount=off` som bare inneholder andre datasett, hoppes over (vist som "bare struktur"), og de monterte underdatasettene sikkerhetskopieres. Et kryptert datasett der nøkkelen ikke er lastet, hoppes over sammen med underdatasettene som deler nøkkelen.
 - **Underdatasett som er VM-disker eller systemdata, starter avslått** i dialogen for å legge til, med årsaken ved siden av bryteren. Legger du til en hel pool, må du bekrefte det i en dialog som lister hva den inneholder.
 
 ### Volumer {#volumes}
 
-Et volum (zvol) inneholder en virtuell disk i stedet for filer, og ZFS-siden sikkerhetskopierer aldri et.
+Et volum (zvol) inneholder en virtuell disk i stedet for filer, og et ZFS-element tar aldri sikkerhetskopi av ett.
 
-- Et volum som en VM bruker, sikkerhetskopieres med den VM-en på siden **VM-er**.
-- Et volum som ingen VM bruker (en iSCSI-extent, en disk du har koblet fra), **sikkerhetskopieres ikke av BombVault**. Dialogen for å legge til og ZFS-siden teller disse volumene og sier det. En senere versjon vil sikkerhetskopiere dem.
+- Et volum som en VM bruker, sikkerhetskopieres sammen med den VM-en.
+- Et volum som ingen VM bruker (en iSCSI-extent, en disk du har koblet fra) **sikkerhetskopieres ikke av BombVault**. Tilleggsvinduet og siden Sikkerhetskopier teller disse volumene og sier det. En senere versjon vil sikkerhetskopiere dem.
 
 Volumer i et elements tre hoppes over og nevnes ved hver kjøring.
 
@@ -53,26 +53,25 @@ Hva som skjer når noe går galt:
 - Stoppet venter til en pågående containersikkerhetskopi er ferdig (opptil 30 minutter ved en manuell kjøring, opptil tidsgrensen for sikkerhetskopien ved en planlagt), så de to aldri stopper og starter samme container samtidig.
 - Før den første containeren stopper, skriver BombVault ned hvilke det stopper. Blir BombVault drept inne i vinduet, starter det de containerne igjen neste gang det starter, sender et varsel, og elementet viser en rød merknad for hver container det ikke kunne starte.
 
-De automatiske databasedumpene (se [Funksjoner](features.md)) kjører med en containers egen sikkerhetskopi på siden **Kontainere**, ikke med et ZFS-element. En database der containeren bare sikkerhetskopieres gjennom datasettet sitt, får ingen dump, så gi den en kommando her.
+De automatiske databasedumpene (se [Funksjoner](features.md)) kjører med containerens egen sikkerhetskopi, ikke med et ZFS-element. En database hvis container bare sikkerhetskopieres via datasettet sitt, får ingen dump, så gi den en kommando her.
 
-En container kan stå på denne listen og på siden **Kontainere** samtidig. Dataene lagres da to ganger, i to repositories, og **Full sikkerhetskopi** stopper den to ganger. Elementet sier fra om det.
+En container kan stå på denne listen og samtidig sikkerhetskopieres som container. Dataene lagres da to ganger, i to arkiver, og den fulle sikkerhetskopien stopper den to ganger. Elementet sier det.
 
 ## Gjenoppretting {#restore}
 
-Åpne **Sikkerhetskopier** på elementet, velg sikkerhetskopien og deretter datasettet. Som standard er det elementets øverste datasett.
+Åpne elementet og velg **Gjenoppretting**, eller velg det på siden **Gjenoppretting**. Gjenopprettingsvinduet spør etter sikkerhetskopien, deretter **Datasett**. Som standard er det det øverste datasettet til elementet. Under **Hva** gjenoppretter du alt eller bare filene og mappene du velger. **Hvor til** tilbyr:
 
 - **Gjenopprett inn i datasettet.** Filer fra sikkerhetskopien skrives inn i datasettets monteringspunkt. Filer med samme navn overskrives, andre blir liggende. Datasettet rulles aldri tilbake eller erstattes. BombVault sjekker at datasettet er montert, synlig og skrivbart, én gang før det starter og igjen rett før det skriver. Der et underdatasett er montert inni det, skrives ingenting: Underdatasettet beholder filene, eieren og tillatelsene sine og gjenopprettes fra sin egen sikkerhetskopi.
-- **Gjenopprett til en mappe.** Velg en mappe under `/mnt`. BombVault sjekker at mappen ligger på en montert pool eller deling, og at det er nok ledig plass. Dette virker uten SSH-forbindelsen og for datasett som ikke lenger finnes.
-- **Til et nytt datasett.** Oppgi et datasett som ikke finnes ennå. BombVault oppretter det med ZFS-egenskapene fra sikkerhetskopien og gjenoppretter inn i det, se [Gjenopprette som nytt datasett](#new-dataset).
-- **Velg filer** (avansert): skriv bare filene og mappene du velger tilbake i datasettet.
-- **Alle datasett i denne sikkerhetskopien** (avansert): hvert datasett i treet i sin egen undermappe av mappen du velger. Datasett som ble hoppet over i den sikkerhetskopien, nevnes.
-- **Fra en annen server:** Siden **Gjenoppretting** gjenoppretter fra en annen BombVaults repository, alltid til en mappe: alle datasett i én sikkerhetskopi, hvert i sin egen undermappe, eller ett datasett i treet, helt eller valgte filer.
+- **Til en mappe.** Velg en mappe under `/mnt`. BombVault sjekker at mappen ligger på en montert pool eller deling og at det er nok ledig plass. Dette fungerer uten SSH-forbindelsen og for datasett som ikke lenger finnes.
+- **Til et nytt dataset.** Gi navn til et datasett som ikke finnes ennå; vinduet foreslår `<dataset>-restored`. BombVault oppretter det med ZFS-egenskapene som er lagret i sikkerhetskopien og gjenoppretter inn i det, se [Gjenopprette som nytt datasett](#new-dataset).
 
-Elementets liste over containere som skal stoppes, tilbys også ved gjenoppretting inn i datasettet. De containerne forblir stoppet under hele gjenopprettingen, og containersikkerhetskopier venter så lenge.
+Velger du **Alle datasett i denne sikkerhetskopien** som datasett, skrives hvert datasett i treet til sin egen undermappe i mappen du velger. Datasett som ble hoppet over i den sikkerhetskopien, navngis. For å gjenopprette fra arkivet til en annen BombVault bruker du **Fra en gammel sikkerhetskopimappe** på siden Gjenoppretting; den gjenoppretter alltid til en mappe: alle datasett i én sikkerhetskopi, hvert i sin egen undermappe, eller ett datasett i treet, helt eller med valgte filer.
+
+Elementets liste over containere som skal stoppes, tilbys også ved en gjenoppretting inn i datasettet. Disse containerne forblir stoppet under hele gjenopprettingen, og containersikkerhetskopier venter i mellomtiden.
 
 ### Sikkerhetsøyeblikksbildet {#safety-snapshot}
 
-Før det skriver inn i et datasett, tar BombVault et ZFS-øyeblikksbilde av bare det datasettet, med navnet `bombvault-prerestore-<tid>`. Det er slått på som standard; å slå det av krever en ekstra bekreftelse. Kan øyeblikksbildet ikke tas, gjenopprettes ingenting.
+Før det skriver inn i et datasett, tar BombVault et ZFS-øyeblikksbilde av bare det datasettet, kalt `bombvault-prerestore-<time>`. **Ta først et ZFS-øyeblikksbilde av tilstanden nå** er på som standard; å slå det av krever en ekstra bekreftelse. Kan øyeblikksbildet ikke tas, gjenopprettes ingenting.
 
 BombVault sletter aldri et sikkerhetsøyeblikksbilde av seg selv. Elementet lister dem med alder og størrelse, hvert med handlingen **Slett**, og advarer når det eldste er mer enn 30 dager gammelt, fordi det holder slettede og endrede data fast i poolen.
 
@@ -108,16 +107,16 @@ En replika er en kopi av datasettene til et element på en andre ZFS-server. Bom
 
 En replika erstatter aldri sikkerhetskopien. Eldre versjoner, enkeltfiler og sjekken kommer fortsatt fra sikkerhetskopiene, og replikaen beholder bare så mange øyeblikksbilder som du stiller inn. En oppdatert replika teller som en kopi utenfor stedet, men et element med replika og uten sikkerhetskopi forblir oransje.
 
-Slå den på i kortet **Replica** i elementets innstillinger. Der velger du hvor replikaen skal, når den kjører (**After every backup** eller **Own plan**) og hvor mange øyeblikksbilder som blir igjen på målet. Kortet viser hvert datasett og hvert volum med status, og **Replikér nå** starter en kjøring. En replikakjøring har sin egen lås, så en lang første overføring aldri holder tilbake sikkerhetskopiene.
+Slå den på i kortet **Replica** på fanen Innstillinger til elementet. Der velger du hvor replikaen går, når den kjører (**Etter hver sikkerhetskopi** eller **Egen plan**) og hvor mange øyeblikksbilder som blir på målet. Kortet lister hvert datasett og volum med tilstanden, og **Replikér nå** starter en kjøring. En replikakjøring har sin egen lås, så en lang første overføring aldri holder opp sikkerhetskopiene.
 
 ### Send til en ZFS-server {#replica-push}
 
 Alle maskiner med ZFS og SSH kan ta imot, for eksempel en andre Unraid eller en TrueNAS. BombVault trenger ikke å kjøre der.
 
-1. Åpne **Instanser, ZFS-servere** og klikk på **Legg til ZFS-server**.
+1. Under **Innstillinger, Paring**, velg **Koble til via SSH** i **ZFS-server uten BombVault**, eller velg **Legg til ZFS-server** i kortet **Replica** på elementet.
 2. Skriv inn adresse, bruker og port. Dialogen viser BombVaults offentlige nøkkel. Legg den til i brukerens `~/.ssh/authorized_keys` på serveren. På Unraid finner du det under **Settings, Users, root, SSH keys**.
 3. Test tilkoblingen. Dialogen lister deretter poolene på serveren. Velg en og angi roten, som som standard er `<pool>/bombvault-replica`.
-4. Velg den nye serveren i kortet **Replica** på elementet.
+4. Velg den nye serveren i kortet **Replica** på elementet. Serveren har da et eget kort på siden Instanser, og **Åpne** fører til siden dens.
 
 Med root trengs ingenting mer. En egen bruker trenger disse rettighetene på poolen til målet, som dialogen også viser:
 
@@ -139,8 +138,8 @@ BombVault lagrer vertsnøkkelen serveren viser ved første tilkobling, og avvise
 
 En paret BombVault kan ta imot replikaen selv. Ingen får SSH-tilgang til den andre verten, og ingen nøkkel havner i en `authorized_keys`-fil.
 
-1. I kortet **Replica** på elementet velger du den parede instansen som mål. Kortet viser **Venter på godkjenning** til den svarer.
-2. På den mottakende instansen åpner du **Instanser**, deretter **Mottak**. Kortet **ZFS** viser forespørselen. Velg pool og rot på den serveren og hvor mange øyeblikksbilder som blir igjen, og trykk så **Tillat** eller **Avslå**.
+1. I kortet **Replica** på elementet velger du den parede instansen som mål, eller slår på rollen **ZFS-server** på kortet til den instansen på siden Instanser og velger ZFS-elementene der. Kortet viser **Venter på godkjenning** til den svarer.
+2. På den mottakende instansen åpner du **Instanser**. Forespørselen vises på kortet til den sendende instansen som et merke, og **Detaljer** lister den. Velg pool og rot på den serveren og hvor mange øyeblikksbilder som blir, og trykk deretter **Tillat** eller **Avslå**.
 3. Etter **Tillat** sender kilden etter sin egen plan, som for ethvert annet mål.
 
 Den mottakende instansen godtar bare det godkjenningen dekker: elementets datasett, inn i sin egen rot. Den kjører `zfs receive` selv, og kilden har ingen måte å slette eller rulle tilbake noe der på. Derfor overlever kopien en kilde som noen har tatt over. Den mottakende instansen har sin egen oppbevaring. Kilden foreslår bare en regel når den ber om godkjenning.
@@ -171,7 +170,7 @@ Et kryptert datasett sendes raw. Det forblir kryptert på målet, og målet ser 
 
 ### Bruke replikaen {#replica-use}
 
-Åpne fanen **Sikkerhetskopier** på elementet og klikk på replikaraden i kortet **Storage locations**. Arket lister øyeblikksbildene på målet og viser kommandoene med dine egne navn.
+Åpne fanen **Sikkerhetskopier** på elementet og klikk på raden **ZFS-replika** blant stedene som holder øyeblikksbildene. Arket lister øyeblikksbildene på målet og viser kommandoene med de ekte navnene dine.
 
 For å se på en gammel tilstand kloner du et øyeblikksbilde på målet. En klone tar ingen plass før noe endres, og replikaen blir urørt:
 
@@ -212,13 +211,13 @@ Et underdatasett som er tømt, endrer nesten ikke totalen for et stort tre, så 
 
 Et datasett som forrige kjøring sikkerhetskopierte og som denne kjøringen ikke kunne lese, teller som tømt, så lenge elementets utvalg ikke er endret. Det dekker en nøkkel som ikke er lastet, et datasett som ikke er montert, og et som har forsvunnet fra treet. Et underdatasett du utelukker selv, endrer utvalget, så historikken begynner på nytt i stedet. Så lenge et funn om tapte data er åpent, beholder oppbevaringen de gamle sikkerhetskopiene av akkurat det datasettet og beskjærer resten av treet som vanlig.
 
-På siden **Avvik** har hvert datasett sin egen linje i elementets panel, som åpnes med **Overvåking** på elementets kort eller, når ingenting er åpent for elementet, fra linjen i kortet **Ingenting åpent**. Elementets tre på denne siden viser de åpne funnene ved hvert datasett. Lenken i et funn åpner elementets gjenopprettingspanel ved datasettets siste gode sikkerhetskopi. Om en kjøring blir ferdig, vurderes for hele elementet, fordi en kjøring lykkes eller feiler som en helhet.
+Hvert datasett har en egen linje i overvåkingen av elementet, som åpnes med **Overvåking** på siden **Avvik** og står på fanen **Integritet** til elementet. De åpne funnene vises ved siden av hvert datasett. Lenken i et funn åpner gjenopprettingsvinduet på datasettets siste gode sikkerhetskopi. Om en kjøring fullføres, vurderes for hele elementet, fordi en kjøring lykkes eller feiler som helhet.
 
 Selve kontrollene er beskrevet under [Funksjoner](features.md). En assistent som er koblet til via [MCP-serveren](mcp.md), kan liste gjenopprettingspunktene til et ZFS-element, starte sikkerhetskopien og lese funnene, men et funn kvitteres på siden **Avvik**.
 
 ## Årsakskoder {#reason-codes}
 
-Siden, kjøringshistorikken og varslene nevner et problem med en av disse kodene. De fleste har også løsningen ved siden av på siden.
+Elementets side, kjøringshistorikken og varslene nevner et problem med en av disse kodene. De fleste har rettingen ved siden av på siden også.
 
 | Kode | Betydning | Hva du gjør |
 |---|---|---|
@@ -226,7 +225,7 @@ Siden, kjøringshistorikken og varslene nevner et problem med en av disse kodene
 | `host-placeholder` | Host SSH: Address er fortsatt eksempelverdien, og `host.docker.internal` svarte heller ikke. | Sett Host SSH: Address til denne serverens LAN-IP. |
 | `host-fallback` | Host SSH: Address er fortsatt eksempelverdien, og `host.docker.internal` fungerer. | Ingenting, eller sett LAN-IP-en. |
 | `ssh-unreachable` | Serveren kan ikke nås over SSH. | Sjekk adresse og port, og at SSH er slått på. |
-| `ssh-auth` | Serveren avviste BombVaults nøkkel. | Kjør kommandoen fra forbindelseskortet én gang på serveren. |
+| `ssh-auth` | Serveren avviste BombVaults nøkkel. | Kjør kommandoen under **Forbindelse til denne serveren** én gang på serveren. |
 | `zfs-not-found` | SSH-verten har ingen `zfs`-kommando. | Pek Host SSH: Address mot maskinen som eier poolene. |
 | `zfs-permission` | SSH-brukeren har ikke lov til å kjøre denne zfs-kommandoen. | Bruk root, eller se [TrueNAS SCALE](#truenas). |
 | `uri-mismatch` | `LIBVIRT_URI` nevner en annen vert eller bruker enn SSH-feltene. | Få dem til å stemme, eller tøm SSH-feltene så begge kommer fra URI-en. |
@@ -274,7 +273,7 @@ Siden, kjøringshistorikken og varslene nevner et problem med en av disse kodene
 
 ### Sjekke hva containeren ser {#mountinfo}
 
-**Test tilgangen til øyeblikksbilder** på et element tar et ekte øyeblikksbilde av treet, ser etter det inne i BombVault for hvert datasett og fjerner det igjen. Det er den raskeste måten å bevise hele veien på før den første planlagte kjøringen.
+**Test tilgangen til øyeblikksbilder** på fanen Innstillinger til elementet tar et ekte øyeblikksbilde av treet, ser etter det inne i BombVault for hvert datasett og fjerner det igjen. Det er den raskeste måten å bevise hele stien på før den første planlagte kjøringen.
 
 For å se selv kjører du dette på serveren:
 
