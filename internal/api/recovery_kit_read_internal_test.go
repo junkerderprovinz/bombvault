@@ -11,6 +11,7 @@ import (
 	"filippo.io/age"
 
 	"github.com/junkerderprovinz/bombvault/internal/ageseal"
+	"github.com/junkerderprovinz/bombvault/internal/restickey"
 )
 
 // writtenKit is the recovery kit of a fixture with encryption on, a named
@@ -118,11 +119,105 @@ func TestAKitThatCannotBeUsedSaysWhy(t *testing.T) {
 		t.Fatal(err)
 	}
 	kit, err := readRecoveryKit(plain)
-	if err != nil || kit.Encrypted || kit.appKey != "" || len(kit.Locations) == 0 {
-		t.Fatalf("a kit without encryption reads as %+v, %v; want its locations and no key", kit, err)
+	if err != nil || kit.Encrypted || !kit.HasKey || kit.appKey != key || len(kit.Locations) == 0 {
+		t.Fatalf("a kit without encryption reads as %+v, %v; want its locations and its key", kit, err)
 	}
-	if _, err := foreignKeyOf("", plain); !errors.Is(err, errKitHasNoKey) {
+
+	// The kit an install without encryption wrote before kits named the key.
+	older := strings.Replace(plain, "APP_KEY (the key the definitions are sealed with):\n\n    "+key+"\n\n", "", 1)
+	kit, err = readRecoveryKit(older)
+	if err != nil || kit.HasKey || len(kit.Locations) == 0 {
+		t.Fatalf("an older kit without encryption reads as %+v, %v; want its locations and no key", kit, err)
+	}
+	if _, err := foreignKeyOf("", older); !errors.Is(err, errKitHasNoKey) {
 		t.Fatalf("opening with a kit that names no key: %v, want %v", err, errKitHasNoKey)
+	}
+}
+
+// The docs describe the kit, so what an install that adopted nothing prints
+// is pinned here line by line.
+func TestTheKitOfAnInstallThatAdoptedNothingKeepsItsWording(t *testing.T) {
+	f := newPlacementFixture(t)
+	key := f.svc.cfg.AppKey
+	f.encrypted()
+	on, err := f.svc.RecoveryKit()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dash := string(rune(0x2014))
+	wantOn := "## Encryption\n\n" +
+		"Status: ENABLED\n\n" +
+		"APP_KEY (the master key " + dash + " recreate the BombVault container with this exact value):\n\n" +
+		"    " + key + "\n\n" +
+		"restic repository password (derived from APP_KEY; use this with plain restic):\n\n" +
+		"    " + restickey.Derive(key) + "\n\n" +
+		"## Repository locations\n"
+	if !strings.Contains(on, wantOn) {
+		t.Fatalf("the Encryption section with encryption on changed:\n%s", on)
+	}
+
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.EncryptionEnabled = false
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	off, err := f.svc.RecoveryKit()
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantOff := "## Encryption\n\n" +
+		"Status: DISABLED\n\n" +
+		"The repositories are created WITHOUT a password (restic --insecure-no-password).\n" +
+		"There is no key to lose; the value of this kit is the repository locations and\n" +
+		"the restore instructions below.\n\n" +
+		"BombVault still seals the definitions it recreates containers and VMs from.\n" +
+		"Restoring those on another server needs this key:\n\n" +
+		"APP_KEY (the key the definitions are sealed with):\n\n" +
+		"    " + key + "\n\n" +
+		"## Repository locations\n"
+	if !strings.Contains(off, wantOff) {
+		t.Fatalf("the Encryption section with encryption off is not the old one plus the key:\n%s", off)
+	}
+	for _, kit := range []string{on, off} {
+		if strings.Contains(kit, "Backup key") || strings.Contains(kit, "APP_KEY of this server") {
+			t.Fatal("a kit of an install that adopted nothing speaks of a backup key")
+		}
+	}
+}
+
+func TestTheKitOfAnInstallWithAnAdoptedKeyNamesBothKeys(t *testing.T) {
+	f := newPlacementFixture(t)
+	own, old := f.svc.cfg.AppKey, strings.Repeat("d", 64)
+	settings := f.encrypted()
+	f.adopt(old, own)
+
+	for _, encrypted := range []bool{true, false} {
+		settings.EncryptionEnabled = encrypted
+		if err := f.st.UpdateSettings(settings); err != nil {
+			t.Fatal(err)
+		}
+		text, err := f.svc.RecoveryKit()
+		if err != nil {
+			t.Fatal(err)
+		}
+		kit, err := readRecoveryKit(text)
+		if err != nil {
+			t.Fatalf("encryption %v: %v", encrypted, err)
+		}
+		if kit.appKey != old || kit.sealingKey != own || kit.Encrypted != encrypted {
+			t.Fatalf("encryption %v: the kit reads back the backup key %v and the sealing key %v", encrypted, kit.appKey == old, kit.sealingKey == own)
+		}
+		if encrypted && !strings.Contains(text, "export RESTIC_PASSWORD='"+restickey.Derive(old)+"'") {
+			t.Fatal("the restore steps do not carry the password of the adopted key")
+		}
+	}
+
+	f.adopt(old, strings.Repeat("e", 64))
+	if _, err := f.svc.RecoveryKit(); !errors.Is(err, errBackupKeyLocked) {
+		t.Fatalf("a kit under a locked backup key: %v, want %v", err, errBackupKeyLocked)
 	}
 }
 

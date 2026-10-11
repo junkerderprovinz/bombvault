@@ -5316,11 +5316,13 @@ export interface RecoveryKitLocation {
   folder?: string;
 }
 
-/** What an uploaded recovery kit says. Its key stays on the server. A kit of
- *  an instance without encryption names no key: its repositories can be read,
- *  its containers and VMs cannot be recreated from them. */
+/** What an uploaded recovery kit says. Its key stays on the server. `hasKey`
+ *  is false for the kit an instance without encryption wrote before kits
+ *  named the key in that case: its repositories can be read, its containers
+ *  and VMs cannot be recreated from them. */
 export interface RecoveryKitFacts {
   encrypted: boolean;
+  hasKey: boolean;
   locations: RecoveryKitLocation[];
 }
 

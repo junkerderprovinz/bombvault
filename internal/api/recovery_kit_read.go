@@ -19,7 +19,7 @@ var (
 	errKitSealed    = errors.New("this recovery kit is sealed with your age key, which BombVault does not have: decrypt it first (age -d -i <key file> bombvault-recovery-kit.md.age) and upload the result")
 	errNotAKit      = errors.New("this is not a BombVault recovery kit")
 	errKitKeyBroken = errors.New("the APP_KEY in this recovery kit does not give the repository password beside it, so one of the two was changed or mistyped")
-	errKitHasNoKey  = errors.New("this recovery kit names no APP_KEY, because its instance ran without encryption")
+	errKitHasNoKey  = errors.New("this recovery kit names no key: it was written without encryption by a version that left the key out")
 )
 
 // The kinds of place a recovery kit lists.
@@ -45,15 +45,28 @@ type kitLocation struct {
 	Folder string `json:"folder,omitempty"`
 }
 
-// recoveryKit is what a recovery kit says. The key stays on the server.
+// recoveryKit is what a recovery kit says. The keys stay on the server.
 type recoveryKit struct {
-	// Encrypted says the repositories carry a password. A kit of an instance
-	// without encryption names no key, so its repositories can be read and its
+	// Encrypted says the repositories carry a password.
+	Encrypted bool `json:"encrypted"`
+	// HasKey is false for the kit an install without encryption wrote before
+	// kits named the key in that case. Its repositories can be read, and its
 	// containers and VMs cannot be recreated from them.
-	Encrypted bool          `json:"encrypted"`
+	HasKey    bool          `json:"hasKey"`
 	Locations []kitLocation `json:"locations"`
-	appKey    string
+	// appKey is the key of the backups. sealingKey is the APP_KEY the install
+	// sealed its settings with, the same key unless it had adopted another
+	// install's backups.
+	appKey, sealingKey string
 }
+
+// The secrets the Encryption section of a kit prints, by the line that
+// introduces each.
+const (
+	kitBackupKey = iota
+	kitPassword
+	kitSealingKey
+)
 
 var (
 	kitLineRe        = regexp.MustCompile(`^- (.+?): (.+?)(?: \(compression: [a-z]+\))?$`)
@@ -74,7 +87,7 @@ func readRecoveryKit(text string) (recoveryKit, error) {
 	}
 	kit := recoveryKit{Locations: []kitLocation{}}
 	var section, mount, destination string
-	var secrets []string
+	secrets, next := map[int]string{}, kitBackupKey
 	for line := range strings.SplitSeq(text, "\n") {
 		if heading, ok := strings.CutPrefix(line, "## "); ok {
 			section = heading
@@ -82,11 +95,19 @@ func readRecoveryKit(text string) (recoveryKit, error) {
 		}
 		switch section {
 		case "Encryption":
-			if line == "Status: ENABLED" {
+			switch {
+			case line == "Status: ENABLED":
 				kit.Encrypted = true
-			}
-			if m := kitSecretRe.FindStringSubmatch(line); m != nil {
-				secrets = append(secrets, m[1])
+			case strings.HasPrefix(line, "APP_KEY of this server"):
+				next = kitSealingKey
+			case strings.HasPrefix(line, "APP_KEY"), strings.HasPrefix(line, "Backup key"):
+				next = kitBackupKey
+			case strings.HasPrefix(line, "restic repository password"):
+				next = kitPassword
+			default:
+				if m := kitSecretRe.FindStringSubmatch(line); m != nil {
+					secrets[next] = m[1]
+				}
 			}
 		case "Repository locations", "BombVault settings backup (config domain)":
 			if m := kitMountRe.FindStringSubmatch(line); m != nil {
@@ -115,13 +136,16 @@ func readRecoveryKit(text string) (recoveryKit, error) {
 			}
 		}
 	}
-	if kit.Encrypted {
-		// The kit prints the key and the password restic takes, which is
-		// derived from it. A kit typed off a printout is caught by the pair.
-		if len(secrets) != 2 || restickey.Derive(secrets[0]) != secrets[1] {
-			return recoveryKit{}, errKitKeyBroken
-		}
-		kit.appKey = secrets[0]
+	kit.appKey = secrets[kitBackupKey]
+	// With encryption on the kit prints the key and the password restic takes,
+	// which is derived from it. A kit typed off a printout is caught by the pair.
+	if kit.Encrypted && (kit.appKey == "" || restickey.Derive(kit.appKey) != secrets[kitPassword]) {
+		return recoveryKit{}, errKitKeyBroken
+	}
+	kit.HasKey = kit.appKey != ""
+	kit.sealingKey = secrets[kitSealingKey]
+	if kit.sealingKey == "" {
+		kit.sealingKey = kit.appKey
 	}
 	mount = strings.TrimRight(filepath.ToSlash(mount), "/")
 	for i, loc := range kit.Locations {

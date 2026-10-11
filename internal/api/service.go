@@ -17920,6 +17920,11 @@ func (s *Service) RecoveryKit() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("read settings: %w", err)
 	}
+	key, err := s.backupKey()
+	if err != nil {
+		return "", err
+	}
+	adopted := key != s.cfg.AppKey
 
 	// Resolve each domain's local + off-site repo locations from the configured
 	// settings (the same resolution the engine uses), so the kit names the real
@@ -17952,11 +17957,18 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("> Anyone with this file can read and restore your backups.\n\n")
 
 	w("## Encryption\n\n")
-	if settings.EncryptionEnabled {
-		password := restickey.Derive(s.cfg.AppKey)
+	if settings.EncryptionEnabled && adopted {
+		w("Status: ENABLED\n\n")
+		w("Backup key (taken over from the server these backups were first made on; a new\n")
+		w("BombVault reads it from this kit):\n\n")
+		w("    %s\n\n", key)
+		w("restic repository password (derived from the backup key; use this with plain restic):\n\n")
+		w("    %s\n\n", restickey.Derive(key))
+	} else if settings.EncryptionEnabled {
+		password := restickey.Derive(key)
 		w("Status: ENABLED\n\n")
 		w("APP_KEY (the master key — recreate the BombVault container with this exact value):\n\n")
-		w("    %s\n\n", s.cfg.AppKey)
+		w("    %s\n\n", key)
 		w("restic repository password (derived from APP_KEY; use this with plain restic):\n\n")
 		w("    %s\n\n", password)
 	} else {
@@ -17964,6 +17976,19 @@ func (s *Service) RecoveryKit() (string, error) {
 		w("The repositories are created WITHOUT a password (restic --insecure-no-password).\n")
 		w("There is no key to lose; the value of this kit is the repository locations and\n")
 		w("the restore instructions below.\n\n")
+		w("BombVault still seals the definitions it recreates containers and VMs from.\n")
+		w("Restoring those on another server needs this key:\n\n")
+		if adopted {
+			w("Backup key (the key the definitions are sealed with):\n\n")
+		} else {
+			w("APP_KEY (the key the definitions are sealed with):\n\n")
+		}
+		w("    %s\n\n", key)
+	}
+	if adopted {
+		w("APP_KEY of this server (it seals the settings inside the settings backup; a new\n")
+		w("BombVault needs it only to bring those settings back):\n\n")
+		w("    %s\n\n", s.cfg.AppKey)
 	}
 
 	w("## Repository locations\n\n")
@@ -18133,7 +18158,7 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("1. Install restic (https://restic.net) on any machine that can reach the repository.\n")
 	if settings.EncryptionEnabled {
 		w("2. Set the repository password from this kit:\n\n")
-		w("       export RESTIC_PASSWORD='%s'\n\n", restickey.Derive(s.cfg.AppKey))
+		w("       export RESTIC_PASSWORD='%s'\n\n", restickey.Derive(key))
 	} else {
 		w("2. The repositories have no password — pass --insecure-no-password to every\n")
 		w("   restic command below (e.g. `restic -r <repo> --insecure-no-password snapshots`).\n\n")
