@@ -45,6 +45,17 @@ func postJSON(t *testing.T, h http.HandlerFunc, path, body, remoteAddr string, h
 	return w.Code, out
 }
 
+// sessionOf is the cookie header of a browser somebody signed in to h with,
+// nil while h has no password.
+func sessionOf(h *Handler) http.Header {
+	hash, epoch, on := h.authEnabled()
+	if !on {
+		return nil
+	}
+	c := h.newSessionCookie(secret.NewSessionToken(h.cfg.AppKey, hash, epoch, time.Hour), 3600)
+	return http.Header{"Cookie": {c.Name + "=" + c.Value}}
+}
+
 // storeTOTP arms the second factor directly, the way a completed enrolment
 // leaves the settings.
 func storeTOTP(t *testing.T, h *Handler, repo *store.Repo, plainSecret string, recovery []string) {
@@ -238,7 +249,7 @@ func TestClearingThePasswordAlsoClearsTheSecondFactor(t *testing.T) {
 	enableAuth(t, h, repo)
 	storeTOTP(t, h, repo, "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ", []string{"deadbeef"})
 
-	_, body := postJSON(t, h.handleSetPassword, "/api/auth/password", `{"password":""}`, "10.0.0.1:1", nil)
+	_, body := postJSON(t, h.handleSetPassword, "/api/auth/password", `{"password":""}`, "10.0.0.1:1", sessionOf(h))
 	if body["ok"] != true {
 		t.Fatalf("clearing the password must succeed: %v", body)
 	}
@@ -616,6 +627,7 @@ func TestClearingThePasswordSendsTheSessionAway(t *testing.T) {
 	enableAuth(t, h, repo)
 
 	r := httptest.NewRequest(http.MethodPost, "/api/auth/password", strings.NewReader(`{"password":""}`))
+	r.Header = sessionOf(h)
 	r.Header.Set("Content-Type", "application/json")
 	r.RemoteAddr = "10.0.0.1:1"
 	w := httptest.NewRecorder()
@@ -686,6 +698,9 @@ func TestSetPasswordEndsEveryOtherSession(t *testing.T) {
 func postPassword(t *testing.T, h *Handler, pw string) string {
 	t.Helper()
 	r := httptest.NewRequest(http.MethodPost, "/api/auth/password", strings.NewReader(`{"password":"`+pw+`"}`))
+	if signedIn := sessionOf(h); signedIn != nil {
+		r.Header = signedIn
+	}
 	r.Header.Set("Content-Type", "application/json")
 	r.RemoteAddr = "10.0.0.1:1"
 	w := httptest.NewRecorder()

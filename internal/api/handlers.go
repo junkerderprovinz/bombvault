@@ -4344,6 +4344,34 @@ func (h *Handler) requireAuthForSecrets(w http.ResponseWriter, action string) bo
 	return false
 }
 
+// authGeneration is the password hash and session epoch a request's session
+// was checked against. Every password change and every reset moves the epoch,
+// so a write that rests on that check applies only while both are unchanged.
+type authGeneration struct {
+	hash, epoch string
+}
+
+func (g authGeneration) current(s *store.Settings) bool {
+	return s.AuthPasswordHash == g.hash && s.SessionEpoch == g.epoch
+}
+
+// errLoginChanged refuses a write whose session ended between its check and
+// the write, through a reset or another password change.
+var errLoginChanged = errors.New("the login changed while this was being saved, sign in again")
+
+// sessionGeneration returns the generation the request's session is valid
+// for, and false when it is valid for none. With the login off every request
+// is.
+func (h *Handler) sessionGeneration(r *http.Request) (authGeneration, bool) {
+	hash, epoch, on := h.authEnabled()
+	gen := authGeneration{hash: hash, epoch: epoch}
+	if !on {
+		return gen, true
+	}
+	c, err := h.sessionCookie(r)
+	return gen, err == nil && secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value)
+}
+
 // newSessionCookie constructs the session cookie with the correct name and
 // attributes. Secure is set to true when the server is in HTTPS mode
 // (cfg.HTTPOnly == false) and false for plain HTTP, which is intentional
@@ -4915,6 +4943,11 @@ func (h *Handler) handleLogoutAll(w http.ResponseWriter, _ *http.Request) {
 // handleSetPassword handles POST /api/auth/password.
 // Body: {password string} — empty string disables auth.
 func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
+	gen, ok := h.sessionGeneration(r)
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "authentication required"})
+		return
+	}
 	var body struct {
 		Password string `json:"password"`
 	}
@@ -4945,46 +4978,12 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	epoch := ""
-	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
-		s.AuthPasswordHash = hash
-		if hash == "" {
-			// Switching the login off takes the second factor with it. Leaving
-			// an armed TOTP secret behind a disabled password would mean a
-			// re-enabled login silently demanding a code from an app the
-			// operator may have deleted months ago.
-			s.TOTPEnabled = false
-			s.TOTPSecret = ""
-			s.TOTPRecovery = ""
-		}
-		// SETTING A PASSWORD ENDS EVERY OTHER SESSION, and that is a deliberate
-		// widening of what this route used to do (GlimStone 2.1.0, rule 22).
-		//
-		// The Security card used to carry a separate "sign out everywhere"
-		// button, and the card lost it: a card configures, the shell operates,
-		// and a form with unsaved fields in it should not end with the two
-		// controls that throw the form away. Deleting a button must not delete
-		// the CAPABILITY, though, and this was the only way to revoke the
-		// outstanding seven-day tokens - they are stateless and bound to this
-		// epoch, so nothing else can reach them.
-		//
-		// Moving it here is not a workaround for the removal. It is what
-		// somebody changing a password out of suspicion already believed was
-		// happening: a password that may have leaked is worth nothing while the
-		// sessions minted under it stay alive. Rotating on the FIRST set costs
-		// nothing (no other session exists yet), so this needs no branch.
-		//
-		// The caller keeps working because the cookie minted below is minted
-		// from THIS value rather than the old one - see the token line further
-		// down, which signs hash and epoch together.
-		next, err := newSessionEpoch()
-		if err != nil {
-			return err
-		}
-		s.SessionEpoch = next
-		epoch = next
-		return nil
-	}); err != nil {
+	epoch, err := h.storePassword(gen, hash)
+	if errors.Is(err, errLoginChanged) {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -5021,6 +5020,39 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 		// show the sign-out controls without a round trip or a reload.
 		"authed": hash != "",
 	}))
+}
+
+// storePassword stores hash as the login password, or switches the login off
+// when hash is empty, and returns the new session epoch. It refuses with
+// errLoginChanged once the login has left gen.
+func (h *Handler) storePassword(gen authGeneration, hash string) (string, error) {
+	epoch := ""
+	_, err := h.store.MutateSettings(func(s *store.Settings) error {
+		if !gen.current(s) {
+			return errLoginChanged
+		}
+		s.AuthPasswordHash = hash
+		if hash == "" {
+			// A second factor left armed behind a disabled password would
+			// demand a code from an app the operator may have deleted long ago
+			// once the login is switched on again.
+			s.TOTPEnabled = false
+			s.TOTPSecret = ""
+			s.TOTPRecovery = ""
+		}
+		// A new password ends every other session, which is what somebody
+		// changing it out of suspicion expects, and the only way to revoke the
+		// stateless seven-day tokens bound to this epoch. The caller's cookie
+		// is minted from the new epoch, so it keeps working.
+		next, err := newSessionEpoch()
+		if err != nil {
+			return err
+		}
+		s.SessionEpoch = next
+		epoch = next
+		return nil
+	})
+	return epoch, err
 }
 
 // ---------------------------------------------------------------------------
@@ -5131,6 +5163,12 @@ func (h *Handler) handleTOTPConfirm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
+		// A reset or a new setup in the meantime replaced the secret this
+		// code was checked against, and arming the factor now would lock the
+		// owner behind an authenticator they never saw.
+		if st.TOTPSecret != s.TOTPSecret {
+			return errLoginChanged
+		}
 		st.TOTPEnabled = true
 		st.TOTPRecovery = encodeRecoveryCodes(hashed)
 		return nil
