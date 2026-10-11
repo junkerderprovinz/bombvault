@@ -1,10 +1,10 @@
-// Every tab in a desktop window between 780 and 1400px wide, with the sidebar
+// Every page in a desktop window between 780 and 1400px wide, with the sidebar
 // beside it: no control reaches past the window, the page does not pan, and
-// no button cuts its label short. German, because its labels run longest; the
-// domains are on and a folder set is staged, so the header rows carry every
-// action they can.
+// no button cuts its label short. German, because its labels run longest. The
+// kinds are on and one entry of each is staged, so the list and the entry
+// pages carry every action they can.
 import { expect, test, type Page } from "@playwright/test";
-import { PLACEMENT } from "./placement";
+import { EVERY_KIND, SET_ID, ZFS_ID, stageEntries } from "./entries";
 
 // A test can end while a route handler still waits on the real server. Closing
 // the context then disposes the response it is about to read, and Playwright
@@ -15,26 +15,26 @@ test.afterEach(async ({ page }) => {
 
 const WIDTHS = [780, 900, 1024, 1400];
 
-const PAGES = ["/dashboard", "/anomalies", "/containers", "/vms", "/flash", "/config", "/files", "/zfs", "/instances", "/recovery", "/settings"];
-
-const FILE_SET = {
-  id: "a1".padEnd(32, "0"),
-  name: "Dokumente vom Hauptserver im Keller",
-  path: "user/dokumente/hauptserver/keller",
-  excludes: [],
-  enabled: true,
-  lastBackup: 0,
-  scheduleCadence: "",
-  repo: "",
-  repoEffective: "user/bombvault/files",
-  effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" },
-  pathExists: true,
-  placement: PLACEMENT,
-};
+const PAGES = [
+  "/dashboard",
+  "/anomalies",
+  "/backups",
+  "/backups/container/immich",
+  "/backups/container/immich?tab=settings",
+  "/backups/vm/win11?tab=settings",
+  `/backups/files/${SET_ID}?tab=settings`,
+  `/backups/zfs/${ZFS_ID}?tab=settings`,
+  "/backups/flash/flash",
+  "/backups/config/config?tab=settings",
+  "/backups/container/immich?tab=verify",
+  "/storage",
+  "/instances",
+  "/recovery",
+  "/settings",
+];
 
 async function stage(page: Page): Promise<void> {
-  await page.route("**/api/display-prefs*", (route) => route.abort());
-  await page.addInitScript(() => window.localStorage.setItem("bv-lang", "de"));
+  await stageEntries(page, { ...EVERY_KIND, lang: "de" });
   await page.route("**/api/settings", async (route) => {
     if (route.request().method() !== "GET") return route.continue();
     const response = await route.fetch();
@@ -45,7 +45,6 @@ async function stage(page: Page): Promise<void> {
     };
     await route.fulfill({ response, json: { ...body, settings: { ...body.settings, ...on } } });
   });
-  await page.route("**/api/files", (route) => route.fulfill({ json: { ok: true, fileSets: [FILE_SET] } }));
 }
 
 async function settle(page: Page): Promise<void> {

@@ -14,13 +14,13 @@ describe("files selection-tree copy", () => {
     );
   });
 
-  it("files.emptySelectionBlocked refuses the last untick and names Delete folder set", () => {
+  it("files.emptySelectionBlocked refuses the last untick and names the way to remove the set", () => {
     expect(en["files.emptySelectionBlocked"]).toBe(
-      "A set needs at least one folder, so the last tick cannot be removed. Use Delete folder set if you no longer want this set.",
+      "A set needs at least one folder, so the last tick cannot be removed. Use Remove from the list if you no longer want this set.",
     );
-    // The tree has no reset, so the refusal names the card's own delete
-    // control as the way out.
-    expect(en["files.emptySelectionBlocked"]).toContain(en["files.deleteSet"]);
+    // The tree has no reset, so the refusal names the entry's own removal
+    // as the way out.
+    expect(en["files.emptySelectionBlocked"]).toContain(en["zfs.removeMissing"]);
   });
 
   it("files.pathChangeHint says a folder change clears the selection", () => {

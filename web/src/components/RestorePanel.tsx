@@ -492,8 +492,8 @@ export function CompareSnapshotsForm({ containerName, t }: { containerName: stri
   }, [containerName]);
 
   // A compare result is a value the reader works through at their own pace,
-  // not a completion ping, so `diff` stays inline where ExportButton and the
-  // restored-to path keep theirs. `error` shares the slot: the two are the
+  // not a completion ping, so `diff` stays inline where the restored-to path
+  // keeps its own. `error` shares the slot: the two are the
   // same last-compare outcome, and the next run clears whichever is showing.
   async function run() {
     if (!from || !to || from === to) return;

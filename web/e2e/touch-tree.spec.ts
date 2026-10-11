@@ -1,92 +1,29 @@
-// Touch-tree e2e: the geometry gate for the touch interaction mode.
+// The folder tree of a container under a finger. Its tests in jsdom prove
+// what a tap means. This proves the geometry, which needs laid-out pixels and
+// a real (pointer: coarse) answer, so it runs on the two phone projects:
 //
-// The dom twins (SelectionTree.touch.dom.test.tsx) prove SEMANTICS in jsdom;
-// this spec proves GEOMETRY on the real binary, in real device emulation:
-// a tap target's 44px promise is a fact about laid-out pixels, which jsdom
-// cannot witness (no layout), and about the (pointer: coarse) media query,
-// which jsdom stubs away. So this file runs only on the two mobile projects
-// (hasTouch → coarse pointer → interactionMode="touch" by construction:
-// the mode follows the pointer axis, never the width), and asserts
-// with locator.tap() + boundingBox():
+//   1. every row of the tree is a target at least 44px tall,
+//   2. the chevron is a button of at least 44 by 44px,
+//   3. the chevron and the label do not share a tap surface,
+//   4. a tap checks and unchecks, and
+//   5. the chevron opens a folder without moving the check.
 //
-//   1. every tree row is a >=44px-tall full-row target,
-//   2. the chevron is a real >=44x44 button (the desktop tree renders an
-//      aria-hidden 10px glyph instead; its presence here is also the
-//      touch-mode tell),
-//   3. the chevron zone and the label zone are DISJOINT hit areas (expand
-//      and check never share a tap surface),
-//   4. tap toggles aria-checked in BOTH directions, and
-//   5. the chevron expands WITHOUT moving the check.
-//
-// Harness honesty: what is mocked and why. The e2e
-// webServer is the real bombvault binary over a wiped fresh DB, but the
-// harness has no Docker, so a fresh DB can never contain a container and the
-// folders editor could never render. The container domain is therefore
-// fulfilled at the Playwright route layer: the SPA, its fetches, the binary
-// and every route shape are real; only the container payloads are staged,
-// mirroring the Go JSON shapes field-for-field (api.ts). Everything else
-// (settings, SSE progress, the save PATCH round-trip) rides the real server;
-// the PATCH is fulfilled too so the harness DB stays untouched by a spec.
+// The harness has no Docker, so the container, its folders and the listing
+// of a folder are staged at the route layer, and so is the answer to the
+// save, which keeps the harness database as it was.
 import { expect, test, type Page } from "@playwright/test";
-import { PLACEMENT } from "./placement";
-
-// The two device projects from playwright.config.ts. Everything else is a
-// desktop project.
-const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
-
-// --- staged container domain (Go JSON shapes, api.ts) ----------------------
+import { MOBILE_PROJECTS, container, item, stageEntries } from "./entries";
 
 const PLEX_SOURCE = "/mnt/user/appdata/plex";
-
-const CONTAINERS_BODY = {
-  ok: true,
-  containers: [
-    {
-      name: "plex",
-      image: "lscr.io/linuxserver/plex:latest",
-      state: "running",
-      status: "Up 2 hours",
-      ip: "172.18.0.5",
-      installed: true, // the folders editor needs an installed container
-      includeInSchedule: true,
-      lastBackup: null,
-      lastBackupStarted: null,
-      preHook: "",
-      postHook: "",
-      stopContainers: [],
-      excludes: [],
-      lastUpdateCheck: 0,
-      lastUpdateResult: "",
-      stack: "",
-      placement: PLACEMENT,
-    },
-  ],
-};
 
 const MOUNTS_BODY = {
   ok: true,
   mounts: [
-    {
-      source: PLEX_SOURCE,
-      dest: "/config",
-      selected: true, // the served baseline starts checked, so the taps below
-      // exercise true → false and then false → true: both directions of the
-      // toggle contract in one session.
-      isAppdata: false,
-      reachable: true,
-    },
-    {
-      // A second served include, and not fixture decoration: FoldersEditor's
-      // empty-selection guard refuses (row shake + blocked warn line, no save)
-      // any toggle that would leave zero includes for the item; with a single
-      // selected mount the first tap trips exactly that contract instead of
-      // exercising it. Two served includes keep every tap a legal toggle.
-      source: "/mnt/user/data",
-      dest: "/data",
-      selected: true,
-      isAppdata: false,
-      reachable: true,
-    },
+    // Checked as served, so the taps go from checked to unchecked and back.
+    { source: PLEX_SOURCE, dest: "/config", selected: true, isAppdata: false, reachable: true },
+    // The editor refuses a toggle that would leave nothing selected, so a
+    // second folder keeps every tap on the first a legal one.
+    { source: "/mnt/user/data", dest: "/data", selected: true, isAppdata: false, reachable: true },
   ],
   custom: [],
   excluded: [],
@@ -102,36 +39,19 @@ const BROWSE_BODY = {
   dirs: [{ name: "library", path: "user/appdata/plex/library" }],
 };
 
-/** Route-level staging of the container domain + the boot-look cut
- *  (the display-prefs abort, mobile-shell.spec.ts's bootWithoutServerLook,
- *  so this spec keeps the harness default English labels regardless of worker
- *  order). */
-async function stageContainerDomain(page: Page): Promise<void> {
-  await page.route("**/api/display-prefs*", (route) => route.abort());
-  await page.route("**/api/containers", (route) => route.fulfill({ json: CONTAINERS_BODY }));
+/** Opens the Settings tab of the container's page, where its folders stand open. */
+async function openFoldersEditor(page: Page): Promise<void> {
+  await stageEntries(page, {
+    items: [item({ key: "plex", lastBackup: 0, lastRunStatus: "" })],
+    containers: [container({ name: "plex", lastBackup: null, lastBackupStarted: null })],
+  });
   await page.route("**/api/containers/plex/mounts*", (route) => route.fulfill({ json: MOUNTS_BODY }));
   await page.route("**/api/browse*", (route) => route.fulfill({ json: BROWSE_BODY }));
-  // The selection save (FoldersEditor's drain PATCHes /api/containers/plex).
-  // Fulfilled so the interaction is fully offline and the wiped harness DB
-  // never sees a spec-driven write.
   await page.route("**/api/containers/plex", (route) => route.fulfill({ json: { ok: true } }));
+  await page.goto("/backups/container/plex?tab=settings");
+  await expect(backupTree(page)).toBeVisible();
 }
 
-/** Boot the /containers page and open the folders editor.
- *
- *  The phone surface is one stacked layout: there is no list-level "Backup
- *  folders" chip; the editor renders inside the card's stacked detail. So
- *  the entry is: tap the plex card, and the Back row confirms the detail
- *  stacked. The geometry under test below is the SAME touch tree; only the
- *  door moved. */
-async function openFoldersEditor(page: Page): Promise<void> {
-  await page.goto("/containers");
-  await page.getByRole("button", { name: /^plex/ }).tap();
-  await expect(page.getByRole("button", { name: "plex, Back" })).toBeVisible();
-}
-
-/** The ONE tree under test, addressed by ROLE (survives page restructures;
- *  there is exactly one tree on this page). */
 function backupTree(page: Page) {
   return page.getByRole("tree", { name: "Backup folder selection" });
 }
@@ -141,7 +61,6 @@ test("touch rows are full-size targets and the chevron zone is disjoint from the
     !MOBILE_PROJECTS.has(testInfo.project.name),
     "touch-only: tap() needs hasTouch and the touch tree needs (pointer: coarse)",
   );
-  await stageContainerDomain(page);
   await openFoldersEditor(page);
 
   const tree = backupTree(page);
@@ -188,7 +107,6 @@ test("tap toggles the check both ways; the chevron expands without ever toggling
     !MOBILE_PROJECTS.has(testInfo.project.name),
     "touch-only: tap() needs hasTouch and the touch tree needs (pointer: coarse)",
   );
-  await stageContainerDomain(page);
   await openFoldersEditor(page);
 
   const tree = backupTree(page);

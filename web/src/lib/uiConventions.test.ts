@@ -113,7 +113,7 @@ ruleTester.run("one-icon-badge-size", rules["one-icon-badge-size"], {
     // An arbitrary-value box such as h-[15px] w-[15px] is not an h-N/w-N
     // tile.
     `<button type="button" aria-label={l} onClick={f} className="h-[15px] w-[15px] rounded-pill"><svg /></button>`,
-    // pages/Containers.tsx: the bare "x" remove glyph has no h-/w- pair, so
+    // A bare "x" remove glyph has no h-/w- pair, so
     // there is no size to be wrong.
     `<button onClick={f} aria-label={t("offsite.targets.remove")} className="text-carbon-textMuted px-1"><span /></button>`,
     // A labelled control with a size is not an icon badge.
@@ -475,7 +475,7 @@ ruleTester.run("user-message-is-translated", rules["user-message-is-translated"]
     // Messages resolved through t() before they are shown.
     `push(t("common.deleteFailed"), "fail");`,
     `setError(res.error ?? t("common.loadBackupsFailed"));`,
-    `setError(err instanceof Error ? err.message : t("vms.loadFailed"));`,
+    `setError(err instanceof Error ? err.message : t("backups.loadFailed"));`,
     `push(res.error ?? t("common.discoverFailed"), "fail");`,
     // `??` and `?:` tails that are values, not sentences, which is what the
     // capital-plus-space test lets through.

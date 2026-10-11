@@ -181,8 +181,8 @@ export function StorageCard({
 
   if (dense) {
     // Off-site copy age: the most recent replication across the configured
-    // domains, in the OffsiteIndicator line language (↗ + relative age,
-    // text-statusOffsite; the token is text-only by design), never a fifth
+    // domains, as ↗ and a relative age in text-statusOffsite (the token is
+    // text-only by design), never a fifth
     // status hue. With a repo configured but nothing replicated yet, the
     // replication line's own "not replicated yet" says so; with none
     // configured, the protection card's existing "No off-site copy".

@@ -12,6 +12,7 @@ import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconCloud, IconLocal } from "../navGlyphs";
 import { Rows } from "../storage/rows";
 import { ReplicaPlaceRow } from "../zfs/replica/ReplicaPlaceRow";
+import { ZFSSitesLine } from "../zfs/ZFSSitesLine";
 
 /** An entry's timeline as the page reads it once for all its cards. */
 export type TimelineState = ReturnType<typeof useTimeline> & { domain: TimelineDomain };
@@ -43,7 +44,7 @@ function PlaceRow({ glyph, name, children }: { glyph: ReactNode; name: ReactNode
  * BackupPlaces lists the storage locations that hold the entry's backups and
  * how many each holds. A location off the premises is read only when asked,
  * because listing it takes time, and says so until then. A ZFS entry lists
- * its replica below them.
+ * its replica below them, and how many sites the server counts with it.
  */
 export function BackupPlaces({
   timeline,
@@ -102,7 +103,12 @@ export function BackupPlaces({
           );
         })}
       </Rows>
-      {replicaOf && <ReplicaPlaceRow itemId={replicaOf.id} name={replicaOf.dataset} />}
+      {replicaOf && (
+        <>
+          <ReplicaPlaceRow itemId={replicaOf.id} name={replicaOf.dataset} />
+          <ZFSSitesLine item={replicaOf} />
+        </>
+      )}
     </Card>
   );
 }

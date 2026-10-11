@@ -53,7 +53,7 @@ export function SelectField<T extends string>({
   /** Set on the trigger, for a visible <label htmlFor>. */
   id?: string;
   /** The trigger's own DOM node, for a caller that opens this field already
-   *  focused (LinkEntryPicker does, the moment the picker itself opens). */
+   *  focused. */
   ref?: Ref<HTMLButtonElement>;
 }) {
   const [open, setOpen] = useState(false);
