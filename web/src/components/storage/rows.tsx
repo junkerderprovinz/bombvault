@@ -36,7 +36,13 @@ export function SettingRow({
         </span>
         {note && <span className="text-xs text-carbon-textMuted wrap-break-word">{note}</span>}
       </div>
-      {children && <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2">{children}</div>}
+      {/* A selector wraps by the room this box has, so on a phone the box takes
+          all the row leaves it, beside the label or under it. */}
+      {children && (
+        <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 max-md:has-[[aria-orientation=horizontal]]:grow">
+          {children}
+        </div>
+      )}
     </div>
   );
 }

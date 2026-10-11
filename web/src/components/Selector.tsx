@@ -12,7 +12,8 @@
 // The strip spans its box and its segments share the width, so a card of
 // stacked selectors ends in one edge. A strip that shares a toolbar row with a
 // search field or buttons passes `inline` and hugs its segments instead. Page
-// tabs pass `fit` and stay on one row.
+// tabs pass `fit` and stay on one row. On a phone a well pins its segments
+// either way, so every row it wraps onto is a row of equals.
 //
 // Under rainbow a selector that sets a value wears one colour, its place among
 // the page's selectors (lib/selectorHue.ts), on its chosen segment, and the
@@ -37,6 +38,7 @@ import { useLabelMode } from "../lib/useLabelMode";
 import type { ControlAxis } from "../lib/controls";
 import { hidesLabel, labelWidth } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
+import { useIsDesktop } from "../lib/useMediaQuery";
 import { segmentLayout, type SegmentWidths } from "../lib/segmentLayout";
 
 export interface SelectorItem {
@@ -146,11 +148,15 @@ const SIZE: Record<
  * a button, the button height, since a box sized by its text comes out shorter
  * than the controls around it. Text-only strips keep the compact padding, and
  * grow to the button height only under a coarse pointer, where a 20px pill is
- * too small to hit.
+ * too small to hit. A well is a row of targets with nothing between them, so
+ * under a finger its segments take the taller key height.
  */
-function segmentPadding(size: SelectorSize, hasGlyph: boolean, buttonHeight: boolean): string {
-  return hasGlyph || buttonHeight ? SIZE[size].glyphPadding : `${SIZE[size].padding} pointer-coarse:min-h-(--btn-h)`;
+function segmentPadding(size: SelectorSize, hasGlyph: boolean, buttonHeight: boolean, well: boolean): string {
+  if (hasGlyph || buttonHeight) return well ? `${SIZE[size].glyphPadding} ${WELL_TOUCH}` : SIZE[size].glyphPadding;
+  return `${SIZE[size].padding} ${well ? WELL_TOUCH : "pointer-coarse:min-h-(--btn-h)"}`;
 }
+
+const WELL_TOUCH = "pointer-coarse:min-h-(--btn-h-key)";
 
 // MIN_PINNED_WIDTH is the narrowest a pinned segment gets. The shared floor
 // keeps the pinned strips on one page at one width instead of each following
@@ -393,6 +399,11 @@ export function Selector(props: SelectorProps) {
     className = "",
   } = props;
   const well = variant === "well";
+  // Below the desktop shell a well soon runs out of row, and segments that hug
+  // their labels then wrap into rows of odd widths. Pinned to the widest label
+  // they stay equal and wrap into even rows. A strip of glyphs alone keeps its
+  // squares.
+  const phoneWell = !useIsDesktop() && well && !fit && !pairsOnPhone && !items.every((i) => i.iconOnly);
 
   // `lg` strips are the page-level tabs and pickers and follow the Tabs label
   // mode; smaller strips sit in form rows beside buttons and follow the Buttons
@@ -408,7 +419,7 @@ export function Selector(props: SelectorProps) {
   // stays a row of equal tabs in glyph mode.
   const labelsOffScreen = hidesLabel(labelModeForStrip) && items.every((i) => !!i.icon);
   const reactiveStrip = labelModeForStrip === "reactive" && items.every((i) => !!i.icon && !i.iconOnly);
-  const pinWidth = equalWidth && !fit && !(labelsOffScreen && size !== "lg");
+  const pinWidth = (equalWidth || phoneWell) && !fit && !(labelsOffScreen && size !== "lg");
   // A strip that keeps to one row can only drop its labels where they are on
   // screen and every segment has a glyph to show instead.
   const canSqueeze = fit && labelModeForStrip === "textGlyph" && items.every((i) => !!i.icon);
@@ -469,12 +480,17 @@ export function Selector(props: SelectorProps) {
       const gap = parseFloat(own.columnGap) || 0;
       const widths = segmentWidths(segs);
       const widest = Math.max(...widths.map((w) => w.oneLine));
-      let pinned = pinnedWidth(widest, segs.length, room, gap);
+      // The shared floor belongs to the strips that asked to be pinned. A phone
+      // well takes its widest label, so one beside a caption still hugs.
+      let pinned = equalWidth ? pinnedWidth(widest, segs.length, room, gap) : Math.min(widest, room);
       let rows = segmentLayout(room, pinned, widths, gap);
       // A hugging strip that wraps takes the floor its rows have room for, so
-      // a tab is as wide in a strip of eight as in a strip of four.
+      // a tab is as wide in a strip of eight as in a strip of four. A phone
+      // well has no floor and takes its even share of the row instead.
       if (inline && !rows.byContent && rows.perRow < segs.length) {
-        pinned = pinnedWidth(widest, rows.perRow, room, gap);
+        pinned = equalWidth
+          ? pinnedWidth(widest, rows.perRow, room, gap)
+          : Math.floor((room - gap * (rows.perRow - 1)) / rows.perRow);
         rows = segmentLayout(room, pinned, widths, gap);
       }
       const next: RowLayout = { pinned, room, gap, inset, ...rows };
@@ -485,7 +501,7 @@ export function Selector(props: SelectorProps) {
     watch.observe(box);
     for (const seg of segments()) watch.observe(seg);
     return () => watch.disconnect();
-  }, [pinWidth, inline, itemsKey, disabledKey, size, labelModeForStrip]);
+  }, [pinWidth, equalWidth, inline, itemsKey, disabledKey, size, labelModeForStrip]);
 
   // How a one-row strip holds its labels: in even shares while the widest
   // fits one, at each label's own width while they fit together, and as
@@ -528,9 +544,10 @@ export function Selector(props: SelectorProps) {
   // hugs its label grows too, and so does a pinned one whose row is laid out
   // by content.
   //
-  // In a hugging strip the pinned segments keep their width, and the track is
-  // held to one row's worth of them, a pixel over against rounding, so it wraps
-  // into even rows that end where the segments do.
+  // In a hugging strip the pinned segments start from their width, and the
+  // track is held to one row's worth of them, a pixel over against rounding, so
+  // it wraps into even rows that end where the segments do. A short last row
+  // grows its segments rather than leave a hole.
   const byContent = pinWidth && !!layout?.byContent;
   const pinnedRows = pinWidth && layout && !layout.byContent ? layout : null;
   const hugged = inline && pinnedRows;
@@ -540,7 +557,7 @@ export function Selector(props: SelectorProps) {
   const segmentFlex: CSSProperties = fit
     ? { flex: fitMode === "content" ? "1 1 auto" : "1 1 0", minWidth: 0, maxWidth: `${MAX_PINNED_WIDTH}px` }
     : hugged
-      ? { flex: `0 0 ${Math.min(hugged.pinned, hugged.room)}px` }
+      ? { flex: `1 0 ${Math.min(hugged.pinned, hugged.room)}px` }
       : pinnedRows
         ? {
             minWidth: `${Math.min(pinnedRows.pinned, pinnedRows.room)}px`,
@@ -660,12 +677,12 @@ export function Selector(props: SelectorProps) {
           // size="icon"; Selector does not render through Badge, so the two
           // sizes have to be kept in step by hand.
           well && equalWidth
-            ? `text-center h-[var(--badge-md)] ${SIZE[size].padding}`
-            : equalWidth || pairsOnPhone
-              ? `text-center ${segmentPadding(size, !!item.icon, buttonHeight)}`
+            ? `text-center h-[var(--badge-md)] ${SIZE[size].padding} ${WELL_TOUCH}`
+            : equalWidth || phoneWell || pairsOnPhone
+              ? `text-center ${segmentPadding(size, !!item.icon, buttonHeight, well)}`
               : item.iconOnly
                 ? "h-8 w-8 p-0"
-                : segmentPadding(size, !!item.icon, buttonHeight),
+                : segmentPadding(size, !!item.icon, buttonHeight, well),
         ]
           .filter(Boolean)
           .join(" ");
