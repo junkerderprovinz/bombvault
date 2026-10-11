@@ -1,63 +1,35 @@
-// Desktop-untouched: the per-page desktop invariance contract.
+// What every routed page looks like at desktop width. On both desktop
+// projects (768px is the 48rem boundary, 1280px a comfortable window) the
+// sidebar is visible, the phone's bottom bar is not in the DOM at all, and
+// the page scrolls inside bv-main.
 //
-// The headline guarantee, made executable: for every routed destination,
-// on both desktop projects (desktop-768 = the 48rem breakpoint
-// boundary, desktop-1280 = comfortable desktop), today's shell is exactly
-// what renders: the desktop Sidebar is visible, the mobile bottom bar has
-// zero matches in the DOM (not CSS-hidden: the Layout chrome switch never
-// renders it), and the `bv-main` scroller is present.
+// A loop over the routes and not a few spot checks, so a route that is added
+// without joining it is a visible gap and a regression on one page fails by
+// name. /receiver and /fleet ride through their redirects to /instances.
 //
-// Parameterized as a route loop rather than spot checks: a future route
-// added to the frozen router without joining this loop is a visible gap in
-// the report, and any desktop-layout regression on any single destination
-// fails the gate by name. /receiver, /pull and /fleet are Navigate
-// redirects into /instances' hash lanes; the loop rides /receiver and
-// /fleet through their redirect, and /instances, the landing surface of
-// all three, holds a slot of its own.
-//
-// The assertions run on the fresh-DB empty states the harness
-// boots (playwright.config.ts): this is a chrome/layout contract, never a
-// data contract. The pages of the single backup types (/containers, /vms,
-// /flash, ...) have no entry in the sidebar and stay routed, so every one of
-// them is directly reachable by goto (the Go SPA fallback,
-// internal/api/spa.go, serves index.html for client routes).
-//
-// The second, per-page half: each page that has been given a phone face
-// (/dashboard in the shell PR, /containers in the containers PR, /vms in this
-// one) additionally asserts the absence of every phone-only surface its PR
-// put below the breakpoint (the StickyActionBar chrome and the filled
-// full-width primary triggers). Same discipline as the route loop: fresh-DB
-// empty states, chrome not data. The page routes (not the / redirect) keep
-// the loop's canonical form.
-//
-// SCOPE NOTE: the Files, Settings-family and Recovery mobile surfaces carry
-// their own per-page leakage batteries with their own commits (their
-// ListToolbar/Load-more/chip-strip/wizard needles and the inverse
-// mobile-direction halves); this file pins the desktop half, and those
-// pages' asserts live beside those pages' phone treatments.
+// The loop runs on the empty states of a fresh database, since it is about
+// the shell and not about data. The pages with a phone layout of their own
+// then show that nothing of it reaches the desktop.
 import { expect, test, type Page } from "@playwright/test";
+import { container, item, stageEntries } from "./entries";
 
 // The two desktop projects from playwright.config.ts (>= the 48rem chrome
 // switch). Branching on the project name, the mobile-shell.spec.ts pattern,
 // keeps every assertion honest about which contract each project verifies.
 const DESKTOP_PROJECTS = new Set(["desktop-1280", "desktop-768"]);
 
-// The route paths the loop pins, verbatim from the frozen route table
-// (web/src/app/router.tsx): every shell destination, plus /receiver and
-// /fleet, whose Navigate redirects land on /instances (the loop rides them
-// through). The pure redirects (/, /jobs, /pull) and the unlisted /glyphs
-// contact sheet are not destinations, so they are absent here.
+// Every destination of the router (web/src/app/router.tsx), with one entry's
+// page for all of them, plus /receiver and /fleet, which redirect to
+// /instances. /containers stands for the links to a kind's own page, which
+// redirect to the list. /, /jobs, /pull and the unlisted /glyphs sheet are
+// not destinations.
 const ROUTES = [
   "/dashboard",
   "/anomalies",
   "/backups",
+  "/backups/flash/flash",
   "/storage",
   "/containers",
-  "/vms",
-  "/flash",
-  "/files",
-  "/zfs",
-  "/config",
   "/recovery",
   "/instances",
   "/receiver",
@@ -178,48 +150,22 @@ for (const route of DASHBOARD_ROUTES) {
   });
 }
 
-// The >=48rem leakage pass for /containers: the page the containers PR gave
-// a phone face (the card list, the stacked detail, the Save bar). Same
-// discipline as the Dashboard pass above.
-const CONTAINER_ROUTES = ["/containers"];
-
-for (const route of CONTAINER_ROUTES) {
-  test(`desktop untouched of the Containers phone chrome at ${route}`, async ({ page }, testInfo) => {
-    test.skip(!DESKTOP_PROJECTS.has(testInfo.project.name), "desktop-only: the >=48rem leakage contract");
-    await page.goto(route);
-
-    // The sticky-in-flow Save bar (the stacked detail's footer).
-    await expect(page.getByTestId("sticky-action-bar")).toHaveCount(0);
-    // The filled full-width accent control: the mobile Save / New-backup
-    // trigger's signature (Button tone="accent" over the caller's w-full
-    // stage); no desktop control carries it.
-    await expect(page.locator("button.w-full.bg-accent")).toHaveCount(0);
-    // The Home thumb-zone trigger and the tree Save bar's action.
-    await expect(page.getByRole("button", { name: "New backup" })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Save folders" })).toHaveCount(0);
-    // The stacked container detail's back row (accessible name
-    // "<container>, Back", touch-tree.spec.ts's entry locator, generalized
-    // past the fixture name).
-    await expect(page.getByRole("button", { name: /, Back$/ })).toHaveCount(0);
-    // The Save bar's live count statement (folders.handedToRestic).
-    await expect(page.getByText(/folders handed to restic/)).toHaveCount(0);
+// The Backups list shows a phone twenty rows at a time. The desktop shows
+// every row at once and has nothing to load.
+test("desktop untouched of the phone's window on the Backups list", async ({ page }, testInfo) => {
+  test.skip(!DESKTOP_PROJECTS.has(testInfo.project.name), "desktop-only: the >=48rem leakage contract");
+  const names = Array.from({ length: 45 }, (_, i) => `svc-${String(i).padStart(2, "0")}`);
+  await stageEntries(page, {
+    items: names.map((key) => item({ key })),
+    containers: names.map((name) => container({ name })),
   });
-}
+  await page.goto("/backups");
 
-// The desktop /vms carries none of the phone face: the ListToolbar's sticky
-// search strip (no desktop element has that class set) and the load-more
-// window are the two surfaces only the phone block renders.
-const VM_ROUTES = ["/vms"];
-
-for (const route of VM_ROUTES) {
-  test(`desktop untouched of the VMs phone chrome at ${route}`, async ({ page }, testInfo) => {
-    test.skip(!DESKTOP_PROJECTS.has(testInfo.project.name), "desktop-only: the >=48rem leakage contract");
-    await page.goto(route);
-
-    await expect(page.locator("div.sticky.top-0.z-10.bg-carbon-sidebar")).toHaveCount(0);
-    await expect(page.getByText("Load more")).toHaveCount(0);
-  });
-}
+  await expect(page.getByTestId("backup-row")).toHaveCount(45);
+  await expect(page.getByText("Load more")).toHaveCount(0);
+  await expect(page.getByTestId("sticky-action-bar")).toHaveCount(0);
+  await expect(page.locator("button.w-full.bg-accent")).toHaveCount(0);
+});
 
 // Positive half for the Dashboard page: the desktop customizable grid is not
 // merely free of mobile chrome, it is present. The customize pencil is

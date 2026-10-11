@@ -608,7 +608,7 @@ test.describe("on the desktop", () => {
     expect(filled).toBe(1);
 
     await restore.click();
-    await expect(page).toHaveURL(/\/containers\?restore=5f3a9c1e&at=\d+&item=Nextcloud_AIO/);
+    await expect(page).toHaveURL(/\/backups\/container\/Nextcloud_AIO[^/?]*\?restore=5f3a9c1e&at=\d+$/);
   });
 
   test("Details opens a window with the whole sentence, the curve and every action", async ({ page }) => {
@@ -801,9 +801,9 @@ test("the More sheet counts the open findings and the bar marks its trigger whil
   await page.route("**/api/anomalies/summary", (route) =>
     route.fulfill({ json: { ok: true, summary: summary({ open }) } }),
   );
-  await page.goto("/containers");
+  await page.goto("/storage");
 
-  const more = page.getByRole("button", { name: "Mehr", exact: true });
+  const more = page.getByTestId("bottom-nav").getByRole("button", { name: "Mehr", exact: true });
   const sheet = page.getByTestId("more-sheet");
   const row = sheet.getByRole("link", { name: /Anomalien/ });
   await expect(more).toBeVisible();
