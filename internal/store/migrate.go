@@ -3073,6 +3073,19 @@ ALTER TABLE key_deposits_sent ADD COLUMN changed_at INTEGER NOT NULL DEFAULT 0;`
 		alreadySatisfied: columnPresent("key_releases", "owner_name"),
 		sql:              `ALTER TABLE key_releases ADD COLUMN owner_name TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// The key each member signs its calls with, as this install first
+		// learned it, and the newest counter a signed call carried.
+		version:          keyHardeningMigration + 3,
+		name:             "member_keys",
+		alreadySatisfied: tablePresent("member_keys"),
+		sql: `CREATE TABLE IF NOT EXISTS member_keys (
+  member_id TEXT    PRIMARY KEY,
+  key       BLOB    NOT NULL,
+  counter   INTEGER NOT NULL DEFAULT 0,
+  pinned_at INTEGER NOT NULL
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3193,7 +3206,7 @@ const oneLineMigration = 336
 const depositProofMigration = 337
 
 // keyHardeningMigration numbers what was added to the tables of
-// keyRolesMigration afterwards, from 350.
+// keyRolesMigration afterwards, from 350, and the keys members sign with, 353.
 const keyHardeningMigration = 350
 
 // oneLineColumns are the names and locations the recovery kit prints.

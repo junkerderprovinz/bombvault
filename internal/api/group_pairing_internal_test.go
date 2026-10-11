@@ -19,6 +19,7 @@ import (
 	"github.com/coder/websocket"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/group"
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
@@ -271,7 +272,15 @@ func TestPairingAnswerOnTheWireCarriesNoAppKey(t *testing.T) {
 	if _, err := in.st.SaveSentRoleRequest(store.RoleRequest{MemberID: fetcher, Role: store.RoleFetcher, Sections: []string{"containers"}, State: store.RoleAllowed}); err != nil {
 		t.Fatal(err)
 	}
-	status, body := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodGet, Path: "/api/group/peer/pairing", Sender: fetcher})
+	seed, err := keydeposit.NewOwnerSeed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := in.st.PinMemberKey(fetcher, keydeposit.OwnerKey(seed)); err != nil {
+		t.Fatal(err)
+	}
+	signed := signedAs(t, in, seed, fetcher, keydeposit.ProofPairing, time.Now().UnixMilli(), nil, map[string]any{})
+	status, body := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodGet, Path: "/api/group/peer/pairing", Body: signed, Sender: fetcher})
 	if status != http.StatusOK {
 		t.Fatalf("pairing answered %d: %s", status, body)
 	}

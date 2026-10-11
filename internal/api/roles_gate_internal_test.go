@@ -334,9 +334,9 @@ func TestLoginsAndPairingsFromBeforeTheUpgradeGoOnWithoutAnyoneAnswering(t *test
 
 	// The sending side kept no record of its login, so it asks; the receiver
 	// already allows it and nobody has to answer.
-	out := oldWayLogin(t, attic, tower.id(t), tower.id(t), "tower")
-	if held, _ := out["receiver"].(map[string]any); out["ok"] != true || held["password"] != "kept across the upgrade" {
-		t.Fatalf("the login the member held before the upgrade: %v", out)
+	held, err := tower.svc.askReceiver(context.Background(), attic.id(t), true)
+	if err != nil || held == nil || held.Password != "kept across the upgrade" {
+		t.Fatalf("the login the member held before the upgrade: %+v, %v", held, err)
 	}
 	if mirror := askForRole(t, tower, attic, store.RoleReceiver, "containers"); mirror.State != store.RoleAllowed {
 		t.Fatalf("the sender switching the role on after the upgrade = %+v, want it allowed at once", mirror)

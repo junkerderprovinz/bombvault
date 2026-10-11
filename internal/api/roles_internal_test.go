@@ -250,21 +250,21 @@ func TestOnlyTheAskedMemberAnswersARoleRequest(t *testing.T) {
 	askForRole(t, tower, attic, store.RoleFetcher, "containers")
 	allowed := map[string]any{"role": store.RoleFetcher, "state": store.RoleAllowed}
 
-	if out := peerCallAs(t, tower, barn, "/api/group/peer/roles/answer", allowed); out["ok"] != true || out["known"] != false {
-		t.Fatalf("another member's answer = %v, want it to find nothing", out)
+	if out := peerCallAs(t, tower, barn, "/api/group/peer/roles/answer", allowed); out["ok"] != false {
+		t.Fatalf("another member's unsigned answer = %v, want it refused", out)
 	}
 	if mirror, _ := roleWith(t, tower, store.RoleRequestOut, attic, store.RoleFetcher); mirror.State != store.RoleAsked {
 		t.Fatalf("another member answered a request that was not put to it: %+v", mirror)
 	}
 
-	if out := peerCallAs(t, attic, tower.id(t), "/api/group/peer/roles/answer", allowed); out["known"] != false {
-		t.Fatalf("the asking member's own answer = %v, want it to find nothing", out)
+	if out := peerCallAs(t, attic, tower.id(t), "/api/group/peer/roles/answer", allowed); out["ok"] != false {
+		t.Fatalf("the asking member's own unsigned answer = %v, want it refused", out)
 	}
 	if req, _ := roleWith(t, attic, store.RoleRequestIn, tower, store.RoleFetcher); req.State != store.RoleAsked {
 		t.Fatalf("the asking member allowed its own request: %+v", req)
 	}
 
-	if out := peerCallAs(t, attic, barn, "/api/group/peer/roles/withdraw", map[string]any{"role": store.RoleFetcher}); out["ok"] != true {
+	if out := peerCallAs(t, attic, barn, "/api/group/peer/roles/withdraw", map[string]any{"role": store.RoleFetcher}); out["ok"] != false {
 		t.Fatalf("withdraw = %v", out)
 	}
 	if _, ok := roleWith(t, attic, store.RoleRequestIn, tower, store.RoleFetcher); !ok {
