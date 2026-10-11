@@ -7,7 +7,7 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { useScheduleSentence } from "../../components/EffectiveScheduleLine";
 import { IconEye, IconRefresh } from "../../components/glyphs";
-import { IconBackupNow, IconCheck, IconDownload } from "../../components/navGlyphs";
+import { IconBackupNow, IconCheck, IconDownload, IconRecovery } from "../../components/navGlyphs";
 import { anomalyEntryName, anomalySentence } from "../../lib/anomalies";
 import {
   ApiError,
@@ -26,6 +26,7 @@ import { useT } from "../../lib/i18n";
 import type { Need } from "../../lib/needs";
 import { formatList } from "../../lib/placement";
 import { formatRecent } from "../../lib/reltime";
+import { emergencyPath } from "../../lib/restorePlan";
 import { runTargetText } from "../../lib/runDisplay";
 import { runKindLabel } from "../../lib/runKind";
 import { isOwnReason, RunReasonText } from "../../lib/runReason";
@@ -331,6 +332,28 @@ function AnomalyRow({ finding, t, lang }: { finding: AnomalyView; t: T; lang: st
   );
 }
 
+function KeyLockedRow({ t }: { t: T }) {
+  const navigate = useNavigate();
+  return (
+    <Row
+      testid="need-key-locked"
+      tone="fail"
+      title={t("overview.needs.keyLocked")}
+      actions={
+        <Button
+          className={TOUCH}
+          label={t("entry.config.startRecovery")}
+          labelKey={null}
+          glyph={<IconRecovery />}
+          onClick={() => navigate(emergencyPath("access"))}
+        />
+      }
+    >
+      <p className={SUB}>{t("emergency.code.backup-key-locked")}</p>
+    </Row>
+  );
+}
+
 function RecoveryKitRow({ t }: { t: T }) {
   const { push } = useToast();
   const [storing, setStoring] = useState(false);
@@ -384,8 +407,8 @@ function RecoveryKitRow({ t }: { t: T }) {
 
 /**
  * NeedsCard lists what waits for the person, each with the action that
- * settles it: a failed run, an entry nothing backs up, a failed off-site
- * copy, an anomaly, the recovery kit.
+ * settles it: a backup key that does not open, a failed run, an entry
+ * nothing backs up, a failed off-site copy, an anomaly, the recovery kit.
  */
 export function NeedsCard({
   needs,
@@ -409,6 +432,8 @@ export function NeedsCard({
         <ul className="flex flex-col">
           {needs.map((need) => {
             switch (need.is) {
+              case "keyLocked":
+                return <KeyLockedRow key="key" t={t} />;
               case "failedRun":
                 return <FailedRunRow key={`run:${need.run.id}`} run={need.run} item={need.item} t={t} onErrors={onErrors} />;
               case "unprotected":

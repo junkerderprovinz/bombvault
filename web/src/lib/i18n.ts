@@ -4561,6 +4561,7 @@ export const en = {
   "oldFolder.viaKit": "Recovery kit",
   "oldFolder.viaKey": "Type the APP_KEY",
   "oldFolder.needsKit": "Choose the old instance's recovery kit first.",
+  "overview.needs.keyLocked": "Backups are stopped: the key can no longer be opened",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -8840,6 +8841,7 @@ export const de: Translations = {
   "oldFolder.viaKit": "Recovery-Kit",
   "oldFolder.viaKey": "APP_KEY eintippen",
   "oldFolder.needsKit": "Wähl zuerst das Recovery-Kit der alten Instanz aus.",
+  "overview.needs.keyLocked": "Sicherungen stehen still: Der Schlüssel lässt sich nicht mehr öffnen",
 };
 
 // ---------------------------------------------------------------------------

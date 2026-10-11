@@ -572,6 +572,18 @@ test("a key that was taken over is named on the page with the day it came", asyn
   await expect(line.getByRole("button")).toHaveCount(0);
 });
 
+test("a key that no longer opens stands first under what needs the person and leads to the emergency", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  await stageEmergency(page, { backupKey: "locked", source: "kit", adoptedAt: NOW, undoable: true });
+  await page.goto("/dashboard");
+  const need = page.getByTestId("need-key-locked");
+  await expect(need).toContainText("Der Schlüssel lässt sich nicht mehr öffnen");
+  await need.getByRole("button", { name: "Notfall-Assistent starten" }).click();
+  await expect(page).toHaveURL(/\/restore\?emergency=access$/);
+  await expect(wizard(page).getByText(/Der übernommene Schlüssel lässt sich nicht mehr öffnen/)).toBeVisible();
+});
+
 for (const width of [320, 360]) {
   test(`the emergency with a kit @ ${width}px keeps inside the edge`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout");

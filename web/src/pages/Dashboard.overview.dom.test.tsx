@@ -331,6 +331,18 @@ describe("the status head", () => {
     expect(within(cell("needs")).getAllByRole("listitem")).toHaveLength(4);
   });
 
+  it("puts a backup key that no longer opens first among what needs the person", async () => {
+    server.domains = [domain()];
+    server.items = [item()];
+    server.kitDue = true;
+    server.keyLocked = true;
+    await renderPage();
+
+    expect(head().getByText("2 things need you")).toBeTruthy();
+    const rows = within(cell("needs")).getAllByRole("listitem");
+    expect(rows.map((row) => row.getAttribute("data-testid"))).toEqual(["need-key-locked", "need-recovery-kit"]);
+  });
+
   it("takes the recovery kit off the list once it is stored", async () => {
     server.domains = [domain()];
     server.items = [item()];

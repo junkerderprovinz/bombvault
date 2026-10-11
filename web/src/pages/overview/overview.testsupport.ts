@@ -189,6 +189,8 @@ export const server = {
   detection: false,
   /** Encryption is on and the recovery kit is not confirmed. */
   kitDue: false,
+  /** APP_KEY stopped opening the key this server took over. */
+  keyLocked: false,
   /** What the settings hold beyond the recovery kit. */
   settings: {} as Partial<Settings>,
   platform: "unraid",
@@ -209,6 +211,7 @@ export function resetServer(): void {
     findings: [],
     detection: false,
     kitDue: false,
+    keyLocked: false,
     settings: {},
     platform: "unraid",
     saveRefused: "",
@@ -262,6 +265,8 @@ export function stagedApi<M extends object>(actual: M): M {
   return {
     ...actual,
     getStatus: () => answer(server.domains, (domains) => ({ ok: true, domains })),
+    getEmergency: () =>
+      Promise.resolve({ ok: true, emergency: { backupKey: server.keyLocked ? "locked" : "own", undoable: false } }),
     listItems: () => answer(server.items, (items) => ({ ok: true, items, unlisted: [] })),
     listRuns: vi.fn(() => answer(server.runs, (runs) => ({ ok: true, runs }))),
     listStorageLocations: vi.fn(() => answer(server.locations, (locations) => ({ ok: true, locations }))),
