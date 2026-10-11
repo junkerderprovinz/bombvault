@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"slices"
@@ -252,10 +253,82 @@ func TestAnErasureLeavesADirectRepositoryInUseAndEmptiesAnIdleOne(t *testing.T) 
 	}
 }
 
+// aliasedHome gives the vms section its own repository under user/ and a
+// destination under disk1/, whose vms folder is the same Unraid share: both
+// hold the same two backups of vm:old.
+func aliasedHome(f *placementFixture) (disk store.OffsiteTarget, home, there string) {
+	f.settings(func(s *store.Settings) { s.VMsPath = "user/backups/vms" })
+	home = f.localRepo("user/backups/vms")
+	disk = f.destination("Disk", "disk1/backups")
+	f.tickDestination(disk, "vms")
+	there = f.localRepo("disk1/backups/vms")
+	for _, loc := range []string{home, there} {
+		f.hold(loc, snap("o1", 50, "vm:old"), snap("o2", 60, "vm:old"))
+	}
+	return disk, home, there
+}
+
+func TestAHomeUnderAnotherSpellingOfTheDestinationIsNoSecondCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	disk, home, _ := aliasedHome(f)
+
+	preview := f.erasurePreview(disk)
+	for _, sec := range preview.Sections {
+		if sec.Kept == "" && len(preview.LastCopies) == 0 {
+			t.Fatalf("the preview empties %+v and calls vm:old held elsewhere, though its home is the same folder", sec)
+		}
+	}
+	res := f.erase(disk, preview.Removal)
+	if res["ok"] != false {
+		t.Fatalf("answer = %v, want a refusal", res)
+	}
+	f.waitForErasure("vms")
+	if len(f.eng.deletes) != 0 || len(f.held(home)) != 2 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+	if _, ok, _ := f.st.GetDestination(disk.ID); !ok {
+		t.Fatal("a refused erasure removed the destination")
+	}
+}
+
+func TestAPlaceTheErasureEmptiesHoldsNothingUnderAnotherSpelling(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, _, there := aliasedHome(f)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	oc, err := f.svc.ownerContextFor("vms")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	held := f.svc.heldOutside(context.Background(), settings, "vms", "", oc, []string{there})
+
+	if len(held.entries) != 0 || len(held.backups) != 0 {
+		t.Fatalf("the home counts as holding %v elsewhere, though it is the folder being emptied", held.backups)
+	}
+}
+
+func TestAPlaceNothingCanNameHoldsNoSecondCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, _ := boxWithVMs(f)
+	nowhere := f.destination("Nowhere", "rclone:nowhere:bv")
+	other := f.tickDestination(nowhere, "vms")
+	f.hold(other.Repo, copied("n1", "o1", 50, "vm:old"), copied("n2", "o2", 60, "vm:old"), copied("n3", "o3", 70, "vm:old"))
+
+	preview := f.erasurePreview(box)
+
+	if last := []erasureEntry{{Domain: "vms", Identity: "vm:old", Backups: 3}}; !slices.Equal(preview.LastCopies, last) {
+		t.Fatalf("last copies = %+v, want %+v: no rclone remote is called nowhere", preview.LastCopies, last)
+	}
+}
+
 func TestAnErasureTakesWhatAMovedSectionLeftBehind(t *testing.T) {
 	f := newPlacementFixture(t)
 	box, vms := boxWithVMs(f)
 	files := f.tickDestination(box, "files")
+	f.rcloneConf("[vault]\ntype = drive\nroot_folder_id = 0Bvault\n")
 	vault := f.destination("Vault", vaultRepo)
 	f.move(vms, vault)
 

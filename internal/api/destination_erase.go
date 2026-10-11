@@ -7,7 +7,6 @@ import (
 	"log"
 	"maps"
 	"net/http"
-	"path/filepath"
 	"slices"
 	"time"
 
@@ -129,11 +128,27 @@ func ofSection(snaps []restic.Snapshot, domain string) []restic.Snapshot {
 type heldElsewhere struct{ entries, backups map[string]bool }
 
 // heldOutside lists the domain's repositories and its targets at other
-// destinations. A place that cannot be read counts as holding nothing, which
-// errs towards calling a copy the last one. emptied are the locations the
-// deletion empties, which are no other place.
-func (s *Service) heldOutside(ctx context.Context, settings store.Settings, domain, destinationID string, oc ownerContext, emptied map[string]bool) heldElsewhere {
+// destinations. A place that cannot be read, or that cannot be told apart
+// from one the deletion empties, counts as holding nothing, which errs
+// towards calling a copy the last one. emptied are the resolved locations the
+// deletion empties.
+func (s *Service) heldOutside(ctx context.Context, settings store.Settings, domain, destinationID string, oc ownerContext, emptied []string) heldElsewhere {
 	held := heldElsewhere{entries: map[string]bool{}, backups: map[string]bool{}}
+	places := s.placesNow()
+	elsewhere := func(loc string) bool {
+		at, named := places.of(loc)
+		if !named {
+			log.Printf("api: erase: %s cannot be told apart from the places being emptied and counts as empty", shortRepoName(loc)) //nolint:gosec // G706: the location is shortened
+			return false
+		}
+		for _, gone := range emptied {
+			other, ok := places.of(gone)
+			if ok && at.same(other) || !ok && sameRepoLocation(loc, gone) {
+				return false
+			}
+		}
+		return true
+	}
 	add := func(snaps []restic.Snapshot) {
 		snaps = ofSection(snaps, domain)
 		owners := oc.owners(snaps)
@@ -147,7 +162,7 @@ func (s *Service) heldOutside(ctx context.Context, settings store.Settings, doma
 		log.Printf("api: erase: the %s repositories do not resolve and count as empty: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 	}
 	for _, home := range homes {
-		if emptied[filepath.ToSlash(home.Loc)] {
+		if !elsewhere(home.Loc) {
 			continue
 		}
 		snaps, err := s.listRepo(ctx, home.Loc, s.primaryModeFor(settings, domain, home.Loc))
@@ -165,7 +180,7 @@ func (s *Service) heldOutside(ctx context.Context, settings store.Settings, doma
 		if t.DestinationID == destinationID {
 			continue
 		}
-		if loc, err := s.resolveRepo(t.Repo); err != nil || emptied[filepath.ToSlash(loc)] {
+		if loc, err := s.resolveRepo(t.Repo); err != nil || !elsewhere(loc) {
 			continue
 		}
 		snaps, err := s.listTarget(ctx, settings, t)
@@ -296,10 +311,10 @@ func (p *erasurePlan) add(ctx context.Context, s *Service, settings store.Settin
 // count fills in the totals over the sections that are emptied and finds the
 // entries nothing else holds a backup of.
 func (p *erasurePlan) count(ctx context.Context, s *Service, settings store.Settings, id string, contexts map[string]ownerContext) {
-	emptied := map[string]bool{}
+	var emptied []string
 	for i, section := range p.Sections {
 		if section.Kept == "" {
-			emptied[filepath.ToSlash(p.repos[i].loc)] = true
+			emptied = append(emptied, p.repos[i].loc)
 		}
 	}
 	outside := map[string]heldElsewhere{}

@@ -409,6 +409,13 @@ func (f *placementFixture) replicated(domain string) {
 	}
 }
 
+func (f *placementFixture) rcloneConf(conf string) {
+	f.t.Helper()
+	if err := f.svc.SetRcloneConf(conf); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
 // hold sets what a listing of the location returns.
 func (f *placementFixture) hold(location string, snaps ...restic.Snapshot) {
 	f.eng.mu.Lock()
