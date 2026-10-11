@@ -135,8 +135,8 @@ describe("the settings index in English", () => {
     expect(where(en["settings.registryHost"])).toEqual([`restore: ${en["settings.registriesTitle"]}`]);
     expect(where(en["settings.cacheLimitLabel"])).toEqual([`system: ${en["tile.system.performance"]}`]);
     expect(where(en["export.encrypt.enable"])).toEqual([`system: ${en["settingsIO.title"]}`]);
-    expect(where(en["settings.restartHealthWait"])).toEqual([`schedules: ${en["settings.restartHealthTitle"]}`]);
-    expect(where(en["settings.pruneImageAfterUpdate"])).toEqual([`schedules: ${en["settings.imageMaintenanceTitle"]}`]);
+    expect(where(en["settings.restartHealthWait"])).toEqual([`schedules: ${en["schedules.order"]}`]);
+    expect(where(en["settings.pruneImageAfterUpdate"])).toEqual([`schedules: ${en["schedules.updates"]}`]);
     expect(where(en["pull.title"])).toContain(`instances: ${en["tile.instances.modules"]}`);
     expect(where(en["tile.info.bugReport"])).toEqual([`info: ${en["tile.info.help"]}`]);
     expect(search(items, en["tile.crypt.title"])[0].item.page).toBe("security");

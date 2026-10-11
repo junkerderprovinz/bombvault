@@ -41,7 +41,7 @@ describe("EffectiveScheduleLine", () => {
       ["domain-off", "Not backed up automatically: the Folders domain is off"],
       ["excluded", "Not backed up automatically: left out of the schedule"],
       ["override-off", "Not backed up automatically: its own schedule is off"],
-      ["schedule-off", "Not backed up automatically: neither the Folders schedule nor Backup Everything is on"],
+      ["schedule-off", "Not backed up automatically: neither the Folders schedule nor the full backup is on"],
     ] as const;
     for (const [reason, text] of cases) {
       draw({ kind: "none", spec: "", alsoSpec: "", reason });
@@ -74,9 +74,9 @@ describe("EffectiveScheduleLine", () => {
     expect(screen.queryByText(/folders/i)).toBeNull();
   });
 
-  it("names Backup Everything for an everything-only run", () => {
+  it("names the full backup for an everything-only run", () => {
     draw({ kind: "everything", spec: "daily 05:00", alsoSpec: "" });
-    expect(screen.getByText(/backup everything/i)).toBeTruthy();
+    expect(screen.getByText(/the full backup/i)).toBeTruthy();
   });
 
   it("calls an override its own schedule and shows no second cadence", () => {

@@ -124,7 +124,7 @@ function ScheduleCard({
   const saveCadence = SAVE_CADENCE[item.kind];
   const placement = placementOf(entry);
   const pausedHint = t("schedule.pausedHint")
-    .replace("{everything}", t("settings.everythingTitle"))
+    .replace("{everything}", t("settings.everythingName"))
     .replace("{backupNow}", t("containers.backupNow"));
 
   return (

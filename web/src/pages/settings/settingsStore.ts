@@ -4,10 +4,8 @@ import {
   getSettings,
   importSettingsApply,
   listContainers,
-  listFileSets,
   listOffsiteTargets,
   listVMs,
-  listZFSDatasets,
   putSettings,
   type OffsiteTarget,
 } from "../../lib/api";
@@ -16,7 +14,7 @@ import { useNamedRepos } from "../../lib/useNamedRepos";
 import { useConfirm } from "../../lib/useConfirm";
 import { pushSaveWarnings } from "../../lib/placementCodes";
 import { directAsk, primaryDirects, retentionLowered } from "../../lib/directRepo";
-import type { Settings, Container, VM, FileSetView, ZFSDatasetView } from "../../lib/api";
+import type { Settings, Container, VM } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import type { SaveState } from "./shared";
@@ -124,17 +122,9 @@ export function useSettingsStore() {
   const [, setRetSaveState] = useState<SaveState>("idle");
   const [, setRetSaveError] = useState<string | null>(null);
 
-  // Schedules page. The container list feeds the Containers section's member
-  // list; syncSchedules applies the Containers cadence to VMs, Flash, Folders
-  // and ZFS.
+  // The containers and VMs the order lists of the schedules page arrange.
   const [containers, setContainers] = useState<Container[]>([]);
-  // VMs feed the VMs schedule section's per-item override list (#121).
   const [vms, setVMs] = useState<VM[]>([]);
-  // File sets feed the Files schedule section's member list (live enabled toggles).
-  const [fileSets, setFileSets] = useState<FileSetView[]>([]);
-  // ZFS items do the same for the ZFS schedule section.
-  const [zfsItems, setZFSItems] = useState<ZFSDatasetView[]>([]);
-  const [syncSchedules, setSyncSchedules] = useState(false);
   const [, setSchedSaveState] = useState<SaveState>("idle");
   const [, setSchedSaveError] = useState<string | null>(null);
   // The plain boolean fields of the schedules page, saved by
@@ -148,45 +138,13 @@ export function useSettingsStore() {
     | "restartHealthWait";
   const [schedFieldBusy, setSchedFieldBusy] = useState<Partial<Record<ScheduleBoolKey, boolean>>>({});
   const [schedFieldShake, setSchedFieldShake] = useState<Partial<Record<ScheduleBoolKey, number>>>({});
-  // The "sync" toggle itself isn't a Settings field (syncSchedules above is
-  // local UI state derived from whether the domain schedules already match),
-  // so it cannot go through autoSaveScheduleField; handleSyncSchedulesToggle
-  // below uses this busy/shake pair.
-  const [syncToggleBusy, setSyncToggleBusy] = useState(false);
-  const [syncToggleShake, setSyncToggleShake] = useState(0);
-  // The self-backup card's on/off toggle. configSchedule is a cadence string,
-  // not a boolean, so like the sync toggle it gets its own busy/shake pair.
-  const [configScheduleToggleBusy, setConfigScheduleToggleBusy] = useState(false);
-  const [configScheduleToggleShake, setConfigScheduleToggleShake] = useState(0);
-  // Remembers the cadence in force before the self-backup schedule was switched
-  // off, so switching it back on restores that instead of the shipped daily
-  // 02:00 default: off writes the literal "off" over the stored string.
-  //
-  // Like FlashZipExportCard's rememberedKeep, it lasts for this page's
-  // lifetime. The server stores one cadence string per domain, so a reload
-  // cannot bring the old value back, and covering that would take a second
-  // persisted field, a second source of truth for the same fact.
-  const [rememberedConfigSchedule, setRememberedConfigSchedule] = useState("daily 02:00");
-
   // installSettings adopts a settings object from the server as both the live
-  // state and the confirmed baseline, and re-derives the page state computed
-  // from it. The mount load and the reload after a settings import both use
-  // it, since an import replaces the whole configuration.
+  // state and the confirmed baseline. The mount load and the reload after a
+  // settings import both use it, since an import replaces the whole
+  // configuration.
   function installSettings(s: Settings) {
     setSettings(s);
     savedBaseline.current = s;
-    // The sync toggle reads as on only when Containers, VMs, Flash, Folders
-    // and ZFS already share one cadence that is not off. A domain that differs
-    // keeps its own value until the next edit, so the toggle must not claim
-    // otherwise.
-    setSyncSchedules(
-      s.vmsSchedule === s.containersSchedule &&
-        s.flashSchedule === s.containersSchedule &&
-        s.filesSchedule === s.containersSchedule &&
-        s.zfsSchedule === s.containersSchedule &&
-        s.containersSchedule !== "off" &&
-        s.containersSchedule !== ""
-    );
   }
 
   useEffect(() => {
@@ -218,76 +176,17 @@ export function useSettingsStore() {
         if (r.ok) setContainers(r.containers ?? []);
       })
       .catch(() => {
-        // Non-fatal: the Containers schedule section shows an empty member list.
+        // Non-fatal: the order list stays empty.
       });
 
-    // The VM list for the per-item overrides (#121).
     listVMs()
       .then((r) => {
         if (r.ok) setVMs(r.vms ?? []);
       })
       .catch(() => {
-        // Non-fatal: the VMs schedule section shows an empty per-item list.
+        // Non-fatal: the order list stays empty.
       });
-
-    loadFileSets();
-    loadZFSItems();
   }, []);
-
-  // loadFileSets runs on mount and after a Files section toggle PATCHes a set,
-  // so the member rows track the server state.
-  function loadFileSets() {
-    listFileSets()
-      .then((r) => {
-        if (r.ok) setFileSets(r.fileSets ?? []);
-      })
-      .catch(() => {
-        // Non-fatal: the Files schedule section shows an empty member list.
-      });
-  }
-
-  // loadZFSItems does for the ZFS section what loadFileSets does for Folders.
-  function loadZFSItems() {
-    listZFSDatasets()
-      .then((r) => {
-        if (r.ok) setZFSItems(r.datasets ?? []);
-      })
-      .catch(() => {
-        // Non-fatal: the ZFS schedule section shows an empty member list.
-      });
-  }
-
-  // While sync is on, mirror the Containers cadence onto VMs, Flash, Folders
-  // and ZFS in live state, not only in the saved patch, so turning sync off
-  // does not snap those editors back to stale values. The equality guard stops
-  // the effect from looping. debouncedSave (keyed "schedSync", separate from
-  // the containersSchedule key) coalesces rapid edits into one PATCH of the
-  // mirrored fields.
-  useEffect(() => {
-    if (!syncSchedules || !settings) return;
-    const merged = settings.containersSchedule;
-    if (
-      settings.vmsSchedule === merged &&
-      settings.flashSchedule === merged &&
-      settings.filesSchedule === merged &&
-      settings.zfsSchedule === merged
-    ) {
-      return;
-    }
-    setSettings((prev) =>
-      prev
-        ? { ...prev, vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged, zfsSchedule: merged }
-        : prev
-    );
-    debouncedSave("schedSync", () => {
-      void save(
-        { vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged, zfsSchedule: merged },
-        setSchedSaveState,
-        setSchedSaveError
-      );
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [syncSchedules, settings?.containersSchedule]);
 
   // fieldPulse holds a confirmation-pulse nonce per Settings field, bumped for
   // every key of a successful patch: a ToggleRow passes `fieldPulse.someKey`
@@ -657,65 +556,6 @@ export function useSettingsStore() {
     }
   }
 
-  // handleSyncSchedulesToggle saves the sync toggle. syncSchedules is local
-  // state derived on load, not a stored field. Turning it on writes the
-  // Containers cadence to VMs, Flash, Folders and ZFS at once, with the usual
-  // revert and shake on failure. Turning it off writes nothing, since every
-  // field already holds its last-saved value.
-  async function handleSyncSchedulesToggle(next: boolean) {
-    setSyncSchedules(next);
-    if (!next || !settings) return;
-    const merged = settings.containersSchedule;
-    const prevVms = settings.vmsSchedule;
-    const prevFlash = settings.flashSchedule;
-    const prevFiles = settings.filesSchedule;
-    const prevZFS = settings.zfsSchedule;
-    setSettings((s) =>
-      s
-        ? { ...s, vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged, zfsSchedule: merged }
-        : s
-    );
-    setSyncToggleBusy(true);
-    const ok = await save(
-      { vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged, zfsSchedule: merged },
-      setSchedSaveState,
-      setSchedSaveError
-    );
-    setSyncToggleBusy(false);
-    if (!ok) {
-      setSyncSchedules(false);
-      setSettings((s) =>
-        s
-          ? { ...s, vmsSchedule: prevVms, flashSchedule: prevFlash, filesSchedule: prevFiles, zfsSchedule: prevZFS }
-          : s
-      );
-      setSyncToggleShake((n) => n + 1);
-    }
-  }
-
-  // toggleConfigSchedule is the self-backup card's on/off toggle. Off writes
-  // the literal "off" cadence; on restores the cadence in force before the
-  // last off (rememberedConfigSchedule), or "daily 02:00" when there is none.
-  // There is no separate configScheduleEnabled field: parseCadenceString and
-  // buildCadenceString already round-trip "off", so a boolean would be a second
-  // source of truth. `configEnabled` in the Domains card is a different thing,
-  // whether the self-backup domain exists at all.
-  async function toggleConfigSchedule(next: boolean) {
-    const prev = settings?.configSchedule ?? "off";
-    // Switching off is the only moment the cadence is lost, and `prev` is the
-    // value being overwritten, wherever it came from.
-    if (!next && prev && prev !== "off") setRememberedConfigSchedule(prev);
-    const value = next ? rememberedConfigSchedule : "off";
-    setSettings((s) => (s ? { ...s, configSchedule: value } : s));
-    setConfigScheduleToggleBusy(true);
-    const ok = await save({ configSchedule: value }, setSchedSaveState, setSchedSaveError);
-    setConfigScheduleToggleBusy(false);
-    if (!ok) {
-      setSettings((s) => (s ? { ...s, configSchedule: prev } : s));
-      setConfigScheduleToggleShake((n) => n + 1);
-    }
-  }
-
   return {
     settings,
     setSettings,
@@ -735,10 +575,6 @@ export function useSettingsStore() {
     minPasswordLen,
     containers,
     vms,
-    fileSets,
-    zfsItems,
-    loadFileSets,
-    loadZFSItems,
     save,
     saveOffsiteRetention,
     debouncedSave,
@@ -760,13 +596,6 @@ export function useSettingsStore() {
     scheduleUpdate,
     schedFieldBusy,
     schedFieldShake,
-    syncSchedules,
-    handleSyncSchedulesToggle,
-    syncToggleBusy,
-    syncToggleShake,
-    toggleConfigSchedule,
-    configScheduleToggleBusy,
-    configScheduleToggleShake,
   };
 }
 

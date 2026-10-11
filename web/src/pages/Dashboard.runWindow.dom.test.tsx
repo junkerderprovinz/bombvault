@@ -93,7 +93,7 @@ describe("the run window of the overview", () => {
 
     expect(started()).toBe(1);
     // The window is named after its run.
-    const window = screen.getByRole("dialog", { name: /backup everything/i });
+    const window = screen.getByRole("dialog", { name: /full backup/i });
     expect(within(window).getByText(RUNNING)).toBeTruthy();
     // The main action leads to the run while it is under way.
     expect(screen.queryByRole("button", { name: START })).toBeNull();
@@ -112,7 +112,7 @@ describe("the run window of the overview", () => {
     await tick(2100);
 
     expect(screen.getByRole("dialog", { name: /plex/i })).toBeTruthy();
-    expect(screen.queryByRole("dialog", { name: /backup everything/i })).toBeNull();
+    expect(screen.queryByRole("dialog", { name: /full backup/i })).toBeNull();
   });
 
   it("stays closed once the person closed it, until a row opens it again", async () => {

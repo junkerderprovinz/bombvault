@@ -1,51 +1,37 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getVmBackupOrder, setVmBackupOrder } from "../../lib/api";
 import type { VM, VmOrder } from "../../lib/api";
-import { hueVars } from "../../lib/appearance";
 import { useReorder } from "../../lib/dragLift";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
-import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { IconTipButton } from "../IconTipButton";
 
 type T = ReturnType<typeof useT>["t"];
 
-const VM_BACKUP_ORDER_COLLAPSED_KEY = "bombvault.vmBackupOrderCollapsed";
-
 /**
  * VMBackupOrderPanel sets the order in which the scheduled run backs up the
  * included VMs. It loads the saved order once and then follows VMs coming and
- * going without discarding a reorder in progress. Save stores the sequence on
- * show, and Reset stores an empty list, which falls back to name order.
+ * going. Every move is stored at once, and Reset stores an empty list, which
+ * falls back to name order.
  */
 export function VMBackupOrderPanel({
   vms,
   t,
-  hueIndex,
+  heading,
 }: {
   vms: VM[];
   t: T;
-  /** Palette position of the heading, taken by the caller in the order its
-   *  cards render. */
-  hueIndex?: number;
+  /** The heading of the list inside the card that holds it. */
+  heading: string;
 }) {
   const [savedOrder, setSavedOrder] = useState<VmOrder[] | null>(null);
   // Libvirt names, which the server stores and matches on.
   const [names, setNames] = useState<string[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
-  // persist() cannot tell Save from Reset, so each has its own counter.
-  const [shakeSave, setShakeSave] = useState(0);
   const [shakeReset, setShakeReset] = useState(0);
   const hydrated = useRef(false);
-  const [collapsed, setCollapsed] = useState(() => {
-    try {
-      return localStorage.getItem(VM_BACKUP_ORDER_COLLAPSED_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
   const displayByLibvirtName = useMemo(
     () => new Map(vms.map((v) => [v.libvirtName, v.name])),
     [vms]
@@ -86,14 +72,12 @@ export function VMBackupOrderPanel({
   }, [vms, savedOrder, displayByLibvirtName]);
 
   function move(index: number, dir: -1 | 1) {
-    setNames((prev) => {
-      const to = index + dir;
-      if (to < 0 || to >= prev.length) return prev;
-      const next = [...prev];
-      [next[index], next[to]] = [next[to], next[index]];
-      return next;
-    });
-    setSaveState("idle");
+    const to = index + dir;
+    if (to < 0 || to >= names.length) return;
+    const next = [...names];
+    [next[index], next[to]] = [next[to], next[index]];
+    setNames(next);
+    void persist(next, "move");
   }
 
   // A row is carried by its grip and lands in its gap; the arrows are the
@@ -108,25 +92,12 @@ export function VMBackupOrderPanel({
     enabled: saveState !== "saving",
     onReorder: (next) => {
       setNames(next);
-      setSaveState("idle");
+      void persist(next, "move");
     },
   });
 
-  function toggleCollapsed() {
-    setCollapsed((v) => {
-      const next = !v;
-      try {
-        localStorage.setItem(VM_BACKUP_ORDER_COLLAPSED_KEY, next ? "1" : "0");
-      } catch {
-        // Without storage the panel opens again next time.
-      }
-      return next;
-    });
-  }
-
-  async function persist(order: string[], via: "save" | "reset") {
+  async function persist(order: string[], via: "move" | "reset") {
     setSaveState("saving");
-    const bumpShake = via === "save" ? setShakeSave : setShakeReset;
     try {
       const res = await setVmBackupOrder(order);
       if (res.ok) {
@@ -134,11 +105,11 @@ export function VMBackupOrderPanel({
         push(t("backupOrder.saved"), "success");
       } else {
         push(res.error ?? t("backupOrder.saveError"), "fail");
-        bumpShake((n) => n + 1);
+        if (via === "reset") setShakeReset((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("backupOrder.saveError"), "fail");
-      bumpShake((n) => n + 1);
+      if (via === "reset") setShakeReset((n) => n + 1);
     } finally {
       setSaveState("idle");
     }
@@ -157,51 +128,9 @@ export function VMBackupOrderPanel({
   if (savedOrder === null) return null;
 
   return (
-    // glim-notch-card does not set --accent, so glim-hue is needed for the
-    // Save button to take the card's hue.
-    <div
-      className={`relative glim-notch-card bg-carbon-surface rounded-card p-4 flex flex-col gap-3${
-        hueIndex !== undefined ? " glim-hue" : ""
-      }`}
-      style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
-    >
-      {/* The heading badge is positioned absolutely, so a sibling would land
-          in the slot it left. The count goes inside the badge. */}
-      <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>
-          {t("vmBackupOrder.title")}
-          {names.length > 0 && (
-            <span className="ms-1.5 font-normal normal-case tracking-normal tabular-nums opacity-80">
-              ({names.length})
-            </span>
-          )}
-        </Badge>
-      </h2>
-      {/* The title is in the h2, so the button is named by aria-label. */}
-      <button
-        type="button"
-        onClick={toggleCollapsed}
-        aria-expanded={!collapsed}
-        aria-label={t("vmBackupOrder.title")}
-        className="flex w-full items-start gap-2 text-start"
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 12 12"
-          fill="none"
-          aria-hidden="true"
-          // Closed points along the reading direction, open points down.
-          className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "rtl:rotate-180" : "rotate-90"}`}
-        >
-          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-        </svg>
-        {!collapsed && (
-          <span className="min-w-0 flex-1 text-xs text-carbon-textMuted">{t("vmBackupOrder.hint")}</span>
-        )}
-      </button>
-      {!collapsed &&
-        (names.length === 0 ? (
+    <section className="flex flex-col gap-3">
+      <h3 className="text-sm font-medium text-carbon-text">{heading}</h3>
+      {names.length === 0 ? (
           <p className="text-xs text-carbon-textMuted">{t("vmBackupOrder.empty")}</p>
         ) : (
           <>
@@ -268,19 +197,9 @@ export function VMBackupOrderPanel({
                   shakeReset ? " glim-shake" : ""
                 }`}
               />
-              <Button
-                key={shakeSave}
-                label={t("backupOrder.save")}
-                labelKey="backupOrder.save"
-                tone="accent"
-                onClick={() => void persist(names, "save")}
-                disabled={saveState === "saving"}
-                busy={saveState === "saving"}
-                className={shakeSave ? "glim-shake" : ""}
-              />
             </div>
           </>
-        ))}
-    </div>
+      )}
+    </section>
   );
 }

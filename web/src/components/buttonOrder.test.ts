@@ -31,7 +31,7 @@ const MUST_BE_FORWARD = [
   "auth.twoFactorConfirm",
   "auth.twoFactorDisable",
   "settingsIO.confirmButton",
-  "backupOrder.save",
+  "storage.conn.save",
   "fleet.mesh.accept",
   "recovery.foreignConnect",
   "recovery.configRestore",

@@ -6,7 +6,7 @@ import { glyphFor } from "./glyphFor";
 describe("glyphFor", () => {
   it("gives one verb one symbol across different pages", () => {
     const a = glyphFor("containers.backupNow");
-    const b = glyphFor("settings.everythingRunNow");
+    const b = glyphFor("containers.backupSelected");
     const c = glyphFor("files.backupAll");
     expect(a).toEqual(b);
     expect(a).toEqual(c);

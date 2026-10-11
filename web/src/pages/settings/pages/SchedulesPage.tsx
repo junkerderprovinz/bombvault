@@ -1,817 +1,344 @@
-import { useState } from "react";
-import {
-  ApiError,
-  backupEverythingNow,
-  patchFileSet,
-  patchZFSDataset,
-  setScheduleCadence,
-  setVMScheduleCadence,
-} from "../../../lib/api";
-import { InfoBubble } from "../../../components/InfoBubble";
-import { IdleCard } from "../IdleCard";
-import { WeekCard } from "../WeekCard";
-import { BackupOrderPanel } from "../../../components/containers/BackupOrderPanel";
-import { NumberField } from "../../../components/NumberField";
-import { VMBackupOrderPanel } from "../../../components/vms/VMBackupOrderPanel";
-// Every cadence picker in settings edits a schedule that can count an
-// interval (#166): the six domains and Backup Everything from their last
-// successful backup, drills, tamper test and digest from schedule_job_runs.
-// The off-site cadences are raw text inputs; rejectEveryNSchedules refuses
-// everyN for them on the server.
-import { CadenceBuilder } from "../../../components/CadenceBuilder";
-import { EffectiveScheduleLine } from "../../../components/EffectiveScheduleLine";
-import { ItemScheduleOverride } from "../../../components/ItemScheduleOverride";
-import { Toggle } from "../../../components/Toggle";
-import { Badge } from "../../../components/Badge";
-import { Button } from "../../../components/Button";
-import { ScheduleRow, scheduleStatus } from "../../../components/ScheduleBadge";
-import type { Settings, Container, VM, FileSetView, ZFSDatasetView } from "../../../lib/api";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { listItems, type BackupItem, type Settings } from "../../../lib/api";
+import { type EntryKind } from "../../../lib/backupEntry";
+import { hueVars } from "../../../lib/appearance";
 import { useT } from "../../../lib/i18n";
-import { useToast } from "../../../lib/toast";
-import { tLtr } from "../../../lib/ltrFragments";
-import { IconBackupNow } from "../../../components/Sidebar";
-import { Card, ToggleRow, hueCounter } from "../shared";
+import { formatList } from "../../../lib/placement";
+import { KIND_LABEL, KindGlyph } from "../../../components/backups/kinds";
+import { Button } from "../../../components/Button";
+import { EXACT_CADENCE_MODES } from "../../../components/CadenceBuilder";
+import { BackupOrderPanel } from "../../../components/containers/BackupOrderPanel";
+import { Note } from "../../../components/entry/Note";
+import { Exceptions } from "../../../components/Exceptions";
+import { IconSchedules, IconTrash } from "../../../components/navGlyphs";
+import { NumberField } from "../../../components/NumberField";
+import { PlanButton } from "../../../components/PlanButton";
+import { scheduleStatus } from "../../../components/ScheduleBadge";
+import { SettingRow } from "../../../components/storage/rows";
+import { Toggle } from "../../../components/Toggle";
+import { VMBackupOrderPanel } from "../../../components/vms/VMBackupOrderPanel";
+import { IdleCard } from "../IdleCard";
+import { ScheduleMembersWindow } from "../ScheduleMembersWindow";
+import { Card, SubCard, ToggleRow, hueCounter } from "../shared";
 import { useSettings } from "../settingsStore";
+import { WeekCard } from "../WeekCard";
 
 // autoSaveField reports through a toast, so its two callbacks have nothing to do here.
 const ignoreSaveState = () => undefined;
 const ignoreSaveError = () => undefined;
 
-function ContainersSection({
-  settings,
-  containers,
+type ScheduleKey =
+  | "containersSchedule"
+  | "vmsSchedule"
+  | "flashSchedule"
+  | "filesSchedule"
+  | "zfsSchedule"
+  | "configSchedule";
+type OffsiteKey =
+  | "containersOffsiteSchedule"
+  | "vmsOffsiteSchedule"
+  | "flashOffsiteSchedule"
+  | "filesOffsiteSchedule"
+  | "zfsOffsiteSchedule"
+  | "configOffsiteSchedule";
+
+interface Section {
+  kind: EntryKind;
+  enabled: keyof Settings;
+  schedule: ScheduleKey;
+  offsite: OffsiteKey;
+}
+
+// The order the full backup runs the sections in.
+const SECTIONS: Section[] = [
+  { kind: "container", enabled: "containersEnabled", schedule: "containersSchedule", offsite: "containersOffsiteSchedule" },
+  { kind: "vm", enabled: "vmsEnabled", schedule: "vmsSchedule", offsite: "vmsOffsiteSchedule" },
+  { kind: "flash", enabled: "flashEnabled", schedule: "flashSchedule", offsite: "flashOffsiteSchedule" },
+  { kind: "files", enabled: "filesEnabled", schedule: "filesSchedule", offsite: "filesOffsiteSchedule" },
+  { kind: "zfs", enabled: "zfsEnabled", schedule: "zfsSchedule", offsite: "zfsOffsiteSchedule" },
+  { kind: "config", enabled: "configEnabled", schedule: "configSchedule", offsite: "configOffsiteSchedule" },
+];
+
+// What a new exception starts from.
+const NEW_SECTION_PLAN = "weekly Sun 04:00";
+const NEW_COPY_PLAN = "daily 05:00";
+
+// The kinds whose entries each have a switch for the schedule.
+const MEMBER_KINDS: EntryKind[] = ["container", "vm", "files", "zfs"];
+
+/** A schedule reaches an entry that exists on the host and is not BombVault itself. */
+function schedulable(item: BackupItem): boolean {
+  return !item.self && item.installed !== false;
+}
+
+function HookRow({
+  label,
+  hint,
+  value,
+  isSet,
+  placeholder,
   onChange,
-  perItem,
-  t,
-  hueIndex,
+  onClear,
 }: {
-  settings: Settings;
-  containers: Container[];
-  onChange: (schedule: string) => void;
-  /** #121: when on, each included container exposes a per-item schedule override. */
-  perItem: boolean;
-  t: ReturnType<typeof useT>["t"];
-  hueIndex?: number;
+  label: string;
+  hint: string;
+  value: string;
+  isSet: boolean;
+  placeholder: string;
+  onChange: (v: string) => void;
+  onClear: () => void;
 }) {
-  const schedule = settings.containersSchedule;
-  // Exclude BombVault's own container: it can never be backed up, so it must
-  // never appear as a schedule member even if a stale flag lingers on its row.
-  const included = containers.filter((c) => c.installed && c.includeInSchedule && !c.self);
-
+  const { t } = useT();
   return (
-    <Card title={t("jobs.containersSection")} hint={t("containers.scheduleHint")} hueIndex={hueIndex}>
-      <ScheduleRow schedule={schedule} />
-
-      {/* The card's own hueIndex, so the time picker takes the card's colour
-          in rainbow mode. */}
-      <div className="rounded-card bg-carbon-surface2 p-4">
-        <CadenceBuilder
-          label={t("jobs.containersSection")}
-          value={schedule}
-          onChange={onChange}
-          hueIndex={hueIndex}
-        />
-      </div>
-
-      {included.length === 0 ? (
-        <p className="text-sm text-carbon-textMuted">{t("jobs.noContainersIncluded")}</p>
-      ) : (
-        <div className="flex flex-col gap-1 divide-y divide-carbon-border">
-          {included.map((c) => (
-            <div key={c.name} className="flex flex-col gap-2 py-2 text-sm">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-2 h-2 rounded-full shrink-0 ${
-                    c.state.toLowerCase() === "running"
-                      ? "bg-statusOkSolid"
-                      : "bg-carbon-surface3"
-                  }`}
-                />
-                <span className="font-medium text-carbon-text flex-1 truncate">
-                  {c.name}
-                </span>
-                {c.image && (
-                  <span className="text-xs text-carbon-textMuted truncate hidden sm:block max-w-xs">
-                    {c.image}
-                  </span>
-                )}
-              </div>
-              {perItem && (
-                <ItemScheduleOverride
-                  name={c.name}
-                  initial={c.scheduleCadence ?? ""}
-                  onSave={(cadence) => setScheduleCadence(c.name, cadence)}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+    <SettingRow label={label} hint={hint}>
+      {/* A stored command is never sent back, so the field starts blank and
+          says it holds one. Blank keeps it; the bin removes it. */}
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        spellCheck={false}
+        aria-label={label}
+        dir="ltr"
+        placeholder={isSet ? t("cloud.secretSet") : placeholder}
+        className="w-80 max-w-full rounded-control bg-carbon-surface3 px-3 py-1.5 text-start font-mono text-xs text-carbon-text glim-field-focus"
+      />
+      {isSet && (
+        <Button label={t("offsite.targets.remove")} labelKey="offsite.targets.remove" glyph={<IconTrash />} variant="icon" glyphOnly onClick={onClear} />
       )}
-    </Card>
-  );
-}
-
-function VMsSection({
-  settings,
-  syncSchedules,
-  onChange,
-  vms,
-  perItem,
-  t,
-  hueIndex,
-}: {
-  settings: Settings;
-  syncSchedules: boolean;
-  onChange: (schedule: string) => void;
-  /** Included VMs, for the per-item override list (#121). */
-  vms: VM[];
-  /** #121: when on, each included VM exposes a per-item schedule override. */
-  perItem: boolean;
-  t: ReturnType<typeof useT>["t"];
-  hueIndex?: number;
-}) {
-  const schedule = syncSchedules ? settings.containersSchedule : settings.vmsSchedule;
-  const included = vms.filter((v) => v.includeInSchedule);
-
-  return (
-    <Card title={t("jobs.vmsSection")} hint={t("jobs.vmIncludeHint")} hueIndex={hueIndex}>
-      {/* The editor stays visible and dimmed while the Containers schedule
-          owns this domain, because the cadence it shows still runs, so the row
-          says who owns it. */}
-      <ScheduleRow schedule={schedule} hint={syncSchedules ? t("jobs.syncSchedulesHint") : undefined} />
-      <div className="rounded-card bg-carbon-surface2 p-4">
-        <CadenceBuilder
-          label={t("jobs.vmsSection")}
-          value={schedule}
-          disabled={syncSchedules}
-          onChange={onChange}
-          hueIndex={hueIndex}
-        />
-      </div>
-
-      {/* Per-item overrides (#121): an included-VM list with a per-VM cadence,
-          shown only when the toggle is on so the section is otherwise unchanged. */}
-      {perItem && (
-        included.length === 0 ? (
-          <p className="text-sm text-carbon-textMuted">{t("jobs.noVMsIncluded")}</p>
-        ) : (
-          <div className="flex flex-col gap-1 divide-y divide-carbon-border">
-            {included.map((v) => (
-              <div key={v.libvirtName} className="flex flex-col gap-2 py-2 text-sm">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-2 h-2 rounded-full shrink-0 ${
-                      v.state.toLowerCase() === "running" ? "bg-statusOkSolid" : "bg-carbon-surface3"
-                    }`}
-                  />
-                  <span className="font-medium text-carbon-text flex-1 truncate">{v.name}</span>
-                </div>
-                <ItemScheduleOverride
-                  name={v.name}
-                  initial={v.scheduleCadence ?? ""}
-                  // libvirtName, not name: PATCH /api/vms/{name} resolves the
-                  // path segment against the raw name (see vmNameParam),
-                  // never the TrueNAS display-only friendly name.
-                  onSave={(cadence) => setVMScheduleCadence(v.libvirtName, cadence)}
-                />
-              </div>
-            ))}
-          </div>
-        )
-      )}
-    </Card>
-  );
-}
-
-function FlashSection({
-  settings,
-  syncSchedules,
-  onChange,
-  t,
-  hueIndex,
-}: {
-  settings: Settings;
-  syncSchedules: boolean;
-  onChange: (schedule: string) => void;
-  t: ReturnType<typeof useT>["t"];
-  hueIndex?: number;
-}) {
-  const schedule = syncSchedules ? settings.containersSchedule : settings.flashSchedule;
-
-  return (
-    // jobs.flashScheduleHint says what a Flash backup covers: unlike
-    // Containers, VMs, Folders and ZFS, Flash has no per-item list to show it.
-    <Card title={t("jobs.flashSection")} hint={tLtr(t, "jobs.flashScheduleHint")} hueIndex={hueIndex}>
-      <ScheduleRow schedule={schedule} hint={syncSchedules ? t("jobs.syncSchedulesHint") : undefined} />
-      <div className="rounded-card bg-carbon-surface2 p-4">
-        <CadenceBuilder
-          label={t("jobs.flashSection")}
-          value={schedule}
-          disabled={syncSchedules}
-          onChange={onChange}
-          hueIndex={hueIndex}
-        />
-      </div>
-    </Card>
-  );
-}
-
-// FilesSection mirrors VMsSection for the cadence and ContainersSection for the
-// member list, except that each set's "include in schedule" toggle PATCHes the
-// set directly (the same {enabled} flag the set's own page edits).
-function FilesSection({
-  settings,
-  syncSchedules,
-  fileSets,
-  perItem,
-  onChange,
-  onSetsChanged,
-  t,
-  hueIndex,
-}: {
-  settings: Settings;
-  /** While synced, the section follows the Containers cadence and its own
-   *  editor is disabled, as for VMs and Flash. */
-  syncSchedules: boolean;
-  fileSets: FileSetView[];
-  /** Whether per-item schedules are switched on (#199): the row's cadence
-   *  editor is hidden while off, as the container rows do it, so nobody can
-   *  set a cadence that the scheduler would then ignore. */
-  perItem: boolean;
-  onChange: (schedule: string) => void;
-  /** A toggle PATCHed a set; reload the list so the rows reflect the server. */
-  onSetsChanged: () => void;
-  t: ReturnType<typeof useT>["t"];
-  hueIndex?: number;
-}) {
-  const { push } = useToast();
-  const schedule = syncSchedules ? settings.containersSchedule : settings.filesSchedule;
-  const [busy, setBusy] = useState<Record<string, boolean>>({});
-
-  // Mirrors ContainersSection's setScheduleCadence: the PATCH carries only the
-  // cadence, so an edit here cannot disturb the set's name, path or excludes,
-  // and the list is reloaded because the server may have reloaded the scheduler.
-  async function setFileSetCadence(id: string, cadence: string) {
-    const res = await patchFileSet(id, { scheduleCadence: cadence });
-    if (res.ok) onSetsChanged();
-    return res;
-  }
-
-  async function toggle(set: FileSetView) {
-    setBusy((b) => ({ ...b, [set.id]: true }));
-    try {
-      const res = await patchFileSet(set.id, { enabled: !set.enabled });
-      if (res.ok) onSetsChanged();
-      else push(res.error ?? t("settings.error"), "fail");
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("settings.error"), "fail");
-    } finally {
-      setBusy((b) => ({ ...b, [set.id]: false }));
-    }
-  }
-
-  return (
-    <Card title={t("jobs.filesSection")} hint={t("jobs.filesIncludeHint")} hueIndex={hueIndex}>
-      <ScheduleRow schedule={schedule} hint={syncSchedules ? t("jobs.syncSchedulesHint") : undefined} />
-      <div className="rounded-card bg-carbon-surface2 p-4">
-        <CadenceBuilder
-          label={t("jobs.filesSection")}
-          value={schedule}
-          disabled={syncSchedules}
-          onChange={onChange}
-          hueIndex={hueIndex}
-        />
-      </div>
-
-      {fileSets.length === 0 ? (
-        <p className="text-sm text-carbon-textMuted">{t("jobs.noFileSetsIncluded")}</p>
-      ) : (
-        <div className="flex flex-col gap-1 divide-y divide-carbon-border">
-          {fileSets.map((s) => (
-            // Same layout as ContainersSection: the identifying row stays one
-            // flex line and the override (#199) sits under it while per-item
-            // schedules are on.
-            <div key={s.id} className="flex flex-col gap-2 py-2 text-sm">
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-2 h-2 rounded-full shrink-0 ${
-                  s.enabled ? "bg-statusOkSolid" : "bg-carbon-surface3"
-                }`}
-              />
-              <span className="font-medium text-carbon-text flex-1 min-w-0 truncate">{s.name}</span>
-              {s.path && (
-                <span dir="ltr" className="text-xs font-mono text-carbon-textMuted truncate hidden sm:block max-w-xs text-start">
-                  {s.path}
-                </span>
-              )}
-              {/* The set name identifies the row, not what the switch does,
-                  so the switch gets a visible caption beside it. */}
-              <label className="flex items-center gap-2 shrink-0 cursor-pointer">
-                <span className="text-xs text-carbon-textSub">{t("files.enabled")}</span>
-                <Toggle
-                  hideLabel
-                  label={`${t("files.enabled")}: ${s.name}`}
-                  checked={s.enabled}
-                  onChange={() => void toggle(s)}
-                  disabled={!!busy[s.id]}
-                />
-              </label>
-            </div>
-            {/* Says what actually happens to this set (#199). Rendered even
-                with per-item schedules off, because "Include in schedule" on
-                its own can leave a set not backed up automatically while
-                users believe Backup Everything still covers it. */}
-            <EffectiveScheduleLine effective={s.effectiveSchedule} />
-            {perItem && (
-              <ItemScheduleOverride
-                name={s.name}
-                initial={s.scheduleCadence ?? ""}
-                onSave={(cadence) => setFileSetCadence(s.id, cadence)}
-              />
-            )}
-            </div>
-          ))}
-        </div>
-      )}
-    </Card>
-  );
-}
-
-// Domain section for ZFS, in the same shape as FilesSection: the cadence card
-// plus one row per item whose "include in schedule" toggle PATCHes the item
-// directly.
-function ZFSSection({
-  settings,
-  syncSchedules,
-  items,
-  perItem,
-  onChange,
-  onItemsChanged,
-  t,
-  hueIndex,
-}: {
-  settings: Settings;
-  syncSchedules: boolean;
-  items: ZFSDatasetView[];
-  perItem: boolean;
-  onChange: (schedule: string) => void;
-  onItemsChanged: () => void;
-  t: ReturnType<typeof useT>["t"];
-  hueIndex?: number;
-}) {
-  const { push } = useToast();
-  const schedule = syncSchedules ? settings.containersSchedule : settings.zfsSchedule;
-  const [busy, setBusy] = useState<Record<string, boolean>>({});
-
-  async function setItemCadence(id: string, cadence: string) {
-    const res = await patchZFSDataset(id, { scheduleCadence: cadence });
-    if (res.ok) onItemsChanged();
-    return res;
-  }
-
-  async function toggle(item: ZFSDatasetView) {
-    setBusy((b) => ({ ...b, [item.id]: true }));
-    try {
-      const res = await patchZFSDataset(item.id, { enabled: !item.enabled });
-      if (res.ok) onItemsChanged();
-      else push(res.error ?? t("settings.error"), "fail");
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("settings.error"), "fail");
-    } finally {
-      setBusy((b) => ({ ...b, [item.id]: false }));
-    }
-  }
-
-  return (
-    <Card title={t("jobs.zfsSection")} hint={t("jobs.zfsIncludeHint")} hueIndex={hueIndex}>
-      <ScheduleRow schedule={schedule} hint={syncSchedules ? t("jobs.syncSchedulesHint") : undefined} />
-      <div className="rounded-card bg-carbon-surface2 p-4">
-        <CadenceBuilder
-          label={t("jobs.zfsSection")}
-          value={schedule}
-          disabled={syncSchedules}
-          onChange={onChange}
-          hueIndex={hueIndex}
-        />
-      </div>
-
-      {items.length === 0 ? (
-        <p className="text-sm text-carbon-textMuted">{t("jobs.noZfsDatasetsIncluded")}</p>
-      ) : (
-        <div className="flex flex-col gap-1 divide-y divide-carbon-border">
-          {items.map((d) => (
-            <div key={d.id} className="flex flex-col gap-2 py-2 text-sm">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-2 h-2 rounded-full shrink-0 ${
-                    d.enabled ? "bg-statusOkSolid" : "bg-carbon-surface3"
-                  }`}
-                />
-                <span dir="ltr" className="font-medium text-carbon-text flex-1 min-w-0 truncate text-start">
-                  {d.dataset}
-                </span>
-                {d.hostMountpoint && (
-                  <span dir="ltr" className="text-xs font-mono text-carbon-textMuted truncate hidden sm:block max-w-xs text-start">
-                    {d.hostMountpoint}
-                  </span>
-                )}
-                <label className="flex items-center gap-2 shrink-0 cursor-pointer">
-                  <span className="text-xs text-carbon-textSub">{t("files.enabled")}</span>
-                  <Toggle
-                    hideLabel
-                    label={`${t("files.enabled")}: ${d.dataset}`}
-                    checked={d.enabled}
-                    onChange={() => void toggle(d)}
-                    disabled={!!busy[d.id]}
-                  />
-                </label>
-              </div>
-              <EffectiveScheduleLine effective={d.effectiveSchedule} domainLabelKey="jobs.zfsSection" />
-              {perItem && (
-                <ItemScheduleOverride
-                  name={d.dataset}
-                  initial={d.scheduleCadence}
-                  onSave={(cadence) => setItemCadence(d.id, cadence)}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </Card>
-  );
-}
-
-export function EverythingSection({
-  settings,
-  update,
-  t,
-  hueIndex,
-}: {
-  settings: Settings;
-  update: (patch: Partial<Settings>) => void;
-  t: ReturnType<typeof useT>["t"];
-  hueIndex?: number;
-}) {
-  const [busy, setBusy] = useState(false);
-  const { push } = useToast();
-  // A failed action toasts and shakes its button. `key={shake}` remounts the
-  // button so the CSS animation restarts on a repeat failure.
-  const [shake, setShake] = useState(0);
-
-  // The overlap this card warns about is only real when this cadence is on
-  // and at least one domain cadence is too, the self-backup included, since
-  // the pass ends with it.
-  const everythingOn = scheduleStatus(settings.everythingSchedule) !== "off";
-  const anyDomainOn = [
-    settings.containersSchedule,
-    settings.vmsSchedule,
-    settings.flashSchedule,
-    settings.filesSchedule,
-    settings.zfsSchedule,
-    settings.configSchedule,
-  ].some((s) => scheduleStatus(s) !== "off");
-  const overlapWarning = everythingOn && anyDomainOn;
-
-  async function runNow() {
-    if (busy) return; // guard the in-flight window (the button also disables)
-    setBusy(true);
-    try {
-      const res = await backupEverythingNow();
-      if (res.ok) {
-        push(t("settings.everythingStarted"), "success");
-      } else {
-        push(res.error ?? t("settings.error"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        push(t("settings.everythingAlreadyRunning"), "fail");
-      } else {
-        push(err instanceof Error ? err.message : t("settings.error"), "fail");
-      }
-      setShake((n) => n + 1);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Card title={t("settings.everythingTitle")} hint={t("settings.everythingHint")} hueIndex={hueIndex}>
-      <ScheduleRow schedule={settings.everythingSchedule} />
-      <div className="rounded-card bg-carbon-surface2 p-4">
-        <CadenceBuilder
-          label={t("settings.everythingTitle")}
-          value={settings.everythingSchedule}
-          onChange={(v) => update({ everythingSchedule: v })}
-          hueIndex={hueIndex}
-        />
-        {/* Status amber on a plain surface, outside the accent and rainbow
-            engine: it is a status colour, not control chrome. */}
-        {overlapWarning && (
-          <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
-            {t("settings.everythingDuplicateWarning")}
-          </div>
-        )}
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-          {t("hooks.title")}
-          <InfoBubble tip={t("settings.everythingHooksHint")} />
-        </span>
-        {/* A stored hook is never echoed back, so the field arrives blank with
-            ...Set true and shows the "already set" placeholder. A blank field
-            means "keep" on save, so the Remove badge is the only way to delete
-            a hook. */}
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
-          <div className="flex items-center gap-2">
-            <input
-              value={settings.everythingPreHook}
-              onChange={(e) => update({ everythingPreHook: e.target.value })}
-              spellCheck={false}
-              placeholder={settings.everythingPreHookSet ? t("cloud.secretSet") : "echo starting"}
-              className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 glim-field-focus"
-            />
-            {settings.everythingPreHookSet && (
-              <Badge
-                as="button"
-                tone="active"
-                size="small"
-                hueIndex={hueIndex}
-                onClick={() => update({ everythingPreHook: "", everythingPreHookClear: true })}
-                className="pointer-coarse:h-(--btn-h) pointer-coarse:px-3"
-              >
-                {t("offsite.targets.remove")}
-              </Badge>
-            )}
-          </div>
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textSub">{t("hooks.post")}</span>
-          <div className="flex items-center gap-2">
-            <input
-              value={settings.everythingPostHook}
-              onChange={(e) => update({ everythingPostHook: e.target.value })}
-              spellCheck={false}
-              placeholder={
-                settings.everythingPostHookSet ? t("cloud.secretSet") : "curl -fsS https://hc-ping.com/your-uuid"
-              }
-              className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 glim-field-focus"
-            />
-            {settings.everythingPostHookSet && (
-              <Badge
-                as="button"
-                tone="active"
-                size="small"
-                hueIndex={hueIndex}
-                onClick={() => update({ everythingPostHook: "", everythingPostHookClear: true })}
-                className="pointer-coarse:h-(--btn-h) pointer-coarse:px-3"
-              >
-                {t("offsite.targets.remove")}
-              </Badge>
-            )}
-          </div>
-        </label>
-      </div>
-      <div className="flex justify-end">
-        <Button
-          key={shake}
-          label={t("settings.everythingRunNow")}
-          labelKey="settings.everythingRunNow"
-          glyph={<IconBackupNow />}
-          tone="accent"
-          onClick={() => void runNow()}
-          disabled={busy}
-          busy={busy}
-          title={busy ? t("settings.everythingBusy") : undefined}
-          className={shake ? "glim-shake" : ""}
-        />
-      </div>
-    </Card>
+    </SettingRow>
   );
 }
 
 export function SchedulesPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const {
     settings,
     containers,
     vms,
-    fileSets,
-    zfsItems,
-    loadFileSets,
-    loadZFSItems,
     fieldPulse,
     scheduleField,
-    autoSaveScheduleField,
     scheduleUpdate,
+    autoSaveScheduleField,
     schedFieldBusy,
     schedFieldShake,
-    syncSchedules,
-    handleSyncSchedulesToggle,
-    syncToggleBusy,
-    syncToggleShake,
-    toggleConfigSchedule,
-    configScheduleToggleBusy,
-    configScheduleToggleShake,
     autoSaveField,
     mergedFieldBusy,
     mergedFieldShake,
   } = useSettings();
+  const [items, setItems] = useState<BackupItem[]>([]);
+  const [members, setMembers] = useState<EntryKind | null>(null);
+
+  const loadItems = useCallback(() => {
+    listItems()
+      .then((res) => {
+        if (res.ok) setItems(res.items ?? []);
+      })
+      .catch(() => {
+        // The entry counts stay empty; the plans above do not depend on them.
+      });
+  }, []);
+  useEffect(loadItems, [loadItems]);
 
   const nextHue = hueCounter();
+  const sections = SECTIONS.filter((s) => settings[s.enabled]);
+  const label = (kind: EntryKind) => t(KIND_LABEL[kind]);
+  const asException = (s: Section) => ({ id: s.kind, label: label(s.kind), glyph: <KindGlyph kind={s.kind} /> });
+  const section = (kind: string) => SECTIONS.find((s) => s.kind === kind)!;
+
+  const fullOn = scheduleStatus(settings.everythingSchedule) !== "off";
+  const ownPlans = sections.filter((s) => scheduleStatus(settings[s.schedule]) !== "off");
+  const ownCopies = sections.filter((s) => settings[s.offsite].trim() !== "");
+  const fullHue = nextHue();
 
   return (
     <>
       <WeekCard settings={settings} hueIndex={nextHue()} />
-      {/* Every cadence lives here, and every field saves as it changes. */}
-      {/* A two-member list, so each toggle takes a local hueIndex (0, 1)
-          independent of the card's own position. */}
-      <Card title={t("settings.schedulesOptions")} hueIndex={nextHue()}>
-        <ToggleRow
-          label={t("settings.perItemSchedules")}
-          hint={t("settings.perItemSchedulesHint")}
-          checked={settings.perItemSchedules}
-          onChange={(v) => void autoSaveScheduleField("perItemSchedules", v)}
-          disabled={schedFieldBusy.perItemSchedules}
-          shakeNonce={schedFieldShake.perItemSchedules}
-          pulseNonce={fieldPulse.perItemSchedules}
-          hueIndex={0}
-        />
-        <ToggleRow
-          label={t("jobs.syncSchedules")}
-          hint={t("jobs.syncSchedulesHint")}
-          checked={syncSchedules}
-          onChange={(v) => void handleSyncSchedulesToggle(v)}
-          disabled={syncToggleBusy}
-          shakeNonce={syncToggleShake || undefined}
-          // The sync save writes all mirrored cadences together, so any of
-          // them carries the pulse.
-          pulseNonce={fieldPulse.vmsSchedule}
-          hueIndex={1}
-        />
-      </Card>
-      {/* Backup Everything, an independent pass over all domains plus a
-          manual trigger. It sits second rather than last, so someone who
-          wants one schedule for the whole server finds it before the parts
-          it is made of. scheduleUpdate saves each key through the shared
-          save(), since nothing on this page has a Save button. */}
-      <EverythingSection settings={settings} update={scheduleUpdate} t={t} hueIndex={nextHue()} />
-      <ContainersSection
-        settings={settings}
-        containers={containers}
-        onChange={(v) => scheduleField("containersSchedule", v)}
-        perItem={settings.perItemSchedules}
-        t={t}
-        hueIndex={nextHue()}
-      />
-      <VMsSection
-        settings={settings}
-        syncSchedules={syncSchedules}
-        onChange={(v) => scheduleField("vmsSchedule", v)}
-        vms={vms}
-        perItem={settings.perItemSchedules}
-        t={t}
-        hueIndex={nextHue()}
-      />
-      <FlashSection
-        settings={settings}
-        syncSchedules={syncSchedules}
-        onChange={(v) => scheduleField("flashSchedule", v)}
-        t={t}
-        hueIndex={nextHue()}
-      />
-      <FilesSection
-        settings={settings}
-        syncSchedules={syncSchedules}
-        fileSets={fileSets}
-        perItem={settings.perItemSchedules}
-        onChange={(v) => scheduleField("filesSchedule", v)}
-        onSetsChanged={loadFileSets}
-        t={t}
-        hueIndex={nextHue()}
-      />
-      <ZFSSection
-        settings={settings}
-        syncSchedules={syncSchedules}
-        items={zfsItems}
-        perItem={settings.perItemSchedules}
-        onChange={(v) => scheduleField("zfsSchedule", v)}
-        onItemsChanged={loadZFSItems}
-        t={t}
-        hueIndex={nextHue()}
-      />
 
-      {/* Off-site replication schedules, one cadence per domain. These
-          editors are the only owner of these fields. */}
-      <Card title={t("settings.schedulesOffsite")} hueIndex={nextHue()}>
-        {([
-          ["containersOffsiteSchedule", "nav.containers"],
-          ["vmsOffsiteSchedule", "nav.vms"],
-          ["flashOffsiteSchedule", "nav.flash"],
-          ["configOffsiteSchedule", "nav.config"],
-          ["filesOffsiteSchedule", "nav.files"],
-          ["zfsOffsiteSchedule", "nav.zfs"],
-        ] as const).map(([key, label]) => (
-          <div key={key} className="flex flex-col gap-1">
-            <span className="text-xs text-carbon-textSub">{t(label)}</span>
-            <input
-              value={settings[key]}
-              spellCheck={false}
-              onChange={(e) => scheduleField(key, e.target.value)}
-              placeholder={t("offsite.schedulePlaceholder")}
-              dir="ltr"
-              className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus text-start"
+      <Card title={t("settings.everythingTitle")} hint={t("schedules.fullHint")} hueIndex={fullHue}>
+        <div>
+          <SettingRow
+            label={t("schedules.whenRuns")}
+            hint={t("schedules.whenRunsHint")}
+            note={
+              fullOn
+                ? t("schedules.includes").replace("{sections}", formatList(lang, sections.map((s) => label(s.kind))))
+                : t("schedules.fullOff")
+            }
+          >
+            <PlanButton
+              label={t("settings.everythingTitle")}
+              value={settings.everythingSchedule}
+              onChange={(v) => scheduleField("everythingSchedule", v)}
+              hueIndex={fullHue}
+            />
+          </SettingRow>
+          <div className="border-t border-carbon-border/60 pt-3">
+            <ToggleRow
+              label={t("settings.catchUpMissed")}
+              hint={t("settings.catchUpMissedHint")}
+              checked={settings.catchUpMissed}
+              onChange={(v) => void autoSaveScheduleField("catchUpMissed", v)}
+              disabled={schedFieldBusy.catchUpMissed}
+              shakeNonce={schedFieldShake.catchUpMissed}
+              pulseNonce={fieldPulse.catchUpMissed}
             />
           </div>
-        ))}
+        </div>
+        <SubCard title={t("schedules.hooks")}>
+          <div className="flex flex-col divide-y divide-carbon-border/60">
+            <HookRow
+              label={t("schedules.hookPre")}
+              hint={t("schedules.hookPreHint")}
+              value={settings.everythingPreHook}
+              isSet={settings.everythingPreHookSet}
+              placeholder="/boot/config/scripts/before.sh"
+              onChange={(v) => scheduleUpdate({ everythingPreHook: v })}
+              onClear={() => scheduleUpdate({ everythingPreHook: "", everythingPreHookClear: true })}
+            />
+            <HookRow
+              label={t("schedules.hookPost")}
+              hint={t("schedules.hookPostHint")}
+              value={settings.everythingPostHook}
+              isSet={settings.everythingPostHookSet}
+              placeholder="/boot/config/scripts/after.sh"
+              onChange={(v) => scheduleUpdate({ everythingPostHook: v })}
+              onClear={() => scheduleUpdate({ everythingPostHook: "", everythingPostHookClear: true })}
+            />
+          </div>
+        </SubCard>
       </Card>
 
-      {/* BombVault's own config backup, in the same shape as the domain
-          sections. One hueIdx feeds both the heading and the time picker,
-          which a nextHue() call per prop could not. The toggle shows the
-          card title as its visible label and has no hueIndex, being a lone
-          switch with no list to walk. */}
-      {(() => {
-        const hueIdx = nextHue();
-        const schedule = settings.configSchedule;
-        const status = scheduleStatus(schedule);
-        return (
-          <Card title={t("settings.schedulesSelfBackup")} hint={t("config.scheduleHint")} hueIndex={hueIdx}>
-            <ToggleRow
-              label={t("settings.schedulesSelfBackup")}
-              checked={status !== "off"}
-              onChange={(v) => void toggleConfigSchedule(v)}
-              disabled={configScheduleToggleBusy}
-              shakeNonce={configScheduleToggleShake}
-              pulseNonce={fieldPulse.configSchedule}
-            />
-            <ScheduleRow schedule={schedule} />
-            <div className="rounded-card bg-carbon-surface2 p-4">
-              <CadenceBuilder
-                label={t("settings.schedulesSelfBackup")}
-                value={schedule}
-                onChange={(v) => scheduleField("configSchedule", v)}
-                hueIndex={hueIdx}
+      {sections.length > 0 &&
+        (() => {
+          const hue = nextHue();
+          return (
+            <Card title={t("schedules.plans")} hint={t("schedules.plansHint")} hueIndex={hue}>
+              <Exceptions
+                label={t("schedules.plans")}
+                taken={ownPlans.map(asException)}
+                free={sections.filter((s) => !ownPlans.includes(s)).map(asException)}
+                rule={t(ownPlans.length > 0 ? "schedules.plansRuleOthers" : "schedules.plansRuleAll")}
+                control={(kind) => (
+                  <PlanButton
+                    label={label(kind as EntryKind)}
+                    value={settings[section(kind).schedule]}
+                    onChange={(v) => scheduleField(section(kind).schedule, v)}
+                    hueIndex={hue}
+                  />
+                )}
+                onAdd={(kind) => scheduleField(section(kind).schedule, NEW_SECTION_PLAN)}
+                onRemove={(kind) => scheduleField(section(kind).schedule, "off")}
               />
-            </div>
-          </Card>
-        );
-      })()}
+              {fullOn && ownPlans.length > 0 && <Note tone="warn">{t("settings.everythingDuplicateWarning")}</Note>}
+              <SubCard title={t("schedules.offsite")}>
+                <Exceptions
+                  label={t("schedules.offsite")}
+                  taken={ownCopies.map(asException)}
+                  free={sections.filter((s) => !ownCopies.includes(s)).map(asException)}
+                  rule={t(ownCopies.length > 0 ? "schedules.offsiteRuleOthers" : "schedules.offsiteRuleAll")}
+                  control={(kind) => (
+                    <PlanButton
+                      label={`${t("schedules.offsite")}: ${label(kind as EntryKind)}`}
+                      value={settings[section(kind).offsite]}
+                      onChange={(v) => scheduleField(section(kind).offsite, v)}
+                      modes={EXACT_CADENCE_MODES}
+                      hueIndex={hue}
+                      raised
+                    />
+                  )}
+                  onAdd={(kind) => scheduleField(section(kind).offsite, NEW_COPY_PLAN)}
+                  onRemove={(kind) => scheduleField(section(kind).offsite, "")}
+                />
+              </SubCard>
+            </Card>
+          );
+        })()}
 
-      {/* Missed schedules: anacron-style catch-up after start. Backend runs
-          the missed domain job ~2 minutes after boot (see internal/schedule
-          CatchUpMissed). */}
-      <Card title={t("settings.missedSchedulesTitle")} hueIndex={nextHue()}>
-        <ToggleRow
-          label={t("settings.catchUpMissed")}
-          hint={t("settings.catchUpMissedHint")}
-          checked={settings.catchUpMissed}
-          onChange={(v) => void autoSaveScheduleField("catchUpMissed", v)}
-          disabled={schedFieldBusy.catchUpMissed}
-          shakeNonce={schedFieldShake.catchUpMissed}
-          pulseNonce={fieldPulse.catchUpMissed}
-        />
+      <Card title={t("schedules.entries")} hint={t("schedules.entriesHint")} hueIndex={nextHue()}>
+        <div className="flex flex-col divide-y divide-carbon-border/60">
+          <SettingRow label={t("schedules.perItem")} hint={t("schedules.perItemHint")}>
+            <Toggle
+              hideLabel
+              label={t("schedules.perItem")}
+              checked={settings.perItemSchedules}
+              onChange={(v) => void autoSaveScheduleField("perItemSchedules", v)}
+              disabled={schedFieldBusy.perItemSchedules}
+              className={schedFieldShake.perItemSchedules ? "glim-shake" : ""}
+            />
+          </SettingRow>
+          {sections
+            .filter((s) => MEMBER_KINDS.includes(s.kind))
+            .map((s, i) => {
+              const list = items.filter((item) => item.kind === s.kind && schedulable(item));
+              return (
+                <div key={s.kind} data-kind={s.kind} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 last:pb-0">
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="flex items-center gap-2 text-sm text-carbon-text">
+                      <span className="glim-hue inline-flex text-accentText" style={hueVars(i) as CSSProperties}>
+                        <KindGlyph kind={s.kind} />
+                      </span>
+                      {label(s.kind)}
+                    </span>
+                    <span className="text-xs text-carbon-textMuted">
+                      {t("schedules.scheduledCount")
+                        .replace("{n}", String(list.filter((item) => item.included).length))
+                        .replace("{m}", String(list.length))}
+                    </span>
+                  </span>
+                  <Button
+                    label={t("schedules.entriesButton")}
+                    labelKey="schedules.entriesButton"
+                    glyph={<IconSchedules />}
+                    onClick={() => setMembers(s.kind)}
+                  />
+                </div>
+              );
+            })}
+        </div>
       </Card>
 
-      {/* The anchor old /settings/containers links land on. */}
-      <div id="order" className="flex scroll-mt-6 flex-col gap-6 md:gap-10">
-        {settings.containersEnabled && <BackupOrderPanel containers={containers} t={t} hueIndex={nextHue()} />}
-        {settings.vmsEnabled && <VMBackupOrderPanel vms={vms} t={t} hueIndex={nextHue()} />}
-        {settings.containersEnabled && (
-          <Card title={t("settings.restartHealthTitle")} hueIndex={nextHue()}>
-            <ToggleRow
-              label={t("settings.restartHealthWait")}
-              hint={t("settings.restartHealthWaitHint")}
-              checked={settings.restartHealthWait}
-              onChange={(v) => void autoSaveScheduleField("restartHealthWait", v)}
-              disabled={schedFieldBusy.restartHealthWait}
-              shakeNonce={schedFieldShake.restartHealthWait}
-              pulseNonce={fieldPulse.restartHealthWait}
-            />
-            {settings.restartHealthWait && (
-              <label className="flex flex-col gap-1 sm:w-1/2">
-                <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                  {t("settings.restartHealthTimeoutLabel")}
-                  <InfoBubble tip={t("settings.restartHealthTimeoutHint")} />
-                </span>
-                <NumberField
-                  min={5}
-                  max={3600}
-                  value={settings.restartHealthTimeoutSec}
-                  // The server takes 5 to 3600, so a smaller number never reaches the state.
-                  onChange={(e) => scheduleField("restartHealthTimeoutSec", Math.max(5, parseInt(e.target.value, 10) || 0))}
-                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
+      {(settings.containersEnabled || settings.vmsEnabled) && (
+        <div id="order" className="scroll-mt-6">
+          <Card title={t("schedules.order")} hint={t("schedules.orderHint")} hueIndex={nextHue()}>
+            {settings.containersEnabled && <BackupOrderPanel containers={containers} t={t} heading={t("nav.containers")} />}
+            {settings.vmsEnabled && <VMBackupOrderPanel vms={vms} t={t} heading={t("nav.vms")} />}
+            {settings.containersEnabled && (
+              <section className="flex flex-col gap-3">
+                <h3 className="text-sm font-medium text-carbon-text">{t("settings.restartHealthTitle")}</h3>
+                <ToggleRow
+                  label={t("settings.restartHealthWait")}
+                  hint={t("settings.restartHealthWaitHint")}
+                  checked={settings.restartHealthWait}
+                  onChange={(v) => void autoSaveScheduleField("restartHealthWait", v)}
+                  disabled={schedFieldBusy.restartHealthWait}
+                  shakeNonce={schedFieldShake.restartHealthWait}
+                  pulseNonce={fieldPulse.restartHealthWait}
                 />
-              </label>
+                {settings.restartHealthWait && (
+                  <div className="ps-4">
+                    <SettingRow label={t("settings.restartHealthTimeoutLabel")} hint={t("settings.restartHealthTimeoutHint")}>
+                      <NumberField
+                        min={5}
+                        max={3600}
+                        value={settings.restartHealthTimeoutSec}
+                        aria-label={t("settings.restartHealthTimeoutLabel")}
+                        // The server takes 5 to 3600, so a smaller number never reaches the state.
+                        onChange={(e) =>
+                          scheduleField("restartHealthTimeoutSec", Math.max(5, parseInt(e.target.value, 10) || 0))
+                        }
+                        className="w-28 pointer-coarse:w-36 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
+                      />
+                    </SettingRow>
+                  </div>
+                )}
+              </section>
             )}
           </Card>
-        )}
-      </div>
+        </div>
+      )}
 
       {settings.containersEnabled && (
-        <Card title={t("settings.imageMaintenanceTitle")} hint={t("settings.imageMaintenanceHint")} hueIndex={nextHue()}>
+        <Card title={t("schedules.updates")} hueIndex={nextHue()}>
           <ToggleRow
             label={t("settings.pruneImageAfterUpdate")}
             hint={t("settings.pruneImageAfterUpdateHint")}
@@ -834,6 +361,15 @@ export function SchedulesPage() {
       )}
 
       {settings.containersEnabled && <IdleCard t={t} hueIndex={nextHue()} />}
+
+      {members && (
+        <ScheduleMembersWindow
+          kind={members}
+          items={items.filter((item) => item.kind === members && schedulable(item))}
+          onChanged={loadItems}
+          onClose={() => setMembers(null)}
+        />
+      )}
     </>
   );
 }

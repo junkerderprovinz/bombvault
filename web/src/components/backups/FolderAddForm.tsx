@@ -195,7 +195,7 @@ export function FolderAddForm({
           onChange={setEnabled}
           label={t("entry.settings.inSchedule")}
           hint={t("schedule.pausedHint")
-            .replace("{everything}", t("settings.everythingTitle"))
+            .replace("{everything}", t("settings.everythingName"))
             .replace("{backupNow}", t("containers.backupNow"))}
         />
 

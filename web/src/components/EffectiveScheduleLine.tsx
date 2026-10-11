@@ -44,7 +44,7 @@ export function useScheduleSentence(): (
         const chosen = effective.reason ? CHOSEN_OFF[effective.reason] : undefined;
         return {
           text: chosen
-            ? t(chosen).replace("{domain}", t(domainLabelKey)).replace("{everything}", t("settings.everythingTitle"))
+            ? t(chosen).replace("{domain}", t(domainLabelKey)).replace("{everything}", t("settings.everythingName"))
             : t("files.effectiveNone"),
           tone: chosen ? "text-carbon-textMuted" : "text-statusFail",
         };
@@ -56,11 +56,11 @@ export function useScheduleSentence(): (
         };
       case "own":
         return { text: t("files.effectiveOwn").replace("{when}", when), tone: "text-carbon-textSub" };
-      // The card names come from the cards' own title keys, so the sentence
-      // matches them in every language.
+      // The names come from translation keys, so the sentence matches the
+      // cards in every language.
       case "everything":
         return {
-          text: t("files.effectiveEverything").replace("{when}", when).replace("{domain}", t("settings.everythingTitle")),
+          text: t("files.effectiveEverything").replace("{when}", when).replace("{domain}", t("settings.everythingName")),
           tone: "text-carbon-textSub",
         };
       case "domain":
