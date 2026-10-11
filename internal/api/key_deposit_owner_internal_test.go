@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"slices"
 	"strings"
@@ -294,5 +295,35 @@ func TestNoDepositIsMadeOrRenewedUnderALockedBackupKey(t *testing.T) {
 	tower.svc.RenewDeposits(context.Background())
 	if after, _ := kept(t, attic, tower); !bytes.Equal(after.Deposit, before.Deposit) {
 		t.Fatal("a renewal under a locked key replaced the deposit")
+	}
+}
+
+func TestACounterMadeUpHighDoesNotKeepTheOwnersDepositOut(t *testing.T) {
+	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
+	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
+	phrase, relayURL := groupOf(t, tower, attic)
+	towerID, atticID := tower.id(t), attic.id(t)
+	mallory := holdWords(t, relayURL, phrase, wordsHolderID, "", attic)
+
+	farOff, _ := plantedDeposit(t, towerID, atticID, math.MaxInt64)
+	if out := mallory.call(atticID, towerID, http.MethodPut, "/api/group/peer/deposit", farOff); out["ok"] != false {
+		t.Fatalf("a deposit with a counter far ahead of the clock: %v", out)
+	}
+	if _, found := kept(t, attic, tower); found {
+		t.Fatal("the keeper took a deposit with a counter far ahead of the clock")
+	}
+
+	ahead, _ := plantedDeposit(t, towerID, atticID, time.Now().Add(20*time.Hour).UnixMilli())
+	if out := mallory.call(atticID, towerID, http.MethodPut, "/api/group/peer/deposit", ahead); out["state"] != store.DepositHeld {
+		t.Fatalf("a first deposit in the owner's name: %v", out)
+	}
+	if err := attic.svc.DropKeptDeposit(context.Background(), towerID); err != nil {
+		t.Fatal(err)
+	}
+	if code, _ := deposit(t, tower, attic)["recoveryCode"].(string); code == "" {
+		t.Fatal("the owner could not deposit after the keeper deleted the planted one")
+	}
+	if d, found := kept(t, attic, tower); !found || d.State != store.DepositHeld || bytes.Contains(d.Deposit, []byte("not the owner's deposit")) {
+		t.Fatalf("the keeper holds %+v", d)
 	}
 }

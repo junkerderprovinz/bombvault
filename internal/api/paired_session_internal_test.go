@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/seedphrase"
@@ -128,7 +129,17 @@ func TestTheTwelveWordsAloneNeitherAllowAReleaseNorReachTheKit(t *testing.T) {
 		t.Fatalf("a request in the owner's own id was taken: %v", inOwnersName)
 	}
 
-	asked := mallory.call(atticID, wordsHolderID, http.MethodPost, "/api/group/peer/deposit/release", peerReleaseAsk{OwnerID: towerID, Name: "tower", Renew: true})
+	// The words make a member of whoever holds them, with a key of its own.
+	seed, err := keydeposit.NewOwnerSeed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := attic.st.PinMemberKey(wordsHolderID, keydeposit.OwnerKey(seed)); err != nil {
+		t.Fatal(err)
+	}
+	signed := signedAs(t, attic, seed, wordsHolderID, keydeposit.ProofRelease, time.Now().UnixMilli(), callPayload(towerID, "tower", "true"),
+		map[string]any{"ownerId": towerID, "name": "tower", "renew": true})
+	asked := mallory.call(atticID, wordsHolderID, http.MethodPost, "/api/group/peer/deposit/release", json.RawMessage(signed))
 	if asked["state"] != store.ReleaseAsked {
 		t.Fatalf("the request: %v", asked)
 	}
@@ -148,7 +159,9 @@ func TestTheTwelveWordsAloneNeitherAllowAReleaseNorReachTheKit(t *testing.T) {
 			t.Fatalf("the kit with the paired session: %d %v", code, out)
 		}
 	})
-	if got := mallory.call(atticID, wordsHolderID, http.MethodPost, "/api/group/peer/deposit/release", peerReleaseAsk{OwnerID: towerID, Name: "tower"}); got["deposit"] != nil || got["state"] != store.ReleaseAsked {
+	again := signedAs(t, attic, seed, wordsHolderID, keydeposit.ProofRelease, time.Now().UnixMilli()+1, callPayload(towerID, "tower", "false"),
+		map[string]any{"ownerId": towerID, "name": "tower", "renew": false})
+	if got := mallory.call(atticID, wordsHolderID, http.MethodPost, "/api/group/peer/deposit/release", json.RawMessage(again)); got["deposit"] != nil || got["state"] != store.ReleaseAsked {
 		t.Fatalf("the keeper handed something out: %v", got)
 	}
 

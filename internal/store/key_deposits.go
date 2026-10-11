@@ -133,10 +133,14 @@ func (r *Repo) KeepDeposit(d KeptDeposit, renew bool, most int) (state string, f
 // DeclineDeposit deletes what this install keeps for a member and remembers
 // that it did. It reports whether there was a deposit. The proof key goes
 // with it, so that the member's own key is taken when a person there asks
-// again, whoever made the deposit that was deleted.
+// again, whoever made the deposit that was deleted. A counter ahead of the
+// clock comes down to it, so that one made up high does not keep the
+// member's own deposits out, and an older deposit stays refused.
 func (r *Repo) DeclineDeposit(ownerID string) (bool, error) {
-	res, err := r.db.Exec(`UPDATE key_deposits SET state = ?, deposit = x'', salt = x'', owner_key = x'', updated_at = ? WHERE owner_id = ? AND state = ?`,
-		DepositDeclined, time.Now().Unix(), ownerID, DepositHeld)
+	now := time.Now()
+	res, err := r.db.Exec(`UPDATE key_deposits SET state = ?, deposit = x'', salt = x'', owner_key = x'', counter = min(counter, ?), updated_at = ?
+		WHERE owner_id = ? AND state = ?`,
+		DepositDeclined, now.UnixMilli(), now.Unix(), ownerID, DepositHeld)
 	if err != nil {
 		return false, fmt.Errorf("DeclineDeposit: %w", err)
 	}
@@ -209,11 +213,11 @@ func scanKeyRelease(s scanner) (KeyRelease, error) {
 	return k, err
 }
 
-// ReleaseLimits bounds the requests for deposits: how many new ones an
-// instance may make within Window and how many all of them together, since an
-// instance names itself, how long one waits for an answer, how long an
-// allowed one can be collected, and how long a request that is over stays on
-// record.
+// ReleaseLimits bounds the requests for deposits: how many new ones the
+// instances that sign with one key may make within Window, since anybody with
+// the group's words can name an instance of their own, how many all of them
+// together, how long one waits for an answer, how long an allowed one can be
+// collected, and how long a request that is over stays on record.
 type ReleaseLimits struct {
 	PerWindow int
 	Total     int
@@ -240,9 +244,10 @@ func expireReleasesTx(tx *sql.Tx, now time.Time, l ReleaseLimits) error {
 // AskKeyRelease returns where the request of requester for the deposit of
 // owner stands. A request that waits or was allowed is returned as it is. With
 // renew, which a person asking sets, anything else is replaced by a new
-// request, unless the instance made PerWindow new ones within Window, or all
-// instances Total, and gets ErrReleaseLimit. Without renew the newest request is returned whatever
-// became of it, and one with an empty state when there never was any.
+// request, unless the instances signing with its key made PerWindow new ones
+// within Window, or all instances Total, and gets ErrReleaseLimit. Without
+// renew the newest request is returned whatever became of it, and one with an
+// empty state when there never was any.
 func (r *Repo) AskKeyRelease(ownerID, requesterID, requesterName string, renew bool, now time.Time, l ReleaseLimits) (out KeyRelease, created bool, err error) {
 	err = r.inTx(func(tx *sql.Tx) error {
 		if err := expireReleasesTx(tx, now, l); err != nil {
@@ -262,8 +267,10 @@ func (r *Repo) AskKeyRelease(ownerID, requesterID, requesterName string, renew b
 			return nil
 		}
 		var recent, all int
-		if err := tx.QueryRow(`SELECT count(*) FILTER (WHERE requester_id = ?), count(*) FROM key_releases WHERE asked_at > ?`,
-			requesterID, now.Add(-l.Window).Unix()).Scan(&recent, &all); err != nil {
+		if err := tx.QueryRow(`SELECT count(*) FILTER (WHERE requester_id = ? OR requester_id IN (
+				SELECT member_id FROM member_keys WHERE key = (SELECT key FROM member_keys WHERE member_id = ?))), count(*)
+			FROM key_releases WHERE asked_at > ?`,
+			requesterID, requesterID, now.Add(-l.Window).Unix()).Scan(&recent, &all); err != nil {
 			return err
 		}
 		if recent >= l.PerWindow || all >= l.Total {
