@@ -66,7 +66,7 @@ Wklej wynik do pola `APP_KEY` w szablonie (Unraid) albo do zmiennej środowiskow
 !!! danger "Nie zgub swojego APP_KEY"
     Utrata `APP_KEY` sprawia, że zaszyfrowane kopie zapasowe stają się nieodzyskiwalne. Przechowuj go w bezpiecznym miejscu, oddzielnie od serwera. Gdy BombVault już działa, ustaw hasło logowania i pobierz **zestaw odzyskiwania** w **Ustawienia, Przywracanie** (zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md#recovery-kit)). Zawiera klucz, każde miejsce docelowe i polecenia restic.
 
-Szablon montuje też za Ciebie gniazdo Docker, flash (`/boot`) oraz katalog główny **Host Data** (`/mnt`). Zarówno *źródła*, jak i *cele* kopii zapasowych znajdują się pod Host Data. Pełny opis zmiennych oraz konfigurację poza siedzibą znajdziesz w [Konfiguracja](configuration.md).
+Szablon montuje też za Ciebie gniazdo Docker, flash (`/boot`) oraz katalog główny **Host Data** (`/mnt`). Zarówno *źródła*, jak i *miejsca docelowe* kopii zapasowych znajdują się pod Host Data. Pełny opis zmiennych oraz konfigurację poza siedzibą znajdziesz w [Konfiguracja](configuration.md).
 
 ## Pierwsze uruchomienie
 

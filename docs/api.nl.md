@@ -21,18 +21,18 @@ Zonder inlogwachtwoord kan iedereen die de webinterface kan openen ook een token
 | Route | Wat die teruggeeft of doet | Token |
 |---|---|---|
 | `GET /api/v1/health` | Versie, instantienaam, of er een back-up loopt en wat dit token mag | lezen |
-| `GET /api/v1/status` | Beschermingsstatus per domein: laatste geslaagde back-up, verwacht interval, controles, volgende geplande runs | lezen |
+| `GET /api/v1/status` | Beschermingsstatus per onderdeel: laatste geslaagde back-up, verwacht interval, controles, volgende geplande runs | lezen |
 | `GET /api/v1/activity` | Wat er nu loopt, met fase en percentage | lezen |
-| `GET /api/v1/items` | Elk beschermd item met planning, wat een back-up stillegt en de laatste back-up; `?domain=` voor één domein | lezen |
+| `GET /api/v1/items` | Elk beschermd item met planning, wat een back-up stillegt en de laatste back-up; `?domain=` voor één onderdeel | lezen |
 | `GET /api/v1/runs` | Uitvoeringsgeschiedenis, nieuwste eerst; filters `limit`, `domain`, `item`, `status`, `kind`, `since` | lezen |
 | `GET /api/v1/anomalies` | Anomalieën met een overzicht van wat open staat; filters `state`, `severity`, `domain`, `limit` | lezen |
 | `GET /api/v1/anomalies/{id}` | Eén anomalie | lezen |
-| `GET /api/v1/storage/{domain}` | Groottegeschiedenis, groei per week en vrije ruimte van elke repository van een domein | lezen |
-| `POST /api/v1/backups` | Maakt een back-up van één item (`{"domain":"containers","item":"plex"}`) of een heel domein (`{"domain":"vms"}`) | starten |
+| `GET /api/v1/storage/{domain}` | Groottegeschiedenis, groei per week en vrije ruimte van elke repository van een onderdeel | lezen |
+| `POST /api/v1/backups` | Maakt een back-up van één item (`{"domain":"containers","item":"plex"}`) of een heel onderdeel (`{"domain":"vms"}`) | starten |
 | `POST /api/v1/backups/everything` | Start de Volledige back-up | starten |
 | `POST /api/v1/runs/{id}/cancel` | Breekt een lopende back-up af die dit token startte | starten |
 
-De domeinen zijn `containers`, `vms`, `files`, `zfs`, `flash` en `config`. Tijden zijn Unix-seconden. De antwoorden zijn die van de [MCP-tools](mcp.md#tools) met dezelfde naam, zodat beide gelijk blijven.
+De onderdelen zijn `containers`, `vms`, `files`, `zfs`, `flash` en `config`. Tijden zijn Unix-seconden. De antwoorden zijn die van de [MCP-tools](mcp.md#tools) met dezelfde naam, zodat beide gelijk blijven.
 
 Een back-up die hier start is dezelfde als die van de webinterface: een draaiende container wordt stilgelegd tot zijn back-up klaar is. De aanvraag komt meteen terug, en `/api/v1/activity` en `/api/v1/runs` laten zien hoe het gaat.
 
@@ -60,7 +60,7 @@ Een fout komt terug als `{"error": {"code": "...", "message": "..."}}` met de bi
 | 401 | `no_token`, `invalid_token` | Geen token, of geen actief token |
 | 403 | `not_permitted`, `forbidden_origin` | Het token mag alleen lezen, of het heeft die run niet gestart, of het verzoek kwam van een pagina met een andere oorsprong |
 | 404 | `not_found` | Zo'n item, run of anomalie bestaat niet |
-| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Er loopt al iets, het domein staat uit, of er is niets te doen |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Er loopt al iets, het onderdeel staat uit, of er is niets te doen |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Een grens houdt de aanvraag tegen; `Retry-After` zegt wanneer het weer kan |
 
 Starts volgen dezelfde grenzen als [starts via MCP](mcp.md#starting-backups): 12 per uur per token, 15 minuten tussen twee starts van hetzelfde item, hoogstens 4 starts van een item in 24 uur, en de bewaarbescherming. De laatste drie tellen starts via MCP, via de API en vanuit Home Assistant samen. Een token mag 120 aanvragen per minuut doen. Na vijf mislukte pogingen vanaf een adres is dat een minuut geblokkeerd.
@@ -81,16 +81,16 @@ Het apparaat heet BombVault, of BombVault met de instantienaam tussen haakjes, e
 
 | Entiteit | Wat die toont |
 |---|---|
-| Status | `ok`, `warning`, `failed` of `off`, het slechtste van de ingeschakelde domeinen |
+| Status | `ok`, `warning`, `failed` of `off`, het slechtste van de ingeschakelde onderdelen |
 | Running job | Wat er nu loopt, of `idle` |
 | Open anomalies | Hoeveel anomalieën open staan |
 | Next scheduled backup | Wanneer de volgende geplande back-up start |
-| *Domein* last backup | Wanneer de laatste geslaagde back-up van het domein liep |
-| *Domein* last result | Hoe zijn laatste back-up afliep |
-| *Domein* repository free space | De vrije ruimte waar zijn primaire repository staat, als BombVault die kan lezen |
-| Back up *domein* | Een knop die het hele domein back-upt |
+| *Onderdeel* last backup | Wanneer de laatste geslaagde back-up van het onderdeel liep |
+| *Onderdeel* last result | Hoe zijn laatste back-up afliep |
+| *Onderdeel* repository free space | De vrije ruimte waar zijn primaire repository staat, als BombVault die kan lezen |
+| Back up *onderdeel* | Een knop die het hele onderdeel back-upt |
 
-De namen van de entiteiten zijn Engels, omdat Home Assistant ze overneemt zoals BombVault ze stuurt. Elk ingeschakeld domein krijgt eigen entiteiten, en een domein dat je uitzet verliest ze. De knoppen verschijnen zodra je **Knoppen starten back-ups** inschakelt; op een nieuwe installatie staat dat uit. Ze volgen dezelfde grenzen als [starts via de API](#errors). Daarnaast neemt BombVault per domein één druk tegelijk aan en hoogstens zes per minuut, en negeert het een druk die de broker als retained bericht heeft bewaard. Iedereen die op de broker mag publiceren, kan erop drukken, dus geef de broker een wachtwoord.
+De namen van de entiteiten zijn Engels, omdat Home Assistant ze overneemt zoals BombVault ze stuurt. Elk ingeschakeld onderdeel krijgt eigen entiteiten, en een onderdeel dat je uitzet verliest ze. De knoppen verschijnen zodra je **Knoppen starten back-ups** inschakelt; op een nieuwe installatie staat dat uit. Ze volgen dezelfde grenzen als [starts via de API](#errors). Daarnaast neemt BombVault per onderdeel één druk tegelijk aan en hoogstens zes per minuut, en negeert het een druk die de broker als retained bericht heeft bewaard. Iedereen die op de broker mag publiceren, kan erop drukken, dus geef de broker een wachtwoord.
 
 BombVault leest zijn status elke 15 seconden en publiceert die als er iets veranderd is, als JSON onder `<voorvoegsel>/<node>/state`. Het voorvoegsel is `bombvault` zolang je het niet wijzigt, en de node is een korte id die BombVault eenmalig kiest. De discovery-berichten gaan naar het standaardvoorvoegsel `homeassistant` van Home Assistant. Beide worden bewaard (retained). Een last will markeert het apparaat als niet beschikbaar als BombVault stopt zonder zich af te melden. Zet je de koppeling uit, dan verwijdert BombVault het apparaat en zijn entiteiten uit Home Assistant.
 

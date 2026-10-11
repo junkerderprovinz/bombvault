@@ -7,18 +7,18 @@ BombVault ha un server integrato per il Model Context Protocol (MCP), il protoco
 | Strumento | Cosa fa | Tipo |
 |---|---|---|
 | `get_health` | Versione, nome dell'istanza, se è in corso un backup e cosa può fare questa chiave | lettura |
-| `get_status` | Stato di protezione per dominio: ultimo backup riuscito, intervallo previsto, verifiche e controlli off-site, prossime esecuzioni pianificate, backup in attesa che l'app sia inattiva e, per i container, il test di avvio più recente | lettura |
+| `get_status` | Stato di protezione per sezione: ultimo backup riuscito, intervallo previsto, verifiche e controlli off-site, prossime esecuzioni pianificate, backup in attesa che l'app sia inattiva e, per i container, il test di avvio più recente | lettura |
 | `get_coverage` | Cosa protegge BombVault e cosa no, con il motivo per ciascuno | lettura |
 | `list_items` | Ogni container, VM e set di cartelle protetto, la chiavetta flash e la configurazione dell'app, con pianificazione, cosa ferma un backup, l'ultimo backup e quanto è durato; i container di database riportano anche l'ultimo dump; compaiono anche i dataset ZFS, con l'esito del loro ultimo controllo; ogni elemento riporta il suo ultimo controllo di ripristino, e un container il suo ultimo test di avvio o il motivo per cui non si può testare; un container ricreato con altre impostazioni dall'ultimo backup elenca cosa è cambiato | lettura |
-| `list_runs` | Cronologia delle esecuzioni, le più recenti prima, filtrabile per dominio, elemento, stato, tipo e data; un backup lento frenato da una sola cosa la nomina | lettura |
+| `list_runs` | Cronologia delle esecuzioni, le più recenti prima, filtrabile per sezione, elemento, stato, tipo e data; un backup lento frenato da una sola cosa la nomina | lettura |
 | `list_restore_points` | Punti di ripristino di un elemento nel suo repository principale e, per un container, i suoi dump di database; un dataset ZFS ha un punto di ripristino per backup, con uno snapshot di ogni dataset sottostante | lettura |
 | `get_activity` | Cosa è in esecuzione adesso, con fase e percentuale | lettura |
-| `get_storage_stats` | Storico delle dimensioni del repository principale di un dominio e la sua crescita settimanale, con lo spazio usato, libero e totale sul disco o sul remoto di ciascuno dei suoi repository | lettura |
+| `get_storage_stats` | Storico delle dimensioni del repository principale di una sezione e la sua crescita settimanale, con lo spazio usato, libero e totale sul disco o sul remoto di ciascuno dei suoi repository | lettura |
 | `get_size_breakdown` | Quali cartelle e file occupano spazio nel backup più recente di un container, una VM o un insieme di cartelle, e quanto ne ha aggiunto l'ultimo backup | lettura |
-| `list_anomalies` | Anomalie notate da BombVault nei backup, filtrabili per stato, gravità e dominio, con un riepilogo di ciò che è aperto | lettura |
+| `list_anomalies` | Anomalie notate da BombVault nei backup, filtrabili per stato, gravità e sezione, con un riepilogo di ciò che è aperto | lettura |
 | `get_anomaly` | Una di queste segnalazioni, con la nota lasciata quando è stata confermata | lettura |
 | `start_backup` | Esegue subito il backup di un elemento | avvio |
-| `start_domain_backup` | Esegue il backup di ogni elemento protetto di un dominio | avvio |
+| `start_domain_backup` | Esegue il backup di ogni elemento protetto di una sezione | avvio |
 | `start_backup_everything` | Avvia il passaggio Backup totale | avvio |
 | `cancel_backup` | Annulla un backup in corso avviato da questa chiave | annullamento |
 
@@ -33,11 +33,11 @@ Il backup di un assistente è lo stesso che avvia l'interfaccia web. Un containe
 Poiché un backup ferma dei servizi e fa uscire vecchi punti di ripristino, gli avvii tramite MCP sono limitati:
 
 - 12 backup avviati all'ora per chiave.
-- 15 minuti tra due avvii MCP dello stesso elemento, dello stesso dominio o del Backup totale.
+- 15 minuti tra due avvii MCP dello stesso elemento, della stessa sezione o del Backup totale.
 - Al massimo 4 avvii MCP dello stesso elemento in 24 ore.
-- **Protezione della conservazione.** Quando un dominio conserva un numero fisso di punti di ripristino (solo "conserva gli ultimi N", senza regola giornaliera, settimanale o mensile, in locale o su una destinazione off-site), ogni nuovo backup fa uscire il più vecchio. BombVault rifiuta allora un avvio MCP di un elemento i cui N-1 backup riusciti più recenti sono stati tutti avviati tramite MCP. Nell'insieme conservato resta quindi sempre almeno un punto di ripristino creato dalla pianificazione o da te. Con "conserva l'ultimo" (N = 1) un assistente non può fare il backup di quell'elemento. Il prossimo backup pianificato fa di nuovo spazio. Una regola annuale da sola conta come "conserva l'ultimo" (N = 1), perché conserva un solo punto di ripristino per l'anno in corso.
+- **Protezione della conservazione.** Quando una sezione conserva un numero fisso di punti di ripristino (solo "conserva gli ultimi N", senza regola giornaliera, settimanale o mensile, in locale o su una destinazione off-site), ogni nuovo backup fa uscire il più vecchio. BombVault rifiuta allora un avvio MCP di un elemento i cui N-1 backup riusciti più recenti sono stati tutti avviati tramite MCP. Nell'insieme conservato resta quindi sempre almeno un punto di ripristino creato dalla pianificazione o da te. Con "conserva l'ultimo" (N = 1) un assistente non può fare il backup di quell'elemento. Il prossimo backup pianificato fa di nuovo spazio. Una regola annuale da sola conta come "conserva l'ultimo" (N = 1), perché conserva un solo punto di ripristino per l'anno in corso.
 
-Un avvio di dominio o del Backup totale lascia fuori gli elementi trattenuti da un limite e li nomina nella risposta. L'interfaccia web e la pianificazione non sono toccate da nessuno di questi limiti. Il budget orario vive in memoria, quindi un riavvio di BombVault lo azzera.
+Un avvio di sezione o del Backup totale lascia fuori gli elementi trattenuti da un limite e li nomina nella risposta. L'interfaccia web e la pianificazione non sono toccate da nessuno di questi limiti. Il budget orario vive in memoria, quindi un riavvio di BombVault lo azzera.
 
 Gli avvii tramite l'[API](api.md#errors) e da [Home Assistant](api.md#home-assistant) contano negli stessi limiti per elemento degli avvii tramite MCP e nella protezione della conservazione.
 
@@ -257,8 +257,8 @@ Tutto ciò che un assistente legge va al fornitore di IA che sta dietro: nomi de
 | `400` "batch requests are not accepted" | Il client invia batch JSON-RPC. Invia un messaggio per richiesta. |
 | `429` | Troppe chiavi sbagliate da questo indirizzo, oppure più di 120 richieste al minuto con una chiave. Aspetta un minuto e controlla che l'assistente non sia bloccato in un ciclo. |
 | Errori con "certificate", "self-signed" o "unable to verify" | Il client non si fida del certificato di BombVault. Vedi [TLS e certificati](#tls). |
-| `busy` | Un altro backup o un'attività di manutenzione occupa quel dominio. Riprova quando ha finito. |
-| `cooldown` | Questo elemento, questo dominio o il Backup totale è stato avviato fuori dall'interfaccia web meno di 15 minuti fa. |
+| `busy` | Un altro backup o un'attività di manutenzione occupa quella sezione. Riprova quando ha finito. |
+| `cooldown` | Questo elemento, questa sezione o il Backup totale è stato avviato fuori dall'interfaccia web meno di 15 minuti fa. |
 | `retention_guard` | Un altro backup MCP lascerebbe solo punti di ripristino MCP in una finestra "conserva gli ultimi N", oppure l'elemento ha già avuto 4 backup tramite MCP nelle ultime 24 ore, contando anche quelli falliti e annullati. Nel primo caso il prossimo backup pianificato fa spazio, nel secondo l'elemento torna libero 24 ore dopo il più vecchio di quei backup. In entrambi i casi puoi avviarlo dall'interfaccia web. |
 | `rate_limited` | La chiave ha usato i suoi 12 avvii di quest'ora. |
 | `not_permitted` su un avvio | La chiave è di sola lettura. Attiva **Consenti di avviare backup** nella scheda; non serve riconnettersi. Su un annullamento significa che l'esecuzione non è stata avviata da questa chiave. |

@@ -26,7 +26,7 @@ Hver container, VM, mappesæt, flashdrevet, hvert ZFS-datasæt og BombVaults egn
 
 ## Gendannelse er stjernen
 
-Efter at data er kopieret tilbage fra restic-øjebliksbilledet, afspiller BombVault den gemte containerdefinition mod Docker-API'en, så containeren dukker op igen i Unraids Docker-fane, som om den altid havde været der (samme image, samme indstillinger, samme portmapninger). VM'er får deres XML defineret på ny over SSH og deres diske og UEFI NVRAM tilkoblet igen, selv efter at VM'en er blevet slettet.
+Efter at data er kopieret tilbage fra restic-sikkerhedskopien, afspiller BombVault den gemte containerdefinition mod Docker-API'en, så containeren dukker op igen i Unraids Docker-fane, som om den altid havde været der (samme image, samme indstillinger, samme portmapninger). VM'er får deres XML defineret på ny over SSH og deres diske og UEFI NVRAM tilkoblet igen, selv efter at VM'en er blevet slettet.
 
 Ét vindue gendanner alle slags. Som standard vælger det **Ved siden af originalen**, som bringer sikkerhedskopien tilbage som en kopi og lader originalen være. **Erstat originalen** tager først en sikkerhedskopi af den aktuelle tilstand, så en gendannelse kan fortrydes. En mappe eller et nyt ZFS-datasæt er de andre mål.
 
@@ -47,7 +47,7 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
-BombVault bruger Docker-socket'en til at stoppe containere før en sikkerhedskopi og genskabe dem efter en gendannelse. Til VM'er kører den `virsh` på værten over SSH (`qemu+ssh://`) for at lukke en VM pænt ned eller tage et live-øjebliksbillede. Den bind-monterer aldrig en libvirt-sti, så den kan ikke komme i vejen for VM Manager på værten.
+BombVault bruger Docker-socket'en til at stoppe containere før en sikkerhedskopi og genskabe dem efter en gendannelse. Til VM'er kører den `virsh` på værten over SSH (`qemu+ssh://`) for at lukke en VM pænt ned eller tage et live-snapshot. Den bind-monterer aldrig en libvirt-sti, så den kan ikke komme i vejen for VM Manager på værten.
 
 BombVault er orkestrerings- og UI-laget, ikke lagringsmotoren. Al faktisk dataflytning går gennem restic.
 

@@ -21,14 +21,14 @@ Bez hasła logowania każdy, kto może otworzyć interfejs WWW, może też utwor
 | Trasa | Co zwraca lub robi | Token |
 |---|---|---|
 | `GET /api/v1/health` | Wersja, nazwa instancji, czy trwa kopia i co może ten token | odczyt |
-| `GET /api/v1/status` | Stan ochrony według obszaru: ostatnia udana kopia, oczekiwany odstęp, kontrole, najbliższe zaplanowane przebiegi | odczyt |
+| `GET /api/v1/status` | Stan ochrony według sekcji: ostatnia udana kopia, oczekiwany odstęp, kontrole, najbliższe zaplanowane przebiegi | odczyt |
 | `GET /api/v1/activity` | Co działa w tej chwili, z fazą i procentem | odczyt |
-| `GET /api/v1/items` | Każdy chroniony element z harmonogramem, tym, co zatrzymuje kopia, i ostatnią kopią; `?domain=` dla jednego obszaru | odczyt |
+| `GET /api/v1/items` | Każdy chroniony element z harmonogramem, tym, co zatrzymuje kopia, i ostatnią kopią; `?domain=` dla jednej sekcji | odczyt |
 | `GET /api/v1/runs` | Historia przebiegów, najnowsze najpierw; filtry `limit`, `domain`, `item`, `status`, `kind`, `since` | odczyt |
 | `GET /api/v1/anomalies` | Anomalie z podsumowaniem otwartych; filtry `state`, `severity`, `domain`, `limit` | odczyt |
 | `GET /api/v1/anomalies/{id}` | Jedna anomalia | odczyt |
-| `GET /api/v1/storage/{domain}` | Historia rozmiaru, przyrost tygodniowy i wolne miejsce każdego repozytorium obszaru | odczyt |
-| `POST /api/v1/backups` | Tworzy kopię jednego elementu (`{"domain":"containers","item":"plex"}`) albo całego obszaru (`{"domain":"vms"}`) | uruchamianie |
+| `GET /api/v1/storage/{domain}` | Historia rozmiaru, przyrost tygodniowy i wolne miejsce każdego repozytorium sekcji | odczyt |
+| `POST /api/v1/backups` | Tworzy kopię jednego elementu (`{"domain":"containers","item":"plex"}`) albo całej sekcji (`{"domain":"vms"}`) | uruchamianie |
 | `POST /api/v1/backups/everything` | Uruchamia Pełną kopię | uruchamianie |
 | `POST /api/v1/runs/{id}/cancel` | Przerywa trwającą kopię uruchomioną przez ten token | uruchamianie |
 
@@ -60,7 +60,7 @@ Błąd wraca jako `{"error": {"code": "...", "message": "..."}}` z odpowiednim s
 | 401 | `no_token`, `invalid_token` | Brak tokenu albo token nieaktywny |
 | 403 | `not_permitted`, `forbidden_origin` | Token może tylko czytać albo nie uruchomił tego przebiegu, albo żądanie przyszło ze strony o innym pochodzeniu |
 | 404 | `not_found` | Nie ma takiego elementu, przebiegu ani anomalii |
-| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Coś innego już działa, obszar jest wyłączony albo nie ma nic do zrobienia |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Coś innego już działa, sekcja jest wyłączona albo nie ma nic do zrobienia |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Limit wstrzymuje żądanie; `Retry-After` mówi, kiedy spróbować ponownie |
 
 Uruchomienia podlegają tym samym limitom co [uruchomienia przez MCP](mcp.md#starting-backups): 12 na godzinę na token, 15 minut między dwoma uruchomieniami tego samego elementu, najwyżej 4 uruchomienia elementu w ciągu 24 godzin oraz ochrona retencji. Ostatnie trzy liczą razem uruchomienia przez MCP, przez API i z Home Assistant. Token może wysłać 120 żądań na minutę. Pięć nieudanych prób z jednego adresu blokuje go na minutę.
@@ -81,16 +81,16 @@ Urządzenie nazywa się BombVault albo BombVault z nazwą instancji w nawiasie i
 
 | Encja | Co pokazuje |
 |---|---|
-| Status | `ok`, `warning`, `failed` lub `off`, najgorszy stan spośród włączonych obszarów |
+| Status | `ok`, `warning`, `failed` lub `off`, najgorszy stan spośród włączonych sekcji |
 | Running job | Co teraz działa, albo `idle` |
 | Open anomalies | Ile anomalii jest otwartych |
 | Next scheduled backup | Kiedy zaczyna się następna zaplanowana kopia |
-| *Obszar* last backup | Kiedy wykonano ostatnią udaną kopię obszaru |
-| *Obszar* last result | Jak zakończyła się jego ostatnia kopia |
-| *Obszar* repository free space | Wolne miejsce tam, gdzie leży jego główne repozytorium, jeśli BombVault może je odczytać |
-| Back up *obszar* | Przycisk, który kopiuje cały obszar |
+| *Sekcja* last backup | Kiedy wykonano ostatnią udaną kopię sekcji |
+| *Sekcja* last result | Jak zakończyła się jej ostatnia kopia |
+| *Sekcja* repository free space | Wolne miejsce tam, gdzie leży jej główne repozytorium, jeśli BombVault może je odczytać |
+| Back up *sekcja* | Przycisk, który kopiuje całą sekcję |
 
-Nazwy encji są po angielsku, bo Home Assistant przejmuje je tak, jak wysyła je BombVault. Każdy włączony obszar dostaje własne encje, a wyłączony je traci. Przyciski pojawiają się, gdy włączysz **Przyciski uruchamiają kopie**; w nowej instalacji jest to wyłączone. Podlegają tym samym limitom co [uruchomienia przez API](#errors). Do tego BombVault przyjmuje naraz tylko jedno naciśnięcie na obszar i najwyżej sześć na minutę, a naciśnięcie, które broker zachował jako wiadomość retained, pomija. Nacisnąć je może każdy, kto może publikować w brokerze, więc zabezpiecz broker hasłem.
+Nazwy encji są po angielsku, bo Home Assistant przejmuje je tak, jak wysyła je BombVault. Każda włączona sekcja dostaje własne encje, a wyłączona je traci. Przyciski pojawiają się, gdy włączysz **Przyciski uruchamiają kopie**; w nowej instalacji jest to wyłączone. Podlegają tym samym limitom co [uruchomienia przez API](#errors). Do tego BombVault przyjmuje naraz tylko jedno naciśnięcie na sekcję i najwyżej sześć na minutę, a naciśnięcie, które broker zachował jako wiadomość retained, pomija. Nacisnąć je może każdy, kto może publikować w brokerze, więc zabezpiecz broker hasłem.
 
 BombVault odczytuje swój stan co 15 sekund i publikuje go, gdy coś się zmieniło, jako JSON pod `<prefiks>/<węzeł>/state`. Prefiks to `bombvault`, dopóki go nie zmienisz, a węzeł to krótki identyfikator, który BombVault wybiera raz. Komunikaty wykrywania trafiają pod domyślny prefiks Home Assistant, `homeassistant`. Oba są zachowywane (retained). Ostatnia wola (last will) oznacza urządzenie jako niedostępne, jeśli BombVault zatrzyma się bez uprzedzenia. Wyłączenie połączenia usuwa urządzenie i jego encje z Home Assistant.
 

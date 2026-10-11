@@ -30,7 +30,7 @@ Sparowany telefon dostaje sesję przez grupę tylko wtedy, gdy w **Ustawienia, B
 
 Kopia VM komunikuje się z libvirt przez SSH, nigdy przez montaż.
 
-- Potwierdź, że SSH jest włączone na hoście, a klucz publiczny BombVault jest autoryzowany w `/root/.ssh/authorized_keys` (Ustawienia, Integracje, SSH hosta pokazuje klucz oraz przycisk **Test połączenia**).
+- Potwierdź, że SSH jest włączone na hoście, a klucz publiczny BombVault jest autoryzowany w `/root/.ssh/authorized_keys` (Ustawienia, Integracje, SSH hosta pokazuje klucz oraz przycisk **Testuj połączenie**).
 - W niestandardowej sieci `br0.x` ustaw `LIBVIRT_HOST` na swoje IP Unraid w LAN (kontener nie może tam dotrzeć do hosta przez `host.docker.internal`). Włącz **Settings, Docker, Host access to custom networks**.
 - Jeśli zmieniłeś port SSH Unraid, ustaw `LIBVIRT_SSH_PORT`, aby pasował.
 - Pełna diagnoza krok po kroku (test osiągalności, routing VLAN, `Permission denied (publickey)`, `Host key verification failed`) znajduje się w [przewodniku Kopia VM przez SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -45,7 +45,7 @@ To zwykle osierocona blokada restic pozostawiona, gdy kontener został zaktualiz
 
 ## Moja kopia poza siedzibą nie zdarzyła się po kopii
 
-Replikacja poza siedzibą jest z założenia best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Sprawdź, kiedy miejsce docelowe kopiuje: jego karta **Kopiuj** mówi **Po każdej kopii zapasowej** albo wymienia własny plan, a **Ustawienia, Harmonogram, Kopie poza siedzibą według obszarów** może dać sekcji własny plan. Użyj **Replikuj teraz** w karcie **Kopia off-site** sekcji w **Ustawienia, Miejsca docelowe** do uruchomienia na żądanie i obserwuj nagłówek stanu przeglądu, który w trakcie pisze **Trwa kopiowanie poza siedzibę**. Nieudana kopia pojawia się pod **Wymaga uwagi**.
+Replikacja poza siedzibą jest z założenia best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Sprawdź, kiedy miejsce docelowe kopiuje: jego karta **Kopiuj** mówi **Po każdej kopii zapasowej** albo wymienia własny plan, a **Ustawienia, Harmonogram, Kopie poza siedzibą według sekcji** może dać sekcji własny plan. Użyj **Replikuj teraz** w karcie **Kopia off-site** sekcji w **Ustawienia, Miejsca docelowe** do uruchomienia na żądanie i obserwuj nagłówek stanu przeglądu, który w trakcie pisze **Trwa kopiowanie poza siedzibę**. Nieudana kopia pojawia się pod **Wymaga uwagi**.
 
 ## Przywracanie przerwane, zanim się zaczęło
 
@@ -95,7 +95,7 @@ Ta sama przyczyna: czyszczenie nie rusza starych kopii elementu z taką anomali�
 
 ## Import historii mówi, że nie udało się odczytać repozytorium
 
-Po aktualizacji BombVault raz odczytuje rozmiary wcześniejszych kopii z każdego repozytorium. Repozytorium, które było wtedy nieosiągalne, na przykład niedziałający cel zewnętrzny albo niezamontowany udział, pojawia się na karcie **Anomalie** w **Ustawienia, Weryfikacja** i jest ponawiane raz dziennie. W tym czasie jego elementy uczą się na nowych kopiach.
+Po aktualizacji BombVault raz odczytuje rozmiary wcześniejszych kopii z każdego repozytorium. Repozytorium, które było wtedy nieosiągalne, na przykład niedziałające zdalne miejsce docelowe albo niezamontowany udział, pojawia się na karcie **Anomalie** w **Ustawienia, Weryfikacja** i jest ponawiane raz dziennie. W tym czasie jego elementy uczą się na nowych kopiach.
 
 ## Ostrzeżenie o miejscu na dysku nie zgadza się z pulpitem Unraid
 

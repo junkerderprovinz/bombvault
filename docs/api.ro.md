@@ -21,18 +21,18 @@ Fără parolă de conectare, oricine poate deschide interfața web poate crea ș
 | Rută | Ce returnează sau face | Token |
 |---|---|---|
 | `GET /api/v1/health` | Versiunea, numele instanței, dacă rulează o copie și ce poate face acest token | citire |
-| `GET /api/v1/status` | Starea protecției pe domenii: ultima copie reușită, intervalul așteptat, verificările, următoarele rulări planificate | citire |
+| `GET /api/v1/status` | Starea protecției pe secțiuni: ultima copie reușită, intervalul așteptat, verificările, următoarele rulări planificate | citire |
 | `GET /api/v1/activity` | Ce rulează acum, cu fază și procent | citire |
-| `GET /api/v1/items` | Fiecare element protejat cu programul, ce oprește o copie și ultima copie; `?domain=` pentru un domeniu | citire |
+| `GET /api/v1/items` | Fiecare element protejat cu programul, ce oprește o copie și ultima copie; `?domain=` pentru o secțiune | citire |
 | `GET /api/v1/runs` | Istoricul rulărilor, cele mai noi primele; filtre `limit`, `domain`, `item`, `status`, `kind`, `since` | citire |
 | `GET /api/v1/anomalies` | Anomalii cu un rezumat al celor deschise; filtre `state`, `severity`, `domain`, `limit` | citire |
 | `GET /api/v1/anomalies/{id}` | O anomalie | citire |
-| `GET /api/v1/storage/{domain}` | Istoricul mărimii, creșterea pe săptămână și spațiul liber al fiecărui depozit dintr-un domeniu | citire |
-| `POST /api/v1/backups` | Copiază un element (`{"domain":"containers","item":"plex"}`) sau un domeniu întreg (`{"domain":"vms"}`) | pornire |
+| `GET /api/v1/storage/{domain}` | Istoricul mărimii, creșterea pe săptămână și spațiul liber al fiecărui depozit dintr-o secțiune | citire |
+| `POST /api/v1/backups` | Copiază un element (`{"domain":"containers","item":"plex"}`) sau o secțiune întreagă (`{"domain":"vms"}`) | pornire |
 | `POST /api/v1/backups/everything` | Rulează Backupul total | pornire |
 | `POST /api/v1/runs/{id}/cancel` | Anulează o copie în curs pornită de acest token | pornire |
 
-Domeniile sunt `containers`, `vms`, `files`, `zfs`, `flash` și `config`. Timpii sunt secunde Unix. Răspunsurile sunt aceleași ca la [instrumentele MCP](mcp.md#tools) cu același nume, așa că cele două rămân la fel.
+Secțiunile sunt `containers`, `vms`, `files`, `zfs`, `flash` și `config`. Timpii sunt secunde Unix. Răspunsurile sunt aceleași ca la [instrumentele MCP](mcp.md#tools) cu același nume, așa că cele două rămân la fel.
 
 O copie pornită aici este aceeași pe care o pornește interfața web: un container care rulează e oprit până se termină copia lui. Cererea se întoarce imediat, iar `/api/v1/activity` și `/api/v1/runs` arată cum merge.
 
@@ -60,7 +60,7 @@ O eroare se întoarce ca `{"error": {"code": "...", "message": "..."}}`, cu star
 | 401 | `no_token`, `invalid_token` | Niciun token, sau nu unul activ |
 | 403 | `not_permitted`, `forbidden_origin` | Tokenul poate doar citi, sau nu el a pornit rularea, sau cererea a venit de pe o pagină cu altă origine |
 | 404 | `not_found` | Nu există acel element, acea rulare sau anomalie |
-| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Rulează deja altceva, domeniul e oprit sau nu e nimic de făcut |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Rulează deja altceva, secțiunea e oprită sau nu e nimic de făcut |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | O limită reține cererea; `Retry-After` spune când poți încerca din nou |
 
 Pornirile respectă aceleași limite ca [pornirile prin MCP](mcp.md#starting-backups): 12 pe oră per token, 15 minute între două porniri ale aceluiași element, cel mult 4 porniri ale unui element în 24 de ore și protecția de retenție. Ultimele trei numără împreună pornirile prin MCP, prin API și din Home Assistant. Un token poate face 120 de cereri pe minut. Cinci încercări eșuate de la o adresă o blochează un minut.
@@ -81,16 +81,16 @@ Dispozitivul se numește BombVault, sau BombVault cu numele instanței între pa
 
 | Entitate | Ce arată |
 |---|---|
-| Status | `ok`, `warning`, `failed` sau `off`, cel mai rău dintre domeniile pornite |
+| Status | `ok`, `warning`, `failed` sau `off`, cel mai rău dintre secțiunile pornite |
 | Running job | Ce rulează acum, sau `idle` |
 | Open anomalies | Câte anomalii sunt deschise |
 | Next scheduled backup | Când începe următoarea copie planificată |
-| *Domeniu* last backup | Când a rulat ultima copie reușită a domeniului |
-| *Domeniu* last result | Cum s-a încheiat ultima sa copie |
-| *Domeniu* repository free space | Spațiul liber acolo unde se află depozitul său principal, dacă BombVault îl poate citi |
-| Back up *domeniu* | Un buton care copiază tot domeniul |
+| *Secțiune* last backup | Când a rulat ultima copie reușită a secțiunii |
+| *Secțiune* last result | Cum s-a încheiat ultima sa copie |
+| *Secțiune* repository free space | Spațiul liber acolo unde se află depozitul său principal, dacă BombVault îl poate citi |
+| Back up *secțiune* | Un buton care copiază toată secțiunea |
 
-Numele entităților sunt în engleză, pentru că Home Assistant le preia așa cum le trimite BombVault. Fiecare domeniu pornit primește entități proprii, iar unul pe care îl oprești le pierde. Butoanele apar după ce pornești **Butoanele pornesc copii**, oprit la o instalare nouă. Respectă aceleași limite ca [pornirile prin API](#errors). În plus, BombVault primește o singură apăsare odată pentru fiecare domeniu și cel mult șase pe minut, și ignoră o apăsare pe care brokerul a păstrat-o ca mesaj retained. Oricine poate publica pe broker le poate apăsa, așa că pune o parolă brokerului.
+Numele entităților sunt în engleză, pentru că Home Assistant le preia așa cum le trimite BombVault. Fiecare secțiune pornită primește entități proprii, iar una pe care o oprești le pierde. Butoanele apar după ce pornești **Butoanele pornesc copii**, oprit la o instalare nouă. Respectă aceleași limite ca [pornirile prin API](#errors). În plus, BombVault primește o singură apăsare odată pentru fiecare secțiune și cel mult șase pe minut, și ignoră o apăsare pe care brokerul a păstrat-o ca mesaj retained. Oricine poate publica pe broker le poate apăsa, așa că pune o parolă brokerului.
 
 BombVault își citește starea la fiecare 15 secunde și o publică atunci când s-a schimbat ceva, ca JSON sub `<prefix>/<nod>/state`. Prefixul este `bombvault` cât timp nu îl schimbi, iar nodul este un identificator scurt pe care BombVault îl alege o dată. Mesajele de descoperire merg la prefixul implicit al Home Assistant, `homeassistant`. Ambele sunt păstrate (retained). Un ultim mesaj (last will) marchează dispozitivul ca indisponibil dacă BombVault se oprește fără să anunțe. Dacă oprești legătura, BombVault scoate dispozitivul și entitățile lui din Home Assistant.
 

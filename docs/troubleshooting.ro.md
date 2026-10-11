@@ -45,7 +45,7 @@ De obicei este un lock restic orfan rămas când containerul a fost actualizat s
 
 ## Copia mea off-site nu s-a întâmplat după un backup
 
-Replicarea off-site este best-effort prin concepție, așa că un sughiț off-site nu face niciodată să eșueze copia locală. Verifică când copiază destinația: cardul ei **Copiază** spune **După fiecare copie de rezervă** sau numește un plan propriu, iar **Setări, Programare, Copii externe pe domenii** poate da unei secțiuni un plan propriu. Folosește **Replică acum** în cardul de copie off-site al secțiunii de la **Setări, Destinații** pentru o rulare la cerere și urmărește antetul de stare din prezentare, care spune **Copierea off-site rulează** cât timp rulează. O copiere eșuată apare la **Necesită atenție**.
+Replicarea off-site este best-effort prin concepție, așa că un sughiț off-site nu face niciodată să eșueze copia locală. Verifică când copiază destinația: cardul ei **Copiază** spune **După fiecare copie de rezervă** sau numește un plan propriu, iar **Setări, Programare, Copii externe pe secțiuni** poate da unei secțiuni un plan propriu. Folosește **Replică acum** în cardul de copie off-site al secțiunii de la **Setări, Destinații** pentru o rulare la cerere și urmărește antetul de stare din prezentare, care spune **Copierea off-site rulează** cât timp rulează. O copiere eșuată apare la **Necesită atenție**.
 
 ## O restaurare s-a oprit înainte de a începe
 

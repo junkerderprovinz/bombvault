@@ -66,7 +66,7 @@ Lim resultatet inn i `APP_KEY`-feltet i malen (Unraid), eller i miljøvariabelen
 !!! danger "Ikke mist APP_KEY-en din"
     Å miste `APP_KEY` gjør de krypterte sikkerhetskopiene dine umulige å gjenopprette. Oppbevar den et trygt sted og adskilt fra serveren. Når BombVault kjører, sett et påloggingspassord og last ned **gjenopprettingssettet** under **Innstillinger, Gjenoppretting** (se [Ekstern lagring og gjenoppretting](offsite-recovery.md#recovery-kit)). Det inneholder nøkkelen, hvert mål og restic-kommandoene.
 
-Malen monterer også Docker-socketen, flashen (`/boot`) og **Host Data**-roten (`/mnt`) for deg. Sikkerhetskopi-*kilder* og -*destinasjoner* ligger begge under Host Data. For den fullstendige variabelreferansen og oppsettet for ekstern lagring, se [Konfigurasjon](configuration.md).
+Malen monterer også Docker-socketen, flashen (`/boot`) og **Host Data**-roten (`/mnt`) for deg. Sikkerhetskopi-*kilder* og -*mål* ligger begge under Host Data. For den fullstendige variabelreferansen og oppsettet for ekstern lagring, se [Konfigurasjon](configuration.md).
 
 ## Første kjøring
 

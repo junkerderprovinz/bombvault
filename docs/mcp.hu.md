@@ -7,18 +7,18 @@ A BombVault beépített kiszolgálót tartalmaz a Model Context Protocolhoz (MCP
 | Eszköz | Mit csinál | Fajta |
 |---|---|---|
 | `get_health` | Verzió, a példány neve, fut-e mentés, és mit tehet ez a kulcs | olvasás |
-| `get_status` | Védettségi állapot tartományonként: utolsó sikeres mentés, várt időköz, ellenőrzések és off-site vizsgálatok, következő ütemezett futások, az alkalmazás nyugalmára váró mentések, konténereknél a legutóbbi indítási teszt | olvasás |
+| `get_status` | Védettségi állapot szakaszonként: utolsó sikeres mentés, várt időköz, ellenőrzések és off-site vizsgálatok, következő ütemezett futások, az alkalmazás nyugalmára váró mentések, konténereknél a legutóbbi indítási teszt | olvasás |
 | `get_coverage` | Mit véd a BombVault és mit nem, mindegyiknél az okkal | olvasás |
 | `list_items` | Minden védett konténer, VM és mappakészlet, a flash meghajtó és az alkalmazás beállításai, ütemezéssel, azzal, hogy egy mentés mit állít le, az utolsó mentéssel és annak idejével; az adatbázis-konténerek az utolsó dumpot is megadják; a ZFS-adatkészletek is szerepelnek, a legutóbbi ellenőrzésük eredményével; minden elem mellett ott a legutóbbi visszaállítási ellenőrzése, egy konténernél a legutóbbi indítási teszt vagy az ok, amiért nem tesztelhető; a legutóbbi mentés óta más beállításokkal újra létrehozott konténer felsorolja a változásokat | olvasás |
-| `list_runs` | Futási előzmények, a legújabbak elöl, tartomány, elem, állapot, fajta és idő szerint szűrhetően; a lassú mentés, amelyet egyetlen dolog fékezett, megnevezi azt | olvasás |
+| `list_runs` | Futási előzmények, a legújabbak elöl, szakasz, elem, állapot, fajta és idő szerint szűrhetően; a lassú mentés, amelyet egyetlen dolog fékezett, megnevezi azt | olvasás |
 | `list_restore_points` | Egy elem visszaállítási pontjai az elsődleges tárolójából, konténernél az adatbázis-dumpjai is; egy ZFS-adatkészletnek mentésenként egy visszaállítási pontja van, az alatta lévő minden adatkészlet pillanatképével | olvasás |
 | `get_activity` | Mi fut éppen, fázissal és százalékkal | olvasás |
-| `get_storage_stats` | Egy tartomány elsődleges tárolójának méretelőzménye és heti növekedése, valamint a foglalt, szabad és teljes hely minden tárolójának lemezén vagy távoli helyén | olvasás |
+| `get_storage_stats` | Egy szakasz elsődleges tárolójának méretelőzménye és heti növekedése, valamint a foglalt, szabad és teljes hely minden tárolójának lemezén vagy távoli helyén | olvasás |
 | `get_size_breakdown` | Mely mappák és fájlok foglalnak helyet egy konténer, VM vagy mappakészlet legújabb mentésében, és ebből mennyit adott hozzá a legutóbbi mentés | olvasás |
-| `list_anomalies` | Anomáliák, amelyeket a BombVault a mentésekben észrevett, állapot, súlyosság és tartomány szerint szűrhetők, a nyitott tételek összesítésével | olvasás |
+| `list_anomalies` | Anomáliák, amelyeket a BombVault a mentésekben észrevett, állapot, súlyosság és szakasz szerint szűrhetők, a nyitott tételek összesítésével | olvasás |
 | `get_anomaly` | Egy ilyen észlelés, a nyugtázáskor hagyott megjegyzéssel | olvasás |
 | `start_backup` | Azonnal elmenti egy elem adatait | indítás |
-| `start_domain_backup` | Egy tartomány minden védett elemét menti | indítás |
+| `start_domain_backup` | Egy szakasz minden védett elemét menti | indítás |
 | `start_backup_everything` | Lefuttatja a Teljes mentés menetet | indítás |
 | `cancel_backup` | Megszakít egy futó mentést, amelyet ez a kulcs indított | megszakítás |
 
@@ -33,11 +33,11 @@ Az asszisztens mentése ugyanaz, mint amit a webes felület indít. Egy futó ko
 Mivel egy mentés leállít dolgokat és kiszorítja a régi visszaállítási pontokat, az MCP-n keresztüli indítások korlátozottak:
 
 - Óránként és kulcsonként 12 elindított mentés.
-- 15 perc ugyanannak az elemnek, ugyanannak a tartománynak vagy a Teljes mentésnek két MCP-indítása között.
+- 15 perc ugyanannak az elemnek, ugyanannak a szakasznak vagy a Teljes mentésnek két MCP-indítása között.
 - Legfeljebb 4 MCP-indítás ugyanarra az elemre 24 óra alatt.
-- **Megőrzésvédelem.** Ha egy tartomány rögzített számú visszaállítási pontot tart meg (csak "az utolsó N megtartása", napi, heti vagy havi szabály nélkül, helyben vagy egy off-site célon), minden új mentés kiszorítja a legrégebbit. A BombVault ilyenkor elutasítja egy elem MCP-indítását, ha a legutóbbi N-1 sikeres mentését mind MCP-n keresztül indították. Így a megtartott halmazban mindig marad legalább egy visszaállítási pont, amelyet az ütemezés vagy te hoztál létre. "Az utolsó 1 megtartása" beállításnál egy asszisztens egyáltalán nem mentheti azt az elemet. A következő ütemezett mentés újra helyet csinál. Egy önmagában álló éves szabály "Az utolsó 1 megtartása" beállításnak számít, mert az aktuális évből csak egy visszaállítási pontot tart meg.
+- **Megőrzésvédelem.** Ha egy szakasz rögzített számú visszaállítási pontot tart meg (csak "az utolsó N megtartása", napi, heti vagy havi szabály nélkül, helyben vagy egy off-site célon), minden új mentés kiszorítja a legrégebbit. A BombVault ilyenkor elutasítja egy elem MCP-indítását, ha a legutóbbi N-1 sikeres mentését mind MCP-n keresztül indították. Így a megtartott halmazban mindig marad legalább egy visszaállítási pont, amelyet az ütemezés vagy te hoztál létre. "Az utolsó 1 megtartása" beállításnál egy asszisztens egyáltalán nem mentheti azt az elemet. A következő ütemezett mentés újra helyet csinál. Egy önmagában álló éves szabály "Az utolsó 1 megtartása" beállításnak számít, mert az aktuális évből csak egy visszaállítási pontot tart meg.
 
-Egy tartomány vagy a Teljes mentés indítása kihagyja azokat az elemeket, amelyeket valamelyik korlát visszatart, és megnevezi őket a válaszában. Egyik korlát sem vonatkozik a webes felületre és az ütemezésre. Az óránkénti keret a memóriában van, így a BombVault újraindítása lenullázza.
+Egy szakasz vagy a Teljes mentés indítása kihagyja azokat az elemeket, amelyeket valamelyik korlát visszatart, és megnevezi őket a válaszában. Egyik korlát sem vonatkozik a webes felületre és az ütemezésre. Az óránkénti keret a memóriában van, így a BombVault újraindítása lenullázza.
 
 Az [API-n](api.md#errors) keresztüli és a [Home Assistantből](api.md#home-assistant) érkező indítások ugyanabba az elemenkénti korlátba számítanak, mint az MCP-n keresztüliek, és a megőrzési védelembe is.
 
@@ -257,8 +257,8 @@ Mindaz, amit egy asszisztens elolvas, a mögötte álló MI-szolgáltatóhoz ker
 | `400` "batch requests are not accepted" | A kliens JSON-RPC kötegeket küld. Kérésenként egy üzenetet küldj. |
 | `429` | Túl sok hibás kulcs erről a címről, vagy egy kulccsal több mint 120 kérés percenként. Várj egy percet, és nézd meg, nem ragadt-e az asszisztens egy ciklusba. |
 | "certificate", "self-signed" vagy "unable to verify" szövegű hibák | A kliens nem bízik a BombVault tanúsítványában. Lásd [TLS és tanúsítványok](#tls). |
-| `busy` | Egy másik mentés vagy karbantartási feladat foglalja a tartományt. Próbáld újra, ha végzett. |
-| `cooldown` | Ezt az elemet, ezt a tartományt vagy a Teljes mentést kevesebb mint 15 perce indították a webes felületen kívülről. |
+| `busy` | Egy másik mentés vagy karbantartási feladat foglalja a szakaszt. Próbáld újra, ha végzett. |
+| `cooldown` | Ezt az elemet, ezt a szakaszt vagy a Teljes mentést kevesebb mint 15 perce indították a webes felületen kívülről. |
 | `retention_guard` | Még egy MCP-mentés után "az utolsó N megtartása" ablakban csak MCP-ből származó visszaállítási pontok maradnának, vagy az elem az elmúlt 24 órában már 4 mentést kapott MCP-n keresztül, a sikertelenekkel és a megszakítottakkal együtt. Az első esetben a következő ütemezett mentés helyet csinál, a másodikban az elem a legrégebbi ilyen mentés után 24 órával lesz újra szabad. A webes felületen bármikor elindíthatod. |
 | `rate_limited` | A kulcs elhasználta az erre az órára jutó 12 indítását. |
 | `not_permitted` indításnál | A kulcs csak olvashat. Kapcsold be az **Mentések indításának engedélyezése** kapcsolót a kártyán; újracsatlakozás nem kell. Megszakításnál azt jelenti, hogy a futást nem ez a kulcs indította. |

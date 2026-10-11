@@ -21,18 +21,18 @@ Sans mot de passe de connexion, toute personne qui peut ouvrir l'interface web p
 | Route | Ce qu'elle renvoie ou fait | Jeton |
 |---|---|---|
 | `GET /api/v1/health` | Version, nom de l'instance, si une sauvegarde tourne et ce que ce jeton peut faire | lecture |
-| `GET /api/v1/status` | État de protection par domaine : dernière sauvegarde réussie, intervalle attendu, vérifications, prochains lancements prévus | lecture |
+| `GET /api/v1/status` | État de protection par section : dernière sauvegarde réussie, intervalle attendu, vérifications, prochains lancements prévus | lecture |
 | `GET /api/v1/activity` | Ce qui tourne en ce moment, avec phase et pourcentage | lecture |
-| `GET /api/v1/items` | Chaque élément protégé avec sa planification, ce qu'une sauvegarde arrête et sa dernière sauvegarde ; `?domain=` pour un domaine | lecture |
+| `GET /api/v1/items` | Chaque élément protégé avec sa planification, ce qu'une sauvegarde arrête et sa dernière sauvegarde ; `?domain=` pour une section | lecture |
 | `GET /api/v1/runs` | Historique des exécutions, les plus récentes d'abord ; filtres `limit`, `domain`, `item`, `status`, `kind`, `since` | lecture |
 | `GET /api/v1/anomalies` | Anomalies avec un résumé de ce qui est ouvert ; filtres `state`, `severity`, `domain`, `limit` | lecture |
 | `GET /api/v1/anomalies/{id}` | Une anomalie | lecture |
-| `GET /api/v1/storage/{domain}` | Historique de taille, croissance par semaine et espace libre de chaque dépôt d'un domaine | lecture |
-| `POST /api/v1/backups` | Sauvegarde un élément (`{"domain":"containers","item":"plex"}`) ou un domaine entier (`{"domain":"vms"}`) | lancement |
+| `GET /api/v1/storage/{domain}` | Historique de taille, croissance par semaine et espace libre de chaque dépôt d'une section | lecture |
+| `POST /api/v1/backups` | Sauvegarde un élément (`{"domain":"containers","item":"plex"}`) ou une section entière (`{"domain":"vms"}`) | lancement |
 | `POST /api/v1/backups/everything` | Lance la Sauvegarde complète | lancement |
 | `POST /api/v1/runs/{id}/cancel` | Annule une sauvegarde en cours lancée par ce jeton | lancement |
 
-Les domaines sont `containers`, `vms`, `files`, `zfs`, `flash` et `config`. Les heures sont des secondes Unix. Les réponses sont celles des [outils MCP](mcp.md#tools) du même nom, les deux restent donc alignés.
+Les sections sont `containers`, `vms`, `files`, `zfs`, `flash` et `config`. Les heures sont des secondes Unix. Les réponses sont celles des [outils MCP](mcp.md#tools) du même nom, les deux restent donc alignés.
 
 Une sauvegarde lancée ici est la même que celle de l'interface web : un conteneur en marche est arrêté jusqu'à la fin de sa sauvegarde. La requête revient tout de suite, et `/api/v1/activity` et `/api/v1/runs` montrent la suite.
 
@@ -60,7 +60,7 @@ Une erreur revient sous la forme `{"error": {"code": "...", "message": "..."}}` 
 | 401 | `no_token`, `invalid_token` | Pas de jeton, ou pas un jeton actif |
 | 403 | `not_permitted`, `forbidden_origin` | Le jeton peut seulement lire, ou il n'a pas lancé cette exécution, ou la requête vient d'une page d'une autre origine |
 | 404 | `not_found` | Élément, exécution ou anomalie introuvable |
-| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Autre chose tourne, le domaine est désactivé, ou il n'y a rien à faire |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Autre chose tourne, la section est désactivée, ou il n'y a rien à faire |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Une limite retient la requête ; `Retry-After` dit quand réessayer |
 
 Les lancements suivent les mêmes limites que [ceux via MCP](mcp.md#starting-backups) : 12 par heure et par jeton, 15 minutes entre deux lancements du même élément, au plus 4 lancements d'un élément en 24 heures, et la protection de rétention. Les trois dernières comptent ensemble les lancements via MCP, via l'API et depuis Home Assistant. Un jeton peut faire 120 requêtes par minute. Après cinq échecs depuis une adresse, elle est bloquée une minute.
@@ -81,16 +81,16 @@ L'appareil s'appelle BombVault, ou BombVault avec le nom de l'instance entre par
 
 | Entité | Ce qu'elle affiche |
 |---|---|
-| Status | `ok`, `warning`, `failed` ou `off`, le pire des domaines activés |
+| Status | `ok`, `warning`, `failed` ou `off`, le pire parmi les sections activées |
 | Running job | Ce qui tourne maintenant, ou `idle` |
 | Open anomalies | Le nombre d'anomalies ouvertes |
 | Next scheduled backup | Quand démarre la prochaine sauvegarde planifiée |
-| *Domaine* last backup | Quand a eu lieu la dernière sauvegarde réussie du domaine |
-| *Domaine* last result | Comment s'est terminée sa dernière sauvegarde |
-| *Domaine* repository free space | L'espace libre là où se trouve son dépôt principal, si BombVault peut le lire |
-| Back up *domaine* | Un bouton qui sauvegarde tout le domaine |
+| *Section* last backup | Quand a eu lieu la dernière sauvegarde réussie de la section |
+| *Section* last result | Comment s'est terminée sa dernière sauvegarde |
+| *Section* repository free space | L'espace libre là où se trouve son dépôt principal, si BombVault peut le lire |
+| Back up *section* | Un bouton qui sauvegarde toute la section |
 
-Les noms des entités sont en anglais, car Home Assistant les reprend tels que BombVault les envoie. Chaque domaine activé a ses propres entités, et un domaine désactivé les perd. Les boutons apparaissent dès que vous activez **Les boutons lancent des sauvegardes**, désactivé sur une nouvelle installation. Ils suivent les mêmes limites que les [lancements via l'API](#errors). En plus, BombVault ne traite qu'un appui à la fois par domaine et au plus six par minute, et ignore un appui que le broker a gardé comme message retenu (retained). Toute personne qui peut publier sur le broker peut appuyer dessus : protégez donc le broker par un mot de passe.
+Les noms des entités sont en anglais, car Home Assistant les reprend tels que BombVault les envoie. Chaque section activée a ses propres entités, et une section désactivée les perd. Les boutons apparaissent dès que vous activez **Les boutons lancent des sauvegardes**, désactivé sur une nouvelle installation. Ils suivent les mêmes limites que les [lancements via l'API](#errors). En plus, BombVault ne traite qu'un appui à la fois par section et au plus six par minute, et ignore un appui que le broker a gardé comme message retenu (retained). Toute personne qui peut publier sur le broker peut appuyer dessus : protégez donc le broker par un mot de passe.
 
 BombVault lit son état toutes les 15 secondes et le publie quand quelque chose a changé, en JSON sous `<préfixe>/<nœud>/state`. Le préfixe est `bombvault` tant que vous ne le changez pas, et le nœud est un court identifiant que BombVault choisit une fois. Les messages de découverte vont au préfixe par défaut de Home Assistant, `homeassistant`. Les deux sont conservés (retained). Un dernier message (last will) marque l'appareil comme indisponible si BombVault s'arrête sans prévenir. Désactiver la liaison retire l'appareil et ses entités de Home Assistant.
 

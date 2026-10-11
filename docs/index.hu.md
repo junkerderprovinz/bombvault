@@ -26,7 +26,7 @@ Minden konténer, VM, mappakészlet, a flash, minden ZFS-adatkészlet és a Bomb
 
 ## A visszaállítás a főszereplő
 
-Miután visszamásolta az adatokat a restic pillanatképből, a BombVault visszajátssza a mentett konténerdefiníciót a Docker API felé, így a konténer pontosan úgy jelenik meg újra az Unraid Docker fülén, mintha mindig is ott lett volna (ugyanaz az image, ugyanazok a beállítások, ugyanazok a port-hozzárendelések). A VM-ek XML-je SSH-n keresztül újradefiniálódik, a lemezeik és az UEFI NVRAM-juk pedig újracsatolódik, még akkor is, ha a VM-et törölték.
+Miután visszamásolta az adatokat a restic mentésből, a BombVault visszajátssza a mentett konténerdefiníciót a Docker API felé, így a konténer pontosan úgy jelenik meg újra az Unraid Docker fülén, mintha mindig is ott lett volna (ugyanaz az image, ugyanazok a beállítások, ugyanazok a port-hozzárendelések). A VM-ek XML-je SSH-n keresztül újradefiniálódik, a lemezeik és az UEFI NVRAM-juk pedig újracsatolódik, még akkor is, ha a VM-et törölték.
 
 Egyetlen ablak állít vissza mindenfajta elemet. Alapból az **Az eredeti mellé** van kiválasztva, amely a mentést másolatként állítja vissza, az eredetit pedig érintetlenül hagyja. Az **Eredeti cseréje** előbb lementi a jelenlegi állapotot, így a visszaállítás visszavonható. A további célok egy mappa vagy egy új ZFS-adatkészlet.
 

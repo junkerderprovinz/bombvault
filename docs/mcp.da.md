@@ -7,18 +7,18 @@ BombVault har en indbygget server til Model Context Protocol (MCP), den protokol
 | Værktøj | Hvad det gør | Art |
 |---|---|---|
 | `get_health` | Version, instansnavn, om en sikkerhedskopi kører, og hvad denne nøgle må | læse |
-| `get_status` | Beskyttelsesstatus pr. domæne: seneste vellykkede sikkerhedskopi, forventet interval, verifikationer og off-site-kontroller, næste planlagte kørsler, backups, der venter på, at appen er i ro, for containere den nyeste starttest | læse |
+| `get_status` | Beskyttelsesstatus pr. område: seneste vellykkede sikkerhedskopi, forventet interval, verifikationer og off-site-kontroller, næste planlagte kørsler, sikkerhedskopier, der venter på, at appen er i ro, for containere den nyeste starttest | læse |
 | `get_coverage` | Hvad BombVault beskytter, og hvad det ikke beskytter, med begrundelsen for hvert | læse |
 | `list_items` | Hver beskyttet container, VM og mappesæt, flash-drevet og app-konfigurationen, med tidsplan, hvad en sikkerhedskopi stopper, seneste sikkerhedskopi og hvor lang tid den tog; databasecontainere viser også deres seneste dump; ZFS-datasæt er også med, med resultatet af deres seneste kontrol; hvert element har sit seneste gendannelsestjek, og en container sin seneste starttest eller grunden til, at den ikke kan testes; en container, der er oprettet igen med andre indstillinger siden sin seneste sikkerhedskopi, viser ændringerne | læse |
-| `list_runs` | Kørselshistorik, nyeste først, kan filtreres efter domæne, element, status, art og tid; en langsom sikkerhedskopi, som én ting holdt tilbage, nævner den | læse |
+| `list_runs` | Kørselshistorik, nyeste først, kan filtreres efter område, element, status, art og tid; en langsom sikkerhedskopi, som én ting holdt tilbage, nævner den | læse |
 | `list_restore_points` | Gendannelsespunkter for ét element fra dets primære repository, og for en container også dens databasedumps; et ZFS-datasæt får ét gendannelsespunkt pr. sikkerhedskopi, med et snapshot af hvert datasæt under det | læse |
 | `get_activity` | Hvad der kører lige nu, med fase og procent | læse |
-| `get_storage_stats` | Størrelseshistorik for et domænes primære repository og dets vækst pr. uge samt brugt, fri og samlet plads på disken eller fjernlageret for hvert af dets repositories | læse |
+| `get_storage_stats` | Størrelseshistorik for et områdes primære repository og dets vækst pr. uge samt brugt, fri og samlet plads på disken eller fjernlageret for hvert af dets repositories | læse |
 | `get_size_breakdown` | Hvilke mapper og filer der fylder i den nyeste sikkerhedskopi af en container, en VM eller et mappesæt, og hvor meget af det den seneste sikkerhedskopi tilføjede | læse |
-| `list_anomalies` | Afvigelser, som BombVault har bemærket i sikkerhedskopierne, kan filtreres efter tilstand, alvor og domæne, med en oversigt over det, der er åbent | læse |
+| `list_anomalies` | Afvigelser, som BombVault har bemærket i sikkerhedskopierne, kan filtreres efter tilstand, alvor og område, med en oversigt over det, der er åbent | læse |
 | `get_anomaly` | Én af disse afvigelser, med den note, der blev skrevet, da den blev kvitteret | læse |
 | `start_backup` | Sikkerhedskopierer ét element med det samme | starte |
-| `start_domain_backup` | Sikkerhedskopierer hvert beskyttet element i et domæne | starte |
+| `start_domain_backup` | Sikkerhedskopierer hvert beskyttet element i et område | starte |
 | `start_backup_everything` | Kører gennemløbet Fuld sikkerhedskopi | starte |
 | `cancel_backup` | Annullerer en kørende sikkerhedskopi, som denne nøgle har startet | annullere |
 
@@ -33,11 +33,11 @@ En assistents sikkerhedskopi er den samme, som webgrænsefladen starter. En kør
 Fordi en sikkerhedskopi stopper ting og skubber gamle gendannelsespunkter ud, er starter via MCP begrænsede:
 
 - 12 startede sikkerhedskopier pr. time pr. nøgle.
-- 15 minutter mellem to MCP-starter af samme element, samme domæne eller Fuld sikkerhedskopi.
+- 15 minutter mellem to MCP-starter af samme element, samme område eller Fuld sikkerhedskopi.
 - Højst 4 MCP-starter af samme element på 24 timer.
-- **Opbevaringsværn.** Når et domæne beholder et fast antal gendannelsespunkter (kun "behold de sidste N", uden daglig, ugentlig eller månedlig regel, lokalt eller på en off-site-destination), skubber hver ny sikkerhedskopi den ældste ud. BombVault afviser så en MCP-start af et element, hvis nyeste N-1 vellykkede sikkerhedskopier alle blev startet via MCP. Der bliver derfor altid mindst ét gendannelsespunkt i det beholdte sæt, som tidsplanen eller du har lavet. Med "behold den sidste 1" kan en assistent slet ikke sikkerhedskopiere det element. Den næste planlagte sikkerhedskopi giver plads igen. En årsregel alene tæller som "behold den sidste 1", fordi den kun beholder ét gendannelsespunkt for det aktuelle år.
+- **Opbevaringsværn.** Når et område beholder et fast antal gendannelsespunkter (kun "behold de sidste N", uden daglig, ugentlig eller månedlig regel, lokalt eller på en off-site-destination), skubber hver ny sikkerhedskopi den ældste ud. BombVault afviser så en MCP-start af et element, hvis nyeste N-1 vellykkede sikkerhedskopier alle blev startet via MCP. Der bliver derfor altid mindst ét gendannelsespunkt i det beholdte sæt, som tidsplanen eller du har lavet. Med "behold den sidste 1" kan en assistent slet ikke sikkerhedskopiere det element. Den næste planlagte sikkerhedskopi giver plads igen. En årsregel alene tæller som "behold den sidste 1", fordi den kun beholder ét gendannelsespunkt for det aktuelle år.
 
-En start af et domæne eller af Fuld sikkerhedskopi udelader de elementer, som en grænse holder tilbage, og nævner dem i svaret. Webgrænsefladen og tidsplanen er ikke berørt af noget af dette. Timebudgettet ligger i hukommelsen, så en genstart af BombVault nulstiller det.
+En start af et område eller af Fuld sikkerhedskopi udelader de elementer, som en grænse holder tilbage, og nævner dem i svaret. Webgrænsefladen og tidsplanen er ikke berørt af noget af dette. Timebudgettet ligger i hukommelsen, så en genstart af BombVault nulstiller det.
 
 Starter via [API'et](api.md#errors) og fra [Home Assistant](api.md#home-assistant) tæller med i de samme grænser pr. element som starter via MCP og i opbevaringsbeskyttelsen.
 
@@ -257,8 +257,8 @@ Det, en assistent læser, går til AI-udbyderen bag den: navne på elementer, ti
 | `400` "batch requests are not accepted" | Klienten sender JSON-RPC-batches. Send én besked pr. forespørgsel. |
 | `429` | For mange forkerte nøgler fra denne adresse, eller mere end 120 forespørgsler i minuttet med én nøgle. Vent et minut, og tjek om assistenten sidder fast i en løkke. |
 | Fejl med "certificate", "self-signed" eller "unable to verify" | Klienten stoler ikke på BombVaults certifikat. Se [TLS og certifikater](#tls). |
-| `busy` | En anden sikkerhedskopi eller en vedligeholdelsesopgave optager domænet. Prøv igen, når den er færdig. |
-| `cooldown` | Dette element, dette domæne eller Fuld sikkerhedskopi blev startet uden for brugerfladen for mindre end 15 minutter siden. |
+| `busy` | En anden sikkerhedskopi eller en vedligeholdelsesopgave optager området. Prøv igen, når den er færdig. |
+| `cooldown` | Dette element, dette område eller Fuld sikkerhedskopi blev startet uden for brugerfladen for mindre end 15 minutter siden. |
 | `retention_guard` | Endnu en MCP-sikkerhedskopi ville kun efterlade gendannelsespunkter fra MCP i et vindue med "behold de sidste N", eller elementet har allerede fået 4 sikkerhedskopier via MCP inden for de sidste 24 timer, mislykkede og annullerede medregnet. I det første tilfælde giver den næste planlagte sikkerhedskopi plads, i det andet er elementet fri igen 24 timer efter den ældste af dem. Du kan altid starte den i webgrænsefladen. |
 | `rate_limited` | Nøglen har brugt sine 12 starter for denne time. |
 | `not_permitted` ved en start | Nøglen må kun læse. Slå **Tillad at starte sikkerhedskopier** til i kortet; ny forbindelse er ikke nødvendig. Ved en annullering betyder det, at denne nøgle ikke startede kørslen. |

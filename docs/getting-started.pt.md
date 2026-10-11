@@ -6,7 +6,7 @@ Esta página acompanha-o desde uma máquina Unraid acabada de instalar até ao s
 
 | Requisito | Notas |
 |---|---|
-| **Unraid 6.12+** | Versões anteriores não são testadas. O Unraid é o alvo principal, mas o BombVault também corre num host Docker simples e no TrueNAS Scale (consulte [Host Docker genérico](#generic-docker-host)). |
+| **Unraid 6.12+** | Versões anteriores não são testadas. O Unraid é o alvo principal, mas o BombVault também corre num host Docker simples e no TrueNAS Scale (consulta [Host Docker genérico](#generic-docker-host)). |
 | **Localização do repo restic** | Um caminho local (recomendado: o seu array ou cache), SMB, NFS, ou qualquer backend rclone. |
 | **Socket Docker** | Montado automaticamente pelo template (`/var/run/docker.sock`). |
 | **Flash do Unraid** (`/boot`) | Montada por inteiro pelo template automaticamente (`/boot` para `/host/boot`). Alimenta o backup do flash e permite que um container restaurado reapareça como uma aplicação Unraid normal e editável. |
@@ -20,12 +20,12 @@ O caminho mais fácil são as **Community Applications**.
 
 1. Abre o separador **Apps** no Unraid.
 2. Pesquisa por **BombVault**.
-3. Clica em **Install**, defina as variáveis obrigatórias (abaixo) e aplique.
+3. Clica em **Install**, define as variáveis obrigatórias (abaixo) e aplica.
 
 !!! tip "Instalação manual do template"
-    Se preferir adicionar o template à mão:
+    Se preferires adicionar o template à mão:
 
-    1. Vá a **Docker, Add Container, Template repositories** e adicione:
+    1. Vai a **Docker, Add Container, Template repositories** e adiciona:
        ```
        https://github.com/junkerderprovinz/unraid-apps
        ```
@@ -44,12 +44,12 @@ O que muda face ao Unraid:
 
 - **Não há secção Flash.** Não existe pen de arranque para capturar ou repor, por isso a secção Flash não tem aqui nada que fazer. Em vez disso, **Adicionar** na página Backups oferece **Configuração do sistema** como sugestão de pasta: um conjunto de pastas inicial com `/etc` que revês e editas antes de guardar.
 - **Não há notificações nativas do Unraid.** Os canais de notificação próprios do BombVault (webhook, alertas de falha fora do local, etc.) funcionam normalmente; só é omitido o envio específico para o sistema de notificações do Unraid, já que aqui esse sistema não existe.
-- **A cópia de máquinas virtuais é opcional e precisa de um anfitrião libvirtd separado, alcançável por SSH.** Vê o bloco comentado no ficheiro compose. Um anfitrião Docker genérico não traz gestor de máquinas virtuais.
+- **O backup de máquinas virtuais é opcional e precisa de um anfitrião libvirtd separado, alcançável por SSH.** Vê o bloco comentado no ficheiro compose. Um anfitrião Docker genérico não traz gestor de máquinas virtuais.
 - **Sem widget no painel.** O BombVault Widget é um plugin do Unraid, por isso esse passo também é omitido.
-- **Encontrar os dados de um container.** Sem a convenção `appdata` do Unraid, a pasta de dados de um container é encontrada a partir dos segmentos em `DATA_ROOT_SEGMENTS`, dos volumes com nome do Docker, do diretório de trabalho de um projeto Compose e da etiqueta `bombvault.data` (consulte [Deteção das fontes de cópia](configuration.md#backup-source-detection)). Os volumes com nome e a predefinição `/etc` só alcançam caminhos dentro da montagem Host Data, por isso aponte o Host Data para uma pasta ascendente comum que abranja também a raiz de dados do Docker.
-- **`PLATFORM`.** Defina-a como `generic` ou `truenas`. Se não for definida, o BombVault deteta o Unraid pelo seu próprio marcador na montagem do flash e trata tudo o resto como genérico, e os passos exclusivos do Unraid são omitidos em vez de serem tentados e falharem.
+- **Encontrar os dados de um container.** Sem a convenção `appdata` do Unraid, a pasta de dados de um container é encontrada a partir dos segmentos em `DATA_ROOT_SEGMENTS`, dos volumes com nome do Docker, do diretório de trabalho de um projeto Compose e da etiqueta `bombvault.data` (consulta [Deteção das fontes de backup](configuration.md#backup-source-detection)). Os volumes com nome e a predefinição `/etc` só alcançam caminhos dentro da montagem Host Data, por isso aponta o Host Data para uma pasta ascendente comum que abranja também a raiz de dados do Docker.
+- **`PLATFORM`.** Define-a como `generic` ou `truenas`. Se não for definida, o BombVault deteta o Unraid pelo seu próprio marcador na montagem do flash e trata tudo o resto como genérico, e os passos exclusivos do Unraid são omitidos em vez de serem tentados e falharem.
 
-O **TrueNAS Scale** segue o mesmo caminho com compose; há uma entrada de catálogo preparada no repositório, mas ainda não submetida. Aí o backup de VMs precisa de `LIBVIRT_URI`, porque o libvirtd do TrueNAS escuta num socket próprio (`/run/truenas_libvirt/libvirt-sock`) que as três variáveis `LIBVIRT_*` não conseguem exprimir (consulte [Configuração](configuration.md)). Até onde isto está comprovado: o backup de zvol foi executado numa máquina TrueNAS Scale real, num zvol ligado a uma VM em execução, e `zfs snapshot`, `zfs send`, restic e `zfs receive` fizeram a ida e volta byte a byte. Um restauro completo conduzido pelo próprio BombVault ainda não foi executado em hardware TrueNAS, e esse zvol era esparso, por isso o débito com muitos gigabytes não está testado. Teste aí um restauro antes de confiar nele.
+O **TrueNAS Scale** segue o mesmo caminho com compose; há uma entrada de catálogo preparada no repositório, mas ainda não submetida. Aí o backup de VMs precisa de `LIBVIRT_URI`, porque o libvirtd do TrueNAS escuta num socket próprio (`/run/truenas_libvirt/libvirt-sock`) que as três variáveis `LIBVIRT_*` não conseguem exprimir (consulta [Configuração](configuration.md)). Até onde isto está comprovado: o backup de zvol foi executado numa máquina TrueNAS Scale real, num zvol ligado a uma VM em execução, e `zfs snapshot`, `zfs send`, restic e `zfs receive` fizeram a ida e volta byte a byte. Um restauro completo conduzido pelo próprio BombVault ainda não foi executado em hardware TrueNAS, e esse zvol era esparso, por isso o débito com muitos gigabytes não está testado. Testa aí um restauro antes de confiares nele.
 
 ## A única definição obrigatória
 
@@ -66,7 +66,7 @@ Cola o resultado no campo `APP_KEY` do template (Unraid), ou na variável de amb
 !!! danger "Não perca a sua APP_KEY"
     Perder a `APP_KEY` torna os teus backups encriptados irrecuperáveis. Guarda-a num local seguro e separado do servidor. Assim que o BombVault estiver a correr, define uma palavra-passe de início de sessão e descarrega o **kit de recuperação** em **Definições, Restauro** (consulta [Externo e recuperação](offsite-recovery.md#recovery-kit)). Contém a chave, cada destino e os comandos do restic.
 
-O template também monta o socket Docker, o flash (`/boot`) e a raiz **Host Data** (`/mnt`) por si. As *origens* e os *destinos* de backup vivem ambos sob Host Data. Para a referência completa de variáveis e a configuração do externo, consulte [Configuração](configuration.md).
+O template também monta o socket Docker, o flash (`/boot`) e a raiz **Host Data** (`/mnt`) por ti. As *origens* e os *destinos* de backup vivem ambos sob Host Data. Para a referência completa de variáveis e a configuração do externo, consulta [Configuração](configuration.md).
 
 ## Primeira execução
 
@@ -97,7 +97,7 @@ Já usaste o BombVault? **Restaurar a partir de um backup** na página de boas-v
 
 A barra lateral tem cinco entradas: **Visão geral**, **Anomalias** (enquanto a deteção de anomalias estiver ativa), **Backups**, **Restauração** e, por baixo de **Sair**, **Definições**. A ação principal de uma página flutua em baixo à direita, e **Mais** guarda as raras. Num telemóvel a barra tem Visão geral, Backups, Restauração e Definições, e **Mais** tem o resto.
 
-- **Backups** lista cada container, VM, conjunto de pastas, a flash, cada conjunto de dados ZFS e o auto-backup como entradas. Os mosaicos por cima da lista escolhem um tipo, e **Filtros**, **Ordenar** e **Pesquisar** restringem-na. Cada entrada tem uma página própria com três separadores: **Backups**, **Definições** e **Integridade**.
+- **Backups** lista cada container, VM, conjunto de pastas, a flash, cada conjunto de dados ZFS e o Auto-backup como entradas. Os mosaicos por cima da lista escolhem um tipo, e **Filtros**, **Ordenar** e **Pesquisar** restringem-na. Cada entrada tem uma página própria com três separadores: **Backups**, **Definições** e **Integridade**.
 - **Restauração** é uma única página para tudo: escolhe uma secção, procura uma entrada e escolhe um backup. O Assistente de emergência e as outras origens também começam aqui.
 - **Definições** são catorze mosaicos: Geral, Aspeto, Agendamento, Destinos, Restauro, Notificações, Verificação, Segurança, Instâncias, Emparelhamento, Integrações, Aplicações, Sistema e Info. Prime `/` ou Ctrl+K para pesquisar todos, também pelos nomes que as páginas tinham em versões anteriores. Arrasta os mosaicos para a tua própria ordem em **Aspeto**.
 - **Destinos** e **Instâncias** são mosaicos de definições com páginas próprias. **Mostrar também na barra lateral** no mosaico deles fixa-os à barra lateral.
@@ -106,7 +106,7 @@ Nada tem um botão Guardar e nada se desdobra: as coisas raras têm um cartão p
 
 ## Compilar a partir do código-fonte {#build-from-source}
 
-O BombVault é um único binário Go estático que serve uma API JSON e uma interface React incorporada. Compile primeiro a interface e depois corra o binário:
+O BombVault é um único binário Go estático que serve uma API JSON e uma interface React incorporada. Compila primeiro a interface e depois corre o binário:
 
 ```bash
 npm --prefix web ci

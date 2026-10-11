@@ -4,17 +4,17 @@ A aplicação Android leva todos os servidores BombVault do teu grupo para o tel
 
 ## Obter a aplicação {#install}
 
-- **Definições, Aplicações:** o cartão da aplicação Android oferece o APK da versão que o seu servidor executa, com um código QR para ler a partir do telemóvel.
+- **Definições, Aplicações:** o cartão da aplicação Android oferece o APK da versão que o teu servidor executa, com um código QR para ler a partir do telemóvel.
 - **APK:** cada versão tem `bombvault-android.apk` na sua página de release, e [esta ligação](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) descarrega sempre a compilação mais recente. Precisa de Android 10 ou posterior, e o Android pergunta uma vez se a aplicação com que abre o ficheiro pode instalar aplicações.
-- **Google Play:** a aplicação está num teste fechado até poder ser pública. O Google Play só lista uma aplicação de uma conta de programador nova depois de pelo menos 12 testadores a terem mantido instalada durante 14 dias. Para ajudar, junte-se ao [grupo de testadores](https://groups.google.com/g/arrowloop-testers), abra a [página de teste](https://play.google.com/apps/testing/bombvault.halleluja.design), toque em **Tornar-se testador** e instale o BombVault a partir do Google Play.
+- **Google Play:** a aplicação está num teste fechado até poder ser pública. O Google Play só lista uma aplicação de uma conta de programador nova depois de pelo menos 12 testadores a terem mantido instalada durante 14 dias. Para ajudar, junta-te ao [grupo de testadores](https://groups.google.com/g/arrowloop-testers), abre a [página de teste](https://play.google.com/apps/testing/bombvault.halleluja.design), toca em **Tornar-se testador** e instala o BombVault a partir do Google Play.
 - **F-Droid:** a listagem virá mais tarde.
 
 Emparelhe a aplicação com servidores na versão 9.7.0 ou posterior. Um servidor numa versão mais antiga pode estar no mesmo grupo, mas mostra o telemóvel como uma instância normal, e a aplicação só lê a atividade desse servidor depois de iniciar sessão.
 
 ## Emparelhar por código QR {#pairing}
 
-1. Em qualquer servidor do seu grupo, abra **Definições, Emparelhamento** e escolha **Mostrar frase**. As doze palavras aparecem com um código QR ao lado.
-2. Na aplicação, toque em **Digitalizar código QR** e aponte o telemóvel para o código. Também pode colar ou escrever as palavras.
+1. Em qualquer servidor do teu grupo, abre **Definições, Emparelhamento** e escolhe **Mostrar frase**. As doze palavras aparecem com um código QR ao lado.
+2. Na aplicação, toca em **Digitalizar código QR** e aponta o telemóvel para o código. Também podes colar ou escrever as palavras.
 3. A aplicação lista os servidores desse grupo antes de guardar o que quer que seja. **Adicionar as N** adiciona-os todos.
 
 A partir daí o telemóvel junta-se ao grupo como mais uma instância. Lê o que corre em cada servidor através do grupo sem iniciar sessão, diretamente em casa e através do retransmissor fora de casa. O funcionamento do próprio grupo está descrito em [Emparelhamento de instâncias](offsite-recovery.md#pairing).

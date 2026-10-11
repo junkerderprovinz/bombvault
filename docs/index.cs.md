@@ -1,15 +1,15 @@
 # BombVault
 
-**Vaše data z Unraidu, zapečetěná v trezoru. Vhoďte zálohu. Odpalte obnovu.**
+**Tvoje data z Unraidu, zapečetěná v trezoru. Vhoď zálohu. Odpal obnovu.**
 
-BombVault je self-hostovaná webová aplikace nativní pro Unraid pro **zálohování a plné zotavení po havárii** vašich Docker kontejnerů a KVM/libvirt VM. Běží jako jediný multi-arch Docker kontejner, nabízí webové rozhraní v tmavém, světlém nebo systémovém motivu, a zvládá celý životní cyklus: zálohovat, plánovat, ověřovat a obnovovat.
+BombVault je self-hostovaná webová aplikace nativní pro Unraid pro **zálohování a plné zotavení po havárii** tvých Docker kontejnerů a KVM/libvirt VM. Běží jako jediný multi-arch Docker kontejner, nabízí webové rozhraní v tmavém, světlém nebo systémovém motivu, a zvládá celý životní cyklus: zálohovat, plánovat, ověřovat a obnovovat.
 
 Obnovy jsou automatické. Kontejnery se znovu objeví v záložce Docker v Unraidu přesně jako předtím a VM jsou znovu definovány ve VM Manageru se svými disky a UEFI NVRAM opět připojenými. Žádná ruční reinstalace, žádná rekonfigurace, žádné drama.
 
 Postaveno na [restic](https://restic.net), takže každá záloha je deduplikovaná, inkrementální a vždy šifrovaná.
 
-!!! note "Uchovejte svůj APP_KEY v bezpečí"
-    BombVault odvozuje heslo k restic repozitáři z 32bajtového tajemství s názvem `APP_KEY`. Jeho ztráta spolu se sadou pro obnovu učiní šifrované zálohy neobnovitelnými. Vygenerujte si jej pomocí `openssl rand -hex 32` a uložte na bezpečné místo. Viz [Konfigurace](configuration.md).
+!!! note "Uchovej svůj APP_KEY v bezpečí"
+    BombVault odvozuje heslo k restic repozitáři z 32bajtového tajemství s názvem `APP_KEY`. Jeho ztráta spolu se sadou pro obnovu učiní šifrované zálohy neobnovitelnými. Vygeneruj si jej pomocí `openssl rand -hex 32` a ulož na bezpečné místo. Viz [Konfigurace](configuration.md).
 
 ## Co BombVault chrání
 
@@ -53,11 +53,11 @@ BombVault je vrstva orchestrace a UI, nikoli úložný engine. Veškerý skuteč
 
 ## Rychlý start
 
-Jste tu noví? Přejděte na **[Začínáme](getting-started.md)** a nainstalujte BombVault na Unraid přes Community Applications a spusťte svou první zálohu. Poté prozkoumejte kompletní **[Funkce](features.md)**, vylaďte si **[Konfiguraci](configuration.md)** a nastavte si **[Mimo lokalitu a obnova](offsite-recovery.md)**.
+Jsi tu nový? Přejdi na **[Začínáme](getting-started.md)** a nainstaluj BombVault na Unraid přes Community Applications a spusť svou první zálohu. Poté prozkoumej kompletní **[Funkce](features.md)**, vylaď si **[Konfiguraci](configuration.md)** a nastav si **[Mimo lokalitu a obnova](offsite-recovery.md)**.
 
 Každá sekce může kopírovat do několika cílů najednou, spárovaný BombVault může držet tvé kopie mimo lokalitu na serveru, který odmítá mazání, a **Nouzový průvodce** vrátí ztracený server z jeho sady pro obnovu, přes tvou skupinu nebo napsaným klíčem. Konfiguraci na nový stroj přenese karta **Export / import nastavení**. Viz [Mimo lokalitu a obnova](offsite-recovery.md) a [Konfigurace](configuration.md#portable-settings-export-and-import).
 
-**[Aplikace pro Android](android.md)** vám dá do telefonu všechny servery vaší skupiny, s protokolem aktivit všech z nich na jedné obrazovce.
+**[Aplikace pro Android](android.md)** ti dá do telefonu všechny servery tvé skupiny, s protokolem aktivit všech z nich na jedné obrazovce.
 
 ## Poděkování {#credits}
 
@@ -68,7 +68,7 @@ Každá sekce může kopírovat do několika cílů najednou, spárovaný BombVa
 
 ## Licence {#license}
 
-Copyright (C) 2026 Junker der Provinz. BombVault je svobodný software pod licencí **GNU Affero General Public License v3.0** ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)). Smíte ho spouštět, studovat, sdílet a měnit. Pokud ho šíříte nebo provozujete upravenou verzi jako síťovou službu, musíte zveřejnit svůj zdrojový kód pod stejnou licencí a zachovat stávající upozornění na autorská práva a uvedení autorství.
+Copyright (C) 2026 Junker der Provinz. BombVault je svobodný software pod licencí **GNU Affero General Public License v3.0** ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)). Smíš ho spouštět, studovat, sdílet a měnit. Pokud ho šíříš nebo provozuješ upravenou verzi jako síťovou službu, musíš zveřejnit svůj zdrojový kód pod stejnou licencí a zachovat stávající upozornění na autorská práva a uvedení autorství.
 
 Název a vizuální identita nejsou licencovány. AGPL pokrývá pouze zdrojový kód: "BombVault", jeho logo a jeho vizuální identita zůstávají vyhrazeny, takže fork musí používat vlastní název a vizuální identitu a nesmí se vydávat za BombVault.
 

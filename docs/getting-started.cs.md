@@ -1,13 +1,13 @@
 # Začínáme
 
-Tato stránka vás provede od čerstvého stroje s Unraidem až k vaší první záloze.
+Tato stránka tě provede od čerstvého stroje s Unraidem až k tvé první záloze.
 
 ## Požadavky
 
 | Požadavek | Poznámky |
 |---|---|
 | **Unraid 6.12+** | Starší verze nejsou testovány. Unraid je hlavní platforma, ale BombVault běží i na obyčejném hostiteli Dockeru a na TrueNAS Scale (viz [Obecný hostitel Dockeru](#generic-docker-host)). |
-| **Umístění restic repozitáře** | Místní cesta (doporučeno: vaše pole nebo cache), SMB, NFS nebo libovolný rclone backend. |
+| **Umístění restic repozitáře** | Místní cesta (doporučeno: tvoje pole nebo cache), SMB, NFS nebo libovolný rclone backend. |
 | **Docker socket** | Připojen šablonou automaticky (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | Připojen celý šablonou automaticky (`/boot` na `/host/boot`). Pohání zálohu flashe a umožňuje obnovenému kontejneru znovu se objevit jako běžná, editovatelná aplikace Unraidu. |
 | **KVM VM** (volitelné) | Záloha VM komunikuje s libvirt přes SSH, bez připojení libvirt. Nastav ji v **Nastavení, Integrace, SSH k hostiteli** (viz [Konfigurace](configuration.md)). |
@@ -18,27 +18,27 @@ Tato stránka vás provede od čerstvého stroje s Unraidem až k vaší první 
 
 Nejsnazší cestou je **Community Applications**.
 
-1. Otevřete záložku **Apps** v Unraidu.
-2. Vyhledejte **BombVault**.
-3. Klikněte na **Install**, nastavte požadované proměnné (níže) a aplikujte.
+1. Otevři záložku **Apps** v Unraidu.
+2. Vyhledej **BombVault**.
+3. Klikni na **Install**, nastav požadované proměnné (níže) a aplikuj.
 
 !!! tip "Ruční instalace šablony"
-    Pokud dáváte přednost ručnímu přidání šablony:
+    Pokud dáváš přednost ručnímu přidání šablony:
 
-    1. Přejděte na **Docker, Add Container, Template repositories** a přidejte:
+    1. Přejdi na **Docker, Add Container, Template repositories** a přidej:
        ```
        https://github.com/junkerderprovinz/unraid-apps
        ```
-    2. Vyhledejte **BombVault** v Templates.
-    3. Nastavte požadované proměnné a klikněte na **Apply**.
+    2. Vyhledej **BombVault** v Templates.
+    3. Nastav požadované proměnné a klikni na **Apply**.
 
 ## Obecný hostitel Dockeru {#generic-docker-host}
 
-Nemáte Unraid? BombVault běží i jako prostý kontejner na libovolném hostiteli Dockeru (na tom stojí také podpora kontejnerů na TrueNAS Scale, ještě před vlastní položkou v tamním katalogu aplikací).
+Nemáš Unraid? BombVault běží i jako prostý kontejner na libovolném hostiteli Dockeru (na tom stojí také podpora kontejnerů na TrueNAS Scale, ještě před vlastní položkou v tamním katalogu aplikací).
 
-1. Stáhněte si z repozitáře soubor [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml), připravený k úpravám.
+1. Stáhni si z repozitáře soubor [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml), připravený k úpravám.
 2. Nastav `APP_KEY` (viz níže) a nasměruj svazek Host Data na svůj skutečný kořen dat. Komentáře v souboru provedou obojím.
-3. `docker compose up -d`, poté otevřete `https://<ip-hostitele>:3443/`.
+3. `docker compose up -d`, poté otevři `https://<ip-hostitele>:3443/`.
 
 V čem se to liší od Unraidu:
 
@@ -46,27 +46,27 @@ V čem se to liší od Unraidu:
 - **Žádná nativní oznámení Unraidu.** Vlastní oznamovací kanály BombVaultu (webhook, upozornění na selhání mimo lokalitu a podobně) fungují normálně; vynechává se jen odeslání do oznamovacího systému Unraidu, protože takový systém tu není.
 - **Záloha virtuálních strojů je volitelná a potřebuje samostatného hostitele libvirtd dostupného přes SSH.** Viz zakomentovaný blok v souboru compose. Obecný hostitel Dockeru sám o sobě žádného správce virtuálních strojů nemá.
 - **Žádný widget na dashboardu.** BombVault Widget je plugin pro Unraid, takže i tento krok odpadá.
-- **Jak se najdou data kontejneru.** Bez konvence `appdata` z Unraidu se datová složka kontejneru najde podle segmentů v `DATA_ROOT_SEGMENTS`, pojmenovaných svazků Dockeru, pracovního adresáře projektu Compose a štítku `bombvault.data` (viz [Rozpoznávání zdrojů zálohy](configuration.md#backup-source-detection)). Pojmenované svazky i přednastavení `/etc` dosáhnou jen na cesty uvnitř připojení Host Data, takže nasměrujte Host Data na společného předka, který pokrývá i kořen dat Dockeru.
-- **`PLATFORM`.** Nastavte ji na `generic` nebo `truenas`. Když ji nenastavíte, BombVault rozpozná Unraid podle jeho vlastní značky na připojení flash a cokoli jiného bere jako obecného hostitele, a kroky jen pro Unraid se přeskočí, místo aby se zkoušely a selhávaly.
+- **Jak se najdou data kontejneru.** Bez konvence `appdata` z Unraidu se datová složka kontejneru najde podle segmentů v `DATA_ROOT_SEGMENTS`, pojmenovaných svazků Dockeru, pracovního adresáře projektu Compose a štítku `bombvault.data` (viz [Rozpoznávání zdrojů zálohy](configuration.md#backup-source-detection)). Pojmenované svazky i přednastavení `/etc` dosáhnou jen na cesty uvnitř připojení Host Data, takže nasměruj Host Data na společného předka, který pokrývá i kořen dat Dockeru.
+- **`PLATFORM`.** Nastav ji na `generic` nebo `truenas`. Když ji nenastavíš, BombVault rozpozná Unraid podle jeho vlastní značky na připojení flash a cokoli jiného bere jako obecného hostitele, a kroky jen pro Unraid se přeskočí, místo aby se zkoušely a selhávaly.
 
-**TrueNAS Scale** jde stejnou cestou přes compose; položka katalogu je v repozitáři připravená, ale zatím nebyla odeslána. Záloha VM tam potřebuje `LIBVIRT_URI`, protože libvirtd na TrueNAS naslouchá na vlastním socketu (`/run/truenas_libvirt/libvirt-sock`), který tři proměnné `LIBVIRT_*` nedokážou vyjádřit (viz [Konfigurace](configuration.md)). Nakolik je to ověřené: záloha zvolu proběhla na skutečném stroji s TrueNAS Scale, na zvolu připojeném k běžící VM, a `zfs snapshot`, `zfs send`, restic a `zfs receive` ho přenesly tam a zpět bajt po bajtu beze změny. Úplná obnova řízená samotným BombVaultem na hardwaru TrueNAS zatím neproběhla a ten zvol byl řídký (sparse), takže propustnost při mnoha gigabajtech není otestovaná. Než se na to spolehnete, vyzkoušejte tam obnovu.
+**TrueNAS Scale** jde stejnou cestou přes compose; položka katalogu je v repozitáři připravená, ale zatím nebyla odeslána. Záloha VM tam potřebuje `LIBVIRT_URI`, protože libvirtd na TrueNAS naslouchá na vlastním socketu (`/run/truenas_libvirt/libvirt-sock`), který tři proměnné `LIBVIRT_*` nedokážou vyjádřit (viz [Konfigurace](configuration.md)). Nakolik je to ověřené: záloha zvolu proběhla na skutečném stroji s TrueNAS Scale, na zvolu připojeném k běžící VM, a `zfs snapshot`, `zfs send`, restic a `zfs receive` ho přenesly tam a zpět bajt po bajtu beze změny. Úplná obnova řízená samotným BombVaultem na hardwaru TrueNAS zatím neproběhla a ten zvol byl řídký (sparse), takže propustnost při mnoha gigabajtech není otestovaná. Než se na to spolehneš, vyzkoušej tam obnovu.
 
 ## Jediné povinné nastavení
 
-Jedinou proměnnou, kterou musíte nastavit, je `APP_KEY`, 32bajtové hex tajemství (64 hex znaků) použité k odvození hesla k restic repozitáři.
+Jedinou proměnnou, kterou musíš nastavit, je `APP_KEY`, 32bajtové hex tajemství (64 hex znaků) použité k odvození hesla k restic repozitáři.
 
-Vygenerujte si jej na libovolném stroji:
+Vygeneruj si jej na libovolném stroji:
 
 ```bash
 openssl rand -hex 32
 ```
 
-Výsledek vložte do pole `APP_KEY` v šabloně (Unraid), nebo do proměnné prostředí `APP_KEY` v `docker-compose.yml` (běžný Docker host).
+Výsledek vlož do pole `APP_KEY` v šabloně (Unraid), nebo do proměnné prostředí `APP_KEY` v `docker-compose.yml` (běžný Docker host).
 
-!!! danger "Neztraťte svůj APP_KEY"
+!!! danger "Neztrať svůj APP_KEY"
     Ztráta `APP_KEY` učiní tvé šifrované zálohy neobnovitelnými. Ulož jej na bezpečné místo oddělené od serveru. Jakmile BombVault běží, nastav přihlašovací heslo a stáhni **sadu pro obnovu** v **Nastavení, Obnova** (viz [Mimo lokalitu a obnova](offsite-recovery.md#recovery-kit)). Obsahuje klíč, každý cíl a příkazy resticu.
 
-Šablona za vás také připojí Docker socket, flash (`/boot`) a kořen **Host Data** (`/mnt`). *Zdroje* i *cíle* záloh žijí pod Host Data. Kompletní referenci proměnných a nastavení mimo lokalitu najdete v [Konfiguraci](configuration.md).
+Šablona za tebe také připojí Docker socket, flash (`/boot`) a kořen **Host Data** (`/mnt`). *Zdroje* i *cíle* záloh žijí pod Host Data. Kompletní referenci proměnných a nastavení mimo lokalitu najdeš v [Konfiguraci](configuration.md).
 
 ## První spuštění
 
@@ -106,7 +106,7 @@ Nic nemá tlačítko Uložit a nic se nerozbaluje: vzácné věci mají vlastní
 
 ## Sestavení ze zdrojového kódu {#build-from-source}
 
-BombVault je jediná statická binárka v Go, která obsluhuje JSON API a vestavěné rozhraní v Reactu. Nejprve sestavte rozhraní, pak spusťte binárku:
+BombVault je jediná statická binárka v Go, která obsluhuje JSON API a vestavěné rozhraní v Reactu. Nejprve sestav rozhraní, pak spusť binárku:
 
 ```bash
 npm --prefix web ci
@@ -121,8 +121,8 @@ Sestavení rozhraní je potřeba i pro `go run`. Repozitář obsahuje pod `web/d
 
 ## Další kroky
 
-- Projděte si kompletní **[Funkce](features.md)**.
-- Dejte si všechny servery své skupiny do telefonu s **[aplikací pro Android](android.md)**.
+- Projdi si kompletní **[Funkce](features.md)**.
+- Dej si všechny servery své skupiny do telefonu s **[aplikací pro Android](android.md)**.
 - Přidej jeden nebo více cílů mimo lokalitu (každá sekce může kopírovat do několika najednou) a ulož si sadu pro obnovu, jak je popsáno v **[Mimo lokalitu a obnova](offsite-recovery.md)**.
-- Klonujete sestavu nebo přecházíte na nový stroj? Přeneste celou svou konfiguraci pomocí karty **Export / import nastavení**. Viz [Konfigurace](configuration.md#portable-settings-export-and-import).
-- Narazili jste na problém? Viz **[Řešení problémů](troubleshooting.md)**.
+- Klonuješ sestavu nebo přecházíš na nový stroj? Přenes celou svou konfiguraci pomocí karty **Export / import nastavení**. Viz [Konfigurace](configuration.md#portable-settings-export-and-import).
+- Narazil jsi na problém? Viz **[Řešení problémů](troubleshooting.md)**.

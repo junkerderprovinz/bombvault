@@ -26,7 +26,7 @@ Elke container, VM, mappenset, de flash, elke ZFS-dataset en de eigen instelling
 
 ## Herstel is de ster
 
-Nadat de data is teruggekopieerd uit de restic-snapshot, speelt BombVault de opgeslagen containerdefinitie opnieuw af tegen de Docker API, zodat de container weer in het Unraid Docker-tabblad verschijnt alsof hij er altijd is geweest (dezelfde image, dezelfde instellingen, dezelfde poorttoewijzingen). VM's krijgen hun XML opnieuw gedefinieerd via SSH en hun schijven en UEFI NVRAM opnieuw gekoppeld, zelfs nadat de VM was verwijderd.
+Nadat de data is teruggekopieerd uit de restic-back-up, speelt BombVault de opgeslagen containerdefinitie opnieuw af tegen de Docker API, zodat de container weer in het Unraid Docker-tabblad verschijnt alsof hij er altijd is geweest (dezelfde image, dezelfde instellingen, dezelfde poorttoewijzingen). VM's krijgen hun XML opnieuw gedefinieerd via SSH en hun schijven en UEFI NVRAM opnieuw gekoppeld, zelfs nadat de VM was verwijderd.
 
 Eén venster herstelt elke soort. Standaard kiest het **Naast het origineel**: de back-up komt als kopie terug en het origineel blijft zoals het is. **Origineel vervangen** maakt eerst een back-up van de huidige staat, zodat een herstel ongedaan te maken is. Een map of een nieuwe ZFS-dataset zijn de andere doelen.
 

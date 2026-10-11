@@ -7,39 +7,39 @@ BombVaultissa on sisäänrakennettu palvelin Model Context Protocolille (MCP), j
 | Työkalu | Mitä se tekee | Laji |
 |---|---|---|
 | `get_health` | Versio, instanssin nimi, onko varmuuskopio käynnissä ja mitä tämä avain saa tehdä | luku |
-| `get_status` | Suojauksen tila toimialueittain: viimeisin onnistunut varmuuskopio, odotettu väli, tarkistukset ja off-site-valvonta, seuraavat ajastetut ajot, joutilasta sovellusta odottavat varmuuskopiot sekä konteille uusin käynnistystesti | luku |
+| `get_status` | Suojauksen tila osioittain: viimeisin onnistunut varmuuskopio, odotettu väli, tarkistukset ja off-site-valvonta, seuraavat ajastetut ajot, joutilasta sovellusta odottavat varmuuskopiot sekä konteille uusin käynnistystesti | luku |
 | `get_coverage` | Mitä BombVault suojaa ja mitä ei, kunkin kohdalla syy | luku |
-| `list_items` | Jokainen suojattu kontti, VM ja kansiojoukko, flash-muisti ja sovelluksen asetukset, ajastuksen, varmuuskopion pysäyttämien palveluiden, viimeisimmän varmuuskopion ja sen keston kera; tietokantakonteilla myös viimeisin dumppi; mukana ovat myös ZFS-datasetit viimeisimmän tarkistuksensa tuloksen kera; jokaisella kohteella on viimeisin palautustarkistuksensa ja kontilla lisäksi viimeisin käynnistystesti tai syy, miksi sitä ei voi testata; kontti, joka on luotu uudelleen eri asetuksilla viimeisimmän varmuuskopion jälkeen, luettelee muutokset | luku |
-| `list_runs` | Ajohistoria uusimmat ensin, suodatettavissa toimialueen, kohteen, tilan, lajin ja ajan mukaan; hidas varmuuskopio, jota yksi asia jarrutti, nimeää sen | luku |
-| `list_restore_points` | Yhden kohteen palautuspisteet sen ensisijaisesta repositoriosta, ja kontille myös sen tietokantadumpit; ZFS-datasetillä on yksi palautuspiste varmuuskopiota kohden, ja siinä on snapshot jokaisesta sen alla olevasta datasetista | luku |
+| `list_items` | Jokainen suojattu kontti, VM ja kansiojoukko, flash-muisti ja sovelluksen asetukset, ajastuksen, varmuuskopion pysäyttämien palveluiden, viimeisimmän varmuuskopion ja sen keston kera; tietokantakonteilla myös viimeisin dumppi; mukana ovat myös ZFS-datasetit viimeisimmän tarkistuksensa tuloksen kera; jokaisella merkinnällä on viimeisin palautustarkistuksensa ja kontilla lisäksi viimeisin käynnistystesti tai syy, miksi sitä ei voi testata; kontti, joka on luotu uudelleen eri asetuksilla viimeisimmän varmuuskopion jälkeen, luettelee muutokset | luku |
+| `list_runs` | Ajohistoria uusimmat ensin, suodatettavissa osion, merkinnän, tilan, lajin ja ajan mukaan; hidas varmuuskopio, jota yksi asia jarrutti, nimeää sen | luku |
+| `list_restore_points` | Yhden merkinnän palautuspisteet sen ensisijaisesta repositoriosta, ja kontille myös sen tietokantadumpit; ZFS-datasetillä on yksi palautuspiste varmuuskopiota kohden, ja siinä on snapshot jokaisesta sen alla olevasta datasetista | luku |
 | `get_activity` | Mikä on käynnissä juuri nyt, vaiheen ja prosentin kera | luku |
-| `get_storage_stats` | Toimialueen ensisijaisen repositorion koon historia ja kasvu viikossa sekä käytetty, vapaa ja kokonaistila kunkin sen repositorion levyllä tai etäkohteessa | luku |
+| `get_storage_stats` | Osion ensisijaisen repositorion koon historia ja kasvu viikossa sekä käytetty, vapaa ja kokonaistila kunkin sen repositorion levyllä tai etäkohteessa | luku |
 | `get_size_breakdown` | Mitkä kansiot ja tiedostot vievät tilaa kontin, virtuaalikoneen tai kansiojoukon uusimmassa varmuuskopiossa ja kuinka paljon niistä viimeisin varmuuskopio lisäsi | luku |
-| `list_anomalies` | Poikkeamat, jotka BombVault on huomannut varmuuskopioissa, suodatettavissa tilan, vakavuuden ja toimialueen mukaan, sekä yhteenveto avoimista | luku |
+| `list_anomalies` | Poikkeamat, jotka BombVault on huomannut varmuuskopioissa, suodatettavissa tilan, vakavuuden ja osion mukaan, sekä yhteenveto avoimista | luku |
 | `get_anomaly` | Yksi näistä havainnoista sekä muistiinpano, joka jätettiin sitä kuitatessa | luku |
-| `start_backup` | Varmuuskopioi yhden kohteen heti | käynnistys |
-| `start_domain_backup` | Varmuuskopioi toimialueen jokaisen suojatun kohteen | käynnistys |
+| `start_backup` | Varmuuskopioi yhden merkinnän heti | käynnistys |
+| `start_domain_backup` | Varmuuskopioi osion jokaisen suojatun merkinnän | käynnistys |
 | `start_backup_everything` | Ajaa Täysvarmuuskopio-kierroksen | käynnistys |
 | `cancel_backup` | Peruu käynnissä olevan varmuuskopion, jonka tämä avain käynnisti | peruutus |
 
 Nämä jäävät verkkokäyttöliittymään: kaikenlaiset palautukset (myös tietokantadumpin lataaminen, tallentaminen tai tuonti), varmuuskopioiden poistaminen, prune, unlock, tarkistukset ja harjoitukset, off-site-replikointi, asetukset, tunnukset ja MCP-avaimet sekä sellaisen varmuuskopion peruminen, jonka ajastus, verkkokäyttöliittymä tai toinen avain käynnisti. Sama koskee poikkeaman kuittaamista tai sen merkitsemistä odotetuksi, mikä tehdään **Poikkeamat**-sivulla. Syy on se, että työkalujen vastauksissa on palvelimesi nimiä ja virheilmoituksia, ja mikä tahansa niistä voi sisältää tekstiä, joka on kirjoitettu ohjaamaan avustajaa. Avustaja, joka lankeaa sellaiseen, voi pahimmillaan käynnistää varmuuskopion alla olevien rajojen sisällä tai perua sellaisen, jonka se itse käynnisti.
 
-Jos kohteen ensisijainen repositorio on muualla (S3, REST, SFTP, rclone), `list_restore_points` ottaa siihen yhteyttä, ja kutsu voi kestää hetken. Off-site-kopioita ei voi listata MCP:n kautta. Mitä poikkeamien tarkistukset katsovat, kerrotaan sivulla [Ominaisuudet](features.md), ja miten ZFS-kohde pitää yhden tilannevedoksen tietojoukkoa kohden, sivulla [ZFS-tietojoukot](zfs-datasets.md#contents).
+Jos merkinnän ensisijainen repositorio on muualla (S3, REST, SFTP, rclone), `list_restore_points` ottaa siihen yhteyttä, ja kutsu voi kestää hetken. Off-site-kopioita ei voi listata MCP:n kautta. Mitä poikkeamien tarkistukset katsovat, kerrotaan sivulla [Ominaisuudet](features.md), ja miten ZFS-merkintä pitää yhden tilannevedoksen tietojoukkoa kohden, sivulla [ZFS-tietojoukot](zfs-datasets.md#contents).
 
 ## Mitä käynnistetty varmuuskopio tekee {#starting-backups}
 
-Avustajan varmuuskopio on sama varmuuskopio, jonka verkkokäyttöliittymä käynnistää. Käynnissä oleva kontti pysäytetään, kunnes sen varmuuskopio on valmis, yhdessä niiden konttien kanssa, jotka on asetettu pysähtymään sen mukana. VM, jolla on "graceful"-menetelmä, sammutetaan ja käynnistetään uudelleen. ZFS-datasetti pysäyttää sille asetetut kontit siksi aikaa, kun sen snapshot otetaan. Kansiojoukot, flash-muisti ja asetukset jatkavat toimintaansa. Sen jälkeen BombVault soveltaa säilytyskäytäntöä ja voi kopioida off-site-repositorioon. `list_items` kertoo avustajalle, mitä kohde pysäyttää ja kauanko sen viimeisin varmuuskopio kesti, ja työkalujen kuvaukset pyytävät sitä kertomaan sen sinulle ennen kuin se käynnistää mitään.
+Avustajan varmuuskopio on sama varmuuskopio, jonka verkkokäyttöliittymä käynnistää. Käynnissä oleva kontti pysäytetään, kunnes sen varmuuskopio on valmis, yhdessä niiden konttien kanssa, jotka on asetettu pysähtymään sen mukana. VM, jolla on "graceful"-menetelmä, sammutetaan ja käynnistetään uudelleen. ZFS-datasetti pysäyttää sille asetetut kontit siksi aikaa, kun sen snapshot otetaan. Kansiojoukot, flash-muisti ja asetukset jatkavat toimintaansa. Sen jälkeen BombVault soveltaa säilytyskäytäntöä ja voi kopioida off-site-repositorioon. `list_items` kertoo avustajalle, mitä merkintä pysäyttää ja kauanko sen viimeisin varmuuskopio kesti, ja työkalujen kuvaukset pyytävät sitä kertomaan sen sinulle ennen kuin se käynnistää mitään.
 
 Koska varmuuskopio pysäyttää asioita ja työntää vanhoja palautuspisteitä ulos, MCP:n kautta tehtyjä käynnistyksiä on rajoitettu:
 
 - 12 käynnistettyä varmuuskopiota tunnissa avainta kohden.
-- 15 minuuttia saman kohteen, saman toimialueen tai Täysvarmuuskopion kahden MCP-käynnistyksen välillä.
-- Enintään 4 saman kohteen MCP-käynnistystä 24 tunnissa.
-- **Säilytyssuoja.** Kun toimialue säilyttää kiinteän määrän palautuspisteitä (vain "säilytä viimeiset N" ilman päivittäistä, viikoittaista tai kuukausittaista sääntöä, paikallisesti tai off-site-kohteessa), jokainen uusi varmuuskopio työntää vanhimman ulos. BombVault hylkää silloin kohteen MCP-käynnistyksen, jos sen uusimmat N-1 onnistunutta varmuuskopiota on kaikki käynnistetty MCP:n kautta. Säilytettävään joukkoon jää siksi aina vähintään yksi palautuspiste, jonka ajastus tai sinä olet tehnyt. Asetuksella "säilytä viimeinen 1" avustaja ei voi varmuuskopioida kohdetta lainkaan. Seuraava ajastettu varmuuskopio tekee taas tilaa. Pelkkä vuosisääntö lasketaan kuin "säilytä viimeinen 1", koska se säilyttää kuluvalta vuodelta vain yhden palautuspisteen.
+- 15 minuuttia saman merkinnän, saman osion tai Täysvarmuuskopion kahden MCP-käynnistyksen välillä.
+- Enintään 4 saman merkinnän MCP-käynnistystä 24 tunnissa.
+- **Säilytyssuoja.** Kun osio säilyttää kiinteän määrän palautuspisteitä (vain "säilytä viimeiset N" ilman päivittäistä, viikoittaista tai kuukausittaista sääntöä, paikallisesti tai off-site-kohteessa), jokainen uusi varmuuskopio työntää vanhimman ulos. BombVault hylkää silloin merkinnän MCP-käynnistyksen, jos sen uusimmat N-1 onnistunutta varmuuskopiota on kaikki käynnistetty MCP:n kautta. Säilytettävään joukkoon jää siksi aina vähintään yksi palautuspiste, jonka ajastus tai sinä olet tehnyt. Asetuksella "säilytä viimeinen 1" avustaja ei voi varmuuskopioida merkintää lainkaan. Seuraava ajastettu varmuuskopio tekee taas tilaa. Pelkkä vuosisääntö lasketaan kuin "säilytä viimeinen 1", koska se säilyttää kuluvalta vuodelta vain yhden palautuspisteen.
 
-Toimialueen tai Täysvarmuuskopion käynnistys jättää pois kohteet, jotka jokin raja pidättää, ja nimeää ne vastauksessaan. Mikään näistä ei koske verkkokäyttöliittymää eikä ajastusta. Tuntikiintiö on muistissa, joten BombVaultin uudelleenkäynnistys nollaa sen.
+Osion tai Täysvarmuuskopion käynnistys jättää pois merkinnät, jotka jokin raja pidättää, ja nimeää ne vastauksessaan. Mikään näistä ei koske verkkokäyttöliittymää eikä ajastusta. Tuntikiintiö on muistissa, joten BombVaultin uudelleenkäynnistys nollaa sen.
 
-[API:n](api.md#errors) kautta ja [Home Assistantista](api.md#home-assistant) tehdyt käynnistykset lasketaan samoihin kohdekohtaisiin rajoihin kuin MCP:n kautta tehdyt sekä säilytyssuojaan.
+[API:n](api.md#errors) kautta ja [Home Assistantista](api.md#home-assistant) tehdyt käynnistykset lasketaan samoihin merkintäkohtaisiin rajoihin kuin MCP:n kautta tehdyt sekä säilytyssuojaan.
 
 ## Ota käyttöön {#switch-on}
 
@@ -56,7 +56,7 @@ Jokaisella avaimella on kortilla oma ruutunsa. Siinä näkyy avaimen nimi, saako
 
 Nimen vieressä ruutu näyttää sen asiakasohjelman merkin, jolle avain luotiin. Kohdan **Muu asiakasohjelma** kautta tai ennen asiakasohjelmien luetteloa luotu avain näyttää sen sijaan avaimen.
 
-Ruudun **Loki** avaa sen, mitä avain on tehnyt. Ensin tulevat sen käynnistämät varmuuskopiot, kukin tilansa kanssa ja linkillä ajoon kojelaudan toimintalokissa. Niiden alla ovat sen kutsut uusin ensin, työkalu ja kutsun lopputulos. Hylkäys kertoo syyn: avain saa vain lukea, säilytyssuoja pidätti varmuuskopion, toinen varmuuskopiointi oli jo käynnissä, kohteen varmuuskopiointi käynnistettiin käyttöliittymän ulkopuolelta muutama minuutti sitten, tai avain lähetti liian monta pyyntöä. Peruutus linkittää ajoon, jota se koski.
+Ruudun **Loki** avaa sen, mitä avain on tehnyt. Ensin tulevat sen käynnistämät varmuuskopiot, kukin tilansa kanssa ja linkillä ajoon kojelaudan toimintalokissa. Niiden alla ovat sen kutsut uusin ensin, työkalu ja kutsun lopputulos. Hylkäys kertoo syyn: avain saa vain lukea, säilytyssuoja pidätti varmuuskopion, toinen varmuuskopiointi oli jo käynnissä, merkinnän varmuuskopiointi käynnistettiin käyttöliittymän ulkopuolelta muutama minuutti sitten, tai avain lähetti liian monta pyyntöä. Peruutus linkittää ajoon, jota se koski.
 
 BombVault säilyttää kunkin avaimen merkinnät enintään 30 päivää: 500 uusinta onnistunutta käynnistystä ja peruutusta sekä niiden rinnalla 200 uusinta muuta kutsua (luvut, hylkäykset ja virheet), joten avustaja, joka kyselee käynnissä olevaa varmuuskopiointia tai yrittää hylättyä kutsua yhä uudelleen, ei voi työntää sen käynnistystä pois lokista. Jokaisesta kutsusta se tallentaa työkalun, lopputuloksen ja peruutuksen nimeämän ajon. Se ei koskaan tallenna sitä, mitä avustaja lähetti, eikä avainta tai sen sormenjälkeä. Diagnostiikkapaketti vain laskee merkinnät, ja asetusten vienti jättää ne pois.
 
@@ -228,7 +228,7 @@ Välityspalvelimen takana jokaisessa pyynnössä on välityspalvelimen osoite. V
 - Ilman aktiivista avainta ja OAuth-kirjautumisen ollessa pois päältä `/mcp` vastaa `404`.
 - OAuth-kirjautumista tarjotaan vain, kun kirjautumissalasana on asetettu. Tunnukset, koodit ja asiakassalaisuudet tallennetaan vain sormenjälkinä, ja tunnus kelpaa vain osoitteeseen, jolle se on myönnetty.
 - Asiakas voi rekisteröityä samasta osoitteesta enintään 10 kertaa tunnissa, ja BombVault säilyttää enintään 100 rekisteröityä asiakasta, joilla kukaan ei ole kirjautunut, kutakin vuorokauden. Väärät koodit ja päivitystunnukset lasketaan samaan estoon kuin väärät avaimet.
-- Luvat käyttäytyvät kuten avaimet, kun asetusten varmuuskopio palautetaan tai `APP_KEY` vaihtuu: palautuksen jälkeen jokaisen asiakkaan on kirjauduttava uudelleen.
+- Luvat käyttäytyvät kuten avaimet, kun Itsevarmuuskopio palautetaan tai `APP_KEY` vaihtuu: palautuksen jälkeen jokaisen asiakkaan on kirjauduttava uudelleen.
 - Mikään osoite ei ole poikkeus. Pyynnöt osoitteesta `localhost`, Unraid-isännältä, käänteiseltä välityspalvelimelta tai `tailscale serve`:ltä tarvitsevat avaimen kuten kaikki muutkin, myös silloin kun verkkokäyttöliittymällä ei ole kirjautumissalasanaa.
 - Avaimet tallennetaan vain sormenjälkinä, näytetään kerran, ja ne voi nimetä uudelleen, vaihtaa ja peruuttaa. Enintään 10 aktiivista avainta, kullakin oma kytkin **Salli varmuuskopioiden käynnistys**.
 - Jokainen luonti, vaihto, oikeuksien muutos ja peruutus lähettää ilmoituksen ilmoituskanaviesi kautta osoitteen kera, josta se tuli, ellei ilmoituksia ole kytketty pois.
@@ -237,13 +237,13 @@ Välityspalvelimen takana jokaisessa pyynnössä on välityspalvelimen osoite. V
 - Niin kauan kuin kirjautumissalasanaa ei ole asetettu, avaimia ei voi luoda julkiselta näyttävästä isäntänimestä.
 - Jokainen avustajan käynnistämä varmuuskopio ja siitä seuraavat prune- ja off-site-ajot merkitään "MCP:n kautta" avaimen nimen kera toimintalokiin, virhepaneeliin ja varmuuskopion ilmoitukseen.
 - Jokainen työkalukutsu kirjoitetaan kontin lokiin avaimen tunnisteen ja sen neljän viimeisen merkin kera (ei koskaan nimeä) ja lasketaan `/metrics`-sivulla (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
-- Asetusten varmuuskopion palauttaminen peruuttaa kaikki avaimet, koska palautettu tietokanta voi sisältää avaimia, jotka peruutit sen tallentamisen jälkeen. Luo uudet avaimet sen jälkeen.
+- Itsevarmuuskopion palauttaminen peruuttaa kaikki avaimet, koska palautettu tietokanta voi sisältää avaimia, jotka peruutit sen tallentamisen jälkeen. Luo uudet avaimet sen jälkeen.
 - Avain lakkaa toimimasta, kun `APP_KEY` muuttuu (uudelleenasennus tai palautus toiseen konttiin). Kortti huomaa sen ja merkitsee avaimen, ja **Vaihda avain** antaa sille taas kelvollisen salaisuuden.
 - Kohtele avainta kuin salasanaa. Asiakasohjelma, joka ei osaa lukea avainta ympäristömuuttujasta, kyselystä tai avaintiedostosta, pitää sen selväkielisenä määrityksissään tai asetuksissaan, ja sen ikkuna kertoo sen. Käytä mieluummin vain lukevaa avainta tietokoneella, johon luotat vähemmän.
 
 ## Mitä koneelta lähtee {#privacy}
 
-Kaikki, mitä avustaja lukee, menee sen takana olevalle tekoälypalvelun tarjoajalle: kohteiden nimet, ajastukset, ajohistoria virheilmoituksineen, palautuspisteiden tunnisteet ja ajat, tietokantamoottorien nimet ja dumppien koot, käynnissä oleva toiminta, tallennustilan luvut, kattavuus ja tila. BombVault poistaa isännän polut, repositorioiden sijainnit, isäntänimet, tunnukset, hook-komennot ja avaimet ennen kuin mitään lähtee.
+Kaikki, mitä avustaja lukee, menee sen takana olevalle tekoälypalvelun tarjoajalle: merkintöjen nimet, ajastukset, ajohistoria virheilmoituksineen, palautuspisteiden tunnisteet ja ajat, tietokantamoottorien nimet ja dumppien koot, käynnissä oleva toiminta, tallennustilan luvut, kattavuus ja tila. BombVault poistaa isännän polut, repositorioiden sijainnit, isäntänimet, tunnukset, hook-komennot ja avaimet ennen kuin mitään lähtee.
 
 ## Vianmääritys {#troubleshooting}
 
@@ -257,13 +257,13 @@ Kaikki, mitä avustaja lukee, menee sen takana olevalle tekoälypalvelun tarjoaj
 | `400` "batch requests are not accepted" | Asiakasohjelma lähettää JSON-RPC-eriä. Lähetä yksi viesti pyyntöä kohden. |
 | `429` | Liian monta väärää avainta tästä osoitteesta, tai yli 120 pyyntöä minuutissa yhdellä avaimella. Odota minuutti ja tarkista, onko avustaja jumissa silmukassa. |
 | Virheet, joissa lukee "certificate", "self-signed" tai "unable to verify" | Asiakasohjelma ei luota BombVaultin varmenteeseen. Katso [TLS ja varmenteet](#tls). |
-| `busy` | Toinen varmuuskopio tai ylläpitotehtävä varaa toimialueen. Yritä uudelleen, kun se on valmis. |
-| `cooldown` | Tämä kohde, tämä toimialue tai Täysvarmuuskopio käynnistettiin käyttöliittymän ulkopuolelta alle 15 minuuttia sitten. |
-| `retention_guard` | Vielä yksi MCP-varmuuskopio jättäisi "säilytä viimeiset N" -ikkunaan vain MCP:n tekemiä palautuspisteitä, tai kohde on jo saanut 4 varmuuskopiota MCP:n kautta viimeisten 24 tunnin aikana, epäonnistuneet ja perutut mukaan lukien. Ensimmäisessä tapauksessa seuraava ajastettu varmuuskopio tekee tilaa, toisessa kohde vapautuu 24 tuntia vanhimman niistä jälkeen. Verkkokäyttöliittymästä voit käynnistää sen milloin tahansa. |
+| `busy` | Toinen varmuuskopio tai ylläpitotehtävä varaa osion. Yritä uudelleen, kun se on valmis. |
+| `cooldown` | Tämä merkintä, tämä osio tai Täysvarmuuskopio käynnistettiin käyttöliittymän ulkopuolelta alle 15 minuuttia sitten. |
+| `retention_guard` | Vielä yksi MCP-varmuuskopio jättäisi "säilytä viimeiset N" -ikkunaan vain MCP:n tekemiä palautuspisteitä, tai merkintä on jo saanut 4 varmuuskopiota MCP:n kautta viimeisten 24 tunnin aikana, epäonnistuneet ja perutut mukaan lukien. Ensimmäisessä tapauksessa seuraava ajastettu varmuuskopio tekee tilaa, toisessa merkintä vapautuu 24 tuntia vanhimman niistä jälkeen. Verkkokäyttöliittymästä voit käynnistää sen milloin tahansa. |
 | `rate_limited` | Avain on käyttänyt tämän tunnin 12 käynnistystään. |
 | `not_permitted` käynnistyksessä | Avain saa vain lukea. Kytke **Salli varmuuskopioiden käynnistys** päälle kortissa; uutta yhteyttä ei tarvita. Peruutuksessa se tarkoittaa, että tämä avain ei käynnistänyt ajoa. |
 | `domain_off` | Se osio on kytketty pois kohdassa **Asetukset, Yleiset**. |
-| `not_found` | BombVault ei suojaa sitä kohdetta. Lisää se ensin verkkokäyttöliittymässä; MCP ei koskaan luo asetuksia. |
+| `not_found` | BombVault ei suojaa sitä merkintää. Lisää se ensin verkkokäyttöliittymässä; MCP ei koskaan luo asetuksia. |
 | Asiakas ei löydä valtuutuspalvelinta | OAuth-kirjautuminen on pois päältä, kirjautumissalasanaa ei ole asetettu, tai välityspalvelin ei päästä polkua `/.well-known/` läpi BombVaultiin. |
 | Suostumussivu kertoo, ettei paluuosoitetta ole rekisteröity | Asiakas lähetti paluuosoitteen, jota se ei ole rekisteröinyt. Poista liitin asiakkaasta ja lisää se uudelleen. |
 | Kirjautunut asiakas saa vastauksen `401` | Sen lupa on peruttu, se on vanhentunut 30 käyttämättömän päivän jälkeen, tai julkinen osoite on muuttunut. Asiakas kirjautuu uudelleen. |

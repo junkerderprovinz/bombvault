@@ -21,18 +21,18 @@ Sin contraseña de acceso, cualquiera que pueda abrir la interfaz web también p
 | Ruta | Qué devuelve o hace | Token |
 |---|---|---|
 | `GET /api/v1/health` | Versión, nombre de la instancia, si hay una copia en marcha y qué puede hacer este token | lectura |
-| `GET /api/v1/status` | Estado de protección por dominio: última copia correcta, intervalo esperado, comprobaciones, próximas ejecuciones | lectura |
+| `GET /api/v1/status` | Estado de protección por sección: última copia correcta, intervalo esperado, comprobaciones, próximas ejecuciones | lectura |
 | `GET /api/v1/activity` | Lo que está en marcha ahora, con fase y porcentaje | lectura |
-| `GET /api/v1/items` | Cada elemento protegido con su programación, lo que detiene una copia y su última copia; `?domain=` para un dominio | lectura |
+| `GET /api/v1/items` | Cada elemento protegido con su programación, lo que detiene una copia y su última copia; `?domain=` para una sección | lectura |
 | `GET /api/v1/runs` | Historial de ejecuciones, las más recientes primero; filtros `limit`, `domain`, `item`, `status`, `kind`, `since` | lectura |
 | `GET /api/v1/anomalies` | Anomalías con un resumen de lo abierto; filtros `state`, `severity`, `domain`, `limit` | lectura |
 | `GET /api/v1/anomalies/{id}` | Una anomalía | lectura |
-| `GET /api/v1/storage/{domain}` | Historial de tamaño, crecimiento semanal y espacio libre de cada repositorio de un dominio | lectura |
-| `POST /api/v1/backups` | Copia un elemento (`{"domain":"containers","item":"plex"}`) o un dominio entero (`{"domain":"vms"}`) | inicio |
+| `GET /api/v1/storage/{domain}` | Historial de tamaño, crecimiento semanal y espacio libre de cada repositorio de una sección | lectura |
+| `POST /api/v1/backups` | Copia un elemento (`{"domain":"containers","item":"plex"}`) o una sección entera (`{"domain":"vms"}`) | inicio |
 | `POST /api/v1/backups/everything` | Ejecuta la Copia total | inicio |
 | `POST /api/v1/runs/{id}/cancel` | Cancela una copia en marcha que inició este token | inicio |
 
-Los dominios son `containers`, `vms`, `files`, `zfs`, `flash` y `config`. Las horas son segundos Unix. Las respuestas son las de las [herramientas MCP](mcp.md#tools) del mismo nombre, así ambas van a la par.
+Las secciones son `containers`, `vms`, `files`, `zfs`, `flash` y `config`. Las horas son segundos Unix. Las respuestas son las de las [herramientas MCP](mcp.md#tools) del mismo nombre, así ambas van a la par.
 
 Una copia iniciada aquí es la misma que inicia la interfaz web: un contenedor en marcha se detiene hasta que termina su copia. La petición vuelve enseguida, y `/api/v1/activity` y `/api/v1/runs` muestran cómo va.
 
@@ -60,7 +60,7 @@ Un error vuelve como `{"error": {"code": "...", "message": "..."}}` con el estad
 | 401 | `no_token`, `invalid_token` | Sin token, o no es uno activo |
 | 403 | `not_permitted`, `forbidden_origin` | El token solo puede leer, o no inició esa ejecución, o la petición vino de una página de otro origen |
 | 404 | `not_found` | No existe ese elemento, ejecución o anomalía |
-| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Ya hay algo en marcha, el dominio está desactivado o no hay nada que hacer |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Ya hay algo en marcha, la sección está desactivada o no hay nada que hacer |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Un límite retiene la petición; `Retry-After` indica cuándo reintentar |
 
 Los inicios siguen los mismos límites que los [inicios por MCP](mcp.md#starting-backups): 12 por hora y token, 15 minutos entre dos inicios del mismo elemento, como mucho 4 inicios de un elemento en 24 horas y la protección de retención. Los tres últimos cuentan juntos los inicios por MCP, por la API y desde Home Assistant. Un token puede hacer 120 peticiones por minuto. Cinco intentos fallidos desde una dirección la bloquean durante un minuto.
@@ -81,16 +81,16 @@ El dispositivo se llama BombVault, o BombVault con el nombre de la instancia ent
 
 | Entidad | Qué muestra |
 |---|---|
-| Status | `ok`, `warning`, `failed` u `off`, el peor de los dominios activados |
+| Status | `ok`, `warning`, `failed` u `off`, el peor entre las secciones activadas |
 | Running job | Lo que está en marcha ahora, o `idle` |
 | Open anomalies | Cuántas anomalías están abiertas |
 | Next scheduled backup | Cuándo empieza la próxima copia programada |
-| *Dominio* last backup | Cuándo fue la última copia correcta del dominio |
-| *Dominio* last result | Cómo terminó su última copia |
-| *Dominio* repository free space | El espacio libre donde está su repositorio principal, si BombVault puede leerlo |
-| Back up *dominio* | Un botón que copia el dominio entero |
+| *Sección* last backup | Cuándo fue la última copia correcta de la sección |
+| *Sección* last result | Cómo terminó su última copia |
+| *Sección* repository free space | El espacio libre donde está su repositorio principal, si BombVault puede leerlo |
+| Back up *sección* | Un botón que copia la sección entera |
 
-Los nombres de las entidades están en inglés, porque Home Assistant los toma tal como los envía BombVault. Cada dominio activado tiene sus propias entidades, y uno que desactives las pierde. Los botones aparecen cuando activas **Los botones inician copias**, que viene desactivado en una instalación nueva. Siguen los mismos límites que los [inicios por la API](#errors). Además, BombVault atiende una sola pulsación por dominio a la vez y como mucho seis por minuto, e ignora una pulsación que el broker guardó como mensaje retenido. Cualquiera que pueda publicar en el broker puede pulsarlos, así que ponle una contraseña al broker.
+Los nombres de las entidades están en inglés, porque Home Assistant los toma tal como los envía BombVault. Cada sección activada tiene sus propias entidades, y una que desactives las pierde. Los botones aparecen cuando activas **Los botones inician copias**, que viene desactivado en una instalación nueva. Siguen los mismos límites que los [inicios por la API](#errors). Además, BombVault atiende una sola pulsación por sección a la vez y como mucho seis por minuto, e ignora una pulsación que el broker guardó como mensaje retenido. Cualquiera que pueda publicar en el broker puede pulsarlos, así que ponle una contraseña al broker.
 
 BombVault lee su estado cada 15 segundos y lo publica cuando algo cambia, como JSON en `<prefijo>/<nodo>/state`. El prefijo es `bombvault` mientras no lo cambies, y el nodo es un identificador corto que BombVault elige una vez. Los mensajes de descubrimiento van al prefijo predeterminado de Home Assistant, `homeassistant`. Ambos se conservan (retained). Un último mensaje (last will) marca el dispositivo como no disponible si BombVault se detiene sin avisar. Desactivar el enlace quita el dispositivo y sus entidades de Home Assistant.
 

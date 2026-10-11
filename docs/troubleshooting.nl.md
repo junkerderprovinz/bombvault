@@ -45,7 +45,7 @@ Dit is meestal een verweesde restic-lock die achterblijft wanneer de container w
 
 ## Mijn off-site kopie is niet gemaakt na een back-up
 
-Off-site replicatie is opzettelijk best-effort, dus een off-site hapering laat de lokale back-up nooit mislukken. Controleer wanneer de bestemming kopieert: de kaart **Kopiëren** zegt **Na elke back-up** of noemt een eigen plan, en **Instellingen, Planning, Off-site-kopieën per domein** kan een onderdeel een eigen plan geven. Gebruik **Nu repliceren** in de kaart **Off-site kopie** van het onderdeel onder **Instellingen, Bestemmingen** voor een run op aanvraag, en let op de statuskop van het overzicht, die **Off-site-kopie loopt** zegt zolang het loopt. Een mislukte kopie staat onder **Aandacht nodig**.
+Off-site replicatie is opzettelijk best-effort, dus een off-site hapering laat de lokale back-up nooit mislukken. Controleer wanneer de bestemming kopieert: de kaart **Kopiëren** zegt **Na elke back-up** of noemt een eigen plan, en **Instellingen, Planning, Off-site-kopieën per onderdeel** kan een onderdeel een eigen plan geven. Gebruik **Nu repliceren** in de kaart **Off-site kopie** van het onderdeel onder **Instellingen, Bestemmingen** voor een run op aanvraag, en let op de statuskop van het overzicht, die **Off-site-kopie loopt** zegt zolang het loopt. Een mislukte kopie staat onder **Aandacht nodig**.
 
 ## Een herstel brak af voordat het begon
 
@@ -95,7 +95,7 @@ Dezelfde oorzaak: opschonen laat de oude back-ups van een item met zo'n anomalie
 
 ## De geschiedenisimport meldt dat een repository niet gelezen kon worden
 
-Na de update leest BombVault één keer de groottes van eerdere back-ups uit elke repository. Een repository die op dat moment niet bereikbaar was, zoals een uitgevallen off-site-doel of een share die niet gekoppeld was, staat op de kaart **Anomalieën** onder **Instellingen, Verificatie** en wordt één keer per dag opnieuw geprobeerd. Zijn items leren intussen van nieuwe back-ups.
+Na de update leest BombVault één keer de groottes van eerdere back-ups uit elke repository. Een repository die op dat moment niet bereikbaar was, zoals een uitgevallen off-site-bestemming of een share die niet gekoppeld was, staat op de kaart **Anomalieën** onder **Instellingen, Verificatie** en wordt één keer per dag opnieuw geprobeerd. Zijn items leren intussen van nieuwe back-ups.
 
 ## De waarschuwing over schijfruimte klopt niet met het Unraid-dashboard
 

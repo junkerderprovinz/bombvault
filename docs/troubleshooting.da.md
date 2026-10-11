@@ -35,9 +35,9 @@ VM-sikkerhedskopiering taler med libvirt over SSH, aldrig en montering.
 - Hvis du ændrede Unraids SSH-port, så sæt `LIBVIRT_SSH_PORT` til at matche.
 - Fuld trin-for-trin-diagnose (opnåelighedstest, VLAN-routing, `Permission denied (publickey)`, `Host key verification failed`) findes i [VM backup over SSH-guiden](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
-## Et live-VM-øjebliksbillede kørte ikke
+## Et live-VM-snapshot kørte ikke
 
-Live-øjebliksbilleder kræver qemu guest agent installeret i VM'en og disken på `/mnt/cache` (eller `/mnt/diskX`), ikke `/mnt/user`. På en slukket VM falder live automatisk tilbage til yndefuld. En yndefuld sikkerhedskopi lukker VM'en ned, sikkerhedskopierer diskene og genstarter den så, så den altid er konsistent.
+Live-snapshots kræver qemu guest agent installeret i VM'en og disken på `/mnt/cache` (eller `/mnt/diskX`), ikke `/mnt/user`. På en slukket VM falder live automatisk tilbage til yndefuld. En yndefuld sikkerhedskopi lukker VM'en ned, sikkerhedskopierer diskene og genstarter den så, så den altid er konsistent.
 
 ## En sikkerhedskopi fejlede med "repository is already locked"
 
@@ -95,7 +95,7 @@ Samme årsag: oprydningen lader de gamle sikkerhedskopier af et element med såd
 
 ## Historikimporten siger, at et repository ikke kunne læses
 
-Efter opgraderingen læser BombVault én gang størrelsen af tidligere sikkerhedskopier fra hvert repository. Et repository, der ikke kunne nås på det tidspunkt, for eksempel et offsite-mål, der var nede, eller et share, der ikke var monteret, står i kortet **Afvigelser** under **Indstillinger, Verificering** og forsøges igen én gang om dagen. Imens lærer dets elementer af nye sikkerhedskopier.
+Efter opgraderingen læser BombVault én gang størrelsen af tidligere sikkerhedskopier fra hvert repository. Et repository, der ikke kunne nås på det tidspunkt, for eksempel en offsite-destination, der var nede, eller et share, der ikke var monteret, står i kortet **Afvigelser** under **Indstillinger, Verificering** og forsøges igen én gang om dagen. Imens lærer dets elementer af nye sikkerhedskopier.
 
 ## Advarslen om diskplads passer ikke med Unraids dashboard
 

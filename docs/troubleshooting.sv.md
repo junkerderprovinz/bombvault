@@ -45,7 +45,7 @@ Det här är oftast ett föräldralöst restic-lås som blev kvar när container
 
 ## Min off-site-kopia hände inte efter en säkerhetskopiering
 
-Off-site-replikering är best-effort av design, så ett off-site-hickande får aldrig den lokala säkerhetskopian att misslyckas. Kontrollera när målet kopierar: dess kort **Kopiera** säger **Efter varje säkerhetskopia** eller namnger en egen plan, och **Inställningar, Schema, Externa kopior per område** kan ge ett avsnitt en egen plan. Använd **Replikera nu** i avsnittets off-site-kopiakort under **Inställningar, Mål** för en körning på begäran, och titta på översiktens statushuvud, som säger **Extern kopiering pågår** medan den körs. En misslyckad kopiering syns under **Behöver uppmärksamhet**.
+Off-site-replikering är best-effort av design, så ett off-site-hickande får aldrig den lokala säkerhetskopian att misslyckas. Kontrollera när målet kopierar: dess kort **Kopiera** säger **Efter varje säkerhetskopia** eller namnger en egen plan, och **Inställningar, Schema, Externa kopior per avsnitt** kan ge ett avsnitt en egen plan. Använd **Replikera nu** i avsnittets off-site-kopiakort under **Inställningar, Mål** för en körning på begäran, och titta på översiktens statushuvud, som säger **Extern kopiering pågår** medan den körs. En misslyckad kopiering syns under **Behöver uppmärksamhet**.
 
 ## En återställning avbröts innan den startade
 

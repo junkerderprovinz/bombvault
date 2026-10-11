@@ -7,18 +7,18 @@ BombVault heeft een ingebouwde server voor het Model Context Protocol (MCP), het
 | Hulpmiddel | Wat het doet | Soort |
 |---|---|---|
 | `get_health` | Versie, naam van de instantie, of er een back-up loopt en wat deze sleutel mag | lezen |
-| `get_status` | Beschermingsstatus per domein: laatste geslaagde back-up, verwacht interval, verificaties en off-site-controles, volgende geplande runs, back-ups die op een rustige app wachten, voor containers de nieuwste starttest | lezen |
+| `get_status` | Beschermingsstatus per onderdeel: laatste geslaagde back-up, verwacht interval, verificaties en off-site-controles, volgende geplande runs, back-ups die op een rustige app wachten, voor containers de nieuwste starttest | lezen |
 | `get_coverage` | Wat BombVault beschermt en wat niet, telkens met de reden | lezen |
 | `list_items` | Elke beschermde container, VM en mappenset, de flashstick en de app-configuratie, met planning, wat een back-up ervan stopt, de laatste back-up en hoe lang die duurde; databasecontainers vermelden ook hun laatste dump; ZFS-datasets staan er ook in, met de uitkomst van hun laatste controle; elk item draagt zijn laatste herstelcontrole, een container ook zijn laatste starttest of de reden waarom hij niet te testen is; een container die sinds zijn laatste back-up opnieuw is gemaakt met andere instellingen, noemt wat er veranderd is | lezen |
-| `list_runs` | Runhistorie, nieuwste eerst, te filteren op domein, item, status, soort en tijd; een trage back-up die door één ding werd afgeremd, noemt dat | lezen |
+| `list_runs` | Runhistorie, nieuwste eerst, te filteren op onderdeel, item, status, soort en tijd; een trage back-up die door één ding werd afgeremd, noemt dat | lezen |
 | `list_restore_points` | Herstelpunten van één item uit zijn primaire repository, en bij een container ook zijn databasedumps; een ZFS-dataset krijgt één herstelpunt per back-up, met een snapshot van elke dataset eronder | lezen |
 | `get_activity` | Wat er nu loopt, met fase en percentage | lezen |
-| `get_storage_stats` | Groottegeschiedenis van de primaire repository van een domein en de groei per week, plus gebruikte, vrije en totale ruimte op de schijf of remote van elk van zijn repositories | lezen |
+| `get_storage_stats` | Groottegeschiedenis van de primaire repository van een onderdeel en de groei per week, plus gebruikte, vrije en totale ruimte op de schijf of remote van elk van zijn repositories | lezen |
 | `get_size_breakdown` | Welke mappen en bestanden ruimte innemen in de nieuwste back-up van een container, een VM of een mapset, en hoeveel daarvan de laatste back-up heeft toegevoegd | lezen |
-| `list_anomalies` | Anomalieën die BombVault in de back-ups heeft opgemerkt, te filteren op status, ernst en domein, met een overzicht van wat nog openstaat | lezen |
+| `list_anomalies` | Anomalieën die BombVault in de back-ups heeft opgemerkt, te filteren op status, ernst en onderdeel, met een overzicht van wat nog openstaat | lezen |
 | `get_anomaly` | Eén van die meldingen, met de notitie die bij het bevestigen is achtergelaten | lezen |
 | `start_backup` | Maakt nu een back-up van één item | starten |
-| `start_domain_backup` | Maakt een back-up van elk beschermd item van een domein | starten |
+| `start_domain_backup` | Maakt een back-up van elk beschermd item van een onderdeel | starten |
 | `start_backup_everything` | Start de ronde Volledige back-up | starten |
 | `cancel_backup` | Annuleert een lopende back-up die deze sleutel heeft gestart | annuleren |
 
@@ -33,11 +33,11 @@ De back-up van een assistent is dezelfde back-up die de webinterface start. Een 
 Omdat een back-up dingen stilzet en oude herstelpunten eruit duwt, zijn starts via MCP begrensd:
 
 - 12 gestarte back-ups per uur per sleutel.
-- 15 minuten tussen twee MCP-starts van hetzelfde item, hetzelfde domein of Volledige back-up.
+- 15 minuten tussen twee MCP-starts van hetzelfde item, hetzelfde onderdeel of Volledige back-up.
 - Hoogstens 4 MCP-starts van hetzelfde item in 24 uur.
-- **Bewaarbeveiliging.** Houdt een domein een vast aantal herstelpunten (alleen "laatste N bewaren", zonder dagelijkse, wekelijkse of maandelijkse regel, lokaal of op een off-site-bestemming), dan duwt elke nieuwe back-up de oudste eruit. BombVault weigert dan een MCP-start van een item waarvan de nieuwste N-1 geslaagde back-ups allemaal via MCP zijn gestart. Er blijft dus altijd minstens één herstelpunt in de bewaarde set dat de planning of jij hebt gemaakt. Met "laatste 1 bewaren" kan een assistent van dat item helemaal geen back-up maken. De volgende geplande back-up maakt weer ruimte. Een jaarregel alleen telt als "laatste 1 bewaren", omdat die voor het lopende jaar maar één herstelpunt bewaart.
+- **Bewaarbeveiliging.** Houdt een onderdeel een vast aantal herstelpunten (alleen "laatste N bewaren", zonder dagelijkse, wekelijkse of maandelijkse regel, lokaal of op een off-site-bestemming), dan duwt elke nieuwe back-up de oudste eruit. BombVault weigert dan een MCP-start van een item waarvan de nieuwste N-1 geslaagde back-ups allemaal via MCP zijn gestart. Er blijft dus altijd minstens één herstelpunt in de bewaarde set dat de planning of jij hebt gemaakt. Met "laatste 1 bewaren" kan een assistent van dat item helemaal geen back-up maken. De volgende geplande back-up maakt weer ruimte. Een jaarregel alleen telt als "laatste 1 bewaren", omdat die voor het lopende jaar maar één herstelpunt bewaart.
 
-Een start van een domein of van Volledige back-up laat de items weg die een grens tegenhoudt en noemt ze in het antwoord. De webinterface en de planning hebben met geen van deze grenzen te maken. Het uurbudget staat in het geheugen, dus een herstart van BombVault zet het op nul.
+Een start van een onderdeel of van Volledige back-up laat de items weg die een grens tegenhoudt en noemt ze in het antwoord. De webinterface en de planning hebben met geen van deze grenzen te maken. Het uurbudget staat in het geheugen, dus een herstart van BombVault zet het op nul.
 
 Starts via de [API](api.md#errors) en vanuit [Home Assistant](api.md#home-assistant) tellen mee voor dezelfde grenzen per item als starts via MCP, en voor de bewaarbescherming.
 
@@ -228,7 +228,7 @@ Achter een proxy draagt elk verzoek het adres van de proxy. Vijf verkeerde sleut
 - Zonder actieve sleutel en met aanmelden via OAuth uit antwoordt `/mcp` met `404`.
 - Aanmelden via OAuth wordt alleen aangeboden zolang er een inlogwachtwoord is ingesteld. Tokens, codes en clientgeheimen worden alleen als vingerafdruk opgeslagen, en een token geldt alleen voor het adres waarvoor het is uitgegeven.
 - Een client kan zich vanaf één adres hoogstens 10 keer per uur registreren, en BombVault bewaart hoogstens 100 geregistreerde clients waarmee niemand zich heeft aangemeld, elk een dag lang. Foute codes en vernieuwingstokens tellen mee voor dezelfde blokkade als foute sleutels.
-- Toestemmingen gedragen zich als sleutels bij het herstellen van een configuratieback-up of een gewijzigde `APP_KEY`: na een herstel moet elke client zich opnieuw aanmelden.
+- Toestemmingen gedragen zich als sleutels bij het herstellen van een zelf-back-up of een gewijzigde `APP_KEY`: na een herstel moet elke client zich opnieuw aanmelden.
 - Geen uitzonderingen voor adressen. Verzoeken van `localhost`, van de Unraid-host, van een reverse proxy of van `tailscale serve` hebben een sleutel nodig zoals elk ander, ook als de webinterface geen inlogwachtwoord heeft.
 - Sleutels worden alleen als vingerafdruk opgeslagen, één keer getoond, en kunnen worden hernoemd, vervangen en ingetrokken. Tot 10 actieve sleutels, elk met een eigen schakelaar **Back-ups laten starten**.
 - Elk aanmaken, vervangen, elke rechtenwijziging en elke intrekking stuurt een melding via je meldingskanalen, met het adres waar het vandaan kwam, tenzij meldingen uit staan.
@@ -237,7 +237,7 @@ Achter een proxy draagt elk verzoek het adres van de proxy. Vijf verkeerde sleut
 - Zolang er geen inlogwachtwoord is, kunnen er geen sleutels worden aangemaakt vanaf een hostnaam die er openbaar uitziet.
 - Elke back-up die een assistent start, en de prune- en off-site-runs die eruit volgen, is gemarkeerd met "via MCP" en de naam van de sleutel: in het activiteitenlogboek, in het foutpaneel en in de back-upmelding.
 - Elke aanroep van een hulpmiddel komt in het containerlog met de id van de sleutel en de laatste vier tekens (nooit de naam) en wordt geteld in `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
-- Het herstellen van een configuratieback-up trekt elke sleutel in, omdat de herstelde database sleutels kan bevatten die je na het opslaan ervan hebt ingetrokken. Maak daarna nieuwe aan.
+- Het herstellen van een zelf-back-up trekt elke sleutel in, omdat de herstelde database sleutels kan bevatten die je na het opslaan ervan hebt ingetrokken. Maak daarna nieuwe aan.
 - Een sleutel werkt niet meer als `APP_KEY` verandert (een herinstallatie of een herstel in een andere container). De kaart merkt dat op en markeert de sleutel, en **Sleutel vervangen** geeft hem weer een geldig geheim.
 - Behandel een sleutel als een wachtwoord. Een client die de sleutel niet uit een omgevingsvariabele, een vraag of een sleutelbestand kan lezen, bewaart hem als platte tekst in zijn configuratie of instellingen, en zijn venster zegt dat. Neem op een computer die je minder vertrouwt liever een sleutel die alleen mag lezen.
 
@@ -257,8 +257,8 @@ Wat een assistent leest, gaat naar de AI-aanbieder erachter: namen van items, pl
 | `400` "batch requests are not accepted" | De client stuurt JSON-RPC-batches. Stuur één bericht per verzoek. |
 | `429` | Te veel verkeerde sleutels vanaf dit adres, of meer dan 120 verzoeken per minuut met één sleutel. Wacht een minuut en kijk of de assistent in een lus zit. |
 | Fouten met "certificate", "self-signed" of "unable to verify" | De client vertrouwt het certificaat van BombVault niet. Zie [TLS en certificaten](#tls). |
-| `busy` | Een andere back-up of een onderhoudstaak bezet dat domein. Probeer het opnieuw als die klaar is. |
-| `cooldown` | Dit item, dit domein of Volledige back-up is minder dan 15 minuten geleden buiten de webinterface gestart. |
+| `busy` | Een andere back-up of een onderhoudstaak bezet dat onderdeel. Probeer het opnieuw als die klaar is. |
+| `cooldown` | Dit item, dit onderdeel of Volledige back-up is minder dan 15 minuten geleden buiten de webinterface gestart. |
 | `retention_guard` | Nog een MCP-back-up zou in een venster "laatste N bewaren" alleen herstelpunten uit MCP overlaten, of het item heeft in de afgelopen 24 uur al 4 back-ups via MCP gehad, mislukte en afgebroken meegeteld. In het eerste geval maakt de volgende geplande back-up ruimte, in het tweede is het item 24 uur na de oudste van die back-ups weer vrij. In beide gevallen kun je hem in de webinterface starten. |
 | `rate_limited` | De sleutel heeft zijn 12 starts voor dit uur opgebruikt. |
 | `not_permitted` bij een start | De sleutel mag alleen lezen. Zet **Back-ups laten starten** aan in de kaart; een nieuwe verbinding is niet nodig. Bij een annulering betekent het dat deze sleutel de run niet heeft gestart. |

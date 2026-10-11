@@ -9,7 +9,7 @@ Restaurările sunt automate. Containerele reapar în fila Docker din Unraid exac
 Bazat pe [restic](https://restic.net), așa că fiecare backup este deduplicat, incremental și mereu criptat.
 
 !!! note "Păstrează-ți APP_KEY în siguranță"
-    BombVault derivă parola depozitului restic dintr-un secret de 32 de octeți numit `APP_KEY`. Pierderea lui, împreună cu kitul de recuperare, face ca backupurile criptate să nu mai poată fi recuperate. Generează unul cu `openssl rand -hex 32` și păstrează-l undeva în siguranță. Vezi [Configurare](configuration.md).
+    BombVault derivă parola depozitului restic dintr-un secret de 32 de octeți numit `APP_KEY`. Pierderea lui, împreună cu kitul de recuperare, face ca copiile de rezervă criptate să nu mai poată fi recuperate. Generează unul cu `openssl rand -hex 32` și păstrează-l undeva în siguranță. Vezi [Configurare](configuration.md).
 
 ## Ce protejează BombVault
 
