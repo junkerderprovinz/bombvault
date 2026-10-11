@@ -6542,6 +6542,16 @@ export function setAuthPassword(password: string): Promise<SetPasswordResponse> 
   });
 }
 
+/** GET /api/auth/phone-pairing: whether a phone of the group may pair. */
+export function getPhonePairing(): Promise<{ ok: boolean; on?: boolean; error?: string }> {
+  return fetchJSON("/api/auth/phone-pairing");
+}
+
+/** PUT /api/auth/phone-pairing switches pairing of phones on or off. */
+export function setPhonePairing(on: boolean): Promise<{ ok: boolean; on?: boolean; error?: string }> {
+  return fetchJSON("/api/auth/phone-pairing", { method: "PUT", body: JSON.stringify({ on }) });
+}
+
 /** POST /api/auth/totp/setup — mint a secret and return the QR payload. The
  *  factor is NOT armed until confirmTOTP accepts a code from the app. */
 export function setupTOTP(): Promise<TOTPSetupResponse> {

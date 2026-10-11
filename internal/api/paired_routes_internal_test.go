@@ -235,8 +235,11 @@ func (s *server) c() {
 // purpose. A route that is on neither this list nor pairedRoutes fails
 // TestEveryRouteIsDecidedForAPairedSession, so whoever adds one decides.
 var pairedRefused = []string{
-	// The login, its second factor and passkeys, tokens, MCP keys and OAuth.
+	// The login, its second factor and passkeys, pairing phones, tokens, MCP
+	// keys and OAuth.
 	"DELETE /api/auth/passkeys/{id}",
+	"GET /api/auth/phone-pairing",
+	"PUT /api/auth/phone-pairing",
 	"DELETE /api/mcp/keys/{id}",
 	"DELETE /api/tokens/{id}",
 	"DELETE /api/widget/token",

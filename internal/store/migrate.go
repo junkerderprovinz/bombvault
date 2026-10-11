@@ -3086,6 +3086,17 @@ ALTER TABLE key_deposits_sent ADD COLUMN changed_at INTEGER NOT NULL DEFAULT 0;`
   pinned_at INTEGER NOT NULL
 );`,
 	},
+	{
+		// Whether a phone of the group may pair, off after a password reset
+		// until a person signed in switches it on again. Without a row it may.
+		version:          keyHardeningMigration + 4,
+		name:             "phone_pairing",
+		alreadySatisfied: tablePresent("phone_pairing"),
+		sql: `CREATE TABLE IF NOT EXISTS phone_pairing (
+  id  INTEGER PRIMARY KEY CHECK (id = 1),
+  off INTEGER NOT NULL
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3206,7 +3217,8 @@ const oneLineMigration = 336
 const depositProofMigration = 337
 
 // keyHardeningMigration numbers what was added to the tables of
-// keyRolesMigration afterwards, from 350, and the keys members sign with, 353.
+// keyRolesMigration afterwards, from 350, the keys members sign with, 353,
+// and the switch for pairing phones, 354.
 const keyHardeningMigration = 350
 
 // oneLineColumns are the names and locations the recovery kit prints.

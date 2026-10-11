@@ -4437,10 +4437,12 @@ func (h *Handler) requireAuthForSecrets(w http.ResponseWriter, r *http.Request, 
 }
 
 // The codes a 403 carries when a request needs more than its session: a login
-// password has to be set first, or the person has to sign in themselves.
+// password has to be set first, the person has to sign in themselves, or a
+// phone asks for a session while pairing phones is switched off.
 const (
-	codeNoPassword     = "password-not-set"
-	codeOwnLoginNeeded = "own-login-needed"
+	codeNoPassword      = "password-not-set"
+	codeOwnLoginNeeded  = "own-login-needed"
+	codePhonePairingOff = "phone-pairing-off"
 )
 
 // requireSignIn refuses the session of a paired phone where a password is
@@ -5424,6 +5426,10 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		// path that matches no route is left to the mux to answer, and
 		// behind anything but a mux the gate cannot tell, so it refuses.
 		if secret.PairedSessionToken(c.Value) {
+			if on, err := h.store.PhonePairing(); err != nil || !on {
+				writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "authentication required"})
+				return
+			}
 			mux, ok := next.(*http.ServeMux)
 			if !ok {
 				refusePaired(w)

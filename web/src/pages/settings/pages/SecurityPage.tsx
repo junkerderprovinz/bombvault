@@ -3,6 +3,7 @@ import { getAuth, setAuthPassword } from "../../../lib/api";
 import { PasskeyCard } from "../PasskeyCard";
 import { TwoFactorCard } from "../TwoFactorCard";
 import { EncryptionCard } from "../EncryptionCard";
+import { PhonePairingCard } from "../PhonePairingCard";
 import { Button } from "../../../components/Button";
 import { RevealInput } from "../../../components/RevealInput";
 import { useReveal } from "../../../lib/useReveal";
@@ -181,6 +182,7 @@ export function SecurityPage() {
       {/* A passkey replaces typing the password rather than strengthening it, */}
       {/* and it is not always available, so the card first explains when it is not. */}
       <PasskeyCard passwordSet={authEnabled} hueIndex={nextHue()} />
+      <PhonePairingCard hueIndex={nextHue()} />
       <EncryptionCard hueIndex={nextHue()} />
     </>
   );
