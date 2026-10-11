@@ -1,0 +1,287 @@
+package api
+
+import (
+	"encoding/json"
+	"errors"
+	"slices"
+	"testing"
+	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
+)
+
+const boxRepo = "rest:https://box:8000/bv"
+
+func (f *placementFixture) erasurePreview(d store.OffsiteTarget) destinationErasure {
+	f.t.Helper()
+	res := f.do("GET", "/api/offsite/destinations/"+d.ID+"/erasure", nil)
+	if res["ok"] != true {
+		f.t.Fatalf("preview: %v", res)
+	}
+	return erasureOf(f.t, res)
+}
+
+func erasureOf(t *testing.T, res map[string]any) destinationErasure {
+	t.Helper()
+	b, err := json.Marshal(res["erasure"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out destinationErasure
+	if err := json.Unmarshal(b, &out); err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
+func (f *placementFixture) erase(d store.OffsiteTarget, expect destinationRemoval, lastCopies ...string) map[string]any {
+	f.t.Helper()
+	return f.do("POST", "/api/offsite/destinations/"+d.ID+"/erasure", map[string]any{"expect": expect, "lastCopies": lastCopies})
+}
+
+// waitForErasure returns once the run that holds the domain has let go of it.
+func (f *placementFixture) waitForErasure(domain string) {
+	f.t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) {
+		if unlock, ok := f.svc.tryLockDomainFor(domain, "test"); ok {
+			unlock()
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	f.t.Fatalf("the deletion still holds %s", domain)
+}
+
+func (f *placementFixture) held(location string) []string {
+	f.eng.mu.Lock()
+	defer f.eng.mu.Unlock()
+	return snapshotIDs(f.eng.snaps[location])
+}
+
+// boxWithVMs is a destination whose vms section holds the copies of the two
+// backups of vm:win that are at home, three backups of vm:old that are nowhere
+// else, and a snapshot somebody wrote by hand.
+func boxWithVMs(f *placementFixture) (box, vms store.OffsiteTarget) {
+	box = f.destination("Box", boxRepo)
+	vms = f.tickDestination(box, "vms")
+	f.hold(f.domainPath("vms"), snap("a1", 100, "vm:win"), snap("a2", 200, "vm:win"))
+	f.hold(boxRepo+"/vms",
+		copied("c1", "a1", 100, "vm:win"), copied("c2", "a2", 200, "vm:win"),
+		snap("o1", 50, "vm:old"), snap("o2", 60, "vm:old"), snap("o3", 70, "vm:old"),
+		snap("hand", 80))
+	return box, vms
+}
+
+func TestTheErasurePreviewCountsWhatLosesACopyAndNamesTheLastCopies(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	files := f.tickDestination(box, "files")
+	f.appendOnly(files.ID)
+	f.hold(boxRepo+"/files", snap("f1", 10, "fileset:docs"), snap("f2", 20, "fileset:docs"))
+
+	got := f.erasurePreview(box)
+
+	want := []erasureSection{
+		{Domain: "files", TargetID: files.ID, Repo: boxRepo + "/files", Backups: 2, Entries: 1, Kept: erasureKeptAppendOnly},
+		{Domain: "vms", TargetID: vms.ID, Repo: boxRepo + "/vms", Backups: 5, Entries: 2},
+	}
+	if !slices.Equal(got.Sections, want) {
+		t.Fatalf("sections = %+v, want %+v", got.Sections, want)
+	}
+	if got.Backups != 5 || got.Entries != 2 || got.BackupsOnlyThere != 3 {
+		t.Fatalf("totals = %d backups, %d entries, %d only there; want 5, 2 and 3", got.Backups, got.Entries, got.BackupsOnlyThere)
+	}
+	if last := []erasureEntry{{Domain: "vms", Identity: "vm:old", Backups: 3}}; !slices.Equal(got.LastCopies, last) {
+		t.Fatalf("last copies = %+v, want %+v", got.LastCopies, last)
+	}
+	if got.Key != "erase:"+box.ID || len(got.Removal.Sections) != 2 {
+		t.Fatalf("key %q and removal %+v", got.Key, got.Removal)
+	}
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the preview deleted %+v", f.eng.deletes)
+	}
+}
+
+func TestAnErasureThatDoesNotNameTheLastCopiesDeletesNothing(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, _ := boxWithVMs(f)
+	preview := f.erasurePreview(box)
+
+	res := f.erase(box, preview.Removal)
+
+	if res["ok"] != false || res["code"] != "last-copies" {
+		t.Fatalf("answer = %v, want the refusal last-copies", res)
+	}
+	if now := erasureOf(t, res); len(now.LastCopies) != 1 || now.LastCopies[0].Identity != "vm:old" {
+		t.Fatalf("the refusal carries %+v, want the entry to name", now.LastCopies)
+	}
+	f.waitForErasure("vms")
+	if len(f.eng.deletes) != 0 || len(f.held(boxRepo+"/vms")) != 6 {
+		t.Fatalf("a refused deletion forgot %+v", f.eng.deletes)
+	}
+	if _, ok, _ := f.st.GetDestination(box.ID); !ok {
+		t.Fatal("a refused deletion removed the destination")
+	}
+}
+
+func TestAnErasureEmptiesTheSectionsAndThenRemovesTheDestination(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	files := f.tickDestination(box, "files")
+	f.appendOnly(files.ID)
+	f.hold(boxRepo+"/files", snap("f1", 10, "fileset:docs"))
+	preview := f.erasurePreview(box)
+
+	res := f.erase(box, preview.Removal, "vm:old")
+	if res["ok"] != true || res["started"] != true {
+		t.Fatalf("answer = %v, want a started run", res)
+	}
+	f.waitForErasure("vms")
+
+	if left := f.held(boxRepo + "/vms"); !slices.Equal(left, []string{"hand"}) {
+		t.Fatalf("the vms repository still holds %v, want the snapshot written by hand alone", left)
+	}
+	if left := f.held(boxRepo + "/files"); !slices.Equal(left, []string{"f1"}) {
+		t.Fatalf("the append-only files repository holds %v, want it untouched", left)
+	}
+	if !slices.Equal(f.eng.prunes, []string{boxRepo + "/vms"}) {
+		t.Fatalf("pruned %v, want the vms repository once", f.eng.prunes)
+	}
+	if _, ok, _ := f.st.GetDestination(box.ID); ok {
+		t.Fatal("the destination is still there")
+	}
+	if f.hasTarget(vms.ID) || f.hasTarget(files.ID) {
+		t.Fatal("a section still copies to the removed destination")
+	}
+	run, err := f.st.LastRunOfKind("vms", "prune")
+	if err != nil || run == nil || run.Status != "success" {
+		t.Fatalf("the run of the vms section = %+v, %v; want a successful prune", run, err)
+	}
+	if home := f.held(f.domainPath("vms")); len(home) != 2 {
+		t.Fatalf("the backups at home are %v, want both left alone", home)
+	}
+}
+
+func TestAFailedErasureKeepsTheDestination(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	f.eng.forgetErr = map[string]error{boxRepo + "/vms": errors.New("connection reset")}
+	preview := f.erasurePreview(box)
+
+	if res := f.erase(box, preview.Removal, "vm:old"); res["ok"] != true {
+		t.Fatalf("answer = %v, want a started run", res)
+	}
+	f.waitForErasure("vms")
+
+	if _, ok, _ := f.st.GetDestination(box.ID); !ok || !f.hasTarget(vms.ID) {
+		t.Fatal("a deletion that failed removed the destination")
+	}
+	run, err := f.st.LastRunOfKind("vms", "prune")
+	if err != nil || run == nil || run.Status != "failed" {
+		t.Fatalf("the run of the vms section = %+v, %v; want a failed one", run, err)
+	}
+}
+
+func TestAnErasureWaitsForNoBackupAndRefusesWhatItCannotEmpty(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, _ := boxWithVMs(f)
+	preview := f.erasurePreview(box)
+
+	unlock, ok := f.svc.tryLockDomainFor("vms", "backup")
+	if !ok {
+		t.Fatal("the vms domain is busy before the test took it")
+	}
+	if res := f.erase(box, preview.Removal, "vm:old"); res["code"] != "domain-busy" {
+		t.Fatalf("answer while a backup runs = %v, want domain-busy", res)
+	}
+	unlock()
+
+	f.eng.listErr[boxRepo+"/vms"] = errors.New("dial tcp: no route to host")
+	unreadable := f.erasurePreview(box)
+	if got := unreadable.Sections[0]; got.Kept != erasureKeptUnreadable || got.Backups != 0 {
+		t.Fatalf("an unreachable section reads as %+v", got)
+	}
+	if res := f.erase(box, unreadable.Removal); res["code"] != "nothing-to-erase" {
+		t.Fatalf("answer with nothing that can be emptied = %v, want nothing-to-erase", res)
+	}
+	if _, ok, _ := f.st.GetDestination(box.ID); !ok {
+		t.Fatal("the destination went although nothing could be deleted")
+	}
+}
+
+func TestAnErasureLeavesADirectRepositoryInUseAndEmptiesAnIdleOne(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.destination("Box", boxRepo)
+	containers := f.tickDestination(box, "containers")
+	files := f.tickDestination(box, "files")
+	used := f.direct(containers)
+	idle := f.direct(files)
+	f.container("nginx", used.ID)
+	f.hold(used.Repo, snap("n1", 10, "container:nginx"))
+	f.hold(idle.Repo, snap("d1", 10, "fileset:docs"), snap("d2", 20, "fileset:docs"))
+
+	preview := f.erasurePreview(box)
+	bySection := map[string]erasureSection{}
+	for _, sec := range preview.Sections {
+		bySection[sec.Domain+"/"+sec.RepoID] = sec
+	}
+	if got := bySection["containers/"+used.ID]; got.Kept != erasureKeptInUse || got.Backups != 1 {
+		t.Fatalf("the direct repository nginx backs up to reads as %+v", got)
+	}
+	if got := bySection["files/"+idle.ID]; got.Kept != "" || got.Backups != 2 {
+		t.Fatalf("the direct repository nothing backs up to reads as %+v", got)
+	}
+	if last := []erasureEntry{{Domain: "files", Identity: "fileset:docs", Backups: 2}}; !slices.Equal(preview.LastCopies, last) {
+		t.Fatalf("last copies = %+v, want %+v", preview.LastCopies, last)
+	}
+
+	if res := f.erase(box, preview.Removal, "fileset:docs"); res["ok"] != true {
+		t.Fatalf("answer = %v, want a started run", res)
+	}
+	f.waitForErasure("files")
+	f.waitForErasure("containers")
+	if left := f.held(idle.Repo); len(left) != 0 {
+		t.Fatalf("the idle direct repository still holds %v", left)
+	}
+	if left := f.held(used.Repo); !slices.Equal(left, []string{"n1"}) {
+		t.Fatalf("the direct repository in use holds %v, want its backup left alone", left)
+	}
+	if _, err := f.st.GetNamedRepo(used.ID); err != nil {
+		t.Fatalf("the direct repository in use did not outlive the destination: %v", err)
+	}
+}
+
+func TestAnErasureTakesWhatAMovedSectionLeftBehind(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	files := f.tickDestination(box, "files")
+	vault := f.destination("Vault", vaultRepo)
+	f.move(vms, vault)
+
+	preview := f.erasurePreview(box)
+	want := []erasureSection{
+		{Domain: "files", TargetID: files.ID, Repo: boxRepo + "/files"},
+		{Domain: "vms", Repo: boxRepo + "/vms", Backups: 5, Entries: 2},
+	}
+	if !slices.Equal(preview.Sections, want) {
+		t.Fatalf("sections = %+v, want %+v", preview.Sections, want)
+	}
+	if len(preview.LastCopies) != 0 {
+		t.Fatalf("last copies = %+v, want none: the section holds them at Vault", preview.LastCopies)
+	}
+
+	if res := f.erase(box, preview.Removal); res["ok"] != true {
+		t.Fatalf("answer = %v, want a started run", res)
+	}
+	f.waitForErasure("files")
+	if left := f.held(boxRepo + "/vms"); !slices.Equal(left, []string{"hand"}) {
+		t.Fatalf("the repository the section left behind still holds %v", left)
+	}
+	if got := f.held(vaultRepo + "/vms"); len(got) != 5 {
+		t.Fatalf("the moved section holds %v at Vault, want its 5 backups", got)
+	}
+	if _, ok, _ := f.st.GetDestination(box.ID); ok {
+		t.Fatal("the destination is still there")
+	}
+}

@@ -378,6 +378,9 @@ func (r *Repo) DeleteZFSDataset(id string) error {
 	if err := del("item", `DELETE FROM zfs_datasets WHERE id = ?`, id); err != nil {
 		return err
 	}
+	if err := del("declined", `DELETE FROM declined_backups WHERE kind = 'zfs' AND key = ?`, id); err != nil {
+		return err
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("DeleteZFSDataset commit: %w", err)
 	}

@@ -441,6 +441,73 @@ func (r *Repo) AdoptIntoDestination(targetID, destID string, settle func(*Settin
 	return out, nil
 }
 
+// ErrTargetHasDirectRepo is returned for a target whose direct repository
+// would stay behind when the target moves.
+var ErrTargetHasDirectRepo = errors.New("entries back up straight to this target's place, so the target cannot move away from it")
+
+// MoveTargetToDestination points a domain target at location, the folder
+// another destination keeps for the domain, and hangs it on that destination.
+// The target keeps its id, its copy rules and what it was seen holding, which
+// a copy of its repository brought along. Its aging mark and its tamper tests
+// spoke about the old place and go. For the target in the primary slot, settle
+// brings the domain's off-site settings in line in the same transaction.
+func (r *Repo) MoveTargetToDestination(targetID, destID, location string, settle func(*Settings)) (OffsiteTarget, error) {
+	if strings.TrimSpace(location) == "" {
+		return OffsiteTarget{}, ErrEmptyOffsiteRepo
+	}
+	r.settingsMu.Lock()
+	defer r.settingsMu.Unlock()
+	var out OffsiteTarget
+	err := r.inTx(func(tx *sql.Tx) error {
+		d, err := destinationTx(tx, destID)
+		if err != nil {
+			return err
+		}
+		t, err := offsiteTargetTx(tx, targetID)
+		if err != nil {
+			return err
+		}
+		var others, directs int
+		if err := tx.QueryRow(`SELECT count(*) FROM offsite_targets
+			WHERE role = ? AND destination_id = ? AND domain = ? AND id <> ?`,
+			RoleOffsite, destID, t.Domain, t.ID).Scan(&others); err != nil {
+			return err
+		}
+		if others > 0 {
+			return ErrDomainHasDestinationTarget
+		}
+		if err := tx.QueryRow(`SELECT count(*) FROM offsite_targets WHERE role = ? AND companion_of = ?`,
+			RoleRepo, t.ID).Scan(&directs); err != nil {
+			return err
+		}
+		if directs > 0 {
+			return ErrTargetHasDirectRepo
+		}
+		if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ?, destination_id = '' WHERE id = ? AND role = ?`,
+			location, t.ID, RoleOffsite); err != nil {
+			return err
+		}
+		t.Repo, t.DestinationID = location, ""
+		if out, err = followDestinationTx(tx, t, d); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(`UPDATE offsite_observations SET rules_rev = '', aged_at = 0 WHERE target_id = ?`, t.ID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(`DELETE FROM tamper_tests WHERE offsite_target_id = ?`, t.ID); err != nil {
+			return err
+		}
+		if t.SortOrder == 0 {
+			return settleTx(tx, settle)
+		}
+		return nil
+	})
+	if err != nil {
+		return OffsiteTarget{}, fmt.Errorf("MoveTargetToDestination: %w", err)
+	}
+	return out, nil
+}
+
 // PrimaryFromDestination makes location, the destination's folder for the
 // domain, the domain's primary off-site target. The row in the primary slot
 // moves there and follows the destination; a domain without one gets a new

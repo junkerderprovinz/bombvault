@@ -168,6 +168,11 @@ func (r *Repo) finishRun(id, status, snapshotID string, bytes int64, errMsg stri
 	if n, _ := res.RowsAffected(); n == 0 {
 		return fmt.Errorf("FinishRun: run %s not found", id)
 	}
+	if status == "success" {
+		if _, err := r.db.Exec(acceptBackupOfRun, id); err != nil {
+			return fmt.Errorf("FinishRun: %w", err)
+		}
+	}
 	r.notifyRunFinished(RunFinished{RunID: id})
 	return nil
 }
@@ -1439,13 +1444,21 @@ type BackupStamp struct {
 	LastRunError        string
 }
 
-// latestBackupsByTargetQuery seeks each target's newest finished backup and its
-// newest successful one off idx_runs_target_kind_started. Grouping the table by
-// target would read every run there is. Both seeks skip future stamps, which
-// would otherwise hide every correctly stamped run behind them.
-const latestBackupsByTargetQuery = `
+// The history queries of an item list read one series of targets: every target
+// with a run, or the single one a caller asks for.
+const (
+	everyTarget     = `SELECT DISTINCT target_id FROM runs`
+	everyTargetKind = `SELECT DISTINCT target_id, kind FROM runs WHERE kind IN ('backup', 'import', 'restore')`
+)
+
+// latestBackupsQuery seeks each target's newest finished backup and its newest
+// successful one off idx_runs_target_kind_started. Grouping the table by target
+// would read every run there is. Both seeks skip future stamps, which would
+// otherwise hide every correctly stamped run behind them.
+func latestBackupsQuery(series string) string {
+	return `
 	SELECT series.target_id, good.finished_at, good.started_at, last.started_at, last.status, last.error
-	FROM (SELECT DISTINCT target_id FROM runs) AS series
+	FROM (` + series + `) AS series
 	JOIN runs AS last ON last.rowid = (
 		SELECT rowid FROM runs
 		WHERE target_id = series.target_id AND kind = 'backup'
@@ -1458,13 +1471,28 @@ const latestBackupsByTargetQuery = `
 		  AND finished_at IS NOT NULL AND finished_at <= ?1
 		ORDER BY started_at DESC, rowid DESC
 		LIMIT 1)`
+}
+
+var (
+	latestBackupsByTargetQuery = latestBackupsQuery(everyTarget)
+	latestBackupsOfTargetQuery = latestBackupsQuery(`SELECT ?2 AS target_id`)
+)
 
 // LatestBackupsByTarget returns every target's newest backup stamps. A target
 // without a finished backup is absent.
 func (r *Repo) LatestBackupsByTarget() (map[string]BackupStamp, error) {
-	rows, err := r.db.Query(latestBackupsByTargetQuery, saneStampCutoff())
+	return r.backupStamps("LatestBackupsByTarget", latestBackupsByTargetQuery, saneStampCutoff())
+}
+
+// LatestBackupsOf is LatestBackupsByTarget for one target.
+func (r *Repo) LatestBackupsOf(targetID string) (map[string]BackupStamp, error) {
+	return r.backupStamps("LatestBackupsOf", latestBackupsOfTargetQuery, saneStampCutoff(), targetID)
+}
+
+func (r *Repo) backupStamps(op, query string, args ...any) (map[string]BackupStamp, error) {
+	rows, err := r.db.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("LatestBackupsByTarget: %w", err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
 
@@ -1475,7 +1503,7 @@ func (r *Repo) LatestBackupsByTarget() (map[string]BackupStamp, error) {
 		var lastError sql.NullString
 		var stamp BackupStamp
 		if sErr := rows.Scan(&target, &goodFinished, &goodStarted, &stamp.LastRunAt, &stamp.LastRunStatus, &lastError); sErr != nil {
-			return nil, fmt.Errorf("LatestBackupsByTarget: %w", sErr)
+			return nil, fmt.Errorf("%s: %w", op, sErr)
 		}
 		if goodFinished.Valid {
 			stamp.LastSuccessAt = goodFinished.Int64
@@ -1526,23 +1554,30 @@ type RunBrief struct {
 	StartedAt int64  `json:"startedAt"`
 }
 
-// recentRunsByTargetQuery reads the newest runs of each target and kind off
+// recentRunsQuery reads the newest runs of each target and kind off
 // idx_runs_target_kind_started, and its window picks a target's newest among
 // those. A window over the bare table would read every run there is.
-const recentRunsByTargetQuery = `
+func recentRunsQuery(series string) string {
+	return `
 	SELECT target_id, id, kind, status, started_at
 	FROM (
 		SELECT r.target_id, r.id, r.kind, r.status, r.started_at,
 		       row_number() OVER (PARTITION BY r.target_id ORDER BY r.started_at DESC, r.rowid DESC) AS rank
-		FROM (SELECT DISTINCT target_id, kind FROM runs WHERE kind IN ('backup', 'import', 'restore')) AS series
+		FROM (` + series + `) AS series
 		JOIN runs AS r ON r.rowid IN (
 			SELECT rowid FROM runs
 			WHERE target_id = series.target_id AND kind = series.kind
 			ORDER BY started_at DESC, rowid DESC
-			LIMIT ?)
+			LIMIT ?1)
 	)
-	WHERE rank <= ?
+	WHERE rank <= ?1
 	ORDER BY target_id, rank`
+}
+
+var (
+	recentRunsByTargetQuery = recentRunsQuery(everyTargetKind)
+	recentRunsOfTargetQuery = recentRunsQuery(everyTargetKind + ` AND target_id = ?2`)
+)
 
 // RecentRunsByTarget returns every target's newest perTarget runs that wrote a
 // backup or restored one, newest first, so a list of items costs one query
@@ -1550,9 +1585,18 @@ const recentRunsByTargetQuery = `
 // they would crowd the backups out of a short list. Ties on started_at fall to
 // the row written last.
 func (r *Repo) RecentRunsByTarget(perTarget int) (map[string][]RunBrief, error) {
-	rows, err := r.db.Query(recentRunsByTargetQuery, perTarget, perTarget)
+	return r.recentRuns("RecentRunsByTarget", recentRunsByTargetQuery, perTarget)
+}
+
+// RecentRunsOf is RecentRunsByTarget for one target.
+func (r *Repo) RecentRunsOf(targetID string, perTarget int) (map[string][]RunBrief, error) {
+	return r.recentRuns("RecentRunsOf", recentRunsOfTargetQuery, perTarget, targetID)
+}
+
+func (r *Repo) recentRuns(op, query string, args ...any) (map[string][]RunBrief, error) {
+	rows, err := r.db.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("RecentRunsByTarget: %w", err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
 
@@ -1561,14 +1605,15 @@ func (r *Repo) RecentRunsByTarget(perTarget int) (map[string][]RunBrief, error) 
 		var target string
 		var run RunBrief
 		if sErr := rows.Scan(&target, &run.ID, &run.Kind, &run.Status, &run.StartedAt); sErr != nil {
-			return nil, fmt.Errorf("RecentRunsByTarget: %w", sErr)
+			return nil, fmt.Errorf("%s: %w", op, sErr)
 		}
 		out[target] = append(out[target], run)
 	}
 	return out, rows.Err()
 }
 
-const latestSourceBytesByTargetQuery = `
+func latestSourceBytesQuery(series string) string {
+	return `
 	SELECT target_id, source_bytes
 	FROM (
 		SELECT series.target_id, (
@@ -1577,16 +1622,31 @@ const latestSourceBytesByTargetQuery = `
 			  AND status = 'success' AND source_bytes IS NOT NULL
 			ORDER BY started_at DESC, rowid DESC
 			LIMIT 1) AS source_bytes
-		FROM (SELECT DISTINCT target_id FROM runs) AS series
+		FROM (` + series + `) AS series
 	)
 	WHERE source_bytes IS NOT NULL`
+}
+
+var (
+	latestSourceBytesByTargetQuery = latestSourceBytesQuery(everyTarget)
+	latestSourceBytesOfTargetQuery = latestSourceBytesQuery(`SELECT ?1 AS target_id`)
+)
 
 // LatestSourceBytesByTarget returns how much each target's newest successful
 // backup with a measurement read. A target without one is absent.
 func (r *Repo) LatestSourceBytesByTarget() (map[string]int64, error) {
-	rows, err := r.db.Query(latestSourceBytesByTargetQuery)
+	return r.sourceBytes("LatestSourceBytesByTarget", latestSourceBytesByTargetQuery)
+}
+
+// LatestSourceBytesOf is LatestSourceBytesByTarget for one target.
+func (r *Repo) LatestSourceBytesOf(targetID string) (map[string]int64, error) {
+	return r.sourceBytes("LatestSourceBytesOf", latestSourceBytesOfTargetQuery, targetID)
+}
+
+func (r *Repo) sourceBytes(op, query string, args ...any) (map[string]int64, error) {
+	rows, err := r.db.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("LatestSourceBytesByTarget: %w", err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
 
@@ -1595,7 +1655,7 @@ func (r *Repo) LatestSourceBytesByTarget() (map[string]int64, error) {
 		var target string
 		var bytes int64
 		if sErr := rows.Scan(&target, &bytes); sErr != nil {
-			return nil, fmt.Errorf("LatestSourceBytesByTarget: %w", sErr)
+			return nil, fmt.Errorf("%s: %w", op, sErr)
 		}
 		out[target] = bytes
 	}

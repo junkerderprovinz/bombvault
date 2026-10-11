@@ -2531,6 +2531,51 @@ export function tamperTestOffsiteTarget(
   return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}/tamper-test`, { method: "POST" });
 }
 
+/** What moving a section's copy to another destination copies. `backups` is
+ *  what the old place holds of the section, `pending` how many of them the new
+ *  place lacks. `key` is the progress key the run reports under and is
+ *  cancelled by. */
+export interface SectionMove {
+  domain: OffsiteDomain;
+  targetId: string;
+  from: string;
+  to: string;
+  backups: number;
+  pending: number;
+  key: string;
+}
+
+/** Why a move cannot be done: the section is there already, the destination
+ *  has the section from before, entries back up straight to the old place,
+ *  both places need different sign-ins of one kind, or a move of the section
+ *  is running. */
+export type SectionMoveRefusal =
+  | "move-same-place"
+  | "move-section-there"
+  | "move-direct-repo"
+  | "move-sign-in"
+  | "move-running";
+
+type SectionMoveAnswer = Omit<OkEnvelope, "code"> & { code?: SectionMoveRefusal; move?: SectionMove };
+
+/** GET /api/offsite/targets/{id}/move?to=: what moving the section's copy to
+ *  the destination `to` would copy. It lists both places. An unknown target or
+ *  destination is a 404. */
+export function previewSectionMove(targetId: string, to: string): Promise<SectionMoveAnswer> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(targetId)}/move?to=${encodeURIComponent(to)}`);
+}
+
+/** POST /api/offsite/targets/{id}/move: copies the section's backups to the
+ *  destination `to` in the background and points the section there once the
+ *  new place holds them all and passes its check. The old place is only read.
+ *  A move started again goes on with what is missing. */
+export function moveSection(targetId: string, to: string): Promise<SectionMoveAnswer & { started?: boolean }> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(targetId)}/move`, {
+    method: "POST",
+    body: JSON.stringify({ to }),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Remote primary repositories (issue #152)
 //
@@ -3685,6 +3730,9 @@ export interface BackupItem {
    *  entry they look renamed from, and the code of what gave it away. */
   renameFrom?: string;
   renameReason?: string;
+  /** True while the person does not want the item backed up and no schedule
+   *  reaches it. Such an item is not something that needs the person. */
+  backupDeclined?: boolean;
   /** The newest fourteen backups, imports and restores, newest first. */
   runs: BackupItemRun[];
 }
@@ -3701,6 +3749,34 @@ export interface ListItemsResponse {
 /** GET /api/items: every item of every kind in one list. */
 export function listItems(): Promise<ListItemsResponse> {
   return fetchJSON("/api/items");
+}
+
+export interface BackupItemResponse {
+  ok: boolean;
+  item?: BackupItem;
+  error?: string;
+}
+
+/** GET /api/items/{kind}/{key}: the row listItems has for one item. An item
+ *  nobody knows rejects with an ApiError of status 404; a load that failed
+ *  resolves with `ok: false`. */
+export function getBackupItem(kind: BackupItemKind, key: string): Promise<BackupItemResponse> {
+  return fetchJSON(`/api/items/${encodeURIComponent(kind)}/${encodeURIComponent(key)}`);
+}
+
+/** PUT /api/items/{kind}/{key}/declined: says not to back an item up, or takes
+ *  that back. Only an item no schedule reaches can be declined, anything else
+ *  is refused with the code "scheduled". A schedule or a successful backup
+ *  ends it. Resolves with the item's row. */
+export function setBackupDeclined(
+  kind: BackupItemKind,
+  key: string,
+  declined: boolean
+): Promise<BackupItemResponse & { code?: "scheduled" }> {
+  return fetchJSON(`/api/items/${encodeURIComponent(kind)}/${encodeURIComponent(key)}/declined`, {
+    method: "PUT",
+    body: JSON.stringify({ declined }),
+  });
 }
 
 /** GET /api/runs for one item of GET /api/items: its runs of every kind,
@@ -5222,6 +5298,53 @@ export function foreignOpen(
   });
 }
 
+/** One repository a recovery kit names. `folder` is a local location below
+ *  the host mount of the instance that wrote the kit, the form `foreignOpen`
+ *  takes one in; a remote location has none. */
+export interface RecoveryKitLocation {
+  /** The section it belongs to. A named repository has none. */
+  domain?: string;
+  kind: "local" | "offsite" | "named" | "destination";
+  /** What a named repository or a destination was called. */
+  name?: string;
+  location: string;
+  folder?: string;
+}
+
+/** What an uploaded recovery kit says. Its key stays on the server. A kit of
+ *  an instance without encryption names no key: its repositories can be read,
+ *  its containers and VMs cannot be recreated from them. */
+export interface RecoveryKitFacts {
+  encrypted: boolean;
+  locations: RecoveryKitLocation[];
+}
+
+/** Why a kit cannot be used: it is sealed with the person's age key and has
+ *  to be decrypted first, it is another file, its key does not give the
+ *  password printed beside it, or it names no key. */
+export type RecoveryKitRefusal = "kit-sealed" | "not-a-kit" | "kit-key-broken" | "kit-no-key";
+
+type RecoveryKitAnswer<T> = Omit<OkEnvelope, "code"> & { code?: RecoveryKitRefusal } & T;
+
+/** POST /api/recovery-kit/read: reads the text of a recovery kit and names
+ *  the repositories in it. Nothing is stored. */
+export function readRecoveryKit(kit: string): Promise<RecoveryKitAnswer<{ kit?: RecoveryKitFacts }>> {
+  return fetchJSON("/api/recovery-kit/read", { method: "POST", body: JSON.stringify({ kit }) });
+}
+
+/** foreignOpen with the other instance's recovery kit in place of its typed
+ *  APP_KEY. The key lives in the session as a typed one does. */
+export function foreignOpenWithKit(
+  location: string,
+  kit: string,
+  creds?: CloudCreds,
+): Promise<RecoveryKitAnswer<ForeignOpenResponse>> {
+  return fetchJSON("/api/foreign/open", {
+    method: "POST",
+    body: JSON.stringify({ location, kit, creds: creds ?? null }),
+  });
+}
+
 /** POST /api/foreign/close — drop the session immediately (call on
  *  leave/unmount). Closing an unknown/expired session is a harmless no-op. */
 export function foreignClose(session: string): Promise<OkEnvelope> {
@@ -6380,6 +6503,9 @@ export type CoverageDomain = {
   total: number;
   protected: number;
   unprotected: CoverageItem[];
+  /** How many items the person said not to back up. They are in neither
+   *  `total` nor `unprotected`. */
+  declined: number;
 };
 
 /** What on this server is not backed up by anything. */
@@ -6387,6 +6513,8 @@ export type CoverageReport = {
   domains: CoverageDomain[];
   total: number;
   protected: number;
+  /** `declined` over the switched-on domains. */
+  declined: number;
 };
 
 /**
@@ -6642,6 +6770,68 @@ export function removeDestination(
   return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/removal`, {
     method: "POST",
     body: JSON.stringify({ expect }),
+  });
+}
+
+/** One repository at a destination whose backups are to be deleted: the copy
+ *  of a section, or the direct repository of its target when `repoId` is set.
+ *  An empty `targetId` is what a section left behind when its copy moved to
+ *  another destination. `kept` says why its backups stay: BombVault may only
+ *  add to it, entries still back up to it, or it could not be listed. */
+export interface ErasureSection {
+  domain: OffsiteDomain;
+  targetId: string;
+  repoId?: string;
+  repo: string;
+  backups: number;
+  entries: number;
+  kept?: "append-only" | "in-use" | "unreadable";
+}
+
+/** An entry by the identity its backups carry, such as "container:plex". */
+export interface ErasureEntry {
+  domain: OffsiteDomain;
+  identity: string;
+  backups: number;
+}
+
+/** What deleting the backups at a destination takes away before the
+ *  destination is removed. The totals cover the sections that are emptied. */
+export interface DestinationErasure {
+  /** What removing the destination detaches, sent back with the request. */
+  removal: DestinationRemoval;
+  sections: ErasureSection[];
+  backups: number;
+  entries: number;
+  /** The backups among them that no other place BombVault could read holds. */
+  backupsOnlyThere: number;
+  /** The entries left without any backup. The request has to name each. */
+  lastCopies: ErasureEntry[];
+  /** The progress key the run reports under and is cancelled by. */
+  key: string;
+}
+
+/** GET /api/offsite/destinations/{id}/erasure. It lists every repository at
+ *  the destination and the other places of its sections, so it takes as long
+ *  as they take to answer. */
+export function previewDestinationErasure(id: string): Promise<OkEnvelope & { erasure?: DestinationErasure }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/erasure`);
+}
+
+/** POST /api/offsite/destinations/{id}/erasure: deletes the backups at a
+ *  destination in the background and removes it once they are gone. `expect`
+ *  is `erasure.removal` as it was shown and `lastCopies` the identities of the
+ *  entries that may lose their only backup. A refusal carries the code "stale"
+ *  with `removal`, or "last-copies" or "nothing-to-erase" with `erasure`, each
+ *  as it stands, or "domain-busy" while a section is being backed up. */
+export function eraseDestination(
+  id: string,
+  expect: DestinationRemoval,
+  lastCopies: string[]
+): Promise<OkEnvelope & { started?: boolean; removal?: DestinationRemoval; erasure?: DestinationErasure }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/erasure`, {
+    method: "POST",
+    body: JSON.stringify({ expect, lastCopies }),
   });
 }
 

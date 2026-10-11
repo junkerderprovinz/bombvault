@@ -262,6 +262,14 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errCopiesToOwnTarget:       "copies-to-own-target",
 		errDestinationHoldsBackups: "destination-holds-backups",
 		errBackupsNotThere:         "backups-not-there",
+		errLastCopiesUnnamed:       "last-copies",
+		errNothingToErase:          "nothing-to-erase",
+		errMoveSamePlace:           "move-same-place",
+		errMoveSignIn:              "move-sign-in",
+		errMoveRunning:             "move-running",
+
+		store.ErrTargetHasDirectRepo:        "move-direct-repo",
+		store.ErrDomainHasDestinationTarget: "move-section-there",
 	}
 	if len(placementCodes) != len(want) {
 		t.Fatalf("placementCodes has %d rows, want %d: a sentinel is missing its row or its test", len(placementCodes), len(want))

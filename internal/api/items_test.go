@@ -47,7 +47,8 @@ func enableEveryKind(t *testing.T, st *store.Repo, change func(*store.Settings))
 	}
 }
 
-// listItems reads GET /api/items and indexes its rows by "kind/key".
+// listItems reads GET /api/items and indexes its rows by "kind/key". Every row
+// has to be what GET /api/items/{kind}/{key} answers for it.
 func listItems(t *testing.T, h http.Handler) (rows map[string]map[string]any, body map[string]any) {
 	t.Helper()
 	w, body := doJSON(t, h, http.MethodGet, "/api/items", "")
@@ -66,8 +67,97 @@ func listItems(t *testing.T, h http.Handler) (rows map[string]map[string]any, bo
 			t.Fatalf("%s is listed twice", id)
 		}
 		rows[id] = row
+		if one := getItem(t, h, row["kind"].(string), row["key"].(string)); !reflect.DeepEqual(one, row) {
+			t.Fatalf("%s read on its own is\n%v\nand in the list\n%v", id, one, row)
+		}
 	}
 	return rows, body
+}
+
+// getItem reads GET /api/items/{kind}/{key}.
+func getItem(t *testing.T, h http.Handler, kind, key string) map[string]any {
+	t.Helper()
+	path := "/api/items/" + url.PathEscape(kind) + "/" + url.PathEscape(key)
+	w, body := doJSON(t, h, http.MethodGet, path, "")
+	if w.Code != http.StatusOK || body["ok"] != true {
+		t.Fatalf("GET %s: %d %v", path, w.Code, body)
+	}
+	item, _ := body["item"].(map[string]any)
+	return item
+}
+
+func TestOneFolderSetIsReadWithoutAskingDockerOrLibvirt(t *testing.T) {
+	docker := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex")}}
+	virsh := &countingVirsh{}
+	h, st, _ := newItemsRouter(t, docker, virsh)
+	enableEveryKind(t, st, nil)
+	seedTarget(t, st, "plex")
+	docs, err := st.CreateFileSet(store.FileSet{Name: "Documents", Path: "documents", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	appdata, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for kind, key := range map[string]string{"files": docs.ID, "zfs": appdata.ID, "flash": "flash", "config": "config"} {
+		if item := getItem(t, h, kind, key); item["kind"] != kind || item["key"] != key {
+			t.Fatalf("%s/%s answers %v", kind, key, item)
+		}
+	}
+	if len(docker.calls) != 0 || virsh.listCalls != 0 {
+		t.Fatalf("Docker was asked %v and libvirt %d times for entries neither of them holds", docker.calls, virsh.listCalls)
+	}
+}
+
+func TestOneContainerInspectsNoOtherContainer(t *testing.T) {
+	postgres := runningContainer("postgres")
+	postgres.Image = "postgres:16"
+	docker := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex"), postgres}}
+	h, st, _ := newItemsRouter(t, docker, fakeVirsh{})
+	enableEveryKind(t, st, nil)
+	seedTarget(t, st, "plex")
+	seedTarget(t, st, "postgres")
+
+	getItem(t, h, "container", "plex")
+	for _, call := range docker.calls {
+		if call == "inspect:postgres" {
+			t.Fatalf("reading plex inspected postgres: %v", docker.calls)
+		}
+	}
+}
+
+func TestAnItemNobodyKnowsAnswersNotFound(t *testing.T) {
+	docker := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex")}}
+	h, st, _ := newItemsRouter(t, docker, listVMsVirsh{})
+	enableEveryKind(t, st, func(s *store.Settings) { s.FlashEnabled = false })
+
+	for _, path := range []string{
+		"/api/items/container/gone",
+		"/api/items/vm/gone",
+		"/api/items/files/gone",
+		"/api/items/zfs/gone",
+		"/api/items/flash/flash",
+		"/api/items/config/other",
+		"/api/items/tape/plex",
+	} {
+		w, body := doJSON(t, h, http.MethodGet, path, "")
+		if w.Code != http.StatusNotFound || body["ok"] != false || body["code"] != "not-found" {
+			t.Fatalf("GET %s: %d %v, want 404 with the code not-found", path, w.Code, body)
+		}
+	}
+}
+
+func TestAContainerWithoutAnEntryIsNotCalledUnknownWhileDockerIsSilent(t *testing.T) {
+	docker := &fakeServiceDocker{listErr: errors.New("docker: socket unreachable")}
+	h, st, _ := newItemsRouter(t, docker, fakeVirsh{})
+	enableEveryKind(t, st, nil)
+
+	w, body := doJSON(t, h, http.MethodGet, "/api/items/container/plex", "")
+	if w.Code != http.StatusOK || body["ok"] != false || body["code"] != nil {
+		t.Fatalf("GET /api/items/container/plex: %d %v, want a failed load and no not-found", w.Code, body)
+	}
 }
 
 func TestListItemsCarriesEveryKindUnderItsKey(t *testing.T) {
@@ -698,10 +788,11 @@ func TestRunViewCarriesSourceBytesAndGroup(t *testing.T) {
 }
 
 func TestItemRoutesRequireSession(t *testing.T) {
-	h, _, _ := newItemsRouter(t, &fakeServiceDocker{}, fakeVirsh{})
+	h, st, _ := newItemsRouter(t, &fakeServiceDocker{}, fakeVirsh{})
+	enableEveryKind(t, st, nil)
 	cookie := loginCookie(t, h, "correct horse battery staple")
 
-	for _, path := range []string{"/api/items", "/api/runs?itemKind=container&itemKey=plex"} {
+	for _, path := range []string{"/api/items", "/api/items/config/config", "/api/runs?itemKind=container&itemKey=plex"} {
 		if w, _ := doJSON(t, h, http.MethodGet, path, ""); w.Code != http.StatusUnauthorized {
 			t.Fatalf("GET %s: status %d, want 401 without a session", path, w.Code)
 		}
