@@ -146,7 +146,7 @@ export function EntryHead({
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span
             dir={item.kind === "zfs" ? "ltr" : undefined}
-            className="min-w-0 text-xl font-semibold text-carbon-text text-start wrap-anywhere"
+            className="min-w-0 text-status font-semibold text-carbon-text text-start wrap-anywhere"
           >
             {name}
           </span>

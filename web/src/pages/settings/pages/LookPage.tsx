@@ -30,7 +30,7 @@ import {
   type MotionIntensity,
 } from "../../../lib/motion";
 import { applyStoredDisco, discoTap, getDisco, setDisco } from "../../../lib/disco";
-import { HUE_OFFSET, Selector } from "../../../components/Selector";
+import { Selector } from "../../../components/Selector";
 import { Card, ToggleRow, hueCounter } from "../shared";
 
 // PaletteSwatch is one editable colour in the rainbow palette editor. It opens
@@ -152,7 +152,6 @@ export function LookPage() {
                 setShape(next);
               }}
               inline
-              hueOffset={HUE_OFFSET.shape}
             />
           </SettingRow>
           <SettingRow label={t("settings.motion")} hint={t("settings.motionHint")}>
@@ -176,7 +175,6 @@ export function LookPage() {
                 setMotionIntensity(next);
               }}
               inline
-              hueOffset={HUE_OFFSET.motion}
             />
           </SettingRow>
           <div className="py-3">
@@ -208,7 +206,7 @@ export function LookPage() {
           do not, and action buttons are a matter of density. */}
       <Card title={t("settings.labels")} hint={t("settings.labelsHint")} hueIndex={nextHue()}>
         <div className="flex flex-col gap-4">
-          {CONTROL_AXES.map((axis, axisIndex) => (
+          {CONTROL_AXES.map((axis) => (
             <div key={axis} className="flex flex-col gap-1">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">
                 {t(`settings.labels.${axis}` as TranslationKey)}
@@ -241,7 +239,6 @@ export function LookPage() {
                 // keeps the rows adjacent in the palette, so the block still
                 // reads as one group rather than unrelated strips. Every other
                 // start in the settings tree comes out of the same table.
-                hueOffset={HUE_OFFSET.labels + axisIndex}
               />
             </div>
           ))}

@@ -197,6 +197,7 @@ function Loaded({
               select="one"
               size="lg"
               fit
+              hueOffset={0}
               active={tab}
               // Replaced, so Back leaves the entry instead of walking its tabs.
               onChange={(id) => navigate(tabPath(id as EntryTab), { replace: true })}

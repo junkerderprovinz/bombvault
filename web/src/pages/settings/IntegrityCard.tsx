@@ -8,7 +8,7 @@
 import { Button } from "../../components/Button";
 import { CheckDraw } from "../../components/CheckDraw";
 import { InfoBubble } from "../../components/InfoBubble";
-import { HUE_OFFSET, Selector } from "../../components/Selector";
+import { Selector } from "../../components/Selector";
 import { SelectField } from "../../components/SelectField";
 import { IconCheck } from "../../components/Sidebar";
 import { RepoSource, SourceToggle, isOffsiteSource } from "../../components/SourceToggle";
@@ -393,9 +393,6 @@ export function IntegrityCard({
             { id: "dr", label: t("drill.kindDR") },
           ]}
           label={t("drill.kindLabel")}
-          // The one shared start in the table; see HUE_OFFSET for why that is
-          // arithmetic rather than an oversight.
-          hueOffset={HUE_OFFSET.drillKind}
           select="one"
           active={kind}
           onChange={(val) => {

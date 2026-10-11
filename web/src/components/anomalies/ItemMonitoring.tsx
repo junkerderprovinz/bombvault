@@ -70,7 +70,7 @@ function LearningState({ t, item }: { t: TranslateAnomaly; item: AnomalyItem }) 
   if (learning.noData) return <span className="text-xs text-carbon-textSub">{t("anomaly.noData")}</span>;
   if (learning.samples >= learning.needed) {
     return (
-      <span className="inline-flex items-center gap-2 text-[13px] text-carbon-textSub">
+      <span className="inline-flex items-center gap-2 text-subline text-carbon-textSub">
         <i aria-hidden="true" className="h-[7px] w-[7px] rounded-full bg-statusOkSolid" />
         {t("anomaly.learningDone")}
       </span>
@@ -164,7 +164,7 @@ export function ItemMonitoring({
 
       {expectations.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h3 className="text-[13px] font-semibold text-carbon-textSub">{t("anomaly.markedExpected")}</h3>
+          <h3 className="text-subline font-semibold text-carbon-textSub">{t("anomaly.markedExpected")}</h3>
           {expectations.map((e) => (
             <div
               key={`${e.scopeKind}:${e.part}:${e.family}`}

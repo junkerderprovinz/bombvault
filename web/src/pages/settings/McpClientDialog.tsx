@@ -5,7 +5,7 @@ import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
 import { IconCheck, IconCopy, IconDownload } from "../../components/navGlyphs";
 import { RevealInput } from "../../components/RevealInput";
-import { HUE_OFFSET, Selector } from "../../components/Selector";
+import { Selector } from "../../components/Selector";
 import { Toggle } from "../../components/Toggle";
 import type { McpKeyView, McpOAuthView } from "../../lib/api";
 import type { TranslationKey } from "../../lib/i18n";
@@ -204,7 +204,7 @@ export function McpClientDialog({
         if (name === undefined || !(name in values)) return part;
         if (name !== "var" && name !== "file") return values[name];
         return (
-          <code key={i} dir="ltr" className="rounded-control bg-carbon-surface2 px-1 font-mono text-[0.78em]">
+          <code key={i} dir="ltr" className="rounded-control bg-carbon-surface2 px-1 font-mono text-meta">
             {values[name]}
           </code>
         );
@@ -371,7 +371,6 @@ export function McpClientDialog({
               label={t("mcp.stepKey")}
               active={mode}
               onChange={(id) => setMode(id as "new" | "pick")}
-              hueOffset={HUE_OFFSET.mcpClient}
             />
           )}
           {mode === "new" && canMint && (

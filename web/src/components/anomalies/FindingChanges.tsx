@@ -124,7 +124,7 @@ function ChangeTable({ summary, t }: { summary: NonNullable<AnomalyChanges["summ
   const heads = ["storage.folder", "anomaly.changes.col.removed", "anomaly.changes.col.added", "anomaly.changes.col.changed"] as const;
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-[13px]">
+      <table className="w-full border-collapse text-subline">
         <thead>
           <tr>
             {heads.map((key) => (

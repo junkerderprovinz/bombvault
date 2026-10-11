@@ -209,7 +209,7 @@ export function PairPage({
             autoCorrect="off"
             dir="ltr"
             placeholder={t("pairing.enterPlaceholder")}
-            className="min-h-36 resize-none rounded-control bg-carbon-surface px-3.5 py-3 text-xl leading-7 text-carbon-text placeholder:text-base placeholder:text-carbon-textMuted glim-field-focus"
+            className="min-h-36 resize-none rounded-control bg-carbon-surface px-3.5 py-3 text-status leading-7 text-carbon-text placeholder:text-base placeholder:text-carbon-textMuted glim-field-focus"
           />
           <WordSlots words={words} unknown={unknown} filled />
           {problem && (

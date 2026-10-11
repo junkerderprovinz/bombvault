@@ -14,6 +14,11 @@
 // search field or buttons passes `inline` and hugs its segments instead. Page
 // tabs pass `fit` and stay on one row.
 //
+// Under rainbow a selector that sets a value wears one colour, its place among
+// the page's selectors (lib/selectorHue.ts), on its chosen segment, and the
+// segments not chosen stay without colour. A tab strip, which picks a page
+// rather than a value, keeps a colour per tab.
+//
 // A caption such as "Sort by:" belongs in a plain <span> outside the component,
 // not a <label> around the row: a label around several tabs forwards its clicks
 // to the first one and gives screen readers that tab's name.
@@ -27,6 +32,7 @@ import {
   type ReactNode,
 } from "react";
 import { hueVars } from "../lib/appearance";
+import { countSelector } from "../lib/selectorHue";
 import { useLabelMode } from "../lib/useLabelMode";
 import type { ControlAxis } from "../lib/controls";
 import { hidesLabel, labelWidth } from "../lib/controls";
@@ -37,7 +43,7 @@ export interface SelectorItem {
   /** Stable id, handed back by onChange. */
   id: string;
   label: string;
-  /** Glyph before the label, tinted with the segment's hue while `hue` is on. */
+  /** Glyph before the label. In a tab strip it is tinted with its tab's hue. */
   icon?: ReactNode;
   disabled?: boolean;
   /** Why the segment is in its state, such as "pick a target folder first" on
@@ -74,14 +80,13 @@ interface SelectorCommon {
    *  one, for a strip beside a real Button. Opt-in because a strip cannot see
    *  its neighbours, and the dense strips should stay short. */
   buttonHeight?: boolean;
-  /** Colour each segment by its position in the rainbow palette. Default true.
-   *  Turn it off where the position means nothing, such as a single-item strip
-   *  (Recovery's StepDisclosure), not for looks. */
+  /** Take a colour under rainbow. Default true. Turn it off where the colour
+   *  means nothing, such as a single-item strip (Recovery's StepDisclosure),
+   *  not for looks. */
   hue?: boolean;
-  /** Where this strip starts in the rainbow palette. Default 0. Strips stacked
-   *  on one page would otherwise repeat each column's colour straight down, so
-   *  a caller rendering a group gives each strip its own offset. The settings
-   *  tree takes its offsets from HUE_OFFSET. */
+  /** Makes the strip a tab strip for colour: each segment keeps its own
+   *  palette position, counting from here. Without it the selector sets a
+   *  value and takes its colour from its place on the page. */
   hueOffset?: number;
   variant?: SelectorVariant;
   /** Pin every segment to the widest one's measured width, at least
@@ -110,36 +115,6 @@ interface SelectorCommon {
   activation?: "auto" | "manual";
   className?: string;
 }
-
-/**
- * HUE_OFFSET is where each selector in the settings tree starts in the palette.
- * The selectors are spread over several files and would all repeat the same
- * colours at the default offset; pages/settings/hueOffsets.test.ts requires
- * every hued selector in that tree to take its offset from here.
- *
- * There are more selectors than the palette has colours, so some share a
- * start: `drillKind` and the placement rows with the first label row, and
- * `theme`, `notifyOn` and `mcpClient` the last colour. `theme` sits on Look,
- * `notifyOn` on Notifications, the placement rows on Storage and the client
- * picker in a dialog from Integrations, so none of them is on screen with
- * another. Look spends all eight positions, so a selector added there has no
- * free start and the table needs rethinking rather than another entry.
- */
-export const HUE_OFFSET = {
-  /** The settings rail. */
-  tabs: 0,
-  /** One row per control axis, each a colour further along, so the block reads
-   *  as one group. */
-  labels: 1,
-  shape: 5,
-  motion: 6,
-  theme: 7,
-  notifyOn: 7,
-  drillKind: 1,
-  /** The three placement default rows, +3 per row: 1, 4 and 7. */
-  placement: 1,
-  mcpClient: 7,
-} as const;
 
 export type SelectorProps =
   | (SelectorCommon & {
@@ -407,7 +382,7 @@ export function Selector(props: SelectorProps) {
     size = "md",
     buttonHeight = false,
     hue = true,
-    hueOffset = 0,
+    hueOffset,
     variant = "well",
     equalWidth = false,
     inline = false,
@@ -446,6 +421,11 @@ export function Selector(props: SelectorProps) {
   const auto = !many && !manual;
 
   const strip = useRef<HTMLDivElement>(null);
+  const perTab = hue && hueOffset !== undefined;
+  const counted = hue && !perTab;
+  useLayoutEffect(() => {
+    if (counted && strip.current) return countSelector(strip.current);
+  }, [counted]);
 
   // How pinned segments share the row, from segmentLayout. Pinning needs each
   // segment's natural width, which only the DOM knows; a flex share alone
@@ -658,10 +638,11 @@ export function Selector(props: SelectorProps) {
             ? "rounded-pill [transition:background-color_120ms_ease]"
             : "rounded-pill transition-colors",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          // An iconOnly segment is all glyph, and on an icon-only badge only
-          // the fill takes the colour (design-language.md), so it skips the
-          // glyph tint of glim-hue-icon.
-          hue ? (item.iconOnly ? "glim-hue" : "glim-hue glim-hue-icon") : "",
+          // A tab tints its glyph with its hue at rest. An iconOnly segment is
+          // all glyph, and on an icon-only badge only the fill takes the colour
+          // (design-language.md), so it skips the tint, as does every segment
+          // of a selector that sets a value.
+          hue ? (perTab && !item.iconOnly ? "glim-hue glim-hue-icon" : "glim-hue") : "",
           on
             ? "glim-active bg-accent text-accentContrast"
             : // Idle well segments are transparent, which puts
@@ -699,7 +680,7 @@ export function Selector(props: SelectorProps) {
             disabled={itemDisabled}
             roved={i === roved}
             className={cls}
-            style={hue ? (hueVars(i + hueOffset) as CSSProperties) : undefined}
+            style={perTab ? (hueVars(i + hueOffset) as CSSProperties) : undefined}
             flex={segmentFlex}
             wraps={pinWidth || pairsOnPhone}
             squeezed={canSqueeze && squeezed}

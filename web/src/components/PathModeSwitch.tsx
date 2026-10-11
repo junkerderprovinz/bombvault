@@ -93,7 +93,6 @@ export function PathModeSwitch({
         size="sm"
         select="one"
         equalWidth
-        hueOffset={hueIndex}
         active={remoteMode ? "remote" : "local"}
         onChange={(id) => (id === "remote" ? setRemoteMode(true) : switchToLocal())}
       />

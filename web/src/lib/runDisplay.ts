@@ -102,21 +102,6 @@ export function runTargetText(t: ReturnType<typeof useT>["t"], run: Run): string
 // in all 42 locales. chipFor, chipForRpo and protectionChip below return this
 // file's own derived vocabulary rather than backend text, so they are
 // translated the same way.
-//
-// Known limitation, documented on purpose (index.css's comment on
-// --status-warn-text's dark value carries the full writeup): tone="warn" and
-// tone="active" render as near-identical amber wherever the accent is gold or
-// yellow. Dark with the default accent puts them an RGB distance of about 11
-// apart (#f1c21b against #FCC419, 1.05:1 between them), and light on a gold
-// accent mixes --accent-text down to roughly the warn hue (#8e6a00 against
-// about #71580b on the default Sunflower). SummaryTier is a live site where
-// both can sit in one row: "Overall health" on tone="warn" for a lapsing RPO
-// beside "Last result" on tone="active" for a run that is going. Each badge's
-// own text still differs, so this is not an SC 1.4.1 violation, but it is a
-// glance-level one. Any other accent separates the two by hue, because
-// --accent-text is derived from the accent the user picked. Recolouring warn
-// off Carbon's yellow token, changing the default accent or giving Badge an
-// icon system all reach well past a contrast fix, so it stays as it is.
 
 export function statusTone(status: string): BadgeTone {
   switch (status.toLowerCase()) {

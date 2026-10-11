@@ -121,7 +121,7 @@ function Location({ location, records }: { location: StorageLocation; records: L
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           <LocationMark location={location} size="head" />
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="truncate text-xl font-semibold text-carbon-text">{location.name}</span>
+            <span className="truncate text-status font-semibold text-carbon-text">{location.name}</span>
             <span className="flex flex-wrap items-center gap-x-1.5 text-sm text-carbon-textMuted">
               <span>
                 {what} · {usedByText(t, lang, location)}
