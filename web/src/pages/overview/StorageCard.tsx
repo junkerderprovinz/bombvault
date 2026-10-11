@@ -10,6 +10,7 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { MobileSectionLabel } from "../../components/mobile/MobileSectionLabel";
 import { Card } from "./Card";
 import { WorstRpoHealthLine } from "./WorstRpoHealthLine";
+import { oneDecimal } from "../../lib/numberFormat";
 
 // Sparkline is a hand-drawn SVG trend line; the app carries no charting library.
 function Sparkline({
@@ -176,7 +177,7 @@ export function StorageCard({
   })();
   const totalsDedup =
     totals && totals.rawSize > 0 && totals.restoreSize > 0
-      ? `${(totals.restoreSize / totals.rawSize).toFixed(1)}x`
+      ? `${oneDecimal(totals.restoreSize / totals.rawSize)}x`
       : NO_VALUE;
 
   if (dense) {
@@ -248,7 +249,7 @@ export function StorageCard({
             const has = d.latest != null;
             const dedup =
               d.latest && d.latest.restoreSize > 0 && d.latest.rawSize > 0
-                ? `${(d.latest.restoreSize / d.latest.rawSize).toFixed(1)}x`
+                ? `${oneDecimal(d.latest.restoreSize / d.latest.rawSize)}x`
                 : NO_VALUE;
             // Compact per-domain forecast line (growth/week + time-to-full +
             // free space) from the same /api/stats response. It is null when

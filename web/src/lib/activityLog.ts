@@ -14,6 +14,8 @@ import type { CountUnit } from "./progress";
 import type { TranslationKey } from "./i18n";
 import { KEY_TARGET_ID } from "./runDisplay";
 import { KEY_RUN_KIND } from "./runKind";
+import { humanBytes } from "./forecast";
+import { formatNumber } from "./numberFormat";
 import { isWarningNote, RESTORED_WITHOUT_LINKS, RESTORED_WITHOUT_RUNTIME, restoreNotes, runReason, runReasonParts } from "./runReason";
 
 /** Picks a line's glyph and colour in ActivityLog.tsx. */
@@ -145,19 +147,6 @@ function displayPercent(percent: number): number {
   return Math.round(Math.max(0, Math.min(100, percent)));
 }
 
-/** Binary byte formatter with one decimal, matching Dashboard's humanBytes. */
-function formatBytesShort(n: number): string {
-  if (!n || n <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  let v = n;
-  let i = 0;
-  while (v >= 1024 && i < units.length - 1) {
-    v /= 1024;
-    i++;
-  }
-  return `${i === 0 ? v : v.toFixed(1)} ${units[i]}`;
-}
-
 type ParsedKey =
   | { scope: "item"; domain: "container" | "vm" | "files" | "zfs" | "flash" | "config"; name: string }
   | { scope: "batch"; domain: string }
@@ -255,7 +244,7 @@ const COUNT_KEYS: Record<CountUnit, string> = {
  */
 export function countProgressText(resolveName: ResolveName, state: ProgressState): string {
   if (!state.total) return "";
-  const count = resolveName(COUNT_KEYS[state.unit ?? "items"], { done: String(state.done ?? 0) }, state.total);
+  const count = resolveName(COUNT_KEYS[state.unit ?? "items"], { done: formatNumber(state.done ?? 0) }, state.total);
   if (!state.remaining) return count;
   return `${count} · ${resolveName("progress.remaining", { time: formatDuration(state.remaining) })}`;
 }
@@ -351,7 +340,7 @@ function buildLiveLines(
       const runKind = state.stage ?? (state.phase === "restore" ? "restore" : "backup");
       const pct = displayPercent(state.percent);
       const text = state.stage
-        ? resolveName(STAGE_LINE_KEYS[state.stage], { name, bytes: formatBytesShort(state.bytes ?? 0) })
+        ? resolveName(STAGE_LINE_KEYS[state.stage], { name, bytes: humanBytes(state.bytes ?? 0) })
         : runKind === "restore"
           ? resolveName("activityLog.lineRestoringItem", { name, percent: String(pct) })
           : resolveName("activityLog.lineBackingUpItem", { name, percent: String(pct) });
@@ -488,7 +477,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
 
   if (run.kind === "export") {
     return run.status === "success"
-      ? { status: "success", text: resolveName("activityLog.lineExportSuccess", { bytes: formatBytesShort(run.bytes), duration }) }
+      ? { status: "success", text: resolveName("activityLog.lineExportSuccess", { bytes: humanBytes(run.bytes), duration }) }
       : run.status === "failed"
         ? { status: "failed", text: resolveName("activityLog.lineExportFailed", { error: reasonText(run.error, resolveName) }) }
         : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
@@ -500,7 +489,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
       return { status: "info", text: resolveName("activityLog.lineDbDumpCancelled", { name }) };
     }
     if (run.status === "success") {
-      const bytes = formatBytesShort(run.bytes);
+      const bytes = humanBytes(run.bytes);
       return run.error
         ? { status: "success", text: resolveName("activityLog.lineDbDumpNote", { name, bytes, duration, note: reasonText(run.error, resolveName) }) }
         : { status: "success", text: resolveName("activityLog.lineDbDumpSuccess", { name, bytes, duration }) };
@@ -512,7 +501,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
 
   if (run.kind === "dbdumpsave") {
     return run.status === "success"
-      ? { status: "success", text: resolveName("activityLog.lineDbDumpSaved", { name, bytes: formatBytesShort(run.bytes) }) }
+      ? { status: "success", text: resolveName("activityLog.lineDbDumpSaved", { name, bytes: humanBytes(run.bytes) }) }
       : run.status === "failed"
         ? { status: "failed", text: resolveName("activityLog.lineDbDumpSaveFailed", { name, error: reasonText(run.error, resolveName) }) }
         : run.status === "cancelled"
@@ -536,7 +525,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
 
   if (run.kind === "import") {
     return run.status === "success"
-      ? { status: "success", text: resolveName("activityLog.lineImportSuccess", { name, bytes: formatBytesShort(run.bytes), duration }) }
+      ? { status: "success", text: resolveName("activityLog.lineImportSuccess", { name, bytes: humanBytes(run.bytes), duration }) }
       : run.status === "failed"
         ? { status: "failed", text: resolveName("activityLog.lineImportFailed", { name, error: reasonText(run.error, resolveName) }) }
         : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
@@ -567,7 +556,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
 
   // backup, and any kind this client does not know yet.
   if (run.status === "success") {
-    return { status: "success", text: resolveName("activityLog.lineBackupSuccess", { name, bytes: formatBytesShort(run.bytes), duration }) };
+    return { status: "success", text: resolveName("activityLog.lineBackupSuccess", { name, bytes: humanBytes(run.bytes), duration }) };
   }
   if (run.status === "failed") {
     return { status: "failed", text: resolveName("activityLog.lineBackupFailed", { name, error: reasonText(run.error, resolveName) }) };

@@ -8,6 +8,7 @@ import { zfsCodeSentence, zfsFixKey, zfsMemberKey } from "../../lib/zfsCodes";
 import { Badge } from "../Badge";
 import { InfoBubble } from "../InfoBubble";
 import { Toggle } from "../Toggle";
+import { formatNumber } from "../../lib/numberFormat";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -135,7 +136,7 @@ function DatasetAnomalies({
       {open > 0 && worst && targetId && (
         <Link
           to={`/anomalies?scope=item:${encodeURIComponent(targetId)}`}
-          aria-label={t("anomaly.itemBadgeAria").replace("{name}", dataset).replace("{n}", open.toLocaleString())}
+          aria-label={t("anomaly.itemBadgeAria").replace("{name}", dataset).replace("{n}", formatNumber(open))}
         >
           <Badge tone={anomalySeverityTone(worst)} size="small" shape="pill">
             {open}

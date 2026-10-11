@@ -5,6 +5,7 @@ import { ANOMALY_NOTIFY_LABEL, ANOMALY_SENSITIVITY_LABEL } from "../../lib/anoma
 import type { AnomalySummary, Settings } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
 import { Card, ToggleRow } from "./shared";
+import { formatNumber } from "../../lib/numberFormat";
 
 type AnomalyFieldKey = "anomalyEnabled" | "anomalyRetentionHold" | "anomalySensitivity" | "anomalyNotifyMin";
 
@@ -96,8 +97,8 @@ export function AnomalyCard({
             {backfill && backfill.slots > 0 && (
               <p>
                 {t("anomaly.settings.backfill")
-                  .replace("{done}", backfill.done.toLocaleString())
-                  .replace("{slots}", backfill.slots.toLocaleString())}
+                  .replace("{done}", formatNumber(backfill.done))
+                  .replace("{slots}", formatNumber(backfill.slots))}
               </p>
             )}
             {backfill && backfill.done + backfill.failed < backfill.slots && (
@@ -105,15 +106,15 @@ export function AnomalyCard({
             )}
             {backfill && backfill.failed > 0 && (
               <p className="text-statusWarn">
-                {t("anomaly.settings.backfillFailed").replace("{failed}", backfill.failed.toLocaleString())}
+                {t("anomaly.settings.backfillFailed").replace("{failed}", formatNumber(backfill.failed))}
               </p>
             )}
             {backfill && backfill.withoutSummary > 0 && (
-              <p>{t("anomaly.settings.backfillOld").replace("{n}", backfill.withoutSummary.toLocaleString())}</p>
+              <p>{t("anomaly.settings.backfillOld").replace("{n}", formatNumber(backfill.withoutSummary))}</p>
             )}
             {summary && summary.evalErrors > 0 && (
               <p className="text-statusWarn">
-                {t("anomaly.settings.evalErrors").replace("{n}", summary.evalErrors.toLocaleString())}
+                {t("anomaly.settings.evalErrors").replace("{n}", formatNumber(summary.evalErrors))}
               </p>
             )}
             {summary && summary.unmeasuredVolumes.length > 0 && (

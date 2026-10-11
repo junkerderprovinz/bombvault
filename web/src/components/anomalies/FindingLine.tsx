@@ -28,6 +28,7 @@ import { useTipBubble } from "../../lib/useTipBubble";
 import { FactGlyph } from "../../pages/settings/pairing/pairingArt";
 import { findingHasChanges } from "./FindingChanges";
 import type { FindingPlace } from "./findingPlace";
+import { formatNumber } from "../../lib/numberFormat";
 
 /** Closes findings one way or the other and says whether it went through. */
 export type SettleFindings = (list: AnomalyView[], how: "acknowledge" | "expected") => Promise<boolean>;
@@ -184,7 +185,7 @@ export function FindingLine({
               )}
               {siblings && (
                 <Button
-                  label={t("anomaly.action.acknowledgeAll").replace("{n}", siblings.length.toLocaleString())}
+                  label={t("anomaly.action.acknowledgeAll").replace("{n}", formatNumber(siblings.length))}
                   labelKey="anomaly.action.acknowledgeAll"
                   onClick={() => void settle(siblings, "acknowledge")}
                   disabled={busy}

@@ -659,7 +659,7 @@ test.describe("on the desktop", () => {
 
     const table = window.getByRole("table");
     await expect(table.getByRole("columnheader")).toHaveText(["Ordner", "Entfernt", "Hinzugekommen", "Geändert"]);
-    await expect(table.getByRole("row", { name: /archiv-2019-bis-2026/ }).getByRole("cell")).toHaveText(["38.0 GB", "", ""]);
+    await expect(table.getByRole("row", { name: /archiv-2019-bis-2026/ }).getByRole("cell")).toHaveText(["38,0 GB", "", ""]);
     await expect(table.getByRole("row", { name: /^Alles andere/ }).getByRole("cell")).toHaveText(["", "", "12 Dateien"]);
     await expectWindowFits(page);
   });

@@ -19,6 +19,7 @@ import { dbDumpNameOf, isDbDumpIdentity } from "./dbdump";
 import { humanBytes } from "./forecast";
 import { isolateLtr } from "./ltrFragments";
 import { formatMillis } from "./reltime";
+import { formatNumber, oneDecimal } from "./numberFormat";
 
 /** Translates a key, and with a count picks the form that count needs. */
 export type TranslateAnomaly = (key: TranslationKey, n?: number) => string;
@@ -158,8 +159,8 @@ export function anomalyLearningText(
   if (noData) return t("anomaly.noData");
   if (samples >= needed) return t("anomaly.learningDone");
   return t("anomaly.learning")
-    .replace("{n}", samples.toLocaleString())
-    .replace("{needed}", needed.toLocaleString());
+    .replace("{n}", formatNumber(samples))
+    .replace("{needed}", formatNumber(needed));
 }
 
 export function worstSeverity(open: Record<AnomalySeverity, number>): AnomalySeverity | null {
@@ -236,7 +237,7 @@ function bytes(n: number): string {
 }
 
 function count(n: number): string {
-  return isolateLtr(Math.round(n).toLocaleString());
+  return isolateLtr(formatNumber(Math.round(n)));
 }
 
 function levelParams(a: AnomalyView): Record<string, string> {
@@ -548,7 +549,7 @@ export function anomalyFigures(
   for (const [key, labelKey] of DETAIL_LABEL) {
     const value = a.details[key];
     if (typeof value !== "number") continue;
-    if (key === "z") more.push([t(labelKey), value.toFixed(1)]);
+    if (key === "z") more.push([t(labelKey), oneDecimal(value)]);
     // The detector measures a rate per second; an hour is the span a reader
     // can picture for a backup.
     else if (key === "refRate") more.push([t(labelKey), bytes(value * 3600)]);

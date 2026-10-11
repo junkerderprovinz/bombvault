@@ -9489,7 +9489,7 @@ export function countText(value: string, lang: string, n?: number): string {
     const category = n === undefined ? "other" : new Intl.PluralRules(lang).select(n);
     text = forms.get(category) ?? forms.get("other") ?? value;
   }
-  return n === undefined ? text : text.split("{n}").join(String(n));
+  return n === undefined ? text : text.split("{n}").join(new Intl.NumberFormat(lang).format(n));
 }
 
 // Provide a safe default so `useT()` never throws outside a Provider during tests.
@@ -9503,6 +9503,11 @@ const I18nContext = createContext<I18nContextValue>({
 /** Mount once at the app root (Layout or main). Children share one language state. */
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<string>(storedCode);
+  // Numbers outside React read the language from here (lib/numberFormat.ts),
+  // so it has to be set before the first render that formats one.
+  if (typeof document !== "undefined" && document.documentElement.lang !== lang) {
+    document.documentElement.setAttribute("lang", lang);
+  }
   // The table actually in use. It starts at whatever is already resident -
   // `en` and `de` are inline - so a German or English reader never waits, and
   // every other language fills in when its chunk lands ([344]).

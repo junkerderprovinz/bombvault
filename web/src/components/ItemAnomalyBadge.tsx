@@ -10,6 +10,7 @@ import {
   type TranslateAnomaly,
 } from "../lib/anomalies";
 import type { AnomalyItem } from "../lib/api";
+import { formatNumber } from "../lib/numberFormat";
 
 /**
  * ItemAnomalyBadge is the mark beside an item's name: the open findings, or
@@ -37,7 +38,7 @@ export function ItemAnomalyBadge({
         to={`/anomalies?scope=item:${encodeURIComponent(item.targetId)}`}
         aria-label={t("anomaly.itemBadgeAria")
           .replace("{name}", item.name || anomalyDomainsLabel(item.domain, t))
-          .replace("{n}", open.toLocaleString())}
+          .replace("{n}", formatNumber(open))}
       >
         <Badge tone={anomalySeverityTone(worst)} size="small" shape="pill">
           {open}

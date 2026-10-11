@@ -3,6 +3,7 @@ import { hueVars } from "../../lib/appearance";
 import type { Tile } from "../../lib/backupList";
 import type { TranslationKey } from "../../lib/i18n";
 import { TileGlyph, tileHue, tileLabel } from "./kinds";
+import { formatNumber } from "../../lib/numberFormat";
 
 type T = (key: TranslationKey, n?: number) => string;
 
@@ -71,7 +72,7 @@ export function KindTile({
       </span>
       <span className="truncate text-sm font-semibold">{label}</span>
       <span className={`truncate text-xs tabular-nums opacity-75 ${chip ? "max-[600px]:hidden" : ""}`}>{sub}</span>
-      {chip && <span className="hidden text-xs font-semibold tabular-nums opacity-70 max-[600px]:inline">{count.toLocaleString()}</span>}
+      {chip && <span className="hidden text-xs font-semibold tabular-nums opacity-70 max-[600px]:inline">{formatNumber(count)}</span>}
     </button>
   );
 }
