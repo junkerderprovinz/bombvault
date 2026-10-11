@@ -227,7 +227,7 @@ func (s *Service) probePlace(ctx context.Context, sess *emergencySession, loc ki
 	// This server's rclone config goes along only once it is the kit's.
 	mode := restic.Mode{
 		Encrypted: sess.encrypted, Password: restickey.Derive(sess.backupKey),
-		Env: cloudEnv(sess.creds), NoLock: true, NoAmbientCreds: !(sess.signInsStored && isRcloneLocation(repo)),
+		Env: cloudEnv(sess.creds), NoLock: true, NoAmbientCreds: !sess.signInsStored || !isRcloneLocation(repo),
 	}
 	modes := []restic.Mode{mode}
 	if typed {
