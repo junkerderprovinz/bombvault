@@ -32,7 +32,6 @@ vi.mock("../lib/api", async (importOriginal) => {
     checkRestore: vi.fn(),
     cancelRestore: vi.fn(),
     listDbDumps: vi.fn(),
-    detectEncryption: vi.fn(async () => ({ ok: false })),
     getVMSSH: vi.fn(async () => ({ ok: false })),
     getRclone: vi.fn(async () => ({ ok: false })),
   };
@@ -322,7 +321,7 @@ describe("the emergency", () => {
     expect(wizard()).toBeNull();
 
     await press(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["entry.config.startRecovery"] }));
-    expect(within(wizard()!).getByText(en["recovery.step1"])).toBeTruthy();
+    expect(within(wizard()!).getByText(en["emergency.waysIntro"])).toBeTruthy();
   });
 
   it("opens on the step a link names", async () => {

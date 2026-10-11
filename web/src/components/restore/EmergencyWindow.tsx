@@ -1,17 +1,14 @@
 // The emergency window brings a lost or rebuilt server back in four steps:
-// access to the backups, BombVault's own settings, the choice of what comes
-// back, and the restore. Each step works on its own, because a rebuilt
-// server often needs its settings before any backup is readable.
+// the key of its backups, BombVault's own settings, the choice of what comes
+// back, and the restore. Each step can be opened on its own, because the
+// settings come back with a restart that ends the first one.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
-  detectEncryption,
-  discover,
   discoverAll,
-  discoverFiles,
-  discoverVMs,
-  discoverZFS,
   downloadRecoveryKit,
   fileSetSnapshots,
+  finishEmergency,
+  getEmergency,
   getSettings,
   getVMSSH,
   listContainers,
@@ -23,15 +20,17 @@ import {
   restoreConfig,
   restoreFileSet,
   restoreVM,
+  undoEmergency,
   waitForAppBack,
   type Container,
-  type EncryptionDetection,
+  type EmergencyState,
   type FileSetView,
   type Settings,
   type VM,
   type ZFSDatasetView,
 } from "../../lib/api";
 import { fireAndWaitRun } from "../../lib/backupWatch";
+import { lossText, refusalText, sessionKeyInUse, settingsOfPlaces, takenOver } from "../../lib/emergency";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { placementChanged } from "../../lib/placementEvents";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
@@ -40,27 +39,22 @@ import { isRuntimeRefusal } from "../../lib/runReason";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { checkRestoreOnce, restoreBlockReason } from "../../lib/useRestoreCheck";
-import type { Verdict } from "../../lib/useTestVerdict";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
-import { CloudCard } from "../../pages/settings/CloudCard";
-import { RcloneCard } from "../../pages/settings/RcloneCard";
 import { ToggleRow } from "../../pages/settings/shared";
 import { KindGlyph } from "../backups/kinds";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
 import { IconBack, IconForward } from "../glyphs";
-import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconDownload, IconRestore } from "../navGlyphs";
 import { DiscoverFindings } from "../placement/DiscoverFindings";
 import { ProgressBar } from "../ProgressBar";
 import { SourceToggle, type RepoSource } from "../SourceToggle";
 import { Rows } from "../storage/rows";
-import { TestButton, VerdictLine } from "../TestButton";
 import { Toggle } from "../Toggle";
 import { DumpOnlyRow } from "./DumpOnlyRow";
-import { EmergencyScene } from "./EmergencyScene";
-import { EncryptionStatus } from "./EncryptionStatus";
+import { EmergencyAccess } from "./EmergencyAccess";
+import { EMERGENCY_FIELD, Note, SECTION_OFFSITE, SECTION_PATHS, Section } from "./EmergencyParts";
 import { RuntimeRetry } from "./RuntimeRetry";
 import { StepBar } from "./StepBar";
 
@@ -71,26 +65,6 @@ const STEP_LABEL: Record<EmergencyStep, TranslationKey> = {
   restore: "snapshots.restore",
 };
 
-const PATHS = [
-  ["containersPath", "settings.containersPath"],
-  ["vmsPath", "settings.vmsPath"],
-  ["flashPath", "settings.flashPath"],
-  ["filesPath", "settings.filesPath"],
-  ["zfsPath", "settings.zfsPath"],
-] as const;
-
-const OFFSITE = [
-  ["containersOffsite", "nav.containers"],
-  ["vmsOffsite", "nav.vms"],
-  ["flashOffsite", "nav.flash"],
-  ["filesOffsite", "nav.files"],
-  ["zfsOffsite", "nav.zfs"],
-] as const;
-
-const FIELD = "rounded-control bg-carbon-surface3 px-3 py-2 text-start font-mono text-sm text-carbon-text glim-field-focus";
-
-type Readable = "idle" | "ok" | "warn" | "bad";
-type DiscoverResult = Awaited<ReturnType<typeof discover>>;
 type Found = Awaited<ReturnType<typeof discoverAll>>;
 type ConfigPhase = "idle" | "saving" | "restarting" | "manual" | "reload" | "error";
 
@@ -107,28 +81,6 @@ type Outcome = "waiting" | "running" | "done" | "failed";
 
 function isKeyMismatch(err: string | undefined): boolean {
   return !!err && /APP_KEY/i.test(err);
-}
-
-function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-4">
-      <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-carbon-textSub">
-        {title}
-        {hint && <InfoBubble tip={hint} />}
-      </h3>
-      {children}
-    </section>
-  );
-}
-
-function Note({ tone, children }: { tone: "ok" | "warn" | "fail" | "neutral"; children: ReactNode }) {
-  const look = {
-    ok: "bg-statusOkBg text-statusOk",
-    warn: "bg-statusWarnBg text-statusWarn",
-    fail: "bg-statusFailBgSoft text-statusFail",
-    neutral: "bg-carbon-surface2 text-carbon-text",
-  }[tone];
-  return <div className={`rounded-card px-3 py-2.5 text-sm leading-relaxed wrap-break-word ${look}`}>{children}</div>;
 }
 
 function Choice({ on, title, sub, onPick }: { on: boolean; title: string; sub: string; onPick: () => void }) {
@@ -184,7 +136,16 @@ function PickRow({
   );
 }
 
-export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onClose: () => void }) {
+export function EmergencyWindow({
+  start,
+  onClose,
+  onOldFolder,
+}: {
+  start: EmergencyStep;
+  onClose: () => void;
+  /** Opens the window that reads another install's backups read-only. */
+  onOldFolder?: () => void;
+}) {
   const { t, lang } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
@@ -193,19 +154,15 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
   const [settings, setSettings] = useState<Settings | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
 
-  const [readable, setReadable] = useState<Readable>("idle");
-  // The folders the check read, so an empty answer says where it looked.
-  const [readSources, setReadSources] = useState<string[]>([]);
-  const [readError, setReadError] = useState<string | null>(null);
-  // Repositories the check left out because they are switched off. That is
-  // said without turning the verdict into a warning.
-  const [readNote, setReadNote] = useState<string | null>(null);
-  const [checking, setChecking] = useState(false);
-  const [readShake, setReadShake] = useState(0);
-  const [attaching, setAttaching] = useState(false);
-
-  const [encDetection, setEncDetection] = useState<EncryptionDetection | null>(null);
-  const [encDetecting, setEncDetecting] = useState(true);
+  const [emergency, setEmergency] = useState<EmergencyState | null>(null);
+  const session = emergency?.session;
+  const taken = takenOver(emergency);
+  // The key was shown and is neither taken over nor the one in use, so no
+  // later step can read a backup yet.
+  const undecided = session !== undefined && !sessionKeyInUse(emergency);
+  const [leaving, setLeaving] = useState(false);
+  // Where the first step puts its own way forward while a key is undecided.
+  const [accessFoot, setAccessFoot] = useState<HTMLElement | null>(null);
 
   const [useBackup, setUseBackup] = useState(true);
   const [configSource, setConfigSource] = useState<RepoSource>("local");
@@ -234,24 +191,6 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
   const restoring = queue.length > 0 && !finished;
   const searched = useRef(false);
 
-  // The detection writes what it found into the settings held here.
-  // Otherwise the next save would put the stale switch back over it.
-  const detect = useCallback(async () => {
-    setEncDetecting(true);
-    try {
-      const res = await detectEncryption();
-      setEncDetection(res);
-      if (res.ok && typeof res.encryptionEnabled === "boolean") {
-        const detected = res.encryptionEnabled;
-        setSettings((prev) => (prev ? { ...prev, encryptionEnabled: detected } : prev));
-      }
-    } catch (err) {
-      setEncDetection({ ok: false, error: err instanceof Error ? err.message : String(err) });
-    } finally {
-      setEncDetecting(false);
-    }
-  }, []);
-
   useEffect(() => {
     getSettings()
       .then((res) => {
@@ -260,63 +199,17 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
         }
       })
-      .catch(() => undefined)
-      // After the settings, so a late answer cannot undo what the detection wrote.
-      .finally(() => void detect());
+      .catch(() => undefined);
+    getEmergency()
+      .then((res) => {
+        if (res.ok && res.emergency) setEmergency(res.emergency);
+      })
+      .catch(() => undefined);
     // VM restore needs the libvirt SSH link. A missing one is a note, never a lock.
     getVMSSH()
       .then((r) => setVmSsh(r.ok && !!r.host))
       .catch(() => setVmSsh(false));
-  }, [detect]);
-
-  // The check is the read-only probe, so it never rebuilds the list of
-  // entries. It opens the encrypted repositories, which is how a wrong
-  // APP_KEY shows.
-  const checkReadable = useCallback(async (): Promise<Readable> => {
-    setChecking(true);
-    setReadError(null);
-    try {
-      const results: DiscoverResult[] = await Promise.all([discover(true), discoverVMs(true), discoverFiles(true), discoverZFS(true)]);
-      const keyErr = results.find((r) => !r.ok && isKeyMismatch(r.error));
-      if (keyErr) {
-        setReadable("bad");
-        setReadError(keyErr.error ?? null);
-        return "bad";
-      }
-      const otherErr = results.find((r) => !r.ok);
-      if (otherErr) {
-        setReadable("warn");
-        setReadError(otherErr.error ?? null);
-        return "warn";
-      }
-      setReadSources(results.map((r) => r.repo).filter((r): r is string => !!r));
-      // A repository that could not be opened keeps the verdict off green,
-      // one switched off on purpose is only named.
-      const skipped = [...new Set(results.flatMap((r) => r.skipped ?? []))];
-      const needsAction = results.some((r) => r.skippedNeedsAction === true);
-      const skippedLine = skipped.length > 0 ? t("common.discoverSkipped").replace("{list}", skipped.join(", ")) : null;
-      setReadNote(needsAction ? null : skippedLine);
-      if (skippedLine && needsAction) {
-        setReadError(skippedLine);
-        setReadable("warn");
-        return "warn";
-      }
-      // Nothing found means reachable but empty, or not attached yet.
-      const next: Readable = results.reduce((n, r) => n + (r.discovered ?? 0), 0) > 0 ? "ok" : "warn";
-      setReadable(next);
-      return next;
-    } catch (err) {
-      setReadable("warn");
-      setReadError(err instanceof Error ? err.message : String(err));
-      return "warn";
-    } finally {
-      setChecking(false);
-    }
-  }, [t]);
-
-  async function recheck() {
-    if ((await checkReadable()) !== "ok") setReadShake((n) => n + 1);
-  }
+  }, []);
 
   // A save sends the whole settings, so it starts from a fresh read. One
   // taken when the window opened would roll back what changed since.
@@ -329,30 +222,73 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
     return null;
   }
 
-  async function attach() {
-    if (!settings) return;
-    setAttaching(true);
+  // What a recovery kit says about each section goes into the fields the
+  // next steps start from. A typed place is in them already.
+  const kitPlaces = session?.source === "kit" ? session.places : undefined;
+  useEffect(() => {
+    if (!kitPlaces) return;
+    const named = settingsOfPlaces(kitPlaces);
+    setSettings((prev) => (prev ? { ...prev, ...named } : prev));
+    if (!named.configPath && named.configOffsite) setConfigSource("offsite");
+  }, [kitPlaces]);
+
+  // Without a settings backup the places of the first step are all this
+  // server learns about the old one, so they are saved before the search.
+  async function attachPlaces(): Promise<boolean> {
+    if (!settings || !session) return true;
+    const patch: Partial<Settings> = {};
+    for (const [name] of [...SECTION_PATHS, ...SECTION_OFFSITE]) patch[name] = settings[name];
+    if (session.places.some((place) => place.state === "readable")) patch.encryptionEnabled = session.encrypted;
+    const refused = await saveOnto(patch).catch((err: unknown) => (err instanceof Error ? err.message : t("settings.error")));
+    if (refused !== null) {
+      push(refused, "fail");
+      return false;
+    }
+    window.dispatchEvent(new Event("bv:settings-changed"));
+    setFound(null);
+    searched.current = false;
+    return true;
+  }
+
+  // Closing ends the emergency. A key that was only shown leaves the
+  // server's memory, and one that was taken over is kept unless the person
+  // undoes it, which works until the first backup under it.
+  function leave() {
+    if (taken && emergency?.undoable) {
+      setLeaving(true);
+      return;
+    }
+    if (session) void finishEmergency().catch(() => undefined);
+    onClose();
+  }
+
+  async function keepAndClose() {
+    await finishEmergency().catch(() => undefined);
+    onClose();
+  }
+
+  async function undoAndClose() {
     try {
-      const patch: Partial<Settings> = { encryptionEnabled: settings.encryptionEnabled };
-      for (const [key] of [...PATHS, ...OFFSITE]) patch[key] = settings[key];
-      const refused = await saveOnto(patch);
-      if (refused !== null) {
-        push(refused, "fail");
+      const res = await undoEmergency();
+      if (res.emergency) setEmergency(res.emergency);
+      if (!res.ok) {
+        push(refusalText(t, res.code, res.error), "fail");
+        setLeaving(false);
+        // A backup ran since the window read whether the key can be given back.
+        const now = await getEmergency();
+        if (now.ok && now.emergency) setEmergency(now.emergency);
         return;
       }
-      window.dispatchEvent(new Event("bv:settings-changed"));
-      // Another repository holds other entries, so the selection searches again.
-      setFound(null);
-      searched.current = false;
-      // The detection probes the saved locations, and the check after it
-      // says whether attaching them worked.
-      await detect();
-      if ((await checkReadable()) === "ok") push(t("recovery.readable"), "success");
+      push(t("emergency.undone"), "success");
+      onClose();
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
-    } finally {
-      setAttaching(false);
     }
+  }
+
+  async function done() {
+    await finishEmergency().catch(() => undefined);
+    onClose();
   }
 
   async function restoreOwnSettings() {
@@ -374,10 +310,11 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
       if (blocked !== undefined) {
         const failed = check.state.phase === "done" ? check.state.result.checks?.find((c) => c.status === "fail") : undefined;
         const detail = check.state.phase === "error" ? check.state.error : failed?.detail;
-        return fail(failed?.id === "key" ? t("recovery.appKeyRemedy") : [blocked, detail].filter(Boolean).join(" "));
+        return fail(failed?.id === "key" ? t("emergency.keyRemedy") : [blocked, detail].filter(Boolean).join(" "));
       }
       const res = await restoreConfig("latest", offsite ? "offsite" : undefined);
-      if (!res.ok) return fail(isKeyMismatch(res.error) ? t("recovery.appKeyRemedy") : (res.error ?? t("settings.error")));
+      if (!res.ok) return fail(res.code ? refusalText(t, res.code, res.error) : isKeyMismatch(res.error) ? t("emergency.keyRemedy") : (res.error ?? t("settings.error")));
+      if (res.lost) setEmergency((prev) => (prev ? { ...prev, lost: res.lost } : prev));
       // Without a staged snapshot the restart would apply nothing.
       if (!res.staged) return fail(res.error ?? t("settings.error"));
       if (!res.autoRestart) {
@@ -399,7 +336,7 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
     try {
       const counts = await discoverAll();
       // A search that failed in one place keeps what it found in the others.
-      if (counts.error) setSearchError(isKeyMismatch(counts.error) ? t("recovery.appKeyRemedy") : counts.error);
+      if (counts.error) setSearchError(isKeyMismatch(counts.error) ? t("emergency.keyRemedy") : counts.error);
       const [cs, vs, fs, zs] = await Promise.all([listContainers(), listVMs(), listFileSets(), listZFSDatasets()]);
       const sets = fs.ok ? (fs.fileSets ?? []) : [];
       setContainers(cs.containers ?? []);
@@ -516,8 +453,6 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
     });
   }
 
-  const readVerdict: Verdict | null =
-    checking || readable === "idle" ? null : { ok: readable === "ok", reason: readable === "warn" ? t("recovery.notReachable") : undefined };
   const configBusy = configPhase === "saving" || configPhase === "restarting";
   const at = EMERGENCY_STEPS.indexOf(step) + 1;
   const total = found ? found.containers + found.vms + found.files + found.zfs : 0;
@@ -530,18 +465,19 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
   ].filter((w): w is string => !!w);
   const doneCount = queue.filter((p) => outcomes[keyOf(p)] === "done" || outcomes[keyOf(p)] === "failed").length;
   const failedCount = queue.filter((p) => outcomes[keyOf(p)] === "failed").length;
+  const lost = lossText(t, lang, emergency?.lost);
 
-  const cancel = <Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={onClose} />;
+  const cancel = <Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={leave} />;
   const back = (to: EmergencyStep) => (
     <Button label={t("common.back")} labelKey="common.back" glyph={<IconBack />} tone="subtle" onClick={() => setStep(to)} />
   );
-  const next = (to: EmergencyStep) => (
+  const next = (to: EmergencyStep, go: () => void = () => setStep(to)) => (
     <Button
       label={t("zfs.replica.add.next")}
       labelKey="zfs.replica.add.next"
       glyph={<IconForward />}
       tone="accent"
-      onClick={() => setStep(to)}
+      onClick={go}
     />
   );
 
@@ -550,7 +486,7 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
     footer = (
       <>
         {cancel}
-        {next("settings")}
+        {undecided ? <span ref={setAccessFoot} className="flex" /> : next("settings")}
       </>
     );
   } else if (step === "settings") {
@@ -568,7 +504,7 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
             busy={configBusy}
           />
         ) : (
-          next("selection")
+          next("selection", () => void attachPlaces().then((ok) => ok && setStep("selection")))
         )}
       </>
     );
@@ -594,113 +530,50 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
         labelKey={finished ? "common.done" : "common.close"}
         glyph={finished ? <IconCheck /> : undefined}
         tone="accent"
-        onClick={onClose}
+        onClick={() => void (finished ? done() : onClose())}
       />
+    );
+  }
+  if (leaving) {
+    footer = (
+      <>
+        <Button label={t("common.back")} labelKey="common.back" glyph={<IconBack />} tone="subtle" onClick={() => setLeaving(false)} />
+        <Button label={t("emergency.undo")} labelKey={null} onClick={() => void undoAndClose()} />
+        <Button label={t("emergency.keep")} labelKey={null} glyph={<IconCheck />} tone="accent" onClick={() => void keepAndClose()} />
+      </>
     );
   }
 
   return (
-    <InstanceWindow title={t("emergency.title")} onClose={onClose} footer={footer}>
+    <InstanceWindow title={t("emergency.title")} onClose={leave} footer={footer}>
       <StepBar
         steps={EMERGENCY_STEPS.map((s) => t(STEP_LABEL[s]))}
         current={at}
-        reach={restoring ? 0 : queue.length > 0 ? 4 : 3}
+        reach={restoring || leaving ? 0 : undecided ? 1 : queue.length > 0 ? 4 : 3}
         label={t("emergency.title")}
         onGo={(n) => setStep(EMERGENCY_STEPS[n - 1])}
       />
+      {leaving && <Note tone="warn">{t("emergency.leaveAsk")}</Note>}
 
-      {step === "access" && (
-        <>
-          <EmergencyScene />
-          <Section title={t("recovery.step1")} hint={t("recovery.appKeyExplain")}>
-            <VerdictLine verdict={readVerdict} />
-            {readable === "ok" && <Note tone="ok">{t("recovery.readable")}</Note>}
-            {readSources.length > 0 && readable !== "idle" && (
-              <p className="text-xs leading-relaxed text-carbon-textMuted wrap-break-word">
-                {t("recovery.readFrom")} <span className="font-mono">{readSources.join(", ")}</span>
-              </p>
-            )}
-            {readable === "bad" && <Note tone="fail">{t("recovery.appKeyRemedy")}</Note>}
-            {readable === "warn" && readError && (
-              <p dir="ltr" className="break-all font-mono text-start text-xs text-carbon-textMuted">
-                {readError}
-              </p>
-            )}
-            {readNote && (
-              <p dir="ltr" className="text-start text-xs text-carbon-textMuted wrap-break-word">
-                {readNote}
-              </p>
-            )}
-            <div>
-              <TestButton
-                label={t("recovery.recheck")}
-                labelKey="recovery.recheck"
-                words="check"
-                test={{ verdict: readVerdict, running: checking, shake: readShake, shaking: readShake > 0 && readable !== "ok" }}
-                onClick={() => void recheck()}
-              />
-            </div>
-          </Section>
-
-          <Section title={t("recovery.step2")} hint={t("emergency.attachHint")}>
-            {settings ? (
-              <>
-                <EncryptionStatus
-                  t={t}
-                  detection={encDetection}
-                  detecting={encDetecting}
-                  encryptionEnabled={settings.encryptionEnabled}
-                  onOverride={(v) => setSettings((prev) => (prev ? { ...prev, encryptionEnabled: v } : prev))}
-                />
-                {PATHS.map(([key, label], i) => (
-                  <FolderBrowser
-                    key={key}
-                    label={t(label)}
-                    value={settings[key]}
-                    hostMountRoot={hostMountRoot}
-                    hueIndex={i}
-                    onChange={(v) => setSettings((prev) => (prev ? { ...prev, [key]: v } : prev))}
-                  />
-                ))}
-                <h4 className="pt-1 text-xs font-semibold text-carbon-textSub">{t("emergency.offsite")}</h4>
-                {OFFSITE.map(([key, label]) => (
-                  <label key={key} className="flex flex-col gap-1 text-xs text-carbon-textSub">
-                    {t(label)}
-                    <input
-                      value={settings[key]}
-                      spellCheck={false}
-                      onChange={(e) => setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))}
-                      placeholder="rest:http://host:8000/repo"
-                      dir="ltr"
-                      className={FIELD}
-                    />
-                  </label>
-                ))}
-                <h4 className="flex items-center gap-1.5 pt-1 text-xs font-semibold text-carbon-textSub">
-                  {t("recovery.cloudCreds")}
-                  <InfoBubble tip={`${t("recovery.cloudCredsHint")} ${t("recovery.credsSaveHint")}`} />
-                </h4>
-                <CloudCard t={t} hueIndex={5} nested />
-                <RcloneCard t={t} hueIndex={6} nested />
-                <div className="flex justify-end">
-                  <Button
-                    label={t("emergency.connect")}
-                    labelKey={null}
-                    glyph={<IconCheck />}
-                    onClick={() => void attach()}
-                    disabled={attaching}
-                    busy={attaching}
-                  />
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
-            )}
-          </Section>
-        </>
+      {step === "access" && !leaving && (
+        <EmergencyAccess
+          emergency={emergency}
+          onEmergency={setEmergency}
+          settings={settings}
+          setSettings={setSettings}
+          hostMountRoot={hostMountRoot}
+          footer={accessFoot}
+          onOldFolder={
+            onOldFolder &&
+            (() => {
+              void finishEmergency().catch(() => undefined);
+              onOldFolder();
+            })
+          }
+        />
       )}
 
-      {step === "settings" && (
+      {step === "settings" && !leaving && (
         <>
           <p className="text-sm text-carbon-text">{t("emergency.settingsIntro")}</p>
           {configPhase === "restarting" ? (
@@ -716,7 +589,7 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
               <Choice
                 on={!useBackup}
                 title={t("recovery.configSkip")}
-                sub={t("emergency.settingsSkipSub")}
+                sub={t("emergency.settingsSkipPlaces")}
                 onPick={() => setUseBackup(false)}
               />
             </div>
@@ -743,11 +616,14 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
                     onChange={(e) => setSettings((prev) => (prev ? { ...prev, configOffsite: e.target.value } : prev))}
                     placeholder="rest:http://host:8000/repo"
                     dir="ltr"
-                    className={FIELD.replace("bg-carbon-surface3", "bg-carbon-surface2")}
+                    className={EMERGENCY_FIELD.replace("bg-carbon-surface3", "bg-carbon-surface2")}
                   />
                 </label>
               )}
-              <p className="text-xs text-carbon-textMuted">{t("emergency.settingsRestartHint")}</p>
+              <p className="text-xs text-carbon-textMuted">
+                {taken && <>{t("emergency.loginStays")} </>}
+                {t("emergency.settingsRestartHint")}
+              </p>
             </>
           )}
           {configPhase === "manual" && <Note tone="warn">{t("recovery.configManualRestart")}</Note>}
@@ -761,8 +637,9 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
         </>
       )}
 
-      {step === "selection" && (
+      {step === "selection" && !leaving && (
         <>
+          {lost && <Note tone="warn">{lost}</Note>}
           {searching && <p className="text-sm text-carbon-textMuted">{t("emergency.searching")}</p>}
           {found && total > 0 && (
             <Note tone="ok">
@@ -869,7 +746,7 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
         </>
       )}
 
-      {step === "restore" && (
+      {step === "restore" && !leaving && (
         <>
           <ProgressBar
             percent={queue.length > 0 ? (doneCount / queue.length) * 100 : 100}

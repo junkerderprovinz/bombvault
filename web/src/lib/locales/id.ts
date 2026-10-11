@@ -324,7 +324,6 @@ const id: Partial<Translations> = {
 
   // Settings
   "settings.title": "Pengaturan",
-  "settings.encryptionLabel": "Kata sandi",
   "settings.encryptionOn": "Diaktifkan (kata sandi diturunkan dari APP_KEY)",
   "settings.encryptionOff": "Dinonaktifkan (tanpa kata sandi)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const id: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "Bisakah BombVault membaca cadangan Anda?",
-  "recovery.appKeyExplain": "Untuk membaca cadangan yang ada, container ini memerlukan APP_KEY YANG SAMA seperti yang digunakan sebelumnya. Ada di kit pemulihan Anda. Atur di template container Unraid jika belum, lalu periksa ulang.",
-  "recovery.appKeyRemedy": "Kunci enkripsi tidak cocok dengan cadangan ini. Atur APP_KEY asli (dari kit pemulihan Anda) di template container, lalu periksa ulang.",
-  "recovery.readable": "Cadangan Anda dapat dibaca.",
-  "recovery.readFrom": "Dibaca dari:",
-  "recovery.notReachable": "Cadangan Anda belum dapat dijangkau. Lampirkan lokasi di bawah, lalu periksa ulang.",
-  "recovery.recheck": "Periksa",
   // Step 2
   "recovery.stepConfig": "Pulihkan pengaturan BombVault sendiri",
   "recovery.configSourceLabel": "Di mana cadangan pengaturan?",
@@ -1862,24 +1854,11 @@ const id: Partial<Translations> = {
   "recovery.configReload": "Muat ulang sekarang",
   "recovery.configSkip": "Lewati: saya tidak punya cadangan pengaturan",
   // Step 3
-  "recovery.step2": "Lampirkan cadangan Anda",
   "recovery.cloudCreds": "Kredensial cloud (opsional)",
   "recovery.cloudCredsHint": "Hanya diperlukan bila jalur cadangan mengarah ke S3, server restic REST, atau remote rclone. Jalur lokal atau share yang dipasang tidak memerlukan apa pun di sini.",
   "recovery.credsSaveHint": "Kredensial off-site disimpan dengan tombol Simpan milik masing-masing kartu. Simpan sebelum menekan \"Hubungkan & pratinjau\".",
-  "recovery.encChecking": "Memeriksa bagaimana cadanganmu dienkripsi…",
   "recovery.encEncrypted": "Terdeteksi: cadanganmu terenkripsi. BombVault akan memakai kata sandi yang diturunkan dari APP_KEY-mu.",
   "recovery.encPlain": "Terdeteksi: cadanganmu tidak punya kata sandi.",
-  "recovery.encAbsent": "Belum ada repositori cadangan di lokasi-lokasi ini, jadi tidak ada yang bisa dideteksi. Pilihanmu di bawah yang menentukan bagaimana ia dibuat.",
-  "recovery.encUnknown": "Belum bisa dipastikan: repositori tidak bisa dibuka, jadi mode enkripsinya tidak diketahui. Perbaiki lokasi di atas lalu periksa lagi, atau atur sendiri jika kamu sudah tahu.",
-  "recovery.encConflict": "Repositorimu saling bertentangan: sebagian terenkripsi, sebagian tidak. Satu pengaturan tidak bisa membuka keduanya. Arahkan yang menyimpang ke lokasi baru yang kosong, atau pulihkan hanya dari kelompok yang cocok.",
-  "recovery.encUnconfigured": "Belum ada lokasi cadangan yang diatur. Isi jalur di bawah, lalu hubungkan.",
-  "recovery.encDetectHint": "Enkripsi bukan soal selera: sebuah repositori dibuat dengan kata sandi (diturunkan dari APP_KEY-mu) atau tanpa, dan itu tidak pernah berubah setelahnya. BombVault membuka repositori yang telah diatur untuk melihat yang mana, sehingga pemulihan di mesin baru tidak perlu menebak. Repositori yang tidak terjangkau dilaporkan sebagai tidak diketahui, tidak pernah sebagai tanpa enkripsi.",
-  "recovery.encStateEncrypted": "terenkripsi",
-  "recovery.encStatePlain": "tanpa kata sandi",
-  "recovery.encStateAbsent": "belum dibuat",
-  "recovery.encStateUnreachable": "tidak terbaca",
-  "recovery.encSourceLocal": "lokal",
-  "recovery.encSourceOffsite": "off-site",
   // Step 3 discover
   "recovery.foundCounts": "Ditemukan {c} container dan {v} VM.",
   "recovery.foundNone": "Belum ditemukan apa pun. Periksa koneksi dan lampiran di atas. Jika Anda mengharapkan cadangan di sini, pastikan APP_KEY Anda cocok dengan cadangan ini.",
@@ -4089,7 +4068,6 @@ const id: Partial<Translations> = {
   "restorePage.restoring": "Memulihkan {name}",
   "restorePage.emergency": "Darurat",
   "restorePage.emergencyWay": "Server hilang atau disiapkan ulang",
-  "restorePage.emergencyWayHint": "Dengan APP_KEY dari kit pemulihan Anda, BombVault membaca cadangan Anda lagi dan mengembalikan pengaturan, container, VM, dan foldernya dalam empat langkah.",
   "emergency.title": "Wizard darurat",
   "emergency.access": "Akses",
   "emergency.selection": "Pilihan",
@@ -4104,7 +4082,6 @@ const id: Partial<Translations> = {
   "emergency.settingsIntro": "Mengembalikan pengaturan BombVault sendiri: tujuan, kredensial, jadwal, dan aturan. Langkah berikutnya lalu sudah terisi.",
   "emergency.settingsRestore": "Kembalikan pengaturan",
   "emergency.settingsRestoreSub": "Dari cadangan mandiri terbaru",
-  "emergency.settingsSkipSub": "Maka Anda menautkan cadangan secara manual di langkah pertama dan mengatur jadwal serta aturan lagi.",
   "emergency.settingsRestartHint": "Jika BombVault tidak kembali sendiri, mulai ulang container di Unraid dan muat ulang halaman ini.",
   "emergency.settingsGo": "Kembalikan dan lanjutkan",
   "emergency.restarting": "BombVault sedang dimulai ulang untuk menerapkan pengaturan Anda. Setelah itu wizard melanjutkan sendiri.",

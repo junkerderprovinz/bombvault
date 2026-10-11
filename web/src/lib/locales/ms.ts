@@ -324,7 +324,6 @@ const ms: Partial<Translations> = {
 
   // Settings
   "settings.title": "Tetapan",
-  "settings.encryptionLabel": "Kata laluan",
   "settings.encryptionOn": "Diaktifkan (kata laluan diperoleh daripada APP_KEY)",
   "settings.encryptionOff": "Dinyahaktifkan (tiada kata laluan)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const ms: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "Bolehkah BombVault membaca sandaran anda?",
-  "recovery.appKeyExplain": "Untuk membaca sandaran sedia ada, bekas ini memerlukan APP_KEY YANG SAMA seperti yang digunakan sebelum ini. Ia ada dalam kit pemulihan anda. Tetapkannya dalam templat bekas Unraid jika belum lagi, kemudian semak semula.",
-  "recovery.appKeyRemedy": "Kunci penyulitan tidak sepadan dengan sandaran ini. Tetapkan APP_KEY asal (daripada kit pemulihan anda) dalam templat bekas, kemudian semak semula.",
-  "recovery.readable": "Sandaran anda boleh dibaca.",
-  "recovery.readFrom": "Dibaca dari:",
-  "recovery.notReachable": "Sandaran anda belum boleh dicapai. Lampirkan lokasi di bawah, kemudian semak semula.",
-  "recovery.recheck": "Semak",
   // Step 2
   "recovery.stepConfig": "Pulihkan tetapan BombVault sendiri",
   "recovery.configSourceLabel": "Di manakah sandaran tetapan?",
@@ -1862,24 +1854,11 @@ const ms: Partial<Translations> = {
   "recovery.configReload": "Muat semula sekarang",
   "recovery.configSkip": "Langkau: saya tiada sandaran tetapan",
   // Step 3
-  "recovery.step2": "Lampirkan sandaran anda",
   "recovery.cloudCreds": "Kelayakan awan (pilihan)",
   "recovery.cloudCredsHint": "Hanya diperlukan apabila laluan sandaran menunjuk ke S3, pelayan restic REST atau remote rclone. Laluan setempat atau perkongsian yang dilekapkan tidak memerlukan apa-apa di sini.",
   "recovery.credsSaveHint": "Kelayakan luar tapak disimpan dengan butang Simpan sendiri setiap kad. Simpan sebelum menekan \"Sambung & pratonton\".",
-  "recovery.encChecking": "Memeriksa bagaimana sandaranmu disulitkan…",
   "recovery.encEncrypted": "Dikesan: sandaranmu disulitkan. BombVault akan menggunakan kata laluan yang diterbitkan daripada APP_KEY kamu.",
   "recovery.encPlain": "Dikesan: sandaranmu tiada kata laluan.",
-  "recovery.encAbsent": "Belum ada repositori sandaran di lokasi-lokasi ini, jadi tiada apa untuk dikesan. Pilihan kamu di bawah menentukan bagaimana ia akan dicipta.",
-  "recovery.encUnknown": "Belum dapat dipastikan: repositori tidak dapat dibuka, jadi mod penyulitannya tidak diketahui. Betulkan lokasi di atas dan periksa semula, atau tetapkan sendiri jika kamu sudah tahu.",
-  "recovery.encConflict": "Repositori kamu bercanggah: sebahagian disulitkan, sebahagian tidak. Satu tetapan tidak boleh membuka kedua-duanya. Halakan yang tersasar ke lokasi baharu yang kosong, atau pulihkan hanya daripada set yang sepadan.",
-  "recovery.encUnconfigured": "Belum ada lokasi sandaran ditetapkan. Isikan laluan di bawah, kemudian sambung.",
-  "recovery.encDetectHint": "Penyulitan bukan soal pilihan peribadi: sesebuah repositori dicipta sama ada dengan kata laluan (diterbitkan daripada APP_KEY kamu) atau tanpa, dan itu tidak pernah berubah selepas itu. BombVault membuka repositori yang ditetapkan untuk melihat yang mana satu, jadi pemulihan pada mesin baharu tidak perlu meneka. Repositori yang tidak dapat dicapai dilaporkan sebagai tidak diketahui, tidak pernah sebagai tidak disulitkan.",
-  "recovery.encStateEncrypted": "disulitkan",
-  "recovery.encStatePlain": "tiada kata laluan",
-  "recovery.encStateAbsent": "belum dicipta",
-  "recovery.encStateUnreachable": "tidak dapat dibaca",
-  "recovery.encSourceLocal": "tempatan",
-  "recovery.encSourceOffsite": "off-site",
   // Step 3 discover
   "recovery.foundCounts": "{c} bekas dan {v} VM dijumpai.",
   "recovery.foundNone": "Belum ada yang dijumpai. Semak sambungan dan lampiran di atas. Jika anda menjangkakan sandaran di sini, pastikan APP_KEY anda sepadan dengan sandaran ini.",
@@ -4089,7 +4068,6 @@ const ms: Partial<Translations> = {
   "restorePage.restoring": "Memulihkan {name}",
   "restorePage.emergency": "Kecemasan",
   "restorePage.emergencyWay": "Pelayan sudah tiada atau dipasang semula",
-  "restorePage.emergencyWayHint": "Dengan APP_KEY daripada kit pemulihan anda, BombVault membaca sandaran anda semula dan memulihkan tetapan, bekas, VM dan foldernya dalam empat langkah.",
   "emergency.title": "Wizard kecemasan",
   "emergency.access": "Akses",
   "emergency.selection": "Pilihan",
@@ -4104,7 +4082,6 @@ const ms: Partial<Translations> = {
   "emergency.settingsIntro": "Memulihkan tetapan BombVault sendiri: destinasi, bukti kelayakan, jadual dan peraturan. Langkah seterusnya kemudian sudah terisi.",
   "emergency.settingsRestore": "Pulihkan tetapan",
   "emergency.settingsRestoreSub": "Daripada sandaran sendiri terbaharu",
-  "emergency.settingsSkipSub": "Anda kemudian memautkan sandaran anda sendiri pada langkah pertama dan menyediakan jadual serta peraturan semula.",
   "emergency.settingsRestartHint": "Jika BombVault tidak kembali sendiri, mulakan semula bekas dalam Unraid dan muat semula halaman ini.",
   "emergency.settingsGo": "Pulihkan dan teruskan",
   "emergency.restarting": "BombVault sedang dimulakan semula untuk menggunakan tetapan anda. Pembantu akan menyambung sendiri selepas itu.",

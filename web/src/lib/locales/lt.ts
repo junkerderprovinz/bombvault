@@ -324,7 +324,6 @@ const lt: Partial<Translations> = {
 
   // Settings
   "settings.title": "Nustatymai",
-  "settings.encryptionLabel": "Slaptažodis",
   "settings.encryptionOn": "Įjungta (slaptažodis gaunamas iš APP_KEY)",
   "settings.encryptionOff": "Išjungta (be slaptažodžio)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const lt: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "Ar BombVault gali perskaityti jūsų atsargines kopijas?",
-  "recovery.appKeyExplain": "Norint perskaityti esamas atsargines kopijas, šiam konteineriui reikia TO PATIES APP_KEY, kurį jis naudojo anksčiau. Jis yra jūsų atkūrimo rinkinyje. Nustatykite jį Unraid konteinerio šablone, jei dar nenustatytas, tada patikrinkite dar kartą.",
-  "recovery.appKeyRemedy": "Šifravimo raktas neatitinka šių atsarginių kopijų. Nustatykite originalų APP_KEY (iš jūsų atkūrimo rinkinio) konteinerio šablone, tada patikrinkite dar kartą.",
-  "recovery.readable": "Jūsų atsarginės kopijos yra skaitomos.",
-  "recovery.readFrom": "Nuskaityta iš:",
-  "recovery.notReachable": "Jūsų atsarginės kopijos dar nebuvo pasiekiamos. Pridėkite vietą žemiau, tada patikrinkite dar kartą.",
-  "recovery.recheck": "Patikrinti",
   // Step 2
   "recovery.stepConfig": "Atkurti paties BombVault nustatymus",
   "recovery.configSourceLabel": "Kur yra nustatymų atsarginė kopija?",
@@ -1862,24 +1854,11 @@ const lt: Partial<Translations> = {
   "recovery.configReload": "Įkelti iš naujo dabar",
   "recovery.configSkip": "Praleisti: neturiu nustatymų atsarginės kopijos",
   // Step 3
-  "recovery.step2": "Pridėti savo atsargines kopijas",
   "recovery.cloudCreds": "Debesijos prisijungimo duomenys (neprivaloma)",
   "recovery.cloudCredsHint": "Reikalingi tik tada, kai atsarginės kopijos kelias nurodo į S3, restic REST serverį arba nuotolinį rclone saugyklą. Vietiniam keliui ar prijungtam bendrinamam aplankui čia nieko nereikia.",
   "recovery.credsSaveHint": "Nuotoliniai prisijungimo duomenys išsaugomi kiekvienos kortelės pačiu Išsaugoti mygtuku. Išsaugokite juos prieš spustelėdami „Prisijungti ir peržiūrėti“.",
-  "recovery.encChecking": "Tikrinu, kaip užšifruotos tavo atsarginės kopijos…",
   "recovery.encEncrypted": "Aptikta: tavo atsarginės kopijos užšifruotos. BombVault naudos slaptažodį, išvestą iš tavo APP_KEY.",
   "recovery.encPlain": "Aptikta: tavo atsarginės kopijos neturi slaptažodžio.",
-  "recovery.encAbsent": "Šiose vietose dar nėra atsarginių kopijų saugyklos, todėl nėra ko aptikti. Tavo pasirinkimas žemiau nulems, kaip ji bus sukurta.",
-  "recovery.encUnknown": "Kol kas nustatyti negalima: saugyklų nepavyko atverti, todėl jų šifravimo režimas nežinomas. Pataisyk vietą viršuje ir patikrink dar kartą arba nustatyk pats, jei jau žinai.",
-  "recovery.encConflict": "Tavo saugyklos prieštarauja viena kitai: vienos užšifruotos, kitos ne. Vienas nustatymas negali atverti abiejų. Nukreipk išsiskiriančią į naują tuščią vietą arba atkurk tik iš sutampančio rinkinio.",
-  "recovery.encUnconfigured": "Atsarginių kopijų vieta dar nenustatyta. Įrašyk kelius žemiau ir tada prisijunk.",
-  "recovery.encDetectHint": "Šifravimas nėra skonio reikalas: saugykla sukuriama arba su slaptažodžiu (išvestu iš tavo APP_KEY), arba be jo, ir po to tai niekada nesikeičia. BombVault atveria nustatytas saugyklas, kad pamatytų, kuris atvejis galioja, todėl atkuriant naujoje mašinoje nereikia spėlioti. Nepasiekiama saugykla pranešama kaip nežinoma, niekada kaip neužšifruota.",
-  "recovery.encStateEncrypted": "užšifruota",
-  "recovery.encStatePlain": "be slaptažodžio",
-  "recovery.encStateAbsent": "dar nesukurta",
-  "recovery.encStateUnreachable": "nepavyko perskaityti",
-  "recovery.encSourceLocal": "vietinė",
-  "recovery.encSourceOffsite": "off-site",
   // Step 3 discover
   "recovery.foundCounts": "Rasta {c} konteinerių ir {v} VM.",
   "recovery.foundNone": "Kol kas nieko nerasta. Patikrinkite ryšį ir aukščiau pateiktus priedus. Jei tikėjotės čia rasti atsarginių kopijų, įsitikinkite, kad jūsų APP_KEY atitinka šias atsargines kopijas.",
@@ -4089,7 +4068,6 @@ const lt: Partial<Translations> = {
   "restorePage.restoring": "Atkuriama: {name}",
   "restorePage.emergency": "Avarinis atvejis",
   "restorePage.emergencyWay": "Serverio nebėra arba jis sukurtas iš naujo",
-  "restorePage.emergencyWayHint": "Su APP_KEY iš atkūrimo rinkinio BombVault vėl perskaito tavo atsargines kopijas ir keturiais žingsniais grąžina savo nustatymus, konteinerius, VM ir aplankus.",
   "emergency.title": "Avarinis vedlys",
   "emergency.access": "Prieiga",
   "emergency.selection": "Pasirinkimas",
@@ -4104,7 +4082,6 @@ const lt: Partial<Translations> = {
   "emergency.settingsIntro": "Grąžina pačios BombVault nustatymus: paskirties vietas, prisijungimo duomenis, tvarkaraščius ir taisykles. Kiti žingsniai po to jau būna užpildyti.",
   "emergency.settingsRestore": "Grąžinti nustatymus",
   "emergency.settingsRestoreSub": "Iš naujausios savarankiškos atsargos",
-  "emergency.settingsSkipSub": "Tada pirmame žingsnyje pats prijungi savo atsargines kopijas ir iš naujo nustatai tvarkaraščius bei taisykles.",
   "emergency.settingsRestartHint": "Jei BombVault negrįžta pats, iš naujo paleisk konteinerį Unraid ir perkrauk šį puslapį.",
   "emergency.settingsGo": "Grąžinti ir tęsti",
   "emergency.restarting": "BombVault paleidžiamas iš naujo, kad pritaikytų tavo nustatymus. Po to vedlys tęsia pats.",

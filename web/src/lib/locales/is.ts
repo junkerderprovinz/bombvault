@@ -324,7 +324,6 @@ const is: Partial<Translations> = {
 
   // Settings
   "settings.title": "Stillingar",
-  "settings.encryptionLabel": "Lykilorð",
   "settings.encryptionOn": "Virkt (lykilorð fengið úr APP_KEY)",
   "settings.encryptionOff": "Óvirkt (ekkert lykilorð)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const is: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "Getur BombVault lesið afritin þín?",
-  "recovery.appKeyExplain": "Til að lesa fyrirliggjandi afrit þarf þessi gámur SAMA APP_KEY og var notaður áður. Það er í endurheimtarpakkanum þínum. Stilltu það í Unraid-gámasniðmátinu ef það er ekki þegar gert, athugaðu svo aftur.",
-  "recovery.appKeyRemedy": "Dulkóðunarlykillinn passar ekki við þessi afrit. Stilltu upprunalega APP_KEY (úr endurheimtarpakkanum þínum) í gámasniðmátinu, athugaðu svo aftur.",
-  "recovery.readable": "Afritin þín eru læsileg.",
-  "recovery.readFrom": "Lesið úr:",
-  "recovery.notReachable": "Afritin þín voru ekki aðgengileg ennþá. Bættu staðsetningunni hér að neðan við, athugaðu svo aftur.",
-  "recovery.recheck": "Athuga",
   // Step 2
   "recovery.stepConfig": "Endurheimta eigin stillingar BombVault",
   "recovery.configSourceLabel": "Hvar er stillingaafritið?",
@@ -1862,24 +1854,11 @@ const is: Partial<Translations> = {
   "recovery.configReload": "Hlaða aftur núna",
   "recovery.configSkip": "Sleppa: ég er ekki með stillingaafrit",
   // Step 3
-  "recovery.step2": "Bæta afritunum þínum við",
   "recovery.cloudCreds": "Skýjaaðgangsgögn (valfrjálst)",
   "recovery.cloudCredsHint": "Aðeins nauðsynleg þegar afritsslóð vísar á S3, restic REST þjón eða rclone fjartengingu. Staðbundin slóð eða tengd sameign þarf ekkert hér.",
   "recovery.credsSaveHint": "Fjarlæg aðgangsgögn eru vistuð með eigin Vista-hnappi hvers spjalds. Vistaðu þau áður en þú smellir á „Tengja og forskoða“.",
-  "recovery.encChecking": "Athuga hvernig afritin þín eru dulkóðuð…",
   "recovery.encEncrypted": "Greint: afritin þín eru dulkóðuð. BombVault mun nota lykilorðið sem leitt er af APP_KEY-inu þínu.",
   "recovery.encPlain": "Greint: afritin þín eru án lykilorðs.",
-  "recovery.encAbsent": "Ekkert afritasafn er enn til á þessum stöðum, svo það er ekkert að greina. Valið þitt hér að neðan ræður hvernig það verður búið til.",
-  "recovery.encUnknown": "Ekki hægt að segja til enn: ekki tókst að opna söfnin, svo dulkóðunarhamur þeirra er óþekktur. Lagfærðu staðsetninguna að ofan og athugaðu aftur, eða stilltu hann sjálf(ur) ef þú veist hann þegar.",
-  "recovery.encConflict": "Söfnin þín stangast á: sum eru dulkóðuð, önnur ekki. Ein stilling getur ekki opnað bæði. Beindu því sem sker sig úr á nýjan, tóman stað, eða endurheimtu aðeins úr því safni sem passar.",
-  "recovery.encUnconfigured": "Engin staðsetning fyrir afrit er enn stillt. Fylltu út slóðirnar hér að neðan og tengdu svo.",
-  "recovery.encDetectHint": "Dulkóðun er ekki smekksatriði: safn er búið til annaðhvort með lykilorði (leitt af APP_KEY-inu þínu) eða án þess, og því er aldrei breytt eftir á. BombVault opnar uppsett söfn til að sjá hvort á við, svo endurheimt á nýrri vél krefjist ekki ágiskana. Safn sem ekki næst í er tilkynnt sem óþekkt, aldrei sem ódulkóðað.",
-  "recovery.encStateEncrypted": "dulkóðað",
-  "recovery.encStatePlain": "ekkert lykilorð",
-  "recovery.encStateAbsent": "ekki búið til enn",
-  "recovery.encStateUnreachable": "tókst ekki að lesa",
-  "recovery.encSourceLocal": "staðbundið",
-  "recovery.encSourceOffsite": "off-site",
   // Step 3 discover
   "recovery.foundCounts": "{c} gámar og {v} sýndarvélar fundust.",
   "recovery.foundNone": "Ekkert fundist ennþá. Athugaðu tenginguna og fylgiskjölin hér að ofan. Ef þú áttir von á afritum hér skaltu ganga úr skugga um að APP_KEY þitt passi við þessi afrit.",
@@ -4089,7 +4068,6 @@ const is: Partial<Translations> = {
   "restorePage.restoring": "Endurheimti {name}",
   "restorePage.emergency": "Neyðartilvik",
   "restorePage.emergencyWay": "Þjónninn er horfinn eða var settur upp aftur",
-  "restorePage.emergencyWayHint": "Með APP_KEY úr endurheimtarpakkanum les BombVault afritin þín aftur og sækir stillingar sínar, gáma, sýndarvélar og möppur í fjórum skrefum.",
   "emergency.title": "Neyðarhjálp",
   "emergency.access": "Aðgangur",
   "emergency.selection": "Val",
@@ -4104,7 +4082,6 @@ const is: Partial<Translations> = {
   "emergency.settingsIntro": "Endurheimtir eigin stillingar BombVault: áfangastaði, aðgangsupplýsingar, tímaáætlanir og reglur. Næstu skref eru þá þegar útfyllt.",
   "emergency.settingsRestore": "Endurheimta stillingar",
   "emergency.settingsRestoreSub": "Úr nýjasta sjálfvirka afritinu",
-  "emergency.settingsSkipSub": "Þá tengirðu afritin þín handvirkt í fyrsta skrefinu og setur upp tímaáætlanir og reglur aftur.",
   "emergency.settingsRestartHint": "Ef BombVault kemur ekki sjálfkrafa aftur skaltu endurræsa gáminn í Unraid og hlaða þessa síðu aftur.",
   "emergency.settingsGo": "Endurheimta og halda áfram",
   "emergency.restarting": "BombVault endurræsir sig til að virkja stillingarnar þínar. Neyðarhjálpin heldur svo áfram sjálf.",

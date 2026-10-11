@@ -324,7 +324,6 @@ const lv: Partial<Translations> = {
 
   // Settings
   "settings.title": "Iestatījumi",
-  "settings.encryptionLabel": "Parole",
   "settings.encryptionOn": "Iespējota (parole iegūta no APP_KEY)",
   "settings.encryptionOff": "Atspējota (bez paroles)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const lv: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "Vai BombVault var nolasīt jūsu rezerves kopijas?",
-  "recovery.appKeyExplain": "Lai nolasītu esošās rezerves kopijas, šim konteinerim nepieciešams TĀDS PATS APP_KEY, kāds izmantots iepriekš. Tas atrodas jūsu atkopšanas komplektā. Iestatiet to Unraid konteinera veidnē, ja tas vēl nav iestatīts, un pēc tam pārbaudiet vēlreiz.",
-  "recovery.appKeyRemedy": "Šifrēšanas atslēga neatbilst šīm rezerves kopijām. Iestatiet oriģinālo APP_KEY (no jūsu atkopšanas komplekta) konteinera veidnē un pēc tam pārbaudiet vēlreiz.",
-  "recovery.readable": "Jūsu rezerves kopijas ir nolasāmas.",
-  "recovery.readFrom": "Nolasīts no:",
-  "recovery.notReachable": "Jūsu rezerves kopijas vēl nebija sasniedzamas. Pievienojiet atrašanās vietu zemāk un pēc tam pārbaudiet vēlreiz.",
-  "recovery.recheck": "Pārbaudīt",
   // Step 2
   "recovery.stepConfig": "Atjaunot paša BombVault iestatījumus",
   "recovery.configSourceLabel": "Kur atrodas iestatījumu rezerves kopija?",
@@ -1862,24 +1854,11 @@ const lv: Partial<Translations> = {
   "recovery.configReload": "Ielādēt atkārtoti tagad",
   "recovery.configSkip": "Izlaist: man nav iestatījumu rezerves kopijas",
   // Step 3
-  "recovery.step2": "Pievienot savas rezerves kopijas",
   "recovery.cloudCreds": "Mākoņa akreditācijas dati (neobligāti)",
   "recovery.cloudCredsHint": "Nepieciešami tikai tad, ja dublējuma ceļš norāda uz S3, restic REST serveri vai rclone attālo krātuvi. Vietējam ceļam vai pievienotai koplietotnei šeit nekas nav vajadzīgs.",
   "recovery.credsSaveHint": "Attālinātie akreditācijas dati tiek saglabāti ar katras kartes pašas Saglabāt pogu. Saglabājiet tos, pirms noklikšķināt „Izveidot savienojumu un priekšskatīt”.",
-  "recovery.encChecking": "Pārbaudu, kā ir šifrētas tavas rezerves kopijas…",
   "recovery.encEncrypted": "Atklāts: tavas rezerves kopijas ir šifrētas. BombVault izmantos paroli, kas atvasināta no tava APP_KEY.",
   "recovery.encPlain": "Atklāts: tavām rezerves kopijām nav paroles.",
-  "recovery.encAbsent": "Šajās vietās vēl nav nevienas rezerves kopiju krātuves, tāpēc nav ko atklāt. Tava izvēle zemāk nosaka, kā tā tiks izveidota.",
-  "recovery.encUnknown": "Pagaidām nav nosakāms: krātuves neizdevās atvērt, tāpēc to šifrēšanas režīms nav zināms. Izlabo atrašanās vietu augšā un pārbaudi vēlreiz vai iestati to pats, ja jau zini.",
-  "recovery.encConflict": "Tavas krātuves ir pretrunā: dažas ir šifrētas, dažas nav. Viens iestatījums nevar atvērt abas. Novirzi to, kas atšķiras, uz jaunu, tukšu vietu vai atjauno tikai no atbilstošā kopuma.",
-  "recovery.encUnconfigured": "Rezerves kopiju atrašanās vieta vēl nav iestatīta. Aizpildi ceļus zemāk un tad pievienojies.",
-  "recovery.encDetectHint": "Šifrēšana nav gaumes jautājums: krātuve tiek izveidota vai nu ar paroli (atvasinātu no tava APP_KEY), vai bez tās, un pēc tam tas vairs nekad nemainās. BombVault atver iestatītās krātuves, lai redzētu, kurš gadījums ir spēkā, tāpēc atjaunošana uz jaunas mašīnas neprasa minēšanu. Nesasniedzama krātuve tiek ziņota kā nezināma, nekad kā nešifrēta.",
-  "recovery.encStateEncrypted": "šifrēts",
-  "recovery.encStatePlain": "bez paroles",
-  "recovery.encStateAbsent": "vēl nav izveidots",
-  "recovery.encStateUnreachable": "neizdevās nolasīt",
-  "recovery.encSourceLocal": "lokāls",
-  "recovery.encSourceOffsite": "off-site",
   // Step 3 discover
   "recovery.foundCounts": "Atrasti {c} konteineri un {v} VM.",
   "recovery.foundNone": "Vēl nekas nav atrasts. Pārbaudiet iepriekš minēto savienojumu un pielikumus. Ja gaidījāt šeit atrast rezerves kopijas, pārliecinieties, ka jūsu APP_KEY atbilst šīm rezerves kopijām.",
@@ -4089,7 +4068,6 @@ const lv: Partial<Translations> = {
   "restorePage.restoring": "Atjauno {name}",
   "restorePage.emergency": "Avārija",
   "restorePage.emergencyWay": "Servera vairs nav vai tas uzstādīts no jauna",
-  "restorePage.emergencyWayHint": "Ar APP_KEY no atkopšanas komplekta BombVault atkal nolasa tavas rezerves kopijas un četros soļos atjauno savus iestatījumus, konteinerus, VM un mapes.",
   "emergency.title": "Avārijas vednis",
   "emergency.access": "Piekļuve",
   "emergency.selection": "Izvēle",
@@ -4104,7 +4082,6 @@ const lv: Partial<Translations> = {
   "emergency.settingsIntro": "Atjauno paša BombVault iestatījumus: mērķus, akreditācijas datus, grafikus un noteikumus. Nākamie soļi pēc tam jau ir aizpildīti.",
   "emergency.settingsRestore": "Atjaunot iestatījumus",
   "emergency.settingsRestoreSub": "No jaunākās pašrezerves",
-  "emergency.settingsSkipSub": "Tad pirmajā solī pats pievieno savas rezerves kopijas un no jauna iestati grafikus un noteikumus.",
   "emergency.settingsRestartHint": "Ja BombVault pats neatgriežas, pārstartē konteineru Unraid un pārlādē šo lapu.",
   "emergency.settingsGo": "Atjaunot un turpināt",
   "emergency.restarting": "BombVault tiek pārstartēts, lai pielietotu tavus iestatījumus. Pēc tam vednis turpina pats.",

@@ -324,7 +324,6 @@ const fa: Partial<Translations> = {
 
   // Settings
   "settings.title": "تنظیمات",
-  "settings.encryptionLabel": "رمز عبور",
   "settings.encryptionOn": "فعال (رمز عبور برگرفته از APP_KEY)",
   "settings.encryptionOff": "غیرفعال (بدون رمز عبور)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const fa: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "آیا BombVault می‌تواند پشتیبان‌های شما را بخواند؟",
-  "recovery.appKeyExplain": "برای خواندن پشتیبان‌های موجود، این کانتینر به همان APP_KEY قبلی نیاز دارد. این در کیت بازیابی شماست. اگر هنوز تنظیم نشده، آن را در قالب کانتینر Unraid تنظیم کنید، سپس دوباره بررسی کنید.",
-  "recovery.appKeyRemedy": "کلید رمزنگاری با این پشتیبان‌ها مطابقت ندارد. APP_KEY اصلی (از کیت بازیابی‌تان) را در قالب کانتینر تنظیم کنید، سپس دوباره بررسی کنید.",
-  "recovery.readable": "پشتیبان‌های شما قابل خواندن هستند.",
-  "recovery.readFrom": "خوانده‌شده از:",
-  "recovery.notReachable": "پشتیبان‌های شما هنوز در دسترس نبودند. مکان را در زیر پیوست کنید، سپس دوباره بررسی کنید.",
-  "recovery.recheck": "بررسی",
   // Step 2
   "recovery.stepConfig": "بازیابی تنظیمات خود BombVault",
   "recovery.configSourceLabel": "پشتیبان تنظیمات کجاست؟",
@@ -1862,24 +1854,11 @@ const fa: Partial<Translations> = {
   "recovery.configReload": "دوباره بارگذاری همین حالا",
   "recovery.configSkip": "رد کردن: پشتیبان تنظیمات ندارم",
   // Step 3
-  "recovery.step2": "پیوست پشتیبان‌های خود",
   "recovery.cloudCreds": "اطلاعات ورود ابری (اختیاری)",
   "recovery.cloudCredsHint": "فقط زمانی لازم است که مسیر پشتیبان به S3، یک سرور restic REST یا یک ریموت rclone اشاره کند. مسیر محلی یا اشتراک متصل‌شده به چیزی در اینجا نیاز ندارد.",
   "recovery.credsSaveHint": "اطلاعات ورود خارج از محل با دکمه ذخیره خودِ هر کارت ذخیره می‌شود. پیش از کلیک روی «اتصال و پیش‌نمایش» آن‌ها را ذخیره کنید.",
-  "recovery.encChecking": "در حال بررسی اینکه پشتیبان‌های شما چگونه رمزگذاری شده‌اند…",
   "recovery.encEncrypted": "شناسایی شد: پشتیبان‌های شما رمزگذاری شده‌اند. BombVault از رمزی که از APP_KEY شما مشتق می‌شود استفاده خواهد کرد.",
   "recovery.encPlain": "شناسایی شد: پشتیبان‌های شما رمز عبور ندارند.",
-  "recovery.encAbsent": "هنوز هیچ مخزن پشتیبانی در این مکان‌ها وجود ندارد، پس چیزی برای شناسایی نیست. انتخاب شما در پایین تعیین می‌کند که چگونه ساخته شود.",
-  "recovery.encUnknown": "هنوز نمی‌توان تشخیص داد: مخزن‌ها باز نشدند، بنابراین حالت رمزگذاری‌شان نامعلوم است. مکان بالا را اصلاح کنید و دوباره بررسی کنید، یا اگر از قبل می‌دانید خودتان آن را تنظیم کنید.",
-  "recovery.encConflict": "مخزن‌های شما با هم در تناقض‌اند: برخی رمزگذاری شده‌اند و برخی نه. یک تنظیم نمی‌تواند هر دو را باز کند. مخزن ناهمخوان را به مکانی تازه و خالی هدایت کنید، یا فقط از مجموعهٔ هماهنگ بازیابی کنید.",
-  "recovery.encUnconfigured": "هنوز هیچ مکان پشتیبانی تنظیم نشده است. مسیرها را در پایین وارد کنید و سپس متصل شوید.",
-  "recovery.encDetectHint": "رمزگذاری یک ترجیح نیست: یک مخزن یا با رمز عبور (مشتق‌شده از APP_KEY شما) ساخته می‌شود یا بدون آن، و پس از آن هرگز تغییر نمی‌کند. BombVault مخزن‌های تنظیم‌شده را باز می‌کند تا ببیند کدام حالت است، تا بازیابی روی دستگاهی نو نیازی به حدس زدن نداشته باشد. مخزنی که در دسترس نباشد به‌عنوان نامعلوم گزارش می‌شود، هرگز به‌عنوان رمزگذاری‌نشده.",
-  "recovery.encStateEncrypted": "رمزگذاری‌شده",
-  "recovery.encStatePlain": "بدون رمز عبور",
-  "recovery.encStateAbsent": "هنوز ساخته نشده",
-  "recovery.encStateUnreachable": "خوانده نشد",
-  "recovery.encSourceLocal": "محلی",
-  "recovery.encSourceOffsite": "خارج از محل",
   // Step 3 discover
   "recovery.foundCounts": "{c} کانتینر و {v} ماشین مجازی یافت شد.",
   "recovery.foundNone": "هنوز چیزی پیدا نشده. اتصال و پیوست بالا را بررسی کنید. اگر انتظار پشتیبانی اینجا داشتید، مطمئن شوید APP_KEY شما با این پشتیبان‌ها مطابقت دارد.",
@@ -4089,7 +4068,6 @@ const fa: Partial<Translations> = {
   "restorePage.restoring": "بازیابی {name}",
   "restorePage.emergency": "اضطراری",
   "restorePage.emergencyWay": "سرور از بین رفته یا دوباره راه‌اندازی شده",
-  "restorePage.emergencyWayHint": "با APP_KEY کیت بازیابی‌ات، BombVault دوباره پشتیبان‌هایت را می‌خواند و تنظیمات، کانتینرها، ماشین‌های مجازی و پوشه‌هایش را در چهار گام برمی‌گرداند.",
   "emergency.title": "دستیار اضطراری",
   "emergency.access": "دسترسی",
   "emergency.selection": "انتخاب",
@@ -4104,7 +4082,6 @@ const fa: Partial<Translations> = {
   "emergency.settingsIntro": "تنظیمات خود BombVault را برمی‌گرداند: مقصدها، اطلاعات ورود، برنامه‌های زمان‌بندی و قاعده‌ها. گام‌های بعدی پس از آن از قبل پر شده‌اند.",
   "emergency.settingsRestore": "بازگردانی تنظیمات",
   "emergency.settingsRestoreSub": "از جدیدترین پشتیبان‌گیری خودکار",
-  "emergency.settingsSkipSub": "آن‌وقت پشتیبان‌هایت را در گام اول دستی وصل می‌کنی و برنامه‌های زمان‌بندی و قاعده‌ها را دوباره تنظیم می‌کنی.",
   "emergency.settingsRestartHint": "اگر BombVault خودش برنگشت، کانتینر را در Unraid دوباره راه‌اندازی کن و این صفحه را دوباره بارگذاری کن.",
   "emergency.settingsGo": "بازگردانی و ادامه",
   "emergency.restarting": "BombVault برای اعمال تنظیماتت دوباره راه‌اندازی می‌شود. دستیار بعد از آن خودش ادامه می‌دهد.",

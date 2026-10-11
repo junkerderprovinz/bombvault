@@ -324,7 +324,6 @@ const et: Partial<Translations> = {
 
   // Settings
   "settings.title": "Seaded",
-  "settings.encryptionLabel": "Parool",
   "settings.encryptionOn": "Lubatud (parool tuletatud APP_KEY-st)",
   "settings.encryptionOff": "Keelatud (parooli pole)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const et: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "Kas BombVault suudab su varundusi lugeda?",
-  "recovery.appKeyExplain": "Olemasolevate varunduste lugemiseks vajab see konteiner SAMA APP_KEY-d, mida varem kasutati. See on sinu taastekomplektis. Määra see Unraidi konteineri mallis, kui see pole veel tehtud, ja kontrolli uuesti.",
-  "recovery.appKeyRemedy": "Krüpteeringu võti ei sobi nende varundustega. Määra algne APP_KEY (sinu taastekomplektist) konteineri mallis ja kontrolli uuesti.",
-  "recovery.readable": "Sinu varundused on loetavad.",
-  "recovery.readFrom": "Loetud asukohast:",
-  "recovery.notReachable": "Sinu varundused polnud veel kättesaadavad. Lisa allpool asukoht ja kontrolli uuesti.",
-  "recovery.recheck": "Kontrolli",
   // Step 2
   "recovery.stepConfig": "Taasta BombVaulti enda seaded",
   "recovery.configSourceLabel": "Kus asub seadete varundus?",
@@ -1862,24 +1854,11 @@ const et: Partial<Translations> = {
   "recovery.configReload": "Laadi kohe uuesti",
   "recovery.configSkip": "Jäta vahele: mul pole seadete varundust",
   // Step 3
-  "recovery.step2": "Lisa oma varundused",
   "recovery.cloudCreds": "Pilve mandaadid (valikuline)",
   "recovery.cloudCredsHint": "Vajalikud ainult siis, kui varunduse asukoht osutab S3-le, restic REST serverile või rclone kaugsihtkohale. Kohalik tee või ühendatud jagatud kaust ei vaja siin midagi.",
   "recovery.credsSaveHint": "Välised mandaadid salvestatakse iga kaardi enda Salvesta nupuga. Salvesta need enne, kui klõpsad „Ühenda ja vaata eelvaadet”.",
-  "recovery.encChecking": "Kontrollin, kuidas su varukoopiad on krüptitud…",
   "recovery.encEncrypted": "Tuvastatud: su varukoopiad on krüptitud. BombVault kasutab APP_KEY-st tuletatud parooli.",
   "recovery.encPlain": "Tuvastatud: su varukoopiatel pole parooli.",
-  "recovery.encAbsent": "Nendes asukohtades pole veel ühtki varukoopiate hoidlat, seega pole midagi tuvastada. Sinu valik allpool otsustab, kuidas see luuakse.",
-  "recovery.encUnknown": "Praegu ei saa öelda: hoidlaid ei õnnestunud avada, seega on nende krüpteerimisrežiim teadmata. Paranda asukoht ülal ja kontrolli uuesti või määra see ise, kui juba tead.",
-  "recovery.encConflict": "Su hoidlad on omavahel vastuolus: mõned on krüptitud, mõned mitte. Üks säte ei saa mõlemat avada. Suuna erandlik uude tühja asukohta või taasta ainult sobivast komplektist.",
-  "recovery.encUnconfigured": "Varukoopiate asukohta pole veel määratud. Täida allpool teed ja seejärel ühenda.",
-  "recovery.encDetectHint": "Krüpteerimine pole eelistus: hoidla luuakse kas parooliga (tuletatud sinu APP_KEY-st) või ilma, ja see ei muutu pärast enam kunagi. BombVault avab määratud hoidlad, et näha, kumb juhtum kehtib, nii et taastamine uuel masinal ei nõua arvamist. Kättesaamatu hoidla teatatakse tundmatuna, mitte kunagi krüptimatuna.",
-  "recovery.encStateEncrypted": "krüptitud",
-  "recovery.encStatePlain": "paroolita",
-  "recovery.encStateAbsent": "veel loomata",
-  "recovery.encStateUnreachable": "ei õnnestunud lugeda",
-  "recovery.encSourceLocal": "kohalik",
-  "recovery.encSourceOffsite": "off-site",
   // Step 3 discover
   "recovery.foundCounts": "Leiti {c} konteinerit ja {v} VM-i.",
   "recovery.foundNone": "Veel midagi ei leitud. Kontrolli ülalolevat ühendust ja lisamist. Kui ootasid siin varundusi, veendu, et sinu APP_KEY nende varundustega sobib.",
@@ -4089,7 +4068,6 @@ const et: Partial<Translations> = {
   "restorePage.restoring": "Taastan: {name}",
   "restorePage.emergency": "Hädaolukord",
   "restorePage.emergencyWay": "Server on kadunud või seatud uuesti üles",
-  "restorePage.emergencyWayHint": "Oma taastekomplekti APP_KEY-ga loeb BombVault sinu varundusi taas ning toob neljas sammus tagasi oma seaded, konteinerid, VM-id ja kaustad.",
   "emergency.title": "Hädaabiviisard",
   "emergency.access": "Ligipääs",
   "emergency.selection": "Valik",
@@ -4104,7 +4082,6 @@ const et: Partial<Translations> = {
   "emergency.settingsIntro": "Toob tagasi BombVaulti enda seaded: sihtkohad, mandaadid, ajakavad ja reeglid. Järgmised sammud on pärast seda juba täidetud.",
   "emergency.settingsRestore": "Too seaded tagasi",
   "emergency.settingsRestoreSub": "Uusimast iseenda varundusest",
-  "emergency.settingsSkipSub": "Siis ühendad oma varundused esimeses sammus käsitsi ning seadistad ajakavad ja reeglid uuesti.",
   "emergency.settingsRestartHint": "Kui BombVault ise tagasi ei tule, taaskäivita konteiner Unraidis ja laadi see leht uuesti.",
   "emergency.settingsGo": "Too tagasi ja jätka",
   "emergency.restarting": "BombVault taaskäivitub, et sinu seaded rakendada. Viisard jätkab pärast ise.",

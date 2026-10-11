@@ -324,7 +324,6 @@ const gl: Partial<Translations> = {
 
   // Settings
   "settings.title": "Configuración",
-  "settings.encryptionLabel": "Contrasinal",
   "settings.encryptionOn": "Activado (contrasinal derivado de APP_KEY)",
   "settings.encryptionOff": "Desactivado (sen contrasinal)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const gl: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "Pode BombVault ler as túas copias?",
-  "recovery.appKeyExplain": "Para ler copias existentes, este contedor precisa o MESMO APP_KEY que usaba antes: está no teu kit de recuperación. Configúrao no modelo de contedor de Unraid se aínda non o está, e volve comprobar.",
-  "recovery.appKeyRemedy": "A clave de cifrado non coincide con estas copias. Configura o APP_KEY orixinal (do teu kit de recuperación) no modelo do contedor, e volve comprobar.",
-  "recovery.readable": "As túas copias son lexibles.",
-  "recovery.readFrom": "Lido de:",
-  "recovery.notReachable": "As túas copias aínda non eran accesibles. Engade a localización de abaixo, e volve comprobar.",
-  "recovery.recheck": "Comprobar",
   // Step 2
   "recovery.stepConfig": "Restaurar a propia configuración de BombVault",
   "recovery.configSourceLabel": "Onde está a copia de configuración?",
@@ -1862,24 +1854,11 @@ const gl: Partial<Translations> = {
   "recovery.configReload": "Recargar agora",
   "recovery.configSkip": "Saltar: non teño copia de configuración",
   // Step 3
-  "recovery.step2": "Engadir as túas copias",
   "recovery.cloudCreds": "Credenciais de nube (opcional)",
   "recovery.cloudCredsHint": "Só fan falla cando unha ruta de copia apunta a S3, a un servidor restic REST ou a un remoto de rclone. Unha ruta local ou un recurso compartido montado non precisan nada aquí.",
   "recovery.credsSaveHint": "As credenciais externas gárdanse co propio botón Gardar de cada tarxeta. Gárdaas antes de premer «Conectar e previsualizar».",
-  "recovery.encChecking": "Comprobando como están cifradas as túas copias de seguranza…",
   "recovery.encEncrypted": "Detectado: as túas copias están cifradas. BombVault usará o contrasinal derivado da túa APP_KEY.",
   "recovery.encPlain": "Detectado: as túas copias non teñen contrasinal.",
-  "recovery.encAbsent": "Aínda non existe ningún repositorio de copias nestas localizacións, así que non hai nada que detectar: a túa escolla de abaixo decide como se creará.",
-  "recovery.encUnknown": "Aínda non se pode saber: non se puideron abrir os repositorios, así que o seu modo de cifrado é descoñecido. Corrixe a localización de arriba e comproba de novo, ou configúrao ti mesmo se xa o sabes.",
-  "recovery.encConflict": "Os teus repositorios contradínse: uns están cifrados e outros non. Un só axuste non pode abrir ambos: apunta o que desentoa a unha localización nova e baleira, ou restaura só do conxunto que coincide.",
-  "recovery.encUnconfigured": "Aínda non hai ningunha localización de copias configurada: enche as rutas de abaixo e despois conéctate.",
-  "recovery.encDetectHint": "O cifrado non é unha preferencia: un repositorio créase con contrasinal (derivado da túa APP_KEY) ou sen el, e iso xa non cambia nunca máis. BombVault abre os repositorios configurados para ver cal é o caso, de xeito que restaurar nunha máquina nova non requira adiviñar nada. Un repositorio inalcanzable infórmase como descoñecido, nunca como non cifrado.",
-  "recovery.encStateEncrypted": "cifrado",
-  "recovery.encStatePlain": "sen contrasinal",
-  "recovery.encStateAbsent": "aínda non creado",
-  "recovery.encStateUnreachable": "non se puido ler",
-  "recovery.encSourceLocal": "local",
-  "recovery.encSourceOffsite": "externo",
   // Step 3 discover
   "recovery.foundCounts": "Atopáronse {c} contedores e {v} MV.",
   "recovery.foundNone": "Aínda non se atopou nada. Comproba a conexión e o adxunto de arriba. Se esperabas copias aquí, asegúrate de que o teu APP_KEY coincide con estas copias.",
@@ -4089,7 +4068,6 @@ const gl: Partial<Translations> = {
   "restorePage.restoring": "Restaurando {name}",
   "restorePage.emergency": "Emerxencia",
   "restorePage.emergencyWay": "O servidor desapareceu ou foi configurado de novo",
-  "restorePage.emergencyWayHint": "Co APP_KEY do teu kit de recuperación, BombVault le outra vez as túas copias e recupera a súa configuración, contedores, MV e cartafoles en catro pasos.",
   "emergency.title": "Asistente de emerxencia",
   "emergency.access": "Acceso",
   "emergency.selection": "Selección",
@@ -4104,7 +4082,6 @@ const gl: Partial<Translations> = {
   "emergency.settingsIntro": "Recupera a propia configuración de BombVault: destinos, credenciais, planificacións e regras. Os pasos seguintes quedan despois xa cubertos.",
   "emergency.settingsRestore": "Recuperar a configuración",
   "emergency.settingsRestoreSub": "Da autocopia máis recente",
-  "emergency.settingsSkipSub": "Entón anexas ti as túas copias a man no primeiro paso e configuras de novo as planificacións e as regras.",
   "emergency.settingsRestartHint": "Se BombVault non volve por si só, reinicia o contedor en Unraid e recarga esta páxina.",
   "emergency.settingsGo": "Recuperar e continuar",
   "emergency.restarting": "BombVault reiníciase para aplicar a túa configuración. O asistente continúa só despois.",

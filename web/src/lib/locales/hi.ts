@@ -324,7 +324,6 @@ const hi: Partial<Translations> = {
 
   // Settings
   "settings.title": "सेटिंग्स",
-  "settings.encryptionLabel": "पासवर्ड",
   "settings.encryptionOn": "सक्षम (APP_KEY से बना पासवर्ड)",
   "settings.encryptionOff": "अक्षम (कोई पासवर्ड नहीं)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const hi: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "क्या BombVault आपके बैकअप पढ़ सकता है?",
-  "recovery.appKeyExplain": "मौजूदा बैकअप पढ़ने के लिए, इस कंटेनर को पहले जैसा वही APP_KEY चाहिए। यह आपकी रिकवरी किट में है। अगर पहले से नहीं है तो इसे Unraid कंटेनर टेम्पलेट में सेट करें, फिर फिर से जाँचें।",
-  "recovery.appKeyRemedy": "एन्क्रिप्शन कुंजी इन बैकअप से मेल नहीं खाती। कंटेनर टेम्पलेट में मूल APP_KEY (आपकी रिकवरी किट से) सेट करें, फिर फिर से जाँचें।",
-  "recovery.readable": "आपके बैकअप पढ़े जा सकते हैं।",
-  "recovery.readFrom": "यहाँ से पढ़ा गया:",
-  "recovery.notReachable": "आपके बैकअप अभी तक पहुँच योग्य नहीं थे। नीचे स्थान जोड़ें, फिर फिर से जाँचें।",
-  "recovery.recheck": "जाँचें",
   // Step 2
   "recovery.stepConfig": "BombVault की अपनी सेटिंग्स रीस्टोर करें",
   "recovery.configSourceLabel": "सेटिंग्स बैकअप कहाँ है?",
@@ -1862,24 +1854,11 @@ const hi: Partial<Translations> = {
   "recovery.configReload": "अभी फिर से लोड करें",
   "recovery.configSkip": "छोड़ें: मेरे पास सेटिंग्स बैकअप नहीं है",
   // Step 3
-  "recovery.step2": "अपने बैकअप जोड़ें",
   "recovery.cloudCreds": "क्लाउड क्रेडेंशियल्स (वैकल्पिक)",
   "recovery.cloudCredsHint": "इनकी ज़रूरत तभी है जब कोई बैकअप पथ S3, किसी restic REST सर्वर या किसी rclone रिमोट की ओर इशारा करता हो। स्थानीय पथ या माउंट किए गए शेयर को यहाँ कुछ नहीं चाहिए।",
   "recovery.credsSaveHint": "ऑफ़-साइट क्रेडेंशियल्स हर कार्ड के अपने Save बटन से सहेजे जाते हैं। \"Connect & preview\" दबाने से पहले इन्हें सहेजें।",
-  "recovery.encChecking": "जाँच रहे हैं कि आपके बैकअप कैसे एन्क्रिप्ट किए गए हैं…",
   "recovery.encEncrypted": "पता चला: आपके बैकअप एन्क्रिप्टेड हैं। BombVault आपकी APP_KEY से बने पासवर्ड का उपयोग करेगा।",
   "recovery.encPlain": "पता चला: आपके बैकअप में कोई पासवर्ड नहीं है।",
-  "recovery.encAbsent": "इन जगहों पर अभी कोई बैकअप रिपॉज़िटरी नहीं है, इसलिए पता लगाने को कुछ नहीं है। नीचे आपका चुनाव तय करेगा कि यह कैसे बनेगी।",
-  "recovery.encUnknown": "अभी बताया नहीं जा सकता: रिपॉज़िटरी खुल नहीं पाईं, इसलिए उनका एन्क्रिप्शन मोड अज्ञात है। ऊपर की जगह ठीक करके फिर जाँचें, या अगर आप पहले से जानते हैं तो खुद सेट करें।",
-  "recovery.encConflict": "आपकी रिपॉज़िटरी आपस में मेल नहीं खातीं: कुछ एन्क्रिप्टेड हैं, कुछ नहीं। एक ही सेटिंग दोनों को नहीं खोल सकती। जो अलग है उसे किसी नई, खाली जगह पर लगाएँ, या केवल मेल खाते समूह से पुनर्स्थापित करें।",
-  "recovery.encUnconfigured": "अभी कोई बैकअप जगह सेट नहीं है। नीचे पथ भरें, फिर कनेक्ट करें।",
-  "recovery.encDetectHint": "एन्क्रिप्शन पसंद का मामला नहीं है: रिपॉज़िटरी या तो पासवर्ड के साथ (आपकी APP_KEY से बना) या बिना पासवर्ड के बनती है, और उसके बाद यह कभी नहीं बदलता। BombVault सेट की गई रिपॉज़िटरी खोलकर देखता है कि कौन-सा मामला है, ताकि नई मशीन पर पुनर्स्थापना में अंदाज़ा न लगाना पड़े। जिस रिपॉज़िटरी तक पहुँचा न जा सके, उसे अज्ञात बताया जाता है, कभी भी बिना-एन्क्रिप्शन नहीं।",
-  "recovery.encStateEncrypted": "एन्क्रिप्टेड",
-  "recovery.encStatePlain": "कोई पासवर्ड नहीं",
-  "recovery.encStateAbsent": "अभी बनी नहीं",
-  "recovery.encStateUnreachable": "पढ़ी नहीं जा सकी",
-  "recovery.encSourceLocal": "स्थानीय",
-  "recovery.encSourceOffsite": "ऑफ़-साइट",
   // Step 3 discover
   "recovery.foundCounts": "{c} कंटेनर और {v} VM मिले।",
   "recovery.foundNone": "अभी तक कुछ नहीं मिला। ऊपर दिया कनेक्शन और अटैचमेंट जाँचें। अगर आपको यहाँ बैकअप की उम्मीद है, तो सुनिश्चित करें कि आपका APP_KEY इन बैकअप से मेल खाता है।",
@@ -4089,7 +4068,6 @@ const hi: Partial<Translations> = {
   "restorePage.restoring": "{name} रीस्टोर हो रहा है",
   "restorePage.emergency": "आपात",
   "restorePage.emergencyWay": "सर्वर चला गया या दोबारा सेट किया गया",
-  "restorePage.emergencyWayHint": "आपकी रिकवरी किट के APP_KEY से BombVault आपके बैकअप फिर पढ़ता है और अपनी सेटिंग्स, कंटेनर, VM और फ़ोल्डर चार चरणों में वापस लाता है।",
   "emergency.title": "आपातकालीन विज़ार्ड",
   "emergency.access": "एक्सेस",
   "emergency.selection": "चयन",
@@ -4104,7 +4082,6 @@ const hi: Partial<Translations> = {
   "emergency.settingsIntro": "BombVault की अपनी सेटिंग्स वापस लाता है: गंतव्य, क्रेडेंशियल्स, शेड्यूल और नियम। अगले चरण इसके बाद पहले से भरे मिलते हैं।",
   "emergency.settingsRestore": "सेटिंग्स वापस लाएँ",
   "emergency.settingsRestoreSub": "सबसे नए सेल्फ़-बैकअप से",
-  "emergency.settingsSkipSub": "तब आप पहले चरण में अपने बैकअप खुद जोड़ते हैं और शेड्यूल व नियम दोबारा सेट करते हैं।",
   "emergency.settingsRestartHint": "अगर BombVault अपने आप वापस न आए, तो Unraid में कंटेनर को फिर से शुरू करें और यह पेज दोबारा लोड करें।",
   "emergency.settingsGo": "वापस लाएँ और आगे बढ़ें",
   "emergency.restarting": "आपकी सेटिंग्स लागू करने के लिए BombVault फिर से शुरू हो रहा है। इसके बाद विज़ार्ड अपने आप आगे बढ़ता है।",

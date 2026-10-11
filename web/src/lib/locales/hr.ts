@@ -324,7 +324,6 @@ const hr: Partial<Translations> = {
 
   // Settings
   "settings.title": "Postavke",
-  "settings.encryptionLabel": "Lozinka",
   "settings.encryptionOn": "Omogućeno (lozinka izvedena iz APP_KEY)",
   "settings.encryptionOff": "Onemogućeno (bez lozinke)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const hr: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "Može li BombVault pročitati vaše sigurnosne kopije?",
-  "recovery.appKeyExplain": "Za čitanje postojećih sigurnosnih kopija ovom kontejneru treba ISTI APP_KEY koji je koristio prije. Nalazi se u vašem kompletu za oporavak. Postavite ga u Unraid predlošku kontejnera ako još nije postavljen, zatim ponovno provjerite.",
-  "recovery.appKeyRemedy": "Ključ za enkripciju ne odgovara ovim sigurnosnim kopijama. Postavite izvorni APP_KEY (iz vašeg kompleta za oporavak) u predlošku kontejnera, zatim ponovno provjerite.",
-  "recovery.readable": "Vaše sigurnosne kopije su čitljive.",
-  "recovery.readFrom": "Pročitano iz:",
-  "recovery.notReachable": "Vaše sigurnosne kopije još nisu bile dostupne. Dodajte lokaciju ispod, zatim ponovno provjerite.",
-  "recovery.recheck": "Provjeri",
   // Step 2
   "recovery.stepConfig": "Vrati vlastite postavke BombVaulta",
   "recovery.configSourceLabel": "Gdje je sigurnosna kopija postavki?",
@@ -1862,24 +1854,11 @@ const hr: Partial<Translations> = {
   "recovery.configReload": "Ponovno učitaj sada",
   "recovery.configSkip": "Preskoči: nemam sigurnosnu kopiju postavki",
   // Step 3
-  "recovery.step2": "Dodaj svoje sigurnosne kopije",
   "recovery.cloudCreds": "Vjerodajnice u oblaku (neobavezno)",
   "recovery.cloudCredsHint": "Potrebne su samo kada putanja sigurnosne kopije upućuje na S3, poslužitelj restic REST ili udaljeno rclone odredište. Lokalna putanja ili montirani dijeljeni resurs ovdje ne trebaju ništa.",
   "recovery.credsSaveHint": "Izvanmrežne vjerodajnice spremaju se vlastitim gumbom Spremi svake kartice. Spremite ih prije klikanja na „Poveži se i pregledaj”.",
-  "recovery.encChecking": "Provjeravam kako su tvoje sigurnosne kopije šifrirane…",
   "recovery.encEncrypted": "Otkriveno: tvoje sigurnosne kopije su šifrirane. BombVault će koristiti lozinku izvedenu iz tvog APP_KEY-a.",
   "recovery.encPlain": "Otkriveno: tvoje sigurnosne kopije nemaju lozinku.",
-  "recovery.encAbsent": "Na tim lokacijama još ne postoji repozitorij sigurnosnih kopija, pa nema što otkriti. Tvoj izbor ispod odlučuje kako će biti stvoren.",
-  "recovery.encUnknown": "Zasad se ne može utvrditi: repozitoriji se nisu otvorili, pa im je način šifriranja nepoznat. Ispravi lokaciju iznad i provjeri ponovno ili je postavi sam ako je već znaš.",
-  "recovery.encConflict": "Tvoji repozitoriji si proturječe: neki su šifrirani, neki nisu. Jedna postavka ne može otvoriti oboje. Usmjeri onaj koji odskače na novu, praznu lokaciju ili vraćaj samo iz odgovarajućeg skupa.",
-  "recovery.encUnconfigured": "Još nije postavljena nijedna lokacija za sigurnosne kopije. Ispuni putanje ispod pa se poveži.",
-  "recovery.encDetectHint": "Šifriranje nije stvar sklonosti: repozitorij nastaje ili s lozinkom (izvedenom iz tvog APP_KEY-a) ili bez nje, i to se nakon toga nikad ne mijenja. BombVault otvara postavljene repozitorije da vidi koji je slučaj, pa vraćanje na svježem stroju ne traži nagađanje. Nedostupan repozitorij prijavljuje se kao nepoznat, nikad kao nešifriran.",
-  "recovery.encStateEncrypted": "šifrirano",
-  "recovery.encStatePlain": "bez lozinke",
-  "recovery.encStateAbsent": "još nije stvoreno",
-  "recovery.encStateUnreachable": "nije se moglo pročitati",
-  "recovery.encSourceLocal": "lokalno",
-  "recovery.encSourceOffsite": "off-site",
   // Step 3 discover
   "recovery.foundCounts": "Pronađeno je {c} kontejnera i {v} VM-ova.",
   "recovery.foundNone": "Još ništa nije pronađeno. Provjerite gornju vezu i priloge. Ako ste ovdje očekivali sigurnosne kopije, provjerite podudara li se vaš APP_KEY s ovim sigurnosnim kopijama.",
@@ -4089,7 +4068,6 @@ const hr: Partial<Translations> = {
   "restorePage.restoring": "Vraća se {name}",
   "restorePage.emergency": "Hitni slučaj",
   "restorePage.emergencyWay": "Poslužitelj je nestao ili je ponovno postavljen",
-  "restorePage.emergencyWayHint": "S APP_KEY-em iz vašeg kompleta za oporavak BombVault ponovno čita vaše sigurnosne kopije i u četiri koraka vraća svoje postavke, kontejnere, VM-ove i mape.",
   "emergency.title": "Čarobnjak za hitne slučajeve",
   "emergency.access": "Pristup",
   "emergency.selection": "Odabir",
@@ -4104,7 +4082,6 @@ const hr: Partial<Translations> = {
   "emergency.settingsIntro": "Vraća BombVaultove vlastite postavke: odredišta, pristupne podatke, rasporede i pravila. Sljedeći su koraci nakon toga već popunjeni.",
   "emergency.settingsRestore": "Vrati postavke",
   "emergency.settingsRestoreSub": "Iz najnovije samostalne sigurnosne kopije",
-  "emergency.settingsSkipSub": "Tada u prvom koraku ručno povezujete svoje sigurnosne kopije te ponovno postavljate rasporede i pravila.",
   "emergency.settingsRestartHint": "Ako se BombVault sam ne vrati, ponovno pokrenite kontejner u Unraidu i ponovno učitajte ovu stranicu.",
   "emergency.settingsGo": "Vrati i nastavi",
   "emergency.restarting": "BombVault se ponovno pokreće kako bi primijenio vaše postavke. Čarobnjak nakon toga nastavlja sam.",

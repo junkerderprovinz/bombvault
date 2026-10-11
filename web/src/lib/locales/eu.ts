@@ -324,7 +324,6 @@ const eu: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ezarpenak",
-  "settings.encryptionLabel": "Pasahitza",
   "settings.encryptionOn": "Gaituta (APP_KEY-tik eratorritako pasahitza)",
   "settings.encryptionOff": "Desgaituta (pasahitzik gabe)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const eu: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "BombVaultek zure babeskopiak irakur ditzake?",
-  "recovery.appKeyExplain": "Dauden babeskopiak irakurtzeko, edukiontzi honek lehen erabili zuen APP_KEY BERA behar du. Zure berreskuratze-kitan dago. Ezarri Unraid edukiontziaren txantiloian jada ez badago, eta egiaztatu berriz.",
-  "recovery.appKeyRemedy": "Zifratze-gakoa ez dator bat babeskopia hauekin. Ezarri jatorrizko APP_KEY-a (zure berreskuratze-kitatik) edukiontziaren txantiloian, eta egiaztatu berriz.",
-  "recovery.readable": "Zure babeskopiak irakurgarriak dira.",
-  "recovery.readFrom": "Hemendik irakurria:",
-  "recovery.notReachable": "Zure babeskopiak oraindik ez zeuden eskuragarri. Erantsi beheko kokapena, eta egiaztatu berriz.",
-  "recovery.recheck": "Egiaztatu",
   // Step 2
   "recovery.stepConfig": "Berrezarri BombVaulten bere ezarpenak",
   "recovery.configSourceLabel": "Non dago ezarpenen babeskopia?",
@@ -1862,24 +1854,11 @@ const eu: Partial<Translations> = {
   "recovery.configReload": "Berriz kargatu orain",
   "recovery.configSkip": "Saltatu: ez dut ezarpen-babeskopiarik",
   // Step 3
-  "recovery.step2": "Erantsi zure babeskopiak",
   "recovery.cloudCreds": "Hodeiko kredentzialak (aukerakoa)",
   "recovery.cloudCredsHint": "Babeskopiaren bide batek S3, restic REST zerbitzari bat edo rclone urruneko bat seinalatzen duenean bakarrik behar dira. Bide lokal batek edo muntatutako partekatze batek ez du ezer behar hemen.",
   "recovery.credsSaveHint": "Kanpoko kredentzialak txartel bakoitzaren bere Gorde botoiarekin gordetzen dira. Gorde itzazu «Konektatu eta aurreikusi» klikatu aurretik.",
-  "recovery.encChecking": "Zure babeskopiak nola zifratuta dauden egiaztatzen…",
   "recovery.encEncrypted": "Antzemanda: zure babeskopiak zifratuta daude. BombVault-ek zure APP_KEY-tik eratorritako pasahitza erabiliko du.",
   "recovery.encPlain": "Antzemanda: zure babeskopiek ez dute pasahitzik.",
-  "recovery.encAbsent": "Kokaleku hauetan ez dago oraindik babeskopia-biltegirik, beraz ez dago zer antzemanik. Beheko zure aukerak erabakiko du nola sortuko den.",
-  "recovery.encUnknown": "Oraindik ezin da jakin: biltegiak ezin izan dira ireki, beraz haien zifratze-modua ezezaguna da. Zuzendu goiko kokalekua eta egiaztatu berriro, edo ezarri zeuk dagoeneko badakizu.",
-  "recovery.encConflict": "Zure biltegiak elkarren kontra doaz: batzuk zifratuta daude, beste batzuk ez. Ezarpen bakar batek ezin ditu biak ireki. Bideratu bat datorren ez dena kokaleku huts berri batera, edo berreskuratu bat datorren multzotik soilik.",
-  "recovery.encUnconfigured": "Ez dago oraindik babeskopia-kokalekurik ezarrita. Bete beheko bideak eta gero konektatu.",
-  "recovery.encDetectHint": "Zifratzea ez da lehentasun kontua: biltegi bat pasahitzarekin (zure APP_KEY-tik eratorria) edo gabe sortzen da, eta hori ez da inoiz gehiago aldatzen. BombVault-ek ezarritako biltegiak irekitzen ditu zein den ikusteko, hala makina berri batean berreskuratzeak ez du asmatzerik eskatzen. Iritsi ezin den biltegi bat ezezagun gisa jakinarazten da, inoiz ez zifratu gabe gisa.",
-  "recovery.encStateEncrypted": "zifratuta",
-  "recovery.encStatePlain": "pasahitzik gabe",
-  "recovery.encStateAbsent": "oraindik sortu gabe",
-  "recovery.encStateUnreachable": "ezin izan da irakurri",
-  "recovery.encSourceLocal": "lokala",
-  "recovery.encSourceOffsite": "off-site",
   // Step 3 discover
   "recovery.foundCounts": "{c} edukiontzi eta {v} MB aurkitu dira.",
   "recovery.foundNone": "Oraindik ez da ezer aurkitu. Egiaztatu goiko konexioa eta eranspena. Hemen babeskopiarik espero baduzu, ziurtatu zure APP_KEY babeskopia hauekin bat datorrela.",
@@ -4089,7 +4068,6 @@ const eu: Partial<Translations> = {
   "restorePage.restoring": "{name} berrezartzen",
   "restorePage.emergency": "Larrialdia",
   "restorePage.emergencyWay": "Zerbitzaria galdu da edo berriz konfiguratu da",
-  "restorePage.emergencyWayHint": "Zure berreskuratze-kiteko APP_KEY-rekin, BombVaultek zure babeskopiak berriz irakurtzen ditu eta bere ezarpenak, edukiontziak, MBak eta karpetak ekartzen ditu atzera lau urratsetan.",
   "emergency.title": "Larrialdi-morroia",
   "emergency.access": "Sarbidea",
   "emergency.selection": "Hautapena",
@@ -4104,7 +4082,6 @@ const eu: Partial<Translations> = {
   "emergency.settingsIntro": "BombVaulten ezarpenak berak ekartzen ditu atzera: helmugak, kredentzialak, egutegiak eta arauak. Hurrengo urratsak gero beteta daude jada.",
   "emergency.settingsRestore": "Ekarri ezarpenak atzera",
   "emergency.settingsRestoreSub": "Autobabeskopia berrienetik",
-  "emergency.settingsSkipSub": "Orduan zure babeskopiak eskuz lotzen dituzu lehen urratsean eta egutegiak eta arauak berriz ezartzen dituzu.",
   "emergency.settingsRestartHint": "BombVault bere kabuz itzultzen ez bada, berrabiarazi edukiontzia Unraiden eta birkargatu orri hau.",
   "emergency.settingsGo": "Ekarri atzera eta jarraitu",
   "emergency.restarting": "BombVault berrabiarazten ari da zure ezarpenak aplikatzeko. Laguntzaileak bere kasa jarraitzen du gero.",

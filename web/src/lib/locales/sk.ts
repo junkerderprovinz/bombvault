@@ -324,7 +324,6 @@ const sk: Partial<Translations> = {
 
   // Settings
   "settings.title": "Nastavenia",
-  "settings.encryptionLabel": "Heslo",
   "settings.encryptionOn": "Zapnuté (heslo odvodené z APP_KEY)",
   "settings.encryptionOff": "Vypnuté (bez hesla)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const sk: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "Dokáže BombVault prečítať vaše zálohy?",
-  "recovery.appKeyExplain": "Na čítanie existujúcich záloh tento kontajner potrebuje ROVNAKÝ APP_KEY, aký sa používal predtým. Je vo vašej súprave na obnovenie. Nastavte ho v šablóne kontajnera Unraid, ak ešte nie je nastavený, potom znova skontrolujte.",
-  "recovery.appKeyRemedy": "Šifrovací kľúč sa nezhoduje s týmito zálohami. Nastavte pôvodný APP_KEY (zo súpravy na obnovenie) v šablóne kontajnera, potom znova skontrolujte.",
-  "recovery.readable": "Vaše zálohy sú čitateľné.",
-  "recovery.readFrom": "Načítané z:",
-  "recovery.notReachable": "Vaše zálohy zatiaľ neboli dostupné. Pripojte umiestnenie nižšie, potom znova skontrolujte.",
-  "recovery.recheck": "Skontrolovať",
   // Step 2
   "recovery.stepConfig": "Obnoviť vlastné nastavenia BombVault",
   "recovery.configSourceLabel": "Kde je záloha nastavení?",
@@ -1862,24 +1854,11 @@ const sk: Partial<Translations> = {
   "recovery.configReload": "Znova načítať teraz",
   "recovery.configSkip": "Preskočiť: nemám zálohu nastavení",
   // Step 3
-  "recovery.step2": "Pripojiť svoje zálohy",
   "recovery.cloudCreds": "Poverenia pre cloud (voliteľné)",
   "recovery.cloudCredsHint": "Potrebné len vtedy, keď cesta zálohy smeruje na S3, server restic REST alebo vzdialené úložisko rclone. Miestna cesta ani pripojené zdieľanie tu nič nepotrebujú.",
   "recovery.credsSaveHint": "Externé poverenia sa ukladajú vlastným tlačidlom Uložiť na každej karte. Uložte ich pred kliknutím na „Pripojiť a zobraziť náhľad“.",
-  "recovery.encChecking": "Zisťujem, ako sú tvoje zálohy zašifrované…",
   "recovery.encEncrypted": "Zistené: tvoje zálohy sú zašifrované. BombVault použije heslo odvodené z tvojho APP_KEY.",
   "recovery.encPlain": "Zistené: tvoje zálohy nemajú heslo.",
-  "recovery.encAbsent": "Na týchto miestach zatiaľ nie je žiadny repozitár záloh, takže nie je čo zisťovať, tvoja voľba nižšie rozhodne, ako sa vytvorí.",
-  "recovery.encUnknown": "Zatiaľ sa to nedá určiť: repozitáre sa nepodarilo otvoriť, takže ich režim šifrovania je neznámy. Oprav umiestnenie vyššie a skontroluj to znova, alebo ho nastav sám, ak ho už poznáš.",
-  "recovery.encConflict": "Tvoje repozitáre si odporujú: niektoré sú zašifrované, iné nie. Jedno nastavenie nemôže otvoriť oboje. Nasmeruj ten vybočujúci na nové prázdne miesto, alebo obnovuj len z odpovedajúcej sady.",
-  "recovery.encUnconfigured": "Zatiaľ nie je nastavené žiadne umiestnenie záloh. Vyplň cesty nižšie a potom sa pripoj.",
-  "recovery.encDetectHint": "Šifrovanie nie je otázka preferencie: repozitár vznikne buď s heslom (odvodeným z tvojho APP_KEY), alebo bez neho, a to sa už nikdy nezmení. BombVault nastavené repozitáre otvorí, aby zistil, ktorý prípad nastal, takže obnova na čerstvom stroji nevyžaduje hádanie. Nedosiahnuteľný repozitár sa hlási ako neznámy, nikdy ako nešifrovaný.",
-  "recovery.encStateEncrypted": "zašifrované",
-  "recovery.encStatePlain": "bez hesla",
-  "recovery.encStateAbsent": "zatiaľ nevytvorené",
-  "recovery.encStateUnreachable": "nepodarilo sa prečítať",
-  "recovery.encSourceLocal": "miestne",
-  "recovery.encSourceOffsite": "off-site",
   // Step 3 discover
   "recovery.foundCounts": "Nájdených {c} kontajnerov a {v} VM.",
   "recovery.foundNone": "Zatiaľ nič nenájdené. Skontrolujte pripojenie a prílohy vyššie. Ak ste tu očakávali zálohy, uistite sa, že váš APP_KEY sa zhoduje s týmito zálohami.",
@@ -4089,7 +4068,6 @@ const sk: Partial<Translations> = {
   "restorePage.restoring": "Obnovuje sa {name}",
   "restorePage.emergency": "Núdzová obnova",
   "restorePage.emergencyWay": "Server zmizol alebo bol nastavený odznova",
-  "restorePage.emergencyWayHint": "S APP_KEY zo súpravy na obnovenie BombVault znova číta tvoje zálohy a v štyroch krokoch vráti svoje nastavenia, kontajnery, VM a priečinky.",
   "emergency.title": "Núdzový sprievodca",
   "emergency.access": "Prístup",
   "emergency.selection": "Výber",
@@ -4104,7 +4082,6 @@ const sk: Partial<Translations> = {
   "emergency.settingsIntro": "Vráti vlastné nastavenia BombVaultu: ciele, prihlasovacie údaje, plány a pravidlá. Ďalšie kroky sú potom už vyplnené.",
   "emergency.settingsRestore": "Vrátiť nastavenia",
   "emergency.settingsRestoreSub": "Z najnovšej vlastnej zálohy",
-  "emergency.settingsSkipSub": "Zálohy potom pripojíš ručne v prvom kroku a plány a pravidlá nastavíš znova.",
   "emergency.settingsRestartHint": "Ak sa BombVault sám nevráti, reštartuj kontajner v Unraide a znova načítaj túto stránku.",
   "emergency.settingsGo": "Vrátiť a pokračovať",
   "emergency.restarting": "BombVault sa reštartuje, aby použil tvoje nastavenia. Sprievodca potom pokračuje sám.",

@@ -324,7 +324,6 @@ const ca: Partial<Translations> = {
 
   // Settings
   "settings.title": "Configuració",
-  "settings.encryptionLabel": "Contrasenya",
   "settings.encryptionOn": "Activat (contrasenya derivada de APP_KEY)",
   "settings.encryptionOff": "Desactivat (sense contrasenya)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const ca: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "Pot BombVault llegir les teves còpies?",
-  "recovery.appKeyExplain": "Per llegir còpies existents, aquest contenidor necessita la MATEIXA APP_KEY que feia servir abans. És al teu kit de recuperació. Configura-la a la plantilla del contenidor Unraid si encara no ho està, i torna a comprovar.",
-  "recovery.appKeyRemedy": "La clau de xifratge no coincideix amb aquestes còpies. Configura la APP_KEY original (del teu kit de recuperació) a la plantilla del contenidor, i torna a comprovar.",
-  "recovery.readable": "Les teves còpies són llegibles.",
-  "recovery.readFrom": "Llegit de:",
-  "recovery.notReachable": "Les teves còpies encara no eren accessibles. Adjunta la ubicació de sota, i torna a comprovar.",
-  "recovery.recheck": "Comprova",
   // Step 2
   "recovery.stepConfig": "Restaura la configuració pròpia de BombVault",
   "recovery.configSourceLabel": "On és la còpia de configuració?",
@@ -1862,24 +1854,11 @@ const ca: Partial<Translations> = {
   "recovery.configReload": "Recarrega ara",
   "recovery.configSkip": "Salta, no tinc cap còpia de configuració",
   // Step 3
-  "recovery.step2": "Adjunta les teves còpies",
   "recovery.cloudCreds": "Credencials de núvol (opcional)",
   "recovery.cloudCredsHint": "Només calen quan una ruta de còpia apunta a S3, a un servidor restic REST o a un remot d'rclone. Una ruta local o un recurs compartit muntat no necessiten res aquí.",
   "recovery.credsSaveHint": "Les credencials externes es desen amb el botó Desa propi de cada targeta. Desa-les abans de fer clic a «Connecta i previsualitza».",
-  "recovery.encChecking": "Comprovant com estan xifrades les teves còpies de seguretat…",
   "recovery.encEncrypted": "Detectat: les teves còpies estan xifrades. BombVault farà servir la contrasenya derivada de la teva APP_KEY.",
   "recovery.encPlain": "Detectat: les teves còpies no tenen contrasenya.",
-  "recovery.encAbsent": "Encara no hi ha cap repositori de còpies en aquestes ubicacions, així que no hi ha res a detectar: la teva tria de sota decideix com es crearà.",
-  "recovery.encUnknown": "Encara no es pot saber: els repositoris no s'han pogut obrir, així que el seu mode de xifratge és desconegut. Corregeix la ubicació de dalt i torna a comprovar-ho, o configura'l tu mateix si ja el saps.",
-  "recovery.encConflict": "Els teus repositoris es contradiuen: alguns estan xifrats i d'altres no. Un sol paràmetre no pot obrir tots dos: apunta el que desentona cap a una ubicació nova i buida, o restaura només del conjunt que coincideix.",
-  "recovery.encUnconfigured": "Encara no hi ha cap ubicació de còpies configurada: omple els camins de sota i després connecta't.",
-  "recovery.encDetectHint": "El xifratge no és una preferència: un repositori es crea amb contrasenya (derivada de la teva APP_KEY) o sense, i això ja no canvia mai més. BombVault obre els repositoris configurats per veure quin cas és, de manera que restaurar en una màquina nova no requereixi endevinar res. Un repositori inabastable es reporta com a desconegut, mai com a no xifrat.",
-  "recovery.encStateEncrypted": "xifrat",
-  "recovery.encStatePlain": "sense contrasenya",
-  "recovery.encStateAbsent": "encara no creat",
-  "recovery.encStateUnreachable": "no s'ha pogut llegir",
-  "recovery.encSourceLocal": "local",
-  "recovery.encSourceOffsite": "extern",
   // Step 3 discover
   "recovery.foundCounts": "S'ha trobat {c} contenidors i {v} MV.",
   "recovery.foundNone": "Encara no s'ha trobat res. Comprova la connexió i l'adjunt de dalt. Si esperaves còpies aquí, assegura't que la teva APP_KEY coincideix amb aquestes còpies.",
@@ -4089,7 +4068,6 @@ const ca: Partial<Translations> = {
   "restorePage.restoring": "Restaurant {name}",
   "restorePage.emergency": "Emergència",
   "restorePage.emergencyWay": "El servidor ha desaparegut o s'ha tornat a configurar",
-  "restorePage.emergencyWayHint": "Amb l'APP_KEY del teu kit de recuperació, BombVault torna a llegir les teves còpies i recupera la seva configuració, contenidors, MV i carpetes en quatre passos.",
   "emergency.title": "Assistent d'emergència",
   "emergency.access": "Accés",
   "emergency.selection": "Selecció",
@@ -4104,7 +4082,6 @@ const ca: Partial<Translations> = {
   "emergency.settingsIntro": "Recupera la configuració pròpia de BombVault: destinacions, credencials, planificacions i regles. Els passos següents queden ja emplenats.",
   "emergency.settingsRestore": "Recupera la configuració",
   "emergency.settingsRestoreSub": "De l'autocòpia més recent",
-  "emergency.settingsSkipSub": "Llavors connectes les teves còpies a mà al primer pas i tornes a configurar planificacions i regles.",
   "emergency.settingsRestartHint": "Si BombVault no torna per si sol, reinicia el contenidor a Unraid i recarrega aquesta pàgina.",
   "emergency.settingsGo": "Recupera i continua",
   "emergency.restarting": "BombVault es reinicia per aplicar la teva configuració. Després l'assistent continua per si sol.",

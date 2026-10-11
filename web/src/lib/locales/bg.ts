@@ -324,7 +324,6 @@ const bg: Partial<Translations> = {
 
   // Settings
   "settings.title": "Настройки",
-  "settings.encryptionLabel": "Парола",
   "settings.encryptionOn": "Активирано (парола, извлечена от APP_KEY)",
   "settings.encryptionOff": "Деактивирано (без парола)",
   "settings.encryptionPasswordWhere":
@@ -1844,13 +1843,6 @@ const bg: Partial<Translations> = {
 
   // Guided Recovery tab
   // Step 1
-  "recovery.step1": "Може ли BombVault да прочете архивиранията ти?",
-  "recovery.appKeyExplain": "За да прочете съществуващи архивирания, този контейнер се нуждае от СЪЩИЯ APP_KEY, който е използвал преди — той е в твоя комплект за възстановяване. Задай го в шаблона на Unraid контейнера, ако вече не е зададен, после провери отново.",
-  "recovery.appKeyRemedy": "Ключът за криптиране не съвпада с тези архивирания. Задай оригиналния APP_KEY (от комплекта ти за възстановяване) в шаблона на контейнера, после провери отново.",
-  "recovery.readable": "Архивиранията ти са четими.",
-  "recovery.readFrom": "Прочетено от:",
-  "recovery.notReachable": "Архивиранията ти все още не бяха достъпни — прикачи местоположението по-долу, после провери отново.",
-  "recovery.recheck": "Провери",
   // Step 2
   "recovery.stepConfig": "Възстанови собствените настройки на BombVault",
   "recovery.configSourceLabel": "Къде е архивирането на настройките?",
@@ -1862,24 +1854,11 @@ const bg: Partial<Translations> = {
   "recovery.configReload": "Презареди сега",
   "recovery.configSkip": "Пропусни — нямам архивиране на настройки",
   // Step 3
-  "recovery.step2": "Прикачи архивиранията си",
   "recovery.cloudCreds": "Данни за облака (по избор)",
   "recovery.cloudCredsHint": "Нужни са само когато път за резервно копие сочи към S3, сървър restic REST или отдалечено rclone хранилище. Локален път или монтирана споделена папка не изискват нищо тук.",
   "recovery.credsSaveHint": "Данните за достъп извън обекта се запазват със собствения бутон Запази на всяка карта — запази ги преди да натиснеш „Свържи и прегледай“.",
-  "recovery.encChecking": "Проверявам как са криптирани резервните ти копия…",
   "recovery.encEncrypted": "Открито: резервните ти копия са криптирани. BombVault ще използва паролата, изведена от твоя APP_KEY.",
   "recovery.encPlain": "Открито: резервните ти копия нямат парола.",
-  "recovery.encAbsent": "На тези места още няма хранилище за резервни копия, така че няма какво да се открие — изборът ти по-долу решава как ще бъде създадено.",
-  "recovery.encUnknown": "Още не може да се определи: хранилищата не се отвориха, затова режимът им на криптиране е неизвестен. Поправи мястото по-горе и провери отново или го задай сам, ако вече го знаеш.",
-  "recovery.encConflict": "Хранилищата ти си противоречат: някои са криптирани, други не. Една настройка не може да отвори и двете — насочи изключението към ново, празно място или възстанови само от съвпадащия набор.",
-  "recovery.encUnconfigured": "Още няма зададено място за резервни копия — попълни пътищата по-долу и след това се свържи.",
-  "recovery.encDetectHint": "Криптирането не е предпочитание: хранилището се създава или с парола (изведена от твоя APP_KEY), или без, и това вече никога не се променя. BombVault отваря зададените хранилища, за да види кой е случаят, така че възстановяването на нова машина не изисква гадаене. Недостъпно хранилище се докладва като неизвестно, никога като некриптирано.",
-  "recovery.encStateEncrypted": "криптирано",
-  "recovery.encStatePlain": "без парола",
-  "recovery.encStateAbsent": "още не е създадено",
-  "recovery.encStateUnreachable": "не можа да се прочете",
-  "recovery.encSourceLocal": "локално",
-  "recovery.encSourceOffsite": "off-site",
   // Step 3 discover
   "recovery.foundCounts": "Открити са {c} контейнера и {v} ВМ.",
   "recovery.foundNone": "Все още нищо не е открито — провери връзката и прикачването по-горе. Ако очакваш архивирания тук, увери се, че твоят APP_KEY съвпада с тези архивирания.",
@@ -4089,7 +4068,6 @@ const bg: Partial<Translations> = {
   "restorePage.restoring": "{name} се възстановява",
   "restorePage.emergency": "Авария",
   "restorePage.emergencyWay": "Сървърът го няма или е настроен наново",
-  "restorePage.emergencyWayHint": "С APP_KEY от комплекта за възстановяване BombVault отново чете архивиранията ти и връща настройките, контейнерите, ВМ и папките си в четири стъпки.",
   "emergency.title": "Помощник при авария",
   "emergency.access": "Достъп",
   "emergency.selection": "Избор",
@@ -4104,7 +4082,6 @@ const bg: Partial<Translations> = {
   "emergency.settingsIntro": "Връща собствените настройки на BombVault: дестинации, данни за достъп, графици и правила. Следващите стъпки после са вече попълнени.",
   "emergency.settingsRestore": "Върни настройките",
   "emergency.settingsRestoreSub": "От най-новия самобекъп",
-  "emergency.settingsSkipSub": "Тогава сам свързваш архивиранията си в първата стъпка и наново настройваш графици и правила.",
   "emergency.settingsRestartHint": "Ако BombVault не се върне сам, рестартирай контейнера в Unraid и презареди тази страница.",
   "emergency.settingsGo": "Върни и продължи",
   "emergency.restarting": "BombVault се рестартира, за да приложи настройките ти. Помощникът продължава сам след това.",
