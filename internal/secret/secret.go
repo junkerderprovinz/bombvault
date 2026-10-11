@@ -101,6 +101,14 @@ func NewSessionToken(appKey, passwordHash, epoch string, ttl time.Duration) stri
 	return expiry + "." + sig
 }
 
+// KeyCheck returns a value that names an APP_KEY without giving it away. A
+// settings database carries the one of the key it was sealed with, so that a
+// server can tell its own settings from another's even when nothing in them
+// is sealed. It panics on a non-hex appKey.
+func KeyCheck(appKey string) string {
+	return hmacHex(appKey, "bombvault:key-check")
+}
+
 // pairedPrefix marks the session a paired phone is given for holding the
 // group's words. Nobody typed the password for it.
 const pairedPrefix = "paired."

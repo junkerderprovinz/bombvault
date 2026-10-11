@@ -295,6 +295,9 @@ func run() error {
 	if err := svc.ConvertLegacyAppKeys(); err != nil {
 		log.Printf("group: converting stored APP_KEYs to restic passwords: %v", err)
 	}
+	if err := svc.RecordKeyCheck(); err != nil {
+		log.Printf("main: recording the check value of APP_KEY: %v", err)
+	}
 	svc.StartGroup()
 	defer svc.StopGroup()
 	// Detect (or honor cfg.PlatformOverride, i.e. the PLATFORM env var) which

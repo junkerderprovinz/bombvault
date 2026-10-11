@@ -2936,6 +2936,17 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
 );`,
 	},
 	{
+		// What names the APP_KEY this database was last run with, by which a
+		// settings restore tells whose settings it has in front of it.
+		version:          depositProofMigration + 1,
+		name:             "key_check",
+		alreadySatisfied: tablePresent("key_check"),
+		sql: `CREATE TABLE IF NOT EXISTS key_check (
+  id    INTEGER PRIMARY KEY CHECK (id = 1),
+  value TEXT    NOT NULL
+);`,
+	},
+	{
 		// The key of another install's backups, sealed under this install's
 		// own. Without a row the install backs up under its own key.
 		version:          keyRolesMigration,
@@ -3133,7 +3144,7 @@ const declinedMigration = 335
 const oneLineMigration = 336
 
 // depositProofMigration numbers the key an install proves its deposits with,
-// 337.
+// 337, and the check value of the APP_KEY, 338.
 const depositProofMigration = 337
 
 // keyHardeningMigration numbers what was added to the tables of

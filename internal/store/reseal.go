@@ -3,6 +3,8 @@ package store
 import (
 	"database/sql"
 	"encoding/base64"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -325,4 +327,51 @@ func (r *Repo) carryPasskeysInto(dst *sql.DB) error {
 		}
 	}
 	return nil
+}
+
+// SetKeyCheck records the check value of the APP_KEY this database runs with.
+func (r *Repo) SetKeyCheck(value string) error {
+	_, err := r.db.Exec(`INSERT INTO key_check (id, value) VALUES (1, ?) ON CONFLICT (id) DO UPDATE SET value = excluded.value`, value)
+	if err != nil {
+		return fmt.Errorf("SetKeyCheck: %w", err)
+	}
+	return nil
+}
+
+// KeyCheckIn returns the check value db carries, empty for a database from
+// before there was one.
+func KeyCheckIn(db *sql.DB) (string, error) {
+	cols, err := tableColumns(db, "key_check")
+	if err != nil || len(cols) == 0 {
+		return "", err
+	}
+	var value string
+	err = db.QueryRow(`SELECT value FROM key_check WHERE id = 1`).Scan(&value)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("KeyCheckIn: %w", err)
+	}
+	return value, nil
+}
+
+// SecondFactorSealIn returns the sealed second factor of the login in db, nil
+// when it has none. ResealDatabase leaves it out, since a restore of another
+// install's settings replaces the login, but it says whose settings db holds
+// like every other sealed value.
+func SecondFactorSealIn(db *sql.DB) ([]byte, error) {
+	cols, err := tableColumns(db, "settings")
+	if err != nil || !slices.Contains(cols, "totp_secret") {
+		return nil, err
+	}
+	var stored string
+	if err := db.QueryRow(`SELECT totp_secret FROM settings WHERE id = 1`).Scan(&stored); err != nil {
+		return nil, fmt.Errorf("SecondFactorSealIn: %w", err)
+	}
+	sealed, err := hex.DecodeString(stored)
+	if err != nil {
+		return nil, nil //nolint:nilerr // text that is no hex was never sealed
+	}
+	return sealed, nil
 }
