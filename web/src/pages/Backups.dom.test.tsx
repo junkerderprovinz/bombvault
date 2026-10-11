@@ -901,6 +901,29 @@ describe("picking rows", () => {
     }
   });
 
+  it("lays the mark of a row on its glyph tile until something is picked, then sets it before the tile", async () => {
+    await renderPage();
+    const tile = () => row("plex").querySelector(".glim-row-glyph")!;
+    const mark = () => within(row("plex")).getByRole("checkbox", { name: "Select plex" });
+    expect(tile().contains(mark())).toBe(true);
+
+    await click(mark());
+    expect(picked()).toEqual(["plex"]);
+    expect(tile().contains(mark())).toBe(false);
+    expect(mark().compareDocumentPosition(tile()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("draws the mark as a disc that no shape squares off, and never as a form field", async () => {
+    await renderPage();
+    await click(row("plex"), { ctrlKey: true });
+    const marks = screen.getAllByRole("checkbox");
+    expect(marks.length).toBeGreaterThan(1);
+    for (const mark of marks) {
+      expect(mark.tagName).toBe("BUTTON");
+      expect(mark.firstElementChild!.className).toContain("rounded-full");
+    }
+  });
+
   it("has no mark for BombVault's own container", async () => {
     await renderPage();
     expect(within(screen.getByTestId("backup-self-row")).queryByRole("checkbox")).toBeNull();

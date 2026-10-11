@@ -3353,8 +3353,6 @@ const zh: Partial<Translations> = {
   "anomaly.changes.none": "两个备份包含相同的文件。",
   "anomaly.changes.focus": "几乎全部位于 {path}。",
   "anomaly.changes.regenerable": "这个文件夹看起来是搜索索引、缓存或缩略图，应用会自行重建。如果是这样，就没有丢失任何东西；排除这个文件夹后，此类重建将不再进入你的备份和这些发现。",
-  "anomaly.changes.removed": "删除 {size}",
-  "anomaly.changes.added": "新增 {size}",
   "anomaly.changes.rest": "其余全部",
   "anomaly.detail.lastSeen": "最近发现",
   "anomaly.detail.median": "中位数",

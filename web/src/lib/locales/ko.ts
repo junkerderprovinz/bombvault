@@ -3353,8 +3353,6 @@ const ko: Partial<Translations> = {
   "anomaly.changes.none": "두 백업에 같은 파일이 있습니다.",
   "anomaly.changes.focus": "거의 전부가 {path}에 있습니다.",
   "anomaly.changes.regenerable": "이 폴더는 검색 인덱스, 캐시 또는 미리보기 이미지처럼 보이며, 앱이 스스로 다시 만듭니다. 그렇다면 잃은 것은 없고, 폴더를 제외하면 이런 재생성이 백업과 이 탐지에 들어오지 않습니다.",
-  "anomaly.changes.removed": "{size} 삭제",
-  "anomaly.changes.added": "{size} 추가",
   "anomaly.changes.rest": "나머지 전부",
   "anomaly.detail.lastSeen": "마지막 발견",
   "anomaly.detail.median": "중앙값",

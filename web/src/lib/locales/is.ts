@@ -3370,8 +3370,6 @@ const is: Partial<Translations> = {
   "anomaly.changes.none": "Bæði afritin geyma sömu skrár.",
   "anomaly.changes.focus": "Nánast allt er í {path}.",
   "anomaly.changes.regenerable": "Mappan lítur út eins og leitarvísir, skyndiminni eða smámyndir sem forrit byggir sjálft upp aftur. Ef svo er tapaðist ekkert, og ef þú undanskilur möppuna haldast slíkar endurbyggingar utan afritanna og utan þessara niðurstaðna.",
-  "anomaly.changes.removed": "{size} fjarlægt",
-  "anomaly.changes.added": "{size} bætt við",
   "anomaly.changes.rest": "Allt annað",
   "anomaly.detail.lastSeen": "Síðast séð",
   "anomaly.detail.median": "Miðgildi",

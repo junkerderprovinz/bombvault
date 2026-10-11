@@ -27,6 +27,7 @@ import { isolateLtr } from "../../lib/ltrFragments";
 import { formatMillis, formatTs } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { Rows, SettingRow } from "../storage/rows";
 import { SeriesCurve } from "./SeriesCurve";
 
 function typicalSize(t: TranslateAnomaly, sourceBytes: number, resticMs: number): string {
@@ -127,15 +128,15 @@ export function ItemMonitoring({
 
   return (
     <div className="flex flex-col gap-4">
-      <ItemAnomalySettings item={item} enabled={enabled} globals={globals} t={t} />
-
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
-        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-carbon-text">
-          {t("anomaly.learn.title")}
-          <InfoBubble tip={t("anomaly.learningHint").replace("{needed}", item.learning.needed.toLocaleString())} />
-        </span>
-        <LearningState t={t} item={item} />
-      </div>
+      <Rows>
+        <ItemAnomalySettings item={item} enabled={enabled} globals={globals} bare t={t} />
+        <SettingRow
+          label={t("anomaly.learn.title")}
+          hint={t("anomaly.learningHint").replace("{needed}", item.learning.needed.toLocaleString())}
+        >
+          <LearningState t={t} item={item} />
+        </SettingRow>
+      </Rows>
 
       <SeriesCurve targetId={item.targetId} finding={finding} t={t} />
 

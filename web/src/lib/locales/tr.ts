@@ -3362,8 +3362,6 @@ const tr: Partial<Translations> = {
   "anomaly.changes.none": "İki yedek de aynı dosyaları içeriyor.",
   "anomaly.changes.focus": "Neredeyse hepsi {path} içinde.",
   "anomaly.changes.regenerable": "Bu klasör bir arama dizini, önbellek ya da küçük resimlere benziyor; bunları uygulama kendisi yeniden oluşturur. Öyleyse hiçbir şey kaybolmadı ve klasörü hariç tutmak bu tür yeniden oluşturmaları yedeklerinizin ve bu bulguların dışında tutar.",
-  "anomaly.changes.removed": "{size} silindi",
-  "anomaly.changes.added": "{size} eklendi",
   "anomaly.changes.rest": "Geri kalan her şey",
   "anomaly.detail.lastSeen": "Son görülme",
   "anomaly.detail.median": "Ortanca",

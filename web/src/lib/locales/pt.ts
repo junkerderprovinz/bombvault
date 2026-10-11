@@ -3362,8 +3362,6 @@ const pt: Partial<Translations> = {
   "anomaly.changes.none": "Os dois backups têm os mesmos ficheiros.",
   "anomaly.changes.focus": "Quase tudo está em {path}.",
   "anomaly.changes.regenerable": "Essa pasta parece um índice de pesquisa, uma cache ou miniaturas, que uma aplicação reconstrói sozinha. Se for o caso, nada se perdeu, e excluir a pasta mantém essas reconstruções fora dos seus backups e destas deteções.",
-  "anomaly.changes.removed": "{size} removidos",
-  "anomaly.changes.added": "{size} adicionados",
   "anomaly.changes.rest": "Todo o resto",
   "anomaly.detail.lastSeen": "Vista pela última vez",
   "anomaly.detail.median": "Mediana",

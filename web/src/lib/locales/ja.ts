@@ -3353,8 +3353,6 @@ const ja: Partial<Translations> = {
   "anomaly.changes.none": "両方のバックアップに同じファイルがあります。",
   "anomaly.changes.focus": "ほぼすべてが {path} にあります。",
   "anomaly.changes.regenerable": "このフォルダーは検索インデックス、キャッシュ、サムネイルのように見えます。これらはアプリが自分で作り直します。その場合は何も失われておらず、フォルダーを除外すれば、こうした作り直しはバックアップにもこの検出にも入らなくなります。",
-  "anomaly.changes.removed": "{size} 削除",
-  "anomaly.changes.added": "{size} 追加",
   "anomaly.changes.rest": "その他すべて",
   "anomaly.detail.lastSeen": "最終検出",
   "anomaly.detail.median": "中央値",

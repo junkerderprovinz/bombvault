@@ -3370,8 +3370,6 @@ const hi: Partial<Translations> = {
   "anomaly.changes.none": "दोनों बैकअप में वही फ़ाइलें हैं।",
   "anomaly.changes.focus": "लगभग सब कुछ {path} में है।",
   "anomaly.changes.regenerable": "यह फ़ोल्डर सर्च इंडेक्स, कैश या थंबनेल जैसा दिखता है, जिसे ऐप ख़ुद दोबारा बना लेता है। अगर ऐसा है तो कुछ नहीं खोया, और फ़ोल्डर को बाहर रखने से ऐसे दोबारा बनाए गए डेटा आपके बैकअप और इन निष्कर्षों से बाहर रहते हैं।",
-  "anomaly.changes.removed": "{size} हटाया",
-  "anomaly.changes.added": "{size} जोड़ा",
   "anomaly.changes.rest": "बाकी सब",
   "anomaly.detail.lastSeen": "अंतिम बार देखी गई",
   "anomaly.detail.median": "माध्यिका",

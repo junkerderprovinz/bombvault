@@ -3370,8 +3370,6 @@ const bg: Partial<Translations> = {
   "anomaly.changes.none": "Двете копия съдържат едни и същи файлове.",
   "anomaly.changes.focus": "Почти всичко е в {path}.",
   "anomaly.changes.regenerable": "Тази папка прилича на индекс за търсене, кеш или миниатюри, които приложението изгражда наново само. Ако е така, нищо не е загубено, а изключването на папката държи тези преизграждания извън копията ви и извън тези находки.",
-  "anomaly.changes.removed": "{size} премахнати",
-  "anomaly.changes.added": "{size} добавени",
   "anomaly.changes.rest": "Всичко останало",
   "anomaly.detail.lastSeen": "Последно забелязване",
   "anomaly.detail.median": "Медиана",

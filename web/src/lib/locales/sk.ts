@@ -3370,8 +3370,6 @@ const sk: Partial<Translations> = {
   "anomaly.changes.none": "Obe zálohy obsahujú rovnaké súbory.",
   "anomaly.changes.focus": "Takmer všetko je v {path}.",
   "anomaly.changes.regenerable": "Tento priečinok vyzerá ako vyhľadávací index, vyrovnávacia pamäť alebo náhľady, ktoré si aplikácia sama znova vytvorí. Ak je to tak, nič sa nestratilo, a vylúčením priečinka sa takéto prestavby nedostanú do vašich záloh ani do týchto nálezov.",
-  "anomaly.changes.removed": "{size} odobraných",
-  "anomaly.changes.added": "{size} pridaných",
   "anomaly.changes.rest": "Všetko ostatné",
   "anomaly.detail.lastSeen": "Naposledy zaznamenané",
   "anomaly.detail.median": "Medián",

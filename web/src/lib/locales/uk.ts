@@ -3357,8 +3357,6 @@ const uk: Partial<Translations> = {
   "anomaly.changes.none": "Обидві копії містять ті самі файли.",
   "anomaly.changes.focus": "Майже все лежить у {path}.",
   "anomaly.changes.regenerable": "Ця тека схожа на пошуковий індекс, кеш або мініатюри, які застосунок сам створює заново. Якщо так, нічого не втрачено, а виключення теки тримає такі перебудови поза вашими копіями й поза цими знахідками.",
-  "anomaly.changes.removed": "{size} вилучено",
-  "anomaly.changes.added": "{size} додано",
   "anomaly.changes.rest": "Усе інше",
   "anomaly.detail.lastSeen": "Востаннє помічено",
   "anomaly.detail.median": "Медіана",

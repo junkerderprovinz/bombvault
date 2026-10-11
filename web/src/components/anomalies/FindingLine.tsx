@@ -7,7 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { Badge } from "../Badge";
 import { Button } from "../Button";
-import { IconCompare, IconInfo } from "../glyphs";
+import { IconCompare, IconEye, IconInfo } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import {
   ANOMALY_SEVERITY_LABEL,
@@ -24,7 +24,10 @@ import type { AnomalySeverity, AnomalyView } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { isolateLtr } from "../../lib/ltrFragments";
 import { formatTs } from "../../lib/reltime";
+import { useTipBubble } from "../../lib/useTipBubble";
+import { FactGlyph } from "../../pages/settings/pairing/pairingArt";
 import { findingHasChanges } from "./FindingChanges";
+import type { FindingPlace } from "./findingPlace";
 
 /** Closes findings one way or the other and says whether it went through. */
 export type SettleFindings = (list: AnomalyView[], how: "acknowledge" | "expected") => Promise<boolean>;
@@ -65,11 +68,14 @@ export function FindingLine({
   closed = false,
   lead = false,
   siblings,
+  place,
   onSettle,
   onDetails,
 }: {
   a: AnomalyView;
   t: TranslateAnomaly;
+  /** Where a finding about a disk leads. */
+  place?: FindingPlace;
   /** A settled or resolved finding, which offers its details and nothing else. */
   closed?: boolean;
   /** The first finding of the list, whose way out is the page's one filled button. */
@@ -83,8 +89,8 @@ export function FindingLine({
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
 
-  const name = anomalyEntryName(a, t);
-  const itemPath = a.targetId ? anomalyItemPath(a) : undefined;
+  const name = place?.name ?? anomalyEntryName(a, t);
+  const namePath = a.targetId ? anomalyItemPath(a) : place?.name ? place.path : undefined;
   const restorePath = a.severity === "critical" ? anomalyRestorePath(a) : null;
   const recovered = a.severity === "critical" && a.recoveredAt > 0;
   const closedAt = a.ackedAt || a.resolvedAt;
@@ -127,9 +133,9 @@ export function FindingLine({
         <Badge tone={anomalySeverityTone(a.severity)} size="small" className="shrink-0">
           {t(ANOMALY_SEVERITY_LABEL[a.severity])}
         </Badge>
-        {itemPath ? (
+        {namePath ? (
           <Link
-            to={itemPath}
+            to={namePath}
             className="min-w-0 text-[15px] font-semibold text-carbon-text hover:text-accentText hover:underline wrap-anywhere"
           >
             {name}
@@ -146,13 +152,13 @@ export function FindingLine({
             <InfoBubble tip={t("anomaly.recoveredHint").replace("{date}", findingWhen(a.recoveredAt))} />
           </span>
         )}
+        {!closed && a.retentionHeld && <HeldMark tip={t("anomaly.retentionPaused")} />}
         <span className="ms-auto shrink-0 text-[13px] text-carbon-textMuted">{findingWhen(a.lastSeenAt)}</span>
       </div>
 
       <p className="text-sm text-carbon-text wrap-anywhere">{anomalyShortLine(a, t, lang).text}</p>
       <p className="text-[13px] text-carbon-textMuted wrap-anywhere">{facts.filter(Boolean).join(" · ")}</p>
       {closed && a.stillPresent && <p className="text-[13px] text-carbon-textMuted">{t("anomaly.stillPresent")}</p>}
-      {!closed && a.retentionHeld && <RetentionNote t={t} />}
 
       <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
         <span className="flex flex-wrap items-center gap-2 max-sm:w-full">
@@ -204,15 +210,24 @@ export function FindingLine({
               onClick={() => navigate(restorePath)}
               className="glim-btn-wrap"
             />
+          ) : !closed && findingHasChanges(a) ? (
+            <Button
+              label={t("anomaly.changes.title")}
+              labelKey="anomaly.changes.title"
+              glyph={<IconCompare />}
+              tone={lead ? "accent" : "neutral"}
+              onClick={() => onDetails(true)}
+              className="glim-btn-wrap"
+            />
           ) : (
             !closed &&
-            findingHasChanges(a) && (
+            place && (
               <Button
-                label={t("anomaly.changes.title")}
-                labelKey="anomaly.changes.title"
-                glyph={<IconCompare />}
+                label={t("anomaly.openLocation")}
+                labelKey="anomaly.openLocation"
+                glyph={<IconEye />}
                 tone={lead ? "accent" : "neutral"}
-                onClick={() => onDetails(true)}
+                onClick={() => navigate(place.path)}
                 className="glim-btn-wrap"
               />
             )
@@ -220,6 +235,27 @@ export function FindingLine({
         </span>
       </div>
     </li>
+  );
+}
+
+/** The lock on a finding that keeps old backups of its series from being
+ *  deleted, with what that means in its bubble. */
+export function HeldMark({ tip }: { tip: string }) {
+  const bubble = useTipBubble(tip);
+  return (
+    <>
+      <span
+        ref={bubble.ref}
+        tabIndex={0}
+        aria-label={tip}
+        aria-describedby={bubble.describedBy}
+        {...bubble.handlers}
+        className="inline-flex flex-none cursor-help rounded-pill text-carbon-textMuted focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) [&>svg]:mt-0"
+      >
+        <FactGlyph kind="lock" />
+      </span>
+      {bubble.bubble}
+    </>
   );
 }
 

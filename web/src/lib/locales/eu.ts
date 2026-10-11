@@ -3370,8 +3370,6 @@ const eu: Partial<Translations> = {
   "anomaly.changes.none": "Bi babeskopiek fitxategi berak dituzte.",
   "anomaly.changes.focus": "Ia dena {path} karpetan dago.",
   "anomaly.changes.regenerable": "Karpeta hori bilaketa-indize, cache edo miniatura baten itxura du, aplikazio batek bere kabuz berreraikitzen dituenak. Hala bada, ez da ezer galdu, eta karpeta baztertuz gero berreraikitze horiek ez dira zure babeskopietan ez aurkikuntza hauetan agertuko.",
-  "anomaly.changes.removed": "{size} kenduta",
-  "anomaly.changes.added": "{size} gehituta",
   "anomaly.changes.rest": "Gainerako guztia",
   "anomaly.detail.lastSeen": "Azken aldiz ikusia",
   "anomaly.detail.median": "Mediana",

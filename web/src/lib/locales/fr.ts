@@ -3362,8 +3362,6 @@ const fr: Partial<Translations> = {
   "anomaly.changes.none": "Les deux sauvegardes contiennent les mêmes fichiers.",
   "anomaly.changes.focus": "Presque tout se trouve dans {path}.",
   "anomaly.changes.regenerable": "Ce dossier ressemble à un index de recherche, un cache ou des vignettes, qu'une application reconstruit d'elle-même. Si c'est le cas, rien n'est perdu, et exclure le dossier tient ces reconstructions à l'écart de vos sauvegardes et de ces constats.",
-  "anomaly.changes.removed": "{size} supprimés",
-  "anomaly.changes.added": "{size} ajoutés",
   "anomaly.changes.rest": "Tout le reste",
   "anomaly.detail.lastSeen": "Vue pour la dernière fois",
   "anomaly.detail.median": "Médiane",

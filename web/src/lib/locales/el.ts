@@ -3362,8 +3362,6 @@ const el: Partial<Translations> = {
   "anomaly.changes.none": "Τα δύο αντίγραφα έχουν τα ίδια αρχεία.",
   "anomaly.changes.focus": "Σχεδόν όλα βρίσκονται στο {path}.",
   "anomaly.changes.regenerable": "Ο φάκελος μοιάζει με ευρετήριο αναζήτησης, cache ή μικρογραφίες, που μια εφαρμογή ξαναχτίζει μόνη της. Αν ισχύει, δεν χάθηκε τίποτα, και αν εξαιρέσεις τον φάκελο, τέτοιες ανακατασκευές μένουν έξω από τα αντίγραφά σου και από αυτά τα ευρήματα.",
-  "anomaly.changes.removed": "{size} αφαιρέθηκαν",
-  "anomaly.changes.added": "{size} προστέθηκαν",
   "anomaly.changes.rest": "Όλα τα υπόλοιπα",
   "anomaly.detail.lastSeen": "Τελευταία εμφάνιση",
   "anomaly.detail.median": "Διάμεσος",

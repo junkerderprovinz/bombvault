@@ -25,7 +25,8 @@ import type { AnomalyView } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { AnomalyWindow } from "./AnomalyWindow";
 import { FindingChanges, findingHasChanges } from "./FindingChanges";
-import { findingWhen, RetentionNote, SeriesTag, type SettleFindings } from "./FindingLine";
+import { findingWhen, HeldMark, SeriesTag, type SettleFindings } from "./FindingLine";
+import type { FindingPlace } from "./findingPlace";
 import { SeriesCurve } from "./SeriesCurve";
 
 function Figures({ rows }: { rows: AnomalyFigure[] }) {
@@ -45,6 +46,7 @@ export function FindingWindow({
   a,
   t,
   comparing,
+  place,
   onCompare,
   onMonitoring,
   onSettle,
@@ -52,6 +54,8 @@ export function FindingWindow({
 }: {
   a: AnomalyView;
   t: TranslateAnomaly;
+  /** Where a finding about a disk leads. */
+  place?: FindingPlace;
   /** Whether the comparison with the backup before is showing. */
   comparing: boolean;
   onCompare: () => void;
@@ -79,7 +83,9 @@ export function FindingWindow({
 
   return (
     <AnomalyWindow
-      title={<span className="min-w-0 normal-case tracking-normal wrap-anywhere">{anomalyEntryName(a, t)}</span>}
+      title={
+        <span className="min-w-0 normal-case tracking-normal wrap-anywhere">{place?.name ?? anomalyEntryName(a, t)}</span>
+      }
       onClose={onClose}
     >
       <div className="flex flex-wrap items-center gap-2 text-sm text-carbon-textMuted">
@@ -114,7 +120,12 @@ export function FindingWindow({
           {t("anomaly.recoveredHint").replace("{date}", findingWhen(a.recoveredAt))}
         </p>
       )}
-      {open && a.retentionHeld && <RetentionNote t={t} />}
+      {open && a.retentionHeld && (
+        <p className="flex items-start gap-1.5 text-xs text-carbon-textSub">
+          <HeldMark tip={t("anomaly.retentionKept")} />
+          {t("anomaly.retentionPaused")}
+        </p>
+      )}
 
       {open && comparing && <FindingChanges a={a} t={t} />}
       {!open && (
@@ -171,6 +182,15 @@ export function FindingWindow({
               labelKey="anomaly.openItem"
               glyph={<IconEye />}
               onClick={() => leave(itemPath)}
+              className="glim-btn-wrap"
+            />
+          )}
+          {place && (
+            <Button
+              label={t("anomaly.openLocation")}
+              labelKey="anomaly.openLocation"
+              glyph={<IconEye />}
+              onClick={() => leave(place.path)}
               className="glim-btn-wrap"
             />
           )}

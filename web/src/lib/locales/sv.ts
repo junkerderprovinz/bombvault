@@ -3362,8 +3362,6 @@ const sv: Partial<Translations> = {
   "anomaly.changes.none": "Båda kopiorna innehåller samma filer.",
   "anomaly.changes.focus": "Nästan allt ligger i {path}.",
   "anomaly.changes.regenerable": "Mappen ser ut som ett sökindex, en cache eller miniatyrer, som en app bygger upp igen själv. I så fall har inget gått förlorat, och om du undantar mappen hålls sådana ombyggnader utanför dina säkerhetskopior och utanför de här fynden.",
-  "anomaly.changes.removed": "{size} borttaget",
-  "anomaly.changes.added": "{size} tillagt",
   "anomaly.changes.rest": "Allt annat",
   "anomaly.detail.lastSeen": "Senast sedd",
   "anomaly.detail.median": "Median",

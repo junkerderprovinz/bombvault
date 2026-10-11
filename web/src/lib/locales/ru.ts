@@ -3357,8 +3357,6 @@ const ru: Partial<Translations> = {
   "anomaly.changes.none": "Обе копии содержат одни и те же файлы.",
   "anomaly.changes.focus": "Почти всё находится в {path}.",
   "anomaly.changes.regenerable": "Эта папка похожа на поисковый индекс, кеш или миниатюры, которые приложение само строит заново. Если так, ничего не потеряно, а исключение папки оставит такие перестройки вне ваших копий и вне этих находок.",
-  "anomaly.changes.removed": "{size} удалено",
-  "anomaly.changes.added": "{size} добавлено",
   "anomaly.changes.rest": "Всё остальное",
   "anomaly.detail.lastSeen": "В последний раз замечено",
   "anomaly.detail.median": "Медиана",

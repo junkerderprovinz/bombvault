@@ -3370,8 +3370,6 @@ const ca: Partial<Translations> = {
   "anomaly.changes.none": "Les dues còpies contenen els mateixos fitxers.",
   "anomaly.changes.focus": "Gairebé tot és a {path}.",
   "anomaly.changes.regenerable": "Aquesta carpeta sembla un índex de cerca, una memòria cau o miniatures, que una aplicació reconstrueix sola. Si és així, no s'ha perdut res, i excloure la carpeta deixa aquestes reconstruccions fora de les còpies i d'aquestes troballes.",
-  "anomaly.changes.removed": "{size} eliminats",
-  "anomaly.changes.added": "{size} afegits",
   "anomaly.changes.rest": "Tota la resta",
   "anomaly.detail.lastSeen": "Vista per últim cop",
   "anomaly.detail.median": "Mediana",

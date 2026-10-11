@@ -3353,8 +3353,6 @@ const vi: Partial<Translations> = {
   "anomaly.changes.none": "Hai bản sao lưu có cùng các tệp.",
   "anomaly.changes.focus": "Gần như tất cả nằm trong {path}.",
   "anomaly.changes.regenerable": "Thư mục này trông giống chỉ mục tìm kiếm, bộ nhớ đệm hoặc ảnh thu nhỏ mà ứng dụng tự dựng lại. Nếu vậy thì không mất gì, và loại trừ thư mục sẽ giữ những lần dựng lại như thế ngoài các bản sao lưu và ngoài các phát hiện này.",
-  "anomaly.changes.removed": "{size} đã xóa",
-  "anomaly.changes.added": "{size} đã thêm",
   "anomaly.changes.rest": "Mọi thứ khác",
   "anomaly.detail.lastSeen": "Lần cuối ghi nhận",
   "anomaly.detail.median": "Trung vị",

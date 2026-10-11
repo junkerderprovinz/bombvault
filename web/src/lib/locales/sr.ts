@@ -3354,8 +3354,6 @@ const sr: Partial<Translations> = {
   "anomaly.changes.none": "Обе копије садрже исте датотеке.",
   "anomaly.changes.focus": "Скоро све је у {path}.",
   "anomaly.changes.regenerable": "Ова фасцикла изгледа као индекс претраге, кеш или сличице, које апликација сама поново изгради. Ако је тако, ништа није изгубљено, а изузимањем фасцикле таква поновна изградња остаје ван твојих копија и ван ових налаза.",
-  "anomaly.changes.removed": "{size} уклоњено",
-  "anomaly.changes.added": "{size} додато",
   "anomaly.changes.rest": "Све остало",
   "anomaly.detail.lastSeen": "Последњи пут виђена",
   "anomaly.detail.median": "Медијана",

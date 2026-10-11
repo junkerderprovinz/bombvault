@@ -3362,8 +3362,6 @@ const fi: Partial<Translations> = {
   "anomaly.changes.none": "Molemmissa varmuuskopioissa on samat tiedostot.",
   "anomaly.changes.focus": "Lähes kaikki on kansiossa {path}.",
   "anomaly.changes.regenerable": "Kansio näyttää hakuindeksiltä, välimuistilta tai pikkukuvilta, jotka sovellus rakentaa itse uudelleen. Jos näin on, mitään ei menetetty, ja kun jätät kansion pois, tällaiset uudelleenrakennukset eivät päädy varmuuskopioihisi eivätkä näihin havaintoihin.",
-  "anomaly.changes.removed": "{size} poistettu",
-  "anomaly.changes.added": "{size} lisätty",
   "anomaly.changes.rest": "Kaikki muu",
   "anomaly.detail.lastSeen": "Viimeksi havaittu",
   "anomaly.detail.median": "Mediaani",

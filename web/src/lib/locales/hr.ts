@@ -3370,8 +3370,6 @@ const hr: Partial<Translations> = {
   "anomaly.changes.none": "Obje kopije sadrže iste datoteke.",
   "anomaly.changes.focus": "Gotovo sve je u {path}.",
   "anomaly.changes.regenerable": "Ova mapa izgleda kao indeks pretraživanja, predmemorija ili sličice, koje aplikacija sama ponovno izgradi. Ako je tako, ništa nije izgubljeno, a izuzimanjem mape takve ponovne izgradnje ostaju izvan tvojih kopija i izvan ovih nalaza.",
-  "anomaly.changes.removed": "{size} uklonjeno",
-  "anomaly.changes.added": "{size} dodano",
   "anomaly.changes.rest": "Sve ostalo",
   "anomaly.detail.lastSeen": "Zadnji put viđena",
   "anomaly.detail.median": "Medijan",

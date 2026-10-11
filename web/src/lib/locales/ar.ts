@@ -3365,8 +3365,6 @@ const ar: Partial<Translations> = {
   "anomaly.changes.none": "تحتوي النسختان على الملفات نفسها.",
   "anomaly.changes.focus": "يقع كل ذلك تقريبًا في {path}.",
   "anomaly.changes.regenerable": "يبدو هذا المجلد فهرس بحث أو ذاكرة مؤقتة أو صورًا مصغرة يعيد التطبيق بناءها بنفسه. إن كان كذلك فلم يُفقد شيء، واستبعاد المجلد يبقي عمليات إعادة البناء هذه خارج نسخك وخارج هذه الاكتشافات.",
-  "anomaly.changes.removed": "{size} محذوف",
-  "anomaly.changes.added": "{size} مضاف",
   "anomaly.changes.rest": "كل ما تبقى",
   "anomaly.detail.lastSeen": "آخر رصد",
   "anomaly.detail.median": "الوسيط",

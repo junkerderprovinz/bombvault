@@ -3359,8 +3359,6 @@ const nl: Partial<Translations> = {
   "anomaly.changes.none": "Beide back-ups bevatten dezelfde bestanden.",
   "anomaly.changes.focus": "Bijna alles zit in {path}.",
   "anomaly.changes.regenerable": "Die map lijkt een zoekindex, een cache of miniaturen, die een app zelf opnieuw opbouwt. Is dat zo, dan is er niets verloren, en als je de map uitsluit, blijven zulke herbouwingen buiten je back-ups en buiten deze bevindingen.",
-  "anomaly.changes.removed": "{size} verwijderd",
-  "anomaly.changes.added": "{size} toegevoegd",
   "anomaly.changes.rest": "Al het andere",
   "anomaly.detail.lastSeen": "Voor het laatst gezien",
   "anomaly.detail.median": "Mediaan",

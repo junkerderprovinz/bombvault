@@ -3357,8 +3357,6 @@ const pl: Partial<Translations> = {
   "anomaly.changes.none": "Obie kopie zawierają te same pliki.",
   "anomaly.changes.focus": "Prawie wszystko jest w {path}.",
   "anomaly.changes.regenerable": "Ten folder wygląda na indeks wyszukiwania, pamięć podręczną lub miniatury, które aplikacja sama odbudowuje. Jeśli tak, nic nie przepadło, a wykluczenie folderu trzyma takie odbudowy z dala od twoich kopii i od tych wykryć.",
-  "anomaly.changes.removed": "{size} usunięte",
-  "anomaly.changes.added": "{size} dodane",
   "anomaly.changes.rest": "Cała reszta",
   "anomaly.detail.lastSeen": "Ostatni raz widziana",
   "anomaly.detail.median": "Mediana",

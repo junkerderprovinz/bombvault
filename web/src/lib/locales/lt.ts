@@ -3370,8 +3370,6 @@ const lt: Partial<Translations> = {
   "anomaly.changes.none": "Abiejose kopijose yra tie patys failai.",
   "anomaly.changes.focus": "Beveik viskas yra {path}.",
   "anomaly.changes.regenerable": "Šis aplankas atrodo kaip paieškos indeksas, podėlis ar miniatiūros, kurias programa pati atkuria. Jei taip, niekas neprarasta, o neįtraukus aplanko tokie atkūrimai nepateks nei į jūsų kopijas, nei į šiuos radinius.",
-  "anomaly.changes.removed": "{size} pašalinta",
-  "anomaly.changes.added": "{size} pridėta",
   "anomaly.changes.rest": "Visa kita",
   "anomaly.detail.lastSeen": "Paskutinį kartą pastebėta",
   "anomaly.detail.median": "Mediana",

@@ -3360,8 +3360,6 @@ const cs: Partial<Translations> = {
   "anomaly.changes.none": "Obě zálohy obsahují stejné soubory.",
   "anomaly.changes.focus": "Téměř všechno je v {path}.",
   "anomaly.changes.regenerable": "Tato složka vypadá jako vyhledávací index, mezipaměť nebo náhledy, které si aplikace sama znovu sestaví. Pokud ano, nic se neztratilo, a když složku vyloučíte, takové přestavby se nedostanou do záloh ani do těchto nálezů.",
-  "anomaly.changes.removed": "{size} odebráno",
-  "anomaly.changes.added": "{size} přidáno",
   "anomaly.changes.rest": "Všechno ostatní",
   "anomaly.detail.lastSeen": "Naposledy zaznamenáno",
   "anomaly.detail.median": "Medián",

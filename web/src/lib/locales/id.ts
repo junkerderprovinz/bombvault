@@ -3370,8 +3370,6 @@ const id: Partial<Translations> = {
   "anomaly.changes.none": "Kedua cadangan berisi file yang sama.",
   "anomaly.changes.focus": "Hampir semuanya ada di {path}.",
   "anomaly.changes.regenerable": "Folder itu tampak seperti indeks pencarian, cache, atau gambar mini yang dibangun ulang sendiri oleh aplikasi. Jika begitu, tidak ada yang hilang, dan mengecualikan folder itu menjaga pembangunan ulang seperti ini tetap di luar cadangan Anda dan di luar temuan ini.",
-  "anomaly.changes.removed": "{size} dihapus",
-  "anomaly.changes.added": "{size} ditambahkan",
   "anomaly.changes.rest": "Selebihnya",
   "anomaly.detail.lastSeen": "Terakhir terlihat",
   "anomaly.detail.median": "Median",

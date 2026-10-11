@@ -3370,8 +3370,6 @@ const ms: Partial<Translations> = {
   "anomaly.changes.none": "Kedua-dua sandaran mengandungi fail yang sama.",
   "anomaly.changes.focus": "Hampir semuanya dalam {path}.",
   "anomaly.changes.regenerable": "Folder itu kelihatan seperti indeks carian, cache atau gambar kecil yang dibina semula sendiri oleh aplikasi. Jika begitu, tiada apa yang hilang, dan mengecualikan folder itu memastikan binaan semula sebegini kekal di luar sandaran anda dan di luar dapatan ini.",
-  "anomaly.changes.removed": "{size} dibuang",
-  "anomaly.changes.added": "{size} ditambah",
   "anomaly.changes.rest": "Selebihnya",
   "anomaly.detail.lastSeen": "Terakhir dilihat",
   "anomaly.detail.median": "Median",

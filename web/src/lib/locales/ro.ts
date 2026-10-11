@@ -3365,8 +3365,6 @@ const ro: Partial<Translations> = {
   "anomaly.changes.none": "Ambele copii conțin aceleași fișiere.",
   "anomaly.changes.focus": "Aproape totul se află în {path}.",
   "anomaly.changes.regenerable": "Dosarul arată ca un index de căutare, un cache sau miniaturi, pe care o aplicație le reconstruiește singură. Dacă e așa, nu s-a pierdut nimic, iar excluderea dosarului ține asemenea reconstruiri în afara copiilor tale și a acestor constatări.",
-  "anomaly.changes.removed": "{size} eliminat",
-  "anomaly.changes.added": "{size} adăugat",
   "anomaly.changes.rest": "Tot restul",
   "anomaly.detail.lastSeen": "Văzută ultima dată",
   "anomaly.detail.median": "Mediană",

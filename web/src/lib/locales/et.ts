@@ -3370,8 +3370,6 @@ const et: Partial<Translations> = {
   "anomaly.changes.none": "Mõlemas varukoopias on samad failid.",
   "anomaly.changes.focus": "Peaaegu kõik on kaustas {path}.",
   "anomaly.changes.regenerable": "See kaust näeb välja nagu otsinguindeks, vahemälu või pisipildid, mille rakendus ise uuesti loob. Kui nii, siis midagi ei kadunud, ja kausta välja jättes jäävad sellised taasloomised su varukoopiatest ja nendest leidudest välja.",
-  "anomaly.changes.removed": "{size} eemaldatud",
-  "anomaly.changes.added": "{size} lisatud",
   "anomaly.changes.rest": "Kõik muu",
   "anomaly.detail.lastSeen": "Viimati nähtud",
   "anomaly.detail.median": "Mediaan",

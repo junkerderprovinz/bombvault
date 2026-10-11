@@ -3362,8 +3362,6 @@ const it: Partial<Translations> = {
   "anomaly.changes.none": "I due backup contengono gli stessi file.",
   "anomaly.changes.focus": "Quasi tutto si trova in {path}.",
   "anomaly.changes.regenerable": "Quella cartella sembra un indice di ricerca, una cache o delle miniature, che un'app ricostruisce da sola. Se è così, non si è perso nulla, ed escludere la cartella tiene queste ricostruzioni fuori dai tuoi backup e da queste segnalazioni.",
-  "anomaly.changes.removed": "{size} rimossi",
-  "anomaly.changes.added": "{size} aggiunti",
   "anomaly.changes.rest": "Tutto il resto",
   "anomaly.detail.lastSeen": "Vista l'ultima volta",
   "anomaly.detail.median": "Mediana",

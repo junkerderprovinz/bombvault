@@ -3370,8 +3370,6 @@ const fa: Partial<Translations> = {
   "anomaly.changes.none": "هر دو پشتیبان همان فایل‌ها را دارند.",
   "anomaly.changes.focus": "تقریبا همه آن در {path} است.",
   "anomaly.changes.regenerable": "این پوشه شبیه نمایه جست‌وجو، حافظه نهان یا تصاویر بندانگشتی است که برنامه خودش دوباره می‌سازد. اگر چنین باشد چیزی از دست نرفته، و کنار گذاشتن پوشه این بازسازی‌ها را از پشتیبان‌ها و این یافته‌ها بیرون نگه می‌دارد.",
-  "anomaly.changes.removed": "{size} حذف‌شده",
-  "anomaly.changes.added": "{size} اضافه‌شده",
   "anomaly.changes.rest": "بقیه موارد",
   "anomaly.detail.lastSeen": "آخرین مشاهده",
   "anomaly.detail.median": "میانه",

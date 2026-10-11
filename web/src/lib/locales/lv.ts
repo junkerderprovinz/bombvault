@@ -3370,8 +3370,6 @@ const lv: Partial<Translations> = {
   "anomaly.changes.none": "Abās kopijās ir tie paši faili.",
   "anomaly.changes.focus": "Gandrīz viss ir mapē {path}.",
   "anomaly.changes.regenerable": "Šī mape izskatās pēc meklēšanas indeksa, kešatmiņas vai sīktēliem, ko lietotne pati izveido no jauna. Ja tā, nekas nav zaudēts, un, izslēdzot mapi, šādas pārbūves nenonāk ne tavos dublējumos, ne šajos atradumos.",
-  "anomaly.changes.removed": "{size} noņemts",
-  "anomaly.changes.added": "{size} pievienots",
   "anomaly.changes.rest": "Viss pārējais",
   "anomaly.detail.lastSeen": "Pēdējoreiz novērota",
   "anomaly.detail.median": "Mediāna",

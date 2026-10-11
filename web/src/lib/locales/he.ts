@@ -3362,8 +3362,6 @@ const he: Partial<Translations> = {
   "anomaly.changes.none": "שני הגיבויים מכילים את אותם קבצים.",
   "anomaly.changes.focus": "כמעט הכול נמצא ב-{path}.",
   "anomaly.changes.regenerable": "התיקייה נראית כמו אינדקס חיפוש, מטמון או תמונות ממוזערות, שאפליקציה בונה מחדש בעצמה. אם כך, שום דבר לא אבד, והחרגת התיקייה משאירה בנייה מחדש כזו מחוץ לגיבויים שלך ומחוץ לממצאים האלה.",
-  "anomaly.changes.removed": "{size} הוסרו",
-  "anomaly.changes.added": "{size} נוספו",
   "anomaly.changes.rest": "כל השאר",
   "anomaly.detail.lastSeen": "נצפתה לאחרונה",
   "anomaly.detail.median": "חציון",

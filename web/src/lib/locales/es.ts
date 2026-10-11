@@ -3360,8 +3360,6 @@ const es: Partial<Translations> = {
   "anomaly.changes.none": "Las dos copias contienen los mismos archivos.",
   "anomaly.changes.focus": "Casi todo está en {path}.",
   "anomaly.changes.regenerable": "Esa carpeta parece un índice de búsqueda, una caché o miniaturas, que una aplicación reconstruye sola. Si es así, no se perdió nada, y excluir la carpeta deja esas reconstrucciones fuera de tus copias y de estos hallazgos.",
-  "anomaly.changes.removed": "{size} eliminados",
-  "anomaly.changes.added": "{size} añadidos",
   "anomaly.changes.rest": "Todo lo demás",
   "anomaly.detail.lastSeen": "Vista por última vez",
   "anomaly.detail.median": "Mediana",

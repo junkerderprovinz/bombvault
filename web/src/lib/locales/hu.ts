@@ -3365,8 +3365,6 @@ const hu: Partial<Translations> = {
   "anomaly.changes.none": "A két biztonsági mentés ugyanazokat a fájlokat tartalmazza.",
   "anomaly.changes.focus": "Szinte minden a(z) {path} mappában van.",
   "anomaly.changes.regenerable": "Ez a mappa keresési indexnek, gyorsítótárnak vagy bélyegképeknek tűnik, amelyeket az alkalmazás magától újraépít. Ha így van, semmi sem veszett el, és ha kizárod a mappát, az ilyen újraépítések nem kerülnek be a biztonsági mentéseidbe és ezekbe az észlelésekbe.",
-  "anomaly.changes.removed": "{size} eltávolítva",
-  "anomaly.changes.added": "{size} hozzáadva",
   "anomaly.changes.rest": "Minden más",
   "anomaly.detail.lastSeen": "Utoljára észlelve",
   "anomaly.detail.median": "Medián",

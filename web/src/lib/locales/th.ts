@@ -3365,8 +3365,6 @@ const th: Partial<Translations> = {
   "anomaly.changes.none": "ข้อมูลสำรองทั้งสองมีไฟล์ชุดเดียวกัน",
   "anomaly.changes.focus": "เกือบทั้งหมดอยู่ใน {path}",
   "anomaly.changes.regenerable": "โฟลเดอร์นี้ดูเหมือนดัชนีค้นหา แคช หรือภาพขนาดย่อ ซึ่งแอปสร้างใหม่เองได้ ถ้าเป็นเช่นนั้นก็ไม่มีอะไรสูญหาย และการยกเว้นโฟลเดอร์นี้จะกันการสร้างใหม่แบบนี้ออกจากข้อมูลสำรองและสิ่งที่พบเหล่านี้",
-  "anomaly.changes.removed": "ลบ {size}",
-  "anomaly.changes.added": "เพิ่ม {size}",
   "anomaly.changes.rest": "ที่เหลือทั้งหมด",
   "anomaly.detail.lastSeen": "พบครั้งล่าสุด",
   "anomaly.detail.median": "ค่ามัธยฐาน",

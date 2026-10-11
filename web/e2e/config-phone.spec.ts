@@ -275,7 +275,7 @@ for (const width of [320, 360]) {
     await expect(page.getByRole("button", { name: "Backup abbrechen" })).toBeVisible();
     await expect(page.getByText("gibt es nicht mehr")).toBeVisible();
     await expect(page.getByText("Als Anomalie markiert")).toBeVisible();
-    await expect(page.getByRole("combobox", { name: "Empfindlichkeit" })).toBeVisible();
+    await expect(page.getByRole("radiogroup", { name: "Empfindlichkeit" })).toBeVisible();
     await expect(timelineRows(page)).toHaveCount(SNAPSHOTS.length);
     await settle(page);
 
@@ -355,8 +355,7 @@ test("self-backup on a phone saves the switch and the anomaly fields as they cha
 
   await page.getByRole("switch", { name: "BombVaults Einstellungen sichern" }).click();
   await expect.poll(() => saves).toContain("settings");
-  await page.getByRole("combobox", { name: "Empfindlichkeit" }).click();
-  await page.getByRole("option", { name: "Streng" }).click();
+  await page.getByRole("radiogroup", { name: "Empfindlichkeit" }).getByRole("radio", { name: "Streng" }).click();
   await expect.poll(() => saves).toContain("prefs");
   await expect(page.locator("#bv-main").getByRole("button", { name: "Speichern" })).toHaveCount(0);
 });

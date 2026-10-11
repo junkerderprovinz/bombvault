@@ -3354,8 +3354,6 @@ const sl: Partial<Translations> = {
   "anomaly.changes.none": "Obe kopiji vsebujeta iste datoteke.",
   "anomaly.changes.focus": "Skoraj vse je v {path}.",
   "anomaly.changes.regenerable": "Ta mapa je videti kot iskalni indeks, predpomnilnik ali sličice, ki jih aplikacija sama znova zgradi. Če je tako, se ni nič izgubilo, izključitev mape pa takšne ponovne gradnje drži zunaj tvojih kopij in zunaj teh ugotovitev.",
-  "anomaly.changes.removed": "{size} odstranjenega",
-  "anomaly.changes.added": "{size} dodanega",
   "anomaly.changes.rest": "Vse drugo",
   "anomaly.detail.lastSeen": "Zadnjič opaženo",
   "anomaly.detail.median": "Mediana",

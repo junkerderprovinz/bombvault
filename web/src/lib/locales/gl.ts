@@ -3370,8 +3370,6 @@ const gl: Partial<Translations> = {
   "anomaly.changes.none": "As dúas copias conteñen os mesmos ficheiros.",
   "anomaly.changes.focus": "Case todo está en {path}.",
   "anomaly.changes.regenerable": "Ese cartafol parece un índice de busca, unha caché ou miniaturas, que unha aplicación reconstrúe soa. Se é así, non se perdeu nada, e excluír o cartafol deixa esas reconstrucións fóra das túas copias e destes achados.",
-  "anomaly.changes.removed": "{size} eliminados",
-  "anomaly.changes.added": "{size} engadidos",
   "anomaly.changes.rest": "Todo o demais",
   "anomaly.detail.lastSeen": "Vista por última vez",
   "anomaly.detail.median": "Mediana",
