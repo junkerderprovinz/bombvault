@@ -57,6 +57,7 @@ func (s *Service) relayServer() *relay.Server {
 func (s *Service) StartGroup() {
 	s.applyGroup()
 	s.pairing().Start()
+	go s.renewDepositsLoop()
 }
 
 // StopGroup closes the relay connection and the discovery service.
@@ -243,6 +244,10 @@ func peerRoutes() []peerRoute {
 		{"POST /api/group/peer/roles/ask", (*Service).handlePeerRoleAsk},
 		{"POST /api/group/peer/roles/answer", (*Service).handlePeerRoleAnswer},
 		{"POST /api/group/peer/roles/withdraw", (*Service).handlePeerRoleWithdraw},
+		{"PUT /api/group/peer/deposit", (*Service).handlePeerDepositPut},
+		{"DELETE /api/group/peer/deposit", (*Service).handlePeerDepositDelete},
+		{"GET /api/group/peer/deposits", (*Service).handlePeerDeposits},
+		{"POST /api/group/peer/deposit/release", (*Service).handlePeerDepositRelease},
 		{"GET /api/group/peer/activity", (*Service).handlePeerActivity},
 		{"GET /api/group/peer/display-prefs", (*Service).handlePeerDisplayPrefs},
 		{"POST /api/group/peer/session", (*Service).handlePeerSession},
@@ -354,6 +359,7 @@ func (s *Service) handlePeerStatus(w http.ResponseWriter, _ *http.Request) {
 		Version:      Version,
 		Domains:      domains,
 		DirectURL:    s.selfDirectURL(),
+		Capabilities: peerCapabilities,
 	})
 }
 

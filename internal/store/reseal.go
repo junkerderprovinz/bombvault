@@ -32,6 +32,13 @@ const backupKeyTable = `CREATE TABLE IF NOT EXISTS backup_key (
   adopted_at INTEGER NOT NULL
 );`
 
+// backupKeyNotes adds what an adoption has to remember: the encryption
+// setting it replaced, to put back on an undo, and the sealed values a
+// settings restore could not open. The migration takes the second column for
+// both, so they are added together.
+const backupKeyNotes = `ALTER TABLE backup_key ADD COLUMN encryption_before INTEGER;
+ALTER TABLE backup_key ADD COLUMN lost TEXT NOT NULL DEFAULT '';`
+
 // SealedColumn names a column that holds sealed bytes. Text marks the base64
 // form.
 type SealedColumn struct {
@@ -121,9 +128,10 @@ func CloseStaged(db *sql.DB) error {
 	return nil
 }
 
-// ResealDatabase hands every sealed value of db to reseal and stores what it
-// returns. A value reseal answers nil for stays as it is.
-func ResealDatabase(db *sql.DB, reseal func(sealed []byte) []byte) error {
+// ResealDatabase hands every sealed value of db to reseal, with the column it
+// is in, and stores what it returns. A value reseal answers nil for stays as
+// it is.
+func ResealDatabase(db *sql.DB, reseal func(c SealedColumn, sealed []byte) []byte) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return fmt.Errorf("ResealDatabase: %w", err)
@@ -163,7 +171,7 @@ func ResealDatabase(db *sql.DB, reseal func(sealed []byte) []byte) error {
 					continue
 				}
 			}
-			out := reseal(sealed)
+			out := reseal(c, sealed)
 			if out == nil {
 				continue
 			}
@@ -198,15 +206,27 @@ func HasAdoptedKey(db *sql.DB) (bool, error) {
 }
 
 // SetAdoptedKeyIn stores an adopted backup key in a database that is not the
-// live one, creating the table where the file is older than it.
-func SetAdoptedKeyIn(db *sql.DB, enc []byte, source string) error {
+// live one, with the list of sealed values the restore of that database could
+// not open. The table and its later columns are created where the file is
+// older than them, in the order the migrations look for them.
+func SetAdoptedKeyIn(db *sql.DB, enc []byte, source, lost string) error {
 	if _, err := db.Exec(backupKeyTable); err != nil {
 		return fmt.Errorf("SetAdoptedKeyIn: %w", err)
 	}
-	_, err := db.Exec(`
-		INSERT INTO backup_key (id, key_enc, source, adopted_at) VALUES (1, ?, ?, ?)
-		ON CONFLICT (id) DO UPDATE SET key_enc = excluded.key_enc, source = excluded.source, adopted_at = excluded.adopted_at`,
-		enc, source, time.Now().Unix())
+	cols, err := tableColumns(db, "backup_key")
+	if err != nil {
+		return fmt.Errorf("SetAdoptedKeyIn: %w", err)
+	}
+	if !slices.Contains(cols, "lost") {
+		if _, err := db.Exec(backupKeyNotes); err != nil {
+			return fmt.Errorf("SetAdoptedKeyIn: %w", err)
+		}
+	}
+	_, err = db.Exec(`
+		INSERT INTO backup_key (id, key_enc, source, adopted_at, lost) VALUES (1, ?, ?, ?, ?)
+		ON CONFLICT (id) DO UPDATE SET key_enc = excluded.key_enc, source = excluded.source,
+			adopted_at = excluded.adopted_at, encryption_before = NULL, lost = excluded.lost`,
+		enc, source, time.Now().Unix(), lost)
 	if err != nil {
 		return fmt.Errorf("SetAdoptedKeyIn: %w", err)
 	}

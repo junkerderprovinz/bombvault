@@ -2,12 +2,15 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -187,7 +190,7 @@ func TestNothingSealedUnderTheOldKeyIsLeftInTheRestoredSettings(t *testing.T) {
 	}
 	defer db.Close() //nolint:errcheck // test database
 	var seen, underOwn int
-	if err := store.ResealDatabase(db, func(sealed []byte) []byte {
+	if err := store.ResealDatabase(db, func(_ store.SealedColumn, sealed []byte) []byte {
 		seen++
 		if _, err := secret.Decrypt(oldKey, sealed); err == nil {
 			t.Errorf("a value still opens under the old key")
@@ -373,5 +376,57 @@ func TestBackupsMadeUnderAnotherKeyAreReadAndWrittenAfterTheAdoption(t *testing.
 	}
 	if got := resticSnapshots(t, repo, restickey.Derive(read.appKey)); len(got) != 2 {
 		t.Fatalf("plain restic with the password of the new kit lists %d backups, want both", len(got))
+	}
+}
+
+func TestARestoreNamesTheSealedValuesItCouldNotBringOver(t *testing.T) {
+	kit := kitOfTheOldInstall(t)
+	old := settingsOfTheOldInstall(t, oldKey)
+	// Two values sealed under a key nobody has any more.
+	stranger := strings.Repeat("9", 64)
+	db, err := store.OpenStaged(old)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sealed, err := secret.Encrypt(stranger, []byte("lost"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, q := range []string{
+		`UPDATE settings SET registry_auths = '` + base64.StdEncoding.EncodeToString(sealed) + `'`,
+		`INSERT INTO received_repos (id, name, repo, created_at, restic_password_enc) VALUES ('rr1', 'attic', '/host/user/attic', 1, x'` + hex.EncodeToString(sealed) + `')`,
+	} {
+		if _, err := db.Exec(q); err != nil {
+			t.Fatalf("%s: %v", q, err)
+		}
+	}
+	if err := store.CloseStaged(db); err != nil {
+		t.Fatal(err)
+	}
+
+	f := newPlacementFixture(t)
+	f.emergency("POST", "/api/emergency/read", map[string]any{"kit": kit})
+	f.emergency("POST", "/api/emergency/adopt", nil)
+	staged := f.stage(old)
+	if err := f.svc.takeOverStagedSettings(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	want := sealedLoss{Count: 2, Kinds: map[string]int{sealedRegistry: 1, sealedPeers: 1}}
+	if got := f.svc.lastTakeoverLoss(); got == nil || !reflect.DeepEqual(*got, want) {
+		t.Fatalf("the restore reports %+v, want %+v", got, want)
+	}
+
+	// After the restart the restored database says the same until somebody
+	// has seen it.
+	svc, st, _ := fileInstall(t, staged, f.svc.cfg.AppKey)
+	view, err := svc.EmergencyState()
+	if err != nil || view.Lost == nil || !reflect.DeepEqual(*view.Lost, want) {
+		t.Fatalf("the state after the restore has lost = %+v, %v; want %+v", view.Lost, err, want)
+	}
+	if err := st.ClearAdoptedLoss(); err != nil {
+		t.Fatal(err)
+	}
+	if view, err := svc.EmergencyState(); err != nil || view.Lost != nil || view.BackupKey != backupKeyAdopted {
+		t.Fatalf("after the list was seen: %+v, %v", view, err)
 	}
 }

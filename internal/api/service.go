@@ -550,6 +550,16 @@ type Service struct {
 	// person showed and exists in memory alone.
 	emergencyMu sync.Mutex
 	emergency   *emergencySession
+	// takeoverLoss is what the last settings restore of another install could
+	// not bring over, for the answer of the request that ran it.
+	takeoverLoss *sealedLoss
+	// collected is a deposit a keeper handed over that the recovery code has
+	// not opened yet.
+	collected *collectedDeposit
+
+	// depositMu keeps two sends of this install's deposit apart, so the keeper
+	// ends up with the one sealed last.
+	depositMu sync.Mutex
 
 	// backupKeyMu guards the backup key as currentBackupKey last read it.
 	backupKeyMu   sync.Mutex
@@ -17983,15 +17993,14 @@ func (s *Service) RecoveryKit() (string, error) {
 		w("    %s\n\n", password)
 	} else {
 		w("Status: DISABLED\n\n")
-		w("The repositories are created WITHOUT a password (restic --insecure-no-password).\n")
-		w("There is no key to lose; the value of this kit is the repository locations and\n")
-		w("the restore instructions below.\n\n")
-		w("BombVault still seals the definitions it recreates containers and VMs from.\n")
-		w("Restoring those on another server needs this key:\n\n")
+		w("The repositories have no password (restic --insecure-no-password), so the\n")
+		w("repository locations and the restore steps in this kit are all you need to get\n")
+		w("files back. BombVault still seals the definitions it recreates containers and\n")
+		w("VMs from. To recreate those on another server you need the key below.\n\n")
 		if adopted {
-			w("Backup key (the key the definitions are sealed with):\n\n")
+			w("Backup key (seals the container and VM definitions):\n\n")
 		} else {
-			w("APP_KEY (the key the definitions are sealed with):\n\n")
+			w("APP_KEY (seals the container and VM definitions):\n\n")
 		}
 		w("    %s\n\n", key)
 	}

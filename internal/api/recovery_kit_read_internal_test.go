@@ -124,7 +124,7 @@ func TestAKitThatCannotBeUsedSaysWhy(t *testing.T) {
 	}
 
 	// The kit an install without encryption wrote before kits named the key.
-	older := strings.Replace(plain, "APP_KEY (the key the definitions are sealed with):\n\n    "+key+"\n\n", "", 1)
+	older := strings.Replace(plain, "APP_KEY (seals the container and VM definitions):\n\n    "+key+"\n\n", "", 1)
 	kit, err = readRecoveryKit(older)
 	if err != nil || kit.HasKey || len(kit.Locations) == 0 {
 		t.Fatalf("an older kit without encryption reads as %+v, %v; want its locations and no key", kit, err)
@@ -170,16 +170,15 @@ func TestTheKitOfAnInstallThatAdoptedNothingKeepsItsWording(t *testing.T) {
 	}
 	wantOff := "## Encryption\n\n" +
 		"Status: DISABLED\n\n" +
-		"The repositories are created WITHOUT a password (restic --insecure-no-password).\n" +
-		"There is no key to lose; the value of this kit is the repository locations and\n" +
-		"the restore instructions below.\n\n" +
-		"BombVault still seals the definitions it recreates containers and VMs from.\n" +
-		"Restoring those on another server needs this key:\n\n" +
-		"APP_KEY (the key the definitions are sealed with):\n\n" +
+		"The repositories have no password (restic --insecure-no-password), so the\n" +
+		"repository locations and the restore steps in this kit are all you need to get\n" +
+		"files back. BombVault still seals the definitions it recreates containers and\n" +
+		"VMs from. To recreate those on another server you need the key below.\n\n" +
+		"APP_KEY (seals the container and VM definitions):\n\n" +
 		"    " + key + "\n\n" +
 		"## Repository locations\n"
 	if !strings.Contains(off, wantOff) {
-		t.Fatalf("the Encryption section with encryption off is not the old one plus the key:\n%s", off)
+		t.Fatalf("the Encryption section with encryption off changed:\n%s", off)
 	}
 	for _, kit := range []string{on, off} {
 		if strings.Contains(kit, "Backup key") || strings.Contains(kit, "APP_KEY of this server") {

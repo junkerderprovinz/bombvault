@@ -5599,7 +5599,11 @@ func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"staged": true, "autoRestart": auto}))
+	answer := map[string]any{"staged": true, "autoRestart": auto}
+	if lost := h.svc.lastTakeoverLoss(); lost != nil {
+		answer["lost"] = lost
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(answer))
 }
 
 // headerOnFirstWrite defers the download headers (and so the 200 status) until
