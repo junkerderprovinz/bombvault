@@ -265,13 +265,16 @@ func (s *Service) alignCopies(ctx context.Context, plan movePlan) error {
 	if err != nil {
 		return fmt.Errorf("list %s: %w", plan.To, err)
 	}
-	copies := map[string]restic.Snapshot{}
-	for _, sn := range dst {
-		copies[restic.Identity(sn)] = sn
-	}
+	originals := map[string]restic.Snapshot{}
 	for _, sn := range ofSection(src, plan.Domain) {
-		c, ok := copies[restic.Identity(sn)]
-		if !ok || !sameSet(c.Paths, sn.Paths) {
+		originals[restic.Identity(sn)] = sn
+	}
+	for _, c := range dst {
+		sn, ok := originals[restic.Identity(c)]
+		if !ok {
+			continue
+		}
+		if !sameSet(c.Paths, sn.Paths) {
 			return errMoveMissing
 		}
 		add := setMinus(sn.Tags, c.Tags)

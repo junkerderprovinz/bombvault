@@ -320,6 +320,50 @@ func TestAPlaceTheErasureEmptiesHoldsNothingUnderAnotherSpelling(t *testing.T) {
 	}
 }
 
+func TestATargetTheErasureEmptiesHoldsNothingElse(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, _ := boxWithVMs(f)
+	f.rcloneConf("[vault]\ntype = drive\nroot_folder_id = 0Bvault\n")
+	other := f.tickDestination(f.destination("Vault", vaultRepo), "vms")
+	f.hold(other.Repo, copied("v1", "o1", 50, "vm:old"))
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	oc, err := f.svc.ownerContextFor("vms")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if held := f.svc.heldOutside(context.Background(), settings, "vms", box.ID, oc, nil); !held.entries["vm:old"] {
+		t.Fatalf("the target at Vault holds %v, want vm:old among it", held.entries)
+	}
+	if held := f.svc.heldOutside(context.Background(), settings, "vms", box.ID, oc, []string{other.Repo}); held.entries["vm:old"] {
+		t.Fatalf("the target the erasure empties counts as holding %v", held.entries)
+	}
+}
+
+func TestAnErasureRefusesADestinationWhoseRemovalChanged(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box := f.destination("Box", boxRepo)
+	f.tickDestination(box, "files")
+	direct := f.direct(f.tickDestination(box, "containers"))
+	f.container("nginx", direct.ID)
+	f.hold(direct.Repo, snap("n1", 10, "container:nginx"))
+	preview := f.erasurePreview(box)
+
+	f.container("redis", direct.ID)
+	res := f.erase(box, preview.Removal)
+
+	if res["ok"] != false || res["code"] != "stale" || res["removal"] == nil {
+		t.Fatalf("answer = %v, want the refusal stale with the removal as it stands", res)
+	}
+	if _, ok, _ := f.st.GetDestination(box.ID); !ok {
+		t.Fatal("a refused erasure removed the destination")
+	}
+}
+
 func TestAPlaceNothingCanNameHoldsNoSecondCopy(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.signIn()

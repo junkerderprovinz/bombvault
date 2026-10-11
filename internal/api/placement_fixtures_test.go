@@ -550,6 +550,10 @@ type placementEngine struct {
 	// onCopy and onForget, when set, run before a Copy or a Forget by ids does
 	// anything, so a test can hold a run in the middle.
 	onCopy, onForget func()
+	// onCheck, when set, runs as a Check starts.
+	onCheck func()
+	// copyDrops are the source snapshot ids a Copy leaves out without a word.
+	copyDrops map[string]bool
 	// signIns lists the environment each Init, Snapshots, Check and Copy ran
 	// with, as "op location".
 	signIns map[string][][]string
@@ -657,7 +661,7 @@ func (e *placementEngine) Copy(_ context.Context, dest, src string, ids []string
 	}
 	for _, sn := range e.snaps[s] {
 		key := restic.Identity(sn)
-		if (ids != nil && !slices.Contains(ids, sn.ID)) || held[key] {
+		if (ids != nil && !slices.Contains(ids, sn.ID)) || held[key] || e.copyDrops[sn.ID] {
 			continue
 		}
 		held[key] = true
@@ -717,6 +721,9 @@ func (e *placementEngine) Check(_ context.Context, repo string, mode restic.Mode
 	key := filepath.ToSlash(repo)
 	e.checks = append(e.checks, key)
 	e.signedIn("check", repo, mode)
+	if e.onCheck != nil {
+		e.onCheck()
+	}
 	return e.checkErr[key]
 }
 

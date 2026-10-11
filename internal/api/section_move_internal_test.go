@@ -173,6 +173,37 @@ func TestACopyWithOtherPathsThanItsOriginalStopsTheMove(t *testing.T) {
 	}
 }
 
+func TestAMoveWhoseCopyLostABackupLeavesTheSectionWhereItIs(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	f.eng.copyDrops = map[string]bool{"o3": true}
+
+	f.move(vms, vault)
+
+	if got := f.stored(vms.ID); got.DestinationID != box.ID {
+		t.Fatalf("the target reads %+v, want it still at Box", got)
+	}
+	run, err := f.st.LastRunOfKind("vms", "offsite")
+	if err != nil || run == nil || run.Status != "failed" || run.Error != errMoveMissing.Error() {
+		t.Fatalf("the run = %+v, %v; want it failed for the missing backup", run, err)
+	}
+}
+
+func TestAMoveChecksTheNewPlaceUnderTheSectionsLock(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	var holder string
+	f.eng.onCheck = func() { holder, _ = f.svc.domainBusy("vms") }
+
+	f.move(vms, vault)
+
+	if holder != "replicate" {
+		t.Fatalf("the check ran while the vms lock was held by %q, want the move", holder)
+	}
+}
+
 func TestAMoveThatFailsItsCheckLeavesTheSectionWhereItIs(t *testing.T) {
 	f := newPlacementFixture(t)
 	box, vms := boxWithVMs(f)
