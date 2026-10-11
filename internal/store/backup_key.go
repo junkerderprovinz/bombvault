@@ -14,6 +14,10 @@ const (
 	KeyFromGroup = "group"
 )
 
+// KeyTargetID is the reserved runs.target_id of what happens to keys: a kit
+// read, a key taken over, a deposit made, renewed, released or deleted.
+const KeyTargetID = "key"
+
 // AdoptedKey is the key of another install's backups that this install took
 // over. KeyEnc is that key sealed under this install's own.
 type AdoptedKey struct {

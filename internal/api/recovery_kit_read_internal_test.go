@@ -129,7 +129,7 @@ func TestAKitThatCannotBeUsedSaysWhy(t *testing.T) {
 	if err != nil || kit.HasKey || len(kit.Locations) == 0 {
 		t.Fatalf("an older kit without encryption reads as %+v, %v; want its locations and no key", kit, err)
 	}
-	if _, err := foreignKeyOf("", older); !errors.Is(err, errKitHasNoKey) {
+	if _, err := foreignKeyOf("", older, ""); !errors.Is(err, errKitHasNoKey) {
 		t.Fatalf("opening with a kit that names no key: %v, want %v", err, errKitHasNoKey)
 	}
 }

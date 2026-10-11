@@ -546,6 +546,11 @@ type Service struct {
 	foreignJanitor    chan struct{}
 	foreignSweepEvery time.Duration
 
+	// emergencyMu guards the emergency in progress, which holds the keys the
+	// person showed and exists in memory alone.
+	emergencyMu sync.Mutex
+	emergency   *emergencySession
+
 	// backupKeyMu guards the backup key as currentBackupKey last read it.
 	backupKeyMu   sync.Mutex
 	backupKeyRead bool
