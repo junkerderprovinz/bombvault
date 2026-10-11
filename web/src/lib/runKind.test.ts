@@ -28,6 +28,16 @@ describe("runKindLabel", () => {
     expect(new Set(labels).size).toBe(kinds.length);
   });
 
+  it.each([
+    ["keyread", "run.kindKeyRead"],
+    ["keyadopt", "run.kindKeyAdopt"],
+    ["keysignins", "run.kindKeySignIns"],
+    ["keysettings", "run.kindKeySettings"],
+    ["keyundo", "run.kindKeyUndo"],
+  ] as const)("names what happened to the backup key for %s", (kind, key) => {
+    expect(runKindLabel(t, kind)).toBe(en[key]);
+  });
+
   it("keeps an unknown kind as it came", () => {
     expect(runKindLabel(t, "someday")).toBe("someday");
   });

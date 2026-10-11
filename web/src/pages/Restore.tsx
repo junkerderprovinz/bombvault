@@ -18,12 +18,14 @@ import { AppdataWindow } from "../components/restore/AppdataWindow";
 import { BackupRail } from "../components/restore/BackupRail";
 import { EmergencyScene } from "../components/restore/EmergencyScene";
 import { EmergencyWindow } from "../components/restore/EmergencyWindow";
+import { KeyState } from "../components/restore/KeyState";
 import { OldFolderWindow } from "../components/restore/OldFolderWindow";
 import { PlaceChecks } from "../components/restore/PlaceChecks";
 import { RestoreWindow, type RestoreAsk } from "../components/restore/RestoreWindow";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { Rows } from "../components/storage/rows";
-import { getSettings, listItems, type BackupItem } from "../lib/api";
+import { getEmergency, getSettings, listItems, type BackupItem, type EmergencyState } from "../lib/api";
+import { ATTENTION_CHANGED_EVENT } from "../lib/attention";
 import { hueVars } from "../lib/appearance";
 import { ENTRY_KIND, ENTRY_KINDS, type EntryKind } from "../lib/backupEntry";
 import { entriesOf, entryTarget, itemId, itemProgressKey, listedItems } from "../lib/backupList";
@@ -31,7 +33,7 @@ import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { anyActive, useProgress, type ProgressState } from "../lib/progress";
 import { formatRecent } from "../lib/reltime";
-import { findingsOf, parseEmergencyStep, recommend, recommendationWhy } from "../lib/restorePlan";
+import { findingsOf, parseEmergencyStep, parseEmergencyWay, recommend, recommendationWhy } from "../lib/restorePlan";
 import { useOpenAnomalies } from "../lib/useAnomalies";
 import { useEntry } from "../lib/useEntry";
 import { useTimeline } from "../lib/useTimeline";
@@ -226,6 +228,7 @@ function Way({
 export function Restore() {
   const { t, lang } = useT();
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const emergency = parseEmergencyStep(params.get("emergency"));
   const progress = useProgress();
   const { list: openFindings } = useOpenAnomalies();
@@ -237,6 +240,24 @@ export function Restore() {
   const [pick, setPick] = useState<string | null>(null);
   const [source, setSource] = useState<"oldFolder" | "appdata" | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
+  const [keyState, setKeyState] = useState<EmergencyState | null>(null);
+
+  // The emergency window can take a key over or give it back, so the key is
+  // read again each time it closes.
+  const emergencyOpen = emergency !== null;
+  useEffect(() => {
+    if (emergencyOpen) return;
+    getEmergency()
+      .then((res) => {
+        if (res.ok && res.emergency) setKeyState(res.emergency);
+      })
+      .catch(() => undefined);
+  }, [emergencyOpen]);
+
+  function closeEmergency() {
+    setParams({}, { replace: true });
+    window.dispatchEvent(new Event(ATTENTION_CHANGED_EVENT));
+  }
 
   useEffect(() => {
     getSettings()
@@ -300,7 +321,18 @@ export function Restore() {
     <div className={PAGE_SHELL_RESPONSIVE}>
       <PageTitle>{t("nav.restore")}</PageTitle>
 
-      {emergency && <EmergencyWindow start={emergency} onClose={() => setParams({}, { replace: true })} />}
+      {emergency && (
+        <EmergencyWindow
+          start={emergency}
+          way={parseEmergencyWay(params.get("way"))}
+          onClose={closeEmergency}
+          onPairing={() => navigate("/settings/pairing?for=emergency")}
+          onOldFolder={() => {
+            closeEmergency();
+            setSource("oldFolder");
+          }}
+        />
+      )}
       {source === "oldFolder" && <OldFolderWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
       {source === "appdata" && <AppdataWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
 
@@ -414,10 +446,11 @@ export function Restore() {
       <div className="grid gap-6 md:grid-cols-2 md:gap-10">
         <Card title={t("restorePage.emergency")} hueIndex={nextHue()} newId="restore-emergency">
           <EmergencyScene words />
+          <KeyState state={keyState} onChanged={setKeyState} />
           <Way
             glyph={<IconRecovery />}
             name={t("restorePage.emergencyWay")}
-            sub={t("restorePage.emergencyWayHint")}
+            sub={t("restorePage.emergencyWayKit")}
             warn
             onOpen={() => setParams({ emergency: "access" })}
           />

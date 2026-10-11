@@ -201,4 +201,13 @@ describe("needsOf", () => {
     });
     expect(needs.map((n) => n.is)).toEqual(["failedRun", "unprotected", "failedCopy", "anomaly", "recoveryKit"]);
   });
+
+  it("puts a backup key that no longer opens before everything else", () => {
+    const needs = needsOf({ ...nothing, runs: [run({ id: "r1" })], items: [item({})], keyLocked: true });
+    expect(needs.map((n) => n.is)).toEqual(["keyLocked", "failedRun"]);
+  });
+
+  it("lists the locked key before the first backup too, since none can run", () => {
+    expect(needsOf({ ...nothing, keyLocked: true }).map((n) => n.is)).toEqual(["keyLocked"]);
+  });
 });

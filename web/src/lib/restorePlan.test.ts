@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { AnomalyView, TimelineRow } from "./api";
 import {
+  emergencyPath,
+  parseEmergencyWay,
   DEFAULT_RESTORE_FOLDER,
   backsUpFirst,
   defaultWhere,
@@ -160,5 +162,19 @@ describe("the backup a link asks for", () => {
 
   it("falls back to the newest without a time", () => {
     expect(requestedRow(ROWS, "gone", 0)).toEqual({ row: ROWS[0], missing: true });
+  });
+});
+
+describe("a link into the emergency window", () => {
+  it("names the step and, where one is meant, the way in", () => {
+    expect(emergencyPath("settings")).toBe("/restore?emergency=settings");
+    expect(emergencyPath("access", "group")).toBe("/restore?emergency=access&way=group");
+  });
+
+  it("is read back, and anything else opens on no way", () => {
+    expect(parseEmergencyWay("group")).toBe("group");
+    expect(parseEmergencyWay("kit")).toBe("kit");
+    expect(parseEmergencyWay("pair")).toBeNull();
+    expect(parseEmergencyWay(null)).toBeNull();
   });
 });

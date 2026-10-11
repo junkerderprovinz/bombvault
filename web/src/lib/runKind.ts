@@ -1,9 +1,19 @@
 // The name a run's kind carries wherever runs are listed: the run history, the
 // error panel and the activity log's type filter.
 
-import type { useT } from "./i18n";
+import type { TranslationKey, useT } from "./i18n";
 
 type T = ReturnType<typeof useT>["t"];
+
+/** What happens to the key of the backups is recorded as a run of one of
+ *  these kinds on a target of its own. */
+export const KEY_RUN_KIND: Record<string, TranslationKey> = {
+  keyread: "run.kindKeyRead",
+  keyadopt: "run.kindKeyAdopt",
+  keysignins: "run.kindKeySignIns",
+  keysettings: "run.kindKeySettings",
+  keyundo: "run.kindKeyUndo",
+};
 
 /** The kind of work a run did, in the reader's language. An unknown kind from a
  *  newer backend shows its raw literal rather than a wrong label. */
@@ -60,6 +70,6 @@ export function runKindLabel(t: T, kind: string): string {
     case "keyrelease":
       return t("run.kindKeyRelease");
     default:
-      return kind;
+      return KEY_RUN_KIND[kind] ? t(KEY_RUN_KIND[kind]) : kind;
   }
 }

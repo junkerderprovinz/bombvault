@@ -8,6 +8,7 @@ import {
   foreignClose,
   foreignContainerWarnings,
   foreignOpen,
+  foreignOpenWithKit,
   foreignRestore,
   listContainers,
   listForeignFiles,
@@ -20,6 +21,7 @@ import {
 } from "../../lib/api";
 import type { EntryKind } from "../../lib/backupEntry";
 import { fireAndWaitRun } from "../../lib/backupWatch";
+import { refusalText } from "../../lib/emergency";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS, withLtrFragments, withLtrIsolates } from "../../lib/ltrFragments";
 import { anyActive, useProgress } from "../../lib/progress";
@@ -39,6 +41,7 @@ import { Selector } from "../Selector";
 import { SelectField } from "../SelectField";
 import { SnapshotFileTree } from "../SnapshotFileTree";
 import { Toggle } from "../Toggle";
+import { KitIdentityField, KitPicker, takeIdentity } from "./KitPicker";
 import { RestoreCheckPanel } from "./RestoreCheckPanel";
 import { StepBar } from "./StepBar";
 
@@ -466,6 +469,13 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
   const [folder, setFolder] = useState("");
   const [url, setUrl] = useState("");
   const [key, setKey] = useState("");
+  // The key comes with the old instance's recovery kit or is typed. The kit
+  // is held like the typed key: while the window is open, for a reconnect.
+  const [via, setVia] = useState<"kit" | "key">("kit");
+  const kit = useRef("");
+  const [kitName, setKitName] = useState<string | null>(null);
+  const [sealed, setSealed] = useState(false);
+  const identity = useRef<HTMLInputElement>(null);
   // The credentials of the foreign repository, held for one session. This
   // instance's own are never offered: lending them to an address somebody
   // typed would hand them to whoever runs it.
@@ -504,7 +514,8 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
   // Which credential a remote repository needs depends on its backend, so any
   // one unlocks Connect and the server says what is missing.
   const hasCreds = [creds.s3KeyId, creds.s3Secret, creds.restUser, creds.restPassword].some((v) => v.trim() !== "");
-  const lacks = location === "" ? t("oldFolder.needsAddress") : key.trim() === "" ? t("oldFolder.needsKey") : undefined;
+  const lacksKey = via === "kit" ? (kitName === null ? t("oldFolder.needsKit") : undefined) : key.trim() === "" ? t("oldFolder.needsKey") : undefined;
+  const lacks = location === "" ? t("oldFolder.needsAddress") : lacksKey;
 
   const connect = useCallback(async () => {
     setConnecting(true);
@@ -517,13 +528,17 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
     }
     try {
       // A mounted folder needs no credentials, so none travel for it.
-      const res = await foreignOpen(
-        location,
-        key.trim(),
-        remote ? { ...creds, s3KeyId: creds.s3KeyId.trim(), s3Region: creds.s3Region.trim(), restUser: creds.restUser.trim(), s3StorageClass: "" } : undefined
-      );
+      const sent = remote
+        ? { ...creds, s3KeyId: creds.s3KeyId.trim(), s3Region: creds.s3Region.trim(), restUser: creds.restUser.trim(), s3StorageClass: "" }
+        : undefined;
+      const res =
+        via === "kit"
+          ? await foreignOpenWithKit(location, kit.current, sent, takeIdentity(identity))
+          : await foreignOpen(location, key.trim(), sent);
       if (!res.ok || !res.session) {
-        setConnectError(res.error ?? t("settings.error"));
+        // The field for the identity shows with the next draw.
+        if (res.code === "kit-sealed") setSealed(true);
+        else setConnectError(refusalText(t, res.code, res.error));
         return;
       }
       const names = new Set<string>();
@@ -550,7 +565,7 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
     } finally {
       setConnecting(false);
     }
-  }, [location, key, remote, creds, t]);
+  }, [location, key, via, remote, creds, t]);
 
   function disconnect() {
     if (sessionRef.current) foreignClose(sessionRef.current).catch(() => undefined);
@@ -699,21 +714,55 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
               hint={t("oldFolder.folderHint")}
             />
           )}
-          <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-            <span className="flex items-center gap-1">
-              {t("recovery.foreignKey")}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+              {t("oldFolder.keyVia")}
               <InfoBubble tip={t("recovery.foreignKeyHint")} />
             </span>
-            <RevealInput
-              {...revealKey}
-              value={key}
-              spellCheck={false}
-              autoComplete="off"
-              onChange={(e) => setKey(e.target.value)}
-              wrapperClassName="w-full"
-              className={FIELD}
+            <Selector
+              items={[
+                { id: "kit", label: t("oldFolder.viaKit") },
+                { id: "key", label: t("oldFolder.viaKey") },
+              ]}
+              label={t("oldFolder.keyVia")}
+              select="one"
+              active={via}
+              onChange={(id) => setVia(id as "kit" | "key")}
+              inline
             />
-          </label>
+          </div>
+          {via === "kit" ? (
+            <>
+              <KitPicker
+                name={kitName}
+                onPick={(text, name) => {
+                  kit.current = text;
+                  setKitName(name);
+                  setSealed(false);
+                  setConnectError(null);
+                }}
+              />
+              {sealed && (
+                <>
+                  <p className="text-xs leading-relaxed text-carbon-textSub">{t("emergency.code.kit-sealed")}</p>
+                  <KitIdentityField inputRef={identity} onEnter={() => void connect()} />
+                </>
+              )}
+            </>
+          ) : (
+            <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
+              {t("recovery.foreignKey")}
+              <RevealInput
+                {...revealKey}
+                value={key}
+                spellCheck={false}
+                autoComplete="off"
+                onChange={(e) => setKey(e.target.value)}
+                wrapperClassName="w-full"
+                className={FIELD}
+              />
+            </label>
+          )}
           {connectError && (
             <p className="rounded-card bg-statusFailBgSoft px-3 py-2.5 text-xs leading-relaxed text-statusFail wrap-break-word">
               {connectError}

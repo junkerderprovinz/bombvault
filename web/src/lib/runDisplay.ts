@@ -24,6 +24,9 @@
 // documented load-bearing exception; this is that exception in its weakest
 // possible form (a type position only, gone in the emitted JS).
 import type { Run } from "./api";
+
+/** The target the server records every event about the backup key on. */
+export const KEY_TARGET_ID = "key";
 import type { useT } from "./i18n";
 // Type-only import; see the layering note in the header comment.
 import type { BadgeTone } from "../components/Badge";
@@ -82,6 +85,10 @@ export function runTargetText(t: ReturnType<typeof useT>["t"], run: Run): string
   // German instead of pairing a translated kind with the raw name.
   if (run.domain === "everything") {
     return t("settings.everythingTitle");
+  }
+  // The server gives the reserved target of key events no name.
+  if (run.targetId === KEY_TARGET_ID) {
+    return t("run.targetKey");
   }
   return run.target || `${run.targetId.slice(0, 12)}…`;
 }

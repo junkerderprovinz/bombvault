@@ -1,5 +1,5 @@
 import { createElement, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { listRuns, type AnomalyView, type Run, type Settings } from "./api";
+import { getEmergency, listRuns, type AnomalyView, type Run, type Settings } from "./api";
 import { ATTENTION_CHANGED_EVENT, AttentionContext, AttentionCountContext, FreshInstallContext } from "./attention";
 import { forgetFirstSteps } from "./firstSteps";
 import { isFreshInstall } from "./freshInstall";
@@ -37,6 +37,7 @@ export function AttentionProvider({ settings, children }: { settings: Settings |
   const [runsReady, setRunsReady] = useState(false);
   const [runsFailed, setRunsFailed] = useState(false);
   const [watchers, setWatchers] = useState(0);
+  const [keyLocked, setKeyLocked] = useState(false);
   const detection = useAnomalySummary().summary?.enabled ?? false;
   const open = useOpenAnomalies().list;
 
@@ -52,17 +53,29 @@ export function AttentionProvider({ settings, children }: { settings: Settings |
       .finally(() => setRunsReady(true));
   }, []);
 
+  // A key locks when the server starts under another APP_KEY, and opens
+  // again when the emergency window takes it over anew.
+  const readKey = useCallback(() => {
+    getEmergency()
+      .then((res) => {
+        if (res.ok && res.emergency) setKeyLocked(res.emergency.backupKey === "locked");
+      })
+      .catch(() => undefined);
+  }, []);
+
   // Marking failures as dealt with can cover failed copies, which only the
   // storage locations report.
   useEffect(() => {
     const dealtWith = () => {
       refreshRuns();
       reloadLocations();
+      readKey();
     };
     refreshRuns();
+    readKey();
     window.addEventListener(ATTENTION_CHANGED_EVENT, dealtWith);
     return () => window.removeEventListener(ATTENTION_CHANGED_EVENT, dealtWith);
-  }, [refreshRuns, reloadLocations]);
+  }, [refreshRuns, reloadLocations, readKey]);
 
   const pollMs = watchers > 0 ? WATCHED_POLL_MS : POLL_MS;
   useEffect(() => {
@@ -105,8 +118,8 @@ export function AttentionProvider({ settings, children }: { settings: Settings |
   const kitDue = recoveryKitDue(settings);
   const anomalies = detection ? open : NO_FINDINGS;
   const needs = useMemo(
-    () => needsOf({ items: items.items, runs, locations: locations.locations, anomalies, kitDue }),
-    [items.items, runs, locations.locations, anomalies, kitDue]
+    () => needsOf({ items: items.items, runs, locations: locations.locations, anomalies, kitDue, keyLocked }),
+    [items.items, runs, locations.locations, anomalies, kitDue, keyLocked]
   );
   const fresh = items.loaded && isFreshInstall(items.items);
   useEffect(() => {

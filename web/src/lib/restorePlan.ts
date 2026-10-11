@@ -174,7 +174,15 @@ export function parseEmergencyStep(value: string | null): EmergencyStep | null {
   return EMERGENCY_STEPS.find((step) => step === value) ?? null;
 }
 
-/** Where the Restore page opens the emergency window on a step. */
-export function emergencyPath(step: EmergencyStep): string {
-  return `/restore?emergency=${step}`;
+/** The ways into an emergency a link can open the window on. */
+export type EmergencyWay = "kit" | "group" | "key";
+
+export function parseEmergencyWay(value: string | null): EmergencyWay | null {
+  return value === "kit" || value === "group" || value === "key" ? value : null;
+}
+
+/** Where the Restore page opens the emergency window on a step, and on one
+ *  of the ways in when the link names it. */
+export function emergencyPath(step: EmergencyStep, way?: EmergencyWay): string {
+  return `/restore?emergency=${step}${way ? `&way=${way}` : ""}`;
 }

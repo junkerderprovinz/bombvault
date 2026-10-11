@@ -129,6 +129,30 @@ describe("buildLogLines", () => {
     expect(restored.text).toContain("; runReason.restoredWithoutRuntime");
   });
 
+  it("says what happened to the backup key, and why when it was refused", () => {
+    const adopted = makeRun({ id: "k1", targetId: "key", kind: "keyadopt", target: "", domain: "", snapshotId: "", bytes: 0 });
+    const refused = makeRun({
+      id: "k2",
+      targetId: "key",
+      kind: "keyread",
+      status: "failed",
+      finishedAt: 1060,
+      target: "",
+      domain: "",
+      error: "this is not a BombVault recovery kit",
+    });
+    const [done, failed] = buildLogLines([adopted, refused], {}, [], resolveName, 2_000_000);
+    expect(done.text).toBe("run.kindKeyAdopt");
+    expect(done.status).toBe("success");
+    expect(failed.text).toBe("activityLog.lineKeyRefused what=run.kindKeyRead error=this is not a BombVault recovery kit");
+    expect(failed.status).toBe("failed");
+  });
+
+  it("shows the kind of a key event it has no name for and does not call it a backup", () => {
+    const [line] = buildLogLines([makeRun({ targetId: "key", kind: "keydeposit", target: "", domain: "" })], {}, [], resolveName, 2_000_000);
+    expect(line.text).toBe("keydeposit");
+  });
+
   it("names the links a restore left out", () => {
     const run = makeRun({
       kind: "restore",
