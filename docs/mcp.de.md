@@ -262,7 +262,7 @@ Was ein Assistent liest, geht an den KI-Anbieter dahinter: Namen von Elementen, 
 | `retention_guard` | Ein weiteres MCP-Backup ließe in einem "die letzten N behalten"-Fenster nur noch Wiederherstellungspunkte aus MCP übrig, oder das Element hat in den letzten 24 Stunden schon 4 Backups über MCP bekommen, fehlgeschlagene und abgebrochene mitgezählt. Im ersten Fall schafft das nächste geplante Backup Platz, im zweiten ist das Element 24 Stunden nach dem ältesten dieser Backups wieder frei. In der Web-Oberfläche kannst du es jederzeit starten. |
 | `rate_limited` | Der Schlüssel hat seine 12 Starts für diese Stunde verbraucht. |
 | `not_permitted` bei einem Start | Der Schlüssel darf nur lesen. Schalte **Backups starten erlauben** in der Karte ein; eine neue Verbindung ist nicht nötig. Bei einem Abbruch heißt es, dass dieser Schlüssel den Lauf nicht gestartet hat. |
-| `domain_off` | Diese Backup-Art ist in den Einstellungen ausgeschaltet. |
+| `domain_off` | Dieser Bereich ist unter **Einstellungen, Allgemein** ausgeschaltet. |
 | `not_found` | BombVault schützt dieses Element nicht. Nimm es zuerst in der Web-Oberfläche auf; MCP legt nie Konfiguration an. |
 | Der Client findet den Anmeldeserver nicht | Die Anmeldung über OAuth ist aus, es ist kein Login-Passwort gesetzt, oder der Proxy lässt `/.well-known/` nicht zu BombVault durch. |
 | Die Zustimmungsseite meldet eine nicht registrierte Rücksprungadresse | Der Client hat eine Rücksprungadresse geschickt, die er nicht registriert hat. Entferne den Connector im Client und füge ihn neu hinzu. |
