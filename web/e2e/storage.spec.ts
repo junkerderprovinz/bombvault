@@ -6,10 +6,11 @@
 // the picture switches a section's default after its question, an entry goes
 // back to its default, a location is added in one window, a shorter rule asks
 // before it is saved, a section gets rules of its own and gives them back, a
-// destination's connection is changed and the destination removed, and a
-// section's folder is set. German, because its labels run longest.
-import { expect, test, type Page } from "@playwright/test";
-import { B2, IMPACT, LOCAL, LOCATIONS, OWN_ENTRY, REMOVAL, REST, STORAGE_BOX, measureLayout, settle, stageStorage } from "./storage";
+// destination's connection is changed, the destination is removed with or
+// without the backups there, a section's copy moves to another location, and
+// a section's folder is set. German, because its labels run longest.
+import { expect, test, type Locator, type Page } from "@playwright/test";
+import { B2, IMPACT, LOCAL, LOCATIONS, MOVE, OWN_ENTRY, REMOVAL, REST, STORAGE_BOX, measureLayout, settle, stageStorage } from "./storage";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -33,6 +34,33 @@ async function expectNothingPansOrClips(page: Page): Promise<void> {
   expect.soft(layout.overflowing, "text runs past the viewport edge").toEqual([]);
 }
 
+/** The row of one section in the card that lists a location's sections. */
+function sectionRow(page: Page, section: string): Locator {
+  return page
+    .locator('[data-search-card="Regeln je Bereich"] div.py-3')
+    .filter({ has: page.getByText(section, { exact: true }) });
+}
+
+/** What a window draws past the edge of the page. */
+function pastTheEdge(window: Locator): Promise<string[]> {
+  return window.evaluate((root) => {
+    const vw = globalThis.innerWidth;
+    return [...root.querySelectorAll("button, input, span, p, code, li")]
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && (r.right > vw + 1 || r.left < -1);
+      })
+      .map((el) => (el.getAttribute("aria-label") ?? el.textContent ?? "").trim().slice(0, 40));
+  });
+}
+
+/** Answers the progress stream with one frame, as a run under way sends it. */
+async function stageProgress(page: Page, frame: Record<string, unknown>): Promise<void> {
+  await page.route("**/api/progress", (route) =>
+    route.fulfill({ status: 200, contentType: "text/event-stream", body: `data: ${JSON.stringify(frame)}\n\n` }),
+  );
+}
+
 for (const width of [320, 390]) {
   test(`storage locations @ ${width}px: the list fits`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone layout lives below 48rem");
@@ -54,6 +82,33 @@ for (const width of [320, 390]) {
     await expect(page.getByRole("group", { name: "Container" })).toBeVisible();
     await settle(page);
     await expectNothingPansOrClips(page);
+  });
+
+  test(`removing a storage location with its backups @ ${width}px: the window fits`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the window is a sheet below 48rem");
+    await stageStorage(page, width);
+    await page.goto(locationUrl(STORAGE_BOX.id));
+    await page.locator("#bv-main").getByRole("button", { name: "Mehr" }).click();
+    await page.getByRole("menuitem", { name: "Speicherort entfernen" }).click();
+    const window = page.getByRole("dialog", { name: `${STORAGE_BOX.name} entfernen?` });
+    await window.getByRole("radio", { name: /Sicherungen dort löschen/ }).click();
+    await expect(window.getByLabel(`Zum Bestätigen ${STORAGE_BOX.name} eintippen`)).toBeVisible();
+    await settle(page);
+    expect(await pastTheEdge(window), "runs past the edge of the window").toEqual([]);
+    await expect(window.getByRole("button", { name: "Entfernen und löschen" })).toBeInViewport();
+  });
+
+  test(`moving a section's copy @ ${width}px: the window fits`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the window is a sheet below 48rem");
+    await stageStorage(page, width);
+    await page.goto(locationUrl(STORAGE_BOX.id));
+    await sectionRow(page, "Flash").getByRole("button", { name: "Umziehen" }).click();
+    const window = page.getByRole("dialog", { name: "Kopie von Flash umziehen" });
+    await window.getByRole("radio", { name: B2.name }).click();
+    await expect(window.getByText(MOVE.to)).toBeVisible();
+    await settle(page);
+    expect(await pastTheEdge(window), "runs past the edge of the window").toEqual([]);
+    await expect(window.getByRole("button", { name: "Umziehen" })).toBeInViewport();
   });
 
   for (const location of LOCATIONS) {
@@ -309,12 +364,91 @@ test.describe("on the desktop", () => {
     await expect(window.getByText("Speicherort entfernen, Sicherungen behalten")).toBeVisible();
     await expect(window.getByRole("listitem")).toHaveCount(3);
     await expect(window.getByRole("listitem").first()).toContainText("7 Einträge · 62 Sicherungen");
-    await expect(window.getByText("löschen", { exact: false })).toHaveCount(0);
+    await expect(window.getByRole("radio", { name: /Sicherungen dort löschen/ })).not.toBeChecked();
     expect(staged.writes).toEqual([]);
 
     await window.getByRole("button", { name: "Speicherort entfernen" }).click();
     await expect(page).toHaveURL(/\/storage$/);
     expect(staged.writes).toEqual([{ method: "POST", path: "/api/offsite/destinations/box/removal", body: { expect: REMOVAL } }]);
+  });
+
+  test("a destination is removed with its backups after the window named what is deleted, kept and lost", async ({ page }) => {
+    const staged = await stageStorage(page, 1280);
+    await page.goto(locationUrl(STORAGE_BOX.id));
+    await page.getByRole("button", { name: "Mehr" }).click();
+    await page.getByRole("menuitem", { name: "Speicherort entfernen" }).click();
+    const window = page.getByRole("dialog", { name: `${STORAGE_BOX.name} entfernen?` });
+    await window.getByRole("radio", { name: /Sicherungen dort löschen/ }).click();
+
+    await expect(window.getByRole("listitem").filter({ hasText: "Flash" })).toContainText("Bleibt: Der Löschschutz verweigert das Löschen.");
+    await expect(window.getByText("71 Sicherungen · 8 Einträge · 12 davon liegen nirgends sonst")).toBeVisible();
+    await expect(window.getByText("Diese Einträge verlieren ihre einzige Sicherung:")).toBeVisible();
+    await expect(window.getByText("paperless", { exact: true })).toBeVisible();
+
+    const erase = window.getByRole("button", { name: "Entfernen und löschen" });
+    await expect(erase).toBeDisabled();
+    await window.getByLabel(`Zum Bestätigen ${STORAGE_BOX.name} eintippen`).fill(STORAGE_BOX.name);
+    await expect(erase).toBeDisabled();
+    await window.getByRole("switch", { name: "Auch diese löschen" }).click();
+    expect(staged.writes).toEqual([]);
+
+    await erase.click();
+    await expect(page).toHaveURL(/\/storage$/);
+    await expect(page.getByText(`Die Sicherungen in ${STORAGE_BOX.name} werden im Hintergrund gelöscht.`, { exact: false })).toBeVisible();
+    expect(staged.writes).toEqual([
+      { method: "POST", path: "/api/offsite/destinations/box/erasure", body: { expect: REMOVAL, lastCopies: ["container:paperless"] } },
+    ]);
+  });
+
+  test("a section's copy moves to another storage location after the window said what it copies", async ({ page }) => {
+    const staged = await stageStorage(page, 1280);
+    await page.goto(locationUrl(STORAGE_BOX.id));
+    await sectionRow(page, "Flash").getByRole("button", { name: "Umziehen" }).click();
+    const window = page.getByRole("dialog", { name: "Kopie von Flash umziehen" });
+    // The Storage Box itself and a place flash already copies to are no choice.
+    await expect(window.getByRole("radio")).toHaveCount(1);
+    const start = window.getByRole("button", { name: "Umziehen" });
+    await expect(start).toBeDisabled();
+
+    await window.getByRole("radio", { name: B2.name }).click();
+    await expect(window.getByText(MOVE.to)).toBeVisible();
+    await expect(window.getByText("14 Sicherungen · 14 davon fehlen am neuen Ort noch")).toBeVisible();
+    await expect(window.getByText("läuft im Hintergrund", { exact: false })).toContainText("Du verfolgst ihn auf der Übersicht.");
+    expect(staged.writes).toEqual([]);
+
+    await start.click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.getByText(`Die Kopie von Flash zieht nach ${B2.name} um`)).toBeVisible();
+    expect(staged.writes).toEqual([{ method: "POST", path: "/api/offsite/targets/t-box-flash/move", body: { to: "b2" } }]);
+  });
+
+  test("a move the server refuses says what to do instead and cannot be started", async ({ page }) => {
+    const staged = await stageStorage(page, 1280);
+    staged.move = { ok: false, code: "move-sign-in", error: "both places sign in the same way" };
+    await page.goto(locationUrl(STORAGE_BOX.id));
+    await sectionRow(page, "Flash").getByRole("button", { name: "Umziehen" }).click();
+    const window = page.getByRole("dialog", { name: "Kopie von Flash umziehen" });
+
+    await window.getByRole("radio", { name: B2.name }).click();
+    await expect(window.getByText("Zieh den Bereich erst in einen Ordner auf diesem Server um", { exact: false })).toBeVisible();
+    await expect(window.getByRole("button", { name: "Umziehen" })).toBeDisabled();
+    expect(staged.writes).toEqual([]);
+  });
+
+  test("a section that is moving says so on its row, and the overview follows it like a copy", async ({ page }) => {
+    await stageStorage(page, 1280);
+    await stageProgress(page, { key: MOVE.key, phase: "replicate", percent: 40, active: true, snapshotIndex: 3, snapshotTotal: 14 });
+    await page.goto(locationUrl(STORAGE_BOX.id));
+
+    const row = sectionRow(page, "Flash");
+    await expect(row.getByRole("status")).toHaveText("Zieht um · Sicherung 3 von 14");
+    await expect(row.getByRole("button", { name: "Umziehen" })).toHaveCount(0);
+    await expect(sectionRow(page, "Container").getByRole("button", { name: "Umziehen" })).toBeVisible();
+
+    await page.goto("/dashboard");
+    const head = page.getByTestId("status-head");
+    await expect(head).toContainText("Off-site-Kopie läuft");
+    await expect(head).toContainText("Sicherung 3 von 14");
   });
 
   test("the rclone.conf card shows the remote's section without its secret", async ({ page }) => {
