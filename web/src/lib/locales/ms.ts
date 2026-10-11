@@ -404,7 +404,6 @@ const ms: Partial<Translations> = {
   "recovery.nagBody": "Apabila penyulitan diaktifkan, kehilangan APP_KEY bermakna kehilangan sandaran anda. Muat turun kit pemulihan dan simpan di tempat yang selamat dan luar talian.",
   "recovery.stored": "Saya telah menyimpannya dengan selamat",
 
-  "settings.paths": "Laluan sandaran",
   "settings.pathsHint": "Laluan bawahan relatif di bawah root mount hos ({root}). Klik Semak Imbas untuk menavigasi direktori atau taip laluan secara terus.",
   "settings.containersPath": "Laluan bekas",
   "settings.vmsPath": "Laluan VM",

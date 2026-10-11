@@ -404,7 +404,6 @@ const ca: Partial<Translations> = {
   "recovery.nagBody": "Amb el xifratge activat, perdre la APP_KEY vol dir perdre les còpies. Descarrega el kit de recuperació i guarda'l en un lloc segur i fora de línia.",
   "recovery.stored": "Ja el tinc guardat de forma segura",
 
-  "settings.paths": "Camins de còpia",
   "settings.pathsHint": "Subcamins relatius sota l'arrel de muntatge de l'amfitrió ({root}). Fes clic a Explora per navegar pels directoris o escriu un camí directament.",
   "settings.containersPath": "Camí dels contenidors",
   "settings.vmsPath": "Camí de les MV",

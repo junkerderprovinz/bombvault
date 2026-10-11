@@ -21,6 +21,7 @@ import { Selector } from "../Selector";
 import { keepSummary } from "./KeepCard";
 import { KeepCountFields, useKeepLessQuestion } from "./keepFields";
 import { DomainGlyph, Rows, SettingRow } from "./rows";
+import { SectionPathWindow } from "./SectionPathWindow";
 import type { LocationEdit } from "./useLocationEdit";
 
 const OWN_LABEL: Record<FollowedSetting, TranslationKey> = {
@@ -50,6 +51,7 @@ function RulesWindow({ edit, section, onClose }: { edit: LocationEdit; section: 
   const settings = sectionSettings(location, records, section);
   const ownKeep = section.own.includes("retention");
   const [custom, setCustom] = useState(ownKeep);
+  const [typing, setTyping] = useState(false);
   const domain = t(DOMAIN_LABEL[section.domain]);
   const counts = keepCounts(section.retention);
   const asks = location.kind !== "local";
@@ -78,11 +80,15 @@ function RulesWindow({ edit, section, onClose }: { edit: LocationEdit; section: 
       footer={<Button label={t("common.done")} labelKey="common.done" glyph={<IconCheck />} tone="accent" onClick={onClose} />}
     >
       {less.dialog}
+      {typing && <SectionPathWindow domain={section.domain} onClose={() => setTyping(false)} />}
       <Rows>
         <SettingRow label={t("storage.rules.repository")} note={t("storage.rules.follows")}>
           <code dir="ltr" className="min-w-0 break-all text-start font-mono text-xs text-carbon-textSub">
             {section.where}
           </code>
+          {location.object === "path" && (
+            <Button label={t("storage.rules.type")} labelKey="storage.rules.type" glyph={<IconPencil />} tone="neutral" onClick={() => setTyping(true)} />
+          )}
         </SettingRow>
         {settings.includes("retention") && (
           <SettingRow

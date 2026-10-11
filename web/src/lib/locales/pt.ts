@@ -323,7 +323,6 @@ const pt: Partial<Translations> = {
     "Nunca escreves essa palavra-passe: o BombVault deriva-a da APP_KEY em cada chamada. O valor está no teu kit de recuperação, como palavra-passe restic derivada, e é o que precisas para correr o restic à mão sobre um repositório.",
   "settings.encryptionHint":
     "A cifra é fixada por repositório no momento da criação, por isso esta definição só decide como se cria um repositório NOVO. Para um que já existe, o BombVault lê o modo do próprio repositório. Vê a página de Recuperação. Alterá-la contra um repositório existente apenas impede o restic de o abrir.",
-  "settings.paths": "Caminhos de backup",
   "settings.pathsHint": "Subcaminhos relativos sob a raiz do mount do host ({root}). Clique em Procurar para navegar pelos diretórios ou digite um caminho diretamente.",
   "settings.containersPath": "Caminho dos containers",
   "settings.vmsPath": "Caminho das VMs",

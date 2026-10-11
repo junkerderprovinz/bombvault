@@ -321,7 +321,6 @@ const pl: Partial<Translations> = {
   "settings.encryptionPasswordWhere":
     "Tego hasła nigdy nie wpisujesz: BombVault wyprowadza je z APP_KEY przy każdym wywołaniu. Sama wartość jest w Twoim zestawie odzyskiwania, jako wyprowadzone hasło restic, i to jej potrzebujesz, aby ręcznie uruchomić restic na repozytorium.",
   "settings.encryptionHint": "Szyfrowanie jest ustalane dla repozytorium przy jego tworzeniu, więc to ustawienie decyduje tylko o NOWYM repozytorium. Dla istniejącego BombVault odczytuje tryb prosto z repozytorium. Zobacz stronę Odzyskiwanie. Zmiana tego wobec istniejącego repozytorium sprawi jedynie, że restic go nie otworzy.",
-  "settings.paths": "Ścieżki kopii zapasowych",
   "settings.pathsHint": "Względne podścieżki w katalogu montowania hosta ({root}). Kliknij Przeglądaj, aby nawigować po katalogach, lub wpisz ścieżkę bezpośrednio.",
   "settings.containersPath": "Ścieżka kontenerów",
   "settings.vmsPath": "Ścieżka maszyn wirtualnych",

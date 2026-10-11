@@ -404,7 +404,6 @@ const sk: Partial<Translations> = {
   "recovery.nagBody": "Keď je šifrovanie zapnuté, strata APP_KEY znamená stratu záloh. Stiahnite si súpravu na obnovenie a uložte ju na bezpečné, offline miesto.",
   "recovery.stored": "Bezpečne som ju uložil",
 
-  "settings.paths": "Cesty zálohovania",
   "settings.pathsHint": "Relatívne podcesty pod koreňom pripojenia hostiteľa ({root}). Kliknutím na Prehľadávať prejdite adresármi alebo zadajte cestu priamo.",
   "settings.containersPath": "Cesta kontajnerov",
   "settings.vmsPath": "Cesta VM",

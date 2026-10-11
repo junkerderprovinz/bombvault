@@ -404,7 +404,6 @@ const hi: Partial<Translations> = {
   "recovery.nagBody": "एन्क्रिप्शन चालू होने पर, APP_KEY खोने का मतलब है बैकअप खोना। रिकवरी किट डाउनलोड करें और इसे कहीं सुरक्षित और ऑफ़लाइन रखें।",
   "recovery.stored": "मैंने इसे सुरक्षित रख लिया है",
 
-  "settings.paths": "बैकअप पथ",
   "settings.pathsHint": "होस्ट माउंट रूट ({root}) के अंतर्गत सापेक्ष उपपथ। डायरेक्टरी में जाने के लिए Browse पर क्लिक करें या सीधे पथ टाइप करें।",
   "settings.containersPath": "कंटेनर पथ",
   "settings.vmsPath": "VM पथ",

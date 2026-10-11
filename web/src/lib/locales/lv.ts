@@ -404,7 +404,6 @@ const lv: Partial<Translations> = {
   "recovery.nagBody": "Kad šifrēšana ir ieslēgta, APP_KEY pazaudēšana nozīmē rezerves kopiju pazaudēšanu. Lejupielādējiet atkopšanas komplektu un glabājiet to drošā, bezsaistes vietā.",
   "recovery.stored": "Esmu to droši saglabājis",
 
-  "settings.paths": "Rezerves kopēšanas ceļi",
   "settings.pathsHint": "Relatīvi apakšceļi zem saimniekdatora piesaistes saknes ({root}). Noklikšķiniet uz Pārlūkot, lai pārvietotos pa direktorijiem, vai ievadiet ceļu tieši.",
   "settings.containersPath": "Konteineru ceļš",
   "settings.vmsPath": "VM ceļš",

@@ -404,7 +404,6 @@ const gl: Partial<Translations> = {
   "recovery.nagBody": "Co cifrado activado, perder o APP_KEY significa perder as copias. Descarga o kit de recuperación e gárdao nun lugar seguro e sen conexión.",
   "recovery.stored": "Xa o teño gardado con seguridade",
 
-  "settings.paths": "Camiños de copia",
   "settings.pathsHint": "Subcamiños relativos baixo a raíz de montaxe do host ({root}). Preme en Explorar para navegar polos directorios ou escribe un camiño directamente.",
   "settings.containersPath": "Camiño dos contedores",
   "settings.vmsPath": "Camiño das MV",

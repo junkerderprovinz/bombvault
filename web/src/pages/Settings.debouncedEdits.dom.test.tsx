@@ -341,20 +341,3 @@ describe("the yearly retention rule", () => {
     expect(sent.retentionKeepMonthly).toBe(6);
   });
 });
-
-describe("a repository's compression", () => {
-  it("saves the choice at once, for that repository only", async () => {
-    await renderPage();
-    await gotoPage("storage");
-
-    const max = screen.getAllByText(en["settings.compression.max"])[0].closest("button") as HTMLButtonElement;
-    await act(async () => {
-      fireEvent.click(max);
-    });
-
-    await waitFor(() => expect(putCalls).toHaveLength(1));
-    const sent = putCalls[0].body.compression;
-    expect(sent.containers).toBe("max");
-    expect(sent.vms).toBe("auto");
-  });
-});

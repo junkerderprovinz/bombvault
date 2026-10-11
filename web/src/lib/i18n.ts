@@ -480,7 +480,6 @@ export const en = {
     "With encryption on, losing your APP_KEY means losing your backups. Download the recovery kit and store it somewhere safe and offline.",
   "recovery.stored": "I've stored it safely",
 
-  "settings.paths": "Backup Paths",
   "settings.pathsHint": "Relative subpaths under the host mount root ({root}). Click Browse to navigate directories or type a path directly.",
   "settings.containersPath": "Containers path",
   "settings.vmsPath": "VMs path",
@@ -4297,6 +4296,7 @@ export const en = {
   "storage.rules.windowTitle": "Rules for {domain}",
   "storage.rules.windowHint": "Apply only to {domain} on {name}.",
   "storage.rules.repository": "Repository",
+  "storage.rules.type": "Type a location",
   "storage.rules.likeLocation": "Like the storage location",
   "storage.rules.keepHint": "Custom values apply only to this section on this storage location. 0 means keep all.",
   "storage.rules.compressionHint": "Applies to new data only. What is already there stays as it was written.",
@@ -4914,7 +4914,6 @@ export const de: Translations = {
     "Mit aktivierter Verschlüsselung bedeutet ein verlorener APP_KEY verlorene Backups. Lade das Recovery-Kit herunter und bewahre es sicher und offline auf.",
   "recovery.stored": "Sicher aufbewahrt",
 
-  "settings.paths": "Backup-Pfade",
   "settings.pathsHint": "Relative Unterpfade unter dem Host-Mount-Root ({root}). Auf Durchsuchen klicken, um Verzeichnisse zu navigieren, oder direkt einen Pfad eingeben.",
   "settings.containersPath": "Container-Pfad",
   "settings.vmsPath": "VMs-Pfad",
@@ -8486,6 +8485,7 @@ export const de: Translations = {
   "storage.rules.windowTitle": "Regeln für {domain}",
   "storage.rules.windowHint": "Gelten nur für {domain} auf {name}.",
   "storage.rules.repository": "Repository",
+  "storage.rules.type": "Ort eintippen",
   "storage.rules.likeLocation": "Wie der Speicherort",
   "storage.rules.keepHint": "Eigene Werte gelten nur für diesen Bereich auf diesem Speicherort. 0 heißt: alle behalten.",
   "storage.rules.compressionHint": "Gilt erst für neue Daten. Was schon liegt, bleibt, wie es geschrieben wurde.",

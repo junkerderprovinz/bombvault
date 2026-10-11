@@ -321,7 +321,6 @@ const nl: Partial<Translations> = {
   "settings.encryptionPasswordWhere":
     "Dat wachtwoord typ je nooit: BombVault leidt het bij elke aanroep af uit de APP_KEY. De waarde zelf staat in je herstelpakket, als het afgeleide restic-wachtwoord, en dat heb je nodig om restic met de hand op een repository te draaien.",
   "settings.encryptionHint": "Versleuteling ligt per repository vast bij het aanmaken, dus deze instelling bepaalt alleen hoe een NIEUWE repository wordt gemaakt. Voor een bestaande leest BombVault de modus van de repository zelf. Zie de pagina Herstel. Dit wijzigen bij een bestaande repository zorgt er alleen voor dat restic hem niet meer kan openen.",
-  "settings.paths": "Back-uppaden",
   "settings.pathsHint": "Relatieve subpaden onder de host-mount-root ({root}). Klik op Bladeren om door mappen te navigeren, of typ een pad rechtstreeks in.",
   "settings.containersPath": "Containers-pad",
   "settings.vmsPath": "VM's-pad",

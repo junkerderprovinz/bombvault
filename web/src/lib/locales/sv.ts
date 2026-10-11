@@ -324,7 +324,6 @@ const sv: Partial<Translations> = {
     "Det lösenordet skriver du aldrig: BombVault härleder det ur APP_KEY vid varje anrop. Själva värdet står i ditt återställningspaket som det härledda restic-lösenordet, och det är det du behöver för att köra restic för hand mot ett arkiv.",
   "settings.encryptionHint":
     "Krypteringen bestäms per arkiv när det skapas, så den här inställningen avgör bara hur ett NYTT arkiv skapas. För ett som redan finns läser BombVault läget direkt ur arkivet. Se sidan Återställning. Att ändra detta mot ett befintligt arkiv gör bara att restic inte kan öppna det.",
-  "settings.paths": "Säkerhetskopiesökvägar",
   "settings.pathsHint": "Relativa undersökvägar under host-monteringens rot ({root}). Klicka på Bläddra för att navigera i mappar, eller skriv en sökväg direkt.",
   "settings.containersPath": "Containers-sökväg",
   "settings.vmsPath": "VM-sökväg",

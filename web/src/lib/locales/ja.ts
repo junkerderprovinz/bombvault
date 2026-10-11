@@ -324,7 +324,6 @@ const ja: Partial<Translations> = {
     "このパスワードを入力することはありません。BombVault が呼び出しのたびに APP_KEY から導出します。値そのものはリカバリキットに「導出された restic パスワード」として載っており、リポジトリに対して restic を手動で実行するときに必要になるのはこれです。",
   "settings.encryptionHint":
     "暗号化はリポジトリの作成時に確定するため、この設定が決めるのは「新規」リポジトリの作り方だけです。すでにあるリポジトリについては、BombVault がリポジトリ自体から方式を読み取ります (復旧ページを参照)。既存のリポジトリに対してここを変更すると、restic が開けなくなるだけです。",
-  "settings.paths": "バックアップパス",
   "settings.pathsHint": "ホストマウントのルート（{root}）配下の相対サブパスです。参照をクリックしてディレクトリを移動するか、パスを直接入力してください。",
   "settings.containersPath": "コンテナパス",
   "settings.vmsPath": "VM パス",

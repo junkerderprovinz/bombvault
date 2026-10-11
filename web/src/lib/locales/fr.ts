@@ -324,7 +324,6 @@ const fr: Partial<Translations> = {
     "Vous ne saisissez jamais ce mot de passe : BombVault le dérive de l'APP_KEY à chaque appel. La valeur elle-même figure dans votre kit de récupération, sous le mot de passe restic dérivé, et c'est ce qu'il vous faut pour lancer restic à la main sur un dépôt.",
   "settings.encryptionHint":
     "Le chiffrement est fixé par dépôt au moment de sa création : ce réglage ne décide donc que pour un NOUVEAU dépôt. Pour un dépôt existant, BombVault lit le mode directement sur le dépôt, voir la page Récupération. Modifier ceci face à un dépôt existant empêche simplement restic de l'ouvrir.",
-  "settings.paths": "Chemins de sauvegarde",
   "settings.pathsHint": "Sous-chemins relatifs sous la racine du montage hôte ({root}). Cliquez sur Parcourir pour naviguer dans les dossiers, ou saisissez un chemin directement.",
   "settings.containersPath": "Chemin des conteneurs",
   "settings.vmsPath": "Chemin des VMs",

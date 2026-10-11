@@ -324,7 +324,6 @@ const ko: Partial<Translations> = {
     "이 비밀번호를 직접 입력할 일은 없습니다. BombVault가 호출할 때마다 APP_KEY에서 파생합니다. 값 자체는 복구 키트에 '파생된 restic 비밀번호'로 적혀 있으며, 저장소에 restic을 손으로 실행할 때 필요한 것이 바로 이것입니다.",
   "settings.encryptionHint":
     "암호화는 저장소를 만들 때 확정되므로, 이 설정은 '새' 저장소를 어떻게 만들지만 결정합니다. 이미 있는 저장소에 대해서는 BombVault가 저장소 자체에서 방식을 읽습니다(복구 페이지 참고). 기존 저장소를 두고 이 값을 바꾸면 restic이 그것을 열지 못하게 될 뿐입니다.",
-  "settings.paths": "백업 경로",
   "settings.pathsHint": "호스트 마운트 루트({root}) 아래의 상대 하위 경로입니다. 찾아보기를 클릭해 디렉터리를 탐색하거나 경로를 직접 입력하세요.",
   "settings.containersPath": "컨테이너 경로",
   "settings.vmsPath": "VM 경로",

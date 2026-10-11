@@ -404,7 +404,6 @@ const lt: Partial<Translations> = {
   "recovery.nagBody": "Kai šifravimas įjungtas, praradus APP_KEY prarandamos ir atsarginės kopijos. Atsisiųskite atkūrimo rinkinį ir laikykite jį saugioje, neprisijungusioje vietoje.",
   "recovery.stored": "Aš jį saugiai išsaugojau",
 
-  "settings.paths": "Atsarginio kopijavimo keliai",
   "settings.pathsHint": "Santykiniai antriniai keliai po pagrindinio kompiuterio prijungimo šaknimi ({root}). Spustelėkite Naršyti, kad naršytumėte katalogus, arba įveskite kelią tiesiogiai.",
   "settings.containersPath": "Konteinerių kelias",
   "settings.vmsPath": "VM kelias",

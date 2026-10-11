@@ -324,7 +324,6 @@ const vi: Partial<Translations> = {
     "Bạn không bao giờ phải gõ mật khẩu đó: BombVault suy ra nó từ APP_KEY ở mỗi lần gọi. Giá trị nằm trong bộ khôi phục của bạn, ghi là mật khẩu restic được suy ra, và đó chính là thứ cần để chạy restic bằng tay trên một kho.",
   "settings.encryptionHint":
     "Mã hoá được cố định cho từng kho ngay khi tạo, nên thiết lập này chỉ quyết định cách tạo một kho MỚI. Với kho đã tồn tại, BombVault đọc chế độ ngay từ chính kho đó. Xem trang Khôi phục. Đổi giá trị này khi đã có kho chỉ khiến restic không mở được nó.",
-  "settings.paths": "Đường dẫn sao lưu",
   "settings.pathsHint": "Đường dẫn con tương đối bên dưới gốc điểm gắn kết của host ({root}). Nhấp Duyệt để điều hướng thư mục, hoặc nhập đường dẫn trực tiếp.",
   "settings.containersPath": "Đường dẫn Containers",
   "settings.vmsPath": "Đường dẫn VMs",

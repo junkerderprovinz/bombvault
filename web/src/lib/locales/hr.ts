@@ -404,7 +404,6 @@ const hr: Partial<Translations> = {
   "recovery.nagBody": "Kad je enkripcija uključena, gubitak APP_KEY znači gubitak sigurnosnih kopija. Preuzmite komplet za oporavak i spremite ga na sigurno mjesto izvan mreže.",
   "recovery.stored": "Sigurno sam ga pohranio",
 
-  "settings.paths": "Putanje sigurnosnih kopija",
   "settings.pathsHint": "Relativne podputanje ispod korijena montiranja hosta ({root}). Kliknite Pregledaj za navigaciju kroz direktorije ili unesite putanju izravno.",
   "settings.containersPath": "Putanja kontejnera",
   "settings.vmsPath": "Putanja VM-ova",

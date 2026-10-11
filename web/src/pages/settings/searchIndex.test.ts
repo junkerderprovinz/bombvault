@@ -62,13 +62,9 @@ describe("the settings search index", () => {
 
   it("has the compression choice on every card that draws one", () => {
     const row = { key: "settings.compression", hint: "settings.compressionInfo" };
-    const storage = pageSource("storage");
-    expect(storage).toContain("<PathModeSwitch");
-    expect(storage).toContain("<ReposCard");
-    const cards = SETTINGS_INDEX.storage.filter(
-      (c) => c.title === "settings.paths" || c.title === "repos.title" || c.title === "offsite.copyDomainTitle"
-    );
-    expect(cards).toHaveLength(8);
+    expect(pageSource("storage")).toContain("<ReposCard");
+    const cards = SETTINGS_INDEX.storage.filter((c) => c.title === "repos.title" || c.title === "offsite.copyDomainTitle");
+    expect(cards).toHaveLength(7);
     for (const card of cards) expect(card.rows).toContainEqual(row);
   });
 

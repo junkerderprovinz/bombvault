@@ -404,7 +404,6 @@ const eu: Partial<Translations> = {
   "recovery.nagBody": "Zifratzea aktibatuta dagoenean, APP_KEY galtzeak babeskopiak galtzea dakar. Deskargatu berreskuratze-kita eta gorde toki seguru batean, konexiorik gabe.",
   "recovery.stored": "Modu seguruan gorde dut",
 
-  "settings.paths": "Babeskopia-bideak",
   "settings.pathsHint": "Ostalariaren muntaketa-erroaren azpiko bide erlatiboak ({root}). Klikatu Arakatu direktorioetan nabigatzeko edo idatzi bide bat zuzenean.",
   "settings.containersPath": "Edukiontzien bidea",
   "settings.vmsPath": "MBen bidea",

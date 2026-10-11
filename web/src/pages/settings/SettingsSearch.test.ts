@@ -58,9 +58,8 @@ describe("the settings index in English", () => {
     expect(hits.every((h) => h.startsWith("storage: "))).toBe(true);
   });
 
-  it("leads compression to the backup paths, the named repositories and each off-site destination", () => {
+  it("leads compression to the named repositories and each off-site destination", () => {
     const hits = where("compression");
-    expect(hits).toContain(`storage: ${en["settings.paths"]}`);
     expect(hits).toContain(`storage: ${en["repos.title"]}`);
     expect(copyCards(hits)).toHaveLength(6);
   });

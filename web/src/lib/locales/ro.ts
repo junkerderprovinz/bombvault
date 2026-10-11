@@ -323,7 +323,6 @@ const ro: Partial<Translations> = {
     "Parola aceasta nu o tastezi niciodată: BombVault o derivă din APP_KEY la fiecare apel. Valoarea în sine este în kitul tău de recuperare, ca parolă restic derivată, și exact ea îți trebuie ca să rulezi restic manual pe un depozit.",
   "settings.encryptionHint":
     "Criptarea este fixată pentru fiecare depozit la crearea lui, deci această setare decide doar pentru un depozit NOU. Pentru unul care există deja, BombVault citește modul chiar de pe depozit. Vezi pagina Recuperare. Schimbarea ei în dreptul unui depozit existent doar împiedică restic să îl deschidă.",
-  "settings.paths": "Căi de copiere de rezervă",
   "settings.pathsHint": "Subcăi relative sub rădăcina montării gazdei ({root}). Apasă pe Răsfoiește pentru a naviga prin directoare, sau introdu o cale direct.",
   "settings.containersPath": "Cale containere",
   "settings.vmsPath": "Cale VM-uri",

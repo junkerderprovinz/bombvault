@@ -324,7 +324,6 @@ const fi: Partial<Translations> = {
     "Tätä salasanaa et koskaan kirjoita: BombVault johtaa sen APP_KEY-avaimesta jokaisella kutsulla. Arvo itsessään on palautuspaketissasi johdettuna restic-salasanana, ja juuri sitä tarvitset ajaaksesi resticiä käsin arkistoa vasten.",
   "settings.encryptionHint":
     "Salaus lukitaan varastokohtaisesti sen luontihetkellä, joten tämä asetus ratkaisee vain UUDEN varaston. Jo olemassa olevan kohdalla BombVault lukee tilan suoraan varastosta. Katso Palautus-sivu. Tämän muuttaminen olemassa olevaa varastoa vasten estää vain resticia avaamasta sitä.",
-  "settings.paths": "Varmuuskopiopolut",
   "settings.pathsHint": "Suhteelliset alipolut isäntäkoneen liitosjuuren alla ({root}). Napsauta Selaa siirtyäksesi kansioissa, tai kirjoita polku suoraan.",
   "settings.containersPath": "Konttien polku",
   "settings.vmsPath": "VM-polku",

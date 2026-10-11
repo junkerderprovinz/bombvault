@@ -324,7 +324,6 @@ const da: Partial<Translations> = {
     "Den adgangskode skriver du aldrig: BombVault udleder den af APP_KEY ved hvert kald. Selve værdien står i dit gendannelsessæt som den udledte restic-adgangskode, og det er den, du skal bruge for at køre restic manuelt mod et arkiv.",
   "settings.encryptionHint":
     "Krypteringen ligger fast pr. arkiv, når det oprettes, så denne indstilling afgør kun, hvordan et NYT arkiv laves. For et arkiv, der allerede findes, læser BombVault tilstanden af selve arkivet. Se siden Gendannelse. At ændre dette over for et eksisterende arkiv gør blot, at restic ikke kan åbne det.",
-  "settings.paths": "Sikkerhedskopistier",
   "settings.pathsHint": "Relative understier under host-monteringsroden ({root}). Klik på Gennemse for at navigere i mapper, eller indtast en sti direkte.",
   "settings.containersPath": "Containers-sti",
   "settings.vmsPath": "VM-sti",

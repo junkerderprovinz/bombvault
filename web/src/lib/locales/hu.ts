@@ -324,7 +324,6 @@ const hu: Partial<Translations> = {
     "Ezt a jelszót sosem gépeled be: a BombVault minden hívásnál az APP_KEY kulcsból származtatja. Maga az érték a helyreállítási csomagodban van, származtatott restic jelszóként, és épp erre van szükséged, ha kézzel futtatnád a resticet egy tárolón.",
   "settings.encryptionHint":
     "A titkosítás a tároló létrehozásakor rögzül, így ez a beállítás csak ÚJ tárolóról dönt. Egy már meglévőnél a BombVault magáról a tárolóról olvassa le a módot. Lásd a Helyreállítás oldalt. Ha ezt egy meglévő tárolóval szemben megváltoztatod, a restic egyszerűen nem tudja megnyitni.",
-  "settings.paths": "Biztonsági mentési útvonalak",
   "settings.pathsHint": "Relatív alútvonalak a gazdagép csatolási gyökere alatt ({root}). Kattints a Tallózás gombra a könyvtárak közötti navigáláshoz, vagy írj be egy útvonalat közvetlenül.",
   "settings.containersPath": "Konténerek útvonala",
   "settings.vmsPath": "VM-ek útvonala",

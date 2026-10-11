@@ -215,19 +215,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       body: ["placementDefaults.paused", "placementDefaults.pausedHint"],
     },
     {
-      title: "settings.paths",
-      hint: "settings.pathsHint",
-      rows: [
-        { key: "settings.containersPath" },
-        { key: "settings.vmsPath" },
-        { key: "settings.flashPath" },
-        { key: "settings.configPath" },
-        { key: "settings.filesPath" },
-        { key: "settings.zfsPath" },
-        { key: "settings.compression", hint: "settings.compressionInfo" },
-      ],
-    },
-    {
       title: "settings.retentionLocalTitle",
       hint: "settings.retentionHint",
       rows: [

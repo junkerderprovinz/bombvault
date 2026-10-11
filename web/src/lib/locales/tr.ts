@@ -324,7 +324,6 @@ const tr: Partial<Translations> = {
     "Bu parolayı hiçbir zaman yazmazsınız: BombVault her çağrıda APP_KEY değerinden türetir. Değerin kendisi kurtarma setinizde, türetilmiş restic parolası olarak durur ve bir depoya elle restic çalıştırmak için gereken tam olarak budur.",
   "settings.encryptionHint":
     "Şifreleme, depo oluşturulurken sabitlenir; bu nedenle bu ayar yalnızca YENİ bir deponun nasıl oluşturulacağını belirler. Zaten var olan bir depo için BombVault kipi doğrudan deponun kendisinden okur. Kurtarma sayfasına bak. Var olan bir depoya karşı bunu değiştirmek yalnızca restic'in onu açamamasına yol açar.",
-  "settings.paths": "Yedekleme Yolları",
   "settings.pathsHint": "Host bağlama kökü ({root}) altındaki göreli alt yollar. Dizinlerde gezinmek için Gözat'a tıklayın veya bir yolu doğrudan yazın.",
   "settings.containersPath": "Konteyner yolu",
   "settings.vmsPath": "VM yolu",

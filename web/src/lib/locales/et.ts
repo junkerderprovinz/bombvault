@@ -404,7 +404,6 @@ const et: Partial<Translations> = {
   "recovery.nagBody": "Kui krüpteering on sees, tähendab APP_KEY kaotamine varunduste kaotamist. Laadi alla taastekomplekt ja hoia seda turvalises kohas võrguühenduseta.",
   "recovery.stored": "Olen selle turvaliselt hoiule pannud",
 
-  "settings.paths": "Varunduse rajad",
   "settings.pathsHint": "Suhtelised alamrajad hosti haakepunkti juure all ({root}). Klõpsa Sirvi kataloogide vahel liikumiseks või sisesta rada otse.",
   "settings.containersPath": "Konteinerite rada",
   "settings.vmsPath": "VM-ide rada",

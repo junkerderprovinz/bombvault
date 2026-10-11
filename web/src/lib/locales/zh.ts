@@ -324,7 +324,6 @@ const zh: Partial<Translations> = {
     "这个密码你从不需要输入：BombVault 每次调用时都从 APP_KEY 派生它。值本身写在你的恢复包里，标为派生的 restic 密码，手动对仓库运行 restic 时需要的正是它。",
   "settings.encryptionHint":
     "加密在仓库创建时就已固定，因此该设置只决定“新”仓库的创建方式。对于已存在的仓库，BombVault 会直接从仓库本身读取方式。见“恢复”页面。对着已有仓库改动此项，只会让 restic 无法打开它。",
-  "settings.paths": "备份路径",
   "settings.pathsHint": "主机挂载根目录（{root}）下的相对子路径。点击浏览以浏览目录，或直接输入路径。",
   "settings.containersPath": "容器路径",
   "settings.vmsPath": "虚拟机路径",

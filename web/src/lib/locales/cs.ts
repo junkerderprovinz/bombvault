@@ -324,7 +324,6 @@ const cs: Partial<Translations> = {
     "Toto heslo nikdy nezadáváte: BombVault je při každém volání odvozuje z APP_KEY. Samotná hodnota je ve vaší sadě pro obnovu jako odvozené heslo restic a právě tu potřebujete, chcete-li restic spustit nad úložištěm ručně.",
   "settings.encryptionHint":
     "Šifrování je pro repozitář dané při jeho vytvoření, takže toto nastavení rozhoduje jen o NOVÉM repozitáři. U už existujícího si BombVault režim přečte přímo z repozitáře. Viz stránka Obnova. Změna proti existujícímu repozitáři jen způsobí, že ho restic neotevře.",
-  "settings.paths": "Zálohovací cesty",
   "settings.pathsHint": "Relativní podcesty pod kořenem připojení hostitele ({root}). Klikněte na Procházet pro procházení adresářů, nebo zadejte cestu přímo.",
   "settings.containersPath": "Cesta ke kontejnerům",
   "settings.vmsPath": "Cesta k VM",

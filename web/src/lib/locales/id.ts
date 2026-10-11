@@ -404,7 +404,6 @@ const id: Partial<Translations> = {
   "recovery.nagBody": "Dengan enkripsi aktif, kehilangan APP_KEY berarti kehilangan cadangan Anda. Unduh kit pemulihan dan simpan di tempat yang aman dan offline.",
   "recovery.stored": "Saya sudah menyimpannya dengan aman",
 
-  "settings.paths": "Jalur pencadangan",
   "settings.pathsHint": "Jalur relatif di bawah akar mount host ({root}). Klik Jelajahi untuk menavigasi direktori atau ketik jalur secara langsung.",
   "settings.containersPath": "Jalur container",
   "settings.vmsPath": "Jalur VM",

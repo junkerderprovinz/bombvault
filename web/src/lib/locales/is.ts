@@ -404,7 +404,6 @@ const is: Partial<Translations> = {
   "recovery.nagBody": "Þegar dulkóðun er virk þýðir tap á APP_KEY tap á afritum. Sæktu endurheimtarpakkann og geymdu hann á öruggum stað án nettengingar.",
   "recovery.stored": "Ég hef geymt hann á öruggum stað",
 
-  "settings.paths": "Afritunarslóðir",
   "settings.pathsHint": "Hlutfallslegar undirslóðir undir rót tengipunkts hýsils ({root}). Smelltu á Skoða til að vafra um möppur eða skrifaðu slóð beint.",
   "settings.containersPath": "Slóð gáma",
   "settings.vmsPath": "Slóð sýndarvéla",

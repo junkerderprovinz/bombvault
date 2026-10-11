@@ -404,7 +404,6 @@ const sl: Partial<Translations> = {
   "recovery.nagBody": "Ko je šifriranje vklopljeno, izguba APP_KEY pomeni izgubo varnostnih kopij. Prenesi obnovitveni komplet in ga shrani nekje varno in zunaj sistema.",
   "recovery.stored": "Varno sem ga shranil",
 
-  "settings.paths": "Poti varnostnega kopiranja",
   "settings.pathsHint": "Relativne podpoti pod korensko priklopno točko gostitelja ({root}). Klikni Prebrskaj za navigacijo po mapah ali vnesi pot neposredno.",
   "settings.containersPath": "Pot za vsebnike",
   "settings.vmsPath": "Pot za VM-je",

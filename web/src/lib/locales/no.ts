@@ -323,7 +323,6 @@ const no: Partial<Translations> = {
     "Dette passordet skriver du aldri: BombVault utleder det fra APP_KEY ved hvert kall. Selve verdien står i gjenopprettingssettet ditt som det utledede restic-passordet, og det er den du trenger for å kjøre restic manuelt mot et arkiv.",
   "settings.encryptionHint":
     "Krypteringen låses per lager når det opprettes, så denne innstillingen avgjør bare hvordan et NYTT lager lages. For et som alt finnes, leser BombVault modusen rett av lageret. Se siden Gjenoppretting. Å endre dette mot et eksisterende lager gjør bare at restic ikke får åpnet det.",
-  "settings.paths": "Sikkerhetskopistier",
   "settings.pathsHint": "Relative understier under host-monteringens rot ({root}). Klikk på Bla gjennom for å navigere i mapper, eller skriv inn en sti direkte.",
   "settings.containersPath": "Kontainersti",
   "settings.vmsPath": "VM-sti",
