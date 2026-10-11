@@ -34,7 +34,7 @@ import { lossText, refusalText, sessionKeyInUse, settingsOfPlaces, takenOver } f
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { placementChanged } from "../../lib/placementEvents";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
-import { EMERGENCY_STEPS, emergencyPath, restoreFolderFor, type EmergencyStep } from "../../lib/restorePlan";
+import { EMERGENCY_STEPS, emergencyPath, restoreFolderFor, type EmergencyStep, type EmergencyWay } from "../../lib/restorePlan";
 import { isRuntimeRefusal } from "../../lib/runReason";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
@@ -138,13 +138,19 @@ function PickRow({
 
 export function EmergencyWindow({
   start,
+  way,
   onClose,
   onOldFolder,
+  onPairing,
 }: {
   start: EmergencyStep;
+  /** The way into the first step a link names. */
+  way?: EmergencyWay | null;
   onClose: () => void;
   /** Opens the window that reads another install's backups read-only. */
   onOldFolder?: () => void;
+  /** Leads to the page where this install joins a group. */
+  onPairing?: () => void;
 }) {
   const { t, lang } = useT();
   const { push } = useToast();
@@ -223,8 +229,9 @@ export function EmergencyWindow({
   }
 
   // What a recovery kit says about each section goes into the fields the
-  // next steps start from. A typed place is in them already.
-  const kitPlaces = session?.source === "kit" ? session.places : undefined;
+  // next steps start from, also when the kit came out of a deposit. A typed
+  // place is in them already.
+  const kitPlaces = session && session.source !== "typed" ? session.places : undefined;
   useEffect(() => {
     if (!kitPlaces) return;
     const named = settingsOfPlaces(kitPlaces);
@@ -563,6 +570,8 @@ export function EmergencyWindow({
           setSettings={setSettings}
           hostMountRoot={hostMountRoot}
           footer={accessFoot}
+          start={way}
+          onPairing={onPairing}
           onOldFolder={
             onOldFolder &&
             (() => {

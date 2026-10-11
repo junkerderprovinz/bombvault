@@ -2,14 +2,16 @@
 // of each place the key was tried on, why a step was refused, and what of the
 // places goes into this server's settings.
 
-import type { EmergencyPlace, EmergencyRefusal, EmergencyState, SealedLoss, Settings } from "./api";
+import type { DepositRefusal, EmergencyPlace, EmergencyRefusal, EmergencyState, ReleaseState, SealedLoss, Settings } from "./api";
 import type { TranslationKey } from "./i18n";
 import { DOMAIN_LABEL } from "./storageLocations";
 
 type T = (key: TranslationKey, n?: number) => string;
 
-/** A refusal of the emergency, or of the settings restore that follows it. */
-export type EmergencyCode = EmergencyRefusal | "settings-other-key";
+/** A refusal of the emergency, of the request for a deposit in the group, or
+ *  of the settings restore that follows. "release-decided" is left out: only
+ *  the instance that keeps a deposit is told so. */
+export type EmergencyCode = EmergencyRefusal | Exclude<DepositRefusal, "release-decided"> | "settings-other-key";
 
 const REFUSAL: Record<EmergencyCode, TranslationKey> = {
   "kit-sealed": "emergency.code.kit-sealed",
@@ -26,6 +28,15 @@ const REFUSAL: Record<EmergencyCode, TranslationKey> = {
   "adopt-in-use": "emergency.code.adopt-in-use",
   "backup-key-locked": "emergency.code.backup-key-locked",
   "settings-other-key": "emergency.code.settings-other-key",
+  "deposit-none": "emergency.code.deposit-none",
+  "release-declined": "emergency.code.release-declined",
+  "release-limit": "emergency.code.release-limit",
+  "deposit-version": "emergency.code.deposit-version",
+  "deposit-code-shape": "emergency.code.deposit-code-shape",
+  "deposit-code": "emergency.code.deposit-code",
+  "member-gone": "emergency.code.member-gone",
+  "member-silent": "emergency.code.member-silent",
+  "keeper-too-old": "emergency.code.keeper-too-old",
 };
 
 /** refusalText is the sentence of a refusal code. A code this client does not
@@ -33,6 +44,34 @@ const REFUSAL: Record<EmergencyCode, TranslationKey> = {
 export function refusalText(t: T, code: string | undefined, said: string | undefined): string {
   const key = code ? REFUSAL[code as EmergencyCode] : undefined;
   return key ? t(key) : (said ?? t("settings.error"));
+}
+
+/** The states of a request for a deposit in which the person has to ask
+ *  again, each with the sentence that says so. */
+export const RELEASE_OVER: Partial<Record<ReleaseState | "unasked", TranslationKey>> = {
+  expired: "emergency.release.expired",
+  released: "emergency.release.released",
+  unasked: "emergency.release.unasked",
+};
+
+const CODE_LENGTH = 20;
+const CODE_GROUP = 5;
+
+/** The characters of a typed recovery code that count: letters and digits,
+ *  in upper case. The server sets the look-alikes right. */
+function codeCharacters(typed: string): string {
+  return typed.toUpperCase().replace(/[^0-9A-Z]/g, "");
+}
+
+/** recoveryCodeShown is a typed recovery code in its four groups of five,
+ *  whatever spaces, dashes or case it was typed or pasted with. */
+export function recoveryCodeShown(typed: string): string {
+  const groups = codeCharacters(typed).slice(0, CODE_LENGTH).match(new RegExp(`.{1,${CODE_GROUP}}`, "g")) ?? [];
+  return groups.join("-");
+}
+
+export function recoveryCodeComplete(typed: string): boolean {
+  return codeCharacters(typed).length === CODE_LENGTH;
 }
 
 type PlaceState = EmergencyPlace["state"];

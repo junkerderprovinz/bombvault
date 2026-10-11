@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import type { EmergencyPlace, EmergencyState } from "./api";
-import { lossText, minutesLeft, placeAdvice, placeName, refusalText, sessionKeyInUse, settingsOfPlaces, takenOver } from "./emergency";
+import {
+  lossText,
+  minutesLeft,
+  placeAdvice,
+  placeName,
+  recoveryCodeComplete,
+  recoveryCodeShown,
+  refusalText,
+  sessionKeyInUse,
+  settingsOfPlaces,
+  takenOver,
+} from "./emergency";
 import { countText, en, type TranslationKey } from "./i18n";
 
 const t = (key: TranslationKey, n?: number) => (n === undefined ? en[key] : countText(en[key], "en", n));
@@ -30,9 +41,36 @@ describe("refusalText", () => {
     expect(refusalText(t, "settings-other-key", undefined)).toBe(en["emergency.code.settings-other-key"]);
   });
 
+  it.each(["deposit-none", "release-declined", "release-limit", "deposit-version", "deposit-code-shape", "deposit-code", "member-gone", "member-silent", "keeper-too-old"] as const)(
+    "has a sentence for a request in the group that was refused as %s",
+    (code) => {
+      expect(refusalText(t, code, "what the server said")).toBe(en[`emergency.code.${code}`]);
+    }
+  );
+
   it("is what the server said for a code it does not know, and a plain failure without either", () => {
     expect(refusalText(t, "kit-from-the-future", "the kit is from the future")).toBe("the kit is from the future");
     expect(refusalText(t, undefined, undefined)).toBe(en["settings.error"]);
+  });
+});
+
+describe("a typed recovery code", () => {
+  it("is shown in four groups of five, in upper case", () => {
+    expect(recoveryCodeShown("abcdefghjkmnpqrstvwx")).toBe("ABCDE-FGHJK-MNPQR-STVWX");
+    expect(recoveryCodeShown(" abcde fghjk\tmnpqr--stvwx ")).toBe("ABCDE-FGHJK-MNPQR-STVWX");
+  });
+
+  it("is grouped while it is typed and cut where a code ends", () => {
+    expect(recoveryCodeShown("")).toBe("");
+    expect(recoveryCodeShown("abc")).toBe("ABC");
+    expect(recoveryCodeShown("abcdef")).toBe("ABCDE-F");
+    expect(recoveryCodeShown("abcdefghjkmnpqrstvwxyz")).toBe("ABCDE-FGHJK-MNPQR-STVWX");
+  });
+
+  it("is complete with twenty letters and digits, however they are spaced", () => {
+    expect(recoveryCodeComplete("ABCDE-FGHJK-MNPQR-STVW")).toBe(false);
+    expect(recoveryCodeComplete("abcde fghjk mnpqr stvwx")).toBe(true);
+    expect(recoveryCodeComplete("ABCDE-FGHJK-MNPQR-STVW!")).toBe(false);
   });
 });
 

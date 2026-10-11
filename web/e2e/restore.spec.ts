@@ -334,6 +334,12 @@ interface StagedEmergency {
   session?: Record<string, unknown>;
 }
 
+/** The instance of the group that keeps the deposit, and what its person has
+ *  answered the request with. */
+const keeper = { allows: false };
+
+const KIT_SESSION = { encrypted: true, places: KIT_PLACES, expiresAt: NOW + 1800, cloudSignIn: true, rcloneConfig: true };
+
 /**
  * Stages the emergency of another install: the key the server backs up under
  * and the session that tried a shown key. Returns what the page asked of it.
@@ -341,6 +347,7 @@ interface StagedEmergency {
 async function stageEmergency(page: Page, start: StagedEmergency = { backupKey: "own", undoable: false }) {
   let state = start;
   const asked: string[] = [];
+  keeper.allows = false;
   await page.route(
     (url) => url.pathname.startsWith("/api/emergency"),
     (route) => {
@@ -353,11 +360,23 @@ async function stageEmergency(page: Page, start: StagedEmergency = { backupKey: 
           const body = request.postDataJSON() as { kit?: string; identity?: string };
           if (body.kit === SEALED_KIT && !body.identity) return refuse("kit-sealed");
           if (body.kit === SEALED_KIT && body.identity !== IDENTITY) return refuse("kit-not-for-identity");
-          state = {
-            ...state,
-            session: { source: "kit", encrypted: true, places: KIT_PLACES, expiresAt: NOW + 1800, cloudSignIn: true, rcloneConfig: true },
-          };
+          state = { ...state, session: { source: "kit", ...KIT_SESSION } };
           break;
+        }
+        case "GET /deposits":
+          return route.fulfill({
+            json: {
+              ok: true,
+              deposits: [{ memberId: "m-nas", memberName: "nas", ownerId: "o-tower", ownerName: "tower", updatedAt: new Date((NOW - DAY) * 1000).toISOString() }],
+              silent: ["dachboden"],
+            },
+          });
+        case "POST /group": {
+          const body = request.postDataJSON() as { code: string; ask: boolean };
+          asked[asked.length - 1] = `group ${body.ask ? "ask" : "look"} ${body.code}`;
+          if (!keeper.allows) return route.fulfill({ json: { ok: true, release: "asked" } });
+          state = { ...state, session: { source: "group", ...KIT_SESSION } };
+          return route.fulfill({ json: { ok: true, release: "allowed", emergency: state } });
         }
         case "POST /adopt":
           state = { backupKey: "adopted", source: "kit", adoptedAt: NOW, undoable: true, session: { ...state.session, refusal: "adopt-same-key" } };
@@ -373,6 +392,39 @@ async function stageEmergency(page: Page, start: StagedEmergency = { backupKey: 
     },
   );
   return asked;
+}
+
+/** Puts this install into a group, as far as the page asks about it. */
+async function stageGroup(page: Page): Promise<void> {
+  await page.route(
+    (url) => url.pathname === "/api/group",
+    (route) =>
+      route.fulfill({
+        json: {
+          ok: true,
+          active: true,
+          instanceId: "new",
+          name: "neu",
+          passwordSet: true,
+          members: [{ id: "m-nas", name: "nas", version: "10.0.0", direct: true, relay: false, address: "" }],
+          relay: { mode: "off", url: "", projectUrl: "", connected: false, serve: false, serveClients: 0 },
+          joinedAgo: 120,
+          memberSeen: true,
+          selfAddress: "",
+          selfAddressManual: false,
+        },
+      }),
+  );
+}
+
+const RECOVERY_CODE = "ABCDE-FGHJK-MNPQR-STVWX";
+
+/** Picks the deposit the group keeps and types the recovery code for it. */
+async function pickDeposit(page: Page): Promise<void> {
+  await wizard(page).getByRole("radio", { name: /^Über die Gruppe/ }).click();
+  await page.getByTestId("emergency-deposit").getByRole("button", { name: "Diese nehmen" }).click();
+  await wizard(page).getByLabel("Wiederherstellungscode").fill("abcde fghjk mnpqr stvwx");
+  await expect(wizard(page).getByLabel("Wiederherstellungscode")).toHaveValue(RECOVERY_CODE);
 }
 
 /** Shows the wizard a sealed kit and opens it with its identity. */
@@ -570,6 +622,63 @@ test("the emergency reads a sealed recovery kit, takes its key over when told to
   await expect(page.getByTestId("key-adopted")).toHaveCount(0);
 });
 
+test("the emergency through the group waits for the instance that keeps the key and opens its deposit", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  await stageGroup(page);
+  const asked = await stageEmergency(page);
+  await page.goto("/restore?emergency=access");
+
+  await expect(wizard(page).getByRole("radio", { name: /^Über die Gruppe/ })).toContainText("die zwölf Wörter der Gruppe, deinen Wiederherstellungscode und jemanden an dieser Instanz");
+  await wizard(page).getByRole("radio", { name: /^Über die Gruppe/ }).click();
+  await expect(page.getByTestId("emergency-deposit")).toContainText("tower");
+  await expect(page.getByTestId("emergency-deposit")).toContainText("verwahrt von nas");
+  await expect(wizard(page).getByText(/^Keine Antwort von dachboden\./)).toBeVisible();
+
+  await page.getByTestId("emergency-deposit").getByRole("button", { name: "Diese nehmen" }).click();
+  await expect(wizard(page).getByRole("button", { name: "Hinterlegung anfordern" })).toBeDisabled();
+  await wizard(page).getByLabel("Wiederherstellungscode").fill("abcde fghjk mnpqr stvwx");
+  await expect(wizard(page).getByLabel("Wiederherstellungscode")).toHaveValue(RECOVERY_CODE);
+  await wizard(page).getByRole("button", { name: "Hinterlegung anfordern" }).click();
+  await expect(wizard(page).getByRole("status")).toContainText("Wartet auf nas.");
+  expect(asked).toEqual([`group ask ${RECOVERY_CODE}`]);
+
+  // The request stays with the keeper while the window is gone. The code does not.
+  await page.goto("/restore?emergency=access");
+  await expect(wizard(page).getByRole("radio", { name: /^Über die Gruppe/ })).toContainText("Bei nas wartet eine Anfrage.");
+  await expect(wizard(page).getByText(/^Deine Anfrage wartet bei nas\./)).toBeVisible();
+  await expect(wizard(page).getByLabel("Wiederherstellungscode")).toHaveValue("");
+  await wizard(page).getByLabel("Wiederherstellungscode").fill(RECOVERY_CODE);
+  await wizard(page).getByRole("button", { name: "Antwort abholen" }).click();
+  await expect(wizard(page).getByRole("status")).toContainText("Wartet auf nas.");
+  expect(asked[asked.length - 1]).toBe(`group look ${RECOVERY_CODE}`);
+
+  keeper.allows = true;
+  await expect(page.getByTestId("emergency-place")).toHaveCount(KIT_PLACES.length, { timeout: 15_000 });
+  await expect(wizard(page).getByText("Hinterlegung geöffnet. Ihr Schlüssel öffnet 2 von 4 Speicherorten.")).toBeVisible();
+  await expect(wizard(page).getByRole("button", { name: "Schlüssel übernehmen" })).toBeEnabled();
+  expect(asked.every((step) => !step.startsWith("group ask") || step === asked[0])).toBe(true);
+});
+
+test("an install in no group is led to the pairing and back to the group way", async ({ page }, testInfo) => {
+  // At 768px the headings of the three pairing steps wrap letter by letter
+  // and reach over the card above them, which is where the way back stands.
+  test.skip(testInfo.project.name !== "desktop-1280", "the pairing page at its full width");
+  await stage(page);
+  await stageEmergency(page);
+  await page.goto("/restore?emergency=access");
+
+  await wizard(page).getByRole("radio", { name: /^Über die Gruppe/ }).click();
+  await expect(wizard(page).getByText(/^Diese Installation ist noch in keiner Gruppe\./)).toBeVisible();
+  await wizard(page).getByRole("button", { name: "Zur Kopplung" }).click();
+  await expect(page).toHaveURL(/\/settings\/pairing\?for=emergency$/);
+  await expect(page.getByText(/^Du kommst vom Notfall-Assistenten\./)).toBeVisible();
+
+  await page.getByRole("button", { name: "Zurück zum Notfall-Assistenten" }).click();
+  await expect(page).toHaveURL(/\/restore\?emergency=access&way=group$/);
+  await expect(wizard(page).getByRole("radio", { name: /^Über die Gruppe/ })).toHaveAttribute("aria-checked", "true");
+});
+
 test("a key that was taken over is named on the page with the day it came", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
   await stage(page);
@@ -618,6 +727,34 @@ for (const width of [320, 360]) {
     await expect(wizard(page).getByRole("button", { name: "Schlüssel behalten und schließen" })).toBeVisible();
     await settle(page);
     expect((await edges(page)).clipped, "the way out clips the edge").toEqual([]);
+  });
+}
+
+for (const width of [320, 360]) {
+  test(`the emergency through the group @ ${width}px keeps inside the edge`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout");
+    await stage(page);
+    await stageGroup(page);
+    await stageEmergency(page);
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("/restore?emergency=access");
+
+    await wizard(page).getByRole("radio", { name: /^Über die Gruppe/ }).click();
+    await expect(page.getByTestId("emergency-deposit")).toBeVisible();
+    await settle(page);
+    const listed = await edges(page);
+    expect(listed.docPan, "the document scrolls horizontally").toBeLessThanOrEqual(1);
+    expect(listed.clipped, "the deposits clip the edge").toEqual([]);
+
+    await page.getByTestId("emergency-deposit").getByRole("button", { name: "Diese nehmen" }).click();
+    await wizard(page).getByLabel("Wiederherstellungscode").fill(RECOVERY_CODE);
+    await settle(page);
+    expect((await edges(page)).clipped, "the recovery code clips the edge").toEqual([]);
+
+    await wizard(page).getByRole("button", { name: "Hinterlegung anfordern" }).click();
+    await expect(wizard(page).getByRole("status")).toBeVisible();
+    await settle(page);
+    expect((await edges(page)).clipped, "the waiting request clips the edge").toEqual([]);
   });
 }
 
@@ -697,7 +834,16 @@ test("pictures of the page", async ({ page }, testInfo) => {
     await page.unrouteAll({ behavior: "ignoreErrors" });
     await stage(page, theme);
     await stageEmergency(page);
+    await stageGroup(page);
     await page.goto("/restore?emergency=access");
+    await pickDeposit(page);
+    await page.screenshot({ path: join(SHOTS!, `emergency-group-${name}.png`) });
+    await wizard(page).getByRole("button", { name: "Hinterlegung anfordern" }).click();
+    await expect(wizard(page).getByRole("status")).toBeVisible();
+    await page.screenshot({ path: join(SHOTS!, `emergency-group-waiting-${name}.png`) });
+    await wizard(page).getByRole("button", { name: "Andere Hinterlegung wählen" }).click();
+    await expect(page.getByTestId("emergency-deposit")).toBeVisible();
+    await page.screenshot({ path: join(SHOTS!, `emergency-group-list-${name}.png`) });
     await wizard(page).getByRole("radio", { name: /^Recovery-Kit hochladen/ }).click();
     await page.screenshot({ path: join(SHOTS!, `emergency-ways-${name}.png`) });
     await showKit(page);

@@ -33,7 +33,7 @@ import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { anyActive, useProgress, type ProgressState } from "../lib/progress";
 import { formatRecent } from "../lib/reltime";
-import { findingsOf, parseEmergencyStep, recommend, recommendationWhy } from "../lib/restorePlan";
+import { findingsOf, parseEmergencyStep, parseEmergencyWay, recommend, recommendationWhy } from "../lib/restorePlan";
 import { useOpenAnomalies } from "../lib/useAnomalies";
 import { useEntry } from "../lib/useEntry";
 import { useTimeline } from "../lib/useTimeline";
@@ -228,6 +228,7 @@ function Way({
 export function Restore() {
   const { t, lang } = useT();
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const emergency = parseEmergencyStep(params.get("emergency"));
   const progress = useProgress();
   const { list: openFindings } = useOpenAnomalies();
@@ -323,7 +324,9 @@ export function Restore() {
       {emergency && (
         <EmergencyWindow
           start={emergency}
+          way={parseEmergencyWay(params.get("way"))}
           onClose={closeEmergency}
+          onPairing={() => navigate("/settings/pairing?for=emergency")}
           onOldFolder={() => {
             closeEmergency();
             setSource("oldFolder");

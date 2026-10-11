@@ -3,8 +3,8 @@
  * The emergency window: the key of the install that is gone, BombVault's own
  * settings, the choice of what comes back, and the restore.
  *
- * The key is shown with the recovery kit or typed, tried on every place and
- * held in the server's memory. Nothing is stored before it is taken over, and
+ * The key is shown with the recovery kit, through the group or typed, tried
+ * on every place and held in the server's memory. Nothing is stored before it is taken over, and
  * a takeover can be undone until the first backup.
  *
  * A repository that holds a database only as dumps holds the only copy of
@@ -27,7 +27,7 @@ import type {
   VM,
 } from "../../lib/api";
 import { I18nProvider, countText, en } from "../../lib/i18n";
-import type { EmergencyStep } from "../../lib/restorePlan";
+import type { EmergencyStep, EmergencyWay } from "../../lib/restorePlan";
 import { RESTORE_NO_RUNTIME } from "../../lib/runReason";
 import { ToastProvider } from "../../lib/toast";
 import { SETTINGS, containerView, fileSetView, vmView } from "../../pages/backupEntry.testsupport";
@@ -184,6 +184,18 @@ const finishEmergency = vi.fn(() => {
   emergencyOnServer = { ...emergencyOnServer, session: undefined, lost: undefined };
   return answer();
 });
+// Whether this install is in a group, and what the group answers a request
+// for a deposit with.
+let inGroup = false;
+const emergencyFromGroup = vi.fn((memberId: string, ownerId: string, code: string, ask: boolean) => {
+  void memberId;
+  void ownerId;
+  void code;
+  void ask;
+  emergencyOnServer = { ...emergencyOnServer, session: session({ source: "group" }) };
+  return Promise.resolve({ ok: true, release: "allowed", emergency: emergencyOnServer });
+});
+
 const undoEmergency = vi.fn(() => {
   if (!emergencyOnServer.undoable) return refused("adopt-in-use");
   emergencyOnServer = { backupKey: "own", undoable: false };
@@ -223,6 +235,14 @@ vi.mock("../../lib/api", async (importOriginal) => {
     storeEmergencySignIns: () => storeEmergencySignIns(),
     finishEmergency: () => finishEmergency(),
     undoEmergency: () => undoEmergency(),
+    getGroup: () => Promise.resolve({ ok: true, active: inGroup, members: [] }),
+    listOfferedDeposits: () =>
+      Promise.resolve({
+        ok: true,
+        deposits: [{ memberId: "m-nas", memberName: "nas", ownerId: "o-tower", ownerName: "tower", updatedAt: "2026-09-14T03:00:00Z" }],
+        silent: [],
+      }),
+    emergencyFromGroup: (...a: unknown[]) => emergencyFromGroup(...(a as [string, string, string, boolean])),
     discoverAll: () => discoverAll(),
     listContainers: () => Promise.resolve({ ok: true, containers: containersOnServer }),
     listVMs: () => Promise.resolve({ ok: true, vms: vmsOnServer }),
@@ -253,14 +273,15 @@ function gone(over: Partial<Container> = {}): Container {
 
 const onClose = vi.fn();
 const onOldFolder = vi.fn();
+const onPairing = vi.fn();
 const OLD_KEY = "ab".repeat(32);
 
-async function open(start: EmergencyStep = "access") {
+async function open(start: EmergencyStep = "access", way?: EmergencyWay) {
   await act(async () => {
     render(
       <I18nProvider>
         <ToastProvider>
-          <EmergencyWindow start={start} onClose={onClose} onOldFolder={onOldFolder} />
+          <EmergencyWindow start={start} way={way} onClose={onClose} onOldFolder={onOldFolder} onPairing={onPairing} />
         </ToastProvider>
       </I18nProvider>
     );
@@ -286,6 +307,8 @@ beforeEach(() => {
   runsOnServer = [];
   needsRuntime = [];
   emergencyOnServer = { backupKey: "own", undoable: false };
+  inGroup = false;
+  localStorage.clear();
 });
 
 afterEach(() => {
@@ -294,7 +317,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-const way = (key: "emergency.way.kit" | "emergency.way.key") =>
+const way = (key: "emergency.way.kit" | "emergency.way.group" | "emergency.way.key") =>
   screen.getByRole("radio", { name: new RegExp(`^${en[key]}`) });
 const places = () => screen.queryAllByTestId("emergency-place");
 const next = () => button(en["zfs.replica.add.next"]);
@@ -323,11 +346,13 @@ async function takeOver() {
 }
 
 describe("the ways in", () => {
-  it("are the recovery kit and the typed key, and neither is needed to step on", async () => {
+  it("are the recovery kit, the group and the typed key, and none is needed to step on", async () => {
     await open();
-    expect(way("emergency.way.kit").getAttribute("aria-checked")).toBe("false");
-    expect(way("emergency.way.key").getAttribute("aria-checked")).toBe("false");
-    expect(within(screen.getByRole("radiogroup", { name: en["emergency.access"] })).getAllByRole("radio")).toHaveLength(2);
+    for (const key of ["emergency.way.kit", "emergency.way.group", "emergency.way.key"] as const) {
+      expect(way(key).getAttribute("aria-checked")).toBe("false");
+    }
+    expect(within(screen.getByRole("radiogroup", { name: en["emergency.access"] })).getAllByRole("radio")).toHaveLength(3);
+    expect(within(way("emergency.way.group")).getByText(en["emergency.way.groupSub"])).toBeTruthy();
     expect(next().disabled).toBe(false);
   });
 
@@ -441,6 +466,56 @@ describe("the ways in", () => {
     emergencyOnServer = { backupKey: "locked", source: "kit", adoptedAt: 1_790_000_000, undoable: true };
     await open();
     expect(await screen.findByText(en["emergency.code.backup-key-locked"])).toBeTruthy();
+  });
+});
+
+describe("the way through the group", () => {
+  const deposit = () => screen.getByRole("button", { name: en["emergency.group.choose"] });
+
+  it("sends an install that is in no group to the pairing", async () => {
+    await open();
+    await press(way("emergency.way.group"));
+    expect(await screen.findByText(en["emergency.group.noGroup"])).toBeTruthy();
+    await press(button(en["emergency.group.toPairing"]));
+    expect(onPairing).toHaveBeenCalledTimes(1);
+  });
+
+  it("is where a link from the pairing opens the window", async () => {
+    inGroup = true;
+    await open("access", "group");
+    expect(way("emergency.way.group").getAttribute("aria-checked")).toBe("true");
+    expect(await screen.findByText("tower")).toBeTruthy();
+  });
+
+  it("opens a deposit with the recovery code and goes on as with the kit", async () => {
+    inGroup = true;
+    await open();
+    await press(way("emergency.way.group"));
+    await waitFor(() => expect(deposit()).toBeTruthy());
+    await press(deposit());
+    fireEvent.change(screen.getByLabelText(en["emergency.group.code"]), { target: { value: "abcde fghjk mnpqr stvwx" } });
+    await press(button(en["emergency.group.ask"]));
+    expect(emergencyFromGroup).toHaveBeenCalledWith("m-nas", "o-tower", "ABCDE-FGHJK-MNPQR-STVWX", true);
+
+    await waitFor(() => expect(places()).toHaveLength(4));
+    expect(screen.getByText(en["emergency.readGroup"].replace("{n}", "2").replace("{total}", "4"))).toBeTruthy();
+    expect(document.body.innerHTML).not.toContain("ABCDE");
+    await press(button(en["emergency.adopt"]));
+    await press(within(screen.getAllByRole("dialog").at(-1)!).getByRole("button", { name: en["emergency.adopt"] }));
+    await screen.findByText(new RegExp(en["emergency.adopted"]));
+    await press(next());
+    await press(button(en["emergency.settingsGo"]));
+    await waitFor(() => expect(restoreConfig).toHaveBeenCalled());
+    expect(putSettings.mock.calls[0][0]).toMatchObject({ configPath: "old/config" });
+  });
+
+  it("shows on its card a request that still waits, and opens on it", async () => {
+    inGroup = true;
+    localStorage.setItem("bv-emergency-asked", JSON.stringify({ memberId: "m-nas", memberName: "nas", ownerId: "o-tower", ownerName: "tower" }));
+    await open();
+    expect(within(way("emergency.way.group")).getByText(en["emergency.group.pending"].replace("{keeper}", "nas"))).toBeTruthy();
+    expect(way("emergency.way.group").getAttribute("aria-checked")).toBe("true");
+    expect(await screen.findByText(en["emergency.group.resumeText"].replace("{keeper}", "nas"))).toBeTruthy();
   });
 });
 

@@ -1,12 +1,14 @@
 // The first step of the emergency window: the person shows the key of the
-// install that is gone, with its recovery kit or typed. The server tries it on
-// every place and keeps it in memory. Only taking the key over stores it.
+// install that is gone, with its recovery kit, through the group or typed.
+// The server tries it on every place and keeps it in memory. Only taking the
+// key over stores it.
 import { useEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { createPortal } from "react-dom";
 import {
   adoptEmergencyKey,
   finishEmergency,
   getEmergency,
+  getGroup,
   readEmergencyKey,
   readEmergencyKit,
   storeEmergencySignIns,
@@ -18,6 +20,7 @@ import {
 } from "../../lib/api";
 import { PLACE_LABEL, minutesLeft, placeAdvice, placeName, refusalText, sessionKeyInUse, takenOver } from "../../lib/emergency";
 import { useT, type TranslationKey } from "../../lib/i18n";
+import type { EmergencyWay } from "../../lib/restorePlan";
 import { useConfirm } from "../../lib/useConfirm";
 import { useReveal } from "../../lib/useReveal";
 import { CloudCard } from "../../pages/settings/CloudCard";
@@ -27,14 +30,14 @@ import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
 import { IconBack, IconKey, IconUpload } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
-import { IconCheck, IconRestore } from "../navGlyphs";
+import { IconCheck, IconFleet, IconRestore } from "../navGlyphs";
 import { RevealInput } from "../RevealInput";
 import { Rows } from "../storage/rows";
 import { EMERGENCY_FIELD, Note, SECTION_OFFSITE, SECTION_PATHS, Section } from "./EmergencyParts";
+import { EmergencyGroup, askedDeposit } from "./EmergencyGroup";
 import { EmergencyScene } from "./EmergencyScene";
 import { KitIdentityField, KitPicker, takeIdentity } from "./KitPicker";
 
-type Way = "kit" | "key";
 type Answer = Omit<OkEnvelope, "code"> & { code?: EmergencyRefusal; emergency?: EmergencyState };
 
 const NO_CREDS = { s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "" };
@@ -48,12 +51,18 @@ function WayCard({
   glyph,
   title,
   sub,
+  note,
+  wide = false,
   onPick,
 }: {
   on: boolean;
   glyph: ReactNode;
   title: string;
   sub: string;
+  /** Something of this way that waits for the person. */
+  note?: string;
+  /** Takes the whole row, as the way of last resort does. */
+  wide?: boolean;
   onPick: () => void;
 }) {
   return (
@@ -64,7 +73,7 @@ function WayCard({
       onClick={onPick}
       className={`flex items-start gap-3 rounded-card bg-carbon-surface2 p-4 text-start ring-2 ring-inset transition-colors hover:bg-carbon-surface3 ${
         on ? "ring-accent" : "ring-transparent"
-      }`}
+      } ${wide ? "sm:col-span-2" : ""}`}
     >
       <span className="flex h-11 w-11 flex-none items-center justify-center rounded-control bg-accent text-accentContrast [&_svg]:h-5 [&_svg]:w-5">
         {glyph}
@@ -72,6 +81,7 @@ function WayCard({
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{title}</span>
         <span className="text-xs leading-relaxed text-carbon-textMuted wrap-anywhere">{sub}</span>
+        {note && <span className="pt-1 text-xs font-semibold text-accentText wrap-anywhere">{note}</span>}
       </span>
     </button>
   );
@@ -132,7 +142,9 @@ export function EmergencyAccess({
   setSettings,
   hostMountRoot,
   footer,
+  start = null,
   onOldFolder,
+  onPairing,
 }: {
   /** What GET /api/emergency answered last, null before the first answer. */
   emergency: EmergencyState | null;
@@ -144,13 +156,26 @@ export function EmergencyAccess({
   /** The place in the window's foot for taking the key over, which is the
    *  way forward while a key is shown and undecided. */
   footer: HTMLElement | null;
+  /** The way a link opened the window on. */
+  start?: EmergencyWay | null;
   /** Opens the window that reads another install's backups without taking
    *  its key over. */
   onOldFolder?: () => void;
+  /** Leads to the page where this install joins a group. */
+  onPairing?: () => void;
 }) {
   const { t } = useT();
   const { confirm, confirmDialog } = useConfirm();
-  const [way, setWay] = useState<Way | null>(null);
+  // A request for a deposit that waits in the group is where the person
+  // left off, so the window opens on that way.
+  const [waitingAt] = useState(() => askedDeposit()?.memberName ?? null);
+  const [way, setWay] = useState<EmergencyWay | null>(start ?? (waitingAt !== null ? "group" : null));
+  const [inGroup, setInGroup] = useState<boolean | null>(null);
+  useEffect(() => {
+    getGroup()
+      .then((group) => setInGroup(group.ok && group.active))
+      .catch(() => setInGroup(false));
+  }, []);
   const [busy, setBusy] = useState(false);
   const [refusal, setRefusal] = useState<{ code?: string; said?: string } | null>(null);
 
@@ -254,7 +279,7 @@ export function EmergencyAccess({
   if (session) {
     const readable = session.places.filter((place) => place.state === "readable").length;
     const needsSignIn = session.places.some((place) => place.state === "sign-in");
-    const count = t(session.source === "kit" ? "emergency.readKit" : "emergency.readKey")
+    const count = t(session.source === "kit" ? "emergency.readKit" : session.source === "group" ? "emergency.readGroup" : "emergency.readKey")
       .replace("{n}", String(readable))
       .replace("{total}", String(session.places.length));
     return (
@@ -398,7 +423,22 @@ export function EmergencyAccess({
           sub={t("emergency.way.kitSub")}
           onPick={() => setWay("kit")}
         />
-        <WayCard on={way === "key"} glyph={<IconKey />} title={t("emergency.way.key")} sub={t("emergency.way.keySub")} onPick={() => setWay("key")} />
+        <WayCard
+          on={way === "group"}
+          glyph={<IconFleet />}
+          title={t("emergency.way.group")}
+          sub={t("emergency.way.groupSub")}
+          note={waitingAt !== null ? t("emergency.group.pending").replace("{keeper}", () => waitingAt) : undefined}
+          onPick={() => setWay("group")}
+        />
+        <WayCard
+          wide
+          on={way === "key"}
+          glyph={<IconKey />}
+          title={t("emergency.way.key")}
+          sub={t("emergency.way.keySub")}
+          onPick={() => setWay("key")}
+        />
       </div>
       {refused}
 
@@ -423,6 +463,17 @@ export function EmergencyAccess({
             </Section>
           )}
         </>
+      )}
+
+      {way === "group" && (
+        <EmergencyGroup
+          active={inGroup}
+          onEmergency={(state) => {
+            setRefusal(null);
+            onEmergency(state);
+          }}
+          onPairing={onPairing}
+        />
       )}
 
       {way === "key" &&
