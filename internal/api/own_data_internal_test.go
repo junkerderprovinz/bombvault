@@ -77,7 +77,7 @@ func TestNoRestoreWritesIntoTheDataFolderOrAFolderThatHoldsIt(t *testing.T) {
 		},
 	}
 	link := filepath.Join(host, "user", "share", "x")
-	if err := os.MkdirAll(filepath.Dir(link), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(link), 0o750); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Symlink(data, link); err == nil {

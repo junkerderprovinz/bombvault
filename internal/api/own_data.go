@@ -88,7 +88,7 @@ func (s *Service) refuseOwnData(dest string) error {
 	if isStrictSubpath(data, named) && (s.cfg.HostMountRoot == "" || !isStrictSubpath(host, named)) {
 		return nil
 	}
-	inside := s.cfg.HostMountRoot == "" || !(host == data || isStrictSubpath(data, host))
+	inside := s.cfg.HostMountRoot == "" || (host != data && !isStrictSubpath(data, host))
 	held := []string{data, resolvedPath(data)}
 	if f, err := os.Open(mountinfoPath); err == nil {
 		held = append(held, dataAliases(f, resolvedPath(data), host, listDirs)...)
@@ -169,7 +169,7 @@ func dataAliases(r io.Reader, data, host string, dirs func(string) []string) []s
 	inFS := path.Join(own.root, strings.TrimPrefix(data, own.point))
 	var out []string
 	for _, m := range mounts {
-		if m.dev != own.dev || !(m.root == inFS || isStrictSubpath(m.root, inFS)) || !isStrictSubpath(host, m.point) {
+		if m.dev != own.dev || (m.root != inFS && !isStrictSubpath(m.root, inFS)) || !isStrictSubpath(host, m.point) {
 			continue
 		}
 		alias := path.Join(m.point, strings.TrimPrefix(inFS, m.root))
