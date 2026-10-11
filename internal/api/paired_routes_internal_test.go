@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -489,35 +488,91 @@ func TestAPairedSessionIsRefusedSomethingOfEveryKindItMayNotDo(t *testing.T) {
 	}
 }
 
+// pairedReads sends every GET route on pairedRoutes through the router with
+// the instance's session and returns each answer by route. A wildcard takes
+// the value fill gives for the path, and a handler that panics on this bare
+// instance answers nothing, which leaks nothing either.
+func pairedReads(in *instance, fill func(path string) string) map[string]string {
+	wildcard := regexp.MustCompile(`\{[^}]+\}`)
+	out := map[string]string{}
+	for pattern := range pairedRoutes {
+		method, path, _ := strings.Cut(pattern, " ")
+		if method != http.MethodGet {
+			continue
+		}
+		path = wildcard.ReplaceAllString(path, fill(path))
+		func() {
+			defer func() { _ = recover() }()
+			req := httptest.NewRequest(method, path, nil)
+			req.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: in.session}) //nolint:gosec // G124: a cookie on a test request
+			w := httptest.NewRecorder()
+			in.router.ServeHTTP(w, req)
+			out[pattern] = w.Body.String()
+		}()
+	}
+	return out
+}
+
 func TestAPairedSessionSeesNoLocationOrHookInWhatItReads(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
-	const withSignIn = "rest:https://user:secret@box:8000/files"
-	if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.FilesPath = withSignIn; return nil }); err != nil {
+	const (
+		withSignIn = "rest:https://user:s3cr'et@box:8000/files"
+		withParams = "rclone::s3,access_key_id=AKIDLEAK,secret_access_key='LEAK,KEY':bucket/vms"
+		hook       = "curl -fsS https://hc-ping.com/hooksecret"
+	)
+	if _, err := in.st.MutateSettings(func(s *store.Settings) error {
+		s.FilesPath, s.ZFSPath, s.ContainersPath, s.VMsPath = withSignIn, withSignIn, withSignIn, withParams
+		return nil
+	}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := in.st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "files", Name: "box", Repo: withSignIn, Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := in.st.CreateOffsiteTarget(store.OffsiteTarget{Name: "named", Repo: withSignIn, Role: "repo", Enabled: true}); err != nil {
+	named, err := in.st.CreateOffsiteTarget(store.OffsiteTarget{Name: "named", Repo: withParams, Role: "repo", Enabled: true})
+	if err != nil {
 		t.Fatal(err)
 	}
-	read := func() string {
-		var all strings.Builder
-		for _, path := range []string{"/api/settings", "/api/offsite/targets", "/api/repos"} {
-			code, out := in.do(t, http.MethodGet, path, nil)
-			if code != http.StatusOK {
-				t.Fatalf("%s: %d %v", path, code, out)
-			}
-			fmt.Fprint(&all, out)
-		}
-		return all.String()
+	set, err := in.st.CreateFileSet(store.FileSet{Name: "docs", Path: "/mnt/user/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(read(), "user:secret") {
-		t.Fatal("the person's own session does not see the locations as stored, so this test proves nothing")
+	ds, err := in.st.CreateZFSDataset(store.ZFSDataset{Dataset: "tank/data", Enabled: true, HookContainer: "db", PreSnapshot: hook, PostSnapshot: hook})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fill := func(path string) string {
+		switch {
+		case strings.HasPrefix(path, "/api/files/sets/"):
+			return set.ID
+		case strings.HasPrefix(path, "/api/zfs/datasets/"):
+			return ds.ID
+		case strings.HasPrefix(path, "/api/storage/locations/"):
+			return named.ID
+		case strings.HasPrefix(path, "/api/items/"), strings.HasPrefix(path, "/api/retention/"):
+			return "files"
+		}
+		return "abc"
+	}
+	leaks := []string{"s3cr", "AKIDLEAK", "LEAK,KEY"}
+	seen := map[string]bool{}
+	for _, body := range pairedReads(in, fill) {
+		for _, leak := range leaks {
+			seen[leak] = seen[leak] || strings.Contains(body, leak)
+		}
+	}
+	for _, leak := range leaks {
+		if !seen[leak] {
+			t.Fatalf("the person's own session does not read %q anywhere, so this test proves nothing", leak)
+		}
 	}
 	hash, epoch, _ := in.h.authEnabled()
 	in.session = secret.NewPairedSessionToken(in.appKey, hash, epoch, time.Hour)
-	if got := read(); strings.Contains(got, "user:secret") {
-		t.Fatal("a paired session read a location with its sign-in")
+	for route, body := range pairedReads(in, fill) {
+		for _, leak := range leaks {
+			if strings.Contains(body, leak) {
+				t.Errorf("%s answered a paired session with %q", route, leak)
+			}
+		}
 	}
 }

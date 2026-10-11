@@ -631,6 +631,23 @@ func TestImportOnFreshInstanceKeepsRedactedLocationVisible(t *testing.T) {
 	}
 }
 
+func TestScrubRepoLocationRemovesQuotedPasswordsAndRcloneParameters(t *testing.T) {
+	for loc, want := range map[string]string{
+		"rest:https://user:pa'ss\"wd@box:8000/files":                        "rest:https://[redacted]@box:8000/files",
+		"rclone::s3,access_key_id=AKID,secret_access_key=SECRET:bucket/vms": "rclone::s3,access_key_id=[redacted],secret_access_key=[redacted]:bucket/vms",
+		`rclone::sftp,host=box,pass="a,b:""c""":backups`:                    "rclone::sftp,host=[redacted],pass=[redacted]:backups",
+		"rclone:remote,token='{\"a\":1}':path":                              "rclone:remote,token=[redacted]:path",
+	} {
+		got := scrubRepoLocation(loc)
+		if got != want {
+			t.Errorf("scrubRepoLocation(%q) = %q, want %q", loc, got, want)
+		}
+		if !locationRedacted(got) {
+			t.Errorf("an import would take %q for a working location", got)
+		}
+	}
+}
+
 func TestScrubRepoLocationLeavesCredentialFreeLocationsAlone(t *testing.T) {
 	for _, loc := range []string{
 		"",

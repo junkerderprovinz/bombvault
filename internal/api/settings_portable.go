@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -146,32 +147,33 @@ func buildSettingsView(s store.Settings) settingsView {
 // the plain export path (scrubRepoLocation). The import recognises it, so a
 // location that arrives redacted can never overwrite a working one
 // (importedLocation).
-const redactedLocationMarker = "[redacted]@"
+const redactedLocationMarker = redactedValue + "@"
 
-// scrubRepoLocation strips a URL-embedded credential out of a restic repo
-// location, leaving the location itself — scheme, host, bucket, path — intact.
-//
-// It reuses credentialRe (handlers.go), the SAME userinfo pattern the error
-// scrubber matches on, rather than growing a second pattern that would drift
-// from it. What it deliberately does NOT reuse is scrubSecrets: that runs
-// absPathRe first, and a repo location IS a path-shaped string, so the whole
-// location would come out as "[path]" and the export would name no destination
-// at all. Only the credential half applies here.
-//
-// A location is not itself a secret — which bucket a box replicates to is the
-// portable part of a settings file — but it can CARRY one: restic accepts
-// rest:https://user:pass@host:8000/repo, and s3:, sftp: and b2: locations take
-// the same userinfo syntax (the generated recovery kit documents it in so many
-// words). Emitting one verbatim would have put a live password in a file that
-// any host on the LAN can fetch in trusted-LAN mode.
+// redactedValue stands in for a parameter value of an rclone connection
+// string the same way.
+const redactedValue = "[redacted]"
+
+// locationUserinfoRe is credentialRe for a single location: the whole string
+// is the location, so a quote in the password ends nothing.
+var locationUserinfoRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@]+@`)
+
+// rcloneParamRe is one key=value parameter of an rclone connection string
+// such as rclone::s3,access_key_id=...,secret_access_key=...:bucket. A value
+// that holds a comma or a colon is quoted, a quote inside it doubled.
+var rcloneParamRe = regexp.MustCompile(`,([\w-]+)=("(?:[^"]|"")*"|'(?:[^']|'')*'|[^,:]*)`)
+
+// scrubRepoLocation strips the credentials out of a restic repo location and
+// leaves scheme, host, bucket and path. scrubSecrets would not do: it
+// takes a location for a path and leaves nothing of it.
 func scrubRepoLocation(loc string) string {
-	return credentialRe.ReplaceAllString(loc, redactedLocationMarker)
+	loc = locationUserinfoRe.ReplaceAllString(loc, redactedLocationMarker)
+	return rcloneParamRe.ReplaceAllString(loc, ",${1}="+redactedValue)
 }
 
 // locationRedacted reports whether a repo location reached the import with its
 // embedded credential already stripped by a plain export.
 func locationRedacted(loc string) bool {
-	return strings.Contains(loc, redactedLocationMarker)
+	return strings.Contains(loc, redactedValue)
 }
 
 // redactExportLocations strips URL-embedded credentials out of every repo

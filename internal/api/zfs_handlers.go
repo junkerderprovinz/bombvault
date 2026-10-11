@@ -48,6 +48,11 @@ func (h *Handler) handleListZFSDatasets(w http.ResponseWriter, r *http.Request) 
 	if views == nil {
 		views = []ZFSDatasetView{}
 	}
+	if isPaired(r) {
+		for i := range views {
+			views[i].RepoEffective = scrubRepoLocation(views[i].RepoEffective)
+		}
+	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"datasets": views}))
 }
 

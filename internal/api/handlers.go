@@ -6206,6 +6206,9 @@ func (h *Handler) handleListFileSets(w http.ResponseWriter, r *http.Request) {
 	placements := h.svc.listPlacements(r.Context(), "files", items)
 	for i := range views {
 		views[i].Placement = placements[views[i].ID]
+		if isPaired(r) {
+			views[i].RepoEffective = scrubRepoLocation(views[i].RepoEffective)
+		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "fileSets": views})
 }
