@@ -193,7 +193,7 @@ zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inhe
 백업 스냅샷의 이름은 `<dataset>@bombvault-<14자리>`이며, 예를 들어 `cache/appdata@bombvault-20260924021500`(UTC)입니다. BombVault는 백업 직후 이를 제거합니다. 데이터세트가 사용 중이었거나 BombVault가 중지되는 등의 이유로 실패하면, BombVault는 다음 때에 제거합니다.
 
 - 그 항목의 다음 백업 전
-- BombVault가 시작될 때, 모든 항목에 대해, 도메인이 꺼져 있어도
+- BombVault가 시작될 때, 모든 항목에 대해, 섹션이 꺼져 있어도
 - 항목을 삭제할 때
 - 항목에서 **지금 지우기**를 누를 때. 남은 개수도 그곳에 표시됩니다
 

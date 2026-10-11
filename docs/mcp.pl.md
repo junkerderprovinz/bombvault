@@ -7,18 +7,18 @@ BombVault ma wbudowany serwer Model Context Protocol (MCP), protokołu, którym 
 | Narzędzie | Co robi | Rodzaj |
 |---|---|---|
 | `get_health` | Wersja, nazwa instancji, czy trwa kopia i co wolno temu kluczowi | odczyt |
-| `get_status` | Stan ochrony w każdej domenie: ostatnia udana kopia, oczekiwany odstęp, weryfikacje i kontrole off-site, kolejne zaplanowane przebiegi, kopie czekające na bezczynność aplikacji, a dla kontenerów najnowszy test uruchomienia | odczyt |
+| `get_status` | Stan ochrony w każdej sekcji: ostatnia udana kopia, oczekiwany odstęp, weryfikacje i kontrole off-site, kolejne zaplanowane przebiegi, kopie czekające na bezczynność aplikacji, a dla kontenerów najnowszy test uruchomienia | odczyt |
 | `get_coverage` | Co BombVault chroni, a czego nie, z podanym powodem | odczyt |
 | `list_items` | Każdy chroniony kontener, VM i zestaw folderów, pamięć flash i konfiguracja aplikacji, z harmonogramem, tym, co zatrzymuje kopia, ostatnią kopią i czasem jej trwania; kontenery baz danych podają też ostatni zrzut; są tu też zbiory danych ZFS z wynikiem ich ostatniej kontroli; każdy element ma swój ostatni test przywracania, a kontener także ostatni test uruchomienia albo powód, dla którego nie da się go przetestować; kontener utworzony ponownie z innymi ustawieniami od ostatniej kopii wymienia zmiany | odczyt |
-| `list_runs` | Historia przebiegów od najnowszych, z filtrem według domeny, elementu, stanu, rodzaju i czasu; wolna kopia, którą hamowała jedna rzecz, ją wskazuje | odczyt |
+| `list_runs` | Historia przebiegów od najnowszych, z filtrem według sekcji, elementu, stanu, rodzaju i czasu; wolna kopia, którą hamowała jedna rzecz, ją wskazuje | odczyt |
 | `list_restore_points` | Punkty przywracania jednego elementu z jego głównego repozytorium, a dla kontenera także jego zrzuty baz danych; zbiór danych ZFS ma jeden punkt przywracania na kopię, ze snapshotem każdego zbioru danych pod nim | odczyt |
 | `get_activity` | Co działa w tej chwili, z etapem i procentem | odczyt |
-| `get_storage_stats` | Historia rozmiaru głównego repozytorium domeny i jego przyrost tygodniowy oraz zajęte, wolne i całkowite miejsce na dysku lub zdalnym magazynie każdego z jej repozytoriów | odczyt |
+| `get_storage_stats` | Historia rozmiaru głównego repozytorium sekcji i jego przyrost tygodniowy oraz zajęte, wolne i całkowite miejsce na dysku lub zdalnym magazynie każdego z jej repozytoriów | odczyt |
 | `get_size_breakdown` | Które foldery i pliki zajmują miejsce w najnowszej kopii kontenera, maszyny wirtualnej lub zestawu folderów i ile z tego dodała ostatnia kopia | odczyt |
-| `list_anomalies` | Anomalie, które BombVault zauważył w kopiach, z filtrowaniem według stanu, wagi i domeny oraz podsumowaniem tego, co otwarte | odczyt |
+| `list_anomalies` | Anomalie, które BombVault zauważył w kopiach, z filtrowaniem według stanu, wagi i sekcji oraz podsumowaniem tego, co otwarte | odczyt |
 | `get_anomaly` | Jedno z tych zgłoszeń wraz z notatką zostawioną przy jego potwierdzeniu | odczyt |
 | `start_backup` | Od razu robi kopię jednego elementu | uruchomienie |
-| `start_domain_backup` | Robi kopię każdego chronionego elementu jednej domeny | uruchomienie |
+| `start_domain_backup` | Robi kopię każdego chronionego elementu jednej sekcji | uruchomienie |
 | `start_backup_everything` | Uruchamia Pełną kopię | uruchomienie |
 | `cancel_backup` | Anuluje trwającą kopię uruchomioną przez ten klucz | anulowanie |
 
@@ -33,11 +33,11 @@ Kopia uruchomiona przez asystenta to ta sama kopia, którą uruchamia interfejs 
 Ponieważ kopia zatrzymuje usługi i wypycha stare punkty przywracania, uruchomienia przez MCP są ograniczone:
 
 - 12 uruchomionych kopii na godzinę na klucz.
-- 15 minut między dwoma uruchomieniami przez MCP tego samego elementu, tej samej domeny lub Pełnej kopii.
+- 15 minut między dwoma uruchomieniami przez MCP tego samego elementu, tej samej sekcji lub Pełnej kopii.
 - Najwyżej 4 uruchomienia przez MCP tego samego elementu w ciągu 24 godzin.
-- **Ochrona przechowywania.** Gdy domena przechowuje stałą liczbę punktów przywracania (tylko "zachowaj ostatnie N", bez reguły dziennej, tygodniowej ani miesięcznej, lokalnie lub w miejscu off-site), każda nowa kopia wypycha najstarszą. BombVault odrzuca wtedy uruchomienie przez MCP elementu, którego N-1 najnowszych udanych kopii uruchomiono przez MCP. Dzięki temu w zachowanym zestawie zawsze zostaje co najmniej jeden punkt przywracania utworzony przez harmonogram albo przez ciebie. Przy "zachowaj ostatnią 1" asystent nie może w ogóle skopiować tego elementu. Następna zaplanowana kopia znowu robi miejsce. Sama reguła roczna liczy się jak "zachowaj ostatnią 1", bo z bieżącego roku zachowuje tylko jeden punkt przywracania.
+- **Ochrona przechowywania.** Gdy sekcja przechowuje stałą liczbę punktów przywracania (tylko "zachowaj ostatnie N", bez reguły dziennej, tygodniowej ani miesięcznej, lokalnie lub w miejscu off-site), każda nowa kopia wypycha najstarszą. BombVault odrzuca wtedy uruchomienie przez MCP elementu, którego N-1 najnowszych udanych kopii uruchomiono przez MCP. Dzięki temu w zachowanym zestawie zawsze zostaje co najmniej jeden punkt przywracania utworzony przez harmonogram albo przez ciebie. Przy "zachowaj ostatnią 1" asystent nie może w ogóle skopiować tego elementu. Następna zaplanowana kopia znowu robi miejsce. Sama reguła roczna liczy się jak "zachowaj ostatnią 1", bo z bieżącego roku zachowuje tylko jeden punkt przywracania.
 
-Uruchomienie domeny lub Pełnej kopii pomija elementy zatrzymane przez któryś limit i wymienia je w odpowiedzi. Żaden z tych limitów nie dotyczy interfejsu WWW ani harmonogramu. Budżet godzinowy jest trzymany w pamięci, więc restart BombVault go zeruje.
+Uruchomienie sekcji lub Pełnej kopii pomija elementy zatrzymane przez któryś limit i wymienia je w odpowiedzi. Żaden z tych limitów nie dotyczy interfejsu WWW ani harmonogramu. Budżet godzinowy jest trzymany w pamięci, więc restart BombVault go zeruje.
 
 Uruchomienia przez [API](api.md#errors) i z [Home Assistant](api.md#home-assistant) liczą się do tych samych limitów na element co uruchomienia przez MCP oraz do ochrony retencji.
 
@@ -228,7 +228,7 @@ Za proxy każde żądanie niesie adres proxy. Pięć złych kluczy od jednego ź
 - Bez aktywnego klucza i przy wyłączonym logowaniu przez OAuth `/mcp` odpowiada `404`.
 - Logowanie przez OAuth jest oferowane tylko, gdy ustawione jest hasło logowania. Tokeny, kody i sekrety klientów są przechowywane tylko jako odcisk, a token działa tylko dla adresu, dla którego został wydany.
 - Klient może się zarejestrować z jednego adresu najwyżej 10 razy na godzinę, a BombVault trzyma najwyżej 100 zarejestrowanych klientów, przez których nikt się nie zalogował, każdego przez dobę. Błędne kody i tokeny odświeżania liczą się do tej samej blokady co błędne klucze.
-- Zgody zachowują się jak klucze przy przywracaniu kopii konfiguracji lub zmianie `APP_KEY`: po przywróceniu każdy klient musi zalogować się ponownie.
+- Zgody zachowują się jak klucze przy przywracaniu autokopii lub zmianie `APP_KEY`: po przywróceniu każdy klient musi zalogować się ponownie.
 - Żaden adres nie jest wyjątkiem. Żądania z `localhost`, z hosta Unraid, z reverse proxy albo z `tailscale serve` potrzebują klucza jak każde inne, także wtedy, gdy interfejs WWW nie ma hasła logowania.
 - Klucze są zapisywane tylko jako odciski, pokazywane raz i można je przemianować, wymienić i unieważnić. Do 10 aktywnych kluczy, każdy z własnym przełącznikiem **Pozwól uruchamiać kopie**.
 - Każde utworzenie, wymiana, zmiana uprawnień i unieważnienie wysyła powiadomienie twoimi kanałami powiadomień, z adresem, z którego przyszło, chyba że powiadomienia są wyłączone.
@@ -237,7 +237,7 @@ Za proxy każde żądanie niesie adres proxy. Pięć złych kluczy od jednego ź
 - Dopóki nie ma hasła logowania, nie można tworzyć kluczy z nazwy hosta wyglądającej na publiczną.
 - Każda kopia uruchomiona przez asystenta oraz wynikające z niej przebiegi prune i off-site są oznaczone "przez MCP" z nazwą klucza w dzienniku aktywności, w panelu błędów i w powiadomieniu o kopii.
 - Każde wywołanie narzędzia trafia do logu kontenera z id klucza i jego czterema ostatnimi znakami (nigdy z nazwą) i jest liczone w `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
-- Przywrócenie kopii konfiguracji unieważnia wszystkie klucze, bo przywrócona baza może zawierać klucze, które unieważniłeś po jej zapisaniu. Potem utwórz nowe.
+- Przywrócenie autokopii unieważnia wszystkie klucze, bo przywrócona baza może zawierać klucze, które unieważniłeś po jej zapisaniu. Potem utwórz nowe.
 - Klucz przestaje działać, gdy zmieni się `APP_KEY` (ponowna instalacja albo przywrócenie do innego kontenera). Karta to wykrywa i oznacza klucz, a **Wymień klucz** daje mu znowu ważny sekret.
 - Traktuj klucz jak hasło. Klient, który nie potrafi odczytać klucza ze zmiennej środowiskowej, z zapytania ani z pliku klucza, trzyma go jawnym tekstem w swojej konfiguracji lub ustawieniach, a jego okno to mówi. Na komputerze, któremu mniej ufasz, lepiej użyj klucza tylko do odczytu.
 
@@ -258,7 +258,7 @@ Wszystko, co czyta asystent, trafia do dostawcy AI, który za nim stoi: nazwy el
 | `429` | Za dużo złych kluczy z tego adresu albo ponad 120 żądań na minutę z jednym kluczem. Odczekaj minutę i sprawdź, czy asystent nie utknął w pętli. |
 | Błędy z "certificate", "self-signed" albo "unable to verify" | Klient nie ufa certyfikatowi BombVault. Zobacz [TLS i certyfikaty](#tls). |
 | `busy` | Domenę zajmuje inna kopia albo zadanie konserwacji. Spróbuj ponownie, gdy się skończy. |
-| `cooldown` | Ten element, ta domena albo Pełna kopia została uruchomiona spoza interfejsu WWW mniej niż 15 minut temu. |
+| `cooldown` | Ten element, ta sekcja albo Pełna kopia została uruchomiona spoza interfejsu WWW mniej niż 15 minut temu. |
 | `retention_guard` | Kolejna kopia przez MCP zostawiłaby w oknie "zachowaj ostatnie N" tylko punkty przywracania z MCP albo element dostał już 4 kopie przez MCP w ciągu ostatnich 24 godzin, licząc nieudane i anulowane. W pierwszym przypadku miejsce zrobi następna zaplanowana kopia, w drugim element zwolni się 24 godziny po najstarszej z tych kopii. W interfejsie WWW możesz ją uruchomić w każdej chwili. |
 | `rate_limited` | Klucz zużył swoje 12 uruchomień na tę godzinę. |
 | `not_permitted` przy uruchomieniu | Klucz może tylko czytać. Włącz w karcie **Pozwól uruchamiać kopie**; ponowne łączenie nie jest potrzebne. Przy anulowaniu oznacza to, że przebiegu nie uruchomił ten klucz. |

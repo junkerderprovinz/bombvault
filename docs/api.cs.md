@@ -21,18 +21,18 @@ Bez přihlašovacího hesla může token vytvořit každý, kdo otevře webové 
 | Cesta | Co vrací nebo dělá | Token |
 |---|---|---|
 | `GET /api/v1/health` | Verze, název instance, zda běží záloha a co tento token smí | čtení |
-| `GET /api/v1/status` | Stav ochrany podle oblasti: poslední úspěšná záloha, očekávaný interval, kontroly, příští plánované běhy | čtení |
+| `GET /api/v1/status` | Stav ochrany podle sekce: poslední úspěšná záloha, očekávaný interval, kontroly, příští plánované běhy | čtení |
 | `GET /api/v1/activity` | Co právě běží, s fází a procenty | čtení |
-| `GET /api/v1/items` | Každá chráněná položka s plánem, tím, co záloha zastaví, a poslední zálohou; `?domain=` pro jednu oblast | čtení |
+| `GET /api/v1/items` | Každá chráněná položka s plánem, tím, co záloha zastaví, a poslední zálohou; `?domain=` pro jednu sekci | čtení |
 | `GET /api/v1/runs` | Historie běhů, nejnovější první; filtry `limit`, `domain`, `item`, `status`, `kind`, `since` | čtení |
 | `GET /api/v1/anomalies` | Anomálie s přehledem otevřených; filtry `state`, `severity`, `domain`, `limit` | čtení |
 | `GET /api/v1/anomalies/{id}` | Jedna anomálie | čtení |
-| `GET /api/v1/storage/{domain}` | Vývoj velikosti, týdenní růst a volné místo každého repozitáře oblasti | čtení |
-| `POST /api/v1/backups` | Zálohuje jednu položku (`{"domain":"containers","item":"plex"}`) nebo celou oblast (`{"domain":"vms"}`) | spouštění |
+| `GET /api/v1/storage/{domain}` | Vývoj velikosti, týdenní růst a volné místo každého repozitáře sekce | čtení |
+| `POST /api/v1/backups` | Zálohuje jednu položku (`{"domain":"containers","item":"plex"}`) nebo celou sekci (`{"domain":"vms"}`) | spouštění |
 | `POST /api/v1/backups/everything` | Spustí Zálohu všeho | spouštění |
 | `POST /api/v1/runs/{id}/cancel` | Zruší běžící zálohu, kterou spustil tento token | spouštění |
 
-Oblasti jsou `containers`, `vms`, `files`, `zfs`, `flash` a `config`. Časy jsou v unixových sekundách. Odpovědi jsou stejné jako u [nástrojů MCP](mcp.md#tools) stejného jména, takže obojí zůstává v souladu.
+Sekce jsou `containers`, `vms`, `files`, `zfs`, `flash` a `config`. Časy jsou v unixových sekundách. Odpovědi jsou stejné jako u [nástrojů MCP](mcp.md#tools) stejného jména, takže obojí zůstává v souladu.
 
 Záloha spuštěná tady je stejná jako ta z webového rozhraní: běžící kontejner se zastaví, dokud jeho záloha neskončí. Požadavek se vrátí hned a `/api/v1/activity` a `/api/v1/runs` ukážou, jak to jde.
 
@@ -60,7 +60,7 @@ Chyba se vrátí jako `{"error": {"code": "...", "message": "..."}}` s odpovída
 | 401 | `no_token`, `invalid_token` | Žádný token, nebo ne aktivní |
 | 403 | `not_permitted`, `forbidden_origin` | Token smí jen číst, nebo ten běh nespustil, nebo požadavek přišel ze stránky s jiným původem |
 | 404 | `not_found` | Taková položka, běh nebo anomálie neexistuje |
-| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Už něco běží, oblast je vypnutá, nebo není co dělat |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Už něco běží, sekce je vypnutá, nebo není co dělat |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Limit požadavek zdrží; `Retry-After` říká, kdy to zkusit znovu |
 
 Spuštění mají stejné limity jako [spuštění přes MCP](mcp.md#starting-backups): 12 za hodinu na token, 15 minut mezi dvěma spuštěními téže položky, nejvýše 4 spuštění jedné položky za 24 hodin a ochrana uchovávání. Poslední tři počítají spuštění přes MCP, přes API a z Home Assistant dohromady. Token smí poslat 120 požadavků za minutu. Pět neúspěšných pokusů z jedné adresy ji na minutu zablokuje.
@@ -81,16 +81,16 @@ Zařízení se jmenuje BombVault, případně BombVault s názvem instance v zá
 
 | Entita | Co ukazuje |
 |---|---|
-| Status | `ok`, `warning`, `failed` nebo `off`, nejhorší ze zapnutých oblastí |
+| Status | `ok`, `warning`, `failed` nebo `off`, nejhorší ze zapnutých sekcí |
 | Running job | Co právě běží, nebo `idle` |
 | Open anomalies | Kolik anomálií je otevřených |
 | Next scheduled backup | Kdy začne další plánovaná záloha |
-| *Oblast* last backup | Kdy proběhla poslední úspěšná záloha oblasti |
-| *Oblast* last result | Jak skončila její poslední záloha |
-| *Oblast* repository free space | Volné místo tam, kde leží její hlavní repozitář, pokud ho BombVault umí přečíst |
-| Back up *oblast* | Tlačítko, které zálohuje celou oblast |
+| *Sekce* last backup | Kdy proběhla poslední úspěšná záloha sekce |
+| *Sekce* last result | Jak skončila její poslední záloha |
+| *Sekce* repository free space | Volné místo tam, kde leží její hlavní repozitář, pokud ho BombVault umí přečíst |
+| Back up *sekce* | Tlačítko, které zálohuje celou sekci |
 
-Názvy entit jsou anglicky, protože Home Assistant je přebírá tak, jak je BombVault posílá. Každá zapnutá oblast dostane vlastní entity a vypnutá o ně přijde. Tlačítka se objeví, jakmile zapneš **Tlačítka spouštějí zálohy**; nová instalace to má vypnuté. Mají stejné limity jako [spuštění přes API](#errors). Navíc BombVault bere pro každou oblast jen jedno stisknutí najednou a nejvýš šest za minutu a stisknutí, které broker uchoval jako retained zprávu, ignoruje. Stisknout je může každý, kdo smí do brokeru publikovat, proto brokeru dej heslo.
+Názvy entit jsou anglicky, protože Home Assistant je přebírá tak, jak je BombVault posílá. Každá zapnutá sekce dostane vlastní entity a vypnutá o ně přijde. Tlačítka se objeví, jakmile zapneš **Tlačítka spouštějí zálohy**; nová instalace to má vypnuté. Mají stejné limity jako [spuštění přes API](#errors). Navíc BombVault bere pro každou sekci jen jedno stisknutí najednou a nejvýš šest za minutu a stisknutí, které broker uchoval jako retained zprávu, ignoruje. Stisknout je může každý, kdo smí do brokeru publikovat, proto brokeru dej heslo.
 
 BombVault čte svůj stav každých 15 sekund a zveřejní ho, když se něco změnilo, jako JSON pod `<předpona>/<uzel>/state`. Předpona je `bombvault`, dokud ji nezměníš, a uzel je krátký identifikátor, který si BombVault jednou zvolí. Zprávy zjišťování jdou pod výchozí předponu Home Assistant `homeassistant`. Obojí se uchovává (retained). Poslední vůle (last will) označí zařízení jako nedostupné, když se BombVault zastaví bez ohlášení. Vypnutím propojení BombVault zařízení i jeho entity z Home Assistant odstraní.
 

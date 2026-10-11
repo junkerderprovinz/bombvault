@@ -193,7 +193,7 @@ For at få en tilstand tilbage til kilden trykker du på **Bring back as a new d
 Snapshottet af en sikkerhedskopi hedder `<dataset>@bombvault-<14 cifre>`, for eksempel `cache/appdata@bombvault-20260924021500` (UTC). BombVault fjerner det lige efter sikkerhedskopien. Lykkes det ikke, for eksempel fordi datasættet er optaget eller BombVault blev stoppet, fjerner BombVault det:
 
 - før elementets næste sikkerhedskopi,
-- når BombVault starter, for hvert element, også med domænet slået fra,
+- når BombVault starter, for hvert element, også med området slået fra,
 - når du sletter elementet,
 - når du trykker **Fjern nu** på elementet, som også viser, hvor mange der er tilbage.
 

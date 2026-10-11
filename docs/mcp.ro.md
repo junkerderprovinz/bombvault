@@ -7,18 +7,18 @@ BombVault are un server integrat pentru Model Context Protocol (MCP), protocolul
 | Unealtă | Ce face | Tip |
 |---|---|---|
 | `get_health` | Versiunea, numele instanței, dacă rulează o copie și ce are voie să facă această cheie | citire |
-| `get_status` | Starea protecției pe fiecare domeniu: ultima copie reușită, intervalul așteptat, verificările și controalele off-site, următoarele rulări programate, copiile care așteaptă o aplicație inactivă, iar pentru containere cel mai recent test de pornire | citire |
+| `get_status` | Starea protecției pe fiecare secțiune: ultima copie reușită, intervalul așteptat, verificările și controalele off-site, următoarele rulări programate, copiile care așteaptă o aplicație inactivă, iar pentru containere cel mai recent test de pornire | citire |
 | `get_coverage` | Ce protejează BombVault și ce nu, cu motivul pentru fiecare | citire |
 | `list_items` | Fiecare container, VM și set de foldere protejat, stick-ul flash și configurația aplicației, cu programarea, ce oprește o copie, ultima copie și cât a durat; containerele de baze de date arată și ultimul dump; apar și seturile de date ZFS, cu rezultatul ultimei lor verificări; fiecare element are ultima sa verificare a restaurării, iar un container și ultimul test de pornire sau motivul pentru care nu poate fi testat; un container recreat cu alte setări de la ultima copie arată ce s-a schimbat | citire |
-| `list_runs` | Istoricul rulărilor, cele mai noi primele, filtrabil după domeniu, element, stare, tip și timp; o copie lentă frânată de un singur lucru îl numește | citire |
+| `list_runs` | Istoricul rulărilor, cele mai noi primele, filtrabil după secțiune, element, stare, tip și timp; o copie lentă frânată de un singur lucru îl numește | citire |
 | `list_restore_points` | Punctele de restaurare ale unui element din depozitul lui principal și, pentru un container, dumpurile lui de baze de date; un set de date ZFS are câte un punct de restaurare pentru fiecare copie, cu un snapshot al fiecărui set de date de sub el | citire |
 | `get_activity` | Ce rulează chiar acum, cu fază și procent | citire |
-| `get_storage_stats` | Istoricul de dimensiune al depozitului principal al unui domeniu și creșterea lui pe săptămână, plus spațiul folosit, liber și total pe discul sau locația la distanță a fiecăruia dintre depozitele sale | citire |
+| `get_storage_stats` | Istoricul de dimensiune al depozitului principal al unei secțiuni și creșterea lui pe săptămână, plus spațiul folosit, liber și total pe discul sau locația la distanță a fiecăruia dintre depozitele sale | citire |
 | `get_size_breakdown` | Ce dosare și fișiere ocupă spațiu în cea mai nouă copie a unui container, a unei VM sau a unui set de dosare, și cât din ele a adăugat ultima copie | citire |
-| `list_anomalies` | Anomaliile observate de BombVault în copii, filtrabile după stare, gravitate și domeniu, cu un rezumat al celor deschise | citire |
+| `list_anomalies` | Anomaliile observate de BombVault în copii, filtrabile după stare, gravitate și secțiune, cu un rezumat al celor deschise | citire |
 | `get_anomaly` | Una dintre aceste constatări, cu nota lăsată la confirmarea ei | citire |
 | `start_backup` | Face imediat copia unui element | pornire |
-| `start_domain_backup` | Face copia fiecărui element protejat dintr-un domeniu | pornire |
+| `start_domain_backup` | Face copia fiecărui element protejat dintr-o secțiune | pornire |
 | `start_backup_everything` | Rulează trecerea Backup total | pornire |
 | `cancel_backup` | Anulează o copie în curs pornită de această cheie | anulare |
 
@@ -33,11 +33,11 @@ Copia unui asistent e aceeași copie pe care o pornește interfața web. Un cont
 Pentru că o copie oprește servicii și scoate afară puncte de restaurare vechi, pornirile prin MCP sunt limitate:
 
 - 12 copii pornite pe oră pentru fiecare cheie.
-- 15 minute între două porniri MCP ale aceluiași element, aceluiași domeniu sau ale Backupului total.
+- 15 minute între două porniri MCP ale aceluiași element, aceleiași secțiuni sau ale Backupului total.
 - Cel mult 4 porniri MCP ale aceluiași element în 24 de ore.
-- **Protecția păstrării.** Când un domeniu păstrează un număr fix de puncte de restaurare (doar "păstrează ultimele N", fără regulă zilnică, săptămânală sau lunară, local sau pe o destinație off-site), fiecare copie nouă scoate afară cea mai veche. BombVault refuză atunci o pornire MCP a unui element ale cărui cele mai noi N-1 copii reușite au fost pornite toate prin MCP. Astfel, în setul păstrat rămâne mereu cel puțin un punct de restaurare făcut de programare sau de tine. Cu "păstrează ultima 1", un asistent nu poate face deloc copia acelui element. Următoarea copie programată face din nou loc. O regulă anuală singură contează ca "păstrează ultima 1", pentru că păstrează un singur punct de restaurare pentru anul curent.
+- **Protecția păstrării.** Când o secțiune păstrează un număr fix de puncte de restaurare (doar "păstrează ultimele N", fără regulă zilnică, săptămânală sau lunară, local sau pe o destinație off-site), fiecare copie nouă scoate afară cea mai veche. BombVault refuză atunci o pornire MCP a unui element ale cărui cele mai noi N-1 copii reușite au fost pornite toate prin MCP. Astfel, în setul păstrat rămâne mereu cel puțin un punct de restaurare făcut de programare sau de tine. Cu "păstrează ultima 1", un asistent nu poate face deloc copia acelui element. Următoarea copie programată face din nou loc. O regulă anuală singură contează ca "păstrează ultima 1", pentru că păstrează un singur punct de restaurare pentru anul curent.
 
-O pornire de domeniu sau de Backup total lasă pe dinafară elementele reținute de o limită și le numește în răspuns. Interfața web și programarea nu sunt atinse de niciuna dintre aceste limite. Bugetul orar stă în memorie, așa că o repornire a BombVault îl readuce la zero.
+O pornire de secțiune sau de Backup total lasă pe dinafară elementele reținute de o limită și le numește în răspuns. Interfața web și programarea nu sunt atinse de niciuna dintre aceste limite. Bugetul orar stă în memorie, așa că o repornire a BombVault îl readuce la zero.
 
 Pornirile prin [API](api.md#errors) și din [Home Assistant](api.md#home-assistant) se numără la aceleași limite pe element ca pornirile prin MCP și la protecția de retenție.
 
@@ -257,8 +257,8 @@ Tot ce citește un asistent ajunge la furnizorul de IA din spatele lui: numele e
 | `400` "batch requests are not accepted" | Clientul trimite loturi JSON-RPC. Trimite un mesaj pe cerere. |
 | `429` | Prea multe chei greșite de la această adresă, sau mai mult de 120 de cereri pe minut cu o cheie. Așteaptă un minut și verifică dacă asistentul nu s-a blocat într-o buclă. |
 | Erori cu "certificate", "self-signed" sau "unable to verify" | Clientul nu are încredere în certificatul BombVault. Vezi [TLS și certificate](#tls). |
-| `busy` | Altă copie sau o sarcină de întreținere ocupă acel domeniu. Încearcă din nou după ce se termină. |
-| `cooldown` | Acest element, acest domeniu sau Backupul total a fost pornit din afara interfeței web acum mai puțin de 15 minute. |
+| `busy` | Altă copie sau o sarcină de întreținere ocupă acea secțiune. Încearcă din nou după ce se termină. |
+| `cooldown` | Acest element, această secțiune sau Backupul total a fost pornit din afara interfeței web acum mai puțin de 15 minute. |
 | `retention_guard` | Încă o copie MCP ar lăsa doar puncte de restaurare din MCP într-o fereastră "păstrează ultimele N", sau elementul a primit deja 4 copii prin MCP în ultimele 24 de ore, inclusiv cele eșuate și anulate. În primul caz următoarea copie programată face loc, în al doilea elementul e liber din nou la 24 de ore după cea mai veche dintre aceste copii. Din interfața web o poți porni oricând. |
 | `rate_limited` | Cheia și-a consumat cele 12 porniri din această oră. |
 | `not_permitted` la o pornire | Cheia poate doar să citească. Pornește **Permite pornirea copiilor** în card; nu e nevoie de reconectare. La o anulare înseamnă că rularea nu a fost pornită de această cheie. |

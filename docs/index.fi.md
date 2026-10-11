@@ -26,7 +26,7 @@ Jokainen kontti, virtuaalikone, kansiojoukko, flash, ZFS-tietojoukko ja BombVaul
 
 ## Palautus on tähti
 
-Kopioituaan datan takaisin restic-tilannevedoksesta BombVault toistaa tallennetun kontin määrityksen Docker-rajapintaa vasten, joten kontti ilmestyy takaisin Unraidin Docker-välilehdelle aivan kuin se olisi aina ollut siellä (sama image, samat asetukset, samat porttikartoitukset). Virtuaalikoneiden XML määritellään uudelleen SSH:n yli, ja niiden levyt sekä UEFI NVRAM liitetään takaisin, vaikka VM olisi poistettu.
+Kopioituaan datan takaisin restic-varmuuskopiosta BombVault toistaa tallennetun kontin määrityksen Docker-rajapintaa vasten, joten kontti ilmestyy takaisin Unraidin Docker-välilehdelle aivan kuin se olisi aina ollut siellä (sama image, samat asetukset, samat porttikartoitukset). Virtuaalikoneiden XML määritellään uudelleen SSH:n yli, ja niiden levyt sekä UEFI NVRAM liitetään takaisin, vaikka VM olisi poistettu.
 
 Yksi ikkuna palauttaa kaikenlaiset merkinnät. Oletuksena valittuna on **Alkuperäisen viereen**, joka tuo varmuuskopion takaisin kopiona ja jättää alkuperäisen ennalleen. **Korvaa alkuperäinen** varmuuskopioi ensin nykytilan, joten palautuksen voi perua. Kansio tai uusi ZFS-tietojoukko ovat muut kohteet.
 

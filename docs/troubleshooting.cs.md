@@ -1,6 +1,6 @@
 # Řešení problémů
 
-Krátké FAQ. Kompletní tabulku řešení problémů na straně hostitele pro VM přes SSH (permission-denied, ověření hostitelského klíče, chybějící proměnné šablony a další) najdete v [průvodci Záloha VM přes SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) na GitHubu.
+Krátké FAQ. Kompletní tabulku řešení problémů na straně hostitele pro VM přes SSH (permission-denied, ověření hostitelského klíče, chybějící proměnné šablony a další) najdeš v [průvodci Záloha VM přes SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) na GitHubu.
 
 ## Něco není správně zapojeno
 
@@ -8,7 +8,7 @@ Přidej kartu **Integrace hostitele** do Přehledu pod **Přizpůsobit**. Kontro
 
 ## Nemohu se dostat k webovému rozhraní
 
-BombVault obsluhuje HTTPS rovnou z krabice na portu `3443` (samopodepsaný certifikát), takže otevřete `https://<your-unraid-ip>:3443`. Přijměte varování o samopodepsaném certifikátu, nebo umístěte BombVault za reverzní proxy s vlastním certifikátem. Pokud běžíte s `HTTP_ONLY=true`, obsluhuje místo toho prosté HTTP na portu `3000` (určeno pro použití za proxy terminující TLS).
+BombVault obsluhuje HTTPS rovnou z krabice na portu `3443` (samopodepsaný certifikát), takže otevři `https://<your-unraid-ip>:3443`. Přijmi varování o samopodepsaném certifikátu, nebo umísti BombVault za reverzní proxy s vlastním certifikátem. Pokud běžíš s `HTTP_ONLY=true`, obsluhuje místo toho prosté HTTP na portu `3000` (určeno pro použití za proxy terminující TLS).
 
 ## Ztratil jsem svůj APP_KEY
 
@@ -30,9 +30,9 @@ Spárovaný telefon dostane relaci přes skupinu jen tehdy, když je v **Nastave
 
 Záloha VM komunikuje s libvirt přes SSH, nikdy přes připojení.
 
-- Potvrďte, že SSH je povoleno na hostiteli a veřejný klíč BombVaultu je autorizovaný v `/root/.ssh/authorized_keys` (Nastavení, Integrace, SSH k hostiteli zobrazuje klíč a tlačítko **Otestovat připojení**).
-- Na vlastní síti `br0.x` nastavte `LIBVIRT_HOST` na svou LAN IP Unraidu (kontejner tam nemůže dosáhnout na hostitele přes `host.docker.internal`). Povolte **Settings, Docker, Host access to custom networks**.
-- Pokud jste změnili SSH port Unraidu, nastavte `LIBVIRT_SSH_PORT`, aby odpovídal.
+- Potvrď, že SSH je povoleno na hostiteli a veřejný klíč BombVaultu je autorizovaný v `/root/.ssh/authorized_keys` (Nastavení, Integrace, SSH k hostiteli zobrazuje klíč a tlačítko **Otestovat připojení**).
+- Na vlastní síti `br0.x` nastav `LIBVIRT_HOST` na svou LAN IP Unraidu (kontejner tam nemůže dosáhnout na hostitele přes `host.docker.internal`). Povol **Settings, Docker, Host access to custom networks**.
+- Pokud jsi změnil SSH port Unraidu, nastav `LIBVIRT_SSH_PORT`, aby odpovídal.
 - Kompletní krok za krokem diagnóza (test dosažitelnosti, směrování VLAN, `Permission denied (publickey)`, `Host key verification failed`) je v [průvodci Záloha VM přes SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Živý snímek VM neproběhl
@@ -45,11 +45,11 @@ Toto je obvykle osiřelý restic zámek zanechaný, když byl kontejner aktualiz
 
 ## Moje kopie mimo lokalitu neproběhla po záloze
 
-Replikace mimo lokalitu je na základě nejlepší snahy záměrně, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Zkontroluj, kdy cíl kopíruje: jeho karta **Kopírovat** říká **Po každé záloze** nebo uvádí vlastní plán a **Nastavení, Plán, Kopie mimo lokalitu podle oblastí** může dát sekci vlastní plán. Použij **Replikovat nyní** na kartě sekce **Kopie mimo lokalitu** v **Nastavení, Cíle** pro běh na vyžádání a sleduj hlavičku stavu v Přehledu, která za běhu říká **Probíhá kopie mimo lokalitu**. Neúspěšná kopie se ukáže pod **Vyžaduje pozornost**.
+Replikace mimo lokalitu je na základě nejlepší snahy záměrně, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Zkontroluj, kdy cíl kopíruje: jeho karta **Kopírovat** říká **Po každé záloze** nebo uvádí vlastní plán a **Nastavení, Plán, Kopie mimo lokalitu podle sekcí** může dát sekci vlastní plán. Použij **Replikovat nyní** na kartě sekce **Kopie mimo lokalitu** v **Nastavení, Cíle** pro běh na vyžádání a sleduj hlavičku stavu v Přehledu, která za běhu říká **Probíhá kopie mimo lokalitu**. Neúspěšná kopie se ukáže pod **Vyžaduje pozornost**.
 
 ## Obnova se přerušila dříve, než začala
 
-Než se cokoli zastaví nebo odebere, obnova spustí předletovou kontrolu konfliktů: ověří, že statická IP kontejneru a publikované hostitelské porty jsou volné. Pokud je jeden z nich již držen jiným kontejnerem, přeruší se s jasnou, akceschopnou zprávou místo toho, aby zanechala napůl dokončenou obnovu. Uvolněte konfliktní port nebo IP, poté opakujte.
+Než se cokoli zastaví nebo odebere, obnova spustí předletovou kontrolu konfliktů: ověří, že statická IP kontejneru a publikované hostitelské porty jsou volné. Pokud je jeden z nich již držen jiným kontejnerem, přeruší se s jasnou, akceschopnou zprávou místo toho, aby zanechala napůl dokončenou obnovu. Uvolni konfliktní port nebo IP, poté opakuj.
 
 ## Prostý export selhal místo zapsání souboru
 
@@ -59,19 +59,19 @@ Pokud je **Šifrovat exporty pomocí age** zapnuto v **Nastavení, Systém**, al
 
 Neúspěšný dump nikdy nepoloží zálohu kolem sebe; zapíše se jako vlastní neúspěšný běh a důvod říká, co spravit.
 
-- **Odmítnuté přihlášení.** Dump se přihlašuje proměnnými s heslem samotného kontejneru (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` nebo jejich verzemi `_FILE`). Zkontrolujte je na kontejneru s databází. Proměnná `_FILE` ukazující na tajemství, které uživatel kontejneru nesmí číst, dopadne stejně.
-- **Chybějící oprávnění.** S náhodným heslem roota se dump přihlásí jen jako uživatel aplikace, obsáhne tedy jen tu jednu databázi, a MySQL 8.4 a novější ho může odmítnout úplně. Dejte kontejneru skutečné heslo roota, nebo mu dump vypněte.
-- **Systémové tabulky potřebují povýšit.** MariaDB odmítá dump, když její systémové tabulky pocházejí ze starší verze (chyba 1558). Přidejte proměnnou `MARIADB_AUTO_UPGRADE=1` a restartujte kontejner, nebo v něm jednou spusťte `mariadb-upgrade`.
-- **Žádný nástroj pro dump.** Odlehčený nebo vlastnoručně sestavený image bez `pg_dump`, `mysqldump` či `mariadb-dump` dumpovat nejde. Vezměte oficiální image, nebo dump vypněte.
-- **Časový limit.** Dump dostane `DB_DUMP_MAX_HOURS` (výchozí 6), záloha kolem něj `BACKUP_MAX_HOURS`, a dump, který přestane postupovat, se utne po `BACKUP_STALL_HOURS`. Za posledním případem bývá zámek držený aplikací. Zvedněte limit, který zabral, nebo dumpujte, když je aplikace v klidu.
+- **Odmítnuté přihlášení.** Dump se přihlašuje proměnnými s heslem samotného kontejneru (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` nebo jejich verzemi `_FILE`). Zkontroluj je na kontejneru s databází. Proměnná `_FILE` ukazující na tajemství, které uživatel kontejneru nesmí číst, dopadne stejně.
+- **Chybějící oprávnění.** S náhodným heslem roota se dump přihlásí jen jako uživatel aplikace, obsáhne tedy jen tu jednu databázi, a MySQL 8.4 a novější ho může odmítnout úplně. Dej kontejneru skutečné heslo roota, nebo mu dump vypni.
+- **Systémové tabulky potřebují povýšit.** MariaDB odmítá dump, když její systémové tabulky pocházejí ze starší verze (chyba 1558). Přidej proměnnou `MARIADB_AUTO_UPGRADE=1` a restartuj kontejner, nebo v něm jednou spusť `mariadb-upgrade`.
+- **Žádný nástroj pro dump.** Odlehčený nebo vlastnoručně sestavený image bez `pg_dump`, `mysqldump` či `mariadb-dump` dumpovat nejde. Vezmi oficiální image, nebo dump vypni.
+- **Časový limit.** Dump dostane `DB_DUMP_MAX_HOURS` (výchozí 6), záloha kolem něj `BACKUP_MAX_HOURS`, a dump, který přestane postupovat, se utne po `BACKUP_STALL_HOURS`. Za posledním případem bývá zámek držený aplikací. Zvedni limit, který zabral, nebo dumpuj, když je aplikace v klidu.
 - **Kontejner je pozastavený nebo se restartuje.** Dump mluví s běžícím serverem. Pokud se kontejner restartuje pořád dokola, jeho vlastní log řekne proč.
-- **Poškozený dump se nepodařilo odstranit.** Dump, který BombVault nedokázal dokončit, se zase smaže. Když se to smazání nepovede, dump zůstane v seznamu označený jako poškozený a můžete ho tam smazat.
+- **Poškozený dump se nepodařilo odstranit.** Dump, který BombVault nedokázal dokončit, se zase smaže. Když se to smazání nepovede, dump zůstane v seznamu označený jako poškozený a můžeš ho tam smazat.
 
 ## Import selhal
 
 Import zastaví kontejner, odsune jeho datovou složku stranou a nechá image vytvořit na jejím místě prázdnou. Selže-li krok před samotným importem, stará složka se vrátí sama. Selže-li import, kontejner si nechá čerstvou složku a stará zůstane vedle jako `<datová složka>.bombvault-before-import-<časová značka>`; chybová hláška běhu uvádí přesnou cestu.
 
-Ruční návrat: zastavte kontejner, přejmenujte současnou datovou složku stranou, přejmenujte zachovanou složku zpět na původní název a kontejner spusťte. Na Unraidu to zvládne správce souborů na kartě Shares.
+Ruční návrat: zastav kontejner, přejmenuj současnou datovou složku stranou, přejmenuj zachovanou složku zpět na původní název a kontejner spusť. Na Unraidu to zvládne správce souborů na kartě Shares.
 
 ## Záloha datové sady ZFS selhala nebo nějakou sadu přeskočila {#zfs-datasets}
 
@@ -87,7 +87,7 @@ Většina kontrol anomálií začíná po 10 úspěšných zálohách položky a
 
 ## Uchovávání přestalo mazat staré zálohy jedné položky
 
-Drží je otevřená kritická anomálie: zdroj položky je téměř prázdný, výrazně se zmenšil, nebo záloha znovu uložila většinu dat. Otevřete anomálii z odznaku u položky. Pokud data chybí nebo byla zašifrována, obnovte nejprve z odkazované poslední dobré zálohy. Pak anomálii potvrďte, nebo ji označte jako očekávanou, pokud změna pochází od vás, a další běh uklidí jako obvykle. Náhled uchovávání takovou položku označí jako ponechanou. U položky ZFS si staré zálohy ponechá jen datová sada, kterou anomálie jmenuje; ostatní datové sady stromu se pročistí jako obvykle.
+Drží je otevřená kritická anomálie: zdroj položky je téměř prázdný, výrazně se zmenšil, nebo záloha znovu uložila většinu dat. Otevři anomálii z odznaku u položky. Pokud data chybí nebo byla zašifrována, obnov nejprve z odkazované poslední dobré zálohy. Pak anomálii potvrď, nebo ji označ jako očekávanou, pokud změna pochází od tebe, a další běh uklidí jako obvykle. Náhled uchovávání takovou položku označí jako ponechanou. U položky ZFS si staré zálohy ponechá jen datová sada, kterou anomálie jmenuje; ostatní datové sady stromu se pročistí jako obvykle.
 
 ## Ruční čištění hlásí, že některé položky byly ponechány
 
@@ -111,6 +111,6 @@ BombVault hlásí healthy/unhealthy ze svého vlastního `/api/health`. Nástroj
 
 ## Stále zaseknutí?
 
-- Přečtěte si kompletní stránky [Konfigurace](configuration.md) a [Mimo lokalitu a obnova](offsite-recovery.md).
-- Zeptejte se ve [vlákně podpory Unraid](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/).
-- Otevřete [GitHub issue](https://github.com/junkerderprovinz/bombvault/issues).
+- Přečti si kompletní stránky [Konfigurace](configuration.md) a [Mimo lokalitu a obnova](offsite-recovery.md).
+- Zeptej se ve [vlákně podpory Unraid](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/).
+- Otevři [GitHub issue](https://github.com/junkerderprovinz/bombvault/issues).

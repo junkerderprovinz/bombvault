@@ -1,12 +1,12 @@
 # Datové sady ZFS
 
-Datové sady ZFS jsou položky v seznamu **Zálohy**, stejně jako kontejnery a VM. Položka je jedna datová sada spolu se všemi datovými sadami pod ní. Pro každou zálohu pořídí BombVault jediný snímek ZFS celého stromu, takže každá datová sada v něm je zachycena ve stejném okamžiku. Poté z tohoto snímku přečte soubory každé datové sady, uloží je pomocí resticu stejně jako složku a snímek hned potom odstraní. Zálohy jsou deduplikované, každou z nich můžete procházet a lze obnovit jednotlivé soubory.
+Datové sady ZFS jsou položky v seznamu **Zálohy**, stejně jako kontejnery a VM. Položka je jedna datová sada spolu se všemi datovými sadami pod ní. Pro každou zálohu pořídí BombVault jediný snímek ZFS celého stromu, takže každá datová sada v něm je zachycena ve stejném okamžiku. Poté z tohoto snímku přečte soubory každé datové sady, uloží je pomocí resticu stejně jako složku a snímek hned potom odstraní. Zálohy jsou deduplikované, každou z nich můžeš procházet a lze obnovit jednotlivé soubory.
 
 Záloha nikdy neposílá proud do restic a nikdy nevrací datovou sadu do dřívějšího stavu. BombVault ničí jen snímky, které sám vytvořil. Volitelná [replika](#replica) je jediné místo, které používá `zfs send`: kopíruje datové sady na druhý server ZFS a zálohy se nedotýká.
 
 ## Požadavky {#requirements}
 
-- **Spojení SSH s tímto serverem.** Datové sady ZFS používají stejný klíč, hostitele a uživatele jako zálohy VM. Pokud zálohy VM už fungují, funguje i tohle. Jinak postupujte podle [průvodce Záloha VM přes SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) na GitHubu. Pole šablony se jmenují **Host SSH: Address**, **Host SSH: Port** a **Host SSH: User**.
+- **Spojení SSH s tímto serverem.** Datové sady ZFS používají stejný klíč, hostitele a uživatele jako zálohy VM. Pokud zálohy VM už fungují, funguje i tohle. Jinak postupuj podle [průvodce Záloha VM přes SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) na GitHubu. Pole šablony se jmenují **Host SSH: Address**, **Host SSH: Port** a **Host SSH: User**.
 - **Příkaz `zfs` na tomto hostiteli.** Unraid 6.12 a novější a TrueNAS SCALE ho mají.
 - **Host Data namapované jako `/mnt` s Access Mode Read/Write - Slave.** To je výchozí hodnota šablony. Snímek datové sady se ve složce `.zfs/snapshot` datové sady objeví až po spuštění BombVaultu, takže kontejner musí dostávat připojení, která hostitel vytvoří později.
 - **Datové sady připojené pod `/mnt`.** Na Unraidu jsou pooly pod `/mnt/<pool>`, takže to už platí.
@@ -34,18 +34,18 @@ Svazky ve stromu položky se při každém běhu přeskočí a uvedou.
 
 ### Úložiště Dockeru {#docker-storage}
 
-S úložným ovladačem ZFS v Dockeru je každá vrstva obrazu datovou sadou s přípojným bodem `legacy`. Dialog přidání je sloučí do jednoho řádku na rodiče. Strom, který obsahuje víc než 20 takových datových sad, se nemůže stát položkou: dokud existuje jeho snímek, Docker nemůže odstraňovat vrstvy obrazů. Přidejte místo toho datové sady pod ním, například `appdata`.
+S úložným ovladačem ZFS v Dockeru je každá vrstva obrazu datovou sadou s přípojným bodem `legacy`. Dialog přidání je sloučí do jednoho řádku na rodiče. Strom, který obsahuje víc než 20 takových datových sad, se nemůže stát položkou: dokud existuje jeho snímek, Docker nemůže odstraňovat vrstvy obrazů. Přidej místo toho datové sady pod ním, například `appdata`.
 
 ### Položky se nikdy nepřekrývají {#overlap}
 
-Datová sada může patřit jen k jedné položce. BombVault odmítne novou položku, která leží uvnitř existující nebo by nějakou obsahovala. Chcete-li sloučit několik podřízených položek do jedné nadřazené, nejprve podřízené položky smažte se zachováním jejich záloh a pak přidejte nadřazenou. Každá datová sada si ponechává historii pod svým jménem, takže další záloha pokračuje tam, kde staré položky skončily, a nečte všechno znovu.
+Datová sada může patřit jen k jedné položce. BombVault odmítne novou položku, která leží uvnitř existující nebo by nějakou obsahovala. Chceš-li sloučit několik podřízených položek do jedné nadřazené, nejprve podřízené položky smaž se zachováním jejich záloh a pak přidej nadřazenou. Každá datová sada si ponechává historii pod svým jménem, takže další záloha pokračuje tam, kde staré položky skončily, a nečte všechno znovu.
 
 ## Zastavení kontejnerů a příkazy kolem snímku {#consistency}
 
 Snímek běžící databáze je jako náhlý výpadek proudu: databáze se obvykle zotaví, ale musí to udělat. Každá položka s tím může udělat dvě věci a obě se týkají jen okamžiku snímku, ne celé zálohy.
 
 - **Zastavit tyto kontejnery kvůli snímku.** BombVault zastaví uvedené kontejnery, pořídí snímek a hned je znovu spustí. Kontejnery na stejné úrovni závislostí se zastavují souběžně, závislé nejdřív, takže celé okno obvykle trvá pár sekund; běh ukáže, jak dlouho. Záloha pak čte zmrazený snímek, zatímco aplikace už zase běží. Zastavují se jen kontejnery, které běžely.
-- **Příkaz před snímkem a po něm.** Běží uvnitř kontejneru podle vašeho výběru, například aby těsně před snímkem vypsal databázi do datové sady, aniž by cokoli zastavil. Selže-li příkaz před snímkem, záloha selže a žádný snímek se nepořídí. Selhání příkazu po snímku se ukáže u běhu, ale zálohu neshodí.
+- **Příkaz před snímkem a po něm.** Běží uvnitř kontejneru podle tvého výběru, například aby těsně před snímkem vypsal databázi do datové sady, aniž by cokoli zastavil. Selže-li příkaz před snímkem, záloha selže a žádný snímek se nepořídí. Selhání příkazu po snímku se ukáže u běhu, ale zálohu neshodí.
 
 Co se stane, když se něco pokazí:
 
@@ -75,7 +75,7 @@ Než BombVault zapíše do datové sady, pořídí snímek ZFS jen této datové
 
 BombVault bezpečnostní snímek nikdy sám nesmaže. Položka je vypíše s jejich stářím a velikostí, každý s akcí **Smazat**, a varuje, když je nejstarší starší než 30 dní, protože drží v poolu smazaná a změněná data.
 
-Chcete-li se po obnově vrátit, zkopírujte jednotlivé soubory z `.zfs/snapshot/bombvault-prerestore-<čas>` uvnitř datové sady. `zfs rollback <dataset>@bombvault-prerestore-<čas>` funguje jen, dokud je to nejnovější snímek této datové sady. `zfs rollback -r` smaže každý novější snímek včetně automatických.
+Chceš-li se po obnově vrátit, zkopíruj jednotlivé soubory z `.zfs/snapshot/bombvault-prerestore-<čas>` uvnitř datové sady. `zfs rollback <dataset>@bombvault-prerestore-<čas>` funguje jen, dokud je to nejnovější snímek této datové sady. `zfs rollback -r` smaže každý novější snímek včetně automatických.
 
 ### Obnova jako nová datová sada {#new-dataset}
 
@@ -95,17 +95,17 @@ Není v záloze:
 - podřízené sady, které byly přeskočeny nebo vynechány;
 - svazky.
 
-Pro obnovu na nový pool vytvoř pool a obnov každou datovou sadu do nové datové sady. Zda se ACL NFSv4, jak je TrueNAS používá na datových sadách SMB, vrátí tak, jak čekáte, zatím nebylo ověřeno, proto si obnovu vyzkoušejte na vlastních datech, než se na to spolehnete.
+Pro obnovu na nový pool vytvoř pool a obnov každou datovou sadu do nové datové sady. Zda se ACL NFSv4, jak je TrueNAS používá na datových sadách SMB, vrátí tak, jak čekáš, zatím nebylo ověřeno, proto si obnovu vyzkoušej na vlastních datech, než se na to spolehneš.
 
 ## Šifrované datové sady {#encryption}
 
-Šifrovaná datová sada se zálohuje, jen dokud je její klíč načtený. Jinak se přeskočí s varováním; načtěte klíč pomocí `zfs load-key` a datovou sadu připojte. BombVault čte data dešifrovaná a ukládá je do repozitáře resticu, který je šifrovaný. Pokud jste šifrování v BombVaultu vypnuli, tento repozitář šifrovaný není.
+Šifrovaná datová sada se zálohuje, jen dokud je její klíč načtený. Jinak se přeskočí s varováním; načti klíč pomocí `zfs load-key` a datovou sadu připoj. BombVault čte data dešifrovaná a ukládá je do repozitáře resticu, který je šifrovaný. Pokud jsi šifrování v BombVaultu vypnuli, tento repozitář šifrovaný není.
 
 ## Replika {#replica}
 
-Replika je kopie datových sad položky na druhém serveru ZFS. BombVault ji udržuje aktuální pomocí `zfs send` a `zfs receive`. První běh pošle všechno, potom putují jen změněné bloky. Na druhém serveru můžete kopii hned připojit.
+Replika je kopie datových sad položky na druhém serveru ZFS. BombVault ji udržuje aktuální pomocí `zfs send` a `zfs receive`. První běh pošle všechno, potom putují jen změněné bloky. Na druhém serveru můžeš kopii hned připojit.
 
-Replika nikdy nenahrazuje zálohu. Starší verze, jednotlivé soubory i kontrola se dál berou ze záloh a replika drží jen tolik snímků, kolik nastavíte. Aktuální replika se počítá jako kopie mimo lokalitu, ale položka s replikou a bez zálohy zůstává oranžová.
+Replika nikdy nenahrazuje zálohu. Starší verze, jednotlivé soubory i kontrola se dál berou ze záloh a replika drží jen tolik snímků, kolik nastavíš. Aktuální replika se počítá jako kopie mimo lokalitu, ale položka s replikou a bez zálohy zůstává oranžová.
 
 Zapneš ji na kartě **Replika** na záložce Nastavení položky. Tam vybereš, kam replika půjde, kdy se spouští (**Po každé záloze** nebo **Vlastní plán**) a kolik snímků zůstane na cíli. Karta vypisuje každou datovou sadu a každý svazek s jeho stavem a **Replikovat teď** spustí běh. Běh repliky má vlastní zámek, takže dlouhý první přenos nikdy nezdrží zálohy.
 
@@ -114,8 +114,8 @@ Zapneš ji na kartě **Replika** na záložce Nastavení položky. Tam vybereš,
 Přijímat může každý stroj se ZFS a SSH, například druhý Unraid nebo TrueNAS. BombVault tam běžet nemusí.
 
 1. V **Nastavení, Párování** zvol **Připojit přes SSH** v **Server ZFS bez BombVault**, nebo **Přidat server ZFS** na kartě **Replika** položky.
-2. Zadejte adresu, uživatele a port. Dialog ukáže veřejný klíč BombVaultu. Přidejte ho do `~/.ssh/authorized_keys` uživatele na serveru. V Unraidu je to v **Settings, Users, root, SSH keys**.
-3. Otestujte spojení. Dialog pak vypíše pooly serveru. Vyberte jeden a nastavte kořen, který je ve výchozím stavu `<pool>/bombvault-replica`.
+2. Zadej adresu, uživatele a port. Dialog ukáže veřejný klíč BombVaultu. Přidej ho do `~/.ssh/authorized_keys` uživatele na serveru. V Unraidu je to v **Settings, Users, root, SSH keys**.
+3. Otestuj spojení. Dialog pak vypíše pooly serveru. Vyber jeden a nastav kořen, který je ve výchozím stavu `<pool>/bombvault-replica`.
 4. Vyber nový server na kartě **Replika** položky. Server pak má na stránce Instance vlastní kartu a **Otevřít** vede na jeho stránku.
 
 S rootem není potřeba nic dalšího. Vlastní uživatel potřebuje tato oprávnění na poolu cíle, která dialog také ukazuje:
@@ -132,7 +132,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 V tomto směru drží BombVault, který položku vlastní, také klíč, který může na server zapisovat.
 
-BombVault si při prvním připojení uloží klíč hostitele, který server ukáže, a jiný později odmítne. Pokud byl server přeinstalován, stiskněte na stránce serveru **Forget host key** a příští připojení uloží nový klíč.
+BombVault si při prvním připojení uloží klíč hostitele, který server ukáže, a jiný později odmítne. Pokud byl server přeinstalován, stiskni na stránce serveru **Zapomenout klíč hostitele** a příští připojení uloží nový klíč.
 
 ### Odeslání spárované instanci {#replica-receive}
 
@@ -140,11 +140,11 @@ Spárovaný BombVault umí repliku přijmout sám. Nikdo nedostane přístup SSH
 
 1. Na kartě **Replika** položky vyber jako cíl spárovanou instanci, nebo na kartě té instance na stránce Instance zapni roli **Server ZFS** a vyber tam položky ZFS. Karta ukazuje **Čeká na schválení**, dokud neodpoví.
 2. Na přijímající instanci otevři **Instance**. Žádost se ukáže na kartě odesílající instance jako odznak a vypisují ji její **Podrobnosti**. Vyber pool a kořen na tom serveru a kolik snímků zůstane, potom stiskni **Povolit** nebo **Odmítnout**.
-3. Po **Allow** zdroj odesílá podle vlastního plánu, jako u každého jiného cíle.
+3. Po **Povolit** zdroj odesílá podle vlastního plánu, jako u každého jiného cíle.
 
 Přijímající instance přijme jen to, co schválení pokrývá: datové sady položky, do vlastního kořene. Příkaz `zfs receive` spouští sama a zdroj tam nemůže nic smazat ani vrátit zpět. Kopie tedy přežije i zdroj, který někdo převzal. Přijímající instance si drží vlastní uchovávání. Zdroj při žádosti jen navrhne pravidlo.
 
-**Revoke access** na přijímající instanci kdykoli ukončí schválení a oznámí to zdroji, který pak zobrazí, že schválení bylo odvoláno, a přestane odesílat. Co přijímající instance už má, tam zůstane. Zamítnutá žádost zůstává zamítnutá. Další datové sady nebo žádost po odvolání se ptají znovu.
+**Odebrat přístup** na přijímající instanci kdykoli ukončí schválení a oznámí to zdroji, který pak zobrazí, že schválení bylo odvoláno, a přestane odesílat. Co přijímající instance už má, tam zůstane. Zamítnutá žádost zůstává zamítnutá. Další datové sady nebo žádost po odvolání se ptají znovu.
 
 Přijímající instance musí odpovídat přes HTTPS. Na prostou adresu http zdroj nic neposílá, protože token a data by šly po síti nešifrované. Každý přenos navíc nechává desetinu přijímajícího poolu volnou a skončí dřív, než by ji začal zabírat, takže jeden zdroj nemůže zaplnit pool přijímajícího serveru.
 
@@ -156,48 +156,48 @@ Kopie na cíli je jen pro čtení a není připojená, takže nikdy nic na tom s
 
 ### Co se zahrnuje {#replica-contents}
 
-Zahrnuje se všechno, co položka zálohuje, a také svazky pod ní, které záloha přeskakuje. Podřízená datová sada, kterou jste v položce vypnuli, zůstane venku. Všechny datové sady jednoho běhu pocházejí z jednoho snímku, stejně jako u zálohy.
+Zahrnuje se všechno, co položka zálohuje, a také svazky pod ní, které záloha přeskakuje. Podřízená datová sada, kterou jsi v položce vypnul, zůstane venku. Všechny datové sady jednoho běhu pocházejí z jednoho snímku, stejně jako u zálohy.
 
 ### Jak dlouho snímky zůstávají {#replica-retention}
 
-Na cíli drží nová replika 7 denních a 3 týdenní snímky. Místo toho vyberte **Short**, **Balanced** nebo **Long**, nebo nastavte **Custom values**. Odstraňují se tam jen snímky pojmenované `bombvault-replica-<14 digits>`, a nikdy ne nejnovější, který mají obě strany společný.
+Na cíli drží nová replika 7 denních a 3 týdenní snímky. Místo toho vyber **Krátké**, **Vyvážené** nebo **Dlouhé**, nebo nastav **Vlastní hodnoty**. Odstraňují se tam jen snímky pojmenované `bombvault-replica-<14 digits>`, a nikdy ne nejnovější, který mají obě strany společný.
 
 Na zdroji drží BombVault jen poslední snímek repliky a k tomu záložku pro každý odeslaný stav. Záložky nezabírají místo. Další přenos od nich vychází.
 
 ### Šifrované datové sady v replice {#replica-encryption}
 
-Šifrovaná datová sada se posílá surově. Na cíli zůstává šifrovaná a cíl klíč nikdy nevidí. Klíč dobře uschovejte: potřebujete ho k otevření kopie po obnově a replika bez něj je nečitelná.
+Šifrovaná datová sada se posílá surově. Na cíli zůstává šifrovaná a cíl klíč nikdy nevidí. Klíč dobře uschovej: potřebuješ ho k otevření kopie po obnově a replika bez něj je nečitelná.
 
 ### Použití repliky {#replica-use}
 
 Otevři záložku **Zálohy** položky a klikni na řádek **Replika ZFS** mezi místy, která drží její snímky. List vypíše snímky na cíli a ukáže příkazy s tvými skutečnými názvy.
 
-Chcete-li se podívat na starý stav, naklonujte snímek na cíli. Klon nezabírá místo, dokud se něco nezmění, a replika zůstane nedotčená:
+Chceš-li se podívat na starý stav, naklonuj snímek na cíli. Klon nezabírá místo, dokud se něco nezmění, a replika zůstane nedotčená:
 
 ```
 zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
-Pokud zdroj selže, změňte kopii na cíli na normální zapisovatelnou datovou sadu:
+Pokud zdroj selže, změň kopii na cíli na normální zapisovatelnou datovou sadu:
 
 ```
 zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
 ```
 
-BombVault pak do této datové sady přestane replikovat, dokud nespustíte nový první běh.
+BombVault pak do této datové sady přestane replikovat, dokud nespustíš nový první běh.
 
-Chcete-li stav vrátit na zdroj, stiskněte v listu **Bring back as a new dataset**. BombVault pošle snímek do nové datové sady vedle originálu, pojmenované `<dataset>-bombvault-restore-` plus časové razítko. Originál nikdy nepřepisuje.
+Chceš-li stav vrátit na zdroj, stiskni v listu **Vrátit jako novou datovou sadu**. BombVault pošle snímek do nové datové sady vedle originálu, pojmenované `<dataset>-bombvault-restore-` plus časové razítko. Originál nikdy nepřepisuje.
 
 ## Zbylé snímky {#leftover-snapshots}
 
 Snímek zálohy se jmenuje `<dataset>@bombvault-<14 číslic>`, například `cache/appdata@bombvault-20260924021500` (UTC). BombVault ho odstraní hned po záloze. Pokud se to nepovede, například protože je datová sada zaneprázdněná nebo byl BombVault zastaven, odstraní ho BombVault:
 
 - před další zálohou této položky,
-- při spuštění BombVaultu, pro každou položku, i s vypnutou doménou,
-- když položku smažete,
-- když u položky stisknete **Odstranit teď**, kde je také vidět, kolik jich zbývá.
+- při spuštění BombVaultu, pro každou položku, i s vypnutou sekcí,
+- když položku smažeš,
+- když u položky stiskneš **Odstranit teď**, kde je také vidět, kolik jich zbývá.
 
-Odstraňují se jen názvy, které přesně odpovídají `bombvault-` plus 14 číslic. Bezpečnostních snímků, vašich vlastních snímků a automatických snímků se to nikdy nedotkne. Chcete-li jeden odstranit ručně:
+Odstraňují se jen názvy, které přesně odpovídají `bombvault-` plus 14 číslic. Bezpečnostních snímků, tvých vlastních snímků a automatických snímků se to nikdy nedotkne. Chceš-li jeden odstranit ručně:
 
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
@@ -209,7 +209,7 @@ Snímek repliky se jmenuje `<dataset>@bombvault-replica-<14 digits>` a není zby
 
 Podřízená sada, která byla vyprázdněna, sotva změní součet velkého stromu, a proto detekce anomálií sleduje každou datovou sadu položky zvlášť: velikost, počet souborů, nová data a doba resticu mají každá vlastní historii. Tato historie patří ke jménu datové sady, takže zůstane, i když strom později zálohuje jiná položka.
 
-Datová sada, kterou předchozí běh zálohoval a kterou tento běh nemohl přečíst, se počítá jako vyprázdněná, pokud se výběr položky nezměnil. To pokrývá nenačtený klíč, nepřipojenou datovou sadu i sadu, která ze stromu zmizela. Podřízená sada, kterou sami vyloučíte, mění výběr, takže její historie začne znovu. Dokud je otevřené zjištění o ztracených datech, uchovávání ponechá staré zálohy právě této datové sady a zbytek stromu pročistí jako obvykle.
+Datová sada, kterou předchozí běh zálohoval a kterou tento běh nemohl přečíst, se počítá jako vyprázdněná, pokud se výběr položky nezměnil. To pokrývá nenačtený klíč, nepřipojenou datovou sadu i sadu, která ze stromu zmizela. Podřízená sada, kterou sám vyloučíš, mění výběr, takže její historie začne znovu. Dokud je otevřené zjištění o ztracených datech, uchovávání ponechá staré zálohy právě této datové sady a zbytek stromu pročistí jako obvykle.
 
 Každá datová sada má vlastní řádek ve sledování položky, které se otevře přes **Sledování** na stránce **Anomálie** a je na záložce **Integrita** položky. Otevřená zjištění se ukazují u každé datové sady. Odkaz ve zjištění otevře okno obnovy u poslední dobré zálohy datové sady. Zda běh doběhne, se posuzuje pro celou položku, protože běh uspěje nebo selže jako celek.
 
@@ -221,50 +221,50 @@ Stránka položky, historie běhů a oznámení pojmenují problém jedním z t�
 
 | Kód | Význam | Co dělat |
 |---|---|---|
-| `ssh-missing` | Spojení SSH není v tomto kontejneru nastavené. | Nastavte spojení SSH jako pro zálohy VM. |
-| `host-placeholder` | Host SSH: Address je stále vzorová hodnota a `host.docker.internal` také neodpověděl. | Nastavte Host SSH: Address na IP adresu LAN tohoto serveru. |
-| `host-fallback` | Host SSH: Address je stále vzorová hodnota a `host.docker.internal` funguje. | Nic, nebo nastavte IP adresu LAN. |
-| `ssh-unreachable` | Server není přes SSH dosažitelný. | Zkontrolujte adresu a port a zda je SSH zapnuté. |
+| `ssh-missing` | Spojení SSH není v tomto kontejneru nastavené. | Nastav spojení SSH jako pro zálohy VM. |
+| `host-placeholder` | Host SSH: Address je stále vzorová hodnota a `host.docker.internal` také neodpověděl. | Nastav Host SSH: Address na IP adresu LAN tohoto serveru. |
+| `host-fallback` | Host SSH: Address je stále vzorová hodnota a `host.docker.internal` funguje. | Nic, nebo nastav IP adresu LAN. |
+| `ssh-unreachable` | Server není přes SSH dosažitelný. | Zkontroluj adresu a port a zda je SSH zapnuté. |
 | `ssh-auth` | Server odmítl klíč BombVaultu. | Spusť jednou na serveru příkaz zobrazený pod **Spojení s tímto serverem**. |
-| `zfs-not-found` | Hostitel SSH nemá příkaz `zfs`. | Nasměrujte Host SSH: Address na stroj, kterému pooly patří. |
-| `zfs-permission` | Uživatel SSH nesmí spustit tento příkaz zfs. | Použijte root, nebo viz [TrueNAS SCALE](#truenas). |
-| `uri-mismatch` | `LIBVIRT_URI` uvádí jiného hostitele nebo uživatele než pole SSH. | Sjednoťte je, nebo pole SSH vyprázdněte, aby obojí pocházelo z URI. |
+| `zfs-not-found` | Hostitel SSH nemá příkaz `zfs`. | Nasměruj Host SSH: Address na stroj, kterému pooly patří. |
+| `zfs-permission` | Uživatel SSH nesmí spustit tento příkaz zfs. | Použij root, nebo viz [TrueNAS SCALE](#truenas). |
+| `uri-mismatch` | `LIBVIRT_URI` uvádí jiného hostitele nebo uživatele než pole SSH. | Sjednoť je, nebo pole SSH vyprázdni, aby obojí pocházelo z URI. |
 | `zfs-error` | zfs nahlásil jinou chybu. | Podrobnosti ukazují jeho zprávu. |
-| `propagation-missing` | Nová připojení na hostiteli nedorazí do kontejneru. | Nastavte Access Mode u Host Data na Read/Write - Slave a restartujte BombVault. |
-| `invalid-name` | Název datové sady, který BombVault nepřijímá. | Přejmenujte datovou sadu. |
-| `name-too-long` | Datová sada ve stromu je na název snímku příliš dlouhá. | Přejmenujte ji, nebo přidejte jako položku datovou sadu pod ní. |
-| `invalid-exclude` | Vzor vyloučení nebo vynechaná podřízená sada k položce nepasuje. | Opravte záznam, který zpráva uvádí. Chcete-li vynechat celou podřízenou sadu, vypněte ji místo psaní vzoru. |
-| `not-found` | Datová sada na serveru neexistuje. | Odeberte položku, nebo datovou sadu vytvořte znovu. Její zálohy zůstávají obnovitelné. |
+| `propagation-missing` | Nová připojení na hostiteli nedorazí do kontejneru. | Nastav Access Mode u Host Data na Read/Write - Slave a restartuj BombVault. |
+| `invalid-name` | Název datové sady, který BombVault nepřijímá. | Přejmenuj datovou sadu. |
+| `name-too-long` | Datová sada ve stromu je na název snímku příliš dlouhá. | Přejmenuj ji, nebo přidej jako položku datovou sadu pod ní. |
+| `invalid-exclude` | Vzor vyloučení nebo vynechaná podřízená sada k položce nepasuje. | Oprav záznam, který zpráva uvádí. Chceš-li vynechat celou podřízenou sadu, vypni ji místo psaní vzoru. |
+| `not-found` | Datová sada na serveru neexistuje. | Odeber položku, nebo datovou sadu vytvoř znovu. Její zálohy zůstávají obnovitelné. |
 | `not-filesystem` | Toto je svazek, ne souborový systém. | Viz [Svazky](#volumes). |
 | `overlaps-item` | Datová sada se překrývá s existující položkou. | Viz [Položky se nikdy nepřekrývají](#overlap). |
 | `docker-storage` | Strom obsahuje úložiště obrazů Dockeru. | Viz [Úložiště Dockeru](#docker-storage). |
-| `nothing-readable` | Žádnou datovou sadu položky teď nelze přečíst. | Podívejte se na kódy přeskočených datových sad. |
+| `nothing-readable` | Žádnou datovou sadu položky teď nelze přečíst. | Podívej se na kódy přeskočených datových sad. |
 | `snapshot-failed` | Snímek nešlo vytvořit. | Podrobnosti ukazují zprávu zfs. |
-| `containers-busy` | Když se měly kontejnery zastavit, ještě běžela záloha kontejneru. | Spusťte znovu později. Plánované běhy počkají samy. |
-| `consistency-stop-failed` | Kontejner nešlo zastavit, takže se snímek nepořídil. | Zkontrolujte kontejner, nebo ho odeberte ze seznamu. |
+| `containers-busy` | Když se měly kontejnery zastavit, ještě běžela záloha kontejneru. | Spusť znovu později. Plánované běhy počkají samy. |
+| `consistency-stop-failed` | Kontejner nešlo zastavit, takže se snímek nepořídil. | Zkontroluj kontejner, nebo ho odeber ze seznamu. |
 | `pre-snapshot-failed` | Příkaz před snímkem selhal. | Podrobnosti běhu ukazují jeho výstup. |
-| `container-unknown` | Uvedený kontejner neexistuje. | Odeberte ho ze seznamu. |
-| `container-is-self` | BombVault nemůže zastavit svůj vlastní kontejner. | Odeberte ho ze seznamu. |
-| `leftover-snapshots` | Na serveru jsou stále snímky, které BombVault nemohl odstranit. | Stiskněte **Odstranit teď**, viz [Zbylé snímky](#leftover-snapshots). |
+| `container-unknown` | Uvedený kontejner neexistuje. | Odeber ho ze seznamu. |
+| `container-is-self` | BombVault nemůže zastavit svůj vlastní kontejner. | Odeber ho ze seznamu. |
+| `leftover-snapshots` | Na serveru jsou stále snímky, které BombVault nemohl odstranit. | Stiskni **Odstranit teď**, viz [Zbylé snímky](#leftover-snapshots). |
 | `zvol` | Svazek ve stromu, přeskočen. | Viz [Svazky](#volumes). |
-| `canmount-off` | Nikdy nepřipojeno (`canmount=off`), přeskočeno. | Pokud obsahuje data, připojte ho nebo data přesuňte do podřízené sady. |
-| `legacy-mount` | Přípojný bod legacy, přeskočeno. | Dejte mu přípojný bod pod `/mnt`. |
-| `no-mountpoint` | Bez přípojného bodu, přeskočeno. | Dejte mu přípojný bod pod `/mnt`. |
-| `not-mounted` | Na serveru nepřipojeno, přeskočeno. | Připojte ho pomocí `zfs mount`, nebo nastavte `canmount=on`. |
-| `key-not-loaded` | Šifrováno a klíč není načtený, přeskočeno. | `zfs load-key`, pak ho připojte. |
+| `canmount-off` | Nikdy nepřipojeno (`canmount=off`), přeskočeno. | Pokud obsahuje data, připoj ho nebo data přesuň do podřízené sady. |
+| `legacy-mount` | Přípojný bod legacy, přeskočeno. | Dej mu přípojný bod pod `/mnt`. |
+| `no-mountpoint` | Bez přípojného bodu, přeskočeno. | Dej mu přípojný bod pod `/mnt`. |
+| `not-mounted` | Na serveru nepřipojeno, přeskočeno. | Připoj ho pomocí `zfs mount`, nebo nastav `canmount=on`. |
+| `key-not-loaded` | Šifrováno a klíč není načtený, přeskočeno. | `zfs load-key`, pak ho připoj. |
 | `snapdir-disabled` | Přístup ke snímkům je vypnutý, přeskočeno. | `zfs set snapdir=hidden <dataset>`. Složka `.zfs` zůstane skrytá. |
-| `not-visible` | BombVault nevidí přípojný bod datové sady. | Přesuňte přípojný bod pod cestu Host Data, nebo ho namapujte do kontejneru na stejnou cestu s Read/Write - Slave. |
-| `shfs-only` | Datová sada je vidět jen přes `/mnt/user`, které skrývá snímky. | Jako Host Data namapujte `/mnt`, ne `/mnt/user`. |
-| `snapshot-not-visible` | Snímek byl vytvořen, ale v BombVaultu se neobjevil. | Spusťte **Vyzkoušet přístup ke snímkům**; viz níže. |
-| `snapshot-loop` | Snímek nedorazil do BombVaultu, protože Host Data nepropouští nová připojení. | Nastavte Access Mode u Host Data na Read/Write - Slave a restartujte BombVault. |
+| `not-visible` | BombVault nevidí přípojný bod datové sady. | Přesuň přípojný bod pod cestu Host Data, nebo ho namapuj do kontejneru na stejnou cestu s Read/Write - Slave. |
+| `shfs-only` | Datová sada je vidět jen přes `/mnt/user`, které skrývá snímky. | Jako Host Data namapuj `/mnt`, ne `/mnt/user`. |
+| `snapshot-not-visible` | Snímek byl vytvořen, ale v BombVaultu se neobjevil. | Spusť **Vyzkoušet přístup ke snímkům**; viz níže. |
+| `snapshot-loop` | Snímek nedorazil do BombVaultu, protože Host Data nepropouští nová připojení. | Nastav Access Mode u Host Data na Read/Write - Slave a restartuj BombVault. |
 | `backup-failed` | restic pro tuto datovou sadu selhal. | Podrobnosti běhu ukazují proč. |
-| `not-reached` | Běh skončil před touto datovou sadou. | Spusťte zálohu znovu. |
+| `not-reached` | Běh skončil před touto datovou sadou. | Spusť zálohu znovu. |
 | `gone` | Datová sada už na serveru není. | Nic. Její zálohy zůstávají obnovitelné. |
-| `read-only-mount` | BombVault může datovou sadu jen číst, takže do ní nemůže obnovovat. | Nastavte mapování na Read/Write - Slave, nebo obnovte do složky. |
-| `destination-not-mounted` | Složka neleží na připojeném poolu ani sdílené složce. | Vyberte složku na poolu nebo sdílené složce. |
-| `not-enough-space` | V cíli není dost volného místa. | Uvolněte místo, nebo vyberte jinou složku. |
+| `read-only-mount` | BombVault může datovou sadu jen číst, takže do ní nemůže obnovovat. | Nastav mapování na Read/Write - Slave, nebo obnov do složky. |
+| `destination-not-mounted` | Složka neleží na připojeném poolu ani sdílené složce. | Vyber složku na poolu nebo sdílené složce. |
+| `not-enough-space` | V cíli není dost volného místa. | Uvolni místo, nebo vyber jinou složku. |
 | `safety-snapshot-failed` | Bezpečnostní snímek nešel pořídit, takže se nic neobnovilo. | Podrobnosti ukazují zprávu zfs. |
-| `safety-name-too-long` | Název datové sady je na bezpečnostní snímek příliš dlouhý. | Vypněte bezpečnostní snímek, nebo obnovte do složky. |
+| `safety-name-too-long` | Název datové sady je na bezpečnostní snímek příliš dlouhý. | Vypni bezpečnostní snímek, nebo obnov do složky. |
 | `dataset-exists` | Datová sada s tímto názvem už existuje. | Zvol nový název, nebo obnov přímo do datové sady. |
 | `create-failed` | Novou datovou sadu se nepodařilo vytvořit. | Podrobnosti ukazují zprávu zfs. Zkontroluj, že nadřazená datová sada existuje. |
 | `new-dataset-not-visible` | Nová datová sada byla vytvořena, ale BombVault ji nevidí, takže se nic neobnovilo. | Datová sada zůstává na serveru. Připoj ji pod cestu Host Data a obnov do ní. |
@@ -275,17 +275,17 @@ Stránka položky, historie běhů a oznámení pojmenují problém jedním z t�
 
 **Vyzkoušet přístup ke snímkům** na záložce Nastavení položky pořídí skutečný snímek jejího stromu, hledá ho v BombVaultu pro každou datovou sadu a zase ho odstraní. Je to nejrychlejší způsob, jak ověřit celou cestu před prvním plánovaným během.
 
-Chcete-li se podívat sami, spusťte na serveru:
+Chceš-li se podívat sám, spusť na serveru:
 
 ```
 docker exec BombVault grep zfs /proc/self/mountinfo
 ```
 
-Každý řádek je jedno připojení uvnitř kontejneru. Řádek datové sady ukazuje její cestu v kontejneru (pod `/host/user`) a název datové sady. Pole `master:N` na tomto řádku znamená, že připojení dostává připojení, která hostitel vytvoří později, a to přístup ke snímkům potřebuje. Pokud chybí, nastavte Access Mode u Host Data na Read/Write - Slave a restartujte BombVault.
+Každý řádek je jedno připojení uvnitř kontejneru. Řádek datové sady ukazuje její cestu v kontejneru (pod `/host/user`) a název datové sady. Pole `master:N` na tomto řádku znamená, že připojení dostává připojení, která hostitel vytvoří později, a to přístup ke snímkům potřebuje. Pokud chybí, nastav Access Mode u Host Data na Read/Write - Slave a restartuj BombVault.
 
 ## TrueNAS SCALE {#truenas}
 
-- Když je nastavena `LIBVIRT_URI` (jako pro zálohy VM na TrueNAS), BombVault vezme hostitele, uživatele a port SSH pro své příkazy zfs z URI, každý, který není nastaven samostatně. Bez záloh VM nastavte místo toho `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` a `LIBVIRT_SSH_PORT`. Proměnné přidejte v **Additional Environment Variables**.
+- Když je nastavena `LIBVIRT_URI` (jako pro zálohy VM na TrueNAS), BombVault vezme hostitele, uživatele a port SSH pro své příkazy zfs z URI, každý, který není nastaven samostatně. Bez záloh VM nastav místo toho `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` a `LIBVIRT_SSH_PORT`. Proměnné přidej v **Additional Environment Variables**.
 - Uživatel jiný než root potřebuje oprávnění k nejvyšší datové sadě položky, která pak pokrývají každou datovou sadu pod ní:
 
   ```

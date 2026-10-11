@@ -193,7 +193,7 @@ For å få en tilstand tilbake til kilden trykker du **Bring back as a new datas
 Øyeblikksbildet av en sikkerhetskopi heter `<dataset>@bombvault-<14 sifre>`, for eksempel `cache/appdata@bombvault-20260924021500` (UTC). BombVault fjerner det rett etter sikkerhetskopien. Mislykkes det, for eksempel fordi datasettet er opptatt eller BombVault ble stoppet, fjerner BombVault det:
 
 - før neste sikkerhetskopi av det elementet,
-- når BombVault starter, for hvert element, også med domenet slått av,
+- når BombVault starter, for hvert element, også med området slått av,
 - når du sletter elementet,
 - når du trykker **Fjern nå** på elementet, som også viser hvor mange som er igjen.
 

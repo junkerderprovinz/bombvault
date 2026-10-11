@@ -144,7 +144,7 @@ Sparowany BombVault może sam odebrać replikę. Nikt nie dostaje dostępu SSH d
 
 Instancja odbierająca przyjmuje tylko to, co obejmuje zatwierdzenie: zbiory danych elementu, do własnego katalogu głównego. Sama uruchamia `zfs receive`, a źródło nie ma żadnej możliwości usunięcia ani cofnięcia czegokolwiek na niej. Kopia przetrwa więc przejęcie źródła przez kogoś innego. Instancja odbierająca stosuje własną retencję. Źródło tylko proponuje regułę, gdy wysyła prośbę.
 
-**Revoke access** na instancji odbierającej w każdej chwili kończy zatwierdzenie i informuje o tym źródło, które pokazuje wtedy, że zatwierdzenie wycofano, i przestaje wysyłać. To, co instancja odbierająca już ma, zostaje u niej. Odrzucona prośba pozostaje odrzucona. Dodatkowe zbiory danych albo prośba po cofnięciu dostępu wymagają ponownego pytania.
+**Cofnij dostęp** na instancji odbierającej w każdej chwili kończy zatwierdzenie i informuje o tym źródło, które pokazuje wtedy, że zatwierdzenie wycofano, i przestaje wysyłać. To, co instancja odbierająca już ma, zostaje u niej. Odrzucona prośba pozostaje odrzucona. Dodatkowe zbiory danych albo prośba po cofnięciu dostępu wymagają ponownego pytania.
 
 Instancja odbierająca musi odpowiadać przez HTTPS. Na zwykły adres http źródło nic nie wysyła, bo token i dane szłyby przez sieć niezaszyfrowane. Każdy transfer zostawia też wolną jedną dziesiątą puli odbierającej i zatrzymuje się, zanim by ją naruszył, więc jedno źródło nie zapełni puli serwera odbierającego.
 
@@ -160,7 +160,7 @@ Uwzględnione jest wszystko, co element kopiuje, a także znajdujące się pod n
 
 ### Jak długo migawki zostają {#replica-retention}
 
-Na celu nowa replika zachowuje 7 migawek dziennych i 3 tygodniowe. Możesz zamiast tego wybrać **Short**, **Balanced** albo **Long**, albo ustawić **Custom values**. Usuwane są tam wyłącznie migawki o nazwie `bombvault-replica-<14 digits>`, i nigdy najnowsza, którą obie strony mają wspólną.
+Na celu nowa replika zachowuje 7 migawek dziennych i 3 tygodniowe. Możesz zamiast tego wybrać **Krótko**, **Zrównoważone** albo **Długo**, albo ustawić **Własne wartości**. Usuwane są tam wyłącznie migawki o nazwie `bombvault-replica-<14 digits>`, i nigdy najnowsza, którą obie strony mają wspólną.
 
 Na źródle BombVault zachowuje tylko najnowszą migawkę repliki oraz zakładkę (bookmark) dla każdego wysłanego stanu. Zakładki nie zajmują miejsca. Następny transfer zaczyna się od nich.
 
@@ -186,7 +186,7 @@ zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inhe
 
 BombVault przestaje potem replikować do tego zbioru danych, dopóki nie uruchomisz nowego pierwszego przebiegu.
 
-Aby przywrócić stan na źródło, naciśnij w arkuszu **Bring back as a new dataset**. BombVault wysyła migawkę do nowego zbioru danych obok oryginału, o nazwie `<dataset>-bombvault-restore-` z dopisanym znacznikiem czasu. Nigdy nie nadpisuje oryginału.
+Aby przywrócić stan na źródło, naciśnij w arkuszu **Przywróć jako nowy zbiór danych**. BombVault wysyła migawkę do nowego zbioru danych obok oryginału, o nazwie `<dataset>-bombvault-restore-` z dopisanym znacznikiem czasu. Nigdy nie nadpisuje oryginału.
 
 ## Pozostałe migawki {#leftover-snapshots}
 

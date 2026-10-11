@@ -26,7 +26,7 @@ Varje container, VM, mappuppsättning, flashenheten, varje ZFS-datauppsättning 
 
 ## Återställning är stjärnan
 
-Efter att data har kopierats tillbaka från restic-ögonblicksbilden spelar BombVault upp den sparade containerdefinitionen mot Docker-API:et, så containern dyker upp igen i Unraids Docker-flik som om den alltid hade varit där (samma image, samma inställningar, samma portmappningar). VM:ar får sin XML återdefinierad över SSH och sina diskar och UEFI NVRAM återkopplade, även efter att VM:en har raderats.
+Efter att data har kopierats tillbaka från restic-säkerhetskopian spelar BombVault upp den sparade containerdefinitionen mot Docker-API:et, så containern dyker upp igen i Unraids Docker-flik som om den alltid hade varit där (samma image, samma inställningar, samma portmappningar). VM:ar får sin XML återdefinierad över SSH och sina diskar och UEFI NVRAM återkopplade, även efter att VM:en har raderats.
 
 Ett enda fönster återställer alla slags poster. Som standard väljer det **Bredvid originalet**, som tar tillbaka säkerhetskopian som en kopia och lämnar originalet orört. **Ersätt originalet** säkerhetskopierar först det nuvarande läget, så en återställning går att ångra. En mapp eller en ny ZFS-datauppsättning är de andra målen.
 

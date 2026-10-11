@@ -193,7 +193,7 @@ Per riportare uno stato sulla sorgente, premi **Ripristina come nuovo dataset** 
 Lo snapshot di un backup si chiama `<dataset>@bombvault-<14 cifre>`, per esempio `cache/appdata@bombvault-20260924021500` (UTC). BombVault lo rimuove subito dopo il backup. Se non ci riesce, per esempio perché il dataset è occupato o BombVault è stato fermato, BombVault lo rimuove:
 
 - prima del backup successivo di quell'elemento,
-- all'avvio di BombVault, per ogni elemento, anche con il dominio disattivato,
+- all'avvio di BombVault, per ogni elemento, anche con la sezione disattivata,
 - quando elimini l'elemento,
 - quando premi **Rimuovi ora** sull'elemento, che mostra quanti ne restano.
 

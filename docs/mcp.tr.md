@@ -7,18 +7,18 @@ BombVault, Model Context Protocol (MCP) için yerleşik bir sunucu içerir; Clau
 | Araç | Ne yapar | Tür |
 |---|---|---|
 | `get_health` | Sürüm, örnek adı, bir yedeklemenin sürüp sürmediği ve bu anahtarın neye izni olduğu | okuma |
-| `get_status` | Alan başına koruma durumu: son başarılı yedek, beklenen aralık, doğrulamalar ve off-site denetimleri, sıradaki zamanlanmış çalıştırmalar, uygulamanın boşta kalmasını bekleyen yedekler, kapsayıcılar için en son başlatma testi | okuma |
+| `get_status` | Bölüm başına koruma durumu: son başarılı yedek, beklenen aralık, doğrulamalar ve off-site denetimleri, sıradaki zamanlanmış çalıştırmalar, uygulamanın boşta kalmasını bekleyen yedekler, kapsayıcılar için en son başlatma testi | okuma |
 | `get_coverage` | BombVault'un neyi koruduğu ve neyi korumadığı, her biri için gerekçesiyle | okuma |
 | `list_items` | Korunan her kapsayıcı, VM ve klasör kümesi, flash sürücü ve uygulama yapılandırması; zamanlama, bir yedeklemenin neyi durdurduğu, son yedek ve ne kadar sürdüğü ile; veritabanı kapsayıcıları son dökümlerini de gösterir; ZFS veri kümeleri de son denetimlerinin sonucuyla birlikte listelenir; her öge son geri yükleme denetimini, bir kapsayıcı ayrıca son başlatma testini ya da neden test edilemediğini taşır; son yedeklemeden beri başka ayarlarla yeniden oluşturulan bir konteyner değişenleri listeler | okuma |
-| `list_runs` | Çalıştırma geçmişi, en yeniler önce; alan, öge, durum, tür ve zamana göre süzülebilir; tek bir şeyin yavaşlattığı bir yedekleme onu adlandırır | okuma |
+| `list_runs` | Çalıştırma geçmişi, en yeniler önce; bölüm, öge, durum, tür ve zamana göre süzülebilir; tek bir şeyin yavaşlattığı bir yedekleme onu adlandırır | okuma |
 | `list_restore_points` | Bir ögenin birincil deposundaki geri yükleme noktaları, bir kapsayıcı için ayrıca veritabanı dökümleri; bir ZFS veri kümesinin her yedek için bir geri yükleme noktası vardır ve bu noktada altındaki her veri kümesinin anlık görüntüsü bulunur | okuma |
 | `get_activity` | Şu anda neyin çalıştığı, aşama ve yüzdesiyle | okuma |
-| `get_storage_stats` | Bir alanın birincil deposunun boyut geçmişi ve haftalık büyümesi, ayrıca her deposunun diskindeki veya uzak konumundaki kullanılan, boş ve toplam alan | okuma |
+| `get_storage_stats` | Bir bölümün birincil deposunun boyut geçmişi ve haftalık büyümesi, ayrıca her deposunun diskindeki veya uzak konumundaki kullanılan, boş ve toplam alan | okuma |
 | `get_size_breakdown` | Bir konteynerin, VM'in ya da klasör kümesinin en yeni yedeğinde hangi klasörlerin ve dosyaların yer kapladığı ve bunun ne kadarını son yedeklemenin eklediği | okuma |
-| `list_anomalies` | BombVault'un yedeklerde fark ettiği anormallikler; duruma, önem derecesine ve alana göre süzülebilir, açık olanların özetiyle birlikte | okuma |
+| `list_anomalies` | BombVault'un yedeklerde fark ettiği anormallikler; duruma, önem derecesine ve bölüme göre süzülebilir, açık olanların özetiyle birlikte | okuma |
 | `get_anomaly` | Bu bulgulardan biri, onaylanırken bırakılan notla birlikte | okuma |
 | `start_backup` | Bir ögeyi hemen yedekler | başlatma |
-| `start_domain_backup` | Bir alandaki korunan her ögeyi yedekler | başlatma |
+| `start_domain_backup` | Bir bölümdeki korunan her ögeyi yedekler | başlatma |
 | `start_backup_everything` | Tam yedekleme turunu çalıştırır | başlatma |
 | `cancel_backup` | Bu anahtarın başlattığı, süren bir yedeklemeyi iptal eder | iptal |
 
@@ -33,11 +33,11 @@ Bir asistanın başlattığı yedekleme, web arayüzünün başlattığı yedekl
 Bir yedekleme hizmetleri durdurduğu ve eski geri yükleme noktalarını dışarı ittiği için MCP üzerinden başlatmalar sınırlıdır:
 
 - Anahtar başına saatte 12 başlatılmış yedekleme.
-- Aynı ögenin, aynı alanın ya da Tam yedeklemenin iki MCP başlatması arasında 15 dakika.
+- Aynı ögenin, aynı bölümün ya da Tam yedeklemenin iki MCP başlatması arasında 15 dakika.
 - Aynı öge için 24 saatte en fazla 4 MCP başlatması.
-- **Saklama koruması.** Bir alan sabit sayıda geri yükleme noktası tuttuğunda (yalnızca "son N taneyi tut"; günlük, haftalık ya da aylık kural olmadan, yerelde ya da bir off-site hedefte), her yeni yedek en eskisini dışarı iter. BombVault bu durumda en yeni N-1 başarılı yedeğinin tamamı MCP üzerinden başlatılmış bir ögenin MCP başlatmasını reddeder. Böylece tutulan kümede her zaman zamanlamanın ya da senin oluşturduğun en az bir geri yükleme noktası kalır. "Son 1 taneyi tut" ayarında bir asistan o ögeyi hiç yedekleyemez. Bir sonraki zamanlanmış yedekleme yeniden yer açar. Tek başına yıllık bir kural "Son 1 taneyi tut" gibi sayılır, çünkü içinde bulunulan yıl için yalnızca bir geri yükleme noktası tutar.
+- **Saklama koruması.** Bir bölüm sabit sayıda geri yükleme noktası tuttuğunda (yalnızca "son N taneyi tut"; günlük, haftalık ya da aylık kural olmadan, yerelde ya da bir off-site hedefte), her yeni yedek en eskisini dışarı iter. BombVault bu durumda en yeni N-1 başarılı yedeğinin tamamı MCP üzerinden başlatılmış bir ögenin MCP başlatmasını reddeder. Böylece tutulan kümede her zaman zamanlamanın ya da senin oluşturduğun en az bir geri yükleme noktası kalır. "Son 1 taneyi tut" ayarında bir asistan o ögeyi hiç yedekleyemez. Bir sonraki zamanlanmış yedekleme yeniden yer açar. Tek başına yıllık bir kural "Son 1 taneyi tut" gibi sayılır, çünkü içinde bulunulan yıl için yalnızca bir geri yükleme noktası tutar.
 
-Bir alanın ya da Tam yedeklemenin başlatılması, bir sınırın geri tuttuğu ögeleri dışarıda bırakır ve yanıtında adlarını verir. Bu sınırların hiçbiri web arayüzünü ve zamanlamayı etkilemez. Saatlik kota bellekte tutulur, bu yüzden BombVault'un yeniden başlatılması onu sıfırlar.
+Bir bölümün ya da Tam yedeklemenin başlatılması, bir sınırın geri tuttuğu ögeleri dışarıda bırakır ve yanıtında adlarını verir. Bu sınırların hiçbiri web arayüzünü ve zamanlamayı etkilemez. Saatlik kota bellekte tutulur, bu yüzden BombVault'un yeniden başlatılması onu sıfırlar.
 
 [API](api.md#errors) üzerinden ve [Home Assistant](api.md#home-assistant)'tan başlatmalar, öge başına aynı sınırlarda ve saklama korumasında MCP üzerinden başlatmalarla birlikte sayılır.
 
@@ -257,8 +257,8 @@ Bir asistanın okuduğu her şey arkasındaki yapay zekâ sağlayıcısına gide
 | `400` "batch requests are not accepted" | İstemci JSON-RPC toplu istekleri gönderiyor. İstek başına tek ileti gönder. |
 | `429` | Bu adresten çok fazla yanlış anahtar ya da tek anahtarla dakikada 120'den fazla istek. Bir dakika bekle ve asistanın bir döngüye takılıp takılmadığını kontrol et. |
 | "certificate", "self-signed" ya da "unable to verify" içeren hatalar | İstemci BombVault'un sertifikasına güvenmiyor. Bkz. [TLS ve sertifikalar](#tls). |
-| `busy` | O alanı başka bir yedekleme ya da bakım işi tutuyor. Bittiğinde yeniden dene. |
-| `cooldown` | Bu öge, bu alan ya da Tam yedekleme 15 dakikadan kısa süre önce web arayüzünün dışından başlatıldı. |
+| `busy` | O bölümü başka bir yedekleme ya da bakım işi tutuyor. Bittiğinde yeniden dene. |
+| `cooldown` | Bu öge, bu bölüm ya da Tam yedekleme 15 dakikadan kısa süre önce web arayüzünün dışından başlatıldı. |
 | `retention_guard` | Bir MCP yedeği daha, "son N taneyi tut" penceresinde yalnızca MCP'den gelen geri yükleme noktaları bırakırdı ya da öge son 24 saatte MCP üzerinden zaten 4 yedek aldı; başarısız ve iptal edilenler de sayılır. İlk durumda bir sonraki zamanlanmış yedekleme yer açar, ikincisinde öge bu yedeklerin en eskisinden 24 saat sonra yeniden serbest kalır. Web arayüzünden her zaman başlatabilirsin. |
 | `rate_limited` | Anahtar bu saat için 12 başlatmasını kullandı. |
 | Başlatmada `not_permitted` | Anahtar yalnızca okuyabilir. Kartta **Yedekleme başlatmaya izin ver** seçeneğini aç; yeniden bağlanmak gerekmez. İptalde, çalıştırmanın bu anahtar tarafından başlatılmadığı anlamına gelir. |

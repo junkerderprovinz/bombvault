@@ -26,7 +26,7 @@ Hver container, VM, mappesett, flashen, hvert ZFS-datasett og BombVaults egne in
 
 ## Gjenoppretting er stjernen
 
-Etter å ha kopiert dataene tilbake fra restic-øyeblikksbildet, spiller BombVault den lagrede container-definisjonen på nytt mot Docker-API-et, slik at containeren dukker opp igjen i Unraids Docker-fane som om den alltid hadde vært der (samme image, samme innstillinger, samme portmappinger). VM-er får XML-en sin definert på nytt over SSH og diskene og UEFI-NVRAM koblet til igjen, selv etter at VM-en ble slettet.
+Etter å ha kopiert dataene tilbake fra restic-sikkerhetskopien, spiller BombVault den lagrede container-definisjonen på nytt mot Docker-API-et, slik at containeren dukker opp igjen i Unraids Docker-fane som om den alltid hadde vært der (samme image, samme innstillinger, samme portmappinger). VM-er får XML-en sin definert på nytt over SSH og diskene og UEFI-NVRAM koblet til igjen, selv etter at VM-en ble slettet.
 
 Ett vindu gjenoppretter alle slag. Som standard velger det **Ved siden av originalen**, som henter sikkerhetskopien tilbake som en kopi og lar originalen stå som den er. **Erstatt originalen** tar først en sikkerhetskopi av dagens tilstand, så en gjenoppretting kan angres. En mappe eller et nytt ZFS-datasett er de andre målene.
 

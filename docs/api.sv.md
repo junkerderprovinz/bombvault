@@ -21,18 +21,18 @@ Utan inloggningslösenord kan alla som kan öppna webbgränssnittet också skapa
 | Rutt | Vad den returnerar eller gör | Token |
 |---|---|---|
 | `GET /api/v1/health` | Version, instansnamn, om en kopia körs och vad det här tokenet får göra | läsa |
-| `GET /api/v1/status` | Skyddsstatus per område: senaste lyckade kopia, förväntat intervall, kontroller, nästa schemalagda körningar | läsa |
+| `GET /api/v1/status` | Skyddsstatus per avsnitt: senaste lyckade kopia, förväntat intervall, kontroller, nästa schemalagda körningar | läsa |
 | `GET /api/v1/activity` | Vad som körs just nu, med fas och procent | läsa |
-| `GET /api/v1/items` | Varje skyddat objekt med schema, vad en kopia stoppar och senaste kopia; `?domain=` för ett område | läsa |
+| `GET /api/v1/items` | Varje skyddad post med schema, vad en kopia stoppar och senaste kopia; `?domain=` för ett avsnitt | läsa |
 | `GET /api/v1/runs` | Körhistorik, nyast först; filter `limit`, `domain`, `item`, `status`, `kind`, `since` | läsa |
 | `GET /api/v1/anomalies` | Avvikelser med en sammanfattning av de öppna; filter `state`, `severity`, `domain`, `limit` | läsa |
 | `GET /api/v1/anomalies/{id}` | En avvikelse | läsa |
-| `GET /api/v1/storage/{domain}` | Storlekshistorik, tillväxt per vecka och ledigt utrymme för varje repository i ett område | läsa |
-| `POST /api/v1/backups` | Säkerhetskopierar ett objekt (`{"domain":"containers","item":"plex"}`) eller ett helt område (`{"domain":"vms"}`) | starta |
+| `GET /api/v1/storage/{domain}` | Storlekshistorik, tillväxt per vecka och ledigt utrymme för varje repository i ett avsnitt | läsa |
+| `POST /api/v1/backups` | Säkerhetskopierar en post (`{"domain":"containers","item":"plex"}`) eller ett helt avsnitt (`{"domain":"vms"}`) | starta |
 | `POST /api/v1/backups/everything` | Kör Total säkerhetskopia | starta |
 | `POST /api/v1/runs/{id}/cancel` | Avbryter en pågående kopia som det här tokenet startade | starta |
 
-Områdena heter `containers`, `vms`, `files`, `zfs`, `flash` och `config`. Tider är Unix-sekunder. Svaren är desamma som från [MCP-verktygen](mcp.md#tools) med samma namn, så de två hänger ihop.
+Avsnitten heter `containers`, `vms`, `files`, `zfs`, `flash` och `config`. Tider är Unix-sekunder. Svaren är desamma som från [MCP-verktygen](mcp.md#tools) med samma namn, så de två hänger ihop.
 
 En kopia som startas här är samma kopia som webbgränssnittet startar: en körande container stoppas tills kopian är klar. Förfrågan svarar direkt, och `/api/v1/activity` och `/api/v1/runs` visar hur det går.
 
@@ -59,11 +59,11 @@ Ett fel kommer tillbaka som `{"error": {"code": "...", "message": "..."}}` med m
 | 400 | `invalid_argument`, `ambiguous` | Ett argument saknas eller är fel |
 | 401 | `no_token`, `invalid_token` | Inget token, eller inget aktivt |
 | 403 | `not_permitted`, `forbidden_origin` | Tokenet får bara läsa, eller det startade inte körningen, eller så kom begäran från en sida med ett annat ursprung |
-| 404 | `not_found` | Inget sådant objekt, körning eller avvikelse |
-| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Något annat körs, området är avstängt eller det finns inget att göra |
+| 404 | `not_found` | Ingen sådan post, körning eller avvikelse |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Något annat körs, avsnittet är avstängt eller det finns inget att göra |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | En gräns håller tillbaka förfrågan; `Retry-After` säger när du kan försöka igen |
 
-Starter följer samma gränser som [starter via MCP](mcp.md#starting-backups): 12 i timmen per token, 15 minuter mellan två starter av samma objekt, högst 4 starter av ett objekt på 24 timmar och lagringsskyddet. De tre sista räknar starter via MCP, via API:t och från Home Assistant tillsammans. Ett token får göra 120 förfrågningar i minuten. Fem misslyckade försök från en adress spärrar den i en minut.
+Starter följer samma gränser som [starter via MCP](mcp.md#starting-backups): 12 i timmen per token, 15 minuter mellan två starter av samma post, högst 4 starter av en post på 24 timmar och lagringsskyddet. De tre sista räknar starter via MCP, via API:t och från Home Assistant tillsammans. Ett token får göra 120 förfrågningar i minuten. Fem misslyckade försök från en adress spärrar den i en minut.
 
 ## OpenAPI {#openapi}
 
@@ -81,16 +81,16 @@ Enheten heter BombVault, eller BombVault med instansnamnet inom parentes, och ha
 
 | Entitet | Vad den visar |
 |---|---|
-| Status | `ok`, `warning`, `failed` eller `off`, det sämsta av de påslagna områdena |
+| Status | `ok`, `warning`, `failed` eller `off`, det sämsta av de påslagna avsnitten |
 | Running job | Vad som körs nu, eller `idle` |
 | Open anomalies | Hur många avvikelser som är öppna |
 | Next scheduled backup | När nästa schemalagda kopia startar |
-| *Område* last backup | När områdets senaste lyckade kopia kördes |
-| *Område* last result | Hur dess senaste kopia slutade |
-| *Område* repository free space | Ledigt utrymme där dess primära repository ligger, om BombVault kan läsa det |
-| Back up *område* | En knapp som säkerhetskopierar hela området |
+| *Avsnitt* last backup | När avsnittets senaste lyckade kopia kördes |
+| *Avsnitt* last result | Hur dess senaste kopia slutade |
+| *Avsnitt* repository free space | Ledigt utrymme där dess primära repository ligger, om BombVault kan läsa det |
+| Back up *avsnitt* | En knapp som säkerhetskopierar hela avsnittet |
 
-Entiteternas namn är på engelska, eftersom Home Assistant tar dem som BombVault skickar dem. Varje påslaget område får egna entiteter, och ett område du stänger av förlorar dem. Knapparna dyker upp när du slår på **Knappar startar säkerhetskopior**, som är avslaget i en ny installation. De följer samma gränser som [starter via API:t](#errors). Dessutom tar BombVault emot ett tryck i taget per område och högst sex per minut, och bortser från ett tryck som brokern har sparat som retained-meddelande. Alla som får publicera på brokern kan trycka på dem, så ge brokern ett lösenord.
+Entiteternas namn är på engelska, eftersom Home Assistant tar dem som BombVault skickar dem. Varje påslaget avsnitt får egna entiteter, och ett avsnitt du stänger av förlorar dem. Knapparna dyker upp när du slår på **Knappar startar säkerhetskopior**, som är avslaget i en ny installation. De följer samma gränser som [starter via API:t](#errors). Dessutom tar BombVault emot ett tryck i taget per avsnitt och högst sex per minut, och bortser från ett tryck som brokern har sparat som retained-meddelande. Alla som får publicera på brokern kan trycka på dem, så ge brokern ett lösenord.
 
 BombVault läser sin status var 15:e sekund och publicerar den när något har ändrats, som JSON under `<prefix>/<nod>/state`. Prefixet är `bombvault` så länge du inte ändrar det, och noden är ett kort id som BombVault väljer en gång. Discovery-meddelandena går till Home Assistants standardprefix `homeassistant`. Båda behålls (retained). En last will markerar enheten som otillgänglig om BombVault stannar utan att säga till. Stänger du av kopplingen tar BombVault bort enheten och dess entiteter från Home Assistant.
 

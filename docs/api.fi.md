@@ -21,18 +21,18 @@ Ilman kirjautumissalasanaa jokainen, joka voi avata käyttöliittymän, voi myö
 | Reitti | Mitä se palauttaa tai tekee | Token |
 |---|---|---|
 | `GET /api/v1/health` | Versio, instanssin nimi, onko varmuuskopio käynnissä ja mitä tämä token saa tehdä | luku |
-| `GET /api/v1/status` | Suojauksen tila alueittain: viimeisin onnistunut kopio, odotettu väli, tarkistukset, seuraavat ajastetut ajot | luku |
+| `GET /api/v1/status` | Suojauksen tila osioittain: viimeisin onnistunut kopio, odotettu väli, tarkistukset, seuraavat ajastetut ajot | luku |
 | `GET /api/v1/activity` | Mitä on käynnissä juuri nyt, vaiheen ja prosentin kanssa | luku |
-| `GET /api/v1/items` | Jokainen suojattu kohde aikatauluineen, mitä kopio pysäyttää ja viimeisin kopio; `?domain=` yhdelle alueelle | luku |
+| `GET /api/v1/items` | Jokainen suojattu merkintä aikatauluineen, mitä kopio pysäyttää ja viimeisin kopio; `?domain=` yhdelle osiolle | luku |
 | `GET /api/v1/runs` | Ajohistoria, uusimmat ensin; suodattimet `limit`, `domain`, `item`, `status`, `kind`, `since` | luku |
 | `GET /api/v1/anomalies` | Poikkeamat ja yhteenveto avoimista; suodattimet `state`, `severity`, `domain`, `limit` | luku |
 | `GET /api/v1/anomalies/{id}` | Yksi poikkeama | luku |
-| `GET /api/v1/storage/{domain}` | Koon historia, kasvu viikossa ja vapaa tila alueen jokaisessa repositoryssä | luku |
-| `POST /api/v1/backups` | Varmuuskopioi yhden kohteen (`{"domain":"containers","item":"plex"}`) tai koko alueen (`{"domain":"vms"}`) | käynnistys |
+| `GET /api/v1/storage/{domain}` | Koon historia, kasvu viikossa ja vapaa tila osion jokaisessa repositoryssä | luku |
+| `POST /api/v1/backups` | Varmuuskopioi yhden merkinnän (`{"domain":"containers","item":"plex"}`) tai koko osion (`{"domain":"vms"}`) | käynnistys |
 | `POST /api/v1/backups/everything` | Ajaa Täysvarmuuskopion | käynnistys |
 | `POST /api/v1/runs/{id}/cancel` | Peruu käynnissä olevan kopion, jonka tämä token käynnisti | käynnistys |
 
-Alueet ovat `containers`, `vms`, `files`, `zfs`, `flash` ja `config`. Ajat ovat Unix-sekunteja. Vastaukset ovat samat kuin samannimisillä [MCP-työkaluilla](mcp.md#tools), joten ne pysyvät samoina.
+Osiot ovat `containers`, `vms`, `files`, `zfs`, `flash` ja `config`. Ajat ovat Unix-sekunteja. Vastaukset ovat samat kuin samannimisillä [MCP-työkaluilla](mcp.md#tools), joten ne pysyvät samoina.
 
 Täällä käynnistetty kopio on sama kopio, jonka käyttöliittymä käynnistää: käynnissä oleva kontti pysäytetään, kunnes sen kopio on valmis. Pyyntö palaa heti, ja `/api/v1/activity` ja `/api/v1/runs` näyttävät, miten se etenee.
 
@@ -59,11 +59,11 @@ Virhe palaa muodossa `{"error": {"code": "...", "message": "..."}}` vastaavalla 
 | 400 | `invalid_argument`, `ambiguous` | Argumentti puuttuu tai on väärä |
 | 401 | `no_token`, `invalid_token` | Ei tokenia, tai se ei ole aktiivinen |
 | 403 | `not_permitted`, `forbidden_origin` | Token saa vain lukea, tai se ei käynnistänyt ajoa, tai pyyntö tuli sivulta, jolla on eri alkuperä |
-| 404 | `not_found` | Tällaista kohdetta, ajoa tai poikkeamaa ei ole |
-| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Jotain muuta on käynnissä, alue on pois päältä tai tehtävää ei ole |
+| 404 | `not_found` | Tällaista merkintää, ajoa tai poikkeamaa ei ole |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Jotain muuta on käynnissä, osio on pois päältä tai tehtävää ei ole |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Raja pidättää pyynnön; `Retry-After` kertoo, milloin voi yrittää uudelleen |
 
-Käynnistyksiin pätevät samat rajat kuin [MCP:n kautta tehtyihin](mcp.md#starting-backups): 12 tunnissa tokenia kohti, 15 minuuttia saman kohteen kahden käynnistyksen välillä, enintään 4 saman kohteen käynnistystä 24 tunnissa sekä säilytyssuoja. Kolme viimeistä laskevat MCP:n ja API:n kautta sekä Home Assistantista tehdyt käynnistykset yhteen. Token voi tehdä 120 pyyntöä minuutissa. Viisi epäonnistunutta yritystä samasta osoitteesta lukitsee sen minuutiksi.
+Käynnistyksiin pätevät samat rajat kuin [MCP:n kautta tehtyihin](mcp.md#starting-backups): 12 tunnissa tokenia kohti, 15 minuuttia saman merkinnän kahden käynnistyksen välillä, enintään 4 saman merkinnän käynnistystä 24 tunnissa sekä säilytyssuoja. Kolme viimeistä laskevat MCP:n ja API:n kautta sekä Home Assistantista tehdyt käynnistykset yhteen. Token voi tehdä 120 pyyntöä minuutissa. Viisi epäonnistunutta yritystä samasta osoitteesta lukitsee sen minuutiksi.
 
 ## OpenAPI {#openapi}
 
@@ -81,16 +81,16 @@ Laitteen nimi on BombVault tai BombVault, jonka perässä on instanssin nimi sul
 
 | Entiteetti | Mitä se näyttää |
 |---|---|
-| Status | `ok`, `warning`, `failed` tai `off`, päällä olevista alueista huonoin |
+| Status | `ok`, `warning`, `failed` tai `off`, päällä olevista osioista huonoin |
 | Running job | Mikä on nyt käynnissä, tai `idle` |
 | Open anomalies | Montako poikkeamaa on avoinna |
 | Next scheduled backup | Milloin seuraava ajastettu kopio alkaa |
-| *Alue* last backup | Milloin alueen viimeisin onnistunut kopio ajettiin |
-| *Alue* last result | Miten sen viimeisin kopio päättyi |
-| *Alue* repository free space | Vapaa tila siellä, missä sen ensisijainen repository on, jos BombVault pystyy lukemaan sen |
-| Back up *alue* | Painike, joka varmuuskopioi koko alueen |
+| *Osio* last backup | Milloin osion viimeisin onnistunut kopio ajettiin |
+| *Osio* last result | Miten sen viimeisin kopio päättyi |
+| *Osio* repository free space | Vapaa tila siellä, missä sen ensisijainen repository on, jos BombVault pystyy lukemaan sen |
+| Back up *osio* | Painike, joka varmuuskopioi koko osion |
 
-Entiteettien nimet ovat englanniksi, koska Home Assistant ottaa ne sellaisina kuin BombVault ne lähettää. Jokainen päällä oleva alue saa omat entiteettinsä, ja pois kytketty alue menettää ne. Painikkeet tulevat näkyviin, kun kytket **Painikkeet käynnistävät varmuuskopioita** päälle; uudessa asennuksessa se on pois. Painikkeisiin pätevät samat rajat kuin [API:n kautta tehtyihin käynnistyksiin](#errors). Lisäksi BombVault ottaa kerrallaan vastaan yhden painalluksen aluetta kohden ja enintään kuusi minuutissa, ja se ohittaa painalluksen, jonka välittäjä on säilyttänyt retained-viestinä. Kuka tahansa, joka voi julkaista välittäjään, voi painaa niitä, joten suojaa välittäjä salasanalla.
+Entiteettien nimet ovat englanniksi, koska Home Assistant ottaa ne sellaisina kuin BombVault ne lähettää. Jokainen päällä oleva osio saa omat entiteettinsä, ja pois kytketty osio menettää ne. Painikkeet tulevat näkyviin, kun kytket **Painikkeet käynnistävät varmuuskopioita** päälle; uudessa asennuksessa se on pois. Painikkeisiin pätevät samat rajat kuin [API:n kautta tehtyihin käynnistyksiin](#errors). Lisäksi BombVault ottaa kerrallaan vastaan yhden painalluksen osiota kohden ja enintään kuusi minuutissa, ja se ohittaa painalluksen, jonka välittäjä on säilyttänyt retained-viestinä. Kuka tahansa, joka voi julkaista välittäjään, voi painaa niitä, joten suojaa välittäjä salasanalla.
 
 BombVault lukee tilansa 15 sekunnin välein ja julkaisee sen, kun jokin on muuttunut, JSON-muodossa aiheessa `<etuliite>/<solmu>/state`. Etuliite on `bombvault`, kunnes muutat sen, ja solmu on lyhyt tunniste, jonka BombVault valitsee kerran. Löytöviestit menevät Home Assistantin oletusetuliitteeseen `homeassistant`. Molemmat säilytetään (retained). Viimeinen viesti (last will) merkitsee laitteen saavuttamattomaksi, jos BombVault pysähtyy ilmoittamatta. Kun kytket yhteyden pois, BombVault poistaa laitteen ja sen entiteetit Home Assistantista.
 

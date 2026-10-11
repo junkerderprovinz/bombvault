@@ -7,16 +7,16 @@ Místní zálohy tě chrání před ztraceným kontejnerem nebo špatnou aktuali
 
 ## Kopie mimo lokalitu {#off-site-copies}
 
-Nech si rychlou místní zálohu a přidej jeden či více cílů mimo lokalitu. BombVault tam nové snímky kopíruje pomocí `restic copy` na základě nejlepší snahy, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. V tomto tvaru zůstává místní repozitář primární a repozitář mimo lokalitu je kopie, ale primární repozitář sekce vůbec nemusí být místní; zálohování rovnou na S3, rest-server a podobné místo kopírování na ně viz [Vzdálené primární repozitáře](#remote-primary-repositories) níže.
+Nech si rychlou místní zálohu a přidej jeden či více cílů mimo lokalitu. BombVault tam nové zálohy kopíruje pomocí `restic copy` na základě nejlepší snahy, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. V tomto tvaru zůstává místní repozitář primární a repozitář mimo lokalitu je kopie, ale primární repozitář sekce vůbec nemusí být místní; zálohování rovnou na S3, rest-server a podobné místo kopírování na ně viz [Vzdálené primární repozitáře](#remote-primary-repositories) níže.
 
 - **Několik cílů na sekci.** Každá sekce (kontejnery, VM, flash, autozáloha, složky a datové sady ZFS) může kopírovat do několika cílů mimo lokalitu najednou, takže můžeš mít například rest-server na krabici kamaráda a bucket S3 souběžně. Karta **Cíle podle sekcí** na stránce Cíle zapíná nebo vypíná každou linku ze sekce do cíle.
-- **Kdy se kopíruje.** Karta **Kopírovat** cíle určuje **Kdy kopírovat**: **Po každé záloze**, nebo podle vlastního plánu, který snímky sbírá a kopíruje v pevných časech. V **Nastavení, Plán, Kopie mimo lokalitu podle oblastí** dává **Výjimka** jedné sekci vlastní plán kopírování. **Replikovat nyní** v kartě **Kopie mimo lokalitu** sekce v **Nastavení, Cíle** spustí kopírování na požádání.
-- **Uchovávání** se nastavuje pro každý cíl pod **Jak dlouho uchovávat**, takže kopie mimo lokalitu můžeš držet déle jako archiv. Kopie v poli sekce mimo lokalitu se řídí kartou **Uchovávání mimo lokalitu** v **Nastavení, Cíle**; nech ji celou na nule, aby se snímky mimo lokalitu nikdy automaticky neořezávaly.
+- **Kdy se kopíruje.** Karta **Kopírovat** cíle určuje **Kdy kopírovat**: **Po každé záloze**, nebo podle vlastního plánu, který zálohy sbírá a kopíruje v pevných časech. V **Nastavení, Plán, Kopie mimo lokalitu podle sekcí** dává **Výjimka** jedné sekci vlastní plán kopírování. **Replikovat nyní** v kartě **Kopie mimo lokalitu** sekce v **Nastavení, Cíle** spustí kopírování na požádání.
+- **Uchovávání** se nastavuje pro každý cíl pod **Jak dlouho uchovávat**, takže kopie mimo lokalitu můžeš držet déle jako archiv. Kopie v poli sekce mimo lokalitu se řídí kartou **Uchovávání mimo lokalitu** v **Nastavení, Cíle**; nech ji celou na nule, aby se zálohy mimo lokalitu nikdy automaticky neořezávaly.
 - **Limity šířky pásma** (**Šířka pásma mimo lokalitu** v **Nastavení, Cíle**, nebo karta **Kopírovat** cíle) omezují rychlost nahrávání/stahování resticu, aby kopie nezahltily tvou WAN.
 - Zatímco kopírování běží, hlavička stavu v Přehledu říká **Probíhá kopie mimo lokalitu**. Je to ukazatel činnosti, ne procentní pruh, protože `restic copy` nezveřejňuje strojově čitelný průběh.
 
 !!! note "Obnova z libovolného místa"
-    Každá položka vypisuje své zálohy jako jednu časovou osu přes všechna místa, kde záloha leží, na záložce **Zálohy**. Záloha zkopírovaná na B2 se ukáže jednou, označená každým místem, které ji drží. Obnova bere první místo, kam se dostane, počínaje repozitářem, do kterého se položka zapisuje, a u každého snímku můžeš zvolit jiné místo. Cíle mimo lokalitu se čtou až po kliknutí na **Zkontrolovat**, protože výpis cloudového úložiště chvíli trvá. Smazání na jednom místě nejdřív zkontroluje ostatní a řekne, zda šlo o poslední kopii.
+    Každá položka vypisuje své zálohy jako jednu časovou osu přes všechna místa, kde záloha leží, na záložce **Zálohy**. Záloha zkopírovaná na B2 se ukáže jednou, označená každým místem, které ji drží. Obnova bere první místo, kam se dostane, počínaje repozitářem, do kterého se položka zapisuje, a u každé zálohy můžeš zvolit jiné místo. Cíle mimo lokalitu se čtou až po kliknutí na **Zkontrolovat**, protože výpis cloudového úložiště chvíli trvá. Smazání na jednom místě nejdřív zkontroluje ostatní a řekne, zda šlo o poslední kopii.
 
 ## Cíle {#destinations}
 
@@ -26,7 +26,7 @@ Cíl je místo, kam zálohy jdou: místní složka, sdílená složka, tvůj vla
 
 1. **Poskytovatel.** Každá služba je vypsána se svým logem, s vyhledáváním nad nimi, ve skupinách: úložné služby s buckety S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 a další), tvůj vlastní server S3 (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), tvůj vlastní server a sdílené složky (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, připojená cesta), cloudové úložiště (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud a zbytek, co rclone podporuje) a přijímací servery tvé skupiny. Každá říká, jak se hodí pro zálohy: cloudové disky zpomalují při mnoha požadavcích, takže první záloha a prune tam trvají déle.
 2. **Přihlášení.** Pole závisejí na službě: přístupový klíč pro S3, uživatel a heslo pro WebDAV a SMB, heslo aplikace tam, kde dvoufázové přihlášení blokuje běžné, veřejný klíč SSH BombVaultu pro SFTP a Storage Box, nebo token pro služby, které se přihlašují přes prohlížeč. Pro ně okno ukáže příkaz `rclone authorize`, který spustíš na počítači s prohlížečem; token, který vypíše, patří do pole. **Otestovat** zkontroluje přihlášení dřív, než se cokoli uloží. Okno pak vypíše složky na cíli, s **Nová složka** pro vytvoření jedné a volným místem tam, kde ho služba hlásí. Prázdná složka je nejbezpečnější; BombVault do ní dá jednu složku na sekci.
-3. **Ochrana.** Okno říká jasně, co služba umí. Rest-server v režimu append-only mazání odmítá a tamper test to ověřuje. Bucket S3 může držet staré verze pomocí verzování a zámku objektů, což BombVault zatím ověřit neumí. Cloudový disk mazání odmítnout vůbec neumí: kdo se dostane na server, dostane se i na tu kopii. **Ochrana proti smazání (append-only)** zapni jen tam, kde druhá strana mazání opravdu odmítá; BombVault tam pak nikdy neořezává. **Pro nouzový případ** říká, co sada pro obnovu pro tento cíl obsahuje.
+3. **Ochrana.** Okno říká jasně, co služba umí. Rest-server v režimu append-only mazání odmítá a tamper test to ověřuje. Bucket S3 může držet staré verze pomocí verzování a zámku objektů, což BombVault zatím ověřit neumí. Cloudový disk mazání odmítnout vůbec neumí: kdo se dostane na server, dostane se i na tu kopii. **Ochrana proti smazání (append-only)** zapni jen tam, kde druhá strana mazání opravdu odmítá; BombVault tam pak nikdy neořezává. **Pro případ nouze** říká, co sada pro obnovu pro tento cíl obsahuje.
 4. **Pro které sekce.** Vyber sekce, které se tam zálohují. První kopie přenese celou historii. Položky, které si zvolily vlastní cíle, nový nedostanou samy a okno je jmenuje.
 
 Služby S3 běží přes vlastní backend S3 resticu, díky čemuž lze použít třídu úložiště a zámek objektů. Každá další služba běží přes rclone, který BombVault dodává, a její remote se pak objeví v kartě **Off-site (rclone)** v **Nastavení, Cíle**. Export nastavení nese cíle; s přihlašovacími údaji nese i jejich přihlášení.
@@ -92,7 +92,7 @@ Cesta každé sekce (Kontejnery, VMs, Flash, Autozáloha, Složky, Datové sady 
 
 - **Místní** zobrazí známý prohlížeč složek.
 - **Vzdálené** jej vymění za prosté pole URL a nastavení připojení, jaké používá cíl mimo lokalitu, nastavené místo toho pro tento primární repozitář. Odtud dostaneš:
-    - **Test připojení** proti skutečné cestě, dřív než se na ni spolehnete.
+    - **Test připojení** proti skutečné cestě, dřív než se na ni spolehneš.
     - **Limity šířky pásma** (nahrávání/stahování), aby plánovaná záloha na vzdálený primární repozitář nezahltila tvou WAN: stejné příznaky resticu `--limit-upload`/`--limit-download`, které používají kopie mimo lokalitu, použité na samotnou zálohu.
     - **Ochranu append-only**, ověřenou stejným aktivním tamper testem (skutečná sonda DELETE proti druhé straně), jaký dostávají cíle mimo lokalitu. Když je zapnutá, BombVault odmítá repozitář sám ořezávat, protože za ním není samostatná místní kopie a přihlašovací údaje na tomto stroji nesmějí umět smazat jedinou kopii zálohy.
     - **Výstrahu rozpočtu růstu**, odvozenou ze stejného trendu velikosti repozitáře, který karta Úložiště už sleduje.
@@ -120,7 +120,7 @@ Nejrychlejší cesta ke kopii append-only je spárovaný BombVault s [přijímac
     Append-only neznamená, že už nelze nic smazat. restic musí zakládat a uvolňovat vlastní zámky, proto `/locks/` záměrně zůstává zapisovatelný a smazatelný. Snapshoty a data za nimi, tedy přesně to, na co by mířil ransomware, odstranit nelze. Pokud si vzdálenou stranu ověříš sám, úspěšné smazání v `/locks/` je správné chování, ne díra v ochraně.
 
 !!! warning "Repozitáře append-only se z tohoto stroje nikdy neořezávají"
-    Cíl append-only odsud staré snímky nikdy neořezává; ořezávání je práce druhé strany. Nastav pro něj **alarm rozpočtu růstu**, abys byl upozorněn, než velikost repozitáře uteče.
+    Cíl append-only odsud staré zálohy nikdy neořezává; ořezávání je práce druhé strany. Nastav pro něj **alarm rozpočtu růstu**, abys byl upozorněn, než velikost repozitáře uteče.
 
 ## Test odolnosti proti manipulaci
 
@@ -134,7 +134,7 @@ Skutečný přechod z chráněno na nechráněno spustí jediné upozornění.
 
 ## Cvičné obnovy po havárii
 
-BombVault nabízí dvě úrovně důkazu, že vaše zálohy jsou skutečně obnovitelné, nejen přítomné.
+BombVault nabízí dvě úrovně důkazu, že tvoje zálohy jsou skutečně obnovitelné, nejen přítomné.
 
 - **Cvičení ověření obnovy (místní).** BombVault pravidelně spouští `restic check --read-data-subset` (omezeně, nikdy ne plnou obnovu zaplňující disk). Kadence je v **Nastavení, Ověření, Automatické kontroly** a karta **Zkontrolovat zálohy** na stejné dlaždici ukazuje výsledek.
 - **Zkušební obnova (mimo lokalitu).** BombVault obnoví skutečný cíl z repozitáře mimo lokalitu do uzavřeného pískoviště, ověří ho soubor po souboru a bajt po bajtu a pak uklidí. To dokazuje, že umíš obnovit z off-site, nejen že repozitář odpovídá.
@@ -147,7 +147,7 @@ Několik BombVaultů pracuje společně jako jedna skupina: ukazují si navzáje
 
 Na první instanci otevři **Nastavení, Párování** a stiskni **Vygenerovat frázi**. Tři karty kroků ukazují, jak to jde. V okně se objeví dvanáct slov s tlačítkem **Kopírovat**. Na každé další instanci otevři totéž místo, stiskni **Zadat frázi** a slova vlož nebo napiš, nebo stiskni **Vložit** v tom okně. Slovo, které není v seznamu, se během psaní pojmenuje s jeho pozicí a poslední slovo nese kontrolní součet, takže se překlep nebo prohozené slovo zachytí dřív, než se cokoli spáruje. Frázi vygeneruj jen na jedné instanci: dvě instance, které ji obě vygenerují, tvoří dvě oddělené skupiny. Pokud se nikdo minutu neobjeví, stránka nabídne dvě cesty ven: ukázat slova znovu a zadat je tam, nebo zadat slova druhé instance a připojit se do její skupiny jedním krokem. Párování funguje bez přihlašovacího hesla, ale nastav si ho: bez něj může kdokoli, kdo otevře webové rozhraní, slova přečíst a přes skupinu žádat o role, které vydávají heslo resticu instancí v ní. Karta párování to říká, dokud se heslo nenastaví. S heslem se při opětovném zobrazení fráze na heslo zeptá. **Opustit skupinu** instanci zase vyjme.
 
-Kdokoli zná ta slova, může se do skupiny přidat, takže s nimi zacházejte jako s heslem.
+Kdokoli zná ta slova, může se do skupiny přidat, takže s nimi zacházej jako s heslem.
 
 **Jak se členové navzájem najdou.** Každá instance zjistí svou vlastní adresu v síti z tvého prohlížeče ve chvíli, kdy se přihlásíš, a je uvedena pod **Známé adresy** na stránce párování spolu s těmi, které instance našla sama; oprav ji tam, pokud před ní stojí reverzní proxy nebo neobvyklý port. Ve stejné síti členové tuto adresu ohlašují multicastem a mluví přímo, a kde multicast nemůže projít sítí kontejneru, například výchozím mostem Dockeru, hledá instance ostatní ve své podsíti podepsaným voláním, na které může odpovědět jen člen skupiny, takže párování skončí během sekund i bez přeposílače. Když se nic neobjeví, **Nemůžeš ji najít?** přijme jednu adresu ručně, pro jinou podsíť nebo nestandardní port. Instance v různých sítích jdou přes přeposílač, zvolený na téže stránce; jeho čtyři podoby mají každá svůj obrázek:
 
@@ -155,9 +155,9 @@ Kdokoli zná ta slova, může se do skupiny přidat, takže s nimi zacházejte j
 - **Vlastní přeposílač**: kontejner [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) z Unraid Community Apps (také v **Nastavení, Aplikace**), nebo jedna z tvých instancí, která je zvenčí už dosažitelná, se zapnutým **Sloužit jako přeposílač**. Ta instance pak odpovídá na `/relay/connect` na vlastní adrese, za reverzní proxy a certifikátem, které už má, a pouští dovnitř jen tvou skupinu. Adresu přeposílače zadej na každé instanci, která ho má používat.
 - **Bez přeposílače**: členové se najdou automaticky jen ve stejné síti, a nikde jinde.
 
-**Co vidí přeposílač.** Každé volání mezi členy je zapečetěno AES-256-GCM klíčem odvozeným z dvanácti slov a ten klíč nikdy neopustí tvé instance. Přeposílač se dozví hash, který seskupuje spojení, pro kterou instanci zpráva je, jak je velká a kdy projde. Přímé volání v místní síti je zapečetěno stejně a navíc podepsáno, takže nic nezávisí na samopodepsaném certifikátu, který instance nabízí. Volání, která něco vydávají (odpovědi na role, heslo resticu, přihlášení příjemce, úschovy klíčů), jsou navíc podepsána klíčem člena, který je posílá, připnutým při prvním spatření; viz [Bezpečnostní model](configuration.md#security-model).
+**Co přeposílač vidí.** Každé volání mezi členy je zapečetěno AES-256-GCM klíčem odvozeným z dvanácti slov a ten klíč nikdy neopustí tvé instance. Přeposílač se dozví hash, který seskupuje spojení, pro kterou instanci zpráva je, jak je velká a kdy projde. Přímé volání v místní síti je zapečetěno stejně a navíc podepsáno, takže nic nezávisí na samopodepsaném certifikátu, který instance nabízí. Volání, která něco vydávají (odpovědi na role, heslo resticu, přihlášení příjemce, úschovy klíčů), jsou navíc podepsána klíčem člena, který je posílá, připnutým při prvním spatření; viz [Bezpečnostní model](configuration.md#security-model).
 
-**Co putuje přes skupinu.** Stav ochrany na stránce Instance, žádost o kontrolu jedné sekce hned, žádosti o role a odpovědi na ně, nabídky úložiště a to, co příjemce či stahovač potřebuje, jakmile je jeho role povolena: umístění repozitářů druhé instance a její heslo resticu. Data záloh nikdy; ta jdou dál přímo na backendy resticu. Ani APP_KEY: heslo resticu otevře repozitáře té instance a nic jiného, ne její uložená tajemství, relace ani kódy pro obnovu.
+**Co putuje přes skupinu.** Stav ochrany na stránce Instance, žádost o kontrolu jedné sekce hned, žádosti o role a odpovědi na ně, nabídky cílů a to, co příjemce či stahovač potřebuje, jakmile je jeho role povolena: umístění repozitářů druhé instance a její heslo resticu. Data záloh nikdy; ta jdou dál přímo na backendy resticu. Ani APP_KEY: heslo resticu otevře repozitáře té instance a nic jiného, ne její uložená tajemství, relace ani kódy pro obnovu.
 
 **Záznamy z doby před párováním.** Instance přidané tokenem flotily a přijaté repozitáře a zdroje stahování nastavené pomocí APP_KEY druhé instance po aktualizaci zůstanou a jsou označené **Spárovat znovu**. Dál fungují: při prvním startu BombVault nahradí každý uložený APP_KEY heslem resticu z něj odvozeným. Spáruj obě instance, pak záznam uprav a zvol jeho instanci. Do té doby takové záznamy stojí v kartě **Bez instance** na stránce Instance.
 
@@ -176,7 +176,7 @@ Každá karta ukazuje stav ochrany člena a jeho role jako dlaždice. Role je n�
 
 Zapnutí role pošle žádost a nic nezačne, dokud někdo na druhé instanci nestiskne **Povolit**. Žádost se ukáže na kartě té instance jako odznak a její **Podrobnosti** ji vypisují s **Povolit** a **Odmítnout**; povolenou roli lze tam kdykoli odvolat. Čárkovaná čára v síti je role, která ještě čeká. Instance na BombVaultu 9.x nemůže na žádost odpovědět, takže tam role platí hned po zapnutí, a žádost od instance 9.x tu čeká na **Povolit**.
 
-**Podrobnosti** na kartě otevřou zbytek: přijaté repozitáře a zdroje stahování toho člena, nabídky úložiště, sledování, **Odebrat** a **Zapomenout klíč**.
+**Podrobnosti** na kartě otevřou zbytek: přijaté repozitáře a zdroje stahování toho člena, nabídky cílů, sledování, **Odebrat** a **Zapomenout klíč**.
 
 ## Přijímač a stahovač {#receiver}
 
@@ -189,7 +189,7 @@ Na stroji, který **přijímá** kopie append-only od jiného BombVaultu, ti př
 - **Inventář podle zdroje**, takže vidíš přesně, které kontejnery, VM a sady složek dorazily.
 - **Naposledy přijato** podle zdroje, takže víš, jak je každý čerstvý.
 - **Nezávislého `restic check`** spuštěného na přijímacím hardwaru, takže integrita je ověřena tam, kde data skutečně leží, nejen na odesílateli.
-- **Pojistky mrtvého muže:** upozornění, když zdroj přestane odesílat v okně, které nastavíte.
+- **Pojistky mrtvého muže:** upozornění, když zdroj přestane odesílat v okně, které nastavíš.
 - **Upozornění na integritu:** upozornění, když kontrola na přijímací straně selže.
 
 Přijímač je striktně jen pro čtení. Nikdy nezapisuje do přijatého repozitáře, takže nikdy nemůže porušit záruku append-only, na které odesílatel stojí.
@@ -251,7 +251,7 @@ Funguje i rest-server, který provozuješ ručně: přidej ho přes **Přidat c�
 
     BombVault pak klíč vyzkouší na každém cíli a pro každý řekne, zda je čitelný, nenalezen, zamčený jiným klíčem, nedosažitelný, nebo mu ještě chybí přihlášení. Nic se zatím neuložilo a klíč zůstává v paměti omezenou dobu. **Převzít klíč** způsobí, že tento server odteď píše zálohy tímto klíčem; **Vrátit převzetí** se vrátí k jeho vlastnímu klíči, dokud neproběhne první záloha. Server, který už má vlastní zálohy, převzetí odmítne a odkáže na [Ze staré složky se zálohami](#restore-from-another-bombvault-repo). **Uložit přihlašovací údaje** uloží přihlášení, která sada nese pro vzdálené cíle, a zeptá se před nahrazením přihlášení, která tento server už má.
 2. **Nastavení.** **Vrátit nastavení** obnoví vlastní nastavení BombVaultu z nejnovější autozálohy: cíle, přihlašovací údaje, plány a pravidla. BombVault se restartuje, aby je použil, přes Docker socket, takže živá databáze nastavení se nikdy nepřepíše pod otevřeným handlem, a průvodce poté pokračuje sám. Přihlášení tohoto serveru zůstává: dál se přihlašuješ heslem, které používáš teď. Tajemství, která starý server uložil a nelze je převzít, jsou vypsána, takže je můžeš zadat znovu.
-3. **Výběr.** BombVault projde tvé zálohy a vypíše kontejnery, VM, sady složek a datové sady ZFS, které najde. Všude je předvybrán nejnovější snímek. Co tento server ještě má, začíná vypnuté, protože by to obnova nahradila. Sady složek po opětovném sestavení nevědí, odkud pocházely, takže jdou do složky, kterou zvolíš.
+3. **Výběr.** BombVault projde tvé zálohy a vypíše kontejnery, VM, sady složek a datové sady ZFS, které najde. Všude je předvybrána nejnovější záloha. Co tento server ještě má, začíná vypnuté, protože by to obnova nahradila. Sady složek po opětovném sestavení nevědí, odkud pocházely, takže jdou do složky, kterou zvolíš.
 4. **Obnova.** Vše vybrané se vrátí najednou, ponechané zastavené, pokud chceš každý kontejner a VM spustit sám, což je po úplné ztrátě nejbezpečnější. Poté stáhni novou sadu pro obnovu: stará patří předchozí instalaci.
 
 !!! tip "Plánovaná migrace versus havárie"
@@ -281,7 +281,7 @@ Toto je díl, který umožňuje zotavení po havárii, i když neběží žádn�
 
 **Stáhnout sadu pro obnovu** v kartě **Pro nouzové případy** v **Nastavení, Obnova** ti dá **klíč**, **odvozené heslo resticu**, každý **cíl** s repozitářem každé sekce, přihlášení, která nová instalace potřebuje k jejich dosažení, a **přesné příkazy resticu**, takže můžeš obnovovat rovnou pomocí restic CLI na jakémkoli stroji. Vyžaduje přihlašovací heslo. Sada klíč vytiskne i při vypnutém šifrování, protože definice kontejnerů a VM jsou jím vždy zapečetěny. Po převzetí vytiskne převzatý klíč záloh a APP_KEY tohoto serveru, který nová instalace potřebuje jen k vrácení nastavení. Karta **Ulož si sadu pro obnovu** v Přehledu ti to připomíná, dokud sadu neuložíš.
 
-!!! danger "Uložte sadu pro obnovu mimo server"
+!!! danger "Ulož sadu pro obnovu mimo server"
     Sada obsahuje tajemství, které dešifruje tvé zálohy. Ulož ji na bezpečné místo oddělené od serveru (správce hesel, vytištěná kopie v trezoru). Pokud ztratíš BombVault i `APP_KEY` bez sady pro obnovu a bez úschovy klíče, šifrované zálohy nelze obnovit.
 
 !!! warning "Nejnovější snímek není vždy ten, který obnovit"
@@ -291,8 +291,8 @@ Toto je díl, který umožňuje zotavení po havárii, i když neběží žádn�
 
 Pokud jsi v **Nastavení, Systém** zapnul **Šifrovat exporty pomocí age**, sada je jím zapečetěna také a stahuje se jako `bombvault-recovery-kit.md.age`. Je ASCII-armored, ne binární, takže je to pořád prostý text: vložení do správce hesel nebo vytištění funguje přesně jako dřív, jen obsah je bez tvého klíče nečitelný.
 
-!!! warning "Klíč age neukládejte do sady"
-    K otevření zapečetěné sady potřebujete svůj **soukromý** klíč age. Uložte ho někde, kde nezávisí na sadě samotné, jinak budete obnovovat dvě věci místo jedné. Zapečetění se vyplatí, když sada leží na místě, které plně nemáte pod kontrolou (sdílený správce hesel, poznámky v cloudu, výtisk v kanceláři); sada ve vlastním trezoru je už chráněná trezorem.
+!!! warning "Klíč age neukládej do sady"
+    K otevření zapečetěné sady potřebuješ svůj **soukromý** klíč age. Ulož ho někde, kde nezávisí na sadě samotné, jinak budeš obnovovat dvě věci místo jedné. Zapečetění se vyplatí, když sada leží na místě, které plně nemáš pod kontrolou (sdílený správce hesel, poznámky v cloudu, výtisk v kanceláři); sada ve vlastním trezoru je už chráněná trezorem.
 
     Se zapnutým šifrováním a bez nastaveného použitelného příjemce se stažení rovnou odmítne. BombVault se nikdy neuchýlí k vydání hlavního klíče v otevřené podobě.
 
@@ -306,7 +306,7 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 To je HMAC-SHA256 nad pevným řetězcem `bombvault:restic-repo`, s klíčem tvořeným surovými bajty hex `APP_KEY`, vytištěný jako 64 malých hexadecimálních znaků. Stejná hodnota je v sadě, uvedená jako odvozené heslo resticu; tohle je pro den, kdy je sada někde, kde nejsi. Na serveru, který převzal zálohy jiného, použij převzatý klíč záloh, což je starý APP_KEY toho serveru.
 
-!!! warning "U přijatého úložiště použijte klíč ODESÍLAJÍCÍ instance"
+!!! warning "U přijatého úložiště použij klíč ODESÍLAJÍCÍ instance"
     Repozitář, který sem přišel kopií mimo lokalitu, vytvořil stroj, který ho poslal, **jeho** klíčem. Odvození z klíče přijímajícího stroje vyrobí heslo, které restic odmítne, a to vypadá přesně jako poškozený repozitář, ale není. To je obvyklý důvod, proč `restic check` na přijatém repozitáři dokola žádá o heslo.
 
 Protože definice pro obnovu žijí **uvnitř** každého repozitáře (`<repo>/def`, `<repo>/vm-def`), je zkopírovaná složka repozitáře plně soběstačná, takže sada plus repozitář jsou vším, co obnova na holém železe potřebuje.
@@ -322,7 +322,7 @@ restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > 
 
 Štítky `dbversion:` a `dbname:` u každého dumpu říkají, z jaké verze serveru pochází a jaké databáze obsahuje. Úplný soubor končí řádkem `-- PostgreSQL database cluster dump complete` nebo `-- Dump completed`.
 
-Naimportujte ho do kontejneru ve stejné nebo novější verzi (PostgreSQL), případně ve stejné hlavní verzi (MySQL a MariaDB), jednou spuštěného s prázdnou datovou složkou, aby se inicializoval. Hostitel žádného databázového klienta nepotřebuje, kontejner ho má:
+Naimportuj ho do kontejneru ve stejné nebo novější verzi (PostgreSQL), případně ve stejné hlavní verzi (MySQL a MariaDB), jednou spuštěného s prázdnou datovou složkou, aby se inicializoval. Hostitel žádného databázového klienta nepotřebuje, kontejner ho má:
 
 ```sh
 docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
@@ -330,7 +330,7 @@ docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"
 docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
 ```
 
-Pro jednu databázi z úplného dumpu berou MySQL a MariaDB `--one-database <name>` v příkazu klienta. Dump PostgreSQL má na každou databázi jednu sekci, každá začíná řádkem `\connect <name>`: zkopírujte tu svou do vlastního souboru a po vytvoření databáze ho naimportujte s `-d <name>`.
+Pro jednu databázi z úplného dumpu berou MySQL a MariaDB `--one-database <name>` v příkazu klienta. Dump PostgreSQL má na každou databázi jednu sekci, každá začíná řádkem `\connect <name>`: zkopíruj tu svou do vlastního souboru a po vytvoření databáze ho naimportuj s `-d <name>`.
 
 !!! warning "Dump pořízený jako root nese uživatele serveru"
     Úplný dump MySQL nebo MariaDB pořízený jako root obsahuje systémovou databázi `mysql`, takže jeho import nahradí účty nového serveru, včetně hesla roota, účty z dumpu. U PostgreSQL je `role ... already exists` pro uživatele, kterého vytvořil kontejner, očekávané a neškodné.

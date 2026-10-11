@@ -21,18 +21,18 @@ Belépési jelszó nélkül bárki, aki meg tudja nyitni a webes felületet, tok
 | Útvonal | Mit ad vissza vagy tesz | Token |
 |---|---|---|
 | `GET /api/v1/health` | Verzió, példánynév, fut-e mentés, és mit tehet ez a token | olvasás |
-| `GET /api/v1/status` | Védettség területenként: utolsó sikeres mentés, várt időköz, ellenőrzések, következő ütemezett futások | olvasás |
+| `GET /api/v1/status` | Védettség szakaszonként: utolsó sikeres mentés, várt időköz, ellenőrzések, következő ütemezett futások | olvasás |
 | `GET /api/v1/activity` | Mi fut éppen, fázissal és százalékkal | olvasás |
-| `GET /api/v1/items` | Minden védett elem ütemezéssel, azzal, mit állít le egy mentés, és az utolsó mentéssel; `?domain=` egy területhez | olvasás |
+| `GET /api/v1/items` | Minden védett elem ütemezéssel, azzal, mit állít le egy mentés, és az utolsó mentéssel; `?domain=` egy szakaszhoz | olvasás |
 | `GET /api/v1/runs` | Futási előzmények, a legújabb elöl; szűrők `limit`, `domain`, `item`, `status`, `kind`, `since` | olvasás |
 | `GET /api/v1/anomalies` | Anomáliák a nyitottak összesítésével; szűrők `state`, `severity`, `domain`, `limit` | olvasás |
 | `GET /api/v1/anomalies/{id}` | Egy anomália | olvasás |
-| `GET /api/v1/storage/{domain}` | Méretelőzmények, heti növekedés és a terület minden tárolójának szabad helye | olvasás |
-| `POST /api/v1/backups` | Ment egy elemet (`{"domain":"containers","item":"plex"}`) vagy egy egész területet (`{"domain":"vms"}`) | indítás |
+| `GET /api/v1/storage/{domain}` | Méretelőzmények, heti növekedés és a szakasz minden tárolójának szabad helye | olvasás |
+| `POST /api/v1/backups` | Ment egy elemet (`{"domain":"containers","item":"plex"}`) vagy egy egész szakaszt (`{"domain":"vms"}`) | indítás |
 | `POST /api/v1/backups/everything` | Elindítja a Teljes mentés menetet | indítás |
 | `POST /api/v1/runs/{id}/cancel` | Megszakít egy futó mentést, amelyet ez a token indított | indítás |
 
-A területek: `containers`, `vms`, `files`, `zfs`, `flash` és `config`. Az idők Unix-másodpercek. A válaszok ugyanazok, mint az azonos nevű [MCP-eszközöké](mcp.md#tools), így a kettő együtt marad.
+A szakaszok: `containers`, `vms`, `files`, `zfs`, `flash` és `config`. Az idők Unix-másodpercek. A válaszok ugyanazok, mint az azonos nevű [MCP-eszközöké](mcp.md#tools), így a kettő együtt marad.
 
 Az itt indított mentés ugyanaz, mint amit a webes felület indít: a futó konténer leáll, amíg a mentése be nem fejeződik. A kérés azonnal visszatér, a `/api/v1/activity` és a `/api/v1/runs` mutatja, hogyan halad.
 
@@ -60,7 +60,7 @@ A hiba `{"error": {"code": "...", "message": "..."}}` formában tér vissza, a m
 | 401 | `no_token`, `invalid_token` | Nincs token, vagy nem aktív |
 | 403 | `not_permitted`, `forbidden_origin` | A token csak olvashat, vagy nem ő indította a futást, vagy a kérés más eredetű oldalról jött |
 | 404 | `not_found` | Nincs ilyen elem, futás vagy anomália |
-| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Már fut valami, a terület ki van kapcsolva, vagy nincs teendő |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Már fut valami, a szakasz ki van kapcsolva, vagy nincs teendő |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Egy korlát visszatartja a kérést; a `Retry-After` megmondja, mikor próbálkozhatsz újra |
 
 Az indításokra ugyanazok a korlátok vonatkoznak, mint az [MCP-n keresztüliekre](mcp.md#starting-backups): tokenenként óránként 12, ugyanannak az elemnek két indítása között 15 perc, egy elemnek 24 óra alatt legfeljebb 4 indítás, valamint a megőrzési védelem. Az utolsó három együtt számolja az MCP-n és az API-n keresztüli, valamint a Home Assistantből érkező indításokat. Egy token percenként 120 kérést küldhet. Egy címről öt sikertelen próbálkozás után a cím egy percre letiltódik.
@@ -81,16 +81,16 @@ Az eszköz neve BombVault, vagy BombVault a példány nevével zárójelben, és
 
 | Entitás | Mit mutat |
 |---|---|
-| Status | `ok`, `warning`, `failed` vagy `off`, a bekapcsolt területek közül a legrosszabb |
+| Status | `ok`, `warning`, `failed` vagy `off`, a bekapcsolt szakaszok közül a legrosszabb |
 | Running job | Mi fut éppen, vagy `idle` |
 | Open anomalies | Hány anomália nyitott |
 | Next scheduled backup | Mikor indul a következő ütemezett mentés |
-| *Terület* last backup | Mikor futott a terület utolsó sikeres mentése |
-| *Terület* last result | Hogyan végződött az utolsó mentése |
-| *Terület* repository free space | A szabad hely ott, ahol a fő tárolója van, ha a BombVault ki tudja olvasni |
-| Back up *terület* | Egy gomb, amely az egész területet menti |
+| *Szakasz* last backup | Mikor futott a szakasz utolsó sikeres mentése |
+| *Szakasz* last result | Hogyan végződött az utolsó mentése |
+| *Szakasz* repository free space | A szabad hely ott, ahol a fő tárolója van, ha a BombVault ki tudja olvasni |
+| Back up *szakasz* | Egy gomb, amely az egész szakaszt menti |
 
-Az entitások neve angol, mert a Home Assistant úgy veszi át őket, ahogy a BombVault küldi. Minden bekapcsolt terület saját entitásokat kap, a kikapcsolt elveszíti őket. A gombok akkor jelennek meg, ha bekapcsolod az **A gombok mentést indítanak** kapcsolót; új telepítésnél ez ki van kapcsolva. A gombokra ugyanazok a korlátok vonatkoznak, mint az [API-n keresztüli indításokra](#errors). Ezen felül a BombVault területenként egyszerre egy nyomást fogad, percenként legfeljebb hatot, és figyelmen kívül hagyja azt a nyomást, amelyet a bróker retained üzenetként megőrzött. Bárki megnyomhatja őket, aki közzétehet a brókeren, ezért adj jelszót a brókernek.
+Az entitások neve angol, mert a Home Assistant úgy veszi át őket, ahogy a BombVault küldi. Minden bekapcsolt szakasz saját entitásokat kap, a kikapcsolt elveszíti őket. A gombok akkor jelennek meg, ha bekapcsolod az **A gombok mentést indítanak** kapcsolót; új telepítésnél ez ki van kapcsolva. A gombokra ugyanazok a korlátok vonatkoznak, mint az [API-n keresztüli indításokra](#errors). Ezen felül a BombVault szakaszonként egyszerre egy nyomást fogad, percenként legfeljebb hatot, és figyelmen kívül hagyja azt a nyomást, amelyet a bróker retained üzenetként megőrzött. Bárki megnyomhatja őket, aki közzétehet a brókeren, ezért adj jelszót a brókernek.
 
 A BombVault 15 másodpercenként beolvassa az állapotát, és közzéteszi, ha valami változott, JSON-ként a `<előtag>/<csomópont>/state` témában. Az előtag `bombvault`, amíg meg nem változtatod, a csomópont pedig egy rövid azonosító, amelyet a BombVault egyszer választ. A felderítési üzenetek a Home Assistant alapértelmezett `homeassistant` előtagjára mennek. Mindkettő megőrzött (retained). Egy utolsó üzenet (last will) elérhetetlennek jelöli az eszközt, ha a BombVault szó nélkül leáll. Ha kikapcsolod a kapcsolatot, a BombVault eltávolítja az eszközt és az entitásait a Home Assistantből.
 

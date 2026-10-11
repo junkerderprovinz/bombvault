@@ -21,18 +21,18 @@ BombVault에는 스크립트, 대시보드, 홈 자동화를 위한 작은 HTTP 
 | 경로 | 반환하거나 하는 일 | 토큰 |
 |---|---|---|
 | `GET /api/v1/health` | 버전, 인스턴스 이름, 백업 실행 여부, 이 토큰이 할 수 있는 일 | 읽기 |
-| `GET /api/v1/status` | 영역별 보호 상태: 마지막 성공 백업, 예상 간격, 점검, 다음 예약 실행 | 읽기 |
+| `GET /api/v1/status` | 섹션별 보호 상태: 마지막 성공 백업, 예상 간격, 점검, 다음 예약 실행 | 읽기 |
 | `GET /api/v1/activity` | 지금 실행 중인 작업과 단계, 진행률 | 읽기 |
-| `GET /api/v1/items` | 보호 중인 모든 항목과 일정, 백업이 멈추는 것, 마지막 백업. `?domain=`으로 한 영역만 | 읽기 |
+| `GET /api/v1/items` | 보호 중인 모든 항목과 일정, 백업이 멈추는 것, 마지막 백업. `?domain=`으로 한 섹션만 | 읽기 |
 | `GET /api/v1/runs` | 실행 기록(최신순). 필터 `limit`, `domain`, `item`, `status`, `kind`, `since` | 읽기 |
 | `GET /api/v1/anomalies` | 이상 징후와 열린 항목 요약. 필터 `state`, `severity`, `domain`, `limit` | 읽기 |
 | `GET /api/v1/anomalies/{id}` | 이상 징후 하나 | 읽기 |
-| `GET /api/v1/storage/{domain}` | 영역의 각 저장소에 대한 크기 기록, 주간 증가량, 여유 공간 | 읽기 |
-| `POST /api/v1/backups` | 항목 하나(`{"domain":"containers","item":"plex"}`) 또는 영역 전체(`{"domain":"vms"}`)를 백업 | 시작 |
+| `GET /api/v1/storage/{domain}` | 섹션의 각 저장소에 대한 크기 기록, 주간 증가량, 여유 공간 | 읽기 |
+| `POST /api/v1/backups` | 항목 하나(`{"domain":"containers","item":"plex"}`) 또는 섹션 전체(`{"domain":"vms"}`)를 백업 | 시작 |
 | `POST /api/v1/backups/everything` | 전체 백업 실행 | 시작 |
 | `POST /api/v1/runs/{id}/cancel` | 이 토큰이 시작한 실행 중인 백업 취소 | 시작 |
 
-영역은 `containers`, `vms`, `files`, `zfs`, `flash`, `config`입니다. 시간은 Unix 초입니다. 응답은 같은 이름의 [MCP 도구](mcp.md#tools)와 같아서 둘이 어긋나지 않습니다.
+섹션은 `containers`, `vms`, `files`, `zfs`, `flash`, `config`입니다. 시간은 Unix 초입니다. 응답은 같은 이름의 [MCP 도구](mcp.md#tools)와 같아서 둘이 어긋나지 않습니다.
 
 여기서 시작한 백업은 웹 화면에서 시작한 백업과 같습니다. 실행 중인 컨테이너는 백업이 끝날 때까지 멈춥니다. 요청은 바로 돌아오고, 진행 상황은 `/api/v1/activity`와 `/api/v1/runs`에서 볼 수 있습니다.
 
@@ -60,7 +60,7 @@ BombVault 자체 서명 인증서를 쓴다면 `--cacert bombvault-cert.pem`(MCP
 | 401 | `no_token`, `invalid_token` | 토큰이 없거나 활성 토큰이 아님 |
 | 403 | `not_permitted`, `forbidden_origin` | 토큰이 읽기 전용이거나 그 실행을 시작한 토큰이 아님, 또는 요청이 다른 출처(origin)의 페이지에서 옴 |
 | 404 | `not_found` | 그런 항목, 실행, 이상 징후가 없음 |
-| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | 다른 작업이 실행 중이거나, 영역이 꺼져 있거나, 할 일이 없음 |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | 다른 작업이 실행 중이거나, 섹션이 꺼져 있거나, 할 일이 없음 |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | 제한 때문에 요청이 보류됨. 다시 시도할 시점은 `Retry-After`가 알려 줌 |
 
 시작에는 [MCP를 통한 시작](mcp.md#starting-backups)과 같은 제한이 적용됩니다. 토큰당 시간당 12회, 같은 항목의 두 시작 사이 15분, 한 항목당 24시간에 최대 4회, 그리고 보존 보호입니다. 뒤의 세 가지는 MCP, API, Home Assistant를 통한 시작을 함께 셉니다. 토큰 하나는 분당 120번 요청할 수 있습니다. 한 주소에서 다섯 번 실패하면 그 주소는 1분 동안 잠깁니다.
@@ -81,16 +81,16 @@ BombVault는 MQTT 검색을 통해 Home Assistant에 기기로 나타날 수 있
 
 | 엔티티 | 보여 주는 것 |
 |---|---|
-| Status | `ok`, `warning`, `failed`, `off` 중 하나. 켜진 영역 중 가장 나쁜 상태 |
+| Status | `ok`, `warning`, `failed`, `off` 중 하나. 켜진 섹션 중 가장 나쁜 상태 |
 | Running job | 지금 실행 중인 작업, 또는 `idle` |
 | Open anomalies | 열린 이상 징후 수 |
 | Next scheduled backup | 다음 예약 백업이 시작되는 시각 |
-| *영역* last backup | 영역의 마지막 성공 백업 시각 |
-| *영역* last result | 마지막 백업의 결과 |
-| *영역* repository free space | 기본 저장소가 있는 곳의 여유 공간(BombVault가 읽을 수 있는 경우) |
-| Back up *영역* | 영역 전체를 백업하는 버튼 |
+| *섹션* last backup | 섹션의 마지막 성공 백업 시각 |
+| *섹션* last result | 마지막 백업의 결과 |
+| *섹션* repository free space | 기본 저장소가 있는 곳의 여유 공간(BombVault가 읽을 수 있는 경우) |
+| Back up *섹션* | 섹션 전체를 백업하는 버튼 |
 
-엔티티 이름은 영어입니다. Home Assistant는 BombVault가 보낸 이름을 그대로 쓰기 때문입니다. 켜진 영역마다 엔티티가 생기고, 끈 영역은 엔티티를 잃습니다. 버튼은 **버튼으로 백업 시작**을 켜면 나타납니다. 새로 설치하면 꺼져 있습니다. 버튼에는 [API를 통한 시작](#errors)과 같은 제한이 적용됩니다. 여기에 더해 BombVault는 영역마다 한 번에 한 번의 누름만 받고 1분에 최대 여섯 번까지만 받으며, 브로커가 retained 메시지로 보관한 누름은 무시합니다. 브로커에 게시할 수 있는 사람은 누구나 누를 수 있으므로 브로커에 비밀번호를 설정하세요.
+엔티티 이름은 영어입니다. Home Assistant는 BombVault가 보낸 이름을 그대로 쓰기 때문입니다. 켜진 섹션마다 엔티티가 생기고, 끈 섹션은 엔티티를 잃습니다. 버튼은 **버튼으로 백업 시작**을 켜면 나타납니다. 새로 설치하면 꺼져 있습니다. 버튼에는 [API를 통한 시작](#errors)과 같은 제한이 적용됩니다. 여기에 더해 BombVault는 섹션마다 한 번에 한 번의 누름만 받고 1분에 최대 여섯 번까지만 받으며, 브로커가 retained 메시지로 보관한 누름은 무시합니다. 브로커에 게시할 수 있는 사람은 누구나 누를 수 있으므로 브로커에 비밀번호를 설정하세요.
 
 BombVault는 15초마다 상태를 읽고, 바뀐 것이 있으면 `<접두사>/<노드>/state`에 JSON으로 게시합니다. 접두사는 바꾸지 않는 한 `bombvault`이고, 노드는 BombVault가 한 번 고르는 짧은 ID입니다. 검색 메시지는 Home Assistant의 기본 접두사 `homeassistant`로 갑니다. 둘 다 보존(retained)됩니다. BombVault가 예고 없이 멈추면 라스트 윌(last will)이 기기를 사용할 수 없음으로 표시합니다. 연동을 끄면 BombVault가 Home Assistant에서 기기와 엔티티를 제거합니다.
 

@@ -21,18 +21,18 @@ Giriş parolası yoksa web arayüzünü açabilen herkes belirteç de oluşturab
 | Yol | Ne döndürür veya ne yapar | Belirteç |
 |---|---|---|
 | `GET /api/v1/health` | Sürüm, örnek adı, yedekleme çalışıyor mu ve bu belirteç neler yapabilir | okuma |
-| `GET /api/v1/status` | Alan başına koruma durumu: son başarılı yedek, beklenen aralık, denetimler, sonraki planlı çalışmalar | okuma |
+| `GET /api/v1/status` | Bölüm başına koruma durumu: son başarılı yedek, beklenen aralık, denetimler, sonraki planlı çalışmalar | okuma |
 | `GET /api/v1/activity` | Şu anda ne çalışıyor, aşama ve yüzdesiyle | okuma |
-| `GET /api/v1/items` | Her korunan öge, zamanlaması, bir yedeğin neyi durdurduğu ve son yedeğiyle; tek alan için `?domain=` | okuma |
+| `GET /api/v1/items` | Her korunan öge, zamanlaması, bir yedeğin neyi durdurduğu ve son yedeğiyle; tek bölüm için `?domain=` | okuma |
 | `GET /api/v1/runs` | Çalışma geçmişi, en yenisi önce; filtreler `limit`, `domain`, `item`, `status`, `kind`, `since` | okuma |
 | `GET /api/v1/anomalies` | Açık olanların özetiyle anomaliler; filtreler `state`, `severity`, `domain`, `limit` | okuma |
 | `GET /api/v1/anomalies/{id}` | Tek bir anomali | okuma |
-| `GET /api/v1/storage/{domain}` | Bir alanın her deposu için boyut geçmişi, haftalık büyüme ve boş alan | okuma |
-| `POST /api/v1/backups` | Tek bir ögeyi (`{"domain":"containers","item":"plex"}`) veya bütün bir alanı (`{"domain":"vms"}`) yedekler | başlatma |
+| `GET /api/v1/storage/{domain}` | Bir bölümün her deposu için boyut geçmişi, haftalık büyüme ve boş alan | okuma |
+| `POST /api/v1/backups` | Tek bir ögeyi (`{"domain":"containers","item":"plex"}`) veya bütün bir bölümü (`{"domain":"vms"}`) yedekler | başlatma |
 | `POST /api/v1/backups/everything` | Tam yedeklemeyi çalıştırır | başlatma |
 | `POST /api/v1/runs/{id}/cancel` | Bu belirtecin başlattığı, süren bir yedeklemeyi iptal eder | başlatma |
 
-Alanlar `containers`, `vms`, `files`, `zfs`, `flash` ve `config`. Zamanlar Unix saniyesidir. Yanıtlar aynı adlı [MCP araçlarınınkiyle](mcp.md#tools) aynıdır, böylece ikisi birlikte kalır.
+Bölümler `containers`, `vms`, `files`, `zfs`, `flash` ve `config`. Zamanlar Unix saniyesidir. Yanıtlar aynı adlı [MCP araçlarınınkiyle](mcp.md#tools) aynıdır, böylece ikisi birlikte kalır.
 
 Buradan başlatılan yedek, web arayüzünün başlattığıyla aynıdır: çalışan bir konteyner yedeği bitene kadar durdurulur. İstek hemen döner; `/api/v1/activity` ve `/api/v1/runs` nasıl gittiğini gösterir.
 
@@ -60,7 +60,7 @@ Hata, uygun durum koduyla `{"error": {"code": "...", "message": "..."}}` olarak 
 | 401 | `no_token`, `invalid_token` | Belirteç yok ya da etkin değil |
 | 403 | `not_permitted`, `forbidden_origin` | Belirteç yalnızca okuyabilir ya da çalışmayı o başlatmadı ya da istek başka bir kaynaktan (origin) gelen bir sayfadan geldi |
 | 404 | `not_found` | Böyle bir öge, çalışma veya anomali yok |
-| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Başka bir şey çalışıyor, alan kapalı ya da yapılacak bir şey yok |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Başka bir şey çalışıyor, bölüm kapalı ya da yapılacak bir şey yok |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Bir sınır isteği bekletiyor; `Retry-After` ne zaman yeniden deneneceğini söyler |
 
 Başlatmalar [MCP üzerinden başlatmalarla](mcp.md#starting-backups) aynı sınırlara tabidir: belirteç başına saatte 12, aynı ögenin iki başlatması arasında 15 dakika, bir öge için 24 saatte en çok 4 başlatma ve saklama koruması. Son üçü MCP ve API üzerinden ve Home Assistant'tan başlatmaları birlikte sayar. Bir belirteç dakikada 120 istek yapabilir. Bir adresten beş başarısız deneme o adresi bir dakika kilitler.
@@ -81,16 +81,16 @@ Cihazın adı BombVault'tur ya da parantez içinde örnek adıyla BombVault'tur 
 
 | Varlık | Gösterdiği |
 |---|---|
-| Status | `ok`, `warning`, `failed` veya `off`, açık alanların en kötüsü |
+| Status | `ok`, `warning`, `failed` veya `off`, açık bölümlerin en kötüsü |
 | Running job | Şu anda ne çalışıyor, ya da `idle` |
 | Open anomalies | Kaç anomali açık |
 | Next scheduled backup | Sonraki planlı yedeğin ne zaman başladığı |
-| *Alan* last backup | Alanın son başarılı yedeğinin ne zaman çalıştığı |
-| *Alan* last result | Son yedeğinin nasıl bittiği |
-| *Alan* repository free space | Ana deposunun bulunduğu yerdeki boş alan, BombVault okuyabiliyorsa |
-| Back up *alan* | Tüm alanı yedekleyen bir düğme |
+| *Bölüm* last backup | Bölümün son başarılı yedeğinin ne zaman çalıştığı |
+| *Bölüm* last result | Son yedeğinin nasıl bittiği |
+| *Bölüm* repository free space | Ana deposunun bulunduğu yerdeki boş alan, BombVault okuyabiliyorsa |
+| Back up *bölüm* | Tüm bölümü yedekleyen bir düğme |
 
-Varlık adları İngilizcedir, çünkü Home Assistant onları BombVault'un gönderdiği gibi alır. Açık her alan kendi varlıklarını alır, kapattığın bir alan onları kaybeder. Düğmeler, **Düğmeler yedekleme başlatır** seçeneğini açtığında görünür; yeni kurulumda bu kapalıdır. Düğmeler [API üzerinden başlatmalarla](#errors) aynı sınırlara tabidir. Bunun üstüne BombVault her alan için aynı anda tek bir basışı ve dakikada en fazla altı basışı kabul eder, aracının retained ileti olarak sakladığı bir basışı da yok sayar. Aracıya yayın yapabilen herkes onlara basabilir; bu yüzden aracıya bir parola ver.
+Varlık adları İngilizcedir, çünkü Home Assistant onları BombVault'un gönderdiği gibi alır. Açık her bölüm kendi varlıklarını alır, kapattığın bir bölüm onları kaybeder. Düğmeler, **Düğmeler yedekleme başlatır** seçeneğini açtığında görünür; yeni kurulumda bu kapalıdır. Düğmeler [API üzerinden başlatmalarla](#errors) aynı sınırlara tabidir. Bunun üstüne BombVault her bölüm için aynı anda tek bir basışı ve dakikada en fazla altı basışı kabul eder, aracının retained ileti olarak sakladığı bir basışı da yok sayar. Aracıya yayın yapabilen herkes onlara basabilir; bu yüzden aracıya bir parola ver.
 
 BombVault durumunu her 15 saniyede bir okur ve bir şey değiştiğinde `<önek>/<düğüm>/state` altında JSON olarak yayımlar. Önek, sen değiştirmedikçe `bombvault`'tur; düğüm ise BombVault'un bir kez seçtiği kısa bir kimliktir. Keşif iletileri Home Assistant'ın varsayılan öneki `homeassistant`'a gider. İkisi de saklanır (retained). Son vasiyet (last will), BombVault haber vermeden durursa cihazı kullanılamaz olarak işaretler. Bağlantıyı kapatırsan BombVault cihazı ve varlıklarını Home Assistant'tan kaldırır.
 

@@ -45,7 +45,7 @@ Bu genellikle konteyner bir işlemin ortasında güncellendiğinde ya da yeniden
 
 ## Bir yedeklemeden sonra site dışı kopyam gerçekleşmedi
 
-Site dışı çoğaltma tasarım gereği en iyi çabayla çalışır, bu yüzden site dışında yaşanan bir aksaklık yerel yedeği asla başarısız kılmaz. Hedefin ne zaman kopyaladığına bak: **Kopyala** kartı **Her yedekten sonra** der ya da kendi planını adıyla belirtir, **Ayarlar, Zamanlama, Alan başına site dışı kopyalar** ise bir bölüme kendi planını verebilir. İsteğe bağlı bir çalıştırma için **Ayarlar, Hedefler** altında bölümün **Site dışı kopya** kartındaki **Şimdi çoğalt**'ı kullan ve çalışırken **Site dışı kopyalama sürüyor** diyen genel bakışın durum başlığını izle. Başarısız bir kopya **İlgi bekliyor** altında görünür.
+Site dışı çoğaltma tasarım gereği en iyi çabayla çalışır, bu yüzden site dışında yaşanan bir aksaklık yerel yedeği asla başarısız kılmaz. Hedefin ne zaman kopyaladığına bak: **Kopyala** kartı **Her yedekten sonra** der ya da kendi planını adıyla belirtir, **Ayarlar, Zamanlama, Bölüm başına site dışı kopyalar** ise bir bölüme kendi planını verebilir. İsteğe bağlı bir çalıştırma için **Ayarlar, Hedefler** altında bölümün **Site dışı kopya** kartındaki **Şimdi çoğalt**'ı kullan ve çalışırken **Site dışı kopyalama sürüyor** diyen genel bakışın durum başlığını izle. Başarısız bir kopya **İlgi bekliyor** altında görünür.
 
 ## Bir geri yükleme başlamadan iptal oldu
 

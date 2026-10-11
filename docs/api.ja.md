@@ -21,18 +21,18 @@ BombVault には、スクリプト、ダッシュボード、ホームオート�
 | ルート | 返す内容または動作 | トークン |
 |---|---|---|
 | `GET /api/v1/health` | バージョン、インスタンス名、バックアップ実行中かどうか、このトークンにできること | 読み取り |
-| `GET /api/v1/status` | 領域ごとの保護状態: 最後に成功したバックアップ、想定間隔、チェック、次の予定実行 | 読み取り |
+| `GET /api/v1/status` | セクションごとの保護状態: 最後に成功したバックアップ、想定間隔、チェック、次の予定実行 | 読み取り |
 | `GET /api/v1/activity` | いま実行中の処理とそのフェーズと進捗率 | 読み取り |
-| `GET /api/v1/items` | 保護対象の各項目とそのスケジュール、バックアップで停止するもの、最後のバックアップ。`?domain=` で 1 領域に絞り込み | 読み取り |
+| `GET /api/v1/items` | 保護対象の各項目とそのスケジュール、バックアップで停止するもの、最後のバックアップ。`?domain=` で 1 セクションに絞り込み | 読み取り |
 | `GET /api/v1/runs` | 実行履歴 (新しい順)。フィルター `limit`、`domain`、`item`、`status`、`kind`、`since` | 読み取り |
 | `GET /api/v1/anomalies` | 異常と未解決分のまとめ。フィルター `state`、`severity`、`domain`、`limit` | 読み取り |
 | `GET /api/v1/anomalies/{id}` | 1 件の異常 | 読み取り |
-| `GET /api/v1/storage/{domain}` | 領域の各リポジトリのサイズ履歴、週あたりの増加量、空き容量 | 読み取り |
-| `POST /api/v1/backups` | 1 項目 (`{"domain":"containers","item":"plex"}`) または領域全体 (`{"domain":"vms"}`) をバックアップ | 開始 |
+| `GET /api/v1/storage/{domain}` | セクションの各リポジトリのサイズ履歴、週あたりの増加量、空き容量 | 読み取り |
+| `POST /api/v1/backups` | 1 項目 (`{"domain":"containers","item":"plex"}`) またはセクション全体 (`{"domain":"vms"}`) をバックアップ | 開始 |
 | `POST /api/v1/backups/everything` | 全体バックアップを実行 | 開始 |
 | `POST /api/v1/runs/{id}/cancel` | このトークンが開始した実行中のバックアップを中止 | 開始 |
 
-領域は `containers`、`vms`、`files`、`zfs`、`flash`、`config` です。時刻は Unix 秒です。応答は同じ名前の [MCP ツール](mcp.md#tools) と同じなので、両者は常にそろっています。
+セクションは `containers`、`vms`、`files`、`zfs`、`flash`、`config` です。時刻は Unix 秒です。応答は同じ名前の [MCP ツール](mcp.md#tools) と同じなので、両者は常にそろっています。
 
 ここで開始したバックアップは、ウェブ画面から開始したものと同じです。稼働中のコンテナはバックアップが終わるまで停止します。リクエストはすぐに戻り、進み具合は `/api/v1/activity` と `/api/v1/runs` で確認できます。
 
@@ -60,7 +60,7 @@ BombVault 独自の自己署名証明書を使っている場合は、`--cacert 
 | 401 | `no_token`、`invalid_token` | トークンがない、または有効でない |
 | 403 | `not_permitted`, `forbidden_origin` | トークンが読み取り専用、またはその実行を開始したのがこのトークンではない、またはリクエストが別のオリジンのページから来た |
 | 404 | `not_found` | その項目、実行、異常が存在しない |
-| 409 | `busy`、`domain_off`、`nothing_to_back_up`、`not_running` | 別の処理が実行中、領域がオフ、または何もすることがない |
+| 409 | `busy`、`domain_off`、`nothing_to_back_up`、`not_running` | 別の処理が実行中、セクションがオフ、または何もすることがない |
 | 429 | `throttled`、`rate_limited`、`cooldown`、`retention_guard` | 制限によって保留された。再試行できる時刻は `Retry-After` が示す |
 
 開始には [MCP 経由の開始](mcp.md#starting-backups) と同じ制限がかかります。トークンごとに 1 時間 12 回、同じ項目の開始の間隔は 15 分、1 項目あたり 24 時間で最大 4 回、そして保持の保護です。後の 3 つは MCP、API、Home Assistant からの開始を合わせて数えます。トークン 1 つで 1 分に 120 リクエストまで送れます。同じアドレスから 5 回失敗すると、そのアドレスは 1 分間ロックされます。
@@ -81,16 +81,16 @@ BombVault は MQTT 検出を使って、Home Assistant にデバイスとして�
 
 | エンティティ | 表示する内容 |
 |---|---|
-| Status | `ok`、`warning`、`failed`、`off` のいずれか。オンの領域の中で最も悪い状態 |
+| Status | `ok`、`warning`、`failed`、`off` のいずれか。オンのセクションの中で最も悪い状態 |
 | Running job | いま実行中の処理、または `idle` |
 | Open anomalies | 未解決の異常の数 |
 | Next scheduled backup | 次の予定バックアップの開始時刻 |
-| *領域* last backup | 領域の最後に成功したバックアップの時刻 |
-| *領域* last result | 最後のバックアップの結果 |
-| *領域* repository free space | メインリポジトリがある場所の空き容量 (BombVault が読み取れる場合) |
-| Back up *領域* | 領域全体をバックアップするボタン |
+| *セクション* last backup | セクションの最後に成功したバックアップの時刻 |
+| *セクション* last result | 最後のバックアップの結果 |
+| *セクション* repository free space | メインリポジトリがある場所の空き容量 (BombVault が読み取れる場合) |
+| Back up *セクション* | セクション全体をバックアップするボタン |
 
-エンティティ名は英語です。Home Assistant は BombVault が送ったとおりの名前を使うためです。オンの領域にはそれぞれエンティティが作られ、オフにした領域からは消えます。ボタンは **ボタンでバックアップを開始** をオンにすると現れます。新しいインストールではオフです。ボタンには [API 経由の開始](#errors) と同じ制限がかかります。さらに BombVault は、領域ごとに一度に 1 回の押下だけを受け付け、1 分間に最大 6 回までとし、ブローカーが retained メッセージとして保持した押下は無視します。ブローカーに公開できる人は誰でも押せるので、ブローカーにパスワードを設定してください。
+エンティティ名は英語です。Home Assistant は BombVault が送ったとおりの名前を使うためです。オンのセクションにはそれぞれエンティティが作られ、オフにしたセクションからは消えます。ボタンは **ボタンでバックアップを開始** をオンにすると現れます。新しいインストールではオフです。ボタンには [API 経由の開始](#errors) と同じ制限がかかります。さらに BombVault は、セクションごとに一度に 1 回の押下だけを受け付け、1 分間に最大 6 回までとし、ブローカーが retained メッセージとして保持した押下は無視します。ブローカーに公開できる人は誰でも押せるので、ブローカーにパスワードを設定してください。
 
 BombVault は 15 秒ごとに状態を読み取り、何か変わったときに `<接頭辞>/<ノード>/state` へ JSON で公開します。接頭辞は変更しない限り `bombvault` で、ノードは BombVault が一度だけ選ぶ短い ID です。検出メッセージは Home Assistant の既定の接頭辞 `homeassistant` に送られます。どちらも保持 (retained) されます。BombVault が予告なく止まった場合は、ラストウィル (last will) がデバイスを利用不可にします。連携をオフにすると、BombVault はデバイスとそのエンティティを Home Assistant から削除します。
 

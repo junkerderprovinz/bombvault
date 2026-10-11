@@ -193,7 +193,7 @@ zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inhe
 バックアップのスナップショットの名前は `<dataset>@bombvault-<14 桁>`、たとえば `cache/appdata@bombvault-20260924021500`（UTC）です。BombVault はバックアップの直後に削除します。データセットが使用中だった、BombVault が停止されたなどの理由で失敗した場合、BombVault は次のときに削除します:
 
 - その項目の次のバックアップの前
-- BombVault の起動時。すべての項目について、ドメインがオフでも
+- BombVault の起動時。すべての項目について、セクションがオフでも
 - 項目を削除したとき
 - 項目で **今すぐ削除** を押したとき。残りの数もそこに表示されます
 

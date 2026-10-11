@@ -1,6 +1,6 @@
 # Resolução de problemas
 
-Um FAQ curto. Para a tabela completa de resolução de problemas do lado do host do backup de VM por SSH (permissão negada, verificação da chave do host, variáveis de template em falta e mais), consulte o [guia de backup de VM por SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) no GitHub.
+Um FAQ curto. Para a tabela completa de resolução de problemas do lado do host do backup de VM por SSH (permissão negada, verificação da chave do host, variáveis de template em falta e mais), consulta o [guia de backup de VM por SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) no GitHub.
 
 ## Alguma coisa não está corretamente ligada
 
@@ -8,11 +8,11 @@ Adiciona o cartão **Integração com o host** à visão geral em **Personalizar
 
 ## Não consigo alcançar a interface web
 
-O BombVault serve HTTPS logo de início na porta `3443` (certificado autoassinado), por isso abra `https://<your-unraid-ip>:3443`. Aceite o aviso do certificado autoassinado, ou coloque o BombVault por trás de um proxy reverso com o seu próprio certificado. Se correr com `HTTP_ONLY=true`, serve HTTP simples na porta `3000` em vez disso (destinado a uso por trás de um proxy que termina o TLS).
+O BombVault serve HTTPS logo de início na porta `3443` (certificado autoassinado), por isso abre `https://<your-unraid-ip>:3443`. Aceita o aviso do certificado autoassinado, ou coloca o BombVault por trás de um proxy reverso com o teu próprio certificado. Se correres com `HTTP_ONLY=true`, serve HTTP simples na porta `3000` em vez disso (destinado a uso por trás de um proxy que termina o TLS).
 
 ## Perdi a minha APP_KEY
 
-A `APP_KEY` deriva a palavra-passe do repositório restic. Sem ela, sem o kit de recuperação e sem um depósito da chave no teu grupo, os backups encriptados não podem ser recuperados. É por isso que a visão geral mostra **Guarda o teu kit de recuperação** até o descarregares. Consulta [Externo e recuperação](offsite-recovery.md#recovery-kit). Gera uma chave com `openssl rand -hex 32` e guarde-a fora do servidor antes de depender de qualquer backup.
+A `APP_KEY` deriva a palavra-passe do repositório restic. Sem ela, sem o kit de recuperação e sem um depósito da chave no teu grupo, os backups encriptados não podem ser recuperados. É por isso que a visão geral mostra **Guarda o teu kit de recuperação** até o descarregares. Consulta [Externo e recuperação](offsite-recovery.md#recovery-kit). Gera uma chave com `openssl rand -hex 32` e guarda-a fora do servidor antes de depender de qualquer backup.
 
 ## Esqueci-me da palavra-passe de início de sessão
 
@@ -31,8 +31,8 @@ Um telemóvel emparelhado só recebe a sessão através do grupo enquanto **Os t
 O backup de VM comunica com o libvirt por SSH, nunca por uma montagem.
 
 - Confirma que o SSH está ativado no host e que a chave pública do BombVault está autorizada em `/root/.ssh/authorized_keys` (Definições, Integrações, SSH do anfitrião mostra a chave e um botão **Testar ligação**).
-- Numa rede `br0.x` personalizada, defina `LIBVIRT_HOST` para o IP LAN do seu Unraid (o container não consegue alcançar o host via `host.docker.internal` aí). Ativa **Settings, Docker, Host access to custom networks**.
-- Se alterou a porta SSH do Unraid, defina `LIBVIRT_SSH_PORT` para corresponder.
+- Numa rede `br0.x` personalizada, define `LIBVIRT_HOST` para o IP LAN do teu Unraid (o container não consegue alcançar o host via `host.docker.internal` aí). Ativa **Settings, Docker, Host access to custom networks**.
+- Se alteraste a porta SSH do Unraid, define `LIBVIRT_SSH_PORT` para corresponder.
 - O diagnóstico completo passo a passo (teste de alcance, encaminhamento de VLAN, `Permission denied (publickey)`, `Host key verification failed`) está no [guia de backup de VM por SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Um instantâneo a quente de VM não correu
@@ -45,11 +45,11 @@ Isto é geralmente um bloqueio restic órfão deixado para trás quando o contai
 
 ## A minha cópia externa não aconteceu após um backup
 
-A replicação externa é de melhor esforço por conceção, por isso um percalço externo nunca faz o backup local falhar. Verifica quando o destino copia: o cartão **Copiar** diz **Depois de cada backup** ou indica um plano próprio, e **Definições, Agendamento, Cópias externas por domínio** pode dar a uma secção um plano próprio. Usa **Replicar agora** no cartão **Cópia externa** da secção em **Definições, Destinos** para uma execução a pedido, e observa o cabeçalho de estado da visão geral, que diz **Cópia externa em curso** enquanto corre. Uma cópia falhada aparece em **Precisa de atenção**.
+A replicação externa é de melhor esforço por conceção, por isso um percalço externo nunca faz o backup local falhar. Verifica quando o destino copia: o cartão **Copiar** diz **Depois de cada backup** ou indica um plano próprio, e **Definições, Agendamento, Cópias externas por secção** pode dar a uma secção um plano próprio. Usa **Replicar agora** no cartão **Cópia externa** da secção em **Definições, Destinos** para uma execução a pedido, e observa o cabeçalho de estado da visão geral, que diz **Cópia externa em curso** enquanto corre. Uma cópia falhada aparece em **Precisa de atenção**.
 
 ## Um restauro abortou antes de começar
 
-Antes de qualquer coisa ser parada ou removida, o restauro corre uma verificação de conflitos pré-voo: verifica que o IP estático do container e as portas do host publicadas estão livres. Se outro container já detém uma, aborta com uma mensagem clara e acionável em vez de deixar um restauro a meio. Liberte a porta ou o IP em conflito, e depois reexperimente.
+Antes de qualquer coisa ser parada ou removida, o restauro corre uma verificação de conflitos pré-voo: verifica que o IP estático do container e as portas do host publicadas estão livres. Se outro container já detém uma, aborta com uma mensagem clara e acionável em vez de deixar um restauro a meio. Liberta a porta ou o IP em conflito, e depois reexperimente.
 
 ## Uma exportação simples falhou em vez de escrever um ficheiro
 
@@ -77,8 +77,8 @@ Para a repor à mão: para o container, muda o nome da pasta de dados atual para
 
 Cada problema tem um código de motivo entre parênteses retos, e a página [Conjuntos de dados ZFS](zfs-datasets.md#reason-codes) lista-os todos com a solução. Os três mais comuns:
 
-- **`snapshot-loop`**: o instantâneo não chegou ao BombVault porque o Host Data não passa as novas montagens. Edite o container, ponha o Access Mode do Host Data em Read/Write - Slave e reinicie o BombVault.
-- **`key-not-loaded`**: um conjunto cifrado cuja chave não está carregada é ignorado. Carrega a chave com `zfs load-key` e monte o conjunto; a próxima cópia inclui-o.
+- **`snapshot-loop`**: o instantâneo não chegou ao BombVault porque o Host Data não passa as novas montagens. Edita o container, põe o Access Mode do Host Data em Read/Write - Slave e reinicia o BombVault.
+- **`key-not-loaded`**: um conjunto cifrado cuja chave não está carregada é ignorado. Carrega a chave com `zfs load-key` e monta o conjunto; o próximo backup inclui-o.
 - **`ssh-auth`**: o servidor recusou a chave do BombVault. **Ligação ZFS a este servidor**, que se abre com **Ver ligação** na página Backups, mostra o comando que a autoriza; executa-o uma vez no servidor.
 
 ## Uma entrada fica em "A aprender N/10"
@@ -111,6 +111,6 @@ O BombVault reporta saudável/não-saudável a partir do seu próprio `/api/heal
 
 ## Ainda preso?
 
-- Leia as páginas completas de [Configuração](configuration.md) e [Externo e recuperação](offsite-recovery.md).
+- Lê as páginas completas de [Configuração](configuration.md) e [Externo e recuperação](offsite-recovery.md).
 - Pergunta na [thread de suporte do Unraid](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/).
 - Abre uma [issue no GitHub](https://github.com/junkerderprovinz/bombvault/issues).

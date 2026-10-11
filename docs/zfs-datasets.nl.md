@@ -193,7 +193,7 @@ Om een stand terug te brengen naar de bron, druk je in het blad op **Bring back 
 De snapshot van een back-up heet `<dataset>@bombvault-<14 cijfers>`, bijvoorbeeld `cache/appdata@bombvault-20260924021500` (UTC). BombVault verwijdert hem direct na de back-up. Lukt dat niet, bijvoorbeeld omdat de dataset bezet is of BombVault werd gestopt, dan verwijdert BombVault hem:
 
 - voor de volgende back-up van dat item,
-- wanneer BombVault start, voor elk item, ook met het domein uitgeschakeld,
+- wanneer BombVault start, voor elk item, ook met het onderdeel uitgeschakeld,
 - wanneer je het item verwijdert,
 - wanneer je bij het item op **Nu verwijderen** drukt, dat ook toont hoeveel er over zijn.
 
