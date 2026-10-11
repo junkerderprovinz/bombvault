@@ -1,4 +1,4 @@
-import { useAttentionCount } from "./attention";
+import { useAttentionCount, useFreshInstall } from "./attention";
 import { useT } from "./i18n";
 import type { NavCountKind } from "./navModel";
 import { useLoudAnomalies } from "./useAnomalies";
@@ -11,12 +11,18 @@ export interface NavCount {
   tone: "fail" | "warn";
 }
 
-/** useNavCounts resolves the figures the navigation entries carry, once for
- *  every surface that shows them. */
+/**
+ * useNavCounts resolves the figures the navigation entries carry, once for
+ * every surface that shows them. Before the first backup they are all zero:
+ * nothing can need the person yet.
+ */
 export function useNavCounts(): Record<NavCountKind, NavCount> {
   const { t } = useT();
-  const attention = useAttentionCount();
-  const anomalies = useLoudAnomalies();
+  const fresh = useFreshInstall();
+  const needs = useAttentionCount();
+  const loud = useLoudAnomalies();
+  const attention = fresh ? 0 : needs;
+  const anomalies = fresh ? { ...loud, count: 0 } : loud;
   return {
     attention: {
       value: attention,

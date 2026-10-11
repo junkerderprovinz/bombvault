@@ -43,11 +43,9 @@ const tr: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Geri bildirim",
   "about.mail": "E-posta",
-  "nav.recovery": "Kurtarma",
   "nav.config": "Öz yedek",
 
   // Dashboard
-  "dashboard.title": "Kontrol Paneli",
   "dashboard.summaryHealth": "Kurtarma noktası",
   "dashboard.summaryNextBackup": "Sonraki yedek",
   "dashboard.summaryNextIn": "{countdown} sonra",
@@ -323,7 +321,7 @@ const tr: Partial<Translations> = {
   "settings.encryptionPasswordWhere":
     "Bu parolayı hiçbir zaman yazmazsınız: BombVault her çağrıda APP_KEY değerinden türetir. Değerin kendisi kurtarma setinizde, türetilmiş restic parolası olarak durur ve bir depoya elle restic çalıştırmak için gereken tam olarak budur.",
   "settings.encryptionHint":
-    "Şifreleme, depo oluşturulurken sabitlenir; bu nedenle bu ayar yalnızca YENİ bir deponun nasıl oluşturulacağını belirler. Zaten var olan bir depo için BombVault kipi doğrudan deponun kendisinden okur. Kurtarma sayfasına bak. Var olan bir depoya karşı bunu değiştirmek yalnızca restic'in onu açamamasına yol açar.",
+    "Şifreleme, depo oluşturulurken sabitlenir; bu nedenle bu ayar yalnızca YENİ bir deponun nasıl oluşturulacağını belirler. Zaten var olan bir depo için BombVault kipi doğrudan deponun kendisinden okur. Geri yükleme sayfasına bak. Var olan bir depoya karşı bunu değiştirmek yalnızca restic'in onu açamamasına yol açar.",
   "settings.paths": "Yedekleme Yolları",
   "settings.pathsHint": "Host bağlama kökü ({root}) altındaki göreli alt yollar. Dizinlerde gezinmek için Gözat'a tıklayın veya bir yolu doğrudan yazın.",
   "settings.containersPath": "Konteyner yolu",
@@ -1007,8 +1005,6 @@ const tr: Partial<Translations> = {
   "recovery.step5": "Kurtarma kitiniz",
   "recovery.kitHint": "Kurtarma kitinizi indirin ve güvenli bir yerde saklayın. Şifreleme anahtarını ve BombVault olmadan bile geri yüklemek için gereken tam restic komutlarını içerir.",
   "recovery.kitDownload": "Kurtarma kitini indir",
-  "recovery.freshNudge": "Önceki bir sunucudan ya da yeniden kurulumdan mı geri yüklüyorsunuz? Mevcut yedeklerinizi kurtarın.",
-  "recovery.freshNudgeCta": "Kurtarma'ya git",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "BombVault'un kendi ayarlarını geri yükle",
@@ -1042,7 +1038,7 @@ const tr: Partial<Translations> = {
   "config.backupNow": "Ayarları şimdi yedekle",
   "config.backingUp": "Yedekleniyor…",
   "config.snapshotsTitle": "Ayar yedekleri",
-  "config.snapshotsHint": "Bu ayarları yeniden oluşturulan bir sunucuya geri yüklemek için Kurtarma sekmesini kullanın. Ayarları geri yüklemek, bunları uygulamak için BombVault'u yeniden başlatır; bu yüzden felaket kurtarma akışının geri kalanıyla birlikte orada bulunur.",
+  "config.snapshotsHint": "Bu ayarları yeniden oluşturulan bir sunucuya geri yüklemek için Geri yükleme sekmesini kullanın. Ayarları geri yüklemek, bunları uygulamak için BombVault'u yeniden başlatır; bu yüzden felaket kurtarma akışının geri kalanıyla birlikte orada bulunur.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Site dışı bant genişliği",
@@ -4187,6 +4183,32 @@ const tr: Partial<Translations> = {
   "tile.info.bugReport": "Hata bildirimi",
   "tile.info.download": "İndir",
   "tile.search.former": "BombVault 9.9'da ayrı bir sekmeydi, şimdi “{tab}” altında",
+  "welcome.title": "BombVault'a hoş geldiniz",
+  "welcome.leadUnraid": "Unraid sunucunuzdaki konteynerleri, VM'leri, Flash'ı ve klasörleri yedekler. Üç adımda korunmuş olursunuz.",
+  "welcome.lead": "Sunucunuzdaki konteynerleri, VM'leri ve klasörleri yedekler. Üç adımda korunmuş olursunuz.",
+  "welcome.restore": "Yedekten geri yükle",
+  "welcome.start": "Başlayalım",
+  "welcome.restoreHint": "BombVault'u daha önce kullandınız mı? O zaman “Yedekten geri yükle” ayarlar dahil her şeyi geri getirir.",
+  "firstSteps.title": "İlk adımlar",
+  "firstSteps.hint": "İlk yedekleme bitene kadar burada kalır.",
+  "firstSteps.sections": "Bölümleri seçin",
+  "firstSteps.sectionsSub": "Nelerin yedeklendiği",
+  "firstSteps.sectionsHint": "BombVault'un neyi yedekleyeceğini açın.",
+  "firstSteps.locationSub": "Yedeklerin gittiği yer",
+  "firstSteps.locationHint": "Yedeklerin gittiği yer. En güvenlisi evin dışında ikinci bir hedeftir, örneğin bir Storage Box ya da Backblaze B2.",
+  "firstSteps.backup": "İlk yedekleme",
+  "firstSteps.backupSub": "Sonrasında her gece kendiliğinden çalışır",
+  "firstSteps.found": "BombVault {list} buldu.",
+  "firstSteps.found.containers": "{n} konteyner",
+  "firstSteps.found.vms": "{n} VM",
+  "firstSteps.found.folders": "{n} klasör",
+  "firstSteps.found.datasets": "{n} ZFS dataset",
+  "firstSteps.found.flash": "Flash'ı",
+  "firstSteps.foundCount": "{n} bulundu",
+  "firstSteps.ownSettings": "BombVault'un kendi ayarları",
+  "firstSteps.waiting": "{n} ilk yedeklemeyi bekliyor",
+  "firstSteps.notProtected": "{n} korumasız",
+  "firstSteps.more": "ve {n} tane daha",
   "fleet.kindAndroid": "Android uygulaması",
   "pairing.qrCaption": "Bir telefonu eşleştirmek için bu kodu BombVault uygulamasıyla tarayın.",
 };

@@ -43,11 +43,9 @@ const hu: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Visszajelzés",
   "about.mail": "E-mail",
-  "nav.recovery": "Helyreállítás",
   "nav.config": "Önmentés",
 
   // Dashboard
-  "dashboard.title": "Irányítópult",
   "dashboard.summaryHealth": "Visszaállítási pont",
   "dashboard.summaryNextBackup": "Következő biztonsági mentés",
   "dashboard.summaryNextIn": "{countdown} múlva",
@@ -323,7 +321,7 @@ const hu: Partial<Translations> = {
   "settings.encryptionPasswordWhere":
     "Ezt a jelszót sosem gépeled be: a BombVault minden hívásnál az APP_KEY kulcsból származtatja. Maga az érték a helyreállítási csomagodban van, származtatott restic jelszóként, és épp erre van szükséged, ha kézzel futtatnád a resticet egy tárolón.",
   "settings.encryptionHint":
-    "A titkosítás a tároló létrehozásakor rögzül, így ez a beállítás csak ÚJ tárolóról dönt. Egy már meglévőnél a BombVault magáról a tárolóról olvassa le a módot. Lásd a Helyreállítás oldalt. Ha ezt egy meglévő tárolóval szemben megváltoztatod, a restic egyszerűen nem tudja megnyitni.",
+    "A titkosítás a tároló létrehozásakor rögzül, így ez a beállítás csak ÚJ tárolóról dönt. Egy már meglévőnél a BombVault magáról a tárolóról olvassa le a módot. Lásd a Visszaállítás oldalt. Ha ezt egy meglévő tárolóval szemben megváltoztatod, a restic egyszerűen nem tudja megnyitni.",
   "settings.paths": "Biztonsági mentési útvonalak",
   "settings.pathsHint": "Relatív alútvonalak a gazdagép csatolási gyökere alatt ({root}). Kattints a Tallózás gombra a könyvtárak közötti navigáláshoz, vagy írj be egy útvonalat közvetlenül.",
   "settings.containersPath": "Konténerek útvonala",
@@ -1010,8 +1008,6 @@ const hu: Partial<Translations> = {
   "recovery.step5": "A helyreállítási csomagod",
   "recovery.kitHint": "Töltsd le és tárold a helyreállítási csomagodat biztonságos helyen. Tartalmazza a titkosítási kulcsot és a pontos restic parancsokat a visszaállításhoz BombVault nélkül is.",
   "recovery.kitDownload": "Helyreállítási csomag letöltése",
-  "recovery.freshNudge": "Egy korábbi szerverről vagy újraépítésből állítasz vissza? Állítsd vissza a meglévő biztonsági mentéseidet.",
-  "recovery.freshNudgeCta": "Ugrás a Helyreállításhoz",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "BombVault saját beállításainak visszaállítása",
@@ -1570,7 +1566,7 @@ const hu: Partial<Translations> = {
   "config.backupNow": "Beállítások biztonsági mentése most",
   "config.backingUp": "Mentés…",
   "config.snapshotsTitle": "Beállítások biztonsági mentései",
-  "config.snapshotsHint": "Ezeknek a beállításoknak egy újraépített szerverre való visszaállításához használd a Helyreállítás lapot. A beállítások visszaállítása újraindítja BombVaultot, hogy alkalmazza őket, ezért a többi vészhelyreállítási lépéssel együtt ott található.",
+  "config.snapshotsHint": "Ezeknek a beállításoknak egy újraépített szerverre való visszaállításához használd a Visszaállítás lapot. A beállítások visszaállítása újraindítja BombVaultot, hogy alkalmazza őket, ezért a többi vészhelyreállítási lépéssel együtt ott található.",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Kizárási minták",
@@ -4190,6 +4186,32 @@ const hu: Partial<Translations> = {
   "tile.info.bugReport": "Hibajelentés",
   "tile.info.download": "Letöltés",
   "tile.search.former": "A BombVault 9.9-ben külön fül volt, most itt: {tab}",
+  "welcome.title": "Üdv a BombVaultban",
+  "welcome.leadUnraid": "Biztonsági mentést készít az Unraid-kiszolgálód konténereiről, VM-jeiről, Flash-meghajtójáról és mappáiról. Három lépésben védett leszel.",
+  "welcome.lead": "Biztonsági mentést készít a kiszolgálód konténereiről, VM-jeiről és mappáiról. Három lépésben védett leszel.",
+  "welcome.restore": "Visszaállítás mentésből",
+  "welcome.start": "Kezdjük",
+  "welcome.restoreHint": "Használtad már a BombVaultot? Akkor a „Visszaállítás mentésből” mindent visszahoz, a beállításokat is.",
+  "firstSteps.title": "Első lépések",
+  "firstSteps.hint": "Itt marad, amíg az első mentés el nem készül.",
+  "firstSteps.sections": "Válaszd ki a területeket",
+  "firstSteps.sectionsSub": "Mit mentünk",
+  "firstSteps.sectionsHint": "Kapcsold be, amit a BombVaultnak mentenie kell.",
+  "firstSteps.locationSub": "Hová kerülnek a mentések",
+  "firstSteps.locationHint": "Hová kerülnek a mentések. A legbiztonságosabb egy második célhely házon kívül, például egy Storage Box vagy a Backblaze B2.",
+  "firstSteps.backup": "Első mentés",
+  "firstSteps.backupSub": "Utána minden éjjel magától lefut",
+  "firstSteps.found": "A BombVault ezt találta: {list}.",
+  "firstSteps.found.containers": "{n} konténer",
+  "firstSteps.found.vms": "{n} VM",
+  "firstSteps.found.folders": "{n} mappa",
+  "firstSteps.found.datasets": "{n} ZFS-dataset",
+  "firstSteps.found.flash": "a Flash-meghajtó",
+  "firstSteps.foundCount": "{n} megtalálva",
+  "firstSteps.ownSettings": "A BombVault saját beállításai",
+  "firstSteps.waiting": "{n} az első mentésre vár",
+  "firstSteps.notProtected": "{n} védelem nélkül",
+  "firstSteps.more": "és még {n}",
   "fleet.kindAndroid": "Android-alkalmazás",
   "pairing.qrCaption": "Olvasd be ezt a kódot a BombVault alkalmazással egy telefon párosításához.",
 };

@@ -47,7 +47,6 @@ const sr: Partial<Translations> = {
   "about.mail": "Е-пошта",
 
   // Dashboard
-  "dashboard.title": "Контролна табла",
   "dashboard.summaryHealth": "Тачка враћања",
   "dashboard.summaryNextBackup": "Следећа резервна копија",
   "dashboard.summaryNextIn": "за {countdown}",
@@ -394,7 +393,7 @@ const sr: Partial<Translations> = {
   "settings.encryptionOff": "Онемогућено (без лозинке)",
   "settings.encryptionPasswordWhere":
     "Ту лозинку никада не куцате: BombVault је при сваком позиву изводи из APP_KEY. Сама вредност је у вашем комплету за опоравак као изведена restic лозинка и управо она треба да бисте restic покренули ручно над складиштем.",
-  "settings.encryptionHint": "Шифровање се за спремиште утврђује при његовом прављењу, па ово подешавање одлучује само о НОВОМ спремишту. За већ постојеће BombVault начин очитава са самог спремишта — види страницу Опоравак. Промена наспрам постојећег спремишта само спречава restic да га отвори.",
+  "settings.encryptionHint": "Шифровање се за спремиште утврђује при његовом прављењу, па ово подешавање одлучује само о НОВОМ спремишту. За већ постојеће BombVault начин очитава са самог спремишта — види страницу Враћање. Промена наспрам постојећег спремишта само спречава restic да га отвори.",
 
   // Encryption-key recovery kit
   "recovery.title": "Комплет за опоравак",
@@ -1539,7 +1538,7 @@ const sr: Partial<Translations> = {
   "config.backupNow": "Направи резервну копију подешавања сада",
   "config.backingUp": "Израда резервне копије…",
   "config.snapshotsTitle": "Резервне копије подешавања",
-  "config.snapshotsHint": "За враћање ових подешавања на обновљеном серверу користи таб Опоравак — враћање подешавања поново покреће BombVault да их примени, па је зато тамо, заједно са остатком тока опоравка од катастрофе.",
+  "config.snapshotsHint": "За враћање ових подешавања на обновљеном серверу користи таб Враћање — враћање подешавања поново покреће BombVault да их примени, па је зато тамо, заједно са остатком тока опоравка од катастрофе.",
 
   // Receiver dashboard
   "receiver.title": "Пријемник",
@@ -1978,7 +1977,6 @@ const sr: Partial<Translations> = {
   "vm.ssh.guide": "Потпуни водич за подешавање и умрежавање",
 
   // Guided Recovery tab
-  "nav.recovery": "Опоравак",
   "recovery.step1": "Може ли BombVault да прочита твоје резервне копије?",
   "recovery.appKeyExplain": "Да прочита постојеће резервне копије, овом контејнеру треба ИСТИ APP_KEY који је коришћен раније — налази се у твом комплету за опоравак. Подеси га у Unraid шаблону контејнера ако већ није, па поново провери.",
   "recovery.appKeyRemedy": "Кључ за шифровање не поклапа се са овим резервним копијама. Подеси оригинални APP_KEY (из свог комплета за опоравак) у шаблону контејнера, па поново провери.",
@@ -2032,8 +2030,6 @@ const sr: Partial<Translations> = {
   "recovery.step5": "Твој комплет за опоравак",
   "recovery.kitHint": "Преузми и сачувај свој комплет за опоравак негде безбедно — садржи кључ за шифровање и тачне restic команде за враћање чак и без BombVault-а.",
   "recovery.kitDownload": "Преузми комплет за опоравак",
-  "recovery.freshNudge": "Опорављаш се са претходног сервера или после поновне израде? Опорави своје постојеће резервне копије.",
-  "recovery.freshNudgeCta": "Иди на Опоравак",
 
   // Settings — section tabs + schedule group headings + subtitle
   "settings.tab.general": "Опште",
@@ -4179,6 +4175,32 @@ const sr: Partial<Translations> = {
   "tile.info.bugReport": "Пријава грешке",
   "tile.info.download": "Преузми",
   "tile.search.former": "У BombVault 9.9 засебан језичак, сада у одељку {tab}",
+  "welcome.title": "Добро дошли у BombVault",
+  "welcome.leadUnraid": "Прави резервне копије контејнера, ВМ, Flash-а и фасцикли на твом Unraid серверу. У три корака све је заштићено.",
+  "welcome.lead": "Прави резервне копије контејнера, ВМ и фасцикли на твом серверу. У три корака све је заштићено.",
+  "welcome.restore": "Врати из резервне копије",
+  "welcome.start": "Хајде да почнемо",
+  "welcome.restoreHint": "Да ли ти је BombVault већ познат? Онда „Врати из резервне копије“ враћа све, укључујући подешавања.",
+  "firstSteps.title": "Први кораци",
+  "firstSteps.hint": "Остаје овде док се прва резервна копија не заврши.",
+  "firstSteps.sections": "Изабери одељке",
+  "firstSteps.sectionsSub": "Шта се копира",
+  "firstSteps.sectionsHint": "Укључи оно што BombVault треба да копира.",
+  "firstSteps.locationSub": "Куда иду резервне копије",
+  "firstSteps.locationHint": "Куда иду резервне копије. Најсигурније је друго одредиште ван куће, на пример Storage Box или Backblaze B2.",
+  "firstSteps.backup": "Прва резервна копија",
+  "firstSteps.backupSub": "После тога се покреће само сваке ноћи",
+  "firstSteps.found": "BombVault је нашао {list}.",
+  "firstSteps.found.containers": "one={n} контејнер|few={n} контејнера|other={n} контејнера",
+  "firstSteps.found.vms": "{n} ВМ",
+  "firstSteps.found.folders": "one={n} фасциклу|few={n} фасцикле|other={n} фасцикли",
+  "firstSteps.found.datasets": "one={n} ZFS dataset|few={n} ZFS dataset-а|other={n} ZFS dataset-а",
+  "firstSteps.found.flash": "Flash",
+  "firstSteps.foundCount": "Пронађено: {n}",
+  "firstSteps.ownSettings": "Сопствена подешавања BombVault-а",
+  "firstSteps.waiting": "Чека прву копију: {n}",
+  "firstSteps.notProtected": "Незаштићено: {n}",
+  "firstSteps.more": "и још {n}",
   "fleet.kindAndroid": "Android апликација",
   "pairing.qrCaption": "Скенирај овај код апликацијом BombVault да упариш телефон.",
 };

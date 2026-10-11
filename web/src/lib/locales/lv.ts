@@ -47,7 +47,6 @@ const lv: Partial<Translations> = {
   "about.mail": "E-pasts",
 
   // Dashboard
-  "dashboard.title": "Vadības panelis",
   "dashboard.summaryHealth": "Atjaunošanas punkts",
   "dashboard.summaryNextBackup": "Nākamā rezerves kopija",
   "dashboard.summaryNextIn": "pēc {countdown}",
@@ -1545,7 +1544,7 @@ const lv: Partial<Translations> = {
   "config.backupNow": "Dublēt iestatījumus tagad",
   "config.backingUp": "Dublē…",
   "config.snapshotsTitle": "Iestatījumu rezerves kopijas",
-  "config.snapshotsHint": "Lai atjaunotu šos iestatījumus atjaunotā serverī, izmantojiet cilni Atkopšana. Iestatījumu atjaunošana restartē BombVault, lai tos piemērotu, tāpēc tas dzīvo tur kopā ar pārējo katastrofu atkopšanas plūsmu.",
+  "config.snapshotsHint": "Lai atjaunotu šos iestatījumus atjaunotā serverī, izmantojiet cilni Atjaunošana. Iestatījumu atjaunošana restartē BombVault, lai tos piemērotu, tāpēc tas dzīvo tur kopā ar pārējo katastrofu atkopšanas plūsmu.",
 
   // Receiver dashboard
   "receiver.title": "Uztvērējs",
@@ -1984,7 +1983,6 @@ const lv: Partial<Translations> = {
   "vm.ssh.guide": "Pilnīga iestatīšanas un tīkla rokasgrāmata",
 
   // Guided Recovery tab
-  "nav.recovery": "Atkopšana",
   // Step 1
   "recovery.step1": "Vai BombVault var nolasīt jūsu rezerves kopijas?",
   "recovery.appKeyExplain": "Lai nolasītu esošās rezerves kopijas, šim konteinerim nepieciešams TĀDS PATS APP_KEY, kāds izmantots iepriekš. Tas atrodas jūsu atkopšanas komplektā. Iestatiet to Unraid konteinera veidnē, ja tas vēl nav iestatīts, un pēc tam pārbaudiet vēlreiz.",
@@ -2045,8 +2043,6 @@ const lv: Partial<Translations> = {
   "recovery.kitHint": "Lejupielādējiet un glabājiet savu atkopšanas komplektu drošā vietā. Tajā ir šifrēšanas atslēga un precīzas restic komandas atjaunošanai pat bez BombVault.",
   "recovery.kitDownload": "Lejupielādēt atkopšanas komplektu",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Atjaunojat no iepriekšēja servera vai pēc atkārtotas izveides? Atjaunojiet savas esošās rezerves kopijas.",
-  "recovery.freshNudgeCta": "Doties uz Atkopšanu",
 
   // Settings — section tabs
   "settings.tab.general": "Vispārīgi",
@@ -4195,6 +4191,32 @@ const lv: Partial<Translations> = {
   "tile.info.bugReport": "Kļūdas ziņojums",
   "tile.info.download": "Lejupielādēt",
   "tile.search.former": "BombVault 9.9 tā bija atsevišķa cilne, tagad: {tab}",
+  "welcome.title": "Laipni lūdzam BombVault lietotnē",
+  "welcome.leadUnraid": "Veido tava Unraid servera konteineru, VM, Flash un mapju rezerves kopijas. Trīs soļos viss ir aizsargāts.",
+  "welcome.lead": "Veido tava servera konteineru, VM un mapju rezerves kopijas. Trīs soļos viss ir aizsargāts.",
+  "welcome.restore": "Atjaunot no rezerves kopijas",
+  "welcome.start": "Sāksim",
+  "welcome.restoreHint": "Vai BombVault tev jau ir pazīstams? Tad “Atjaunot no rezerves kopijas” atgriež visu, arī iestatījumus.",
+  "firstSteps.title": "Pirmie soļi",
+  "firstSteps.hint": "Paliek šeit, līdz pabeigta pirmā rezerves kopija.",
+  "firstSteps.sections": "Izvēlies sadaļas",
+  "firstSteps.sectionsSub": "Kas tiek kopēts",
+  "firstSteps.sectionsHint": "Ieslēdz to, ko BombVault jākopē.",
+  "firstSteps.locationSub": "Kurp iet rezerves kopijas",
+  "firstSteps.locationHint": "Kurp iet rezerves kopijas. Drošākais ir otrs mērķis ārpus mājām, piemēram, Storage Box vai Backblaze B2.",
+  "firstSteps.backup": "Pirmā rezerves kopija",
+  "firstSteps.backupSub": "Pēc tam tā notiek pati katru nakti",
+  "firstSteps.found": "BombVault atrada {list}.",
+  "firstSteps.found.containers": "zero={n} konteineru|one={n} konteineru|other={n} konteinerus",
+  "firstSteps.found.vms": "{n} VM",
+  "firstSteps.found.folders": "zero={n} mapju|one={n} mapi|other={n} mapes",
+  "firstSteps.found.datasets": "zero={n} ZFS datu kopu|one={n} ZFS datu kopu|other={n} ZFS datu kopas",
+  "firstSteps.found.flash": "Flash",
+  "firstSteps.foundCount": "Atrasts: {n}",
+  "firstSteps.ownSettings": "Pašas BombVault iestatījumi",
+  "firstSteps.waiting": "Gaida pirmo kopiju: {n}",
+  "firstSteps.notProtected": "Neaizsargāts: {n}",
+  "firstSteps.more": "un vēl {n}",
   "fleet.kindAndroid": "Android lietotne",
   "pairing.qrCaption": "Noskenējiet šo kodu ar BombVault lietotni, lai sapārotu tālruni.",
 };

@@ -43,11 +43,9 @@ const ko: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "의견",
   "about.mail": "메일",
-  "nav.recovery": "복구",
   "nav.config": "셀프 백업",
 
   // Dashboard
-  "dashboard.title": "대시보드",
   "dashboard.summaryHealth": "복원 지점",
   "dashboard.summaryNextBackup": "다음 백업",
   "dashboard.summaryNextIn": "{countdown} 후",
@@ -323,7 +321,7 @@ const ko: Partial<Translations> = {
   "settings.encryptionPasswordWhere":
     "이 비밀번호를 직접 입력할 일은 없습니다. BombVault가 호출할 때마다 APP_KEY에서 파생합니다. 값 자체는 복구 키트에 '파생된 restic 비밀번호'로 적혀 있으며, 저장소에 restic을 손으로 실행할 때 필요한 것이 바로 이것입니다.",
   "settings.encryptionHint":
-    "암호화는 저장소를 만들 때 확정되므로, 이 설정은 '새' 저장소를 어떻게 만들지만 결정합니다. 이미 있는 저장소에 대해서는 BombVault가 저장소 자체에서 방식을 읽습니다(복구 페이지 참고). 기존 저장소를 두고 이 값을 바꾸면 restic이 그것을 열지 못하게 될 뿐입니다.",
+    "암호화는 저장소를 만들 때 확정되므로, 이 설정은 '새' 저장소를 어떻게 만들지만 결정합니다. 이미 있는 저장소에 대해서는 BombVault가 저장소 자체에서 방식을 읽습니다(복원 페이지 참고). 기존 저장소를 두고 이 값을 바꾸면 restic이 그것을 열지 못하게 될 뿐입니다.",
   "settings.paths": "백업 경로",
   "settings.pathsHint": "호스트 마운트 루트({root}) 아래의 상대 하위 경로입니다. 찾아보기를 클릭해 디렉터리를 탐색하거나 경로를 직접 입력하세요.",
   "settings.containersPath": "컨테이너 경로",
@@ -998,8 +996,6 @@ const ko: Partial<Translations> = {
   "recovery.step5": "복구 키트",
   "recovery.kitHint": "복구 키트를 다운로드하여 안전한 곳에 보관하세요. 암호화 키와 BombVault 없이도 복원할 수 있는 정확한 restic 명령이 들어 있습니다.",
   "recovery.kitDownload": "복구 키트 다운로드",
-  "recovery.freshNudge": "이전 서버나 재구축에서 복원하시나요? 기존 백업을 복구하세요.",
-  "recovery.freshNudgeCta": "복구로 이동",
 
   // Recovery — restore BombVault's own settings (config)
   "recovery.stepConfig": "BombVault 자체 설정 복원",
@@ -1558,7 +1554,7 @@ const ko: Partial<Translations> = {
   "config.backupNow": "지금 설정 백업",
   "config.backingUp": "백업 중…",
   "config.snapshotsTitle": "설정 백업",
-  "config.snapshotsHint": "이 설정을 재구축된 서버에 복원하려면 복구 탭을 사용하세요. 설정을 복원하면 BombVault가 재시작되어 적용되므로, 나머지 재해 복구 흐름과 함께 그곳에 있습니다.",
+  "config.snapshotsHint": "이 설정을 재구축된 서버에 복원하려면 복원 탭을 사용하세요. 설정을 복원하면 BombVault가 재시작되어 적용되므로, 나머지 재해 복구 흐름과 함께 그곳에 있습니다.",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "제외 패턴",
@@ -4178,6 +4174,32 @@ const ko: Partial<Translations> = {
   "tile.info.bugReport": "버그 신고",
   "tile.info.download": "다운로드",
   "tile.search.former": "BombVault 9.9에서는 별도 탭이었고, 지금은 다음 위치에 있습니다: {tab}",
+  "welcome.title": "BombVault에 오신 것을 환영합니다",
+  "welcome.leadUnraid": "Unraid 서버의 컨테이너, 가상 머신, 플래시, 폴더를 백업합니다. 세 단계면 보호가 끝납니다.",
+  "welcome.lead": "서버의 컨테이너, 가상 머신, 폴더를 백업합니다. 세 단계면 보호가 끝납니다.",
+  "welcome.restore": "백업에서 복원",
+  "welcome.start": "시작하기",
+  "welcome.restoreHint": "전에 BombVault를 사용한 적이 있나요? 그렇다면 “백업에서 복원”이 설정을 포함해 모든 것을 되돌려 줍니다.",
+  "firstSteps.title": "첫 단계",
+  "firstSteps.hint": "첫 백업이 끝날 때까지 여기에 남아 있습니다.",
+  "firstSteps.sections": "섹션 선택",
+  "firstSteps.sectionsSub": "백업할 대상",
+  "firstSteps.sectionsHint": "BombVault가 백업할 항목을 켜세요.",
+  "firstSteps.locationSub": "백업이 저장되는 위치",
+  "firstSteps.locationHint": "백업이 저장되는 위치입니다. 가장 안전한 방법은 외부에 두 번째 대상을 두는 것이며, 예를 들어 Storage Box나 Backblaze B2가 있습니다.",
+  "firstSteps.backup": "첫 백업",
+  "firstSteps.backupSub": "이후에는 매일 밤 자동으로 실행됩니다",
+  "firstSteps.found": "BombVault가 찾은 항목: {list}",
+  "firstSteps.found.containers": "컨테이너 {n}개",
+  "firstSteps.found.vms": "가상 머신 {n}대",
+  "firstSteps.found.folders": "폴더 {n}개",
+  "firstSteps.found.datasets": "ZFS 데이터셋 {n}개",
+  "firstSteps.found.flash": "플래시",
+  "firstSteps.foundCount": "{n}개 발견",
+  "firstSteps.ownSettings": "BombVault 자체 설정",
+  "firstSteps.waiting": "첫 백업 대기 중: {n}",
+  "firstSteps.notProtected": "보호되지 않음: {n}",
+  "firstSteps.more": "외 {n}개",
   "fleet.kindAndroid": "Android 앱",
   "pairing.qrCaption": "휴대폰을 페어링하려면 BombVault 앱으로 이 코드를 스캔하세요.",
 };

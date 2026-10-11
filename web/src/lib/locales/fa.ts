@@ -47,7 +47,6 @@ const fa: Partial<Translations> = {
   "about.mail": "ایمیل",
 
   // Dashboard
-  "dashboard.title": "داشبورد",
   "dashboard.summaryHealth": "نقطه بازیابی",
   "dashboard.summaryNextBackup": "پشتیبان بعدی",
   "dashboard.summaryNextIn": "تا {countdown} دیگر",
@@ -1984,7 +1983,6 @@ const fa: Partial<Translations> = {
   "vm.ssh.guide": "راهنمای کامل راه‌اندازی و شبکه",
 
   // Guided Recovery tab
-  "nav.recovery": "بازیابی",
   // Step 1
   "recovery.step1": "آیا BombVault می‌تواند پشتیبان‌های شما را بخواند؟",
   "recovery.appKeyExplain": "برای خواندن پشتیبان‌های موجود، این کانتینر به همان APP_KEY قبلی نیاز دارد. این در کیت بازیابی شماست. اگر هنوز تنظیم نشده، آن را در قالب کانتینر Unraid تنظیم کنید، سپس دوباره بررسی کنید.",
@@ -2045,8 +2043,6 @@ const fa: Partial<Translations> = {
   "recovery.kitHint": "کیت بازیابی خود را دانلود کرده و جایی امن نگه دارید: شامل کلید رمزنگاری و دستورهای دقیق restic برای بازیابی حتی بدون BombVault است.",
   "recovery.kitDownload": "دانلود کیت بازیابی",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "در حال بازیابی از یک سرور قبلی یا پس از بازسازی هستید؟ پشتیبان‌های موجود خود را بازیابی کنید.",
-  "recovery.freshNudgeCta": "رفتن به بازیابی",
 
   // Settings — section tabs
   "settings.tab.general": "عمومی",
@@ -4195,6 +4191,32 @@ const fa: Partial<Translations> = {
   "tile.info.bugReport": "گزارش خطا",
   "tile.info.download": "دانلود",
   "tile.search.former": "در BombVault 9.9 یک زبانهٔ جداگانه بود، حالا در «{tab}»",
+  "welcome.title": "به BombVault خوش آمدید",
+  "welcome.leadUnraid": "از کانتینرها، ماشین‌های مجازی، فلش و پوشه‌های سرور Unraid شما پشتیبان می‌گیرد. در سه گام محافظت می‌شوید.",
+  "welcome.lead": "از کانتینرها، ماشین‌های مجازی و پوشه‌های سرور شما پشتیبان می‌گیرد. در سه گام محافظت می‌شوید.",
+  "welcome.restore": "بازیابی از یک پشتیبان",
+  "welcome.start": "شروع کنیم",
+  "welcome.restoreHint": "قبلاً از BombVault استفاده کرده‌اید؟ در این صورت «بازیابی از یک پشتیبان» همه‌چیز را برمی‌گرداند، از جمله تنظیمات.",
+  "firstSteps.title": "نخستین گام‌ها",
+  "firstSteps.hint": "تا پایان نخستین پشتیبان‌گیری همین‌جا می‌ماند.",
+  "firstSteps.sections": "انتخاب بخش‌ها",
+  "firstSteps.sectionsSub": "از چه چیزی پشتیبان گرفته می‌شود",
+  "firstSteps.sectionsHint": "آنچه BombVault باید پشتیبان بگیرد را روشن کنید.",
+  "firstSteps.locationSub": "پشتیبان‌ها کجا می‌روند",
+  "firstSteps.locationHint": "پشتیبان‌ها کجا می‌روند. امن‌ترین حالت یک مقصد دوم بیرون از محل است، مثل Storage Box یا Backblaze B2.",
+  "firstSteps.backup": "نخستین پشتیبان‌گیری",
+  "firstSteps.backupSub": "پس از آن هر شب خودکار اجرا می‌شود",
+  "firstSteps.found": "BombVault {list} را پیدا کرد.",
+  "firstSteps.found.containers": "{n} کانتینر",
+  "firstSteps.found.vms": "{n} ماشین مجازی",
+  "firstSteps.found.folders": "{n} پوشه",
+  "firstSteps.found.datasets": "{n} ZFS dataset",
+  "firstSteps.found.flash": "فلش",
+  "firstSteps.foundCount": "{n} مورد پیدا شد",
+  "firstSteps.ownSettings": "تنظیمات خود BombVault",
+  "firstSteps.waiting": "{n} در انتظار نخستین پشتیبان‌گیری",
+  "firstSteps.notProtected": "{n} بدون محافظت",
+  "firstSteps.more": "و {n} مورد دیگر",
   "fleet.kindAndroid": "برنامه اندروید",
   "pairing.qrCaption": "این کد را با برنامه BombVault اسکن کنید تا گوشی‌ای جفت شود.",
 };

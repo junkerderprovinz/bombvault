@@ -10,6 +10,7 @@ import type {
   BackupItem,
   DomainStatus,
   Run,
+  Settings,
   StorageLocation,
   StorageLocationSection,
 } from "../../lib/api";
@@ -188,6 +189,11 @@ export const server = {
   detection: false,
   /** Encryption is on and the recovery kit is not confirmed. */
   kitDue: false,
+  /** What the settings hold beyond the recovery kit. */
+  settings: {} as Partial<Settings>,
+  platform: "unraid",
+  /** Why the server refuses to save the settings, "" while it saves them. */
+  saveRefused: "",
   /** Every call to a function that changes something, by its name. */
   calls: [] as { name: string; args: unknown[] }[],
 };
@@ -201,6 +207,9 @@ export function resetServer(): void {
     findings: [],
     detection: false,
     kitDue: false,
+    settings: {},
+    platform: "unraid",
+    saveRefused: "",
     calls: [],
   });
 }
@@ -245,7 +254,17 @@ export function stagedApi<M extends object>(actual: M): M {
     getCoverage: () => Promise.resolve({ ok: true, coverage: { total: 0, protected: 0, domains: [] } }),
     getScheduleNext: () => Promise.resolve([]),
     getSettings: () =>
-      Promise.resolve({ ok: true, settings: { encryptionEnabled: server.kitDue, recoveryKitAck: false } }),
+      Promise.resolve({
+        ok: true,
+        settings: { encryptionEnabled: server.kitDue, recoveryKitAck: false, ...server.settings },
+        platform: server.platform,
+      }),
+    putSettings: (settings: Settings) => {
+      server.calls.push({ name: "putSettings", args: [settings] });
+      if (server.saveRefused) return Promise.resolve({ ok: false, error: server.saveRefused });
+      server.settings = settings;
+      return Promise.resolve({ ok: true });
+    },
     getAnomalySummary: () => Promise.resolve({ ok: true, summary: summary() }),
     getAnomalies: () => Promise.resolve({ ok: true, anomalies: server.findings, nextCursor: "" }),
     getStats: () => Promise.resolve({ ok: false }),

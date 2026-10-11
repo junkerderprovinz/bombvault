@@ -47,7 +47,6 @@ const ms: Partial<Translations> = {
   "about.mail": "E-mel",
 
   // Dashboard
-  "dashboard.title": "Papan Pemuka",
   "dashboard.summaryHealth": "Titik pemulihan",
   "dashboard.summaryNextBackup": "Sandaran seterusnya",
   "dashboard.summaryNextIn": "dalam {countdown}",
@@ -1984,7 +1983,6 @@ const ms: Partial<Translations> = {
   "vm.ssh.guide": "Panduan persediaan & rangkaian lengkap",
 
   // Guided Recovery tab
-  "nav.recovery": "Pemulihan",
   // Step 1
   "recovery.step1": "Bolehkah BombVault membaca sandaran anda?",
   "recovery.appKeyExplain": "Untuk membaca sandaran sedia ada, bekas ini memerlukan APP_KEY YANG SAMA seperti yang digunakan sebelum ini. Ia ada dalam kit pemulihan anda. Tetapkannya dalam templat bekas Unraid jika belum lagi, kemudian semak semula.",
@@ -2045,8 +2043,6 @@ const ms: Partial<Translations> = {
   "recovery.kitHint": "Muat turun dan simpan kit pemulihan anda di tempat yang selamat. Ia mengandungi kunci penyulitan dan arahan restic yang tepat untuk memulihkan walaupun tanpa BombVault.",
   "recovery.kitDownload": "Muat turun kit pemulihan",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Memulihkan daripada pelayan sebelumnya atau selepas pembinaan semula? Pulihkan sandaran sedia ada anda.",
-  "recovery.freshNudgeCta": "Pergi ke Pemulihan",
 
   // Settings — section tabs
   "settings.tab.general": "Umum",
@@ -4195,6 +4191,32 @@ const ms: Partial<Translations> = {
   "tile.info.bugReport": "Laporan pepijat",
   "tile.info.download": "Muat turun",
   "tile.search.former": "Tab tersendiri dalam BombVault 9.9, kini di bawah {tab}",
+  "welcome.title": "Selamat datang ke BombVault",
+  "welcome.leadUnraid": "Menyandarkan bekas, VM, Flash dan folder pada pelayan Unraid anda. Dalam tiga langkah, anda dilindungi.",
+  "welcome.lead": "Menyandarkan bekas, VM dan folder pada pelayan anda. Dalam tiga langkah, anda dilindungi.",
+  "welcome.restore": "Pulihkan daripada sandaran",
+  "welcome.start": "Mari mulakan",
+  "welcome.restoreHint": "Pernah guna BombVault sebelum ini? Maka “Pulihkan daripada sandaran” memulihkan semuanya, termasuk tetapan.",
+  "firstSteps.title": "Langkah pertama",
+  "firstSteps.hint": "Kekal di sini sehingga sandaran pertama selesai.",
+  "firstSteps.sections": "Pilih bahagian",
+  "firstSteps.sectionsSub": "Apa yang disandarkan",
+  "firstSteps.sectionsHint": "Hidupkan apa yang perlu disandarkan oleh BombVault.",
+  "firstSteps.locationSub": "Ke mana sandaran dihantar",
+  "firstSteps.locationHint": "Ke mana sandaran dihantar. Yang paling selamat ialah destinasi kedua di luar premis, seperti Storage Box atau Backblaze B2.",
+  "firstSteps.backup": "Sandaran pertama",
+  "firstSteps.backupSub": "Selepas itu ia berjalan sendiri setiap malam",
+  "firstSteps.found": "BombVault menjumpai {list}.",
+  "firstSteps.found.containers": "{n} bekas",
+  "firstSteps.found.vms": "{n} VM",
+  "firstSteps.found.folders": "{n} folder",
+  "firstSteps.found.datasets": "{n} set data ZFS",
+  "firstSteps.found.flash": "Flash",
+  "firstSteps.foundCount": "{n} dijumpai",
+  "firstSteps.ownSettings": "Tetapan BombVault sendiri",
+  "firstSteps.waiting": "{n} menunggu sandaran pertama",
+  "firstSteps.notProtected": "{n} tidak dilindungi",
+  "firstSteps.more": "dan {n} lagi",
   "fleet.kindAndroid": "Aplikasi Android",
   "pairing.qrCaption": "Imbas kod ini dengan aplikasi BombVault untuk menggandingkan telefon.",
 };

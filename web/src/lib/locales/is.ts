@@ -47,7 +47,6 @@ const is: Partial<Translations> = {
   "about.mail": "Tölvupóstur",
 
   // Dashboard
-  "dashboard.title": "Stjórnborð",
   "dashboard.summaryHealth": "Endurheimtupunktur",
   "dashboard.summaryNextBackup": "Næsta afritun",
   "dashboard.summaryNextIn": "eftir {countdown}",
@@ -1984,7 +1983,6 @@ const is: Partial<Translations> = {
   "vm.ssh.guide": "Fullkominn uppsetningar- og netleiðbeiningar",
 
   // Guided Recovery tab
-  "nav.recovery": "Endurheimt",
   // Step 1
   "recovery.step1": "Getur BombVault lesið afritin þín?",
   "recovery.appKeyExplain": "Til að lesa fyrirliggjandi afrit þarf þessi gámur SAMA APP_KEY og var notaður áður. Það er í endurheimtarpakkanum þínum. Stilltu það í Unraid-gámasniðmátinu ef það er ekki þegar gert, athugaðu svo aftur.",
@@ -2045,8 +2043,6 @@ const is: Partial<Translations> = {
   "recovery.kitHint": "Sæktu og geymdu endurheimtarpakkann þinn á öruggum stað. Hann inniheldur dulkóðunarlykilinn og nákvæmar restic-skipanir til að endurheimta jafnvel án BombVault.",
   "recovery.kitDownload": "Sækja endurheimtarpakka",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Ertu að endurheimta frá fyrri netþjóni eða eftir endurbyggingu? Endurheimtu fyrirliggjandi afritin þín.",
-  "recovery.freshNudgeCta": "Fara í Endurheimt",
 
   // Settings — section tabs
   "settings.tab.general": "Almennt",
@@ -4195,6 +4191,32 @@ const is: Partial<Translations> = {
   "tile.info.bugReport": "Villuskýrsla",
   "tile.info.download": "Sækja",
   "tile.search.former": "Var sérstakur flipi í BombVault 9.9, núna hér: {tab}",
+  "welcome.title": "Velkomin í BombVault",
+  "welcome.leadUnraid": "Afritar gáma, sýndarvélar, Flash og möppur á Unraid-þjóninum þínum. Á þremur skrefum er allt varið.",
+  "welcome.lead": "Afritar gáma, sýndarvélar og möppur á þjóninum þínum. Á þremur skrefum er allt varið.",
+  "welcome.restore": "Endurheimta úr afriti",
+  "welcome.start": "Byrjum",
+  "welcome.restoreHint": "Hefurðu notað BombVault áður? Þá sækir „Endurheimta úr afriti“ allt aftur, líka stillingarnar.",
+  "firstSteps.title": "Fyrstu skref",
+  "firstSteps.hint": "Helst hér þar til fyrsta afritið er búið.",
+  "firstSteps.sections": "Veldu svæði",
+  "firstSteps.sectionsSub": "Hvað er afritað",
+  "firstSteps.sectionsHint": "Kveiktu á því sem BombVault á að afrita.",
+  "firstSteps.locationSub": "Hvert afritin fara",
+  "firstSteps.locationHint": "Hvert afritin fara. Öruggast er annar áfangastaður utan heimilisins, til dæmis Storage Box eða Backblaze B2.",
+  "firstSteps.backup": "Fyrsta afritið",
+  "firstSteps.backupSub": "Eftir það keyrir það sjálfkrafa á hverri nóttu",
+  "firstSteps.found": "BombVault fann {list}.",
+  "firstSteps.found.containers": "one={n} gám|other={n} gáma",
+  "firstSteps.found.vms": "one={n} sýndarvél|other={n} sýndarvélar",
+  "firstSteps.found.folders": "one={n} möppu|other={n} möppur",
+  "firstSteps.found.datasets": "{n} ZFS dataset",
+  "firstSteps.found.flash": "Flash",
+  "firstSteps.foundCount": "one={n} fannst|other={n} fundust",
+  "firstSteps.ownSettings": "Eigin stillingar BombVault",
+  "firstSteps.waiting": "one={n} bíður eftir fyrsta afritinu|other={n} bíða eftir fyrsta afritinu",
+  "firstSteps.notProtected": "one={n} óvarið|other={n} óvarin",
+  "firstSteps.more": "og {n} í viðbót",
   "fleet.kindAndroid": "Android app",
   "pairing.qrCaption": "Skannaðu þennan kóða með BombVault appinu til að para síma.",
 };

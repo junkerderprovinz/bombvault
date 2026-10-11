@@ -47,7 +47,6 @@ const ca: Partial<Translations> = {
   "about.mail": "Correu",
 
   // Dashboard
-  "dashboard.title": "Tauler",
   "dashboard.summaryHealth": "Punt de recuperació",
   "dashboard.summaryNextBackup": "Pròxima còpia",
   "dashboard.summaryNextIn": "d’aquí a {countdown}",
@@ -394,7 +393,7 @@ const ca: Partial<Translations> = {
   "settings.encryptionOff": "Desactivat (sense contrasenya)",
   "settings.encryptionPasswordWhere":
     "Aquesta contrasenya no la escrius mai: BombVault la deriva de l'APP_KEY a cada crida. El valor és al teu kit de recuperació, com a contrasenya restic derivada, i és el que necessites per executar restic a mà contra un dipòsit.",
-  "settings.encryptionHint": "El xifratge es fixa per repositori quan es crea, així que aquest paràmetre només decideix com es fa un repositori NOU. Per a un que ja existeix, BombVault llegeix el mode del repositori mateix. Mira la pàgina de Recuperació. Canviar-ho davant d'un repositori existent només impedeix que restic l'obri.",
+  "settings.encryptionHint": "El xifratge es fixa per repositori quan es crea, així que aquest paràmetre només decideix com es fa un repositori NOU. Per a un que ja existeix, BombVault llegeix el mode del repositori mateix. Mira la pàgina de Restauració. Canviar-ho davant d'un repositori existent només impedeix que restic l'obri.",
 
   // Encryption-key recovery kit
   "recovery.title": "Kit de recuperació",
@@ -1545,7 +1544,7 @@ const ca: Partial<Translations> = {
   "config.backupNow": "Fes còpia de la configuració ara",
   "config.backingUp": "Fent còpia…",
   "config.snapshotsTitle": "Còpies de configuració",
-  "config.snapshotsHint": "Per restaurar aquesta configuració en un servidor reconstruït, fes servir la pestanya de Recuperació. Restaurar la configuració reinicia BombVault per aplicar-la, per això hi viu junt amb la resta del flux de recuperació d'avaries.",
+  "config.snapshotsHint": "Per restaurar aquesta configuració en un servidor reconstruït, fes servir la pestanya de Restauració. Restaurar la configuració reinicia BombVault per aplicar-la, per això hi viu junt amb la resta del flux de recuperació d'avaries.",
 
   // Receiver dashboard
   "receiver.title": "Receptor",
@@ -1984,7 +1983,6 @@ const ca: Partial<Translations> = {
   "vm.ssh.guide": "Guia completa de configuració i xarxa",
 
   // Guided Recovery tab
-  "nav.recovery": "Recuperació",
   // Step 1
   "recovery.step1": "Pot BombVault llegir les teves còpies?",
   "recovery.appKeyExplain": "Per llegir còpies existents, aquest contenidor necessita la MATEIXA APP_KEY que feia servir abans. És al teu kit de recuperació. Configura-la a la plantilla del contenidor Unraid si encara no ho està, i torna a comprovar.",
@@ -2045,8 +2043,6 @@ const ca: Partial<Translations> = {
   "recovery.kitHint": "Descarrega i guarda el teu kit de recuperació en un lloc segur. Conté la clau de xifratge i les ordres restic exactes per restaurar fins i tot sense BombVault.",
   "recovery.kitDownload": "Descarrega el kit de recuperació",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Restaurant des d'un servidor anterior o després d'una reconstrucció? Recupera les teves còpies existents.",
-  "recovery.freshNudgeCta": "Ves a Recuperació",
 
   // Settings — section tabs
   "settings.tab.general": "General",
@@ -4195,6 +4191,32 @@ const ca: Partial<Translations> = {
   "tile.info.bugReport": "Informe d'error",
   "tile.info.download": "Baixa",
   "tile.search.former": "A BombVault 9.9 era una pestanya pròpia, ara és a «{tab}»",
+  "welcome.title": "Et donem la benvinguda a BombVault",
+  "welcome.leadUnraid": "Fa còpies de seguretat dels contenidors, les MV, la unitat Flash i les carpetes del teu servidor Unraid. En tres passos ho tens protegit.",
+  "welcome.lead": "Fa còpies de seguretat dels contenidors, les MV i les carpetes del teu servidor. En tres passos ho tens protegit.",
+  "welcome.restore": "Restaura des d'una còpia de seguretat",
+  "welcome.start": "Som-hi",
+  "welcome.restoreHint": "Ja has fet servir BombVault abans? Llavors «Restaura des d'una còpia de seguretat» ho recupera tot, també la configuració.",
+  "firstSteps.title": "Primers passos",
+  "firstSteps.hint": "Es queda aquí fins que acabi la primera còpia de seguretat.",
+  "firstSteps.sections": "Tria les seccions",
+  "firstSteps.sectionsSub": "De què es fa còpia",
+  "firstSteps.sectionsHint": "Activa el que BombVault ha de copiar.",
+  "firstSteps.locationSub": "On van les còpies",
+  "firstSteps.locationHint": "On van les còpies de seguretat. El més segur és una segona destinació fora de casa, com una Storage Box o Backblaze B2.",
+  "firstSteps.backup": "Primera còpia de seguretat",
+  "firstSteps.backupSub": "Després s'executa sola cada nit",
+  "firstSteps.found": "BombVault ha trobat {list}.",
+  "firstSteps.found.containers": "one={n} contenidor|other={n} contenidors",
+  "firstSteps.found.vms": "{n} MV",
+  "firstSteps.found.folders": "one={n} carpeta|other={n} carpetes",
+  "firstSteps.found.datasets": "{n} datasets ZFS",
+  "firstSteps.found.flash": "la unitat Flash",
+  "firstSteps.foundCount": "one={n} trobat|other={n} trobats",
+  "firstSteps.ownSettings": "La configuració pròpia de BombVault",
+  "firstSteps.waiting": "one={n} espera la primera còpia|other={n} esperen la primera còpia",
+  "firstSteps.notProtected": "{n} sense protecció",
+  "firstSteps.more": "i {n} més",
   "fleet.kindAndroid": "App d'Android",
   "pairing.qrCaption": "Escaneja aquest codi amb l'app de BombVault per aparellar un telèfon.",
 };

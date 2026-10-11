@@ -47,7 +47,6 @@ const et: Partial<Translations> = {
   "about.mail": "E-kiri",
 
   // Dashboard
-  "dashboard.title": "Töölaud",
   "dashboard.summaryHealth": "Taastepunkt",
   "dashboard.summaryNextBackup": "Järgmine varundus",
   "dashboard.summaryNextIn": "{countdown} pärast",
@@ -1545,7 +1544,7 @@ const et: Partial<Translations> = {
   "config.backupNow": "Varunda seaded kohe",
   "config.backingUp": "Varundamine…",
   "config.snapshotsTitle": "Seadete varundused",
-  "config.snapshotsHint": "Nende seadete taastamiseks ülesehitatud serveril kasuta Taaste vahekaarti. Seadete taastamine käivitab BombVaulti uuesti nende rakendamiseks, seetõttu elab see seal koos ülejäänud õnnetusjärgse taaste vooluga.",
+  "config.snapshotsHint": "Nende seadete taastamiseks ülesehitatud serveril kasuta Taastamise vahekaarti. Seadete taastamine käivitab BombVaulti uuesti nende rakendamiseks, seetõttu elab see seal koos ülejäänud õnnetusjärgse taaste vooluga.",
 
   // Receiver dashboard
   "receiver.title": "Vastuvõtja",
@@ -1984,7 +1983,6 @@ const et: Partial<Translations> = {
   "vm.ssh.guide": "Täielik seadistus- ja võrgujuhend",
 
   // Guided Recovery tab
-  "nav.recovery": "Taastamine",
   // Step 1
   "recovery.step1": "Kas BombVault suudab su varundusi lugeda?",
   "recovery.appKeyExplain": "Olemasolevate varunduste lugemiseks vajab see konteiner SAMA APP_KEY-d, mida varem kasutati. See on sinu taastekomplektis. Määra see Unraidi konteineri mallis, kui see pole veel tehtud, ja kontrolli uuesti.",
@@ -2045,8 +2043,6 @@ const et: Partial<Translations> = {
   "recovery.kitHint": "Laadi alla ja hoia oma taastekomplekt turvalises kohas: see sisaldab krüpteeringu võtit ja täpseid restic käske taastamiseks isegi ilma BombVaultita.",
   "recovery.kitDownload": "Laadi alla taastekomplekt",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Taastad varasemast serverist või pärast ülesehitust? Taasta oma olemasolevad varundused.",
-  "recovery.freshNudgeCta": "Mine Taastamise juurde",
 
   // Settings — section tabs
   "settings.tab.general": "Üldine",
@@ -4195,6 +4191,32 @@ const et: Partial<Translations> = {
   "tile.info.bugReport": "Veaaruanne",
   "tile.info.download": "Laadi alla",
   "tile.search.former": "BombVaulti versioonis 9.9 oli see oma vaheleht, nüüd jaotises „{tab}“",
+  "welcome.title": "Tere tulemast BombVaulti",
+  "welcome.leadUnraid": "Varundab sinu Unraid-serveri konteinerid, VM-id, Flashi ja kaustad. Kolme sammuga oled kaitstud.",
+  "welcome.lead": "Varundab sinu serveri konteinerid, VM-id ja kaustad. Kolme sammuga oled kaitstud.",
+  "welcome.restore": "Taasta varundusest",
+  "welcome.start": "Alustame",
+  "welcome.restoreHint": "Oled BombVaulti varem kasutanud? Siis toob „Taasta varundusest“ kõik tagasi, ka seaded.",
+  "firstSteps.title": "Esimesed sammud",
+  "firstSteps.hint": "Jääb siia, kuni esimene varundus on valmis.",
+  "firstSteps.sections": "Vali jaotised",
+  "firstSteps.sectionsSub": "Mida varundatakse",
+  "firstSteps.sectionsHint": "Lülita sisse, mida BombVault peab varundama.",
+  "firstSteps.locationSub": "Kuhu varundused lähevad",
+  "firstSteps.locationHint": "Kuhu varundused lähevad. Kõige turvalisem on teine sihtkoht kodust väljas, näiteks Storage Box või Backblaze B2.",
+  "firstSteps.backup": "Esimene varundus",
+  "firstSteps.backupSub": "Pärast seda käib see iga öö ise",
+  "firstSteps.found": "BombVault leidis {list}.",
+  "firstSteps.found.containers": "one={n} konteineri|other={n} konteinerit",
+  "firstSteps.found.vms": "{n} VM-i",
+  "firstSteps.found.folders": "{n} kausta",
+  "firstSteps.found.datasets": "{n} ZFS-dataseti",
+  "firstSteps.found.flash": "Flashi",
+  "firstSteps.foundCount": "Leitud: {n}",
+  "firstSteps.ownSettings": "BombVaulti enda seaded",
+  "firstSteps.waiting": "Ootab esimest varundust: {n}",
+  "firstSteps.notProtected": "Kaitseta: {n}",
+  "firstSteps.more": "ja veel {n}",
   "fleet.kindAndroid": "Androidi rakendus",
   "pairing.qrCaption": "Skanni seda koodi BombVault rakendusega, et siduda telefon.",
 };

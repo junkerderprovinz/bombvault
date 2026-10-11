@@ -43,11 +43,9 @@ const es: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Comentarios",
   "about.mail": "Correo",
-  "nav.recovery": "Recuperación",
   "nav.config": "Autocopia",
 
   // Dashboard
-  "dashboard.title": "Panel",
   "dashboard.summaryHealth": "Punto de recuperación",
   "dashboard.summaryNextBackup": "Próxima copia",
   "dashboard.summaryNextIn": "en {countdown}",
@@ -323,7 +321,7 @@ const es: Partial<Translations> = {
   "settings.encryptionPasswordWhere":
     "Nunca escribes esa contraseña: BombVault la deriva de la APP_KEY en cada llamada. El valor está en tu kit de recuperación, como la contraseña restic derivada, y es lo que necesitas para ejecutar restic a mano contra un repositorio.",
   "settings.encryptionHint":
-    "El cifrado se fija por repositorio al crearlo, así que este ajuste solo decide cómo se crea un repositorio NUEVO. Para uno que ya existe, BombVault lee el modo del propio repositorio: mira la página de Recuperación. Cambiarlo frente a un repositorio existente solo impide que restic lo abra.",
+    "El cifrado se fija por repositorio al crearlo, así que este ajuste solo decide cómo se crea un repositorio NUEVO. Para uno que ya existe, BombVault lee el modo del propio repositorio: mira la página de Restauración. Cambiarlo frente a un repositorio existente solo impide que restic lo abra.",
   "settings.paths": "Rutas de copia",
   "settings.pathsHint": "Subrutas relativas bajo la raíz del montaje del host ({root}). Haz clic en Examinar para navegar por directorios o escribe una ruta directamente.",
   "settings.containersPath": "Ruta de contenedores",
@@ -1015,8 +1013,6 @@ const es: Partial<Translations> = {
   "recovery.step5": "Tu kit de recuperación",
   "recovery.kitHint": "Descarga y guarda tu kit de recuperación en un lugar seguro. Contiene la clave de cifrado y los comandos restic exactos para restaurar incluso sin BombVault.",
   "recovery.kitDownload": "Descargar kit de recuperación",
-  "recovery.freshNudge": "¿Restaurando desde un servidor anterior o una reconstrucción? Recupera tus copias existentes.",
-  "recovery.freshNudgeCta": "Ir a Recuperación",
 
   // Config backup (BombVault's own settings)
   "config.title": "Autocopia",
@@ -1034,7 +1030,7 @@ const es: Partial<Translations> = {
   "config.backupNow": "Copiar ajustes ahora",
   "config.backingUp": "Copiando…",
   "config.snapshotsTitle": "Copias de configuración",
-  "config.snapshotsHint": "Para restaurar estos ajustes en un servidor reconstruido, usa la pestaña Recuperación. Restaurar los ajustes reinicia BombVault para aplicarlos, por eso vive ahí junto con el resto del flujo de recuperación ante desastres.",
+  "config.snapshotsHint": "Para restaurar estos ajustes en un servidor reconstruido, usa la pestaña Restauración. Restaurar los ajustes reinicia BombVault para aplicarlos, por eso vive ahí junto con el resto del flujo de recuperación ante desastres.",
 
   // Recovery — restore BombVault's own settings step
   "recovery.stepConfig": "Restaurar la propia configuración de BombVault",
@@ -4185,6 +4181,32 @@ const es: Partial<Translations> = {
   "tile.info.bugReport": "Informe de error",
   "tile.info.download": "Descargar",
   "tile.search.former": "En BombVault 9.9 era una pestaña propia, ahora está en «{tab}»",
+  "welcome.title": "Te damos la bienvenida a BombVault",
+  "welcome.leadUnraid": "Hace copias de seguridad de los contenedores, las VMs, la unidad Flash y las carpetas de tu servidor Unraid. En tres pasos tienes todo protegido.",
+  "welcome.lead": "Hace copias de seguridad de los contenedores, las VMs y las carpetas de tu servidor. En tres pasos tienes todo protegido.",
+  "welcome.restore": "Restaurar desde una copia",
+  "welcome.start": "Vamos allá",
+  "welcome.restoreHint": "¿Ya has usado BombVault antes? Entonces «Restaurar desde una copia» lo recupera todo, ajustes incluidos.",
+  "firstSteps.title": "Primeros pasos",
+  "firstSteps.hint": "Se queda aquí hasta que termine la primera copia.",
+  "firstSteps.sections": "Elige las secciones",
+  "firstSteps.sectionsSub": "Qué se copia",
+  "firstSteps.sectionsHint": "Activa lo que BombVault debe copiar.",
+  "firstSteps.locationSub": "Adónde van las copias",
+  "firstSteps.locationHint": "Adónde van las copias de seguridad. Lo más seguro es un segundo destino fuera de casa, como una Storage Box o Backblaze B2.",
+  "firstSteps.backup": "Primera copia",
+  "firstSteps.backupSub": "Después se ejecuta sola cada noche",
+  "firstSteps.found": "BombVault ha encontrado {list}.",
+  "firstSteps.found.containers": "one={n} contenedor|other={n} contenedores",
+  "firstSteps.found.vms": "{n} VMs",
+  "firstSteps.found.folders": "one={n} carpeta|other={n} carpetas",
+  "firstSteps.found.datasets": "one={n} dataset ZFS|other={n} datasets ZFS",
+  "firstSteps.found.flash": "la unidad Flash",
+  "firstSteps.foundCount": "one={n} encontrado|other={n} encontrados",
+  "firstSteps.ownSettings": "Los ajustes propios de BombVault",
+  "firstSteps.waiting": "one={n} espera la primera copia|other={n} esperan la primera copia",
+  "firstSteps.notProtected": "{n} sin proteger",
+  "firstSteps.more": "y {n} más",
   "fleet.kindAndroid": "App de Android",
   "pairing.qrCaption": "Escanea este código con la app de BombVault para emparejar un teléfono.",
 };

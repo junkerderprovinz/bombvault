@@ -103,7 +103,6 @@ export const en = {
   "about.version": "Version",
 
   // Dashboard
-  "dashboard.title": "Dashboard",
   "dashboard.summaryHealth": "Recovery point",
   "dashboard.summaryNextBackup": "Next backup",
   "dashboard.summaryNextIn": "in {countdown}",
@@ -468,7 +467,7 @@ export const en = {
   "settings.encryptionPasswordWhere":
     "You never type that password: BombVault derives it from the APP_KEY on every call. The value itself is in your recovery kit, listed as the derived restic password, which is what you need to run restic against a repository by hand.",
   "settings.encryptionHint":
-    "Encryption is fixed per repository when it is created, so this only decides how a NEW repository is made. For a repository that already exists BombVault reads the mode off the repository itself. See the Recovery page. Changing this against an existing repository just stops restic from opening it.",
+    "Encryption is fixed per repository when it is created, so this only decides how a NEW repository is made. For a repository that already exists BombVault reads the mode off the repository itself. See the Restore page. Changing this against an existing repository just stops restic from opening it.",
 
   // Encryption-key recovery kit
   "recovery.title": "Recovery kit",
@@ -1831,7 +1830,7 @@ export const en = {
   "config.backupNow": "Back up settings now",
   "config.backingUp": "Backing up…",
   "config.snapshotsTitle": "Settings backups",
-  "config.snapshotsHint": "To restore these settings onto a rebuilt server, use the Recovery tab: restoring settings restarts BombVault to apply them, so it lives there with the rest of the disaster-recovery flow.",
+  "config.snapshotsHint": "To restore these settings onto a rebuilt server, use the Restore page: restoring settings restarts BombVault to apply them, so it lives there with the rest of the disaster-recovery flow.",
 
   // Receiver dashboard (read-only monitoring of an append-only off-site repo
   // another BombVault pushes to)
@@ -2285,9 +2284,7 @@ export const en = {
   "vm.ssh.copyCmd": "Copy command",
   "vm.ssh.guide": "Full setup & networking guide",
 
-  // Guided Recovery tab. The `recovery.*` keys above belong to the encryption
-  // kit; the page heading reads `nav.recovery`.
-  "nav.recovery": "Recovery",
+  // The guided recovery. The `recovery.*` keys above belong to the encryption kit.
   // Step 1 — connection / APP_KEY readability check
   "recovery.step1": "Can BombVault read your backups?",
   "recovery.appKeyExplain": "To read existing backups this container needs the SAME APP_KEY it used before. It's in your recovery kit. Set it in the Unraid container template if it isn't already, then re-check.",
@@ -2354,9 +2351,6 @@ export const en = {
   "recovery.step5": "Your recovery kit",
   "recovery.kitHint": "Download and store your recovery kit somewhere safe. It holds the encryption key and the exact restic commands to restore even without BombVault.",
   "recovery.kitDownload": "Download recovery kit",
-  // Dashboard fresh-install nudge → guided Recovery tab
-  "recovery.freshNudge": "Restoring from a previous server or a rebuild? Recover your existing backups.",
-  "recovery.freshNudgeCta": "Go to Recovery",
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "General",
@@ -4563,6 +4557,32 @@ export const en = {
   "tile.info.bugReport": "Bug report",
   "tile.info.download": "Download",
   "tile.search.former": "A tab of its own in BombVault 9.9, now under {tab}",
+  "welcome.title": "Welcome to BombVault",
+  "welcome.leadUnraid": "Backs up the containers, VMs, flash drive and folders of your Unraid server. You're protected in three steps.",
+  "welcome.lead": "Backs up the containers, VMs and folders of your server. You're protected in three steps.",
+  "welcome.restore": "Restore from a backup",
+  "welcome.start": "Let's go",
+  "welcome.restoreHint": "Have you used BombVault before? Then \"Restore from a backup\" brings everything back, settings included.",
+  "firstSteps.title": "First steps",
+  "firstSteps.hint": "Stays here until the first backup has finished.",
+  "firstSteps.sections": "Choose sections",
+  "firstSteps.sectionsSub": "What gets backed up",
+  "firstSteps.sectionsHint": "Switch on what BombVault should back up.",
+  "firstSteps.locationSub": "Where the backups go",
+  "firstSteps.locationHint": "Where the backups go. Safest is a second storage location off the premises, such as a Storage Box or Backblaze B2.",
+  "firstSteps.backup": "First backup",
+  "firstSteps.backupSub": "After that it runs by itself every night",
+  "firstSteps.found": "BombVault found {list}.",
+  "firstSteps.found.containers": "one={n} container|other={n} containers",
+  "firstSteps.found.vms": "one={n} VM|other={n} VMs",
+  "firstSteps.found.folders": "one={n} folder|other={n} folders",
+  "firstSteps.found.datasets": "one={n} ZFS dataset|other={n} ZFS datasets",
+  "firstSteps.found.flash": "the flash drive",
+  "firstSteps.foundCount": "one={n} found|other={n} found",
+  "firstSteps.ownSettings": "BombVault's own settings",
+  "firstSteps.waiting": "one={n} waiting for the first backup|other={n} waiting for the first backup",
+  "firstSteps.notProtected": "one={n} not protected|other={n} not protected",
+  "firstSteps.more": "one=and {n} more|other=and {n} more",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4619,7 +4639,6 @@ export const de: Translations = {
   "about.version": "Version",
 
 
-  "dashboard.title": "Dashboard",
   "dashboard.summaryHealth": "Wiederherstellungspunkt",
   "dashboard.summaryNextBackup": "Nächstes Backup",
   "dashboard.summaryNextIn": "in {countdown}",
@@ -6574,7 +6593,6 @@ export const de: Translations = {
   "vm.ssh.guide": "Vollständige Setup- & Netzwerk-Anleitung",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "nav.recovery": "Wiederherstellung",
   // Schritt 1 — Verbindungs-/APP_KEY-Lesbarkeitsprüfung
   "recovery.step1": "Kann BombVault deine Backups lesen?",
   "recovery.appKeyExplain": "Um vorhandene Backups zu lesen, braucht dieser Container denselben APP_KEY wie zuvor. Er steht in deinem Recovery-Kit. Setze ihn im Unraid-Container-Template, falls noch nicht geschehen, und prüfe erneut.",
@@ -6639,9 +6657,6 @@ export const de: Translations = {
   "recovery.step5": "Dein Recovery-Kit",
   "recovery.kitHint": "Lade dein Recovery-Kit herunter und bewahre es sicher auf. Es enthält den Verschlüsselungsschlüssel und die genauen restic-Befehle, um selbst ohne BombVault wiederherzustellen.",
   "recovery.kitDownload": "Recovery-Kit herunterladen",
-  // Dashboard-Hinweis bei frischer Installation → geführter Wiederherstellungs-Tab
-  "recovery.freshNudge": "Wiederherstellung von einem früheren Server oder nach einem Neuaufbau? Stelle deine vorhandenen Backups wieder her.",
-  "recovery.freshNudgeCta": "Zur Wiederherstellung",
 
   // Einstellungen — Bereichs-Tabs + Zeitplan-Überschriften + Untertitel (v5-Redesign)
   "settings.tab.general": "Allgemein",
@@ -8815,6 +8830,32 @@ export const de: Translations = {
   "tile.info.bugReport": "Fehlerbericht",
   "tile.info.download": "Herunterladen",
   "tile.search.former": "In BombVault 9.9 ein eigener Reiter, jetzt unter {tab}",
+  "welcome.title": "Willkommen bei BombVault",
+  "welcome.leadUnraid": "Sichert Container, VMs, Flash und Ordner deines Unraid-Servers. In drei Schritten bist du geschützt.",
+  "welcome.lead": "Sichert Container, VMs und Ordner deines Servers. In drei Schritten bist du geschützt.",
+  "welcome.restore": "Aus einer Sicherung wiederherstellen",
+  "welcome.start": "Los geht’s",
+  "welcome.restoreHint": "Hattest du BombVault schon einmal? Dann holt „Aus einer Sicherung wiederherstellen“ alles zurück, auch die Einstellungen.",
+  "firstSteps.title": "Erste Schritte",
+  "firstSteps.hint": "Bleibt hier, bis die erste Sicherung fertig ist.",
+  "firstSteps.sections": "Bereiche wählen",
+  "firstSteps.sectionsSub": "Was gesichert wird",
+  "firstSteps.sectionsHint": "Schalt ein, was BombVault sichern soll.",
+  "firstSteps.locationSub": "Wohin die Sicherungen kommen",
+  "firstSteps.locationHint": "Wohin die Sicherungen kommen. Am sichersten ist ein zweiter Speicherort außer Haus, etwa eine Storage Box oder Backblaze B2.",
+  "firstSteps.backup": "Erste Sicherung",
+  "firstSteps.backupSub": "Danach läuft es jede Nacht von selbst",
+  "firstSteps.found": "BombVault hat {list} gefunden.",
+  "firstSteps.found.containers": "one={n} Container|other={n} Container",
+  "firstSteps.found.vms": "one={n} VM|other={n} VMs",
+  "firstSteps.found.folders": "one={n} Ordner|other={n} Ordner",
+  "firstSteps.found.datasets": "one={n} ZFS-Dataset|other={n} ZFS-Datasets",
+  "firstSteps.found.flash": "den Flash",
+  "firstSteps.foundCount": "one={n} gefunden|other={n} gefunden",
+  "firstSteps.ownSettings": "BombVaults eigene Einstellungen",
+  "firstSteps.waiting": "one={n} wartet auf die erste Sicherung|other={n} warten auf die erste Sicherung",
+  "firstSteps.notProtected": "one={n} nicht geschützt|other={n} nicht geschützt",
+  "firstSteps.more": "one=und {n} weiterer|other=und {n} weitere",
 };
 
 // ---------------------------------------------------------------------------

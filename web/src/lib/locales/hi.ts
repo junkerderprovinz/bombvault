@@ -47,7 +47,6 @@ const hi: Partial<Translations> = {
   "about.mail": "ईमेल",
 
   // Dashboard
-  "dashboard.title": "डैशबोर्ड",
   "dashboard.summaryHealth": "पुनर्प्राप्ति बिंदु",
   "dashboard.summaryNextBackup": "अगला बैकअप",
   "dashboard.summaryNextIn": "{countdown} में",
@@ -394,7 +393,7 @@ const hi: Partial<Translations> = {
   "settings.encryptionOff": "अक्षम (कोई पासवर्ड नहीं)",
   "settings.encryptionPasswordWhere":
     "यह पासवर्ड आप कभी टाइप नहीं करते: BombVault हर कॉल पर इसे APP_KEY से व्युत्पन्न करता है। मान स्वयं आपकी रिकवरी किट में व्युत्पन्न restic पासवर्ड के रूप में है, और रिपॉज़िटरी पर restic को हाथ से चलाने के लिए यही चाहिए।",
-  "settings.encryptionHint": "एन्क्रिप्शन हर रिपॉज़िटरी के लिए उसके बनने के समय तय हो जाता है, इसलिए यह सेटिंग केवल यह तय करती है कि नई रिपॉज़िटरी कैसे बनेगी। जो पहले से मौजूद है, उसके लिए BombVault मोड सीधे रिपॉज़िटरी से पढ़ लेता है। पुनर्प्राप्ति पृष्ठ देखें। मौजूदा रिपॉज़िटरी के विरुद्ध इसे बदलने से बस restic उसे खोल नहीं पाएगा।",
+  "settings.encryptionHint": "एन्क्रिप्शन हर रिपॉज़िटरी के लिए उसके बनने के समय तय हो जाता है, इसलिए यह सेटिंग केवल यह तय करती है कि नई रिपॉज़िटरी कैसे बनेगी। जो पहले से मौजूद है, उसके लिए BombVault मोड सीधे रिपॉज़िटरी से पढ़ लेता है। रीस्टोर पृष्ठ देखें। मौजूदा रिपॉज़िटरी के विरुद्ध इसे बदलने से बस restic उसे खोल नहीं पाएगा।",
 
   // Encryption-key recovery kit
   "recovery.title": "रिकवरी किट",
@@ -1545,7 +1544,7 @@ const hi: Partial<Translations> = {
   "config.backupNow": "अभी सेटिंग्स का बैकअप लें",
   "config.backingUp": "बैकअप लिया जा रहा है…",
   "config.snapshotsTitle": "सेटिंग्स के बैकअप",
-  "config.snapshotsHint": "फिर से बनाए गए सर्वर पर इन सेटिंग्स को रीस्टोर करने के लिए, Recovery टैब का उपयोग करें। सेटिंग्स रीस्टोर करने से BombVault उन्हें लागू करने के लिए फिर से शुरू होता है, इसलिए यह बाकी डिज़ास्टर-रिकवरी फ़्लो के साथ वहीं रहता है।",
+  "config.snapshotsHint": "फिर से बनाए गए सर्वर पर इन सेटिंग्स को रीस्टोर करने के लिए, रीस्टोर टैब का उपयोग करें। सेटिंग्स रीस्टोर करने से BombVault उन्हें लागू करने के लिए फिर से शुरू होता है, इसलिए यह बाकी डिज़ास्टर-रिकवरी फ़्लो के साथ वहीं रहता है।",
 
   // Receiver dashboard
   "receiver.title": "रिसीवर",
@@ -1984,7 +1983,6 @@ const hi: Partial<Translations> = {
   "vm.ssh.guide": "पूरी सेटअप और नेटवर्किंग गाइड",
 
   // Guided Recovery tab
-  "nav.recovery": "रिकवरी",
   // Step 1
   "recovery.step1": "क्या BombVault आपके बैकअप पढ़ सकता है?",
   "recovery.appKeyExplain": "मौजूदा बैकअप पढ़ने के लिए, इस कंटेनर को पहले जैसा वही APP_KEY चाहिए। यह आपकी रिकवरी किट में है। अगर पहले से नहीं है तो इसे Unraid कंटेनर टेम्पलेट में सेट करें, फिर फिर से जाँचें।",
@@ -2045,8 +2043,6 @@ const hi: Partial<Translations> = {
   "recovery.kitHint": "अपनी रिकवरी किट को कहीं सुरक्षित जगह डाउनलोड करके रखें। इसमें एन्क्रिप्शन कुंजी और BombVault के बिना भी रीस्टोर करने के लिए ठीक-ठीक restic कमांड हैं।",
   "recovery.kitDownload": "रिकवरी किट डाउनलोड करें",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "किसी पुराने सर्वर से या फिर से बनाने के बाद रीस्टोर कर रहे हैं? अपने मौजूदा बैकअप रीस्टोर करें।",
-  "recovery.freshNudgeCta": "Recovery पर जाएँ",
 
   // Settings — section tabs
   "settings.tab.general": "सामान्य",
@@ -4195,6 +4191,32 @@ const hi: Partial<Translations> = {
   "tile.info.bugReport": "बग रिपोर्ट",
   "tile.info.download": "डाउनलोड",
   "tile.search.former": "BombVault 9.9 में अलग टैब था, अब “{tab}” के तहत",
+  "welcome.title": "BombVault में आपका स्वागत है",
+  "welcome.leadUnraid": "आपके Unraid सर्वर के कंटेनर, VM, फ़्लैश और फ़ोल्डर का बैकअप लेता है। तीन चरणों में आप सुरक्षित हो जाते हैं।",
+  "welcome.lead": "आपके सर्वर के कंटेनर, VM और फ़ोल्डर का बैकअप लेता है। तीन चरणों में आप सुरक्षित हो जाते हैं।",
+  "welcome.restore": "बैकअप से रीस्टोर करें",
+  "welcome.start": "शुरू करें",
+  "welcome.restoreHint": "क्या आपने पहले BombVault इस्तेमाल किया है? तो “बैकअप से रीस्टोर करें” सेटिंग्स समेत सब कुछ वापस ले आता है।",
+  "firstSteps.title": "पहले कदम",
+  "firstSteps.hint": "पहला बैकअप पूरा होने तक यह यहीं रहता है।",
+  "firstSteps.sections": "सेक्शन चुनें",
+  "firstSteps.sectionsSub": "किसका बैकअप लिया जाएगा",
+  "firstSteps.sectionsHint": "वह चालू करें जिसका BombVault को बैकअप लेना है।",
+  "firstSteps.locationSub": "बैकअप कहाँ जाते हैं",
+  "firstSteps.locationHint": "बैकअप कहाँ जाते हैं। सबसे सुरक्षित है घर से बाहर एक दूसरा गंतव्य, जैसे Storage Box या Backblaze B2।",
+  "firstSteps.backup": "पहला बैकअप",
+  "firstSteps.backupSub": "इसके बाद यह हर रात अपने आप चलता है",
+  "firstSteps.found": "BombVault को मिला: {list}।",
+  "firstSteps.found.containers": "{n} कंटेनर",
+  "firstSteps.found.vms": "{n} VM",
+  "firstSteps.found.folders": "{n} फ़ोल्डर",
+  "firstSteps.found.datasets": "{n} ZFS डेटासेट",
+  "firstSteps.found.flash": "फ़्लैश",
+  "firstSteps.foundCount": "{n} मिले",
+  "firstSteps.ownSettings": "BombVault की अपनी सेटिंग्स",
+  "firstSteps.waiting": "{n} पहले बैकअप की प्रतीक्षा में",
+  "firstSteps.notProtected": "{n} असुरक्षित",
+  "firstSteps.more": "और {n} अन्य",
   "fleet.kindAndroid": "Android ऐप",
   "pairing.qrCaption": "फ़ोन पेयर करने के लिए इस कोड को BombVault ऐप से स्कैन करें।",
 };

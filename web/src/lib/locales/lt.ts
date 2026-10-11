@@ -47,7 +47,6 @@ const lt: Partial<Translations> = {
   "about.mail": "El. paštas",
 
   // Dashboard
-  "dashboard.title": "Skydelis",
   "dashboard.summaryHealth": "Atkūrimo taškas",
   "dashboard.summaryNextBackup": "Kita atsarginė kopija",
   "dashboard.summaryNextIn": "po {countdown}",
@@ -1984,7 +1983,6 @@ const lt: Partial<Translations> = {
   "vm.ssh.guide": "Išsamus nustatymo ir tinklo vadovas",
 
   // Guided Recovery tab
-  "nav.recovery": "Atkūrimas",
   // Step 1
   "recovery.step1": "Ar BombVault gali perskaityti jūsų atsargines kopijas?",
   "recovery.appKeyExplain": "Norint perskaityti esamas atsargines kopijas, šiam konteineriui reikia TO PATIES APP_KEY, kurį jis naudojo anksčiau. Jis yra jūsų atkūrimo rinkinyje. Nustatykite jį Unraid konteinerio šablone, jei dar nenustatytas, tada patikrinkite dar kartą.",
@@ -2045,8 +2043,6 @@ const lt: Partial<Translations> = {
   "recovery.kitHint": "Atsisiųskite ir laikykite savo atkūrimo rinkinį saugioje vietoje. Jame yra šifravimo raktas ir tikslios restic komandos atkūrimui net be BombVault.",
   "recovery.kitDownload": "Atsisiųsti atkūrimo rinkinį",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Atkuriate iš ankstesnio serverio arba po pakartotinio kūrimo? Atkurkite savo esamas atsargines kopijas.",
-  "recovery.freshNudgeCta": "Eiti į Atkūrimą",
 
   // Settings — section tabs
   "settings.tab.general": "Bendra",
@@ -4195,6 +4191,32 @@ const lt: Partial<Translations> = {
   "tile.info.bugReport": "Klaidos ataskaita",
   "tile.info.download": "Atsisiųsti",
   "tile.search.former": "BombVault 9.9 tai buvo atskiras skirtukas, dabar: {tab}",
+  "welcome.title": "Sveiki atvykę į BombVault",
+  "welcome.leadUnraid": "Daro tavo Unraid serverio konteinerių, VM, Flash ir aplankų atsargines kopijas. Per tris žingsnius viskas apsaugota.",
+  "welcome.lead": "Daro tavo serverio konteinerių, VM ir aplankų atsargines kopijas. Per tris žingsnius viskas apsaugota.",
+  "welcome.restore": "Atkurti iš atsarginės kopijos",
+  "welcome.start": "Pradėkime",
+  "welcome.restoreHint": "Ar BombVault tau jau pažįstamas? Tada „Atkurti iš atsarginės kopijos“ grąžina viską, įskaitant nustatymus.",
+  "firstSteps.title": "Pirmieji žingsniai",
+  "firstSteps.hint": "Lieka čia, kol bus baigta pirmoji atsarginė kopija.",
+  "firstSteps.sections": "Pasirink sritis",
+  "firstSteps.sectionsSub": "Kas kopijuojama",
+  "firstSteps.sectionsHint": "Įjunk tai, ką BombVault turi kopijuoti.",
+  "firstSteps.locationSub": "Kur keliauja kopijos",
+  "firstSteps.locationHint": "Kur keliauja atsarginės kopijos. Saugiausia antra paskirties vieta ne namuose, pavyzdžiui, Storage Box ar Backblaze B2.",
+  "firstSteps.backup": "Pirmoji atsarginė kopija",
+  "firstSteps.backupSub": "Vėliau ji daroma pati kiekvieną naktį",
+  "firstSteps.found": "BombVault rado {list}.",
+  "firstSteps.found.containers": "one={n} konteinerį|few={n} konteinerius|many={n} konteinerio|other={n} konteinerių",
+  "firstSteps.found.vms": "{n} VM",
+  "firstSteps.found.folders": "one={n} aplanką|few={n} aplankus|many={n} aplanko|other={n} aplankų",
+  "firstSteps.found.datasets": "one={n} ZFS duomenų rinkinį|few={n} ZFS duomenų rinkinius|many={n} ZFS duomenų rinkinio|other={n} ZFS duomenų rinkinių",
+  "firstSteps.found.flash": "Flash",
+  "firstSteps.foundCount": "Rasta: {n}",
+  "firstSteps.ownSettings": "Pačios BombVault nustatymai",
+  "firstSteps.waiting": "Laukia pirmosios kopijos: {n}",
+  "firstSteps.notProtected": "Neapsaugota: {n}",
+  "firstSteps.more": "ir dar {n}",
   "fleet.kindAndroid": "Android programa",
   "pairing.qrCaption": "Nuskaitykite šį kodą BombVault programa, kad susietumėte telefoną.",
 };

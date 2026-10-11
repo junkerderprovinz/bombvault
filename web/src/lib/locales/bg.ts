@@ -47,7 +47,6 @@ const bg: Partial<Translations> = {
   "about.mail": "Имейл",
 
   // Dashboard
-  "dashboard.title": "Табло",
   "dashboard.summaryHealth": "Точка за възстановяване",
   "dashboard.summaryNextBackup": "Следващо архивиране",
   "dashboard.summaryNextIn": "след {countdown}",
@@ -1984,7 +1983,6 @@ const bg: Partial<Translations> = {
   "vm.ssh.guide": "Пълно ръководство за настройка и мрежа",
 
   // Guided Recovery tab
-  "nav.recovery": "Възстановяване",
   // Step 1
   "recovery.step1": "Може ли BombVault да прочете архивиранията ти?",
   "recovery.appKeyExplain": "За да прочете съществуващи архивирания, този контейнер се нуждае от СЪЩИЯ APP_KEY, който е използвал преди — той е в твоя комплект за възстановяване. Задай го в шаблона на Unraid контейнера, ако вече не е зададен, после провери отново.",
@@ -2045,8 +2043,6 @@ const bg: Partial<Translations> = {
   "recovery.kitHint": "Изтегли и съхрани комплекта си за възстановяване на сигурно място — той съдържа ключа за криптиране и точните restic команди за възстановяване дори без BombVault.",
   "recovery.kitDownload": "Изтегли комплект за възстановяване",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Възстановяваш от предишен сървър или след пресъздаване? Възстанови съществуващите си архивирания.",
-  "recovery.freshNudgeCta": "Към Възстановяване",
 
   // Settings — section tabs
   "settings.tab.general": "Общи",
@@ -4195,6 +4191,32 @@ const bg: Partial<Translations> = {
   "tile.info.bugReport": "Сигнал за грешка",
   "tile.info.download": "Изтегли",
   "tile.search.former": "В BombVault 9.9 беше отделен раздел, сега е в „{tab}“",
+  "welcome.title": "Добре дошли в BombVault",
+  "welcome.leadUnraid": "Архивира контейнерите, ВМ, Flash и папките на твоя Unraid сървър. Три стъпки и данните ти са защитени.",
+  "welcome.lead": "Архивира контейнерите, ВМ и папките на твоя сървър. Три стъпки и данните ти са защитени.",
+  "welcome.restore": "Възстановяване от архив",
+  "welcome.start": "Да започваме",
+  "welcome.restoreHint": "Познаваш ли вече BombVault? Тогава „Възстановяване от архив“ връща всичко, включително настройките.",
+  "firstSteps.title": "Първи стъпки",
+  "firstSteps.hint": "Остава тук, докато първото архивиране приключи.",
+  "firstSteps.sections": "Избери раздели",
+  "firstSteps.sectionsSub": "Какво се архивира",
+  "firstSteps.sectionsHint": "Включи какво да архивира BombVault.",
+  "firstSteps.locationSub": "Къде отиват архивите",
+  "firstSteps.locationHint": "Къде отиват архивите. Най-сигурна е втора дестинация извън дома, например Storage Box или Backblaze B2.",
+  "firstSteps.backup": "Първо архивиране",
+  "firstSteps.backupSub": "След това върви само всяка нощ",
+  "firstSteps.found": "BombVault откри {list}.",
+  "firstSteps.found.containers": "one={n} контейнер|other={n} контейнера",
+  "firstSteps.found.vms": "{n} ВМ",
+  "firstSteps.found.folders": "one={n} папка|other={n} папки",
+  "firstSteps.found.datasets": "one={n} ZFS dataset|other={n} ZFS dataset-а",
+  "firstSteps.found.flash": "Flash",
+  "firstSteps.foundCount": "one={n} открит|other={n} открити",
+  "firstSteps.ownSettings": "Собствените настройки на BombVault",
+  "firstSteps.waiting": "one={n} чака първото архивиране|other={n} чакат първото архивиране",
+  "firstSteps.notProtected": "{n} без защита",
+  "firstSteps.more": "и още {n}",
   "fleet.kindAndroid": "Приложение за Android",
   "pairing.qrCaption": "Сканирай този код с приложението BombVault, за да сдвоиш телефон.",
 };

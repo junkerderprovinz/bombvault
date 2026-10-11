@@ -47,7 +47,6 @@ const id: Partial<Translations> = {
   "about.mail": "Surel",
 
   // Dashboard
-  "dashboard.title": "Dasbor",
   "dashboard.summaryHealth": "Titik pemulihan",
   "dashboard.summaryNextBackup": "Cadangan berikutnya",
   "dashboard.summaryNextIn": "dalam {countdown}",
@@ -1984,7 +1983,6 @@ const id: Partial<Translations> = {
   "vm.ssh.guide": "Panduan penyiapan & jaringan lengkap",
 
   // Guided Recovery tab
-  "nav.recovery": "Pemulihan",
   // Step 1
   "recovery.step1": "Bisakah BombVault membaca cadangan Anda?",
   "recovery.appKeyExplain": "Untuk membaca cadangan yang ada, container ini memerlukan APP_KEY YANG SAMA seperti yang digunakan sebelumnya. Ada di kit pemulihan Anda. Atur di template container Unraid jika belum, lalu periksa ulang.",
@@ -2045,8 +2043,6 @@ const id: Partial<Translations> = {
   "recovery.kitHint": "Unduh dan simpan kit pemulihan Anda di tempat yang aman. Berisi kunci enkripsi dan perintah restic yang tepat untuk memulihkan bahkan tanpa BombVault.",
   "recovery.kitDownload": "Unduh kit pemulihan",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Memulihkan dari server sebelumnya atau setelah membangun ulang? Pulihkan cadangan Anda yang sudah ada.",
-  "recovery.freshNudgeCta": "Buka Pemulihan",
 
   // Settings — section tabs
   "settings.tab.general": "Umum",
@@ -4195,6 +4191,32 @@ const id: Partial<Translations> = {
   "tile.info.bugReport": "Laporan bug",
   "tile.info.download": "Unduh",
   "tile.search.former": "Dulu tab tersendiri di BombVault 9.9, kini di {tab}",
+  "welcome.title": "Selamat datang di BombVault",
+  "welcome.leadUnraid": "Mencadangkan container, VM, Flash, dan folder di server Unraid-mu. Dalam tiga langkah, semuanya terlindungi.",
+  "welcome.lead": "Mencadangkan container, VM, dan folder di servermu. Dalam tiga langkah, semuanya terlindungi.",
+  "welcome.restore": "Pulihkan dari cadangan",
+  "welcome.start": "Ayo mulai",
+  "welcome.restoreHint": "Pernah memakai BombVault sebelumnya? Maka “Pulihkan dari cadangan” mengembalikan semuanya, termasuk pengaturan.",
+  "firstSteps.title": "Langkah pertama",
+  "firstSteps.hint": "Tetap di sini sampai cadangan pertama selesai.",
+  "firstSteps.sections": "Pilih bagian",
+  "firstSteps.sectionsSub": "Apa yang dicadangkan",
+  "firstSteps.sectionsHint": "Aktifkan apa yang harus dicadangkan BombVault.",
+  "firstSteps.locationSub": "Ke mana cadangan disimpan",
+  "firstSteps.locationHint": "Ke mana cadangan disimpan. Yang paling aman adalah tujuan kedua di luar lokasi, seperti Storage Box atau Backblaze B2.",
+  "firstSteps.backup": "Cadangan pertama",
+  "firstSteps.backupSub": "Setelah itu berjalan sendiri setiap malam",
+  "firstSteps.found": "BombVault menemukan {list}.",
+  "firstSteps.found.containers": "{n} container",
+  "firstSteps.found.vms": "{n} VM",
+  "firstSteps.found.folders": "{n} folder",
+  "firstSteps.found.datasets": "{n} dataset ZFS",
+  "firstSteps.found.flash": "Flash",
+  "firstSteps.foundCount": "{n} ditemukan",
+  "firstSteps.ownSettings": "Pengaturan BombVault sendiri",
+  "firstSteps.waiting": "{n} menunggu cadangan pertama",
+  "firstSteps.notProtected": "{n} belum terlindungi",
+  "firstSteps.more": "dan {n} lagi",
   "fleet.kindAndroid": "Aplikasi Android",
   "pairing.qrCaption": "Pindai kode ini dengan aplikasi BombVault untuk memasangkan ponsel.",
 };

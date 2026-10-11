@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./Layout";
 import { Dashboard } from "../pages/Dashboard";
+import { Welcome } from "../pages/Welcome";
 import { Anomalies } from "../pages/Anomalies";
 import { BackupEntryPage } from "../pages/BackupEntry";
 import { Backups } from "../pages/Backups";
@@ -35,7 +36,10 @@ export function AppRouter() {
                 session itself. */}
             {mcpShipped && <Route path="/oauth/authorize" element={<OAuthConsent />} />}
             <Route element={<Layout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
+              {/* The app opens on the welcome page, which passes an install
+                  that has a backup straight on to the overview. */}
+              <Route index element={<Navigate to="/welcome" replace />} />
+              <Route path="/welcome" element={<Welcome />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/anomalies" element={<Anomalies />} />
               <Route path={ENTRY_LIST_PATH} element={<Backups />} />

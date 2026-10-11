@@ -47,7 +47,6 @@ const sl: Partial<Translations> = {
   "about.mail": "E-pošta",
 
   // Dashboard
-  "dashboard.title": "Nadzorna plošča",
   "dashboard.summaryHealth": "Obnovitvena točka",
   "dashboard.summaryNextBackup": "Naslednja varnostna kopija",
   "dashboard.summaryNextIn": "čez {countdown}",
@@ -394,7 +393,7 @@ const sl: Partial<Translations> = {
   "settings.encryptionOff": "Onemogočeno (brez gesla)",
   "settings.encryptionPasswordWhere":
     "Tega gesla nikoli ne vnašate: BombVault ga ob vsakem klicu izpelje iz APP_KEY. Sama vrednost je v vašem kompletu za obnovitev kot izpeljano geslo restic in prav to potrebujete za ročni zagon restic nad shrambo.",
-  "settings.encryptionHint": "Šifriranje se za repozitorij določi ob njegovem nastanku, zato ta nastavitev odloča le o NOVEM repozitoriju. Pri že obstoječem BombVault način prebere kar iz repozitorija. Glej stran Obnovitev. Sprememba nasproti obstoječemu repozitoriju povzroči le, da ga restic ne more odpreti.",
+  "settings.encryptionHint": "Šifriranje se za repozitorij določi ob njegovem nastanku, zato ta nastavitev odloča le o NOVEM repozitoriju. Pri že obstoječem BombVault način prebere kar iz repozitorija. Glej stran Obnova. Sprememba nasproti obstoječemu repozitoriju povzroči le, da ga restic ne more odpreti.",
 
   // Encryption-key recovery kit
   "recovery.title": "Obnovitveni komplet",
@@ -1978,7 +1977,6 @@ const sl: Partial<Translations> = {
   "vm.ssh.guide": "Popoln vodnik za nastavitev in omrežje",
 
   // Guided Recovery tab
-  "nav.recovery": "Obnova",
   "recovery.step1": "Ali lahko BombVault prebere tvoje varnostne kopije?",
   "recovery.appKeyExplain": "Za branje obstoječih varnostnih kopij ta vsebnik potrebuje ISTI APP_KEY, kot ga je uporabljal prej. Najdeš ga v svojem obnovitvenem kompletu. Nastavi ga v Unraidovi predlogi vsebnika, če še ni, nato znova preveri.",
   "recovery.appKeyRemedy": "Šifrirni ključ se ne ujema s temi varnostnimi kopijami. V predlogi vsebnika nastavi izvirni APP_KEY (iz svojega obnovitvenega kompleta), nato znova preveri.",
@@ -2032,8 +2030,6 @@ const sl: Partial<Translations> = {
   "recovery.step5": "Tvoj obnovitveni komplet",
   "recovery.kitHint": "Prenesi in shrani svoj obnovitveni komplet nekje varno. Vsebuje šifrirni ključ in natančne ukaze restic za obnovitev tudi brez BombVaulta.",
   "recovery.kitDownload": "Prenesi obnovitveni komplet",
-  "recovery.freshNudge": "Obnavljaš iz prejšnjega strežnika ali po ponovni izdelavi? Obnovi svoje obstoječe varnostne kopije.",
-  "recovery.freshNudgeCta": "Pojdi na Obnovo",
 
   // Settings — section tabs + schedule group headings + subtitle
   "settings.tab.general": "Splošno",
@@ -4179,6 +4175,32 @@ const sl: Partial<Translations> = {
   "tile.info.bugReport": "Poročilo o napaki",
   "tile.info.download": "Prenesi",
   "tile.search.former": "V BombVault 9.9 samostojen zavihek, zdaj v razdelku {tab}",
+  "welcome.title": "Dobrodošli v BombVault",
+  "welcome.leadUnraid": "Ustvarja varnostne kopije vsebnikov, VM-jev, Flasha in map tvojega strežnika Unraid. V treh korakih je vse zaščiteno.",
+  "welcome.lead": "Ustvarja varnostne kopije vsebnikov, VM-jev in map tvojega strežnika. V treh korakih je vse zaščiteno.",
+  "welcome.restore": "Obnovi iz varnostne kopije",
+  "welcome.start": "Začnimo",
+  "welcome.restoreHint": "Ti je BombVault že znan? Potem „Obnovi iz varnostne kopije“ vrne vse, tudi nastavitve.",
+  "firstSteps.title": "Prvi koraki",
+  "firstSteps.hint": "Ostane tu, dokler ni končana prva varnostna kopija.",
+  "firstSteps.sections": "Izberi razdelke",
+  "firstSteps.sectionsSub": "Kaj se varnostno kopira",
+  "firstSteps.sectionsHint": "Vklopi, kar naj BombVault varnostno kopira.",
+  "firstSteps.locationSub": "Kam gredo varnostne kopije",
+  "firstSteps.locationHint": "Kam gredo varnostne kopije. Najvarnejši je drugi cilj zunaj doma, na primer Storage Box ali Backblaze B2.",
+  "firstSteps.backup": "Prva varnostna kopija",
+  "firstSteps.backupSub": "Potem se izvaja sama vsako noč",
+  "firstSteps.found": "BombVault je našel {list}.",
+  "firstSteps.found.containers": "one={n} vsebnik|two={n} vsebnika|few={n} vsebnike|other={n} vsebnikov",
+  "firstSteps.found.vms": "one={n} VM|two={n} VM-ja|few={n} VM-je|other={n} VM-jev",
+  "firstSteps.found.folders": "one={n} mapo|two={n} mapi|few={n} mape|other={n} map",
+  "firstSteps.found.datasets": "one={n} nabor podatkov ZFS|two={n} nabora podatkov ZFS|few={n} nabore podatkov ZFS|other={n} naborov podatkov ZFS",
+  "firstSteps.found.flash": "Flash",
+  "firstSteps.foundCount": "Najdeno: {n}",
+  "firstSteps.ownSettings": "Lastne nastavitve BombVault",
+  "firstSteps.waiting": "Čaka na prvo kopijo: {n}",
+  "firstSteps.notProtected": "Nezaščeno: {n}",
+  "firstSteps.more": "in še {n}",
   "fleet.kindAndroid": "Aplikacija za Android",
   "pairing.qrCaption": "Skeniraj to kodo z aplikacijo BombVault, da seznaniš telefon.",
 };

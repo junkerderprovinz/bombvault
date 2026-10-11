@@ -47,7 +47,6 @@ const hr: Partial<Translations> = {
   "about.mail": "E-pošta",
 
   // Dashboard
-  "dashboard.title": "Nadzorna ploča",
   "dashboard.summaryHealth": "Točka vraćanja",
   "dashboard.summaryNextBackup": "Sljedeća sigurnosna kopija",
   "dashboard.summaryNextIn": "za {countdown}",
@@ -394,7 +393,7 @@ const hr: Partial<Translations> = {
   "settings.encryptionOff": "Onemogućeno (bez lozinke)",
   "settings.encryptionPasswordWhere":
     "Tu lozinku nikada ne upisujete: BombVault je pri svakom pozivu izvodi iz APP_KEY. Sama vrijednost nalazi se u vašem kompletu za oporavak kao izvedena restic lozinka i upravo je ona potrebna za ručno pokretanje restic nad spremištem.",
-  "settings.encryptionHint": "Šifriranje se za repozitorij utvrđuje pri njegovu stvaranju, pa ova postavka odlučuje samo o NOVOM repozitoriju. Za već postojeći BombVault način očitava s samog repozitorija. Vidi stranicu Oporavak. Promjena nasuprot postojećem repozitoriju samo sprječava restic da ga otvori.",
+  "settings.encryptionHint": "Šifriranje se za repozitorij utvrđuje pri njegovu stvaranju, pa ova postavka odlučuje samo o NOVOM repozitoriju. Za već postojeći BombVault način očitava s samog repozitorija. Vidi stranicu Vraćanje. Promjena nasuprot postojećem repozitoriju samo sprječava restic da ga otvori.",
 
   // Encryption-key recovery kit
   "recovery.title": "Komplet za oporavak",
@@ -1545,7 +1544,7 @@ const hr: Partial<Translations> = {
   "config.backupNow": "Sigurnosno kopiraj postavke sada",
   "config.backingUp": "Izrada sigurnosne kopije…",
   "config.snapshotsTitle": "Sigurnosne kopije postavki",
-  "config.snapshotsHint": "Za vraćanje ovih postavki na ponovno izgrađenom poslužitelju, koristite karticu Oporavak. Vraćanje postavki ponovno pokreće BombVault kako bi ih primijenio, stoga tu ostaje uz ostatak procesa oporavka od katastrofe.",
+  "config.snapshotsHint": "Za vraćanje ovih postavki na ponovno izgrađenom poslužitelju, koristite karticu Vraćanje. Vraćanje postavki ponovno pokreće BombVault kako bi ih primijenio, stoga tu ostaje uz ostatak procesa oporavka od katastrofe.",
 
   // Receiver dashboard
   "receiver.title": "Prijamnik",
@@ -1984,7 +1983,6 @@ const hr: Partial<Translations> = {
   "vm.ssh.guide": "Potpuni vodič za postavljanje i umrežavanje",
 
   // Guided Recovery tab
-  "nav.recovery": "Oporavak",
   // Step 1
   "recovery.step1": "Može li BombVault pročitati vaše sigurnosne kopije?",
   "recovery.appKeyExplain": "Za čitanje postojećih sigurnosnih kopija ovom kontejneru treba ISTI APP_KEY koji je koristio prije. Nalazi se u vašem kompletu za oporavak. Postavite ga u Unraid predlošku kontejnera ako još nije postavljen, zatim ponovno provjerite.",
@@ -2045,8 +2043,6 @@ const hr: Partial<Translations> = {
   "recovery.kitHint": "Preuzmite i pohranite svoj komplet za oporavak na sigurno mjesto. Sadrži ključ za enkripciju i točne restic naredbe za vraćanje čak i bez BombVaulta.",
   "recovery.kitDownload": "Preuzmi komplet za oporavak",
   // Dashboard fresh-install nudge
-  "recovery.freshNudge": "Vraćate podatke s prethodnog poslužitelja ili nakon ponovne izgradnje? Vratite svoje postojeće sigurnosne kopije.",
-  "recovery.freshNudgeCta": "Idi na Oporavak",
 
   // Settings — section tabs
   "settings.tab.general": "Opće",
@@ -4195,6 +4191,32 @@ const hr: Partial<Translations> = {
   "tile.info.bugReport": "Prijava greške",
   "tile.info.download": "Preuzmi",
   "tile.search.former": "U BombVaultu 9.9 zasebna kartica, sada pod „{tab}“",
+  "welcome.title": "Dobro došli u BombVault",
+  "welcome.leadUnraid": "Izrađuje sigurnosne kopije kontejnera, VM-ova, Flasha i mapa vašeg Unraid poslužitelja. U tri koraka ste zaštićeni.",
+  "welcome.lead": "Izrađuje sigurnosne kopije kontejnera, VM-ova i mapa vašeg poslužitelja. U tri koraka ste zaštićeni.",
+  "welcome.restore": "Vrati iz sigurnosne kopije",
+  "welcome.start": "Krenimo",
+  "welcome.restoreHint": "Jeste li već koristili BombVault? Tada „Vrati iz sigurnosne kopije“ vraća sve, uključujući postavke.",
+  "firstSteps.title": "Prvi koraci",
+  "firstSteps.hint": "Ostaje ovdje dok prva sigurnosna kopija ne završi.",
+  "firstSteps.sections": "Odaberite odjeljke",
+  "firstSteps.sectionsSub": "Što se sigurnosno kopira",
+  "firstSteps.sectionsHint": "Uključite ono što BombVault treba sigurnosno kopirati.",
+  "firstSteps.locationSub": "Kamo idu sigurnosne kopije",
+  "firstSteps.locationHint": "Kamo idu sigurnosne kopije. Najsigurnije je drugo odredište izvan kuće, na primjer Storage Box ili Backblaze B2.",
+  "firstSteps.backup": "Prva sigurnosna kopija",
+  "firstSteps.backupSub": "Poslije se izvodi sama svake noći",
+  "firstSteps.found": "BombVault je pronašao {list}.",
+  "firstSteps.found.containers": "one={n} kontejner|few={n} kontejnera|other={n} kontejnera",
+  "firstSteps.found.vms": "one={n} VM|few={n} VM-a|other={n} VM-ova",
+  "firstSteps.found.folders": "one={n} mapu|few={n} mape|other={n} mapa",
+  "firstSteps.found.datasets": "one={n} ZFS dataset|few={n} ZFS dataseta|other={n} ZFS dataseta",
+  "firstSteps.found.flash": "Flash",
+  "firstSteps.foundCount": "Pronađeno: {n}",
+  "firstSteps.ownSettings": "Vlastite postavke BombVaulta",
+  "firstSteps.waiting": "Čeka prvu sigurnosnu kopiju: {n}",
+  "firstSteps.notProtected": "Nezaštićeno: {n}",
+  "firstSteps.more": "i još {n}",
   "fleet.kindAndroid": "Android aplikacija",
   "pairing.qrCaption": "Skeniraj ovaj kod aplikacijom BombVault da upariš telefon.",
 };

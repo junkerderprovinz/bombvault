@@ -3,6 +3,7 @@
 
 import type { AnomalyView, BackupItem, Run, StorageLocation, StorageLocationSection } from "./api";
 import { protection } from "./backupList";
+import { isFreshInstall } from "./freshInstall";
 import { tallyEntries } from "./protectionTally";
 import { failedRunsNeedingAttention } from "./runFailures";
 
@@ -50,6 +51,8 @@ function failedCopies(locations: StorageLocation[]): Need[] {
 /**
  * needsOf lists what waits for the person, most urgent first. An entry whose
  * last run failed stands once, as that failure, also when it has no backup.
+ * Before the first backup the entries without a schedule and the recovery kit
+ * are the first steps, not something that went wrong.
  */
 export function needsOf({ items, runs, locations, anomalies, kitDue }: NeedsInput): Need[] {
   const failed = failedRunsNeedingAttention(runs).map((run): Need & { is: "failedRun" } => ({
@@ -57,12 +60,15 @@ export function needsOf({ items, runs, locations, anomalies, kitDue }: NeedsInpu
     run,
     item: items.find((item) => item.runs.some((r) => r.id === run.id)),
   }));
+  const fresh = isFreshInstall(items);
   const withFailure = new Set(failed.map((need) => need.item));
-  const unprotected = tallyEntries(items)
-    .entries.filter((item) => protection(item) === "none" && !withFailure.has(item))
-    .map((item): Need => ({ is: "unprotected", item }));
+  const unprotected = fresh
+    ? []
+    : tallyEntries(items)
+        .entries.filter((item) => protection(item) === "none" && !withFailure.has(item))
+        .map((item): Need => ({ is: "unprotected", item }));
   const loud = anomalies
     .filter((finding) => finding.severity !== "info")
     .map((finding): Need => ({ is: "anomaly", finding }));
-  return [...failed, ...unprotected, ...failedCopies(locations), ...loud, ...(kitDue ? [{ is: "recoveryKit" } as const] : [])];
+  return [...failed, ...unprotected, ...failedCopies(locations), ...loud, ...(kitDue && !fresh ? [{ is: "recoveryKit" } as const] : [])];
 }
