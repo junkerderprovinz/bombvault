@@ -6,7 +6,7 @@ import { hueVars } from "../../lib/appearance";
 import { useT } from "../../lib/i18n";
 import { LogoImage, PHONE_PATH } from "./InstanceCard";
 import { ROLES } from "./RoleTile";
-import { ROLE_KINDS } from "./instancesModel";
+import { FLOW_ROLES, ROLE_KINDS } from "./instancesModel";
 import { NODE_RADIUS, netLanes, netLayout, type NetLabel, type NetLane, type NetNode, type Point } from "./netModel";
 
 const at = ([x, y]: Point) => `${x.toFixed(1)} ${y.toFixed(1)}`;
@@ -193,7 +193,7 @@ export function NetPicture({
         </div>
         {nodes.some((n) => n.kind === "peer") && (
           <div className="glim-net-key">
-            {ROLE_KINDS.map((k, i) => (
+            {FLOW_ROLES.map((k, i) => (
               <span key={k} className="glim-hue" style={hueVars(i) as CSSProperties}>
                 <span className="glim-net-key-glyph">{ROLES[k].glyph}</span>
                 {t(ROLES[k].label)}

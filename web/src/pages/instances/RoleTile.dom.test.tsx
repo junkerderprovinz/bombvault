@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // A role tile says in one glance whether an instance plays a role: on,
 // asked for and waiting, or off. The bubble beside the heading tells the
-// three roles apart.
+// three backup roles apart. The key keeper is a tile like the others.
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
@@ -105,6 +105,26 @@ describe("the tiles of a card", () => {
       ["fetcher", "waiting"],
       ["zfs", "off"],
     ]);
+  });
+
+  it("stand three in a row, and two by two once the key keeper makes four", () => {
+    const grid = () => document.querySelector("[data-role]")!.parentElement!;
+    const { unmount } = render(
+      <I18nProvider>
+        <RoleTiles heading="x" states={{ receiver: "off", fetcher: "off", keeper: "on" }} />
+      </I18nProvider>,
+    );
+    expect(tile("keeper").textContent).toBe(en["instances.role.keeper"] + en["instances.role.on"]);
+    expect(grid().className).toContain("grid-cols-3");
+    unmount();
+    render(
+      <I18nProvider>
+        <RoleTiles heading="x" states={{ receiver: "off", fetcher: "off", zfs: "off", keeper: "off" }} />
+      </I18nProvider>,
+    );
+    expect([...grid().children].map((el) => el.getAttribute("data-role"))).toEqual(["receiver", "fetcher", "zfs", "keeper"]);
+    expect(grid().className).toContain("grid-cols-2");
+    expect(grid().className).not.toContain("grid-cols-3");
   });
 
   it("leave out a role nothing is known about", () => {

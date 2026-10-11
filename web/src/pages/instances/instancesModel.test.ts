@@ -23,6 +23,7 @@ import {
   roleStates,
   scorecardDue,
   SCORECARD_STALE_S,
+  tooOldToKeep,
   type InstancesData,
 } from "./instancesModel";
 
@@ -153,6 +154,25 @@ describe("the roles an instance plays for this server", () => {
     expect(roleState(undefined, "zfs")).toBe("off");
   });
 
+  it("reads a key deposit the same way: held is on, one that is behind waits, one deleted there is off", () => {
+    const keeper = (state: string) => side({ keeper: { state: state as "held", at: "" } });
+    expect(roleState(keeper("held"), "keeper")).toBe("on");
+    expect(roleState(keeper("stale"), "keeper")).toBe("waiting");
+    expect(roleState(keeper("declined"), "keeper")).toBe("off");
+    expect(roleState(side(), "keeper")).toBe("off");
+    // A newer server may know states this build does not. Such a deposit is
+    // there and not known to be current.
+    expect(roleState(keeper("someday"), "keeper")).toBe("waiting");
+  });
+
+  it("calls an instance too old to keep a deposit only when the instance answered and said so", () => {
+    const of = (over: Parameters<typeof roles>[0]) => buildInstances(data({ roles: [roles(over)] })).instances[0];
+    expect(tooOldToKeep(of({ canKeep: false }))).toBe(true);
+    expect(tooOldToKeep(of({ canKeep: true }))).toBe(false);
+    expect(tooOldToKeep(of({ canKeep: false, reachable: false }))).toBe(false);
+    expect(tooOldToKeep(buildInstances(data()).instances[0])).toBe(false);
+  });
+
   it("takes them from what the member does for this server, not the other way round", () => {
     const { instances } = buildInstances(
       data({
@@ -164,11 +184,11 @@ describe("the roles an instance plays for this server", () => {
         ],
       }),
     );
-    expect(roleStates(instances[0])).toEqual({ receiver: "on", fetcher: "off", zfs: "waiting" });
+    expect(roleStates(instances[0])).toEqual({ receiver: "on", fetcher: "off", zfs: "waiting", keeper: "off" });
   });
 
   it("shows every role as off for an instance the server reports no roles for", () => {
-    expect(roleStates(buildInstances(data()).instances[0])).toEqual({ receiver: "off", fetcher: "off", zfs: "off" });
+    expect(roleStates(buildInstances(data()).instances[0])).toEqual({ receiver: "off", fetcher: "off", zfs: "off", keeper: "off" });
   });
 
   it("names the destination an active Receiver became, by its receiving server's address", () => {

@@ -10,7 +10,7 @@ import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
-import { IconEye, IconInfo, IconLink } from "../components/glyphs";
+import { IconEye, IconInfo, IconKey, IconLink } from "../components/glyphs";
 import { IconReceiver } from "../components/navGlyphs";
 import { useReplicaServers } from "../components/zfs/replica/replicaStore";
 import { getSettings } from "../lib/api";
@@ -21,11 +21,12 @@ import { relativeTime } from "../lib/reltime";
 import { useLoudAnomalies } from "../lib/useAnomalies";
 import { Facts, Figure, InstanceCard, PhoneMark } from "./instances/InstanceCard";
 import { NetPicture, useNetHover } from "./instances/NetPicture";
+import { KeyDepositWindow } from "./instances/KeyDepositWindow";
 import { PeerDetails } from "./instances/PeerDetails";
 import { ReceiverServerWindow } from "./instances/ReceiverServerWindow";
 import { RemoveInstanceButton } from "./instances/RemoveInstanceButton";
 import { useRoleSwitch } from "./instances/RoleDialogs";
-import { RoleTiles } from "./instances/RoleTile";
+import { depositStateLabel, RoleTiles } from "./instances/RoleTile";
 import { UnplacedCard } from "./instances/UnplacedCard";
 import { ZFSServerCards } from "./instances/ZFSServerCards";
 import { buildInstances, protectionFigures, ROLE_KINDS, withoutScheme, type Instance, type RoleKind, type RoleState } from "./instances/instancesModel";
@@ -52,22 +53,26 @@ function SelfCard({
   receiverServer,
   hot,
   onOpenServer,
+  onOpenDeposits,
 }: {
   self: Self;
   served: SelfRoles;
   receiverServer: boolean;
   hot: boolean;
   onOpenServer: () => void;
+  /** Opens this server's key deposits. Missing while there are none. */
+  onOpenDeposits?: () => void;
 }) {
   const { t } = useT();
   const navigate = useNavigate();
   const anomalies = useLoudAnomalies().count;
-  const states = Object.fromEntries(ROLE_KINDS.map((k) => [k, served[k].length > 0 ? "on" : "off"])) as Record<RoleKind, RoleState>;
+  const holders = (k: RoleKind) => served[k] ?? [];
+  const states = Object.fromEntries(ROLE_KINDS.map((k) => [k, holders(k).length > 0 ? "on" : "off"])) as Record<RoleKind, RoleState>;
   const details = Object.fromEntries(
     ROLE_KINDS.map((k) => [
       k,
-      served[k].length > 0
-        ? t("instances.forNames").replace("{names}", () => served[k].map((holder) => holder.name || holder.memberId).join(", "))
+      holders(k).length > 0
+        ? t("instances.forNames").replace("{names}", () => holders(k).map((holder) => holder.name || holder.memberId).join(", "))
         : t("instances.forNoOne"),
     ]),
   ) as Record<RoleKind, string>;
@@ -97,6 +102,15 @@ function SelfCard({
               glyph={<IconReceiver />}
               tone="neutral"
               onClick={onOpenServer}
+            />
+          )}
+          {onOpenDeposits && (
+            <Button
+              label={t("keeper.window.title")}
+              labelKey="keeper.window.title"
+              glyph={<IconKey />}
+              tone="neutral"
+              onClick={onOpenDeposits}
             />
           )}
         </>
@@ -135,6 +149,9 @@ function PeerCard({
   const roles = useRoleSwitch({ instance, peers, sections, state });
   const tiles: Partial<Record<RoleKind, RoleState>> = { ...roles.states };
   if (!modules.zfs && !instance.roles?.byMember.zfs) delete tiles.zfs;
+  // A deposit that is not current says so in place of the tile's own word.
+  const deposit = instance.roles?.byMember.keeper?.state;
+  const details = deposit && deposit !== "held" ? { keeper: depositStateLabel(t, deposit) } : undefined;
 
   const badges = (
     <>
@@ -203,7 +220,12 @@ function PeerCard({
       hot={hot}
     >
       {paired && !instance.app && (
-        <RoleTiles heading={t("instances.doesForServer").replaceAll("{peer}", () => name)} states={tiles} onToggle={roles.toggle} />
+        <RoleTiles
+          heading={t("instances.doesForServer").replaceAll("{peer}", () => name)}
+          states={tiles}
+          details={details}
+          onToggle={roles.toggle}
+        />
       )}
       {roles.dialogs}
     </InstanceCard>
@@ -229,6 +251,7 @@ export function Instances() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [detailsOf, setDetailsOf] = useState<string | null>(null);
   const [serverOpen, setServerOpen] = useState(false);
+  const [depositsOpen, setDepositsOpen] = useState(false);
   const { hot, handlers } = useNetHover();
 
   useEffect(() => {
@@ -284,6 +307,8 @@ export function Instances() {
   }, [navigate, receiver]);
 
   const opened = shown.find((i) => i.key === detailsOf);
+  const { deposits } = state;
+  const hasDeposits = deposits.codeSince !== "" || deposits.sent.length + deposits.kept.length + deposits.releases.length > 0;
   const hasUnplaced = unplaced.received.length + unplaced.pulls.length + unplaced.offers.length > 0;
 
   const peerCard = (inst: Instance, index: number) =>
@@ -327,6 +352,7 @@ export function Instances() {
                 receiverServer={state.receiverServer}
                 hot={hot === "self"}
                 onOpenServer={() => setServerOpen(true)}
+                onOpenDeposits={hasDeposits ? () => setDepositsOpen(true) : undefined}
               />
             )}
             {servers.map((inst, i) => peerCard(inst, i + 1))}
@@ -366,6 +392,7 @@ export function Instances() {
           }}
         />
       )}
+      {depositsOpen && <KeyDepositWindow state={state} onClose={() => setDepositsOpen(false)} />}
       {modules && !state.loading && (
         <PageActions>
           <PageAction primary label={t("instances.pair")} glyph={<IconLink />} onClick={() => navigate("/settings/pairing")} />

@@ -36,6 +36,11 @@ describe("the arrows between this server and a member", () => {
     expect(flows).toEqual([]);
     expect(netFlows(undefined)).toEqual([]);
   });
+
+  it("leave out a key deposit, which is one sealed file and no place backups go to", () => {
+    const keeper = { state: "held" as const, at: "" };
+    expect(netFlows(memberRoles({ byMember: roleSide({ keeper }), forMember: roleSide({ keeper }) }))).toEqual([]);
+  });
 });
 
 describe("what stands around this server", () => {
