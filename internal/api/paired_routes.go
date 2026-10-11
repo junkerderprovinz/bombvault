@@ -107,17 +107,16 @@ var pairedRoutes = map[string]bool{
 	"POST /api/flash/plugins/restore":                 true,
 	"POST /api/containers/{name}/dbdumps/{id}/import": true,
 	"GET /api/stacks/{project}/dir":                   true,
-	"POST /api/stacks/{project}/restore":              true,
 	"GET /api/browse":                                 true,
 
-	// The anomalies, to read and acknowledge.
+	// The anomalies, to read. Acknowledging one ends the hold on the backups
+	// from before it.
 	"GET /api/anomalies":                         true,
 	"GET /api/anomalies/summary":                 true,
 	"GET /api/anomalies/items":                   true,
 	"GET /api/anomalies/items/{targetId}/series": true,
 	"GET /api/anomalies/{id}":                    true,
 	"GET /api/anomalies/{id}/changes":            true,
-	"POST /api/anomalies/acknowledge":            true,
 
 	// The Instances page, to look at.
 	"GET /api/group":                    true,

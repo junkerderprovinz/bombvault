@@ -369,6 +369,10 @@ var pairedRefused = []string{
 	"PUT /api/containers/backup-order",
 	"PUT /api/items/{kind}/{key}/declined",
 	"PUT /api/vms/backup-order",
+	// Acknowledging an anomaly, which lets the backups held for it be pruned.
+	"POST /api/anomalies/acknowledge",
+	// Restores that replace what is there without a backup first.
+	"POST /api/stacks/{project}/restore",
 }
 
 // sessionRoutes are the registered routes that need a session.

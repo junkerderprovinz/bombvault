@@ -438,6 +438,13 @@ func (h *Handler) handleRestoreZFS(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &req) {
 		return
 	}
+	if isPaired(r) {
+		if req.SafetyOffConfirm {
+			refusePaired(w)
+			return
+		}
+		req.SafetySnapshot = true
+	}
 	ack, started, err := h.svc.StartRestoreZFS(r.Context(), id, sourceParam(r), req)
 	if err != nil {
 		zfsFail(w, err)

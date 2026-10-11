@@ -1439,8 +1439,10 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(backup.ErrNotConfirmed))
 		return
 	}
+	// Whoever holds the group's words has a paired session, so what it
+	// replaces is always backed up first and can be brought back.
 	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), RestoreOptions{
-		LeaveStopped: body.LeaveStopped, WithoutRuntime: body.WithoutRuntime, Beside: beside, BackupFirst: body.BackupFirst,
+		LeaveStopped: body.LeaveStopped, WithoutRuntime: body.WithoutRuntime, Beside: beside, BackupFirst: body.BackupFirst || isPaired(r),
 	})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
@@ -1606,6 +1608,11 @@ func (h *Handler) handleRestoreFiles(w http.ResponseWriter, r *http.Request) {
 		Confirm    bool     `json:"confirm"`
 	}
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	// An in-place selection has no backup first to undo it with.
+	if isPaired(r) && strings.TrimSpace(body.TargetPath) == "" {
+		refusePaired(w)
 		return
 	}
 	target, started, err := h.svc.StartRestoreFiles(r.Context(), name, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
@@ -5589,7 +5596,7 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	started, err := h.svc.StartRestoreVM(r.Context(), name, body.SnapshotID, sourceParam(r), RestoreOptions{
-		LeaveStopped: body.LeaveStopped, Beside: beside, BackupFirst: body.BackupFirst,
+		LeaveStopped: body.LeaveStopped, Beside: beside, BackupFirst: body.BackupFirst || isPaired(r),
 	})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
@@ -6618,7 +6625,7 @@ func (h *Handler) handleRestoreFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	target, started, err := h.svc.StartRestoreFileSet(r.Context(), id, body.SnapshotID, sourceParam(r), body.TargetPath, body.Confirm, RestoreOptions{Beside: beside, BackupFirst: body.BackupFirst})
+	target, started, err := h.svc.StartRestoreFileSet(r.Context(), id, body.SnapshotID, sourceParam(r), body.TargetPath, body.Confirm, RestoreOptions{Beside: beside, BackupFirst: body.BackupFirst || isPaired(r)})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
 		return
@@ -6669,6 +6676,10 @@ func (h *Handler) handleRestoreFileSetFiles(w http.ResponseWriter, r *http.Reque
 		Confirm    bool     `json:"confirm"`
 	}
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	if isPaired(r) && strings.TrimSpace(body.TargetPath) == "" {
+		refusePaired(w)
 		return
 	}
 	target, started, err := h.svc.StartRestoreFileSetFiles(r.Context(), id, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
