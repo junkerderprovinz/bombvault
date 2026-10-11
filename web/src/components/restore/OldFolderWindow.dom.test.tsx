@@ -61,6 +61,16 @@ const listForeignFiles = vi.fn((...args: unknown[]) => {
   return Promise.resolve({ ok: true, files: [{ path: "/mnt/cache/appdata/plex/Library", type: "dir", size: 0 }] });
 });
 
+// The kit way opens the same session, and a sealed kit is turned away until
+// its identity comes along.
+const foreignOpenWithKit = vi.fn((location: string, kit: string, creds?: unknown, identity?: string) => {
+  void location;
+  void creds;
+  if (kit === SEALED && !identity) return Promise.resolve({ ok: false, code: "kit-sealed", error: "sealed" });
+  return Promise.resolve({ ok: true, session: "sess-kit", inventory });
+});
+const SEALED = "-----BEGIN AGE ENCRYPTED FILE-----";
+
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
   return {
@@ -69,6 +79,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     listVMs: () => Promise.resolve({ ok: true, vms: [] }),
     listRuns: () => Promise.resolve({ ok: true, runs: [] }),
     foreignOpen: (location: string, key: string, creds?: unknown) => foreignOpen(location, key, creds),
+    foreignOpenWithKit: (...a: unknown[]) => foreignOpenWithKit(...(a as [string, string, unknown, string?])),
     foreignClose: (session: string) => foreignClose(session),
     foreignContainerWarnings: () =>
       Promise.resolve({ ok: true, warnings: [], missingNetwork, networks: missingNetwork ? ["bridge", "proxy"] : [] }),
@@ -115,10 +126,23 @@ async function press(el: HTMLElement) {
 
 const button = (name: string) => screen.getByRole("button", { name }) as HTMLButtonElement;
 
+/** Chooses to type the old instance's key and types one. */
+async function typeKey() {
+  await press(screen.getByRole("tab", { name: en["oldFolder.viaKey"] }));
+  fireEvent.change(screen.getByLabelText(new RegExp(`^${en["recovery.foreignKey"]}`)), { target: { value: "a".repeat(64) } });
+}
+
+async function chooseKit(text: string) {
+  await act(async () => {
+    fireEvent.change(screen.getByTestId("kit-file"), { target: { files: [new File([text], "bombvault-recovery-kit.md")] } });
+  });
+  await screen.findByText("bombvault-recovery-kit.md");
+}
+
 async function connect() {
   const view = await open();
   fireEvent.change(screen.getByLabelText(en["oldFolder.folder"]), { target: { value: "backups/other" } });
-  fireEvent.change(screen.getByLabelText(new RegExp(`^${en["recovery.foreignKey"]}`)), { target: { value: "a".repeat(64) } });
+  await typeKey();
   await press(button(en["recovery.foreignConnect"]));
   return view;
 }
@@ -153,8 +177,44 @@ describe("connecting", () => {
     expect(button(en["recovery.foreignConnect"]).disabled).toBe(true);
     fireEvent.change(screen.getByLabelText(en["oldFolder.folder"]), { target: { value: "backups/other" } });
     expect(button(en["recovery.foreignConnect"]).disabled).toBe(true);
-    fireEvent.change(screen.getByLabelText(new RegExp(`^${en["recovery.foreignKey"]}`)), { target: { value: "a".repeat(64) } });
+    await typeKey();
     expect(button(en["recovery.foreignConnect"]).disabled).toBe(false);
+  });
+
+  it("opens the folder with the old instance's recovery kit in place of a typed key", async () => {
+    await open();
+    fireEvent.change(screen.getByLabelText(en["oldFolder.folder"]), { target: { value: "backups/other" } });
+    expect(screen.getByRole("tab", { name: en["oldFolder.viaKit"] }).getAttribute("aria-selected")).toBe("true");
+    expect(button(en["recovery.foreignConnect"]).disabled).toBe(true);
+    await chooseKit("# BombVault encryption-key recovery kit");
+    await press(button(en["recovery.foreignConnect"]));
+    expect(foreignOpenWithKit).toHaveBeenCalledWith("backups/other", "# BombVault encryption-key recovery kit", undefined, "");
+    expect(foreignOpen).not.toHaveBeenCalled();
+    expect(await screen.findByText(en["recovery.foreignConnected"])).toBeTruthy();
+  });
+
+  it("asks for the age identity of a sealed kit and sends it once", async () => {
+    await open();
+    fireEvent.change(screen.getByLabelText(en["oldFolder.folder"]), { target: { value: "backups/other" } });
+    await chooseKit(SEALED);
+    expect(document.querySelector('input[type="password"]')).toBeNull();
+    await press(button(en["recovery.foreignConnect"]));
+    expect(await screen.findByText(en["emergency.code.kit-sealed"])).toBeTruthy();
+    const identity = document.querySelector<HTMLInputElement>('input[type="password"]')!;
+    fireEvent.change(identity, { target: { value: "AGE-SECRET-KEY-1ABC" } });
+    await press(button(en["recovery.foreignConnect"]));
+    expect(foreignOpenWithKit).toHaveBeenLastCalledWith("backups/other", SEALED, undefined, "AGE-SECRET-KEY-1ABC");
+    expect(await screen.findByText(en["recovery.foreignConnected"])).toBeTruthy();
+    expect(document.body.innerHTML).not.toContain("AGE-SECRET-KEY-1ABC");
+  });
+
+  it("says in a sentence why a kit was turned away", async () => {
+    foreignOpenWithKit.mockResolvedValueOnce({ ok: false, code: "kit-no-key", error: "this recovery kit names no key" } as never);
+    await open();
+    fireEvent.change(screen.getByLabelText(en["oldFolder.folder"]), { target: { value: "backups/other" } });
+    await chooseKit("an old kit");
+    await press(button(en["recovery.foreignConnect"]));
+    expect(await screen.findByText(en["emergency.code.kit-no-key"])).toBeTruthy();
   });
 
   it("sends no credentials for a mounted folder", async () => {
@@ -167,7 +227,7 @@ describe("connecting", () => {
     await open();
     await press(screen.getByRole("tab", { name: en["oldFolder.remote"] }));
     fireEvent.change(screen.getByRole("textbox", { name: en["oldFolder.remote"] }), { target: { value: "s3:https://s3.example/bucket" } });
-    fireEvent.change(screen.getByLabelText(new RegExp(`^${en["recovery.foreignKey"]}`)), { target: { value: "a".repeat(64) } });
+    await typeKey();
     expect(button(en["recovery.foreignConnect"]).disabled).toBe(true);
     fireEvent.change(screen.getByLabelText(en["recovery.foreignS3KeyId"]), { target: { value: "AKIA" } });
     await press(button(en["recovery.foreignConnect"]));

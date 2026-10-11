@@ -4557,6 +4557,10 @@ export const en = {
   "emergency.code.adopt-in-use": "Backups were written with the key that was taken over, so it stays.",
   "emergency.code.backup-key-locked": "The key this server took over can no longer be opened, because APP_KEY changed afterwards. No backup runs until you upload the recovery kit again or set APP_KEY back to what it was.",
   "emergency.code.settings-other-key": "These settings were sealed with another server's APP_KEY. Start with that server's recovery kit in the first step, then bring the settings back again.",
+  "oldFolder.keyVia": "The old instance's key",
+  "oldFolder.viaKit": "Recovery kit",
+  "oldFolder.viaKey": "Type the APP_KEY",
+  "oldFolder.needsKit": "Choose the old instance's recovery kit first.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -8832,6 +8836,10 @@ export const de: Translations = {
   "emergency.code.adopt-in-use": "Mit dem übernommenen Schlüssel wurden schon Sicherungen geschrieben, deshalb bleibt er.",
   "emergency.code.backup-key-locked": "Der übernommene Schlüssel lässt sich nicht mehr öffnen, weil sich der APP_KEY danach geändert hat. Es läuft keine Sicherung, bis du das Recovery-Kit noch einmal hochlädst oder den APP_KEY auf den alten Wert zurücksetzt.",
   "emergency.code.settings-other-key": "Diese Einstellungen wurden mit dem APP_KEY eines anderen Servers versiegelt. Fang im ersten Schritt mit dem Recovery-Kit dieses Servers an und hol die Einstellungen dann noch einmal zurück.",
+  "oldFolder.keyVia": "Schlüssel der alten Instanz",
+  "oldFolder.viaKit": "Recovery-Kit",
+  "oldFolder.viaKey": "APP_KEY eintippen",
+  "oldFolder.needsKit": "Wähl zuerst das Recovery-Kit der alten Instanz aus.",
 };
 
 // ---------------------------------------------------------------------------
