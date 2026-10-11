@@ -116,7 +116,7 @@ func TestTheTwelveWordsAloneNeitherAllowAReleaseNorReachTheKit(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	phrase, relayURL := groupOf(t, tower, attic)
-	if code, _ := deposit(t, tower, attic)["code"].(string); code == "" {
+	if code, _ := deposit(t, tower, attic)["recoveryCode"].(string); code == "" {
 		t.Fatal("no deposit")
 	}
 	towerID, atticID := tower.id(t), attic.id(t)

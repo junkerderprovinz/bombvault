@@ -17,7 +17,7 @@ func TestTheRecoveryCodesPublicKeyIsStoredSealed(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	groupOf(t, tower, attic)
-	code, _ := deposit(t, tower, attic)["code"].(string)
+	code, _ := deposit(t, tower, attic)["recoveryCode"].(string)
 
 	identity, found, err := tower.st.DepositIdentity()
 	if err != nil || !found {
@@ -56,7 +56,7 @@ func TestADepositSaysInsideWhoseItIsAndWhenItWasSealed(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	groupOf(t, tower, attic)
-	code, _ := deposit(t, tower, attic)["code"].(string)
+	code, _ := deposit(t, tower, attic)["recoveryCode"].(string)
 	held, _ := kept(t, attic, tower)
 	plain, err := keydeposit.Open(held.Deposit, code, held.Salt)
 	if err != nil {
@@ -140,7 +140,7 @@ func TestANewerDepositWithAnotherMemberIsNamed(t *testing.T) {
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	barn := newInstance(t, "barn", strings.Repeat("d4", 32))
 	phrase, relayURL := groupOf(t, tower, attic, barn)
-	code, _ := deposit(t, tower, attic)["code"].(string)
+	code, _ := deposit(t, tower, attic)["recoveryCode"].(string)
 	deposit(t, tower, barn)
 	towerID := tower.id(t)
 	tower.svc.StopGroup()

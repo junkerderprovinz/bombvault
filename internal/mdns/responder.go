@@ -333,6 +333,23 @@ func announcedOn(name string) bool {
 	return true
 }
 
+// Addresses lists the IPv4 addresses this host announces itself on: those of
+// the interfaces that are up and carry multicast, without loopback,
+// link-local and container bridges.
+func Addresses() []string {
+	list, err := interfaces()
+	if err != nil {
+		return nil
+	}
+	var out []string
+	for _, ifc := range list {
+		for _, a := range ifc.addrs {
+			out = append(out, a.String())
+		}
+	}
+	return out
+}
+
 // interfaces lists the interfaces that are up, carry multicast and have an
 // IPv4 address other than a link-local one.
 func interfaces() ([]iface, error) {

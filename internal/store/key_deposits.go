@@ -188,8 +188,11 @@ func (r *Repo) KeptDeposits() ([]KeptDeposit, error) {
 
 // KeyRelease is one instance's request to be handed the deposit of another.
 type KeyRelease struct {
-	ID            string
-	OwnerID       string
+	ID      string
+	OwnerID string
+	// OwnerName is the name the deposit had when the request was made, which
+	// stays when the deposit is deleted.
+	OwnerName     string
 	RequesterID   string
 	RequesterName string
 	State         string
@@ -198,11 +201,11 @@ type KeyRelease struct {
 	ReleasedAt    int64
 }
 
-const keyReleaseCols = `id, owner_id, requester_id, requester_name, state, asked_at, decided_at, released_at`
+const keyReleaseCols = `id, owner_id, owner_name, requester_id, requester_name, state, asked_at, decided_at, released_at`
 
 func scanKeyRelease(s scanner) (KeyRelease, error) {
 	var k KeyRelease
-	err := s.Scan(&k.ID, &k.OwnerID, &k.RequesterID, &k.RequesterName, &k.State, &k.AskedAt, &k.DecidedAt, &k.ReleasedAt)
+	err := s.Scan(&k.ID, &k.OwnerID, &k.OwnerName, &k.RequesterID, &k.RequesterName, &k.State, &k.AskedAt, &k.DecidedAt, &k.ReleasedAt)
 	return k, err
 }
 
@@ -268,8 +271,11 @@ func (r *Repo) AskKeyRelease(ownerID, requesterID, requesterName string, renew b
 		}
 		out = KeyRelease{ID: newID(), OwnerID: ownerID, RequesterID: requesterID, RequesterName: requesterName, State: ReleaseAsked, AskedAt: now.Unix()}
 		created = true
-		_, err = tx.Exec(`INSERT INTO key_releases (id, owner_id, requester_id, requester_name, state, asked_at) VALUES (?, ?, ?, ?, ?, ?)`,
-			out.ID, out.OwnerID, out.RequesterID, out.RequesterName, out.State, out.AskedAt)
+		if err := tx.QueryRow(`SELECT coalesce((SELECT owner_name FROM key_deposits WHERE owner_id = ?), '')`, ownerID).Scan(&out.OwnerName); err != nil {
+			return err
+		}
+		_, err = tx.Exec(`INSERT INTO key_releases (id, owner_id, owner_name, requester_id, requester_name, state, asked_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			out.ID, out.OwnerID, out.OwnerName, out.RequesterID, out.RequesterName, out.State, out.AskedAt)
 		return err
 	})
 	if errors.Is(err, ErrReleaseLimit) {

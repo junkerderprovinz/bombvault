@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
@@ -47,7 +48,7 @@ func TestAMemberCanNeitherReplaceNorTakeBackAnotherInstallsDeposit(t *testing.T)
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	phrase, relayURL := groupOf(t, tower, attic)
-	code, _ := deposit(t, tower, attic)["code"].(string)
+	code, _ := deposit(t, tower, attic)["recoveryCode"].(string)
 	towerID, atticID := tower.id(t), attic.id(t)
 	mallory := holdWords(t, relayURL, phrase, wordsHolderID, "", attic)
 	before, _ := kept(t, attic, tower)
@@ -79,8 +80,8 @@ func TestAMemberCanNeitherReplaceNorTakeBackAnotherInstallsDeposit(t *testing.T)
 		t.Fatalf("the deposit does not open with the owner's code: %v", err)
 	}
 
-	if told, err := tower.svc.WithdrawDeposit(context.Background(), atticID); err != nil || !told {
-		t.Fatalf("the owner takes its deposit back: %v, %v", told, err)
+	if told, codeGone, err := tower.svc.WithdrawDeposit(context.Background(), atticID); err != nil || !told || !codeGone {
+		t.Fatalf("the owner takes its last deposit back: told %v, code gone %v, %v", told, codeGone, err)
 	}
 	if _, found := kept(t, attic, tower); found {
 		t.Fatal("the deposit outlived the owner's own call")
@@ -134,7 +135,7 @@ func TestAnInstallNoticesAKeeperThatHoldsSomethingElse(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	groupOf(t, tower, attic)
-	code, _ := deposit(t, tower, attic)["code"].(string)
+	code, _ := deposit(t, tower, attic)["recoveryCode"].(string)
 	opens := func() bool {
 		held, found := kept(t, attic, tower)
 		if !found {
@@ -209,5 +210,61 @@ func TestADepositSomebodyElseMadeUnderAnInstallsIdShowsOnItsSide(t *testing.T) {
 	held, _ := kept(t, attic, tower)
 	if string(held.Deposit) == "not the owner's deposit" || len(held.OwnerKey) == 0 {
 		t.Fatal("the keeper still holds the planted deposit")
+	}
+}
+
+func TestARequestKeepsTheNameOfTheDepositAfterTheDepositIsGone(t *testing.T) {
+	attic, fresh, towerID, _, code := goneTower(t)
+	emergencyGroup(t, fresh, attic, towerID, code, true)
+	if code, res := attic.do(t, http.MethodDelete, "/api/group/deposits/"+towerID, map[string]any{}); code != http.StatusOK || res["ok"] != true {
+		t.Fatalf("the keeper's person deletes the deposit: %d %v", code, res)
+	}
+	asks := releasesOn(t, attic)
+	if len(asks) != 1 || asks[0].OwnerName != "tower" {
+		t.Fatalf("the request after the deposit was deleted: %+v", asks)
+	}
+}
+
+func TestTheRolesSayWhetherAMemberCanKeepADepositOrIsOutOfReach(t *testing.T) {
+	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
+	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
+	groupOf(t, tower, attic)
+	deposit(t, tower, attic)
+	keep := func() any {
+		t.Helper()
+		_, roles := tower.do(t, http.MethodGet, "/api/group/roles", nil)
+		for _, raw := range roles["members"].([]any) {
+			if m := raw.(map[string]any); m["memberId"] == attic.id(t) {
+				return m["keep"]
+			}
+		}
+		return nil
+	}
+	if got := keep(); got != keepYes {
+		t.Fatalf("a member in reach reads %v", got)
+	}
+	attic.svc.StopGroup()
+	deadline := time.Now().Add(10 * time.Second)
+	for isMember(tower, attic.id(t)) {
+		if time.Now().After(deadline) {
+			t.Fatal("the member never left")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if got := keep(); got != keepUnreachable {
+		t.Fatalf("a member out of reach reads %v", got)
+	}
+}
+
+func TestTakingTheLastDepositBackSaysTheRecoveryCodeIsGone(t *testing.T) {
+	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
+	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
+	groupOf(t, tower, attic)
+	if out := deposit(t, tower, attic); out["recoveryCode"] == nil || out["code"] != nil {
+		t.Fatalf("the first deposit answers %v", out)
+	}
+	_, out := tower.do(t, http.MethodDelete, "/api/group/members/"+attic.id(t)+"/roles/keeper", map[string]any{})
+	if out["ok"] != true || out["told"] != true || out["codeGone"] != true {
+		t.Fatalf("taking the last deposit back: %v", out)
 	}
 }

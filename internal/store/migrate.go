@@ -3065,6 +3065,14 @@ ALTER TABLE key_deposits_sent ADD COLUMN changed_at INTEGER NOT NULL DEFAULT 0;`
 		alreadySatisfied: columnPresent("key_deposit_identity", "recipient_enc"),
 		sql:              `ALTER TABLE key_deposit_identity ADD COLUMN recipient_enc BLOB NOT NULL DEFAULT x'';`,
 	},
+	{
+		// The name a deposit had when it was asked for, which the record of
+		// the request keeps after the deposit is deleted.
+		version:          keyHardeningMigration + 2,
+		name:             "key_releases_owner_name",
+		alreadySatisfied: columnPresent("key_releases", "owner_name"),
+		sql:              `ALTER TABLE key_releases ADD COLUMN owner_name TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,

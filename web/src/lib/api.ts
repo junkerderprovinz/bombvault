@@ -5972,6 +5972,11 @@ export interface GroupState extends OkEnvelope {
   /** selfAddress was set by hand and stops being replaced by a newly
    *  learned one. */
   selfAddressManual: boolean;
+  /** The addresses this instance found for itself, read-only: its IPv4
+   *  addresses on the local network (no loopback, no link-local, no
+   *  container bridges), then its mDNS host name ("bombvault.local") while
+   *  it announces itself. */
+  ownAddresses: string[];
 }
 
 /** Why a phrase did not decode, with the word at fault. */
@@ -6105,9 +6110,12 @@ export interface MemberRoles {
   /** False for a member from before role requests: asking it takes effect at
    *  once, since nobody there can answer. */
   answers: boolean;
-  /** False for a member too old to keep a key deposit. The server always
-   *  sends it. */
+  /** False for a member too old to keep a key deposit, and for one out of
+   *  reach. The server always sends it. */
   canKeep?: boolean;
+  /** Whether the member can keep this instance's deposit, telling a member
+   *  that is too old from one that is out of reach, whose version is unknown. */
+  keep: "yes" | "too-old" | "unreachable";
   /** What the member does for this instance. */
   byMember: RoleSide;
   /** What this instance does for the member. */
@@ -6211,7 +6219,8 @@ export type ReleaseState = "asked" | "allowed" | "declined" | "released" | "expi
 
 /** What the keeper's person sees of a request: who asks, for whose deposit,
  *  since when this instance has had the asking instance in its group ("" for
- *  never listed), and how often it asked. */
+ *  never listed), and how often it asked. `ownerName` is the name the
+ *  deposit had when it was asked for, kept after the deposit is deleted. */
 export interface DepositRelease {
   id: string;
   ownerId: string;
@@ -6237,6 +6246,12 @@ export interface Deposits {
   /** Newest first, answered ones included. */
   releases: DepositRelease[];
 }
+
+/** What a refused run of the key events (kinds "key...") carries as its
+ *  error: one of these codes, to be shown in the reader's language. Runs
+ *  written before carry an English sentence instead, which is shown as it
+ *  is. */
+export type KeyRunRefusal = EmergencyRefusal | DepositRefusal | RecoveryKitRefusal;
 
 /** Why a deposit call was refused: the member is too old to keep one, it
  *  keeps none of that server, the keeper's person declined, this server asked
@@ -6274,25 +6289,25 @@ export function listDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>> 
 }
 
 /** PUT /api/group/members/{id}/roles/keeper: gives the member this instance's
- *  deposit. `code` is the recovery code, in four groups of five; it comes
+ *  deposit. `recoveryCode` is the recovery code, in four groups of five; it comes
  *  with the first deposit only and is stored nowhere, so it has to be shown
  *  and written down then. Answers a SecretsRefusal without a login password
  *  or with a paired phone's session. */
-export function askKeeper(memberId: string): Promise<DepositAnswer<{ keeper?: KeeperRole; code?: string }>> {
+export function askKeeper(memberId: string): Promise<DepositAnswer<{ keeper?: KeeperRole; recoveryCode?: string }>> {
   return fetchKeyJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "PUT" });
 }
 
 /** DELETE /api/group/members/{id}/roles/keeper: takes the deposit back.
  *  `told` is false when the member could not be reached. With the last
- *  keeper gone the recovery code is void. */
-export function withdrawKeeper(memberId: string): Promise<DepositAnswer<{ told?: boolean }>> {
+ *  keeper gone the recovery code is void, and `codeGone` says so. */
+export function withdrawKeeper(memberId: string): Promise<DepositAnswer<{ told?: boolean; codeGone?: boolean }>> {
   return fetchKeyJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "DELETE" });
 }
 
 /** POST /api/group/deposit/code: replaces the recovery code and seals every
  *  keeper's deposit for the new one. The answer is the one time it is shown.
  *  Answers a SecretsRefusal like askKeeper. */
-export function newDepositCode(): Promise<DepositAnswer<{ code?: string }>> {
+export function newDepositCode(): Promise<DepositAnswer<{ recoveryCode?: string }>> {
   return fetchKeyJSON("/api/group/deposit/code", { method: "POST" });
 }
 

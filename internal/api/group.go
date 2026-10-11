@@ -18,6 +18,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/discovery"
 	"github.com/junkerderprovinz/bombvault/internal/group"
+	"github.com/junkerderprovinz/bombvault/internal/mdns"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -523,6 +524,10 @@ type groupView struct {
 	// SelfAddressManual is true once a person has set SelfAddress by hand,
 	// so a newly learned address stops replacing it until it is cleared.
 	SelfAddressManual bool `json:"selfAddressManual"`
+	// OwnAddresses are the addresses this instance found for itself: its
+	// IPv4 addresses on the local network, then the host name it announces
+	// over mDNS while it does.
+	OwnAddresses []string `json:"ownAddresses"`
 }
 
 type relayView struct {
@@ -584,7 +589,18 @@ func (h *Handler) groupViewNow() (groupView, error) {
 		MemberSeen:        !g.MemberSeenAt.IsZero(),
 		SelfAddress:       h.svc.directURL(g),
 		SelfAddressManual: g.DirectURLManual,
+		OwnAddresses:      h.ownAddresses(),
 	}, nil
+}
+
+func (h *Handler) ownAddresses() []string {
+	out := append([]string{}, mdns.Addresses()...)
+	h.mdns.mu.Lock()
+	defer h.mdns.mu.Unlock()
+	if h.mdns.responder != nil {
+		out = append(out, h.mdns.responder.Service().Host+".local")
+	}
+	return out
 }
 
 func (h *Handler) writeGroupView(w http.ResponseWriter) {

@@ -756,3 +756,17 @@ func TestConvertedAppKeysLeaveNoBytesInTheDatabaseFiles(t *testing.T) {
 		}
 	}
 }
+
+func TestTheGroupViewListsTheAddressesTheInstanceFoundForItself(t *testing.T) {
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	_, out := in.do(t, http.MethodGet, "/api/group", nil)
+	list, ok := out["ownAddresses"].([]any)
+	if !ok {
+		t.Fatalf("the group view has no list of its own addresses: %v", out["ownAddresses"])
+	}
+	for _, a := range list {
+		if s, _ := a.(string); s == "" || strings.HasPrefix(s, "127.") || strings.HasPrefix(s, "169.254.") {
+			t.Errorf("an address of its own: %v", a)
+		}
+	}
+}

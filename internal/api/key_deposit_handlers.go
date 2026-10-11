@@ -166,7 +166,7 @@ func (s *Service) depositsOverview() (depositsView, error) {
 	}
 	for _, k := range releases {
 		view.Releases = append(view.Releases, releaseView{
-			ID: k.ID, OwnerID: k.OwnerID, OwnerName: owners[k.OwnerID],
+			ID: k.ID, OwnerID: k.OwnerID, OwnerName: cmp.Or(k.OwnerName, owners[k.OwnerID]),
 			RequesterID: k.RequesterID, RequesterName: k.RequesterName, State: releaseState(k, now),
 			AskedAt: unixRFC3339(k.AskedAt), DecidedAt: unixRFC3339(k.DecidedAt), ReleasedAt: unixRFC3339(k.ReleasedAt),
 			KnownSince: unixRFC3339(known[k.RequesterID]),
@@ -229,7 +229,7 @@ func (h *Handler) askKeeper(w http.ResponseWriter, r *http.Request) {
 	}
 	answer := map[string]any{"keeper": keeperRoleView{State: state, At: unixRFC3339(time.Now().Unix())}}
 	if code != "" {
-		answer["code"] = code
+		answer["recoveryCode"] = code
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(answer))
 }
@@ -239,13 +239,13 @@ func (h *Handler) withdrawKeeper(w http.ResponseWriter, r *http.Request) {
 	if !crossOriginGuard(w, r) || !h.requireSignIn(w, r, "taking a deposit back") {
 		return
 	}
-	told, err := h.svc.WithdrawDeposit(r.Context(), r.PathValue("id"))
+	told, codeGone, err := h.svc.WithdrawDeposit(r.Context(), r.PathValue("id"))
 	h.svc.keyEvent(r.Context(), keyEventWithdraw, err)
 	if err != nil {
 		depositFail(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"told": told}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"told": told, "codeGone": codeGone}))
 }
 
 // handleNewDepositCode replaces the recovery code and answers with the new
@@ -261,7 +261,7 @@ func (h *Handler) handleNewDepositCode(w http.ResponseWriter, r *http.Request) {
 		depositFail(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"code": code}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"recoveryCode": code}))
 }
 
 // handleRenewDeposits sends the keepers a fresh deposit where the content

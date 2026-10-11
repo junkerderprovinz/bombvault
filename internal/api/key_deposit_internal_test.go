@@ -116,7 +116,7 @@ func TestAKeeperHoldsADepositItCannotRead(t *testing.T) {
 	groupOf(t, tower, attic)
 
 	out := deposit(t, tower, attic)
-	code, _ := out["code"].(string)
+	code, _ := out["recoveryCode"].(string)
 	keeper, _ := out["keeper"].(map[string]any)
 	if out["ok"] != true || !codeShape.MatchString(code) || keeper["state"] != store.DepositHeld {
 		t.Fatalf("deposit: %v", out)
@@ -162,7 +162,7 @@ func TestAKeeperHoldsADepositItCannotRead(t *testing.T) {
 	if err != nil || !found || len(identity.RecipientEnc) == 0 {
 		t.Fatalf("the owner's identity: %+v, %v, %v", identity, found, err)
 	}
-	if again := deposit(t, tower, attic); again["ok"] != true || again["code"] != nil {
+	if again := deposit(t, tower, attic); again["ok"] != true || again["recoveryCode"] != nil {
 		t.Fatalf("a second deposit made a second code: %v", again)
 	}
 
@@ -191,7 +191,7 @@ func TestADepositIsRenewedWithoutTheCode(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	groupOf(t, tower, attic)
-	code, _ := deposit(t, tower, attic)["code"].(string)
+	code, _ := deposit(t, tower, attic)["recoveryCode"].(string)
 	first, _ := kept(t, attic, tower)
 
 	tower.svc.RenewDeposits(context.Background())
@@ -245,7 +245,7 @@ func TestADepositTheKeeperDeletedComesBackOnlyWhenAPersonAsks(t *testing.T) {
 		t.Fatal("a renewal put a deposit back that the keeper had deleted")
 	}
 
-	if out := deposit(t, tower, attic); out["ok"] != true || out["code"] != nil {
+	if out := deposit(t, tower, attic); out["ok"] != true || out["recoveryCode"] != nil {
 		t.Fatalf("asking again: %v", out)
 	}
 	if held, _ := kept(t, attic, tower); held.State != store.DepositHeld || len(held.Deposit) == 0 {
@@ -319,7 +319,7 @@ func goneTower(t *testing.T) (attic, fresh *instance, towerID, towerKey, code st
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic = newInstance(t, "attic", strings.Repeat("b2", 32))
 	phrase, relayURL := groupOf(t, tower, attic)
-	code, _ = deposit(t, tower, attic)["code"].(string)
+	code, _ = deposit(t, tower, attic)["recoveryCode"].(string)
 	towerID = tower.id(t)
 	tower.svc.StopGroup()
 

@@ -483,29 +483,25 @@ func (s *Service) renewDepositsLoop() {
 
 // WithdrawDeposit takes this install's deposit back from a member and reports
 // whether the member heard. The last keeper gone, the recovery code is
-// forgotten too.
-func (s *Service) WithdrawDeposit(ctx context.Context, memberID string) (bool, error) {
+// forgotten too, which codeGone says.
+func (s *Service) WithdrawDeposit(ctx context.Context, memberID string) (told, codeGone bool, err error) {
 	s.depositMu.Lock()
 	defer s.depositMu.Unlock()
 	if err := s.store.DeleteSentDeposit(memberID); err != nil {
-		return false, err
+		return false, false, err
 	}
-	told := false
 	if _, ok := s.reachableMember(memberID); ok {
 		signer, err := s.nextDepositSigner()
 		if err != nil {
-			return false, err
+			return false, false, err
 		}
 		told = s.callMember(ctx, memberID, http.MethodDelete, "/api/group/peer/deposit", signer.prove(keydeposit.ProofDrop, memberID, nil, nil), nil) == nil
 	}
 	left, err := s.store.SentDeposits()
-	if err != nil {
-		return told, err
+	if err != nil || len(left) > 0 {
+		return told, false, err
 	}
-	if len(left) == 0 {
-		err = s.store.ClearDepositIdentity()
-	}
-	return told, err
+	return told, true, s.store.ClearDepositIdentity()
 }
 
 // handlePeerDepositPut takes a member's deposit to keep.
