@@ -169,6 +169,21 @@ describe("the Help card", () => {
     expect(open).toHaveBeenCalledWith("https://junkerderprovinz.github.io/bombvault/", "_blank", "noopener,noreferrer");
   });
 
+  it("draws the manual's book closed at rest and brings the open one for the pointer, a finger and the focus", async () => {
+    await renderPage();
+    const manual = help().getByRole("button", { name: new RegExp(en["tile.info.manual"]) });
+    const drawings = [...manual.querySelectorAll(".glim-house-mark svg")];
+    expect(drawings.map((svg) => svg.getAttribute("class"))).toEqual(["glim-mark-rest", "glim-mark-hover"]);
+    // Each drawing in the square cropped to its own ink, like the envelope's two.
+    expect(drawings.map((svg) => svg.getAttribute("viewBox"))).toEqual(["0 0 14 14", "0 0.125 14 14"]);
+  });
+
+  it("puts the bug of the glyph set on the bug report", async () => {
+    await renderPage();
+    const report = help().getByRole("button", { name: new RegExp(en["tile.info.bugReport"]) });
+    expect(report.querySelector(".glim-house-mark svg")?.getAttribute("viewBox")).toBe("0.05 0.05 13.9 13.9");
+  });
+
   it("downloads the bug report when its button is pressed", async () => {
     api.downloadDiagnostics.mockResolvedValue(null);
     await renderPage();

@@ -3,7 +3,7 @@ import { Button } from "../../../components/Button";
 import { CheckDraw } from "../../../components/CheckDraw";
 import { IconSearch } from "../../../components/glyphs";
 import { IconClose, IconDiagnostics } from "../../../components/navGlyphs";
-import { ReadmeButton } from "../../../components/ReadmeButton";
+import { BrandMark, ReadmeButton } from "../../../components/ReadmeButton";
 import { Rows, SettingRow } from "../../../components/storage/rows";
 import {
   checkForUpdate,
@@ -13,6 +13,7 @@ import {
   type UpdateCheck,
   type UpdateCheckRefusal,
 } from "../../../lib/api";
+import { MANUAL_SVG } from "../../../lib/appMarks";
 import { groupStage } from "../../../lib/controls";
 import { useT, type TranslationKey } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
@@ -117,17 +118,6 @@ function UpdateButton() {
   );
 }
 
-function BookMark() {
-  return (
-    <svg viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        d="M3 0a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h9.25a.75.75 0 0 0 0-1.5H3a.5.5 0 0 1 0-1h9.25A.75.75 0 0 0 13 10.75V1a1 1 0 0 0-1-1H3Zm1.75 3a.75.75 0 0 0 0 1.5h4.5a.75.75 0 0 0 0-1.5h-4.5Z"
-      />
-    </svg>
-  );
-}
-
 export function InfoPage() {
   const { t } = useT();
   const { push } = useToast();
@@ -187,7 +177,7 @@ export function InfoPage() {
                 onClick: () => window.open(DOCS, "_blank", "noopener,noreferrer"),
               },
             ]}
-            mark={<BookMark />}
+            mark={<BrandMark svg={MANUAL_SVG} />}
             markClass="glim-house-mark"
           />
           <ReadmeButton
