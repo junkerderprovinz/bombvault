@@ -70,9 +70,10 @@ type Handler struct {
 	// stdout itself and not the logger: the logger feeds the log ring, the ring
 	// is copied into the diagnostics bundle, and a bundle gets attached to bug
 	// reports.
-	resetMu  sync.Mutex
-	reset    passwordReset
-	resetOut io.Writer
+	resetMu      sync.Mutex
+	reset        passwordReset
+	resetRefused resetRefusals
+	resetOut     io.Writer
 
 	loginMu    sync.Mutex
 	loginFails map[string][]time.Time

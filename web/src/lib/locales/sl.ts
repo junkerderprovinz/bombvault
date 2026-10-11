@@ -1458,8 +1458,6 @@ const sl: Partial<Translations> = {
   "auth.resetCodeLabel": "Koda iz dnevnika vsebnika",
   "auth.resetCodeTip": "BombVault je zapisal kodo v dnevnik svojega vsebnika. V Unraidu: zavihek Docker, ikona BombVault, Logs. Koda velja 10 minut. Ponastavitev izklopi tudi dvostopenjsko preverjanje.",
   "auth.newPassword": "Novo geslo",
-  "auth.resetCodeInvalid": "Ta koda ni pravilna",
-  "auth.resetCodeExpired": "Ta koda ne velja več. V dnevniku je nova.",
   "auth.twoFactorOn": "Vklopljeno. Poleg gesla je potrebna koda.",
   "auth.twoFactorOff": "Izklopljeno. Za prijavo zadostuje geslo.",
   "auth.twoFactorNeedsPassword": "Najprej nastavi prijavno geslo.",

@@ -551,8 +551,6 @@ const ro: Partial<Translations> = {
   "auth.resetCodeLabel": "Cod din jurnalul containerului",
   "auth.resetCodeTip": "BombVault a scris un cod în jurnalul containerului său. În Unraid: fila Docker, pictograma BombVault, Logs. Un cod este valabil 10 minute. Resetarea dezactivează și autentificarea în doi pași.",
   "auth.newPassword": "Parolă nouă",
-  "auth.resetCodeInvalid": "Acest cod nu este corect",
-  "auth.resetCodeExpired": "Acest cod nu mai este valabil. În jurnal este unul nou.",
   "auth.twoFactorOn": "Pornită. Pe lângă parolă este necesar un cod.",
   "auth.twoFactorOff": "Oprită. Doar parola permite autentificarea.",
   "auth.twoFactorNeedsPassword": "Setează mai întâi o parolă de autentificare.",

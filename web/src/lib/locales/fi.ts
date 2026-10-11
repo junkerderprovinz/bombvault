@@ -554,8 +554,6 @@ const fi: Partial<Translations> = {
   "auth.resetCodeLabel": "Koodi kontin lokista",
   "auth.resetCodeTip": "BombVault kirjoitti koodin konttinsa lokiin. Unraidissa: Docker-välilehti, BombVault-kuvake, Logs. Koodi on voimassa 10 minuuttia. Nollaus poistaa myös kaksivaiheisen tunnistautumisen käytöstä.",
   "auth.newPassword": "Uusi salasana",
-  "auth.resetCodeInvalid": "Tämä koodi ei ole oikea",
-  "auth.resetCodeExpired": "Tämä koodi ei ole enää voimassa. Lokissa on uusi.",
   "auth.twoFactorOn": "Päällä. Salasanan lisäksi tarvitaan koodi.",
   "auth.twoFactorOff": "Pois. Pelkkä salasana riittää kirjautumiseen.",
   "auth.twoFactorNeedsPassword": "Aseta ensin kirjautumissalasana.",

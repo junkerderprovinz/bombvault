@@ -1463,8 +1463,6 @@ const fa: Partial<Translations> = {
   "auth.resetCodeLabel": "کد از لاگ کانتینر",
   "auth.resetCodeTip": "BombVault یک کد در لاگ کانتینر خود نوشته است. در Unraid: زبانه Docker، آیکون BombVault، سپس Logs. هر کد 10 دقیقه معتبر است. بازنشانی، احراز هویت دومرحله‌ای را هم خاموش می‌کند.",
   "auth.newPassword": "رمز عبور جدید",
-  "auth.resetCodeInvalid": "این کد درست نیست",
-  "auth.resetCodeExpired": "این کد دیگر معتبر نیست. کد تازه‌ای در لاگ هست.",
   "auth.twoFactorOn": "روشن. علاوه بر گذرواژه یک کد لازم است.",
   "auth.twoFactorOff": "خاموش. تنها گذرواژه برای ورود کافی است.",
   "auth.twoFactorNeedsPassword": "ابتدا یک گذرواژه ورود تعیین کنید.",

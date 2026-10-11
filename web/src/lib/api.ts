@@ -5238,8 +5238,8 @@ export function startPasswordReset(): Promise<OkEnvelope> {
 }
 
 /** POST /api/auth/reset/finish: sets the password with the code from the log
- *  and signs this browser in. A refusal carries the code "resetCodeInvalid" or
- *  "resetCodeExpired". */
+ *  and signs this browser in. A wrong, expired or missing code is refused
+ *  with the code "resetCodeRejected", the same for all three. */
 export function finishPasswordReset(code: string, password: string): Promise<OkEnvelope> {
   return fetchJSON("/api/auth/reset/finish", {
     method: "POST",

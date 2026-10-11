@@ -1458,8 +1458,6 @@ const sr: Partial<Translations> = {
   "auth.resetCodeLabel": "Код из дневника контејнера",
   "auth.resetCodeTip": "BombVault је уписао код у дневник свог контејнера. У Unraid-у: картица Docker, икона BombVault, Logs. Код важи 10 минута. Ресетовање искључује и двофакторску аутентификацију.",
   "auth.newPassword": "Нова лозинка",
-  "auth.resetCodeInvalid": "Тај код није тачан",
-  "auth.resetCodeExpired": "Тај код више не важи. У дневнику је нови.",
   "auth.twoFactorOn": "Укључено. Уз лозинку је потребан и код.",
   "auth.twoFactorOff": "Искључено. Сама лозинка омогућава пријаву.",
   "auth.twoFactorNeedsPassword": "Прво постави лозинку за пријаву.",

@@ -554,8 +554,6 @@ const ar: Partial<Translations> = {
   "auth.resetCodeLabel": "الرمز من سجل الحاوية",
   "auth.resetCodeTip": "كتب BombVault رمزًا في سجل الحاوية. في Unraid: تبويب Docker، أيقونة BombVault، ثم Logs. يبقى الرمز صالحًا 10 دقائق. إعادة التعيين توقف المصادقة بخطوتين أيضًا.",
   "auth.newPassword": "كلمة المرور الجديدة",
-  "auth.resetCodeInvalid": "هذا الرمز غير صحيح",
-  "auth.resetCodeExpired": "هذا الرمز لم يعد صالحًا. يوجد رمز جديد في السجل.",
   "auth.twoFactorOn": "مفعّلة. يلزم رمز إضافة إلى كلمة المرور.",
   "auth.twoFactorOff": "معطّلة. كلمة المرور وحدها تكفي لتسجيل الدخول.",
   "auth.twoFactorNeedsPassword": "عيّن كلمة مرور للدخول أولاً.",

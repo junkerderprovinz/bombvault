@@ -1463,8 +1463,6 @@ const hi: Partial<Translations> = {
   "auth.resetCodeLabel": "कंटेनर लॉग का कोड",
   "auth.resetCodeTip": "BombVault ने अपने कंटेनर लॉग में एक कोड लिखा है। Unraid में: Docker टैब, BombVault आइकन, Logs। कोड 10 मिनट तक मान्य रहता है। रीसेट करने पर दो-चरणीय सत्यापन भी बंद हो जाता है।",
   "auth.newPassword": "नया पासवर्ड",
-  "auth.resetCodeInvalid": "यह कोड सही नहीं है",
-  "auth.resetCodeExpired": "यह कोड अब मान्य नहीं है। लॉग में नया कोड है।",
   "auth.twoFactorOn": "चालू। पासवर्ड के अलावा एक कोड भी चाहिए।",
   "auth.twoFactorOff": "बंद। केवल पासवर्ड से साइन इन हो जाता है।",
   "auth.twoFactorNeedsPassword": "पहले लॉगिन पासवर्ड सेट करें।",

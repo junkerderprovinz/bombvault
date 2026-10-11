@@ -1463,8 +1463,6 @@ const lv: Partial<Translations> = {
   "auth.resetCodeLabel": "Kods no konteinera žurnāla",
   "auth.resetCodeTip": "BombVault ierakstīja kodu sava konteinera žurnālā. Unraid: cilne Docker, BombVault ikona, Logs. Kods ir derīgs 10 minūtes. Atiestatīšana izslēdz arī divfaktoru autentifikāciju.",
   "auth.newPassword": "Jauna parole",
-  "auth.resetCodeInvalid": "Šis kods nav pareizs",
-  "auth.resetCodeExpired": "Šis kods vairs nav derīgs. Žurnālā ir jauns.",
   "auth.twoFactorOn": "Ieslēgta. Papildus parolei ir vajadzīgs kods.",
   "auth.twoFactorOff": "Izslēgta. Pieteikties var ar pašu paroli.",
   "auth.twoFactorNeedsPassword": "Vispirms iestati pieteikšanās paroli.",

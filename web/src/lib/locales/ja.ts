@@ -554,8 +554,6 @@ const ja: Partial<Translations> = {
   "auth.resetCodeLabel": "コンテナログのコード",
   "auth.resetCodeTip": "BombVault がコンテナのログにコードを書き込みました。Unraid では Docker タブで BombVault のアイコンをクリックし、Logs を開きます。コードの有効時間は 10 分です。リセットすると二段階認証もオフになります。",
   "auth.newPassword": "新しいパスワード",
-  "auth.resetCodeInvalid": "そのコードは正しくありません",
-  "auth.resetCodeExpired": "そのコードはもう使えません。ログに新しいコードがあります。",
   "auth.twoFactorOn": "オン。パスワードに加えてコードが必要です。",
   "auth.twoFactorOff": "オフ。パスワードだけでサインインできます。",
   "auth.twoFactorNeedsPassword": "先にログインパスワードを設定してください。",

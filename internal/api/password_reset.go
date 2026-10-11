@@ -63,21 +63,48 @@ func (p *passwordReset) live() bool {
 	return p.code != "" && time.Now().Before(p.expires)
 }
 
-// guess reports whether typed is the code and spends the code if it is. A
-// wrong guess leaves the code as it was. live is false when there was no code
-// to guess at: none was asked for, or it expired.
-func (p *passwordReset) guess(typed string) (ok, live bool) {
-	if !p.live() {
+// noResetCode stands in for the code while none is live, so a guess costs the
+// same comparison either way. It has the length of a code and symbols no code
+// has.
+const noResetCode = "000000000000"
+
+// guess reports whether typed is the live code and spends the code if it is.
+// A wrong guess leaves the code as it was. stale reports that no code was live
+// to guess at, which only the log is told.
+func (p *passwordReset) guess(typed string) (ok, stale bool) {
+	stale = !p.live()
+	want := p.code
+	if stale {
 		*p = passwordReset{}
-		return false, false
+		want = noResetCode
 	}
 	// The log prints the code in capitals in groups of four.
 	typed = strings.ToUpper(strings.NewReplacer("-", "", " ", "").Replace(typed))
-	if subtle.ConstantTimeCompare([]byte(typed), []byte(p.code)) == 1 {
+	if subtle.ConstantTimeCompare([]byte(typed), []byte(want)) == 1 && !stale {
 		*p = passwordReset{}
-		return true, true
+		return true, false
 	}
-	return false, true
+	return false, stale
+}
+
+// resetRefusals counts refused reset codes for a log line written at most
+// once a minute, so somebody guessing shows in the log without filling it.
+type resetRefusals struct {
+	wrong, stale int
+	reported     time.Time
+}
+
+func (c *resetRefusals) add(stale bool) {
+	if stale {
+		c.stale++
+	} else {
+		c.wrong++
+	}
+	if time.Since(c.reported) < time.Minute {
+		return
+	}
+	log.Printf("api: refused %d wrong password reset code(s) and %d entered while no code was live since the last report", c.wrong, c.stale)
+	*c = resetRefusals{reported: time.Now()}
 }
 
 // handleStartPasswordReset handles POST /api/auth/reset. It writes a code to
@@ -135,19 +162,18 @@ func (h *Handler) handleFinishPasswordReset(w http.ResponseWriter, r *http.Reque
 	}
 
 	h.resetMu.Lock()
-	ok, live := h.reset.guess(body.Code)
-	h.resetMu.Unlock()
-	if !live {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "resetCodeExpired", "error": "that code is no longer valid"})
-		return
+	ok, stale := h.reset.guess(body.Code)
+	if !ok {
+		h.resetRefused.add(stale)
 	}
+	h.resetMu.Unlock()
 	if !ok {
 		if h.loginThrottled(key) {
 			writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
 			return
 		}
 		h.recordLoginFail(key)
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "resetCodeInvalid", "error": "that code is not right"})
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "resetCodeRejected", "error": "that code is wrong or has expired"})
 		return
 	}
 

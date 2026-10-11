@@ -548,8 +548,6 @@ const nl: Partial<Translations> = {
   "auth.resetCodeLabel": "Code uit het containerlog",
   "auth.resetCodeTip": "BombVault heeft een code in het log van zijn container geschreven. In Unraid: tabblad Docker, BombVault-pictogram, Logs. Een code is 10 minuten geldig. Het opnieuw instellen schakelt ook tweefactorauthenticatie uit.",
   "auth.newPassword": "Nieuw wachtwoord",
-  "auth.resetCodeInvalid": "Die code klopt niet",
-  "auth.resetCodeExpired": "Die code is niet meer geldig. In het log staat een nieuwe.",
   "auth.twoFactorOn": "Aan. Naast het wachtwoord is een code nodig.",
   "auth.twoFactorOff": "Uit. Het wachtwoord alleen is genoeg om in te loggen.",
   "auth.twoFactorNeedsPassword": "Stel eerst een inlogwachtwoord in.",

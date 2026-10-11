@@ -554,8 +554,6 @@ const es: Partial<Translations> = {
   "auth.resetCodeLabel": "Código del registro del contenedor",
   "auth.resetCodeTip": "BombVault ha escrito un código en el registro de su contenedor. En Unraid: pestaña Docker, icono de BombVault, Logs. Un código es válido durante 10 minutos. El restablecimiento también desactiva la verificación en dos pasos.",
   "auth.newPassword": "Contraseña nueva",
-  "auth.resetCodeInvalid": "Ese código no es correcto",
-  "auth.resetCodeExpired": "Ese código ya no es válido. Hay uno nuevo en el registro.",
   "auth.twoFactorOn": "Activada. Se pide un código además de la contraseña.",
   "auth.twoFactorOff": "Desactivada. La contraseña por sí sola inicia sesión.",
   "auth.twoFactorNeedsPassword": "Establece primero una contraseña de acceso.",

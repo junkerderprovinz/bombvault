@@ -75,17 +75,17 @@ describe("LoginPage, a forgotten password", () => {
     render(<LoginPage onLogin={onLogin} />);
     await openReset();
 
-    await fillAndSubmit("ABCD-EFGH", "correct horse battery");
+    await fillAndSubmit("ABCD-EFGH-JKLM", "correct horse battery");
 
     await waitFor(() => expect(onLogin).toHaveBeenCalledTimes(1));
-    expect(finishPasswordReset).toHaveBeenCalledWith("ABCD-EFGH", "correct horse battery");
+    expect(finishPasswordReset).toHaveBeenCalledWith("ABCD-EFGH-JKLM", "correct horse battery");
   });
 
   it("sends nothing while the two passwords differ", async () => {
     render(<LoginPage onLogin={vi.fn()} />);
     await openReset();
 
-    await fillAndSubmit("ABCD-EFGH", "correct horse battery", "correct horse batterx");
+    await fillAndSubmit("ABCD-EFGH-JKLM", "correct horse battery", "correct horse batterx");
 
     expect(screen.getByRole("alert").textContent).toBe(en["auth.passwordMismatch"]);
     expect(finishPasswordReset).not.toHaveBeenCalled();
@@ -95,34 +95,23 @@ describe("LoginPage, a forgotten password", () => {
     render(<LoginPage onLogin={vi.fn()} />);
     await openReset();
 
-    await fillAndSubmit("ABCD-EFGH", "short");
+    await fillAndSubmit("ABCD-EFGH-JKLM", "short");
 
     expect(screen.getByRole("alert")).toBeTruthy();
     expect(finishPasswordReset).not.toHaveBeenCalled();
   });
 
-  it("says so when the code is wrong and keeps what was typed", async () => {
-    finishPasswordReset.mockResolvedValue({ ok: false, code: "resetCodeInvalid", error: "that code is not right" });
+  it("says so when the code is refused, keeps what was typed and asks for a code in case it expired", async () => {
+    finishPasswordReset.mockResolvedValue({ ok: false, code: "resetCodeRejected", error: "that code is wrong or has expired" });
     render(<LoginPage onLogin={vi.fn()} />);
     await openReset();
 
-    await fillAndSubmit("ABCD-EFGH", "correct horse battery");
+    await fillAndSubmit("ABCD-EFGH-JKLM", "correct horse battery");
 
-    await waitFor(() => expect(screen.getByRole("alert").textContent).toBe(en["auth.resetCodeInvalid"]));
+    await waitFor(() => expect(screen.getByRole("alert").textContent).toBe(en["auth.resetCodeRejected"]));
+    expect((document.getElementById("bv-reset-code") as HTMLInputElement).value).toBe("ABCD-EFGH-JKLM");
     expect((document.getElementById("bv-reset-password") as HTMLInputElement).value).toBe("correct horse battery");
-    expect(startPasswordReset).toHaveBeenCalledTimes(1);
-  });
-
-  it("has a new code written when the old one has expired", async () => {
-    finishPasswordReset.mockResolvedValue({ ok: false, code: "resetCodeExpired", error: "that code is no longer valid" });
-    render(<LoginPage onLogin={vi.fn()} />);
-    await openReset();
-
-    await fillAndSubmit("ABCD-EFGH", "correct horse battery");
-
-    await waitFor(() => expect(screen.getByRole("alert").textContent).toBe(en["auth.resetCodeExpired"]));
     expect(startPasswordReset).toHaveBeenCalledTimes(2);
-    expect((document.getElementById("bv-reset-code") as HTMLInputElement).value).toBe("");
   });
 
   it("goes back to the sign-in form", async () => {

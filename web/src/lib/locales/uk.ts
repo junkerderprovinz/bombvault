@@ -551,8 +551,6 @@ const uk: Partial<Translations> = {
   "auth.resetCodeLabel": "Код із журналу контейнера",
   "auth.resetCodeTip": "BombVault записав код у журнал свого контейнера. В Unraid: вкладка Docker, значок BombVault, Logs. Код дійсний 10 хвилин. Скидання також вимикає двофакторну автентифікацію.",
   "auth.newPassword": "Новий пароль",
-  "auth.resetCodeInvalid": "Цей код неправильний",
-  "auth.resetCodeExpired": "Цей код більше не дійсний. У журналі є новий.",
   "auth.twoFactorOn": "Увімкнено. Крім пароля потрібен код.",
   "auth.twoFactorOff": "Вимкнено. Для входу достатньо пароля.",
   "auth.twoFactorNeedsPassword": "Спочатку задай пароль для входу.",
