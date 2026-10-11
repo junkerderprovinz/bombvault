@@ -286,6 +286,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/diagnostics", h.handleDiagnostics)
 	mux.HandleFunc("POST /api/settings/import", h.handleImportSettings)
 	mux.HandleFunc("GET /api/recovery-kit", h.handleRecoveryKit)
+	mux.HandleFunc("POST /api/recovery-kit/read", h.handleReadRecoveryKit)
 	mux.HandleFunc("POST /api/recovery-kit/ack", h.handleRecoveryKitAck)
 	mux.HandleFunc("GET /api/rclone", h.handleRcloneInfo)
 	mux.HandleFunc("POST /api/rclone", h.handleSetRclone)

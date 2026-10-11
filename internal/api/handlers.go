@@ -6612,6 +6612,8 @@ func (h *Handler) handleForeignOpen(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Location string `json:"location"`
 		Key      string `json:"key"`
+		// Kit is the other instance's recovery kit, sent in place of Key.
+		Kit string `json:"kit"`
 		// Creds are the FOREIGN repository's own backend credentials, required
 		// for a remote location and used for this session only (#185). They are
 		// never persisted: OpenForeign does not write Settings.
@@ -6620,7 +6622,12 @@ func (h *Handler) handleForeignOpen(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	session, inv, err := h.svc.OpenForeign(r.Context(), body.Location, body.Key, body.Creds)
+	key, err := foreignKeyOf(body.Key, body.Kit)
+	if err != nil {
+		kitFail(w, err)
+		return
+	}
+	session, inv, err := h.svc.OpenForeign(r.Context(), body.Location, key, body.Creds)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

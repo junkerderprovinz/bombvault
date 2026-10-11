@@ -5298,6 +5298,53 @@ export function foreignOpen(
   });
 }
 
+/** One repository a recovery kit names. `folder` is a local location below
+ *  the host mount of the instance that wrote the kit, the form `foreignOpen`
+ *  takes one in; a remote location has none. */
+export interface RecoveryKitLocation {
+  /** The section it belongs to. A named repository has none. */
+  domain?: string;
+  kind: "local" | "offsite" | "named" | "destination";
+  /** What a named repository or a destination was called. */
+  name?: string;
+  location: string;
+  folder?: string;
+}
+
+/** What an uploaded recovery kit says. Its key stays on the server. A kit of
+ *  an instance without encryption names no key: its repositories can be read,
+ *  its containers and VMs cannot be recreated from them. */
+export interface RecoveryKitFacts {
+  encrypted: boolean;
+  locations: RecoveryKitLocation[];
+}
+
+/** Why a kit cannot be used: it is sealed with the person's age key and has
+ *  to be decrypted first, it is another file, its key does not give the
+ *  password printed beside it, or it names no key. */
+export type RecoveryKitRefusal = "kit-sealed" | "not-a-kit" | "kit-key-broken" | "kit-no-key";
+
+type RecoveryKitAnswer<T> = Omit<OkEnvelope, "code"> & { code?: RecoveryKitRefusal } & T;
+
+/** POST /api/recovery-kit/read: reads the text of a recovery kit and names
+ *  the repositories in it. Nothing is stored. */
+export function readRecoveryKit(kit: string): Promise<RecoveryKitAnswer<{ kit?: RecoveryKitFacts }>> {
+  return fetchJSON("/api/recovery-kit/read", { method: "POST", body: JSON.stringify({ kit }) });
+}
+
+/** foreignOpen with the other instance's recovery kit in place of its typed
+ *  APP_KEY. The key lives in the session as a typed one does. */
+export function foreignOpenWithKit(
+  location: string,
+  kit: string,
+  creds?: CloudCreds,
+): Promise<RecoveryKitAnswer<ForeignOpenResponse>> {
+  return fetchJSON("/api/foreign/open", {
+    method: "POST",
+    body: JSON.stringify({ location, kit, creds: creds ?? null }),
+  });
+}
+
 /** POST /api/foreign/close — drop the session immediately (call on
  *  leave/unmount). Closing an unknown/expired session is a harmless no-op. */
 export function foreignClose(session: string): Promise<OkEnvelope> {
