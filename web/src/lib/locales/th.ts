@@ -52,11 +52,7 @@ const th: Partial<Translations> = {
   "dashboard.summaryNextBackup": "การสำรองข้อมูลครั้งถัดไป",
   "dashboard.summaryNextIn": "ในอีก {countdown}",
   "dashboard.summaryLastResult": "ผลลัพธ์ล่าสุด",
-  "dashboard.recentRuns": "การทำงานล่าสุด",
-  "dashboard.spikeStatus": "สถานะระบบ",
   "dashboard.noRuns": "ยังไม่มีการทำงาน",
-  "dashboard.spikeLink": "ตรวจสอบการผสานรวมโฮสต์",
-  "dashboard.hostIntegrationCheck": "การตรวจสอบการผสานรวมโฮสต์",
   "dashboard.allOk": "ระบบทั้งหมดปกติ",
   "dashboard.degraded": "ประสิทธิภาพลดลง",
   "dashboard.checking": "กำลังตรวจสอบ…",
@@ -71,7 +67,6 @@ const th: Partial<Translations> = {
   "dashboard.resetLayout": "รีเซ็ตเป็นค่าเริ่มต้น",
   "dashboard.blockSummary": "ภาพรวม",
   "dashboard.blockStats": "สถิติ",
-  "dashboard.blockBackups": "การสำรองข้อมูลและประวัติ",
 
   // Spike
   "spike.title": "การผสานรวมโฮสต์",
@@ -84,7 +79,6 @@ const th: Partial<Translations> = {
   "spike.info": "ข้อมูล",
   "spike.bestEffort": "ไม่บังคับ",
   "spike.checkNow": "ตรวจสอบเดี๋ยวนี้",
-  "spike.probeFailed": "การตรวจสอบล้มเหลว (ดูบันทึกเซิร์ฟเวอร์)",
 
   // Containers
   "containers.discover": "ค้นหาการสำรองข้อมูล",
@@ -105,15 +99,8 @@ const th: Partial<Translations> = {
   "changeNotice.volumeGone": "วอลุ่ม {name} ไม่มีแล้ว",
   "changeNotice.more": "อีก {n} รายการ",
   "containers.never": "ไม่เคย",
-  "containers.colName": "ชื่อ",
-  "containers.colImage": "อิมเมจ",
-  "containers.colStatus": "สถานะ",
-  "containers.colAppdata": "Appdata",
-  "containers.colActions": "การดำเนินการ",
   "containers.backupStarted": "เริ่มการสำรองข้อมูลแล้ว",
-  "containers.noDestination": "ยังไม่ได้กำหนดปลายทาง",
   "containers.includeInSchedule": "รวมในตารางเวลา",
-  "containers.schedule": "ตารางเวลา",
   "containers.scheduleHint": "คอนเทนเนอร์ที่รวมอยู่จะถูกสำรองข้อมูลทีละรายการตามลำดับ เริ่มจากเวลาที่กำหนดไว้ เนื่องจากใช้ที่เก็บข้อมูลร่วมกัน จึงทำงานตามลำดับ ไม่ใช่พร้อมกันทั้งหมด",
   "containers.notInstalled": "ไม่ได้ติดตั้ง",
   "containers.notInstalledTitle": "ไม่ได้ติดตั้ง (เฉพาะการสำรองข้อมูล)",
@@ -160,17 +147,9 @@ const th: Partial<Translations> = {
 
   // Backups (restic snapshots)
   "snapshots.title": "การสำรองข้อมูล",
-  "snapshots.colId": "รหัส",
-  "snapshots.colTime": "เวลา",
-  "snapshots.colTags": "แท็ก",
-  "snapshots.colSize": "ขนาด",
   "snapshots.restore": "กู้คืน",
   "snapshots.none": "ไม่พบการสำรองข้อมูล",
 
-  // Restore
-  "restore.confirmTitle": "ยืนยันการกู้คืน",
-  "restore.confirmBody":
-    "การดำเนินการนี้จะหยุด container แทนที่ข้อมูล และสร้างใหม่จากการสำรองข้อมูล ดำเนินการต่อ?",
   "restore.cancel": "ยกเลิกการกู้คืน",
   "backup.cancel": "ยกเลิกการสำรองข้อมูล",
   "backup.cancelConfirm": "ยกเลิกการสำรองข้อมูลของ {name} หรือไม่ การทำงานจะหยุดโดยไม่เขียนสแนปช็อต และสิ่งที่บันทึกไว้แล้วจะไม่สูญหาย",
@@ -293,11 +272,6 @@ const th: Partial<Translations> = {
   "bottleneck.cpu": "CPU ทำงานอยู่ {pct}%",
   "bottleneck.cpuLimit": "BombVault ใช้ {pct}% ของขีดจำกัด CPU ของคอนเทนเนอร์",
   "bottleneck.upload": "การอัปโหลดวิ่งที่ {pct}% ของขีดจำกัด",
-  "run.colKind": "ประเภท",
-  "run.colStatus": "สถานะ",
-  "run.colStarted": "เริ่มต้น",
-  "run.colFinished": "เสร็จสิ้น",
-  "run.colContainer": "Container",
   "home.newBackupConfirm": "เริ่มสำรองข้อมูลทุกโดเมนที่เปิดใช้งานตอนนี้หรือไม่? คอนเทนเนอร์จะหยุดและเริ่มใหม่ทีละตัวระหว่างการสำรองข้อมูลของตน",
   "run.statVolume": "ปริมาณข้อมูล",
   "run.statSnapshot": "สแนปช็อต",
@@ -347,7 +321,6 @@ const th: Partial<Translations> = {
   "settings.configEnabled": "สำรองข้อมูลตัวเอง",
   "settings.configEnabledHint": "สำรองข้อมูลการตั้งค่า เป้าหมาย และข้อมูลรับรองของ BombVault เอง เพื่อให้การติดตั้งใหม่สามารถกู้คืนการตั้งค่าของตัวเองได้ด้วย (สำรองข้อมูลตัวเอง)",
   "settings.schedule": "ตารางเวลา",
-  "settings.scheduleOff": "ปิด",
   "settings.language": "ภาษา",
   "settings.theme": "ธีม",
   "settings.save": "บันทึก",
@@ -455,7 +428,6 @@ const th: Partial<Translations> = {
   "time.minutesAgo": "{n} นาทีที่แล้ว",
   "time.hoursAgo": "{n} ชั่วโมงที่แล้ว",
   "time.daysAgo": "{n} วันที่แล้ว",
-  "folder.browse": "เรียกดู…",
   "folder.browseTitle": "เรียกดูโฟลเดอร์",
   "folder.use": "ใช้โฟลเดอร์นี้",
   "folder.none": "ไม่มีโฟลเดอร์ย่อย",
@@ -558,14 +530,12 @@ const th: Partial<Translations> = {
   "state.notInstalled": "ไม่ได้ติดตั้ง",
 
   // Backups — files
-  "snapshots.files": "ไฟล์",
   "snapshots.delete": "ลบ",
   "snapshots.recreate": "สร้างใหม่จากการตั้งค่าที่บันทึกไว้",
   "snapshots.recreateConfirm": "สร้างคอนเทนเนอร์นี้ใหม่จากการตั้งค่าที่บันทึกไว้หรือไม่? จะถูกสร้างและเริ่มทำงานจากคำจำกัดความที่จัดเก็บไว้",
   "snapshots.configOnlyHint": "การสำรองข้อมูลเฉพาะการตั้งค่า: คำจำกัดความของคอนเทนเนอร์ถูกบันทึกไว้ แต่ไม่มีโฟลเดอร์ข้อมูลให้สแนปช็อต หากคุณลบคอนเทนเนอร์ จะปรากฏใน \"ยังไม่ได้ติดตั้ง\" ซึ่งคุณสามารถสร้างใหม่จากการตั้งค่านี้ได้",
 
   // File-level restore
-  "files.restore": "กู้คืน",
   "files.restored": "กู้คืนแล้ว",
   "files.restoreConfirm": "กู้คืนไฟล์ที่เลือกไปยังตำแหน่งเดิมของแต่ละไฟล์? ไฟล์ที่มีอยู่จะถูกเขียนทับ",
   "files.selectHint": "ทำเครื่องหมายไฟล์และโฟลเดอร์ที่ต้องการกู้คืน แล้วเลือกปลายทาง",
@@ -656,8 +626,6 @@ const th: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "เก็บสแนปช็อตหนึ่งรายการสำหรับแต่ละสัปดาห์ตามปฏิทินใน N สัปดาห์ล่าสุดที่มีการสำรองข้อมูล",
   "settings.retentionMonthlyInfo": "เก็บสแนปช็อตหนึ่งรายการสำหรับแต่ละเดือนตามปฏิทินใน N เดือนล่าสุดที่มีการสำรองข้อมูล",
   "settings.retentionYearlyInfo": "เก็บสแนปช็อตหนึ่งรายการสำหรับแต่ละปีตามปฏิทินใน N ปีล่าสุดที่มีการสำรองข้อมูล หากมีจำนวนปีน้อยกว่านั้น จะเก็บรายการที่เก่าที่สุดไว้ด้วย",
-  "settings.retentionLocal": "ที่เก็บในเครื่อง",
-  "settings.retentionOffsite": "ที่เก็บนอกสถานที่",
   "settings.retentionLocalTitle": "การเก็บรักษาในเครื่อง",
   "settings.retentionOffsiteTitle": "การเก็บรักษานอกสถานที่",
   "settings.retentionOffsiteHint": "นโยบายแยกสำหรับที่เก็บนอกสถานที่ เพื่อเก็บไว้นานขึ้นเป็นคลังเก็บ ตั้งเป็น 0 ทั้งหมด = เก็บข้อมูลสำรองนอกสถานที่ทุกชุด (ไม่พรูนนอกสถานที่)",
@@ -845,10 +813,8 @@ const th: Partial<Translations> = {
     "คอนเทนเนอร์นี้อยู่ในสแตก Compose {stack} โฟลเดอร์โปรเจกต์ถูกสำรองครั้งเดียวสำหรับทั้งสแตก ไม่ใช่ครั้งละบริการ จึงไม่แสดงในรายการนี้",
   "folders.notReachable": "ไม่อยู่ภายใต้จุดเมานต์ของโฮสต์ ไม่สามารถสำรองข้อมูลได้",
   "folders.customMissing": "ไม่พบโฟลเดอร์ข้อมูล (ไม่มีอะไรให้สำรองที่นี่)",
-  "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "เพิ่มเส้นทางโฟลเดอร์",
   "folders.add": "เพิ่ม",
-  "folders.save": "บันทึกโฟลเดอร์",
   "folders.saved": "บันทึกแล้ว",
   "folders.empty": "ไม่พบโฟลเดอร์ที่แมปไว้สำหรับคอนเทนเนอร์นี้",
   "folders.treeLabel": "เลือกโฟลเดอร์สำรองข้อมูล",
@@ -916,8 +882,6 @@ const th: Partial<Translations> = {
   "snapshot.changed": "เปลี่ยนแปลง",
   "snapshot.diffSummary": "+{addedFiles} ไฟล์ ({addedBytes}), ~{changedFiles} เปลี่ยนแปลง, -{removedFiles} ไฟล์ ({removedBytes})",
 
-  // Restore — to folder
-  "restore.toFolder": "กู้คืนไปยังโฟลเดอร์…",
   "restore.toFolderHint":
     "แตกสแนปช็อตนี้ลงในโฟลเดอร์ภายใต้จุดเมานต์การสำรองข้อมูลของคุณ คอนเทนเนอร์ที่กำลังทำงานจะไม่ถูกแตะต้อง",
   "restore.targetPath": "โฟลเดอร์ปลายทาง",
@@ -997,9 +961,7 @@ const th: Partial<Translations> = {
   "config.settingsHint": "ปกป้องการกำหนดค่าของ BombVault เอง (ฐานข้อมูลการตั้งค่า ข้อมูลรับรองนอกสถานที่ และคีย์ SSH) เพื่อให้การติดตั้งใหม่สามารถกู้คืนตัวเองและทำงานต่อจากจุดที่ค้างไว้ได้ทันที",
   "config.enabled": "สำรองข้อมูลการตั้งค่าของ BombVault",
   "config.enabledHint": "รวม /config ของ BombVault เองไว้ในตารางเวลาด้านล่าง",
-  "config.schedule": "ตารางเวลา",
   "config.scheduleHint": "สำรองข้อมูลการตั้งค่า เป้าหมาย และข้อมูลรับรองของ BombVault เอง ตามเวลาที่กำหนดไว้",
-  "config.offsiteSchedule": "ตารางเวลานอกสถานที่",
   "config.offsiteMoved": "สำเนานอกสถานที่ของการสำรองข้อมูลตัวเองตั้งค่าได้ที่ การตั้งค่า, ปลายทาง ในการ์ดเดียวกับที่ทุกโดเมนอื่นมี",
   "config.pathMoved": "กำหนดตำแหน่งสำรองข้อมูลได้ที่ การตั้งค่า, ปลายทาง ซึ่งอาจเป็นโฟลเดอร์ในเครื่องหรือที่เก็บระยะไกลที่มีข้อมูลรับรองของตัวเอง",
 
@@ -1287,7 +1249,6 @@ const th: Partial<Translations> = {
   "stack.members": "คอนเทนเนอร์ {n} ตัว",
   "stack.startInOrder": "เริ่มทำงานตามลำดับการพึ่งพาหลังการกู้คืน",
   "stack.restoreConfirm": "กู้คืนทุกคอนเทนเนอร์ในสแตกนี้หรือไม่? แต่ละตัวจะถูกสร้างใหม่จากการสำรองข้อมูลล่าสุด",
-  "stack.restored": "กู้คืนสแตกแล้ว",
   "stack.restoreFinished": "กู้คืนสแตกเสร็จแล้ว ดูผลลัพธ์รายคอนเทนเนอร์ได้ในประวัติการทำงาน",
   "stack.memberRestored": "กู้คืนแล้ว",
   "stack.memberStarted": "เริ่มทำงานแล้ว",
@@ -1524,10 +1485,8 @@ const th: Partial<Translations> = {
   "excludes.title": "รูปแบบการยกเว้น",
   "excludes.hint": "หนึ่งรูปแบบต่อบรรทัด พาธคอนเทนเนอร์ (เช่น /config/Library/.../Cache) จะถูกจับคู่กับวอลุ่มที่สำรองไว้ ส่วนชื่อล้วน ๆ อย่าง .git จะจับคู่ที่ระดับความลึกใดก็ได้ ไม่รองรับรายการในวงเล็บปีกกาอย่าง {a,b} ให้ใช้บรรทัดละหนึ่งรายการ",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
-  "excludes.save": "บันทึกการยกเว้น",
   "excludes.saved": "บันทึกการยกเว้นแล้ว",
   "excludes.error": "ไม่สามารถบันทึกการยกเว้นได้",
-  "excludes.resolvedTo": "แปลงเป็น:",
   "excludes.noMatch": "ส่งให้ restic ตามที่เป็น (ไม่ใช่พาธคอนเทนเนอร์ที่รู้จัก)",
   "excludes.excludesNothing": "วอลุ่มของโฟลเดอร์นี้ไม่ได้อยู่ในข้อมูลสำรอง ดังนั้นบรรทัดนี้จึงไม่ยกเว้นสิ่งใด",
   // Exclude preview status (#38)
@@ -2909,7 +2868,6 @@ const th: Partial<Translations> = {
   "receiver.checkCadenceHint": "เวลาที่จะรันการตรวจสอบความสมบูรณ์แบบอิสระบนเครื่องนี้ เว้นว่างสำหรับรายวัน, 'off' เพื่อปิด, หรือเช่น 'weekly Sun 05:00'",
   "receiver.checkCadencePlaceholder": "ว่าง = daily 04:00 · off · daily HH:MM · weekly Sun 05:00",
   "receiver.readDataPercent": "ตัวอย่างการตรวจสอบเชิงลึก (%)",
-  "receiver.readDataPercentHint": "restic อ่านข้อมูลแพ็กซ้ำมากเพียงใดในการตรวจสอบตามกำหนด 0 = ตรวจสอบโครงสร้างเท่านั้น",
   "receiver.enabledLabel": "ตรวจสอบที่เก็บนี้",
   "receiver.nameRequired": "ป้อนชื่อ",
   "receiver.repoRequired": "ป้อนตำแหน่งที่เก็บ",

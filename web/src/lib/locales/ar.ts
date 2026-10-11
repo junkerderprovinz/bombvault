@@ -52,11 +52,7 @@ const ar: Partial<Translations> = {
   "dashboard.summaryNextBackup": "النسخة الاحتياطية التالية",
   "dashboard.summaryNextIn": "خلال {countdown}",
   "dashboard.summaryLastResult": "آخر نتيجة",
-  "dashboard.recentRuns": "آخر التشغيلات",
-  "dashboard.spikeStatus": "حالة النظام",
   "dashboard.noRuns": "لا توجد تشغيلات بعد",
-  "dashboard.spikeLink": "تشغيل فحص تكامل المضيف",
-  "dashboard.hostIntegrationCheck": "فحص تكامل المضيف",
   "dashboard.allOk": "جميع الأنظمة تعمل بشكل جيد",
   "dashboard.degraded": "متدهور",
   "dashboard.checking": "جارٍ الفحص…",
@@ -71,7 +67,6 @@ const ar: Partial<Translations> = {
   "dashboard.resetLayout": "إعادة التعيين إلى الافتراضي",
   "dashboard.blockSummary": "نظرة عامة",
   "dashboard.blockStats": "إحصائيات",
-  "dashboard.blockBackups": "النسخ الاحتياطية والسجل",
 
   // Spike
   "spike.title": "تكامل المضيف",
@@ -84,7 +79,6 @@ const ar: Partial<Translations> = {
   "spike.info": "معلومة",
   "spike.bestEffort": "اختياري",
   "spike.checkNow": "فحص الآن",
-  "spike.probeFailed": "فشل الاستطلاع (راجع سجلات الخادم)",
 
   // Containers
   "containers.discover": "اكتشاف النسخ الاحتياطية",
@@ -105,15 +99,8 @@ const ar: Partial<Translations> = {
   "changeNotice.volumeGone": "وحدة التخزين {name} لم تعد موجودة",
   "changeNotice.more": "و{n} غيرها",
   "containers.never": "أبداً",
-  "containers.colName": "الاسم",
-  "containers.colImage": "الصورة",
-  "containers.colStatus": "الحالة",
-  "containers.colAppdata": "Appdata",
-  "containers.colActions": "الإجراءات",
   "containers.backupStarted": "بدأ النسخ الاحتياطي",
-  "containers.noDestination": "لم يُحدَّد وجهة",
   "containers.includeInSchedule": "تضمين في الجدول الزمني",
-  "containers.schedule": "الجدول الزمني",
   "containers.scheduleHint": "يتم نسخ الحاويات المُدرجة احتياطيًا واحدة تلو الأخرى بدءًا من الوقت المجدول، فهي تشترك في مستودع واحد، لذا تعمل بالتسلسل وليس جميعها في وقت واحد.",
   "containers.notInstalled": "غير مثبّت",
   "containers.notInstalledTitle": "غير مثبّت (النسخ الاحتياطية فقط)",
@@ -160,17 +147,9 @@ const ar: Partial<Translations> = {
 
   // Backups (restic snapshots)
   "snapshots.title": "النسخ الاحتياطية",
-  "snapshots.colId": "المعرّف",
-  "snapshots.colTime": "الوقت",
-  "snapshots.colTags": "العلامات",
-  "snapshots.colSize": "الحجم",
   "snapshots.restore": "استعادة",
   "snapshots.none": "لا توجد نسخ احتياطية",
 
-  // Restore
-  "restore.confirmTitle": "تأكيد الاستعادة",
-  "restore.confirmBody":
-    "سيُوقف هذا الـ container وتُستبدل بياناته ويُعاد إنشاؤه من النسخة الاحتياطية. هل تريد المتابعة؟",
   "restore.cancel": "إلغاء الاستعادة",
   "backup.cancel": "إلغاء النسخ الاحتياطي",
   "backup.cancelConfirm": "إلغاء النسخ الاحتياطي لـ {name}؟ يتوقف التشغيل دون كتابة لقطة، ولا يُفقد أي شيء محفوظ بالفعل.",
@@ -293,11 +272,6 @@ const ar: Partial<Translations> = {
   "bottleneck.cpu": "كان المعالج مشغولًا بنسبة {pct}%.",
   "bottleneck.cpuLimit": "استخدم BombVault نسبة {pct}% من حد المعالج لحاويته.",
   "bottleneck.upload": "جرى الرفع بنسبة {pct}% من حدّه.",
-  "run.colKind": "النوع",
-  "run.colStatus": "الحالة",
-  "run.colStarted": "بدأ",
-  "run.colFinished": "انتهى",
-  "run.colContainer": "Container",
   "home.newBackupConfirm": "هل تريد بدء نسخة احتياطية لكل نطاق ممكّن الآن؟ تُوقف الحاويات وتُعاد تشغيلها واحدًا تلو الآخر أثناء تشغيل النسخ الاحتياطي لها.",
   "run.statVolume": "حجم البيانات",
   "run.statSnapshot": "لقطة",
@@ -347,7 +321,6 @@ const ar: Partial<Translations> = {
   "settings.configEnabled": "النسخ الذاتي",
   "settings.configEnabledHint": "نسخ إعدادات BombVault ووجهاته وبيانات اعتماده احتياطيًا، بحيث يمكن لتثبيت جديد استعادة إعداداته أيضًا (النسخ الذاتي).",
   "settings.schedule": "الجدول الزمني",
-  "settings.scheduleOff": "إيقاف",
   "settings.language": "اللغة",
   "settings.theme": "المظهر",
   "settings.save": "حفظ",
@@ -455,7 +428,6 @@ const ar: Partial<Translations> = {
   "time.minutesAgo": "zero=منذ {n} دقيقة|one=منذ دقيقة واحدة|two=منذ دقيقتين|few=منذ {n} دقائق|many=منذ {n} دقيقة|other=منذ {n} دقيقة",
   "time.hoursAgo": "zero=منذ {n} ساعة|one=منذ ساعة واحدة|two=منذ ساعتين|few=منذ {n} ساعات|many=منذ {n} ساعة|other=منذ {n} ساعة",
   "time.daysAgo": "zero=منذ {n} يوم|one=منذ يوم واحد|two=منذ يومين|few=منذ {n} أيام|many=منذ {n} يوماً|other=منذ {n} يوم",
-  "folder.browse": "استعراض…",
   "folder.browseTitle": "استعراض المجلدات",
   "folder.use": "استخدام هذا المجلد",
   "folder.none": "لا توجد مجلدات فرعية",
@@ -558,14 +530,12 @@ const ar: Partial<Translations> = {
   "state.notInstalled": "غير مثبّت",
 
   // Backups — files
-  "snapshots.files": "الملفات",
   "snapshots.delete": "حذف",
   "snapshots.recreate": "إعادة الإنشاء من الإعداد المحفوظ",
   "snapshots.recreateConfirm": "إعادة إنشاء هذه الحاوية من إعدادها المحفوظ؟ سيتم إنشاؤها وتشغيلها من التعريف المخزَّن.",
   "snapshots.configOnlyHint": "نسخة احتياطية للإعداد فقط: تعريف الحاوية محفوظ، لكن لا توجد مجلدات بيانات للقطة. إذا حذفت الحاوية ستظهر ضمن \"غير مثبَّتة\" حيث يمكنك إعادة إنشائها من هذا الإعداد.",
 
   // File-level restore
-  "files.restore": "استعادة",
   "files.restored": "تمت الاستعادة",
   "files.restoreConfirm": "استعادة الملفات المحددة إلى مواقعها الأصلية؟ سيتم استبدال الملفات الموجودة.",
   "files.selectHint": "حدّد الملفات والمجلدات المراد استعادتها ثم اختر الوجهة.",
@@ -656,8 +626,6 @@ const ar: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "يحتفظ بنسخة واحدة لكل أسبوع من آخر N أسبوع تقويمي يحتوي على نسخة احتياطية.",
   "settings.retentionMonthlyInfo": "يحتفظ بنسخة واحدة لكل شهر من آخر N شهر تقويمي يحتوي على نسخة احتياطية.",
   "settings.retentionYearlyInfo": "يحتفظ بنسخة واحدة لكل سنة من آخر N سنة تقويمية تحتوي على نسخة احتياطية. وإذا كانت السنوات أقل من ذلك، تُحفظ أقدم نسخة أيضاً.",
-  "settings.retentionLocal": "المستودع المحلي",
-  "settings.retentionOffsite": "المستودع الخارجي",
   "settings.retentionLocalTitle": "الاحتفاظ المحلي",
   "settings.retentionOffsiteTitle": "الاحتفاظ خارج الموقع",
   "settings.retentionOffsiteHint": "سياسة منفصلة للمستودع الخارجي لتحتفظ به أطول كأرشيف. الكل 0 = الاحتفاظ بكل نسخة خارجية (دون تقليم خارجي).",
@@ -845,10 +813,8 @@ const ar: Partial<Translations> = {
     "تنتمي هذه الحاوية إلى حزمة Compose ‏{stack}. يُنسخ مجلد المشروع مرة واحدة للحزمة كلها، لا مرة لكل خدمة، ولذلك لا يظهر هنا.",
   "folders.notReachable": "ليس ضمن نقطة تركيب المضيف، لا يمكن نسخه احتياطياً",
   "folders.customMissing": "لم يتم العثور على مجلد بيانات (لا شيء للنسخ الاحتياطي هنا)",
-  "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "إضافة مسار مجلد",
   "folders.add": "إضافة",
-  "folders.save": "حفظ المجلدات",
   "folders.saved": "تم الحفظ",
   "folders.empty": "لم يتم العثور على مجلدات مربوطة لهذه الحاوية.",
   "folders.treeLabel": "اختيار مجلدات النسخ الاحتياطي",
@@ -916,8 +882,6 @@ const ar: Partial<Translations> = {
   "snapshot.changed": "متغيّر",
   "snapshot.diffSummary": "+{addedFiles} ملفات ({addedBytes})، ~{changedFiles} متغيّرة، -{removedFiles} ملفات ({removedBytes})",
 
-  // Restore to folder
-  "restore.toFolder": "استعادة إلى مجلد…",
   "restore.toFolderHint":
     "يستخرج هذه اللقطة إلى مجلد ضمن نقطة تركيب النسخ الاحتياطي. لا يتم المساس بالـ container قيد التشغيل.",
   "restore.targetPath": "المجلد الهدف",
@@ -981,9 +945,7 @@ const ar: Partial<Translations> = {
   "config.settingsHint": "احمِ إعدادات BombVault الخاصة (قاعدة بيانات الإعدادات وبيانات الاعتماد خارج الموقع ومفاتيح SSH) حتى يتمكن تثبيت جديد من استعادة نفسه ومتابعة العمل من حيث توقّف.",
   "config.enabled": "نسخ إعدادات BombVault احتياطياً",
   "config.enabledHint": "تضمين /config الخاص بـ BombVault في الجدول الزمني أدناه.",
-  "config.schedule": "الجدول الزمني",
   "config.scheduleHint": "ينسخ إعدادات BombVault ووجهاته وبيانات اعتماده احتياطيًا في الوقت المجدول.",
-  "config.offsiteSchedule": "الجدول الزمني خارج الموقع",
   "config.offsiteMoved": "يتم إعداد النسخة الخارجية للنسخ الاحتياطي الذاتي ضمن الإعدادات، الوجهات، في البطاقة نفسها التي تملكها كل المجالات الأخرى.",
   "config.pathMoved": "يُضبط موقع النسخ الاحتياطي في الإعدادات، الوجهات، حيث يمكن أن يكون مجلدًا محليًا أو مستودعًا بعيدًا ببيانات اعتماد خاصة به.",
 
@@ -1287,7 +1249,6 @@ const ar: Partial<Translations> = {
   "stack.members": "zero=لا حاويات|one=حاوية واحدة|two=حاويتان|few={n} حاويات|many={n} حاوية|other={n} حاوية",
   "stack.startInOrder": "التشغيل بترتيب التبعيات بعد الاستعادة",
   "stack.restoreConfirm": "استعادة جميع الـ containers في هذا الـ stack؟ يُعاد إنشاء كل منها من أحدث نسخة احتياطية.",
-  "stack.restored": "تمت استعادة الـ stack",
   "stack.restoreFinished": "اكتملت استعادة الـ stack. راجع سجل التشغيلات للاطّلاع على نتائج كل حاوية.",
   "stack.memberRestored": "تمت الاستعادة",
   "stack.memberStarted": "تم التشغيل",
@@ -1524,10 +1485,8 @@ const ar: Partial<Translations> = {
   "excludes.title": "أنماط الاستبعاد",
   "excludes.hint": "نمط واحد لكل سطر. يُطابَق مسار الحاوية (مثل /config/Library/.../Cache) مع وحدة التخزين المنسوخة احتياطياً؛ أما اسم مجرد مثل .git فيطابق على أي عمق. لا تُدعم قوائم الأقواس المعقوفة مثل {a,b}؛ استخدم سطراً لكل واحدة.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
-  "excludes.save": "حفظ الاستبعادات",
   "excludes.saved": "تم حفظ الاستبعادات",
   "excludes.error": "تعذّر حفظ الاستبعادات",
-  "excludes.resolvedTo": "يتحوّل إلى:",
   "excludes.noMatch": "يُمرَّر إلى restic كما هو (ليس مساراً معروفاً للحاوية).",
   "excludes.excludesNothing": "وحدة تخزين هذا المجلد ليست ضمن النسخة الاحتياطية، لذا لا يستبعد هذا السطر أي شيء.",
   // Exclude preview status (#38)
@@ -2909,7 +2868,6 @@ const ar: Partial<Translations> = {
   "receiver.checkCadenceHint": "متى يُشغَّل فحص السلامة المستقل على هذا الجهاز. اتركه فارغًا للفحص اليومي، 'off' للتعطيل، أو مثلًا 'weekly Sun 05:00'.",
   "receiver.checkCadencePlaceholder": "فارغ = daily 04:00 · off · daily HH:MM · weekly Sun 05:00",
   "receiver.readDataPercent": "عينة الفحص العميق (%)",
-  "receiver.readDataPercentHint": "مقدار بيانات الحزم التي يعيد restic قراءتها في الفحص المجدول. 0 = فحص هيكلي فقط.",
   "receiver.enabledLabel": "مراقبة هذا المستودع",
   "receiver.nameRequired": "أدخل اسمًا.",
   "receiver.repoRequired": "أدخل موقع المستودع.",

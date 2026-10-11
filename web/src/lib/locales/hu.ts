@@ -52,11 +52,7 @@ const hu: Partial<Translations> = {
   "dashboard.summaryNextBackup": "Következő biztonsági mentés",
   "dashboard.summaryNextIn": "{countdown} múlva",
   "dashboard.summaryLastResult": "Utolsó eredmény",
-  "dashboard.recentRuns": "Legutóbbi futások",
-  "dashboard.spikeStatus": "Rendszerállapot",
   "dashboard.noRuns": "Még nincs futás",
-  "dashboard.spikeLink": "Hosztellenőrzés futtatása",
-  "dashboard.hostIntegrationCheck": "Hosztellenőrzés",
   "dashboard.allOk": "Minden rendszer rendben",
   "dashboard.degraded": "Leromlott",
   "dashboard.checking": "Ellenőrzés…",
@@ -71,7 +67,6 @@ const hu: Partial<Translations> = {
   "dashboard.resetLayout": "Visszaállítás alapértelmezettre",
   "dashboard.blockSummary": "Áttekintés",
   "dashboard.blockStats": "Statisztika",
-  "dashboard.blockBackups": "Biztonsági mentések és előzmények",
 
   // Spike
   "spike.title": "Hosztintegráció",
@@ -84,7 +79,6 @@ const hu: Partial<Translations> = {
   "spike.info": "INFÓ",
   "spike.bestEffort": "nem kötelező",
   "spike.checkNow": "Ellenőrzés most",
-  "spike.probeFailed": "a próba sikertelen volt (lásd a szerver naplóit)",
 
   // Containers
   "containers.discover": "Biztonsági mentések felfedezése",
@@ -105,15 +99,8 @@ const hu: Partial<Translations> = {
   "changeNotice.volumeGone": "A(z) {name} kötet már nincs meg",
   "changeNotice.more": "még {n}",
   "containers.never": "Soha",
-  "containers.colName": "Név",
-  "containers.colImage": "Image",
-  "containers.colStatus": "Állapot",
-  "containers.colAppdata": "Appdata",
-  "containers.colActions": "Műveletek",
   "containers.backupStarted": "Biztonsági mentés elindult",
-  "containers.noDestination": "Nincs beállított célhely",
   "containers.includeInSchedule": "Ütemezésbe foglalás",
-  "containers.schedule": "Ütemezés",
   "containers.scheduleHint": "A felvett konténerek egymás után, az ütemezett időponttól kezdve készülnek biztonsági mentésről. Egy közös tárolón osztoznak, így sorban futnak, nem egyszerre.",
   "containers.notInstalled": "Nincs telepítve",
   "containers.notInstalledTitle": "Nincs telepítve (csak biztonsági mentések)",
@@ -160,17 +147,9 @@ const hu: Partial<Translations> = {
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Biztonsági mentések",
-  "snapshots.colId": "ID",
-  "snapshots.colTime": "Időpont",
-  "snapshots.colTags": "Címkék",
-  "snapshots.colSize": "Méret",
   "snapshots.restore": "Visszaállítás",
   "snapshots.none": "Nem található biztonsági mentés",
 
-  // Restore
-  "restore.confirmTitle": "Visszaállítás megerősítése",
-  "restore.confirmBody":
-    "Ez leállítja a konténert, kicseréli az appdata-t, és visszaállítja a mentésből. Folytatja?",
   "restore.cancel": "Visszaállítás megszakítása",
   "backup.cancel": "Biztonsági mentés megszakítása",
   "backup.cancelConfirm": "Megszakítja a(z) {name} biztonsági mentését? A futás pillanatkép írása nélkül áll le, és a már elmentettekből semmi sem vész el.",
@@ -293,11 +272,6 @@ const hu: Partial<Translations> = {
   "bottleneck.cpu": "A processzor {pct}%-ban volt foglalt.",
   "bottleneck.cpuLimit": "A BombVault a konténere processzorkorlátjának {pct}%-át használta.",
   "bottleneck.upload": "A feltöltés a korlátja {pct}%-án futott.",
-  "run.colKind": "Típus",
-  "run.colStatus": "Állapot",
-  "run.colStarted": "Indítva",
-  "run.colFinished": "Befejezve",
-  "run.colContainer": "Konténer",
   "home.newBackupConfirm": "Elindítod most az összes engedélyezett terület biztonsági mentését? A konténerek a saját mentésük alatt egyenként leállnak és újraindulnak.",
   "run.statVolume": "Adatmennyiség",
   "run.statSnapshot": "Pillanatkép",
@@ -347,7 +321,6 @@ const hu: Partial<Translations> = {
   "settings.configEnabled": "Önmentés",
   "settings.configEnabledHint": "A BombVault saját beállításainak, céljainak és hitelesítő adatainak biztonsági mentése, hogy egy friss telepítés is vissza tudja állítani a saját konfigurációját (önmentés).",
   "settings.schedule": "Ütemezés",
-  "settings.scheduleOff": "ki",
   "settings.language": "Nyelv",
   "settings.theme": "Téma",
   "settings.save": "Mentés",
@@ -455,7 +428,6 @@ const hu: Partial<Translations> = {
   "time.minutesAgo": "{n} perce",
   "time.hoursAgo": "{n} órája",
   "time.daysAgo": "{n} napja",
-  "folder.browse": "Tallózás…",
   "folder.browseTitle": "Mappák tallózása",
   "folder.use": "Ezt a mappát használom",
   "folder.none": "Nincsenek almappák",
@@ -558,14 +530,12 @@ const hu: Partial<Translations> = {
   "state.notInstalled": "Nincs telepítve",
 
   // Backups — files
-  "snapshots.files": "Fájlok",
   "snapshots.delete": "Törlés",
   "snapshots.recreate": "Újralétrehozás mentett konfigból",
   "snapshots.recreateConfirm": "Újralétrehozza ezt a konténert a mentett konfigurációjából? A tárolt definícióból jön létre és indul el.",
   "snapshots.configOnlyHint": "Csak-konfiguráció biztonsági mentés: a konténer definíciója mentve van, de nincsenek adatmappái pillanatképhez. Ha törlöd, a „Nincs telepítve“ alatt jelenik meg, ahonnan újralétrehozhatod ebből a konfigból.",
 
   // File-level restore
-  "files.restore": "Visszaállítás",
   "files.restored": "Visszaállítva",
   "files.restoreConfirm": "Visszaállítja a kijelölt fájlokat az eredeti helyükre? A meglévő fájlok felülíródnak.",
   "files.selectHint": "Jelölje be a visszaállítandó fájlokat és mappákat, majd válassza ki a célt.",
@@ -656,8 +626,6 @@ const hu: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "Egy pillanatképet őriz meg az utolsó N naptári hét mindegyikéből, amelyben van biztonsági mentés.",
   "settings.retentionMonthlyInfo": "Egy pillanatképet őriz meg az utolsó N naptári hónap mindegyikéből, amelyben van biztonsági mentés.",
   "settings.retentionYearlyInfo": "Egy pillanatképet őriz meg az utolsó N naptári év mindegyikéből, amelyben van biztonsági mentés. Ha kevesebb év van, a legrégebbit is megtartja.",
-  "settings.retentionLocal": "Helyi repó",
-  "settings.retentionOffsite": "Távoli repó",
   "settings.retentionLocalTitle": "Helyi megőrzés",
   "settings.retentionOffsiteTitle": "Telephelyen kívüli megőrzés",
   "settings.retentionOffsiteHint": "Külön szabály a távoli repóhoz, hogy archívumként tovább megőrizhesd. Minden 0 = minden távoli biztonsági mentés megőrzése (nincs távoli takarítás).",
@@ -845,10 +813,8 @@ const hu: Partial<Translations> = {
     "Ez a konténer a(z) {stack} Compose veremhez tartozik. A projektmappa az egész veremhez egyszer kerül mentésre, nem szolgáltatásonként, ezért nem szerepel itt.",
   "folders.notReachable": "nincs a gazdagép csatolásán belül, nem menthető",
   "folders.customMissing": "nem található adatmappa (nincs mit menteni)",
-  "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Mappaútvonal hozzáadása",
   "folders.add": "Hozzáadás",
-  "folders.save": "Mappák mentése",
   "folders.saved": "Mentve",
   "folders.empty": "Nem található leképezett mappa ehhez a konténerhez.",
   "folders.treeLabel": "Biztonsági mentési mappák kiválasztása",
@@ -916,8 +882,6 @@ const hu: Partial<Translations> = {
   "snapshot.changed": "módosítva",
   "snapshot.diffSummary": "+{addedFiles} fájl ({addedBytes}), ~{changedFiles} módosítva, -{removedFiles} fájl ({removedBytes})",
 
-  // Restore to folder
-  "restore.toFolder": "Visszaállítás mappába…",
   "restore.toFolderHint":
     "Kicsomagolja ezt a pillanatképet egy mappába a mentési csatoláson belül. A futó konténert nem érinti.",
   "restore.targetPath": "Célmappa",
@@ -1276,7 +1240,6 @@ const hu: Partial<Translations> = {
   "stack.members": "{n} konténer",
   "stack.startInOrder": "Indítás függőségi sorrendben a visszaállítás után",
   "stack.restoreConfirm": "Visszaállítja a stack összes konténerét? Mindegyik újra létrejön a legutóbbi biztonsági mentésből.",
-  "stack.restored": "Stack visszaállítva",
   "stack.restoreFinished": "A stack visszaállítása befejeződött. A konténerenkénti eredmények a futási előzményekben találhatók.",
   "stack.memberRestored": "visszaállítva",
   "stack.memberStarted": "elindítva",
@@ -1514,9 +1477,7 @@ const hu: Partial<Translations> = {
   "config.settingsHint": "Védd meg BombVault saját konfigurációját (a beállítás-adatbázisát, a telephelyen kívüli hitelesítő adatait és az SSH-kulcsait), hogy egy friss telepítés helyre tudja állítani magát, és pontosan ott folytassa, ahol abbahagyta.",
   "config.enabled": "BombVault beállításainak biztonsági mentése",
   "config.enabledHint": "BombVault saját /config mappájának felvétele az alábbi ütemezésbe.",
-  "config.schedule": "Ütemezés",
   "config.scheduleHint": "A BombVault saját beállításait, céljait és hitelesítő adatait menti az ütemezett időpontban.",
-  "config.offsiteSchedule": "Telephelyen kívüli ütemezés",
   "config.offsiteMoved": "Az önmentés telephelyen kívüli másolata a Beállítások, Célok alatt állítható be, ugyanabban a kártyában, amely minden más tartománynál is megvan.",
   "config.pathMoved": "A biztonsági mentés helye a Beállítások, Célok alatt adható meg, ahol lehet helyi mappa vagy saját hitelesítő adatokkal rendelkező távoli tároló.",
 
@@ -1524,10 +1485,8 @@ const hu: Partial<Translations> = {
   "excludes.title": "Kizárási minták",
   "excludes.hint": "Soronként egy minta. Egy konténer-útvonal (pl. /config/Library/.../Cache) a mentett kötethez lesz illesztve; egy önálló név, mint a .git, bármilyen mélységben illeszkedik. A kapcsos zárójeles listák, mint a {a,b}, nem támogatottak; használj soronként egyet.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
-  "excludes.save": "Kizárások mentése",
   "excludes.saved": "Kizárások mentve",
   "excludes.error": "A kizárásokat nem sikerült menteni",
-  "excludes.resolvedTo": "erre oldódik fel:",
   "excludes.noMatch": "Változatlanul átadva a resticnek (nem felismert konténer-útvonal).",
   "excludes.excludesNothing": "Ennek a mappának a kötete nincs a biztonsági mentésben, ezért ez a sor semmit sem zár ki.",
   // Exclude preview status (#38)
@@ -2909,7 +2868,6 @@ const hu: Partial<Translations> = {
   "receiver.checkCadenceHint": "Mikor fusson a független sértetlenség-ellenőrzés ezen a gépen. Hagyja üresen a napihoz, 'off' a letiltáshoz, vagy pl. 'weekly Sun 05:00'.",
   "receiver.checkCadencePlaceholder": "üres = daily 04:00 · off · daily HH:MM · weekly Sun 05:00",
   "receiver.readDataPercent": "Mély ellenőrzés minta (%)",
-  "receiver.readDataPercentHint": "Mennyi csomagadatot olvas újra a restic az ütemezett ellenőrzéskor. 0 = csak szerkezeti ellenőrzés.",
   "receiver.enabledLabel": "Tároló figyelése",
   "receiver.nameRequired": "Adjon meg egy nevet.",
   "receiver.repoRequired": "Adjon meg egy tárolóhelyet.",
