@@ -109,24 +109,6 @@ describe("the settings search index", () => {
     }
   );
 
-  it("has every caption of the placement defaults card, its row of buttons and its fields", () => {
-    expect(pageSource("storage")).toContain("<PlacementDefaultsCard");
-    const card = SETTINGS_INDEX.storage.find((c) => c.title === "placementDefaults.title");
-    expect(card, "placementDefaults.title on storage").toBeDefined();
-    expect(card?.hint).toBe("placementDefaults.hint");
-    const sources = [
-      readFileSync(join(HERE, "PlacementDefaultsCard.tsx"), "utf8"),
-      readFileSync(join(HERE, "..", "..", "components", "placement", "PlacementBar.tsx"), "utf8"),
-    ];
-    const keys = sources.flatMap((source) => [
-      ...[...source.matchAll(/label=\{t\("([\w.]+)"\)\}/g)].map(([, key]) => key),
-      ...[...source.matchAll(/\blabel: t\("([\w.]+)"\)/g)].map(([, key]) => key),
-    ]);
-    expect(keys).toContain("placement.segLocal");
-    expect(keys.length).toBeGreaterThanOrEqual(5);
-    for (const key of keys) expect(card?.rows.map((r) => r.key), key).toContain(key);
-  });
-
   it("has the off-premises switch of the repositories card with its (i)", () => {
     const source = readFileSync(join(HERE, "ReposCard.tsx"), "utf8");
     const rows = [...source.matchAll(/\{t\("([\w.]+)"\)\}\s*<InfoBubble tip=\{t\("([\w.]+)"\)\}/g)].map(([, key, hint]) => ({ key, hint }));

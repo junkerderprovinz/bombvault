@@ -2593,15 +2593,6 @@ export const en = {
 
   // Defaults
   "placementDefaults.title": "Placement defaults",
-  "placementDefaults.hint":
-    "New items take the location at their first backup. Changing it moves no backups. The copies apply at once to every item without its own choice.",
-  "placementDefaults.countFollow": "Following the default: {n}",
-  "placementDefaults.othersOffsite": "Flash, self-backup and ZFS datasets pick their destinations on the Off-site page",
-  "placementDefaults.countOwn": "Own choice: {n}",
-  "placementDefaults.countOpen": "No location yet: {n}",
-  "placementDefaults.countChosenNoRun": "Location set, no backup: {n}",
-  "placementDefaults.homeOff":
-    "{home} is switched off. Items without a location are not backed up until it is on again or the default changes.",
   "placementDefaults.homeMissing": "The default points at a repository that no longer exists. Items without a location are not backed up.",
   "placementDefaults.confirmHome": "New items in {domain} take {home} at their first backup. Items with a location keep it.",
   "placementDefaults.dropAskContainers": "Items and project folders that {target} no longer gets: {n}. Copies that stay there: {copies}.",
@@ -2613,14 +2604,6 @@ export const en = {
     "Items and project folders that {target} gets from now on: {n}. Snapshots uploaded at the next run: at most {snapshots}.",
   "placementDefaults.addAsk": "Items that {target} gets from now on: {n}. Snapshots uploaded at the next run: at most {snapshots}.",
   "placementDefaults.openTakeHome": "Items without a location that take {home} at their first backup: {n}.",
-  "placementDefaults.apply": "Apply to items without backups",
-  "placementDefaults.applyAsk": "Location and copies go back to the default for these items: {n}.",
-  "placementDefaults.applyLoses": "Losing their own choice: {list}",
-  "placementDefaults.applyKeptBackups": "Stay as they are, they have backups: {list}",
-  "placementDefaults.applyKeptUnreadable": "Stay as they are, their location could not be read: {list}",
-  "placementDefaults.applyKeptChanged": "Changed in the meantime and left alone: {list}",
-  "placementDefaults.applyNone": "No item without backups differs from the default.",
-  "placementDefaults.applyBusy": "A backup is running. Apply again once it has finished.",
   "placementDefaults.paused": "Off-site paused after a rebuild",
   "placementDefaults.pausedHint":
     "Rules and defaults were lost with the old configuration. Nothing from {domain} is copied off-site until this default is confirmed. Items with a card can be set to Local first.",
@@ -6811,15 +6794,6 @@ export const de: Translations = {
 
   // Defaults
   "placementDefaults.title": "Ablage-Vorgaben",
-  "placementDefaults.hint":
-    "Neue Einträge übernehmen den Ort beim ersten Backup. Eine Änderung verschiebt keine Backups. Die Kopien gelten sofort für jeden Eintrag ohne eigene Wahl.",
-  "placementDefaults.countFollow": "Folgen der Vorgabe: {n}",
-  "placementDefaults.othersOffsite": "Flash, Selbst-Backup und ZFS-Datasets wählen ihre Ziele auf der Seite Off-site",
-  "placementDefaults.countOwn": "Eigene Wahl: {n}",
-  "placementDefaults.countOpen": "Noch ohne Ort: {n}",
-  "placementDefaults.countChosenNoRun": "Ort eingetragen, ohne Backup: {n}",
-  "placementDefaults.homeOff":
-    "{home} ist ausgeschaltet. Einträge ohne Ort werden nicht gesichert, bis es wieder an ist oder die Vorgabe sich ändert.",
   "placementDefaults.homeMissing": "Die Vorgabe zeigt auf ein Repository, das es nicht mehr gibt. Einträge ohne Ort werden nicht gesichert.",
   "placementDefaults.confirmHome": "Neue Einträge unter {domain} übernehmen {home} bei ihrem ersten Backup. Einträge mit eingetragenem Ort behalten ihn.",
   "placementDefaults.dropAskContainers": "Einträge und Projektordner, die {target} nicht mehr bekommt: {n}. Kopien, die dort bleiben: {copies}.",
@@ -6831,14 +6805,6 @@ export const de: Translations = {
     "Einträge und Projektordner, die {target} ab jetzt bekommt: {n}. Beim nächsten Lauf hochgeladene Snapshots: höchstens {snapshots}.",
   "placementDefaults.addAsk": "Einträge, die {target} ab jetzt bekommt: {n}. Beim nächsten Lauf hochgeladene Snapshots: höchstens {snapshots}.",
   "placementDefaults.openTakeHome": "Einträge ohne Ort, die bei ihrem ersten Backup {home} übernehmen: {n}.",
-  "placementDefaults.apply": "Auf Einträge ohne Backups anwenden",
-  "placementDefaults.applyAsk": "Ort und Kopien gehen bei diesen Einträgen auf die Vorgabe zurück: {n}.",
-  "placementDefaults.applyLoses": "Verlieren dabei ihre eigene Wahl: {list}",
-  "placementDefaults.applyKeptBackups": "Bleiben, wie sie sind, weil sie Backups haben: {list}",
-  "placementDefaults.applyKeptUnreadable": "Bleiben, wie sie sind, weil ihr Ort nicht lesbar war: {list}",
-  "placementDefaults.applyKeptChanged": "Inzwischen geändert und nicht angefasst: {list}",
-  "placementDefaults.applyNone": "Kein Eintrag ohne Backups weicht von der Vorgabe ab.",
-  "placementDefaults.applyBusy": "Ein Backup läuft. Danach erneut anwenden.",
   "placementDefaults.paused": "Off-site pausiert nach Neuaufbau",
   "placementDefaults.pausedHint":
     "Regeln und Vorgaben gingen mit der alten Konfiguration verloren. Aus {domain} wird nichts off-site kopiert, bis diese Vorgabe bestätigt ist. Einträge mit Karte lassen sich vorher auf Lokal stellen.",

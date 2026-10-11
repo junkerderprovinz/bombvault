@@ -203,18 +203,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       ],
     },
     {
-      title: "placementDefaults.title",
-      hint: "placementDefaults.hint",
-      rows: [
-        { key: "placement.title" },
-        { key: "placement.segLocal" },
-        { key: "placement.storedOn" },
-        { key: "placementDefaults.apply" },
-        { key: "placementDefaults.confirm" },
-      ],
-      body: ["placementDefaults.paused", "placementDefaults.pausedHint"],
-    },
-    {
       title: "settings.retentionLocalTitle",
       hint: "settings.retentionHint",
       rows: [

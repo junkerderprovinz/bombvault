@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { IconTabStorage } from "../../../components/navGlyphs";
 import { useT } from "../../../lib/i18n";
 import { listStorageLocations } from "../../../lib/api";
-import { PlacementDefaultsCard } from "../PlacementDefaultsCard";
 import { ReposCard } from "../ReposCard";
 import { PageLinkCard, SidebarCard } from "../SidebarTile";
 import { CloudCards } from "../sections/CloudCards";
@@ -45,7 +44,6 @@ export function StoragePage() {
       />
 
       <ReposCard hueIndex={nextHue()} />
-      <PlacementDefaultsCard hueIndex={nextHue()} />
 
       <RetentionCards nextHue={nextHue} />
       <OffsiteCards nextHue={nextHue} />
