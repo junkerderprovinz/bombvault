@@ -10,17 +10,18 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const pruneDomain = vi.fn();
 const push = vi.fn();
 
-vi.mock("../../lib/api", () => ({
+vi.mock("../../lib/api", async () => {
+  const { domain } = await import("../overview/overview.testsupport");
+  return {
   pruneDomain: (...a: unknown[]) => pruneDomain(...a),
   unlockDomain: vi.fn().mockResolvedValue({ ok: true }),
   checkDomain: vi.fn().mockResolvedValue({ ok: true }),
   runDrill: vi.fn().mockResolvedValue({ ok: true }),
   tamperTest: vi.fn().mockResolvedValue({ ok: true }),
-  getDrills: vi.fn().mockResolvedValue({ ok: true, drills: [], latest: null }),
-  getStatus: vi.fn().mockResolvedValue({ ok: true }),
-  listContainers: vi.fn().mockResolvedValue({ containers: [] }),
-  listVMs: vi.fn().mockResolvedValue({ vms: [] }),
-}));
+  getStatus: vi.fn().mockResolvedValue({ ok: true, domains: [domain({ domain: "containers", offsiteConfigured: false })] }),
+  listItems: vi.fn().mockResolvedValue({ ok: true, items: [] }),
+  };
+});
 
 vi.mock("../../lib/toast", () => ({
   useToast: () => ({ push, quiet: false, setQuiet: () => {} }),
@@ -28,6 +29,7 @@ vi.mock("../../lib/toast", () => ({
 
 import { IntegrityCard } from "./IntegrityCard";
 import { en } from "../../lib/i18n";
+import { pickAction } from "./IntegrityCard.testsupport";
 
 // The card follows live progress, and jsdom has no EventSource.
 class FakeEventSource {
@@ -39,17 +41,13 @@ class FakeEventSource {
 vi.stubGlobal("EventSource", FakeEventSource);
 
 const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as unknown as Parameters<typeof IntegrityCard>[0]["t"];
-const settings = { drDrillTarget: "", drDrillTargetVm: "" } as never;
 
 async function prune() {
-  render(<IntegrityCard t={t} settings={settings} setSettings={() => {}} save={async () => true} />);
-  const button = (await screen.findAllByRole("button", { name: /^prune$/i }))[0];
-  await act(async () => {
-    fireEvent.click(button);
-  });
+  render(<IntegrityCard t={t} />);
+  await pickAction("containers", en["integrity.prune"]);
   const dialog = await screen.findByRole("dialog");
   await act(async () => {
-    fireEvent.click(within(dialog).getByRole("button", { name: /^confirm$/i }));
+    fireEvent.click(within(dialog).getByRole("button", { name: en["integrity.prune"] }));
   });
   await waitFor(() => expect(pruneDomain).toHaveBeenCalled());
 }
@@ -88,5 +86,6 @@ it("names a VM once with its disks and the flash drive by its backup type", asyn
 it("stays quiet about anomalies when nothing was held", async () => {
   pruneDomain.mockResolvedValue({ ok: true });
   await prune();
-  expect(push).not.toHaveBeenCalled();
+  await waitFor(() => expect(push).toHaveBeenCalled());
+  expect(push.mock.calls.every(([, tone]) => tone !== "warn")).toBe(true);
 });

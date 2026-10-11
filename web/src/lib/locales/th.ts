@@ -661,23 +661,17 @@ const th: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "ความสมบูรณ์และการบำรุงรักษา",
-  "integrity.hint": "เรียกใช้ restic check เพื่อยืนยันว่าโครงสร้างและเมตาดาตาของรีพอสิทอรีสมบูรณ์",
   "integrity.verify": "ยืนยัน",
   "integrity.checking": "กำลังตรวจสอบ…",
   "integrity.ok": "สมบูรณ์",
   "integrity.failed": "การตรวจสอบล้มเหลว",
-  "integrity.failedShort": "✗ ล้มเหลว",
   "integrity.unlock": "ปลดล็อก",
   "integrity.prune": "ตัดทิ้ง",
   "integrity.verifyHint": "รัน restic check เพื่อตรวจสอบโครงสร้างและข้อมูลเมตา",
   "integrity.unlockHint": "ล้างล็อกที่ค้างของที่เก็บจากการทำงานที่ขัดข้อง/ถูกขัดจังหวะ (แก้ 'repository is already locked')",
   "integrity.unlockPartial": "ไม่ได้ปลดล็อกทุกที่เก็บข้อมูลทั้งหมด: {list}",
   "integrity.pruneHint": "ใช้นโยบายการเก็บรักษาและคืนพื้นที่ (ถ้าไม่ได้ตั้งนโยบายจะคืนพื้นที่เท่านั้น; อาจใช้เวลาสักครู่)",
-  "integrity.pruneConfirm": "ตอนนี้การพรูนจะใช้นโยบายการเก็บรักษาของคุณ ลบข้อมูลสำรองที่เกินกฎของคุณ (last/daily/weekly/monthly/yearly) และคืนพื้นที่ หากไม่มีนโยบายจะคืนพื้นที่เท่านั้น ดำเนินการต่อหรือไม่?",
-  "integrity.appendOnly": "การตรวจสอบ append-only",
   "integrity.appendOnlyHint": "พิสูจน์ว่าที่เก็บสำรองภายนอกยังคงปฏิเสธการลบ (การป้องกันแบบเขียนต่อท้ายเท่านั้น) เป็นการตรวจสอบเดียวกับการทดสอบการแทรกแซงในตัวช่วยตั้งค่าภายนอก",
-  "integrity.appendOnlyLast": "การป้องกัน append-only · ตรวจสอบล่าสุด {time}",
-  "integrity.appendOnlyNever": "การป้องกัน append-only · ยังไม่เคยตรวจสอบ",
 
   // Pre/post-backup hooks
   "hooks.hint": "คำสั่งทำงานภายใน container (sh -c) Pre ทำงานก่อนการสำรองข้อมูล (เช่น เขียนแคชลงดิสก์ ส่วนฐานข้อมูลที่รู้จักจะถูกดัมป์ให้เอง) หากล้มเหลวจะยกเลิกการสำรองข้อมูล Post ทำงานหลังจาก container กลับมาทำงาน หากล้มเหลวจะบันทึกไว้เท่านั้น",
@@ -737,7 +731,6 @@ const th: Partial<Translations> = {
   "vm.blocks.reason.no_space": "พื้นที่ว่างใน appdata น้อยเกินไป",
   "vm.blocks.reason.job_failed": "libvirt ไม่ได้เริ่มการสำรอง",
   "vm.ssh.title": "SSH ของโฮสต์",
-  "vm.ssh.desc": "การสำรองข้อมูล VM และ ZFS รันคำสั่งบนเซิร์ฟเวอร์นี้ผ่าน SSH (ไม่ต้องเมานต์) อนุญาตคีย์นี้บน Unraid แล้วทดสอบ",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "คีย์สาธารณะ เพิ่มต่อท้าย ‎/root/.ssh/authorized_keys ของ Unraid",
   "common.copy": "คัดลอก",
@@ -746,12 +739,7 @@ const th: Partial<Translations> = {
   "vm.ssh.test": "ทดสอบการเชื่อมต่อ",
   "vm.ssh.testNoLibvirt": "เชื่อมต่อแล้ว เข้าถึง libvirt ไม่ได้ แต่มีเพียงการสำรองข้อมูล VM ที่ต้องใช้",
   "vm.ssh.testFail": "การเชื่อมต่อล้มเหลว",
-  "vm.ssh.setupTitle": "ตั้งค่า (ครั้งเดียว)",
-  "vm.ssh.step1": "คัดลอกคำสั่งด้านล่างแล้วเรียกใช้ในเทอร์มินัล Unraid เพื่ออนุญาตคีย์นี้ (คงอยู่หลังรีบูต)",
-  "vm.ssh.step2": "ตั้งตัวแปร «Host SSH: Address» ของ container เป็น LAN IP ของ Unraid (เช่น 192.168.x.x); บนเครือข่าย bridge แบบง่าย host.docker.internal ก็ใช้ได้",
-  "vm.ssh.step3": "คลิกทดสอบการเชื่อมต่อ เมื่อเป็นสีเขียวแล้ว เปิดใช้งาน VMs หรือชุดข้อมูล ZFS ภายใต้ ส่วน",
   "vm.ssh.copyCmd": "คัดลอกคำสั่ง",
-  "vm.ssh.guide": "คู่มือการตั้งค่าและเครือข่ายฉบับเต็ม",
   "common.backingUp": "กำลังสำรองข้อมูล…",
   "common.restoring": "กำลังกู้คืน…",
   "common.done": "เสร็จสิ้น",
@@ -963,16 +951,13 @@ const th: Partial<Translations> = {
   "settings.dashTileHint": "วางวิดเจ็ตสถานะ BombVault ลงบนแดชบอร์ดของ Unraid ได้โดยตรง ปลั๊กอินคู่หูตัวเล็ก ๆ จะเพิ่มวิดเจ็ตให้ และ BombVault สามารถติดตั้งให้คุณผ่านการเชื่อมต่อ SSH ไปยังโฮสต์ที่มีอยู่แล้ว",
   "settings.dashTileChecking": "กำลังตรวจสอบสถานะปลั๊กอิน…",
   "settings.dashTileNoSsh": "ยังไม่ได้ตั้งค่าการเชื่อมต่อ SSH ไปยังโฮสต์ (การตั้งค่า, การเชื่อมต่อ, SSH ของโฮสต์) BombVault จึงติดตั้งปลั๊กอินให้คุณไม่ได้ โปรดติดตั้งเองใน Unraid ที่ Plugins → Install Plugin ด้วย URL นี้:",
-  "settings.dashTileCa": "อาจมีให้ใน Community Applications ด้วย ค้นหา BombVault Widget",
   "settings.dashTileNotInstalled": "ยังไม่ได้ติดตั้งปลั๊กอินวิดเจ็ตแดชบอร์ด",
   "settings.dashTileConfirm": "ปุ่มติดตั้งจะติดตั้งปลั๊กอิน bombvault-widget บนโฮสต์ Unraid ของคุณผ่านกลไกปลั๊กอินปกติของ Unraid โดยจะปรากฏใน Plugins เหมือนปลั๊กอินอื่น ๆ และถอนออกได้ทุกเมื่อจากที่นั่น (หรือที่นี่)",
-  "settings.dashTileRepo": "ดูปลั๊กอินบน GitHub",
   "settings.dashTileInstall": "ติดตั้งปลั๊กอิน",
   "settings.dashTileInstalling": "กำลังติดตั้ง…",
   "settings.dashTileInstalled": "ติดตั้งปลั๊กอินวิดเจ็ตแดชบอร์ดแล้ว ({version})",
   "settings.dashTileInstalledNoV": "ติดตั้งปลั๊กอินวิดเจ็ตแดชบอร์ดแล้ว",
   "settings.dashTileInstallOk": "ติดตั้งปลั๊กอินแล้ว เปิดแดชบอร์ดของ Unraid เพื่อดูวิดเจ็ต BombVault ใหม่",
-  "settings.dashTileInstalledHint": "วิดเจ็ตจะปรากฏบนแดชบอร์ดของ Unraid หากมองไม่เห็น ให้เปิดใช้งานในหน้าจัดการวิดเจ็ตของแดชบอร์ด",
   "settings.dashTileRemove": "ถอนปลั๊กอิน",
   "settings.dashTileRemoving": "กำลังถอน…",
   "settings.dashTileRemoveOk": "ถอนปลั๊กอินแล้ว จะไม่ปรากฏบนแดชบอร์ดของ Unraid อีกต่อไป",
@@ -988,14 +973,9 @@ const th: Partial<Translations> = {
   "notify.smtpTls": "การเข้ารหัส",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "ตรวจสอบความสามารถในการกู้คืน",
   "verify.running": "กำลังตรวจสอบ…",
-  "verify.ok": "ตรวจสอบแล้วว่ากู้คืนได้",
   "verify.failed": "การตรวจสอบล้มเหลว",
-  "verify.last": "ตรวจสอบล่าสุด {time}",
-  "verify.never": "ยังไม่เคยตรวจสอบ",
   "verify.subsetPct": "ตัวอย่างข้อมูล (%)",
-  "verify.hint": "อ่านตัวอย่างข้อมูลสำรองแบบสุ่มเป็นระยะ เพื่อพิสูจน์ว่าข้อมูลสมบูรณ์และกู้คืนได้",
   "verify.shield": "ตรวจสอบแล้ว",
 
   // Dashboard protection (RPO) status
@@ -1370,16 +1350,6 @@ const th: Partial<Translations> = {
   "offsite.targets.retentionTitle": "การเก็บรักษา (0 = เก็บทั้งหมด)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "ประเภทการทดสอบ:",
-  "drill.kindSubset": "การตรวจสอบความสมบูรณ์",
-  "drill.kindDR": "การกู้คืนจริง (นอกสถานที่)",
-  "drill.target": "เป้าหมายการทดสอบ (container)",
-  "drill.targetVM": "เป้าหมายการทดสอบ (VM)",
-  "drill.targetMostRecent": "การสำรองข้อมูลล่าสุด",
-  "drill.drNote": "การกู้คืนจริงจะแตกข้อมูลสำรองนอกสถานที่ล่าสุดลงใน sandbox ชั่วคราว ตรวจสอบ แล้วล้างออก มันจะดาวน์โหลดข้อมูลจริงและอาจใช้เวลาสักครู่",
-  "drill.runDR": "เรียกใช้การกู้คืนจริง",
-  "drill.runningDR": "กำลังกู้คืน…",
-  "drill.confirmDR": "การดำเนินการนี้จะกู้คืนข้อมูลสำรองนอกสถานที่ล่าสุดแบบจริงลงใน sandbox ชั่วคราว เพื่อพิสูจน์ว่ากู้คืนได้ แล้วลบทิ้ง มันจะดาวน์โหลดข้อมูลจริงและอาจใช้เวลาสักครู่ ดำเนินการต่อ?",
   "drill.offsiteVerified": "ตรวจสอบนอกสถานที่แล้ว",
 
   // Dashboard ransomware-protection card (v4)
@@ -1430,8 +1400,6 @@ const th: Partial<Translations> = {
   "excludes.assistRemoveLine": "ลบการยกเว้น {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "การกู้คืน DR นอกสถานที่",
-  "drill.checkLocal": "การตรวจสอบความสมบูรณ์ในเครื่อง",
   "drill.failReasonPrefix": "เหตุผล:",
 
   // Off-site DR opt-out (#37)
@@ -1468,7 +1436,6 @@ const th: Partial<Translations> = {
   "settings.schedulesSelfBackup": "กำหนดการสำรองข้อมูลตัวเอง",
   "settings.tamperScheduleInactive": "ไม่ทำงาน ไม่มีรีพอสิทอรีนอกสถานที่ใดถูกทำเครื่องหมายเป็น append-only จึงทำให้กำหนดการนี้ไม่ทำงานเลย ทำเครื่องหมายรีพอสิทอรีนอกสถานที่เป็น append-only ในการตั้งค่านอกสถานที่ของมันเพื่อเปิดใช้งาน",
   "settings.everythingTitle": "สำรองข้อมูลทั้งหมด",
-  "settings.everythingDuplicateWarning": "ตราบใดที่ทั้งกำหนดการนี้และกำหนดการของแต่ละส่วนเปิดใช้งานพร้อมกัน Containers, VMs, Flash, โฟลเดอร์ ชุดข้อมูล ZFS และ สำรองข้อมูลตัวเอง จะถูกสำรองสองครั้ง คือครั้งหนึ่งที่นี่ และอีกครั้งตามกำหนดการของตัวเอง ปิดส่วนที่ไม่ต้องการให้สำรองซ้ำ",
   "settings.everythingStarted": "เริ่มแล้ว จะทำงานบนเซิร์ฟเวอร์ทีละส่วนตามลำดับ ติดตามผลลัพธ์ได้ที่บันทึกกิจกรรม",
   "settings.everythingAlreadyRunning": "มีการสำรองข้อมูลทั้งหมดกำลังทำงานอยู่แล้ว",
   // Filter drawer trigger (v5 redesign)
@@ -1514,7 +1481,6 @@ const th: Partial<Translations> = {
   "files.effectiveOwn": "ทำงาน {when} ตามกำหนดการของตัวเอง",
   "files.effectiveDomain": "ทำงาน {when} จาก {domain}",
   "files.effectiveEverything": "ทำงาน {when} พร้อมกับ {domain}",
-  "files.effectiveBoth": "ทำงานสองครั้ง: {when} และ {when2}",
   "files.pathMissing": "ไม่พบโฟลเดอร์",
   "files.noPath": "ยังไม่ได้กำหนดโฟลเดอร์",
   "files.noPathHint": "สร้างขึ้นใหม่จากการสำรองข้อมูลโดยไม่มีโฟลเดอร์ กำหนดโฟลเดอร์เพื่อสำรองข้อมูลอีกครั้ง การกู้คืนไปยังโฟลเดอร์ใช้งานได้แล้ว",
@@ -2691,7 +2657,6 @@ const th: Partial<Translations> = {
   "apps.parleyport.dockerHint": "คัดลอกคำสั่งที่เริ่มการทำงานบนพอร์ต 8760 สำหรับ reverse proxy ที่อยู่ด้านหน้า:",
   "apps.parleyport.toRelay": "การตั้งค่ารีเลย์",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "วิดเจ็ตของจริงบนแดชบอร์ด Unraid พร้อมบันทึกกิจกรรมของ BombVault และรอบการทำงานตามกำหนดครั้งถัดไป ติดตั้งจาก Community Applications หรือให้ BombVault ติดตั้งให้ด้านล่างผ่านการเชื่อมต่อ SSH ไปยังโฮสต์ที่มีอยู่แล้ว",
   "apps.unraidSub": "เทมเพลต",
   "apps.dockerSub": "คัดลอกคำสั่ง",
   "apps.repoSub": "ซอร์สโค้ดและเอกสารประกอบ",
@@ -4421,7 +4386,6 @@ const th: Partial<Translations> = {
   "deposit.code.deposit-changed": "อินสแตนซ์เก็บสิ่งอื่นที่ไม่ใช่สำเนาที่ฝากไว้ที่เซิร์ฟเวอร์นี้ส่งไป แสดงว่ามีคนแก้ไขที่นั่น",
   "exceptions.add": "ข้อยกเว้น",
   "exceptions.remove": "ลบข้อยกเว้น",
-  "schedules.fullHint": "กำหนดการเริ่มต้นสำหรับทุกอย่าง: รันครั้งเดียวผ่านทุกโดเมน มีคำสั่งหนึ่งชุดก่อนและหนึ่งชุดหลัง รายการที่มีกำหนดการของตัวเองจะรันตามเวลาของมันเอง และการสำรองข้อมูลทั้งหมดจะข้ามไป",
   "schedules.whenRuns": "เวลาที่สำรองข้อมูลทำงาน",
   "schedules.whenRunsHint": "การรันหนึ่งรอบจะสำรองทุกโดเมนตามลำดับ ได้แก่ Containers, VMs, Flash, โฟลเดอร์ ชุดข้อมูล ZFS และปิดท้ายด้วยการสำรองข้อมูลตัวเอง “ปิด” คือการปิดส่วนนี้",
   "schedules.includes": "รวมถึง: {sections}",
@@ -4432,7 +4396,6 @@ const th: Partial<Translations> = {
   "schedules.hookPost": "คำสั่งหลังการสำรองข้อมูลทั้งหมด",
   "schedules.hookPostHint": "ไม่บังคับ ทำงานเพียงครั้งเดียวหลังจากลองทุกโดเมนแล้ว แม้บางโดเมนจะล้มเหลว เหมาะกับ ping ที่ยืนยันว่าเซิร์ฟเวอร์ทั้งเครื่องได้รับการปกป้อง",
   "schedules.plans": "กำหนดการรายโดเมน",
-  "schedules.plansHint": "โดเมนที่มีกำหนดการของตัวเองจะรันตามเวลาของมันเอง ตราบใดที่การสำรองข้อมูลทั้งหมดเปิดอยู่ โดเมนนั้นก็จะถูกสำรองในนั้นด้วย โดเมนยังคัดลอกไปยังที่เก็บนอกสถานที่ตามกำหนดการของตัวเองได้",
   "schedules.plansRuleAll": "ทุกโดเมนทำงานในการสำรองข้อมูลทั้งหมด",
   "schedules.plansRuleOthers": "โดเมนอื่นทั้งหมดทำงานในการสำรองข้อมูลทั้งหมด",
   "schedules.offsite": "สำเนานอกสถานที่รายโดเมน",

@@ -661,23 +661,17 @@ const he: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "שלמות ותחזוקה",
-  "integrity.hint": "הרצת restic check כדי לאמת שהמבנה והמטא-נתונים של המאגר תקינים.",
   "integrity.verify": "אימות",
   "integrity.checking": "בודק…",
   "integrity.ok": "תקין",
   "integrity.failed": "הבדיקה נכשלה",
-  "integrity.failedShort": "✗ נכשל",
   "integrity.unlock": "ביטול נעילה",
   "integrity.prune": "גיזום",
   "integrity.verifyHint": "הרצת restic check לאימות המבנה והמטא-נתונים.",
   "integrity.unlockHint": "ניקוי נעילות מאגר תקועות שנותרו מהרצה שקרסה/הופסקה (מתקן 'repository is already locked').",
   "integrity.unlockPartial": "לא כל המאגרים שוחררו במלואם: {list}",
   "integrity.pruneHint": "החלת מדיניות השמירה ושחרור מקום (ללא מדיניות משחרר רק מקום; עשוי לקחת זמן).",
-  "integrity.pruneConfirm": "הגיזום מחיל כעת את מדיניות השמירה: מסיר גיבויים מעבר לכללי השמירה (last/daily/weekly/monthly/yearly) ומשחרר מקום. ללא מדיניות משחרר רק מקום. להמשיך?",
-  "integrity.appendOnly": "בדיקת append-only",
   "integrity.appendOnlyHint": "מוכיחה שמאגר הגיבוי המרוחק עדיין דוחה מחיקות (הגנת append-only), אותה בדיקת חבלה כמו באשף המרוחק.",
-  "integrity.appendOnlyLast": "הגנת append-only · נבדק לאחרונה {time}",
-  "integrity.appendOnlyNever": "הגנת append-only · טרם נבדק",
 
   // Pre/post-backup hooks
   "hooks.hint": "הפקודות רצות בתוך ה-container (sh -c). Pre רץ לפני הגיבוי (למשל כתיבת מטמון לדיסק; מסדי נתונים מזוהים עוברים דאמפ מעצמם). כישלון מבטל את הגיבוי. Post רץ אחרי שה-container שב לפעול; כישלונו רק נרשם בלוג.",
@@ -737,7 +731,6 @@ const he: Partial<Translations> = {
   "vm.blocks.reason.no_space": "מעט מדי מקום פנוי ב-appdata",
   "vm.blocks.reason.job_failed": "libvirt לא התחיל את הגיבוי",
   "vm.ssh.title": "SSH למארח",
-  "vm.ssh.desc": "גיבויי VM וגיבויי ZFS מריצים את הפקודות שלהם בשרת הזה דרך SSH (ללא עיגון). יש לאשר מפתח זה ב-Unraid, ואז לבדוק.",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "מפתח ציבורי: להוסיף ל-‎/root/.ssh/authorized_keys של Unraid",
   "common.copy": "העתקה",
@@ -746,12 +739,7 @@ const he: Partial<Translations> = {
   "vm.ssh.test": "בדיקת חיבור",
   "vm.ssh.testNoLibvirt": "מחובר. libvirt אינו נגיש, ורק גיבויי VM צריכים אותו.",
   "vm.ssh.testFail": "החיבור נכשל",
-  "vm.ssh.setupTitle": "הגדרה (פעם אחת)",
-  "vm.ssh.step1": "יש להעתיק את הפקודה למטה ולהריץ אותה במסוף Unraid כדי לאשר מפתח זה (שורד אתחולים).",
-  "vm.ssh.step2": "יש להגדיר את משתנה ה-container „Host SSH: Address‟ לכתובת ה-LAN IP של Unraid (למשל 192.168.x.x); ברשת bridge פשוטה גם host.docker.internal עובד.",
-  "vm.ssh.step3": "ללחוץ על בדיקת חיבור: ברגע שהוא ירוק, להפעיל VMs או מערכי נתונים של ZFS תחת תחומים.",
   "vm.ssh.copyCmd": "העתקת פקודה",
-  "vm.ssh.guide": "מדריך הגדרה ורשת מלא",
   "common.backingUp": "מגבה…",
   "common.restoring": "משחזר…",
   "common.done": "הושלם",
@@ -954,16 +942,13 @@ const he: Partial<Translations> = {
   "settings.dashTileHint": "הצבת וידג'ט מצב של BombVault ישירות בלוח הבקרה של Unraid. תוסף נלווה קטן מוסיף את הוידג'ט; BombVault יכול להתקין אותו דרך חיבור ה-SSH הקיים למארח.",
   "settings.dashTileChecking": "בודק את מצב התוסף…",
   "settings.dashTileNoSsh": "חיבור ה-SSH למארח אינו מוגדר (הגדרות, אינטגרציות, SSH למארח), ולכן BombVault אינו יכול להתקין את התוסף. אפשר להתקין אותו ידנית ב-Unraid דרך Plugins ← Install Plugin עם כתובת ה-URL הזו:",
-  "settings.dashTileCa": "ייתכן שהוא זמין גם ב-Community Applications. חפשו BombVault Widget.",
   "settings.dashTileNotInstalled": "תוסף וידג'ט לוח הבקרה אינו מותקן.",
   "settings.dashTileConfirm": "התקנה מתקינה את התוסף bombvault-widget על מארח ה-Unraid דרך מנגנון התוספים הרגיל של Unraid. הוא מופיע תחת Plugins כמו כל תוסף אחר וניתן להסירו שם (או כאן) בכל עת.",
-  "settings.dashTileRepo": "צפו בתוסף ב-GitHub",
   "settings.dashTileInstall": "התקנת תוסף",
   "settings.dashTileInstalling": "מתקין…",
   "settings.dashTileInstalled": "תוסף וידג'ט לוח הבקרה מותקן ({version})",
   "settings.dashTileInstalledNoV": "תוסף וידג'ט לוח הבקרה מותקן",
   "settings.dashTileInstallOk": "התוסף הותקן. וידג'ט ה-BombVault החדש מופיע בלוח הבקרה של Unraid.",
-  "settings.dashTileInstalledHint": "הוידג'ט מופיע בלוח הבקרה של Unraid. אם אינו נראה, אפשר להפעיל אותו בניהול הוידג'טים של לוח הבקרה.",
   "settings.dashTileRemove": "הסרת תוסף",
   "settings.dashTileRemoving": "מסיר…",
   "settings.dashTileRemoveOk": "התוסף הוסר. הוא כבר לא מופיע בלוח הבקרה של Unraid.",
@@ -979,14 +964,9 @@ const he: Partial<Translations> = {
   "notify.smtpTls": "הצפנה",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "אימות יכולת שחזור",
   "verify.running": "מאמת…",
-  "verify.ok": "אומת כניתן לשחזור",
   "verify.failed": "האימות נכשל",
-  "verify.last": "אומת לאחרונה {time}",
-  "verify.never": "מעולם לא אומת",
   "verify.subsetPct": "מדגם נתונים (%)",
-  "verify.hint": "קורא מעת לעת מדגם אקראי של נתוני הגיבוי כדי להוכיח שהם תקינים וניתנים לשחזור.",
   "verify.shield": "אומת",
 
   // Dashboard protection (RPO) status
@@ -1361,16 +1341,6 @@ const he: Partial<Translations> = {
   "offsite.targets.retentionTitle": "שמירה (0 = הכול נשמר)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "סוג תרגיל:",
-  "drill.kindSubset": "בדיקת שלמות",
-  "drill.kindDR": "שחזור אמיתי (מחוץ לאתר)",
-  "drill.target": "יעד התרגיל (container)",
-  "drill.targetVM": "יעד התרגיל (VM)",
-  "drill.targetMostRecent": "הגיבוי האחרון",
-  "drill.drNote": "שחזור אמיתי מחלץ את הגיבוי העדכני ביותר מחוץ לאתר אל sandbox זמני, מאמת אותו ואז מנקה. הוא מוריד נתונים אמיתיים ועלול להימשך זמן מה.",
-  "drill.runDR": "הרצת שחזור אמיתי",
-  "drill.runningDR": "משחזר…",
-  "drill.confirmDR": "פעולה זו מבצעת שחזור אמיתי של הגיבוי העדכני ביותר מחוץ לאתר אל sandbox זמני כדי להוכיח שניתן לשחזרו, ואז מוחקת אותו. היא מורידה נתונים אמיתיים ועלולה להימשך זמן מה. להמשיך?",
   "drill.offsiteVerified": "אומת מחוץ לאתר",
 
   // Dashboard ransomware-protection card (v4)
@@ -1429,8 +1399,6 @@ const he: Partial<Translations> = {
   "excludes.assistRemoveLine": "הסרת ההחרגה {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "שחזור DR מחוץ לאתר",
-  "drill.checkLocal": "בדיקת שלמות מקומית",
   "drill.failReasonPrefix": "סיבה:",
 
   // Off-site DR opt-out (#37)
@@ -1467,7 +1435,6 @@ const he: Partial<Translations> = {
   "settings.schedulesSelfBackup": "תזמון גיבוי עצמי",
   "settings.tamperScheduleInactive": "לא פעיל: אף מאגר מחוץ לאתר אינו מסומן כ-append-only, ולכן תזמון זה לעולם לא פועל. כדי להפעיל אותו, יש לסמן מאגר מחוץ לאתר כ-append-only בהגדרות מחוץ לאתר שלו.",
   "settings.everythingTitle": "גיבוי מלא",
-  "settings.everythingDuplicateWarning": "ה-Containers, ה-VMs, ה-Flash, התיקיות, מערכי הנתונים של ZFS והגיבוי העצמי מגובים פעמיים כל עוד לוח הזמנים הזה ולוח הזמנים שלהם פעילים בו-זמנית: פעם אחת כאן ופעם אחת בלוח שלהם. יש לכבות את התחומים שאין צורך לגבות פעמיים.",
   "settings.everythingStarted": "התחיל. הוא רץ על השרת בכל תחום בתורו; התוצאה מופיעה ביומן הפעילות.",
   "settings.everythingAlreadyRunning": "גיבוי מלא כבר רץ.",
   // Filter drawer trigger (v5 redesign)
@@ -1513,7 +1480,6 @@ const he: Partial<Translations> = {
   "files.effectiveOwn": "פועל {when}, לוח זמנים משלו",
   "files.effectiveDomain": "פועל {when}, מתוך {domain}",
   "files.effectiveEverything": "פועל {when}, יחד עם {domain}",
-  "files.effectiveBoth": "פועל פעמיים: {when} ו-{when2}",
   "files.pathMissing": "התיקייה לא נמצאה",
   "files.noPath": "לא הוגדרה תיקייה",
   "files.noPathHint": "שוחזר מגיבויים ללא תיקייה. הגדרת תיקייה מאפשרת לגבות שוב. שחזור לתיקייה עובד כבר עכשיו.",
@@ -2690,7 +2656,6 @@ const he: Partial<Translations> = {
   "apps.parleyport.dockerHint": "מעתיק את הפקודה שמפעילה אותו בפורט 8760, עבור reverse proxy לפניו:",
   "apps.parleyport.toRelay": "הגדרות הממסר",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "וידג'ט אמיתי בלוח הבקרה של Unraid עם יומן הפעילות של BombVault וההרצה המתוזמנת הבאה. אפשר להתקין אותו מ-Community Applications, או לתת ל-BombVault להתקין אותו למטה דרך חיבור ה-SSH הקיים למארח.",
   "apps.unraidSub": "תבנית",
   "apps.dockerSub": "העתקת הפקודה",
   "apps.repoSub": "קוד המקור והתיעוד",
@@ -4420,7 +4385,6 @@ const he: Partial<Translations> = {
   "deposit.code.deposit-changed": "במופע היה משהו אחר מהפיקדון שהשרת הזה שלח, כלומר מישהו שינה אותו שם.",
   "exceptions.add": "חריג",
   "exceptions.remove": "הסרת חריג",
-  "schedules.fullHint": "לוח הזמנים המשותף לכול: מעבר אחד על כל התחומים, עם פקודה אחת לפניו ואחת אחריו. פריט עם לוח זמנים משלו רץ בשעה שלו, והגיבוי המלא מדלג עליו.",
   "schedules.whenRuns": "מתי הגיבויים רצים",
   "schedules.whenRunsHint": "מעבר אחד מגבה כל תחום בתורו: Containers, VMs, Flash, תיקיות, מערכי נתונים של ZFS ולבסוף הגיבוי העצמי. ״כבוי״ מכבה אותו.",
   "schedules.includes": "כולל: {sections}",
@@ -4431,7 +4395,6 @@ const he: Partial<Translations> = {
   "schedules.hookPost": "פקודה אחרי הגיבוי המלא",
   "schedules.hookPostHint": "אופציונלי. רצה פעם אחת בדיוק, אחרי שכל תחום נוסה, גם אם אחד מהם נכשל. מתאימה לפינג שמאשר שכל השרת מוגן.",
   "schedules.plans": "לוחות זמנים לפי תחום",
-  "schedules.plansHint": "תחום עם לוח זמנים משלו רץ בשעה שלו. כל עוד הגיבוי המלא פעיל, הוא מגבה גם את התחום הזה. תחום יכול גם להעתיק למיקומים שלו מחוץ לאתר לפי לוח הזמנים שלו.",
   "schedules.plansRuleAll": "כל התחומים רצים בגיבוי המלא.",
   "schedules.plansRuleOthers": "כל שאר התחומים רצים בגיבוי המלא.",
   "schedules.offsite": "עותקים מחוץ לאתר לפי תחום",

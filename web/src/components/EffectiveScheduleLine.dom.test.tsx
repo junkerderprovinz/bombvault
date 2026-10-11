@@ -1,9 +1,8 @@
 // @vitest-environment jsdom
 /**
- * The outcomes that matter most are the two warnings: a set nothing backs up,
- * and a set two schedules back up. The server decides the outcome
- * (internal/schedule/effective_internal_test.go pins the rule), so these tests
- * pin only how it is formatted.
+ * The outcome that matters most is the warning for a set nothing backs up. The
+ * server decides the outcome (internal/schedule/effective_internal_test.go pins
+ * the rule), so these tests pin only how it is formatted.
  */
 import { render, screen, cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
@@ -29,7 +28,7 @@ describe("EffectiveScheduleLine", () => {
 
   it("shows a set that is not backed up for no chosen reason in the fail colour", () => {
     for (const reason of [undefined, "schedule-invalid"] as const) {
-      draw({ kind: "none", spec: "", alsoSpec: "", reason });
+      draw({ kind: "none", spec: "", reason });
       const line = screen.getByText(/not backed up automatically/i);
       expect(line.closest("p")?.className).toContain("text-statusFail");
       cleanup();
@@ -44,7 +43,7 @@ describe("EffectiveScheduleLine", () => {
       ["schedule-off", "Not backed up automatically: neither the Folders schedule nor the full backup is on"],
     ] as const;
     for (const [reason, text] of cases) {
-      draw({ kind: "none", spec: "", alsoSpec: "", reason });
+      draw({ kind: "none", spec: "", reason });
       const line = screen.getByText(text);
       expect(line.closest("p")?.className, reason).toContain("text-carbon-textMuted");
       expect(line.closest("p")?.className, reason).not.toContain("text-statusFail");
@@ -52,42 +51,32 @@ describe("EffectiveScheduleLine", () => {
     }
   });
 
-  it("names both cadences when a set runs twice, in the warning colour", () => {
-    draw({ kind: "both", spec: "weekly mon 02:00", alsoSpec: "daily 05:00" });
-    const line = screen.getByText(/runs twice/i);
-    const text = line.closest("p")?.textContent ?? "";
-    // Naming only one would leave the reader looking for the other schedule.
-    expect(text).toMatch(/2:00/); // formatCadence drops the leading zero
-    expect(text).toMatch(/5:00/);
-    expect(line.closest("p")?.className).toContain("text-statusWarn");
-  });
-
   it("names the Folders card for a domain run", () => {
-    draw({ kind: "domain", spec: "weekly mon 02:00", alsoSpec: "" });
+    draw({ kind: "domain", spec: "weekly mon 02:00" });
     // The name comes from jobs.filesSection, the card's own title key.
     expect(screen.getByText(/folders/i)).toBeTruthy();
   });
 
   it("names the card the caller points it at for a domain run", () => {
-    drawZFS({ kind: "domain", spec: "weekly mon 02:00", alsoSpec: "" });
+    drawZFS({ kind: "domain", spec: "weekly mon 02:00" });
     expect(screen.getByText(/from ZFS datasets/i)).toBeTruthy();
     expect(screen.queryByText(/folders/i)).toBeNull();
   });
 
   it("names the full backup for an everything-only run", () => {
-    draw({ kind: "everything", spec: "daily 05:00", alsoSpec: "" });
+    draw({ kind: "everything", spec: "daily 05:00" });
     expect(screen.getByText(/the full backup/i)).toBeTruthy();
   });
 
   it("calls an override its own schedule and shows no second cadence", () => {
-    draw({ kind: "own", spec: "daily 03:00", alsoSpec: "" });
+    draw({ kind: "own", spec: "daily 03:00" });
     const text = screen.getByText(/its own schedule/i).closest("p")?.textContent ?? "";
     expect(text).toMatch(/3:00/);
     expect(text).not.toMatch(/5:00/);
   });
 
   it("renders nothing for a kind it does not know", () => {
-    const { container } = draw({ kind: "quarterly" as EffectiveSchedule["kind"], spec: "daily 05:00", alsoSpec: "" });
+    const { container } = draw({ kind: "quarterly" as EffectiveSchedule["kind"], spec: "daily 05:00" });
     expect(container.textContent).toBe("");
   });
 });

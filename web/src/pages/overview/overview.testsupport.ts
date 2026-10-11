@@ -64,7 +64,7 @@ export function item(over: Partial<BackupItem> = {}): BackupItem {
     name: "plex",
     included: true,
     paused: false,
-    effectiveSchedule: { kind: "domain", spec: "daily 03:00", alsoSpec: "" },
+    effectiveSchedule: { kind: "domain", spec: "daily 03:00" },
     lastBackup: NOW - 2 * HOUR,
     lastRunStatus: "success",
     sourceBytes: 1024,

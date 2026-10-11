@@ -661,23 +661,17 @@ const tr: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Bütünlük ve bakım",
-  "integrity.hint": "Bir deponun yapısının ve meta verisinin sağlam olduğunu doğrulamak için restic check çalıştır.",
   "integrity.verify": "Doğrula",
   "integrity.checking": "Denetleniyor…",
   "integrity.ok": "Sağlıklı",
   "integrity.failed": "Denetim başarısız",
-  "integrity.failedShort": "✗ Başarısız",
   "integrity.unlock": "Kilidi aç",
   "integrity.prune": "Buda",
   "integrity.verifyHint": "Yapı ve meta verileri doğrulamak için restic check çalıştır.",
   "integrity.unlockHint": "Çöken/kesintiye uğrayan bir çalışmadan kalan takılı depo kilitlerini temizle ('repository is already locked' hatasını giderir).",
   "integrity.unlockPartial": "Tüm depoların kilidi tamamen açılmadı: {list}",
   "integrity.pruneHint": "Saklama politikanı uygula ve alan geri kazan (politika yoksa yalnızca alan geri kazanır; biraz sürebilir).",
-  "integrity.pruneConfirm": "Budama artık saklama politikanı uygular: kurallarının (last/daily/weekly/monthly/yearly) ötesindeki yedekleri kaldırır ve alan geri kazanır. Politika yoksa yalnızca alan geri kazanır. Devam edilsin mi?",
-  "integrity.appendOnly": "Append-only denetimi",
   "integrity.appendOnlyHint": "Uzak deponun silmeleri hâlâ reddettiğini kanıtlar (salt-ekleme koruması). Off-site sihirbazındaki kurcalama testiyle aynı denetimdir.",
-  "integrity.appendOnlyLast": "append-only koruması · Son denetim {time}",
-  "integrity.appendOnlyNever": "append-only koruması · hiç denetlenmedi",
 
   // Pre/post-backup hooks
   "hooks.hint": "Komutlar konteynerin içinde çalışır (sh -c). Pre, yedeklemeden önce çalışır (örn. bir önbelleği diske yazar; tanınan veritabanlarının dökümü kendiliğinden alınır). Bir hata yedeklemeyi iptal eder. Post, konteyner tekrar açıldıktan sonra çalışır; hatası yalnızca günlüğe kaydedilir.",
@@ -737,7 +731,6 @@ const tr: Partial<Translations> = {
   "vm.blocks.reason.no_space": "appdata'da boş alan yetersiz",
   "vm.blocks.reason.job_failed": "libvirt yedeklemeyi başlatmadı",
   "vm.ssh.title": "Ana makine SSH",
-  "vm.ssh.desc": "VM ve ZFS yedekleri komutlarını bu sunucuda SSH üzerinden çalıştırır (bağlama yok). Bu anahtarı Unraid'de yetkilendir, ardından test et.",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "Genel anahtar: Unraid /root/.ssh/authorized_keys dosyasına ekle",
   "common.copy": "Kopyala",
@@ -746,12 +739,7 @@ const tr: Partial<Translations> = {
   "vm.ssh.test": "Bağlantıyı test et",
   "vm.ssh.testNoLibvirt": "Bağlandı. libvirt erişilebilir değil, ama ona yalnızca VM yedekleri ihtiyaç duyar.",
   "vm.ssh.testFail": "Bağlantı başarısız",
-  "vm.ssh.setupTitle": "Kurulum (tek seferlik)",
-  "vm.ssh.step1": "Bu anahtarı yetkilendirmek için aşağıdaki komutu kopyalayıp Unraid terminalinde çalıştır (yeniden başlatmalarda kalıcıdır).",
-  "vm.ssh.step2": "Konteynerin “Host SSH: Address” değişkenini Unraid sunucunun LAN IP'sine ayarla (örn. 192.168.x.x); basit köprü ağında host.docker.internal de çalışır.",
-  "vm.ssh.step3": "Bağlantıyı test et'e tıkla. Yeşil olduğunda Bölümler altında VM'leri veya ZFS veri kümelerini etkinleştir.",
   "vm.ssh.copyCmd": "Komutu kopyala",
-  "vm.ssh.guide": "Tam kurulum ve ağ kılavuzu",
   "common.backingUp": "Yedekleniyor…",
   "common.restoring": "Geri yükleniyor…",
   "common.done": "Tamam",
@@ -962,16 +950,13 @@ const tr: Partial<Translations> = {
   "settings.dashTileHint": "BombVault durum widget'ını doğrudan Unraid kontrol paneline yerleştir. Küçük bir yardımcı eklenti widget'ı ekler; BombVault, ana makineye mevcut SSH bağlantısı üzerinden eklentiyi senin için kurabilir.",
   "settings.dashTileChecking": "Eklenti durumu denetleniyor…",
   "settings.dashTileNoSsh": "Ana makineye SSH bağlantısı kurulu değil (Ayarlar, Entegrasyonlar, Ana makine SSH), bu yüzden BombVault eklentiyi senin için kuramıyor. Unraid'de Plugins → Install Plugin altında bu URL ile elle kur:",
-  "settings.dashTileCa": "Community Applications'ta da bulunabilir. BombVault Widget diye arat.",
   "settings.dashTileNotInstalled": "Kontrol paneli widget'ı eklentisi kurulu değil.",
   "settings.dashTileConfirm": "Kur, bombvault-widget eklentisini Unraid'in olağan eklenti mekanizmasıyla Unraid ana makinene kurar. Diğer tüm eklentiler gibi Plugins altında görünür ve oradan (veya buradan) istediğin zaman kaldırılabilir.",
-  "settings.dashTileRepo": "Eklentiyi GitHub'da görüntüle",
   "settings.dashTileInstall": "Eklentiyi kur",
   "settings.dashTileInstalling": "Kuruluyor…",
   "settings.dashTileInstalled": "Kontrol paneli widget'ı eklentisi kurulu ({version})",
   "settings.dashTileInstalledNoV": "Kontrol paneli widget'ı eklentisi kurulu",
   "settings.dashTileInstallOk": "Eklenti kuruldu. Yeni BombVault widget'ını görmek için Unraid kontrol panelini aç.",
-  "settings.dashTileInstalledHint": "Widget Unraid kontrol panelinde görünür. Görünmüyorsa panelin widget yönetiminden etkinleştir.",
   "settings.dashTileRemove": "Eklentiyi kaldır",
   "settings.dashTileRemoving": "Kaldırılıyor…",
   "settings.dashTileRemoveOk": "Eklenti kaldırıldı. Artık Unraid kontrol panelinde görünmüyor.",
@@ -987,14 +972,9 @@ const tr: Partial<Translations> = {
   "notify.smtpTls": "Şifreleme",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Geri yüklenebilirliği doğrula",
   "verify.running": "Doğrulanıyor…",
-  "verify.ok": "Geri yüklenebilir olduğu doğrulandı",
   "verify.failed": "Doğrulama başarısız",
-  "verify.last": "Son doğrulama {time}",
-  "verify.never": "Hiç doğrulanmadı",
   "verify.subsetPct": "Veri örneği (%)",
-  "verify.hint": "Yedek verisinin sağlam ve geri yüklenebilir olduğunu kanıtlamak için düzenli olarak rastgele bir örneği okur.",
   "verify.shield": "doğrulandı",
 
   // Dashboard protection (RPO) status
@@ -1369,16 +1349,6 @@ const tr: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Saklama (0 = tümünü sakla)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Tatbikat türü:",
-  "drill.kindSubset": "Bütünlük denetimi",
-  "drill.kindDR": "Gerçek geri yükleme (site dışı)",
-  "drill.target": "Tatbikat hedefi (konteyner)",
-  "drill.targetVM": "Tatbikat hedefi (VM)",
-  "drill.targetMostRecent": "En son yedek",
-  "drill.drNote": "Gerçek bir geri yükleme, en yeni site dışı yedeği geçici bir sandbox'a çıkarır, doğrular ve ardından temizler. Gerçek veri indirir ve biraz zaman alabilir.",
-  "drill.runDR": "Gerçek geri yüklemeyi çalıştır",
-  "drill.runningDR": "Geri yükleniyor…",
-  "drill.confirmDR": "Bu işlem, geri yüklenebilir olduğunu kanıtlamak için en yeni site dışı yedeğin GERÇEK bir geri yüklemesini geçici bir sandbox'a yapar, ardından siler. Gerçek veri indirir ve biraz zaman alabilir. Devam edilsin mi?",
   "drill.offsiteVerified": "site dışı doğrulandı",
 
   // Dashboard ransomware-protection card (v4)
@@ -1429,8 +1399,6 @@ const tr: Partial<Translations> = {
   "excludes.assistRemoveLine": "{line} hariç tutmasını kaldır",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "site dışı DR geri yükleme",
-  "drill.checkLocal": "yerel bütünlük denetimi",
   "drill.failReasonPrefix": "neden:",
 
   // Off-site DR opt-out (#37)
@@ -1467,7 +1435,6 @@ const tr: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Öz yedek zamanlaması",
   "settings.tamperScheduleInactive": "Etkin değil. Hiçbir site dışı depo append-only olarak işaretlenmediği için bu zamanlama asla çalışmaz. Etkinleştirmek için bir site dışı depoyu kendi site dışı ayarlarında append-only olarak işaretle.",
   "settings.everythingTitle": "Tam yedekleme",
-  "settings.everythingDuplicateWarning": "Bu zamanlama ile kendi zamanlamaları aynı anda açıkken konteynerler, VM'ler, flash, klasörler, ZFS veri kümeleri ve Öz yedek iki kez yedeklenir: bir kez burada, bir kez de kendi zamanlamalarında. Yedeğinin ikiye katlanmasını istemediğin bölümleri kapat.",
   "settings.everythingStarted": "Başlatıldı. Sunucuda her bölümü sırayla işler; sonucu Etkinlik Günlüğü'nden takip et.",
   "settings.everythingAlreadyRunning": "Zaten bir tam yedekleme çalışıyor.",
   // Filter drawer trigger (v5 redesign)
@@ -1513,7 +1480,6 @@ const tr: Partial<Translations> = {
   "files.effectiveOwn": "{when} çalışır, kendi zamanlaması",
   "files.effectiveDomain": "{when} çalışır, {domain} kaynağından",
   "files.effectiveEverything": "{when} çalışır, {domain} ile",
-  "files.effectiveBoth": "İki kez çalışır: {when} ve {when2}",
   "files.pathMissing": "Klasör bulunamadı",
   "files.noPath": "Klasör ayarlanmadı",
   "files.noPathHint": "Klasör olmadan yedeklerden yeniden oluşturuldu. Yeniden yedeklemek için bir klasör ayarla. Bir klasöre geri yükleme şimdiden çalışıyor.",
@@ -2690,7 +2656,6 @@ const tr: Partial<Translations> = {
   "apps.parleyport.dockerHint": "Onu port 8760'ta başlatan komutu, önüne bir reverse proxy koymak için kopyalar:",
   "apps.parleyport.toRelay": "Röle ayarları",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "Unraid kontrol panelinde BombVault'un etkinlik günlüğünü ve bir sonraki zamanlanmış çalıştırmayı gösteren gerçek bir widget. Community Applications'tan kur, ya da BombVault'un aşağıda ana makineye mevcut SSH bağlantısı üzerinden kurmasına izin ver.",
   "apps.unraidSub": "Şablon",
   "apps.dockerSub": "Komutu kopyala",
   "apps.repoSub": "Kaynak kodu ve belgeler",
@@ -4420,7 +4385,6 @@ const tr: Partial<Translations> = {
   "deposit.code.deposit-changed": "Örnekte, bu sunucunun gönderdiği emanetten başka bir şey vardı; yani biri onu orada değiştirmiş.",
   "exceptions.add": "İstisna",
   "exceptions.remove": "İstisnayı kaldır",
-  "schedules.fullHint": "Her şey için varsayılan zamanlama: tüm alanlar üzerinden tek geçiş, öncesinde bir komut, sonrasında bir komut. Kendi zamanlaması olan bir kayıt kendi saatinde çalışır ve tam yedekleme onu atlar.",
   "schedules.whenRuns": "Yedeklemeler ne zaman çalışır",
   "schedules.whenRunsHint": "Tek geçiş tüm alanları sırayla yedekler: konteynerler, VM'ler, flash, klasörler, ZFS veri kümeleri ve en sonda öz yedek. “Kapalı” bunu kapatır.",
   "schedules.includes": "Kapsadıkları: {sections}",
@@ -4431,7 +4395,6 @@ const tr: Partial<Translations> = {
   "schedules.hookPost": "Tam yedekleme sonrası komut",
   "schedules.hookPostHint": "İsteğe bağlı. Her alan denendikten sonra, biri başarısız olsa bile, tam olarak bir kez çalışır. Tüm sunucunun korunduğunu doğrulayan bir ping için uygundur.",
   "schedules.plans": "Alan başına zamanlamalar",
-  "schedules.plansHint": "Kendi zamanlaması olan bir alan kendi saatinde çalışır. Tam yedekleme açıkken o alan onda da yedeklenir. Bir alan kendi zamanlamasıyla site dışı konumlarına da kopyalayabilir.",
   "schedules.plansRuleAll": "Tüm alanlar tam yedeklemede çalışır.",
   "schedules.plansRuleOthers": "Diğer tüm alanlar tam yedeklemede çalışır.",
   "schedules.offsite": "Alan başına site dışı kopyalar",

@@ -661,23 +661,17 @@ const ar: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "السلامة والصيانة",
-  "integrity.hint": "تشغيل restic check للتحقق من سلامة بنية المستودع وبياناته الوصفية.",
   "integrity.verify": "تحقّق",
   "integrity.checking": "جارٍ الفحص…",
   "integrity.ok": "سليم",
   "integrity.failed": "فشل الفحص",
-  "integrity.failedShort": "✗ فشل",
   "integrity.unlock": "إلغاء القفل",
   "integrity.prune": "تقليم",
   "integrity.verifyHint": "تشغيل restic check للتحقق من سلامة البنية والبيانات الوصفية.",
   "integrity.unlockHint": "إزالة أقفال المستودع العالقة من تشغيل تعطل أو انقطع (يصلح 'repository is already locked').",
   "integrity.unlockPartial": "لم يتم إلغاء قفل كل مستودع بالكامل: {list}",
   "integrity.pruneHint": "تطبيق سياسة الاحتفاظ واستعادة المساحة (تستعيد المساحة فقط إذا لم تُحدَّد سياسة؛ قد يستغرق وقتًا).",
-  "integrity.pruneConfirm": "يطبّق التقليم الآن سياسة الاحتفاظ: يزيل النسخ الاحتياطية التي تتجاوز قواعد الاحتفاظ (last/daily/weekly/monthly/yearly) ويستعيد المساحة. بدون سياسة يستعيد المساحة فقط. المتابعة؟",
-  "integrity.appendOnly": "فحص append-only",
   "integrity.appendOnlyHint": "يثبت أن مستودع النسخ الخارجي لا يزال يرفض الحذف (حماية append-only)، وهو نفس فحص العبث في مُعالج الإعداد الخارجي.",
-  "integrity.appendOnlyLast": "حماية append-only · آخر فحص {time}",
-  "integrity.appendOnlyNever": "حماية append-only · لم يُفحص بعد",
 
   // Pre/post-backup hooks
   "hooks.hint": "تُنفَّذ الأوامر داخل الـ container (sh -c). يُنفَّذ Pre قبل النسخ الاحتياطي (مثلاً كتابة ذاكرة مؤقتة إلى القرص؛ أما قواعد البيانات المعروفة فتُفرَّغ تلقائياً). فشله يُلغي النسخ الاحتياطي. يُنفَّذ Post بعد عودة الـ container للعمل؛ فشله يُسجَّل فقط.",
@@ -737,7 +731,6 @@ const ar: Partial<Translations> = {
   "vm.blocks.reason.no_space": "مساحة حرة قليلة جدًا في appdata",
   "vm.blocks.reason.job_failed": "لم يبدأ libvirt النسخ الاحتياطي",
   "vm.ssh.title": "SSH المضيف",
-  "vm.ssh.desc": "يشغّل نسخ VM الاحتياطي ونسخ ZFS الاحتياطي أوامرهما على هذا الخادم عبر SSH (دون تركيب). يجب تفويض هذا المفتاح على Unraid ثم الاختبار.",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "المفتاح العام: يُضاف إلى ‎/root/.ssh/authorized_keys في Unraid",
   "common.copy": "نسخ",
@@ -746,12 +739,7 @@ const ar: Partial<Translations> = {
   "vm.ssh.test": "اختبار الاتصال",
   "vm.ssh.testNoLibvirt": "متصل. libvirt غير متاح، ولا يحتاجه سوى نسخ VM الاحتياطي.",
   "vm.ssh.testFail": "فشل الاتصال",
-  "vm.ssh.setupTitle": "الإعداد (لمرة واحدة)",
-  "vm.ssh.step1": "يُنسخ الأمر أدناه ويُنفَّذ في طرفية Unraid لتفويض هذا المفتاح (يبقى بعد إعادة التشغيل).",
-  "vm.ssh.step2": "يُضبط متغيّر الـ container «Host SSH: Address» على عنوان LAN IP الخاص بـ Unraid (مثلاً 192.168.x.x)؛ مع شبكة الجسر البسيطة يعمل host.docker.internal أيضاً.",
-  "vm.ssh.step3": "النقر على اختبار الاتصال. عندما يصبح أخضر، تُفعَّل VMs أو مجموعات بيانات ZFS ضمن الأقسام.",
   "vm.ssh.copyCmd": "نسخ الأمر",
-  "vm.ssh.guide": "دليل الإعداد والشبكة الكامل",
   "common.backingUp": "جارٍ النسخ الاحتياطي…",
   "common.restoring": "جارٍ الاستعادة…",
   "common.done": "تم",
@@ -963,16 +951,13 @@ const ar: Partial<Translations> = {
   "settings.dashTileHint": "وضع ودجة حالة BombVault مباشرة على لوحة تحكم Unraid. تضيف إضافة مرافقة صغيرة هذه الودجة؛ ويمكن لـ BombVault تثبيتها عبر اتصال SSH الحالي بالمضيف.",
   "settings.dashTileChecking": "جارٍ التحقق من حالة الإضافة…",
   "settings.dashTileNoSsh": "اتصال SSH بالمضيف غير مُعدّ (الإعدادات، التكاملات، SSH المضيف)، لذا لا يستطيع BombVault تثبيت الإضافة. يمكن تثبيتها يدويًا في Unraid من Plugins ← Install Plugin باستخدام هذا العنوان:",
-  "settings.dashTileCa": "قد تكون متاحة أيضًا في Community Applications، باسم BombVault Widget.",
   "settings.dashTileNotInstalled": "إضافة ودجة لوحة التحكم غير مثبّتة.",
   "settings.dashTileConfirm": "يقوم زر التثبيت بتثبيت إضافة bombvault-widget على مضيف Unraid عبر آلية الإضافات المعتادة في Unraid. تظهر ضمن Plugins مثل أي إضافة أخرى ويمكن إزالتها من هناك (أو من هنا) في أي وقت.",
-  "settings.dashTileRepo": "عرض الإضافة على GitHub",
   "settings.dashTileInstall": "تثبيت الإضافة",
   "settings.dashTileInstalling": "جارٍ التثبيت…",
   "settings.dashTileInstalled": "إضافة ودجة لوحة التحكم مثبّتة ({version})",
   "settings.dashTileInstalledNoV": "إضافة ودجة لوحة التحكم مثبّتة",
   "settings.dashTileInstallOk": "تم تثبيت الإضافة. تظهر ودجة BombVault الجديدة في لوحة تحكم Unraid.",
-  "settings.dashTileInstalledHint": "تظهر الودجة على لوحة تحكم Unraid. إذا لم تكن ظاهرة، يمكن تفعيلها من إدارة الودجات في لوحة التحكم.",
   "settings.dashTileRemove": "إزالة الإضافة",
   "settings.dashTileRemoving": "جارٍ الإزالة…",
   "settings.dashTileRemoveOk": "تمت إزالة الإضافة. لم تعد تظهر في لوحة تحكم Unraid.",
@@ -988,14 +973,9 @@ const ar: Partial<Translations> = {
   "notify.smtpTls": "التشفير",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "التحقق من قابلية الاستعادة",
   "verify.running": "جارٍ التحقق…",
-  "verify.ok": "تم التحقق من قابلية الاستعادة",
   "verify.failed": "فشل التحقق",
-  "verify.last": "آخر تحقق {time}",
-  "verify.never": "لم يُتحقَّق أبداً",
   "verify.subsetPct": "عينة البيانات (%)",
-  "verify.hint": "يقرأ دورياً عينة عشوائية من بيانات النسخ الاحتياطي لإثبات أنها سليمة وقابلة للاستعادة.",
   "verify.shield": "مُتحقَّق منه",
 
   // Dashboard protection (RPO) status
@@ -1370,16 +1350,6 @@ const ar: Partial<Translations> = {
   "offsite.targets.retentionTitle": "الاحتفاظ (0 = الاحتفاظ بالكل)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "نوع التمرين:",
-  "drill.kindSubset": "فحص السلامة",
-  "drill.kindDR": "استعادة حقيقية (خارج الموقع)",
-  "drill.target": "هدف التمرين (الحاوية)",
-  "drill.targetVM": "هدف التمرين (VM)",
-  "drill.targetMostRecent": "أحدث نسخة احتياطية",
-  "drill.drNote": "تستخرج الاستعادة الحقيقية أحدث نسخة احتياطية خارج الموقع إلى sandbox مؤقتة، وتتحقق منها، ثم تنظّف بعد ذلك. تنزّل بيانات حقيقية وقد تستغرق بعض الوقت.",
-  "drill.runDR": "تشغيل الاستعادة الحقيقية",
-  "drill.runningDR": "جارٍ الاستعادة…",
-  "drill.confirmDR": "يُجري هذا استعادة حقيقية لأحدث نسخة احتياطية خارج الموقع إلى sandbox مؤقتة لإثبات قابليتها للاستعادة، ثم يحذفها. يُنزّل بيانات حقيقية وقد يستغرق بعض الوقت. المتابعة؟",
   "drill.offsiteVerified": "مُتحقَّق منه خارج الموقع",
 
   // Dashboard ransomware-protection card (v4)
@@ -1430,8 +1400,6 @@ const ar: Partial<Translations> = {
   "excludes.assistRemoveLine": "إزالة الاستبعاد {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "استعادة DR خارج الموقع",
-  "drill.checkLocal": "فحص السلامة المحلي",
   "drill.failReasonPrefix": "السبب:",
 
   // Off-site DR opt-out (#37)
@@ -1468,7 +1436,6 @@ const ar: Partial<Translations> = {
   "settings.schedulesSelfBackup": "جدول النسخ الذاتي",
   "settings.tamperScheduleInactive": "غير نشط: لا يوجد مستودع خارج الموقع مُعلَّم كـ append-only، لذا لا يعمل هذا الجدول الزمني أبدًا. لتفعيله، يُعلَّم مستودع خارج الموقع كـ append-only ضمن إعداداته خارج الموقع.",
   "settings.everythingTitle": "نسخ احتياطي شامل",
-  "settings.everythingDuplicateWarning": "تُنسخ Containers وVMs وFlash والمجلدات ومجموعات بيانات ZFS والنسخ الذاتي مرتين طالما أن هذا الجدول الزمني وجدولها الخاص مفعّلان معًا: مرة هنا ومرة في جدولها الخاص. يجب تعطيل الأقسام التي لا يُراد تكرارها.",
   "settings.everythingStarted": "بدأ. يعمل على الخادم عبر كل قسم بالترتيب؛ النتيجة في سجل النشاط.",
   "settings.everythingAlreadyRunning": "هناك نسخ احتياطي شامل قيد التشغيل بالفعل.",
   // Filter drawer trigger (v5 redesign)
@@ -1514,7 +1481,6 @@ const ar: Partial<Translations> = {
   "files.effectiveOwn": "يعمل {when}، جدوله الخاص",
   "files.effectiveDomain": "يعمل {when}، من {domain}",
   "files.effectiveEverything": "يعمل {when}، مع {domain}",
-  "files.effectiveBoth": "يعمل مرتين: {when} و{when2}",
   "files.pathMissing": "المجلد غير موجود",
   "files.noPath": "لم يُحدَّد مجلد",
   "files.noPathHint": "أُعيد بناؤه من النسخ الاحتياطية دون مجلد. تحديد مجلد يتيح نسخه احتياطياً من جديد. الاستعادة إلى مجلد تعمل بالفعل.",
@@ -2691,7 +2657,6 @@ const ar: Partial<Translations> = {
   "apps.parleyport.dockerHint": "ينسخ الأمر الذي يشغّله على المنفذ 8760، لوضع reverse proxy أمامه:",
   "apps.parleyport.toRelay": "إعدادات المُرحِّل",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "ودجة أصلية على لوحة تحكم Unraid تعرض سجل نشاط BombVault وموعد التشغيل المجدول التالي. تُثبَّت من Community Applications، أو يثبّتها BombVault أدناه عبر اتصال SSH الحالي بالمضيف.",
   "apps.unraidSub": "قالب",
   "apps.dockerSub": "نسخ الأمر",
   "apps.repoSub": "المصدر والتوثيق",
@@ -4421,7 +4386,6 @@ const ar: Partial<Translations> = {
   "deposit.code.deposit-changed": "كان لدى المثيل شيء غير الوديعة التي أرسلها هذا الخادم، أي أن أحدًا غيّرها هناك.",
   "exceptions.add": "استثناء",
   "exceptions.remove": "إزالة الاستثناء",
-  "schedules.fullHint": "الجدول الافتراضي لكل شيء: تمريرة واحدة على كل النطاقات، مع أمر واحد قبلها وآخر بعدها. العنصر الذي له جدوله الخاص يعمل في وقته الخاص ويتخطاه النسخ الاحتياطي الشامل.",
   "schedules.whenRuns": "موعد تشغيل النسخ الاحتياطي",
   "schedules.whenRunsHint": "تنسخ التمريرة الواحدة كل نطاق بالتتابع: Containers وVMs وFlash والمجلدات ومجموعات بيانات ZFS، ثم النسخ الذاتي أخيرًا. «إيقاف» يوقفها.",
   "schedules.includes": "يشمل: {sections}",
@@ -4432,7 +4396,6 @@ const ar: Partial<Translations> = {
   "schedules.hookPost": "أمر بعد النسخ الاحتياطي الشامل",
   "schedules.hookPostHint": "اختياري. يعمل مرة واحدة بالضبط بعد تجربة كل نطاق، حتى لو فشل أحدها. مناسب لإرسال ping يؤكد أن الخادم كله محمي.",
   "schedules.plans": "الجداول لكل نطاق",
-  "schedules.plansHint": "النطاق الذي له جدول خاص يعمل في وقته الخاص. وما دام النسخ الاحتياطي الشامل مفعّلًا فإنه ينسخ ذلك النطاق أيضًا. ويمكن للنطاق أن ينسخ إلى مواقعه الخارجية وفق جدوله الخاص.",
   "schedules.plansRuleAll": "تعمل كل النطاقات ضمن النسخ الاحتياطي الشامل.",
   "schedules.plansRuleOthers": "تعمل كل النطاقات الأخرى ضمن النسخ الاحتياطي الشامل.",
   "schedules.offsite": "النسخ الخارجية لكل نطاق",

@@ -2896,36 +2896,17 @@ func cadencePeriodSeconds(cadence string) int64 {
 	return cad.PeriodSeconds()
 }
 
-// domainCoverage answers "how often does this domain actually get backed up, and
-// by what" for ONE domain, given its own cadence and the "Backup Everything"
-// cadence. It returns the RPO window in seconds and, when the pass is the only
-// thing covering the domain, that pass's cadence string.
-//
-// Backup Everything runs the domains as a sixth, independent pseudo-domain, so a
-// user can (and #177's reporter does) leave every per-domain schedule off and let
-// the pass do the work. Reading the per-domain cadence alone then answers zero,
-// which the protection status renders as "Not scheduled" for a domain that is in
-// fact backed up nightly, and which makes the overdue watchdog fall silent for
-// that domain entirely — the far more expensive half, since its whole job is to
-// notice when backups stop.
-//
-// When both are scheduled the window is the SHORTER of the two: whichever fires
-// more often is what bounds how stale a backup can get. The pass only touches
-// domains that are switched on, so a switched-off domain gets no coverage from
-// it either — the caller's own enabled check still governs.
+// domainCoverage returns a domain's RPO window in seconds and, when the full
+// backup covers it, that pass's cadence. A domain with a cadence of its own
+// leaves the scheduled pass, so its own cadence is the window.
 func domainCoverage(ownCadence, everythingCadence string) (period int64, coveredBy string) {
-	own := cadencePeriodSeconds(ownCadence)
-	every := cadencePeriodSeconds(everythingCadence)
-	switch {
-	case own == 0 && every == 0:
-		return 0, ""
-	case own == 0:
-		return every, strings.TrimSpace(everythingCadence)
-	case every == 0 || own <= every:
+	if own := cadencePeriodSeconds(ownCadence); own > 0 {
 		return own, ""
-	default:
-		return every, ""
 	}
+	if every := cadencePeriodSeconds(everythingCadence); every > 0 {
+		return every, strings.TrimSpace(everythingCadence)
+	}
+	return 0, ""
 }
 
 // protInputs carries the facts protectionLevel aggregates, so the decision is a

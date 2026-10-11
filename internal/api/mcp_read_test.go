@@ -362,8 +362,8 @@ func TestMCPListItemsIdsNamesAndStamps(t *testing.T) {
 	if got := domains["containers"]["installedKnown"]; got != true {
 		t.Fatalf("installedKnown = %v with Docker answering", got)
 	}
-	if got := containers["plex"]["schedule"]; got != "both" {
-		t.Fatalf("plex schedule = %v, want both (the domain cadence and Backup Everything)", got)
+	if got := containers["plex"]["schedule"]; got != "domain" {
+		t.Fatalf("plex schedule = %v, want domain (a section with its own plan leaves the full backup)", got)
 	}
 	if got := containers["archive"]["paused"]; got != true {
 		t.Fatalf("a container switched off by its own override reports paused = %v", got)

@@ -14,6 +14,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 )
 
@@ -98,6 +99,53 @@ func TestEverythingSkipsSwitchedOffDomain(t *testing.T) {
 	if sum.Status != "success" {
 		t.Fatalf("Status = %q, want %q (a skipped domain is not a failure): %+v", sum.Status, "success", sum.Domains)
 	}
+}
+
+// The scheduled full backup leaves out a section that runs on a plan of its
+// own; started by hand it takes every section that is switched on.
+func TestScheduledEverythingLeavesOutASectionWithItsOwnPlan(t *testing.T) {
+	log := &everythingOrderLog{}
+	eng := &orderedEngine{fakeResticEngine: &fakeResticEngine{}, log: log}
+	svc, st, _, _ := everythingTestService(t, eng)
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersSchedule = "daily 02:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	sum, err := svc.BackupEverything(api.WithScheduledPass(context.Background()))
+	if err != nil {
+		t.Fatalf("scheduled BackupEverything: %v", err)
+	}
+	for _, d := range sum.Domains {
+		if d.Domain == "containers" {
+			t.Fatalf("containers runs on its own plan and must not be in the scheduled pass, got %+v", sum.Domains)
+		}
+	}
+	if !ranDomain(log, "flash") {
+		t.Fatalf("flash has no plan of its own and must run in the scheduled pass, order log = %v", log.entries)
+	}
+
+	log.entries = nil
+	if _, err := svc.BackupEverything(context.Background()); err != nil {
+		t.Fatalf("manual BackupEverything: %v", err)
+	}
+	if !ranDomain(log, "containers") {
+		t.Fatalf("a pass started by hand takes every section, order log = %v", log.entries)
+	}
+}
+
+func ranDomain(log *everythingOrderLog, domain string) bool {
+	for _, e := range log.entries {
+		if e == domain {
+			return true
+		}
+	}
+	return false
 }
 
 // A switched-on domain with nothing eligible must not ping its check, as with

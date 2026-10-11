@@ -657,23 +657,17 @@ const nl: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integriteit en onderhoud",
-  "integrity.hint": "Voer restic check uit om te verifiëren dat de structuur en metadata van een repository intact zijn.",
   "integrity.verify": "Verifiëren",
   "integrity.checking": "Controleren…",
   "integrity.ok": "Gezond",
   "integrity.failed": "Controle mislukt",
-  "integrity.failedShort": "✗ Mislukt",
   "integrity.unlock": "Ontgrendelen",
   "integrity.prune": "Opschonen",
   "integrity.verifyHint": "Voer restic check uit om structuur en metadata te verifiëren.",
   "integrity.unlockHint": "Verwijder vastgelopen repository-locks van een gecrashte/onderbroken run (lost 'repository is already locked' op).",
   "integrity.unlockPartial": "Niet elke repository is volledig ontgrendeld: {list}",
   "integrity.pruneHint": "Pas je bewaarbeleid toe en maak ruimte vrij (maakt alleen ruimte vrij als er geen beleid is ingesteld; kan even duren).",
-  "integrity.pruneConfirm": "Opschonen past nu je bewaarbeleid toe: het verwijdert back-ups buiten je regels (last/daily/weekly/monthly/yearly) en maakt ruimte vrij. Zonder beleid maakt het alleen ruimte vrij. Doorgaan?",
-  "integrity.appendOnly": "Append-only-controle",
   "integrity.appendOnlyHint": "Bewijst dat de off-site-repository verwijderingen nog steeds weigert (append-only-bescherming), dezelfde controle als de tamper-test van de off-site-wizard.",
-  "integrity.appendOnlyLast": "append-only-bescherming · Laatst gecontroleerd {time}",
-  "integrity.appendOnlyNever": "append-only-bescherming · nooit gecontroleerd",
 
   // Pre/post-backup hooks
   "hooks.hint": "Commando's draaien in de container (sh -c). Pre draait vóór de back-up (bijv. een cache naar schijf wegschrijven; herkende databases worden vanzelf gedumpt). Een fout breekt de back-up af. Post draait nadat de container weer draait; een fout daarvan wordt alleen gelogd.",
@@ -733,7 +727,6 @@ const nl: Partial<Translations> = {
   "vm.blocks.reason.no_space": "te weinig vrije ruimte in appdata",
   "vm.blocks.reason.job_failed": "libvirt startte de back-up niet",
   "vm.ssh.title": "Host-SSH",
-  "vm.ssh.desc": "VM-back-ups en ZFS-back-ups voeren hun opdrachten via SSH uit op deze server (geen mount). Autoriseer deze sleutel op Unraid en test daarna.",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "Publieke sleutel: toevoegen aan Unraid /root/.ssh/authorized_keys",
   "common.copy": "Kopiëren",
@@ -742,12 +735,7 @@ const nl: Partial<Translations> = {
   "vm.ssh.test": "Verbinding testen",
   "vm.ssh.testNoLibvirt": "Verbonden. libvirt is niet bereikbaar, en alleen VM-back-ups hebben het nodig.",
   "vm.ssh.testFail": "Verbinding mislukt",
-  "vm.ssh.setupTitle": "Instellen (eenmalig)",
-  "vm.ssh.step1": "Kopieer het onderstaande commando en voer het uit in de Unraid-terminal om deze sleutel te autoriseren (overleeft herstarts).",
-  "vm.ssh.step2": "Stel de containervariabele „Host SSH: Address” in op het LAN-IP van je Unraid (bijv. 192.168.x.x); bij eenvoudig bridge-netwerk werkt host.docker.internal ook.",
-  "vm.ssh.step3": "Klik op Verbinding testen. Zodra die groen is, schakel VM's of ZFS-datasets in onder Onderdelen.",
   "vm.ssh.copyCmd": "Commando kopiëren",
-  "vm.ssh.guide": "Volledige installatie- & netwerkgids",
   "common.backingUp": "Back-up maken…",
   "common.restoring": "Herstellen…",
   "common.done": "Klaar",
@@ -950,16 +938,13 @@ const nl: Partial<Translations> = {
   "settings.dashTileHint": "Zet een BombVault-statuswidget direct op het Unraid-dashboard. Een kleine companion-plugin voegt de widget toe; BombVault kan hem voor je installeren via de bestaande SSH-verbinding met de host.",
   "settings.dashTileChecking": "Pluginstatus controleren…",
   "settings.dashTileNoSsh": "De SSH-verbinding met de host is niet ingesteld (Instellingen, Integraties, Host-SSH), dus BombVault kan de plugin niet voor je installeren. Installeer hem handmatig in Unraid onder Plugins → Install Plugin met deze URL:",
-  "settings.dashTileCa": "Mogelijk is hij ook beschikbaar in Community Applications. Zoek naar BombVault Widget.",
   "settings.dashTileNotInstalled": "De dashboardwidget-plugin is niet geïnstalleerd.",
   "settings.dashTileConfirm": "Installeren installeert de bombvault-widget-plugin op je Unraid-host via het gewone Unraid-pluginmechanisme. Hij verschijnt onder Plugins zoals elke andere plugin en kan daar (of hier) altijd worden verwijderd.",
-  "settings.dashTileRepo": "Bekijk de plugin op GitHub",
   "settings.dashTileInstall": "Plugin installeren",
   "settings.dashTileInstalling": "Installeren…",
   "settings.dashTileInstalled": "De dashboardwidget-plugin is geïnstalleerd ({version})",
   "settings.dashTileInstalledNoV": "De dashboardwidget-plugin is geïnstalleerd",
   "settings.dashTileInstallOk": "Plugin geïnstalleerd. Open het Unraid-dashboard om de nieuwe BombVault-widget te zien.",
-  "settings.dashTileInstalledHint": "De widget verschijnt op het Unraid-dashboard. Is hij niet zichtbaar, schakel hem dan in via het widgetbeheer van het dashboard.",
   "settings.dashTileRemove": "Plugin verwijderen",
   "settings.dashTileRemoving": "Verwijderen…",
   "settings.dashTileRemoveOk": "Plugin verwijderd. Het verschijnt niet meer op het Unraid-dashboard.",
@@ -975,14 +960,9 @@ const nl: Partial<Translations> = {
   "notify.smtpTls": "Versleuteling",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Herstelbaarheid verifiëren",
   "verify.running": "Verifiëren…",
-  "verify.ok": "Herstelbaarheid geverifieerd",
   "verify.failed": "Verificatie mislukt",
-  "verify.last": "Laatst geverifieerd {time}",
-  "verify.never": "Nooit geverifieerd",
   "verify.subsetPct": "Datasteekproef (%)",
-  "verify.hint": "Leest periodiek een willekeurige steekproef van de back-upgegevens om te bewijzen dat ze intact en herstelbaar zijn.",
   "verify.shield": "geverifieerd",
 
   // Dashboard protection (RPO) status
@@ -1356,16 +1336,6 @@ const nl: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Bewaring (0 = alles bewaren)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Testtype:",
-  "drill.kindSubset": "Integriteitscontrole",
-  "drill.kindDR": "Echt herstel (off-site)",
-  "drill.target": "Testdoel (container)",
-  "drill.targetVM": "Testdoel (VM)",
-  "drill.targetMostRecent": "Meest recente back-up",
-  "drill.drNote": "Een echt herstel pakt de nieuwste off-site back-up uit in een tijdelijke sandbox, verifieert die en ruimt daarna op. Het downloadt echte data en kan even duren.",
-  "drill.runDR": "Echt herstel uitvoeren",
-  "drill.runningDR": "Herstellen…",
-  "drill.confirmDR": "Dit voert een ECHT herstel uit van de nieuwste off-site back-up naar een tijdelijke sandbox om te bewijzen dat die herstelbaar is, en verwijdert het daarna. Het downloadt echte data en kan even duren. Doorgaan?",
   "drill.offsiteVerified": "off-site geverifieerd",
 
   // Dashboard ransomware-protection card (v4)
@@ -1428,8 +1398,6 @@ const nl: Partial<Translations> = {
   "excludes.assistRemoveLine": "Uitsluiting {line} verwijderen",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "off-site DR-herstel",
-  "drill.checkLocal": "lokale integriteitscontrole",
   "drill.failReasonPrefix": "reden:",
 
   // Off-site DR opt-out (#37)
@@ -1466,7 +1434,6 @@ const nl: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Schema van de zelf-back-up",
   "settings.tamperScheduleInactive": "Inactief: geen enkele off-site repo is gemarkeerd als append-only, dus dit schema wordt nooit uitgevoerd. Markeer een off-site repo als append-only in de bijbehorende off-site-instellingen om het te activeren.",
   "settings.everythingTitle": "Volledige back-up",
-  "settings.everythingDuplicateWarning": "Containers, VM's, flash, mappen, ZFS-datasets en de zelf-back-up krijgen twee back-ups zolang deze planning en hun eigen planning allebei aanstaan: één keer hier en één keer in hun eigen planning. Zet de onderdelen uit die je niet dubbel wilt back-uppen.",
   "settings.everythingStarted": "Gestart. Draait op de server achtereenvolgens door elk onderdeel; volg het Activiteitenlogboek voor het resultaat.",
   "settings.everythingAlreadyRunning": "Er loopt al een volledige back-up.",
   // Filter drawer trigger (v5 redesign)
@@ -1512,7 +1479,6 @@ const nl: Partial<Translations> = {
   "files.effectiveOwn": "Draait {when}, eigen planning",
   "files.effectiveDomain": "Draait {when}, uit {domain}",
   "files.effectiveEverything": "Draait {when}, met {domain}",
-  "files.effectiveBoth": "Draait twee keer: {when} en {when2}",
   "files.pathMissing": "Map niet gevonden",
   "files.noPath": "Geen map ingesteld",
   "files.noPathHint": "Opnieuw opgebouwd uit back-ups zonder map. Stel een map in om weer te back-uppen. Herstellen naar een map werkt nu al.",
@@ -2689,7 +2655,6 @@ const nl: Partial<Translations> = {
   "apps.parleyport.dockerHint": "Kopieert de opdracht die hem op poort 8760 start, voor een reverse proxy ervoor:",
   "apps.parleyport.toRelay": "Relay-instellingen",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "Een echte widget op het Unraid-dashboard met BombVaults activiteitenlog en de volgende geplande run. Installeer hem vanuit Community Applications, of laat BombVault hem hieronder installeren via de bestaande SSH-verbinding met de host.",
   "apps.unraidSub": "Sjabloon",
   "apps.dockerSub": "Opdracht kopiëren",
   "apps.repoSub": "Broncode en documentatie",
@@ -4419,7 +4384,6 @@ const nl: Partial<Translations> = {
   "deposit.code.deposit-changed": "De instantie had iets anders dan de bewaarkopie die deze server had gestuurd, dus iemand heeft die daar gewijzigd.",
   "exceptions.add": "Uitzondering",
   "exceptions.remove": "Uitzondering verwijderen",
-  "schedules.fullHint": "De standaardplanning voor alles: één ronde langs alle domeinen, met één opdracht ervoor en één erna. Een item met een eigen planning draait op zijn eigen tijd en wordt door de volledige back-up overgeslagen.",
   "schedules.whenRuns": "Wanneer back-ups draaien",
   "schedules.whenRunsHint": "Eén ronde maakt van elk domein na elkaar een back-up: containers, VM's, flash, mappen, ZFS-datasets en als laatste de zelf-back-up. “Uit” schakelt dit uit.",
   "schedules.includes": "Omvat: {sections}",
@@ -4430,7 +4394,6 @@ const nl: Partial<Translations> = {
   "schedules.hookPost": "Opdracht na de volledige back-up",
   "schedules.hookPostHint": "Optioneel. Draait precies één keer nadat elk domein is geprobeerd, ook als een ervan is mislukt. Handig voor een ping die bevestigt dat de hele server beschermd is.",
   "schedules.plans": "Planningen per domein",
-  "schedules.plansHint": "Een domein met een eigen planning draait op zijn eigen tijd. Staat de volledige back-up aan, dan wordt dat domein daar ook in meegenomen. Een domein kan ook volgens een eigen planning naar zijn off-site-locaties kopiëren.",
   "schedules.plansRuleAll": "Alle domeinen draaien in de volledige back-up.",
   "schedules.plansRuleOthers": "Alle andere domeinen draaien in de volledige back-up.",
   "schedules.offsite": "Off-site-kopieën per domein",

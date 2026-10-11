@@ -658,23 +658,17 @@ const uk: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Цілісність та обслуговування",
-  "integrity.hint": "Запустіть restic check, щоб перевірити, що структура й метадані репозиторію не пошкоджені.",
   "integrity.verify": "Перевірити",
   "integrity.checking": "Перевірка…",
   "integrity.ok": "Справний",
   "integrity.failed": "Перевірка не пройдена",
-  "integrity.failedShort": "✗ Не пройдено",
   "integrity.unlock": "Розблокувати",
   "integrity.prune": "Очистити",
   "integrity.verifyHint": "Запустіть restic check для перевірки структури та метаданих.",
   "integrity.unlockHint": "Видалити застряглі блокування репозиторію після перерваного запуску (виправляє 'repository is already locked').",
   "integrity.unlockPartial": "Не всі репозиторії було повністю розблоковано: {list}",
   "integrity.pruneHint": "Застосувати політику зберігання та звільнити місце (без політики лише звільняє місце; може зайняти час).",
-  "integrity.pruneConfirm": "Очищення тепер застосовує вашу політику зберігання — видаляє резервні копії понад ваші правила (last/daily/weekly/monthly/yearly) і звільняє місце. Без політики лише звільняє місце. Продовжити?",
-  "integrity.appendOnly": "Перевірка append-only",
   "integrity.appendOnlyHint": "Доводить, що віддалене сховище й далі відхиляє видалення (захист append-only) — та сама перевірка, що й tamper-тест у майстрі off-site.",
-  "integrity.appendOnlyLast": "захист append-only · Остання перевірка {time}",
-  "integrity.appendOnlyNever": "захист append-only · ще не перевірявся",
 
   // Backup hooks
   "hooks.hint": "Команди виконуються всередині контейнера (sh -c). Pre виконується перед копією (напр. скидання кешу на диск; розпізнані бази даних вивантажуються самі). Помилка перериває копіювання. Post виконується після відновлення контейнера; його помилка лише записується в журнал.",
@@ -734,7 +728,6 @@ const uk: Partial<Translations> = {
   "vm.blocks.reason.no_space": "замало вільного місця в appdata",
   "vm.blocks.reason.job_failed": "libvirt не запустив копіювання",
   "vm.ssh.title": "SSH хоста",
-  "vm.ssh.desc": "Копії VM і ZFS виконують свої команди на цьому сервері через SSH (без монтування). Авторизуйте цей ключ в Unraid, потім протестуйте.",
   "vm.ssh.host": "Хост",
   "vm.ssh.publicKey": "Публічний ключ — додайте до Unraid /root/.ssh/authorized_keys",
   "common.copy": "Копіювати",
@@ -743,12 +736,7 @@ const uk: Partial<Translations> = {
   "vm.ssh.test": "Перевірити з'єднання",
   "vm.ssh.testNoLibvirt": "З'єднано. libvirt недоступний, але він потрібен лише для копій VM.",
   "vm.ssh.testFail": "З'єднання не вдалося",
-  "vm.ssh.setupTitle": "Налаштування (одноразове)",
-  "vm.ssh.step1": "Скопіюйте команду нижче та виконайте її в терміналі Unraid, щоб авторизувати цей ключ (переживає перезавантаження).",
-  "vm.ssh.step2": "Встановіть змінну контейнера «Host SSH: Address» на LAN IP вашого Unraid (напр. 192.168.x.x); за простої мостової мережі також працює host.docker.internal.",
-  "vm.ssh.step3": "Натисніть Перевірити з'єднання — щойно воно стане зеленим, увімкніть VMs або Набори даних ZFS у розділі «Розділи».",
   "vm.ssh.copyCmd": "Копіювати команду",
-  "vm.ssh.guide": "Повний посібник з налаштування та мережі",
   "common.backingUp": "Копіювання…",
   "common.restoring": "Відновлення…",
   "common.done": "Готово",
@@ -959,16 +947,13 @@ const uk: Partial<Translations> = {
   "settings.dashTileHint": "Розмістіть віджет стану BombVault прямо на панелі Unraid. Невеликий плагін-компаньйон додає віджет; BombVault може встановити його за вас через наявне SSH-з'єднання з хостом.",
   "settings.dashTileChecking": "Перевірка стану плагіна…",
   "settings.dashTileNoSsh": "SSH-з'єднання з хостом не налаштоване (Налаштування, Інтеграції, SSH хоста), тому BombVault не може встановити плагін за вас. Встановіть його вручну в Unraid через Plugins → Install Plugin за цією URL-адресою:",
-  "settings.dashTileCa": "Можливо, він також доступний у Community Applications — шукайте BombVault Widget.",
   "settings.dashTileNotInstalled": "Плагін віджета панелі не встановлено.",
   "settings.dashTileConfirm": "«Встановити» встановлює плагін bombvault-widget на ваш хост Unraid через звичайний механізм плагінів Unraid. Він з'являється в розділі Plugins, як будь-який інший плагін, і його можна видалити там (або тут) у будь-який момент.",
-  "settings.dashTileRepo": "Переглянути плагін на GitHub",
   "settings.dashTileInstall": "Встановити плагін",
   "settings.dashTileInstalling": "Встановлення…",
   "settings.dashTileInstalled": "Плагін віджета панелі встановлено ({version})",
   "settings.dashTileInstalledNoV": "Плагін віджета панелі встановлено",
   "settings.dashTileInstallOk": "Плагін встановлено. Відкрийте панель Unraid, щоб побачити новий віджет BombVault.",
-  "settings.dashTileInstalledHint": "Віджет з'являється на панелі Unraid — якщо його не видно, увімкніть його в керуванні віджетами панелі.",
   "settings.dashTileRemove": "Видалити плагін",
   "settings.dashTileRemoving": "Видалення…",
   "settings.dashTileRemoveOk": "Плагін видалено. Він більше не відображається на панелі Unraid.",
@@ -984,14 +969,9 @@ const uk: Partial<Translations> = {
   "notify.smtpTls": "Шифрування",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Перевірити відновлюваність",
   "verify.running": "Перевірка…",
-  "verify.ok": "Відновлюваність підтверджено",
   "verify.failed": "Перевірка не пройдена",
-  "verify.last": "Востаннє перевірено {time}",
-  "verify.never": "Ще не перевірялося",
   "verify.subsetPct": "Вибірка даних (%)",
-  "verify.hint": "Періодично зчитує випадкову вибірку даних резервної копії, щоб довести, що вони цілі та можуть бути відновлені.",
   "verify.shield": "перевірено",
 
   // Dashboard protection (RPO) status
@@ -1366,16 +1346,6 @@ const uk: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Зберігання (0 = зберігати все)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Тип перевірки:",
-  "drill.kindSubset": "Перевірка цілісності",
-  "drill.kindDR": "Справжнє відновлення (зовнішнє)",
-  "drill.target": "Ціль перевірки (контейнер)",
-  "drill.targetVM": "Ціль перевірки (віртуальна машина)",
-  "drill.targetMostRecent": "Найновіша резервна копія",
-  "drill.drNote": "Справжнє відновлення розпаковує найновішу зовнішню резервну копію в тимчасову пісочницю, перевіряє її, а потім прибирає. Воно завантажує реальні дані й може тривати деякий час.",
-  "drill.runDR": "Запустити справжнє відновлення",
-  "drill.runningDR": "Відновлення…",
-  "drill.confirmDR": "Це виконує СПРАВЖНЄ відновлення найновішої зовнішньої резервної копії в тимчасову пісочницю, щоб довести можливість відновлення, а потім видаляє її. Воно завантажує реальні дані й може тривати деякий час. Продовжити?",
   "drill.offsiteVerified": "зовнішнє місце призначення перевірено",
 
   // Dashboard ransomware-protection card (v4)
@@ -1426,8 +1396,6 @@ const uk: Partial<Translations> = {
   "excludes.assistRemoveLine": "Прибрати виключення {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "зовнішнє DR-відновлення",
-  "drill.checkLocal": "локальна перевірка цілісності",
   "drill.failReasonPrefix": "причина:",
 
   // Off-site DR opt-out (#37)
@@ -1464,7 +1432,6 @@ const uk: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Розклад Автобекапу",
   "settings.tamperScheduleInactive": "Неактивно — жоден зовнішній репозиторій не позначений як append-only, тому цей розклад ніколи не запускається. Позначте зовнішній репозиторій як append-only в його зовнішніх налаштуваннях, щоб увімкнути його.",
   "settings.everythingTitle": "Повний бекап",
-  "settings.everythingDuplicateWarning": "Контейнери, віртуальні машини, Flash, папки, набори даних ZFS й Автобекап копіюються двічі, поки одночасно ввімкнено цей розклад і їхній власний: один раз тут і один раз за власним розкладом. Вимкніть розділи, які не потрібно копіювати двічі.",
   "settings.everythingStarted": "Запущено — виконується на сервері по черзі для кожного розділу; результат дивіться в розділі «Журнал активності».",
   "settings.everythingAlreadyRunning": "Повний бекап вже виконується.",
   // Filter drawer trigger (v5 redesign)
@@ -1510,7 +1477,6 @@ const uk: Partial<Translations> = {
   "files.effectiveOwn": "Виконується {when}, власний розклад",
   "files.effectiveDomain": "Виконується {when}, з {domain}",
   "files.effectiveEverything": "Виконується {when}, разом із {domain}",
-  "files.effectiveBoth": "Виконується двічі: {when} та {when2}",
   "files.pathMissing": "Папку не знайдено",
   "files.noPath": "Папку не задано",
   "files.noPathHint": "Відновлено з резервних копій без папки. Задайте папку, щоб знову створювати копії — відновлення до папки вже працює.",
@@ -2687,7 +2653,6 @@ const uk: Partial<Translations> = {
   "apps.parleyport.dockerHint": "Копіює команду, яка запускає його на порту 8760, для reverse proxy перед ним:",
   "apps.parleyport.toRelay": "Налаштування реле",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "Справжній віджет на панелі Unraid із журналом активності BombVault і наступним запланованим запуском. Встановіть його з Community Applications або дозвольте BombVault встановити його нижче через наявне SSH-з'єднання з хостом.",
   "apps.unraidSub": "Шаблон",
   "apps.dockerSub": "Скопіювати команду",
   "apps.repoSub": "Вихідний код і документація",
@@ -4417,7 +4382,6 @@ const uk: Partial<Translations> = {
   "deposit.code.deposit-changed": "В екземплярі було не те, що надіслав цей сервер, отже, депозит там хтось змінив.",
   "exceptions.add": "Виняток",
   "exceptions.remove": "Прибрати виняток",
-  "schedules.fullHint": "Типовий розклад для всього: один прохід по всіх областях, з однією командою перед ним і однією після. Запис із власним розкладом виконується у свій час, а повний бекап його пропускає.",
   "schedules.whenRuns": "Коли виконуються бекапи",
   "schedules.whenRunsHint": "Один прохід по черзі копіює всі області: контейнери, віртуальні машини, flash, папки, набори даних ZFS, а наприкінці автобекап. «Вимкнено» вимикає це.",
   "schedules.includes": "Охоплює: {sections}",
@@ -4428,7 +4392,6 @@ const uk: Partial<Translations> = {
   "schedules.hookPost": "Команда після повного бекапу",
   "schedules.hookPostHint": "Необов'язково. Виконується рівно один раз після того, як спробовано кожну область, навіть якщо одна з них зазнала невдачі. Годиться для ping, що підтверджує захист усього сервера.",
   "schedules.plans": "Розклади за областями",
-  "schedules.plansHint": "Область із власним розкладом виконується у свій час. Поки повний бекап увімкнено, ця область копіюється і в ньому. Область також може копіювати у свої зовнішні місця за власним розкладом.",
   "schedules.plansRuleAll": "Усі області виконуються в повному бекапі.",
   "schedules.plansRuleOthers": "Усі інші області виконуються в повному бекапі.",
   "schedules.offsite": "Зовнішні копії за областями",

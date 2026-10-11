@@ -25,7 +25,7 @@ afterEach(cleanup);
 it("names the server's clock when the browser runs on another", async () => {
   render(
     <EffectiveScheduleLine
-      effective={{ kind: "domain", spec: "daily 03:00", alsoSpec: "" }}
+      effective={{ kind: "domain", spec: "daily 03:00" }}
       domainLabelKey="jobs.zfsSection"
     />
   );

@@ -1,16 +1,18 @@
-import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { IconCopy } from "../../components/Sidebar";
+import { IconInfo } from "../../components/glyphs";
+import { IconCopy } from "../../components/navGlyphs";
+import { SettingRow } from "../../components/storage/rows";
 import { getVMSSH, testVMSSH } from "../../lib/api";
 import { copyText } from "../../lib/clipboard";
 import { useT } from "../../lib/i18n";
-import { tLtr } from "../../lib/ltrFragments";
 import { authorizeCommand } from "../../lib/sshAuthorize";
 import { useToast } from "../../lib/toast";
-import { Card } from "./shared";
+import { Card, SubCard } from "./shared";
 import { TestButton, VerdictLine } from "../../components/TestButton";
 import { useTestVerdict } from "../../lib/useTestVerdict";
 import { useEffect, useState } from "react";
+
+const GUIDE_URL = "https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md";
 
 // VMSSHCard shows BombVault's SSH public key (to authorize on the Unraid host)
 // and a connection test for the link VM and ZFS backups share. It fetches its
@@ -20,8 +22,6 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
   const [host, setHost] = useState("");
   const [pub, setPub] = useState("");
   const test = useTestVerdict(host, t("vm.ssh.testFail"));
-
-  const authorizeCmd = authorizeCommand(pub);
 
   useEffect(() => {
     getVMSSH()
@@ -44,104 +44,75 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
     });
   }
 
-  // copyText falls back to execCommand in non-secure contexts (#112).
-  async function handleCopy() {
-    if (await copyText(pub)) {
-      push(t("common.copied"), "success");
-    } else {
-      // copyText fails only when the Clipboard API and the execCommand
-      // fallback both failed, so this is a real failure, not routine noise.
-      push(t("vm.ssh.copyFailed"), "fail");
-    }
-  }
-
-  async function handleCopyCmd() {
-    if (await copyText(authorizeCmd)) {
-      push(t("common.copied"), "success");
-    } else {
-      push(t("vm.ssh.copyFailed"), "fail");
-    }
+  // copyText falls back to execCommand in non-secure contexts (#112), so a
+  // failure here means both ways failed.
+  async function copy(text: string) {
+    const ok = await copyText(text);
+    push(ok ? t("common.copied") : t("vm.ssh.copyFailed"), ok ? "success" : "fail");
   }
 
   return (
-    <Card title={t("vm.ssh.title")} hint={t("vm.ssh.desc")} hueIndex={hueIndex}>
-      <div className="flex flex-col gap-3">
-        <div className="text-sm text-carbon-text">
-          {t("vm.ssh.host")}: <span dir="ltr" className="font-mono text-start">{host || "—"}</span>
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textMuted">{tLtr(t, "vm.ssh.publicKey")}</span>
-          {/* On a phone the copy buttons go under their blocks, which beside
-              them shrink to a few characters a line. */}
-          <div className="flex items-start gap-2 max-md:flex-col">
-            <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
-              {pub || "—"}
-            </code>
-            <Button
-              label={t("common.copy")}
-              labelKey="common.copy"
-              glyph={<IconCopy />}
-              tone="accent"
-              onClick={() => void handleCopy()}
-              disabled={!pub}
-              hueIndex={hueIndex}
-              className={"shrink-0"}
-            />
-          </div>
-        </div>
-
-        {/* One-time setup instructions */}
-        <div className="rounded-card bg-carbon-surface2 p-3 flex flex-col gap-2">
-          <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
-            {t("vm.ssh.setupTitle")}
-          </span>
-          <ol className="list-decimal ps-5 text-xs text-carbon-textSub flex flex-col gap-1">
-            <li>{t("vm.ssh.step1")}</li>
-            <li>{t("vm.ssh.step2")}</li>
-            <li>{t("vm.ssh.step3")}</li>
-          </ol>
-          <div className="flex items-start gap-2 max-md:flex-col max-md:items-stretch">
-            <pre className="flex-1 min-w-0 rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre-wrap break-all">{authorizeCmd}</pre>
-            <Button
-              label={t("vm.ssh.copyCmd")}
-              labelKey="vm.ssh.copyCmd"
-              glyph={<IconCopy />}
-              tone="accent"
-              onClick={() => void handleCopyCmd()}
-              disabled={!pub}
-              hueIndex={hueIndex}
-              className="shrink-0 max-md:self-start"
-            />
-          </div>
-          <Badge
-            as="a"
-            href="https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md"
-            target="_blank"
-            rel="noreferrer"
-            tone="neutral"
-            size="small"
-            // Under a coarse pointer the chip becomes a tap target, and its
-            // label may wrap there.
-            className="self-start pointer-coarse:h-auto pointer-coarse:min-h-(--btn-h) pointer-coarse:py-1 pointer-coarse:leading-tight"
+    <Card title={t("vm.ssh.title")} hint={t("vm.ssh.cardHint")} hueIndex={hueIndex}>
+      <div className="flex flex-col divide-y divide-carbon-border/60">
+        <SettingRow label={t("vm.ssh.host")} hint={t("vm.ssh.hostHint")}>
+          <code dir="ltr" className="font-mono text-sm font-semibold text-carbon-text">
+            {host || "-"}
+          </code>
+        </SettingRow>
+        <SettingRow label={t("vm.ssh.keyLabel")} hint={t("vm.ssh.keyHint")}>
+          <code
+            dir="ltr"
+            className="w-80 max-w-full truncate rounded-control bg-carbon-surface2 px-3 py-1.5 text-start font-mono text-xs text-carbon-text"
           >
-            {t("vm.ssh.guide")} →
-          </Badge>
-        </div>
+            {pub || "-"}
+          </code>
+          <Button label={t("common.copy")} labelKey="common.copy" glyph={<IconCopy />} onClick={() => void copy(pub)} disabled={!pub} />
+        </SettingRow>
+      </div>
 
-        <VerdictLine verdict={test.verdict} />
-        <div className="flex items-center gap-3">
-          <TestButton
-            label={t("vm.ssh.test")}
-            labelKey="vm.ssh.test"
-            // Accent, not neutral: it is the one thing this card asks you to
-            // do, and the card is useless until it has been done once.
-            tone="accent"
-            test={test}
-            onClick={handleTest}
-            hueIndex={hueIndex}
+      <SubCard title={t("settings.widgetSetup")}>
+        <ol className="flex list-decimal flex-col gap-2 ps-5 text-sm text-carbon-text">
+          <li>
+            <span className="flex flex-wrap items-center gap-2">
+              {t("vm.ssh.stepCopy")}
+              <Button
+                label={t("vm.ssh.copyCmd")}
+                labelKey="vm.ssh.copyCmd"
+                glyph={<IconCopy />}
+                onClick={() => void copy(authorizeCommand(pub))}
+                disabled={!pub}
+                hueIndex={hueIndex}
+                className="glim-btn-wrap"
+              />
+            </span>
+          </li>
+          <li>{t("vm.ssh.stepTerminal")}</li>
+          <li>{t("vm.ssh.stepPaste")}</li>
+          <li>
+            <VerdictLine verdict={test.verdict} />
+            <span className="flex flex-wrap items-center gap-2">
+              {t("vm.ssh.stepTest")}
+              <TestButton
+                label={t("vm.ssh.test")}
+                labelKey="vm.ssh.test"
+                test={test}
+                onClick={handleTest}
+                hueIndex={hueIndex}
+                className="glim-btn-wrap"
+              />
+            </span>
+          </li>
+        </ol>
+        <div className="flex justify-end pt-3">
+          <Button
+            label={t("vm.ssh.fullGuide")}
+            labelKey="vm.ssh.fullGuide"
+            glyph={<IconInfo />}
+            className="glim-btn-wrap"
+            onClick={() => window.open(GUIDE_URL, "_blank", "noopener,noreferrer")}
           />
         </div>
-      </div>
+      </SubCard>
     </Card>
   );
 }

@@ -33,7 +33,7 @@ function item(over: Partial<BackupItem> = {}): BackupItem {
     name: "plex",
     included: true,
     paused: false,
-    effectiveSchedule: { kind: "everything", spec: "daily@03:00", alsoSpec: "" },
+    effectiveSchedule: { kind: "everything", spec: "daily@03:00" },
     lastBackup: 1_700_000_000,
     lastRunStatus: "success",
     sourceBytes: 1024,
@@ -129,7 +129,7 @@ describe("protection", () => {
   it("is missing when nothing will run", () => {
     expect(protection(item({ lastBackup: 0, included: false }))).toBe("none");
     expect(protection(item({ lastBackup: 0, paused: true }))).toBe("none");
-    expect(protection(item({ lastBackup: 0, effectiveSchedule: { kind: "none", spec: "", alsoSpec: "" } }))).toBe("none");
+    expect(protection(item({ lastBackup: 0, effectiveSchedule: { kind: "none", spec: "" } }))).toBe("none");
     expect(protection(item({ lastBackup: 0, installed: false }))).toBe("none");
   });
 
@@ -298,7 +298,7 @@ describe("sorting", () => {
   });
 
   it("by schedule, with what never runs last and equal schedules side by side", () => {
-    const at = (spec: string) => ({ kind: "domain" as const, spec, alsoSpec: "" });
+    const at = (spec: string) => ({ kind: "domain" as const, spec });
     const items = [
       item({ name: "off", included: false }),
       item({ name: "b-4am", effectiveSchedule: at("daily@04:00") }),

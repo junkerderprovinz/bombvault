@@ -661,23 +661,17 @@ const hu: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integritás és karbantartás",
-  "integrity.hint": "Futtasd a restic check parancsot, hogy ellenőrizd egy adattár szerkezetének és metaadatainak épségét.",
   "integrity.verify": "Ellenőrzés",
   "integrity.checking": "Ellenőrzés…",
   "integrity.ok": "Ép",
   "integrity.failed": "Az ellenőrzés sikertelen",
-  "integrity.failedShort": "✗ Sikertelen",
   "integrity.unlock": "Feloldás",
   "integrity.prune": "Nyesés",
   "integrity.verifyHint": "restic check futtatása a szerkezet és metaadatok ellenőrzéséhez.",
   "integrity.unlockHint": "Megszakadt futás után ottragadt repository-zárolások törlése (javítja a 'repository is already locked' hibát).",
   "integrity.unlockPartial": "Nem minden tároló lett teljesen feloldva: {list}",
   "integrity.pruneHint": "Alkalmazd a megőrzési szabályt és szabadíts fel helyet (szabály nélkül csak helyet szabadít fel; eltarthat egy ideig).",
-  "integrity.pruneConfirm": "A karbantartás most alkalmazza a megőrzési szabályodat. Eltávolítja a szabályaidon (last/daily/weekly/monthly/yearly) túli mentéseket és helyet szabadít fel. Szabály nélkül csak helyet szabadít fel. Folytatod?",
-  "integrity.appendOnly": "Append-only ellenőrzés",
   "integrity.appendOnlyHint": "Bizonyítja, hogy a távoli tároló továbbra is elutasítja a törléseket (append-only védelem), ugyanaz az ellenőrzés, mint az off-site varázsló tamper-tesztje.",
-  "integrity.appendOnlyLast": "append-only védelem · Utoljára ellenőrizve {time}",
-  "integrity.appendOnlyNever": "append-only védelem · még nem ellenőrizve",
 
   // Pre/post-backup hooks
   "hooks.hint": "A parancsok a konténeren belül futnak (sh -c). A Pre a biztonsági mentés előtt fut (pl. egy gyorsítótár lemezre írása; a felismert adatbázisokról magától készül dump). A hiba megszakítja a mentést. A Post a konténer újraindulása után fut; annak hibáját csak naplózza.",
@@ -737,7 +731,6 @@ const hu: Partial<Translations> = {
   "vm.blocks.reason.no_space": "kevés a szabad hely az appdata-ban",
   "vm.blocks.reason.job_failed": "a libvirt nem indította el a biztonsági mentést",
   "vm.ssh.title": "Gazdagép SSH",
-  "vm.ssh.desc": "A VM- és ZFS-mentések SSH-n keresztül futtatják parancsaikat ezen a szerveren (csatolás nélkül). Engedélyezd ezt a kulcsot az Unraidben, majd teszteld.",
   "vm.ssh.host": "Hoszt",
   "vm.ssh.publicKey": "Nyilvános kulcs: fűzze hozzá az Unraid /root/.ssh/authorized_keys fájljához",
   "common.copy": "Másolás",
@@ -746,12 +739,7 @@ const hu: Partial<Translations> = {
   "vm.ssh.test": "Kapcsolat tesztelése",
   "vm.ssh.testNoLibvirt": "Csatlakozva. A libvirt nem érhető el, de csak a VM-ek biztonsági mentéséhez kell.",
   "vm.ssh.testFail": "A kapcsolat sikertelen",
-  "vm.ssh.setupTitle": "Beállítás (egyszeri)",
-  "vm.ssh.step1": "Másold az alábbi parancsot, és futtasd az Unraid terminálban a kulcs engedélyezéséhez (túléli az újraindításokat).",
-  "vm.ssh.step2": "Állítsd a konténer „Host SSH: Address” változóját az Unraid szerver LAN IP-címére (pl. 192.168.x.x); egyszerű bridge hálózaton a host.docker.internal is működik.",
-  "vm.ssh.step3": "Kattints a Kapcsolat tesztelése gombra. Ha zöld, engedélyezd a VM-eket vagy a ZFS-adatkészleteket a Szakaszok alatt.",
   "vm.ssh.copyCmd": "Parancs másolása",
-  "vm.ssh.guide": "Teljes beállítási és hálózati útmutató",
   "common.backingUp": "Mentés…",
   "common.restoring": "Visszaállítás…",
   "common.done": "Kész",
@@ -955,16 +943,13 @@ const hu: Partial<Translations> = {
   "settings.dashTileHint": "Tegyél egy BombVault állapot-widgetet közvetlenül az Unraid irányítópultjára. Egy kis kísérő bővítmény adja hozzá a widgetet; a BombVault a meglévő gazdagép felé irányuló SSH-kapcsolaton keresztül telepítheti helyetted.",
   "settings.dashTileChecking": "Bővítmény állapotának ellenőrzése…",
   "settings.dashTileNoSsh": "A gazdagép felé irányuló SSH-kapcsolat nincs beállítva (Beállítások, Integrációk, Gazdagép SSH), így a BombVault nem tudja telepíteni a bővítményt helyetted. Telepítsd kézzel az Unraidben a Plugins → Install Plugin alatt ezzel az URL-lel:",
-  "settings.dashTileCa": "Lehet, hogy a Community Applications-ben is elérhető. Keress rá: BombVault Widget.",
   "settings.dashTileNotInstalled": "Az irányítópult-widget bővítmény nincs telepítve.",
   "settings.dashTileConfirm": "A Telepítés a bombvault-widget bővítményt az Unraid szokásos bővítménymechanizmusával telepíti az Unraid gazdagépre. A Plugins alatt jelenik meg, mint bármely más bővítmény, és ott (vagy itt) bármikor eltávolítható.",
-  "settings.dashTileRepo": "Bővítmény megtekintése a GitHubon",
   "settings.dashTileInstall": "Bővítmény telepítése",
   "settings.dashTileInstalling": "Telepítés…",
   "settings.dashTileInstalled": "Az irányítópult-widget bővítmény telepítve van ({version})",
   "settings.dashTileInstalledNoV": "Az irányítópult-widget bővítmény telepítve van",
   "settings.dashTileInstallOk": "Bővítmény telepítve. Nyisd meg az Unraid irányítópultját az új BombVault-widget megtekintéséhez.",
-  "settings.dashTileInstalledHint": "A widget az Unraid irányítópultján jelenik meg. Ha nem látható, engedélyezd az irányítópult widgetkezelőjében.",
   "settings.dashTileRemove": "Bővítmény eltávolítása",
   "settings.dashTileRemoving": "Eltávolítás…",
   "settings.dashTileRemoveOk": "Bővítmény eltávolítva. Már nem jelenik meg az Unraid irányítópultján.",
@@ -980,14 +965,9 @@ const hu: Partial<Translations> = {
   "notify.smtpTls": "Titkosítás",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Visszaállíthatóság ellenőrzése",
   "verify.running": "Ellenőrzés…",
-  "verify.ok": "Visszaállíthatóság igazolva",
   "verify.failed": "Az ellenőrzés sikertelen",
-  "verify.last": "Utoljára ellenőrizve: {time}",
-  "verify.never": "Soha nem ellenőrizve",
   "verify.subsetPct": "Adatminta (%)",
-  "verify.hint": "Rendszeresen beolvas egy véletlenszerű mintát a biztonsági mentési adatokból, hogy igazolja, azok épek és visszaállíthatók.",
   "verify.shield": "ellenőrizve",
 
   // Dashboard protection (RPO) status
@@ -1362,16 +1342,6 @@ const hu: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Megőrzés (0 = mind megtartása)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Próba típusa:",
-  "drill.kindSubset": "Integritásellenőrzés",
-  "drill.kindDR": "Valódi visszaállítás (telephelyen kívüli)",
-  "drill.target": "Próba célpontja (konténer)",
-  "drill.targetVM": "Próba célpontja (VM)",
-  "drill.targetMostRecent": "Legfrissebb biztonsági mentés",
-  "drill.drNote": "A valódi visszaállítás kicsomagolja a legfrissebb telephelyen kívüli mentést egy ideiglenes sandboxba, ellenőrzi, majd feltakarít. Valódi adatokat tölt le, és eltarthat egy ideig.",
-  "drill.runDR": "Valódi visszaállítás indítása",
-  "drill.runningDR": "Visszaállítás…",
-  "drill.confirmDR": "Ez a legfrissebb telephelyen kívüli mentés VALÓDI visszaállítását végzi el egy ideiglenes sandboxba, hogy bizonyítsa a visszaállíthatóságát, majd törli azt. Valódi adatokat tölt le, és eltarthat egy ideig. Folytatod?",
   "drill.offsiteVerified": "telephelyen kívül ellenőrizve",
 
   // Dashboard ransomware-protection card (v4)
@@ -1430,8 +1400,6 @@ const hu: Partial<Translations> = {
   "excludes.assistRemoveLine": "A(z) {line} kizárás eltávolítása",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "telephelyen kívüli DR-visszaállítás",
-  "drill.checkLocal": "helyi integritásellenőrzés",
   "drill.failReasonPrefix": "ok:",
 
   // Off-site DR opt-out (#37)
@@ -1468,7 +1436,6 @@ const hu: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Az Önmentés ütemezése",
   "settings.tamperScheduleInactive": "Inaktív: egyetlen telephelyen kívüli repó sincs append-only-ként megjelölve, ezért ez az ütemezés soha nem fut le. Jelölj meg egy telephelyen kívüli repót append-only-ként annak telephelyen kívüli beállításaiban, hogy engedélyezd.",
   "settings.everythingTitle": "Teljes biztonsági mentés",
-  "settings.everythingDuplicateWarning": "A konténerek, a VM-ek, a flash, a mappák, a ZFS-adatkészletek és az Önmentés kétszer készül el, amíg egyszerre be van kapcsolva ez az ütemezés és a sajátjuk is: egyszer itt, egyszer a saját ütemezésük szerint. Kapcsold ki azokat a szakaszokat, amelyeket nem akarsz duplán menteni.",
   "settings.everythingStarted": "Elindult. A szerveren sorban lefut minden szakaszban; az eredményt a Tevékenységnaplóban követheted.",
   "settings.everythingAlreadyRunning": "Már fut egy teljes biztonsági mentés.",
   // Filter drawer trigger (v5 redesign)
@@ -1514,7 +1481,6 @@ const hu: Partial<Translations> = {
   "files.effectiveOwn": "Fut {when}, saját ütemezés",
   "files.effectiveDomain": "Fut {when}, innen: {domain}",
   "files.effectiveEverything": "Fut {when}, ezzel: {domain}",
-  "files.effectiveBoth": "Kétszer fut: {when} és {when2}",
   "files.pathMissing": "A mappa nem található",
   "files.noPath": "Nincs mappa beállítva",
   "files.noPathHint": "Mappa nélkül, biztonsági mentésekből újjáépítve. Állíts be egy mappát az újbóli mentéshez. A mappába való visszaállítás már most működik.",
@@ -2691,7 +2657,6 @@ const hu: Partial<Translations> = {
   "apps.parleyport.dockerHint": "Lemásolja a parancsot, amely elindítja a 8760-as porton, egy előtte lévő reverse proxy számára:",
   "apps.parleyport.toRelay": "Relay-beállítások",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "Igazi widget az Unraid irányítópulton a BombVault tevékenységnaplójával és a következő ütemezett futtatással. Telepítsd a Community Applications-ből, vagy hagyd, hogy a BombVault telepítse lent, a meglévő gazdagép felé irányuló SSH-kapcsolaton keresztül.",
   "apps.unraidSub": "Sablon",
   "apps.dockerSub": "Parancs másolása",
   "apps.repoSub": "Forráskód és dokumentáció",
@@ -4421,7 +4386,6 @@ const hu: Partial<Translations> = {
   "deposit.code.deposit-changed": "A példánynál más volt, mint a letét, amit ez a szerver küldött, vagyis valaki megváltoztatta ott.",
   "exceptions.add": "Kivétel",
   "exceptions.remove": "Kivétel eltávolítása",
-  "schedules.fullHint": "Az alapértelmezett ütemezés mindenhez: egyetlen menet az összes területen, egy paranccsal előtte és eggyel utána. A saját ütemezésű elem a saját idejében fut, és a teljes biztonsági mentés kihagyja.",
   "schedules.whenRuns": "Mikor futnak a mentések",
   "schedules.whenRunsHint": "Egy menet sorban lementi az összes területet: a konténereket, a VM-eket, a flasht, a mappákat, a ZFS-adatkészleteket, a végén pedig az önmentést. A „Ki” kikapcsolja.",
   "schedules.includes": "Tartalma: {sections}",
@@ -4432,7 +4396,6 @@ const hu: Partial<Translations> = {
   "schedules.hookPost": "Parancs a teljes biztonsági mentés után",
   "schedules.hookPostHint": "Opcionális. Pontosan egyszer fut le, miután minden területtel megpróbálkozott a rendszer, akkor is, ha az egyik hibázott. Jó egy olyan pinghez, amely megerősíti, hogy az egész szerver védett.",
   "schedules.plans": "Ütemezések területenként",
-  "schedules.plansHint": "A saját ütemezésű terület a saját idejében fut. Amíg a teljes biztonsági mentés be van kapcsolva, azt a területet is lementi. A terület a saját ütemezése szerint külön is másolhat a telephelyen kívüli helyeire.",
   "schedules.plansRuleAll": "Minden terület benne van a teljes biztonsági mentésben.",
   "schedules.plansRuleOthers": "Az összes többi terület benne van a teljes biztonsági mentésben.",
   "schedules.offsite": "Telephelyen kívüli másolatok területenként",

@@ -591,7 +591,7 @@ describe("a read older than a placement write", () => {
 });
 
 describe("saying that an entry is not to be backed up", () => {
-  const NO_SCHEDULE = { kind: "none", spec: "", alsoSpec: "", reason: "excluded" } as const;
+  const NO_SCHEDULE = { kind: "none", spec: "", reason: "excluded" } as const;
   const gitea = (declined: boolean): Staged => ({
     items: [{ ...GITEA, effectiveSchedule: NO_SCHEDULE, backupDeclined: declined }],
   });

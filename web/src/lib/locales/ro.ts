@@ -658,23 +658,17 @@ const ro: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integritate și întreținere",
-  "integrity.hint": "Rulează restic check pentru a verifica dacă structura și metadatele unui depozit sunt intacte.",
   "integrity.verify": "Verifică",
   "integrity.checking": "Verificare…",
   "integrity.ok": "Sănătos",
   "integrity.failed": "Verificare eșuată",
-  "integrity.failedShort": "✗ Eșuat",
   "integrity.unlock": "Deblochează",
   "integrity.prune": "Curăță",
   "integrity.verifyHint": "Rulează restic check pentru a verifica structura și metadatele.",
   "integrity.unlockHint": "Elimină blocajele rămase ale depozitului după o rulare întreruptă (rezolvă 'repository is already locked').",
   "integrity.unlockPartial": "Nu toate depozitele au fost deblocate complet: {list}",
   "integrity.pruneHint": "Aplică politica de retenție și recuperează spațiu (fără politică doar recuperează spațiu; poate dura).",
-  "integrity.pruneConfirm": "Curățarea aplică acum politica ta de retenție. Elimină copiile de rezervă dincolo de regulile tale (last/daily/weekly/monthly/yearly) și recuperează spațiu. Fără politică doar recuperează spațiu. Continui?",
-  "integrity.appendOnly": "Verificare append-only",
   "integrity.appendOnlyHint": "Dovedește că depozitul off-site refuză în continuare ștergerile (protecție append-only), aceeași verificare ca testul de manipulare din asistentul off-site.",
-  "integrity.appendOnlyLast": "protecție append-only · Ultima verificare {time}",
-  "integrity.appendOnlyNever": "protecție append-only · niciodată verificată",
 
   // Pre/post-backup hooks
   "hooks.hint": "Comenzile rulează în interiorul containerului (sh -c). Pre rulează înainte de backup (de ex. scrie un cache pe disc; bazele de date recunoscute sunt dumpate singure). O eroare anulează backupul. Post rulează după ce containerul a revenit; eroarea sa este doar înregistrată în jurnal.",
@@ -734,7 +728,6 @@ const ro: Partial<Translations> = {
   "vm.blocks.reason.no_space": "prea puțin spațiu liber în appdata",
   "vm.blocks.reason.job_failed": "libvirt nu a pornit backupul",
   "vm.ssh.title": "SSH al gazdei",
-  "vm.ssh.desc": "Backupurile VM și ZFS își rulează comenzile pe acest server prin SSH (fără montare). Autorizează această cheie pe Unraid, apoi testează.",
   "vm.ssh.host": "Gazdă",
   "vm.ssh.publicKey": "Cheie publică: adaugă în /root/.ssh/authorized_keys de pe Unraid",
   "common.copy": "Copiază",
@@ -743,12 +736,7 @@ const ro: Partial<Translations> = {
   "vm.ssh.test": "Testează conexiunea",
   "vm.ssh.testNoLibvirt": "Conectat. libvirt nu este accesibil, dar doar backupurile VM au nevoie de el.",
   "vm.ssh.testFail": "Conexiune eșuată",
-  "vm.ssh.setupTitle": "Configurare (o singură dată)",
-  "vm.ssh.step1": "Copiază comanda de mai jos și rulează-o în terminalul Unraid pentru a autoriza această cheie (rezistă la reporniri).",
-  "vm.ssh.step2": "Setează variabila „Host SSH: Address” a containerului la IP-ul LAN al serverului tău Unraid (de ex. 192.168.x.x); pe rețea bridge simplă funcționează și host.docker.internal.",
-  "vm.ssh.step3": "Fă clic pe Testează conexiunea. Odată ce e verde, activează VM-urile sau Seturile de date ZFS la Secțiuni.",
   "vm.ssh.copyCmd": "Copiază comanda",
-  "vm.ssh.guide": "Ghid complet de configurare și rețea",
   "common.backingUp": "Se copiază…",
   "common.restoring": "Se restaurează…",
   "common.done": "Gata",
@@ -952,16 +940,13 @@ const ro: Partial<Translations> = {
   "settings.dashTileHint": "Pune un widget de stare BombVault direct pe panoul principal Unraid. Un mic plugin însoțitor adaugă widgetul; BombVault îl poate instala pentru tine prin conexiunea SSH existentă către gazdă.",
   "settings.dashTileChecking": "Se verifică starea pluginului…",
   "settings.dashTileNoSsh": "Conexiunea SSH către gazdă nu este configurată (Setări, Integrări, SSH al gazdei), așa că BombVault nu poate instala pluginul pentru tine. Instalează-l manual în Unraid la Plugins → Install Plugin cu acest URL:",
-  "settings.dashTileCa": "Ar putea fi disponibil și în Community Applications. Caută BombVault Widget.",
   "settings.dashTileNotInstalled": "Pluginul widgetului de panou nu este instalat.",
   "settings.dashTileConfirm": "Instalează instalează pluginul bombvault-widget pe gazda ta Unraid prin mecanismul obișnuit de pluginuri al Unraid. Apare la Plugins ca orice alt plugin și poate fi eliminat de acolo (sau de aici) oricând.",
-  "settings.dashTileRepo": "Vezi pluginul pe GitHub",
   "settings.dashTileInstall": "Instalează pluginul",
   "settings.dashTileInstalling": "Se instalează…",
   "settings.dashTileInstalled": "Pluginul widgetului de panou este instalat ({version})",
   "settings.dashTileInstalledNoV": "Pluginul widgetului de panou este instalat",
   "settings.dashTileInstallOk": "Plugin instalat. Deschide panoul principal Unraid pentru a vedea noul widget BombVault.",
-  "settings.dashTileInstalledHint": "Widgetul apare pe panoul principal Unraid. Dacă nu este vizibil, activează-l din gestionarea widgeturilor panoului.",
   "settings.dashTileRemove": "Elimină pluginul",
   "settings.dashTileRemoving": "Se elimină…",
   "settings.dashTileRemoveOk": "Modul eliminat. Nu mai apare pe panoul Unraid.",
@@ -977,14 +962,9 @@ const ro: Partial<Translations> = {
   "notify.smtpTls": "Criptare",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Verifică posibilitatea de restaurare",
   "verify.running": "Se verifică…",
-  "verify.ok": "Restaurare verificată",
   "verify.failed": "Verificare eșuată",
-  "verify.last": "Ultima verificare {time}",
-  "verify.never": "Niciodată verificat",
   "verify.subsetPct": "Eșantion de date (%)",
-  "verify.hint": "Citește periodic un eșantion aleatoriu din datele de backup pentru a dovedi că sunt intacte și restaurabile.",
   "verify.shield": "verificat",
 
   // Dashboard protection (RPO) status
@@ -1358,16 +1338,6 @@ const ro: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Retenție (0 = păstrează tot)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Tip de test:",
-  "drill.kindSubset": "Verificare de integritate",
-  "drill.kindDR": "Restaurare reală (off-site)",
-  "drill.target": "Țintă test (container)",
-  "drill.targetVM": "Țintă test (VM)",
-  "drill.targetMostRecent": "Cea mai recentă copie de rezervă",
-  "drill.drNote": "O restaurare reală extrage cea mai nouă copie de rezervă off-site într-un sandbox temporar, o verifică, apoi curăță. Descarcă date reale și poate dura.",
-  "drill.runDR": "Rulează restaurarea reală",
-  "drill.runningDR": "Se restaurează…",
-  "drill.confirmDR": "Aceasta efectuează o restaurare REALĂ a celei mai noi copii de rezervă off-site într-un sandbox temporar pentru a dovedi că se poate recupera, apoi o șterge. Descarcă date reale și poate dura. Continui?",
   "drill.offsiteVerified": "verificat off-site",
 
   // Dashboard ransomware-protection card (v4)
@@ -1430,8 +1400,6 @@ const ro: Partial<Translations> = {
   "excludes.assistRemoveLine": "Elimină excluderea {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "restaurare DR externă",
-  "drill.checkLocal": "verificare de integritate locală",
   "drill.failReasonPrefix": "motiv:",
 
   // Off-site DR opt-out (#37)
@@ -1468,7 +1436,6 @@ const ro: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Programare Auto-backup",
   "settings.tamperScheduleInactive": "Inactiv: niciun repo off-site nu este marcat ca append-only, așa că această programare nu rulează niciodată. Marchează un repo off-site ca append-only în setările sale off-site pentru a o activa.",
   "settings.everythingTitle": "Backup total",
-  "settings.everythingDuplicateWarning": "Containerele, VM-urile, flash-ul, folderele, seturile de date ZFS și Auto-backup sunt salvate de două ori cât timp sunt active în același timp și această programare, și cea proprie: o dată aici și o dată în programarea proprie. Dezactivează secțiunile pe care nu vrei să le dublezi.",
   "settings.everythingStarted": "Pornit. Rulează pe server prin fiecare secțiune, pe rând; urmărește rezultatul în Jurnal de activitate.",
   "settings.everythingAlreadyRunning": "O rulare Backup total este deja în curs.",
   // Filter drawer trigger (v5 redesign)
@@ -1514,7 +1481,6 @@ const ro: Partial<Translations> = {
   "files.effectiveOwn": "Rulează {when}, program propriu",
   "files.effectiveDomain": "Rulează {when}, din {domain}",
   "files.effectiveEverything": "Rulează {when}, cu {domain}",
-  "files.effectiveBoth": "Rulează de două ori: {when} și {when2}",
   "files.pathMissing": "Folderul nu a fost găsit",
   "files.noPath": "Niciun folder setat",
   "files.noPathHint": "Reconstruit din copiile de rezervă fără folder. Setează un folder pentru a-l copia din nou. Restaurarea într-un folder funcționează deja.",
@@ -2691,7 +2657,6 @@ const ro: Partial<Translations> = {
   "apps.parleyport.dockerHint": "Copiază comanda care îl pornește pe portul 8760, pentru un reverse proxy din față:",
   "apps.parleyport.toRelay": "Setările relay-ului",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "Un widget nativ pe panoul principal Unraid cu jurnalul de activitate al BombVault și următoarea rulare programată. Instalează-l din Community Applications sau lasă BombVault să îl instaleze mai jos prin conexiunea SSH existentă către gazdă.",
   "apps.unraidSub": "Șablon",
   "apps.dockerSub": "Copiază comanda",
   "apps.repoSub": "Codul sursă și documentația",
@@ -4421,7 +4386,6 @@ const ro: Partial<Translations> = {
   "deposit.code.deposit-changed": "Instanța avea altceva decât depunerea trimisă de acest server, deci cineva a modificat-o acolo.",
   "exceptions.add": "Excepție",
   "exceptions.remove": "Elimină excepția",
-  "schedules.fullHint": "Programarea implicită pentru tot: o trecere prin toate domeniile, cu o comandă înainte și una după. Un element cu programare proprie rulează la ora lui și este sărit de backupul total.",
   "schedules.whenRuns": "Când rulează backupurile",
   "schedules.whenRunsHint": "O trecere face backup pe rând fiecărui domeniu: containere, VM-uri, flash, foldere, seturi de date ZFS și la urmă auto-backupul. „Oprit” îl dezactivează.",
   "schedules.includes": "Include: {sections}",
@@ -4432,7 +4396,6 @@ const ro: Partial<Translations> = {
   "schedules.hookPost": "Comandă după backupul total",
   "schedules.hookPostHint": "Opțional. Rulează exact o dată după ce fiecare domeniu a fost încercat, chiar dacă unul a eșuat. Potrivită pentru un ping care confirmă că întregul server este protejat.",
   "schedules.plans": "Programări pe domenii",
-  "schedules.plansHint": "Un domeniu cu programare proprie rulează la ora lui. Cât timp backupul total este pornit, face backup și acelui domeniu. Un domeniu poate copia și în locațiile sale externe după propria programare.",
   "schedules.plansRuleAll": "Toate domeniile rulează în backupul total.",
   "schedules.plansRuleOthers": "Toate celelalte domenii rulează în backupul total.",
   "schedules.offsite": "Copii externe pe domenii",

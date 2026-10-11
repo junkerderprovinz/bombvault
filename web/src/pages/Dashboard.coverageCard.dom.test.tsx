@@ -28,7 +28,7 @@ function entry(key: string, lastBackup: number): BackupItem {
     name: key,
     included: true,
     paused: false,
-    effectiveSchedule: { kind: "domain", spec: "daily 03:00", alsoSpec: "" },
+    effectiveSchedule: { kind: "domain", spec: "daily 03:00" },
     lastBackup,
     lastRunStatus: "",
     sourceBytes: null,

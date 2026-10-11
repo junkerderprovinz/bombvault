@@ -216,7 +216,7 @@ async function stageTwoUnprotected(page: Page): Promise<void> {
     name,
     included: false,
     paused: false,
-    effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+    effectiveSchedule: { kind: "none", spec: "", reason: "excluded" },
     lastBackup: 0,
     lastRunStatus: "",
     sourceBytes: null,

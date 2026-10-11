@@ -118,7 +118,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     { title: "tile.week.title", hint: "tile.week.hint", rows: [] },
     {
       title: "settings.everythingTitle",
-      hint: "schedules.fullHint",
+      hint: "schedules.fullCardHint",
       rows: [
         { key: "schedules.whenRuns", hint: "schedules.whenRunsHint" },
         { key: "settings.catchUpMissed", hint: "settings.catchUpMissedHint" },
@@ -129,7 +129,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
     {
       title: "schedules.plans",
-      hint: "schedules.plansHint",
+      hint: "schedules.plansCardHint",
       rows: [{ key: "exceptions.add" }, { key: "schedules.offsite" }],
     },
     {
@@ -364,14 +364,9 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
 
   integrity: [
     {
-      title: "integrity.title",
-      hint: "integrity.hint",
-      rows: [
-        { key: "source.label" },
-        { key: "drill.kindLabel" },
-        { key: "drill.target", hint: "drill.drNote" },
-        { key: "drill.targetVM" },
-      ],
+      title: "integrity.checkTitle",
+      hint: "integrity.checkHint",
+      rows: [],
     },
     {
       title: "verify.autoChecks",
@@ -379,6 +374,8 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "verify.trialRestore", hint: "verify.trialRestoreHint" },
         { key: "settings.offsiteDrills", hint: "settings.offsiteDrillsHelp" },
         { key: "settings.startTest", hint: "settings.startTestHelp" },
+        { key: "verify.testTarget", hint: "verify.testTargetHint" },
+        { key: "verify.testTargetVM" },
         { key: "verify.subsetPct", hint: "verify.subsetPctHint" },
         { key: "verify.tamper", hint: "verify.tamperHint" },
       ],
@@ -536,11 +533,11 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
     {
       title: "vm.ssh.title",
-      hint: "vm.ssh.desc",
+      hint: "vm.ssh.cardHint",
       rows: [
-        { key: "vm.ssh.host" },
-        { key: "vm.ssh.publicKey" },
-        { key: "vm.ssh.setupTitle" },
+        { key: "vm.ssh.host", hint: "vm.ssh.hostHint" },
+        { key: "vm.ssh.keyLabel", hint: "vm.ssh.keyHint" },
+        { key: "settings.widgetSetup" },
       ],
     },
   ],
@@ -558,7 +555,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
     {
       title: "apps.widget.title",
-      hint: "apps.widget.hint",
+      hint: "apps.widget.cardHint",
       rows: [{ key: "settings.dashTile", hint: "settings.dashTileHint" }],
     },
   ],

@@ -661,23 +661,17 @@ const it: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integrità e manutenzione",
-  "integrity.hint": "Esegui restic check per verificare che struttura e metadati di un repository siano intatti.",
   "integrity.verify": "Verifica",
   "integrity.checking": "Verifica…",
   "integrity.ok": "Integro",
   "integrity.failed": "Verifica fallita",
-  "integrity.failedShort": "✗ Fallito",
   "integrity.unlock": "Sblocca",
   "integrity.prune": "Pota",
   "integrity.verifyHint": "Esegui restic check per verificare struttura e metadati.",
   "integrity.unlockHint": "Rimuovi i lock bloccati del repository lasciati da un'esecuzione interrotta (corregge 'repository is already locked').",
   "integrity.unlockPartial": "Non tutti i repository sono stati sbloccati completamente: {list}",
   "integrity.pruneHint": "Applica la tua policy di retention e libera spazio (libera solo spazio se nessuna policy è impostata; può richiedere tempo).",
-  "integrity.pruneConfirm": "La pulizia ora applica la tua policy di retention: rimuove gli snapshot oltre le tue regole (last/daily/weekly/monthly/yearly) e libera spazio. Senza policy libera solo spazio. Continuare?",
-  "integrity.appendOnly": "Controllo append-only",
   "integrity.appendOnlyHint": "Dimostra che il repository off-site rifiuta ancora le eliminazioni (protezione append-only), lo stesso controllo del tamper test della procedura guidata off-site.",
-  "integrity.appendOnlyLast": "protezione append-only · Ultimo controllo {time}",
-  "integrity.appendOnlyNever": "protezione append-only · mai controllata",
 
   // Pre/post-backup hooks
   "hooks.hint": "I comandi vengono eseguiti dentro il container (sh -c). Pre viene eseguito prima del backup (es. scaricare una cache su disco; i database riconosciuti vengono dumpati da soli). Un errore annulla il backup. Post viene eseguito quando il container è di nuovo attivo; il suo errore viene solo registrato.",
@@ -737,7 +731,6 @@ const it: Partial<Translations> = {
   "vm.blocks.reason.no_space": "poco spazio libero in appdata",
   "vm.blocks.reason.job_failed": "libvirt non ha avviato il backup",
   "vm.ssh.title": "SSH dell'host",
-  "vm.ssh.desc": "I backup delle VM e di ZFS eseguono i loro comandi su questo server via SSH (senza mount). Autorizza questa chiave su Unraid, poi prova.",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "Chiave pubblica: aggiungila a /root/.ssh/authorized_keys di Unraid",
   "common.copy": "Copia",
@@ -746,12 +739,7 @@ const it: Partial<Translations> = {
   "vm.ssh.test": "Prova connessione",
   "vm.ssh.testNoLibvirt": "Connesso. libvirt non è raggiungibile, e serve solo ai backup delle VM.",
   "vm.ssh.testFail": "Connessione fallita",
-  "vm.ssh.setupTitle": "Configura (una volta)",
-  "vm.ssh.step1": "Copia il comando qui sotto ed eseguilo nel terminale di Unraid per autorizzare questa chiave (sopravvive ai riavvii).",
-  "vm.ssh.step2": "Imposta la variabile «Host SSH: Address» del container sull'IP LAN del tuo Unraid (es. 192.168.x.x); con rete bridge semplice funziona anche host.docker.internal.",
-  "vm.ssh.step3": "Clicca su Prova connessione. Quando è verde, abilita le VM o i Dataset ZFS sotto Sezioni.",
   "vm.ssh.copyCmd": "Copia comando",
-  "vm.ssh.guide": "Guida completa a configurazione e rete",
   "common.backingUp": "Backup in corso…",
   "common.restoring": "Ripristino…",
   "common.done": "Fatto",
@@ -954,29 +942,21 @@ const it: Partial<Translations> = {
   "settings.dashTileHint": "Metti un widget di stato di BombVault direttamente sulla dashboard di Unraid. Un piccolo plugin companion aggiunge il widget; BombVault può installarlo per te tramite la connessione SSH già esistente verso l'host.",
   "settings.dashTileChecking": "Controllo dello stato del plugin…",
   "settings.dashTileNoSsh": "La connessione SSH verso l'host non è configurata (Impostazioni, Integrazioni, SSH dell'host), quindi BombVault non può installare il plugin per te. Installalo manualmente in Unraid da Plugins → Install Plugin con questo URL:",
-  "settings.dashTileCa": "Potrebbe essere disponibile anche nelle Community Applications. Cerca BombVault Widget.",
   "settings.dashTileNotInstalled": "Il plugin del widget della dashboard non è installato.",
   "settings.dashTileConfirm": "Installa installa il plugin bombvault-widget sul tuo host Unraid tramite il normale meccanismo dei plugin di Unraid. Compare sotto Plugins come qualsiasi altro plugin e può essere rimosso lì (o qui) in qualsiasi momento.",
-  "settings.dashTileRepo": "Vedi il plugin su GitHub",
   "settings.dashTileInstall": "Installa plugin",
   "settings.dashTileInstalling": "Installazione…",
   "settings.dashTileInstalled": "Il plugin del widget della dashboard è installato ({version})",
   "settings.dashTileInstalledNoV": "Il plugin del widget della dashboard è installato",
   "settings.dashTileInstallOk": "Plugin installato. Apri la dashboard di Unraid per vedere il nuovo widget BombVault.",
-  "settings.dashTileInstalledHint": "Il widget compare sulla dashboard di Unraid. Se non è visibile, attivalo nella gestione dei widget della dashboard.",
   "settings.dashTileRemove": "Rimuovi plugin",
   "settings.dashTileRemoving": "Rimozione…",
   "settings.dashTileRemoveOk": "Plugin rimosso. Non compare più nella dashboard di Unraid.",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Verifica ripristinabilità",
   "verify.running": "Verifica in corso…",
-  "verify.ok": "Ripristinabilità verificata",
   "verify.failed": "Verifica fallita",
-  "verify.last": "Ultima verifica {time}",
-  "verify.never": "Mai verificato",
   "verify.subsetPct": "Campione di dati (%)",
-  "verify.hint": "Legge periodicamente un campione casuale dei dati di backup per dimostrare che sono intatti e ripristinabili.",
   "verify.shield": "verificato",
 
   // Dashboard protection (RPO) status
@@ -1361,16 +1341,6 @@ const it: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Conservazione (0 = mantieni tutto)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Tipo di prova:",
-  "drill.kindSubset": "Controllo di integrità",
-  "drill.kindDR": "Ripristino reale (off-site)",
-  "drill.target": "Obiettivo della prova (container)",
-  "drill.targetVM": "Obiettivo della prova (VM)",
-  "drill.targetMostRecent": "Backup più recente",
-  "drill.drNote": "Un ripristino reale estrae lo snapshot off-site più recente in una sandbox temporanea, lo verifica, poi ripulisce. Scarica dati reali e può richiedere tempo.",
-  "drill.runDR": "Avvia ripristino reale",
-  "drill.runningDR": "Ripristino…",
-  "drill.confirmDR": "Questo esegue un ripristino REALE dello snapshot off-site più recente in una sandbox temporanea per dimostrare che è recuperabile, poi lo elimina. Scarica dati reali e può richiedere tempo. Continuare?",
   "drill.offsiteVerified": "verificato off-site",
 
   // Dashboard ransomware-protection card (v4)
@@ -1429,8 +1399,6 @@ const it: Partial<Translations> = {
   "excludes.assistRemoveLine": "Rimuovi l'esclusione {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "ripristino DR off-site",
-  "drill.checkLocal": "controllo di integrità locale",
   "drill.failReasonPrefix": "motivo:",
 
   // Off-site DR opt-out (#37)
@@ -1467,7 +1435,6 @@ const it: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Pianificazione di auto-backup",
   "settings.tamperScheduleInactive": "Inattivo. Nessun repo off-site è contrassegnato come append-only, quindi questa pianificazione non viene mai eseguita. Contrassegna un repo off-site come append-only nelle sue impostazioni off-site per attivarla.",
   "settings.everythingTitle": "Backup completo",
-  "settings.everythingDuplicateWarning": "Container, VM, flash, cartelle, dataset ZFS e auto-backup vengono salvati due volte finché questo calendario e il loro restano attivi entrambi: una volta qui e una volta nel loro. Disattiva le sezioni che non vuoi duplicare.",
   "settings.everythingStarted": "Avviato. Viene eseguito sul server attraverso ogni sezione in sequenza; controlla il Registro attività per il risultato.",
   "settings.everythingAlreadyRunning": "È già in corso un backup completo.",
   // Filter drawer trigger (v5 redesign)
@@ -1513,7 +1480,6 @@ const it: Partial<Translations> = {
   "files.effectiveOwn": "Viene eseguito {when}, pianificazione propria",
   "files.effectiveDomain": "Viene eseguito {when}, da {domain}",
   "files.effectiveEverything": "Viene eseguito {when}, con {domain}",
-  "files.effectiveBoth": "Viene eseguito due volte: {when} e {when2}",
   "files.pathMissing": "Cartella non trovata",
   "files.noPath": "Nessuna cartella impostata",
   "files.noPathHint": "Ricostruito dai backup senza cartella. Imposta una cartella per eseguirne di nuovo il backup. Il ripristino in una cartella funziona già.",
@@ -2690,7 +2656,6 @@ const it: Partial<Translations> = {
   "apps.parleyport.dockerHint": "Copia il comando che lo avvia sulla porta 8760, per un reverse proxy davanti:",
   "apps.parleyport.toRelay": "Impostazioni del relay",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "Un widget nativo sulla dashboard di Unraid con il registro delle attività di BombVault e la prossima esecuzione pianificata. Installalo dalle Community Applications, oppure lascia che BombVault lo installi qui sotto tramite la connessione SSH già esistente verso l'host.",
   "apps.unraidSub": "Modello",
   "apps.dockerSub": "Copia il comando",
   "apps.repoSub": "Codice sorgente e documentazione",
@@ -4420,7 +4385,6 @@ const it: Partial<Translations> = {
   "deposit.code.deposit-changed": "L'istanza aveva qualcosa di diverso dal deposito inviato da questo server, quindi qualcuno l'ha modificato lì.",
   "exceptions.add": "Eccezione",
   "exceptions.remove": "Rimuovi eccezione",
-  "schedules.fullHint": "La pianificazione predefinita per tutto: un unico passaggio su tutti i domini, con un comando prima e uno dopo. Una voce con una pianificazione propria viene eseguita al suo orario e il backup completo la salta.",
   "schedules.whenRuns": "Quando vengono eseguiti i backup",
   "schedules.whenRunsHint": "Un passaggio esegue il backup di ogni dominio in sequenza: container, VM, flash, cartelle, dataset ZFS e per ultimo l'auto-backup. «Disattivato» lo spegne.",
   "schedules.includes": "Include: {sections}",
@@ -4431,7 +4395,6 @@ const it: Partial<Translations> = {
   "schedules.hookPost": "Comando dopo il backup completo",
   "schedules.hookPostHint": "Facoltativo. Viene eseguito esattamente una volta dopo che ogni dominio è stato tentato, anche se uno è fallito. Utile per un ping che conferma che l'intero server è protetto.",
   "schedules.plans": "Pianificazioni per dominio",
-  "schedules.plansHint": "Un dominio con una pianificazione propria viene eseguito al suo orario. Finché il backup completo è attivo, esegue il backup anche di quel dominio. Un dominio può anche copiare sulle sue destinazioni off-site con la propria pianificazione.",
   "schedules.plansRuleAll": "Tutti i domini vengono eseguiti nel backup completo.",
   "schedules.plansRuleOthers": "Tutti gli altri domini vengono eseguiti nel backup completo.",
   "schedules.offsite": "Copie off-site per dominio",

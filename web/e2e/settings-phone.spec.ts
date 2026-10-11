@@ -604,7 +604,9 @@ test("settings integrations on a phone: the MCP confirmations come up as a sheet
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
   await openPage(page, 320, "integrations", "Anbindungen");
 
-  await page.getByRole("button", { name: "Schlüssel ersetzen" }).first().click();
+  // Replace sits in the key's window, which gives way to the confirmation.
+  await page.getByRole("button", { name: "Details" }).first().click();
+  await page.getByRole("dialog").getByRole("button", { name: "Schlüssel ersetzen" }).click();
   const sheet = page.getByRole("dialog");
   await expect(sheet).toBeVisible();
   await settle(page);

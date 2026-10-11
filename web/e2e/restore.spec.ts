@@ -27,7 +27,7 @@ const DAY = 86400;
 const MB = 1024 ** 2;
 
 const SET_ID = "a1b2c3d4e5f60718293a4b5c6d7e8f90";
-const EVERYTHING = { kind: "everything", spec: "daily@03:00", alsoSpec: "" };
+const EVERYTHING = { kind: "everything", spec: "daily@03:00" };
 
 const PLACEMENT = {
   segment: "local-offsite",

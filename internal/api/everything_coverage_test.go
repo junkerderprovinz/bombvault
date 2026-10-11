@@ -56,9 +56,8 @@ func TestDomainStatusCoveredByEverything(t *testing.T) {
 	}
 }
 
-// A domain with a cadence of its own leaves CoveredBy empty. Its window is the
-// shorter of the two, since whichever fires more often bounds how stale a
-// backup can get.
+// A domain with a cadence of its own leaves CoveredBy empty, and its window is
+// its own cadence: the full backup leaves it out.
 func TestDomainStatusOwnScheduleWins(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -91,10 +90,8 @@ func TestDomainStatusOwnScheduleWins(t *testing.T) {
 			if d.CoveredBy != "" {
 				t.Errorf("files has its own schedule, CoveredBy must stay empty, got %q", d.CoveredBy)
 			}
-			// Weekly on its own, but the daily pass also backs it up, so the
-			// window is a day, not a week.
-			if d.PeriodSeconds != 86400 {
-				t.Errorf("files: PeriodSeconds = %d, want 86400 (the daily pass is the shorter window)", d.PeriodSeconds)
+			if d.PeriodSeconds != 7*86400 {
+				t.Errorf("files: PeriodSeconds = %d, want a week (the daily pass leaves it out)", d.PeriodSeconds)
 			}
 		}
 	}

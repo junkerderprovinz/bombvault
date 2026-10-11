@@ -661,23 +661,17 @@ const es: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integridad y mantenimiento",
-  "integrity.hint": "Ejecuta restic check para verificar que la estructura y los metadatos de un repositorio están intactos.",
   "integrity.verify": "Verificar",
   "integrity.checking": "Comprobando…",
   "integrity.ok": "Saludable",
   "integrity.failed": "Comprobación fallida",
-  "integrity.failedShort": "✗ Fallido",
   "integrity.unlock": "Desbloquear",
   "integrity.prune": "Podar",
   "integrity.verifyHint": "Ejecuta restic check para verificar la estructura y los metadatos.",
   "integrity.unlockHint": "Elimina bloqueos obsoletos del repositorio dejados por una ejecución interrumpida (corrige 'repository is already locked').",
   "integrity.unlockPartial": "No se desbloquearon por completo todos los repositorios: {list}",
   "integrity.pruneHint": "Aplicar tu política de retención y recuperar espacio (solo recupera espacio si no hay política; puede tardar).",
-  "integrity.pruneConfirm": "La purga ahora aplica tu política de retención: elimina copias más allá de tus reglas (last/daily/weekly/monthly/yearly) y recupera espacio. Sin política, solo recupera espacio. ¿Continuar?",
-  "integrity.appendOnly": "Comprobación append-only",
   "integrity.appendOnlyHint": "Demuestra que el repositorio remoto sigue rechazando borrados (protección append-only), la misma prueba de manipulación del asistente off-site.",
-  "integrity.appendOnlyLast": "protección append-only · Última comprobación {time}",
-  "integrity.appendOnlyNever": "protección append-only · nunca comprobada",
 
   // Pre/post-backup hooks
   "hooks.hint": "Los comandos se ejecutan dentro del contenedor (sh -c). Pre se ejecuta antes de la copia (p. ej. volcar una caché al disco; las bases de datos reconocidas se vuelcan solas). Un fallo aborta la copia. Post se ejecuta cuando el contenedor vuelve a estar activo; su fallo solo se registra.",
@@ -737,7 +731,6 @@ const es: Partial<Translations> = {
   "vm.blocks.reason.no_space": "poco espacio libre en appdata",
   "vm.blocks.reason.job_failed": "libvirt no inició la copia",
   "vm.ssh.title": "SSH del host",
-  "vm.ssh.desc": "Las copias de VM y de ZFS ejecutan sus comandos en este servidor por SSH (sin montaje). Autoriza esta clave en Unraid y luego prueba.",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "Clave pública: añádela a /root/.ssh/authorized_keys de Unraid",
   "common.copy": "Copiar",
@@ -746,12 +739,7 @@ const es: Partial<Translations> = {
   "vm.ssh.test": "Probar conexión",
   "vm.ssh.testNoLibvirt": "Conectado. libvirt no es accesible, y solo lo necesitan las copias de VM.",
   "vm.ssh.testFail": "Conexión fallida",
-  "vm.ssh.setupTitle": "Configurar (una vez)",
-  "vm.ssh.step1": "Copia el comando de abajo y ejecútalo en el terminal de Unraid para autorizar esta clave (sobrevive a los reinicios).",
-  "vm.ssh.step2": "Establece la variable «Host SSH: Address» del contenedor a la IP LAN de tu Unraid (p. ej. 192.168.x.x); en redes bridge simples también funciona host.docker.internal.",
-  "vm.ssh.step3": "Haz clic en Probar conexión. Cuando esté en verde, habilita las VMs o los Conjuntos de datos ZFS en Secciones.",
   "vm.ssh.copyCmd": "Copiar comando",
-  "vm.ssh.guide": "Guía completa de configuración y red",
   "common.backingUp": "Copiando…",
   "common.restoring": "Restaurando…",
   "common.done": "Listo",
@@ -970,29 +958,21 @@ const es: Partial<Translations> = {
   "settings.dashTileHint": "Pon un widget de estado de BombVault directamente en el panel de Unraid. Un pequeño plugin complementario añade el widget; BombVault puede instalarlo por ti a través de su conexión SSH existente con el host.",
   "settings.dashTileChecking": "Comprobando el estado del plugin…",
   "settings.dashTileNoSsh": "La conexión SSH con el host no está configurada (Ajustes, Integraciones, SSH del host), así que BombVault no puede instalar el plugin por ti. Instálalo manualmente en Unraid en Plugins → Install Plugin con esta URL:",
-  "settings.dashTileCa": "Puede que también esté disponible en Community Applications. Busca BombVault Widget.",
   "settings.dashTileNotInstalled": "El plugin del widget del panel no está instalado.",
   "settings.dashTileConfirm": "Instalar instala el plugin bombvault-widget en tu host de Unraid mediante el mecanismo de plugins habitual de Unraid. Aparece en Plugins como cualquier otro plugin y puede eliminarse allí (o aquí) en cualquier momento.",
-  "settings.dashTileRepo": "Ver el plugin en GitHub",
   "settings.dashTileInstall": "Instalar plugin",
   "settings.dashTileInstalling": "Instalando…",
   "settings.dashTileInstalled": "El plugin del widget del panel está instalado ({version})",
   "settings.dashTileInstalledNoV": "El plugin del widget del panel está instalado",
   "settings.dashTileInstallOk": "Plugin instalado. Abre el panel de Unraid para ver el nuevo widget de BombVault.",
-  "settings.dashTileInstalledHint": "El widget aparece en el panel de Unraid. Si no está visible, actívalo en la gestión de widgets del panel.",
   "settings.dashTileRemove": "Eliminar plugin",
   "settings.dashTileRemoving": "Eliminando…",
   "settings.dashTileRemoveOk": "Plugin eliminado. Ya no aparece en el panel de Unraid.",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Verificar restaurabilidad",
   "verify.running": "Verificando…",
-  "verify.ok": "Restaurabilidad verificada",
   "verify.failed": "Verificación fallida",
-  "verify.last": "Última verificación {time}",
-  "verify.never": "Nunca verificado",
   "verify.subsetPct": "Muestra de datos (%)",
-  "verify.hint": "Lee periódicamente una muestra aleatoria de los datos de copia para demostrar que están intactos y son restaurables.",
   "verify.shield": "verificado",
 
   // Dashboard protection (RPO) status
@@ -1367,16 +1347,6 @@ const es: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Retención (0 = conservar todo)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Tipo de simulacro:",
-  "drill.kindSubset": "Comprobación de integridad",
-  "drill.kindDR": "Restauración real (externo)",
-  "drill.target": "Objetivo del simulacro (contenedor)",
-  "drill.targetVM": "Objetivo del simulacro (VM)",
-  "drill.targetMostRecent": "Copia más reciente",
-  "drill.drNote": "Una restauración real extrae la copia externa más reciente en un sandbox temporal, la verifica y luego limpia. Descarga datos reales y puede tardar un rato.",
-  "drill.runDR": "Ejecutar restauración real",
-  "drill.runningDR": "Restaurando…",
-  "drill.confirmDR": "Esto realiza una restauración REAL de la copia externa más reciente en un sandbox temporal para demostrar que es recuperable, y luego la elimina. Descarga datos reales y puede tardar un rato. ¿Continuar?",
   "drill.offsiteVerified": "externo verificado",
 
   // Dashboard ransomware-protection card (v4)
@@ -1427,8 +1397,6 @@ const es: Partial<Translations> = {
   "excludes.assistRemoveLine": "Quitar la exclusión {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "restauración DR externa",
-  "drill.checkLocal": "comprobación de integridad local",
   "drill.failReasonPrefix": "motivo:",
 
   // Off-site DR opt-out (#37)
@@ -1465,7 +1433,6 @@ const es: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Programación de la Autocopia",
   "settings.tamperScheduleInactive": "Inactivo: ningún repo externo está marcado como append-only, así que esta programación nunca se ejecuta. Marca un repo externo como append-only en su configuración externa para activarla.",
   "settings.everythingTitle": "Copia total",
-  "settings.everythingDuplicateWarning": "Los contenedores, las VMs, el flash, las carpetas, los conjuntos de datos ZFS y la Autocopia se copian dos veces mientras este calendario y el suyo propio estén activos a la vez: una vez aquí y otra en el suyo. Desactiva las secciones que no quieras duplicar.",
   "settings.everythingStarted": "Iniciado: se ejecuta en el servidor por cada sección en turno; consulta el Registro de actividad para ver el resultado.",
   "settings.everythingAlreadyRunning": "Ya hay una copia total en curso.",
   // Filter drawer trigger (v5 redesign)
@@ -1511,7 +1478,6 @@ const es: Partial<Translations> = {
   "files.effectiveOwn": "Se ejecuta {when}, horario propio",
   "files.effectiveDomain": "Se ejecuta {when}, desde {domain}",
   "files.effectiveEverything": "Se ejecuta {when}, con {domain}",
-  "files.effectiveBoth": "Se ejecuta dos veces: {when} y {when2}",
   "files.pathMissing": "Carpeta no encontrada",
   "files.noPath": "Sin carpeta definida",
   "files.noPathHint": "Reconstruido desde las copias sin carpeta. Define una carpeta para volver a copiarlo. Restaurar en una carpeta ya funciona.",
@@ -2688,7 +2654,6 @@ const es: Partial<Translations> = {
   "apps.parleyport.dockerHint": "Copia el comando que lo inicia en el puerto 8760, para un reverse proxy delante:",
   "apps.parleyport.toRelay": "Ajustes del repetidor",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "Un widget nativo en el panel de Unraid con el registro de actividad de BombVault y la próxima ejecución programada. Instálalo desde Community Applications, o deja que BombVault lo instale más abajo a través de su conexión SSH existente con el host.",
   "apps.unraidSub": "Plantilla",
   "apps.dockerSub": "Copiar comando",
   "apps.repoSub": "Código fuente y documentación",
@@ -4418,7 +4383,6 @@ const es: Partial<Translations> = {
   "deposit.code.deposit-changed": "La instancia tenía algo distinto del depósito que envió este servidor, así que alguien lo cambió allí.",
   "exceptions.add": "Excepción",
   "exceptions.remove": "Quitar excepción",
-  "schedules.fullHint": "El calendario predeterminado para todo: una pasada por todos los dominios, con un comando antes y otro después. Una entrada con calendario propio se ejecuta a su hora y la copia total la omite.",
   "schedules.whenRuns": "Cuándo se ejecutan las copias",
   "schedules.whenRunsHint": "Una pasada copia cada dominio por turnos: contenedores, VMs, flash, carpetas, conjuntos de datos ZFS y, al final, la autocopia. «Desactivado» la apaga.",
   "schedules.includes": "Incluye: {sections}",
@@ -4429,7 +4393,6 @@ const es: Partial<Translations> = {
   "schedules.hookPost": "Comando después de la copia total",
   "schedules.hookPostHint": "Opcional. Se ejecuta exactamente una vez después de intentar todos los dominios, aunque alguno haya fallado. Sirve para un ping que confirme que todo el servidor está protegido.",
   "schedules.plans": "Calendarios por dominio",
-  "schedules.plansHint": "Un dominio con calendario propio se ejecuta a su hora. Mientras la copia total esté activada, también copia ese dominio. Un dominio también puede copiar a sus ubicaciones externas con su propio calendario.",
   "schedules.plansRuleAll": "Todos los dominios se ejecutan en la copia total.",
   "schedules.plansRuleOthers": "Todos los demás dominios se ejecutan en la copia total.",
   "schedules.offsite": "Copias externas por dominio",

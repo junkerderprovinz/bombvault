@@ -25,7 +25,7 @@ const DAY = 86400;
 export const SET_ID = "a1b2c3d4e5f60718293a4b5c6d7e8f90";
 export const ZFS_ID = "0f1e2d3c4b5a69788796a5b4c3d2e1f0";
 
-const EVERYTHING = { kind: "everything", spec: "daily@03:00", alsoSpec: "" } as const;
+const EVERYTHING = { kind: "everything", spec: "daily@03:00" } as const;
 
 export const PLACEMENT: PlacementView = {
   segment: "local-offsite",

@@ -34,7 +34,7 @@ function entry(lastBackup: number) {
     name: "flash",
     included: true,
     paused: false,
-    effectiveSchedule: { kind: "everything", spec: "daily@03:00", alsoSpec: "" },
+    effectiveSchedule: { kind: "everything", spec: "daily@03:00" },
     lastBackup,
     lastRunStatus: lastBackup ? "success" : "",
     sourceBytes: lastBackup ? 1024 ** 3 : null,

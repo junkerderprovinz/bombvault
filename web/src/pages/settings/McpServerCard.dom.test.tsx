@@ -121,6 +121,8 @@ beforeEach(() => {
   for (const m of [createMcpKey, updateMcpKey, rotateMcpKey, revokeMcpKey, purgeMcpKey, addMcpCertificateName, getMcpKeyActivity, setMcpOAuth]) {
     m.mockReset();
   }
+  // A key's window shows its log, so every test that opens one reads it.
+  getMcpKeyActivity.mockResolvedValue({ ok: true, runs: [], events: [] });
 });
 
 afterEach(() => {
@@ -148,6 +150,20 @@ async function openClient(name: string, kind?: string): Promise<HTMLElement> {
 
 function dialogText(): string {
   return screen.getByRole("dialog").textContent ?? "";
+}
+
+/** The row of a key or a revoked key, by its name. */
+function rowOf(label: string): HTMLElement {
+  const row = screen.getAllByRole("listitem").find((li) => li.textContent?.includes(label));
+  if (!row) throw new Error(`no row for ${label}`);
+  return row;
+}
+
+/** Opens a key's window from its row and returns the window. */
+async function openDetails(label: string): Promise<HTMLElement> {
+  await screen.findByText(label);
+  fireEvent.click(within(rowOf(label)).getByRole("button", { name: en["mcp.details"] }));
+  return screen.getByRole("dialog");
 }
 
 describe("the MCP card without a key", () => {
@@ -244,10 +260,8 @@ describe("the client picker", () => {
   it("explains the picker through one (i) on its label and one on the cloud group", async () => {
     await renderCard(payload({ keys: [key()] }));
 
-    const label = await screen.findByText(en["mcp.snippetsLabel"]);
-    const bubbles = label.querySelectorAll("[aria-label]");
-    expect(bubbles).toHaveLength(1);
-    expect(bubbles[0].getAttribute("aria-label")).toBe(en["mcp.connectHint"]);
+    const row = (await screen.findByText(en["mcp.snippetsLabel"])).closest("[data-search-row]") as HTMLElement;
+    expect(within(row).getAllByLabelText(en["mcp.connectHint"])).toHaveLength(1);
 
     await openPicker();
     const cloud = screen.getByText(en["mcp.groupCloud"]);
@@ -684,7 +698,7 @@ describe("the certificate of this address", () => {
     expect(screen.queryByRole("button", { name: en["mcp.certAddAddress"] })).toBeNull();
   });
 
-  it("puts the certificate warning right under the password warning", async () => {
+  it("keeps the certificate in a part of its own after the keys", async () => {
     vi.stubGlobal("location", new URL("https://192.168.1.10:3443/settings"));
     await renderCard(
       payload({
@@ -698,9 +712,11 @@ describe("the certificate of this address", () => {
     await waitFor(() => expect(screen.getByText(en["mcp.appKeyChanged"])).toBeTruthy());
     const order = [
       en["mcp.noPasswordWarning"],
-      en["mcp.certNotForThisAddress"].replace("{host}", "192.168.1.10"),
       en["mcp.restoreRevokedNotice"],
       en["mcp.appKeyChanged"],
+      en["mcp.keysTitle"],
+      en["mcp.certTitle"],
+      en["mcp.certNotForThisAddress"].replace("{host}", "192.168.1.10"),
     ].map((text) => screen.getByText(text));
     for (let i = 1; i < order.length; i++) {
       expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -732,8 +748,10 @@ describe("a key list", () => {
     await renderCard(payload({ keys: [key({ unusable: "app-key-changed" })] }));
 
     await waitFor(() => expect(screen.getByText(en["mcp.appKeyChanged"])).toBeTruthy());
-    expect(screen.getByText(en["mcp.keyUnusable"])).toBeTruthy();
-    expect(screen.getByRole("button", { name: en["mcp.rotate"] })).toBeTruthy();
+    expect(within(rowOf("office laptop")).getByText(en["mcp.invalid"])).toBeTruthy();
+    const details = await openDetails("office laptop");
+    expect(within(details).getAllByText(en["mcp.keyUnusable"]).length).toBeGreaterThan(0);
+    expect(within(details).getByRole("button", { name: en["mcp.rotate"] })).toBeTruthy();
   });
 
   it("counts only the keys that still work as active", async () => {
@@ -744,17 +762,19 @@ describe("a key list", () => {
     expect(screen.queryByText(/active key/)).toBeNull();
   });
 
-  it("labels the permission on a key row as it was labelled when the key was created", async () => {
+  it("labels the permission in a key's window as it was labelled when the key was created", async () => {
     await renderCard(payload({ keys: [key()] }));
-    await waitFor(() => expect(screen.getByRole("switch", { name: en["mcp.allowStart"] })).toBeTruthy());
+    const details = await openDetails("office laptop");
+    expect(within(details).getByRole("switch", { name: en["mcp.allowStart"] })).toBeTruthy();
   });
 
   it("auto-saves the permission toggle and reverts on failure", async () => {
     await renderCard(payload({ keys: [key()] }));
     updateMcpKey.mockResolvedValue({ ok: true, item: key({ canStartBackups: false }) });
 
+    await openDetails("office laptop");
     const toggle = () => screen.getByRole("switch", { name: en["mcp.allowStart"] });
-    await waitFor(() => expect(toggle().getAttribute("aria-checked")).toBe("true"));
+    expect(toggle().getAttribute("aria-checked")).toBe("true");
     fireEvent.click(toggle());
 
     await waitFor(() => expect(updateMcpKey).toHaveBeenCalledWith("k1", { canStartBackups: false }));
@@ -768,7 +788,7 @@ describe("a key list", () => {
     expect(toggle().parentElement?.className).toContain("glim-shake");
   });
 
-  it("rotates and revokes through confirm dialogs", async () => {
+  it("rotates and revokes from the key's window through confirm dialogs", async () => {
     await renderCard(
       payload({ keys: [key()] }),
       payload({ keys: [key()] }),
@@ -777,12 +797,12 @@ describe("a key list", () => {
     rotateMcpKey.mockResolvedValue({ ok: true, key: "bvmcp_rotated9999", item: key() });
     revokeMcpKey.mockResolvedValue({ ok: true });
 
-    fireEvent.click(screen.getByRole("button", { name: en["mcp.rotate"] }));
+    fireEvent.click(within(await openDetails("office laptop")).getByRole("button", { name: en["mcp.rotate"] }));
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["mcp.rotate"] }));
     await waitFor(() => expect(rotateMcpKey).toHaveBeenCalledWith("k1"));
     await waitFor(() => expect(screen.getByDisplayValue("bvmcp_rotated9999")).toBeTruthy());
 
-    fireEvent.click(screen.getByRole("button", { name: en["mcp.revoke"] }));
+    fireEvent.click(within(await openDetails("office laptop")).getByRole("button", { name: en["mcp.revoke"] }));
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["mcp.revoke"] }));
     await waitFor(() => expect(revokeMcpKey).toHaveBeenCalledWith("k1"));
     await waitFor(() =>
@@ -801,17 +821,16 @@ describe("a key list", () => {
     );
     purgeMcpKey.mockResolvedValue({ ok: true });
 
-    fireEvent.click(await screen.findByText(countText(en["mcp.revokedList"], "en", 2).replace("{n}", "2")));
-    const rows = screen.getAllByRole("listitem");
-    const inUse = rows.find((r) => r.textContent?.includes("old laptop"))!;
-    const free = rows.find((r) => r.textContent?.includes("old desktop"))!;
+    await screen.findByText(countText(en["mcp.revokedList"], "en", 2).replace("{n}", "2"));
+    const inUse = rowOf("old laptop");
+    const free = rowOf("old desktop");
     const blocked = within(inUse).getByRole("button", { name: en["common.delete"] });
     expect(blocked.hasAttribute("disabled")).toBe(true);
-    // The reason rides on the button, yet outside the <button>, which takes no
-    // hover or focus while disabled.
+    // The reason sits right after the button, outside it, since a disabled
+    // <button> takes no hover or focus.
     const reason = within(inUse).getByLabelText(en["mcp.inUseTip"]);
     expect(blocked.contains(reason)).toBe(false);
-    expect(blocked.parentElement?.contains(reason)).toBe(true);
+    expect(blocked.compareDocumentPosition(reason) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(free).queryByLabelText(en["mcp.inUseTip"])).toBeNull();
 
     fireEvent.click(within(free).getByRole("button", { name: en["common.delete"] }));
@@ -860,23 +879,7 @@ describe("a key list", () => {
   });
 });
 
-describe("a key's tile", () => {
-  function tileOf(label: string): HTMLElement {
-    const tile = screen.getAllByRole("listitem").find((li) => li.textContent?.includes(label));
-    if (!tile) throw new Error(`no tile for ${label}`);
-    return tile;
-  }
-
-  it("sets each tile straight on the card, with its chips a step above it", async () => {
-    await renderCard(payload({ keys: [key({ label: "laptop" })] }));
-    await screen.findByText("laptop");
-
-    const tile = tileOf("laptop");
-    expect(tile.className).toContain("glim-tile");
-    expect(tile.parentElement?.className).not.toMatch(/bg-/);
-    expect(within(tile).getByText(en["mcp.canStart"]).closest(".glim-tile-raise")).not.toBeNull();
-  });
-
+describe("a key's row and window", () => {
   it("shows the mark of the client a key was made for, and the key glyph for none", async () => {
     await renderCard(
       payload({
@@ -889,7 +892,7 @@ describe("a key's tile", () => {
     );
     await screen.findByText("laptop");
 
-    const mark = (label: string) => tileOf(label).querySelector(".glim-client-mark")!;
+    const mark = (label: string) => rowOf(label).querySelector(".glim-client-mark")!;
     const cursorPath = / d="([^"]+)"/.exec(CLIENT_MARKS.cursor.rest)![1];
     expect(mark("laptop").querySelector("path")?.getAttribute("d")).toBe(cursorPath);
     expect(mark("nightly report").innerHTML).not.toContain(cursorPath);
@@ -897,30 +900,30 @@ describe("a key's tile", () => {
     expect(mark("laptop").getAttribute("aria-hidden")).toBe("true");
   });
 
-  it("shows the permission, the hint and today's calls", async () => {
+  it("shows the client, the hint and the permission on the row, and today's calls in the window", async () => {
     await renderCard(
       payload({
         keys: [
-          key({ id: "k1", label: "laptop", callsToday: 3 }),
+          key({ id: "k1", label: "laptop", client: "cursor", callsToday: 3 }),
           key({ id: "k2", label: "desktop", canStartBackups: false, callsToday: 1, hint: "77aa" }),
         ],
       })
     );
 
-    await waitFor(() => expect(tileOf("laptop")).toBeTruthy());
-    const laptop = tileOf("laptop");
-    expect(within(laptop).getByText(en["mcp.canStart"])).toBeTruthy();
-    expect(within(laptop).getByText(countText(en["mcp.callsToday"], "en", 3))).toBeTruthy();
-    const desktop = tileOf("desktop");
+    await screen.findByText("laptop");
+    expect(within(rowOf("laptop")).getByText(en["mcp.canStart"])).toBeTruthy();
+    expect(rowOf("laptop").textContent).toContain("Cursor · ");
+    const desktop = rowOf("desktop");
     expect(within(desktop).getByText(en["mcp.readOnly"])).toBeTruthy();
-    expect(within(desktop).getByText(countText(en["mcp.callsToday"], "en", 1))).toBeTruthy();
     expect(desktop.textContent).toContain(en["mcp.keyHint"].replace("{hint}", "77aa"));
-    expect(within(desktop).getByRole("button", { name: en["mcp.revoke"] })).toBeTruthy();
-    expect(within(desktop).getByRole("button", { name: en["mcp.rotate"] })).toBeTruthy();
-    expect(getMcpKeyActivity).not.toHaveBeenCalled();
+    expect(within(desktop).queryByRole("button", { name: en["mcp.revoke"] })).toBeNull();
+    const details = await openDetails("desktop");
+    expect(within(details).getByText(countText(en["mcp.callsToday"], "en", 1))).toBeTruthy();
+    expect(within(details).getByRole("button", { name: en["mcp.revoke"] })).toBeTruthy();
+    expect(within(details).getByRole("button", { name: en["mcp.rotate"] })).toBeTruthy();
   });
 
-  it("opens the key's log with its runs, calls and refusals", async () => {
+  it("shows the key's log with its runs, calls and refusals in its window", async () => {
     await renderCard(payload({ keys: [key({ id: "k1", label: "laptop" })] }));
     getMcpKeyActivity.mockResolvedValue({
       ok: true,
@@ -951,13 +954,11 @@ describe("a key's tile", () => {
       ],
     });
 
-    fireEvent.click(within(await waitFor(() => tileOf("laptop"))).getByRole("button", { name: en["mcp.log"] }));
-
+    const details = await openDetails("laptop");
     await waitFor(() => expect(getMcpKeyActivity).toHaveBeenCalledWith("k1"));
-    const tile = tileOf("laptop");
-    await waitFor(() => expect(within(tile).getByText("plex")).toBeTruthy());
-    expect(within(tile).getByText(en["run.statusCancelled"])).toBeTruthy();
-    const links = within(tile).getAllByRole("link", { name: en["mcp.logShowRun"] });
+    await waitFor(() => expect(within(details).getByText("plex")).toBeTruthy());
+    expect(within(details).getByText(en["run.statusCancelled"])).toBeTruthy();
+    const links = within(details).getAllByRole("link", { name: en["mcp.logShowRun"] });
     expect(links.map((a) => a.getAttribute("href"))).toEqual(["/dashboard?run=run1", "/dashboard?run=run1"]);
     for (const text of [
       en["mcp.outcomeOk"],
@@ -969,13 +970,11 @@ describe("a key's tile", () => {
       en["mcp.outcomeDomainOff"],
       en["mcp.logRequest"],
     ]) {
-      expect(within(tile).getByText(text)).toBeTruthy();
+      // The OK outcome reads Done, like the window's own button.
+      expect(within(details).getAllByText(text).length).toBeGreaterThan(0);
     }
-    expect(within(tile).getAllByText("cancel_backup")).toHaveLength(2);
-    expect(tile.textContent).not.toContain(en["mcp.outcomeOther"].replace("{code}", "").trim());
-
-    fireEvent.click(within(tile).getByRole("button", { name: en["mcp.log"] }));
-    await waitFor(() => expect(within(tileOf("laptop")).queryByText("plex")).toBeNull());
+    expect(within(details).getAllByText("cancel_backup")).toHaveLength(2);
+    expect(details.textContent).not.toContain(en["mcp.outcomeOther"].replace("{code}", "").trim());
   });
 
   it("says when a key has no log yet or it cannot be read", async () => {
@@ -984,39 +983,20 @@ describe("a key's tile", () => {
       id === "k1" ? Promise.resolve({ ok: true, runs: [], events: [] }) : Promise.reject(new Error("offline"))
     );
 
-    await waitFor(() => expect(tileOf("laptop")).toBeTruthy());
-    fireEvent.click(within(tileOf("laptop")).getByRole("button", { name: en["mcp.log"] }));
-    fireEvent.click(within(tileOf("desktop")).getByRole("button", { name: en["mcp.log"] }));
-
-    await waitFor(() => expect(within(tileOf("laptop")).getByText(en["mcp.logEmpty"])).toBeTruthy());
-    await waitFor(() => expect(within(tileOf("desktop")).getByText(en["mcp.logFailed"])).toBeTruthy());
+    const laptop = await openDetails("laptop");
+    await waitFor(() => expect(within(laptop).getByText(en["mcp.logEmpty"])).toBeTruthy());
+    fireEvent.click(within(laptop).getByRole("button", { name: en["common.done"] }));
+    const desktop = await openDetails("desktop");
+    await waitFor(() => expect(within(desktop).getByText(en["mcp.logFailed"])).toBeTruthy());
   });
 
   it("does not claim a used key never called when its log is empty", async () => {
     await renderCard(payload({ keys: [key({ id: "k1", label: "laptop", lastUsedAt: Math.floor(Date.now() / 1000) - 7200 })] }));
     getMcpKeyActivity.mockResolvedValue({ ok: true, runs: [], events: [] });
 
-    fireEvent.click(within(await waitFor(() => tileOf("laptop"))).getByRole("button", { name: en["mcp.log"] }));
-
-    await waitFor(() => expect(within(tileOf("laptop")).getByText(en["mcp.logEmptyUsed"])).toBeTruthy());
-    expect(within(tileOf("laptop")).queryByText(en["mcp.logEmpty"])).toBeNull();
-  });
-
-  it("announces whether the log is open and which panel it opened", async () => {
-    await renderCard(payload({ keys: [key({ id: "k1", label: "laptop" })] }));
-    getMcpKeyActivity.mockResolvedValue({ ok: true, runs: [], events: [] });
-
-    const button = within(await waitFor(() => tileOf("laptop"))).getByRole("button", { name: en["mcp.log"] });
-    expect(button.getAttribute("aria-expanded")).toBe("false");
-    fireEvent.click(button);
-
-    await waitFor(() => expect(button.getAttribute("aria-expanded")).toBe("true"));
-    const panel = document.getElementById(button.getAttribute("aria-controls") ?? "");
-    expect(panel).not.toBeNull();
-    await waitFor(() => expect(within(panel as HTMLElement).getByText(en["mcp.logCalls"])).toBeTruthy());
-
-    fireEvent.click(button);
-    await waitFor(() => expect(button.getAttribute("aria-expanded")).toBe("false"));
+    const details = await openDetails("laptop");
+    await waitFor(() => expect(within(details).getByText(en["mcp.logEmptyUsed"])).toBeTruthy());
+    expect(within(details).queryByText(en["mcp.logEmpty"])).toBeNull();
   });
 
   it("gives a revoked key a log of its own", async () => {
@@ -1025,9 +1005,10 @@ describe("a key's tile", () => {
     );
     getMcpKeyActivity.mockResolvedValue({ ok: true, runs: [], events: [] });
 
-    fireEvent.click(await screen.findByText(countText(en["mcp.revokedList"], "en", 1)));
-    fireEvent.click(within(tileOf("old laptop")).getByRole("button", { name: en["mcp.log"] }));
+    await screen.findByText("old laptop");
+    fireEvent.click(within(rowOf("old laptop")).getByRole("button", { name: en["mcp.log"] }));
     await waitFor(() => expect(getMcpKeyActivity).toHaveBeenCalledWith("r1"));
+    expect(screen.getByRole("dialog").textContent).toContain("old laptop");
   });
 });
 
@@ -1074,21 +1055,21 @@ describe("a refusal from the server", () => {
     await renderCard(payload({ keys: [key()] }));
     updateMcpKey.mockResolvedValue({ ok: false, code: "mcp-key-label-taken", error: "taken" });
 
-    fireEvent.click(screen.getByRole("button", { name: en["common.edit"] }));
-    const input = screen.getByLabelText(en["mcp.labelLabel"]);
+    const details = await openDetails("office laptop");
+    const input = within(details).getByLabelText(en["mcp.labelLabel"]);
     fireEvent.change(input, { target: { value: "desk" } });
     fireEvent.keyDown(input, { key: "Enter" });
 
     await waitFor(() => expect(pushed.map((p) => p.message)).toContain(en["mcp.labelTaken"]));
     expect(screen.getByDisplayValue("desk").className).toContain("glim-shake");
-    expect(screen.getByRole("button", { name: en["mcp.revoke"] }).className).not.toContain("glim-shake");
+    expect(within(details).getByRole("button", { name: en["mcp.revoke"] }).className).not.toContain("glim-shake");
   });
 
   it("refreshes the list when a key is already gone", async () => {
     await renderCard(payload({ keys: [key()] }), payload());
     revokeMcpKey.mockResolvedValue({ ok: false, code: "mcp-key-not-found", error: "gone" });
 
-    fireEvent.click(screen.getByRole("button", { name: en["mcp.revoke"] }));
+    fireEvent.click(within(await openDetails("office laptop")).getByRole("button", { name: en["mcp.revoke"] }));
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["mcp.revoke"] }));
 
     await waitFor(() => expect(pushed.map((p) => p.message)).toContain(en["mcp.notFound"]));
@@ -1163,7 +1144,7 @@ describe("sign-in through OAuth on the card", () => {
     await waitFor(() => expect(setMcpOAuth).toHaveBeenCalledWith(false, "https://vault.example"));
   });
 
-  it("reads the tiles again after switching off, which ends every grant", async () => {
+  it("reads the keys again after switching off, which ends every grant", async () => {
     const grant = key({ id: "g1", viaOAuth: true, client: "chatgpt", label: "ChatGPT", hint: "" });
     const ended = { ...grant, revokedAt: 1_700_000_100, revokedReason: "oauth-off" as const };
     await renderCard(payload({ oauth: on, keys: [grant] }));
@@ -1171,9 +1152,9 @@ describe("sign-in through OAuth on the card", () => {
     listMcpKeys.mockResolvedValue(payload({ oauth: { ...on, enabled: false, active: false }, keys: [], revoked: [ended] }));
     setMcpOAuth.mockResolvedValue({ ok: true, oauth: { ...on, enabled: false, active: false } });
     fireEvent.click(screen.getByRole("switch", { name: en["mcp.oauthToggle"] }));
-    fireEvent.click(await screen.findByRole("button", { name: countText(en["mcp.revokedList"], "en", 1) }));
+    await screen.findByText(countText(en["mcp.revokedList"], "en", 1));
     expect(cardText()).toContain(en["mcp.revokedOAuthOff"].split("{date}")[0]);
-    expect(screen.queryByRole("button", { name: en["mcp.revoke"] })).toBeNull();
+    expect(screen.queryByRole("button", { name: en["mcp.details"] })).toBeNull();
   });
 
   it("says the endpoint is on while only sign-in can reach it", async () => {
@@ -1181,24 +1162,25 @@ describe("sign-in through OAuth on the card", () => {
     await waitFor(() => expect(screen.getByText(en["mcp.statusOAuthOnly"])).toBeTruthy());
   });
 
-  it("shows a grant as a tile with its log, Revoke and the start switch but nothing to replace", async () => {
+  it("shows a grant with its log, Revoke and the start switch but nothing to rename or replace", async () => {
     const grant = key({ id: "g1", viaOAuth: true, client: "chatgpt", label: "ChatGPT", hint: "", canStartBackups: false });
     await renderCard(payload({ oauth: on, keys: [grant] }));
-    const tile = await screen.findByRole("listitem");
-    expect(within(tile).getByText("ChatGPT")).toBeTruthy();
-    expect(tile.textContent).toContain(en["mcp.grantCreated"].split("{date}")[0]);
-    expect(within(tile).getByRole("button", { name: en["mcp.revoke"] })).toBeTruthy();
-    expect(within(tile).getByRole("button", { name: en["mcp.log"] })).toBeTruthy();
-    expect(within(tile).queryByRole("button", { name: en["mcp.rotate"] })).toBeNull();
-    const toggle = within(tile).getByRole("switch", { name: en["mcp.allowStart"] });
+    getMcpKeyActivity.mockResolvedValue({ ok: true, runs: [], events: [] });
+    const row = await screen.findByRole("listitem");
+    expect(row.textContent).toContain(en["mcp.grantCreated"].split("{date}")[0]);
+    expect(row.querySelector(".glim-client-mark svg")).not.toBeNull();
+    const details = await openDetails("ChatGPT");
+    expect(within(details).getByRole("button", { name: en["mcp.revoke"] })).toBeTruthy();
+    expect(within(details).queryByRole("button", { name: en["mcp.rotate"] })).toBeNull();
+    expect(within(details).queryByLabelText(en["mcp.labelLabel"])).toBeNull();
+    const toggle = within(details).getByRole("switch", { name: en["mcp.allowStart"] });
     expect(toggle.getAttribute("aria-checked")).toBe("false");
-    expect(tile.querySelector(".glim-client-mark svg")).not.toBeNull();
   });
 
   it("says why a grant was revoked", async () => {
     const reused = key({ id: "g1", viaOAuth: true, label: "ChatGPT", revokedAt: 1_700_000_100, revokedReason: "refresh-reuse" });
     await renderCard(payload({ revoked: [reused] }));
-    fireEvent.click(await screen.findByRole("button", { name: countText(en["mcp.revokedList"], "en", 1) }));
+    await screen.findByText(countText(en["mcp.revokedList"], "en", 1));
     expect(cardText()).toContain(en["mcp.revokedReuse"].split("{date}")[0]);
   });
 
@@ -1213,11 +1195,11 @@ describe("sign-in through OAuth on the card", () => {
 
 // jsdom lays nothing out, so these pin the classes the phone layout rests on.
 describe("the MCP card at phone width", () => {
-  it("lets a key's name wrap instead of cutting it beside Edit", async () => {
+  it("lets a key's name wrap instead of cutting it", async () => {
     await renderCard(payload({ keys: [key({ label: "Claude Code on the workstation" })] }));
     const name = await screen.findByText("Claude Code on the workstation");
-    expect(name.className).toContain("max-md:whitespace-normal");
-    expect(name.parentElement!.className).toContain("max-md:flex-wrap");
+    expect(name.className).toContain("wrap-anywhere");
+    expect(name.className).not.toContain("truncate");
   });
 
   it("keeps the certificate button inside its warning", async () => {
@@ -1252,16 +1234,15 @@ describe("a confirmation on a phone", () => {
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     };
 
-    fireEvent.click(await screen.findByRole("button", { name: en["mcp.rotate"] }));
+    fireEvent.click(within(await openDetails("office laptop")).getByRole("button", { name: en["mcp.rotate"] }));
     await doubleTap(en["mcp.rotate"]);
     expect(rotateMcpKey).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole("button", { name: en["mcp.revoke"] }));
+    fireEvent.click(within(await openDetails("office laptop")).getByRole("button", { name: en["mcp.revoke"] }));
     await doubleTap(en["mcp.revoke"]);
     expect(revokeMcpKey).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByText(countText(en["mcp.revokedList"], "en", 1).replace("{n}", "1")));
-    fireEvent.click(screen.getByRole("button", { name: en["common.delete"] }));
+    fireEvent.click(within(rowOf("old desktop")).getByRole("button", { name: en["common.delete"] }));
     await doubleTap(en["common.delete"]);
     expect(purgeMcpKey).toHaveBeenCalledTimes(1);
   });

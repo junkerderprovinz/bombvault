@@ -661,23 +661,17 @@ const da: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integritet og vedligeholdelse",
-  "integrity.hint": "Kør restic check for at verificere, at et arkivs struktur og metadata er intakte.",
   "integrity.verify": "Verificer",
   "integrity.checking": "Tjekker…",
   "integrity.ok": "Sund",
   "integrity.failed": "Tjek mislykkedes",
-  "integrity.failedShort": "✗ Mislykkedes",
   "integrity.unlock": "Lås op",
   "integrity.prune": "Beskær",
   "integrity.verifyHint": "Kør restic check for at verificere struktur og metadata.",
   "integrity.unlockHint": "Ryd fastlåste repository-låse fra et nedbrudt/afbrudt kørsel (retter 'repository is already locked').",
   "integrity.unlockPartial": "Ikke alle arkiver blev låst helt op: {list}",
   "integrity.pruneHint": "Anvend din opbevaringspolitik og frigør plads (frigør kun plads hvis ingen politik er sat; kan tage et stykke tid).",
-  "integrity.pruneConfirm": "Oprydning anvender nu din opbevaringspolitik: den fjerner sikkerhedskopier ud over dine regler (last/daily/weekly/monthly/yearly) og frigør plads. Uden politik frigør den kun plads. Fortsæt?",
-  "integrity.appendOnly": "Append-only-tjek",
   "integrity.appendOnlyHint": "Beviser at off-site-repositoriet stadig afviser sletninger (append-only-beskyttelse), samme tjek som tamper-testen i off-site-guiden.",
-  "integrity.appendOnlyLast": "append-only-beskyttelse · Sidst tjekket {time}",
-  "integrity.appendOnlyNever": "append-only-beskyttelse · aldrig tjekket",
 
   // Pre/post-backup hooks
   "hooks.hint": "Kommandoer kører inde i containeren (sh -c). Pre kører før sikkerhedskopieringen (f.eks. skriv en cache til disk; genkendte databaser dumpes af sig selv). En fejl afbryder sikkerhedskopieringen. Post kører, når containeren er oppe igen; dens fejl logges blot.",
@@ -737,7 +731,6 @@ const da: Partial<Translations> = {
   "vm.blocks.reason.no_space": "for lidt fri plads i appdata",
   "vm.blocks.reason.job_failed": "libvirt startede ikke sikkerhedskopien",
   "vm.ssh.title": "Værts-SSH",
-  "vm.ssh.desc": "VM- og ZFS-sikkerhedskopier kører deres kommandoer på denne server over SSH (ingen montering). Autoriser denne nøgle på Unraid, og test derefter.",
   "vm.ssh.host": "Vært",
   "vm.ssh.publicKey": "Offentlig nøgle: tilføj til Unraid /root/.ssh/authorized_keys",
   "common.copy": "Kopier",
@@ -746,12 +739,7 @@ const da: Partial<Translations> = {
   "vm.ssh.test": "Test forbindelse",
   "vm.ssh.testNoLibvirt": "Forbundet. libvirt er ikke tilgængelig, men kun VM-sikkerhedskopier har brug for den.",
   "vm.ssh.testFail": "Forbindelse mislykkedes",
-  "vm.ssh.setupTitle": "Opsætning (én gang)",
-  "vm.ssh.step1": "Kopier kommandoen nedenfor og kør den i Unraid-terminalen for at autorisere denne nøgle (overlever genstarter).",
-  "vm.ssh.step2": "Sæt containerens »Host SSH: Address«-variabel til din Unraids LAN-IP (f.eks. 192.168.x.x); ved simpel bridge-netværk virker host.docker.internal også.",
-  "vm.ssh.step3": "Klik på Test forbindelse. Når den er grøn, aktiver VMs eller ZFS-datasæt under Områder.",
   "vm.ssh.copyCmd": "Kopier kommando",
-  "vm.ssh.guide": "Fuld opsætnings- & netværksguide",
   "common.backingUp": "Sikkerhedskopierer…",
   "common.restoring": "Gendanner…",
   "common.done": "Færdig",
@@ -962,16 +950,13 @@ const da: Partial<Translations> = {
   "settings.dashTileHint": "Sæt en BombVault-statuswidget direkte på Unraids Dashboard. En lille ledsager-plugin tilføjer widgeten; BombVault kan installere den for dig via den eksisterende SSH-forbindelse til værten.",
   "settings.dashTileChecking": "Kontrollerer pluginstatus…",
   "settings.dashTileNoSsh": "SSH-forbindelsen til værten er ikke sat op (Indstillinger, Integrationer, Værts-SSH), så BombVault kan ikke installere pluginet for dig. Installer det manuelt i Unraid under Plugins → Install Plugin med denne URL:",
-  "settings.dashTileCa": "Det findes måske også i Community Applications. Søg efter BombVault Widget.",
   "settings.dashTileNotInstalled": "Dashboard-widgetens plugin er ikke installeret.",
   "settings.dashTileConfirm": "Installer installerer pluginet bombvault-widget på din Unraid-vært via Unraids almindelige pluginmekanisme. Det dukker op under Plugins som ethvert andet plugin og kan fjernes dér (eller her) når som helst.",
-  "settings.dashTileRepo": "Se pluginet på GitHub",
   "settings.dashTileInstall": "Installer plugin",
   "settings.dashTileInstalling": "Installerer…",
   "settings.dashTileInstalled": "Dashboard-widgetens plugin er installeret ({version})",
   "settings.dashTileInstalledNoV": "Dashboard-widgetens plugin er installeret",
   "settings.dashTileInstallOk": "Plugin installeret. Åbn Unraids Dashboard for at se den nye BombVault-widget.",
-  "settings.dashTileInstalledHint": "Widgeten vises på Unraids Dashboard. Hvis den ikke er synlig, så slå den til i Dashboardets widgetstyring.",
   "settings.dashTileRemove": "Fjern plugin",
   "settings.dashTileRemoving": "Fjerner…",
   "settings.dashTileRemoveOk": "Plugin fjernet. Det vises ikke længere på Unraid-dashboardet.",
@@ -987,14 +972,9 @@ const da: Partial<Translations> = {
   "notify.smtpTls": "Kryptering",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Verificer gendannelighed",
   "verify.running": "Verificerer…",
-  "verify.ok": "Verificeret gendannelig",
   "verify.failed": "Verificering mislykkedes",
-  "verify.last": "Sidst verificeret {time}",
-  "verify.never": "Aldrig verificeret",
   "verify.subsetPct": "Datastikprøve (%)",
-  "verify.hint": "Læser jævnligt en tilfældig stikprøve af sikkerhedskopidataene for at bevise, at de er intakte og kan gendannes.",
   "verify.shield": "verificeret",
 
   // Dashboard protection (RPO) status
@@ -1369,16 +1349,6 @@ const da: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Opbevaring (0 = behold alt)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Testtype:",
-  "drill.kindSubset": "Integritetstjek",
-  "drill.kindDR": "Ægte gendannelse (off-site)",
-  "drill.target": "Testmål (container)",
-  "drill.targetVM": "Testmål (VM)",
-  "drill.targetMostRecent": "Nyeste sikkerhedskopi",
-  "drill.drNote": "En ægte gendannelse pakker den nyeste off-site-sikkerhedskopi ud i en midlertidig sandbox, verificerer den og rydder derefter op. Den henter rigtige data og kan tage et stykke tid.",
-  "drill.runDR": "Kør ægte gendannelse",
-  "drill.runningDR": "Gendanner…",
-  "drill.confirmDR": "Dette udfører en ÆGTE gendannelse af den nyeste off-site-sikkerhedskopi til en midlertidig sandbox for at bevise, at den kan gendannes, og sletter den derefter. Den henter rigtige data og kan tage et stykke tid. Fortsæt?",
   "drill.offsiteVerified": "off-site verificeret",
 
   // Dashboard ransomware-protection card (v4)
@@ -1429,8 +1399,6 @@ const da: Partial<Translations> = {
   "excludes.assistRemoveLine": "Fjern udelukkelsen {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "off-site DR-gendannelse",
-  "drill.checkLocal": "lokalt integritetstjek",
   "drill.failReasonPrefix": "årsag:",
 
   // Off-site DR opt-out (#37)
@@ -1467,7 +1435,6 @@ const da: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Tidsplan for auto-sikkerhedskopi",
   "settings.tamperScheduleInactive": "Inaktiv: intet off-site-repo er markeret som append-only, så denne tidsplan kører aldrig. Markér et off-site-repo som append-only i dets off-site-indstillinger for at aktivere den.",
   "settings.everythingTitle": "Fuld sikkerhedskopi",
-  "settings.everythingDuplicateWarning": "Containere, VMs, flash, mapper, ZFS-datasæt og auto-sikkerhedskopien bliver sikkerhedskopieret to gange, så længe både denne tidsplan og deres egen er slået til: én gang her og én gang på deres egen. Slå de områder fra, du ikke vil have dubleret.",
   "settings.everythingStarted": "Startet. Den kører på serveren gennem hvert område i rækkefølge; se Aktivitetsloggen for resultatet.",
   "settings.everythingAlreadyRunning": "Der kører allerede en fuld sikkerhedskopi.",
   // Filter drawer trigger (v5 redesign)
@@ -1513,7 +1480,6 @@ const da: Partial<Translations> = {
   "files.effectiveOwn": "Kører {when}, egen plan",
   "files.effectiveDomain": "Kører {when}, fra {domain}",
   "files.effectiveEverything": "Kører {when}, med {domain}",
-  "files.effectiveBoth": "Kører to gange: {when} og {when2}",
   "files.pathMissing": "Mappen blev ikke fundet",
   "files.noPath": "Ingen mappe angivet",
   "files.noPathHint": "Genopbygget fra sikkerhedskopier uden mappe. Angiv en mappe for at sikkerhedskopiere igen. Gendannelse til en mappe virker allerede.",
@@ -2690,7 +2656,6 @@ const da: Partial<Translations> = {
   "apps.parleyport.dockerHint": "Kopierer kommandoen, der starter den på port 8760, til en reverse proxy foran:",
   "apps.parleyport.toRelay": "Indstillinger for videresender",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "En rigtig widget på Unraids Dashboard med BombVaults aktivitetslog og den næste planlagte kørsel. Installer den fra Community Applications, eller lad BombVault installere den nedenfor via den eksisterende SSH-forbindelse til værten.",
   "apps.unraidSub": "Skabelon",
   "apps.dockerSub": "Kopiér kommando",
   "apps.repoSub": "Kildekode og dokumentation",
@@ -4420,7 +4385,6 @@ const da: Partial<Translations> = {
   "deposit.code.deposit-changed": "Instansen havde noget andet end den deponering, som denne server sendte, så nogen har ændret den dér.",
   "exceptions.add": "Undtagelse",
   "exceptions.remove": "Fjern undtagelse",
-  "schedules.fullHint": "Standardtidsplanen for alt: ét gennemløb over alle områder, med én kommando før og én efter. Et element med egen tidsplan kører på sit eget tidspunkt og springes over af den fulde sikkerhedskopi.",
   "schedules.whenRuns": "Hvornår sikkerhedskopierne kører",
   "schedules.whenRunsHint": "Ét gennemløb sikkerhedskopierer hvert område efter tur: containere, VMs, flash, mapper, ZFS-datasæt og til sidst auto-sikkerhedskopien. “Fra” slår det fra.",
   "schedules.includes": "Omfatter: {sections}",
@@ -4431,7 +4395,6 @@ const da: Partial<Translations> = {
   "schedules.hookPost": "Kommando efter den fulde sikkerhedskopi",
   "schedules.hookPostHint": "Valgfri. Kører præcis én gang, når alle områder er prøvet, også hvis et af dem fejlede. Passer til et ping, der bekræfter, at hele serveren er beskyttet.",
   "schedules.plans": "Tidsplaner pr. område",
-  "schedules.plansHint": "Et område med egen tidsplan kører på sit eget tidspunkt. Så længe den fulde sikkerhedskopi er slået til, sikkerhedskopierer den også det område. Et område kan også kopiere til sine off-site-steder efter egen tidsplan.",
   "schedules.plansRuleAll": "Alle områder kører i den fulde sikkerhedskopi.",
   "schedules.plansRuleOthers": "Alle andre områder kører i den fulde sikkerhedskopi.",
   "schedules.offsite": "Off-site-kopier pr. område",

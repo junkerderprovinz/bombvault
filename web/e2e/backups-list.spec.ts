@@ -27,8 +27,8 @@ const HOUR = 3600;
 const DAY = 86400;
 const GB = 1024 ** 3;
 
-const DAILY = { kind: "domain", spec: "daily@03:30", alsoSpec: "" };
-const EVERYTHING = { kind: "everything", spec: "daily@03:00", alsoSpec: "" };
+const DAILY = { kind: "domain", spec: "daily@03:30" };
+const EVERYTHING = { kind: "everything", spec: "daily@03:00" };
 
 function runs(statuses: string[], prefix: string) {
   return statuses.map((status, i) => ({
@@ -63,10 +63,10 @@ const LONG_NAME = "nextcloud-aio-datenbank-hauptserver-produktivsystem";
 
 const ITEMS = [
   entry({ kind: "config", key: "config", name: "config", state: undefined, installed: undefined }),
-  entry({ kind: "vm", key: "debian", name: "Debian Docker-Host", state: "shut off", effectiveSchedule: { kind: "own", spec: "weekly@0@04:00", alsoSpec: "" }, lastBackup: NOW - 3 * DAY, runs: runs(OK14.slice(0, 8), "debian") }),
+  entry({ kind: "vm", key: "debian", name: "Debian Docker-Host", state: "shut off", effectiveSchedule: { kind: "own", spec: "weekly@0@04:00" }, lastBackup: NOW - 3 * DAY, runs: runs(OK14.slice(0, 8), "debian") }),
   entry({ kind: "files", key: "a1", name: "Dokumente", state: undefined, installed: undefined, effectiveSchedule: DAILY, runs: runs(OK14.slice(0, 7), "dokumente") }),
   entry({ kind: "files", key: "a2", name: "Fotos", state: undefined, installed: undefined, sourceBytes: 180 * GB }),
-  entry({ key: "gitea", lastBackup: 0, lastRunStatus: "", sourceBytes: null, included: false, effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" }, runs: [], renameFrom: "pihole", renameReason: "appdata-bind" }),
+  entry({ key: "gitea", lastBackup: 0, lastRunStatus: "", sourceBytes: null, included: false, effectiveSchedule: { kind: "none", spec: "", reason: "excluded" }, runs: [], renameFrom: "pihole", renameReason: "appdata-bind" }),
   entry({ key: "immich", sourceBytes: 40 * GB, stack: "immich", ip: "192.168.20.40", image: "ghcr.io/immich-app/immich-server:release" }),
   entry({ key: "immich_postgres", stack: "immich", ip: "192.168.20.41", image: "postgres:16", dbTier: "curated", dbDataCoverage: "stopped" }),
   entry({

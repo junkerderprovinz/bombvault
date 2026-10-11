@@ -53,6 +53,7 @@ type EverythingDomainResult struct {
 type everythingStep struct {
 	domain  string
 	enabled bool
+	cadence string
 	run     func() EverythingDomainResult
 }
 
@@ -122,17 +123,24 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 	// host without an Unraid flash would fail the parent run on every pass, and
 	// FlashEnabled=false on Unraid would still create a flash repository.
 	steps := []everythingStep{
-		{"containers", settings.ContainersEnabled, func() EverythingDomainResult { return s.everythingRunContainers(ctx, pass, settings) }},
-		{"vms", settings.VMsEnabled, func() EverythingDomainResult { return s.everythingRunVMs(ctx, pass, settings) }},
-		{"flash", settings.FlashEnabled, func() EverythingDomainResult { return s.everythingRunFlash(ctx, pass) }},
-		{"files", settings.FilesEnabled, func() EverythingDomainResult { return s.everythingRunFiles(ctx, pass, settings) }},
-		{zfsDomain, settings.ZFSEnabled, func() EverythingDomainResult { return s.everythingRunZFS(ctx, pass, settings) }},
-		{"config", settings.ConfigEnabled, func() EverythingDomainResult { return s.everythingRunConfig(ctx, pass) }},
+		{"containers", settings.ContainersEnabled, settings.ContainersSchedule, func() EverythingDomainResult { return s.everythingRunContainers(ctx, pass, settings) }},
+		{"vms", settings.VMsEnabled, settings.VMsSchedule, func() EverythingDomainResult { return s.everythingRunVMs(ctx, pass, settings) }},
+		{"flash", settings.FlashEnabled, settings.FlashSchedule, func() EverythingDomainResult { return s.everythingRunFlash(ctx, pass) }},
+		{"files", settings.FilesEnabled, settings.FilesSchedule, func() EverythingDomainResult { return s.everythingRunFiles(ctx, pass, settings) }},
+		{zfsDomain, settings.ZFSEnabled, settings.ZFSSchedule, func() EverythingDomainResult { return s.everythingRunZFS(ctx, pass, settings) }},
+		{"config", settings.ConfigEnabled, settings.ConfigSchedule, func() EverythingDomainResult { return s.everythingRunConfig(ctx, pass) }},
 	}
+	scheduled := scheduledPass(ctx)
 	results := make([]EverythingDomainResult, 0, len(steps))
 	for _, step := range steps {
 		if !step.enabled {
 			log.Printf("api: backup everything: %s skipped, the domain is switched off in Settings", step.domain)
+			continue
+		}
+		// A section with a plan of its own runs at its own time; the scheduled
+		// pass would back it up a second time. A pass started by hand takes it.
+		if scheduled && schedule.CadenceRuns(step.cadence) {
+			log.Printf("api: backup everything: %s skipped, it runs on a plan of its own", step.domain)
 			continue
 		}
 		results = append(results, step.run())

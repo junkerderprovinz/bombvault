@@ -661,23 +661,17 @@ const el: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Ακεραιότητα και συντήρηση",
-  "integrity.hint": "Εκτελέστε restic check για επαλήθευση ότι η δομή και τα μεταδεδομένα ενός αποθετηρίου είναι άθικτα.",
   "integrity.verify": "Επαλήθευση",
   "integrity.checking": "Έλεγχος…",
   "integrity.ok": "Υγιές",
   "integrity.failed": "Ο έλεγχος απέτυχε",
-  "integrity.failedShort": "✗ Απέτυχε",
   "integrity.unlock": "Ξεκλείδωμα",
   "integrity.prune": "Εκκαθάριση",
   "integrity.verifyHint": "Εκτέλεση restic check για επαλήθευση δομής και μεταδεδομένων.",
   "integrity.unlockHint": "Καθαρισμός κολλημένων κλειδωμάτων αποθετηρίου από διακοπείσα εκτέλεση (διορθώνει 'repository is already locked').",
   "integrity.unlockPartial": "Δεν ξεκλειδώθηκε πλήρως κάθε αποθετήριο: {list}",
   "integrity.pruneHint": "Εφαρμογή της πολιτικής διατήρησης και ανάκτηση χώρου (χωρίς πολιτική ανακτά μόνο χώρο· μπορεί να πάρει λίγο).",
-  "integrity.pruneConfirm": "Το κλάδεμα εφαρμόζει τώρα την πολιτική διατήρησής σας: αφαιρεί αντίγραφα ασφαλείας πέρα από τους κανόνες σας (last/daily/weekly/monthly/yearly) και ανακτά χώρο. Χωρίς πολιτική ανακτά μόνο χώρο. Συνέχεια;",
-  "integrity.appendOnly": "Έλεγχος append-only",
   "integrity.appendOnlyHint": "Αποδεικνύει ότι το απομακρυσμένο αποθετήριο εξακολουθεί να απορρίπτει διαγραφές (προστασία append-only), ο ίδιος έλεγχος με το tamper test του οδηγού off-site.",
-  "integrity.appendOnlyLast": "προστασία append-only · Τελευταίος έλεγχος {time}",
-  "integrity.appendOnlyNever": "προστασία append-only · κανένας έλεγχος ακόμη",
 
   // Pre/post-backup hooks
   "hooks.hint": "Οι εντολές εκτελούνται μέσα στο container (sh -c). Το Pre εκτελείται πριν το αντίγραφο (π.χ. γράψιμο μιας cache στον δίσκο· οι αναγνωρισμένες βάσεις παίρνουν dump μόνες τους). Μια αποτυχία ματαιώνει το αντίγραφο. Το Post εκτελείται αφού το container επανέλθει· η αποτυχία του μόνο καταγράφεται.",
@@ -737,7 +731,6 @@ const el: Partial<Translations> = {
   "vm.blocks.reason.no_space": "λίγος ελεύθερος χώρος στο appdata",
   "vm.blocks.reason.job_failed": "το libvirt δεν ξεκίνησε το αντίγραφο",
   "vm.ssh.title": "SSH κεντρικού συστήματος",
-  "vm.ssh.desc": "Τα αντίγραφα VM και ZFS εκτελούν τις εντολές τους σε αυτόν τον διακομιστή μέσω SSH (χωρίς προσάρτηση). Εξουσιοδοτήστε αυτό το κλειδί στο Unraid, μετά δοκιμάστε.",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "Δημόσιο κλειδί: προσθέστε στο /root/.ssh/authorized_keys του Unraid",
   "common.copy": "Αντιγραφή",
@@ -746,12 +739,7 @@ const el: Partial<Translations> = {
   "vm.ssh.test": "Δοκιμή σύνδεσης",
   "vm.ssh.testNoLibvirt": "Συνδέθηκε. Το libvirt δεν είναι προσβάσιμο, αλλά το χρειάζονται μόνο τα αντίγραφα VM.",
   "vm.ssh.testFail": "Η σύνδεση απέτυχε",
-  "vm.ssh.setupTitle": "Ρύθμιση (μία φορά)",
-  "vm.ssh.step1": "Αντιγράψτε την παρακάτω εντολή και εκτελέστε την στο τερματικό Unraid για να εξουσιοδοτήσετε αυτό το κλειδί (επιβιώνει των επανεκκινήσεων).",
-  "vm.ssh.step2": "Ορίστε τη μεταβλητή «Host SSH: Address» του container στη LAN IP του Unraid σας (π.χ. 192.168.x.x)· σε απλό bridge networking λειτουργεί και το host.docker.internal.",
-  "vm.ssh.step3": "Κάντε κλικ στη Δοκιμή σύνδεσης. Μόλις γίνει πράσινη, ενεργοποιήστε τα VMs ή τα Σύνολα δεδομένων ZFS στους Τομείς.",
   "vm.ssh.copyCmd": "Αντιγραφή εντολής",
-  "vm.ssh.guide": "Πλήρης οδηγός ρύθμισης & δικτύου",
   "common.backingUp": "Δημιουργία αντιγράφου…",
   "common.restoring": "Επαναφορά…",
   "common.done": "Έτοιμο",
@@ -962,16 +950,13 @@ const el: Partial<Translations> = {
   "settings.dashTileHint": "Βάλτε ένα Widget κατάστασης του BombVault κατευθείαν στον πίνακα ελέγχου του Unraid. Ένα μικρό συνοδευτικό πρόσθετο προσθέτει το Widget· το BombVault μπορεί να το εγκαταστήσει για εσάς μέσω της υπάρχουσας σύνδεσης SSH με τον κεντρικό υπολογιστή.",
   "settings.dashTileChecking": "Έλεγχος κατάστασης πρόσθετου…",
   "settings.dashTileNoSsh": "Η σύνδεση SSH με τον κεντρικό υπολογιστή δεν έχει ρυθμιστεί (Ρυθμίσεις, Ενσωματώσεις, SSH κεντρικού συστήματος), οπότε το BombVault δεν μπορεί να εγκαταστήσει το πρόσθετο για εσάς. Εγκαταστήστε το χειροκίνητα στο Unraid από το Plugins → Install Plugin με αυτό το URL:",
-  "settings.dashTileCa": "Ίσως είναι διαθέσιμο και στα Community Applications. Αναζητήστε BombVault Widget.",
   "settings.dashTileNotInstalled": "Το πρόσθετο Widget του πίνακα ελέγχου δεν είναι εγκατεστημένο.",
   "settings.dashTileConfirm": "Η Εγκατάσταση εγκαθιστά το πρόσθετο bombvault-widget στον κεντρικό υπολογιστή Unraid μέσω του συνηθισμένου μηχανισμού πρόσθετων του Unraid. Εμφανίζεται στο Plugins όπως κάθε άλλο πρόσθετο και μπορεί να αφαιρεθεί εκεί (ή εδώ) ανά πάσα στιγμή.",
-  "settings.dashTileRepo": "Δείτε το πρόσθετο στο GitHub",
   "settings.dashTileInstall": "Εγκατάσταση πρόσθετου",
   "settings.dashTileInstalling": "Εγκατάσταση…",
   "settings.dashTileInstalled": "Το πρόσθετο Widget του πίνακα ελέγχου είναι εγκατεστημένο ({version})",
   "settings.dashTileInstalledNoV": "Το πρόσθετο Widget του πίνακα ελέγχου είναι εγκατεστημένο",
   "settings.dashTileInstallOk": "Το πρόσθετο εγκαταστάθηκε. Ανοίξτε τον πίνακα ελέγχου του Unraid για να δείτε το νέο Widget BombVault.",
-  "settings.dashTileInstalledHint": "Το Widget εμφανίζεται στον πίνακα ελέγχου του Unraid. Αν δεν φαίνεται, ενεργοποιήστε το στη διαχείριση Widget του πίνακα.",
   "settings.dashTileRemove": "Αφαίρεση πρόσθετου",
   "settings.dashTileRemoving": "Αφαίρεση…",
   "settings.dashTileRemoveOk": "Το πρόσθετο αφαιρέθηκε. Δεν εμφανίζεται πλέον στον πίνακα ελέγχου του Unraid.",
@@ -987,14 +972,9 @@ const el: Partial<Translations> = {
   "notify.smtpTls": "Κρυπτογράφηση",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Επαλήθευση δυνατότητας επαναφοράς",
   "verify.running": "Επαλήθευση…",
-  "verify.ok": "Επαληθεύτηκε ως επαναφερόμενο",
   "verify.failed": "Η επαλήθευση απέτυχε",
-  "verify.last": "Τελευταία επαλήθευση {time}",
-  "verify.never": "Καμία επαλήθευση",
   "verify.subsetPct": "Δείγμα δεδομένων (%)",
-  "verify.hint": "Διαβάζει περιοδικά ένα τυχαίο δείγμα των δεδομένων αντιγράφου για να αποδείξει ότι είναι άθικτα και επαναφερόμενα.",
   "verify.shield": "επαληθευμένο",
 
   // Dashboard protection (RPO) status
@@ -1369,16 +1349,6 @@ const el: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Διατήρηση (0 = διατήρηση όλων)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Τύπος δοκιμής:",
-  "drill.kindSubset": "Έλεγχος ακεραιότητας",
-  "drill.kindDR": "Πραγματική επαναφορά (εκτός τόπου)",
-  "drill.target": "Στόχος δοκιμής (container)",
-  "drill.targetVM": "Στόχος δοκιμής (VM)",
-  "drill.targetMostRecent": "Πιο πρόσφατο αντίγραφο",
-  "drill.drNote": "Μια πραγματική επαναφορά εξάγει το νεότερο αντίγραφο ασφαλείας εκτός τόπου σε ένα προσωρινό sandbox, το επαληθεύει και έπειτα καθαρίζει. Κατεβάζει πραγματικά δεδομένα και μπορεί να πάρει λίγη ώρα.",
-  "drill.runDR": "Εκτέλεση πραγματικής επαναφοράς",
-  "drill.runningDR": "Επαναφορά…",
-  "drill.confirmDR": "Αυτό εκτελεί μια ΠΡΑΓΜΑΤΙΚΗ επαναφορά του νεότερου αντιγράφου ασφαλείας εκτός τόπου σε ένα προσωρινό sandbox για να αποδείξει ότι είναι επαναφερόμενο και έπειτα το διαγράφει. Κατεβάζει πραγματικά δεδομένα και μπορεί να πάρει λίγη ώρα. Συνέχεια;",
   "drill.offsiteVerified": "επαληθευμένο εκτός τόπου",
 
   // Dashboard ransomware-protection card (v4)
@@ -1429,8 +1399,6 @@ const el: Partial<Translations> = {
   "excludes.assistRemoveLine": "Αφαίρεση της εξαίρεσης {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "επαναφορά DR εκτός τόπου",
-  "drill.checkLocal": "τοπικός έλεγχος ακεραιότητας",
   "drill.failReasonPrefix": "αιτία:",
 
   // Off-site DR opt-out (#37)
@@ -1467,7 +1435,6 @@ const el: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Προγραμματισμός αυτο-αντιγράφου",
   "settings.tamperScheduleInactive": "Ανενεργό: κανένα αποθετήριο εκτός τόπου δεν είναι επισημασμένο ως append-only, επομένως αυτός ο προγραμματισμός δεν εκτελείται ποτέ. Επισημάνετε ένα αποθετήριο εκτός τόπου ως append-only στις ρυθμίσεις εκτός τόπου του για να τον ενεργοποιήσετε.",
   "settings.everythingTitle": "Πλήρες αντίγραφο ασφαλείας",
-  "settings.everythingDuplicateWarning": "Τα Containers, τα VMs, το Flash, οι φάκελοι, τα σύνολα δεδομένων ZFS και το αυτο-αντίγραφο λαμβάνονται δύο φορές όσο είναι ενεργά ταυτόχρονα αυτό το χρονοδιάγραμμα και το δικό τους: μία φορά εδώ και μία φορά στο δικό τους. Απενεργοποιήστε τους τομείς που δεν θέλετε να διπλασιάζονται.",
   "settings.everythingStarted": "Ξεκίνησε. Εκτελείται στον διακομιστή σε κάθε τομέα με τη σειρά· παρακολουθήστε το Αρχείο καταγραφής δραστηριότητας για το αποτέλεσμα.",
   "settings.everythingAlreadyRunning": "Ένα πλήρες αντίγραφο ασφαλείας εκτελείται ήδη.",
   // Filter drawer trigger (v5 redesign)
@@ -1513,7 +1480,6 @@ const el: Partial<Translations> = {
   "files.effectiveOwn": "Εκτελείται {when}, δικό του πρόγραμμα",
   "files.effectiveDomain": "Εκτελείται {when}, από {domain}",
   "files.effectiveEverything": "Εκτελείται {when}, με {domain}",
-  "files.effectiveBoth": "Εκτελείται δύο φορές: {when} και {when2}",
   "files.pathMissing": "Ο φάκελος δεν βρέθηκε",
   "files.noPath": "Δεν έχει οριστεί φάκελος",
   "files.noPathHint": "Ανακατασκευάστηκε από αντίγραφα χωρίς φάκελο. Ορίστε έναν φάκελο για να δημιουργούνται ξανά αντίγραφα. Η επαναφορά σε φάκελο λειτουργεί ήδη.",
@@ -2690,7 +2656,6 @@ const el: Partial<Translations> = {
   "apps.parleyport.dockerHint": "Αντιγράφει την εντολή που τον εκκινεί στη θύρα 8760, για έναν reverse proxy μπροστά:",
   "apps.parleyport.toRelay": "Ρυθμίσεις αναμεταδότη",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "Ένα αυθεντικό widget στον πίνακα ελέγχου του Unraid με το αρχείο καταγραφής δραστηριότητας του BombVault και την επόμενη προγραμματισμένη εκτέλεση. Εγκαταστήστε το από τα Community Applications, ή αφήστε το BombVault να το εγκαταστήσει παρακάτω μέσω της υπάρχουσας σύνδεσης SSH με τον κεντρικό υπολογιστή.",
   "apps.unraidSub": "Πρότυπο",
   "apps.dockerSub": "Αντιγραφή εντολής",
   "apps.repoSub": "Πηγαίος κώδικας και τεκμηρίωση",
@@ -4420,7 +4385,6 @@ const el: Partial<Translations> = {
   "deposit.code.deposit-changed": "Το στιγμιότυπο είχε κάτι άλλο από την παρακαταθήκη που έστειλε αυτός ο διακομιστής, άρα κάποιος την άλλαξε εκεί.",
   "exceptions.add": "Εξαίρεση",
   "exceptions.remove": "Αφαίρεση εξαίρεσης",
-  "schedules.fullHint": "Το προεπιλεγμένο χρονοδιάγραμμα για τα πάντα: ένα πέρασμα σε όλους τους τομείς, με μία εντολή πριν και μία μετά. Μια καταχώριση με δικό της χρονοδιάγραμμα εκτελείται στη δική της ώρα και το πλήρες αντίγραφο ασφαλείας την παραλείπει.",
   "schedules.whenRuns": "Πότε εκτελούνται τα αντίγραφα",
   "schedules.whenRunsHint": "Ένα πέρασμα παίρνει αντίγραφο κάθε τομέα με τη σειρά: containers, VMs, Flash, φακέλους, σύνολα δεδομένων ZFS και τελευταίο το αυτο-αντίγραφο. Το «Ανενεργό» το απενεργοποιεί.",
   "schedules.includes": "Περιλαμβάνει: {sections}",
@@ -4431,7 +4395,6 @@ const el: Partial<Translations> = {
   "schedules.hookPost": "Εντολή μετά το πλήρες αντίγραφο ασφαλείας",
   "schedules.hookPostHint": "Προαιρετική. Εκτελείται ακριβώς μία φορά αφού δοκιμαστεί κάθε τομέας, ακόμη κι αν κάποιος απέτυχε. Κατάλληλη για ένα ping που επιβεβαιώνει ότι ολόκληρος ο διακομιστής προστατεύεται.",
   "schedules.plans": "Χρονοδιαγράμματα ανά τομέα",
-  "schedules.plansHint": "Ένας τομέας με δικό του χρονοδιάγραμμα εκτελείται στη δική του ώρα. Όσο το πλήρες αντίγραφο ασφαλείας είναι ενεργό, παίρνει αντίγραφο και αυτού του τομέα. Ένας τομέας μπορεί επίσης να αντιγράφει στις εκτός τόπου θέσεις του με δικό του χρονοδιάγραμμα.",
   "schedules.plansRuleAll": "Όλοι οι τομείς εκτελούνται στο πλήρες αντίγραφο ασφαλείας.",
   "schedules.plansRuleOthers": "Όλοι οι άλλοι τομείς εκτελούνται στο πλήρες αντίγραφο ασφαλείας.",
   "schedules.offsite": "Αντίγραφα εκτός τόπου ανά τομέα",

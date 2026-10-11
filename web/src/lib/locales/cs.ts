@@ -659,23 +659,17 @@ const cs: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integrita a údržba",
-  "integrity.hint": "Spusť restic check k ověření, že struktura a metadata repozitáře jsou neporušené.",
   "integrity.verify": "Ověřit",
   "integrity.checking": "Kontroluji…",
   "integrity.ok": "V pořádku",
   "integrity.failed": "Kontrola selhala",
-  "integrity.failedShort": "✗ Selhalo",
   "integrity.unlock": "Odemknout",
   "integrity.prune": "Vyčistit",
   "integrity.verifyHint": "Spustit restic check k ověření struktury a metadat.",
   "integrity.unlockHint": "Odstranit zaseklé zámky repozitáře po havarovaném/přerušeném běhu (řeší 'repository is already locked').",
   "integrity.unlockPartial": "Ne každý repozitář byl plně odemčen: {list}",
   "integrity.pruneHint": "Použít zásady uchovávání a uvolnit místo (bez zásad pouze uvolní místo; může chvíli trvat).",
-  "integrity.pruneConfirm": "Úklid nyní použije tvé zásady uchovávání: odebere zálohy nad rámec tvých pravidel (last/daily/weekly/monthly/yearly) a uvolní místo. Bez zásad pouze uvolní místo. Pokračovat?",
-  "integrity.appendOnly": "Kontrola append-only",
   "integrity.appendOnlyHint": "Prokáže, že off-site repozitář stále odmítá mazání (ochrana append-only), stejná kontrola jako tamper test v průvodci off-site.",
-  "integrity.appendOnlyLast": "ochrana append-only · Naposledy zkontrolováno {time}",
-  "integrity.appendOnlyNever": "ochrana append-only · zatím nekontrolováno",
 
   // Backup hooks
   "hooks.hint": "Příkazy běží uvnitř kontejneru (sh -c). Pre běží před zálohou (např. vyprázdnění cache na disk; rozpoznané databáze se dumpují samy). Selhání zruší zálohu. Post běží po opětovném spuštění kontejneru; jeho selhání se pouze zaznamená.",
@@ -735,7 +729,6 @@ const cs: Partial<Translations> = {
   "vm.blocks.reason.no_space": "málo volného místa v appdata",
   "vm.blocks.reason.job_failed": "libvirt zálohu nespustil",
   "vm.ssh.title": "SSH k hostiteli",
-  "vm.ssh.desc": "Zálohy VM a ZFS spouštějí své příkazy na tomto serveru přes SSH (bez připojení). Autorizuj tento klíč v Unraidu, poté otestuj.",
   "vm.ssh.host": "Host",
   "vm.ssh.publicKey": "Veřejný klíč: připoj do Unraid /root/.ssh/authorized_keys",
   "common.copy": "Kopírovat",
@@ -744,12 +737,7 @@ const cs: Partial<Translations> = {
   "vm.ssh.test": "Otestovat připojení",
   "vm.ssh.testNoLibvirt": "Připojeno. libvirt není dostupný; potřebují ho jen zálohy VM.",
   "vm.ssh.testFail": "Připojení selhalo",
-  "vm.ssh.setupTitle": "Nastavení (jednorázové)",
-  "vm.ssh.step1": "Zkopíruj níže uvedený příkaz a spusť ho v terminálu Unraid pro autorizaci tohoto klíče (přežije restarty).",
-  "vm.ssh.step2": "Nastav proměnnou kontejneru „Host SSH: Address“ na LAN IP tvého Unraidu (např. 192.168.x.x); u jednoduché bridge sítě funguje i host.docker.internal.",
-  "vm.ssh.step3": "Klikni na Otestovat připojení. Jakmile je zelené, povol VMs nebo Datové sady ZFS v části Sekce.",
   "vm.ssh.copyCmd": "Kopírovat příkaz",
-  "vm.ssh.guide": "Kompletní průvodce nastavením a sítí",
   "common.backingUp": "Zálohuji…",
   "common.restoring": "Obnovuji…",
   "common.done": "Hotovo",
@@ -960,16 +948,13 @@ const cs: Partial<Translations> = {
   "settings.dashTileHint": "Umísti stavový widget BombVaultu přímo na Dashboard Unraidu. Malý doprovodný plugin widget přidá; BombVault ho za tebe může nainstalovat přes stávající SSH připojení k hostiteli.",
   "settings.dashTileChecking": "Kontrola stavu pluginu…",
   "settings.dashTileNoSsh": "SSH připojení k hostiteli není nastavené (Nastavení, Integrace, SSH k hostiteli), takže BombVault plugin nainstalovat nemůže. Nainstaluj ho ručně v Unraidu přes Plugins → Install Plugin s touto URL:",
-  "settings.dashTileCa": "Možná je k dispozici i v Community Applications. Hledej BombVault Widget.",
   "settings.dashTileNotInstalled": "Plugin widgetu není nainstalovaný.",
   "settings.dashTileConfirm": "Nainstalovat nainstaluje plugin bombvault-widget na tvůj hostitel Unraid běžným mechanismem pluginů Unraidu. Objeví se v Plugins jako každý jiný plugin a lze ho tam (nebo zde) kdykoli odebrat.",
-  "settings.dashTileRepo": "Zobrazit plugin na GitHubu",
   "settings.dashTileInstall": "Nainstalovat plugin",
   "settings.dashTileInstalling": "Instalace…",
   "settings.dashTileInstalled": "Plugin widgetu je nainstalovaný ({version})",
   "settings.dashTileInstalledNoV": "Plugin widgetu je nainstalovaný",
   "settings.dashTileInstallOk": "Plugin nainstalován. Otevři Dashboard Unraidu a podívej se na nový widget BombVaultu.",
-  "settings.dashTileInstalledHint": "Widget se objeví na Dashboardu Unraidu. Pokud není vidět, zapni ho ve správě widgetů Dashboardu.",
   "settings.dashTileRemove": "Odebrat plugin",
   "settings.dashTileRemoving": "Odebírání…",
   "settings.dashTileRemoveOk": "Plugin odebrán. Na Dashboardu Unraidu se už nezobrazuje.",
@@ -985,14 +970,9 @@ const cs: Partial<Translations> = {
   "notify.smtpTls": "Šifrování",
 
   // Restore-verification drills
-  "verify.now": "Ověřit obnovitelnost",
   "verify.running": "Ověřuji…",
-  "verify.ok": "Ověřeno jako obnovitelné",
   "verify.failed": "Ověření selhalo",
-  "verify.last": "Naposledy ověřeno {time}",
-  "verify.never": "Nikdy neověřeno",
   "verify.subsetPct": "Vzorek dat (%)",
-  "verify.hint": "Pravidelně čte náhodný vzorek dat zálohy, aby ověřil, že jsou neporušená a obnovitelná.",
   "verify.shield": "ověřeno",
 
   // Dashboard protection (RPO) status
@@ -1367,16 +1347,6 @@ const cs: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Uchování (0 = ponechat vše)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Typ cvičení:",
-  "drill.kindSubset": "Kontrola integrity",
-  "drill.kindDR": "Skutečná obnova (mimo lokalitu)",
-  "drill.target": "Cíl cvičení (kontejner)",
-  "drill.targetVM": "Cíl cvičení (VM)",
-  "drill.targetMostRecent": "Nejnovější záloha",
-  "drill.drNote": "Skutečná obnova rozbalí nejnovější zálohu mimo lokalitu do dočasného sandboxu, ověří ji a poté uklidí. Stahují se přitom skutečná data, což může chvíli trvat.",
-  "drill.runDR": "Spustit skutečnou obnovu",
-  "drill.runningDR": "Obnovuji…",
-  "drill.confirmDR": "Provede se SKUTEČNÁ obnova nejnovější zálohy mimo lokalitu do dočasného sandboxu, aby se prokázala její obnovitelnost, a poté se smaže. Stahují se přitom skutečná data, což může chvíli trvat. Pokračovat?",
   "drill.offsiteVerified": "ověřeno mimo lokalitu",
 
   // Dashboard ransomware-protection card (v4)
@@ -1427,8 +1397,6 @@ const cs: Partial<Translations> = {
   "excludes.assistRemoveLine": "Odebrat vyloučení {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "obnova DR mimo lokalitu",
-  "drill.checkLocal": "místní kontrola integrity",
   "drill.failReasonPrefix": "důvod:",
 
   // Off-site DR opt-out (#37)
@@ -1465,7 +1433,6 @@ const cs: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Plán autozálohy",
   "settings.tamperScheduleInactive": "Neaktivní: žádný repozitář mimo lokalitu není označen jako append-only, takže tento plán nikdy neběží. Označ repozitář mimo lokalitu jako append-only v jeho nastavení mimo lokalitu, abys ho aktivoval.",
   "settings.everythingTitle": "Úplná záloha",
-  "settings.everythingDuplicateWarning": "Kontejnery, VMs, flash, složky, datové sady ZFS i autozáloha se zálohují dvakrát, dokud jsou zapnuté zároveň tento plán i jejich vlastní: jednou zde a jednou ve vlastním plánu. Vypni sekce, které nechceš zálohovat dvakrát.",
   "settings.everythingStarted": "Spuštěno. Poběží na serveru postupně přes všechny sekce; výsledek sleduj v části Protokol aktivit.",
   "settings.everythingAlreadyRunning": "Úplná záloha už probíhá.",
   // Filter drawer trigger (v5 redesign)
@@ -1511,7 +1478,6 @@ const cs: Partial<Translations> = {
   "files.effectiveOwn": "Běží {when}, vlastní plán",
   "files.effectiveDomain": "Běží {when}, z {domain}",
   "files.effectiveEverything": "Běží {when}, s {domain}",
-  "files.effectiveBoth": "Běží dvakrát: {when} a {when2}",
   "files.pathMissing": "Složka nenalezena",
   "files.noPath": "Složka není nastavena",
   "files.noPathHint": "Obnoveno ze záloh bez složky. Nastav složku, aby se sada znovu zálohovala. Obnova do složky funguje už teď.",
@@ -2688,7 +2654,6 @@ const cs: Partial<Translations> = {
   "apps.parleyport.dockerHint": "Kopíruje příkaz, který ho spustí na portu 8760, pro reverse proxy před ním:",
   "apps.parleyport.toRelay": "Nastavení přeposílače",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "Vlastní widget na Dashboardu Unraidu s protokolem aktivity BombVaultu a dalším naplánovaným během. Nainstaluj ho z Community Applications, nebo nech BombVault nainstalovat ho níže přes stávající SSH připojení k hostiteli.",
   "apps.unraidSub": "Šablona",
   "apps.dockerSub": "Kopírovat příkaz",
   "apps.repoSub": "Zdrojový kód a dokumentace",
@@ -4418,7 +4383,6 @@ const cs: Partial<Translations> = {
   "deposit.code.deposit-changed": "Instance měla něco jiného než úschovu, kterou tento server poslal, takže ji tam někdo změnil.",
   "exceptions.add": "Výjimka",
   "exceptions.remove": "Odebrat výjimku",
-  "schedules.fullHint": "Výchozí plán pro všechno: jeden průchod všemi oblastmi, s jedním příkazem před ním a jedním po něm. Položka s vlastním plánem běží ve svůj čas a úplná záloha ji přeskočí.",
   "schedules.whenRuns": "Kdy zálohy běží",
   "schedules.whenRunsHint": "Jeden průchod zálohuje postupně každou oblast: kontejnery, VMs, flash, složky, datové sady ZFS a jako poslední autozálohu. „Vypnuto“ ho vypne.",
   "schedules.includes": "Zahrnuje: {sections}",
@@ -4429,7 +4393,6 @@ const cs: Partial<Translations> = {
   "schedules.hookPost": "Příkaz po úplné záloze",
   "schedules.hookPostHint": "Volitelné. Spustí se právě jednou poté, co byla vyzkoušena každá oblast, i když některá selhala. Hodí se pro ping, který potvrdí, že je chráněn celý server.",
   "schedules.plans": "Plány podle oblastí",
-  "schedules.plansHint": "Oblast s vlastním plánem běží ve svůj čas. Dokud je úplná záloha zapnutá, zálohuje i tuto oblast. Oblast může kopírovat na svá místa mimo lokalitu i podle vlastního plánu.",
   "schedules.plansRuleAll": "Všechny oblasti běží v úplné záloze.",
   "schedules.plansRuleOthers": "Všechny ostatní oblasti běží v úplné záloze.",
   "schedules.offsite": "Kopie mimo lokalitu podle oblastí",

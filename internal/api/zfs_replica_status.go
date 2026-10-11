@@ -13,11 +13,8 @@ import (
 // nothing does.
 func zfsItemBackupPeriod(d store.ZFSDataset, settings store.Settings) int64 {
 	eff := schedule.EffectiveZFSDatasetSchedule(d, settings)
-	switch eff.Kind {
-	case schedule.EffectiveNone:
+	if eff.Kind == schedule.EffectiveNone {
 		return 0
-	case schedule.EffectiveBoth:
-		return min(cadencePeriodSeconds(eff.Spec), cadencePeriodSeconds(eff.AlsoSpec))
 	}
 	return cadencePeriodSeconds(eff.Spec)
 }

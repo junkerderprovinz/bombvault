@@ -661,23 +661,17 @@ const fi: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Eheys ja ylläpito",
-  "integrity.hint": "Suorita restic check tarkistaaksesi, että arkiston rakenne ja metatiedot ovat ehjät.",
   "integrity.verify": "Tarkista",
   "integrity.checking": "Tarkistetaan…",
   "integrity.ok": "Kunnossa",
   "integrity.failed": "Tarkistus epäonnistui",
-  "integrity.failedShort": "✗ Epäonnistui",
   "integrity.unlock": "Avaa lukitus",
   "integrity.prune": "Karsi",
   "integrity.verifyHint": "Suorita restic check rakenteen ja metatietojen tarkistamiseksi.",
   "integrity.unlockHint": "Poista keskeytyneen ajon jättämät jumittuneet repositorion lukot (korjaa 'repository is already locked').",
   "integrity.unlockPartial": "Kaikkia arkistoja ei avattu kokonaan: {list}",
   "integrity.pruneHint": "Sovella säilytyskäytäntöä ja vapauta tilaa (ilman käytäntöä vain vapauttaa tilaa; voi kestää).",
-  "integrity.pruneConfirm": "Karsinta soveltaa nyt säilytyskäytäntöäsi. Se poistaa varmuuskopiot sääntöjesi (last/daily/weekly/monthly/yearly) ulkopuolelta ja vapauttaa tilaa. Ilman käytäntöä se vain vapauttaa tilaa. Jatketaanko?",
-  "integrity.appendOnly": "Append-only-tarkistus",
   "integrity.appendOnlyHint": "Todistaa, että off-site-repositorio torjuu poistot edelleen (append-only-suojaus), sama tarkistus kuin off-site-avustajan peukalointitesti.",
-  "integrity.appendOnlyLast": "append-only-suojaus · Viimeksi tarkistettu {time}",
-  "integrity.appendOnlyNever": "append-only-suojaus · ei koskaan tarkistettu",
 
   // Pre/post-backup hooks
   "hooks.hint": "Komennot suoritetaan kontin sisällä (sh -c). Pre suoritetaan ennen varmuuskopiota (esim. välimuistin kirjoitus levylle; tunnistetut tietokannat vedostetaan itsestään). Virhe keskeyttää varmuuskopion. Post suoritetaan kontin käynnistyttyä uudelleen; sen virhe vain kirjataan lokiin.",
@@ -737,7 +731,6 @@ const fi: Partial<Translations> = {
   "vm.blocks.reason.no_space": "liian vähän vapaata tilaa appdatassa",
   "vm.blocks.reason.job_failed": "libvirt ei käynnistänyt varmuuskopiota",
   "vm.ssh.title": "Palvelimen SSH",
-  "vm.ssh.desc": "VM- ja ZFS-varmuuskopiot suorittavat komentonsa tällä palvelimella SSH:n kautta (ei liitosta). Valtuuta tämä avain Unraidissa ja testaa sitten.",
   "vm.ssh.host": "Isäntä",
   "vm.ssh.publicKey": "Julkinen avain: lisää Unraidin tiedostoon /root/.ssh/authorized_keys",
   "common.copy": "Kopioi",
@@ -746,12 +739,7 @@ const fi: Partial<Translations> = {
   "vm.ssh.test": "Testaa yhteys",
   "vm.ssh.testNoLibvirt": "Yhdistetty. libvirt ei ole tavoitettavissa, mutta sitä tarvitsevat vain VM-varmuuskopiot.",
   "vm.ssh.testFail": "Yhteys epäonnistui",
-  "vm.ssh.setupTitle": "Määritä (kertaluonteinen)",
-  "vm.ssh.step1": "Kopioi alla oleva komento ja suorita se Unraid-terminaalissa valtuuttaaksesi tämän avaimen (se säilyy uudelleenkäynnistysten yli).",
-  "vm.ssh.step2": "Aseta kontin „Host SSH: Address” -muuttuja Unraid-palvelimesi LAN-IP-osoitteeseen (esim. 192.168.x.x); yksinkertaisessa siltaverkossa myös host.docker.internal toimii.",
-  "vm.ssh.step3": "Napsauta Testaa yhteys. Kun se on vihreä, ota VM:t tai ZFS-tietojoukot käyttöön kohdassa Osiot.",
   "vm.ssh.copyCmd": "Kopioi komento",
-  "vm.ssh.guide": "Täydellinen asennus- ja verkko-opas",
   "common.backingUp": "Varmuuskopioidaan…",
   "common.restoring": "Palautetaan…",
   "common.done": "Valmis",
@@ -962,16 +950,13 @@ const fi: Partial<Translations> = {
   "settings.dashTileHint": "Tuo BombVaultin tilawidget suoraan Unraidin kojelaudalle. Pieni kumppanilisäosa lisää widgetin; BombVault voi asentaa sen puolestasi olemassa olevan SSH-yhteyden kautta isäntään.",
   "settings.dashTileChecking": "Tarkistetaan lisäosan tilaa…",
   "settings.dashTileNoSsh": "SSH-yhteyttä isäntään ei ole määritetty (Asetukset, Integraatiot, Palvelimen SSH), joten BombVault ei voi asentaa lisäosaa puolestasi. Asenna se käsin Unraidissa kohdassa Plugins → Install Plugin tällä URL-osoitteella:",
-  "settings.dashTileCa": "Se voi löytyä myös Community Applications -sovelluksesta. Hae nimellä BombVault Widget.",
   "settings.dashTileNotInstalled": "Kojelaudan widget-lisäosaa ei ole asennettu.",
   "settings.dashTileConfirm": "Asenna asentaa bombvault-widget-lisäosan Unraid-isännällesi Unraidin tavallisen lisäosamekanismin kautta. Se näkyy Plugins-kohdassa kuten mikä tahansa muu lisäosa ja sen voi poistaa sieltä (tai täältä) milloin vain.",
-  "settings.dashTileRepo": "Katso lisäosa GitHubissa",
   "settings.dashTileInstall": "Asenna lisäosa",
   "settings.dashTileInstalling": "Asennetaan…",
   "settings.dashTileInstalled": "Kojelaudan widget-lisäosa on asennettu ({version})",
   "settings.dashTileInstalledNoV": "Kojelaudan widget-lisäosa on asennettu",
   "settings.dashTileInstallOk": "Lisäosa asennettu. Avaa Unraidin kojelauta nähdäksesi uuden BombVault-widgetin.",
-  "settings.dashTileInstalledHint": "Widget näkyy Unraidin kojelaudalla. Jos se ei näy, ota se käyttöön kojelaudan widgetien hallinnassa.",
   "settings.dashTileRemove": "Poista lisäosa",
   "settings.dashTileRemoving": "Poistetaan…",
   "settings.dashTileRemoveOk": "Lisäosa poistettu. Se ei enää näy Unraidin kojelaudalla.",
@@ -987,14 +972,9 @@ const fi: Partial<Translations> = {
   "notify.smtpTls": "Salaus",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Vahvista palautettavuus",
   "verify.running": "Vahvistetaan…",
-  "verify.ok": "Palautettavuus vahvistettu",
   "verify.failed": "Vahvistus epäonnistui",
-  "verify.last": "Viimeksi vahvistettu {time}",
-  "verify.never": "Ei koskaan vahvistettu",
   "verify.subsetPct": "Datanäyte (%)",
-  "verify.hint": "Lukee säännöllisesti satunnaisen näytteen varmuuskopiodatasta todistaakseen, että se on ehjä ja palautettavissa.",
   "verify.shield": "vahvistettu",
 
   // Dashboard protection (RPO) status
@@ -1369,16 +1349,6 @@ const fi: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Säilytys (0 = säilytä kaikki)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Harjoitustyyppi:",
-  "drill.kindSubset": "Eheystarkistus",
-  "drill.kindDR": "Todellinen palautus (etä)",
-  "drill.target": "Harjoituksen kohde (kontti)",
-  "drill.targetVM": "Harjoituksen kohde (VM)",
-  "drill.targetMostRecent": "Viimeisin varmuuskopio",
-  "drill.drNote": "Todellinen palautus purkaa uusimman etävarmuuskopion tilapäiseen sandboxiin, vahvistaa sen ja siivoaa jäljet. Se lataa oikeaa dataa ja voi kestää hetken.",
-  "drill.runDR": "Suorita todellinen palautus",
-  "drill.runningDR": "Palautetaan…",
-  "drill.confirmDR": "Tämä suorittaa uusimman etävarmuuskopion TODELLISEN palautuksen tilapäiseen sandboxiin todistaakseen sen palautettavuuden ja poistaa sen sitten. Se lataa oikeaa dataa ja voi kestää hetken. Jatketaanko?",
   "drill.offsiteVerified": "etäkopio vahvistettu",
 
   // Dashboard ransomware-protection card (v4)
@@ -1429,8 +1399,6 @@ const fi: Partial<Translations> = {
   "excludes.assistRemoveLine": "Poista poissulkeminen {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "etä-DR-palautus",
-  "drill.checkLocal": "paikallinen eheystarkistus",
   "drill.failReasonPrefix": "syy:",
 
   // Off-site DR opt-out (#37)
@@ -1467,7 +1435,6 @@ const fi: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Itsevarmuuskopion aikataulu",
   "settings.tamperScheduleInactive": "Ei aktiivinen. Mikään etärepo ei ole merkitty append-only-tilaan, joten tämä aikataulu ei koskaan käynnisty. Merkitse etärepo append-only-tilaan sen etäasetuksissa ottaaksesi sen käyttöön.",
   "settings.everythingTitle": "Täysvarmuuskopio",
-  "settings.everythingDuplicateWarning": "Kontit, VMs, flash, kansiot, ZFS-tietojoukot ja Itsevarmuuskopio varmuuskopioidaan kahdesti niin kauan kuin sekä tämä aikataulu että niiden oma ovat päällä: kerran täällä ja kerran omalla aikataulullaan. Kytke pois ne osiot, joita et halua kahdentaa.",
   "settings.everythingStarted": "Käynnistetty. Se etenee palvelimella osio kerrallaan; seuraa tulosta Toimintalokista.",
   "settings.everythingAlreadyRunning": "Täysvarmuuskopio on jo käynnissä.",
   // Filter drawer trigger (v5 redesign)
@@ -1513,7 +1480,6 @@ const fi: Partial<Translations> = {
   "files.effectiveOwn": "Suoritetaan {when}, oma aikataulu",
   "files.effectiveDomain": "Suoritetaan {when}, lähteestä {domain}",
   "files.effectiveEverything": "Suoritetaan {when}, yhdessä {domain}",
-  "files.effectiveBoth": "Suoritetaan kahdesti: {when} ja {when2}",
   "files.pathMissing": "Kansiota ei löydy",
   "files.noPath": "Kansiota ei asetettu",
   "files.noPathHint": "Rakennettu uudelleen varmuuskopioista ilman kansiota. Aseta kansio, jotta varmuuskopiointi onnistuu taas. Palautus kansioon toimii jo nyt.",
@@ -2690,7 +2656,6 @@ const fi: Partial<Translations> = {
   "apps.parleyport.dockerHint": "Kopioi komennon, joka käynnistää sen portissa 8760, edessä olevaa reverse proxya varten:",
   "apps.parleyport.toRelay": "Releen asetukset",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "Aito widget Unraidin kojelaudalla BombVaultin toimintalokin ja seuraavan ajastetun ajon kanssa. Asenna se Community Applications -sovelluksesta, tai anna BombVaultin asentaa se alla olemassa olevan SSH-yhteyden kautta isäntään.",
   "apps.unraidSub": "Malli",
   "apps.dockerSub": "Kopioi komento",
   "apps.repoSub": "Lähdekoodi ja dokumentaatio",
@@ -4420,7 +4385,6 @@ const fi: Partial<Translations> = {
   "deposit.code.deposit-changed": "Ilmentymällä oli jotain muuta kuin talletus, jonka tämä palvelin lähetti, joten joku on muuttanut sitä siellä.",
   "exceptions.add": "Poikkeus",
   "exceptions.remove": "Poista poikkeus",
-  "schedules.fullHint": "Oletusaikataulu kaikelle: yksi läpikäynti kaikissa osa-alueissa, yksi komento ennen sitä ja yksi sen jälkeen. Kohde, jolla on oma aikataulu, ajetaan omaan aikaansa, ja täysvarmuuskopio ohittaa sen.",
   "schedules.whenRuns": "Milloin varmuuskopiot ajetaan",
   "schedules.whenRunsHint": "Yksi läpikäynti varmuuskopioi kaikki osa-alueet vuorotellen: kontit, VMs, flash, kansiot, ZFS-tietojoukot ja viimeisenä itsevarmuuskopio. ”Pois” kytkee sen pois päältä.",
   "schedules.includes": "Sisältää: {sections}",
@@ -4431,7 +4395,6 @@ const fi: Partial<Translations> = {
   "schedules.hookPost": "Komento täysvarmuuskopion jälkeen",
   "schedules.hookPostHint": "Valinnainen. Ajetaan täsmälleen kerran, kun jokaista osa-aluetta on yritetty, vaikka jokin niistä epäonnistuisi. Sopii pingiin, joka vahvistaa koko palvelimen olevan suojattu.",
   "schedules.plans": "Aikataulut osa-alueittain",
-  "schedules.plansHint": "Osa-alue, jolla on oma aikataulu, ajetaan omaan aikaansa. Kun täysvarmuuskopio on päällä, se varmuuskopioi myös tämän osa-alueen. Osa-alue voi myös kopioida etäkohteisiinsa omalla aikataulullaan.",
   "schedules.plansRuleAll": "Kaikki osa-alueet ajetaan täysvarmuuskopiossa.",
   "schedules.plansRuleOthers": "Kaikki muut osa-alueet ajetaan täysvarmuuskopiossa.",
   "schedules.offsite": "Etäkopiot osa-alueittain",

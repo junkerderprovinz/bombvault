@@ -378,7 +378,7 @@ describe("BottomNav's count on Overview", () => {
     name,
     included: false,
     paused: false,
-    effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+    effectiveSchedule: { kind: "none", spec: "", reason: "excluded" },
     lastBackup: 0,
     lastRunStatus: "",
     sourceBytes: 1,

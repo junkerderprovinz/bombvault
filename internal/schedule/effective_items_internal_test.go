@@ -127,17 +127,17 @@ func TestItemEffectiveEverythingOnly(t *testing.T) {
 	wantKind(t, v, EffectiveEverything, "vm, everything only")
 }
 
-func TestItemEffectiveBoth(t *testing.T) {
+func TestItemOfASectionWithItsOwnPlanLeavesTheFullBackup(t *testing.T) {
 	s := containerSettings()
 	s.ContainersSchedule = "daily 02:00"
 	s.VMsSchedule = "daily 02:00"
 	s.EverythingSchedule = "daily 05:00"
 
 	c, v := bothKinds(t, s, true, "")
-	wantKind(t, c, EffectiveBoth, "container, both")
-	wantKind(t, v, EffectiveBoth, "vm, both")
-	if c.AlsoSpec != "daily 05:00" {
-		t.Fatalf("the second cadence must be named, got %q", c.AlsoSpec)
+	wantKind(t, c, EffectiveDomain, "container, section plan")
+	wantKind(t, v, EffectiveDomain, "vm, section plan")
+	if c.Spec != "daily 02:00" {
+		t.Fatalf("the section's plan must be named, got %q", c.Spec)
 	}
 }
 
@@ -173,9 +173,9 @@ func TestFlashAndConfigFollowTheirKindAndBackupEverything(t *testing.T) {
 	if got := EffectiveFlashSchedule(s); got != want {
 		t.Fatalf("flash without a cadence of its kind: got %+v, want %+v", got, want)
 	}
-	want = EffectiveSchedule{Kind: EffectiveBoth, Spec: "weekly sun 03:00", AlsoSpec: "daily 05:00"}
+	want = EffectiveSchedule{Kind: EffectiveDomain, Spec: "weekly sun 03:00"}
 	if got := EffectiveConfigSchedule(s); got != want {
-		t.Fatalf("config with both cadences: got %+v, want %+v", got, want)
+		t.Fatalf("config with a plan of its own: got %+v, want %+v", got, want)
 	}
 
 	s.EverythingSchedule = "off"

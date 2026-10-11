@@ -32,9 +32,6 @@ type EffectiveSchedule struct {
 	// It is the raw user-facing cadence ("weekly mon 02:00"), not a cron spec,
 	// so the interface can render it with the formatter it already has.
 	Spec string `json:"spec"`
-	// AlsoSpec is the SECOND cadence, set only for EffectiveBoth: the run that
-	// duplicates the first one.
-	AlsoSpec string `json:"alsoSpec"`
 	// Reason says why nothing runs, one of the None* constants, set only for
 	// EffectiveNone. All but NoneScheduleInvalid are a setting someone chose.
 	Reason string `json:"reason,omitempty"`
@@ -57,17 +54,13 @@ const (
 	// EffectiveOwn: the set has its own per-item entry on its own cadence, and is
 	// excluded from both the domain run and Backup Everything.
 	EffectiveOwn = "own"
-	// EffectiveDomain: the set follows the Folders domain schedule, and Backup
-	// Everything is not also covering it.
+	// EffectiveDomain: the set follows the Folders domain schedule. A section
+	// with a plan of its own is left out of the full backup.
 	EffectiveDomain = "domain"
 	// EffectiveEverything: the Folders domain schedule is off, so the set is
 	// backed up only as part of the Backup Everything pass. This is the shape
 	// #199 was built for and the one manilx wanted.
 	EffectiveEverything = "everything"
-	// EffectiveBoth: the Folders domain schedule AND Backup Everything both cover
-	// this set, so it is backed up twice. Legal, occasionally intended, and the
-	// state manilx was in without knowing it.
-	EffectiveBoth = "both"
 )
 
 // EffectiveContainerSchedule answers the same question for one container, and
@@ -106,14 +99,10 @@ func effectiveItemSchedule(domainEnabled, included bool, override, domainSchedul
 			return EffectiveSchedule{Kind: EffectiveNone, Reason: NoneOverrideOff}
 		}
 	}
-	domain := cadenceRuns(domainSchedule)
-	everything := cadenceRuns(s.EverythingSchedule)
 	switch {
-	case domain && everything:
-		return EffectiveSchedule{Kind: EffectiveBoth, Spec: domainSchedule, AlsoSpec: s.EverythingSchedule}
-	case domain:
+	case CadenceRuns(domainSchedule):
 		return EffectiveSchedule{Kind: EffectiveDomain, Spec: domainSchedule}
-	case everything:
+	case CadenceRuns(s.EverythingSchedule):
 		return EffectiveSchedule{Kind: EffectiveEverything, Spec: s.EverythingSchedule}
 	case !cadenceParses(domainSchedule) || !cadenceParses(s.EverythingSchedule):
 		return EffectiveSchedule{Kind: EffectiveNone, Reason: NoneScheduleInvalid}
@@ -177,9 +166,10 @@ func cadenceParses(cadence string) bool {
 	return err == nil
 }
 
-// cadenceRuns reports whether a cadence string would ever fire. An unparseable
+// CadenceRuns reports whether a cadence string would ever fire. An unparseable
 // cadence counts as not running, which matches registerJobs: it logs and skips.
-func cadenceRuns(cadence string) bool {
+// A section whose own cadence runs is left out of the scheduled full backup.
+func CadenceRuns(cadence string) bool {
 	cad, err := ParseCadence(cadence)
 	if err != nil {
 		return false

@@ -127,7 +127,7 @@ function progress(frame: Record<string, unknown>) {
 
 const NOW = Math.floor(Date.now() / 1000);
 const HOUR = 3600;
-const EVERYTHING = { kind: "everything", spec: "daily@03:00", alsoSpec: "" } as const;
+const EVERYTHING = { kind: "everything", spec: "daily@03:00" } as const;
 
 function entry(over: Partial<BackupItem> = {}): BackupItem {
   return {
@@ -399,7 +399,7 @@ describe("a row", () => {
       items: [watched({ learning: { samples: 3, needed: 10, newData: 3, source: 3, duration: 3, noData: false } })],
     });
     serve([
-      entry({ key: "plex", state: "exited", effectiveSchedule: { kind: "own", spec: "daily@04:00", alsoSpec: "" } }),
+      entry({ key: "plex", state: "exited", effectiveSchedule: { kind: "own", spec: "daily@04:00" } }),
       entry({ kind: "vm", key: "win11", state: "shut off" }),
     ]);
     await renderPage();
@@ -475,7 +475,7 @@ describe("the entries that are not backed up like the rest", () => {
         key: "f1",
         name: "Documents",
         kindDisabled: true,
-        effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "domain-off" },
+        effectiveSchedule: { kind: "none", spec: "", reason: "domain-off" },
       }),
       entry({ key: "untouched", kindDisabled: true, lastBackup: 0, lastRunStatus: "" }),
     ]);
@@ -487,8 +487,8 @@ describe("the entries that are not backed up like the rest", () => {
 
   it("keeps a paused entry undimmed and names the pause in its bubble", async () => {
     serve([
-      entry({ key: "plex", included: false, effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" } }),
-      entry({ key: "sonarr", paused: true, effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "override-off" } }),
+      entry({ key: "plex", included: false, effectiveSchedule: { kind: "none", spec: "", reason: "excluded" } }),
+      entry({ key: "sonarr", paused: true, effectiveSchedule: { kind: "none", spec: "", reason: "override-off" } }),
     ]);
     await renderPage();
     expect(row("plex").className).not.toContain("opacity-55");
@@ -502,7 +502,7 @@ describe("the entries that are not backed up like the rest", () => {
       entry({
         key: "scratch",
         included: false,
-        effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+        effectiveSchedule: { kind: "none", spec: "", reason: "excluded" },
         backupDeclined: true,
       }),
     ]);
@@ -514,7 +514,7 @@ describe("the entries that are not backed up like the rest", () => {
   });
 
   it("says why an entry in the schedule still never runs", async () => {
-    serve([entry({ key: "plex", effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" } })]);
+    serve([entry({ key: "plex", effectiveSchedule: { kind: "none", spec: "", reason: "schedule-off" } })]);
     await renderPage();
     expect(
       within(row("plex")).getByLabelText(

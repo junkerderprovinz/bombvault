@@ -661,23 +661,17 @@ const sv: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integritet och underhåll",
-  "integrity.hint": "Kör restic check för att verifiera att ett arkivs struktur och metadata är intakta.",
   "integrity.verify": "Verifiera",
   "integrity.checking": "Kontrollerar…",
   "integrity.ok": "Frisk",
   "integrity.failed": "Kontrollen misslyckades",
-  "integrity.failedShort": "✗ Misslyckades",
   "integrity.unlock": "Lås upp",
   "integrity.prune": "Rensa",
   "integrity.verifyHint": "Kör restic check för att verifiera struktur och metadata.",
   "integrity.unlockHint": "Ta bort fastnade repository-lås från en kraschad/avbruten körning (åtgärdar 'repository is already locked').",
   "integrity.unlockPartial": "Alla arkiv låstes inte upp helt: {list}",
   "integrity.pruneHint": "Tillämpa din lagringspolicy och frigör utrymme (frigör bara utrymme om ingen policy är satt; kan ta en stund).",
-  "integrity.pruneConfirm": "Rensning tillämpar nu din lagringspolicy: den tar bort säkerhetskopior utöver dina regler (last/daily/weekly/monthly/yearly) och frigör utrymme. Utan policy frigör den bara utrymme. Fortsätta?",
-  "integrity.appendOnly": "Append-only-kontroll",
   "integrity.appendOnlyHint": "Bevisar att off-site-arkivet fortfarande nekar raderingar (append-only-skydd), samma kontroll som tamper-testet i off-site-guiden.",
-  "integrity.appendOnlyLast": "append-only-skydd · Senast kontrollerad {time}",
-  "integrity.appendOnlyNever": "append-only-skydd · aldrig kontrollerad",
 
   // Pre/post-backup hooks
   "hooks.hint": "Kommandon körs inuti containern (sh -c). Pre körs före säkerhetskopieringen (t.ex. skriva en cache till disk; igenkända databaser dumpas av sig själva). Ett fel avbryter säkerhetskopieringen. Post körs när containern är uppe igen; dess fel loggas bara.",
@@ -737,7 +731,6 @@ const sv: Partial<Translations> = {
   "vm.blocks.reason.no_space": "för lite ledigt utrymme i appdata",
   "vm.blocks.reason.job_failed": "libvirt startade inte säkerhetskopian",
   "vm.ssh.title": "Värd-SSH",
-  "vm.ssh.desc": "VM- och ZFS-säkerhetskopior kör sina kommandon på den här servern över SSH (ingen montering). Auktorisera den här nyckeln på Unraid och testa sedan.",
   "vm.ssh.host": "Värd",
   "vm.ssh.publicKey": "Publik nyckel: lägg till i Unraid /root/.ssh/authorized_keys",
   "common.copy": "Kopiera",
@@ -746,12 +739,7 @@ const sv: Partial<Translations> = {
   "vm.ssh.test": "Testa anslutning",
   "vm.ssh.testNoLibvirt": "Ansluten. libvirt går inte att nå, men bara VM-säkerhetskopior behöver det.",
   "vm.ssh.testFail": "Anslutningen misslyckades",
-  "vm.ssh.setupTitle": "Konfigurera (en gång)",
-  "vm.ssh.step1": "Kopiera kommandot nedan och kör det i Unraid-terminalen för att auktorisera den här nyckeln (överlever omstarter).",
-  "vm.ssh.step2": "Ange containerns variabel ”Host SSH: Address” till din Unraids LAN-IP (t.ex. 192.168.x.x); vid enkel bridge-nätverk fungerar host.docker.internal också.",
-  "vm.ssh.step3": "Klicka på Testa anslutning. När den är grön, aktivera VMs eller ZFS-datauppsättningar under Avsnitt.",
   "vm.ssh.copyCmd": "Kopiera kommando",
-  "vm.ssh.guide": "Fullständig installations- och nätverksguide",
   "common.backingUp": "Säkerhetskopierar…",
   "common.restoring": "Återställer…",
   "common.done": "Klar",
@@ -962,16 +950,13 @@ const sv: Partial<Translations> = {
   "settings.dashTileHint": "Lägg en BombVault-statuswidget direkt på Unraids Dashboard. En liten kompanjonsplugin lägger till widgeten; BombVault kan installera den åt dig via den befintliga SSH-anslutningen till värden.",
   "settings.dashTileChecking": "Kontrollerar pluginstatus…",
   "settings.dashTileNoSsh": "SSH-anslutningen till värden är inte inställd (Inställningar, Integrationer, Värd-SSH), så BombVault kan inte installera pluginet åt dig. Installera det manuellt i Unraid under Plugins → Install Plugin med denna URL:",
-  "settings.dashTileCa": "Det kan också finnas i Community Applications. Sök efter BombVault Widget.",
   "settings.dashTileNotInstalled": "Dashboard-widgetens plugin är inte installerat.",
   "settings.dashTileConfirm": "Installera installerar pluginet bombvault-widget på din Unraid-värd via Unraids vanliga pluginmekanism. Det dyker upp under Plugins som vilket annat plugin som helst och kan tas bort där (eller här) när som helst.",
-  "settings.dashTileRepo": "Visa pluginet på GitHub",
   "settings.dashTileInstall": "Installera plugin",
   "settings.dashTileInstalling": "Installerar…",
   "settings.dashTileInstalled": "Dashboard-widgetens plugin är installerat ({version})",
   "settings.dashTileInstalledNoV": "Dashboard-widgetens plugin är installerat",
   "settings.dashTileInstallOk": "Pluginet är installerat. Öppna Unraids Dashboard för att se den nya BombVault-widgeten.",
-  "settings.dashTileInstalledHint": "Widgeten visas på Unraids Dashboard. Om den inte syns, aktivera den i Dashboardens widgethantering.",
   "settings.dashTileRemove": "Ta bort plugin",
   "settings.dashTileRemoving": "Tar bort…",
   "settings.dashTileRemoveOk": "Pluginet är borttaget. Det visas inte längre på Unraid-Dashboard.",
@@ -987,14 +972,9 @@ const sv: Partial<Translations> = {
   "notify.smtpTls": "Kryptering",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Verifiera återställbarhet",
   "verify.running": "Verifierar…",
-  "verify.ok": "Verifierat återställbar",
   "verify.failed": "Verifieringen misslyckades",
-  "verify.last": "Senast verifierad {time}",
-  "verify.never": "Aldrig verifierad",
   "verify.subsetPct": "Dataurval (%)",
-  "verify.hint": "Läser regelbundet ett slumpmässigt urval av säkerhetskopiedata för att bevisa att den är intakt och återställbar.",
   "verify.shield": "verifierad",
 
   // Dashboard protection (RPO) status
@@ -1369,16 +1349,6 @@ const sv: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Bevarande (0 = behåll allt)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Övningstyp:",
-  "drill.kindSubset": "Integritetskontroll",
-  "drill.kindDR": "Riktig återställning (off-site)",
-  "drill.target": "Övningsmål (container)",
-  "drill.targetVM": "Övningsmål (VM)",
-  "drill.targetMostRecent": "Senaste säkerhetskopian",
-  "drill.drNote": "En riktig återställning packar upp den senaste off-site-säkerhetskopian i en tillfällig sandbox, verifierar den och städar sedan upp. Den laddar ner riktiga data och kan ta en stund.",
-  "drill.runDR": "Kör riktig återställning",
-  "drill.runningDR": "Återställer…",
-  "drill.confirmDR": "Detta utför en RIKTIG återställning av den senaste off-site-säkerhetskopian i en tillfällig sandbox för att bevisa att den kan återställas, och tar sedan bort den. Den laddar ner riktiga data och kan ta en stund. Fortsätta?",
   "drill.offsiteVerified": "off-site verifierad",
 
   // Dashboard ransomware-protection card (v4)
@@ -1429,8 +1399,6 @@ const sv: Partial<Translations> = {
   "excludes.assistRemoveLine": "Ta bort uteslutningen {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "off-site DR-återställning",
-  "drill.checkLocal": "lokal integritetskontroll",
   "drill.failReasonPrefix": "orsak:",
 
   // Off-site DR opt-out (#37)
@@ -1467,7 +1435,6 @@ const sv: Partial<Translations> = {
   "settings.schedulesSelfBackup": "Schema för auto-säkerhetskopia",
   "settings.tamperScheduleInactive": "Inaktivt: inget off-site-repo är markerat som append-only, så det här schemat körs aldrig. Markera ett off-site-repo som append-only i dess off-site-inställningar för att aktivera det.",
   "settings.everythingTitle": "Total säkerhetskopia",
-  "settings.everythingDuplicateWarning": "Containers, VMs, flash, mappar, ZFS-datauppsättningar och auto-säkerhetskopian säkerhetskopieras två gånger så länge både det här schemat och deras eget är påslagna: en gång här och en gång på sitt eget schema. Stäng av de avsnitt du inte vill ha dubblerade.",
   "settings.everythingStarted": "Startad. Den körs på servern genom varje avsnitt i tur och ordning; följ Aktivitetsloggen för resultatet.",
   "settings.everythingAlreadyRunning": "En total säkerhetskopia pågår redan.",
   // Filter drawer trigger (v5 redesign)
@@ -1513,7 +1480,6 @@ const sv: Partial<Translations> = {
   "files.effectiveOwn": "Körs {when}, eget schema",
   "files.effectiveDomain": "Körs {when}, från {domain}",
   "files.effectiveEverything": "Körs {when}, med {domain}",
-  "files.effectiveBoth": "Körs två gånger: {when} och {when2}",
   "files.pathMissing": "Mappen hittades inte",
   "files.noPath": "Ingen mapp angiven",
   "files.noPathHint": "Återuppbyggd från säkerhetskopior utan mapp. Ange en mapp för att säkerhetskopiera igen. Återställning till en mapp fungerar redan.",
@@ -2690,7 +2656,6 @@ const sv: Partial<Translations> = {
   "apps.parleyport.dockerHint": "Kopierar kommandot som startar det på port 8760, för en reverse proxy framför:",
   "apps.parleyport.toRelay": "Relä-inställningar",
   "apps.widget.title": "BombVault Widget",
-  "apps.widget.hint": "En riktig widget på Unraids Dashboard med BombVaults aktivitetslogg och nästa schemalagda körning. Installera den från Community Applications, eller låt BombVault installera den nedan via den befintliga SSH-anslutningen till värden.",
   "apps.unraidSub": "Mall",
   "apps.dockerSub": "Kopiera kommandot",
   "apps.repoSub": "Källkod och dokumentation",
@@ -4420,7 +4385,6 @@ const sv: Partial<Translations> = {
   "deposit.code.deposit-changed": "Instansen hade något annat än depositionen som den här servern skickade, så någon har ändrat den där.",
   "exceptions.add": "Undantag",
   "exceptions.remove": "Ta bort undantag",
-  "schedules.fullHint": "Standardschemat för allt: ett varv över alla områden, med ett kommando före och ett efter. En post med eget schema körs vid sin egen tid och hoppas över av den totala säkerhetskopian.",
   "schedules.whenRuns": "När säkerhetskopiorna körs",
   "schedules.whenRunsHint": "Ett varv säkerhetskopierar alla områden i tur och ordning: containers, VMs, flash, mappar, ZFS-datauppsättningar och sist auto-säkerhetskopian. ”Av” stänger av det.",
   "schedules.includes": "Omfattar: {sections}",
@@ -4431,7 +4395,6 @@ const sv: Partial<Translations> = {
   "schedules.hookPost": "Kommando efter den totala säkerhetskopian",
   "schedules.hookPostHint": "Valfritt. Körs exakt en gång när varje område har försökts, även om något av dem misslyckades. Bra för en ping som bekräftar att hela servern är skyddad.",
   "schedules.plans": "Scheman per område",
-  "schedules.plansHint": "Ett område med eget schema körs vid sin egen tid. Så länge den totala säkerhetskopian är på säkerhetskopieras området också där. Ett område kan dessutom kopiera till sina externa platser enligt sitt eget schema.",
   "schedules.plansRuleAll": "Alla områden körs i den totala säkerhetskopian.",
   "schedules.plansRuleOthers": "Alla andra områden körs i den totala säkerhetskopian.",
   "schedules.offsite": "Externa kopior per område",

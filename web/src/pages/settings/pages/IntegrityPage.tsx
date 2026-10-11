@@ -11,8 +11,8 @@ export function IntegrityPage() {
   const { t } = useT();
   const {
     settings,
-    setSettings,
-    save,
+    containers,
+    vms,
     fieldPulse,
     autoSaveToggle,
     fieldBusy,
@@ -43,14 +43,14 @@ export function IntegrityPage() {
 
   return (
     <>
-      {/* Restore drills, the off-site DR restore among them, are part of the */}
-      {/* default view. */}
-      <IntegrityCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={nextHue()} />
+      <IntegrityCard t={t} hueIndex={nextHue()} />
 
       <RestoreChecksSection
         settings={settings}
         update={scheduleUpdate}
         tamperActive={tamperScheduleActive}
+        containers={containers}
+        vms={vms}
         busy={schedFieldBusy}
         shake={schedFieldShake}
         pulse={fieldPulse}

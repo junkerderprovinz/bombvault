@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Button } from "../../components/Button";
-import { InfoBubble } from "../../components/InfoBubble";
+import { IconSave } from "../../components/glyphs";
+import { SettingRow } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import { setMcpOAuth, type McpOAuthView } from "../../lib/api";
 import { copyText } from "../../lib/clipboard";
 import type { TranslationKey } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
+import { CopyField } from "./CopyField";
 
 type T = (key: TranslationKey, count?: number) => string;
 
@@ -88,82 +90,55 @@ export function McpOAuthSettings({
   }
 
   return (
-    <div className="flex flex-col gap-2.5">
-      <span className="flex items-center gap-1.5">
+    <div className="flex flex-col divide-y divide-carbon-border/60">
+      <SettingRow
+        label={t("mcp.oauthToggle")}
+        hint={t("mcp.oauthHint")}
+        note={authEnabled ? undefined : t("mcp.oauthNeedsPassword")}
+      >
         <Toggle
           key={shake}
           label={t("mcp.oauthToggle")}
+          hideLabel
           checked={on}
           onChange={toggle}
           disabled={busy || (!authEnabled && !oauth.enabled)}
           className={shake ? "glim-shake" : ""}
         />
-        <InfoBubble tip={t("mcp.oauthHint")} />
-      </span>
-
-      {!authEnabled && (
-        <p className="rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">
-          {t("mcp.oauthNeedsPassword")}
-        </p>
-      )}
+      </SettingRow>
 
       {on && (
-        <div className="flex flex-col gap-1.5">
-          <span className="flex items-center gap-1.5">
-            <label htmlFor={addressId} className="text-xs text-carbon-textSub">
-              {t("mcp.oauthAddressLabel")}
-            </label>
-            <InfoBubble tip={t("mcp.oauthAddressHint")} />
-          </span>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              id={addressId}
-              value={draft}
-              dir="ltr"
-              inputMode="url"
-              autoComplete="url"
-              spellCheck={false}
-              placeholder="https://backup.example.com"
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void save(true, draft);
-              }}
-              className="min-w-0 max-w-96 flex-[1_1_18rem] rounded-control bg-carbon-surface2 px-3 py-1.5 text-start font-mono text-sm text-carbon-text glim-field-focus"
-            />
-            <Button
-              label={t("mcp.oauthSave")}
-              labelKey="mcp.oauthSave"
-              tone="subtle"
-              onClick={() => void save(true, draft)}
-              disabled={busy || draft.trim() === "" || (draft.trim() === oauth.issuer && oauth.enabled)}
-              busy={busy}
-            />
-          </div>
-        </div>
+        <SettingRow label={t("mcp.oauthAddressLabel")} hint={t("mcp.oauthAddressHint")}>
+          <input
+            id={addressId}
+            aria-label={t("mcp.oauthAddressLabel")}
+            value={draft}
+            dir="ltr"
+            inputMode="url"
+            autoComplete="url"
+            spellCheck={false}
+            placeholder="https://backup.example.com"
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void save(true, draft);
+            }}
+            className="w-72 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-start font-mono text-xs text-carbon-text glim-field-focus"
+          />
+          <Button
+            label={t("mcp.oauthSave")}
+            labelKey="mcp.oauthSave"
+            glyph={<IconSave />}
+            onClick={() => void save(true, draft)}
+            disabled={busy || draft.trim() === "" || (draft.trim() === oauth.issuer && oauth.enabled)}
+            busy={busy}
+          />
+        </SettingRow>
       )}
 
       {connector !== "" && (
-        <div className="flex flex-col gap-1.5">
-          <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-            {t("mcp.oauthConnectorLabel")}
-            <InfoBubble tip={t("mcp.oauthConnectorHint")} />
-          </span>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              readOnly
-              value={connector}
-              aria-label={t("mcp.oauthConnectorLabel")}
-              dir="ltr"
-              className="min-w-0 max-w-96 flex-[1_1_18rem] rounded-control bg-carbon-surface2 px-3 py-1.5 text-start font-mono text-sm text-carbon-text glim-field-focus"
-            />
-            <Button
-              label={t("common.copy")}
-              labelKey="common.copy"
-              tone="subtle"
-              onClick={() => void copy(connector)}
-            />
-          </div>
-        </div>
+        <SettingRow label={t("mcp.oauthConnectorLabel")} hint={t("mcp.oauthConnectorHint")}>
+          <CopyField value={connector} label={t("mcp.oauthConnectorLabel")} onCopy={() => void copy(connector)} t={t} />
+        </SettingRow>
       )}
     </div>
   );

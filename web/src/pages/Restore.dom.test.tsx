@@ -283,7 +283,7 @@ describe("the backups of the picked entry", () => {
     const setAside = {
       ...IMMICH,
       included: false,
-      effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+      effectiveSchedule: { kind: "none", spec: "", reason: "excluded" },
       backupDeclined: true,
     } as const;
     serveEntries(mocks, { items: [setAside] });
