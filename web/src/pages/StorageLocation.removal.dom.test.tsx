@@ -420,7 +420,7 @@ describe("removing a destination and deleting the backups there", () => {
     await renderPage();
     const dialog = await openDeletion();
 
-    expect(within(dialog).getByText(en["secrets.passwordNotSet"])).toBeTruthy();
+    expect(within(dialog).getByText(en["storage.remove.passwordNeeded"])).toBeTruthy();
     expect(erase(dialog).disabled).toBe(true);
   });
 

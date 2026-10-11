@@ -9,7 +9,7 @@ import {
   type OkEnvelope,
   type StorageLocation,
 } from "../../lib/api";
-import { useT } from "../../lib/i18n";
+import { useT, type TranslationKey } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
 import { secretsSentence } from "../../lib/secretsRefusal";
@@ -29,6 +29,12 @@ type Answer = OkEnvelope & { removal?: DestinationRemoval; erasure?: Destination
 
 function failed(e: unknown): Answer {
   return { ok: false, error: e instanceof Error ? e.message : undefined };
+}
+
+/** The sentence for a refusal over the login. The shared one for a missing
+ *  password speaks of keys, so deleting has its own. */
+function refusalSentence(t: (key: TranslationKey) => string, code: string | undefined): string | undefined {
+  return code === "password-not-set" ? t("storage.remove.passwordNeeded") : secretsSentence(t, code);
 }
 
 type How = "keep" | "delete";
@@ -115,7 +121,7 @@ export function RemovalWindow({
       .then((res) => {
         if (!alive) return;
         if (res.ok && res.erasure) setErasure(res.erasure);
-        else setProblem(secretsSentence(t, res.code) ?? res.error ?? t("settings.error"));
+        else setProblem(refusalSentence(t, res.code) ?? res.error ?? t("settings.error"));
       });
     return () => {
       alive = false;
@@ -159,7 +165,7 @@ export function RemovalWindow({
     const res = await eraseDestination(id, erasure.removal, named).catch(failed);
     setBusy(false);
     if (!res.ok) {
-      setProblem(secretsSentence(t, res.code) ?? placementErrorText(t, lang, res, "settings.error"));
+      setProblem(refusalSentence(t, res.code) ?? placementErrorText(t, lang, res, "settings.error"));
       setLastToo(false);
       if (res.erasure) setErasure(res.erasure);
       else if (res.removal) {
