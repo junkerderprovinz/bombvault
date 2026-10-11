@@ -330,3 +330,22 @@ describe("the emergency", () => {
     expect(within(wizard()!).getByText(en["emergency.settingsIntro"])).toBeTruthy();
   });
 });
+
+describe("the other sources", () => {
+  it("open the window for an old backup folder and the one for the Appdata.Backup plugin", async () => {
+    await renderPage();
+    await press(screen.getByRole("button", { name: new RegExp(`^${en["restorePage.oldFolder"]}`) }));
+    const oldFolder = screen.getByRole("dialog", { name: en["restorePage.oldFolder"] });
+    expect(within(oldFolder).getByRole("button", { name: en["recovery.foreignConnect"] })).toBeTruthy();
+    await press(within(oldFolder).getByRole("button", { name: en["common.cancel"] }));
+
+    await press(screen.getByRole("button", { name: new RegExp(`^${en["recovery.abTitle"]}`) }));
+    const appdata = screen.getByRole("dialog", { name: en["recovery.abTitle"] });
+    expect(within(appdata).getByRole("button", { name: en["recovery.abScan"] })).toBeTruthy();
+  });
+
+  it("do not offer another instance through the group, which the server cannot reach yet", async () => {
+    await renderPage();
+    expect(screen.queryByText(/another BombVault instance/i)).toBeNull();
+  });
+});

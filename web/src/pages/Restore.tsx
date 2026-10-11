@@ -10,19 +10,21 @@ import { Button } from "../components/Button";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconArchive, IconForward, IconSearch } from "../components/glyphs";
 import { InstanceWindow } from "./instances/InstanceWindow";
-import { IconRecovery, IconRestore } from "../components/navGlyphs";
+import { IconDownload, IconFolder, IconRecovery, IconRestore } from "../components/navGlyphs";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { ProgressBar } from "../components/ProgressBar";
+import { AppdataWindow } from "../components/restore/AppdataWindow";
 import { BackupRail } from "../components/restore/BackupRail";
 import { EmergencyScene } from "../components/restore/EmergencyScene";
 import { EmergencyWindow } from "../components/restore/EmergencyWindow";
+import { OldFolderWindow } from "../components/restore/OldFolderWindow";
 import { PlaceChecks } from "../components/restore/PlaceChecks";
 import { RestoreWindow, type RestoreAsk } from "../components/restore/RestoreWindow";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { displayTags } from "../components/RestorePanel";
 import { Rows } from "../components/storage/rows";
-import { listItems, type BackupItem, type TimelineRow } from "../lib/api";
+import { getSettings, listItems, type BackupItem, type TimelineRow } from "../lib/api";
 import { hueVars } from "../lib/appearance";
 import { ENTRY_KIND, ENTRY_KINDS, type EntryKind } from "../lib/backupEntry";
 import { entriesOf, entryTarget, itemId, itemProgressKey, listedItems } from "../lib/backupList";
@@ -231,6 +233,16 @@ export function Restore() {
   const [kind, setKind] = useState<EntryKind | null>(null);
   const [query, setQuery] = useState("");
   const [pick, setPick] = useState<string | null>(null);
+  const [source, setSource] = useState<"oldFolder" | "appdata" | null>(null);
+  const [hostMountRoot, setHostMountRoot] = useState("/host/user");
+
+  useEffect(() => {
+    getSettings()
+      .then((res) => {
+        if (res.ok && res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
+      })
+      .catch(() => undefined);
+  }, []);
 
   const load = useCallback(() => {
     listItems()
@@ -287,6 +299,8 @@ export function Restore() {
       <PageTitle>{t("nav.restore")}</PageTitle>
 
       {emergency && <EmergencyWindow start={emergency} onClose={() => setParams({}, { replace: true })} />}
+      {source === "oldFolder" && <OldFolderWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
+      {source === "appdata" && <AppdataWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
 
       {failed ? (
         <div className="flex flex-col items-start gap-2">
@@ -405,6 +419,22 @@ export function Restore() {
             warn
             onOpen={() => setParams({ emergency: "access" })}
           />
+        </Card>
+        <Card title={t("restorePage.otherSources")} hueIndex={nextHue()}>
+          <div className="flex flex-col">
+            <Way
+              glyph={<IconFolder />}
+              name={t("restorePage.oldFolder")}
+              sub={t("restorePage.oldFolderHint")}
+              onOpen={() => setSource("oldFolder")}
+            />
+            <Way
+              glyph={<IconDownload />}
+              name={t("recovery.abTitle")}
+              sub={t("restorePage.appdataHint")}
+              onOpen={() => setSource("appdata")}
+            />
+          </div>
         </Card>
       </div>
 
