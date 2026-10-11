@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"filippo.io/age"
@@ -22,7 +23,33 @@ var (
 	errNotAKit      = errors.New("this is not a BombVault recovery kit")
 	errKitKeyBroken = errors.New("the APP_KEY in this recovery kit does not give the repository password beside it, so one of the two was changed or mistyped")
 	errKitHasNoKey  = errors.New("this recovery kit names no key. A version that left the key out wrote it for a server without encryption")
+	// errKitAmbiguous is a kit with two keys of a kind or the same section
+	// twice. BombVault writes neither, and choosing one would let whoever
+	// added the second decide which key is taken.
+	errKitAmbiguous = errors.New("this recovery kit names a key or a section twice, so it is unclear which one counts. Use the kit as BombVault wrote it")
+	// errKitLineBreak is a value that would break out of its line in the kit.
+	errKitLineBreak = errors.New("the recovery kit cannot be written: a name, a location or a sign-in stored on this server spans more than one line. Correct it and try again")
 )
+
+// kitFence opens and closes the block a kit prints the rclone config in.
+const kitFence = "```"
+
+// spansLines reports whether one of the values would take more than its own
+// line in a recovery kit.
+func spansLines(values ...string) bool {
+	return slices.ContainsFunc(values, func(v string) bool { return strings.ContainsAny(v, "\r\n") })
+}
+
+// breaksKitFence reports whether an rclone config has a line that would end
+// the block the kit prints it in, after which the rest would read as kit.
+func breaksKitFence(conf string) bool {
+	for line := range strings.SplitSeq(conf, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), kitFence) {
+			return true
+		}
+	}
+	return false
+}
 
 // The kinds of place a recovery kit lists.
 const (
@@ -95,10 +122,27 @@ func readRecoveryKit(text string) (recoveryKit, error) {
 	kit := recoveryKit{Locations: []kitLocation{}}
 	var section, mount, destination string
 	secrets, next := map[int]string{}, kitBackupKey
+	seen := map[string]bool{}
 	var conf []string
-	inConf := false
+	fenced := false
 	for line := range strings.SplitSeq(text, "\n") {
+		// Inside the block everything is the rclone config, a line that looks
+		// like a heading included.
+		if line == kitFence {
+			fenced = !fenced
+			continue
+		}
+		if fenced {
+			if section == "Repository credentials" {
+				conf = append(conf, line)
+			}
+			continue
+		}
 		if heading, ok := strings.CutPrefix(line, "## "); ok {
+			if seen[heading] {
+				return recoveryKit{}, errKitAmbiguous
+			}
+			seen[heading] = true
 			section = heading
 			continue
 		}
@@ -115,6 +159,9 @@ func readRecoveryKit(text string) (recoveryKit, error) {
 				next = kitPassword
 			default:
 				if m := kitSecretRe.FindStringSubmatch(line); m != nil {
+					if _, twice := secrets[next]; twice {
+						return recoveryKit{}, errKitAmbiguous
+					}
 					secrets[next] = m[1]
 				}
 			}
@@ -138,12 +185,7 @@ func readRecoveryKit(text string) (recoveryKit, error) {
 				kit.Locations = append(kit.Locations, kitLocation{Kind: kitNamed, Name: m[1], Location: m[2]})
 			}
 		case "Repository credentials":
-			switch m := kitEnvRe.FindStringSubmatch(line); {
-			case line == "```":
-				inConf = !inConf
-			case inConf:
-				conf = append(conf, line)
-			case m != nil:
+			if m := kitEnvRe.FindStringSubmatch(line); m != nil {
 				kit.creds.set(m[1], m[2])
 			}
 		case "Destinations":
@@ -261,6 +303,8 @@ func kitFail(w http.ResponseWriter, err error) {
 		code = "kit-key-broken"
 	case errors.Is(err, errKitHasNoKey):
 		code = "kit-no-key"
+	case errors.Is(err, errKitAmbiguous):
+		code = "kit-ambiguous"
 	case errors.Is(err, errKitIdentity):
 		code = "kit-identity"
 	case errors.Is(err, errKitNotForIdentity):

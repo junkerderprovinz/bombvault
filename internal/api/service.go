@@ -17430,6 +17430,9 @@ func (s *Service) writeRcloneFile(encB64 string) error {
 // file restic→rclone reads. An empty conf clears both. The stored DB value is
 // AES-256-GCM-encrypted (APP_KEY); the on-disk file is 0600 in /config.
 func (s *Service) SetRcloneConf(conf string) error {
+	if breaksKitFence(conf) {
+		return errors.New("an rclone config must not contain a line that starts with three backticks")
+	}
 	stored := ""
 	if strings.TrimSpace(conf) != "" {
 		enc, encErr := secret.Encrypt(s.cfg.AppKey, []byte(conf))
@@ -17652,6 +17655,9 @@ func (s *Service) SetCloudCreds(c CloudCreds) error {
 	c.S3StorageClass = strings.ToUpper(strings.TrimSpace(c.S3StorageClass))
 	if c.S3StorageClass != "" && !restic.StorageClassAllowed(c.S3StorageClass) {
 		return fmt.Errorf("unsupported S3 storage class %q (allowed: %s)", c.S3StorageClass, strings.Join(restic.AllowedStorageClasses, ", "))
+	}
+	if spansLines(c.RESTUser, c.RESTPassword, c.S3KeyID, c.S3Secret, c.S3Region) {
+		return errors.New("a user name, a key or a password must be on one line")
 	}
 	// The keep-prior merge below reads the CURRENTLY stored secrets, so it has to
 	// happen in the same transaction as the write. Doing it against a snapshot
@@ -17966,8 +17972,22 @@ func (s *Service) RecoveryKit() (string, error) {
 		repos = append(repos, rr)
 	}
 
+	// Every value has a line of its own, so one that spans lines could add a
+	// section or a key to what the kit says when it is read back. broken
+	// names the section the first such value turned up in.
 	var b strings.Builder
-	w := func(format string, a ...any) { fmt.Fprintf(&b, format, a...) }
+	section, broken := "", ""
+	w := func(format string, a ...any) {
+		if heading, ok := strings.CutPrefix(format, "## "); ok {
+			section = strings.TrimSpace(heading)
+		}
+		for _, v := range a {
+			if value, ok := v.(string); ok && broken == "" && spansLines(value) {
+				broken = section
+			}
+		}
+		fmt.Fprintf(&b, format, a...)
+	}
 
 	w("# BombVault encryption-key recovery kit\n\n")
 	w("Generated: %s\n\n", time.Now().Format(time.RFC1123))
@@ -18168,7 +18188,10 @@ func (s *Service) RecoveryKit() (string, error) {
 		if hasRclone {
 			w("rclone config — holds each remote's own secrets. Save it verbatim as\n")
 			w("~/.config/rclone/rclone.conf, then use the repo as rclone:<remote>:<path>:\n\n")
-			w("```\n%s\n```\n\n", strings.TrimRight(rcloneConf, "\n"))
+			if breaksKitFence(rcloneConf) && broken == "" {
+				broken = section
+			}
+			b.WriteString(kitFence + "\n" + strings.TrimRight(rcloneConf, "\n") + "\n" + kitFence + "\n\n")
 		}
 	}
 
@@ -18200,7 +18223,14 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("  (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY for S3, RESTIC_REST_USERNAME /\n")
 	w("  RESTIC_REST_PASSWORD for a REST server) and use the repo verbatim.\n")
 
-	b.WriteString(s.zfsKitSection(settings))
+	zfsSection, oneLine := s.zfsKitSection(settings)
+	if !oneLine && broken == "" {
+		broken = "ZFS datasets"
+	}
+	if broken != "" {
+		return "", fmt.Errorf("%w (section %q)", errKitLineBreak, broken)
+	}
+	b.WriteString(zfsSection)
 	b.WriteString(dbDumpKitSection)
 
 	return b.String(), nil

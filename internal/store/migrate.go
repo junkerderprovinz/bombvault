@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -2914,6 +2915,14 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
 ) WITHOUT ROWID;`,
 	},
 	{
+		// The recovery kit prints each name and location on a line of its
+		// own, so one that spans lines would read back as another entry or
+		// another key. The database refuses them whichever way they come in.
+		version: oneLineMigration,
+		name:    "one_line_names_and_locations",
+		sql:     oneLineTriggers(),
+	},
+	{
 		// The key of another install's backups, sealed under this install's
 		// own. Without a row the install backs up under its own key.
 		version:          keyRolesMigration,
@@ -3094,6 +3103,48 @@ const restoreFolderMigration = 325
 
 // declinedMigration numbers the entries nobody wants backed up, 335.
 const declinedMigration = 335
+
+// oneLineMigration numbers the guard against line breaks in what the recovery
+// kit prints, 336.
+const oneLineMigration = 336
+
+// oneLineColumns are the names and locations the recovery kit prints.
+var oneLineColumns = []struct {
+	table string
+	cols  []string
+}{
+	{"offsite_targets", []string{"name", "repo"}},
+	{"mesh_offers", []string{"from_name", "suggested_domain", "repo", "rest_user"}},
+	{"file_sets", []string{"name"}},
+	{"settings", []string{
+		"containers_path", "vms_path", "flash_path", "config_path", "files_path", "zfs_path",
+		"containers_offsite", "vms_offsite", "flash_offsite", "config_offsite", "files_offsite", "zfs_offsite",
+	}},
+}
+
+// ErrLineBreakText is what the database says when it refuses a name or a
+// location that spans lines.
+const ErrLineBreakText = "a name or a location must be on one line"
+
+// oneLineTriggers refuses a line break in oneLineColumns on insert and on
+// every update that changes the value. A value stored before the guard stays
+// until somebody corrects it, so that saving something else still works.
+func oneLineTriggers() string {
+	var b strings.Builder
+	for _, t := range oneLineColumns {
+		var fresh, changed []string
+		for _, c := range t.cols {
+			broken := fmt.Sprintf("(instr(coalesce(NEW.%[1]s, ''), char(10)) + instr(coalesce(NEW.%[1]s, ''), char(13)) > 0)", c)
+			fresh = append(fresh, broken)
+			changed = append(changed, fmt.Sprintf("(NEW.%[1]s IS NOT OLD.%[1]s AND %[2]s)", c, broken))
+		}
+		fmt.Fprintf(&b, "CREATE TRIGGER IF NOT EXISTS one_line_%[1]s_insert BEFORE INSERT ON %[1]s WHEN %[2]s BEGIN SELECT RAISE(ABORT, '%[3]s'); END;\n",
+			t.table, strings.Join(fresh, " OR "), ErrLineBreakText)
+		fmt.Fprintf(&b, "CREATE TRIGGER IF NOT EXISTS one_line_%[1]s_update BEFORE UPDATE OF %[2]s ON %[1]s WHEN %[3]s BEGIN SELECT RAISE(ABORT, '%[4]s'); END;\n",
+			t.table, strings.Join(t.cols, ", "), strings.Join(changed, " OR "), ErrLineBreakText)
+	}
+	return b.String()
+}
 
 // keyRolesMigration numbers the adopted backup key, 345 and 349, and the key
 // deposits a group member keeps, 346 to 348.
