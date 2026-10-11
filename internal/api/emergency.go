@@ -256,6 +256,9 @@ func (s *Service) currentEmergency() (*emergencySession, error) {
 // may.
 func (s *Service) adoptionRefusal(sess *emergencySession) error {
 	now := s.currentBackupKey()
+	if now.unread {
+		return errBackupKeyUnread
+	}
 	if now.state != backupKeyLocked && sess.backupKey == now.key {
 		return errAdoptSameKey
 	}

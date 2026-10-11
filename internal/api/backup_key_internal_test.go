@@ -141,3 +141,28 @@ func TestAnAdoptedKeyThatNoLongerOpensLocksTheBackups(t *testing.T) {
 		t.Fatalf("the refusal carries the code %q", code)
 	}
 }
+
+func TestAStoreThatDoesNotAnswerLocksTheBackupKeyUntilItDoes(t *testing.T) {
+	f := newPlacementFixture(t)
+	own := f.svc.cfg.AppKey
+	if _, err := f.db.Exec(`ALTER TABLE backup_key RENAME TO backup_key_away`); err != nil {
+		t.Fatal(err)
+	}
+	f.svc.forgetBackupKey()
+	if key, err := f.svc.backupKey(); !errors.Is(err, errBackupKeyUnread) || key != "" {
+		t.Fatalf("the backup key while the store fails: %v (a key was returned: %v)", err, key != "")
+	}
+	if f.svc.currentBackupKey().state != backupKeyLocked || f.svc.backupPassword() != lockedPassword {
+		t.Fatal("the server backs up under some key while it cannot read which one is right")
+	}
+	if _, err := f.svc.RecoveryKit(); err == nil {
+		t.Fatal("a recovery kit was written while the key could not be read")
+	}
+
+	if _, err := f.db.Exec(`ALTER TABLE backup_key_away RENAME TO backup_key`); err != nil {
+		t.Fatal(err)
+	}
+	if key, err := f.svc.backupKey(); err != nil || key != own {
+		t.Fatalf("the backup key once the store answers again: %v", err)
+	}
+}

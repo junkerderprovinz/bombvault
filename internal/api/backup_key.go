@@ -30,12 +30,18 @@ var errBackupKeyLocked = errors.New("the key of the backups this server took ove
 // wrong key in the meantime.
 const lockedPassword = "backup-key-locked"
 
-// backupKeyState is the backup key as it was last read or set.
+// errBackupKeyUnread is what backups are refused with while the store does
+// not say whether a key was adopted.
+var errBackupKeyUnread = errors.New("the settings database did not say which key the backups are under, so nothing is backed up or handed out until it does")
+
+// backupKeyState is the backup key as it was last read or set. unread marks a
+// locked state that only stands for a store that could not be asked.
 type backupKeyState struct {
 	state     string
 	key       string
 	source    string
 	adoptedAt int64
+	unread    bool
 }
 
 // currentBackupKey reads the adopted key once and keeps it. An install without
@@ -46,19 +52,23 @@ func (s *Service) currentBackupKey() backupKeyState {
 	if s.backupKeyRead {
 		return s.backupKeyNow
 	}
-	s.backupKeyNow = backupKeyState{state: backupKeyOwn, key: s.cfg.AppKey}
-	s.backupKeyRead = true
+	own := backupKeyState{state: backupKeyOwn, key: s.cfg.AppKey}
 	if s.store == nil {
-		return s.backupKeyNow
+		s.backupKeyNow, s.backupKeyRead = own, true
+		return own
 	}
 	adopted, found, err := s.store.AdoptedKey()
 	if err != nil {
-		// A database older than the table has no adopted key either.
-		log.Printf("api: backup key: %v; backing up under APP_KEY", err)
-		return s.backupKeyNow
+		// APP_KEY in place of an adopted key would write backups, the kit and
+		// the deposits under the wrong one. The answer is not kept, so the
+		// next reader asks again.
+		log.Printf("api: backup key: %v; backups are refused until the key can be read", err)
+		return backupKeyState{state: backupKeyLocked, unread: true}
 	}
+	s.backupKeyRead = true
 	if !found {
-		return s.backupKeyNow
+		s.backupKeyNow = own
+		return own
 	}
 	s.backupKeyNow = backupKeyState{state: backupKeyLocked, source: adopted.Source, adoptedAt: adopted.AdoptedAt}
 	if plain, err := secret.Decrypt(s.cfg.AppKey, adopted.KeyEnc); err == nil && foreignKeyRe.Match(plain) {
@@ -79,7 +89,10 @@ func (s *Service) forgetBackupKey() {
 // backupKey returns the key the backups are under.
 func (s *Service) backupKey() (string, error) {
 	k := s.currentBackupKey()
-	if k.state == backupKeyLocked {
+	switch {
+	case k.unread:
+		return "", errBackupKeyUnread
+	case k.state == backupKeyLocked:
 		return "", errBackupKeyLocked
 	}
 	return k.key, nil
