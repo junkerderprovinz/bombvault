@@ -117,7 +117,6 @@ const et: Partial<Translations> = {
   "takeover.reason.composeService": "sama Compose'i teenus",
   "takeover.reason.templateLineage": "Unraid nimetas malli ümber",
   "takeover.reason.libvirtUuid": "sama VM (UUID)",
-  "takeover.backups": "one={n} varundus|other={n} varundust",
   "takeover.accept": "Võta üle",
   "takeover.decline": "Mitte see",
   "takeover.confirm": "Kas võtta {old} üle? Seaded liiguvad kirjele {new}. {history} Edaspidi arvestavad säilitusreeglid mõlema kirje varundusi koos. Sidumise saad hiljem tagasi võtta.",

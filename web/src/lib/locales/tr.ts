@@ -115,7 +115,6 @@ const tr: Partial<Translations> = {
   "takeover.reason.composeService": "aynı Compose hizmeti",
   "takeover.reason.templateLineage": "Unraid şablonunu yeniden adlandırdı",
   "takeover.reason.libvirtUuid": "aynı VM (UUID)",
-  "takeover.backups": "{n} yedek",
   "takeover.accept": "Devral",
   "takeover.decline": "Bu değil",
   "takeover.confirm": "{old} devralınsın mı? Ayarları {new} ögesine taşınır. {history} Bundan sonra saklama kuralları iki ögenin yedeklerini birlikte sayar. Bağlantıyı daha sonra geri alabilirsin.",

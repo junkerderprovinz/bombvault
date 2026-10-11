@@ -114,7 +114,6 @@ const ru: Partial<Translations> = {
   "takeover.reason.composeService": "та же служба Compose",
   "takeover.reason.templateLineage": "Unraid переименовал свой шаблон",
   "takeover.reason.libvirtUuid": "та же ВМ (UUID)",
-  "takeover.backups": "one={n} копия|few={n} копии|many={n} копий|other={n} копии",
   "takeover.accept": "Перенести",
   "takeover.decline": "Не эта",
   "takeover.confirm": "Перенести {old}? Настройки перейдут к {new}. {history} После этого правила хранения будут учитывать резервные копии обеих записей вместе. Связь можно будет отменить позже.",

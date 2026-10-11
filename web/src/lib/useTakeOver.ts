@@ -53,7 +53,7 @@ export async function countBackups(api: TakeoverApi, name: string): Promise<numb
 }
 
 export function backupCountText(t: T, n: number): string {
-  return t("takeover.backups", n);
+  return t("entry.places.count", n);
 }
 
 function historyKey(backups: number | null): TranslationKey {

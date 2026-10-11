@@ -117,7 +117,6 @@ const is: Partial<Translations> = {
   "takeover.reason.composeService": "sama Compose-þjónusta",
   "takeover.reason.templateLineage": "Unraid endurnefndi sniðmátið",
   "takeover.reason.libvirtUuid": "sama sýndarvél (UUID)",
-  "takeover.backups": "{n} afrit",
   "takeover.accept": "Taka yfir",
   "takeover.decline": "Ekki þessi",
   "takeover.confirm": "Taka yfir {old}? Stillingarnar flytjast yfir á {new}. {history} Upp frá því telur varðveislustefnan afrit beggja saman. Þú getur rofið tenginguna síðar.",

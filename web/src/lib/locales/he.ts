@@ -115,7 +115,6 @@ const he: Partial<Translations> = {
   "takeover.reason.composeService": "אותו שירות Compose",
   "takeover.reason.templateLineage": "Unraid שינה את שם התבנית שלו",
   "takeover.reason.libvirtUuid": "אותה מכונה וירטואלית (UUID)",
-  "takeover.backups": "one=גיבוי אחד|two=שני גיבויים|other={n} גיבויים",
   "takeover.accept": "מזג",
   "takeover.decline": "לא זה",
   "takeover.confirm": "למזג את {old}? ההגדרות שלו עוברות ל-{new}. {history} מכאן והלאה, מדיניות השמירה סופרת את הגיבויים של שני הפריטים יחד. אפשר לבטל את הקישור מאוחר יותר.",

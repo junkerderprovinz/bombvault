@@ -114,7 +114,6 @@ const nl: Partial<Translations> = {
   "takeover.reason.composeService": "dezelfde Compose-service",
   "takeover.reason.templateLineage": "Unraid heeft het sjabloon hernoemd",
   "takeover.reason.libvirtUuid": "dezelfde VM (UUID)",
-  "takeover.backups": "one={n} back-up|other={n} back-ups",
   "takeover.accept": "Overnemen",
   "takeover.decline": "Niet deze",
   "takeover.confirm": "{old} overnemen? De instellingen gaan naar {new}. {history} Daarna telt het bewaarbeleid de back-ups van beide samen. Je kunt de koppeling later ongedaan maken.",

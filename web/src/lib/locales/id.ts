@@ -117,7 +117,6 @@ const id: Partial<Translations> = {
   "takeover.reason.composeService": "layanan Compose yang sama",
   "takeover.reason.templateLineage": "Unraid mengganti nama template-nya",
   "takeover.reason.libvirtUuid": "VM yang sama (UUID)",
-  "takeover.backups": "{n} cadangan",
   "takeover.accept": "Ambil alih",
   "takeover.decline": "Bukan yang ini",
   "takeover.confirm": "Ambil alih {old}? Pengaturannya pindah ke {new}. {history} Mulai saat itu, aturan retensi menghitung cadangan keduanya bersama-sama. Anda dapat melepas tautan ini nanti.",

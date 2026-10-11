@@ -115,7 +115,6 @@ const ko: Partial<Translations> = {
   "takeover.reason.composeService": "같은 Compose 서비스",
   "takeover.reason.templateLineage": "Unraid의 템플릿 이름 변경",
   "takeover.reason.libvirtUuid": "같은 VM (UUID)",
-  "takeover.backups": "백업 {n}개",
   "takeover.accept": "이어받기",
   "takeover.decline": "해당 없음",
   "takeover.confirm": "{old} 항목을 이어받을까요? 설정이 {new} 항목으로 옮겨집니다. {history} 이후에는 보존 정책이 두 항목의 백업을 합쳐서 계산합니다. 연결은 나중에 해제할 수 있습니다.",

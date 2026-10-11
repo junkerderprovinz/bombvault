@@ -346,7 +346,7 @@ test("the list shows every kind with its count, its last runs and one status", a
   }
 
   // What is gone from the host stands last, under its own heading.
-  await expect(page.getByRole("heading", { name: "Nicht installiert (nur Backups)" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nicht installiert (nur Sicherungen)" })).toBeVisible();
   await expect(rows(page).last()).toContainText(/pihole|Windows 10/);
 });
 
@@ -590,7 +590,7 @@ test("the rare actions wait under More", async ({ page }, testInfo) => {
   const menu = page.getByRole("menu", { name: "Mehr" });
   await expect(menu.getByRole("menuitem")).toHaveText([
     "Auswählen",
-    "Backups entdecken",
+    "Sicherungen entdecken",
     "Stack wiederherstellen",
     "ZFS-Verbindung zu diesem Server",
   ]);
@@ -599,7 +599,7 @@ test("the rare actions wait under More", async ({ page }, testInfo) => {
   const box = (await menu.boundingBox())!;
   expect(box.y + box.height).toBeLessThanOrEqual(corner.y);
 
-  await menu.getByRole("menuitem", { name: "Backups entdecken" }).click();
+  await menu.getByRole("menuitem", { name: "Sicherungen entdecken" }).click();
   await expect.poll(() => posts).toContain("/api/zfs/discover");
 
   await more.click();

@@ -117,7 +117,6 @@ const eu: Partial<Translations> = {
   "takeover.reason.composeService": "Compose zerbitzu bera",
   "takeover.reason.templateLineage": "Unraid-ek txantiloiaren izena aldatu du",
   "takeover.reason.libvirtUuid": "MB bera (UUID)",
-  "takeover.backups": "{n} babeskopia",
   "takeover.accept": "Bereganatu",
   "takeover.decline": "Ez da hau",
   "takeover.confirm": "{old} elementua bereganatu nahi duzu? Ezarpenak {new} elementura pasatzen dira. {history} Hortik aurrera, mantentzeak bien babeskopiak batera zenbatzen ditu. Lotura geroago desegin dezakezu.",

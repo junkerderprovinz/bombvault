@@ -117,7 +117,6 @@ const sr: Partial<Translations> = {
   "takeover.reason.composeService": "иста Compose услуга",
   "takeover.reason.templateLineage": "Unraid је преименовао шаблон",
   "takeover.reason.libvirtUuid": "исти ВМ (UUID)",
-  "takeover.backups": "one={n} резервна копија|few={n} резервне копије|other={n} резервних копија",
   "takeover.accept": "Пренеси",
   "takeover.decline": "Није овај",
   "takeover.confirm": "Пренесем {old}? Њена подешавања прелазе на {new}. {history} Након тога правила задржавања заједно броје резервне копије обе ставке. Везу можеш касније да поништиш.",

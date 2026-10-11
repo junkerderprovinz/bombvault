@@ -115,7 +115,6 @@ const vi: Partial<Translations> = {
   "takeover.reason.composeService": "cùng dịch vụ Compose",
   "takeover.reason.templateLineage": "Unraid đã đổi tên mẫu",
   "takeover.reason.libvirtUuid": "cùng VM (UUID)",
-  "takeover.backups": "{n} bản sao lưu",
   "takeover.accept": "Tiếp quản",
   "takeover.decline": "Không phải mục này",
   "takeover.confirm": "Tiếp quản {old}? Cài đặt của nó sẽ chuyển sang {new}. {history} Từ đó, chính sách lưu giữ sẽ tính gộp bản sao lưu của cả hai. Bạn có thể hủy liên kết này sau.",

@@ -117,7 +117,6 @@ const hi: Partial<Translations> = {
   "takeover.reason.composeService": "वही Compose सेवा",
   "takeover.reason.templateLineage": "Unraid ने इसके टेम्पलेट का नाम बदल दिया",
   "takeover.reason.libvirtUuid": "वही VM (UUID)",
-  "takeover.backups": "{n} बैकअप",
   "takeover.accept": "अपनाएँ",
   "takeover.decline": "यह नहीं",
   "takeover.confirm": "{old} को अपनाएँ? इसकी सेटिंग्स {new} में चली जाएँगी। {history} इसके बाद रिटेंशन नीति दोनों के बैकअप एक साथ गिनती है। आप यह लिंक बाद में हटा सकते हैं।",

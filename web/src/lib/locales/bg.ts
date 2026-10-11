@@ -117,7 +117,6 @@ const bg: Partial<Translations> = {
   "takeover.reason.composeService": "същата Compose услуга",
   "takeover.reason.templateLineage": "Unraid преименува шаблона си",
   "takeover.reason.libvirtUuid": "същата ВМ (UUID)",
-  "takeover.backups": "one={n} архивиране|other={n} архивирания",
   "takeover.accept": "Поеми",
   "takeover.decline": "Не е този",
   "takeover.confirm": "Да поема ли {old}? Настройките му преминават към {new}. {history} След това правилата за задържане броят архивиранията на двата записа заедно. Можеш да премахнеш връзката по-късно.",

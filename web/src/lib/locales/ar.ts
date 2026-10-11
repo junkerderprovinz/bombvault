@@ -115,7 +115,6 @@ const ar: Partial<Translations> = {
   "takeover.reason.composeService": "خدمة Compose نفسها",
   "takeover.reason.templateLineage": "أعاد Unraid تسمية قالبه",
   "takeover.reason.libvirtUuid": "الجهاز الظاهري نفسه (UUID)",
-  "takeover.backups": "zero=لا نسخ احتياطية|one=نسخة احتياطية واحدة|two=نسختان احتياطيتان|few={n} نسخ احتياطية|many={n} نسخة احتياطية|other={n} نسخة احتياطية",
   "takeover.accept": "دمج",
   "takeover.decline": "ليس هذا",
   "takeover.confirm": "دمج {old}؟ تنتقل إعداداته إلى {new}. {history} بعد ذلك تحسب سياسة الاحتفاظ النسخ الاحتياطية للاثنين معاً. يمكن التراجع عن الربط لاحقاً.",

@@ -115,7 +115,6 @@ const zh: Partial<Translations> = {
   "takeover.reason.composeService": "同一个 Compose 服务",
   "takeover.reason.templateLineage": "Unraid 重命名了其模板",
   "takeover.reason.libvirtUuid": "同一台虚拟机 (UUID)",
-  "takeover.backups": "{n} 个备份",
   "takeover.accept": "接管",
   "takeover.decline": "不是这个",
   "takeover.confirm": "接管 {old}？其设置将转移到 {new}。{history}此后，保留策略会将两者的备份合并计算。之后可以撤销此关联。",

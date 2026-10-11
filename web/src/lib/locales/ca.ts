@@ -117,7 +117,6 @@ const ca: Partial<Translations> = {
   "takeover.reason.composeService": "mateix servei de Compose",
   "takeover.reason.templateLineage": "Unraid ha reanomenat la plantilla",
   "takeover.reason.libvirtUuid": "mateixa MV (UUID)",
-  "takeover.backups": "one={n} còpia|many={n} de còpies|other={n} còpies",
   "takeover.accept": "Adopta",
   "takeover.decline": "No és aquesta",
   "takeover.confirm": "Vols adoptar {old}? La configuració passa a {new}. {history} A partir d'aleshores, la retenció compta conjuntament les còpies de totes dues. Pots desfer la vinculació més endavant.",
