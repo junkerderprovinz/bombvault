@@ -452,6 +452,48 @@ func TestARecoveryCodeIsSpentWhenUsed(t *testing.T) {
 	}
 }
 
+// Logins that read the codes at the same moment each spend their own code
+// and nothing else: one code signs in once, and none comes back.
+func TestRecoveryCodesSpentAtOnceAreSpentOnce(t *testing.T) {
+	h, repo, _ := newAuthGateHandler(t)
+	enableAuth(t, h, repo)
+	plain, hashed, err := secret.NewRecoveryCodes(h.cfg.AppKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	storeTOTP(t, h, repo, testTOTPSecret, hashed)
+	read := func() *store.Settings {
+		s, err := repo.GetSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return &s
+	}
+
+	first, second, third := read(), read(), read()
+	accepted := 0
+	for _, s := range []*store.Settings{first, second} {
+		if h.secondFactorOK(s, plain[0]) {
+			accepted++
+		}
+	}
+	if accepted != 1 {
+		t.Fatalf("one recovery code signed in %d times", accepted)
+	}
+	if !h.secondFactorOK(third, plain[1]) {
+		t.Fatal("a second code was refused")
+	}
+	left := decodeRecoveryCodes(read().TOTPRecovery)
+	if len(left) != len(plain)-2 {
+		t.Fatalf("%d codes left after two were spent, want %d", len(left), len(plain)-2)
+	}
+	for _, c := range plain[:2] {
+		if secret.MatchRecoveryCode(h.cfg.AppKey, c, left) >= 0 {
+			t.Fatalf("the spent code %s came back", c)
+		}
+	}
+}
+
 func TestAnUnconfirmedEnrolmentDoesNotDemandACode(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)

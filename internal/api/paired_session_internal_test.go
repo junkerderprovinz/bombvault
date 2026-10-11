@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -242,6 +244,53 @@ func TestKeyMaterialIsNotMadeOrHandedOutWithoutALoginPassword(t *testing.T) {
 	}
 	if _, found := kept(t, attic, tower); found {
 		t.Fatal("a deposit was made")
+	}
+}
+
+// heldBody tells entered when the request first reads it and hands out its
+// content once release is closed. That holds a request after the gates have
+// let it in and before it reads its body.
+type heldBody struct {
+	entered func()
+	release <-chan struct{}
+	body    *strings.Reader
+}
+
+func (b heldBody) Read(p []byte) (int, error) {
+	b.entered()
+	<-b.release
+	return b.body.Read(p)
+}
+
+func TestASessionTheResetEndedCannotSwitchPairingPhonesOn(t *testing.T) {
+	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
+	entered, release := make(chan struct{}), make(chan struct{})
+	body := heldBody{entered: sync.OnceFunc(func() { close(entered) }), release: release, body: strings.NewReader(`{"on":true}`)}
+	req := httptest.NewRequest(http.MethodPut, "/api/auth/phone-pairing", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: attic.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
+	w := httptest.NewRecorder()
+	done := make(chan struct{})
+	go func() {
+		attic.router.ServeHTTP(w, req)
+		close(done)
+	}()
+
+	hash, err := secret.HashPassword(attic.appKey, "a new password")
+	if err != nil {
+		t.Fatal(err)
+	}
+	<-entered
+	attic.h.mintMu.Lock()
+	_, _, err = attic.h.resetLogin(hash)
+	attic.h.mintMu.Unlock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	close(release)
+	<-done
+	if on, err := attic.st.PhonePairing(); err != nil || on {
+		t.Fatalf("pairing phones after the reset = %v, %v; answer %d %s", on, err, w.Code, w.Body)
 	}
 }
 

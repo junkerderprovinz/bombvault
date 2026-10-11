@@ -92,6 +92,13 @@ func (h *Handler) handleSetPhonePairing(w http.ResponseWriter, r *http.Request) 
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	// Switching it on lets the group's words in, so a session a reset ended
+	// while this request was under way must not do it.
+	release, ok := h.holdSignIn(w, r, "switching pairing phones on or off")
+	if !ok {
+		return
+	}
+	defer release()
 	if err := h.store.SetPhonePairing(body.On); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

@@ -4938,25 +4938,36 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+var errRecoveryCodeSpent = errors.New("the recovery code was spent")
+
 // secondFactorOK checks code against the time-based secret and, failing that,
-// against the single-use recovery codes. A recovery code that matches is SPENT
-// here (removed from the stored list) before this returns true.
+// against the single-use recovery codes. A recovery code that matches is spent
+// here, removed from the stored list, before this returns true.
 func (h *Handler) secondFactorOK(s *store.Settings, code string) bool {
 	if sec, err := h.decryptTOTPSecret(s.TOTPSecret); err == nil && sec != "" {
 		if secret.ValidTOTP(sec, code, time.Now()) {
 			return true
 		}
 	}
-	stored := decodeRecoveryCodes(s.TOTPRecovery)
-	idx := secret.MatchRecoveryCode(h.cfg.AppKey, code, stored)
-	if idx < 0 {
+	if secret.MatchRecoveryCode(h.cfg.AppKey, code, decodeRecoveryCodes(s.TOTPRecovery)) < 0 {
 		return false
 	}
-	remaining := append(append([]string{}, stored[:idx]...), stored[idx+1:]...)
+	// The code is matched again against the codes as stored, so two logins
+	// that read them at once cannot both spend one code or bring back the
+	// code the other spent.
+	var remaining []string
 	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
+		stored := decodeRecoveryCodes(st.TOTPRecovery)
+		idx := secret.MatchRecoveryCode(h.cfg.AppKey, code, stored)
+		if idx < 0 {
+			return errRecoveryCodeSpent
+		}
+		remaining = append(append([]string{}, stored[:idx]...), stored[idx+1:]...)
 		st.TOTPRecovery = encodeRecoveryCodes(remaining)
 		return nil
-	}); err != nil {
+	}); errors.Is(err, errRecoveryCodeSpent) {
+		return false
+	} else if err != nil {
 		// The code was correct, but it could not be burned. Refuse the login:
 		// a recovery code that survives its own use is a permanent password.
 		log.Printf("api: login: spending recovery code: %v", err)
@@ -5221,8 +5232,11 @@ func (h *Handler) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
+		// A factor armed in another tab since the read above stays armed.
+		if st.TOTPEnabled {
+			return errLoginChanged
+		}
 		st.TOTPSecret = sealed
-		st.TOTPEnabled = false
 		return nil
 	}); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -5330,6 +5344,11 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
+		// The code was checked against the secret read above. A factor set up
+		// anew since then is not the one it proves.
+		if st.TOTPSecret != s.TOTPSecret {
+			return errLoginChanged
+		}
 		st.TOTPEnabled = false
 		st.TOTPSecret = ""
 		st.TOTPRecovery = ""
