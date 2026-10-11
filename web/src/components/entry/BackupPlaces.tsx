@@ -12,7 +12,6 @@ import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconCloud, IconLocal } from "../navGlyphs";
 import { Rows } from "../storage/rows";
 import { ReplicaPlaceRow } from "../zfs/replica/ReplicaPlaceRow";
-import { ZFSSitesLine } from "../zfs/ZFSSitesLine";
 
 /** An entry's timeline as the page reads it once for all its cards. */
 export type TimelineState = ReturnType<typeof useTimeline> & { domain: TimelineDomain };
@@ -39,16 +38,26 @@ function PlaceRow({ glyph, name, children }: { glyph: ReactNode; name: ReactNode
   );
 }
 
+
 /**
  * BackupPlaces lists the storage locations that hold the entry's backups and
  * how many each holds. A location off the premises is read only when asked,
- * because listing it takes time, and says so until then.
+ * because listing it takes time, and says so until then. A ZFS entry lists
+ * its replica below them.
  */
-export function BackupPlaces({ timeline, hueIndex }: { timeline: TimelineState; hueIndex: number }) {
+export function BackupPlaces({
+  timeline,
+  replicaOf,
+  hueIndex,
+}: {
+  timeline: TimelineState;
+  replicaOf?: ZFSDatasetView;
+  hueIndex: number;
+}) {
   const { t } = useT();
   const { places, rows, reading, loadPlace } = timeline;
   const labelOf = usePlaceLabel(places);
-  if (places.length === 0) return null;
+  if (places.length === 0 && !replicaOf) return null;
 
   return (
     <Card title={t("storage.title")} hint={t("entry.places.hint")} hueIndex={hueIndex}>
@@ -93,29 +102,7 @@ export function BackupPlaces({ timeline, hueIndex }: { timeline: TimelineState; 
           );
         })}
       </Rows>
-    </Card>
-  );
-}
-
-/** ZFSPlaces is the same card for a ZFS entry, whose places are its one
- *  repository and its replica. */
-export function ZFSPlaces({ dataset, hueIndex }: { dataset: ZFSDatasetView; hueIndex: number }) {
-  const { t } = useT();
-  return (
-    <Card title={t("storage.title")} hueIndex={hueIndex}>
-      <Rows>
-        <PlaceRow
-          glyph={<IconLocal />}
-          name={
-            <span dir="ltr" className="font-mono text-start">
-              {dataset.repoEffective}
-            </span>
-          }
-        >
-          <ZFSSitesLine item={dataset} />
-        </PlaceRow>
-      </Rows>
-      <ReplicaPlaceRow itemId={dataset.id} name={dataset.dataset} />
+      {replicaOf && <ReplicaPlaceRow itemId={replicaOf.id} name={replicaOf.dataset} />}
     </Card>
   );
 }

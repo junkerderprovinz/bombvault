@@ -165,6 +165,35 @@ describe("the cards of each kind", () => {
     expect(within(card(en["entry.settings.database"])).getByRole("switch", { name: en["dbdump.toggle"] })).toBeTruthy();
   });
 
+  it("draws beside the switch how a backup of the database runs, with the stop while the files are read", async () => {
+    serveEntries(mocks, { containers: [containerView({ dbEngine: "postgres", dbTier: "curated", dbDataCoverage: "stopped" })] });
+    await renderSettings("container/immich");
+    const database = within(card(en["entry.settings.database"]));
+    expect(database.getByRole("img", { name: en["entry.dump.label"] })).toBeTruthy();
+    expect(database.getByText(en["entry.dump.twoPoints"])).toBeTruthy();
+    expect(database.getByText(en["entry.dump.paused"])).toBeTruthy();
+    expect(database.getByText("database.sql", { selector: "div" })).toBeTruthy();
+  });
+
+  it("draws the one restore point that is left while the dump is off, and nothing that moves", async () => {
+    serveEntries(mocks, {
+      containers: [containerView({ dbEngine: "postgres", dbTier: "curated", dbDataCoverage: "stopped", dbDumpOff: true })],
+    });
+    await renderSettings("container/immich");
+    const database = within(card(en["entry.settings.database"]));
+    const picture = database.getByRole("img", { name: en["entry.dump.labelWithout"] });
+    expect(database.getByText(en["entry.dump.none"])).toBeTruthy();
+    expect(database.getByText(en["entry.dump.without"])).toBeTruthy();
+    expect(database.queryByText(en["entry.dump.paused"])).toBeNull();
+    expect(picture.querySelector('[class*="glim-dump-"]')).toBeNull();
+  });
+
+  it("leaves the container running in the picture where its files are read live", async () => {
+    serveEntries(mocks, { containers: [containerView({ dbEngine: "postgres", dbTier: "curated", dbDataCoverage: "live" })] });
+    await renderSettings("container/immich");
+    expect(within(card(en["entry.settings.database"])).queryByText(en["entry.dump.paused"])).toBeNull();
+  });
+
   it("names what a container was called before, with the way to unlink it", async () => {
     serveEntries(mocks, { containers: [containerView({ aliases: ["immich-old"] })] });
     await renderSettings("container/immich");

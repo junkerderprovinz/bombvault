@@ -1,13 +1,21 @@
 import { describe, expect, it } from "vitest";
-import type { BackupItem, Run } from "./api";
+import type { BackupItem, Run, TimelinePlace, TimelineRow } from "./api";
 import {
   HISTORY_DAYS,
+  actionMark,
   barHeight,
+  comparable,
+  diffGroups,
   entryReason,
   entryTabPath,
   historyDays,
+  isOwnTag,
   parseEntryTab,
+  parseTags,
+  personTags,
   recommendedRun,
+  rowHolds,
+  rowTags,
 } from "./entry";
 
 const NOON = new Date(2026, 9, 6, 12, 0, 0).getTime();
@@ -138,5 +146,73 @@ describe("the backup history", () => {
     expect(barHeight(10_000, 1_000_000)).toBe(10);
     expect(barHeight(0, 1_000_000)).toBe(8);
     expect(barHeight(0, 0)).toBe(8);
+  });
+});
+
+describe("the tags of a backup", () => {
+  const row = (...tags: string[][]): TimelineRow => ({
+    key: "k",
+    time: "2026-10-06T03:47:00Z",
+    places: tags.map((list, i) => ({ place: i === 0 ? "local" : `offsite:t${i}`, snapshotIds: [`s${i}`], tags: list })),
+  });
+
+  it("tells a person's tags from the ones BombVault writes itself", () => {
+    const own = ["container:plex", "vmrun:7", "bvrun:9", "dbdump:plex", "zfs:tank/a", "bv:direct", "p1", "blocks", "imported"];
+    expect(own.filter(isOwnTag)).toEqual(own);
+    expect(personTags([...own, "before-upgrade", "keep"])).toEqual(["before-upgrade", "keep"]);
+  });
+
+  it("shows a row the tags of every place once, and that it was imported", () => {
+    expect(rowTags(row(["container:plex", "keep", "imported"], ["container:plex", "keep", "p1"]))).toEqual([
+      "keep",
+      "imported",
+    ]);
+  });
+
+  it("reads typed tags apart at the comma and drops what is empty or double", () => {
+    expect(parseTags(" keep ,before-upgrade,, keep")).toEqual(["keep", "before-upgrade"]);
+    expect(parseTags("  ")).toEqual([]);
+  });
+});
+
+describe("the place an action on a backup works at", () => {
+  const local: TimelinePlace = { place: "local", label: "", kind: "home", remote: false, enabled: true, appendOnly: false, state: "read" };
+  const box: TimelinePlace = { ...local, place: "offsite:t1", label: "Box", kind: "target", remote: true };
+  const mark = (place: string) => ({ place, snapshotIds: [place], tags: [] });
+  const both: TimelineRow = { key: "a", time: "2026-10-06T03:47:00Z", places: [mark(box.place), mark(local.place)] };
+  const away: TimelineRow = { key: "b", time: "2026-10-05T03:47:00Z", places: [mark(box.place)] };
+
+  it("is the entry's own place before a copy, and a copy when that is all there is", () => {
+    expect(actionMark(both, [local, box]).place).toBe("local");
+    expect(actionMark(away, [local, box]).place).toBe(box.place);
+  });
+
+  it("falls back to the first place while none of them is read", () => {
+    expect(actionMark(away, [local, { ...box, state: "unchecked" }]).place).toBe(box.place);
+  });
+
+  it("offers for a comparison only the backups one place holds", () => {
+    expect(comparable([both, away], "local").map((r) => r.key)).toEqual(["a"]);
+    expect(comparable([both, away], box.place).map((r) => r.key)).toEqual(["a", "b"]);
+  });
+
+  it("finds a backup by its key and by the id a place holds it under", () => {
+    expect(rowHolds(both, "a")).toBe(true);
+    expect(rowHolds(both, "local")).toBe(true);
+    expect(rowHolds(both, "other")).toBe(false);
+  });
+});
+
+describe("the paths of a comparison", () => {
+  it("are sorted by what happened to them", () => {
+    const groups = diffGroups([
+      { path: "/new", modifier: "+" },
+      { path: "/gone", modifier: "-" },
+      { path: "/edited", modifier: "M" },
+      { path: "/retyped", modifier: "T" },
+    ]);
+    expect(groups.added.map((c) => c.path)).toEqual(["/new"]);
+    expect(groups.removed.map((c) => c.path)).toEqual(["/gone"]);
+    expect(groups.changed.map((c) => c.path)).toEqual(["/edited", "/retyped"]);
   });
 });

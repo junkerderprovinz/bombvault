@@ -5,9 +5,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   deleteBackups,
   deleteBackupsVM,
-  deleteFileSet,
-  deleteFileSetBackups,
-  deleteZFSDataset,
   forgetContainer,
   forgetVM,
   type OkEnvelope,
@@ -23,20 +20,20 @@ import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useIsDesktop } from "../../lib/useMediaQuery";
-import { containerTakeover, vmTakeover } from "../../lib/useTakeOver";
-import { AnomalyWindow } from "../anomalies/AnomalyWindow";
+import { containerTakeover, vmTakeover, type TakeoverEntry } from "../../lib/useTakeOver";
 import { STOP_ACK_KEY } from "../BackupButton";
+import { ActionMenu, type MenuAction } from "../backups/ActionMenu";
+import { ZFSConnectionWindow } from "../backups/ZFSConnectionWindow";
 import { Button } from "../Button";
-import { ExportButton } from "../containers/ExportButton";
-import { LinkEntryPicker } from "../LinkEntryPicker";
+import { IconLink } from "../glyphs";
 import { RunDetailSheet } from "../mobile/RunDetailSheet";
-import { IconBackupNow, IconDownload, IconRestore, IconTrash, IconZFS } from "../navGlyphs";
-import { OrphanRemoveButton } from "../OrphanRemoveButton";
+import { IconBackupNow, IconDownload, IconMore, IconRestore, IconTrash, IconZFS } from "../navGlyphs";
 import { PageAction } from "../PageActions";
 import { PauseButton } from "../SchedulePause";
-import { VMExportButton } from "../vms/VMExportButton";
-import { ZFSConnectionCard } from "../zfs/ZFSConnectionCard";
-import { DeleteSafetyToggle } from "../zfs/ZFSDatasetRow";
+import type { TimelineState } from "./BackupPlaces";
+import { ExportWindow, LiveExportWindow } from "./ExportWindow";
+import { LinkWindow } from "./LinkWindow";
+import { RemoveWindow, type Removable } from "./RemoveWindow";
 
 function stopAcknowledged(): boolean {
   try {
@@ -194,21 +191,45 @@ export function EntryCorner({
   );
 }
 
-/** useRemoval asks, runs one removing call and reports a refusal as a toast. */
-function useRemoval() {
+type MenuWindow = "link" | "export" | "exportNewest" | "connection" | "remove";
+
+/**
+ * EntryMenu holds the actions an entry needs seldom, behind one button beside
+ * its name: linking it to the entry it was before a rename, exporting it, and
+ * taking it or its backups away. Which of them exist depends on the kind, and
+ * the removals are the ones the server has for that kind.
+ */
+export function EntryMenu({
+  entry,
+  name,
+  timeline,
+  onChanged,
+  onRemoved,
+  onOpenNewest,
+}: {
+  entry: Entry;
+  name: string;
+  timeline: TimelineState;
+  onChanged: () => void;
+  /** The entry is off the list, so the page has nothing left to show. */
+  onRemoved: () => void;
+  /** Opens the newest backup, which is where the flash drive's ZIP is fetched. */
+  onOpenNewest?: () => void;
+}) {
   const { t } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const anchor = useRef<HTMLSpanElement>(null);
+  const [open, setOpen] = useState(false);
+  const [shown, setShown] = useState<MenuWindow | null>(null);
   const [busy, setBusy] = useState(false);
+  const { item, detail } = entry;
+  const hasBackups = item.lastBackup > 0;
+  const newest = timeline.rows[0];
+  const close = () => setShown(null);
 
-  async function remove(
-    question: string,
-    confirmKey: TranslationKey,
-    call: () => Promise<OkEnvelope>,
-    done: () => void,
-    extra?: ReactNode
-  ) {
-    if (!(await confirm(question, { confirmKey, extra }))) return;
+  async function removeAfter(question: string, confirmKey: TranslationKey, call: () => Promise<OkEnvelope>, done: () => void) {
+    if (!(await confirm(question, { confirmKey }))) return;
     setBusy(true);
     try {
       const res = await call();
@@ -221,189 +242,113 @@ function useRemoval() {
     }
   }
 
-  return { remove, busy, confirmDialog };
-}
+  const actions: MenuAction[] = [];
+  const add = (id: string, label: string, glyph: ReactNode, onSelect: () => void) =>
+    actions.push({ id, label, glyph, onSelect });
+  const exportNewest = () => {
+    if (newest) add("export", t("entry.menu.exportNewest"), <IconDownload />, () => setShown("exportNewest"));
+  };
+  let takeover: TakeoverEntry | null = null;
+  let candidates: string[] = [];
 
-/**
- * EntryHeadActions are the actions an entry needs seldom: linking it to the
- * entry it was before a rename, exporting it, and taking it or its backups
- * away. Which of them exist depends on the kind.
- */
-export function EntryHeadActions({
-  entry,
-  onChanged,
-  onRemoved,
-  onDownloadNewest,
-}: {
-  entry: Entry;
-  onChanged: () => void;
-  /** The entry is off the list, so the page has nothing left to show. */
-  onRemoved: () => void;
-  /** Flash: opens the newest backup, which is where its ZIP is fetched. */
-  onDownloadNewest?: () => void;
-}) {
-  const { t } = useT();
-  const { push } = useToast();
-  const { remove, busy, confirmDialog } = useRemoval();
-  const [connection, setConnection] = useState(false);
-  const safetyToo = useRef(false);
-  const { item, detail } = entry;
-  const hasBackups = item.lastBackup > 0;
-
-  let actions: ReactNode = null;
-  if (detail.kind === "container") {
+  if (detail.kind === "container" && !detail.container.self) {
     const c = detail.container;
-    const takeover = { name: c.name, displayName: c.name, api: containerTakeover };
-    if (!c.installed) {
-      actions = (
-        <OrphanRemoveButton
-          hasBackups={c.lastBackup != null}
-          deleteConfirm={t("containers.deleteBackupsConfirm")}
-          removeConfirm={t("containers.removeEntryConfirm")}
-          deleteBackups={() => deleteBackups(c.name)}
-          removeEntry={() => forgetContainer(c.name)}
-          onDone={onRemoved}
-          t={t}
-        />
-      );
-    } else if (!c.self) {
-      actions = (
-        <>
-          {c.lastBackup == null && (c.aliases ?? []).length === 0 && detail.linkCandidates.length > 0 && (
-            <LinkEntryPicker candidates={detail.linkCandidates} entry={takeover} onDone={onChanged} t={t} />
-          )}
-          <ExportButton name={c.name} t={t} tone="neutral" />
-        </>
-      );
+    if (c.installed) {
+      takeover = { name: c.name, displayName: c.name, api: containerTakeover };
+      if (c.lastBackup == null && (c.aliases ?? []).length === 0) candidates = detail.linkCandidates;
+      if (candidates.length > 0) add("link", t("entry.menu.link"), <IconLink />, () => setShown("link"));
+      add("export", t("entry.menu.exportContainer"), <IconDownload />, () => setShown("export"));
+    } else {
+      exportNewest();
+      // The server keeps the entry of a container with backups, so they go with it.
+      if (c.lastBackup != null) {
+        add("remove", t("containers.deleteBackups"), <IconTrash />, () =>
+          void removeAfter(t("containers.deleteBackupsConfirm"), "containers.deleteBackups", () => deleteBackups(c.name), onRemoved)
+        );
+      } else {
+        add("remove", t("vms.removeEntry"), <IconTrash />, () =>
+          void removeAfter(t("containers.removeEntryConfirm"), "vms.removeEntry", () => forgetContainer(c.name), onRemoved)
+        );
+      }
     }
   } else if (detail.kind === "vm") {
     const vm = detail.vm;
-    const takeover = { name: vm.libvirtName, displayName: vm.name, api: vmTakeover };
-    if (vm.state === "not-installed") {
-      actions = (
-        <OrphanRemoveButton
-          hasBackups={vm.lastBackup != null}
-          deleteConfirm={t("vms.deleteBackupsConfirm")}
-          removeConfirm={t("vms.removeEntryConfirm")}
-          deleteBackups={() => deleteBackupsVM(vm.libvirtName, "local")}
-          removeEntry={() => forgetVM(vm.libvirtName)}
-          onDone={onRemoved}
-          t={t}
-        />
-      );
+    if (vm.state !== "not-installed") {
+      takeover = { name: vm.libvirtName, displayName: vm.name, api: vmTakeover };
+      if (vm.lastBackup == null && (vm.aliases ?? []).length === 0) candidates = detail.linkCandidates;
+      if (candidates.length > 0) add("link", t("entry.menu.link"), <IconLink />, () => setShown("link"));
+      add("export", t("entry.menu.exportVM"), <IconDownload />, () => setShown("export"));
+      if (hasBackups) {
+        add("remove", t("entry.deleteLocal"), <IconTrash />, () =>
+          void removeAfter(t("snapshots.deleteAllConfirm"), "snapshots.deleteAll", () => deleteBackupsVM(vm.libvirtName, "local"), onChanged)
+        );
+      }
     } else {
-      actions = (
-        <>
-          {vm.lastBackup == null && (vm.aliases ?? []).length === 0 && detail.linkCandidates.length > 0 && (
-            <LinkEntryPicker candidates={detail.linkCandidates} entry={takeover} onDone={onChanged} t={t} />
-          )}
-          <VMExportButton name={vm.libvirtName} t={t} tone="neutral" />
-          {hasBackups && (
-            <Button
-              label={t("entry.deleteLocal")}
-              labelKey="entry.deleteLocal"
-              glyph={<IconTrash />}
-              disabled={busy}
-              onClick={() =>
-                void remove(
-                  t("snapshots.deleteAllConfirm"),
-                  "snapshots.deleteAll",
-                  () => deleteBackupsVM(vm.libvirtName, "local"),
-                  onChanged
-                )
-              }
-            />
-          )}
-        </>
-      );
+      exportNewest();
+      if (vm.lastBackup != null) {
+        add("remove", t("containers.deleteBackups"), <IconTrash />, () =>
+          void removeAfter(t("vms.deleteBackupsConfirm"), "containers.deleteBackups", () => deleteBackupsVM(vm.libvirtName, "local"), onRemoved)
+        );
+      } else {
+        add("remove", t("vms.removeEntry"), <IconTrash />, () =>
+          void removeAfter(t("vms.removeEntryConfirm"), "vms.removeEntry", () => forgetVM(vm.libvirtName), onRemoved)
+        );
+      }
     }
-  } else if (detail.kind === "files") {
-    const set = detail.set;
-    actions = (
-      <>
-        {hasBackups && (
-          <Button
-            label={t("snapshots.deleteAll")}
-            labelKey="snapshots.deleteAll"
-            glyph={<IconTrash />}
-            disabled={busy}
-            onClick={() =>
-              void remove(
-                t("files.deleteBackupsConfirm"),
-                "snapshots.deleteAll",
-                () => deleteFileSetBackups(set.id),
-                onRemoved
-              )
-            }
-          />
-        )}
-        <Button
-          label={t("zfs.removeMissing")}
-          labelKey="zfs.removeMissing"
-          glyph={<IconTrash />}
-          disabled={busy}
-          onClick={() =>
-            void remove(t("files.deleteSetConfirm"), "zfs.removeMissing", () => deleteFileSet(set.id), onRemoved)
-          }
-        />
-      </>
-    );
-  } else if (detail.kind === "zfs") {
-    const dataset = detail.dataset;
-    const removeDataset = async () => {
-      const res = await deleteZFSDataset(dataset.id, safetyToo.current);
-      if (res.ok && res.safetyRemaining) push(t("zfs.deleteKeptSafety", res.safetyRemaining), "warn");
-      if (res.ok && res.leftoversRemaining) push(t("zfs.sweepRemaining", res.leftoversRemaining), "warn");
-      return res;
-    };
-    actions = (
-      <>
-        <Button
-          label={t("zfs.connection.title")}
-          labelKey="zfs.connection.title"
-          glyph={<IconZFS />}
-          onClick={() => setConnection(true)}
-        />
-        <Button
-          label={t("zfs.removeMissing")}
-          labelKey="zfs.removeMissing"
-          glyph={<IconTrash />}
-          disabled={busy}
-          onClick={() => {
-            safetyToo.current = false;
-            void remove(
-              t("zfs.deleteRowConfirm"),
-              "zfs.removeMissing",
-              removeDataset,
-              onRemoved,
-              dataset.safetyCount > 0 ? (
-                <DeleteSafetyToggle label={t("zfs.deleteSafetyToo")} sink={safetyToo} />
-              ) : undefined
-            );
-          }}
-        />
-      </>
-    );
-  } else if (detail.kind === "flash" && onDownloadNewest) {
-    actions = (
-      <Button
-        label={t("entry.flashDownloadNewest")}
-        labelKey="entry.flashDownloadNewest"
-        glyph={<IconDownload />}
-        onClick={onDownloadNewest}
-      />
-    );
+  } else if (detail.kind === "files" || detail.kind === "zfs") {
+    exportNewest();
+    if (detail.kind === "zfs") add("connection", t("zfs.connection.title"), <IconZFS />, () => setShown("connection"));
+    add("remove", t("zfs.removeMissing"), <IconTrash />, () => setShown("remove"));
+  } else if (detail.kind === "flash" || detail.kind === "config") {
+    exportNewest();
+    if (detail.kind === "flash" && onOpenNewest) {
+      add("download", t("entry.flashDownloadNewest"), <IconDownload />, onOpenNewest);
+    }
   }
 
-  if (!actions) return null;
+  if (actions.length === 0) return null;
+  const removable: Removable | null =
+    detail.kind === "files"
+      ? { kind: "files", set: detail.set }
+      : detail.kind === "zfs"
+        ? { kind: "zfs", dataset: detail.dataset }
+        : null;
+
   return (
     <>
-      {actions}
+      <span ref={anchor} className="flex">
+        <Button
+          label={t("nav.more")}
+          labelKey="nav.more"
+          glyph={<IconMore />}
+          ariaExpanded={open}
+          disabled={busy}
+          busy={busy}
+          onClick={() => setOpen((was) => !was)}
+        />
+      </span>
+      {open && anchor.current && (
+        <ActionMenu label={name} actions={actions} place={{ anchor: anchor.current }} onClose={() => setOpen(false)} />
+      )}
       {confirmDialog}
-      {connection && (
-        <AnomalyWindow title={t("zfs.connection.title")} onClose={() => setConnection(false)}>
-          <ZFSConnectionCard />
-        </AnomalyWindow>
+      {shown === "link" && takeover && (
+        <LinkWindow
+          candidates={candidates}
+          entry={takeover}
+          onDone={() => {
+            close();
+            onChanged();
+          }}
+          onClose={close}
+        />
+      )}
+      {shown === "export" && <LiveExportWindow entry={entry} name={name} onClose={close} />}
+      {shown === "exportNewest" && newest && (
+        <ExportWindow entry={entry} name={name} row={newest} timeline={timeline} onClose={close} />
+      )}
+      {shown === "connection" && <ZFSConnectionWindow onClose={close} />}
+      {shown === "remove" && removable && (
+        <RemoveWindow target={removable} name={name} hasBackups={hasBackups} onRemoved={onRemoved} onClose={close} />
       )}
     </>
   );

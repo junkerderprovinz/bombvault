@@ -339,11 +339,13 @@ describe("the database dumps", () => {
 });
 
 describe("a ZFS entry", () => {
-  it("shows its repository and its restore points without a timeline", async () => {
+  it("shows its runs as the history, the places and the list of every other kind", async () => {
     await renderPage(`/backups/zfs/${ZFS_ID}`);
-    expect(getTimeline).not.toHaveBeenCalled();
-    expect(within(card(en["storage.title"])).getByText("/mnt/user/backups/bombvault/zfs")).toBeTruthy();
+    expect(getTimeline).toHaveBeenCalledWith("zfs", ZFS_ID);
+    expect(within(card(en["storage.title"])).getByText("5 backups")).toBeTruthy();
     expect(bars()).toHaveLength(4);
-    expect(bars()[0].closest("button")).toBeNull();
+    expect(rows()).toHaveLength(5);
+    await press(bars().at(-2)!.closest("button")!);
+    expect(rows()[1].className).toContain("bg-carbon-surface3");
   });
 });

@@ -8,6 +8,7 @@ import {
   coverageKey,
   dbDumpNameOf,
   dumpLeftRunning,
+  dumpRuns,
   dumpWasCancelled,
   ENGINE_NAMES,
   importRefusedKey,
@@ -171,5 +172,34 @@ describe("introDatabases", () => {
 
   it("introduces nothing while dumps are off for every container", () => {
     expect(introDatabases([row("immich_postgres", { dbDumpsGlobalOff: true })])).toEqual([]);
+  });
+});
+
+describe("dumpRuns", () => {
+  const db = (over: Partial<Container> = {}) =>
+    ({
+      dbTier: "curated",
+      dbDumpOff: false,
+      dbDumpEngine: "",
+      dbDumpLabelOff: false,
+      dbDumpsGlobalOff: false,
+      ...over,
+    }) as Container;
+
+  it("is on for a recognised database until it is switched off", () => {
+    expect(dumpRuns(db())).toBe(true);
+    expect(dumpRuns(db({ dbDumpOff: true }))).toBe(false);
+    expect(dumpRuns(db({ dbTier: "" }))).toBe(false);
+  });
+
+  it("lets the label and the switch for every container decide first", () => {
+    expect(dumpRuns(db({ dbTier: "label", dbDumpOff: true }))).toBe(true);
+    expect(dumpRuns(db({ dbDumpLabelOff: true }))).toBe(false);
+    expect(dumpRuns(db({ dbTier: "label", dbDumpsGlobalOff: true }))).toBe(false);
+  });
+
+  it("waits for an engine before it dumps a container that only looks like a database", () => {
+    expect(dumpRuns(db({ dbTier: "lookalike" }))).toBe(false);
+    expect(dumpRuns(db({ dbTier: "lookalike", dbDumpEngine: "postgres" }))).toBe(true);
   });
 });
