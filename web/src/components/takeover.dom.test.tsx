@@ -3,7 +3,7 @@
  * Taking over the entry a renamed container or VM left behind.
  *
  * Three controls share one takeover: the suggestion under an entry that looks
- * renamed, the picker that links an entry by hand, and the list of former
+ * renamed, the window that links an entry by hand, and the list of former
  * names with the way to unlink one. Each asks before it writes, sends the
  * name the routes take and says why the server refused.
  */
@@ -34,7 +34,7 @@ const { countText, en } = await import("../lib/i18n");
 const { ToastProvider } = await import("../lib/toast");
 const { containerTakeover, vmTakeover } = await import("../lib/useTakeOver");
 const { RenameTakeoverRow } = await import("./RenameTakeoverRow");
-const { LinkEntryPicker } = await import("./LinkEntryPicker");
+const { LinkWindow } = await import("./entry/LinkWindow");
 const { FormerNames } = await import("./FormerNames");
 
 const t = ((key: TranslationKey, n?: number) => countText(en[key], "en", n)) as unknown as Parameters<
@@ -71,9 +71,25 @@ function suggestion(over: { from?: string; entry?: typeof radarr; onDone?: () =>
 function picker(candidates: string[], entry = radarr) {
   return (
     <ToastProvider>
-      <LinkEntryPicker candidates={candidates} entry={entry} onDone={() => {}} t={t} />
+      <LinkWindow candidates={candidates} entry={entry} onDone={() => {}} onClose={() => {}} />
     </ToastProvider>
   );
+}
+
+/** Presses Take over in the row of one entry the window lists. */
+function takeOverFrom(name: string) {
+  const row = screen.getByText(name).closest("li")!;
+  fireEvent.click(within(row).getByRole("button", { name: "Take over" }));
+}
+
+/** The question that follows, which stands above the window that asked. */
+async function question() {
+  const window = screen.getByRole("dialog", { name: "Link to a former entry" });
+  return waitFor(() => {
+    const asked = screen.getAllByRole("dialog").find((dialog) => dialog !== window);
+    if (!asked) throw new Error("no question yet");
+    return asked;
+  });
 }
 
 function formerNames(aliases: string[], conflicts: string[] = [], onDone: () => void = () => {}, entry = radarr) {
@@ -246,12 +262,9 @@ describe("the rename suggestion", () => {
 describe("linking an entry by hand", () => {
   it("takes over the entry picked from the list", async () => {
     render(picker(["radarr-movies", "lidarr-old"]));
-    press("Link to an entry…");
-    fireEvent.click(screen.getByRole("combobox", { name: "Former entry" }));
-    fireEvent.click(screen.getByRole("option", { name: "lidarr-old" }));
-    press("Take over");
+    takeOverFrom("lidarr-old");
 
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await question();
     expect(dialog.textContent).toContain("The 3 backups of lidarr-old become the history of radarr.");
     fireEvent.click(within(dialog).getByRole("button", { name: "Take over" }));
     await waitFor(() => expect(takeOverContainer).toHaveBeenCalledWith("radarr", "lidarr-old"));
@@ -259,30 +272,20 @@ describe("linking an entry by hand", () => {
 
   it("takes over an entry still in the list when the one first shown has gone", async () => {
     const view = render(picker(["radarr-movies", "lidarr-old"]));
-    press("Link to an entry…");
     view.rerender(picker(["lidarr-old"]));
-    press("Take over");
+    expect(screen.queryByText("radarr-movies")).toBeNull();
+    takeOverFrom("lidarr-old");
 
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await question();
     expect(dialog.textContent).toContain("Take over lidarr-old?");
     fireEvent.click(within(dialog).getByRole("button", { name: "Take over" }));
     await waitFor(() => expect(takeOverContainer).toHaveBeenCalledWith("radarr", "lidarr-old"));
   });
 
-  it("focuses the select on open and returns focus to the opener on cancel", () => {
-    render(picker(["radarr-movies", "lidarr-old"]));
-    press("Link to an entry…");
-    expect(document.activeElement).toBe(screen.getByRole("combobox", { name: "Former entry" }));
-
-    press("Cancel");
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Link to an entry…" }));
-  });
-
   it("links a VM under its libvirt name", async () => {
     render(picker(["1_windows-11"], win11));
-    press("Link to an entry…");
-    press("Take over");
-    const dialog = await screen.findByRole("dialog");
+    takeOverFrom("1_windows-11");
+    const dialog = await question();
     fireEvent.click(within(dialog).getByRole("button", { name: "Take over" }));
     await waitFor(() => expect(takeOverVM).toHaveBeenCalledWith("1_win11", "1_windows-11"));
   });

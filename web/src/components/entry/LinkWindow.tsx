@@ -4,7 +4,6 @@ import { countBackups, useTakeOver, type TakeoverEntry } from "../../lib/useTake
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
 import { IconLink } from "../glyphs";
-import { Rows } from "../storage/rows";
 
 /**
  * LinkWindow lists the entries that are not installed, for the one the
@@ -42,9 +41,9 @@ export function LinkWindow({
       onClose={onClose}
       footer={<Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={onClose} />}
     >
-      <Rows>
+      <ul className="flex flex-col divide-y divide-carbon-border/60">
         {candidates.map((from) => (
-          <div key={from} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+          <li key={from} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
             <span className="min-w-0 text-sm font-semibold text-carbon-text wrap-anywhere">{from}</span>
             <Button
               label={t("takeover.accept")}
@@ -53,9 +52,9 @@ export function LinkWindow({
               disabled={busy || counting}
               onClick={() => void link(from)}
             />
-          </div>
+          </li>
         ))}
-      </Rows>
+      </ul>
       {confirmDialog}
     </InstanceWindow>
   );

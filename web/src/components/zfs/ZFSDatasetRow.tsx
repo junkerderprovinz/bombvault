@@ -9,7 +9,6 @@ import { RunReasonText } from "../../lib/runReason";
 import { ZFS_CODE_VARS, zfsCodeSentence, zfsFixKey, zfsMemberKey, zfsRunReasonCode } from "../../lib/zfsCodes";
 import { Badge } from "../Badge";
 import { InfoBubble } from "../InfoBubble";
-import { ToggleRow } from "../../pages/settings/shared";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -25,22 +24,6 @@ export const RED_CODES = new Set([
   "pre-snapshot-failed",
   "consistency-stop-failed",
 ]);
-
-/** The extra switch in the delete confirm. It owns its state and reports
- *  through `sink`, because the dialog keeps the node it was handed. */
-export function DeleteSafetyToggle({ label, sink }: { label: string; sink: { current: boolean } }) {
-  const [on, setOn] = useState(false);
-  return (
-    <ToggleRow
-      label={label}
-      checked={on}
-      onChange={(next) => {
-        setOn(next);
-        sink.current = next;
-      }}
-    />
-  );
-}
 
 /** Why a run failed or stopped, in the reader's language where the code allows
  *  it. A detail the command output below repeats is left out. */
