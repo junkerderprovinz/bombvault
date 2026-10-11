@@ -404,6 +404,92 @@ func TestAnErasureWaitsForABackupOfASectionLeftBehind(t *testing.T) {
 	}
 }
 
+func TestAnErasureRefusesBackupsThatArrivedAfterThePreview(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, _ := boxWithVMs(f)
+	preview := f.erasurePreview(box)
+
+	f.hold(boxRepo+"/vms", append(f.snapsAt(boxRepo+"/vms"), snap("o4", 80, "vm:old"))...)
+	res := f.erase(box, preview.Removal, "vm:old")
+
+	if res["ok"] != false || res["code"] != "stale" {
+		t.Fatalf("answer = %v, want the refusal stale", res)
+	}
+	if now := erasureOf(t, res); now.Backups != 6 {
+		t.Fatalf("the refusal counts %d backups, want the 6 there are now", now.Backups)
+	}
+	f.waitForErasure("vms")
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+}
+
+func TestAnErasureWaitsForAMoveOfOneOfItsSections(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	waiting, done := make(chan struct{}), make(chan struct{})
+	f.eng.onCopy = func() {
+		select {
+		case <-waiting:
+		default:
+			close(waiting)
+		}
+		<-done
+	}
+	moveOf(t, f.do("POST", "/api/offsite/targets/"+vms.ID+"/move", map[string]any{"to": vault.ID}))
+	<-waiting
+	preview := f.erasurePreview(box)
+
+	res := f.erase(box, preview.Removal, "vm:old")
+	close(done)
+
+	if res["ok"] != false || res["code"] != "move-running" {
+		t.Fatalf("answer while vms moves away = %v, want move-running", res)
+	}
+	f.waitForErasure("vms")
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+}
+
+func TestAMoveWaitsForAnErasureAtEitherPlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	f.tickDestination(vault, "files")
+	f.hold(f.domainPath("files"), snap("d1", 10, "fileset:docs"))
+	f.hold(vaultRepo+"/files", copied("e1", "d1", 10, "fileset:docs"))
+	waiting, done := make(chan struct{}), make(chan struct{})
+	f.eng.onForget = func() {
+		select {
+		case <-waiting:
+		default:
+			close(waiting)
+		}
+		<-done
+	}
+	if res := f.erase(vault, f.erasurePreview(vault).Removal); res["ok"] != true {
+		t.Fatalf("answer = %v, want a started run", res)
+	}
+	<-waiting
+
+	res := f.movePreview(vms, vault)
+	started := f.do("POST", "/api/offsite/targets/"+vms.ID+"/move", map[string]any{"to": vault.ID})
+	close(done)
+	f.waitForErasure("files")
+
+	if res["ok"] != true {
+		t.Fatalf("preview = %v, want it to answer", res)
+	}
+	if started["ok"] != false || started["code"] != "erase-running" {
+		t.Fatalf("a move onto a place being emptied = %v, want erase-running", started)
+	}
+	if got := f.stored(vms.ID); got.DestinationID != box.ID || len(f.eng.copies) != 0 {
+		t.Fatalf("the refused move copied %+v and left the target at %+v", f.eng.copies, got)
+	}
+}
+
 func TestADestinationOverAHomeOrAnotherDestinationIsRefused(t *testing.T) {
 	f := newPlacementFixture(t)
 	ctx := context.Background()

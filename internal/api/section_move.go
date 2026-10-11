@@ -23,6 +23,7 @@ var (
 	errMoveSignIn  = errors.New("both places sign in the same way with different credentials, which one copy cannot do; move through a folder on this server instead")
 	errMoveMissing = errors.New("the new place does not hold every backup of the old one after the copy, so the section stays where it is")
 	errMoveRunning = errors.New("this section is already being moved")
+	errMoveErasing = errors.New("the backups at one of the two places are being deleted; try again once that has finished")
 )
 
 // sectionMove is what moving a section's copy to another destination copies.
@@ -275,19 +276,37 @@ func (s *Service) StartSectionMove(ctx context.Context, targetID, destID string,
 	}
 	bctx := context.WithoutCancel(ctx)
 	rctx, cancel := context.WithTimeout(bctx, 7*24*time.Hour)
+	places := [2]string{plan.target.DestinationID, plan.dest.ID}
 	s.cancelMu.Lock()
 	if _, running := s.runCancels[plan.Key]; running {
+		err = errMoveRunning
+	}
+	for _, id := range places {
+		if _, erasing := s.runCancels["erase:"+id]; erasing && id != "" {
+			err = errMoveErasing
+		}
+	}
+	if err != nil {
 		s.cancelMu.Unlock()
 		cancel()
-		return sectionMove{}, errMoveRunning
+		return sectionMove{}, err
 	}
 	s.runCancels[plan.Key] = cancel
+	if s.moving == nil {
+		s.moving = map[string][2]string{}
+	}
+	s.moving[plan.Key] = places
 	s.cancelMu.Unlock()
 	go func() {
 		var runID string
 		defer s.recoverOperation("move "+plan.Domain, nil, func(msg string) { s.finishMoveRun(runID, errors.New(msg)) })
 		defer cancel()
-		defer s.unregisterCancel(plan.Key)
+		defer func() {
+			s.cancelMu.Lock()
+			delete(s.runCancels, plan.Key)
+			delete(s.moving, plan.Key)
+			s.cancelMu.Unlock()
+		}()
 		var rErr error
 		if runID, rErr = s.startRun(bctx, domainRunTargetID(plan.Domain), "offsite"); rErr != nil {
 			log.Printf("api: move %s: the run is not recorded: %v", plan.Domain, rErr) //nolint:gosec // G706: domain is a fixed literal

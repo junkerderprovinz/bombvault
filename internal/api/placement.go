@@ -91,6 +91,7 @@ var placementCodes = []struct {
 	{errMoveSamePlace, "move-same-place"},
 	{errMoveSignIn, "move-sign-in"},
 	{errMoveRunning, "move-running"},
+	{errMoveErasing, "erase-running"},
 	{store.ErrTargetHasDirectRepo, "move-direct-repo"},
 	{store.ErrDomainHasDestinationTarget, "move-section-there"},
 }

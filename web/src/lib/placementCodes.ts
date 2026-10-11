@@ -44,6 +44,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "move-direct-repo": "placementCode.moveDirectRepo",
   "move-sign-in": "placementCode.moveSignIn",
   "move-running": "placementCode.moveRunning",
+  "erase-running": "storage.remove.erasingNow",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

@@ -362,6 +362,10 @@ type Service struct {
 	// by cancelMu. Cancelling an unknown/finished key is a harmless no-op.
 	cancelMu   sync.Mutex
 	runCancels map[string]context.CancelFunc
+	// moving holds the destinations a running section move leaves and goes to,
+	// by its progress key. Guarded by cancelMu, so that a move and the deletion
+	// of the backups at either of its places never start together.
+	moving map[string][2]string
 
 	// backupCancels is the SAME idea for backups, deliberately kept as a second
 	// map rather than folded into runCancels ([375]). Shutdown must be able to

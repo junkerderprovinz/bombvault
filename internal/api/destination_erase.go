@@ -299,12 +299,15 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 	return plan, nil
 }
 
-// digest sums up what the erasure takes, so a request can show it was made on
-// the same.
+// digest sums up what the erasure takes, down to the snapshot ids of each
+// section, so a request can show it was made on the same.
 func (p erasurePlan) digest() string {
 	var b strings.Builder
-	for _, sec := range p.Sections {
-		fmt.Fprintf(&b, "%s\x00%s\x00%s\x00%s\x00%s\n", sec.Domain, sec.TargetID, sec.RepoID, sec.Repo, sec.Kept)
+	fmt.Fprintf(&b, "%d\n", p.BackupsOnlyThere)
+	for i, sec := range p.Sections {
+		ids := snapshotIDs(p.repos[i].snaps)
+		slices.Sort(ids)
+		fmt.Fprintf(&b, "%s\x00%s\x00%s\x00%s\x00%s\x00%s\n", sec.Domain, sec.TargetID, sec.RepoID, sec.Repo, sec.Kept, strings.Join(ids, ","))
 	}
 	sum := sha256.Sum256([]byte(b.String()))
 	return hex.EncodeToString(sum[:])
@@ -457,14 +460,26 @@ func (s *Service) StartDestinationErasure(ctx context.Context, id string, expect
 		return destinationErasure{}, err
 	}
 
+	rctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 24*time.Hour)
+	s.cancelMu.Lock()
+	for _, places := range s.moving {
+		if places[0] == id || places[1] == id {
+			s.cancelMu.Unlock()
+			cancel()
+			unlock()
+			return destinationErasure{}, errMoveRunning
+		}
+	}
+	if s.runCancels == nil {
+		s.runCancels = map[string]context.CancelFunc{}
+	}
+	s.runCancels[plan.Key] = cancel
+	s.cancelMu.Unlock()
+
 	go func() {
 		defer s.recoverOperation("erase destination", nil, nil)
 		defer unlock()
-		tctx, tcancel := context.WithTimeout(context.WithoutCancel(ctx), 24*time.Hour)
-		defer tcancel()
-		rctx, cancel := context.WithCancel(tctx)
 		defer cancel()
-		s.registerCancel(plan.Key, cancel)
 		defer s.unregisterCancel(plan.Key)
 
 		_, startedAt := s.progBegin(rctx, plan.Key, "maintenance")

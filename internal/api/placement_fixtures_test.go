@@ -503,6 +503,9 @@ type placementEngine struct {
 	// onSnapshots, when set, runs synchronously after every Snapshots call, so a
 	// test can rewrite state a caller already captured before it listed.
 	onSnapshots func()
+	// onCopy and onForget, when set, run before a Copy or a Forget by ids does
+	// anything, so a test can hold a run in the middle.
+	onCopy, onForget func()
 }
 
 type copyCall struct {
@@ -580,6 +583,9 @@ func (e *placementEngine) Snapshots(_ context.Context, repo string, _ restic.Mod
 // Copy puts a copy with a new id and the source's identity at the destination
 // for every snapshot asked for that the destination does not hold yet.
 func (e *placementEngine) Copy(_ context.Context, dest, src string, ids []string, _ restic.Limits, _ restic.Mode) error {
+	if e.onCopy != nil {
+		e.onCopy()
+	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	d, s := filepath.ToSlash(dest), filepath.ToSlash(src)
@@ -631,6 +637,9 @@ func (e *placementEngine) ForgetPolicy(_ context.Context, repo string, p restic.
 }
 
 func (e *placementEngine) Forget(_ context.Context, repo string, ids []string, _ bool, _ restic.Mode) error {
+	if e.onForget != nil {
+		e.onForget()
+	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	key := filepath.ToSlash(repo)
