@@ -41,7 +41,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
-    listItems: vi.fn(),
+    getBackupItem: vi.fn(),
     listContainers: vi.fn(),
     listVMs: vi.fn(),
     listFileSets: vi.fn(),
@@ -75,7 +75,7 @@ vi.mock("../lib/toast", () => ({ useToast: () => ({ push: () => {} }) }));
 
 const api = await import("../lib/api");
 const mocks = {
-  listItems: vi.mocked(api.listItems),
+  getBackupItem: vi.mocked(api.getBackupItem),
   listContainers: vi.mocked(api.listContainers),
   listVMs: vi.mocked(api.listVMs),
   listFileSets: vi.mocked(api.listFileSets),
@@ -467,11 +467,11 @@ describe("taking over the entry of a renamed container", () => {
   it("takes the suggested entry over and reads the entry again", async () => {
     serveEntries(mocks, { containers: [fresh({ renameFrom: "gitea-old", renameReason: "appdata-bind" })] });
     await renderPage("/backups/container/gitea");
-    const before = mocks.listItems.mock.calls.length;
+    const before = mocks.getBackupItem.mock.calls.length;
     await press(await screen.findByRole("button", { name: en["takeover.accept"] }));
     await confirmWith(en["takeover.accept"]);
     await waitFor(() => expect(takeOverContainer).toHaveBeenCalledWith("gitea", "gitea-old"));
-    await waitFor(() => expect(mocks.listItems.mock.calls.length).toBeGreaterThan(before));
+    await waitFor(() => expect(mocks.getBackupItem.mock.calls.length).toBeGreaterThan(before));
   });
 
   it("offers to link by hand the entries whose container is gone, and no other", async () => {

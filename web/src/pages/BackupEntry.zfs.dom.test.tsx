@@ -34,7 +34,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
-    listItems: vi.fn(),
+    getBackupItem: vi.fn(),
     listContainers: vi.fn(),
     listVMs: vi.fn(),
     listFileSets: vi.fn(),
@@ -70,7 +70,7 @@ vi.mock("../lib/toast", () => ({
 
 const api = await import("../lib/api");
 const mocks = {
-  listItems: vi.mocked(api.listItems),
+  getBackupItem: vi.mocked(api.getBackupItem),
   listContainers: vi.mocked(api.listContainers),
   listVMs: vi.mocked(api.listVMs),
   listFileSets: vi.mocked(api.listFileSets),

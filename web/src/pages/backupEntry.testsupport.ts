@@ -1,6 +1,7 @@
 // One staged entry of every kind for the tests of the entry page, and the
-// answers of the list calls the page reads them through.
+// answers of the calls the page reads them through.
 import type { Mock } from "vitest";
+import { ApiError } from "../lib/api";
 import type {
   AnomalyItem,
   BackupItem,
@@ -244,7 +245,7 @@ export const SETTINGS = {
 } as Settings;
 
 export interface EntryMocks {
-  listItems: Mock;
+  getBackupItem: Mock;
   listContainers: Mock;
   listVMs: Mock;
   listFileSets: Mock;
@@ -269,12 +270,13 @@ function replaced<T>(base: T[], over: T[] | undefined, same: (a: T, b: T) => boo
   return [...base.filter((b) => !over.some((o) => same(o, b))), ...over];
 }
 
-/** serveEntries answers the calls the page reads an entry through. */
+/** serveEntries answers the calls the page reads an entry through. An entry
+ *  nobody staged is answered as the server answers an unknown one. */
 export function serveEntries(mocks: EntryMocks, staged: Staged = {}): void {
-  mocks.listItems.mockResolvedValue({
-    ok: true,
-    items: replaced(ITEMS, staged.items, (a, b) => a.kind === b.kind && a.key === b.key),
-    unlisted: [],
+  const items = replaced(ITEMS, staged.items, (a, b) => a.kind === b.kind && a.key === b.key);
+  mocks.getBackupItem.mockImplementation((kind: string, key: string) => {
+    const item = items.find((i) => i.kind === kind && i.key === key);
+    return item ? Promise.resolve({ ok: true, item }) : Promise.reject(new ApiError(404, "not found"));
   });
   mocks.listContainers.mockResolvedValue({
     ok: true,
