@@ -16,8 +16,10 @@ import (
 )
 
 // A forgotten login password is reset with a code that BombVault writes to its
-// own container log. Reading that log takes access to the Docker host, which is
-// root on it already, so the code proves more than the password did.
+// own container log. Whoever can read that log can reset the password: root on
+// the host, but also a log viewer such as Dozzle, anything given the Docker
+// socket read-only and a log shipper that forwards container output. Somebody
+// who only reaches the web interface never sees the code.
 const (
 	resetCodeTTL = 10 * time.Minute
 	// A code holds 60 bits, which nobody finds in ten minutes at any rate
