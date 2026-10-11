@@ -931,15 +931,12 @@ const fr: Partial<Translations> = {
   "idle.quietHint": "Durée pendant laquelle le CPU et le trafic doivent rester sous les deux limites.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Surveillance (Prometheus)",
   "settings.metricsEnable": "Exposer /metrics",
   "settings.metricsToken": "Jeton de scrape (facultatif)",
   "settings.metricsHint": "Métriques au format Prometheus sur /metrics pour Grafana/Uptime Kuma. Si un jeton est défini, récupérez avec Authorization: Bearer <token>.",
   "settings.widget": "Widget de tableau de bord",
   "settings.widgetHint": "Intégrez le journal d'activité de BombVault dans Homepage, Organizr, Heimdall ou tout tableau de bord affichant une iframe, une minuscule page autonome avec juste le journal.",
-  "settings.widgetHow": "Collez l'URL dans le widget iframe de votre tableau de bord, il n'en faut pas plus.",
   "settings.widgetAccess": "Le jeton donne un accès en lecture seule au journal d'activité, rien d'autre ; Désactiver le révoque immédiatement.",
-  "settings.widgetEnglish": "La page du widget elle-même est uniquement en anglais. Une variante pour le tableau de bord Unraid viendra peut-être plus tard.",
   "settings.widgetGenerate": "Générer un jeton",
   "settings.widgetRegenerate": "Régénérer",
   "settings.widgetDisable": "Désactiver",

@@ -716,7 +716,6 @@ const lv: Partial<Translations> = {
   "idle.quietHint": "Cik ilgi CPU un datplūsmai jāpaliek zem abām robežām.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Uzraudzība (Prometheus)",
   "settings.metricsEnable": "Atklāt /metrics",
   "settings.metricsToken": "Nolasīšanas marķieris (neobligāti)",
   "settings.metricsHint": "Prometheus formāta metrikas vietnē /metrics priekš Grafana/Uptime Kuma. Ja marķieris ir iestatīts, nolasiet ar Authorization: Bearer <token>.",
@@ -724,9 +723,7 @@ const lv: Partial<Translations> = {
   // Dashboard widget
   "settings.widget": "Vadības paneļa sīkrīks",
   "settings.widgetHint": "Iegultiniet BombVault darbības žurnālu Homepage, Organizr, Heimdall vai jebkurā panelī, kas var rādīt iframe, nelielu, patstāvīgu lapu tikai ar žurnālu.",
-  "settings.widgetHow": "Ielīmējiet URL sava paneļa iframe sīkrīkā. Tas ir viss, kas nepieciešams.",
   "settings.widgetAccess": "Marķieris piešķir tikai lasīšanas piekļuvi darbības žurnālam un neko citu; Atspējot to nekavējoties atceļ.",
-  "settings.widgetEnglish": "Pati sīkrīka lapa ir tikai angļu valodā. Unraid paneļa variants var parādīties vēlāk.",
   "settings.widgetGenerate": "Ģenerēt marķieri",
   "settings.widgetRegenerate": "Ģenerēt no jauna",
   "settings.widgetDisable": "Atspējot",

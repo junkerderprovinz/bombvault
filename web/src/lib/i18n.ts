@@ -810,7 +810,6 @@ export const en = {
   "idle.quietHint": "How long CPU and traffic have to stay below both limits.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Monitoring (Prometheus)",
   "settings.metricsEnable": "Expose /metrics",
   "settings.metricsToken": "Scrape token (optional)",
   "settings.metricsHint": "Prometheus-format metrics at /metrics for Grafana/Uptime Kuma. If a token is set, scrape with Authorization: Bearer <token>.",
@@ -818,9 +817,7 @@ export const en = {
   // Dashboard widget (embeddable activity log)
   "settings.widget": "Dashboard widget",
   "settings.widgetHint": "Embed BombVault's activity log in Homepage, Organizr, Heimdall or any dashboard that can show an iframe: a tiny standalone page with just the log.",
-  "settings.widgetHow": "Paste the URL into your dashboard's iframe widget. That is all it needs.",
   "settings.widgetAccess": "The token grants read-only access to the activity log and nothing else; Disable revokes it immediately.",
-  "settings.widgetEnglish": "The widget page itself is English-only. An Unraid dashboard variant may come later.",
   "settings.widgetGenerate": "Generate token",
   "settings.widgetRegenerate": "Regenerate",
   "settings.widgetDisable": "Disable",
@@ -4799,6 +4796,17 @@ export const en = {
   "entry.settings.plan": "Plan",
   "zfs.commands": "Commands around the snapshot",
   "zfs.connection.view": "View connection",
+  "integrations.services": "Services",
+  "api.description": "API description",
+  "api.descriptionHint": "The description of every route is at /api/v1/openapi.json and needs no token.",
+  "settings.dashTileNoSshShort": "Host SSH missing",
+  "settings.widgetNoToken": "No token",
+  "settings.widgetSetup": "Setup",
+  "settings.widgetStep1": "Generate a token.",
+  "settings.widgetStep2": "Paste the widget URL into your dashboard's iframe widget. That is all it needs. The Unraid plugin asks for it itself.",
+  "settings.widgetStep3": "The widget then shows the activity log and the next scheduled run. The widget page itself is in English only.",
+  "settings.widgetMissing": "If the tile is missing after installing, switch it on in the dashboard's widget settings.",
+  "settings.widgetCa": "The plugin is also in the Community Applications, see {page}.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -5522,7 +5530,6 @@ export const de: Translations = {
   "idle.quietHint": "So lange müssen CPU und Verkehr unter beiden Grenzen bleiben.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Monitoring (Prometheus)",
   "settings.metricsEnable": "/metrics bereitstellen",
   "settings.metricsToken": "Scrape-Token (optional)",
   "settings.metricsHint": "Prometheus-Metriken unter /metrics für Grafana/Uptime Kuma. Mit gesetztem Token via Authorization: Bearer <token> abrufen.",
@@ -5530,9 +5537,7 @@ export const de: Translations = {
   // Dashboard widget (embeddable activity log)
   "settings.widget": "Dashboard-Widget",
   "settings.widgetHint": "BombVaults Aktivitätslog in Homepage, Organizr, Heimdall oder jedem Dashboard mit iframe-Widget einbetten: eine winzige eigenständige Seite nur mit dem Log.",
-  "settings.widgetHow": "Die URL einfach ins iframe-Widget des Dashboards einfügen. Mehr braucht es nicht.",
   "settings.widgetAccess": "Das Token erlaubt nur Lesezugriff auf das Aktivitätslog, sonst nichts; Deaktivieren widerruft es sofort.",
-  "settings.widgetEnglish": "Die Widget-Seite selbst ist nur auf Englisch. Eine Unraid-Dashboard-Variante kommt eventuell später.",
   "settings.widgetGenerate": "Token erzeugen",
   "settings.widgetRegenerate": "Neu erzeugen",
   "settings.widgetDisable": "Deaktivieren",
@@ -9316,6 +9321,17 @@ export const de: Translations = {
   "entry.settings.plan": "Plan",
   "zfs.commands": "Befehle rund um den Snapshot",
   "zfs.connection.view": "Verbindung ansehen",
+  "integrations.services": "Dienste",
+  "api.description": "Beschreibung der API",
+  "api.descriptionHint": "Die Beschreibung aller Routen liegt unter /api/v1/openapi.json und braucht kein Token.",
+  "settings.dashTileNoSshShort": "Host-SSH fehlt",
+  "settings.widgetNoToken": "Kein Token",
+  "settings.widgetSetup": "Einrichtung",
+  "settings.widgetStep1": "Token erzeugen.",
+  "settings.widgetStep2": "Die Widget-URL ins iframe-Widget deines Dashboards einfügen. Mehr braucht es nicht. Beim Unraid-Plugin fragt das Plugin selbst danach.",
+  "settings.widgetStep3": "Das Widget zeigt dann das Aktivitätslog und den nächsten geplanten Lauf. Die Widget-Seite selbst ist nur auf Englisch.",
+  "settings.widgetMissing": "Falls die Kachel nach dem Installieren fehlt, schalte sie in der Widget-Verwaltung des Dashboards ein.",
+  "settings.widgetCa": "Das Plugin steht auch in den Community Applications, siehe {page}.",
 };
 
 // ---------------------------------------------------------------------------

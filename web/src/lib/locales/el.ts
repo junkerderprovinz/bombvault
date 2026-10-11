@@ -939,15 +939,12 @@ const el: Partial<Translations> = {
   "idle.quietHint": "Πόση ώρα πρέπει CPU και κίνηση να μείνουν κάτω και από τα δύο όρια.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Παρακολούθηση (Prometheus)",
   "settings.metricsEnable": "Έκθεση /metrics",
   "settings.metricsToken": "Διακριτικό scrape (προαιρετικό)",
   "settings.metricsHint": "Μετρικές σε μορφή Prometheus στο /metrics για Grafana/Uptime Kuma. Αν οριστεί διακριτικό, κάντε scrape με Authorization: Bearer <token>.",
   "settings.widget": "Widget πίνακα",
   "settings.widgetHint": "Ενσωματώστε το αρχείο δραστηριότητας του BombVault στο Homepage, το Organizr, το Heimdall ή σε οποιονδήποτε πίνακα με widget iframe: μια μικροσκοπική αυτόνομη σελίδα μόνο με το αρχείο.",
-  "settings.widgetHow": "Επικολλήστε το URL στο widget iframe του πίνακά σας. Δεν χρειάζεται τίποτα άλλο.",
   "settings.widgetAccess": "Το token δίνει πρόσβαση μόνο για ανάγνωση στο αρχείο δραστηριότητας και τίποτα άλλο· η Απενεργοποίηση το ανακαλεί αμέσως.",
-  "settings.widgetEnglish": "Η ίδια η σελίδα του widget είναι μόνο στα αγγλικά. Μια έκδοση για τον πίνακα του Unraid ίσως έρθει αργότερα.",
   "settings.widgetGenerate": "Δημιουργία token",
   "settings.widgetRegenerate": "Εκ νέου δημιουργία",
   "settings.widgetDisable": "Απενεργοποίηση",

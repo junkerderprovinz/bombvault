@@ -716,7 +716,6 @@ const et: Partial<Translations> = {
   "idle.quietHint": "Kui kaua peavad protsessor ja liiklus jääma mõlema piiri alla.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Jälgimine (Prometheus)",
   "settings.metricsEnable": "Ava /metrics",
   "settings.metricsToken": "Skreipimise luba (valikuline)",
   "settings.metricsHint": "Prometheuse vormingus mõõdikud aadressil /metrics Grafana/Uptime Kuma jaoks. Kui luba on seadistatud, skreipi päisega Authorization: Bearer <token>.",
@@ -724,9 +723,7 @@ const et: Partial<Translations> = {
   // Dashboard widget
   "settings.widget": "Töölaua vidin",
   "settings.widgetHint": "Manusta BombVaulti tegevuslogi Homepage'i, Organizri, Heimdalli või mistahes töölauale, mis toetab iframe'i, väike iseseisev leht, kus on ainult logi.",
-  "settings.widgetHow": "Kleebi URL oma töölaua iframe-vidinasse. Rohkem pole vaja.",
   "settings.widgetAccess": "Luba annab ainult lugemisõiguse tegevuslogile ja mitte millelegi muule; Keela tühistab selle kohe.",
-  "settings.widgetEnglish": "Vidina leht ise on ainult inglise keeles. Unraidi töölaua variant võib tulla hiljem.",
   "settings.widgetGenerate": "Loo luba",
   "settings.widgetRegenerate": "Loo uuesti",
   "settings.widgetDisable": "Keela",

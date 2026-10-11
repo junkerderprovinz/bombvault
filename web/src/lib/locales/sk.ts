@@ -716,7 +716,6 @@ const sk: Partial<Translations> = {
   "idle.quietHint": "Ako dlho musia CPU a prevádzka zostať pod oboma limitmi.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Monitorovanie (Prometheus)",
   "settings.metricsEnable": "Sprístupniť /metrics",
   "settings.metricsToken": "Token na zber (voliteľné)",
   "settings.metricsHint": "Metriky vo formáte Prometheus na /metrics pre Grafana/Uptime Kuma. Ak je nastavený token, zbierajte pomocou Authorization: Bearer <token>.",
@@ -724,9 +723,7 @@ const sk: Partial<Translations> = {
   // Dashboard widget
   "settings.widget": "Miniaplikácia prehľadu",
   "settings.widgetHint": "Vložte denník aktivít BombVault do Homepage, Organizr, Heimdall alebo akéhokoľvek prehľadu, ktorý dokáže zobraziť iframe, malú samostatnú stránku iba s denníkom.",
-  "settings.widgetHow": "Vložte URL do miniaplikácie iframe vášho prehľadu. To je všetko, čo je potrebné.",
   "settings.widgetAccess": "Token poskytuje iba prístup na čítanie k denníku aktivít a nič viac; Vypnutie ho okamžite zruší.",
-  "settings.widgetEnglish": "Samotná stránka miniaplikácie je iba v angličtine. Varianta pre prehľad Unraid môže prísť neskôr.",
   "settings.widgetGenerate": "Vygenerovať token",
   "settings.widgetRegenerate": "Vygenerovať znova",
   "settings.widgetDisable": "Vypnúť",

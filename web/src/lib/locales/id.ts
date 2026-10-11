@@ -716,7 +716,6 @@ const id: Partial<Translations> = {
   "idle.quietHint": "Berapa lama CPU dan lalu lintas harus tetap di bawah kedua batas.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Pemantauan (Prometheus)",
   "settings.metricsEnable": "Ekspos /metrics",
   "settings.metricsToken": "Token scrape (opsional)",
   "settings.metricsHint": "Metrik format Prometheus di /metrics untuk Grafana/Uptime Kuma. Jika token diatur, scrape dengan Authorization: Bearer <token>.",
@@ -724,9 +723,7 @@ const id: Partial<Translations> = {
   // Dashboard widget
   "settings.widget": "Widget dasbor",
   "settings.widgetHint": "Sematkan log aktivitas BombVault di Homepage, Organizr, Heimdall, atau dasbor mana pun yang dapat menampilkan iframe: halaman mandiri kecil hanya dengan log itu.",
-  "settings.widgetHow": "Tempel URL ke widget iframe dasbor Anda. Itu saja yang diperlukan.",
   "settings.widgetAccess": "Token memberikan akses hanya-baca ke log aktivitas dan tidak lebih; Nonaktifkan langsung mencabutnya.",
-  "settings.widgetEnglish": "Halaman widget itu sendiri hanya dalam bahasa Inggris. Varian dasbor Unraid mungkin hadir nanti.",
   "settings.widgetGenerate": "Buat token",
   "settings.widgetRegenerate": "Buat ulang",
   "settings.widgetDisable": "Nonaktifkan",

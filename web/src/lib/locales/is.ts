@@ -716,7 +716,6 @@ const is: Partial<Translations> = {
   "idle.quietHint": "Hve lengi örgjörvi og umferð þurfa að haldast undir báðum mörkunum.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Vöktun (Prometheus)",
   "settings.metricsEnable": "Sýna /metrics",
   "settings.metricsToken": "Skrapetákn (valfrjálst)",
   "settings.metricsHint": "Mælingar á Prometheus-sniði á /metrics fyrir Grafana/Uptime Kuma. Ef tákn er stillt, sæktu með Authorization: Bearer <token>.",
@@ -724,9 +723,7 @@ const is: Partial<Translations> = {
   // Dashboard widget
   "settings.widget": "Viðmótshluti stjórnborðs",
   "settings.widgetHint": "Felldu inn virknidagbók BombVault í Homepage, Organizr, Heimdall eða hvaða stjórnborð sem getur sýnt iframe, örsmáa sjálfstæða síðu með aðeins dagbókinni.",
-  "settings.widgetHow": "Límdu slóðina inn í iframe-viðmótshlutann á stjórnborðinu þínu. Það er allt sem þarf.",
   "settings.widgetAccess": "Táknið veitir aðeins lestraraðgang að virknidagbókinni og ekkert annað; Slökkva afturkallar það samstundis.",
-  "settings.widgetEnglish": "Sjálf viðmótshlutasíðan er aðeins á ensku. Útgáfa fyrir Unraid stjórnborðið gæti komið síðar.",
   "settings.widgetGenerate": "Búa til tákn",
   "settings.widgetRegenerate": "Búa til aftur",
   "settings.widgetDisable": "Slökkva",

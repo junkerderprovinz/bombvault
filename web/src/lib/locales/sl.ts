@@ -716,7 +716,6 @@ const sl: Partial<Translations> = {
   "idle.quietHint": "Kako dolgo morata CPE in promet ostati pod obema mejama.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Nadzor (Prometheus)",
   "settings.metricsEnable": "Izpostavi /metrics",
   "settings.metricsToken": "Žeton za pobiranje (neobvezno)",
   "settings.metricsHint": "Meritve v obliki Prometheus na /metrics za Grafano/Uptime Kuma. Če je nastavljen žeton, pobiraj z Authorization: Bearer <žeton>.",
@@ -724,9 +723,7 @@ const sl: Partial<Translations> = {
   // Dashboard widget (embeddable activity log)
   "settings.widget": "Pripomoček nadzorne plošče",
   "settings.widgetHint": "Vdelaj dnevnik dejavnosti BombVaulta v Homepage, Organizr, Heimdall ali katero koli nadzorno ploščo, ki lahko prikaže iframe, majhno samostojno stran samo z dnevnikom.",
-  "settings.widgetHow": "Prilepi URL v pripomoček iframe svoje nadzorne plošče. To je vse, kar potrebuje.",
   "settings.widgetAccess": "Žeton omogoča dostop do dnevnika dejavnosti samo za branje in nič drugega; Onemogoči ga takoj prekliče.",
-  "settings.widgetEnglish": "Stran pripomočka je sama po sebi samo v angleščini. Različica za Unraidovo nadzorno ploščo bo morda na voljo pozneje.",
   "settings.widgetGenerate": "Ustvari žeton",
   "settings.widgetRegenerate": "Ponovno ustvari",
   "settings.widgetDisable": "Onemogoči",

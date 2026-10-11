@@ -947,15 +947,12 @@ const es: Partial<Translations> = {
   "idle.quietHint": "Cuánto tiempo deben quedar la CPU y el tráfico por debajo de ambos límites.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Monitorización (Prometheus)",
   "settings.metricsEnable": "Exponer /metrics",
   "settings.metricsToken": "Token de scrape (opcional)",
   "settings.metricsHint": "Métricas en formato Prometheus en /metrics para Grafana/Uptime Kuma. Si se define un token, haz el scrape con Authorization: Bearer <token>.",
   "settings.widget": "Widget de panel",
   "settings.widgetHint": "Integra el registro de actividad de BombVault en Homepage, Organizr, Heimdall o cualquier panel que muestre un iframe, una pequeña página independiente solo con el registro.",
-  "settings.widgetHow": "Pega la URL en el widget iframe de tu panel. No necesita nada más.",
   "settings.widgetAccess": "El token concede acceso de solo lectura al registro de actividad y nada más; Desactivar lo revoca de inmediato.",
-  "settings.widgetEnglish": "La página del widget está solo en inglés. Puede que más adelante llegue una variante para el panel de Unraid.",
   "settings.widgetGenerate": "Generar token",
   "settings.widgetRegenerate": "Regenerar",
   "settings.widgetDisable": "Desactivar",

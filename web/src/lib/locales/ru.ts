@@ -925,15 +925,12 @@ const ru: Partial<Translations> = {
   "idle.quietHint": "Сколько CPU и трафик должны оставаться ниже обоих пределов.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Мониторинг (Prometheus)",
   "settings.metricsEnable": "Публиковать /metrics",
   "settings.metricsToken": "Токен сбора (необязательно)",
   "settings.metricsHint": "Метрики в формате Prometheus по адресу /metrics для Grafana/Uptime Kuma. Если задан токен, выполняйте сбор с заголовком Authorization: Bearer <token>.",
   "settings.widget": "Виджет для дашборда",
   "settings.widgetHint": "Встройте журнал активности BombVault в Homepage, Organizr, Heimdall или любой дашборд с iframe-виджетом — крошечная автономная страница только с журналом.",
-  "settings.widgetHow": "Вставьте URL в iframe-виджет вашего дашборда — больше ничего не нужно.",
   "settings.widgetAccess": "Токен даёт доступ только на чтение журнала активности и ничего больше; «Отключить» немедленно отзывает его.",
-  "settings.widgetEnglish": "Сама страница виджета только на английском. Вариант для дашборда Unraid может появиться позже.",
   "settings.widgetGenerate": "Создать токен",
   "settings.widgetRegenerate": "Создать заново",
   "settings.widgetDisable": "Отключить",

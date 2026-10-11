@@ -922,15 +922,12 @@ const ko: Partial<Translations> = {
   "idle.quietHint": "CPU와 트래픽이 두 기준 아래에 머물러야 하는 시간입니다.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "모니터링 (Prometheus)",
   "settings.metricsEnable": "/metrics 노출",
   "settings.metricsToken": "스크레이프 토큰 (선택)",
   "settings.metricsHint": "Grafana/Uptime Kuma용 Prometheus 형식 메트릭이 /metrics에 제공됩니다. 토큰이 설정되어 있으면 Authorization: Bearer <token>으로 스크레이프하세요.",
   "settings.widget": "대시보드 위젯",
   "settings.widgetHint": "BombVault의 활동 로그를 Homepage, Organizr, Heimdall 등 iframe을 표시할 수 있는 대시보드에 삽입하세요. 로그만 있는 작은 독립 페이지입니다.",
-  "settings.widgetHow": "URL을 대시보드의 iframe 위젯에 붙여넣기만 하면 됩니다.",
   "settings.widgetAccess": "토큰은 활동 로그에 대한 읽기 전용 접근만 허용합니다. 비활성화하면 즉시 취소됩니다.",
-  "settings.widgetEnglish": "위젯 페이지 자체는 영어로만 제공됩니다. Unraid 대시보드용 버전은 나중에 나올 수 있습니다.",
   "settings.widgetGenerate": "토큰 생성",
   "settings.widgetRegenerate": "다시 생성",
   "settings.widgetDisable": "비활성화",

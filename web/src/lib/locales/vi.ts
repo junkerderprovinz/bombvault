@@ -930,15 +930,12 @@ const vi: Partial<Translations> = {
   "idle.quietHint": "CPU và lưu lượng phải ở dưới cả hai giới hạn trong bao lâu.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Giám sát (Prometheus)",
   "settings.metricsEnable": "Cung cấp /metrics",
   "settings.metricsToken": "Token scrape (tùy chọn)",
   "settings.metricsHint": "Số liệu định dạng Prometheus tại /metrics cho Grafana/Uptime Kuma. Nếu đặt token, scrape với Authorization: Bearer <token>.",
   "settings.widget": "Widget bảng điều khiển",
   "settings.widgetHint": "Nhúng nhật ký hoạt động của BombVault vào Homepage, Organizr, Heimdall hoặc bất kỳ bảng điều khiển nào hiển thị được iframe, một trang độc lập nhỏ gọn chỉ chứa nhật ký.",
-  "settings.widgetHow": "Dán URL vào widget iframe của bảng điều khiển. Chỉ cần vậy thôi.",
   "settings.widgetAccess": "Mã thông báo chỉ cấp quyền đọc nhật ký hoạt động, không gì khác; Tắt sẽ thu hồi ngay lập tức.",
-  "settings.widgetEnglish": "Bản thân trang widget chỉ có tiếng Anh. Phiên bản cho bảng điều khiển Unraid có thể ra mắt sau.",
   "settings.widgetGenerate": "Tạo mã thông báo",
   "settings.widgetRegenerate": "Tạo lại",
   "settings.widgetDisable": "Tắt",

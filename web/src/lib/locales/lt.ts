@@ -716,7 +716,6 @@ const lt: Partial<Translations> = {
   "idle.quietHint": "Kiek laiko procesorius ir srautas turi likti žemiau abiejų ribų.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Stebėjimas (Prometheus)",
   "settings.metricsEnable": "Rodyti /metrics",
   "settings.metricsToken": "Nuskaitymo žetonas (neprivaloma)",
   "settings.metricsHint": "Prometheus formato metrikos adresu /metrics skirtos Grafana/Uptime Kuma. Jei nustatytas žetonas, nuskaitykite su Authorization: Bearer <token>.",
@@ -724,9 +723,7 @@ const lt: Partial<Translations> = {
   // Dashboard widget
   "settings.widget": "Skydelio valdiklis",
   "settings.widgetHint": "Įterpkite BombVault veiklos žurnalą į Homepage, Organizr, Heimdall arba bet kokį skydelį, galintį rodyti iframe, mažą atskirą puslapį tik su žurnalu.",
-  "settings.widgetHow": "Įklijuokite URL į savo skydelio iframe valdiklį. Daugiau nieko nereikia.",
   "settings.widgetAccess": "Žetonas suteikia tik skaitymo prieigą prie veiklos žurnalo ir nieko daugiau; Išjungti jį iškart panaikina.",
-  "settings.widgetEnglish": "Pats valdiklio puslapis yra tik anglų kalba. Unraid skydelio variantas gali atsirasti vėliau.",
   "settings.widgetGenerate": "Generuoti žetoną",
   "settings.widgetRegenerate": "Generuoti iš naujo",
   "settings.widgetDisable": "Išjungti",

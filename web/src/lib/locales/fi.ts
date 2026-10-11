@@ -939,15 +939,12 @@ const fi: Partial<Translations> = {
   "idle.quietHint": "Kuinka kauan suorittimen ja liikenteen on pysyttävä kummankin rajan alla.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Valvonta (Prometheus)",
   "settings.metricsEnable": "Tarjoa /metrics",
   "settings.metricsToken": "Scrape-tunniste (valinnainen)",
   "settings.metricsHint": "Prometheus-muotoiset mittarit osoitteessa /metrics Grafanalle/Uptime Kumalle. Jos tunniste on asetettu, scrape Authorization: Bearer <token> -otsikolla.",
   "settings.widget": "Dashboard-widget",
   "settings.widgetHint": "Upota BombVaultin toimintaloki Homepageen, Organizriin, Heimdalliin tai mihin tahansa kojelautaan, joka näyttää iframen (pikkuruinen itsenäinen sivu, jossa on vain loki).",
-  "settings.widgetHow": "Liitä URL kojelautasi iframe-widgetiin. Muuta ei tarvita.",
   "settings.widgetAccess": "Token antaa vain lukuoikeuden toimintalokiin eikä mihinkään muuhun; Poista käytöstä kumoaa sen heti.",
-  "settings.widgetEnglish": "Itse widget-sivu on vain englanniksi. Unraid-kojelautaversio saattaa tulla myöhemmin.",
   "settings.widgetGenerate": "Luo token",
   "settings.widgetRegenerate": "Luo uudelleen",
   "settings.widgetDisable": "Poista käytöstä",

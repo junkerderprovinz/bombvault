@@ -929,15 +929,12 @@ const ro: Partial<Translations> = {
   "idle.quietHint": "Cât timp trebuie să rămână CPU și traficul sub ambele limite.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Monitorizare (Prometheus)",
   "settings.metricsEnable": "Expune /metrics",
   "settings.metricsToken": "Token de scrape (opțional)",
   "settings.metricsHint": "Metrici în format Prometheus la /metrics pentru Grafana/Uptime Kuma. Dacă este setat un token, fă scrape cu Authorization: Bearer <token>.",
   "settings.widget": "Widget pentru dashboard",
   "settings.widgetHint": "Încorporează jurnalul de activitate BombVault în Homepage, Organizr, Heimdall sau orice dashboard care afișează un iframe, o pagină minusculă de sine stătătoare doar cu jurnalul.",
-  "settings.widgetHow": "Lipește URL-ul în widgetul iframe al dashboard-ului. Nu e nevoie de nimic altceva.",
   "settings.widgetAccess": "Tokenul oferă acces doar în citire la jurnalul de activitate și la nimic altceva; Dezactivează îl revocă imediat.",
-  "settings.widgetEnglish": "Pagina widgetului este doar în engleză. O variantă pentru dashboard-ul Unraid ar putea veni mai târziu.",
   "settings.widgetGenerate": "Generează token",
   "settings.widgetRegenerate": "Regenerează",
   "settings.widgetDisable": "Dezactivează",

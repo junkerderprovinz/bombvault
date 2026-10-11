@@ -501,12 +501,13 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "api.labelLabel" },
         { key: "mcp.allowStart", hint: "api.allowStartHint" },
         { key: "api.newTokenTitle", hint: "mcp.showOnce" },
+        { key: "api.description", hint: "api.descriptionHint" },
       ],
     },
     {
-      title: "ha.title",
-      hint: "ha.hint",
+      title: "integrations.services",
       rows: [
+        { key: "ha.title", hint: "ha.hint" },
         { key: "ha.enable" },
         { key: "ha.host" },
         { key: "notify.smtpPort" },
@@ -515,16 +516,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "ha.prefix", hint: "ha.prefixHint" },
         { key: "ha.tls", hint: "ha.tlsHint" },
         { key: "ha.buttons", hint: "ha.buttonsHint" },
-      ],
-    },
-    {
-      title: "mdns.title",
-      hint: "mdns.hint",
-      rows: [{ key: "mdns.enable" }],
-    },
-    {
-      title: "settings.metrics",
-      rows: [
+        { key: "mdns.enable", hint: "mdns.hint" },
         { key: "settings.metricsEnable", hint: "settings.metricsHint" },
         { key: "settings.metricsToken" },
       ],
@@ -532,7 +524,11 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "settings.widget",
       hint: "settings.widgetHint",
-      rows: [{ key: "settings.widgetToken" }],
+      rows: [
+        { key: "settings.widgetToken", hint: "settings.widgetAccess" },
+        { key: "settings.dashTile", hint: "settings.dashTileHint" },
+        { key: "settings.widgetSetup" },
+      ],
     },
     {
       title: "vm.ssh.title",

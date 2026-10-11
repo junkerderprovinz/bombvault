@@ -937,15 +937,12 @@ const cs: Partial<Translations> = {
   "idle.quietHint": "Jak dlouho musí CPU a provoz zůstat pod oběma limity.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Monitorování (Prometheus)",
   "settings.metricsEnable": "Zpřístupnit /metrics",
   "settings.metricsToken": "Scrape token (volitelné)",
   "settings.metricsHint": "Metriky ve formátu Prometheus na /metrics pro Grafana/Uptime Kuma. Pokud je nastaven token, scrapujte s Authorization: Bearer <token>.",
   "settings.widget": "Widget pro dashboard",
   "settings.widgetHint": "Vložte log aktivit BombVaultu do Homepage, Organizr, Heimdall nebo jakéhokoli dashboardu s iframe widgetem: drobná samostatná stránka jen s logem.",
-  "settings.widgetHow": "Vložte URL do iframe widgetu svého dashboardu. Víc není potřeba.",
   "settings.widgetAccess": "Token dává přístup k logu aktivit pouze pro čtení a k ničemu jinému; Zakázat ho okamžitě odvolá.",
-  "settings.widgetEnglish": "Samotná stránka widgetu je pouze anglicky. Varianta pro dashboard Unraidu možná přijde později.",
   "settings.widgetGenerate": "Vygenerovat token",
   "settings.widgetRegenerate": "Vygenerovat znovu",
   "settings.widgetDisable": "Zakázat",

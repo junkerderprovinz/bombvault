@@ -716,7 +716,6 @@ const ca: Partial<Translations> = {
   "idle.quietHint": "Quant de temps han d'estar la CPU i el trànsit per sota de tots dos límits.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Supervisió (Prometheus)",
   "settings.metricsEnable": "Exposa /metrics",
   "settings.metricsToken": "Testimoni de raspat (opcional)",
   "settings.metricsHint": "Mètriques en format Prometheus a /metrics per a Grafana/Uptime Kuma. Si hi ha un testimoni configurat, raspa amb Authorization: Bearer <token>.",
@@ -724,9 +723,7 @@ const ca: Partial<Translations> = {
   // Dashboard widget
   "settings.widget": "Giny del tauler",
   "settings.widgetHint": "Incrusta el registre d'activitat de BombVault a Homepage, Organizr, Heimdall o qualsevol tauler que pugui mostrar un iframe: una pàgina petita només amb el registre.",
-  "settings.widgetHow": "Enganxa la URL al giny iframe del teu tauler. Això és tot el que cal.",
   "settings.widgetAccess": "El testimoni dona accés només de lectura al registre d'activitat i res més; Desactiva'l el revoca immediatament.",
-  "settings.widgetEnglish": "La pàgina del giny només està en anglès. Potser més endavant hi haurà una variant per al tauler d'Unraid.",
   "settings.widgetGenerate": "Genera testimoni",
   "settings.widgetRegenerate": "Regenera",
   "settings.widgetDisable": "Desactiva",

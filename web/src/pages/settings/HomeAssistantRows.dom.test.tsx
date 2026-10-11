@@ -24,7 +24,7 @@ vi.mock("../../lib/toast", () => ({
   useToast: () => ({ push: (message: string, severity?: string) => pushed.push({ message, severity }) }),
 }));
 
-const { HomeAssistantCard } = await import("./HomeAssistantCard");
+const { HomeAssistantRows } = await import("./HomeAssistantRows");
 
 function settings(over: Partial<HomeAssistantSettings> = {}): HomeAssistantSettings {
   return {
@@ -50,17 +50,17 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-describe("HomeAssistantCard", () => {
-  it("saves the whole form and shows the connection", async () => {
+describe("HomeAssistantRows", () => {
+  it("opens the form with the switch, saves it whole and shows the connection", async () => {
     getHomeAssistant.mockResolvedValue({ ok: true, settings: settings(), cooldownMinutes: 15, itemStartsPerDay: 4 });
     setHomeAssistant.mockResolvedValue({
       ok: true,
       settings: settings({ enabled: true, host: "10.0.0.2", nodeId: "a1b2c3d4", status: { connected: true, error: "" } }),
     });
-    render(<HomeAssistantCard hueIndex={0} />);
+    render(<HomeAssistantRows />);
 
-    fireEvent.change(await screen.findByPlaceholderText(en["ha.hostPlaceholder"]), { target: { value: "10.0.0.2" } });
-    fireEvent.click(screen.getByRole("switch", { name: en["ha.enable"] }));
+    fireEvent.click(await screen.findByRole("switch", { name: en["ha.enable"] }));
+    fireEvent.change(screen.getByPlaceholderText(en["ha.hostPlaceholder"]), { target: { value: "10.0.0.2" } });
     fireEvent.click(screen.getByRole("button", { name: new RegExp(en["settings.save"]) }));
 
     await waitFor(() =>
@@ -84,7 +84,7 @@ describe("HomeAssistantCard", () => {
       settings: settings({ enabled: true, host: "broker", status: { connected: false, error: "connection refused" } }),
     });
     setHomeAssistant.mockResolvedValue({ ok: true, settings: settings(), warning: "mqtt-remove-failed" });
-    render(<HomeAssistantCard hueIndex={0} />);
+    render(<HomeAssistantRows />);
 
     expect(await screen.findByText(en["ha.statusError"].replace("{error}", "connection refused"))).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(en["settings.save"]) }));
@@ -92,15 +92,27 @@ describe("HomeAssistantCard", () => {
   });
 });
 
-describe("HomeAssistantCard password", () => {
+describe("HomeAssistantRows switch", () => {
+  it("saves at once when a connection that is on is switched off", async () => {
+    getHomeAssistant.mockResolvedValue({ ok: true, settings: settings({ enabled: true, host: "broker" }) });
+    setHomeAssistant.mockResolvedValue({ ok: true, settings: settings({ host: "broker" }) });
+    render(<HomeAssistantRows />);
+
+    fireEvent.click(await screen.findByRole("switch", { name: en["ha.enable"] }));
+    await waitFor(() => expect(setHomeAssistant).toHaveBeenCalledWith(expect.objectContaining({ enabled: false, host: "broker" })));
+    await waitFor(() => expect(screen.queryByPlaceholderText(en["ha.hostPlaceholder"])).toBeNull());
+  });
+});
+
+describe("HomeAssistantRows password", () => {
   it("stops showing the stored password once the broker changes", async () => {
     getHomeAssistant.mockResolvedValue({
       ok: true,
-      settings: settings({ host: "10.0.0.2", username: "bv", passwordSet: true }),
+      settings: settings({ enabled: true, host: "10.0.0.2", username: "bv", passwordSet: true }),
       cooldownMinutes: 15,
       itemStartsPerDay: 4,
     });
-    render(<HomeAssistantCard hueIndex={0} />);
+    render(<HomeAssistantRows />);
     expect(await screen.findByPlaceholderText(en["cloud.secretSet"])).toBeTruthy();
     fireEvent.change(screen.getByPlaceholderText(en["ha.hostPlaceholder"]), { target: { value: "10.0.0.9" } });
     expect(screen.queryByPlaceholderText(en["cloud.secretSet"])).toBeNull();

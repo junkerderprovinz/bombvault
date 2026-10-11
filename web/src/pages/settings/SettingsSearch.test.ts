@@ -113,10 +113,10 @@ describe("the settings index in English", () => {
   it("leads the API tokens, Home Assistant and the mDNS switch to the Integrations page", () => {
     expect(search(items, "api tokens")[0].item.page).toBe("integrations");
     expect(where("token name")).toEqual([`integrations: ${en["api.title"]}`]);
-    expect(where("mqtt broker")).toContain(`integrations: ${en["ha.title"]}`);
-    expect(where("buttons start backups")).toEqual([`integrations: ${en["ha.title"]}`]);
-    expect(where("topic prefix")).toEqual([`integrations: ${en["ha.title"]}`]);
-    expect(where("announce on the local network")).toEqual([`integrations: ${en["mdns.title"]}`]);
+    expect(where("mqtt broker")).toContain(`integrations: ${en["integrations.services"]}`);
+    expect(where("buttons start backups")).toEqual([`integrations: ${en["integrations.services"]}`]);
+    expect(where("topic prefix")).toEqual([`integrations: ${en["integrations.services"]}`]);
+    expect(where("announce on the local network")).toEqual([`integrations: ${en["integrations.services"]}`]);
   });
 
   it("finds the API, Home Assistant and mDNS rows by the words behind their (i)", () => {
@@ -126,7 +126,7 @@ describe("the settings index in English", () => {
     const port = search(items, "8883").find((h) => h.item.page === "integrations");
     expect(port?.item.name).toBe(en["ha.tls"]);
     const local = search(items, "bombvault.local").filter((h) => h.item.page === "integrations");
-    expect(local.map((h) => h.item.name)).toContain(en["mdns.title"]);
+    expect(local.map((h) => h.item.name)).toContain(en["mdns.enable"]);
   });
 
   it("leads what moved to the tile that holds it", () => {

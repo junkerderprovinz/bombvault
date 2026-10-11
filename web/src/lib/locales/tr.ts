@@ -939,15 +939,12 @@ const tr: Partial<Translations> = {
   "idle.quietHint": "CPU ve trafiğin iki sınırın da altında kalması gereken süre.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "İzleme (Prometheus)",
   "settings.metricsEnable": "/metrics'i yayınla",
   "settings.metricsToken": "Scrape belirteci (isteğe bağlı)",
   "settings.metricsHint": "Grafana/Uptime Kuma için /metrics adresinde Prometheus biçiminde metrikler. Bir belirteç ayarlanırsa Authorization: Bearer <token> ile scrape edin.",
   "settings.widget": "Panel widget'ı",
   "settings.widgetHint": "BombVault'un etkinlik günlüğünü Homepage, Organizr, Heimdall veya iframe gösterebilen herhangi bir panele gömün. Yalnızca günlüğü içeren minicik bağımsız bir sayfa.",
-  "settings.widgetHow": "URL'yi panelinizin iframe widget'ına yapıştırın. Başka bir şey gerekmez.",
   "settings.widgetAccess": "Belirteç, etkinlik günlüğüne yalnızca okuma erişimi verir, başka hiçbir şeye değil; Devre dışı bırak onu hemen iptal eder.",
-  "settings.widgetEnglish": "Widget sayfasının kendisi yalnızca İngilizcedir. Unraid paneli için bir sürüm daha sonra gelebilir.",
   "settings.widgetGenerate": "Belirteç oluştur",
   "settings.widgetRegenerate": "Yeniden oluştur",
   "settings.widgetDisable": "Devre dışı bırak",

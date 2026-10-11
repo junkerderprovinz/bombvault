@@ -716,7 +716,6 @@ const gl: Partial<Translations> = {
   "idle.quietHint": "Canto tempo deben quedar a CPU e o tráfico por baixo dos dous límites.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Supervisión (Prometheus)",
   "settings.metricsEnable": "Expor /metrics",
   "settings.metricsToken": "Testemuño de scrape (opcional)",
   "settings.metricsHint": "Métricas en formato Prometheus en /metrics para Grafana/Uptime Kuma. Se hai un testemuño configurado, faino scrape con Authorization: Bearer <token>.",
@@ -724,9 +723,7 @@ const gl: Partial<Translations> = {
   // Dashboard widget
   "settings.widget": "Widget do panel",
   "settings.widgetHint": "Incrusta o rexistro de actividade de BombVault en Homepage, Organizr, Heimdall ou calquera panel que poida mostrar un iframe, unha páxina pequena independente só co rexistro.",
-  "settings.widgetHow": "Pega a URL no widget iframe do teu panel. Iso é todo o que fai falta.",
   "settings.widgetAccess": "O testemuño dá acceso só de lectura ao rexistro de actividade e nada máis; Desactivar revócao de inmediato.",
-  "settings.widgetEnglish": "A propia páxina do widget está só en inglés. Pode que máis adiante chegue unha variante para o panel de Unraid.",
   "settings.widgetGenerate": "Xerar testemuño",
   "settings.widgetRegenerate": "Rexenerar",
   "settings.widgetDisable": "Desactivar",

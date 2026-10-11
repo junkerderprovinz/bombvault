@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { getMdns, setMdns, type MdnsState } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
-import { Card, ToggleRow } from "./shared";
+import { SettingRow } from "../../components/storage/rows";
+import { Toggle } from "../../components/Toggle";
 
-// NetworkCard switches the mDNS announcement that lets a browser find
-// BombVault as bombvault.local.
-export function NetworkCard({ hueIndex }: { hueIndex?: number }) {
+// MdnsRow switches the mDNS announcement that lets a browser find BombVault as
+// bombvault.local.
+export function MdnsRow() {
   const { t } = useT();
   const { push } = useToast();
   const [state, setState] = useState<MdnsState | null>(null);
@@ -41,21 +42,18 @@ export function NetworkCard({ hueIndex }: { hueIndex?: number }) {
   else if (state?.enabled) status = t("mdns.statusStarting");
 
   return (
-    <Card title={t("mdns.title")} hint={t("mdns.hint")} hueIndex={hueIndex}>
+    <SettingRow label={t("mdns.enable")} hint={t("mdns.hint")} note={state === null ? undefined : status}>
       {state !== null && (
-        <>
-          <ToggleRow
-            label={t("mdns.enable")}
-            checked={state.enabled}
-            onChange={(v) => void toggle(v)}
-            disabled={busy}
-            shakeNonce={shake}
-          />
-          <p className="text-sm text-carbon-textSub wrap-anywhere" role="status">
-            {status}
-          </p>
-        </>
+        <Toggle
+          key={shake}
+          hideLabel
+          label={t("mdns.enable")}
+          checked={state.enabled}
+          onChange={(v) => void toggle(v)}
+          disabled={busy}
+          className={shake ? "glim-shake" : ""}
+        />
       )}
-    </Card>
+    </SettingRow>
   );
 }

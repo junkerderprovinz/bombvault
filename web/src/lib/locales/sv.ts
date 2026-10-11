@@ -939,15 +939,12 @@ const sv: Partial<Translations> = {
   "idle.quietHint": "Hur länge CPU och trafik måste ligga under båda gränserna.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Övervakning (Prometheus)",
   "settings.metricsEnable": "Exponera /metrics",
   "settings.metricsToken": "Scrape-token (valfritt)",
   "settings.metricsHint": "Mätvärden i Prometheus-format på /metrics för Grafana/Uptime Kuma. Om en token är satt, hämta med Authorization: Bearer <token>.",
   "settings.widget": "Dashboard-widget",
   "settings.widgetHint": "Bädda in BombVaults aktivitetslogg i Homepage, Organizr, Heimdall eller vilken dashboard som helst med en iframe-widget, en pytteliten fristående sida med bara loggen.",
-  "settings.widgetHow": "Klistra in URL:en i din dashboards iframe-widget. Mer behövs inte.",
   "settings.widgetAccess": "Token ger endast läsåtkomst till aktivitetsloggen och inget annat; Inaktivera återkallar den direkt.",
-  "settings.widgetEnglish": "Själva widgetsidan är enbart på engelska. En variant för Unraids dashboard kan komma senare.",
   "settings.widgetGenerate": "Generera token",
   "settings.widgetRegenerate": "Generera om",
   "settings.widgetDisable": "Inaktivera",

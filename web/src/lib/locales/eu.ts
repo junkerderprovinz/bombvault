@@ -716,7 +716,6 @@ const eu: Partial<Translations> = {
   "idle.quietHint": "Zenbat denbora egon behar duten CPUak eta trafikoak bi mugen azpitik.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Gainbegiratzea (Prometheus)",
   "settings.metricsEnable": "Erakutsi /metrics",
   "settings.metricsToken": "Eskaneatze-tokena (aukerakoa)",
   "settings.metricsHint": "Prometheus formatuko metrikak /metrics helbidean Grafana/Uptime Kuma-rentzat. Tokena ezarrita badago, eskaneatu Authorization: Bearer <token> erabiliz.",
@@ -724,9 +723,7 @@ const eu: Partial<Translations> = {
   // Dashboard widget
   "settings.widget": "Paneleko widgeta",
   "settings.widgetHint": "Txertatu BombVaulten jarduera-erregistroa Homepage, Organizr, Heimdall edo iframe bat erakuts dezakeen edozein panelen, erregistro hutsa duen orri txiki independentea.",
-  "settings.widgetHow": "Itsatsi URLa zure panelaren iframe widgetean. Hori besterik ez da behar.",
   "settings.widgetAccess": "Tokenak irakurtzeko soilik sarbidea ematen dio jarduera-erregistroari eta besterik ez; Desgaituak berehala baliogabetzen du.",
-  "settings.widgetEnglish": "Widgetaren orria bera ingelesez soilik dago. Unraid panelaren aldaera bat geroago etor daiteke.",
   "settings.widgetGenerate": "Sortu tokena",
   "settings.widgetRegenerate": "Sortu berriz",
   "settings.widgetDisable": "Desgaitu",

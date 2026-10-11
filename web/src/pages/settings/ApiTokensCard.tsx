@@ -6,6 +6,9 @@ import { IconDisclosure } from "../../components/IconDisclosure";
 import { InfoBubble } from "../../components/InfoBubble";
 import { RevealInput } from "../../components/RevealInput";
 import { Toggle } from "../../components/Toggle";
+import { IconAdd, IconCopy } from "../../components/navGlyphs";
+import { SettingRow } from "../../components/storage/rows";
+import { InstanceWindow } from "../instances/InstanceWindow";
 import {
   createApiToken,
   getApiTokenActivity,
@@ -82,6 +85,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   const [keyVisible, setKeyVisible] = useState(true);
   const [label, setLabel] = useState("");
   const [allowStart, setAllowStart] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [renaming, setRenaming] = useState("");
   const [draft, setDraft] = useState("");
   const [revokedOpen, setRevokedOpen] = useState(false);
@@ -170,6 +174,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       setFresh({ key: res.key, id: res.item.id, hint: res.item.hint });
       setLabel("");
       setAllowStart(false);
+      setCreating(false);
     }
   }
 
@@ -254,75 +259,16 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
             </p>
           )}
 
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("api.addressLabel")}
-              <InfoBubble tip={tLtr(t, "api.addressHint")} />
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                readOnly
-                value={address}
-                aria-label={t("api.addressLabel")}
-                dir="ltr"
-                className="min-w-0 max-w-96 flex-[1_1_18rem] rounded-control bg-carbon-surface2 px-3 py-1.5 text-start font-mono text-sm text-carbon-text glim-field-focus"
-              />
-              <Button
-                label={t("common.copy")}
-                labelKey="common.copy"
-                tone="subtle"
-                onClick={() => void copy(address)}
-                hueIndex={hueIndex}
-              />
-              <Button
-                label={t("api.viewDescription")}
-                labelKey="api.viewDescription"
-                tone="subtle"
-                onClick={() => window.open(data.openapiPath, "_blank", "noopener")}
-                hueIndex={hueIndex}
-              />
-            </div>
-          </div>
-
-          {canMint && (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="bv-api-token-label" className="text-xs text-carbon-textSub">
-                  {t("api.labelLabel")}
-                </label>
-                <input
-                  key={shake.create ?? 0}
-                  id="bv-api-token-label"
-                  value={label}
-                  maxLength={64}
-                  placeholder={t("api.labelPlaceholder")}
-                  onChange={(e) => setLabel(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void create();
-                  }}
-                  className={`w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus${
-                    shake.create ? " glim-shake" : ""
-                  }`}
-                />
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="flex items-center gap-1.5">
-                  <Toggle label={t("mcp.allowStart")} checked={allowStart} onChange={setAllowStart} />
-                  <InfoBubble tip={allowStartHint} />
-                </span>
-                <Button
-                  label={t("api.createToken")}
-                  labelKey="api.createToken"
-                  tone="accent"
-                  onClick={() => void create()}
-                  disabled={busy || tokens.length >= limit}
-                  busy={busy}
-                  hint={tokens.length >= limit ? t("api.limitReached", limit) : undefined}
-                  hueIndex={hueIndex}
-                />
-              </div>
-            </div>
-          )}
+          <SettingRow label={t("api.addressLabel")} hint={tLtr(t, "api.addressHint")}>
+            <input
+              readOnly
+              value={address}
+              aria-label={t("api.addressLabel")}
+              dir="ltr"
+              className="w-80 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-start font-mono text-xs text-carbon-text glim-field-focus"
+            />
+            <Button label={t("common.copy")} labelKey="common.copy" glyph={<IconCopy />} onClick={() => void copy(address)} />
+          </SettingRow>
         </>
       )}
 
@@ -485,6 +431,74 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
             </li>
           ))}
         </ul>
+      )}
+
+      {data !== null && !failed && (
+        <>
+          {canMint && (
+            <div className="flex justify-end">
+              <Button
+                label={t("api.createToken")}
+                labelKey="api.createToken"
+                glyph={<IconAdd />}
+                onClick={() => setCreating(true)}
+                disabled={busy || tokens.length >= limit}
+                hint={tokens.length >= limit ? t("api.limitReached", limit) : undefined}
+              />
+            </div>
+          )}
+          <SettingRow label={t("api.description")} hint={tLtr(t, "api.descriptionHint")}>
+            <Button
+              label={t("api.viewDescription")}
+              labelKey="api.viewDescription"
+              onClick={() => window.open(data.openapiPath, "_blank", "noopener")}
+            />
+          </SettingRow>
+        </>
+      )}
+
+      {creating && (
+        <InstanceWindow
+          title={t("api.createToken")}
+          hint={t("api.hint")}
+          onClose={() => setCreating(false)}
+          footer={
+            <>
+              <Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={() => setCreating(false)} />
+              <Button
+                key={shake.create ?? 0}
+                label={t("api.createToken")}
+                labelKey="api.createToken"
+                tone="accent"
+                onClick={() => void create()}
+                disabled={busy}
+                busy={busy}
+                className={shake.create ? "glim-shake" : ""}
+              />
+            </>
+          }
+        >
+          <div className="flex flex-col divide-y divide-carbon-border/60">
+            <SettingRow label={t("api.labelLabel")}>
+              <input
+                id="bv-api-token-label"
+                value={label}
+                maxLength={64}
+                autoFocus
+                aria-label={t("api.labelLabel")}
+                placeholder={t("api.labelPlaceholder")}
+                onChange={(e) => setLabel(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void create();
+                }}
+                className="w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
+              />
+            </SettingRow>
+            <SettingRow label={t("mcp.allowStart")} hint={allowStartHint}>
+              <Toggle hideLabel label={t("mcp.allowStart")} checked={allowStart} onChange={setAllowStart} />
+            </SettingRow>
+          </div>
+        </InstanceWindow>
       )}
 
       {data !== null && !failed && revoked.length > 0 && (

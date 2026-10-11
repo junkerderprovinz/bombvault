@@ -940,15 +940,12 @@ const ar: Partial<Translations> = {
   "idle.quietHint": "المدة التي يجب أن يبقى فيها المعالج وحركة المرور تحت الحدين.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "المراقبة (Prometheus)",
   "settings.metricsEnable": "إتاحة /metrics",
   "settings.metricsToken": "رمز الاستخلاص (اختياري)",
   "settings.metricsHint": "مقاييس بتنسيق Prometheus على /metrics لـ Grafana/Uptime Kuma. إذا حُدِّد رمز، استخلص باستخدام Authorization: Bearer <token>.",
   "settings.widget": "ودجة لوحة التحكم",
   "settings.widgetHint": "ضمِّن سجل نشاط BombVault في Homepage أو Organizr أو Heimdall أو أي لوحة تحكم تعرض iframe: صفحة مستقلة صغيرة تعرض السجل فقط.",
-  "settings.widgetHow": "الصق الرابط في ودجة iframe الخاصة بلوحتك. لا يحتاج إلى أي شيء آخر.",
   "settings.widgetAccess": "يمنح الرمز وصولًا للقراءة فقط إلى سجل النشاط ولا شيء غير ذلك؛ التعطيل يلغيه فورًا.",
-  "settings.widgetEnglish": "صفحة الودجة نفسها بالإنجليزية فقط. قد تتوفر نسخة للوحة تحكم Unraid لاحقًا.",
   "settings.widgetGenerate": "إنشاء رمز",
   "settings.widgetRegenerate": "إعادة الإنشاء",
   "settings.widgetDisable": "تعطيل",

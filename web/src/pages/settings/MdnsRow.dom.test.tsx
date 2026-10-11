@@ -13,16 +13,16 @@ vi.mock("../../lib/api", async (importOriginal) => {
 
 vi.mock("../../lib/toast", () => ({ useToast: () => ({ push: () => {} }) }));
 
-const { NetworkCard } = await import("./NetworkCard");
+const { MdnsRow } = await import("./MdnsRow");
 
 afterEach(cleanup);
 
-describe("NetworkCard", () => {
+describe("MdnsRow", () => {
   it("shows the announced address and switches it off", async () => {
     const url = "https://bombvault.local:3443/";
     getMdns.mockResolvedValue({ ok: true, enabled: true, running: true, url, instance: "BombVault", error: "" });
     setMdns.mockResolvedValue({ ok: true, enabled: false, running: false, url: "", instance: "", error: "" });
-    render(<NetworkCard hueIndex={0} />);
+    render(<MdnsRow />);
 
     expect(await screen.findByText(en["mdns.statusOn"].replace("{url}", url))).toBeTruthy();
     fireEvent.click(screen.getByRole("switch", { name: en["mdns.enable"] }));

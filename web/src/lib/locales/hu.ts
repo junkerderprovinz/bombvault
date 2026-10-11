@@ -932,15 +932,12 @@ const hu: Partial<Translations> = {
   "idle.quietHint": "Mennyi ideig kell a CPU-nak és a forgalomnak mindkét korlát alatt maradnia.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Monitorozás (Prometheus)",
   "settings.metricsEnable": "/metrics közzététele",
   "settings.metricsToken": "Lekérdezési token (opcionális)",
   "settings.metricsHint": "Prometheus-formátumú metrikák a /metrics címen a Grafana/Uptime Kuma számára. Ha be van állítva token, az Authorization: Bearer <token> fejléccel kérdezd le.",
   "settings.widget": "Irányítópult-widget",
   "settings.widgetHint": "Ágyazd be a BombVault tevékenységnaplóját a Homepage-be, az Organizrba, a Heimdallba vagy bármely irányítópultba, amely iframe-et jelenít meg: egy apró önálló oldal csak a naplóval.",
-  "settings.widgetHow": "Illeszd be az URL-t az irányítópultod iframe-widgetjébe. Másra nincs szükség.",
   "settings.widgetAccess": "A token csak olvasási hozzáférést ad a tevékenységnaplóhoz, semmi máshoz; a Letiltás azonnal visszavonja.",
-  "settings.widgetEnglish": "Maga a widget-oldal csak angolul érhető el. Az Unraid-irányítópulthoz később jöhet egy változat.",
   "settings.widgetGenerate": "Token létrehozása",
   "settings.widgetRegenerate": "Újragenerálás",
   "settings.widgetDisable": "Letiltás",

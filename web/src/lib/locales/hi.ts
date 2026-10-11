@@ -716,7 +716,6 @@ const hi: Partial<Translations> = {
   "idle.quietHint": "CPU और ट्रैफ़िक को कितनी देर दोनों सीमाओं से नीचे रहना होगा।",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "निगरानी (Prometheus)",
   "settings.metricsEnable": "/metrics दिखाएँ",
   "settings.metricsToken": "स्क्रेप टोकन (वैकल्पिक)",
   "settings.metricsHint": "Grafana/Uptime Kuma के लिए /metrics पर Prometheus फ़ॉर्मैट में मेट्रिक्स। टोकन सेट होने पर, Authorization: Bearer <token> से स्क्रेप करें।",
@@ -724,9 +723,7 @@ const hi: Partial<Translations> = {
   // Dashboard widget
   "settings.widget": "डैशबोर्ड विजेट",
   "settings.widgetHint": "BombVault का एक्टिविटी लॉग Homepage, Organizr, Heimdall या किसी भी डैशबोर्ड में एम्बेड करें जो iframe दिखा सके: बस लॉग वाला एक छोटा स्टैंडअलोन पेज।",
-  "settings.widgetHow": "URL को अपने डैशबोर्ड के iframe विजेट में पेस्ट करें। बस इतना ही चाहिए।",
   "settings.widgetAccess": "टोकन केवल एक्टिविटी लॉग तक पढ़ने की पहुँच देता है, और कुछ नहीं; अक्षम करने पर यह तुरंत रद्द हो जाता है।",
-  "settings.widgetEnglish": "विजेट पेज खुद केवल अंग्रेज़ी में है। Unraid डैशबोर्ड वर्ज़न बाद में आ सकता है।",
   "settings.widgetGenerate": "टोकन बनाएँ",
   "settings.widgetRegenerate": "फिर से बनाएँ",
   "settings.widgetDisable": "अक्षम करें",

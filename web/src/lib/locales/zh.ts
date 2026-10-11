@@ -930,15 +930,12 @@ const zh: Partial<Translations> = {
   "idle.quietHint": "CPU 和流量需要同时低于两个限制多长时间。",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "监控 (Prometheus)",
   "settings.metricsEnable": "暴露 /metrics",
   "settings.metricsToken": "抓取令牌（可选）",
   "settings.metricsHint": "在 /metrics 提供 Prometheus 格式的指标，供 Grafana/Uptime Kuma 使用。若设置了令牌，请使用 Authorization: Bearer <token> 抓取。",
   "settings.widget": "仪表盘小组件",
   "settings.widgetHint": "把 BombVault 的活动日志嵌入 Homepage、Organizr、Heimdall 或任何支持 iframe 的仪表盘：一个只包含日志的迷你独立页面。",
-  "settings.widgetHow": "把 URL 粘贴到仪表盘的 iframe 小组件里即可，无需其他设置。",
   "settings.widgetAccess": "令牌只授予活动日志的只读访问权限，仅此而已；点击“停用”会立即撤销。",
-  "settings.widgetEnglish": "小组件页面本身仅提供英文。Unraid 仪表盘版本可能会在以后推出。",
   "settings.widgetGenerate": "生成令牌",
   "settings.widgetRegenerate": "重新生成",
   "settings.widgetDisable": "停用",

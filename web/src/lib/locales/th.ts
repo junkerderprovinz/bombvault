@@ -940,15 +940,12 @@ const th: Partial<Translations> = {
   "idle.quietHint": "ระยะเวลาที่ CPU และทราฟฟิกต้องอยู่ต่ำกว่าทั้งสองขีดจำกัด",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "การมอนิเตอร์ (Prometheus)",
   "settings.metricsEnable": "เปิดเผย /metrics",
   "settings.metricsToken": "โทเค็น scrape (ไม่บังคับ)",
   "settings.metricsHint": "เมตริกรูปแบบ Prometheus ที่ /metrics สำหรับ Grafana/Uptime Kuma หากตั้งโทเค็นไว้ ให้ scrape ด้วย Authorization: Bearer <token>",
   "settings.widget": "วิดเจ็ตแดชบอร์ด",
   "settings.widgetHint": "ฝังบันทึกกิจกรรมของ BombVault ลงใน Homepage, Organizr, Heimdall หรือแดชบอร์ดใดก็ได้ที่แสดง iframe หน้าเล็ก ๆ แบบสแตนด์อโลนที่มีเฉพาะบันทึก",
-  "settings.widgetHow": "วาง URL ลงในวิดเจ็ต iframe ของแดชบอร์ดของคุณ แค่นั้นก็พอ",
   "settings.widgetAccess": "โทเคนให้สิทธิ์อ่านอย่างเดียวกับบันทึกกิจกรรมเท่านั้น ไม่มีอย่างอื่น การปิดใช้งานจะเพิกถอนทันที",
-  "settings.widgetEnglish": "หน้าวิดเจ็ตเองมีเฉพาะภาษาอังกฤษ เวอร์ชันสำหรับแดชบอร์ด Unraid อาจตามมาภายหลัง",
   "settings.widgetGenerate": "สร้างโทเคน",
   "settings.widgetRegenerate": "สร้างใหม่",
   "settings.widgetDisable": "ปิดใช้งาน",

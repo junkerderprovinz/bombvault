@@ -716,7 +716,6 @@ const fa: Partial<Translations> = {
   "idle.quietHint": "پردازنده و ترافیک چه مدت باید زیر هر دو حد بمانند.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "نظارت (Prometheus)",
   "settings.metricsEnable": "نمایش /metrics",
   "settings.metricsToken": "توکن اسکرپ (اختیاری)",
   "settings.metricsHint": "متریک‌های با قالب Prometheus در /metrics برای Grafana/Uptime Kuma. اگر توکنی تنظیم شده باشد، با Authorization: Bearer <token> اسکرپ کنید.",
@@ -724,9 +723,7 @@ const fa: Partial<Translations> = {
   // Dashboard widget
   "settings.widget": "ویجت داشبورد",
   "settings.widgetHint": "لاگ فعالیت BombVault را در Homepage، Organizr، Heimdall یا هر داشبوردی که بتواند iframe نمایش دهد، جاسازی کنید، یک صفحه مستقل کوچک فقط با همان لاگ.",
-  "settings.widgetHow": "کافی است نشانی را در ویجت iframe داشبوردتان بچسبانید.",
   "settings.widgetAccess": "توکن فقط دسترسی خواندنی به لاگ فعالیت می‌دهد و بس؛ غیرفعال کردن بلافاصله آن را باطل می‌کند.",
-  "settings.widgetEnglish": "خود صفحه ویجت فقط به انگلیسی است. ممکن است در آینده یک نسخه برای داشبورد Unraid ارائه شود.",
   "settings.widgetGenerate": "تولید توکن",
   "settings.widgetRegenerate": "تولید دوباره",
   "settings.widgetDisable": "غیرفعال",

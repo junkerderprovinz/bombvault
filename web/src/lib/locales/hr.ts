@@ -716,7 +716,6 @@ const hr: Partial<Translations> = {
   "idle.quietHint": "Koliko dugo CPU i promet moraju ostati ispod obje granice.",
 
   // Monitoring (Prometheus)
-  "settings.metrics": "Nadzor (Prometheus)",
   "settings.metricsEnable": "Izloži /metrics",
   "settings.metricsToken": "Token za scrape (neobavezno)",
   "settings.metricsHint": "Metrike u Prometheus formatu na /metrics za Grafana/Uptime Kuma. Ako je token postavljen, koristite Authorization: Bearer <token>.",
@@ -724,9 +723,7 @@ const hr: Partial<Translations> = {
   // Dashboard widget
   "settings.widget": "Widget nadzorne ploče",
   "settings.widgetHint": "Ugradite BombVaultov zapisnik aktivnosti u Homepage, Organizr, Heimdall ili bilo koju nadzornu ploču koja može prikazati iframe: malenu samostalnu stranicu samo sa zapisnikom.",
-  "settings.widgetHow": "Zalijepite URL u iframe widget svoje nadzorne ploče. To je sve što je potrebno.",
   "settings.widgetAccess": "Token daje pristup zapisniku aktivnosti samo za čitanje i ništa drugo; Onemogući ga odmah opoziva.",
-  "settings.widgetEnglish": "Sama stranica widgeta dostupna je samo na engleskom. Varijanta za Unraid nadzornu ploču može stići kasnije.",
   "settings.widgetGenerate": "Generiraj token",
   "settings.widgetRegenerate": "Ponovno generiraj",
   "settings.widgetDisable": "Onemogući",
