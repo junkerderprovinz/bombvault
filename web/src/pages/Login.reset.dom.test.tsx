@@ -95,7 +95,7 @@ describe("LoginPage, a forgotten password", () => {
     const status = await screen.findByRole("status");
     expect(status.textContent).toContain("2 passkeys removed");
     expect(status.textContent).toContain("1 API token revoked");
-    expect(status.textContent).toContain(en["auth.resetDoneTwoFactor"]);
+    expect(status.textContent).toContain(en["auth.twoFactorOffNow"]);
     expect(status.textContent).not.toContain("MCP");
     expect(status.textContent).toContain(en["auth.resetDoneHint"]);
     expect(onLogin).not.toHaveBeenCalled();
