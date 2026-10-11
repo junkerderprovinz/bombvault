@@ -546,6 +546,11 @@ type Service struct {
 	foreignJanitor    chan struct{}
 	foreignSweepEvery time.Duration
 
+	// backupKeyMu guards the backup key as currentBackupKey last read it.
+	backupKeyMu   sync.Mutex
+	backupKeyRead bool
+	backupKeyNow  backupKeyState
+
 	// detectMu guards detectFlight, the single in-flight encryption-detection
 	// pass (internal/api/encryption_detect.go). The Recovery page fires
 	// POST /api/encryption/detect on mount, and one pass can take minutes when a
@@ -1234,7 +1239,7 @@ func (s *Service) ModeFor(settings store.Settings) restic.Mode {
 	m := restic.Mode{Env: cloudEnv(c), StorageClass: c.S3StorageClass}
 	if settings.EncryptionEnabled {
 		m.Encrypted = true
-		m.Password = restickey.Derive(s.cfg.AppKey)
+		m.Password = s.backupPassword()
 	}
 	return m
 }
@@ -4985,6 +4990,11 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 // ensureRepo is EnsureRepo, and also reports whether the repository opened at
 // the end, which a caller about to save a pointer to it needs to know.
 func (s *Service) ensureRepo(ctx context.Context, repo string, mode restic.Mode) (bool, error) {
+	// Under a locked backup key the repository would be probed, and a missing
+	// one created, with a password that is not its own.
+	if _, err := s.backupKey(); err != nil {
+		return false, err
+	}
 	if s.engine.RepoOpens(ctx, repo, mode) {
 		s.markRepoEstablished(repo) // remember it for the not-mounted guard (#55)
 		return true, nil
@@ -5140,7 +5150,7 @@ func (s *Service) oppositeMode(mode restic.Mode) restic.Mode {
 	o := mode
 	o.Encrypted = !mode.Encrypted
 	if o.Encrypted {
-		o.Password = restickey.Derive(s.cfg.AppKey)
+		o.Password = s.backupPassword()
 	} else {
 		o.Password = ""
 	}
@@ -7170,7 +7180,7 @@ func (s *Service) writeDefToStorage(settings store.Settings, name, itemRepo stri
 	if err := ensureDefsDir(dir); err != nil {
 		return fmt.Errorf("ensure defs dir: %w", err)
 	}
-	enc, err := secret.Encrypt(s.cfg.AppKey, defJSON)
+	enc, err := s.sealDefinition(defJSON)
 	if err != nil {
 		return fmt.Errorf("encrypt definition: %w", err)
 	}
@@ -7263,7 +7273,7 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 		if err != nil {
 			return nil, containerDefinition{}, fmt.Errorf("no stored definition: %w", err)
 		}
-		plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+		plain, err := s.openDefinition(enc)
 		if err != nil {
 			return nil, containerDefinition{}, fmt.Errorf("the definition does not decrypt (wrong APP_KEY?): %w", err)
 		}
@@ -7513,7 +7523,7 @@ func (s *Service) writeVMDefToStorage(settings store.Settings, name, itemRepo st
 	if err := ensureDefsDir(dir); err != nil {
 		return fmt.Errorf("ensure vm defs dir: %w", err)
 	}
-	enc, err := secret.Encrypt(s.cfg.AppKey, defJSON)
+	enc, err := s.sealDefinition(defJSON)
 	if err != nil {
 		return fmt.Errorf("encrypt vm definition: %w", err)
 	}
@@ -7586,7 +7596,7 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult,
 		if err != nil {
 			return nil, vmDefinition{}, fmt.Errorf("no stored definition: %w", err)
 		}
-		plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+		plain, err := s.openDefinition(enc)
 		if err != nil {
 			return nil, vmDefinition{}, fmt.Errorf("the definition does not decrypt (wrong APP_KEY?): %w", err)
 		}

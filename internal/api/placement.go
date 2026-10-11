@@ -84,6 +84,7 @@ var placementCodes = []struct {
 	{errSnapshotMissing, "snapshot-missing"},
 	{errDestinationHoldsBackups, "destination-holds-backups"},
 	{errBackupsNotThere, "backups-not-there"},
+	{errBackupKeyLocked, "backup-key-locked"},
 	{errLastCopiesUnnamed, "last-copies"},
 	{errNothingToErase, "nothing-to-erase"},
 	{errMoveSamePlace, "move-same-place"},

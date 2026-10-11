@@ -608,6 +608,11 @@ export interface RestoreDrill {
 export interface StatusResponse {
   ok: boolean;
   domains?: DomainStatus[];
+  /** The key the backups are under: this install's own, one adopted from
+   *  another install, or "locked" for an adopted key that APP_KEY stopped
+   *  opening. While it is locked every backup is refused with the code
+   *  "backup-key-locked" until the key is adopted again. */
+  backupKey?: "own" | "adopted" | "locked";
   error?: string;
 }
 

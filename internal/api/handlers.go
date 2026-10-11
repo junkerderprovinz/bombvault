@@ -4214,7 +4214,7 @@ func (h *Handler) handleStatus(w http.ResponseWriter, _ *http.Request) {
 	// ranks cadence strings at all — it reads the scheduler's real fire times
 	// from GET /api/schedule/next, where the pass is already one entry among the
 	// rest (#187) — and nothing else ever read the field, so it is gone.
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"domains": domains}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"domains": domains, "backupKey": h.svc.currentBackupKey().state}))
 }
 
 // handleScheduleNext returns the next fire time for every currently registered

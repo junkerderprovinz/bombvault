@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
-	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -313,7 +312,7 @@ func (s *Service) probeOneEncryptionMode(ctx context.Context, t encryptionProbeT
 
 	encMode := t.mode
 	encMode.Encrypted = true
-	encMode.Password = restickey.Derive(s.cfg.AppKey)
+	encMode.Password = s.backupPassword()
 	plainMode := t.mode
 	plainMode.Encrypted = false
 	plainMode.Password = ""
