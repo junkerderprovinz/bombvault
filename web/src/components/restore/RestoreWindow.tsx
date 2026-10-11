@@ -24,7 +24,7 @@ import { isGone, itemProgressKey } from "../../lib/backupList";
 import { useBackupWatch } from "../../lib/backupWatch";
 import { copyText } from "../../lib/clipboard";
 import { ENGINE_NAMES, pairsWith } from "../../lib/dbdump";
-import { rowHolds, rowTime, type Entry } from "../../lib/entry";
+import { actionMark, comparable, rowHolds, rowTime, type Entry } from "../../lib/entry";
 import { loadErrorMessage } from "../../lib/errors";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { isolateLtr, tLtr } from "../../lib/ltrFragments";
@@ -59,10 +59,13 @@ import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { CheckDraw } from "../CheckDraw";
 import { usePlaceLabel, type TimelineState } from "../entry/BackupPlaces";
+import { CompareWindow } from "../entry/CompareWindow";
 import { FlashPluginList } from "../FlashPluginList";
 import { FolderBrowser } from "../FolderBrowser";
+import { IconCompare } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconCopy, IconDownload, IconRecovery, IconRestore, IconTrash } from "../navGlyphs";
+import { RadioMark } from "../RadioMark";
 import { Selector } from "../Selector";
 import { SelectField } from "../SelectField";
 import { SnapshotFileTree } from "../SnapshotFileTree";
@@ -228,13 +231,7 @@ function WhereOption({
         on ? "ring-accent" : "ring-transparent"
       }`}
     >
-      <span
-        className={`flex h-[18px] w-[18px] flex-none items-center justify-center rounded-pill border-2 ${
-          on ? "border-accent" : "border-carbon-textMuted"
-        }`}
-      >
-        {on && <span className="h-2 w-2 rounded-pill bg-accent" />}
-      </span>
+      <RadioMark on={on} />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{title}</span>
         <span className="text-xs text-carbon-textMuted wrap-anywhere">{sub}</span>
@@ -324,6 +321,7 @@ function RestoreForm({
   const [withoutRuntime, setWithoutRuntime] = useState(false);
   const [backupFirst, setBackupFirst] = useState(true);
   const [preparing, setPreparing] = useState(false);
+  const [comparing, setComparing] = useState(false);
 
   const [datasetPick, setDatasetPick] = useState<string | null>(null);
   const [newDataset, setNewDataset] = useState("");
@@ -610,6 +608,11 @@ function RestoreForm({
   }
 
   const when = (r: TimelineRow) => formatRecent(rowTime(r), lang);
+  // An option starts a line, so it starts with a capital like the rail does.
+  const optionWhen = (r: TimelineRow) => {
+    const text = when(r);
+    return text.charAt(0).toLocaleUpperCase(lang) + text.slice(1);
+  };
   const recommended = rows[recommendation.index];
   const why = recommendationWhy(recommendation, t, lang);
   const title = t("entry.restore.title").replace("{name}", () => name);
@@ -814,10 +817,20 @@ function RestoreForm({
                 label={t("restoreWindow.backup")}
                 options={rows.map((r) => ({
                   value: r.key,
-                  label: r === recommended ? t("restoreWindow.recommendedOption").replace("{when}", () => when(r)) : when(r),
+                  label:
+                    r === recommended ? t("restoreWindow.recommendedOption").replace("{when}", () => optionWhen(r)) : optionWhen(r),
                 }))}
                 className="max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
               />
+              {comparable(rows, actionMark(row, places).place).length > 1 && (
+                <Button
+                  label={t("snapshot.compare")}
+                  labelKey="snapshot.compare"
+                  glyph={<IconCompare />}
+                  tone="subtle"
+                  onClick={() => setComparing(true)}
+                />
+              )}
             </SettingRow>
             {marks.length > 1 && (
               <SettingRow label={t("restoreWindow.source")} hint={t("restoreWindow.sourceHint")}>
@@ -935,7 +948,7 @@ function RestoreForm({
           {!listed && where && (
             <>
               <div data-new="restore-where" className="flex flex-col gap-2">
-                <h3 className="text-xs font-semibold uppercase tracking-widest text-carbon-textSub">{t("restoreWindow.where")}</h3>
+                <h3 className="text-sm font-semibold text-carbon-textSub">{t("restoreWindow.where")}</h3>
                 <div role="radiogroup" aria-label={t("restoreWindow.where")} className="flex flex-col gap-2">
                   {wheres.map((w) => {
                     const [optionTitle, sub] = optionText(w);
@@ -984,7 +997,7 @@ function RestoreForm({
                 <ZFSPropertyList properties={storedProps} into="existing" t={t} />
               )}
 
-              <div className="flex flex-col gap-3">
+              <div className="-my-3 flex flex-col [&>*]:border-t [&>*]:border-carbon-border/60 [&>*]:py-3">
                 {canBackUpFirst && (
                   <ToggleRow
                     label={t("restoreWindow.backupFirst")}
@@ -1057,6 +1070,9 @@ function RestoreForm({
         </>
       )}
 
+      {comparing && row && (
+        <CompareWindow entry={entry} name={name} row={row} timeline={timeline} onClose={() => setComparing(false)} />
+      )}
       {confirmDialog}
     </InstanceWindow>
   );

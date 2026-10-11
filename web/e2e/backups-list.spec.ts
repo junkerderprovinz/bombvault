@@ -654,7 +654,7 @@ test("Add opens one window for a folder or a ZFS dataset", async ({ page }, test
   await page.getByTestId("page-actions").getByRole("button", { name: "Hinzufügen" }).click();
   const win = page.getByRole("dialog", { name: "Was soll BombVault zusätzlich sichern?" });
   await expect(win.getByRole("button", { name: /Einen Ordner/ })).toContainText("3 Freigaben gefunden, 1 davon sicherst du schon");
-  await expect(win.getByRole("button", { name: /Ein ZFS-Dataset/ })).toContainText("4 Datasets auf dem Host sind in keinem Element");
+  await expect(win.getByRole("button", { name: /Ein ZFS-Dataset/ })).toContainText("4 Datasets auf dem Host sind in keinem Eintrag");
 
   await win.getByRole("button", { name: /Einen Ordner/ }).click();
   const found = win.getByTestId("found-folders");

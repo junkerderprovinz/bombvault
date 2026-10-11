@@ -97,6 +97,27 @@ describe("the restore plan", () => {
     expect(screen.getByText(en["restoreCheck.reason.noSnapshot"])).toBeTruthy();
   });
 
+  it("ends each line with its state and puts what was found under the name of the check", () => {
+    show({
+      ok: true,
+      ready: false,
+      checks: [
+        { id: "repository", status: "ok", detail: "/mnt/user/backups/bombvault/containers" },
+        { id: "snapshot", status: "fail", detail: "gone" },
+        { id: "space", status: "skip", reason: "no-snapshot" },
+      ],
+      plan: null,
+    });
+    const lines = screen.getAllByRole("listitem");
+    expect(lines.map((line) => line.lastElementChild?.textContent)).toEqual([
+      en["restoreCheck.status.ok"],
+      en["restoreCheck.status.fail"],
+      en["restoreCheck.status.skip"],
+    ]);
+    const named = screen.getByText(en["restoreCheck.line.repository"]);
+    expect(named.nextElementSibling?.textContent).toBe("/mnt/user/backups/bombvault/containers");
+  });
+
   it("names the missing dataset a new dataset would go under", () => {
     show({
       ok: true,

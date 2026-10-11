@@ -8,18 +8,18 @@ import type { CheckLine, DefinitionChange, PlanChange, RestorePlan } from "../..
 import type { TranslationKey, useT } from "../../lib/i18n";
 import { humanBytes } from "../../lib/forecast";
 import { CHECK_LINE_LABEL, type RestoreCheck } from "../../lib/useRestoreCheck";
-import { Badge, type BadgeTone } from "../Badge";
 import { Button } from "../Button";
-import { InfoBubble } from "../InfoBubble";
 import { IconDisclosure } from "../IconDisclosure";
+import { InfoBubble } from "../InfoBubble";
+import { IconCheck, IconClose } from "../navGlyphs";
 import { IconSync } from "../Sidebar";
 
 type T = ReturnType<typeof useT>["t"];
 
-const STATUS_TONE: Record<CheckLine["status"], BadgeTone> = {
-  ok: "ok",
-  fail: "fail",
-  skip: "neutral",
+const STATUS_INK: Record<CheckLine["status"], string> = {
+  ok: "text-statusOk",
+  fail: "text-statusFail",
+  skip: "text-carbon-textMuted",
 };
 const STATUS_LABEL: Record<CheckLine["status"], TranslationKey> = {
   ok: "restoreCheck.status.ok",
@@ -90,13 +90,9 @@ export function RestoreCheckPanel({
   const members = state.phase === "done" ? (state.result.members ?? []) : [];
 
   return (
-    <section
-      className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3"
-      aria-live="polite"
-      aria-busy={state.phase === "running"}
-    >
+    <section className="flex flex-col gap-2" aria-live="polite" aria-busy={state.phase === "running"}>
       <div className="flex flex-wrap items-center gap-2">
-        <h4 className="text-sm font-semibold text-carbon-text">{t("restoreCheck.title")}</h4>
+        <h4 className="text-sm font-semibold text-carbon-textSub">{t("restoreCheck.title")}</h4>
         <InfoBubble tip={t("restoreCheck.titleHint")} />
         {state.phase === "running" && (
           <span className="text-caption text-carbon-textMuted">{t("restoreCheck.running")}</span>
@@ -120,7 +116,7 @@ export function RestoreCheckPanel({
       {lines.length > 0 && <CheckLines lines={lines} t={t} />}
       {plan && <PlanView plan={plan} t={t} />}
       {members.map((m) => (
-        <div key={m.name} className="flex flex-col gap-2 border-t border-carbon-border pt-2">
+        <div key={m.name} className="flex flex-col gap-2 pt-2">
           <h5 className="font-mono text-sm font-semibold text-carbon-text" dir="ltr">
             {m.name}
           </h5>
@@ -134,16 +130,17 @@ export function RestoreCheckPanel({
 
 function CheckLines({ lines, t }: { lines: CheckLine[]; t: T }) {
   return (
-    <ul className="flex flex-col gap-1.5">
+    <ul className="flex flex-col rounded-control bg-carbon-surface2 px-3 py-1.5">
       {lines.map((c) => (
-        <li key={c.id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
-          <Badge tone={STATUS_TONE[c.status]} size="small" shape="pill">
-            {t(STATUS_LABEL[c.status])}
-          </Badge>
-          <span className="text-carbon-text">{t(CHECK_LINE_LABEL[c.id])}</span>
-          {lineText(c, t) && (
-            <span className="min-w-0 wrap-break-word text-caption text-carbon-textMuted">{lineText(c, t)}</span>
-          )}
+        <li key={c.id} className="flex items-start gap-2.5 py-1.5 text-sm">
+          <span className={`flex h-5 w-4 flex-none items-center justify-center [&_svg]:h-3.5 [&_svg]:w-3.5 ${STATUS_INK[c.status]}`}>
+            {c.status === "ok" ? <IconCheck /> : c.status === "fail" ? <IconClose /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="text-carbon-text">{t(CHECK_LINE_LABEL[c.id])}</span>
+            {lineText(c, t) && <span className="wrap-break-word text-caption text-carbon-textMuted">{lineText(c, t)}</span>}
+          </span>
+          <span className={`flex-none text-caption font-semibold ${STATUS_INK[c.status]}`}>{t(STATUS_LABEL[c.status])}</span>
         </li>
       ))}
     </ul>
@@ -159,7 +156,7 @@ function PlanView({ plan, t }: { plan: RestorePlan; t: T }) {
     [plan.unchanged, "restoreCheck.plan.unchanged"],
   ];
   return (
-    <div className="flex flex-col gap-2 border-t border-carbon-border pt-2">
+    <div className="flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <h5 className="text-sm font-semibold text-carbon-text">{t("restoreCheck.plan.title")}</h5>
         <InfoBubble tip={t("restoreCheck.plan.titleHint")} />
