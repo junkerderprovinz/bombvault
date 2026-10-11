@@ -97,7 +97,10 @@ export function tileEntries(entries: BackupItem[], tile: Tile): BackupItem[] {
 
 export type Protection = "ok" | "pending" | "none";
 
+/** protection is how an entry stands. One the person said not to back up is
+ *  not protected, whatever backups it still has. */
 export function protection(item: BackupItem): Protection {
+  if (item.backupDeclined) return "none";
   if (item.lastBackup > 0) return "ok";
   if (isGone(item) || neverRuns(item)) return "none";
   return "pending";

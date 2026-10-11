@@ -1011,6 +1011,12 @@ var resticPasswordRe = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
 // resticPassword is this instance's own repository password, the one thing
 // about its keys a member receives.
-func (s *Service) resticPassword() string { return resticPasswordFor(s.cfg.AppKey) }
+func (s *Service) resticPassword() string {
+	key, err := s.backupKey()
+	if err != nil {
+		return ""
+	}
+	return resticPasswordFor(key)
+}
 
 func resticPasswordFor(appKey string) string { return restickey.Derive(appKey) }

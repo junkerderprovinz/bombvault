@@ -100,6 +100,11 @@ describe("the line under the name", () => {
     ).toEqual({ is: "notScheduled" });
   });
 
+  it("says of an entry the person set aside that it is excluded, with or without a backup", () => {
+    expect(entryReason(item({ included: false, backupDeclined: true }))).toEqual({ is: "declined" });
+    expect(entryReason(item({ lastBackup: 0, included: false, backupDeclined: true }))).toEqual({ is: "declined" });
+  });
+
   it("says of an entry that is gone only that", () => {
     expect(entryReason(item({ installed: false, lastRunStatus: "failed" }))).toEqual({ is: "gone" });
   });

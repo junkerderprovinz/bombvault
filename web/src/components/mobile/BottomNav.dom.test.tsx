@@ -107,7 +107,7 @@ describe("BottomNav bar-card", () => {
     expect(within(bar()).getAllByRole("link").map((slot) => slot.getAttribute("href"))).toEqual([
       "/dashboard",
       "/backups",
-      "/recovery",
+      "/restore",
       "/settings",
     ]);
   });

@@ -30,7 +30,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
-    listItems: vi.fn(),
+    getBackupItem: vi.fn(),
     listContainers: vi.fn(),
     listVMs: vi.fn(),
     listFileSets: vi.fn(),
@@ -56,7 +56,7 @@ vi.mock("../lib/toast", () => ({ useToast: () => ({ push: () => {} }) }));
 
 const api = await import("../lib/api");
 const mocks = {
-  listItems: vi.mocked(api.listItems),
+  getBackupItem: vi.mocked(api.getBackupItem),
   listContainers: vi.mocked(api.listContainers),
   listVMs: vi.mocked(api.listVMs),
   listFileSets: vi.mocked(api.listFileSets),
@@ -237,8 +237,8 @@ describe("the list of backups", () => {
     await press(rows()[0]);
     const window = screen.getByRole("dialog");
     expect(screen.getByText(en["entry.restore.title"].replace("{name}", "immich"))).toBeTruthy();
-    expect(within(window).getByText(en["restore.mode.inPlace"])).toBeTruthy();
-    await press(within(window).getByRole("button", { name: en["common.close"] }));
+    expect(within(window).getByRole("radio", { name: new RegExp(en["restoreWindow.beside"]) })).toBeTruthy();
+    await press(within(window).getByRole("button", { name: en["common.cancel"] }));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
@@ -251,7 +251,6 @@ describe("the list of backups", () => {
       within(rows()[0]).getByRole("button", { name: en["entry.list.restoreFrom"].replace("{place}", "Storage Box") })
     );
     const window = screen.getByRole("dialog");
-    expect(within(window).getByText(/· Storage Box$/)).toBeTruthy();
     expect(within(window).getByRole("tab", { name: "Storage Box" }).getAttribute("aria-selected")).toBe("true");
   });
 
@@ -265,13 +264,13 @@ describe("the list of backups", () => {
   });
 
   it.each([
-    ["the flash drive", "/backups/flash/flash", en["flash.download"]],
-    ["the self-backup", "/backups/config/config", en["entry.config.startRecovery"]],
-    ["a VM", "/backups/vm/win11", en["restore.open"]],
-  ])("offers what %s can do with a backup", async (_, path, action) => {
+    ["the flash drive", "/backups/flash/flash", "radio", en["restoreWindow.zip"]],
+    ["the self-backup", "/backups/config/config", "button", en["entry.config.startRecovery"]],
+    ["a VM", "/backups/vm/win11", "radio", en["restoreWindow.beside"]],
+  ])("offers what %s can do with a backup", async (_, path, role, action) => {
     await renderPage(path);
     await press(rows()[0]);
-    expect(within(screen.getByRole("dialog")).getByRole("button", { name: action })).toBeTruthy();
+    expect(within(screen.getByRole("dialog")).getByRole(role, { name: new RegExp(`^${action}`) })).toBeTruthy();
   });
 
   it("downloads a flash backup from the place whose mark was pressed", async () => {
@@ -284,10 +283,14 @@ describe("the list of backups", () => {
     await press(
       within(rows()[0]).getByRole("button", { name: en["entry.list.restoreFrom"].replace("{place}", "Storage Box") })
     );
-    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["flash.download"] }));
+    const download = () =>
+      within(screen.getByRole("dialog")).getByRole<HTMLButtonElement>("button", { name: en["restoreWindow.zip"] });
+    await waitFor(() => expect(download().disabled).toBe(false));
+    await press(download());
     await waitFor(() => expect(flashDownloadURL).toHaveBeenCalledWith("b9b9b9b9", BOX.place));
     expect(checkRestore).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: "flash", snapshotId: "b9b9b9b9", source: BOX.place })
+      expect.objectContaining({ kind: "flash", snapshotId: "b9b9b9b9", source: BOX.place }),
+      expect.anything()
     );
   });
 
@@ -296,7 +299,7 @@ describe("the list of backups", () => {
     expect(getTimeline).toHaveBeenCalledWith("config", "config");
     await press(rows()[0]);
     await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["entry.config.startRecovery"] }));
-    expect(screen.getByText("at /recovery")).toBeTruthy();
+    expect(screen.getByText("at /restore")).toBeTruthy();
   });
 
   it("says so when there is no backup yet", async () => {
@@ -322,7 +325,7 @@ describe("the list of backups", () => {
   it("opens the newest backup of an entry that is gone from the corner", async () => {
     await renderPage("/backups/container/pihole");
     await press(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["snapshots.restore"] }));
-    expect(screen.getByText(en["entry.restore.title"].replace("{name}", "pihole"))).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: en["entry.restore.title"].replace("{name}", "pihole") })).toBeTruthy();
   });
 });
 

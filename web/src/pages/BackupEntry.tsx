@@ -230,7 +230,17 @@ function Loaded({
       )}
 
       {!self && tab === "verify" && (
-        <VerifyTab entry={entry} runs={runs} anomaly={anomaly} anomalyEnabled={anomalyEnabled} nextHue={nextHue} />
+        <VerifyTab
+          entry={entry}
+          runs={runs}
+          anomaly={anomaly}
+          anomalyEnabled={anomalyEnabled}
+          onRestore={(run) => {
+            navigate(tabPath("backups"), { replace: true });
+            setOpened({ key: run.snapshotId });
+          }}
+          nextHue={nextHue}
+        />
       )}
 
       {!self && (

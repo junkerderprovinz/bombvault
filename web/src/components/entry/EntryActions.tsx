@@ -1,7 +1,7 @@
 // What can be done with one entry as a whole: the two actions the page is
 // there for, in its corner, and the rare ones beside its name.
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   deleteBackups,
   deleteBackupsVM,
@@ -10,6 +10,7 @@ import {
   type OkEnvelope,
   type Run,
 } from "../../lib/api";
+import { useEntriesReload } from "../../lib/attention";
 import { ENTRY_KIND } from "../../lib/backupEntry";
 import { inSchedule, isGone, itemProgressKey } from "../../lib/backupList";
 import { useBackupWatch } from "../../lib/backupWatch";
@@ -19,13 +20,14 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { useDeclineBackup } from "../../lib/useDeclineBackup";
 import { useIsDesktop } from "../../lib/useMediaQuery";
 import { containerTakeover, vmTakeover, type TakeoverEntry } from "../../lib/useTakeOver";
 import { STOP_ACK_KEY } from "../BackupButton";
 import { ActionMenu, type MenuAction } from "../backups/ActionMenu";
 import { ZFSConnectionWindow } from "../backups/ZFSConnectionWindow";
 import { Button } from "../Button";
-import { IconLink } from "../glyphs";
+import { IconClearSelection, IconLink, IconSelectAll } from "../glyphs";
 import { RunDetailSheet } from "../mobile/RunDetailSheet";
 import { IconBackupNow, IconDownload, IconMore, IconRestore, IconTrash, IconZFS } from "../navGlyphs";
 import { PageAction } from "../PageActions";
@@ -195,9 +197,10 @@ type MenuWindow = "link" | "export" | "exportNewest" | "connection" | "remove";
 
 /**
  * EntryMenu holds the actions an entry needs seldom, behind one button beside
- * its name: linking it to the entry it was before a rename, exporting it, and
- * taking it or its backups away. Which of them exist depends on the kind, and
- * the removals are the ones the server has for that kind.
+ * its name: linking it to the entry it was before a rename, exporting it,
+ * saying that it is not to be backed up, and taking it or its backups away.
+ * Which of them exist depends on the kind, and the removals are the ones the
+ * server has for that kind.
  */
 export function EntryMenu({
   entry,
@@ -227,6 +230,12 @@ export function EntryMenu({
   const hasBackups = item.lastBackup > 0;
   const newest = timeline.rows[0];
   const close = () => setShown(null);
+  const reloadEntries = useEntriesReload();
+  const decided = useCallback(() => {
+    reloadEntries();
+    onChanged();
+  }, [reloadEntries, onChanged]);
+  const { decline, accept, busy: deciding } = useDeclineBackup(decided);
 
   async function removeAfter(question: string, confirmKey: TranslationKey, call: () => Promise<OkEnvelope>, done: () => void) {
     if (!(await confirm(question, { confirmKey }))) return;
@@ -306,6 +315,20 @@ export function EntryMenu({
     }
   }
 
+  // The server takes the mark only for an entry no schedule reaches. It
+  // stands before the removals, which end the menu.
+  const self = detail.kind === "container" && detail.container.self;
+  if (!self && !isGone(item) && (item.backupDeclined || item.effectiveSchedule.kind === "none")) {
+    const removals = actions.findIndex((action) => action.id === "remove");
+    actions.splice(
+      removals < 0 ? actions.length : removals,
+      0,
+      item.backupDeclined
+        ? { id: "accept", label: t("backups.accept"), glyph: <IconSelectAll />, onSelect: () => void accept(item) }
+        : { id: "decline", label: t("backups.decline"), glyph: <IconClearSelection />, onSelect: () => void decline(item, name) }
+    );
+  }
+
   if (actions.length === 0) return null;
   const removable: Removable | null =
     detail.kind === "files"
@@ -322,8 +345,8 @@ export function EntryMenu({
           labelKey="nav.more"
           glyph={<IconMore />}
           ariaExpanded={open}
-          disabled={busy}
-          busy={busy}
+          disabled={busy || deciding}
+          busy={busy || deciding}
           onClick={() => setOpen((was) => !was)}
         />
       </span>

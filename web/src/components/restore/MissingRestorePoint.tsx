@@ -14,7 +14,7 @@ export function restorePointOf(s: { id: string; time: string; original?: string 
 }
 
 /** The backup closest in time to `at`, or the newest one without a time. */
-export function nearestRestorePoint<P extends RestorePointTime>(points: P[], at: number): P | undefined {
+function nearestRestorePoint<P extends RestorePointTime>(points: P[], at: number): P | undefined {
   const target = at > 0 ? at : Number.MAX_SAFE_INTEGER;
   let best: P | undefined;
   for (const p of points) {

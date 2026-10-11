@@ -4,7 +4,9 @@ import type { Compression, FollowedSetting, OffsiteDomain, StorageLocationSectio
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { presetOf, type KeepCounts } from "../../lib/keepPlan";
 import { formatList } from "../../lib/placement";
+import { useProgress } from "../../lib/progress";
 import { DOMAIN_LABEL, canFollow, keepCounts, retentionKeep } from "../../lib/storageLocations";
+import { liveRun, moveKey, moveText } from "../../lib/storageRuns";
 import { sectionSettings } from "../../lib/storageWrites";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
@@ -14,12 +16,13 @@ import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Card } from "../../pages/settings/shared";
 import { Button } from "../Button";
 import { COMPRESSION_MODES } from "../CompressionSelector";
-import { IconLink, IconRefresh } from "../glyphs";
+import { IconForward, IconLink, IconRefresh } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconPencil } from "../navGlyphs";
 import { Selector } from "../Selector";
 import { keepSummary } from "./KeepCard";
 import { KeepCountFields, useKeepLessQuestion } from "./keepFields";
+import { MoveWindow } from "./MoveWindow";
 import { DomainGlyph, Rows, SettingRow } from "./rows";
 import { SectionPathWindow } from "./SectionPathWindow";
 import type { LocationEdit } from "./useLocationEdit";
@@ -164,14 +167,18 @@ function RulesWindow({ edit, section, onClose }: { edit: LocationEdit; section: 
 /**
  * RulesCard lists the sections that keep backups at a location, each with
  * whether it follows the location or holds rules of its own, and opens the
- * window that changes them.
+ * window that changes them. A copy at a destination can move to another one
+ * from its row, and the row says so while it does.
  */
 export function RulesCard({ edit, hueIndex }: { edit: LocationEdit; hueIndex: number }) {
   const { t, lang } = useT();
   const { location, records } = edit;
   const [open, setOpen] = useState<OffsiteDomain | null>(null);
+  const [moving, setMoving] = useState<OffsiteDomain | null>(null);
+  const progress = useProgress();
   const sections = ruledSections(location.sections);
   const shown = sections.find((section) => section.domain === open);
+  const moved = sections.find((section) => section.domain === moving);
 
   return (
     <Card title={t("storage.rules.title")} hint={t("storage.rules.hint")} hueIndex={hueIndex}>
@@ -179,6 +186,8 @@ export function RulesCard({ edit, hueIndex }: { edit: LocationEdit; hueIndex: nu
         <Rows>
           {sections.map((section) => {
             const own = section.own.map((setting) => t(OWN_LABEL[setting]));
+            const movable = location.object === "destination" && section.use === "copy" && !!section.targetId;
+            const run = section.targetId ? liveRun(progress, moveKey(section.targetId)) : null;
             return (
               <div key={section.domain} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0">
                 <DomainGlyph domain={section.domain} />
@@ -190,7 +199,21 @@ export function RulesCard({ edit, hueIndex }: { edit: LocationEdit; hueIndex: nu
                   <span className="text-xs text-carbon-textMuted wrap-break-word">
                     {own.length > 0 ? t("storage.rules.own").replace("{list}", () => formatList(lang, own)) : t("storage.rules.follows")}
                   </span>
+                  {run && (
+                    <span className="text-xs text-accentText" role="status">
+                      {moveText(t, run)}
+                    </span>
+                  )}
                 </div>
+                {movable && !run && (
+                  <Button
+                    label={t("storage.move.action")}
+                    labelKey="storage.move.action"
+                    glyph={<IconForward />}
+                    tone="neutral"
+                    onClick={() => setMoving(section.domain)}
+                  />
+                )}
                 {sectionSettings(location, records, section).length > 0 && (
                   <Button
                     label={t("storage.rules.change")}
@@ -212,6 +235,9 @@ export function RulesCard({ edit, hueIndex }: { edit: LocationEdit; hueIndex: nu
         </Link>
       </p>
       {shown && <RulesWindow key={shown.domain} edit={edit} section={shown} onClose={() => setOpen(null)} />}
+      {moved?.targetId && (
+        <MoveWindow key={moved.domain} location={location} domain={moved.domain} targetId={moved.targetId} onClose={() => setMoving(null)} />
+      )}
     </Card>
   );
 }

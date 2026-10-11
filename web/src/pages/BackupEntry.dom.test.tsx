@@ -2,7 +2,8 @@
 /**
  * The page of one backup entry.
  *
- * Six kinds of entry share the page, each read through the list of its kind.
+ * Six kinds of entry share the page, each read through its own route and the
+ * list of its kind.
  * The head has to say the one thing that matters about the entry, and every
  * action has to reach the call of the kind it belongs to. Only EventSource is
  * faked for the progress stream, because jsdom has none.
@@ -37,6 +38,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
+    getBackupItem: vi.fn(),
     listItems: vi.fn(),
     listContainers: vi.fn(),
     listVMs: vi.fn(),
@@ -75,7 +77,7 @@ vi.mock("../lib/toast", () => ({
 
 const api = await import("../lib/api");
 const mocks = {
-  listItems: vi.mocked(api.listItems),
+  getBackupItem: vi.mocked(api.getBackupItem),
   listContainers: vi.mocked(api.listContainers),
   listVMs: vi.mocked(api.listVMs),
   listFileSets: vi.mocked(api.listFileSets),
@@ -263,20 +265,40 @@ describe("reading the entry", () => {
     expect(corner().getByRole("button", { name: en["containers.backupNow"] })).toBeTruthy();
   });
 
-  it("says an entry is gone when its list no longer holds it", async () => {
+  it("says an entry is gone when the server knows none of that name", async () => {
     await renderPage("/backups/container/vanished");
+    expect(mocks.getBackupItem).toHaveBeenCalledWith("container", "vanished");
     expect(screen.getByText(en["entry.missing"])).toBeTruthy();
     expect(screen.getByRole("link", { name: en["backups.title"] }).getAttribute("href")).toBe("/backups");
+  });
+
+  it("says an entry is gone when the list of its kind no longer holds it", async () => {
+    serveEntries(mocks, { items: [{ ...IMMICH, key: "ghost", name: "ghost" }] });
+    await renderPage("/backups/container/ghost");
+    expect(screen.getByText(en["entry.missing"])).toBeTruthy();
+  });
+
+  it("does not take a server that failed for an entry that is gone", async () => {
+    mocks.getBackupItem.mockRejectedValueOnce(new api.ApiError(500, "database is locked"));
+    await renderPage("/backups/container/immich");
+    expect(screen.queryByText(en["entry.missing"])).toBeNull();
+    expect(screen.getByText(en["backups.loadFailed"])).toBeTruthy();
+  });
+
+  it("reads the one entry and not the list of all of them", async () => {
+    await renderPage("/backups/container/immich");
+    expect(mocks.getBackupItem).toHaveBeenCalledWith("container", "immich");
+    expect(vi.mocked(api.listItems)).not.toHaveBeenCalled();
   });
 
   it("does not ask the server about a kind it does not know", async () => {
     await renderPage("/backups/tapes/1");
     expect(screen.getByText(en["entry.missing"])).toBeTruthy();
-    expect(mocks.listItems).not.toHaveBeenCalled();
+    expect(mocks.getBackupItem).not.toHaveBeenCalled();
   });
 
   it("offers to try again when the entry could not be read", async () => {
-    mocks.listItems.mockRejectedValueOnce(new Error("down"));
+    mocks.getBackupItem.mockRejectedValueOnce(new Error("down"));
     await renderPage("/backups/container/immich");
     expect(screen.getByText(en["backups.loadFailed"])).toBeTruthy();
     await press(button(en["anomaly.retry"]));
@@ -285,6 +307,24 @@ describe("reading the entry", () => {
 });
 
 describe("the state of the entry", () => {
+  it("says of an entry the person set aside that it is excluded and not protected", async () => {
+    serveEntries(mocks, {
+      items: [
+        {
+          ...IMMICH,
+          included: false,
+          effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+          backupDeclined: true,
+        },
+      ],
+      containers: [containerView({ includeInSchedule: false })],
+    });
+    await renderPage("/backups/container/immich");
+    expect(screen.getByText(en["entry.reason.declined"], { exact: false })).toBeTruthy();
+    expect(screen.getByText(en["backups.status.notProtected"])).toBeTruthy();
+    expect(screen.queryByText(en["ransomware.protGreen"])).toBeNull();
+  });
+
   it("puts the reason of a failed run under the head", async () => {
     serveEntries(mocks, {
       items: [{ ...IMMICH, lastRunStatus: "failed" }],
@@ -326,9 +366,9 @@ describe("the state of the entry", () => {
   it("reads the entry again when its backup ends", async () => {
     await renderPage("/backups/container/immich");
     progress({ key: "container:immich", phase: "backup", percent: 42, active: true });
-    const before = mocks.listItems.mock.calls.length;
+    const before = mocks.getBackupItem.mock.calls.length;
     progress({ key: "container:immich", phase: "backup", percent: 100, active: false, finished: true });
-    await waitFor(() => expect(mocks.listItems.mock.calls.length).toBeGreaterThan(before));
+    await waitFor(() => expect(mocks.getBackupItem.mock.calls.length).toBeGreaterThan(before));
   });
 
   it("says of BombVault's own container why it has no backup and offers nothing else", async () => {
@@ -450,10 +490,10 @@ describe("the actions of the corner", () => {
 
   it("pauses the schedule of the entry and reads it again", async () => {
     await renderPage("/backups/container/immich");
-    const before = mocks.listItems.mock.calls.length;
+    const before = mocks.getBackupItem.mock.calls.length;
     await press(corner().getByRole("button", { name: en["schedule.pause"] }));
     expect(setInclude).toHaveBeenCalledWith("immich", false);
-    await waitFor(() => expect(mocks.listItems.mock.calls.length).toBeGreaterThan(before));
+    await waitFor(() => expect(mocks.getBackupItem.mock.calls.length).toBeGreaterThan(before));
   });
 
   it("resumes a paused folder set through the call of its kind", async () => {

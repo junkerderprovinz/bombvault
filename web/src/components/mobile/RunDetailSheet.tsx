@@ -23,6 +23,7 @@ import { useVisibilityGate } from "../../lib/useVisibilityGate";
 import { loadErrorMessage } from "../../lib/errors";
 import { useConfirm } from "../../lib/useConfirm";
 import { useIsDesktop } from "../../lib/useMediaQuery";
+import { runRestorePath } from "../../lib/restoreRequest";
 import { AnomalyWindow } from "../anomalies/AnomalyWindow";
 import { Badge } from "../Badge";
 import { CheckDraw } from "../CheckDraw";
@@ -63,9 +64,8 @@ import { BottomSheet, type BottomSheetProps } from "./BottomSheet";
 //   - log: buildLogLines + ActivityLog's mono pattern (font-mono text-xs +
 //     formatLogDate/formatClockTime stamps, colorFor/glyphFor vocabulary);
 //     never a second log style
-//   - browse: SnapshotFileTree behind a tonal row (the parent-fetch precedent
-//     in Recovery.tsx; RestorePanel.tsx is the local
-//     container twin)
+//   - browse: SnapshotFileTree behind a tonal row, the parent owning the fetch
+//     as in the restore window
 //   - verify: checkDomain() with the Settings integrity tab's own labels
 //   - restore entry: the desktop restore surface's own label
 //     ("snapshots.restore"), secondary and tonal, never accent, because a
@@ -106,6 +106,9 @@ export interface RunDetailSheetProps {
   /** At desktop widths, show the run in a window over the page instead of a
    *  sheet over the whole screen. */
   windowed?: boolean;
+  /** Opens the restore window on the backup this run wrote. Offered where
+   *  the host can lead there and the run left a backup. */
+  onRestore?: () => void;
 }
 
 /** The sheet, or with `windowed` at desktop widths a window that carries the
@@ -343,7 +346,7 @@ function SheetActionRow({
   );
 }
 
-export function RunDetailSheet({ run, open, onClose, windowed = false }: RunDetailSheetProps) {
+export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore }: RunDetailSheetProps) {
   const { t } = useT();
   const browseId = useId();
   const inFlight = isInFlight(run);
@@ -364,7 +367,7 @@ export function RunDetailSheet({ run, open, onClose, windowed = false }: RunDeta
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // Lazy parent-fetch on expand; the RestorePanel.tsx shape (list →
+  // Lazy parent-fetch on expand; the restore window's shape (list →
   // {ok, files} → tree props; #129 server reason over the generic message).
   // The cancelled flag is the late-response guard: hosts keep one mounted
   // sheet and swap its `run` prop (the Dashboard's run-sheet host), so the
@@ -453,7 +456,7 @@ export function RunDetailSheet({ run, open, onClose, windowed = false }: RunDeta
   // --- restore row (the selection the tree collects, restored in place) -----
   // The sheet's own restore path: the SnapshotFileTree selection restored to
   // the original locations, behind the same confirm gate the desktop restore
-  // surfaces answer (RestorePanel.tsx, files.restoreConfirm).
+  // surfaces answer (files.restoreConfirm).
   // Round 1 shipped the row as a second toggle of the browse disclosure, so
   // two adjacent buttons promised a restore while one disclosure answered
   // for both, and pressing "Restore" with the tree open CLOSED it
@@ -597,9 +600,11 @@ export function RunDetailSheet({ run, open, onClose, windowed = false }: RunDeta
   // widened to the cutout. The inner
   // rounded cards keep their own px-4: they inset from the slot, not from
   // the screen.
+  const restorable = onRestore !== undefined && runRestorePath(run) !== null;
   const footerContent =
-    browseSupported || verifyDomain ? (
+    browseSupported || verifyDomain || restorable ? (
       <div className="flex flex-col gap-2 py-4">
+        {restorable && <SheetActionRow label={t("restore.open")} onClick={onRestore} tone="neutral" hueIndex={3} />}
         <div className={browseSupported && verifyDomain ? "grid grid-cols-2 gap-2" : "flex"}>
           {browseSupported && (
             <SheetActionRow
@@ -733,8 +738,8 @@ export function RunDetailSheet({ run, open, onClose, windowed = false }: RunDeta
           <HistoryLogSection run={run} />
         )}
 
-        {/* Browse section; the SnapshotFileTree mount (the Recovery.tsx
-            precedent: purely presentational tree, the parent
+        {/* Browse section; the SnapshotFileTree mount (a purely
+            presentational tree, the parent
             owns the fetch). Revealed by the footer browse disclosure, or
             opened by the restore entry below when it needs a selection. */}
         {browseSupported && browseOpen && (

@@ -111,7 +111,7 @@ export default [
             // gap-10 at/above it, so desktop is unchanged by construction).
             // Same 1152px cap. See PAGE_SHELL_RESPONSIVE in pageShell.ts.
             "Dashboard.tsx": "PAGE_SHELL_RESPONSIVE",
-            "Recovery.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Restore.tsx": "PAGE_SHELL_RESPONSIVE",
             "Anomalies.tsx": "PAGE_SHELL_RESPONSIVE",
             "BackupEntry.tsx": "PAGE_SHELL_RESPONSIVE",
             "Backups.tsx": "PAGE_SHELL_RESPONSIVE",

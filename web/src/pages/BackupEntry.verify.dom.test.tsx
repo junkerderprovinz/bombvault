@@ -15,13 +15,13 @@ import { ENTRY_ROUTE } from "../lib/backupEntry";
 import { humanBytes } from "../lib/forecast";
 import { I18nProvider, en } from "../lib/i18n";
 import { AnomalyProvider } from "../lib/useAnomalies";
-import { NOW, ZFS_ID, backupRun, serveEntries, watched } from "./backupEntry.testsupport";
+import { NOW, ZFS_ID, backupRun, serveEntries, timelineOf, watched } from "./backupEntry.testsupport";
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
-    listItems: vi.fn(),
+    getBackupItem: vi.fn(),
     listContainers: vi.fn(),
     listVMs: vi.fn(),
     listFileSets: vi.fn(),
@@ -46,7 +46,7 @@ vi.mock("../lib/toast", () => ({ useToast: () => ({ push: () => {} }) }));
 
 const api = await import("../lib/api");
 const mocks = {
-  listItems: vi.mocked(api.listItems),
+  getBackupItem: vi.mocked(api.getBackupItem),
   listContainers: vi.mocked(api.listContainers),
   listVMs: vi.mocked(api.listVMs),
   listFileSets: vi.mocked(api.listFileSets),
@@ -233,6 +233,15 @@ describe("the recent runs", () => {
     expect(within(window).getByText(RUNS[0].snapshotId.slice(0, 8))).toBeTruthy();
     await press(within(window).getByRole("button", { name: en["common.close"] }));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("lead from a run to the restore of the backup it wrote", async () => {
+    serveEntries(mocks, { runs: RUNS });
+    vi.mocked(api.getTimeline).mockResolvedValue(timelineOf(RUNS));
+    await renderVerify("container/immich");
+    await press(runRows()[0]);
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["restore.open"] }));
+    expect(await screen.findByRole("dialog", { name: en["entry.restore.title"].replace("{name}", "immich") })).toBeTruthy();
   });
 
   it("open a ZFS run on what happened to its datasets", async () => {

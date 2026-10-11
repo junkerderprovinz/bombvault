@@ -211,6 +211,15 @@ describe("AttentionProvider", () => {
     await waitFor(() => expect(shown()).toBe("1"));
   });
 
+  it("leaves out an entry the person said not to back up", async () => {
+    const backedUp = leftOut("immich", { included: true, lastBackup: 1_700_000_000 });
+    listItems.mockResolvedValue(items([backedUp, leftOut("gitea"), leftOut("scratch", { backupDeclined: true })]));
+    draw(kitStored, true);
+
+    await waitFor(() => expect(shown()).toBe("1"));
+    expect(listed()).toBe("unprotected");
+  });
+
   it("leaves the findings out while detection is off", async () => {
     getAnomalySummary.mockResolvedValue({ ok: true, summary: summary({ critical: 1, warning: 0, info: 0 }, false) });
     getAnomalies.mockResolvedValue(findings([finding("a1", "critical")]));

@@ -8,7 +8,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ActionMenu, type MenuAction } from "../components/backups/ActionMenu";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
-import { IconBack } from "../components/glyphs";
+import { IconBack, IconForward } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconMore, IconPencil, IconTrash } from "../components/navGlyphs";
 import { PageTitle } from "../components/PageTitle";
@@ -18,6 +18,7 @@ import { ConnectionWindow } from "../components/storage/ConnectionWindow";
 import { CopyCard } from "../components/storage/CopyCard";
 import { CredentialsCard } from "../components/storage/CredentialsCard";
 import { KeepCard } from "../components/storage/KeepCard";
+import { MoveWindow } from "../components/storage/MoveWindow";
 import { LocationMark } from "../components/storage/LocationMark";
 import { ProtectionCard } from "../components/storage/ProtectionCard";
 import { RcloneConfCard } from "../components/storage/RcloneConfCard";
@@ -29,7 +30,10 @@ import { testOffsiteTarget, testPrimaryRemote, type OkEnvelope, type StorageLoca
 import { useT } from "../lib/i18n";
 import { offsiteVerdict } from "../lib/offsiteVerdict";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
+import { useProgress } from "../lib/progress";
+import { objectId } from "../lib/storageFlow";
 import { DOMAIN_LABEL, amountText, credentialKind, rcloneRemote, usedByText } from "../lib/storageLocations";
+import { eraseKey, liveRun, moveKey, moveText } from "../lib/storageRuns";
 import { settingsOwned, type LocationRecords } from "../lib/storageWrites";
 import { useProviderForm } from "../lib/useProviders";
 import { useStorageLocation } from "../lib/useStorageLocations";
@@ -79,6 +83,8 @@ function Location({ location, records }: { location: StorageLocation; records: L
   const probe = connectionProbe(location);
   const [changing, setChanging] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const progress = useProgress();
   const [menuOpen, setMenuOpen] = useState(false);
   const moreButton = useRef<HTMLSpanElement>(null);
   const test = useTestVerdict(location.id, t("offsite.testFailed"));
@@ -95,7 +101,15 @@ function Location({ location, records }: { location: StorageLocation; records: L
   if (changeable) {
     actions.push({ id: "connection", label: t("storage.conn.change"), glyph: <IconPencil />, onSelect: () => setChanging(true) });
   }
-  if (location.object === "destination") {
+  // A target set up for one section has no row per section, so its copy
+  // moves from the menu.
+  const own = location.object === "target" ? location.sections.find((section) => section.use === "copy" && section.targetId) : undefined;
+  const moveRun = own?.targetId ? liveRun(progress, moveKey(own.targetId)) : null;
+  const erasing = location.object === "destination" && liveRun(progress, eraseKey(objectId(location))) !== null;
+  if (own && !moveRun) {
+    actions.push({ id: "move", label: t("storage.move.action"), glyph: <IconForward />, onSelect: () => setMoving(true) });
+  }
+  if (location.object === "destination" && !erasing) {
     actions.push({ id: "remove", label: t("storage.remove.action"), glyph: <IconTrash />, onSelect: () => setRemoving(true) });
   }
 
@@ -139,12 +153,20 @@ function Location({ location, records }: { location: StorageLocation; records: L
           </div>
         </div>
         <VerdictLine verdict={test.verdict} />
+        {(erasing || moveRun) && (
+          <p className="text-sm text-accentText" role="status">
+            {moveRun ? moveText(t, moveRun) : t("storage.remove.erasingNow")}
+          </p>
+        )}
       </div>
 
       {menuOpen && moreButton.current && (
         <ActionMenu label={location.name} actions={actions} place={{ anchor: moreButton.current }} onClose={() => setMenuOpen(false)} />
       )}
       {changing && form && <ConnectionWindow edit={edit} form={form} onClose={() => setChanging(false)} />}
+      {moving && own?.targetId && (
+        <MoveWindow location={location} domain={own.domain} targetId={own.targetId} onClose={() => setMoving(false)} />
+      )}
       {removing && <RemovalWindow location={location} onClose={() => setRemoving(false)} onRemoved={() => navigate("/storage")} />}
 
       <ConnectionCard edit={edit} onChange={changeable ? () => setChanging(true) : undefined} hueIndex={nextHue()} />

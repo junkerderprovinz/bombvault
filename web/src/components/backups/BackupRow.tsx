@@ -168,6 +168,7 @@ function rowFacts({
   if (failed && item.lastRunError) facts.push(runReason(item.lastRunError, t));
   if (failed && loudAnomalies(anomaly) > 0) facts.push(t("backups.fact.anomalyOpen"));
   if (state === "pending" && !item.renameFrom) facts.push(`${t("backups.fact.nextRun")}.`);
+  if (item.backupDeclined) facts.push(`${t("entry.reason.declined")}.`);
 
   const learning = anomaly?.learning;
   if (state === "ok" && anomalyEnabled && anomaly?.scheduled && learning && !learning.noData && learning.samples < learning.needed) {
@@ -248,7 +249,7 @@ export function BackupRow({
   const running = runsNow(progress);
   const facts = rowFacts({ item, running, anomaly, anomalyEnabled, scheduleSentence, t, lang });
   const status = rowStatus(item, loudAnomalies(anomaly));
-  const dim = isGone(item) || item.kindDisabled;
+  const dim = isGone(item) || item.kindDisabled || item.backupDeclined;
 
   let cell: ReactNode;
   if (running) {
