@@ -60,7 +60,8 @@ type destinationErasure struct {
 }
 
 // erasureSection is one repository at the destination: the copy of a section,
-// or the direct repository of its target when RepoID is set.
+// or the direct repository of its target when RepoID is set. One without a
+// TargetID is what a section left behind when its copy moved elsewhere.
 type erasureSection struct {
 	Domain   string `json:"domain"`
 	TargetID string `json:"targetId"`
@@ -184,7 +185,7 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 	if err != nil {
 		return erasurePlan{}, fmt.Errorf("read settings: %w", err)
 	}
-	_, removal, err := s.destinationRemovalPreview(id)
+	d, removal, err := s.destinationRemovalPreview(id)
 	if err != nil {
 		return erasurePlan{}, err
 	}
@@ -227,6 +228,33 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 			kept = erasureKeptAppendOnly
 		}
 		plan.add(ctx, s, settings, contexts[t.Domain], t, direct, kept)
+	}
+	// A section that moved to another destination left its repository here,
+	// where no target points at it.
+	for _, domain := range offsiteConfigDomains {
+		if slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return t.Domain == domain }) {
+			continue
+		}
+		left := store.OffsiteTarget{
+			Domain: domain, Repo: destinationLocation(d.Repo, domain),
+			CredsRef: d.CredsRef, StorageClass: d.StorageClass, Immutable: d.Immutable,
+		}
+		loc, err := s.resolveRepo(left.Repo)
+		if err != nil || !s.engine.RepoOpens(ctx, loc, s.offsiteModeForTarget(settings, left)) {
+			continue
+		}
+		if contexts[domain], err = s.ownerContextFor(domain); err != nil {
+			return erasurePlan{}, err
+		}
+		kept := ""
+		if d.Immutable {
+			kept = erasureKeptAppendOnly
+		}
+		at := len(plan.Sections)
+		plan.add(ctx, s, settings, contexts[domain], left, store.OffsiteTarget{}, kept)
+		if plan.Sections[at].Backups == 0 {
+			plan.Sections, plan.repos = plan.Sections[:at], plan.repos[:at]
+		}
 	}
 	plan.count(ctx, s, settings, id, contexts)
 	return plan, nil
@@ -451,7 +479,7 @@ func (s *Service) emptyRepo(ctx context.Context, repo erasureRepo) error {
 	if len(repo.snaps) == 0 {
 		return nil
 	}
-	if !repo.direct && validPlacementDomain(repo.domain) {
+	if !repo.direct && repo.target.ID != "" && validPlacementDomain(repo.domain) {
 		if err := s.store.RecordTargetListing(repo.domain, repo.target.ID, time.Now().Unix(), nil); err != nil {
 			log.Printf("api: erase %s: the copies seen at %s stay listed: %v", repo.domain, placementTargetName(repo.target), err) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
 		}

@@ -6775,8 +6775,9 @@ export function removeDestination(
 
 /** One repository at a destination whose backups are to be deleted: the copy
  *  of a section, or the direct repository of its target when `repoId` is set.
- *  `kept` says why its backups stay: BombVault may only add to it, entries
- *  still back up to it, or it could not be listed. */
+ *  An empty `targetId` is what a section left behind when its copy moved to
+ *  another destination. `kept` says why its backups stay: BombVault may only
+ *  add to it, entries still back up to it, or it could not be listed. */
 export interface ErasureSection {
   domain: OffsiteDomain;
   targetId: string;

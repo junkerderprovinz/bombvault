@@ -251,3 +251,37 @@ func TestAnErasureLeavesADirectRepositoryInUseAndEmptiesAnIdleOne(t *testing.T) 
 		t.Fatalf("the direct repository in use did not outlive the destination: %v", err)
 	}
 }
+
+func TestAnErasureTakesWhatAMovedSectionLeftBehind(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	files := f.tickDestination(box, "files")
+	vault := f.destination("Vault", vaultRepo)
+	f.move(vms, vault)
+
+	preview := f.erasurePreview(box)
+	want := []erasureSection{
+		{Domain: "files", TargetID: files.ID, Repo: boxRepo + "/files"},
+		{Domain: "vms", Repo: boxRepo + "/vms", Backups: 5, Entries: 2},
+	}
+	if !slices.Equal(preview.Sections, want) {
+		t.Fatalf("sections = %+v, want %+v", preview.Sections, want)
+	}
+	if len(preview.LastCopies) != 0 {
+		t.Fatalf("last copies = %+v, want none: the section holds them at Vault", preview.LastCopies)
+	}
+
+	if res := f.erase(box, preview.Removal); res["ok"] != true {
+		t.Fatalf("answer = %v, want a started run", res)
+	}
+	f.waitForErasure("files")
+	if left := f.held(boxRepo + "/vms"); !slices.Equal(left, []string{"hand"}) {
+		t.Fatalf("the repository the section left behind still holds %v", left)
+	}
+	if got := f.held(vaultRepo + "/vms"); len(got) != 5 {
+		t.Fatalf("the moved section holds %v at Vault, want its 5 backups", got)
+	}
+	if _, ok, _ := f.st.GetDestination(box.ID); ok {
+		t.Fatal("the destination is still there")
+	}
+}
