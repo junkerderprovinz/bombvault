@@ -8,8 +8,8 @@ import { useEffect, useRef, useState } from "react";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 
-// FlashZipExportCard sits on the Flash page, outside SettingsPage, so it loads
-// its own settings and saves the way Config.tsx's ConfigSettingsCard does:
+// FlashZipExportCard sits on the flash drive's page, outside SettingsPage, so
+// it loads its own settings and saves the way ConfigSettingsCard does:
 // re-fetch the latest settings, merge only this card's fields, put them back.
 // Every field saves itself; the toggles flip optimistically and revert on
 // failure, the path and count are debounced.

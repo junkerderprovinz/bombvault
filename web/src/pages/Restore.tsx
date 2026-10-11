@@ -22,9 +22,8 @@ import { OldFolderWindow } from "../components/restore/OldFolderWindow";
 import { PlaceChecks } from "../components/restore/PlaceChecks";
 import { RestoreWindow, type RestoreAsk } from "../components/restore/RestoreWindow";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
-import { displayTags } from "../components/RestorePanel";
 import { Rows } from "../components/storage/rows";
-import { getSettings, listItems, type BackupItem, type TimelineRow } from "../lib/api";
+import { getSettings, listItems, type BackupItem } from "../lib/api";
 import { hueVars } from "../lib/appearance";
 import { ENTRY_KIND, ENTRY_KINDS, type EntryKind } from "../lib/backupEntry";
 import { entriesOf, entryTarget, itemId, itemProgressKey, listedItems } from "../lib/backupList";
@@ -108,11 +107,6 @@ function PickedEntry({
     if (reveal) card.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }, [reveal]);
 
-  const tagsOf = (row: TimelineRow) =>
-    item.kind === "container"
-      ? displayTags([...new Set(row.places.flatMap((m) => m.tags))], item.key, item.formerNames ?? [])
-      : [];
-
   return (
     <div ref={card}>
       <Card title={name} hueIndex={hueIndex}>
@@ -127,7 +121,6 @@ function PickedEntry({
             recommendation={recommendation}
             chosen={chosen}
             why={recommendationWhy(recommendation, t, lang)}
-            tagsOf={tagsOf}
             onChoose={(i) => setPick(rows[i].key)}
             onRestore={(i) => setOpened({ snapshot: rows[i].key })}
           />

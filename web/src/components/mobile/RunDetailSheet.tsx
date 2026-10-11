@@ -64,9 +64,8 @@ import { BottomSheet, type BottomSheetProps } from "./BottomSheet";
 //   - log: buildLogLines + ActivityLog's mono pattern (font-mono text-xs +
 //     formatLogDate/formatClockTime stamps, colorFor/glyphFor vocabulary);
 //     never a second log style
-//   - browse: SnapshotFileTree behind a tonal row (the parent-fetch precedent
-//     in Recovery.tsx / Files.tsx; RestorePanel.tsx is the local
-//     container twin)
+//   - browse: SnapshotFileTree behind a tonal row, the parent owning the fetch
+//     as in the restore window
 //   - verify: checkDomain() with the Settings integrity tab's own labels
 //   - restore entry: the desktop restore surface's own label
 //     ("snapshots.restore"), secondary and tonal, never accent, because a
@@ -135,8 +134,8 @@ const LIVE_TICK_MS = 1000;
  *  streams no key of its own ("everything" is the parent run; its per-domain
  *  children are the ones that publish; store.EverythingTargetID). Shapes
  *  mirror the wire examples in progress.ts ("container:plex", "vm:win11") and
- *  the consumers (BackupButton.tsx, VMs.tsx, Files.tsx, Config.tsx
- *  "config", flash as the bare "flash").
+ *  the keys of lib/backupEntry.ts (the self-backup as the bare "config",
+ *  flash as the bare "flash").
  *
  *  The suffix is run.target; the name; never run.targetId. The backend
  *  records vm/files runs under the row's 32-hex id (StartRun(tg.ID) /
@@ -368,7 +367,7 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // Lazy parent-fetch on expand; the RestorePanel.tsx shape (list →
+  // Lazy parent-fetch on expand; the restore window's shape (list →
   // {ok, files} → tree props; #129 server reason over the generic message).
   // The cancelled flag is the late-response guard: hosts keep one mounted
   // sheet and swap its `run` prop (the Dashboard's run-sheet host), so the
@@ -457,7 +456,7 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
   // --- restore row (the selection the tree collects, restored in place) -----
   // The sheet's own restore path: the SnapshotFileTree selection restored to
   // the original locations, behind the same confirm gate the desktop restore
-  // surfaces answer (Files.tsx / RestorePanel.tsx, files.restoreConfirm).
+  // surfaces answer (files.restoreConfirm).
   // Round 1 shipped the row as a second toggle of the browse disclosure, so
   // two adjacent buttons promised a restore while one disclosure answered
   // for both, and pressing "Restore" with the tree open CLOSED it
@@ -739,8 +738,8 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
           <HistoryLogSection run={run} />
         )}
 
-        {/* Browse section; the SnapshotFileTree mount (the Recovery.tsx /
-            Files.tsx precedent: purely presentational tree, the parent
+        {/* Browse section; the SnapshotFileTree mount (a purely
+            presentational tree, the parent
             owns the fetch). Revealed by the footer browse disclosure, or
             opened by the restore entry below when it needs a selection. */}
         {browseSupported && browseOpen && (

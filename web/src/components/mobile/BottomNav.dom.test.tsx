@@ -348,6 +348,24 @@ describe("BottomNav's More trigger and open findings", () => {
     const more = await drawWithFindings({ critical: 1, warning: 0, info: 0 }, false);
     expect(within(more).queryByTestId("more-anomaly-dot")).toBeNull();
   });
+
+  it("leaves it unmarked before the first backup", async () => {
+    getAnomalySummary.mockResolvedValue({ ok: true, summary: summary({ critical: 1, warning: 0, info: 0 }) });
+    listItems.mockResolvedValue({ ok: true, items: [], unlisted: [] });
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <I18nProvider>
+          <AnomalyProvider>
+            <AttentionProvider settings={null}>
+              <BottomNav settings={{ anomalyEnabled: true } as Settings} authEnabled={false} scrollMainToTop={() => undefined} />
+            </AttentionProvider>
+          </AnomalyProvider>
+        </I18nProvider>
+      </MemoryRouter>,
+    );
+    await act(async () => {});
+    expect(within(bar()).queryByTestId("more-anomaly-dot")).toBeNull();
+  });
 });
 
 describe("BottomNav's count on Overview", () => {
@@ -368,9 +386,11 @@ describe("BottomNav's count on Overview", () => {
     runs: [],
   });
 
-  async function drawWithUnprotected(path: string, mode?: string) {
+  const plex = { ...leftOut("plex"), lastBackup: 1_700_000_000 };
+
+  async function drawWithUnprotected(path: string, mode?: string, entries = [leftOut("gitea"), leftOut("immich"), plex]) {
     if (mode) localStorage.setItem("bv-labels-bottombar", mode);
-    listItems.mockResolvedValue({ ok: true, items: [leftOut("gitea"), leftOut("immich")], unlisted: [] });
+    listItems.mockResolvedValue({ ok: true, items: entries, unlisted: [] });
     render(
       <MemoryRouter initialEntries={[path]}>
         <I18nProvider>
@@ -404,6 +424,11 @@ describe("BottomNav's count on Overview", () => {
   it("is part of the slot's name when the caption is hidden", async () => {
     await drawWithUnprotected("/backups", "glyph");
     expect(within(bar()).getByRole("link", { name: `Overview, ${LABEL}` })).toBeTruthy();
+  });
+
+  it("is absent before the first backup", async () => {
+    await drawWithUnprotected("/backups", undefined, [leftOut("gitea"), leftOut("immich")]);
+    expect(within(bar()).queryByLabelText(/Things that need you/)).toBeNull();
   });
 
   it("shows on no other slot and is absent while nothing needs the person", async () => {

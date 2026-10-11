@@ -29,13 +29,13 @@ describe("collect", () => {
     localStorage.setItem("bv-theme", "light");
     localStorage.setItem("bombvault.navPins", "cloud");
     // Sort orders and the password toggle belong to a page, not to the look.
-    localStorage.setItem("bv-containers-sort", "name");
+    localStorage.setItem("bv-backups-view", "{}");
     localStorage.setItem("bv-password", "shown");
 
     const got = collect();
     expect(got["bv-theme"]).toBe("light");
     expect(got["bombvault.navPins"]).toBe("cloud");
-    expect(got["bv-containers-sort"]).toBeUndefined();
+    expect(got["bv-backups-view"]).toBeUndefined();
     expect(got["bv-password"]).toBeUndefined();
   });
 

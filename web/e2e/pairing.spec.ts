@@ -213,6 +213,11 @@ for (const width of [1280, 390]) {
     const list = page.getByTestId("members");
     await expect(list.getByText("Schwiegereltern Tower Gmunden Keller")).toBeVisible();
     await expect(pairState(page)).toHaveText("Gekoppelt");
+    // A member says in plain words that it is paired and how it is reached.
+    await expect(list.getByRole("listitem").filter({ hasText: "Büro Linz" })).toContainText("Gekoppelt · Direkt");
+    await expect(list.getByRole("listitem").filter({ hasText: "Schwiegereltern" })).toContainText("Gekoppelt · Über Relay");
+    // Another group's phrase can be entered without leaving this one first.
+    await expect(enter(page)).toBeVisible();
     // The list ends with the way in for a ZFS server that runs no BombVault.
     const zfsRow = page.getByTestId("zfs-row");
     await expect(zfsRow).toContainText("ZFS-Server ohne BombVault");

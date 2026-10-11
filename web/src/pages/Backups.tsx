@@ -7,7 +7,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { ActionMenu, type MenuAction, type MenuPlace } from "../components/backups/ActionMenu";
 import { AddWindow } from "../components/backups/AddWindow";
-import { BackupRow, SelfRow } from "../components/backups/BackupRow";
+import { BackupRow, LIST_SPAN, SelfRow, listColumns } from "../components/backups/BackupRow";
 import { BulkBar } from "../components/backups/BulkBar";
 import { KIND_LABEL, KIND_SCHEDULE_LABEL, entryName, tileLabel } from "../components/backups/kinds";
 import { KindTiles } from "../components/backups/KindTiles";
@@ -259,6 +259,8 @@ export function Backups() {
       const count = found.containers + found.vms + found.files + found.zfs;
       if (found.error) push(found.error, "fail");
       else push(count > 0 ? t("backups.discover.found", count) : t("backups.discover.none"), "success");
+      // The count does not say that a rebuilt ZFS item stays off until it was checked.
+      if (found.zfs > 0) push(t("zfs.discovered", found.zfs), "success");
       await load();
     } catch (err) {
       push(err instanceof Error ? err.message : t("common.discoverFailed"), "fail");
@@ -451,17 +453,19 @@ export function Backups() {
               <ListBar view={view} onView={changeView} query={query} onQuery={setQuery} t={t} />
               <Card title={tile === "all" ? t("backups.allEntries") : tileLabel(tile, t)} hueIndex={0}>
                 <div className={`@container glim-content-fade${selection.selecting ? " select-none" : ""}`}>
-                  <ul>
-                    {installed.map(row)}
-                    {selfShown && <SelfRow item={self} selecting={selection.selecting} showIp={showIp} t={t} />}
-                  </ul>
-                  {notInstalled.length > 0 && (installed.length > 0 || selfShown) && (
-                    <h3 className="flex items-center gap-1.5 border-t border-carbon-border px-1.5 pb-1.5 pt-4 text-xs font-medium uppercase tracking-wider text-carbon-textMuted">
-                      {t("containers.notInstalledTitle")}
-                      <InfoBubble tip={t("backups.notInstalledHint")} />
-                    </h3>
-                  )}
-                  <ul>{notInstalled.map(row)}</ul>
+                  <div className={listColumns(selection.selecting)}>
+                    <ul className={LIST_SPAN}>
+                      {installed.map(row)}
+                      {selfShown && <SelfRow item={self} selecting={selection.selecting} showIp={showIp} t={t} />}
+                    </ul>
+                    {notInstalled.length > 0 && (installed.length > 0 || selfShown) && (
+                      <h3 className="col-span-full flex items-center gap-1.5 border-t border-carbon-border px-1.5 pb-1.5 pt-4 text-xs font-medium uppercase tracking-wider text-carbon-textMuted">
+                        {t("containers.notInstalledTitle")}
+                        <InfoBubble tip={t("backups.notInstalledHint")} />
+                      </h3>
+                    )}
+                    <ul className={LIST_SPAN}>{notInstalled.map(row)}</ul>
+                  </div>
                   {shown.length === 0 && !selfShown && (
                     <p className="px-1.5 py-3 text-sm text-carbon-textMuted">{t("filter.noMatch")}</p>
                   )}

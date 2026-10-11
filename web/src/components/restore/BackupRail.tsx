@@ -2,7 +2,7 @@
 // is in sight with its size and the storage locations that hold it. A handle
 // rests on the chosen one and can be dragged from backup to backup.
 import { useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import type { TimelineRow } from "../../lib/api";
+import { rowTags } from "../../lib/entry";
 import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { formatRecent } from "../../lib/reltime";
@@ -21,7 +21,6 @@ export function BackupRail({
   recommendation,
   chosen,
   why,
-  tagsOf,
   onChoose,
   onRestore,
 }: {
@@ -31,7 +30,6 @@ export function BackupRail({
   chosen: number;
   /** Why the recommended backup is the recommended one. */
   why: string;
-  tagsOf: (row: TimelineRow) => string[];
   onChoose: (index: number) => void;
   onRestore: (index: number) => void;
 }) {
@@ -155,7 +153,7 @@ export function BackupRail({
                       {t("restorePage.afterAnomaly")}
                     </Badge>
                   )}
-                  {tagsOf(row).map((tag) => (
+                  {rowTags(row).map((tag) => (
                     <Badge key={tag} tone="neutral" size="small">
                       {tag}
                     </Badge>

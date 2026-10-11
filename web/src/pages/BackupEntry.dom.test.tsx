@@ -28,7 +28,9 @@ import {
   backupRun,
   containerView,
   serveEntries,
+  timelineOf,
   watched,
+  zfsView,
 } from "./backupEntry.testsupport";
 
 vi.mock("../lib/api", async (importOriginal) => {
@@ -53,8 +55,15 @@ vi.mock("../lib/api", async (importOriginal) => {
     backupVMNow: vi.fn(),
     backupFlashNow: vi.fn(),
     deleteFileSet: vi.fn(),
+    deleteFileSetBackups: vi.fn(),
+    deleteZFSDataset: vi.fn(),
+    deleteBackupsZFSDataset: vi.fn(),
     deleteBackups: vi.fn(),
+    forgetContainer: vi.fn(),
     takeOverContainer: vi.fn(),
+    exportContainer: vi.fn(),
+    previewBackupExport: vi.fn(),
+    getTimeline: vi.fn(),
     getZFSReplica: vi.fn(),
   };
 });
@@ -85,7 +94,15 @@ const backupNow = vi.mocked(api.backupNow);
 const backupVMNow = vi.mocked(api.backupVMNow);
 const backupFlashNow = vi.mocked(api.backupFlashNow);
 const deleteFileSet = vi.mocked(api.deleteFileSet);
+const deleteFileSetBackups = vi.mocked(api.deleteFileSetBackups);
+const deleteZFSDataset = vi.mocked(api.deleteZFSDataset);
+const deleteBackupsZFSDataset = vi.mocked(api.deleteBackupsZFSDataset);
 const deleteBackups = vi.mocked(api.deleteBackups);
+const forgetContainer = vi.mocked(api.forgetContainer);
+const takeOverContainer = vi.mocked(api.takeOverContainer);
+const exportContainer = vi.mocked(api.exportContainer);
+const previewBackupExport = vi.mocked(api.previewBackupExport);
+const getTimeline = vi.mocked(api.getTimeline);
 
 const { BackupEntryPage } = await import("./BackupEntry");
 
@@ -174,6 +191,13 @@ const corner = () => within(screen.getByTestId("page-actions"));
 const button = (name: string) => screen.getByRole("button", { name });
 const address = () => screen.getByTestId("address").textContent;
 
+/** What the bubble of the corner's backup button says while it cannot be pressed. */
+function whyHeld(): string {
+  // A disabled button gets no hover, so the box around it shows the bubble.
+  fireEvent.mouseEnter(corner().getByRole("button", { name: en["containers.backupNow"] }).parentElement!);
+  return screen.getByRole("tooltip").textContent ?? "";
+}
+
 beforeEach(() => {
   pushed.length = 0;
   streams.length = 0;
@@ -192,7 +216,19 @@ beforeEach(() => {
   getAnomalyItems.mockResolvedValue({ ok: true, items: [] });
   listSnapshots.mockResolvedValue({ ok: true, snapshots: [] });
   vi.mocked(api.getZFSReplica).mockRejectedValue(new Error("no replica"));
-  for (const call of [setInclude, patchFileSet, deleteFileSet, deleteBackups]) call.mockResolvedValue({ ok: true });
+  getTimeline.mockResolvedValue({ ok: false });
+  for (const call of [
+    setInclude,
+    patchFileSet,
+    deleteFileSet,
+    deleteFileSetBackups,
+    deleteZFSDataset,
+    deleteBackupsZFSDataset,
+    deleteBackups,
+    forgetContainer,
+  ]) {
+    call.mockResolvedValue({ ok: true });
+  }
   for (const call of [backupNow, backupVMNow, backupFlashNow]) call.mockResolvedValue({ ok: true, started: true });
 });
 
@@ -342,6 +378,66 @@ describe("the actions of the corner", () => {
     await waitFor(() => expect(backupNow).toHaveBeenCalledWith("immich"));
   });
 
+  it("starts nothing when the warning is declined, and asks again the next time", async () => {
+    await renderPage("/backups/container/immich");
+    await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["common.cancel"] }));
+    expect(backupNow).not.toHaveBeenCalled();
+    await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
+    expect(within(screen.getByRole("dialog")).getByText(en["containers.stopWarning"])).toBeTruthy();
+  });
+
+  it("does not warn a browser that has answered the warning before", async () => {
+    await renderPage("/backups/container/immich");
+    await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["containers.backupNow"] }));
+    await waitFor(() => expect(backupNow).toHaveBeenCalledTimes(1));
+    cleanup();
+
+    await renderPage("/backups/container/immich");
+    await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(backupNow).toHaveBeenCalledTimes(2));
+  });
+
+  it("warns every time when the browser refuses to say what was answered, and not never", async () => {
+    const read = Storage.prototype.getItem;
+    const refused = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
+      if (key === "bv-container-stop-ack") throw new Error("blocked");
+      return read.call(this, key);
+    });
+    try {
+      localStorage.setItem("bv-container-stop-ack", "1");
+      await renderPage("/backups/container/immich");
+      await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
+      expect(within(screen.getByRole("dialog")).getByText(en["containers.stopWarning"])).toBeTruthy();
+      expect(backupNow).not.toHaveBeenCalled();
+    } finally {
+      refused.mockRestore();
+    }
+  });
+
+  // A dump of a large database runs for minutes with no percentage of its
+  // own, so the button says what is happening.
+  it("counts the dumped bytes while the entry's own backup dumps its database", async () => {
+    localStorage.setItem("bv-container-stop-ack", "1");
+    await renderPage("/backups/container/immich");
+    await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
+    await waitFor(() => expect(backupNow).toHaveBeenCalled());
+    progress({ key: "container:immich", phase: "backup", stage: "dbdump", bytes: 5_242_880, percent: 0, active: true });
+    expect(whyHeld()).toContain("5.0 MB");
+  });
+
+  it.each([
+    ["a dump", "dbdump", en["dbdump.busyDumping"]],
+    ["a backup", undefined, en["common.backupRunning"]],
+  ])("says that %s of another entry holds the backup back", async (_, stage, hint) => {
+    await renderPage("/backups/container/immich");
+    progress({ key: "container:gitea", phase: "backup", stage, percent: 10, active: true });
+    expect((corner().getByRole("button", { name: en["containers.backupNow"] }) as HTMLButtonElement).disabled).toBe(true);
+    expect(whyHeld()).toBe(hint);
+  });
+
   it.each([
     ["a VM", "/backups/vm/win11", backupVMNow, ["win11"]],
     ["the flash drive", "/backups/flash/flash", backupFlashNow, []],
@@ -383,32 +479,95 @@ describe("the actions of the corner", () => {
   });
 });
 
-describe("the rare actions", () => {
-  it("deletes the backups of a container that is gone and leaves for the list", async () => {
+describe("the menu beside the name", () => {
+  const menuItems = () =>
+    within(screen.getByRole("menu"))
+      .getAllByRole("menuitem")
+      .map((item) => item.textContent);
+
+  async function openMenu() {
+    await press(screen.getAllByRole("button", { name: en["nav.more"] })[0]);
+  }
+
+  async function choose(action: string) {
+    await openMenu();
+    await press(within(screen.getByRole("menu")).getByRole("menuitem", { name: action }));
+  }
+
+  it("offers a running container its export and no removal", async () => {
+    await renderPage("/backups/container/immich");
+    await openMenu();
+    expect(menuItems()).toEqual([en["entry.menu.exportContainer"]]);
+  });
+
+  it("offers a VM its export and the delete of its local backups", async () => {
+    await renderPage("/backups/vm/win11");
+    await openMenu();
+    expect(menuItems()).toEqual([en["entry.menu.exportVM"], en["entry.deleteLocal"]]);
+  });
+
+  it("offers the flash drive its newest backup as an export and as a ZIP", async () => {
+    getTimeline.mockResolvedValue(timelineOf([backupRun("r0", 0)]));
+    await renderPage("/backups/flash/flash");
+    await openMenu();
+    expect(menuItems()).toEqual([en["entry.menu.exportNewest"], en["entry.flashDownloadNewest"]]);
+  });
+
+  it("has no menu where there is nothing to do", async () => {
+    await renderPage("/backups/config/config");
+    expect(screen.queryByRole("button", { name: en["nav.more"] })).toBeNull();
+  });
+
+  it("writes a running container into the export folder and names it", async () => {
+    exportContainer.mockResolvedValue({ ok: true, path: "/mnt/user/backups/bombvault/export" });
+    await renderPage("/backups/container/immich");
+    await choose(en["entry.menu.exportContainer"]);
+    const window = screen.getByRole("dialog");
+    expect(within(window).getByText(/immich\.tar\.gz, immich\.xml/)).toBeTruthy();
+    await press(within(window).getByRole("button", { name: en["entry.export.action"] }));
+    expect(exportContainer).toHaveBeenCalledWith("immich");
+    expect(within(await screen.findByTestId("export-result")).getByText("/mnt/user/backups/bombvault/export")).toBeTruthy();
+  });
+
+  it("says why a container could not be exported", async () => {
+    exportContainer.mockResolvedValue({ ok: false, error: "inspect container: no such container" });
+    await renderPage("/backups/container/immich");
+    await choose(en["entry.menu.exportContainer"]);
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["entry.export.action"] }));
+    expect((await screen.findByRole("alert")).textContent).toBe("inspect container: no such container");
+  });
+
+  it("opens the export of the newest backup of an entry that is gone", async () => {
+    getTimeline.mockResolvedValue(timelineOf([backupRun("r0", 0)]));
+    previewBackupExport.mockResolvedValue({ ok: false, error: "not now" });
     await renderPage("/backups/container/pihole");
-    await press(button(en["containers.deleteBackups"]));
-    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["containers.deleteBackups"] }));
-    await waitFor(() => expect(deleteBackups).toHaveBeenCalledWith(PIHOLE.key));
-    await waitFor(() => expect(screen.getByText("at /backups?kind=container")).toBeTruthy());
+    await choose(en["entry.menu.exportNewest"]);
+    await waitFor(() =>
+      expect(previewBackupExport).toHaveBeenCalledWith(
+        "containers",
+        "pihole",
+        { form: "tar", snapshotId: backupRun("r0", 0).snapshotId },
+        "local"
+      )
+    );
   });
 
-  it("takes a folder set off the list after asking", async () => {
-    await renderPage(`/backups/files/${SET_ID}`);
-    await press(button(en["zfs.removeMissing"]));
-    const dialog = screen.getByRole("dialog");
-    expect(within(dialog).getByText(en["files.deleteSetConfirm"])).toBeTruthy();
-    await press(within(dialog).getByRole("button", { name: en["zfs.removeMissing"] }));
-    await waitFor(() => expect(deleteFileSet).toHaveBeenCalledWith(SET_ID));
-    await waitFor(() => expect(screen.getByText("at /backups?kind=files")).toBeTruthy());
+  it("links an entry without backups to the one it was before a rename", async () => {
+    takeOverContainer.mockResolvedValue({ ok: true });
+    await renderPage("/backups/container/gitea");
+    await choose(en["entry.menu.link"]);
+    const window = screen.getByRole("dialog", { name: en["entry.menu.link"] });
+    expect(within(window).getByText("pihole")).toBeTruthy();
+    await press(within(window).getByRole("button", { name: en["takeover.accept"] }));
+    const question = (await screen.findAllByRole("dialog")).find((dialog) => dialog !== window)!;
+    await press(within(question).getByRole("button", { name: en["takeover.accept"] }));
+    await waitFor(() => expect(takeOverContainer).toHaveBeenCalledWith("gitea", "pihole"));
   });
 
-  it("keeps the entry when the server refuses to remove it", async () => {
-    deleteFileSet.mockResolvedValue({ ok: false, error: "busy" });
-    await renderPage(`/backups/files/${SET_ID}`);
-    await press(button(en["zfs.removeMissing"]));
-    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["zfs.removeMissing"] }));
-    await waitFor(() => expect(pushed).toContainEqual({ message: "busy", severity: "fail" }));
-    expect(address()).toBe(`/backups/files/${SET_ID}`);
+  it("names what an entry was called before", async () => {
+    serveEntries(mocks, { containers: [containerView({ name: "immich", aliases: ["immich-old"] })] });
+    await renderPage("/backups/container/immich");
+    expect(screen.getByText(en["takeover.renamed"])).toBeTruthy();
   });
 
   it("offers the entry a renamed container looks like", async () => {
@@ -419,10 +578,93 @@ describe("the rare actions", () => {
     expect(await screen.findByText(en["takeover.looksLike"].replace("{old}", "gitea-old"))).toBeTruthy();
     expect(button(en["takeover.accept"])).toBeTruthy();
   });
+});
 
-  it("names what an entry was called before", async () => {
-    serveEntries(mocks, { containers: [containerView({ name: "immich", aliases: ["immich-old"] })] });
-    await renderPage("/backups/container/immich");
-    expect(screen.getByText(en["takeover.renamed"])).toBeTruthy();
+describe("removing an entry", () => {
+  async function choose(action: string) {
+    await press(screen.getAllByRole("button", { name: en["nav.more"] })[0]);
+    await press(within(screen.getByRole("menu")).getByRole("menuitem", { name: action }));
+  }
+
+  const ways = () => within(screen.getByRole("dialog")).getAllByRole("radio");
+  const go = (label: string) => press(within(screen.getByRole("dialog")).getByRole("button", { name: label }));
+
+  it("deletes the backups of a container that is gone with its entry, which the server keeps otherwise", async () => {
+    await renderPage("/backups/container/pihole");
+    await choose(en["containers.deleteBackups"]);
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["containers.deleteBackups"] }));
+    await waitFor(() => expect(deleteBackups).toHaveBeenCalledWith(PIHOLE.key));
+    await waitFor(() => expect(screen.getByText("at /backups?kind=container")).toBeTruthy());
+  });
+
+  it("removes the entry of a container that is gone and has no backups", async () => {
+    serveEntries(mocks, {
+      containers: [containerView({ name: "pihole", installed: false, state: "", ip: "", lastBackup: null })],
+    });
+    await renderPage("/backups/container/pihole");
+    await choose(en["vms.removeEntry"]);
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["vms.removeEntry"] }));
+    await waitFor(() => expect(forgetContainer).toHaveBeenCalledWith("pihole"));
+  });
+
+  it("takes a folder set off the list and keeps its backups unless told otherwise", async () => {
+    await renderPage(`/backups/files/${SET_ID}`);
+    await choose(en["zfs.removeMissing"]);
+    expect(ways().map((way) => way.getAttribute("aria-checked"))).toEqual(["true", "false"]);
+    await go(en["entry.remove.keepGo"]);
+    await waitFor(() => expect(deleteFileSet).toHaveBeenCalledWith(SET_ID));
+    expect(deleteFileSetBackups).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByText("at /backups?kind=files")).toBeTruthy());
+    expect(pushed).toContainEqual({
+      message: en["entry.remove.kept"].replace("{name}", PHOTOS.name),
+      severity: "success",
+    });
+  });
+
+  it("deletes the local backups with a folder set on the second way", async () => {
+    await renderPage(`/backups/files/${SET_ID}`);
+    await choose(en["zfs.removeMissing"]);
+    await press(ways()[1]);
+    await go(en["entry.remove.dropGo"]);
+    await waitFor(() => expect(deleteFileSetBackups).toHaveBeenCalledWith(SET_ID));
+    expect(deleteFileSet).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByText("at /backups?kind=files")).toBeTruthy());
+  });
+
+  it("has one way for an entry without backups", async () => {
+    serveEntries(mocks, { items: [{ ...PHOTOS, lastBackup: 0 }] });
+    await renderPage(`/backups/files/${SET_ID}`);
+    await choose(en["zfs.removeMissing"]);
+    expect(ways()).toHaveLength(1);
+  });
+
+  it("keeps the entry when the server refuses to remove it", async () => {
+    deleteFileSet.mockResolvedValue({ ok: false, error: "busy" });
+    await renderPage(`/backups/files/${SET_ID}`);
+    await choose(en["zfs.removeMissing"]);
+    await go(en["entry.remove.keepGo"]);
+    await waitFor(() => expect(pushed).toContainEqual({ message: "busy", severity: "fail" }));
+    expect(address()).toBe(`/backups/files/${SET_ID}`);
+  });
+
+  it("takes the safety snapshots of a ZFS entry with it when asked, and says what stayed", async () => {
+    serveEntries(mocks, { datasets: [zfsView({ safetyCount: 2 })] });
+    deleteZFSDataset.mockResolvedValue({ ok: true, leftoversRemaining: 1 });
+    await renderPage(`/backups/zfs/${ZFS_ID}`);
+    await choose(en["zfs.removeMissing"]);
+    await press(within(screen.getByRole("dialog")).getByRole("switch"));
+    await go(en["entry.remove.keepGo"]);
+    await waitFor(() => expect(deleteZFSDataset).toHaveBeenCalledWith(ZFS_ID, true));
+    expect(pushed).toContainEqual({ message: "1 leftover snapshot is still on the server", severity: "warn" });
+  });
+
+  it("deletes the backups of a ZFS entry on the second way", async () => {
+    await renderPage(`/backups/zfs/${ZFS_ID}`);
+    await choose(en["zfs.removeMissing"]);
+    expect(within(screen.getByRole("dialog")).queryByRole("switch")).toBeNull();
+    await press(ways()[1]);
+    await go(en["entry.remove.dropGo"]);
+    await waitFor(() => expect(deleteBackupsZFSDataset).toHaveBeenCalledWith(ZFS_ID));
+    expect(deleteZFSDataset).not.toHaveBeenCalled();
   });
 });

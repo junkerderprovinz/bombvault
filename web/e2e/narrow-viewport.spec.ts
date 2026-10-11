@@ -422,7 +422,7 @@ test("landscape 844x390: at >=48rem the desktop chrome owns the shell", async ({
   // chrome exists: the width-only switch did its job at a landscape height.
   await expect(page.getByTestId("desktop-sidebar")).toBeVisible();
   await expect(page.getByTestId("bottom-nav")).toHaveCount(0);
-  await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
 });
 
 // The Settings rail in a desktop browser narrowed to a phone width. The shell

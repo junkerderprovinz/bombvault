@@ -303,6 +303,36 @@ describe("a container", () => {
     expect(vi.mocked(api.listDbDumps)).toHaveBeenCalledWith("immich", "local");
   });
 
+  it("marks the backup a database dump belongs to, at a copy of it too", async () => {
+    const container = containerView({ dbTier: "curated", dbEngine: "postgres" });
+    const timeline = timelineState("containers", [{ ...BOX, state: "read" }]);
+    timeline.rows[0].places.push({ place: BOX.place, snapshotIds: ["copy"], tags: [] });
+    vi.mocked(api.listDbDumps).mockResolvedValue({
+      ok: true,
+      dumps: [{ id: "d1", time: timeline.rows[0].time, pairedSnapshotId: NEWEST }],
+    } as never);
+    await open(entryOf("container", { detail: { kind: "container", container, installed: [container], linkCandidates: [] } }), {
+      timeline,
+    });
+    expect(await within(dialog()).findByText(en["dbdump.pairedBadge"])).toBeTruthy();
+    await press(within(dialog()).getByRole("tab", { name: "Storage Box" }));
+    expect(await within(dialog()).findByText(en["dbdump.pairedBadge"])).toBeTruthy();
+    await press(within(dialog()).getByRole("combobox", { name: en["restoreWindow.backup"] }));
+    await press(screen.getAllByRole("option")[1]);
+    expect(within(dialog()).queryByText(en["dbdump.pairedBadge"])).toBeNull();
+  });
+
+  it.each([
+    ["live", en["restoreWindow.dbLive"]],
+    ["none", en["restoreWindow.dbNone"]],
+  ] as const)("warns what the files of a database are worth when their coverage is %s", async (dbDataCoverage, warning) => {
+    const container = containerView({ dbTier: "curated", dbEngine: "postgres", dbDataCoverage });
+    await open(entryOf("container", { detail: { kind: "container", container, installed: [container], linkCandidates: [] } }));
+    expect(within(dialog()).getByText(warning)).toBeTruthy();
+    await press(toFolder()!);
+    expect(within(dialog()).queryByText(warning)).toBeNull();
+  });
+
   it("recreates one that is gone without asking for its name", async () => {
     const gone = containerView({ name: "pihole", installed: false, state: "" });
     await open(entryOf("container", { item: PIHOLE, detail: { kind: "container", container: gone, installed: [], linkCandidates: [] } }));
@@ -495,6 +525,109 @@ describe("a ZFS entry", () => {
     expect(toFolder()).toBeTruthy();
     expect(within(dialog()).queryByRole("tab", { name: en["restore.mode.files"] })).toBeNull();
   });
+
+  const inPlace = () => within(dialog()).queryByRole("radio", { name: new RegExp(`^${en["zfs.restore.inPlace"]}`) });
+  const zfsEntry = (over: Parameters<typeof zfsView>[0] = {}) =>
+    entryOf("zfs", { detail: { kind: "zfs", dataset: zfsView(over) } });
+
+  /** Opens the window and chooses to write into the dataset itself. */
+  async function openInPlace(entry = zfsEntry()) {
+    await open(entry);
+    await waitFor(() => expect(inPlace()).toBeTruthy());
+    await press(inPlace()!);
+  }
+
+  /** Starts the restore into the dataset and answers the question with its name. */
+  async function replaceTree() {
+    await ready(() => named("restoreWindow.replaceNamed", "tank/appdata"));
+    await press(named("restoreWindow.replaceNamed", "tank/appdata"));
+    await typeAndConfirm("tank/appdata");
+  }
+
+  it("restores the whole tree into a folder only, without calling the dataset missing", async () => {
+    await open(zfsEntry());
+    await waitFor(() => expect(inPlace()).toBeTruthy());
+    await press(within(dialog()).getByRole("combobox", { name: en["zfs.restore.dataset"] }));
+    await press(screen.getByRole("option", { name: en["zfs.restore.wholeTree"] }));
+    expect(inPlace()).toBeNull();
+    expect(within(dialog()).queryByRole("tab", { name: en["restore.mode.files"] })).toBeNull();
+    expect(toFolder()?.getAttribute("aria-checked")).toBe("true");
+    expect(within(dialog()).queryByText(en["zfs.restore.missingDataset"])).toBeNull();
+    expect(screen.queryByRole("switch", { name: en["zfs.restore.safetySnapshot"] })).toBeNull();
+    await waitFor(() => expect(lastCheck().zfs).toMatchObject({ stamp: NEWEST, dataset: "", wholeTree: true }));
+  });
+
+  it("will not write through a read-only mapping", async () => {
+    vi.mocked(api.zfsHostDatasets).mockResolvedValue({
+      ok: true,
+      available: true,
+      datasets: [{ dataset: "tank/appdata", hostMountpoint: "/mnt/tank/appdata", visible: true, writable: false }],
+    } as never);
+    await open(zfsEntry());
+    expect(await within(dialog()).findByText(en["zfs.code.read-only-mount"], { selector: "p" })).toBeTruthy();
+    expect(inPlace()).toBeNull();
+  });
+
+  it("asks a second time before it restores without a safety snapshot", async () => {
+    await openInPlace();
+    const safety = screen.getByRole("switch", { name: en["zfs.restore.safetySnapshot"] });
+    expect(safety.getAttribute("aria-checked")).toBe("true");
+    await press(safety);
+    await press(within(question()).getByRole("button", { name: en["common.confirm"] }));
+    await waitFor(() => expect(safety.getAttribute("aria-checked")).toBe("false"));
+    await replaceTree();
+    expect(restoreZFS).toHaveBeenCalledWith(
+      TANK.key,
+      expect.objectContaining({ safetySnapshot: false, safetyOffConfirm: true }),
+      "local"
+    );
+  });
+
+  it("offers the stop switch only to an item that stops containers", async () => {
+    await openInPlace();
+    expect(screen.queryByRole("switch", { name: /Stop/ })).toBeNull();
+    cleanup();
+    await openInPlace(zfsEntry({ stopContainers: ["plex", "sonarr"] }));
+    const stop = screen.getByRole("switch", { name: en["zfs.restore.stopContainers"].replace("{names}", "plex, sonarr") });
+    expect(stop.getAttribute("aria-checked")).toBe("true");
+    await replaceTree();
+    expect(restoreZFS).toHaveBeenCalledWith(TANK.key, expect.objectContaining({ stopContainers: true }), "local");
+  });
+
+  it("names the safety snapshot it took, ready to copy", async () => {
+    restoreZFS.mockResolvedValue({
+      ok: true,
+      started: true,
+      target: "/host/mnt/tank/appdata",
+      safetySnapshot: "tank/appdata@bombvault-prerestore-20260101120000",
+    } as never);
+    await openInPlace();
+    await replaceTree();
+    expect(
+      await screen.findByText(
+        en["zfs.restore.safetyTaken"].replace("{snapshot}", "tank/appdata@bombvault-prerestore-20260101120000")
+      )
+    ).toBeTruthy();
+    expect(screen.getByText(en["zfs.restore.started"].replace("{target}", "/mnt/tank/appdata"))).toBeTruthy();
+    expect(screen.getByRole("button", { name: en["common.copy"] })).toBeTruthy();
+  });
+
+  it("shows the stored properties and sets them only when asked", async () => {
+    const stored = { compression: "zstd", mountpoint: "/mnt/elsewhere", casesensitivity: "insensitive" };
+    zfsRestorePoints.mockResolvedValue({
+      ok: true,
+      points: [{ ...point, members: [{ ...point.members[0], properties: stored }, point.members[1]] }],
+    } as never);
+    await openInPlace();
+    expect(screen.getByText("compression=zstd")).toBeTruthy();
+    expect(screen.getByText(en["zfs.restore.propertyNotApplied"])).toBeTruthy();
+    expect(screen.getByText(en["zfs.restore.propertyCreateOnly"])).toBeTruthy();
+    const apply = screen.getByRole("switch", { name: en["zfs.restore.applyProperties"] });
+    expect(apply.getAttribute("aria-checked")).toBe("false");
+    await press(apply);
+    await replaceTree();
+    expect(restoreZFS).toHaveBeenCalledWith(TANK.key, expect.objectContaining({ applyProperties: true }), "local");
+  });
 });
 
 describe("the self-backup", () => {
@@ -503,6 +636,17 @@ describe("the self-backup", () => {
     expect(screen.getByText(en["restoreWindow.self.text"])).toBeTruthy();
     await press(screen.getByRole("button", { name: en["entry.config.startRecovery"] }));
     expect(screen.getByText("at /restore?emergency=settings")).toBeTruthy();
+  });
+
+  it("can still be deleted where the list of the entry opened one of its backups", async () => {
+    await open(entryOf("config"));
+    expect(within(dialog()).queryByRole("button", { name: en["common.delete"] })).toBeNull();
+    cleanup();
+    await open(entryOf("config"), { snapshot: RUNS[1].snapshotId, deletable: true });
+    await press(within(dialog()).getByRole("button", { name: en["common.delete"] }));
+    await waitFor(() =>
+      expect(vi.mocked(api.getTimelineDeletePreview)).toHaveBeenCalledWith("config", "config", RUNS[1].snapshotId, ["local"])
+    );
   });
 });
 

@@ -2,22 +2,31 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 
-import type { AnomalySummary, AnomalyView, BackupItem, Run, Settings } from "./api";
+import type { AnomalySummary, AnomalyView, BackupItem, Run, Settings, StorageLocation } from "./api";
 
 vi.mock("./api", async () => {
   const actual = await vi.importActual<typeof import("./api")>("./api");
-  return { ...actual, listRuns: vi.fn(), listItems: vi.fn(), getAnomalySummary: vi.fn(), getAnomalies: vi.fn() };
+  return {
+    ...actual,
+    listRuns: vi.fn(),
+    listItems: vi.fn(),
+    listStorageLocations: vi.fn(),
+    getAnomalySummary: vi.fn(),
+    getAnomalies: vi.fn(),
+  };
 });
 
 const api = await import("./api");
 const listRuns = vi.mocked(api.listRuns);
 const listItems = vi.mocked(api.listItems);
+const listStorageLocations = vi.mocked(api.listStorageLocations);
 const getAnomalySummary = vi.mocked(api.getAnomalySummary);
 const getAnomalies = vi.mocked(api.getAnomalies);
 
-const { ATTENTION_CHANGED_EVENT, useAttention, useAttentionCount } = await import("./attention");
+const { ATTENTION_CHANGED_EVENT, useAttention, useAttentionCount, useFreshInstall } = await import("./attention");
 const { AttentionProvider, recoveryKitDue } = await import("./attentionProvider");
 const { AnomalyProvider } = await import("./useAnomalies");
+const { storageLocationsChanged } = await import("./useStorageLocations");
 
 function run(over: Partial<Run> = {}): Run {
   return {
@@ -55,7 +64,48 @@ function leftOut(name: string, over: Partial<BackupItem> = {}): BackupItem {
   };
 }
 
-const items = (list: BackupItem[]) => ({ ok: true, items: list, unlisted: [] });
+const backedUp = leftOut("plex", { lastBackup: 1_700_000_000 });
+
+/** The entries of an install that has a backup of plex. */
+const items = (list: BackupItem[]) => ({ ok: true, items: [backedUp, ...list], unlisted: [] });
+
+/** The entries of an install before its first backup. */
+const freshItems = (list: BackupItem[]) => ({ ok: true, items: list, unlisted: [] });
+
+/** A storage location whose copy of the containers has failed since it last worked. */
+function failingBox(acknowledged = false): StorageLocation {
+  return {
+    id: "destination:box",
+    object: "destination",
+    kind: "offsite",
+    provider: "storagebox",
+    backend: "rclone",
+    name: "Storage Box",
+    where: "rclone:box:",
+    enabled: true,
+    offPremises: true,
+    sections: [
+      {
+        domain: "containers",
+        use: "copy",
+        targetId: "t-containers",
+        where: "rclone:box:containers",
+        enabled: true,
+        immutable: false,
+        retention: { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 1 },
+        compression: "auto",
+        limitUpload: 0,
+        limitDownload: 0,
+        own: [],
+        lastCopy: { at: 1_700_000_000, ok: false, failingSince: 1_700_050_000, acknowledged },
+      },
+    ],
+    protection: { immutable: false, testable: false },
+    capacity: {},
+  };
+}
+
+const places = (list: StorageLocation[]) => ({ ok: true, locations: list });
 
 function summary(open: AnomalySummary["open"], enabled = true): AnomalySummary {
   return {
@@ -93,6 +143,10 @@ describe("AttentionProvider", () => {
     return <output>{useAttentionCount()}</output>;
   }
 
+  function Fresh() {
+    return <i data-testid="fresh">{String(useFreshInstall())}</i>;
+  }
+
   /** A page that lists what the navigation counts. */
   function Page() {
     const { needs } = useAttention();
@@ -114,10 +168,12 @@ describe("AttentionProvider", () => {
 
   const shown = () => screen.getByRole("status").textContent;
   const listed = () => screen.getByTestId("listed").textContent;
+  const fresh = () => screen.getByTestId("fresh").textContent;
 
   beforeEach(() => {
     listRuns.mockReset().mockResolvedValue({ ok: true, runs: [] });
     listItems.mockReset().mockResolvedValue(items([]));
+    listStorageLocations.mockReset().mockResolvedValue(places([]));
     getAnomalySummary.mockReset().mockResolvedValue({ ok: true, summary: summary({ critical: 0, warning: 0, info: 0 }) });
     getAnomalies.mockReset().mockResolvedValue(findings([]));
   });
@@ -137,10 +193,11 @@ describe("AttentionProvider", () => {
     listItems.mockResolvedValue(items([leftOut("gitea"), leftOut("flash", { kind: "flash" })]));
     getAnomalySummary.mockResolvedValue({ ok: true, summary: summary({ critical: 1, warning: 1, info: 1 }) });
     getAnomalies.mockResolvedValue(findings([finding("a1", "critical"), finding("a2", "warning"), finding("a3", "info")]));
+    listStorageLocations.mockResolvedValue(places([failingBox()]));
     draw(kitDue, true);
 
-    await waitFor(() => expect(shown()).toBe("7"));
-    expect(listed()).toBe("failedRun failedRun unprotected unprotected anomaly anomaly recoveryKit");
+    await waitFor(() => expect(shown()).toBe("8"));
+    expect(listed()).toBe("failedRun failedRun unprotected unprotected failedCopy anomaly anomaly recoveryKit");
   });
 
   it("counts an entry once whose last run failed and that has no backup", async () => {
@@ -174,6 +231,40 @@ describe("AttentionProvider", () => {
       window.dispatchEvent(new Event(ATTENTION_CHANGED_EVENT));
     });
     await waitFor(() => expect(shown()).toBe("0"));
+  });
+
+  it("drops a failed copy that was marked as seen without waiting for a run to end", async () => {
+    listStorageLocations.mockResolvedValue(places([failingBox()]));
+    draw(kitStored);
+    await waitFor(() => expect(shown()).toBe("1"));
+
+    listStorageLocations.mockResolvedValue(places([failingBox(true)]));
+    act(() => {
+      window.dispatchEvent(new Event(ATTENTION_CHANGED_EVENT));
+    });
+    await waitFor(() => expect(shown()).toBe("0"));
+  });
+
+  it("reads the storage locations again when one of them was written", async () => {
+    listStorageLocations.mockResolvedValue(places([failingBox()]));
+    draw(kitStored);
+    await waitFor(() => expect(shown()).toBe("1"));
+
+    listStorageLocations.mockResolvedValue(places([]));
+    act(() => storageLocationsChanged());
+    await waitFor(() => expect(shown()).toBe("0"));
+  });
+
+  it("keeps a failed copy in the count when the storage locations cannot be read", async () => {
+    listStorageLocations.mockResolvedValue(places([failingBox()]));
+    draw(kitStored);
+    await waitFor(() => expect(shown()).toBe("1"));
+
+    listStorageLocations.mockResolvedValue({ ok: false });
+    act(() => storageLocationsChanged());
+    await waitFor(() => expect(listStorageLocations).toHaveBeenCalledTimes(2));
+    await act(async () => {});
+    expect(shown()).toBe("1");
   });
 
   it("drops the recovery kit as soon as the settings say it is stored", async () => {
@@ -219,6 +310,25 @@ describe("AttentionProvider", () => {
     expect(listItems).toHaveBeenCalledTimes(2);
   });
 
+  it("reads the storage locations again when a copy has ended", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const copying = run({ kind: "offsite", targetId: "containers", status: "running", finishedAt: null });
+    listRuns.mockResolvedValue({ ok: true, runs: [copying] });
+    draw(kitStored);
+    await waitFor(() => expect(listRuns).toHaveBeenCalledTimes(1));
+    await act(async () => {});
+    expect(shown()).toBe("0");
+
+    listRuns.mockResolvedValue({ ok: true, runs: [{ ...copying, status: "failed", finishedAt: 1_700_050_060 }] });
+    listStorageLocations.mockResolvedValue(places([failingBox()]));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30000);
+    });
+
+    await waitFor(() => expect(shown()).toBe("1"));
+    expect(listStorageLocations).toHaveBeenCalledTimes(2);
+  });
+
   it("keeps the last count when a read fails", async () => {
     listRuns.mockResolvedValue({ ok: true, runs: [run()] });
     draw(kitStored);
@@ -232,7 +342,7 @@ describe("AttentionProvider", () => {
     expect(shown()).toBe("1");
   });
 
-  it("polls the runs while the tab is visible, and never the entries", async () => {
+  it("polls the runs while the tab is visible, and never the entries or the storage locations", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     draw(kitStored);
     await waitFor(() => expect(listRuns).toHaveBeenCalledTimes(1));
@@ -241,6 +351,7 @@ describe("AttentionProvider", () => {
     });
     expect(listRuns).toHaveBeenCalledTimes(2);
     expect(listItems).toHaveBeenCalledTimes(1);
+    expect(listStorageLocations).toHaveBeenCalledTimes(1);
   });
 
   it("reads once for a page that opens with the app", async () => {
@@ -250,6 +361,7 @@ describe("AttentionProvider", () => {
 
     expect(listRuns).toHaveBeenCalledTimes(1);
     expect(listItems).toHaveBeenCalledTimes(1);
+    expect(listStorageLocations).toHaveBeenCalledTimes(1);
   });
 
   it("brings the lists up to date for a page that is visited later", async () => {
@@ -264,6 +376,69 @@ describe("AttentionProvider", () => {
     expect(shown()).toBe("1");
     expect(listRuns).toHaveBeenCalledTimes(2);
     expect(listItems).toHaveBeenCalledTimes(2);
+    expect(listStorageLocations).toHaveBeenCalledTimes(2);
+  });
+
+  it("reports a first start once the entries are read, until one of them has a backup", async () => {
+    listItems.mockResolvedValue(freshItems([leftOut("gitea")]));
+    render(
+      <AttentionProvider settings={kitDue}>
+        <Count />
+        <Fresh />
+      </AttentionProvider>
+    );
+    expect(fresh()).toBe("false");
+    await waitFor(() => expect(fresh()).toBe("true"));
+    expect(shown()).toBe("0");
+
+    listItems.mockResolvedValue(freshItems([leftOut("gitea", { lastBackup: 1_700_000_500 })]));
+    act(() => {
+      window.dispatchEvent(new Event("bv:settings-changed"));
+    });
+    await waitFor(() => expect(fresh()).toBe("false"));
+    expect(shown()).toBe("1");
+  });
+
+  it("takes a server with nothing to list for a first start", async () => {
+    listItems.mockResolvedValue({ ok: true, items: null as unknown as BackupItem[], unlisted: ["container"] });
+    render(
+      <AttentionProvider settings={kitStored}>
+        <Fresh />
+      </AttentionProvider>
+    );
+    await waitFor(() => expect(fresh()).toBe("true"));
+  });
+
+  it("forgets a ticked-off first step once the install has a backup", async () => {
+    const { rememberSectionsChosen, sectionsChosen } = await import("./firstSteps");
+    rememberSectionsChosen();
+    listItems.mockResolvedValue(freshItems([leftOut("gitea")]));
+    render(
+      <AttentionProvider settings={kitStored}>
+        <Fresh />
+      </AttentionProvider>
+    );
+    await waitFor(() => expect(fresh()).toBe("true"));
+    expect(sectionsChosen()).toBe(true);
+
+    listItems.mockResolvedValue(items([]));
+    act(() => {
+      window.dispatchEvent(new Event("bv:settings-changed"));
+    });
+    await waitFor(() => expect(fresh()).toBe("false"));
+    expect(sectionsChosen()).toBe(false);
+  });
+
+  it("does not take a list that never arrived for a first start", async () => {
+    listItems.mockRejectedValue(new Error("offline"));
+    render(
+      <AttentionProvider settings={kitStored}>
+        <Fresh />
+      </AttentionProvider>
+    );
+    await waitFor(() => expect(listItems).toHaveBeenCalled());
+    await act(async () => {});
+    expect(fresh()).toBe("false");
   });
 
   it("reads the runs at the activity log's rate while a page shows them", async () => {

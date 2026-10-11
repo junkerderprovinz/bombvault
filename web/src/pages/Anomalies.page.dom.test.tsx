@@ -16,7 +16,7 @@ import { isolateLtr } from "../lib/ltrFragments";
 import { ToastProvider } from "../lib/toast";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { ANOMALY_CHANGED_EVENT } from "../lib/anomalies";
-import type { AnomalyFilter, AnomalyItem, AnomalySummary, AnomalyView, Settings } from "../lib/api";
+import type { AnomalyFilter, AnomalyItem, AnomalySummary, AnomalyView, Settings, StorageLocation } from "../lib/api";
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -28,6 +28,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     getAnomalyItemSeries: vi.fn(),
     getAnomalyChanges: vi.fn(),
     getSettings: vi.fn(),
+    listStorageLocations: vi.fn(),
     acknowledgeAnomalies: vi.fn(),
     markAnomaliesExpected: vi.fn(),
     setItemAnomalyPrefs: vi.fn(),
@@ -42,6 +43,7 @@ const getAnomalyItems = vi.mocked(api.getAnomalyItems);
 const getAnomalyItemSeries = vi.mocked(api.getAnomalyItemSeries);
 const getAnomalyChanges = vi.mocked(api.getAnomalyChanges);
 const getSettings = vi.mocked(api.getSettings);
+const listStorageLocations = vi.mocked(api.listStorageLocations);
 const acknowledgeAnomalies = vi.mocked(api.acknowledgeAnomalies);
 const markAnomaliesExpected = vi.mocked(api.markAnomaliesExpected);
 const setItemAnomalyPrefs = vi.mocked(api.setItemAnomalyPrefs);
@@ -178,11 +180,34 @@ async function press(el: HTMLElement) {
   });
 }
 
-/** Opens a SelectField by its accessible name and picks one of its options. */
-async function pick(fieldLabel: string, optionLabel: string) {
-  fireEvent.click(screen.getByRole("combobox", { name: fieldLabel }));
-  await press(screen.getByRole("option", { name: optionLabel }));
+/** The selector of one of an item's two settings. */
+function setting(fieldLabel: string): HTMLElement {
+  return screen.getByRole("radiogroup", { name: fieldLabel });
 }
+
+async function pick(fieldLabel: string, optionLabel: string) {
+  await press(within(setting(fieldLabel)).getByRole("radio", { name: optionLabel }));
+}
+
+function location(over: Partial<StorageLocation>): StorageLocation {
+  return {
+    id: "path:local",
+    object: "path",
+    kind: "local",
+    provider: "",
+    backend: "local",
+    name: "Local",
+    where: "/mnt/user/backups",
+    enabled: true,
+    offPremises: false,
+    sections: [],
+    protection: { immutable: false, testable: false },
+    capacity: {},
+    ...over,
+  };
+}
+
+const holds = (...domains: string[]) => domains.map((domain) => ({ domain, use: "home" })) as StorageLocation["sections"];
 
 /** The findings on the page, top to bottom. */
 function findings(): HTMLElement[] {
@@ -239,6 +264,7 @@ beforeEach(() => {
   getAnomalyItemSeries.mockReset();
   getAnomalyChanges.mockReset();
   getSettings.mockReset();
+  listStorageLocations.mockReset();
   acknowledgeAnomalies.mockReset();
   markAnomaliesExpected.mockReset();
   setItemAnomalyPrefs.mockReset();
@@ -248,6 +274,7 @@ beforeEach(() => {
   getAnomalyItemSeries.mockResolvedValue({ ok: true, series: [] });
   getAnomalyChanges.mockResolvedValue({ ok: true, changes: { state: "running" } });
   getSettings.mockResolvedValue({ ok: true, settings: settings() });
+  listStorageLocations.mockResolvedValue({ ok: true, locations: [] });
   serve([]);
 });
 
@@ -397,7 +424,7 @@ describe("settling findings", () => {
     acknowledgeAnomalies.mockResolvedValue({ ok: true, changed: 1, skipped: 0, released: 1 });
     await renderPage();
 
-    expect(within(findings()[0]!).getByText(en["anomaly.retentionKept"])).toBeTruthy();
+    expect(within(findings()[0]!).getByLabelText(en["anomaly.retentionPaused"])).toBeTruthy();
     fireEvent.click(within(findings()[0]!).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
     expect(screen.getByText(en["anomaly.releaseConfirm"].replace("{name}", "plex"))).toBeTruthy();
     expect(acknowledgeAnomalies).not.toHaveBeenCalled();
@@ -510,6 +537,57 @@ describe("the way out of a finding", () => {
     expect(within(screen.getByRole("dialog")).getByRole("status").textContent).toBe(en["breakdown.running"]);
   });
 
+  const disk = () =>
+    finding({ metric: "capacity_eta", detector: "capacity", severity: "info", scopeKind: "volume", scopeId: "8:1", targetId: "", name: "", domain: "containers,vms" });
+
+  it("leads a finding about a disk to the storage location on it, under that location's name", async () => {
+    listStorageLocations.mockResolvedValue({
+      ok: true,
+      locations: [
+        location({ id: "path:local", name: "Local", sections: holds("containers", "vms", "flash") }),
+        location({ id: "destination:box", name: "Storage Box", kind: "offsite", backend: "sftp", sections: holds("containers") }),
+      ],
+    });
+    serve([disk()]);
+    await renderPage();
+
+    const line = findings()[0]!;
+    await waitFor(() => expect(within(line).getByRole("link", { name: "Local" }).getAttribute("href")).toBe("/storage/path%3Alocal"));
+    const view = within(line).getByRole("button", { name: en["anomaly.openLocation"] });
+    expect(view.className).toContain("bg-accent");
+    await press(view);
+    expect(screen.getByTestId("where").textContent).toBe("/storage/path%3Alocal");
+  });
+
+  it("leads to the list of storage locations when more than one could be meant", async () => {
+    listStorageLocations.mockResolvedValue({
+      ok: true,
+      locations: [
+        location({ id: "path:local", name: "Local", sections: holds("containers") }),
+        location({ id: "repo:r1", name: "Second disk", object: "repo", sections: holds("vms") }),
+      ],
+    });
+    serve([disk()]);
+    await renderPage();
+
+    const line = findings()[0]!;
+    expect(within(line).queryByRole("link")).toBeNull();
+    expect(within(line).getByText(en["anomaly.detector.capacity"])).toBeTruthy();
+    const window = await openDetails(line);
+    await press(within(window).getByRole("button", { name: en["anomaly.openLocation"] }));
+    expect(screen.getByTestId("where").textContent).toBe("/storage");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("offers no storage location for a finding about an entry", async () => {
+    serve([finding({ targetId: "tg-plex", name: "plex", severity: "warning", metric: "duration_slower" })]);
+    await renderPage();
+    expect(listStorageLocations).not.toHaveBeenCalled();
+    expect(within(findings()[0]!).queryByRole("button", { name: en["anomaly.openLocation"] })).toBeNull();
+    const window = await openDetails(findings()[0]!);
+    expect(within(window).queryByRole("button", { name: en["anomaly.openLocation"] })).toBeNull();
+  });
+
   it("waits with the comparison until it is asked for", async () => {
     serve([finding({ targetId: "tg-plex", name: "plex", severity: "warning" })]);
     await renderPage();
@@ -620,6 +698,14 @@ describe("a finding's window", () => {
     getAnomalyItemSeries.mockClear();
     await openDetails(findingOf(en["anomaly.detector.capacity"]));
     expect(getAnomalyItemSeries).not.toHaveBeenCalled();
+  });
+
+  it("says in the window what a finding that keeps old backups holds back", async () => {
+    serve([finding({ targetId: "tg-plex", name: "plex", retentionHeld: true })]);
+    await renderPage();
+    const window = await openDetails(findings()[0]!);
+    expect(within(window).getByText(en["anomaly.retentionPaused"])).toBeTruthy();
+    expect(within(window).getByLabelText(en["anomaly.retentionKept"])).toBeTruthy();
   });
 
   it("says that the cause of a critical finding has gone away", async () => {
@@ -809,7 +895,7 @@ describe("a link to one item", () => {
     await renderPage("/anomalies?scope=item:tg-2");
     const window = screen.getByRole("dialog");
     expect(within(window).getByText("sonarr")).toBeTruthy();
-    expect(within(window).getByRole("combobox", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
+    expect(within(window).getByRole("radiogroup", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
   });
 });
 
@@ -919,8 +1005,8 @@ describe("monitoring", () => {
     expect(document.getElementById(window.getAttribute("aria-labelledby")!)?.textContent).toBe(
       en["anomaly.card.monitoring"]
     );
-    expect(within(window).getByRole("combobox", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
-    expect(within(window).getByRole("combobox", { name: en["anomaly.items.notifyMin"] })).toBeTruthy();
+    expect(within(window).getByRole("radiogroup", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
+    expect(within(window).getByRole("radiogroup", { name: en["anomaly.items.notifyMin"] })).toBeTruthy();
     expect(within(window).getByText(en["anomaly.learn.title"])).toBeTruthy();
     expect(getAnomalyItemSeries).toHaveBeenCalledWith("tg-plex");
     expect(within(window).queryByRole("button", { name: en["common.back"] })).toBeNull();
@@ -934,7 +1020,7 @@ describe("monitoring", () => {
     const details = await openDetails(findings()[0]!);
     await press(within(details).getByRole("button", { name: en["anomaly.card.monitoring"] }));
     const window = screen.getByRole("dialog");
-    expect(within(window).getByRole("combobox", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
+    expect(within(window).getByRole("radiogroup", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
 
     await press(within(window).getByRole("button", { name: en["common.back"] }));
     expect(within(screen.getByRole("dialog")).getByText(en["anomaly.detail.observed"])).toBeTruthy();
@@ -966,9 +1052,37 @@ describe("monitoring", () => {
     await pick(en["anomaly.items.sensitivity"], en["anomaly.sensitivity.strict"]);
     expect(setItemAnomalyPrefs).toHaveBeenCalledWith("tg-plex", { sensitivity: "strict" });
     await waitFor(() => expect(screen.getByText(en["anomaly.error.badRequest"])).toBeTruthy());
-    expect(
-      screen.getByRole("combobox", { name: en["anomaly.items.sensitivity"] }).textContent
-    ).toContain(en["anomaly.sensitivity.follow"].replace("{preset}", en["anomaly.sensitivity.balanced"]));
+    const chosen = within(setting(en["anomaly.items.sensitivity"])).getByRole("radio", { checked: true });
+    expect(chosen.textContent).toBe(en["anomaly.items.followGlobal"]);
+  });
+
+  it("offers both settings as one row of choices each, the first following the global one", async () => {
+    getAnomalyItems.mockResolvedValue({ ok: true, items: [item({ sensitivity: "strict" })] });
+    await renderPage();
+    await openMonitoring("plex");
+
+    const names = (label: string) => within(setting(label)).getAllByRole("radio").map((radio) => radio.textContent);
+    expect(names(en["anomaly.items.sensitivity"])).toEqual([
+      en["anomaly.items.followGlobal"],
+      en["anomaly.sensitivity.strict"],
+      en["anomaly.sensitivity.balanced"],
+      en["anomaly.sensitivity.permissive"],
+    ]);
+    expect(names(en["anomaly.items.notifyMin"])[0]).toBe(en["anomaly.items.followGlobal"]);
+    expect(names(en["anomaly.items.notifyMin"])).toHaveLength(5);
+    expect(within(setting(en["anomaly.items.sensitivity"])).getByRole("radio", { checked: true }).textContent).toBe(
+      en["anomaly.sensitivity.strict"]
+    );
+  });
+
+  it("goes back to the global sensitivity by storing none of its own", async () => {
+    getAnomalyItems.mockResolvedValue({ ok: true, items: [item({ sensitivity: "strict" })] });
+    setItemAnomalyPrefs.mockResolvedValue({ ok: true });
+    await renderPage();
+    await openMonitoring("plex");
+
+    await pick(en["anomaly.items.sensitivity"], en["anomaly.items.followGlobal"]);
+    expect(setItemAnomalyPrefs).toHaveBeenCalledWith("tg-plex", { sensitivity: "" });
   });
 
   it("saves the item's notification minimum on its own", async () => {
@@ -1128,7 +1242,7 @@ describe("with detection switched off", () => {
     await renderPage();
     const window = await openMonitoring("plex");
     expect(within(window).getByText(en["anomaly.learn.title"])).toBeTruthy();
-    expect(within(window).queryByRole("combobox")).toBeNull();
+    expect(within(window).queryByRole("radiogroup")).toBeNull();
   });
 });
 
@@ -1180,7 +1294,7 @@ it("draws no native select and no checkbox", async () => {
   serve([finding({ targetId: "tg-x", name: "sonarr" })]);
   await renderPage();
   await openMonitoring("plex");
-  expect(screen.getByRole("combobox", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
+  expect(screen.getByRole("radiogroup", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
   expect(document.querySelectorAll("select, input[type=checkbox]")).toHaveLength(0);
 });
 

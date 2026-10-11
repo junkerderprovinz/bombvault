@@ -99,7 +99,7 @@ export function PairingSteps({ t, hues }: { t: T; hues: [number, number, number]
               <div data-step-frame className="glim-pic mx-auto w-full max-w-[280px]">
                 <StepPicture step={(i + 1) as 1 | 2 | 3} t={t} />
               </div>
-              <p className="text-carbon-textSub">{s.body}</p>
+              <p className="text-carbon-textMuted">{s.body}</p>
             </div>
           </StepCard>
         ))}

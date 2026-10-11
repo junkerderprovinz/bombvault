@@ -7,11 +7,10 @@ import { useToast } from "../lib/toast";
 interface IncludeToggleProps {
   name: string;
   initial: boolean;
-  /** The request that stores the switch. Containers by default; the VMs page
-   *  passes setVMInclude, so both pages render this one control. */
+  /** The request that stores the switch: a container's, unless the caller
+   *  passes the one of its kind. */
   save?: (name: string, include: boolean) => Promise<OkEnvelope>;
-  /** Hands the stored value to the page's list, which the card's Pause
-   *  button and badge read. */
+  /** Called with the stored value once the save succeeded. */
   onSaved?: (include: boolean) => void;
   /** Another wording for the switch, with what it means in an (i) bubble. */
   label?: string;

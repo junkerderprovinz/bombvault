@@ -4,6 +4,7 @@
 import { anomalyShortLine } from "./anomalies";
 import type { AnomalyView, OffsiteDomain, Settings, TimelineRow } from "./api";
 import { entryKey, kindOfDomain, type EntryKind } from "./backupEntry";
+import { rowHolds, rowTime } from "./entry";
 import type { TranslationKey } from "./i18n";
 
 export type RestoreWhat = "all" | "files" | "dumps" | "plugins";
@@ -99,10 +100,6 @@ export function snapshotIds(row: TimelineRow): string[] {
   return [row.key, ...row.places.flatMap((mark) => mark.snapshotIds)];
 }
 
-export function holdsSnapshot(row: TimelineRow, id: string): boolean {
-  return snapshotIds(row).includes(id);
-}
-
 /** The open findings that are more than a note and belong to this entry. */
 export function findingsOf(list: AnomalyView[], kind: EntryKind, key: string): AnomalyView[] {
   return list.filter(
@@ -129,16 +126,16 @@ export function recommend(rows: TimelineRow[], findings: AnomalyView[]): Recomme
   for (const finding of lossy) {
     const good = finding.lastGood;
     if (!good) continue;
-    const named = rows.findIndex((row) => holdsSnapshot(row, good.snapshotId));
+    const named = rows.findIndex((row) => rowHolds(row, good.snapshotId));
     if (named >= 0) return { index: named, finding };
     // Retention may have removed the named backup since.
-    const before = rows.findIndex((row) => Date.parse(row.time) / 1000 <= good.at);
+    const before = rows.findIndex((row) => rowTime(row) <= good.at);
     if (before >= 0) return { index: before, finding };
   }
   let oldest = -1;
   let raisedBy: AnomalyView | undefined;
   rows.forEach((row, i) => {
-    const finding = findings.find((a) => (a.flaggedSnapshots ?? []).some((id) => holdsSnapshot(row, id)));
+    const finding = findings.find((a) => (a.flaggedSnapshots ?? []).some((id) => rowHolds(row, id)));
     if (finding) {
       oldest = i;
       raisedBy = finding;
@@ -150,12 +147,11 @@ export function recommend(rows: TimelineRow[], findings: AnomalyView[]): Recomme
 
 /** The row a restore link asks for, or the one closest to its time. */
 export function requestedRow(rows: TimelineRow[], snapshot: string, at: number): { row?: TimelineRow; missing: boolean } {
-  const asked = rows.find((row) => holdsSnapshot(row, snapshot));
+  const asked = rows.find((row) => rowHolds(row, snapshot));
   if (asked) return { row: asked, missing: false };
   let nearest: TimelineRow | undefined;
   for (const row of rows) {
-    const distance = Math.abs(Date.parse(row.time) / 1000 - at);
-    if (!nearest || distance < Math.abs(Date.parse(nearest.time) / 1000 - at)) nearest = row;
+    if (!nearest || Math.abs(rowTime(row) - at) < Math.abs(rowTime(nearest) - at)) nearest = row;
   }
   return { row: at > 0 ? nearest : rows[0], missing: true };
 }

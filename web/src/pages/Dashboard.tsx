@@ -27,7 +27,7 @@ import { AnomaliesBlock } from "./overview/AnomaliesCard";
 import { OVERVIEW_CARDS, OVERVIEW_MIGRATION, PHONE_ORDER } from "./overview/cards";
 import { CoverageCard } from "./overview/CoverageCard";
 import { EverythingAction } from "./overview/EverythingAction";
-import { FreshInstallNudge, RECOVERY_NUDGE_DISMISSED } from "./overview/FreshInstallNudge";
+import { FirstStepsCard } from "./overview/FirstStepsCard";
 import { HealthHeatmapCard } from "./overview/HealthHeatmapCard";
 import { HistoryCard, type HistoryView } from "./overview/HistoryCard";
 import { NeedsCard } from "./overview/NeedsCard";
@@ -38,7 +38,7 @@ import { sectionsOf } from "./overview/protectionChecks";
 import { ProtectionWindow } from "./overview/ProtectionWindow";
 import { SpikeCard } from "./overview/SpikeCard";
 import { StatCardsRow } from "./overview/StatCardsRow";
-import { headlineOf, liveRunOf } from "./overview/headState";
+import { headlineOf, liveRunOf, passOf, passRuns } from "./overview/headState";
 import { StatusHead } from "./overview/StatusHead";
 import { StorageCard } from "./overview/StorageCard";
 import { SummaryTier } from "./overview/SummaryTier";
@@ -61,7 +61,7 @@ export function Dashboard() {
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
   const progress = useProgress();
-  const { needs, items: backupItems, runs, runsReady, runsFailed, refreshRuns } = useAttention();
+  const { needs, fresh, items: backupItems, runs, runsReady, runsFailed, refreshRuns, locations } = useAttention();
   const anomalySummary = useAnomalySummary().summary;
   const trial = useTrialRestore(t("verify.failed"));
 
@@ -156,6 +156,14 @@ export function Dashboard() {
     wasRunning.current = running;
   }, [running, refreshRuns]);
 
+  // The stream counts an entry of a pass as soon as it is through. Its mark
+  // waits for the run that says how it ended.
+  const pass = passOf(progress);
+  const passDone = pass?.done;
+  useEffect(() => {
+    if (passDone !== undefined) refreshRuns();
+  }, [passDone, refreshRuns]);
+
   // The window shows the freshest record of its run. A finished record wins
   // whichever feed carries it. Before that the watch's record wins while the
   // watch speaks about this run, and the polled list's otherwise.
@@ -202,22 +210,6 @@ export function Dashboard() {
       clearInterval(id);
     };
   }, []);
-
-  const [freshDismissed, setFreshDismissed] = useState(() => {
-    try {
-      return localStorage.getItem(RECOVERY_NUDGE_DISMISSED) === "1";
-    } catch {
-      return false;
-    }
-  });
-  const dismissFresh = () => {
-    try {
-      localStorage.setItem(RECOVERY_NUDGE_DISMISSED, "1");
-    } catch {
-      // Without storage the nudge is back on the next visit.
-    }
-    setFreshDismissed(true);
-  };
 
   // A day picked in the calendar and a run linked as ?run=<id> both narrow
   // the log, so either one turns the history card to its log.
@@ -296,7 +288,7 @@ export function Dashboard() {
         />
       ),
     },
-    targets: { label: t("storage.title"), render: (hue) => <TargetsCard t={t} hueIndex={hue} /> },
+    targets: { label: t("storage.title"), render: (hue) => <TargetsCard t={t} list={locations} hueIndex={hue} /> },
     history: {
       label: t("overview.history.title"),
       render: (hue) => (
@@ -389,8 +381,8 @@ export function Dashboard() {
   const hiddenCards = layout.order.filter((id) => layout.hidden.includes(id)).map((id) => ({ id, label: blocks[id].label }));
 
   // The heading of each card takes the next palette position in the order
-  // the cards stand on the page.
-  let hues = 0;
+  // the cards stand on the page. The first steps stand above them all.
+  let hues = fresh ? 1 : 0;
   const cards: GridCard[] = visible.map((id) => ({
     id,
     label: blocks[id].label,
@@ -438,7 +430,7 @@ export function Dashboard() {
           <img src="/logo-light.svg" alt="" draggable={false} className="hidden h-6 w-6 object-contain dark:block" />
           <span className="text-lg font-semibold tracking-tight text-carbon-text">BombVault</span>
         </div>
-        <PageTitle>{t("dashboard.title")}</PageTitle>
+        <PageTitle>{t("nav.overview")}</PageTitle>
         <StatusHead
           t={t}
           lang={lang}
@@ -450,15 +442,9 @@ export function Dashboard() {
           sections={sections}
           nextRun={Number.isFinite(nextFire) ? Math.round(nextFire / 1000) : null}
           run={liveRun}
+          pass={pass}
+          passRuns={passRuns(runs)}
           onOpenRun={openLiveRun}
-        />
-
-        <FreshInstallNudge
-          t={t}
-          domains={statusDomains}
-          loading={statusLoading}
-          dismissed={freshDismissed}
-          onDismiss={dismissFresh}
         />
 
         {arranging && (
@@ -468,6 +454,8 @@ export function Dashboard() {
           </div>
         )}
       </div>
+
+      {fresh && <FirstStepsCard tally={tally} t={t} lang={lang} hueIndex={0} />}
 
       <OverviewGrid
         cards={cards}
@@ -513,7 +501,7 @@ export function Dashboard() {
         )}
         <EverythingAction
           t={t}
-          running={liveRun !== null}
+          running={liveRun !== null || pass !== null}
           hidden={arranging}
           onWatchRun={handleWatchRun}
           onArmFire={armFire}

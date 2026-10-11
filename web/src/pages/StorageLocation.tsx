@@ -2,21 +2,26 @@
 // setting that belongs to the place as a whole. A location is read from one of
 // four kinds of object, and a card shows only where its object has something
 // to say.
-import { Link, useParams } from "react-router-dom";
+import { useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
+import { ActionMenu, type MenuAction } from "../components/backups/ActionMenu";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { IconBack } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
+import { IconMore, IconPencil, IconTrash } from "../components/navGlyphs";
 import { PageTitle } from "../components/PageTitle";
 import { providerName } from "../components/destinations/ProviderPicker";
 import { ConnectionCard } from "../components/storage/ConnectionCard";
+import { ConnectionWindow } from "../components/storage/ConnectionWindow";
 import { CopyCard } from "../components/storage/CopyCard";
 import { CredentialsCard } from "../components/storage/CredentialsCard";
 import { KeepCard } from "../components/storage/KeepCard";
 import { LocationMark } from "../components/storage/LocationMark";
 import { ProtectionCard } from "../components/storage/ProtectionCard";
 import { RcloneConfCard } from "../components/storage/RcloneConfCard";
+import { RemovalWindow } from "../components/storage/RemovalWindow";
 import { AdoptCard, RulesCard } from "../components/storage/RulesCard";
 import { useLocationEdit } from "../components/storage/useLocationEdit";
 import { TestButton, VerdictLine } from "../components/TestButton";
@@ -26,7 +31,7 @@ import { offsiteVerdict } from "../lib/offsiteVerdict";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { DOMAIN_LABEL, amountText, credentialKind, rcloneRemote, usedByText } from "../lib/storageLocations";
 import { settingsOwned, type LocationRecords } from "../lib/storageWrites";
-import { useProvider } from "../lib/useProviders";
+import { useProviderForm } from "../lib/useProviders";
 import { useStorageLocation } from "../lib/useStorageLocations";
 import { useTestVerdict } from "../lib/useTestVerdict";
 import { hueCounter } from "./settings/shared";
@@ -67,9 +72,15 @@ function Crumb() {
 
 function Location({ location, records }: { location: StorageLocation; records: LocationRecords }) {
   const { t, lang } = useT();
+  const navigate = useNavigate();
   const edit = useLocationEdit(location, records);
-  const provider = useProvider(location.provider);
+  const form = useProviderForm(location.provider);
+  const provider = form?.provider;
   const probe = connectionProbe(location);
+  const [changing, setChanging] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const moreButton = useRef<HTMLSpanElement>(null);
   const test = useTestVerdict(location.id, t("offsite.testFailed"));
   const nextHue = hueCounter();
 
@@ -79,6 +90,14 @@ function Location({ location, records }: { location: StorageLocation; records: L
   const remote = location.backend === "rclone" ? rcloneRemote(location.where) : null;
   const takesCopies = location.object === "destination" || location.object === "target";
   const primary = settingsOwned(location) ? location.sections.find((section) => section.primary) : undefined;
+  const changeable = location.object === "destination" && form !== undefined;
+  const actions: MenuAction[] = [];
+  if (changeable) {
+    actions.push({ id: "connection", label: t("storage.conn.change"), glyph: <IconPencil />, onSelect: () => setChanging(true) });
+  }
+  if (location.object === "destination") {
+    actions.push({ id: "remove", label: t("storage.remove.action"), glyph: <IconTrash />, onSelect: () => setRemoving(true) });
+  }
 
   return (
     <>
@@ -112,15 +131,26 @@ function Location({ location, records }: { location: StorageLocation; records: L
                 onClick={() => void test.run(async () => offsiteVerdict(await probe(), t))}
               />
             )}
+            {actions.length > 0 && (
+              <span ref={moreButton} className="flex">
+                <Button label={t("nav.more")} labelKey="nav.more" glyph={<IconMore />} tone="neutral" onClick={() => setMenuOpen((was) => !was)} />
+              </span>
+            )}
           </div>
         </div>
         <VerdictLine verdict={test.verdict} />
       </div>
 
-      <ConnectionCard edit={edit} hueIndex={nextHue()} />
+      {menuOpen && moreButton.current && (
+        <ActionMenu label={location.name} actions={actions} place={{ anchor: moreButton.current }} onClose={() => setMenuOpen(false)} />
+      )}
+      {changing && form && <ConnectionWindow edit={edit} form={form} onClose={() => setChanging(false)} />}
+      {removing && <RemovalWindow location={location} onClose={() => setRemoving(false)} onRemoved={() => navigate("/storage")} />}
+
+      <ConnectionCard edit={edit} onChange={changeable ? () => setChanging(true) : undefined} hueIndex={nextHue()} />
       {kind && <CredentialsCard edit={edit} kind={kind} hueIndex={nextHue()} />}
       {remote && <RcloneConfCard remote={remote} hueIndex={nextHue()} />}
-      {location.object !== "path" && <ProtectionCard edit={edit} provider={provider} hueIndex={nextHue()} />}
+      {(location.object !== "path" || local) && <ProtectionCard edit={edit} provider={provider} hueIndex={nextHue()} />}
       {takesCopies && <CopyCard edit={edit} hueIndex={nextHue()} />}
       {location.retention && <KeepCard edit={edit} retention={location.retention} hueIndex={nextHue()} />}
       {(records.destination?.adoptable?.length ?? 0) > 0 && <AdoptCard edit={edit} hueIndex={nextHue()} />}

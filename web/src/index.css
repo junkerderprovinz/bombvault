@@ -1988,8 +1988,8 @@ body {
 
 /* A section-title (notch) badge also reveals its hue while its whole card is
    hovered or focused; its own 22px pill is too small a target on its own.
-   `.glim-notch-card` marks the badge's positioned card (Settings.tsx's Card
-   and a few bespoke cards in Flash.tsx and Config.tsx) rather than every
+   `.glim-notch-card` marks the badge's positioned card (the Card of
+   pages/settings/shared.tsx and a few bespoke cards) rather than every
    `rounded-card`, which also lands on hint panels, banners and rows.
    `.glim-notch-hue` marks the badge itself, so other hued controls in the card
    do not light up just because the pointer is somewhere in it. */
@@ -2988,6 +2988,10 @@ body {
   :root:not([data-motion="off"]) .glim-station-mover {
     transition: inset-inline-start var(--motion-tab-dur, 220ms) ease-out;
   }
+  /* The mark of the entry a pass has just finished drops onto the stack. */
+  :root:not([data-motion="off"]) .glim-mark-drop {
+    animation: glim-mark-drop var(--motion-block-dur, 420ms) cubic-bezier(.3, 0, .4, 1.5) backwards;
+  }
   :root:not([data-motion="off"]) .glim-scene-flow {
     animation: glim-scene-stream calc(var(--motion-scene-dur, 6s) / 4) linear infinite;
   }
@@ -3083,6 +3087,47 @@ body {
     transform-origin: center;
     animation: glim-block-swell calc(var(--motion-block-dur, 420ms) * .75) ease-out;
     animation-delay: calc(var(--block-i, 0) * var(--motion-block-step, 170ms) + var(--motion-block-dur, 420ms) * .8);
+  }
+
+  /* The backup of a database container, as a loop. The dump travels to the
+     repository in two steps and the files in one, and what lies there at the
+     end shows from the moment both have arrived. */
+  :root:not([data-motion="off"]) .glim-dump-running {
+    animation: glim-dump-mid-out var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-paused {
+    animation: glim-dump-mid-in var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-badge {
+    animation: glim-dump-badge var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-ring {
+    animation: glim-dump-ring var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-sheet {
+    animation:
+      glim-dump-sheet-go var(--dump-dur) linear infinite,
+      glim-dump-sheet-show var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-sheet-grow {
+    animation: glim-dump-sheet-grow var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-name {
+    animation: glim-dump-name var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-pack {
+    animation:
+      glim-dump-pack-go var(--dump-dur) linear infinite,
+      glim-dump-pack-show var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-settle {
+    animation: glim-dump-settle var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-say-dump {
+    animation: glim-dump-say-dump var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-say-files {
+    animation: glim-dump-say-files var(--dump-dur) linear infinite;
   }
 
   /* The group as a network. The links draw in one after the other when the
@@ -3474,6 +3519,10 @@ body {
 }
 /* Without delete protection the pack is gone in the last frame. */
 .glim-lock-gone { opacity: 0; }
+
+/* One pass of the database backup picture tells three steps, so it takes
+   longer than the pass of a picture that tells one. */
+.glim-dump { --dump-dur: calc(var(--motion-scene-dur, 6s) * 1.8); }
 
 /* Parts of a picture on the clock. --at is the share of the pass at which a
    part shows or sets off, --until the share at which it goes again, and
@@ -3918,6 +3967,78 @@ body {
   40% { transform: scale(var(--motion-block-swell, 1)); }
   to { transform: none; }
 }
+/* The container's state chip gives way to "paused" for the middle of the
+   pass, while its files are read. */
+@keyframes glim-dump-mid-out {
+  0%, 33%   { opacity: 1; }
+  34%, 57%  { opacity: 0; }
+  58%, 100% { opacity: 1; }
+}
+@keyframes glim-dump-mid-in {
+  0%, 33%   { opacity: 0; }
+  34%, 57%  { opacity: 1; }
+  58%, 100% { opacity: 0; }
+}
+@keyframes glim-dump-badge {
+  0%, 5%    { transform: none; }
+  7%        { transform: scale(1.25); }
+  9%, 100%  { transform: none; }
+}
+@keyframes glim-dump-ring {
+  0%, 4.9%  { opacity: 0; transform: none; }
+  5%        { opacity: .7; transform: none; }
+  10%, 100% { opacity: 0; transform: scale(2); }
+}
+/* The dump leaves the database, waits between it and the repository as a
+   file, then goes on into its place. */
+@keyframes glim-dump-sheet-go {
+  0%, 8%    { transform: translateX(-122px); animation-timing-function: cubic-bezier(.3, 0, .4, 1); }
+  20%, 40%  { transform: translateX(-64px); animation-timing-function: cubic-bezier(.5, 0, .7, 1); }
+  55%, 100% { transform: none; }
+}
+@keyframes glim-dump-sheet-grow {
+  0%, 8%    { transform: scale(.65); }
+  20%, 40%  { transform: scale(1.6); }
+  55%, 100% { transform: none; }
+}
+@keyframes glim-dump-sheet-show {
+  0%, 8%    { opacity: 0; }
+  10%, 54%  { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
+@keyframes glim-dump-name {
+  0%, 20%     { opacity: 0; }
+  21.5%, 39%  { opacity: 1; }
+  40.5%, 100% { opacity: 0; }
+}
+@keyframes glim-dump-pack-go {
+  0%, 40%   { transform: translateX(-118px); animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+  55%, 100% { transform: none; }
+}
+@keyframes glim-dump-pack-show {
+  0%, 40%   { opacity: 0; }
+  41.5%, 54% { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
+@keyframes glim-dump-settle {
+  0%, 55%     { opacity: 0; }
+  56.5%, 97%  { opacity: 1; }
+  98.5%, 100% { opacity: 0; }
+}
+@keyframes glim-dump-say-dump {
+  0%, 3%      { opacity: 0; }
+  4.5%, 30%   { opacity: 1; }
+  31.5%, 100% { opacity: 0; }
+}
+@keyframes glim-dump-say-files {
+  0%, 32%     { opacity: 0; }
+  33.5%, 54%  { opacity: 1; }
+  55.5%, 100% { opacity: 0; }
+}
+@keyframes glim-mark-drop {
+  from { opacity: 0; transform: translateY(calc(var(--motion-block-fall, 0px) * -.3)); }
+  to { transform: none; }
+}
 @keyframes glim-parcel-hop {
   0%, 10%   { transform: none; animation-timing-function: ease-out; }
   20%       { transform: translateY(calc(var(--motion-scene-hop, 0px) * var(--parcel-hop, 1) * -1)); animation-timing-function: ease-in; }
@@ -3995,10 +4116,10 @@ body {
   justify-content: center;
   gap: 12px 32px;
 }
-/* The legend wraps below before it would squeeze the wide picture out. */
+/* The legend stays beside the picture while the narrow one fits there. */
 .glim-net-pics {
   container: glim-net-pics / inline-size;
-  flex: 1 1 35rem;
+  flex: 1 1 20rem;
   min-width: 0;
   max-width: 760px;
 }
@@ -4132,6 +4253,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 .glim-net-key-glyph {
   display: inline-flex;

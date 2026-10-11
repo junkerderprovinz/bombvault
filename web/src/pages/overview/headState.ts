@@ -1,8 +1,9 @@
 // What the status head says: one of a few fixed sentences while nothing runs,
 // and the run it follows while something does.
 
+import type { Run } from "../../lib/api";
 import { ENTRY_KIND, isEntryKind, type EntryKind } from "../../lib/backupEntry";
-import { offsiteRunProgress, type ProgressMap, type ProgressState } from "../../lib/progress";
+import { EVERYTHING_KEY, offsiteRunProgress, type ProgressMap, type ProgressState } from "../../lib/progress";
 import type { Tally } from "../../lib/protectionTally";
 import type { Section } from "./protectionChecks";
 
@@ -43,12 +44,13 @@ function stops(kind: EntryKind | null): boolean {
 }
 
 /**
- * stationOf is where a run stands among the four stations. The server reports
- * a percentage, whether the backup is written and the off-site keys, but no
- * named phases, so this is the one place that derives them.
+ * stationOf is where a run stands among the four stations. A backup that
+ * stops its container or VM names its step. Every other backup sends none,
+ * so its station is read off the percentage and the written flag.
  */
 export function stationOf(kind: EntryKind | null, state: ProgressState): Station {
   if (state.phase === "replicate") return "copy";
+  if (state.step) return state.step;
   if (state.committed) return "start";
   if (!stops(kind) || state.percent > 0 || state.stage !== undefined) return "read";
   return "stop";
@@ -97,9 +99,42 @@ function liveCopy(key: string, state: ProgressState): LiveRun {
  * copy. Restores and maintenance leave the head alone.
  */
 export function liveRunOf(progress: ProgressMap): LiveRun | null {
-  const live = Object.entries(progress).filter(([, state]) => state.active && !state.finished);
+  const live = Object.entries(progress).filter(([key, state]) => key !== EVERYTHING_KEY && state.active && !state.finished);
   const backup = live.find(([key, state]) => state.phase === "backup" && !key.startsWith("offsite:"));
   if (backup) return liveBackup(...backup);
   const copy = live.find(([key, state]) => state.phase === "replicate" && key.startsWith("offsite:"));
   return copy ? liveCopy(...copy) : null;
+}
+
+export interface Pass {
+  /** How many of the pass's entries were attempted. */
+  done: number;
+  total: number;
+}
+
+/** passOf is the pass over everything while it runs. */
+export function passOf(progress: ProgressMap): Pass | null {
+  const state = progress[EVERYTHING_KEY];
+  if (!state?.active || state.finished) return null;
+  return { done: state.done ?? 0, total: state.total ?? 0 };
+}
+
+/**
+ * passShare is how far a pass is, in percent: the entries behind it and the
+ * part of the one being backed up.
+ */
+export function passShare(pass: Pass, run: LiveRun | null): number {
+  if (pass.total <= 0) return 0;
+  const current = run?.kind ? run.percent / 100 : 0;
+  return Math.min(100, ((pass.done + current) / pass.total) * 100);
+}
+
+/**
+ * passRuns lists the backups a running pass has finished, oldest first.
+ * `runs` arrives newest first.
+ */
+export function passRuns(runs: Run[]): Run[] {
+  const pass = runs.find((run) => run.domain === "everything" && run.status === "running");
+  if (!pass) return [];
+  return runs.filter((run) => run.groupId === pass.id && run.kind === "backup" && run.status !== "running").reverse();
 }

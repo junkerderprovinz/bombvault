@@ -79,7 +79,6 @@ import { hidesLabel, labelWidth } from "../../lib/controls";
 import { hueVars } from "../../lib/appearance";
 import { useLabelMode } from "../../lib/useLabelMode";
 import { useTipBubble } from "../../lib/useTipBubble";
-import { useLoudAnomalies } from "../../lib/useAnomalies";
 import { IconMore } from "../navGlyphs";
 import { NavCount } from "../NavCount";
 import { MoreSheet } from "./MoreSheet";
@@ -124,8 +123,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
   // The More trigger's bubble: worded only in hiding modes, the same rule
   // the sidebar's rows follow (reactive mode brings the word back on hover).
   const moreTip = useTipBubble(showLabel || reactive ? undefined : t("nav.more"));
-  const loudAnomalies = useLoudAnomalies();
-  const anomalyDot = (settings?.anomalyEnabled ?? false) && loudAnomalies.count > 0;
+  const anomalyDot = (settings?.anomalyEnabled ?? false) && counts.anomalies.value > 0;
 
   // NavLink's onClick fires before react-router's own Link handler, and Link
   // checks event.defaultPrevented before navigating (verified against the
@@ -221,7 +219,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
                 <span
                   data-testid="more-anomaly-dot"
                   aria-hidden="true"
-                  className={`absolute -end-0.5 -top-0.5 h-2 w-2 rounded-full ${loudAnomalies.tone === "fail" ? "bg-statusFailSolid" : "bg-statusWarnSolid"}`}
+                  className={`absolute -end-0.5 -top-0.5 h-2 w-2 rounded-full ${counts.anomalies.tone === "fail" ? "bg-statusFailSolid" : "bg-statusWarnSolid"}`}
                 />
               )}
             </span>

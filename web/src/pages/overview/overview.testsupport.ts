@@ -4,7 +4,16 @@
 // import a module that imports the api.
 import { vi } from "vitest";
 
-import type { AnomalySummary, AnomalyView, BackupItem, DomainStatus, Run, StorageLocation } from "../../lib/api";
+import type {
+  AnomalySummary,
+  AnomalyView,
+  BackupItem,
+  DomainStatus,
+  Run,
+  Settings,
+  StorageLocation,
+  StorageLocationSection,
+} from "../../lib/api";
 import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
 
 export const NOW = Math.floor(Date.now() / 1000);
@@ -145,6 +154,25 @@ export function location(over: Partial<StorageLocation> = {}): StorageLocation {
   };
 }
 
+/** An off-site copy of the containers that has failed since it last worked. */
+export function failedCopy(over: Partial<StorageLocationSection> = {}): StorageLocationSection {
+  return {
+    domain: "containers",
+    use: "copy",
+    targetId: "t-containers",
+    where: "rclone:box:containers",
+    enabled: true,
+    immutable: false,
+    retention: { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 1 },
+    compression: "auto",
+    limitUpload: 0,
+    limitDownload: 0,
+    own: [],
+    lastCopy: { at: NOW - 2 * DAY, ok: false, failingSince: NOW - DAY },
+    ...over,
+  };
+}
+
 type Answer<T> = T | "refused" | "pending";
 
 /**
@@ -161,6 +189,11 @@ export const server = {
   detection: false,
   /** Encryption is on and the recovery kit is not confirmed. */
   kitDue: false,
+  /** What the settings hold beyond the recovery kit. */
+  settings: {} as Partial<Settings>,
+  platform: "unraid",
+  /** Why the server refuses to save the settings, "" while it saves them. */
+  saveRefused: "",
   /** Every call to a function that changes something, by its name. */
   calls: [] as { name: string; args: unknown[] }[],
 };
@@ -174,6 +207,9 @@ export function resetServer(): void {
     findings: [],
     detection: false,
     kitDue: false,
+    settings: {},
+    platform: "unraid",
+    saveRefused: "",
     calls: [],
   });
 }
@@ -214,11 +250,21 @@ export function stagedApi<M extends object>(actual: M): M {
     getStatus: () => answer(server.domains, (domains) => ({ ok: true, domains })),
     listItems: () => answer(server.items, (items) => ({ ok: true, items, unlisted: [] })),
     listRuns: vi.fn(() => answer(server.runs, (runs) => ({ ok: true, runs }))),
-    listStorageLocations: () => answer(server.locations, (locations) => ({ ok: true, locations })),
+    listStorageLocations: vi.fn(() => answer(server.locations, (locations) => ({ ok: true, locations }))),
     getCoverage: () => Promise.resolve({ ok: true, coverage: { total: 0, protected: 0, domains: [] } }),
     getScheduleNext: () => Promise.resolve([]),
     getSettings: () =>
-      Promise.resolve({ ok: true, settings: { encryptionEnabled: server.kitDue, recoveryKitAck: false } }),
+      Promise.resolve({
+        ok: true,
+        settings: { encryptionEnabled: server.kitDue, recoveryKitAck: false, ...server.settings },
+        platform: server.platform,
+      }),
+    putSettings: (settings: Settings) => {
+      server.calls.push({ name: "putSettings", args: [settings] });
+      if (server.saveRefused) return Promise.resolve({ ok: false, error: server.saveRefused });
+      server.settings = settings;
+      return Promise.resolve({ ok: true });
+    },
     getAnomalySummary: () => Promise.resolve({ ok: true, summary: summary() }),
     getAnomalies: () => Promise.resolve({ ok: true, anomalies: server.findings, nextCursor: "" }),
     getStats: () => Promise.resolve({ ok: false }),
@@ -232,6 +278,20 @@ export function stagedApi<M extends object>(actual: M): M {
       return record("ackRecoveryKit")(...args);
     },
     downloadRecoveryKit: record("downloadRecoveryKit", null),
+    replicateOffsite: record("replicateOffsite"),
+    ackFailedCopies: (targetIds: string[]) => {
+      if (Array.isArray(server.locations)) {
+        server.locations = server.locations.map((place) => ({
+          ...place,
+          sections: place.sections.map((section) =>
+            section.lastCopy && targetIds.includes(section.targetId ?? "")
+              ? { ...section, lastCopy: { ...section.lastCopy, acknowledged: true } }
+              : section
+          ),
+        }));
+      }
+      return record("ackFailedCopies")(targetIds);
+    },
     runDrill: record("runDrill", { ok: true, drill: { ok: true } }),
   };
 }

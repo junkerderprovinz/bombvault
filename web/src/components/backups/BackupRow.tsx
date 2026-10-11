@@ -33,15 +33,28 @@ import { SelectMark } from "./SelectMark";
 
 type T = (key: TranslationKey, n?: number) => string;
 
-const ROW = "flex min-h-[50px] items-center gap-3 border-t border-carbon-border px-1.5 py-2 first:border-t-0";
+// Where the list has room for the run strips, its rows share their columns:
+// the widest status sets the width of them all, so every status stays on one
+// line in any language and the strips before them line up. In a narrower
+// list each row is a line of its own and a long status wraps. LIST_SPAN is
+// what a sub-list, a row or a line across the list takes the columns with.
+export const LIST_SPAN = "@min-[36rem]:col-span-full @min-[36rem]:grid @min-[36rem]:grid-cols-subgrid";
+const ROW = `flex min-h-[50px] items-center gap-3 border-t border-carbon-border px-1.5 py-2 first:border-t-0 ${LIST_SPAN}`;
 const GLYPH_TILE =
-  "flex h-[34px] w-[34px] flex-none items-center justify-center rounded-control bg-carbon-surface2 [&_svg]:h-[18px] [&_svg]:w-[18px]";
-// One width for every status, so the strips before them line up in a column.
-// A longer one takes a second line.
-const STATUS_WIDTH = "w-[9.5rem] @max-[36rem]:w-auto @max-[36rem]:max-w-[9.5rem]";
+  "flex h-[34px] w-[34px] flex-none items-center justify-center rounded-control bg-carbon-surface2 [&>svg]:h-[18px] [&>svg]:w-[18px]";
+const STATUS = "@min-[36rem]:w-full @min-[36rem]:whitespace-nowrap @max-[36rem]:max-w-[9.5rem]";
 const NAME =
   "min-w-0 truncate text-sm font-semibold text-carbon-text @max-[36rem]:whitespace-normal @max-[36rem]:wrap-anywhere";
-const IP_COLUMN = "min-w-[7.5rem] flex-none text-end text-xs tabular-nums text-carbon-textMuted @max-[36rem]:hidden";
+const BEFORE_STATUS = "flex flex-none items-center gap-2 @max-[36rem]:hidden";
+const IP_COLUMN = "min-w-[7.5rem] flex-none text-end text-xs tabular-nums text-carbon-textMuted";
+
+/** The columns of the list, which its sub-lists and their rows pass on. A
+ *  list whose rows are being picked has one more for their marks. */
+export function listColumns(selecting: boolean): string {
+  return selecting
+    ? "@min-[36rem]:grid @min-[36rem]:grid-cols-[auto_auto_minmax(0,1fr)_auto_minmax(9.5rem,max-content)]"
+    : "@min-[36rem]:grid @min-[36rem]:grid-cols-[auto_minmax(0,1fr)_auto_minmax(9.5rem,max-content)]";
+}
 
 const STRIP_TONE: Record<RunTone, string> = {
   ok: "bg-statusOkSolid",
@@ -76,7 +89,7 @@ function RunStrip({ tones, t }: { tones: RunTone[]; t: T }) {
         aria-label={label}
         onMouseEnter={tip.handlers.onMouseEnter}
         onMouseLeave={tip.handlers.onMouseLeave}
-        className="grid flex-none grid-cols-[repeat(14,8px)] gap-0.5 @max-[36rem]:hidden"
+        className="grid flex-none grid-cols-[repeat(14,8px)] gap-0.5"
       >
         {tones.map((tone, i) => (
           <i key={i} className={`h-2 w-2 rounded-xs ${STRIP_TONE[tone]}`} />
@@ -180,7 +193,7 @@ const BUBBLE_TONE: Record<RowFacts["tone"], string> = {
 
 function Status({ children, tone }: { children: ReactNode; tone: "fail" | "warn" | "neutral" }) {
   return (
-    <Badge tone={tone} size="large" wrap className={`text-center ${STATUS_WIDTH}`}>
+    <Badge tone={tone} size="large" wrap className={`text-center ${STATUS}`}>
       {children}
     </Badge>
   );
@@ -240,7 +253,10 @@ export function BackupRow({
   let cell: ReactNode;
   if (running) {
     cell = (
-      <span className={`flex items-center gap-1.5 ${STATUS_WIDTH}`} onClick={keepInRow}>
+      <span
+        className="flex items-center gap-1.5 @min-[36rem]:w-0 @min-[36rem]:min-w-full @max-[36rem]:max-w-[9.5rem]"
+        onClick={keepInRow}
+      >
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="flex items-center gap-2 text-dense tabular-nums text-carbon-textSub">
             <span
@@ -260,7 +276,11 @@ export function BackupRow({
     cell = <Status tone="fail">{t("run.statusFailed")}</Status>;
   } else if (status.is === "anomalies" && anomaly) {
     cell = (
-      <Link to={`/anomalies?scope=item:${encodeURIComponent(anomaly.targetId)}`} onClick={keepInRow}>
+      <Link
+        to={`/anomalies?scope=item:${encodeURIComponent(anomaly.targetId)}`}
+        onClick={keepInRow}
+        className="flex min-w-0 @min-[36rem]:w-full"
+      >
         <Status tone="warn">
           <span className="flex [&_svg]:h-3 [&_svg]:w-3">
             <IconAnomalies />
@@ -286,7 +306,8 @@ export function BackupRow({
 
   // The tap that ends a long press has already picked the row.
   const taken = (e: MouseEvent) => press.took() || onClick(e);
-  const mark = <SelectMark checked={picked} label={t("common.selectItem").replace("{name}", name)} onChange={onPick} />;
+  const pickLabel = t("common.selectItem").replace("{name}", name);
+  const mark = <SelectMark checked={picked} label={pickLabel} onChange={onPick} />;
 
   return (
     <li
@@ -311,17 +332,18 @@ export function BackupRow({
           : "hover:bg-carbon-hover"
       }${dim ? " opacity-55" : ""}`}
     >
-      {selecting ? (
-        mark
-      ) : (
-        // Until a row is picked, the mark waits in the card's margin beside
-        // the row under the pointer, so no row moves when it appears.
-        <span className="absolute -start-[19px] top-1/2 hidden -translate-y-1/2 pointer-fine:group-hover:flex pointer-fine:group-focus-within:flex">
-          {mark}
-        </span>
-      )}
-      <span className={`glim-row-glyph ${GLYPH_TILE}`}>
+      {selecting && mark}
+      <span className={`glim-row-glyph relative ${GLYPH_TILE}`}>
         <KindGlyph kind={item.kind} />
+        {!selecting && (
+          // Until a row is picked, the mark of the row under the pointer lies
+          // on the corner of its glyph, as on an icon in a file manager. No
+          // row moves when it appears, and the rest of the row still opens
+          // the entry.
+          <span className="absolute -start-1.5 -top-1.5 hidden rounded-full ring-2 ring-carbon-surface pointer-fine:group-hover:flex pointer-fine:group-focus-within:flex">
+            <SelectMark checked={false} label={pickLabel} onChange={onPick} bare />
+          </span>
+        )}
       </span>
       <span className="flex min-w-0 flex-1 items-center gap-2">
         <Link
@@ -340,11 +362,11 @@ export function BackupRow({
           </span>
         )}
       </span>
-      <span className="ms-auto flex flex-none items-center gap-2">
+      <span className={BEFORE_STATUS}>
         {showIp && <span className={IP_COLUMN}>{item.ip}</span>}
         <RunStrip tones={tones} t={t} />
-        {cell}
       </span>
+      <span className="flex min-w-0 flex-none justify-end">{cell}</span>
     </li>
   );
 }
@@ -372,13 +394,11 @@ export function SelfRow({
         <KindGlyph kind={item.kind} />
       </span>
       <span className={`flex-1 ${NAME}`}>{item.name}</span>
-      <span className="ms-auto flex flex-none items-center gap-2">
-        {showIp && <span className={IP_COLUMN}>{item.ip}</span>}
-        <Badge tone="neutral" size="large" className="whitespace-nowrap">
-          {t("backups.status.self")}
-          <InfoBubble tip={t("backups.selfNote")} />
-        </Badge>
-      </span>
+      <span className={BEFORE_STATUS}>{showIp && <span className={IP_COLUMN}>{item.ip}</span>}</span>
+      <Badge tone="neutral" size="large" className="whitespace-nowrap @min-[36rem]:w-full">
+        {t("backups.status.self")}
+        <InfoBubble tip={t("backups.selfNote")} />
+      </Badge>
     </li>
   );
 }

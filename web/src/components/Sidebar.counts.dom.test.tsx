@@ -3,7 +3,7 @@
 // colour like the count on Anomalies, and keeps out of the way of a centred
 // glyph when the rail shows no labels.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import { Sidebar } from "./Sidebar";
@@ -53,6 +53,9 @@ const paperless: BackupItem = {
   runs: [],
 };
 
+/** A container with a backup, which makes the install one that is in use. */
+const plex: BackupItem = { ...paperless, key: "plex", name: "plex", lastBackup: 1_700_000_000 };
+
 const kitDue = { encryptionEnabled: true, recoveryKitAck: false } as Settings;
 const calm = { encryptionEnabled: true, recoveryKitAck: true } as Settings;
 
@@ -78,7 +81,7 @@ async function overviewCount(n: number): Promise<HTMLElement> {
 beforeEach(() => {
   localStorage.clear();
   listRuns.mockReset().mockResolvedValue({ ok: true, runs: [failedRun("gitea"), failedRun("immich")] });
-  listItems.mockReset().mockResolvedValue({ ok: true, items: [paperless], unlisted: [] });
+  listItems.mockReset().mockResolvedValue({ ok: true, items: [paperless, plex], unlisted: [] });
 });
 
 afterEach(cleanup);
@@ -94,6 +97,14 @@ describe("the count on Overview", () => {
     listItems.mockResolvedValue({ ok: true, items: [], unlisted: [] });
     renderRail(calm);
     await vi.waitFor(() => expect(listItems).toHaveBeenCalled());
+    expect(screen.getByRole("link", { name: en["nav.overview"] }).textContent).toBe(en["nav.overview"]);
+  });
+
+  it("is absent before the first backup, whatever waits", async () => {
+    listItems.mockResolvedValue({ ok: true, items: [paperless], unlisted: [] });
+    renderRail(kitDue);
+    await vi.waitFor(() => expect(listItems).toHaveBeenCalled());
+    await act(async () => {});
     expect(screen.getByRole("link", { name: en["nav.overview"] }).textContent).toBe(en["nav.overview"]);
   });
 

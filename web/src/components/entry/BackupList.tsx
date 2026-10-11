@@ -1,14 +1,15 @@
-import { useEffect, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import type { Run, TimelineRow } from "../../lib/api";
-import { runOfRow } from "../../lib/entry";
+import { actionMark, comparable, personTags, rowTags, rowTime, runOfRow } from "../../lib/entry";
 import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { formatRecent } from "../../lib/reltime";
-import { holdsSnapshot } from "../../lib/restorePlan";
+import { ActionMenu, type MenuAction } from "../backups/ActionMenu";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
+import { IconCompare } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
-import { IconCloud, IconLocal, IconRestore } from "../navGlyphs";
+import { IconAdd, IconCloud, IconDownload, IconLocal, IconMore, IconRestore, IconTrash } from "../navGlyphs";
 import { usePlaceLabel, type TimelineState } from "./BackupPlaces";
 
 const WEEK_MS = 7 * 86_400_000;
@@ -20,27 +21,86 @@ export interface OpenBackup {
   place?: string;
 }
 
+/** What the menu of a backup can do with it. */
+export type RowAction = "compare" | "tag" | "export" | "delete";
+
 export function rowElementId(key: string): string {
   return `entry-backup-${key}`;
+}
+
+function RowMenu({
+  row,
+  timeline,
+  onAct,
+}: {
+  row: TimelineRow;
+  timeline: TimelineState;
+  onAct: (action: RowAction) => void;
+}) {
+  const { t, lang } = useT();
+  const anchor = useRef<HTMLSpanElement>(null);
+  const [open, setOpen] = useState(false);
+  const { rows, places } = timeline;
+  const mark = actionMark(row, places);
+  const deletable = row.places.some((m) => places.find((p) => p.place === m.place)?.appendOnly === false);
+
+  const actions: MenuAction[] = [];
+  if (comparable(rows, mark.place).length > 1) {
+    actions.push({ id: "compare", label: t("entry.row.compare"), glyph: <IconCompare />, onSelect: () => onAct("compare") });
+  }
+  actions.push(
+    {
+      id: "tag",
+      label: t(personTags(mark.tags).length > 0 ? "entry.row.tagChange" : "snapshot.addTag"),
+      glyph: <IconAdd />,
+      onSelect: () => onAct("tag"),
+    },
+    { id: "export", label: t("entry.export.action"), glyph: <IconDownload />, onSelect: () => onAct("export") }
+  );
+  if (deletable) {
+    actions.push({ id: "delete", label: t("common.delete"), glyph: <IconTrash />, onSelect: () => onAct("delete") });
+  }
+
+  return (
+    <>
+      <span ref={anchor} className="flex">
+        <Button
+          label={t("nav.more")}
+          labelKey="nav.more"
+          glyph={<IconMore />}
+          ariaExpanded={open}
+          onClick={() => setOpen((was) => !was)}
+        />
+      </span>
+      {open && anchor.current && (
+        <ActionMenu
+          label={formatRecent(rowTime(row), lang)}
+          actions={actions}
+          place={{ anchor: anchor.current }}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
+  );
 }
 
 function Row({
   row,
   timeline,
   run,
-  tags,
   flagged,
   marked,
   onOpen,
+  onAct,
 }: {
   row: TimelineRow;
   timeline: TimelineState;
   run: Run | undefined;
-  tags: string[];
   flagged: boolean;
   /** The row a bar of the history or a restore link points at. */
   marked: boolean;
   onOpen: (open: OpenBackup) => void;
+  onAct: (row: TimelineRow, action: RowAction) => void;
 }) {
   const { t, lang } = useT();
   const { places } = timeline;
@@ -48,6 +108,7 @@ function Row({
   const orderOf = (place: string) => places.findIndex((p) => p.place === place);
   const marks = [...row.places].sort((a, b) => orderOf(a.place) - orderOf(b.place));
   const allRead = places.every((p) => p.state === "read");
+  const size = row.size ?? run?.sourceBytes;
 
   function openAt(e: MouseEvent, place: string) {
     e.stopPropagation();
@@ -65,14 +126,14 @@ function Row({
     >
       <span className="flex min-w-0 flex-1 basis-56 flex-wrap items-center gap-2">
         <span className="text-sm font-semibold tabular-nums text-carbon-text first-letter:uppercase">
-          {formatRecent(Math.floor(Date.parse(row.time) / 1000), lang)}
+          {formatRecent(rowTime(row), lang)}
         </span>
         {flagged && (
           <Badge tone="warn" size="small">
             {t("anomaly.snapshotFlagged")}
           </Badge>
         )}
-        {tags.map((tag) => (
+        {rowTags(row).map((tag) => (
           <Badge key={tag} tone="neutral" size="small">
             {tag}
           </Badge>
@@ -104,17 +165,22 @@ function Row({
           </span>
         ))}
       </span>
-      <span className="w-24 text-end text-xs tabular-nums text-carbon-textMuted max-md:w-auto">
-        {run?.sourceBytes != null && humanBytes(run.sourceBytes)}
+      <span data-testid="entry-backup-size" className="w-24 text-end text-xs tabular-nums text-carbon-textMuted max-md:w-auto">
+        {size != null && humanBytes(size)}
       </span>
-      {/* A phone opens the backup with a tap on its row. */}
-      <span className="max-md:hidden">
-        <Button
-          label={t("snapshots.restore")}
-          labelKey="snapshots.restore"
-          glyph={<IconRestore />}
-          onClick={() => onOpen({ key: row.key })}
-        />
+      {/* The menu is drawn outside the row, and a press in it would otherwise
+          reach the row and open the backup. */}
+      <span className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <RowMenu row={row} timeline={timeline} onAct={(action) => onAct(row, action)} />
+        {/* A phone opens the backup with a tap on its row. */}
+        <span className="max-md:hidden">
+          <Button
+            label={t("snapshots.restore")}
+            labelKey="snapshots.restore"
+            glyph={<IconRestore />}
+            onClick={() => onOpen({ key: row.key })}
+          />
+        </span>
       </span>
     </li>
   );
@@ -131,27 +197,28 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
 
 /**
  * BackupList is every backup of the entry, the newest first and split at one
- * week. A row opens its backup. The mark of a place opens it at that place.
+ * week. A row opens its backup. The mark of a place opens it at that place,
+ * and the menu holds what else can be done with it.
  */
 export function BackupList({
   timeline,
   runs,
   isFlagged,
-  tagsOf,
   located,
   requested,
   onOpen,
+  onAct,
 }: {
   timeline: TimelineState;
   runs: Run[];
   /** Whether an open finding was raised on the backup. */
   isFlagged: (row: TimelineRow, run: Run | undefined) => boolean;
-  tagsOf: (row: TimelineRow) => string[];
   /** The row a bar of the history asked for. It comes into view. */
   located: string | null;
   /** The backup a restore link asked for. */
   requested: string;
   onOpen: (open: OpenBackup) => void;
+  onAct: (row: TimelineRow, action: RowAction) => void;
 }) {
   const { t } = useT();
   const { rows, places, reading, loadPlace } = timeline;
@@ -173,10 +240,10 @@ export function BackupList({
         row={row}
         timeline={timeline}
         run={run}
-        tags={tagsOf(row)}
         flagged={isFlagged(row, run)}
-        marked={row.key === located || (requested !== "" && holdsSnapshot(row, requested))}
+        marked={row.key === located || row.key === requested}
         onOpen={onOpen}
+        onAct={onAct}
       />
     );
   };

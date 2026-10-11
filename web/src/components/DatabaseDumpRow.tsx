@@ -28,7 +28,16 @@ const OFF_CONFIRM_KEYS: Record<string, TranslationKey> = {
  * backup of its data folder is worth and how the last dump went. The backend
  * sends states and numbers; every sentence is built here.
  */
-export function DatabaseDumpRow({ container, t }: { container: Container; t: T }) {
+export function DatabaseDumpRow({
+  container,
+  t,
+  onSaved,
+}: {
+  container: Container;
+  t: T;
+  /** The setting is stored, for a page that shows what follows from it. */
+  onSaved?: () => void;
+}) {
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const lookalike = container.dbTier === "lookalike";
@@ -78,6 +87,7 @@ export function DatabaseDumpRow({ container, t }: { container: Container; t: T }
       if (res.ok) {
         setOn(next);
         if (next) setChosenEngine(picked);
+        onSaved?.();
       } else {
         push(res.error || t("dbdump.settingFailed"), "fail");
         setShake((n) => n + 1);

@@ -8,7 +8,7 @@ import { entryName } from "../components/backups/kinds";
 import { Button } from "../components/Button";
 import type { OpenBackup } from "../components/entry/BackupList";
 import { BackupsTab } from "../components/entry/BackupsTab";
-import { EntryCorner, EntryHeadActions } from "../components/entry/EntryActions";
+import { EntryCorner, EntryMenu } from "../components/entry/EntryActions";
 import { EntryHead } from "../components/entry/EntryHead";
 import { KindHead } from "../components/entry/KindHead";
 import { Note } from "../components/entry/Note";
@@ -162,11 +162,13 @@ function Loaded({
           anomaly={anomaly}
           anomalyEnabled={anomalyEnabled}
           actions={
-            <EntryHeadActions
+            <EntryMenu
               entry={entry}
+              name={name}
+              timeline={timeline}
               onChanged={reload}
               onRemoved={() => navigate(entryListPath(item.kind), { replace: true })}
-              onDownloadNewest={openNewest}
+              onOpenNewest={openNewest}
             />
           }
         />

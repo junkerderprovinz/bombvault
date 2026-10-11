@@ -643,16 +643,57 @@ test("the grid on the desktop keeps the 40px rhythm and cards of one size", asyn
   // A name stays one line on the desktop, cut with an ellipsis if it must be.
   const name = card(page, MEMBER).locator("span.font-semibold").first();
   expect(await name.evaluate((node) => getComputedStyle(node).whiteSpace)).toBe("nowrap");
+
+  // Pairing is the page's own action, in the corner.
+  const pair = page.getByTestId("page-actions").getByRole("button", { name: "Instanz koppeln" });
+  await expect(pair).toBeVisible();
+  await expect(page.getByRole("button", { name: "Instanz koppeln" })).toHaveCount(1);
+  await pair.click();
+  await expect(page).toHaveURL(/\/settings\/pairing$/);
+});
+
+test("a Receiver is asked where it keeps the copies", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "the flow runs once, on the desktop");
+  const sent: unknown[] = [];
+  await page.route("**/api/group/members/*/roles/*", async (route) => {
+    sent.push(route.request().postDataJSON());
+    await route.fulfill({ json: { ok: true, request: roleRequest("rr8", "asked", ["containers"]) } });
+  });
+  await openPage(page, testInfo.project.use.viewport!.width);
+  // The second member answers requests here, so it is asked like a current one.
+  await page.route("**/api/group/roles", (route) =>
+    route.fulfill({ json: { ok: true, members: [ROLES[0], { ...ROLES[1], answers: true }], self: SELF_ROLES } }),
+  );
+  await page.reload();
+  await expect(card(page, "member-2")).toBeVisible();
+  await card(page, "member-2").locator('button[data-role="receiver"]').click();
+  const dialog = page.getByRole("dialog", { name: "Büro Linz als Empfänger" });
+  const where = dialog.getByRole("radiogroup", { name: /^Wo auf / });
+  await expect(where.getByRole("radio")).toHaveText([/^Empfangsserver von /, "Freigabe"]);
+  await expect(where.getByRole("radio").first()).toBeChecked();
+  await expect(dialog.getByText("rest-server im Append-only-Modus")).toBeVisible();
+  await where.getByRole("radio", { name: "Freigabe" }).click();
+  await expect(dialog.getByText("rest-server im Append-only-Modus")).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Anfrage senden" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(sent).toEqual([expect.objectContaining({ store: "share" })]);
 });
 
 test("the net picture on the desktop shows the group with an arrow per role", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await openPage(page, testInfo.project.use.viewport!.width);
-  // Beside the sidebar the 768px window leaves the picture a phone's width.
-  const [shown, hidden] = testInfo.project.name === "desktop-1280" ? ["wide", "narrow"] : ["narrow", "wide"];
-  const picture = page.locator(`#bv-main .glim-net-${shown}`);
+  // Beside the sidebar both windows leave room for the narrow picture only.
+  // At 1280 its legend stands beside it, at 768 below.
+  const picture = page.locator("#bv-main .glim-net-narrow");
+  const wide = page.locator("#bv-main .glim-net-wide");
+  const key = page.locator("#bv-main .glim-net-key");
   await expect(picture).toBeVisible();
-  await expect(page.locator(`#bv-main .glim-net-${hidden}`)).toBeHidden();
+  await expect(wide).toBeHidden();
+  const beside = async (pic: typeof picture) => {
+    const [p, k] = [(await pic.boundingBox())!, (await key.boundingBox())!];
+    return k.x >= p.x + p.width && k.y < p.y + p.height;
+  };
+  expect(await beside(picture)).toBe(testInfo.project.name === "desktop-1280");
   for (const name of ["Tower Linz", MEMBER_NAME, "Büro Linz", "Backup-NAS im Keller"]) {
     await expect(picture.getByRole("button", { name })).toBeVisible();
   }
@@ -673,6 +714,12 @@ test("the net picture on the desktop shows the group with an arrow per role", as
   expect(await travelling()).toBeGreaterThan(0);
   await page.emulateMedia({ reducedMotion: "reduce" });
   expect(await travelling(), "the picture moves under reduced motion").toBe(0);
+
+  // A wider window has room for the wide picture, still with the legend beside it.
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await expect(wide).toBeVisible();
+  await expect(picture).toBeHidden();
+  expect(await beside(wide)).toBe(true);
 });
 
 test("a role is asked for from its tile, and an older instance takes it at once", async ({ page }, testInfo) => {

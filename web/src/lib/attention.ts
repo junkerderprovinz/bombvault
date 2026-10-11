@@ -7,6 +7,7 @@ import { createContext, useContext, useEffect } from "react";
 import type { Run } from "./api";
 import type { Need } from "./needs";
 import type { BackupItems } from "./useBackupItems";
+import type { StorageLocationList } from "./useStorageLocations";
 
 /** Dispatched after a failure was dealt with, so the list follows without
  *  waiting for the next poll. */
@@ -15,6 +16,8 @@ export const ATTENTION_CHANGED_EVENT = "bv:attention-changed";
 export interface Attention {
   /** What waits for the person. The overview lists it, the navigation counts it. */
   needs: Need[];
+  /** The entries are read and none of them has a backup yet. */
+  fresh: boolean;
   items: BackupItems;
   /** The runs of GET /api/runs, newest first. */
   runs: Run[];
@@ -23,17 +26,21 @@ export interface Attention {
   /** The last read of the runs failed. The runs read before stay in place. */
   runsFailed: boolean;
   refreshRuns: () => void;
+  /** The storage locations, read once for the count and for the page. */
+  locations: StorageLocationList;
 }
 
 const idle = () => undefined;
 
 export const AttentionContext = createContext<Attention & { watch: () => () => void }>({
   needs: [],
-  items: { items: [], loaded: false, failed: false, reload: idle },
+  fresh: false,
+  items: { items: [], reported: [], loaded: false, failed: false, reload: idle },
   runs: [],
   runsReady: false,
   runsFailed: false,
   refreshRuns: idle,
+  locations: { locations: [], loaded: false, failed: false, retry: idle },
   watch: () => idle,
 });
 
@@ -41,11 +48,13 @@ export const AttentionContext = createContext<Attention & { watch: () => () => v
 // with every poll that leaves it as it was.
 export const AttentionCountContext = createContext(0);
 
+export const FreshInstallContext = createContext(false);
+
 /**
  * useAttention is for the page that shows the lists themselves. While it is
  * mounted the runs are read at the activity log's rate, and a visit brings
- * the entries and the runs up to date, because entries change on other pages
- * without an event.
+ * the entries, the runs and the storage locations up to date, because entries
+ * change on other pages without an event.
  */
 export function useAttention(): Attention {
   const { watch, ...attention } = useContext(AttentionContext);
@@ -56,4 +65,10 @@ export function useAttention(): Attention {
 /** useAttentionCount is how many things need the person. */
 export function useAttentionCount(): number {
   return useContext(AttentionCountContext);
+}
+
+/** useFreshInstall is true from the moment the entries are read until the
+ *  first of them has a backup. */
+export function useFreshInstall(): boolean {
+  return useContext(FreshInstallContext);
 }

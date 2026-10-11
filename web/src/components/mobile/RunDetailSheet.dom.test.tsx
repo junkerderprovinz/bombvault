@@ -19,7 +19,7 @@
 //     exception (BottomSheet.dom.test.tsx precedent: jsdom computes no
 //     geometry, so the observable form of a styling contract is the token).
 //
-// EventSource stub: lifted from OffsiteIndicator.dom.test.tsx; jsdom does not
+// EventSource stub: jsdom does not
 // implement EventSource, and the live-section test drives the real
 // lib/progress.ts singleton through `source.onmessage`, exactly the path a
 // backend push takes. Nothing about the component under test is stubbed.
@@ -110,7 +110,7 @@ function renderSheet(run: Run) {
   );
 }
 
-// --- EventSource fake (OffsiteIndicator.dom.test.tsx pattern) ---------------
+// The EventSource fake.
 
 const instances: FakeEventSource[] = [];
 

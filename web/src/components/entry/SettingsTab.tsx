@@ -16,7 +16,7 @@ import {
 } from "../../lib/api";
 import { ENTRY_KIND } from "../../lib/backupEntry";
 import { isGone } from "../../lib/backupList";
-import { updateWarnKey } from "../../lib/dbdump";
+import { dumpRuns, updateWarnKey } from "../../lib/dbdump";
 import type { Entry } from "../../lib/entry";
 import { useT } from "../../lib/i18n";
 import { lockHint, viewHomeLabel } from "../../lib/placement";
@@ -53,6 +53,7 @@ import { ReplicaPlanLine } from "../zfs/replica/ReplicaPlanLine";
 import { ZFSItemSettings } from "../zfs/ZFSItemSettings";
 import { ZFSSafetySection } from "../zfs/ZFSSafetySection";
 import { ZFSSitesLine } from "../zfs/ZFSSitesLine";
+import { DumpScene } from "./DumpScene";
 
 // What stores an entry's own schedule, per kind. Flash and the self-backup
 // run on their kind's schedule and have none.
@@ -212,8 +213,11 @@ function ContainerCards({
     <>
       {container.dbTier !== "" && (
         <Card title={t("entry.settings.database")} hint={t("entry.settings.databaseHint")} hueIndex={nextHue()}>
-          <div className={SPAN_ROWS}>
-            <DatabaseDumpRow container={container} t={t} />
+          <div className="grid items-start gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
+            <div className={SPAN_ROWS}>
+              <DatabaseDumpRow container={container} t={t} onSaved={onChanged} />
+            </div>
+            <DumpScene on={dumpRuns(container)} stops={container.dbDataCoverage === "stopped"} />
           </div>
         </Card>
       )}

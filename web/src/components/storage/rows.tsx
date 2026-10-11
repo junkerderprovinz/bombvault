@@ -24,7 +24,8 @@ export function SettingRow({
   hint?: string;
   /** What the control cannot say itself, under the label. */
   note?: string;
-  children: ReactNode;
+  /** The control. A row without one only says something. */
+  children?: ReactNode;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
@@ -35,7 +36,7 @@ export function SettingRow({
         </span>
         {note && <span className="text-xs text-carbon-textMuted wrap-break-word">{note}</span>}
       </div>
-      <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2">{children}</div>
+      {children && <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2">{children}</div>}
     </div>
   );
 }

@@ -69,7 +69,6 @@ describe("plural forms in the tables", () => {
       "recovery.zfsFound",
       "zfs.discovered",
       "zfs.notInItem",
-      "zfs.unusedZvols",
       "zfs.code.leftover-snapshots",
       "zfs.membersSummary",
       "zfs.skippedCount",

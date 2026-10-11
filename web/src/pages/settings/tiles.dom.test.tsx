@@ -55,6 +55,7 @@ function store(s: Settings): SettingsStore {
     hostMountRoot: "/host/user",
     save,
     debouncedSave: (_key: string, run: () => void) => run(),
+    cancelDebounce: vi.fn(),
     fieldPulse: {},
     toggleDomainEnabled,
     domainToggleBusy: {},
@@ -205,9 +206,66 @@ describe("the Restore tile", () => {
     expect(screen.getByTestId("where").textContent).toBe("/restore");
   });
 
-  it("holds the restore folder", async () => {
-    await renderTile(RestorePage);
-    expect(within(card(en["tile.restore.folders"])).getByText(en["settings.restoreFolder"])).toBeTruthy();
+  describe("the restore folders", () => {
+    const folders = () => within(card(en["tile.restore.folders"]));
+    const two = (over: Partial<Settings> = {}) =>
+      settings({ vmsEnabled: true, restoreFolders: { containers: "restore/containers", vms: "restore/vms" }, ...over });
+    const lastSave = () => save.mock.calls.at(-1)?.[0];
+
+    it("holds the default folder and says where every section lands", async () => {
+      await renderTile(RestorePage);
+      expect(folders().getByText(en["settings.restoreFolder"])).toBeTruthy();
+      expect(folders().getByDisplayValue("restore")).toBeTruthy();
+      expect(card(en["tile.restore.folders"]).textContent).toContain("All sections end up in /host/user/restore.");
+    });
+
+    it("names the subfolder in that sentence once every section gets one", async () => {
+      await renderTile(RestorePage, settings({ restoreFolderPerSection: true }));
+      expect(card(en["tile.restore.folders"]).textContent).toContain("All sections end up in /host/user/restore/‹section›.");
+    });
+
+    it("saves the switch for a subfolder per section", async () => {
+      await renderTile(RestorePage);
+      fireEvent.click(folders().getByRole("switch", { name: en["tile.restore.perSection"] }));
+      expect(lastSave()).toEqual({ restoreFolderPerSection: true });
+    });
+
+    it("gives a section a folder of its own, starting from where it lands today", async () => {
+      await renderTile(RestorePage, two());
+      fireEvent.click(folders().getByRole("button", { name: en["tile.restore.exception"] }));
+      expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([en["nav.containers"], en["nav.vms"]]);
+
+      fireEvent.click(screen.getByRole("menuitem", { name: en["nav.vms"] }));
+      expect(lastSave()).toEqual({ restoreFolderOverrides: { vms: "restore/vms" } });
+    });
+
+    it("opens an empty field for a section with nowhere to start from, and saves once a folder is typed", async () => {
+      await renderTile(RestorePage, settings({ restoreFolder: "" }));
+      fireEvent.click(folders().getByRole("button", { name: en["tile.restore.exception"] }));
+      fireEvent.click(screen.getByRole("menuitem", { name: en["nav.containers"] }));
+      expect(save).not.toHaveBeenCalled();
+
+      const field = folders().getAllByRole("textbox")[1];
+      fireEvent.change(field, { target: { value: "restore/apps" } });
+      expect(lastSave()).toEqual({ restoreFolderOverrides: { containers: "restore/apps" } });
+    });
+
+    it("lists a section that has its own folder and speaks of the others", async () => {
+      await renderTile(RestorePage, two({ restoreFolderOverrides: { vms: "restore/machines" } }));
+      expect(folders().getByDisplayValue("restore/machines")).toBeTruthy();
+      expect(card(en["tile.restore.folders"]).textContent).toContain("All other sections end up in /host/user/restore.");
+
+      fireEvent.click(folders().getByRole("button", { name: en["tile.restore.exception"] }));
+      expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([en["nav.containers"]]);
+    });
+
+    it("puts a section back on the shared folder", async () => {
+      await renderTile(RestorePage, two({ restoreFolderOverrides: { vms: "restore/machines", containers: "restore/apps" } }));
+      expect(folders().queryByRole("button", { name: en["tile.restore.exception"] })).toBeNull();
+
+      fireEvent.click(folders().getAllByRole("button", { name: en["tile.restore.removeException"] })[1]);
+      expect(lastSave()).toEqual({ restoreFolderOverrides: { containers: "restore/apps" } });
+    });
   });
 
   it("downloads the recovery kit and shows why the server refused it", async () => {

@@ -13,20 +13,14 @@ const reply = () =>
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
-  return { ...actual, getIdle: () => reply(), getStreaming: () => reply() };
+  return { ...actual, getIdle: () => reply() };
 });
 
 const { IdleCard } = await import("./IdleCard");
-const { StreamingCard } = await import("./StreamingCard");
 
 function Cards() {
   const { t } = useT();
-  return (
-    <>
-      <IdleCard t={t} />
-      <StreamingCard t={t} />
-    </>
-  );
+  return <IdleCard t={t} />;
 }
 
 async function renderCards() {
@@ -48,17 +42,13 @@ afterEach(() => {
   answer = "pending";
 });
 
-it("offers the idle and streaming cards as search targets while their settings load", async () => {
+it("offers the idle card as a search target while its settings load", async () => {
   const root = await renderCards();
   expect(jumpTarget(root, { card: en["idle.title"], row: en["idle.cpu"] })?.getAttribute("data-search-card")).toBe(en["idle.title"]);
-  expect(jumpTarget(root, { card: en["streaming.title"], row: en["streaming.toggle"] })?.getAttribute("data-search-card")).toBe(
-    en["streaming.title"]
-  );
 });
 
-it("leaves the idle and streaming cards out when their settings cannot be read", async () => {
+it("leaves the idle card out when its settings cannot be read", async () => {
   answer = "failed";
   const root = await renderCards();
   expect(jumpTarget(root, { card: en["idle.title"] })).toBeNull();
-  expect(jumpTarget(root, { card: en["streaming.title"] })).toBeNull();
 });

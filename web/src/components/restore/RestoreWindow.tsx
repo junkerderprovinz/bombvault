@@ -14,6 +14,8 @@ import {
   zfsRestorePoints,
   type DBDumpView,
   type FileEntry,
+  type TimelineMark,
+  type TimelineRow,
   type ZFSHostDataset,
   type ZFSRestorePoint,
 } from "../../lib/api";
@@ -22,7 +24,7 @@ import { isGone, itemProgressKey } from "../../lib/backupList";
 import { useBackupWatch } from "../../lib/backupWatch";
 import { copyText } from "../../lib/clipboard";
 import { ENGINE_NAMES, pairsWith } from "../../lib/dbdump";
-import type { Entry } from "../../lib/entry";
+import { rowHolds, rowTime, type Entry } from "../../lib/entry";
 import { loadErrorMessage } from "../../lib/errors";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { isolateLtr, tLtr } from "../../lib/ltrFragments";
@@ -38,6 +40,7 @@ import {
   recommendationWhy,
   requestedRow,
   restoreFolderFor,
+  snapshotIds,
   whatsFor,
   wheresFor,
   type RestoreWhat,
@@ -60,7 +63,6 @@ import { FlashPluginList } from "../FlashPluginList";
 import { FolderBrowser } from "../FolderBrowser";
 import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconCopy, IconDownload, IconRecovery, IconRestore, IconTrash } from "../navGlyphs";
-import { SnapshotTags } from "../RestorePanel";
 import { Selector } from "../Selector";
 import { SelectField } from "../SelectField";
 import { SnapshotFileTree } from "../SnapshotFileTree";
@@ -105,9 +107,70 @@ const WHAT_LABEL: Record<RestoreWhat, TranslationKey> = {
   plugins: "flash.plugins",
 };
 
+/** DeleteBackup offers to delete the backup the window stands on: at the
+ *  storage location it is taken from and, where others hold it too, at all. */
+function DeleteBackup({
+  timeline,
+  itemKey,
+  row,
+  mark,
+  onDeleted,
+}: {
+  timeline: TimelineState;
+  itemKey: string;
+  row: TimelineRow;
+  mark: TimelineMark;
+  onDeleted: () => void;
+}) {
+  const { t } = useT();
+  const [deleting, setDeleting] = useState<string[] | null>(null);
+  const place = timeline.places.find((p) => p.place === mark.place);
+  if (!place) return null;
+  return (
+    <span className="me-auto flex flex-wrap gap-2">
+      <Button
+        label={t("common.delete")}
+        labelKey="common.delete"
+        glyph={<IconTrash />}
+        tone="subtle"
+        disabled={place.appendOnly}
+        hint={place.appendOnly ? t("placementCode.appendOnly") : undefined}
+        onClick={() => setDeleting([mark.place])}
+      />
+      {row.places.length > 1 && (
+        <Button
+          label={t("timeline.deleteRow")}
+          labelKey="timeline.deleteRow"
+          glyph={<IconTrash />}
+          tone="subtle"
+          onClick={() => setDeleting([])}
+        />
+      )}
+      {deleting && (
+        <TimelineDeleteDialog
+          key={deleting.join(",")}
+          domain={timeline.domain}
+          itemKey={itemKey}
+          row={row}
+          places={deleting}
+          onDone={() => {
+            const everywhere = deleting.length === 0;
+            setDeleting(null);
+            onDeleted();
+            timeline.reload();
+            // The cards count the copies at targets, so they read them again.
+            if (everywhere || deleting.some((p) => p !== "local")) placementChanged();
+          }}
+          onClose={() => setDeleting(null)}
+        />
+      )}
+    </span>
+  );
+}
+
 /** SelfRestoreNote stands in for the window on the self-backup: the running
  *  instance does not overwrite its own settings. */
-function SelfRestoreNote({ onClose }: { onClose: () => void }) {
+function SelfRestoreNote({ deletes, onClose }: { deletes: React.ReactNode; onClose: () => void }) {
   const { t } = useT();
   const navigate = useNavigate();
   return (
@@ -117,6 +180,7 @@ function SelfRestoreNote({ onClose }: { onClose: () => void }) {
       onClose={onClose}
       footer={
         <>
+          {deletes}
           <Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={onClose} />
           <Button
             label={t("entry.config.startRecovery")}
@@ -201,7 +265,19 @@ export function RestoreWindow({
   deletable?: boolean;
   onClose: () => void;
 }) {
-  if (entry.detail.kind === "config") return <SelfRestoreNote onClose={onClose} />;
+  if (entry.detail.kind === "config") {
+    const { snapshot } = ask;
+    const row = deletable && snapshot ? timeline.rows.find((r) => rowHolds(r, snapshot)) : undefined;
+    const mark = row && (row.places.find((m) => m.place === ask.place) ?? autoMark(row, timeline.places) ?? row.places[0]);
+    return (
+      <SelfRestoreNote
+        deletes={
+          row && mark && <DeleteBackup timeline={timeline} itemKey={entry.item.key} row={row} mark={mark} onDeleted={onClose} />
+        }
+        onClose={onClose}
+      />
+    );
+  }
   return <RestoreForm entry={entry} name={name} timeline={timeline} ask={ask} deletable={deletable} onClose={onClose} />;
 }
 
@@ -227,7 +303,7 @@ function RestoreForm({
   const { kind } = item;
   const { rows, places, loadPlace, reload } = timeline;
   const labelOf = usePlaceLabel(places);
-  const { list: openFindings, flagged } = useOpenAnomalies();
+  const { list: openFindings, flagged: flaggedIds } = useOpenAnomalies();
   const container = detail.kind === "container" ? detail.container : null;
   const zfsItem = detail.kind === "zfs" ? detail.dataset : null;
   const gone = isGone(item);
@@ -247,7 +323,6 @@ function RestoreForm({
   const [leaveStopped, setLeaveStopped] = useState(false);
   const [withoutRuntime, setWithoutRuntime] = useState(false);
   const [backupFirst, setBackupFirst] = useState(true);
-  const [deleting, setDeleting] = useState<string[] | null>(null);
   const [preparing, setPreparing] = useState(false);
 
   const [datasetPick, setDatasetPick] = useState<string | null>(null);
@@ -258,7 +333,6 @@ function RestoreForm({
 
   const row = rows.find((r) => r.key === rowKey) ?? asked?.row ?? rows[recommendation.index];
   const mark = row && (row.places.find((m) => m.place === placePick) ?? autoMark(row, places) ?? row.places[0]);
-  const place = mark && places.find((p) => p.place === mark.place);
   const source = mark ? sourceOfPlace(mark.place) : "local";
   const snapshotId = mark ? newestId(mark) : "";
 
@@ -315,6 +389,11 @@ function RestoreForm({
   const storedProps = member?.properties ?? {};
   const hasProps = Object.keys(storedProps).length > 0;
   const mountpoint = live?.hostMountpoint ?? zfsItem?.hostMountpoint ?? "";
+  // A finding about one dataset marks that dataset's backup, not the run of the tree.
+  const flagged =
+    zfsItem && !wholeTree
+      ? member !== undefined && flaggedIds.has(member.snapshotId)
+      : row !== undefined && snapshotIds(row).some((id) => flaggedIds.has(id));
 
   const facts = {
     hasOriginal,
@@ -366,6 +445,7 @@ function RestoreForm({
 
   const [dumps, setDumps] = useState<DBDumpView[]>([]);
   const database = container !== null && container.dbTier !== "";
+  const paired = row !== undefined && dumps.some((dump) => pairsWith(dump, { id: snapshotId, original: row.key }));
   useEffect(() => {
     if (!database) return;
     listDbDumps(item.key, source)
@@ -529,7 +609,7 @@ function RestoreForm({
     else push(t("vm.ssh.copyFailed"), "fail");
   }
 
-  const when = (time: string) => formatRecent(Math.floor(Date.parse(time) / 1000), lang);
+  const when = (r: TimelineRow) => formatRecent(rowTime(r), lang);
   const recommended = rows[recommendation.index];
   const why = recommendationWhy(recommendation, t, lang);
   const title = t("entry.restore.title").replace("{name}", () => name);
@@ -684,27 +764,8 @@ function RestoreForm({
       onClose={onClose}
       footer={
         <>
-          {deletable && row && mark && place && (
-            <span className="me-auto flex flex-wrap gap-2">
-              <Button
-                label={t("common.delete")}
-                labelKey="common.delete"
-                glyph={<IconTrash />}
-                tone="subtle"
-                disabled={place.appendOnly}
-                hint={place.appendOnly ? t("placementCode.appendOnly") : undefined}
-                onClick={() => setDeleting([mark.place])}
-              />
-              {row.places.length > 1 && (
-                <Button
-                  label={t("timeline.deleteRow")}
-                  labelKey="timeline.deleteRow"
-                  glyph={<IconTrash />}
-                  tone="subtle"
-                  onClick={() => setDeleting([])}
-                />
-              )}
-            </span>
+          {deletable && row && mark && (
+            <DeleteBackup timeline={timeline} itemKey={item.key} row={row} mark={mark} onDeleted={onClose} />
           )}
           <Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={onClose} />
           {!listed && (
@@ -737,7 +798,7 @@ function RestoreForm({
             <MissingRestorePoint
               requested={ask.snapshot}
               requestedAt={ask.at ?? 0}
-              points={rows.map((r) => ({ id: r.key, at: Math.floor(Date.parse(r.time) / 1000) }))}
+              points={rows.map((r) => ({ id: r.key, at: rowTime(r) }))}
               t={t}
             />
           )}
@@ -753,7 +814,7 @@ function RestoreForm({
                 label={t("restoreWindow.backup")}
                 options={rows.map((r) => ({
                   value: r.key,
-                  label: r === recommended ? t("restoreWindow.recommendedOption").replace("{when}", () => when(r.time)) : when(r.time),
+                  label: r === recommended ? t("restoreWindow.recommendedOption").replace("{when}", () => when(r)) : when(r),
                 }))}
                 className="max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
               />
@@ -802,7 +863,7 @@ function RestoreForm({
           {row !== recommended && recommended && (
             <div className="flex flex-wrap items-center gap-3 rounded-card bg-carbon-surface2 px-4 py-3 text-sm text-carbon-text">
               <span className="min-w-0 flex-1">
-                {t("restoreWindow.recommendedIs").replace("{when}", () => when(recommended.time))} {why}
+                {t("restoreWindow.recommendedIs").replace("{when}", () => when(recommended))} {why}
               </span>
               <Button
                 label={t("restoreWindow.useThis")}
@@ -812,25 +873,14 @@ function RestoreForm({
               />
             </div>
           )}
-          {(container || mark.incomplete || flagged.has(row.key) || (member && flagged.has(member.snapshotId))) && (
+          {(flagged || paired) && (
             <div className="flex flex-wrap items-center gap-2">
-              {(flagged.has(row.key) || (member && flagged.has(member.snapshotId))) && (
+              {flagged && (
                 <Badge tone="warn" size="small">
                   {t("anomaly.snapshotFlagged")}
                 </Badge>
               )}
-              {container && (
-                <SnapshotTags
-                  tags={mark.tags}
-                  snapshotId={snapshotId}
-                  containerName={container.name}
-                  aliases={container.aliases ?? []}
-                  source={source}
-                  onTagged={() => void loadPlace(mark.place)}
-                  t={t}
-                />
-              )}
-              {dumps.some((dump) => pairsWith(dump, { id: snapshotId, original: row.key })) && (
+              {paired && (
                 <span className="flex items-center gap-1">
                   <Badge tone="neutral" size="small">
                     {t("dbdump.pairedBadge")}
@@ -1007,24 +1057,6 @@ function RestoreForm({
         </>
       )}
 
-      {deleting && row && (
-        <TimelineDeleteDialog
-          key={deleting.join(",")}
-          domain={timeline.domain}
-          itemKey={item.key}
-          row={row}
-          places={deleting}
-          onDone={() => {
-            const everywhere = deleting.length === 0;
-            setDeleting(null);
-            onClose();
-            reload();
-            // The cards count the copies at targets, so they read them again.
-            if (everywhere || deleting.some((p) => p !== "local")) placementChanged();
-          }}
-          onClose={() => setDeleting(null)}
-        />
-      )}
       {confirmDialog}
     </InstanceWindow>
   );

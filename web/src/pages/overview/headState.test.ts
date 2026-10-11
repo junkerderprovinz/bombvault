@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import type { ProgressState } from "../../lib/progress";
 import { tallyEntries } from "../../lib/protectionTally";
-import { headlineOf, liveRunOf, stationOf } from "./headState";
-import { domain, item } from "./overview.testsupport";
+import { headlineOf, liveRunOf, passOf, passRuns, passShare, stationOf } from "./headState";
+import { domain, item, run } from "./overview.testsupport";
 import { sectionsOf } from "./protectionChecks";
 
 const live = (over: Partial<ProgressState> = {}): ProgressState => ({
@@ -49,7 +49,27 @@ describe("headlineOf", () => {
   });
 });
 
-describe("stationOf", () => {
+describe("stationOf with the step the server names", () => {
+  it("stands where the server says a container or a VM is", () => {
+    expect(stationOf("container", live({ step: "stop" }))).toBe("stop");
+    expect(stationOf("container", live({ step: "read" }))).toBe("read");
+    expect(stationOf("vm", live({ step: "start", percent: 100 }))).toBe("start");
+  });
+
+  it("does not move on by the percentage while the server still stops the container", () => {
+    expect(stationOf("container", live({ step: "stop", percent: 40 }))).toBe("stop");
+  });
+
+  it("keeps reading until the server says the containers start again", () => {
+    expect(stationOf("container", live({ step: "read", percent: 100, committed: true }))).toBe("read");
+  });
+
+  it("copies while an off-site copy runs, whatever step its frame carries", () => {
+    expect(stationOf(null, live({ phase: "replicate", step: "read" }))).toBe("copy");
+  });
+});
+
+describe("stationOf without a step", () => {
   it("stands at the stop until a container's backup starts reading", () => {
     expect(stationOf("container", live())).toBe("stop");
     expect(stationOf("vm", live())).toBe("stop");
@@ -78,6 +98,16 @@ describe("stationOf", () => {
 });
 
 describe("liveRunOf", () => {
+  it("takes its station from the step of the run it follows", () => {
+    expect(liveRunOf({ "container:plex": live({ percent: 30, step: "stop" }) })).toMatchObject({ station: "stop" });
+  });
+
+  it("follows the entry a pass is at, not the pass", () => {
+    const pass = live({ percent: 20, done: 1, total: 5, unit: "items" });
+    expect(liveRunOf({ everything: pass })).toBeNull();
+    expect(liveRunOf({ everything: pass, "vm:win": live() })).toMatchObject({ kind: "vm", name: "win" });
+  });
+
   it("is null while nothing runs", () => {
     expect(liveRunOf({})).toBeNull();
     expect(liveRunOf({ "container:plex": live({ active: false }) })).toBeNull();
@@ -122,5 +152,76 @@ describe("liveRunOf", () => {
 
   it("lets go of a run that has ended and only lingers", () => {
     expect(liveRunOf({ "container:plex": live({ percent: 100, finished: true }) })).toBeNull();
+  });
+});
+
+describe("the pass over everything", () => {
+  const counting = (done: number, total: number, over: Partial<ProgressState> = {}) => ({
+    everything: live({ done, total, unit: "items", ...over }),
+  });
+
+  it("is null while no pass runs", () => {
+    expect(passOf({})).toBeNull();
+    expect(passOf({ "container:plex": live() })).toBeNull();
+  });
+
+  it("counts the entries it is through", () => {
+    expect(passOf(counting(3, 14))).toEqual({ done: 3, total: 14 });
+  });
+
+  it("starts at none, because the server leaves a zero out", () => {
+    expect(passOf({ everything: live({ total: 14, unit: "items" }) })).toEqual({ done: 0, total: 14 });
+  });
+
+  it("ends with its last frame, not when that frame is dropped", () => {
+    expect(passOf(counting(14, 14, { percent: 100, finished: true }))).toBeNull();
+  });
+
+  it("shares out the ring by the entries behind it", () => {
+    expect(passShare({ done: 3, total: 12 }, null)).toBe(25);
+  });
+
+  it("adds the part of the entry being backed up", () => {
+    const at = liveRunOf({ "container:plex": live({ percent: 50 }) });
+    expect(passShare({ done: 3, total: 12 }, at)).toBeCloseTo(29.17, 2);
+  });
+
+  it("does not count an off-site copy as part of an entry", () => {
+    const copy = liveRunOf({ "offsite:containers": live({ phase: "replicate", percent: 50 }) });
+    expect(passShare({ done: 3, total: 12 }, copy)).toBe(25);
+  });
+
+  it("shows an empty ring for a pass with nothing to back up", () => {
+    expect(passShare({ done: 0, total: 0 }, null)).toBe(0);
+  });
+
+  it("never passes the full ring when the total was corrected downwards", () => {
+    expect(passShare({ done: 5, total: 4 }, null)).toBe(100);
+  });
+});
+
+describe("passRuns", () => {
+  const parent = run({ id: "all", domain: "everything", targetId: "everything", status: "running", finishedAt: null });
+  const child = (id: string, over: Partial<Parameters<typeof run>[0]> = {}) => run({ id, groupId: "all", ...over });
+
+  it("lists the backups the running pass has finished, oldest first", () => {
+    const runs = [child("c", { status: "running", finishedAt: null }), child("b", { status: "failed" }), child("a"), parent];
+    expect(passRuns(runs).map((r) => [r.id, r.status])).toEqual([
+      ["a", "success"],
+      ["b", "failed"],
+    ]);
+  });
+
+  it("leaves out a dump that ran for one of its entries", () => {
+    expect(passRuns([child("d", { kind: "dbdump" }), child("a"), parent]).map((r) => r.id)).toEqual(["a"]);
+  });
+
+  it("leaves out runs of an earlier pass and runs outside one", () => {
+    const runs = [child("a"), run({ id: "solo" }), run({ id: "old", groupId: "before" }), parent];
+    expect(passRuns(runs).map((r) => r.id)).toEqual(["a"]);
+  });
+
+  it("is empty once the pass is over", () => {
+    expect(passRuns([child("a"), { ...parent, status: "success", finishedAt: 1 }])).toEqual([]);
   });
 });

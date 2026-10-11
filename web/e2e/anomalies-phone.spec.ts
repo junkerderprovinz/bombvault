@@ -397,6 +397,22 @@ const CHANGES = {
   },
 };
 
+const held = (domain: string) => ({ domain, use: "home", where: "/mnt/cache/backups", enabled: true, immutable: false, own: [] });
+const place = (over: Record<string, unknown>) => ({
+  object: "path",
+  provider: "",
+  enabled: true,
+  offPremises: false,
+  protection: { immutable: false, testable: false },
+  capacity: {},
+  ...over,
+});
+// One local location, so both findings about a disk can only mean it.
+const LOCATIONS = [
+  place({ id: "path:local", kind: "local", backend: "local", name: "Cache-Pool", where: "/mnt/cache/backups", sections: ["containers", "vms", "files"].map(held) }),
+  place({ id: "destination:box", object: "destination", kind: "offsite", backend: "sftp", name: "Storage Box", where: "sftp:box:/backups", sections: [held("containers")] }),
+];
+
 async function stage(page: Page, width: number, s: Stage = {}): Promise<void> {
   const enabled = s.enabled ?? true;
   const findings = s.findings ?? FINDINGS;
@@ -424,6 +440,7 @@ async function stage(page: Page, width: number, s: Stage = {}): Promise<void> {
     return route.fulfill({ json: { ok: true, series: measured(targetId) } });
   });
   await page.route("**/api/anomalies/*/changes*", (route) => route.fulfill({ json: { ok: true, changes: CHANGES } }));
+  await page.route("**/api/storage/locations", (route) => route.fulfill({ json: { ok: true, locations: LOCATIONS } }));
   // Same seeding as narrow-viewport.spec.ts: the stored locale is the look,
   // and the server's display prefs must not overwrite it mid-boot.
   await page.route("**/api/display-prefs*", (route) => route.abort());
@@ -535,7 +552,7 @@ for (const width of [320, 390]) {
     await expectWindowFits(page);
 
     await page.getByRole("dialog").getByRole("button", { name: "Überwachung" }).click();
-    await expect(page.getByRole("dialog").getByRole("combobox", { name: "Empfindlichkeit" })).toBeVisible();
+    await expect(page.getByRole("dialog").getByRole("radiogroup", { name: "Empfindlichkeit" })).toBeVisible();
     await expectWindowFits(page);
     await closeWindow(page);
 
@@ -608,7 +625,7 @@ test.describe("on the desktop", () => {
     expect(filled).toBe(1);
 
     await restore.click();
-    await expect(page).toHaveURL(/\/containers\?restore=5f3a9c1e&at=\d+&item=Nextcloud_AIO/);
+    await expect(page).toHaveURL(new RegExp(`/backups/container/${NEXTCLOUD}\\?restore=5f3a9c1e&at=\\d+$`));
   });
 
   test("Details opens a window with the whole sentence, the curve and every action", async ({ page }) => {
@@ -639,6 +656,36 @@ test.describe("on the desktop", () => {
     const window = page.getByRole("dialog");
     await expect(window.getByText(/Fast alles davon liegt in/)).toBeVisible();
     await expect(window.getByRole("button", { name: /vergleichen/ })).toHaveCount(0);
+
+    const table = window.getByRole("table");
+    await expect(table.getByRole("columnheader")).toHaveText(["Ordner", "Entfernt", "Hinzugekommen", "Geändert"]);
+    await expect(table.getByRole("row", { name: /archiv-2019-bis-2026/ }).getByRole("cell")).toHaveText(["38.0 GB", "", ""]);
+    await expect(table.getByRole("row", { name: /^Alles andere/ }).getByRole("cell")).toHaveText(["", "", "12 Dateien"]);
+    await expectWindowFits(page);
+  });
+
+  test("a finding about a disk carries its storage location's name and leads there", async ({ page }) => {
+    await stage(page, 1280);
+    await openPage(page);
+    const disk = findings(page).filter({ hasText: "Datenträger mit" }).first();
+    await expect(disk.getByRole("link", { name: "Cache-Pool" })).toBeVisible();
+    await disk.getByRole("button", { name: "Details" }).click();
+    const window = page.getByRole("dialog");
+    await expect(window.getByRole("button", { name: "Element öffnen" })).toHaveCount(0);
+    await window.getByRole("button", { name: "Speicherort ansehen" }).click();
+    await expect(page).toHaveURL(/\/storage\/path%3Alocal$/);
+  });
+
+  test("a finding that keeps old backups says so with a lock, in the list and in its window", async ({ page }) => {
+    await stage(page, 1280);
+    await openPage(page);
+    const lock = findingOf(page, NEXTCLOUD).getByLabel(/^Alte Backups dieses Elements bleiben erhalten/);
+    await expect(lock).toBeVisible();
+    const name = (await findingOf(page, NEXTCLOUD).getByRole("link", { name: NEXTCLOUD }).boundingBox())!;
+    const at = (await lock.boundingBox())!;
+    expect(Math.abs(at.y + at.height / 2 - (name.y + name.height / 2)), "the lock stands beside the name").toBeLessThanOrEqual(4);
+    await findingOf(page, NEXTCLOUD).getByRole("button", { name: "Details" }).click();
+    await expect(page.getByRole("dialog").getByText(/^Alte Backups dieses Elements bleiben erhalten/)).toBeVisible();
   });
 
   test("Alle N quittieren sends exactly that item's ids", async ({ page }) => {
@@ -725,7 +772,7 @@ test.describe("on the desktop", () => {
 
     const window = page.getByRole("dialog");
     await expect(window.getByText("Lernt noch: 3 von 10 Sicherungen")).toBeVisible();
-    await expect(window.getByRole("combobox", { name: "Empfindlichkeit" })).toBeVisible();
+    await expect(window.getByRole("radiogroup", { name: "Empfindlichkeit" })).toBeVisible();
     await expect(window.getByText("Üblicher Bereich: steht nach 10 Sicherungen fest")).toBeVisible();
     await expect(window.locator("[data-part='band']")).toHaveCount(0);
     await expect(window.locator("[data-part='to-learn']")).toHaveCount(7);
@@ -801,9 +848,29 @@ test("the More sheet counts the open findings and the bar marks its trigger whil
   await page.route("**/api/anomalies/summary", (route) =>
     route.fulfill({ json: { ok: true, summary: summary({ open }) } }),
   );
-  await page.goto("/containers");
+  // Before the first backup the navigation carries no counts, so the install
+  // has one.
+  const backedUp = {
+    kind: "container",
+    key: "nextcloud",
+    name: "nextcloud",
+    included: true,
+    paused: false,
+    effectiveSchedule: { kind: "domain", spec: "daily 03:00", alsoSpec: "" },
+    lastBackup: Math.floor(Date.now() / 1000) - 3600,
+    lastRunStatus: "success",
+    sourceBytes: 1024,
+    state: "running",
+    installed: true,
+    runs: [],
+  };
+  await page.route(
+    (url) => url.pathname === "/api/items",
+    (route) => route.fulfill({ json: { ok: true, items: [backedUp], unlisted: [] } }),
+  );
+  await page.goto("/storage");
 
-  const more = page.getByRole("button", { name: "Mehr", exact: true });
+  const more = page.getByTestId("bottom-nav").getByRole("button", { name: "Mehr", exact: true });
   const sheet = page.getByTestId("more-sheet");
   const row = sheet.getByRole("link", { name: /Anomalien/ });
   await expect(more).toBeVisible();

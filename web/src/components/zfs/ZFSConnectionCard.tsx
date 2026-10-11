@@ -30,7 +30,7 @@ export function zfsReaches(result: ZFSConnectionResult): boolean {
   return CONNECTED.has(result.code);
 }
 
-/** ZFSConnectionCard is ZFSConnectionStatus as a card of the ZFS page. */
+/** ZFSConnectionCard is ZFSConnectionStatus as a card of its own. */
 export function ZFSConnectionCard() {
   const { t } = useT();
   return (

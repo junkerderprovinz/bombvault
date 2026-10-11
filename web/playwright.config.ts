@@ -1,5 +1,5 @@
 // Playwright harness: the responsive-regression gate for the mobile shell
-// and the phone layouts of the Dashboard, Containers and VMs pages.
+// and the phone layouts of the pages.
 //
 // Why the compiled Go binary and not `vite preview` or MSW: the binary serves
 // the embedded SPA and the real API (web/embed.go), `vite preview` serves zero
@@ -68,31 +68,26 @@ const testMatch = [
   "home-trigger.spec.ts",
   "desktop-untouched.spec.ts",
   "narrow-viewport.spec.ts",
-  // The Containers PR: touch tree, list ergonomics battery and the
-  // run-visibility sheet checks.
   "touch-tree.spec.ts",
-  "list-ergonomics-containers.spec.ts",
+  "list-ergonomics.spec.ts",
   "run-detail-visibility.spec.ts",
-  "destination-vms.spec.ts",
-  "files-phone.spec.ts",
-  "flash-phone.spec.ts",
-  "config-phone.spec.ts",
   "anomalies-phone.spec.ts",
   "dashboard-phone.spec.ts",
-  "zfs-phone.spec.ts",
   "instances-phone.spec.ts",
   "pairing.spec.ts",
   "settings-phone.spec.ts",
   "activity-log-jump.spec.ts",
   "selector-span.spec.ts",
   "page-width.spec.ts",
-  "placement-phone.spec.ts",
   "narrow-window.spec.ts",
   "backups-list.spec.ts",
   "storage.spec.ts",
   "backup-entry.spec.ts",
+  "old-links.spec.ts",
+  "entry-kinds-phone.spec.ts",
   "overview.spec.ts",
   "restore.spec.ts",
+  "welcome.spec.ts",
 ];
 
 for (const spec of testMatch) {

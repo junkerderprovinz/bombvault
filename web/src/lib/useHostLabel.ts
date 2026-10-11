@@ -12,10 +12,9 @@ function loadPlatform(): Promise<string> {
   return platform;
 }
 
-/** useHostLabel is what the interface calls this server: the product it runs on,
- *  or "Host" on a plain Docker host and until the answer is in. */
-export function useHostLabel(): string {
-  const { t } = useT();
+/** usePlatform is the kind of server BombVault runs on: "unraid", "truenas" or
+ *  "generic", and "" until the answer is in. */
+export function usePlatform(): string {
   const [kind, setKind] = useState("");
   useEffect(() => {
     let alive = true;
@@ -26,7 +25,14 @@ export function useHostLabel(): string {
       alive = false;
     };
   }, []);
-  return PRODUCTS[kind] ?? t("placement.hostGeneric");
+  return kind;
+}
+
+/** useHostLabel is what the interface calls this server: the product it runs on,
+ *  or "Host" on a plain Docker host and until the answer is in. */
+export function useHostLabel(): string {
+  const { t } = useT();
+  return PRODUCTS[usePlatform()] ?? t("placement.hostGeneric");
 }
 
 /** The host label settled rather than reactive, for a flow that builds its

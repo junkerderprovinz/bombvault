@@ -85,7 +85,11 @@ export function RoleRequests({
     await decide(role, request, { decision: "revoke" }, t("zfs.receive.revoked"));
   }
 
-  const sections = (request: RoleRequest) => request.sections.map((s) => t(domainLabelKey(s))).join(", ");
+  // A request for a share says so, since its copies bypass the receiving server.
+  const sections = (request: RoleRequest) =>
+    [request.sections.map((s) => t(domainLabelKey(s))).join(", "), request.store === "share" && t("rcloneRemote.share")]
+      .filter(Boolean)
+      .join(" · ");
 
   return (
     <>

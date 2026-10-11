@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ApiError,
   getStorageLocation,
@@ -18,13 +18,28 @@ export function storageLocationsChanged(): void {
 }
 
 /**
- * useReloadCount counts the reasons to read again: a write announced with
- * storageLocationsChanged, a retry, and the end of a backup or a copy, which
- * moves the fill level and the last copy.
+ * useWriteCount counts the reasons to read again that every reader shares: a
+ * write announced with storageLocationsChanged and a call of the function it
+ * returns.
  */
-function useReloadCount(): [number, () => void] {
+function useWriteCount(): [number, () => void] {
   const [count, setCount] = useState(0);
   const bump = useCallback(() => setCount((n) => n + 1), []);
+
+  useEffect(() => {
+    window.addEventListener(STORAGE_LOCATIONS_CHANGED, bump);
+    return () => window.removeEventListener(STORAGE_LOCATIONS_CHANGED, bump);
+  }, [bump]);
+
+  return [count, bump];
+}
+
+/**
+ * useReloadCount also counts the end of a backup or a copy, which moves the
+ * fill level and the last copy.
+ */
+function useReloadCount(): [number, () => void] {
+  const [count, bump] = useWriteCount();
   const running = anyActive(useProgress()).active;
   const wasRunning = useRef(running);
 
@@ -32,11 +47,6 @@ function useReloadCount(): [number, () => void] {
     if (wasRunning.current && !running) bump();
     wasRunning.current = running;
   }, [running, bump]);
-
-  useEffect(() => {
-    window.addEventListener(STORAGE_LOCATIONS_CHANGED, bump);
-    return () => window.removeEventListener(STORAGE_LOCATIONS_CHANGED, bump);
-  }, [bump]);
 
   return [count, bump];
 }
@@ -50,7 +60,19 @@ export interface StorageLocationList {
 }
 
 export function useStorageLocations(): StorageLocationList {
-  const [reloads, retry] = useReloadCount();
+  return useList(...useReloadCount());
+}
+
+/**
+ * useStorageLocationsOnDemand leaves the end of a run to its caller, for a
+ * reader that is mounted on every page and hears of a finished run without
+ * the progress stream.
+ */
+export function useStorageLocationsOnDemand(): StorageLocationList {
+  return useList(...useWriteCount());
+}
+
+function useList(reloads: number, retry: () => void): StorageLocationList {
   const [state, setState] = useState({ locations: [] as StorageLocation[], loaded: false, failed: false });
 
   useEffect(() => {
@@ -69,7 +91,7 @@ export function useStorageLocations(): StorageLocationList {
     };
   }, [reloads]);
 
-  return { ...state, retry };
+  return useMemo(() => ({ ...state, retry }), [state, retry]);
 }
 
 export type LocationStatus = "loading" | "ready" | "missing" | "failed";

@@ -113,6 +113,20 @@ export function introDatabases<
   return containers.filter((c) => c.dbTier === "curated" && !c.dbDumpOff && !c.dbDumpLabelOff);
 }
 
+/**
+ * dumpRuns says whether a backup of the container takes a database dump. Its
+ * label and the switch for every container decide before its own setting,
+ * and a container that only looks like a database dumps once an engine is
+ * chosen for it.
+ */
+export function dumpRuns(
+  c: Pick<Container, "dbTier" | "dbDumpOff" | "dbDumpEngine" | "dbDumpLabelOff" | "dbDumpsGlobalOff">
+): boolean {
+  if (c.dbTier === "" || c.dbDumpLabelOff || c.dbDumpsGlobalOff) return false;
+  if (c.dbTier === "label") return true;
+  return !c.dbDumpOff && (c.dbTier !== "lookalike" || c.dbDumpEngine !== "");
+}
+
 const COVERAGE_KEYS: Record<string, TranslationKey> = {
   stopped: "dbdump.coverageStopped",
   live: "dbdump.coverageLive",

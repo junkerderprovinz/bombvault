@@ -230,7 +230,7 @@ export function ReceivedRepoCard({
   return (
     <div
       style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
-      // Unlike ContainerRow, no glim-active: a check is a quick request, not a
+      // No glim-active: a check is a quick request, not a
       // tracked backup or restore job.
       className="relative overflow-hidden bg-carbon-background rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row"
     >

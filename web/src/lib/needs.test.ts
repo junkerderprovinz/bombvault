@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { AnomalyView, BackupItem, Run } from "./api";
+import type { AnomalyView, BackupItem, Run, StorageLocation, StorageLocationSection } from "./api";
 import { needsOf } from "./needs";
 
 function item(over: Partial<BackupItem>): BackupItem {
@@ -45,7 +45,43 @@ const leftOut = {
   effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
 } as const;
 
-const nothing = { items: [], runs: [], anomalies: [], kitDue: false };
+/** A copy to a storage location that has failed since it last worked. */
+function copy(over: Partial<StorageLocationSection> = {}): StorageLocationSection {
+  return {
+    domain: "containers",
+    use: "copy",
+    targetId: "t-containers",
+    where: "rclone:box:containers",
+    enabled: true,
+    immutable: false,
+    retention: { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 1 },
+    compression: "auto",
+    limitUpload: 0,
+    limitDownload: 0,
+    own: [],
+    lastCopy: { at: 100, ok: false, failingSince: 500 },
+    ...over,
+  };
+}
+
+function box(sections: StorageLocationSection[], id = "destination:box"): StorageLocation {
+  return {
+    id,
+    object: "destination",
+    kind: "offsite",
+    provider: "storagebox",
+    backend: "rclone",
+    name: "Storage Box",
+    where: "rclone:box:",
+    enabled: true,
+    offPremises: true,
+    sections,
+    protection: { immutable: false, testable: false },
+    capacity: {},
+  };
+}
+
+const nothing = { items: [], runs: [], locations: [], anomalies: [], kitDue: false };
 
 describe("needsOf", () => {
   it("is empty where nothing waits", () => {
@@ -90,16 +126,62 @@ describe("needsOf", () => {
   });
 
   it("lists the recovery kit while it is due", () => {
-    expect(needsOf({ ...nothing, kitDue: true })).toEqual([{ is: "recoveryKit" }]);
+    expect(needsOf({ ...nothing, items: [item({})], kitDue: true })).toEqual([{ is: "recoveryKit" }]);
   });
 
-  it("orders failures, entries, findings and the kit", () => {
+  it("asks for neither a schedule nor the recovery kit before the first backup", () => {
+    const fresh = [item({ key: "gitea", ...leftOut }), item({ key: "plex", lastBackup: 0, lastRunStatus: "" })];
+    expect(needsOf({ ...nothing, items: fresh, kitDue: true })).toEqual([]);
+    expect(needsOf({ ...nothing, kitDue: true })).toEqual([]);
+  });
+
+  it("still lists a failure and a finding before the first backup", () => {
+    const gitea = item({ key: "gitea", ...leftOut, runs: [{ id: "r1", kind: "backup", status: "failed", startedAt: 100 }] });
     const needs = needsOf({
-      items: [item({ key: "gitea", ...leftOut })],
-      runs: [run({ id: "r1" })],
+      items: [gitea],
+      runs: [run({ id: "r1", targetId: "gitea" })],
+      locations: [],
       anomalies: [finding("a", "warning")],
       kitDue: true,
     });
-    expect(needs.map((n) => n.is)).toEqual(["failedRun", "unprotected", "anomaly", "recoveryKit"]);
+    expect(needs.map((n) => n.is)).toEqual(["failedRun", "anomaly"]);
+  });
+
+  it("lists a failed off-site copy with its location, its section and since when", () => {
+    const failing = copy();
+    const location = box([failing, copy({ domain: "flash", targetId: "t-flash", lastCopy: { at: 400, ok: true } })]);
+    expect(needsOf({ ...nothing, locations: [location] })).toEqual([
+      { is: "failedCopy", location, sections: [failing], since: 500 },
+    ]);
+  });
+
+  it("lists a location once for all its failed copies, since the first of them", () => {
+    const sections = [copy({ lastCopy: { at: 0, ok: false, failingSince: 900 } }), copy({ domain: "flash", targetId: "t-flash" })];
+    const needs = needsOf({ ...nothing, locations: [box(sections), box([copy()], "destination:b2")] });
+    expect(needs).toMatchObject([
+      { is: "failedCopy", sections, since: 500 },
+      { is: "failedCopy", location: { id: "destination:b2" } },
+    ]);
+  });
+
+  it("drops a failed copy somebody has marked as seen", () => {
+    const seen = copy({ lastCopy: { at: 100, ok: false, failingSince: 500, acknowledged: true } });
+    expect(needsOf({ ...nothing, locations: [box([seen])] })).toEqual([]);
+  });
+
+  it("lists no copy that is switched off, has never run or is the home of its backups", () => {
+    const sections = [copy({ enabled: false }), copy({ lastCopy: undefined }), copy({ use: "home" })];
+    expect(needsOf({ ...nothing, locations: [box(sections)] })).toEqual([]);
+  });
+
+  it("orders failures, entries, copies, findings and the kit", () => {
+    const needs = needsOf({
+      items: [item({}), item({ key: "gitea", ...leftOut })],
+      runs: [run({ id: "r1" })],
+      locations: [box([copy()])],
+      anomalies: [finding("a", "warning")],
+      kitDue: true,
+    });
+    expect(needs.map((n) => n.is)).toEqual(["failedRun", "unprotected", "failedCopy", "anomaly", "recoveryKit"]);
   });
 });

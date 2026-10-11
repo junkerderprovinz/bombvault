@@ -71,6 +71,7 @@ function runsOf(prefix: string, domain: string, target: string) {
 const RUNS: Record<string, ReturnType<typeof runsOf>> = {
   "container:immich": runsOf("immich", "container", "immich"),
   "container:pihole": runsOf("pihole", "container", "pihole").slice(6),
+  "container:paperless-db": runsOf("paperless", "container", "paperless-db"),
   "vm:win11": runsOf("win11", "vm", "win11"),
   [`files:${SET_ID}`]: runsOf("fotos", "files", "Fotos"),
   [`zfs:${ZFS_ID}`]: runsOf("tank", "zfs", "tank/appdata"),
@@ -99,6 +100,7 @@ function item(over: Record<string, unknown>) {
 const ITEMS = [
   item({ key: "immich" }),
   item({ key: "pihole", installed: false, state: undefined, included: false, lastBackup: NOW - 20 * DAY }),
+  item({ key: "paperless-db" }),
   item({ kind: "vm", key: "win11", name: "Windows 11" }),
   item({ kind: "files", key: SET_ID, name: "Fotos", state: undefined, installed: undefined }),
   item({ kind: "zfs", key: ZFS_ID, name: "tank/appdata", state: undefined, installed: undefined }),
@@ -142,6 +144,7 @@ function container(over: Record<string, unknown>) {
 const CONTAINERS = [
   container({}),
   container({ name: "pihole", installed: false, state: "", ip: "", includeInSchedule: false, lastBackup: NOW - 20 * DAY }),
+  container({ name: "paperless-db", image: "postgres:16", dbEngine: "postgres", dbTier: "curated", dbDataCoverage: "stopped" }),
 ];
 
 const VMS = [
@@ -226,10 +229,12 @@ function timeline(key: string) {
   return {
     ok: true,
     places: [{ place: "local", label: "", kind: "home", remote: false, enabled: true, appendOnly: false, state: "read" }, BOX],
-    rows: (RUNS[key] ?? []).map((run) => ({
+    rows: (RUNS[key] ?? []).map((run, i) => ({
       key: run.snapshotId,
       time: new Date(run.finishedAt * 1000).toISOString(),
-      places: [{ place: "local", snapshotIds: [run.snapshotId], tags: [] }],
+      size: run.sourceBytes,
+      // The second backup carries a tag a person set beside the server's own.
+      places: [{ place: "local", snapshotIds: [run.snapshotId], tags: i === 1 ? ["container:immich", "vor-update"] : [] }],
     })),
   };
 }
@@ -289,6 +294,33 @@ const TIMELINE_DOMAIN: Record<string, string> = {
   config: "config",
 };
 
+const DIFF = {
+  addedFiles: 2,
+  removedFiles: 1,
+  changedFiles: 12,
+  addedBytes: 5 * MB,
+  removedBytes: MB,
+  changes: [
+    { path: "/config/new.yaml", modifier: "+" },
+    { path: "/logs/old.log", modifier: "-" },
+    { path: "/config/configuration.yaml", modifier: "M" },
+    { path: "/data/library.db", modifier: "M" },
+  ],
+};
+
+function exportPreview(form: string) {
+  const repository = form === "repository";
+  return {
+    folder: "/mnt/user/backups/bombvault/export",
+    files: [repository ? "immich-restic/" : `immich-20261006-034700.${form === "zip" ? "zip" : "tar.gz"}`],
+    replaces: [],
+    backups: repository ? 1 : undefined,
+    bytes: repository ? undefined : 65 * MB,
+    encryption: repository ? "password" : "none",
+    key: "export:containers",
+  };
+}
+
 async function stage(page: Page, theme: "dark" | "light" = "dark"): Promise<void> {
   const json = (path: string, body: unknown) =>
     page.route(
@@ -338,6 +370,22 @@ async function stage(page: Page, theme: "dark" | "light" = "dark"): Promise<void
         return route.fulfill({ json: { ok: true, place: { ...BOX, state: "read" }, rows: [] } });
       }
       return route.fulfill({ json: timeline(`${TIMELINE_DOMAIN[domain]}:${decodeURIComponent(key)}`) });
+    },
+  );
+  await page.route(
+    (url) => /^\/api\/items\/[^/]+\/[^/]+\/tag$/.test(url.pathname),
+    (route) => route.fulfill({ json: { ok: true } }),
+  );
+  await page.route(
+    (url) => /^\/api\/items\/[^/]+\/[^/]+\/diff$/.test(url.pathname),
+    (route) => route.fulfill({ json: { ok: true, diff: DIFF } }),
+  );
+  await page.route(
+    (url) => /^\/api\/items\/[^/]+\/[^/]+\/export(\/preview)?$/.test(url.pathname),
+    (route) => {
+      const preview = exportPreview(route.request().postDataJSON().form);
+      const starts = !route.request().url().endsWith("/preview");
+      return route.fulfill({ json: { ok: true, export: preview, ...(starts ? { started: true } : {}) } });
     },
   );
   await page.route(
@@ -453,7 +501,8 @@ test("the Backups tab shows the history, the storage locations and the list a re
 
   const rows = page.getByTestId("entry-backup");
   await expect(rows).toHaveCount(8);
-  await rows.first().click();
+  // At its start, where the row holds no control of its own.
+  await rows.first().click({ position: { x: 16, y: 16 } });
   const restore = page.getByRole("dialog", { name: "immich wiederherstellen" });
   await expect(restore).toBeVisible();
   await restore.getByRole("button", { name: "Abbrechen" }).click();
@@ -507,6 +556,89 @@ for (const [what, path, name] of [
   });
 }
 
+test("the menu of a backup marks it, compares it and exports it", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  await openEntry(page, "/backups/container/immich", "immich");
+
+  const rows = page.getByTestId("entry-backup");
+  await expect(rows.nth(1)).toContainText("vor-update");
+  await expect(rows.nth(1)).not.toContainText("container:immich");
+  await expect(rows.first().getByTestId("entry-backup-size")).toHaveText(/65/);
+
+  await rows.first().getByRole("button", { name: "Mehr" }).click();
+  const menu = page.getByRole("menu");
+  await expect(menu.getByRole("menuitem")).toHaveText([
+    "Mit anderer Sicherung vergleichen",
+    "Tag hinzufügen",
+    "Exportieren",
+    "Löschen",
+  ]);
+  await menu.getByRole("menuitem", { name: "Tag hinzufügen" }).click();
+  const tag = page.getByRole("dialog", { name: "Tag für diese Sicherung" });
+  await tag.getByRole("textbox").fill("vor-umzug");
+  const tagged = page.waitForRequest((req) => req.url().endsWith("/api/items/containers/immich/tag"));
+  await tag.getByRole("button", { name: "Speichern" }).click();
+  expect((await tagged).postDataJSON()).toEqual({ snapshotId: RUNS["container:immich"][0].snapshotId, tags: ["vor-umzug"], remove: [] });
+  await expect(tag).toBeHidden();
+
+  await rows.first().getByRole("button", { name: "Mehr" }).click();
+  await menu.getByRole("menuitem", { name: "Mit anderer Sicherung vergleichen" }).click();
+  const compare = page.getByRole("dialog", { name: "Sicherungen vergleichen" });
+  await compare.getByRole("button", { name: "Vergleichen" }).click();
+  const result = compare.getByTestId("compare-result");
+  await expect(result).toContainText("12 Dateien geändert, 2 neu, 1 gelöscht");
+  await expect(result).toContainText("/config/configuration.yaml");
+  await compare.getByRole("button", { name: "Schließen" }).click();
+
+  await rows.first().getByRole("button", { name: "Mehr" }).click();
+  await menu.getByRole("menuitem", { name: "Exportieren" }).click();
+  const exported = page.getByRole("dialog", { name: "immich exportieren" });
+  const preview = exported.getByTestId("export-preview");
+  await expect(preview).toContainText("/mnt/user/backups/bombvault/export");
+  await expect(preview).toContainText("immich-20261006-034700.tar.gz");
+  await exported.getByRole("tab", { name: "restic" }).click();
+  await expect(preview).toContainText("immich-restic/");
+  await expect(preview).toContainText("abgeleitetes restic-Passwort");
+  await expect(preview.getByRole("link", { name: "Wiederherstellung" })).toHaveAttribute("href", "/settings/restore");
+  await exported.getByRole("button", { name: "Exportieren" }).click();
+  await expect(exported.getByRole("button", { name: "Export abbrechen" })).toBeVisible();
+});
+
+test("the menu beside the name takes a folder set off the list in one of two ways", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  await openEntry(page, `/backups/files/${SET_ID}`, "Fotos");
+
+  await page.getByRole("button", { name: "Mehr" }).first().click();
+  await expect(page.getByRole("menu").getByRole("menuitem")).toHaveText(["Neueste Sicherung exportieren", "Aus der Liste entfernen"]);
+  await page.getByRole("menuitem", { name: "Aus der Liste entfernen" }).click();
+  const remove = page.getByRole("dialog", { name: "Fotos aus der Liste nehmen?" });
+  await expect(remove.getByRole("radio")).toHaveCount(2);
+  await expect(remove.getByRole("button", { name: "Aus der Liste nehmen" })).toBeVisible();
+  await remove.getByRole("radio", { name: /Auch alle Sicherungen löschen/ }).click();
+  await expect(remove.getByRole("button", { name: "Sicherungen löschen" })).toBeVisible();
+  await remove.getByRole("button", { name: "Abbrechen" }).click();
+  await expect(remove).toBeHidden();
+});
+
+test("a ZFS entry lists its runs on the Backups tab like every other kind", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  await openEntry(page, `/backups/zfs/${ZFS_ID}`, "tank/appdata");
+  await expect(page.getByTestId("entry-backup")).toHaveCount(8);
+  await expect(card(page, "Speicherorte")).toContainText("8 Sicherungen");
+});
+
+test("the Database card draws how a backup of a database container runs", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  await openEntry(page, "/backups/container/paperless-db?tab=settings", "paperless-db");
+  const picture = card(page, "Datenbank").getByRole("img", { name: /zwei Wiederherstellungspunkte/ });
+  await expect(picture).toBeVisible();
+  await expect(card(page, "Datenbank")).toContainText("Ablauf einer Sicherung");
+});
+
 test("an entry that is gone offers its newest backup instead of a new one", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
   await stage(page);
@@ -551,14 +683,27 @@ for (const width of [320, 390]) {
     const nav = (await page.getByRole("navigation", { name: "Mobile Navigation" }).boundingBox())!;
     expect(backup.y + backup.height).toBeLessThanOrEqual(nav.y);
 
+    // The menu of a backup opens inside the window, and its tag window as a sheet.
+    const first = page.getByTestId("entry-backup").first();
+    await first.getByRole("button", { name: "Mehr" }).click();
+    const menu = (await page.getByRole("menu").boundingBox())!;
+    expect(menu.x).toBeGreaterThanOrEqual(0);
+    expect(menu.x + menu.width).toBeLessThanOrEqual(width);
+    await page.getByRole("menuitem", { name: "Tag hinzufügen" }).click();
+    const sheet = page.getByRole("dialog", { name: "Tag für diese Sicherung" });
+    await expect(sheet.getByRole("textbox")).toBeVisible();
+    await sheet.getByRole("button", { name: "Abbrechen" }).click();
+    await expect(sheet).toBeHidden();
+
     // A phone opens a backup with a tap on its row.
-    await page.getByTestId("entry-backup").first().click();
+    await first.click({ position: { x: 16, y: 16 } });
     await expect(page.getByRole("dialog", { name: "immich wiederherstellen" })).toBeVisible();
   });
 }
 
 test("pictures of the page", async ({ page }, testInfo) => {
   test.skip(!SHOTS || testInfo.project.name !== "desktop-1280", "only when a folder for them is named");
+  test.setTimeout(180_000);
   mkdirSync(SHOTS!, { recursive: true });
   for (const [name, width, theme] of [
     ["1440-dark", 1440, "dark"],
@@ -576,5 +721,55 @@ test("pictures of the page", async ({ page }, testInfo) => {
       await openEntry(page, `/backups/container/immich${query}`, "immich");
       await page.screenshot({ path: join(SHOTS!, `immich-${tabName}-${name}.png`) });
     }
+
+    // The windows are taken at the height of a screen, where they stand.
+    await page.setViewportSize({ width, height: width < 500 ? 844 : 1000 });
+    const shot = async (what: string) => {
+      // A sheet starts to slide in a frame after it mounts.
+      await page.waitForTimeout(300);
+      await settle(page);
+      await page.screenshot({ path: join(SHOTS!, `${what}-${name}.png`) });
+    };
+    const fromRow = async (action: string) => {
+      await page.getByTestId("entry-backup").nth(1).getByRole("button", { name: "Mehr" }).click();
+      await page.getByRole("menuitem", { name: action }).click();
+    };
+    await openEntry(page, "/backups/container/immich", "immich");
+    await page.getByTestId("entry-backup").nth(1).scrollIntoViewIfNeeded();
+    await page.getByTestId("entry-backup").nth(1).getByRole("button", { name: "Mehr" }).click();
+    await shot("rowmenu");
+    await page.getByRole("menuitem", { name: "Tag ändern" }).click();
+    await shot("tag");
+    await page.getByRole("dialog").getByRole("button", { name: "Abbrechen" }).click();
+    await fromRow("Mit anderer Sicherung vergleichen");
+    await page.getByRole("dialog").getByRole("button", { name: "Vergleichen" }).click();
+    await expect(page.getByTestId("compare-result")).toBeVisible();
+    await shot("compare");
+    await page.getByRole("dialog").getByRole("button", { name: "Schließen" }).click();
+    await fromRow("Exportieren");
+    await expect(page.getByTestId("export-preview")).toBeVisible();
+    await shot("export");
+    await page.getByRole("dialog").getByRole("tab", { name: "restic" }).click();
+    await expect(page.getByTestId("export-preview")).toContainText("immich-restic/");
+    await shot("export-restic");
+    await page.getByRole("dialog").getByRole("button", { name: "Abbrechen" }).click();
+    await page.getByRole("button", { name: "Mehr" }).first().click();
+    await page.getByRole("menuitem", { name: "Container exportieren" }).click();
+    await shot("export-live");
+
+    await openEntry(page, `/backups/files/${SET_ID}`, "Fotos");
+    await shot("entry-folder");
+    await page.getByRole("button", { name: "Mehr" }).first().click();
+    await page.getByRole("menuitem", { name: "Aus der Liste entfernen" }).click();
+    await shot("remove-folder");
+
+    await openEntry(page, `/backups/zfs/${ZFS_ID}`, "tank/appdata");
+    await shot("entry-zfs");
+    await openEntry(page, "/backups/vm/win11", "Windows 11");
+    await shot("entry-vm");
+    await openEntry(page, "/backups/container/paperless-db?tab=settings", "paperless-db");
+    await card(page, "Datenbank").scrollIntoViewIfNeeded();
+    await shot("dbcard");
+    await card(page, "Datenbank").screenshot({ path: join(SHOTS!, `dbgrid-${name}.png`) });
   }
 });

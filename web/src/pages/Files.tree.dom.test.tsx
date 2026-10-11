@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// The folder selection tree on the Files page, with the same harness as
+// The folder selection tree of a folder set, with the same harness as
 // Containers.tree.dom.test.tsx: the mocked api client serves browse listings
 // and records PATCH bodies, so what goes over the wire can be checked step by
 // step.
@@ -10,7 +10,7 @@ import { ToastProvider } from "../lib/toast";
 import type { BrowseResponse, FileSetView } from "../lib/api";
 import { placementOptions, placementView } from "../lib/placement.testsupport";
 
-// jsdom has no EventSource, and FileSetRow opens the progress stream on mount.
+// jsdom has no EventSource.
 class NoopEventSource {
   onmessage: ((e: MessageEvent) => void) | null = null;
   close() {}
@@ -51,7 +51,6 @@ vi.mock("../lib/api", async (importOriginal) => {
 });
 
 // Imported after vi.mock so the components get the mocked client.
-const { FileSetRow } = await import("./Files");
 const { FileSetFoldersEditor, fileSetEditorKey } = await import("../components/files/FileSetFoldersEditor");
 const { FileSetDialog } = await import("../components/files/FileSetDialog");
 
@@ -91,24 +90,8 @@ function documentsListing(): BrowseResponse {
 
 function EditorHarness({ set, hostMountRoot = HOST_MOUNT_ROOT }: { set: FileSetView; hostMountRoot?: string }) {
   const { t } = useT();
-  // Keyed as FileSetRow keys it, so the harness remounts when the page would.
+  // Keyed as the entry's page keys it, so the harness remounts when the page would.
   return <FileSetFoldersEditor key={fileSetEditorKey(set)} set={set} hostMountRoot={hostMountRoot} t={t} />;
-}
-
-function RowHarness({ set, hostMountRoot = HOST_MOUNT_ROOT, index = 0 }: { set: FileSetView; hostMountRoot?: string; index?: number }) {
-  const { t } = useT();
-  return (
-    <FileSetRow
-      set={set}
-      hostMountRoot={hostMountRoot}
-      restoreFolder="/restore"
-      t={t}
-      onRefresh={() => {}}
-      onEdit={() => {}}
-      onPlacement={() => {}}
-      index={index}
-    />
-  );
 }
 
 function DialogHarness({ initial }: { initial: FileSetView | null }) {
@@ -223,22 +206,6 @@ describe("FileSetFoldersEditor tree mount", () => {
     const sub = screen.getByRole("treeitem", { name: /^sub$/ });
     expect(sub.getAttribute("aria-checked")).toBe("false");
     expect(root.getAttribute("aria-expanded")).toBe("true");
-  });
-
-  it("a set without a path renders no disclosure and no tree", async () => {
-    render(
-      <Providers>
-        <RowHarness set={setView({ path: "" })} />
-      </Providers>,
-    );
-    await act(async () => {});
-    expect(screen.queryByRole("button", { name: "Choose folders" })).toBeNull();
-    expect(screen.queryByRole("tree")).toBeNull();
-    expect(
-      screen.getByText(
-        "Rebuilt from backups without a folder. Set a folder to back it up again. Restoring to a folder already works.",
-      ),
-    ).toBeTruthy();
   });
 
   it("lazy expansion browses through the hostMountRoot prefix and caches for the editor lifetime", async () => {
@@ -396,7 +363,7 @@ describe("FileSetFoldersEditor live save", () => {
     // have no reset.
     expect(
       screen.getByText(
-        "A set needs at least one folder, so the last tick cannot be removed. Use Delete folder set if you no longer want this set.",
+        "A set needs at least one folder, so the last tick cannot be removed. Use Remove from the list if you no longer want this set.",
       ),
     ).toBeTruthy();
     // The shake nonce remounts the row, so it is queried again. It still
@@ -438,7 +405,7 @@ describe("FileSetFoldersEditor live save", () => {
     expect(screen.getByText("selection refused")).toBeTruthy();
     expect(
       screen.getByText(
-        "A set needs at least one folder, so the last tick cannot be removed. Use Delete folder set if you no longer want this set.",
+        "A set needs at least one folder, so the last tick cannot be removed. Use Remove from the list if you no longer want this set.",
       ),
     ).toBeTruthy();
     // Only the failed toggle is undone on the current state: media is checked
@@ -689,16 +656,5 @@ describe("FileSetDialog path-change hint", () => {
     expect(
       screen.getByText("The folder to back up, a relative subpath under the host mount root."),
     ).toBeTruthy();
-  });
-});
-
-describe("FileSetRow placement", () => {
-  it("carries the placement bar, the same row the container card has", async () => {
-    render(
-      <Providers>
-        <RowHarness set={setView()} />
-      </Providers>,
-    );
-    expect(await screen.findByRole("group", { name: "Placement" })).toBeTruthy();
   });
 });

@@ -50,53 +50,9 @@ const DYNAMIC = dynamicKeyPatterns(CORPUS);
 // searching the whole corpus for each of three thousand keys takes seconds.
 const QUOTED = new Set(CORPUS.match(/(?<=["'])[\w.-]+(?=["'])/g) ?? []);
 
-// KNOWN_ORPHANS lists keys that are already dead. It is a ratchet: removing an
-// entry is free, since nothing requires them to exist, but it must not grow.
-const KNOWN_ORPHANS = new Set([
-  "dashboard.recentRuns",
-  "dashboard.spikeStatus",
-  "dashboard.spikeLink",
-  "dashboard.hostIntegrationCheck",
-  "dashboard.blockBackups",
-  "spike.probeFailed",
-  "containers.colName",
-  "containers.colImage",
-  "containers.colStatus",
-  "containers.colAppdata",
-  "containers.colActions",
-  "containers.backupStarted",
-  "containers.noDestination",
-  "containers.schedule",
-  "snapshots.colId",
-  "snapshots.colTime",
-  "snapshots.colTags",
-  "snapshots.colSize",
-  "snapshots.files",
-  "files.restore",
-  "files.restored",
-  "restore.confirmTitle",
-  "restore.confirmBody",
-  "restore.preview",
-  "restore.toFolder",
-  "stack.restored",
-  "run.statusSuccess",
-  "run.statusFailed",
-  "run.colKind",
-  "run.colStatus",
-  "run.colStarted",
-  "run.colFinished",
-  "run.colContainer",
-  "settings.scheduleOff",
-  "settings.retentionLocal",
-  "settings.retentionOffsite",
-  "folders.customPlaceholder",
-  "folders.save",
-  "excludes.save",
-  "excludes.resolvedTo",
-  "folder.browse",
-  "config.schedule",
-  "config.offsiteSchedule",
-  "receiver.readDataPercentHint",
+// The states of a container and a VM are read through STATE_KEY_MAP, which
+// stands in the table file the scan leaves out.
+const READ_BY_THE_TABLES = new Set([
   "state.created",
   "state.running",
   "state.paused",
@@ -123,7 +79,7 @@ describe("translation keys", () => {
   it("adds no en key that nothing in the tree renders", () => {
     const orphans = Object.keys(en).filter(
       (key) =>
-        !KNOWN_ORPHANS.has(key) &&
+        !READ_BY_THE_TABLES.has(key) &&
         !QUOTED.has(key) &&
         !CORPUS.includes(`"${key}"`) &&
         !CORPUS.includes(`'${key}'`) &&

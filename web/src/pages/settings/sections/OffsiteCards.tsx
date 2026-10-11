@@ -3,11 +3,9 @@ import { replicateOffsite, testOffsite } from "../../../lib/api";
 import { useOffsiteTargets, type OffsiteDomain } from "../../../lib/useOffsiteTargets";
 import { NumberField } from "../../../components/NumberField";
 import { OffsiteWizard } from "../../../components/OffsiteWizard";
-import { DestinationsCard } from "../DestinationsCard";
 import { OffsiteLocationInput } from "../../../components/placement/OffsiteLocationInput";
 import { CompressionSelector, saveCompression } from "../../../components/CompressionSelector";
 import { OffsiteTargetsSection } from "../../../components/OffsiteTargetsSection";
-import { StreamingCard } from "../StreamingCard";
 import { TestButton, VerdictLine } from "../../../components/TestButton";
 import { useTestVerdict } from "../../../lib/useTestVerdict";
 import { offsiteVerdict } from "../../../lib/offsiteVerdict";
@@ -132,8 +130,8 @@ function OffsiteDomainBar({
   );
 }
 
-/** OffsiteCards are the destinations, each domain's off-site copy and the
- *  limits all copies share. */
+/** OffsiteCards are each domain's off-site copy and the limits all copies
+ *  share. */
 export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
   const { t } = useT();
   const { settings, setSettings, savedBaseline, allTargets, save, debouncedSave } = useSettings();
@@ -150,7 +148,6 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
     <>
       {/* The anchor old /settings/offsite links land on. */}
       <div id="offsite" className="flex scroll-mt-6 flex-col gap-6">
-      <DestinationsCard hueIndex={nextHue()} />
       {/* Self-backup ("config") is listed with the other domains (#176): the
           backend gives it its own off-site repo and targets like any other,
           so it gets the wizard, the connection test and per-destination
@@ -259,8 +256,6 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
           ))}
         </div>
       </Card>
-
-      <StreamingCard t={t} hueIndex={nextHue()} />
     </>
   );
 }

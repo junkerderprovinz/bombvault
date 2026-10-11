@@ -207,7 +207,8 @@ test("the sidebar lists the navigation in order, with Settings at the foot", asy
   }
 });
 
-// Two entries nothing backs up, so Overview carries a count on every project.
+// Two entries nothing backs up beside one that has a backup, so Overview
+// carries a count on every project.
 async function stageTwoUnprotected(page: Page): Promise<void> {
   const leftOut = (name: string) => ({
     kind: "container",
@@ -225,7 +226,10 @@ async function stageTwoUnprotected(page: Page): Promise<void> {
   });
   await page.route(
     (url) => url.pathname === "/api/items",
-    (route) => route.fulfill({ json: { ok: true, items: [leftOut("gitea"), leftOut("immich")], unlisted: [] } }),
+    (route) =>
+      route.fulfill({
+        json: { ok: true, items: [leftOut("gitea"), leftOut("immich"), { ...leftOut("plex"), lastBackup: 1_700_000_000 }], unlisted: [] },
+      }),
   );
 }
 

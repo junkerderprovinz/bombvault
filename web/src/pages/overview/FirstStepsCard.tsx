@@ -1,0 +1,283 @@
+// The card a new install keeps on its overview until the first backup has
+// finished: the three steps, and what the next one asks for.
+import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+
+import { KIND_LABEL, KindGlyph, entryName } from "../../components/backups/kinds";
+import { Badge } from "../../components/Badge";
+import { Button } from "../../components/Button";
+import { IconForward } from "../../components/glyphs";
+import { IconAdd } from "../../components/navGlyphs";
+import { StepMark } from "../../components/StepMark";
+import { AddLocationWindow } from "../../components/storage/AddLocationWindow";
+import { Toggle } from "../../components/Toggle";
+import { getSettings, putSettings, type Settings, type StorageLocation } from "../../lib/api";
+import { hueVars } from "../../lib/appearance";
+import type { EntryKind } from "../../lib/backupEntry";
+import { entryTarget, protection } from "../../lib/backupList";
+import { SECTIONS, scheduleChosen, switchSection, type Section } from "../../lib/firstSections";
+import { foundSentence, type Found, type StepState } from "../../lib/firstSteps";
+import type { useT } from "../../lib/i18n";
+import { formatList } from "../../lib/placement";
+import type { Tally } from "../../lib/protectionTally";
+import { flowDomains } from "../../lib/storageFlow";
+import { useToast } from "../../lib/toast";
+import { useFirstSteps } from "../../lib/useFirstSteps";
+import { usePlacementDefaults } from "../../lib/usePlacementDefaults";
+import { Card } from "./Card";
+
+type T = ReturnType<typeof useT>["t"];
+
+const SHOWN_WAITING = 4;
+
+const HINT = "text-sm text-carbon-textSub";
+
+/**
+ * useSections reads which sections are switched on and saves what the first
+ * step changes. A refused switch, such as VMs without a connection to the
+ * host, goes back and says why.
+ */
+function useSections(t: T) {
+  const { push } = useToast();
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [refused, setRefused] = useState<Partial<Record<EntryKind, number>>>({});
+
+  const read = useCallback(() => {
+    getSettings()
+      .then((res) => {
+        if (res.ok) setSettings(res.settings);
+      })
+      .catch(() => undefined);
+  }, []);
+  useEffect(() => {
+    read();
+    window.addEventListener("bv:settings-changed", read);
+    return () => window.removeEventListener("bv:settings-changed", read);
+  }, [read]);
+
+  // The whole object is written, so it is read first: a setting saved
+  // elsewhere since the card was drawn must not be put back.
+  async function save(change: (now: Settings) => Partial<Settings>): Promise<boolean> {
+    setSaving(true);
+    try {
+      const now = await getSettings();
+      if (!now.ok) throw new Error();
+      const patch = change(now.settings);
+      if (Object.keys(patch).length > 0) {
+        const res = await putSettings({ ...now.settings, ...patch });
+        if (!res.ok) throw new Error(res.error);
+        window.dispatchEvent(new Event("bv:settings-changed"));
+      }
+      return true;
+    } catch (err) {
+      push((err instanceof Error && err.message) || t("settings.error"), "fail");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function flip(section: Section, on: boolean) {
+    setSettings((s) => s && { ...s, [section.enabled]: on });
+    if (await save((now) => switchSection(now, section, on))) return;
+    setSettings((s) => s && { ...s, [section.enabled]: !on });
+    setRefused((n) => ({ ...n, [section.kind]: (n[section.kind] ?? 0) + 1 }));
+  }
+
+  return { settings, saving, refused, flip, schedule: () => save(scheduleChosen) };
+}
+
+function Step({
+  n,
+  state,
+  title,
+  summary,
+  children,
+  t,
+}: {
+  n: number;
+  state: StepState;
+  title: string;
+  /** What a finished step came to. */
+  summary?: string;
+  /** What the step asks for, shown while it is the next one. */
+  children: ReactNode;
+  t: T;
+}) {
+  return (
+    <li
+      data-state={state}
+      aria-current={state === "next" ? "step" : undefined}
+      className="flex gap-3.5 border-t border-carbon-border py-3.5 first:border-t-0 first:pt-0 last:pb-0"
+    >
+      <StepMark n={n} state={state} />
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <span className={`text-base font-semibold leading-7 ${state === "open" ? "text-carbon-textMuted" : "text-carbon-text"}`}>
+          {title}
+          {state === "done" && <span className="sr-only">{` (${t("common.done")})`}</span>}
+        </span>
+        {state === "done" && summary && <p className={HINT}>{summary}</p>}
+        {state === "next" && children}
+      </div>
+    </li>
+  );
+}
+
+function SectionSwitches({
+  sections,
+  settings,
+  found,
+  t,
+}: {
+  sections: ReturnType<typeof useSections>;
+  settings: Settings;
+  found: Found;
+  t: T;
+}) {
+  const { saving, refused, flip } = sections;
+  const line: Partial<Record<EntryKind, string | false>> = {
+    container: found.container > 0 && t("firstSteps.foundCount", found.container),
+    vm: found.vm > 0 && t("firstSteps.foundCount", found.vm),
+    config: t("firstSteps.ownSettings"),
+  };
+
+  return (
+    <div className="grid gap-2 md:grid-cols-2">
+      {SECTIONS.map((section, i) => (
+        <div
+          key={section.kind}
+          data-section={section.kind}
+          style={hueVars(i) as CSSProperties}
+          className="glim-hue flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5"
+        >
+          <span className="glim-row-glyph flex h-[34px] w-[34px] flex-none items-center justify-center rounded-control bg-carbon-surface3 [&_svg]:h-[18px] [&_svg]:w-[18px]">
+            <KindGlyph kind={section.kind} />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="text-sm font-semibold text-carbon-text">{t(KIND_LABEL[section.kind])}</span>
+            {line[section.kind] && <span className="text-[13px] text-carbon-textMuted">{line[section.kind]}</span>}
+          </div>
+          <Toggle
+            key={refused[section.kind]}
+            hideLabel
+            label={t(KIND_LABEL[section.kind])}
+            checked={settings[section.enabled]}
+            onChange={(on) => void flip(section, on)}
+            disabled={saving}
+            className={refused[section.kind] ? "glim-shake" : undefined}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Waiting({ tally, t }: { tally: Tally; t: T }) {
+  const left = tally.entries.filter((item) => protection(item) !== "ok");
+  const more = left.length - SHOWN_WAITING;
+  if (left.length === 0) return null;
+  return (
+    <>
+      <p className={`flex flex-wrap gap-x-3 gap-y-1 ${HINT}`}>
+        {tally.pending > 0 && <span>{t("firstSteps.waiting", tally.pending)}</span>}
+        {tally.none > 0 && <span>{t("firstSteps.notProtected", tally.none)}</span>}
+      </p>
+      <ul className="flex flex-col divide-y divide-carbon-border/60">
+        {left.slice(0, SHOWN_WAITING).map((item, i) => (
+          <li
+            key={`${item.kind}:${item.key}`}
+            data-testid="first-steps-entry"
+            style={hueVars(i) as CSSProperties}
+            className="glim-hue flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2"
+          >
+            <span className="glim-row-glyph flex h-[34px] w-[34px] flex-none items-center justify-center rounded-control bg-carbon-surface2 [&_svg]:h-[18px] [&_svg]:w-[18px]">
+              <KindGlyph kind={item.kind} />
+            </span>
+            <Link
+              to={entryTarget(item)}
+              className="min-w-0 flex-1 basis-24 truncate rounded-sm text-sm font-semibold text-carbon-text hover:underline focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
+            >
+              {entryName(item, t)}
+            </Link>
+            {protection(item) === "pending" ? (
+              <Badge tone="neutral">{t("backups.status.waiting")}</Badge>
+            ) : (
+              <Badge tone="warn">{t("backups.status.notProtected")}</Badge>
+            )}
+          </li>
+        ))}
+      </ul>
+      {more > 0 && <p className={HINT}>{t("firstSteps.more", more)}</p>}
+    </>
+  );
+}
+
+function AddLocation({ locations, onClose }: { locations: StorageLocation[]; onClose: () => void }) {
+  const defaults = usePlacementDefaults();
+  return <AddLocationWindow domains={flowDomains(locations)} defaults={defaults.rows} onClose={onClose} />;
+}
+
+/**
+ * FirstStepsCard lists the three steps with where each stands. The next one
+ * shows what it asks for: the sections to switch on, the window that adds a
+ * storage location, or what still waits for the first backup, which the
+ * page's own action starts.
+ */
+export function FirstStepsCard({ tally, t, lang, hueIndex }: { tally: Tally; t: T; lang: string; hueIndex: number }) {
+  const { states, found, locations, added, chooseSections } = useFirstSteps();
+  const sections = useSections(t);
+  const [adding, setAdding] = useState(false);
+  const sentence = foundSentence(found, t, lang);
+  const { settings } = sections;
+  const switchedOn = SECTIONS.filter(({ enabled }) => settings?.[enabled]).map(({ kind }) => t(KIND_LABEL[kind]));
+  const where = `${t("nav.settings")} › ${t("settings.schedule")}`;
+  // The step is ticked off only once the sections that are on have a schedule.
+  const next = async () => {
+    if (await sections.schedule()) chooseSections();
+  };
+
+  return (
+    <div data-testid="first-steps" className="flex">
+      <Card title={t("firstSteps.title")} hint={t("firstSteps.hint")} hueIndex={hueIndex}>
+        <ol className="flex flex-col">
+          <Step n={1} state={states.sections} title={t("firstSteps.sections")} summary={formatList(lang, switchedOn)} t={t}>
+            <p className={HINT}>{[sentence, t("firstSteps.sectionsHint")].filter(Boolean).join(" ")}</p>
+            {settings && <SectionSwitches sections={sections} settings={settings} found={found} t={t} />}
+            <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+              <p className={`min-w-0 flex-1 basis-64 ${HINT}`}>{t("firstSteps.nightly").replace("{where}", () => where)}</p>
+              <Button
+                label={t("zfs.replica.add.next")}
+                labelKey="zfs.replica.add.next"
+                glyph={<IconForward />}
+                disabled={sections.saving}
+                onClick={() => void next()}
+              />
+            </div>
+          </Step>
+          <Step
+            n={2}
+            state={states.location}
+            title={t("storage.add.title")}
+            summary={formatList(lang, added.map((location) => location.name))}
+            t={t}
+          >
+            <p className={HINT}>{t("firstSteps.locationHint")}</p>
+            <div className="flex justify-end">
+              <Button
+                label={t("storage.add.title")}
+                labelKey="storage.add.title"
+                glyph={<IconAdd />}
+                onClick={() => setAdding(true)}
+              />
+            </div>
+          </Step>
+          <Step n={3} state={states.backup} title={t("firstSteps.backup")} t={t}>
+            <Waiting tally={tally} t={t} />
+          </Step>
+        </ol>
+      </Card>
+      {adding && <AddLocation locations={locations} onClose={() => setAdding(false)} />}
+    </div>
+  );
+}
