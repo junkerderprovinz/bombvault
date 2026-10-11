@@ -13,7 +13,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import type { Destination, DestinationErasure, DestinationRemoval, ErasureSection, RemovalSection, Settings, StorageLocation } from "../lib/api";
-import { I18nProvider } from "../lib/i18n";
+import { en, I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 
 class NoopEventSource {
@@ -413,6 +413,15 @@ describe("removing a destination and deleting the backups there", () => {
 
     expect(within(dialog).getByText("A backup is running. Choose again once it has finished.")).toBeTruthy();
     expect(screen.queryByText("the list")).toBeNull();
+  });
+
+  it("asks for a login password before anything is read or deleted", async () => {
+    previewDestinationErasure.mockResolvedValueOnce({ ok: false, code: "password-not-set", error: "set a login password first" });
+    await renderPage();
+    const dialog = await openDeletion();
+
+    expect(within(dialog).getByText(en["secrets.passwordNotSet"])).toBeTruthy();
+    expect(erase(dialog).disabled).toBe(true);
   });
 
   it("says what to do instead where nothing can be deleted", async () => {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"slices"
 	"testing"
 	"time"
@@ -76,6 +77,7 @@ func boxWithVMs(f *placementFixture) (box, vms store.OffsiteTarget) {
 
 func TestTheErasurePreviewCountsWhatLosesACopyAndNamesTheLastCopies(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, vms := boxWithVMs(f)
 	files := f.tickDestination(box, "files")
 	f.appendOnly(files.ID)
@@ -106,6 +108,7 @@ func TestTheErasurePreviewCountsWhatLosesACopyAndNamesTheLastCopies(t *testing.T
 
 func TestAnErasureThatDoesNotNameTheLastCopiesDeletesNothing(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, _ := boxWithVMs(f)
 	preview := f.erasurePreview(box)
 
@@ -128,6 +131,7 @@ func TestAnErasureThatDoesNotNameTheLastCopiesDeletesNothing(t *testing.T) {
 
 func TestAnErasureEmptiesTheSectionsAndThenRemovesTheDestination(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, vms := boxWithVMs(f)
 	files := f.tickDestination(box, "files")
 	f.appendOnly(files.ID)
@@ -166,6 +170,7 @@ func TestAnErasureEmptiesTheSectionsAndThenRemovesTheDestination(t *testing.T) {
 
 func TestAFailedErasureKeepsTheDestination(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, vms := boxWithVMs(f)
 	f.eng.forgetErr = map[string]error{boxRepo + "/vms": errors.New("connection reset")}
 	preview := f.erasurePreview(box)
@@ -186,6 +191,7 @@ func TestAFailedErasureKeepsTheDestination(t *testing.T) {
 
 func TestAnErasureWaitsForNoBackupAndRefusesWhatItCannotEmpty(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, _ := boxWithVMs(f)
 	preview := f.erasurePreview(box)
 
@@ -213,6 +219,7 @@ func TestAnErasureWaitsForNoBackupAndRefusesWhatItCannotEmpty(t *testing.T) {
 
 func TestAnErasureLeavesADirectRepositoryInUseAndEmptiesAnIdleOne(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box := f.destination("Box", boxRepo)
 	containers := f.tickDestination(box, "containers")
 	files := f.tickDestination(box, "files")
@@ -270,6 +277,7 @@ func aliasedHome(f *placementFixture) (disk store.OffsiteTarget, home, there str
 
 func TestAHomeUnderAnotherSpellingOfTheDestinationIsNoSecondCopy(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	disk, home, _ := aliasedHome(f)
 
 	preview := f.erasurePreview(disk)
@@ -293,6 +301,7 @@ func TestAHomeUnderAnotherSpellingOfTheDestinationIsNoSecondCopy(t *testing.T) {
 
 func TestAPlaceTheErasureEmptiesHoldsNothingUnderAnotherSpelling(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	_, _, there := aliasedHome(f)
 	settings, err := f.st.GetSettings()
 	if err != nil {
@@ -312,6 +321,7 @@ func TestAPlaceTheErasureEmptiesHoldsNothingUnderAnotherSpelling(t *testing.T) {
 
 func TestAPlaceNothingCanNameHoldsNoSecondCopy(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, _ := boxWithVMs(f)
 	nowhere := f.destination("Nowhere", "rclone:nowhere:bv")
 	other := f.tickDestination(nowhere, "vms")
@@ -326,6 +336,7 @@ func TestAPlaceNothingCanNameHoldsNoSecondCopy(t *testing.T) {
 
 func TestAnErasureLeavesTheRepositoriesEntriesBackUpToAlone(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box := f.destination("Box", boxRepo)
 	files := f.tickDestination(box, "files")
 	containers := f.tickDestination(box, "containers")
@@ -363,6 +374,7 @@ func TestAnErasureLeavesTheRepositoriesEntriesBackUpToAlone(t *testing.T) {
 
 func TestAnErasureRefusesASectionLeftBehindThatWasNotShown(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box := f.destination("Box", boxRepo)
 	f.tickDestination(box, "files")
 	f.hold(f.domainPath("vms"), snap("a1", 100, "vm:win"))
@@ -385,6 +397,7 @@ func TestAnErasureRefusesASectionLeftBehindThatWasNotShown(t *testing.T) {
 
 func TestAnErasureWaitsForABackupOfASectionLeftBehind(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box := f.destination("Box", boxRepo)
 	f.tickDestination(box, "files")
 	f.hold(f.domainPath("vms"), snap("a1", 100, "vm:win"))
@@ -406,6 +419,7 @@ func TestAnErasureWaitsForABackupOfASectionLeftBehind(t *testing.T) {
 
 func TestAnErasureRefusesBackupsThatArrivedAfterThePreview(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, _ := boxWithVMs(f)
 	preview := f.erasurePreview(box)
 
@@ -426,6 +440,7 @@ func TestAnErasureRefusesBackupsThatArrivedAfterThePreview(t *testing.T) {
 
 func TestAnErasureWaitsForAMoveOfOneOfItsSections(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, vms := boxWithVMs(f)
 	vault := f.destination("Vault", vaultRepo)
 	waiting, done := make(chan struct{}), make(chan struct{})
@@ -455,6 +470,7 @@ func TestAnErasureWaitsForAMoveOfOneOfItsSections(t *testing.T) {
 
 func TestAMoveWaitsForAnErasureAtEitherPlace(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, vms := boxWithVMs(f)
 	vault := f.destination("Vault", vaultRepo)
 	f.tickDestination(vault, "files")
@@ -490,8 +506,34 @@ func TestAMoveWaitsForAnErasureAtEitherPlace(t *testing.T) {
 	}
 }
 
+func TestDeletingTheBackupsAtADestinationTakesALoginPassword(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, _ := boxWithVMs(f)
+
+	for _, req := range []struct {
+		method string
+		body   any
+	}{
+		{"GET", nil},
+		{"POST", map[string]any{"expect": destinationRemoval{}, "lastCopies": []string{"vm:old"}}},
+	} {
+		code, res := f.call(req.method, "/api/offsite/destinations/"+box.ID+"/erasure", req.body)
+		if code != http.StatusForbidden || res["code"] != codeNoPassword {
+			t.Fatalf("%s without a login password = %d %v, want %s", req.method, code, res, codeNoPassword)
+		}
+	}
+	f.waitForErasure("vms")
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+	if res := f.do("POST", "/api/offsite/destinations/"+box.ID+"/removal", map[string]any{"expect": f.removalPreview(box)}); res["ok"] != true {
+		t.Fatalf("removing the destination and keeping its backups = %v, want it done", res)
+	}
+}
+
 func TestADestinationOverAHomeOrAnotherDestinationIsRefused(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	ctx := context.Background()
 	if _, err := f.svc.SaveNewDestination(ctx, draftRequest{Provider: "path", Settings: map[string]string{"path": "backups"}}); !errors.Is(err, errNestedLocation) {
 		t.Fatalf("a destination around the repositories at home = %v, want errNestedLocation", err)
@@ -511,6 +553,7 @@ func TestADestinationOverAHomeOrAnotherDestinationIsRefused(t *testing.T) {
 
 func TestAnErasureTakesWhatAMovedSectionLeftBehind(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, vms := boxWithVMs(f)
 	files := f.tickDestination(box, "files")
 	f.rcloneConf("[vault]\ntype = drive\nroot_folder_id = 0Bvault\n")

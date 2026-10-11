@@ -12,6 +12,7 @@ import {
 import { useT } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
+import { secretsSentence } from "../../lib/secretsRefusal";
 import { objectId } from "../../lib/storageFlow";
 import { useToast } from "../../lib/toast";
 import { credSetsChanged } from "../../lib/useCloudCredSets";
@@ -114,7 +115,7 @@ export function RemovalWindow({
       .then((res) => {
         if (!alive) return;
         if (res.ok && res.erasure) setErasure(res.erasure);
-        else setProblem(res.error ?? t("settings.error"));
+        else setProblem(secretsSentence(t, res.code) ?? res.error ?? t("settings.error"));
       });
     return () => {
       alive = false;
@@ -158,7 +159,7 @@ export function RemovalWindow({
     const res = await eraseDestination(id, erasure.removal, named).catch(failed);
     setBusy(false);
     if (!res.ok) {
-      setProblem(placementErrorText(t, lang, res, "settings.error"));
+      setProblem(secretsSentence(t, res.code) ?? placementErrorText(t, lang, res, "settings.error"));
       setLastToo(false);
       if (res.erasure) setErasure(res.erasure);
       else if (res.removal) {

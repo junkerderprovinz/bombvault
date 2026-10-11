@@ -24,6 +24,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
@@ -42,6 +43,8 @@ type placementFixture struct {
 	dock  *placementDocker
 	virsh *placementVirsh
 	root  string // host mount root, slash-spelled
+	// session is the session cookie requests carry, empty for none.
+	session string
 }
 
 func newPlacementFixture(t *testing.T) *placementFixture {
@@ -427,7 +430,48 @@ func (f *placementFixture) hold(location string, snaps ...restic.Snapshot) {
 // but 200 fails the test.
 func (f *placementFixture) do(method, path string, body any) map[string]any {
 	f.t.Helper()
-	return doJSON(f.t, f.h, method, path, body)
+	code, out := f.call(method, path, body)
+	if code != http.StatusOK {
+		f.t.Fatalf("%s %s = %d: %v", method, path, code, out)
+	}
+	return out
+}
+
+// call sends one request through the router, signed in once signIn ran, and
+// returns its status and JSON body.
+func (f *placementFixture) call(method, path string, body any) (int, map[string]any) {
+	f.t.Helper()
+	var rd io.Reader
+	if body != nil {
+		b, err := json.Marshal(body)
+		if err != nil {
+			f.t.Fatal(err)
+		}
+		rd = bytes.NewReader(b)
+	}
+	r := jsonReq(method, path, rd)
+	if f.session != "" {
+		r.AddCookie(&http.Cookie{Name: f.h.sessionCookieNameFor(), Value: f.session}) //nolint:gosec // G124: a cookie on a test request
+	}
+	rec := httptest.NewRecorder()
+	f.h.Router().ServeHTTP(rec, r)
+	var out map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		f.t.Fatalf("%s %s: %v", method, path, err)
+	}
+	return rec.Code, out
+}
+
+// signIn gives the server a login password and the requests after it a
+// session of a person signed in with it.
+func (f *placementFixture) signIn() {
+	f.t.Helper()
+	f.withPassword("a password of the owner")
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	f.session = secret.NewSessionToken(f.svc.cfg.AppKey, settings.AuthPasswordHash, settings.SessionEpoch, time.Hour)
 }
 
 func doJSON(t *testing.T, h *Handler, method, path string, body any) map[string]any {

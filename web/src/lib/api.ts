@@ -7157,23 +7157,26 @@ export interface DestinationErasure {
 
 /** GET /api/offsite/destinations/{id}/erasure. It lists every repository at
  *  the destination and the other places of its sections, so it takes as long
- *  as they take to answer. */
+ *  as they take to answer. Without a login password, or with the session of a
+ *  paired phone, it answers with a SecretsRefusal code. */
 export function previewDestinationErasure(id: string): Promise<OkEnvelope & { erasure?: DestinationErasure }> {
-  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/erasure`);
+  return fetchKeyJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/erasure`);
 }
 
 /** POST /api/offsite/destinations/{id}/erasure: deletes the backups at a
  *  destination in the background and removes it once they are gone. `expect`
  *  is `erasure.removal` as it was shown and `lastCopies` the identities of the
  *  entries that may lose their only backup. A refusal carries the code "stale"
- *  with `removal`, or "last-copies" or "nothing-to-erase" with `erasure`, each
- *  as it stands, or "domain-busy" while a section is being backed up. */
+ *  with `removal` or `erasure`, or "last-copies" or "nothing-to-erase" with
+ *  `erasure`, each as it stands, "domain-busy" while a section is being backed
+ *  up, "move-running" while a section moves to or from here, or a
+ *  SecretsRefusal code like the preview. */
 export function eraseDestination(
   id: string,
   expect: DestinationRemoval,
   lastCopies: string[]
 ): Promise<OkEnvelope & { started?: boolean; removal?: DestinationRemoval; erasure?: DestinationErasure }> {
-  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/erasure`, {
+  return fetchKeyJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/erasure`, {
     method: "POST",
     body: JSON.stringify({ expect, lastCopies }),
   });
