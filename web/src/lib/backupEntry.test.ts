@@ -58,7 +58,7 @@ describe("the kinds", () => {
     ["container", "containers", "containers"],
     ["vm", "vms", "vms"],
     ["files", "files", "files"],
-    ["zfs", undefined, undefined],
+    ["zfs", "zfs", undefined],
     ["flash", "flash", undefined],
     ["config", "config", undefined],
   ] as const)("gives %s the timeline domain %s and the placement domain %s", (kind, timeline, placement) => {

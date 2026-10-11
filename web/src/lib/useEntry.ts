@@ -21,8 +21,7 @@ export type EntryStatus = "loading" | "ready" | "missing" | "failed";
 
 class ReadFailed extends Error {}
 
-/** readDetail reads the list of the entry's kind and picks the entry out of
- *  it. The server has no route for one entry. */
+/** readDetail reads the list of the entry's kind and picks the entry out of it. */
 async function readDetail(kind: EntryKind, key: string): Promise<EntryDetail | null> {
   switch (kind) {
     case "container": {
@@ -67,6 +66,12 @@ async function readDetail(kind: EntryKind, key: string): Promise<EntryDetail | n
   }
 }
 
+/**
+ * readEntry is the one read behind an entry's page, and null for an entry
+ * that does not exist. The server lists entries only as a whole, so the entry
+ * is picked out of the list of all items and the list of its kind. A route
+ * for one entry replaces the body of this function and nothing else.
+ */
 async function readEntry(kind: EntryKind, key: string): Promise<Entry | null> {
   const [items, detail, settings] = await Promise.all([listItems(), readDetail(kind, key), getSettings()]);
   if (!items.ok || !settings.ok) throw new ReadFailed();

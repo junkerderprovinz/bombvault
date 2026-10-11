@@ -9,24 +9,27 @@ import {
   type ZFSHostDataset,
 } from "../../lib/api";
 import { isGone } from "../../lib/backupList";
-import { historyDays, rowOfRun, type Entry } from "../../lib/entry";
+import { actionMark, historyDays, rowHolds, rowOfRun, rowTime, type Entry } from "../../lib/entry";
 import { useT } from "../../lib/i18n";
 import type { RestoreRequest } from "../../lib/restoreRequest";
+import { newestId } from "../../lib/timeline";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
 import { Card } from "../../pages/settings/shared";
 import { AnomalyWindow } from "../anomalies/AnomalyWindow";
-import { Button } from "../Button";
-import { IconCompare } from "../glyphs";
 import { DatabaseDumpList } from "../restore/DatabaseDumpList";
 import { MissingRestorePoint } from "../restore/MissingRestorePoint";
-import { CompareSnapshotsForm, DEFAULT_RESTORE_FOLDER, RecreateButton, displayTags } from "../RestorePanel";
+import { DEFAULT_RESTORE_FOLDER, RecreateButton } from "../RestorePanel";
 import { Selector } from "../Selector";
 import { SourceToggle, type RepoSource } from "../SourceToggle";
 import { ZFSRestorePanel } from "../zfs/ZFSRestorePanel";
 import { BackupHistory, hasHistory } from "./BackupHistory";
-import { BackupList, type OpenBackup } from "./BackupList";
-import { BackupPlaces, ZFSPlaces, type TimelineState } from "./BackupPlaces";
+import { BackupList, type OpenBackup, type RowAction } from "./BackupList";
+import { BackupPlaces, type TimelineState } from "./BackupPlaces";
+import { CompareWindow } from "./CompareWindow";
+import { DeleteBackupWindow } from "./DeleteBackupWindow";
+import { ExportWindow } from "./ExportWindow";
 import { RestoreWindow } from "./RestoreWindow";
+import { TagWindow } from "./TagWindow";
 
 type View = "backups" | "dumps";
 
@@ -49,6 +52,63 @@ function KeepLine() {
       </Link>
       {after}
     </p>
+  );
+}
+
+/** ZFSRestoreWindow opens one run of a ZFS entry in the panel that restores
+ *  a dataset tree. */
+function ZFSRestoreWindow({
+  entry,
+  dataset,
+  name,
+  row,
+  timeline,
+  request,
+  onClose,
+}: {
+  entry: Entry;
+  dataset: ZFSDatasetView;
+  name: string;
+  row: TimelineRow;
+  timeline: TimelineState;
+  request: RestoreRequest;
+  onClose: () => void;
+}) {
+  const { t } = useT();
+  const [host, setHost] = useState<ReadonlyMap<string, ZFSHostDataset>>(new Map());
+
+  // The listing goes over SSH. Without it the panel still restores, and the
+  // server checks again whether a dataset can be written into.
+  useEffect(() => {
+    zfsHostDatasets()
+      .then((res) => {
+        if (res.ok && res.available) setHost(new Map(res.datasets.map((d) => [d.dataset, d])));
+      })
+      .catch(() => undefined);
+  }, []);
+
+  // A finding names one dataset's backup. Any other way in names the run.
+  const asked = request.snapshot && rowHolds(row, request.snapshot);
+  const preselect: RestoreRequest = asked
+    ? request
+    : {
+        snapshot: newestId(actionMark(row, timeline.places)),
+        at: rowTime(row),
+        item: "",
+        dump: false,
+        dataset: "",
+      };
+
+  return (
+    <AnomalyWindow title={t("entry.restore.title").replace("{name}", () => name)} onClose={onClose}>
+      <ZFSRestorePanel
+        item={dataset}
+        host={host}
+        hostMountRoot={entry.hostMountRoot}
+        restoreFolder={entry.settings.restoreFolder || DEFAULT_RESTORE_FOLDER}
+        preselect={preselect}
+      />
+    </AnomalyWindow>
   );
 }
 
@@ -89,7 +149,7 @@ export function BackupsTab({
   const [dumpSource, setDumpSource] = useState<RepoSource>("local");
   const [dumps, setDumps] = useState<DBDumpView[]>([]);
   const [located, setLocated] = useState<string | null>(null);
-  const [comparing, setComparing] = useState(false);
+  const [acting, setActing] = useState<{ key: string; action: RowAction } | null>(null);
 
   useEffect(() => {
     if (!located) return;
@@ -100,8 +160,12 @@ export function BackupsTab({
   const { rows, places, loading, error } = timeline;
   const pending = places.filter((p) => p.state !== "read");
   const empty = !loading && error === null && rows.length === 0 && pending.length === 0;
-  const openedRow = opened ? rows.find((row) => row.key === opened.key) : undefined;
+  const openedRow = opened ? rows.find((row) => rowHolds(row, opened.key)) : undefined;
+  const actingRow = acting ? rows.find((row) => row.key === acting.key) : undefined;
+  const wanted = request.dump ? "" : request.snapshot;
+  const requestedRow = wanted ? rows.find((row) => rowHolds(row, wanted)) : undefined;
   const restoreFolder = settings.restoreFolder || DEFAULT_RESTORE_FOLDER;
+  const done = () => setActing(null);
 
   function locate(run: Run) {
     const row = rowOfRun(rows, run);
@@ -110,48 +174,37 @@ export function BackupsTab({
     setLocated(row.key);
   }
 
-  const tagsOf = (row: TimelineRow) =>
-    container ? displayTags([...new Set(row.places.flatMap((m) => m.tags))], container.name, container.aliases ?? []) : [];
-
   return (
     <>
       {hasHistory(days) && <BackupHistory days={days} onLocate={locate} hueIndex={nextHue()} />}
-      <BackupPlaces timeline={timeline} hueIndex={nextHue()} />
+      <BackupPlaces
+        timeline={timeline}
+        replicaOf={detail.kind === "zfs" ? detail.dataset : undefined}
+        hueIndex={nextHue()}
+      />
       <Card
         title={t(view === "dumps" ? "dbdump.listTitle" : "backups.title")}
         hint={t("entry.list.hint")}
         hueIndex={nextHue()}
       >
-        {(hasDumps || (container && rows.length > 1)) && (
+        {hasDumps && (
           <div className="flex flex-wrap items-center gap-2">
-            {hasDumps && (
-              <Selector
-                items={[
-                  { id: "backups", label: t("backups.title") },
-                  { id: "dumps", label: t("dbdump.listTitle") },
-                ]}
-                label={t("backups.title")}
-                select="one"
-                variant="well"
-                inline
-                active={view}
-                onChange={(id) => setView(id as View)}
-              />
-            )}
+            <Selector
+              items={[
+                { id: "backups", label: t("backups.title") },
+                { id: "dumps", label: t("dbdump.listTitle") },
+              ]}
+              label={t("backups.title")}
+              select="one"
+              variant="well"
+              inline
+              active={view}
+              onChange={(id) => setView(id as View)}
+            />
             {view === "dumps" && (
               <span className="flex flex-wrap items-center gap-2 text-xs text-carbon-textMuted">
                 {t("source.label")}
                 <SourceToggle source={dumpSource} onChange={setDumpSource} domain="containers" inline />
-              </span>
-            )}
-            {view === "backups" && container && rows.length > 1 && (
-              <span className="ms-auto">
-                <Button
-                  label={t("snapshot.compare")}
-                  labelKey="snapshot.compare"
-                  glyph={<IconCompare />}
-                  onClick={() => setComparing(true)}
-                />
               </span>
             )}
           </div>
@@ -160,11 +213,11 @@ export function BackupsTab({
         <div hidden={view !== "backups"} className="flex flex-col gap-4">
           {loading && <p className="text-sm text-carbon-textMuted">{t("common.loadingBackups")}</p>}
           {error !== null && <p className="text-sm text-statusFail">{error || t("common.loadBackupsFailed")}</p>}
-          {request.snapshot && !request.dump && places.length > 0 && pending.length === 0 && (
+          {wanted && places.length > 0 && pending.length === 0 && (
             <MissingRestorePoint
-              requested={request.snapshot}
+              requested={wanted}
               requestedAt={request.at}
-              points={rows.map((row) => ({ id: row.key, at: Math.floor(Date.parse(row.time) / 1000) }))}
+              points={rows.map((row) => ({ id: row === requestedRow ? wanted : row.key, at: rowTime(row) }))}
               t={t}
             />
           )}
@@ -182,10 +235,10 @@ export function BackupsTab({
             timeline={timeline}
             runs={runs}
             isFlagged={(row, run) => flagged.has(row.key) || (run !== undefined && isFlagged(run))}
-            tagsOf={tagsOf}
             located={located}
-            requested={request.dump ? "" : request.snapshot}
+            requested={requestedRow?.key ?? ""}
             onOpen={onOpen}
+            onAct={(row, action) => setActing({ key: row.key, action })}
           />
           <KeepLine />
         </div>
@@ -214,9 +267,21 @@ export function BackupsTab({
         )}
       </Card>
 
-      {opened && openedRow && (
+      {opened && openedRow && detail.kind === "zfs" && (
+        <ZFSRestoreWindow
+          key={openedRow.key}
+          entry={entry}
+          dataset={detail.dataset}
+          name={name}
+          row={openedRow}
+          timeline={timeline}
+          request={request}
+          onClose={() => onOpen(null)}
+        />
+      )}
+      {opened && openedRow && detail.kind !== "zfs" && (
         <RestoreWindow
-          key={opened.key}
+          key={openedRow.key}
           entry={entry}
           name={name}
           row={openedRow}
@@ -226,60 +291,28 @@ export function BackupsTab({
           onClose={() => onOpen(null)}
         />
       )}
-      {comparing && container && (
-        <AnomalyWindow title={t("snapshot.compare")} onClose={() => setComparing(false)}>
-          <CompareSnapshotsForm containerName={container.name} t={t} />
-        </AnomalyWindow>
-      )}
-    </>
-  );
-}
-
-/**
- * ZFSBackupsTab is the Backups tab of a ZFS entry, whose backups are restore
- * points of a whole dataset tree and come with a panel of their own.
- */
-export function ZFSBackupsTab({
-  entry,
-  dataset,
-  runs,
-  request,
-  nextHue,
-}: {
-  entry: Entry;
-  dataset: ZFSDatasetView;
-  runs: Run[];
-  request: RestoreRequest;
-  nextHue: () => number;
-}) {
-  const { t } = useT();
-  const isFlagged = useFlaggedRun();
-  const days = historyDays(runs, isFlagged);
-  const [host, setHost] = useState<ReadonlyMap<string, ZFSHostDataset>>(new Map());
-
-  // The listing goes over SSH. Without it the panel still restores, and the
-  // server checks again whether a dataset can be written into.
-  useEffect(() => {
-    zfsHostDatasets()
-      .then((res) => {
-        if (res.ok && res.available) setHost(new Map(res.datasets.map((d) => [d.dataset, d])));
-      })
-      .catch(() => undefined);
-  }, []);
-
-  return (
-    <>
-      {hasHistory(days) && <BackupHistory days={days} hueIndex={nextHue()} />}
-      <ZFSPlaces dataset={dataset} hueIndex={nextHue()} />
-      <Card title={t("backups.title")} hueIndex={nextHue()}>
-        <ZFSRestorePanel
-          item={dataset}
-          host={host}
-          hostMountRoot={entry.hostMountRoot}
-          restoreFolder={entry.settings.restoreFolder || DEFAULT_RESTORE_FOLDER}
-          preselect={request.snapshot ? request : undefined}
+      {actingRow && acting?.action === "tag" && (
+        <TagWindow
+          entry={entry}
+          name={name}
+          row={actingRow}
+          timeline={timeline}
+          onSaved={() => {
+            done();
+            timeline.reload();
+          }}
+          onClose={done}
         />
-      </Card>
+      )}
+      {actingRow && acting?.action === "compare" && (
+        <CompareWindow entry={entry} name={name} row={actingRow} timeline={timeline} onClose={done} />
+      )}
+      {actingRow && acting?.action === "export" && (
+        <ExportWindow entry={entry} name={name} row={actingRow} timeline={timeline} onClose={done} />
+      )}
+      {actingRow && acting?.action === "delete" && (
+        <DeleteBackupWindow entry={entry} name={name} row={actingRow} timeline={timeline} onClose={done} />
+      )}
     </>
   );
 }
