@@ -463,8 +463,7 @@ async function edges(page: Page) {
   return page.evaluate(() => {
     const main = document.querySelector("#bv-main");
     const vw = window.innerWidth;
-    // The tiles are one row that scrolls sideways on a phone, so a tile past
-    // the edge is in reach.
+    // What stands in a box that scrolls sideways is in reach past the edge.
     const scrolls = (el: Element | null): boolean =>
       el !== null && (/auto|scroll/.test(getComputedStyle(el).overflowX) || scrolls(el.parentElement));
     const clipped = [...document.querySelectorAll("#bv-main button, #bv-main input, [role='dialog'] button, [role='dialog'] input, [role='switch']")]
@@ -603,8 +602,8 @@ test("the emergency and the other sources open their windows", async ({ page }, 
   await expect(oldFolder.getByRole("button", { name: "Verbinden" })).toBeDisabled();
   await oldFolder.getByRole("button", { name: "Abbrechen" }).click();
 
-  await page.getByRole("button", { name: /^Aus dem Appdata.Backup-Plugin importieren/ }).click();
-  await expect(page.getByRole("dialog", { name: "Aus dem Appdata.Backup-Plugin importieren" })).toBeVisible();
+  await page.getByRole("button", { name: /^Aus dem Appdata.Backup-Plugin übernehmen/ }).click();
+  await expect(page.getByRole("dialog", { name: "Aus dem Appdata.Backup-Plugin übernehmen" })).toBeVisible();
 });
 
 test("the emergency reads a sealed recovery kit, takes its key over when told to and undoes that on the way out", async ({ page }, testInfo) => {
@@ -793,6 +792,13 @@ for (const width of [320, 360]) {
     expect(onPage.mainPan!, "#bv-main scrolls horizontally").toBeLessThanOrEqual(1);
     expect(onPage.clipped, "controls clip the viewport edge").toEqual([]);
 
+    // The tiles stay tiles with their count in words, two to a row.
+    const tiles = page.getByRole("group", { name: "Bereiche" }).getByRole("button");
+    await expect(tiles.first()).toContainText("mit Sicherungen");
+    const [a, b, c] = await Promise.all([0, 1, 2].map(async (i) => (await tiles.nth(i).boundingBox())!));
+    expect(Math.abs(a.y - b.y), "the first two tiles share a row").toBeLessThan(1);
+    expect(c.y, "the third tile starts the next row").toBeGreaterThan(a.y + a.height - 1);
+
     // A phone has no hover, so every backup shows its restore button.
     await rows(page).nth(2).getByRole("button", { name: "Wiederherstellen" }).click();
     const win = page.getByRole("dialog", { name: "immich wiederherstellen" });
@@ -891,7 +897,7 @@ test("pictures of the page", async ({ page }, testInfo) => {
     await settle(page);
     await page.screenshot({ path: join(SHOTS!, `old-folder-${name}.png`) });
     await page.getByRole("dialog").getByRole("button", { name: "Abbrechen" }).click();
-    await page.getByRole("button", { name: /^Aus dem Appdata.Backup-Plugin importieren/ }).click();
+    await page.getByRole("button", { name: /^Aus dem Appdata.Backup-Plugin übernehmen/ }).click();
     await settle(page);
     await page.screenshot({ path: join(SHOTS!, `appdata-${name}.png`) });
   }
