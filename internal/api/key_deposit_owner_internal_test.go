@@ -13,6 +13,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -266,5 +267,32 @@ func TestTakingTheLastDepositBackSaysTheRecoveryCodeIsGone(t *testing.T) {
 	_, out := tower.do(t, http.MethodDelete, "/api/group/members/"+attic.id(t)+"/roles/keeper", map[string]any{})
 	if out["ok"] != true || out["told"] != true || out["codeGone"] != true {
 		t.Fatalf("taking the last deposit back: %v", out)
+	}
+}
+
+func TestNoDepositIsMadeOrRenewedUnderALockedBackupKey(t *testing.T) {
+	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
+	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
+	groupOf(t, tower, attic)
+	deposit(t, tower, attic)
+	before, _ := kept(t, attic, tower)
+
+	sealedElsewhere, err := secret.Encrypt(strings.Repeat("9", 64), []byte(strings.Repeat("e", 64)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := tower.st.SetAdoptedKey(sealedElsewhere, store.KeyFromKit, true); err != nil {
+		t.Fatal(err)
+	}
+	tower.svc.forgetBackupKey()
+	if out := deposit(t, tower, attic); out["ok"] != false || out["code"] != "backup-key-locked" {
+		t.Fatalf("a deposit under a locked key: %v", out)
+	}
+	if _, err := tower.db.Exec(`UPDATE key_deposits_sent SET digest = ''`); err != nil {
+		t.Fatal(err)
+	}
+	tower.svc.RenewDeposits(context.Background())
+	if after, _ := kept(t, attic, tower); !bytes.Equal(after.Deposit, before.Deposit) {
+		t.Fatal("a renewal under a locked key replaced the deposit")
 	}
 }
