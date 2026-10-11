@@ -1988,8 +1988,8 @@ body {
 
 /* A section-title (notch) badge also reveals its hue while its whole card is
    hovered or focused; its own 22px pill is too small a target on its own.
-   `.glim-notch-card` marks the badge's positioned card (Settings.tsx's Card
-   and a few bespoke cards in Flash.tsx and Config.tsx) rather than every
+   `.glim-notch-card` marks the badge's positioned card (the Card of
+   pages/settings/shared.tsx and a few bespoke cards) rather than every
    `rounded-card`, which also lands on hint panels, banners and rows.
    `.glim-notch-hue` marks the badge itself, so other hued controls in the card
    do not light up just because the pointer is somewhere in it. */

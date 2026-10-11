@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// The folder selection tree on the Files page, with the same harness as
+// The folder selection tree of a folder set, with the same harness as
 // Containers.tree.dom.test.tsx: the mocked api client serves browse listings
 // and records PATCH bodies, so what goes over the wire can be checked step by
 // step.

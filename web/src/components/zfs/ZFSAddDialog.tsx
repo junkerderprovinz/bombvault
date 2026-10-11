@@ -93,7 +93,7 @@ export function ZFSAddForm({
       if (!(await confirm(question, { confirmKey: "zfs.add.asItem" }))) return;
     }
     setSelected(new Set([...selected, dataset]));
-    // A VM's disks are backed up on the VMs page and system data is not worth
+    // A VM's disks are backed up with the VM and system data is not worth
     // a copy, so they start out of the item rather than surprising the reader
     // with their size on the first run.
     const off = entries

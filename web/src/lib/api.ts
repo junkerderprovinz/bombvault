@@ -77,8 +77,8 @@ export interface Container {
   dbDumpEngine: DbEngine;
   /** The bombvault.dbdump=false label, which wins over the toggle. */
   dbDumpLabelOff: boolean;
-  /** The Settings switch for every container. The Containers page loads no
-   *  settings, so each row carries it. */
+  /** The Settings switch for every container. Each container carries it, so
+   *  a list of containers needs no settings. */
   dbDumpsGlobalOff: boolean;
   dbDataCoverage: DbDataCoverage;
   /** The container's pre-backup hook already runs a dump tool. */
@@ -430,7 +430,7 @@ export interface GetSettingsResponse {
   /** The detected/overridden platform BombVault is running on ("unraid" |
    *  "generic" | "truenas"), sourced from internal/platform's Platform.Kind().
    *  Read-only host-environment info, not a setting the UI can change — used
-   *  e.g. to gate the Files page's "Host system config" preset (offered only
+   *  e.g. to gate a new folder set's "Host system config" preset (offered only
    *  off Unraid, which already has the dedicated flash domain for this). */
   platform: string;
   /** The clock the server reads every schedule on, and its offset from UTC. */
@@ -2137,8 +2137,8 @@ export function recoveryKitUrl(): string {
  * JSON error body as a .md file), which is why this goes through fetch.
  *
  * The browser globals are reached via globalThis with minimal structural
- * types: runtime-identical to bare fetch/document/URL (cf. Flash.tsx's zip
- * download), but immune to a toolchain whose DOM lib resolution is broken and
+ * types: runtime-identical to bare fetch/document/URL (as the flash ZIP
+ * download uses them), but immune to a toolchain whose DOM lib resolution is broken and
  * would spuriously flag the bare global names.
  */
 /**

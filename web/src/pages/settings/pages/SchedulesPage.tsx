@@ -218,7 +218,7 @@ function FlashSection({
 
 // FilesSection mirrors VMsSection for the cadence and ContainersSection for the
 // member list, except that each set's "include in schedule" toggle PATCHes the
-// set directly (the same {enabled} flag the Files page edits).
+// set directly (the same {enabled} flag the set's own page edits).
 function FilesSection({
   settings,
   syncSchedules,

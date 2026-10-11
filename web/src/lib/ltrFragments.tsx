@@ -116,7 +116,7 @@ export const FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS = ["/mnt/zfs"] as const;
 /** BombVault's own config volume, named in prose by four different cards. */
 export const CONFIG_VOLUME_LTR_FRAGMENTS = ["/config"] as const;
 
-/** The Unraid USB mount, named by the Flash tab and its schedule/settings rows. */
+/** The Unraid USB mount, named by the flash drive's schedule and settings rows. */
 export const BOOT_VOLUME_LTR_FRAGMENTS = ["/boot"] as const;
 
 /** The path an instance serving a relay answers on, named in the relay card. */
@@ -143,7 +143,7 @@ export const VM_SSH_KEY_PATH_LTR_FRAGMENTS = ["/root/.ssh/authorized_keys"] as c
 /** The key file the replica dialog tells the user to append to on a ZFS server. */
 export const REPLICA_KEY_PATH_LTR_FRAGMENTS = ["~/.ssh/authorized_keys"] as const;
 
-/** The Unraid user share, which the ZFS pages name as the mapping that hides
+/** The Unraid user share, which the ZFS texts name as the mapping that hides
  *  snapshots. */
 export const USER_SHARE_LTR_FRAGMENTS = ["/mnt/user"] as const;
 

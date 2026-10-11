@@ -1,5 +1,5 @@
 // offsiteRunProgress is the one place the off-site run percentage is derived,
-// shared by ActivityLog's live line and OffsiteIndicator.
+// shared by the activity log's live line and the head of the overview.
 //
 // Node environment: importing ./progress only defines functions, the
 // EventSource is created inside them.

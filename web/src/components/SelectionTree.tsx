@@ -69,7 +69,7 @@ export interface SelectionTreeProps {
   onToggle: (hostPath: string) => void;
   /** Remove-button handler for custom rows; carries the host path. */
   onRemoveCustom: (hostPath: string) => void;
-  /** Per-root CACHEDIR.TAG switches in host path form. The Files page passes
+  /** Per-root CACHEDIR.TAG switches in host path form. A folder set passes
    *  neither this nor onToggleCaches, which hides the switch row rather than
    *  rendering a switch that does nothing. */
   excludeCaches?: Readonly<Record<string, boolean>>;
@@ -81,8 +81,8 @@ export interface SelectionTreeProps {
   shakeCounts?: Readonly<Record<string, number>>;
   /** Path whose last toggle was blocked; shows the inline warning. */
   blockedPath?: string | null;
-  /** Text of the blocked warning. The Files page passes its own, because the
-   *  default names a reset action its card does not have. */
+  /** Text of the blocked warning. A folder set passes its own, because the
+   *  default names a reset action it does not have. */
   blockedMessage?: string;
   /** Interaction mode: "pointer" (the default, desktop
    *  byte-identical: row click expands, checkbox toggles) or "touch" (row
@@ -276,7 +276,7 @@ export function SelectionTree({
       label: (
         <span className="flex flex-col min-w-0">
           <span dir="ltr" className="font-mono break-all text-start">
-            {/* The Files page passes its set root as a mount without a dest. */}
+            {/* A folder set passes its root as a mount without a dest. */}
             {m.dest === "" ? m.source : `${m.dest} ← ${m.source}`}
           </span>
           {m.isAppdata && <span className="text-statusOk">{t("folders.appdataDefault")}</span>}

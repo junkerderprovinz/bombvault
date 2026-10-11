@@ -64,7 +64,7 @@ import { BottomSheet, type BottomSheetProps } from "./BottomSheet";
 //     formatLogDate/formatClockTime stamps, colorFor/glyphFor vocabulary);
 //     never a second log style
 //   - browse: SnapshotFileTree behind a tonal row (the parent-fetch precedent
-//     in Recovery.tsx / Files.tsx; RestorePanel.tsx is the local
+//     in Recovery.tsx; RestorePanel.tsx is the local
 //     container twin)
 //   - verify: checkDomain() with the Settings integrity tab's own labels
 //   - restore entry: the desktop restore surface's own label
@@ -131,8 +131,8 @@ const LIVE_TICK_MS = 1000;
  *  streams no key of its own ("everything" is the parent run; its per-domain
  *  children are the ones that publish; store.EverythingTargetID). Shapes
  *  mirror the wire examples in progress.ts ("container:plex", "vm:win11") and
- *  the consumers (BackupButton.tsx, VMs.tsx, Files.tsx, Config.tsx
- *  "config", flash as the bare "flash").
+ *  the keys of lib/backupEntry.ts (the self-backup as the bare "config",
+ *  flash as the bare "flash").
  *
  *  The suffix is run.target; the name; never run.targetId. The backend
  *  records vm/files runs under the row's 32-hex id (StartRun(tg.ID) /
@@ -453,7 +453,7 @@ export function RunDetailSheet({ run, open, onClose, windowed = false }: RunDeta
   // --- restore row (the selection the tree collects, restored in place) -----
   // The sheet's own restore path: the SnapshotFileTree selection restored to
   // the original locations, behind the same confirm gate the desktop restore
-  // surfaces answer (Files.tsx / RestorePanel.tsx, files.restoreConfirm).
+  // surfaces answer (RestorePanel.tsx, files.restoreConfirm).
   // Round 1 shipped the row as a second toggle of the browse disclosure, so
   // two adjacent buttons promised a restore while one disclosure answered
   // for both, and pressing "Restore" with the tree open CLOSED it
@@ -733,8 +733,8 @@ export function RunDetailSheet({ run, open, onClose, windowed = false }: RunDeta
           <HistoryLogSection run={run} />
         )}
 
-        {/* Browse section; the SnapshotFileTree mount (the Recovery.tsx /
-            Files.tsx precedent: purely presentational tree, the parent
+        {/* Browse section; the SnapshotFileTree mount (the Recovery.tsx
+            precedent: purely presentational tree, the parent
             owns the fetch). Revealed by the footer browse disclosure, or
             opened by the restore entry below when it needs a selection. */}
         {browseSupported && browseOpen && (

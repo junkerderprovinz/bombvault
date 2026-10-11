@@ -97,7 +97,7 @@ describe("rovedIndex", () => {
   });
 
   it("falls back to the first enabled item when the active item is disabled", () => {
-    // Files.tsx disables its active "original" chip when there is no target
+    // A folder set's restore disables its active "original" chip when there is no target
     // path, and the tab stop still has to be reachable.
     expect(rovedIndex([false, true, false], 1)).toBe(0);
   });

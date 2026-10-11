@@ -194,8 +194,8 @@ export function FileSetFoldersEditor({
     });
   }
 
-  // A set without a path has no tree; the card's noPathHint line stands in.
-  // FileSetRow checks this too. The check comes after the hooks.
+  // A set without a path has no tree, and its page says so in the tree's
+  // place. The check comes after the hooks.
   if (noPath) return null;
 
   return (
