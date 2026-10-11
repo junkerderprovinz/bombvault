@@ -102,7 +102,7 @@ func TestAScheduledOrUnknownEntryCannotBeDeclined(t *testing.T) {
 	}
 }
 
-func TestAScheduleEndsADeclineForGood(t *testing.T) {
+func TestAScheduleOutranksADeclineWithoutReadingWritingAnything(t *testing.T) {
 	docker := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex")}}
 	h, st, _ := newItemsRouter(t, docker, fakeVirsh{})
 	enableEveryKind(t, st, nil)
@@ -123,13 +123,15 @@ func TestAScheduleEndsADeclineForGood(t *testing.T) {
 	if d := coverageDomain(t, h, "containers"); d["protected"] != float64(1) || d["declined"] != float64(0) {
 		t.Fatalf("a scheduled container that was declined before reads as %v", d)
 	}
-	setSchedule("")
-	d := coverageDomain(t, h, "containers")
-	if d["declined"] != float64(0) || len(d["unprotected"].([]any)) != 1 {
-		t.Fatalf("after losing its schedule again the container reads as %v, want it unprotected", d)
-	}
 	if item := getItem(t, h, "container", "plex"); item["backupDeclined"] != nil {
-		t.Fatalf("the row still carries backupDeclined: %v", item)
+		t.Fatalf("the scheduled row carries backupDeclined: %v", item)
+	}
+	if marks, err := st.DeclinedBackups(); err != nil || !marks[store.BackupEntry{Kind: "container", Key: "plex"}] {
+		t.Fatalf("reading the list dropped the mark: %v, %v", marks, err)
+	}
+	setSchedule("")
+	if d := coverageDomain(t, h, "containers"); d["declined"] != float64(1) || len(d["unprotected"].([]any)) != 0 {
+		t.Fatalf("taken out of the schedule before any backup the container reads as %v, want it declined", d)
 	}
 }
 
