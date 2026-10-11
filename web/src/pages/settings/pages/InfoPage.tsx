@@ -181,11 +181,12 @@ export function InfoPage() {
             mark={<BrandMark svg={MANUAL_SVG} />}
             markClass="glim-house-mark"
           />
+          {/* The file goes with an issue on GitHub, so it lights up beside it. */}
           <ReadmeButton
-            tile="glim-tile-house"
+            tile="glim-tile-github"
             parts={[{ name: t("tile.info.bugReport"), sub: t("tile.info.download"), onClick: () => void bugReport() }]}
             mark={<IconDiagnostics />}
-            markClass="glim-house-mark"
+            markClass="glim-github-mark"
           />
         </div>
       </Card>

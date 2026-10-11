@@ -184,7 +184,7 @@ describe("the Help card", () => {
   it("puts the bug of the glyph set on the bug report", async () => {
     await renderPage();
     const report = help().getByRole("button", { name: new RegExp(en["tile.info.bugReport"]) });
-    expect(report.querySelector(".glim-house-mark svg")?.getAttribute("viewBox")).toBe("0.05 0.05 13.9 13.9");
+    expect(report.querySelector(".glim-github-mark svg")?.getAttribute("viewBox")).toBe("0.05 0.05 13.9 13.9");
   });
 
   it("downloads the bug report when its button is pressed", async () => {
