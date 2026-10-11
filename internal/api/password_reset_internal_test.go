@@ -21,7 +21,7 @@ const (
 	resetNewPass    = "correct horse battery"
 )
 
-var loggedResetCode = regexp.MustCompile(`the code is ([2-9A-Z]{4}-[2-9A-Z]{4}) `)
+var loggedResetCode = regexp.MustCompile(`RESET CODE: ([2-9A-Z]{4}-[2-9A-Z]{4})`)
 
 // newResetHandler is a handler with a login password and a buffer in place of
 // the container log.
@@ -30,7 +30,7 @@ func newResetHandler(t *testing.T) (*Handler, *store.Repo, *bytes.Buffer) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
 	out := &bytes.Buffer{}
-	h.resetLog = log.New(out, "", 0)
+	h.resetOut = out
 	return h, repo, out
 }
 
@@ -270,7 +270,7 @@ func TestAskingAgainKeepsTheLiveCode(t *testing.T) {
 func TestResetNeedsALoginPassword(t *testing.T) {
 	h, _, _ := newAuthGateHandler(t)
 	out := &bytes.Buffer{}
-	h.resetLog = log.New(out, "", 0)
+	h.resetOut = out
 
 	_, body := postJSON(t, h.handleStartPasswordReset, resetStartPath, `{}`, "10.0.0.1:1", nil)
 
@@ -315,7 +315,7 @@ func TestALockedOutOwnerResetsThePasswordThroughTheRouter(t *testing.T) {
 	in := newInstance(t, "alpha", strings.Repeat("a", 64))
 	in.session = ""
 	out := &bytes.Buffer{}
-	in.h.resetLog = log.New(out, "", 0)
+	in.h.resetOut = out
 
 	if status, _ := in.do(t, http.MethodGet, "/api/settings", nil); status != http.StatusUnauthorized {
 		t.Fatalf("status = %d, want the instance locked before the reset", status)

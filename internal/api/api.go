@@ -1,7 +1,7 @@
 package api
 
 import (
-	"log"
+	"io"
 	"net/http"
 	"os"
 	"sync"
@@ -66,12 +66,13 @@ type Handler struct {
 	passkeyMu         sync.Mutex
 	passkeyCeremonies map[string]passkeyCeremony
 
-	// The live password reset code, and where it is written. resetLog goes to
-	// stdout past the log ring, because the ring is copied into the diagnostics
-	// bundle and a bundle gets attached to bug reports.
+	// The live password reset code, and where it is written. resetOut is
+	// stdout itself and not the logger: the logger feeds the log ring, the ring
+	// is copied into the diagnostics bundle, and a bundle gets attached to bug
+	// reports.
 	resetMu  sync.Mutex
 	reset    passwordReset
-	resetLog *log.Logger
+	resetOut io.Writer
 
 	loginMu    sync.Mutex
 	loginFails map[string][]time.Time
@@ -108,7 +109,7 @@ func NewHandler(
 		svc:       svc,
 		scheduler: scheduler,
 		probes:    probes,
-		resetLog:  log.New(os.Stdout, "", log.LstdFlags),
+		resetOut:  os.Stdout,
 		// Same gate queries main.go wires for the initial reload. A settings
 		// save re-arms the scheduler through this handler, so a divergence here
 		// would mean the gates changed meaning the first time a user pressed a
