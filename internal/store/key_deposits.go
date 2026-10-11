@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -15,9 +16,27 @@ const (
 	// DepositDeclined is a deposit the keeper deleted. It takes no new one
 	// from that install until a person there asks again.
 	DepositDeclined = "declined"
-	// DepositStale is a deposit whose content changed on the install it
-	// belongs to and has not reached the keeper since.
+	// DepositStale is a deposit the keeper holds an older form of: the kit
+	// says something else since, or the recovery code is another.
 	DepositStale = "stale"
+	// DepositChanged is what an install records when the keeper holds,
+	// under the install's id, something the install did not send. Either
+	// the bytes differ and the fresh deposit has not arrived yet, or
+	// another key made the deposit and the keeper takes none from the
+	// install until a person there deletes that one.
+	DepositChanged = "changed"
+)
+
+var (
+	// ErrDepositNotOwner is returned for a deposit under an id whose kept
+	// deposit was made with another proof key.
+	ErrDepositNotOwner = errors.New("the deposit kept under this id was made by another key")
+	// ErrDepositReplayed is returned for a deposit that is not newer than the
+	// one kept.
+	ErrDepositReplayed = errors.New("a deposit at least as new is kept already")
+	// ErrDepositsFull is returned for a first deposit once the install keeps
+	// as many as it takes.
+	ErrDepositsFull = errors.New("this instance already keeps as many deposits as it can")
 )
 
 // The states of a request to hand a deposit out.
@@ -37,6 +56,9 @@ var ErrReleaseLimit = errors.New("too many requests for a deposit from this inst
 
 // KeptDeposit is a deposit this install keeps for a member. Deposit is sealed
 // to a key only the member's recovery code gives, so nothing here reads it.
+// OwnerKey is the proof key the deposit came with, which every later one and
+// the call that takes it back have to be signed with, and Counter the highest
+// one a signed call carried.
 type KeptDeposit struct {
 	OwnerID   string
 	OwnerName string
@@ -44,53 +66,76 @@ type KeptDeposit struct {
 	Deposit   []byte
 	Salt      []byte
 	Version   int
+	OwnerKey  []byte
+	Counter   int64
 	CreatedAt int64
 	UpdatedAt int64
 }
 
 func scanKeptDeposit(s scanner) (KeptDeposit, error) {
 	var d KeptDeposit
-	err := s.Scan(&d.OwnerID, &d.OwnerName, &d.State, &d.Deposit, &d.Salt, &d.Version, &d.CreatedAt, &d.UpdatedAt)
+	err := s.Scan(&d.OwnerID, &d.OwnerName, &d.State, &d.Deposit, &d.Salt, &d.Version, &d.OwnerKey, &d.Counter, &d.CreatedAt, &d.UpdatedAt)
 	return d, err
 }
 
-const keptDepositCols = `owner_id, owner_name, state, deposit, salt, version, created_at, updated_at`
+const keptDepositCols = `owner_id, owner_name, state, deposit, salt, version, owner_key, counter, created_at, updated_at`
 
 // KeepDeposit stores the deposit a member sent and returns the state it is in
 // afterwards and whether it is the member's first. A deposit this install
-// deleted stays declined unless renew says a person there asked again.
-func (r *Repo) KeepDeposit(d KeptDeposit, renew bool) (state string, first bool, err error) {
+// deleted stays declined unless renew says a person there asked again. One
+// that is kept is replaced only by a newer deposit with the same proof key,
+// and a first one is taken while the install keeps fewer than most.
+func (r *Repo) KeepDeposit(d KeptDeposit, renew bool, most int) (state string, first bool, err error) {
 	now := time.Now().Unix()
 	err = r.inTx(func(tx *sql.Tx) error {
 		var held string
-		switch err := tx.QueryRow(`SELECT state FROM key_deposits WHERE owner_id = ?`, d.OwnerID).Scan(&held); {
+		var key []byte
+		var counter int64
+		switch err := tx.QueryRow(`SELECT state, owner_key, counter FROM key_deposits WHERE owner_id = ?`, d.OwnerID).Scan(&held, &key, &counter); {
 		case errors.Is(err, sql.ErrNoRows):
+			var kept int
+			if err := tx.QueryRow(`SELECT count(*) FROM key_deposits`).Scan(&kept); err != nil {
+				return err
+			}
+			if kept >= most {
+				return ErrDepositsFull
+			}
 			first = true
 		case err != nil:
 			return err
 		case held == DepositDeclined && !renew:
 			state = DepositDeclined
 			return nil
+		case len(key) > 0 && !bytes.Equal(key, d.OwnerKey):
+			return ErrDepositNotOwner
+		case d.Counter <= counter:
+			return ErrDepositReplayed
 		}
 		state = DepositHeld
 		_, err := tx.Exec(`
-			INSERT INTO key_deposits (owner_id, owner_name, state, deposit, salt, version, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+			INSERT INTO key_deposits (owner_id, owner_name, state, deposit, salt, version, owner_key, counter, created_at, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT (owner_id) DO UPDATE SET owner_name = excluded.owner_name, state = excluded.state,
-				deposit = excluded.deposit, salt = excluded.salt, version = excluded.version, updated_at = excluded.updated_at`,
-			d.OwnerID, d.OwnerName, DepositHeld, d.Deposit, d.Salt, d.Version, now, now)
+				deposit = excluded.deposit, salt = excluded.salt, version = excluded.version,
+				owner_key = excluded.owner_key, counter = excluded.counter, updated_at = excluded.updated_at`,
+			d.OwnerID, d.OwnerName, DepositHeld, d.Deposit, d.Salt, d.Version, d.OwnerKey, d.Counter, now, now)
 		return err
 	})
-	if err != nil {
+	switch {
+	case errors.Is(err, ErrDepositNotOwner), errors.Is(err, ErrDepositReplayed), errors.Is(err, ErrDepositsFull):
+		return "", false, err
+	case err != nil:
 		return "", false, fmt.Errorf("KeepDeposit: %w", err)
 	}
 	return state, first, nil
 }
 
 // DeclineDeposit deletes what this install keeps for a member and remembers
-// that it did. It reports whether there was a deposit.
+// that it did. It reports whether there was a deposit. The proof key goes
+// with it, so that the member's own key is taken when a person there asks
+// again, whoever made the deposit that was deleted.
 func (r *Repo) DeclineDeposit(ownerID string) (bool, error) {
-	res, err := r.db.Exec(`UPDATE key_deposits SET state = ?, deposit = x'', salt = x'', updated_at = ? WHERE owner_id = ? AND state = ?`,
+	res, err := r.db.Exec(`UPDATE key_deposits SET state = ?, deposit = x'', salt = x'', owner_key = x'', updated_at = ? WHERE owner_id = ? AND state = ?`,
 		DepositDeclined, time.Now().Unix(), ownerID, DepositHeld)
 	if err != nil {
 		return false, fmt.Errorf("DeclineDeposit: %w", err)
@@ -162,29 +207,38 @@ func scanKeyRelease(s scanner) (KeyRelease, error) {
 }
 
 // ReleaseLimits bounds the requests for deposits: how many new ones an
-// instance may make within Window, how long one waits for an answer, and how
-// long an allowed one can be collected.
+// instance may make within Window and how many all of them together, since an
+// instance names itself, how long one waits for an answer, how long an
+// allowed one can be collected, and how long a request that is over stays on
+// record.
 type ReleaseLimits struct {
 	PerWindow int
+	Total     int
 	Window    time.Duration
 	Answer    time.Duration
 	Collect   time.Duration
+	Keep      time.Duration
 }
 
-// expireReleasesTx closes the requests whose time is up.
+// expireReleasesTx closes the requests whose time is up and forgets the ones
+// that have been over for longer than they are kept.
 func expireReleasesTx(tx *sql.Tx, now time.Time, l ReleaseLimits) error {
-	_, err := tx.Exec(`
+	if _, err := tx.Exec(`
 		UPDATE key_releases SET state = ?
 		WHERE (state = ? AND asked_at < ?) OR (state = ? AND decided_at < ?)`,
-		ReleaseExpired, ReleaseAsked, now.Add(-l.Answer).Unix(), ReleaseAllowed, now.Add(-l.Collect).Unix())
+		ReleaseExpired, ReleaseAsked, now.Add(-l.Answer).Unix(), ReleaseAllowed, now.Add(-l.Collect).Unix()); err != nil {
+		return err
+	}
+	_, err := tx.Exec(`DELETE FROM key_releases WHERE asked_at < ? AND state NOT IN (?, ?)`,
+		now.Add(-l.Keep).Unix(), ReleaseAsked, ReleaseAllowed)
 	return err
 }
 
 // AskKeyRelease returns where the request of requester for the deposit of
 // owner stands. A request that waits or was allowed is returned as it is. With
 // renew, which a person asking sets, anything else is replaced by a new
-// request, unless the instance made PerWindow new ones within Window and gets
-// ErrReleaseLimit. Without renew the newest request is returned whatever
+// request, unless the instance made PerWindow new ones within Window, or all
+// instances Total, and gets ErrReleaseLimit. Without renew the newest request is returned whatever
 // became of it, and one with an empty state when there never was any.
 func (r *Repo) AskKeyRelease(ownerID, requesterID, requesterName string, renew bool, now time.Time, l ReleaseLimits) (out KeyRelease, created bool, err error) {
 	err = r.inTx(func(tx *sql.Tx) error {
@@ -204,12 +258,12 @@ func (r *Repo) AskKeyRelease(ownerID, requesterID, requesterName string, renew b
 		if !renew {
 			return nil
 		}
-		var recent int
-		if err := tx.QueryRow(`SELECT count(*) FROM key_releases WHERE requester_id = ? AND asked_at > ?`,
-			requesterID, now.Add(-l.Window).Unix()).Scan(&recent); err != nil {
+		var recent, all int
+		if err := tx.QueryRow(`SELECT count(*) FILTER (WHERE requester_id = ?), count(*) FROM key_releases WHERE asked_at > ?`,
+			requesterID, now.Add(-l.Window).Unix()).Scan(&recent, &all); err != nil {
 			return err
 		}
-		if recent >= l.PerWindow {
+		if recent >= l.PerWindow || all >= l.Total {
 			return ErrReleaseLimit
 		}
 		out = KeyRelease{ID: newID(), OwnerID: ownerID, RequesterID: requesterID, RequesterName: requesterName, State: ReleaseAsked, AskedAt: now.Unix()}
@@ -361,22 +415,26 @@ func (r *Repo) ClearDepositIdentity() error {
 }
 
 // SentDeposit is this install's deposit with one member. Digest is of the
-// content that was last sealed for it.
+// content that was last sealed for it and HeldDigest of the sealed bytes the
+// member took, which it names again when asked what it holds. ChangedAt is
+// when the member was last found holding something else, zero for never.
 type SentDeposit struct {
 	MemberID   string
 	MemberName string
 	State      string
 	Digest     string
+	HeldDigest string
 	SentAt     int64
+	ChangedAt  int64
 }
 
 // SaveSentDeposit records what a member answered to a deposit.
 func (r *Repo) SaveSentDeposit(d SentDeposit) error {
 	_, err := r.db.Exec(`
-		INSERT INTO key_deposits_sent (member_id, member_name, state, digest, sent_at) VALUES (?, ?, ?, ?, ?)
+		INSERT INTO key_deposits_sent (member_id, member_name, state, digest, held_digest, sent_at, changed_at) VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (member_id) DO UPDATE SET member_name = excluded.member_name, state = excluded.state,
-			digest = excluded.digest, sent_at = excluded.sent_at`,
-		d.MemberID, d.MemberName, d.State, d.Digest, d.SentAt)
+			digest = excluded.digest, held_digest = excluded.held_digest, sent_at = excluded.sent_at, changed_at = excluded.changed_at`,
+		d.MemberID, d.MemberName, d.State, d.Digest, d.HeldDigest, d.SentAt, d.ChangedAt)
 	if err != nil {
 		return fmt.Errorf("SaveSentDeposit: %w", err)
 	}
@@ -393,7 +451,7 @@ func (r *Repo) DeleteSentDeposit(memberID string) error {
 
 // SentDeposits lists this install's deposits by member name.
 func (r *Repo) SentDeposits() ([]SentDeposit, error) {
-	rows, err := r.db.Query(`SELECT member_id, member_name, state, digest, sent_at FROM key_deposits_sent ORDER BY member_name, member_id`)
+	rows, err := r.db.Query(`SELECT member_id, member_name, state, digest, held_digest, sent_at, changed_at FROM key_deposits_sent ORDER BY member_name, member_id`)
 	if err != nil {
 		return nil, fmt.Errorf("SentDeposits: %w", err)
 	}
@@ -401,10 +459,45 @@ func (r *Repo) SentDeposits() ([]SentDeposit, error) {
 	var out []SentDeposit
 	for rows.Next() {
 		var d SentDeposit
-		if err := rows.Scan(&d.MemberID, &d.MemberName, &d.State, &d.Digest, &d.SentAt); err != nil {
+		if err := rows.Scan(&d.MemberID, &d.MemberName, &d.State, &d.Digest, &d.HeldDigest, &d.SentAt, &d.ChangedAt); err != nil {
 			return nil, fmt.Errorf("SentDeposits: %w", err)
 		}
 		out = append(out, d)
 	}
 	return out, rows.Err()
+}
+
+// DepositSigner returns the sealed seed of the key this install proves its
+// deposits with, found false before the first deposit made it.
+func (r *Repo) DepositSigner() (seedEnc []byte, found bool, err error) {
+	err = r.db.QueryRow(`SELECT seed_enc FROM key_deposit_signer WHERE id = 1`).Scan(&seedEnc)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("DepositSigner: %w", err)
+	}
+	return seedEnc, true, nil
+}
+
+// SetDepositSigner stores the sealed seed of the install's proof key. The key
+// outlives a recovery code: the keepers hold its public half.
+func (r *Repo) SetDepositSigner(seedEnc []byte) error {
+	if _, err := r.db.Exec(`INSERT INTO key_deposit_signer (id, seed_enc, created_at) VALUES (1, ?, ?)`, seedEnc, time.Now().Unix()); err != nil {
+		return fmt.Errorf("SetDepositSigner: %w", err)
+	}
+	return nil
+}
+
+// NextDepositCounter returns the counter of the next signed call: higher than
+// every one before, and no lower than floor. The caller passes the time as
+// floor, so that settings restored from an older backup do not count again
+// from where they were.
+func (r *Repo) NextDepositCounter(floor int64) (int64, error) {
+	var next int64
+	err := r.db.QueryRow(`UPDATE key_deposit_signer SET counter = max(counter + 1, ?) WHERE id = 1 RETURNING counter`, floor).Scan(&next)
+	if err != nil {
+		return 0, fmt.Errorf("NextDepositCounter: %w", err)
+	}
+	return next, nil
 }

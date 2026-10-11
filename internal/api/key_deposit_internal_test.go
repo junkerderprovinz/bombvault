@@ -425,6 +425,9 @@ func TestADepositGoesToNobodyWithoutMembershipOrAnAllow(t *testing.T) {
 	if unnamed["ok"] != false || unnamed["deposit"] != nil {
 		t.Fatalf("a call that names no member: %v", unnamed)
 	}
+	if stranger := peerCallAs(t, attic, strings.Repeat("9", 32), "/api/group/peer/deposit/release", ask); stranger["ok"] != false || len(releasesOn(t, attic)) != 0 {
+		t.Fatalf("a call from an id that is no member: %v", stranger)
+	}
 	waiting := peerCallAs(t, attic, fresh.id(t), "/api/group/peer/deposit/release", ask)
 	if waiting["state"] != store.ReleaseAsked || waiting["deposit"] != nil || waiting["salt"] != nil {
 		t.Fatalf("a request nobody allowed: %v", waiting)

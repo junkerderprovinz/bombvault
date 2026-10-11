@@ -34,13 +34,17 @@ type keeperRoleView struct {
 	State string `json:"state"`
 	At    string `json:"at"`
 	Asks  int    `json:"asks,omitempty"`
+	// ChangedAt is when the member was last found holding something this
+	// install did not send, on the side of what the member keeps.
+	ChangedAt string `json:"changedAt,omitempty"`
 }
 
 type sentDepositView struct {
-	MemberID string `json:"memberId"`
-	Name     string `json:"name"`
-	State    string `json:"state"`
-	SentAt   string `json:"sentAt"`
+	MemberID  string `json:"memberId"`
+	Name      string `json:"name"`
+	State     string `json:"state"`
+	SentAt    string `json:"sentAt"`
+	ChangedAt string `json:"changedAt"`
 }
 
 type keptDepositView struct {
@@ -107,8 +111,22 @@ func (s *Service) depositsOverview() (depositsView, error) {
 	if err != nil {
 		return view, err
 	}
+	// A keeper holds an older deposit from the moment the kit says something
+	// else, which is before the next renewal finds out.
+	current := ""
+	if found && len(sent) > 0 {
+		if _, digest, err := s.depositContent(identity.Recipient); err == nil {
+			current = digest
+		}
+	}
 	for _, d := range sent {
-		view.Sent = append(view.Sent, sentDepositView{MemberID: d.MemberID, Name: d.MemberName, State: d.State, SentAt: unixRFC3339(d.SentAt)})
+		if d.State == store.DepositHeld && current != "" && d.Digest != current {
+			d.State = store.DepositStale
+		}
+		view.Sent = append(view.Sent, sentDepositView{
+			MemberID: d.MemberID, Name: d.MemberName, State: d.State,
+			SentAt: unixRFC3339(d.SentAt), ChangedAt: unixRFC3339(d.ChangedAt),
+		})
 	}
 	kept, err := s.store.KeptDeposits()
 	if err != nil {
@@ -165,7 +183,7 @@ func (s *Service) addKeeperRoles(entry func(id, name string) *memberRolesView) e
 		return err
 	}
 	for _, d := range view.Sent {
-		entry(d.MemberID, d.Name).ByMember.Keeper = &keeperRoleView{State: d.State, At: d.SentAt}
+		entry(d.MemberID, d.Name).ByMember.Keeper = &keeperRoleView{State: d.State, At: d.SentAt, ChangedAt: d.ChangedAt}
 	}
 	for _, d := range view.Kept {
 		entry(d.OwnerID, d.OwnerName).ForMember.Keeper = &keeperRoleView{State: d.State, At: d.UpdatedAt}

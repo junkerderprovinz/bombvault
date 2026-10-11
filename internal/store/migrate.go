@@ -2923,6 +2923,19 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
 		sql:     oneLineTriggers(),
 	},
 	{
+		// The key an install proves its deposits with to the members that
+		// keep them. It is made with the first deposit and stays for good.
+		version:          depositProofMigration,
+		name:             "key_deposit_signer",
+		alreadySatisfied: tablePresent("key_deposit_signer"),
+		sql: `CREATE TABLE IF NOT EXISTS key_deposit_signer (
+  id         INTEGER PRIMARY KEY CHECK (id = 1),
+  seed_enc   BLOB    NOT NULL,
+  counter    INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+);`,
+	},
+	{
 		// The key of another install's backups, sealed under this install's
 		// own. Without a row the install backs up under its own key.
 		version:          keyRolesMigration,
@@ -2993,6 +3006,17 @@ CREATE TABLE IF NOT EXISTS key_deposits_sent (
 		name:             "backup_key_notes",
 		alreadySatisfied: columnPresent("backup_key", "lost"),
 		sql:              backupKeyNotes,
+	},
+	{
+		// The keeper's side of that proof, and what the install remembers of
+		// the bytes its keeper took, to tell when the keeper holds others.
+		version:          keyHardeningMigration,
+		name:             "key_deposit_proofs",
+		alreadySatisfied: columnPresent("key_deposits_sent", "changed_at"),
+		sql: `ALTER TABLE key_deposits ADD COLUMN owner_key BLOB NOT NULL DEFAULT x'';
+ALTER TABLE key_deposits ADD COLUMN counter INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE key_deposits_sent ADD COLUMN held_digest TEXT NOT NULL DEFAULT '';
+ALTER TABLE key_deposits_sent ADD COLUMN changed_at INTEGER NOT NULL DEFAULT 0;`,
 	},
 }
 
@@ -3107,6 +3131,14 @@ const declinedMigration = 335
 // oneLineMigration numbers the guard against line breaks in what the recovery
 // kit prints, 336.
 const oneLineMigration = 336
+
+// depositProofMigration numbers the key an install proves its deposits with,
+// 337.
+const depositProofMigration = 337
+
+// keyHardeningMigration numbers what was added to the tables of
+// keyRolesMigration afterwards, from 350.
+const keyHardeningMigration = 350
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

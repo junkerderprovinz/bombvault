@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -34,13 +35,16 @@ var peerCapabilities = []string{keyDepositCapability}
 // roleKeeper is the role a member takes when it keeps this install's deposit.
 const roleKeeper = "keeper"
 
-// The kinds the runs of store.KeyTargetID have for deposits. The first four
+// The kinds the runs of store.KeyTargetID have for deposits. The first five
 // are written on the install the deposit belongs to, the rest on the keeper.
+// keyEventChanged is a keeper found holding something the install did not
+// send.
 const (
 	keyEventDeposit  = "keydeposit"
 	keyEventRenew    = "keyrenew"
 	keyEventWithdraw = "keywithdraw"
 	keyEventCode     = "keycode"
+	keyEventChanged  = "keychanged"
 	keyEventKeep     = "keykeep"
 	keyEventGone     = "keygone"
 	keyEventDrop     = "keydrop"
@@ -60,17 +64,31 @@ const (
 )
 
 // releaseLimits are what a keeper holds release requests to: three new ones an
-// hour from one instance, a day to answer, and the length of an emergency to
-// collect an allowed one.
-var releaseLimits = store.ReleaseLimits{PerWindow: 3, Window: time.Hour, Answer: 24 * time.Hour, Collect: emergencyTTL}
+// hour from one instance and six from all of them, a day to answer, the
+// length of an emergency to collect an allowed one, and thirty days on record
+// once a request is over.
+var releaseLimits = store.ReleaseLimits{
+	PerWindow: 3, Total: 6, Window: time.Hour,
+	Answer: 24 * time.Hour, Collect: emergencyTTL, Keep: 30 * 24 * time.Hour,
+}
 
 // depositRenewEvery is how often an install looks whether what it deposited
 // still says where its backups are.
 const depositRenewEvery = 15 * time.Minute
 
-// peerDepositMax caps a deposit, which is a recovery kit with its rclone
-// config.
-const peerDepositMax = 2 << 20
+// A deposit is a recovery kit with its rclone config, a few kilobytes.
+// maxDepositBytes caps the sealed bytes and peerDepositMax the call they
+// arrive in, where they are base64. maxKeptDeposits is how many installs one
+// keeper takes a deposit from.
+const (
+	maxDepositBytes = 256 << 10
+	peerDepositMax  = 512 << 10
+	maxKeptDeposits = 32
+)
+
+// depositFull is what a keeper answers a first deposit with once it keeps
+// maxKeptDeposits.
+const depositFull = "full"
 
 var (
 	errKeeperTooOld = errors.New("that instance runs a version that cannot keep a deposit. Update it first")
@@ -78,6 +96,10 @@ var (
 	errReleaseNo    = errors.New("the request for the deposit was declined on the instance that keeps it")
 	errReleaseLimit = errors.New("this server asked for deposits too often. Try again in an hour")
 	errDepositNewer = errors.New("the deposit was made by a newer version of BombVault than this one")
+	errKeeperFull   = errors.New("that instance already keeps as many deposits as it can")
+	// errDepositChanged is recorded when a keeper holds other bytes than the
+	// ones this install sent, or none.
+	errDepositChanged = errors.New("the instance held something other than the deposit this server sent, so somebody else changed it there")
 )
 
 var depositCodes = []struct {
@@ -89,6 +111,8 @@ var depositCodes = []struct {
 	{errReleaseNo, "release-declined"},
 	{errReleaseLimit, "release-limit"},
 	{errDepositNewer, "deposit-version"},
+	{errKeeperFull, "keeper-full"},
+	{errDepositChanged, "deposit-changed"},
 	{keydeposit.ErrCode, "deposit-code-shape"},
 	{keydeposit.ErrWrongCode, "deposit-code"},
 	{errMemberGone, "member-gone"},
@@ -132,6 +156,15 @@ func (s *Service) depositContent(recipient []byte) (kit, digest string, err erro
 	return kit, hex.EncodeToString(sum.Sum(nil)), nil
 }
 
+// peerProof is what an install signs a call to its keeper with: the public
+// half of its proof key, a counter that only grows, and the signature over
+// what the call says.
+type peerProof struct {
+	Key     []byte `json:"key"`
+	Counter int64  `json:"counter"`
+	Proof   []byte `json:"proof"`
+}
+
 // peerDeposit is what an install sends a member to keep. Renew is set when a
 // person asked, which is the only deposit a keeper that deleted the last one
 // takes again.
@@ -141,6 +174,7 @@ type peerDeposit struct {
 	Salt    []byte `json:"salt"`
 	Version int    `json:"version"`
 	Renew   bool   `json:"renew"`
+	peerProof
 }
 
 type peerDepositState struct {
@@ -148,9 +182,56 @@ type peerDepositState struct {
 	State string `json:"state"`
 }
 
+// depositSeed returns the seed of this install's proof key, which the first
+// deposit makes.
+func (s *Service) depositSeed() ([]byte, error) {
+	enc, found, err := s.store.DepositSigner()
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		return secret.Decrypt(s.cfg.AppKey, enc)
+	}
+	seed, err := keydeposit.NewOwnerSeed()
+	if err != nil {
+		return nil, err
+	}
+	enc, err = secret.Encrypt(s.cfg.AppKey, seed)
+	if err != nil {
+		return nil, err
+	}
+	return seed, s.store.SetDepositSigner(enc)
+}
+
+// proveToKeeper signs what this install says to a keeper about its deposit.
+func (s *Service) proveToKeeper(action, keeperID string, deposit, salt []byte) (peerProof, error) {
+	seed, err := s.depositSeed()
+	if err != nil {
+		return peerProof{}, err
+	}
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		return peerProof{}, err
+	}
+	counter, err := s.store.NextDepositCounter(time.Now().UnixMilli())
+	if err != nil {
+		return peerProof{}, err
+	}
+	claim := keydeposit.Claim{Action: action, OwnerID: g.InstanceID, KeeperID: keeperID, Counter: counter, Deposit: deposit, Salt: salt}
+	return peerProof{Key: keydeposit.OwnerKey(seed), Counter: counter, Proof: keydeposit.Prove(seed, claim)}, nil
+}
+
+// heldDigest names sealed bytes the way a keeper and the install they belong
+// to compare what is held.
+func heldDigest(sealed []byte) string {
+	sum := sha256.Sum256(sealed)
+	return hex.EncodeToString(sum[:])
+}
+
 // sendDeposit seals this install's kit for its recovery code and gives it to
 // a member. It needs no code: the public half the install kept is enough.
-func (s *Service) sendDeposit(ctx context.Context, memberID, memberName string, renew bool) (string, error) {
+// changedAt is carried into the record of the deposit.
+func (s *Service) sendDeposit(ctx context.Context, memberID, memberName string, renew bool, changedAt int64) (string, error) {
 	identity, found, err := s.store.DepositIdentity()
 	if err != nil {
 		return "", err
@@ -170,15 +251,28 @@ func (s *Service) sendDeposit(ctx context.Context, memberID, memberName string, 
 	if err != nil {
 		return "", err
 	}
-	in := peerDeposit{Name: instanceDisplayName(settings), Deposit: sealed, Salt: identity.Salt, Version: keydeposit.Version, Renew: renew}
+	proof, err := s.proveToKeeper(keydeposit.ProofKeep, memberID, sealed, identity.Salt)
+	if err != nil {
+		return "", err
+	}
+	in := peerDeposit{
+		Name: instanceDisplayName(settings), Deposit: sealed, Salt: identity.Salt,
+		Version: keydeposit.Version, Renew: renew, peerProof: proof,
+	}
 	var ans peerDepositState
 	if err := s.callMember(ctx, memberID, http.MethodPut, "/api/group/peer/deposit", in, &ans); err != nil {
 		return "", err
 	}
-	if ans.State != store.DepositHeld && ans.State != store.DepositDeclined {
+	sent := store.SentDeposit{MemberID: memberID, MemberName: memberName, State: ans.State, SentAt: time.Now().Unix(), ChangedAt: changedAt}
+	switch ans.State {
+	case store.DepositHeld:
+		sent.Digest, sent.HeldDigest = digest, heldDigest(sealed)
+	case store.DepositDeclined, store.DepositChanged:
+	case depositFull:
+		return "", errKeeperFull
+	default:
 		return "", errMemberUnreadable
 	}
-	sent := store.SentDeposit{MemberID: memberID, MemberName: memberName, State: ans.State, Digest: digest, SentAt: time.Now().Unix()}
 	if err := s.store.SaveSentDeposit(sent); err != nil {
 		return "", err
 	}
@@ -222,7 +316,7 @@ func (s *Service) MakeDeposit(ctx context.Context, memberID string) (state, code
 			return "", "", err
 		}
 	}
-	state, err = s.sendDeposit(ctx, m.ID, m.Name, true)
+	state, err = s.sendDeposit(ctx, m.ID, m.Name, true, 0)
 	return state, code, err
 }
 
@@ -295,11 +389,29 @@ func (s *Service) renewDepositsLocked(ctx context.Context) {
 			if err := s.store.SaveSentDeposit(d); err != nil {
 				log.Printf("api: deposits: %v", err)
 			}
+		case d.State == store.DepositHeld && (held.Mine != store.DepositHeld || held.MineDigest != d.HeldDigest):
+			// Nothing this install or the keeper's person did leaves the
+			// keeper with other bytes or none, so a member did it in this
+			// install's name.
+			d.State, d.ChangedAt = store.DepositChanged, time.Now().Unix()
+			if err := s.store.SaveSentDeposit(d); err != nil {
+				log.Printf("api: deposits: %v", err)
+			}
+			s.keyEvent(ctx, keyEventChanged, errDepositChanged)
+			s.resendDeposit(ctx, d)
 		case held.Mine == store.DepositHeld && d.Digest == digest && d.State == store.DepositHeld:
 		default:
-			_, err := s.sendDeposit(ctx, d.MemberID, d.MemberName, false)
-			s.keyEvent(ctx, keyEventRenew, err)
+			s.resendDeposit(ctx, d)
 		}
+	}
+}
+
+// resendDeposit sends a keeper a fresh deposit outside of a person asking. A
+// keeper that still refuses it is no event: the record says so already.
+func (s *Service) resendDeposit(ctx context.Context, d store.SentDeposit) {
+	state, err := s.sendDeposit(ctx, d.MemberID, d.MemberName, false, d.ChangedAt)
+	if err != nil || state == store.DepositHeld {
+		s.keyEvent(ctx, keyEventRenew, err)
 	}
 }
 
@@ -329,7 +441,11 @@ func (s *Service) WithdrawDeposit(ctx context.Context, memberID string) (bool, e
 	}
 	told := false
 	if _, ok := s.reachableMember(memberID); ok {
-		told = s.callMember(ctx, memberID, http.MethodDelete, "/api/group/peer/deposit", nil, nil) == nil
+		proof, err := s.proveToKeeper(keydeposit.ProofDrop, memberID, nil, nil)
+		if err != nil {
+			return false, err
+		}
+		told = s.callMember(ctx, memberID, http.MethodDelete, "/api/group/peer/deposit", proof, nil) == nil
 	}
 	left, err := s.store.SentDeposits()
 	if err != nil {
@@ -349,19 +465,36 @@ func (s *Service) handlePeerDepositPut(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "malformed deposit"})
 		return
 	}
-	owner, ok := s.roleAsker(r)
+	owner, ok := s.depositAsker(w, r)
 	if !ok {
-		refuseUnnamedPeer(w)
 		return
 	}
-	if len(in.Deposit) == 0 || len(in.Salt) == 0 || in.Version != keydeposit.Version {
+	if len(in.Deposit) == 0 || len(in.Deposit) > maxDepositBytes || len(in.Salt) == 0 || in.Version != keydeposit.Version {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "this is not a deposit this version keeps"})
+		return
+	}
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	claim := keydeposit.Claim{Action: keydeposit.ProofKeep, OwnerID: owner, KeeperID: g.InstanceID, Counter: in.Counter, Deposit: in.Deposit, Salt: in.Salt}
+	if !keydeposit.Proven(in.Key, in.Proof, claim) {
+		refuseUnprovenDeposit(w)
 		return
 	}
 	state, first, err := s.store.KeepDeposit(store.KeptDeposit{
 		OwnerID: owner, OwnerName: clipRoleName(in.Name), Deposit: in.Deposit, Salt: in.Salt, Version: in.Version,
-	}, in.Renew)
-	if err != nil {
+		OwnerKey: in.Key, Counter: in.Counter,
+	}, in.Renew, maxKeptDeposits)
+	switch {
+	case errors.Is(err, store.ErrDepositNotOwner):
+		writeJSON(w, http.StatusOK, peerDepositState{OK: true, State: store.DepositChanged})
+		return
+	case errors.Is(err, store.ErrDepositsFull):
+		writeJSON(w, http.StatusOK, peerDepositState{OK: true, State: depositFull})
+		return
+	case err != nil:
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -375,12 +508,54 @@ func (s *Service) handlePeerDepositPut(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, peerDepositState{OK: true, State: state})
 }
 
-// handlePeerDepositDelete forgets the deposit of the member that calls.
-// DELETE /api/group/peer/deposit
-func (s *Service) handlePeerDepositDelete(w http.ResponseWriter, r *http.Request) {
-	owner, ok := s.roleAsker(r)
+// depositAsker names the member behind a call about a deposit, which has to
+// be a member the group has in reach. It answers the refusal itself.
+func (s *Service) depositAsker(w http.ResponseWriter, r *http.Request) (string, bool) {
+	id, ok := s.roleAsker(r)
 	if !ok {
 		refuseUnnamedPeer(w)
+		return "", false
+	}
+	if s.memberPresent(id) != nil {
+		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "no member of this group by that id"})
+		return "", false
+	}
+	return id, true
+}
+
+func refuseUnprovenDeposit(w http.ResponseWriter) {
+	writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "the call is not signed by the install the deposit belongs to"})
+}
+
+// handlePeerDepositDelete forgets the deposit of the member that calls, which
+// proves itself with the key the deposit came with.
+// DELETE /api/group/peer/deposit
+func (s *Service) handlePeerDepositDelete(w http.ResponseWriter, r *http.Request) {
+	var in peerProof
+	if !decodePeerRole(w, r, &in) {
+		return
+	}
+	owner, ok := s.depositAsker(w, r)
+	if !ok {
+		return
+	}
+	kept, found, err := s.store.KeptDeposit(owner)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !found {
+		writeJSON(w, http.StatusOK, okEnvelope(nil))
+		return
+	}
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	claim := keydeposit.Claim{Action: keydeposit.ProofDrop, OwnerID: owner, KeeperID: g.InstanceID, Counter: in.Counter}
+	if len(kept.OwnerKey) > 0 && (in.Counter <= kept.Counter || !keydeposit.Proven(kept.OwnerKey, in.Proof, claim)) {
+		refuseUnprovenDeposit(w)
 		return
 	}
 	had, err := s.store.DropDeposit(owner)
@@ -402,11 +577,13 @@ type peerDepositEntry struct {
 }
 
 // peerDepositList is what a member keeps. Mine is the state of the caller's
-// own deposit there, empty for none.
+// own deposit there, empty for none, and MineDigest names the sealed bytes
+// held, so the caller can tell them from the ones it sent.
 type peerDepositList struct {
-	OK       bool               `json:"ok"`
-	Deposits []peerDepositEntry `json:"deposits"`
-	Mine     string             `json:"mine,omitempty"`
+	OK         bool               `json:"ok"`
+	Deposits   []peerDepositEntry `json:"deposits"`
+	Mine       string             `json:"mine,omitempty"`
+	MineDigest string             `json:"mineDigest,omitempty"`
 }
 
 // handlePeerDeposits lists whose deposits this instance keeps, for a new
@@ -427,6 +604,9 @@ func (s *Service) handlePeerDeposits(w http.ResponseWriter, r *http.Request) {
 	for _, d := range kept {
 		if d.OwnerID == caller {
 			out.Mine = d.State
+			if d.State == store.DepositHeld {
+				out.MineDigest = heldDigest(d.Deposit)
+			}
 		}
 		if d.State == store.DepositHeld {
 			out.Deposits = append(out.Deposits, peerDepositEntry{OwnerID: d.OwnerID, OwnerName: d.OwnerName, UpdatedAt: d.UpdatedAt})
@@ -463,9 +643,8 @@ func (s *Service) handlePeerDepositRelease(w http.ResponseWriter, r *http.Reques
 	if !decodePeerRole(w, r, &in) {
 		return
 	}
-	requester, ok := s.roleAsker(r)
+	requester, ok := s.depositAsker(w, r)
 	if !ok {
-		refuseUnnamedPeer(w)
 		return
 	}
 	// The install a deposit belongs to has its key. A request in its name

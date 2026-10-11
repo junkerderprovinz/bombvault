@@ -28,6 +28,7 @@ const (
 // base64 text is listed in store.SealedSettingsText.
 var sealSites = map[string]string{
 	"sealDefinition":         keptOutside,
+	"depositSeed":            "key_deposit_signer.seed_enc",
 	"takeOverStagedSettings": keptOutside,
 	"finishTakeover":         "backup_key.key_enc",
 	"AdoptEmergencyKey":      "backup_key.key_enc",

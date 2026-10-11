@@ -6145,10 +6145,16 @@ export function decideRole(
   });
 }
 
-/** Where a key deposit stands: the keeper holds it, its content changed and
- *  the fresh one has not reached the keeper, or the keeper deleted it and
- *  takes a new one only when a person asks again. */
-export type DepositState = "held" | "stale" | "declined";
+/** Where a key deposit stands. "held": the keeper has the current one.
+ *  "stale": the keeper has an older one, because the kit says something else
+ *  since or the recovery code is another; the next renewal sends the fresh
+ *  one. "changed" (on this instance's own deposits only): the keeper holds,
+ *  under this instance's id, something this instance did not send. Either a
+ *  fresh deposit is on its way, or somebody else made the one there and the
+ *  keeper takes none from this instance until a person on the keeper deletes
+ *  it. "declined": the keeper deleted it and takes a new one only when a
+ *  person asks again. */
+export type DepositState = "held" | "stale" | "changed" | "declined";
 
 /** The keeper role in one direction. Under `byMember` it is this instance's
  *  deposit with the member and `at` when it was last sent. Under `forMember`
@@ -6158,6 +6164,11 @@ export interface KeeperRole {
   state: DepositState;
   at: string;
   asks?: number;
+  /** Under `byMember`: when the member was last found holding something this
+   *  instance did not send, or nothing. Absent for never. The deposit is sent
+   *  again at once, so `state` says what became of it: "held" when the member
+   *  took it, "changed" while it has not. */
+  changedAt?: string;
 }
 
 /** A request to hand a deposit out, as the keeper answers it. "released"
@@ -6188,7 +6199,8 @@ export interface DepositRelease {
  *  recovery code was made, "" while it has none. */
 export interface Deposits {
   codeSince: string;
-  sent: { memberId: string; name: string; state: DepositState; sentAt: string }[];
+  /** `changedAt` as in KeeperRole, "" for never. */
+  sent: { memberId: string; name: string; state: DepositState; sentAt: string; changedAt: string }[];
   kept: { ownerId: string; ownerName: string; state: DepositState; createdAt: string; updatedAt: string }[];
   /** Newest first, answered ones included. */
   releases: DepositRelease[];
@@ -6196,7 +6208,9 @@ export interface Deposits {
 
 /** Why a deposit call was refused: the member is too old to keep one, it
  *  keeps none of that server, the keeper's person declined, this server asked
- *  more than three times in an hour, the deposit is of a newer version, the
+ *  more than three times in an hour or all instances together more than six
+ *  times, the member keeps as many deposits as it takes ("keeper-full"), the
+ *  deposit is of a newer version, the
  *  code is not twenty characters, the code does not open the deposit, the
  *  member is out of reach or did not answer, the backup key is locked, or the
  *  request was answered before. */
@@ -6212,6 +6226,7 @@ export type DepositRefusal =
   | "member-silent"
   | "backup-key-locked"
   | "release-decided"
+  | "keeper-full"
   | SecretsRefusal;
 
 type DepositAnswer<T> = Omit<OkEnvelope, "code"> & { code?: DepositRefusal } & T;
