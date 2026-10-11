@@ -55,6 +55,11 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
     retentionKeepMonthly: 6,
     retentionKeepYearly: 0,
     ownRetention: {},
+    offsiteRetentionKeepLast: 0,
+    offsiteRetentionKeepDaily: 14,
+    offsiteRetentionKeepWeekly: 0,
+    offsiteRetentionKeepMonthly: 12,
+    offsiteRetentionKeepYearly: 0,
     ownOffsiteRetention: {},
     compression: {
       containers: "auto", vms: "auto", flash: "auto", config: "auto", files: "auto", zfs: "auto",
@@ -319,12 +324,11 @@ describe("importing settings while an edit is still inside its debounce", () => 
   });
 });
 
-describe("the yearly retention rule", () => {
+describe("the yearly off-site retention rule", () => {
   it("saves its count next to the other keep rules", async () => {
     await renderPage();
     await gotoPage("storage");
 
-    // The local rules come first, the off-site ones follow.
     const label = screen.getAllByText(en["settings.retentionYearly"])[0].closest("label");
     const input = label?.querySelector("input") as HTMLInputElement;
     expect(input.value).toBe("0");
@@ -337,7 +341,7 @@ describe("the yearly retention rule", () => {
 
     await waitFor(() => expect(putCalls).toHaveLength(1));
     const sent = putCalls[0].body;
-    expect(sent.retentionKeepYearly).toBe(3);
-    expect(sent.retentionKeepMonthly).toBe(6);
+    expect(sent.offsiteRetentionKeepYearly).toBe(3);
+    expect(sent.offsiteRetentionKeepMonthly).toBe(12);
   });
 });

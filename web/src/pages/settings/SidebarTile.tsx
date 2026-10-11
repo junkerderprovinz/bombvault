@@ -25,7 +25,8 @@ export function SidebarCard({ pin, hueIndex }: { pin: NavPin; hueIndex: number }
   );
 }
 
-/** PageLinkCard names a page, says in a line what stands there and opens it. */
+/** PageLinkCard names a page, says in a line what stands there and opens it.
+ *  The search finds it under the page's name. */
 export function PageLinkCard({
   to,
   label,
@@ -43,7 +44,7 @@ export function PageLinkCard({
   const navigate = useNavigate();
   return (
     <Card hueIndex={hueIndex}>
-      <div data-search-row={label} className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div data-search-card={label} className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="flex h-(--btn-h) w-(--btn-h) shrink-0 items-center justify-center rounded-control bg-carbon-surface2 text-accentText">
           {glyph}
         </span>
