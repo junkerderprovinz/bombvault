@@ -20,10 +20,11 @@ import (
 // root on it already, so the code proves more than the password did.
 const (
 	resetCodeTTL = 10 * time.Minute
-	// A code holds 40 bits, so five tries leave a guess no chance worth
-	// counting.
-	resetCodeTries = 5
-	resetCodeLen   = 8
+	// A code holds 60 bits, which nobody finds in ten minutes at any rate
+	// HTTP allows. That is why a wrong guess does not spend it: a code that a
+	// few guesses killed would let anybody who reaches the login page keep the
+	// owner from ever using one.
+	resetCodeLen = 12
 	// resetCodeAlphabet has no 0, O, 1 or I, which look alike in a log window.
 	// Its 32 symbols take five bits of a random byte each without bias.
 	resetCodeAlphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
@@ -35,7 +36,6 @@ const (
 type passwordReset struct {
 	code    string
 	expires time.Time
-	tries   int
 }
 
 func newPasswordReset() (passwordReset, error) {
@@ -46,17 +46,17 @@ func newPasswordReset() (passwordReset, error) {
 	for i, b := range buf {
 		buf[i] = resetCodeAlphabet[b&31]
 	}
-	return passwordReset{code: string(buf), expires: time.Now().Add(resetCodeTTL), tries: resetCodeTries}, nil
+	return passwordReset{code: string(buf), expires: time.Now().Add(resetCodeTTL)}, nil
 }
 
 // printResetCode writes the code as a block of its own in bold yellow, set
 // off like the ready line, so it stands out between the timestamped lines of a
 // busy log.
 func printResetCode(w io.Writer, code string) {
-	_, _ = fmt.Fprintf(w, "\n  \033[1;33m▶ PASSWORD RESET CODE: %s-%s\033[0m\n"+
+	_, _ = fmt.Fprintf(w, "\n  \033[1;33m▶ PASSWORD RESET CODE: %s-%s-%s\033[0m\n"+
 		"    Valid for %d minutes. Enter it on the login page.\n"+
 		"    If nobody here asked for a reset, ignore this. The password is unchanged.\n\n",
-		code[:4], code[4:], int(resetCodeTTL.Minutes()))
+		code[:4], code[4:8], code[8:], int(resetCodeTTL.Minutes()))
 }
 
 func (p *passwordReset) live() bool {
@@ -64,21 +64,18 @@ func (p *passwordReset) live() bool {
 }
 
 // guess reports whether typed is the code and spends the code if it is. A
-// wrong guess costs one try. live is false when there was no code to guess at:
-// none was asked for, it expired, or its tries are used up.
+// wrong guess leaves the code as it was. live is false when there was no code
+// to guess at: none was asked for, or it expired.
 func (p *passwordReset) guess(typed string) (ok, live bool) {
 	if !p.live() {
 		*p = passwordReset{}
 		return false, false
 	}
-	// The log prints the code in capitals with a dash in the middle.
+	// The log prints the code in capitals in groups of four.
 	typed = strings.ToUpper(strings.NewReplacer("-", "", " ", "").Replace(typed))
 	if subtle.ConstantTimeCompare([]byte(typed), []byte(p.code)) == 1 {
 		*p = passwordReset{}
 		return true, true
-	}
-	if p.tries--; p.tries == 0 {
-		*p = passwordReset{}
 	}
 	return false, true
 }

@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -21,7 +22,9 @@ const (
 	resetNewPass    = "correct horse battery"
 )
 
-var loggedResetCode = regexp.MustCompile(`RESET CODE: ([2-9A-Z]{4}-[2-9A-Z]{4})`)
+var loggedResetCode = regexp.MustCompile(`RESET CODE: ([2-9A-Z]{4}(?:-[2-9A-Z]{4})+)`)
+
+const wrongResetCode = "2222-2222-2222"
 
 // newResetHandler is a handler with a login password and a buffer in place of
 // the container log.
@@ -51,10 +54,15 @@ func askForResetCode(t *testing.T, h *Handler, out *bytes.Buffer) string {
 
 func finishReset(t *testing.T, h *Handler, code, password string) (map[string]any, *http.Response) {
 	t.Helper()
+	return finishResetFrom(t, h, "10.0.0.1:1", code, password)
+}
+
+func finishResetFrom(t *testing.T, h *Handler, addr, code, password string) (map[string]any, *http.Response) {
+	t.Helper()
 	r := httptest.NewRequest(http.MethodPost, resetFinishPath,
 		strings.NewReader(`{"code":"`+code+`","password":"`+password+`"}`))
 	r.Header.Set("Content-Type", "application/json")
-	r.RemoteAddr = "10.0.0.1:1"
+	r.RemoteAddr = addr
 	w := httptest.NewRecorder()
 	h.handleFinishPasswordReset(w, r)
 	var body map[string]any
@@ -177,7 +185,7 @@ func TestAWrongResetCodeChangesNothing(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	body, res := finishReset(t, h, "2222-2222", resetNewPass)
+	body, res := finishReset(t, h, wrongResetCode, resetNewPass)
 
 	if body["ok"] != false || body["code"] != "resetCodeInvalid" {
 		t.Fatalf("a wrong code must be refused as invalid: %v", body)
@@ -224,17 +232,29 @@ func TestAResetCodeExpires(t *testing.T) {
 	}
 }
 
-func TestWrongGuessesSpendTheResetCode(t *testing.T) {
+func TestAResetCodeHasSixtyBits(t *testing.T) {
+	h, _, out := newResetHandler(t)
+
+	code := strings.ReplaceAll(askForResetCode(t, h, out), "-", "")
+
+	if len(code) != 12 {
+		t.Fatalf("code %q has %d symbols, want 12 of five bits each", code, len(code))
+	}
+}
+
+// Anybody who reaches the login page can send wrong codes, so they must not
+// be able to use up the code the owner is reading off the log.
+func TestWrongGuessesLeaveTheResetCodeAlone(t *testing.T) {
 	h, _, out := newResetHandler(t)
 	code := askForResetCode(t, h, out)
-	for range resetCodeTries {
-		h.reset.guess("2222-2222")
+	for i := range 3 * loginMaxFails {
+		finishResetFrom(t, h, fmt.Sprintf("192.0.2.%d:1", i), wrongResetCode, resetNewPass)
 	}
 
 	body, _ := finishReset(t, h, code, resetNewPass)
 
-	if body["ok"] != false || body["code"] != "resetCodeExpired" {
-		t.Fatalf("the code must be gone after %d wrong guesses: %v", resetCodeTries, body)
+	if body["ok"] != true {
+		t.Fatalf("the owner's code must still work after wrong guesses: %v", body)
 	}
 }
 
@@ -242,10 +262,10 @@ func TestAWrongResetCodeCountsTowardsTheThrottle(t *testing.T) {
 	h, _, out := newResetHandler(t)
 	askForResetCode(t, h, out)
 	for range loginMaxFails {
-		finishReset(t, h, "2222-2222", resetNewPass)
+		finishReset(t, h, wrongResetCode, resetNewPass)
 	}
 
-	_, res := finishReset(t, h, "2222-2222", resetNewPass)
+	_, res := finishReset(t, h, wrongResetCode, resetNewPass)
 
 	if res.StatusCode != http.StatusTooManyRequests {
 		t.Fatalf("status = %d, want the login throttle to answer", res.StatusCode)

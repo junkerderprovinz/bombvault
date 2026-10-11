@@ -96,7 +96,7 @@ export function PasswordResetForm({
           autoComplete="one-time-code"
           autoCapitalize="characters"
           spellCheck={false}
-          placeholder="XXXX-XXXX"
+          placeholder="XXXX-XXXX-XXXX"
           className={`w-full uppercase tracking-[0.2em] placeholder:tracking-[0.2em] ${FIELD}`}
         />
       </div>
