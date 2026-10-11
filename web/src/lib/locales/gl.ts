@@ -809,51 +809,28 @@ const gl: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integridade e mantemento",
-  "integrity.hint": "Verifica a estrutura dun repositorio (restic check), limpa bloqueos obsoletos deixados por unha execución interrompida, ou limpa para recuperar espazo de copias eliminadas.",
   "integrity.verify": "Verificar",
   "integrity.checking": "Verificando…",
   "integrity.ok": "San",
   "integrity.failed": "Verificación fallida",
-  "integrity.failedShort": "✗ Fallida",
   "integrity.unlock": "Desbloquear",
   "integrity.prune": "Limpar",
   "integrity.verifyHint": "Executa restic check para verificar que a estrutura e os metadatos están intactos.",
   "integrity.unlockHint": "Limpa bloqueos obsoletos do repositorio deixados por unha execución fallida ou interrompida (soluciona «repository is already locked»).",
   "integrity.unlockPartial": "Non se desbloquearon por completo todos os repositorios: {list}",
   "integrity.pruneHint": "Aplica a túa política de retención e recupera espazo (só recupera espazo sen política; pode tardar).",
-  "integrity.pruneConfirm": "Limpar aplica agora a túa retención: elimina instantáneas máis alá das túas regras de conservación (last/daily/weekly/monthly/yearly) e recupera espazo. Sen política, só recupera espazo. Continuar?",
-  "integrity.appendOnly": "Comprobación de só-engadir",
   "integrity.appendOnlyHint": "Demostra que o repositorio externo segue rexeitando eliminacións (protección de só-engadir), a mesma comprobación que a proba de manipulación do asistente externo.",
-  "integrity.appendOnlyLast": "protección de só-engadir · Última comprobación {time}",
-  "integrity.appendOnlyNever": "protección de só-engadir · nunca comprobada",
 
   // Restore-verification drills
-  "verify.now": "Verificar restaurabilidade",
   "verify.running": "Verificando…",
-  "verify.ok": "Restaurabilidade verificada",
   "verify.failed": "Verificación fallida",
-  "verify.last": "Última verificación {time}",
-  "verify.never": "Nunca verificado",
   "verify.subsetPct": "Mostra de datos (%)",
-  "verify.hint": "Le periodicamente unha mostra aleatoria dos datos de copia para demostrar que están intactos e son restaurables.",
   "verify.shield": "verificado",
 
   // DR drill controls
-  "drill.kindLabel": "Tipo de proba:",
-  "drill.kindSubset": "Comprobación de integridade",
-  "drill.kindDR": "Restauración real (externa)",
-  "drill.target": "Obxectivo da proba (contedor)",
-  "drill.targetVM": "Obxectivo da proba (MV)",
-  "drill.targetMostRecent": "Copia máis recente",
-  "drill.drNote": "Unha restauración real extrae a instantánea externa máis recente nunha sandbox temporal, verifícaa e despois límpaa. Descarga datos reais e pode tardar.",
-  "drill.runDR": "Executar restauración real",
-  "drill.runningDR": "Restaurando…",
-  "drill.confirmDR": "Isto realiza unha restauración REAL da instantánea externa máis recente nunha sandbox temporal para demostrar que é recuperable, e despois a elimina. Descarga datos reais e pode tardar. Continuar?",
   "drill.offsiteVerified": "externa verificada",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "restauración DR externa",
-  "drill.checkLocal": "comprobación de integridade local",
   "drill.failReasonPrefix": "motivo:",
 
   // Off-site DR opt-out

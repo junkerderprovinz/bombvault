@@ -5,23 +5,24 @@
 // is not stale until it is old enough, so the button can succeed while
 // changing nothing. The server names those repositories on success and
 // failure, and the card has to show them.
-import { render, screen, cleanup, waitFor, fireEvent, act } from "@testing-library/react";
+import { render, cleanup, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const unlockDomain = vi.fn();
 const pushed: { message: string; severity?: string }[] = [];
 
-vi.mock("../../lib/api", () => ({
+vi.mock("../../lib/api", async () => {
+  const { domain } = await import("../overview/overview.testsupport");
+  return {
   unlockDomain: (...a: unknown[]) => unlockDomain(...a),
   checkDomain: vi.fn().mockResolvedValue({ ok: true }),
   pruneDomain: vi.fn().mockResolvedValue({ ok: true }),
   runDrill: vi.fn().mockResolvedValue({ ok: true }),
   tamperTest: vi.fn().mockResolvedValue({ ok: true }),
-  getDrills: vi.fn().mockResolvedValue({ ok: true, drills: [], latest: null }),
-  getStatus: vi.fn().mockResolvedValue({ ok: true }),
-  listContainers: vi.fn().mockResolvedValue({ containers: [] }),
-  listVMs: vi.fn().mockResolvedValue({ vms: [] }),
-}));
+  getStatus: vi.fn().mockResolvedValue({ ok: true, domains: [domain({ domain: "containers", offsiteConfigured: false })] }),
+  listItems: vi.fn().mockResolvedValue({ ok: true, items: [] }),
+  };
+});
 
 vi.mock("../../lib/toast", () => ({
   useToast: () => ({
@@ -33,6 +34,7 @@ vi.mock("../../lib/toast", () => ({
 
 import { IntegrityCard } from "./IntegrityCard";
 import { en } from "../../lib/i18n";
+import { pickAction } from "./IntegrityCard.testsupport";
 
 // The card follows live progress, and jsdom has no EventSource.
 class FakeEventSource {
@@ -47,16 +49,10 @@ vi.stubGlobal("EventSource", FakeEventSource);
 // about the sentence an operator reads, with {list} filled in.
 const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as unknown as Parameters<typeof IntegrityCard>[0]["t"];
 
-const settings = { drDrillTarget: "", drDrillTargetVm: "" } as never;
 
 function renderCard() {
   return render(
-    <IntegrityCard
-      t={t}
-      settings={settings}
-      setSettings={() => {}}
-      save={async () => true}
-    />
+    <IntegrityCard t={t} />
   );
 }
 
@@ -74,10 +70,7 @@ describe("the unlock button", () => {
     });
     renderCard();
 
-    const buttons = await screen.findAllByRole("button", { name: /unlock/i });
-    await act(async () => {
-      fireEvent.click(buttons[0]);
-    });
+    await pickAction("containers", en["integrity.unlock"]);
 
     await waitFor(() => expect(unlockDomain).toHaveBeenCalled());
     await waitFor(() => {
@@ -94,10 +87,7 @@ describe("the unlock button", () => {
   it("says it as a warning, not as a success", async () => {
     unlockDomain.mockResolvedValue({ ok: true, skipped: ["Cold (shared)"] });
     renderCard();
-    const buttons = await screen.findAllByRole("button", { name: /unlock/i });
-    await act(async () => {
-      fireEvent.click(buttons[0]);
-    });
+    await pickAction("containers", en["integrity.unlock"]);
 
     await waitFor(() => {
       const line = pushed.find((p) => /Cold/.test(p.message));
@@ -112,10 +102,7 @@ describe("the unlock button", () => {
       skipped: ["Cold (another domain writes to it too, so only stale locks were cleared there)"],
     });
     renderCard();
-    const buttons = await screen.findAllByRole("button", { name: /unlock/i });
-    await act(async () => {
-      fireEvent.click(buttons[0]);
-    });
+    await pickAction("containers", en["integrity.unlock"]);
 
     await waitFor(() => {
       const said = pushed.map((p) => p.message).join("\n");
@@ -128,15 +115,14 @@ describe("the unlock button", () => {
     });
   });
 
-  it("stays quiet when there is nothing to report", async () => {
+  it("only says it unlocked when there is nothing else to report", async () => {
     unlockDomain.mockResolvedValue({ ok: true, skipped: [] });
     renderCard();
-    const buttons = await screen.findAllByRole("button", { name: /unlock/i });
-    await act(async () => {
-      fireEvent.click(buttons[0]);
-    });
+    await pickAction("containers", en["integrity.unlock"]);
 
     await waitFor(() => expect(unlockDomain).toHaveBeenCalled());
-    expect(pushed, "an ordinary unlock must not produce a toast").toHaveLength(0);
+    await waitFor(() =>
+      expect(pushed).toEqual([{ message: en["integrity.unlocked"].replace("{section}", en["nav.containers"]), severity: "success" }])
+    );
   });
 });

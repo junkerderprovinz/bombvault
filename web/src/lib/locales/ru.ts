@@ -652,23 +652,17 @@ const ru: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Целостность и обслуживание",
-  "integrity.hint": "Запустите restic check, чтобы проверить, что структура и метаданные репозитория не повреждены.",
   "integrity.verify": "Проверить",
   "integrity.checking": "Проверка…",
   "integrity.ok": "Исправен",
   "integrity.failed": "Проверка не пройдена",
-  "integrity.failedShort": "✗ Не пройдено",
   "integrity.unlock": "Разблокировать",
   "integrity.prune": "Очистить",
   "integrity.verifyHint": "Запустите restic check для проверки структуры и метаданных.",
   "integrity.unlockHint": "Удалить зависшие блокировки репозитория от прерванного запуска (исправляет 'repository is already locked').",
   "integrity.unlockPartial": "Не все репозитории были полностью разблокированы: {list}",
   "integrity.pruneHint": "Применить политику хранения и освободить место (без политики только освобождает место; может занять время).",
-  "integrity.pruneConfirm": "Очистка теперь применяет вашу политику хранения — удаляет снимки сверх ваших правил (last/daily/weekly/monthly/yearly) и освобождает место. Без политики только освобождает место. Продолжить?",
-  "integrity.appendOnly": "Проверка append-only",
   "integrity.appendOnlyHint": "Доказывает, что удалённый репозиторий по-прежнему отклоняет удаления (защита append-only) — та же проверка, что и tamper-тест в мастере off-site.",
-  "integrity.appendOnlyLast": "защита append-only · Последняя проверка {time}",
-  "integrity.appendOnlyNever": "защита append-only · ещё не проверялась",
 
   // Backup hooks
   "hooks.hint": "Команды выполняются внутри контейнера (sh -c). Pre выполняется перед копией (напр. сброс кэша на диск; распознанные базы данных выгружаются сами). Ошибка прерывает копирование. Post выполняется после восстановления контейнера; его ошибка только записывается в журнал.",
@@ -961,14 +955,9 @@ const ru: Partial<Translations> = {
   "notify.smtpTls": "Шифрование",
 
   // Restore-verification drills
-  "verify.now": "Проверить восстановимость",
   "verify.running": "Проверка…",
-  "verify.ok": "Восстановимость подтверждена",
   "verify.failed": "Проверка не пройдена",
-  "verify.last": "Последняя проверка {time}",
-  "verify.never": "Ни разу не проверялось",
   "verify.subsetPct": "Выборка данных (%)",
-  "verify.hint": "Периодически считывает случайную выборку данных резервной копии, чтобы убедиться, что они целы и восстановимы.",
   "verify.shield": "проверено",
 
   // Dashboard protection (RPO) status
@@ -1342,16 +1331,6 @@ const ru: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Хранение (0 = хранить всё)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Тип проверки:",
-  "drill.kindSubset": "Проверка целостности",
-  "drill.kindDR": "Реальное восстановление (внешнее)",
-  "drill.target": "Цель проверки (контейнер)",
-  "drill.targetVM": "Цель проверки (виртуальная машина)",
-  "drill.targetMostRecent": "Последняя резервная копия",
-  "drill.drNote": "Реальное восстановление извлекает новейший внешний снимок во временный sandbox, проверяет его, затем выполняет очистку. Оно загружает реальные данные и может занять время.",
-  "drill.runDR": "Запустить реальное восстановление",
-  "drill.runningDR": "Восстановление…",
-  "drill.confirmDR": "Это выполняет РЕАЛЬНОЕ восстановление новейшего внешнего снимка во временный sandbox, чтобы доказать его восстановимость, затем удаляет его. Оно загружает реальные данные и может занять время. Продолжить?",
   "drill.offsiteVerified": "внешняя копия проверена",
 
   // Dashboard ransomware-protection card (v4)
@@ -1414,8 +1393,6 @@ const ru: Partial<Translations> = {
   "excludes.assistRemoveLine": "Убрать исключение {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "внешнее DR-восстановление",
-  "drill.checkLocal": "локальная проверка целостности",
   "drill.failReasonPrefix": "причина:",
 
   // Off-site DR opt-out (#37)

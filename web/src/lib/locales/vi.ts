@@ -652,23 +652,17 @@ const vi: Partial<Translations> = {
   "rclone.save": "Lưu cấu hình",
 
   "integrity.title": "Toàn vẹn và bảo trì",
-  "integrity.hint": "Chạy restic check để xác minh cấu trúc và siêu dữ liệu của kho lưu trữ còn nguyên vẹn.",
   "integrity.verify": "Xác minh",
   "integrity.checking": "Đang kiểm tra…",
   "integrity.ok": "Khỏe mạnh",
   "integrity.failed": "Kiểm tra thất bại",
-  "integrity.failedShort": "✗ Thất bại",
   "integrity.unlock": "Mở khóa",
   "integrity.prune": "Dọn bớt",
   "integrity.verifyHint": "Chạy restic check để xác minh cấu trúc và siêu dữ liệu.",
   "integrity.unlockHint": "Xóa các khóa kho bị kẹt do lần chạy bị treo/gián đoạn (sửa 'repository is already locked').",
   "integrity.unlockPartial": "Không phải mọi kho lưu trữ đều được mở khóa hoàn toàn: {list}",
   "integrity.pruneHint": "Áp dụng chính sách lưu giữ và thu hồi dung lượng (không có chính sách thì chỉ thu hồi dung lượng; có thể mất một lúc).",
-  "integrity.pruneConfirm": "Dọn dẹp giờ áp dụng chính sách lưu giữ của bạn: xóa các ảnh chụp vượt quá quy tắc (last/daily/weekly/monthly/yearly) và thu hồi dung lượng. Không có chính sách thì chỉ thu hồi dung lượng. Tiếp tục?",
-  "integrity.appendOnly": "Kiểm tra append-only",
   "integrity.appendOnlyHint": "Chứng minh kho lưu trữ ngoài trạm vẫn từ chối thao tác xóa (bảo vệ chỉ ghi thêm), cùng phép kiểm tra với bài kiểm tra can thiệp của trình hướng dẫn off-site.",
-  "integrity.appendOnlyLast": "bảo vệ append-only · Kiểm tra lần cuối {time}",
-  "integrity.appendOnlyNever": "bảo vệ append-only · chưa từng kiểm tra",
 
   "hooks.hint": "Lệnh chạy bên trong container (sh -c). Pre chạy trước khi sao lưu (ví dụ: ghi bộ nhớ đệm xuống đĩa; các CSDL được nhận ra sẽ tự được kết xuất). Lỗi sẽ hủy việc sao lưu. Post chạy sau khi container hoạt động trở lại; lỗi của nó chỉ được ghi log.",
   "hooks.pre": "Lệnh trước sao lưu",
@@ -966,14 +960,9 @@ const vi: Partial<Translations> = {
   "notify.smtpTls": "Mã hóa",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Xác minh khả năng khôi phục",
   "verify.running": "Đang xác minh…",
-  "verify.ok": "Đã xác minh khôi phục được",
   "verify.failed": "Xác minh thất bại",
-  "verify.last": "Lần xác minh cuối {time}",
-  "verify.never": "Chưa từng xác minh",
   "verify.subsetPct": "Mẫu dữ liệu (%)",
-  "verify.hint": "Định kỳ đọc một mẫu ngẫu nhiên của dữ liệu sao lưu để chứng minh nó còn nguyên vẹn và khôi phục được.",
   "verify.shield": "đã xác minh",
 
   // Dashboard protection (RPO) status
@@ -1348,16 +1337,6 @@ const vi: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Lưu giữ (0 = giữ tất cả)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Loại diễn tập:",
-  "drill.kindSubset": "Kiểm tra toàn vẹn",
-  "drill.kindDR": "Khôi phục thật (off-site)",
-  "drill.target": "Đối tượng diễn tập (container)",
-  "drill.targetVM": "Đối tượng diễn tập (VM)",
-  "drill.targetMostRecent": "Bản sao lưu mới nhất",
-  "drill.drNote": "Khôi phục thật sẽ giải nén snapshot off-site mới nhất vào một sandbox tạm thời, xác minh nó, rồi dọn dẹp. Nó tải về dữ liệu thật và có thể mất một lúc.",
-  "drill.runDR": "Chạy khôi phục thật",
-  "drill.runningDR": "Đang khôi phục…",
-  "drill.confirmDR": "Thao tác này thực hiện khôi phục THẬT snapshot off-site mới nhất vào một sandbox tạm thời để chứng minh nó có thể khôi phục được, rồi xóa nó đi. Nó tải về dữ liệu thật và có thể mất một lúc. Tiếp tục?",
   "drill.offsiteVerified": "đã xác minh off-site",
 
   // Dashboard ransomware-protection card (v4)
@@ -1408,8 +1387,6 @@ const vi: Partial<Translations> = {
   "excludes.assistRemoveLine": "Xóa loại trừ {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "khôi phục DR ngoài site",
-  "drill.checkLocal": "kiểm tra toàn vẹn cục bộ",
   "drill.failReasonPrefix": "lý do:",
 
   // Off-site DR opt-out (#37)

@@ -809,51 +809,28 @@ const hr: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Cjelovitost i održavanje",
-  "integrity.hint": "Provjerite strukturu repozitorija (restic check), očistite zastarjele zaključavanja ostavljene prekinutim izvršavanjem, ili očistite radi vraćanja prostora izbrisanih sigurnosnih kopija.",
   "integrity.verify": "Provjeri",
   "integrity.checking": "Provjeravanje…",
   "integrity.ok": "Ispravno",
   "integrity.failed": "Provjera nije uspjela",
-  "integrity.failedShort": "✗ Neuspješno",
   "integrity.unlock": "Otključaj",
   "integrity.prune": "Očisti",
   "integrity.verifyHint": "Pokrenite restic check za provjeru cjelovitosti strukture i metapodataka.",
   "integrity.unlockHint": "Očistite zastarjela zaključavanja repozitorija ostavljena srušenim ili prekinutim izvršavanjem (rješava „repository is already locked”).",
   "integrity.unlockPartial": "Nisu sva spremišta u potpunosti otključana: {list}",
   "integrity.pruneHint": "Primjenjuje vašu politiku zadržavanja i oslobađa prostor (oslobađa prostor samo ako politika nije postavljena; može potrajati).",
-  "integrity.pruneConfirm": "Čišćenje sada primjenjuje vašu politiku zadržavanja. Uklanja snimke izvan vaših pravila zadržavanja (last/daily/weekly/monthly/yearly) i oslobađa prostor. Bez politike, samo oslobađa prostor. Nastaviti?",
-  "integrity.appendOnly": "Provjera samo-dodavanja",
   "integrity.appendOnlyHint": "Dokazuje da izvanmrežni repozitorij i dalje odbija brisanje (zaštita samo-dodavanja), ista provjera kao test neovlaštene izmjene u izvanmrežnom čarobnjaku.",
-  "integrity.appendOnlyLast": "zaštita samo-dodavanja · Posljednja provjera {time}",
-  "integrity.appendOnlyNever": "zaštita samo-dodavanja · nikad provjereno",
 
   // Restore-verification drills
-  "verify.now": "Provjeri mogućnost vraćanja",
   "verify.running": "Provjeravanje…",
-  "verify.ok": "Mogućnost vraćanja provjerena",
   "verify.failed": "Provjera nije uspjela",
-  "verify.last": "Posljednja provjera {time}",
-  "verify.never": "Nikad provjereno",
   "verify.subsetPct": "Uzorak podataka (%)",
-  "verify.hint": "Periodički čita nasumični uzorak podataka sigurnosne kopije kako bi dokazao da su cjeloviti i da se mogu vratiti.",
   "verify.shield": "provjereno",
 
   // DR drill controls
-  "drill.kindLabel": "Vrsta provjere:",
-  "drill.kindSubset": "Provjera cjelovitosti",
-  "drill.kindDR": "Stvarno vraćanje (izvanmrežno)",
-  "drill.target": "Cilj provjere (kontejner)",
-  "drill.targetVM": "Cilj provjere (VM)",
-  "drill.targetMostRecent": "Najnovija sigurnosna kopija",
-  "drill.drNote": "Stvarno vraćanje izdvaja najnoviju izvanmrežnu snimku u privremeni izolirani prostor, provjerava je, a zatim je čisti. Preuzima stvarne podatke i može potrajati.",
-  "drill.runDR": "Pokreni stvarno vraćanje",
-  "drill.runningDR": "Vraćanje…",
-  "drill.confirmDR": "Ovo izvodi STVARNO vraćanje najnovije izvanmrežne snimke u privremeni izolirani prostor kako bi dokazalo da se može oporaviti, a zatim ga briše. Preuzima stvarne podatke i može potrajati. Nastaviti?",
   "drill.offsiteVerified": "izvanmrežno provjereno",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "izvanmrežno DR vraćanje",
-  "drill.checkLocal": "lokalna provjera cjelovitosti",
   "drill.failReasonPrefix": "razlog:",
 
   // Off-site DR opt-out

@@ -809,51 +809,28 @@ const is: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Heilleiki og viðhald",
-  "integrity.hint": "Staðfestu uppbyggingu geymslusafns (restic check), hreinsaðu úreltar lásar sem eftir standa frá rofinni keyrslu, eða hreinsaðu til að endurheimta pláss frá eyddum afritum.",
   "integrity.verify": "Staðfesta",
   "integrity.checking": "Staðfesti…",
   "integrity.ok": "Heilbrigt",
   "integrity.failed": "Staðfesting mistókst",
-  "integrity.failedShort": "✗ Mistókst",
   "integrity.unlock": "Aflæsa",
   "integrity.prune": "Hreinsa",
   "integrity.verifyHint": "Keyrðu restic check til að staðfesta að uppbygging og lýsigögn séu heil.",
   "integrity.unlockHint": "Hreinsaðu úrelta geymslusafnslása sem eftir standa frá hrundinni eða rofinni keyrslu (lagar „repository is already locked“).",
   "integrity.unlockPartial": "Ekki voru allar geymslur að fullu aflæstar: {list}",
   "integrity.pruneHint": "Beitir varðveislustefnu þinni og endurheimtir pláss (endurheimtir pláss aðeins ef engin stefna er sett; getur tekið tíma).",
-  "integrity.pruneConfirm": "Hreinsun beitir nú varðveislustefnu þinni: fjarlægir snapshot utan geymslureglna þinna (last/daily/weekly/monthly/yearly) og endurheimtir pláss. Án stefnu er aðeins pláss endurheimt. Halda áfram?",
-  "integrity.appendOnly": "Athugun á aðeins-bæta-við",
   "integrity.appendOnlyHint": "Sannar að fjarlæga geymslusafnið hafnar enn eyðingum (aðeins-bæta-við vörn), sama athugun og átroðsluprófun fjarlæga hjálparans.",
-  "integrity.appendOnlyLast": "aðeins-bæta-við vörn · Síðast athugað {time}",
-  "integrity.appendOnlyNever": "aðeins-bæta-við vörn · aldrei athugað",
 
   // Restore-verification drills
-  "verify.now": "Staðfesta endurheimtanleika",
   "verify.running": "Staðfesti…",
-  "verify.ok": "Endurheimtanleiki staðfestur",
   "verify.failed": "Staðfesting mistókst",
-  "verify.last": "Síðast staðfest {time}",
-  "verify.never": "Aldrei staðfest",
   "verify.subsetPct": "Gagnaúrtak (%)",
-  "verify.hint": "Les reglulega tilviljunarkennt úrtak af afritunargögnum til að sanna að þau séu heil og endurheimtanleg.",
   "verify.shield": "staðfest",
 
   // DR drill controls
-  "drill.kindLabel": "Tegund prófunar:",
-  "drill.kindSubset": "Heilleikaathugun",
-  "drill.kindDR": "Raunveruleg endurheimt (fjarlægt)",
-  "drill.target": "Markmið prófunar (gámur)",
-  "drill.targetVM": "Markmið prófunar (sýndarvél)",
-  "drill.targetMostRecent": "Nýjasta afritið",
-  "drill.drNote": "Raunveruleg endurheimt dregur nýjasta fjarlæga snapshottið út í tímabundið einangrað umhverfi, staðfestir það og hreinsar svo til. Það sækir raunveruleg gögn og getur tekið tíma.",
-  "drill.runDR": "Keyra raunverulega endurheimt",
-  "drill.runningDR": "Endurheimti…",
-  "drill.confirmDR": "Þetta framkvæmir RAUNVERULEGA endurheimt á nýjasta fjarlæga snapshottinu í tímabundið einangrað umhverfi til að sanna að hægt sé að endurheimta það, og eyðir því svo. Það sækir raunveruleg gögn og getur tekið tíma. Halda áfram?",
   "drill.offsiteVerified": "fjarlægt staðfest",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "fjarlæg DR-endurheimt",
-  "drill.checkLocal": "staðbundin heilleikaathugun",
   "drill.failReasonPrefix": "ástæða:",
 
   // Off-site DR opt-out

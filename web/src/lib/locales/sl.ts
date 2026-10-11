@@ -809,51 +809,28 @@ const sl: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Celovitost in vzdrževanje",
-  "integrity.hint": "Preveri strukturo repozitorija (restic check), počisti obstale zaklepe, ki jih je pustil prekinjen zagon, ali počisti za sprostitev prostora izbrisanih varnostnih kopij.",
   "integrity.verify": "Preveri",
   "integrity.checking": "Preverjanje…",
   "integrity.ok": "Zdravo",
   "integrity.failed": "Preverjanje ni uspelo",
-  "integrity.failedShort": "✗ Ni uspelo",
   "integrity.unlock": "Odkleni",
   "integrity.prune": "Počisti",
   "integrity.verifyHint": "Zaženi restic check za preverjanje, da sta struktura in metapodatki nedotaknjena.",
   "integrity.unlockHint": "Počisti obstale zaklepe repozitorija, ki jih je pustil sesut ali prekinjen zagon (odpravi 'repository is already locked').",
   "integrity.unlockPartial": "Niso bila vsa skladišča popolnoma odklenjena: {list}",
   "integrity.pruneHint": "Uveljavi svojo politiko hrambe in sprosti prostor (prostor sprosti samo, če politika ni nastavljena; lahko traja dlje časa).",
-  "integrity.pruneConfirm": "Počisti zdaj uveljavi tvojo politiko hrambe: odstrani posnetke izven tvojih pravil ohranitve (zadnji/dnevno/tedensko/mesečno/letno) in sprosti prostor. Brez nastavljene politike samo sprosti prostor. Nadaljujem?",
-  "integrity.appendOnly": "Preverjanje samo-dodajanja",
   "integrity.appendOnlyHint": "Dokaži, da zunanji repozitorij še vedno zavrača brisanje (zaščita s samo-dodajanjem), enako preverjanje kot preizkus nespremenljivosti v čarovniku za zunanjo kopijo.",
-  "integrity.appendOnlyLast": "zaščita s samo-dodajanjem · Nazadnje preverjeno {time}",
-  "integrity.appendOnlyNever": "zaščita s samo-dodajanjem · nikoli preverjeno",
 
   // Restore-verification drills
-  "verify.now": "Preveri možnost obnovitve",
   "verify.running": "Preverjanje…",
-  "verify.ok": "Obnovljivost potrjena",
   "verify.failed": "Preverjanje ni uspelo",
-  "verify.last": "Nazadnje preverjeno {time}",
-  "verify.never": "Nikoli preverjeno",
   "verify.subsetPct": "Vzorec podatkov (%)",
-  "verify.hint": "Občasno prebere naključni vzorec podatkov varnostne kopije, da dokaže, da je nedotaknjen in obnovljiv.",
   "verify.shield": "preverjeno",
 
   // DR drill controls
-  "drill.kindLabel": "Vrsta vaje:",
-  "drill.kindSubset": "Preverjanje celovitosti",
-  "drill.kindDR": "Prava obnovitev (zunanja)",
-  "drill.target": "Cilj vaje (vsebnik)",
-  "drill.targetVM": "Cilj vaje (VM)",
-  "drill.targetMostRecent": "Najnovejša varnostna kopija",
-  "drill.drNote": "Prava obnovitev razširi najnovejši zunanji posnetek v začasno peskovnik, ga preveri, nato počisti za sabo. Prenese prave podatke in lahko traja dlje časa.",
-  "drill.runDR": "Zaženi pravo obnovitev",
-  "drill.runningDR": "Obnavljanje…",
-  "drill.confirmDR": "To izvede PRAVO obnovitev najnovejšega zunanjega posnetka v začasen peskovnik, da dokaže, da je obnovljiv, nato ga izbriše. Prenese prave podatke in lahko traja dlje časa. Nadaljujem?",
   "drill.offsiteVerified": "zunanja kopija preverjena",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "obnovitev DR z zunanje kopije",
-  "drill.checkLocal": "lokalno preverjanje celovitosti",
   "drill.failReasonPrefix": "razlog:",
 
   // Off-site DR opt-out (#37)

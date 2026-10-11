@@ -658,23 +658,17 @@ const fi: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Eheys ja ylläpito",
-  "integrity.hint": "Suorita restic check tarkistaaksesi, että arkiston rakenne ja metatiedot ovat ehjät.",
   "integrity.verify": "Tarkista",
   "integrity.checking": "Tarkistetaan…",
   "integrity.ok": "Kunnossa",
   "integrity.failed": "Tarkistus epäonnistui",
-  "integrity.failedShort": "✗ Epäonnistui",
   "integrity.unlock": "Avaa lukitus",
   "integrity.prune": "Karsi",
   "integrity.verifyHint": "Suorita restic check rakenteen ja metatietojen tarkistamiseksi.",
   "integrity.unlockHint": "Poista keskeytyneen ajon jättämät jumittuneet repositorion lukot (korjaa 'repository is already locked').",
   "integrity.unlockPartial": "Kaikkia arkistoja ei avattu kokonaan: {list}",
   "integrity.pruneHint": "Sovella säilytyskäytäntöä ja vapauta tilaa (ilman käytäntöä vain vapauttaa tilaa; voi kestää).",
-  "integrity.pruneConfirm": "Karsinta soveltaa nyt säilytyskäytäntöäsi. Se poistaa tilannevedokset sääntöjesi (last/daily/weekly/monthly/yearly) ulkopuolelta ja vapauttaa tilaa. Ilman käytäntöä se vain vapauttaa tilaa. Jatketaanko?",
-  "integrity.appendOnly": "Append-only-tarkistus",
   "integrity.appendOnlyHint": "Todistaa, että off-site-repositorio torjuu poistot edelleen (append-only-suojaus), sama tarkistus kuin off-site-avustajan peukalointitesti.",
-  "integrity.appendOnlyLast": "append-only-suojaus · Viimeksi tarkistettu {time}",
-  "integrity.appendOnlyNever": "append-only-suojaus · ei koskaan tarkistettu",
 
   // Pre/post-backup hooks
   "hooks.hint": "Komennot suoritetaan kontin sisällä (sh -c). Pre suoritetaan ennen varmuuskopiota (esim. välimuistin kirjoitus levylle; tunnistetut tietokannat vedostetaan itsestään). Virhe keskeyttää varmuuskopion. Post suoritetaan kontin käynnistyttyä uudelleen; sen virhe vain kirjataan lokiin.",
@@ -975,14 +969,9 @@ const fi: Partial<Translations> = {
   "notify.smtpTls": "Salaus",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Vahvista palautettavuus",
   "verify.running": "Vahvistetaan…",
-  "verify.ok": "Palautettavuus vahvistettu",
   "verify.failed": "Vahvistus epäonnistui",
-  "verify.last": "Viimeksi vahvistettu {time}",
-  "verify.never": "Ei koskaan vahvistettu",
   "verify.subsetPct": "Datanäyte (%)",
-  "verify.hint": "Lukee säännöllisesti satunnaisen näytteen varmuuskopiodatasta todistaakseen, että se on ehjä ja palautettavissa.",
   "verify.shield": "vahvistettu",
 
   // Dashboard protection (RPO) status
@@ -1357,16 +1346,6 @@ const fi: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Säilytys (0 = säilytä kaikki)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Harjoitustyyppi:",
-  "drill.kindSubset": "Eheystarkistus",
-  "drill.kindDR": "Todellinen palautus (etä)",
-  "drill.target": "Harjoituksen kohde (kontti)",
-  "drill.targetVM": "Harjoituksen kohde (VM)",
-  "drill.targetMostRecent": "Viimeisin varmuuskopio",
-  "drill.drNote": "Todellinen palautus purkaa uusimman etätilannevedoksen tilapäiseen sandboxiin, vahvistaa sen ja siivoaa jäljet. Se lataa oikeaa dataa ja voi kestää hetken.",
-  "drill.runDR": "Suorita todellinen palautus",
-  "drill.runningDR": "Palautetaan…",
-  "drill.confirmDR": "Tämä suorittaa uusimman etätilannevedoksen TODELLISEN palautuksen tilapäiseen sandboxiin todistaakseen sen palautettavuuden ja poistaa sen sitten. Se lataa oikeaa dataa ja voi kestää hetken. Jatketaanko?",
   "drill.offsiteVerified": "etäkopio vahvistettu",
 
   // Dashboard ransomware-protection card (v4)
@@ -1417,8 +1396,6 @@ const fi: Partial<Translations> = {
   "excludes.assistRemoveLine": "Poista poissulkeminen {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "etä-DR-palautus",
-  "drill.checkLocal": "paikallinen eheystarkistus",
   "drill.failReasonPrefix": "syy:",
 
   // Off-site DR opt-out (#37)

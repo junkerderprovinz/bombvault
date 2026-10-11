@@ -658,23 +658,17 @@ const hu: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integritás és karbantartás",
-  "integrity.hint": "Futtassa a restic check parancsot, hogy ellenőrizze egy adattár szerkezetének és metaadatainak épségét.",
   "integrity.verify": "Ellenőrzés",
   "integrity.checking": "Ellenőrzés…",
   "integrity.ok": "Ép",
   "integrity.failed": "Az ellenőrzés sikertelen",
-  "integrity.failedShort": "✗ Sikertelen",
   "integrity.unlock": "Feloldás",
   "integrity.prune": "Nyesés",
   "integrity.verifyHint": "restic check futtatása a szerkezet és metaadatok ellenőrzéséhez.",
   "integrity.unlockHint": "Megszakadt futás után ottragadt repository-zárolások törlése (javítja a 'repository is already locked' hibát).",
   "integrity.unlockPartial": "Nem minden tároló lett teljesen feloldva: {list}",
   "integrity.pruneHint": "Alkalmazd a megőrzési szabályt és szabadíts fel helyet (szabály nélkül csak helyet szabadít fel; eltarthat egy ideig).",
-  "integrity.pruneConfirm": "A karbantartás most alkalmazza a megőrzési szabályodat. Eltávolítja a szabályaidon (last/daily/weekly/monthly/yearly) túli pillanatképeket és helyet szabadít fel. Szabály nélkül csak helyet szabadít fel. Folytatod?",
-  "integrity.appendOnly": "Append-only ellenőrzés",
   "integrity.appendOnlyHint": "Bizonyítja, hogy a távoli tároló továbbra is elutasítja a törléseket (append-only védelem), ugyanaz az ellenőrzés, mint az off-site varázsló tamper-tesztje.",
-  "integrity.appendOnlyLast": "append-only védelem · Utoljára ellenőrizve {time}",
-  "integrity.appendOnlyNever": "append-only védelem · még nem ellenőrizve",
 
   // Pre/post-backup hooks
   "hooks.hint": "A parancsok a konténeren belül futnak (sh -c). A Pre a biztonsági mentés előtt fut (pl. egy gyorsítótár lemezre írása; a felismert adatbázisokról magától készül dump). A hiba megszakítja a mentést. A Post a konténer újraindulása után fut; annak hibáját csak naplózza.",
@@ -968,14 +962,9 @@ const hu: Partial<Translations> = {
   "notify.smtpTls": "Titkosítás",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Visszaállíthatóság ellenőrzése",
   "verify.running": "Ellenőrzés…",
-  "verify.ok": "Visszaállíthatóság igazolva",
   "verify.failed": "Az ellenőrzés sikertelen",
-  "verify.last": "Utoljára ellenőrizve: {time}",
-  "verify.never": "Soha nem ellenőrizve",
   "verify.subsetPct": "Adatminta (%)",
-  "verify.hint": "Rendszeresen beolvas egy véletlenszerű mintát a biztonsági mentési adatokból, hogy igazolja, azok épek és visszaállíthatók.",
   "verify.shield": "ellenőrizve",
 
   // Dashboard protection (RPO) status
@@ -1350,16 +1339,6 @@ const hu: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Megőrzés (0 = mind megtartása)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Próba típusa:",
-  "drill.kindSubset": "Integritásellenőrzés",
-  "drill.kindDR": "Valódi visszaállítás (telephelyen kívüli)",
-  "drill.target": "Próba célpontja (konténer)",
-  "drill.targetVM": "Próba célpontja (VM)",
-  "drill.targetMostRecent": "Legfrissebb biztonsági mentés",
-  "drill.drNote": "A valódi visszaállítás kicsomagolja a legfrissebb telephelyen kívüli pillanatképet egy ideiglenes sandboxba, ellenőrzi, majd feltakarít. Valódi adatokat tölt le, és eltarthat egy ideig.",
-  "drill.runDR": "Valódi visszaállítás indítása",
-  "drill.runningDR": "Visszaállítás…",
-  "drill.confirmDR": "Ez a legfrissebb telephelyen kívüli pillanatkép VALÓDI visszaállítását végzi el egy ideiglenes sandboxba, hogy bizonyítsa a visszaállíthatóságát, majd törli azt. Valódi adatokat tölt le, és eltarthat egy ideig. Folytatod?",
   "drill.offsiteVerified": "telephelyen kívül ellenőrizve",
 
   // Dashboard ransomware-protection card (v4)
@@ -1418,8 +1397,6 @@ const hu: Partial<Translations> = {
   "excludes.assistRemoveLine": "A(z) {line} kizárás eltávolítása",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "telephelyen kívüli DR-visszaállítás",
-  "drill.checkLocal": "helyi integritásellenőrzés",
   "drill.failReasonPrefix": "ok:",
 
   // Off-site DR opt-out (#37)

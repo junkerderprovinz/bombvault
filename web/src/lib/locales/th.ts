@@ -658,23 +658,17 @@ const th: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "ความสมบูรณ์และการบำรุงรักษา",
-  "integrity.hint": "เรียกใช้ restic check เพื่อยืนยันว่าโครงสร้างและเมตาดาตาของรีพอสิทอรีสมบูรณ์",
   "integrity.verify": "ยืนยัน",
   "integrity.checking": "กำลังตรวจสอบ…",
   "integrity.ok": "สมบูรณ์",
   "integrity.failed": "การตรวจสอบล้มเหลว",
-  "integrity.failedShort": "✗ ล้มเหลว",
   "integrity.unlock": "ปลดล็อก",
   "integrity.prune": "ตัดทิ้ง",
   "integrity.verifyHint": "รัน restic check เพื่อตรวจสอบโครงสร้างและข้อมูลเมตา",
   "integrity.unlockHint": "ล้างล็อกที่ค้างของที่เก็บจากการทำงานที่ขัดข้อง/ถูกขัดจังหวะ (แก้ 'repository is already locked')",
   "integrity.unlockPartial": "ไม่ได้ปลดล็อกทุกที่เก็บข้อมูลทั้งหมด: {list}",
   "integrity.pruneHint": "ใช้นโยบายการเก็บรักษาและคืนพื้นที่ (ถ้าไม่ได้ตั้งนโยบายจะคืนพื้นที่เท่านั้น; อาจใช้เวลาสักครู่)",
-  "integrity.pruneConfirm": "ตอนนี้การพรูนจะใช้นโยบายการเก็บรักษาของคุณ ลบสแนปช็อตที่เกินกฎของคุณ (last/daily/weekly/monthly/yearly) และคืนพื้นที่ หากไม่มีนโยบายจะคืนพื้นที่เท่านั้น ดำเนินการต่อหรือไม่?",
-  "integrity.appendOnly": "การตรวจสอบ append-only",
   "integrity.appendOnlyHint": "พิสูจน์ว่าที่เก็บสำรองภายนอกยังคงปฏิเสธการลบ (การป้องกันแบบเขียนต่อท้ายเท่านั้น) เป็นการตรวจสอบเดียวกับการทดสอบการแทรกแซงในตัวช่วยตั้งค่าภายนอก",
-  "integrity.appendOnlyLast": "การป้องกัน append-only · ตรวจสอบล่าสุด {time}",
-  "integrity.appendOnlyNever": "การป้องกัน append-only · ยังไม่เคยตรวจสอบ",
 
   // Pre/post-backup hooks
   "hooks.hint": "คำสั่งทำงานภายใน container (sh -c) Pre ทำงานก่อนการสำรองข้อมูล (เช่น เขียนแคชลงดิสก์ ส่วนฐานข้อมูลที่รู้จักจะถูกดัมป์ให้เอง) หากล้มเหลวจะยกเลิกการสำรองข้อมูล Post ทำงานหลังจาก container กลับมาทำงาน หากล้มเหลวจะบันทึกไว้เท่านั้น",
@@ -976,14 +970,9 @@ const th: Partial<Translations> = {
   "notify.smtpTls": "การเข้ารหัส",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "ตรวจสอบความสามารถในการกู้คืน",
   "verify.running": "กำลังตรวจสอบ…",
-  "verify.ok": "ตรวจสอบแล้วว่ากู้คืนได้",
   "verify.failed": "การตรวจสอบล้มเหลว",
-  "verify.last": "ตรวจสอบล่าสุด {time}",
-  "verify.never": "ยังไม่เคยตรวจสอบ",
   "verify.subsetPct": "ตัวอย่างข้อมูล (%)",
-  "verify.hint": "อ่านตัวอย่างข้อมูลสำรองแบบสุ่มเป็นระยะ เพื่อพิสูจน์ว่าข้อมูลสมบูรณ์และกู้คืนได้",
   "verify.shield": "ตรวจสอบแล้ว",
 
   // Dashboard protection (RPO) status
@@ -1358,16 +1347,6 @@ const th: Partial<Translations> = {
   "offsite.targets.retentionTitle": "การเก็บรักษา (0 = เก็บทั้งหมด)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "ประเภทการทดสอบ:",
-  "drill.kindSubset": "การตรวจสอบความสมบูรณ์",
-  "drill.kindDR": "การกู้คืนจริง (นอกสถานที่)",
-  "drill.target": "เป้าหมายการทดสอบ (container)",
-  "drill.targetVM": "เป้าหมายการทดสอบ (VM)",
-  "drill.targetMostRecent": "การสำรองข้อมูลล่าสุด",
-  "drill.drNote": "การกู้คืนจริงจะแตกสแนปช็อตนอกสถานที่ล่าสุดลงใน sandbox ชั่วคราว ตรวจสอบ แล้วล้างออก มันจะดาวน์โหลดข้อมูลจริงและอาจใช้เวลาสักครู่",
-  "drill.runDR": "เรียกใช้การกู้คืนจริง",
-  "drill.runningDR": "กำลังกู้คืน…",
-  "drill.confirmDR": "การดำเนินการนี้จะกู้คืนสแนปช็อตนอกสถานที่ล่าสุดแบบจริงลงใน sandbox ชั่วคราว เพื่อพิสูจน์ว่ากู้คืนได้ แล้วลบทิ้ง มันจะดาวน์โหลดข้อมูลจริงและอาจใช้เวลาสักครู่ ดำเนินการต่อ?",
   "drill.offsiteVerified": "ตรวจสอบนอกสถานที่แล้ว",
 
   // Dashboard ransomware-protection card (v4)
@@ -1418,8 +1397,6 @@ const th: Partial<Translations> = {
   "excludes.assistRemoveLine": "ลบการยกเว้น {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "การกู้คืน DR นอกสถานที่",
-  "drill.checkLocal": "การตรวจสอบความสมบูรณ์ในเครื่อง",
   "drill.failReasonPrefix": "เหตุผล:",
 
   // Off-site DR opt-out (#37)

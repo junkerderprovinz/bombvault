@@ -809,51 +809,28 @@ const fa: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "یکپارچگی و نگهداری",
-  "integrity.hint": "ساختار یک مخزن را تأیید کنید (restic check)، قفل‌های باقی‌مانده از یک اجرای قطع‌شده را پاک کنید، یا برای بازپس‌گیری فضای پشتیبان‌های حذف‌شده پاک‌سازی کنید.",
   "integrity.verify": "تأیید",
   "integrity.checking": "در حال بررسی…",
   "integrity.ok": "سالم",
   "integrity.failed": "بررسی ناموفق بود",
-  "integrity.failedShort": "✗ ناموفق",
   "integrity.unlock": "باز کردن قفل",
   "integrity.prune": "پاک‌سازی",
   "integrity.verifyHint": "restic check را اجرا کنید تا سلامت ساختار و ابرداده‌ها تأیید شود.",
   "integrity.unlockHint": "قفل‌های باقی‌مانده مخزن از یک اجرای دچار خرابی یا قطع‌شده را پاک کنید (مشکل «repository is already locked» را برطرف می‌کند).",
   "integrity.unlockPartial": "همه مخزن‌ها به‌طور کامل باز نشدند: {list}",
   "integrity.pruneHint": "سیاست نگه‌داری خود را اعمال کرده و فضا را بازپس بگیرید (بدون سیاست فقط فضا بازپس گرفته می‌شود؛ ممکن است زمان‌بر باشد).",
-  "integrity.pruneConfirm": "پاک‌سازی اکنون سیاست نگه‌داری شما را اعمال می‌کند: اسنپ‌شات‌های فراتر از قوانین نگه‌داری‌تان (روزانه/هفتگی/ماهانه/سالانه/آخرین‌ها) را حذف کرده و فضا را بازپس می‌گیرد. بدون سیاست، فقط فضا بازپس گرفته می‌شود. ادامه می‌دهید؟",
-  "integrity.appendOnly": "بررسی فقط-افزودنی",
   "integrity.appendOnlyHint": "ثابت می‌کند مخزن خارج از محل همچنان حذف‌ها را رد می‌کند (محافظت فقط-افزودنی)، همان بررسی آزمایش دستکاری در راهنمای خارج از محل.",
-  "integrity.appendOnlyLast": "محافظت فقط-افزودنی · آخرین بررسی {time}",
-  "integrity.appendOnlyNever": "محافظت فقط-افزودنی · هرگز بررسی نشده",
 
   // Restore-verification drills
-  "verify.now": "بررسی قابلیت بازیابی",
   "verify.running": "در حال بررسی…",
-  "verify.ok": "قابلیت بازیابی تأیید شد",
   "verify.failed": "بررسی ناموفق بود",
-  "verify.last": "آخرین بررسی {time}",
-  "verify.never": "هرگز بررسی نشده",
   "verify.subsetPct": "نمونه داده (٪)",
-  "verify.hint": "به‌طور دوره‌ای یک نمونه تصادفی از داده‌های پشتیبان را می‌خواند تا ثابت کند سالم و قابل بازیابی هستند.",
   "verify.shield": "تأییدشده",
 
   // DR drill controls
-  "drill.kindLabel": "نوع بررسی:",
-  "drill.kindSubset": "بررسی یکپارچگی",
-  "drill.kindDR": "بازیابی واقعی (خارج از محل)",
-  "drill.target": "هدف بررسی (کانتینر)",
-  "drill.targetVM": "هدف بررسی (ماشین مجازی)",
-  "drill.targetMostRecent": "جدیدترین پشتیبان",
-  "drill.drNote": "بازیابی واقعی، جدیدترین اسنپ‌شات خارج از محل را در یک محیط ایزوله موقت استخراج می‌کند، آن را تأیید می‌کند و سپس پاک‌سازی می‌کند. داده واقعی دانلود می‌شود و ممکن است زمان‌بر باشد.",
-  "drill.runDR": "اجرای بازیابی واقعی",
-  "drill.runningDR": "در حال بازیابی…",
-  "drill.confirmDR": "این کار یک بازیابی واقعی از جدیدترین اسنپ‌شات خارج از محل در یک محیط ایزوله موقت انجام می‌دهد تا قابل بازیابی بودن آن ثابت شود، سپس آن را حذف می‌کند. داده واقعی دانلود می‌شود و ممکن است زمان‌بر باشد. ادامه می‌دهید؟",
   "drill.offsiteVerified": "خارج از محل تأیید شده",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "بازیابی DR خارج از محل",
-  "drill.checkLocal": "بررسی یکپارچگی محلی",
   "drill.failReasonPrefix": "دلیل:",
 
   // Off-site DR opt-out

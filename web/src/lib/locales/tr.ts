@@ -658,23 +658,17 @@ const tr: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Bütünlük ve bakım",
-  "integrity.hint": "Bir deponun yapısının ve meta verisinin sağlam olduğunu doğrulamak için restic check çalıştırın.",
   "integrity.verify": "Doğrula",
   "integrity.checking": "Denetleniyor…",
   "integrity.ok": "Sağlıklı",
   "integrity.failed": "Denetim başarısız",
-  "integrity.failedShort": "✗ Başarısız",
   "integrity.unlock": "Kilidi aç",
   "integrity.prune": "Buda",
   "integrity.verifyHint": "Yapı ve meta verileri doğrulamak için restic check çalıştırın.",
   "integrity.unlockHint": "Çöken/kesintiye uğrayan bir çalışmadan kalan takılı depo kilitlerini temizleyin ('repository is already locked' hatasını giderir).",
   "integrity.unlockPartial": "Tüm depoların kilidi tamamen açılmadı: {list}",
   "integrity.pruneHint": "Saklama politikanı uygula ve alan geri kazan (politika yoksa yalnızca alan geri kazanır; biraz sürebilir).",
-  "integrity.pruneConfirm": "Budama artık saklama politikanı uygular: kurallarının (last/daily/weekly/monthly/yearly) ötesindeki anlık görüntüleri kaldırır ve alan geri kazanır. Politika yoksa yalnızca alan geri kazanır. Devam edilsin mi?",
-  "integrity.appendOnly": "Append-only denetimi",
   "integrity.appendOnlyHint": "Uzak deponun silmeleri hâlâ reddettiğini kanıtlar (salt-ekleme koruması). Off-site sihirbazındaki kurcalama testiyle aynı denetimdir.",
-  "integrity.appendOnlyLast": "append-only koruması · Son denetim {time}",
-  "integrity.appendOnlyNever": "append-only koruması · hiç denetlenmedi",
 
   // Pre/post-backup hooks
   "hooks.hint": "Komutlar konteynerin içinde çalışır (sh -c). Pre, yedeklemeden önce çalışır (örn. bir önbelleği diske yazar; tanınan veritabanlarının dökümü kendiliğinden alınır). Bir hata yedeklemeyi iptal eder. Post, konteyner tekrar açıldıktan sonra çalışır; hatası yalnızca günlüğe kaydedilir.",
@@ -975,14 +969,9 @@ const tr: Partial<Translations> = {
   "notify.smtpTls": "Şifreleme",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Geri yüklenebilirliği doğrula",
   "verify.running": "Doğrulanıyor…",
-  "verify.ok": "Geri yüklenebilir olduğu doğrulandı",
   "verify.failed": "Doğrulama başarısız",
-  "verify.last": "Son doğrulama {time}",
-  "verify.never": "Hiç doğrulanmadı",
   "verify.subsetPct": "Veri örneği (%)",
-  "verify.hint": "Yedek verisinin sağlam ve geri yüklenebilir olduğunu kanıtlamak için düzenli olarak rastgele bir örneği okur.",
   "verify.shield": "doğrulandı",
 
   // Dashboard protection (RPO) status
@@ -1357,16 +1346,6 @@ const tr: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Saklama (0 = tümünü sakla)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Tatbikat türü:",
-  "drill.kindSubset": "Bütünlük denetimi",
-  "drill.kindDR": "Gerçek geri yükleme (site dışı)",
-  "drill.target": "Tatbikat hedefi (konteyner)",
-  "drill.targetVM": "Tatbikat hedefi (VM)",
-  "drill.targetMostRecent": "En son yedek",
-  "drill.drNote": "Gerçek bir geri yükleme, en yeni site dışı anlık görüntüyü geçici bir sandbox'a çıkarır, doğrular ve ardından temizler. Gerçek veri indirir ve biraz zaman alabilir.",
-  "drill.runDR": "Gerçek geri yüklemeyi çalıştır",
-  "drill.runningDR": "Geri yükleniyor…",
-  "drill.confirmDR": "Bu işlem, geri yüklenebilir olduğunu kanıtlamak için en yeni site dışı anlık görüntünün GERÇEK bir geri yüklemesini geçici bir sandbox'a yapar, ardından siler. Gerçek veri indirir ve biraz zaman alabilir. Devam edilsin mi?",
   "drill.offsiteVerified": "site dışı doğrulandı",
 
   // Dashboard ransomware-protection card (v4)
@@ -1417,8 +1396,6 @@ const tr: Partial<Translations> = {
   "excludes.assistRemoveLine": "{line} hariç tutmasını kaldır",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "site dışı DR geri yükleme",
-  "drill.checkLocal": "yerel bütünlük denetimi",
   "drill.failReasonPrefix": "neden:",
 
   // Off-site DR opt-out (#37)

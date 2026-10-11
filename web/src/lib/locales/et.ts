@@ -809,51 +809,28 @@ const et: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Terviklikkus ja hooldus",
-  "integrity.hint": "Kontrolli hoidla struktuuri (restic check), eemalda katkenud käivitusest jäänud lukud või puhasta, et vabastada ruumi kustutatud varundustest.",
   "integrity.verify": "Kontrolli",
   "integrity.checking": "Kontrollimine…",
   "integrity.ok": "Terve",
   "integrity.failed": "Kontroll ebaõnnestus",
-  "integrity.failedShort": "✗ Ebaõnnestus",
   "integrity.unlock": "Ava lukk",
   "integrity.prune": "Puhasta",
   "integrity.verifyHint": "Käivita restic check, et kontrollida struktuuri ja metaandmete terviklikkust.",
   "integrity.unlockHint": "Eemalda katkenud või tõrkunud käivitusest jäänud hoidla lukud (lahendab „repository is already locked”).",
   "integrity.unlockPartial": "Kõiki hoidlaid ei avatud täielikult: {list}",
   "integrity.pruneHint": "Rakenda oma säilitamisreegel ja vabasta ruumi (vabastab ruumi ainult siis, kui reeglit pole; võib võtta aega).",
-  "integrity.pruneConfirm": "Puhastamine rakendab nüüd sinu säilitamisreegli: eemaldab hetktõmmised, mis jäävad väljapoole sinu säilitusreegleid (last/daily/weekly/monthly/yearly), ja vabastab ruumi. Ilma reeglita vabastab see ainult ruumi. Kas jätkata?",
-  "integrity.appendOnly": "Ainult-lisamise kontroll",
   "integrity.appendOnlyHint": "Tõestab, et väline hoidla lükkab kustutamised jätkuvalt tagasi (ainult-lisamise kaitse), sama kontroll, mis välise abilise manipuleerimistest.",
-  "integrity.appendOnlyLast": "ainult-lisamise kaitse · Viimati kontrollitud {time}",
-  "integrity.appendOnlyNever": "ainult-lisamise kaitse · pole kunagi kontrollitud",
 
   // Restore-verification drills
-  "verify.now": "Kontrolli taastatavust",
   "verify.running": "Kontrollimine…",
-  "verify.ok": "Taastatavus kontrollitud",
   "verify.failed": "Kontroll ebaõnnestus",
-  "verify.last": "Viimati kontrollitud {time}",
-  "verify.never": "Pole kunagi kontrollitud",
   "verify.subsetPct": "Andmevalim (%)",
-  "verify.hint": "Loeb perioodiliselt juhuslikku valimit varundatud andmetest, et tõestada nende terviklikkust ja taastatavust.",
   "verify.shield": "kontrollitud",
 
   // DR drill controls
-  "drill.kindLabel": "Kontrolli liik:",
-  "drill.kindSubset": "Terviklikkuse kontroll",
-  "drill.kindDR": "Päris taastamine (väline)",
-  "drill.target": "Kontrolli sihtmärk (konteiner)",
-  "drill.targetVM": "Kontrolli sihtmärk (VM)",
-  "drill.targetMostRecent": "Kõige uuem varundus",
-  "drill.drNote": "Päris taastamine pakib uusima välise hetktõmmise ajutisse liivakasti, kontrollib seda ja seejärel koristab. See laadib alla päris andmeid ja võib võtta aega.",
-  "drill.runDR": "Käivita päris taastamine",
-  "drill.runningDR": "Taastamine…",
-  "drill.confirmDR": "See teostab uusima välise hetktõmmise PÄRIS taastamise ajutisse liivakasti, et tõestada selle taastatavust, ja kustutab selle seejärel. See laadib alla päris andmeid ja võib võtta aega. Kas jätkata?",
   "drill.offsiteVerified": "väline kontrollitud",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "väline DR taastamine",
-  "drill.checkLocal": "kohalik terviklikkuse kontroll",
   "drill.failReasonPrefix": "põhjus:",
 
   // Off-site DR opt-out

@@ -658,23 +658,17 @@ const ar: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "السلامة والصيانة",
-  "integrity.hint": "شغّل restic check للتحقق من سلامة بنية المستودع وبياناته الوصفية.",
   "integrity.verify": "تحقّق",
   "integrity.checking": "جارٍ الفحص…",
   "integrity.ok": "سليم",
   "integrity.failed": "فشل الفحص",
-  "integrity.failedShort": "✗ فشل",
   "integrity.unlock": "إلغاء القفل",
   "integrity.prune": "تقليم",
   "integrity.verifyHint": "تشغيل restic check للتحقق من سلامة البنية والبيانات الوصفية.",
   "integrity.unlockHint": "إزالة أقفال المستودع العالقة من تشغيل تعطل أو انقطع (يصلح 'repository is already locked').",
   "integrity.unlockPartial": "لم يتم إلغاء قفل كل مستودع بالكامل: {list}",
   "integrity.pruneHint": "تطبيق سياسة الاحتفاظ واستعادة المساحة (تستعيد المساحة فقط إذا لم تُحدَّد سياسة؛ قد يستغرق وقتًا).",
-  "integrity.pruneConfirm": "يطبّق التقليم الآن سياسة الاحتفاظ الخاصة بك: يزيل اللقطات التي تتجاوز قواعدك (last/daily/weekly/monthly/yearly) ويستعيد المساحة. بدون سياسة يستعيد المساحة فقط. هل تريد المتابعة؟",
-  "integrity.appendOnly": "فحص append-only",
   "integrity.appendOnlyHint": "يثبت أن مستودع النسخ الخارجي لا يزال يرفض الحذف (حماية append-only)، وهو نفس فحص العبث في مُعالج التخزين الخارجي.",
-  "integrity.appendOnlyLast": "حماية append-only · آخر فحص {time}",
-  "integrity.appendOnlyNever": "حماية append-only · لم يُفحص بعد",
 
   // Pre/post-backup hooks
   "hooks.hint": "تُنفَّذ الأوامر داخل الـ container (sh -c). يُنفَّذ Pre قبل النسخ الاحتياطي (مثلاً كتابة ذاكرة مؤقتة إلى القرص؛ أما قواعد البيانات المعروفة فتُفرَّغ تلقائياً). فشله يُلغي النسخ الاحتياطي. يُنفَّذ Post بعد عودة الـ container للعمل؛ فشله يُسجَّل فقط.",
@@ -976,14 +970,9 @@ const ar: Partial<Translations> = {
   "notify.smtpTls": "التشفير",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "التحقق من قابلية الاستعادة",
   "verify.running": "جارٍ التحقق…",
-  "verify.ok": "تم التحقق من قابلية الاستعادة",
   "verify.failed": "فشل التحقق",
-  "verify.last": "آخر تحقق {time}",
-  "verify.never": "لم يُتحقَّق أبداً",
   "verify.subsetPct": "عينة البيانات (%)",
-  "verify.hint": "يقرأ دورياً عينة عشوائية من بيانات النسخ الاحتياطي لإثبات أنها سليمة وقابلة للاستعادة.",
   "verify.shield": "مُتحقَّق منه",
 
   // Dashboard protection (RPO) status
@@ -1358,16 +1347,6 @@ const ar: Partial<Translations> = {
   "offsite.targets.retentionTitle": "الاحتفاظ (0 = الاحتفاظ بالكل)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "نوع التمرين:",
-  "drill.kindSubset": "فحص السلامة",
-  "drill.kindDR": "استعادة حقيقية (خارج الموقع)",
-  "drill.target": "هدف التمرين (الحاوية)",
-  "drill.targetVM": "هدف التمرين (VM)",
-  "drill.targetMostRecent": "أحدث نسخة احتياطية",
-  "drill.drNote": "تستخرج الاستعادة الحقيقية أحدث لقطة خارج الموقع إلى sandbox مؤقتة، وتتحقق منها، ثم تنظّف بعد ذلك. تنزّل بيانات حقيقية وقد تستغرق بعض الوقت.",
-  "drill.runDR": "تشغيل الاستعادة الحقيقية",
-  "drill.runningDR": "جارٍ الاستعادة…",
-  "drill.confirmDR": "يُجري هذا استعادة حقيقية لأحدث لقطة خارج الموقع إلى sandbox مؤقتة لإثبات قابليتها للاستعادة، ثم يحذفها. يُنزّل بيانات حقيقية وقد يستغرق بعض الوقت. هل تريد المتابعة؟",
   "drill.offsiteVerified": "مُتحقَّق منه خارج الموقع",
 
   // Dashboard ransomware-protection card (v4)
@@ -1418,8 +1397,6 @@ const ar: Partial<Translations> = {
   "excludes.assistRemoveLine": "إزالة الاستبعاد {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "استعادة DR خارج الموقع",
-  "drill.checkLocal": "فحص السلامة المحلي",
   "drill.failReasonPrefix": "السبب:",
 
   // Off-site DR opt-out (#37)

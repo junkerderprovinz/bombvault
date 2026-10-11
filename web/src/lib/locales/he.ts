@@ -658,23 +658,17 @@ const he: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "שלמות ותחזוקה",
-  "integrity.hint": "הרץ restic check כדי לאמת שהמבנה והמטא-נתונים של המאגר תקינים.",
   "integrity.verify": "אמת",
   "integrity.checking": "בודק…",
   "integrity.ok": "תקין",
   "integrity.failed": "הבדיקה נכשלה",
-  "integrity.failedShort": "✗ נכשל",
   "integrity.unlock": "ביטול נעילה",
   "integrity.prune": "גיזום",
   "integrity.verifyHint": "הרצת restic check לאימות המבנה והמטא-נתונים.",
   "integrity.unlockHint": "ניקוי נעילות מאגר תקועות שנותרו מהרצה שקרסה/הופסקה (מתקן 'repository is already locked').",
   "integrity.unlockPartial": "לא כל המאגרים שוחררו במלואם: {list}",
   "integrity.pruneHint": "החלת מדיניות השמירה ושחרור מקום (ללא מדיניות משחרר רק מקום; עשוי לקחת זמן).",
-  "integrity.pruneConfirm": "הגיזום מחיל כעת את מדיניות השמירה שלך: מסיר תמונות מעבר לכללים שלך (last/daily/weekly/monthly/yearly) ומשחרר מקום. ללא מדיניות משחרר רק מקום. להמשיך?",
-  "integrity.appendOnly": "בדיקת append-only",
   "integrity.appendOnlyHint": "מוכיחה שמאגר הגיבוי המרוחק עדיין דוחה מחיקות (הגנת append-only), אותה בדיקת חבלה כמו באשף האחסון המרוחק.",
-  "integrity.appendOnlyLast": "הגנת append-only · נבדק לאחרונה {time}",
-  "integrity.appendOnlyNever": "הגנת append-only · טרם נבדק",
 
   // Pre/post-backup hooks
   "hooks.hint": "הפקודות רצות בתוך ה-container (sh -c). Pre רץ לפני הגיבוי (למשל כתיבת מטמון לדיסק; מסדי נתונים מזוהים עוברים דאמפ מעצמם). כישלון מבטל את הגיבוי. Post רץ אחרי שה-container שב לפעול; כישלונו רק נרשם בלוג.",
@@ -967,14 +961,9 @@ const he: Partial<Translations> = {
   "notify.smtpTls": "הצפנה",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "אמת יכולת שחזור",
   "verify.running": "מאמת…",
-  "verify.ok": "אומת כניתן לשחזור",
   "verify.failed": "האימות נכשל",
-  "verify.last": "אומת לאחרונה {time}",
-  "verify.never": "מעולם לא אומת",
   "verify.subsetPct": "מדגם נתונים (%)",
-  "verify.hint": "קורא מעת לעת מדגם אקראי של נתוני הגיבוי כדי להוכיח שהם תקינים וניתנים לשחזור.",
   "verify.shield": "אומת",
 
   // Dashboard protection (RPO) status
@@ -1349,16 +1338,6 @@ const he: Partial<Translations> = {
   "offsite.targets.retentionTitle": "שמירה (0 = שמור הכול)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "סוג תרגיל:",
-  "drill.kindSubset": "בדיקת שלמות",
-  "drill.kindDR": "שחזור אמיתי (מחוץ לאתר)",
-  "drill.target": "יעד התרגיל (container)",
-  "drill.targetVM": "יעד התרגיל (VM)",
-  "drill.targetMostRecent": "הגיבוי האחרון",
-  "drill.drNote": "שחזור אמיתי מחלץ את ה-snapshot העדכני ביותר מחוץ לאתר אל sandbox זמני, מאמת אותו ואז מנקה. הוא מוריד נתונים אמיתיים ועלול להימשך זמן מה.",
-  "drill.runDR": "הרץ שחזור אמיתי",
-  "drill.runningDR": "משחזר…",
-  "drill.confirmDR": "פעולה זו מבצעת שחזור אמיתי של ה-snapshot העדכני ביותר מחוץ לאתר אל sandbox זמני כדי להוכיח שניתן לשחזרו, ואז מוחקת אותו. היא מורידה נתונים אמיתיים ועלולה להימשך זמן מה. להמשיך?",
   "drill.offsiteVerified": "אומת מחוץ לאתר",
 
   // Dashboard ransomware-protection card (v4)
@@ -1417,8 +1396,6 @@ const he: Partial<Translations> = {
   "excludes.assistRemoveLine": "הסר את ההחרגה {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "שחזור DR מחוץ לאתר",
-  "drill.checkLocal": "בדיקת שלמות מקומית",
   "drill.failReasonPrefix": "סיבה:",
 
   // Off-site DR opt-out (#37)

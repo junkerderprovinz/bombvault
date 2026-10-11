@@ -652,23 +652,17 @@ const ko: Partial<Translations> = {
   "rclone.save": "설정 저장",
 
   "integrity.title": "무결성 및 유지 관리",
-  "integrity.hint": "restic check를 실행하여 저장소의 구조와 메타데이터가 온전한지 확인합니다.",
   "integrity.verify": "검증",
   "integrity.checking": "확인 중…",
   "integrity.ok": "정상",
   "integrity.failed": "검사 실패",
-  "integrity.failedShort": "✗ 실패",
   "integrity.unlock": "잠금 해제",
   "integrity.prune": "정리",
   "integrity.verifyHint": "restic check를 실행하여 구조와 메타데이터 무결성을 확인합니다.",
   "integrity.unlockHint": "중단된 실행이 남긴 멈춘 저장소 잠금을 제거합니다('repository is already locked' 해결).",
   "integrity.unlockPartial": "모든 저장소의 잠금이 완전히 해제되지는 않았습니다: {list}",
   "integrity.pruneHint": "보존 정책을 적용하고 공간을 회수합니다(정책이 없으면 공간만 회수, 시간이 걸릴 수 있음).",
-  "integrity.pruneConfirm": "정리는 이제 보존 정책을 적용합니다. 규칙(last/daily/weekly/monthly/yearly)을 벗어난 스냅샷을 제거하고 공간을 회수합니다. 정책이 없으면 공간만 회수합니다. 계속할까요?",
-  "integrity.appendOnly": "Append-only 검사",
   "integrity.appendOnlyHint": "오프사이트 저장소가 여전히 삭제를 거부하는지(추가 전용 보호) 증명합니다. 오프사이트 마법사의 변조 테스트와 동일한 검사입니다.",
-  "integrity.appendOnlyLast": "append-only 보호 · 마지막 검사 {time}",
-  "integrity.appendOnlyNever": "append-only 보호 · 검사한 적 없음",
 
   "hooks.hint": "명령은 컨테이너 내부(sh -c)에서 실행됩니다. Pre는 백업 전에 실행되며(예: 캐시를 디스크로 내보내기, 인식된 데이터베이스는 자동으로 덤프됨) 실패 시 백업이 중단됩니다. Post는 컨테이너가 다시 가동된 후 실행되며 그 실패는 로그에만 기록됩니다.",
   "hooks.pre": "백업 전 명령",
@@ -948,14 +942,9 @@ const ko: Partial<Translations> = {
   "settings.dashTileRemoveOk": "플러그인이 제거되었습니다. 더 이상 Unraid 대시보드에 표시되지 않습니다.",
 
   // Restore-verification drills
-  "verify.now": "복원 가능 여부 검증",
   "verify.running": "검증 중…",
-  "verify.ok": "복원 가능 확인됨",
   "verify.failed": "검증 실패",
-  "verify.last": "마지막 검증 {time}",
-  "verify.never": "검증한 적 없음",
   "verify.subsetPct": "데이터 표본 (%)",
-  "verify.hint": "백업 데이터의 무작위 표본을 주기적으로 읽어 데이터가 온전하고 복원 가능한지 입증합니다.",
   "verify.shield": "검증됨",
 
   // Email (SMTP) notifications
@@ -1340,16 +1329,6 @@ const ko: Partial<Translations> = {
   "offsite.targets.retentionTitle": "보존 (0 = 모두 유지)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "훈련 유형:",
-  "drill.kindSubset": "무결성 검사",
-  "drill.kindDR": "실제 복원 (오프사이트)",
-  "drill.target": "훈련 대상 (컨테이너)",
-  "drill.targetVM": "훈련 대상 (가상 머신)",
-  "drill.targetMostRecent": "가장 최근 백업",
-  "drill.drNote": "실제 복원은 최신 오프사이트 스냅샷을 임시 샌드박스로 추출하여 검증한 뒤 정리합니다. 실제 데이터를 다운로드하므로 시간이 걸릴 수 있습니다.",
-  "drill.runDR": "실제 복원 실행",
-  "drill.runningDR": "복원 중…",
-  "drill.confirmDR": "이 작업은 복원 가능함을 입증하기 위해 최신 오프사이트 스냅샷을 임시 샌드박스로 실제 복원한 뒤 삭제합니다. 실제 데이터를 다운로드하므로 시간이 걸릴 수 있습니다. 계속하시겠습니까?",
   "drill.offsiteVerified": "오프사이트 검증됨",
 
   // Dashboard ransomware-protection card (v4)
@@ -1408,8 +1387,6 @@ const ko: Partial<Translations> = {
   "excludes.assistRemoveLine": "제외 항목 {line} 삭제",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "오프사이트 DR 복원",
-  "drill.checkLocal": "로컬 무결성 검사",
   "drill.failReasonPrefix": "이유:",
 
   // Off-site DR opt-out (#37)

@@ -809,51 +809,28 @@ const lv: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integritāte un uzturēšana",
-  "integrity.hint": "Pārbaudiet repozitorija struktūru (restic check), iztīriet novecojušas bloķēšanas, ko atstājis pārtraukts izpildījums, vai iztīriet, lai atgūtu vietu no izdzēstajām rezerves kopijām.",
   "integrity.verify": "Pārbaudīt",
   "integrity.checking": "Pārbauda…",
   "integrity.ok": "Vesels",
   "integrity.failed": "Pārbaude neizdevās",
-  "integrity.failedShort": "✗ Neizdevās",
   "integrity.unlock": "Atbloķēt",
   "integrity.prune": "Iztīrīt",
   "integrity.verifyHint": "Palaidiet restic check, lai pārbaudītu, vai struktūra un metadati ir neskarti.",
   "integrity.unlockHint": "Iztīriet novecojušas repozitorija bloķēšanas, ko atstājis avarējis vai pārtraukts izpildījums (novērš „repository is already locked”).",
   "integrity.unlockPartial": "Ne visas krātuves tika pilnībā atbloķētas: {list}",
   "integrity.pruneHint": "Piemēro jūsu saglabāšanas politiku un atgūst vietu (vietu atgūst tikai tad, ja politika nav iestatīta; var aizņemt laiku).",
-  "integrity.pruneConfirm": "Iztīrīšana tagad piemēro jūsu saglabāšanas politiku: noņem momentuzņēmumus ārpus jūsu saglabāšanas noteikumiem (last/daily/weekly/monthly/yearly) un atgūst vietu. Bez politikas tikai atgūst vietu. Turpināt?",
-  "integrity.appendOnly": "Tikai-pievienot pārbaude",
   "integrity.appendOnlyHint": "Pierāda, ka attālinātais repozitorijs joprojām atsakās dzēst (tikai-pievienot aizsardzība), tā pati pārbaude, ko veic attālinātā vedņa manipulācijas tests.",
-  "integrity.appendOnlyLast": "tikai-pievienot aizsardzība · Pēdējo reizi pārbaudīts {time}",
-  "integrity.appendOnlyNever": "tikai-pievienot aizsardzība · nekad nav pārbaudīts",
 
   // Restore-verification drills
-  "verify.now": "Pārbaudīt atjaunojamību",
   "verify.running": "Pārbauda…",
-  "verify.ok": "Atjaunojamība pārbaudīta",
   "verify.failed": "Pārbaude neizdevās",
-  "verify.last": "Pēdējo reizi pārbaudīts {time}",
-  "verify.never": "Nekad nav pārbaudīts",
   "verify.subsetPct": "Datu paraugs (%)",
-  "verify.hint": "Periodiski nolasa nejaušu rezerves kopēšanas datu paraugu, lai pierādītu, ka tie ir neskarti un atjaunojami.",
   "verify.shield": "pārbaudīts",
 
   // DR drill controls
-  "drill.kindLabel": "Pārbaudes veids:",
-  "drill.kindSubset": "Integritātes pārbaude",
-  "drill.kindDR": "Reāla atjaunošana (attālināta)",
-  "drill.target": "Pārbaudes mērķis (konteiners)",
-  "drill.targetVM": "Pārbaudes mērķis (VM)",
-  "drill.targetMostRecent": "Jaunākā rezerves kopija",
-  "drill.drNote": "Reāla atjaunošana izgūst jaunāko attālināto momentuzņēmumu pagaidu izolētā vidē, to pārbauda un pēc tam iztīra. Tā lejupielādē reālus datus un var aizņemt laiku.",
-  "drill.runDR": "Palaist reālu atjaunošanu",
-  "drill.runningDR": "Atjauno…",
-  "drill.confirmDR": "Tas veic jaunākā attālinātā momentuzņēmuma REĀLU atjaunošanu pagaidu izolētā vidē, lai pierādītu, ka to var atjaunot, un pēc tam to izdzēš. Tas lejupielādē reālus datus un var aizņemt laiku. Turpināt?",
   "drill.offsiteVerified": "attālinātā pārbaudīta",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "attālināta DR atjaunošana",
-  "drill.checkLocal": "vietēja integritātes pārbaude",
   "drill.failReasonPrefix": "iemesls:",
 
   // Off-site DR opt-out

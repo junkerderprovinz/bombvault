@@ -809,51 +809,28 @@ const ms: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integriti & penyelenggaraan",
-  "integrity.hint": "Sahkan struktur repositori (restic check), bersihkan kunci lapuk yang ditinggalkan oleh larian yang terganggu, atau prune untuk mendapatkan semula ruang daripada sandaran yang dipadamkan.",
   "integrity.verify": "Sahkan",
   "integrity.checking": "Menyemak…",
   "integrity.ok": "Sihat",
   "integrity.failed": "Pengesahan gagal",
-  "integrity.failedShort": "✗ Gagal",
   "integrity.unlock": "Buka kunci",
   "integrity.prune": "Prune",
   "integrity.verifyHint": "Jalankan restic check untuk mengesahkan struktur dan metadata utuh.",
   "integrity.unlockHint": "Bersihkan kunci repositori lapuk yang ditinggalkan oleh larian yang rosak atau terganggu (membetulkan 'repository is already locked').",
   "integrity.unlockPartial": "Bukan semua repositori dibuka sepenuhnya: {list}",
   "integrity.pruneHint": "Terapkan polisi pengekalan anda dan dapatkan semula ruang (hanya mendapatkan semula ruang jika tiada polisi ditetapkan; boleh mengambil masa).",
-  "integrity.pruneConfirm": "Prune kini menerapkan polisi pengekalan anda: mengalih keluar snapshot di luar peraturan simpan anda (last/daily/weekly/monthly/yearly) dan mendapatkan semula ruang. Tanpa polisi, hanya mendapatkan semula ruang. Teruskan?",
-  "integrity.appendOnly": "Semakan tambah-sahaja",
   "integrity.appendOnlyHint": "Membuktikan bahawa repositori luar tapak masih menolak pemadaman (perlindungan tambah-sahaja), semakan yang sama seperti ujian gangguan wizard luar tapak.",
-  "integrity.appendOnlyLast": "perlindungan tambah-sahaja · Terakhir disemak {time}",
-  "integrity.appendOnlyNever": "perlindungan tambah-sahaja · tidak pernah disemak",
 
   // Restore-verification drills
-  "verify.now": "Sahkan kebolehpulihan",
   "verify.running": "Mengesahkan…",
-  "verify.ok": "Kebolehpulihan disahkan",
   "verify.failed": "Pengesahan gagal",
-  "verify.last": "Terakhir disahkan {time}",
-  "verify.never": "Tidak pernah disahkan",
   "verify.subsetPct": "Sampel data (%)",
-  "verify.hint": "Secara berkala membaca sampel rawak data sandaran untuk membuktikan ia utuh dan boleh dipulihkan.",
   "verify.shield": "disahkan",
 
   // DR drill controls
-  "drill.kindLabel": "Jenis ujian:",
-  "drill.kindSubset": "Semakan integriti",
-  "drill.kindDR": "Pemulihan sebenar (luar tapak)",
-  "drill.target": "Sasaran ujian (bekas)",
-  "drill.targetVM": "Sasaran ujian (VM)",
-  "drill.targetMostRecent": "Sandaran terkini",
-  "drill.drNote": "Pemulihan sebenar mengekstrak snapshot luar tapak terkini ke dalam sandbox sementara, mengesahkannya, kemudian membersihkannya. Ia memuat turun data sebenar dan boleh mengambil masa.",
-  "drill.runDR": "Jalankan pemulihan sebenar",
-  "drill.runningDR": "Memulihkan…",
-  "drill.confirmDR": "Ini melakukan pemulihan SEBENAR snapshot luar tapak terkini ke dalam sandbox sementara untuk membuktikan ia boleh dipulihkan, kemudian memadamkannya. Ia memuat turun data sebenar dan boleh mengambil masa. Teruskan?",
   "drill.offsiteVerified": "luar tapak disahkan",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "pemulihan DR luar tapak",
-  "drill.checkLocal": "semakan integriti setempat",
   "drill.failReasonPrefix": "sebab:",
 
   // Off-site DR opt-out

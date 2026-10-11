@@ -655,23 +655,17 @@ const pt: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integridade e manutenção",
-  "integrity.hint": "Execute restic check para verificar que a estrutura e os metadados de um repositório estão intactos.",
   "integrity.verify": "Verificar",
   "integrity.checking": "A verificar…",
   "integrity.ok": "Saudável",
   "integrity.failed": "Verificação falhou",
-  "integrity.failedShort": "✗ Falhou",
   "integrity.unlock": "Desbloquear",
   "integrity.prune": "Podar",
   "integrity.verifyHint": "Execute restic check para verificar estrutura e metadados.",
   "integrity.unlockHint": "Remova bloqueios travados do repositório deixados por uma execução interrompida (corrige 'repository is already locked').",
   "integrity.unlockPartial": "Nem todos os repositórios foram totalmente desbloqueados: {list}",
   "integrity.pruneHint": "Aplicar sua política de retenção e liberar espaço (só libera espaço se nenhuma política estiver definida; pode demorar).",
-  "integrity.pruneConfirm": "A limpeza agora aplica sua política de retenção: remove snapshots além das suas regras (last/daily/weekly/monthly/yearly) e libera espaço. Sem política, só libera espaço. Continuar?",
-  "integrity.appendOnly": "Verificação append-only",
   "integrity.appendOnlyHint": "Prova que o repositório off-site continua a recusar eliminações (proteção append-only), a mesma verificação do teste de adulteração do assistente off-site.",
-  "integrity.appendOnlyLast": "proteção append-only · Última verificação {time}",
-  "integrity.appendOnlyNever": "proteção append-only · nunca verificada",
 
   // Pre/post-backup hooks
   "hooks.hint": "Os comandos são executados dentro do container (sh -c). Pre é executado antes do backup (p. ex. despejar uma cache para disco; as bases de dados reconhecidas são despejadas sozinhas). Uma falha aborta o backup. Post é executado quando o container está de novo ativo; a sua falha é apenas registada.",
@@ -964,14 +958,9 @@ const pt: Partial<Translations> = {
   "notify.smtpTls": "Encriptação",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Verificar restaurabilidade",
   "verify.running": "A verificar…",
-  "verify.ok": "Restaurabilidade verificada",
   "verify.failed": "Verificação falhou",
-  "verify.last": "Última verificação {time}",
-  "verify.never": "Nunca verificado",
   "verify.subsetPct": "Amostra de dados (%)",
-  "verify.hint": "Lê periodicamente uma amostra aleatória dos dados de backup para provar que estão intactos e restauráveis.",
   "verify.shield": "verificado",
 
   // Dashboard protection (RPO) status
@@ -1345,16 +1334,6 @@ const pt: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Retenção (0 = manter tudo)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Tipo de teste:",
-  "drill.kindSubset": "Verificação de integridade",
-  "drill.kindDR": "Restauro real (externo)",
-  "drill.target": "Alvo do teste (container)",
-  "drill.targetVM": "Alvo do teste (VM)",
-  "drill.targetMostRecent": "Backup mais recente",
-  "drill.drNote": "Um restauro real extrai o instantâneo externo mais recente para uma sandbox temporária, verifica-o e depois limpa tudo. Descarrega dados reais e pode demorar.",
-  "drill.runDR": "Executar restauro real",
-  "drill.runningDR": "A restaurar…",
-  "drill.confirmDR": "Isto executa um restauro REAL do instantâneo externo mais recente para uma sandbox temporária para provar que é recuperável e depois elimina-o. Descarrega dados reais e pode demorar. Continuar?",
   "drill.offsiteVerified": "externo verificado",
 
   // Dashboard ransomware-protection card (v4)
@@ -1417,8 +1396,6 @@ const pt: Partial<Translations> = {
   "excludes.assistRemoveLine": "Remover a exclusão {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "restauro DR externo",
-  "drill.checkLocal": "verificação de integridade local",
   "drill.failReasonPrefix": "motivo:",
 
   // Off-site DR opt-out (#37)

@@ -658,23 +658,17 @@ const es: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integridad y mantenimiento",
-  "integrity.hint": "Ejecuta restic check para verificar que la estructura y los metadatos de un repositorio están intactos.",
   "integrity.verify": "Verificar",
   "integrity.checking": "Comprobando…",
   "integrity.ok": "Saludable",
   "integrity.failed": "Comprobación fallida",
-  "integrity.failedShort": "✗ Fallido",
   "integrity.unlock": "Desbloquear",
   "integrity.prune": "Podar",
   "integrity.verifyHint": "Ejecuta restic check para verificar la estructura y los metadatos.",
   "integrity.unlockHint": "Elimina bloqueos obsoletos del repositorio dejados por una ejecución interrumpida (corrige 'repository is already locked').",
   "integrity.unlockPartial": "No se desbloquearon por completo todos los repositorios: {list}",
   "integrity.pruneHint": "Aplicar tu política de retención y recuperar espacio (solo recupera espacio si no hay política; puede tardar).",
-  "integrity.pruneConfirm": "La purga ahora aplica tu política de retención: elimina instantáneas más allá de tus reglas (last/daily/weekly/monthly/yearly) y recupera espacio. Sin política, solo recupera espacio. ¿Continuar?",
-  "integrity.appendOnly": "Comprobación append-only",
   "integrity.appendOnlyHint": "Demuestra que el repositorio remoto sigue rechazando borrados (protección append-only), la misma prueba de manipulación del asistente off-site.",
-  "integrity.appendOnlyLast": "protección append-only · Última comprobación {time}",
-  "integrity.appendOnlyNever": "protección append-only · nunca comprobada",
 
   // Pre/post-backup hooks
   "hooks.hint": "Los comandos se ejecutan dentro del contenedor (sh -c). Pre se ejecuta antes de la copia (p. ej. volcar una caché al disco; las bases de datos reconocidas se vuelcan solas). Un fallo aborta la copia. Post se ejecuta cuando el contenedor vuelve a estar activo; su fallo solo se registra.",
@@ -973,14 +967,9 @@ const es: Partial<Translations> = {
   "settings.dashTileRemoveOk": "Plugin eliminado. Ya no aparece en el panel de Unraid.",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Verificar restaurabilidad",
   "verify.running": "Verificando…",
-  "verify.ok": "Restaurabilidad verificada",
   "verify.failed": "Verificación fallida",
-  "verify.last": "Última verificación {time}",
-  "verify.never": "Nunca verificado",
   "verify.subsetPct": "Muestra de datos (%)",
-  "verify.hint": "Lee periódicamente una muestra aleatoria de los datos de copia para demostrar que están intactos y son restaurables.",
   "verify.shield": "verificado",
 
   // Dashboard protection (RPO) status
@@ -1355,16 +1344,6 @@ const es: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Retención (0 = conservar todo)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Tipo de simulacro:",
-  "drill.kindSubset": "Comprobación de integridad",
-  "drill.kindDR": "Restauración real (externo)",
-  "drill.target": "Objetivo del simulacro (contenedor)",
-  "drill.targetVM": "Objetivo del simulacro (VM)",
-  "drill.targetMostRecent": "Copia más reciente",
-  "drill.drNote": "Una restauración real extrae la instantánea externa más reciente en un sandbox temporal, la verifica y luego limpia. Descarga datos reales y puede tardar un rato.",
-  "drill.runDR": "Ejecutar restauración real",
-  "drill.runningDR": "Restaurando…",
-  "drill.confirmDR": "Esto realiza una restauración REAL de la instantánea externa más reciente en un sandbox temporal para demostrar que es recuperable, y luego la elimina. Descarga datos reales y puede tardar un rato. ¿Continuar?",
   "drill.offsiteVerified": "externo verificado",
 
   // Dashboard ransomware-protection card (v4)
@@ -1415,8 +1394,6 @@ const es: Partial<Translations> = {
   "excludes.assistRemoveLine": "Quitar la exclusión {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "restauración DR externa",
-  "drill.checkLocal": "comprobación de integridad local",
   "drill.failReasonPrefix": "motivo:",
 
   // Off-site DR opt-out (#37)

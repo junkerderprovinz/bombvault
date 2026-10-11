@@ -658,23 +658,17 @@ const fr: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Intégrité et maintenance",
-  "integrity.hint": "Lancez restic check pour vérifier que la structure et les métadonnées d'un dépôt sont intactes.",
   "integrity.verify": "Vérifier",
   "integrity.checking": "Vérification…",
   "integrity.ok": "Sain",
   "integrity.failed": "Vérification échouée",
-  "integrity.failedShort": "✗ Échoué",
   "integrity.unlock": "Déverrouiller",
   "integrity.prune": "Élaguer",
   "integrity.verifyHint": "Lancer restic check pour vérifier la structure et les métadonnées.",
   "integrity.unlockHint": "Supprimer les verrous bloqués du dépôt laissés par une exécution interrompue (corrige 'repository is already locked').",
   "integrity.unlockPartial": "Tous les dépôts n'ont pas été entièrement déverrouillés : {list}",
   "integrity.pruneHint": "Appliquer la politique de rétention et récupérer de l'espace (récupère seulement l'espace si aucune politique n'est définie ; peut prendre du temps).",
-  "integrity.pruneConfirm": "La purge applique maintenant votre politique de rétention : elle supprime les instantanés au-delà de vos règles (last/daily/weekly/monthly/yearly) et récupère de l'espace. Sans politique, elle ne fait que récupérer de l'espace. Continuer ?",
-  "integrity.appendOnly": "Vérification append-only",
   "integrity.appendOnlyHint": "Prouve que le dépôt hors site refuse toujours les suppressions (protection append-only), la même vérification que le test de sabotage de l'assistant hors site.",
-  "integrity.appendOnlyLast": "protection append-only · Dernière vérification {time}",
-  "integrity.appendOnlyNever": "protection append-only · jamais vérifiée",
 
   // Pre/post-backup hooks
   "hooks.hint": "Les commandes s'exécutent dans le conteneur (sh -c). Pre s'exécute avant la sauvegarde (p. ex. vider un cache sur le disque ; les bases reconnues sont vidangées toutes seules) : un échec annule la sauvegarde. Post s'exécute une fois le conteneur de nouveau actif ; son échec est seulement journalisé.",
@@ -967,14 +961,9 @@ const fr: Partial<Translations> = {
   "notify.smtpTls": "Chiffrement",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Vérifier la restaurabilité",
   "verify.running": "Vérification…",
-  "verify.ok": "Restaurabilité vérifiée",
   "verify.failed": "Échec de la vérification",
-  "verify.last": "Dernière vérification {time}",
-  "verify.never": "Jamais vérifié",
   "verify.subsetPct": "Échantillon de données (%)",
-  "verify.hint": "Lit régulièrement un échantillon aléatoire des données de sauvegarde pour prouver qu'elles sont intactes et restaurables.",
   "verify.shield": "vérifié",
 
   // Dashboard protection (RPO) status
@@ -1349,16 +1338,6 @@ const fr: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Rétention (0 = tout conserver)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Type d'exercice :",
-  "drill.kindSubset": "Vérification d'intégrité",
-  "drill.kindDR": "Restauration réelle (hors site)",
-  "drill.target": "Cible de l'exercice (conteneur)",
-  "drill.targetVM": "Cible de l'exercice (VM)",
-  "drill.targetMostRecent": "Sauvegarde la plus récente",
-  "drill.drNote": "Une restauration réelle extrait l'instantané hors site le plus récent dans une sandbox temporaire, le vérifie, puis nettoie. Elle télécharge de vraies données et peut prendre un certain temps.",
-  "drill.runDR": "Lancer la restauration réelle",
-  "drill.runningDR": "Restauration…",
-  "drill.confirmDR": "Ceci effectue une restauration RÉELLE de l'instantané hors site le plus récent dans une sandbox temporaire pour prouver qu'il est récupérable, puis le supprime. Elle télécharge de vraies données et peut prendre un certain temps. Continuer ?",
   "drill.offsiteVerified": "vérifié hors site",
 
   // Dashboard ransomware-protection card (v4)
@@ -1417,8 +1396,6 @@ const fr: Partial<Translations> = {
   "excludes.assistRemoveLine": "Retirer l'exclusion {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "restauration DR hors site",
-  "drill.checkLocal": "vérification d'intégrité locale",
   "drill.failReasonPrefix": "raison :",
 
   // Off-site DR opt-out (#37)

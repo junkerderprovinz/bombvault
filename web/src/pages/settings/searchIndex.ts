@@ -364,14 +364,9 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
 
   integrity: [
     {
-      title: "integrity.title",
-      hint: "integrity.hint",
-      rows: [
-        { key: "source.label" },
-        { key: "drill.kindLabel" },
-        { key: "drill.target", hint: "drill.drNote" },
-        { key: "drill.targetVM" },
-      ],
+      title: "integrity.checkTitle",
+      hint: "integrity.checkHint",
+      rows: [],
     },
     {
       title: "verify.autoChecks",
@@ -379,6 +374,8 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "verify.trialRestore", hint: "verify.trialRestoreHint" },
         { key: "settings.offsiteDrills", hint: "settings.offsiteDrillsHelp" },
         { key: "settings.startTest", hint: "settings.startTestHelp" },
+        { key: "verify.testTarget", hint: "verify.testTargetHint" },
+        { key: "verify.testTargetVM" },
         { key: "verify.subsetPct", hint: "verify.subsetPctHint" },
         { key: "verify.tamper", hint: "verify.tamperHint" },
       ],

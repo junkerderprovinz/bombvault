@@ -809,51 +809,28 @@ const lt: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Vientisumas ir priežiūra",
-  "integrity.hint": "Patikrinkite saugyklos struktūrą (restic check), išvalykite pasenusius užraktus, likusius po nutraukto vykdymo, arba išvalykite, kad atgautumėte vietą iš ištrintų atsarginių kopijų.",
   "integrity.verify": "Patikrinti",
   "integrity.checking": "Tikrinama…",
   "integrity.ok": "Sveika",
   "integrity.failed": "Patikra nepavyko",
-  "integrity.failedShort": "✗ Nepavyko",
   "integrity.unlock": "Atrakinti",
   "integrity.prune": "Valyti",
   "integrity.verifyHint": "Paleiskite restic check, kad patikrintumėte, ar struktūra ir metaduomenys yra nepažeisti.",
   "integrity.unlockHint": "Išvalykite pasenusius saugyklos užraktus, likusius po nulūžusio ar nutraukto vykdymo (išsprendžia „repository is already locked“).",
   "integrity.unlockPartial": "Ne visos saugyklos buvo visiškai atrakintos: {list}",
   "integrity.pruneHint": "Pritaiko jūsų saugojimo politiką ir atgauna vietą (vietą atgauna tik jei politika nenustatyta; gali užtrukti).",
-  "integrity.pruneConfirm": "Valymas dabar pritaiko jūsų saugojimo politiką: pašalina momentines kopijas, viršijančias jūsų saugojimo taisykles (last/daily/weekly/monthly/yearly), ir atgauna vietą. Be politikos, tik atgaunama vieta. Tęsti?",
-  "integrity.appendOnly": "Tik-pridėjimo patikra",
   "integrity.appendOnlyHint": "Įrodo, kad nuotolinė saugykla vis dar atmeta trynimus (tik-pridėjimo apsauga), ta pati patikra kaip ir nuotolinio vedlio klastojimo testas.",
-  "integrity.appendOnlyLast": "tik-pridėjimo apsauga · Paskutinį kartą patikrinta {time}",
-  "integrity.appendOnlyNever": "tik-pridėjimo apsauga · niekada netikrinta",
 
   // Restore-verification drills
-  "verify.now": "Patikrinti atkuriamumą",
   "verify.running": "Tikrinama…",
-  "verify.ok": "Atkuriamumas patikrintas",
   "verify.failed": "Patikra nepavyko",
-  "verify.last": "Paskutinį kartą patikrinta {time}",
-  "verify.never": "Niekada netikrinta",
   "verify.subsetPct": "Duomenų imtis (%)",
-  "verify.hint": "Periodiškai nuskaito atsitiktinę atsarginio kopijavimo duomenų imtį, kad įrodytų, jog jie yra nepažeisti ir atkuriami.",
   "verify.shield": "patikrinta",
 
   // DR drill controls
-  "drill.kindLabel": "Patikros tipas:",
-  "drill.kindSubset": "Vientisumo patikra",
-  "drill.kindDR": "Tikras atkūrimas (nuotolinis)",
-  "drill.target": "Patikros taikinys (konteineris)",
-  "drill.targetVM": "Patikros taikinys (VM)",
-  "drill.targetMostRecent": "Naujausia atsarginė kopija",
-  "drill.drNote": "Tikras atkūrimas ištraukia naujausią nuotolinę momentinę kopiją į laikiną izoliuotą aplinką, ją patikrina, o tada išvalo. Jis atsisiunčia realius duomenis ir gali užtrukti.",
-  "drill.runDR": "Vykdyti tikrą atkūrimą",
-  "drill.runningDR": "Atkuriama…",
-  "drill.confirmDR": "Tai atlieka TIKRĄ naujausios nuotolinės momentinės kopijos atkūrimą laikinoje izoliuotoje aplinkoje, kad įrodytų, jog ją galima atkurti, o tada ją ištrina. Tai atsisiunčia realius duomenis ir gali užtrukti. Tęsti?",
   "drill.offsiteVerified": "nuotolinė saugykla patikrinta",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "nuotolinis DR atkūrimas",
-  "drill.checkLocal": "vietinė vientisumo patikra",
   "drill.failReasonPrefix": "priežastis:",
 
   // Off-site DR opt-out

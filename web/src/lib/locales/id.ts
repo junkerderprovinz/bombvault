@@ -809,51 +809,28 @@ const id: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integritas & pemeliharaan",
-  "integrity.hint": "Verifikasi struktur repositori (restic check), bersihkan kunci basi yang ditinggalkan oleh eksekusi yang terputus, atau prune untuk mendapatkan kembali ruang dari cadangan yang dihapus.",
   "integrity.verify": "Verifikasi",
   "integrity.checking": "Memeriksa…",
   "integrity.ok": "Sehat",
   "integrity.failed": "Pemeriksaan gagal",
-  "integrity.failedShort": "✗ Gagal",
   "integrity.unlock": "Buka kunci",
   "integrity.prune": "Prune",
   "integrity.verifyHint": "Jalankan restic check untuk memverifikasi struktur dan metadata utuh.",
   "integrity.unlockHint": "Bersihkan kunci repositori basi yang ditinggalkan oleh eksekusi yang crash atau terputus (memperbaiki 'repository is already locked').",
   "integrity.unlockPartial": "Tidak semua repositori dibuka sepenuhnya: {list}",
   "integrity.pruneHint": "Terapkan kebijakan retensi Anda dan dapatkan kembali ruang (hanya mendapatkan kembali ruang jika tidak ada kebijakan yang diatur; bisa memakan waktu).",
-  "integrity.pruneConfirm": "Prune sekarang menerapkan kebijakan retensi Anda. Menghapus snapshot di luar aturan simpan Anda (last/daily/weekly/monthly/yearly) dan mendapatkan kembali ruang. Tanpa kebijakan, hanya mendapatkan kembali ruang. Lanjutkan?",
-  "integrity.appendOnly": "Pemeriksaan append-only",
   "integrity.appendOnlyHint": "Membuktikan bahwa repositori off-site masih menolak penghapusan (perlindungan append-only), pemeriksaan yang sama dengan uji sabotase wizard off-site.",
-  "integrity.appendOnlyLast": "perlindungan append-only · Terakhir diperiksa {time}",
-  "integrity.appendOnlyNever": "perlindungan append-only · belum pernah diperiksa",
 
   // Restore-verification drills
-  "verify.now": "Verifikasi kemampuan pemulihan",
   "verify.running": "Memverifikasi…",
-  "verify.ok": "Kemampuan pemulihan terverifikasi",
   "verify.failed": "Verifikasi gagal",
-  "verify.last": "Terakhir diverifikasi {time}",
-  "verify.never": "Belum pernah diverifikasi",
   "verify.subsetPct": "Sampel data (%)",
-  "verify.hint": "Secara berkala membaca sampel acak data cadangan untuk membuktikan bahwa data itu utuh dan dapat dipulihkan.",
   "verify.shield": "terverifikasi",
 
   // DR drill controls
-  "drill.kindLabel": "Jenis uji:",
-  "drill.kindSubset": "Pemeriksaan integritas",
-  "drill.kindDR": "Pemulihan sungguhan (off-site)",
-  "drill.target": "Target uji (container)",
-  "drill.targetVM": "Target uji (VM)",
-  "drill.targetMostRecent": "Cadangan terbaru",
-  "drill.drNote": "Pemulihan sungguhan mengekstrak snapshot off-site terbaru ke sandbox sementara, memverifikasinya, lalu membersihkannya. Ini mengunduh data sungguhan dan bisa memakan waktu.",
-  "drill.runDR": "Jalankan pemulihan sungguhan",
-  "drill.runningDR": "Memulihkan…",
-  "drill.confirmDR": "Ini melakukan pemulihan SUNGGUHAN dari snapshot off-site terbaru ke sandbox sementara untuk membuktikan bahwa data dapat dipulihkan, lalu menghapusnya. Ini mengunduh data sungguhan dan bisa memakan waktu. Lanjutkan?",
   "drill.offsiteVerified": "off-site terverifikasi",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "pemulihan DR off-site",
-  "drill.checkLocal": "pemeriksaan integritas lokal",
   "drill.failReasonPrefix": "alasan:",
 
   // Off-site DR opt-out

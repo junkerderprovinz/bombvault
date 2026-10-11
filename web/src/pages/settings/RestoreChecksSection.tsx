@@ -1,11 +1,14 @@
-import type { Settings } from "../../lib/api";
+import type { Container, Settings, VM } from "../../lib/api";
 import { Card, ToggleRow } from "../settings/shared";
 import { Note } from "../../components/entry/Note";
 import { NumberField } from "../../components/NumberField";
 import { PlanButton } from "../../components/PlanButton";
+import { SelectField } from "../../components/SelectField";
 import { SettingRow } from "../../components/storage/rows";
 import { useT } from "../../lib/i18n";
 import { PackGrid, SandboxPicture } from "./pictures";
+
+const TARGET_FIELD = "rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus";
 
 type DrillKey = "drillsEnabled" | "offsiteDrillsEnabled" | "startTestEnabled";
 
@@ -18,6 +21,8 @@ export function RestoreChecksSection({
   settings,
   update,
   tamperActive,
+  containers,
+  vms,
   busy,
   shake,
   pulse,
@@ -29,6 +34,9 @@ export function RestoreChecksSection({
   /** Whether an off-site location refuses deletes, without which the test of
    *  the delete protection never runs. */
   tamperActive: boolean;
+  /** What a trial restore can start, to choose its test target from. */
+  containers: Container[];
+  vms: VM[];
   /** Save feedback for the switches, which save themselves. */
   busy?: Partial<Record<DrillKey, boolean>>;
   shake?: Partial<Record<DrillKey, number>>;
@@ -93,6 +101,37 @@ export function RestoreChecksSection({
               <PackGrid percent={settings.drillsSubsetPct} />
               <SandboxPicture startTest={settings.startTestEnabled} />
             </div>
+            {settings.containersEnabled && (
+              <SettingRow label={t("verify.testTarget")} hint={t("verify.testTargetHint")}>
+                <SelectField
+                  value={settings.drDrillTarget}
+                  onChange={(v) => update({ drDrillTarget: v })}
+                  label={t("verify.testTarget")}
+                  options={[
+                    { value: "", label: t("verify.newestBackup") },
+                    ...containers.map((c) => ({ value: c.name, label: c.name })),
+                  ]}
+                  className={TARGET_FIELD}
+                />
+              </SettingRow>
+            )}
+            {settings.vmsEnabled && (
+              <SettingRow label={t("verify.testTargetVM")}>
+                <SelectField
+                  value={settings.drDrillTargetVm}
+                  onChange={(v) => update({ drDrillTargetVm: v })}
+                  label={t("verify.testTargetVM")}
+                  options={[
+                    { value: "", label: t("verify.newestBackup") },
+                    // The value is the raw libvirt name: the server matches it
+                    // against the vm: backup tag, never the friendly name a
+                    // TrueNAS VM shows here.
+                    ...vms.map((vm) => ({ value: vm.libvirtName, label: vm.name })),
+                  ]}
+                  className={TARGET_FIELD}
+                />
+              </SettingRow>
+            )}
           </div>
         )}
         <SettingRow label={t("verify.tamper")} hint={t("verify.tamperHint")}>

@@ -809,51 +809,28 @@ const ca: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integritat i manteniment",
-  "integrity.hint": "Verifica l'estructura d'un repositori (restic check), neteja bloquejos obsolets deixats per una execució interrompuda, o neteja per recuperar espai de còpies eliminades.",
   "integrity.verify": "Verifica",
   "integrity.checking": "Verificant…",
   "integrity.ok": "Sa",
   "integrity.failed": "Verificació fallida",
-  "integrity.failedShort": "✗ Fallida",
   "integrity.unlock": "Desbloqueja",
   "integrity.prune": "Neteja",
   "integrity.verifyHint": "Executa restic check per verificar que l'estructura i les metadades estan intactes.",
   "integrity.unlockHint": "Neteja bloquejos obsolets del repositori deixats per una execució interrompuda o fallida (soluciona «repository is already locked»).",
   "integrity.unlockPartial": "No s'han desbloquejat completament tots els repositoris: {list}",
   "integrity.pruneHint": "Aplica la teva política de retenció i recupera espai (només recupera espai sense política; pot trigar).",
-  "integrity.pruneConfirm": "Neteja ara aplica la teva retenció: elimina instantanis més enllà de les teves regles de conservació (last/daily/weekly/monthly/yearly) i recupera espai. Sense política, només recupera espai. Vols continuar?",
-  "integrity.appendOnly": "Comprovació de només-afegir",
   "integrity.appendOnlyHint": "Demostra que el repositori extern encara rebutja eliminacions (protecció de només-afegir), la mateixa comprovació que la prova de manipulació de l'assistent extern.",
-  "integrity.appendOnlyLast": "protecció de només-afegir · Última comprovació {time}",
-  "integrity.appendOnlyNever": "protecció de només-afegir · mai comprovada",
 
   // Restore-verification drills
-  "verify.now": "Verifica la restaurabilitat",
   "verify.running": "Verificant…",
-  "verify.ok": "Restaurabilitat verificada",
   "verify.failed": "Verificació fallida",
-  "verify.last": "Última verificació {time}",
-  "verify.never": "Mai verificat",
   "verify.subsetPct": "Mostra de dades (%)",
-  "verify.hint": "Llegeix periòdicament una mostra aleatòria de dades de còpia per demostrar que estan intactes i són restaurables.",
   "verify.shield": "verificat",
 
   // DR drill controls
-  "drill.kindLabel": "Tipus de prova:",
-  "drill.kindSubset": "Comprovació d'integritat",
-  "drill.kindDR": "Restauració real (extern)",
-  "drill.target": "Objectiu de la prova (contenidor)",
-  "drill.targetVM": "Objectiu de la prova (MV)",
-  "drill.targetMostRecent": "Còpia més recent",
-  "drill.drNote": "Una restauració real extreu l'instantani extern més recent a un entorn temporal aïllat, el verifica i després el neteja. Descarrega dades reals i pot trigar.",
-  "drill.runDR": "Executa restauració real",
-  "drill.runningDR": "Restaurant…",
-  "drill.confirmDR": "Això fa una restauració REAL de l'instantani extern més recent a un entorn temporal aïllat per demostrar que és recuperable, i després l'elimina. Descarrega dades reals i pot trigar. Vols continuar?",
   "drill.offsiteVerified": "extern verificat",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "restauració DR externa",
-  "drill.checkLocal": "comprovació local d'integritat",
   "drill.failReasonPrefix": "motiu:",
 
   // Off-site DR opt-out

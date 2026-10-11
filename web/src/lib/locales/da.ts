@@ -658,23 +658,17 @@ const da: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integritet og vedligeholdelse",
-  "integrity.hint": "Kør restic check for at verificere, at et arkivs struktur og metadata er intakte.",
   "integrity.verify": "Verificer",
   "integrity.checking": "Tjekker…",
   "integrity.ok": "Sund",
   "integrity.failed": "Tjek mislykkedes",
-  "integrity.failedShort": "✗ Mislykkedes",
   "integrity.unlock": "Lås op",
   "integrity.prune": "Beskær",
   "integrity.verifyHint": "Kør restic check for at verificere struktur og metadata.",
   "integrity.unlockHint": "Ryd fastlåste repository-låse fra et nedbrudt/afbrudt kørsel (retter 'repository is already locked').",
   "integrity.unlockPartial": "Ikke alle arkiver blev låst helt op: {list}",
   "integrity.pruneHint": "Anvend din opbevaringspolitik og frigør plads (frigør kun plads hvis ingen politik er sat; kan tage et stykke tid).",
-  "integrity.pruneConfirm": "Oprydning anvender nu din opbevaringspolitik: den fjerner snapshots ud over dine regler (last/daily/weekly/monthly/yearly) og frigør plads. Uden politik frigør den kun plads. Fortsæt?",
-  "integrity.appendOnly": "Append-only-tjek",
   "integrity.appendOnlyHint": "Beviser at off-site-repositoriet stadig afviser sletninger (append-only-beskyttelse), samme tjek som tamper-testen i off-site-guiden.",
-  "integrity.appendOnlyLast": "append-only-beskyttelse · Sidst tjekket {time}",
-  "integrity.appendOnlyNever": "append-only-beskyttelse · aldrig tjekket",
 
   // Pre/post-backup hooks
   "hooks.hint": "Kommandoer kører inde i containeren (sh -c). Pre kører før sikkerhedskopieringen (f.eks. skriv en cache til disk; genkendte databaser dumpes af sig selv). En fejl afbryder sikkerhedskopieringen. Post kører, når containeren er oppe igen; dens fejl logges blot.",
@@ -975,14 +969,9 @@ const da: Partial<Translations> = {
   "notify.smtpTls": "Kryptering",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Verificer gendannelighed",
   "verify.running": "Verificerer…",
-  "verify.ok": "Verificeret gendannelig",
   "verify.failed": "Verificering mislykkedes",
-  "verify.last": "Sidst verificeret {time}",
-  "verify.never": "Aldrig verificeret",
   "verify.subsetPct": "Datastikprøve (%)",
-  "verify.hint": "Læser jævnligt en tilfældig stikprøve af sikkerhedskopidataene for at bevise, at de er intakte og kan gendannes.",
   "verify.shield": "verificeret",
 
   // Dashboard protection (RPO) status
@@ -1357,16 +1346,6 @@ const da: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Opbevaring (0 = behold alt)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Testtype:",
-  "drill.kindSubset": "Integritetstjek",
-  "drill.kindDR": "Ægte gendannelse (off-site)",
-  "drill.target": "Testmål (container)",
-  "drill.targetVM": "Testmål (VM)",
-  "drill.targetMostRecent": "Nyeste sikkerhedskopi",
-  "drill.drNote": "En ægte gendannelse pakker det nyeste off-site-snapshot ud i en midlertidig sandbox, verificerer det og rydder derefter op. Den henter rigtige data og kan tage et stykke tid.",
-  "drill.runDR": "Kør ægte gendannelse",
-  "drill.runningDR": "Gendanner…",
-  "drill.confirmDR": "Dette udfører en ÆGTE gendannelse af det nyeste off-site-snapshot til en midlertidig sandbox for at bevise, at det kan gendannes, og sletter det derefter. Den henter rigtige data og kan tage et stykke tid. Fortsæt?",
   "drill.offsiteVerified": "off-site verificeret",
 
   // Dashboard ransomware-protection card (v4)
@@ -1417,8 +1396,6 @@ const da: Partial<Translations> = {
   "excludes.assistRemoveLine": "Fjern udelukkelsen {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "off-site DR-gendannelse",
-  "drill.checkLocal": "lokalt integritetstjek",
   "drill.failReasonPrefix": "årsag:",
 
   // Off-site DR opt-out (#37)

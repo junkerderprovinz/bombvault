@@ -652,23 +652,17 @@ const pl: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integralność i konserwacja",
-  "integrity.hint": "Uruchom restic check, aby zweryfikować, że struktura i metadane repozytorium są nienaruszone.",
   "integrity.verify": "Zweryfikuj",
   "integrity.checking": "Sprawdzanie…",
   "integrity.ok": "Sprawne",
   "integrity.failed": "Weryfikacja nieudana",
-  "integrity.failedShort": "✗ Nieudane",
   "integrity.unlock": "Odblokuj",
   "integrity.prune": "Przytnij",
   "integrity.verifyHint": "Uruchom restic check, aby zweryfikować strukturę i metadane.",
   "integrity.unlockHint": "Usuń zablokowane blokady repozytorium pozostałe po przerwanym uruchomieniu (naprawia 'repository is already locked').",
   "integrity.unlockPartial": "Nie każde repozytorium zostało w pełni odblokowane: {list}",
   "integrity.pruneHint": "Zastosuj politykę retencji i zwolnij miejsce (bez polityki tylko zwalnia miejsce; może chwilę potrwać).",
-  "integrity.pruneConfirm": "Czyszczenie stosuje teraz politykę retencji. Usuwa migawki poza Twoimi regułami (last/daily/weekly/monthly/yearly) i zwalnia miejsce. Bez polityki tylko zwalnia miejsce. Kontynuować?",
-  "integrity.appendOnly": "Kontrola append-only",
   "integrity.appendOnlyHint": "Dowodzi, że zdalne repozytorium nadal odrzuca usunięcia (ochrona append-only), ta sama kontrola co tamper test w kreatorze off-site.",
-  "integrity.appendOnlyLast": "ochrona append-only · Ostatnia kontrola {time}",
-  "integrity.appendOnlyNever": "ochrona append-only · nigdy nie sprawdzano",
 
   // Backup hooks
   "hooks.hint": "Polecenia uruchamiane wewnątrz kontenera (sh -c). Pre działa przed kopią (np. zrzucenie pamięci podręcznej na dysk; rozpoznane bazy danych zrzucają się same). Błąd przerywa kopię. Post działa po przywróceniu kontenera; jego błąd jest tylko zapisywany w logach.",
@@ -961,14 +955,9 @@ const pl: Partial<Translations> = {
   "notify.smtpTls": "Szyfrowanie",
 
   // Restore-verification drills
-  "verify.now": "Zweryfikuj możliwość przywrócenia",
   "verify.running": "Weryfikowanie…",
-  "verify.ok": "Zweryfikowano możliwość przywrócenia",
   "verify.failed": "Weryfikacja nieudana",
-  "verify.last": "Ostatnio zweryfikowano {time}",
-  "verify.never": "Nigdy nie weryfikowano",
   "verify.subsetPct": "Próbka danych (%)",
-  "verify.hint": "Okresowo odczytuje losową próbkę danych kopii zapasowej, aby potwierdzić, że są nienaruszone i możliwe do przywrócenia.",
   "verify.shield": "zweryfikowano",
 
   // Dashboard protection (RPO) status
@@ -1342,16 +1331,6 @@ const pl: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Przechowywanie (0 = zachowaj wszystko)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Typ próby:",
-  "drill.kindSubset": "Sprawdzenie integralności",
-  "drill.kindDR": "Rzeczywiste przywracanie (poza siedzibą)",
-  "drill.target": "Cel próby (kontener)",
-  "drill.targetVM": "Cel próby (maszyna wirtualna)",
-  "drill.targetMostRecent": "Najnowsza kopia zapasowa",
-  "drill.drNote": "Rzeczywiste przywracanie wypakowuje najnowszą migawkę poza siedzibą do tymczasowego sandboxa, weryfikuje ją, a następnie sprząta. Pobiera prawdziwe dane i może chwilę potrwać.",
-  "drill.runDR": "Uruchom rzeczywiste przywracanie",
-  "drill.runningDR": "Przywracanie…",
-  "drill.confirmDR": "To wykonuje RZECZYWISTE przywracanie najnowszej migawki poza siedzibą do tymczasowego sandboxa, aby udowodnić, że da się ją odzyskać, a następnie ją usuwa. Pobiera prawdziwe dane i może chwilę potrwać. Kontynuować?",
   "drill.offsiteVerified": "zweryfikowano poza siedzibą",
 
   // Dashboard ransomware-protection card (v4)
@@ -1414,8 +1393,6 @@ const pl: Partial<Translations> = {
   "excludes.assistRemoveLine": "Usuń wykluczenie {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "przywracanie DR poza siedzibą",
-  "drill.checkLocal": "lokalne sprawdzenie integralności",
   "drill.failReasonPrefix": "powód:",
 
   // Off-site DR opt-out (#37)

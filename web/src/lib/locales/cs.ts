@@ -656,23 +656,17 @@ const cs: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integrita a údržba",
-  "integrity.hint": "Spusťte restic check k ověření, že struktura a metadata repozitáře jsou neporušené.",
   "integrity.verify": "Ověřit",
   "integrity.checking": "Kontroluji…",
   "integrity.ok": "V pořádku",
   "integrity.failed": "Kontrola selhala",
-  "integrity.failedShort": "✗ Selhalo",
   "integrity.unlock": "Odemknout",
   "integrity.prune": "Vyčistit",
   "integrity.verifyHint": "Spustit restic check k ověření struktury a metadat.",
   "integrity.unlockHint": "Odstranit zaseklé zámky repozitáře po havarovaném/přerušeném běhu (řeší 'repository is already locked').",
   "integrity.unlockPartial": "Ne každý repozitář byl plně odemčen: {list}",
   "integrity.pruneHint": "Použít zásady uchovávání a uvolnit místo (bez zásad pouze uvolní místo; může chvíli trvat).",
-  "integrity.pruneConfirm": "Úklid nyní použije vaše zásady uchovávání: odebere snímky nad rámec vašich pravidel (last/daily/weekly/monthly/yearly) a uvolní místo. Bez zásad pouze uvolní místo. Pokračovat?",
-  "integrity.appendOnly": "Kontrola append-only",
   "integrity.appendOnlyHint": "Prokáže, že off-site repozitář stále odmítá mazání (ochrana append-only), stejná kontrola jako tamper test v průvodci off-site.",
-  "integrity.appendOnlyLast": "ochrana append-only · Naposledy zkontrolováno {time}",
-  "integrity.appendOnlyNever": "ochrana append-only · zatím nekontrolováno",
 
   // Backup hooks
   "hooks.hint": "Příkazy běží uvnitř kontejneru (sh -c). Pre běží před zálohou (např. vyprázdnění cache na disk; rozpoznané databáze se dumpují samy). Selhání zruší zálohu. Post běží po opětovném spuštění kontejneru; jeho selhání se pouze zaznamená.",
@@ -973,14 +967,9 @@ const cs: Partial<Translations> = {
   "notify.smtpTls": "Šifrování",
 
   // Restore-verification drills
-  "verify.now": "Ověřit obnovitelnost",
   "verify.running": "Ověřuji…",
-  "verify.ok": "Ověřeno jako obnovitelné",
   "verify.failed": "Ověření selhalo",
-  "verify.last": "Naposledy ověřeno {time}",
-  "verify.never": "Nikdy neověřeno",
   "verify.subsetPct": "Vzorek dat (%)",
-  "verify.hint": "Pravidelně čte náhodný vzorek dat zálohy, aby ověřil, že jsou neporušená a obnovitelná.",
   "verify.shield": "ověřeno",
 
   // Dashboard protection (RPO) status
@@ -1355,16 +1344,6 @@ const cs: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Uchování (0 = ponechat vše)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Typ cvičení:",
-  "drill.kindSubset": "Kontrola integrity",
-  "drill.kindDR": "Skutečná obnova (mimo lokalitu)",
-  "drill.target": "Cíl cvičení (kontejner)",
-  "drill.targetVM": "Cíl cvičení (VM)",
-  "drill.targetMostRecent": "Nejnovější záloha",
-  "drill.drNote": "Skutečná obnova rozbalí nejnovější snímek mimo lokalitu do dočasného sandboxu, ověří jej a poté uklidí. Stahují se přitom skutečná data, což může chvíli trvat.",
-  "drill.runDR": "Spustit skutečnou obnovu",
-  "drill.runningDR": "Obnovuji…",
-  "drill.confirmDR": "Provede se SKUTEČNÁ obnova nejnovějšího snímku mimo lokalitu do dočasného sandboxu, aby se prokázala jeho obnovitelnost, a poté se smaže. Stahují se přitom skutečná data, což může chvíli trvat. Pokračovat?",
   "drill.offsiteVerified": "ověřeno mimo lokalitu",
 
   // Dashboard ransomware-protection card (v4)
@@ -1415,8 +1394,6 @@ const cs: Partial<Translations> = {
   "excludes.assistRemoveLine": "Odebrat vyloučení {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "obnova DR mimo lokalitu",
-  "drill.checkLocal": "místní kontrola integrity",
   "drill.failReasonPrefix": "důvod:",
 
   // Off-site DR opt-out (#37)

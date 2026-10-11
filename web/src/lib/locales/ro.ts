@@ -655,23 +655,17 @@ const ro: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integritate și întreținere",
-  "integrity.hint": "Rulați restic check pentru a verifica dacă structura și metadatele unui depozit sunt intacte.",
   "integrity.verify": "Verifică",
   "integrity.checking": "Verificare…",
   "integrity.ok": "Sănătos",
   "integrity.failed": "Verificare eșuată",
-  "integrity.failedShort": "✗ Eșuat",
   "integrity.unlock": "Deblochează",
   "integrity.prune": "Curăță",
   "integrity.verifyHint": "Rulează restic check pentru a verifica structura și metadatele.",
   "integrity.unlockHint": "Elimină blocajele rămase ale depozitului după o rulare întreruptă (rezolvă 'repository is already locked').",
   "integrity.unlockPartial": "Nu toate depozitele au fost deblocate complet: {list}",
   "integrity.pruneHint": "Aplică politica de retenție și recuperează spațiu (fără politică doar recuperează spațiu; poate dura).",
-  "integrity.pruneConfirm": "Curățarea aplică acum politica ta de retenție. Elimină instantaneele dincolo de regulile tale (last/daily/weekly/monthly/yearly) și recuperează spațiu. Fără politică doar recuperează spațiu. Continui?",
-  "integrity.appendOnly": "Verificare append-only",
   "integrity.appendOnlyHint": "Dovedește că depozitul off-site refuză în continuare ștergerile (protecție append-only), aceeași verificare ca testul de manipulare din asistentul off-site.",
-  "integrity.appendOnlyLast": "protecție append-only · Ultima verificare {time}",
-  "integrity.appendOnlyNever": "protecție append-only · niciodată verificată",
 
   // Pre/post-backup hooks
   "hooks.hint": "Comenzile rulează în interiorul containerului (sh -c). Pre rulează înainte de backup (de ex. scrie un cache pe disc; bazele de date recunoscute sunt dumpate singure). O eroare anulează backupul. Post rulează după ce containerul a revenit; eroarea sa este doar înregistrată în jurnal.",
@@ -965,14 +959,9 @@ const ro: Partial<Translations> = {
   "notify.smtpTls": "Criptare",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Verifică posibilitatea de restaurare",
   "verify.running": "Se verifică…",
-  "verify.ok": "Restaurare verificată",
   "verify.failed": "Verificare eșuată",
-  "verify.last": "Ultima verificare {time}",
-  "verify.never": "Niciodată verificat",
   "verify.subsetPct": "Eșantion de date (%)",
-  "verify.hint": "Citește periodic un eșantion aleatoriu din datele de backup pentru a dovedi că sunt intacte și restaurabile.",
   "verify.shield": "verificat",
 
   // Dashboard protection (RPO) status
@@ -1346,16 +1335,6 @@ const ro: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Retenție (0 = păstrează tot)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Tip de test:",
-  "drill.kindSubset": "Verificare de integritate",
-  "drill.kindDR": "Restaurare reală (off-site)",
-  "drill.target": "Țintă test (container)",
-  "drill.targetVM": "Țintă test (VM)",
-  "drill.targetMostRecent": "Cel mai recent backup",
-  "drill.drNote": "O restaurare reală extrage cel mai nou snapshot off-site într-un sandbox temporar, îl verifică, apoi curăță. Descarcă date reale și poate dura.",
-  "drill.runDR": "Rulează restaurarea reală",
-  "drill.runningDR": "Se restaurează…",
-  "drill.confirmDR": "Aceasta efectuează o restaurare REALĂ a celui mai nou snapshot off-site într-un sandbox temporar pentru a dovedi că se poate recupera, apoi îl șterge. Descarcă date reale și poate dura. Continui?",
   "drill.offsiteVerified": "verificat off-site",
 
   // Dashboard ransomware-protection card (v4)
@@ -1418,8 +1397,6 @@ const ro: Partial<Translations> = {
   "excludes.assistRemoveLine": "Elimină excluderea {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "restaurare DR externă",
-  "drill.checkLocal": "verificare de integritate locală",
   "drill.failReasonPrefix": "motiv:",
 
   // Off-site DR opt-out (#37)

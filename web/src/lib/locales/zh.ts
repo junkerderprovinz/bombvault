@@ -652,23 +652,17 @@ const zh: Partial<Translations> = {
   "rclone.save": "保存配置",
 
   "integrity.title": "完整性与维护",
-  "integrity.hint": "运行 restic check 以验证仓库的结构和元数据是否完好。",
   "integrity.verify": "验证",
   "integrity.checking": "检查中…",
   "integrity.ok": "健康",
   "integrity.failed": "检查失败",
-  "integrity.failedShort": "✗ 失败",
   "integrity.unlock": "解锁",
   "integrity.prune": "清理",
   "integrity.verifyHint": "运行 restic check 以验证结构和元数据的完整性。",
   "integrity.unlockHint": "清除崩溃或中断的运行遗留的卡住的仓库锁（修复 'repository is already locked'）。",
   "integrity.unlockPartial": "并非所有存储库都已完全解锁：{list}",
   "integrity.pruneHint": "应用你的保留策略并回收空间（未设置策略时仅回收空间；可能需要一些时间）。",
-  "integrity.pruneConfirm": "清理现在会应用你的保留策略：删除超出规则（last/daily/weekly/monthly/yearly）的快照并回收空间。未设置策略时仅回收空间。是否继续？",
-  "integrity.appendOnly": "Append-only 检查",
   "integrity.appendOnlyHint": "证明异地仓库仍然拒绝删除操作(仅追加保护)，与异地向导中的防篡改测试相同。",
-  "integrity.appendOnlyLast": "append-only 保护 · 上次检查 {time}",
-  "integrity.appendOnlyNever": "append-only 保护 · 从未检查",
 
   "hooks.hint": "命令在容器内运行（sh -c）。Pre 在备份前运行（例如把缓存写入磁盘；识别出的数据库会自动转储）。失败会中止备份。Post 在容器恢复运行后执行；其失败仅记录日志。",
   "hooks.pre": "备份前命令",
@@ -966,14 +960,9 @@ const zh: Partial<Translations> = {
   "notify.smtpTls": "加密",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "验证可还原性",
   "verify.running": "验证中…",
-  "verify.ok": "已验证可还原",
   "verify.failed": "验证失败",
-  "verify.last": "上次验证于 {time}",
-  "verify.never": "从未验证",
   "verify.subsetPct": "数据抽样 (%)",
-  "verify.hint": "定期读取备份数据的随机样本，以证明其完好且可还原。",
   "verify.shield": "已验证",
 
   // Dashboard protection (RPO) status
@@ -1348,16 +1337,6 @@ const zh: Partial<Translations> = {
   "offsite.targets.retentionTitle": "保留（0 = 全部保留）",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "演练类型：",
-  "drill.kindSubset": "完整性检查",
-  "drill.kindDR": "真实还原（异地）",
-  "drill.target": "演练目标（容器）",
-  "drill.targetVM": "演练目标（虚拟机）",
-  "drill.targetMostRecent": "最近备份",
-  "drill.drNote": "真实还原会将最新的异地快照解压到临时沙盒中进行验证，然后清理。它会下载真实数据，可能需要一些时间。",
-  "drill.runDR": "运行真实还原",
-  "drill.runningDR": "还原中…",
-  "drill.confirmDR": "此操作会将最新的异地快照真实还原到临时沙盒中，以证明其可恢复，然后将其删除。它会下载真实数据，可能需要一些时间。是否继续？",
   "drill.offsiteVerified": "异地已验证",
 
   // Dashboard ransomware-protection card (v4)
@@ -1408,8 +1387,6 @@ const zh: Partial<Translations> = {
   "excludes.assistRemoveLine": "移除排除项 {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "异地 DR 还原",
-  "drill.checkLocal": "本地完整性检查",
   "drill.failReasonPrefix": "原因：",
 
   // Off-site DR opt-out (#37)

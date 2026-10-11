@@ -654,23 +654,17 @@ const nl: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integriteit en onderhoud",
-  "integrity.hint": "Voer restic check uit om te verifiëren dat de structuur en metadata van een repository intact zijn.",
   "integrity.verify": "Verifiëren",
   "integrity.checking": "Controleren…",
   "integrity.ok": "Gezond",
   "integrity.failed": "Controle mislukt",
-  "integrity.failedShort": "✗ Mislukt",
   "integrity.unlock": "Ontgrendelen",
   "integrity.prune": "Opschonen",
   "integrity.verifyHint": "Voer restic check uit om structuur en metadata te verifiëren.",
   "integrity.unlockHint": "Verwijder vastgelopen repository-locks van een gecrashte/onderbroken run (lost 'repository is already locked' op).",
   "integrity.unlockPartial": "Niet elke repository is volledig ontgrendeld: {list}",
   "integrity.pruneHint": "Pas je bewaarbeleid toe en maak ruimte vrij (maakt alleen ruimte vrij als er geen beleid is ingesteld; kan even duren).",
-  "integrity.pruneConfirm": "Opschonen past nu je bewaarbeleid toe: het verwijdert snapshots buiten je regels (last/daily/weekly/monthly/yearly) en maakt ruimte vrij. Zonder beleid maakt het alleen ruimte vrij. Doorgaan?",
-  "integrity.appendOnly": "Append-only-controle",
   "integrity.appendOnlyHint": "Bewijst dat de off-site-repository verwijderingen nog steeds weigert (append-only-bescherming), dezelfde controle als de tamper-test van de off-site-wizard.",
-  "integrity.appendOnlyLast": "append-only-bescherming · Laatst gecontroleerd {time}",
-  "integrity.appendOnlyNever": "append-only-bescherming · nooit gecontroleerd",
 
   // Pre/post-backup hooks
   "hooks.hint": "Commando's draaien in de container (sh -c). Pre draait vóór de back-up (bijv. een cache naar schijf wegschrijven; herkende databases worden vanzelf gedumpt). Een fout breekt de back-up af. Post draait nadat de container weer draait; een fout daarvan wordt alleen gelogd.",
@@ -963,14 +957,9 @@ const nl: Partial<Translations> = {
   "notify.smtpTls": "Versleuteling",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Herstelbaarheid verifiëren",
   "verify.running": "Verifiëren…",
-  "verify.ok": "Herstelbaarheid geverifieerd",
   "verify.failed": "Verificatie mislukt",
-  "verify.last": "Laatst geverifieerd {time}",
-  "verify.never": "Nooit geverifieerd",
   "verify.subsetPct": "Datasteekproef (%)",
-  "verify.hint": "Leest periodiek een willekeurige steekproef van de back-upgegevens om te bewijzen dat ze intact en herstelbaar zijn.",
   "verify.shield": "geverifieerd",
 
   // Dashboard protection (RPO) status
@@ -1344,16 +1333,6 @@ const nl: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Bewaring (0 = alles bewaren)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Testtype:",
-  "drill.kindSubset": "Integriteitscontrole",
-  "drill.kindDR": "Echt herstel (off-site)",
-  "drill.target": "Testdoel (container)",
-  "drill.targetVM": "Testdoel (VM)",
-  "drill.targetMostRecent": "Meest recente back-up",
-  "drill.drNote": "Een echt herstel pakt de nieuwste off-site snapshot uit in een tijdelijke sandbox, verifieert die en ruimt daarna op. Het downloadt echte data en kan even duren.",
-  "drill.runDR": "Echt herstel uitvoeren",
-  "drill.runningDR": "Herstellen…",
-  "drill.confirmDR": "Dit voert een ECHT herstel uit van de nieuwste off-site snapshot naar een tijdelijke sandbox om te bewijzen dat die herstelbaar is, en verwijdert het daarna. Het downloadt echte data en kan even duren. Doorgaan?",
   "drill.offsiteVerified": "off-site geverifieerd",
 
   // Dashboard ransomware-protection card (v4)
@@ -1416,8 +1395,6 @@ const nl: Partial<Translations> = {
   "excludes.assistRemoveLine": "Uitsluiting {line} verwijderen",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "off-site DR-herstel",
-  "drill.checkLocal": "lokale integriteitscontrole",
   "drill.failReasonPrefix": "reden:",
 
   // Off-site DR opt-out (#37)

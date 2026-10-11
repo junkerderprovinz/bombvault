@@ -809,51 +809,28 @@ const hi: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "इंटीग्रिटी और रखरखाव",
-  "integrity.hint": "किसी रिपॉज़िटरी की संरचना जाँचें (restic check), किसी रुके हुए रन से बचे पुराने लॉक साफ़ करें, या हटाए गए बैकअप की जगह वापस पाने के लिए प्रून करें।",
   "integrity.verify": "जाँचें",
   "integrity.checking": "जाँचा जा रहा है…",
   "integrity.ok": "स्वस्थ",
   "integrity.failed": "जाँच विफल हुई",
-  "integrity.failedShort": "✗ विफल",
   "integrity.unlock": "अनलॉक करें",
   "integrity.prune": "प्रून करें",
   "integrity.verifyHint": "संरचना और मेटाडेटा बरकरार हैं यह जाँचने के लिए restic check चलाएँ।",
   "integrity.unlockHint": "किसी क्रैश या रुके हुए रन से बचे पुराने रिपॉज़िटरी लॉक साफ़ करें (\"repository is already locked\" ठीक करता है)।",
   "integrity.unlockPartial": "हर रिपॉज़िटरी पूरी तरह अनलॉक नहीं हुई: {list}",
   "integrity.pruneHint": "अपनी रिटेंशन नीति लागू करें और जगह वापस पाएँ (नीति न होने पर केवल जगह वापस मिलती है; समय लग सकता है)।",
-  "integrity.pruneConfirm": "Prune अब आपकी रिटेंशन लागू करता है। यह आपके keep नियमों (last/daily/weekly/monthly/yearly) से आगे के स्नैपशॉट हटाता है और जगह वापस पाता है। नीति न होने पर, यह केवल जगह वापस पाता है। जारी रखें?",
-  "integrity.appendOnly": "अपेंड-ओनली जाँच",
   "integrity.appendOnlyHint": "साबित करता है कि ऑफ़-साइट रिपॉज़िटरी अभी भी हटाने को अस्वीकार करती है (अपेंड-ओनली सुरक्षा), ठीक वही जाँच जो ऑफ़-साइट विज़ार्ड की छेड़छाड़ जाँच करती है।",
-  "integrity.appendOnlyLast": "अपेंड-ओनली सुरक्षा · आख़िरी जाँच {time}",
-  "integrity.appendOnlyNever": "अपेंड-ओनली सुरक्षा · कभी नहीं जाँची गई",
 
   // Restore-verification drills
-  "verify.now": "रीस्टोरेबिलिटी जाँचें",
   "verify.running": "जाँचा जा रहा है…",
-  "verify.ok": "रीस्टोरेबिलिटी सत्यापित",
   "verify.failed": "सत्यापन विफल हुआ",
-  "verify.last": "आख़िरी सत्यापन {time}",
-  "verify.never": "कभी सत्यापित नहीं हुआ",
   "verify.subsetPct": "डेटा नमूना (%)",
-  "verify.hint": "यह साबित करने के लिए कि बैकअप डेटा बरकरार और रीस्टोर योग्य है, समय-समय पर उसका एक यादृच्छिक नमूना पढ़ता है।",
   "verify.shield": "सत्यापित",
 
   // DR drill controls
-  "drill.kindLabel": "जाँच का प्रकार:",
-  "drill.kindSubset": "इंटीग्रिटी जाँच",
-  "drill.kindDR": "वास्तविक रीस्टोर (ऑफ़-साइट)",
-  "drill.target": "जाँच लक्ष्य (कंटेनर)",
-  "drill.targetVM": "जाँच लक्ष्य (VM)",
-  "drill.targetMostRecent": "सबसे हाल का बैकअप",
-  "drill.drNote": "वास्तविक रीस्टोर नवीनतम ऑफ़-साइट स्नैपशॉट को एक अस्थायी सैंडबॉक्स में निकालता है, उसकी जाँच करता है, फिर सफ़ाई करता है। यह वास्तविक डेटा डाउनलोड करता है और समय ले सकता है।",
-  "drill.runDR": "वास्तविक रीस्टोर चलाएँ",
-  "drill.runningDR": "रीस्टोर हो रहा है…",
-  "drill.confirmDR": "यह नवीनतम ऑफ़-साइट स्नैपशॉट का एक वास्तविक रीस्टोर एक अस्थायी सैंडबॉक्स में करता है ताकि साबित हो कि यह रीस्टोर योग्य है, फिर उसे हटा देता है। यह वास्तविक डेटा डाउनलोड करता है और समय ले सकता है। जारी रखें?",
   "drill.offsiteVerified": "ऑफ़-साइट सत्यापित",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "ऑफ़-साइट DR रीस्टोर",
-  "drill.checkLocal": "लोकल इंटीग्रिटी जाँच",
   "drill.failReasonPrefix": "कारण:",
 
   // Off-site DR opt-out

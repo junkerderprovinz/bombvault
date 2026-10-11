@@ -809,51 +809,28 @@ const eu: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Osotasuna eta mantentzea",
-  "integrity.hint": "Egiaztatu biltegi baten egitura (restic check), garbitu eten den exekuzio batek utzitako blokeo zaharkituak, edo garbitu ezabatutako babeskopien lekua berreskuratzeko.",
   "integrity.verify": "Egiaztatu",
   "integrity.checking": "Egiaztatzen…",
   "integrity.ok": "Osasuntsu",
   "integrity.failed": "Egiaztapenak huts egin du",
-  "integrity.failedShort": "✗ Huts egin du",
   "integrity.unlock": "Desblokeatu",
   "integrity.prune": "Garbitu",
   "integrity.verifyHint": "Exekutatu restic check egitura eta metadatuak osorik daudela egiaztatzeko.",
   "integrity.unlockHint": "Garbitu exekuzio kraskatu edo eten batek utzitako biltegi-blokeo zaharkituak (konpontzen du «repository is already locked»).",
   "integrity.unlockPartial": "Biltegi guztiak ez dira guztiz desblokeatu: {list}",
   "integrity.pruneHint": "Aplikatu zure mantentze-politika eta berreskuratu lekua (politikarik gabe lekua bakarrik berreskuratzen du; denbora har dezake).",
-  "integrity.pruneConfirm": "Garbitu-k orain zure mantentzea aplikatzen du: zure gorde-arauetatik (last/daily/weekly/monthly/yearly) kanpo dauden argazkiak kentzen ditu eta lekua berreskuratzen du. Politikarik gabe, lekua bakarrik berreskuratzen du. Jarraitu nahi duzu?",
-  "integrity.appendOnly": "Gehitu-soilik egiaztapena",
   "integrity.appendOnlyHint": "Kanpoko biltegiak ezabatzeak ukatzen jarraitzen duela frogatzen du (gehitu-soilik babesa), kanpoko laguntzailearen manipulazio-proba bera.",
-  "integrity.appendOnlyLast": "gehitu-soilik babesa · Azken egiaztapena {time}",
-  "integrity.appendOnlyNever": "gehitu-soilik babesa · inoiz egiaztatu gabe",
 
   // Restore-verification drills
-  "verify.now": "Egiaztatu berrezargarritasuna",
   "verify.running": "Egiaztatzen…",
-  "verify.ok": "Berrezargarritasuna egiaztatuta",
   "verify.failed": "Egiaztapenak huts egin du",
-  "verify.last": "Azken egiaztapena {time}",
-  "verify.never": "Inoiz egiaztatu gabe",
   "verify.subsetPct": "Datu-lagina (%)",
-  "verify.hint": "Aldizka babeskopiaren datu-lagin ausazko bat irakurtzen du, osorik eta berrezargarri direla frogatzeko.",
   "verify.shield": "egiaztatuta",
 
   // DR drill controls
-  "drill.kindLabel": "Proba mota:",
-  "drill.kindSubset": "Osotasun-egiaztapena",
-  "drill.kindDR": "Benetako berrezarpena (kanpokoa)",
-  "drill.target": "Probaren helburua (edukiontzia)",
-  "drill.targetVM": "Probaren helburua (MB)",
-  "drill.targetMostRecent": "Babeskopia berriena",
-  "drill.drNote": "Benetako berrezarpen batek kanpoko argazki berriena aldi baterako aisialdi babestu batean ateratzen du, egiaztatu eta gero garbitzen du. Benetako datuak deskargatzen ditu eta denbora har dezake.",
-  "drill.runDR": "Exekutatu benetako berrezarpena",
-  "drill.runningDR": "Berrezartzen…",
-  "drill.confirmDR": "Honek kanpoko argazki berrienaren BENETAKO berrezarpena egiten du aldi baterako aisialdi babestu batean, berrezargarria dela frogatzeko, eta gero ezabatu egiten du. Benetako datuak deskargatzen ditu eta denbora har dezake. Jarraitu nahi duzu?",
   "drill.offsiteVerified": "kanpokoa egiaztatuta",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "kanpoko DR berrezarpena",
-  "drill.checkLocal": "osotasun-egiaztapen lokala",
   "drill.failReasonPrefix": "arrazoia:",
 
   // Off-site DR opt-out

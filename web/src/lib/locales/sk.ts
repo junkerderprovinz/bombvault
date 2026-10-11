@@ -809,51 +809,28 @@ const sk: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integrita a údržba",
-  "integrity.hint": "Overte štruktúru repozitára (restic check), vyčistite zastarané zámky ponechané prerušeným behom, alebo vyčistite, aby ste získali späť miesto z odstránených záloh.",
   "integrity.verify": "Overiť",
   "integrity.checking": "Overuje sa…",
   "integrity.ok": "V poriadku",
   "integrity.failed": "Overenie zlyhalo",
-  "integrity.failedShort": "✗ Zlyhalo",
   "integrity.unlock": "Odomknúť",
   "integrity.prune": "Vyčistiť",
   "integrity.verifyHint": "Spustite restic check na overenie neporušenosti štruktúry a metadát.",
   "integrity.unlockHint": "Vyčistite zastarané zámky repozitára ponechané spadnutým alebo prerušeným behom (rieši „repository is already locked“).",
   "integrity.unlockPartial": "Nie každý repozitár bol úplne odomknutý: {list}",
   "integrity.pruneHint": "Uplatní vašu zásadu uchovávania a získa späť miesto (miesto získa späť iba ak nie je nastavená zásada; môže to chvíľu trvať).",
-  "integrity.pruneConfirm": "Vyčistenie teraz uplatní vašu zásadu uchovávania: odstráni snímky mimo vašich pravidiel uchovania (last/daily/weekly/monthly/yearly) a získa späť miesto. Bez zásady iba získa späť miesto. Pokračovať?",
-  "integrity.appendOnly": "Kontrola len-na-pridávanie",
   "integrity.appendOnlyHint": "Dokazuje, že externý repozitár naďalej odmieta odstraňovanie (ochrana len-na-pridávanie), rovnaká kontrola ako test neoprávnenej manipulácie v sprievodcovi externým úložiskom.",
-  "integrity.appendOnlyLast": "ochrana len-na-pridávanie · Naposledy skontrolované {time}",
-  "integrity.appendOnlyNever": "ochrana len-na-pridávanie · nikdy nekontrolované",
 
   // Restore-verification drills
-  "verify.now": "Overiť obnoviteľnosť",
   "verify.running": "Overuje sa…",
-  "verify.ok": "Obnoviteľnosť overená",
   "verify.failed": "Overenie zlyhalo",
-  "verify.last": "Naposledy overené {time}",
-  "verify.never": "Nikdy neoverené",
   "verify.subsetPct": "Vzorka dát (%)",
-  "verify.hint": "Pravidelne číta náhodnú vzorku dát zálohy, aby dokázala, že sú neporušené a obnoviteľné.",
   "verify.shield": "overené",
 
   // DR drill controls
-  "drill.kindLabel": "Typ testu:",
-  "drill.kindSubset": "Kontrola integrity",
-  "drill.kindDR": "Skutočné obnovenie (externé)",
-  "drill.target": "Cieľ testu (kontajner)",
-  "drill.targetVM": "Cieľ testu (VM)",
-  "drill.targetMostRecent": "Najnovšia záloha",
-  "drill.drNote": "Skutočné obnovenie extrahuje najnovšiu externú snímku do dočasného izolovaného priestoru, overí ju a potom vyčistí. Sťahuje skutočné dáta a môže to chvíľu trvať.",
-  "drill.runDR": "Spustiť skutočné obnovenie",
-  "drill.runningDR": "Obnovuje sa…",
-  "drill.confirmDR": "Toto vykoná SKUTOČNÉ obnovenie najnovšej externej snímky do dočasného izolovaného priestoru, aby dokázalo, že je obnoviteľná, a potom ju odstráni. Sťahuje skutočné dáta a môže to chvíľu trvať. Pokračovať?",
   "drill.offsiteVerified": "externé overené",
 
   // Drill reason + check labels
-  "drill.checkOffsiteDr": "externé DR obnovenie",
-  "drill.checkLocal": "lokálna kontrola integrity",
   "drill.failReasonPrefix": "dôvod:",
 
   // Off-site DR opt-out

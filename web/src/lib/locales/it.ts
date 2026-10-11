@@ -658,23 +658,17 @@ const it: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Integrità e manutenzione",
-  "integrity.hint": "Esegui restic check per verificare che struttura e metadati di un repository siano intatti.",
   "integrity.verify": "Verifica",
   "integrity.checking": "Verifica…",
   "integrity.ok": "Integro",
   "integrity.failed": "Verifica fallita",
-  "integrity.failedShort": "✗ Fallito",
   "integrity.unlock": "Sblocca",
   "integrity.prune": "Pota",
   "integrity.verifyHint": "Esegui restic check per verificare struttura e metadati.",
   "integrity.unlockHint": "Rimuovi i lock bloccati del repository lasciati da un'esecuzione interrotta (corregge 'repository is already locked').",
   "integrity.unlockPartial": "Non tutti i repository sono stati sbloccati completamente: {list}",
   "integrity.pruneHint": "Applica la tua policy di retention e libera spazio (libera solo spazio se nessuna policy è impostata; può richiedere tempo).",
-  "integrity.pruneConfirm": "La pulizia ora applica la tua policy di retention: rimuove gli snapshot oltre le tue regole (last/daily/weekly/monthly/yearly) e libera spazio. Senza policy libera solo spazio. Continuare?",
-  "integrity.appendOnly": "Controllo append-only",
   "integrity.appendOnlyHint": "Dimostra che il repository off-site rifiuta ancora le eliminazioni (protezione append-only), lo stesso controllo del tamper test della procedura guidata off-site.",
-  "integrity.appendOnlyLast": "protezione append-only · Ultimo controllo {time}",
-  "integrity.appendOnlyNever": "protezione append-only · mai controllata",
 
   // Pre/post-backup hooks
   "hooks.hint": "I comandi vengono eseguiti dentro il container (sh -c). Pre viene eseguito prima del backup (es. scaricare una cache su disco; i database riconosciuti vengono dumpati da soli). Un errore annulla il backup. Post viene eseguito quando il container è di nuovo attivo; il suo errore viene solo registrato.",
@@ -957,14 +951,9 @@ const it: Partial<Translations> = {
   "settings.dashTileRemoveOk": "Plugin rimosso. Non compare più nella dashboard di Unraid.",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Verifica ripristinabilità",
   "verify.running": "Verifica in corso…",
-  "verify.ok": "Ripristinabilità verificata",
   "verify.failed": "Verifica fallita",
-  "verify.last": "Ultima verifica {time}",
-  "verify.never": "Mai verificato",
   "verify.subsetPct": "Campione di dati (%)",
-  "verify.hint": "Legge periodicamente un campione casuale dei dati di backup per dimostrare che sono intatti e ripristinabili.",
   "verify.shield": "verificato",
 
   // Dashboard protection (RPO) status
@@ -1349,16 +1338,6 @@ const it: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Conservazione (0 = mantieni tutto)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Tipo di prova:",
-  "drill.kindSubset": "Controllo di integrità",
-  "drill.kindDR": "Ripristino reale (off-site)",
-  "drill.target": "Obiettivo della prova (container)",
-  "drill.targetVM": "Obiettivo della prova (VM)",
-  "drill.targetMostRecent": "Backup più recente",
-  "drill.drNote": "Un ripristino reale estrae lo snapshot off-site più recente in una sandbox temporanea, lo verifica, poi ripulisce. Scarica dati reali e può richiedere tempo.",
-  "drill.runDR": "Avvia ripristino reale",
-  "drill.runningDR": "Ripristino…",
-  "drill.confirmDR": "Questo esegue un ripristino REALE dello snapshot off-site più recente in una sandbox temporanea per dimostrare che è recuperabile, poi lo elimina. Scarica dati reali e può richiedere tempo. Continuare?",
   "drill.offsiteVerified": "verificato off-site",
 
   // Dashboard ransomware-protection card (v4)
@@ -1417,8 +1396,6 @@ const it: Partial<Translations> = {
   "excludes.assistRemoveLine": "Rimuovi l'esclusione {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "ripristino DR off-site",
-  "drill.checkLocal": "controllo di integrità locale",
   "drill.failReasonPrefix": "motivo:",
 
   // Off-site DR opt-out (#37)

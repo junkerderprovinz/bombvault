@@ -658,23 +658,17 @@ const el: Partial<Translations> = {
 
   // Integrity (restic check)
   "integrity.title": "Ακεραιότητα και συντήρηση",
-  "integrity.hint": "Εκτελέστε restic check για επαλήθευση ότι η δομή και τα μεταδεδομένα ενός αποθετηρίου είναι άθικτα.",
   "integrity.verify": "Επαλήθευση",
   "integrity.checking": "Έλεγχος…",
   "integrity.ok": "Υγιές",
   "integrity.failed": "Ο έλεγχος απέτυχε",
-  "integrity.failedShort": "✗ Απέτυχε",
   "integrity.unlock": "Ξεκλείδωμα",
   "integrity.prune": "Εκκαθάριση",
   "integrity.verifyHint": "Εκτέλεση restic check για επαλήθευση δομής και μεταδεδομένων.",
   "integrity.unlockHint": "Καθαρισμός κολλημένων κλειδωμάτων αποθετηρίου από διακοπείσα εκτέλεση (διορθώνει 'repository is already locked').",
   "integrity.unlockPartial": "Δεν ξεκλειδώθηκε πλήρως κάθε αποθετήριο: {list}",
   "integrity.pruneHint": "Εφαρμογή της πολιτικής διατήρησης και ανάκτηση χώρου (χωρίς πολιτική ανακτά μόνο χώρο· μπορεί να πάρει λίγο).",
-  "integrity.pruneConfirm": "Το κλάδεμα εφαρμόζει τώρα την πολιτική διατήρησής σας: αφαιρεί στιγμιότυπα πέρα από τους κανόνες σας (last/daily/weekly/monthly/yearly) και ανακτά χώρο. Χωρίς πολιτική ανακτά μόνο χώρο. Συνέχεια;",
-  "integrity.appendOnly": "Έλεγχος append-only",
   "integrity.appendOnlyHint": "Αποδεικνύει ότι το απομακρυσμένο αποθετήριο εξακολουθεί να απορρίπτει διαγραφές (προστασία append-only), ο ίδιος έλεγχος με το tamper test του οδηγού off-site.",
-  "integrity.appendOnlyLast": "προστασία append-only · Τελευταίος έλεγχος {time}",
-  "integrity.appendOnlyNever": "προστασία append-only · κανένας έλεγχος ακόμη",
 
   // Pre/post-backup hooks
   "hooks.hint": "Οι εντολές εκτελούνται μέσα στο container (sh -c). Το Pre εκτελείται πριν το αντίγραφο (π.χ. γράψιμο μιας cache στον δίσκο· οι αναγνωρισμένες βάσεις παίρνουν dump μόνες τους). Μια αποτυχία ματαιώνει το αντίγραφο. Το Post εκτελείται αφού το container επανέλθει· η αποτυχία του μόνο καταγράφεται.",
@@ -975,14 +969,9 @@ const el: Partial<Translations> = {
   "notify.smtpTls": "Κρυπτογράφηση",
 
   // Restore-verification drills ("verify restorability")
-  "verify.now": "Επαλήθευση δυνατότητας επαναφοράς",
   "verify.running": "Επαλήθευση…",
-  "verify.ok": "Επαληθεύτηκε ως επαναφερόμενο",
   "verify.failed": "Η επαλήθευση απέτυχε",
-  "verify.last": "Τελευταία επαλήθευση {time}",
-  "verify.never": "Καμία επαλήθευση",
   "verify.subsetPct": "Δείγμα δεδομένων (%)",
-  "verify.hint": "Διαβάζει περιοδικά ένα τυχαίο δείγμα των δεδομένων αντιγράφου για να αποδείξει ότι είναι άθικτα και επαναφερόμενα.",
   "verify.shield": "επαληθευμένο",
 
   // Dashboard protection (RPO) status
@@ -1357,16 +1346,6 @@ const el: Partial<Translations> = {
   "offsite.targets.retentionTitle": "Διατήρηση (0 = διατήρηση όλων)",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "Τύπος δοκιμής:",
-  "drill.kindSubset": "Έλεγχος ακεραιότητας",
-  "drill.kindDR": "Πραγματική επαναφορά (εκτός τόπου)",
-  "drill.target": "Στόχος δοκιμής (container)",
-  "drill.targetVM": "Στόχος δοκιμής (VM)",
-  "drill.targetMostRecent": "Πιο πρόσφατο αντίγραφο",
-  "drill.drNote": "Μια πραγματική επαναφορά εξάγει το νεότερο στιγμιότυπο εκτός τόπου σε ένα προσωρινό sandbox, το επαληθεύει και έπειτα καθαρίζει. Κατεβάζει πραγματικά δεδομένα και μπορεί να πάρει λίγη ώρα.",
-  "drill.runDR": "Εκτέλεση πραγματικής επαναφοράς",
-  "drill.runningDR": "Επαναφορά…",
-  "drill.confirmDR": "Αυτό εκτελεί μια ΠΡΑΓΜΑΤΙΚΗ επαναφορά του νεότερου στιγμιότυπου εκτός τόπου σε ένα προσωρινό sandbox για να αποδείξει ότι είναι επαναφερόμενο και έπειτα το διαγράφει. Κατεβάζει πραγματικά δεδομένα και μπορεί να πάρει λίγη ώρα. Συνέχεια;",
   "drill.offsiteVerified": "επαληθευμένο εκτός τόπου",
 
   // Dashboard ransomware-protection card (v4)
@@ -1417,8 +1396,6 @@ const el: Partial<Translations> = {
   "excludes.assistRemoveLine": "Αφαίρεση της εξαίρεσης {line}",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "επαναφορά DR εκτός τόπου",
-  "drill.checkLocal": "τοπικός έλεγχος ακεραιότητας",
   "drill.failReasonPrefix": "αιτία:",
 
   // Off-site DR opt-out (#37)

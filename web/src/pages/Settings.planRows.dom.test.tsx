@@ -94,7 +94,7 @@ vi.mock("../lib/api", async (importOriginal) => {
       return Promise.resolve({ ok: true });
     },
     getAuth: () => Promise.resolve({ enabled: false, authed: false }),
-    listContainers: () => Promise.resolve({ ok: true, containers: [] }),
+    listContainers: () => Promise.resolve({ ok: true, containers: [{ name: "plex" }] }),
     listVMs: () => Promise.resolve({ ok: true, vms: [] }),
     getStatus: () => Promise.resolve({ ok: true }),
   };
@@ -234,6 +234,18 @@ describe("the automatic checks", () => {
   it("says that the delete protection test never runs without a location that refuses deletes", async () => {
     await renderPage("integrity");
     expect(within(card(en["verify.autoChecks"])).getByText(en["settings.tamperScheduleInactive"])).toBeTruthy();
+  });
+
+  it("chooses the container a trial restore starts under the trial restore", async () => {
+    await renderPage("integrity");
+    const checks = card(en["verify.autoChecks"]);
+    const target = within(checks).getByRole("combobox", { name: en["verify.testTarget"] });
+    expect(target.textContent).toContain(en["verify.newestBackup"]);
+    fireEvent.click(target);
+    fireEvent.click(await screen.findByRole("option", { name: "plex" }));
+    await waitFor(() => expect(putBodies.at(-1)?.drDrillTarget).toBe("plex"), SAVED);
+    // VMs are switched off here, so they have no target to choose.
+    expect(within(checks).queryByRole("combobox", { name: en["verify.testTargetVM"] })).toBeNull();
   });
 
   it("drops that warning once an off-site location refuses deletes", async () => {

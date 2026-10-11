@@ -5,7 +5,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { ProgressMap } from "../../lib/progress";
 
-const getDrills = vi.fn();
+const getStatus = vi.fn();
 let progressMap: ProgressMap = {};
 
 vi.mock("../../lib/api", () => ({
@@ -14,10 +14,8 @@ vi.mock("../../lib/api", () => ({
   pruneDomain: vi.fn().mockResolvedValue({ ok: true }),
   runDrill: vi.fn().mockResolvedValue({ ok: true }),
   tamperTest: vi.fn().mockResolvedValue({ ok: true }),
-  getDrills: (...a: unknown[]) => getDrills(...a),
-  getStatus: vi.fn().mockResolvedValue({ ok: true }),
-  listContainers: vi.fn().mockResolvedValue({ containers: [] }),
-  listVMs: vi.fn().mockResolvedValue({ vms: [] }),
+  getStatus: (...a: unknown[]) => getStatus(...a),
+  listItems: vi.fn().mockResolvedValue({ ok: true, items: [] }),
 }));
 
 vi.mock("../../lib/progress", async (orig) => ({
@@ -31,12 +29,12 @@ vi.mock("../../lib/toast", () => ({
 
 import { IntegrityCard } from "./IntegrityCard";
 import { countText, en } from "../../lib/i18n";
+import { domain } from "../overview/overview.testsupport";
 
 const t = ((key: string, n?: number) => countText((en as Record<string, string>)[key] ?? key, "en", n)) as unknown as Parameters<typeof IntegrityCard>[0]["t"];
-const settings = { drDrillTarget: "", drDrillTargetVm: "" } as never;
 
 function card() {
-  return <IntegrityCard t={t} settings={settings} setSettings={() => {}} save={async () => true} />;
+  return <IntegrityCard t={t} />;
 }
 
 function running(lastSeen: number): ProgressMap {
@@ -46,8 +44,8 @@ function running(lastSeen: number): ProgressMap {
 }
 
 beforeEach(() => {
-  getDrills.mockReset();
-  getDrills.mockResolvedValue({ ok: true, drills: [], latest: null });
+  getStatus.mockReset();
+  getStatus.mockResolvedValue({ ok: true, domains: [domain({ domain: "files" })] });
   progressMap = {};
 });
 afterEach(() => {
@@ -77,15 +75,15 @@ it("drops a bar whose run stopped reporting, as when BombVault restarted under i
   expect(screen.queryByRole("progressbar")).toBeNull();
 });
 
-it("reads the domain's last restore check again once a live one ends", async () => {
+it("reads the checks again once a live run ends", async () => {
   progressMap = running(Date.now());
   const view = await act(async () => render(card()));
-  const before = getDrills.mock.calls.filter((c) => c[0] === "files").length;
+  const before = getStatus.mock.calls.length;
 
   progressMap = {};
   await act(async () => {
     view.rerender(card());
   });
-  const after = getDrills.mock.calls.filter((c) => c[0] === "files").length;
+  const after = getStatus.mock.calls.length;
   expect(after).toBe(before + 1);
 });

@@ -652,23 +652,17 @@ const ja: Partial<Translations> = {
   "rclone.save": "設定を保存",
 
   "integrity.title": "整合性とメンテナンス",
-  "integrity.hint": "restic check を実行して、リポジトリの構造とメタデータが正常か検証します。",
   "integrity.verify": "検証",
   "integrity.checking": "確認中…",
   "integrity.ok": "正常",
   "integrity.failed": "チェックに失敗しました",
-  "integrity.failedShort": "✗ 失敗",
   "integrity.unlock": "ロック解除",
   "integrity.prune": "整理",
   "integrity.verifyHint": "restic check を実行して構造とメタデータの整合性を検証します。",
   "integrity.unlockHint": "中断された実行で残ったリポジトリのロックを削除します（'repository is already locked' を解消）。",
   "integrity.unlockPartial": "すべてのリポジトリのロックを完全に解除できたわけではありません: {list}",
   "integrity.pruneHint": "保持ポリシーを適用して領域を回収します（ポリシー未設定なら領域回収のみ。時間がかかる場合があります）。",
-  "integrity.pruneConfirm": "プルーンは保持ポリシーを適用し、ルール（last/daily/weekly/monthly/yearly）を超えるスナップショットを削除して領域を回収します。ポリシー未設定なら領域回収のみです。続行しますか？",
-  "integrity.appendOnly": "append-only チェック",
   "integrity.appendOnlyHint": "オフサイトリポジトリが削除を拒否し続けていること(追記専用保護)を証明します。オフサイトウィザードの改ざんテストと同じチェックです。",
-  "integrity.appendOnlyLast": "append-only 保護 · 最終チェック {time}",
-  "integrity.appendOnlyNever": "append-only 保護 · 未チェック",
 
   "hooks.hint": "コマンドはコンテナ内（sh -c）で実行されます。Pre はバックアップ前に実行（例：キャッシュをディスクへ書き出す。認識されたデータベースは自動でダンプされます）。失敗するとバックアップは中止されます。Post はコンテナの復帰後に実行され、その失敗はログに記録されるだけです。",
   "hooks.pre": "バックアップ前コマンド",
@@ -958,14 +952,9 @@ const ja: Partial<Translations> = {
   "notify.smtpTls": "暗号化",
 
   // Restore-verification drills
-  "verify.now": "復元可能性を検証",
   "verify.running": "検証中…",
-  "verify.ok": "復元可能と検証済み",
   "verify.failed": "検証に失敗しました",
-  "verify.last": "最終検証 {time}",
-  "verify.never": "未検証",
   "verify.subsetPct": "データサンプル (%)",
-  "verify.hint": "定期的にバックアップデータのランダムなサンプルを読み取り、データが正常で復元可能であることを確認します。",
   "verify.shield": "検証済み",
 
   // Dashboard protection (RPO) status
@@ -1340,16 +1329,6 @@ const ja: Partial<Translations> = {
   "offsite.targets.retentionTitle": "保持（0 = すべて保持）",
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
-  "drill.kindLabel": "ドリルの種類:",
-  "drill.kindSubset": "整合性チェック",
-  "drill.kindDR": "実復元（オフサイト）",
-  "drill.target": "ドリル対象（コンテナ）",
-  "drill.targetVM": "ドリル対象（VM）",
-  "drill.targetMostRecent": "最新のバックアップ",
-  "drill.drNote": "実復元は最新のオフサイトスナップショットを一時的なサンドボックスに展開して検証し、その後クリーンアップします。実データをダウンロードするため時間がかかる場合があります。",
-  "drill.runDR": "実復元を実行",
-  "drill.runningDR": "復元中…",
-  "drill.confirmDR": "これは最新のオフサイトスナップショットを一時的なサンドボックスに実際に復元して復元可能であることを証明し、その後削除します。実データをダウンロードするため時間がかかる場合があります。続行しますか？",
   "drill.offsiteVerified": "オフサイト検証済み",
 
   // Dashboard ransomware-protection card (v4)
@@ -1408,8 +1387,6 @@ const ja: Partial<Translations> = {
   "excludes.assistRemoveLine": "除外 {line} を削除",
 
   // Drill reason + check labels (#30)
-  "drill.checkOffsiteDr": "オフサイト DR 復元",
-  "drill.checkLocal": "ローカル整合性チェック",
   "drill.failReasonPrefix": "理由:",
 
   // Off-site DR opt-out (#37)
