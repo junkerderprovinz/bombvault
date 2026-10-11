@@ -554,7 +554,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
     {
       title: "apps.widget.title",
-      hint: "apps.widget.hint",
+      hint: "apps.widget.cardHint",
       rows: [{ key: "settings.dashTile", hint: "settings.dashTileHint" }],
     },
   ],

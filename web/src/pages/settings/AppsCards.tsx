@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { IconGithub, IconLink } from "../../components/glyphs";
+import { IconLive } from "../../components/navGlyphs";
 import { QRCode } from "../../components/QRCode";
 import { BrandMark, ReadmeButton } from "../../components/ReadmeButton";
 import { getHealth } from "../../lib/api";
@@ -11,7 +12,6 @@ import { copyText } from "../../lib/clipboard";
 import type { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { useIsDesktop } from "../../lib/useMediaQuery";
-import { UnraidTileSection } from "./DashboardWidgetCard";
 import { Card } from "./shared";
 
 // The Apps page ("The App tab"): the forms of BombVault this server is not,
@@ -261,8 +261,9 @@ export function ParleyPortCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"
 }
 
 export function WidgetAppCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
+  const navigate = useNavigate();
   return (
-    <Card title={t("apps.widget.title")} hint={t("apps.widget.hint")} hueIndex={hueIndex}>
+    <Card title={t("apps.widget.title")} hint={t("apps.widget.cardHint")} hueIndex={hueIndex}>
       <div className="flex flex-wrap gap-3">
         <ReadmeButton
           tile="glim-tile-unraid"
@@ -276,7 +277,15 @@ export function WidgetAppCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]
           markClass="glim-github-mark"
         />
       </div>
-      <UnraidTileSection t={t} hueIndex={hueIndex} />
+      <Button
+        label={t("apps.widget.toSettings")}
+        labelKey="apps.widget.toSettings"
+        glyph={<IconLive />}
+        tone="neutral"
+        hueIndex={hueIndex}
+        onClick={() => navigate("/settings/integrations")}
+        className="self-start"
+      />
     </Card>
   );
 }
