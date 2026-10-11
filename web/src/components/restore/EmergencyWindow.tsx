@@ -232,6 +232,7 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
 
   const running = anyActive(useProgress());
   const restoring = queue.length > 0 && !finished;
+  const searched = useRef(false);
 
   // The detection writes what it found into the settings held here.
   // Otherwise the next save would put the stale switch back over it.
@@ -340,8 +341,9 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
         return;
       }
       window.dispatchEvent(new Event("bv:settings-changed"));
-      // Another repository holds other entries, so what was found is void.
+      // Another repository holds other entries, so the selection searches again.
       setFound(null);
+      searched.current = false;
       // The detection probes the saved locations, and the check after it
       // says whether attaching them worked.
       await detect();
@@ -422,7 +424,6 @@ export function EmergencyWindow({ start, onClose }: { start: EmergencyStep; onCl
     }
   }, [t]);
 
-  const searched = useRef(false);
   useEffect(() => {
     if (step !== "selection" || searched.current) return;
     searched.current = true;

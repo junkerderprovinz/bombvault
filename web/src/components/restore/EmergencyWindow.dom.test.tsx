@@ -265,6 +265,18 @@ describe("the selection", () => {
     expect(picks()).toHaveLength(2);
   });
 
+  it("looks again after other folders were attached", async () => {
+    containersOnServer = [gone()];
+    await open("selection");
+    expect(discoverAll).toHaveBeenCalledTimes(1);
+    await press(screen.getByRole("radio", { name: en["emergency.access"] }));
+    await press(button(en["emergency.connect"]));
+    await waitFor(() => expect(putSettings).toHaveBeenCalled());
+    await screen.findAllByText(en["recovery.readable"]);
+    await press(screen.getByRole("radio", { name: en["emergency.selection"] }));
+    await waitFor(() => expect(discoverAll).toHaveBeenCalledTimes(2));
+  });
+
   it("starts with what this server lacks switched on and what it has switched off", async () => {
     containersOnServer = [gone(), containerView({ name: "plex" })];
     vmsOnServer = [vmView({ state: "not-installed" })];

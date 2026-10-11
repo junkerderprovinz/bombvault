@@ -25,7 +25,7 @@ import { ENGINE_NAMES, pairsWith } from "../../lib/dbdump";
 import type { Entry } from "../../lib/entry";
 import { loadErrorMessage } from "../../lib/errors";
 import { useT, type TranslationKey } from "../../lib/i18n";
-import { tLtr } from "../../lib/ltrFragments";
+import { isolateLtr, tLtr } from "../../lib/ltrFragments";
 import { placementChanged } from "../../lib/placementEvents";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
 import { formatRecent } from "../../lib/reltime";
@@ -429,7 +429,12 @@ function RestoreForm({
       if (res.ok) setAck({ target: res.target ?? "", created: res.created, safetySnapshot: res.safetySnapshot });
       else if (kind === "zfs" && res.code) {
         setRefusalFix(zfsFixKey(res.code));
-        return { ...res, error: zfsCodeSentence(t, res.code, { hostMountpoint: mountpoint }) };
+        // What the server said beyond the dataset the restore was about,
+        // such as zfs's own message, follows the sentence of the code.
+        const said = (res.error ?? "").startsWith(`${res.code}: `) ? (res.error ?? "").slice(res.code.length + 2) : "";
+        const sentence = zfsCodeSentence(t, res.code, { hostMountpoint: mountpoint });
+        const named = said === "" || said === run.zfs?.dataset || said === run.zfs?.newDataset;
+        return { ...res, error: named ? sentence : `${sentence} ${isolateLtr(said)}` };
       }
       return res;
     },

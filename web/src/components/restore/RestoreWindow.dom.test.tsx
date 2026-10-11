@@ -473,6 +473,21 @@ describe("a ZFS entry", () => {
     );
   });
 
+  it("says why the server refused, with what zfs itself reported", async () => {
+    restoreZFS.mockResolvedValue({ ok: false, code: "safety-snapshot-failed", error: "safety-snapshot-failed: dataset is busy" } as never);
+    await open(entryOf("zfs"));
+    const inPlace = () => within(dialog()).getByRole("radio", { name: new RegExp(`^${en["zfs.restore.inPlace"]}`) });
+    await waitFor(() => expect(inPlace()).toBeTruthy());
+    await press(inPlace());
+    await ready(() => named("restoreWindow.replaceNamed", "tank/appdata"));
+    await press(named("restoreWindow.replaceNamed", "tank/appdata"));
+    await typeAndConfirm("tank/appdata");
+    const said = await screen.findByText(/dataset is busy/);
+    expect(said.textContent).toContain(en["zfs.code.safety-snapshot-failed"]);
+    await press(screen.getByRole("button", { name: en["common.back"] }));
+    expect(inPlace()).toBeTruthy();
+  });
+
   it("only offers a folder and a new dataset for a dataset the host no longer has", async () => {
     await open(entryOf("zfs", { detail: { kind: "zfs", dataset: zfsView({ lastCheckCode: "not-found" }) } }));
     await waitFor(() => expect(within(dialog()).getByText(en["zfs.restore.missingDataset"])).toBeTruthy());
