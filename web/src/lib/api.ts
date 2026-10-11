@@ -608,6 +608,11 @@ export interface RestoreDrill {
 export interface StatusResponse {
   ok: boolean;
   domains?: DomainStatus[];
+  /** The key the backups are under: this install's own, one adopted from
+   *  another install, or "locked" for an adopted key that APP_KEY stopped
+   *  opening. While it is locked every backup is refused with the code
+   *  "backup-key-locked" until the key is adopted again. */
+  backupKey?: "own" | "adopted" | "locked";
   error?: string;
 }
 
@@ -5280,25 +5285,39 @@ export interface RecoveryKitLocation {
   folder?: string;
 }
 
-/** What an uploaded recovery kit says. Its key stays on the server. A kit of
- *  an instance without encryption names no key: its repositories can be read,
- *  its containers and VMs cannot be recreated from them. */
+/** What an uploaded recovery kit says. Its key stays on the server. `hasKey`
+ *  is false for the kit an instance without encryption wrote before kits
+ *  named the key in that case: its repositories can be read, its containers
+ *  and VMs cannot be recreated from them. */
 export interface RecoveryKitFacts {
   encrypted: boolean;
+  hasKey: boolean;
   locations: RecoveryKitLocation[];
 }
 
-/** Why a kit cannot be used: it is sealed with the person's age key and has
- *  to be decrypted first, it is another file, its key does not give the
- *  password printed beside it, or it names no key. */
-export type RecoveryKitRefusal = "kit-sealed" | "not-a-kit" | "kit-key-broken" | "kit-no-key";
+/** Why a kit cannot be used: it is sealed with age and came without the
+ *  identity that opens it, it is another file, its key does not give the
+ *  password printed beside it, it names no key, what was pasted is no age
+ *  identity, or the identity is not the one the kit was sealed for. */
+export type RecoveryKitRefusal =
+  | "kit-sealed"
+  | "not-a-kit"
+  | "kit-key-broken"
+  | "kit-no-key"
+  | "kit-identity"
+  | "kit-not-for-identity";
 
 type RecoveryKitAnswer<T> = Omit<OkEnvelope, "code"> & { code?: RecoveryKitRefusal } & T;
 
 /** POST /api/recovery-kit/read: reads the text of a recovery kit and names
- *  the repositories in it. Nothing is stored. */
-export function readRecoveryKit(kit: string): Promise<RecoveryKitAnswer<{ kit?: RecoveryKitFacts }>> {
-  return fetchJSON("/api/recovery-kit/read", { method: "POST", body: JSON.stringify({ kit }) });
+ *  the repositories in it. Nothing is stored. A kit sealed with age needs
+ *  `identity`, the pasted line that starts with AGE-SECRET-KEY-1; the server
+ *  uses it for this one request. */
+export function readRecoveryKit(
+  kit: string,
+  identity?: string,
+): Promise<RecoveryKitAnswer<{ kit?: RecoveryKitFacts }>> {
+  return fetchJSON("/api/recovery-kit/read", { method: "POST", body: JSON.stringify({ kit, identity: identity ?? "" }) });
 }
 
 /** foreignOpen with the other instance's recovery kit in place of its typed
@@ -5307,11 +5326,104 @@ export function foreignOpenWithKit(
   location: string,
   kit: string,
   creds?: CloudCreds,
+  identity?: string,
 ): Promise<RecoveryKitAnswer<ForeignOpenResponse>> {
   return fetchJSON("/api/foreign/open", {
     method: "POST",
-    body: JSON.stringify({ location, kit, creds: creds ?? null }),
+    body: JSON.stringify({ location, kit, identity: identity ?? "", creds: creds ?? null }),
   });
+}
+
+/** One place an emergency tried its key on. "sign-in" is a remote place the
+ *  emergency has no sign-in for; that comes back with the settings backup. */
+export interface EmergencyPlace extends RecoveryKitLocation {
+  state: "readable" | "missing" | "wrong-key" | "unreachable" | "sign-in";
+}
+
+/** Why a step of an emergency was refused: its 30 minutes are over, this
+ *  server has backups of its own, it already uses that key, the key opened
+ *  none of the places, backups were written under the key that was taken
+ *  over, the typed key is not 64 hex characters, or the backup key is locked. */
+export type EmergencyRefusal =
+  | "emergency-ended"
+  | "adopt-own-backups"
+  | "adopt-same-key"
+  | "adopt-nothing-readable"
+  | "adopt-in-use"
+  | "emergency-key"
+  | "backup-key-locked"
+  | RecoveryKitRefusal;
+
+/** The emergency in progress. It lives in the server's memory for 30 minutes
+ *  and ends on finish, on cancel and with a restart. */
+export interface EmergencySession {
+  source: "kit" | "typed" | "group";
+  encrypted: boolean;
+  places: EmergencyPlace[];
+  /** Unix seconds. */
+  expiresAt: number;
+  /** The kit carries the shared sign-in of its remote places, which
+   *  storeEmergencySignIns saves. */
+  cloudSignIn: boolean;
+  rcloneConfig: boolean;
+  /** What adopting would be refused with, absent when it would go through. */
+  refusal?: EmergencyRefusal;
+}
+
+/** The key the backups are under and the emergency in progress. `undoable`
+ *  says a key was taken over and no backup was written under it yet. */
+export interface EmergencyState {
+  backupKey: "own" | "adopted" | "locked";
+  source?: "kit" | "typed" | "group";
+  adoptedAt?: number;
+  undoable: boolean;
+  session?: EmergencySession;
+}
+
+type EmergencyAnswer = Omit<OkEnvelope, "code"> & { code?: EmergencyRefusal; emergency?: EmergencyState };
+
+/** GET /api/emergency. */
+export function getEmergency(): Promise<EmergencyAnswer> {
+  return fetchJSON("/api/emergency");
+}
+
+/** POST /api/emergency/read with a recovery kit: starts an emergency and
+ *  tries the kit's key on every place it names. Nothing is stored. */
+export function readEmergencyKit(kit: string, identity?: string): Promise<EmergencyAnswer> {
+  return fetchJSON("/api/emergency/read", { method: "POST", body: JSON.stringify({ kit, identity: identity ?? "" }) });
+}
+
+/** POST /api/emergency/read with a typed APP_KEY and the places to try it
+ *  on: folders below the host mount or restic addresses, with their sign-in. */
+export function readEmergencyKey(key: string, places: string[], creds?: CloudCreds): Promise<EmergencyAnswer> {
+  return fetchJSON("/api/emergency/read", {
+    method: "POST",
+    body: JSON.stringify({ key, places, creds: creds ?? null }),
+  });
+}
+
+/** POST /api/emergency/adopt: makes the key of the emergency the key of this
+ *  server's backups and sets whether repositories carry a password. */
+export function adoptEmergencyKey(): Promise<EmergencyAnswer> {
+  return fetchJSON("/api/emergency/adopt", { method: "POST" });
+}
+
+/** POST /api/emergency/sign-ins: saves the shared cloud sign-in and the
+ *  rclone config the kit carries. */
+export function storeEmergencySignIns(): Promise<EmergencyAnswer> {
+  return fetchJSON("/api/emergency/sign-ins", { method: "POST" });
+}
+
+/** POST /api/emergency/finish: ends the emergency and keeps what it took
+ *  over. */
+export function finishEmergency(): Promise<EmergencyAnswer> {
+  return fetchJSON("/api/emergency/finish", { method: "POST" });
+}
+
+/** DELETE /api/emergency: ends the emergency and puts the server back under
+ *  its own key, refused with "adopt-in-use" once backups were written. */
+export function undoEmergency(): Promise<EmergencyAnswer> {
+  return fetchJSON("/api/emergency", { method: "DELETE" });
 }
 
 /** POST /api/foreign/close — drop the session immediately (call on

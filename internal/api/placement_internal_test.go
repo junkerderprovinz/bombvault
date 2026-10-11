@@ -262,6 +262,8 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errCopiesToOwnTarget:       "copies-to-own-target",
 		errDestinationHoldsBackups: "destination-holds-backups",
 		errBackupsNotThere:         "backups-not-there",
+		errBackupKeyLocked:         "backup-key-locked",
+		errSettingsOtherKey:        "settings-other-key",
 		errLastCopiesUnnamed:       "last-copies",
 		errNothingToErase:          "nothing-to-erase",
 		errMoveSamePlace:           "move-same-place",

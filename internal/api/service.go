@@ -546,6 +546,16 @@ type Service struct {
 	foreignJanitor    chan struct{}
 	foreignSweepEvery time.Duration
 
+	// emergencyMu guards the emergency in progress, which holds the keys the
+	// person showed and exists in memory alone.
+	emergencyMu sync.Mutex
+	emergency   *emergencySession
+
+	// backupKeyMu guards the backup key as currentBackupKey last read it.
+	backupKeyMu   sync.Mutex
+	backupKeyRead bool
+	backupKeyNow  backupKeyState
+
 	// detectMu guards detectFlight, the single in-flight encryption-detection
 	// pass (internal/api/encryption_detect.go). The Recovery page fires
 	// POST /api/encryption/detect on mount, and one pass can take minutes when a
@@ -1234,7 +1244,7 @@ func (s *Service) ModeFor(settings store.Settings) restic.Mode {
 	m := restic.Mode{Env: cloudEnv(c), StorageClass: c.S3StorageClass}
 	if settings.EncryptionEnabled {
 		m.Encrypted = true
-		m.Password = restickey.Derive(s.cfg.AppKey)
+		m.Password = s.backupPassword()
 	}
 	return m
 }
@@ -4985,6 +4995,11 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 // ensureRepo is EnsureRepo, and also reports whether the repository opened at
 // the end, which a caller about to save a pointer to it needs to know.
 func (s *Service) ensureRepo(ctx context.Context, repo string, mode restic.Mode) (bool, error) {
+	// Under a locked backup key the repository would be probed, and a missing
+	// one created, with a password that is not its own.
+	if _, err := s.backupKey(); err != nil {
+		return false, err
+	}
 	if s.engine.RepoOpens(ctx, repo, mode) {
 		s.markRepoEstablished(repo) // remember it for the not-mounted guard (#55)
 		return true, nil
@@ -5140,7 +5155,7 @@ func (s *Service) oppositeMode(mode restic.Mode) restic.Mode {
 	o := mode
 	o.Encrypted = !mode.Encrypted
 	if o.Encrypted {
-		o.Password = restickey.Derive(s.cfg.AppKey)
+		o.Password = s.backupPassword()
 	} else {
 		o.Password = ""
 	}
@@ -7170,7 +7185,7 @@ func (s *Service) writeDefToStorage(settings store.Settings, name, itemRepo stri
 	if err := ensureDefsDir(dir); err != nil {
 		return fmt.Errorf("ensure defs dir: %w", err)
 	}
-	enc, err := secret.Encrypt(s.cfg.AppKey, defJSON)
+	enc, err := s.sealDefinition(defJSON)
 	if err != nil {
 		return fmt.Errorf("encrypt definition: %w", err)
 	}
@@ -7263,7 +7278,7 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 		if err != nil {
 			return nil, containerDefinition{}, fmt.Errorf("no stored definition: %w", err)
 		}
-		plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+		plain, err := s.openDefinition(enc)
 		if err != nil {
 			return nil, containerDefinition{}, fmt.Errorf("the definition does not decrypt (wrong APP_KEY?): %w", err)
 		}
@@ -7513,7 +7528,7 @@ func (s *Service) writeVMDefToStorage(settings store.Settings, name, itemRepo st
 	if err := ensureDefsDir(dir); err != nil {
 		return fmt.Errorf("ensure vm defs dir: %w", err)
 	}
-	enc, err := secret.Encrypt(s.cfg.AppKey, defJSON)
+	enc, err := s.sealDefinition(defJSON)
 	if err != nil {
 		return fmt.Errorf("encrypt vm definition: %w", err)
 	}
@@ -7586,7 +7601,7 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult,
 		if err != nil {
 			return nil, vmDefinition{}, fmt.Errorf("no stored definition: %w", err)
 		}
-		plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+		plain, err := s.openDefinition(enc)
 		if err != nil {
 			return nil, vmDefinition{}, fmt.Errorf("the definition does not decrypt (wrong APP_KEY?): %w", err)
 		}
@@ -15387,6 +15402,11 @@ func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) 
 		_ = s.store.FinishRun(runID, "failed", "", 0, rerr.Error())
 		return rerr
 	}
+	if terr := s.takeOverStagedSettings(ctx); terr != nil {
+		_ = os.RemoveAll(root)
+		_ = s.store.FinishRun(runID, "failed", "", 0, terr.Error())
+		return terr
+	}
 	if merr := selfrestore.WriteMarker(s.cfg.DataDir); merr != nil {
 		_ = s.store.FinishRun(runID, "failed", "", 0, merr.Error())
 		return merr
@@ -17910,6 +17930,11 @@ func (s *Service) RecoveryKit() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("read settings: %w", err)
 	}
+	key, err := s.backupKey()
+	if err != nil {
+		return "", err
+	}
+	adopted := key != s.cfg.AppKey
 
 	// Resolve each domain's local + off-site repo locations from the configured
 	// settings (the same resolution the engine uses), so the kit names the real
@@ -17942,11 +17967,18 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("> Anyone with this file can read and restore your backups.\n\n")
 
 	w("## Encryption\n\n")
-	if settings.EncryptionEnabled {
-		password := restickey.Derive(s.cfg.AppKey)
+	if settings.EncryptionEnabled && adopted {
+		w("Status: ENABLED\n\n")
+		w("Backup key (taken over from the server these backups were first made on; a new\n")
+		w("BombVault reads it from this kit):\n\n")
+		w("    %s\n\n", key)
+		w("restic repository password (derived from the backup key; use this with plain restic):\n\n")
+		w("    %s\n\n", restickey.Derive(key))
+	} else if settings.EncryptionEnabled {
+		password := restickey.Derive(key)
 		w("Status: ENABLED\n\n")
 		w("APP_KEY (the master key — recreate the BombVault container with this exact value):\n\n")
-		w("    %s\n\n", s.cfg.AppKey)
+		w("    %s\n\n", key)
 		w("restic repository password (derived from APP_KEY; use this with plain restic):\n\n")
 		w("    %s\n\n", password)
 	} else {
@@ -17954,6 +17986,19 @@ func (s *Service) RecoveryKit() (string, error) {
 		w("The repositories are created WITHOUT a password (restic --insecure-no-password).\n")
 		w("There is no key to lose; the value of this kit is the repository locations and\n")
 		w("the restore instructions below.\n\n")
+		w("BombVault still seals the definitions it recreates containers and VMs from.\n")
+		w("Restoring those on another server needs this key:\n\n")
+		if adopted {
+			w("Backup key (the key the definitions are sealed with):\n\n")
+		} else {
+			w("APP_KEY (the key the definitions are sealed with):\n\n")
+		}
+		w("    %s\n\n", key)
+	}
+	if adopted {
+		w("APP_KEY of this server (it seals the settings inside the settings backup; a new\n")
+		w("BombVault needs it only to bring those settings back):\n\n")
+		w("    %s\n\n", s.cfg.AppKey)
 	}
 
 	w("## Repository locations\n\n")
@@ -18123,7 +18168,7 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("1. Install restic (https://restic.net) on any machine that can reach the repository.\n")
 	if settings.EncryptionEnabled {
 		w("2. Set the repository password from this kit:\n\n")
-		w("       export RESTIC_PASSWORD='%s'\n\n", restickey.Derive(s.cfg.AppKey))
+		w("       export RESTIC_PASSWORD='%s'\n\n", restickey.Derive(key))
 	} else {
 		w("2. The repositories have no password — pass --insecure-no-password to every\n")
 		w("   restic command below (e.g. `restic -r <repo> --insecure-no-password snapshots`).\n\n")

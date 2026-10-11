@@ -7558,7 +7558,7 @@ func TestRecoveryKit(t *testing.T) {
 		}
 	})
 
-	t.Run("encryption off: contains the no-password note, no key", func(t *testing.T) {
+	t.Run("encryption off: contains the no-password note and the key definitions are sealed with", func(t *testing.T) {
 		dir := t.TempDir()
 		appKey := strings.Repeat("b", 64)
 		cfg := config.Config{AppKey: appKey, DataDir: dir, HostMountRoot: dir}
@@ -7579,8 +7579,11 @@ func TestRecoveryKit(t *testing.T) {
 		if !strings.Contains(kit, "insecure-no-password") {
 			t.Error("kit must explain the no-password (--insecure-no-password) mode when encryption is off")
 		}
-		if strings.Contains(kit, appKey) {
-			t.Error("kit must NOT expose the APP_KEY when encryption is off (no key in play)")
+		if !strings.Contains(kit, appKey) {
+			t.Error("the kit lacks the APP_KEY that container and VM definitions are sealed with")
+		}
+		if strings.Contains(kit, restickey.Derive(appKey)) {
+			t.Error("the kit names a restic password although the repositories have none")
 		}
 		if !strings.Contains(kit, "restic restore") {
 			t.Error("kit must still contain the manual `restic restore` step")
