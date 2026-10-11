@@ -339,6 +339,7 @@ export function useSettingsStore() {
   type MergedAutoSaveKey =
     | "pruneImageAfterUpdate"
     | "reconcileUnraidUpdateStatus"
+    | "updateContainersAfterBackup"
     | "exportEncryptEnabled"
     | "encryptionEnabled";
   const [mergedFieldBusy, setMergedFieldBusy] = useState<Partial<Record<MergedAutoSaveKey, boolean>>>({});

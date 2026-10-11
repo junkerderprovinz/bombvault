@@ -242,6 +242,16 @@ describe("scheduled entries", () => {
     await waitFor(() => expect(patches).toEqual([["z1", { enabled: true }]]));
   });
 
+  it("updates every container after its backup once switched on", async () => {
+    settingsOnServer = baseSettings({ containersEnabled: true, updateContainersAfterBackup: false });
+    await renderPage();
+    const updates = card("schedules.updates");
+    const toggle = within(updates).getByRole("switch", { name: en["settings.updateEveryContainer"] });
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(toggle);
+    await waitFor(() => expect(putBodies.at(-1)?.updateContainersAfterBackup).toBe(true));
+  });
+
   it("saves the switch for own plans per entry", async () => {
     await renderPage();
     fireEvent.click(screen.getByRole("switch", { name: en["schedules.perItem"] }));

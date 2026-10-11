@@ -52,6 +52,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     patchZFSDataset: vi.fn(),
     setVMBlockBackup: vi.fn(),
     setUpdateAfterBackup: vi.fn(),
+    followUpdateAfterBackup: vi.fn(),
     putSettings: vi.fn(),
   };
 });
@@ -74,6 +75,7 @@ const setScheduleCadence = vi.mocked(api.setScheduleCadence);
 const patchZFSDataset = vi.mocked(api.patchZFSDataset);
 const setVMBlockBackup = vi.mocked(api.setVMBlockBackup);
 const setUpdateAfterBackup = vi.mocked(api.setUpdateAfterBackup);
+const followUpdateAfterBackup = vi.mocked(api.followUpdateAfterBackup);
 const putSettings = vi.mocked(api.putSettings);
 
 const { BackupEntryPage } = await import("./BackupEntry");
@@ -137,7 +139,7 @@ beforeEach(() => {
   vi.mocked(api.getZFSReplica).mockRejectedValue(new Error("no replica"));
   setItemPlacement.mockResolvedValue({ ok: true, placement: PLACEMENT } as never);
   vi.mocked(api.previewItemPlacement).mockResolvedValue({ ok: true, added: [] });
-  for (const call of [setInclude, patchZFSDataset, setVMBlockBackup, setUpdateAfterBackup, putSettings]) {
+  for (const call of [setInclude, patchZFSDataset, setVMBlockBackup, setUpdateAfterBackup, followUpdateAfterBackup, putSettings]) {
     call.mockResolvedValue({ ok: true } as never);
   }
 });
@@ -345,6 +347,24 @@ describe("a container's switches", () => {
     await renderSettings("container/immich");
     await press(within(card(en["entry.settings.container"])).getByRole("switch", { name: en["update.afterBackup"] }));
     expect(setUpdateAfterBackup).toHaveBeenCalledWith("immich", true);
+  });
+
+  it("follow the switch for every container and say so", async () => {
+    serveEntries(mocks, { containers: [containerView({ updateAfterBackup: true, updateAfterBackupOwn: false })] });
+    await renderSettings("container/immich");
+    const container = within(await waitFor(() => card(en["entry.settings.container"])));
+    expect(container.getByRole("switch", { name: en["update.afterBackup"] }).getAttribute("aria-checked")).toBe("true");
+    expect(container.getByText(en["update.followsSchedule"])).toBeTruthy();
+    expect(container.queryByRole("button", { name: en["update.useDefault"] })).toBeNull();
+  });
+
+  it("keep a choice of their own until it is handed back to the switch", async () => {
+    serveEntries(mocks, { containers: [containerView({ updateAfterBackup: false, updateAfterBackupOwn: true })] });
+    await renderSettings("container/immich");
+    const container = within(await waitFor(() => card(en["entry.settings.container"])));
+    expect(container.getByText(en["update.ownChoice"])).toBeTruthy();
+    await press(container.getByRole("button", { name: en["update.useDefault"] }));
+    expect(followUpdateAfterBackup).toHaveBeenCalledWith("immich");
   });
 });
 

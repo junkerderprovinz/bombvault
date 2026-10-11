@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { setUpdateAfterBackup } from "../../lib/api";
+import { followUpdateAfterBackup, setUpdateAfterBackup } from "../../lib/api";
+import { Button } from "../Button";
+import { IconRefresh } from "../glyphs";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { ToggleRow } from "../../pages/settings/shared";
 import { relativeTime } from "../../lib/reltime";
@@ -7,14 +9,17 @@ import { useToast } from "../../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
-// UpdateAfterBackupRow toggles the per-container "update after successful
-// backup" opt-in: after a backup, BombVault pulls the image and recreates the
-// container only when a newer image exists, with the fresh backup as the
-// safety net. The explanation sits in the hint bubble; the result of the last
-// check is status and stays visible under the toggle.
+// UpdateAfterBackupRow is a container's "update after successful backup":
+// after a backup, BombVault pulls the image and recreates the container only
+// when a newer image exists, with the fresh backup as the safety net. The
+// switch shows what happens; until the container has a choice of its own it
+// follows the switch for every container on the Schedules page. The result of
+// the last check is status and stays visible under the toggle.
 export function UpdateAfterBackupRow({
   name,
   initial,
+  own: initialOwn,
+  onFollow,
   lastUpdateCheck,
   lastUpdateResult,
   databaseWarn,
@@ -22,6 +27,10 @@ export function UpdateAfterBackupRow({
 }: {
   name: string;
   initial: boolean;
+  own: boolean;
+  /** Reloads the container after it hands its choice back, since the switch
+   *  for every container decides what it then shows. */
+  onFollow: () => void;
   lastUpdateCheck: number;
   lastUpdateResult: string;
   /** What an update means for a recognised database, whose major version it
@@ -30,23 +39,44 @@ export function UpdateAfterBackupRow({
   t: T;
 }) {
   const [enabled, setEnabled] = useState(initial);
+  const [own, setOwn] = useState(initialOwn);
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
   const [shake, setShake] = useState(0);
   useEffect(() => setEnabled(initial), [initial]);
+  useEffect(() => setOwn(initialOwn), [initialOwn]);
 
   async function handle(next: boolean) {
     setBusy(true);
     try {
       const res = await setUpdateAfterBackup(name, next);
-      if (res.ok) setEnabled(next);
-      else {
+      if (res.ok) {
+        setEnabled(next);
+        setOwn(true);
+      } else {
         push(res.error ?? t("containers.updateSettingFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("containers.updateSettingFailed"), "fail");
       setShake((n) => n + 1);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function follow() {
+    setBusy(true);
+    try {
+      const res = await followUpdateAfterBackup(name);
+      if (res.ok) {
+        setOwn(false);
+        onFollow();
+      } else {
+        push(res.error ?? t("containers.updateSettingFailed"), "fail");
+      }
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("containers.updateSettingFailed"), "fail");
     } finally {
       setBusy(false);
     }
@@ -65,6 +95,19 @@ export function UpdateAfterBackupRow({
         disabled={busy}
         shakeNonce={shake}
       />
+      <p className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-xs text-carbon-textMuted">
+        {own ? t("update.ownChoice") : t("update.followsSchedule")}
+        {own && (
+          <Button
+            label={t("update.useDefault")}
+            labelKey="update.useDefault"
+            glyph={<IconRefresh />}
+            tone="neutral"
+            onClick={() => void follow()}
+            disabled={busy}
+          />
+        )}
+      </p>
       {/* An up-to-date check records no run, so this line is the only place
           its result shows. */}
       {enabled && lastUpdateCheck > 0 && (
