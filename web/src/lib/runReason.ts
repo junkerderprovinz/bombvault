@@ -10,7 +10,14 @@
 
 import { createElement, Fragment, type ReactElement, type ReactNode } from "react";
 import { dumpLeftRunning, ORPHAN_NOTE } from "./dbdump";
+import { DEPOSIT_CODE_KEY } from "./depositCodes";
+import { refusalKey } from "./emergency";
 import type { TranslationKey, useT } from "./i18n";
+
+/** The code a refused key run stores, as its sentence. */
+function keyRunKey(code: string): TranslationKey | undefined {
+  return refusalKey(code) ?? (code in DEPOSIT_CODE_KEY ? DEPOSIT_CODE_KEY[code as keyof typeof DEPOSIT_CODE_KEY] : undefined);
+}
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -202,6 +209,11 @@ export function runReasonParts(raw: string | null | undefined, t: T): RunReasonP
     };
   }
   if (!text) return { head: "", detail: "" };
+
+  // A refused run about a key stores its code, and an older one the server's
+  // sentence, which the lookups below leave as it is.
+  const keyRefusal = keyRunKey(text);
+  if (keyRefusal) return { head: t(keyRefusal), detail: "" };
 
   const stall = stallOf(text);
   if (stall) {
