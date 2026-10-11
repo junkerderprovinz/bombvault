@@ -3619,12 +3619,12 @@ body {
   background: color-mix(
     in srgb,
     var(--status-ok-bg) calc(var(--done) * 100%),
-    color-mix(in srgb, var(--accent) calc(var(--on) * 100%), var(--carbon-surface2))
+    color-mix(in srgb, var(--pic) calc(var(--on) * 100%), var(--carbon-surface2))
   );
   color: color-mix(
     in srgb,
     var(--status-ok-text) calc(var(--done) * 100%),
-    color-mix(in srgb, var(--accent-contrast) calc(var(--on) * 100%), var(--carbon-text-sub))
+    color-mix(in srgb, var(--carbon-surface) calc(var(--on) * 100%), var(--carbon-text-sub))
   );
 }
 

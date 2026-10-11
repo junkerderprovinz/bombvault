@@ -327,7 +327,8 @@ function RestoreForm({
   const wheres = wheresFor(kind, what, facts);
   const where = wherePick !== null && wheres.includes(wherePick) ? wherePick : defaultWhere(wheres, hasOriginal);
   const replaces = where === "replace" && hasOriginal;
-  const canBackUpFirst = where !== undefined && backsUpFirst(kind, what, where, hasOriginal);
+  const replaceBacksUp = backsUpFirst(kind, what, "replace", hasOriginal);
+  const canBackUpFirst = where === "replace" && replaceBacksUp;
   const fileSnapshot = zfsItem ? (member?.snapshotId ?? "") : snapshotId;
 
   const [files, setFiles] = useState<FileEntry[]>([]);
@@ -650,7 +651,7 @@ function RestoreForm({
         if (!hasOriginal) return [t("restore.mode.inPlace"), t("restoreCheck.def.missing")];
         return [
           t("restoreWindow.replace"),
-          t(canBackUpFirst && backupFirst ? "restoreWindow.replaceSubBackup" : "restoreWindow.replaceSub"),
+          t(replaceBacksUp && backupFirst ? "restoreWindow.replaceSubBackup" : "restoreWindow.replaceSub"),
         ];
       case "folder":
         return [t("restore.mode.toFolder"), t("restoreWindow.folderSub")];
@@ -890,7 +891,7 @@ function RestoreForm({
                         on={w === where}
                         title={optionTitle}
                         sub={sub}
-                        kept={canBackUpFirst && backupFirst}
+                        kept={replaceBacksUp && backupFirst}
                         disabled={false}
                         onPick={() => {
                           if (w === "newDataset" && newDataset === "") setNewDataset(`${dataset}-restored`);

@@ -284,6 +284,7 @@ const TIMELINE_DOMAIN: Record<string, string> = {
   containers: "container",
   vms: "vm",
   files: "files",
+  zfs: "zfs",
   flash: "flash",
   config: "config",
 };
@@ -455,7 +456,7 @@ test("the Backups tab shows the history, the storage locations and the list a re
   await rows.first().click();
   const restore = page.getByRole("dialog", { name: "immich wiederherstellen" });
   await expect(restore).toBeVisible();
-  await restore.getByRole("button", { name: "Schließen" }).click();
+  await restore.getByRole("button", { name: "Abbrechen" }).click();
   await expect(restore).toBeHidden();
 });
 

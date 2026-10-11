@@ -74,7 +74,6 @@ const testMatch = [
   "list-ergonomics-containers.spec.ts",
   "run-detail-visibility.spec.ts",
   "destination-vms.spec.ts",
-  "recovery-phone.spec.ts",
   "files-phone.spec.ts",
   "flash-phone.spec.ts",
   "config-phone.spec.ts",
@@ -93,6 +92,7 @@ const testMatch = [
   "storage.spec.ts",
   "backup-entry.spec.ts",
   "overview.spec.ts",
+  "restore.spec.ts",
 ];
 
 for (const spec of testMatch) {

@@ -113,7 +113,6 @@ export default [
             "Dashboard.tsx": "PAGE_SHELL_RESPONSIVE",
             "Containers.tsx": "PAGE_SHELL_RESPONSIVE",
             "VMs.tsx": "PAGE_SHELL_RESPONSIVE",
-            "Recovery.tsx": "PAGE_SHELL_RESPONSIVE",
             "Restore.tsx": "PAGE_SHELL_RESPONSIVE",
             "Files.tsx": "PAGE_SHELL_RESPONSIVE",
             "Flash.tsx": "PAGE_SHELL_RESPONSIVE",

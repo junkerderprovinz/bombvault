@@ -17,11 +17,12 @@ const WEB = join(SRC, "..");
 
 const router = readFileSync(join(HERE, "router.tsx"), "utf8");
 
-/** `<Route path="/x" element={<Fleet />} />` → "Fleet". `<Navigate>` is not a page. */
+/** `<Route path="/x" element={<Fleet />} />` → "Fleet". `<Navigate>` and the
+ *  redirect that keeps a link's query are not pages. */
 function routedComponents(): string[] {
   const names = new Set<string>();
   for (const m of router.matchAll(/element=\{<\s*([A-Za-z][A-Za-z0-9_]*)\b/g)) {
-    if (m[1] === "Navigate" || m[1] === "Layout") continue;
+    if (m[1] === "Navigate" || m[1] === "Layout" || m[1] === "MovedTo") continue;
     names.add(m[1]);
   }
   return [...names].sort();

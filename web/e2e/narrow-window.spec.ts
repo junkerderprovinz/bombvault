@@ -15,7 +15,7 @@ test.afterEach(async ({ page }) => {
 
 const WIDTHS = [780, 900, 1024, 1400];
 
-const PAGES = ["/dashboard", "/anomalies", "/containers", "/vms", "/flash", "/config", "/files", "/zfs", "/instances", "/recovery", "/settings"];
+const PAGES = ["/dashboard", "/anomalies", "/containers", "/vms", "/flash", "/config", "/files", "/zfs", "/instances", "/restore", "/settings"];
 
 const FILE_SET = {
   id: "a1".padEnd(32, "0"),

@@ -76,7 +76,16 @@ function EntryRestore({
 }
 
 /** The backups of the picked entry, and the window a restore of one opens. */
-function PickedEntry({ item, hueIndex }: { item: BackupItem; hueIndex: number }) {
+function PickedEntry({
+  item,
+  reveal,
+  hueIndex,
+}: {
+  item: BackupItem;
+  /** The entry was picked by hand, so its card comes into view. */
+  reveal: boolean;
+  hueIndex: number;
+}) {
   const { t, lang } = useT();
   const navigate = useNavigate();
   const { list: openFindings } = useOpenAnomalies();
@@ -94,10 +103,10 @@ function PickedEntry({ item, hueIndex }: { item: BackupItem; hueIndex: number })
   const picked = rows.findIndex((row) => row.key === pick);
   const chosen = picked >= 0 ? picked : recommendation.index;
 
-  // The card of another entry may stand below the fold.
+  // jsdom has no layout to scroll.
   useEffect(() => {
-    card.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
-  }, []);
+    if (reveal) card.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+  }, [reveal]);
 
   const tagsOf = (row: TimelineRow) =>
     item.kind === "container"
@@ -403,7 +412,7 @@ export function Restore() {
                 {shown.length === 0 && <p className="text-sm text-carbon-textMuted">{t("restorePage.noMatch")}</p>}
               </div>
 
-              {picked && <PickedEntry key={itemId(picked)} item={picked} hueIndex={nextHue()} />}
+              {picked && <PickedEntry key={itemId(picked)} item={picked} reveal={pick !== null} hueIndex={nextHue()} />}
             </>
           )}
         </>

@@ -58,7 +58,7 @@ const ROUTES = [
   "/files",
   "/zfs",
   "/config",
-  "/recovery",
+  "/restore",
   "/instances",
   "/receiver",
   "/fleet",
