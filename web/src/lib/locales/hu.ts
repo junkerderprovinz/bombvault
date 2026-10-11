@@ -3710,8 +3710,6 @@ const hu: Partial<Translations> = {
   "entry.list.empty": "Még nincs biztonsági mentés. Vedd fel a(z) {name} elemet az ütemezésbe, vagy mentsd most.",
   "entry.list.restoreFrom": "Visszaállítás innen: {place}",
   "entry.restore.title": "{name} visszaállítása",
-  "entry.restore.sub": "Biztonsági mentés {when} · {source}",
-  "entry.config.restoreText": "Az önmentést a vészvarázslóval állítod vissza. A BombVault újraindul, hogy a beállítások érvénybe lépjenek, ezért a többi vészlépés mellett található.",
   "entry.config.startRecovery": "Vészvarázsló indítása",
   "entry.places.count": "{n} biztonsági mentés",
   "entry.settings.schedule": "Ütemezés és cél",

@@ -3707,8 +3707,6 @@ const pt: Partial<Translations> = {
   "entry.list.empty": "Ainda não há backups. Adicione {name} ao agendamento ou faça um backup agora.",
   "entry.list.restoreFrom": "Restaurar a partir de {place}",
   "entry.restore.title": "Restaurar {name}",
-  "entry.restore.sub": "Backup {when} · {source}",
-  "entry.config.restoreText": "O auto-backup recupera-se pelo assistente de emergência. O BombVault reinicia para que as definições tenham efeito, por isso fica junto dos restantes passos de emergência.",
   "entry.config.startRecovery": "Iniciar o assistente de emergência",
   "entry.places.count": "one={n} backup|many={n} de backups|other={n} backups",
   "entry.settings.schedule": "Agendamento e destino",

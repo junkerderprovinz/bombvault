@@ -3715,8 +3715,6 @@ const id: Partial<Translations> = {
   "entry.list.empty": "Belum ada cadangan. Tambahkan {name} ke jadwal atau cadangkan sekarang.",
   "entry.list.restoreFrom": "Pulihkan dari {place}",
   "entry.restore.title": "Pulihkan {name}",
-  "entry.restore.sub": "Cadangan {when} · {source}",
-  "entry.config.restoreText": "Cadangan mandiri dipulihkan lewat wizard darurat. BombVault dimulai ulang agar pengaturan berlaku, karena itu letaknya bersama langkah darurat lainnya.",
   "entry.config.startRecovery": "Mulai wizard darurat",
   "entry.places.count": "{n} cadangan",
   "entry.settings.schedule": "Jadwal dan tujuan",

@@ -3715,8 +3715,6 @@ const lt: Partial<Translations> = {
   "entry.list.empty": "Atsarginių kopijų dar nėra. Įtraukite {name} į tvarkaraštį arba darykite kopiją dabar.",
   "entry.list.restoreFrom": "Atkurti iš {place}",
   "entry.restore.title": "Atkurti {name}",
-  "entry.restore.sub": "Atsarginė kopija {when} · {source}",
-  "entry.config.restoreText": "Savarankišką atsargą atkuriate per avarinį vedlį. BombVault persikrauna, kad nustatymai įsigaliotų, todėl ji yra kartu su kitais avariniais žingsniais.",
   "entry.config.startRecovery": "Paleisti avarinį vedlį",
   "entry.places.count": "one={n} kopija|few={n} kopijos|many={n} kopijos|other={n} kopijų",
   "entry.settings.schedule": "Tvarkaraštis ir paskirties vieta",

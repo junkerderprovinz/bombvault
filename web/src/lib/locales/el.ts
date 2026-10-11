@@ -3707,8 +3707,6 @@ const el: Partial<Translations> = {
   "entry.list.empty": "Δεν υπάρχουν ακόμη αντίγραφα. Προσθέστε το {name} στο χρονοδιάγραμμα ή δημιουργήστε αντίγραφο τώρα.",
   "entry.list.restoreFrom": "Επαναφορά από {place}",
   "entry.restore.title": "Επαναφορά του {name}",
-  "entry.restore.sub": "Αντίγραφο {when} · {source}",
-  "entry.config.restoreText": "Το αυτο-αντίγραφο επαναφέρεται με τον οδηγό έκτακτης ανάγκης. Το BombVault επανεκκινείται ώστε να ισχύσουν οι ρυθμίσεις, γι' αυτό βρίσκεται μαζί με τα υπόλοιπα βήματα έκτακτης ανάγκης.",
   "entry.config.startRecovery": "Εκκίνηση του οδηγού έκτακτης ανάγκης",
   "entry.places.count": "one={n} αντίγραφο|other={n} αντίγραφα",
   "entry.settings.schedule": "Χρονοδιάγραμμα και προορισμός",

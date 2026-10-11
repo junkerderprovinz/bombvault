@@ -3715,8 +3715,6 @@ const hr: Partial<Translations> = {
   "entry.list.empty": "Još nema sigurnosnih kopija. Dodajte {name} u raspored ili napravite kopiju odmah.",
   "entry.list.restoreFrom": "Vrati iz {place}",
   "entry.restore.title": "Vrati {name}",
-  "entry.restore.sub": "Sigurnosna kopija {when} · {source}",
-  "entry.config.restoreText": "Samostalnu sigurnosnu kopiju vraćate hitnim čarobnjakom. BombVault se ponovno pokreće da bi postavke stupile na snagu, zato je zajedno s ostalim hitnim koracima.",
   "entry.config.startRecovery": "Pokreni hitni čarobnjak",
   "entry.places.count": "one={n} sigurnosna kopija|few={n} sigurnosne kopije|other={n} sigurnosnih kopija",
   "entry.settings.schedule": "Raspored i odredište",

@@ -1,0 +1,1027 @@
+// The one window that restores an entry of any kind. It asks in the order a
+// restore is decided: which backup and from which storage location, what of
+// it, and where to. The check and what will happen stand above the button,
+// and a target that replaces the original asks for its name first.
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  flashDownloadURL,
+  listDbDumps,
+  listSnapshotFiles,
+  listSnapshotFilesFileSet,
+  listSnapshotFilesZFS,
+  zfsHostDatasets,
+  zfsRestorePoints,
+  type DBDumpView,
+  type FileEntry,
+  type ZFSHostDataset,
+  type ZFSRestorePoint,
+} from "../../lib/api";
+import { ENTRY_KIND } from "../../lib/backupEntry";
+import { isGone, itemProgressKey } from "../../lib/backupList";
+import { useBackupWatch } from "../../lib/backupWatch";
+import { copyText } from "../../lib/clipboard";
+import { ENGINE_NAMES, pairsWith } from "../../lib/dbdump";
+import type { Entry } from "../../lib/entry";
+import { loadErrorMessage } from "../../lib/errors";
+import { useT, type TranslationKey } from "../../lib/i18n";
+import { tLtr } from "../../lib/ltrFragments";
+import { placementChanged } from "../../lib/placementEvents";
+import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
+import { formatRecent } from "../../lib/reltime";
+import {
+  backsUpFirst,
+  defaultWhere,
+  findingsOf,
+  recommend,
+  recommendationWhy,
+  requestedRow,
+  restoreFolderFor,
+  whatsFor,
+  wheresFor,
+  type RestoreWhat,
+  type RestoreWhere,
+} from "../../lib/restorePlan";
+import { SNAPSHOT_MISSING, autoMark, newestId, sourceOfPlace } from "../../lib/timeline";
+import { useToast } from "../../lib/toast";
+import { useOpenAnomalies } from "../../lib/useAnomalies";
+import { useConfirm } from "../../lib/useConfirm";
+import { restoreBlockReason, useRestoreCheck } from "../../lib/useRestoreCheck";
+import { zfsCodeSentence, zfsFixKey, zfsMemberKey } from "../../lib/zfsCodes";
+import { InstanceWindow } from "../../pages/instances/InstanceWindow";
+import { ToggleRow } from "../../pages/settings/shared";
+import { KIND_LABEL } from "../backups/kinds";
+import { Badge } from "../Badge";
+import { Button } from "../Button";
+import { CheckDraw } from "../CheckDraw";
+import { usePlaceLabel, type TimelineState } from "../entry/BackupPlaces";
+import { FlashPluginList } from "../FlashPluginList";
+import { FolderBrowser } from "../FolderBrowser";
+import { InfoBubble } from "../InfoBubble";
+import { IconCheck, IconCopy, IconDownload, IconRecovery, IconRestore, IconTrash } from "../navGlyphs";
+import { SnapshotTags } from "../RestorePanel";
+import { Selector } from "../Selector";
+import { SelectField } from "../SelectField";
+import { SnapshotFileTree } from "../SnapshotFileTree";
+import { Rows, SettingRow } from "../storage/rows";
+import { TimelineDeleteDialog } from "../timeline/TimelineDeleteDialog";
+import { ZFSPropertyList } from "../zfs/ZFSPropertyList";
+import { PlaceChecks } from "./PlaceChecks";
+import { DatabaseDumpList } from "./DatabaseDumpList";
+import { MissingRestorePoint } from "./MissingRestorePoint";
+import { RestoreCheckPanel } from "./RestoreCheckPanel";
+import { checkRequest, startRestore, type RestoreChoice } from "./restoreJob";
+import { RestoreProgress } from "./RestoreProgress";
+import { TargetScene } from "./TargetScene";
+import { WhatHappens } from "./WhatHappens";
+
+/** What a link or a click asks the window to open on. */
+export interface RestoreAsk {
+  /** The backup: its row or one of its snapshots. Without one the
+   *  recommended backup is taken. */
+  snapshot?: string;
+  /** When that backup was taken, in Unix seconds. */
+  at?: number;
+  /** The storage location a click on its mark asked for. */
+  place?: string;
+  /** The dataset of a ZFS entry the request is about. */
+  dataset?: string;
+}
+
+/** Where the emergency window opens on the settings of BombVault itself. */
+export const SETTINGS_RESCUE_PATH = "/restore?emergency=settings";
+
+/** ZFS: the member states that make writing into the live dataset impossible. */
+const NOT_WRITABLE = new Set(["gone", "not-mounted", "not-visible"]);
+
+const WHOLE_TREE = "";
+
+// The server sends nothing until it has packed the whole backup, and the
+// browser has no event to wait for, so the button spins for a guessed while.
+const DOWNLOAD_PREPARING_MS = 20_000;
+
+const WHAT_LABEL: Record<RestoreWhat, TranslationKey> = {
+  all: "restoreWindow.all",
+  files: "restore.mode.files",
+  dumps: "dbdump.listTitle",
+  plugins: "flash.plugins",
+};
+
+/** SelfRestoreNote stands in for the window on the self-backup: the running
+ *  instance does not overwrite its own settings. */
+function SelfRestoreNote({ onClose }: { onClose: () => void }) {
+  const { t } = useT();
+  const navigate = useNavigate();
+  return (
+    <InstanceWindow
+      title={t("restoreWindow.self.title")}
+      facts={t("restoreWindow.self.text")}
+      onClose={onClose}
+      footer={
+        <>
+          <Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={onClose} />
+          <Button
+            label={t("entry.config.startRecovery")}
+            labelKey={null}
+            glyph={<IconRecovery />}
+            tone="accent"
+            onClick={() => {
+              onClose();
+              navigate(SETTINGS_RESCUE_PATH);
+            }}
+          />
+        </>
+      }
+    >
+      {null}
+    </InstanceWindow>
+  );
+}
+
+function WhereOption({
+  where,
+  on,
+  title,
+  sub,
+  kept,
+  disabled,
+  onPick,
+}: {
+  where: RestoreWhere;
+  on: boolean;
+  title: string;
+  sub: string;
+  kept: boolean;
+  disabled: boolean;
+  onPick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={on}
+      disabled={disabled}
+      onClick={onPick}
+      className={`flex items-center gap-3 rounded-control bg-carbon-surface2 p-3 text-start ring-2 ring-inset transition-colors hover:bg-carbon-surface3 ${
+        on ? "ring-accent" : "ring-transparent"
+      }`}
+    >
+      <span
+        className={`flex h-[18px] w-[18px] flex-none items-center justify-center rounded-pill border-2 ${
+          on ? "border-accent" : "border-carbon-textMuted"
+        }`}
+      >
+        {on && <span className="h-2 w-2 rounded-pill bg-accent" />}
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{title}</span>
+        <span className="text-xs text-carbon-textMuted wrap-anywhere">{sub}</span>
+      </span>
+      <TargetScene where={where} playing={on} kept={kept} />
+    </button>
+  );
+}
+
+/**
+ * RestoreWindow restores one entry from one of its backups. It reads nothing
+ * about the entry itself: the caller hands it the entry and its timeline.
+ */
+export function RestoreWindow({
+  entry,
+  name,
+  timeline,
+  ask = {},
+  deletable = false,
+  onClose,
+}: {
+  entry: Entry;
+  /** The entry's name as the page shows it. */
+  name: string;
+  timeline: TimelineState;
+  ask?: RestoreAsk;
+  /** Also offers to delete the backup, as the list of an entry's backups does. */
+  deletable?: boolean;
+  onClose: () => void;
+}) {
+  if (entry.detail.kind === "config") return <SelfRestoreNote onClose={onClose} />;
+  return <RestoreForm entry={entry} name={name} timeline={timeline} ask={ask} deletable={deletable} onClose={onClose} />;
+}
+
+function RestoreForm({
+  entry,
+  name,
+  timeline,
+  ask,
+  deletable,
+  onClose,
+}: {
+  entry: Entry;
+  name: string;
+  timeline: TimelineState;
+  ask: RestoreAsk;
+  deletable: boolean;
+  onClose: () => void;
+}) {
+  const { t, lang } = useT();
+  const { push } = useToast();
+  const { confirm, confirmDialog } = useConfirm();
+  const { item, detail, settings, hostMountRoot } = entry;
+  const { kind } = item;
+  const { rows, places, loadPlace, reload } = timeline;
+  const labelOf = usePlaceLabel(places);
+  const { list: openFindings, flagged } = useOpenAnomalies();
+  const container = detail.kind === "container" ? detail.container : null;
+  const zfsItem = detail.kind === "zfs" ? detail.dataset : null;
+  const gone = isGone(item);
+  const hasOriginal = detail.kind === "files" ? detail.set.path !== "" : !gone;
+
+  const findings = useMemo(() => findingsOf(openFindings, kind, item.key), [openFindings, kind, item.key]);
+  const recommendation = useMemo(() => recommend(rows, findings), [rows, findings]);
+  const asked = ask.snapshot ? requestedRow(rows, ask.snapshot, ask.at ?? 0) : undefined;
+
+  const [rowKey, setRowKey] = useState<string | null>(null);
+  const [placePick, setPlacePick] = useState(ask.place);
+  const [what, setWhat] = useState<RestoreWhat>("all");
+  const [wherePick, setWherePick] = useState<RestoreWhere | null>(null);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState("");
+  const [folder, setFolder] = useState(() => restoreFolderFor(settings, kind));
+  const [leaveStopped, setLeaveStopped] = useState(false);
+  const [withoutRuntime, setWithoutRuntime] = useState(false);
+  const [backupFirst, setBackupFirst] = useState(true);
+  const [deleting, setDeleting] = useState<string[] | null>(null);
+  const [preparing, setPreparing] = useState(false);
+
+  const [datasetPick, setDatasetPick] = useState<string | null>(null);
+  const [newDataset, setNewDataset] = useState("");
+  const [applyProps, setApplyProps] = useState(false);
+  const [safety, setSafety] = useState(true);
+  const [stopContainers, setStopContainers] = useState(true);
+
+  const row = rows.find((r) => r.key === rowKey) ?? asked?.row ?? rows[recommendation.index];
+  const mark = row && (row.places.find((m) => m.place === placePick) ?? autoMark(row, places) ?? row.places[0]);
+  const place = mark && places.find((p) => p.place === mark.place);
+  const source = mark ? sourceOfPlace(mark.place) : "local";
+  const snapshotId = mark ? newestId(mark) : "";
+
+  const [points, setPoints] = useState<ZFSRestorePoint[]>([]);
+  const [host, setHost] = useState<ReadonlyMap<string, ZFSHostDataset>>(new Map());
+  const zfsId = zfsItem?.id;
+  useEffect(() => {
+    if (!zfsId) return;
+    let current = true;
+    zfsRestorePoints(zfsId, source)
+      .then((res) => {
+        if (current) setPoints(res.ok ? (res.points ?? []) : []);
+      })
+      .catch(() => {
+        if (current) setPoints([]);
+      });
+    return () => {
+      current = false;
+    };
+  }, [zfsId, source]);
+  // The listing goes over SSH. Without it the server still checks whether a
+  // dataset can be written into.
+  useEffect(() => {
+    if (!zfsId) return;
+    zfsHostDatasets()
+      .then((res) => {
+        if (res.ok && res.available) setHost(new Map(res.datasets.map((d) => [d.dataset, d])));
+      })
+      .catch(() => undefined);
+  }, [zfsId]);
+
+  const point = points.find((p) => p.stamp === row?.key);
+  const held = (point?.members ?? []).filter((m) => m.snapshotId !== "");
+  const dataset =
+    datasetPick ??
+    (
+      held.find((m) => m.dataset === ask.dataset) ??
+      held.find((m) => m.dataset === zfsItem?.dataset) ??
+      held[0]
+    )?.dataset ??
+    zfsItem?.dataset ??
+    "";
+  const wholeTree = zfsItem !== null && dataset === WHOLE_TREE;
+  const member = point?.members.find((m) => m.dataset === dataset);
+  const live = zfsItem?.members.find((m) => m.dataset === dataset);
+  const onHost = host.get(dataset);
+  const blocked = ((): "zfs.restore.missingDataset" | "zfs.code.read-only-mount" | null => {
+    if (!zfsItem || wholeTree) return null;
+    if (zfsItem.lastCheckCode === "not-found") return "zfs.restore.missingDataset";
+    if (live === undefined || NOT_WRITABLE.has(live.outcome)) return "zfs.restore.missingDataset";
+    if (onHost && onHost.visible && !onHost.writable) return "zfs.code.read-only-mount";
+    return null;
+  })();
+  const storedProps = member?.properties ?? {};
+  const hasProps = Object.keys(storedProps).length > 0;
+  const mountpoint = live?.hostMountpoint ?? zfsItem?.hostMountpoint ?? "";
+
+  const facts = {
+    hasOriginal,
+    writable: zfsItem !== null && !wholeTree && blocked === null,
+    oneDataset: zfsItem !== null && !wholeTree && (member?.snapshotId ?? "") !== "",
+  };
+  const whats = whatsFor(kind, { database: container !== null && container.dbTier !== "" }).filter(
+    (w) => w !== "files" || wheresFor(kind, "files", facts).length > 0
+  );
+  const wheres = wheresFor(kind, what, facts);
+  const where = wherePick !== null && wheres.includes(wherePick) ? wherePick : defaultWhere(wheres, hasOriginal);
+  const replaces = where === "replace" && hasOriginal;
+  const canBackUpFirst = where !== undefined && backsUpFirst(kind, what, where, hasOriginal);
+  const fileSnapshot = zfsItem ? (member?.snapshotId ?? "") : snapshotId;
+
+  const [files, setFiles] = useState<FileEntry[]>([]);
+  const [filesLoading, setFilesLoading] = useState(false);
+  const [filesError, setFilesError] = useState<string | null>(null);
+  useEffect(() => {
+    if (what !== "files" || fileSnapshot === "") return;
+    let current = true;
+    // Paths ticked in another backup mean nothing in this one.
+    setPicked(new Set());
+    setFilesLoading(true);
+    setFilesError(null);
+    const listing =
+      kind === "container"
+        ? listSnapshotFiles(item.key, fileSnapshot, source)
+        : kind === "files"
+          ? listSnapshotFilesFileSet(item.key, fileSnapshot, source)
+          : listSnapshotFilesZFS(item.key, fileSnapshot, source);
+    listing
+      .then((res) => {
+        if (!current) return;
+        setFiles(res.ok ? (res.files ?? []) : []);
+        if (!res.ok) setFilesError(loadErrorMessage(res, t("files.loadFailed")));
+      })
+      .catch(() => {
+        if (current) setFilesError(t("files.loadFailed"));
+      })
+      .finally(() => {
+        if (current) setFilesLoading(false);
+      });
+    return () => {
+      current = false;
+    };
+  }, [what, kind, item.key, fileSnapshot, source, t]);
+
+  const [dumps, setDumps] = useState<DBDumpView[]>([]);
+  const database = container !== null && container.dbTier !== "";
+  useEffect(() => {
+    if (!database) return;
+    listDbDumps(item.key, source)
+      .then((res) => setDumps(res.ok ? (res.dumps ?? []) : []))
+      .catch(() => setDumps([]));
+  }, [database, item.key, source]);
+
+  const choice: RestoreChoice | null =
+    row && mark && where
+      ? {
+          kind,
+          id: item.key,
+          snapshotId,
+          source,
+          what,
+          where,
+          paths: [...picked],
+          folder: folder.trim(),
+          leaveStopped,
+          withoutRuntime,
+          backupFirst: canBackUpFirst && backupFirst,
+          zfs: zfsItem
+            ? {
+                stamp: point?.stamp ?? "",
+                dataset,
+                newDataset: newDataset.trim(),
+                applyProperties: hasProps && applyProps,
+                safetySnapshot: safety,
+                safetyOffConfirm: !safety,
+                stopContainers: zfsItem.stopContainers.length > 0 && stopContainers,
+              }
+            : undefined,
+        }
+      : null;
+  const check = useRestoreCheck(choice ? checkRequest(choice) : null);
+  const plan = check.state.phase === "done" ? check.state.result.plan : null;
+
+  const progressKey = itemProgressKey(item);
+  const runTarget = ENTRY_KIND[kind].keyedBy === "name" ? item.key : item.name;
+  const cancelledRef = useRef(false);
+  const retryWithoutRuntime = useRef(false);
+  const [ack, setAck] = useState<{ target: string; created?: string; safetySnapshot?: string } | null>(null);
+  const [refusalFix, setRefusalFix] = useState<TranslationKey | null>(null);
+  // What the restore that runs was asked for, kept apart from the form. The
+  // ref is what the start reads, the state what the window draws.
+  const fired = useRef<RestoreChoice | null>(null);
+  const [ran, setRan] = useState<RestoreChoice | null>(null);
+  const { state, fire, reset, isPending } = useBackupWatch({
+    progressKey,
+    kind: "restore",
+    matchRun: (r) => r.domain === kind && r.target === runTarget,
+    cancelledRef,
+    onDone: reload,
+    start: async () => {
+      const run = fired.current;
+      if (!run) return { ok: false };
+      setAck(null);
+      setRefusalFix(null);
+      const res = await startRestore({ ...run, withoutRuntime: run.withoutRuntime || retryWithoutRuntime.current });
+      if (res.code === SNAPSHOT_MISSING) void missing();
+      if (res.ok) setAck({ target: res.target ?? "", created: res.created, safetySnapshot: res.safetySnapshot });
+      else if (kind === "zfs" && res.code) {
+        setRefusalFix(zfsFixKey(res.code));
+        return { ...res, error: zfsCodeSentence(t, res.code, { hostMountpoint: mountpoint }) };
+      }
+      return res;
+    },
+  });
+  const progress = useProgress();
+  const prog = progress[progressKey];
+  const running = anyActive(progress);
+  const own = isPending || (prog?.active === true && prog.phase === "restore");
+  const blockedByOther = running.active && !own;
+  const shown = own || state.phase !== "idle";
+
+  // The place answered that the backup is gone from it. It is read again, and
+  // the next place that holds the backup is offered.
+  async function missing() {
+    if (!row || !mark) return;
+    const lost = mark.place;
+    const next = autoMark({ ...row, places: row.places.filter((m) => m.place !== lost) }, places);
+    await loadPlace(lost);
+    if (next === null) {
+      onClose();
+      return;
+    }
+    const yes = await confirm(
+      t("timeline.snapshotMissing")
+        .replace("{place}", () => labelOf(lost))
+        .replace("{next}", () => labelOf(next.place))
+    );
+    if (yes) {
+      reset();
+      setPlacePick(next.place);
+    } else onClose();
+  }
+
+  async function handleSafety(next: boolean) {
+    if (!next && !(await confirm(t("zfs.restore.safetyOffConfirm")))) return;
+    setSafety(next);
+  }
+
+  function download() {
+    setPreparing(true);
+    setTimeout(() => setPreparing(false), DOWNLOAD_PREPARING_MS);
+    const a = document.createElement("a");
+    a.href = flashDownloadURL(snapshotId, source);
+    a.download = `flash-${snapshotId.slice(0, 8)}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  const copyName = plan?.beside?.name ?? "";
+  const says = sayReplace();
+  function sayReplace(): string {
+    if (kind === "zfs") return t("zfs.restore.confirm").replace("{path}", mountpoint);
+    if (what === "files") return t("files.restoreConfirm");
+    if (kind === "container") return t("restoreWindow.says.replaceContainer");
+    if (kind === "vm") return t("restoreWindow.says.replaceVM");
+    return t("restoreWindow.says.replaceFiles");
+  }
+
+  async function begin() {
+    if (!choice || !where) return;
+    if (where === "zip") {
+      download();
+      return;
+    }
+    if (where === "newDataset") {
+      const question = t("zfs.restore.newDatasetConfirm").replace("{name}", () => newDataset.trim());
+      if (!(await confirm(question, { confirmKey: "snapshots.restore" }))) return;
+    }
+    if (replaces) {
+      const typed = await confirm(says, {
+        requireText: name,
+        requirePrompt: t("restoreWindow.confirmType").replace("{name}", () => name),
+        confirmLabel: t("restoreWindow.replaceNamed").replace("{name}", () => name),
+        confirmLabelKey: "snapshots.restore",
+      });
+      if (!typed) return;
+    }
+    fired.current = choice;
+    setRan(choice);
+    retryWithoutRuntime.current = false;
+    void fire();
+  }
+
+  function again() {
+    retryWithoutRuntime.current = true;
+    void fire();
+  }
+
+  async function copySnapshot(snapshot: string) {
+    if (await copyText(snapshot)) push(t("common.copied"), "success");
+    else push(t("vm.ssh.copyFailed"), "fail");
+  }
+
+  const when = (time: string) => formatRecent(Math.floor(Date.parse(time) / 1000), lang);
+  const recommended = rows[recommendation.index];
+  const why = recommendationWhy(recommendation, t, lang);
+  const title = t("entry.restore.title").replace("{name}", () => name);
+  const engine = container?.dbEngine ? ENGINE_NAMES[container.dbEngine] : "";
+  const subtitle = [t(KIND_LABEL[kind]), engine].filter(Boolean).join(" · ");
+
+  const doneText = !ran
+    ? ""
+    : ran.where === "beside"
+      ? t("restoreWindow.doneBeside").replace("{name}", () => ack?.target || copyName || name)
+      : ran.where === "folder"
+        ? t("restoreWindow.doneFolder").replace("{path}", () => ack?.target || ran.folder)
+        : t("restoreWindow.doneReplace").replace("{name}", () => name);
+
+  if (shown) {
+    const finished = !own;
+    return (
+      <InstanceWindow
+        title={title}
+        facts={t(
+          own
+            ? "restore.started"
+            : state.phase === "success"
+              ? "common.done"
+              : state.phase === "cancelled"
+                ? "restoreWindow.cancelled"
+                : "restoreWindow.notDone"
+        )}
+        onClose={onClose}
+        footer={
+          <>
+            {finished && state.phase !== "success" && (
+              <Button label={t("common.back")} labelKey="common.back" tone="subtle" onClick={reset} />
+            )}
+            <Button
+              label={t(finished ? "common.done" : "common.close")}
+              labelKey={finished ? "common.done" : "common.close"}
+              glyph={finished ? <IconCheck /> : undefined}
+              tone="accent"
+              onClick={onClose}
+            />
+          </>
+        }
+      >
+        <div className="flex flex-col gap-2">
+          {ack && kind === "zfs" && (
+            <div className="flex flex-col gap-1 text-xs text-carbon-textSub">
+              {ack.created && <p>{t("zfs.restore.created").replace("{name}", ack.created)}</p>}
+              <p>{t("zfs.restore.started").replace("{target}", ran?.where === "replace" ? mountpoint : ack.target)}</p>
+              {ack.safetySnapshot && (
+                <p className="flex items-center gap-2">
+                  <span dir="ltr" className="font-mono text-start">
+                    {t("zfs.restore.safetyTaken").replace("{snapshot}", ack.safetySnapshot)}
+                  </span>
+                  <Button
+                    label={t("common.copy")}
+                    labelKey="common.copy"
+                    glyph={<IconCopy />}
+                    onClick={() => void copySnapshot(ack.safetySnapshot ?? "")}
+                  />
+                </p>
+              )}
+            </div>
+          )}
+          <RestoreProgress
+            state={state}
+            isPending={own}
+            prog={prog}
+            cancelKey={progressKey}
+            inPlace={ran ? ran.where === "replace" : true}
+            name={name}
+            cancelledRef={cancelledRef}
+            showStartedHint={false}
+            successMessage={
+              <span className="inline-flex items-center gap-1.5 text-sm" data-testid="restore-done">
+                <CheckDraw />
+                {doneText}
+              </span>
+            }
+            onRestoreWithoutRuntime={kind === "container" && ran?.where !== "folder" ? again : undefined}
+            t={t}
+          />
+          {own && <p className="text-xs text-carbon-textMuted">{t("restoreWindow.background")}</p>}
+          {state.phase === "success" && kind === "container" && ran?.where === "beside" && (
+            <p className="text-xs text-carbon-textMuted">{t("restoreWindow.copyListed")}</p>
+          )}
+          {state.phase === "error" && refusalFix && <p className="text-xs text-carbon-textSub">{t(refusalFix)}</p>}
+        </div>
+        {confirmDialog}
+      </InstanceWindow>
+    );
+  }
+
+  const listed = what === "dumps" || what === "plugins";
+  const blockReason = blockedByOther
+    ? t(busyPhraseKey(running.phase, running.stage))
+    : what === "files" && picked.size === 0
+      ? t("files.selectHint")
+      : where === "folder" && folder.trim() === ""
+        ? t("restoreWindow.needsFolder")
+        : restoreBlockReason(check, t);
+  const primary =
+    where === "beside"
+      ? t("restoreWindow.besideNamed")
+      : where === "zip"
+        ? t("restoreWindow.zip")
+        : where === "folder"
+          ? t("restoreWindow.toFolderNamed")
+          : where === "newDataset"
+            ? t("zfs.restore.newDataset")
+            : replaces
+              ? t("restoreWindow.replaceNamed")
+              : t("entry.restore.title");
+
+  const optionText = (w: RestoreWhere): [string, string] => {
+    switch (w) {
+      case "beside":
+        return [
+          t("restoreWindow.beside"),
+          copyName ? t("restoreWindow.besideSub").replace("{name}", () => copyName) : t("restoreWindow.untouched"),
+        ];
+      case "replace":
+        if (kind === "zfs") return [t("zfs.restore.inPlace"), t("restoreWindow.zfsInPlaceSub")];
+        if (!hasOriginal) return [t("restore.mode.inPlace"), t("restoreCheck.def.missing")];
+        return [
+          t("restoreWindow.replace"),
+          t(canBackUpFirst && backupFirst ? "restoreWindow.replaceSubBackup" : "restoreWindow.replaceSub"),
+        ];
+      case "folder":
+        return [t("restore.mode.toFolder"), t("restoreWindow.folderSub")];
+      case "newDataset":
+        return [t("zfs.restore.newDataset"), t("restoreWindow.untouched")];
+      default:
+        return [t("restoreWindow.zip"), t("restoreWindow.zipSub")];
+    }
+  };
+
+  const marks = row ? [...row.places].sort((a, b) => places.findIndex((p) => p.place === a.place) - places.findIndex((p) => p.place === b.place)) : [];
+  const datasetOptions = [
+    { value: WHOLE_TREE, label: t("zfs.restore.wholeTree") },
+    ...(point?.members ?? []).map((m) => {
+      const key = zfsMemberKey(m.outcome);
+      const outcome = key ? t(key) : zfsCodeSentence(t, m.outcome, { hostMountpoint: host.get(m.dataset)?.hostMountpoint });
+      return { value: m.dataset, label: `${m.dataset} (${outcome})`, disabled: m.snapshotId === "" };
+    }),
+  ];
+
+  return (
+    <InstanceWindow
+      title={title}
+      facts={subtitle}
+      onClose={onClose}
+      footer={
+        <>
+          {deletable && row && mark && place && (
+            <span className="me-auto flex flex-wrap gap-2">
+              <Button
+                label={t("common.delete")}
+                labelKey="common.delete"
+                glyph={<IconTrash />}
+                tone="subtle"
+                disabled={place.appendOnly}
+                hint={place.appendOnly ? t("placementCode.appendOnly") : undefined}
+                onClick={() => setDeleting([mark.place])}
+              />
+              {row.places.length > 1 && (
+                <Button
+                  label={t("timeline.deleteRow")}
+                  labelKey="timeline.deleteRow"
+                  glyph={<IconTrash />}
+                  tone="subtle"
+                  onClick={() => setDeleting([])}
+                />
+              )}
+            </span>
+          )}
+          <Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={onClose} />
+          {!listed && (
+            <Button
+              label={primary.replace("{name}", () => name)}
+              labelKey={where === "zip" ? "flash.download" : "snapshots.restore"}
+              glyph={where === "zip" ? <IconDownload /> : <IconRestore />}
+              tone="accent"
+              onClick={() => void begin()}
+              disabled={!choice || blockedByOther || !check.ready || preparing}
+              busy={preparing}
+              hint={blockReason}
+            />
+          )}
+        </>
+      }
+    >
+      {timeline.loading && <p className="text-sm text-carbon-textMuted">{t("common.loadingBackups")}</p>}
+      {timeline.error !== null && <p className="text-sm text-statusFail">{timeline.error || t("common.loadBackupsFailed")}</p>}
+      {!timeline.loading && timeline.error === null && !row && (
+        <>
+          <p className="text-sm text-carbon-textMuted">{t("restoreWindow.noBackup")}</p>
+          <PlaceChecks timeline={timeline} />
+        </>
+      )}
+
+      {row && mark && (
+        <>
+          {ask.snapshot && asked?.missing && places.every((p) => p.state === "read") && (
+            <MissingRestorePoint
+              requested={ask.snapshot}
+              requestedAt={ask.at ?? 0}
+              points={rows.map((r) => ({ id: r.key, at: Math.floor(Date.parse(r.time) / 1000) }))}
+              t={t}
+            />
+          )}
+          <Rows>
+            <SettingRow
+              label={t("restoreWindow.backup")}
+              hint={t("restoreWindow.backupHint")}
+              note={row === recommended ? why : undefined}
+            >
+              <SelectField
+                value={row.key}
+                onChange={setRowKey}
+                label={t("restoreWindow.backup")}
+                options={rows.map((r) => ({
+                  value: r.key,
+                  label: r === recommended ? t("restoreWindow.recommendedOption").replace("{when}", () => when(r.time)) : when(r.time),
+                }))}
+                className="max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
+              />
+            </SettingRow>
+            {marks.length > 1 && (
+              <SettingRow label={t("restoreWindow.source")} hint={t("restoreWindow.sourceHint")}>
+                <Selector
+                  items={marks.map((m) => ({
+                    id: m.place,
+                    label: m.incomplete ? `${labelOf(m.place)} · ${t("timeline.incomplete")}` : labelOf(m.place),
+                    tip: m.incomplete ? t("timeline.incompleteHint") : undefined,
+                  }))}
+                  label={t("restoreWindow.source")}
+                  select="one"
+                  active={mark.place}
+                  onChange={setPlacePick}
+                  inline
+                />
+              </SettingRow>
+            )}
+            {zfsItem && (
+              <SettingRow label={t("zfs.restore.dataset")}>
+                <SelectField
+                  value={dataset}
+                  onChange={setDatasetPick}
+                  label={t("zfs.restore.dataset")}
+                  options={datasetOptions}
+                  className="max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
+                />
+              </SettingRow>
+            )}
+            {whats.length > 1 && (
+              <SettingRow label={t("restoreWindow.what")}>
+                <Selector
+                  items={whats.map((w) => ({ id: w, label: t(WHAT_LABEL[w]) }))}
+                  label={t("restoreWindow.what")}
+                  select="one"
+                  active={what}
+                  onChange={(id) => setWhat(id as RestoreWhat)}
+                  inline
+                />
+              </SettingRow>
+            )}
+          </Rows>
+
+          {row !== recommended && recommended && (
+            <div className="flex flex-wrap items-center gap-3 rounded-card bg-carbon-surface2 px-4 py-3 text-sm text-carbon-text">
+              <span className="min-w-0 flex-1">
+                {t("restoreWindow.recommendedIs").replace("{when}", () => when(recommended.time))} {why}
+              </span>
+              <Button
+                label={t("restoreWindow.useThis")}
+                labelKey={null}
+                glyph={<IconCheck />}
+                onClick={() => setRowKey(recommended.key)}
+              />
+            </div>
+          )}
+          {(container || mark.incomplete || flagged.has(row.key) || (member && flagged.has(member.snapshotId))) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {(flagged.has(row.key) || (member && flagged.has(member.snapshotId))) && (
+                <Badge tone="warn" size="small">
+                  {t("anomaly.snapshotFlagged")}
+                </Badge>
+              )}
+              {container && (
+                <SnapshotTags
+                  tags={mark.tags}
+                  snapshotId={snapshotId}
+                  containerName={container.name}
+                  aliases={container.aliases ?? []}
+                  source={source}
+                  onTagged={() => void loadPlace(mark.place)}
+                  t={t}
+                />
+              )}
+              {dumps.some((dump) => pairsWith(dump, { id: snapshotId, original: row.key })) && (
+                <span className="flex items-center gap-1">
+                  <Badge tone="neutral" size="small">
+                    {t("dbdump.pairedBadge")}
+                  </Badge>
+                  <InfoBubble tip={t("dbdump.pairedTip")} />
+                </span>
+              )}
+            </div>
+          )}
+          <PlaceChecks timeline={timeline} />
+
+          {what === "files" && (
+            <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3 text-xs">
+              <SnapshotFileTree
+                files={files}
+                loading={filesLoading}
+                error={filesError}
+                filter={filter}
+                onFilterChange={setFilter}
+                selected={picked}
+                onToggle={(path) => {
+                  const next = new Set(picked);
+                  if (next.has(path)) next.delete(path);
+                  else next.add(path);
+                  setPicked(next);
+                }}
+                t={t}
+              />
+            </div>
+          )}
+          {what === "dumps" && container && (
+            <DatabaseDumpList
+              containerName={container.name}
+              source={source}
+              recognised
+              canImport={container.installed && container.state === "running"}
+              importStops={
+                detail.kind === "container"
+                  ? (container.stopContainers ?? []).filter((dep) =>
+                      detail.installed.some((c) => c.name === dep && c.state === "running")
+                    )
+                  : []
+              }
+              hostMountRoot={hostMountRoot}
+              defaultFolder={restoreFolderFor(settings, kind)}
+              reloadTick={0}
+              t={t}
+            />
+          )}
+          {what === "plugins" && <FlashPluginList snapshotId={snapshotId} source={source} t={t} />}
+
+          {!listed && where && (
+            <>
+              <div className="flex flex-col gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-carbon-textSub">{t("restoreWindow.where")}</h3>
+                <div role="radiogroup" aria-label={t("restoreWindow.where")} className="flex flex-col gap-2">
+                  {wheres.map((w) => {
+                    const [optionTitle, sub] = optionText(w);
+                    return (
+                      <WhereOption
+                        key={w}
+                        where={w}
+                        on={w === where}
+                        title={optionTitle}
+                        sub={sub}
+                        kept={canBackUpFirst && backupFirst}
+                        disabled={false}
+                        onPick={() => {
+                          if (w === "newDataset" && newDataset === "") setNewDataset(`${dataset}-restored`);
+                          setWherePick(w);
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                {blocked !== null && <p className="text-xs text-statusWarn">{tLtr(t, blocked)}</p>}
+              </div>
+
+              {where === "folder" && (
+                <FolderBrowser label={t("restore.targetPath")} value={folder} hostMountRoot={hostMountRoot} onChange={setFolder} />
+              )}
+              {where === "newDataset" && (
+                <div className="flex flex-col gap-1">
+                  <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+                    {t("zfs.restore.newDatasetName")}
+                    <InfoBubble tip={t("zfs.restore.newDatasetHint")} />
+                  </span>
+                  <input
+                    type="text"
+                    dir="ltr"
+                    aria-label={t("zfs.restore.newDatasetName")}
+                    value={newDataset}
+                    onChange={(e) => setNewDataset(e.target.value)}
+                    spellCheck={false}
+                    className="w-full max-w-md rounded-control bg-carbon-surface2 px-3 py-1.5 text-start font-mono text-xs text-carbon-text glim-field-focus"
+                  />
+                </div>
+              )}
+              {where === "newDataset" && hasProps && <ZFSPropertyList properties={storedProps} into="new" t={t} />}
+              {kind === "zfs" && where === "replace" && hasProps && (
+                <ZFSPropertyList properties={storedProps} into="existing" t={t} />
+              )}
+
+              <div className="flex flex-col gap-3">
+                {canBackUpFirst && (
+                  <ToggleRow
+                    label={t("restoreWindow.backupFirst")}
+                    hint={t("restoreWindow.backupFirstHint")}
+                    checked={backupFirst}
+                    onChange={setBackupFirst}
+                  />
+                )}
+                {(kind === "container" || kind === "vm") && where === "replace" && (
+                  <ToggleRow
+                    label={t("restoreWindow.leaveStopped")}
+                    hint={t(kind === "vm" ? "restoreWindow.leaveStoppedVM" : "restoreWindow.leaveStoppedContainer")}
+                    checked={leaveStopped}
+                    onChange={setLeaveStopped}
+                  />
+                )}
+                {kind === "container" && what === "all" && where !== "folder" && (
+                  <ToggleRow
+                    label={t("restore.withoutRuntime")}
+                    hint={t("restoreWindow.withoutRuntimeHint")}
+                    checked={withoutRuntime}
+                    onChange={setWithoutRuntime}
+                  />
+                )}
+                {kind === "zfs" && where === "replace" && (
+                  <>
+                    {hasProps && (
+                      <ToggleRow
+                        label={t("zfs.restore.applyProperties")}
+                        hint={t("zfs.restore.applyPropertiesHint")}
+                        checked={applyProps}
+                        onChange={setApplyProps}
+                      />
+                    )}
+                    <ToggleRow
+                      label={t("zfs.restore.safetySnapshot")}
+                      hint={t("zfs.restore.safetySnapshotHint")}
+                      checked={safety}
+                      onChange={(next) => void handleSafety(next)}
+                    />
+                    {zfsItem && zfsItem.stopContainers.length > 0 && (
+                      <ToggleRow
+                        label={t("zfs.restore.stopContainers").replace("{names}", zfsItem.stopContainers.join(", "))}
+                        hint={t("zfs.restore.stopContainersHint")}
+                        checked={stopContainers}
+                        onChange={setStopContainers}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+
+              {container && what === "all" && where !== "folder" && (container.dbDataCoverage === "live" || container.dbDataCoverage === "none") && (
+                <p className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs leading-relaxed text-statusWarn">
+                  {t(container.dbDataCoverage === "live" ? "restoreWindow.dbLive" : "restoreWindow.dbNone")}
+                </p>
+              )}
+
+              <RestoreCheckPanel check={check} t={t} />
+              <WhatHappens
+                kind={kind}
+                what={what}
+                where={where}
+                stopped={leaveStopped}
+                backupFirst={canBackUpFirst && backupFirst}
+                plan={plan}
+              />
+            </>
+          )}
+        </>
+      )}
+
+      {deleting && row && (
+        <TimelineDeleteDialog
+          key={deleting.join(",")}
+          domain={timeline.domain}
+          itemKey={item.key}
+          row={row}
+          places={deleting}
+          onDone={() => {
+            const everywhere = deleting.length === 0;
+            setDeleting(null);
+            onClose();
+            reload();
+            // The cards count the copies at targets, so they read them again.
+            if (everywhere || deleting.some((p) => p !== "local")) placementChanged();
+          }}
+          onClose={() => setDeleting(null)}
+        />
+      )}
+      {confirmDialog}
+    </InstanceWindow>
+  );
+}

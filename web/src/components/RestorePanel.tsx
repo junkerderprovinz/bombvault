@@ -27,6 +27,7 @@ import { Timeline, type TimelinePick } from "./timeline/Timeline";
 import { useOpenAnomalies } from "../lib/useAnomalies";
 import { restoreBlockReason, useRestoreCheck } from "../lib/useRestoreCheck";
 import { RestoreCheckPanel } from "./restore/RestoreCheckPanel";
+import { DEFAULT_RESTORE_FOLDER } from "../lib/restorePlan";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -581,7 +582,7 @@ export function CompareSnapshotsForm({ containerName, t }: { containerName: stri
 
 // SnapshotTags shows a snapshot's user tags as chips, with an inline input to
 // add one.
-function SnapshotTags({
+export function SnapshotTags({
   tags,
   snapshotId,
   containerName,
@@ -829,9 +830,7 @@ export function SnapshotActions({
   );
 }
 
-// DEFAULT_RESTORE_FOLDER pre-fills every restore-to-folder picker when the
-// setting is empty. It matches the backend column default.
-export const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
+export { DEFAULT_RESTORE_FOLDER };
 
 export function RestorePanel({
   name,

@@ -3698,8 +3698,6 @@ const ko: Partial<Translations> = {
   "entry.list.empty": "아직 백업이 없습니다. {name}을(를) 일정에 추가하거나 지금 백업하세요.",
   "entry.list.restoreFrom": "{place}에서 복원",
   "entry.restore.title": "{name} 복원",
-  "entry.restore.sub": "백업 {when} · {source}",
-  "entry.config.restoreText": "셀프 백업은 긴급 마법사를 통해 되돌립니다. 설정이 적용되도록 BombVault가 다시 시작되므로 나머지 긴급 단계와 함께 있습니다.",
   "entry.config.startRecovery": "긴급 마법사 시작",
   "entry.places.count": "백업 {n}개",
   "entry.settings.schedule": "일정 및 대상",

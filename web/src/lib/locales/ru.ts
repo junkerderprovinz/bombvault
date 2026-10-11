@@ -3702,8 +3702,6 @@ const ru: Partial<Translations> = {
   "entry.list.empty": "Резервных копий пока нет. Добавьте {name} в расписание или создайте копию сейчас.",
   "entry.list.restoreFrom": "Восстановить из {place}",
   "entry.restore.title": "Восстановить {name}",
-  "entry.restore.sub": "Резервная копия {when} · {source}",
-  "entry.config.restoreText": "Автобэкап восстанавливается через аварийный мастер. BombVault перезапускается, чтобы настройки вступили в силу, поэтому он находится вместе с остальными аварийными шагами.",
   "entry.config.startRecovery": "Запустить аварийный мастер",
   "entry.places.count": "one={n} копия|few={n} копии|many={n} копий|other={n} копии",
   "entry.settings.schedule": "Расписание и место назначения",

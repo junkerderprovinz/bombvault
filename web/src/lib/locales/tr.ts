@@ -3707,8 +3707,6 @@ const tr: Partial<Translations> = {
   "entry.list.empty": "Henüz yedek yok. {name} öğesini zamanlamaya ekleyin veya şimdi yedekleyin.",
   "entry.list.restoreFrom": "{place} konumundan geri yükle",
   "entry.restore.title": "{name} öğesini geri yükle",
-  "entry.restore.sub": "Yedek {when} · {source}",
-  "entry.config.restoreText": "Öz yedeği acil durum sihirbazıyla geri alırsınız. BombVault ayarların geçerli olması için yeniden başlar, bu yüzden diğer acil durum adımlarıyla birlikte durur.",
   "entry.config.startRecovery": "Acil durum sihirbazını başlat",
   "entry.places.count": "{n} yedek",
   "entry.settings.schedule": "Zamanlama ve hedef",

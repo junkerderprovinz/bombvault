@@ -3715,8 +3715,6 @@ const gl: Partial<Translations> = {
   "entry.list.empty": "Aínda non hai copias. Engade {name} ao horario ou fai unha copia agora.",
   "entry.list.restoreFrom": "Restaurar desde {place}",
   "entry.restore.title": "Restaurar {name}",
-  "entry.restore.sub": "Copia {when} · {source}",
-  "entry.config.restoreText": "A autocopia recupérase co asistente de emerxencia. BombVault reiníciase para que os axustes teñan efecto, por iso está xunto co resto dos pasos de emerxencia.",
   "entry.config.startRecovery": "Iniciar o asistente de emerxencia",
   "entry.places.count": "one={n} copia|other={n} copias",
   "entry.settings.schedule": "Horario e destino",

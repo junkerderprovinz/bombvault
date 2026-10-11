@@ -3707,8 +3707,6 @@ const fi: Partial<Translations> = {
   "entry.list.empty": "Ei vielä varmuuskopioita. Lisää {name} aikatauluun tai tee varmuuskopio nyt.",
   "entry.list.restoreFrom": "Palauta kohteesta {place}",
   "entry.restore.title": "Palauta {name}",
-  "entry.restore.sub": "Varmuuskopio {when} · {source}",
-  "entry.config.restoreText": "Itsevarmuuskopio palautetaan hätäohjatulla toiminnolla. BombVault käynnistyy uudelleen, jotta asetukset tulevat voimaan, siksi se on muiden hätävaiheiden kanssa.",
   "entry.config.startRecovery": "Käynnistä hätäohjattu toiminto",
   "entry.places.count": "one={n} varmuuskopio|other={n} varmuuskopiota",
   "entry.settings.schedule": "Aikataulu ja kohde",

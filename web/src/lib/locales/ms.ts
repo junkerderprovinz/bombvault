@@ -3715,8 +3715,6 @@ const ms: Partial<Translations> = {
   "entry.list.empty": "Belum ada sandaran. Tambah {name} ke jadual atau buat sandaran sekarang.",
   "entry.list.restoreFrom": "Pulihkan dari {place}",
   "entry.restore.title": "Pulihkan {name}",
-  "entry.restore.sub": "Sandaran {when} · {source}",
-  "entry.config.restoreText": "Sandaran sendiri dipulihkan melalui wizard kecemasan. BombVault dimulakan semula supaya tetapan berkuat kuasa, sebab itu ia berada bersama langkah kecemasan lain.",
   "entry.config.startRecovery": "Mulakan wizard kecemasan",
   "entry.places.count": "{n} sandaran",
   "entry.settings.schedule": "Jadual dan destinasi",

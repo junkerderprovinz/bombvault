@@ -233,8 +233,8 @@ describe("the list of backups", () => {
     await press(rows()[0]);
     const window = screen.getByRole("dialog");
     expect(screen.getByText(en["entry.restore.title"].replace("{name}", "immich"))).toBeTruthy();
-    expect(within(window).getByText(en["restore.mode.inPlace"])).toBeTruthy();
-    await press(within(window).getByRole("button", { name: en["common.close"] }));
+    expect(within(window).getByRole("radio", { name: new RegExp(en["restoreWindow.beside"]) })).toBeTruthy();
+    await press(within(window).getByRole("button", { name: en["common.cancel"] }));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
@@ -247,7 +247,6 @@ describe("the list of backups", () => {
       within(rows()[0]).getByRole("button", { name: en["entry.list.restoreFrom"].replace("{place}", "Storage Box") })
     );
     const window = screen.getByRole("dialog");
-    expect(within(window).getByText(/· Storage Box$/)).toBeTruthy();
     expect(within(window).getByRole("tab", { name: "Storage Box" }).getAttribute("aria-selected")).toBe("true");
   });
 
@@ -261,20 +260,20 @@ describe("the list of backups", () => {
   });
 
   it.each([
-    ["the flash drive", "/backups/flash/flash", en["flash.download"]],
-    ["the self-backup", "/backups/config/config", en["entry.config.startRecovery"]],
-    ["a VM", "/backups/vm/win11", en["restore.open"]],
-  ])("offers what %s can do with a backup", async (_, path, action) => {
+    ["the flash drive", "/backups/flash/flash", "radio", en["restoreWindow.zip"]],
+    ["the self-backup", "/backups/config/config", "button", en["entry.config.startRecovery"]],
+    ["a VM", "/backups/vm/win11", "radio", en["restoreWindow.beside"]],
+  ])("offers what %s can do with a backup", async (_, path, role, action) => {
     await renderPage(path);
     await press(rows()[0]);
-    expect(within(screen.getByRole("dialog")).getByRole("button", { name: action })).toBeTruthy();
+    expect(within(screen.getByRole("dialog")).getByRole(role, { name: new RegExp(`^${action}`) })).toBeTruthy();
   });
 
   it("sends the self-backup to the emergency wizard", async () => {
     await renderPage("/backups/config/config");
     await press(rows()[0]);
     await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["entry.config.startRecovery"] }));
-    expect(screen.getByText("at /recovery")).toBeTruthy();
+    expect(screen.getByText("at /restore")).toBeTruthy();
   });
 
   it("says so when there is no backup yet", async () => {
@@ -300,7 +299,7 @@ describe("the list of backups", () => {
   it("opens the newest backup of an entry that is gone from the corner", async () => {
     await renderPage("/backups/container/pihole");
     await press(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["snapshots.restore"] }));
-    expect(screen.getByText(en["entry.restore.title"].replace("{name}", "pihole"))).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: en["entry.restore.title"].replace("{name}", "pihole") })).toBeTruthy();
   });
 });
 
@@ -339,11 +338,17 @@ describe("the database dumps", () => {
 });
 
 describe("a ZFS entry", () => {
-  it("shows its repository and its restore points without a timeline", async () => {
+  it("shows its repository and lists the backups of its timeline", async () => {
     await renderPage(`/backups/zfs/${ZFS_ID}`);
-    expect(getTimeline).not.toHaveBeenCalled();
+    expect(getTimeline).toHaveBeenCalledWith("zfs", ZFS_ID);
     expect(within(card(en["storage.title"])).getByText("/mnt/user/backups/bombvault/zfs")).toBeTruthy();
     expect(bars()).toHaveLength(4);
-    expect(bars()[0].closest("button")).toBeNull();
+    expect(rows()).toHaveLength(5);
+  });
+
+  it("opens the restore of a backup with its datasets to choose from", async () => {
+    await renderPage(`/backups/zfs/${ZFS_ID}`);
+    await press(rows()[0]);
+    expect(within(screen.getByRole("dialog")).getByRole("combobox", { name: en["zfs.restore.dataset"] })).toBeTruthy();
   });
 });

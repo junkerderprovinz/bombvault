@@ -3715,8 +3715,6 @@ const fa: Partial<Translations> = {
   "entry.list.empty": "هنوز پشتیبانی نیست. {name} را به زمان‌بندی اضافه کنید یا همین حالا پشتیبان بگیرید.",
   "entry.list.restoreFrom": "بازیابی از {place}",
   "entry.restore.title": "بازیابی {name}",
-  "entry.restore.sub": "پشتیبان {when} · {source}",
-  "entry.config.restoreText": "پشتیبان خودکار را با دستیار اضطراری برمی‌گردانید. BombVault راه‌اندازی مجدد می‌شود تا تنظیمات اعمال شوند، به همین دلیل کنار بقیه‌ی مراحل اضطراری است.",
   "entry.config.startRecovery": "شروع دستیار اضطراری",
   "entry.places.count": "{n} پشتیبان",
   "entry.settings.schedule": "زمان‌بندی و مقصد",

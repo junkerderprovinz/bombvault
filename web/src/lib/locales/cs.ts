@@ -3705,8 +3705,6 @@ const cs: Partial<Translations> = {
   "entry.list.empty": "Zatím žádné zálohy. Přidejte {name} do plánu, nebo zálohujte hned.",
   "entry.list.restoreFrom": "Obnovit z {place}",
   "entry.restore.title": "Obnovit {name}",
-  "entry.restore.sub": "Záloha {when} · {source}",
-  "entry.config.restoreText": "Autozálohu obnovíte nouzovým průvodcem. BombVault se restartuje, aby se nastavení projevilo, proto je spolu s ostatními nouzovými kroky.",
   "entry.config.startRecovery": "Spustit nouzového průvodce",
   "entry.places.count": "one={n} záloha|few={n} zálohy|many={n} zálohy|other={n} záloh",
   "entry.settings.schedule": "Plán a cíl",

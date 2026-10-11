@@ -3707,8 +3707,6 @@ const fr: Partial<Translations> = {
   "entry.list.empty": "Pas encore de sauvegardes. Ajoute {name} au planning ou sauvegarde-le maintenant.",
   "entry.list.restoreFrom": "Restaurer depuis {place}",
   "entry.restore.title": "Restaurer {name}",
-  "entry.restore.sub": "Sauvegarde {when} · {source}",
-  "entry.config.restoreText": "Tu restaures l'auto-sauvegarde via l'assistant d'urgence. BombVault redémarre pour que les paramètres soient pris en compte, c'est pourquoi elle se trouve avec les autres étapes d'urgence.",
   "entry.config.startRecovery": "Lancer l'assistant d'urgence",
   "entry.places.count": "one={n} sauvegarde|many={n} sauvegardes|other={n} sauvegardes",
   "entry.settings.schedule": "Planning et destination",

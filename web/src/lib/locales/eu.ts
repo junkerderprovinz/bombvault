@@ -3715,8 +3715,6 @@ const eu: Partial<Translations> = {
   "entry.list.empty": "Oraindik ez dago babeskopiarik. Gehitu {name} egutegira edo egin babeskopia orain.",
   "entry.list.restoreFrom": "Berrezarri {place} lekutik",
   "entry.restore.title": "Berrezarri {name}",
-  "entry.restore.sub": "Babeskopia {when} · {source}",
-  "entry.config.restoreText": "Autobabeskopia larrialdi-morroiarekin berreskuratzen da. BombVault berrabiarazi egiten da ezarpenek eragina izan dezaten, horregatik dago gainerako larrialdi-urratsekin batera.",
   "entry.config.startRecovery": "Hasi larrialdi-morroia",
   "entry.places.count": "{n} babeskopia",
   "entry.settings.schedule": "Egutegia eta helmuga",

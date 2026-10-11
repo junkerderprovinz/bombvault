@@ -3710,8 +3710,6 @@ const th: Partial<Translations> = {
   "entry.list.empty": "ยังไม่มีข้อมูลสำรอง เพิ่ม {name} ในตารางเวลาหรือสำรองข้อมูลตอนนี้",
   "entry.list.restoreFrom": "กู้คืนจาก {place}",
   "entry.restore.title": "กู้คืน {name}",
-  "entry.restore.sub": "ข้อมูลสำรอง {when} · {source}",
-  "entry.config.restoreText": "คุณกู้คืนข้อมูลสำรองตัวเองผ่านตัวช่วยฉุกเฉิน BombVault รีสตาร์ตเพื่อให้การตั้งค่ามีผล จึงอยู่รวมกับขั้นตอนฉุกเฉินอื่น ๆ",
   "entry.config.startRecovery": "เริ่มตัวช่วยฉุกเฉิน",
   "entry.places.count": "ข้อมูลสำรอง {n} รายการ",
   "entry.settings.schedule": "ตารางเวลาและปลายทาง",

@@ -3715,8 +3715,6 @@ const hi: Partial<Translations> = {
   "entry.list.empty": "अभी कोई बैकअप नहीं है। {name} को शेड्यूल में जोड़ें या अभी बैकअप लें।",
   "entry.list.restoreFrom": "{place} से रीस्टोर करें",
   "entry.restore.title": "{name} रीस्टोर करें",
-  "entry.restore.sub": "बैकअप {when} · {source}",
-  "entry.config.restoreText": "सेल्फ़-बैकअप आप आपातकालीन विज़ार्ड से वापस लाते हैं। सेटिंग्स लागू होने के लिए BombVault रीस्टार्ट होता है, इसीलिए यह बाकी आपातकालीन चरणों के साथ है।",
   "entry.config.startRecovery": "आपातकालीन विज़ार्ड शुरू करें",
   "entry.places.count": "{n} बैकअप",
   "entry.settings.schedule": "शेड्यूल और गंतव्य",

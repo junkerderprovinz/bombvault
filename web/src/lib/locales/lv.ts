@@ -3715,8 +3715,6 @@ const lv: Partial<Translations> = {
   "entry.list.empty": "Rezerves kopiju vēl nav. Pievienojiet {name} grafikam vai izveidojiet kopiju tūlīt.",
   "entry.list.restoreFrom": "Atjaunot no {place}",
   "entry.restore.title": "Atjaunot {name}",
-  "entry.restore.sub": "Rezerves kopija {when} · {source}",
-  "entry.config.restoreText": "Pašrezervi atjauno ar avārijas vedni. BombVault pārstartējas, lai iestatījumi stātos spēkā, tāpēc tā atrodas kopā ar pārējiem avārijas soļiem.",
   "entry.config.startRecovery": "Palaist avārijas vedni",
   "entry.places.count": "zero={n} rezerves kopiju|one={n} rezerves kopija|other={n} rezerves kopijas",
   "entry.settings.schedule": "Grafiks un mērķis",

@@ -7,7 +7,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { entryName } from "../components/backups/kinds";
 import { Button } from "../components/Button";
 import type { OpenBackup } from "../components/entry/BackupList";
-import { BackupsTab, ZFSBackupsTab } from "../components/entry/BackupsTab";
+import { BackupsTab } from "../components/entry/BackupsTab";
 import { EntryCorner, EntryHeadActions } from "../components/entry/EntryActions";
 import { EntryHead } from "../components/entry/EntryHead";
 import { KindHead } from "../components/entry/KindHead";
@@ -125,11 +125,10 @@ function Loaded({
   const nextHue = hueCounter();
 
   // Read here and not in the tab, so the head can open the newest backup and
-  // a change of tab reads nothing again. A ZFS entry has no timeline and
-  // leaves the hook closed.
+  // a change of tab reads nothing again.
   const domain = ENTRY_KIND[item.kind].timelineDomain;
-  const read = useTimeline(domain ?? "containers", item.key, domain !== undefined && !self);
-  const timeline = { ...read, domain: domain ?? "containers" };
+  const read = useTimeline(domain, item.key, !self);
+  const timeline = { ...read, domain };
   const reloadTimeline = read.reload;
   const [opened, setOpened] = useState<OpenBackup | null>(
     request.snapshot && !request.dump ? { key: request.snapshot } : null
@@ -204,22 +203,18 @@ function Loaded({
         )}
       </div>
 
-      {!self &&
-        tab === "backups" &&
-        (detail.kind === "zfs" ? (
-          <ZFSBackupsTab entry={entry} dataset={detail.dataset} runs={runs} request={request} nextHue={nextHue} />
-        ) : (
-          <BackupsTab
-            entry={entry}
-            name={name}
-            runs={runs}
-            timeline={timeline}
-            opened={opened}
-            onOpen={setOpened}
-            request={request}
-            nextHue={nextHue}
-          />
-        ))}
+      {!self && tab === "backups" && (
+        <BackupsTab
+          entry={entry}
+          name={name}
+          runs={runs}
+          timeline={timeline}
+          opened={opened}
+          onOpen={setOpened}
+          request={request}
+          nextHue={nextHue}
+        />
+      )}
 
       {!self && tab === "settings" && (
         <SettingsTab

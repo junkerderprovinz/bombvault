@@ -3715,8 +3715,6 @@ const bg: Partial<Translations> = {
   "entry.list.empty": "Още няма архиви. Добави {name} в графика или архивирай сега.",
   "entry.list.restoreFrom": "Възстанови от {place}",
   "entry.restore.title": "Възстанови {name}",
-  "entry.restore.sub": "Архив {when} · {source}",
-  "entry.config.restoreText": "Самобекъпът се възстановява чрез аварийния помощник. BombVault се рестартира, за да влязат в сила настройките, затова е заедно с другите аварийни стъпки.",
   "entry.config.startRecovery": "Стартирай аварийния помощник",
   "entry.places.count": "one={n} архивиране|other={n} архивирания",
   "entry.settings.schedule": "График и дестинация",

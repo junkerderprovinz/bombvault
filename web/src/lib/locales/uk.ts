@@ -3702,8 +3702,6 @@ const uk: Partial<Translations> = {
   "entry.list.empty": "Резервних копій поки немає. Додайте {name} до розкладу або створіть копію зараз.",
   "entry.list.restoreFrom": "Відновити з {place}",
   "entry.restore.title": "Відновити {name}",
-  "entry.restore.sub": "Резервна копія {when} · {source}",
-  "entry.config.restoreText": "Автобекап відновлюється через аварійний майстер. BombVault перезапускається, щоб налаштування набули чинності, тому він розташований разом з іншими аварійними кроками.",
   "entry.config.startRecovery": "Запустити аварійний майстер",
   "entry.places.count": "one={n} копія|few={n} копії|many={n} копій|other={n} копії",
   "entry.settings.schedule": "Розклад і місце призначення",

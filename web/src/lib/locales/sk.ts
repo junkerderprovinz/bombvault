@@ -3715,8 +3715,6 @@ const sk: Partial<Translations> = {
   "entry.list.empty": "Zatiaľ žiadne zálohy. Pridajte {name} do plánu, alebo zálohujte hneď.",
   "entry.list.restoreFrom": "Obnoviť z {place}",
   "entry.restore.title": "Obnoviť {name}",
-  "entry.restore.sub": "Záloha {when} · {source}",
-  "entry.config.restoreText": "Vlastnú zálohu obnovíte núdzovým sprievodcom. BombVault sa reštartuje, aby sa nastavenia prejavili, preto je spolu s ostatnými núdzovými krokmi.",
   "entry.config.startRecovery": "Spustiť núdzového sprievodcu",
   "entry.places.count": "one={n} záloha|few={n} zálohy|many={n} zálohy|other={n} záloh",
   "entry.settings.schedule": "Plán a cieľ",

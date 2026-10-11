@@ -3707,8 +3707,6 @@ const he: Partial<Translations> = {
   "entry.list.empty": "עדיין אין גיבויים. הוסף את {name} ללוח הזמנים או גבה עכשיו.",
   "entry.list.restoreFrom": "שחזר מ-{place}",
   "entry.restore.title": "שחזר את {name}",
-  "entry.restore.sub": "גיבוי {when} · {source}",
-  "entry.config.restoreText": "את הגיבוי העצמי משחזרים דרך אשף החירום. BombVault מופעל מחדש כדי שההגדרות ייכנסו לתוקף, ולכן הוא נמצא עם שאר שלבי החירום.",
   "entry.config.startRecovery": "הפעל את אשף החירום",
   "entry.places.count": "one=גיבוי אחד|two=שני גיבויים|other={n} גיבויים",
   "entry.settings.schedule": "לוח זמנים ויעד",

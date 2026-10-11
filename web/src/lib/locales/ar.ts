@@ -3710,8 +3710,6 @@ const ar: Partial<Translations> = {
   "entry.list.empty": "لا توجد نسخ احتياطية بعد. أضف {name} إلى الجدول الزمني أو أنشئ نسخة الآن.",
   "entry.list.restoreFrom": "استعادة من {place}",
   "entry.restore.title": "استعادة {name}",
-  "entry.restore.sub": "نسخة {when} · {source}",
-  "entry.config.restoreText": "تستعيد النسخة الذاتية عبر معالج الطوارئ. يُعاد تشغيل BombVault كي تسري الإعدادات، ولهذا توجد مع بقية خطوات الطوارئ.",
   "entry.config.startRecovery": "بدء معالج الطوارئ",
   "entry.places.count": "zero=لا نسخ احتياطية|one=نسخة احتياطية واحدة|two=نسختان احتياطيتان|few={n} نسخ احتياطية|many={n} نسخة احتياطية|other={n} نسخة احتياطية",
   "entry.settings.schedule": "الجدول الزمني والوجهة",

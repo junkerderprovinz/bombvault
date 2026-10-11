@@ -3707,8 +3707,6 @@ const no: Partial<Translations> = {
   "entry.list.empty": "Ingen sikkerhetskopier ennå. Legg {name} til i tidsplanen eller ta en sikkerhetskopi nå.",
   "entry.list.restoreFrom": "Gjenopprett fra {place}",
   "entry.restore.title": "Gjenopprett {name}",
-  "entry.restore.sub": "Sikkerhetskopi {when} · {source}",
-  "entry.config.restoreText": "Auto-sikkerhetskopien henter du tilbake via nødveiviseren. BombVault starter på nytt slik at innstillingene trer i kraft, og derfor ligger den sammen med de andre nødtrinnene.",
   "entry.config.startRecovery": "Start nødveiviseren",
   "entry.places.count": "one={n} sikkerhetskopi|other={n} sikkerhetskopier",
   "entry.settings.schedule": "Tidsplan og mål",

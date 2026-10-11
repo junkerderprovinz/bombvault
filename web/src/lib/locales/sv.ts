@@ -3707,8 +3707,6 @@ const sv: Partial<Translations> = {
   "entry.list.empty": "Inga säkerhetskopior ännu. Lägg till {name} i schemat eller säkerhetskopiera nu.",
   "entry.list.restoreFrom": "Återställ från {place}",
   "entry.restore.title": "Återställ {name}",
-  "entry.restore.sub": "Säkerhetskopia {when} · {source}",
-  "entry.config.restoreText": "Självsäkerhetskopian återställer du via nödguiden. BombVault startar om så att inställningarna börjar gälla, därför ligger den bland de övriga nödstegen.",
   "entry.config.startRecovery": "Starta nödguiden",
   "entry.places.count": "one={n} säkerhetskopia|other={n} säkerhetskopior",
   "entry.settings.schedule": "Schema och mål",

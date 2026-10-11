@@ -3715,8 +3715,6 @@ const et: Partial<Translations> = {
   "entry.list.empty": "Varundusi veel pole. Lisa {name} ajakavasse või tee varundus kohe.",
   "entry.list.restoreFrom": "Taasta asukohast {place}",
   "entry.restore.title": "Taasta {name}",
-  "entry.restore.sub": "Varundus {when} · {source}",
-  "entry.config.restoreText": "Iseenda varundus taastatakse hädaabiviisardiga. BombVault taaskäivitub, et seaded jõustuksid, seetõttu asub see koos muude hädaabisammudega.",
   "entry.config.startRecovery": "Käivita hädaabiviisard",
   "entry.places.count": "one={n} varundus|other={n} varundust",
   "entry.settings.schedule": "Ajakava ja sihtkoht",

@@ -3707,8 +3707,6 @@ const it: Partial<Translations> = {
   "entry.list.empty": "Ancora nessun backup. Aggiungi {name} al calendario o esegui subito un backup.",
   "entry.list.restoreFrom": "Ripristina da {place}",
   "entry.restore.title": "Ripristina {name}",
-  "entry.restore.sub": "Backup {when} · {source}",
-  "entry.config.restoreText": "L'auto-backup si ripristina con la procedura guidata di emergenza. BombVault si riavvia perché le impostazioni abbiano effetto, ed è per questo che si trova con gli altri passaggi di emergenza.",
   "entry.config.startRecovery": "Avvia la procedura guidata di emergenza",
   "entry.places.count": "{n} backup",
   "entry.settings.schedule": "Calendario e destinazione",

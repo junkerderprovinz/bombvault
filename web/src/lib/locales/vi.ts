@@ -3698,8 +3698,6 @@ const vi: Partial<Translations> = {
   "entry.list.empty": "Chưa có bản sao lưu. Thêm {name} vào lịch trình hoặc sao lưu ngay.",
   "entry.list.restoreFrom": "Khôi phục từ {place}",
   "entry.restore.title": "Khôi phục {name}",
-  "entry.restore.sub": "Bản sao lưu {when} · {source}",
-  "entry.config.restoreText": "Bạn khôi phục bản tự sao lưu qua trình hướng dẫn khẩn cấp. BombVault khởi động lại để cài đặt có hiệu lực, vì vậy nó nằm cùng các bước khẩn cấp khác.",
   "entry.config.startRecovery": "Bắt đầu trình hướng dẫn khẩn cấp",
   "entry.places.count": "{n} bản sao lưu",
   "entry.settings.schedule": "Lịch trình và đích sao lưu",

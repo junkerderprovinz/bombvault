@@ -3715,8 +3715,6 @@ const ca: Partial<Translations> = {
   "entry.list.empty": "Encara no hi ha còpies. Afegeix {name} a l'horari o fes-ne una còpia ara.",
   "entry.list.restoreFrom": "Restaura des de {place}",
   "entry.restore.title": "Restaura {name}",
-  "entry.restore.sub": "Còpia {when} · {source}",
-  "entry.config.restoreText": "L'autocòpia es recupera amb l'assistent d'emergència. BombVault es reinicia perquè la configuració tingui efecte, per això és amb la resta de passos d'emergència.",
   "entry.config.startRecovery": "Inicia l'assistent d'emergència",
   "entry.places.count": "one={n} còpia|many={n} de còpies|other={n} còpies",
   "entry.settings.schedule": "Horari i destinació",

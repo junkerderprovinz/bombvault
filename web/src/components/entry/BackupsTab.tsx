@@ -1,17 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  zfsHostDatasets,
-  type DBDumpView,
-  type Run,
-  type TimelineRow,
-  type ZFSDatasetView,
-  type ZFSHostDataset,
-} from "../../lib/api";
+import type { Run, TimelineRow } from "../../lib/api";
 import { isGone } from "../../lib/backupList";
 import { historyDays, rowOfRun, type Entry } from "../../lib/entry";
 import { useT } from "../../lib/i18n";
 import type { RestoreRequest } from "../../lib/restoreRequest";
+import { holdsSnapshot, restoreFolderFor, snapshotIds } from "../../lib/restorePlan";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
 import { Card } from "../../pages/settings/shared";
 import { AnomalyWindow } from "../anomalies/AnomalyWindow";
@@ -19,14 +13,13 @@ import { Button } from "../Button";
 import { IconCompare } from "../glyphs";
 import { DatabaseDumpList } from "../restore/DatabaseDumpList";
 import { MissingRestorePoint } from "../restore/MissingRestorePoint";
-import { CompareSnapshotsForm, DEFAULT_RESTORE_FOLDER, RecreateButton, displayTags } from "../RestorePanel";
+import { RestoreWindow } from "../restore/RestoreWindow";
+import { CompareSnapshotsForm, RecreateButton, displayTags } from "../RestorePanel";
 import { Selector } from "../Selector";
 import { SourceToggle, type RepoSource } from "../SourceToggle";
-import { ZFSRestorePanel } from "../zfs/ZFSRestorePanel";
 import { BackupHistory, hasHistory } from "./BackupHistory";
 import { BackupList, type OpenBackup } from "./BackupList";
 import { BackupPlaces, ZFSPlaces, type TimelineState } from "./BackupPlaces";
-import { RestoreWindow } from "./RestoreWindow";
 
 type View = "backups" | "dumps";
 
@@ -87,7 +80,6 @@ export function BackupsTab({
   const hasDumps = container !== null && (container.dbTier !== "" || request.dump);
   const [view, setView] = useState<View>(request.dump ? "dumps" : "backups");
   const [dumpSource, setDumpSource] = useState<RepoSource>("local");
-  const [dumps, setDumps] = useState<DBDumpView[]>([]);
   const [located, setLocated] = useState<string | null>(null);
   const [comparing, setComparing] = useState(false);
 
@@ -100,8 +92,7 @@ export function BackupsTab({
   const { rows, places, loading, error } = timeline;
   const pending = places.filter((p) => p.state !== "read");
   const empty = !loading && error === null && rows.length === 0 && pending.length === 0;
-  const openedRow = opened ? rows.find((row) => row.key === opened.key) : undefined;
-  const restoreFolder = settings.restoreFolder || DEFAULT_RESTORE_FOLDER;
+  const openedRow = opened ? rows.find((row) => holdsSnapshot(row, opened.key)) : undefined;
 
   function locate(run: Run) {
     const row = rowOfRun(rows, run);
@@ -116,7 +107,11 @@ export function BackupsTab({
   return (
     <>
       {hasHistory(days) && <BackupHistory days={days} onLocate={locate} hueIndex={nextHue()} />}
-      <BackupPlaces timeline={timeline} hueIndex={nextHue()} />
+      {detail.kind === "zfs" ? (
+        <ZFSPlaces dataset={detail.dataset} hueIndex={nextHue()} />
+      ) : (
+        <BackupPlaces timeline={timeline} hueIndex={nextHue()} />
+      )}
       <Card
         title={t(view === "dumps" ? "dbdump.listTitle" : "backups.title")}
         hint={t("entry.list.hint")}
@@ -164,7 +159,7 @@ export function BackupsTab({
             <MissingRestorePoint
               requested={request.snapshot}
               requestedAt={request.at}
-              points={rows.map((row) => ({ id: row.key, at: Math.floor(Date.parse(row.time) / 1000) }))}
+              points={rows.flatMap((row) => snapshotIds(row).map((id) => ({ id, at: Math.floor(Date.parse(row.time) / 1000) })))}
               t={t}
             />
           )}
@@ -181,7 +176,7 @@ export function BackupsTab({
           <BackupList
             timeline={timeline}
             runs={runs}
-            isFlagged={(row, run) => flagged.has(row.key) || (run !== undefined && isFlagged(run))}
+            isFlagged={(row, run) => snapshotIds(row).some((id) => flagged.has(id)) || (run !== undefined && isFlagged(run))}
             tagsOf={tagsOf}
             located={located}
             requested={request.dump ? "" : request.snapshot}
@@ -191,8 +186,6 @@ export function BackupsTab({
         </div>
 
         {hasDumps && container && (
-          // Mounted on both views, because the list of backups marks the
-          // backup a dump was taken with.
           <div hidden={view !== "dumps"}>
             <DatabaseDumpList
               containerName={container.name}
@@ -203,9 +196,8 @@ export function BackupsTab({
                 installed.some((c) => c.name === dep && c.state === "running")
               )}
               hostMountRoot={hostMountRoot}
-              defaultFolder={restoreFolder}
+              defaultFolder={restoreFolderFor(settings, item.kind)}
               reloadTick={0}
-              onDumps={setDumps}
               preselect={request.dump ? request.snapshot : ""}
               preselectAt={request.at}
               t={t}
@@ -219,10 +211,9 @@ export function BackupsTab({
           key={opened.key}
           entry={entry}
           name={name}
-          row={openedRow}
-          place={opened.place}
           timeline={timeline}
-          dumps={dumps}
+          ask={{ snapshot: openedRow.key, place: opened.place, dataset: request.dataset }}
+          deletable
           onClose={() => onOpen(null)}
         />
       )}
@@ -231,55 +222,6 @@ export function BackupsTab({
           <CompareSnapshotsForm containerName={container.name} t={t} />
         </AnomalyWindow>
       )}
-    </>
-  );
-}
-
-/**
- * ZFSBackupsTab is the Backups tab of a ZFS entry, whose backups are restore
- * points of a whole dataset tree and come with a panel of their own.
- */
-export function ZFSBackupsTab({
-  entry,
-  dataset,
-  runs,
-  request,
-  nextHue,
-}: {
-  entry: Entry;
-  dataset: ZFSDatasetView;
-  runs: Run[];
-  request: RestoreRequest;
-  nextHue: () => number;
-}) {
-  const { t } = useT();
-  const isFlagged = useFlaggedRun();
-  const days = historyDays(runs, isFlagged);
-  const [host, setHost] = useState<ReadonlyMap<string, ZFSHostDataset>>(new Map());
-
-  // The listing goes over SSH. Without it the panel still restores, and the
-  // server checks again whether a dataset can be written into.
-  useEffect(() => {
-    zfsHostDatasets()
-      .then((res) => {
-        if (res.ok && res.available) setHost(new Map(res.datasets.map((d) => [d.dataset, d])));
-      })
-      .catch(() => undefined);
-  }, []);
-
-  return (
-    <>
-      {hasHistory(days) && <BackupHistory days={days} hueIndex={nextHue()} />}
-      <ZFSPlaces dataset={dataset} hueIndex={nextHue()} />
-      <Card title={t("backups.title")} hueIndex={nextHue()}>
-        <ZFSRestorePanel
-          item={dataset}
-          host={host}
-          hostMountRoot={entry.hostMountRoot}
-          restoreFolder={entry.settings.restoreFolder || DEFAULT_RESTORE_FOLDER}
-          preselect={request.snapshot ? request : undefined}
-        />
-      </Card>
     </>
   );
 }

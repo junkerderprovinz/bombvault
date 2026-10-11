@@ -3710,8 +3710,6 @@ const ro: Partial<Translations> = {
   "entry.list.empty": "Încă nu există copii. Adaugă {name} în programare sau fă o copie acum.",
   "entry.list.restoreFrom": "Restaurează din {place}",
   "entry.restore.title": "Restaurează {name}",
-  "entry.restore.sub": "Copie {when} · {source}",
-  "entry.config.restoreText": "Auto-backup-ul îl aduci înapoi prin asistentul de urgență. BombVault repornește pentru ca setările să aibă efect, de aceea se află laolaltă cu restul pașilor de urgență.",
   "entry.config.startRecovery": "Pornește asistentul de urgență",
   "entry.places.count": "one={n} copie de rezervă|few={n} copii de rezervă|other={n} de copii de rezervă",
   "entry.settings.schedule": "Programare și destinație",

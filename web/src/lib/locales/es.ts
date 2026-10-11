@@ -3705,8 +3705,6 @@ const es: Partial<Translations> = {
   "entry.list.empty": "Aún no hay copias. Añade {name} al calendario o haz una copia ahora.",
   "entry.list.restoreFrom": "Restaurar desde {place}",
   "entry.restore.title": "Restaurar {name}",
-  "entry.restore.sub": "Copia {when} · {source}",
-  "entry.config.restoreText": "La autocopia se recupera con el asistente de emergencia. BombVault se reinicia para que los ajustes surtan efecto, por eso está junto al resto de los pasos de emergencia.",
   "entry.config.startRecovery": "Iniciar el asistente de emergencia",
   "entry.places.count": "one={n} copia|many={n} de copias|other={n} copias",
   "entry.settings.schedule": "Calendario y destino",

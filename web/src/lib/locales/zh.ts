@@ -3698,8 +3698,6 @@ const zh: Partial<Translations> = {
   "entry.list.empty": "还没有备份。把 {name} 加入计划，或现在就备份。",
   "entry.list.restoreFrom": "从 {place} 还原",
   "entry.restore.title": "还原 {name}",
-  "entry.restore.sub": "备份 {when} · {source}",
-  "entry.config.restoreText": "自我备份通过应急向导还原。BombVault 会重启以使设置生效，所以它与其他应急步骤放在一起。",
   "entry.config.startRecovery": "启动应急向导",
   "entry.places.count": "{n} 个备份",
   "entry.settings.schedule": "计划和目标",

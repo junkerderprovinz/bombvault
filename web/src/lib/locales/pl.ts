@@ -3702,8 +3702,6 @@ const pl: Partial<Translations> = {
   "entry.list.empty": "Nie ma jeszcze kopii zapasowych. Dodaj {name} do harmonogramu albo zrób kopię teraz.",
   "entry.list.restoreFrom": "Przywróć z {place}",
   "entry.restore.title": "Przywróć {name}",
-  "entry.restore.sub": "Kopia zapasowa {when} · {source}",
-  "entry.config.restoreText": "Autokopię przywracasz kreatorem awaryjnym. BombVault uruchamia się ponownie, by ustawienia zaczęły działać, dlatego jest razem z pozostałymi krokami awaryjnymi.",
   "entry.config.startRecovery": "Uruchom kreator awaryjny",
   "entry.places.count": "one={n} kopia zapasowa|few={n} kopie zapasowe|many={n} kopii zapasowych|other={n} kopii zapasowych",
   "entry.settings.schedule": "Harmonogram i miejsce docelowe",

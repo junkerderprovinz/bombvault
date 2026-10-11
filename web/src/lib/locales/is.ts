@@ -3715,8 +3715,6 @@ const is: Partial<Translations> = {
   "entry.list.empty": "Engin afrit enn. Bættu {name} við tímaáætlunina eða taktu afrit núna.",
   "entry.list.restoreFrom": "Endurheimta frá {place}",
   "entry.restore.title": "Endurheimta {name}",
-  "entry.restore.sub": "Afrit {when} · {source}",
-  "entry.config.restoreText": "Sjálfvirka afritið er endurheimt með neyðarhjálpinni. BombVault endurræsir sig svo stillingarnar taki gildi, þess vegna er það með hinum neyðarskrefunum.",
   "entry.config.startRecovery": "Ræsa neyðarhjálpina",
   "entry.places.count": "{n} afrit",
   "entry.settings.schedule": "Tímaáætlun og áfangastaður",

@@ -3699,8 +3699,6 @@ const sl: Partial<Translations> = {
   "entry.list.empty": "Varnostnih kopij še ni. Dodaj {name} v urnik ali naredi kopijo zdaj.",
   "entry.list.restoreFrom": "Obnovi iz {place}",
   "entry.restore.title": "Obnovi {name}",
-  "entry.restore.sub": "Varnostna kopija {when} · {source}",
-  "entry.config.restoreText": "Lastno varnostno kopijo obnoviš z nujnim čarovnikom. BombVault se znova zažene, da nastavitve začnejo veljati, zato je skupaj z ostalimi nujnimi koraki.",
   "entry.config.startRecovery": "Zaženi nujnega čarovnika",
   "entry.places.count": "one={n} varnostna kopija|two={n} varnostni kopiji|few={n} varnostne kopije|other={n} varnostnih kopij",
   "entry.settings.schedule": "Urnik in cilj",

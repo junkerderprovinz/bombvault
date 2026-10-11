@@ -3698,8 +3698,6 @@ const ja: Partial<Translations> = {
   "entry.list.empty": "バックアップはまだありません。{name} をスケジュールに追加するか、今すぐバックアップしてください。",
   "entry.list.restoreFrom": "{place} から復元",
   "entry.restore.title": "{name} を復元",
-  "entry.restore.sub": "バックアップ {when} · {source}",
-  "entry.config.restoreText": "セルフバックアップは緊急ウィザードで戻します。設定を反映するため BombVault が再起動するので、ほかの緊急手順と同じ場所にあります。",
   "entry.config.startRecovery": "緊急ウィザードを開始",
   "entry.places.count": "{n} 件のバックアップ",
   "entry.settings.schedule": "スケジュールと保存先",

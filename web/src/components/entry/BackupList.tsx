@@ -4,6 +4,7 @@ import { runOfRow } from "../../lib/entry";
 import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { formatRecent } from "../../lib/reltime";
+import { holdsSnapshot } from "../../lib/restorePlan";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
@@ -174,7 +175,7 @@ export function BackupList({
         run={run}
         tags={tagsOf(row)}
         flagged={isFlagged(row, run)}
-        marked={row.key === located || row.key === requested}
+        marked={row.key === located || (requested !== "" && holdsSnapshot(row, requested))}
         onOpen={onOpen}
       />
     );

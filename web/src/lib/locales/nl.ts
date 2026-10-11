@@ -3704,8 +3704,6 @@ const nl: Partial<Translations> = {
   "entry.list.empty": "Nog geen back-ups. Zet {name} in de planning of maak nu een back-up.",
   "entry.list.restoreFrom": "Herstellen vanaf {place}",
   "entry.restore.title": "{name} herstellen",
-  "entry.restore.sub": "Back-up {when} · {source}",
-  "entry.config.restoreText": "De zelf-back-up haal je terug met de noodassistent. BombVault start daarbij opnieuw op zodat de instellingen ingaan, daarom staat hij bij de andere noodstappen.",
   "entry.config.startRecovery": "Noodassistent starten",
   "entry.places.count": "one={n} back-up|other={n} back-ups",
   "entry.settings.schedule": "Planning en bestemming",

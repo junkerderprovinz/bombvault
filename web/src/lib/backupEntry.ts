@@ -29,7 +29,7 @@ export interface EntryKindSpec {
   keyedBy: "name" | "id" | "kind";
   /** The kind's own page, which older links point to. */
   legacyPath: string;
-  timelineDomain?: TimelineDomain;
+  timelineDomain: TimelineDomain;
   placementDomain?: PlacementDomain;
   backup: (key: string) => Promise<BackupResponse>;
   /** Takes the entry out of the schedule or back into it. Flash and config
@@ -67,6 +67,7 @@ export const ENTRY_KIND: Record<EntryKind, EntryKindSpec> = {
   zfs: {
     keyedBy: "id",
     legacyPath: "/zfs",
+    timelineDomain: "zfs",
     backup: (id) => backupZFSDataset(id),
     setIncluded: (id, enabled) => patchZFSDataset(id, { enabled }),
   },
