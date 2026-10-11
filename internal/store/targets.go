@@ -49,11 +49,14 @@ type Target struct {
 	// keys are per-root UI state and never reach argv. Owned by SetExcludeCaches
 	// (never reset by Upsert).
 	ExcludeCaches map[string]bool
-	// UpdateAfterBackup opts this container into a post-backup image update (#52):
-	// after a successful backup, pull the image and recreate the container if a
-	// newer image is available. Owned by SetUpdateAfterBackup (never reset by
-	// Upsert). Off by default.
-	UpdateAfterBackup bool
+	// UpdateAfterBackup is this container's own choice about the post-backup
+	// image update (#52): after a successful backup, pull the image and recreate
+	// the container if a newer one is available. It counts only while
+	// UpdateAfterBackupOwn is set; otherwise the container follows
+	// Settings.UpdateContainersAfterBackup. Both are owned by their setters and
+	// never reset by Upsert.
+	UpdateAfterBackup    bool
+	UpdateAfterBackupOwn bool
 	// LastUpdateCheck / LastUpdateResult record the outcome of the most recent
 	// post-backup update check, so "checked and current" is distinguishable from
 	// "never reached" without a noise run row per night. LastUpdateCheck is the
@@ -160,13 +163,13 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	// repo and repo_chosen are written on insert only: an upsert never moves
 	// where an item's backups go.
 	_, err = r.db.Exec(`
-		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, update_after_backup_own, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(container_name) DO UPDATE SET
 		  appdata_paths = excluded.appdata_paths,
 		  definition    = excluded.definition`,
 		t.ID, t.ContainerName, string(pathsJSON),
-		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), string(ecJSON), boolInt(t.UpdateAfterBackup), t.BackupOrder, t.ScheduleCadence, t.Repo, t.RepoChosen, boolInt(t.DBDumpOff), t.DBDumpEngine,
+		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), string(ecJSON), boolInt(t.UpdateAfterBackup), boolInt(t.UpdateAfterBackupOwn), t.BackupOrder, t.ScheduleCadence, t.Repo, t.RepoChosen, boolInt(t.DBDumpOff), t.DBDumpEngine,
 	)
 	if err != nil {
 		return Target{}, fmt.Errorf("UpsertTarget: %w", err)
@@ -179,7 +182,7 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 // GetTargetByContainer returns the target for the named container.
 func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, update_after_backup_own, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine
 		FROM targets WHERE container_name = ?`, name)
 	return scanTarget(row)
 }
@@ -188,7 +191,7 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 // alias's target_id resolves to the entry's current name.
 func (r *Repo) GetTargetByID(id string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, update_after_backup_own, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine
 		FROM targets WHERE id = ?`, id)
 	return scanTarget(row)
 }
@@ -196,7 +199,7 @@ func (r *Repo) GetTargetByID(id string) (Target, error) {
 // ListTargets returns all known targets.
 func (r *Repo) ListTargets() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, update_after_backup_own, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine
 		FROM targets ORDER BY container_name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
@@ -238,7 +241,7 @@ func (r *Repo) ListTargetsScheduleOrder() ([]Target, error) {
 	// there is and drifts to the end of the queue for good — quietly, since the
 	// ordering is a preference rather than an error.
 	rows, err := r.db.Query(`
-		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.exclude_caches, t.update_after_backup, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence, t.repo, t.repo_chosen, t.db_dump_off, t.db_dump_engine
+		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.exclude_caches, t.update_after_backup, t.update_after_backup_own, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence, t.repo, t.repo_chosen, t.db_dump_off, t.db_dump_engine
 		FROM targets t
 		LEFT JOIN (
 			SELECT target_id, MAX(finished_at) AS last_ok
@@ -299,20 +302,41 @@ func (r *Repo) SetHooks(containerName, preHook, postHook string) error {
 	return nil
 }
 
-// SetUpdateAfterBackup toggles the post-backup image update for a container (#52),
-// creating the target row if it does not exist yet (so it can be set before the
-// first backup). Never reset by UpsertTarget.
+// UpdatesAfterBackup reports whether the post-backup update runs for this
+// container: its own choice when it has one, else everyContainer.
+func (t Target) UpdatesAfterBackup(everyContainer bool) bool {
+	if t.UpdateAfterBackupOwn {
+		return t.UpdateAfterBackup
+	}
+	return everyContainer
+}
+
+// SetUpdateAfterBackup gives a container its own choice about the post-backup
+// image update (#52), creating the target row if it does not exist yet (so it
+// can be set before the first backup). Never reset by UpsertTarget.
 func (r *Repo) SetUpdateAfterBackup(containerName string, updateAfterBackup bool) error {
 	res, err := r.db.Exec(
-		`UPDATE targets SET update_after_backup = ? WHERE container_name = ?`,
+		`UPDATE targets SET update_after_backup = ?, update_after_backup_own = 1 WHERE container_name = ?`,
 		boolInt(updateAfterBackup), containerName)
 	if err != nil {
 		return fmt.Errorf("SetUpdateAfterBackup: %w", err)
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
-		if _, err := r.UpsertTarget(Target{ContainerName: containerName, UpdateAfterBackup: updateAfterBackup}); err != nil {
+		if _, err := r.UpsertTarget(Target{ContainerName: containerName, UpdateAfterBackup: updateAfterBackup, UpdateAfterBackupOwn: true}); err != nil {
 			return fmt.Errorf("SetUpdateAfterBackup create target: %w", err)
 		}
+	}
+	return nil
+}
+
+// FollowUpdateAfterBackup drops a container's own choice, so it follows the
+// switch for every container again. A container without a row follows it
+// already.
+func (r *Repo) FollowUpdateAfterBackup(containerName string) error {
+	if _, err := r.db.Exec(
+		`UPDATE targets SET update_after_backup = 0, update_after_backup_own = 0 WHERE container_name = ?`,
+		containerName); err != nil {
+		return fmt.Errorf("FollowUpdateAfterBackup: %w", err)
 	}
 	return nil
 }
@@ -722,8 +746,8 @@ type scanner interface {
 func scanTarget(s scanner) (Target, error) {
 	var t Target
 	var pathsJSON, selJSON, stopJSON, exJSON, ecJSON string
-	var include, updateAfter, dbDumpOff int
-	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &ecJSON, &updateAfter, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence, &t.Repo, &t.RepoChosen, &dbDumpOff, &t.DBDumpEngine)
+	var include, updateAfter, updateAfterOwn, dbDumpOff int
+	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &ecJSON, &updateAfter, &updateAfterOwn, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence, &t.Repo, &t.RepoChosen, &dbDumpOff, &t.DBDumpEngine)
 	if err != nil {
 		return Target{}, fmt.Errorf("scanTarget: %w", err)
 	}
@@ -746,6 +770,7 @@ func scanTarget(s scanner) (Target, error) {
 	}
 	t.IncludeInSchedule = include != 0
 	t.UpdateAfterBackup = updateAfter != 0
+	t.UpdateAfterBackupOwn = updateAfterOwn != 0
 	t.DBDumpOff = dbDumpOff != 0
 	return t, nil
 }

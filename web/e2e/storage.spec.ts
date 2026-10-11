@@ -493,7 +493,7 @@ test.describe("on the desktop", () => {
     await stageStorage(page, 1280);
     await page.goto("/settings/storage");
     await expect(page.getByRole("heading", { name: "Off-site-Aufbewahrung" })).toBeAttached();
-    for (const moved of ["Backup-Pfade", "Ablage-Vorgaben", "Ziele", "Streaming", "Lokale Aufbewahrung"]) {
+    for (const moved of ["Backup-Pfade", "Vorgaben für Speicherorte", "Speicherorte", "Streaming", "Lokale Aufbewahrung"]) {
       await expect(page.getByRole("heading", { name: moved, exact: true })).toHaveCount(0);
     }
     await page.getByRole("button", { name: "Öffnen" }).click();

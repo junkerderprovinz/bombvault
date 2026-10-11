@@ -341,6 +341,15 @@ export function SchedulesPage() {
       {settings.containersEnabled && (
         <Card title={t("schedules.updates")} hueIndex={nextHue()}>
           <ToggleRow
+            label={t("settings.updateEveryContainer")}
+            hint={t("settings.updateEveryContainerHint")}
+            checked={settings.updateContainersAfterBackup}
+            onChange={(v) => void autoSaveField("updateContainersAfterBackup", v, ignoreSaveState, ignoreSaveError)}
+            disabled={mergedFieldBusy.updateContainersAfterBackup}
+            shakeNonce={mergedFieldShake.updateContainersAfterBackup}
+            pulseNonce={fieldPulse.updateContainersAfterBackup}
+          />
+          <ToggleRow
             label={t("settings.pruneImageAfterUpdate")}
             hint={t("settings.pruneImageAfterUpdateHint")}
             checked={settings.pruneImageAfterUpdate}

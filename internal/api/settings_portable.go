@@ -1544,6 +1544,9 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.CatchUpMissed = v.CatchUpMissed
 	out.WatchdogEnabled = v.WatchdogEnabled
 	out.ReconcileUnraidUpdateStatus = v.ReconcileUnraidUpdateStatus
+	if v.UpdateContainersAfterBackup != nil {
+		out.UpdateContainersAfterBackup = *v.UpdateContainersAfterBackup
+	}
 	out.ExportEncryptEnabled = v.ExportEncryptEnabled
 	out.ExportAgeRecipients = strings.TrimSpace(v.ExportAgeRecipients)
 	out.ReceiverEnabled = v.ReceiverEnabled

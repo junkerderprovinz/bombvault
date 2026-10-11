@@ -671,7 +671,7 @@ test.describe("on the desktop", () => {
     await expect(disk.getByRole("link", { name: "Cache-Pool" })).toBeVisible();
     await disk.getByRole("button", { name: "Details" }).click();
     const window = page.getByRole("dialog");
-    await expect(window.getByRole("button", { name: "Element öffnen" })).toHaveCount(0);
+    await expect(window.getByRole("button", { name: "Eintrag öffnen" })).toHaveCount(0);
     await window.getByRole("button", { name: "Speicherort ansehen" }).click();
     await expect(page).toHaveURL(/\/storage\/path%3Alocal$/);
   });
@@ -679,13 +679,13 @@ test.describe("on the desktop", () => {
   test("a finding that keeps old backups says so with a lock, in the list and in its window", async ({ page }) => {
     await stage(page, 1280);
     await openPage(page);
-    const lock = findingOf(page, NEXTCLOUD).getByLabel(/^Alte Backups dieses Elements bleiben erhalten/);
+    const lock = findingOf(page, NEXTCLOUD).getByLabel(/^Alte Sicherungen dieses Eintrags bleiben erhalten/);
     await expect(lock).toBeVisible();
     const name = (await findingOf(page, NEXTCLOUD).getByRole("link", { name: NEXTCLOUD }).boundingBox())!;
     const at = (await lock.boundingBox())!;
     expect(Math.abs(at.y + at.height / 2 - (name.y + name.height / 2)), "the lock stands beside the name").toBeLessThanOrEqual(4);
     await findingOf(page, NEXTCLOUD).getByRole("button", { name: "Details" }).click();
-    await expect(page.getByRole("dialog").getByText(/^Alte Backups dieses Elements bleiben erhalten/)).toBeVisible();
+    await expect(page.getByRole("dialog").getByText(/^Alte Sicherungen dieses Eintrags bleiben erhalten/)).toBeVisible();
   });
 
   test("Alle N quittieren sends exactly that item's ids", async ({ page }) => {
@@ -820,7 +820,7 @@ test("the overview on a phone keeps notes out of what needs the person", async (
   await stage(page, 360, { findings: [], open: { critical: 0, warning: 0, info: 2 } });
   await showAnomaliesCard(page);
   await page.goto("/dashboard");
-  await expect(page.getByText("Keine Anomalien in deinen Backups.")).toBeVisible();
+  await expect(page.getByText("Keine Anomalien in deinen Sicherungen.")).toBeVisible();
 
   await expect(page.getByTestId("need-anomaly")).toHaveCount(0);
 });

@@ -646,7 +646,7 @@ for (const width of [320, 360]) {
     // Its request to hand out a key deposit waits in the same list, and the
     // deposit this server keeps for it stands with what was allowed.
     await expect(win.locator("[data-release]")).toHaveCount(1);
-    await expect(win.locator('[data-release="rel1"]')).toContainText("fragt nach der Schlüssel-Hinterlegung von Büro Linz");
+    await expect(win.locator('[data-release="rel1"]')).toContainText("fragt nach der Hinterlegung von Büro Linz");
     await expect(win.locator("[data-kept]")).toHaveCount(1);
     await expect(win.locator('[data-request="fetcher"]').getByRole("button", { name: "Freigabe entziehen" })).toBeVisible();
     await win.evaluate((el) => el.setAttribute("data-probe", ""));
@@ -661,13 +661,13 @@ for (const width of [320, 360]) {
     await openPage(page, width);
     const win = await openDetails(page);
 
-    await win.getByRole("button", { name: "Empfangenes Repo hinzufügen" }).click();
-    await expectDialogFits(page, "Empfangenes Repo hinzufügen");
-    await page.getByRole("dialog", { name: "Empfangenes Repo hinzufügen" }).getByRole("button", { name: "Abbrechen" }).click();
+    await win.getByRole("button", { name: "Repository hinzufügen", exact: true }).click();
+    await expectDialogFits(page, "Empfangenes Repository hinzufügen");
+    await page.getByRole("dialog", { name: "Empfangenes Repository hinzufügen" }).getByRole("button", { name: "Abbrechen" }).click();
 
     await win.getByRole("button", { name: "Bearbeiten", exact: true }).first().click();
-    await expectDialogFits(page, "Empfangenes Repo bearbeiten");
-    await page.getByRole("dialog", { name: "Empfangenes Repo bearbeiten" }).getByRole("button", { name: "Abbrechen" }).click();
+    await expectDialogFits(page, "Empfangenes Repository bearbeiten");
+    await page.getByRole("dialog", { name: "Empfangenes Repository bearbeiten" }).getByRole("button", { name: "Abbrechen" }).click();
 
     await win.getByRole("button", { name: "Quelle hinzufügen" }).click();
     await expectDialogFits(page, "Quelle hinzufügen");
@@ -698,13 +698,13 @@ for (const width of [320, 360]) {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
     await page.route("**/api/group/deposit/code", (route) => route.fulfill({ json: { ok: true, recoveryCode: CODE } }));
     await openPage(page, width);
-    await card(page, "self").getByRole("button", { name: "Schlüssel-Hinterlegung" }).click();
-    const win = page.getByRole("dialog", { name: "Schlüssel-Hinterlegung" });
+    await card(page, "self").getByRole("button", { name: "Hinterlegung", exact: true }).click();
+    const win = page.getByRole("dialog", { name: /^Hinterlegung/ });
     await expect(win.locator("[data-keeper]")).toHaveCount(3);
     await expect(win.locator("[data-kept]")).toHaveCount(3);
     await expect(win.locator("[data-release]")).toHaveCount(2);
     await expect(win.locator('[data-release="rel2"]').getByText("Hier noch nie gesehen")).toBeVisible();
-    await expectDialogFits(page, "Schlüssel-Hinterlegung");
+    await expectDialogFits(page, win);
 
     await win.getByRole("button", { name: "Neuen Code erstellen" }).click();
     await expectDialogFits(page, "Bestätigen");
@@ -840,7 +840,7 @@ test("a key deposit is made from its tile, and the recovery code stays until it 
   const tile = card(page, MEMBER).locator('button[data-role="keeper"]');
   await expect(tile).toHaveAttribute("data-state", "off");
   // With no deposit on either side the window has nothing to show yet.
-  await expect(card(page, "self").getByRole("button", { name: "Schlüssel-Hinterlegung" })).toHaveCount(0);
+  await expect(card(page, "self").getByRole("button", { name: "Hinterlegung", exact: true })).toHaveCount(0);
 
   // The tile is one of four, in the form of the others.
   const sizes = await card(page, MEMBER)
@@ -876,7 +876,7 @@ test("a key deposit is made from its tile, and the recovery code stays until it 
   await expect(code).toHaveCount(0);
   await expect(page.getByText("K7QF2")).toHaveCount(0);
   await expect(tile).toHaveAttribute("data-state", "on");
-  await expect(card(page, "self").getByRole("button", { name: "Schlüssel-Hinterlegung" })).toBeVisible();
+  await expect(card(page, "self").getByRole("button", { name: "Hinterlegung", exact: true })).toBeVisible();
 });
 
 test("the key deposits on the desktop: every line fits, and a request is allowed", async ({ page }, testInfo) => {
@@ -887,8 +887,8 @@ test("the key deposits on the desktop: every line fits, and a request is allowed
     await route.fulfill({ json: { ok: true, state: "allowed" } });
   });
   await openPage(page, testInfo.project.use.viewport!.width);
-  await card(page, "self").getByRole("button", { name: "Schlüssel-Hinterlegung" }).click();
-  const win = page.getByRole("dialog", { name: "Schlüssel-Hinterlegung" });
+  await card(page, "self").getByRole("button", { name: "Hinterlegung", exact: true }).click();
+  const win = page.getByRole("dialog", { name: /^Hinterlegung/ });
   await expect(win.getByTestId("code-since")).toContainText("Wiederherstellungscode erstellt am");
   await expect(win.locator("[data-keeper]")).toHaveText([/Aktiv/, /Veraltet.*Jetzt senden/, /Dort gelöscht.*Erneut anfragen/]);
   // An answered request is not listed, and the one from an unknown instance says so.
@@ -897,7 +897,7 @@ test("the key deposits on the desktop: every line fits, and a request is allowed
   await expect(unknown).toContainText("Hier noch nie gesehen");
   await expect(unknown).toContainText("7 Anfragen von dort bisher, 3 in der letzten Stunde");
   await expect(win.locator('[data-release="rel1"]')).toContainText("Hier zuerst gesehen am");
-  await expectDialogFits(page, "Schlüssel-Hinterlegung", { desktop: true });
+  await expectDialogFits(page, win, { desktop: true });
 
   await unknown.getByRole("button", { name: "Erlauben" }).click();
   expect(sent).toEqual([["/api/group/deposits/releases/rel2", { decision: "allow" }]]);
@@ -906,7 +906,7 @@ test("the key deposits on the desktop: every line fits, and a request is allowed
   // Deleting a kept deposit asks first, and the question is no red one.
   await win.locator('[data-kept="member-2"]').getByRole("button", { name: "Löschen" }).click();
   const question = page.getByRole("dialog", { name: "Bestätigen" });
-  await expect(question).toContainText("Schlüssel-Hinterlegung von Büro Linz löschen?");
+  await expect(question).toContainText("Hinterlegung von Büro Linz löschen?");
   await expectDialogFits(page, "Bestätigen", { desktop: true });
   await question.getByRole("button", { name: "Abbrechen" }).click();
 });

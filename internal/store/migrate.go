@@ -3098,10 +3098,22 @@ ALTER TABLE key_deposits_sent ADD COLUMN changed_at INTEGER NOT NULL DEFAULT 0;`
 );`,
 	},
 	{
-		// The members this install knew when it first ran a release whose
-		// members sign their calls. Only these may still call unsigned, so a
-		// member that turns up later cannot pass for an old one by saying so.
-		version:          keyHardeningMigration + 5,
+		// The switch for every container starts off, and a container that was
+		// switched on keeps that as a choice of its own, so an existing
+		// install updates exactly what it updated before.
+		version:          updateEveryContainerMigration,
+		name:             "update_containers_after_backup",
+		alreadySatisfied: columnPresent("targets", "update_after_backup_own"),
+		sql: `ALTER TABLE settings ADD COLUMN update_containers_after_backup INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE targets ADD COLUMN update_after_backup_own INTEGER NOT NULL DEFAULT 0;
+UPDATE targets SET update_after_backup_own = 1 WHERE update_after_backup = 1;`,
+	},
+	{
+		// The members this install knew when it first started with this
+		// table, before members signed their calls. Only these may still call
+		// unsigned, so a member that turns up later cannot pass for an old one
+		// by saying so.
+		version:          legacyMembersMigration,
 		name:             "legacy_members",
 		alreadySatisfied: tablePresent("legacy_members"),
 		sql: `CREATE TABLE IF NOT EXISTS legacy_members (
@@ -3234,9 +3246,15 @@ const depositProofMigration = 337
 
 // keyHardeningMigration numbers what was added to the tables of
 // keyRolesMigration afterwards, from 350, the keys members sign with, 353,
-// the switch for pairing phones, 354, and the members that may call unsigned,
-// 355.
+// and the switch for pairing phones, 354.
 const keyHardeningMigration = 350
+
+// updateEveryContainerMigration numbers the switch that updates every
+// container after its backup, 355.
+const updateEveryContainerMigration = 355
+
+// legacyMembersMigration numbers the members that may call unsigned, 356.
+const legacyMembersMigration = 356
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

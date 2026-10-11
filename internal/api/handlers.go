@@ -599,7 +599,11 @@ type containerView struct {
 	PostHook          string   `json:"postHook"`
 	StopContainers    []string `json:"stopContainers"`
 	Excludes          []string `json:"excludes"`
-	UpdateAfterBackup bool     `json:"updateAfterBackup"`
+	// UpdateAfterBackup is whether the post-backup update runs for this
+	// container, and UpdateAfterBackupOwn whether that is its own choice
+	// rather than the switch for every container.
+	UpdateAfterBackup    bool `json:"updateAfterBackup"`
+	UpdateAfterBackupOwn bool `json:"updateAfterBackupOwn"`
 	// BackupOrder is the container's explicit manual backup position (#119): a
 	// positive value runs earlier, 0 means unordered (overdue-first tiebreak).
 	BackupOrder int `json:"backupOrder"`
@@ -771,6 +775,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.DBDumpsGlobalOff = !settings.DBDumpsEnabled
 		}
 		var run *store.Run
+		v.UpdateAfterBackup = settings.UpdateContainersAfterBackup
 		if t, ok := byName[c.Name]; ok {
 			v.AliasConflicts = aliasConflicts.of(t.ID)
 			v.Aliases = formerNames.of(t.ID)
@@ -784,7 +789,8 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.PostHook = t.PostHook
 			v.StopContainers = t.StopContainers
 			v.Excludes = t.Excludes
-			v.UpdateAfterBackup = t.UpdateAfterBackup
+			v.UpdateAfterBackup = t.UpdatesAfterBackup(settings.UpdateContainersAfterBackup)
+			v.UpdateAfterBackupOwn = t.UpdateAfterBackupOwn
 			v.LastUpdateCheck = t.LastUpdateCheck
 			v.LastUpdateResult = t.LastUpdateResult
 			v.BackupOrder = t.BackupOrder
@@ -1865,7 +1871,10 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		// only the boolean union of the values ever reaches restic argv (D-06).
 		ExcludeCaches     map[string]bool `json:"excludeCaches"`
 		UpdateAfterBackup *bool           `json:"updateAfterBackup"`
-		ScheduleCadence   *string         `json:"scheduleCadence"`
+		// UpdateAfterBackupDefault drops the container's own choice, so it
+		// follows the switch for every container again.
+		UpdateAfterBackupDefault bool    `json:"updateAfterBackupDefault"`
+		ScheduleCadence          *string `json:"scheduleCadence"`
 		// DBDumpOff opts the container out of the automatic database dump;
 		// DBDumpEngine names the engine a container that only looks like a
 		// database is dumped with. Pointers like their neighbours: the card
@@ -1945,6 +1954,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.UpdateAfterBackup != nil {
 		if err := h.svc.SetUpdateAfterBackup(r.Context(), name, *body.UpdateAfterBackup); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.UpdateAfterBackupDefault {
+		if err := h.store.FollowUpdateAfterBackup(name); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
@@ -2363,6 +2378,10 @@ type settingsView struct {
 	// recheck runs over the existing host SSH link; best-effort and non-fatal.
 	// Default on.
 	ReconcileUnraidUpdateStatus bool `json:"reconcileUnraidUpdateStatus"`
+	// UpdateContainersAfterBackup runs the post-backup update for every
+	// container without a choice of its own. A pointer for the reason
+	// DBDumpsEnabled below is one: a body that predates it means keep.
+	UpdateContainersAfterBackup *bool `json:"updateContainersAfterBackup"`
 	// PerItemSchedules opts into per-container/VM schedule overrides (#121). Default
 	// false: the per-domain schedule stays authoritative for every item and the UI
 	// is unchanged. When on, an included item with a non-empty scheduleCadence runs
@@ -2527,6 +2546,7 @@ func toView(s store.Settings) settingsView {
 		CatchUpMissed:               s.CatchUpMissed,
 		WatchdogEnabled:             s.WatchdogEnabled,
 		ReconcileUnraidUpdateStatus: s.ReconcileUnraidUpdateStatus,
+		UpdateContainersAfterBackup: &s.UpdateContainersAfterBackup,
 		ExportEncryptEnabled:        s.ExportEncryptEnabled,
 		ExportAgeRecipients:         s.ExportAgeRecipients,
 		ReceiverEnabled:             s.ReceiverEnabled,
@@ -3144,6 +3164,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.CatchUpMissed = v.CatchUpMissed
 		cur.WatchdogEnabled = v.WatchdogEnabled
 		cur.ReconcileUnraidUpdateStatus = v.ReconcileUnraidUpdateStatus
+		if v.UpdateContainersAfterBackup != nil {
+			cur.UpdateContainersAfterBackup = *v.UpdateContainersAfterBackup
+		}
 		cur.ExportEncryptEnabled = v.ExportEncryptEnabled
 		cur.ExportAgeRecipients = strings.TrimSpace(v.ExportAgeRecipients)
 		cur.ReceiverEnabled = v.ReceiverEnabled

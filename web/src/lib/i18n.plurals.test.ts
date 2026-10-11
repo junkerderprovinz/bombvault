@@ -54,7 +54,7 @@ describe("plural forms in the tables", () => {
   const labelled = Object.keys(en).filter((k) => forms(en[k as keyof typeof en]) !== null);
 
   it("are declared on the strings that carry a count", () => {
-    expect(labelled).toContain("takeover.backups");
+    expect(labelled).toContain("entry.places.count");
     expect(labelled).toContain("time.minutesAgo");
     expect(labelled).toContain("dbdump.introNotice");
     expect(labelled).toContain("dbdump.stackRestoreWarn");
