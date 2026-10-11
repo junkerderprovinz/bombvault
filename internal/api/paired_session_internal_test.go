@@ -190,7 +190,7 @@ func TestAPairedSessionOpensThePagesAndStopsAtKeysAndTheLogin(t *testing.T) {
 			{http.MethodPost, "/api/group/deposit/code", map[string]any{}},
 			{http.MethodPost, "/api/emergency/adopt", map[string]any{}},
 			{http.MethodPost, "/api/emergency/sign-ins", map[string]any{}},
-			{http.MethodDelete, "/api/emergency", map[string]any{}},
+			{http.MethodPost, "/api/emergency/undo", map[string]any{}},
 		} {
 			code, out := attic.do(t, route.method, route.path, route.body)
 			if code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {

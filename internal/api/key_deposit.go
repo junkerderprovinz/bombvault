@@ -120,6 +120,7 @@ var depositCodes = []struct {
 	{keydeposit.ErrNotADeposit, "deposit-unreadable"},
 	{keydeposit.ErrCode, "deposit-code-shape"},
 	{keydeposit.ErrWrongCode, "deposit-code"},
+	{keydeposit.ErrBusy, "deposit-busy"},
 	{errMemberGone, "member-gone"},
 	{errMemberSilent, "member-silent"},
 	{errBackupKeyLocked, "backup-key-locked"},

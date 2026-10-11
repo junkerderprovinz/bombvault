@@ -5621,6 +5621,9 @@ func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Source   string `json:"source"`
 		Snapshot string `json:"snapshot"`
+		// Emergency is the id of the emergency this restore belongs to. With
+		// it the settings are taken to be the old install's.
+		Emergency string `json:"emergency"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -5628,7 +5631,11 @@ func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
 	// The source rides the BODY here (not ?source=), so normalize it explicitly —
 	// same contract as sourceParam, incl. the "offsite:<id>" per-target form.
 	source := normalizeSource(body.Source)
-	started, auto, err := h.svc.StartRestoreConfig(r.Context(), body.Snapshot, source)
+	started, auto, err := h.svc.StartRestoreConfig(forEmergency(r.Context(), body.Emergency), body.Snapshot, source)
+	if code := emergencyCode(err); code != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error(), "code": code})
+		return
+	}
 	if err != nil {
 		restoreFail(w, source, err)
 		return

@@ -151,7 +151,7 @@ func TestASettingsRestoreStoresNoKeyAnAdoptionWouldRefuse(t *testing.T) {
 	}
 
 	staged := f.stage(settingsOfTheOldInstall(t, oldKey))
-	if err := f.svc.takeOverStagedSettings(context.Background()); !errors.Is(err, errAdoptOwnBackups) {
+	if err := f.svc.takeOverStagedSettings(f.inEmergency()); !errors.Is(err, errAdoptOwnBackups) {
 		t.Fatalf("the settings of the old install on a server with backups of its own: %v, want %v", err, errAdoptOwnBackups)
 	}
 	db, err := store.OpenStaged(staged)

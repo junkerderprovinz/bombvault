@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync/atomic"
 
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/scrypt"
@@ -44,6 +45,20 @@ var (
 	ErrCode = errors.New("the recovery code has twenty letters and digits, in four groups of five")
 	// ErrWrongCode is returned for a deposit the code does not open.
 	ErrWrongCode = errors.New("the recovery code does not open this deposit")
+	// ErrBusy is returned while as many codes wait to be stretched as are
+	// let wait.
+	ErrBusy = errors.New("too many recovery codes are being tried at once. Try again in a moment")
+)
+
+// Stretching a code takes 256 MiB, so it is done for one code at a time, and
+// no more than maxWaiting others wait their turn. A server in a container
+// with a memory limit would otherwise be brought down by a handful of
+// attempts at once.
+const maxWaiting = 4
+
+var (
+	stretching = make(chan struct{}, 1)
+	waiting    atomic.Int32
 )
 
 // NewCode returns a fresh recovery code as it is shown: four groups of five.
@@ -95,7 +110,14 @@ func keyPair(code string, salt []byte) (public, private *[32]byte, err error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	if waiting.Add(1) > maxWaiting+1 {
+		waiting.Add(-1)
+		return nil, nil, ErrBusy
+	}
+	stretching <- struct{}{}
 	seed, err := scrypt.Key([]byte(code), salt, scryptN, scryptR, scryptP, 32)
+	<-stretching
+	waiting.Add(-1)
 	if err != nil {
 		return nil, nil, fmt.Errorf("keydeposit: stretch the code: %w", err)
 	}

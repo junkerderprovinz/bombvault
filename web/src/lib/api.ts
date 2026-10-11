@@ -4242,15 +4242,18 @@ export function backupEverythingNow(): Promise<OkEnvelope & { started?: boolean 
  * `autoRestart` is true when a container restart was scheduled, false when Docker
  * was unreachable and the user must restart the container manually. On a restore
  * error the 200 body carries {ok:false, error} (an APP_KEY / encryption mismatch
- * surfaces as a scrubbed message). Consumed by the Recovery tab (Task 13).
+ * surfaces as a scrubbed message). `emergency` is the id of the emergency
+ * the restore belongs to: only with it are settings of the old install taken
+ * over, and a stale id is refused with code "emergency-ended".
  */
 export function restoreConfig(
   snapshot: string,
-  source?: string
-): Promise<OkEnvelope & { staged?: boolean; autoRestart?: boolean; lost?: SealedLoss }> {
+  source?: string,
+  emergency?: string
+): Promise<Omit<OkEnvelope, "code"> & { code?: EmergencyRefusal; staged?: boolean; autoRestart?: boolean; lost?: SealedLoss }> {
   return fetchJSON("/api/config/restore", {
     method: "POST",
-    body: JSON.stringify({ snapshot, source }),
+    body: JSON.stringify({ snapshot, source, emergency: emergency ?? "" }),
   });
 }
 
@@ -5388,12 +5391,17 @@ export type EmergencyRefusal =
   | "adopt-in-use"
   | "emergency-key"
   | "backup-key-locked"
+  | "adopt-busy"
+  | "sign-ins-exist"
   | SecretsRefusal
   | RecoveryKitRefusal;
 
 /** The emergency in progress. It lives in the server's memory for 30 minutes
  *  and ends on finish, on cancel and with a restart. */
 export interface EmergencySession {
+  /** Names this emergency. Every request that acts on it carries it, and one
+   *  that names an emergency another read replaced gets "emergency-ended". */
+  id: string;
   source: "kit" | "typed" | "group";
   /** Whose kit the emergency reads and how old it is, to show before
    *  anything is taken over. Empty for a typed key. `ownerId` is set for a
@@ -5409,6 +5417,9 @@ export interface EmergencySession {
    *  storeEmergencySignIns saves. */
   cloudSignIn: boolean;
   rcloneConfig: boolean;
+  /** Which of this server's own sign-ins storing the kit's would replace.
+   *  With either true, storeEmergencySignIns needs `replace`. */
+  replaces: { cloudSignIn: boolean; rcloneConfig: boolean };
   /** What adopting would be refused with, absent when it would go through. */
   refusal?: EmergencyRefusal;
 }
@@ -5462,26 +5473,36 @@ export function readEmergencyKey(key: string, places: string[], creds?: CloudCre
 /** POST /api/emergency/adopt: makes the key of the emergency the key of this
  *  server's backups and sets whether repositories carry a password. A paired
  *  phone's session gets "own-login-needed". */
-export function adoptEmergencyKey(): Promise<EmergencyAnswer> {
-  return fetchKeyJSON("/api/emergency/adopt", { method: "POST" });
+export function adoptEmergencyKey(session: string): Promise<EmergencyAnswer> {
+  return fetchKeyJSON("/api/emergency/adopt", { method: "POST", body: JSON.stringify({ session }) });
 }
 
 /** POST /api/emergency/sign-ins: saves the shared cloud sign-in and the
- *  rclone config the kit carries. */
-export function storeEmergencySignIns(): Promise<EmergencyAnswer> {
-  return fetchKeyJSON("/api/emergency/sign-ins", { method: "POST" });
+ *  rclone config the kit carries and answers with the places looked into
+ *  again. Over sign-ins this server has of its own it answers
+ *  "sign-ins-exist" unless `replace` is set; undoEmergency puts them back. */
+export function storeEmergencySignIns(session: string, replace = false): Promise<EmergencyAnswer> {
+  return fetchKeyJSON("/api/emergency/sign-ins", { method: "POST", body: JSON.stringify({ session, replace }) });
 }
 
 /** POST /api/emergency/finish: ends the emergency and keeps what it took
- *  over. */
-export function finishEmergency(): Promise<EmergencyAnswer> {
-  return fetchJSON("/api/emergency/finish", { method: "POST" });
+ *  over. After the restart a settings restore ends in, no emergency is left
+ *  and the call only clears `lost`; the session it names is then ignored. */
+export function finishEmergency(session: string): Promise<EmergencyAnswer> {
+  return fetchJSON("/api/emergency/finish", { method: "POST", body: JSON.stringify({ session }) });
 }
 
-/** DELETE /api/emergency: ends the emergency and puts the server back under
- *  its own key, refused with "adopt-in-use" once backups were written. */
+/** DELETE /api/emergency?session=: cancels the emergency before anything is
+ *  taken over. It stores and undoes nothing. */
+export function cancelEmergency(session: string): Promise<EmergencyAnswer> {
+  return fetchJSON(`/api/emergency?session=${encodeURIComponent(session)}`, { method: "DELETE" });
+}
+
+/** POST /api/emergency/undo: puts the server back under its own key and its
+ *  own sign-ins and ends any emergency, refused with "adopt-in-use" once
+ *  backups were written and "adopt-busy" while one runs. */
 export function undoEmergency(): Promise<EmergencyAnswer> {
-  return fetchKeyJSON("/api/emergency", { method: "DELETE" });
+  return fetchKeyJSON("/api/emergency/undo", { method: "POST" });
 }
 
 /** POST /api/foreign/close — drop the session immediately (call on
@@ -6222,7 +6243,8 @@ export interface Deposits {
  *  more than three times in an hour or all instances together more than six
  *  times, the member keeps as many deposits as it takes ("keeper-full"), what
  *  the code opened says another install sealed it ("deposit-owner") or is no
- *  deposit ("deposit-unreadable"), the deposit is of a newer version, the
+ *  deposit ("deposit-unreadable"), too many codes are being tried at once
+ *  ("deposit-busy", try again shortly), the deposit is of a newer version, the
  *  code is not twenty characters, the code does not open the deposit, the
  *  member is out of reach or did not answer, the backup key is locked, or the
  *  request was answered before. */
@@ -6241,6 +6263,7 @@ export type DepositRefusal =
   | "keeper-full"
   | "deposit-owner"
   | "deposit-unreadable"
+  | "deposit-busy"
   | SecretsRefusal;
 
 type DepositAnswer<T> = Omit<OkEnvelope, "code"> & { code?: DepositRefusal } & T;

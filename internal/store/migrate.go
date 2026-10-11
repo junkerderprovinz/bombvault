@@ -2947,6 +2947,20 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
 );`,
 	},
 	{
+		// The sign-ins this server had before an emergency stored those of a
+		// recovery kit over them, so that an undo can put them back. A NULL
+		// column is a sign-in the server did not have.
+		version:          depositProofMigration + 2,
+		name:             "replaced_sign_ins",
+		alreadySatisfied: tablePresent("replaced_sign_ins"),
+		sql: `CREATE TABLE IF NOT EXISTS replaced_sign_ins (
+  id              INTEGER PRIMARY KEY CHECK (id = 1),
+  cloud_conf_enc  BLOB,
+  rclone_conf_enc BLOB,
+  replaced_at     INTEGER NOT NULL
+);`,
+	},
+	{
 		// The key of another install's backups, sealed under this install's
 		// own. Without a row the install backs up under its own key.
 		version:          keyRolesMigration,
@@ -3154,7 +3168,8 @@ const declinedMigration = 335
 const oneLineMigration = 336
 
 // depositProofMigration numbers the key an install proves its deposits with,
-// 337, and the check value of the APP_KEY, 338.
+// 337, the check value of the APP_KEY, 338, and the sign-ins an emergency
+// replaced, 339.
 const depositProofMigration = 337
 
 // keyHardeningMigration numbers what was added to the tables of

@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -33,8 +34,28 @@ func kitOfTheOldInstall(t *testing.T) string {
 	return writtenKit(t, old)
 }
 
+// sessionID is the id of the emergency in progress, empty without one.
+func (f *placementFixture) sessionID() string {
+	sess, err := f.svc.currentEmergency()
+	if err != nil {
+		return ""
+	}
+	return sess.id
+}
+
+// inEmergency is the context of a settings restore that belongs to the
+// emergency in progress.
+func (f *placementFixture) inEmergency() context.Context {
+	return forEmergency(context.Background(), f.sessionID())
+}
+
+// emergency sends one request of an emergency. A request that acts on the
+// emergency and has no body names the one in progress, as the window does.
 func (f *placementFixture) emergency(method, path string, body any) (map[string]any, emergencyView) {
 	f.t.Helper()
+	if body == nil && (strings.HasSuffix(path, "/adopt") || strings.HasSuffix(path, "/sign-ins") || strings.HasSuffix(path, "/finish")) {
+		body = map[string]any{"session": f.sessionID()}
+	}
 	res := f.do(method, path, body)
 	var view emergencyView
 	if raw, ok := res["emergency"]; ok {
@@ -146,7 +167,7 @@ func TestAnEmergencyByKitTakesTheKeyOverOnlyWhenAskedTo(t *testing.T) {
 		t.Fatalf("the sign-in of the kit is stored as %+v, %v", creds, err)
 	}
 
-	res, view = f.emergency("DELETE", "/api/emergency", nil)
+	res, view = f.emergency("POST", "/api/emergency/undo", nil)
 	if res["ok"] != true || view.BackupKey != backupKeyOwn || view.Session != nil {
 		t.Fatalf("undo: %v, %+v", res, view)
 	}
@@ -238,7 +259,7 @@ func TestAnAdoptedKeyIsReplacedOnlyWhileNothingWasWrittenUnderIt(t *testing.T) {
 	if res, _ := f.emergency("POST", "/api/emergency/adopt", nil); res["code"] != "adopt-own-backups" {
 		t.Fatalf("an adoption over a key with backups: %v", res)
 	}
-	res, view = f.emergency("DELETE", "/api/emergency", nil)
+	res, view = f.emergency("POST", "/api/emergency/undo", nil)
 	if res["code"] != "adopt-in-use" {
 		t.Fatalf("undoing a key with backups: %v", res)
 	}
@@ -379,7 +400,7 @@ func TestUndoingAnAdoptionPutsTheEncryptionSettingBack(t *testing.T) {
 		t.Fatalf("second adoption: %v", res)
 	}
 
-	if res, _ := f.emergency("DELETE", "/api/emergency", nil); res["ok"] != true {
+	if res, _ := f.emergency("POST", "/api/emergency/undo", nil); res["ok"] != true {
 		t.Fatalf("undo: %v", res)
 	}
 	if encryption() {

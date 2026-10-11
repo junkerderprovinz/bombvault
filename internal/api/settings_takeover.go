@@ -146,10 +146,18 @@ func (s *Service) takeOverStagedSettings(ctx context.Context) error {
 	s.emergencyMu.Lock()
 	s.takeoverLoss = nil
 	s.emergencyMu.Unlock()
+	// Only a restore that names an emergency is part of it. One that names
+	// none goes by this server's key alone, whatever is in progress.
 	own, from := s.cfg.AppKey, ""
-	sess, _ := s.currentEmergency()
-	if sess != nil && sess.sealingKey != own {
-		from = sess.sealingKey
+	var sess *emergencySession
+	if id := restoreEmergency(ctx); id != "" {
+		if sess, err = s.emergencyByID(id); err != nil {
+			_ = db.Close()
+			return err
+		}
+		if sess.sealingKey != own {
+			from = sess.sealingKey
+		}
 	}
 	var opened, moved int
 	var lost sealedLoss
@@ -208,6 +216,18 @@ func (s *Service) lastTakeoverLoss() *sealedLoss {
 	return s.takeoverLoss
 }
 
+type restoreEmergencyKey struct{}
+
+// forEmergency marks a settings restore as part of the emergency id names.
+func forEmergency(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, restoreEmergencyKey{}, id)
+}
+
+func restoreEmergency(ctx context.Context) string {
+	id, _ := ctx.Value(restoreEmergencyKey{}).(string)
+	return id
+}
+
 // stagedOwnerOf reads from a staged database whose settings it holds. opened
 // and lost count its sealed values that open under this server's key and
 // under none.
@@ -256,7 +276,7 @@ func (s *Service) finishTakeover(db *sql.DB, sess *emergencySession, whose stage
 	// The restore stores the key of the emergency like an adoption does, so
 	// it goes by the same refusals unless the key was adopted already.
 	if now := s.currentBackupKey(); now.state == backupKeyLocked || now.key != sess.backupKey {
-		if err := s.adoptionRefusal(sess); err != nil {
+		if err := s.adoptionRefusal(sess, false); err != nil {
 			return err
 		}
 	}
