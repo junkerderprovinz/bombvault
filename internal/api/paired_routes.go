@@ -93,21 +93,20 @@ var pairedRoutes = map[string]bool{
 	"POST /api/verify/{domain}":               true,
 	"POST /api/backup/cancel":                 true,
 
-	// Restoring and following a restore.
-	"POST /api/restore/check":                         true,
-	"POST /api/restore/cancel":                        true,
-	"POST /api/containers/{name}/restore":             true,
-	"POST /api/containers/{name}/restore-files":       true,
-	"POST /api/containers/{name}/restore-to":          true,
-	"POST /api/vms/{name}/restore":                    true,
-	"POST /api/files/sets/{id}/restore":               true,
-	"POST /api/files/sets/{id}/restore-files":         true,
-	"POST /api/zfs/datasets/{id}/restore":             true,
-	"POST /api/zfs/datasets/{id}/replica/restore":     true,
-	"POST /api/flash/plugins/restore":                 true,
-	"POST /api/containers/{name}/dbdumps/{id}/import": true,
-	"GET /api/stacks/{project}/dir":                   true,
-	"GET /api/browse":                                 true,
+	// Restoring and following a restore. The handlers back up what a restore
+	// in place replaces, or refuse it to a paired session.
+	"POST /api/restore/check":                     true,
+	"POST /api/restore/cancel":                    true,
+	"POST /api/containers/{name}/restore":         true,
+	"POST /api/containers/{name}/restore-files":   true,
+	"POST /api/containers/{name}/restore-to":      true,
+	"POST /api/vms/{name}/restore":                true,
+	"POST /api/files/sets/{id}/restore":           true,
+	"POST /api/files/sets/{id}/restore-files":     true,
+	"POST /api/zfs/datasets/{id}/restore":         true,
+	"POST /api/zfs/datasets/{id}/replica/restore": true,
+	"GET /api/stacks/{project}/dir":               true,
+	"GET /api/browse":                             true,
 
 	// The anomalies, to read. Acknowledging one ends the hold on the backups
 	// from before it.

@@ -371,7 +371,10 @@ var pairedRefused = []string{
 	"PUT /api/vms/backup-order",
 	// Acknowledging an anomaly, which lets the backups held for it be pruned.
 	"POST /api/anomalies/acknowledge",
-	// Restores that replace what is there without a backup first.
+	// Restores that replace what is there without a backup first, and a
+	// plugin written back to the flash drive, which runs it as root at boot.
+	"POST /api/containers/{name}/dbdumps/{id}/import",
+	"POST /api/flash/plugins/restore",
 	"POST /api/stacks/{project}/restore",
 }
 
@@ -558,7 +561,7 @@ func TestAPairedSessionSeesNoLocationOrHookInWhatItReads(t *testing.T) {
 		}
 		return "abc"
 	}
-	leaks := []string{"s3cr", "AKIDLEAK", "LEAK,KEY"}
+	leaks := []string{"s3cr", "AKIDLEAK", "LEAK,KEY", "hooksecret"}
 	seen := map[string]bool{}
 	for _, body := range pairedReads(in, fill) {
 		for _, leak := range leaks {

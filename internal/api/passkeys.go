@@ -296,13 +296,13 @@ func (h *Handler) handlePasskeyStatus(w http.ResponseWriter, r *http.Request) {
 	if rpErr != nil {
 		body["reason"] = rpErr.Error()
 	}
-	// The list itself is only for somebody signed in. Before that the login
-	// screen needs the counts and nothing else.
+	// The list itself is only for somebody signed in with the password. Before
+	// that the login screen needs the counts and nothing else.
 	hash, epoch, on := h.authEnabled()
 	authed := false
 	if on {
 		if c, cErr := h.sessionCookie(r); cErr == nil {
-			authed = secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value)
+			authed = secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value) && !secret.PairedSessionToken(c.Value)
 		}
 	}
 	if !on || authed {

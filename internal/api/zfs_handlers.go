@@ -51,6 +51,7 @@ func (h *Handler) handleListZFSDatasets(w http.ResponseWriter, r *http.Request) 
 	if isPaired(r) {
 		for i := range views {
 			views[i].RepoEffective = scrubRepoLocation(views[i].RepoEffective)
+			views[i].PreSnapshot, views[i].PostSnapshot = "", ""
 		}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"datasets": views}))
@@ -439,7 +440,7 @@ func (h *Handler) handleRestoreZFS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if isPaired(r) {
-		if req.SafetyOffConfirm {
+		if req.SafetyOffConfirm || strings.TrimSpace(req.NewDataset) != "" {
 			refusePaired(w)
 			return
 		}

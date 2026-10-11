@@ -4174,6 +4174,12 @@ func (h *Handler) handleAckRuns(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	// A paired session acknowledges one failure at a time, so a phone cannot
+	// clear what the person should still see.
+	if isPaired(r) && (body.All || len(body.IDs)+len(body.CopyTargets) != 1) {
+		refusePaired(w)
+		return
+	}
 	ackRuns := func() (int64, error) { return h.store.AcknowledgeRuns(body.IDs) }
 	ackCopies := func() (int64, error) { return h.store.AcknowledgeFailedCopies(body.CopyTargets) }
 	if body.All {
