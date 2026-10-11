@@ -3,18 +3,22 @@
 // weeks become the bars of the history.
 
 import type {
+  BackupChange,
   BackupItem,
   Container,
   FileSetView,
   PlacementView,
   Run,
   Settings,
+  TimelineMark,
+  TimelinePlace,
   TimelineRow,
   VM,
   ZFSDatasetView,
 } from "./api";
 import { entryPath, type EntryKind } from "./backupEntry";
 import { inSchedule, isGone, protection } from "./backupList";
+import { autoMark } from "./timeline";
 
 export const ENTRY_TABS = ["backups", "settings", "verify"] as const;
 
@@ -166,16 +170,100 @@ export function barHeight(bytes: number, largest: number): number {
   return Math.max(8, Math.round((Math.sqrt(bytes) / Math.sqrt(largest)) * 100));
 }
 
-function holds(row: TimelineRow, snapshotId: string): boolean {
+// The tags BombVault writes itself, by prefix and in whole. The server refuses
+// to set or clear them by hand, because retention, the database dumps and a
+// VM restore read a meaning from them.
+const OWN_TAG_PREFIXES = [
+  "container:",
+  "vm:",
+  "fileset:",
+  "stack:",
+  "vmrun:",
+  "formerly:",
+  "dbdump:",
+  "dbengine:",
+  "dbimage:",
+  "dbversion:",
+  "dbname:",
+  "bvrun:",
+  "zfs:",
+  "import:",
+  "blocks-partial:",
+  "bv:",
+];
+const IMPORTED_TAG = "imported";
+const OWN_TAGS = new Set([IMPORTED_TAG, "blocks", "live", "p1", "p2"]);
+
+export function isOwnTag(tag: string): boolean {
+  return OWN_TAGS.has(tag) || OWN_TAG_PREFIXES.some((prefix) => tag.startsWith(prefix));
+}
+
+/** personTags are the tags among these that a person set. */
+export function personTags(tags: string[]): string[] {
+  return tags.filter((tag) => !isOwnTag(tag));
+}
+
+/** rowTags are the tags a backup shows in the list: the ones a person set at
+ *  any of its places, and that it came in through an import. */
+export function rowTags(row: TimelineRow): string[] {
+  const all = new Set(row.places.flatMap((mark) => mark.tags));
+  return [...all].filter((tag) => tag === IMPORTED_TAG || !isOwnTag(tag));
+}
+
+/** parseTags reads a typed list of tags, which a comma separates because no
+ *  tag can hold one. */
+export function parseTags(text: string): string[] {
+  return [...new Set(text.split(",").map((tag) => tag.trim()))].filter((tag) => tag !== "");
+}
+
+/**
+ * actionMark is where a tag, a comparison or an export of a backup works: the
+ * place a restore would take it from, else the first place that holds it.
+ */
+export function actionMark(row: TimelineRow, places: TimelinePlace[]): TimelineMark {
+  return autoMark(row, places) ?? row.places[0];
+}
+
+/** comparable are the backups that can be compared with one another at a
+ *  place, which are the ones that place holds. */
+export function comparable(rows: TimelineRow[], place: string): TimelineRow[] {
+  return rows.filter((row) => row.places.some((mark) => mark.place === place));
+}
+
+export interface DiffGroups {
+  added: BackupChange[];
+  removed: BackupChange[];
+  changed: BackupChange[];
+}
+
+/** diffGroups sorts the listed paths of a comparison by what happened to them. */
+export function diffGroups(changes: BackupChange[]): DiffGroups {
+  const groups: DiffGroups = { added: [], removed: [], changed: [] };
+  for (const change of changes) {
+    if (change.modifier === "+") groups.added.push(change);
+    else if (change.modifier === "-") groups.removed.push(change);
+    else groups.changed.push(change);
+  }
+  return groups;
+}
+
+/** rowHolds says whether an id names the backup: its key, or one of the
+ *  snapshots a place holds of it. */
+export function rowHolds(row: TimelineRow, snapshotId: string): boolean {
   return row.key === snapshotId || row.places.some((mark) => mark.snapshotIds.includes(snapshotId));
 }
 
 /** rowOfRun is the row of the backup list a run wrote. A copy at a target
  *  carries an id of its own, so every id of the row is looked at. */
 export function rowOfRun(rows: TimelineRow[], run: Run): TimelineRow | undefined {
-  return run.snapshotId === "" ? undefined : rows.find((row) => holds(row, run.snapshotId));
+  return run.snapshotId === "" ? undefined : rows.find((row) => rowHolds(row, run.snapshotId));
 }
 
 export function runOfRow(runs: Run[], row: TimelineRow): Run | undefined {
-  return runs.find((run) => run.snapshotId !== "" && holds(row, run.snapshotId));
+  return runs.find((run) => run.snapshotId !== "" && rowHolds(row, run.snapshotId));
+}
+
+/** rowTime is when a backup was taken, in Unix seconds. */
+export function rowTime(row: TimelineRow): number {
+  return Math.floor(Date.parse(row.time) / 1000);
 }
