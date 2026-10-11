@@ -271,8 +271,6 @@ const pt: Partial<Translations> = {
 
   // Settings
   "settings.title": "Definições",
-  "settings.encryptionOn": "Ativada (palavra-passe derivada de APP_KEY)",
-  "settings.encryptionOff": "Desativada (sem palavra-passe)",
   "settings.encryptionPasswordWhere":
     "Nunca escreves essa palavra-passe: o BombVault deriva-a da APP_KEY em cada chamada. O valor está no teu kit de recuperação, como palavra-passe restic derivada, e é o que precisas para correr o restic à mão sobre um repositório.",
   "settings.encryptionHint":
@@ -2417,7 +2415,6 @@ const pt: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Agendamentos perdidos",
   "settings.catchUpMissed": "Recuperar backups perdidos após o arranque",
   "settings.catchUpMissedHint": "Se o servidor estava desligado quando um agendamento era devido, esse backup é executado cerca de dois minutos após o arranque do BombVault.",
-  "settings.watchdogTitle": "Vigilância de backups atrasados",
   "settings.watchdogHint": "Verifica uma vez por dia se algum backup ativado está atrasado (mais antigo do que o dobro do seu agendamento) e envia uma notificação por incidente através dos canais configurados acima.",
   "settings.watchdogToggle": "Notificar quando houver backups atrasados",
   "settings.coresLabel": "Threads de CPU (0 = todos)",
@@ -3381,7 +3378,6 @@ const pt: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Usa os canais configurados em Notificações. Cada elemento pode alterá-lo em Anomalias, Elementos. As falhas repetidas de backups e dumps e as verificações de restauro agendadas falhadas já enviam a sua própria mensagem, por isso não são enviadas uma segunda vez.",
   "anomaly.settings.notifyMuted": "Neste momento nada é enviado: as notificações estão desligadas ou não há nenhum canal configurado.",
   "anomaly.settings.openNotifications": "Abrir as definições de notificações",
-  "anomaly.settings.notifyCrossLink": "As anomalias que enviam uma notificação definem-se em Integridade, Anomalias.",
   "anomaly.settings.holdToggle": "Manter os backups antigos quando uma origem encolhe muito ou é reescrita",
   "anomaly.settings.holdHint": "Três achados suspendem a eliminação de backups antigos: uma origem que de repente está quase vazia, uma que ficou muito mais pequena e um backup que voltou a guardar a maior parte dos dados, que é o aspeto de um ransomware. De outra forma a retenção apagaria os bons backups antigos um a um. Enquanto uma anomalia destas estiver aberta, mantêm-se os backups antigos só desse item (ou desse dump de base de dados ou conjunto de dados ZFS); tudo o resto é limpo como de costume. Confirma a anomalia ou marca-a como esperada para retomar.",
   "anomaly.settings.backfill": "Histórico lido dos repositórios: {done} de {slots}",

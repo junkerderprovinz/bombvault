@@ -337,8 +337,6 @@ const ms: Partial<Translations> = {
 
   // Settings
   "settings.title": "Tetapan",
-  "settings.encryptionOn": "Diaktifkan (kata laluan diperoleh daripada APP_KEY)",
-  "settings.encryptionOff": "Dinyahaktifkan (tiada kata laluan)",
   "settings.encryptionPasswordWhere":
     "Kata laluan itu tidak pernah anda taip: BombVault menerbitkannya daripada APP_KEY pada setiap panggilan. Nilainya sendiri ada dalam kit pemulihan anda, disenaraikan sebagai kata laluan restic terbitan, dan itulah yang diperlukan untuk menjalankan restic secara manual terhadap sesebuah repositori.",
   "settings.encryptionHint": "Penyulitan ditetapkan bagi setiap repositori semasa ia dicipta, jadi tetapan ini hanya menentukan bagaimana repositori BAHARU dibuat. Bagi yang sedia ada, BombVault membaca modnya terus daripada repositori itu. Lihat halaman Pemulihan. Mengubahnya terhadap repositori sedia ada hanya menyebabkan restic tidak dapat membukanya.",
@@ -2009,7 +2007,6 @@ const ms: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Jadual terlepas",
   "settings.catchUpMissed": "Kejar sandaran yang terlepas selepas dimulakan",
   "settings.catchUpMissedHint": "Jika pelayan telah dimatikan semasa jadual tiba, jalankan sandaran itu kira-kira dua minit selepas BombVault dimulakan.",
-  "settings.watchdogTitle": "Pengawal sandaran tertunggak",
   "settings.watchdogHint": "Menyemak sekali sehari sama ada sandaran yang diaktifkan tertunggak (lebih lama daripada dua kali jadualnya) dan menghantar satu pemberitahuan bagi setiap insiden melalui saluran yang dikonfigurasikan di atas.",
   "settings.watchdogToggle": "Beritahu apabila sandaran tertunggak",
   "settings.coresLabel": "Benang CPU (0 = semua)",
@@ -3391,7 +3388,6 @@ const ms: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Menggunakan saluran yang ditetapkan di Pemberitahuan. Setiap item boleh mengubahnya di Anomali, Item. Kegagalan sandaran dan longgokan yang berulang serta semakan pemulihan berjadual yang gagal sudah menghantar mesej sendiri, jadi ia tidak dihantar kali kedua.",
   "anomaly.settings.notifyMuted": "Tiada apa-apa dihantar sekarang: pemberitahuan dimatikan atau tiada saluran ditetapkan.",
   "anomaly.settings.openNotifications": "Buka tetapan pemberitahuan",
-  "anomaly.settings.notifyCrossLink": "Anomali mana yang menghantar pemberitahuan ditetapkan di Integriti, Anomali.",
   "anomaly.settings.holdToggle": "Simpan sandaran lama apabila sumber mengecut dengan ketara atau ditulis semula",
   "anomaly.settings.holdHint": "Tiga penemuan menghentikan pemadaman sandaran lama: sumber yang tiba-tiba hampir kosong, sumber yang menjadi jauh lebih kecil, dan sandaran yang menyimpan semula kebanyakan data, seperti rupa perisian tebusan. Jika tidak, pengekalan akan memadam sandaran lama yang baik satu demi satu. Selagi anomali sebegitu terbuka, hanya sandaran lama item itu (atau longgokan pangkalan data atau set data ZFS itu) disimpan; yang lain dibersihkan seperti biasa. Sahkan anomali atau tandakannya sebagai dijangka untuk meneruskan.",
   "anomaly.settings.backfill": "Sejarah yang dibaca daripada repositori: {done} daripada {slots}",

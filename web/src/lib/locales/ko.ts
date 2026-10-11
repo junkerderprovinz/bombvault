@@ -272,8 +272,6 @@ const ko: Partial<Translations> = {
 
   // Settings
   "settings.title": "설정",
-  "settings.encryptionOn": "활성화됨 (APP_KEY에서 파생된 비밀번호)",
-  "settings.encryptionOff": "비활성화됨 (비밀번호 없음)",
   "settings.encryptionPasswordWhere":
     "이 비밀번호를 직접 입력할 일은 없습니다. BombVault가 호출할 때마다 APP_KEY에서 파생합니다. 값 자체는 복구 키트에 '파생된 restic 비밀번호'로 적혀 있으며, 저장소에 restic을 손으로 실행할 때 필요한 것이 바로 이것입니다.",
   "settings.encryptionHint":
@@ -2408,7 +2406,6 @@ const ko: Partial<Translations> = {
   "settings.missedSchedulesTitle": "놓친 일정",
   "settings.catchUpMissed": "시작 후 놓친 백업 따라잡기",
   "settings.catchUpMissedHint": "일정 시각에 서버가 꺼져 있었다면, 해당 백업은 BombVault 시작 약 2분 후에 실행됩니다.",
-  "settings.watchdogTitle": "백업 지연 감시",
   "settings.watchdogHint": "활성화된 백업이 지연되었는지(일정의 두 배보다 오래되었는지) 하루에 한 번 확인하고, 위에 설정한 채널로 사건당 한 건의 알림을 보냅니다.",
   "settings.watchdogToggle": "백업이 지연되면 알림",
   "settings.coresLabel": "CPU 스레드 (0 = 전체)",
@@ -3372,7 +3369,6 @@ const ko: Partial<Translations> = {
   "anomaly.settings.notifyHint": "알림에서 설정한 채널을 사용합니다. 대상마다 이상 징후, 대상에서 바꿀 수 있습니다. 반복되는 백업과 덤프 실패, 실패한 예약 복원 점검은 이미 자체 메시지를 보내므로 두 번 보내지 않습니다.",
   "anomaly.settings.notifyMuted": "지금은 아무것도 보내지 않습니다. 알림이 꺼져 있거나 설정된 채널이 없습니다.",
   "anomaly.settings.openNotifications": "알림 설정 열기",
-  "anomaly.settings.notifyCrossLink": "어떤 이상 징후가 알림을 보낼지는 무결성, 이상 징후에서 정합니다.",
   "anomaly.settings.holdToggle": "원본이 크게 줄거나 다시 쓰이면 오래된 백업 보존",
   "anomaly.settings.holdHint": "세 가지 발견이 오래된 백업의 삭제를 멈춥니다. 갑자기 거의 비어 버린 원본, 훨씬 작아진 원본, 그리고 데이터 대부분을 다시 저장한 백업인데, 마지막 것은 랜섬웨어의 전형적인 모습입니다. 그렇지 않으면 보존 정책이 정상인 오래된 백업을 한 번에 하나씩 지워 갑니다. 이런 이상 징후가 열려 있는 동안 그 대상 하나(또는 그 데이터베이스 덤프나 ZFS 데이터셋 하나)의 오래된 백업만 남고 나머지는 평소대로 정리됩니다. 다시 진행하려면 이상 징후를 확인하거나 예상된 것으로 표시하세요.",
   "anomaly.settings.backfill": "저장소에서 읽은 기록: {slots}개 중 {done}개",

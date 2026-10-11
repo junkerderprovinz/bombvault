@@ -272,8 +272,6 @@ const vi: Partial<Translations> = {
 
   // Settings
   "settings.title": "Cài đặt",
-  "settings.encryptionOn": "Bật (mật khẩu lấy từ APP_KEY)",
-  "settings.encryptionOff": "Tắt (không có mật khẩu)",
   "settings.encryptionPasswordWhere":
     "Bạn không bao giờ phải gõ mật khẩu đó: BombVault suy ra nó từ APP_KEY ở mỗi lần gọi. Giá trị nằm trong bộ khôi phục của bạn, ghi là mật khẩu restic được suy ra, và đó chính là thứ cần để chạy restic bằng tay trên một kho.",
   "settings.encryptionHint":
@@ -2408,7 +2406,6 @@ const vi: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Lịch bị bỏ lỡ",
   "settings.catchUpMissed": "Chạy bù các bản sao lưu bị bỏ lỡ sau khi khởi động",
   "settings.catchUpMissedHint": "Nếu máy chủ tắt khi một lịch đến hạn, bản sao lưu đó sẽ chạy khoảng hai phút sau khi BombVault khởi động.",
-  "settings.watchdogTitle": "Giám sát sao lưu quá hạn",
   "settings.watchdogHint": "Kiểm tra mỗi ngày một lần xem có bản sao lưu nào đang bật bị quá hạn không (cũ hơn gấp đôi lịch của nó) và gửi một thông báo cho mỗi sự cố qua các kênh đã cấu hình ở trên.",
   "settings.watchdogToggle": "Thông báo khi sao lưu quá hạn",
   "settings.coresLabel": "Luồng CPU (0 = tất cả)",
@@ -3372,7 +3369,6 @@ const vi: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Dùng các kênh đã thiết lập trong Thông báo. Mỗi mục có thể đổi điều này trong Bất thường, Mục. Các lỗi sao lưu và kết xuất lặp lại cùng các lần kiểm tra khôi phục theo lịch thất bại đã tự gửi thông báo riêng, nên không gửi lần thứ hai.",
   "anomaly.settings.notifyMuted": "Hiện không có gì được gửi: thông báo đang tắt hoặc chưa thiết lập kênh nào.",
   "anomaly.settings.openNotifications": "Mở cài đặt thông báo",
-  "anomaly.settings.notifyCrossLink": "Bất thường nào gửi thông báo được đặt trong Toàn vẹn, Bất thường.",
   "anomaly.settings.holdToggle": "Giữ bản sao lưu cũ khi nguồn co lại mạnh hoặc bị ghi lại",
   "anomaly.settings.holdHint": "Ba phát hiện tạm dừng việc xóa bản sao lưu cũ: nguồn đột nhiên gần như trống, nguồn nhỏ đi nhiều, và bản sao lưu đã lưu lại phần lớn dữ liệu, trông giống như mã độc tống tiền. Nếu không, chính sách lưu giữ sẽ xóa dần từng bản sao lưu cũ còn tốt. Khi một bất thường như vậy còn mở, chỉ các bản sao lưu cũ của đúng mục đó (hoặc bản kết xuất cơ sở dữ liệu hay tập dữ liệu ZFS đó) được giữ lại; mọi thứ khác được dọn như thường. Xác nhận bất thường hoặc đánh dấu là đã lường trước để tiếp tục.",
   "anomaly.settings.backfill": "Lịch sử đã đọc từ kho lưu trữ: {done} trên {slots}",

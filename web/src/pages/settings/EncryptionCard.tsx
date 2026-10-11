@@ -16,7 +16,7 @@ export function EncryptionCard({ hueIndex }: { hueIndex: number }) {
   return (
     <Card title={t("tile.crypt.title")} hueIndex={hueIndex}>
       <ToggleRow
-        label={settings.encryptionEnabled ? t("settings.encryptionOn") : t("settings.encryptionOff")}
+        label={t("tile.crypt.toggle")}
         hint={`${t("settings.encryptionHint")} ${t("settings.encryptionPasswordWhere")}`}
         checked={settings.encryptionEnabled}
         onChange={(v) => void autoSaveField("encryptionEnabled", v, setSaveState, setSaveError)}

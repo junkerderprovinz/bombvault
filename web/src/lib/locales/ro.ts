@@ -271,8 +271,6 @@ const ro: Partial<Translations> = {
 
   // Settings
   "settings.title": "Setări",
-  "settings.encryptionOn": "Activată (parolă derivată din APP_KEY)",
-  "settings.encryptionOff": "Dezactivată (fără parolă)",
   "settings.encryptionPasswordWhere":
     "Parola aceasta nu o tastezi niciodată: BombVault o derivă din APP_KEY la fiecare apel. Valoarea în sine este în kitul tău de recuperare, ca parolă restic derivată, și exact ea îți trebuie ca să rulezi restic manual pe un depozit.",
   "settings.encryptionHint":
@@ -2418,7 +2416,6 @@ const ro: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Programări ratate",
   "settings.catchUpMissed": "Recuperează backupurile ratate după pornire",
   "settings.catchUpMissedHint": "Dacă serverul era oprit când o programare era scadentă, acel backup rulează la circa două minute după pornirea BombVault.",
-  "settings.watchdogTitle": "Supraveghere backupuri întârziate",
   "settings.watchdogHint": "Verifică o dată pe zi dacă vreun backup activat este întârziat (mai vechi decât dublul programării sale) și trimite câte o notificare per incident prin canalele configurate mai sus.",
   "settings.watchdogToggle": "Notifică atunci când backupurile sunt întârziate",
   "settings.coresLabel": "Fire CPU (0 = toate)",
@@ -3382,7 +3379,6 @@ const ro: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Folosește canalele configurate la Notificări. Fiecare element poate schimba asta în Anomalii, Elemente. Eșecurile repetate ale copiilor și dump-urilor și verificările de restaurare programate eșuate trimit deja propriul mesaj, deci nu sunt trimise a doua oară.",
   "anomaly.settings.notifyMuted": "Momentan nu se trimite nimic: notificările sunt oprite sau nu este configurat niciun canal.",
   "anomaly.settings.openNotifications": "Deschide setările notificărilor",
-  "anomaly.settings.notifyCrossLink": "Ce anomalii trimit o notificare se setează la Integritate, Anomalii.",
   "anomaly.settings.holdToggle": "Păstrează copiile vechi când o sursă se micșorează brusc sau este rescrisă",
   "anomaly.settings.holdHint": "Trei constatări opresc ștergerea copiilor vechi: o sursă care dintr-odată este aproape goală, una care a devenit mult mai mică și o copie care a salvat din nou majoritatea datelor, așa cum arată un ransomware. Altfel păstrarea ar șterge copiile vechi bune una câte una. Cât timp o astfel de anomalie este deschisă, se păstrează copiile vechi doar ale acelui element (sau ale acelui dump de bază de date sau set de date ZFS); tot restul se curăță ca de obicei. Confirmă anomalia sau marcheaz-o ca așteptată ca să continue.",
   "anomaly.settings.backfill": "Istoric citit din depozite: {done} din {slots}",

@@ -272,8 +272,6 @@ const sv: Partial<Translations> = {
 
   // Settings
   "settings.title": "Inställningar",
-  "settings.encryptionOn": "Aktiverad (lösenord härlett från APP_KEY)",
-  "settings.encryptionOff": "Inaktiverad (inget lösenord)",
   "settings.encryptionPasswordWhere":
     "Det lösenordet skriver du aldrig: BombVault härleder det ur APP_KEY vid varje anrop. Själva värdet står i ditt återställningspaket som det härledda restic-lösenordet, och det är det du behöver för att köra restic för hand mot ett arkiv.",
   "settings.encryptionHint":
@@ -2417,7 +2415,6 @@ const sv: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Missade scheman",
   "settings.catchUpMissed": "Kör ikapp missade säkerhetskopieringar efter start",
   "settings.catchUpMissedHint": "Om servern var avstängd när ett schema skulle köras, körs den säkerhetskopieringen ungefär två minuter efter att BombVault startat.",
-  "settings.watchdogTitle": "Vakthund för försenade säkerhetskopior",
   "settings.watchdogHint": "Kontrollerar en gång om dagen om någon aktiverad säkerhetskopia är försenad (äldre än dubbla schemat) och skickar en avisering per incident via kanalerna ovan.",
   "settings.watchdogToggle": "Avisera när säkerhetskopior är försenade",
   "settings.coresLabel": "CPU-trådar (0 = alla)",
@@ -3381,7 +3378,6 @@ const sv: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Använder kanalerna som är inställda under Aviseringar. Varje objekt kan ändra det under Avvikelser, Objekt. Upprepade fel i säkerhetskopior och dumpar och misslyckade schemalagda återställningskontroller skickar redan ett eget meddelande och skickas därför inte en gång till.",
   "anomaly.settings.notifyMuted": "Just nu skickas ingenting: aviseringar är avstängda eller ingen kanal är inställd.",
   "anomaly.settings.openNotifications": "Öppna aviseringsinställningar",
-  "anomaly.settings.notifyCrossLink": "Vilka avvikelser som skickar en avisering ställs in under Integritet, Avvikelser.",
   "anomaly.settings.holdToggle": "Behåll gamla säkerhetskopior när en källa krymper kraftigt eller skrivs om",
   "anomaly.settings.holdHint": "Tre fynd pausar raderingen av gamla säkerhetskopior: en källa som plötsligt är nästan tom, en som har blivit mycket mindre och en säkerhetskopia som sparade det mesta av datan igen, som det ser ut efter utpressningsprogram. Annars skulle lagringen radera de goda äldre säkerhetskopiorna en i taget. Så länge en sådan avvikelse är öppen behålls de gamla säkerhetskopiorna av bara det objektet (eller den databasdumpen eller det ZFS-datasetet); allt annat rensas som vanligt. Kvittera avvikelsen eller markera den som väntad för att fortsätta.",
   "anomaly.settings.backfill": "Historik läst från repositorier: {done} av {slots}",

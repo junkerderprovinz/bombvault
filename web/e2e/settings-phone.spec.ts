@@ -616,10 +616,11 @@ test("settings integrations on a phone: the MCP confirmations come up as a sheet
   await expect(sheet).toBeHidden();
 
   // The client dialog stays a dialog: it fits, and it scrolls inside.
-  const client = page.getByRole("button", { name: /Claude Code/ }).first();
-  await client.scrollIntoViewIfNeeded();
+  const choose = page.getByRole("button", { name: "Client wählen" });
+  await choose.scrollIntoViewIfNeeded();
   await scrollRest(page);
-  await client.click();
+  await choose.click();
+  await page.getByRole("dialog").getByRole("button", { name: /Claude Code/ }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await settle(page);

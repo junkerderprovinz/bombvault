@@ -31,6 +31,11 @@ export function hueCounter(): () => number {
   return () => next++;
 }
 
+// Rows that follow each other in a card are parted by a hairline, 12px above
+// and below it, the rhythm of the storage cards' Rows.
+const ROW_RULES =
+  "[&>[data-search-row]+[data-search-row]]:-mt-1 [&>[data-search-row]+[data-search-row]]:border-t [&>[data-search-row]+[data-search-row]]:border-carbon-border/60 [&>[data-search-row]+[data-search-row]]:pt-3";
+
 export function Card({
   title,
   hint,
@@ -67,7 +72,7 @@ export function Card({
     <div
       data-search-card={title}
       data-new={newId}
-      className={`relative glim-notch-card flex flex-col gap-4 ${
+      className={`relative glim-notch-card flex flex-col gap-4 ${ROW_RULES} ${
         nested ? "pt-5" : "bg-carbon-surface rounded-card p-5"
       }${hueIndex !== undefined ? " glim-hue" : ""}`}
       style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}

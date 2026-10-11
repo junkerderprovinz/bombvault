@@ -147,3 +147,15 @@ it("keeps language, theme, shape, motion and colours off the General page", asyn
   }
   expect(screen.queryByRole("button", { name: /English/ })).toBeNull();
 });
+
+it("sets each label axis in a row of its own, the name at the start and its selector beside it", async () => {
+  await renderAt("/settings/look");
+  await screen.findByRole("heading", { name: new RegExp(`^${en["settings.labels"]}`) });
+  const card = document.querySelector<HTMLElement>(`[data-search-card="${en["settings.labels"]}"]`)!;
+  for (const axis of ["buttons", "sidebar", "tabs", "bottombar"] as const) {
+    const name = en[`settings.labels.${axis}`];
+    const selector = within(card).getByRole("tablist", { name });
+    const row = selector.closest(".justify-between")!;
+    expect(within(row as HTMLElement).getByText(name), axis).toBeTruthy();
+  }
+});

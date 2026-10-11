@@ -348,6 +348,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "notify.on" },
         { key: "notify.scheduledSummary", hint: "notify.scheduledSummaryHint" },
         { key: "notify.notifyOnUpdate", hint: "notify.notifyOnUpdateHint" },
+        { key: "settings.watchdogToggle", hint: "settings.watchdogHint" },
         { key: "notify.unraid", hint: "notify.unraidHint" },
       ],
     },
@@ -392,11 +393,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       title: "settings.digestTitle",
       hint: "settings.digestHint",
       rows: [{ key: "settings.digestToggle" }],
-    },
-    {
-      title: "settings.watchdogTitle",
-      hint: "settings.watchdogHint",
-      rows: [{ key: "settings.watchdogToggle" }],
     },
   ],
 
@@ -461,8 +457,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "tile.crypt.title",
       rows: [
-        { key: "settings.encryptionOn", hint: "settings.encryptionHint" },
-        { key: "settings.encryptionOff", hint: "settings.encryptionHint" },
+        { key: "tile.crypt.toggle", hint: "settings.encryptionHint" },
       ],
       body: ["settings.encryptionPasswordWhere", "tile.crypt.line"],
     },

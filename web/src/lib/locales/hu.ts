@@ -272,8 +272,6 @@ const hu: Partial<Translations> = {
 
   // Settings
   "settings.title": "Beállítások",
-  "settings.encryptionOn": "Engedélyezett (jelszó az APP_KEY-ből)",
-  "settings.encryptionOff": "Letiltott (nincs jelszó)",
   "settings.encryptionPasswordWhere":
     "Ezt a jelszót sosem gépeled be: a BombVault minden hívásnál az APP_KEY kulcsból származtatja. Maga az érték a helyreállítási csomagodban van, származtatott restic jelszóként, és épp erre van szükséged, ha kézzel futtatnád a resticet egy tárolón.",
   "settings.encryptionHint":
@@ -2418,7 +2416,6 @@ const hu: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Elmaradt ütemezések",
   "settings.catchUpMissed": "Elmaradt biztonsági mentések pótlása indulás után",
   "settings.catchUpMissedHint": "Ha a szerver ki volt kapcsolva, amikor egy ütemezés esedékes volt, az a biztonsági mentés a BombVault indulása után körülbelül két perccel lefut.",
-  "settings.watchdogTitle": "Késedelmes biztonsági mentések őre",
   "settings.watchdogHint": "Naponta egyszer ellenőrzi, hogy van-e késésben lévő engedélyezett biztonsági mentés (régebbi, mint az ütemezésének kétszerese), és incidensenként egy értesítést küld a fent beállított csatornákon.",
   "settings.watchdogToggle": "Értesítés, ha a biztonsági mentések késnek",
   "settings.coresLabel": "CPU szálak (0 = mind)",
@@ -3382,7 +3379,6 @@ const hu: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Az Értesítések alatt beállított csatornákat használja. Minden elem módosíthatja az Anomáliák, Elemek alatt. Az ismétlődő biztonsági mentési és dumphibák és a sikertelen ütemezett visszaállítási ellenőrzések már saját üzenetet küldenek, ezért nem mennek ki másodszor.",
   "anomaly.settings.notifyMuted": "Most semmi sem megy ki: az értesítések ki vannak kapcsolva, vagy nincs beállított csatorna.",
   "anomaly.settings.openNotifications": "Értesítési beállítások megnyitása",
-  "anomaly.settings.notifyCrossLink": "Hogy mely anomáliák küldenek értesítést, az Integritás, Anomáliák alatt állítható.",
   "anomaly.settings.holdToggle": "Régi biztonsági mentések megtartása, ha egy forrás erősen zsugorodik vagy újraíródik",
   "anomaly.settings.holdHint": "Három lelet állítja meg a régi biztonsági mentések törlését: a hirtelen majdnem üres forrás, a sokkal kisebbre zsugorodott forrás, és az a mentés, amely az adatok nagy részét újra eltárolta, ahogy egy zsarolóvírus kinéz. A megőrzés különben egyenként törölné a jó régebbi mentéseket. Amíg egy ilyen anomália nyitva van, csak annak az egy elemnek (vagy annak az adatbázismentésnek vagy ZFS adatkészletnek) a régi mentései maradnak meg; minden más a szokott módon takarítódik. A folytatáshoz nyugtázd az anomáliát, vagy jelöld várhatónak.",
   "anomaly.settings.backfill": "Tárolókból beolvasott előzmények: {done} / {slots}",

@@ -142,7 +142,7 @@ const DESK_X = 92;
 export function CryptScene() {
   const { t } = useT();
   return (
-    <div className="glim-pic glim-scene mx-auto w-full max-w-[440px]">
+    <div className="glim-pic glim-scene mx-auto w-full max-w-[520px]">
       <svg viewBox="0 0 360 172" role="img" aria-label={t("tile.crypt.sceneAlt")}>
         <rect className="glim-scene-box" x="8" y="16" width="150" height="128" />
         <text className="glim-sandbox-caption" x="83" y="162" textAnchor="middle">

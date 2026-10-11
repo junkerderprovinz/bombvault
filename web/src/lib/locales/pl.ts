@@ -272,8 +272,6 @@ const pl: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ustawienia",
-  "settings.encryptionOn": "Włączone (hasło pochodzi z APP_KEY)",
-  "settings.encryptionOff": "Wyłączone (bez hasła)",
   "settings.encryptionPasswordWhere":
     "Tego hasła nigdy nie wpisujesz: BombVault wyprowadza je z APP_KEY przy każdym wywołaniu. Sama wartość jest w Twoim zestawie odzyskiwania, jako wyprowadzone hasło restic, i to jej potrzebujesz, aby ręcznie uruchomić restic na repozytorium.",
   "settings.encryptionHint": "Szyfrowanie jest ustalane dla repozytorium przy jego tworzeniu, więc to ustawienie decyduje tylko o NOWYM repozytorium. Dla istniejącego BombVault odczytuje tryb prosto z repozytorium. Zobacz stronę Przywracanie. Zmiana tego wobec istniejącego repozytorium sprawi jedynie, że restic go nie otworzy.",
@@ -2414,7 +2412,6 @@ const pl: Partial<Translations> = {
   "settings.missedSchedulesTitle": "Pominięte harmonogramy",
   "settings.catchUpMissed": "Nadrabiaj pominięte kopie zapasowe po starcie",
   "settings.catchUpMissedHint": "Jeśli serwer był wyłączony, gdy harmonogram przypadał, ta kopia zapasowa uruchomi się około dwóch minut po starcie BombVault.",
-  "settings.watchdogTitle": "Nadzór zaległych kopii zapasowych",
   "settings.watchdogHint": "Raz dziennie sprawdza, czy któraś włączona kopia zapasowa jest zaległa (starsza niż dwukrotność jej harmonogramu), i wysyła jedno powiadomienie na incydent przez skonfigurowane powyżej kanały.",
   "settings.watchdogToggle": "Powiadamiaj o zaległych kopiach zapasowych",
   "settings.coresLabel": "Wątki CPU (0 = wszystkie)",
@@ -3378,7 +3375,6 @@ const pl: Partial<Translations> = {
   "anomaly.settings.notifyHint": "Korzysta z kanałów ustawionych w Powiadomienia. Każdy element może to zmienić w Anomalie, Elementy. Powtarzające się błędy kopii i zrzutów oraz nieudane zaplanowane kontrole przywracania wysyłają już własną wiadomość, więc nie są wysyłane drugi raz.",
   "anomaly.settings.notifyMuted": "Teraz nic nie jest wysyłane: powiadomienia są wyłączone albo nie ustawiono żadnego kanału.",
   "anomaly.settings.openNotifications": "Otwórz ustawienia powiadomień",
-  "anomaly.settings.notifyCrossLink": "Które anomalie wysyłają powiadomienie, ustawia się w Integralność, Anomalie.",
   "anomaly.settings.holdToggle": "Zachowuj stare kopie, gdy źródło mocno się kurczy lub zostaje nadpisane",
   "anomaly.settings.holdHint": "Trzy znaleziska wstrzymują usuwanie starych kopii: źródło, które nagle jest prawie puste, źródło, które stało się dużo mniejsze, i kopia, która ponownie zapisała większość danych, jak wygląda ransomware. Inaczej retencja usuwałaby dobre starsze kopie jedną po drugiej. Dopóki taka anomalia jest otwarta, zachowywane są stare kopie tylko tego elementu (albo tego zrzutu bazy danych lub zbioru danych ZFS); wszystko inne jest czyszczone jak zwykle. Potwierdź anomalię lub oznacz ją jako oczekiwaną, aby wznowić.",
   "anomaly.settings.backfill": "Historia odczytana z repozytoriów: {done} z {slots}",
