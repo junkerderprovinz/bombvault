@@ -228,11 +228,12 @@ describe("the first step, choosing the sections", () => {
     expect(saved()[0]).toMatchObject({ containersEnabled: false, containersSchedule: "weekly Sun 04:00" });
   });
 
-  it("says that what is switched on runs every night and where that is changed", async () => {
+  it("says in a bubble that what is switched on runs every night and where that is changed", async () => {
     await renderPage();
 
     const line = en["firstSteps.nightly"].replace("{where}", `${en["nav.settings"]} › ${en["settings.schedule"]}`);
-    expect(within(steps()[0]).getByText(line)).toBeTruthy();
+    expect(within(steps()[0]).getByLabelText(line)).toBeTruthy();
+    expect(within(steps()[0]).queryByText(line)).toBeNull();
   });
 
   it("puts a switch back and says why when the server refuses", async () => {

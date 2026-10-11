@@ -7,6 +7,7 @@ import { KIND_LABEL, KindGlyph, entryName } from "../../components/backups/kinds
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { IconForward } from "../../components/glyphs";
+import { InfoBubble } from "../../components/InfoBubble";
 import { IconAdd, IconPencil } from "../../components/navGlyphs";
 import { StepMark } from "../../components/StepMark";
 import { AddLocationWindow } from "../../components/storage/AddLocationWindow";
@@ -296,10 +297,14 @@ export function FirstStepsCard({ tally, t, lang, hueIndex }: { tally: Tally; t: 
       <Card title={t("firstSteps.title")} hint={t("firstSteps.hint")} hueIndex={hueIndex}>
         <ol className="flex flex-col">
           <Step n={1} state={states.sections} title={t("firstSteps.sections")} summary={formatList(lang, switchedOn)} t={t}>
-            <p className={HINT}>{[sentence, t("firstSteps.sectionsHint")].filter(Boolean).join(" ")}</p>
+            <p className={HINT}>
+              {[sentence, t("firstSteps.sectionsHint")].filter(Boolean).join(" ")}{" "}
+              <span className="inline-flex align-middle">
+                <InfoBubble tip={t("firstSteps.nightly").replace("{where}", () => where)} />
+              </span>
+            </p>
             {settings && <SectionSwitches sections={sections} settings={settings} found={found} t={t} />}
-            <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
-              <p className={`min-w-0 flex-1 basis-64 ${HINT}`}>{t("firstSteps.nightly").replace("{where}", () => where)}</p>
+            <div className="flex justify-end">
               <Button
                 label={t("zfs.replica.add.next")}
                 labelKey="zfs.replica.add.next"

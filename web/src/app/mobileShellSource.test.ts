@@ -545,7 +545,7 @@ describe("Filled tab; the active bottom-bar slot is a filled accent surface, not
 
   it("fills the whole active slot with the accent and pairs every mark on it with the contrast ink", () => {
     expect(
-      bottomNav.includes('isActive ? "bg-accent text-accentContrast glim-active" : "text-carbon-textMuted"'),
+      bottomNav.includes('isActive || here ? "bg-accent text-accentContrast glim-active" : "text-carbon-textMuted"'),
       "BottomNav.tsx's active branch no longer fills the slot. The active tab " +
         "must read as filled: bg-accent over the entire NavLink; glyph and " +
         "caption sit on the fill together; with the ink paired to that fill " +

@@ -283,6 +283,7 @@ function BarSlot({
   // An aria-label replaces what the slot contains, the figure included, so a
   // slot without a caption says both.
   const hiddenName = counted ? `${label}, ${counted.label}` : label;
+  const here = onDestination(useLocation().pathname, destination);
   return (
     <>
       <NavLink
@@ -293,7 +294,7 @@ function BarSlot({
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
         className={({ isActive }) =>
-          `${slotBase} rounded-control ${reactive && !showLabel ? "glim-reactive" : ""} glim-hue glim-hue-icon ${isActive ? "bg-accent text-accentContrast glim-active" : "text-carbon-textMuted"}`
+          `${slotBase} rounded-control ${reactive && !showLabel ? "glim-reactive" : ""} glim-hue glim-hue-icon ${isActive || here ? "bg-accent text-accentContrast glim-active" : "text-carbon-textMuted"}`
         }
         style={
           {
@@ -322,7 +323,7 @@ function BarSlot({
             </span>
             {/* 400 rest, 600 active; the caption's two sanctioned weights. */}
             <span
-              className={`max-w-full truncate ${isActive ? "font-semibold" : ""} ${showLabel ? "" : reactive ? "glim-label-reactive" : "sr-only"}`}
+              className={`max-w-full truncate ${isActive || here ? "font-semibold" : ""} ${showLabel ? "" : reactive ? "glim-label-reactive" : "sr-only"}`}
             >
               {label}
             </span>

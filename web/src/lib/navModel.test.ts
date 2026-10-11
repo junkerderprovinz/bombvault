@@ -193,4 +193,10 @@ describe("onDestination", () => {
     expect(onDestination("/storages", storage)).toBe(false);
     expect(onDestination("/settings/storage", storage)).toBe(false);
   });
+
+  it("counts the welcome page of a new install as the overview", () => {
+    const overview = destinations(null, PINNED).find((d) => d.to === "/dashboard")!;
+    expect(onDestination("/welcome", overview)).toBe(true);
+    expect(onDestination("/welcome", storage)).toBe(false);
+  });
 });
