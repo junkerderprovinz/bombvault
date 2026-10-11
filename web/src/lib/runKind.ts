@@ -37,6 +37,28 @@ export function runKindLabel(t: T, kind: string): string {
       return t("run.kindDbDumpSave");
     case "dbimport":
       return t("run.kindDbImport");
+    case "keydeposit":
+      return t("run.kindKeyDeposit");
+    case "keyrenew":
+      return t("run.kindKeyRenew");
+    case "keywithdraw":
+      return t("run.kindKeyWithdraw");
+    case "keycode":
+      return t("run.kindKeyCode");
+    case "keykeep":
+      return t("run.kindKeyKeep");
+    case "keygone":
+      return t("run.kindKeyGone");
+    case "keydrop":
+      return t("run.kindKeyDrop");
+    case "keyask":
+      return t("run.kindKeyAsk");
+    case "keyallow":
+      return t("run.kindKeyAllow");
+    case "keyrefuse":
+      return t("run.kindKeyRefuse");
+    case "keyrelease":
+      return t("run.kindKeyRelease");
     default:
       return kind;
   }
