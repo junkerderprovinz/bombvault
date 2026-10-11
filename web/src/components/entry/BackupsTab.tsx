@@ -94,7 +94,6 @@ function ZFSRestoreWindow({
     : {
         snapshot: newestId(actionMark(row, timeline.places)),
         at: rowTime(row),
-        item: "",
         dump: false,
         dataset: "",
       };

@@ -21,6 +21,24 @@ export type EntryStatus = "loading" | "ready" | "missing" | "failed";
 
 class ReadFailed extends Error {}
 
+/**
+ * linkable picks the entries a live one can take over by hand: those whose
+ * container or VM is gone. One that carries another entry's former name is
+ * left out, because the server refuses to move it. The older backups under
+ * that name belong to the other entry.
+ */
+function linkable<T extends { aliases?: string[] }>(
+  entries: T[],
+  gone: (e: T) => boolean,
+  nameOf: (e: T) => string
+): string[] {
+  const former = new Set(entries.flatMap((e) => e.aliases ?? []));
+  return entries
+    .filter(gone)
+    .map(nameOf)
+    .filter((name) => !former.has(name));
+}
+
 /** readDetail reads the list of the entry's kind and picks the entry out of it. */
 async function readDetail(kind: EntryKind, key: string): Promise<EntryDetail | null> {
   switch (kind) {
@@ -34,7 +52,7 @@ async function readDetail(kind: EntryKind, key: string): Promise<EntryDetail | n
         kind,
         container,
         installed: containers.filter((c) => c.installed),
-        linkCandidates: containers.filter((c) => !c.installed).map((c) => c.name),
+        linkCandidates: linkable(containers, (c) => !c.installed, (c) => c.name),
       };
     }
     case "vm": {
@@ -46,7 +64,7 @@ async function readDetail(kind: EntryKind, key: string): Promise<EntryDetail | n
       return {
         kind,
         vm,
-        linkCandidates: vms.filter((v) => v.state === "not-installed").map((v) => v.libvirtName),
+        linkCandidates: linkable(vms, (v) => v.state === "not-installed", (v) => v.libvirtName),
       };
     }
     case "files": {

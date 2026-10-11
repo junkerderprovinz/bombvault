@@ -868,9 +868,9 @@ test("the More sheet counts the open findings and the bar marks its trigger whil
     (url) => url.pathname === "/api/items",
     (route) => route.fulfill({ json: { ok: true, items: [backedUp], unlisted: [] } }),
   );
-  await page.goto("/containers");
+  await page.goto("/storage");
 
-  const more = page.getByRole("button", { name: "Mehr", exact: true });
+  const more = page.getByTestId("bottom-nav").getByRole("button", { name: "Mehr", exact: true });
   const sheet = page.getByTestId("more-sheet");
   const row = sheet.getByRole("link", { name: /Anomalien/ });
   await expect(more).toBeVisible();

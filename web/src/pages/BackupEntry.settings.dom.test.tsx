@@ -51,6 +51,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     patchZFSDataset: vi.fn(),
     setVMBlockBackup: vi.fn(),
     setUpdateAfterBackup: vi.fn(),
+    putSettings: vi.fn(),
   };
 });
 
@@ -71,6 +72,7 @@ const setInclude = vi.mocked(api.setInclude);
 const patchZFSDataset = vi.mocked(api.patchZFSDataset);
 const setVMBlockBackup = vi.mocked(api.setVMBlockBackup);
 const setUpdateAfterBackup = vi.mocked(api.setUpdateAfterBackup);
+const putSettings = vi.mocked(api.putSettings);
 
 const { BackupEntryPage } = await import("./BackupEntry");
 
@@ -133,7 +135,7 @@ beforeEach(() => {
   vi.mocked(api.getZFSReplica).mockRejectedValue(new Error("no replica"));
   setItemPlacement.mockResolvedValue({ ok: true, placement: PLACEMENT } as never);
   vi.mocked(api.previewItemPlacement).mockResolvedValue({ ok: true, added: [] });
-  for (const call of [setInclude, patchZFSDataset, setVMBlockBackup, setUpdateAfterBackup]) {
+  for (const call of [setInclude, patchZFSDataset, setVMBlockBackup, setUpdateAfterBackup, putSettings]) {
     call.mockResolvedValue({ ok: true } as never);
   }
 });
@@ -225,10 +227,13 @@ describe("the cards of each kind", () => {
     expect(screen.getByRole("dialog")).toBeTruthy();
   });
 
-  it("says of a folder set without a folder that it has none", async () => {
+  it("says of a folder set without a folder that it has none, and offers no folders to choose", async () => {
     serveEntries(mocks, { fileSets: [fileSetView({ path: "" })] });
     await renderSettings(`files/${SET_ID}`);
     expect(within(card(en["files.path"])).getByText(en["files.noPath"])).toBeTruthy();
+    expect(screen.getByLabelText(en["files.noPathHint"])).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["files.foldersToggle"] })).toBeNull();
+    expect(screen.queryByRole("tree")).toBeNull();
   });
 
   it("gives a ZFS entry its datasets and no storage location bar", async () => {
@@ -275,6 +280,15 @@ describe("the schedule", () => {
 });
 
 describe("the storage locations", () => {
+  it.each([
+    ["a container", "container/immich"],
+    ["a VM", "vm/win11"],
+    ["a folder set", `files/${SET_ID}`],
+  ])("give %s the bar that places its backups", async (_, entry) => {
+    await renderSettings(entry);
+    expect(await screen.findByRole("group", { name: en["placement.title"] })).toBeTruthy();
+  });
+
   it("say that an entry follows the default", async () => {
     await renderSettings("container/immich");
     expect(await screen.findByText(en["placement.followsDefault"])).toBeTruthy();
@@ -310,5 +324,16 @@ describe("a container's switches", () => {
     await renderSettings("container/immich");
     await press(within(card(en["entry.settings.container"])).getByRole("switch", { name: en["update.afterBackup"] }));
     expect(setUpdateAfterBackup).toHaveBeenCalledWith("immich", true);
+  });
+});
+
+describe("the self-backup's switch", () => {
+  it("is stored at once with its new value, and the card has no save button", async () => {
+    await renderSettings("config/config");
+    const config = within(await waitFor(() => card(en["config.settingsTitle"])));
+    await press(config.getByRole("switch", { name: en["config.enabled"] }));
+    await waitFor(() => expect(putSettings).toHaveBeenCalled());
+    expect(putSettings.mock.calls.at(-1)?.[0].configEnabled).toBe(false);
+    expect(screen.queryByRole("button", { name: en["settings.save"] })).toBeNull();
   });
 });

@@ -107,11 +107,7 @@ export const en = {
   "dashboard.summaryNextBackup": "Next backup",
   "dashboard.summaryNextIn": "in {countdown}",
   "dashboard.summaryLastResult": "Last result",
-  "dashboard.recentRuns": "Recent Runs",
-  "dashboard.spikeStatus": "System Status",
   "dashboard.noRuns": "No runs yet",
-  "dashboard.spikeLink": "Run host-integration check",
-  "dashboard.hostIntegrationCheck": "Host Integration Check",
   "dashboard.allOk": "All systems OK",
   "dashboard.degraded": "Degraded",
   "dashboard.checking": "Checking…",
@@ -127,7 +123,6 @@ export const en = {
   "dashboard.resetLayout": "Reset to default",
   "dashboard.blockSummary": "Overview",
   "dashboard.blockStats": "Statistics",
-  "dashboard.blockBackups": "Backups & history",
 
   // Spike
   "spike.title": "Host Integration",
@@ -140,13 +135,10 @@ export const en = {
   "spike.info": "INFO",
   "spike.bestEffort": "optional",
   "spike.checkNow": "Check now",
-  "spike.probeFailed": "probe failed (see server logs)",
 
   // Containers
-  "containers.title": "Containers",
   "containers.discover": "Discover backups",
   "containers.discovering": "Discovering…",
-  "containers.discoverHint": "Lost /config? Rebuild the backup list from storage.",
   "containers.backupNow": "Back up now",
   "containers.stopWarning": "Backing up a container stops it while the backup runs, then starts it again. That is what keeps its data consistent. The first backup is the long one; later ones only copy what changed.",
   "containers.lastBackup": "Last backup",
@@ -163,20 +155,11 @@ export const en = {
   "changeNotice.volumeGone": "Volume {name} is gone",
   "changeNotice.more": "one={n} more|other={n} more",
   "containers.never": "Never",
-  "containers.colName": "Name",
-  "containers.colImage": "Image",
-  "containers.colStatus": "Status",
-  "containers.colAppdata": "Appdata",
-  "containers.colActions": "Actions",
   "containers.backupStarted": "Backup started",
-  "containers.noDestination": "No destination configured",
   "containers.includeInSchedule": "Include in schedule",
-  "containers.schedule": "Schedule",
   "containers.scheduleHint": "Included containers back up one after another from the scheduled time. They share one repository, so they run in sequence, not all at once.",
   "containers.notInstalled": "Not installed",
   "containers.notInstalledTitle": "Not installed (backups only)",
-  "containers.notInstalledHint": "These containers are no longer installed but still have backups. Restore them, or delete their backups to free space.",
-  "containers.notInstalledSkipped": "Entries that are still scheduled record a skip on every run. Switch off “Include in schedule” on the card to stop that.",
   "containers.deleteBackups": "Delete all backups",
   "containers.deleteBackupsConfirm": "Delete all backups of this container? The snapshots are permanently removed from the repository and cannot be undone. Its database dumps are deleted too.",
   "containers.removeEntryConfirm": "Remove this container's entry from the list? Its backups, if any, are not deleted.",
@@ -211,21 +194,12 @@ export const en = {
   "takeover.conflict": "The old name {old} is taken again",
   "takeover.conflictHint": "Something else now runs under this old name. This entry's older backups stay with it. Rename the other one if the two should stay separate.",
 
-  "containers.filter": "Filter:",
-  "containers.filterAll": "All",
   "containers.filterInstalled": "Installed",
-  "containers.sectionsLabel": "Sections",
   "containers.selectAll": "Select all",
-  "containers.selectedCount": "selected",
   "containers.backupSelected": "Back up selected",
-  "containers.restoreSelected": "Restore selected (latest)",
   "containers.restoreSelectedConfirm": "Restore the LATEST backup of the selected containers? Each is stopped, its appdata replaced, and the container recreated.",
-  "containers.clearSelection": "Clear",
-  "containers.working": "Working…",
   "containers.batchStarted": "Backup started. It runs on the server, so you can close this tab.",
   "containers.batchAlreadyRunning": "A batch backup is already running.",
-  "containers.batchRunning": "Backing up selected containers…",
-  "containers.selfNote": "This is BombVault. It doesn't back up its own container (that would stop itself); its settings are recovered via Discover.",
 
   // Post-backup update-check line (G4)
   "containers.updateCheckLabel": "Update check",
@@ -235,13 +209,8 @@ export const en = {
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.title": "Backups",
-  "snapshots.colId": "ID",
-  "snapshots.colTime": "Time",
-  "snapshots.colTags": "Tags",
-  "snapshots.colSize": "Size",
   "snapshots.restore": "Restore",
   "snapshots.none": "No backups found",
-  "snapshots.files": "Files",
   "snapshots.delete": "Delete",
   "snapshots.deleteAll": "Delete all backups",
   "snapshots.deleteAllConfirm": "Delete all local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
@@ -263,7 +232,6 @@ export const en = {
   "snapshot.diffSummary": "+{addedFiles} files ({addedBytes}), ~{changedFiles} changed, -{removedFiles} files ({removedBytes})",
 
   // File-level restore
-  "files.restore": "Restore",
   "files.restored": "Restored",
   "files.restoreConfirm": "Restore the selected files to their original locations? Existing files will be overwritten.",
   "files.filterPlaceholder": "Filter files…",
@@ -276,10 +244,6 @@ export const en = {
   "files.restoreSelected": "Restore selected ({n})",
   "files.restoredInPlace": "Restored the selected files to their original location.",
 
-  // Restore
-  "restore.confirmTitle": "Confirm restore",
-  "restore.confirmBody":
-    "This will stop the container, replace its appdata and recreate it from the backup. Continue?",
   "restore.cancel": "Cancel restore",
   "backup.cancel": "Cancel backup",
   "backup.cancelConfirm": "Cancel the backup of {name}? The run stops without writing a snapshot, and nothing already stored is lost.",
@@ -293,7 +257,6 @@ export const en = {
   "restore.cancelled": "Restore cancelled",
   "restore.preview": "Preview",
   "restore.started": "Restore started",
-  "restore.toFolder": "Restore to folder…",
   "restore.toFolderHint":
     "Extracts this snapshot into a folder under your backup mount. The running container is not touched.",
   "restore.targetPath": "Target folder",
@@ -382,15 +345,10 @@ export const en = {
 
   // Stacks (compose-project restore)
   "stack.title": "Stacks",
-  "stack.restore": "Restore stack…",
   "stack.members": "one={n} container|other={n} containers",
-  "stack.restoreHint":
-    "Restores every container in this stack from its latest backup, left stopped, then (optionally) starts them in dependency order.",
   "stack.startInOrder": "Start in dependency order after restore",
   "stack.restoreConfirm":
     "Restore all containers in this stack? Each is recreated from its latest backup.",
-  "stack.restoring": "Restoring stack…",
-  "stack.restored": "Stack restored",
   "stack.restoreFinished": "Stack restore finished. See the run history for per-container results.",
   "stack.memberRestored": "restored",
   "stack.memberStarted": "started",
@@ -439,11 +397,6 @@ export const en = {
   "bottleneck.cpu": "The CPU was {pct}% busy.",
   "bottleneck.cpuLimit": "BombVault used {pct}% of the CPU limit of its container.",
   "bottleneck.upload": "The upload ran at {pct}% of its limit.",
-  "run.colKind": "Kind",
-  "run.colStatus": "Status",
-  "run.colStarted": "Started",
-  "run.colFinished": "Finished",
-  "run.colContainer": "Container",
   // Phone Dashboard additions: home.newBackupConfirm drives the "back up
   // everything now" confirm (the trigger button itself reads the existing
   // settings.everythingTitle; one name for the one action); run.statVolume/
@@ -529,29 +482,6 @@ export const en = {
   "offsite.replicating": "Replicating…",
   "offsite.throttleNow": "slowed for streaming",
   "offsite.throttleNext": "stream running, slower from the next step",
-  // Issue #159: appended next to offsite.replicating when the live progress
-  // event carries a startedAt (see OffsiteIndicator) but no live per-snapshot
-  // percentage is available YET (e.g. restic is still walking the source tree
-  // before it starts copying packs) — a live elapsed duration is shown in its
-  // place, same as before percentage support existed.
-  "offsite.replicatingWithDuration": "Replicating… ({duration})",
-  // Issue #159: restic copy DOES print a real, parseable per-snapshot
-  // pack-copy percentage (see restic.Copy's doc comment), and lib/progress.ts's
-  // offsiteRunProgress folds it into the snapshot count to get ONE run-level
-  // figure. Word order matters here and is not free styling: the first cut read
-  // "Replicating snapshot 15 of 126 (55%)", where the parenthetical was the
-  // CURRENT snapshot's own pack progress but every reader took it as
-  // "15/126 = 55%" — two correct numbers rendered as one wrong claim. With the
-  // percentage leading and "snapshot k of N" demoted to the parenthetical, the
-  // two now agree (~12% either way) instead of fighting. Do not reorder them
-  // back. The "overall" wording is what makes the scope explicit — keep an
-  // equivalent in every locale.
-  "offsite.replicatingSnapshotPercent": "Replicating… {percent}% overall (snapshot {index} of {total})",
-  "offsite.replicatingSnapshotPercentWithDuration": "Replicating… {percent}% overall (snapshot {index} of {total}) · {duration}",
-  // The (i) next to that readout (OffsiteIndicator). The percentage counts
-  // SNAPSHOTS against a best-effort estimate, not bytes — house rule says that
-  // caveat belongs behind an info bubble, not as permanent prose on the line.
-  "offsite.overallPercentHint": "Overall progress for this replication run, counted in snapshots: restic only ever reports progress for one snapshot at a time, never for a whole copy. Snapshots differ in size, so treat this as an estimate.",
   "offsite.replicateFailed": "Replication failed",
   "offsite.test": "Test connection",
   // Shown instead of offsite.test once the domain has additional targets: that
@@ -771,7 +701,6 @@ export const en = {
   "settings.receiverEnabledHint": "Monitor an append-only off-site repo another BombVault pushes to (read-only)",
   "settings.fleetEnabledHint": "Watch the protection status of peer BombVault instances (read-only)",
   "settings.schedule": "Schedule",
-  "settings.scheduleOff": "off",
   "settings.language": "Language",
   "settings.theme": "Theme",
   "settings.save": "Save",
@@ -870,8 +799,6 @@ export const en = {
   "settings.retentionMonthlyInfo": "Keeps one snapshot for each of the last N calendar months that has a backup.",
   "settings.retentionYearlyInfo": "Keeps one snapshot for each of the last N calendar years that has a backup, and the oldest one as well while there are fewer such years.",
   "settings.retentionCombineInfo": "The five rules combine with OR: a snapshot survives if any single rule would keep it. They don't add up to a fixed count. Applied separately to each backed-up item.",
-  "settings.retentionLocal": "Local repo",
-  "settings.retentionOffsite": "Off-site repo",
   "settings.retentionLocalTitle": "Local retention",
   "settings.retentionOffsiteTitle": "Off-site retention",
   "settings.retentionOffsiteHint": "A separate policy for the off-site repo, so you can keep it longer as an archive. All zero = keep every off-site backup (no off-site pruning).",
@@ -1097,10 +1024,8 @@ export const en = {
     "This container belongs to the Compose stack {stack}. Its project folder is backed up once for the whole stack, not once per service, so it is not listed here.",
   "folders.notReachable": "not under the host mount, can't be backed up",
   "folders.customMissing": "no data folder detected (nothing to back up here)",
-  "folders.customPlaceholder": "/mnt/user/some/folder",
   "folders.addCustom": "Add a folder path",
   "folders.add": "Add",
-  "folders.save": "Save folders",
   "folders.saved": "Saved",
   "folders.empty": "No mapped folders found for this container.",
   // Selection tree (Phase 2) — aria-label on the role="tree" element.
@@ -1156,10 +1081,8 @@ export const en = {
   "excludes.title": "Exclude patterns",
   "excludes.hint": "One pattern per line. A container path (e.g. /config/Library/.../Cache) is matched against the backed-up volume; a bare name like .git matches at any depth. Brace lists like {a,b} are not supported; use one line each.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
-  "excludes.save": "Save excludes",
   "excludes.saved": "Excludes saved",
   "excludes.error": "Could not save excludes",
-  "excludes.resolvedTo": "resolves to:",
   "excludes.noMatch": "Passed to restic as-is (not a recognized container path).",
   "excludes.excludesNothing": "This folder's volume is not in the backup, so this line excludes nothing.",
   // Exclude preview status (#38)
@@ -1507,11 +1430,8 @@ export const en = {
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Duration",
-  "containers.searchPlaceholder": "Search containers…",
-  "vms.searchPlaceholder": "Search VMs…",
   "filter.all": "All",
   "filter.scheduled": "Scheduled",
-  "filter.notScheduled": "Not scheduled",
   "filter.backedUp": "Backed up",
   "filter.neverBackedUp": "Never backed up",
   "filter.schedule": "Schedule",
@@ -1528,10 +1448,6 @@ export const en = {
   "jobs.cadenceDaily": "Daily at {time}",
   "jobs.cadenceWeekly": "Weekly ({days}) at {time}",
   "jobs.cadenceEveryN": "one=Every day at {time}|other=Every {n} days at {time}",
-  "sort.label": "Sort:",
-  "sort.nameAsc": "Name (A–Z)",
-  "sort.status": "Status",
-  "sort.ip": "IP",
   "cadence.off": "Off",
   "cadence.daily": "Daily",
   "cadence.weekly": "Weekly",
@@ -1568,7 +1484,6 @@ export const en = {
   "time.minutesAgo": "one={n} minute ago|other={n} minutes ago",
   "time.hoursAgo": "one={n} hour ago|other={n} hours ago",
   "time.daysAgo": "one={n} day ago|other={n} days ago",
-  "folder.browse": "Browse…",
   "folder.browseTitle": "Browse folders",
   "folder.use": "Use this folder",
   "folder.none": "No subdirectories",
@@ -1586,7 +1501,6 @@ export const en = {
   // rather than left as a key that looks generic-and-shared but is used
   // nowhere — the next person to need a reset label would have reached for it
   // and reintroduced exactly the ambiguity this round removed.)
-  "containers.emptyDocker": "No containers found. Is Docker running?",
   "containers.bulkResult": "{ok} ok, {fail} failed",
   "vm.method.saveFailed": "Couldn't change the backup method. It was not switched.",
   "jobs.noContainersIncluded": "No containers included in schedule.",
@@ -1594,8 +1508,6 @@ export const en = {
   "jobs.syncSchedulesHint": "When enabled, VMs, Flash, Folders and ZFS datasets all follow the Containers schedule instead of their own. Turn it off to set each domain's cadence independently.",
   "jobs.flashScheduleHint": "Backs up the Unraid USB flash boot drive (/boot) at the scheduled time.",
   "jobs.vmIncludeHint": "Backs up every VM with “include in schedule” enabled (set it per VM in the VMs tab).",
-  "schedule.includeAll": "Include all in schedule",
-  "schedule.excludeAll": "Exclude all from schedule",
   "schedule.updateFailed": "Failed to update schedule",
   "schedule.pause": "Pause schedule",
   "schedule.resume": "Resume schedule",
@@ -1749,34 +1661,19 @@ export const en = {
   "common.compareFailed": "Compare failed",
   "common.loadBackupsFailed": "Failed to load backups",
   "common.deleteBackupsFailed": "Failed to delete backups",
-  "containers.loadFailed": "Failed to load containers",
   "containers.backupStartFailed": "Failed to start backup",
   "containers.updateSettingFailed": "Failed to update setting",
-  "vms.loadFailed": "Failed to load VMs",
-  "files.loadSetsFailed": "Failed to load folder sets",
   "config.loadSettingsFailed": "Could not load current settings",
   "dashboard.loadRunsFailed": "Failed to load runs",
 
   // VMs page
-  "vms.title": "Virtual Machines",
-  "vms.empty": "No VMs found. Is libvirt/KVM running?",
-  "vms.backupSelected": "Back up selected",
-  "vms.restoreSelected": "Restore selected (latest)",
   "vms.restoreSelectedConfirm": "Restore the LATEST backup of the selected VMs? Each VM is shut off, its disk files replaced, and the VM restored.",
-  "vms.notInstalledHint": "These VMs are no longer defined on the host but still have backups. Restore them to recover, or use the Backups panel to browse their snapshots.",
   "vms.removeEntry": "Remove entry",
   "vms.removeEntryConfirm": "Remove this VM's entry from the list? Its backups, if any, are not deleted.",
   "vms.deleteBackupsConfirm": "Delete all backups of this VM? The snapshots are permanently removed from the repository and cannot be undone.",
-  "vms.discoverHint": "VM deleted from Unraid (or lost after a reinstall)? Rebuild its backup entry from storage so you can restore it.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash Backup",
-  "flash.backupTitle": "Back up the flash",
-  "flash.backupHint": "Captures the entire USB flash (/boot): Unraid OS, license, array config, shares, network and plugin config.",
-  "flash.backupNow": "Back up flash now",
-  "flash.backingUp": "Backing up…",
   "flash.download": "Download (.zip)",
-  "flash.restoreNote": "Restore downloads a ZIP of the snapshot. The running /boot is never touched. Drop the .zip straight into the Unraid USB creator, or unzip it onto a fresh USB to rebuild your flash. Restoring a single plugin under Plugins is the exception: it writes that plugin back into the running flash.",
   "flash.plugins": "Plugins",
   "flash.pluginsTitle": "Plugins in this backup",
   "flash.pluginsHint": "Puts one plugin back into the running flash: its .plg file, its folder under config/plugins and the package files this backup holds. Unraid installs it on the next boot, or right away under Plugins, Install Plugin.",
@@ -1815,22 +1712,13 @@ export const en = {
 
   // Config self-backup (BombVault's own settings). Minimal en/de set for Task 12;
   // the full 24-locale translation lands in Task 14.
-  "config.title": "Self-Backup",
   "config.settingsTitle": "Self-Backup settings",
   "config.settingsHint": "Protect BombVault's own configuration (its settings database, off-site credentials and SSH keys) so a fresh install can restore itself and pick up right where it left off.",
   "config.enabled": "Back up BombVault's settings",
   "config.enabledHint": "Include BombVault's own /config in the schedule below.",
-  "config.schedule": "Schedule",
   "config.scheduleHint": "Backs up BombVault's own settings, targets and credentials at the scheduled time.",
-  "config.offsiteSchedule": "Off-site schedule",
   "config.offsiteMoved": "The off-site copy of the self-backup is set up under Settings, Storage locations, in the same card every other domain has.",
   "config.pathMoved": "The backup location is set under Settings, Storage locations, where it can be a local folder or a remote repository with its own credentials.",
-  "config.backupTitle": "Back up settings now",
-  "config.backupHint": "Captures BombVault's own /config: the settings database, off-site credentials (rclone.conf) and SSH keypair.",
-  "config.backupNow": "Back up settings now",
-  "config.backingUp": "Backing up…",
-  "config.snapshotsTitle": "Settings backups",
-  "config.snapshotsHint": "To restore these settings onto a rebuilt server, use the Restore page: restoring settings restarts BombVault to apply them, so it lives there with the rest of the disaster-recovery flow.",
 
   // Receiver dashboard (read-only monitoring of an append-only off-site repo
   // another BombVault pushes to)
@@ -2159,7 +2047,6 @@ export const en = {
   "receiver.checkCadenceHint": "When to run the independent integrity check on this box. Leave blank for daily, 'off' to disable, or e.g. 'weekly Sun 05:00'.",
   "receiver.checkCadencePlaceholder": "blank = daily 04:00 · off · daily HH:MM · weekly Sun 05:00",
   "receiver.readDataPercent": "Deep-check sample (%)",
-  "receiver.readDataPercentHint": "How much pack data restic re-reads on the scheduled check. 0 = structural check only.",
   "receiver.enabledLabel": "Monitor this repository",
   "receiver.nameRequired": "Enter a name.",
   "receiver.repoRequired": "Enter a repository location.",
@@ -2428,12 +2315,6 @@ export const en = {
   // The files.* KEY names, the "files" domain literal, routes and types are
   // technical identifiers and deliberately keep the historical name.
   "nav.files": "Folders",
-  "files.title": "Folders",
-  // Card-title Badge headline for the empty-state list card (GlimStone
-  // follow-up pass, "half-overlap card notch") — distinct from files.title
-  // (the page's own h1) since the two sit right on top of each other.
-  "files.setsTitle": "Folder sets",
-  "files.empty": "No folder sets yet. Add a folder (shares, documents, photos, anything under your mounts) and BombVault protects it like everything else: schedules, off-site copies, integrity checks and restores. No separate file-backup tool needed.",
   "files.addSet": "Add folder set",
   "files.editSet": "Edit folder set",
   "files.name": "Name",
@@ -2696,7 +2577,6 @@ export const en = {
   "files.pathMissing": "Folder not found",
   "files.noPath": "No folder set",
   "files.noPathHint": "Rebuilt from backups without a folder. Set a folder to back it up again. Restoring to a folder already works.",
-  "files.deleteSet": "Delete folder set",
   "files.deleteSetConfirm": "Remove this folder set from the list? Its backups are not deleted and can be rediscovered later.",
   "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Restore to original location",
@@ -2705,24 +2585,17 @@ export const en = {
   "files.restoreSelectFiles": "Select files",
   "files.restoreComplete": "Restore complete: the files have been written.",
   "files.backupAll": "Back up all now",
-  "files.discoverHint": "Lost the set list? Rebuild it from the backups in storage.",
   "files.cancel": "Cancel",
   // "Host system config" preset (generic/TrueNAS only — Unraid already has the
   // flash domain for this). Platform-expansion plan Task 7.
-  "files.addPreset": "Add preset: Host system config",
   "files.addPresetHint": "A conservative starting point for host-level configuration outside your containers, not a claim of completeness. Review the folder before saving.",
-  // Phase 4 (INTEG-02): the Files-page selection tree, mounted per the UI-SPEC
-  // reuse contract with one root (the set's resolved Path, D-02). Copy is the
-  // UI-SPEC Copywriting Contract's en source of truth, pinned byte-exact by
-  // i18n.filesSelection.test.ts. Deliberately NOT the container folders.*
-  // wordings: folders.emptySelectionBlocked teaches "Reset selection", which
-  // does not exist here (D-06 - the files domain has no auto-detection to
-  // reset to, so the refusal orients to Delete folder set instead).
+  // The folder tree of a set. folders.emptySelectionBlocked teaches "Reset
+  // selection", which a set does not have, so its refusal names the removal.
   "files.foldersToggle": "Choose folders",
   "files.foldersHint":
     "Tick the folders this set covers. Untick a subfolder to leave it out; the count shows how many paths the next backup hands restic.",
   "files.emptySelectionBlocked":
-    "A set needs at least one folder, so the last tick cannot be removed. Use Delete folder set if you no longer want this set.",
+    "A set needs at least one folder, so the last tick cannot be removed. Use Remove from the list if you no longer want this set.",
   // A3: the dialog disclosure for plan 02's PATCH-time clear rule - changing
   // the set's folder clears the ticked selection (clear-wins precedence),
   // so the consequence is named before it happens. Rendered under the
@@ -2740,7 +2613,6 @@ export const en = {
   "recovery.filesRestoreHint": "Rediscovered folder sets carry no original folder. Each one restores into a folder you choose.",
   // ZFS datasets
   "nav.zfs": "ZFS",
-  "zfs.title": "ZFS datasets",
   "settings.zfsEnabled": "ZFS datasets",
   "settings.zfsEnabledHint": "Back up ZFS datasets and their child datasets from snapshots, using the SSH connection to this server.",
   "settings.zfsPath": "ZFS datasets path",
@@ -2751,14 +2623,8 @@ export const en = {
   "dashboard.domainZFS": "ZFS",
   "recovery.zfsFound": "one=Found {n} ZFS item.|other=Found {n} ZFS items.",
   "recovery.zfsRestoreHint": "Rediscovered ZFS items stay switched off. Check each item's datasets and settings before you switch it on; a restore into a folder works right away.",
-  "zfs.emptyTitle": "No ZFS datasets yet",
-  "zfs.empty": "Add a dataset and BombVault backs it up together with its child datasets from one ZFS snapshot, so every file is captured at the same instant.",
-  "zfs.loadFailed": "Failed to load ZFS datasets",
-  "zfs.backupAll": "Back up all now",
-  "zfs.discoverHint": "Lost the list? Rebuild it from the backups in storage.",
   "zfs.discovered": "one=Rebuilt {n} ZFS item. It stays switched off until you check it.|other=Rebuilt {n} ZFS items. They stay switched off until you check them.",
   "zfs.notInItem": "one={n} dataset on the host is in no item|other={n} datasets on the host are in no item",
-  "zfs.unusedZvols": "one={n} volume is not used by any VM|other={n} volumes are not used by any VM",
   "zfs.unusedZvolsHint": "A volume holds a virtual disk instead of files. Volumes a VM uses are backed up on the VMs page. These belong to no VM, for example an iSCSI share or a disk you detached, and BombVault does not back them up yet. A later version will.",
   "zfs.connection.title": "Connection to this server",
   "zfs.connection.hint": "BombVault runs zfs commands on this server over SSH, the same connection VM backups use. When the connection fails, this card shows BombVault's key and the command that authorizes it.",
@@ -2887,12 +2753,10 @@ export const en = {
   "zfs.member.excluded": "Left out",
   "zfs.member.new": "New",
   "zfs.member.structure": "Structure only",
-  "zfs.enabled": "Include in schedule",
   "zfs.checkedAt": "Checked {when}",
   "zfs.notChecked": "Not checked yet",
   "zfs.probe": "Test snapshot access",
   "zfs.probing": "Testing snapshot access…",
-  "zfs.repoEffective": "Stored in {repo}",
   "zfs.repo": "Repository for this item",
   "zfs.repoPlaceholder": "leave empty to use the ZFS datasets repository",
   "zfs.repoHint": "Where this item's backups are stored. Leave it empty and it uses the ZFS datasets repository. The list holds the repositories you set up under Settings.",
@@ -2936,7 +2800,6 @@ export const en = {
   "zfs.deleteBackupsConfirm": "Delete all backups of this item and its datasets? The snapshots are permanently removed, the repository is pruned and the item is removed from the list. This cannot be undone.",
   "zfs.deleteKeptSafety": "one={n} safety snapshot was left on the server|other={n} safety snapshots were left on the server",
   // ZFS add dialog and restore panel
-  "zfs.addDatasets": "Add datasets",
   "zfs.add.title": "Add ZFS datasets",
   "zfs.add.hint": "The list comes from this server. An item is a dataset together with every dataset below it, backed up from one snapshot. Pick the dataset at the top of what you want, then switch off the child datasets you want to leave out.",
   "zfs.add.loading": "Reading datasets from the server…",
@@ -3053,8 +2916,6 @@ export const en = {
   "zfs.replica.restoreFailed": "Bringing back {name} from {target} failed. {name} itself stays as it is.",
   "zfs.replica.servers.title": "ZFS server",
   "zfs.replica.servers.hint": "Targets for the ZFS replica. A ZFS entry that picks one sends it a block-exact copy. No backups land here.",
-  "zfs.replica.servers.empty": "No ZFS server yet. Add one under Instances › ZFS servers, then every ZFS entry can send a replica there.",
-  "zfs.replica.servers.inUse": "{n} in use",
   "zfs.replica.servers.unused": "not in use",
   "zfs.replica.servers.off": "Off",
   "zfs.replica.servers.free": "{free} free of {size}",
@@ -4651,11 +4512,7 @@ export const de: Translations = {
   "dashboard.summaryNextBackup": "Nächstes Backup",
   "dashboard.summaryNextIn": "in {countdown}",
   "dashboard.summaryLastResult": "Letztes Ergebnis",
-  "dashboard.recentRuns": "Letzte Ausführungen",
-  "dashboard.spikeStatus": "Systemstatus",
   "dashboard.noRuns": "Noch keine Ausführungen",
-  "dashboard.spikeLink": "Host-Integration prüfen",
-  "dashboard.hostIntegrationCheck": "Host-Integration-Check",
   "dashboard.allOk": "Alle Systeme OK",
   "dashboard.degraded": "Eingeschränkt",
   "dashboard.checking": "Prüfe…",
@@ -4670,7 +4527,6 @@ export const de: Translations = {
   "dashboard.resetLayout": "Auf Standard zurücksetzen",
   "dashboard.blockSummary": "Überblick",
   "dashboard.blockStats": "Statistik",
-  "dashboard.blockBackups": "Backups & Verlauf",
 
   "spike.title": "Host-Integration",
   "spike.overall": "Gesamt:",
@@ -4682,12 +4538,9 @@ export const de: Translations = {
   "spike.info": "Info",
   "spike.bestEffort": "optional",
   "spike.checkNow": "Jetzt prüfen",
-  "spike.probeFailed": "Prüfung fehlgeschlagen (siehe Server-Logs)",
 
-  "containers.title": "Container",
   "containers.discover": "Backups entdecken",
   "containers.discovering": "Suche…",
-  "containers.discoverHint": "/config verloren? Backup-Liste aus dem Speicher wiederherstellen.",
   "containers.backupNow": "Jetzt sichern",
   "containers.stopWarning": "Beim Sichern wird der Container angehalten und danach wieder gestartet. Nur so bleiben seine Daten in sich stimmig. Die erste Sicherung dauert am längsten, spätere kopieren nur noch Änderungen.",
   "containers.lastBackup": "Letztes Backup",
@@ -4704,20 +4557,11 @@ export const de: Translations = {
   "changeNotice.volumeGone": "Volume {name} ist weg",
   "changeNotice.more": "one={n} weitere|other={n} weitere",
   "containers.never": "Nie",
-  "containers.colName": "Name",
-  "containers.colImage": "Image",
-  "containers.colStatus": "Status",
-  "containers.colAppdata": "Appdata",
-  "containers.colActions": "Aktionen",
   "containers.backupStarted": "Backup gestartet",
-  "containers.noDestination": "Kein Ziel konfiguriert",
   "containers.includeInSchedule": "Im Zeitplan einschließen",
-  "containers.schedule": "Zeitplan",
   "containers.scheduleHint": "Aufgenommene Container werden ab der geplanten Zeit nacheinander gesichert. Sie teilen sich ein Repository, laufen also der Reihe nach, nicht alle gleichzeitig.",
   "containers.notInstalled": "Nicht installiert",
   "containers.notInstalledTitle": "Nicht installiert (nur Backups)",
-  "containers.notInstalledHint": "Diese Container sind nicht mehr installiert, haben aber noch Backups. Stelle sie wieder her oder lösche ihre Backups, um Platz freizugeben.",
-  "containers.notInstalledSkipped": "Einträge, die hier noch eingeplant sind, halten bei jedem Lauf einen Überspringer fest. Schalte auf der Karte „Im Zeitplan einschließen“ aus, damit das aufhört.",
   "containers.deleteBackups": "Alle Backups löschen",
   "containers.deleteBackupsConfirm": "Alle Backups dieses Containers löschen? Die Snapshots werden dauerhaft aus dem Repository entfernt und können nicht wiederhergestellt werden. Die Datenbank-Dumps des Containers werden ebenfalls gelöscht.",
   "containers.removeEntryConfirm": "Den Eintrag dieses Containers aus der Liste entfernen? Vorhandene Backups werden nicht gelöscht.",
@@ -4751,21 +4595,12 @@ export const de: Translations = {
   "takeover.conflict": "Der alte Name {old} ist wieder vergeben",
   "takeover.conflictHint": "Unter diesem alten Namen läuft jetzt etwas anderes. Die älteren Backups bleiben bei diesem Eintrag. Sollen beide getrennt bleiben, benenne das andere um.",
 
-  "containers.filter": "Filter:",
-  "containers.filterAll": "Alle",
   "containers.filterInstalled": "Installiert",
-  "containers.sectionsLabel": "Bereiche",
   "containers.selectAll": "Alle auswählen",
-  "containers.selectedCount": "ausgewählt",
   "containers.backupSelected": "Auswahl sichern",
-  "containers.restoreSelected": "Auswahl wiederherstellen (neuestes)",
   "containers.restoreSelectedConfirm": "Das NEUESTE Backup der ausgewählten Container wiederherstellen? Jeder wird gestoppt, seine Appdata ersetzt und neu erstellt.",
-  "containers.clearSelection": "Leeren",
-  "containers.working": "Arbeite…",
   "containers.batchStarted": "Backup gestartet. Es läuft auf dem Server, du kannst diesen Tab schließen.",
   "containers.batchAlreadyRunning": "Es läuft bereits ein Sammel-Backup.",
-  "containers.batchRunning": "Sichere ausgewählte Container…",
-  "containers.selfNote": "Das ist BombVault. Es sichert seinen eigenen Container nicht (würde sich selbst stoppen); seine Einstellungen werden über Discover wiederhergestellt.",
 
   // Post-Backup-Update-Prüfzeile (G4)
   "containers.updateCheckLabel": "Update-Prüfung",
@@ -4774,13 +4609,8 @@ export const de: Translations = {
   "containers.updateCheckFailed": "Prüfung fehlgeschlagen",
 
   "snapshots.title": "Backups",
-  "snapshots.colId": "ID",
-  "snapshots.colTime": "Zeitpunkt",
-  "snapshots.colTags": "Tags",
-  "snapshots.colSize": "Größe",
   "snapshots.restore": "Wiederherstellen",
   "snapshots.none": "Keine Backups gefunden",
-  "snapshots.files": "Dateien",
   "snapshots.delete": "Löschen",
   "snapshots.deleteAll": "Alle Backups löschen",
   "snapshots.deleteAllConfirm": "Alle lokalen Backups dieser VM löschen? Die Snapshots werden dauerhaft entfernt und das lokale Repository wird aufgeräumt. Kopien an Off-site-Zielen bleiben erhalten. Kann nicht rückgängig gemacht werden.",
@@ -4802,7 +4632,6 @@ export const de: Translations = {
   "snapshot.diffSummary": "+{addedFiles} Dateien ({addedBytes}), ~{changedFiles} geändert, -{removedFiles} Dateien ({removedBytes})",
 
   // File-level restore
-  "files.restore": "Wiederherstellen",
   "files.restored": "Wiederhergestellt",
   "files.restoreConfirm": "Ausgewählte Dateien an ihren Originalort wiederherstellen? Vorhandene Dateien werden überschrieben.",
   "files.filterPlaceholder": "Dateien filtern…",
@@ -4815,9 +4644,6 @@ export const de: Translations = {
   "files.restoreSelected": "Auswahl wiederherstellen ({n})",
   "files.restoredInPlace": "Ausgewählte Dateien an ihren Originalort wiederhergestellt.",
 
-  "restore.confirmTitle": "Wiederherstellung bestätigen",
-  "restore.confirmBody":
-    "Der Container wird gestoppt, seine Appdata ersetzt und aus dem Backup neu erstellt. Fortfahren?",
   "restore.cancel": "Wiederherstellung abbrechen",
   "backup.cancel": "Backup abbrechen",
   "backup.cancelConfirm": "Backup von {name} abbrechen? Der Lauf endet ohne Snapshot, und nichts bereits Gesichertes geht verloren.",
@@ -4831,7 +4657,6 @@ export const de: Translations = {
   "restore.cancelled": "Wiederherstellung abgebrochen",
   "restore.preview": "Vorschau",
   "restore.started": "Wiederherstellung gestartet",
-  "restore.toFolder": "In Ordner wiederherstellen…",
   "restore.toFolderHint":
     "Entpackt diesen Snapshot in einen Ordner unter deinem Backup-Mount. Der laufende Container wird nicht angetastet.",
   "restore.targetPath": "Zielordner",
@@ -4920,15 +4745,10 @@ export const de: Translations = {
 
   // Stacks (Compose-Projekt-Wiederherstellung)
   "stack.title": "Stacks",
-  "stack.restore": "Stack wiederherstellen…",
   "stack.members": "{n} Container",
-  "stack.restoreHint":
-    "Stellt jeden Container dieses Stacks aus dem letzten Backup wieder her (gestoppt) und startet sie danach optional in Abhängigkeitsreihenfolge.",
   "stack.startInOrder": "Nach dem Restore in Abhängigkeitsreihenfolge starten",
   "stack.restoreConfirm":
     "Alle Container dieses Stacks wiederherstellen? Jeder wird aus seinem letzten Backup neu erstellt.",
-  "stack.restoring": "Stack wird wiederhergestellt…",
-  "stack.restored": "Stack wiederhergestellt",
   "stack.restoreFinished": "Stack-Wiederherstellung abgeschlossen: Ergebnisse je Container im Verlauf.",
   "stack.memberRestored": "wiederhergestellt",
   "stack.memberStarted": "gestartet",
@@ -4976,11 +4796,6 @@ export const de: Translations = {
   "bottleneck.cpu": "Die CPU war zu {pct} % ausgelastet.",
   "bottleneck.cpuLimit": "BombVault hat {pct} % der CPU-Grenze seines Containers genutzt.",
   "bottleneck.upload": "Der Upload lief mit {pct} % seiner Grenze.",
-  "run.colKind": "Art",
-  "run.colStatus": "Status",
-  "run.colStarted": "Gestartet",
-  "run.colFinished": "Abgeschlossen",
-  "run.colContainer": "Container",
   "home.newBackupConfirm": "Jetzt ein Backup aller aktivierten Bereiche starten? Container werden während ihrer Sicherung nacheinander gestoppt und neu gestartet.",
   "run.statVolume": "Datenmenge",
   "run.statSnapshot": "Snapshot",
@@ -5040,10 +4855,6 @@ export const de: Translations = {
   "offsite.replicating": "Repliziere…",
   "offsite.throttleNow": "gebremst fürs Streaming",
   "offsite.throttleNext": "Stream läuft, langsamer ab dem nächsten Schritt",
-  "offsite.replicatingWithDuration": "Repliziere… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Repliziere… {percent} % gesamt (Snapshot {index} von {total})",
-  "offsite.replicatingSnapshotPercentWithDuration": "Repliziere… {percent} % gesamt (Snapshot {index} von {total}) · {duration}",
-  "offsite.overallPercentHint": "Gesamtfortschritt dieses Replikationslaufs, gezählt in Snapshots: restic meldet Fortschritt immer nur für einen einzelnen Snapshot, nie für einen ganzen Kopiervorgang. Snapshots sind unterschiedlich groß, das hier ist also ein Schätzwert.",
   "offsite.replicateFailed": "Replikation fehlgeschlagen",
   "offsite.test": "Verbindung testen",
   "offsite.testPrimary": "Primäres Ziel testen",
@@ -5257,7 +5068,6 @@ export const de: Translations = {
   "settings.receiverEnabledHint": "Ein Append-only-Off-site-Repo überwachen, in das ein anderes BombVault schiebt (nur lesend)",
   "settings.fleetEnabledHint": "Den Schutzstatus verbundener BombVault-Instanzen einsehen (nur lesend)",
   "settings.schedule": "Zeitplan",
-  "settings.scheduleOff": "aus",
   "settings.language": "Sprache",
   "settings.theme": "Design",
   "settings.save": "Speichern",
@@ -5354,8 +5164,6 @@ export const de: Translations = {
   "settings.retentionMonthlyInfo": "Behält einen Snapshot für jeden der letzten N Kalendermonate mit einem Backup.",
   "settings.retentionYearlyInfo": "Behält einen Snapshot für jedes der letzten N Kalenderjahre mit einem Backup, und den ältesten dazu, solange es weniger solche Jahre gibt.",
   "settings.retentionCombineInfo": "Die fünf Regeln kombinieren sich per ODER: ein Snapshot bleibt erhalten, wenn ihn irgendeine Regel behalten würde. Sie addieren sich nicht zu einer festen Anzahl. Gilt separat für jedes gesicherte Objekt.",
-  "settings.retentionLocal": "Lokales Repo",
-  "settings.retentionOffsite": "Off-site-Repo",
   "settings.retentionLocalTitle": "Lokale Aufbewahrung",
   "settings.retentionOffsiteTitle": "Off-site-Aufbewahrung",
   "settings.retentionOffsiteHint": "Eine separate Regel für das Off-site-Repo, damit du es länger als Archiv behalten kannst. Alles 0 = jedes Off-site-Backup behalten (kein Off-site-Prune).",
@@ -5576,10 +5384,8 @@ export const de: Translations = {
     "Dieser Container gehört zum Compose-Stack {stack}. Sein Projektordner wird einmal für den ganzen Stack gesichert, nicht einmal je Dienst, und steht deshalb nicht in dieser Liste.",
   "folders.notReachable": "nicht unter dem Host-Mount, kann nicht gesichert werden",
   "folders.customMissing": "kein Datenordner gefunden (hier gibt es nichts zu sichern)",
-  "folders.customPlaceholder": "/mnt/user/irgendein/ordner",
   "folders.addCustom": "Ordnerpfad hinzufügen",
   "folders.add": "Hinzufügen",
-  "folders.save": "Ordner speichern",
   "folders.saved": "Gespeichert",
   "folders.empty": "Keine gemappten Ordner für diesen Container gefunden.",
   "folders.treeLabel": "Auswahl der Sicherungsordner",
@@ -5608,10 +5414,8 @@ export const de: Translations = {
   "excludes.title": "Ausschlussmuster",
   "excludes.hint": "Ein Muster pro Zeile. Ein Container-Pfad (z. B. /config/Library/.../Cache) wird gegen das gesicherte Volume abgeglichen; ein reiner Name wie .git passt in jeder Tiefe. Klammerlisten wie {a,b} werden nicht unterstützt; nutze je eine Zeile.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
-  "excludes.save": "Ausschlüsse speichern",
   "excludes.saved": "Ausschlüsse gespeichert",
   "excludes.error": "Ausschlüsse konnten nicht gespeichert werden",
-  "excludes.resolvedTo": "wird aufgelöst zu:",
   "excludes.noMatch": "Wird unverändert an restic übergeben (kein erkannter Container-Pfad).",
   "excludes.excludesNothing": "Das Volume dieses Ordners ist nicht im Backup, diese Zeile schließt also nichts aus.",
   // Exclude preview status (#38)
@@ -5879,11 +5683,8 @@ export const de: Translations = {
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Dauer",
-  "containers.searchPlaceholder": "Container suchen…",
-  "vms.searchPlaceholder": "VMs suchen…",
   "filter.all": "Alle",
   "filter.scheduled": "Geplant",
-  "filter.notScheduled": "Nicht geplant",
   "filter.backedUp": "Gesichert",
   "filter.neverBackedUp": "Nie gesichert",
   "filter.schedule": "Zeitplan",
@@ -5900,10 +5701,6 @@ export const de: Translations = {
   "jobs.cadenceDaily": "Täglich um {time}",
   "jobs.cadenceWeekly": "Wöchentlich ({days}) um {time}",
   "jobs.cadenceEveryN": "one=Jeden Tag um {time}|other=Alle {n} Tage um {time}",
-  "sort.label": "Sortieren:",
-  "sort.nameAsc": "Name (A–Z)",
-  "sort.status": "Status",
-  "sort.ip": "IP",
   "cadence.off": "Aus",
   "cadence.daily": "Täglich",
   "cadence.weekly": "Wöchentlich",
@@ -5935,7 +5732,6 @@ export const de: Translations = {
   "time.minutesAgo": "one=vor {n} Minute|other=vor {n} Minuten",
   "time.hoursAgo": "one=vor {n} Stunde|other=vor {n} Stunden",
   "time.daysAgo": "one=vor {n} Tag|other=vor {n} Tagen",
-  "folder.browse": "Durchsuchen…",
   "folder.browseTitle": "Ordner durchsuchen",
   "folder.use": "Diesen Ordner verwenden",
   "folder.none": "Keine Unterordner",
@@ -5947,7 +5743,6 @@ export const de: Translations = {
   "folder.pathHint": "Pfad muss ein relativer Unterpfad sein (kein führendes / oder ..)",
   "folder.couldNotRead": "Verzeichnis konnte nicht gelesen werden",
   "folder.browseFailed": "Durchsuchen fehlgeschlagen",
-  "containers.emptyDocker": "Keine Container gefunden. Läuft Docker?",
   "containers.bulkResult": "{ok} ok, {fail} fehlgeschlagen",
   "vm.method.saveFailed": "Backup-Methode konnte nicht geändert werden. Sie wurde nicht umgestellt.",
   "jobs.noContainersIncluded": "Keine Container im Zeitplan enthalten.",
@@ -5955,8 +5750,6 @@ export const de: Translations = {
   "jobs.syncSchedulesHint": "Wenn aktiviert, folgen VMs, Flash, Ordner und ZFS-Datasets dem Container-Zeitplan statt ihrem eigenen. Schalte es aus, um für jede Domäne einen eigenen Rhythmus festzulegen.",
   "jobs.flashScheduleHint": "Sichert den Unraid-USB-Flash-Bootstick (/boot) zur geplanten Zeit.",
   "jobs.vmIncludeHint": "Sichert jede VM mit aktiviertem „In Zeitplan aufnehmen“ (pro VM im VMs-Tab einstellbar).",
-  "schedule.includeAll": "Alle in den Zeitplan",
-  "schedule.excludeAll": "Alle aus dem Zeitplan",
   "schedule.updateFailed": "Zeitplan konnte nicht aktualisiert werden",
   "schedule.pause": "Zeitplan pausieren",
   "schedule.resume": "Zeitplan fortsetzen",
@@ -6081,34 +5874,19 @@ export const de: Translations = {
   "common.compareFailed": "Vergleich fehlgeschlagen",
   "common.loadBackupsFailed": "Sicherungen konnten nicht geladen werden",
   "common.deleteBackupsFailed": "Sicherungen konnten nicht gelöscht werden",
-  "containers.loadFailed": "Container konnten nicht geladen werden",
   "containers.backupStartFailed": "Sicherung konnte nicht gestartet werden",
   "containers.updateSettingFailed": "Einstellung konnte nicht geändert werden",
-  "vms.loadFailed": "VMs konnten nicht geladen werden",
-  "files.loadSetsFailed": "Ordnersets konnten nicht geladen werden",
   "config.loadSettingsFailed": "Aktuelle Einstellungen konnten nicht geladen werden",
   "dashboard.loadRunsFailed": "Läufe konnten nicht geladen werden",
 
   // VMs page
-  "vms.title": "Virtuelle Maschinen",
-  "vms.empty": "Keine VMs gefunden. Läuft libvirt/KVM?",
-  "vms.backupSelected": "Auswahl sichern",
-  "vms.restoreSelected": "Auswahl wiederherstellen (neuestes)",
   "vms.restoreSelectedConfirm": "Das NEUESTE Backup der ausgewählten VMs wiederherstellen? Jede VM wird heruntergefahren, ihre Disk-Dateien ersetzt und die VM wiederhergestellt.",
-  "vms.notInstalledHint": "Diese VMs sind nicht mehr auf dem Host definiert, haben aber noch Backups. Stelle sie wieder her oder sieh ihre Snapshots im Backups-Panel ein.",
   "vms.removeEntry": "Eintrag entfernen",
   "vms.removeEntryConfirm": "Den Eintrag dieser VM aus der Liste entfernen? Vorhandene Backups werden nicht gelöscht.",
   "vms.deleteBackupsConfirm": "Alle Backups dieser VM löschen? Die Snapshots werden dauerhaft aus dem Repository entfernt und können nicht wiederhergestellt werden.",
-  "vms.discoverHint": "VM aus Unraid gelöscht (oder nach einer Neuinstallation verloren)? Baue ihren Backup-Eintrag aus dem Speicher neu auf, um sie wiederherzustellen.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash-Backup",
-  "flash.backupTitle": "Flash sichern",
-  "flash.backupHint": "Sichert den kompletten USB-Stick (/boot): Unraid-OS, Lizenz, Array-Config, Shares, Netzwerk und Plugin-Config.",
-  "flash.backupNow": "Flash jetzt sichern",
-  "flash.backingUp": "Sichere…",
   "flash.download": "Download (.zip)",
-  "flash.restoreNote": "Restore lädt ein ZIP des Snapshots herunter. Der laufende /boot wird nie angefasst. Das .zip direkt in den Unraid-USB-Creator geben oder auf einen frischen USB-Stick entpacken, um deinen Flash neu aufzubauen. Ausnahme ist ein einzelnes Plugin, das du unter Plugins wiederherstellst: Es wird zurück in den laufenden Flash geschrieben.",
   "flash.plugins": "Plugins",
   "flash.pluginsTitle": "Plugins in diesem Backup",
   "flash.pluginsHint": "Legt ein einzelnes Plugin zurück in den laufenden Flash: seine .plg-Datei, seinen Ordner unter config/plugins und die Paketdateien, die dieses Backup enthält. Unraid installiert es beim nächsten Start oder sofort unter Plugins, Install Plugin.",
@@ -6143,22 +5921,13 @@ export const de: Translations = {
 
   // Config-Selbst-Backup (BombVaults eigene Einstellungen). Minimaler en/de-Satz
   // für Task 12; die vollständige 24-Sprachen-Übersetzung folgt in Task 14.
-  "config.title": "Selbst-Backup",
   "config.settingsTitle": "Selbst-Backup-Einstellungen",
   "config.settingsHint": "Schützt BombVaults eigene Konfiguration (die Einstellungsdatenbank, Off-site-Zugangsdaten und SSH-Schlüssel), damit eine frische Installation sich selbst wiederherstellt und genau dort weitermacht, wo sie aufgehört hat.",
   "config.enabled": "BombVaults Einstellungen sichern",
   "config.enabledHint": "BombVaults eigenes /config in den unten stehenden Zeitplan aufnehmen.",
-  "config.schedule": "Zeitplan",
   "config.scheduleHint": "Sichert BombVaults eigene Einstellungen, Ziele und Zugangsdaten zur geplanten Zeit.",
-  "config.offsiteSchedule": "Off-site-Zeitplan",
   "config.offsiteMoved": "Die Off-site-Kopie des Selbst-Backups richtest du unter Einstellungen, Speicherorte ein, in derselben Karte wie jede andere Domäne.",
   "config.pathMoved": "Den Backup-Ort stellst du unter Einstellungen, Speicherorte ein, dort kann er ein lokaler Ordner oder ein Remote-Repository mit eigenen Zugangsdaten sein.",
-  "config.backupTitle": "Einstellungen jetzt sichern",
-  "config.backupHint": "Erfasst BombVaults eigenes /config: die Einstellungsdatenbank, Off-site-Zugangsdaten (rclone.conf) und das SSH-Schlüsselpaar.",
-  "config.backupNow": "Einstellungen jetzt sichern",
-  "config.backingUp": "Sichere…",
-  "config.snapshotsTitle": "Einstellungs-Backups",
-  "config.snapshotsHint": "Um diese Einstellungen auf einem neu aufgesetzten Server wiederherzustellen, den Wiederherstellungs-Tab verwenden: das Wiederherstellen der Einstellungen startet BombVault neu, damit sie angewendet werden, daher liegt es dort beim übrigen Notfall-Ablauf.",
 
   // Empfänger-Dashboard (nur lesende Überwachung eines Append-only-Off-site-Repos,
   // in das ein anderes BombVault schiebt)
@@ -6478,7 +6247,6 @@ export const de: Translations = {
   "receiver.checkCadenceHint": "Wann die unabhängige Integritätsprüfung auf dieser Box läuft. Leer lassen für täglich, 'off' zum Deaktivieren, oder z. B. 'weekly Sun 05:00'.",
   "receiver.checkCadencePlaceholder": "leer = daily 04:00 · off · daily HH:MM · weekly Sun 05:00",
   "receiver.readDataPercent": "Tiefenprüfung-Stichprobe (%)",
-  "receiver.readDataPercentHint": "Wie viel Pack-Daten restic bei der geplanten Prüfung erneut liest. 0 = nur Strukturprüfung.",
   "receiver.enabledLabel": "Dieses Repository überwachen",
   "receiver.nameRequired": "Namen eingeben.",
   "receiver.repoRequired": "Repository-Speicherort eingeben.",
@@ -6741,9 +6509,6 @@ export const de: Translations = {
   // Ordner-Domäne (Ordner-Set-Backups, #62) — der Ordner-Tab (Keys behalten
   // die historischen files.*-Namen; nur die angezeigten Werte heißen "Ordner")
   "nav.files": "Ordner",
-  "files.title": "Ordner",
-  "files.setsTitle": "Ordner-Sets",
-  "files.empty": "Noch keine Ordner-Sets. Füge einen Ordner hinzu (Shares, Dokumente, Fotos, alles unter deinen Mounts) und BombVault schützt ihn wie alles andere: Zeitpläne, Off-site-Kopien, Integritätsprüfungen und Wiederherstellungen. Kein separates Datei-Backup-Tool nötig.",
   "files.addSet": "Ordner-Set hinzufügen",
   "files.editSet": "Ordner-Set bearbeiten",
   "files.name": "Name",
@@ -7006,7 +6771,6 @@ export const de: Translations = {
   "files.pathMissing": "Ordner nicht gefunden",
   "files.noPath": "Kein Ordner gesetzt",
   "files.noPathHint": "Aus Backups ohne Ordner wiederaufgebaut. Setze einen Ordner, um wieder zu sichern. Die Wiederherstellung in einen Ordner funktioniert schon jetzt.",
-  "files.deleteSet": "Ordner-Set löschen",
   "files.deleteSetConfirm": "Dieses Ordner-Set aus der Liste entfernen? Seine Backups werden nicht gelöscht und können später wiederentdeckt werden.",
   "files.deleteBackupsConfirm": "Alle lokalen Backups dieses Ordner-Sets löschen? Die Snapshots werden dauerhaft entfernt, das lokale Repository wird aufgeräumt und das Set wird vergessen. Kopien an Off-site-Zielen bleiben erhalten, ohne ein Set, das sie kennt. Kann nicht rückgängig gemacht werden.",
   "files.restoreOriginal": "An den Originalort wiederherstellen",
@@ -7015,9 +6779,7 @@ export const de: Translations = {
   "files.restoreSelectFiles": "Dateien auswählen",
   "files.restoreComplete": "Wiederherstellung abgeschlossen: die Dateien wurden geschrieben.",
   "files.backupAll": "Alle jetzt sichern",
-  "files.discoverHint": "Set-Liste verloren? Baue sie aus den Backups im Speicher neu auf.",
   "files.cancel": "Abbrechen",
-  "files.addPreset": "Preset hinzufügen: Systemkonfiguration",
   "files.addPresetHint": "Ein vorsichtiger Ausgangspunkt für die Konfiguration auf Host-Ebene außerhalb deiner Container, kein Anspruch auf Vollständigkeit. Ordner vor dem Speichern prüfen.",
   // Phase 4 (INTEG-02): Auswahlbaum der Files-Seite (de-Übersetzungen der
   // en-Quelle oben). Bewusst NICHT die Container-Wortwahl von folders.*:
@@ -7027,7 +6789,7 @@ export const de: Translations = {
   "files.foldersHint":
     "Kreuze die Ordner an, die dieses Set abdecken soll. Wähle ein Unterverzeichnis ab, um es wegzulassen; die Zahl zeigt, wie viele Pfade die nächste Sicherung an restic übergibt.",
   "files.emptySelectionBlocked":
-    "Ein Set braucht mindestens einen Ordner, deshalb kann der letzte Haken nicht entfernt werden. Nutze Set entfernen, wenn du dieses Set nicht mehr brauchst.",
+    "Ein Set braucht mindestens einen Ordner, deshalb kann der letzte Haken nicht entfernt werden. Nutze Aus der Liste entfernen, wenn du dieses Set nicht mehr brauchst.",
   "files.pathChangeHint": "Wenn du den Ordner änderst, wird die angekreuzte Unterordner-Auswahl gelöscht.",
   // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
   "settings.filesEnabled": "Ordner",
@@ -7041,7 +6803,6 @@ export const de: Translations = {
   "recovery.filesRestoreHint": "Wiederentdeckte Ordner-Sets kennen ihren Ursprungsordner nicht. Jedes wird in einen Ordner deiner Wahl wiederhergestellt.",
   // ZFS datasets
   "nav.zfs": "ZFS",
-  "zfs.title": "ZFS-Datasets",
   "settings.zfsEnabled": "ZFS-Datasets",
   "settings.zfsEnabledHint": "Sichert ZFS-Datasets und ihre Unter-Datasets aus Snapshots, über die SSH-Verbindung zu diesem Server.",
   "settings.zfsPath": "ZFS-Datasets-Pfad",
@@ -7052,14 +6813,8 @@ export const de: Translations = {
   "dashboard.domainZFS": "ZFS",
   "recovery.zfsFound": "one={n} ZFS-Element gefunden.|other={n} ZFS-Elemente gefunden.",
   "recovery.zfsRestoreHint": "Wiedergefundene ZFS-Elemente bleiben ausgeschaltet. Prüfe die Datasets und Einstellungen jedes Elements, bevor du es einschaltest; eine Wiederherstellung in einen Ordner geht sofort.",
-  "zfs.emptyTitle": "Noch keine ZFS-Datasets",
-  "zfs.empty": "Füge ein Dataset hinzu, und BombVault sichert es zusammen mit seinen Unter-Datasets aus einem einzigen ZFS-Snapshot, damit jede Datei denselben Stand hat.",
-  "zfs.loadFailed": "ZFS-Datasets konnten nicht geladen werden",
-  "zfs.backupAll": "Alle jetzt sichern",
-  "zfs.discoverHint": "Liste verloren? Baue sie aus den Backups im Speicher neu auf.",
   "zfs.discovered": "one={n} ZFS-Element wiederhergestellt. Es bleibt ausgeschaltet, bis du es geprüft hast.|other={n} ZFS-Elemente wiederhergestellt. Sie bleiben ausgeschaltet, bis du sie geprüft hast.",
   "zfs.notInItem": "one={n} Dataset auf dem Host ist in keinem Element|other={n} Datasets auf dem Host sind in keinem Element",
-  "zfs.unusedZvols": "one={n} Volume wird von keiner VM genutzt|other={n} Volumes werden von keiner VM genutzt",
   "zfs.unusedZvolsHint": "Ein Volume enthält eine virtuelle Festplatte statt Dateien. Volumes, die eine VM nutzt, werden auf der VM-Seite gesichert. Diese hier gehören zu keiner VM, zum Beispiel ein iSCSI-Share oder eine abgehängte Platte, und BombVault sichert sie noch nicht. Eine spätere Version wird es tun.",
   "zfs.connection.title": "Verbindung zu diesem Server",
   "zfs.connection.hint": "BombVault führt zfs-Befehle über SSH auf diesem Server aus, über dieselbe Verbindung wie die VM-Backups. Scheitert die Verbindung, zeigt diese Karte den Schlüssel von BombVault und den Befehl, der ihn freigibt.",
@@ -7188,12 +6943,10 @@ export const de: Translations = {
   "zfs.member.excluded": "Ausgelassen",
   "zfs.member.new": "Neu",
   "zfs.member.structure": "Nur Struktur",
-  "zfs.enabled": "Im Zeitplan einschließen",
   "zfs.checkedAt": "Geprüft {when}",
   "zfs.notChecked": "Noch nicht geprüft",
   "zfs.probe": "Snapshot-Zugriff testen",
   "zfs.probing": "Snapshot-Zugriff wird getestet…",
-  "zfs.repoEffective": "Liegt in {repo}",
   "zfs.repo": "Repository für dieses Element",
   "zfs.repoPlaceholder": "leer lassen für das ZFS-Datasets-Repository",
   "zfs.repoHint": "Wo die Backups dieses Elements liegen. Leer bedeutet: das ZFS-Datasets-Repository. In der Liste stehen die Repositories, die du in den Einstellungen angelegt hast.",
@@ -7237,7 +6990,6 @@ export const de: Translations = {
   "zfs.deleteBackupsConfirm": "Alle Backups dieses Elements und seiner Datasets löschen? Die Snapshots verschwinden endgültig, das Repository wird aufgeräumt und das Element aus der Liste genommen. Das lässt sich nicht rückgängig machen.",
   "zfs.deleteKeptSafety": "one={n} Sicherheits-Snapshot ist auf dem Server geblieben|other={n} Sicherheits-Snapshots sind auf dem Server geblieben",
   // ZFS add dialog and restore panel
-  "zfs.addDatasets": "Datasets hinzufügen",
   "zfs.add.title": "ZFS-Datasets hinzufügen",
   "zfs.add.hint": "Die Liste kommt von diesem Server. Ein Element ist ein Dataset zusammen mit allen Datasets darunter, gesichert aus einem einzigen Snapshot. Wähle das Dataset ganz oben aus und schalte danach die Unter-Datasets ab, die draußen bleiben sollen.",
   "zfs.add.loading": "Datasets werden vom Server gelesen…",
@@ -7354,8 +7106,6 @@ export const de: Translations = {
   "zfs.replica.restoreFailed": "{name} ließ sich nicht von {target} zurückholen. {name} selbst bleibt, wie es ist.",
   "zfs.replica.servers.title": "ZFS-Server",
   "zfs.replica.servers.hint": "Ziele für die ZFS-Replik. Ein ZFS-Eintrag, der einen davon wählt, schickt ihm eine blockgenaue Kopie. Sicherungen landen hier keine.",
-  "zfs.replica.servers.empty": "Noch kein ZFS-Server. Unter Instanzen › ZFS-Server legst du einen an, dann kann jeder ZFS-Eintrag eine Replik dorthin schicken.",
-  "zfs.replica.servers.inUse": "{n}× in Verwendung",
   "zfs.replica.servers.unused": "nicht in Verwendung",
   "zfs.replica.servers.off": "Aus",
   "zfs.replica.servers.free": "{free} frei von {size}",

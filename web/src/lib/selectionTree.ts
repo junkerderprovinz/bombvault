@@ -74,7 +74,7 @@ export function isStrictlyUnder(path: string, ancestor: string): boolean {
 
 /** Host path to browse-relative path. The root itself maps to "", and a path
  *  outside the root passes through untranslated, as the manual custom-path
- *  entry does (Containers.tsx addCustom). */
+ *  entry does (addCustom in FoldersEditor.tsx). */
 export function hostToBrowseRel(host: string, hostSourceRoot: string): string {
   const h = cleanPath(host);
   const root = cleanPath(hostSourceRoot);

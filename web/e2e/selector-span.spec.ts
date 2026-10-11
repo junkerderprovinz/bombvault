@@ -1,13 +1,11 @@
-// Every horizontal selector spans the card it sits in, and one in a toolbar
-// row hugs its segments. The track of a spanning selector is as wide as its
-// card's content box; the Theme picker and the overview's calendar strip
-// stand for the page-level selectors on the desktop. The VMs sort strip
-// in the phone's list toolbar stands for the toolbar ones: it stays as wide as
-// its own segments, well short of the toolbar.
+// Every horizontal selector spans the card it sits in, and one beside a
+// caption hugs its segments. The track of a spanning selector is as wide as
+// its card's content box; the Theme picker and the overview's calendar strip
+// stand for the page-level selectors on the desktop. A filter of the Backups
+// list stands for the ones beside a caption: it stays as wide as its own
+// segments, well short of its row.
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { PLACEMENT } from "./placement";
-
-const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
+import { EVERY_KIND, MOBILE_PROJECTS, stageEntries } from "./entries";
 
 // A test can end while a route handler still waits on the real server. Closing
 // the context then disposes the response it is about to read, and Playwright
@@ -23,26 +21,8 @@ async function stage(page: Page): Promise<void> {
     if (route.request().method() !== "GET") return route.continue();
     const response = await route.fetch();
     const body = await response.json();
-    await route.fulfill({ response, json: { ...body, settings: { ...body.settings, vmsEnabled: true, receiverEnabled: true, fleetEnabled: true, pullEnabled: true } } });
+    await route.fulfill({ response, json: { ...body, settings: { ...body.settings, receiverEnabled: true, fleetEnabled: true, pullEnabled: true } } });
   });
-  await page.route("**/api/vms", (route) =>
-    route.fulfill({
-      json: {
-        ok: true,
-        vms: ["haos", "win11"].map((name) => ({
-          name,
-          libvirtName: name,
-          state: "running",
-          method: "graceful",
-          includeInSchedule: true,
-          lastBackup: null,
-          lastBackupStarted: null,
-          scheduleCadence: "",
-          placement: PLACEMENT,
-        })),
-      },
-    }),
-  );
 }
 
 /** The track's width beside the content box of the element it sits in. */
@@ -83,46 +63,44 @@ test("a card's selector spans the card's content box", async ({ page }, testInfo
 });
 
 test("a page-level tab strip never wraps", async ({ page }, testInfo) => {
-  // The phone width case (glyph-only, one row down to 320px) has its own
-  // geometry coverage in instances-phone.spec.ts; this checks the desktop
-  // scale of the same `fit` strip.
-  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: instances-phone.spec.ts covers the phone scale");
-  await stage(page);
+  // backup-entry.spec.ts covers the same strip at phone width.
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: backup-entry.spec.ts covers the phone scale");
+  await stageEntries(page, EVERY_KIND);
 
-  await page.goto("/instances");
-  const tabs = page.getByRole("tablist", { name: "Instances" });
+  await page.goto("/backups/vm/win11");
+  const tabs = page.getByRole("tablist", { name: "Windows 11" });
   await expect(tabs).toBeVisible();
   expect(await tabs.evaluate((el) => getComputedStyle(el).flexWrap)).toBe("nowrap");
   const tops = await tabs.getByRole("tab").evaluateAll((els) => new Set(els.map((el) => Math.round(el.getBoundingClientRect().top))).size);
   expect(tops, "the tabs share one row").toBe(1);
 });
 
-test("a toolbar's selector hugs its segments", async ({ page }, testInfo) => {
-  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the list toolbar is the phone's");
-  await stage(page);
+test("a selector beside its caption hugs its segments", async ({ page }) => {
+  await stageEntries(page, EVERY_KIND);
 
-  await page.goto("/vms");
-  const sort = page.getByRole("tablist", { name: "Sort:" });
-  await expect(sort).toBeVisible();
-  // The strip shares its row with the "Sort:" caption, so a strip that
-  // spanned the row would take all of it and drop under the caption.
-  const sortWidths = await widths(sort);
-  expect(sortWidths.track, JSON.stringify(sortWidths)).toBeLessThan(sortWidths.box - 20);
+  await page.goto("/backups");
+  await page.getByRole("button", { name: "Filters" }).click();
+  const schedule = page.getByRole("tablist", { name: "Schedule" });
+  await expect(schedule).toBeVisible();
+  // The strip shares its row with its caption, so a strip that spanned the
+  // row would take all of it and drop under the caption.
+  const scheduleWidths = await widths(schedule);
+  expect(scheduleWidths.track, JSON.stringify(scheduleWidths)).toBeLessThan(scheduleWidths.box - 20);
 });
 
 test("a VM's method strip keeps its size through a save", async ({ page }, testInfo) => {
-  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop row carries it; the phone renders the same component");
-  await stage(page);
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the phone renders the same component");
+  await stageEntries(page, EVERY_KIND);
   let release = () => {};
   const held = new Promise<void>((resolve) => (release = resolve));
-  await page.route("**/api/vms/haos", async (route) => {
+  await page.route("**/api/vms/win11", async (route) => {
     if (route.request().method() !== "PATCH") return route.continue();
     await held;
     await route.fulfill({ json: { ok: true } });
   });
 
-  await page.goto("/vms");
-  const strip = page.getByRole("tablist", { name: "Method", exact: true }).first();
+  await page.goto("/backups/vm/win11?tab=settings");
+  const strip = page.getByRole("tablist", { name: "Method", exact: true });
   await expect(strip).toBeVisible();
   const width = () => strip.evaluate((el) => el.getBoundingClientRect().width);
   const before = await width();

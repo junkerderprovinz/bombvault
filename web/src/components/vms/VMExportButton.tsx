@@ -9,7 +9,7 @@ import { useToast } from "../../lib/toast";
 type T = ReturnType<typeof useT>["t"];
 
 // VMExportButton keeps its result inline as well as toasting a failure, like
-// Containers.tsx's ExportButton: the destination path is something to copy
+// a container's ExportButton: the destination path is something to copy
 // down, not a passing notice.
 export function VMExportButton({ name, t, tone = "accent" }: { name: string; t: T; tone?: ButtonTone }) {
   const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
@@ -41,7 +41,7 @@ export function VMExportButton({ name, t, tone = "accent" }: { name: string; t: 
   }
   return (
     <div className="flex flex-col items-end gap-1">
-      {/* No hueIndex: the VMRow card already carries this VM's hue. The
+      {/* No hueIndex: the head of the VM's page already carries its hue. The
           column aligns to the end so the text hangs beneath the button at
           the card edge. */}
       <Button

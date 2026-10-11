@@ -15,9 +15,9 @@ import { enableWheelStep } from "../lib/selectScroll";
 
 // DropdownListbox is the shared role="listbox" panel for pickers that open a
 // list from a button. It is portalled to document.body because a card with
-// overflow: hidden (ContainerRow clips its progress bar that way) would cut it
-// off whatever its z-index. computeBubblePosition returns the panel's centre,
-// so translateX(-50%) centres it on the trigger with no RTL branch.
+// overflow: hidden would cut it off whatever its z-index.
+// computeBubblePosition returns the panel's centre, so translateX(-50%)
+// centres it on the trigger with no RTL branch.
 
 /** Gap between trigger and panel, and the panel's minimum distance from the
  *  viewport edge. */

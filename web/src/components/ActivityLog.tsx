@@ -23,7 +23,7 @@ const POLL_RUNS_MS = 10000;
 const POLL_SCHEDULE_MS = 30000;
 // The idle countdown ("in 2h 14m") only shows minutes.
 const TICK_MS = 60000;
-// Same rate as OffsiteIndicator's elapsed time, so both tick together.
+// The elapsed time of a running step counts in seconds.
 const LIVE_TICK_MS = 1000;
 // Rounding slack for "scrolled to the bottom".
 const BOTTOM_THRESHOLD_PX = 24;

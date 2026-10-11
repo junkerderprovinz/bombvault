@@ -24,11 +24,11 @@ interface OrphanRemoveButtonProps {
   t: T;
 }
 
-// The removal button on a not-installed card on the Containers and VMs pages.
+// The removal button of an entry whose container or VM is gone.
 // With backups it is "Delete all backups", because removing only the entry
 // would leave snapshots in the repository that nothing on the page points at.
 // Without backups it is "Remove entry". Keeping the backups while dropping the
-// entry from the schedule is the card's schedule switch.
+// entry from the schedule is the entry's schedule switch.
 //
 // Neutral rather than red, like every destructive action in the app: the label
 // and the confirmation carry the meaning.
@@ -49,7 +49,7 @@ export function OrphanRemoveButton({
 
   async function run() {
     // TODO: pass what is at stake ("N snapshots, X GB") to confirm() once the
-    // interpolated i18n keys exist, as in VMs.tsx and Files.tsx.
+    // interpolated i18n keys exist.
     const asked = hasBackups
       ? confirm(deleteConfirm, { confirmKey: "containers.deleteBackups" })
       : confirm(removeConfirm, { confirmKey: "vms.removeEntry" });

@@ -12,7 +12,7 @@ import { IdleCard } from "../IdleCard";
 import { WeekCard } from "../WeekCard";
 import { BackupOrderPanel } from "../../../components/containers/BackupOrderPanel";
 import { NumberField } from "../../../components/NumberField";
-import { VMBackupOrderPanel } from "../../VMs";
+import { VMBackupOrderPanel } from "../../../components/vms/VMBackupOrderPanel";
 // Every cadence picker in settings edits a schedule that can count an
 // interval (#166): the six domains and Backup Everything from their last
 // successful backup, drills, tamper test and digest from schedule_job_runs.
@@ -218,7 +218,7 @@ function FlashSection({
 
 // FilesSection mirrors VMsSection for the cadence and ContainersSection for the
 // member list, except that each set's "include in schedule" toggle PATCHes the
-// set directly (the same {enabled} flag the Files page edits).
+// set directly (the same {enabled} flag the set's own page edits).
 function FilesSection({
   settings,
   syncSchedules,

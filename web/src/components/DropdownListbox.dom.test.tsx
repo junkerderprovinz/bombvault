@@ -8,8 +8,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useRef, useState } from "react";
 import { DropdownListbox } from "./DropdownListbox";
 
-/** A trigger inside a `relative overflow-hidden` card like ContainerRow's, so
- *  the clipping ancestor is present. */
+/** A trigger inside a `relative overflow-hidden` card, so the clipping
+ *  ancestor is present. */
 function Harness({
   onPick,
   multiselectable,

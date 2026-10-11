@@ -272,12 +272,12 @@ const DOMAIN_OP_RUNNING_KEYS: Record<"prune" | "verify" | "drill" | "drdrill" | 
 
 /**
  * offsiteLiveLineText picks the live-line text for an "offsite:<domain>"
- * progress state, in the same tiers as OffsiteIndicator's offsiteStatusText:
+ * progress state, in three tiers:
  * a run-level percentage when one can be derived ("{percent}% overall
  * (snapshot {index} of {total})"), otherwise the elapsed duration, otherwise
  * the bare running text. Each tier has a "WithDuration" key so a percentage
  * never has to drop the duration. The percentage comes from
- * offsiteRunProgress, so this line and OffsiteIndicator agree on it.
+ * offsiteRunProgress, the one place it is derived.
  */
 function offsiteLiveLineText(resolveName: ResolveName, domain: LogDomain, state: ProgressState, duration: string): string {
   const text = offsiteRunningText(resolveName, domain, state, duration);
