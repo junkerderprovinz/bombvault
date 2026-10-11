@@ -24,6 +24,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
@@ -42,6 +43,8 @@ type placementFixture struct {
 	dock  *placementDocker
 	virsh *placementVirsh
 	root  string // host mount root, slash-spelled
+	// session is the session cookie requests carry, empty for none.
+	session string
 }
 
 func newPlacementFixture(t *testing.T) *placementFixture {
@@ -409,6 +412,13 @@ func (f *placementFixture) replicated(domain string) {
 	}
 }
 
+func (f *placementFixture) rcloneConf(conf string) {
+	f.t.Helper()
+	if err := f.svc.SetRcloneConf(conf); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
 // hold sets what a listing of the location returns.
 func (f *placementFixture) hold(location string, snaps ...restic.Snapshot) {
 	f.eng.mu.Lock()
@@ -420,7 +430,48 @@ func (f *placementFixture) hold(location string, snaps ...restic.Snapshot) {
 // but 200 fails the test.
 func (f *placementFixture) do(method, path string, body any) map[string]any {
 	f.t.Helper()
-	return doJSON(f.t, f.h, method, path, body)
+	code, out := f.call(method, path, body)
+	if code != http.StatusOK {
+		f.t.Fatalf("%s %s = %d: %v", method, path, code, out)
+	}
+	return out
+}
+
+// call sends one request through the router, signed in once signIn ran, and
+// returns its status and JSON body.
+func (f *placementFixture) call(method, path string, body any) (int, map[string]any) {
+	f.t.Helper()
+	var rd io.Reader
+	if body != nil {
+		b, err := json.Marshal(body)
+		if err != nil {
+			f.t.Fatal(err)
+		}
+		rd = bytes.NewReader(b)
+	}
+	r := jsonReq(method, path, rd)
+	if f.session != "" {
+		r.AddCookie(&http.Cookie{Name: f.h.sessionCookieNameFor(), Value: f.session}) //nolint:gosec // G124: a cookie on a test request
+	}
+	rec := httptest.NewRecorder()
+	f.h.Router().ServeHTTP(rec, r)
+	var out map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		f.t.Fatalf("%s %s: %v", method, path, err)
+	}
+	return rec.Code, out
+}
+
+// signIn gives the server a login password and the requests after it a
+// session of a person signed in with it.
+func (f *placementFixture) signIn() {
+	f.t.Helper()
+	f.withPassword("a password of the owner")
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	f.session = secret.NewSessionToken(f.svc.cfg.AppKey, settings.AuthPasswordHash, settings.SessionEpoch, time.Hour)
 }
 
 func doJSON(t *testing.T, h *Handler, method, path string, body any) map[string]any {
@@ -496,6 +547,24 @@ type placementEngine struct {
 	// onSnapshots, when set, runs synchronously after every Snapshots call, so a
 	// test can rewrite state a caller already captured before it listed.
 	onSnapshots func()
+	// onCopy and onForget, when set, run before a Copy or a Forget by ids does
+	// anything, so a test can hold a run in the middle.
+	onCopy, onForget func()
+	// onCheck, when set, runs as a Check starts.
+	onCheck func()
+	// copyDrops are the source snapshot ids a Copy leaves out without a word.
+	copyDrops map[string]bool
+	// signIns lists the environment each Init, Snapshots, Check and Copy ran
+	// with, as "op location".
+	signIns map[string][][]string
+}
+
+func (e *placementEngine) signedIn(op, repo string, mode restic.Mode) {
+	if e.signIns == nil {
+		e.signIns = map[string][][]string{}
+	}
+	key := op + " " + filepath.ToSlash(repo)
+	e.signIns[key] = append(e.signIns[key], slices.Clone(mode.Env))
 }
 
 type copyCall struct {
@@ -521,11 +590,12 @@ type tagCall struct {
 	Add, Remove []string
 }
 
-func (e *placementEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
+func (e *placementEngine) Init(_ context.Context, repo string, mode restic.Mode) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	key := filepath.ToSlash(repo)
 	e.ensured = append(e.ensured, key)
+	e.signedIn("init", repo, mode)
 	if err := e.initErr[key]; err != nil {
 		return err
 	}
@@ -553,10 +623,11 @@ func (e *placementEngine) RepoOpensErr(ctx context.Context, repo string, mode re
 	return errors.New("repository does not exist: unable to open config file")
 }
 
-func (e *placementEngine) Snapshots(_ context.Context, repo string, _ restic.Mode) ([]restic.Snapshot, error) {
+func (e *placementEngine) Snapshots(_ context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error) {
 	e.mu.Lock()
 	key := filepath.ToSlash(repo)
 	e.lists[key]++
+	e.signedIn("list", repo, mode)
 	err := e.listErr[key]
 	snaps := slices.Clone(e.snaps[key])
 	hook := e.onSnapshots
@@ -572,11 +643,15 @@ func (e *placementEngine) Snapshots(_ context.Context, repo string, _ restic.Mod
 
 // Copy puts a copy with a new id and the source's identity at the destination
 // for every snapshot asked for that the destination does not hold yet.
-func (e *placementEngine) Copy(_ context.Context, dest, src string, ids []string, _ restic.Limits, _ restic.Mode) error {
+func (e *placementEngine) Copy(_ context.Context, dest, src string, ids []string, _ restic.Limits, mode restic.Mode) error {
+	if e.onCopy != nil {
+		e.onCopy()
+	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	d, s := filepath.ToSlash(dest), filepath.ToSlash(src)
 	e.copies = append(e.copies, copyCall{Dest: d, Src: s, IDs: slices.Clone(ids)})
+	e.signedIn("copy", dest, mode)
 	if err := e.copyErr[s]; err != nil {
 		return err
 	}
@@ -586,7 +661,7 @@ func (e *placementEngine) Copy(_ context.Context, dest, src string, ids []string
 	}
 	for _, sn := range e.snaps[s] {
 		key := restic.Identity(sn)
-		if (ids != nil && !slices.Contains(ids, sn.ID)) || held[key] {
+		if (ids != nil && !slices.Contains(ids, sn.ID)) || held[key] || e.copyDrops[sn.ID] {
 			continue
 		}
 		held[key] = true
@@ -624,6 +699,9 @@ func (e *placementEngine) ForgetPolicy(_ context.Context, repo string, p restic.
 }
 
 func (e *placementEngine) Forget(_ context.Context, repo string, ids []string, _ bool, _ restic.Mode) error {
+	if e.onForget != nil {
+		e.onForget()
+	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	key := filepath.ToSlash(repo)
@@ -637,11 +715,15 @@ func (e *placementEngine) Forget(_ context.Context, repo string, ids []string, _
 	return nil
 }
 
-func (e *placementEngine) Check(_ context.Context, repo string, _ restic.Mode) error {
+func (e *placementEngine) Check(_ context.Context, repo string, mode restic.Mode) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	key := filepath.ToSlash(repo)
 	e.checks = append(e.checks, key)
+	e.signedIn("check", repo, mode)
+	if e.onCheck != nil {
+		e.onCheck()
+	}
 	return e.checkErr[key]
 }
 

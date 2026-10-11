@@ -17,6 +17,7 @@ const REPO = "break-all text-start font-mono text-xs text-carbon-textMuted";
 const KEPT: Record<NonNullable<ErasureSection["kept"]>, TranslationKey> = {
   "append-only": "storage.remove.keptAppendOnly",
   "in-use": "storage.remove.keptInUse",
+  shared: "storage.remove.keptShared",
   unreadable: "storage.remove.keptUnreadable",
 };
 

@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -11,31 +10,20 @@ import (
 
 // declinedBackups is the entries the person said not to back up.
 type declinedBackups struct {
-	store *store.Repo
 	marks map[store.BackupEntry]bool
 }
 
 func (s *Service) declinedBackups() (declinedBackups, error) {
 	marks, err := s.store.DeclinedBackups()
-	return declinedBackups{store: s.store, marks: marks}, err
+	return declinedBackups{marks: marks}, err
 }
 
 // holds reports whether the entry is set aside and so counts neither as
 // protected nor as something that needs the person. That covers an entry no
-// schedule reaches. Once one does, the mark is dropped for good, so the entry
-// counts again should the schedule go away later.
+// schedule reaches. The first backup a schedule makes drops the mark for good,
+// when the run is recorded, so reading the list writes nothing.
 func (d declinedBackups) holds(kind, key string, eff schedule.EffectiveSchedule) bool {
-	entry := store.BackupEntry{Kind: kind, Key: key}
-	if !d.marks[entry] {
-		return false
-	}
-	if eff.Kind == schedule.EffectiveNone {
-		return true
-	}
-	if err := d.store.AcceptBackup(entry); err != nil {
-		log.Printf("api: dropping the do-not-back-up mark of %s %q failed: %v", kind, key, err) //nolint:gosec // G706: key is %q-quoted
-	}
-	return false
+	return d.marks[store.BackupEntry{Kind: kind, Key: key}] && eff.Kind == schedule.EffectiveNone
 }
 
 var errEntryIsScheduled = errors.New("a schedule backs this entry up, take it out of the schedule first")

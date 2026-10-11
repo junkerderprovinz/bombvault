@@ -2,13 +2,15 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
 	"maps"
 	"net/http"
-	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/progress"
@@ -21,9 +23,13 @@ import (
 const (
 	// erasureKeptAppendOnly is a repository BombVault may only add to.
 	erasureKeptAppendOnly = "append-only"
-	// erasureKeptInUse is a direct repository that entries still back up to. It
-	// outlives the destination as a repository of its own.
+	// erasureKeptInUse is a repository that entries still back up to: a direct
+	// repository, which outlives the destination as a repository of its own,
+	// or one that shares its place with a repository entries back up to.
 	erasureKeptInUse = "in-use"
+	// erasureKeptShared shares its place with another section's copy or
+	// another destination.
+	erasureKeptShared = "shared"
 	// erasureKeptUnreadable is a repository that could not be listed, so nobody
 	// can say what deleting from it would take.
 	erasureKeptUnreadable = "unreadable"
@@ -97,7 +103,28 @@ type erasureRepo struct {
 
 type erasurePlan struct {
 	destinationErasure
-	repos []erasureRepo
+	repos  []erasureRepo
+	places places
+	live   []liveRepo
+}
+
+// sharedBy says why the repository at raw stays when it is, holds or lies
+// inside a repository in use other than the rows named in self: in-use for one
+// entries back up to, shared for another section's copy or another
+// destination, empty when the place is its own.
+func (p *erasurePlan) sharedBy(s *Service, raw string, self ...string) string {
+	loc, err := s.resolveRepo(raw)
+	if err != nil {
+		return ""
+	}
+	homes := slices.DeleteFunc(slices.Clone(p.live), func(r liveRepo) bool { return r.kind != liveHome })
+	switch {
+	case overlapsLive(p.places, loc, homes, self...):
+		return erasureKeptInUse
+	case overlapsLive(p.places, loc, p.live, self...):
+		return erasureKeptShared
+	}
+	return ""
 }
 
 // entryOf names the entry a backup belongs to: its settled owner, or the
@@ -129,11 +156,27 @@ func ofSection(snaps []restic.Snapshot, domain string) []restic.Snapshot {
 type heldElsewhere struct{ entries, backups map[string]bool }
 
 // heldOutside lists the domain's repositories and its targets at other
-// destinations. A place that cannot be read counts as holding nothing, which
-// errs towards calling a copy the last one. emptied are the locations the
-// deletion empties, which are no other place.
-func (s *Service) heldOutside(ctx context.Context, settings store.Settings, domain, destinationID string, oc ownerContext, emptied map[string]bool) heldElsewhere {
+// destinations. A place that cannot be read, or that cannot be told apart
+// from one the deletion empties, counts as holding nothing, which errs
+// towards calling a copy the last one. emptied are the resolved locations the
+// deletion empties.
+func (s *Service) heldOutside(ctx context.Context, settings store.Settings, domain, destinationID string, oc ownerContext, emptied []string) heldElsewhere {
 	held := heldElsewhere{entries: map[string]bool{}, backups: map[string]bool{}}
+	places := s.placesNow()
+	elsewhere := func(loc string) bool {
+		at, named := places.of(loc)
+		if !named {
+			log.Printf("api: erase: %s cannot be told apart from the places being emptied and counts as empty", shortRepoName(loc)) //nolint:gosec // G706: the location is shortened
+			return false
+		}
+		for _, gone := range emptied {
+			other, ok := places.of(gone)
+			if ok && at.same(other) || !ok && sameRepoLocation(loc, gone) {
+				return false
+			}
+		}
+		return true
+	}
 	add := func(snaps []restic.Snapshot) {
 		snaps = ofSection(snaps, domain)
 		owners := oc.owners(snaps)
@@ -147,7 +190,7 @@ func (s *Service) heldOutside(ctx context.Context, settings store.Settings, doma
 		log.Printf("api: erase: the %s repositories do not resolve and count as empty: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 	}
 	for _, home := range homes {
-		if emptied[filepath.ToSlash(home.Loc)] {
+		if !elsewhere(home.Loc) {
 			continue
 		}
 		snaps, err := s.listRepo(ctx, home.Loc, s.primaryModeFor(settings, domain, home.Loc))
@@ -165,7 +208,7 @@ func (s *Service) heldOutside(ctx context.Context, settings store.Settings, doma
 		if t.DestinationID == destinationID {
 			continue
 		}
-		if loc, err := s.resolveRepo(t.Repo); err != nil || emptied[filepath.ToSlash(loc)] {
+		if loc, err := s.resolveRepo(t.Repo); err != nil || !elsewhere(loc) {
 			continue
 		}
 		snaps, err := s.listTarget(ctx, settings, t)
@@ -193,9 +236,13 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 	if err != nil {
 		return erasurePlan{}, err
 	}
+	live, err := s.liveRepos(settings)
+	if err != nil {
+		return erasurePlan{}, err
+	}
 	plan := erasurePlan{destinationErasure: destinationErasure{
 		Removal: removal, Sections: []erasureSection{}, LastCopies: []erasureEntry{}, Key: "erase:" + id,
-	}}
+	}, places: s.placesNow(), live: live}
 	contexts := map[string]ownerContext{}
 	for _, t := range targets {
 		if _, known := contexts[t.Domain]; !known {
@@ -203,8 +250,8 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 				return erasurePlan{}, err
 			}
 		}
-		kept := ""
-		if t.Immutable {
+		kept := plan.sharedBy(s, t.Repo, t.ID, id)
+		if s.refusesDeletes(t) {
 			kept = erasureKeptAppendOnly
 		}
 		plan.add(ctx, s, settings, contexts[t.Domain], t, store.OffsiteTarget{}, kept)
@@ -220,19 +267,21 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 		if err != nil {
 			return erasurePlan{}, err
 		}
-		kept = ""
+		kept = plan.sharedBy(s, direct.Repo, direct.ID, id)
 		switch {
 		case use.InUse():
 			kept = erasureKeptInUse
-		case direct.Immutable:
+		case kept == "" && direct.Immutable:
 			kept = erasureKeptAppendOnly
 		}
 		plan.add(ctx, s, settings, contexts[t.Domain], t, direct, kept)
 	}
 	// A section that moved to another destination left its repository here,
-	// where no target points at it.
+	// where no target points at it. One that a repository in use shares is not
+	// left behind.
 	for _, domain := range offsiteConfigDomains {
-		if slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return t.Domain == domain }) {
+		if slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return t.Domain == domain }) ||
+			plan.sharedBy(s, destinationLocation(d.Repo, domain), id) != "" {
 			continue
 		}
 		left := store.OffsiteTarget{
@@ -257,7 +306,33 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 		}
 	}
 	plan.count(ctx, s, settings, id, contexts)
+	plan.Removal.Erasure = plan.digest()
 	return plan, nil
+}
+
+// digest sums up what the erasure takes, down to the snapshot ids of each
+// section, so a request can show it was made on the same.
+func (p erasurePlan) digest() string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "%d\n", p.BackupsOnlyThere)
+	for i, sec := range p.Sections {
+		ids := snapshotIDs(p.repos[i].snaps)
+		slices.Sort(ids)
+		fmt.Fprintf(&b, "%s\x00%s\x00%s\x00%s\x00%s\x00%s\n", sec.Domain, sec.TargetID, sec.RepoID, sec.Repo, sec.Kept, strings.Join(ids, ","))
+	}
+	sum := sha256.Sum256([]byte(b.String()))
+	return hex.EncodeToString(sum[:])
+}
+
+// refusesDeletes reports whether a target is marked append-only or its last
+// delete test was refused, by append-only or an object lock. A test that cannot
+// be read counts as refused.
+func (s *Service) refusesDeletes(t store.OffsiteTarget) bool {
+	if t.Immutable {
+		return true
+	}
+	test, found, err := s.store.LatestTamperTestForTarget(t.Domain, t.ID)
+	return err != nil || found && test.Protected
 }
 
 // add lists one repository of a target, its copy or its direct repository,
@@ -296,10 +371,10 @@ func (p *erasurePlan) add(ctx context.Context, s *Service, settings store.Settin
 // count fills in the totals over the sections that are emptied and finds the
 // entries nothing else holds a backup of.
 func (p *erasurePlan) count(ctx context.Context, s *Service, settings store.Settings, id string, contexts map[string]ownerContext) {
-	emptied := map[string]bool{}
+	var emptied []string
 	for i, section := range p.Sections {
 		if section.Kept == "" {
-			emptied[filepath.ToSlash(p.repos[i].loc)] = true
+			emptied = append(emptied, p.repos[i].loc)
 		}
 	}
 	outside := map[string]heldElsewhere{}
@@ -364,19 +439,41 @@ func (s *Service) StartDestinationErasure(ctx context.Context, id string, expect
 		}
 	}
 	locked := map[string]bool{}
-	for _, t := range targets {
-		if locked[t.Domain] {
-			continue
+	lock := func(domain string) error {
+		if locked[domain] {
+			return nil
 		}
-		u, ok := s.tryLockDomainFor(t.Domain, "delete")
+		u, ok := s.tryLockDomainFor(domain, "delete")
 		if !ok {
-			unlock()
-			return destinationErasure{}, errDomainBusy
+			return errDomainBusy
 		}
-		locked[t.Domain] = true
+		locked[domain] = true
 		unlocks = append(unlocks, u)
+		return nil
 	}
-	plan, err := s.planErasure(ctx, id)
+	for _, t := range targets {
+		if err := lock(t.Domain); err != nil {
+			unlock()
+			return destinationErasure{}, err
+		}
+	}
+	// Only the plan finds what a moved section left behind, so its domain is
+	// locked after the plan and the plan is made again under that lock.
+	var plan erasurePlan
+	for {
+		if plan, err = s.planErasure(ctx, id); err != nil {
+			break
+		}
+		before := len(locked)
+		for _, sec := range plan.Sections {
+			if err = lock(sec.Domain); err != nil {
+				break
+			}
+		}
+		if err != nil || len(locked) == before {
+			break
+		}
+	}
 	if err == nil {
 		err = plan.refusal(expect, named)
 	}
@@ -385,14 +482,26 @@ func (s *Service) StartDestinationErasure(ctx context.Context, id string, expect
 		return destinationErasure{}, err
 	}
 
+	rctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 24*time.Hour)
+	s.cancelMu.Lock()
+	for _, places := range s.moving {
+		if places[0] == id || places[1] == id {
+			s.cancelMu.Unlock()
+			cancel()
+			unlock()
+			return destinationErasure{}, errMoveRunning
+		}
+	}
+	if s.runCancels == nil {
+		s.runCancels = map[string]context.CancelFunc{}
+	}
+	s.runCancels[plan.Key] = cancel
+	s.cancelMu.Unlock()
+
 	go func() {
 		defer s.recoverOperation("erase destination", nil, nil)
 		defer unlock()
-		tctx, tcancel := context.WithTimeout(context.WithoutCancel(ctx), 24*time.Hour)
-		defer tcancel()
-		rctx, cancel := context.WithCancel(tctx)
 		defer cancel()
-		s.registerCancel(plan.Key, cancel)
 		defer s.unregisterCancel(plan.Key)
 
 		_, startedAt := s.progBegin(rctx, plan.Key, "maintenance")
@@ -416,6 +525,9 @@ func (p erasurePlan) refusal(expect destinationRemoval, named []string) error {
 	if !p.Removal.same(expect) {
 		return &removalChangedErr{now: p.Removal}
 	}
+	if p.Removal.Erasure != expect.Erasure {
+		return &erasureRefused{err: errPlacementStale, now: p.destinationErasure}
+	}
 	if !slices.ContainsFunc(p.Sections, func(sec erasureSection) bool { return sec.Kept == "" }) {
 		return &erasureRefused{err: errNothingToErase, now: p.destinationErasure}
 	}
@@ -429,7 +541,8 @@ func (p erasurePlan) refusal(expect destinationRemoval, named []string) error {
 
 // runErasure empties one repository after the other and stops at the first
 // that fails, so a destination that still holds backups is not removed. Each
-// is recorded as a prune of its section.
+// is recorded as a prune of its section, and the one that fails names those
+// already emptied.
 func (s *Service) runErasure(ctx context.Context, plan erasurePlan, startedAt int64) error {
 	var todo []erasureRepo
 	for i, section := range plan.Sections {
@@ -437,6 +550,7 @@ func (s *Service) runErasure(ctx context.Context, plan erasurePlan, startedAt in
 			todo = append(todo, plan.repos[i])
 		}
 	}
+	var emptied []string
 	for done, repo := range todo {
 		s.publishProgress(progress.Event{
 			Key: plan.Key, Phase: "maintenance", Active: true, StartedAt: startedAt,
@@ -447,6 +561,9 @@ func (s *Service) runErasure(ctx context.Context, plan erasurePlan, startedAt in
 			log.Printf("api: erase %s: the run is not recorded: %v", repo.domain, rErr) //nolint:gosec // G706: domain is a fixed literal
 		}
 		err := s.emptyRepo(ctx, repo)
+		if err != nil && len(emptied) > 0 {
+			err = fmt.Errorf("%w; already emptied: %s", err, strings.Join(emptied, ", "))
+		}
 		if runID != "" {
 			status := "success"
 			switch {
@@ -462,6 +579,7 @@ func (s *Service) runErasure(ctx context.Context, plan erasurePlan, startedAt in
 		if err != nil {
 			return fmt.Errorf("%s at %s: %w", repo.domain, shortRepoName(repo.loc), err)
 		}
+		emptied = append(emptied, repo.domain+" at "+scrubRepoLocation(repo.loc))
 	}
 	return nil
 }
@@ -494,6 +612,9 @@ func (s *Service) emptyRepo(ctx context.Context, repo erasureRepo) error {
 // destination would take away.
 // GET /api/offsite/destinations/{id}/erasure
 func (h *Handler) handleDestinationErasurePreview(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAuthForSecrets(w, r, "listing what deleting the backups at a destination takes") {
+		return
+	}
 	plan, err := h.svc.planErasure(r.Context(), r.PathValue("id"))
 	if errors.Is(err, store.ErrNotDestination) {
 		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": err.Error()})
@@ -509,9 +630,13 @@ func (h *Handler) handleDestinationErasurePreview(w http.ResponseWriter, r *http
 // handleEraseDestination starts deleting the backups at a destination and
 // removing it afterwards. The body carries the removal that was shown and the
 // identities of the entries that may lose their only backup. A refusal on a
-// fresh listing carries that listing.
+// fresh listing carries that listing. Without a login password anybody on the
+// network could delete the backups, so it takes one.
 // POST /api/offsite/destinations/{id}/erasure
 func (h *Handler) handleEraseDestination(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAuthForSecrets(w, r, "deleting the backups at a destination") {
+		return
+	}
 	var body struct {
 		Expect     destinationRemoval `json:"expect"`
 		LastCopies []string           `json:"lastCopies"`

@@ -143,3 +143,37 @@ func TestDeletingAFolderSetOrZFSEntryDropsItsDecline(t *testing.T) {
 		t.Fatalf("the deleted entries left the marks %v, %v", marks, err)
 	}
 }
+
+func TestARemovedContainerOrVMTakesItsDeclineWithIt(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "plex"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.UpsertVMTarget(store.VMTarget{Name: "Windows11", Method: "graceful"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range []store.BackupEntry{{Kind: "container", Key: "plex"}, {Kind: "vm", Key: "Windows11"}, {Kind: "container", Key: "sonarr"}} {
+		if err := r.DeclineBackup(entry); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := r.DeleteTarget("plex", nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.DeleteVMTarget("Windows11", nil); err != nil {
+		t.Fatal(err)
+	}
+
+	marks, err := r.DeclinedBackups()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := map[store.BackupEntry]bool{{Kind: "container", Key: "sonarr"}: true}; !maps.Equal(marks, want) {
+		t.Fatalf("declined = %v, want only the container nobody removed", marks)
+	}
+}

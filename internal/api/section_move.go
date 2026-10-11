@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ var (
 	errMoveSignIn  = errors.New("both places sign in the same way with different credentials, which one copy cannot do; move through a folder on this server instead")
 	errMoveMissing = errors.New("the new place does not hold every backup of the old one after the copy, so the section stays where it is")
 	errMoveRunning = errors.New("this section is already being moved")
+	errMoveErasing = errors.New("the backups at one of the two places are being deleted; try again once that has finished")
 )
 
 // sectionMove is what moving a section's copy to another destination copies.
@@ -44,15 +46,35 @@ type movePlan struct {
 	sectionMove
 	target, dest store.OffsiteTarget
 	src, dst     string
-	// srcMode reads the old place. mode writes the new one and carries the
-	// sign-ins of both, because the copy reaches both from one process.
-	srcMode, mode restic.Mode
-	lim           restic.Limits
+	// srcMode reads the old place and mode the new one, each with its own
+	// sign-in. copyMode carries both: restic copy opens the two repositories in
+	// one process, and their backends read the sign-in from its environment.
+	srcMode, mode, copyMode restic.Mode
+	lim                     restic.Limits
 }
 
-// bothSignIns joins the backend credentials of two places. ok is false when
-// they set the same variable to different values.
-func bothSignIns(a, b []string) (env []string, ok bool) {
+// signInVars are the variables a restic backend reads its login from.
+var signInVars = map[string][]string{
+	"s3":   {"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"},
+	"rest": {"RESTIC_REST_USERNAME", "RESTIC_REST_PASSWORD"},
+}
+
+// bothSignIns joins the backend credentials of two places for one restic
+// process. ok is false when they set one variable to different values, or
+// when the backend of one place reads a login variable that only the other
+// sets, which would sign it in with the other's login.
+func bothSignIns(aLoc string, a []string, bLoc string, b []string) (env []string, ok bool) {
+	lacks := func(loc string, own, other []string) bool {
+		for _, name := range signInVars[repoScheme(loc)] {
+			if envValue(own, name) == "" && envValue(other, name) != "" {
+				return true
+			}
+		}
+		return false
+	}
+	if lacks(aLoc, a, b) || lacks(bLoc, b, a) {
+		return nil, false
+	}
 	set := map[string]string{}
 	for _, kv := range a {
 		name, value, _ := strings.Cut(kv, "=")
@@ -128,10 +150,20 @@ func (s *Service) planMove(ctx context.Context, targetID, destID string) (movePl
 	if filepath.ToSlash(plan.src) == filepath.ToSlash(plan.dst) {
 		return movePlan{}, errMoveSamePlace
 	}
+	// A copy on a home repository is no second copy, and one on or around
+	// another target or destination is emptied with it.
+	live, err := s.liveRepos(settings)
+	if err != nil {
+		return movePlan{}, err
+	}
+	if overlapsLive(s.placesNow(), plan.dst, live, t.ID, d.ID) {
+		return movePlan{}, errNestedLocation
+	}
 	arrived := t
 	arrived.Repo, arrived.CredsRef, arrived.StorageClass = to, d.CredsRef, d.StorageClass
 	plan.srcMode, plan.mode = s.offsiteModeForTarget(settings, t), s.offsiteModeForTarget(settings, arrived)
-	if plan.mode.Env, ok = bothSignIns(plan.mode.Env, plan.srcMode.Env); !ok {
+	plan.copyMode = plan.mode
+	if plan.copyMode.Env, ok = bothSignIns(plan.dst, plan.mode.Env, plan.src, plan.srcMode.Env); !ok {
 		return movePlan{}, errMoveSignIn
 	}
 
@@ -192,6 +224,9 @@ func (s *Service) MoveSection(ctx context.Context, plan movePlan, startedAt int6
 	if len(left) > 0 {
 		return store.Settings{}, errMoveMissing
 	}
+	if err := s.alignCopies(ctx, plan); err != nil {
+		return store.Settings{}, err
+	}
 	if err := s.engine.Check(ctx, plan.dst, plan.mode); err != nil {
 		return store.Settings{}, fmt.Errorf("check %s: %w", plan.To, err)
 	}
@@ -217,6 +252,58 @@ func (s *Service) MoveSection(ctx context.Context, plan movePlan, startedAt int6
 	return settings, nil
 }
 
+// alignCopies gives each copy at the new place the tags its original carries.
+// restic copy skips a backup the new place already holds, so a copy from an
+// earlier attempt keeps the tags of before a rename. Paths cannot be changed,
+// and a copy with other paths than its original stops the move.
+func (s *Service) alignCopies(ctx context.Context, plan movePlan) error {
+	src, err := s.listRepo(ctx, plan.src, plan.srcMode)
+	if err != nil {
+		return fmt.Errorf("list %s: %w", plan.From, err)
+	}
+	dst, err := s.listRepo(ctx, plan.dst, plan.mode)
+	if err != nil {
+		return fmt.Errorf("list %s: %w", plan.To, err)
+	}
+	originals := map[string]restic.Snapshot{}
+	for _, sn := range ofSection(src, plan.Domain) {
+		originals[restic.Identity(sn)] = sn
+	}
+	for _, c := range dst {
+		sn, ok := originals[restic.Identity(c)]
+		if !ok {
+			continue
+		}
+		if !sameSet(c.Paths, sn.Paths) {
+			return errMoveMissing
+		}
+		add := setMinus(sn.Tags, c.Tags)
+		remove := setMinus(c.Tags, sn.Tags)
+		if len(add)+len(remove) == 0 {
+			continue
+		}
+		if err := s.engine.Tag(ctx, plan.dst, []string{c.ID}, add, remove, plan.mode); err != nil {
+			return fmt.Errorf("tag the copies at %s: %w", plan.To, err)
+		}
+	}
+	return nil
+}
+
+func sameSet(a, b []string) bool {
+	return len(setMinus(a, b)) == 0 && len(setMinus(b, a)) == 0
+}
+
+// setMinus is what a holds and b does not.
+func setMinus(a, b []string) []string {
+	var out []string
+	for _, v := range a {
+		if !slices.Contains(b, v) {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
 // copyPending copies what the new place lacks, a block of backups per restic
 // run, so a move that is cancelled or fails keeps the blocks that landed and
 // the next one goes on from there.
@@ -236,7 +323,7 @@ func (s *Service) copyPending(ctx context.Context, plan movePlan, startedAt int6
 			Percent: cp.Percent, SnapshotIndex: cp.SnapshotIndex, SnapshotTotal: len(pending),
 		})
 	})
-	if _, err := s.copyInChunks(ctx, plan.Domain, plan.dst, plan.src, pending, plan.lim, plan.mode, 0); err != nil {
+	if _, err := s.copyInChunks(ctx, plan.Domain, plan.dst, plan.src, pending, plan.lim, plan.copyMode, 0); err != nil {
 		return fmt.Errorf("copy to %s: %w", plan.To, err)
 	}
 	return nil
@@ -266,19 +353,37 @@ func (s *Service) StartSectionMove(ctx context.Context, targetID, destID string,
 	}
 	bctx := context.WithoutCancel(ctx)
 	rctx, cancel := context.WithTimeout(bctx, 7*24*time.Hour)
+	places := [2]string{plan.target.DestinationID, plan.dest.ID}
 	s.cancelMu.Lock()
 	if _, running := s.runCancels[plan.Key]; running {
+		err = errMoveRunning
+	}
+	for _, id := range places {
+		if _, erasing := s.runCancels["erase:"+id]; erasing && id != "" {
+			err = errMoveErasing
+		}
+	}
+	if err != nil {
 		s.cancelMu.Unlock()
 		cancel()
-		return sectionMove{}, errMoveRunning
+		return sectionMove{}, err
 	}
 	s.runCancels[plan.Key] = cancel
+	if s.moving == nil {
+		s.moving = map[string][2]string{}
+	}
+	s.moving[plan.Key] = places
 	s.cancelMu.Unlock()
 	go func() {
 		var runID string
 		defer s.recoverOperation("move "+plan.Domain, nil, func(msg string) { s.finishMoveRun(runID, errors.New(msg)) })
 		defer cancel()
-		defer s.unregisterCancel(plan.Key)
+		defer func() {
+			s.cancelMu.Lock()
+			delete(s.runCancels, plan.Key)
+			delete(s.moving, plan.Key)
+			s.cancelMu.Unlock()
+		}()
 		var rErr error
 		if runID, rErr = s.startRun(bctx, domainRunTargetID(plan.Domain), "offsite"); rErr != nil {
 			log.Printf("api: move %s: the run is not recorded: %v", plan.Domain, rErr) //nolint:gosec // G706: domain is a fixed literal

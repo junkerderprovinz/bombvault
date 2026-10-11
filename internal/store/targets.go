@@ -697,6 +697,9 @@ func (r *Repo) DeleteTarget(name string, installed map[string]bool) error {
 	if _, err := tx.Exec(`DELETE FROM targets WHERE container_name = ?`, name); err != nil {
 		return fmt.Errorf("DeleteTarget: %w", err)
 	}
+	if _, err := tx.Exec(`DELETE FROM declined_backups WHERE kind = 'container' AND key = ?`, name); err != nil {
+		return fmt.Errorf("DeleteTarget declined: %w", err)
+	}
 	if hasRow {
 		if err := keepRuleOnAliasesTx(tx, containerEntries, id, name, installed); err != nil {
 			return fmt.Errorf("DeleteTarget: %w", err)

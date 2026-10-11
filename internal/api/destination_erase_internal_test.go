@@ -1,9 +1,12 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -75,6 +78,7 @@ func boxWithVMs(f *placementFixture) (box, vms store.OffsiteTarget) {
 
 func TestTheErasurePreviewCountsWhatLosesACopyAndNamesTheLastCopies(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, vms := boxWithVMs(f)
 	files := f.tickDestination(box, "files")
 	f.appendOnly(files.ID)
@@ -105,6 +109,7 @@ func TestTheErasurePreviewCountsWhatLosesACopyAndNamesTheLastCopies(t *testing.T
 
 func TestAnErasureThatDoesNotNameTheLastCopiesDeletesNothing(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, _ := boxWithVMs(f)
 	preview := f.erasurePreview(box)
 
@@ -127,6 +132,7 @@ func TestAnErasureThatDoesNotNameTheLastCopiesDeletesNothing(t *testing.T) {
 
 func TestAnErasureEmptiesTheSectionsAndThenRemovesTheDestination(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, vms := boxWithVMs(f)
 	files := f.tickDestination(box, "files")
 	f.appendOnly(files.ID)
@@ -165,6 +171,7 @@ func TestAnErasureEmptiesTheSectionsAndThenRemovesTheDestination(t *testing.T) {
 
 func TestAFailedErasureKeepsTheDestination(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, vms := boxWithVMs(f)
 	f.eng.forgetErr = map[string]error{boxRepo + "/vms": errors.New("connection reset")}
 	preview := f.erasurePreview(box)
@@ -185,6 +192,7 @@ func TestAFailedErasureKeepsTheDestination(t *testing.T) {
 
 func TestAnErasureWaitsForNoBackupAndRefusesWhatItCannotEmpty(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, _ := boxWithVMs(f)
 	preview := f.erasurePreview(box)
 
@@ -212,6 +220,7 @@ func TestAnErasureWaitsForNoBackupAndRefusesWhatItCannotEmpty(t *testing.T) {
 
 func TestAnErasureLeavesADirectRepositoryInUseAndEmptiesAnIdleOne(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box := f.destination("Box", boxRepo)
 	containers := f.tickDestination(box, "containers")
 	files := f.tickDestination(box, "files")
@@ -252,10 +261,405 @@ func TestAnErasureLeavesADirectRepositoryInUseAndEmptiesAnIdleOne(t *testing.T) 
 	}
 }
 
+// aliasedHome gives the vms section its own repository under user/ and a
+// destination under disk1/, whose vms folder is the same Unraid share: both
+// hold the same two backups of vm:old.
+func aliasedHome(f *placementFixture) (disk store.OffsiteTarget, home, there string) {
+	f.settings(func(s *store.Settings) { s.VMsPath = "user/backups/vms" })
+	home = f.localRepo("user/backups/vms")
+	disk = f.destination("Disk", "disk1/backups")
+	f.tickDestination(disk, "vms")
+	there = f.localRepo("disk1/backups/vms")
+	for _, loc := range []string{home, there} {
+		f.hold(loc, snap("o1", 50, "vm:old"), snap("o2", 60, "vm:old"))
+	}
+	return disk, home, there
+}
+
+func TestAHomeUnderAnotherSpellingOfTheDestinationIsNoSecondCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	disk, home, _ := aliasedHome(f)
+
+	preview := f.erasurePreview(disk)
+	for _, sec := range preview.Sections {
+		if sec.Kept == "" && len(preview.LastCopies) == 0 {
+			t.Fatalf("the preview empties %+v and calls vm:old held elsewhere, though its home is the same folder", sec)
+		}
+	}
+	res := f.erase(disk, preview.Removal)
+	if res["ok"] != false {
+		t.Fatalf("answer = %v, want a refusal", res)
+	}
+	f.waitForErasure("vms")
+	if len(f.eng.deletes) != 0 || len(f.held(home)) != 2 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+	if _, ok, _ := f.st.GetDestination(disk.ID); !ok {
+		t.Fatal("a refused erasure removed the destination")
+	}
+}
+
+func TestAPlaceTheErasureEmptiesHoldsNothingUnderAnotherSpelling(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	_, _, there := aliasedHome(f)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	oc, err := f.svc.ownerContextFor("vms")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	held := f.svc.heldOutside(context.Background(), settings, "vms", "", oc, []string{there})
+
+	if len(held.entries) != 0 || len(held.backups) != 0 {
+		t.Fatalf("the home counts as holding %v elsewhere, though it is the folder being emptied", held.backups)
+	}
+}
+
+func TestATargetTheErasureEmptiesHoldsNothingElse(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, _ := boxWithVMs(f)
+	f.rcloneConf("[vault]\ntype = drive\nroot_folder_id = 0Bvault\n")
+	other := f.tickDestination(f.destination("Vault", vaultRepo), "vms")
+	f.hold(other.Repo, copied("v1", "o1", 50, "vm:old"))
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	oc, err := f.svc.ownerContextFor("vms")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if held := f.svc.heldOutside(context.Background(), settings, "vms", box.ID, oc, nil); !held.entries["vm:old"] {
+		t.Fatalf("the target at Vault holds %v, want vm:old among it", held.entries)
+	}
+	if held := f.svc.heldOutside(context.Background(), settings, "vms", box.ID, oc, []string{other.Repo}); held.entries["vm:old"] {
+		t.Fatalf("the target the erasure empties counts as holding %v", held.entries)
+	}
+}
+
+func TestAnErasureRefusesADestinationWhoseRemovalChanged(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box := f.destination("Box", boxRepo)
+	f.tickDestination(box, "files")
+	direct := f.direct(f.tickDestination(box, "containers"))
+	f.container("nginx", direct.ID)
+	f.hold(direct.Repo, snap("n1", 10, "container:nginx"))
+	preview := f.erasurePreview(box)
+
+	f.container("redis", direct.ID)
+	res := f.erase(box, preview.Removal)
+
+	if res["ok"] != false || res["code"] != "stale" || res["removal"] == nil {
+		t.Fatalf("answer = %v, want the refusal stale with the removal as it stands", res)
+	}
+	if _, ok, _ := f.st.GetDestination(box.ID); !ok {
+		t.Fatal("a refused erasure removed the destination")
+	}
+}
+
+func TestAPlaceNothingCanNameHoldsNoSecondCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box, _ := boxWithVMs(f)
+	nowhere := f.destination("Nowhere", "rclone:nowhere:bv")
+	other := f.tickDestination(nowhere, "vms")
+	f.hold(other.Repo, copied("n1", "o1", 50, "vm:old"), copied("n2", "o2", 60, "vm:old"), copied("n3", "o3", 70, "vm:old"))
+
+	preview := f.erasurePreview(box)
+
+	if last := []erasureEntry{{Domain: "vms", Identity: "vm:old", Backups: 3}}; !slices.Equal(preview.LastCopies, last) {
+		t.Fatalf("last copies = %+v, want %+v: no rclone remote is called nowhere", preview.LastCopies, last)
+	}
+}
+
+func TestAnErasureLeavesTheRepositoriesEntriesBackUpToAlone(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box := f.destination("Box", boxRepo)
+	files := f.tickDestination(box, "files")
+	containers := f.tickDestination(box, "containers")
+	f.container("nginx", f.namedRepo("Box containers", boxRepo+"/containers").ID)
+	f.vm("win", f.namedRepo("Box vms", boxRepo+"/vms").ID)
+	f.hold(boxRepo+"/containers", snap("n1", 10, "container:nginx"))
+	f.hold(boxRepo+"/vms", snap("w1", 10, "vm:win"))
+
+	preview := f.erasurePreview(box)
+	want := []erasureSection{
+		{Domain: "containers", TargetID: containers.ID, Repo: boxRepo + "/containers", Backups: 1, Entries: 1, Kept: erasureKeptInUse},
+		{Domain: "files", TargetID: files.ID, Repo: boxRepo + "/files"},
+	}
+	if !slices.Equal(preview.Sections, want) {
+		t.Fatalf("sections = %+v, want %+v", preview.Sections, want)
+	}
+
+	var named []string
+	for _, entry := range preview.LastCopies {
+		named = append(named, entry.Identity)
+	}
+	if res := f.erase(box, preview.Removal, named...); res["ok"] != true {
+		t.Fatalf("answer = %v, want a started run", res)
+	}
+	for _, domain := range []string{"containers", "files", "vms"} {
+		f.waitForErasure(domain)
+	}
+	if got := f.held(boxRepo + "/containers"); !slices.Equal(got, []string{"n1"}) {
+		t.Fatalf("the repository nginx backs up to holds %v", got)
+	}
+	if got := f.held(boxRepo + "/vms"); !slices.Equal(got, []string{"w1"}) {
+		t.Fatalf("the repository win backs up to holds %v", got)
+	}
+}
+
+func TestASectionAnotherSectionCopiesToStaysAsShared(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box, _ := boxWithVMs(f)
+	f.target("vms", "By hand", boxRepo+"/vms")
+
+	preview := f.erasurePreview(box)
+
+	if got := preview.Sections[0]; got.Kept != erasureKeptShared {
+		t.Fatalf("the section another target copies to reads as %+v, want it kept as shared", got)
+	}
+}
+
+func TestAnErasureRefusesASectionLeftBehindThatWasNotShown(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box := f.destination("Box", boxRepo)
+	f.tickDestination(box, "files")
+	f.hold(f.domainPath("vms"), snap("a1", 100, "vm:win"))
+	preview := f.erasurePreview(box)
+
+	f.hold(boxRepo+"/vms", copied("c1", "a1", 100, "vm:win"))
+	res := f.erase(box, preview.Removal)
+
+	if res["ok"] != false || res["code"] != "stale" {
+		t.Fatalf("answer = %v, want the refusal stale", res)
+	}
+	if now := erasureOf(t, res); len(now.Sections) != 2 {
+		t.Fatalf("the refusal carries %+v, want the section left behind in it", now.Sections)
+	}
+	f.waitForErasure("vms")
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+}
+
+func TestAnErasureWaitsForABackupOfASectionLeftBehind(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box := f.destination("Box", boxRepo)
+	f.tickDestination(box, "files")
+	f.hold(f.domainPath("vms"), snap("a1", 100, "vm:win"))
+	f.hold(boxRepo+"/vms", copied("c1", "a1", 100, "vm:win"))
+	preview := f.erasurePreview(box)
+
+	unlock, ok := f.svc.tryLockDomainFor("vms", "backup")
+	if !ok {
+		t.Fatal("the vms domain is busy before the test took it")
+	}
+	defer unlock()
+	if res := f.erase(box, preview.Removal); res["code"] != "domain-busy" {
+		t.Fatalf("answer while vms is backed up = %v, want domain-busy", res)
+	}
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+}
+
+func TestAnErasureRefusesBackupsThatArrivedAfterThePreview(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box, _ := boxWithVMs(f)
+	preview := f.erasurePreview(box)
+
+	f.hold(boxRepo+"/vms", append(f.snapsAt(boxRepo+"/vms"), snap("o4", 80, "vm:old"))...)
+	res := f.erase(box, preview.Removal, "vm:old")
+
+	if res["ok"] != false || res["code"] != "stale" {
+		t.Fatalf("answer = %v, want the refusal stale", res)
+	}
+	if now := erasureOf(t, res); now.Backups != 6 {
+		t.Fatalf("the refusal counts %d backups, want the 6 there are now", now.Backups)
+	}
+	f.waitForErasure("vms")
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+}
+
+func TestAnErasureWaitsForAMoveOfOneOfItsSections(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	waiting, done := make(chan struct{}), make(chan struct{})
+	f.eng.onCopy = func() {
+		select {
+		case <-waiting:
+		default:
+			close(waiting)
+		}
+		<-done
+	}
+	moveOf(t, f.do("POST", "/api/offsite/targets/"+vms.ID+"/move", map[string]any{"to": vault.ID}))
+	<-waiting
+	preview := f.erasurePreview(box)
+
+	res := f.erase(box, preview.Removal, "vm:old")
+	close(done)
+
+	if res["ok"] != false || res["code"] != "move-running" {
+		t.Fatalf("answer while vms moves away = %v, want move-running", res)
+	}
+	f.waitForErasure("vms")
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+}
+
+func TestAMoveWaitsForAnErasureAtEitherPlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	f.tickDestination(vault, "files")
+	f.hold(f.domainPath("files"), snap("d1", 10, "fileset:docs"))
+	f.hold(vaultRepo+"/files", copied("e1", "d1", 10, "fileset:docs"))
+	waiting, done := make(chan struct{}), make(chan struct{})
+	f.eng.onForget = func() {
+		select {
+		case <-waiting:
+		default:
+			close(waiting)
+		}
+		<-done
+	}
+	if res := f.erase(vault, f.erasurePreview(vault).Removal); res["ok"] != true {
+		t.Fatalf("answer = %v, want a started run", res)
+	}
+	<-waiting
+
+	res := f.movePreview(vms, vault)
+	started := f.do("POST", "/api/offsite/targets/"+vms.ID+"/move", map[string]any{"to": vault.ID})
+	close(done)
+	f.waitForErasure("files")
+
+	if res["ok"] != true {
+		t.Fatalf("preview = %v, want it to answer", res)
+	}
+	if started["ok"] != false || started["code"] != "erase-running" {
+		t.Fatalf("a move onto a place being emptied = %v, want erase-running", started)
+	}
+	if got := f.stored(vms.ID); got.DestinationID != box.ID || len(f.eng.copies) != 0 {
+		t.Fatalf("the refused move copied %+v and left the target at %+v", f.eng.copies, got)
+	}
+}
+
+func TestDeletingTheBackupsAtADestinationTakesALoginPassword(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, _ := boxWithVMs(f)
+
+	for _, req := range []struct {
+		method string
+		body   any
+	}{
+		{"GET", nil},
+		{"POST", map[string]any{"expect": destinationRemoval{}, "lastCopies": []string{"vm:old"}}},
+	} {
+		code, res := f.call(req.method, "/api/offsite/destinations/"+box.ID+"/erasure", req.body)
+		if code != http.StatusForbidden || res["code"] != codeNoPassword {
+			t.Fatalf("%s without a login password = %d %v, want %s", req.method, code, res, codeNoPassword)
+		}
+	}
+	f.waitForErasure("vms")
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+	if res := f.do("POST", "/api/offsite/destinations/"+box.ID+"/removal", map[string]any{"expect": f.removalPreview(box)}); res["ok"] != true {
+		t.Fatalf("removing the destination and keeping its backups = %v, want it done", res)
+	}
+}
+
+func TestAnErasureKeepsASectionWhoseDeleteTestWasRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box, vms := boxWithVMs(f)
+	if err := f.st.RecordTamperTestForTarget("vms", vms.ID, true, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	preview := f.erasurePreview(box)
+
+	if got := preview.Sections[0]; got.Kept != erasureKeptAppendOnly {
+		t.Fatalf("the section behind an object lock reads as %+v, want it kept as append-only", got)
+	}
+	if res := f.erase(box, preview.Removal, "vm:old"); res["code"] != "nothing-to-erase" {
+		t.Fatalf("answer = %v, want nothing-to-erase", res)
+	}
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+}
+
+func TestAnErasureThatFailsHalfwayNamesTheSectionsItEmptied(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box, _ := boxWithVMs(f)
+	f.tickDestination(box, "files")
+	f.hold(f.domainPath("files"), snap("d1", 10, "fileset:docs"))
+	f.hold(boxRepo+"/files", copied("e1", "d1", 10, "fileset:docs"))
+	f.eng.forgetErr = map[string]error{boxRepo + "/vms": errors.New("connection reset")}
+
+	if res := f.erase(box, f.erasurePreview(box).Removal, "vm:old"); res["ok"] != true {
+		t.Fatalf("answer = %v, want a started run", res)
+	}
+	f.waitForErasure("vms")
+	f.waitForErasure("files")
+
+	if left := f.held(boxRepo + "/files"); len(left) != 0 {
+		t.Fatalf("the files section still holds %v, want it emptied first", left)
+	}
+	run, err := f.st.LastRunOfKind("vms", "prune")
+	if err != nil || run == nil || run.Status != "failed" || !strings.Contains(run.Error, "files at "+boxRepo+"/files") {
+		t.Fatalf("the failed run = %+v, %v; want it to name the files section it emptied before", run, err)
+	}
+}
+
+func TestADestinationOverAHomeOrAnotherDestinationIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	ctx := context.Background()
+	if _, err := f.svc.SaveNewDestination(ctx, draftRequest{Provider: "path", Settings: map[string]string{"path": "backups"}}); !errors.Is(err, errNestedLocation) {
+		t.Fatalf("a destination around the repositories at home = %v, want errNestedLocation", err)
+	}
+	rest := draftRequest{Provider: "rest", Name: "Box", Settings: map[string]string{"url": "https://box:8000/bv", "user": "bv", "pass": "one"}}
+	if _, err := f.svc.SaveNewDestination(ctx, rest); err != nil {
+		t.Fatal(err)
+	}
+	rest.Settings["url"] = "https://box:8000/bv/inner"
+	if _, err := f.svc.SaveNewDestination(ctx, rest); !errors.Is(err, errNestedLocation) {
+		t.Fatalf("a destination inside another = %v, want errNestedLocation", err)
+	}
+	if sets := f.storedCredSets(); len(sets) != 1 {
+		t.Fatalf("the refused destination left its sign-in behind: %+v", sets)
+	}
+}
+
 func TestAnErasureTakesWhatAMovedSectionLeftBehind(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	box, vms := boxWithVMs(f)
 	files := f.tickDestination(box, "files")
+	f.rcloneConf("[vault]\ntype = drive\nroot_folder_id = 0Bvault\n")
 	vault := f.destination("Vault", vaultRepo)
 	f.move(vms, vault)
 

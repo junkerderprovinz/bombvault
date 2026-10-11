@@ -200,6 +200,9 @@ func (r *Repo) DeleteVMTarget(name string, installed map[string]bool) error {
 	if _, err := tx.Exec(`DELETE FROM vms WHERE name = ?`, name); err != nil {
 		return fmt.Errorf("DeleteVMTarget: %w", err)
 	}
+	if _, err := tx.Exec(`DELETE FROM declined_backups WHERE kind = 'vm' AND key = ?`, name); err != nil {
+		return fmt.Errorf("DeleteVMTarget declined: %w", err)
+	}
 	if hasRow {
 		if err := keepRuleOnAliasesTx(tx, vmEntries, id, name, installed); err != nil {
 			return fmt.Errorf("DeleteVMTarget: %w", err)

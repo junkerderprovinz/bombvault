@@ -140,6 +140,70 @@ func TestAMoveCopiesTheHistoryAndThenPointsTheSectionAtTheNewPlace(t *testing.T)
 	}
 }
 
+func TestACopyFromAnEarlierMoveTakesTheTagsOfItsOriginal(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	f.hold(vaultRepo+"/vms", copied("v1", "a1", 100, "vm:win", "vm:windows"))
+
+	f.move(vms, vault)
+
+	for _, sn := range f.snapsAt(vaultRepo + "/vms") {
+		if sn.ID == "v1" && !slices.Equal(sn.Tags, []string{"vm:win"}) {
+			t.Fatalf("the copy of a1 carries %v, want the tags a1 carries", sn.Tags)
+		}
+	}
+	if got := f.stored(vms.ID); got.DestinationID != vault.ID {
+		t.Fatalf("the target reads %+v, want it at Vault", got)
+	}
+}
+
+func TestACopyWithOtherPathsThanItsOriginalStopsTheMove(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	other := copied("v1", "a1", 100, "vm:win")
+	other.Paths = []string{"/somewhere/else"}
+	f.hold(vaultRepo+"/vms", other)
+
+	f.move(vms, vault)
+
+	if got := f.stored(vms.ID); got.DestinationID != box.ID {
+		t.Fatalf("the target reads %+v, want it still at Box", got)
+	}
+}
+
+func TestAMoveWhoseCopyLostABackupLeavesTheSectionWhereItIs(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	f.eng.copyDrops = map[string]bool{"o3": true}
+
+	f.move(vms, vault)
+
+	if got := f.stored(vms.ID); got.DestinationID != box.ID {
+		t.Fatalf("the target reads %+v, want it still at Box", got)
+	}
+	run, err := f.st.LastRunOfKind("vms", "offsite")
+	if err != nil || run == nil || run.Status != "failed" || run.Error != errMoveMissing.Error() {
+		t.Fatalf("the run = %+v, %v; want it failed for the missing backup", run, err)
+	}
+}
+
+func TestAMoveChecksTheNewPlaceUnderTheSectionsLock(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	var holder string
+	f.eng.onCheck = func() { holder, _ = f.svc.domainBusy("vms") }
+
+	f.move(vms, vault)
+
+	if holder != "replicate" {
+		t.Fatalf("the check ran while the vms lock was held by %q, want the move", holder)
+	}
+}
+
 func TestAMoveThatFailsItsCheckLeavesTheSectionWhereItIs(t *testing.T) {
 	f := newPlacementFixture(t)
 	box, vms := boxWithVMs(f)
@@ -232,6 +296,26 @@ func TestAMoveIsRefusedWhereItCannotBeDone(t *testing.T) {
 	}
 }
 
+func TestAMoveOntoARepositoryInUseIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, vms := boxWithVMs(f)
+	home := f.destination("Home", "backups")
+	vault := f.destination("Vault", vaultRepo)
+	f.vm("win", f.namedRepo("Vault vms", vaultRepo+"/vms").ID)
+
+	for _, dest := range []store.OffsiteTarget{home, vault} {
+		if res := f.movePreview(vms, dest); res["code"] != "nested-location" {
+			t.Fatalf("moving the copy onto a repository entries back up to at %s = %v, want nested-location", dest.Name, res)
+		}
+		if res := f.do("POST", "/api/offsite/targets/"+vms.ID+"/move", map[string]any{"to": dest.ID}); res["ok"] != false {
+			t.Fatalf("the refused move started: %v", res)
+		}
+	}
+	if len(f.eng.copies) != 0 {
+		t.Fatalf("a refused move copied %+v", f.eng.copies)
+	}
+}
+
 func TestTwoPlacesOfOneKindUnderDifferentSignInsCannotBeMovedBetween(t *testing.T) {
 	f := newPlacementFixture(t)
 	ctx := context.Background()
@@ -253,7 +337,57 @@ func TestTwoPlacesOfOneKindUnderDifferentSignInsCannotBeMovedBetween(t *testing.
 		t.Fatalf("answer = %v, want move-sign-in", res)
 	}
 
-	if env, ok := bothSignIns([]string{"AWS_ACCESS_KEY_ID=a"}, []string{"RESTIC_REST_USERNAME=bv", "AWS_ACCESS_KEY_ID=a"}); !ok || len(env) != 2 {
+	if env, ok := bothSignIns("s3:https://s3.example/bv", []string{"AWS_ACCESS_KEY_ID=a"}, "rest:https://box:8000/bv", []string{"RESTIC_REST_USERNAME=bv", "AWS_ACCESS_KEY_ID=a"}); !ok || len(env) != 2 {
 		t.Fatalf("an S3 place and a rest-server sharing what they share joined to %v, %v", env, ok)
+	}
+}
+
+func TestTheNewPlaceSeesTheOldPlacesLoginOnlyInTheCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	old, err := f.svc.SaveNewDestination(context.Background(), draftRequest{
+		Provider: "rest", Name: "Old", Settings: map[string]string{"url": "https://old:8000/bv", "user": "bv", "pass": "one"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	vms := f.tickDestination(old, "vms")
+	f.hold(vms.Repo, snap("o1", 50, "vm:old"))
+	vault := f.destination("Vault", vaultRepo)
+	at := vaultRepo + "/vms"
+	f.eng.opens[at] = false
+
+	f.move(vms, vault)
+
+	for _, op := range []string{"init", "list", "check"} {
+		calls := f.eng.signIns[op+" "+at]
+		if len(calls) == 0 {
+			t.Fatalf("no %s ran at the new place", op)
+		}
+		for _, env := range calls {
+			if envValue(env, "RESTIC_REST_PASSWORD") != "" {
+				t.Fatalf("%s at the new place ran with the old place's login: %v", op, env)
+			}
+		}
+	}
+	if copies := f.eng.signIns["copy "+at]; len(copies) == 0 || envValue(copies[0], "RESTIC_REST_PASSWORD") != "one" {
+		t.Fatalf("the copy ran with %v, want the old place's login to read it", copies)
+	}
+}
+
+func TestAMoveThatWouldLendOnePlaceTheOthersLoginIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	ref, err := f.svc.addCredSet("Old", CloudCreds{S3KeyID: "old-key", S3Secret: "old-secret"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	old, err := f.st.SaveDestination(store.OffsiteTarget{Name: "Old", Repo: "s3:https://old.example/bv", Provider: "aws", CredsRef: ref})
+	if err != nil {
+		t.Fatal(err)
+	}
+	vms := f.tickDestination(old, "vms")
+	fresh := f.destination("New", "s3:https://new.example/bv")
+
+	if res := f.movePreview(vms, fresh); res["code"] != "move-sign-in" {
+		t.Fatalf("moving from an S3 place with a login to one without = %v, want move-sign-in", res)
 	}
 }
