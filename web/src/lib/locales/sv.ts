@@ -233,6 +233,9 @@ const sv: Partial<Translations> = {
   "run.kindUpdate": "Uppdatering",
   "update.afterBackup": "Uppdatera efter en lyckad säkerhetskopiering",
   "update.afterBackupHint": "Hämtar imagen och återskapar den här containern direkt efter en lyckad säkerhetskopiering, så du alltid har en färsk återställningspunkt först. Den körs vid tidpunkten för säkerhetskopieringen (säkerhetskopior körs en efter en), inte vid en fast klockslag. För uppdateringar enligt ett fast schema, versionsstyrt, se ShipLog.",
+  "update.followsSchedule": "Som inställt under Inställningar › Schema",
+  "update.ownChoice": "Eget val",
+  "update.useDefault": "Följ standarden",
   "update.afterBackupOrphans":
     "Docker behåller avbildningen som containern tidigare kördes på, nu utan tagg, och Unraid listar den som en orphan image. Det är den normala resten av en LYCKAD uppdatering, inte tecknet på en misslyckad, och det är precis vad en snabb återgång till den förra avbildningen behöver. Vill du inte behålla den finns det en brytare under Inställningar, Schema, Image-uppstädning & uppdateringsstatus som tar bort den ersatta avbildningen direkt efter uppdateringen.",
   "run.statusRunning": "Körs",
@@ -1472,6 +1475,8 @@ const sv: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "När uppdatera-efter-säkerhetskopiering uppgraderar en container till en nyare image skickas ett meddelande så att du kan kontrollera att den fortfarande fungerar. Utlöses per uppdaterad container (uppdateringar är sällsynta).",
   "settings.pruneImageAfterUpdate": "Ta bort den gamla imagen efter en uppdatering",
   "settings.pruneImageAfterUpdateHint": "När en container har uppdaterats till en nyare image tas den ersatta gamla imagen bort. Av som standard: att behålla den gör det billigt att rulla tillbaka (en BombVault-säkerhetskopia återställer data, inte den gamla imagen). En delad basimage tas aldrig bort.",
+  "settings.updateEveryContainer": "Uppdatera containrar efter en lyckad säkerhetskopiering",
+  "settings.updateEveryContainerHint": "Hämtar en ny image först när säkerhetskopieringen före är klar. En enskild container kan ställas in annorlunda på sin egen sida.",
   "settings.registriesTitle": "Container-register",
   "settings.registriesHint": "Autentiseringsuppgifter för privata register, som används när uppdatera-efter-säkerhetskopiering kontrollerar om en container har en nyare image (till exempel en sponsorlåst ghcr.io-image). Publika images hämtas fortfarande anonymt. Lämna token tomt för att behålla det sparade; tas en rad bort raderas dess autentiseringsuppgifter.",
   "settings.registriesEmpty": "Inga register konfigurerade, alla images hämtas anonymt.",

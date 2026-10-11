@@ -298,6 +298,9 @@ const eu: Partial<Translations> = {
   "run.kindKeyRelease": "Gordailua emana",
   "update.afterBackup": "Eguneratu babeskopia arrakastatsu bat egin ondoren",
   "update.afterBackupHint": "Irudia deskargatu eta edukiontzi hau berriz sortzen du babeskopia arrakastatsu baten ondoren berehala, horrela beti izango duzu lehenik berrezarpen-puntu freskoa. Babeskopiaren orduan exekutatzen da (babeskopiak bata bestearen atzetik doaz), ez ordu finko batean. Bertsioaren araberako ordutegi finkoko eguneraketetarako, ikusi ShipLog.",
+  "update.followsSchedule": "Ezarpenak › Egutegia atalean ezarritakoaren arabera",
+  "update.ownChoice": "Aukera propioa",
+  "update.useDefault": "Jarraitu lehenetsiari",
   "update.afterBackupOrphans":
     "Docker-ek edukiontzia lehen exekutatzen zen irudia gordetzen du, orain etiketarik gabe, eta Unraid-ek irudi umezurtz gisa zerrendatzen du. Eguneratze ARRAKASTATSU baten hondar arrunta da, ez huts egindako baten seinalea, eta hori bera behar da aurreko irudira azkar itzultzeko. Gorde nahi ez baduzu, Ezarpenak, Egutegia, Irudien garbiketa eta eguneraketa-egoera atalean etengailu bat dago, eguneratu eta berehala ordezkatutako irudia ezabatzen duena.",
   "run.statusRunning": "Exekutatzen",
@@ -649,6 +652,8 @@ const eu: Partial<Translations> = {
   "retentionPreview.sourceLabel": "Iturria",
   "settings.pruneImageAfterUpdate": "Kendu irudi zaharra eguneraketaren ondoren",
   "settings.pruneImageAfterUpdateHint": "Edukiontzi bat irudi berriago batera eguneratu ondoren, ezabatu ordezkatutako irudi zaharra. Lehenespenez itzalita: hura gordetzeak atzera egitea merke bihurtzen du (BombVaulteko babeskopia batek datuak berrezartzen ditu, ez irudi zaharra). Oinarrizko irudi partekatu bat ez da inoiz ezabatzen.",
+  "settings.updateEveryContainer": "Eguneratu edukiontziak babeskopia arrakastatsu baten ondoren",
+  "settings.updateEveryContainerHint": "Irudi berri bat aurreko babeskopia amaitu ondoren soilik deskargatzen du. Edukiontzi bakar bat modu desberdinean ezar daiteke bere orrian.",
   "settings.registriesTitle": "Edukiontzi-erregistroak",
   "settings.registriesHint": "Erregistro pribatuentzako kredentzialak, «eguneratu babeskopiaren ondoren» aukerak edukiontzi bat irudi berriago baterako egiaztatzean erabiliak (adibidez babesle-esklusiboko ghcr.io irudi bat). Irudi publikoak anonimoki jaisten jarraitzen dute. Utzi tokena hutsik gordetakoa mantentzeko; errenkada bat kentzeak bere kredentziala ezabatzen du.",
   "settings.registriesEmpty": "Ez dago erregistrorik konfiguratuta: irudi guztiak anonimoki jaisten dira.",

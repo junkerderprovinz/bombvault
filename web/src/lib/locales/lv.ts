@@ -298,6 +298,9 @@ const lv: Partial<Translations> = {
   "run.kindKeyRelease": "Depozīts izsniegts",
   "update.afterBackup": "Atjaunināt pēc sekmīgas rezerves kopijas",
   "update.afterBackupHint": "Ievelk attēlu un izveido šo konteineru no jauna uzreiz pēc veiksmīgas rezerves kopijas, lai jums vienmēr vispirms būtu svaigs atjaunošanas punkts. Darbojas rezerves kopēšanas laikā (rezerves kopijas notiek cita pēc citas), nevis fiksētā pulksteņa laikā. Atjauninājumiem pēc fiksēta, versijas atkarīga grafika skatiet ShipLog.",
+  "update.followsSchedule": "Kā iestatīts sadaļā Iestatījumi › Grafiks",
+  "update.ownChoice": "Paša izvēle",
+  "update.useDefault": "Sekot noklusējumam",
   "update.afterBackupOrphans":
     "Docker patur attēlu, uz kura konteiners darbojās iepriekš, tagad bez birkas, un Unraid to uzskaita kā bāreņa attēlu. Tas ir VEIKSMĪGA atjauninājuma parastais atlikums, nevis neveiksmīga atjauninājuma pazīme, un tieši tas ir vajadzīgs, lai ātri atgrieztos pie iepriekšējā attēla. Ja nevēlaties to paturēt, sadaļā Iestatījumi, Grafiks, Attēlu tīrīšana un atjaunināšanas statuss ir slēdzis, kas nomainīto attēlu izdzēš uzreiz pēc atjaunināšanas.",
   "run.statusRunning": "Notiek",
@@ -649,6 +652,8 @@ const lv: Partial<Translations> = {
   "retentionPreview.sourceLabel": "Avots",
   "settings.pruneImageAfterUpdate": "Noņemt veco attēlu pēc atjaunināšanas",
   "settings.pruneImageAfterUpdateHint": "Pēc konteinera atjaunināšanas uz jaunāku attēlu aizstātais vecais attēls tiek izdzēsts. Pēc noklusējuma izslēgts. Tā saglabāšana padara atgriešanos lētu (BombVault rezerves kopija atjauno datus, nevis veco attēlu). Kopīgs bāzes attēls nekad netiek dzēsts.",
+  "settings.updateEveryContainer": "Atjaunināt konteinerus pēc sekmīgas rezerves kopijas",
+  "settings.updateEveryContainerHint": "Jaunu attēlu ievelk tikai tad, kad ir pabeigta iepriekšējā rezerves kopija. Atsevišķu konteineru var iestatīt citādi tā paša lapā.",
   "settings.registriesTitle": "Konteineru reģistri",
   "settings.registriesHint": "Akreditācijas dati privātiem reģistriem, izmantoti, kad „atjaunināt pēc rezerves kopijas” pārbauda, vai konteinerim ir jaunāks attēls (piem., sponsoriem paredzēts ghcr.io attēls). Publiskie attēli turpina tikt ievilkti anonīmi. Atstājiet marķieri tukšu, lai saglabātu saglabāto; rindas noņemšana izdzēš tās akreditācijas datus.",
   "settings.registriesEmpty": "Nav konfigurēts neviens reģistrs. Visi attēli tiek ievilkti anonīmi.",

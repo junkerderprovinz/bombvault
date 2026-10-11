@@ -233,6 +233,9 @@ const he: Partial<Translations> = {
   "run.kindUpdate": "עדכון",
   "update.afterBackup": "עדכון לאחר גיבוי מוצלח",
   "update.afterBackupHint": "מושך את הדימוי ובונה מחדש את הקונטיינר מיד לאחר גיבוי מוצלח, כך שתמיד קיימת קודם נקודת שחזור טרייה. הוא פועל בזמן הגיבוי (הגיבויים פועלים בזה אחר זה), לא בשעה קבועה. לעדכונים בלוח זמנים קבוע, לפי גרסה, יש את ShipLog.",
+  "update.followsSchedule": "כפי שהוגדר בהגדרות › לוח זמנים",
+  "update.ownChoice": "בחירה אישית",
+  "update.useDefault": "לעקוב אחר ברירת המחדל",
   "update.afterBackupOrphans":
     "Docker שומר את הדימוי שהמכולה רצה עליו קודם, כעת בלי תג, ו-Unraid מציג אותו כדימוי יתום. זה השארית הרגילה של עדכון שהצליח, לא סימן לעדכון שנכשל, וזה בדיוק מה שדרוש כדי לחזור במהירות לדימוי הקודם. אם אינך רוצה לשמור אותו, בהגדרות, לוח זמנים, ניקוי images וסטטוס עדכון יש מתג שמוחק את הדימוי שהוחלף מיד לאחר העדכון.",
   "run.statusRunning": "פועל",
@@ -1472,6 +1475,8 @@ const he: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "כאשר עדכון-לאחר-גיבוי משדרג container ל-image חדש יותר, נשלחת הודעה כדי לוודא שהוא עדיין עובד. נשלח לכל container שעודכן (עדכונים הם נדירים).",
   "settings.pruneImageAfterUpdate": "הסרת ה-image הישן לאחר עדכון",
   "settings.pruneImageAfterUpdateHint": "לאחר ש-container עודכן ל-image חדש יותר, מחיקת ה-image הישן שהוחלף. כבוי כברירת מחדל: שמירתו מוזילה את החזרה לאחור (גיבוי של BombVault משחזר נתונים, לא את ה-image הישן). image בסיס משותף לעולם לא נמחק.",
+  "settings.updateEveryContainer": "עדכון קונטיינרים לאחר גיבוי מוצלח",
+  "settings.updateEveryContainerHint": "דימוי חדש נמשך רק לאחר שהגיבוי שלפניו הסתיים. אפשר להגדיר קונטיינר בודד אחרת בדף שלו.",
   "settings.registriesTitle": "Registries של containers",
   "settings.registriesHint": "פרטי גישה ל-registries פרטיים, בשימוש כאשר עדכון-לאחר-גיבוי בודק אם קיים image חדש יותר עבור container (למשל image ב-ghcr.io שזמין לספונסרים בלבד). Images ציבוריים ממשיכים להימשך באופן אנונימי. token ריק שומר על הקיים; הסרת שורה מוחקת את פרטי הגישה שלה.",
   "settings.registriesEmpty": "לא הוגדרו registries: כל ה-images נמשכים באופן אנונימי.",

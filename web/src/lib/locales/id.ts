@@ -298,6 +298,9 @@ const id: Partial<Translations> = {
   "run.kindKeyRelease": "Titipan kunci diberikan",
   "update.afterBackup": "Perbarui setelah pencadangan yang berhasil",
   "update.afterBackupHint": "Menarik image dan membuat ulang container ini tepat setelah pencadangan berhasil, sehingga Anda selalu punya titik pemulihan yang segar terlebih dahulu. Berjalan pada waktu pencadangan (pencadangan berjalan satu per satu), bukan pada jam tetap. Untuk pembaruan pada jadwal tetap, berbasis versi, lihat ShipLog.",
+  "update.followsSchedule": "Sesuai pengaturan di Pengaturan › Jadwal",
+  "update.ownChoice": "Pilihan sendiri",
+  "update.useDefault": "Ikuti default",
   "update.afterBackupOrphans":
     "Docker menyimpan image yang sebelumnya dijalankan kontainer, sekarang tanpa tag, dan Unraid mencantumkannya sebagai orphan image. Itu sisa normal dari pembaruan yang BERHASIL, bukan tanda kegagalan, dan justru itulah yang dibutuhkan untuk kembali cepat ke image sebelumnya. Kalau tidak ingin menyimpannya, di Pengaturan, Jadwal, Pembersihan image & status pembaruan ada sakelar yang menghapus image yang digantikan tepat setelah pembaruan.",
   "run.statusRunning": "Sedang berjalan",
@@ -649,6 +652,8 @@ const id: Partial<Translations> = {
   "retentionPreview.sourceLabel": "Sumber",
   "settings.pruneImageAfterUpdate": "Hapus image lama setelah pembaruan",
   "settings.pruneImageAfterUpdateHint": "Setelah container diperbarui ke image yang lebih baru, hapus image lama yang digantikan. Mati secara bawaan. Mempertahankannya membuat rollback murah (cadangan BombVault memulihkan data, bukan image lama). Image dasar bersama tidak pernah dihapus.",
+  "settings.updateEveryContainer": "Perbarui container setelah pencadangan yang berhasil",
+  "settings.updateEveryContainerHint": "Menarik image baru hanya setelah pencadangan sebelumnya selesai. Satu container dapat diatur berbeda di halamannya sendiri.",
   "settings.registriesTitle": "Registri container",
   "settings.registriesHint": "Kredensial untuk registri pribadi, digunakan saat \"perbarui setelah pencadangan\" memeriksa container untuk image yang lebih baru (misalnya image ghcr.io khusus sponsor). Image publik tetap ditarik secara anonim. Biarkan token kosong untuk mempertahankan yang tersimpan; menghapus baris menghapus kredensialnya.",
   "settings.registriesEmpty": "Tidak ada registri yang dikonfigurasi. Semua image ditarik secara anonim.",

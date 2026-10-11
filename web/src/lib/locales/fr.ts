@@ -233,6 +233,9 @@ const fr: Partial<Translations> = {
   "run.kindUpdate": "Mise à jour",
   "update.afterBackup": "Mettre à jour après une sauvegarde réussie",
   "update.afterBackupHint": "Récupère l'image et recrée ce conteneur juste après une sauvegarde réussie, pour que vous ayez toujours d'abord un point de restauration récent. Il s'exécute au moment de la sauvegarde (les sauvegardes s'enchaînent l'une après l'autre), pas à une heure fixe. Pour des mises à jour à horaire fixe, avec gestion des versions, voir ShipLog.",
+  "update.followsSchedule": "Selon le réglage sous Paramètres › Planning",
+  "update.ownChoice": "Choix personnel",
+  "update.useDefault": "Suivre le réglage par défaut",
   "update.afterBackupOrphans":
     "Docker conserve l'image sur laquelle le conteneur tournait avant, désormais sans étiquette, et Unraid la range parmi les images orphelines. C'est le résidu normal d'une mise à jour RÉUSSIE, pas la trace d'un échec, et c'est exactement ce qu'un retour rapide à l'image précédente demande. Si vous préférez ne pas la garder, Paramètres, Planning, Nettoyage des images et statut de mise à jour propose un interrupteur qui supprime l'image remplacée juste après la mise à jour.",
   "run.statusRunning": "En cours",
@@ -1472,6 +1475,8 @@ const fr: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Lorsque la mise à jour après sauvegarde fait passer un container à une image plus récente, envoyer un message pour que vous puissiez vérifier qu'il fonctionne toujours. Se déclenche pour chaque container mis à jour (les mises à jour sont rares).",
   "settings.pruneImageAfterUpdate": "Supprimer l'ancienne image après une mise à jour",
   "settings.pruneImageAfterUpdateHint": "Après la mise à jour d'un container vers une image plus récente, supprimer l'ancienne image remplacée. Désactivé par défaut : la conserver rend le retour en arrière peu coûteux (une sauvegarde BombVault restaure les données, pas l'ancienne image). Une image de base partagée n'est jamais supprimée.",
+  "settings.updateEveryContainer": "Mettre à jour les conteneurs après une sauvegarde réussie",
+  "settings.updateEveryContainerHint": "Ne récupère une nouvelle image qu'une fois la sauvegarde précédente terminée. Un conteneur peut être réglé autrement sur sa propre page.",
   "settings.registriesTitle": "Registres de containers",
   "settings.registriesHint": "Identifiants pour les registres privés, utilisés lorsque la mise à jour après sauvegarde vérifie si une image plus récente existe pour un container (par exemple une image ghcr.io réservée aux sponsors). Les images publiques restent récupérées anonymement. Laissez le token vide pour conserver celui enregistré ; supprimer une ligne efface ses identifiants.",
   "settings.registriesEmpty": "Aucun registre configuré : toutes les images sont récupérées anonymement.",

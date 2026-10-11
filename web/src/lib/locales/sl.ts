@@ -298,6 +298,9 @@ const sl: Partial<Translations> = {
   "run.kindKeyRelease": "Depozit ključa izdan",
   "update.afterBackup": "Posodobi po uspešni varnostni kopiji",
   "update.afterBackupHint": "Takoj po uspešni varnostni kopiji povleci sliko in ponovno ustvari ta vsebnik, tako da vedno najprej dobiš svežo točko za obnovitev. Zgodi se ob času varnostnega kopiranja (varnostne kopije tečejo ena za drugo), ne ob fiksni uri. Za posodobitve po lastnem urniku, vezane na različico, glej ShipLog.",
+  "update.followsSchedule": "Kot je nastavljeno v razdelku Nastavitve › Urnik",
+  "update.ownChoice": "Lastna izbira",
+  "update.useDefault": "Sledi privzetemu",
   "update.afterBackupOrphans":
     "Docker ohrani sliko, na kateri je vsebnik tekel prej, zdaj brez oznake, in Unraid jo navede kot osirotelo sliko. To je običajni ostanek USPEŠNE nadgradnje, ne znak neuspele, in prav to potrebuje hitra vrnitev na prejšnjo sliko. Če je ne želite obdržati, je v razdelku Nastavitve, Urnik, Čiščenje slik in stanje posodobitev stikalo, ki nadomeščeno sliko izbriše takoj po nadgradnji.",
   "run.statusRunning": "Teče",
@@ -649,6 +652,8 @@ const sl: Partial<Translations> = {
   "retentionPreview.sourceLabel": "Vir",
   "settings.pruneImageAfterUpdate": "Po posodobitvi odstrani staro sliko",
   "settings.pruneImageAfterUpdateHint": "Ko je vsebnik posodobljen na novejšo sliko, izbriši presežno staro sliko. Privzeto izklopljeno. Ohranitev omogoča poceni vrnitev nazaj (varnostna kopija BombVaulta obnovi podatke, ne stare slike). Skupna osnovna slika se nikoli ne izbriše.",
+  "settings.updateEveryContainer": "Posodobi vsebnike po uspešni varnostni kopiji",
+  "settings.updateEveryContainerHint": "Novo sliko povleče šele, ko je prejšnja varnostna kopija končana. Posamezen vsebnik lahko na njegovi strani nastaviš drugače.",
   "settings.registriesTitle": "Registri vsebnikov",
   "settings.registriesHint": "Poverilnice za zasebne registre, uporabljene, ko \"posodobi po varnostni kopiji\" preveri, ali obstaja novejša slika vsebnika (na primer slika ghcr.io, dostopna samo sponzorjem). Javne slike se še naprej vlečejo anonimno. Pusti žeton prazen, da ohraniš shranjenega; odstranitev vrstice izbriše njeno poverilnico.",
   "settings.registriesEmpty": "Ni nastavljenih registrov, vse slike se vlečejo anonimno.",

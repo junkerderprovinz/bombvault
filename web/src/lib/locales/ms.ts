@@ -298,6 +298,9 @@ const ms: Partial<Translations> = {
   "run.kindKeyRelease": "Deposit dikeluarkan",
   "update.afterBackup": "Kemas kini selepas sandaran yang berjaya",
   "update.afterBackupHint": "Menarik imej dan mencipta semula bekas ini sejurus selepas sandaran berjaya, jadi anda sentiasa mempunyai titik pemulihan terkini dahulu. Berjalan pada masa sandaran (sandaran berjalan satu demi satu), bukan pada waktu tetap. Untuk kemas kini pada jadual tetap, mengikut versi, lihat ShipLog.",
+  "update.followsSchedule": "Seperti yang ditetapkan di Tetapan › Jadual",
+  "update.ownChoice": "Pilihan sendiri",
+  "update.useDefault": "Ikut lalai",
   "update.afterBackupOrphans":
     "Docker menyimpan imej yang bekas itu jalankan sebelum ini, kini tanpa tag, dan Unraid menyenaraikannya sebagai imej yatim. Itu sisa biasa bagi kemas kini yang BERJAYA, bukan tanda kegagalan, dan itulah yang diperlukan untuk kembali pantas ke imej sebelumnya. Jika anda tidak mahu menyimpannya, di Tetapan, Jadual, Pembersihan imej & status kemas kini ada suis yang memadam imej yang diganti sebaik sahaja kemas kini selesai.",
   "run.statusRunning": "Sedang berjalan",
@@ -649,6 +652,8 @@ const ms: Partial<Translations> = {
   "retentionPreview.sourceLabel": "Sumber",
   "settings.pruneImageAfterUpdate": "Alih keluar imej lama selepas kemas kini",
   "settings.pruneImageAfterUpdateHint": "Selepas bekas dikemas kini kepada imej yang lebih baharu, padamkan imej lama yang digantikan. Mati secara lalai. Mengekalkannya menjadikan rollback murah (sandaran BombVault memulihkan data, bukan imej lama). Imej asas yang dikongsi tidak sekali-kali dipadamkan.",
+  "settings.updateEveryContainer": "Kemas kini bekas selepas sandaran yang berjaya",
+  "settings.updateEveryContainerHint": "Menarik imej baharu hanya selepas sandaran sebelumnya selesai. Satu bekas boleh ditetapkan secara berbeza pada halamannya sendiri.",
   "settings.registriesTitle": "Registri bekas",
   "settings.registriesHint": "Kelayakan untuk registri persendirian, digunakan apabila \"kemas kini selepas sandaran\" menyemak bekas untuk imej yang lebih baharu (contohnya imej ghcr.io khusus penaja). Imej awam terus ditarik secara tanpa nama. Biarkan token kosong untuk mengekalkan yang tersimpan; mengalih keluar baris memadamkan kelayakannya.",
   "settings.registriesEmpty": "Tiada registri dikonfigurasikan. Semua imej ditarik secara tanpa nama.",

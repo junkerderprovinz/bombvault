@@ -233,6 +233,9 @@ const tr: Partial<Translations> = {
   "run.kindUpdate": "Güncelleme",
   "update.afterBackup": "Başarılı bir yedeklemeden sonra güncelle",
   "update.afterBackupHint": "İmajı çeker ve bu konteyneri başarılı bir yedeklemeden hemen sonra yeniden oluşturur, böylece her zaman önce taze bir geri yükleme noktan olur. Yedekleme zamanında çalışır (yedeklemeler birbiri ardına çalışır), sabit bir saatte değil. Sabit bir zamanlamaya göre, sürüme dayalı güncellemeler için ShipLog'a bak.",
+  "update.followsSchedule": "Ayarlar › Zamanlama altında belirlendiği gibi",
+  "update.ownChoice": "Kendi seçimi",
+  "update.useDefault": "Varsayılanı izle",
   "update.afterBackupOrphans":
     "Docker, kapsayıcının önceden çalıştığı imajı etiketsiz olarak saklar ve Unraid onu artık sahipsiz imaj olarak listeler. Bu, BAŞARILI bir güncellemenin normal artığıdır, başarısız olanın izi değil, ve önceki imaja hızlıca dönmek için gereken tam olarak budur. Saklamak istemiyorsanız Ayarlar, Zamanlama, Image Temizliği & Güncelleme Durumu altında, güncellemenin hemen ardından değiştirilen imajı silen bir anahtar var.",
   "run.statusRunning": "Çalışıyor",
@@ -1472,6 +1475,8 @@ const tr: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Yedeklemeden sonra güncelleme özelliği bir container'ı daha yeni bir image'e yükselttiğinde, hâlâ çalıştığını doğrulayabilmeniz için bir mesaj gönderir. Güncellenen her container için tetiklenir (güncellemeler nadirdir).",
   "settings.pruneImageAfterUpdate": "Güncellemeden sonra eski image'i kaldır",
   "settings.pruneImageAfterUpdateHint": "Bir container daha yeni bir image'e güncellendikten sonra, yerini alan eski image'i sil. Varsayılan olarak kapalı: image'i tutmak geri almayı kolay ve ucuz kılar (bir BombVault yedeği verileri geri yükler, eski image'i değil). Paylaşılan bir temel image asla silinmez.",
+  "settings.updateEveryContainer": "Başarılı bir yedeklemeden sonra konteynerleri güncelle",
+  "settings.updateEveryContainerHint": "Yeni bir imajı ancak önceki yedekleme bittikten sonra çeker. Tek bir konteyner kendi sayfasında farklı ayarlanabilir.",
   "settings.registriesTitle": "Container registry'leri",
   "settings.registriesHint": "Özel registry'ler için kimlik bilgileri; yedeklemeden sonra güncelleme bir container için daha yeni bir image olup olmadığını kontrol ederken kullanılır (örneğin yalnızca sponsorlara açık bir ghcr.io image'i). Herkese açık image'ler anonim olarak çekilmeye devam eder. Kaydedileni korumak için token'ı boş bırak; bir satırı kaldırmak o satırın kimlik bilgilerini siler.",
   "settings.registriesEmpty": "Yapılandırılmış registry yok. Tüm image'ler anonim olarak çekilir.",

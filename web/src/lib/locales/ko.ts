@@ -233,6 +233,9 @@ const ko: Partial<Translations> = {
   "run.kindUpdate": "업데이트",
   "update.afterBackup": "백업에 성공한 후 업데이트",
   "update.afterBackupHint": "백업이 성공한 직후에 이미지를 가져와 이 컨테이너를 다시 만들므로 항상 먼저 최신 복원 지점이 확보됩니다. 백업 시각에 실행되며(백업은 차례로 실행됩니다), 고정된 시각에 실행되는 것은 아닙니다. 버전 기준의 고정 일정 업데이트를 원하시면 ShipLog를 확인하세요.",
+  "update.followsSchedule": "설정 › 일정에서 지정한 대로",
+  "update.ownChoice": "직접 선택",
+  "update.useDefault": "기본값 따르기",
   "update.afterBackupOrphans":
     "Docker는 컨테이너가 이전에 실행하던 이미지를 태그 없이 남겨 두고, Unraid는 그것을 고아 이미지로 표시합니다. 이는 업데이트가 '성공했을' 때 남는 정상적인 잔여물이며 실패의 흔적이 아닙니다. 직전 이미지로 빠르게 되돌릴 때 필요한 것이기도 합니다. 남겨 두고 싶지 않다면 설정, 일정, 이미지 정리 및 업데이트 상태에 업데이트 직후 교체된 이미지를 삭제하는 스위치가 있습니다.",
   "run.statusRunning": "실행 중",
@@ -1463,6 +1466,8 @@ const ko: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "백업 후 업데이트로 컨테이너가 최신 image로 업그레이드되면 정상 작동 여부를 확인할 수 있도록 메시지를 보냅니다. 업데이트된 컨테이너마다 발생합니다(업데이트는 드뭅니다).",
   "settings.pruneImageAfterUpdate": "업데이트 후 이전 image 제거",
   "settings.pruneImageAfterUpdateHint": "컨테이너가 최신 image로 업데이트된 후 대체된 이전 image를 삭제합니다. 기본값은 꺼짐입니다. 이전 image를 유지하면 롤백이 간편해집니다(BombVault 백업은 이전 image가 아니라 데이터를 복원합니다). 공유 베이스 image는 절대 삭제되지 않습니다.",
+  "settings.updateEveryContainer": "백업 성공 후 컨테이너 업데이트",
+  "settings.updateEveryContainerHint": "앞선 백업이 끝난 뒤에만 새 이미지를 가져옵니다. 개별 컨테이너는 해당 컨테이너 페이지에서 다르게 설정할 수 있습니다.",
   "settings.registriesTitle": "컨테이너 레지스트리",
   "settings.registriesHint": "비공개 레지스트리용 자격 증명입니다. 백업 후 업데이트가 컨테이너의 최신 image를 확인할 때 사용됩니다(예: 스폰서 전용 ghcr.io image). 공개 image는 계속 익명으로 가져옵니다. 토큰을 비워 두면 저장된 값이 유지되고, 행을 제거하면 해당 자격 증명이 삭제됩니다.",
   "settings.registriesEmpty": "설정된 레지스트리가 없습니다. 모든 image를 익명으로 가져옵니다.",

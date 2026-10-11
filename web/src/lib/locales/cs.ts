@@ -233,6 +233,9 @@ const cs: Partial<Translations> = {
   "run.kindUpdate": "Aktualizace",
   "update.afterBackup": "Aktualizovat po úspěšné záloze",
   "update.afterBackupHint": "Stáhne image a znovu vytvoří tento kontejner hned po úspěšné záloze, takže máš vždy nejdřív čerstvý bod obnovení. Spouští se v čase zálohy (zálohy běží jedna po druhé), ne v pevně stanovený čas. Pro aktualizace podle pevného harmonogramu, podle verze, viz ShipLog.",
+  "update.followsSchedule": "Podle nastavení v Nastavení › Plán",
+  "update.ownChoice": "Vlastní volba",
+  "update.useDefault": "Převzít výchozí",
   "update.afterBackupOrphans":
     "Docker si nechává obraz, na kterém kontejner běžel dříve, teď bez značky, a Unraid jej vypisuje jako osiřelý obraz. To je normální zbytek ÚSPĚŠNÉ aktualizace, ne známka neúspěšné, a je to přesně to, co potřebuje rychlý návrat k předchozímu obrazu. Pokud si jej nechcete nechávat, v Nastavení, Plán, Úklid images a stav aktualizace je přepínač, který nahrazený obraz smaže hned po aktualizaci.",
   "run.statusRunning": "Probíhá",
@@ -1470,6 +1473,8 @@ const cs: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Když aktualizace po záloze povýší kontejner na novější image, odeslat zprávu, abys mohl ověřit, že stále funguje. Spustí se pro každý aktualizovaný kontejner (aktualizace jsou vzácné).",
   "settings.pruneImageAfterUpdate": "Odstranit starý image po aktualizaci",
   "settings.pruneImageAfterUpdateHint": "Po aktualizaci kontejneru na novější image smazat nahrazený starý image. Ve výchozím nastavení vypnuto: jeho ponechání zlevňuje návrat zpět (záloha BombVault obnoví data, ne starý image). Sdílený základní image se nikdy nesmaže.",
+  "settings.updateEveryContainer": "Aktualizovat kontejnery po úspěšné záloze",
+  "settings.updateEveryContainerHint": "Stáhne nový image až poté, co skončí předchozí záloha. Jednotlivý kontejner lze nastavit jinak na jeho vlastní stránce.",
   "settings.registriesTitle": "Registry kontejnerů",
   "settings.registriesHint": "Přihlašovací údaje pro privátní registry, používané když aktualizace po záloze kontroluje, zda pro kontejner existuje novější image (například sponzorský image na ghcr.io). Veřejné image se dál stahují anonymně. Token nech prázdný pro zachování uloženého; odstranění řádku smaže jeho přihlašovací údaje.",
   "settings.registriesEmpty": "Žádné registry nejsou nastaveny. Všechny image se stahují anonymně.",

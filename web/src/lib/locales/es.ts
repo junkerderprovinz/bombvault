@@ -233,6 +233,9 @@ const es: Partial<Translations> = {
   "run.kindUpdate": "Actualización",
   "update.afterBackup": "Actualizar tras una copia de seguridad correcta",
   "update.afterBackupHint": "Descarga la imagen y recrea este contenedor justo después de una copia de seguridad correcta, para que siempre tengas primero un punto de restauración reciente. Se ejecuta a la hora de la copia de seguridad (las copias se ejecutan una tras otra), no a una hora fija. Para actualizaciones en un horario fijo, según la versión, consulta ShipLog.",
+  "update.followsSchedule": "Según lo definido en Ajustes › Calendario",
+  "update.ownChoice": "Elección propia",
+  "update.useDefault": "Seguir el valor por defecto",
   "update.afterBackupOrphans":
     "Docker conserva la imagen sobre la que el contenedor corría antes, ahora sin etiqueta, y Unraid la lista como imagen huérfana. Es el residuo normal de una actualización CORRECTA, no la señal de una fallida, y es justo lo que necesita una vuelta rápida a la imagen anterior. Si prefieres no conservarla, Ajustes, Calendario, Limpieza de imágenes y estado de actualización tiene un interruptor que borra la imagen sustituida justo después de la actualización.",
   "run.statusRunning": "En curso",
@@ -1470,6 +1473,8 @@ const es: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Cuando «actualizar tras la copia» actualiza un contenedor a una imagen más reciente, envía un mensaje para que puedas verificar que sigue funcionando. Se activa por cada contenedor actualizado (las actualizaciones son poco frecuentes).",
   "settings.pruneImageAfterUpdate": "Eliminar la imagen antigua tras una actualización",
   "settings.pruneImageAfterUpdateHint": "Después de actualizar un contenedor a una imagen más reciente, elimina la imagen antigua sustituida. Desactivado por defecto: conservarla hace que revertir sea barato (una copia de BombVault restaura los datos, no la imagen antigua). Una imagen base compartida nunca se elimina.",
+  "settings.updateEveryContainer": "Actualizar los contenedores tras una copia de seguridad correcta",
+  "settings.updateEveryContainerHint": "Descarga una imagen nueva solo cuando ha terminado la copia anterior. Un contenedor concreto puede configurarse de otra forma en su propia página.",
   "settings.registriesTitle": "Registros de contenedores",
   "settings.registriesHint": "Credenciales para registros privados, usadas cuando «actualizar tras la copia» comprueba si hay una imagen más reciente para un contenedor (por ejemplo, una imagen de ghcr.io exclusiva para patrocinadores). Las imágenes públicas se siguen descargando de forma anónima. Deja el token vacío para conservar el guardado; eliminar una fila borra sus credenciales.",
   "settings.registriesEmpty": "No hay registros configurados: todas las imágenes se descargan de forma anónima.",

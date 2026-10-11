@@ -233,6 +233,9 @@ const zh: Partial<Translations> = {
   "run.kindUpdate": "更新",
   "update.afterBackup": "备份成功后更新",
   "update.afterBackupHint": "在备份成功后立即拉取镜像并重建此容器，因此你总是先有一个新的恢复点。它在备份的时间运行（备份是依次运行的），而不是固定的时钟时间。如果需要按固定计划、按版本进行更新，请查看 ShipLog。",
+  "update.followsSchedule": "与“设置 › 计划”中的设定一致",
+  "update.ownChoice": "自行选择",
+  "update.useDefault": "遵循默认",
   "update.afterBackupOrphans":
     "Docker 会保留容器此前运行的镜像，此时它已没有标签，Unraid 就把它列为孤立镜像。这是一次「成功」更新的正常残留，不是失败的迹象，也正是快速回退到上一个镜像所需要的。如果不想保留，可在设置、计划、镜像清理与更新状态中使用一个开关，它会在更新后立即删除被替换的镜像。",
   "run.statusRunning": "运行中",
@@ -1463,6 +1466,8 @@ const zh: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "当“备份后更新”将容器升级到较新镜像时，发送一条消息，以便你确认它仍能正常工作。每个已更新的容器各触发一次（更新很少发生）。",
   "settings.pruneImageAfterUpdate": "更新后删除旧镜像",
   "settings.pruneImageAfterUpdateHint": "当容器更新到较新镜像后，删除已被取代的旧镜像。默认关闭：保留旧镜像可让回滚更省事（BombVault 备份恢复的是数据，而非旧镜像）。共享的基础镜像永远不会被删除。",
+  "settings.updateEveryContainer": "备份成功后更新容器",
+  "settings.updateEveryContainerHint": "只有在前一次备份完成后才会拉取新镜像。单个容器可以在它自己的页面上单独设置。",
   "settings.registriesTitle": "容器镜像仓库",
   "settings.registriesHint": "私有镜像仓库的凭据，在“备份后更新”检查容器是否有更新镜像时使用（例如仅限赞助者的 ghcr.io 镜像）。公共镜像仍以匿名方式拉取。令牌留空可保留已保存的令牌；移除一行会删除该仓库的凭据。",
   "settings.registriesEmpty": "未配置任何镜像仓库。所有镜像均以匿名方式拉取。",

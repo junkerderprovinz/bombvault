@@ -298,6 +298,9 @@ const is: Partial<Translations> = {
   "run.kindKeyRelease": "Lykilpakki afhentur",
   "update.afterBackup": "Uppfæra eftir árangursríka afritun",
   "update.afterBackupHint": "Sækir ímyndina og endurgerir þennan gám strax eftir árangursríka afritun, svo þú hefur alltaf ferskan endurheimtarpunkt fyrst. Keyrir á tíma afritunar (afrit keyra hvert á eftir öðru), ekki á föstum klukkutíma. Fyrir uppfærslur á föstu tímaáætlunarkerfi, útgáfustýrðar, sjá ShipLog.",
+  "update.followsSchedule": "Eins og stillt er undir Stillingar › Tímaáætlun",
+  "update.ownChoice": "Eigið val",
+  "update.useDefault": "Fylgja sjálfgefnu",
   "update.afterBackupOrphans":
     "Docker heldur myndinni sem gámurinn keyrði á áður, nú án merkis, og Unraid skráir hana sem föðurlausa mynd. Það eru eðlilegar eftirstöðvar HEPPNAÐRAR uppfærslu, ekki merki um mistök, og einmitt það sem þarf til að fara hratt til baka í fyrri mynd. Ef þú vilt ekki halda henni er rofi undir Stillingar, Tímaáætlun, Myndahreinsun og uppfærslustaða sem eyðir myndinni sem var leyst af hólmi rétt eftir uppfærsluna.",
   "run.statusRunning": "Í gangi",
@@ -649,6 +652,8 @@ const is: Partial<Translations> = {
   "retentionPreview.sourceLabel": "Uppruni",
   "settings.pruneImageAfterUpdate": "Fjarlægja gömlu ímyndina eftir uppfærslu",
   "settings.pruneImageAfterUpdateHint": "Eftir að gámur er uppfærður í nýrri ímynd, eyddu gömlu ímyndinni sem var skipt út. Sjálfgefið slökkt. Að geyma hana gerir afturköllun ódýra (afrit BombVault endurheimtir gögn, ekki gömlu ímyndina). Sameiginlegri grunnímynd er aldrei eytt.",
+  "settings.updateEveryContainer": "Uppfæra gáma eftir árangursríka afritun",
+  "settings.updateEveryContainerHint": "Sækir nýja ímynd aðeins þegar afritunin á undan er búin. Hægt er að stilla einstakan gám öðruvísi á hans eigin síðu.",
   "settings.registriesTitle": "Gámaskrár",
   "settings.registriesHint": "Aðgangsgögn fyrir einkaskrár, notuð þegar „uppfæra eftir afritun“ athugar gám fyrir nýrri ímynd (t.d. ímynd á ghcr.io sem er bundin styrktaraðilum). Opinberum ímyndum er áfram sótt nafnlaust. Skildu tákn eftir autt til að halda vistuðu gildi; að fjarlægja línu eyðir aðgangsgögnum hennar.",
   "settings.registriesEmpty": "Engar skrár stilltar. Allar ímyndir eru sóttar nafnlaust.",

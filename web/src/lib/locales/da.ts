@@ -233,6 +233,9 @@ const da: Partial<Translations> = {
   "run.kindUpdate": "Opdatering",
   "update.afterBackup": "Opdater efter en vellykket sikkerhedskopiering",
   "update.afterBackupHint": "Henter imaget og genskaber denne container lige efter en vellykket sikkerhedskopiering, så du altid har et frisk gendannelsespunkt først. Den kører på tidspunktet for sikkerhedskopieringen (sikkerhedskopier kører en ad gangen), ikke på et fast klokkeslæt. For opdateringer efter en fast tidsplan, versionsstyret, se ShipLog.",
+  "update.followsSchedule": "Som angivet under Indstillinger › Tidsplan",
+  "update.ownChoice": "Eget valg",
+  "update.useDefault": "Følg standarden",
   "update.afterBackupOrphans":
     "Docker beholder det image, containeren kørte på før, nu uden tag, og Unraid viser det som et forældreløst image. Det er den normale rest af en LYKKET opdatering, ikke tegnet på en mislykket, og det er netop hvad en hurtig tilbagerulning til det forrige image kræver. Vil du ikke beholde det, findes der under Indstillinger, Tidsplan, Oprydning af images & opdateringsstatus en kontakt, der sletter det erstattede image lige efter opdateringen.",
   "run.statusRunning": "Kører",
@@ -1472,6 +1475,8 @@ const da: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Når opdatér-efter-backup opgraderer en container til et nyere image, sendes en besked, så du kan bekræfte, at den stadig virker. Udløses pr. opdateret container (opdateringer er sjældne).",
   "settings.pruneImageAfterUpdate": "Fjern det gamle image efter en opdatering",
   "settings.pruneImageAfterUpdateHint": "Når en container er opdateret til et nyere image, slettes det gamle, erstattede image. Slået fra som standard: at beholde det gør det billigt at rulle tilbage (en BombVault-sikkerhedskopi gendanner data, ikke det gamle image). Et delt base-image slettes aldrig.",
+  "settings.updateEveryContainer": "Opdater containere efter en vellykket sikkerhedskopiering",
+  "settings.updateEveryContainerHint": "Henter først et nyt image, når sikkerhedskopieringen før er færdig. En enkelt container kan indstilles anderledes på sin egen side.",
   "settings.registriesTitle": "Container-registre",
   "settings.registriesHint": "Legitimationsoplysninger til private registre, som bruges når opdatér-efter-backup tjekker en container for et nyere image (for eksempel et sponsor-låst ghcr.io-image). Offentlige images hentes fortsat anonymt. Lad token stå tomt for at beholde det gemte; fjernes en række, slettes dens legitimationsoplysninger.",
   "settings.registriesEmpty": "Ingen registre konfigureret. Alle images hentes anonymt.",

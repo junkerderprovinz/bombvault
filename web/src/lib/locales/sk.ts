@@ -298,6 +298,9 @@ const sk: Partial<Translations> = {
   "run.kindKeyRelease": "Úschova kľúča vydaná",
   "update.afterBackup": "Aktualizovať po úspešnej zálohe",
   "update.afterBackupHint": "Stiahne obraz a znova vytvorí tento kontajner hneď po úspešnej zálohe, takže vždy máš najprv čerstvý bod obnovenia. Beží v čase zálohovania (zálohy bežia jedna za druhou), nie o pevnom čase. Aktualizácie podľa pevného plánu, viazané na verziu, nájdeš v ShipLog.",
+  "update.followsSchedule": "Podľa nastavenia v časti Nastavenia › Plán",
+  "update.ownChoice": "Vlastná voľba",
+  "update.useDefault": "Prevziať predvolené",
   "update.afterBackupOrphans":
     "Docker si ponechá obraz, na ktorom kontajner bežal predtým, teraz bez značky, a Unraid ho vypisuje ako osirelý obraz. Je to normálny zvyšok ÚSPEŠNEJ aktualizácie, nie znak neúspešnej, a je to presne to, čo potrebuje rýchly návrat k predošlému obrazu. Ak si ho nechcete ponechať, v časti Nastavenia, Plán, Čistenie obrazov a stav aktualizácií je prepínač, ktorý nahradený obraz zmaže hneď po aktualizácii.",
   "run.statusRunning": "Prebieha",
@@ -649,6 +652,8 @@ const sk: Partial<Translations> = {
   "retentionPreview.sourceLabel": "Zdroj",
   "settings.pruneImageAfterUpdate": "Odstrániť starý obraz po aktualizácii",
   "settings.pruneImageAfterUpdateHint": "Po aktualizácii kontajnera na novší obraz odstráň nahradený starý obraz. Predvolene vypnuté. Jeho ponechanie robí návrat lacným (záloha BombVault obnovuje dáta, nie starý obraz). Zdieľaný základný obraz sa nikdy neodstráni.",
+  "settings.updateEveryContainer": "Aktualizovať kontajnery po úspešnej zálohe",
+  "settings.updateEveryContainerHint": "Stiahne nový obraz až po dokončení predchádzajúcej zálohy. Jednotlivý kontajner možno nastaviť inak na jeho vlastnej stránke.",
   "settings.registriesTitle": "Registre kontajnerov",
   "settings.registriesHint": "Poverenia pre súkromné registre, používané, keď funkcia „aktualizovať po zálohe“ kontroluje kontajner na novší obraz (napríklad obraz ghcr.io exkluzívny pre sponzorov). Verejné obrazy sa naďalej sťahujú anonymne. Nechaj token prázdny, aby si zachoval uložený; odstránením riadku sa odstránia jeho poverenia.",
   "settings.registriesEmpty": "Nie je nakonfigurovaný žiadny register, všetky obrazy sa sťahujú anonymne.",

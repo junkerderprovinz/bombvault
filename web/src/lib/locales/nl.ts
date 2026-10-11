@@ -233,6 +233,9 @@ const nl: Partial<Translations> = {
   "run.kindUpdate": "Update",
   "update.afterBackup": "Bijwerken na een geslaagde back-up",
   "update.afterBackupHint": "Haalt de image op en maakt deze container direct na een geslaagde back-up opnieuw aan, zodat je altijd eerst een vers herstelpunt hebt. Dit gebeurt op het moment van de back-up (back-ups lopen na elkaar), niet op een vast tijdstip. Voor updates volgens een vast schema, per versie, zie ShipLog.",
+  "update.followsSchedule": "Zoals ingesteld onder Instellingen › Planning",
+  "update.ownChoice": "Eigen keuze",
+  "update.useDefault": "Standaard volgen",
   "update.afterBackupOrphans":
     "Docker houdt de image waarop de container eerder liep, nu zonder tag, en Unraid noemt die een orphan image. Dat is het normale restant van een GESLAAGDE update, niet het teken van een mislukte, en het is precies wat een snelle terugval naar de vorige image nodig heeft. Wil je die niet bewaren, dan staat er in Instellingen, Planning, Image-opschoning & updatestatus een schakelaar die de vervangen image direct na de update verwijdert.",
   "run.statusRunning": "Actief",
@@ -1471,6 +1474,8 @@ const nl: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Wanneer update-na-backup een container bijwerkt naar een nieuwere image, wordt er een bericht verstuurd zodat je kunt controleren of alles nog werkt. Wordt per bijgewerkte container verstuurd (updates zijn zeldzaam).",
   "settings.pruneImageAfterUpdate": "Oude image verwijderen na een update",
   "settings.pruneImageAfterUpdateHint": "Nadat een container is bijgewerkt naar een nieuwere image, wordt de vervangen oude image verwijderd. Standaard uit: door deze te bewaren is terugrollen goedkoop (een BombVault-back-up herstelt gegevens, niet de oude image). Een gedeelde base-image wordt nooit verwijderd.",
+  "settings.updateEveryContainer": "Containers bijwerken na een geslaagde back-up",
+  "settings.updateEveryContainerHint": "Haalt pas een nieuwe image op nadat de back-up ervoor klaar is. Een afzonderlijke container kan op zijn eigen pagina anders worden ingesteld.",
   "settings.registriesTitle": "Container-registry's",
   "settings.registriesHint": "Inloggegevens voor privéregistry's, gebruikt wanneer update-na-backup een container controleert op een nieuwere image (bijvoorbeeld een ghcr.io-image alleen voor sponsors). Publieke images worden nog steeds anoniem opgehaald. Laat het token leeg om het opgeslagen token te behouden; het verwijderen van een rij wist de bijbehorende inloggegevens.",
   "settings.registriesEmpty": "Geen registry's geconfigureerd. Alle images worden anoniem opgehaald.",

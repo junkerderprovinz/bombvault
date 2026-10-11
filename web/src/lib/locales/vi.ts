@@ -233,6 +233,9 @@ const vi: Partial<Translations> = {
   "run.kindUpdate": "Cập nhật",
   "update.afterBackup": "Cập nhật sau khi sao lưu thành công",
   "update.afterBackupHint": "Kéo image và tạo lại container này ngay sau khi sao lưu thành công, nên bạn luôn có sẵn một điểm khôi phục mới trước. Nó chạy vào thời điểm sao lưu (các bản sao lưu chạy lần lượt), không phải vào một giờ cố định. Để cập nhật theo lịch cố định, dựa trên phiên bản, hãy xem ShipLog.",
+  "update.followsSchedule": "Theo thiết lập trong Cài đặt › Lịch trình",
+  "update.ownChoice": "Lựa chọn riêng",
+  "update.useDefault": "Theo mặc định",
   "update.afterBackupOrphans":
     "Docker giữ lại ảnh mà container chạy trước đó, giờ không còn thẻ, và Unraid liệt kê nó là ảnh mồ côi. Đó là phần còn lại bình thường của một lần cập nhật THÀNH CÔNG, không phải dấu vết của lần thất bại, và cũng chính là thứ cần để quay nhanh về ảnh trước. Nếu bạn không muốn giữ nó, trong Cài đặt, Lịch trình, Dọn dẹp Image & Trạng thái cập nhật có một công tắc xoá ảnh bị thay thế ngay sau khi cập nhật.",
   "run.statusRunning": "Đang chạy",
@@ -1463,6 +1466,8 @@ const vi: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Khi tính năng cập-nhật-sau-sao-lưu nâng cấp một container lên image mới hơn, gửi một thông báo để bạn kiểm tra xem nó còn hoạt động không. Kích hoạt cho từng container được cập nhật (việc cập nhật hiếm khi xảy ra).",
   "settings.pruneImageAfterUpdate": "Xóa image cũ sau khi cập nhật",
   "settings.pruneImageAfterUpdateHint": "Sau khi một container được cập nhật lên image mới hơn, xóa image cũ đã bị thay thế. Mặc định tắt: giữ lại giúp việc quay về phiên bản cũ trở nên dễ dàng (một bản sao lưu của BombVault khôi phục dữ liệu, không phải image cũ). Image nền dùng chung sẽ không bao giờ bị xóa.",
+  "settings.updateEveryContainer": "Cập nhật container sau khi sao lưu thành công",
+  "settings.updateEveryContainerHint": "Chỉ kéo image mới sau khi bản sao lưu trước đó đã hoàn tất. Có thể đặt một container riêng khác đi ở trang của chính nó.",
   "settings.registriesTitle": "Registry container",
   "settings.registriesHint": "Thông tin đăng nhập cho các registry riêng tư, được dùng khi tính năng cập-nhật-sau-sao-lưu kiểm tra xem container có image mới hơn không (ví dụ một image ghcr.io chỉ dành cho nhà tài trợ). Image công khai vẫn được kéo ẩn danh. Để trống token để giữ token đã lưu; xóa một hàng sẽ xóa thông tin đăng nhập của hàng đó.",
   "settings.registriesEmpty": "Chưa cấu hình registry nào. Tất cả image được kéo ẩn danh.",

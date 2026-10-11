@@ -298,6 +298,9 @@ const gl: Partial<Translations> = {
   "run.kindKeyRelease": "Depósito entregado",
   "update.afterBackup": "Actualizar despois dunha copia correcta",
   "update.afterBackupHint": "Descarga a imaxe e recrea este contedor xusto despois dunha copia correcta, así sempre tes primeiro un punto de restauración recente. Execútase á hora da copia (as copias van unha tras outra), non a unha hora fixa. Para actualizacións nun horario fixo segundo versión, consulta ShipLog.",
+  "update.followsSchedule": "Segundo o definido en Configuración › Horario",
+  "update.ownChoice": "Escolla propia",
+  "update.useDefault": "Seguir o valor predeterminado",
   "update.afterBackupOrphans":
     "Docker mantén a imaxe na que o contedor se executaba antes, agora sen etiqueta, e Unraid lístaa como imaxe orfa. É o residuo normal dunha actualización CORRECTA, non o sinal dunha fallida, e é xustamente o que precisa unha volta rápida á imaxe anterior. Se preferes non conservala, en Configuración, Horario, Limpeza de imaxes e estado de actualizacións hai un interruptor que borra a imaxe substituída xusto despois da actualización.",
   "run.statusRunning": "En execución",
@@ -649,6 +652,8 @@ const gl: Partial<Translations> = {
   "retentionPreview.sourceLabel": "Orixe",
   "settings.pruneImageAfterUpdate": "Eliminar a imaxe antiga despois de actualizar",
   "settings.pruneImageAfterUpdateHint": "Despois de que un contedor se actualice a unha imaxe máis nova, elimina a imaxe antiga substituída. Desactivado por defecto: conservala fai que volver atrás saia barato (unha copia de BombVault restaura datos, non a imaxe antiga). Unha imaxe base compartida nunca se elimina.",
+  "settings.updateEveryContainer": "Actualizar os contedores despois dunha copia correcta",
+  "settings.updateEveryContainerHint": "Descarga unha imaxe nova só cando remata a copia anterior. Un contedor concreto pode configurarse de forma distinta na súa propia páxina.",
   "settings.registriesTitle": "Rexistros de contedores",
   "settings.registriesHint": "Credenciais para rexistros privados, usadas cando «actualizar despois da copia» comproba se un contedor ten unha imaxe máis nova (por exemplo unha imaxe exclusiva para patrocinadores en ghcr.io). As imaxes públicas séguense descargando de forma anónima. Deixa o testemuño baleiro para conservar o gardado; eliminar unha fila borra as súas credenciais.",
   "settings.registriesEmpty": "Non hai rexistros configurados: todas as imaxes descárganse de forma anónima.",

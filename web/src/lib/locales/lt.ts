@@ -298,6 +298,9 @@ const lt: Partial<Translations> = {
   "run.kindKeyRelease": "Depozitas išduotas",
   "update.afterBackup": "Atnaujinti po sėkmingos atsarginės kopijos",
   "update.afterBackupHint": "Ištraukia atvaizdą ir iš naujo sukuria šį konteinerį iškart po sėkmingos atsarginės kopijos, todėl visada pirmiausia turėsi šviežią atkūrimo tašką. Vykdoma kopijavimo metu (kopijos vykdomos viena po kitos), o ne fiksuotu laiku. Atnaujinimams pagal fiksuotą tvarkaraštį, pagal versiją, žr. ShipLog.",
+  "update.followsSchedule": "Kaip nustatyta skiltyje Nustatymai › Tvarkaraštis",
+  "update.ownChoice": "Savas pasirinkimas",
+  "update.useDefault": "Sekti numatytąją reikšmę",
   "update.afterBackupOrphans":
     "Docker pasilieka vaizdą, su kuriuo konteineris veikė anksčiau, dabar be žymos, o Unraid rodo jį kaip apleistą vaizdą. Tai normali PAVYKUSIO atnaujinimo liekana, o ne nepavykusio žymė, ir būtent jos reikia norint greitai grįžti prie ankstesnio vaizdo. Jei nenorite jo saugoti, skiltyje Nustatymai, Tvarkaraštis, Vaizdų valymas ir atnaujinimo būsena yra jungiklis, kuris pakeistą vaizdą ištrina iškart po atnaujinimo.",
   "run.statusRunning": "Vykdoma",
@@ -649,6 +652,8 @@ const lt: Partial<Translations> = {
   "retentionPreview.sourceLabel": "Šaltinis",
   "settings.pruneImageAfterUpdate": "Pašalinti seną atvaizdą po atnaujinimo",
   "settings.pruneImageAfterUpdateHint": "Atnaujinus konteinerį į naujesnį atvaizdą, pakeistas senas atvaizdas ištrinamas. Pagal numatytuosius nustatymus išjungta. Jo saugojimas atpigina grįžimą atgal (BombVault atsarginė kopija atkuria duomenis, o ne seną atvaizdą). Bendras bazinis atvaizdas niekada netrinamas.",
+  "settings.updateEveryContainer": "Atnaujinti konteinerius po sėkmingos atsarginės kopijos",
+  "settings.updateEveryContainerHint": "Naują atvaizdą ištraukia tik tada, kai baigiama ankstesnė atsarginė kopija. Atskirą konteinerį galima nustatyti kitaip jo paties puslapyje.",
   "settings.registriesTitle": "Konteinerių registrai",
   "settings.registriesHint": "Privačių registrų prisijungimo duomenys, naudojami, kai „atnaujinti po atsarginės kopijos“ tikrina, ar konteineris turi naujesnį atvaizdą (pvz., rėmėjams skirtą ghcr.io atvaizdą). Vieši atvaizdai ir toliau parsiunčiami anonimiškai. Palik žetoną tuščią, kad išsaugotum esamą; eilutės pašalinimas ištrina jos prisijungimo duomenis.",
   "settings.registriesEmpty": "Nėra sukonfigūruotų registrų. Visi atvaizdai parsiunčiami anonimiškai.",

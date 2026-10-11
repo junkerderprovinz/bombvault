@@ -232,6 +232,9 @@ const pt: Partial<Translations> = {
   "run.kindUpdate": "Atualização",
   "update.afterBackup": "Atualizar após um backup bem-sucedido",
   "update.afterBackupHint": "Baixa a imagem e recria este contêiner logo após um backup bem-sucedido, para teres sempre antes um ponto de restauração recente. Ele é executado no horário do backup (os backups são executados um após o outro), não em um horário fixo. Para atualizações em um horário fixo, com base na versão, vê o ShipLog.",
+  "update.followsSchedule": "Conforme definido em Definições › Agendamento",
+  "update.ownChoice": "Escolha própria",
+  "update.useDefault": "Seguir a predefinição",
   "update.afterBackupOrphans":
     "O Docker mantém a imagem em que o contentor corria antes, agora sem etiqueta, e o Unraid lista-a como imagem órfã. É o resíduo normal de uma atualização BEM-SUCEDIDA, não o sinal de uma falhada, e é exatamente o que um regresso rápido à imagem anterior precisa. Se preferires não a guardar, Definições, Agendamento, Limpeza de imagens e estado de atualização tem um interruptor que apaga a imagem substituída logo após a atualização.",
   "run.statusRunning": "Em curso",
@@ -1472,6 +1475,8 @@ const pt: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Quando a atualização após backup atualiza um container para uma image mais recente, envia uma mensagem para poder verificar se continua a funcionar. Ocorre por cada container atualizado (as atualizações são raras).",
   "settings.pruneImageAfterUpdate": "Remover a image antiga após uma atualização",
   "settings.pruneImageAfterUpdateHint": "Depois de um container ser atualizado para uma image mais recente, elimina a image antiga substituída. Desativado por predefinição: mantê-la torna a reversão simples (um backup do BombVault restaura os dados, não a image antiga). Uma image base partilhada nunca é eliminada.",
+  "settings.updateEveryContainer": "Atualizar contêineres após um backup bem-sucedido",
+  "settings.updateEveryContainerHint": "Só baixa uma imagem nova depois de o backup anterior terminar. Um contêiner individual pode ser configurado de outra forma na sua própria página.",
   "settings.registriesTitle": "Registries de containers",
   "settings.registriesHint": "Credenciais para registries privados, usadas quando a atualização após backup verifica se há uma image mais recente para um container (por exemplo, uma image do ghcr.io exclusiva para patrocinadores). As images públicas continuam a ser transferidas anonimamente. Deixa o token em branco para manter o guardado; remover uma linha apaga as suas credenciais.",
   "settings.registriesEmpty": "Nenhum registry configurado. Todas as images são transferidas anonimamente.",

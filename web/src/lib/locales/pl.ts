@@ -233,6 +233,9 @@ const pl: Partial<Translations> = {
   "run.kindUpdate": "Aktualizacja",
   "update.afterBackup": "Aktualizuj po udanej kopii zapasowej",
   "update.afterBackupHint": "Pobiera obraz i odtwarza ten kontener zaraz po udanej kopii zapasowej, więc zawsze masz najpierw świeży punkt przywracania. Działa o czasie kopii zapasowej (kopie zapasowe wykonywane są jedna po drugiej), a nie o stałej porze. Aby aktualizować według stałego harmonogramu, według wersji, zobacz ShipLog.",
+  "update.followsSchedule": "Zgodnie z ustawieniem w Ustawienia › Harmonogram",
+  "update.ownChoice": "Własny wybór",
+  "update.useDefault": "Użyj ustawienia domyślnego",
   "update.afterBackupOrphans":
     "Docker zachowuje obraz, na którym kontener działał wcześniej, teraz bez znacznika, a Unraid pokazuje go jako obraz osierocony. To normalna pozostałość UDANEJ aktualizacji, a nie ślad nieudanej, i właśnie tego wymaga szybki powrót do poprzedniego obrazu. Jeśli wolisz go nie trzymać, w sekcji Ustawienia, Harmonogram, Czyszczenie obrazów i stan aktualizacji jest przełącznik, który usuwa zastąpiony obraz zaraz po aktualizacji.",
   "run.statusRunning": "W toku",
@@ -1469,6 +1472,8 @@ const pl: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Gdy aktualizacja po kopii zapasowej podniesie kontener do nowszego obrazu, wyślij wiadomość, dzięki której sprawdzisz, czy nadal działa. Wyzwalane dla każdego zaktualizowanego kontenera (aktualizacje są rzadkie).",
   "settings.pruneImageAfterUpdate": "Usuń stary obraz po aktualizacji",
   "settings.pruneImageAfterUpdateHint": "Po zaktualizowaniu kontenera do nowszego obrazu usuń zastąpiony stary obraz. Domyślnie wyłączone: pozostawienie go sprawia, że wycofanie zmian jest tanie (kopia zapasowa BombVault przywraca dane, a nie stary obraz). Współdzielony obraz bazowy nigdy nie jest usuwany.",
+  "settings.updateEveryContainer": "Aktualizuj kontenery po udanej kopii zapasowej",
+  "settings.updateEveryContainerHint": "Pobiera nowy obraz dopiero po zakończeniu poprzedniej kopii zapasowej. Pojedynczy kontener można ustawić inaczej na jego własnej stronie.",
   "settings.registriesTitle": "Rejestry kontenerów",
   "settings.registriesHint": "Dane logowania do prywatnych rejestrów, używane gdy aktualizacja po kopii zapasowej sprawdza, czy dla kontenera dostępny jest nowszy obraz (na przykład obraz ghcr.io tylko dla sponsorów). Publiczne obrazy nadal są pobierane anonimowo. Pozostaw token pusty, aby zachować zapisany; usunięcie wiersza kasuje jego dane logowania.",
   "settings.registriesEmpty": "Nie skonfigurowano żadnych rejestrów. Wszystkie obrazy są pobierane anonimowo.",

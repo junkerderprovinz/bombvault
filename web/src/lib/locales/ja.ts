@@ -233,6 +233,9 @@ const ja: Partial<Translations> = {
   "run.kindUpdate": "更新",
   "update.afterBackup": "バックアップ成功後に更新",
   "update.afterBackupHint": "バックアップが成功した直後にイメージを取得してこのコンテナを再作成するため、常に先に新しい復元ポイントが確保されます。実行タイミングはバックアップの時刻に依存し（バックアップは順番に実行されます）、固定の時刻ではありません。バージョンに応じて固定スケジュールで更新したい場合は、ShipLog をご覧ください。",
+  "update.followsSchedule": "設定 › スケジュールの指定どおり",
+  "update.ownChoice": "個別の選択",
+  "update.useDefault": "既定に従う",
   "update.afterBackupOrphans":
     "Docker は更新前にコンテナが動いていたイメージをタグなしで残し、Unraid はそれを孤立イメージとして表示します。これは更新が「成功した」ときの普通の残りかすで、失敗の痕ではありません。直前のイメージへ素早く戻すために必要なものでもあります。残したくない場合は、設定、スケジュール、イメージのクリーンアップと更新ステータスに、更新直後に置き換えられたイメージを削除するスイッチがあります。",
   "run.statusRunning": "実行中",
@@ -1463,6 +1466,8 @@ const ja: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "バックアップ後の更新でコンテナが新しい image にアップグレードされたら、正常に動作するか確認できるようメッセージを送信します。更新されたコンテナごとに通知します（更新はまれです）。",
   "settings.pruneImageAfterUpdate": "更新後に古い image を削除",
   "settings.pruneImageAfterUpdateHint": "コンテナが新しい image に更新された後、置き換えられた古い image を削除します。デフォルトはオフです。残しておくとロールバックが容易になります（BombVault のバックアップが復元するのはデータであり、古い image ではありません）。共有ベース image は削除されません。",
+  "settings.updateEveryContainer": "バックアップ成功後にコンテナを更新",
+  "settings.updateEveryContainerHint": "直前のバックアップが完了してから初めて新しいイメージを取得します。個々のコンテナは、そのコンテナのページで別の設定にできます。",
   "settings.registriesTitle": "コンテナレジストリ",
   "settings.registriesHint": "プライベートレジストリ用の認証情報です。バックアップ後の更新がコンテナの新しい image を確認するときに使われます（例: スポンサー限定の ghcr.io image）。パブリックな image は引き続き匿名で取得されます。トークンを空欄にすると保存済みのものを維持し、行を削除するとその認証情報も削除されます。",
   "settings.registriesEmpty": "レジストリは設定されていません。すべての image は匿名で取得されます。",

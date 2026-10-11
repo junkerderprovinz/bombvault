@@ -298,6 +298,9 @@ const et: Partial<Translations> = {
   "run.kindKeyRelease": "Hoiustus välja antud",
   "update.afterBackup": "Uuenda pärast õnnestunud varundust",
   "update.afterBackupHint": "Tõmbab tõmmise ja loob selle konteineri kohe pärast õnnestunud varundust uuesti, nii on sul alati enne olemas värske taastamispunkt. Töötab varunduse ajal (varundused käivad üksteise järel), mitte kindlal kellaajal. Kindla, versioonipõhise ajakavaga uuenduste jaoks vaata ShipLog.",
+  "update.followsSchedule": "Nagu on määratud jaotises Seaded › Ajakava",
+  "update.ownChoice": "Oma valik",
+  "update.useDefault": "Järgi vaikimisi valikut",
   "update.afterBackupOrphans":
     "Docker hoiab alles tõmmise, millel konteiner varem töötas, nüüd sildita, ja Unraid näitab seda orvuks jäänud tõmmisena. See on ÕNNESTUNUD uuenduse tavaline jääk, mitte ebaõnnestunu märk, ja just seda on vaja kiireks naasmiseks eelmise tõmmise juurde. Kui sa ei soovi seda alles hoida, siis jaotises Seaded, Ajakava, Tõmmiste puhastus ja uuenduse olek on lüliti, mis kustutab asendatud tõmmise kohe pärast uuendust.",
   "run.statusRunning": "Töötab",
@@ -649,6 +652,8 @@ const et: Partial<Translations> = {
   "retentionPreview.sourceLabel": "Allikas",
   "settings.pruneImageAfterUpdate": "Eemalda vana tõmmis pärast uuendust",
   "settings.pruneImageAfterUpdateHint": "Pärast konteineri uuendamist uuemale tõmmisele kustuta asendatud vana tõmmis. Vaikimisi väljas: selle säilitamine muudab tagasipöördumise odavaks (BombVaulti varundus taastab andmeid, mitte vana tõmmist). Jagatud baastõmmist ei kustutata kunagi.",
+  "settings.updateEveryContainer": "Uuenda konteinerid pärast õnnestunud varundust",
+  "settings.updateEveryContainerHint": "Tõmbab uue tõmmise alles siis, kui eelnev varundus on lõppenud. Üksikut konteinerit saab seadistada teisiti selle enda lehel.",
   "settings.registriesTitle": "Konteinerite registrid",
   "settings.registriesHint": "Mandaadid privaatsete registrite jaoks, mida kasutatakse, kui „uuenda pärast varundust” kontrollib konteineri uuema tõmmise olemasolu (näiteks sponsoritele mõeldud ghcr.io tõmmis). Avalikke tõmmiseid tõmmatakse jätkuvalt anonüümselt. Jäta luba tühjaks, et salvestatud luba säiliks; rea eemaldamine kustutab selle mandaadi.",
   "settings.registriesEmpty": "Ühtegi registrit pole seadistatud: kõik tõmmised tõmmatakse anonüümselt.",

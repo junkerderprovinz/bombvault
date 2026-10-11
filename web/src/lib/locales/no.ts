@@ -232,6 +232,9 @@ const no: Partial<Translations> = {
   "run.kindUpdate": "Oppdatering",
   "update.afterBackup": "Oppdater etter en vellykket sikkerhetskopi",
   "update.afterBackupHint": "Henter imaget og gjenskaper denne containeren rett etter en vellykket sikkerhetskopiering, så du alltid har et ferskt gjenopprettingspunkt først. Den kjører på tidspunktet for sikkerhetskopieringen (sikkerhetskopier kjøres en etter en), ikke på et fast klokkeslett. For oppdateringer på en fast tidsplan, versjonsstyrt, se ShipLog.",
+  "update.followsSchedule": "Som angitt under Innstillinger › Tidsplan",
+  "update.ownChoice": "Eget valg",
+  "update.useDefault": "Følg standarden",
   "update.afterBackupOrphans":
     "Docker beholder avbildningen containeren kjørte på før, nå uten merke, og Unraid viser den som en foreldreløs avbildning. Det er den normale resten av en VELLYKKET oppdatering, ikke tegnet på en mislykket, og det er nettopp det en rask tilbakerulling til forrige avbildning trenger. Vil du ikke beholde den, finnes det en bryter under Innstillinger, Tidsplan, Image-opprydding & oppdateringsstatus som sletter den erstattede avbildningen rett etter oppdateringen.",
   "run.statusRunning": "Kjører",
@@ -1472,6 +1475,8 @@ const no: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Når oppdater-etter-sikkerhetskopiering oppgraderer en container til et nyere image, send en melding så du kan bekrefte at den fortsatt fungerer. Utløses per oppdatert container (oppdateringer er sjeldne).",
   "settings.pruneImageAfterUpdate": "Fjern det gamle imaget etter en oppdatering",
   "settings.pruneImageAfterUpdateHint": "Etter at en container er oppdatert til et nyere image, slett det utdaterte gamle imaget. Av som standard: å beholde det gjør tilbakerulling billig (en BombVault-sikkerhetskopi gjenoppretter data, ikke det gamle imaget). Et delt base-image slettes aldri.",
+  "settings.updateEveryContainer": "Oppdater containere etter en vellykket sikkerhetskopi",
+  "settings.updateEveryContainerHint": "Henter et nytt image først når sikkerhetskopien før er ferdig. En enkelt container kan stilles inn annerledes på sin egen side.",
   "settings.registriesTitle": "Container-registre",
   "settings.registriesHint": "Påloggingsinformasjon for private registre, brukt når oppdater-etter-sikkerhetskopiering sjekker en container for et nyere image (for eksempel et sponsor-låst ghcr.io-image). Offentlige images hentes fortsatt anonymt. La token stå tomt for å beholde det lagrede; fjernes en rad, slettes dens påloggingsinformasjon.",
   "settings.registriesEmpty": "Ingen registre er konfigurert. Alle images hentes anonymt.",

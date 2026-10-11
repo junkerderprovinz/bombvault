@@ -232,6 +232,9 @@ const ro: Partial<Translations> = {
   "run.kindUpdate": "Actualizare",
   "update.afterBackup": "Actualizează după o copie de rezervă reușită",
   "update.afterBackupHint": "Descarcă imaginea și recreează acest container imediat după o copie de rezervă reușită, ca să ai mereu mai întâi un punct de restaurare proaspăt. Rulează la ora copiei de rezervă (copiile de rezervă rulează una după alta), nu la o oră fixă. Pentru actualizări după un program fix, în funcție de versiune, vezi ShipLog.",
+  "update.followsSchedule": "Așa cum este setat în Setări › Programare",
+  "update.ownChoice": "Alegere proprie",
+  "update.useDefault": "Urmează setarea implicită",
   "update.afterBackupOrphans":
     "Docker păstrează imaginea pe care containerul rula înainte, acum fără etichetă, iar Unraid o listează ca imagine orfană. Este reziduul normal al unei actualizări REUȘITE, nu semnul uneia eșuate, și este exact ce îi trebuie unei reveniri rapide la imaginea anterioară. Dacă preferi să nu o păstrezi, în Setări, Programare, Curățare imagini și stare actualizare există un comutator care șterge imaginea înlocuită imediat după actualizare.",
   "run.statusRunning": "În rulare",
@@ -1473,6 +1476,8 @@ const ro: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Când actualizarea-după-backup trece un container la o imagine mai nouă, trimite un mesaj ca să poți verifica dacă încă funcționează. Se declanșează pentru fiecare container actualizat (actualizările sunt rare).",
   "settings.pruneImageAfterUpdate": "Elimină imaginea veche după o actualizare",
   "settings.pruneImageAfterUpdateHint": "După ce un container este actualizat la o imagine mai nouă, șterge imaginea veche înlocuită. Dezactivat implicit: păstrarea ei face revenirea ieftină (o copie de rezervă BombVault restaurează datele, nu imaginea veche). O imagine de bază partajată nu este niciodată ștearsă.",
+  "settings.updateEveryContainer": "Actualizează containerele după o copie de rezervă reușită",
+  "settings.updateEveryContainerHint": "Descarcă o imagine nouă abia după ce s-a încheiat copia de rezervă dinainte. Un singur container poate fi setat diferit pe propria pagină.",
   "settings.registriesTitle": "Registre de containere",
   "settings.registriesHint": "Credențiale pentru registrele private, folosite când actualizarea-după-backup verifică dacă există o imagine mai nouă pentru un container (de exemplu o imagine ghcr.io disponibilă doar sponsorilor). Imaginile publice continuă să fie descărcate anonim. Lasă tokenul gol pentru a păstra ce este salvat; eliminarea unui rând îi șterge credențialele.",
   "settings.registriesEmpty": "Niciun registru configurat. Toate imaginile sunt descărcate anonim.",

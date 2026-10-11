@@ -298,6 +298,9 @@ const ca: Partial<Translations> = {
   "run.kindKeyRelease": "Dipòsit lliurat",
   "update.afterBackup": "Actualitza després d'una còpia correcta",
   "update.afterBackupHint": "Descarrega la imatge i recrea aquest contenidor just després d'una còpia correcta, així sempre tens primer un punt de restauració recent. S'executa a l'hora de la còpia (les còpies van una darrere l'altra), no a una hora fixa. Per a actualitzacions en un horari fix segons versió, consulta ShipLog.",
+  "update.followsSchedule": "Tal com està definit a Configuració › Horari",
+  "update.ownChoice": "Elecció pròpia",
+  "update.useDefault": "Segueix el valor per defecte",
   "update.afterBackupOrphans":
     "Docker manté la imatge en què el contenidor s'executava abans, ara sense etiqueta, i l'Unraid la llista com a imatge òrfena. És el residu normal d'una actualització CORRECTA, no el senyal d'una de fallida, i és just el que necessita una tornada ràpida a la imatge anterior. Si prefereixes no conservar-la, a Configuració, Horari, Neteja d'imatges i estat d'actualitzacions hi ha un interruptor que esborra la imatge substituïda just després de l'actualització.",
   "run.statusRunning": "En execució",
@@ -649,6 +652,8 @@ const ca: Partial<Translations> = {
   "retentionPreview.sourceLabel": "Origen",
   "settings.pruneImageAfterUpdate": "Elimina la imatge antiga després d'actualitzar",
   "settings.pruneImageAfterUpdateHint": "Després que un contenidor s'actualitzi a una imatge més nova, elimina la imatge antiga substituïda. Desactivat per defecte: conservar-la fa que tornar enrere surti barat (una còpia de BombVault restaura dades, no la imatge antiga). Una imatge base compartida mai s'elimina.",
+  "settings.updateEveryContainer": "Actualitza els contenidors després d'una còpia correcta",
+  "settings.updateEveryContainerHint": "Descarrega una imatge nova només quan ha acabat la còpia anterior. Un contenidor concret es pot configurar de manera diferent a la seva pàgina.",
   "settings.registriesTitle": "Registres de contenidors",
   "settings.registriesHint": "Credencials per a registres privats, usades quan «actualitza després de la còpia» comprova si un contenidor té una imatge més nova (per exemple una imatge exclusiva per a patrocinadors a ghcr.io). Les imatges públiques es continuen descarregant de forma anònima. Deixa el testimoni buit per conservar el desat; eliminar una fila esborra les seves credencials.",
   "settings.registriesEmpty": "No hi ha cap registre configurat. Totes les imatges es descarreguen de forma anònima.",

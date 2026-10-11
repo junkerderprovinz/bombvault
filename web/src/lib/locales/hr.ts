@@ -298,6 +298,9 @@ const hr: Partial<Translations> = {
   "run.kindKeyRelease": "Polog ključa izdan",
   "update.afterBackup": "Ažuriraj nakon uspješne sigurnosne kopije",
   "update.afterBackupHint": "Povlači sliku i ponovno stvara ovaj kontejner odmah nakon uspješne sigurnosne kopije, tako da uvijek prvo imate svježu točku vraćanja. Izvršava se u vrijeme sigurnosne kopije (sigurnosne kopije se izvršavaju jedna za drugom), ne u fiksno vrijeme. Za ažuriranja prema fiksnom rasporedu, prema verziji, pogledajte ShipLog.",
+  "update.followsSchedule": "Kako je postavljeno pod Postavke › Raspored",
+  "update.ownChoice": "Vlastiti odabir",
+  "update.useDefault": "Prati zadano",
   "update.afterBackupOrphans":
     "Docker zadržava sliku na kojoj je spremnik prije radio, sada bez oznake, a Unraid je prikazuje kao sliku siroče. To je normalan ostatak USPJEŠNOG ažuriranja, a ne znak neuspjelog, i upravo je to ono što treba za brzo vraćanje na prethodnu sliku. Ako je ne želite zadržati, u odjeljku „Postavke, Raspored, Čišćenje slika i status ažuriranja“ postoji prekidač koji zamijenjenu sliku briše odmah nakon ažuriranja.",
   "run.statusRunning": "U tijeku",
@@ -649,6 +652,8 @@ const hr: Partial<Translations> = {
   "retentionPreview.sourceLabel": "Izvor",
   "settings.pruneImageAfterUpdate": "Ukloni staru sliku nakon ažuriranja",
   "settings.pruneImageAfterUpdateHint": "Nakon što se kontejner ažurira na noviju sliku, briše se zamijenjena stara slika. Zadano isključeno. Njezino zadržavanje čini vraćanje unatrag jeftinim (sigurnosna kopija BombVaulta vraća podatke, a ne staru sliku). Zajednička temeljna slika nikad se ne briše.",
+  "settings.updateEveryContainer": "Ažuriraj kontejnere nakon uspješne sigurnosne kopije",
+  "settings.updateEveryContainerHint": "Povlači novu sliku tek kad završi prethodna sigurnosna kopija. Pojedinačni kontejner može se postaviti drukčije na vlastitoj stranici.",
   "settings.registriesTitle": "Registri kontejnera",
   "settings.registriesHint": "Vjerodajnice za privatne registre, korištene kad „ažuriraj nakon sigurnosne kopije” provjerava ima li za kontejner noviju sliku (npr. slika na ghcr.io dostupna samo sponzorima). Javne slike i dalje se povlače anonimno. Ostavite token praznim kako biste zadržali spremljeni; uklanjanje retka briše njegovu vjerodajnicu.",
   "settings.registriesEmpty": "Nije konfiguriran nijedan registar. Sve slike se povlače anonimno.",

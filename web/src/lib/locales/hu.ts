@@ -233,6 +233,9 @@ const hu: Partial<Translations> = {
   "run.kindUpdate": "Frissítés",
   "update.afterBackup": "Frissítés egy sikeres biztonsági mentés után",
   "update.afterBackupHint": "Lehúzza a képet, és újra létrehozza ezt a konténert közvetlenül egy sikeres biztonsági mentés után, így mindig van előbb friss visszaállítási pont. A mentés időpontjában fut (a mentések egymás után futnak), nem egy rögzített időpontban. Ha rögzített ütemterv szerinti, verzióalapú frissítést szeretnél, nézd meg a ShipLogot.",
+  "update.followsSchedule": "A Beállítások › Ütemezés alatt megadott szerint",
+  "update.ownChoice": "Saját választás",
+  "update.useDefault": "Alapértelmezés követése",
   "update.afterBackupOrphans":
     "A Docker megtartja azt a lemezképet, amelyen a konténer korábban futott, immár címke nélkül, és az Unraid árva lemezképként listázza. Ez egy SIKERES frissítés szokásos maradéka, nem egy elrontott nyoma, és épp erre van szükség a korábbi lemezképre való gyors visszatéréshez. Ha nem akarod megtartani, a Beállítások, Ütemezés, Image-takarítás és frissítési állapot alatt van egy kapcsoló, amely a frissítés után azonnal törli a lecserélt lemezképet.",
   "run.statusRunning": "Fut",
@@ -1473,6 +1476,8 @@ const hu: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Amikor a biztonsági mentés utáni frissítés egy containert újabb image-re frissít, üzenetet küld, hogy ellenőrizhesd, továbbra is működik-e. Frissített containerenként fut le (a frissítések ritkák).",
   "settings.pruneImageAfterUpdate": "A régi image eltávolítása frissítés után",
   "settings.pruneImageAfterUpdateHint": "Miután egy container újabb image-re frissült, törli a lecserélt régi image-et. Alapértelmezetten kikapcsolva: a megtartása olcsóvá teszi a visszagörgetést (a BombVault mentés az adatokat állítja vissza, nem a régi image-et). A megosztott alap-image soha nem törlődik.",
+  "settings.updateEveryContainer": "Konténerek frissítése egy sikeres biztonsági mentés után",
+  "settings.updateEveryContainerHint": "Csak azután húz le új képet, hogy az előtte lévő mentés befejeződött. Egy-egy konténer a saját oldalán másképp is beállítható.",
   "settings.registriesTitle": "Container registry-k",
   "settings.registriesHint": "Hitelesítő adatok privát registrykhez; akkor használatosak, amikor a biztonsági mentés utáni frissítés újabb image-et keres egy containerhez (például egy csak szponzoroknak elérhető ghcr.io image-et). A publikus image-ek továbbra is névtelenül töltődnek le. Hagyd üresen a tokent a mentett megtartásához; egy sor eltávolítása törli annak hitelesítő adatait.",
   "settings.registriesEmpty": "Nincs beállítva registry. Minden image névtelenül töltődik le.",

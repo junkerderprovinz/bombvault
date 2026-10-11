@@ -233,6 +233,9 @@ const fi: Partial<Translations> = {
   "run.kindUpdate": "Päivitys",
   "update.afterBackup": "Päivitä onnistuneen varmuuskopioinnin jälkeen",
   "update.afterBackupHint": "Hakee imagen ja luo tämän kontin uudelleen heti onnistuneen varmuuskopioinnin jälkeen, joten sinulla on aina ensin tuore palautuspiste. Se ajetaan varmuuskopioinnin ajankohtana (varmuuskopiot ajetaan peräkkäin), ei kiinteänä kellonaikana. Jos haluat päivitykset kiinteän aikataulun mukaan, versioperusteisesti, katso ShipLog.",
+  "update.followsSchedule": "Kuten kohdassa Asetukset › Aikataulu on määritetty",
+  "update.ownChoice": "Oma valinta",
+  "update.useDefault": "Noudata oletusta",
   "update.afterBackupOrphans":
     "Docker säilyttää levykuvan, jolla kontti aiemmin ajoi, nyt ilman tunnistetta, ja Unraid listaa sen orvoksi levykuvaksi. Se on ONNISTUNEEN päivityksen normaali jäänne, ei merkki epäonnistuneesta, ja juuri sitä nopea paluu edelliseen levykuvaan tarvitsee. Jos et halua säilyttää sitä, kohdassa Asetukset, Aikataulu, Image-siivous ja päivitystila on kytkin, joka poistaa korvatun levykuvan heti päivityksen jälkeen.",
   "run.statusRunning": "Käynnissä",
@@ -1472,6 +1475,8 @@ const fi: Partial<Translations> = {
   "notify.notifyOnUpdateHint": "Kun containeria päivitetään varmuuskopioinnin jälkeen uudempaan imageen, lähetä viesti, jotta voit varmistaa, että se toimii edelleen. Laukeaa jokaista päivitettyä containeria kohti (päivitykset ovat harvinaisia).",
   "settings.pruneImageAfterUpdate": "Poista vanha image päivityksen jälkeen",
   "settings.pruneImageAfterUpdateHint": "Kun container on päivitetty uudempaan imageen, poista korvattu vanha image. Oletuksena pois päältä: sen säilyttäminen tekee edelliseen versioon palaamisesta vaivatonta (BombVaultin varmuuskopio palauttaa datan, ei vanhaa imagea). Jaettua perus-imagea ei koskaan poisteta.",
+  "settings.updateEveryContainer": "Päivitä kontit onnistuneen varmuuskopioinnin jälkeen",
+  "settings.updateEveryContainerHint": "Hakee uuden imagen vasta, kun edellinen varmuuskopiointi on valmis. Yksittäisen kontin voi asettaa toisin sen omalla sivulla.",
   "settings.registriesTitle": "Container-rekisterit",
   "settings.registriesHint": "Tunnistetiedot yksityisiä rekistereitä varten; niitä käytetään, kun päivitys varmuuskopioinnin jälkeen tarkistaa, onko containerille uudempi image (esimerkiksi vain sponsoreille tarkoitettu ghcr.io-image). Julkiset imaget haetaan edelleen anonyymisti. Jätä token tyhjäksi säilyttääksesi tallennetun; rivin poistaminen poistaa sen tunnistetiedot.",
   "settings.registriesEmpty": "Rekistereitä ei ole määritetty. Kaikki imaget haetaan anonyymisti.",
