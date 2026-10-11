@@ -21,8 +21,8 @@ const DETECTION_ON = { anomalyEnabled: true } as Settings;
 const UNPINNED: NavPins = { storage: false, instances: false };
 const PINNED: NavPins = { storage: true, instances: true };
 
-const ORDER = ["/dashboard", "/anomalies", "/backups", "/recovery", "/storage", "/instances", "/settings"];
-const BAR = ["/dashboard", "/backups", "/recovery", "/settings"];
+const ORDER = ["/dashboard", "/anomalies", "/backups", "/restore", "/storage", "/instances", "/settings"];
+const BAR = ["/dashboard", "/backups", "/restore", "/settings"];
 
 const routes = (list: NavDestination[]) => list.map((d) => d.to);
 
@@ -46,7 +46,7 @@ describe("destinations, the one ordered registry", () => {
   it("hands out the full list with every gate closed, with only the flags changed", () => {
     const all = destinations(DETECTION_OFF, UNPINNED);
     expect(routes(all)).toEqual(ORDER);
-    expect(routes(all.filter((d) => d.sidebar))).toEqual(["/dashboard", "/backups", "/recovery", "/settings"]);
+    expect(routes(all.filter((d) => d.sidebar))).toEqual(["/dashboard", "/backups", "/restore", "/settings"]);
   });
 
   it("treats settings that have not loaded as detection off", () => {
@@ -120,13 +120,13 @@ describe("sidebarDestinations, the rail's rows", () => {
       "/dashboard",
       "/anomalies",
       "/backups",
-      "/recovery",
+      "/restore",
       "/settings",
     ]);
     expect(routes(sidebarDestinations(DETECTION_OFF, { storage: true, instances: false }))).toEqual([
       "/dashboard",
       "/backups",
-      "/recovery",
+      "/restore",
       "/storage",
       "/settings",
     ]);

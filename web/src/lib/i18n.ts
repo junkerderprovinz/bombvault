@@ -4546,6 +4546,17 @@ export const en = {
   "restoreWindow.notDone": "Not quite done",
   "restoreWindow.self.title": "Restore BombVault settings",
   "restoreWindow.self.text": "The running instance does not overwrite its own settings. On a new or rebuilt server the emergency wizard brings them back in its second step.",
+  "restorePage.tiles": "Sections",
+  "restorePage.tileCount": "one={n} with snapshots|other={n} with snapshots",
+  "restorePage.search": "What do you want to bring back?",
+  "restorePage.noMatch": "No entry matches.",
+  "restorePage.newest": "newest {when}",
+  "restorePage.none": "No snapshots yet",
+  "restorePage.recommended": "Recommended",
+  "restorePage.afterAnomaly": "After the anomaly",
+  "restorePage.openEntry": "Open entry",
+  "restorePage.running": "Running now",
+  "restorePage.restoring": "Restoring {name}",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -8781,6 +8792,17 @@ export const de: Translations = {
   "restoreWindow.notDone": "Nicht ganz fertig",
   "restoreWindow.self.title": "BombVault-Einstellungen wiederherstellen",
   "restoreWindow.self.text": "Die laufende Instanz überschreibt ihre eigenen Einstellungen nicht. Auf einem neuen oder neu aufgesetzten Server holt sie der Notfall-Assistent im zweiten Schritt zurück.",
+  "restorePage.tiles": "Bereiche",
+  "restorePage.tileCount": "one={n} mit Sicherungen|other={n} mit Sicherungen",
+  "restorePage.search": "Was willst du zurückholen?",
+  "restorePage.noMatch": "Kein Eintrag passt.",
+  "restorePage.newest": "neueste {when}",
+  "restorePage.none": "Noch keine Sicherungen",
+  "restorePage.recommended": "Empfohlen",
+  "restorePage.afterAnomaly": "Nach der Anomalie",
+  "restorePage.openEntry": "Eintrag öffnen",
+  "restorePage.running": "Läuft gerade",
+  "restorePage.restoring": "{name} wird wiederhergestellt",
 };
 
 // ---------------------------------------------------------------------------

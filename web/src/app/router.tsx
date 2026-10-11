@@ -16,6 +16,7 @@ import { StoragePage } from "../pages/Storage";
 import { StorageLocationPage } from "../pages/StorageLocation";
 import { SettingsPage } from "../pages/Settings";
 import Recovery from "../pages/Recovery";
+import { Restore } from "../pages/Restore";
 import { GlyphSheet } from "../pages/Glyphs";
 import { OAuthConsent } from "../pages/OAuthConsent";
 import { ENTRY_LIST_PATH, ENTRY_ROUTE } from "../lib/backupEntry";
@@ -55,6 +56,7 @@ export function AppRouter() {
               <Route path="/fleet" element={<Navigate to="/instances" replace />} />
               <Route path="/storage" element={<StoragePage />} />
               <Route path="/storage/:id" element={<StorageLocationPage />} />
+              <Route path="/restore" element={<Restore />} />
               <Route path="/recovery" element={<Recovery />} />
               {/* Schedules are a Settings page; /jobs stays for existing links. */}
               <Route path="/jobs" element={<Navigate to="/settings/schedules" replace />} />

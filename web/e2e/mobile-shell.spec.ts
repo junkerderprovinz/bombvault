@@ -89,7 +89,7 @@ test("each bar slot leads to its page and reads as current there", async ({ page
   const bar = page.getByTestId("bottom-nav");
   for (const [name, path] of [
     ["Backups", "/backups"],
-    ["Restore", "/recovery"],
+    ["Restore", "/restore"],
     ["Settings", "/settings"],
     ["Overview", "/dashboard"],
   ] as const) {
@@ -194,7 +194,7 @@ test("the sidebar lists the navigation in order, with Settings at the foot", asy
 
   for (const [name, path] of [
     ["Backups", "/backups"],
-    ["Restore", "/recovery"],
+    ["Restore", "/restore"],
     ["Storage locations", "/storage"],
     ["Anomalies", "/anomalies"],
     ["Settings", "/settings"],

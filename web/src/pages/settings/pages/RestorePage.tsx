@@ -22,7 +22,7 @@ export function RestorePage() {
   return (
     <>
       <PageLinkCard
-        to="/recovery"
+        to="/restore"
         label={t("activityLog.typeRestore")}
         sub={t("tile.restore.pageSub")}
         glyph={<IconTabRecovery />}

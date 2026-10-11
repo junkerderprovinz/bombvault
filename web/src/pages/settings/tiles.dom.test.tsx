@@ -202,7 +202,7 @@ describe("the Restore tile", () => {
     await renderTile(RestorePage);
     expect(screen.getByRole("link", { name: en["activityLog.typeVerify"] }).getAttribute("href")).toBe("/settings/integrity");
     fireEvent.click(screen.getByRole("button", { name: en["instances.open"] }));
-    expect(screen.getByTestId("where").textContent).toBe("/recovery");
+    expect(screen.getByTestId("where").textContent).toBe("/restore");
   });
 
   it("holds the restore folder", async () => {
