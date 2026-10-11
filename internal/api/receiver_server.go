@@ -24,6 +24,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/group"
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
@@ -635,6 +636,7 @@ type peerReceiverRequest struct {
 	InstanceID string `json:"instanceId"`
 	Name       string `json:"name"`
 	Login      bool   `json:"login"`
+	peerProof
 }
 
 // peerReceiverBodyMax caps the request, which is a few dozen bytes.
@@ -670,6 +672,7 @@ func (s *Service) handlePeerReceiver(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "malformed receiver request"})
 		return
 	}
+	signed := callPayload(in.InstanceID, in.Name)
 	in.InstanceID, in.Name = strings.TrimSpace(in.InstanceID), strings.TrimSpace(in.Name)
 	if in.InstanceID == "" || len(in.InstanceID) > 64 {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the asking instance did not say who it is"})
@@ -704,6 +707,10 @@ func (s *Service) handlePeerReceiver(w http.ResponseWriter, r *http.Request) {
 		caller, ok := s.peerCaller(r)
 		if !ok || caller.ID != in.InstanceID {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the asking instance is not the one the group names for this call"})
+			return
+		}
+		if err := s.verifyCaller(r.Context(), caller, keydeposit.ProofReceiverLogin, signed, in.peerProof); err != nil {
+			writeJSON(w, http.StatusForbidden, failEnvelope(err))
 			return
 		}
 		offer.User, offer.Password, err = s.receiverLoginFor(r.Context(), rs, caller.ID, in.Name)
@@ -762,6 +769,9 @@ func (s *Service) askReceiver(ctx context.Context, memberID string, login bool) 
 		return nil, err
 	}
 	req := peerReceiverRequest{InstanceID: g.InstanceID, Name: instanceDisplayName(settings), Login: login}
+	if req.peerProof, err = s.signCall(keydeposit.ProofReceiverLogin, memberID, callPayload(req.InstanceID, req.Name)); err != nil {
+		return nil, err
+	}
 	var ans peerReceiverAnswer
 	if err := s.callMember(ctx, memberID, http.MethodPost, "/api/group/peer/receiver", req, &ans); err != nil {
 		return nil, err

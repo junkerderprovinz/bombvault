@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/seedphrase"
@@ -128,7 +129,17 @@ func TestTheTwelveWordsAloneNeitherAllowAReleaseNorReachTheKit(t *testing.T) {
 		t.Fatalf("a request in the owner's own id was taken: %v", inOwnersName)
 	}
 
-	asked := mallory.call(atticID, wordsHolderID, http.MethodPost, "/api/group/peer/deposit/release", peerReleaseAsk{OwnerID: towerID, Name: "tower", Renew: true})
+	// The words make a member of whoever holds them, with a key of its own.
+	seed, err := keydeposit.NewOwnerSeed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := attic.st.PinMemberKey(wordsHolderID, keydeposit.OwnerKey(seed)); err != nil {
+		t.Fatal(err)
+	}
+	signed := signedAs(t, attic, seed, wordsHolderID, keydeposit.ProofRelease, time.Now().UnixMilli(), callPayload(towerID, "tower", "true"),
+		map[string]any{"ownerId": towerID, "name": "tower", "renew": true})
+	asked := mallory.call(atticID, wordsHolderID, http.MethodPost, "/api/group/peer/deposit/release", json.RawMessage(signed))
 	if asked["state"] != store.ReleaseAsked {
 		t.Fatalf("the request: %v", asked)
 	}
@@ -148,7 +159,9 @@ func TestTheTwelveWordsAloneNeitherAllowAReleaseNorReachTheKit(t *testing.T) {
 			t.Fatalf("the kit with the paired session: %d %v", code, out)
 		}
 	})
-	if got := mallory.call(atticID, wordsHolderID, http.MethodPost, "/api/group/peer/deposit/release", peerReleaseAsk{OwnerID: towerID, Name: "tower"}); got["deposit"] != nil || got["state"] != store.ReleaseAsked {
+	again := signedAs(t, attic, seed, wordsHolderID, keydeposit.ProofRelease, time.Now().UnixMilli()+1, callPayload(towerID, "tower", "false"),
+		map[string]any{"ownerId": towerID, "name": "tower", "renew": false})
+	if got := mallory.call(atticID, wordsHolderID, http.MethodPost, "/api/group/peer/deposit/release", json.RawMessage(again)); got["deposit"] != nil || got["state"] != store.ReleaseAsked {
 		t.Fatalf("the keeper handed something out: %v", got)
 	}
 
@@ -230,4 +243,38 @@ func TestKeyMaterialIsNotMadeOrHandedOutWithoutALoginPassword(t *testing.T) {
 	if _, found := kept(t, attic, tower); found {
 		t.Fatal("a deposit was made")
 	}
+}
+
+func TestAResetKeepsPhonesOutUntilAPersonLetsThemPairAgain(t *testing.T) {
+	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
+	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
+	phrase, relayURL := groupOf(t, tower, attic)
+	phone := holdWords(t, relayURL, phrase, wordsHolderID, "android", attic)
+	phone.pairedSession(attic)
+
+	hash, err := secret.HashPassword(attic.appKey, "a new password")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := attic.h.resetLogin(hash); err != nil {
+		t.Fatal(err)
+	}
+	if out := phone.call(attic.id(t), wordsHolderID, http.MethodPost, "/api/group/peer/session", map[string]any{"instanceId": wordsHolderID}); out["ok"] != false || out["code"] != codePhonePairingOff {
+		t.Fatalf("a phone asking for a session after the reset: %v", out)
+	}
+	hash, epoch, _ := attic.h.authEnabled()
+	attic.as(secret.NewPairedSessionToken(attic.appKey, hash, epoch, time.Hour), func() {
+		if code, _ := attic.do(t, http.MethodGet, "/api/status", nil); code != http.StatusUnauthorized {
+			t.Fatalf("a paired session while pairing phones is off: %d", code)
+		}
+	})
+
+	attic.session = secret.NewSessionToken(attic.appKey, hash, epoch, time.Hour)
+	if _, out := attic.do(t, http.MethodGet, "/api/auth/phone-pairing", nil); out["on"] != false {
+		t.Fatalf("pairing phones after the reset: %v", out)
+	}
+	if _, out := attic.do(t, http.MethodPut, "/api/auth/phone-pairing", map[string]any{"on": true}); out["ok"] != true {
+		t.Fatalf("switching pairing phones on: %v", out)
+	}
+	phone.pairedSession(attic)
 }

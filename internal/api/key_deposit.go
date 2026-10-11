@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -64,11 +65,11 @@ const (
 )
 
 // releaseLimits are what a keeper holds release requests to: three new ones an
-// hour from one instance and six from all of them, a day to answer, the
-// length of an emergency to collect an allowed one, and thirty days on record
-// once a request is over.
+// hour per signing key and thirty from all of them, more than one forger can
+// use up, a day to answer, the length of an emergency to collect an allowed
+// one, and thirty days on record once a request is over.
 var releaseLimits = store.ReleaseLimits{
-	PerWindow: 3, Total: 6, Window: time.Hour,
+	PerWindow: 3, Total: 30, Window: time.Hour,
 	Answer: 24 * time.Hour, Collect: emergencyTTL, Keep: 30 * 24 * time.Hour,
 }
 
@@ -516,6 +517,10 @@ func (s *Service) handlePeerDepositPut(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if in.Counter > time.Now().Add(maxCounterLead).UnixMilli() {
+		refuseUnprovenDeposit(w)
+		return
+	}
 	if len(in.Deposit) == 0 || len(in.Deposit) > maxDepositBytes || len(in.Salt) == 0 || in.Version != keydeposit.Version {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "this is not a deposit this version keeps"})
 		return
@@ -584,6 +589,10 @@ func (s *Service) handlePeerDepositDelete(w http.ResponseWriter, r *http.Request
 	}
 	owner, ok := s.depositAsker(w, r)
 	if !ok {
+		return
+	}
+	if in.Counter > time.Now().Add(maxCounterLead).UnixMilli() {
+		refuseUnprovenDeposit(w)
 		return
 	}
 	kept, found, err := s.store.KeptDeposit(owner)
@@ -672,6 +681,7 @@ type peerReleaseAsk struct {
 	OwnerID string `json:"ownerId"`
 	Name    string `json:"name"`
 	Renew   bool   `json:"renew"`
+	peerProof
 }
 
 // peerRelease is the answer: where the request stands, and the deposit once
@@ -695,6 +705,10 @@ func (s *Service) handlePeerDepositRelease(w http.ResponseWriter, r *http.Reques
 	}
 	requester, ok := s.depositAsker(w, r)
 	if !ok {
+		return
+	}
+	if err := s.verifyMember(r.Context(), requester, keydeposit.ProofRelease, callPayload(in.OwnerID, in.Name, strconv.FormatBool(in.Renew)), in.peerProof); err != nil {
+		writeJSON(w, http.StatusForbidden, failEnvelope(err))
 		return
 	}
 	// The install a deposit belongs to has its key. A request in its name

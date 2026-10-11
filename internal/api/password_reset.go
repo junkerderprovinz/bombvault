@@ -206,7 +206,7 @@ func (h *Handler) handleFinishPasswordReset(w http.ResponseWriter, r *http.Reque
 	}
 	h.recordLoginSuccess(key)
 	log.Printf("api: the login password was reset with a code from the container log: %d passkey(s) removed, "+
-		"%d API token(s) and %d MCP key(s) or OAuth grant(s) revoked, every other session ended",
+		"%d API token(s) and %d MCP key(s) or OAuth grant(s) revoked, every other session ended, pairing phones switched off",
 		removed.Passkeys, removed.APITokens, removed.MCPKeys)
 
 	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
@@ -223,10 +223,10 @@ type resetRemoved struct {
 }
 
 // resetLogin leaves whoever holds the code alone in the instance: every key,
-// token, OAuth grant and passkey goes, then the password, the second factor
-// and every session. The caller holds mintMu, so nothing can be added in
-// between. The keys go first, so a failure never leaves them beside a new
-// password.
+// token, OAuth grant and passkey goes, pairing phones is switched off, then
+// the password, the second factor and every session go. The caller holds
+// mintMu, so nothing can be added in between. The keys go first, so a failure
+// never leaves them beside a new password.
 func (h *Handler) resetLogin(hash string) (resetRemoved, string, error) {
 	var removed resetRemoved
 	rows, err := h.store.ListMCPKeys()
@@ -247,6 +247,11 @@ func (h *Handler) resetLogin(hash string) (resetRemoved, string, error) {
 	}
 	h.mcp.oauth.dropCodes()
 	if removed.Passkeys, err = h.store.DeleteAllPasskeys(); err != nil {
+		return removed, "", err
+	}
+
+	// Whoever holds the group's words would get a session on a phone again.
+	if err := h.store.SetPhonePairing(false); err != nil {
 		return removed, "", err
 	}
 

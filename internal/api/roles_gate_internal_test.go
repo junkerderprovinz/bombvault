@@ -246,11 +246,13 @@ func TestAFetcherThatRevokesNoLongerGetsThePassword(t *testing.T) {
 	fetcher := newInstance(t, "attic", strings.Repeat("b2", 32))
 	pairThroughRelay(t, source, fetcher)
 	granted := allowRole(t, source, fetcher, store.RoleFetcher, "containers")
-	if p := oldWayPairing(t, source, fetcher.id(t)); !p.OK || p.ResticPassword != restickey.Derive(source.appKey) {
-		t.Fatalf("pairing while allowed = %+v", p)
+	var p peerPairing
+	if err := fetcher.svc.askPairing(context.Background(), source.id(t), &p); err != nil || p.ResticPassword != restickey.Derive(source.appKey) {
+		t.Fatalf("pairing while allowed = %+v, %v", p, err)
 	}
 	answerRole(t, fetcher, granted.ID, store.RoleRevoked)
-	if p := oldWayPairing(t, source, fetcher.id(t)); p.OK || p.ResticPassword != "" {
+	p = peerPairing{}
+	if err := fetcher.svc.askPairing(context.Background(), source.id(t), &p); err == nil || p.ResticPassword != "" {
 		t.Fatalf("pairing after the fetcher revoked = %+v, want nothing", p)
 	}
 }
@@ -334,9 +336,9 @@ func TestLoginsAndPairingsFromBeforeTheUpgradeGoOnWithoutAnyoneAnswering(t *test
 
 	// The sending side kept no record of its login, so it asks; the receiver
 	// already allows it and nobody has to answer.
-	out := oldWayLogin(t, attic, tower.id(t), tower.id(t), "tower")
-	if held, _ := out["receiver"].(map[string]any); out["ok"] != true || held["password"] != "kept across the upgrade" {
-		t.Fatalf("the login the member held before the upgrade: %v", out)
+	held, err := tower.svc.askReceiver(context.Background(), attic.id(t), true)
+	if err != nil || held == nil || held.Password != "kept across the upgrade" {
+		t.Fatalf("the login the member held before the upgrade: %+v, %v", held, err)
 	}
 	if mirror := askForRole(t, tower, attic, store.RoleReceiver, "containers"); mirror.State != store.RoleAllowed {
 		t.Fatalf("the sender switching the role on after the upgrade = %+v, want it allowed at once", mirror)

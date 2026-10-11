@@ -1439,8 +1439,10 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(backup.ErrNotConfirmed))
 		return
 	}
+	// Whoever holds the group's words has a paired session, so what it
+	// replaces is always backed up first and can be brought back.
 	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), RestoreOptions{
-		LeaveStopped: body.LeaveStopped, WithoutRuntime: body.WithoutRuntime, Beside: beside, BackupFirst: body.BackupFirst,
+		LeaveStopped: body.LeaveStopped, WithoutRuntime: body.WithoutRuntime, Beside: beside, BackupFirst: body.BackupFirst || isPaired(r),
 	})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
@@ -1606,6 +1608,11 @@ func (h *Handler) handleRestoreFiles(w http.ResponseWriter, r *http.Request) {
 		Confirm    bool     `json:"confirm"`
 	}
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	// An in-place selection has no backup first to undo it with.
+	if isPaired(r) && strings.TrimSpace(body.TargetPath) == "" {
+		refusePaired(w)
 		return
 	}
 	target, started, err := h.svc.StartRestoreFiles(r.Context(), name, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
@@ -4167,6 +4174,12 @@ func (h *Handler) handleAckRuns(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	// A paired session acknowledges one failure at a time, so a phone cannot
+	// clear what the person should still see.
+	if isPaired(r) && (body.All || len(body.IDs)+len(body.CopyTargets) != 1) {
+		refusePaired(w)
+		return
+	}
 	ackRuns := func() (int64, error) { return h.store.AcknowledgeRuns(body.IDs) }
 	ackCopies := func() (int64, error) { return h.store.AcknowledgeFailedCopies(body.CopyTargets) }
 	if body.All {
@@ -4424,10 +4437,12 @@ func (h *Handler) requireAuthForSecrets(w http.ResponseWriter, r *http.Request, 
 }
 
 // The codes a 403 carries when a request needs more than its session: a login
-// password has to be set first, or the person has to sign in themselves.
+// password has to be set first, the person has to sign in themselves, or a
+// phone asks for a session while pairing phones is switched off.
 const (
-	codeNoPassword     = "password-not-set"
-	codeOwnLoginNeeded = "own-login-needed"
+	codeNoPassword      = "password-not-set"
+	codeOwnLoginNeeded  = "own-login-needed"
+	codePhonePairingOff = "phone-pairing-off"
 )
 
 // requireSignIn refuses the session of a paired phone where a password is
@@ -5408,20 +5423,30 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		}
 
 		// The session of a paired phone reaches what pairedRoutes lists. A
-		// path that matches no route is left to the mux to answer.
+		// path that matches no route is left to the mux to answer, and
+		// behind anything but a mux the gate cannot tell, so it refuses.
 		if secret.PairedSessionToken(c.Value) {
-			if mux, ok := next.(*http.ServeMux); ok {
-				if _, pattern := mux.Handler(r); pattern != "" && !pairedRoutes[pattern] {
-					refusePaired(w)
-					return
-				}
+			if on, err := h.store.PhonePairing(); err != nil || !on {
+				writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "authentication required"})
+				return
 			}
-			r = withPaired(r)
+			mux, ok := next.(*http.ServeMux)
+			if !ok {
+				refusePaired(w)
+				return
+			}
+			if _, pattern := mux.Handler(r); pattern != "" && !pairedRoutes[pattern] {
+				refusePaired(w)
+				return
+			}
+			next.ServeHTTP(w, withPaired(r))
+			return
 		}
 
-		// This request came from a signed-in browser, so its Host header is
-		// what actually reaches this instance: the one address worth
-		// learning as where members should send it direct calls.
+		// This request came from a browser signed in with the password, so
+		// its Host header is what actually reaches this instance: the one
+		// address worth learning as where members should send it direct
+		// calls. Whoever holds the group's words could name any host.
 		if h.svc != nil {
 			h.svc.learnDirectURL(r)
 		}
@@ -5589,7 +5614,7 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	started, err := h.svc.StartRestoreVM(r.Context(), name, body.SnapshotID, sourceParam(r), RestoreOptions{
-		LeaveStopped: body.LeaveStopped, Beside: beside, BackupFirst: body.BackupFirst,
+		LeaveStopped: body.LeaveStopped, Beside: beside, BackupFirst: body.BackupFirst || isPaired(r),
 	})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
@@ -6206,6 +6231,9 @@ func (h *Handler) handleListFileSets(w http.ResponseWriter, r *http.Request) {
 	placements := h.svc.listPlacements(r.Context(), "files", items)
 	for i := range views {
 		views[i].Placement = placements[views[i].ID]
+		if isPaired(r) {
+			views[i].RepoEffective = scrubRepoLocation(views[i].RepoEffective)
+		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "fileSets": views})
 }
@@ -6615,7 +6643,7 @@ func (h *Handler) handleRestoreFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	target, started, err := h.svc.StartRestoreFileSet(r.Context(), id, body.SnapshotID, sourceParam(r), body.TargetPath, body.Confirm, RestoreOptions{Beside: beside, BackupFirst: body.BackupFirst})
+	target, started, err := h.svc.StartRestoreFileSet(r.Context(), id, body.SnapshotID, sourceParam(r), body.TargetPath, body.Confirm, RestoreOptions{Beside: beside, BackupFirst: body.BackupFirst || isPaired(r)})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
 		return
@@ -6666,6 +6694,10 @@ func (h *Handler) handleRestoreFileSetFiles(w http.ResponseWriter, r *http.Reque
 		Confirm    bool     `json:"confirm"`
 	}
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	if isPaired(r) && strings.TrimSpace(body.TargetPath) == "" {
+		refusePaired(w)
 		return
 	}
 	target, started, err := h.svc.StartRestoreFileSetFiles(r.Context(), id, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)

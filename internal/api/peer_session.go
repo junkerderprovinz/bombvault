@@ -51,6 +51,10 @@ func (s *Service) handlePeerSession(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "a session is only given to the member that asks for it"})
 		return
 	}
+	if on, err := s.store.PhonePairing(); err != nil || !on {
+		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "pairing phones is switched off on this instance", "code": codePhonePairingOff})
+		return
+	}
 	// Synced first: a member that joined since anybody last opened the
 	// Instances page has no row yet.
 	peers, err := s.syncFleetPeers()
@@ -65,4 +69,32 @@ func (s *Service) handlePeerSession(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "no phone of this group by that name"})
+}
+
+// handleGetPhonePairing says whether a phone of the group may pair.
+// GET /api/auth/phone-pairing
+func (h *Handler) handleGetPhonePairing(w http.ResponseWriter, _ *http.Request) {
+	on, err := h.store.PhonePairing()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"on": on}))
+}
+
+// handleSetPhonePairing switches pairing of phones on or off. Off, a phone
+// gets no session and the sessions phones hold are refused.
+// PUT /api/auth/phone-pairing
+func (h *Handler) handleSetPhonePairing(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		On bool `json:"on"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if err := h.store.SetPhonePairing(body.On); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"on": body.On}))
 }

@@ -15,6 +15,7 @@ import (
 	"golang.org/x/mod/semver"
 
 	"github.com/junkerderprovinz/bombvault/internal/group"
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
@@ -135,6 +136,7 @@ type peerRoleState struct {
 type peerRoleNote struct {
 	Role  string `json:"role"`
 	State string `json:"state,omitempty"`
+	peerProof
 }
 
 func decodePeerRole(w http.ResponseWriter, r *http.Request, into any) bool {
@@ -196,6 +198,10 @@ func (s *Service) handlePeerRoleAnswer(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the answer must be allowed, refused or revoked"})
 		return
 	}
+	if err := s.verifyMember(r.Context(), asked, keydeposit.ProofRoleAnswer, callPayload(in.Role, in.State), in.peerProof); err != nil {
+		writeJSON(w, http.StatusForbidden, failEnvelope(err))
+		return
+	}
 	known, err := s.store.SetSentRoleRequestState(asked, in.Role, in.State)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -215,6 +221,10 @@ func (s *Service) handlePeerRoleWithdraw(w http.ResponseWriter, r *http.Request)
 	asker, ok := s.roleAsker(r)
 	if !ok {
 		refuseUnnamedPeer(w)
+		return
+	}
+	if err := s.verifyMember(r.Context(), asker, keydeposit.ProofRoleWithdraw, callPayload(in.Role), in.peerProof); err != nil {
+		writeJSON(w, http.StatusForbidden, failEnvelope(err))
 		return
 	}
 	prev, found, err := s.store.WithdrawRoleRequest(asker, in.Role)
@@ -314,7 +324,11 @@ func (s *Service) withdrawRole(ctx context.Context, memberID, role string) (bool
 	if !ok || predatesRoleRequests(m.Version) {
 		return false, nil
 	}
-	err := s.callMember(ctx, memberID, http.MethodPost, "/api/group/peer/roles/withdraw", peerRoleNote{Role: role}, nil)
+	proof, err := s.signCall(keydeposit.ProofRoleWithdraw, memberID, callPayload(role))
+	if err != nil {
+		return false, err
+	}
+	err = s.callMember(ctx, memberID, http.MethodPost, "/api/group/peer/roles/withdraw", peerRoleNote{Role: role, peerProof: proof}, nil)
 	return err == nil, nil
 }
 
@@ -326,7 +340,11 @@ func (s *Service) tellRoleAnswer(ctx context.Context, req store.RoleRequest) boo
 	if !ok || predatesRoleRequests(m.Version) {
 		return false
 	}
-	note := peerRoleNote{Role: req.Role, State: req.State}
+	proof, err := s.signCall(keydeposit.ProofRoleAnswer, req.MemberID, callPayload(req.Role, req.State))
+	if err != nil {
+		return false
+	}
+	note := peerRoleNote{Role: req.Role, State: req.State, peerProof: proof}
 	return s.callMember(ctx, req.MemberID, http.MethodPost, "/api/group/peer/roles/answer", note, nil) == nil
 }
 

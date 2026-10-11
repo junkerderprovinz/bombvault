@@ -313,3 +313,29 @@ func TestADatabaseWithOneOfTheTwoDepositTablesGetsTheOther(t *testing.T) {
 		t.Fatalf("the identity table after migrating again: %d, %v", n, err)
 	}
 }
+
+func TestReleaseRequestsCountPerSigningKeyWhateverIDTheyName(t *testing.T) {
+	r := depositRepo(t)
+	limits := store.ReleaseLimits{PerWindow: 3, Total: 30, Window: time.Hour, Answer: 24 * time.Hour, Collect: 30 * time.Minute, Keep: 30 * 24 * time.Hour}
+	at := time.Unix(1_700_000_000, 0)
+	for i := range 4 {
+		if err := r.PinMemberKey(fmt.Sprintf("forger-%d", i), []byte("one key")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := r.PinMemberKey("fresh", []byte("the new install's key")); err != nil {
+		t.Fatal(err)
+	}
+	for i := range 3 {
+		id := fmt.Sprintf("forger-%d", i)
+		if _, created, err := r.AskKeyRelease("tower", id, id, true, at.Add(time.Duration(i)*time.Minute), limits); err != nil || !created {
+			t.Fatalf("request %d: %v, %v", i+1, created, err)
+		}
+	}
+	if _, _, err := r.AskKeyRelease("tower", "forger-3", "forger-3", true, at.Add(4*time.Minute), limits); !errors.Is(err, store.ErrReleaseLimit) {
+		t.Fatalf("a fourth request with the same key under another id: %v", err)
+	}
+	if _, created, err := r.AskKeyRelease("tower", "fresh", "fresh", true, at.Add(5*time.Minute), limits); err != nil || !created {
+		t.Fatalf("the real recovery after the forger: %v, %v", created, err)
+	}
+}

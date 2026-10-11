@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -12,13 +13,16 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/group"
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -447,8 +451,28 @@ func htpasswdLineOf(t *testing.T, f *receiverFixture, user string) string {
 	return ""
 }
 
+// askCounter numbers the signed asks of askPeerReceiver.
+var askCounter atomic.Int64
+
+// askPeerReceiver asks f the way member req.InstanceID does. A login is asked
+// for in a call signed with a key f has pinned for that member.
 func askPeerReceiver(t *testing.T, f *receiverFixture, req peerReceiverRequest) peerReceiverAnswer {
 	t.Helper()
+	if req.Login {
+		seed := sha256.Sum256([]byte(req.InstanceID))
+		if err := f.st.PinMemberKey(req.InstanceID, keydeposit.OwnerKey(seed[:])); err != nil {
+			t.Fatal(err)
+		}
+		g, err := f.st.GetGroupState()
+		if err != nil {
+			t.Fatal(err)
+		}
+		askCounter.CompareAndSwap(0, time.Now().UnixMilli())
+		counter := askCounter.Add(1)
+		claim := keydeposit.Claim{Action: keydeposit.ProofReceiverLogin, OwnerID: req.InstanceID, KeeperID: g.InstanceID,
+			Counter: counter, Deposit: callPayload(req.InstanceID, req.Name)}
+		req.peerProof = peerProof{Key: keydeposit.OwnerKey(seed[:]), Counter: counter, Proof: keydeposit.Prove(seed[:], claim)}
+	}
 	body, err := json.Marshal(req)
 	if err != nil {
 		t.Fatal(err)

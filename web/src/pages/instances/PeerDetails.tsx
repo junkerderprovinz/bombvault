@@ -21,6 +21,7 @@ import { MeshOffers, ProposeMeshDialog } from "./MeshOffers";
 import { domainLabelKey, PeerScorecard } from "./PeerScorecard";
 import { PullDialog, PullSourceCard } from "./PullSourceCard";
 import { ReceivedRepoCard, ReceiverDialog } from "./ReceivedRepoCard";
+import { ForgetKeyButton } from "./ForgetKeyButton";
 import { RemoveInstanceButton } from "./RemoveInstanceButton";
 import { useRoleSwitch } from "./RoleDialogs";
 import { RoleRequests } from "./RoleRequests";
@@ -193,6 +194,7 @@ export function PeerDetails({
       onClose={onClose}
       footer={
         <>
+          {paired && !instance.app && <ForgetKeyButton memberId={instance.memberId} />}
           {modules.fleet && peer && (
             <RemoveInstanceButton
               peerId={peer.id}

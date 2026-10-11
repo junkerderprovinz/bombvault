@@ -191,6 +191,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/auth/password", h.handleSetPassword)
 	mux.HandleFunc("POST /api/auth/reset", h.handleStartPasswordReset)
 	mux.HandleFunc("POST /api/auth/reset/finish", h.handleFinishPasswordReset)
+	mux.HandleFunc("GET /api/auth/phone-pairing", h.handleGetPhonePairing)
+	mux.HandleFunc("PUT /api/auth/phone-pairing", h.handleSetPhonePairing)
 	// The second factor. All three sit behind authGate like any other setting:
 	// arming, proving and removing a factor are things only a signed-in
 	// operator does, and the disable route additionally demands a live code.
@@ -243,6 +245,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/group/phrase/show", h.handleGroupShow)
 	mux.HandleFunc("POST /api/group/join", h.handleGroupJoin)
 	mux.HandleFunc("DELETE /api/group", h.handleGroupLeave)
+	mux.HandleFunc("DELETE /api/group/members/{id}/key", h.handleForgetMemberKey)
 	mux.HandleFunc("PUT /api/group/relay", h.handleGroupRelay)
 	mux.HandleFunc("PUT /api/group/address", h.handleGroupAddress)
 	mux.HandleFunc("POST /api/group/probe", h.handleGroupProbe)

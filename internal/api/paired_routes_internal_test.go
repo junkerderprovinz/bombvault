@@ -1,10 +1,10 @@
 package api
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -26,8 +26,7 @@ import (
 var routeBuilders = []string{"mountAPIV1", "peerMux"}
 
 // registeredRoutes reads every pattern the package registers on a mux from
-// its source: a string literal, or a literal joined to a string constant of
-// the package.
+// its source.
 func registeredRoutes(t *testing.T) []string {
 	t.Helper()
 	fset := token.NewFileSet()
@@ -35,7 +34,6 @@ func registeredRoutes(t *testing.T) []string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	consts := map[string]ast.Expr{}
 	var parsed []*ast.File
 	for _, name := range files {
 		if strings.HasSuffix(name, "_test.go") {
@@ -50,20 +48,99 @@ func registeredRoutes(t *testing.T) []string {
 			t.Fatal(err)
 		}
 		parsed = append(parsed, f)
-		for _, decl := range f.Decls {
-			gen, ok := decl.(*ast.GenDecl)
-			if !ok || gen.Tok != token.CONST {
-				continue
+	}
+	return routesIn(t, fset, parsed)
+}
+
+// isServeMux reports whether a type expression is *http.ServeMux.
+func isServeMux(e ast.Expr) bool {
+	star, ok := e.(*ast.StarExpr)
+	if !ok {
+		return false
+	}
+	sel, ok := star.X.(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+	pkg, ok := sel.X.(*ast.Ident)
+	return ok && pkg.Name == "http" && sel.Sel.Name == "ServeMux"
+}
+
+// isNewServeMux reports whether an expression is a call to http.NewServeMux.
+func isNewServeMux(e ast.Expr) bool {
+	call, ok := e.(*ast.CallExpr)
+	if !ok {
+		return false
+	}
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+	pkg, ok := sel.X.(*ast.Ident)
+	return ok && pkg.Name == "http" && sel.Sel.Name == "NewServeMux"
+}
+
+// muxNames are the names a function holds a *http.ServeMux under: its
+// parameters and variables of that type, and the struct fields of the files.
+func muxNames(fn *ast.FuncDecl, fields map[string]bool) map[string]bool {
+	names := maps.Clone(fields)
+	for _, p := range fn.Type.Params.List {
+		if isServeMux(p.Type) {
+			for _, n := range p.Names {
+				names[n.Name] = true
 			}
-			for _, spec := range gen.Specs {
-				vs := spec.(*ast.ValueSpec)
-				for i, n := range vs.Names {
-					if i < len(vs.Values) {
-						consts[n.Name] = vs.Values[i]
-					}
+		}
+	}
+	ast.Inspect(fn.Body, func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.AssignStmt:
+			for i, rhs := range x.Rhs {
+				if id, ok := x.Lhs[i].(*ast.Ident); ok && isNewServeMux(rhs) {
+					names[id.Name] = true
+				}
+			}
+		case *ast.ValueSpec:
+			for i, n := range x.Names {
+				if isServeMux(x.Type) || (i < len(x.Values) && isNewServeMux(x.Values[i])) {
+					names[n.Name] = true
 				}
 			}
 		}
+		return true
+	})
+	return names
+}
+
+// routesIn reads the patterns registered on any *http.ServeMux in files: a
+// string literal, or a literal joined to a string constant of the files.
+func routesIn(t *testing.T, fset *token.FileSet, files []*ast.File) []string {
+	t.Helper()
+	consts := map[string]ast.Expr{}
+	fields := map[string]bool{}
+	for _, f := range files {
+		ast.Inspect(f, func(n ast.Node) bool {
+			switch x := n.(type) {
+			case *ast.GenDecl:
+				if x.Tok != token.CONST {
+					return true
+				}
+				for _, spec := range x.Specs {
+					vs := spec.(*ast.ValueSpec)
+					for i, n := range vs.Names {
+						if i < len(vs.Values) {
+							consts[n.Name] = vs.Values[i]
+						}
+					}
+				}
+			case *ast.Field:
+				if isServeMux(x.Type) {
+					for _, n := range x.Names {
+						fields[n.Name] = true
+					}
+				}
+			}
+			return true
+		})
 	}
 	var value func(ast.Expr) (string, bool)
 	value = func(e ast.Expr) (string, bool) {
@@ -84,12 +161,13 @@ func registeredRoutes(t *testing.T) []string {
 		return "", false
 	}
 	var out []string
-	for _, f := range parsed {
+	for _, f := range files {
 		for _, decl := range f.Decls {
 			fn, ok := decl.(*ast.FuncDecl)
 			if !ok || fn.Body == nil {
 				continue
 			}
+			muxes := muxNames(fn, fields)
 			ast.Inspect(fn.Body, func(n ast.Node) bool {
 				call, ok := n.(*ast.CallExpr)
 				if !ok || len(call.Args) != 2 {
@@ -99,7 +177,14 @@ func registeredRoutes(t *testing.T) []string {
 				if !ok || (sel.Sel.Name != "HandleFunc" && sel.Sel.Name != "Handle") {
 					return true
 				}
-				if recv, ok := sel.X.(*ast.Ident); !ok || recv.Name != "mux" {
+				var recv string
+				switch x := sel.X.(type) {
+				case *ast.Ident:
+					recv = x.Name
+				case *ast.SelectorExpr:
+					recv = x.Sel.Name
+				}
+				if !muxes[recv] {
 					return true
 				}
 				pattern, ok := value(call.Args[0])
@@ -118,12 +203,43 @@ func registeredRoutes(t *testing.T) []string {
 	return out
 }
 
+func TestRoutesAreFoundOnAMuxOfAnyName(t *testing.T) {
+	const src = `package api
+
+type server struct{ routes *http.ServeMux }
+
+func a() {
+	m := http.NewServeMux()
+	m.HandleFunc("GET /a", nil)
+}
+
+func b(r *http.ServeMux) { r.Handle("GET /b", nil) }
+
+func (s *server) c() {
+	var inner *http.ServeMux
+	inner.HandleFunc("GET /c", nil)
+	s.routes.HandleFunc("GET /d", nil)
+}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "routes.go", src, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := routesIn(t, fset, []*ast.File{f}), []string{"GET /a", "GET /b", "GET /c", "GET /d"}; !slices.Equal(got, want) {
+		t.Fatalf("routes = %v, want %v", got, want)
+	}
+}
+
 // pairedRefused are the routes the session of a paired phone is refused on
 // purpose. A route that is on neither this list nor pairedRoutes fails
 // TestEveryRouteIsDecidedForAPairedSession, so whoever adds one decides.
 var pairedRefused = []string{
-	// The login, its second factor and passkeys, tokens, MCP keys and OAuth.
+	// The login, its second factor and passkeys, pairing phones, tokens, MCP
+	// keys and OAuth.
 	"DELETE /api/auth/passkeys/{id}",
+	"GET /api/auth/phone-pairing",
+	"PUT /api/auth/phone-pairing",
 	"DELETE /api/mcp/keys/{id}",
 	"DELETE /api/tokens/{id}",
 	"DELETE /api/widget/token",
@@ -179,6 +295,7 @@ var pairedRefused = []string{
 	// Joining and changing the group, roles, receivers, pull sources and ZFS replication peers.
 	"DELETE /api/fleet/peers/{id}",
 	"DELETE /api/group",
+	"DELETE /api/group/members/{id}/key",
 	"DELETE /api/group/members/{id}/roles/{role}",
 	"DELETE /api/pull/sources/{id}",
 	"DELETE /api/receiver/repos/{id}",
@@ -370,6 +487,13 @@ var pairedRefused = []string{
 	"PUT /api/containers/backup-order",
 	"PUT /api/items/{kind}/{key}/declined",
 	"PUT /api/vms/backup-order",
+	// Acknowledging an anomaly, which lets the backups held for it be pruned.
+	"POST /api/anomalies/acknowledge",
+	// Restores that replace what is there without a backup first, and a
+	// plugin written back to the flash drive, which runs it as root at boot.
+	"POST /api/containers/{name}/dbdumps/{id}/import",
+	"POST /api/flash/plugins/restore",
+	"POST /api/stacks/{project}/restore",
 }
 
 // sessionRoutes are the registered routes that need a session.
@@ -489,35 +613,91 @@ func TestAPairedSessionIsRefusedSomethingOfEveryKindItMayNotDo(t *testing.T) {
 	}
 }
 
+// pairedReads sends every GET route on pairedRoutes through the router with
+// the instance's session and returns each answer by route. A wildcard takes
+// the value fill gives for the path, and a handler that panics on this bare
+// instance answers nothing, which leaks nothing either.
+func pairedReads(in *instance, fill func(path string) string) map[string]string {
+	wildcard := regexp.MustCompile(`\{[^}]+\}`)
+	out := map[string]string{}
+	for pattern := range pairedRoutes {
+		method, path, _ := strings.Cut(pattern, " ")
+		if method != http.MethodGet {
+			continue
+		}
+		path = wildcard.ReplaceAllString(path, fill(path))
+		func() {
+			defer func() { _ = recover() }()
+			req := httptest.NewRequest(method, path, nil)
+			req.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: in.session}) //nolint:gosec // G124: a cookie on a test request
+			w := httptest.NewRecorder()
+			in.router.ServeHTTP(w, req)
+			out[pattern] = w.Body.String()
+		}()
+	}
+	return out
+}
+
 func TestAPairedSessionSeesNoLocationOrHookInWhatItReads(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
-	const withSignIn = "rest:https://user:secret@box:8000/files"
-	if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.FilesPath = withSignIn; return nil }); err != nil {
+	const (
+		withSignIn = "rest:https://user:s3cr'et@box:8000/files"
+		withParams = "rclone::s3,access_key_id=AKIDLEAK,secret_access_key='LEAK,KEY':bucket/vms"
+		hook       = "curl -fsS https://hc-ping.com/hooksecret"
+	)
+	if _, err := in.st.MutateSettings(func(s *store.Settings) error {
+		s.FilesPath, s.ZFSPath, s.ContainersPath, s.VMsPath = withSignIn, withSignIn, withSignIn, withParams
+		return nil
+	}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := in.st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "files", Name: "box", Repo: withSignIn, Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := in.st.CreateOffsiteTarget(store.OffsiteTarget{Name: "named", Repo: withSignIn, Role: "repo", Enabled: true}); err != nil {
+	named, err := in.st.CreateOffsiteTarget(store.OffsiteTarget{Name: "named", Repo: withParams, Role: "repo", Enabled: true})
+	if err != nil {
 		t.Fatal(err)
 	}
-	read := func() string {
-		var all strings.Builder
-		for _, path := range []string{"/api/settings", "/api/offsite/targets", "/api/repos"} {
-			code, out := in.do(t, http.MethodGet, path, nil)
-			if code != http.StatusOK {
-				t.Fatalf("%s: %d %v", path, code, out)
-			}
-			fmt.Fprint(&all, out)
-		}
-		return all.String()
+	set, err := in.st.CreateFileSet(store.FileSet{Name: "docs", Path: "/mnt/user/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(read(), "user:secret") {
-		t.Fatal("the person's own session does not see the locations as stored, so this test proves nothing")
+	ds, err := in.st.CreateZFSDataset(store.ZFSDataset{Dataset: "tank/data", Enabled: true, HookContainer: "db", PreSnapshot: hook, PostSnapshot: hook})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fill := func(path string) string {
+		switch {
+		case strings.HasPrefix(path, "/api/files/sets/"):
+			return set.ID
+		case strings.HasPrefix(path, "/api/zfs/datasets/"):
+			return ds.ID
+		case strings.HasPrefix(path, "/api/storage/locations/"):
+			return named.ID
+		case strings.HasPrefix(path, "/api/items/"), strings.HasPrefix(path, "/api/retention/"):
+			return "files"
+		}
+		return "abc"
+	}
+	leaks := []string{"s3cr", "AKIDLEAK", "LEAK,KEY", "hooksecret"}
+	seen := map[string]bool{}
+	for _, body := range pairedReads(in, fill) {
+		for _, leak := range leaks {
+			seen[leak] = seen[leak] || strings.Contains(body, leak)
+		}
+	}
+	for _, leak := range leaks {
+		if !seen[leak] {
+			t.Fatalf("the person's own session does not read %q anywhere, so this test proves nothing", leak)
+		}
 	}
 	hash, epoch, _ := in.h.authEnabled()
 	in.session = secret.NewPairedSessionToken(in.appKey, hash, epoch, time.Hour)
-	if got := read(); strings.Contains(got, "user:secret") {
-		t.Fatal("a paired session read a location with its sign-in")
+	for route, body := range pairedReads(in, fill) {
+		for _, leak := range leaks {
+			if strings.Contains(body, leak) {
+				t.Errorf("%s answered a paired session with %q", route, leak)
+			}
+		}
 	}
 }

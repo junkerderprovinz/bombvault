@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
@@ -460,6 +461,9 @@ func (s *Service) collectDeposit(ctx context.Context, memberID, ownerID string, 
 	}
 	var ans peerRelease
 	in := peerReleaseAsk{OwnerID: ownerID, Name: instanceDisplayName(settings), Renew: ask}
+	if in.peerProof, err = s.signCall(keydeposit.ProofRelease, memberID, callPayload(in.OwnerID, in.Name, strconv.FormatBool(in.Renew))); err != nil {
+		return nil, "", err
+	}
 	if err := s.callMember(ctx, memberID, http.MethodPost, "/api/group/peer/deposit/release", in, &ans); err != nil {
 		return nil, "", err
 	}

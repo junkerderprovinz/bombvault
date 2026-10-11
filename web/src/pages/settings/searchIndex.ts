@@ -455,6 +455,10 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       rows: [{ key: "auth.passkeyNameLabel" }],
     },
     {
+      title: "apps.phone.title",
+      rows: [{ key: "auth.phonePairing", hint: "auth.phonePairingHint" }],
+    },
+    {
       title: "tile.crypt.title",
       rows: [
         { key: "tile.crypt.toggle", hint: "settings.encryptionHint" },

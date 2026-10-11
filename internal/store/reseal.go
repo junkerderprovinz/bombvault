@@ -387,3 +387,57 @@ func SecondFactorSealIn(db *sql.DB) ([]byte, error) {
 	}
 	return sealed, nil
 }
+
+// DropTriggersAndViews removes every trigger and view of a staged database:
+// a crafted one would run its own SQL whenever the restore or the next boot
+// writes to a table. The triggers BombVault makes come back with their
+// migration at the next boot.
+func DropTriggersAndViews(db *sql.DB) error {
+	rows, err := db.Query(`SELECT type, name FROM sqlite_master WHERE type IN ('trigger', 'view')`)
+	if err != nil {
+		return fmt.Errorf("DropTriggersAndViews: %w", err)
+	}
+	var drops []string
+	for rows.Next() {
+		var kind, name string
+		if err := rows.Scan(&kind, &name); err != nil {
+			rows.Close() //nolint:errcheck,gosec // the scan error is the one to report
+			return fmt.Errorf("DropTriggersAndViews: %w", err)
+		}
+		drops = append(drops, `DROP `+strings.ToUpper(kind)+` IF EXISTS `+quoteIdent(name))
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("DropTriggersAndViews: %w", err)
+	}
+	for _, drop := range drops {
+		if _, err := db.Exec(drop); err != nil {
+			return fmt.Errorf("DropTriggersAndViews: %w", err)
+		}
+	}
+	migrations, err := tableColumns(db, "schema_migrations")
+	if err != nil || len(migrations) == 0 {
+		return err
+	}
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version = ?`, oneLineMigration); err != nil {
+		return fmt.Errorf("DropTriggersAndViews: %w", err)
+	}
+	return nil
+}
+
+// PasswordHashIn returns the login password hash of a staged database, empty
+// for none.
+func PasswordHashIn(db *sql.DB) (string, error) {
+	cols, err := tableColumns(db, "settings")
+	if err != nil || !slices.Contains(cols, "auth_password_hash") {
+		return "", err
+	}
+	var hash string
+	err = db.QueryRow(`SELECT auth_password_hash FROM settings WHERE id = 1`).Scan(&hash)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("PasswordHashIn: %w", err)
+	}
+	return hash, nil
+}

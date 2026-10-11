@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -432,11 +433,15 @@ func TestADepositGoesToNobodyWithoutMembershipOrAnAllow(t *testing.T) {
 	if stranger := peerCallAs(t, attic, strings.Repeat("9", 32), "/api/group/peer/deposit/release", ask); stranger["ok"] != false || len(releasesOn(t, attic)) != 0 {
 		t.Fatalf("a call from an id that is no member: %v", stranger)
 	}
-	waiting := peerCallAs(t, attic, fresh.id(t), "/api/group/peer/deposit/release", ask)
+	unsigned := peerCallAs(t, attic, fresh.id(t), "/api/group/peer/deposit/release", ask)
+	if unsigned["ok"] != false || len(releasesOn(t, attic)) != 0 {
+		t.Fatalf("a request the member did not sign: %v", unsigned)
+	}
+	waiting := peerCallAs(t, attic, fresh.id(t), "/api/group/peer/deposit/release", signedAsk(t, fresh, attic, ask))
 	if waiting["state"] != store.ReleaseAsked || waiting["deposit"] != nil || waiting["salt"] != nil {
 		t.Fatalf("a request nobody allowed: %v", waiting)
 	}
-	if none := peerCallAs(t, attic, fresh.id(t), "/api/group/peer/deposit/release", peerReleaseAsk{OwnerID: strings.Repeat("0", 32), Renew: true}); none["state"] != releaseNone {
+	if none := peerCallAs(t, attic, fresh.id(t), "/api/group/peer/deposit/release", signedAsk(t, fresh, attic, peerReleaseAsk{OwnerID: strings.Repeat("0", 32), Renew: true})); none["state"] != releaseNone {
 		t.Fatalf("a request for a deposit nobody made: %v", none)
 	}
 
@@ -471,4 +476,15 @@ func TestADepositGoesToNobodyWithoutMembershipOrAnAllow(t *testing.T) {
 	if got := keyRunsOf(t, attic); got[len(got)-1] != "keyask failed" {
 		t.Fatalf("the keeper's activity log ends with %v", got)
 	}
+}
+
+// signedAsk is ask as from signs it for keeper.
+func signedAsk(t *testing.T, from, keeper *instance, ask peerReleaseAsk) peerReleaseAsk {
+	t.Helper()
+	proof, err := from.svc.signCall(keydeposit.ProofRelease, keeper.id(t), callPayload(ask.OwnerID, ask.Name, strconv.FormatBool(ask.Renew)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ask.peerProof = proof
+	return ask
 }

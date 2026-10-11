@@ -134,6 +134,7 @@ var errSettingsOtherKey = errors.New("these settings were sealed with the APP_KE
 // old one, whose password hash no other APP_KEY can check. Settings of any
 // other install are refused. Where the database does not show whose it is,
 // it is taken for this server's and gets this server's login all the same.
+// The staged file is somebody's input, so its triggers and views go first.
 func (s *Service) takeOverStagedSettings(ctx context.Context) error {
 	path := filepath.Join(selfrestore.RestoredSnapshotDir(s.cfg.DataDir), "bombvault.sqlite")
 	if _, err := os.Stat(path); err != nil {
@@ -141,6 +142,10 @@ func (s *Service) takeOverStagedSettings(ctx context.Context) error {
 	}
 	db, err := store.OpenStaged(path)
 	if err != nil {
+		return err
+	}
+	if err := store.DropTriggersAndViews(db); err != nil {
+		_ = db.Close()
 		return err
 	}
 	s.emergencyMu.Lock()
@@ -160,6 +165,7 @@ func (s *Service) takeOverStagedSettings(ctx context.Context) error {
 		}
 	}
 	var opened, moved int
+	var ownLogin bool
 	var lost sealedLoss
 	whose := stagedOwn
 	err = store.ResealDatabase(db, func(c store.SealedColumn, sealed []byte) []byte {
@@ -177,10 +183,10 @@ func (s *Service) takeOverStagedSettings(ctx context.Context) error {
 		return nil
 	})
 	if err == nil {
-		whose, err = s.stagedOwnerOf(db, from, opened, lost.Count)
+		whose, ownLogin, err = s.stagedOwnerOf(db, from, opened, lost.Count)
 	}
 	if err == nil {
-		err = s.finishTakeover(db, sess, whose, lost)
+		err = s.finishTakeover(db, sess, whose, ownLogin, lost)
 	}
 	if cErr := store.CloseStaged(db); err == nil {
 		err = cErr
@@ -230,15 +236,18 @@ func restoreEmergency(ctx context.Context) string {
 
 // stagedOwnerOf reads from a staged database whose settings it holds. opened
 // and lost count its sealed values that open under this server's key and
-// under none.
-func (s *Service) stagedOwnerOf(db *sql.DB, from string, opened, lost int) (stagedOwner, error) {
+// under none. ownLogin reports whether the login in it can stay: the check
+// value is this server's, everything sealed opens and there is a password.
+// The check value alone proves nothing, it is in the clear in every settings
+// backup.
+func (s *Service) stagedOwnerOf(db *sql.DB, from string, opened, lost int) (whose stagedOwner, ownLogin bool, err error) {
 	check, err := store.KeyCheckIn(db)
 	if err != nil {
-		return stagedOther, err
+		return stagedOther, false, err
 	}
 	factor, err := store.SecondFactorSealIn(db)
 	if err != nil {
-		return stagedOther, err
+		return stagedOther, false, err
 	}
 	if len(factor) > 0 {
 		if _, err := secret.Decrypt(s.cfg.AppKey, factor); err == nil {
@@ -247,18 +256,23 @@ func (s *Service) stagedOwnerOf(db *sql.DB, from string, opened, lost int) (stag
 			lost++
 		}
 	}
-	return whoseSettings(check, s.cfg.AppKey, from, opened, lost), nil
+	hash, err := store.PasswordHashIn(db)
+	if err != nil {
+		return stagedOther, false, err
+	}
+	ownLogin = check == secret.KeyCheck(s.cfg.AppKey) && lost == 0 && hash != ""
+	return whoseSettings(check, s.cfg.AppKey, from, opened, lost), ownLogin, nil
 }
 
-// finishTakeover puts the adopted backup key and, for settings that are not
-// shown to be this server's, this server's login into the staged database.
-func (s *Service) finishTakeover(db *sql.DB, sess *emergencySession, whose stagedOwner, lost sealedLoss) error {
+// finishTakeover puts the adopted backup key and, unless the login in the
+// staged database is shown to be this server's, this server's login into it.
+func (s *Service) finishTakeover(db *sql.DB, sess *emergencySession, whose stagedOwner, ownLogin bool, lost sealedLoss) error {
 	own := s.cfg.AppKey
 	if whose == stagedOther {
 		return errSettingsOtherKey
 	}
 	if whose != stagedForeign {
-		if whose == stagedUnknown {
+		if !ownLogin {
 			if err := s.store.CarryLoginInto(db); err != nil {
 				return err
 			}

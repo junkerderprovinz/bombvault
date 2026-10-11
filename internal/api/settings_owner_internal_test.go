@@ -70,6 +70,7 @@ func TestOwnSettingsRestoredWhileAnEmergencyLingersKeepTheServersKey(t *testing.
 		t.Fatalf("a typed key was adopted over the server's own backups: %v", res)
 	}
 
+	f.withPassword("this server's password")
 	staged := f.stage(settingsOfTheOldInstall(t, own))
 	if err := f.svc.takeOverStagedSettings(context.Background()); err != nil {
 		t.Fatalf("takeOverStagedSettings: %v", err)
@@ -78,8 +79,9 @@ func TestOwnSettingsRestoredWhileAnEmergencyLingersKeepTheServersKey(t *testing.
 	if key, err := svc.backupKey(); err != nil || key != own || svc.currentBackupKey().state != backupKeyOwn {
 		t.Fatalf("the restored settings back up under another key than the server's own (state %s, %v)", svc.currentBackupKey().state, err)
 	}
-	if hash := restoredLogin(t, staged, own); !secret.VerifyPassword(own, "the old password", hash) {
-		t.Fatal("the server's own settings came back with another login than their own")
+	// Without the check value nothing shows the login in them is this server's.
+	if hash := restoredLogin(t, staged, own); !secret.VerifyPassword(own, "this server's password", hash) {
+		t.Fatal("settings without a check value came back with their own login")
 	}
 }
 

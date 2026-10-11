@@ -8,19 +8,28 @@ import (
 )
 
 // A group shares one secret, so a member can speak in any other member's
-// name. An install therefore proves to its keeper that a deposit is its own
-// with an Ed25519 key the keeper saw with the first deposit. Whoever else
-// names the install has no such key and can neither replace the deposit nor
-// take it back.
+// name. An install therefore signs what only it may say with an Ed25519 key:
+// its deposits to the keeper that saw the key with the first one, and its
+// answers about roles, the passwords and logins those give, and requests for
+// a deposit to every member, which learns the key from the install itself.
+// Whoever else names the install has no such key.
 
 // The actions a proof covers.
 const (
 	ProofKeep = "keep"
 	ProofDrop = "drop"
+	// ProofKey is a member's answer to the question which key it signs with.
+	ProofKey           = "key"
+	ProofRoleAnswer    = "role-answer"
+	ProofRoleWithdraw  = "role-withdraw"
+	ProofPairing       = "pairing"
+	ProofReceiverLogin = "receiver-login"
+	ProofRelease       = "release"
 )
 
-// Claim is what an install says to its keeper and signs. Counter only ever
-// grows, so a call the keeper has seen cannot be sent to it again.
+// Claim is what an install says and signs. Counter only ever grows, so a call
+// the other side has seen cannot be sent to it again. Deposit and Salt are a
+// deposit's; another call puts what it says into Deposit.
 type Claim struct {
 	Action   string
 	OwnerID  string

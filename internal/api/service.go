@@ -5081,13 +5081,10 @@ func (s *Service) ensureRepo(ctx context.Context, repo string, mode restic.Mode)
 // surfaces this instead of a misleading "no backups" (#55).
 var ErrBackupPathNotMounted = errors.New("backup path is not mounted yet: a remote backup share may mount late at boot; it recovers once the mount is available (restart BombVault if it persists)")
 
-// markRepoEstablished records a successfully created/opened LOCAL repo so a later
-// open-failure can be told apart from a fresh location (#55). Remote repos have
-// no local backing store to vanish, so they are not tracked. Best-effort.
+// markRepoEstablished records a repo that was created or opened. For a local
+// one it tells a later open failure apart from a fresh location (#55); for
+// every one it shows an undo of an adopted key that the key is in use.
 func (s *Service) markRepoEstablished(repo string) {
-	if restic.IsRemoteRepo(repo) {
-		return
-	}
 	if err := s.store.MarkRepoEstablished(repo); err != nil {
 		log.Printf("api: mark repo established: %v", err)
 	}
