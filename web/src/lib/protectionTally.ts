@@ -6,7 +6,8 @@ import type { EntryKind } from "./backupEntry";
 import { entriesOf, isGone, protection } from "./backupList";
 
 export interface Tally {
-  /** What is counted: the installed entries of every switched-on kind. */
+  /** What is counted: the installed entries of every switched-on kind, less
+   *  those the person said not to back up. */
   entries: BackupItem[];
   total: number;
   ok: number;
@@ -14,12 +15,15 @@ export interface Tally {
   none: number;
   /** Entries whose container or VM is gone from the host. They are not counted. */
   gone: number;
+  /** The installed entries the person said not to back up. They are not counted. */
+  declined: BackupItem[];
 }
 
 /** tallyEntries counts the rows of GET /api/items, all kinds or one. */
 export function tallyEntries(items: BackupItem[], kind?: EntryKind): Tally {
   const all = entriesOf(items).filter((item) => !item.kindDisabled && (!kind || item.kind === kind));
-  const entries = all.filter((item) => !isGone(item));
+  const installed = all.filter((item) => !isGone(item));
+  const entries = installed.filter((item) => !item.backupDeclined);
   const count = (state: ReturnType<typeof protection>) => entries.filter((item) => protection(item) === state).length;
   return {
     entries,
@@ -27,7 +31,8 @@ export function tallyEntries(items: BackupItem[], kind?: EntryKind): Tally {
     ok: count("ok"),
     pending: count("pending"),
     none: count("none"),
-    gone: all.length - entries.length,
+    gone: all.length - installed.length,
+    declined: installed.filter((item) => item.backupDeclined),
   };
 }
 

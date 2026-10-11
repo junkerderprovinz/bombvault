@@ -132,6 +132,11 @@ describe("protection", () => {
     expect(protection(item({ lastBackup: 0, effectiveSchedule: { kind: "none", spec: "", alsoSpec: "" } }))).toBe("none");
     expect(protection(item({ lastBackup: 0, installed: false }))).toBe("none");
   });
+
+  it("is missing for an entry the person said not to back up, whatever backups it has", () => {
+    expect(protection(item({ included: false, backupDeclined: true }))).toBe("none");
+    expect(protection(item({ lastBackup: 0, included: false, backupDeclined: true }))).toBe("none");
+  });
 });
 
 describe("the one status of a row", () => {
@@ -150,6 +155,10 @@ describe("the one status of a row", () => {
   it("warns about an entry nothing will back up and waits for one that is scheduled", () => {
     expect(rowStatus(item({ lastBackup: 0, included: false }), 0)).toEqual({ is: "notProtected" });
     expect(rowStatus(item({ lastBackup: 0 }), 0)).toEqual({ is: "waiting" });
+  });
+
+  it("says not protected of an entry set aside that still has a backup", () => {
+    expect(rowStatus(item({ included: false, backupDeclined: true }), 0)).toEqual({ is: "notProtected" });
   });
 
   it("leaves only the date on an entry that is gone or whose kind is off, failed or not", () => {
