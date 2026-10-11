@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -528,6 +529,51 @@ func TestDeletingTheBackupsAtADestinationTakesALoginPassword(t *testing.T) {
 	}
 	if res := f.do("POST", "/api/offsite/destinations/"+box.ID+"/removal", map[string]any{"expect": f.removalPreview(box)}); res["ok"] != true {
 		t.Fatalf("removing the destination and keeping its backups = %v, want it done", res)
+	}
+}
+
+func TestAnErasureKeepsASectionWhoseDeleteTestWasRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box, vms := boxWithVMs(f)
+	if err := f.st.RecordTamperTestForTarget("vms", vms.ID, true, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	preview := f.erasurePreview(box)
+
+	if got := preview.Sections[0]; got.Kept != erasureKeptAppendOnly {
+		t.Fatalf("the section behind an object lock reads as %+v, want it kept as append-only", got)
+	}
+	if res := f.erase(box, preview.Removal, "vm:old"); res["code"] != "nothing-to-erase" {
+		t.Fatalf("answer = %v, want nothing-to-erase", res)
+	}
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+}
+
+func TestAnErasureThatFailsHalfwayNamesTheSectionsItEmptied(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box, _ := boxWithVMs(f)
+	f.tickDestination(box, "files")
+	f.hold(f.domainPath("files"), snap("d1", 10, "fileset:docs"))
+	f.hold(boxRepo+"/files", copied("e1", "d1", 10, "fileset:docs"))
+	f.eng.forgetErr = map[string]error{boxRepo + "/vms": errors.New("connection reset")}
+
+	if res := f.erase(box, f.erasurePreview(box).Removal, "vm:old"); res["ok"] != true {
+		t.Fatalf("answer = %v, want a started run", res)
+	}
+	f.waitForErasure("vms")
+	f.waitForErasure("files")
+
+	if left := f.held(boxRepo + "/files"); len(left) != 0 {
+		t.Fatalf("the files section still holds %v, want it emptied first", left)
+	}
+	run, err := f.st.LastRunOfKind("vms", "prune")
+	if err != nil || run == nil || run.Status != "failed" || !strings.Contains(run.Error, "files at "+boxRepo+"/files") {
+		t.Fatalf("the failed run = %+v, %v; want it to name the files section it emptied before", run, err)
 	}
 }
 

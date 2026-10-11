@@ -238,7 +238,7 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 		}
 		kept := ""
 		switch {
-		case t.Immutable:
+		case s.refusesDeletes(t):
 			kept = erasureKeptAppendOnly
 		case plan.shared(s, t.Repo, t.ID, id):
 			kept = erasureKeptInUse
@@ -311,6 +311,17 @@ func (p erasurePlan) digest() string {
 	}
 	sum := sha256.Sum256([]byte(b.String()))
 	return hex.EncodeToString(sum[:])
+}
+
+// refusesDeletes reports whether a target is marked append-only or its last
+// delete test was refused, by append-only or an object lock. A test that cannot
+// be read counts as refused.
+func (s *Service) refusesDeletes(t store.OffsiteTarget) bool {
+	if t.Immutable {
+		return true
+	}
+	test, found, err := s.store.LatestTamperTestForTarget(t.Domain, t.ID)
+	return err != nil || found && test.Protected
 }
 
 // add lists one repository of a target, its copy or its direct repository,
@@ -519,7 +530,8 @@ func (p erasurePlan) refusal(expect destinationRemoval, named []string) error {
 
 // runErasure empties one repository after the other and stops at the first
 // that fails, so a destination that still holds backups is not removed. Each
-// is recorded as a prune of its section.
+// is recorded as a prune of its section, and the one that fails names those
+// already emptied.
 func (s *Service) runErasure(ctx context.Context, plan erasurePlan, startedAt int64) error {
 	var todo []erasureRepo
 	for i, section := range plan.Sections {
@@ -527,6 +539,7 @@ func (s *Service) runErasure(ctx context.Context, plan erasurePlan, startedAt in
 			todo = append(todo, plan.repos[i])
 		}
 	}
+	var emptied []string
 	for done, repo := range todo {
 		s.publishProgress(progress.Event{
 			Key: plan.Key, Phase: "maintenance", Active: true, StartedAt: startedAt,
@@ -537,6 +550,9 @@ func (s *Service) runErasure(ctx context.Context, plan erasurePlan, startedAt in
 			log.Printf("api: erase %s: the run is not recorded: %v", repo.domain, rErr) //nolint:gosec // G706: domain is a fixed literal
 		}
 		err := s.emptyRepo(ctx, repo)
+		if err != nil && len(emptied) > 0 {
+			err = fmt.Errorf("%w; already emptied: %s", err, strings.Join(emptied, ", "))
+		}
 		if runID != "" {
 			status := "success"
 			switch {
@@ -552,6 +568,7 @@ func (s *Service) runErasure(ctx context.Context, plan erasurePlan, startedAt in
 		if err != nil {
 			return fmt.Errorf("%s at %s: %w", repo.domain, shortRepoName(repo.loc), err)
 		}
+		emptied = append(emptied, repo.domain+" at "+scrubRepoLocation(repo.loc))
 	}
 	return nil
 }
