@@ -4,9 +4,9 @@
 // default theme. A cleared browser renders defaults for a moment and then picks
 // up the stored look.
 
-/** Every localStorage key that describes how the interface looks. List filters
- *  and sort orders (bv-containers-sort and friends) belong to one page, and
- *  syncing them would move someone else's filter under your cursor; the
+/** Every localStorage key that describes how the interface looks. The filters
+ *  and the order of a list (bv-backups-view) belong to one page, and syncing
+ *  them would move someone else's filter under your cursor. The
  *  password-visibility toggle is per session. */
 const KEYS = [
   "bv-theme",

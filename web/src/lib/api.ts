@@ -1907,18 +1907,6 @@ export function setScheduleCadence(
   });
 }
 
-/**
- * POST /api/containers/schedule-include — one-click set the "include in schedule"
- * flag for EVERY installed container (true = include all, false = exclude all).
- * Excluding also takes not-installed entries off the schedule (#232).
- */
-export function setIncludeAll(include: boolean): Promise<OkEnvelope> {
-  return fetchJSON("/api/containers/schedule-include", {
-    method: "POST",
-    body: JSON.stringify({ include }),
-  });
-}
-
 /** One container's explicit manual backup position (#119). */
 export interface ContainerOrder {
   container: string;

@@ -190,7 +190,6 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "excludes.hint": EXCLUDES_HINT_LTR_FRAGMENTS,
   "recovery.foreignAppdataDestHint": FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS,
   "config.enabledHint": CONFIG_VOLUME_LTR_FRAGMENTS,
-  "containers.discoverHint": CONFIG_VOLUME_LTR_FRAGMENTS,
   "settings.cacheHint": CONFIG_VOLUME_LTR_FRAGMENTS,
   "excludes.placeholder": EXCLUDES_PLACEHOLDER_LTR_FRAGMENTS,
   "jobs.flashScheduleHint": BOOT_VOLUME_LTR_FRAGMENTS,

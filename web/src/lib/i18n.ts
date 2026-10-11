@@ -144,10 +144,8 @@ export const en = {
   "spike.probeFailed": "probe failed (see server logs)",
 
   // Containers
-  "containers.title": "Containers",
   "containers.discover": "Discover backups",
   "containers.discovering": "Discovering…",
-  "containers.discoverHint": "Lost /config? Rebuild the backup list from storage.",
   "containers.backupNow": "Back up now",
   "containers.stopWarning": "Backing up a container stops it while the backup runs, then starts it again. That is what keeps its data consistent. The first backup is the long one; later ones only copy what changed.",
   "containers.lastBackup": "Last backup",
@@ -176,8 +174,6 @@ export const en = {
   "containers.scheduleHint": "Included containers back up one after another from the scheduled time. They share one repository, so they run in sequence, not all at once.",
   "containers.notInstalled": "Not installed",
   "containers.notInstalledTitle": "Not installed (backups only)",
-  "containers.notInstalledHint": "These containers are no longer installed but still have backups. Restore them, or delete their backups to free space.",
-  "containers.notInstalledSkipped": "Entries that are still scheduled record a skip on every run. Switch off “Include in schedule” on the card to stop that.",
   "containers.deleteBackups": "Delete all backups",
   "containers.deleteBackupsConfirm": "Delete all backups of this container? The snapshots are permanently removed from the repository and cannot be undone. Its database dumps are deleted too.",
   "containers.removeEntryConfirm": "Remove this container's entry from the list? Its backups, if any, are not deleted.",
@@ -212,21 +208,12 @@ export const en = {
   "takeover.conflict": "The old name {old} is taken again",
   "takeover.conflictHint": "Something else now runs under this old name. This entry's older backups stay with it. Rename the other one if the two should stay separate.",
 
-  "containers.filter": "Filter:",
-  "containers.filterAll": "All",
   "containers.filterInstalled": "Installed",
-  "containers.sectionsLabel": "Sections",
   "containers.selectAll": "Select all",
-  "containers.selectedCount": "selected",
   "containers.backupSelected": "Back up selected",
-  "containers.restoreSelected": "Restore selected (latest)",
   "containers.restoreSelectedConfirm": "Restore the LATEST backup of the selected containers? Each is stopped, its appdata replaced, and the container recreated.",
-  "containers.clearSelection": "Clear",
-  "containers.working": "Working…",
   "containers.batchStarted": "Backup started. It runs on the server, so you can close this tab.",
   "containers.batchAlreadyRunning": "A batch backup is already running.",
-  "containers.batchRunning": "Backing up selected containers…",
-  "containers.selfNote": "This is BombVault. It doesn't back up its own container (that would stop itself); its settings are recovered via Discover.",
 
   // Post-backup update-check line (G4)
   "containers.updateCheckLabel": "Update check",
@@ -383,14 +370,10 @@ export const en = {
 
   // Stacks (compose-project restore)
   "stack.title": "Stacks",
-  "stack.restore": "Restore stack…",
   "stack.members": "one={n} container|other={n} containers",
-  "stack.restoreHint":
-    "Restores every container in this stack from its latest backup, left stopped, then (optionally) starts them in dependency order.",
   "stack.startInOrder": "Start in dependency order after restore",
   "stack.restoreConfirm":
     "Restore all containers in this stack? Each is recreated from its latest backup.",
-  "stack.restoring": "Restoring stack…",
   "stack.restored": "Stack restored",
   "stack.restoreFinished": "Stack restore finished. See the run history for per-container results.",
   "stack.memberRestored": "restored",
@@ -530,29 +513,6 @@ export const en = {
   "offsite.replicating": "Replicating…",
   "offsite.throttleNow": "slowed for streaming",
   "offsite.throttleNext": "stream running, slower from the next step",
-  // Issue #159: appended next to offsite.replicating when the live progress
-  // event carries a startedAt (see OffsiteIndicator) but no live per-snapshot
-  // percentage is available YET (e.g. restic is still walking the source tree
-  // before it starts copying packs) — a live elapsed duration is shown in its
-  // place, same as before percentage support existed.
-  "offsite.replicatingWithDuration": "Replicating… ({duration})",
-  // Issue #159: restic copy DOES print a real, parseable per-snapshot
-  // pack-copy percentage (see restic.Copy's doc comment), and lib/progress.ts's
-  // offsiteRunProgress folds it into the snapshot count to get ONE run-level
-  // figure. Word order matters here and is not free styling: the first cut read
-  // "Replicating snapshot 15 of 126 (55%)", where the parenthetical was the
-  // CURRENT snapshot's own pack progress but every reader took it as
-  // "15/126 = 55%" — two correct numbers rendered as one wrong claim. With the
-  // percentage leading and "snapshot k of N" demoted to the parenthetical, the
-  // two now agree (~12% either way) instead of fighting. Do not reorder them
-  // back. The "overall" wording is what makes the scope explicit — keep an
-  // equivalent in every locale.
-  "offsite.replicatingSnapshotPercent": "Replicating… {percent}% overall (snapshot {index} of {total})",
-  "offsite.replicatingSnapshotPercentWithDuration": "Replicating… {percent}% overall (snapshot {index} of {total}) · {duration}",
-  // The (i) next to that readout (OffsiteIndicator). The percentage counts
-  // SNAPSHOTS against a best-effort estimate, not bytes — house rule says that
-  // caveat belongs behind an info bubble, not as permanent prose on the line.
-  "offsite.overallPercentHint": "Overall progress for this replication run, counted in snapshots: restic only ever reports progress for one snapshot at a time, never for a whole copy. Snapshots differ in size, so treat this as an estimate.",
   "offsite.replicateFailed": "Replication failed",
   "offsite.test": "Test connection",
   // Shown instead of offsite.test once the domain has additional targets: that
@@ -1508,10 +1468,8 @@ export const en = {
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Duration",
-  "containers.searchPlaceholder": "Search containers…",
   "filter.all": "All",
   "filter.scheduled": "Scheduled",
-  "filter.notScheduled": "Not scheduled",
   "filter.backedUp": "Backed up",
   "filter.neverBackedUp": "Never backed up",
   "filter.schedule": "Schedule",
@@ -1528,10 +1486,6 @@ export const en = {
   "jobs.cadenceDaily": "Daily at {time}",
   "jobs.cadenceWeekly": "Weekly ({days}) at {time}",
   "jobs.cadenceEveryN": "one=Every day at {time}|other=Every {n} days at {time}",
-  "sort.label": "Sort:",
-  "sort.nameAsc": "Name (A–Z)",
-  "sort.status": "Status",
-  "sort.ip": "IP",
   "cadence.off": "Off",
   "cadence.daily": "Daily",
   "cadence.weekly": "Weekly",
@@ -1586,7 +1540,6 @@ export const en = {
   // rather than left as a key that looks generic-and-shared but is used
   // nowhere — the next person to need a reset label would have reached for it
   // and reintroduced exactly the ambiguity this round removed.)
-  "containers.emptyDocker": "No containers found. Is Docker running?",
   "containers.bulkResult": "{ok} ok, {fail} failed",
   "vm.method.saveFailed": "Couldn't change the backup method. It was not switched.",
   "jobs.noContainersIncluded": "No containers included in schedule.",
@@ -1594,8 +1547,6 @@ export const en = {
   "jobs.syncSchedulesHint": "When enabled, VMs, Flash, Folders and ZFS datasets all follow the Containers schedule instead of their own. Turn it off to set each domain's cadence independently.",
   "jobs.flashScheduleHint": "Backs up the Unraid USB flash boot drive (/boot) at the scheduled time.",
   "jobs.vmIncludeHint": "Backs up every VM with “include in schedule” enabled (set it per VM in the VMs tab).",
-  "schedule.includeAll": "Include all in schedule",
-  "schedule.excludeAll": "Exclude all from schedule",
   "schedule.updateFailed": "Failed to update schedule",
   "schedule.pause": "Pause schedule",
   "schedule.resume": "Resume schedule",
@@ -1749,7 +1700,6 @@ export const en = {
   "common.compareFailed": "Compare failed",
   "common.loadBackupsFailed": "Failed to load backups",
   "common.deleteBackupsFailed": "Failed to delete backups",
-  "containers.loadFailed": "Failed to load containers",
   "containers.backupStartFailed": "Failed to start backup",
   "containers.updateSettingFailed": "Failed to update setting",
   "config.loadSettingsFailed": "Could not load current settings",
@@ -4524,10 +4474,8 @@ export const de: Translations = {
   "spike.checkNow": "Jetzt prüfen",
   "spike.probeFailed": "Prüfung fehlgeschlagen (siehe Server-Logs)",
 
-  "containers.title": "Container",
   "containers.discover": "Backups entdecken",
   "containers.discovering": "Suche…",
-  "containers.discoverHint": "/config verloren? Backup-Liste aus dem Speicher wiederherstellen.",
   "containers.backupNow": "Jetzt sichern",
   "containers.stopWarning": "Beim Sichern wird der Container angehalten und danach wieder gestartet. Nur so bleiben seine Daten in sich stimmig. Die erste Sicherung dauert am längsten, spätere kopieren nur noch Änderungen.",
   "containers.lastBackup": "Letztes Backup",
@@ -4556,8 +4504,6 @@ export const de: Translations = {
   "containers.scheduleHint": "Aufgenommene Container werden ab der geplanten Zeit nacheinander gesichert. Sie teilen sich ein Repository, laufen also der Reihe nach, nicht alle gleichzeitig.",
   "containers.notInstalled": "Nicht installiert",
   "containers.notInstalledTitle": "Nicht installiert (nur Backups)",
-  "containers.notInstalledHint": "Diese Container sind nicht mehr installiert, haben aber noch Backups. Stelle sie wieder her oder lösche ihre Backups, um Platz freizugeben.",
-  "containers.notInstalledSkipped": "Einträge, die hier noch eingeplant sind, halten bei jedem Lauf einen Überspringer fest. Schalte auf der Karte „Im Zeitplan einschließen“ aus, damit das aufhört.",
   "containers.deleteBackups": "Alle Backups löschen",
   "containers.deleteBackupsConfirm": "Alle Backups dieses Containers löschen? Die Snapshots werden dauerhaft aus dem Repository entfernt und können nicht wiederhergestellt werden. Die Datenbank-Dumps des Containers werden ebenfalls gelöscht.",
   "containers.removeEntryConfirm": "Den Eintrag dieses Containers aus der Liste entfernen? Vorhandene Backups werden nicht gelöscht.",
@@ -4591,21 +4537,12 @@ export const de: Translations = {
   "takeover.conflict": "Der alte Name {old} ist wieder vergeben",
   "takeover.conflictHint": "Unter diesem alten Namen läuft jetzt etwas anderes. Die älteren Backups bleiben bei diesem Eintrag. Sollen beide getrennt bleiben, benenne das andere um.",
 
-  "containers.filter": "Filter:",
-  "containers.filterAll": "Alle",
   "containers.filterInstalled": "Installiert",
-  "containers.sectionsLabel": "Bereiche",
   "containers.selectAll": "Alle auswählen",
-  "containers.selectedCount": "ausgewählt",
   "containers.backupSelected": "Auswahl sichern",
-  "containers.restoreSelected": "Auswahl wiederherstellen (neuestes)",
   "containers.restoreSelectedConfirm": "Das NEUESTE Backup der ausgewählten Container wiederherstellen? Jeder wird gestoppt, seine Appdata ersetzt und neu erstellt.",
-  "containers.clearSelection": "Leeren",
-  "containers.working": "Arbeite…",
   "containers.batchStarted": "Backup gestartet. Es läuft auf dem Server, du kannst diesen Tab schließen.",
   "containers.batchAlreadyRunning": "Es läuft bereits ein Sammel-Backup.",
-  "containers.batchRunning": "Sichere ausgewählte Container…",
-  "containers.selfNote": "Das ist BombVault. Es sichert seinen eigenen Container nicht (würde sich selbst stoppen); seine Einstellungen werden über Discover wiederhergestellt.",
 
   // Post-Backup-Update-Prüfzeile (G4)
   "containers.updateCheckLabel": "Update-Prüfung",
@@ -4760,14 +4697,10 @@ export const de: Translations = {
 
   // Stacks (Compose-Projekt-Wiederherstellung)
   "stack.title": "Stacks",
-  "stack.restore": "Stack wiederherstellen…",
   "stack.members": "{n} Container",
-  "stack.restoreHint":
-    "Stellt jeden Container dieses Stacks aus dem letzten Backup wieder her (gestoppt) und startet sie danach optional in Abhängigkeitsreihenfolge.",
   "stack.startInOrder": "Nach dem Restore in Abhängigkeitsreihenfolge starten",
   "stack.restoreConfirm":
     "Alle Container dieses Stacks wiederherstellen? Jeder wird aus seinem letzten Backup neu erstellt.",
-  "stack.restoring": "Stack wird wiederhergestellt…",
   "stack.restored": "Stack wiederhergestellt",
   "stack.restoreFinished": "Stack-Wiederherstellung abgeschlossen: Ergebnisse je Container im Verlauf.",
   "stack.memberRestored": "wiederhergestellt",
@@ -4880,10 +4813,6 @@ export const de: Translations = {
   "offsite.replicating": "Repliziere…",
   "offsite.throttleNow": "gebremst fürs Streaming",
   "offsite.throttleNext": "Stream läuft, langsamer ab dem nächsten Schritt",
-  "offsite.replicatingWithDuration": "Repliziere… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Repliziere… {percent} % gesamt (Snapshot {index} von {total})",
-  "offsite.replicatingSnapshotPercentWithDuration": "Repliziere… {percent} % gesamt (Snapshot {index} von {total}) · {duration}",
-  "offsite.overallPercentHint": "Gesamtfortschritt dieses Replikationslaufs, gezählt in Snapshots: restic meldet Fortschritt immer nur für einen einzelnen Snapshot, nie für einen ganzen Kopiervorgang. Snapshots sind unterschiedlich groß, das hier ist also ein Schätzwert.",
   "offsite.replicateFailed": "Replikation fehlgeschlagen",
   "offsite.test": "Verbindung testen",
   "offsite.testPrimary": "Primäres Ziel testen",
@@ -5719,10 +5648,8 @@ export const de: Translations = {
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Dauer",
-  "containers.searchPlaceholder": "Container suchen…",
   "filter.all": "Alle",
   "filter.scheduled": "Geplant",
-  "filter.notScheduled": "Nicht geplant",
   "filter.backedUp": "Gesichert",
   "filter.neverBackedUp": "Nie gesichert",
   "filter.schedule": "Zeitplan",
@@ -5739,10 +5666,6 @@ export const de: Translations = {
   "jobs.cadenceDaily": "Täglich um {time}",
   "jobs.cadenceWeekly": "Wöchentlich ({days}) um {time}",
   "jobs.cadenceEveryN": "one=Jeden Tag um {time}|other=Alle {n} Tage um {time}",
-  "sort.label": "Sortieren:",
-  "sort.nameAsc": "Name (A–Z)",
-  "sort.status": "Status",
-  "sort.ip": "IP",
   "cadence.off": "Aus",
   "cadence.daily": "Täglich",
   "cadence.weekly": "Wöchentlich",
@@ -5786,7 +5709,6 @@ export const de: Translations = {
   "folder.pathHint": "Pfad muss ein relativer Unterpfad sein (kein führendes / oder ..)",
   "folder.couldNotRead": "Verzeichnis konnte nicht gelesen werden",
   "folder.browseFailed": "Durchsuchen fehlgeschlagen",
-  "containers.emptyDocker": "Keine Container gefunden. Läuft Docker?",
   "containers.bulkResult": "{ok} ok, {fail} fehlgeschlagen",
   "vm.method.saveFailed": "Backup-Methode konnte nicht geändert werden. Sie wurde nicht umgestellt.",
   "jobs.noContainersIncluded": "Keine Container im Zeitplan enthalten.",
@@ -5794,8 +5716,6 @@ export const de: Translations = {
   "jobs.syncSchedulesHint": "Wenn aktiviert, folgen VMs, Flash, Ordner und ZFS-Datasets dem Container-Zeitplan statt ihrem eigenen. Schalte es aus, um für jede Domäne einen eigenen Rhythmus festzulegen.",
   "jobs.flashScheduleHint": "Sichert den Unraid-USB-Flash-Bootstick (/boot) zur geplanten Zeit.",
   "jobs.vmIncludeHint": "Sichert jede VM mit aktiviertem „In Zeitplan aufnehmen“ (pro VM im VMs-Tab einstellbar).",
-  "schedule.includeAll": "Alle in den Zeitplan",
-  "schedule.excludeAll": "Alle aus dem Zeitplan",
   "schedule.updateFailed": "Zeitplan konnte nicht aktualisiert werden",
   "schedule.pause": "Zeitplan pausieren",
   "schedule.resume": "Zeitplan fortsetzen",
@@ -5920,7 +5840,6 @@ export const de: Translations = {
   "common.compareFailed": "Vergleich fehlgeschlagen",
   "common.loadBackupsFailed": "Sicherungen konnten nicht geladen werden",
   "common.deleteBackupsFailed": "Sicherungen konnten nicht gelöscht werden",
-  "containers.loadFailed": "Container konnten nicht geladen werden",
   "containers.backupStartFailed": "Sicherung konnte nicht gestartet werden",
   "containers.updateSettingFailed": "Einstellung konnte nicht geändert werden",
   "config.loadSettingsFailed": "Aktuelle Einstellungen konnten nicht geladen werden",

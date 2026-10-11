@@ -174,6 +174,13 @@ const corner = () => within(screen.getByTestId("page-actions"));
 const button = (name: string) => screen.getByRole("button", { name });
 const address = () => screen.getByTestId("address").textContent;
 
+/** What the bubble of the corner's backup button says while it cannot be pressed. */
+function whyHeld(): string {
+  // A disabled button gets no hover, so the box around it shows the bubble.
+  fireEvent.mouseEnter(corner().getByRole("button", { name: en["containers.backupNow"] }).parentElement!);
+  return screen.getByRole("tooltip").textContent ?? "";
+}
+
 beforeEach(() => {
   pushed.length = 0;
   streams.length = 0;
@@ -340,6 +347,66 @@ describe("the actions of the corner", () => {
     expect(within(dialog).getByText(en["containers.stopWarning"])).toBeTruthy();
     await press(within(dialog).getByRole("button", { name: en["containers.backupNow"] }));
     await waitFor(() => expect(backupNow).toHaveBeenCalledWith("immich"));
+  });
+
+  it("starts nothing when the warning is declined, and asks again the next time", async () => {
+    await renderPage("/backups/container/immich");
+    await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["common.cancel"] }));
+    expect(backupNow).not.toHaveBeenCalled();
+    await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
+    expect(within(screen.getByRole("dialog")).getByText(en["containers.stopWarning"])).toBeTruthy();
+  });
+
+  it("does not warn a browser that has answered the warning before", async () => {
+    await renderPage("/backups/container/immich");
+    await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["containers.backupNow"] }));
+    await waitFor(() => expect(backupNow).toHaveBeenCalledTimes(1));
+    cleanup();
+
+    await renderPage("/backups/container/immich");
+    await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(backupNow).toHaveBeenCalledTimes(2));
+  });
+
+  it("warns every time when the browser refuses to say what was answered, and not never", async () => {
+    const read = Storage.prototype.getItem;
+    const refused = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
+      if (key === "bv-container-stop-ack") throw new Error("blocked");
+      return read.call(this, key);
+    });
+    try {
+      localStorage.setItem("bv-container-stop-ack", "1");
+      await renderPage("/backups/container/immich");
+      await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
+      expect(within(screen.getByRole("dialog")).getByText(en["containers.stopWarning"])).toBeTruthy();
+      expect(backupNow).not.toHaveBeenCalled();
+    } finally {
+      refused.mockRestore();
+    }
+  });
+
+  // A dump of a large database runs for minutes with no percentage of its
+  // own, so the button says what is happening.
+  it("counts the dumped bytes while the entry's own backup dumps its database", async () => {
+    localStorage.setItem("bv-container-stop-ack", "1");
+    await renderPage("/backups/container/immich");
+    await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
+    await waitFor(() => expect(backupNow).toHaveBeenCalled());
+    progress({ key: "container:immich", phase: "backup", stage: "dbdump", bytes: 5_242_880, percent: 0, active: true });
+    expect(whyHeld()).toContain("5.0 MB");
+  });
+
+  it.each([
+    ["a dump", "dbdump", en["dbdump.busyDumping"]],
+    ["a backup", undefined, en["common.backupRunning"]],
+  ])("says that %s of another entry holds the backup back", async (_, stage, hint) => {
+    await renderPage("/backups/container/immich");
+    progress({ key: "container:gitea", phase: "backup", stage, percent: 10, active: true });
+    expect((corner().getByRole("button", { name: en["containers.backupNow"] }) as HTMLButtonElement).disabled).toBe(true);
+    expect(whyHeld()).toBe(hint);
   });
 
   it.each([
