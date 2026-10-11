@@ -76,6 +76,9 @@ func (s *Service) editPathConnection(ctx context.Context, d store.OffsiteTarget,
 	if len(held) > 0 {
 		return store.OffsiteTarget{}, errDestinationHoldsBackups
 	}
+	if err := s.destinationClash(repo, d.ID); err != nil {
+		return store.OffsiteTarget{}, err
+	}
 	if _, err := s.CheckDraft(ctx, draftRequest{Provider: p.ID, Settings: map[string]string{"path": repo}}); err != nil {
 		return store.OffsiteTarget{}, err
 	}
@@ -128,6 +131,11 @@ func (s *Service) editSignInConnection(ctx context.Context, d store.OffsiteTarge
 		}
 	}
 
+	if repo != d.Repo {
+		if err := s.destinationClash(repo, d.ID); err != nil {
+			return store.OffsiteTarget{}, nil, err
+		}
+	}
 	switch {
 	case len(held) == 0:
 		if _, err := s.CheckDraft(ctx, draft); err != nil {
@@ -188,6 +196,11 @@ func (s *Service) editRemoteConnection(ctx context.Context, d store.OffsiteTarge
 	repo := "rclone:" + remotes.Join(remote, dir)
 	if repo != d.Repo && len(held) > 0 {
 		return store.OffsiteTarget{}, errDestinationHoldsBackups
+	}
+	if repo != d.Repo {
+		if err := s.destinationClash(repo, d.ID); err != nil {
+			return store.OffsiteTarget{}, err
+		}
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {

@@ -384,3 +384,29 @@ func TestTheConnectionRouteAnswersARefusedMoveWithItsCode(t *testing.T) {
 		t.Fatalf("answer = %v, want the destination back", res)
 	}
 }
+
+func TestAConnectionEditCannotMoveADestinationOntoAHomeOrAnotherDestination(t *testing.T) {
+	f := newPlacementFixture(t)
+	ctx := context.Background()
+	folder, err := f.svc.SaveNewDestination(ctx, draftRequest{Provider: "path", Settings: map[string]string{"path": "offsite"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := f.svc.EditDestinationConnection(ctx, folder.ID, connectionEdit{Settings: map[string]string{"path": "backups"}}); !errors.Is(err, errNestedLocation) {
+		t.Fatalf("moving a folder destination around the repositories at home = %v, want errNestedLocation", err)
+	}
+
+	if _, err := f.svc.SaveNewDestination(ctx, draftRequest{Provider: "rest", Name: "Box", Settings: map[string]string{"url": "https://box:8000/bv", "user": "bv", "pass": "one"}}); err != nil {
+		t.Fatal(err)
+	}
+	other, err := f.svc.SaveNewDestination(ctx, draftRequest{Provider: "rest", Name: "Other", Settings: map[string]string{"url": "https://other:8000/bv", "user": "bv", "pass": "two"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := f.svc.EditDestinationConnection(ctx, other.ID, connectionEdit{Settings: map[string]string{"url": "https://box:8000/bv/inner"}}); !errors.Is(err, errNestedLocation) {
+		t.Fatalf("moving a rest-server destination inside another = %v, want errNestedLocation", err)
+	}
+	if got, _, _ := f.st.GetDestination(other.ID); got.Repo != other.Repo {
+		t.Fatalf("the refused edit moved the destination to %q", got.Repo)
+	}
+}
