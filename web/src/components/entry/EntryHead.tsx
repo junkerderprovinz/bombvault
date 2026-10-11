@@ -139,14 +139,14 @@ export function EntryHead({
       style={hueVars(kindHue(item.kind)) as CSSProperties}
       className={`glim-hue flex flex-wrap items-center gap-x-4 gap-y-3 ${running ? "glim-active" : ""}`}
     >
-      <span className="glim-row-glyph flex h-10 w-10 flex-none items-center justify-center rounded-control bg-carbon-surface2 [&_svg]:h-5 [&_svg]:w-5">
+      <span data-new="entry-page" className="glim-row-glyph flex h-10 w-10 flex-none items-center justify-center rounded-control bg-carbon-surface2 [&_svg]:h-5 [&_svg]:w-5">
         <KindGlyph kind={item.kind} />
       </span>
       <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5">
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span
             dir={item.kind === "zfs" ? "ltr" : undefined}
-            className="min-w-0 text-xl font-semibold text-carbon-text text-start wrap-anywhere"
+            className="min-w-0 text-status font-semibold text-carbon-text text-start wrap-anywhere"
           >
             {name}
           </span>

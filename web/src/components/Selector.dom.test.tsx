@@ -14,6 +14,12 @@ import { Selector, MAX_PINNED_WIDTH, MIN_PINNED_WIDTH, type SelectorItem } from 
 import { RAINBOW_OFF, applyRainbow } from "../lib/appearance";
 import { setLabelMode } from "../lib/controls";
 
+const screenWidth = vi.hoisted(() => ({ desktop: true }));
+vi.mock("../lib/useMediaQuery", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/useMediaQuery")>()),
+  useIsDesktop: () => screenWidth.desktop,
+}));
+
 const ITEMS: SelectorItem[] = [
   { id: "a", label: "Alpha" },
   { id: "b", label: "Beta" },
@@ -215,39 +221,46 @@ describe("Selector select=\"many\"", () => {
 });
 
 describe("Selector hue opt-out", () => {
-  it("hue=true (default) carries .glim-hue/.glim-hue-icon and an --item-hue inline style", () => {
+  it("hue=true (default) colours the strip as one and tints no idle glyph", async () => {
     render(<OneOfThree />);
+    await act(async () => {});
     const tab = screen.getByRole("tab", { name: "Alpha" });
     expect(tab.className).toContain("glim-hue");
-    expect(tab.className).toContain("glim-hue-icon");
-    expect(tab.style.getPropertyValue("--item-hue")).not.toBe("");
+    expect(tab.className).not.toContain("glim-hue-icon");
+    expect(tab.style.getPropertyValue("--item-hue")).toBe("");
+    expect(screen.getByRole("tablist").style.getPropertyValue("--item-hue")).not.toBe("");
   });
 
-  it("hue=false carries neither class, even while rainbow is globally on", () => {
+  it("hue=false carries neither class nor a colour, even while rainbow is globally on", async () => {
     applyRainbow({ on: true });
     render(
       <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} hue={false} />
     );
+    await act(async () => {});
     const tab = screen.getByRole("tab", { name: "Alpha" });
     expect(tab.className).not.toContain("glim-hue");
-    expect(tab.style.getPropertyValue("--item-hue")).toBe("");
+    expect(screen.getByRole("tablist").style.getPropertyValue("--item-hue")).toBe("");
   });
 });
 
 describe("Selector under a coarse pointer", () => {
-  it("grows a text segment to the button height, which a glyph segment has already", () => {
-    render(
-      <Selector
-        items={[ITEMS[0], { id: "g", label: "Glyph", icon: <svg /> }]}
-        label="Test strip"
-        active="a"
-        onChange={() => {}}
-      />
-    );
-    expect(screen.getByRole("tab", { name: "Alpha" }).className).toContain("pointer-coarse:min-h-(--btn-h)");
+  const mixed = [ITEMS[0], { id: "g", label: "Glyph", icon: <svg /> }];
+
+  it("grows every segment of a well to the key height, text and glyph alike", () => {
+    render(<Selector items={mixed} label="Test strip" active="a" onChange={() => {}} />);
+    for (const name of ["Alpha", "Glyph"]) {
+      const cls = screen.getByRole("tab", { name }).className.split(/\s+/);
+      expect(cls).toContain("pointer-coarse:min-h-(--btn-h-key)");
+      expect(cls).not.toContain("pointer-coarse:min-h-(--btn-h)");
+    }
+  });
+
+  it("grows a chip's text segment to the button height, which its glyph segment has already", () => {
+    render(<Selector items={mixed} label="Test strip" active="a" onChange={() => {}} variant="chip" />);
+    expect(screen.getByRole("tab", { name: "Alpha" }).className.split(/\s+/)).toContain("pointer-coarse:min-h-(--btn-h)");
     const glyph = screen.getByRole("tab", { name: "Glyph" }).className;
     expect(glyph).toContain("glim-seg-btn");
-    expect(glyph).not.toContain("pointer-coarse:min-h-(--btn-h)");
+    expect(glyph).not.toContain("pointer-coarse:min-h");
   });
 });
 
@@ -301,6 +314,46 @@ const perRow = (el: HTMLElement) => {
   const share = /^1 0 calc\(([\d.]+)\*/.exec(el.style.flex);
   return share ? Math.round(1 / parseFloat(share[1])) : null;
 };
+
+describe("Selector on a phone", () => {
+  afterEach(() => {
+    screenWidth.desktop = true;
+  });
+
+  function hugging(room: number, variant: "well" | "chip" = "well") {
+    const restore = layOut(room, oneLine(90, 106, 64));
+    try {
+      render(
+        <div data-room>
+          <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} inline variant={variant} />
+        </div>,
+      );
+      return ["a", "b", "c"].map((id) => seg(id).style.flex);
+    } finally {
+      restore();
+    }
+  }
+
+  it("pins a hugging well to its widest label, so a strip on one row stays short of its box", () => {
+    screenWidth.desktop = false;
+    expect(hugging(400)).toEqual(["1 0 106px", "1 0 106px", "1 0 106px"]);
+    expect(classes(screen.getByRole("tablist"))).toContain("w-fit");
+  });
+
+  it("wraps a hugging well into even rows that take the box", () => {
+    screenWidth.desktop = false;
+    // Two of the three fit a row, so the rows go two and one, each half of it.
+    expect(hugging(230)).toEqual(["1 0 113px", "1 0 113px", "1 0 113px"]);
+    cleanup();
+    // One to a row, each the whole row, with no floor to stop it short.
+    expect(hugging(150)).toEqual(["1 0 150px", "1 0 150px", "1 0 150px"]);
+  });
+
+  it("leaves a chip strip hugging its labels", () => {
+    screenWidth.desktop = false;
+    expect(hugging(230, "chip")).toEqual(["1 0 auto", "1 0 auto", "1 0 auto"]);
+  });
+});
 
 describe("Selector width", () => {
   it("spans its box at both scales and in both stylings", () => {
@@ -448,7 +501,7 @@ describe("Selector equalWidth", () => {
         </div>,
       );
       // Four to a row leave each the full floor, however narrow the labels.
-      for (const item of eight) expect(seg(item.id).style.flex).toBe(`0 0 ${MIN_PINNED_WIDTH}px`);
+      for (const item of eight) expect(seg(item.id).style.flex).toBe(`1 0 ${MIN_PINNED_WIDTH}px`);
       expect(screen.getByRole("tablist").style.maxWidth).toBe(`${4 * MIN_PINNED_WIDTH + 3 * 3.2 + 1}px`);
     } finally {
       restore();
@@ -649,16 +702,16 @@ describe("Selector well at both scales", () => {
 
     expect(bigList).toBe(smallList);
 
-    // The segment differs by two sanctioned riders: the pinning classes the
-    // big scale carries, and the touch height of the small one, which the big
-    // scale's fixed height already clears. They are stripped before the
-    // byte-identity compare, so the guard keeps catching any third divergence.
+    // The segment differs by one sanctioned rider, the pinning classes the big
+    // scale carries. They are stripped before the byte-identity compare, so the
+    // guard keeps catching any second divergence. Both scales take the touch
+    // height, since the big scale's fixed height stays under it.
     const PIN = ["text-center", "h-[var(--badge-md)]"];
-    const TOUCH = "pointer-coarse:min-h-(--btn-h)";
+    const TOUCH = "pointer-coarse:min-h-(--btn-h-key)";
     const strip = (s: string) =>
       s
         .split(/\s+/)
-        .filter((c) => !PIN.includes(c) && c !== TOUCH)
+        .filter((c) => !PIN.includes(c))
         .join(" ");
     expect(strip(bigTab)).toBe(strip(smallTab));
     for (const c of PIN) {
@@ -666,7 +719,7 @@ describe("Selector well at both scales", () => {
       expect(smallTab.split(/\s+/)).not.toContain(c);
     }
     expect(smallTab.split(/\s+/)).toContain(TOUCH);
-    expect(bigTab.split(/\s+/)).not.toContain(TOUCH);
+    expect(bigTab.split(/\s+/)).toContain(TOUCH);
   });
 
   it("without equalWidth a strip has no pinned width or fixed height", () => {
@@ -715,20 +768,18 @@ describe("Selector well at both scales", () => {
     expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Alpha" }));
   });
 
-  it("every segment carries its own rainbow position at both scales", () => {
+  it("every segment reads the strip's one colour at both scales", async () => {
     for (const props of [{}, { equalWidth: true }]) {
       cleanup();
       render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} {...props} />);
-      const tabs = Array.from(
-        screen.getByRole("tablist").querySelectorAll<HTMLElement>("[data-sel-id]")
-      );
+      await act(async () => {});
+      const strip = screen.getByRole("tablist");
+      const tabs = Array.from(strip.querySelectorAll<HTMLElement>("[data-sel-id]"));
       expect(tabs.length).toBe(ITEMS.length);
-      tabs.forEach((tab) => {
-        expect(tab.className).toContain("glim-hue");
-        // hueVars() lands the position colour on the element as a custom
-        // property; without it the accent fill has nothing to resolve.
-        expect(tab.getAttribute("style") ?? "").toContain("--");
-      });
+      // hueVars() lands the colour on the strip, and each segment's .glim-hue
+      // turns it into the accent its chosen fill resolves.
+      expect(strip.style.getPropertyValue("--item-hue")).not.toBe("");
+      tabs.forEach((tab) => expect(tab.className).toContain("glim-hue"));
       expect(tabs[0].className).toContain("glim-active");
     }
   });
@@ -953,55 +1004,80 @@ describe("Selector glyph mode names its segments", () => {
   });
 });
 
-// A segment's colour comes from its position, so selectors stacked with the
-// same number of segments would repeat each column's colour down the page.
-// hueOffset shifts where a selector starts in the palette.
-describe("Selector hueOffset", () => {
-  const styleOf = (name: string) =>
-    screen.getByRole("tab", { name }).getAttribute("style") ?? "";
+// Under rainbow a selector that sets a value wears one colour, its place among
+// the selectors of its page or window. A tab strip keeps a colour per tab.
+describe("Selector colours under rainbow", () => {
+  const position = (strip: HTMLElement) => strip.dataset.hue;
+  const strips = () => screen.getAllByRole("tablist");
 
-  it("gives the same position a different colour than an unshifted selector", () => {
-    applyRainbow({ on: true });
-    const { unmount } = render(
-      <Selector items={ITEMS} label="First" active={ITEMS[0].id} onChange={() => {}} />,
-    );
-    const plain = ITEMS.map((it) => styleOf(it.label));
-    unmount();
-
+  it("counts the selectors of a page in the order they stand", async () => {
     render(
-      <Selector items={ITEMS} label="Second" active={ITEMS[0].id} onChange={() => {}} hueOffset={1} />,
+      <main id="bv-main">
+        <Selector items={ITEMS} label="First" active="a" onChange={() => {}} />
+        <Selector items={ITEMS} label="Second" active="b" onChange={() => {}} />
+        <Selector items={ITEMS} label="Third" active="c" onChange={() => {}} />
+      </main>,
     );
-    const shifted = ITEMS.map((it) => styleOf(it.label));
-
-    expect(shifted).not.toEqual(plain);
-    // Shifted by exactly one: position i now wears what position i+1 wore.
-    for (let i = 0; i < ITEMS.length - 1; i++) {
-      expect(shifted[i]).toBe(plain[i + 1]);
-    }
+    await act(async () => {});
+    expect(strips().map(position)).toEqual(["0", "1", "2"]);
+    expect(strips()[1].style.getPropertyValue("--item-hue")).toBe("var(--rb-1)");
   });
 
-  it("defaults to no shift, so existing call sites are untouched", () => {
-    applyRainbow({ on: true });
-    const { unmount } = render(
-      <Selector items={ITEMS} label="Implicit" active={ITEMS[0].id} onChange={() => {}} />,
-    );
-    const implicit = ITEMS.map((it) => styleOf(it.label));
-    unmount();
-
-    render(
-      <Selector items={ITEMS} label="Explicit" active={ITEMS[0].id} onChange={() => {}} hueOffset={0} />,
-    );
-    expect(ITEMS.map((it) => styleOf(it.label))).toEqual(implicit);
+  it("counts again when a selector before the others goes", async () => {
+    function Page({ first }: { first: boolean }) {
+      return (
+        <main id="bv-main">
+          {first && <Selector items={ITEMS} label="First" active="a" onChange={() => {}} />}
+          <Selector items={ITEMS} label="Second" active="b" onChange={() => {}} />
+        </main>
+      );
+    }
+    const { rerender } = render(<Page first />);
+    await act(async () => {});
+    expect(screen.getByRole("tablist", { name: "Second" }).dataset.hue).toBe("1");
+    rerender(<Page first={false} />);
+    await act(async () => {});
+    expect(screen.getByRole("tablist", { name: "Second" }).dataset.hue).toBe("0");
   });
 
-  it("is ignored when the selector is not hued at all", () => {
-    applyRainbow({ on: true });
-    render(
-      <Selector items={ITEMS} label="Flat" active={ITEMS[0].id} onChange={() => {}} hue={false} hueOffset={3} />,
-    );
-    for (const it of ITEMS) {
-      expect(styleOf(it.label)).not.toContain("--item-hue");
+  it("counts a window's selectors on their own, so the page keeps its colours", async () => {
+    function Page({ open }: { open: boolean }) {
+      return (
+        <>
+          <main id="bv-main">
+            <Selector items={ITEMS} label="Page" active="a" onChange={() => {}} />
+            <Selector items={ITEMS} label="Page two" active="a" onChange={() => {}} />
+          </main>
+          {open && (
+            <div role="dialog" aria-modal="true">
+              <Selector items={ITEMS} label="Window" active="a" onChange={() => {}} />
+            </div>
+          )}
+        </>
+      );
     }
+    const { rerender } = render(<Page open={false} />);
+    await act(async () => {});
+    const before = strips().map(position);
+    rerender(<Page open />);
+    await act(async () => {});
+    expect(screen.getByRole("tablist", { name: "Window" }).dataset.hue).toBe("0");
+    expect([screen.getByRole("tablist", { name: "Page" }), screen.getByRole("tablist", { name: "Page two" })].map(position)).toEqual(before);
+  });
+
+  it("keeps a colour per tab in a tab strip, counted from its start", async () => {
+    render(<Selector items={ITEMS} label="Tabs" active="a" onChange={() => {}} hueOffset={1} />);
+    await act(async () => {});
+    const tabs = ITEMS.map((it) => screen.getByRole("tab", { name: it.label }));
+    expect(tabs.map((tab) => tab.style.getPropertyValue("--item-hue"))).toEqual(["var(--rb-1)", "var(--rb-2)", "var(--rb-3)"]);
+    expect(tabs[1].className).toContain("glim-hue-icon");
+    expect(screen.getByRole("tablist").dataset.hue).toBeUndefined();
+  });
+
+  it("is ignored when the selector is not hued at all", async () => {
+    render(<Selector items={ITEMS} label="Flat" active="a" onChange={() => {}} hue={false} hueOffset={3} />);
+    await act(async () => {});
+    for (const it of ITEMS) expect(screen.getByRole("tab", { name: it.label }).style.getPropertyValue("--item-hue")).toBe("");
   });
 });
 

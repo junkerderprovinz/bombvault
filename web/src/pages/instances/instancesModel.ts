@@ -15,11 +15,15 @@ import type {
   ZFSReplica,
 } from "../../lib/api";
 
-export type RoleKind = "receiver" | "fetcher" | "zfs";
+export type RoleKind = "receiver" | "fetcher" | "zfs" | "keeper";
 export type RoleState = "on" | "waiting" | "off";
 
 /** The order the tiles and rows stand in everywhere. */
-export const ROLE_KINDS: readonly RoleKind[] = ["receiver", "fetcher", "zfs"];
+export const ROLE_KINDS: readonly RoleKind[] = ["receiver", "fetcher", "zfs", "keeper"];
+
+/** The roles that carry backups from one instance to another. A key keeper
+ *  holds one sealed file and takes no backups. */
+export const FLOW_ROLES = ["receiver", "fetcher", "zfs"] as const satisfies readonly RoleKind[];
 
 /** How often the page asks who is connected and where the roles stand. The
  *  answers come from this instance's own view of the group, so asking costs
@@ -96,9 +100,14 @@ export interface Unplaced {
 }
 
 /** roleState reads one role of one direction as a tile shows it. A request
- *  the other side declined or took back counts as off. */
+ *  the other side declined or took back counts as off, and so does a key
+ *  deposit the keeper deleted. A deposit whose fresh copy has not reached the
+ *  keeper waits like a request. */
 export function roleState(side: RoleSide | undefined, role: RoleKind): RoleState {
-  const state = side?.[role]?.state;
+  const state: string | undefined = side?.[role]?.state;
+  // A deposit is with the keeper in every state but the one that says it was
+  // deleted there, and only "held" says it is current.
+  if (role === "keeper" && state !== undefined) return state === "held" ? "on" : state === "declined" ? "off" : "waiting";
   if (state === "asked") return "waiting";
   return state === "allowed" ? "on" : "off";
 }
@@ -106,7 +115,18 @@ export function roleState(side: RoleSide | undefined, role: RoleKind): RoleState
 /** roleStates is what an instance does for this server, role by role. */
 export function roleStates(instance: Instance): Record<RoleKind, RoleState> {
   const side = instance.roles?.byMember;
-  return { receiver: roleState(side, "receiver"), fetcher: roleState(side, "fetcher"), zfs: roleState(side, "zfs") };
+  return {
+    receiver: roleState(side, "receiver"),
+    fetcher: roleState(side, "fetcher"),
+    zfs: roleState(side, "zfs"),
+    keeper: roleState(side, "keeper"),
+  };
+}
+
+/** tooOldToKeep says an instance in reach runs a version that keeps no key
+ *  deposit. An instance out of reach has not said either way. */
+export function tooOldToKeep(instance: Instance): boolean {
+  return instance.roles?.reachable === true && instance.roles.canKeep === false;
 }
 
 function restAddress(location: string): string {

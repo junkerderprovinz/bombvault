@@ -47,14 +47,16 @@ function hostOf(url: string): string {
   }
 }
 
-/** SelfAddressField is where this instance's own address on the local
- *  network is shown and, when it is wrong, corrected: prefilled from the
- *  browser and saved on its own. */
+/** SelfAddressField is the addresses this instance is known under: the ones
+ *  it found by itself, which nobody can edit, and below them the one members
+ *  are told, prefilled from the browser, corrected by hand when it is wrong
+ *  and saved on its own. */
 export function SelfAddressField({ group, onGroup, t }: { group: GroupState; onGroup: (g: GroupState) => void; t: T }) {
   const [value, setValue] = useState(group.selfAddress);
   const [error, setError] = useState<string | null>(null);
   const editing = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const found = group.ownAddresses ?? [];
 
   useEffect(() => {
     if (!editing.current) setValue(group.selfAddress);
@@ -92,9 +94,23 @@ export function SelfAddressField({ group, onGroup, t }: { group: GroupState; onG
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor="self-address" className="inline-flex items-center gap-1.5 text-xs text-carbon-textSub">
-        {t("relay.selfAddressLabel")}
+        {t("pairing.knownAddresses")}
         <InfoBubble tip={t("relay.selfAddressTip")} />
       </label>
+      {found.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <span className="text-caption text-carbon-textMuted">{t("pairing.foundAddresses")}</span>
+          <ul data-testid="own-addresses" aria-label={t("pairing.foundAddresses")} className="flex flex-col gap-0.5">
+            {found.map((address) => (
+              <li key={address} className="text-sm text-carbon-text wrap-anywhere">
+                <bdi dir="ltr" className="font-mono">
+                  {address}
+                </bdi>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <input
         id="self-address"
         data-testid="self-address-input"
@@ -338,7 +354,7 @@ export function RelayCard({
                   {form === "project" ? (
                     <>
                       {beforeHost}
-                      <span dir="ltr" className="font-mono text-[0.92em] text-carbon-text">
+                      <span dir="ltr" className="font-mono text-subline text-carbon-text">
                         {hostOf(relay.projectUrl)}
                       </span>
                       {afterHost}

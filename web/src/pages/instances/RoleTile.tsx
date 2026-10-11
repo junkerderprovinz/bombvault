@@ -1,8 +1,9 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { InfoBubble } from "../../components/InfoBubble";
-import { IconLatest } from "../../components/glyphs";
+import { IconKey, IconLatest } from "../../components/glyphs";
 import { IconReceiver, IconZFS } from "../../components/navGlyphs";
+import type { DepositState } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { useTipBubble } from "../../lib/useTipBubble";
@@ -13,6 +14,7 @@ export const ROLES: Record<RoleKind, { label: TranslationKey; tip: TranslationKe
   receiver: { label: "receiver.title", tip: "instances.role.receiverTip", glyph: <IconReceiver /> },
   fetcher: { label: "instances.role.fetcher", tip: "instances.role.fetcherTip", glyph: <IconLatest /> },
   zfs: { label: "zfs.replica.servers.title", tip: "instances.role.zfsTip", glyph: <IconZFS /> },
+  keeper: { label: "instances.role.keeper", tip: "instances.role.keeperTip", glyph: <IconKey /> },
 };
 
 export const ROLE_STATE_KEY: Record<RoleState, TranslationKey> = {
@@ -21,12 +23,24 @@ export const ROLE_STATE_KEY: Record<RoleState, TranslationKey> = {
   off: "zfs.replica.servers.off",
 };
 
+const DEPOSIT_STATE_KEY: Record<DepositState, TranslationKey> = {
+  held: "instances.role.on",
+  stale: "keeper.state.stale",
+  declined: "keeper.state.declined",
+};
+
+/** depositStateLabel is what a key deposit's state is called on a tile and
+ *  in a list. A state this build does not know keeps the server's word. */
+export function depositStateLabel(t: (key: TranslationKey) => string, state: string): string {
+  return state in DEPOSIT_STATE_KEY ? t(DEPOSIT_STATE_KEY[state as DepositState]) : state;
+}
+
 const FILL: Record<RoleState, string> = {
   on: "bg-accent text-accentContrast",
   // A request that still waits is filled like an active role and wears a
   // dashed inner line until the other side allows it.
   waiting: "bg-accent text-accentContrast outline-dashed outline-[1.5px] -outline-offset-[5px] outline-accentContrast",
-  off: "bg-carbon-surface3 text-carbon-textMuted",
+  off: "bg-carbon-surface2 text-carbon-textMuted",
 };
 
 /** RoleTile is one role on an instance's card: filled while it is on or
@@ -56,13 +70,15 @@ export function RoleTile({
       {glyph}
       <span className="flex min-w-0 flex-col">
         <span
-          className={`text-dense font-semibold wrap-anywhere md:truncate md:text-[13px] ${
+          // A name wider than its tile is hyphenated in the page's language,
+          // and split without a hyphen only where no dictionary exists.
+          className={`text-dense font-semibold wrap-anywhere hyphens-auto md:truncate md:text-subline ${
             state === "off" ? "text-carbon-text" : ""
           }`}
         >
           {t(label)}
         </span>
-        <span className="text-dense leading-[1.3]">{detail ?? t(ROLE_STATE_KEY[state])}</span>
+        <span className="text-dense leading-[1.3] wrap-anywhere">{detail ?? t(ROLE_STATE_KEY[state])}</span>
       </span>
     </>
   );
@@ -86,8 +102,8 @@ export function RoleTile({
         aria-describedby={tooltip.describedBy}
         onClick={onToggle}
         {...tooltip.handlers}
-        className={`${cls} glim-field-focus transition-[filter,background-color] ${
-          state === "off" ? "hover:bg-carbon-hoverRaised" : "hover:brightness-105"
+        className={`${cls} glim-field-focus transition-colors ${
+          state === "off" ? "hover:bg-carbon-hoverRaised" : "hover:bg-accentHover"
         }`}
         style={style}
       >
@@ -116,11 +132,12 @@ export function RoleTiles({
   if (shown.length === 0) return null;
   return (
     <div className="flex flex-col gap-2">
-      <span className="flex items-center gap-1.5 text-[13px] font-semibold text-carbon-textSub">
+      <span className="flex items-center gap-1.5 text-subline font-semibold text-carbon-textSub">
         {heading}
         <InfoBubble tip={t("instances.role.diff")} />
       </span>
-      <div className="grid grid-cols-3 gap-1.5 md:gap-2">
+      {/* Four tiles stand two by two, since a card is too narrow for four names in a row. */}
+      <div className={`grid gap-1.5 md:gap-2 ${shown.length > 3 ? "grid-cols-2" : "grid-cols-3"}`}>
         {shown.map((k) => (
           <RoleTile
             key={k}

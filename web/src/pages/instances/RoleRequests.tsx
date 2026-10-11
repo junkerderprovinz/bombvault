@@ -10,6 +10,7 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { KeptDeposits, ReleaseRequests } from "./DepositRows";
 import { domainLabelKey } from "./PeerScorecard";
 import { ReceiverServerWindow } from "./ReceiverServerWindow";
 import { ROLES } from "./RoleTile";
@@ -30,8 +31,10 @@ const REVOKE_TEXT: Record<RequestedRole, TranslationKey> = {
 
 /** RoleRequests is what an instance asked this server to be for it: the
  *  Receiver and Fetcher requests that wait for an answer, or the ones that
- *  were allowed and can be taken back. It draws one of the two parts, so the
- *  ZFS requests can stand between them in the same list. */
+ *  were allowed and can be taken back. A request to hand out a key deposit
+ *  waits with the first, and a deposit kept for the instance stands with the
+ *  second. It draws one of the two parts, so the ZFS requests can stand
+ *  between them in the same list. */
 export function RoleRequests({
   instance,
   part,
@@ -143,6 +146,11 @@ export function RoleRequests({
           </div>
         </div>
       ))}
+      {part === "asked" ? (
+        <ReleaseRequests releases={state.deposits.releases.filter((r) => r.requesterId === instance.memberId)} state={state} />
+      ) : (
+        <KeptDeposits kept={state.deposits.kept.filter((d) => d.ownerId === instance.memberId)} state={state} />
+      )}
       {confirmDialog}
       {needsServer && (
         <ReceiverServerWindow

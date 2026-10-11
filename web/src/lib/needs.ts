@@ -8,6 +8,8 @@ import { tallyEntries } from "./protectionTally";
 import { failedRunsNeedingAttention } from "./runFailures";
 
 export type Need =
+  /** APP_KEY stopped opening the key this server took over, so no backup runs. */
+  | { is: "keyLocked" }
   /** A run that failed and was neither repeated with success nor acknowledged.
    *  `item` is the entry it ran for, where the list of entries still has it. */
   | { is: "failedRun"; run: Run; item?: BackupItem }
@@ -30,6 +32,8 @@ export interface NeedsInput {
   anomalies: AnomalyView[];
   /** Encryption is on and nobody has confirmed the recovery kit is stored. */
   kitDue: boolean;
+  /** GET /api/emergency names the backup key "locked". */
+  keyLocked?: boolean;
 }
 
 // A copy that is switched off is not tried again, so its last failure waits
@@ -56,7 +60,7 @@ function failedCopies(locations: StorageLocation[]): Need[] {
  * Before the first backup the entries without a schedule and the recovery kit
  * are the first steps, not something that went wrong.
  */
-export function needsOf({ items, runs, locations, anomalies, kitDue }: NeedsInput): Need[] {
+export function needsOf({ items, runs, locations, anomalies, kitDue, keyLocked = false }: NeedsInput): Need[] {
   const failed = failedRunsNeedingAttention(runs)
     .map((run): Need & { is: "failedRun" } => ({
       is: "failedRun",
@@ -74,5 +78,13 @@ export function needsOf({ items, runs, locations, anomalies, kitDue }: NeedsInpu
   const loud = anomalies
     .filter((finding) => finding.severity !== "info")
     .map((finding): Need => ({ is: "anomaly", finding }));
-  return [...failed, ...unprotected, ...failedCopies(locations), ...loud, ...(kitDue && !fresh ? [{ is: "recoveryKit" } as const] : [])];
+  return [
+    // First, because every backup is refused until it is solved.
+    ...(keyLocked ? [{ is: "keyLocked" } as const] : []),
+    ...failed,
+    ...unprotected,
+    ...failedCopies(locations),
+    ...loud,
+    ...(kitDue && !fresh ? [{ is: "recoveryKit" } as const] : []),
+  ];
 }

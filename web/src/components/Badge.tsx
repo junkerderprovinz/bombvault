@@ -69,6 +69,19 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   muted: "text-carbon-textMuted",
 };
 
+// A badge that is a button or a link hovers by a colour step, like Button
+// (rule 21). A wash steps toward its own ink, read where the badge sits, so a
+// hued badge steps from its hue.
+const HOVER_CLASSES: Record<BadgeTone, string> = {
+  ok: "hover:bg-[color-mix(in_srgb,var(--status-ok-bg),var(--status-ok-text)_12%)]",
+  fail: "hover:bg-[color-mix(in_srgb,var(--status-fail-bg),var(--status-fail-text)_12%)]",
+  warn: "hover:bg-[color-mix(in_srgb,var(--status-warn-bg-strong),var(--status-warn-text)_12%)]",
+  active: "hover:bg-[color-mix(in_srgb,var(--accent-soft),var(--accent)_12%)]",
+  neutral: "hover:bg-carbon-surface3",
+  heading: "hover:bg-accentHover",
+  muted: "hover:text-carbon-text",
+};
+
 const RADIUS_CLASSES: Record<BadgeShape, string> = {
   pill: "rounded-pill",
   square: "rounded-pill",
@@ -236,9 +249,11 @@ export function Badge({
   const shared = badgeClassName({ tone, size, shape, wrap, className, iconOnly: tip !== undefined, inFlow, insetStart });
   const merged = hueOn ? `glim-hue ${isNotchHue ? "glim-notch-hue " : ""}${shared}` : shared;
   const hueStyle = hueOn ? (hueVars(hueIndex) as CSSProperties) : undefined;
+  // The icon-only active badge is the solid accent, so it steps like a heading.
+  const hover = tip !== undefined && tone === "active" ? HOVER_CLASSES.heading : HOVER_CLASSES[tone];
 
   if (as === "button") {
-    const buttonClassName = `appearance-none transition-opacity hover:opacity-80 disabled:opacity-50 disabled:hover:opacity-50 ${merged}`;
+    const buttonClassName = `appearance-none transition-colors ${hover} disabled:pointer-events-none disabled:opacity-50 ${merged}`;
     if (tip !== undefined) {
       return (
         <IconTipButton tip={tip} onClick={onClick} disabled={disabled} style={hueStyle} className={buttonClassName}>
@@ -263,7 +278,7 @@ export function Badge({
 
   if (as === "a") {
     return (
-      <a href={href} target={target} rel={rel} title={title} aria-label={ariaLabel} style={hueStyle} className={`transition-opacity hover:opacity-80 ${merged}`}>
+      <a href={href} target={target} rel={rel} title={title} aria-label={ariaLabel} style={hueStyle} className={`transition-colors ${hover} ${merged}`}>
         {children}
       </a>
     );

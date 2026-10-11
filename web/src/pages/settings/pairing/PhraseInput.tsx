@@ -81,7 +81,7 @@ export function usePhraseEntry({ id, label, tip, bare = false, busy, onPair, t }
     <div className="flex flex-col gap-2" data-testid={id}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         {!bare && (
-          <label htmlFor={id} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-carbon-text">
+          <label htmlFor={id} className="inline-flex items-center gap-1.5 text-subline font-medium text-carbon-text">
             {label}
             <InfoBubble tip={tip} />
           </label>
@@ -105,10 +105,10 @@ export function usePhraseEntry({ id, label, tip, bare = false, busy, onPair, t }
         aria-label={bare ? label : undefined}
         aria-invalid={problem ? true : undefined}
         placeholder={t("pairing.enterPlaceholder")}
-        className="min-h-16 resize-y rounded-control bg-carbon-surface2 px-3 py-2.5 font-mono text-[13px] leading-normal text-carbon-text placeholder:font-sans placeholder:text-carbon-textMuted glim-field-focus"
+        className="min-h-16 resize-y rounded-control bg-carbon-surface2 px-3 py-2.5 font-mono text-subline leading-normal text-carbon-text placeholder:font-sans placeholder:text-carbon-textMuted glim-field-focus"
       />
       <WordSlots words={words} unknown={unknown} />
-      <p role="alert" className="text-[13px] text-statusFail empty:hidden">
+      <p role="alert" className="text-subline text-statusFail empty:hidden">
         {problem ?? ""}
       </p>
     </div>

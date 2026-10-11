@@ -1,7 +1,9 @@
 // Instances shows the pairing group: a picture of who does what for whom,
 // then a grid of cards with this server first, every paired instance and
-// every ZFS server reached over SSH. A card's tiles switch what the instance
-// does for this server, and its Details window holds everything else.
+// every ZFS server reached over SSH. The picture and the cards stand on the
+// page itself, since a card around them would frame each of them twice. A
+// card's tiles switch what the instance does for this server, and its Details
+// window holds everything else.
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -10,7 +12,7 @@ import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
-import { IconEye, IconInfo, IconLink } from "../components/glyphs";
+import { IconEye, IconInfo, IconKey, IconLink } from "../components/glyphs";
 import { IconReceiver } from "../components/navGlyphs";
 import { useReplicaServers } from "../components/zfs/replica/replicaStore";
 import { getSettings } from "../lib/api";
@@ -21,11 +23,12 @@ import { relativeTime } from "../lib/reltime";
 import { useLoudAnomalies } from "../lib/useAnomalies";
 import { Facts, Figure, InstanceCard, PhoneMark } from "./instances/InstanceCard";
 import { NetPicture, useNetHover } from "./instances/NetPicture";
+import { KeyDepositWindow } from "./instances/KeyDepositWindow";
 import { PeerDetails } from "./instances/PeerDetails";
 import { ReceiverServerWindow } from "./instances/ReceiverServerWindow";
 import { RemoveInstanceButton } from "./instances/RemoveInstanceButton";
 import { useRoleSwitch } from "./instances/RoleDialogs";
-import { RoleTiles } from "./instances/RoleTile";
+import { depositStateLabel, RoleTiles } from "./instances/RoleTile";
 import { UnplacedCard } from "./instances/UnplacedCard";
 import { ZFSServerCards } from "./instances/ZFSServerCards";
 import { buildInstances, protectionFigures, ROLE_KINDS, withoutScheme, type Instance, type RoleKind, type RoleState } from "./instances/instancesModel";
@@ -52,22 +55,26 @@ function SelfCard({
   receiverServer,
   hot,
   onOpenServer,
+  onOpenDeposits,
 }: {
   self: Self;
   served: SelfRoles;
   receiverServer: boolean;
   hot: boolean;
   onOpenServer: () => void;
+  /** Opens this server's key deposits. Missing while there are none. */
+  onOpenDeposits?: () => void;
 }) {
   const { t } = useT();
   const navigate = useNavigate();
   const anomalies = useLoudAnomalies().count;
-  const states = Object.fromEntries(ROLE_KINDS.map((k) => [k, served[k].length > 0 ? "on" : "off"])) as Record<RoleKind, RoleState>;
+  const holders = (k: RoleKind) => served[k] ?? [];
+  const states = Object.fromEntries(ROLE_KINDS.map((k) => [k, holders(k).length > 0 ? "on" : "off"])) as Record<RoleKind, RoleState>;
   const details = Object.fromEntries(
     ROLE_KINDS.map((k) => [
       k,
-      served[k].length > 0
-        ? t("instances.forNames").replace("{names}", () => served[k].map((holder) => holder.name || holder.memberId).join(", "))
+      holders(k).length > 0
+        ? t("instances.forNames").replace("{names}", () => holders(k).map((holder) => holder.name || holder.memberId).join(", "))
         : t("instances.forNoOne"),
     ]),
   ) as Record<RoleKind, string>;
@@ -97,6 +104,15 @@ function SelfCard({
               glyph={<IconReceiver />}
               tone="neutral"
               onClick={onOpenServer}
+            />
+          )}
+          {onOpenDeposits && (
+            <Button
+              label={t("keeper.window.title")}
+              labelKey="keeper.window.title"
+              glyph={<IconKey />}
+              tone="neutral"
+              onClick={onOpenDeposits}
             />
           )}
         </>
@@ -135,6 +151,9 @@ function PeerCard({
   const roles = useRoleSwitch({ instance, peers, sections, state });
   const tiles: Partial<Record<RoleKind, RoleState>> = { ...roles.states };
   if (!modules.zfs && !instance.roles?.byMember.zfs) delete tiles.zfs;
+  // A deposit that is not current says so in place of the tile's own word.
+  const deposit = instance.roles?.byMember.keeper?.state;
+  const details = deposit && deposit !== "held" ? { keeper: depositStateLabel(t, deposit) } : undefined;
 
   const badges = (
     <>
@@ -203,7 +222,12 @@ function PeerCard({
       hot={hot}
     >
       {paired && !instance.app && (
-        <RoleTiles heading={t("instances.doesForServer").replaceAll("{peer}", () => name)} states={tiles} onToggle={roles.toggle} />
+        <RoleTiles
+          heading={t("instances.doesForServer").replaceAll("{peer}", () => name)}
+          states={tiles}
+          details={details}
+          onToggle={roles.toggle}
+        />
       )}
       {roles.dialogs}
     </InstanceCard>
@@ -229,6 +253,7 @@ export function Instances() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [detailsOf, setDetailsOf] = useState<string | null>(null);
   const [serverOpen, setServerOpen] = useState(false);
+  const [depositsOpen, setDepositsOpen] = useState(false);
   const { hot, handlers } = useNetHover();
 
   useEffect(() => {
@@ -261,6 +286,7 @@ export function Instances() {
   const servers = shown.filter((i) => !i.app);
   const phones = shown.filter((i) => i.app);
   const zfs = modules?.zfs ?? false;
+  const zfsCards = zfs ? zfsServers.length : 0;
   const nodes = useMemo(
     () => (grouped ? groupNodes(instances, zfs ? zfsServers : [], t) : []),
     [grouped, instances, zfsServers, zfs, t],
@@ -284,6 +310,8 @@ export function Instances() {
   }, [navigate, receiver]);
 
   const opened = shown.find((i) => i.key === detailsOf);
+  const { deposits } = state;
+  const hasDeposits = deposits.codeSince !== "" || deposits.sent.length + deposits.kept.length + deposits.releases.length > 0;
   const hasUnplaced = unplaced.received.length + unplaced.pulls.length + unplaced.offers.length > 0;
 
   const peerCard = (inst: Instance, index: number) =>
@@ -313,39 +341,41 @@ export function Instances() {
       ))}
 
       {modules && !state.loading && (
-        <div className="rounded-card bg-carbon-surface p-3 md:p-6 glim-content-fade">
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,24rem),1fr))] items-stretch gap-4" {...handlers}>
-            {grouped && state.self && nodes.length > 0 && (
-              <div className="col-span-full rounded-card bg-carbon-surface2 px-3 py-3 md:px-5 md:py-4">
-                <NetPicture selfName={state.self.name} nodes={nodes} hot={hot} />
-              </div>
-            )}
-            {grouped && state.self && (
-              <SelfCard
-                self={state.self}
-                served={state.selfRoles}
-                receiverServer={state.receiverServer}
-                hot={hot === "self"}
-                onOpenServer={() => setServerOpen(true)}
-              />
-            )}
-            {servers.map((inst, i) => peerCard(inst, i + 1))}
-            {shown.length === 0 && (
-              <div
-                data-instance="none"
-                className="flex flex-col items-center justify-center gap-3 rounded-card border-[1.5px] border-dashed border-carbon-border px-5 py-7 text-center"
-              >
-                <b className="font-semibold text-carbon-text">{t("instances.emptyTitle")}</b>
-                <p className="text-sm text-carbon-textSub">{t("instances.emptyLead")}</p>
-              </div>
-            )}
-            {modules.zfs && <ZFSServerCards replicas={state.data.replicas} firstIndex={servers.length + 1} hot={hot} />}
-            {phones.map((inst, i) => peerCard(inst, servers.length + (modules.zfs ? zfsServers.length : 0) + i + 1))}
-          </div>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,24rem),1fr))] items-stretch gap-4 glim-content-fade" {...handlers}>
+          {grouped && state.self && nodes.length > 0 && (
+            <div className="col-span-full rounded-card bg-carbon-surface px-3 py-3 md:px-5 md:py-4 [--net-ground:var(--carbon-surface)]">
+              <NetPicture selfName={state.self.name} nodes={nodes} hot={hot} />
+            </div>
+          )}
+          {grouped && state.self && (
+            <SelfCard
+              self={state.self}
+              served={state.selfRoles}
+              receiverServer={state.receiverServer}
+              hot={hot === "self"}
+              onOpenServer={() => setServerOpen(true)}
+              onOpenDeposits={hasDeposits ? () => setDepositsOpen(true) : undefined}
+            />
+          )}
+          {servers.map((inst, i) => peerCard(inst, i + 1))}
+          {shown.length === 0 && (
+            <div
+              data-instance="none"
+              className="flex flex-col items-center justify-center gap-3 rounded-card border-[1.5px] border-dashed border-carbon-border px-5 py-7 text-center"
+            >
+              <b className="font-semibold text-carbon-text">{t("instances.emptyTitle")}</b>
+              <p className="text-sm text-carbon-textSub">{t("instances.emptyLead")}</p>
+            </div>
+          )}
+          {modules.zfs && <ZFSServerCards replicas={state.data.replicas} firstIndex={servers.length + 1} hot={hot} />}
+          {phones.map((inst, i) => peerCard(inst, servers.length + zfsCards + i + 1))}
         </div>
       )}
 
-      {grouped && !state.loading && hasUnplaced && <UnplacedCard unplaced={unplaced} state={state} hueIndex={0} />}
+      {/* The hue goes on from the last card of the grid. */}
+      {grouped && !state.loading && hasUnplaced && (
+        <UnplacedCard unplaced={unplaced} state={state} hueIndex={1 + servers.length + zfsCards + phones.length} />
+      )}
 
       {opened && modules && (
         <PeerDetails
@@ -366,9 +396,12 @@ export function Instances() {
           }}
         />
       )}
+      {depositsOpen && <KeyDepositWindow state={state} onClose={() => setDepositsOpen(false)} />}
       {modules && !state.loading && (
         <PageActions>
-          <PageAction primary label={t("instances.pair")} glyph={<IconLink />} onClick={() => navigate("/settings/pairing")} />
+          <span data-new="instances-pair" className="flex">
+            <PageAction primary label={t("instances.pair")} glyph={<IconLink />} onClick={() => navigate("/settings/pairing")} />
+          </span>
         </PageActions>
       )}
     </div>

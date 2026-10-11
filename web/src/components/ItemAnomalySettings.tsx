@@ -126,7 +126,6 @@ function PrefsFields({ item, globals, t }: { item: AnomalyItem; globals: Anomaly
           activation="manual"
           inline
           pairsOnPhone
-          hueOffset={sensitivityItems.length}
           active={notifyMin || FOLLOW}
           onChange={(id) => {
             const before = notifyMin;

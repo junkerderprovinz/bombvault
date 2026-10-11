@@ -174,7 +174,7 @@ function Curve({ source, finding, t }: { source: CurveSource; finding?: AnomalyV
 
   return (
     <div className="flex min-w-0 flex-col gap-2 rounded-card bg-carbon-surface2 px-2 py-3 sm:px-4">
-      <div className="flex flex-wrap items-center gap-1.5 px-1.5 text-[13px] font-semibold text-carbon-textSub sm:px-0">
+      <div className="flex flex-wrap items-center gap-1.5 px-1.5 text-subline font-semibold text-carbon-textSub sm:px-0">
         <span>{title}</span>
         {series.scopeKind === "zfsds" && (
           <span dir="ltr" className="min-w-0 font-mono font-normal text-start wrap-anywhere">

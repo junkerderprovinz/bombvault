@@ -270,7 +270,7 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
           )}
           {groups.map((g) => (
             <div key={g.page} role="group" aria-label={g.name} className="py-1">
-              <div className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wide text-carbon-textMuted">
+              <div className="px-4 pb-1 text-meta font-semibold uppercase tracking-wide text-carbon-textMuted">
                 {g.name}
               </div>
               {g.hits.map(({ hit, index }) => (
@@ -287,7 +287,7 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
                 >
                   <span className="truncate">{hit.item.name}</span>
                   {(hit.item.cardName || hit.inHint || hit.item.tier === 0) && (
-                    <span className="flex min-w-0 gap-2 text-[11px] text-carbon-textMuted">
+                    <span className="flex min-w-0 gap-2 text-meta text-carbon-textMuted">
                       <span className="truncate">
                         {hit.item.former
                           ? t("tile.search.former").replace("{tab}", () => hit.item.pageName)

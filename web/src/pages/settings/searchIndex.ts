@@ -508,7 +508,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "settings.fleet",
       hint: "settings.fleetHint",
-      rows: [{ key: "settings.instanceName" }, { key: "relay.selfAddressLabel", hint: "relay.selfAddressTip" }],
+      rows: [{ key: "settings.instanceName" }, { key: "pairing.knownAddresses", hint: "relay.selfAddressTip" }],
     },
     {
       title: "relay.title",
@@ -638,6 +638,11 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       hint: "tile.info.helpHint",
       rows: [{ key: "tile.info.manual" }, { key: "tile.info.bugReport" }],
       body: ["about.report"],
+    },
+    {
+      title: "whatsNew.title",
+      hint: "whatsNew.hint",
+      rows: [{ key: "whatsNew.show" }, { key: "whatsNew.showAll" }, { key: "whatsNew.markAll" }],
     },
     { title: "about.title", rows: [], body: ["about.body"] },
   ],

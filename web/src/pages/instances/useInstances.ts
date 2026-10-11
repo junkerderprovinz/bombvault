@@ -7,6 +7,7 @@ import {
   getReceiverServer,
   getStatus,
   getZFSReplica,
+  listDeposits,
   listDestinations,
   listFleetPeers,
   listGroupReceivers,
@@ -18,6 +19,7 @@ import {
   pollFleetPeer,
 } from "../../lib/api";
 import type {
+  Deposits,
   Destination,
   DomainStatus,
   FleetPeer,
@@ -56,17 +58,23 @@ export interface InstancesState {
   selfRoles: SelfRoles;
   /** This server runs a receiving server. */
   receiverServer: boolean;
+  /** Both sides of the key deposits: what this server gave its keepers and
+   *  what it keeps for others. */
+  deposits: Deposits;
   data: InstancesData;
   reloadPeers: () => Promise<void>;
   reloadOffers: () => Promise<void>;
   reloadReceived: () => Promise<void>;
   reloadPulls: () => Promise<void>;
   reloadRoles: () => Promise<void>;
+  /** Reads the deposits and, since they are roles too, the roles. */
+  reloadDeposits: () => Promise<void>;
   reloadReplicas: () => Promise<void>;
   reloadServer: () => Promise<void>;
 }
 
-const NO_ROLES: SelfRoles = { receiver: [], fetcher: [], zfs: [] };
+const NO_ROLES: SelfRoles = { receiver: [], fetcher: [], zfs: [], keeper: [] };
+const NO_DEPOSITS: Deposits = { codeSince: "", sent: [], kept: [], releases: [] };
 
 function message(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
@@ -90,6 +98,7 @@ export function useInstances(modules: Modules | null): InstancesState {
   const [roles, setRoles] = useState<MemberRoles[]>([]);
   const [selfRoles, setSelfRoles] = useState<SelfRoles>(NO_ROLES);
   const [receiverServer, setReceiverServer] = useState(false);
+  const [deposits, setDeposits] = useState<Deposits>(NO_DEPOSITS);
   const [destinations, setDestinations] = useState<Destination[] | null>(null);
   const [groupReceivers, setGroupReceivers] = useState<GroupReceiver[] | null>(null);
   const [replicas, setReplicas] = useState<ItemReplica[]>([]);
@@ -195,6 +204,19 @@ export function useInstances(modules: Modules | null): InstancesState {
     [note, t],
   );
 
+  const reloadDeposits = useCallback(
+    (): Promise<void> =>
+      Promise.all([
+        listDeposits()
+          .then((res) => {
+            if (res.ok && res.deposits) setDeposits(res.deposits);
+          })
+          .catch(() => undefined),
+        reloadRoles(),
+      ]).then(() => undefined),
+    [reloadRoles],
+  );
+
   const reloadReplicas = useCallback(
     (): Promise<void> =>
       listZFSDatasets()
@@ -223,7 +245,7 @@ export function useInstances(modules: Modules | null): InstancesState {
     void Promise.all([
       loadSelf(),
       loadDestinations,
-      reloadRoles(),
+      reloadDeposits(),
       zfs ? reloadReplicas() : undefined,
       fleet ? reloadPeers() : undefined,
       fleet ? reloadOffers() : undefined,
@@ -235,7 +257,7 @@ export function useInstances(modules: Modules | null): InstancesState {
     const refresh = () => {
       if (document.visibilityState !== "visible") return;
       void loadSelf();
-      void reloadRoles();
+      void reloadDeposits();
       if (fleet) void reloadPeers();
     };
     const id = setInterval(refresh, FLEET_REFRESH_MS);
@@ -244,7 +266,7 @@ export function useInstances(modules: Modules | null): InstancesState {
       clearInterval(id);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [ready, fleet, receiver, pull, zfs, loadSelf, reloadPeers, reloadOffers, reloadReceived, reloadServer, reloadPulls, reloadRoles, reloadReplicas]);
+  }, [ready, fleet, receiver, pull, zfs, loadSelf, reloadPeers, reloadOffers, reloadReceived, reloadServer, reloadPulls, reloadDeposits, reloadReplicas]);
 
   // An answer to a ZFS request changes the roles the server reports.
   const answers = requests.map((r) => `${r.id}:${r.state}`).join(" ");
@@ -293,12 +315,14 @@ export function useInstances(modules: Modules | null): InstancesState {
     self,
     selfRoles,
     receiverServer: receiver && receiverServer,
+    deposits,
     data,
     reloadPeers,
     reloadOffers,
     reloadReceived,
     reloadPulls,
     reloadRoles,
+    reloadDeposits,
     reloadReplicas,
     reloadServer,
   };

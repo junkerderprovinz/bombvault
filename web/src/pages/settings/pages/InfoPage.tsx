@@ -3,7 +3,7 @@ import { Button } from "../../../components/Button";
 import { CheckDraw } from "../../../components/CheckDraw";
 import { IconSearch } from "../../../components/glyphs";
 import { IconClose, IconDiagnostics } from "../../../components/navGlyphs";
-import { ReadmeButton } from "../../../components/ReadmeButton";
+import { BrandMark, ReadmeButton } from "../../../components/ReadmeButton";
 import { Rows, SettingRow } from "../../../components/storage/rows";
 import {
   checkForUpdate,
@@ -13,11 +13,13 @@ import {
   type UpdateCheck,
   type UpdateCheckRefusal,
 } from "../../../lib/api";
+import { MANUAL_SVG } from "../../../lib/appMarks";
 import { groupStage } from "../../../lib/controls";
 import { useT, type TranslationKey } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { AboutGive, GLIMSTONE_REPO, GLIMSTONE_VERSION, REPO, ReportButtons, releaseUrl } from "../AboutCard";
 import { Card, hueCounter } from "../shared";
+import { WhatsNewCard } from "../WhatsNewCard";
 
 const DOCS = "https://junkerderprovinz.github.io/bombvault/";
 
@@ -117,17 +119,6 @@ function UpdateButton() {
   );
 }
 
-function BookMark() {
-  return (
-    <svg viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        d="M3 0a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h9.25a.75.75 0 0 0 0-1.5H3a.5.5 0 0 1 0-1h9.25A.75.75 0 0 0 13 10.75V1a1 1 0 0 0-1-1H3Zm1.75 3a.75.75 0 0 0 0 1.5h4.5a.75.75 0 0 0 0-1.5h-4.5Z"
-      />
-    </svg>
-  );
-}
-
 export function InfoPage() {
   const { t } = useT();
   const { push } = useToast();
@@ -156,7 +147,7 @@ export function InfoPage() {
 
   return (
     <>
-      <Card title={t("about.version")} hint={t("tile.info.versionHint")} hueIndex={nextHue()}>
+      <Card title={t("about.version")} hint={t("tile.info.versionHint")} hueIndex={nextHue()} newId="settings-version">
         <Rows>
           <SettingRow label="BombVault">
             {versions?.bombvault ? <Version version={versions.bombvault} repo={REPO} /> : unknown}
@@ -187,17 +178,20 @@ export function InfoPage() {
                 onClick: () => window.open(DOCS, "_blank", "noopener,noreferrer"),
               },
             ]}
-            mark={<BookMark />}
+            mark={<BrandMark svg={MANUAL_SVG} />}
             markClass="glim-house-mark"
           />
+          {/* The file goes with an issue on GitHub, so it lights up beside it. */}
           <ReadmeButton
-            tile="glim-tile-house"
+            tile="glim-tile-github"
             parts={[{ name: t("tile.info.bugReport"), sub: t("tile.info.download"), onClick: () => void bugReport() }]}
             mark={<IconDiagnostics />}
-            markClass="glim-house-mark"
+            markClass="glim-github-mark"
           />
         </div>
       </Card>
+
+      <WhatsNewCard hueIndex={nextHue()} />
 
       <Card title={t("about.title")} hueIndex={nextHue()}>
         <AboutGive />

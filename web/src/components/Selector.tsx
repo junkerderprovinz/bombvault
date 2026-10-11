@@ -12,7 +12,13 @@
 // The strip spans its box and its segments share the width, so a card of
 // stacked selectors ends in one edge. A strip that shares a toolbar row with a
 // search field or buttons passes `inline` and hugs its segments instead. Page
-// tabs pass `fit` and stay on one row.
+// tabs pass `fit` and stay on one row. On a phone a well pins its segments
+// either way, so every row it wraps onto is a row of equals.
+//
+// Under rainbow a selector that sets a value wears one colour, its place among
+// the page's selectors (lib/selectorHue.ts), on its chosen segment, and the
+// segments not chosen stay without colour. A tab strip, which picks a page
+// rather than a value, keeps a colour per tab.
 //
 // A caption such as "Sort by:" belongs in a plain <span> outside the component,
 // not a <label> around the row: a label around several tabs forwards its clicks
@@ -27,17 +33,19 @@ import {
   type ReactNode,
 } from "react";
 import { hueVars } from "../lib/appearance";
+import { countSelector } from "../lib/selectorHue";
 import { useLabelMode } from "../lib/useLabelMode";
 import type { ControlAxis } from "../lib/controls";
 import { hidesLabel, labelWidth } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
+import { useIsDesktop } from "../lib/useMediaQuery";
 import { segmentLayout, type SegmentWidths } from "../lib/segmentLayout";
 
 export interface SelectorItem {
   /** Stable id, handed back by onChange. */
   id: string;
   label: string;
-  /** Glyph before the label, tinted with the segment's hue while `hue` is on. */
+  /** Glyph before the label. In a tab strip it is tinted with its tab's hue. */
   icon?: ReactNode;
   disabled?: boolean;
   /** Why the segment is in its state, such as "pick a target folder first" on
@@ -74,14 +82,13 @@ interface SelectorCommon {
    *  one, for a strip beside a real Button. Opt-in because a strip cannot see
    *  its neighbours, and the dense strips should stay short. */
   buttonHeight?: boolean;
-  /** Colour each segment by its position in the rainbow palette. Default true.
-   *  Turn it off where the position means nothing, such as a single-item strip
-   *  (Recovery's StepDisclosure), not for looks. */
+  /** Take a colour under rainbow. Default true. Turn it off where the colour
+   *  means nothing, such as a single-item strip (Recovery's StepDisclosure),
+   *  not for looks. */
   hue?: boolean;
-  /** Where this strip starts in the rainbow palette. Default 0. Strips stacked
-   *  on one page would otherwise repeat each column's colour straight down, so
-   *  a caller rendering a group gives each strip its own offset. The settings
-   *  tree takes its offsets from HUE_OFFSET. */
+  /** Makes the strip a tab strip for colour: each segment keeps its own
+   *  palette position, counting from here. Without it the selector sets a
+   *  value and takes its colour from its place on the page. */
   hueOffset?: number;
   variant?: SelectorVariant;
   /** Pin every segment to the widest one's measured width, at least
@@ -110,36 +117,6 @@ interface SelectorCommon {
   activation?: "auto" | "manual";
   className?: string;
 }
-
-/**
- * HUE_OFFSET is where each selector in the settings tree starts in the palette.
- * The selectors are spread over several files and would all repeat the same
- * colours at the default offset; pages/settings/hueOffsets.test.ts requires
- * every hued selector in that tree to take its offset from here.
- *
- * There are more selectors than the palette has colours, so some share a
- * start: `drillKind` and the placement rows with the first label row, and
- * `theme`, `notifyOn` and `mcpClient` the last colour. `theme` sits on Look,
- * `notifyOn` on Notifications, the placement rows on Storage and the client
- * picker in a dialog from Integrations, so none of them is on screen with
- * another. Look spends all eight positions, so a selector added there has no
- * free start and the table needs rethinking rather than another entry.
- */
-export const HUE_OFFSET = {
-  /** The settings rail. */
-  tabs: 0,
-  /** One row per control axis, each a colour further along, so the block reads
-   *  as one group. */
-  labels: 1,
-  shape: 5,
-  motion: 6,
-  theme: 7,
-  notifyOn: 7,
-  drillKind: 1,
-  /** The three placement default rows, +3 per row: 1, 4 and 7. */
-  placement: 1,
-  mcpClient: 7,
-} as const;
 
 export type SelectorProps =
   | (SelectorCommon & {
@@ -171,11 +148,15 @@ const SIZE: Record<
  * a button, the button height, since a box sized by its text comes out shorter
  * than the controls around it. Text-only strips keep the compact padding, and
  * grow to the button height only under a coarse pointer, where a 20px pill is
- * too small to hit.
+ * too small to hit. A well is a row of targets with nothing between them, so
+ * under a finger its segments take the taller key height.
  */
-function segmentPadding(size: SelectorSize, hasGlyph: boolean, buttonHeight: boolean): string {
-  return hasGlyph || buttonHeight ? SIZE[size].glyphPadding : `${SIZE[size].padding} pointer-coarse:min-h-(--btn-h)`;
+function segmentPadding(size: SelectorSize, hasGlyph: boolean, buttonHeight: boolean, well: boolean): string {
+  if (hasGlyph || buttonHeight) return well ? `${SIZE[size].glyphPadding} ${WELL_TOUCH}` : SIZE[size].glyphPadding;
+  return `${SIZE[size].padding} ${well ? WELL_TOUCH : "pointer-coarse:min-h-(--btn-h)"}`;
 }
+
+const WELL_TOUCH = "pointer-coarse:min-h-(--btn-h-key)";
 
 // MIN_PINNED_WIDTH is the narrowest a pinned segment gets. The shared floor
 // keeps the pinned strips on one page at one width instead of each following
@@ -407,7 +388,7 @@ export function Selector(props: SelectorProps) {
     size = "md",
     buttonHeight = false,
     hue = true,
-    hueOffset = 0,
+    hueOffset,
     variant = "well",
     equalWidth = false,
     inline = false,
@@ -418,6 +399,11 @@ export function Selector(props: SelectorProps) {
     className = "",
   } = props;
   const well = variant === "well";
+  // Below the desktop shell a well soon runs out of row, and segments that hug
+  // their labels then wrap into rows of odd widths. Pinned to the widest label
+  // they stay equal and wrap into even rows. A strip of glyphs alone keeps its
+  // squares.
+  const phoneWell = !useIsDesktop() && well && !fit && !pairsOnPhone && !items.every((i) => i.iconOnly);
 
   // `lg` strips are the page-level tabs and pickers and follow the Tabs label
   // mode; smaller strips sit in form rows beside buttons and follow the Buttons
@@ -433,7 +419,7 @@ export function Selector(props: SelectorProps) {
   // stays a row of equal tabs in glyph mode.
   const labelsOffScreen = hidesLabel(labelModeForStrip) && items.every((i) => !!i.icon);
   const reactiveStrip = labelModeForStrip === "reactive" && items.every((i) => !!i.icon && !i.iconOnly);
-  const pinWidth = equalWidth && !fit && !(labelsOffScreen && size !== "lg");
+  const pinWidth = (equalWidth || phoneWell) && !fit && !(labelsOffScreen && size !== "lg");
   // A strip that keeps to one row can only drop its labels where they are on
   // screen and every segment has a glyph to show instead.
   const canSqueeze = fit && labelModeForStrip === "textGlyph" && items.every((i) => !!i.icon);
@@ -446,6 +432,11 @@ export function Selector(props: SelectorProps) {
   const auto = !many && !manual;
 
   const strip = useRef<HTMLDivElement>(null);
+  const perTab = hue && hueOffset !== undefined;
+  const counted = hue && !perTab;
+  useLayoutEffect(() => {
+    if (counted && strip.current) return countSelector(strip.current);
+  }, [counted]);
 
   // How pinned segments share the row, from segmentLayout. Pinning needs each
   // segment's natural width, which only the DOM knows; a flex share alone
@@ -489,12 +480,17 @@ export function Selector(props: SelectorProps) {
       const gap = parseFloat(own.columnGap) || 0;
       const widths = segmentWidths(segs);
       const widest = Math.max(...widths.map((w) => w.oneLine));
-      let pinned = pinnedWidth(widest, segs.length, room, gap);
+      // The shared floor belongs to the strips that asked to be pinned. A phone
+      // well takes its widest label, so one beside a caption still hugs.
+      let pinned = equalWidth ? pinnedWidth(widest, segs.length, room, gap) : Math.min(widest, room);
       let rows = segmentLayout(room, pinned, widths, gap);
       // A hugging strip that wraps takes the floor its rows have room for, so
-      // a tab is as wide in a strip of eight as in a strip of four.
+      // a tab is as wide in a strip of eight as in a strip of four. A phone
+      // well has no floor and takes its even share of the row instead.
       if (inline && !rows.byContent && rows.perRow < segs.length) {
-        pinned = pinnedWidth(widest, rows.perRow, room, gap);
+        pinned = equalWidth
+          ? pinnedWidth(widest, rows.perRow, room, gap)
+          : Math.floor((room - gap * (rows.perRow - 1)) / rows.perRow);
         rows = segmentLayout(room, pinned, widths, gap);
       }
       const next: RowLayout = { pinned, room, gap, inset, ...rows };
@@ -505,7 +501,7 @@ export function Selector(props: SelectorProps) {
     watch.observe(box);
     for (const seg of segments()) watch.observe(seg);
     return () => watch.disconnect();
-  }, [pinWidth, inline, itemsKey, disabledKey, size, labelModeForStrip]);
+  }, [pinWidth, equalWidth, inline, itemsKey, disabledKey, size, labelModeForStrip]);
 
   // How a one-row strip holds its labels: in even shares while the widest
   // fits one, at each label's own width while they fit together, and as
@@ -548,9 +544,10 @@ export function Selector(props: SelectorProps) {
   // hugs its label grows too, and so does a pinned one whose row is laid out
   // by content.
   //
-  // In a hugging strip the pinned segments keep their width, and the track is
-  // held to one row's worth of them, a pixel over against rounding, so it wraps
-  // into even rows that end where the segments do.
+  // In a hugging strip the pinned segments start from their width, and the
+  // track is held to one row's worth of them, a pixel over against rounding, so
+  // it wraps into even rows that end where the segments do. A short last row
+  // grows its segments rather than leave a hole.
   const byContent = pinWidth && !!layout?.byContent;
   const pinnedRows = pinWidth && layout && !layout.byContent ? layout : null;
   const hugged = inline && pinnedRows;
@@ -560,7 +557,7 @@ export function Selector(props: SelectorProps) {
   const segmentFlex: CSSProperties = fit
     ? { flex: fitMode === "content" ? "1 1 auto" : "1 1 0", minWidth: 0, maxWidth: `${MAX_PINNED_WIDTH}px` }
     : hugged
-      ? { flex: `0 0 ${Math.min(hugged.pinned, hugged.room)}px` }
+      ? { flex: `1 0 ${Math.min(hugged.pinned, hugged.room)}px` }
       : pinnedRows
         ? {
             minWidth: `${Math.min(pinnedRows.pinned, pinnedRows.room)}px`,
@@ -658,10 +655,11 @@ export function Selector(props: SelectorProps) {
             ? "rounded-pill [transition:background-color_120ms_ease]"
             : "rounded-pill transition-colors",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          // An iconOnly segment is all glyph, and on an icon-only badge only
-          // the fill takes the colour (design-language.md), so it skips the
-          // glyph tint of glim-hue-icon.
-          hue ? (item.iconOnly ? "glim-hue" : "glim-hue glim-hue-icon") : "",
+          // A tab tints its glyph with its hue at rest. An iconOnly segment is
+          // all glyph, and on an icon-only badge only the fill takes the colour
+          // (design-language.md), so it skips the tint, as does every segment
+          // of a selector that sets a value.
+          hue ? (perTab && !item.iconOnly ? "glim-hue glim-hue-icon" : "glim-hue") : "",
           on
             ? "glim-active bg-accent text-accentContrast"
             : // Idle well segments are transparent, which puts
@@ -679,12 +677,12 @@ export function Selector(props: SelectorProps) {
           // size="icon"; Selector does not render through Badge, so the two
           // sizes have to be kept in step by hand.
           well && equalWidth
-            ? `text-center h-[var(--badge-md)] ${SIZE[size].padding}`
-            : equalWidth || pairsOnPhone
-              ? `text-center ${segmentPadding(size, !!item.icon, buttonHeight)}`
+            ? `text-center h-[var(--badge-md)] ${SIZE[size].padding} ${WELL_TOUCH}`
+            : equalWidth || phoneWell || pairsOnPhone
+              ? `text-center ${segmentPadding(size, !!item.icon, buttonHeight, well)}`
               : item.iconOnly
                 ? "h-8 w-8 p-0"
-                : segmentPadding(size, !!item.icon, buttonHeight),
+                : segmentPadding(size, !!item.icon, buttonHeight, well),
         ]
           .filter(Boolean)
           .join(" ");
@@ -699,7 +697,7 @@ export function Selector(props: SelectorProps) {
             disabled={itemDisabled}
             roved={i === roved}
             className={cls}
-            style={hue ? (hueVars(i + hueOffset) as CSSProperties) : undefined}
+            style={perTab ? (hueVars(i + hueOffset) as CSSProperties) : undefined}
             flex={segmentFlex}
             wraps={pinWidth || pairsOnPhone}
             squeezed={canSqueeze && squeezed}

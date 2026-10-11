@@ -33,7 +33,7 @@ export const PHONE_PATH =
  *  the app. */
 export function PhoneMark() {
   return (
-    <span className="grid h-[88px] w-16 shrink-0 place-items-center rounded-card bg-carbon-surface3 text-accentText">
+    <span className="grid h-[88px] w-16 shrink-0 place-items-center rounded-card bg-carbon-surface2 text-accentText">
       <svg viewBox="0 0 16 16" width="34" height="34" fill="currentColor" aria-hidden="true">
         <path fillRule="evenodd" d={PHONE_PATH} />
       </svg>
@@ -97,7 +97,7 @@ export function InstanceCard({
       data-instance={cardKey}
       data-net={cardKey}
       style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
-      className={`relative flex h-full flex-col overflow-hidden rounded-card bg-carbon-surface2 glim-hue glim-stagger-row glim-net-entry${
+      className={`relative flex h-full flex-col overflow-hidden rounded-card bg-carbon-surface glim-hue glim-stagger-row glim-net-entry${
         hot ? " glim-net-entry-hot" : ""
       }`}
     >
@@ -121,7 +121,7 @@ export function InstanceCard({
       </div>
       {children && <div className="flex flex-col gap-4 px-4 pb-4 md:px-5">{children}</div>}
       {actions && (
-        <div className="mt-auto flex flex-wrap items-center gap-2 px-4 pb-4 md:px-5 md:pb-5 [&>:first-child]:flex-1">
+        <div className="mt-auto flex flex-wrap items-center gap-2 px-4 pb-4 md:px-5 md:pb-5 [&>:first-child]:flex-auto">
           {actions}
         </div>
       )}

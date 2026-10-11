@@ -78,6 +78,7 @@ const testMatch = [
   "settings-phone.spec.ts",
   "activity-log-jump.spec.ts",
   "selector-span.spec.ts",
+  "selector-hue.spec.ts",
   "page-width.spec.ts",
   "narrow-window.spec.ts",
   "backups-list.spec.ts",
@@ -86,8 +87,10 @@ const testMatch = [
   "old-links.spec.ts",
   "entry-kinds-phone.spec.ts",
   "overview.spec.ts",
+  "whats-new.spec.ts",
   "restore.spec.ts",
   "welcome.spec.ts",
+  "look-help.spec.ts",
 ];
 
 for (const spec of testMatch) {

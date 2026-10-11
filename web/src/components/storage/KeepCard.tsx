@@ -84,7 +84,7 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
   const mode: Mode = custom ? "custom" : presetOf(draft);
 
   return (
-    <Card title={t("storage.keep.title")} hint={t("storage.keep.hint")} hueIndex={hueIndex}>
+    <Card title={t("storage.keep.title")} hint={t("storage.keep.hint")} hueIndex={hueIndex} newId="location-keep">
       {less.dialog}
       {editable ? (
         <Selector

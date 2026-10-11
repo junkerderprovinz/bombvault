@@ -13,7 +13,7 @@ export function StatCard({
   const base = "flex min-w-0 flex-col gap-1 overflow-hidden rounded-control bg-carbon-surface2 px-4 py-3";
   const inner = (
     <>
-      <span className={`text-2xl font-bold tabular-nums ${danger && value > 0 ? "text-statusFail" : "text-carbon-text"}`}>
+      <span className={`text-status font-bold tabular-nums ${danger && value > 0 ? "text-statusFail" : "text-carbon-text"}`}>
         {value}
       </span>
       <span className="text-xs leading-tight text-carbon-textMuted wrap-break-word">{label}</span>

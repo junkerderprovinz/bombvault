@@ -115,7 +115,7 @@ export function GlyphSheet() {
   return (
     <div className={PAGE_SHELL}>
       <div>
-        <h1 className="text-lg font-semibold text-carbon-text">Glyph sheet</h1>
+        <h1 className="text-title font-semibold text-carbon-text">Glyph sheet</h1>
         <p className="mt-1 max-w-3xl text-sm text-carbon-textMuted">
           {rows.length} glyphs at their real 20px size. The percentage is how much of its own
           viewBox each drawing fills, measured here rather than taken from the generator. An

@@ -37,6 +37,7 @@ export function Card({
   children,
   hueIndex,
   nested,
+  newId,
 }: {
   /** Without a title but with a hint the heading badge still renders, so the
    *  card keeps its hue notch. A card with neither renders no heading. */
@@ -54,6 +55,8 @@ export function Card({
    *  because the heading notch straddles the top edge and would otherwise
    *  sit on the first field. */
   nested?: boolean;
+  /** The change in lib/whatsNew.ts the card is, which puts its dot on it. */
+  newId?: string;
 }) {
   return (
     // `relative` anchors the absolutely positioned heading badge; the hint
@@ -63,6 +66,7 @@ export function Card({
     // whole card, so no control inside has to repeat its card's hue.
     <div
       data-search-card={title}
+      data-new={newId}
       className={`relative glim-notch-card flex flex-col gap-4 ${
         nested ? "pt-5" : "bg-carbon-surface rounded-card p-5"
       }${hueIndex !== undefined ? " glim-hue" : ""}`}

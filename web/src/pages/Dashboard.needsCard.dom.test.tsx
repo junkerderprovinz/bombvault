@@ -39,7 +39,8 @@ beforeEach(() => {
 afterEach(cleanup);
 
 function Where() {
-  return <output>{useLocation().pathname}</output>;
+  const { pathname, search } = useLocation();
+  return <output>{pathname + search}</output>;
 }
 
 function renderCard(needs: Need[]) {
@@ -236,6 +237,17 @@ describe("NeedsCard", () => {
     expect(link.getAttribute("href")).toBe("/anomalies?scope=item:tg-immich");
     expect(row.getByText(en["anomaly.retentionKept"])).toBeTruthy();
     expect(row.getByRole("button", { name: en["overview.needs.check"] })).toBeTruthy();
+  });
+
+  it("says that no backup runs while the key is locked, with both remedies and the way to the emergency", () => {
+    renderCard([{ is: "keyLocked" }, { is: "recoveryKit" }]);
+    const rows = screen.getAllByRole("listitem");
+    expect(rows[0].getAttribute("data-testid")).toBe("need-key-locked");
+    const row = within(rows[0]);
+    expect(row.getByText(en["overview.needs.keyLocked"])).toBeTruthy();
+    expect(row.getByText(en["emergency.code.backup-key-locked"])).toBeTruthy();
+    fireEvent.click(row.getByRole("button", { name: en["entry.config.startRecovery"] }));
+    expect(screen.getByRole("status").textContent).toBe("/restore?emergency=access");
   });
 
   it("downloads the recovery kit and takes the word that it is stored", async () => {

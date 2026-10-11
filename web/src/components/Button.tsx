@@ -44,14 +44,15 @@ export type ButtonVariant = "default" | "chip" | "icon";
 
 // ok, danger and warn put carbon-background ink on the solid status tokens: in
 // both themes the solid status values sit at the opposite lightness to the
-// background, so one ink reads on both.
+// background, so one ink reads on both. The filled tones hover by a colour
+// step toward the theme's text (rule 21).
 const TONE_CLASS: Record<ButtonTone, string> = {
-  accent: "bg-accent text-accentContrast hover:opacity-90",
+  accent: "bg-accent text-accentContrast hover:bg-accentHover",
   neutral: "bg-carbon-surface3 text-carbon-text hover:bg-carbon-hoverRaised",
   subtle: "bg-carbon-surface2 text-carbon-text hover:bg-carbon-surface3",
-  ok: "bg-statusOkSolid text-carbon-background hover:opacity-90",
-  danger: "bg-statusFailSolid text-carbon-background hover:opacity-90",
-  warn: "bg-statusWarnSolid text-carbon-background hover:opacity-90",
+  ok: "bg-statusOkSolid text-carbon-background hover:bg-statusOkHover",
+  danger: "bg-statusFailSolid text-carbon-background hover:bg-statusFailHover",
+  warn: "bg-statusWarnSolid text-carbon-background hover:bg-statusWarnHover",
 };
 
 // The text colour of each tone alone, for the (i) HintSlot lays over a button.

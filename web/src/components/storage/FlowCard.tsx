@@ -89,7 +89,6 @@ function FlowSwitches({ rows, busy, onToggle }: { rows: FlowRow[]; busy: boolean
                   select="many"
                   inline
                   pairsOnPhone
-                  hueOffset={3 * i}
                   active={new Set(row.lines.filter((line) => line.on).map((line) => line.key))}
                   disabled={busy}
                   onChange={(key) => {
@@ -137,7 +136,7 @@ export function FlowCard({
   const graph = view === "graph";
 
   return (
-    <Card title={t("storage.flow.title")} hint={t("storage.flow.hint")} hueIndex={hueIndex}>
+    <Card title={t("storage.flow.title")} hint={t("storage.flow.hint")} hueIndex={hueIndex} newId="storage-flow">
       {flow.dialogs}
       <div className={`flex justify-end ${graph ? "md:absolute md:end-5 md:top-5 md:z-1" : ""}`}>
         <Selector

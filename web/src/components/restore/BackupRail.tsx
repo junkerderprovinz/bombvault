@@ -139,7 +139,7 @@ export function BackupRail({
               />
               <div className="flex min-w-0 flex-1 basis-56 flex-col gap-1.5">
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                  <b className="text-[15px] font-semibold tabular-nums text-carbon-text first-letter:uppercase">
+                  <b className="text-title font-semibold tabular-nums text-carbon-text first-letter:uppercase">
                     {formatRecent(Math.floor(Date.parse(row.time) / 1000), lang)}
                   </b>
                   {recommended && (
@@ -159,7 +159,7 @@ export function BackupRail({
                     </Badge>
                   ))}
                 </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-carbon-textSub">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-subline text-carbon-textSub">
                   {row.size !== undefined && <span className="tabular-nums">{humanBytes(row.size)}</span>}
                   <span className="flex flex-wrap gap-1.5">
                     {marks.map((mark) => (
@@ -177,6 +177,7 @@ export function BackupRail({
                 {on && recommended && <p className="text-xs text-carbon-textMuted">{why}</p>}
               </div>
               <div
+                data-new-way={on ? "restore-window" : undefined}
                 className={`ms-auto max-md:w-full max-md:[&_button]:w-full max-md:[&_button]:justify-center${
                   on ? "" : " md:opacity-0 md:focus-within:opacity-100 md:group-hover:opacity-100"
                 }`}

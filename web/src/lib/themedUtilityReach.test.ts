@@ -59,6 +59,10 @@ const declared = new Set(
   Array.from(css.matchAll(/--color-([A-Za-z0-9-]+)\s*:/g)).map((m) => m[1]),
 );
 
+// The type scale's sizes, which share the text- prefix with the colours:
+// --text-status -> status, the size of `text-status`.
+const sizes = new Set(Array.from(css.matchAll(/--text-([a-z]+)s*:/g)).map((m) => m[1]));
+
 type Use = { name: string; file: string; line: number };
 
 const uses: Use[] = [];
@@ -67,6 +71,7 @@ for (const file of sources(SRC)) {
   text.split("\n").forEach((line, i) => {
     for (const m of line.matchAll(USE)) {
       const name = m[1].replace(/-+$/, "");
+      if (m[0].startsWith("text-") && sizes.has(name)) continue;
       uses.push({ name, file: file.slice(SRC.length + 1).replace(/\\/g, "/"), line: i + 1 });
     }
   });

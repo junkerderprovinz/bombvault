@@ -24,6 +24,14 @@
   --color-accentContrast: var(--accent-contrast);
   --color-accentSoft: var(--accent-soft);
   --color-accentText: var(--accent-text);
+  /* The ink of a line-drawn glyph, which takes a rainbow position where text
+     does not. */
+  --color-accentGlyph: var(--accent-glyph);
+  /* The hover step of a filled accent or status control (rule 21). */
+  --color-accentHover: var(--accent-hover);
+  --color-statusOkHover: var(--status-ok-hover);
+  --color-statusFailHover: var(--status-fail-hover);
+  --color-statusWarnHover: var(--status-warn-hover);
 
   /* Status colours that flip with the theme. The plain token is text, Bg and
      Border are chip surfaces, Solid is for dots, bars and other graphics. */
@@ -73,11 +81,20 @@
   --radius-control: var(--radius-control);
   --radius-pill: var(--radius-pill);
 
-  /* Type scale, self-referencing for the same reason. */
-  --text-heading: var(--text-heading);
+  /* Type scale, self-referencing for the same reason. Tailwind's own xs, sm
+     and base read the scale too, so the sizes written that way are its 12,
+     14 and 16px. */
+  --text-status: var(--text-status);
+  --text-title: var(--text-title);
   --text-body: var(--text-body);
+  --text-subline: var(--text-subline);
+  --text-meta: var(--text-meta);
+  --text-heading: var(--text-heading);
   --text-dense: var(--text-dense);
   --text-caption: var(--text-caption);
+  --text-xs: var(--text-meta);
+  --text-sm: var(--text-body);
+  --text-base: var(--text-title);
 }
 
 /* Height of the Selector "well" variant, under TrickWork's name for the same
@@ -188,6 +205,66 @@
   padding-bottom: calc(1rem + var(--page-actions-clearance, 0px));
 }
 
+/* What is new after an update (components/WhatsNewDots.tsx): a dot on each
+   changed element and on what leads to it, in a layer above windows and below
+   bubbles. The green is the state colour and stays it in every colour mode,
+   and the ring in the page's ground keeps it legible on any surface. */
+.glim-new-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+}
+.glim-new-dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background-color: var(--status-ok-solid);
+  box-shadow:
+    0 0 0 2px var(--carbon-bg),
+    0 0 10px 3px color-mix(in srgb, var(--status-ok-solid) 80%, transparent);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.glim-new-dot:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+/* A finger needs more than twelve pixels to hit. */
+@media (pointer: coarse) {
+  .glim-new-dot::before {
+    content: "";
+    position: absolute;
+    inset: -14px;
+  }
+}
+/* The same dot in the list of changes, where it marks a line and is nothing
+   to press. A change that was seen loses the colour. */
+.glim-new-dot-still {
+  position: static;
+  flex: none;
+  margin: 0;
+  pointer-events: none;
+}
+.glim-new-dot-seen {
+  background-color: var(--carbon-text-muted);
+  box-shadow: none;
+}
+@keyframes glim-new-glow {
+  50% {
+    box-shadow:
+      0 0 0 2px var(--carbon-bg),
+      0 0 18px 7px color-mix(in srgb, var(--status-ok-solid) 50%, transparent);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="off"]) .glim-new-dot:not(.glim-new-dot-still) {
+    animation: glim-new-glow var(--motion-breathe-dur, 1400ms) ease-in-out infinite;
+  }
+}
+
 /* The glyph tile of a list row (components/backups/BackupRow.tsx). It takes
    the row's ink, which rainbow turns into the row's hue, and fills with the
    accent while the row is hovered, holds the focus or is picked. Reactive
@@ -223,7 +300,7 @@
   height: var(--btn-h);
   padding-inline: var(--btn-pad-x);
   border-radius: var(--radius-pill);
-  font-size: 0.875rem;
+  font-size: var(--text-body);
   font-weight: 500;
   line-height: 1;
   box-sizing: border-box;
@@ -619,10 +696,19 @@
      it. The wide rail is Tailwind's `w-56`. */
   --rail-narrow:      85px;
 
-  --text-heading: 1.25rem;  /* 20px */
-  --text-body:    0.875rem; /* 14px */
-  --text-dense:   0.75rem;  /* 12px */
-  --text-caption: 0.6875rem; /* 11px */
+  /* GlimStone's type scale, five sizes, one per role: the status line and a
+     tile's one figure, an emphasised title, body text, the line under a name,
+     and notch and meta. lib/typeScale.test.ts keeps every other size out. */
+  --text-status:  1.375rem;  /* 22px */
+  --text-title:   1rem;      /* 16px */
+  --text-body:    0.875rem;  /* 14px */
+  --text-subline: 0.8125rem; /* 13px */
+  --text-meta:    0.75rem;   /* 12px */
+
+  /* The names text-heading, text-dense and text-caption read. */
+  --text-heading: var(--text-status);
+  --text-dense:   var(--text-meta);
+  --text-caption: var(--text-meta);
 }
 
 /* The shape axis. Every rounded corner reads --radius-card, --radius-control or
@@ -825,24 +911,18 @@
   --status-fail-border-soft:  #4a2a2a;
   --status-fail-solid:        #ff8389;
 
-  --status-warn-text:         #f1c21b;  /* yellow-30 */
-  --status-warn-bg:           #2a2a1c;
-  --status-warn-bg-strong:    #3a2f1c;  /* emphasised warn chip (Files) */
+  /* Orange, so yellow only ever means "act here" or "chosen". 6.1:1 on its
+     own bg-strong and 7.3:1 under the dark ink of a solid fill. */
+  --status-warn-text:         #ff832b;
+  --status-warn-bg:           #322319;
+  --status-warn-bg-strong:    #36231a;  /* emphasised warn chip (Files) */
   /* The quiet end, for a paragraph that explains rather than warns, such as
      the passkey card's refusal: the full warn wash behind prose reads as an
      alert. */
-  --status-warn-bg-soft:      #23231a;
-  --status-warn-border:       #4a4a2a;
-  --status-warn-border-strong:#5a4a2a;
-  --status-warn-solid:        #f1c21b;
-
-  /* Known limitation: with the default accent, "warn" and "active" read as the
-     same amber in both themes (#f1c21b against #FCC419 is 1.05:1 here), and
-     Dashboard's SummaryTier can put a "warn" health chip and a "running" chip
-     side by side. The other accent presets are not yellow. Every chip carries
-     its own label, so colour is never the only signal; a real fix would mean
-     leaving Carbon's yellow for warn, changing the default accent, or giving
-     Badge icons. */
+  --status-warn-bg-soft:      #241d17;
+  --status-warn-border:       #4a321f;
+  --status-warn-border-strong:#5a3a22;
+  --status-warn-solid:        #ff832b;
 
   /* Off-site replication's identity colour, Carbon blue-40, identical to
      internal/api/widget.html's `.offsite` rule (see --color-statusOffsite).
@@ -927,8 +1007,7 @@
      --accent-contrast. */
 
   /* The dark ring composites to about 1.3:1 on white, under SC 1.4.11's 3:1.
-     This is Carbon yellow-60 (the warn text colour, in the accent's hue
-     family) at .85: about 3.75:1 on #ffffff and 3.48:1 on the #f4f4f4 page. */
+     This is Carbon yellow-60, in the accent's hue family, at .85: about 3.75:1 on #ffffff and 3.48:1 on the #f4f4f4 page. */
   --focus-ring: rgba(142, 106, 0, .85);
 
   /* A copy of --focus-ring, as in the dark block. */
@@ -967,13 +1046,15 @@
   --status-fail-border-soft:  #ffd7d9;
   --status-fail-solid:        #da1e28;
 
-  --status-warn-text:         #8e6a00;  /* yellow-60, dark enough for light grounds */
-  --status-warn-bg:           #fcf4d6;  /* yellow-10 */
-  --status-warn-bg-strong:    #fcf4d6;
-  --status-warn-bg-soft:      #fdf9ec;
-  --status-warn-border:       #fddc69;  /* yellow-20 */
-  --status-warn-border-strong:#fddc69;
-  --status-warn-solid:        #b28600;  /* yellow-50; #f1c21b is under 3:1 on light */
+  /* 4.6:1 on its own bg-strong, 5.0:1 on white and 4.6:1 under the light
+     ink of a solid fill. */
+  --status-warn-text:         #ba4e00;
+  --status-warn-bg:           #fff2e8;
+  --status-warn-bg-strong:    #fff2e8;
+  --status-warn-bg-soft:      #fff8f3;
+  --status-warn-border:       #ffd9be;
+  --status-warn-border-strong:#ffd9be;
+  --status-warn-solid:        #ba4e00;
 
   /* The off-site colour on light: 7.79:1 on --carbon-surface and 7.09:1 on
      --carbon-bg, where the dark #78a9ff would be 2.4:1. */
@@ -1048,6 +1129,22 @@
   }
 }
 
+/* The hover step of a filled tone that has no surface ramp of its own (rule
+   21): the fill mixed toward the theme's text colour, lighter on dark and
+   darker on light, the way the ramp moves. Opacity would let the card show
+   through. Declared wherever a theme is set, so --carbon-text is that
+   theme's. */
+:root,
+[data-theme] {
+  --accent-hover:      color-mix(in srgb, var(--accent) 85%, var(--carbon-text));
+  --status-ok-hover:   color-mix(in srgb, var(--status-ok-solid) 85%, var(--carbon-text));
+  --status-fail-hover: color-mix(in srgb, var(--status-fail-solid) 85%, var(--carbon-text));
+  --status-warn-hover: color-mix(in srgb, var(--status-warn-solid) 85%, var(--carbon-text));
+  /* A line-drawn glyph in the accent. Rainbow never colours text, so a hued
+     subtree redefines this and leaves --accent-text on the single accent. */
+  --accent-glyph:      var(--accent-text);
+}
+
 /* The shatter egg slices whichever logo is on screen: the light mark on the
    dark sidebar, the dark mark on the light one. Same specificity, so the dark
    rule has to come after :root. */
@@ -1109,7 +1206,7 @@ body {
   text-transform: none;
   font-weight: 400;
   text-align: start;
-  white-space: normal;
+  white-space: pre-line;
 }
 
 /* The colour picker, from GlimStone's reference: a saturation/value square and
@@ -1347,9 +1444,15 @@ body {
      position's colour while ink kept the single accent. --ink-mix is
      inherited, so there is no light-theme twin. */
   --accent-text: color-mix(in srgb, var(--item-hue) var(--ink-mix), black);
+  --accent-glyph: var(--accent-text);
+  /* Read against this element's own --accent, so a filled control steps from
+     its hue, and in reactive mode from whatever the state rule below sets. */
+  --accent-hover: color-mix(in srgb, var(--accent) 85%, var(--carbon-text));
   --color-accent: var(--item-hue);
   --color-accentContrast: var(--item-hue-ink);
   --color-accentSoft: var(--item-hue-soft);
+  --color-accentGlyph: var(--accent-glyph);
+  --color-accentHover: var(--accent-hover);
   /* The focus ring belongs to the position and is drawn around the element
      that owns the colour; the base :focus-visible rule reads it. Reactive mode
      does not reset it, because the ring only paints under focus, when the
@@ -1415,19 +1518,6 @@ body {
   color: var(--accent);
 }
 
-/* Except in a form row. A tab strip is a set of destinations, and each idle tab
-   may show its own hue. A Local/Off-site switch is one binary choice inside a
-   card that already has a hue, and an unchosen half in a third colour reads
-   as a status the control does not have. `.glim-seg-btn` is exactly the
-   form-row variant, so there the idle glyph inherits `text-carbon-textSub`
-   from its segment, like the label beside it. */
-.glim-seg-btn.glim-hue-icon:not(.glim-active) svg,
-[data-rainbow="reactive"] .glim-seg-btn.glim-hue-icon:not(.glim-active) svg,
-[data-rainbow="reactive"] .glim-seg-btn.glim-hue-icon:not(.glim-active):hover svg,
-[data-rainbow="reactive"] .glim-seg-btn.glim-hue-icon:not(.glim-active):focus-within svg {
-  color: inherit;
-}
-
 /* The figure on a navigation entry wears the colour of the entry's glyph, so it
    follows the accent and every colour mode with it. The current entry is filled
    with that colour itself, so there the pair is turned round: the fill's ink is
@@ -1475,6 +1565,14 @@ body {
 /* A mark whose layers do not survive one ink brings the brand's own
    single-colour version for the hover. */
 .glim-mark-hover { display: none; }
+/* The house marks open: the envelope and the manual's book show their open
+   drawing on the focus as well, and under a finger, where nothing hovers. */
+.glim-brand-tile:focus-visible .glim-house-mark .glim-mark-rest { display: none; }
+.glim-brand-tile:focus-visible .glim-house-mark .glim-mark-hover { display: block; }
+@media (hover: none) {
+  .glim-brand-tile:active .glim-house-mark .glim-mark-rest { display: none; }
+  .glim-brand-tile:active .glim-house-mark .glim-mark-hover { display: block; }
+}
 
 /* The About card's marks at rest. A published brand colour fails on one of
    the two grounds, so they take the adjusted theme tokens, and the house mark
@@ -1484,7 +1582,7 @@ body {
 .glim-github-mark { color: var(--brand-github); }
 .glim-android-mark { color: var(--brand-android); }
 .glim-docker-mark { color: var(--brand-docker); }
-.glim-house-mark { color: var(--accent-text); }
+.glim-house-mark { color: var(--accent-glyph); }
 
 /* The phone app answers a press the way KnightLoader's does. Nothing hovers
    on a touch screen, so without this a tap that works looks like one that did
@@ -1674,7 +1772,7 @@ body {
 
 /* Half the second line's height down, so the name alone sits in the middle. */
 .glim-readme-btn-name:not(:only-child) {
-  translate: 0 0.4375rem;
+  translate: 0 calc(0.75rem * 1.15 / 2);
 }
 
 .glim-readme-btn-sub {
@@ -3806,7 +3904,7 @@ body {
   position: absolute;
   top: 0;
   translate: -50% 0;
-  font-size: 11px;
+  font-size: var(--text-meta);
   line-height: 15px;
   font-variant-numeric: tabular-nums;
   color: var(--carbon-text-muted);
@@ -3881,7 +3979,7 @@ body {
   background: var(--carbon-text);
   color: var(--carbon-surface);
   font-style: normal;
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 700;
   line-height: 1.1;
   white-space: nowrap;

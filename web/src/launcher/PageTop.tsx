@@ -11,7 +11,7 @@ export function PageTop({ t, title, onBack, children }: { t: T; title: string; o
       <Badge as="button" shape="square" size="icon" tone="neutral" tip={t("common.back")} onClick={onBack}>
         <IconBack />
       </Badge>
-      <h1 className="min-w-0 truncate text-xl font-semibold text-carbon-text">{title}</h1>
+      <h1 className="min-w-0 truncate text-status font-semibold text-carbon-text">{title}</h1>
       {children}
     </header>
   );

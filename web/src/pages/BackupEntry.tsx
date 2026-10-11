@@ -187,7 +187,7 @@ function Loaded({
         {gone && <Note>{t(item.kind === "vm" ? "entry.gone.vm" : "entry.gone.container")}</Note>}
         {!self && <KindHead entry={entry} tab={tab} onChanged={reload} />}
         {!self && (
-          <div className="mt-2 max-w-xl">
+          <div data-new-way="entry-tabs" className="mt-2 max-w-xl">
             <Selector
               items={ENTRY_TABS.map((id) => {
                 const Glyph = TAB_GLYPH[id];
@@ -197,6 +197,7 @@ function Loaded({
               select="one"
               size="lg"
               fit
+              hueOffset={0}
               active={tab}
               // Replaced, so Back leaves the entry instead of walking its tabs.
               onChange={(id) => navigate(tabPath(id as EntryTab), { replace: true })}

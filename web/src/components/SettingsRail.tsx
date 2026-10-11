@@ -22,7 +22,6 @@ import { useReorder } from "../lib/dragLift";
 import { useLabelMode } from "../lib/useLabelMode";
 import { useIsWide } from "../lib/useIsWide";
 import { useTipBubble } from "../lib/useTipBubble";
-import { HUE_OFFSET } from "./Selector";
 
 export interface RailItem {
   id: string;
@@ -93,6 +92,7 @@ export function SettingsRail({ items, active, label, onReorder }: SettingsRailPr
   return (
     <nav
       aria-label={label}
+      data-new="settings-tiles"
       // Sticky at the scroller's top, so the rail stays put while the page
       // scrolls past it. On desktop it moves out of the page padding to 4px
       // from the sidebar, the room the focus ring and a lifted tile's shadow
@@ -111,7 +111,7 @@ export function SettingsRail({ items, active, label, onReorder }: SettingsRailPr
           <RailTile
             key={item.id}
             item={item}
-            hue={i + HUE_OFFSET.tabs}
+            hue={i}
             on={item.id === active}
             tabStop={item.id === stop}
             glyphs={glyphs}
@@ -166,7 +166,7 @@ function RailTile({ item, hue, on, tabStop, glyphs, reactive, showIcon, look, on
         }}
         className={[
           "glim-nav-row glim-hue glim-hue-icon group flex w-full min-w-0 shrink-0 grow basis-0 items-center",
-          "overflow-hidden rounded-pill text-[15px] font-medium transition-colors select-none [-webkit-touch-callout:none]",
+          "overflow-hidden rounded-pill text-sm font-medium transition-colors select-none [-webkit-touch-callout:none]",
           stacked
             ? `flex-col justify-center gap-0.5 px-2 ${reactive ? "min-h-12 py-1" : "min-h-10 py-1.5"}`
             : "min-h-10 flex-row gap-3 px-3",

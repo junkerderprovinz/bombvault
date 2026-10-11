@@ -2,26 +2,26 @@
 // dialog collects what the request covers and sends it, and the tile then
 // waits for the other side. On withdraws, after a question that says what
 // stops.
-import { useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { useState, type ReactNode } from "react";
 
-import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { InfoBubble } from "../../components/InfoBubble";
 import { KindGlyph } from "../../components/backups/kinds";
 import { IconPlay, IconSave, IconUpload } from "../../components/glyphs";
 import { Selector } from "../../components/Selector";
 import { SettingRow } from "../../components/storage/rows";
 import { useReplicaServers } from "../../components/zfs/replica/replicaStore";
-import { askRole, patchZFSReplica, withdrawRole } from "../../lib/api";
+import { askRole, patchZFSReplica, withdrawKeeper, withdrawRole } from "../../lib/api";
 import type { RequestedRole, RoleSection, RoleStore, ZFSReplicaTarget } from "../../lib/api";
 import type { EntryKind } from "../../lib/backupEntry";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
-import { useConfirm, useDialogKeys } from "../../lib/useConfirm";
+import { depositSentence } from "../../lib/depositCodes";
+import { useConfirm } from "../../lib/useConfirm";
 import { zfsCodeSentence } from "../../lib/zfsCodes";
 import { ToggleRow } from "../settings/shared";
+import { KeeperDialog } from "./KeeperDialogs";
 import { domainLabelKey } from "./PeerScorecard";
+import { RoleDialog } from "./RoleDialog";
 import { ROLES } from "./RoleTile";
 import { roleStates, type Instance, type ItemReplica, type RoleKind, type RoleState } from "./instancesModel";
 import type { InstancesState } from "./useInstances";
@@ -34,54 +34,6 @@ const SECTION_KIND: Record<RoleSection, EntryKind> = {
   zfs: "zfs",
   config: "config",
 };
-
-function RoleDialog({
-  title,
-  hint,
-  lead,
-  footer,
-  onClose,
-  children,
-}: {
-  title: string;
-  hint: string;
-  lead: string;
-  footer: ReactNode;
-  onClose: () => void;
-  children?: ReactNode;
-}) {
-  const box = useRef<HTMLDivElement>(null);
-  useDialogKeys(true, box, onClose);
-  return createPortal(
-    <div
-      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="relative w-full max-w-lg">
-        <h2 className="flex items-center px-5">
-          <Badge tone="heading" size="heading" wrap>
-            {title}
-            <InfoBubble tip={hint} onAccent />
-          </Badge>
-        </h2>
-        <div
-          ref={box}
-          role="dialog"
-          aria-modal="true"
-          aria-label={title}
-          className="glim-modal-card flex max-h-[90vh] w-full flex-col gap-4 overflow-y-auto rounded-card bg-carbon-surface p-5 pt-6 shadow-2xl"
-        >
-          <p className="text-sm text-carbon-textSub">{lead}</p>
-          {children}
-          <div className="flex flex-wrap items-center justify-end gap-2 pt-1">{footer}</div>
-        </div>
-      </div>
-    </div>,
-    document.body,
-  );
-}
 
 /** RoleAskDialog asks an instance to be this server's Receiver or Fetcher,
  *  or changes the sections of a request already sent. An instance too old to
@@ -169,7 +121,7 @@ export function RoleAskDialog({
       }
     >
       <div className="flex flex-col gap-3">
-        <span className="text-[13px] font-semibold text-carbon-textSub">
+        <span className="text-subline font-semibold text-carbon-textSub">
           {t(role === "receiver" ? "instances.role.sections" : "instances.role.sectionsFetch")}
         </span>
         {sections.map((s, i) => (
@@ -204,7 +156,6 @@ export function RoleAskDialog({
             activation="manual"
             inline
             pairsOnPhone
-            hueOffset={sections.length}
             active={store}
             onChange={(id) => setStore(id as RoleStore)}
             // What was allowed was allowed for the place it named.
@@ -301,7 +252,7 @@ export function ZFSRoleDialog({
     >
       {usable && (
         <div className="flex flex-col gap-3">
-          <span className="text-[13px] font-semibold text-carbon-textSub">{t("instances.role.zfsEntries")}</span>
+          <span className="text-subline font-semibold text-carbon-textSub">{t("instances.role.zfsEntries")}</span>
           {replicas.map((r, i) => (
             <div key={r.itemId} className="flex flex-col gap-0.5">
               <ToggleRow
@@ -323,11 +274,12 @@ const OFF_TEXT: Record<RoleKind, TranslationKey> = {
   receiver: "instances.role.offReceiver",
   fetcher: "instances.role.offFetcher",
   zfs: "instances.role.offZfs",
+  keeper: "instances.role.offKeeper",
 };
 
-/** useRoleSwitch is what the three role controls of one instance do. The
- *  caller draws `dialogs` once and wires `toggle` and `change` to its tiles
- *  or switches. */
+/** useRoleSwitch is what the role controls of one instance do. The caller
+ *  draws `dialogs` once and wires `toggle` and `change` to its tiles or
+ *  switches. */
 export function useRoleSwitch({
   instance,
   peers,
@@ -346,9 +298,25 @@ export function useRoleSwitch({
   const states = roleStates(instance);
 
   async function switchOff(role: RoleKind) {
-    const question = `${t("instances.role.offQuestion").replace("{role}", t(ROLES[role].label))} ${t(OFF_TEXT[role])}`;
+    // The last keeper takes the recovery code with it.
+    const lastKeeper = role === "keeper" && state.deposits.sent.every((d) => d.memberId === instance.memberId);
+    const question = [
+      t("instances.role.offQuestion").replace("{role}", t(ROLES[role].label)),
+      t(OFF_TEXT[role]),
+      lastKeeper && t("keeper.offLast"),
+    ]
+      .filter(Boolean)
+      .join(" ");
     if (!(await confirm(question.replaceAll("{peer}", () => instance.name), { confirmKey: "instances.role.switchOff" }))) return;
     try {
+      if (role === "keeper") {
+        const res = await withdrawKeeper(instance.memberId);
+        if (!res.ok) push(depositSentence(t, res), "fail");
+        // A keeper that did not hear still holds the deposit.
+        else if (!res.told) push(t("keeper.notTold").replaceAll("{peer}", () => instance.name), "warn");
+        await state.reloadDeposits();
+        return;
+      }
       if (role === "zfs") {
         const answers = await Promise.all(instance.replicas.map((r) => patchZFSReplica(r.itemId, { target: { kind: "none", id: "" } })));
         const refused = answers.find((res) => !res.ok);
@@ -366,7 +334,7 @@ export function useRoleSwitch({
 
   function sent() {
     setAsking(null);
-    void state.reloadRoles();
+    void (asking === "keeper" ? state.reloadDeposits() : state.reloadRoles());
     if (asking === "zfs") void state.reloadReplicas();
   }
 
@@ -376,7 +344,10 @@ export function useRoleSwitch({
       {asking === "zfs" && (
         <ZFSRoleDialog instance={instance} replicas={state.data.replicas} peers={peers} onClose={() => setAsking(null)} onSent={sent} />
       )}
-      {asking !== null && asking !== "zfs" && (
+      {asking === "keeper" && (
+        <KeeperDialog instance={instance} hasCode={state.deposits.codeSince !== ""} onClose={() => setAsking(null)} onDone={sent} />
+      )}
+      {(asking === "receiver" || asking === "fetcher") && (
         <RoleAskDialog instance={instance} role={asking} sections={sections} onClose={() => setAsking(null)} onSent={sent} />
       )}
     </>

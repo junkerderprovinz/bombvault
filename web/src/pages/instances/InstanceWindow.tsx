@@ -86,7 +86,7 @@ export function InstanceWindow({
       >
         {facts ? (
           <div className="flex flex-col gap-1 px-6 pt-6">
-            <h2 className="flex items-center gap-1.5 text-lg font-semibold text-carbon-text wrap-anywhere">
+            <h2 className="flex items-center gap-1.5 text-title font-semibold text-carbon-text wrap-anywhere">
               {title}
               {hint && <InfoBubble tip={hint} />}
             </h2>

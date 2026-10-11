@@ -152,7 +152,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
             tone="accent"
             onClick={() => void handleAccept()}
             disabled={busy}
-            className={`inline-flex items-center rounded-pill bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            className={`inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-medium disabled:opacity-50${
               shakeAccept ? " glim-shake" : ""
             }`}
           />

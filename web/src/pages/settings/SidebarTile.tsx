@@ -14,7 +14,7 @@ export function SidebarCard({ pin, hueIndex }: { pin: NavPin; hueIndex: number }
   const { settings } = useSettings();
   const pins = useNavPins(settings);
   return (
-    <Card title={t("settings.labels.sidebar")} hueIndex={hueIndex}>
+    <Card title={t("settings.labels.sidebar")} hueIndex={hueIndex} newId="settings-pin">
       <ToggleRow
         label={t("tile.sidebar.show")}
         hint={t("tile.sidebar.showHint")}

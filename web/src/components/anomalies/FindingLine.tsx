@@ -136,12 +136,12 @@ export function FindingLine({
         {namePath ? (
           <Link
             to={namePath}
-            className="min-w-0 text-[15px] font-semibold text-carbon-text hover:text-accentText hover:underline wrap-anywhere"
+            className="min-w-0 text-title font-semibold text-carbon-text hover:text-accentText hover:underline wrap-anywhere"
           >
             {name}
           </Link>
         ) : (
-          <span className="min-w-0 text-[15px] font-semibold text-carbon-text wrap-anywhere">{name}</span>
+          <span className="min-w-0 text-title font-semibold text-carbon-text wrap-anywhere">{name}</span>
         )}
         <SeriesTag a={a} t={t} />
         {recovered && !closed && (
@@ -153,12 +153,12 @@ export function FindingLine({
           </span>
         )}
         {!closed && a.retentionHeld && <HeldMark tip={t("anomaly.retentionPaused")} />}
-        <span className="ms-auto shrink-0 text-[13px] text-carbon-textMuted">{findingWhen(a.lastSeenAt)}</span>
+        <span className="ms-auto shrink-0 text-subline text-carbon-textMuted">{findingWhen(a.lastSeenAt)}</span>
       </div>
 
       <p className="text-sm text-carbon-text wrap-anywhere">{anomalyShortLine(a, t, lang).text}</p>
-      <p className="text-[13px] text-carbon-textMuted wrap-anywhere">{facts.filter(Boolean).join(" · ")}</p>
-      {closed && a.stillPresent && <p className="text-[13px] text-carbon-textMuted">{t("anomaly.stillPresent")}</p>}
+      <p className="text-subline text-carbon-textMuted wrap-anywhere">{facts.filter(Boolean).join(" · ")}</p>
+      {closed && a.stillPresent && <p className="text-subline text-carbon-textMuted">{t("anomaly.stillPresent")}</p>}
 
       <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
         <span className="flex flex-wrap items-center gap-2 max-sm:w-full">

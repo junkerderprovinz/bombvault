@@ -2,8 +2,9 @@
 // entries, their timelines, one open finding and the answer of the restore
 // check are staged at the route layer. On the desktop: the tiles, the search,
 // the backups of the picked entry on their rail, the restore window and the
-// windows of the rare ways. On the phones: the same content with nothing past
-// the edge. German, because its labels run longest.
+// windows of the rare ways, among them the emergency that takes the key of
+// another install over from its recovery kit. On the phones: the same content
+// with nothing past the edge. German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -314,6 +315,129 @@ const rows = (page: Page) => page.getByTestId("rail-row");
 const rail = (page: Page) => page.getByRole("listbox", { name: "Sicherung" });
 const wizard = (page: Page) => page.getByRole("dialog", { name: "Notfall-Assistent" });
 
+// A recovery kit sealed with age, as far as the staged server looks at it.
+const SEALED_KIT = "-----BEGIN AGE ENCRYPTED FILE-----\nYWdlLWVuY3J5cHRpb24ub3JnL3YxCg==\n-----END AGE ENCRYPTED FILE-----\n";
+const IDENTITY = `AGE-SECRET-KEY-1${"Q".repeat(58)}`;
+
+const KIT_PLACES = [
+  { domain: "containers", kind: "local", location: "/mnt/user/backups/bombvault/containers", folder: "backups/bombvault/containers", state: "readable" },
+  { domain: "config", kind: "local", location: "/mnt/user/backups/bombvault/config", folder: "backups/bombvault/config", state: "readable" },
+  { domain: "containers", kind: "offsite", location: "rclone:storagebox:bombvault/containers", state: "sign-in" },
+  { domain: "files", kind: "local", location: "/mnt/disks/usb/bombvault/files", state: "missing" },
+];
+
+interface StagedEmergency {
+  backupKey: "own" | "adopted" | "locked";
+  source?: string;
+  adoptedAt?: number;
+  undoable: boolean;
+  session?: Record<string, unknown>;
+}
+
+/** The instance of the group that keeps the deposit, and what its person has
+ *  answered the request with. */
+const keeper = { allows: false };
+
+const KIT_SESSION = { encrypted: true, places: KIT_PLACES, expiresAt: NOW + 1800, cloudSignIn: true, rcloneConfig: true };
+
+/**
+ * Stages the emergency of another install: the key the server backs up under
+ * and the session that tried a shown key. Returns what the page asked of it.
+ */
+async function stageEmergency(page: Page, start: StagedEmergency = { backupKey: "own", undoable: false }) {
+  let state = start;
+  const asked: string[] = [];
+  keeper.allows = false;
+  await page.route(
+    (url) => url.pathname.startsWith("/api/emergency"),
+    (route) => {
+      const request = route.request();
+      const step = `${request.method()} ${new URL(request.url()).pathname.replace("/api/emergency", "") || "/"}`;
+      if (request.method() !== "GET") asked.push(step);
+      const refuse = (code: string) => route.fulfill({ json: { ok: false, code, error: code } });
+      switch (step) {
+        case "POST /read": {
+          const body = request.postDataJSON() as { kit?: string; identity?: string };
+          if (body.kit === SEALED_KIT && !body.identity) return refuse("kit-sealed");
+          if (body.kit === SEALED_KIT && body.identity !== IDENTITY) return refuse("kit-not-for-identity");
+          state = { ...state, session: { source: "kit", ...KIT_SESSION } };
+          break;
+        }
+        case "GET /deposits":
+          return route.fulfill({
+            json: {
+              ok: true,
+              deposits: [{ memberId: "m-nas", memberName: "nas", ownerId: "o-tower", ownerName: "tower", updatedAt: new Date((NOW - DAY) * 1000).toISOString() }],
+              silent: ["dachboden"],
+            },
+          });
+        case "POST /group": {
+          const body = request.postDataJSON() as { code: string; ask: boolean };
+          asked[asked.length - 1] = `group ${body.ask ? "ask" : "look"} ${body.code}`;
+          if (!keeper.allows) return route.fulfill({ json: { ok: true, release: "asked" } });
+          state = { ...state, session: { source: "group", ...KIT_SESSION } };
+          return route.fulfill({ json: { ok: true, release: "allowed", emergency: state } });
+        }
+        case "POST /adopt":
+          state = { backupKey: "adopted", source: "kit", adoptedAt: NOW, undoable: true, session: { ...state.session, refusal: "adopt-same-key" } };
+          break;
+        case "POST /finish":
+          state = { ...state, session: undefined };
+          break;
+        case "DELETE /":
+          state = { backupKey: "own", undoable: false };
+          break;
+      }
+      return route.fulfill({ json: { ok: true, emergency: state } });
+    },
+  );
+  return asked;
+}
+
+/** Puts this install into a group, as far as the page asks about it. */
+async function stageGroup(page: Page): Promise<void> {
+  await page.route(
+    (url) => url.pathname === "/api/group",
+    (route) =>
+      route.fulfill({
+        json: {
+          ok: true,
+          active: true,
+          instanceId: "new",
+          name: "neu",
+          passwordSet: true,
+          members: [{ id: "m-nas", name: "nas", version: "10.0.0", direct: true, relay: false, address: "" }],
+          relay: { mode: "off", url: "", projectUrl: "", connected: false, serve: false, serveClients: 0 },
+          joinedAgo: 120,
+          memberSeen: true,
+          selfAddress: "",
+          selfAddressManual: false,
+        },
+      }),
+  );
+}
+
+const RECOVERY_CODE = "ABCDE-FGHJK-MNPQR-STVWX";
+
+/** Picks the deposit the group keeps and types the recovery code for it. */
+async function pickDeposit(page: Page): Promise<void> {
+  await wizard(page).getByRole("radio", { name: /^Über die Gruppe/ }).click();
+  await page.getByTestId("emergency-deposit").getByRole("button", { name: "Diese nehmen" }).click();
+  await wizard(page).getByLabel("Wiederherstellungscode").fill("abcde fghjk mnpqr stvwx");
+  await expect(wizard(page).getByLabel("Wiederherstellungscode")).toHaveValue(RECOVERY_CODE);
+}
+
+/** Shows the wizard a sealed kit and opens it with its identity. */
+async function showKit(page: Page): Promise<void> {
+  await wizard(page).getByRole("radio", { name: /^Recovery-Kit hochladen/ }).click();
+  await page.getByTestId("kit-file").setInputFiles({ name: "bombvault-recovery-kit.md.age", mimeType: "text/plain", buffer: Buffer.from(SEALED_KIT) });
+  const identity = wizard(page).getByLabel("age-Identität");
+  await expect(identity).toHaveAttribute("type", "password");
+  await identity.fill(IDENTITY);
+  await wizard(page).getByRole("button", { name: "Kit öffnen" }).click();
+  await expect(page.getByTestId("emergency-place")).toHaveCount(KIT_PLACES.length);
+}
+
 async function edges(page: Page) {
   return page.evaluate(() => {
     const main = document.querySelector("#bv-main");
@@ -462,6 +586,178 @@ test("the emergency and the other sources open their windows", async ({ page }, 
   await expect(page.getByRole("dialog", { name: "Aus dem Appdata.Backup-Plugin importieren" })).toBeVisible();
 });
 
+test("the emergency reads a sealed recovery kit, takes its key over when told to and undoes that on the way out", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  const asked = await stageEmergency(page);
+  await page.goto("/restore?emergency=access");
+
+  await expect(wizard(page).getByLabel("age-Identität")).toHaveCount(0);
+  await showKit(page);
+  await expect(wizard(page).getByLabel("age-Identität")).toHaveCount(0);
+  await expect(wizard(page).getByText("Sein Schlüssel öffnet 2 von 4 Speicherorten.")).toBeVisible();
+  await expect(wizard(page).getByText(/Noch ist nichts gespeichert\. Der Schlüssel bleibt noch 30 Minuten/)).toBeVisible();
+  await expect(page.getByTestId("emergency-place").nth(2)).toContainText("Zugang fehlt");
+  await expect(wizard(page).getByRole("button", { name: "Weiter" })).toHaveCount(0);
+  expect(asked).toEqual(["POST /read", "POST /read"]);
+
+  await wizard(page).getByRole("button", { name: "Schlüssel übernehmen" }).click();
+  const question = page.getByRole("dialog").last();
+  await expect(question).toContainText("Bis zur ersten Sicherung kannst du das rückgängig machen.");
+  await question.getByRole("button", { name: "Schlüssel übernehmen" }).click();
+  await expect(wizard(page).getByText(/^Schlüssel übernommen\./)).toBeVisible();
+  await wizard(page).getByRole("button", { name: "Zugangsdaten speichern" }).click();
+  await expect(wizard(page).getByText("Zugangsdaten gespeichert.")).toBeVisible();
+
+  await wizard(page).getByRole("button", { name: "Weiter" }).click();
+  await expect(wizard(page).getByText(/Die Anmeldung dieses Servers bleibt/)).toBeVisible();
+  await expect(wizard(page).locator("input").first()).toHaveValue("backups/bombvault/config");
+
+  await wizard(page).getByRole("button", { name: "Zurück", exact: true }).click();
+  await wizard(page).getByRole("button", { name: "Abbrechen" }).click();
+  await expect(wizard(page).getByText(/Dieser Server hat den Schlüssel übernommen\./)).toBeVisible();
+  await wizard(page).getByRole("button", { name: "Übernahme rückgängig machen" }).click();
+  await expect(wizard(page)).toBeHidden();
+  expect(asked).toEqual(["POST /read", "POST /read", "POST /adopt", "POST /sign-ins", "DELETE /"]);
+  await expect(page.getByTestId("key-adopted")).toHaveCount(0);
+});
+
+test("the emergency through the group waits for the instance that keeps the key and opens its deposit", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  await stageGroup(page);
+  const asked = await stageEmergency(page);
+  await page.goto("/restore?emergency=access");
+
+  await expect(wizard(page).getByRole("radio", { name: /^Über die Gruppe/ })).toContainText("die zwölf Wörter der Gruppe, deinen Wiederherstellungscode und jemanden an dieser Instanz");
+  await wizard(page).getByRole("radio", { name: /^Über die Gruppe/ }).click();
+  await expect(page.getByTestId("emergency-deposit")).toContainText("tower");
+  await expect(page.getByTestId("emergency-deposit")).toContainText("verwahrt von nas");
+  await expect(wizard(page).getByText(/^Keine Antwort von dachboden\./)).toBeVisible();
+
+  await page.getByTestId("emergency-deposit").getByRole("button", { name: "Diese nehmen" }).click();
+  await expect(wizard(page).getByRole("button", { name: "Hinterlegung anfordern" })).toBeDisabled();
+  await wizard(page).getByLabel("Wiederherstellungscode").fill("abcde fghjk mnpqr stvwx");
+  await expect(wizard(page).getByLabel("Wiederherstellungscode")).toHaveValue(RECOVERY_CODE);
+  await wizard(page).getByRole("button", { name: "Hinterlegung anfordern" }).click();
+  await expect(wizard(page).getByRole("status")).toContainText("Wartet auf nas.");
+  expect(asked).toEqual([`group ask ${RECOVERY_CODE}`]);
+
+  // The request stays with the keeper while the window is gone. The code does not.
+  await page.goto("/restore?emergency=access");
+  await expect(wizard(page).getByRole("radio", { name: /^Über die Gruppe/ })).toContainText("Bei nas wartet eine Anfrage.");
+  await expect(wizard(page).getByText(/^Deine Anfrage wartet bei nas\./)).toBeVisible();
+  await expect(wizard(page).getByLabel("Wiederherstellungscode")).toHaveValue("");
+  await wizard(page).getByLabel("Wiederherstellungscode").fill(RECOVERY_CODE);
+  await wizard(page).getByRole("button", { name: "Antwort abholen" }).click();
+  await expect(wizard(page).getByRole("status")).toContainText("Wartet auf nas.");
+  expect(asked[asked.length - 1]).toBe(`group look ${RECOVERY_CODE}`);
+
+  keeper.allows = true;
+  await expect(page.getByTestId("emergency-place")).toHaveCount(KIT_PLACES.length, { timeout: 15_000 });
+  await expect(wizard(page).getByText("Hinterlegung geöffnet. Ihr Schlüssel öffnet 2 von 4 Speicherorten.")).toBeVisible();
+  await expect(wizard(page).getByRole("button", { name: "Schlüssel übernehmen" })).toBeEnabled();
+  expect(asked.every((step) => !step.startsWith("group ask") || step === asked[0])).toBe(true);
+});
+
+test("an install in no group is led to the pairing and back to the group way", async ({ page }, testInfo) => {
+  // At 768px the headings of the three pairing steps wrap letter by letter
+  // and reach over the card above them, which is where the way back stands.
+  test.skip(testInfo.project.name !== "desktop-1280", "the pairing page at its full width");
+  await stage(page);
+  await stageEmergency(page);
+  await page.goto("/restore?emergency=access");
+
+  await wizard(page).getByRole("radio", { name: /^Über die Gruppe/ }).click();
+  await expect(wizard(page).getByText(/^Diese Installation ist noch in keiner Gruppe\./)).toBeVisible();
+  await wizard(page).getByRole("button", { name: "Zur Kopplung" }).click();
+  await expect(page).toHaveURL(/\/settings\/pairing\?for=emergency$/);
+  await expect(page.getByText(/^Du kommst vom Notfall-Assistenten\./)).toBeVisible();
+
+  await page.getByRole("button", { name: "Zurück zum Notfall-Assistenten" }).click();
+  await expect(page).toHaveURL(/\/restore\?emergency=access&way=group$/);
+  await expect(wizard(page).getByRole("radio", { name: /^Über die Gruppe/ })).toHaveAttribute("aria-checked", "true");
+});
+
+test("a key that was taken over is named on the page with the day it came", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  await stageEmergency(page, { backupKey: "adopted", source: "kit", adoptedAt: Date.UTC(2026, 8, 14, 12) / 1000, undoable: false });
+  await openPage(page);
+  const line = page.getByTestId("key-adopted");
+  await expect(line).toContainText("aus einem Recovery-Kit übernommen");
+  await expect(line).toContainText("14.09.2026");
+  await expect(line).toContainText("Sein eigenes Recovery-Kit nennt diesen Schlüssel.");
+  await expect(line.getByRole("button")).toHaveCount(0);
+});
+
+test("a key that no longer opens stands first under what needs the person and leads to the emergency", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  await stageEmergency(page, { backupKey: "locked", source: "kit", adoptedAt: NOW, undoable: true });
+  await page.goto("/dashboard");
+  const need = page.getByTestId("need-key-locked");
+  await expect(need).toContainText("Der Schlüssel lässt sich nicht mehr öffnen");
+  await need.getByRole("button", { name: "Notfall-Assistent starten" }).click();
+  await expect(page).toHaveURL(/\/restore\?emergency=access$/);
+  await expect(wizard(page).getByText(/Der übernommene Schlüssel lässt sich nicht mehr öffnen/)).toBeVisible();
+});
+
+for (const width of [320, 360]) {
+  test(`the emergency with a kit @ ${width}px keeps inside the edge`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout");
+    await stage(page);
+    await stageEmergency(page);
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("/restore?emergency=access");
+
+    await showKit(page);
+    await settle(page);
+    const read = await edges(page);
+    expect(read.docPan, "the document scrolls horizontally").toBeLessThanOrEqual(1);
+    expect(read.clipped, "the places clip the edge").toEqual([]);
+
+    await wizard(page).getByRole("button", { name: "Schlüssel übernehmen" }).click();
+    await page.getByRole("dialog").last().getByRole("button", { name: "Schlüssel übernehmen" }).click();
+    await expect(wizard(page).getByRole("button", { name: "Zugangsdaten speichern" })).toBeVisible();
+    await settle(page);
+    expect((await edges(page)).clipped, "the taken-over key clips the edge").toEqual([]);
+
+    await wizard(page).getByRole("button", { name: "Abbrechen" }).click();
+    await expect(wizard(page).getByRole("button", { name: "Schlüssel behalten und schließen" })).toBeVisible();
+    await settle(page);
+    expect((await edges(page)).clipped, "the way out clips the edge").toEqual([]);
+  });
+}
+
+for (const width of [320, 360]) {
+  test(`the emergency through the group @ ${width}px keeps inside the edge`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout");
+    await stage(page);
+    await stageGroup(page);
+    await stageEmergency(page);
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("/restore?emergency=access");
+
+    await wizard(page).getByRole("radio", { name: /^Über die Gruppe/ }).click();
+    await expect(page.getByTestId("emergency-deposit")).toBeVisible();
+    await settle(page);
+    const listed = await edges(page);
+    expect(listed.docPan, "the document scrolls horizontally").toBeLessThanOrEqual(1);
+    expect(listed.clipped, "the deposits clip the edge").toEqual([]);
+
+    await page.getByTestId("emergency-deposit").getByRole("button", { name: "Diese nehmen" }).click();
+    await wizard(page).getByLabel("Wiederherstellungscode").fill(RECOVERY_CODE);
+    await settle(page);
+    expect((await edges(page)).clipped, "the recovery code clips the edge").toEqual([]);
+
+    await wizard(page).getByRole("button", { name: "Hinterlegung anfordern" }).click();
+    await expect(wizard(page).getByRole("status")).toBeVisible();
+    await settle(page);
+    expect((await edges(page)).clipped, "the waiting request clips the edge").toEqual([]);
+  });
+}
+
 for (const width of [320, 360]) {
   test(`restore @ ${width}px: the page and its windows keep inside the edge`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout");
@@ -483,6 +779,7 @@ for (const width of [320, 360]) {
     await win.getByRole("button", { name: "Abbrechen" }).click();
 
     await page.goto("/restore?emergency=access");
+    await wizard(page).getByRole("radio", { name: /^Schlüssel eintippen/ }).click();
     await expect(wizard(page).getByRole("button", { name: "Verbinden und prüfen" })).toBeVisible();
     await settle(page);
     const inWizard = await edges(page);
@@ -496,6 +793,7 @@ test("restore on a phone: the eye of a secret field is big enough to tap", async
   await stage(page);
   await page.setViewportSize({ width: 360, height: 800 });
   await page.goto("/restore?emergency=access");
+  await wizard(page).getByRole("radio", { name: /^Schlüssel eintippen/ }).click();
 
   const eye = wizard(page).getByRole("button", { name: "Wert anzeigen" }).first();
   await eye.scrollIntoViewIfNeeded();
@@ -532,6 +830,32 @@ test("pictures of the page", async ({ page }, testInfo) => {
     await win.getByRole("button", { name: "immich ersetzen" }).scrollIntoViewIfNeeded();
     await page.screenshot({ path: join(SHOTS!, `window-replace-${name}.png`) });
     await win.getByRole("button", { name: "Abbrechen" }).click();
+
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    await stage(page, theme);
+    await stageEmergency(page);
+    await stageGroup(page);
+    await page.goto("/restore?emergency=access");
+    await pickDeposit(page);
+    await page.screenshot({ path: join(SHOTS!, `emergency-group-${name}.png`) });
+    await wizard(page).getByRole("button", { name: "Hinterlegung anfordern" }).click();
+    await expect(wizard(page).getByRole("status")).toBeVisible();
+    await page.screenshot({ path: join(SHOTS!, `emergency-group-waiting-${name}.png`) });
+    await wizard(page).getByRole("button", { name: "Andere Hinterlegung wählen" }).click();
+    await expect(page.getByTestId("emergency-deposit")).toBeVisible();
+    await page.screenshot({ path: join(SHOTS!, `emergency-group-list-${name}.png`) });
+    await wizard(page).getByRole("radio", { name: /^Recovery-Kit hochladen/ }).click();
+    await page.screenshot({ path: join(SHOTS!, `emergency-ways-${name}.png`) });
+    await showKit(page);
+    await page.screenshot({ path: join(SHOTS!, `emergency-read-${name}.png`) });
+    await wizard(page).getByRole("button", { name: "Schlüssel übernehmen" }).click();
+    await page.getByRole("dialog").last().getByRole("button", { name: "Schlüssel übernehmen" }).click();
+    await expect(wizard(page).getByRole("button", { name: "Zugangsdaten speichern" })).toBeVisible();
+    await page.screenshot({ path: join(SHOTS!, `emergency-taken-${name}.png`) });
+    await page.goto("/restore");
+    await expect(page.getByTestId("key-adopted")).toBeVisible();
+    await page.getByTestId("key-adopted").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: join(SHOTS!, `page-adopted-${name}.png`) });
 
     for (const step of ["access", "settings", "selection"]) {
       await page.goto(`/restore?emergency=${step}`);

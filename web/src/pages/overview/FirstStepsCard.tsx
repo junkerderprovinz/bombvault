@@ -197,7 +197,7 @@ function SectionSwitches({
             </span>
             <div className="flex min-w-0 flex-1 flex-col">
               <span className="text-sm font-semibold text-carbon-text">{t(KIND_LABEL[section.kind])}</span>
-              {line[section.kind] && <span className="text-[13px] text-carbon-textMuted">{line[section.kind]}</span>}
+              {line[section.kind] && <span className="text-subline text-carbon-textMuted">{line[section.kind]}</span>}
             </div>
             {choosable && (
               <Button

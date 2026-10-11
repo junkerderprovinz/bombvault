@@ -2,11 +2,15 @@
 // The Details window of one instance: what it does for this server, with a
 // switch per role, what this server does for it, with its requests to answer,
 // its protection per section, whether it is polled, and the way to remove it.
+// The key keeper is a role like the others on both sides: a row with a switch
+// for the deposit this server gave the instance, and among the requests the
+// one to hand a deposit out and the deposit this server keeps for it.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import { receiveRequest, replica } from "../../components/zfs/replica/replica.testsupport";
 import type {
+  Deposits,
   DomainStatus,
   MemberRoles,
   PullSourceInput,
@@ -19,8 +23,11 @@ import { I18nProvider, en } from "../../lib/i18n";
 import { destination } from "../../lib/placement.testsupport";
 import { ToastProvider } from "../../lib/toast";
 import {
+  depositRelease,
+  deposits,
   fleetPeer,
   groupMember,
+  keptDeposit,
   memberRoles,
   meshOffer,
   NOW_S,
@@ -28,6 +35,7 @@ import {
   receivedRepo,
   roleRequest,
   roleSide,
+  sentDeposit,
   zfsRole,
 } from "./instances.testsupport";
 import { buildInstances, type InstancesData } from "./instancesModel";
@@ -43,6 +51,8 @@ const MEMBER = groupMember();
 
 let requests: ZFSReceiveRequest[] = [];
 let serverRuns = false;
+let depositList: Deposits = deposits();
+const keeperCalls: string[] = [];
 let decideAnswer: (id: string, decision: RoleDecision) => { ok: boolean; code?: string; error?: string } = () => ({ ok: true });
 const decided: [string, RoleDecision][] = [];
 const asked: [string, string, unknown][] = [];
@@ -76,6 +86,22 @@ vi.mock("../../lib/api", async (importOriginal) => {
     withdrawRole: (memberId: string, role: string) => {
       withdrawn.push([memberId, role]);
       return Promise.resolve({ ok: true, told: true });
+    },
+    askKeeper: (memberId: string) => {
+      keeperCalls.push(`ask:${memberId}`);
+      return Promise.resolve({ ok: true, keeper: { state: "held", at: "" } });
+    },
+    withdrawKeeper: (memberId: string) => {
+      keeperCalls.push(`withdraw:${memberId}`);
+      return Promise.resolve({ ok: true, told: true });
+    },
+    decideRelease: (id: string, decision: string) => {
+      keeperCalls.push(`${decision}:${id}`);
+      return Promise.resolve({ ok: true, state: decision === "allow" ? "allowed" : "declined" });
+    },
+    dropKeptDeposit: (ownerId: string) => {
+      keeperCalls.push(`drop:${ownerId}`);
+      return Promise.resolve({ ok: true });
     },
     getReceiverServer: () =>
       Promise.resolve({
@@ -153,14 +179,16 @@ async function open(over: Partial<InstancesData> = {}, modules: Modules = ALL) {
     loading: false,
     errors: [],
     self: null,
-    selfRoles: { receiver: [], fetcher: [], zfs: [] },
+    selfRoles: { receiver: [], fetcher: [], zfs: [], keeper: [] },
     receiverServer: serverRuns,
+    deposits: depositList,
     data: all,
     reloadPeers: reload("peers"),
     reloadOffers: reload("offers"),
     reloadReceived: reload("received"),
     reloadPulls: reload("pulls"),
     reloadRoles: reload("roles"),
+    reloadDeposits: reload("deposits"),
     reloadReplicas: reload("replicas"),
     reloadServer: reload("server"),
   };
@@ -207,6 +235,8 @@ async function click(el: Element) {
 beforeEach(() => {
   requests = [];
   serverRuns = false;
+  depositList = deposits();
+  keeperCalls.length = 0;
   decideAnswer = () => ({ ok: true });
   decided.length = 0;
   asked.length = 0;
@@ -239,7 +269,7 @@ describe("the head of the window", () => {
 });
 
 describe("what the instance does for this server", () => {
-  it("lists the three roles, each with a switch, and explains how they differ", async () => {
+  it("lists the four roles, each with a switch, and explains how they differ", async () => {
     await open({ roles: by({ receiver: allowed(), fetcher: roleRequest() }) });
     expect(within(does()).getByLabelText(en["instances.role.diff"])).toBeTruthy();
     const rows = [...does().querySelectorAll("[data-role]")];
@@ -247,14 +277,17 @@ describe("what the instance does for this server", () => {
       ["receiver", "on"],
       ["fetcher", "waiting"],
       ["zfs", "off"],
+      ["keeper", "off"],
     ]);
     const switches = within(does()).getAllByRole("switch");
     expect(switches.map((sw) => [sw.getAttribute("aria-label"), sw.getAttribute("aria-checked")])).toEqual([
       [en["receiver.title"], "true"],
       [en["instances.role.fetcher"], "true"],
       [en["zfs.replica.servers.title"], "false"],
+      [en["instances.role.keeper"], "false"],
     ]);
     expect(within(does()).getByLabelText(en["instances.role.receiverTip"])).toBeTruthy();
+    expect(within(does()).getByLabelText(en["instances.role.keeperTip"])).toBeTruthy();
   });
 
   it("says what a role covers, and for one that waits, whom it waits for", async () => {
@@ -301,7 +334,43 @@ describe("what the instance does for this server", () => {
 
   it("leaves out the ZFS server while this server has no ZFS section", async () => {
     await open({}, { fleet: true, receiver: true, pull: true, zfs: false });
-    expect([...does().querySelectorAll("[data-role]")].map((r) => r.getAttribute("data-role"))).toEqual(["receiver", "fetcher"]);
+    expect([...does().querySelectorAll("[data-role]")].map((r) => r.getAttribute("data-role"))).toEqual(["receiver", "fetcher", "keeper"]);
+  });
+
+  it("says where this server's key deposit stands there, and what to do when it is behind or gone", async () => {
+    const keeps = (state: "held" | "stale" | "declined") => by({ keeper: { state, at: new Date((NOW_S - 2 * 3600) * 1000).toISOString() } });
+    await open({ roles: keeps("held") });
+    expect(row("keeper").getAttribute("data-state")).toBe("on");
+    expect(row("keeper").textContent).toContain("keeps this server's key deposit · sent 2 hours ago");
+    expect(within(row("keeper")).queryByRole("button", { name: en["instances.role.change"] })).toBeNull();
+    cleanup();
+    await open({ roles: keeps("stale") });
+    expect(row("keeper").getAttribute("data-state")).toBe("waiting");
+    expect(row("keeper").textContent).toContain("sent 2 hours ago · attic still holds an older deposit.");
+    cleanup();
+    await open({ roles: keeps("declined") });
+    expect(row("keeper").getAttribute("data-state")).toBe("off");
+    expect(row("keeper").textContent).toContain("The deposit was deleted on attic. attic takes a new one only when you ask again.");
+  });
+
+  it("says that an instance too old to keep a deposit has to be updated first", async () => {
+    await open({ roles: [memberRoles({ canKeep: false })] });
+    expect(row("keeper").textContent).toContain("attic runs a version that cannot keep a key deposit. Update it first.");
+  });
+
+  it("makes a deposit from the keeper's switch, and takes it back the same way", async () => {
+    await open();
+    await click(within(row("keeper")).getByRole("switch"));
+    await click(within(screen.getByRole("dialog", { name: "attic as Key keeper" })).getByRole("button", { name: en["keeper.make"] }));
+    expect(keeperCalls).toEqual(["ask:m1"]);
+    expect(reloads).toContain("deposits");
+    cleanup();
+    depositList = deposits({ sent: [sentDeposit()] });
+    await open({ roles: by({ keeper: { state: "held", at: "" } }) });
+    await click(within(row("keeper")).getByRole("switch"));
+    const question = screen.getByRole("dialog", { name: en["confirmDialog.title"] });
+    await click(within(question).getByRole("button", { name: en["instances.role.switchOff"] }));
+    expect(keeperCalls).toEqual(["ask:m1", "withdraw:m1"]);
   });
 
   it("asks for a role from its switch", async () => {
@@ -452,6 +521,38 @@ describe("requests from the instance", () => {
     await click(within(question).getByRole("button", { name: en["zfs.receive.revokeConfirm"] }));
     expect(decided).toEqual([["rr1", { decision: "revoke" }]]);
     expect(screen.getByText(en["zfs.receive.revoked"])).toBeTruthy();
+  });
+
+  it("shows its request to hand out a key deposit with the others, to allow or to refuse", async () => {
+    depositList = deposits({
+      releases: [
+        depositRelease({ requesterId: "m1", requesterName: "attic", ownerId: "m4", ownerName: "barn" }),
+        depositRelease({ id: "rel2", requesterId: "m7", requesterName: "shed" }),
+      ],
+    });
+    await open({ roles: forPeer({ receiver: roleRequest() }, { asks: 2 }) });
+    const asks = [...serves().querySelectorAll("[data-request], [data-release]")];
+    expect(asks.map((a) => a.getAttribute("data-request") ?? a.getAttribute("data-release"))).toEqual(["receiver", "rel1"]);
+    const ask = asks[1] as HTMLElement;
+    expect(ask.textContent).toContain(en["instances.request"]);
+    expect(ask.textContent).toContain("attic asks for the key deposit of barn.");
+    expect(ask.textContent).toContain(en["keeper.release.unknown"]);
+    await click(within(ask).getByRole("button", { name: en["zfs.receive.allow"] }));
+    expect(keeperCalls).toEqual(["allow:rel1"]);
+    expect(reloads).toContain("deposits");
+  });
+
+  it("shows the deposit this server keeps for it with what was allowed, and deletes it after a question", async () => {
+    depositList = deposits({ kept: [keptDeposit(), keptDeposit({ ownerId: "m4", ownerName: "barn" })] });
+    await open({ roles: forPeer({ keeper: { state: "held", at: "" } }) });
+    const rows = [...serves().querySelectorAll("[data-kept]")] as HTMLElement[];
+    expect(rows.map((r) => r.getAttribute("data-kept"))).toEqual(["m1"]);
+    expect(rows[0].textContent).toContain("Key deposit of attic");
+    await click(within(rows[0]).getByRole("button", { name: en["common.delete"] }));
+    const question = screen.getByRole("dialog", { name: en["confirmDialog.title"] });
+    expect(question.textContent).toContain("Delete the key deposit of attic?");
+    await click(within(question).getByRole("button", { name: en["common.delete"] }));
+    expect(keeperCalls).toEqual(["drop:m1"]);
   });
 
   it("reads as one list with the ZFS requests: what waits first, then what was allowed", async () => {
