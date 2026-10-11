@@ -270,7 +270,7 @@ func (h *Handler) dbDumpDiagnostics(ctx context.Context) ([]diagDBDump, error) {
 // memory means a failure halfway through still answers a clean JSON envelope
 // instead of a truncated file with a 200 on it.
 func (h *Handler) handleDiagnostics(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "downloading the diagnostics bundle") {
+	if !h.requireAuthForSecrets(w, r, "downloading the diagnostics bundle") {
 		return
 	}
 

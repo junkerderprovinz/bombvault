@@ -20,20 +20,21 @@ type peerSessionResponse struct {
 	Secure bool   `json:"secure,omitempty"`
 }
 
-// phoneSession mints the session a login would, without the password: the
-// group key already gives a member every backup of this instance.
+// phoneSession mints a session without the password, marked as the one of a
+// paired phone: it opens the pages, and what hands out a key asks for a
+// sign-in on top.
 func (h *Handler) phoneSession() peerSessionResponse {
 	hash, epoch, on := h.authEnabled()
 	if !on {
 		return peerSessionResponse{OK: true}
 	}
-	c := h.newSessionCookie(secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL), int(sessionTTL.Seconds()))
+	c := h.newSessionCookie(secret.NewPairedSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL), int(sessionTTL.Seconds()))
 	return peerSessionResponse{OK: true, Needed: true, Name: c.Name, Value: c.Value, MaxAge: c.MaxAge, Secure: c.Secure}
 }
 
 // handlePeerSession gives a session to a member that is a phone. The phone
-// names itself inside the sealed call, so a BombVault instance of the group
-// never comes away with one.
+// names itself inside the sealed call and has to be the member the call came
+// from, so a BombVault instance of the group never comes away with one.
 func (s *Service) handlePeerSession(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		InstanceID string `json:"instanceId"`
@@ -44,6 +45,10 @@ func (s *Service) handlePeerSession(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(io.LimitReader(r.Body, 4096)).Decode(&body); err != nil || body.InstanceID == "" {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "no instance named"})
+		return
+	}
+	if peerSender(r) != body.InstanceID {
+		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "a session is only given to the member that asks for it"})
 		return
 	}
 	// Synced first: a member that joined since anybody last opened the

@@ -93,6 +93,27 @@ func TestSessionTokenRoundtrip(t *testing.T) {
 	}
 }
 
+func TestAPairedSessionTokenSignsInAndIsNeverMistakenForASignIn(t *testing.T) {
+	hash := mustHash(t, appKey, "s3cret")
+	paired := NewPairedSessionToken(appKey, hash, "e1", time.Hour)
+	if !ValidSessionToken(appKey, hash, "e1", paired) || !PairedSessionToken(paired) {
+		t.Fatal("a paired token must be valid and tell what it is")
+	}
+	full := NewSessionToken(appKey, hash, "e1", time.Hour)
+	if PairedSessionToken(full) {
+		t.Fatal("a sign-in token must not read as a paired one")
+	}
+	if ValidSessionToken(appKey, hash, "e1", strings.TrimPrefix(paired, "paired.")) {
+		t.Fatal("a paired token without its mark must not pass as a sign-in")
+	}
+	if ValidSessionToken(appKey, hash, "e1", "paired."+full) {
+		t.Fatal("a sign-in token with the mark put on must not be valid")
+	}
+	if ValidSessionToken(appKey, hash, "e2", paired) {
+		t.Fatal("a paired token must end with its epoch")
+	}
+}
+
 func TestSessionTokenRoundtripWithEpoch(t *testing.T) {
 	hash := mustHash(t, appKey, "s3cret")
 	const epoch = "0011223344556677"

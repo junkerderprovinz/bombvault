@@ -768,6 +768,35 @@ async function fetchJSON<T>(
   return res.json() as Promise<T>;
 }
 
+/** What a route that makes or hands out key material answers a 403 with:
+ *  the server has no login password, or the session is the one a paired phone
+ *  got for the group's words. After the second, signing in with the password
+ *  (login) and sending the same request again goes through. */
+export type SecretsRefusal = "password-not-set" | "sign-in-needed";
+
+/** fetchJSON for the routes that can answer with a SecretsRefusal: that 403
+ *  comes back as the answer, with its code, and every other failure throws. */
+async function fetchKeyJSON<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(path, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options?.headers ?? {}),
+    },
+  });
+  if (res.status === 403) {
+    const body = (await res.json().catch(() => null)) as { code?: string } | null;
+    if (body?.code === "password-not-set" || body?.code === "sign-in-needed") {
+      return body as T;
+    }
+    throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
+  }
+  if (!res.ok) {
+    throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
+  }
+  return res.json() as Promise<T>;
+}
+
 // ---------------------------------------------------------------------------
 // API functions
 // ---------------------------------------------------------------------------
@@ -5297,13 +5326,15 @@ export interface RecoveryKitFacts {
 
 /** Why a kit cannot be used: it is sealed with age and came without the
  *  identity that opens it, it is another file, its key does not give the
- *  password printed beside it, it names no key, what was pasted is no age
- *  identity, or the identity is not the one the kit was sealed for. */
+ *  password printed beside it, it names no key, it names a key or a section
+ *  twice, what was pasted is no age identity, or the identity is not the one
+ *  the kit was sealed for. */
 export type RecoveryKitRefusal =
   | "kit-sealed"
   | "not-a-kit"
   | "kit-key-broken"
   | "kit-no-key"
+  | "kit-ambiguous"
   | "kit-identity"
   | "kit-not-for-identity";
 
@@ -5352,6 +5383,7 @@ export type EmergencyRefusal =
   | "adopt-in-use"
   | "emergency-key"
   | "backup-key-locked"
+  | SecretsRefusal
   | RecoveryKitRefusal;
 
 /** The emergency in progress. It lives in the server's memory for 30 minutes
@@ -5417,15 +5449,16 @@ export function readEmergencyKey(key: string, places: string[], creds?: CloudCre
 }
 
 /** POST /api/emergency/adopt: makes the key of the emergency the key of this
- *  server's backups and sets whether repositories carry a password. */
+ *  server's backups and sets whether repositories carry a password. A paired
+ *  phone's session gets "sign-in-needed". */
 export function adoptEmergencyKey(): Promise<EmergencyAnswer> {
-  return fetchJSON("/api/emergency/adopt", { method: "POST" });
+  return fetchKeyJSON("/api/emergency/adopt", { method: "POST" });
 }
 
 /** POST /api/emergency/sign-ins: saves the shared cloud sign-in and the
  *  rclone config the kit carries. */
 export function storeEmergencySignIns(): Promise<EmergencyAnswer> {
-  return fetchJSON("/api/emergency/sign-ins", { method: "POST" });
+  return fetchKeyJSON("/api/emergency/sign-ins", { method: "POST" });
 }
 
 /** POST /api/emergency/finish: ends the emergency and keeps what it took
@@ -5437,7 +5470,7 @@ export function finishEmergency(): Promise<EmergencyAnswer> {
 /** DELETE /api/emergency: ends the emergency and puts the server back under
  *  its own key, refused with "adopt-in-use" once backups were written. */
 export function undoEmergency(): Promise<EmergencyAnswer> {
-  return fetchJSON("/api/emergency", { method: "DELETE" });
+  return fetchKeyJSON("/api/emergency", { method: "DELETE" });
 }
 
 /** POST /api/foreign/close — drop the session immediately (call on
@@ -6178,7 +6211,8 @@ export type DepositRefusal =
   | "member-gone"
   | "member-silent"
   | "backup-key-locked"
-  | "release-decided";
+  | "release-decided"
+  | SecretsRefusal;
 
 type DepositAnswer<T> = Omit<OkEnvelope, "code"> & { code?: DepositRefusal } & T;
 
@@ -6190,9 +6224,10 @@ export function listDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>> 
 /** PUT /api/group/members/{id}/roles/keeper: gives the member this instance's
  *  deposit. `code` is the recovery code, in four groups of five; it comes
  *  with the first deposit only and is stored nowhere, so it has to be shown
- *  and written down then. */
+ *  and written down then. Answers a SecretsRefusal without a login password
+ *  or with a paired phone's session. */
 export function askKeeper(memberId: string): Promise<DepositAnswer<{ keeper?: KeeperRole; code?: string }>> {
-  return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "PUT" });
+  return fetchKeyJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "PUT" });
 }
 
 /** DELETE /api/group/members/{id}/roles/keeper: takes the deposit back.
@@ -6203,9 +6238,10 @@ export function withdrawKeeper(memberId: string): Promise<DepositAnswer<{ told?:
 }
 
 /** POST /api/group/deposit/code: replaces the recovery code and seals every
- *  keeper's deposit for the new one. The answer is the one time it is shown. */
+ *  keeper's deposit for the new one. The answer is the one time it is shown.
+ *  Answers a SecretsRefusal like askKeeper. */
 export function newDepositCode(): Promise<DepositAnswer<{ code?: string }>> {
-  return fetchJSON("/api/group/deposit/code", { method: "POST" });
+  return fetchKeyJSON("/api/group/deposit/code", { method: "POST" });
 }
 
 /** POST /api/group/deposit/renew: sends the keepers a fresh deposit where the
@@ -6215,12 +6251,13 @@ export function renewDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>>
 }
 
 /** POST /api/group/deposits/releases/{id}: the keeper's person allows or
- *  refuses a request. An unknown id is a 404. */
+ *  refuses a request. An unknown id is a 404. Allowing answers a
+ *  SecretsRefusal like askKeeper; refusing never does. */
 export function decideRelease(
   id: string,
   decision: "allow" | "refuse",
 ): Promise<DepositAnswer<{ state?: ReleaseState }>> {
-  return fetchJSON(`/api/group/deposits/releases/${encodeURIComponent(id)}`, {
+  return fetchKeyJSON(`/api/group/deposits/releases/${encodeURIComponent(id)}`, {
     method: "POST",
     body: JSON.stringify({ decision }),
   });

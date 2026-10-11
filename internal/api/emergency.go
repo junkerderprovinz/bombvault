@@ -473,7 +473,7 @@ func (h *Handler) handleEmergencyRead(w http.ResponseWriter, r *http.Request) {
 
 // handleEmergencyAdopt serves POST /api/emergency/adopt.
 func (h *Handler) handleEmergencyAdopt(w http.ResponseWriter, r *http.Request) {
-	if !crossOriginGuard(w, r) {
+	if !crossOriginGuard(w, r) || !h.requireSignIn(w, r, "taking over a backup key") {
 		return
 	}
 	h.answerEmergency(w, r.Context(), keyEventAdopt, h.svc.AdoptEmergencyKey())
@@ -491,7 +491,7 @@ func (h *Handler) handleEmergencyFinish(w http.ResponseWriter, r *http.Request) 
 
 // handleEmergencySignIns serves POST /api/emergency/sign-ins.
 func (h *Handler) handleEmergencySignIns(w http.ResponseWriter, r *http.Request) {
-	if !crossOriginGuard(w, r) {
+	if !crossOriginGuard(w, r) || !h.requireSignIn(w, r, "storing the sign-ins of a recovery kit") {
 		return
 	}
 	h.answerEmergency(w, r.Context(), keyEventSignIns, h.svc.StoreEmergencySignIns())
@@ -499,7 +499,7 @@ func (h *Handler) handleEmergencySignIns(w http.ResponseWriter, r *http.Request)
 
 // handleEmergencyUndo serves DELETE /api/emergency.
 func (h *Handler) handleEmergencyUndo(w http.ResponseWriter, r *http.Request) {
-	if !crossOriginGuard(w, r) {
+	if !crossOriginGuard(w, r) || !h.requireSignIn(w, r, "putting the backup key back") {
 		return
 	}
 	h.answerEmergency(w, r.Context(), keyEventUndo, h.svc.UndoAdoption())

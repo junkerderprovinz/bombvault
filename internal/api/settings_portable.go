@@ -282,7 +282,7 @@ func redactedLocations(exp settingsExport) []string {
 // single unauthenticated GET.
 func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 	withCredentials := truthy(r.URL.Query().Get("includeCredentials"))
-	if withCredentials && !h.requireAuthForSecrets(w, "exporting settings with credentials") {
+	if withCredentials && !h.requireAuthForSecrets(w, r, "exporting settings with credentials") {
 		return
 	}
 

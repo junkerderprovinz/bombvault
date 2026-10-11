@@ -468,6 +468,12 @@ func (s *Service) handlePeerDepositRelease(w http.ResponseWriter, r *http.Reques
 		refuseUnnamedPeer(w)
 		return
 	}
+	// The install a deposit belongs to has its key. A request in its name
+	// would show the keeper's person a member they have known for long.
+	if requester == in.OwnerID {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "an instance cannot ask for its own deposit"})
+		return
+	}
 	kept, found, err := s.store.KeptDeposit(in.OwnerID)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
