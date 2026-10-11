@@ -4,7 +4,7 @@ Một mục hỏi đáp ngắn. Để xem bảng khắc phục sự cố phía m
 
 ## Có gì đó chưa được kết nối đúng cách
 
-Mở `/spike` trong giao diện web. Kiểm tra tích hợp máy chủ kiểm thử mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu. Bắt đầu ở đây trước khi cho rằng có một lỗi: một điểm gắn kết bị thiếu hoặc một máy chủ không tiếp cận được sẽ hiện ra ngay lập tức.
+Thêm thẻ **Tích hợp máy chủ** vào Tổng quan trong **Tùy chỉnh**. Kiểm tra tích hợp máy chủ kiểm tra mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu, còn **Kiểm tra ngay** chạy lại nó. Hãy bắt đầu từ đây trước khi cho rằng có lỗi: một điểm gắn kết bị thiếu hay một máy chủ không tới được sẽ hiện ra ngay lập tức.
 
 ## Tôi không thể truy cập giao diện web
 
@@ -12,7 +12,19 @@ BombVault phục vụ HTTPS ngay từ đầu trên cổng `3443` (chứng chỉ 
 
 ## Tôi đánh mất APP_KEY của mình
 
-`APP_KEY` dẫn xuất mật khẩu kho lưu trữ restic. Không có nó (và không có bộ khôi phục khóa mã hóa), các bản sao lưu đã mã hóa không thể khôi phục được. Đây là lý do bảng điều khiển nhắc nhở bạn tải xuống bộ khôi phục. Xem [Off-site & khôi phục](offsite-recovery.md). Tạo một khóa bằng `openssl rand -hex 32` và cất giữ nó ngoài máy chủ trước khi bạn tin cậy bất kỳ bản sao lưu nào.
+`APP_KEY` dẫn xuất mật khẩu kho lưu trữ restic. Không có nó, không có bộ khôi phục và không có bản gửi khóa trong nhóm của bạn, các bản sao lưu đã mã hóa không thể khôi phục được. Đó là lý do Tổng quan hiện **Lưu bộ khôi phục của bạn** cho đến khi bạn tải nó về. Xem [Off-site & khôi phục](offsite-recovery.md#recovery-kit). Hãy tạo một khóa bằng `openssl rand -hex 32` và cất nó bên ngoài máy chủ trước khi bạn tin cậy bất kỳ bản sao lưu nào.
+
+## Tôi quên mật khẩu đăng nhập
+
+Chọn **Quên mật khẩu?** trên trang đăng nhập. BombVault ghi một mã gồm 12 ký tự vào nhật ký container của nó (trên Unraid: tab Docker, biểu tượng BombVault, **Logs**). Hãy nhập mã đó cùng một mật khẩu mới trong vòng 10 phút. Việc đặt lại cũng tắt xác thực hai yếu tố, gỡ mọi khóa truy cập, thu hồi mọi mã thông báo API, khóa MCP và phiên đăng nhập OAuth, kết thúc mọi phiên khác và tắt việc ghép nối điện thoại. Hãy thêm lại khóa truy cập trong **Cài đặt, Bảo mật**, bật lại việc ghép nối điện thoại ở đó, rồi tạo mã thông báo và khóa mới ở nơi bạn vẫn cần. Xem [Mô hình bảo mật](configuration.md#login).
+
+## Sao lưu dừng lại và báo không thể mở khóa nữa
+
+Máy chủ này đã tiếp nhận khóa sao lưu của một máy chủ khác trong Trình hướng dẫn khẩn cấp, và sau đó `APP_KEY` bị đổi. Khóa được tiếp nhận được niêm phong bằng APP_KEY cũ, nên BombVault không mở được nó và không sao lưu gì thay vì ghi bằng khóa sai. **Cần chú ý** trên Tổng quan nêu tên nó. Hãy đặt APP_KEY về giá trị cũ, hoặc tải lại bộ khôi phục trên trang Khôi phục trong **Khẩn cấp**.
+
+## Điện thoại bị đưa tới trang đăng nhập
+
+Một điện thoại đã ghép nối chỉ nhận phiên qua nhóm khi **Điện thoại có thể ghép nối bằng mười hai từ của nhóm** đang bật trong **Cài đặt, Bảo mật**. Việc đặt lại mật khẩu sẽ tắt nó. Một ứng dụng cũ hơn máy chủ cũng không nhận được phiên cho đến khi được cập nhật. Máy chủ được thêm bằng địa chỉ luôn hỏi mật khẩu.
 
 ## Sao lưu VM không kết nối được
 
@@ -29,11 +41,11 @@ Snapshot trực tiếp cần qemu guest agent được cài đặt trong VM và 
 
 ## Một lần sao lưu thất bại với "repository is already locked"
 
-Đây thường là một khóa restic mồ côi bị bỏ lại khi container được cập nhật hoặc khởi động lại giữa chừng thao tác. BombVault phát hiện một khóa mồ côi được chứng minh, xóa cưỡng bức nó và thử lại một lần, tự động. Nếu nó cứ dai dẳng, dùng **Cài đặt, Toàn vẹn, Mở khóa** cho miền bị ảnh hưởng để xóa một khóa bị kẹt bằng tay. Một vấn đề thực sự vẫn hiện ra thay vì bị ẩn đi. Sau khi khởi động lại, BombVault chờ đến khi khóa đó đã mười phút không được làm mới. Một restic vẫn đang chạy, chẳng hạn trong một BombVault thứ hai trên cùng kho lưu trữ, làm mới khóa của nó mỗi năm phút.
+Đây thường là một khóa restic mồ côi còn sót lại khi container được cập nhật hoặc khởi động lại giữa chừng một thao tác. BombVault phát hiện khóa mồ côi đã được chứng minh, tự động xóa cưỡng bức và thử lại một lần. Nếu vẫn còn, hãy mở thẻ **Kiểm tra bản sao lưu** trong **Cài đặt, Xác minh** và chọn **Mở khóa** dưới **Thêm** trong hàng của phần bị ảnh hưởng để tự tay xóa khóa cũ. Một sự cố thật vẫn sẽ hiện ra chứ không bị che giấu. Sau khi khởi động lại, BombVault chờ cho đến khi khóa như vậy đã mười phút không được làm mới. Một restic vẫn đang chạy, ví dụ trong một BombVault thứ hai trên cùng kho lưu trữ, làm mới khóa của nó mỗi năm phút.
 
 ## Bản sao off-site của tôi đã không diễn ra sau một lần sao lưu
 
-Nhân bản off-site theo thiết kế là nỗ lực tối đa, nên một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ. Kiểm tra lịch trình off-site cho miền đó (Cài đặt, Lịch trình): một lịch trình trống sẽ nhân bản sau mỗi lần sao lưu cục bộ, trong khi một nhịp độ sẽ gửi ít thường xuyên hơn. Dùng **Sao chép ngay** trên trang Ngoài site cho một lần chạy theo yêu cầu, và theo dõi chỉ báo nhân bản trên bảng điều khiển.
+Nhân bản off-site vốn được thiết kế theo kiểu hết sức có thể, nên một trục trặc ở off-site không bao giờ làm hỏng bản sao lưu cục bộ. Hãy kiểm tra khi nào đích sao lưu sao chép: thẻ **Sao chép** của nó ghi **Sau mỗi bản sao lưu** hoặc nêu một kế hoạch riêng, và **Cài đặt, Lịch trình, Bản sao ngoài site theo phần** có thể cho một phần kế hoạch riêng. Hãy dùng **Sao chép ngay** trong thẻ **Bản sao ngoài site** của phần đó dưới **Cài đặt, Đích sao lưu** để chạy theo yêu cầu, và theo dõi phần đầu trạng thái của Tổng quan, nơi ghi **Đang sao chép ra ngoài site** khi đang chạy. Một bản sao thất bại hiện dưới **Cần chú ý**.
 
 ## Một lần khôi phục đã hủy trước khi nó bắt đầu
 
@@ -41,7 +53,7 @@ Trước khi bất cứ thứ gì bị dừng hoặc xóa, việc khôi phục c
 
 ## Một bản xuất thô đã thất bại thay vì ghi một tệp
 
-Nếu bật mã hóa age (Cài đặt) nhưng không đặt người nhận hợp lệ nào, một bản xuất sẽ thất bại với một lỗi rõ ràng thay vì ghi văn bản thô. Thêm một người nhận hợp lệ (một khóa công khai age hoặc một khóa công khai SSH), hoặc tắt mã hóa nếu bạn có ý định bản xuất là văn bản thô. Xem [Tính năng](features.md).
+Nếu **Mã hóa bản xuất bằng age** đang bật trong **Cài đặt, Hệ thống** nhưng chưa đặt người nhận hợp lệ nào, một lần xuất sẽ thất bại với lỗi rõ ràng thay vì ghi văn bản thuần. Hãy thêm một người nhận hợp lệ (khóa công khai age hoặc khóa công khai SSH), hoặc tắt mã hóa nếu bạn muốn bản xuất là văn bản thuần. Xem [Tính năng](features.md).
 
 ## Một bản kết xuất cơ sở dữ liệu đã thất bại
 
@@ -67,23 +79,23 @@ Mỗi sự cố có một mã lý do trong ngoặc vuông, và trang [Tập dữ
 
 - **`snapshot-loop`**: ảnh chụp không tới được BombVault vì Host Data không chuyển tiếp các lần gắn mới. Sửa container, đặt Access Mode của Host Data thành Read/Write - Slave rồi khởi động lại BombVault.
 - **`key-not-loaded`**: tập dữ liệu mã hóa chưa nạp khóa sẽ bị bỏ qua. Nạp khóa bằng `zfs load-key` và gắn tập dữ liệu; lần sao lưu sau sẽ gồm nó.
-- **`ssh-auth`**: máy chủ từ chối khóa của BombVault. Thẻ kết nối trên trang ZFS hiện lệnh cấp quyền cho khóa; chạy lệnh đó một lần trên máy chủ.
+- **`ssh-auth`**: máy chủ đã từ chối khóa của BombVault. **Kết nối ZFS tới máy chủ này**, mở bằng **Xem kết nối** trên trang Bản sao lưu, hiện lệnh cấp quyền cho nó; hãy chạy lệnh đó một lần trên máy chủ.
 
 ## Một mục đứng yên ở "Đang học N/10"
 
-Phần lớn kiểm tra bất thường bắt đầu sau 10 bản sao lưu thành công của một mục, và việc đếm bắt đầu lại sau **Đánh dấu là đã lường trước** và sau khi lựa chọn của mục thay đổi. Một mục không có lịch thì không học, và một container không có appdata thì không có gì để học, huy hiệu của nó cũng cho biết điều đó.
+Hầu hết các kiểm tra bất thường bắt đầu sau 10 lần sao lưu thành công của một mục, và bộ đếm bắt đầu lại sau **Đánh dấu là đã lường trước** và sau khi lựa chọn của mục thay đổi. Một mục không có lịch thì không học, và một container không có appdata thì không có gì để học, điều mà huy hiệu của nó cho biết. **Tiến trình học** trên trang Bất thường hiện một vòng mười phần cho mỗi mục.
 
 ## Chính sách lưu giữ không còn xóa bản sao lưu cũ của một mục
 
-Một bất thường nghiêm trọng đang mở giữ chúng lại: nguồn của mục gần như trống, đã co lại mạnh, hoặc một bản sao lưu đã lưu lại phần lớn dữ liệu. Mở bất thường từ huy hiệu trên mục. Nếu thiếu dữ liệu hoặc dữ liệu đã bị mã hóa, trước tiên hãy khôi phục từ bản sao lưu tốt cuối cùng được liên kết. Sau đó xác nhận bất thường, hoặc đánh dấu là đã lường trước nếu thay đổi do bạn, và lần chạy kế tiếp sẽ dọn dẹp như thường. Bản xem trước lưu giữ đánh dấu mục như vậy là được giữ lại. Với một mục ZFS, chỉ tập dữ liệu mà bất thường nêu tên mới giữ các bản sao lưu cũ; các tập dữ liệu khác trong cây vẫn được dọn như thường.
+Một bất thường nghiêm trọng đang mở đang giữ chúng: nguồn của mục gần như trống, co lại mạnh, hoặc một bản sao lưu lại lưu phần lớn dữ liệu của nó. Hãy mở bất thường từ huy hiệu trên mục. Nếu dữ liệu bị thiếu hoặc đã bị mã hóa, trước tiên hãy khôi phục từ bản sao lưu tốt gần nhất được liên kết. Sau đó xác nhận bất thường, hoặc đánh dấu là đã lường trước nếu thay đổi là của bạn, và lần chạy kế tiếp sẽ dọn như thường. Bản xem trước lưu giữ đánh dấu một mục như vậy là được giữ lại. Với một mục ZFS, chỉ tập dữ liệu được nêu trong bất thường giữ các bản sao lưu cũ, còn các tập dữ liệu khác của cây được dọn như thường.
 
 ## Dọn dẹp thủ công báo rằng một số mục đã được giữ lại
 
-Cùng nguyên nhân: việc dọn dẹp không động đến các bản sao lưu cũ của mục có bất thường như vậy và nêu tên mục trong thông báo. Mọi thứ khác được dọn như thường.
+Cùng nguyên nhân: dọn dẹp để yên các bản sao lưu cũ của một mục có bất thường như vậy và nêu tên mục trong thông báo của nó. Mọi thứ khác được dọn như thường.
 
 ## Nhập lịch sử báo rằng không đọc được một kho lưu trữ
 
-Sau khi cập nhật, BombVault đọc một lần kích thước của các bản sao lưu trước đó từ mỗi kho. Một kho không truy cập được vào lúc đó, chẳng hạn một đích ngoài site bị sập hoặc một chia sẻ chưa được gắn, sẽ được liệt kê trong thẻ **Bất thường** tại **Cài đặt, Toàn vẹn** và được thử lại mỗi ngày một lần. Trong lúc đó, các mục của nó học từ các bản sao lưu mới.
+Sau khi nâng cấp, BombVault đọc dung lượng của các bản sao lưu trước đó từ mỗi kho lưu trữ một lần. Một kho mà lúc đó nó không tới được, chẳng hạn một đích off-site đang tắt hoặc một share chưa được gắn kết, được đếm trong thẻ **Bất thường** dưới **Cài đặt, Xác minh** và được thử lại mỗi ngày một lần. Trong lúc đó các mục của nó học từ những bản sao lưu mới.
 
 ## Cảnh báo dung lượng đĩa không khớp với bảng điều khiển Unraid
 
@@ -95,7 +107,7 @@ Trang [Máy chủ MCP](mcp.md#troubleshooting) giải thích ý nghĩa của t�
 
 ## Container cứ khởi động lại hoặc trông không khỏe mạnh
 
-BombVault báo khỏe mạnh/không khỏe mạnh từ `/api/health` của chính nó. Một công cụ tự phục hồi (chẳng hạn Autoheal) có thể khởi động lại nó tự động nếu công cụ có bao giờ bị kẹt. Kiểm tra nhật ký container và báo cáo `/spike` để tìm nguyên nhân cơ bản.
+BombVault báo cáo khỏe/không khỏe từ `/api/health` của chính nó. Một công cụ tự chữa (như Autoheal) có thể tự khởi động lại nó nếu bộ máy bị treo. Hãy kiểm tra nhật ký container và thẻ **Tích hợp máy chủ** để tìm nguyên nhân gốc.
 
 ## Vẫn bế tắc?
 

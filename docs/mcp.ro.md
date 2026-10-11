@@ -262,7 +262,7 @@ Tot ce citește un asistent ajunge la furnizorul de IA din spatele lui: numele e
 | `retention_guard` | Încă o copie MCP ar lăsa doar puncte de restaurare din MCP într-o fereastră "păstrează ultimele N", sau elementul a primit deja 4 copii prin MCP în ultimele 24 de ore, inclusiv cele eșuate și anulate. În primul caz următoarea copie programată face loc, în al doilea elementul e liber din nou la 24 de ore după cea mai veche dintre aceste copii. Din interfața web o poți porni oricând. |
 | `rate_limited` | Cheia și-a consumat cele 12 porniri din această oră. |
 | `not_permitted` la o pornire | Cheia poate doar să citească. Pornește **Permite pornirea copiilor** în card; nu e nevoie de reconectare. La o anulare înseamnă că rularea nu a fost pornită de această cheie. |
-| `domain_off` | Acel tip de copie e oprit în setări. |
+| `domain_off` | Acea secțiune este oprită la **Setări, General**. |
 | `not_found` | BombVault nu protejează acel element. Adaugă-l întâi în interfața web; MCP nu creează niciodată configurație. |
 | Clientul nu găsește serverul de autorizare | Autentificarea prin OAuth este oprită, nu este setată o parolă de conectare, sau proxy-ul nu lasă `/.well-known/` să treacă până la BombVault. |
 | Pagina de acord spune că adresa de întoarcere nu este înregistrată | Clientul a trimis o adresă de întoarcere pe care nu a înregistrat-o. Elimină conectorul din client și adaugă-l din nou. |

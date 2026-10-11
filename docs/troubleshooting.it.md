@@ -4,7 +4,7 @@ Una breve FAQ. Per la tabella completa di risoluzione dei problemi lato host del
 
 ## Qualcosa non è collegato correttamente
 
-Apri `/spike` nell'interfaccia web. La verifica dell'integrazione host sonda ogni mount e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e segnala eventuali pezzi mancanti. Inizia da qui prima di dare per scontato un bug: un mount mancante o un host irraggiungibile si presenta immediatamente.
+Aggiungi alla panoramica la scheda **Integrazione host** in **Personalizza**. La verifica dell'integrazione host sonda ogni mount e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e segnala eventuali pezzi mancanti, e **Controlla ora** la esegue di nuovo. Inizia da qui prima di dare per scontato un bug: un mount mancante o un host irraggiungibile si presenta immediatamente.
 
 ## Non riesco a raggiungere l'interfaccia web
 
@@ -12,7 +12,19 @@ BombVault serve HTTPS pronto all'uso sulla porta `3443` (certificato autofirmato
 
 ## Ho perso la mia APP_KEY
 
-`APP_KEY` deriva la password del repository restic. Senza di essa (e senza il kit di ripristino della chiave di crittografia), i backup cifrati non possono essere recuperati. Ecco perché la Dashboard ti assilla per scaricare il kit di ripristino. Vedi [Off-site e ripristino](offsite-recovery.md). Genera una chiave con `openssl rand -hex 32` e conservala fuori dal server prima di affidarti a qualsiasi backup.
+`APP_KEY` deriva la password del repository restic. Senza di essa, senza il kit di ripristino e senza un deposito della chiave nel tuo gruppo, i backup cifrati non possono essere recuperati. Ecco perché la panoramica mostra **Salva il tuo kit di ripristino** finché non l'hai scaricato. Vedi [Off-site e ripristino](offsite-recovery.md#recovery-kit). Genera una chiave con `openssl rand -hex 32` e conservala fuori dal server prima di affidarti a qualsiasi backup.
+
+## Ho dimenticato la password di accesso
+
+Scegli **Password dimenticata?** nella pagina di accesso. BombVault scrive un codice di 12 caratteri nel log del suo container (su Unraid: scheda Docker, icona di BombVault, **Logs**). Digitalo con una nuova password entro 10 minuti. Il ripristino disattiva anche l'autenticazione a due fattori, rimuove tutte le passkey, revoca tutti i token API, le chiavi MCP e gli accessi OAuth, chiude tutte le altre sessioni e disattiva l'associazione dei telefoni. Aggiungi di nuovo le tue passkey in **Impostazioni, Sicurezza**, riattiva lì l'associazione dei telefoni e crea nuovi token e chiavi dove ti servono ancora. Vedi [Modello di sicurezza](configuration.md#login).
+
+## I backup si sono fermati e dicono che la chiave non si può più aprire
+
+Questo server ha rilevato la chiave dei backup di un altro server nella Procedura guidata di emergenza, e `APP_KEY` è stata cambiata dopo. La chiave rilevata è sigillata con la vecchia APP_KEY, quindi BombVault non può aprirla e non esegue alcun backup piuttosto che scrivere con la chiave sbagliata. **Richiede attenzione** nella panoramica la nomina. Rimetti APP_KEY com'era, oppure carica di nuovo il kit di ripristino nella pagina Ripristino sotto **Emergenza**.
+
+## Un telefono finisce nella pagina di accesso
+
+Un telefono associato riceve la sessione tramite il gruppo solo finché **I telefoni possono associarsi con le dodici parole del gruppo** è attivo in **Impostazioni, Sicurezza**. Un ripristino della password lo disattiva. Anche un'app più vecchia del server non riceve una sessione finché non viene aggiornata. Un server aggiunto con il suo indirizzo chiede sempre la password.
 
 ## Il backup delle VM non si connette
 
@@ -29,11 +41,11 @@ Gli snapshot a caldo necessitano del qemu guest agent installato nella VM e del 
 
 ## Un backup è fallito con "repository is already locked"
 
-Di solito è un lock restic orfano lasciato quando il container è stato aggiornato o riavviato a metà operazione. BombVault rileva un lock dimostrabilmente orfano, lo rimuove forzatamente e ritenta una volta, automaticamente. Se persiste, usa **Impostazioni, Integrità, Sblocca** per il dominio interessato per rimuovere a mano un lock bloccato. Un problema autentico si presenta comunque invece di essere nascosto. Dopo un riavvio BombVault aspetta che un lock del genere resti dieci minuti senza essere rinnovato. Un restic ancora in esecuzione, per esempio in un secondo BombVault sullo stesso repository, rinnova il suo lock ogni cinque minuti.
+Di solito è un lock restic orfano lasciato quando il container è stato aggiornato o riavviato a metà operazione. BombVault rileva un lock dimostrabilmente orfano, lo rimuove forzatamente e ritenta una volta, automaticamente. Se persiste, apri la scheda **Controlla i backup** in **Impostazioni, Verifica** e scegli **Sblocca** sotto **Altro** nella riga della sezione interessata per rimuovere a mano un lock bloccato. Un problema autentico si presenta comunque invece di essere nascosto. Dopo un riavvio BombVault aspetta che un lock del genere resti dieci minuti senza essere rinnovato. Un restic ancora in esecuzione, per esempio in un secondo BombVault sullo stesso repository, rinnova il suo lock ogni cinque minuti.
 
 ## La mia copia off-site non è avvenuta dopo un backup
 
-La replica off-site è best-effort per progettazione, così un intoppo off-site non fa mai fallire il backup locale. Controlla il calendario off-site per quel dominio (Impostazioni, Pianificazioni): un calendario vuoto replica dopo ogni backup locale, mentre una cadenza spedisce meno spesso. Usa **Replica ora** nella pagina Off-site per un'esecuzione su richiesta, e osserva l'indicatore di replica sulla Dashboard.
+La replica off-site è best-effort per progettazione, così un intoppo off-site non fa mai fallire il backup locale. Controlla quando copia la destinazione: la sua scheda **Copia** dice **Dopo ogni backup** o indica un piano proprio, e **Impostazioni, Calendario, Copie off-site per sezione** può dare a una sezione un piano suo. Usa **Replica ora** nella scheda **Copia off-site** della sezione in **Impostazioni, Destinazioni** per un'esecuzione su richiesta, e osserva la testata di stato della panoramica, che dice **Copia off-site in corso** mentre gira. Una copia fallita compare sotto **Richiede attenzione**.
 
 ## Un ripristino si è interrotto prima di iniziare
 
@@ -41,7 +53,7 @@ Prima che qualcosa venga fermato o rimosso, il ripristino esegue una verifica de
 
 ## Un'esportazione in chiaro è fallita invece di scrivere un file
 
-Se la cifratura age è attiva (Impostazioni) ma non è impostato alcun destinatario valido, un'esportazione fallisce con un errore chiaro invece di scrivere testo in chiaro. Aggiungi un destinatario valido (una chiave pubblica age o una chiave pubblica SSH), oppure disattiva la cifratura se intendi che l'esportazione sia in chiaro. Vedi [Funzionalità](features.md).
+Se **Cifra le esportazioni con age** è attivo in **Impostazioni, Sistema** ma non è impostato alcun destinatario valido, un'esportazione fallisce con un errore chiaro invece di scrivere testo in chiaro. Aggiungi un destinatario valido (una chiave pubblica age o una chiave pubblica SSH), oppure disattiva la cifratura se intendi che l'esportazione sia in chiaro. Vedi [Funzionalità](features.md).
 
 ## Un dump del database è fallito
 
@@ -67,11 +79,11 @@ Ogni problema porta un codice di motivo tra parentesi quadre, e la pagina [Datas
 
 - **`snapshot-loop`**: lo snapshot non è arrivato a BombVault perché Host Data non inoltra i nuovi mount. Modifica il container, imposta l'Access Mode di Host Data su Read/Write - Slave e riavvia BombVault.
 - **`key-not-loaded`**: un dataset cifrato la cui chiave non è caricata viene saltato. Carica la chiave con `zfs load-key` e monta il dataset; il backup successivo lo include.
-- **`ssh-auth`**: il server ha rifiutato la chiave di BombVault. La scheda di connessione nella pagina ZFS mostra il comando che la autorizza; eseguilo una volta sul server.
+- **`ssh-auth`**: il server ha rifiutato la chiave di BombVault. **Connessione ZFS a questo server**, che si apre con **Mostra connessione** nella pagina Backup, mostra il comando che la autorizza; eseguilo una volta sul server.
 
 ## Un elemento resta su "Sta imparando N/10"
 
-La maggior parte dei controlli di anomalia parte dopo 10 backup riusciti di un elemento, e il conteggio riparte dopo **Segna come attesa** e dopo una modifica della selezione dell'elemento. Un elemento non pianificato non impara, e un container senza appdata non ha nulla da cui imparare, come dice il suo badge.
+La maggior parte dei controlli di anomalia parte dopo 10 backup riusciti di un elemento, e il conteggio riparte dopo **Segna come attesa** e dopo una modifica della selezione dell'elemento. Un elemento non pianificato non impara, e un container senza appdata non ha nulla da cui imparare, come dice il suo badge. **Avanzamento dell'apprendimento** nella pagina Anomalie mostra un anello di dieci parti per elemento.
 
 ## La conservazione non elimina più i vecchi backup di un elemento
 
@@ -83,7 +95,7 @@ La stessa causa: la pulizia lascia stare i vecchi backup di un elemento con un'a
 
 ## L'importazione della cronologia dice che un repository non si è potuto leggere
 
-Dopo l'aggiornamento BombVault legge una volta le dimensioni dei backup precedenti da ogni repository. Un repository non raggiungibile in quel momento, per esempio una destinazione esterna non disponibile o una condivisione non montata, compare nella scheda **Anomalie** di **Impostazioni, Integrità** e viene ritentato una volta al giorno. Nel frattempo i suoi elementi imparano dai nuovi backup.
+Dopo l'aggiornamento BombVault legge una volta le dimensioni dei backup precedenti da ogni repository. Un repository non raggiungibile in quel momento, per esempio una destinazione esterna non disponibile o una condivisione non montata, compare nella scheda **Anomalie** di **Impostazioni, Verifica** e viene ritentato una volta al giorno. Nel frattempo i suoi elementi imparano dai nuovi backup.
 
 ## L'avviso sullo spazio su disco non corrisponde alla dashboard di Unraid
 
@@ -95,7 +107,7 @@ La pagina [Server MCP](mcp.md#troubleshooting) spiega cosa significano ogni codi
 
 ## Il container continua a riavviarsi o sembra non sano
 
-BombVault segnala sano/non sano dal proprio `/api/health`. Uno strumento di auto-heal (come Autoheal) può riavviarlo automaticamente se il motore dovesse mai incepparsi. Controlla il log del container e il report `/spike` per la causa sottostante.
+BombVault segnala sano/non sano dal proprio `/api/health`. Uno strumento di auto-heal (come Autoheal) può riavviarlo automaticamente se il motore dovesse mai incepparsi. Controlla il log del container e la scheda **Integrazione host** per la causa sottostante.
 
 ## Ancora bloccato?
 

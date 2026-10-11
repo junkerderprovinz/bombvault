@@ -1,6 +1,6 @@
 # Android-App
 
-Die Android-App holt jeden BombVault-Server deiner Gruppe aufs Handy. Sie startet mit einer Liste deiner Server, darüber das Aktivitätsprotokoll aller Server mit denselben Zeilen, die das Dashboard zeigt, und öffnet die Handy-Ansicht des Servers, den du antippst. Die App selbst sichert nichts.
+Die Android-App holt jeden BombVault-Server deiner Gruppe aufs Handy. Sie startet mit einer Liste deiner Server, darüber das Aktivitätsprotokoll aller Server mit denselben Zeilen, die die Übersicht zeigt, und öffnet die Handy-Ansicht des Servers, den du antippst. Die App selbst sichert nichts.
 
 ## Die App bekommen {#install}
 
@@ -24,12 +24,16 @@ Danach tritt das Handy der Gruppe bei wie eine weitere Instanz. Es liest über d
 
 ## Angemeldet auf einem gekoppelten Handy {#sign-in}
 
-Ein mit deiner Gruppe gekoppeltes Handy öffnet jeden ihrer Server bereits angemeldet. Bevor es eine Seite lädt, bittet es diesen Server über die Gruppe um eine Sitzung, und ein Server gibt eine nur an ein Mitglied heraus, das ein Handy ist. Ein Server, den du über seine Adresse hinzugefügt hast, fragt wie im Browser nach dem Passwort. Wer die zwölf Wörter hat, kann ohnehin schon jedes Backup der Gruppe öffnen, die Kopplung gewährt also nichts Neues.
+Ein mit deiner Gruppe gekoppeltes Handy öffnet jeden ihrer Server bereits angemeldet. Bevor es eine Seite lädt, bittet es diesen Server über die Gruppe um eine Sitzung, und ein Server gibt eine nur an ein Mitglied heraus, das ein Handy ist. Ein Server, den du über seine Adresse hinzugefügt hast, fragt wie im Browser nach dem Passwort.
+
+Ein gekoppeltes Handy bekommt nicht alles, was ein Passwort öffnet. Seine Sitzung erreicht eine feste Liste dessen, was die App zeigt: die Übersicht, die Läufe und das Aktivitätsprotokoll, die Sicherungen zum Ansehen, Starten und Wiederherstellen, die Anomalien zum Lesen und die Seite Instanzen zum Ansehen. Speicherorte und Befehle kommen ohne ihre Adressen und Geheimnisse an. Eine Wiederherstellung, die das Original ersetzt, sichert vorher den heutigen Zustand. Schlüssel, das Recovery-Kit, Hinterlegungen, Einstellungen und das Löschen von Sicherungen bleiben einer Anmeldung am Server selbst vorbehalten, und alles andere antwortet, dass es diese Anmeldung braucht.
+
+Der Schalter dafür ist **Handys können sich mit den zwölf Wörtern der Gruppe koppeln** auf der Karte **Android-App** unter **Einstellungen, Sicherheit**. Ein Zurücksetzen des Passworts schaltet ihn ab und meldet jedes Handy ab, bis du ihn dort wieder einschaltest.
 
 ## Server außerhalb einer Gruppe {#other-servers}
 
 - **Server hinzufügen** nimmt die Adresse, mit der du BombVault im Browser öffnest, etwa `192.168.1.10:3443`. Ohne `http://` oder `https://` davor nimmt die App https.
-- Server, die sich im lokalen Netz bekannt geben, stehen unter **In diesem Netz** und öffnen sich mit einem Tippen. Das tun sie, solange **Im Netzwerk finden** unter Einstellungen, Anbindungen eingeschaltet ist. Ein Server in einem anderen Netz oder hinter einem VPN taucht dort nicht auf.
+- Server, die sich im lokalen Netz bekannt geben, stehen unter **In diesem Netz** und öffnen sich mit einem Tippen. Das tun sie, solange **Im Netzwerk finden** auf der Karte **Dienste** unter **Einstellungen, Anbindungen** eingeschaltet ist. Ein Server in einem anderen Netz oder hinter einem VPN taucht dort nicht auf.
 - Einem selbstsignierten Zertifikat vertraut die App einmal anhand seines SHA-256-Fingerabdrucks. Zeigt der Server später ein anderes, warnt die App dich und öffnet ihn erst, wenn du dem neuen Zertifikat vertraust.
 
 ## Das Handy auf der Instanzen-Seite {#instances}

@@ -2,29 +2,33 @@
 
 **Vaše data z Unraidu, zapečetěná v trezoru. Vhoďte zálohu. Odpalte obnovu.**
 
-BombVault je self-hostovaná webová aplikace nativní pro Unraid pro **zálohování a plné zotavení po havárii** vašich Docker kontejnerů a KVM/libvirt VM. Běží jako jediný multi-arch Docker kontejner, nabízí moderní webové rozhraní, které se řídí preferencí světlého/tmavého režimu vašeho systému, a zvládá celý životní cyklus: zálohovat, plánovat, ověřovat a obnovovat.
+BombVault je self-hostovaná webová aplikace nativní pro Unraid pro **zálohování a plné zotavení po havárii** vašich Docker kontejnerů a KVM/libvirt VM. Běží jako jediný multi-arch Docker kontejner, nabízí webové rozhraní v tmavém, světlém nebo systémovém motivu, a zvládá celý životní cyklus: zálohovat, plánovat, ověřovat a obnovovat.
 
 Obnovy jsou automatické. Kontejnery se znovu objeví v záložce Docker v Unraidu přesně jako předtím a VM jsou znovu definovány ve VM Manageru se svými disky a UEFI NVRAM opět připojenými. Žádná ruční reinstalace, žádná rekonfigurace, žádné drama.
 
 Postaveno na [restic](https://restic.net), takže každá záloha je deduplikovaná, inkrementální a vždy šifrovaná.
 
 !!! note "Uchovejte svůj APP_KEY v bezpečí"
-    BombVault odvozuje heslo k restic repozitáři z 32bajtového tajemství s názvem `APP_KEY`. Jeho ztráta učiní šifrované zálohy neobnovitelnými. Vygenerujte si jej pomocí `openssl rand -hex 32` a uložte na bezpečné místo. Viz [Konfigurace](configuration.md).
+    BombVault odvozuje heslo k restic repozitáři z 32bajtového tajemství s názvem `APP_KEY`. Jeho ztráta spolu se sadou pro obnovu učiní šifrované zálohy neobnovitelnými. Vygenerujte si jej pomocí `openssl rand -hex 32` a uložte na bezpečné místo. Viz [Konfigurace](configuration.md).
 
 ## Co BombVault chrání
 
-| Doména | Co se ukládá |
+Každý kontejner, VM, sada složek, flash disk, každá datová sada ZFS a vlastní nastavení BombVaultu je **položka** s vlastní stránkou. Položky jednoho druhu tvoří **sekci**, kterou zapneš v **Nastavení, Obecné**.
+
+| Sekce | Co se ukládá |
 |---|---|
-| **Docker kontejnery** | Adresář appdata plus definice kontejneru (image, proměnné prostředí, porty, štítky, svazky). |
-| **KVM / libvirt VM** | Diskové image VM, definice XML a UEFI NVRAM, zálohováno přes SSH (bez připojení libvirt). |
-| **Unraid flash** | Celý USB flash (`/boot`): OS, licence, konfigurace pole, sdílené složky, síť a konfigurace pluginů. |
-| **Konfigurace aplikace** | Vlastní `/config` BombVaultu: jeho databáze nastavení, přihlašovací údaje mimo lokalitu a pár klíčů SSH pro libvirt. |
-| **Soubory a složky** | Pojmenované **sady souborů**, libovolná složka na serveru, každá s volitelnými vylučovacími vzory pro danou sadu. |
+| **Kontejnery** | Adresář appdata plus definice kontejneru (image, proměnné prostředí, porty, štítky, svazky). |
+| **VMs** | Diskové image VM, definice XML a UEFI NVRAM, zálohováno přes SSH (bez připojení libvirt). |
+| **Flash** | Celý USB flash (`/boot`): OS, licence, konfigurace pole, sdílené složky, síť a konfigurace pluginů. |
+| **Autozáloha** | Vlastní `/config` BombVaultu: jeho databáze nastavení, přihlašovací údaje jeho cílů a pár klíčů SSH pro libvirt. |
+| **Složky** | Libovolná složka na serveru jako sada složek, každá s volitelnými vylučovacími vzory. |
 | **Datové sady ZFS** | Datová sada se všemi sadami pod ní, čtená z jednoho snímku ZFS a uložená jako složka. Viz [Datové sady ZFS](zfs-datasets.md). |
 
 ## Obnova je hvězdou
 
 Po zkopírování dat zpět ze snímku restic BombVault přehraje uloženou definici kontejneru proti Docker API, takže se kontejner znovu objeví v záložce Docker v Unraidu, jako by tam byl vždy (stejný image, stejné nastavení, stejné mapování portů). VM dostanou XML znovu definované přes SSH a jejich disky a UEFI NVRAM opět připojené, i po smazání VM.
+
+Jedno okno obnovuje každý druh. Ve výchozím stavu zvolí **Vedle originálu**, které vrátí zálohu jako kopii a originál nechá být. **Nahradit originál** nejdřív zazálohuje aktuální stav, takže obnovu lze vrátit. Dalšími cíli jsou složka nebo nová datová sada ZFS.
 
 Když záloha zastaví závislé kontejnery, vrátí se ve správném pořadí: BombVault je znovu spustí v pořadí `depends_on` z Compose a čeká, až každý ohlásí stav healthy, než spustí ty, které na něm závisí, takže nic nepředběhne databázi nebo bránu, která ještě není v provozu. Viz [Funkce](features.md).
 
@@ -33,7 +37,7 @@ Když záloha zastaví závislé kontejnery, vrátí se ve správném pořadí: 
 ```
 Browser --HTTPS--> BombVault container
                    |- Go binary: JSON API + embedded React UI
-                   |- Background worker (per-domain scheduler + job executor)
+                   |- Background worker (per-section scheduler + job executor)
                    |
                    |- /var/run/docker.sock  -> Docker API (container stop/inspect/recreate)
                    |- qemu+ssh://host       -> libvirt / KVM on the HOST over SSH (no mount)
@@ -51,7 +55,7 @@ BombVault je vrstva orchestrace a UI, nikoli úložný engine. Veškerý skuteč
 
 Jste tu noví? Přejděte na **[Začínáme](getting-started.md)** a nainstalujte BombVault na Unraid přes Community Applications a spusťte svou první zálohu. Poté prozkoumejte kompletní **[Funkce](features.md)**, vylaďte si **[Konfiguraci](configuration.md)** a nastavte si **[Mimo lokalitu a obnova](offsite-recovery.md)**.
 
-Mimo lokalitu se může rozvětvit na několik cílů na doménu najednou, **řídicí panel přijímače** určený jen pro čtení monitoruje tyto kopie na stroji, který je přijímá, a celou svou konfiguraci můžete přenést na nový stroj pomocí karty **Export / import nastavení**. Viz [Mimo lokalitu a obnova](offsite-recovery.md) a [Konfigurace](configuration.md#portable-settings-export-and-import).
+Každá sekce může kopírovat do několika cílů najednou, spárovaný BombVault může držet tvé kopie mimo lokalitu na serveru, který odmítá mazání, a **Nouzový průvodce** vrátí ztracený server z jeho sady pro obnovu, přes tvou skupinu nebo napsaným klíčem. Konfiguraci na nový stroj přenese karta **Export / import nastavení**. Viz [Mimo lokalitu a obnova](offsite-recovery.md) a [Konfigurace](configuration.md#portable-settings-export-and-import).
 
 **[Aplikace pro Android](android.md)** vám dá do telefonu všechny servery vaší skupiny, s protokolem aktivit všech z nich na jedné obrazovce.
 
@@ -75,4 +79,4 @@ Název a vizuální identita nejsou licencovány. AGPL pokrývá pouze zdrojový
 - **Problémy:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Kontrola nad hostitelem na úrovni root"
-    Skrze Docker socket může BombVault zastavovat, odebírat a znovu vytvářet kontejnery a číst/zapisovat appdata, a pro zálohu VM se přihlašuje k hostiteli přes SSH, aby spustil `virsh`. Kdokoli, kdo se dostane k jeho webovému rozhraní, má fakticky root na hostiteli. Provozujte BombVault pouze v důvěryhodné, nevystavené síti a zapněte volitelnou ochranu heslem (Nastavení, Zabezpečení), jakmile používáte zálohy mimo lokalitu nebo neměnné zálohy. Kompletní bezpečnostní model najdete v [Konfiguraci](configuration.md).
+    Skrze Docker socket může BombVault zastavovat, odebírat a znovu vytvářet kontejnery a číst/zapisovat appdata, a pro zálohu VM se přihlašuje k hostiteli přes SSH, aby spustil `virsh`. Kdokoli, kdo se dostane k jeho webovému rozhraní, má fakticky root na hostiteli. Provozuj BombVault pouze v důvěryhodné, nevystavené síti a nastav přihlašovací heslo v **Nastavení, Zabezpečení**. Sada pro obnovu, úschova klíčů a mazání záloh v cíli ho vyžadují. Kompletní bezpečnostní model najdeš v [Konfiguraci](configuration.md#security-model).

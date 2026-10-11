@@ -2,38 +2,42 @@
 
 **Os seus dados do Unraid, selados num cofre. Largue um backup. Detone um restauro.**
 
-O BombVault é uma aplicação web self-hosted e nativa do Unraid para **backup e recuperação total de desastres** dos seus containers Docker e VMs KVM/libvirt. Corre como um único container Docker multi-arch, oferece-lhe uma interface web moderna que segue a preferência de tema claro/escuro do seu sistema e trata de todo o ciclo de vida: fazer backup, agendar, verificar e restaurar.
+O BombVault é uma aplicação web self-hosted e nativa do Unraid para **backup e recuperação total de desastres** dos seus containers Docker e VMs KVM/libvirt. Corre como um único container Docker multi-arch, dá-te uma interface web num tema escuro, claro ou do sistema e trata de todo o ciclo de vida: fazer backup, agendar, verificar e restaurar.
 
 Os restauros são automáticos. Os containers reaparecem no separador Docker do Unraid exatamente como antes, e as VMs são redefinidas no VM Manager com os seus discos e a NVRAM UEFI reanexados. Sem reinstalações manuais, sem reconfiguração, sem dramas.
 
 Assente em [restic](https://restic.net), por isso cada backup é deduplicado, incremental e sempre encriptado.
 
-!!! note "Guarde a sua APP_KEY em segurança"
-    O BombVault deriva a palavra-passe do repositório restic a partir de um segredo de 32 bytes chamado `APP_KEY`. Perdê-lo torna os backups encriptados irrecuperáveis. Gere um com `openssl rand -hex 32` e guarde-o num local seguro. Consulte [Configuração](configuration.md).
+!!! note "Guarda a tua APP_KEY em segurança"
+    O BombVault deriva a palavra-passe do repositório restic a partir de um segredo de 32 bytes chamado `APP_KEY`. Perdê-lo, juntamente com o kit de recuperação, torna os backups encriptados irrecuperáveis. Gera um com `openssl rand -hex 32` e guarda-o num local seguro. Consulta [Configuração](configuration.md).
 
 ## O que o BombVault protege
 
-| Domínio | O que é guardado |
+Cada container, VM, conjunto de pastas, a flash, cada conjunto de dados ZFS e as definições do próprio BombVault são uma **entrada** com uma página própria. As entradas do mesmo tipo formam uma **secção**, que ativas em **Definições, Geral**.
+
+| Secção | O que é guardado |
 |---|---|
-| **Containers Docker** | Diretório appdata mais a definição do container (imagem, variáveis de ambiente, portas, etiquetas, volumes). |
-| **VMs KVM / libvirt** | Imagem(ns) de disco da VM, a definição XML e a NVRAM UEFI, com backup por SSH (sem montagem de libvirt). |
-| **Flash do Unraid** | Toda a pen USB flash (`/boot`): SO, licença, configuração do array, partilhas, rede e configuração de plugins. |
-| **Configuração da aplicação** | O próprio `/config` do BombVault: a sua base de dados de definições, as credenciais externas e o par de chaves SSH do libvirt. |
-| **Ficheiros e pastas** | **Conjuntos de ficheiros** nomeados, qualquer pasta no servidor, cada um com padrões de exclusão opcionais por conjunto. |
-| **Conjuntos de dados ZFS** | Um conjunto de dados com todos os que estão abaixo dele, lido de um instantâneo ZFS e guardado como uma pasta. Veja [Conjuntos de dados ZFS](zfs-datasets.md). |
+| **Containers** | Diretório appdata mais a definição do container (imagem, variáveis de ambiente, portas, etiquetas, volumes). |
+| **VMs** | Imagem(ns) de disco da VM, a definição XML e a NVRAM UEFI, com backup por SSH (sem montagem de libvirt). |
+| **Flash** | Toda a pen USB flash (`/boot`): SO, licença, configuração do array, partilhas, rede e configuração de plugins. |
+| **Auto-backup** | O próprio `/config` do BombVault: a base de dados de definições, os inícios de sessão dos destinos e o par de chaves SSH do libvirt. |
+| **Pastas** | Qualquer pasta no servidor como conjunto de pastas, cada um com padrões de exclusão opcionais. |
+| **Conjuntos de dados ZFS** | Um conjunto de dados com todos os que estão abaixo dele, lido de um instantâneo ZFS e guardado como uma pasta. Vê [Conjuntos de dados ZFS](zfs-datasets.md). |
 
 ## O restauro é a estrela
 
 Depois de copiar os dados de volta a partir do instantâneo restic, o BombVault reproduz a definição de container guardada contra a Docker API, para que o container reapareça no separador Docker do Unraid como se sempre lá tivesse estado (mesma imagem, mesmas definições, mesmos mapeamentos de portas). As VMs têm o seu XML redefinido por SSH e os seus discos e a NVRAM UEFI reanexados, mesmo depois de a VM ter sido eliminada.
 
-Quando um backup para containers dependentes, estes voltam na ordem correta: o BombVault reinicia-os pela ordem `depends_on` do Compose e espera que cada um reporte saudável antes de iniciar os que dependem dele, para que nada avance à frente de uma base de dados ou de um gateway que ainda não esteja disponível. Consulte [Funcionalidades](features.md).
+Uma só janela restaura todos os tipos. Por predefinição escolhe **Ao lado do original**, que traz o backup de volta como cópia e deixa o original como está. **Substituir o original** faz primeiro backup do estado atual, para que um restauro possa ser desfeito. Uma pasta ou um novo conjunto de dados ZFS são os outros destinos.
+
+Quando um backup para containers dependentes, estes voltam na ordem correta: o BombVault reinicia-os pela ordem `depends_on` do Compose e espera que cada um reporte saudável antes de iniciar os que dependem dele, para que nada avance à frente de uma base de dados ou de um gateway que ainda não esteja disponível. Consulta [Funcionalidades](features.md).
 
 ## Como funciona
 
 ```
 Browser --HTTPS--> BombVault container
                    |- Go binary: JSON API + embedded React UI
-                   |- Background worker (per-domain scheduler + job executor)
+                   |- Background worker (per-section scheduler + job executor)
                    |
                    |- /var/run/docker.sock  -> Docker API (container stop/inspect/recreate)
                    |- qemu+ssh://host       -> libvirt / KVM on the HOST over SSH (no mount)
@@ -49,11 +53,11 @@ O BombVault é a camada de orquestração e de interface, não o motor de armaze
 
 ## Início rápido
 
-Novo por aqui? Vá a **[Introdução](getting-started.md)** para instalar o BombVault no Unraid através das Community Applications e correr o seu primeiro backup. Depois explore as **[Funcionalidades](features.md)** completas, afine a sua **[Configuração](configuration.md)** e configure o **[Externo e recuperação](offsite-recovery.md)**.
+Novo por aqui? Vai a **[Introdução](getting-started.md)** para instalar o BombVault no Unraid através das Community Applications e correr o teu primeiro backup. Depois explora as **[Funcionalidades](features.md)** completas, afina a tua **[Configuração](configuration.md)** e configura o **[Externo e recuperação](offsite-recovery.md)**.
 
-O externo pode espalhar-se por vários destinos por domínio de uma só vez, um **painel recetor** só de leitura monitoriza essas cópias na máquina que as recebe, e pode levar toda a sua configuração para uma máquina nova com o cartão **Exportar / importar configurações**. Consulte [Externo e recuperação](offsite-recovery.md) e [Configuração](configuration.md#portable-settings-export-and-import).
+Cada secção pode copiar para vários destinos ao mesmo tempo, um BombVault emparelhado pode guardar as tuas cópias externas num servidor que recusa eliminações, e o **Assistente de emergência** recupera um servidor perdido a partir do kit de recuperação, através do teu grupo ou com a chave escrita à mão. Para levar a configuração para uma máquina nova, usa o cartão **Exportar / importar configurações**. Consulta [Externo e recuperação](offsite-recovery.md) e [Configuração](configuration.md#portable-settings-export-and-import).
 
-A **[Aplicação Android](android.md)** leva todos os servidores do seu grupo para o telemóvel, com o registo de atividade de todos eles num só ecrã.
+A **[Aplicação Android](android.md)** leva todos os servidores do teu grupo para o telemóvel, com o registo de atividade de todos eles num só ecrã.
 
 ## Créditos {#credits}
 
@@ -75,4 +79,4 @@ O nome e a marca não estão licenciados. A AGPL cobre apenas o código-fonte: "
 - **Issues:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Controlo do host equivalente a root"
-    Através do socket Docker, o BombVault pode parar, remover e recriar containers e ler/escrever appdata, e para o backup de VMs inicia sessão no host por SSH para correr `virsh`. Qualquer pessoa que consiga alcançar a sua interface web tem, efetivamente, root no host. Corra o BombVault apenas numa rede de confiança e não exposta, e ative o controlo por palavra-passe opcional (Definições, Segurança) assim que estiver a usar backups externos ou imutáveis. Consulte [Configuração](configuration.md) para o modelo de segurança completo.
+    Através do socket Docker, o BombVault pode parar, remover e recriar containers e ler/escrever appdata, e para o backup de VMs inicia sessão no host por SSH para correr `virsh`. Qualquer pessoa que consiga alcançar a interface web tem, efetivamente, root no host. Corre o BombVault apenas numa rede de confiança e não exposta, e define uma palavra-passe de início de sessão em **Definições, Segurança**. O kit de recuperação, os depósitos de chaves e a eliminação dos backups num destino exigem-na. Consulta [Configuração](configuration.md#security-model) para o modelo de segurança completo.

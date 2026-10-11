@@ -262,7 +262,7 @@ Wat een assistent leest, gaat naar de AI-aanbieder erachter: namen van items, pl
 | `retention_guard` | Nog een MCP-back-up zou in een venster "laatste N bewaren" alleen herstelpunten uit MCP overlaten, of het item heeft in de afgelopen 24 uur al 4 back-ups via MCP gehad, mislukte en afgebroken meegeteld. In het eerste geval maakt de volgende geplande back-up ruimte, in het tweede is het item 24 uur na de oudste van die back-ups weer vrij. In beide gevallen kun je hem in de webinterface starten. |
 | `rate_limited` | De sleutel heeft zijn 12 starts voor dit uur opgebruikt. |
 | `not_permitted` bij een start | De sleutel mag alleen lezen. Zet **Back-ups laten starten** aan in de kaart; een nieuwe verbinding is niet nodig. Bij een annulering betekent het dat deze sleutel de run niet heeft gestart. |
-| `domain_off` | Dat soort back-up staat uit in de instellingen. |
+| `domain_off` | Dat onderdeel staat uit onder **Instellingen, Algemeen**. |
 | `not_found` | BombVault beschermt dat item niet. Voeg het eerst toe in de webinterface; MCP maakt nooit configuratie aan. |
 | De client vindt de autorisatieserver niet | Aanmelden via OAuth staat uit, er is geen inlogwachtwoord ingesteld, of de proxy laat `/.well-known/` niet door naar BombVault. |
 | De toestemmingspagina meldt een niet-geregistreerd terugkeeradres | De client stuurde een terugkeeradres dat hij niet heeft geregistreerd. Verwijder de connector in de client en voeg hem opnieuw toe. |

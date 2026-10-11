@@ -1,6 +1,6 @@
 # Aplicația Android
 
-Aplicația Android pune pe telefon toate serverele BombVault din grupul tău. Pornește cu o listă a serverelor tale, cu jurnalul de activitate al tuturor deasupra, aceleași rânduri pe care le arată panoul principal, și deschide vizualizarea pentru telefon a serverului pe care îl atingi. Aplicația nu face ea însăși niciun backup.
+Aplicația Android pune pe telefon toate serverele BombVault din grupul tău. Pornește cu o listă a serverelor tale, cu jurnalul de activitate al tuturor deasupra, aceleași rânduri pe care le arată prezentarea, și deschide vizualizarea pentru telefon a serverului pe care îl atingi. Aplicația nu face ea însăși niciun backup.
 
 ## Obținerea aplicației {#install}
 
@@ -24,12 +24,16 @@ Telefonul intră apoi în grup ca încă o instanță. Citește ce rulează pe f
 
 ## Autentificat pe un telefon împerecheat {#sign-in}
 
-Un telefon împerecheat cu grupul tău deschide fiecare dintre serverele lui deja autentificat. Înainte să încarce o pagină, cere acelui server o sesiune prin grup, iar un server acordă una doar unui membru care este telefon. Un server adăugat după adresă cere parola, ca într-un browser. Oricine are cele douăsprezece cuvinte poate deja să deschidă orice backup al grupului, așa că împerecherea nu acordă nimic nou.
+Un telefon împerecheat cu grupul tău deschide fiecare dintre serverele lui deja autentificat. Înainte să încarce o pagină, cere acelui server o sesiune prin grup, iar un server acordă una doar unui membru care este telefon. Un server adăugat după adresă cere parola, ca într-un browser. 
+
+Un telefon împerecheat nu primește tot ce primește o parolă. Sesiunea lui ajunge la o listă fixă din ce arată aplicația: prezentarea, rulările și jurnalul de activitate, copiile de rezervă de privit, pornirea și restaurarea, anomaliile de citit și pagina Instanțe de privit. Destinațiile și comenzile ajung la el fără adrese și fără secrete. O restaurare care înlocuiește originalul face mai întâi o copie de rezervă a stării curente. Cheile, kitul de recuperare, depunerile de chei, setările și ștergerea copiilor de rezervă rămân la o autentificare chiar pe server, iar orice altceva răspunde că are nevoie de acea autentificare.
+
+Comutatorul pentru asta este **Telefoanele se pot împerechea cu cele douăsprezece cuvinte ale grupului**, în cardul **Aplicația Android** de la **Setări, Securitate**. O resetare a parolei îl oprește și deconectează toate telefoanele, până când îl pornești la loc acolo.
 
 ## Servere din afara unui grup {#other-servers}
 
 - **Adaugă server** primește adresa cu care deschizi BombVault într-un browser, de exemplu `192.168.1.10:3443`. Fără `http://` sau `https://` în față, aplicația folosește https.
-- Serverele care se anunță în rețeaua locală apar la **În această rețea** și se deschid cu o atingere. Fac asta cât timp **Găsește în rețea** este activat la Setări, Integrări. Un server dintr-o altă rețea sau din spatele unui VPN nu apare acolo.
+- Serverele care se anunță în rețeaua locală apar la **În această rețea** și se deschid cu o atingere. Fac asta cât timp **Găsește în rețea** este activat în cardul **Servicii** de la **Setări, Integrări**. Un server dintr-o altă rețea sau din spatele unui VPN nu apare acolo.
 - Un certificat autosemnat este acceptat o dată, după amprenta sa SHA-256. Când serverul arată mai târziu un alt certificat, aplicația te avertizează și îl deschide doar după ce ai acceptat noul certificat.
 
 ## Telefonul pe pagina Instanțe {#instances}

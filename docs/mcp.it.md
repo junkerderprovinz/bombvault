@@ -262,7 +262,7 @@ Tutto ciò che un assistente legge va al fornitore di IA che sta dietro: nomi de
 | `retention_guard` | Un altro backup MCP lascerebbe solo punti di ripristino MCP in una finestra "conserva gli ultimi N", oppure l'elemento ha già avuto 4 backup tramite MCP nelle ultime 24 ore, contando anche quelli falliti e annullati. Nel primo caso il prossimo backup pianificato fa spazio, nel secondo l'elemento torna libero 24 ore dopo il più vecchio di quei backup. In entrambi i casi puoi avviarlo dall'interfaccia web. |
 | `rate_limited` | La chiave ha usato i suoi 12 avvii di quest'ora. |
 | `not_permitted` su un avvio | La chiave è di sola lettura. Attiva **Consenti di avviare backup** nella scheda; non serve riconnettersi. Su un annullamento significa che l'esecuzione non è stata avviata da questa chiave. |
-| `domain_off` | Quel tipo di backup è disattivato nelle impostazioni. |
+| `domain_off` | Quella sezione è disattivata in **Impostazioni, Generale**. |
 | `not_found` | BombVault non protegge quell'elemento. Aggiungilo prima nell'interfaccia web; MCP non crea mai configurazione. |
 | Il client non trova il server di autorizzazione | L'accesso tramite OAuth è spento, non è impostata una password di accesso, oppure il proxy non lascia passare `/.well-known/` fino a BombVault. |
 | La pagina di consenso dice che l'indirizzo di ritorno non è registrato | Il client ha inviato un indirizzo di ritorno che non ha registrato. Rimuovi il connettore nel client e aggiungilo di nuovo. |

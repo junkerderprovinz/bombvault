@@ -4,7 +4,7 @@ Lyhyt UKK. Täydellistä VM-over-SSH-isäntäpuolen vianmääritystaulukkoa vart
 
 ## Jokin ei ole kytketty oikein
 
-Avaa `/spike` verkkokäyttöliittymässä. Isäntäintegraation tarkistus koettaa jokaista liitosta ja komentorivityökalua (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat palaset. Aloita täältä ennen kuin oletat bugia: puuttuva liitos tai tavoittamaton isäntä näkyy heti.
+Lisää **Isäntäintegraatio**-kortti yleiskatsaukseen kohdassa **Mukauta**. Isäntäintegraation tarkistus koettaa jokaista liitosta ja komentorivityökalua (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat palaset, ja **Tarkista nyt** ajaa sen uudelleen. Aloita täältä ennen kuin oletat bugia: puuttuva liitos tai tavoittamaton isäntä näkyy heti.
 
 ## En saa yhteyttä verkkokäyttöliittymään
 
@@ -12,7 +12,19 @@ BombVault tarjoaa HTTPS:ää valmiiksi portissa `3443` (itse allekirjoitettu var
 
 ## Menetin APP_KEY:ni
 
-`APP_KEY` johtaa restic-arkiston salasanan. Ilman sitä (ja ilman salausavaimen palautuspakettia) salattuja varmuuskopioita ei voi palauttaa. Tämän vuoksi Kojelauta nalkuttaa sinua lataamaan palautuspaketin. Katso [Etäsijainti ja palautus](offsite-recovery.md). Luo avain komennolla `openssl rand -hex 32` ja säilytä se palvelimen ulkopuolella ennen kuin luotat mihinkään varmuuskopioon.
+`APP_KEY` johtaa restic-arkiston salasanan. Ilman sitä, ilman palautuspakettia ja ilman avaintalletusta ryhmässäsi salattuja varmuuskopioita ei voi palauttaa. Tämän vuoksi yleiskatsaus näyttää **Tallenna palautuspakettisi**, kunnes olet ladannut sen. Katso [Etäsijainti ja palautus](offsite-recovery.md#recovery-kit). Luo avain komennolla `openssl rand -hex 32` ja säilytä se palvelimen ulkopuolella ennen kuin luotat mihinkään varmuuskopioon.
+
+## Unohdin kirjautumissalasanan
+
+Valitse kirjautumissivulla **Unohtuiko salasana?** BombVault kirjoittaa 12 merkin koodin konttinsa lokiin (Unraidissa: Docker-välilehti, BombVault-kuvake, **Logs**). Kirjoita se uuden salasanan kanssa 10 minuutin kuluessa. Nollaus myös kytkee kaksivaiheisen tunnistautumisen pois, poistaa kaikki pääsyavaimet, mitätöi kaikki API-tokenit, MCP-avaimet ja OAuth-kirjautumiset, päättää kaikki muut istunnot ja kytkee puhelinten pariliitoksen pois. Lisää pääsyavaimesi uudelleen kohdassa **Asetukset, Turvallisuus**, kytke puhelinten pariliitos takaisin päälle siellä ja luo uudet tokenit ja avaimet sinne, missä tarvitset niitä yhä. Katso [Turvallisuusmalli](configuration.md#login).
+
+## Varmuuskopiointi pysähtyi, ja avainta ei voi enää avata
+
+Tämä palvelin otti Hätäohjatussa toiminnossa haltuun toisen palvelimen varmuuskopioavaimen, ja `APP_KEY`:tä muutettiin sen jälkeen. Haltuun otettu avain on sinetöity vanhalla APP_KEY:llä, joten BombVault ei voi avata sitä eikä varmuuskopioi mitään sen sijaan, että kirjoittaisi väärällä avaimella. Yleiskatsauksen **Vaatii huomiota** nimeää sen. Aseta APP_KEY takaisin entiselleen tai lataa palautuspaketti uudelleen Palautus-sivulla kohdassa **Hätätilanne**.
+
+## Puhelin päätyy kirjautumissivulle
+
+Pariliitetty puhelin saa istuntonsa ryhmän kautta vain niin kauan kuin **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** on päällä kohdassa **Asetukset, Turvallisuus**. Salasanan nollaus kytkee sen pois. Palvelinta vanhempi sovellus ei myöskään saa istuntoa, ennen kuin se päivitetään. Osoitteella lisätty palvelin kysyy aina salasanaa.
 
 ## VM-varmuuskopiointi ei muodosta yhteyttä
 
@@ -29,11 +41,11 @@ Live-tilannevedokset tarvitsevat qemu guest agentin asennettuna VM:ään ja levy
 
 ## Varmuuskopio epäonnistui virheeseen "repository is already locked"
 
-Tämä on yleensä orpo restic-lukko, joka jäi jälkeen kun kontti päivitettiin tai käynnistettiin uudelleen kesken toiminnan. BombVault havaitsee todistettavasti orvon lukon, pakottaa sen auki ja yrittää uudelleen kerran, automaattisesti. Jos se jää pysyväksi, käytä **Asetukset, Eheys, Avaa lukitus** kyseiselle toimialueelle poistaaksesi jumittuneen lukon käsin. Todellinen ongelma nousee silti pintaan sen sijaan että piiloutuisi. Uudelleenkäynnistyksen jälkeen BombVault odottaa, kunnes tällaista lukkoa ei ole uusittu kymmeneen minuuttiin. Yhä käynnissä oleva restic, esimerkiksi toisessa samaa tietovarastoa käyttävässä BombVaultissa, uusii lukkonsa viiden minuutin välein.
+Tämä on yleensä orpo restic-lukko, joka jäi jälkeen kun kontti päivitettiin tai käynnistettiin uudelleen kesken toiminnan. BombVault havaitsee todistettavasti orvon lukon, pakottaa sen auki ja yrittää uudelleen kerran, automaattisesti. Jos se jää pysyväksi, avaa kortti **Tarkista varmuuskopiot** kohdassa **Asetukset, Tarkistus** ja valitse **Avaa lukitus** kohdasta **Lisää** kyseisen osion rivillä poistaaksesi jumittuneen lukon käsin. Todellinen ongelma nousee silti pintaan sen sijaan että piiloutuisi. Uudelleenkäynnistyksen jälkeen BombVault odottaa, kunnes tällaista lukkoa ei ole uusittu kymmeneen minuuttiin. Yhä käynnissä oleva restic, esimerkiksi toisessa samaa tietovarastoa käyttävässä BombVaultissa, uusii lukkonsa viiden minuutin välein.
 
 ## Etäkopiotani ei tapahtunut varmuuskopion jälkeen
 
-Etäreplikointi on suunnitellusti parhaan yrityksen mukaista, joten etäsijainnin nikottelu ei koskaan kaada paikallista varmuuskopiota. Tarkista kyseisen toimialueen etäaikataulu (Asetukset, Aikataulut): tyhjä aikataulu replikoi jokaisen paikallisen varmuuskopion jälkeen, kun taas tahti lähettää harvemmin. Käytä **Replikoi nyt** Etä-sivulla pyydettäessä tehtävään ajoon, ja tarkkaile replikointiosoitinta Kojelaudalla.
+Etäreplikointi on suunnitellusti parhaan yrityksen mukaista, joten etäsijainnin nikottelu ei koskaan kaada paikallista varmuuskopiota. Tarkista, milloin kohde kopioi: sen **Kopioi**-kortti sanoo **Jokaisen varmuuskopion jälkeen** tai nimeää oman aikataulun, ja **Asetukset, Aikataulu, Etäkopiot osioittain** voi antaa osiolle oman aikataulun. Käytä **Replikoi nyt** osion **Etäkopio**-kortissa kohdassa **Asetukset, Kohteet** pyydettäessä tehtävään ajoon, ja tarkkaile yleiskatsauksen tilariviä, joka kertoo **Etäkopiointi käynnissä**, kun kopiointi on käynnissä. Epäonnistunut kopio näkyy kohdassa **Vaatii huomiota**.
 
 ## Palautus keskeytyi ennen kuin se alkoi
 
@@ -41,7 +53,7 @@ Ennen kuin mitään pysäytetään tai poistetaan, palautus ajaa esitarkastuksen
 
 ## Selkokielinen vienti epäonnistui tiedoston kirjoittamisen sijaan
 
-Jos age-salaus on päällä (Asetukset) mutta kelvollista vastaanottajaa ei ole asetettu, vienti epäonnistuu selkeällä virheellä selkotekstin kirjoittamisen sijaan. Lisää kelvollinen vastaanottaja (age-julkinen avain tai SSH-julkinen avain), tai kytke salaus pois päältä, jos tarkoitat viennin olevan selkotekstiä. Katso [Ominaisuudet](features.md).
+Jos **Salaa viennit age:lla** on päällä kohdassa **Asetukset, Järjestelmä** mutta kelvollista vastaanottajaa ei ole asetettu, vienti epäonnistuu selkeällä virheellä selkotekstin kirjoittamisen sijaan. Lisää kelvollinen vastaanottaja (age-julkinen avain tai SSH-julkinen avain), tai kytke salaus pois päältä, jos tarkoitat viennin olevan selkotekstiä. Katso [Ominaisuudet](features.md).
 
 ## Tietokantavedos epäonnistui
 
@@ -67,23 +79,23 @@ Jokaisella ongelmalla on syykoodi hakasulkeissa, ja sivu [ZFS-tietojoukot](zfs-d
 
 - **`snapshot-loop`**: tilannevedos ei päässyt BombVaultiin, koska Host Data ei välitä uusia liitoksia. Muokkaa konttia, aseta Host Datan Access Mode arvoon Read/Write - Slave ja käynnistä BombVault uudelleen.
 - **`key-not-loaded`**: salattu tietojoukko, jonka avainta ei ole ladattu, ohitetaan. Lataa avain komennolla `zfs load-key` ja liitä tietojoukko; seuraava varmuuskopio ottaa sen mukaan.
-- **`ssh-auth`**: palvelin hylkäsi BombVaultin avaimen. ZFS-sivun yhteyskortti näyttää komennon, joka valtuuttaa sen; aja se kerran palvelimella.
+- **`ssh-auth`**: palvelin hylkäsi BombVaultin avaimen. **ZFS-yhteys tähän palvelimeen**, joka avautuu Varmuuskopiot-sivun kohdasta **Näytä yhteys**, näyttää komennon, joka valtuuttaa sen; aja se kerran palvelimella.
 
-## Kohde jää tilaan "Oppii N/10"
+## Merkintä jää tilaan "Oppii N/10"
 
-Useimmat poikkeamatarkistukset alkavat kohteen 10 onnistuneen varmuuskopion jälkeen, ja laskenta alkaa alusta toiminnon **Merkitse odotetuksi** jälkeen ja kun kohteen valinta on muuttunut. Kohde, jolla ei ole ajastusta, ei opi, eikä kontilla ilman appdataa ole mistä oppia, minkä sen merkki myös kertoo.
+Useimmat poikkeamatarkistukset alkavat merkinnän 10 onnistuneen varmuuskopion jälkeen, ja laskenta alkaa alusta toiminnon **Merkitse odotetuksi** jälkeen ja kun merkinnän valinta on muuttunut. Merkintä, jolla ei ole ajastusta, ei opi, eikä kontilla ilman appdataa ole mistä oppia, minkä sen merkki myös kertoo. **Oppimisen edistyminen** Poikkeamat-sivulla näyttää kymmenosaisen renkaan merkintää kohti.
 
-## Säilytys ei enää poista yhden kohteen vanhoja varmuuskopioita
+## Säilytys ei enää poista yhden merkinnän vanhoja varmuuskopioita
 
-Avoin kriittinen poikkeama pitää ne: kohteen lähde on lähes tyhjä, on kutistunut voimakkaasti tai varmuuskopio on tallentanut suurimman osan datasta uudelleen. Avaa poikkeama kohteen merkistä. Jos dataa puuttuu tai se on salattu, palauta ensin linkitetystä viimeisestä hyvästä varmuuskopiosta. Kuittaa sitten poikkeama tai merkitse se odotetuksi, jos muutos oli sinun, niin seuraava ajo siivoaa tavalliseen tapaan. Säilytyksen esikatselu merkitsee tällaisen kohteen säilytetyksi. ZFS-kohteessa vain poikkeaman nimeämä tietojoukko säilyttää vanhat varmuuskopionsa; puun muut tietojoukot siivotaan tavalliseen tapaan.
+Avoin kriittinen poikkeama pitää ne: merkinnän lähde on lähes tyhjä, on kutistunut voimakkaasti tai varmuuskopio on tallentanut suurimman osan datasta uudelleen. Avaa poikkeama merkinnän merkistä. Jos dataa puuttuu tai se on salattu, palauta ensin linkitetystä viimeisestä hyvästä varmuuskopiosta. Kuittaa sitten poikkeama tai merkitse se odotetuksi, jos muutos oli sinun, niin seuraava ajo siivoaa tavalliseen tapaan. Säilytyksen esikatselu merkitsee tällaisen merkinnän säilytetyksi. ZFS-merkinnässä vain poikkeaman nimeämä tietojoukko säilyttää vanhat varmuuskopionsa; puun muut tietojoukot siivotaan tavalliseen tapaan.
 
-## Manuaalinen siivous kertoo, että joitakin kohteita säilytettiin
+## Manuaalinen siivous kertoo, että joitakin merkintöjä säilytettiin
 
-Sama syy: siivous jättää tällaisen poikkeaman kohteen vanhat varmuuskopiot rauhaan ja nimeää kohteen viestissään. Kaikki muu siivotaan tavalliseen tapaan.
+Sama syy: siivous jättää tällaisen poikkeaman merkinnän vanhat varmuuskopiot rauhaan ja nimeää merkinnän viestissään. Kaikki muu siivotaan tavalliseen tapaan.
 
 ## Historian tuonti kertoo, ettei tietovarastoa voitu lukea
 
-Päivityksen jälkeen BombVault lukee kerran aiempien varmuuskopioiden koot jokaisesta tietovarastosta. Tietovarasto, jota ei silloin tavoitettu, esimerkiksi alhaalla ollut ulkoinen kohde tai liittämätön jako, näkyy kortissa **Poikkeamat** kohdassa **Asetukset, Eheys**, ja sitä yritetään uudelleen kerran päivässä. Sillä välin sen kohteet oppivat uusista varmuuskopioista.
+Päivityksen jälkeen BombVault lukee kerran aiempien varmuuskopioiden koot jokaisesta tietovarastosta. Tietovarasto, jota ei silloin tavoitettu, esimerkiksi alhaalla ollut ulkoinen kohde tai liittämätön jako, näkyy kortissa **Poikkeamat** kohdassa **Asetukset, Tarkistus**, ja sitä yritetään uudelleen kerran päivässä. Sillä välin sen merkinnät oppivat uusista varmuuskopioista.
 
 ## Levytilavaroitus ei vastaa Unraidin kojelautaa
 
@@ -95,7 +107,7 @@ Sivu [MCP-palvelin](mcp.md#troubleshooting) kertoo, mitä kukin tilakoodi ja kuk
 
 ## Kontti käynnistyy jatkuvasti uudelleen tai näyttää epäterveeltä
 
-BombVault raportoi terve/epäterve omasta `/api/health`-päätepisteestään. Automaattinen korjaustyökalu (kuten Autoheal) voi käynnistää sen uudelleen automaattisesti, jos moottori koskaan jumiutuu. Tarkista kontin loki ja `/spike`-raportti taustalla olevan syyn selvittämiseksi.
+BombVault raportoi terve/epäterve omasta `/api/health`-päätepisteestään. Automaattinen korjaustyökalu (kuten Autoheal) voi käynnistää sen uudelleen automaattisesti, jos moottori koskaan jumiutuu. Tarkista kontin loki ja **Isäntäintegraatio**-kortti taustalla olevan syyn selvittämiseksi.
 
 ## Yhä jumissa?
 

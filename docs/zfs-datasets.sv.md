@@ -1,6 +1,6 @@
 # ZFS-datauppsättningar
 
-Sidan **ZFS** säkerhetskopierar ZFS-datauppsättningar. Ett objekt är en datauppsättning tillsammans med alla datauppsättningar under den. För varje säkerhetskopia tar BombVault en enda ZFS-ögonblicksbild av hela trädet, så att varje datauppsättning i det fångas i samma ögonblick. Sedan läser det filerna i varje datauppsättning från den ögonblicksbilden, lagrar dem med restic på samma sätt som en mapp och tar bort ögonblicksbilden direkt efteråt. Säkerhetskopiorna är deduplicerade, du kan bläddra i var och en av dem, och enskilda filer kan återställas.
+ZFS-datauppsättningar är poster i listan **Säkerhetskopior**, som containrar och VM:ar. En post är en datauppsättning tillsammans med varje datauppsättning under den. För varje säkerhetskopia tar BombVault en enda ZFS-ögonblicksbild av hela trädet, så att varje datauppsättning i det fångas i samma ögonblick. Den läser sedan varje datauppsättnings filer från den ögonblicksbilden och lagrar dem med restic, på samma sätt som en mapp, och tar bort ögonblicksbilden direkt efteråt. Säkerhetskopiorna är deduplicerade, du kan bläddra i varje, och enskilda filer går att återställa.
 
 Säkerhetskopian skickar aldrig en ström in i restic och rullar aldrig tillbaka en datauppsättning. BombVault förstör bara ögonblicksbilder som det själv har skapat. Den valfria [repliken](#replica) är det enda som använder `zfs send`: den kopierar datauppsättningarna till en andra ZFS-server och rör inte säkerhetskopian.
 
@@ -11,38 +11,38 @@ Säkerhetskopian skickar aldrig en ström in i restic och rullar aldrig tillbaka
 - **Host Data mappad som `/mnt` med Access Mode Read/Write - Slave.** Det är mallens standard. Ögonblicksbilden av en datauppsättning dyker upp i datauppsättningens mapp `.zfs/snapshot` först efter att BombVault har startat, så containern måste ta emot monteringar som värden gör senare.
 - **Datauppsättningarna monterade under `/mnt`.** På Unraid ligger pooler under `/mnt/<pool>`, så det är redan fallet.
 
-Slå på domänen under **Inställningar, Allmänt** (ZFS-datauppsättningar). ZFS-sidan visar då kortet **Anslutning till den här servern**. Det testar SSH-anslutningen, anger användaren och värden det ansluter till och säger vad som saknas när något saknas. Kontrollen av värdintegrationen (`/spike`) visar samma resultat.
+Slå på avsnittet under **Inställningar, Allmänt** (ZFS-datauppsättningar). **ZFS-anslutning till den här servern** under **Mer** på sidan Säkerhetskopior öppnar sedan **Anslutning till den här servern**. Den testar SSH-länken, namnger användaren och värden den ansluter till och säger vad som saknas när något gör det. När länken är nere säger listan Säkerhetskopior det med **Visa anslutningen**, och kortet **Värdintegration** på översikten visar samma resultat.
 
-## Objekt och underliggande datauppsättningar {#items-and-children}
+## Poster och underordnade datauppsättningar {#items-and-children}
 
-Öppna **Lägg till datauppsättningar** på ZFS-sidan. Listan kommer från servern. Välj den datauppsättning som ligger överst i det du vill säkerhetskopiera, till exempel `cache/appdata`, så omfattar objektet den och alla datauppsättningar under den.
+Välj **Lägg till** på sidan Säkerhetskopior och sedan **En ZFS-datauppsättning**. Listan kommer från servern. Välj datauppsättningen överst i det du vill säkerhetskopiera, till exempel `cache/appdata`, så omfattar posten den och varje datauppsättning under den.
 
-- **Nya underliggande datauppsättningar kommer med av sig själva.** En datauppsättning som skapas senare under objektet säkerhetskopieras vid nästa körning, och den körningen anger den som ny. Dess första säkerhetskopia läser den helt en gång; därefter läses bara ändringar.
-- **Du kan utelämna enskilda underliggande datauppsättningar.** Slå av en i objektets inställningar så lämnas den utanför tillsammans med allt under den. En utelämnad underliggande datauppsättning som inte längre finns på servern markeras som sådan och kan tas bort från listan.
-- **Underliggande datauppsättningar som inte går att läsa hoppas över, aldrig i tysthet.** Körningen listar dem, objektet visar hur många som hoppades över och täckningskortet på översikten räknar var och en som oskyddad. Körningen säkerhetskopierar ändå allt annat och misslyckas inte på grund av en överhoppad datauppsättning. Orsakerna står i [tabellen över orsakskoder](#reason-codes): en datauppsättning som inte är monterad, har `canmount=off`, en `legacy`-monteringspunkt eller ingen alls, en krypteringsnyckel som inte är laddad, avstängd åtkomst till ögonblicksbilder eller en monteringspunkt som BombVault inte ser.
+- **Nya underordnade datauppsättningar ansluter sig själva.** En datauppsättning som skapas under posten senare säkerhetskopieras vid nästa körning, och den körningen namnger den som ny. Dess första säkerhetskopia läser den helt en gång; därefter läses bara ändringar.
+- **Du kan lämna enskilda underordnade utanför.** Slå av en underordnad på postens flik Inställningar så lämnas den utanför tillsammans med allt under den. En utelämnad underordnad som inte längre finns på servern markeras som sådan och kan tas bort från listan.
+- **Underordnade som inte går att läsa hoppas över, aldrig tyst.** Körningen listar dem, posten visar hur många som hoppades över, och översiktens kort **Inte säkerhetskopierat** räknar var och en som oskyddad. Körningen säkerhetskopierar allt annat och misslyckas inte på grund av en överhoppad underordnad. Orsakerna finns i [tabellen över orsakskoder](#reason-codes): en datauppsättning som inte är monterad, har `canmount=off`, en `legacy`-monteringspunkt eller ingen, en krypteringsnyckel som inte är inläst, avstängd ögonblicksbildsåtkomst eller en monteringspunkt BombVault inte ser.
 - **En överhoppad datauppsättning tar inte med sig sina underliggande.** En datauppsättning med `canmount=off` som bara innehåller andra datauppsättningar hoppas över (visas som "bara struktur"), och dess monterade underliggande datauppsättningar säkerhetskopieras. En krypterad datauppsättning vars nyckel inte är laddad hoppas över tillsammans med de underliggande som delar dess nyckel.
 - **Underliggande datauppsättningar som är VM-diskar eller systemdata börjar avstängda** i dialogen för att lägga till, med orsaken bredvid omkopplaren. Lägger du till en hel pool får du bekräfta det i en dialog som listar vad den innehåller.
 
 ### Volymer {#volumes}
 
-En volym (zvol) innehåller en virtuell disk i stället för filer, och ZFS-sidan säkerhetskopierar aldrig någon.
+En volym (zvol) rymmer en virtuell disk i stället för filer, och en ZFS-post säkerhetskopierar aldrig en.
 
-- En volym som en VM använder säkerhetskopieras med den VM:en på sidan **VMs**.
-- En volym som ingen VM använder (en iSCSI-extent, en disk du har kopplat bort) **säkerhetskopieras inte av BombVault**. Dialogen för att lägga till och ZFS-sidan räknar de här volymerna och säger det. En senare version kommer att säkerhetskopiera dem.
+- En volym som en VM använder säkerhetskopieras med den VM:en.
+- En volym som ingen VM använder (en iSCSI-extent, en disk du kopplat bort) **säkerhetskopieras inte av BombVault**. Fönstret för att lägga till och sidan Säkerhetskopior räknar de volymerna och säger det. En senare version kommer att säkerhetskopiera dem.
 
-Volymer i ett objekts träd hoppas över och nämns vid varje körning.
+Volymer inuti en posts träd hoppas över och namnges vid varje körning.
 
 ### Dockers lagring {#docker-storage}
 
-Med Dockers ZFS-lagringsdrivrutin är varje avbildningslager en datauppsättning med `legacy`-monteringspunkt. Dialogen för att lägga till slår ihop dem till en rad per överordnad datauppsättning. Ett träd med fler än 20 sådana datauppsättningar kan inte bli ett objekt: så länge det finns en ögonblicksbild av det kan Docker inte ta bort avbildningslager. Lägg i stället till datauppsättningarna under det, till exempel `appdata`.
+Med Dockers ZFS-lagringsdrivrutin är varje image-lager en datauppsättning med en `legacy`-monteringspunkt. Dialogen för att lägga till viker ihop dessa till en rad per förälder. Ett träd som rymmer fler än 20 sådana datauppsättningar kan inte bli en post: medan en ögonblicksbild av det finns kan Docker inte ta bort image-lager. Lägg i stället till datauppsättningarna under det, till exempel `appdata`.
 
-### Objekt överlappar aldrig {#overlap}
+### Poster överlappar aldrig {#overlap}
 
-En datauppsättning kan bara höra till ett objekt. BombVault avvisar ett nytt objekt som ligger inuti ett befintligt eller som skulle innehålla ett. För att slå ihop flera underliggande objekt till ett överordnat tar du först bort de underliggande objekten och väljer att behålla deras säkerhetskopior, och lägger sedan till det överordnade. Varje datauppsättning behåller sin historik under sitt eget namn, så nästa säkerhetskopia fortsätter där de gamla objekten slutade och läser inte om allt.
+En datauppsättning kan tillhöra bara en post. BombVault avvisar en ny post som ligger inuti en befintlig eller som skulle innehålla en. För att slå ihop flera underordnade poster till en överordnad post, radera först de underordnade posterna och välj att behålla deras säkerhetskopior, och lägg sedan till den överordnade. Varje datauppsättning behåller sin historik under sitt eget namn, så nästa säkerhetskopia fortsätter där de gamla posterna slutade och läser inte allt igen.
 
 ## Stoppa containrar och köra kommandon runt ögonblicksbilden {#consistency}
 
-En ögonblicksbild av en databas som körs är som ett plötsligt strömavbrott: databasen återhämtar sig oftast, men den måste göra det. Varje objekt kan göra två saker åt det, och båda gäller bara ögonblicket för ögonblicksbilden, inte hela säkerhetskopian.
+En ögonblicksbild av en körande databas är som ett plötsligt strömavbrott: databasen återhämtar sig oftast, men den måste göra det. Varje post kan göra två saker åt det, och båda täcker bara ögonblicksbildens ögonblick, inte hela säkerhetskopian.
 
 - **Stoppa de här containrarna för ögonblicksbilden.** BombVault stoppar containrarna i listan, tar ögonblicksbilden och startar dem igen direkt. Containrar på samma beroendenivå stoppas parallellt, de beroende först, så hela fönstret varar oftast några sekunder; körningen visar hur länge. Säkerhetskopian läser sedan den frysta ögonblicksbilden medan apparna redan kör igen. Bara containrar som körde stoppas.
 - **Ett kommando före och efter ögonblicksbilden.** Det körs i en container du väljer, till exempel för att dumpa en databas till datauppsättningen precis före ögonblicksbilden utan att stoppa något. Misslyckas kommandot före ögonblicksbilden misslyckas säkerhetskopian och ingen ögonblicksbild tas. Ett kommando efter ögonblicksbilden som misslyckas visas på körningen men får inte säkerhetskopian att misslyckas.
@@ -51,30 +51,29 @@ Vad som händer när något går fel:
 
 - Kan en container inte stoppas startar BombVault de som redan har stoppats, och säkerhetskopian misslyckas med containerns namn. Det faller aldrig tillbaka på en ögonblicksbild av appar som körs.
 - Stoppet väntar tills en pågående containersäkerhetskopia är klar (upp till 30 minuter vid en manuell körning, upp till säkerhetskopians tidsgräns vid en schemalagd), så att de två aldrig stoppar och startar samma container samtidigt.
-- Innan den första containern stoppas skriver BombVault ner vilka det stoppar. Om BombVault dödas inom fönstret startar det de containrarna igen nästa gång det startar, skickar en avisering, och objektet visar en röd anteckning för varje container det inte kunde starta.
+- Innan den första containern stoppas skriver BombVault ner vilka den stoppar. Om BombVault dödas inom fönstret startar den de containrarna igen nästa gång den startar, skickar en avisering, och posten visar en röd not för varje container den inte kunde starta.
 
-De automatiska databasdumparna (se [Funktioner](features.md)) körs med en containers egen säkerhetskopia på sidan **Containers**, inte med ett ZFS-objekt. En databas vars container bara säkerhetskopieras via sin datauppsättning får ingen dump, så ge den ett kommando här.
+De automatiska databasdumparna (se [Funktioner](features.md)) körs med en containers egen säkerhetskopia, inte med en ZFS-post. En databas vars container säkerhetskopieras bara via sin datauppsättning får ingen dump, så ge den ett kommando här.
 
-En container kan stå på den här listan och på sidan **Containers** samtidigt. Dess data lagras då två gånger, i två repositories, och **Total säkerhetskopia** stoppar den två gånger. Objektet påpekar det.
+En container kan stå i den här listan och samtidigt säkerhetskopieras som container. Dess data lagras då två gånger, i två arkiv, och den totala säkerhetskopian stoppar den två gånger. Posten säger det.
 
 ## Återställning {#restore}
 
-Öppna **Säkerhetskopior** på objektet, välj säkerhetskopian och sedan datauppsättningen. Som standard är det objektets översta datauppsättning.
+Öppna posten och välj **Återställning**, eller välj den på sidan **Återställning**. Återställningsfönstret frågar efter säkerhetskopian och sedan **Datauppsättning**. Som standard är det postens översta datauppsättning. Under **Vad** återställer du allt eller bara filerna och mapparna du väljer. **Vart** erbjuder:
 
 - **Återställ in i datauppsättningen.** Filer från säkerhetskopian skrivs till datauppsättningens monteringspunkt. Filer med samma namn skrivs över, andra ligger kvar. Datauppsättningen rullas aldrig tillbaka eller ersätts. BombVault kontrollerar att datauppsättningen är monterad, synlig och skrivbar, en gång innan det börjar och igen precis innan det skriver. Där en underliggande datauppsättning är monterad inuti skrivs ingenting: den behåller sina filer, sin ägare och sina behörigheter och återställs från sin egen säkerhetskopia.
-- **Återställ till en mapp.** Välj en mapp under `/mnt`. BombVault kontrollerar att mappen ligger på en monterad pool eller resurs och att det finns tillräckligt med ledigt utrymme. Det fungerar utan SSH-anslutningen och för datauppsättningar som inte längre finns.
-- **Till en ny datauppsättning.** Ange en datauppsättning som inte finns ännu. BombVault skapar den med ZFS-egenskaperna i säkerhetskopian och återställer till den, se [Återställa som ny datauppsättning](#new-dataset).
-- **Välj filer** (avancerat): skriv bara tillbaka de filer och mappar du väljer till datauppsättningen.
-- **Alla datauppsättningar i den här säkerhetskopian** (avancerat): varje datauppsättning i trädet i en egen undermapp i den mapp du väljer. Datauppsättningar som hoppades över i den säkerhetskopian nämns.
-- **Från en annan server:** sidan **Återställning** återställer från en annan BombVaults repository, alltid till en mapp: alla datauppsättningar i en säkerhetskopia, var och en i en egen undermapp, eller en datauppsättning i trädet, hel eller valda filer.
+- **Till en mapp.** Välj en mapp under `/mnt`. BombVault kontrollerar att mappen ligger på en monterad pool eller resurs och att det finns tillräckligt med ledigt utrymme. Det fungerar utan SSH-länken och för datauppsättningar som inte längre finns.
+- **Till en ny datauppsättning.** Ange en datauppsättning som ännu inte finns; fönstret föreslår `<datauppsättning>-restored`. BombVault skapar den med ZFS-egenskaperna som lagrats i säkerhetskopian och återställer in i den, se [Återställning som en ny datauppsättning](#new-dataset).
 
-Objektets lista över containrar som ska stoppas erbjuds även vid återställning in i datauppsättningen. De containrarna förblir stoppade under hela återställningen, och containersäkerhetskopior väntar så länge.
+Att välja **Alla datauppsättningar i den här säkerhetskopian** som datauppsättning skriver varje datauppsättning i trädet till en egen undermapp i mappen du väljer. Datauppsättningar som hoppades över i den säkerhetskopian namnges. För att återställa från en annan BombVaults arkiv, använd **Från en gammal säkerhetskopiemapp** på sidan Återställning; den återställer alltid till en mapp: alla datauppsättningar i en säkerhetskopia, var och en till sin undermapp, eller en datauppsättning i trädet, hel eller valda filer.
+
+Postens lista över containrar att stoppa erbjuds även för en återställning in i datauppsättningen. De containrarna förblir stoppade under hela återställningen, och containersäkerhetskopior väntar under tiden.
 
 ### Säkerhetsögonblicksbilden {#safety-snapshot}
 
-Innan det skriver till en datauppsättning tar BombVault en ZFS-ögonblicksbild av just den datauppsättningen, med namnet `bombvault-prerestore-<tid>`. Den är på som standard; att stänga av den kräver en andra bekräftelse. Om ögonblicksbilden inte kan tas återställs ingenting.
+Innan den skriver in i en datauppsättning tar BombVault en ZFS-ögonblicksbild av just den datauppsättningen, med namnet `bombvault-prerestore-<tid>`. **Spara först en ZFS-ögonblicksbild av läget nu** är på som standard; att stänga av det kräver en andra bekräftelse. Om ögonblicksbilden inte kan tas återställs ingenting.
 
-BombVault tar aldrig bort en säkerhetsögonblicksbild av sig självt. Objektet listar dem med ålder och storlek, var och en med åtgärden **Ta bort**, och varnar när den äldsta är mer än 30 dagar gammal, eftersom den håller kvar raderad och ändrad data i poolen.
+BombVault raderar aldrig en säkerhetsögonblicksbild på egen hand. Posten listar dem med ålder och storlek, var och en med åtgärden **Ta bort**, och varnar när den äldsta är mer än 30 dagar gammal, eftersom den håller kvar raderad och ändrad data på poolen.
 
 För att gå tillbaka efter en återställning kopierar du enskilda filer från `.zfs/snapshot/bombvault-prerestore-<tid>` inuti datauppsättningen. `zfs rollback <dataset>@bombvault-prerestore-<tid>` fungerar bara så länge den är datauppsättningens senaste ögonblicksbild. `zfs rollback -r` tar bort alla nyare ögonblicksbilder, även automatiska.
 
@@ -104,20 +103,20 @@ En krypterad datauppsättning säkerhetskopieras bara medan dess nyckel är ladd
 
 ## Replik {#replica}
 
-En replik är en kopia av ett objekts datauppsättningar på en andra ZFS-server. BombVault håller den aktuell med `zfs send` och `zfs receive`. Första körningen skickar allt, sedan skickas bara de ändrade blocken. På den andra servern kan du montera kopian direkt.
+En replik är en kopia av en posts datauppsättningar på en andra ZFS-server. BombVault håller den aktuell med `zfs send` och `zfs receive`. Första körningen skickar allt, därefter färdas bara de ändrade blocken. På den andra servern kan du montera kopian direkt.
 
-En replik ersätter aldrig säkerhetskopian. Äldre versioner, enskilda filer och kontrollen kommer fortfarande från säkerhetskopiorna, och repliken behåller bara så många ögonblicksbilder som du anger. En aktuell replik räknas som en kopia utanför platsen, men ett objekt med replik och utan säkerhetskopia förblir orange.
+En replik ersätter aldrig säkerhetskopian. Äldre versioner, enskilda filer och kontrollen kommer fortfarande från säkerhetskopiorna, och repliken behåller bara så många ögonblicksbilder som du anger. En aktuell replik räknas som en kopia utanför lokalerna, men en post med en replik och utan säkerhetskopia förblir orange.
 
-Slå på den i kortet **Replica** i objektets inställningar. Där väljer du vart repliken går, när den körs (**After every backup** eller **Own plan**) och hur många ögonblicksbilder som blir kvar på målet. Kortet listar varje datauppsättning och volym med dess status, och **Replicate now** startar en körning. En replikkörning har ett eget lås, så en lång första överföring håller aldrig upp säkerhetskopiorna.
+Slå på det i kortet **Replik** på postens flik Inställningar. Där väljer du vart repliken går, när den körs (**Efter varje säkerhetskopia** eller **Egen plan**) och hur många ögonblicksbilder som blir kvar på målet. Kortet listar varje datauppsättning och volym med dess tillstånd, och **Replikera nu** startar en körning. En replikkörning har ett eget lås, så en lång första överföring håller aldrig upp säkerhetskopiorna.
 
 ### Skicka till en ZFS-server {#replica-push}
 
 Vilken maskin som helst med ZFS och SSH kan ta emot, till exempel en andra Unraid eller en TrueNAS. BombVault behöver inte köra där.
 
-1. Öppna **Instanser, ZFS-servrar** och klicka på **Lägg till ZFS-server**.
+1. Under **Inställningar, Parkoppling**, välj **Anslut via SSH** i **ZFS-server utan BombVault**, eller **Lägg till ZFS-server** i postens kort **Replik**.
 2. Ange adress, användare och port. Dialogen visar BombVaults publika nyckel. Lägg till den i användarens `~/.ssh/authorized_keys` på servern. På Unraid finns det under **Settings, Users, root, SSH keys**.
 3. Testa anslutningen. Dialogen listar sedan serverns pooler. Välj en och ange roten, som som standard är `<pool>/bombvault-replica`.
-4. Välj den nya servern i kortet **Replica** på objektet.
+4. Välj den nya servern i postens kort **Replik**. Servern har då ett eget kort på sidan Instanser, och **Öppna** leder till dess sida.
 
 Med root behövs inget mer. En egen användare behöver de här behörigheterna på målets pool, som dialogen också visar:
 
@@ -125,13 +124,13 @@ Med root behövs inget mer. En egen användare behöver de här behörigheterna 
 zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
 ```
 
-På källan behöver samma sorts användare de här på objektets översta datauppsättning:
+På källan behöver samma slags användare dessa på postens översta datauppsättning:
 
 ```
 zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 ```
 
-I den här riktningen har BombVault som äger objektet också en nyckel som kan skriva på servern.
+I den här riktningen håller BombVault som äger posten också en nyckel som kan skriva på servern.
 
 BombVault sparar värdnyckeln som servern visar vid första anslutningen och avvisar senare alla andra. Om servern har installerats om, tryck på **Glöm värdnyckel** på serverns sida, så sparar nästa anslutning den nya nyckeln.
 
@@ -139,11 +138,11 @@ BombVault sparar värdnyckeln som servern visar vid första anslutningen och avv
 
 Ett parkopplat BombVault kan ta emot repliken själv. Ingen får SSH-åtkomst till den andra värden, och ingen nyckel hamnar i en `authorized_keys`-fil.
 
-1. I kortet **Replica** på objektet väljer du den parkopplade instansen som mål. Kortet visar **Väntar på godkännande** tills den svarar.
-2. På den mottagande instansen öppnar du **Instanser**, sedan **Ta emot**. Kortet **ZFS** listar begäran. Välj pool och rot på den servern och hur många ögonblicksbilder som blir kvar, och tryck sedan på **Tillåt** eller **Avvisa**.
+1. I postens kort **Replik**, välj den parkopplade instansen som mål, eller slå på rollen **ZFS-server** på den instansens kort på sidan Instanser och välj ZFS-posterna där. Kortet visar **Väntar på godkännande** tills den svarar.
+2. Öppna **Instanser** på den mottagande instansen. Begäran visas på den sändande instansens kort som ett märke, och dess **Detaljer** listar den. Välj poolen och roten på den servern och hur många ögonblicksbilder som blir kvar, och tryck sedan på **Tillåt** eller **Avvisa**.
 3. Efter **Tillåt** skickar källan enligt sitt eget schema, som till vilket annat mål som helst.
 
-Den mottagande instansen tar bara emot det som godkännandet täcker: objektets datauppsättningar, in i sin egen rot. Den kör `zfs receive` själv, och källan har inget sätt att ta bort eller återställa något där. Därför överlever kopian en källa som någon har tagit över. Den mottagande instansen har sin egen lagringstid. Källan föreslår bara en regel när den skickar begäran.
+Den mottagande instansen accepterar bara det godkännandet täcker: postens datauppsättningar, in i sin egen rot. Den kör `zfs receive` själv, och källan har inget sätt att radera eller rulla tillbaka något där. Så kopian överlever en källa som någon tagit över. Den mottagande instansen behåller sin egen retention. Källan föreslår bara en regel när den ber.
 
 **Revoke access** på den mottagande instansen avslutar godkännandet när som helst och meddelar källan, som då visar att godkännandet har återkallats och slutar. Det som den mottagande instansen redan har blir kvar där. En avvisad begäran förblir avvisad. Fler datauppsättningar, eller en begäran efter ett återkallande, frågar igen.
 
@@ -157,7 +156,7 @@ Kopian på målet är skrivskyddad och inte monterad, så den täcker aldrig nå
 
 ### Vad som ingår {#replica-contents}
 
-Allt som objektet säkerhetskopierar ingår, och volymerna under det också, som säkerhetskopian hoppar över. En underliggande datauppsättning som du har stängt av i objektet lämnas utanför. Alla datauppsättningar i en körning kommer från en enda ögonblicksbild, som i säkerhetskopian.
+Allt posten säkerhetskopierar går med, och volymerna under den också, som säkerhetskopian hoppar över. En underordnad datauppsättning du slagit av i posten stannar utanför. Alla datauppsättningar i en körning kommer från en ögonblicksbild, som i säkerhetskopian.
 
 ### Hur länge ögonblicksbilderna blir kvar {#replica-retention}
 
@@ -171,7 +170,7 @@ En krypterad datauppsättning skickas rå. Den förblir krypterad på målet, oc
 
 ### Använda repliken {#replica-use}
 
-Öppna fliken **Säkerhetskopior** på objektet och klicka på replikraden i kortet **Storage locations**. Bladet listar ögonblicksbilderna på målet och visar kommandona med dina riktiga namn.
+Öppna postens flik **Säkerhetskopior** och klicka på raden **ZFS-replik** bland platserna som håller dess ögonblicksbilder. Bladet listar ögonblicksbilderna på målet och visar kommandona med dina riktiga namn.
 
 För att titta på ett gammalt tillstånd klonar du en ögonblicksbild på målet. En klon tar ingen plats förrän något ändras, och repliken förblir orörd:
 
@@ -193,10 +192,10 @@ För att få tillbaka ett tillstånd till källan trycker du på **Bring back as
 
 Ögonblicksbilden av en säkerhetskopia heter `<dataset>@bombvault-<14 siffror>`, till exempel `cache/appdata@bombvault-20260924021500` (UTC). BombVault tar bort den direkt efter säkerhetskopian. Om det misslyckas, till exempel för att datauppsättningen är upptagen eller BombVault stoppades, tar BombVault bort den:
 
-- före nästa säkerhetskopia av det objektet,
-- när BombVault startar, för varje objekt, även med domänen avstängd,
-- när du tar bort objektet,
-- när du trycker på **Ta bort nu** på objektet, som också visar hur många som är kvar.
+- före nästa säkerhetskopia av den posten,
+- när BombVault startar, för varje post, även med avsnittet avstängt,
+- när du raderar posten,
+- när du trycker på **Ta bort nu** på posten, som visar hur många som är kvar.
 
 Bara namn som exakt är `bombvault-` plus 14 siffror tas bort. Säkerhetsögonblicksbilder, dina egna ögonblicksbilder och automatiska ögonblicksbilder rörs aldrig. För att ta bort en för hand:
 
@@ -208,17 +207,17 @@ zfs destroy -r cache/appdata@bombvault-20260924021500
 
 ## Avvikelser {#anomalies}
 
-En underliggande datauppsättning som har tömts ändrar knappt summan för ett stort träd, så avvikelsedetekteringen bevakar varje datauppsättning i ett objekt för sig: storlek, antal filer, ny data och restic-tid har var sin egen historik. Den historiken hör till datauppsättningens namn, så den finns kvar när trädet senare säkerhetskopieras av ett annat objekt.
+En tömd underordnad ändrar knappt totalen i ett stort träd, så avvikelsedetekteringen bevakar varje datauppsättning i en post för sig: storlek, filantal, ny data och restic-tid har var sin historik. Den historiken tillhör datauppsättningens namn, så den blir kvar när trädet senare säkerhetskopieras av en annan post.
 
-En datauppsättning som föregående körning säkerhetskopierade och som den här körningen inte kunde läsa räknas som tömd, så länge objektets urval inte har ändrats. Det täcker en nyckel som inte är laddad, en datauppsättning som inte är monterad och en som har försvunnit ur trädet. En underliggande datauppsättning som du själv utesluter ändrar urvalet, så dess historik börjar om i stället. Så länge ett fynd om förlorad data är öppet behåller lagringen de gamla säkerhetskopiorna av just den datauppsättningen och rensar resten av trädet som vanligt.
+En datauppsättning som föregående körning säkerhetskopierade och den här körningen inte kunde läsa räknas som tömd, så länge postens urval inte ändrats. Det omfattar en nyckel som inte är inläst, en datauppsättning som inte är monterad och en som försvunnit ur trädet. En underordnad du själv undantar ändrar urvalet, så dess historik börjar i stället om. Medan ett fynd om förlorad data är öppet behåller retention just den datauppsättningens gamla säkerhetskopior och gallrar resten av trädet som vanligt.
 
-På sidan **Avvikelser** har varje datauppsättning en egen rad i objektets panel, som öppnas med **Övervakning** på objektets kort eller, när inget är öppet för objektet, från dess rad i kortet **Inget öppet**. Objektets träd på den här sidan visar de öppna fynden bredvid varje datauppsättning. Länken i ett fynd öppnar objektets återställningspanel vid datauppsättningens senaste goda säkerhetskopia. Om en körning blir klar bedöms för hela objektet, eftersom en körning lyckas eller misslyckas som helhet.
+Varje datauppsättning har en egen rad i postens övervakning, som öppnas med **Övervakning** på sidan **Avvikelser** och står på postens flik **Integritet**. De öppna fynden visas bredvid varje datauppsättning. Länken i ett fynd öppnar återställningsfönstret på datauppsättningens sista goda säkerhetskopia. Om en körning blir klar bedöms för hela posten, eftersom en körning lyckas eller misslyckas som helhet.
 
-Själva kontrollerna beskrivs under [Funktioner](features.md). En assistent som är ansluten via [MCP-servern](mcp.md) kan lista ett ZFS-objekts återställningspunkter, starta dess säkerhetskopia och läsa fynden, men ett fynd kvitteras på sidan **Avvikelser**.
+Själva kontrollerna beskrivs under [Funktioner](features.md). En assistent ansluten via [MCP-servern](mcp.md) kan lista en ZFS-posts återställningspunkter, starta dess säkerhetskopia och läsa fynden, men att kvittera ett fynd görs på sidan **Avvikelser**.
 
 ## Orsakskoder {#reason-codes}
 
-Sidan, körningshistoriken och aviseringarna anger ett problem med en av de här koderna. De flesta har också lösningen bredvid på sidan.
+Postens sida, körhistoriken och aviseringarna namnger ett problem med en av dessa koder. De flesta har också åtgärden bredvid sig på sidan.
 
 | Kod | Betydelse | Vad du gör |
 |---|---|---|
@@ -226,20 +225,20 @@ Sidan, körningshistoriken och aviseringarna anger ett problem med en av de här
 | `host-placeholder` | Host SSH: Address är fortfarande exempelvärdet, och `host.docker.internal` svarade inte heller. | Sätt Host SSH: Address till den här serverns LAN-IP. |
 | `host-fallback` | Host SSH: Address är fortfarande exempelvärdet, och `host.docker.internal` fungerar. | Inget, eller sätt LAN-IP:n. |
 | `ssh-unreachable` | Servern går inte att nå över SSH. | Kontrollera adress och port, och att SSH är påslaget. |
-| `ssh-auth` | Servern avvisade BombVaults nyckel. | Kör kommandot från anslutningskortet en gång på servern. |
+| `ssh-auth` | Servern avvisade BombVaults nyckel. | Kör kommandot som visas under **Anslutning till den här servern** en gång på servern. |
 | `zfs-not-found` | SSH-värden har inget `zfs`-kommando. | Peka Host SSH: Address mot maskinen som äger poolerna. |
 | `zfs-permission` | SSH-användaren får inte köra det här zfs-kommandot. | Använd root, eller se [TrueNAS SCALE](#truenas). |
 | `uri-mismatch` | `LIBVIRT_URI` anger en annan värd eller användare än SSH-fälten. | Få dem att stämma, eller töm SSH-fälten så att båda kommer från URI:n. |
 | `zfs-error` | zfs rapporterade ett annat fel. | Detaljerna visar dess meddelande. |
 | `propagation-missing` | Nya monteringar på värden når inte containern. | Sätt Access Mode för Host Data till Read/Write - Slave och starta om BombVault. |
 | `invalid-name` | Ett namn på en datauppsättning som BombVault inte godtar. | Byt namn på datauppsättningen. |
-| `name-too-long` | En datauppsättning i trädet är för lång för ett namn på en ögonblicksbild. | Byt namn på den, eller lägg till en datauppsättning under den som objekt. |
-| `invalid-exclude` | Ett uteslutningsmönster eller en utelämnad underliggande datauppsättning passar inte objektet. | Rätta posten som meddelandet nämner. För att utelämna en hel underliggande datauppsättning stänger du av den i stället för att skriva ett mönster. |
-| `not-found` | Datauppsättningen finns inte på servern. | Ta bort objektet eller skapa datauppsättningen igen. Dess säkerhetskopior går fortfarande att återställa. |
+| `name-too-long` | En datauppsättning i trädet är för lång för ett ögonblicksbildsnamn. | Döp om den, eller lägg till en datauppsättning under den som post. |
+| `invalid-exclude` | Ett exkluderingsmönster eller en utelämnad underordnad passar inte posten. | Rätta posten som meddelandet namnger. För att lämna ut en hel underordnad datauppsättning, slå av den i stället för att skriva ett mönster. |
+| `not-found` | Datauppsättningen finns inte på servern. | Ta bort posten, eller återskapa datauppsättningen. Dess säkerhetskopior går fortfarande att återställa. |
 | `not-filesystem` | Det här är en volym, inte ett filsystem. | Se [Volymer](#volumes). |
-| `overlaps-item` | Datauppsättningen överlappar ett befintligt objekt. | Se [Objekt överlappar aldrig](#overlap). |
+| `overlaps-item` | Datauppsättningen överlappar en befintlig post. | Se [Poster överlappar aldrig](#overlap). |
 | `docker-storage` | Trädet innehåller Dockers avbildningslagring. | Se [Dockers lagring](#docker-storage). |
-| `nothing-readable` | Ingen datauppsättning i objektet går att läsa just nu. | Titta på koderna för de överhoppade datauppsättningarna. |
+| `nothing-readable` | Ingen datauppsättning i posten går att läsa just nu. | Titta på koderna för de överhoppade datauppsättningarna. |
 | `snapshot-failed` | Ögonblicksbilden kunde inte skapas. | Detaljerna visar meddelandet från zfs. |
 | `containers-busy` | En containersäkerhetskopia körde fortfarande när containrarna skulle stoppas. | Starta igen senare. Schemalagda körningar väntar av sig själva. |
 | `consistency-stop-failed` | En container kunde inte stoppas, så ingen ögonblicksbild togs. | Kontrollera containern, eller ta bort den från listan. |
@@ -274,7 +273,7 @@ Sidan, körningshistoriken och aviseringarna anger ett problem med en av de här
 
 ### Kontrollera vad containern ser {#mountinfo}
 
-**Testa åtkomsten till ögonblicksbilder** på ett objekt tar en riktig ögonblicksbild av dess träd, letar efter den i BombVault för varje datauppsättning och tar bort den igen. Det är det snabbaste sättet att bevisa hela vägen före den första schemalagda körningen.
+**Testa åtkomsten till ögonblicksbilder** på postens flik Inställningar tar en riktig ögonblicksbild av dess träd, letar efter den inuti BombVault för varje datauppsättning och tar bort den igen. Det är det snabbaste sättet att bevisa hela vägen före den första schemalagda körningen.
 
 För att titta själv kör du det här på servern:
 
@@ -287,7 +286,7 @@ Varje rad är en montering i containern. Raden för en datauppsättning visar de
 ## TrueNAS SCALE {#truenas}
 
 - När `LIBVIRT_URI` är satt (som för VM-säkerhetskopior på TrueNAS) tar BombVault SSH-värd, användare och port för sina zfs-kommandon från URI:n, var och en som inte är satt för sig. Utan VM-säkerhetskopior sätter du i stället `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` och `LIBVIRT_SSH_PORT`. Lägg till variablerna under **Additional Environment Variables**.
-- En annan användare än root behöver behörigheter på objektets översta datauppsättning, som då täcker alla datauppsättningar under den:
+- En annan användare än root behöver behörighet på postens översta datauppsättning, som sedan täcker varje datauppsättning under den:
 
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>

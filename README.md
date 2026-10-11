@@ -109,36 +109,36 @@ If it has earned a place on your server or computer, toss a coin to your knight:
 ## 1. Screenshots
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault dashboard: recovery point, next backup, last result and the live activity log" width="100%">
-  <br><em>Dashboard: the recovery point, the next backup and the last result sit above a live activity log. The log also shows the off-site copy and the tamper test that proves the far side refuses a delete.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault overview: what needs you, the protection of each section, the storage locations and the history" width="100%">
+  <br><em>Overview: a ring shows how much is protected, then what needs you, the protection of each section, how full each storage location is and the history with every run and the log. More cards wait under Customize.</em>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/recovery.png" alt="BombVault Recovery: the guided disaster-recovery flow onto a fresh install" width="100%">
-  <br><em>Recovery: a guided flow for a fresh install. Check that BombVault can read your backups, restore its own settings, then attach your container, VM and flash backups and restore them.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/recovery.png" alt="BombVault Restore: one page to pick a section, an entry and a backup" width="100%">
+  <br><em>Restore: one page for everything. Pick a section, search for an entry and choose a backup. One window restores every kind, next to the original by default. The Emergency wizard brings back a lost server from its recovery kit, through your group or with its typed key.</em>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/containers.png" alt="BombVault Containers: each container with its schedule switch, placement and restore check" width="100%">
-  <br><em>Containers: each container has its own schedule switch, a choice of local, off-site or both, a one-click backup and a restore check. Filters and bulk include or exclude sit above the list.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/containers.png" alt="BombVault Backups: one list of every container, VM, folder set, flash drive and ZFS dataset" width="100%">
+  <br><em>Backups: everything that is backed up stands in one list, each row with its last fourteen runs and one status. Tiles pick a kind, Filters, Sort and Search sit above the list, and every entry has a page with its backups, its settings and its checks.</em>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/settings.png" alt="BombVault Settings: configuration organised into pages for domains, paths, schedules, off-site, notifications and integrity" width="100%">
-  <br><em>Settings, organised into pages (General · Look · Storage · Retention · Schedules · Containers · Off-site · Cloud access · Notifications · Integrity · Security · Pairing · Integrations · System). General turns each backup domain on or off and holds the language and quiet toasts; Look holds the theme, colours, corners and animation. Nothing here has a Save button; every change is written as you make it.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/settings.png" alt="BombVault Settings: fourteen tiles from General to Info" width="100%">
+  <br><em>Settings as fourteen tiles (General · Look · Schedule · Storage locations · Restore · Notifications · Verify · Security · Instances · Pairing · Integrations · Apps · System · Info), with a search over all of them on / or Ctrl+K. Nothing here has a Save button; every change is written as you make it.</em>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/receiver.png" alt="BombVault Receiver: a received off-site copy with its snapshots by source and an independent check" width="100%">
-  <br><em>Receiver: the other end of an off-site copy, read-only. It lists what arrived from each source and when, and runs its own integrity check on this hardware instead of trusting the sender.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/receiver.png" alt="BombVault Instances: a paired server as receiver, with a received off-site copy and an independent check" width="100%">
+  <br><em>Instances: paired servers take on roles for each other: receiver, fetcher, ZFS server and key keeper. A receiver keeps the other's off-site copy in an append-only server, lists what arrived from each source and when, and runs its own integrity check on this hardware instead of trusting the sender.</em>
 </p>
 
 <br>
@@ -153,11 +153,12 @@ If it has earned a place on your server or computer, toss a coin to your knight:
 ## 2. What it does
 
 - **Backs up the whole server.** Containers with their appdata and definition, VMs with their disks, XML and NVRAM, the Unraid flash, any folder, ZFS datasets with their children, and BombVault's own settings. PostgreSQL, MySQL and MariaDB containers are dumped first. [Features](https://junkerderprovinz.github.io/bombvault/features/)
-- **Restores to a running state.** A restored container comes back in the Docker tab with its image, settings and data, a VM in the VM tab with its disks and NVRAM. Every restore shows what it will change before it starts. [Features](https://junkerderprovinz.github.io/bombvault/features/)
-- **Copies off site, item by item.** Encrypted, to one or more targets that can be append-only. A destination is set up once, with a wizard that knows S3 storage services, your own servers and every cloud drive rclone supports. Each container, VM and folder set then lights the places that get its backups, and its card says how many sites hold it and whether 3-2-1 is met. [Off-site & recovery](https://junkerderprovinz.github.io/bombvault/offsite-recovery/)
-- **Proves that restores work.** A restore check after each item's first backup, scheduled drills, and a start test that runs a restored container in an isolated network. [Features](https://junkerderprovinz.github.io/bombvault/features/)
+- **Restores to a running state.** A restored container comes back in the Docker tab with its image, settings and data, a VM in the VM tab with its disks and NVRAM. By default the copy lands next to the original; replacing the original first backs up what is there now. Every restore shows what it will change before it starts. [Features](https://junkerderprovinz.github.io/bombvault/features/)
+- **Copies off site, entry by entry.** Encrypted, to one or more storage locations that can be append-only. A storage location is set up once, from tiles that know S3 storage services, your own servers and every cloud drive rclone supports. A picture shows 3-2-1 for every section, and each entry says how many sites hold it and whether 3-2-1 is met. [Off-site & recovery](https://junkerderprovinz.github.io/bombvault/offsite-recovery/)
+- **Proves that restores work.** A restore check after each entry's first backup, scheduled drills, and a start test that runs a restored container in an isolated network. [Features](https://junkerderprovinz.github.io/bombvault/features/)
 - **Notices when a backup looks wrong.** Much more new data than usual, a source that shrank, a run that took far longer. When a source shrinks sharply, its old backups are kept until you acknowledge the finding. [Features](https://junkerderprovinz.github.io/bombvault/features/)
-- **Fits into the rest of your setup.** Several servers pair by twelve words, an Android app shows them all, and AI assistants, scripts and Home Assistant read the status over MCP, an HTTP API and MQTT. [Android app](https://junkerderprovinz.github.io/bombvault/android/), [MCP server](https://junkerderprovinz.github.io/bombvault/mcp/), [API and integrations](https://junkerderprovinz.github.io/bombvault/api/)
+- **Survives losing the server.** The recovery kit, or a key deposit with another server of your group that only your recovery code opens, brings the key back, and the Emergency wizard restores settings, containers, VMs and folders onto a new install. [Off-site & recovery](https://junkerderprovinz.github.io/bombvault/offsite-recovery/)
+- **Fits into the rest of your setup.** Several servers pair by twelve words and take on roles for each other, an Android app shows them all, and AI assistants, scripts and Home Assistant read the status over MCP, an HTTP API and MQTT. [Android app](https://junkerderprovinz.github.io/bombvault/android/), [MCP server](https://junkerderprovinz.github.io/bombvault/mcp/), [API and integrations](https://junkerderprovinz.github.io/bombvault/api/)
 
 It runs as one Docker container on Unraid, TrueNAS Scale or a plain Docker host and stores everything with [restic](https://restic.net). The idea of one-click backup with automatic reinstall comes from [**VolumeVault**](https://github.com/Darkdragon14/VolumeVault) by [@Darkdragon14](https://github.com/Darkdragon14); BombVault is a separate implementation (see [Credits](https://junkerderprovinz.github.io/bombvault/#credits)).
 
@@ -209,7 +210,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 
 ## 4. Getting started
 
-On Unraid, install **BombVault** from [Community Applications](https://unraid.net/community/apps?q=bombvault). The one setting it needs is `APP_KEY`, a secret you make with `openssl rand -hex 32`. Keep a copy somewhere other than the server, because without it nobody can read the encrypted backups. Then open `https://<server-ip>:3443`, switch on the kinds of backup you want under Settings, and press **Back up now** on a container.
+On Unraid, install **BombVault** from [Community Applications](https://unraid.net/community/apps?q=bombvault). The one setting it needs is `APP_KEY`, a secret you make with `openssl rand -hex 32`. Keep a copy somewhere other than the server, because without it nobody can read the encrypted backups. Then open `https://<server-ip>:3443` and follow the three first steps on the overview: choose what to back up, add a storage location, run the first backup.
 
 On any other Docker host or on TrueNAS Scale, take [`deploy/docker-compose.generic.yml`](deploy/docker-compose.generic.yml), set `APP_KEY` and the Host Data volume, and run `docker compose up -d`. VM and ZFS backups reach the host over SSH, so BombVault's public key has to be added there once. [Getting started](https://junkerderprovinz.github.io/bombvault/getting-started/) and [Configuration](https://junkerderprovinz.github.io/bombvault/configuration/) cover the template, the mounts, every variable and the SSH setup.
 
@@ -234,12 +235,12 @@ Every release has the app as `bombvault-android.apk`. On any server, open **Sett
 
 The [documentation](https://junkerderprovinz.github.io/bombvault/), in 26 languages, has what this page leaves out:
 
-- [Getting started](https://junkerderprovinz.github.io/bombvault/getting-started/): requirements, the Unraid template, other Docker hosts and TrueNAS Scale, the first backup and building from source
+- [Getting started](https://junkerderprovinz.github.io/bombvault/getting-started/): requirements, the Unraid template, other Docker hosts and TrueNAS Scale, the first backup, finding your way and building from source
 - [Android app](https://junkerderprovinz.github.io/bombvault/android/): pairing by QR code, servers outside a group, settings and downloads
-- [Features](https://junkerderprovinz.github.io/bombvault/features/): everything BombVault backs up, restores, checks and reports, and the companion apps
-- [Configuration](https://junkerderprovinz.github.io/bombvault/configuration/): environment variables, mounts, the security model, VM backup over SSH and the off-site setup
-- [Off-site & recovery](https://junkerderprovinz.github.io/bombvault/offsite-recovery/): destinations, placement per item, append-only copies, tamper tests, pairing, the recovery kit and guided recovery
-- [ZFS datasets](https://junkerderprovinz.github.io/bombvault/zfs-datasets/): items and child datasets, restores and the safety snapshot
+- [Features](https://junkerderprovinz.github.io/bombvault/features/): everything BombVault backs up, restores, checks and reports
+- [Configuration](https://junkerderprovinz.github.io/bombvault/configuration/): environment variables, mounts, the security model with keys, phones and the password reset, VM backup over SSH and the off-site setup
+- [Off-site & recovery](https://junkerderprovinz.github.io/bombvault/offsite-recovery/): storage locations, placement per entry, append-only copies, tamper tests, pairing and roles, the key keeper, the recovery kit and the Emergency wizard
+- [ZFS datasets](https://junkerderprovinz.github.io/bombvault/zfs-datasets/): entries and child datasets, restores, the safety snapshot and the replica
 - [MCP server](https://junkerderprovinz.github.io/bombvault/mcp/): connecting AI assistants, keys and limits
 - [API and integrations](https://junkerderprovinz.github.io/bombvault/api/): the HTTP API, Home Assistant and mDNS
 - [Troubleshooting](https://junkerderprovinz.github.io/bombvault/troubleshooting/): failed backups, locks, VM connections and a container that restarts

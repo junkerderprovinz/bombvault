@@ -262,7 +262,7 @@ Det som en assistent läser går till AI-leverantören bakom den: objektnamn, sc
 | `retention_guard` | Ytterligare en MCP-säkerhetskopia skulle bara lämna återställningspunkter från MCP i ett fönster med "behåll de senaste N", eller så har objektet redan fått 4 säkerhetskopior via MCP de senaste 24 timmarna, misslyckade och avbrutna medräknade. I det första fallet gör nästa schemalagda säkerhetskopia plats, i det andra är objektet ledigt igen 24 timmar efter den äldsta av dem. Du kan alltid starta den i webbgränssnittet. |
 | `rate_limited` | Nyckeln har använt sina 12 starter för den här timmen. |
 | `not_permitted` vid en start | Nyckeln får bara läsa. Slå på **Tillåt att starta säkerhetskopior** i kortet; ingen ny anslutning behövs. Vid ett avbrott betyder det att den här nyckeln inte startade körningen. |
-| `domain_off` | Den typen av säkerhetskopia är avstängd i inställningarna. |
+| `domain_off` | Det avsnittet är avstängt under **Inställningar, Allmänt**. |
 | `not_found` | BombVault skyddar inte det objektet. Lägg först till det i webbgränssnittet; MCP skapar aldrig konfiguration. |
 | Klienten hittar inte auktoriseringsservern | Inloggning via OAuth är avslagen, inget inloggningslösenord är satt, eller proxyn släpper inte igenom `/.well-known/` till BombVault. |
 | Samtyckessidan säger att returadressen inte är registrerad | Klienten skickade en returadress som den inte har registrerat. Ta bort connectorn i klienten och lägg till den igen. |

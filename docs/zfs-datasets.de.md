@@ -1,8 +1,8 @@
 # ZFS-Datasets
 
-Die Seite **ZFS** sichert ZFS-Datasets. Ein Element ist ein Dataset zusammen mit jedem Dataset darunter. Für jedes Backup legt BombVault einen einzigen ZFS-Snapshot des ganzen Baums an, sodass jedes Dataset darin vom selben Augenblick stammt. Danach liest es die Dateien jedes Datasets aus diesem Snapshot, speichert sie mit restic so wie einen Ordner und entfernt den Snapshot gleich wieder. Die Backups sind dedupliziert, jedes lässt sich durchsuchen, und einzelne Dateien lassen sich wiederherstellen.
+ZFS-Datasets sind Einträge in der Liste **Sicherungen**, wie Container und VMs. Ein Eintrag ist ein Dataset zusammen mit jedem Dataset darunter. Für jede Sicherung legt BombVault einen einzigen ZFS-Snapshot des ganzen Baums an, sodass jedes Dataset darin vom selben Augenblick stammt. Danach liest es die Dateien jedes Datasets aus diesem Snapshot, speichert sie mit restic so wie einen Ordner und entfernt den Snapshot gleich wieder. Die Sicherungen sind dedupliziert, jedes lässt sich durchsuchen, und einzelne Dateien lassen sich wiederherstellen.
 
-Das Backup schickt nie einen Stream in restic und rollt nie ein Dataset zurück. BombVault löscht nur Snapshots, die es selbst angelegt hat. Die optionale [Replik](#replica) ist die einzige Stelle, die `zfs send` nutzt: Sie kopiert die Datasets auf einen zweiten ZFS-Server und lässt das Backup unberührt.
+Die Sicherung schickt nie einen Stream in restic und rollt nie ein Dataset zurück. BombVault löscht nur Snapshots, die es selbst angelegt hat. Die optionale [Replik](#replica) ist die einzige Stelle, die `zfs send` nutzt: Sie kopiert die Datasets auf einen zweiten ZFS-Server und lässt die Sicherung unberührt.
 
 ## Voraussetzungen {#requirements}
 
@@ -11,85 +11,84 @@ Das Backup schickt nie einen Stream in restic und rollt nie ein Dataset zurück.
 - **Host Data als `/mnt` gemappt, mit Access Mode Read/Write - Slave.** Das ist die Vorgabe des Templates. Der Snapshot eines Datasets taucht im Ordner `.zfs/snapshot` des Datasets erst auf, nachdem BombVault gestartet ist, deshalb muss der Container Mounts mitbekommen, die der Host später anlegt.
 - **Die Datasets unter `/mnt` eingehängt.** Unter Unraid liegen Pools unter `/mnt/<pool>`, das ist also schon der Fall.
 
-Schalte die Domäne unter **Einstellungen, Allgemein** ein (ZFS-Datasets). Die ZFS-Seite zeigt dann die Karte **Verbindung zu diesem Server**. Sie testet die SSH-Verbindung, nennt Benutzer und Host, mit denen sie sich verbindet, und sagt, was fehlt, wenn etwas fehlt. Die Host-Integrationsprüfung (`/spike`) zeigt dasselbe Ergebnis.
+Schalte den Bereich unter **Einstellungen, Allgemein** ein (ZFS-Datasets). **ZFS-Verbindung zu diesem Server** unter **Mehr** auf der Seite Sicherungen öffnet dann **Verbindung zu diesem Server**. Sie testet die SSH-Verbindung, nennt Benutzer und Host, mit denen sie sich verbindet, und sagt, was fehlt, wenn etwas fehlt. Ist die Verbindung unterbrochen, sagt die Liste Sicherungen das mit **Verbindung ansehen**, und die Karte **Host-Integration** auf der Übersicht zeigt dasselbe Ergebnis.
 
-## Elemente und Unter-Datasets {#items-and-children}
+## Einträge und Unter-Datasets {#items-and-children}
 
-Öffne auf der ZFS-Seite **Datasets hinzufügen**. Die Liste kommt vom Server. Wähle das Dataset ganz oben in dem, was gesichert werden soll, zum Beispiel `cache/appdata`, und das Element umfasst dieses Dataset und jedes darunter.
+Wähl auf der Seite Sicherungen **Hinzufügen**, dann **Ein ZFS-Dataset**. Die Liste kommt vom Server. Wähle das Dataset ganz oben in dem, was gesichert werden soll, zum Beispiel `cache/appdata`, und der Eintrag umfasst dieses Dataset und jedes darunter.
 
-- **Neue Unter-Datasets kommen von selbst dazu.** Ein Dataset, das später unter dem Element angelegt wird, wird beim nächsten Lauf gesichert, und dieser Lauf nennt es als neu. Sein erstes Backup liest es einmal vollständig, danach werden nur Änderungen gelesen.
-- **Einzelne Unter-Datasets lassen sich auslassen.** Schalte eines in den Einstellungen des Elements ab, dann bleibt es samt allem darunter draußen. Ein ausgelassenes Unter-Dataset, das es auf dem Server nicht mehr gibt, wird so markiert und lässt sich aus der Liste entfernen.
-- **Unter-Datasets, die nicht lesbar sind, werden übersprungen, aber nie stillschweigend.** Der Lauf führt sie auf, das Element zeigt, wie viele übersprungen wurden, und die Abdeckungskarte im Dashboard zählt jedes als nicht geschützt. Der Lauf sichert trotzdem alles andere und schlägt wegen eines übersprungenen Unter-Datasets nicht fehl. Die Gründe stehen in der [Tabelle der Grundcodes](#reason-codes): ein Dataset, das nicht eingehängt ist, `canmount=off` hat, einen `legacy`- oder gar keinen Mountpoint, einen nicht geladenen Verschlüsselungsschlüssel, abgeschalteten Snapshot-Zugriff oder einen Mountpoint, den BombVault nicht sieht.
+- **Neue Unter-Datasets kommen von selbst dazu.** Ein Dataset, das später unter dem Eintrag angelegt wird, wird beim nächsten Lauf gesichert, und dieser Lauf nennt es als neu. Seine erste Sicherung liest es einmal vollständig, danach werden nur Änderungen gelesen.
+- **Einzelne Unter-Datasets lassen sich auslassen.** Schalte eines im Reiter Einstellungen des Eintrags ab, dann bleibt es samt allem darunter draußen. Ein ausgelassenes Unter-Dataset, das es auf dem Server nicht mehr gibt, wird so markiert und lässt sich aus der Liste entfernen.
+- **Unter-Datasets, die nicht lesbar sind, werden übersprungen, aber nie stillschweigend.** Der Lauf führt sie auf, der Eintrag zeigt, wie viele übersprungen wurden, und die Karte **Nicht gesichert** der Übersicht zählt jedes als nicht geschützt. Der Lauf sichert trotzdem alles andere und schlägt wegen eines übersprungenen Unter-Datasets nicht fehl. Die Gründe stehen in der [Tabelle der Grundcodes](#reason-codes): ein Dataset, das nicht eingehängt ist, `canmount=off` hat, einen `legacy`- oder gar keinen Mountpoint, einen nicht geladenen Verschlüsselungsschlüssel, abgeschalteten Snapshot-Zugriff oder einen Mountpoint, den BombVault nicht sieht.
 - **Ein übersprungenes Dataset nimmt seine Unter-Datasets nicht mit.** Ein Dataset mit `canmount=off`, das nur andere Datasets enthält, wird übersprungen (angezeigt als "nur Struktur"), und seine eingehängten Unter-Datasets werden gesichert. Ein verschlüsseltes Dataset ohne geladenen Schlüssel wird zusammen mit den Unter-Datasets übersprungen, die seinen Schlüssel teilen.
-- **Unter-Datasets, die VM-Platten oder Systemdaten sind, starten ausgeschaltet** im Dialog zum Hinzufügen, mit dem Grund neben dem Schalter. Wer einen ganzen Pool hinzufügt, bestätigt das vorher in einer Abfrage, die auflistet, was er enthält.
+- **Unter-Datasets, die VM-Platten oder Systemdaten sind, starten ausgeschaltet** im Fenster zum Hinzufügen, mit dem Grund neben dem Schalter. Wer einen ganzen Pool hinzufügt, bestätigt das vorher in einer Abfrage, die auflistet, was er enthält.
 
 ### Volumes {#volumes}
 
-Ein Volume (zvol) enthält eine virtuelle Festplatte statt Dateien, und die ZFS-Seite sichert nie eines.
+Ein Volume (zvol) enthält eine virtuelle Festplatte statt Dateien, und ein ZFS-Eintrag sichert nie eines.
 
-- Ein Volume, das eine VM nutzt, wird mit dieser VM auf der Seite **VMs** gesichert.
-- Ein Volume, das keine VM nutzt (ein iSCSI-Extent, eine abgehängte Platte), wird **von BombVault nicht gesichert**. Der Dialog zum Hinzufügen und die ZFS-Seite zählen diese Volumes und sagen das. Eine spätere Version wird sie sichern.
+- Ein Volume, das eine VM nutzt, wird mit dieser VM gesichert.
+- Ein Volume, das keine VM nutzt (ein iSCSI-Extent, eine abgehängte Platte), wird **von BombVault nicht gesichert**. Das Fenster zum Hinzufügen und die Seite Sicherungen zählen diese Volumes und sagen das. Eine spätere Version wird sie sichern.
 
-Volumes im Baum eines Elements werden bei jedem Lauf übersprungen und genannt.
+Volumes im Baum eines Eintrags werden bei jedem Lauf übersprungen und genannt.
 
 ### Der Speicher von Docker {#docker-storage}
 
-Mit dem ZFS-Speichertreiber von Docker ist jede Image-Schicht ein Dataset mit `legacy`-Mountpoint. Der Dialog zum Hinzufügen fasst sie zu einer Zeile pro Eltern-Dataset zusammen. Ein Baum mit mehr als 20 solcher Datasets kann kein Element werden: Solange ein Snapshot davon existiert, kann Docker keine Image-Schichten entfernen. Füge stattdessen die Datasets darunter hinzu, zum Beispiel `appdata`.
+Mit dem ZFS-Speichertreiber von Docker ist jede Image-Schicht ein Dataset mit `legacy`-Mountpoint. Das Fenster zum Hinzufügen fasst sie zu einer Zeile pro Eltern-Dataset zusammen. Ein Baum mit mehr als 20 solcher Datasets kann kein Eintrag werden: Solange ein Snapshot davon existiert, kann Docker keine Image-Schichten entfernen. Füge stattdessen die Datasets darunter hinzu, zum Beispiel `appdata`.
 
-### Elemente überschneiden sich nie {#overlap}
+### Einträge überschneiden sich nie {#overlap}
 
-Ein Dataset kann nur zu einem Element gehören. BombVault lehnt ein neues Element ab, das in einem bestehenden liegt oder eines enthalten würde. Um mehrere Unter-Elemente zu einem Eltern-Element zusammenzufassen, lösche zuerst die Unter-Elemente, behalte dabei ihre Backups und füge dann das Eltern-Element hinzu. Jedes Dataset behält seinen Verlauf unter seinem eigenen Namen, deshalb macht das nächste Backup dort weiter, wo die alten Elemente aufgehört haben, und liest nicht alles neu.
+Ein Dataset kann nur zu einem Eintrag gehören. BombVault lehnt einen neuen Eintrag ab, der in einem bestehenden liegt oder einen enthalten würde. Um mehrere Unter-Einträge zu einem Eltern-Eintrag zusammenzufassen, lösche zuerst die Unter-Einträge, behalte dabei ihre Sicherungen und füge dann den Eltern-Eintrag hinzu. Jedes Dataset behält seinen Verlauf unter seinem eigenen Namen, deshalb macht das nächste Backup dort weiter, wo die alten Elemente aufgehört haben, und liest nicht alles neu.
 
 ## Container und Befehle rund um den Snapshot {#consistency}
 
-Ein Snapshot einer laufenden Datenbank ist wie ein plötzlicher Stromausfall: Die Datenbank erholt sich meistens davon, muss das aber erst einmal schaffen. Jedes Element kann dagegen zwei Dinge tun, und beide gelten nur für den Augenblick des Snapshots, nicht für das ganze Backup.
+Ein Snapshot einer laufenden Datenbank ist wie ein plötzlicher Stromausfall: Die Datenbank erholt sich meistens davon, muss das aber erst einmal schaffen. Jeder Eintrag kann dagegen zwei Dinge tun, und beide gelten nur für den Augenblick des Snapshots, nicht für die ganze Sicherung.
 
-- **Diese Container für den Snapshot stoppen.** BombVault stoppt die aufgeführten Container, legt den Snapshot an und startet sie sofort wieder. Container derselben Abhängigkeitsstufe stoppen parallel, abhängige zuerst, deshalb dauert das ganze Fenster meist ein paar Sekunden; der Lauf zeigt, wie lange es war. Das Backup liest danach den eingefrorenen Snapshot, während die Apps schon wieder laufen. Gestoppt werden nur Container, die liefen.
-- **Ein Befehl vor und nach dem Snapshot.** Er läuft in einem Container deiner Wahl, zum Beispiel um kurz vor dem Snapshot eine Datenbank in das Dataset zu dumpen, ohne etwas zu stoppen. Scheitert der Befehl vor dem Snapshot, schlägt das Backup fehl und es entsteht kein Snapshot. Ein scheiternder Befehl nach dem Snapshot wird am Lauf angezeigt, lässt das Backup aber nicht fehlschlagen.
+- **Diese Container für den Snapshot stoppen.** BombVault stoppt die aufgeführten Container, legt den Snapshot an und startet sie sofort wieder. Container derselben Abhängigkeitsstufe stoppen parallel, abhängige zuerst, deshalb dauert das ganze Fenster meist ein paar Sekunden; der Lauf zeigt, wie lange es war. Die Sicherung liest danach den eingefrorenen Snapshot, während die Apps schon wieder laufen. Gestoppt werden nur Container, die liefen.
+- **Ein Befehl vor und nach dem Snapshot.** Er läuft in einem Container deiner Wahl, zum Beispiel um kurz vor dem Snapshot eine Datenbank in das Dataset zu dumpen, ohne etwas zu stoppen. Scheitert der Befehl vor dem Snapshot, schlägt die Sicherung fehl und es entsteht kein Snapshot. Ein scheiternder Befehl nach dem Snapshot wird am Lauf angezeigt, lässt das Backup aber nicht fehlschlagen.
 
 Was passiert, wenn etwas schiefgeht:
 
-- Lässt sich ein Container nicht stoppen, startet BombVault die schon gestoppten wieder, und das Backup schlägt fehl und nennt den Container. Es weicht nie auf einen Snapshot laufender Apps aus.
-- Das Stoppen wartet, bis ein laufendes Container-Backup fertig ist (bis zu 30 Minuten bei einem manuellen Lauf, bis zum Zeitlimit des Backups bei einem geplanten), damit die beiden nie gleichzeitig denselben Container stoppen und starten.
-- Bevor der erste Container stoppt, schreibt BombVault auf, welche es stoppt. Wird BombVault innerhalb des Fensters beendet, startet es diese Container beim nächsten Start wieder, schickt eine Benachrichtigung, und das Element zeigt einen roten Hinweis für jeden Container, den es nicht starten konnte.
+- Lässt sich ein Container nicht stoppen, startet BombVault die schon gestoppten wieder, und die Sicherung schlägt fehl und nennt den Container. Es weicht nie auf einen Snapshot laufender Apps aus.
+- Das Stoppen wartet, bis ein laufendes Container-Backup fertig ist (bis zu 30 Minuten bei einem manuellen Lauf, bis zum Zeitlimit der Sicherung bei einem geplanten), damit die beiden nie gleichzeitig denselben Container stoppen und starten.
+- Bevor der erste Container stoppt, schreibt BombVault auf, welche es stoppt. Wird BombVault innerhalb des Fensters beendet, startet es diese Container beim nächsten Start wieder, schickt eine Benachrichtigung, und der Eintrag zeigt einen roten Hinweis für jeden Container, den es nicht starten konnte.
 
-Die automatischen Datenbank-Dumps (siehe [Funktionen](features.md)) laufen mit dem eigenen Backup eines Containers auf der Seite **Container**, nicht mit einem ZFS-Element. Eine Datenbank, deren Container nur über sein Dataset gesichert wird, bekommt keinen Dump, also gib ihr hier einen Befehl.
+Die automatischen Datenbank-Dumps (siehe [Funktionen](features.md)) laufen mit der eigenen Sicherung eines Containers, nicht mit einem ZFS-Eintrag. Eine Datenbank, deren Container nur über sein Dataset gesichert wird, bekommt keinen Dump, also gib ihr hier einen Befehl.
 
-Ein Container kann gleichzeitig auf dieser Liste und auf der Seite **Container** stehen. Seine Daten liegen dann doppelt, in zwei Repositories, und das **Gesamt-Backup** stoppt ihn zweimal. Das Element weist darauf hin.
+Ein Container kann gleichzeitig auf dieser Liste stehen und als Container gesichert werden. Seine Daten liegen dann doppelt, in zwei Repositories, und das Gesamt-Backup stoppt ihn zweimal. Der Eintrag weist darauf hin.
 
 ## Wiederherstellen {#restore}
 
-Öffne **Backups** am Element, wähle das Backup und dann das Dataset. Vorgegeben ist das oberste Dataset des Elements.
+Öffne den Eintrag und wähl **Wiederherstellen**, oder such ihn auf der Seite **Wiederherstellung**. Das Wiederherstellungsfenster fragt nach der Sicherung, dann nach dem **Dataset**. Vorgegeben ist das oberste Dataset des Eintrags. Unter **Was** stellst du alles wieder her oder nur die Dateien und Ordner, die du auswählst. **Wohin** bietet an:
 
-- **In das Dataset zurückschreiben.** Dateien aus dem Backup werden in den Mountpoint des Datasets geschrieben. Gleichnamige Dateien werden überschrieben, andere bleiben liegen. Das Dataset selbst wird nie zurückgerollt oder ersetzt. BombVault prüft, ob das Dataset eingehängt, sichtbar und beschreibbar ist, einmal vor dem Start und noch einmal direkt vor dem Schreiben. Wo ein Unter-Dataset darin eingehängt ist, wird nichts geschrieben: Das Unter-Dataset behält seine Dateien, seinen Besitzer und seine Rechte und wird aus seinem eigenen Backup wiederhergestellt.
-- **In einen Ordner wiederherstellen.** Wähle einen Ordner unter `/mnt`. BombVault prüft, ob der Ordner auf einem eingehängten Pool oder einer Freigabe liegt und ob genug Platz frei ist. Das geht ohne SSH-Verbindung und auch für Datasets, die es nicht mehr gibt.
-- **In ein neues Dataset.** Gib ein Dataset an, das es noch nicht gibt. BombVault legt es mit den ZFS-Eigenschaften aus dem Backup an und stellt dort hinein wieder her, siehe [Als neues Dataset wiederherstellen](#new-dataset).
-- **Dateien auswählen** (Erweitert): nur die Dateien und Ordner, die du auswählst, zurück in das Dataset schreiben.
-- **Alle Datasets dieses Backups** (Erweitert): jedes Dataset des Baums in einen eigenen Unterordner des gewählten Ordners. Datasets, die in diesem Backup übersprungen wurden, werden genannt.
-- **Von einem anderen Server:** Die Seite **Wiederherstellung** stellt aus dem Repository eines anderen BombVault wieder her, immer in einen Ordner: alle Datasets eines Backups, jedes in einen eigenen Unterordner, oder ein Dataset des Baums, ganz oder ausgewählte Dateien.
+- **In das Dataset zurückschreiben.** Dateien aus der Sicherung werden in den Mountpoint des Datasets geschrieben. Gleichnamige Dateien werden überschrieben, andere bleiben liegen. Das Dataset selbst wird nie zurückgerollt oder ersetzt. BombVault prüft, ob das Dataset eingehängt, sichtbar und beschreibbar ist, einmal vor dem Start und noch einmal direkt vor dem Schreiben. Wo ein Unter-Dataset darin eingehängt ist, wird nichts geschrieben: Das Unter-Dataset behält seine Dateien, seinen Besitzer und seine Rechte und wird aus seiner eigenen Sicherung wiederhergestellt.
+- **In einen Ordner.** Wähl einen Ordner unter `/mnt`. BombVault prüft, ob der Ordner auf einem eingehängten Pool oder einer Freigabe liegt und ob genug Platz frei ist. Das geht ohne SSH-Verbindung und auch für Datasets, die es nicht mehr gibt.
+- **In ein neues Dataset.** Gib ein Dataset an, das es noch nicht gibt; das Fenster schlägt `<dataset>-restored` vor. BombVault legt es mit den ZFS-Eigenschaften aus der Sicherung an und stellt dort hinein wieder her, siehe [Als neues Dataset wiederherstellen](#new-dataset).
 
-Die Liste der zu stoppenden Container des Elements wird auch beim Zurückschreiben in das Dataset angeboten. Diese Container bleiben während der ganzen Wiederherstellung gestoppt, und Container-Backups warten so lange.
+Wählst du als Dataset **Alle Datasets dieser Sicherung**, kommt jedes Dataset des Baums in einen eigenen Unterordner des gewählten Ordners. Datasets, die in dieser Sicherung übersprungen wurden, werden genannt. Um aus dem Repository eines anderen BombVault wiederherzustellen, nimm **Aus einem alten Sicherungsordner** auf der Seite Wiederherstellung; das geht immer in einen Ordner: alle Datasets einer Sicherung, jedes in einen eigenen Unterordner, oder ein Dataset des Baums, ganz oder ausgewählte Dateien.
+
+Die Liste der zu stoppenden Container des Eintrags wird auch beim Zurückschreiben in das Dataset angeboten. Diese Container bleiben während der ganzen Wiederherstellung gestoppt, und Container-Sicherungen warten so lange.
 
 ### Der Sicherheits-Snapshot {#safety-snapshot}
 
-Bevor es in ein Dataset schreibt, legt BombVault einen ZFS-Snapshot genau dieses Datasets an, mit dem Namen `bombvault-prerestore-<Zeit>`. Er ist standardmäßig an; ihn abzuschalten braucht eine zweite Bestätigung. Lässt sich der Snapshot nicht anlegen, wird nichts wiederhergestellt.
+Bevor es in ein Dataset schreibt, legt BombVault einen ZFS-Snapshot genau dieses Datasets an, mit dem Namen `bombvault-prerestore-<Zeit>`. **Vorher einen ZFS-Snapshot vom jetzigen Stand behalten** ist standardmäßig an; das Abschalten braucht eine zweite Bestätigung. Lässt sich der Snapshot nicht anlegen, wird nichts wiederhergestellt.
 
-BombVault löscht einen Sicherheits-Snapshot nie von selbst. Das Element listet sie mit Alter und Größe auf, jeden mit einer Aktion **Löschen**, und warnt, wenn der älteste mehr als 30 Tage alt ist, weil er gelöschte und geänderte Daten im Pool festhält.
+BombVault löscht einen Sicherheits-Snapshot nie von selbst. Der Eintrag listet sie mit Alter und Größe auf, jeden mit einer Aktion **Löschen**, und warnt, wenn der älteste mehr als 30 Tage alt ist, weil er gelöschte und geänderte Daten im Pool festhält.
 
 Um nach einer Wiederherstellung zurückzugehen, kopiere einzelne Dateien aus `.zfs/snapshot/bombvault-prerestore-<Zeit>` im Dataset. `zfs rollback <dataset>@bombvault-prerestore-<Zeit>` geht nur, solange er der neueste Snapshot dieses Datasets ist. `zfs rollback -r` löscht jeden neueren Snapshot, automatische eingeschlossen.
 
 ### Als neues Dataset wiederherstellen {#new-dataset}
 
-BombVault speichert mit jedem Backup die lokal gesetzten ZFS-Eigenschaften jedes Datasets: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity und deine eigenen Benutzereigenschaften. Geerbte und schreibgeschützte Werte bleiben weg, weil sie von selbst zurückkommen. Backups aus der Zeit, bevor BombVault sie gespeichert hat, haben keine.
+BombVault speichert mit jeder Sicherung die lokal gesetzten ZFS-Eigenschaften jedes Datasets: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity und deine eigenen Benutzereigenschaften. Geerbte und schreibgeschützte Werte bleiben weg, weil sie von selbst zurückkommen. Sicherungen aus der Zeit, bevor BombVault sie gespeichert hat, haben keine.
 
 - **In ein neues Dataset** ruft `zfs create` mit jeder gespeicherten Eigenschaft auf. casesensitivity, normalization und utf8only lassen sich nur so setzen. Quotas und Reservierungen kommen erst nach den Dateien, damit sie sie nicht abweisen können. Der Mountpoint bleibt weg, damit die Kopie nicht mit dem Original kollidiert, ebenso `canmount`, `readonly` und die Verschlüsselung, damit die Wiederherstellung schreiben kann. Ein neues Dataset unter einem verschlüsselten übernimmt dessen Verschlüsselung. Das Dataset darüber muss existieren. Schlägt nach dem Anlegen etwas fehl, bleibt das neue Dataset auf dem Server, weil BombVault nie ein Dataset zerstört.
 - **In das Dataset zurückschreiben** zeigt die gespeicherten Eigenschaften neben der Wiederherstellung. **Diese Eigenschaften auch setzen** setzt die, die ein bestehendes Dataset noch annimmt, bevor eine Datei geschrieben wird. Quotas und Reservierungen kommen erst nach den Dateien, damit sie sie nicht abweisen können. Ohne diesen Schalter behält das Dataset seine Einstellungen.
 
-## Was im Backup steckt {#contents}
+## Was in der Sicherung steckt {#contents}
 
-Im Backup: die Dateien und Ordner jedes gesicherten Datasets, mit Besitz, Rechten, Zeitstempeln und erweiterten Attributen, so wie restic sie speichert und die lokal gesetzten ZFS-Eigenschaften jedes Datasets.
+In der Sicherung: die Dateien und Ordner jedes gesicherten Datasets, mit Besitz, Rechten, Zeitstempeln und erweiterten Attributen, so wie restic sie speichert und die lokal gesetzten ZFS-Eigenschaften jedes Datasets.
 
-Nicht im Backup:
+Nicht in der Sicherung:
 
 - Besitzer und Rechte des obersten Ordners jedes Datasets selbst (alles darunter ist enthalten). Eine Wiederherstellung in das Dataset lässt den vorhandenen obersten Ordner, wie er ist, eine Wiederherstellung in einen Ordner legt ihn mit den Rechten `0755` an;
 - vorhandene ZFS-Snapshots;
@@ -104,34 +103,34 @@ Ein verschlüsseltes Dataset wird nur gesichert, solange sein Schlüssel geladen
 
 ## Replik {#replica}
 
-Eine Replik ist eine Kopie der Datasets eines Elements auf einem zweiten ZFS-Server. BombVault hält sie mit `zfs send` und `zfs receive` aktuell. Der erste Lauf überträgt alles, danach wandern nur noch die geänderten Blöcke. Auf dem anderen Server kannst du die Kopie sofort einhängen.
+Eine Replik ist eine Kopie der Datasets eines Eintrags auf einem zweiten ZFS-Server. BombVault hält sie mit `zfs send` und `zfs receive` aktuell. Der erste Lauf überträgt alles, danach wandern nur noch die geänderten Blöcke. Auf dem anderen Server kannst du die Kopie sofort einhängen.
 
-Eine Replik ersetzt das Backup nie. Ältere Versionen, einzelne Dateien und die Prüfung kommen weiter aus den Backups, und die Replik behält nur so viele Snapshots, wie du einstellst. Eine aktuelle Replik zählt als Kopie außer Haus, aber ein Element mit Replik und ohne Backup bleibt orange.
+Eine Replik ersetzt die Sicherung nie. Ältere Versionen, einzelne Dateien und die Prüfung kommen weiter aus den Sicherungen, und die Replik behält nur so viele Snapshots, wie du einstellst. Eine aktuelle Replik zählt als Kopie außer Haus, aber ein Eintrag mit Replik und ohne Sicherung bleibt orange.
 
-Schalte sie in der Karte **Replik** in den Einstellungen des Elements ein. Dort wählst du, wohin die Replik geht, wann sie läuft (**Nach jeder Sicherung** oder **Eigener Plan**) und wie viele Snapshots auf dem Ziel bleiben. Die Karte listet jedes Dataset und jedes Volume mit seinem Zustand, und **Jetzt replizieren** startet einen Lauf. Ein Replik-Lauf hat eine eigene Sperre, deshalb hält eine lange erste Übertragung die Backups nie auf.
+Schalte sie in der Karte **Replik** im Reiter Einstellungen des Eintrags ein. Dort wählst du, wohin die Replik geht, wann sie läuft (**Nach jeder Sicherung** oder **Eigener Plan**) und wie viele Snapshots auf dem Ziel bleiben. Die Karte listet jedes Dataset und jedes Volume mit seinem Zustand, und **Jetzt replizieren** startet einen Lauf. Ein Replik-Lauf hat eine eigene Sperre, deshalb hält eine lange erste Übertragung die Sicherungen nie auf.
 
 ### Auf einen ZFS-Server schicken {#replica-push}
 
 Jede Maschine mit ZFS und SSH kann empfangen, zum Beispiel ein zweiter Unraid oder ein TrueNAS. BombVault muss dort nicht laufen.
 
-1. Öffne unter **Instanzen** den Tab **ZFS-Server** und klick auf **ZFS-Server hinzufügen**.
-2. Trag Adresse, Benutzer und Port ein. Der Dialog zeigt den öffentlichen Schlüssel von BombVault. Häng ihn auf dem Server an die Datei `~/.ssh/authorized_keys` des Benutzers. Auf einem Unraid geht das unter **Einstellungen, Benutzer, root, SSH-Schlüssel**.
-3. Teste die Verbindung. Der Dialog listet dann die Pools des Servers auf. Wähl einen aus und setz die Wurzel, die standardmäßig `<pool>/bombvault-replica` heißt.
-4. Wähl den neuen Server in der Karte **Replik** des Elements.
+1. Wähl unter **Einstellungen, Kopplung** bei **ZFS-Server ohne BombVault** den Knopf **Per SSH verbinden**, oder **ZFS-Server hinzufügen** in der Karte **Replik** des Eintrags.
+2. Trag Adresse, Benutzer und Port ein. Das Fenster zeigt den öffentlichen Schlüssel von BombVault. Häng ihn auf dem Server an die Datei `~/.ssh/authorized_keys` des Benutzers. Auf einem Unraid geht das unter **Einstellungen, Benutzer, root, SSH-Schlüssel**.
+3. Teste die Verbindung. Das Fenster listet dann die Pools des Servers auf. Wähl einen aus und setz die Wurzel, die standardmäßig `<pool>/bombvault-replica` heißt.
+4. Wähl den neuen Server in der Karte **Replik** des Eintrags. Der Server bekommt dann eine eigene Karte auf der Seite Instanzen, und **Öffnen** führt zu seiner Seite.
 
-Mit root braucht es nichts weiter. Ein eigener Benutzer braucht diese Rechte auf dem Pool des Ziels, die der Dialog ebenfalls zeigt:
+Mit root braucht es nichts weiter. Ein eigener Benutzer braucht diese Rechte auf dem Pool des Ziels, die das Fenster ebenfalls zeigt:
 
 ```
 zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
 ```
 
-Auf der Quelle braucht ein solcher Benutzer diese Rechte auf dem obersten Dataset des Elements:
+Auf der Quelle braucht ein solcher Benutzer diese Rechte auf dem obersten Dataset des Eintrags:
 
 ```
 zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 ```
 
-In dieser Richtung hält das BombVault, das das Element besitzt, auch einen Schlüssel, der auf dem Server schreiben kann.
+In dieser Richtung hält das BombVault, das den Eintrag besitzt, auch einen Schlüssel, der auf dem Server schreiben kann.
 
 BombVault speichert beim ersten Verbinden den Host-Schlüssel des Servers und lehnt später einen anderen ab. Wurde der Server neu aufgesetzt, drück auf der Seite des Servers **Host-Schlüssel vergessen**, dann speichert die nächste Verbindung den neuen Schlüssel.
 
@@ -139,11 +138,11 @@ BombVault speichert beim ersten Verbinden den Host-Schlüssel des Servers und le
 
 Ein gekoppeltes BombVault kann die Replik selbst empfangen. Niemand bekommt SSH-Zugang zum anderen Host, und es landet kein Schlüssel in einer Datei `authorized_keys`.
 
-1. Wähl in der Karte **Replik** des Elements die gekoppelte Instanz als Ziel. Die Karte zeigt **Wartet auf Freigabe**, bis sie antwortet.
-2. Öffne auf der empfangenden Instanz **Instanzen**, dann **Empfangen**. Die Karte **ZFS** listet die Anfrage. Wähl Pool und Wurzel auf diesem Server und wie viele Snapshots bleiben, und drück dann **Erlauben** oder **Ablehnen**.
+1. Wähl in der Karte **Replik** des Eintrags die gekoppelte Instanz als Ziel, oder schalte auf der Seite Instanzen auf der Karte dieser Instanz die Rolle **ZFS-Server** ein und wähl dort die ZFS-Einträge. Die Karte zeigt **Wartet auf Freigabe**, bis sie antwortet.
+2. Öffne auf der empfangenden Instanz **Instanzen**. Die Anfrage erscheint auf der Karte der sendenden Instanz als Abzeichen, und ihre **Details** listen sie. Wähl Pool und Wurzel auf diesem Server und wie viele Snapshots bleiben, und drück dann **Erlauben** oder **Ablehnen**.
 3. Nach **Erlauben** sendet die Quelle nach ihrem eigenen Plan, wie bei jedem anderen Ziel.
 
-Die empfangende Instanz nimmt nur an, was die Freigabe abdeckt: die Datasets des Elements, in ihre eigene Wurzel. Sie führt `zfs receive` selbst aus, und die Quelle kann dort nichts löschen oder zurückrollen. Die Kopie übersteht also auch eine Quelle, die jemand übernommen hat. Die empfangende Instanz behält ihre eigene Aufbewahrung. Die Quelle schlägt bei der Anfrage nur eine Regel vor.
+Die empfangende Instanz nimmt nur an, was die Freigabe abdeckt: die Datasets des Eintrags, in ihre eigene Wurzel. Sie führt `zfs receive` selbst aus, und die Quelle kann dort nichts löschen oder zurückrollen. Die Kopie übersteht also auch eine Quelle, die jemand übernommen hat. Die empfangende Instanz behält ihre eigene Aufbewahrung. Die Quelle schlägt bei der Anfrage nur eine Regel vor.
 
 **Freigabe entziehen** auf der empfangenden Instanz beendet die Freigabe jederzeit und sagt es der Quelle, die dann anzeigt, dass die Freigabe zurückgezogen wurde, und aufhört. Was die empfangende Instanz schon hat, bleibt dort. Eine abgelehnte Anfrage bleibt abgelehnt. Für weitere Datasets oder nach einem Entzug fragt die Quelle erneut an.
 
@@ -157,7 +156,7 @@ Die Kopie auf dem Ziel ist schreibgeschützt und nicht eingehängt, damit sie do
 
 ### Was hineinkommt {#replica-contents}
 
-Hinein kommt alles, was das Element sichert, und auch die Volumes darunter, die das Backup überspringt. Ein Unter-Dataset, das du im Element abgeschaltet hast, bleibt draußen. Alle Datasets eines Laufs stammen aus einem Snapshot, wie beim Backup.
+Hinein kommt alles, was der Eintrag sichert, und auch die Volumes darunter, die die Sicherung überspringt. Ein Unter-Dataset, das du im Eintrag abgeschaltet hast, bleibt draußen. Alle Datasets eines Laufs stammen aus einem Snapshot, wie bei der Sicherung.
 
 ### Wie lange Snapshots bleiben {#replica-retention}
 
@@ -171,7 +170,7 @@ Ein verschlüsseltes Dataset wird roh gesendet. Es bleibt auf dem Ziel verschlü
 
 ### Die Replik nutzen {#replica-use}
 
-Öffne am Element den Tab **Backups** und klick in der Karte **Speicherorte** auf die Zeile der Replik. Das Blatt listet die Snapshots auf dem Ziel und zeigt die Befehle mit deinen echten Namen.
+Öffne im Eintrag den Reiter **Sicherungen** und klick bei den Orten, die seine Snapshots halten, auf die Zeile **ZFS-Replik**. Das Blatt listet die Snapshots auf dem Ziel und zeigt die Befehle mit deinen echten Namen.
 
 Um einen älteren Stand anzusehen, klone einen Snapshot auf dem Ziel. Ein Klon braucht keinen Platz, bis sich etwas ändert, und die Replik bleibt unberührt:
 
@@ -191,12 +190,12 @@ Um einen Stand zurück auf die Quelle zu holen, drück im Blatt **Als neues Data
 
 ## Übrig gebliebene Snapshots {#leftover-snapshots}
 
-Der Snapshot eines Backups heißt `<dataset>@bombvault-<14 Ziffern>`, zum Beispiel `cache/appdata@bombvault-20260924021500` (UTC). BombVault entfernt ihn direkt nach dem Backup. Klappt das nicht, etwa weil das Dataset beschäftigt ist oder BombVault gestoppt wurde, entfernt BombVault ihn:
+Der Snapshot einer Sicherung heißt `<dataset>@bombvault-<14 Ziffern>`, zum Beispiel `cache/appdata@bombvault-20260924021500` (UTC). BombVault entfernt ihn direkt nach der Sicherung. Klappt das nicht, etwa weil das Dataset beschäftigt ist oder BombVault gestoppt wurde, entfernt BombVault ihn:
 
-- vor dem nächsten Backup dieses Elements,
-- beim Start von BombVault, für jedes Element, auch bei abgeschalteter Domäne,
-- wenn du das Element löschst,
-- wenn du am Element **Jetzt entfernen** drückst; dort steht auch, wie viele übrig sind.
+- vor der nächsten Sicherung dieses Eintrags,
+- beim Start von BombVault, für jeden Eintrag, auch bei abgeschaltetem Bereich,
+- wenn du den Eintrag löschst,
+- wenn du am Eintrag **Jetzt entfernen** drückst; dort steht auch, wie viele übrig sind.
 
 Entfernt werden nur Namen, die genau `bombvault-` plus 14 Ziffern lauten. Sicherheits-Snapshots, deine eigenen Snapshots und automatische Snapshots werden nie angefasst. Um einen von Hand zu entfernen:
 
@@ -208,17 +207,17 @@ Der Snapshot einer Replik heißt `<dataset>@bombvault-replica-<14 Ziffern>` und 
 
 ## Anomalien {#anomalies}
 
-Ein Unter-Dataset, das geleert wurde, verändert die Summe eines großen Baums kaum, deshalb beobachtet die Anomalie-Erkennung jedes Dataset eines Elements für sich: Größe, Dateianzahl, neue Daten und restic-Dauer haben jeweils ihren eigenen Verlauf. Dieser Verlauf gehört zum Namen des Datasets und bleibt deshalb, wenn der Baum später von einem anderen Element gesichert wird.
+Ein Unter-Dataset, das geleert wurde, verändert die Summe eines großen Baums kaum, deshalb beobachtet die Anomalie-Erkennung jedes Dataset eines Eintrags für sich: Größe, Dateianzahl, neue Daten und restic-Dauer haben jeweils ihren eigenen Verlauf. Dieser Verlauf gehört zum Namen des Datasets und bleibt deshalb, wenn der Baum später von einem anderen Element gesichert wird.
 
-Ein Dataset, das der vorige Lauf gesichert hat und das dieser Lauf nicht lesen konnte, zählt als geleert, solange sich die Auswahl des Elements nicht geändert hat. Das deckt einen nicht geladenen Schlüssel ab, ein nicht eingehängtes Dataset und eines, das aus dem Baum verschwunden ist. Ein Unter-Dataset, das du selbst ausschließt, ändert die Auswahl, deshalb beginnt sein Verlauf stattdessen neu. Solange ein Fund zu verlorenen Daten offen ist, behält die Aufbewahrung die alten Backups genau dieses Datasets und räumt den Rest des Baums wie gewohnt auf.
+Ein Dataset, das der vorige Lauf gesichert hat und das dieser Lauf nicht lesen konnte, zählt als geleert, solange sich die Auswahl des Eintrags nicht geändert hat. Das deckt einen nicht geladenen Schlüssel ab, ein nicht eingehängtes Dataset und eines, das aus dem Baum verschwunden ist. Ein Unter-Dataset, das du selbst ausschließt, ändert die Auswahl, deshalb beginnt sein Verlauf stattdessen neu. Solange ein Fund zu verlorenen Daten offen ist, behält die Aufbewahrung die alten Sicherungen genau dieses Datasets und räumt den Rest des Baums wie gewohnt auf.
 
-Auf der Seite **Anomalien** hat jedes Dataset eine eigene Zeile im Panel des Elements, das sich mit **Überwachung** auf der Karte des Elements öffnet oder, wenn für das Element nichts offen ist, über seine Zeile in der Karte **Ohne offene Funde**. Der Baum des Elements auf dieser Seite zeigt die offenen Funde neben jedem Dataset. Der Link in einem Fund öffnet die Wiederherstellung des Elements beim letzten guten Backup des Datasets. Ob ein Lauf fertig wird, wird für das ganze Element beurteilt, weil ein Lauf als Ganzes gelingt oder scheitert.
+Jedes Dataset hat eine eigene Zeile in der Überwachung des Eintrags, die sich mit **Überwachung** auf der Seite **Anomalien** öffnet und im Reiter **Prüfung** des Eintrags steht. Die offenen Funde stehen neben jedem Dataset. Der Link in einem Fund öffnet das Wiederherstellungsfenster bei der letzten guten Sicherung des Datasets. Ob ein Lauf fertig wird, wird für den ganzen Eintrag beurteilt, weil ein Lauf als Ganzes gelingt oder scheitert.
 
-Die Prüfungen selbst sind unter [Funktionen](features.md) beschrieben. Ein Assistent, der über den [MCP-Server](mcp.md) verbunden ist, kann die Wiederherstellungspunkte eines ZFS-Elements auflisten, sein Backup starten und die Funde lesen, quittiert wird ein Fund aber auf der Seite **Anomalien**.
+Die Prüfungen selbst sind unter [Funktionen](features.md) beschrieben. Ein Assistent, der über den [MCP-Server](mcp.md) verbunden ist, kann die Wiederherstellungspunkte eines ZFS-Eintrags auflisten, seine Sicherung starten und die Funde lesen, quittiert wird ein Fund aber auf der Seite **Anomalien**.
 
 ## Grundcodes {#reason-codes}
 
-Die Seite, der Laufverlauf und die Benachrichtigungen nennen ein Problem mit einem dieser Codes. Bei den meisten steht die Abhilfe auch auf der Seite daneben.
+Die Seite des Eintrags, der Laufverlauf und die Benachrichtigungen nennen ein Problem mit einem dieser Codes. Bei den meisten steht die Abhilfe auch auf der Seite daneben.
 
 | Code | Bedeutung | Was zu tun ist |
 |---|---|---|
@@ -226,20 +225,20 @@ Die Seite, der Laufverlauf und die Benachrichtigungen nennen ein Problem mit ein
 | `host-placeholder` | Host SSH: Address ist noch der Platzhalter, und `host.docker.internal` hat auch nicht geantwortet. | Setze Host SSH: Address auf die LAN-IP dieses Servers. |
 | `host-fallback` | Host SSH: Address ist noch der Platzhalter, und `host.docker.internal` funktioniert. | Nichts, oder setze die LAN-IP. |
 | `ssh-unreachable` | Der Server ist über SSH nicht erreichbar. | Prüfe Adresse und Port und ob SSH eingeschaltet ist. |
-| `ssh-auth` | Der Server hat den Schlüssel von BombVault abgelehnt. | Führe den Befehl von der Verbindungskarte einmal auf dem Server aus. |
+| `ssh-auth` | Der Server hat den Schlüssel von BombVault abgelehnt. | Führe den Befehl unter **Verbindung zu diesem Server** einmal auf dem Server aus. |
 | `zfs-not-found` | Der SSH-Host hat keinen Befehl `zfs`. | Richte Host SSH: Address auf den Rechner, dem die Pools gehören. |
 | `zfs-permission` | Der SSH-Benutzer darf diesen zfs-Befehl nicht ausführen. | Nimm root, oder siehe [TrueNAS SCALE](#truenas). |
 | `uri-mismatch` | `LIBVIRT_URI` nennt einen anderen Host oder Benutzer als die SSH-Felder. | Bring sie in Einklang, oder leere die SSH-Felder, damit beides aus der URI kommt. |
 | `zfs-error` | zfs hat einen anderen Fehler gemeldet. | Die Details zeigen seine Meldung. |
 | `propagation-missing` | Neue Mounts auf dem Host erreichen den Container nicht. | Setze den Access Mode von Host Data auf Read/Write - Slave und starte BombVault neu. |
 | `invalid-name` | Ein Dataset-Name, den BombVault nicht annimmt. | Benenne das Dataset um. |
-| `name-too-long` | Ein Dataset im Baum ist zu lang für einen Snapshot-Namen. | Benenne es um, oder füge ein Dataset darunter als Element hinzu. |
-| `invalid-exclude` | Ein Ausschlussmuster oder ein ausgelassenes Unter-Dataset passt nicht zum Element. | Korrigiere den Eintrag, den die Meldung nennt. Um ein ganzes Unter-Dataset auszulassen, schalte es ab, statt ein Muster zu schreiben. |
-| `not-found` | Das Dataset gibt es auf dem Server nicht. | Entferne das Element oder lege das Dataset neu an. Seine Backups bleiben wiederherstellbar. |
+| `name-too-long` | Ein Dataset im Baum ist zu lang für einen Snapshot-Namen. | Benenne es um, oder füge ein Dataset darunter als Eintrag hinzu. |
+| `invalid-exclude` | Ein Ausschlussmuster oder ein ausgelassenes Unter-Dataset passt nicht zum Eintrag. | Korrigiere den Eintrag, den die Meldung nennt. Um ein ganzes Unter-Dataset auszulassen, schalte es ab, statt ein Muster zu schreiben. |
+| `not-found` | Das Dataset gibt es auf dem Server nicht. | Entferne den Eintrag oder lege das Dataset neu an. Seine Sicherungen bleiben wiederherstellbar. |
 | `not-filesystem` | Das ist ein Volume, kein Dateisystem. | Siehe [Volumes](#volumes). |
-| `overlaps-item` | Das Dataset überschneidet sich mit einem bestehenden Element. | Siehe [Elemente überschneiden sich nie](#overlap). |
+| `overlaps-item` | Das Dataset überschneidet sich mit einem bestehenden Eintrag. | Siehe [Einträge überschneiden sich nie](#overlap). |
 | `docker-storage` | Der Baum enthält den Image-Speicher von Docker. | Siehe [Der Speicher von Docker](#docker-storage). |
-| `nothing-readable` | Kein Dataset im Element ist gerade lesbar. | Sieh dir die Codes der übersprungenen Datasets an. |
+| `nothing-readable` | Kein Dataset im Eintrag ist gerade lesbar. | Sieh dir die Codes der übersprungenen Datasets an. |
 | `snapshot-failed` | Der Snapshot ließ sich nicht anlegen. | Die Details zeigen die Meldung von zfs. |
 | `containers-busy` | Als die Container stoppen mussten, lief noch ein Container-Backup. | Starte später noch einmal. Geplante Läufe warten von selbst. |
 | `consistency-stop-failed` | Ein Container ließ sich nicht stoppen, deshalb gibt es keinen Snapshot. | Prüfe den Container oder nimm ihn von der Liste. |
@@ -259,8 +258,8 @@ Die Seite, der Laufverlauf und die Benachrichtigungen nennen ein Problem mit ein
 | `snapshot-not-visible` | Der Snapshot wurde angelegt, ist in BombVault aber nicht aufgetaucht. | Führe **Snapshot-Zugriff testen** aus; siehe unten. |
 | `snapshot-loop` | Der Snapshot hat BombVault nicht erreicht, weil Host Data neue Mounts nicht durchreicht. | Setze den Access Mode von Host Data auf Read/Write - Slave und starte BombVault neu. |
 | `backup-failed` | restic ist für dieses Dataset fehlgeschlagen. | Die Details des Laufs zeigen den Grund. |
-| `not-reached` | Der Lauf endete vor diesem Dataset. | Starte das Backup noch einmal. |
-| `gone` | Das Dataset ist nicht mehr auf dem Server. | Nichts. Seine Backups bleiben wiederherstellbar. |
+| `not-reached` | Der Lauf endete vor diesem Dataset. | Starte die Sicherung noch einmal. |
+| `gone` | Das Dataset ist nicht mehr auf dem Server. | Nichts. Seine Sicherungen bleiben wiederherstellbar. |
 | `read-only-mount` | BombVault kann das Dataset nur lesen und deshalb nicht hinein wiederherstellen. | Setze das Mapping auf Read/Write - Slave, oder stelle in einen Ordner wieder her. |
 | `destination-not-mounted` | Der Ordner liegt auf keinem eingehängten Pool und keiner Freigabe. | Wähle einen Ordner auf einem Pool oder einer Freigabe. |
 | `not-enough-space` | Am Ziel ist nicht genug Platz frei. | Schaffe Platz oder wähle einen anderen Ordner. |
@@ -274,7 +273,7 @@ Die Seite, der Laufverlauf und die Benachrichtigungen nennen ein Problem mit ein
 
 ### Prüfen, was der Container sieht {#mountinfo}
 
-**Snapshot-Zugriff testen** an einem Element legt einen echten Snapshot seines Baums an, sucht ihn in BombVault für jedes Dataset und entfernt ihn wieder. So lässt sich der ganze Weg am schnellsten vor dem ersten geplanten Lauf belegen.
+**Snapshot-Zugriff testen** im Reiter Einstellungen des Eintrags legt einen echten Snapshot seines Baums an, sucht ihn in BombVault für jedes Dataset und entfernt ihn wieder. So lässt sich der ganze Weg am schnellsten vor dem ersten geplanten Lauf belegen.
 
 Um selbst nachzusehen, führe das auf dem Server aus:
 
@@ -287,7 +286,7 @@ Jede Zeile ist ein Mount im Container. Die Zeile eines Datasets zeigt seinen Pfa
 ## TrueNAS SCALE {#truenas}
 
 - Ist `LIBVIRT_URI` gesetzt (wie für VM-Backups unter TrueNAS), nimmt BombVault SSH-Host, Benutzer und Port für seine zfs-Befehle aus der URI, jeden Wert, der nicht eigens gesetzt ist. Ohne VM-Backups setze stattdessen `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` und `LIBVIRT_SSH_PORT`. Trag die Variablen unter **Additional Environment Variables** ein.
-- Ein anderer Benutzer als root braucht Rechte auf dem obersten Dataset des Elements, die dann jedes Dataset darunter abdecken:
+- Ein anderer Benutzer als root braucht Rechte auf dem obersten Dataset des Eintrags, die dann jedes Dataset darunter abdecken:
 
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>

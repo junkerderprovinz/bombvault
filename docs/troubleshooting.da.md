@@ -4,7 +4,7 @@ En kort FAQ. For den fulde fejlfindingstabel for VM-over-SSH på værtssiden (pe
 
 ## Noget er ikke forbundet korrekt
 
-Åbn `/spike` i web-UI'en. Vært-integrationstjekket prober hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer eventuelle manglende dele. Start her, før du antager en fejl: en manglende montering eller en uopnåelig vært dukker op med det samme.
+Føj kortet **Vært-integration** til oversigten under **Tilpas**. Vært-integrationstjekket prober hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer eventuelle manglende dele, og **Tjek nu** kører det igen. Start her, før du antager en fejl: en manglende montering eller en uopnåelig vært dukker op med det samme.
 
 ## Jeg kan ikke nå web-UI'en
 
@@ -12,7 +12,19 @@ BombVault serverer HTTPS fra start på port `3443` (selvsigneret certifikat), s�
 
 ## Jeg mistede min APP_KEY
 
-`APP_KEY` udleder restic-repositoriets adgangskode. Uden den (og uden gendannelseskittet til krypteringsnøglen) kan krypterede sikkerhedskopier ikke gendannes. Derfor nager Oversigten dig til at downloade gendannelseskittet. Se [Off-site og gendannelse](offsite-recovery.md). Generer en nøgle med `openssl rand -hex 32`, og opbevar den uden for serveren, før du forlader dig på nogen sikkerhedskopi.
+`APP_KEY` udleder restic-repositoriets adgangskode. Uden den, uden gendannelseskittet og uden en nøgledeponering i din gruppe kan krypterede sikkerhedskopier ikke gendannes. Derfor viser oversigten **Gem dit gendannelseskit**, indtil du har downloadet det. Se [Off-site og gendannelse](offsite-recovery.md#recovery-kit). Generer en nøgle med `openssl rand -hex 32`, og opbevar den uden for serveren, før du forlader dig på nogen sikkerhedskopi.
+
+## Jeg har glemt login-adgangskoden
+
+Vælg **Glemt adgangskode?** på loginsiden. BombVault skriver en kode på 12 tegn i sin containerlog (på Unraid: fanen Docker, BombVault-ikonet, **Logs**). Skriv den sammen med en ny adgangskode inden for 10 minutter. Nulstillingen slår også tofaktorgodkendelse fra, fjerner alle passkeys, tilbagekalder alle API-tokens, MCP-nøgler og OAuth-logins, afslutter alle andre sessioner og slår telefonparring fra. Tilføj dine passkeys igen under **Indstillinger, Sikkerhed**, slå telefonparring til igen dér, og opret nye tokens og nøgler, hvor du stadig har brug for dem. Se [Sikkerhedsmodel](configuration.md#login).
+
+## Sikkerhedskopierne stoppede og siger, at nøglen ikke længere kan åbnes
+
+Denne server overtog en anden servers sikkerhedskopinøgle i Nødguiden, og `APP_KEY` blev ændret bagefter. Den overtagne nøgle er forseglet med den gamle APP_KEY, så BombVault kan ikke åbne den og tager i stedet ingen sikkerhedskopier, frem for at skrive med den forkerte nøgle. **Kræver opmærksomhed** på oversigten nævner den. Sæt APP_KEY tilbage til det, den var, eller upload gendannelseskittet igen på siden Gendannelse under **Nødsituation**.
+
+## En telefon havner på loginsiden
+
+En parret telefon får kun sin session via gruppen, så længe **Telefoner kan parre med gruppens tolv ord** er slået til under **Indstillinger, Sikkerhed**. En nulstilling af adgangskoden slår det fra. En app, der er ældre end serveren, får heller ingen session, før den er opdateret. En server, der er tilføjet med sin adresse, beder altid om adgangskoden.
 
 ## VM-sikkerhedskopiering vil ikke oprette forbindelse
 
@@ -29,11 +41,11 @@ Live-øjebliksbilleder kræver qemu guest agent installeret i VM'en og disken p�
 
 ## En sikkerhedskopi fejlede med "repository is already locked"
 
-Dette er som regel en forældreløs restic-lås efterladt, da containeren blev opdateret eller genstartet midt i en operation. BombVault detekterer en beviseligt forældreløs lås, tvangsrydder den og forsøger igen én gang, automatisk. Hvis den vedvarer, brug **Indstillinger, Integritet, Lås op** for det berørte domæne for at rydde en forældet lås manuelt. Et ægte problem dukker stadig op i stedet for at blive skjult. Efter en genstart venter BombVault, til sådan en lås har været ti minutter uden fornyelse. En restic, der stadig kører, for eksempel i en anden BombVault på samme repository, fornyer sin lås hvert femte minut.
+Dette er som regel en forældreløs restic-lås efterladt, da containeren blev opdateret eller genstartet midt i en operation. BombVault detekterer en beviseligt forældreløs lås, tvangsrydder den og forsøger igen én gang, automatisk. Hvis den vedvarer, åbn kortet **Tjek sikkerhedskopier** under **Indstillinger, Verificering**, og vælg **Lås op** under **Mere** i det berørte områdes række for at rydde en forældet lås manuelt. Et ægte problem dukker stadig op i stedet for at blive skjult. Efter en genstart venter BombVault, til sådan en lås har været ti minutter uden fornyelse. En restic, der stadig kører, for eksempel i en anden BombVault på samme repository, fornyer sin lås hvert femte minut.
 
 ## Min off-site-kopi skete ikke efter en sikkerhedskopi
 
-Off-site-replikering er best-effort af design, så et off-site-hikke aldrig får den lokale sikkerhedskopi til at fejle. Tjek off-site-tidsplanen for det domæne (Indstillinger, Tidsplaner): en tom tidsplan replikerer efter hver lokal sikkerhedskopi, mens en kadence sender sjældnere. Brug **Replikér nu** på Off-site-siden for en on-demand-kørsel, og hold øje med replikeringsindikatoren på Oversigten.
+Off-site-replikering er best-effort af design, så et off-site-hikke aldrig får den lokale sikkerhedskopi til at fejle. Tjek, hvornår destinationen kopierer: dens kort **Kopier** siger **Efter hver sikkerhedskopi** eller nævner en egen plan, og **Indstillinger, Tidsplan, Off-site-kopier pr. område** kan give et område sin egen plan. Brug **Replikér nu** i områdets kort **Off-site-kopi** under **Indstillinger, Destinationer** for en on-demand-kørsel, og hold øje med statushovedet på oversigten, som siger **Off-site-kopi kører**, mens den kører. En mislykket kopi vises under **Kræver opmærksomhed**.
 
 ## En gendannelse blev afbrudt, før den startede
 
@@ -41,7 +53,7 @@ Før noget stoppes eller fjernes, kører gendannelsen et pre-flight-konflikttjek
 
 ## En almindelig eksport fejlede i stedet for at skrive en fil
 
-Hvis age-kryptering er slået til (Indstillinger), men ingen gyldig modtager er sat, fejler en eksport med en klar fejl i stedet for at skrive klartekst. Tilføj en gyldig modtager (en age-offentlig nøgle eller en SSH-offentlig nøgle), eller slå kryptering fra, hvis du har til hensigt, at eksporten skal være klartekst. Se [Funktioner](features.md).
+Hvis **Krypter eksporter med age** er slået til under **Indstillinger, System**, men ingen gyldig modtager er sat, fejler en eksport med en klar fejl i stedet for at skrive klartekst. Tilføj en gyldig modtager (en age-offentlig nøgle eller en SSH-offentlig nøgle), eller slå kryptering fra, hvis du har til hensigt, at eksporten skal være klartekst. Se [Funktioner](features.md).
 
 ## Et databasedump mislykkedes
 
@@ -67,11 +79,11 @@ Hvert problem har en årsagskode i firkantede parenteser, og siden [ZFS-datasæt
 
 - **`snapshot-loop`**: snapshottet nåede ikke frem til BombVault, fordi Host Data ikke sender nye monteringer videre. Rediger containeren, sæt Access Mode for Host Data til Read/Write - Slave, og genstart BombVault.
 - **`key-not-loaded`**: et krypteret datasæt, hvis nøgle ikke er indlæst, springes over. Indlæs nøglen med `zfs load-key` og monter datasættet; næste sikkerhedskopi tager det med.
-- **`ssh-auth`**: serveren afviste BombVaults nøgle. Forbindelseskortet på ZFS-siden viser kommandoen, der godkender den; kør den én gang på serveren.
+- **`ssh-auth`**: serveren afviste BombVaults nøgle. **ZFS-forbindelse til denne server**, som åbnes med **Se forbindelsen** på siden Sikkerhedskopier, viser kommandoen, der godkender den; kør den én gang på serveren.
 
 ## Et element bliver stående på "Lærer N/10"
 
-De fleste anomalitjek begynder efter 10 vellykkede sikkerhedskopier af et element, og optællingen starter forfra efter **Markér som forventet** og efter en ændring af elementets udvalg. Et element uden tidsplan lærer ikke, og en container uden appdata har intet at lære af, hvilket dens mærke også siger.
+De fleste anomalitjek begynder efter 10 vellykkede sikkerhedskopier af et element, og optællingen starter forfra efter **Markér som forventet** og efter en ændring af elementets udvalg. Et element uden tidsplan lærer ikke, og en container uden appdata har intet at lære af, hvilket dens mærke også siger. **Læringsforløb** på siden Afvigelser viser en ring på ti dele for hvert element.
 
 ## Opbevaringen sletter ikke længere gamle sikkerhedskopier af ét element
 
@@ -83,7 +95,7 @@ Samme årsag: oprydningen lader de gamle sikkerhedskopier af et element med såd
 
 ## Historikimporten siger, at et repository ikke kunne læses
 
-Efter opgraderingen læser BombVault én gang størrelsen af tidligere sikkerhedskopier fra hvert repository. Et repository, der ikke kunne nås på det tidspunkt, for eksempel et offsite-mål, der var nede, eller et share, der ikke var monteret, står i kortet **Afvigelser** under **Indstillinger, Integritet** og forsøges igen én gang om dagen. Imens lærer dets elementer af nye sikkerhedskopier.
+Efter opgraderingen læser BombVault én gang størrelsen af tidligere sikkerhedskopier fra hvert repository. Et repository, der ikke kunne nås på det tidspunkt, for eksempel et offsite-mål, der var nede, eller et share, der ikke var monteret, står i kortet **Afvigelser** under **Indstillinger, Verificering** og forsøges igen én gang om dagen. Imens lærer dets elementer af nye sikkerhedskopier.
 
 ## Advarslen om diskplads passer ikke med Unraids dashboard
 
@@ -95,7 +107,7 @@ Siden [MCP-server](mcp.md#troubleshooting) viser, hvad hver statuskode og hver a
 
 ## Containeren bliver ved med at genstarte eller ser usund ud
 
-BombVault rapporterer sund/usund fra sin egen `/api/health`. Et auto-heal-værktøj (såsom Autoheal) kan genstarte den automatisk, hvis motoren nogensinde går i baglås. Tjek containerloggen og `/spike`-rapporten for den underliggende årsag.
+BombVault rapporterer sund/usund fra sin egen `/api/health`. Et auto-heal-værktøj (såsom Autoheal) kan genstarte den automatisk, hvis motoren nogensinde går i baglås. Tjek containerloggen og kortet **Vært-integration** for den underliggende årsag.
 
 ## Stadig fast?
 

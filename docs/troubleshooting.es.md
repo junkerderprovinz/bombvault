@@ -4,7 +4,7 @@ Un breve FAQ. Para la tabla completa de resolución de problemas del lado del ho
 
 ## Algo no está bien conectado
 
-Abre `/spike` en la interfaz web. La comprobación de integración con el host sondea cada montaje y CLI (socket de Docker, libvirt, restic, qemu-img, rclone) e informa de cualquier pieza que falte. Empieza aquí antes de asumir que es un error: un montaje faltante o un host inalcanzable aparece de inmediato.
+Añade la tarjeta **Integración con el host** al resumen en **Personalizar**. La comprobación de integración con el host sondea cada montaje y CLI (socket de Docker, libvirt, restic, qemu-img, rclone) e informa de cualquier pieza que falte, y **Comprobar ahora** la ejecuta de nuevo. Empieza aquí antes de asumir que es un error: un montaje faltante o un host inalcanzable aparece de inmediato.
 
 ## No puedo alcanzar la interfaz web
 
@@ -12,7 +12,19 @@ BombVault sirve HTTPS de fábrica en el puerto `3443` (certificado autofirmado),
 
 ## Perdí mi APP_KEY
 
-`APP_KEY` deriva la contraseña del repositorio restic. Sin ella (y sin el kit de recuperación de la clave de cifrado), las copias cifradas no se pueden recuperar. Por eso el Panel insiste en que descargues el kit de recuperación. Consulta [Copia externa y recuperación](offsite-recovery.md). Genera una clave con `openssl rand -hex 32` y guárdala fuera del servidor antes de confiar en ninguna copia.
+`APP_KEY` deriva la contraseña del repositorio restic. Sin ella, sin el kit de recuperación y sin un depósito de claves en tu grupo, las copias cifradas no se pueden recuperar. Por eso el resumen muestra **Guarda tu kit de recuperación** hasta que lo descargas. Consulta [Copia externa y recuperación](offsite-recovery.md#recovery-kit). Genera una clave con `openssl rand -hex 32` y guárdala fuera del servidor antes de confiar en ninguna copia.
+
+## Olvidé la contraseña de inicio de sesión
+
+Elige **¿Has olvidado la contraseña?** en la página de inicio de sesión. BombVault escribe un código de 12 caracteres en el registro de su contenedor (en Unraid: pestaña Docker, icono de BombVault, **Logs**). Escríbelo con una contraseña nueva en 10 minutos. El restablecimiento también desactiva la verificación en dos pasos, elimina todas las claves de acceso, revoca todos los tokens de API, claves MCP e inicios de sesión OAuth, cierra todas las demás sesiones y desactiva el emparejamiento de móviles. Vuelve a añadir tus claves de acceso en **Ajustes, Seguridad**, activa de nuevo ahí el emparejamiento de móviles y crea tokens y claves nuevos donde aún los necesites. Consulta [Modelo de seguridad](configuration.md#login).
+
+## Las copias se detuvieron y dicen que la clave ya no se puede abrir
+
+Este servidor adoptó la clave de copias de otro servidor en el Asistente de emergencia, y después se cambió `APP_KEY`. La clave adoptada está sellada con la antigua APP_KEY, así que BombVault no puede abrirla y no copia nada en lugar de escribir con la clave equivocada. **Necesita atención** en el resumen la nombra. Vuelve a poner APP_KEY como estaba, o sube de nuevo el kit de recuperación en la página Restauración, en **Emergencia**.
+
+## Un móvil llega a la página de inicio de sesión
+
+Un móvil emparejado recibe su sesión a través del grupo solo mientras **Los teléfonos pueden emparejarse con las doce palabras del grupo** esté activado en **Ajustes, Seguridad**. Un restablecimiento de la contraseña lo desactiva. Una app más antigua que el servidor tampoco recibe sesión hasta que se actualiza. Un servidor añadido por su dirección siempre pide la contraseña.
 
 ## La copia de VM no conecta
 
@@ -29,11 +41,11 @@ Las instantáneas en vivo necesitan el agente invitado de qemu instalado en la V
 
 ## Una copia falló con "repository is already locked"
 
-Suele tratarse de un bloqueo de restic huérfano dejado atrás cuando el contenedor se actualizó o reinició a mitad de operación. BombVault detecta un bloqueo huérfano de forma demostrable, lo fuerza a limpiar y lo reintenta una vez, automáticamente. Si persiste, usa **Ajustes, Integridad, Desbloquear** para el dominio afectado con el fin de limpiar un bloqueo obsoleto a mano. Un problema genuino sigue saliendo a la superficie en lugar de quedar oculto. Tras un reinicio, BombVault espera a que ese bloqueo lleve diez minutos sin renovarse. Un restic que sigue en marcha, por ejemplo en un segundo BombVault sobre el mismo repositorio, renueva su bloqueo cada cinco minutos.
+Suele tratarse de un bloqueo de restic huérfano dejado atrás cuando el contenedor se actualizó o reinició a mitad de operación. BombVault detecta un bloqueo huérfano de forma demostrable, lo fuerza a limpiar y lo reintenta una vez, automáticamente. Si persiste, abre la tarjeta **Comprobar las copias** en **Ajustes, Verificación** y elige **Desbloquear** bajo **Más** en la fila de la sección afectada para limpiar un bloqueo obsoleto a mano. Un problema genuino sigue saliendo a la superficie en lugar de quedar oculto. Tras un reinicio, BombVault espera a que ese bloqueo lleve diez minutos sin renovarse. Un restic que sigue en marcha, por ejemplo en un segundo BombVault sobre el mismo repositorio, renueva su bloqueo cada cinco minutos.
 
 ## Mi copia externa no ocurrió tras una copia
 
-La replicación externa es de mejor esfuerzo por diseño, de modo que un contratiempo externo nunca hace fallar la copia local. Comprueba el calendario externo de ese dominio (Ajustes, Programaciones): un calendario en blanco replica tras cada copia local, mientras que una cadencia envía con menos frecuencia. Usa **Replicar ahora** en la página Externo para una ejecución bajo demanda, y observa el indicador de replicación en el Panel.
+La replicación externa es de mejor esfuerzo por diseño, de modo que un contratiempo externo nunca hace fallar la copia local. Comprueba cuándo copia el destino: su tarjeta **Copiar** dice **Después de cada copia** o nombra un plan propio, y **Ajustes, Calendario, Copias externas por sección** puede dar a una sección su propio plan. Usa **Replicar ahora** en la tarjeta **Copia externa** de la sección, en **Ajustes, Destinos**, para una ejecución bajo demanda, y observa la cabecera de estado del resumen, que dice **Copia externa en curso** mientras dura. Una copia fallida aparece en **Necesita atención**.
 
 ## Una restauración se abortó antes de empezar
 
@@ -41,7 +53,7 @@ Antes de detener o eliminar nada, la restauración ejecuta una comprobación de 
 
 ## Una exportación sencilla falló en lugar de escribir un archivo
 
-Si el cifrado age está activado (Ajustes) pero no hay ningún destinatario válido definido, una exportación falla con un error claro en lugar de escribir texto plano. Añade un destinatario válido (una clave pública age o una clave pública SSH), o desactiva el cifrado si quieres que la exportación sea en texto plano. Consulta [Funciones](features.md).
+Si **Cifrar exportaciones con age** está activado en **Ajustes, Sistema** pero no hay ningún destinatario válido definido, una exportación falla con un error claro en lugar de escribir texto plano. Añade un destinatario válido (una clave pública age o una clave pública SSH), o desactiva el cifrado si quieres que la exportación sea en texto plano. Consulta [Funciones](features.md).
 
 ## Un volcado de base de datos falló
 
@@ -67,11 +79,11 @@ Cada problema lleva un código de motivo entre corchetes, y la página [Conjunto
 
 - **`snapshot-loop`**: la instantánea no llegó a BombVault porque Host Data no transmite los montajes nuevos. Edita el contenedor, pon el Access Mode de Host Data en Read/Write - Slave y reinicia BombVault.
 - **`key-not-loaded`**: un conjunto cifrado cuya clave no está cargada se omite. Carga la clave con `zfs load-key` y monta el conjunto; la siguiente copia lo incluye.
-- **`ssh-auth`**: el servidor rechazó la clave de BombVault. La tarjeta de conexión de la página ZFS muestra el comando que la autoriza; ejecútalo una vez en el servidor.
+- **`ssh-auth`**: el servidor rechazó la clave de BombVault. **Conexión ZFS con este servidor**, que se abre con **Ver conexión** en la página Copias de seguridad, muestra el comando que la autoriza; ejecútalo una vez en el servidor.
 
 ## Un elemento se queda en "Aprendiendo N/10"
 
-La mayoría de las comprobaciones de anomalías empiezan tras 10 copias correctas de un elemento, y la cuenta vuelve a empezar tras **Marcar como esperada** y tras cambiar la selección del elemento. Un elemento sin programación no aprende, y un contenedor sin appdata no tiene de qué aprender, como indica su insignia.
+La mayoría de las comprobaciones de anomalías empiezan tras 10 copias correctas de un elemento, y la cuenta vuelve a empezar tras **Marcar como esperada** y tras cambiar la selección del elemento. Un elemento sin programación no aprende, y un contenedor sin appdata no tiene de qué aprender, como indica su insignia. **Progreso del aprendizaje** en la página Anomalías muestra un anillo de diez partes por elemento.
 
 ## La retención dejó de borrar las copias antiguas de un elemento
 
@@ -83,7 +95,7 @@ La misma causa: la limpieza no toca las copias antiguas de un elemento con una a
 
 ## La importación del historial dice que no se pudo leer un repositorio
 
-Tras la actualización, BombVault lee una vez el tamaño de las copias anteriores de cada repositorio. Un repositorio que no estaba accesible en ese momento, como un destino externo caído o un recurso compartido sin montar, aparece en la tarjeta **Anomalías** de **Ajustes, Integridad** y se reintenta una vez al día. Mientras tanto, sus elementos aprenden de las copias nuevas.
+Tras la actualización, BombVault lee una vez el tamaño de las copias anteriores de cada repositorio. Un repositorio que no estaba accesible en ese momento, como un destino externo caído o un recurso compartido sin montar, aparece en la tarjeta **Anomalías** de **Ajustes, Verificación** y se reintenta una vez al día. Mientras tanto, sus elementos aprenden de las copias nuevas.
 
 ## El aviso de espacio en disco no coincide con el panel de Unraid
 
@@ -95,7 +107,7 @@ La página [Servidor MCP](mcp.md#troubleshooting) explica qué significa cada c�
 
 ## El contenedor se reinicia constantemente o parece no saludable
 
-BombVault informa de saludable/no saludable desde su propio `/api/health`. Una herramienta de autorreparación (como Autoheal) puede reiniciarlo automáticamente si el motor se atasca alguna vez. Comprueba el registro del contenedor y el informe de `/spike` para conocer la causa subyacente.
+BombVault informa de saludable/no saludable desde su propio `/api/health`. Una herramienta de autorreparación (como Autoheal) puede reiniciarlo automáticamente si el motor se atasca alguna vez. Comprueba el registro del contenedor y la tarjeta **Integración con el host** para conocer la causa subyacente.
 
 ## ¿Sigues atascado?
 

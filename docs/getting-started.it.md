@@ -10,7 +10,7 @@ Questa pagina ti accompagna da una macchina Unraid appena installata al tuo prim
 | **Posizione del repo restic** | Un percorso locale (consigliato: il tuo array o la cache), SMB, NFS o qualsiasi backend rclone. |
 | **Socket Docker** | Montato automaticamente dal template (`/var/run/docker.sock`). |
 | **Flash Unraid** (`/boot`) | Montato per intero automaticamente dal template (`/boot` in `/host/boot`). Alimenta il backup del flash e permette a un container ripristinato di riapparire come una normale app Unraid, modificabile. |
-| **VM KVM** (opzionale) | Il backup delle VM comunica con libvirt via SSH, nessun mount libvirt. Configuralo in Impostazioni (vedi [Configurazione](configuration.md)). |
+| **VM KVM** (opzionale) | Il backup delle VM comunica con libvirt via SSH, nessun mount libvirt. Configuralo in **Impostazioni, Integrazioni, SSH dell'host** (vedi [Configurazione](configuration.md)). |
 | **Dataset ZFS** (opzionale) | Lo stesso collegamento SSH del backup delle VM, `zfs` sull'host e Host Data mappato come `/mnt` con modalità di accesso Read/Write - Slave, il valore predefinito del template. Vedi [Dataset ZFS](zfs-datasets.md). |
 | **App Android** (facoltativa) | Android 10 o successivo, associata a server con versione 9.7.0 o successiva. Vedi [App Android](android.md). |
 
@@ -37,12 +37,12 @@ Il percorso più semplice è **Community Applications**.
 Non sei su Unraid? BombVault gira anche come semplice contenitore su qualsiasi host Docker (è anche ciò su cui si regge il supporto ai contenitori su TrueNAS Scale, prima di una voce dedicata nel suo catalogo di applicazioni).
 
 1. Prendi dal repository il file [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml), pronto da modificare.
-2. Imposta `APP_KEY` (vedi sotto) e punta il volume Host Data alla tua vera radice dati: i commenti nel file spiegano entrambe le cose.
+2. Imposta `APP_KEY` (vedi sotto) e punta il volume Host Data alla tua vera radice dati. I commenti nel file spiegano entrambe le cose.
 3. `docker compose up -d`, poi apri `https://<ip-host>:3443/`.
 
 Cosa cambia rispetto a Unraid:
 
-- **Nessun dominio flash/USB.** Non c'è una chiavetta di avvio da catturare o ripristinare, quindi il dominio Flash nelle impostazioni qui non ha nulla da fare. Al suo posto il dominio Cartelle propone il suggerimento in un clic **Aggiungi preimpostazione: configurazione di sistema dell'host** (un insieme iniziale di file `/etc` che rivedi e modifichi prima di salvare), come equivalente generico pratico.
+- **Nessuna sezione Flash.** Non c'è una chiavetta di avvio da catturare o ripristinare, quindi la sezione Flash qui non ha nulla da fare. Al suo posto **Aggiungi** nella pagina Backup propone **Configurazione di sistema** come suggerimento di cartelle: un insieme iniziale di cartelle `/etc` che rivedi e modifichi prima di salvare.
 - **Nessuna notifica nativa di Unraid.** I canali di notifica propri di BombVault (webhook, avvisi di fallimento off-site e così via) funzionano normalmente; viene saltato soltanto l'inoltro specifico al sistema di notifiche di Unraid, dato che qui non esiste.
 - **Il backup delle macchine virtuali è opzionale e richiede un host libvirtd separato raggiungibile via SSH.** Vedi il blocco commentato nel file compose. Un host Docker generico non porta con sé alcun gestore di macchine virtuali.
 - **Nessun widget per la dashboard.** BombVault Widget è un plugin Unraid, quindi anche questo passaggio viene saltato.
@@ -64,34 +64,45 @@ openssl rand -hex 32
 Incolla il risultato nel campo `APP_KEY` del template (Unraid), oppure nella variabile d'ambiente `APP_KEY` in `docker-compose.yml` (host Docker generico).
 
 !!! danger "Non perdere la tua APP_KEY"
-    Perdere `APP_KEY` rende i tuoi backup cifrati irrecuperabili. Conservala in un luogo sicuro e separato dal server. Una volta che BombVault è in esecuzione, usa il suo **kit di ripristino della chiave di crittografia** con un clic (vedi [Off-site e ripristino](offsite-recovery.md)) per salvare l'intero pacchetto di ripristino.
+    Perdere `APP_KEY` rende i tuoi backup cifrati irrecuperabili. Conservala in un luogo sicuro e separato dal server. Una volta che BombVault è in esecuzione, imposta una password di accesso e scarica il **Kit di ripristino** in **Impostazioni, Ripristino** (vedi [Off-site e ripristino](offsite-recovery.md#recovery-kit)). Contiene la chiave, ogni destinazione e i comandi restic.
 
 Il template monta anche il socket Docker, il flash (`/boot`) e la radice **Host Data** (`/mnt`) per te. Le *origini* e le *destinazioni* dei backup risiedono entrambe sotto Host Data. Per il riferimento completo delle variabili e la configurazione off-site, vedi [Configurazione](configuration.md).
 
 ## Prima esecuzione
 
-![La dashboard dopo un primo backup: cosa è protetto, cosa parte dopo e un registro dal vivo.](assets/screenshots/dashboard.png)
+![La panoramica dopo un primo backup: cosa richiede la tua attenzione, la protezione di ogni sezione, le destinazioni e la cronologia.](assets/screenshots/dashboard.png)
 
-*La dashboard dopo un primo backup: cosa è protetto, cosa parte dopo e un registro dal vivo.*
+*La panoramica dopo un primo backup: cosa richiede la tua attenzione, la protezione di ogni sezione, le destinazioni e la cronologia.*
 
-1. Apri l'interfaccia web all'indirizzo `https://<your-unraid-ip>:3443` (certificato autofirmato pronto all'uso).
-2. In **Impostazioni**, abilita i domini di backup che vuoi (Container, VM, Flash, Auto-backup, Cartelle, Dataset ZFS) e scegli un colore di accento.
-3. Nella scheda **Container**, scegli un container e clicca **Esegui backup ora** per creare il tuo primo punto di ripristino. I percorsi dei repository hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` e vengono creati al primo backup.
-4. Imposta la pianificazione da **Impostazioni, Pianificazioni**. C'è un *Includi tutto nel calendario* con un clic per container e VM.
+1. Apri l'interfaccia web all'indirizzo `https://<your-unraid-ip>:3443` (certificato autofirmato pronto all'uso). Un'installazione nuova si apre su **Ti diamo il benvenuto in BombVault**, che elenca ciò che BombVault ha trovato sul server.
+2. Scegli **Iniziamo**. La panoramica mostra poi la scheda **Primi passi** con tre passaggi:
+    1. **Scegli le sezioni**: attiva ciò di cui BombVault fa il backup (Container, VM, Flash, Cartelle, Dataset ZFS, Auto-backup). **Scegli** apre l'elenco degli elementi di una sezione, dove **Sospendi pianificazione** ne lascia fuori uno. Le sezioni che attivi qui girano ogni notte, e lo cambi in **Impostazioni, Calendario**.
+    2. **Aggiungi destinazione**: dove vanno i backup. Una cartella locale basta per iniziare. La scelta più sicura è una seconda destinazione fuori sede, come una Storage Box o Backblaze B2. I repository locali hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` e vengono creati al primo backup.
+    3. **Primo backup**: dopo, va avanti da solo ogni notte.
+3. Apri **Backup** per vedere ogni elemento in un unico elenco. **Esegui il backup di tutto ora** avvia un'esecuzione su tutte le sezioni attivate, ed **Esegui backup ora** nella pagina di un elemento ne salva solo quell'uno.
+
+Hai già usato BombVault? **Ripristina da un backup** nella pagina di benvenuto apre la pagina Ripristino, dove la **Procedura guidata di emergenza** riporta indietro impostazioni, container, VM e cartelle di un server perso. Vedi [Off-site e ripristino](offsite-recovery.md#emergency).
 
 !!! tip "Facoltativo: scegli un ordine di backup"
-    Se alcuni container dovrebbero sempre essere sottoposti a backup prima di altri (per esempio un database prima dell'app che lo usa), apri il pannello **Ordine dei backup** nella pagina Container e trascinali nella sequenza che vuoi. Le esecuzioni pianificate e a selezione multipla la seguono quindi; tutto ciò che lasci non ordinato viene sottoposto a backup dal più in ritardo per primo, come prima.
+    Se alcuni container dovrebbero sempre essere sottoposti a backup prima di altri (per esempio un database prima dell'app che lo usa), apri la scheda **Ordine** in **Impostazioni, Calendario** e trascinali nella sequenza che vuoi. Le esecuzioni pianificate e il backup completo la seguono quindi; tutto ciò che lasci non ordinato viene sottoposto a backup dal più in ritardo per primo.
 
 !!! note "Verifica integrazione host"
-    Apri `/spike` nell'interfaccia web dopo l'avvio del container. Sonda ogni mount e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e segnala eventuali pezzi mancanti, così puoi confermare che il container sia collegato correttamente prima di affidartici.
+    La scheda **Integrazione host** della panoramica sonda ogni mount e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e segnala eventuali pezzi mancanti, così puoi confermare che il container sia collegato correttamente prima di affidartici. Resta sotto **Personalizza** finché non la aggiungi.
 
-## Semplice vs Avanzata
+## Orientarsi {#navigation}
 
-![Le impostazioni non hanno un pulsante Salva: ogni modifica viene scritta mentre la fai.](assets/screenshots/settings.png)
+![Le impostazioni come riquadri, con le schede del riquadro scelto accanto. Ogni modifica viene scritta mentre la fai.](assets/screenshots/settings.png)
 
-*Le impostazioni non hanno un pulsante Salva: ogni modifica viene scritta mentre la fai.*
+*Le impostazioni come riquadri, con le schede del riquadro scelto accanto. Ogni modifica viene scritta mentre la fai.*
 
-Per impostazione predefinita l'interfaccia mostra solo l'essenziale (backup, ripristino, pianificazione). Usa l'interruttore **Vista semplice / Vista avanzata** nella barra laterale per rivelare i controlli esperti: conservazione, copia off-site, hook pre/post, ripristino a livello di file, notifiche, metriche Prometheus e gli strumenti di integrità/manutenzione. È una preferenza per browser e disattivata di default, così i nuovi arrivati ottengono un'interfaccia pulita e gli utenti esperti ottengono tutto.
+La barra laterale ha cinque voci: **Panoramica**, **Anomalie** (finché il rilevamento delle anomalie è attivo), **Backup**, **Ripristino** e, sotto **Esci**, **Impostazioni**. L'azione principale di una pagina fluttua in basso a destra, e **Altro** raccoglie quelle rare. Sul telefono la barra contiene Panoramica, Backup, Ripristino e Impostazioni, e **Altro** ha il resto.
+
+- **Backup** elenca come elementi ogni container, VM, set di cartelle, la flash, ogni dataset ZFS e l'auto-backup. I riquadri sopra l'elenco scelgono un tipo, e **Filtri**, **Ordina** e **Cerca** restringono la scelta. Ogni elemento ha una pagina propria con tre schede: **Backup**, **Impostazioni** e **Integrità**.
+- **Ripristino** è un'unica pagina per tutto: scegli una sezione, cerca un elemento e scegli un backup. Anche la Procedura guidata di emergenza e le altre sorgenti partono da qui.
+- **Impostazioni** sono quattordici riquadri: Generale, Aspetto, Calendario, Destinazioni, Ripristino, Notifiche, Verifica, Sicurezza, Istanze, Associazione, Integrazioni, App, Sistema e Info. Premi `/` o Ctrl+K per cercare in tutti, anche con i nomi che le pagine avevano nelle versioni precedenti. Trascina i riquadri nel tuo ordine in **Aspetto**.
+- **Destinazioni** e **Istanze** sono riquadri delle impostazioni con pagine proprie. **Mostra anche nella barra laterale** sul loro riquadro le fissa alla barra laterale.
+
+Niente ha un pulsante Salva e niente si apre a fisarmonica: le cose rare hanno una scheda propria o una finestra, e le spiegazioni stanno nei fumetti (i). Dopo un aggiornamento, puntini verdi segnalano ciò che è cambiato. Un clic nasconde un puntino, e **Impostazioni, Info, Novità** elenca ogni modifica con **Vai lì**.
 
 ## Compilare dai sorgenti {#build-from-source}
 
@@ -106,12 +117,12 @@ golangci-lint run ./...
 go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signed certificate
 ```
 
-La build dell'interfaccia serve anche per `go run`. Il repository traccia solo un marcatore vuoto sotto `web/dist`, quindi senza `npm --prefix web run build` il binario non incorpora nulla e risponde `500 SPA index not found`, ed è normale. Docker, libvirt e Unraid non si possono testare in CI, quindi verifica i mount, restic e il collegamento SSH delle VM su un host reale con la verifica integrazione host (`/spike`) prima di aprire una pull request.
+La build dell'interfaccia serve anche per `go run`. Il repository traccia solo un marcatore vuoto sotto `web/dist`, quindi senza `npm --prefix web run build` il binario non incorpora nulla e risponde `500 SPA index not found`, ed è normale. Docker, libvirt e Unraid non si possono testare in CI, quindi verifica i mount, restic e il collegamento SSH delle VM su un host reale con la scheda **Integrazione host** della panoramica (o `GET /api/spike`) prima di aprire una pull request.
 
 ## Prossimi passi
 
 - Sfoglia l'insieme completo delle **[Funzionalità](features.md)**.
 - Porta tutti i server del tuo gruppo sul telefono con l'**[App Android](android.md)**.
-- Aggiungi una o più repliche **[Off-site e ripristino](offsite-recovery.md)** (ogni dominio può spedire a più destinazioni contemporaneamente) e salva il tuo kit di ripristino.
+- Aggiungi una o più destinazioni fuori sede (ogni sezione può copiare su più destinazioni contemporaneamente) e salva il tuo kit di ripristino, come descritto in **[Off-site e ripristino](offsite-recovery.md)**.
 - Stai clonando una configurazione o passando a una nuova macchina? Porta con te l'intera configurazione con la scheda **Esporta / importa impostazioni**. Vedi [Configurazione](configuration.md#portable-settings-export-and-import).
 - Hai incontrato un intoppo? Vedi **[Risoluzione dei problemi](troubleshooting.md)**.

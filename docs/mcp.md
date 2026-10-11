@@ -262,7 +262,7 @@ Whatever an assistant reads goes to the AI provider behind it: item names, sched
 | `retention_guard` | One more MCP backup would leave only MCP-made restore points in a "keep last N" window, or the item already got 4 backups through MCP in the last 24 hours, failed and cancelled ones included. In the first case the next scheduled backup makes room, in the second the item is free again 24 hours after the oldest of those backups. Either way you can start it in the web interface. |
 | `rate_limited` | The key has used its 12 starts for this hour. |
 | `not_permitted` on a start | The key is read-only. Switch **Allow starting backups** on in the card; no reconnect needed. On a cancel it means the run was not started by this key. |
-| `domain_off` | That backup type is switched off in Settings. |
+| `domain_off` | That section is switched off under **Settings, General**. |
 | `not_found` | The item is not protected by BombVault. Add it in the web interface first; MCP never creates configuration. |
 | The client cannot find the authorization server | Sign-in through OAuth is off, no login password is set, or the proxy does not let `/.well-known/` through to BombVault. |
 | The consent page says the return address is not registered | The client sent a return address it did not register. Remove the connector in the client and add it again. |

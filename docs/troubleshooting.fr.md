@@ -4,7 +4,7 @@ Une courte FAQ. Pour le tableau complet de dépannage côté hôte de la sauvega
 
 ## Quelque chose n'est pas correctement branché
 
-Ouvrez `/spike` dans l'interface web. La vérification de l'intégration hôte sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante. Commencez ici avant de supposer un bug : un montage manquant ou un hôte injoignable apparaît immédiatement.
+Ajoutez la carte **Intégration hôte** à l'aperçu sous **Personnaliser**. La vérification de l'intégration hôte sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante, et **Vérifier maintenant** la relance. Commencez ici avant de supposer un bug : un montage manquant ou un hôte injoignable apparaît immédiatement.
 
 ## Je ne peux pas atteindre l'interface web
 
@@ -12,7 +12,19 @@ BombVault sert du HTTPS par défaut sur le port `3443` (certificat auto-signé),
 
 ## J'ai perdu mon APP_KEY
 
-`APP_KEY` dérive le mot de passe du dépôt restic. Sans lui (et sans le kit de récupération de clé de chiffrement), les sauvegardes chiffrées ne peuvent pas être récupérées. C'est pourquoi le tableau de bord vous relance pour télécharger le kit de récupération. Voir [Sauvegarde hors site et récupération](offsite-recovery.md). Générez une clé avec `openssl rand -hex 32` et conservez-la hors du serveur avant de vous fier à une quelconque sauvegarde.
+`APP_KEY` dérive le mot de passe du dépôt restic. Sans lui, sans le kit de récupération et sans copie déposée dans votre groupe, les sauvegardes chiffrées ne peuvent pas être récupérées. C'est pourquoi l'aperçu affiche **Sauvegardez votre kit de récupération** tant que vous ne l'avez pas téléchargé. Voir [Sauvegarde hors site et récupération](offsite-recovery.md#recovery-kit). Générez une clé avec `openssl rand -hex 32` et conservez-la hors du serveur avant de vous fier à une quelconque sauvegarde.
+
+## J'ai oublié le mot de passe de connexion
+
+Choisissez **Mot de passe oublié ?** sur la page de connexion. BombVault écrit un code de 12 caractères dans le journal de son conteneur (sous Unraid : onglet Docker, icône BombVault, **Logs**). Saisissez-le avec un nouveau mot de passe dans les 10 minutes. La réinitialisation désactive aussi l'authentification à deux facteurs, supprime toutes les clés d'accès, révoque tous les jetons d'API, clés MCP et connexions OAuth, ferme toutes les autres sessions et désactive l'appairage des téléphones. Ajoutez à nouveau vos clés d'accès sous **Paramètres, Sécurité**, réactivez-y l'appairage des téléphones, et créez de nouveaux jetons et de nouvelles clés là où vous en avez encore besoin. Voir [Modèle de sécurité](configuration.md#login).
+
+## Les sauvegardes se sont arrêtées et indiquent que la clé ne peut plus être ouverte
+
+Ce serveur a repris la clé de sauvegarde d'un autre serveur dans l'Assistant d'urgence, et `APP_KEY` a été modifiée ensuite. La clé reprise est scellée avec l'ancienne APP_KEY : BombVault ne peut donc pas l'ouvrir et ne sauvegarde rien plutôt que d'écrire avec la mauvaise clé. **À traiter** sur l'aperçu la nomme. Remettez APP_KEY comme elle était, ou téléversez à nouveau le kit de récupération sur la page Restauration sous **Urgence**.
+
+## Un téléphone arrive sur la page de connexion
+
+Un téléphone appairé reçoit sa session via le groupe seulement tant que **Les téléphones peuvent s'appairer avec les douze mots du groupe** est activé sous **Paramètres, Sécurité**. Une réinitialisation du mot de passe le désactive. Une application plus ancienne que le serveur ne reçoit pas non plus de session avant d'être mise à jour. Un serveur ajouté par son adresse demande toujours le mot de passe.
 
 ## La sauvegarde de VM ne se connecte pas
 
@@ -29,11 +41,11 @@ Les instantanés à chaud nécessitent l'agent invité qemu installé dans la VM
 
 ## Une sauvegarde a échoué avec « repository is already locked »
 
-C'est généralement un verrou restic orphelin laissé lorsque le conteneur a été mis à jour ou redémarré en pleine opération. BombVault détecte un verrou prouvé orphelin, le force à se libérer et réessaie une fois, automatiquement. S'il persiste, utilisez **Paramètres, Intégrité, Déverrouiller** pour le domaine concerné afin de libérer un verrou bloqué à la main. Un vrai problème remonte tout de même au lieu d'être caché. Après un redémarrage, BombVault attend qu'un tel verrou soit resté dix minutes sans être rafraîchi. Un restic encore en marche, par exemple dans un second BombVault sur le même dépôt, rafraîchit son verrou toutes les cinq minutes.
+C'est généralement un verrou restic orphelin laissé lorsque le conteneur a été mis à jour ou redémarré en pleine opération. BombVault détecte un verrou prouvé orphelin, le force à se libérer et réessaie une fois, automatiquement. S'il persiste, ouvrez la carte **Vérifier les sauvegardes** sous **Paramètres, Vérification** et choisissez **Déverrouiller** sous **Plus** dans la ligne de la section concernée pour libérer un verrou bloqué à la main. Un vrai problème remonte tout de même au lieu d'être caché. Après un redémarrage, BombVault attend qu'un tel verrou soit resté dix minutes sans être rafraîchi. Un restic encore en marche, par exemple dans un second BombVault sur le même dépôt, rafraîchit son verrou toutes les cinq minutes.
 
 ## Ma copie hors site n'a pas eu lieu après une sauvegarde
 
-La réplication hors site est au mieux par conception, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Vérifiez le planning hors site de ce domaine (Paramètres, Plannings) : un planning vide réplique après chaque sauvegarde locale, tandis qu'une cadence expédie moins souvent. Utilisez **Répliquer maintenant** dans la page Hors site pour une exécution à la demande, et surveillez l'indicateur de réplication sur le tableau de bord.
+La réplication hors site est au mieux par conception, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Vérifiez quand la destination copie : sa carte **Copier** indique **Après chaque sauvegarde** ou nomme un planning propre, et **Paramètres, Planning, Copies hors site par section** peut donner à une section son propre planning. Utilisez **Répliquer maintenant** dans la carte **Copie hors site** de la section sous **Paramètres, Destinations** pour une exécution à la demande, et surveillez l'en-tête d'état de l'aperçu, qui affiche **Copie hors site en cours** pendant l'exécution. Une copie échouée apparaît sous **À traiter**.
 
 ## Une restauration s'est interrompue avant de démarrer
 
@@ -41,7 +53,7 @@ Avant que quoi que ce soit ne soit arrêté ou supprimé, la restauration exécu
 
 ## Un export en clair a échoué au lieu d'écrire un fichier
 
-Si le chiffrement age est activé (Paramètres) mais qu'aucun destinataire valide n'est défini, un export échoue avec une erreur claire au lieu d'écrire du texte en clair. Ajoutez un destinataire valide (une clé publique age ou une clé publique SSH), ou désactivez le chiffrement si vous voulez que l'export soit en clair. Voir [Fonctionnalités](features.md).
+Si **Chiffrer les exports avec age** est activé sous **Paramètres, Système** mais qu'aucun destinataire valide n'est défini, un export échoue avec une erreur claire au lieu d'écrire du texte en clair. Ajoutez un destinataire valide (une clé publique age ou une clé publique SSH), ou désactivez le chiffrement si vous voulez que l'export soit en clair. Voir [Fonctionnalités](features.md).
 
 ## Un dump de base de données a échoué
 
@@ -67,11 +79,11 @@ Chaque problème porte un code de raison entre crochets, et la page [Jeux de don
 
 - **`snapshot-loop`** : l'instantané n'est pas parvenu à BombVault parce que Host Data ne transmet pas les nouveaux montages. Modifiez le conteneur, réglez l'Access Mode de Host Data sur Read/Write - Slave et redémarrez BombVault.
 - **`key-not-loaded`** : un jeu de données chiffré dont la clé n'est pas chargée est ignoré. Chargez la clé avec `zfs load-key` et montez le jeu ; la sauvegarde suivante l'inclut.
-- **`ssh-auth`** : le serveur a refusé la clé de BombVault. La carte de connexion de la page ZFS affiche la commande qui l'autorise ; exécutez-la une fois sur le serveur.
+- **`ssh-auth`** : le serveur a refusé la clé de BombVault. **Connexion ZFS à ce serveur**, qu'ouvre **Voir la connexion** sur la page Sauvegardes, affiche la commande qui l'autorise ; exécutez-la une fois sur le serveur.
 
 ## Un élément reste sur « Apprend N/10 »
 
-La plupart des contrôles d'anomalies commencent après 10 sauvegardes réussies d'un élément, et le compte repart de zéro après **Marquer comme attendue** et après une modification de la sélection de l'élément. Un élément non planifié n'apprend pas, et un conteneur sans appdata n'a rien dont apprendre, ce que son badge indique.
+La plupart des contrôles d'anomalies commencent après 10 sauvegardes réussies d'un élément, et le compte repart de zéro après **Marquer comme attendue** et après une modification de la sélection de l'élément. Un élément non planifié n'apprend pas, et un conteneur sans appdata n'a rien dont apprendre, ce que son badge indique. **Progression de l'apprentissage** sur la page Anomalies montre un anneau de dix parties par élément.
 
 ## La rétention ne supprime plus les anciennes sauvegardes d'un élément
 
@@ -83,7 +95,7 @@ Même cause : le nettoyage laisse intactes les anciennes sauvegardes d'un élém
 
 ## L'import de l'historique indique qu'un dépôt n'a pas pu être lu
 
-Après la mise à jour, BombVault lit une fois la taille des sauvegardes antérieures dans chaque dépôt. Un dépôt injoignable à ce moment, par exemple une cible hors site en panne ou un partage non monté, est compté dans la carte **Anomalies** de **Paramètres, Intégrité** et réessayé une fois par jour. Ses éléments apprennent entre-temps des nouvelles sauvegardes.
+Après la mise à jour, BombVault lit une fois la taille des sauvegardes antérieures dans chaque dépôt. Un dépôt injoignable à ce moment, par exemple une cible hors site en panne ou un partage non monté, est compté dans la carte **Anomalies** de **Paramètres, Vérification** et réessayé une fois par jour. Ses éléments apprennent entre-temps des nouvelles sauvegardes.
 
 ## L'alerte d'espace disque ne correspond pas au tableau de bord Unraid
 
@@ -95,7 +107,7 @@ La page [Serveur MCP](mcp.md#troubleshooting) indique ce que signifie chaque cod
 
 ## Le conteneur redémarre sans cesse ou semble non sain
 
-BombVault se signale sain/non sain depuis son propre `/api/health`. Un outil d'auto-réparation (comme Autoheal) peut le redémarrer automatiquement si le moteur venait à se coincer. Vérifiez le journal du conteneur et le rapport `/spike` pour la cause sous-jacente.
+BombVault se signale sain/non sain depuis son propre `/api/health`. Un outil d'auto-réparation (comme Autoheal) peut le redémarrer automatiquement si le moteur venait à se coincer. Vérifiez le journal du conteneur et la carte **Intégration hôte** pour la cause sous-jacente.
 
 ## Toujours bloqué ?
 

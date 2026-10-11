@@ -1,6 +1,6 @@
 # ZFS-datasets
 
-De pagina **ZFS** maakt back-ups van ZFS-datasets. Een item is één dataset samen met elke dataset eronder. Voor elke back-up maakt BombVault één ZFS-snapshot van de hele boom, zodat elke dataset erin op hetzelfde moment wordt vastgelegd. Daarna leest het de bestanden van elke dataset uit die snapshot, slaat ze met restic op zoals het een map opslaat en verwijdert de snapshot meteen daarna. De back-ups zijn gededupliceerd, je kunt elke back-up doorbladeren en losse bestanden kunnen worden teruggezet.
+ZFS-datasets zijn items in de lijst **Back-ups**, net als containers en VM's. Een item is één dataset samen met elke dataset eronder. Bij elke back-up maakt BombVault één ZFS-snapshot van de hele boom, zodat elke dataset erin op hetzelfde moment wordt vastgelegd. Daarna leest het de bestanden van elke dataset uit die snapshot en slaat ze met restic op, op dezelfde manier als een map, en verwijdert de snapshot meteen daarna. De back-ups zijn gededupliceerd, je kunt ze allemaal doorbladeren en losse bestanden kunnen worden hersteld.
 
 De back-up stuurt nooit een stream naar restic en zet nooit een dataset terug naar een eerdere stand. BombVault vernietigt alleen snapshots die het zelf heeft gemaakt. De optionele [replica](#replica) is de enige plek die `zfs send` gebruikt: ze kopieert de datasets naar een tweede ZFS-server en raakt de back-up niet aan.
 
@@ -11,24 +11,24 @@ De back-up stuurt nooit een stream naar restic en zet nooit een dataset terug na
 - **Host Data gemapt als `/mnt` met Access Mode Read/Write - Slave.** Dat is de standaard van de template. De snapshot van een dataset verschijnt pas in de map `.zfs/snapshot` van de dataset nadat BombVault is gestart, dus de container moet de mounts ontvangen die de host later maakt.
 - **De datasets gemount onder `/mnt`.** Op Unraid staan pools onder `/mnt/<pool>`, dus dat is al zo.
 
-Schakel het domein in onder **Instellingen, Algemeen** (ZFS-datasets). De ZFS-pagina toont dan een kaart **Verbinding met deze server**. Die test de SSH-verbinding, noemt de gebruiker en host waarmee hij verbindt en zegt wat er ontbreekt als er iets ontbreekt. De controle van de hostintegratie (`/spike`) toont hetzelfde resultaat.
+Schakel het onderdeel in onder **Instellingen, Algemeen** (ZFS-datasets). **ZFS-verbinding met deze server** onder **Meer** op de pagina Back-ups opent dan **Verbinding met deze server**. Het test de SSH-verbinding, noemt de gebruiker en host waarmee het verbindt, en zegt wat er ontbreekt als er iets ontbreekt. Is de verbinding weg, dan zegt de lijst Back-ups dat met **Verbinding bekijken**, en de kaart **Host-integratie** in het overzicht toont hetzelfde resultaat.
 
 ## Items en onderliggende datasets {#items-and-children}
 
-Open **Datasets toevoegen** op de ZFS-pagina. De lijst komt van de server. Kies de dataset die het hoogst staat van wat je wilt back-uppen, bijvoorbeeld `cache/appdata`, en het item omvat die dataset en elke dataset eronder.
+Kies **Toevoegen** op de pagina Back-ups en dan **Een ZFS-dataset**. De lijst komt van de server. Kies de dataset bovenaan wat je wilt back-uppen, bijvoorbeeld `cache/appdata`, en het item omvat die en elke dataset eronder.
 
 - **Nieuwe onderliggende datasets komen er vanzelf bij.** Een dataset die later onder het item wordt aangemaakt, wordt bij de volgende run geback-upt, en die run meldt hem als nieuw. Zijn eerste back-up leest hem één keer volledig; daarna worden alleen wijzigingen gelezen.
-- **Je kunt losse onderliggende datasets weglaten.** Schakel er een uit in de instellingen van het item en hij blijft buiten, samen met alles eronder. Een weggelaten onderliggende dataset die niet meer op de server bestaat, wordt zo gemarkeerd en kan uit de lijst worden verwijderd.
-- **Onderliggende datasets die niet leesbaar zijn, worden overgeslagen, nooit stilletjes.** De run somt ze op, het item toont hoeveel er zijn overgeslagen en de dekkingskaart op het dashboard telt elk ervan als niet beschermd. De run back-upt toch al het andere en mislukt niet door een overgeslagen dataset. De redenen staan in de [tabel met redencodes](#reason-codes): een dataset die niet gemount is, `canmount=off` heeft, een `legacy`- of geen mountpoint, een versleutelingssleutel die niet geladen is, uitgeschakelde snapshottoegang of een mountpoint dat BombVault niet ziet.
+- **Je kunt afzonderlijke onderliggende datasets weglaten.** Zet een onderliggende dataset uit op het tabblad Instellingen van het item en hij wordt samen met alles eronder weggelaten. Een weggelaten onderliggende dataset die niet meer op de server bestaat, wordt als zodanig gemarkeerd en kan uit de lijst worden gehaald.
+- **Onderliggende datasets die niet gelezen kunnen worden, worden overgeslagen, nooit stilzwijgend.** De run noemt ze, het item toont hoeveel er zijn overgeslagen, en de kaart **Zonder back-up** in het overzicht telt elk ervan als niet beschermd. De run maakt nog steeds van al het andere een back-up en mislukt niet door een overgeslagen onderliggende dataset. De redenen staan in de [tabel met redencodes](#reason-codes): een dataset die niet is gemount, `canmount=off` heeft, een `legacy` of geen mountpoint, een encryptiesleutel die niet is geladen, snapshottoegang die is uitgeschakeld, of een mountpoint dat BombVault niet kan zien.
 - **Een overgeslagen dataset neemt zijn onderliggende datasets niet mee.** Een dataset met `canmount=off` die alleen andere datasets bevat, wordt overgeslagen (getoond als "alleen structuur") en zijn gemounte onderliggende datasets worden geback-upt. Een versleutelde dataset waarvan de sleutel niet geladen is, wordt overgeslagen samen met de onderliggende datasets die zijn sleutel delen.
 - **Onderliggende datasets die VM-schijven of systeemdata zijn, beginnen uitgeschakeld** in het toevoegvenster, met de reden naast de schakelaar. Een hele pool toevoegen vraagt om een bevestiging die opsomt wat erin zit.
 
 ### Volumes {#volumes}
 
-Een volume (zvol) bevat een virtuele schijf in plaats van bestanden, en de ZFS-pagina back-upt er nooit een.
+Een volume (zvol) bevat een virtuele schijf in plaats van bestanden, en een ZFS-item maakt er nooit een back-up van.
 
-- Een volume dat een VM gebruikt, wordt met die VM geback-upt op de pagina **VM's**.
-- Een volume dat geen enkele VM gebruikt (een iSCSI-extent, een losgekoppelde schijf) **wordt niet door BombVault geback-upt**. Het toevoegvenster en de ZFS-pagina tellen deze volumes en zeggen dat. Een latere versie zal ze back-uppen.
+- Van een volume dat een VM gebruikt, wordt een back-up gemaakt met die VM.
+- Een volume dat geen enkele VM gebruikt (een iSCSI-extent, een schijf die je hebt losgekoppeld) wordt **niet door BombVault geback-upt**. Het toevoegvenster en de pagina Back-ups tellen deze volumes en zeggen het. Een latere versie maakt er wel een back-up van.
 
 Volumes in de boom van een item worden bij elke run overgeslagen en genoemd.
 
@@ -53,26 +53,25 @@ Wat er gebeurt als er iets misgaat:
 - Het stoppen wacht tot een lopende containerback-up klaar is (tot 30 minuten bij een handmatige run, tot de tijdslimiet van de back-up bij een geplande), zodat die twee nooit tegelijk dezelfde container stoppen en starten.
 - Voordat de eerste container stopt, noteert BombVault welke het stopt. Wordt BombVault binnen het venster beëindigd, dan start het die containers bij de volgende start opnieuw, stuurt een melding, en het item toont een rode notitie voor elke container die het niet kon starten.
 
-De automatische databasedumps (zie [Functies](features.md)) draaien met de eigen back-up van een container op de pagina **Containers**, niet met een ZFS-item. Een database waarvan de container alleen via zijn dataset wordt geback-upt, krijgt geen dump, dus geef hem hier een commando.
+De automatische databasedumps (zie [Functies](features.md)) draaien mee met de eigen back-up van een container, niet met een ZFS-item. Een database waarvan de container alleen via zijn dataset wordt geback-upt, krijgt geen dump, dus geef er hier een opdracht voor.
 
-Een container kan tegelijk op deze lijst en op de pagina **Containers** staan. Zijn data wordt dan twee keer opgeslagen, in twee repository's, en de **Volledige back-up** stopt hem twee keer. Het item wijst daarop.
+Een container kan op deze lijst staan en tegelijk als container worden geback-upt. Zijn data wordt dan twee keer opgeslagen, in twee repository's, en de volledige back-up stopt hem twee keer. Het item zegt het.
 
 ## Terugzetten {#restore}
 
-Open **Back-ups** bij het item, kies de back-up en daarna de dataset. Standaard is dat de bovenste dataset van het item.
+Open het item en kies **Herstel**, of kies het op de pagina **Herstel**. Het herstelvenster vraagt om de back-up en dan de **Dataset**. Standaard is dat de bovenste dataset van het item. Onder **Wat** herstel je alles of alleen de bestanden en mappen die je kiest. **Waarheen** biedt:
 
 - **Terugzetten in de dataset.** Bestanden uit de back-up worden in het mountpoint van de dataset geschreven. Bestanden met dezelfde naam worden overschreven, andere blijven staan. De dataset wordt nooit teruggezet naar een eerdere stand of vervangen. BombVault controleert of de dataset gemount, zichtbaar en beschrijfbaar is, één keer voor het begint en opnieuw vlak voor het schrijft. Waar een onderliggende dataset erin is gemount, wordt niets geschreven: die behoudt zijn bestanden, eigenaar en rechten en wordt teruggezet uit zijn eigen back-up.
-- **Terugzetten naar een map.** Kies een map onder `/mnt`. BombVault controleert of de map op een gemounte pool of share staat en of er genoeg vrije ruimte is. Dit werkt zonder de SSH-verbinding en voor datasets die niet meer bestaan.
-- **In een nieuwe dataset.** Geef een dataset op die nog niet bestaat. BombVault maakt hem aan met de ZFS-eigenschappen uit de back-up en zet de bestanden erin terug, zie [Terugzetten als nieuwe dataset](#new-dataset).
-- **Bestanden kiezen** (geavanceerd): alleen de bestanden en mappen die je kiest terugschrijven in de dataset.
-- **Alle datasets van deze back-up** (geavanceerd): elke dataset van de boom in een eigen submap van de map die je kiest. Datasets die in die back-up werden overgeslagen, worden genoemd.
-- **Van een andere server:** de pagina **Herstel** zet terug uit de repository van een andere BombVault, altijd naar een map: alle datasets van één back-up, elk in een eigen submap, of één dataset van de boom, geheel of gekozen bestanden.
+- **Naar een map.** Kies een map onder `/mnt`. BombVault controleert of de map op een gemounte pool of share staat en of er genoeg vrije ruimte is. Dit werkt zonder de SSH-verbinding en voor datasets die niet meer bestaan.
+- **In een nieuwe dataset.** Geef een dataset op die nog niet bestaat; het venster stelt `<dataset>-restored` voor. BombVault maakt hem aan met de ZFS-eigenschappen die in de back-up staan en herstelt erin, zie [Terugzetten als nieuwe dataset](#new-dataset).
 
-De lijst met te stoppen containers van het item wordt ook aangeboden bij terugzetten in de dataset. Die containers blijven de hele tijd gestopt, en containerback-ups wachten zolang.
+Als je **Alle datasets van deze back-up** als dataset kiest, wordt elke dataset van de boom in een eigen submap van de gekozen map geschreven. Datasets die in die back-up zijn overgeslagen, worden genoemd. Om te herstellen uit de repository van een andere BombVault gebruik je **Uit een oude back-upmap** op de pagina Herstel; die herstelt altijd naar een map: alle datasets van één back-up, elk in een eigen submap, of één dataset van de boom, geheel of met gekozen bestanden.
+
+De lijst met te stoppen containers van het item wordt ook aangeboden bij een herstel in de dataset. Die containers blijven gestopt tijdens het hele herstel, en container-back-ups wachten intussen.
 
 ### De veiligheidssnapshot {#safety-snapshot}
 
-Voordat het in een dataset schrijft, maakt BombVault een ZFS-snapshot van alleen die dataset, met de naam `bombvault-prerestore-<tijd>`. Die staat standaard aan; uitschakelen vraagt een tweede bevestiging. Kan de snapshot niet worden gemaakt, dan wordt er niets teruggezet.
+Voordat het in een dataset schrijft, maakt BombVault een ZFS-snapshot van alleen die dataset, genaamd `bombvault-prerestore-<time>`. **Eerst een ZFS-snapshot van de huidige toestand bewaren** staat standaard aan; uitzetten vraagt een tweede bevestiging. Kan de snapshot niet worden gemaakt, dan wordt er niets hersteld.
 
 BombVault verwijdert een veiligheidssnapshot nooit uit zichzelf. Het item somt ze op met leeftijd en grootte, elk met de actie **Verwijderen**, en waarschuwt als de oudste meer dan 30 dagen oud is, omdat die verwijderde en gewijzigde data op de pool vasthoudt.
 
@@ -108,16 +107,16 @@ Een replica is een kopie van de datasets van een item op een tweede ZFS-server. 
 
 Een replica vervangt de back-up nooit. Oudere versies, losse bestanden en de controle komen nog steeds uit de back-ups, en de replica bewaart maar zoveel snapshots als je instelt. Een actuele replica telt als kopie buiten de locatie, maar een item met een replica en zonder back-up blijft oranje.
 
-Schakel haar in op de kaart **Replica** in de instellingen van het item. Daar kies je waarheen de replica gaat, wanneer ze draait (**After every backup** of **Own plan**) en hoeveel snapshots er op het doel blijven. De kaart toont elke dataset en elk volume met zijn status, en **Nu repliceren** start een run. Een replica-run heeft een eigen vergrendeling, zodat een lange eerste overdracht de back-ups nooit ophoudt.
+Zet het aan in de kaart **Replica** op het tabblad Instellingen van het item. Daar kies je waar de replica heen gaat, wanneer ze draait (**Na elke back-up** of **Eigen plan**) en hoeveel snapshots op het doel blijven. De kaart toont elke dataset en elk volume met zijn status, en **Nu repliceren** start een run. Een replica-run heeft een eigen lock, zodat een lange eerste overdracht de back-ups nooit ophoudt.
 
 ### Naar een ZFS-server sturen {#replica-push}
 
 Elke machine met ZFS en SSH kan ontvangen, bijvoorbeeld een tweede Unraid of een TrueNAS. BombVault hoeft daar niet te draaien.
 
-1. Open **Instanties, ZFS-servers** en klik op **ZFS-server toevoegen**.
+1. Kies onder **Instellingen, Koppeling** bij **ZFS-server zonder BombVault** voor **Verbinden via SSH**, of kies **ZFS-server toevoegen** in de kaart **Replica** van het item.
 2. Voer adres, gebruiker en poort in. Het venster toont de publieke sleutel van BombVault. Voeg die toe aan de `~/.ssh/authorized_keys` van de gebruiker op de server. Op Unraid staat dat onder **Settings, Users, root, SSH keys**.
 3. Test de verbinding. Het venster toont dan de pools van de server. Kies er een en stel de root in, die standaard `<pool>/bombvault-replica` is.
-4. Kies de nieuwe server op de kaart **Replica** van het item.
+4. Kies de nieuwe server in de kaart **Replica** van het item. De server heeft dan een eigen kaart op de pagina Instanties, en **Openen** leidt naar zijn pagina.
 
 Met root is verder niets nodig. Een eigen gebruiker heeft deze rechten nodig op de pool van het doel, die het venster ook toont:
 
@@ -139,8 +138,8 @@ BombVault legt bij de eerste verbinding de hostsleutel vast die de server laat z
 
 Een gekoppelde BombVault kan de replica zelf ontvangen. Niemand krijgt SSH-toegang tot de andere host en er komt geen sleutel in een `authorized_keys`-bestand.
 
-1. Kies op de kaart **Replica** van het item de gekoppelde instantie als doel. De kaart toont **Wacht op goedkeuring** totdat die antwoordt.
-2. Open op de ontvangende instantie **Instanties**, dan **Ontvangen**. De kaart **ZFS** toont het verzoek. Kies de pool en root op die server en hoeveel snapshots blijven, en druk dan op **Toestaan** of **Afwijzen**.
+1. Kies in de kaart **Replica** van het item de gekoppelde instantie als doel, of schakel de rol **ZFS-server** in op de kaart van die instantie op de pagina Instanties en kies daar de ZFS-items. De kaart toont **Wacht op goedkeuring** totdat ze antwoordt.
+2. Open op de ontvangende instantie **Instanties**. Het verzoek verschijnt op de kaart van de verzendende instantie als badge, en haar **Details** tonen het. Kies de pool en root op die server en hoeveel snapshots blijven, en druk dan op **Toestaan** of **Afwijzen**.
 3. Na **Toestaan** verstuurt de bron volgens haar eigen schema, net als bij elk ander doel.
 
 De ontvangende instantie accepteert alleen wat de goedkeuring dekt: de datasets van het item, in haar eigen root. Ze voert zelf `zfs receive` uit en de bron kan daar niets verwijderen of terugdraaien. Zo overleeft de kopie een bron die iemand heeft overgenomen. De ontvangende instantie houdt haar eigen retentie aan. De bron stelt alleen een regel voor wanneer ze het verzoek doet.
@@ -171,7 +170,7 @@ Een versleutelde dataset wordt raw verstuurd. Hij blijft op het doel versleuteld
 
 ### De replica gebruiken {#replica-use}
 
-Open het tabblad **Back-ups** van het item en klik op de replicarij op de kaart **Storage locations**. Het blad toont de snapshots op het doel en de commando's met je echte namen.
+Open het tabblad **Back-ups** van het item en klik op de rij **ZFS-replica** tussen de plekken die zijn snapshots bewaren. Het blad toont de snapshots op het doel en laat de opdrachten met je echte namen zien.
 
 Om een oude stand te bekijken, kloon je een snapshot op het doel. Een kloon neemt geen ruimte in totdat er iets verandert, en de replica blijft onaangeraakt:
 
@@ -212,13 +211,13 @@ Een onderliggende dataset die werd leeggemaakt, verandert het totaal van een gro
 
 Een dataset die de vorige run heeft geback-upt en die deze run niet kon lezen, telt als leeggemaakt, zolang de selectie van het item niet veranderde. Dat dekt een sleutel die niet geladen is, een dataset die niet gemount is en een die uit de boom is verdwenen. Een onderliggende dataset die je zelf uitsluit, verandert de selectie, dus zijn geschiedenis begint dan opnieuw. Zolang een bevinding over verloren data open staat, bewaart de retentie de oude back-ups van alleen die dataset en snoeit de rest van de boom zoals gewoonlijk.
 
-Op de pagina **Anomalieën** heeft elke dataset een eigen regel in het paneel van het item, dat opengaat met **Bewaking** op de kaart van het item of, als er voor het item niets open is, vanuit zijn regel in de kaart **Niets open**. De boom van het item op deze pagina toont de open bevindingen naast elke dataset. De link in een bevinding opent het terugzetpaneel van het item bij de laatste goede back-up van de dataset. Of een run afloopt, wordt beoordeeld voor het hele item, omdat een run als geheel slaagt of mislukt.
+Elke dataset heeft een eigen regel in de bewaking van het item, die opent met **Bewaking** op de pagina **Anomalieën** en staat op het tabblad **Integriteit** van het item. De open bevindingen staan naast elke dataset. De link in een bevinding opent het herstelvenster op de laatste goede back-up van de dataset. Of een run slaagt, wordt voor het hele item beoordeeld, omdat een run als geheel slaagt of mislukt.
 
 De controles zelf staan beschreven onder [Functies](features.md). Een assistent die via de [MCP-server](mcp.md) is verbonden, kan de herstelpunten van een ZFS-item opsommen, zijn back-up starten en de bevindingen lezen, maar een bevinding bevestigen gebeurt op de pagina **Anomalieën**.
 
 ## Redencodes {#reason-codes}
 
-De pagina, de rungeschiedenis en de meldingen noemen een probleem met een van deze codes. Bij de meeste staat de oplossing ook ernaast op de pagina.
+De pagina van het item, de runhistorie en de meldingen noemen een probleem met een van deze codes. De meeste hebben de oplossing ook ernaast op de pagina.
 
 | Code | Betekenis | Wat te doen |
 |---|---|---|
@@ -226,7 +225,7 @@ De pagina, de rungeschiedenis en de meldingen noemen een probleem met een van de
 | `host-placeholder` | Host SSH: Address is nog de voorbeeldwaarde, en `host.docker.internal` antwoordde ook niet. | Zet Host SSH: Address op het LAN-IP van deze server. |
 | `host-fallback` | Host SSH: Address is nog de voorbeeldwaarde, en `host.docker.internal` werkt. | Niets, of zet het LAN-IP. |
 | `ssh-unreachable` | De server is niet bereikbaar via SSH. | Controleer adres en poort, en of SSH aan staat. |
-| `ssh-auth` | De server weigerde de sleutel van BombVault. | Voer het commando van de verbindingskaart één keer uit op de server. |
+| `ssh-auth` | De server weigerde de sleutel van BombVault. | Voer de opdracht onder **Verbinding met deze server** één keer uit op de server. |
 | `zfs-not-found` | De SSH-host heeft geen commando `zfs`. | Laat Host SSH: Address wijzen naar de machine die de pools bezit. |
 | `zfs-permission` | De SSH-gebruiker mag dit zfs-commando niet uitvoeren. | Gebruik root, of zie [TrueNAS SCALE](#truenas). |
 | `uri-mismatch` | `LIBVIRT_URI` noemt een andere host of gebruiker dan de SSH-velden. | Laat ze overeenkomen, of maak de SSH-velden leeg zodat beide uit de URI komen. |
@@ -274,7 +273,7 @@ De pagina, de rungeschiedenis en de meldingen noemen een probleem met een van de
 
 ### Controleren wat de container ziet {#mountinfo}
 
-**Toegang tot snapshots testen** bij een item maakt een echte snapshot van zijn boom, zoekt hem in BombVault voor elke dataset en verwijdert hem weer. Het is de snelste manier om het hele pad te bewijzen voor de eerste geplande run.
+**Toegang tot snapshots testen** op het tabblad Instellingen van het item maakt een echte snapshot van zijn boom, zoekt hem in BombVault voor elke dataset en verwijdert hem weer. Het is de snelste manier om het hele pad te bewijzen vóór de eerste geplande run.
 
 Om zelf te kijken, voer je dit uit op de server:
 

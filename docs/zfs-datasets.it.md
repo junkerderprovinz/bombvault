@@ -1,6 +1,6 @@
 # Dataset ZFS
 
-La pagina **ZFS** esegue il backup di dataset ZFS. Un elemento è un dataset insieme a tutti i dataset che stanno sotto di esso. Per ogni backup BombVault prende un solo snapshot ZFS dell'intero albero, così ogni dataset al suo interno viene catturato nello stesso istante. Poi legge i file di ogni dataset da quello snapshot, li salva con restic nello stesso modo in cui salva una cartella e rimuove subito lo snapshot. I backup sono deduplicati, puoi sfogliare ciascuno di essi e ripristinare singoli file.
+I dataset ZFS sono elementi dell'elenco **Backup**, come i container e le VM. Un elemento è un dataset insieme a tutti i dataset che stanno sotto di esso. Per ogni backup BombVault prende un solo snapshot ZFS dell'intero albero, così ogni dataset al suo interno viene catturato nello stesso istante. Poi legge i file di ogni dataset da quello snapshot, li salva con restic nello stesso modo in cui salva una cartella e rimuove subito lo snapshot. I backup sono deduplicati, puoi sfogliare ciascuno di essi e ripristinare singoli file.
 
 Il backup non invia mai uno stream a restic e non riporta mai indietro un dataset. BombVault distrugge solo gli snapshot che ha creato lui stesso. La [replica](#replica) facoltativa è l'unico punto che usa `zfs send`: copia i dataset su un secondo server ZFS e non tocca il backup.
 
@@ -11,24 +11,24 @@ Il backup non invia mai uno stream a restic e non riporta mai indietro un datase
 - **Host Data mappato come `/mnt` con Access Mode Read/Write - Slave.** È il valore predefinito del template. Lo snapshot di un dataset compare nella cartella `.zfs/snapshot` del dataset solo dopo l'avvio di BombVault, quindi il container deve ricevere i mount che l'host crea in seguito.
 - **I dataset montati sotto `/mnt`.** Su Unraid i pool si trovano in `/mnt/<pool>`, quindi è già così.
 
-Attiva il dominio in **Impostazioni, Generale** (Dataset ZFS). La pagina ZFS mostra allora una scheda **Connessione a questo server**. Prova il collegamento SSH, indica l'utente e l'host con cui si collega e dice cosa manca quando manca qualcosa. Il controllo dell'integrazione con l'host (`/spike`) mostra lo stesso risultato.
+Attiva la sezione in **Impostazioni, Generale** (Dataset ZFS). **Connessione ZFS a questo server** sotto **Altro** nella pagina Backup apre poi **Connessione a questo server**. Prova il collegamento SSH, indica l'utente e l'host con cui si collega e dice cosa manca quando manca qualcosa. Quando il collegamento è interrotto, l'elenco Backup lo dice con **Mostra connessione**, e la scheda **Integrazione host** nella panoramica mostra lo stesso risultato.
 
 ## Elementi e dataset figli {#items-and-children}
 
-Apri **Aggiungi dataset** nella pagina ZFS. L'elenco arriva dal server. Scegli il dataset più in alto di ciò che vuoi salvare, per esempio `cache/appdata`, e l'elemento copre quel dataset e ogni dataset sotto di esso.
+Scegli **Aggiungi** nella pagina Backup, poi **Un dataset ZFS**. L'elenco arriva dal server. Scegli il dataset più in alto di ciò che vuoi salvare, per esempio `cache/appdata`, e l'elemento copre quel dataset e ogni dataset sotto di esso.
 
 - **I nuovi dataset figli entrano da soli.** Un dataset creato più tardi sotto l'elemento viene salvato con l'esecuzione successiva, che lo segnala come nuovo. Il suo primo backup lo legge per intero una volta; poi vengono lette solo le modifiche.
-- **Puoi escludere singoli figli.** Disattiva un figlio nelle impostazioni dell'elemento e viene escluso insieme a tutto ciò che sta sotto. Un figlio escluso che non esiste più sul server viene segnalato come tale e si può togliere dall'elenco.
-- **I figli illeggibili vengono saltati, mai in silenzio.** L'esecuzione li elenca, l'elemento mostra quanti sono stati saltati e la scheda della copertura nella dashboard conta ciascuno come non protetto. L'esecuzione salva comunque tutto il resto e non fallisce per un figlio saltato. I motivi sono nella [tabella dei codici di motivo](#reason-codes): un dataset non montato, con `canmount=off`, con un mountpoint `legacy` o senza mountpoint, una chiave di cifratura non caricata, l'accesso agli snapshot disattivato o un mountpoint che BombVault non vede.
+- **Puoi escludere singoli figli.** Disattiva un figlio nella scheda Impostazioni dell'elemento e viene escluso insieme a tutto ciò che sta sotto. Un figlio escluso che non esiste più sul server viene segnalato come tale e si può togliere dall'elenco.
+- **I figli illeggibili vengono saltati, mai in silenzio.** L'esecuzione li elenca, l'elemento mostra quanti sono stati saltati e la scheda **Senza backup** della panoramica conta ciascuno come non protetto. L'esecuzione salva comunque tutto il resto e non fallisce per un figlio saltato. I motivi sono nella [tabella dei codici di motivo](#reason-codes): un dataset non montato, con `canmount=off`, con un mountpoint `legacy` o senza mountpoint, una chiave di cifratura non caricata, l'accesso agli snapshot disattivato o un mountpoint che BombVault non vede.
 - **Un dataset saltato non si trascina dietro i figli.** Un dataset con `canmount=off` che contiene solo altri dataset viene saltato (mostrato come "solo struttura") e i suoi figli montati vengono salvati. Un dataset cifrato con la chiave non caricata viene saltato insieme ai figli che condividono la sua chiave.
 - **I figli che sono dischi di VM o dati di sistema partono disattivati** nella finestra di aggiunta, con il motivo accanto all'interruttore. Aggiungere un intero pool chiede una conferma che elenca cosa contiene.
 
 ### Volumi {#volumes}
 
-Un volume (zvol) contiene un disco virtuale invece di file, e la pagina ZFS non ne salva mai uno.
+Un volume (zvol) contiene un disco virtuale invece di file, e un elemento ZFS non ne salva mai uno.
 
-- Un volume usato da una VM viene salvato con quella VM nella pagina **VM**.
-- Un volume che nessuna VM usa (un extent iSCSI, un disco scollegato) **non viene salvato da BombVault**. La finestra di aggiunta e la pagina ZFS contano questi volumi e lo dicono. Una versione successiva li salverà.
+- Un volume usato da una VM viene salvato con quella VM.
+- Un volume che nessuna VM usa (un extent iSCSI, un disco scollegato) **non viene salvato da BombVault**. La finestra di aggiunta e la pagina Backup contano questi volumi e lo dicono. Una versione successiva li salverà.
 
 I volumi nell'albero di un elemento vengono saltati e nominati a ogni esecuzione.
 
@@ -53,26 +53,25 @@ Cosa succede quando qualcosa va storto:
 - L'arresto aspetta che finisca un backup di container in corso (fino a 30 minuti per un'esecuzione manuale, fino al limite di tempo del backup per una pianificata), così i due non fermano e avviano mai lo stesso container nello stesso momento.
 - Prima che si fermi il primo container, BombVault annota quali ferma. Se BombVault viene terminato dentro la finestra, riavvia quei container al suo avvio successivo, invia una notifica e l'elemento mostra una nota rossa per ogni container che non è riuscito ad avviare.
 
-I dump automatici dei database (vedi [Funzionalità](features.md)) girano con il backup proprio di un container nella pagina **Container**, non con un elemento ZFS. Un database il cui container viene salvato solo tramite il suo dataset non riceve dump, quindi dagli qui un comando.
+I dump automatici dei database (vedi [Funzionalità](features.md)) girano con il backup proprio di un container, non con un elemento ZFS. Un database il cui container viene salvato solo tramite il suo dataset non riceve dump, quindi dagli qui un comando.
 
-Un container può stare in questo elenco e nella pagina **Container** allo stesso tempo. I suoi dati vengono allora salvati due volte, in due repository, e il **Backup totale** lo ferma due volte. L'elemento lo segnala.
+Un container può stare in questo elenco ed essere salvato anche come container. I suoi dati vengono allora salvati due volte, in due repository, e il backup completo lo ferma due volte. L'elemento lo segnala.
 
 ## Ripristino {#restore}
 
-Apri **Backup** sull'elemento, scegli il backup, poi il dataset. Per impostazione predefinita è il dataset superiore dell'elemento.
+Apri l'elemento e scegli **Ripristina**, oppure sceglilo nella pagina **Ripristino**. La finestra di ripristino chiede il backup, poi il **Dataset**. Per impostazione predefinita è il dataset superiore dell'elemento. Sotto **Cosa** ripristini tutto oppure solo i file e le cartelle che scegli. **Dove** offre:
 
 - **Ripristina dentro il dataset.** I file del backup vengono scritti nel mountpoint del dataset. I file con lo stesso nome vengono sovrascritti, gli altri restano. Il dataset non viene mai riportato indietro né sostituito. BombVault controlla che il dataset sia montato, visibile e scrivibile, una volta prima di iniziare e di nuovo subito prima di scrivere. Dove al suo interno è montato un dataset figlio, non viene scritto nulla: il figlio mantiene i suoi file, il proprietario e i permessi e viene ripristinato dal proprio backup.
-- **Ripristina in una cartella.** Scegli una cartella sotto `/mnt`. BombVault controlla che la cartella sia su un pool o una condivisione montati e che ci sia abbastanza spazio libero. Funziona senza il collegamento SSH e per dataset che non esistono più.
-- **In un nuovo dataset.** Indica un dataset che non esiste ancora. BombVault lo crea con le proprietà ZFS salvate nel backup e ripristina al suo interno, vedi [Ripristinare come nuovo dataset](#new-dataset).
-- **Scegli i file** (avanzato): riscrivere nel dataset solo i file e le cartelle che scegli.
-- **Tutti i dataset di questo backup** (avanzato): ogni dataset dell'albero nella propria sottocartella della cartella che scegli. I dataset saltati in quel backup vengono nominati.
-- **Da un altro server:** la pagina **Ripristino** ripristina dal repository di un altro BombVault, sempre in una cartella: tutti i dataset di un backup, ciascuno nella propria sottocartella, oppure un dataset dell'albero, intero o solo i file scelti.
+- **In una cartella.** Scegli una cartella sotto `/mnt`. BombVault controlla che la cartella sia su un pool o una condivisione montati e che ci sia abbastanza spazio libero. Funziona senza il collegamento SSH e per dataset che non esistono più.
+- **In un nuovo dataset.** Indica un dataset che non esiste ancora; la finestra propone `<dataset>-restored`. BombVault lo crea con le proprietà ZFS salvate nel backup e ripristina al suo interno, vedi [Ripristinare come nuovo dataset](#new-dataset).
+
+Scegliendo **Tutti i dataset di questo backup** come dataset, ogni dataset dell'albero viene scritto nella propria sottocartella della cartella che scegli. I dataset saltati in quel backup vengono nominati. Per ripristinare dal repository di un altro BombVault, usa **Da una vecchia cartella di backup** nella pagina Ripristino; ripristina sempre in una cartella: tutti i dataset di un backup, ciascuno nella propria sottocartella, oppure un dataset dell'albero, intero o solo i file scelti.
 
 L'elenco dei container da fermare dell'elemento viene proposto anche per un ripristino dentro il dataset. Quei container restano fermi per tutto il ripristino, e nel frattempo i backup dei container aspettano.
 
 ### Lo snapshot di sicurezza {#safety-snapshot}
 
-Prima di scrivere in un dataset, BombVault prende uno snapshot ZFS di quel solo dataset, chiamato `bombvault-prerestore-<ora>`. È attivo per impostazione predefinita; disattivarlo richiede una seconda conferma. Se non si riesce a prendere lo snapshot, non viene ripristinato nulla.
+Prima di scrivere in un dataset, BombVault prende uno snapshot ZFS di quel solo dataset, chiamato `bombvault-prerestore-<ora>`. **Tieni prima uno snapshot ZFS dello stato attuale** è attivo per impostazione predefinita; disattivarlo richiede una seconda conferma. Se non si riesce a prendere lo snapshot, non viene ripristinato nulla.
 
 BombVault non elimina mai da solo uno snapshot di sicurezza. L'elemento li elenca con età e dimensione, ciascuno con l'azione **Elimina**, e avvisa quando il più vecchio ha più di 30 giorni, perché trattiene sul pool dati eliminati e modificati.
 
@@ -108,16 +107,16 @@ Una replica è una copia dei dataset di un elemento su un secondo server ZFS. Bo
 
 Una replica non sostituisce mai il backup. Le versioni più vecchie, i singoli file e il controllo arrivano sempre dai backup, e la replica tiene solo tanti snapshot quanti ne imposti. Una replica aggiornata conta come copia off-site, ma un elemento con una replica e senza backup resta arancione.
 
-Attivala nella scheda **Replica** delle impostazioni dell'elemento. Lì scegli dove va la replica, quando viene eseguita (**After every backup** o **Own plan**) e quanti snapshot restano sulla destinazione. La scheda elenca ogni dataset e ogni volume con il suo stato, e **Replicate now** avvia un'esecuzione. Un'esecuzione di replica ha un lock proprio, così un primo trasferimento lungo non blocca mai i backup.
+Attivala nella scheda **Replica** nella scheda Impostazioni dell'elemento. Lì scegli dove va la replica, quando viene eseguita (**Dopo ogni backup** o **Piano proprio**) e quanti snapshot restano sulla destinazione. La scheda elenca ogni dataset e ogni volume con il suo stato, e **Replica ora** avvia un'esecuzione. Un'esecuzione di replica ha un lock proprio, così un primo trasferimento lungo non blocca mai i backup.
 
 ### Invio a un server ZFS {#replica-push}
 
 Qualsiasi macchina con ZFS e SSH può ricevere, per esempio un secondo Unraid o un TrueNAS. BombVault non deve girare lì.
 
-1. Apri **Istanze, Server ZFS** e clicca su **Aggiungi server ZFS**.
+1. In **Impostazioni, Associazione** scegli **Collega via SSH** in **Server ZFS senza BombVault**, oppure **Aggiungi server ZFS** nella scheda **Replica** dell'elemento.
 2. Inserisci indirizzo, utente e porta. La finestra mostra la chiave pubblica di BombVault. Aggiungila al file `~/.ssh/authorized_keys` dell'utente sul server. Su Unraid si trova in **Settings, Users, root, SSH keys**.
 3. Prova la connessione. La finestra elenca poi i pool del server. Scegline uno e imposta la radice, che di default è `<pool>/bombvault-replica`.
-4. Scegli il nuovo server nella scheda **Replica** dell'elemento.
+4. Scegli il nuovo server nella scheda **Replica** dell'elemento. Il server ha poi una scheda propria nella pagina Istanze, e **Apri** porta alla sua pagina.
 
 Con root non serve altro. Un utente dedicato ha bisogno di questi permessi sul pool della destinazione, che la finestra mostra a sua volta:
 
@@ -133,19 +132,19 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 In questa direzione il BombVault che tiene l'elemento tiene anche una chiave che può scrivere sul server.
 
-BombVault memorizza la chiave host che il server mostra alla prima connessione e in seguito ne rifiuta qualsiasi altra. Se il server è stato reinstallato, premi **Forget host key** nella pagina del server e la connessione successiva memorizza la nuova chiave.
+BombVault memorizza la chiave host che il server mostra alla prima connessione e in seguito ne rifiuta qualsiasi altra. Se il server è stato reinstallato, premi **Dimentica chiave host** nella pagina del server e la connessione successiva memorizza la nuova chiave.
 
 ### Invio a un'istanza abbinata {#replica-receive}
 
 Un BombVault abbinato può ricevere la replica da sé. Nessuno ottiene accesso SSH all'altro host e nessuna chiave finisce in un file `authorized_keys`.
 
-1. Nella scheda **Replica** dell'elemento scegli l'istanza abbinata come destinazione. La scheda mostra **In attesa di approvazione** finché non risponde.
-2. Sull'istanza che riceve apri **Instances**, poi **Ricevi**. La scheda **ZFS** elenca la richiesta. Scegli il pool e la radice su quel server e quanti snapshot restano, poi premi **Allow** o **Decline**.
-3. Dopo **Allow** la sorgente invia secondo il proprio piano, come per qualsiasi altra destinazione.
+1. Nella scheda **Replica** dell'elemento scegli l'istanza abbinata come destinazione, oppure attiva il ruolo **Server ZFS** sulla scheda di quell'istanza nella pagina Istanze e scegli lì gli elementi ZFS. La scheda mostra **In attesa di approvazione** finché non risponde.
+2. Sull'istanza che riceve apri **Istanze**. La richiesta compare come badge sulla scheda dell'istanza che invia, e i suoi **Dettagli** la elencano. Scegli il pool e la radice su quel server e quanti snapshot restano, poi premi **Consenti** o **Rifiuta**.
+3. Dopo **Consenti** la sorgente invia secondo il proprio piano, come per qualsiasi altra destinazione.
 
 L'istanza che riceve accetta solo ciò che l'approvazione copre: i dataset dell'elemento, nella propria radice. Esegue `zfs receive` da sola, e la sorgente non ha modo di eliminare o ripristinare nulla lì. Così la copia sopravvive a una sorgente di cui qualcuno ha preso il controllo. L'istanza che riceve tiene la propria conservazione. La sorgente suggerisce una regola solo quando fa la richiesta.
 
-**Revoke access** sull'istanza che riceve termina l'approvazione in qualsiasi momento e lo comunica alla sorgente, che allora mostra che l'approvazione è stata ritirata e si ferma. Ciò che l'istanza che riceve ha già resta lì. Una richiesta rifiutata resta rifiutata. Altri dataset, o una richiesta dopo una revoca, chiedono di nuovo.
+**Revoca accesso** sull'istanza che riceve termina l'approvazione in qualsiasi momento e lo comunica alla sorgente, che allora mostra che l'approvazione è stata ritirata e si ferma. Ciò che l'istanza che riceve ha già resta lì. Una richiesta rifiutata resta rifiutata. Altri dataset, o una richiesta dopo una revoca, chiedono di nuovo.
 
 L'istanza che riceve deve rispondere in HTTPS. A un indirizzo http semplice la sorgente non invia nulla, perché il token e i dati attraverserebbero la rete senza cifratura. Ogni trasferimento lascia inoltre libero un decimo del pool che riceve e si ferma prima di intaccarlo, così una sola sorgente non può riempire il pool del server che riceve.
 
@@ -161,7 +160,7 @@ Entra tutto ciò che l'elemento salva, e anche i volumi sotto di esso, che il ba
 
 ### Quanto restano gli snapshot {#replica-retention}
 
-Sulla destinazione una nuova replica tiene 7 snapshot giornalieri e 3 settimanali. Scegli invece **Short**, **Balanced** o **Long**, oppure imposta **Custom values**. Lì vengono rimossi solo gli snapshot chiamati `bombvault-replica-<14 cifre>`, e mai il più recente che i due lati condividono.
+Sulla destinazione una nuova replica tiene 7 snapshot giornalieri e 3 settimanali. Scegli invece **Breve**, **Equilibrato** o **Lungo**, oppure imposta **Valori personalizzati**. Lì vengono rimossi solo gli snapshot chiamati `bombvault-replica-<14 cifre>`, e mai il più recente che i due lati condividono.
 
 Sulla sorgente BombVault tiene solo l'ultimo snapshot di replica, più un bookmark per ogni stato inviato. I bookmark non occupano spazio. Il trasferimento successivo parte da quelli.
 
@@ -171,7 +170,7 @@ Un dataset cifrato viene inviato raw. Resta cifrato sulla destinazione, e la des
 
 ### Usare la replica {#replica-use}
 
-Apri la scheda **Backup** dell'elemento e clicca sulla riga della replica nella scheda **Storage locations**. Il pannello elenca gli snapshot sulla destinazione e mostra i comandi con i tuoi nomi reali.
+Apri la scheda **Backup** dell'elemento e clicca sulla riga **Replica ZFS** tra i luoghi che custodiscono i suoi snapshot. Il pannello elenca gli snapshot sulla destinazione e mostra i comandi con i tuoi nomi reali.
 
 Per guardare uno stato vecchio, clona uno snapshot sulla destinazione. Un clone non occupa spazio finché qualcosa non cambia, e la replica resta intatta:
 
@@ -187,7 +186,7 @@ zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inhe
 
 Dopo di che BombVault smette di replicare su quel dataset, finché non avvii una nuova prima esecuzione.
 
-Per riportare uno stato sulla sorgente, premi **Bring back as a new dataset** nel pannello. BombVault invia lo snapshot in un nuovo dataset accanto all'originale, chiamato `<dataset>-bombvault-restore-` più un timestamp. Non scrive mai sopra l'originale.
+Per riportare uno stato sulla sorgente, premi **Ripristina come nuovo dataset** nel pannello. BombVault invia lo snapshot in un nuovo dataset accanto all'originale, chiamato `<dataset>-bombvault-restore-` più un timestamp. Non scrive mai sopra l'originale.
 
 ## Snapshot rimasti {#leftover-snapshots}
 
@@ -212,13 +211,13 @@ Un figlio che è stato svuotato cambia appena il totale di un albero grande, qui
 
 Un dataset che l'esecuzione precedente ha salvato e che questa non è riuscita a leggere conta come svuotato, purché la selezione dell'elemento non sia cambiata. Questo copre una chiave non caricata, un dataset non montato e uno sparito dall'albero. Un figlio che escludi tu stesso cambia la selezione, quindi la sua cronologia riparte da zero. Finché un rilevamento di dati persi è aperto, la conservazione tiene i vecchi backup di quel solo dataset e sfoltisce il resto dell'albero come al solito.
 
-Nella pagina **Anomalie** ogni dataset ha una riga propria nel pannello dell'elemento, che si apre con **Monitoraggio** sulla scheda dell'elemento o, quando per l'elemento non c'è niente di aperto, dalla sua riga nella scheda **Niente di aperto**. L'albero dell'elemento in questa pagina mostra i rilevamenti aperti accanto a ogni dataset. Il link di un rilevamento apre il pannello di ripristino dell'elemento sull'ultimo backup buono del dataset. Se un'esecuzione arriva in fondo viene giudicato per l'intero elemento, perché un'esecuzione riesce o fallisce nel suo insieme.
+Ogni dataset ha una riga propria nel monitoraggio dell'elemento, che si apre con **Monitoraggio** nella pagina **Anomalie** e si trova nella scheda **Integrità** dell'elemento. I rilevamenti aperti compaiono accanto a ogni dataset. Il link di un rilevamento apre la finestra di ripristino sull'ultimo backup buono del dataset. Se un'esecuzione arriva in fondo viene giudicato per l'intero elemento, perché un'esecuzione riesce o fallisce nel suo insieme.
 
 I controlli in sé sono descritti in [Funzionalità](features.md). Un assistente collegato tramite il [server MCP](mcp.md) può elencare i punti di ripristino di un elemento ZFS, avviarne il backup e leggere i rilevamenti, ma la presa visione di un rilevamento avviene nella pagina **Anomalie**.
 
 ## Codici di motivo {#reason-codes}
 
-La pagina, la cronologia delle esecuzioni e le notifiche nominano un problema con uno di questi codici. Per la maggior parte la soluzione è indicata anche accanto, sulla pagina.
+La pagina dell'elemento, la cronologia delle esecuzioni e le notifiche nominano un problema con uno di questi codici. Per la maggior parte la soluzione è indicata anche accanto, sulla pagina.
 
 | Codice | Significato | Cosa fare |
 |---|---|---|
@@ -226,7 +225,7 @@ La pagina, la cronologia delle esecuzioni e le notifiche nominano un problema co
 | `host-placeholder` | Host SSH: Address è ancora il valore di esempio, e nemmeno `host.docker.internal` ha risposto. | Imposta Host SSH: Address sull'IP LAN di questo server. |
 | `host-fallback` | Host SSH: Address è ancora il valore di esempio, e `host.docker.internal` funziona. | Niente, oppure imposta l'IP LAN. |
 | `ssh-unreachable` | Il server non è raggiungibile via SSH. | Controlla indirizzo e porta, e che SSH sia attivo. |
-| `ssh-auth` | Il server ha rifiutato la chiave di BombVault. | Esegui una volta sul server il comando mostrato nella scheda della connessione. |
+| `ssh-auth` | Il server ha rifiutato la chiave di BombVault. | Esegui una volta sul server il comando mostrato sotto **Connessione a questo server**. |
 | `zfs-not-found` | L'host SSH non ha il comando `zfs`. | Fai puntare Host SSH: Address alla macchina che possiede i pool. |
 | `zfs-permission` | L'utente SSH non può eseguire questo comando zfs. | Usa root, oppure vedi [TrueNAS SCALE](#truenas). |
 | `uri-mismatch` | `LIBVIRT_URI` indica un host o un utente diverso dai campi SSH. | Falli coincidere, oppure svuota i campi SSH così che entrambi vengano dall'URI. |
@@ -274,7 +273,7 @@ La pagina, la cronologia delle esecuzioni e le notifiche nominano un problema co
 
 ### Controllare cosa vede il container {#mountinfo}
 
-**Prova l'accesso agli snapshot** su un elemento prende un vero snapshot del suo albero, lo cerca dentro BombVault per ogni dataset e poi lo rimuove. È il modo più rapido per verificare l'intero percorso prima della prima esecuzione pianificata.
+**Prova l'accesso agli snapshot** nella scheda Impostazioni dell'elemento prende un vero snapshot del suo albero, lo cerca dentro BombVault per ogni dataset e poi lo rimuove. È il modo più rapido per verificare l'intero percorso prima della prima esecuzione pianificata.
 
 Per controllare da solo, esegui questo sul server:
 

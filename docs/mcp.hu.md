@@ -262,7 +262,7 @@ Mindaz, amit egy asszisztens elolvas, a mögötte álló MI-szolgáltatóhoz ker
 | `retention_guard` | Még egy MCP-mentés után "az utolsó N megtartása" ablakban csak MCP-ből származó visszaállítási pontok maradnának, vagy az elem az elmúlt 24 órában már 4 mentést kapott MCP-n keresztül, a sikertelenekkel és a megszakítottakkal együtt. Az első esetben a következő ütemezett mentés helyet csinál, a másodikban az elem a legrégebbi ilyen mentés után 24 órával lesz újra szabad. A webes felületen bármikor elindíthatod. |
 | `rate_limited` | A kulcs elhasználta az erre az órára jutó 12 indítását. |
 | `not_permitted` indításnál | A kulcs csak olvashat. Kapcsold be az **Mentések indításának engedélyezése** kapcsolót a kártyán; újracsatlakozás nem kell. Megszakításnál azt jelenti, hogy a futást nem ez a kulcs indította. |
-| `domain_off` | Ez a mentésfajta ki van kapcsolva a beállításokban. |
+| `domain_off` | Ez a szakasz ki van kapcsolva a **Beállítások, Általános** alatt. |
 | `not_found` | A BombVault nem védi ezt az elemet. Előbb vedd fel a webes felületen; az MCP soha nem hoz létre beállítást. |
 | A kliens nem találja az engedélyezési kiszolgálót | Az OAuth-bejelentkezés ki van kapcsolva, nincs belépési jelszó, vagy a proxy nem engedi át a `/.well-known/` útvonalat a BombVaultig. |
 | A hozzájárulási oldal szerint a visszatérési cím nincs regisztrálva | A kliens olyan visszatérési címet küldött, amelyet nem regisztrált. Távolítsd el a csatolót a kliensben, és add hozzá újra. |

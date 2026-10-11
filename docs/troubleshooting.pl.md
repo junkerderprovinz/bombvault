@@ -4,15 +4,27 @@ Krótkie FAQ. Pełną tabelę rozwiązywania problemów po stronie hosta dla VM 
 
 ## Coś nie jest poprawnie połączone
 
-Otwórz `/spike` w interfejsie webowym. Kontrola integracji z hostem sonduje każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy. Zacznij tutaj, zanim założysz, że to błąd: brakujący montaż lub nieosiągalny host pojawia się natychmiast.
+Dodaj kartę **Integracja z hostem** do przeglądu w **Dostosuj**. Kontrola integracji z hostem sonduje każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy, a **Sprawdź teraz** uruchamia ją ponownie. Zacznij tutaj, zanim założysz, że to błąd: brakujący montaż lub nieosiągalny host pojawia się natychmiast.
 
 ## Nie mogę dotrzeć do interfejsu webowego
 
 BombVault serwuje HTTPS od razu po instalacji na porcie `3443` (certyfikat samopodpisany), więc otwórz `https://<your-unraid-ip>:3443`. Zaakceptuj ostrzeżenie o certyfikacie samopodpisanym lub umieść BombVault za odwrotnym proxy z własnym certyfikatem. Jeśli uruchamiasz z `HTTP_ONLY=true`, serwuje zamiast tego zwykły HTTP na porcie `3000` (przeznaczony do użytku za proxy terminującym TLS).
 
-## Straciłem swój APP_KEY
+## Zgubił się mój APP_KEY
 
-`APP_KEY` wyprowadza hasło repozytorium restic. Bez niego (i bez zestawu odzyskiwania klucza szyfrowania) zaszyfrowanych kopii nie da się odzyskać. Dlatego panel nęka Cię, abyś pobrał zestaw odzyskiwania. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md). Wygeneruj klucz poleceniem `openssl rand -hex 32` i przechowuj go poza serwerem, zanim zaczniesz polegać na jakiejkolwiek kopii.
+`APP_KEY` wyprowadza hasło repozytorium restic. Bez niego, bez zestawu odzyskiwania i bez depozytu klucza w Twojej grupie zaszyfrowanych kopii nie da się odzyskać. Dlatego przegląd pokazuje **Zapisz swój zestaw odzyskiwania**, dopóki go nie pobierzesz. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md#recovery-kit). Wygeneruj klucz poleceniem `openssl rand -hex 32` i przechowuj go poza serwerem, zanim zaczniesz polegać na jakiejkolwiek kopii.
+
+## Zapomniane hasło logowania
+
+Wybierz **Nie pamiętasz hasła?** na stronie logowania. BombVault zapisuje kod z 12 znaków w logu swojego kontenera (w Unraid: zakładka Docker, ikona BombVault, **Logs**). Wpisz go razem z nowym hasłem w ciągu 10 minut. Reset wyłącza też uwierzytelnianie dwuskładnikowe, usuwa każdy klucz dostępu (passkey), unieważnia każdy token API, klucz MCP i logowanie OAuth, kończy wszystkie inne sesje i wyłącza parowanie telefonów. Dodaj swoje klucze dostępu ponownie w **Ustawienia, Bezpieczeństwo**, włącz tam z powrotem parowanie telefonów i utwórz nowe tokeny i klucze tam, gdzie jeszcze ich potrzebujesz. Zobacz [Model bezpieczeństwa](configuration.md#login).
+
+## Kopie zapasowe się zatrzymały i mówią, że klucza nie można już otworzyć
+
+Ten serwer przejął w Kreatorze awaryjnym klucz kopii innego serwera, a potem zmieniono `APP_KEY`. Przejęty klucz jest zapieczętowany starym APP_KEY, więc BombVault nie może go otworzyć i raczej niczego nie kopiuje, niż miałby zapisywać złym kluczem. **Wymaga uwagi** w przeglądzie go wymienia. Ustaw APP_KEY z powrotem na dawną wartość albo wgraj zestaw odzyskiwania ponownie na stronie Przywracanie w **Awaria**.
+
+## Telefon trafia na stronę logowania
+
+Sparowany telefon dostaje sesję przez grupę tylko wtedy, gdy w **Ustawienia, Bezpieczeństwo** włączone jest **Telefony mogą się sparować z dwunastoma słowami grupy**. Reset hasła je wyłącza. Aplikacja starsza niż serwer też nie dostaje sesji, dopóki nie zostanie zaktualizowana. Serwer dodany po adresie zawsze pyta o hasło.
 
 ## Kopia VM nie łączy się
 
@@ -29,11 +41,11 @@ Migawki na żywo wymagają agenta gościa qemu zainstalowanego w VM oraz dysku n
 
 ## Kopia zapasowa zawiodła z "repository is already locked"
 
-To zwykle osierocona blokada restic pozostawiona, gdy kontener został zaktualizowany lub zrestartowany w trakcie operacji. BombVault wykrywa bezspornie osieroconą blokadę, wymuszenie ją usuwa i ponawia raz, automatycznie. Jeśli się utrzymuje, użyj **Ustawienia, Integralność, Odblokuj** dla dotkniętej domeny, aby ręcznie usunąć nieaktualną blokadę. Prawdziwy problem nadal wychodzi na jaw zamiast być ukrywany. Po restarcie BombVault czeka, aż taka blokada przez dziesięć minut nie zostanie odświeżona. Restic, który wciąż działa, na przykład w drugim BombVaulcie na tym samym repozytorium, odświeża swoją blokadę co pięć minut.
+To zwykle osierocona blokada restic pozostawiona, gdy kontener został zaktualizowany lub zrestartowany w trakcie operacji. BombVault wykrywa bezspornie osieroconą blokadę, wymuszenie ją usuwa i ponawia raz, automatycznie. Jeśli się utrzymuje, otwórz kartę **Sprawdź kopie zapasowe** w **Ustawienia, Weryfikacja** i wybierz **Odblokuj** pod **Więcej** w wierszu dotkniętej sekcji, aby ręcznie usunąć nieaktualną blokadę. Prawdziwy problem nadal wychodzi na jaw zamiast być ukrywany. Po restarcie BombVault czeka, aż taka blokada przez dziesięć minut nie zostanie odświeżona. Restic, który wciąż działa, na przykład w drugim BombVaulcie na tym samym repozytorium, odświeża swoją blokadę co pięć minut.
 
 ## Moja kopia poza siedzibą nie zdarzyła się po kopii
 
-Replikacja poza siedzibą jest z założenia best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Sprawdź harmonogram poza siedzibą dla tej domeny (Ustawienia, Harmonogramy): pusty harmonogram replikuje po każdej kopii lokalnej, podczas gdy kadencja wysyła rzadziej. Użyj **Replikuj teraz** na stronie Poza siedzibą do uruchomienia na żądanie i obserwuj wskaźnik replikacji na panelu.
+Replikacja poza siedzibą jest z założenia best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Sprawdź, kiedy miejsce docelowe kopiuje: jego karta **Kopiuj** mówi **Po każdej kopii zapasowej** albo wymienia własny plan, a **Ustawienia, Harmonogram, Kopie poza siedzibą według obszarów** może dać sekcji własny plan. Użyj **Replikuj teraz** w karcie **Kopia off-site** sekcji w **Ustawienia, Miejsca docelowe** do uruchomienia na żądanie i obserwuj nagłówek stanu przeglądu, który w trakcie pisze **Trwa kopiowanie poza siedzibę**. Nieudana kopia pojawia się pod **Wymaga uwagi**.
 
 ## Przywracanie przerwane, zanim się zaczęło
 
@@ -41,7 +53,7 @@ Zanim cokolwiek zostanie zatrzymane lub usunięte, przywracanie uruchamia kontro
 
 ## Jawny eksport zawiódł zamiast zapisać plik
 
-Jeśli szyfrowanie age jest włączone (Ustawienia), ale nie ustawiono prawidłowego odbiorcy, eksport kończy się czytelnym błędem zamiast zapisać tekst jawny. Dodaj prawidłowego odbiorcę (klucz publiczny age lub klucz publiczny SSH) albo wyłącz szyfrowanie, jeśli chcesz, aby eksport był w postaci jawnej. Zobacz [Funkcje](features.md).
+Jeśli **Szyfruj eksporty za pomocą age** jest włączone w **Ustawienia, System**, ale nie ustawiono prawidłowego odbiorcy, eksport kończy się czytelnym błędem zamiast zapisać tekst jawny. Dodaj prawidłowego odbiorcę (klucz publiczny age lub klucz publiczny SSH) albo wyłącz szyfrowanie, jeśli chcesz, aby eksport był w postaci jawnej. Zobacz [Funkcje](features.md).
 
 ## Zrzut bazy danych się nie udał
 
@@ -67,11 +79,11 @@ Każdy problem ma kod przyczyny w nawiasach kwadratowych, a strona [Zbiory danyc
 
 - **`snapshot-loop`**: migawka nie dotarła do BombVault, bo Host Data nie przekazuje nowych montowań. Edytuj kontener, ustaw Access Mode dla Host Data na Read/Write - Slave i uruchom ponownie BombVault.
 - **`key-not-loaded`**: zaszyfrowany zbiór, którego klucz nie jest załadowany, jest pomijany. Załaduj klucz poleceniem `zfs load-key` i zamontuj zbiór; następna kopia go obejmie.
-- **`ssh-auth`**: serwer odrzucił klucz BombVault. Karta połączenia na stronie ZFS pokazuje polecenie, które go autoryzuje; uruchom je raz na serwerze.
+- **`ssh-auth`**: serwer odrzucił klucz BombVault. **Połączenie ZFS z tym serwerem**, otwierane przez **Pokaż połączenie** na stronie Kopie zapasowe, pokazuje polecenie, które go autoryzuje; uruchom je raz na serwerze.
 
 ## Element zatrzymuje się na "Uczy się N/10"
 
-Większość kontroli anomalii zaczyna się po 10 udanych kopiach elementu, a licznik zaczyna od nowa po **Oznacz jako oczekiwane** i po zmianie wyboru elementu. Element bez harmonogramu się nie uczy, a kontener bez appdata nie ma się na czym uczyć, co mówi też jego znaczek.
+Większość kontroli anomalii zaczyna się po 10 udanych kopiach elementu, a licznik zaczyna od nowa po **Oznacz jako oczekiwane** i po zmianie wyboru elementu. Element bez harmonogramu się nie uczy, a kontener bez appdata nie ma się na czym uczyć, co mówi też jego znaczek. **Postęp nauki** na stronie Anomalie pokazuje pierścień z dziesięciu części dla każdego elementu.
 
 ## Retencja przestała usuwać stare kopie jednego elementu
 
@@ -83,7 +95,7 @@ Ta sama przyczyna: czyszczenie nie rusza starych kopii elementu z taką anomali�
 
 ## Import historii mówi, że nie udało się odczytać repozytorium
 
-Po aktualizacji BombVault raz odczytuje rozmiary wcześniejszych kopii z każdego repozytorium. Repozytorium, które było wtedy nieosiągalne, na przykład niedziałający cel zewnętrzny albo niezamontowany udział, pojawia się na karcie **Anomalie** w **Ustawienia, Integralność** i jest ponawiane raz dziennie. W tym czasie jego elementy uczą się na nowych kopiach.
+Po aktualizacji BombVault raz odczytuje rozmiary wcześniejszych kopii z każdego repozytorium. Repozytorium, które było wtedy nieosiągalne, na przykład niedziałający cel zewnętrzny albo niezamontowany udział, pojawia się na karcie **Anomalie** w **Ustawienia, Weryfikacja** i jest ponawiane raz dziennie. W tym czasie jego elementy uczą się na nowych kopiach.
 
 ## Ostrzeżenie o miejscu na dysku nie zgadza się z pulpitem Unraid
 
@@ -95,7 +107,7 @@ Strona [Serwer MCP](mcp.md#troubleshooting) wyjaśnia, co oznacza każdy kod sta
 
 ## Kontener wciąż się restartuje lub wygląda na niesprawny
 
-BombVault zgłasza stan healthy/unhealthy z własnego `/api/health`. Narzędzie do auto-naprawy (takie jak Autoheal) może go automatycznie zrestartować, jeśli silnik kiedykolwiek się zaklinuje. Sprawdź log kontenera oraz raport `/spike` w poszukiwaniu przyczyny źródłowej.
+BombVault zgłasza stan healthy/unhealthy z własnego `/api/health`. Narzędzie do auto-naprawy (takie jak Autoheal) może go automatycznie zrestartować, jeśli silnik kiedykolwiek się zaklinuje. Sprawdź log kontenera oraz kartę **Integracja z hostem** w poszukiwaniu przyczyny źródłowej.
 
 ## Nadal utknąłeś?
 

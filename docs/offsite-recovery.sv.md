@@ -1,288 +1,328 @@
 # Off-site och återställning
 
 !!! note "Off-site-kopior väntar efter en ombyggnad"
-    När steg 4 återbygger poster utan de gamla inställningarna pausar off-site-replikeringen för de domänerna tills standardplaceringen bekräftas. Se [Placering per objekt](#placement).
+    När Nödguiden eller **Identifiera säkerhetskopior** bygger upp poster utan de gamla inställningarna pausas off-site-kopior av de avsnitten tills deras standard är bekräftad. Se [Efter en ombyggnad](#after-a-rebuild).
 
-Lokala säkerhetskopior skyddar dig mot en förlorad container eller en dålig uppdatering. Off-site-replikering och ett testat återställningskit skyddar dig mot hela boxen, ransomware eller en brand. Den här sidan täcker att replikera off-site, att göra den kopian manipuleringssäker, att bevisa att du kan återställa, och att återhämta dig när BombVault självt är borta.
+Lokala säkerhetskopior skyddar mot en förlorad container eller en dålig uppdatering. Off-site-kopior och ett testat återställningskit skyddar mot hela boxen, ransomware eller en brand. Den här sidan täcker mål och off-site-kopior, hur du gör en kopia manipuleringssäker, hur du bevisar att du kan återställa, hur du parkopplar flera servrar och hur du får tillbaka allt när BombVault självt är borta.
 
-## Off-site-replikering
+## Off-site-kopior {#off-site-copies}
 
-Behåll den snabba lokala säkerhetskopian och lägg till en eller flera off-site-repliker. Ange ett repo per domän på sidan **Inställningar, Extern**. BombVault replikerar nya ögonblicksbilder dit med `restic copy` på best-effort-basis, så att en off-site-hicka aldrig misslyckar den lokala säkerhetskopian. I den här formen förblir det lokala repot primärt och off-site-repot är en replik, men en domäns primära repo behöver inte alls vara lokalt; se [Fjärranslutna primära arkiv](#remote-primary-repositories) nedan för att säkerhetskopiera direkt till S3, en rest-server osv. i stället för att replikera dit.
+Behåll den snabba lokala säkerhetskopian och lägg till ett eller flera mål utanför huset. BombVault kopierar nya ögonblicksbilder dit med `restic copy` på best-effort-basis, så ett off-site-hickande får aldrig den lokala säkerhetskopian att misslyckas. I den här formen är det lokala arkivet primärt och off-site-arkivet en kopia, men ett avsnitts primära arkiv behöver inte alls vara lokalt; se [Fjärranslutna primära arkiv](#remote-primary-repositories) nedan för att säkerhetskopiera rakt till S3, en rest-server och liknande i stället för att kopiera dit.
 
-- **Flera off-site-mål per domän.** Varje domän (containrar, VM:ar, flash, config, filuppsättningar och ZFS-datauppsättningar) kan replikera till flera off-site-mål samtidigt, inte bara ett, så att du kan hålla, till exempel, en rest-server på en väns box och en S3-bucket parallellt. Lägg till extra mål under Inställningar, Extern, var och en med sitt eget repository, S3-lagringsklass, append-only-flagga, retention och tillväxtbudget. En befintlig enskild off-site-uppsättning förs över orörd som det första målet, och varje mål i en domän replikeras enligt den domänens off-site-schema.
-- **Off-site-schema per domän** (redigerat tillsammans med alla andra scheman under Inställningar, Scheman): lämna det tomt för att replikera efter varje lokal säkerhetskopiering, eller sätt en kadens (till exempel `weekly Sun 03:00`) för att skicka off-site mer sällan än du säkerhetskopierar lokalt. En **Replikera nu**-knapp täcker körningar på begäran.
-- **Off-site-retention** finns under Inställningar, Bevarande så att du kan behålla off-site-kopior längre som ett arkiv. Lämna policyn helt-noll för att aldrig autotrimma off-site-ögonblicksbilder.
-- **Bandbreddsgränser** (Inställningar, Extern) begränsar restics uppladdnings-/nedladdningshastighet så att replikering inte mättar din WAN.
-- En **replikeringsindikator** visar vilken domän som replikeras medan det pågår (på dess sida och Översikten). Det är en aktiv indikator, inte en procentstapel, eftersom `restic copy` inte exponerar något maskinläsbart förlopp.
+- **Flera mål per avsnitt.** Varje avsnitt (containrar, VM:ar, flash, auto-säkerhetskopia, mappar och ZFS-datauppsättningar) kan kopiera till flera off-site-mål samtidigt, så att du till exempel kan ha en rest-server hos en vän och en S3-bucket parallellt. Kortet **Mål per avsnitt** på sidan Mål slår på eller av varje linje från ett avsnitt till ett mål.
+- **När kopiorna körs.** Ett måls kort **Kopiera** anger **När det kopieras**: **Efter varje säkerhetskopia**, eller enligt en egen plan som samlar ögonblicksbilderna och kopierar vid fasta tider. Under **Inställningar, Schema, Externa kopior per område** ger **Undantag** ett avsnitt en egen kopieringsplan. **Replikera nu** i ett avsnitts off-site-kopiakort under **Inställningar, Mål** startar en kopiering på begäran.
+- **Retention** ställs in per mål under **Hur länge det bevaras**, så att du kan behålla off-site-kopior längre som arkiv. Kopian i ett avsnitts off-site-fält följer kortet **Extern lagring** under **Inställningar, Mål**; lämna det helt noll för att aldrig autotrimma off-site-ögonblicksbilder.
+- **Bandbreddsgränser** (**Off-site-bandbredd** under **Inställningar, Mål**, eller ett måls kort **Kopiera**) begränsar restics uppladdnings-/nedladdningshastighet så att kopior inte mättar ditt WAN.
+- Medan en kopiering körs står det **Off-site-kopiering pågår** i översiktens statushuvud. Det är en aktivitetsindikator, inte en procentstapel, eftersom `restic copy` inte ger någon maskinläsbar förloppsinformation.
 
 !!! note "Återställ från vilken plats som helst"
-    Varje container, VM, filuppsättning, flashen och app-konfigurationen listar sina säkerhetskopior som en enda tidslinje över alla platser en kopia ligger på. En säkerhetskopia kopierad till B2 dyker upp en gång, märkt med varje plats som har den. En återställning tar den första platsen den kan nå, med start i det arkiv objektet skrivs till, och du kan välja en annan plats per rad. Off-site-platser läses bara när du öppnar dem. Att radera på en plats kontrollerar först de andra och säger om det var den sista kopian.
+    Varje post listar sina säkerhetskopior som en enda tidslinje över alla platser där en säkerhetskopia ligger, på fliken **Säkerhetskopior**. En säkerhetskopia som kopierats till B2 visas en gång, markerad med varje plats som håller den. En återställning tar den första plats den når, med början i arkivet posten skrivs till, och du kan välja en annan plats per ögonblicksbild. Off-site-mål läses först när du klickar **Kontrollera**, eftersom det tar en stund att lista molnlagring. Att radera på en plats kontrollerar först de andra och säger om det var den sista kopian.
 
 ## Mål {#destinations}
 
-Inställningar, Extern börjar med **Mål**: de platser dit off-site-kopiorna går, uppsatta en gång för alla domäner. Ett mål dyker sedan upp som en knapp i raden **Placering** för varje domän och objekt. Första gången det kryssas i för en domän skapar BombVault domänens arkiv i en mapp under det, till exempel `rclone:onedrive:BombVault/containers`. Flash, Auto-säkerhetskopia och ZFS-datauppsättningar har ingen rad **Placering**, så deras off-site-avsnitt erbjuder i stället **Lägg till från** och målets namn.
+Ett mål är en plats dit säkerhetskopior går: en lokal mapp, en resurs, en egen server eller en molntjänst. Det sätts upp en gång och betjänar sedan varje avsnitt. Öppna **Mål** från dess inställningsbricka, eller slå på **Visa även i sidofältet** där för att fästa det.
 
-**Lägg till mål** öppnar en guide i fem steg:
+**Lägg till mål** öppnar ett fönster i fyra steg:
 
-1. **Vart ska säkerhetskopiorna ta vägen?** Varje tjänst visas med sin logotyp, i fyra grupper: lagringstjänster med S3-bucketar (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 och fler), din egen S3-server (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), din egen server och dina resurser (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, en monterad sökväg) och molnlagring (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud och resten som rclone stöder). Varje tjänst anger hur väl den lämpar sig för säkerhetskopior: molndiskar saktar ner vid många förfrågningar, så den första säkerhetskopian och rensningen tar längre tid där.
-2. **Logga in på** den valda tjänsten. Fälten beror på tjänsten: en åtkomstnyckel för S3, användare och lösenord för WebDAV och SMB, ett appspecifikt lösenord där tvåstegsinloggning blockerar det vanliga, BombVaults publika SSH-nyckel för SFTP och Storage Box, eller en token för tjänster som loggar in via webbläsaren. För dem visar guiden ett `rclone authorize`-kommando som körs på en dator med webbläsare; den token det skriver ut klistras in i fältet. **Testa anslutning** kontrollerar inloggningen innan något sparas.
-3. **Välj en mapp.** Guiden listar mapparna på målet, med **Ny mapp** för att skapa en och med ledigt utrymme där tjänsten rapporterar det. En tom mapp är säkrast.
-4. **Skydd mot radering.** Guiden säger rakt ut vad tjänsten kan. En rest-server i append-only-läge vägrar radering, och manipulationstestet kontrollerar det. En S3-bucket kan behålla gamla versioner med versionshantering och objektlås, vilket BombVault ännu inte kan kontrollera. En molndisk kan inte vägra radering alls: den som tar sig in på servern tar sig också in i den kopian. Slå bara på **Oföränderlig (append-only)** där andra sidan verkligen vägrar radering; BombVault rensar då aldrig där.
-5. **För nödläge.** Återställningskitet listar varje mål med arkivet för varje domän under det. Inloggningen kommer tillbaka med BombVaults inställningssäkerhetskopia; på en ny installation utan den sätter du upp målet igen på samma plats.
+1. **Leverantör.** Varje tjänst listas med sin logotyp, med en sökning ovanför, i grupper: lagringstjänster med S3-buckets (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 och andra), din egen S3-server (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), din egen server och dina resurser (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, en monterad sökväg), molnlagring (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud och resten som rclone stöder) och din grupps mottagarservrar. Varje tjänst anger hur väl den passar för säkerhetskopior: molndiskar saktar ner vid många förfrågningar, så den första säkerhetskopian och rensningen tar längre tid där.
+2. **Inloggning.** Fälten beror på tjänsten: en åtkomstnyckel för S3, ett användarnamn och lösenord för WebDAV och SMB, ett applösenord där tvåfaktorsinloggning blockerar det vanliga, BombVaults publika SSH-nyckel för SFTP och Storage Box, eller en token för tjänster som loggar in via en webbläsare. För dem visar fönstret ett `rclone authorize`-kommando att köra på en dator med webbläsare; token som det skriver ut går in i fältet. **Testa** kontrollerar inloggningen innan något sparas. Fönstret listar sedan mapparna på målet, med **Ny mapp** för att skapa en och det lediga utrymmet där tjänsten rapporterar det. En tom mapp är säkrast; BombVault lägger en mapp per avsnitt i den.
+3. **Skydd.** Fönstret säger rakt ut vad tjänsten kan. En rest-server i append-only-läge vägrar radering, och manipulationstestet kontrollerar det. En S3-bucket kan behålla gamla versioner med versionshantering och object lock, vilket BombVault ännu inte kan kontrollera. En molndisk kan inte vägra radering alls: den som tar sig in på servern tar sig in i den kopian också. Slå på **Skydd mot radering (append-only)** bara där den bortre sidan verkligen vägrar radering; BombVault rensar då aldrig där. **För nödfall** anger vad återställningskitet innehåller för det här målet.
+4. **För vilka avsnitt.** Välj avsnitten som säkerhetskopieras hit. Den första kopieringen tar med hela historiken. Poster som valt egna mål får inte det nya av sig själva, och fönstret namnger dem.
 
-S3-tjänster körs genom restics egen S3-backend, vilket gör att lagringsklass och objektlås kan tillämpas. Alla andra tjänster körs genom den rclone som BombVault levererar, och dess remote syns sedan i rclone-konfigurationen under Inställningar, Molnåtkomst. En export av inställningarna innehåller målen; med uppgifter inkluderade innehåller den även deras inloggning.
+S3-tjänster körs via restics eget S3-backend, vilket är det som låter en lagringsklass och object lock gälla. Varje annan tjänst körs via rclone som BombVault levereras med, och dess fjärr dyker sedan upp i kortet **Off-site (rclone)** under **Inställningar, Mål**. En inställningsexport bär målen; med autentiseringsuppgifter inkluderade bär den också deras inloggning.
 
-En mottagarserver som en annan instans i din grupp kör visas i guiden under **Från din grupp**; se [Mottagarserver](#receiving-server).
+Varje mål har en egen sida:
 
-Ett off-site-mål för en domän som skapats från ett mål tar över det målets namn, plats, uppgifter, lagringsklass och omkopplaren för oföränderlighet. Dess retention, komprimering och tillväxtbudget förblir per domän, och dess plats kan inte flyttas eftersom domänens arkiv ligger där. **Lägg till ett mål bara för den här domänen** under varje domän tar fortfarande en handskriven arkiv-URL.
+- **Anslutning** med namn, reglaget **Tillgängligt** (av betyder att BombVault inte längre skriver hit, och poster som säkerhetskopieras hit misslyckas med ett tydligt meddelande i stället för att hamna någon annanstans), mappen, komprimering, lagringsklass och **Utanför lokalerna**. **Ändra anslutning** testar och sparar en ny adress eller inloggning.
+- **Autentiseringsuppgifter**: den delade uppsättningen eller en egen.
+- **Raderingsskydd**, med **Testa skyddet mot radering nu** och vem som rensar den här kopian.
+- **Kopiera**: när det kopieras, samt upp- och nedladdningsgränserna.
+- **Hur länge det bevaras**: **Kort**, **Balanserad**, **Lång** eller **Egna värden**, med en tidslinje över vilka säkerhetskopior regeln behåller. **Fråga innan mindre bevaras** frågar innan en kortare regel raderar säkerhetskopior vars enda kopia finns här.
+- **Regler per avsnitt**: ett avsnitts eget arkiv, egen retention eller komprimering vid det här målet. **Ändra regler** öppnar dem, och **Tillbaka till målet** tar tillbaka ett avsnitt.
+- **Ligger redan under det här målet**: avsnitt vars handskrivna adress ligger i en mapp hos det här målet. Att ta över ett lämnar arkivet där det är; inloggning, lagringsklass och raderingsskydd kommer då från målet. BombVault kontrollerar först att målets inloggning öppnar arkivet, och vägrar lägga ett append-only-arkiv under ett mål som inte är append-only.
+- Ett kärl som visar hur fullt målet är, med markeringen där det är fullt och hur många veckor som återstår vid de senaste veckornas tillväxt. Ett mål som inte rapporterar sin storlek säger **Storlek okänd**.
 
-En domäns off-site-fält, dess primära kopia, kan också följa ett mål. Under fältet finns en knapp **Använd** för varje mål som domänen ännu inte kopierar till. Den flyttar den primära kopian till domänens mapp under målet, och kopian tar sedan över målets namn, uppgifter, lagringsklass och omkopplaren för oföränderlighet, medan dess retention ligger kvar på sidan Bevarande. Från den stunden visar fältet platsen låst. **Skriv en plats** låser upp det, och när du sparar en handskriven plats upphör kopplingen.
+En mottagarserver som en annan instans i din grupp kör visas bland leverantörerna som **Från din grupp**; se [Mottagarserver](#receiving-server).
 
-Ett handskrivet mål vars arkiv ligger i en mapp under ett mål kan gå med i det. Målet listar sådana mål under **Ligger redan under det här målet**, och **Ta över** hänger upp ett på det. Det handskrivna målet behåller sitt arkiv, sina snapshots, sin retention och sin placering och tar över målets namn, uppgifter, lagringsklass och omkopplaren för oföränderlighet. BombVault kontrollerar först att målets inloggning öppnar arkivet och vägrar lägga ett append-only-mål under ett mål som inte är append-only. En domäns primära mål som tas över blir kvar i domänens off-site-fält.
+### Flytta och ta bort {#move-remove}
 
-## Placering per objekt {#placement}
+- **Flytta** tar ett avsnitts kopia, med hela dess historik, till ett annat mål. Allt blir kvar på den gamla platsen; BombVault raderar ingenting där. Flytten körs i bakgrunden och kan ta lång tid: ungefär 9 minuter per 100 GB mellan lokala diskar, timmar över en långsam länk. Översikten visar den medan den körs.
+- **Ta bort mål** erbjuder två vägar. **Ta bort mål, behåll säkerhetskopiorna** slutar skriva dit och lämnar säkerhetskopiorna kvar; du kan läsa dem senare under **Återställning, Från en gammal säkerhetskopiemapp**. **Ta bort målet och radera säkerhetskopiorna där** läser först vad som lagras där och listar det: vilka säkerhetskopior som försvinner, vilka av dem som inte finns någon annanstans, och vilka arkiv som blir kvar eftersom raderingsskyddet vägrar, poster fortfarande säkerhetskopieras rakt till dem, ett annat mål eller avsnitt har sina kopior där, eller de inte gick att läsa. Poster som skulle förlora sin enda säkerhetskopia listas separat och behålls om du inte bockar för **Radera dessa också**. Du bekräftar genom att skriva målets namn, och raderingen körs i bakgrunden.
+- Att radera säkerhetskopiorna på ett mål kräver ett inloggningslösenord och en inloggning på instansen. Utan lösenord kan målet ändå tas bort, bara dess säkerhetskopior kan inte raderas härifrån.
 
-Varje kort för container, VM och filuppsättning har en rad **Placering** med knappar: **Lokal** och en knapp per off-site-mål för domänen, följt av de mål som domänen ännu inte har något mål under. Tända knappar får objektets säkerhetskopior.
+## Placering per post {#placement}
 
-- Med **Lokal** tänd skrivs objektet till arkivet som visas under **Sparad på** och kopieras till varje annat tänt mål. Släck ett mål och det får inget nytt från det här objektet. Enbart Lokal kopierar ingenstans, vilket passar data som redan har en andra kopia, till exempel en resurs som ligger på en NAS.
-- Med **Lokal** släckt skrivs objektet direkt till det direkta arkivet för det första tända målet och kopieras därifrån till de andra tända målen. Första gången skapar en dialog det direkta arkivet.
-- En målknapp skapar domänens mål under det målet och tänder det bara för det här objektet. Varje annat objekt börjar utan kopia där.
-- En knapp förblir alltid tänd, eftersom en säkerhetskopia behöver någonstans att ta vägen. Vill du lämna något utanför säkerhetskopiorna, utesluter du det.
+Kortet **Schema och mål** på en posts flik Inställningar har en rad knappar: **Lokal** och en knapp per off-site-mål i avsnittet. Tända knappar får postens säkerhetskopior.
 
-Platsen är fast från objektets första säkerhetskopiering, eftersom BombVault aldrig flyttar säkerhetskopior mellan arkiv. Kopiorna kan ändras när som helst. Ett mål som inte längre får ett objekt behåller de kopior det har och trimmar dem till sin egen retention vid domänens nästa off-site-körning; **Radera hos B2** på kortet tar bort dem direkt. När några av de kopiorna inte finns någon annanstans listar bekräftelsen dem efter datum och ber om objektets namn. Från append-only-mål går det inte att radera.
+- Med **Lokal** tänd skrivs posten till arkivet som visas under **Sparad på** och kopieras till varje annat tänt mål. Släck ett mål så får det inget nytt från den här posten. Enbart Lokal kopierar ingenstans, vilket passar data som redan har en andra kopia, till exempel en resurs som ligger på en NAS.
+- Med **Lokal** släckt skrivs posten rakt till det första tända målets direkta arkiv och kopieras därifrån till de andra tända. Första gången skapar en dialog det direkta arkivet.
+- En knapp förblir tänd, eftersom en säkerhetskopia behöver en plats att gå till. För att lämna en post utanför säkerhetskopiorna, använd **Säkerhetskopiera inte**.
 
-Under raden berättar kortet vart objektet går och vad som faktiskt finns där: hur många platser som har det, när varje mål senast sågs, och om 3-2-1 är uppfyllt. En plats är servern med originaldata, varje off-site-mål och varje arkiv märkt **Utanför lokalerna**. BombVault kontrollerar kopior och platser; det kontrollerar inte ”två medier”-delen av 3-2-1.
+Platsen är fastlagd från postens första säkerhetskopia, eftersom BombVault aldrig flyttar säkerhetskopior mellan arkiv; kortet **Arkiv** på fliken Inställningar namnger den. Kopiorna kan ändras när som helst. Ett mål som inte längre får en post behåller kopiorna det har och trimmar dem enligt sin egen retention vid avsnittets nästa off-site-körning. Från append-only-mål går det inte att radera.
 
-### Standardplaceringar
+Under raden anger kortet vart posten går och vad som faktiskt finns där: hur många platser som håller den, när varje mål senast sågs och om 3-2-1 är uppfyllt. En plats är servern med originaldatan, varje off-site-mål och varje arkiv markerat **Utanför lokalerna**. BombVault kontrollerar kopior och platser; det kontrollerar inte delen "två medier" i 3-2-1.
 
-Inställningar, Lagring, **Standardplaceringar** har en rad per domän med samma knappar. Kopiorna gäller genast för varje objekt utan eget val, och för projektmapparna i Compose-stackar. Platsen gäller för ett nytt objekt vid dess första säkerhetskopiering; att ändra den flyttar inga säkerhetskopior. Innan du sparar namnger raden varje mål som vinner eller förlorar objekt och hur många ögonblicksbilder det innebär. **Tillämpa på objekt utan säkerhetskopior** sätter tillbaka varje objekt som ännu inte har en säkerhetskopia till standarden.
+### Standard per avsnitt {#placement-defaults}
 
-Ett nytt off-site-mål tar emot varje objekt som inte är satt till Lokal. Dialogen som lägger till det säger hur många objekt det är och, där det är känt, hur mycket historik det motsvarar, och erbjuder att lämna ute objekt som redan är uteslutna från andra mål.
+Kortet **Mål per avsnitt** på sidan Mål är varje avsnitts standard. I grafen är varje linje en kopia, och ett klick på en linje eller en punkt slår på eller av den; streckade linjer är av. **Graf / Reglage** visar samma sak som rader med knappar. Kopiorna gäller direkt för varje post utan eget val och för projektmapparna i Compose-stackar. Platsen gäller en ny post vid dess första säkerhetskopia; att ändra den flyttar inga säkerhetskopior. Före sparandet namnger BombVault varje mål som får eller förlorar poster och hur många ögonblicksbilder det innebär.
+
+Poster som säkerhetskopieras någon annanstans än sitt avsnitt står i kortet **Eget val**, var och en med **Följ standarden**. Nya säkerhetskopior går då till avsnittets mål, och de tidigare blir kvar där de är.
+
+Ett nytt off-site-mål får varje post som inte är satt till Lokal. Fönstret som lägger till det säger hur många poster och, där det är känt, hur mycket historik det är.
 
 ### Direkta arkiv
 
-Att stänga av Lokal för ett objekt, så att ett mål utan direkt arkiv blir dess hem, öppnar en dialog med en föreslagen plats intill målet, till exempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, och ett anslutningstest som inte skapar något. **Skapa och använd** skapar arkivet och pekar objektet mot det. Ett direkt arkiv tar över målets nyckel, lagringsklass, gränser, append-only-inställning och retention, och ändras med dem; kortet Arkiv visar det skrivskyddat. När en ny nyckel för målet inte kan öppna det behåller det direkta arkivet den nyckel det har, och sparningen säger det. Ett objekt på ett direkt arkiv kopieras därifrån till de andra tända målen, aldrig till det mål som arkivet tillhör. Dess ögonblicksbilder bär taggen `bv:direct`, och varje annan retention-passering behåller dem, så ett direkt arkiv som förlorat kopplingen till sitt mål åldras aldrig efter de lokala reglerna. B2 nås via sin S3-slutpunkt, med nyckel-ID och programnyckel angivna som S3-uppgifter; en nyckel som är begränsad till målets egen mapp når inte mappen bredvid den, så begränsa i stället nyckeln till mappen ovanför målet.
+Att stänga av Lokal för en post, så att ett mål utan direkt arkiv blir dess hem, öppnar en dialog med en föreslagen plats bredvid, till exempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, och ett anslutningstest som inte skapar något. **Skapa och använd** skapar arkivet och pekar posten mot det. Ett direkt arkiv tar målets nyckel, lagringsklass, gränser, append-only-inställning och retention och ändras med dem; kortet Arkiv visar det skrivskyddat. När en ny nyckel för målet inte kan öppna det behåller det direkta arkivet den nyckel det har, och sparandet säger det. En post på ett direkt arkiv kopieras därifrån till de andra tända målen, aldrig till målet arkivet tillhör. Dess ögonblicksbilder bär taggen `bv:direct`, och varje annan retentionsomgång behåller dem, så ett direkt arkiv som förlorat kopplingen till sitt mål åldras aldrig enligt de lokala reglerna. B2 nås via sin S3-slutpunkt, med nyckel-ID och programnyckel inskrivna som S3-uppgifter; en nyckel begränsad till målets egen mapp kan inte nå mappen bredvid, så begränsa nyckeln till mappen ovanför i stället.
 
 ### Utanför lokalerna
 
-Ett namngivet arkiv kan märkas **Utanför lokalerna** på kortet Arkiv. Fjärrarkiv börjar märkta; stäng av det för en rest-server i samma byggnad. Märkningen räknas bara för platser och 3-2-1 på korten. Den ändrar ingen kopia.
+Ett mål eller ett namngivet arkiv kan markeras **Utanför lokalerna**. Fjärranslutna börjar markerade; stäng av det för en rest-server i samma byggnad. Markeringen räknar bara platser och 3-2-1 på korten. Den ändrar ingen kopia.
 
-### Efter en ombyggnad
+En ZFS-replik är en kopia utanför lokalerna, men inte en säkerhetskopia med historik. Den behåller bara de ögonblicksbilder du anger, och gamla versioner och enskilda filer kommer fortfarande från säkerhetskopiorna. Den går från en ZFS-server rakt till den andra, över SSH till en ZFS-server eller till mottagningspunkten hos en parkopplad instans. Parkopplingsgruppen bär bara begäran. Se [Replik](zfs-datasets.md#replica).
 
-Kopieringsval lever i BombVaults egna inställningar. Efter en ombyggnad via Identifiera säkerhetskopior utan en återställd `/config` är de borta, och att kopiera allt skulle skicka objekten du hade lämnat ute till B2 igen. Off-site-replikering för varje ombyggd domän pausar därför. Översikten visar det i gult, och Standardplaceringar erbjuder **Bekräfta standard** med en förhandsgranskning av vad nästa körning kopierar och namnen i säkerhetskopiorna som saknar en post, vilka du kan lämna ute där. Endast bekräftelsen avslutar pausen; att importera en inställningsfil tar tillbaka regler och standarder men avslutar den inte.
+### Efter en ombyggnad {#after-a-rebuild}
+
+Kopieringsvalen finns i BombVaults egna inställningar. Efter en ombyggnad via **Identifiera säkerhetskopior** eller Nödguiden utan återställda inställningar är de borta, och att kopiera allt skulle skicka poster du lämnat utanför till B2 igen. Off-site-kopior av varje ombyggt avsnitt pausas därför. Översikten säger det, och kortet **Mål per avsnitt** erbjuder **Bekräfta standard** med en förhandsvisning av vad nästa körning kopierar och namnen i säkerhetskopiorna utan post, som du kan lämna utanför där. Bara bekräftelsen avslutar pausen; att importera en inställningsfil ger tillbaka regler och standarder men avslutar den inte.
 
 ## Fjärranslutna primära arkiv {#remote-primary-repositories}
 
-En domäns säkerhetskopieringssökväg (Inställningar, Lagring) är inte begränsad till en lokal mapp: rikta den direkt mot ett restic-fjärrarkiv (`s3:...`, `rest:http://värd:8000/arkiv`, `sftp:användare@värd:/arkiv`, `rclone:fjärr:bucket/sökväg`) så säkerhetskopierar BombVault dit direkt, utan separat lokal kopia och utan replikeringssteg. Det är en verkligt annan form än off-site-replikeringen ovan: där är det lokala arkivet primärt och off-site-arkivet ett arkiv av det efter bästa förmåga; här **är** fjärrarkivet det primära, och det är den enda kopian så länge du inte också ställer in off-site-replikering (eller ett andra fjärrarkiv) för den domänen.
+Ett avsnitts egen sökväg är inte begränsad till en lokal mapp: peka den direkt mot en restic-fjärr (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) så säkerhetskopierar BombVault direkt dit, utan separat lokal kopia och utan kopieringssteg. Det är en annan form än off-site-kopiorna ovan: där är det lokala arkivet primärt och off-site-arkivet ett best-effort-arkiv av det; här **är** fjärrarkivet det primära och den enda kopian, om du inte också kopierar avsnittet till ett annat mål.
 
-Vart och ett av de sex sökvägsfälten (Containers, VMs, Flash, Auto-säkerhetskopia, Mappar, ZFS-datauppsättningar) har en omkopplare **Lokal / Fjärran** alldeles intill:
+Varje avsnitts sökväg (Containers, VMs, Flash, Auto-säkerhetskopia, Mappar, ZFS-datauppsättningar) anges på sidan för målet **Lokal mapp**: **Ändra** bredvid avsnittet i dess kort **Anslutning** öppnar ett fönster med en omkopplare **Lokal / Fjärran**:
 
-- **Lokal** visar den vanliga mappbläddraren.
-- **Fjärran** byter ut den mot ett enkelt URL-fält, plus en knapp som öppnar samma dialog för anslutningstest och inloggningsuppgifter som off-site-destinationer använder, fast inställd för det här primära arkivet. Därifrån får du:
-    - **Ett anslutningstest** mot den verkliga sökvägen, innan du förlitar dig på den.
-    - **Bandbreddsgränser** (uppladdning och nedladdning) så att en schemalagd säkerhetskopiering till ett fjärrprimärt arkiv inte mättar din WAN-länk: samma restic-flaggor `--limit-upload` och `--limit-download` som off-site-replikeringen använder, nu tillämpade på själva säkerhetskopieringen.
-    - **Append-only-skydd (oföränderlighet)**, verifierat med samma aktiva manipulationstest (en riktig DELETE-sond mot andra sidan) som off-site-destinationer får. Med det påslaget vägrar BombVault att själv gallra arkivet: eftersom ingen separat lokal kopia står bakom, får inloggningsuppgifterna på den här maskinen inte kunna radera säkerhetskopians enda kopia.
-    - **Ett larm för tillväxtbudgeten**, hämtat ur samma trend för arkivets storlek som Lagringskortet redan följer.
+- **Lokal** visar den välbekanta mappbläddraren.
+- **Fjärran** byter ut den mot ett vanligt URL-fält och anslutningsinställningarna ett off-site-mål använder, konfigurerade för det här primära i stället. Därifrån får du:
+    - **Ett anslutningstest** mot den levande sökvägen, innan du förlitar dig på den.
+    - **Bandbreddsgränser** (upp-/nedladdning) så att en schemalagd säkerhetskopia till ett fjärranslutet primärt arkiv inte mättar ditt WAN: samma restic-flaggor `--limit-upload`/`--limit-download` som off-site-kopior använder, tillämpade på själva säkerhetskopieringen.
+    - **Append-only-skydd**, verifierat med samma aktiva manipulationstest (en riktig DELETE-sond mot den bortre sidan) som off-site-mål får. Med det påslaget vägrar BombVault att själv rensa arkivet, eftersom det inte finns någon separat lokal kopia bakom det och uppgifterna på den här boxen inte får kunna radera den enda kopian av säkerhetskopian.
+    - **Ett larm för tillväxtbudget**, samplat från samma arkivstorlekstrend som kortet Lagring redan följer.
 
-Inget av detta är obligatoriskt: en handskriven fjärrsökväg utan sparade säkerhetsinställningar säkerhetskopierar precis som förut (obegränsad bandbredd, gallringsbar, inget budgetlarm). Säkerhetsdialogen finns där för när du vill ha samma skydd som en off-site-kopia får, utan att behöva skapa en off-site-destination bara för det.
+Inget av detta är obligatoriskt: en handskriven fjärrsökväg utan sparade säkerhetsinställningar säkerhetskopierar obegränsat, rensningsbart och utan budgetlarm. Säkerhetsinställningarna finns för när du vill ha skydden en off-site-kopia får, utan ett separat mål bara för att få dem.
 
-!!! note "Moln- och REST-uppgifter delas"
-    Ett fjärrprimärt arkiv autentiserar med samma S3-/REST-uppgifter som ställts in under Inställningar, Molnåtkomst, Delade molnautentiseringsuppgifter. Det finns ingen separat uppgiftslagring för primära arkiv.
+!!! note "Moln-/REST-uppgifter är delade"
+    Ett fjärranslutet primärt arkiv autentiserar med de delade molnautentiseringsuppgifterna under **Inställningar, Mål**; det finns ingen separat uppgiftslagring för primära arkiv.
 
 ### SMB och WebDAV utan värdmontering {#smb-webdav}
 
-Inställningar, Molnåtkomst, rclone har ett formulär för en Windows- eller Samba-resurs och för en WebDAV-server (Nextcloud, ownCloud, SharePoint eller någon annan). Fyll i ett kort namn, värden och resursen (SMB) eller URL:en och servertypen (WebDAV), användaren och lösenordet, så skriver BombVault rclone-avsnittet åt dig. rclone döljer själv lösenordet innan det sparas; lägger du till en destination med ett namn som redan finns ersätter den det avsnittet i stället för att lägga till ett andra.
+Kortet **Off-site (rclone)** under **Inställningar, Mål** har ett formulär för en Windows- eller Samba-resurs och för en WebDAV-server (Nextcloud, ownCloud, SharePoint eller någon annan). Fyll i ett kort namn, värd och resurs (SMB) eller URL och servertyp (WebDAV), användare och lösenord, så skriver BombVault rclone-avsnittet åt dig. rclone fördunklar lösenordet själv innan det lagras; att lägga till ett med ett namn som redan finns ersätter det avsnittet i stället för att lägga till ett andra. **Lägg till mål** erbjuder SMB och WebDAV som leverantörer med samma fält.
 
-Formuläret svarar med den färdiga platsen, till exempel `rclone:nas:backups`. Lägg in den i en säkerhetskopieringssökväg eller en off-site-destination och lägg till en undermapp om du vill ha en (`rclone:nas:backups/bombvault`). Resursen är det första ledet i sökvägen, inte en del av namnet.
+Formuläret svarar med det färdiga målet, till exempel `rclone:nas:backups`. Använd det som ett avsnitts sökväg eller ett mål och lägg till en undermapp om du vill ha en (`rclone:nas:backups/bombvault`). Resursen är det första sökvägssegmentet, inte en del av namnet.
 
-Det här är en bättre väg än att montera resursen på Unraid: restic avråder från att ha ett repository på en monterad CIFS-resurs, och här monteras ingenting. NFS finns inte i formuläret eftersom varken restic eller rclone har en NFS-backend; för NFS monterar du exporten på värden och pekar en säkerhetskopieringssökväg mot den.
+Det här är den bättre vägen än att montera resursen på Unraid: restic avråder från att hålla ett arkiv på en monterad CIFS-resurs, och här monteras ingenting. NFS finns inte i formuläret eftersom varken restic eller rclone har ett NFS-backend; för NFS, montera exporten på värden och använd den som en lokal mapp.
 
-## Oföränderligt (append-only) off-site
+## Raderingsskydd (append-only)
 
-Flagga ett off-site-repo append-only så att ransomware, eller en komprometterad värd, inte kan radera eller skriva om dina säkerhetskopior. Den bortre sidan (en `restic/rest-server` som körs i `--append-only`-läge) **upprätthåller** det. BombVault **verifierar** det bara och visar aldrig grönt enbart på ett konfigurationspåstående.
+Slå på raderingsskydd för ett off-site-mål så att ransomware, eller en komprometterad värd, inte kan radera eller skriva över dina säkerhetskopior. Den bortre sidan (en `restic/rest-server` i läget `--append-only`) **upprätthåller** det. BombVault **verifierar** det bara och visar aldrig grönt på ett konfigurationspåstående ensamt. En mapp på den här servern kan inte vägra radering, eftersom den som styr BombVault styr också mappen, så lokala mål erbjuder inte reglaget.
 
-Guiden **guidad off-site-uppsättning** lotsar dig från val av backend (rest-server / rclone / S3) genom ett färdigt-att-klistra-in rest-server-deploy-utdrag, ett anslutningstest, den oföränderliga växeln (som kör manipulationstestet omedelbart) och en retention-strategi, så att append-only off-site är nåbar utan att handredigera konfigurationer.
+Snabbaste vägen till en append-only-kopia är en parkopplad BombVault med en [mottagarserver](#receiving-server): den kör rest-servern åt dig, i append-only-läge.
 
-!!! note "En lyckad radering under `/locks/` är förväntad"
-    Append-only betyder inte att ingenting längre kan raderas. restic måste ta och släppa sina egna lås, så `/locks/` förblir avsiktligt skrivbar och raderbar. Ögonblicksbilder och datan bakom dem, alltså precis det som utpressningsprogram skulle gå efter, går inte att ta bort. Testar du motparten själv är en radering som lyckas under `/locks/` korrekt beteende och inte ett hål i skyddet.
+!!! note "En lyckad radering under `/locks/` är väntad"
+    Append-only betyder inte att inget någonsin kan tas bort. restic måste ta och släppa sina egna lås, så `/locks/` förblir skrivbar och raderbar med flit. Ögonblicksbilderna och datan bakom dem, som är det ransomware skulle gå efter, kan inte tas bort. Om du själv provar den bortre sidan är en radering som lyckas under `/locks/` korrekt beteende och inget hål i skyddet.
 
-!!! warning "Oföränderliga repos rensas aldrig från den här boxen"
-    Ett oföränderligt off-site rensar avsiktligt aldrig gamla ögonblicksbilder. Sätt ett **tillväxtbudget-alarm** för det så att du varnas innan repo-storleken skenar iväg.
+!!! warning "Append-only-arkiv rensas aldrig från den här boxen"
+    Ett append-only-mål rensar aldrig gamla ögonblicksbilder härifrån; rensning är den bortre sidans jobb. Ange ett **larm för tillväxtbudget** för det så att du varnas innan arkivstorleken skenar.
 
 ## Manipulationstest
 
-BombVault bevisar regelbundet append-only-garantin genom att faktiskt försöka en radering mot off-site-repot, riktad mot ett obefintligt objekt:
+BombVault bevisar med jämna mellanrum append-only-garantin genom att faktiskt försöka radera i off-site-arkivet, riktat mot ett obefintligt objekt. **Testa skyddet mot radering nu** på ett måls sida kör det på begäran, och **Kontrollera raderingsskydd** under **Inställningar, Verifiering, Automatiska kontroller** kör det enligt ett schema.
 
-- **Nekad** betyder skyddad.
-- **Accepterad** betyder inte skyddad.
-- Ett **obestämt** resultat (server onåbar, autentiseringsfel) vänder aldrig det lagrade utslaget.
+- **Nekat** betyder skyddat.
+- **Accepterat** betyder oskyddat.
+- Ett **ofullständigt** resultat (servern onåbar, autentiseringsfel) vänder aldrig det lagrade utlåtandet.
 
-En verklig skyddad-till-oskyddad-vändning avfyrar ett enda larm.
+En verklig övergång från skyddat till oskyddat utlöser ett enda larm.
 
 ## DR-övningar
 
-BombVault erbjuder två nivåer av bevis på att dina säkerhetskopior faktiskt går att återställa, inte bara finns.
+BombVault erbjuder två nivåer av bevis för att dina säkerhetskopior verkligen går att återställa, inte bara finns.
 
-- **Återställningsverifieringsövningar (lokala).** BombVault kör regelbundet `restic check --read-data-subset` (avgränsad, aldrig en diskfyllande fullständig återställning) och visar en *Verifierat återställbar*-märkning per domän. Kadensen finns under Inställningar, Scheman; märkningen under Inställningar, Integritet.
-- **DR-övningar (off-site).** BombVault återställer ett verkligt mål från off-site-repot till en engångssandlåda, verifierar det fil-för-fil och byte-för-byte, och städar sedan upp. Detta bevisar att du kan återhämta dig från off-site, inte bara att repot svarar.
+- **Återställningsverifieringsövningar (lokala).** BombVault kör med jämna mellanrum `restic check --read-data-subset` (begränsat, aldrig en diskfyllande full återställning). Kadensen finns under **Inställningar, Verifiering, Automatiska kontroller**, och kortet **Kontrollera säkerhetskopior** på samma bricka visar resultatet.
+- **Provåterställning (off-site).** BombVault återställer ett riktigt mål från off-site-arkivet i en avskärmad sandlåda, verifierar det fil för fil och byte för byte och städar sedan upp. Det bevisar att du kan återhämta dig från off-site, inte bara att arkivet svarar.
 
-**Poängkortet för ransomware-skydd** på Översikten rullar upp detta i en grön / gul / röd hållning per domän, med en åldersstämplad checklista (off-site konfigurerat, append-only verifierat, replikering aktuell, återställningsövning godkänd, kryptering på, rensningsstrategi satt). Varje röd rad djuplänkar till åtgärden, och kortet blir grönt endast på verifierade fakta.
+Kortet **Skyddsstatus** på översikten sammanfattar detta per avsnitt i fyra kontroller: en aktuell säkerhetskopia på den här servern, en kopia off-site, raderingsskydd där och en provåterställning därifrån. Ett klick på ett avsnitt visar detaljerna, och kortet blir bara grönt på verifierade fakta.
 
-## Parkoppling av instanser {#pairing}
+## Parkoppla instanser {#pairing}
 
-Mottagare, Hämtning-källor, Instanser-sidan och Mesh-off-site pratar alla med en annan BombVault. De gör det som medlemmar i en och samma parkopplingsgrupp, och en instans går med i gruppen med tolv ord.
+Flera BombVault arbetar tillsammans som en grupp: de visar varandras skyddsstatus, tar på sig roller åt varandra och kan förvara varandras nyckel. En instans går med i gruppen med tolv ord.
 
-På den första instansen, öppna **Inställningar → Parkoppling** och klicka på **Skapa fras** i parkopplingskorten. Tolv ord dyker upp i ett fönster med en **Kopiera**-knapp. På varje annan instans, öppna samma plats, klicka på **Ange fras** och klistra in eller skriv in orden, eller klicka på **Klistra in** i det fönstret. Ett ord som inte finns i listan namnges med sin plats redan medan du skriver, och det sista ordet bär en kontrollsumma, så ett feltippat eller omkastat ord fångas innan något parkopplas. Skapa frasen på bara en instans: två instanser som båda skapar en fras bildar två separata grupper. Om ingen dyker upp inom en minut erbjuder fliken två utvägar: visa orden igen för att skriva in dem där borta, eller skriv in den andra instansens ord och gå med i dess grupp i ett steg. Parkoppling fungerar utan inloggningslösenord också, men ange ett: utan det kan alla som kan öppna det här webbgränssnittet läsa orden och via gruppen få tag i restic-lösenordet för varje instans i den. Parkopplingskortet säger det tills ett lösenord är angett. Med ett lösenord frågar en förnyad visning av frasen efter det. **Lämna gruppen** tar en instans ur den igen.
+Öppna **Inställningar, Parkoppling** på den första instansen och tryck på **Skapa fras**. Tre stegkort visar hur det går till. Tolv ord visas i ett fönster med en knapp **Kopiera**. På varje annan instans öppnar du samma ställe, trycker på **Ange fras** och klistrar in eller skriver dem, eller trycker på **Klistra in** i det fönstret. Ett ord som inte finns i listan namnges med sin position medan du skriver, och det sista ordet bär en kontrollsumma, så ett felskrivet eller bytt ord upptäcks innan något parkopplas. Skapa frasen på bara en instans: två instanser som båda skapar en bildar två skilda grupper. Om ingen dyker upp inom en minut erbjuder sidan två utvägar: visa orden igen för att ange dem där borta, eller ange den andra instansens ord och gå med i dess grupp i ett steg. Parkoppling fungerar utan inloggningslösenord, men ange ett: utan det kan vem som helst som kan öppna webbgränssnittet läsa orden och, via gruppen, be om roller som lämnar ut restic-lösenordet för instanserna i den. Parkopplingskortet säger det tills ett lösenord är angivet. Med ett lösenord frågar visning av frasen igen efter det. **Lämna gruppen** tar ut en instans igen.
 
-Den som känner till orden kan gå med i gruppen, så behandla dem som ett lösenord.
+Den som kan orden kan gå med i gruppen, så behandla dem som ett lösenord.
 
-**Hur medlemmar når varandra.** Varje instans lär sig sin egen adress på nätverket från din webbläsare så snart du loggar in, den visas i reläkortet som **Den här instansen på ditt nätverk**; rätta den där om en reverse proxy eller en ovanlig port ligger framför. I samma nätverk kungör medlemmarna den adressen via multicast och pratar direkt med varandra, och där multicast inte kan ta sig över ett containernätverk, som Dockers standard-bridge-nätverk, söker en instans i stället igenom sitt eget subnät efter de andra med ett signerat anrop som bara en gruppmedlem kan svara på, så parkopplingen ändå blir klar på några sekunder utan relä. Dyker inget upp tar **Hittar du den inte?** under parkopplingskortet emot en adress för hand, för ett annat subnät eller en icke-standardport. Instanser i olika nätverk går via ett relä, valt på samma flik:
+**Hur medlemmar når varandra.** Varje instans får veta sin egen adress i nätverket av din webbläsare i samma stund du loggar in, listad under **Kända adresser** på parkopplingssidan tillsammans med dem instansen hittade själv; rätta den där om en omvänd proxy eller en ovanlig port sitter framför. I samma nätverk annonserar medlemmar den adressen med multicast och talar direkt, och där multicast inte kan korsa ett containernätverk, till exempel Dockers standardbrygga, söker en instans i stället igenom sitt eget subnät efter de andra med ett signerat anrop som bara en gruppmedlem kan svara på, så parkopplingen blir klar på sekunder ändå utan relä. Om inget dyker upp tar **Hittar du den inte?** emot en adress för hand, för ett annat subnät eller en ovanlig port. Instanser i olika nätverk går via ett relä, valt på samma sida; dess fyra former har var sin bild:
 
-- **Projektrelä** (standard): `parleyport.halleluja.design`, samma relä som KnightLoader använder. Inget att ställa in.
-- **Eget relä**: containern [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) från Unraid Community Apps, eller en av dina instanser som redan är nåbar utifrån med **Fungera som relä** påslaget. Den instansen svarar då på `/relay/connect` på sin egen adress, bakom den reverse proxy och det certifikat den redan har, och släpper bara in din grupp. Ange reläets adress på varje instans som ska använda det.
+- **Projektets relä** (standard): `parleyport.halleluja.design`, samma relä som KnightLoader använder. Inget att ställa in.
+- **Eget relä**: containern [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) från Unraid Community Apps (också under **Inställningar, Appar**), eller en av dina instanser som redan nås utifrån med **Fungera som relä** påslaget. Den instansen svarar då på `/relay/connect` på sin egen adress, bakom den omvända proxy och det certifikat den redan har, och släpper bara in din grupp. Ange reläets adress på varje instans som ska använda det.
 - **Inget relä**: medlemmar hittar varandra automatiskt i samma nätverk, och ingen annanstans.
 
-**Vad reläet ser.** Varje anrop mellan medlemmar är förseglat med AES-256-GCM under en nyckel härledd ur de tolv orden, och den nyckeln lämnar aldrig dina instanser. Reläet lär sig en hash som grupperar anslutningarna, vilken instans ett meddelande är till, hur stort det är och när det passerar. Ett direkt anrop i det lokala nätverket är förseglat på samma sätt och även signerat, så inget beror på det självsignerade certifikat en instans visar upp.
+**Vad reläet ser.** Varje anrop mellan medlemmar förseglas med AES-256-GCM under en nyckel härledd ur de tolv orden, och den nyckeln lämnar aldrig dina instanser. Reläet får veta en hash som grupperar anslutningarna, vilken instans ett meddelande är till, hur stort det är och när det passerar. Ett direkt anrop i det lokala nätverket förseglas på samma sätt och signeras dessutom, så ingenting beror på det självsignerade certifikat en instans serverar. Anrop som lämnar ut något (rollsvar, ett restic-lösenord, mottagarinloggningar, nyckeldepositioner) signeras också med en nyckel för medlemmen som skickar dem, fästad vid första anblicken; se [Säkerhetsmodell](configuration.md#security-model).
 
-**Vad som färdas över gruppen.** Poängkorten på Instanser-sidan, en begäran att kontrollera en domän just nu, erbjudanden om extern lagring från Mesh, och det en mottagare eller en Hämtning-källa behöver: den andra instansens repository-platser och dess restic-lösenord. Säkerhetskopieringsdata gör det aldrig; den går alltid direkt till restic-backendarna. Inte heller APP_KEY: restic-lösenordet öppnar bara den instansens repositorier och inget annat, inte dess sparade hemligheter, sessioner eller återställningskoder.
+**Vad som färdas över gruppen.** Skyddsstatusen på sidan Instanser, en begäran att kontrollera ett avsnitt nu, rollförfrågningar och svaren på dem, lagringserbjudanden och det en mottagare eller hämtare behöver när dess roll väl tillåtits: den andra instansens arkivplatser och dess restic-lösenord. Säkerhetskopieringsdata gör det aldrig; den går fortfarande rakt till restic-backenderna. Inte heller APP_KEY: restic-lösenordet öppnar den instansens arkiv och inget annat, inte dess lagrade hemligheter, sessioner eller återställningskoder.
 
-**Poster från innan parkoppling.** Instanser som lagts till med en flotta-token, och mottagare och Hämtning-källor som satts upp med den andra instansens APP_KEY, finns kvar efter uppdateringen och märks **Parkoppla igen**. Mottagare och Hämtning-källor fortsätter att fungera: vid sin första start ersätter BombVault varje sparad APP_KEY med det restic-lösenord som härletts ur den. Parkoppla båda instanserna, redigera sedan posten och välj dess instans. En sådan instans tar över sitt gamla kort så snart en instans med samma namn dyker upp i gruppen.
+**Poster från före parkopplingen.** Instanser som lagts till med en fleet-token, och mottagna arkiv och hämtningskällor som satts upp med den andra instansens APP_KEY, finns kvar efter uppdateringen och är markerade **Parkoppla igen**. De fortsätter fungera: vid första starten ersätter BombVault varje lagrad APP_KEY med restic-lösenordet härlett ur den. Parkoppla båda instanserna, redigera sedan posten och välj dess instans. Tills dess står sådana poster i kortet **Utan instans** på sidan Instanser.
 
-Den enda plats som fortfarande tar emot en APP_KEY för hand är [Återställ från ett annat BombVault-repo](#restore-from-another-bombvault-repo), för fallet att den andra instansen är borta och inte kan svara i en grupp.
+Det enda ställe som fortfarande tar en APP_KEY för hand är [Från en gammal säkerhetskopiemapp](#restore-from-another-bombvault-repo), för fallet att den andra instansen är borta och inte kan svara i en grupp.
 
-## Mottagarpanel (den mottagande sidan)
+## Instanser och roller {#roles}
 
-![Den mottagande sidan, bevakad skrivskyddat, med en integritetskontroll körd på denna maskin.](assets/screenshots/receiver.png)
+Sidan **Instanser** (en inställningsbricka som kan fästas i sidofältet) visar gruppen som ett nät över vem som gör vad för vem, ett kort för den här instansen och ett kort för varje annan medlem, Android-telefonerna och ZFS-servrarna. **Parkoppla en instans** flyter nere till höger. Vilka delar som är på ställs in under **Inställningar, Instanser, Flera servrar**: **Instanser**, **Mottagare** och **Hämtning**.
 
-*Den mottagande sidan, bevakad skrivskyddat, med en integritetskontroll körd på denna maskin.*
+Varje kort visar medlemmens skyddsstatus och dess roller som brickor. En roll är något en instans gör för en annan:
 
-Allt ovan är den *sändande* sidan. På boxen som **tar emot** oföränderliga off-site-kopior från en annan BombVault ger mottagarpanelen dig oberoende, skrivskyddad övervakning av de repositorierna på den mottagande hårdvaran, så att ett tyst fel i den bortre änden inte förblir obemärkt.
+- **Mottagare** förvarar den här serverns off-site-kopior i en rest-server i append-only-läge. Den här servern skickar efter varje säkerhetskopia och kan inte radera något där, även om någon tar över den.
+- **Hämtare** hämtar den här serverns säkerhetskopior enligt ett eget schema. Den här servern behöver inte vara vaken för det.
+- **ZFS-server** tar emot den här serverns ZFS-repliker. Varje ZFS-post väljer den under **Replik** i sina inställningar.
+- **Nyckelförvarare** förvarar en förseglad kopia av den här serverns återställningskit. Se [Nyckelförvarare](#key-keeper).
 
-Slå på **Mottagare**-växeln i Inställningar för att avslöja en **Mottagare**-flik. Den är av som standard; aktivera den endast på en box som faktiskt tar emot oföränderliga off-site-säkerhetskopior. Registrera sedan ett mottaget repository (skrivskyddat, öppnat med den sändande instansens restic-lösenord, som den får via [parkopplingsgruppen](#pairing)) för att få:
+Att slå på en roll skickar en begäran, och ingenting startar förrän någon på den andra instansen trycker på **Tillåt**. Begäran visas på den instansens kort som ett märke, och dess **Detaljer** listar den med **Tillåt** och **Avvisa**; en tillåten roll kan återkallas där när som helst. En streckad linje i nätet är en roll som fortfarande väntar. En instans på BombVault 9.x kan inte svara på en begäran, så en roll är aktiv där så fort du slår på den, och en begäran från en 9.x-instans väntar här på **Tillåt**.
 
-- **En ögonblicksbildsinventering grupperad per källa**, så att du exakt kan se vilka containrar, VM:ar och filuppsättningar som har landat.
-- **Senast mottaget** per källa, så att du vet hur färsk var och en är.
-- **En oberoende `restic check`** körd på den mottagande hårdvaran, så att integritet verifieras där datan faktiskt sitter, inte bara på avsändaren.
-- **En dödmansknapp:** ett larm när en källa slutar sända inom ett fönster du ställer in.
+**Detaljer** på ett kort öppnar resten: den medlemmens mottagna arkiv och hämtningskällor, lagringserbjudanden, övervakning, **Ta bort** och **Glöm nyckeln**.
+
+## Mottagare och hämtare {#receiver}
+
+![En mottagen off-site-kopia i en instanss detaljer, bevakad skrivskyddat, med en integritetskontroll körd på den här hårdvaran.](assets/screenshots/receiver.png)
+
+*En mottagen off-site-kopia i en instanss detaljer, bevakad skrivskyddat, med en integritetskontroll körd på den här hårdvaran.*
+
+På boxen som **tar emot** append-only-kopior från en annan BombVault ger de mottagna arkiven dig oberoende, skrivskyddad övervakning på den mottagande hårdvaran, så att ett tyst fel i andra änden inte går obemärkt förbi. Slå på **Mottagare** under **Inställningar, Instanser**, öppna sedan den sändande instansens **Detaljer** på sidan Instanser och lägg till det mottagna arkivet (skrivskyddat, öppnat med den sändande instansens restic-lösenord, som den får över [parkopplingsgruppen](#pairing)). Du får:
+
+- **En inventering per källa**, så att du ser exakt vilka containrar, VM:ar och mappuppsättningar som har anlänt.
+- **Senast mottaget** per källa, så att du vet hur färsk varje är.
+- **En oberoende `restic check`** körd på den mottagande hårdvaran, så att integriteten verifieras där datan faktiskt ligger, inte bara hos avsändaren.
+- **En dödmansknapp:** ett larm när en källa slutar skicka inom ett fönster du anger.
 - **Integritetslarm:** ett larm när en kontroll på den mottagande sidan misslyckas.
 
-Mottagaren är strikt skrivskyddad. Den skriver aldrig till det mottagna repositoriet, så den kan aldrig bryta append-only-garantin som avsändaren förlitar sig på.
+Mottagaren är strikt skrivskyddad. Den skriver aldrig till det mottagna arkivet, så den kan aldrig bryta append-only-garantin som avsändaren förlitar sig på.
+
+En hämtare arbetar åt andra hållet: med **Hämtning** påslaget läser en instans en annan medlems säkerhetskopior in i sitt eget arkiv enligt ett eget schema. Dess källor står också i den medlemmens detaljer.
 
 ### Mottagarserver {#receiving-server}
 
-Mottagarboxen kan också köra den rest-server som de andra kopierar till. **Ställ in mottagarserver** överst på fliken Mottagare frågar efter en mapp på en resurs, där **Ny mapp** skapar en, och en port (8000 om ingen annan container använder den). BombVault gör sedan så här:
+Den mottagande boxen kan också köra rest-servern som de andra kopierar till. Den sätts upp första gången du tillåter en **Mottagare**-förfrågan som ber om den: fönstret säger att servern behöver en mottagarserver och ber om en mapp på en resurs, med **Ny mapp** för att skapa en, och en port (8000 om inte en annan container använder den). BombVault då:
 
-1. avbryter om en container som heter `rest-server` redan finns eller om en annan container har porten;
+1. vägrar om en container som heter `rest-server` redan finns eller en annan container håller porten;
 2. hämtar `restic/rest-server` och startar den via Docker-socketen i append-only-läge med privata arkiv och en inloggningsfil i mappen;
-3. skriver dess Unraid-mall till flashen, så att containern går att redigera på fliken Docker, eller erbjuder mallen som nedladdning när flashen inte går att nå;
-4. kör manipulationstestet mot den och visar om den vägrar radera.
+3. skriver dess Unraid-mall till flash-enheten, så att containern förblir redigerbar på fliken Docker, eller erbjuder mallen som nedladdning när flash-enheten inte går att nå;
+4. kör manipulationstestet mot den och visar om den vägrar radering.
 
-Instanserna i din grupp hittar sedan servern i målguiden under **Från din grupp**, med mottagarboxens namn. Varje instans får en egen inloggning första gången den väljer servern och skriver bara till sin egen mapp där. Kortet listar inloggningarna, och **Återkalla inloggning** tar bort en; det den instansen redan har kopierat ligger kvar i mappen. Konfigurationen skapar också en inloggning för någon utanför gruppen, vars lösenord kortet visar en enda gång.
+Instanserna i din grupp hittar sedan servern bland leverantörerna under **Från din grupp**, uppkallad efter den mottagande boxen, och rollen **Mottagare** erbjuder den som det säkra valet. Varje instans får en egen inloggning första gången den använder servern och skriver bara i sin egen mapp där. Med **Mottagare** påslaget under **Inställningar, Instanser** öppnar **Mottagarserver** på den här instansens kort servern igen. Dess fönster listar inloggningarna under **Partner med inloggning**, och **Återkalla inloggning** tar bort en; det den instansen redan kopierat blir kvar i mappen. Uppsättningen skapar också en **Inloggning utanför gruppen**, vars lösenord fönstret visar en gång.
 
-En instans som når mottagarboxen bara via reläet kan inte använda servern, eftersom reläet inte bär några säkerhetskopior. Lägg först till mottagarboxens adress under Inställningar, Parkoppling. När BombVault körs på en egen IP-adress (till exempel på br0), fyll i **Adress för partner**, eftersom servern lyssnar på värdens adress.
+En instans som når den mottagande boxen bara via reläet kan inte använda servern, eftersom reläet inte bär några säkerhetskopior. Lägg först till den mottagande boxens adress på parkopplingssidan. När BombVault körs på en egen IP-adress (på br0, till exempel), fyll i **Adress för partner**, eftersom servern lyssnar på värdens adress.
 
-## Genomgånget exempel: två Unraid-maskiner, hela vägen
+## Komplett exempel: två Unraid-boxar, från början till slut
 
-Ovan beskrivs delarna. Här är en komplett uppsättning med riktiga värden, för delar är lättare att sätta ihop när man har sett dem ihopsatta en gång.
+Allt ovan beskriver delarna. Det här är en komplett uppsättning, eftersom delarna är lättare att sätta ihop när man sett dem hopsatta en gång.
 
-Två maskiner: **TOWER** kör containrarna och skickar säkerhetskopiorna, **VAULT** tar emot dem och upprätthåller oföränderligheten. Byt ut mot dina egna namn, adresser och utdelningssökvägar.
+Två boxar: **TOWER** kör containrarna och skickar säkerhetskopior; **VAULT** tar emot dem och upprätthåller append-only. Byt ut mot dina egna namn, adresser och resurssökvägar.
 
-**1. Res upp append-only-servern på VAULT.** I BombVault på TOWER, gå till *Inställningar → Extern → Konfigurera*, välj **rest-server** och generera receptet. Kopiera fliken **Unraid-mall (XML)**, spara den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, gå sedan till *Docker → Add Container* och välj **rest-server** i mallistan. Skriv in den visade `htpasswd`-raden i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT innan du startar den. Engångslösenordet visas en gång och sparas aldrig, kopiera det nu. Den raden bär samma lösenord, redan bcrypt-hashat åt dig: klartexten hör hemma i REST-uppgifterna på TOWER, den hashade raden i `.htpasswd` på VAULT. Du behöver inte hasha något själv.
+**1. Parkoppla de två boxarna.** Öppna **Inställningar, Parkoppling** på TOWER, tryck på **Skapa fras** och skriv in de tolv orden på VAULT under **Ange fras**. Ange först ett inloggningslösenord på båda.
 
-    Låt `--append-only` stå kvar i OPTIONS-fältet. Det är hela poängen: utan det är VAULT en vanlig utdelning igen.
+**2. På TOWER, be VAULT vara mottagare.** På sidan Instanser slår du på **Mottagare** på VAULT:s kort, väljer avsnitten och **VAULT:s mottagarserver** som plats och skickar begäran.
 
-**2. Peka det externa arkivet dit på TOWER.** Arkivets URL följer mönstret som receptet skriver ut:
+**3. På VAULT, tillåt.** VAULT:s sida Instanser visar begäran på TOWER:s kort. Tryck på **Tillåt**. Första gången ber VAULT om en mapp för sin mottagarserver, till exempel `user/appdata/rest-server`, startar rest-servern i append-only-läge och kör manipulationstestet mot den.
 
-    rest:http://VAULT:8000/bombvault-containers/containers
+**4. Tillbaka på TOWER.** Från då kopierar TOWER till VAULT efter varje säkerhetskopia, och det nya målet visas på TOWER:s sida Mål med sitt raderingsskydd.
 
-Första segmentet i sökvägen är htpasswd-användaren, det andra är arkivet. Ange den genererade användaren och lösenordet som destinationens REST-uppgifter och kör **anslutningstestet**.
-
-**3. Slå på ”Oföränderlig” på TOWER.** Manipulationstestet körs direkt och måste säga *skyddad*. Vad svaren betyder:
+Vad manipulationstestet svarar:
 
 | Resultat | Vad som hände |
 | --- | --- |
-| **skyddad** | VAULT vägrade raderingen. Det är det enda godkända tillståndet. |
-| **INTE skyddad** | VAULT accepterade en radering. `--append-only` saknas eller har tagits bort. |
-| **ej avgörande** | Varken eller. Oftast är adressen inte den restic själv använder, eller så har uppgifterna ändrats. Inget registreras och inget larm utlöses. |
+| **skyddat** | VAULT vägrade raderingen. Det här är det enda godkända läget. |
+| **oskyddat** | VAULT accepterade en radering. `--append-only` saknas eller togs bort. |
+| **ofullständigt** | Ingetdera. Oftast är URL:en inte den restic själv använder, eller så ändrades uppgifterna. Ingenting registreras och inget larm utlöses. |
 
-**4. Se på VAULT vad som kommer in.** Parkoppla de två boxarna ([Parkoppling av instanser](#pairing)), slå på *Inställningar → Allmänt → Mottagare*, öppna fliken **Mottagare** och registrera arkivet skrivskyddat med TOWER som sändande instans.
+**5. Bevaka det som kommer, om du vill.** Slå på **Mottagare** under **Inställningar, Instanser** på VAULT, öppna TOWER:s **Detaljer** och lägg till det mottagna arkivet. VAULT får TOWER:s restic-lösenord över gruppen; ingen skriver en nyckel.
 
-!!! warning "Platsen är en sökväg **inuti** containern, skriven relativt värdmonteringen"
-    Ange `user/appdata/rest-server/bombvault-containers/containers`, **inte** `/mnt/user/appdata/…`. BombVault kör i en container där värdens `/mnt` är monterad någon annanstans; en absolut värdsökväg finns inte där. Klistrar du in en sådan talar BombVault nu om vilken relativ sökväg du ska använda i stället.
+**6. Gör det ömsesidigt.** Upprepa stegen i andra riktningen: VAULT ber TOWER vara dess mottagare. Varje box upprätthåller då append-only åt den andra, och ingen kan radera den andras säkerhetskopior.
 
-    VAULT hämtar TOWERs restic-lösenord via gruppen när du sparar; ingen behöver skriva in en nyckel.
+En rest-server du kör för hand fungerar också: lägg till den med **Lägg till mål** som rest-server, med användare och lösenord från dess `.htpasswd`, och slå på raderingsskydd. Behåll `--append-only` i dess alternativ; utan det är den bortre sidan en vanlig resurs igen.
 
-**5. Gör det ömsesidigt, om du vill.** Upprepa samma fem steg åt andra hållet: en rest-server på TOWER som tar emot VAULTs kopia. Då upprätthåller varje maskin oföränderligheten åt den andra, och ingen kan radera den andras säkerhetskopior.
+!!! warning "En lokal sökväg är en sökväg inuti containern"
+    Där BombVault ber om en mapp på den här servern, ange den relativt värdmonteringen, till exempel `user/appdata/rest-server/bombvault-containers`, inte `/mnt/user/appdata/...`. BombVault körs i en container, där värdens `/mnt` är monterad någon annanstans; en absolut värdsökväg finns inte inuti den. Om du klistrar in en säger BombVault vilken relativ sökväg du ska använda i stället.
 
-## Guidad återställning
+## Nödguide {#emergency}
 
-En dedikerad **Återställning**-flik lotsar en ny eller ombyggd installation genom katastrofscenariot, på ett ställe:
+**Nödguiden** tar tillbaka en server som är borta eller sattes upp på nytt. Den startar på sidan **Återställning** under **Nödläge**, och från **Återställ från en säkerhetskopia** på välkomstsidan för en ny installation. Den går i fyra steg: **Åtkomst**, **Inställningar**, **Urval** och **Återställning**.
 
-1. **Återställer BombVaults egna inställningar först**, så att säkerhetskopiesökvägarna, off-site-målen och uppgifterna som resten av flödet behöver kommer förifyllda (tillämpade via en självomstart över Docker-socketen, så att den körande inställningsdatabasen aldrig skrivs över under ett öppet handtag).
-2. **Kontrollerar att BombVault kan läsa dina säkerhetskopior** (krypteringsnyckel-fällan direkt).
-3. Låter dig **peka mot ditt befintliga repo** (lokalt eller off-site).
-4. **Identifierar** containrarna, VM:arna, filuppsättningarna och ZFS-datauppsättningarna lagrade i det.
-5. **Återställer containrarna och VM:arna i ett svep** (lämnade stoppade, så att du startar dem medvetet) och listar filuppsättningarna och ZFS-objekten som du återställer ett i taget; ZFS-objekt kommer tillbaka avstängda. Ditt återställningskit är ett klick bort.
+1. **Åtkomst.** Visa BombVault nyckeln till de gamla säkerhetskopiorna, på ett av tre sätt:
+    - **Ladda upp återställningskit**: filen du laddade ner under uppsättningen. Den innehåller nyckeln och varje mål, och BombVault fyller i resten från den. Ett kit förseglat med age frågar efter identiteten det förseglades för; den används en gång och lagras inte.
+    - **Via gruppen**: en instans i din grupp förvarar nyckeln som en deposition. Du behöver gruppens tolv ord, din utlämningskod och någon vid den instansen. Se [Nyckelförvarare](#key-keeper).
+    - **Skriv in nyckeln**: den gamla serverns `APP_KEY`, och var dess säkerhetskopior finns.
 
-!!! tip "Planerad migrering kontra katastrof"
-    Guidad återställning återställer BombVaults egna inställningar från en säkerhetskopia. För en *planerad* flytt till en ny box kan du istället ta med din konfiguration direkt med kortet **Exportera / importera inställningar** (en portabel JSON-fil). Se [Konfiguration](configuration.md#portable-settings-export-and-import).
+    BombVault provar sedan nyckeln på varje mål och säger för vart och ett om det är läsbart, inte hittat, låst med en annan nyckel, inte nåbart eller fortfarande saknar inloggning. Ingenting har sparats ännu, och nyckeln finns kvar i minnet under begränsad tid. **Ta över nyckeln** får den här servern att skriva sina säkerhetskopior med den nyckeln från och med nu; **Ångra övertagandet** går tillbaka till den egna nyckeln tills den första säkerhetskopian har körts. En server som redan har egna säkerhetskopior vägrar övertagandet och hänvisar till [Från en gammal säkerhetskopiemapp](#restore-from-another-bombvault-repo). **Spara inloggningsuppgifter** lagrar inloggningarna kitet bär för fjärranslutna mål, och frågar innan det ersätter inloggningar den här servern redan har.
+2. **Inställningar.** **Återställ inställningar** återställer BombVaults egna inställningar från den nyaste auto-säkerhetskopian: mål, autentiseringsuppgifter, scheman och regler. BombVault startar om för att tillämpa dem, via Docker-socketen, så den aktiva inställningsdatabasen skrivs aldrig över under ett öppet handtag, och guiden fortsätter av sig själv efteråt. Den här serverns inloggning blir kvar: du fortsätter logga in med lösenordet du använder nu. Hemligheter den gamla servern lagrat som inte kan tas över listas, så att du kan ange dem igen.
+3. **Urval.** BombVault går igenom dina säkerhetskopior och listar containrarna, VM:arna, mappuppsättningarna och ZFS-datauppsättningarna den hittar. Den nyaste ögonblicksbilden är förvald överallt. Det den här servern fortfarande har börjar avstängt, eftersom en återställning skulle ersätta det. Mappuppsättningar vet inte längre var de kom ifrån efter en ombyggnad, så de går till en mapp du väljer.
+4. **Återställning.** Allt valt kommer tillbaka på en gång, lämnat stoppat om du vill starta varje container och VM själv, vilket är säkrast efter en total förlust. Ladda efteråt ner ett nytt återställningskit: det gamla hör till den tidigare installationen.
 
-### Återställ från ett annat BombVault-repo {#restore-from-another-bombvault-repo}
+!!! tip "Planerad flytt kontra katastrof"
+    Nödguiden återställer BombVaults egna inställningar från en säkerhetskopia. För en *planerad* flytt till en ny box kan du i stället föra över din konfiguration direkt med kortet **Exportera / importera inställningar** (en portabel JSON-fil). Se [Konfiguration](configuration.md#portable-settings-export-and-import).
 
-Ett separat kort på fliken **Återställning** öppnar en *annan* BombVault-instans repo (en resurs monterad under `/mnt`, eller en fjärr-URL) med **den instansens `APP_KEY`**, i en engångs, skrivskyddad session. Bläddra bland containrarna, VM:arna och filuppsättningarna som lagras där, välj en ögonblicksbild och återställ den, och det återställda objektet blir en normal lokal container, VM eller filuppsättning. Inget skrivs någonsin till det andra repot, och dina egna säkerhetskopieringsinställningar förblir orörda (sessionen lever i minnet och löper ut av sig själv). Att flytta en container från server A till server B innebär inte längre att peka om dina repo-inställningar och återställa dem efteråt. Det här kortet är för en enda gång: det öppnar en session, återställer det du väljer och glömmer den andra instansen. Vill du i stället ha ett stående arrangemang, där den här boxen enligt ett schema hämtar en annan instans ögonblicksbilder till sitt eget repository, är det fliken **Hämtning** på sidan **Instanser**.
+### Från en gammal säkerhetskopiemapp {#restore-from-another-bombvault-repo}
 
-En container vars nätverk inte finns på den här servern, till exempel ett Unraid-`br0`-nätverk på en vanlig Docker-värd, visar ett nätverksval under sin rad. BombVault skapar den på nätverket du väljer, tillsammans med dess andra nätverk. Den fasta IP-adressen och MAC-adressen hörde till det gamla nätverket och faller bort, så det nya nätverket delar ut dem.
+**Från en gammal säkerhetskopiemapp** under **Andra källor** på sidan Återställning öppnar en *annan* BombVault-instans arkiv (en resurs monterad under `/mnt`, eller en fjärradress) med den instansens återställningskit eller dess inskrivna `APP_KEY`, i en engångssession, skrivskyddad. Bläddra bland containrarna, VM:arna, mappuppsättningarna och ZFS-datauppsättningarna som lagras där, välj en ögonblicksbild och återställ den, så blir det återställda objektet en vanlig lokal container, VM eller mappuppsättning. Ingenting skrivs någonsin till det andra arkivet, och dina egna säkerhetskopieringsinställningar förblir orörda (sessionen lever i minnet och löper ut av sig själv). Att flytta en container från server A till server B innebär inte att du pekar om dina inställningar och återställer dem efteråt. Det här fönstret är en engångsgrej: det öppnar en session, återställer det du väljer och glömmer den andra instansen. Vill du i stället ha ett stående arrangemang, där den här boxen enligt ett schema hämtar en annan instans ögonblicksbilder in i sitt eget arkiv, är det rollen **Hämtare** på sidan Instanser.
 
-## Återställningskit för krypteringsnyckeln
+En container vars nätverk inte finns på den här servern, till exempel ett Unraid-nätverk `br0` på en vanlig Docker-värd, visar en nätverksväljare under sin rad. BombVault skapar det i nätverket du väljer, tillsammans med dess övriga nätverk. Den fasta IP-adressen och MAC-adressen tillhörde det gamla nätverket och tas bort, så det nya nätverket tilldelar dem.
 
-Detta är delen som gör katastrofåterställning möjlig även när det inte finns någon körande BombVault.
+## Nyckelförvarare {#key-keeper}
 
-Ett klick laddar ner **huvudnyckeln**, det **härledda restic-lösenordet** och de **exakta repo-platserna och kommandona**, så att du kan återställa direkt med restic-CLI på valfri maskin. En påminnelse på Översikten tjatar tills du har förvarat det.
+En nyckelförvarare är en instans i din grupp som håller en förseglad kopia av den här serverns återställningskit. Den kan inte öppna kopian själv. Om den här servern någonsin förloras ber en ny installation som går med i din grupp förvararen om kopian och öppnar den med din utlämningskod.
 
-!!! danger "Förvara återställningskitet bort från servern"
-    Kitet innehåller hemligheten som dekrypterar dina säkerhetskopior. Förvara det på en säker plats åtskild från servern (en lösenordshanterare, en utskriven kopia i ett kassaskåp). Om du förlorar både BombVault och `APP_KEY` utan något återställningskit kan dina krypterade säkerhetskopior inte återställas.
+1. På sidan Instanser slår du på **Nyckelförvarare** på kortet för instansen som ska förvara den och väljer **Deponera**. Att deponera kräver ett inloggningslösenord.
+2. Den här servern visar **Utlämningskoden** en gång: tjugo bokstäver och siffror i fyra grupper om fem. Skriv ner den och bekräfta med **Jag har skrivit ner koden**. Den här servern lagrar inte koden, bara det den behöver för att försegla en deposition för den.
+3. Förvararen håller nu depositionen, och den här servern förnyar den när kitet ändras. **Nyckeldeposition** på den här instansens kort listar **Den här serverns deposition** med varje förvarare och dess tillstånd, och **Depositioner som den här servern förvarar** för de andra. **Skapa en ny kod** ersätter koden; varje förvarare byter till den nya när den får den nya depositionen.
 
-!!! warning "Den senaste snapshoten är inte alltid den som ska återställas"
-    Sedan restic 0.17 visar `restic snapshots` storleken på varje snapshot. Efter dataförlust kan den senaste snapshoten vara den tömda, så återställ inte en snapshot som är mycket mindre än de före den. Efter ransomware kan det vara den krypterade, i vanlig storlek. Om BombVault fortfarande körs, titta först på sidan **Avvikelser**: den anger den senaste bra säkerhetskopian. En återställning behöver inga avvikelsedata från BombVault, och gallringspausen behåller bara fler snapshots.
+Den dagen behöver du tre saker: gruppens tolv ord, utlämningskoden och åtkomst till förvararens gränssnitt, där någon måste trycka på **Tillåt**. Välj **Via gruppen** i Nödguiden, välj depositionen, be om den och skriv utlämningskoden. Koden används på den nya servern och skickas inte till förvararen. Hos förvararen visas begäran under **Nyckeldeposition** med vem som ber, om den instansen någonsin setts där förut och hur ofta den bett; **Tillåt** lämnar ut den förseglade kopian, och att tillåta kräver ett inloggningslösenord. Den nya installationen har 30 minuter på sig att hämta den efter Tillåt, en begäran som ingen besvarar löper ut efter ett dygn, och en instans som ber för ofta måste vänta en timme.
 
-### Försegla kitet
+Utan koden kan ingen öppna kopian, förvararen inräknad. Om koden förloras, skapa en ny medan den här servern fortfarande körs; om servern redan är borta fungerar återställningskitet och den inskrivna APP_KEY fortfarande. Förvararen kan radera en deposition när som helst, och ägaren måste då be igen.
 
-Om du har slagit på age-kryptering för de vanliga exporterna (Inställningar) förseglas kitet också med den och laddas ned som `bombvault-recovery-kit.md.age`. Det är ASCII-armored i stället för binärt, så det är fortfarande vanlig text: att klistra in det i en lösenordshanterare eller skriva ut det fungerar precis som förut, innehållet går bara inte att läsa utan din nyckel.
+## Återställningskit {#recovery-kit}
 
-!!! warning "Förvara inte age-nyckeln i kitet"
-    Du behöver din **privata** age-nyckel för att öppna ett förseglat kit. Förvara den någonstans som inte är beroende av själva kitet, annars har du två saker att återställa i stället för en. Förseglingen är värd det när kitet förvaras någonstans du inte har full kontroll över (en delad lösenordshanterare, anteckningar i molnet, en utskrift på ett kontor); ett kit i ditt eget kassaskåp skyddas redan av kassaskåpet.
+Det här är delen som gör katastrofåterställning möjlig även när ingen BombVault körs.
 
-    Med kryptering påslagen och ingen användbar mottagare inställd vägras nedladdningen helt. BombVault faller aldrig tillbaka på att lämna ut huvudnyckeln i klartext.
+**Ladda ner återställningskit** i kortet **För nödfall** under **Inställningar, Återställning** ger dig **nyckeln**, det **härledda restic-lösenordet**, varje **mål** med arkivet för varje avsnitt, inloggningarna en ny installation behöver för att nå dem och de **exakta restic-kommandona**, så att du kan återställa direkt med restic-CLI på vilken dator som helst. Det kräver ett inloggningslösenord. Kitet skriver ut nyckeln också med kryptering avstängd, eftersom container- och VM-definitionerna alltid är förseglade med den. Efter ett övertagande skriver det ut den övertagna säkerhetskopienyckeln och den här serverns APP_KEY, som en ny installation bara behöver för att få tillbaka inställningarna. Ett kort **Spara ditt återställningskit** på översikten påminner dig tills du har sparat det.
 
-### När paketet inte finns till hands
+!!! danger "Förvara återställningskitet utanför servern"
+    Kitet innehåller hemligheten som dekrypterar dina säkerhetskopior. Förvara det på en säker plats åtskild från servern (en lösenordshanterare, en utskrift i ett kassaskåp). Om du förlorar både BombVault och `APP_KEY` utan återställningskit och utan nyckeldeposition går dina krypterade säkerhetskopior inte att återställa.
 
-Lösenordet lagras ingenstans, det **beräknas** ur `APP_KEY`. Med nyckeln och ett skal kan du alltså återskapa det själv:
+!!! warning "Den nyaste ögonblicksbilden är inte alltid den som ska återställas"
+    Sedan restic 0.17 visar `restic snapshots` varje ögonblicksbilds storlek. Efter dataförlust kan den nyaste ögonblicksbilden vara den tömda, så återställ inte en ögonblicksbild som är mycket mindre än de före den. Efter ransomware kan det vara den krypterade i vanlig storlek. Om BombVault fortfarande körs, kontrollera först sidan **Avvikelser**: den namnger den sista goda säkerhetskopian, och återställningsfönstret förväljer den. En återställning behöver ingen av BombVaults avvikelsedata, och retentionspausen behåller bara fler ögonblicksbilder.
+
+### Att försegla kitet
+
+Om du har slagit på **Kryptera exporter med age** under **Inställningar, System** är kitet förseglat med den också och laddas ner som `bombvault-recovery-kit.md.age`. Det är ASCII-armerat i stället för binärt, så det är fortfarande vanlig text: att klistra in det i en lösenordshanterare eller skriva ut det fungerar precis som förut, innehållet är bara oläsligt utan din nyckel.
+
+!!! warning "Förvara inte age-nyckeln inuti kitet"
+    Du behöver din **privata** age-nyckel för att öppna ett förseglat kit. Förvara den någonstans som inte beror på kitet självt, annars har du två saker att återställa i stället för en. Att försegla är värt det när kitet förvaras någonstans du inte helt kontrollerar (en delad lösenordshanterare, molnanteckningar, en utskrift på ett kontor); ett kit i ditt eget kassaskåp är redan skyddat av kassaskåpet.
+
+    Med kryptering på och ingen användbar mottagare konfigurerad vägras nedladdningen helt. BombVault faller aldrig tillbaka på att lämna ut huvudnyckeln i klartext.
+
+### Om du inte har kitet till hands
+
+Lösenordet lagras ingenstans, det **beräknas** ur säkerhetskopiornas nyckel, så du kan återskapa det själv med inget annat än nyckeln och ett skal:
 
 ```sh
-printf 'bombvault:restic-repo' \
-  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
-  | cut -d' ' -f1
+printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r   | cut -d' ' -f1
 ```
 
-Det är HMAC-SHA256 över den fasta strängen `bombvault:restic-repo`, med de råa byten i den hexadecimala `APP_KEY` som nyckel, utskrivet som 64 gemena hexadecimala tecken. Samma värde står i paketet som det härledda restic-lösenordet; det här är för dagen då paketet ligger någon annanstans än du.
+Det är HMAC-SHA256 över den fasta strängen `bombvault:restic-repo`, med nyckeln som råbytes av hex-`APP_KEY`, utskrivet som 64 hextecken med gemener. Samma värde finns i kitet, listat som det härledda restic-lösenordet; det här är för dagen då kitet finns någonstans där du inte är. På en server som tagit över en annans säkerhetskopior, använd den övertagna säkerhetskopienyckeln, som är den serverns gamla APP_KEY.
 
-!!! warning "För ett mottaget arkiv, använd den SÄNDANDE instansens nyckel"
-    Ett arkiv som kommit hit via off-site-replikering skapades av maskinen som skickade det, med **dess** `APP_KEY`. Att härleda ur den mottagande maskinens nyckel ger ett lösenord som restic avvisar, vilket ser ut precis som ett trasigt arkiv utan att vara det. Det är den vanliga anledningen till att `restic check` på ett mottaget arkiv frågar efter lösenordet gång på gång.
+!!! warning "För ett mottaget arkiv, använd nyckeln för den SÄNDANDE instansen"
+    Ett arkiv som kom hit genom en off-site-kopia skapades av maskinen som skickade det, med **dess** nyckel. Att härleda ur den mottagande boxens nyckel ger ett lösenord som restic avvisar, vilket ser exakt ut som ett korrupt arkiv men inte är det. Det är den vanliga orsaken till att `restic check` på ett mottaget arkiv frågar efter lösenord om och om igen.
 
-Eftersom återställningsdefinitioner ligger **inuti** varje repo (`<repo>/def`, `<repo>/vm-def`) är en kopierad repo-mapp helt självständig, så kitet plus repot är allt en bare-metal-återställning behöver.
+Eftersom återställningsdefinitionerna ligger **inuti** varje arkiv (`<repo>/def`, `<repo>/vm-def`) är en kopierad arkivmapp helt fristående, så kitet plus arkivet är allt en återställning på blank hårdvara behöver.
 
-## Hämta tillbaka en databasdump {#database-dumps}
+## Att få tillbaka en databasdump {#database-dumps}
 
-En databasdump är en egen återställningspunkt i containerförrådet, med etiketten `dbdump:<container>` och den enda filen `/dbdump/<container>.sql`. BombVault listar, hämtar och importerar dem under **Säkerhetskopior**; nedan står samma steg med enbart restic, för dagen då BombVault inte finns till hands.
+En databasdump är en egen återställningspunkt i containerarkivet, taggad `dbdump:<container>`, med den enda filen `/dbdump/<container>.sql`. BombVault listar, laddar ner och importerar dem på containerns flik **Säkerhetskopior**; nedan finns samma steg med bara restic, för dagen då BombVault inte finns.
 
 ```sh
 restic -r <repo> snapshots --tag dbdump:<container>
 restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
 
-Etiketterna `dbversion:` och `dbname:` på varje dump säger vilken serverversion den kommer från och vilka databaser den rymmer. En komplett fil slutar med `-- PostgreSQL database cluster dump complete` eller `-- Dump completed`.
+Taggarna `dbversion:` och `dbname:` på varje dump anger vilken serverversion den kommer från och vilka databaser den innehåller. En komplett fil slutar med `-- PostgreSQL database cluster dump complete` eller `-- Dump completed`.
 
-Importera den i en container med samma eller nyare version (PostgreSQL), eller samma huvudversion (MySQL och MariaDB), startad en gång med tom datamapp så att den initierar sig. Värden behöver ingen databasklient, containern har en:
+Importera den i en container med samma eller en nyare version (PostgreSQL), eller samma huvudversion (MySQL och MariaDB), startad en gång med en tom datamapp så att den initieras. Värden behöver ingen databasklient, containern har en:
 
 ```sh
 docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
@@ -290,7 +330,7 @@ docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"
 docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
 ```
 
-För en enda databas ur en full dump tar MySQL och MariaDB `--one-database <name>` på klientkommandot. En PostgreSQL-dump har ett avsnitt per databas, vart och ett inlett med raden `\connect <name>`: kopiera det avsnittet till en egen fil och importera den med `-d <name>` efter att databasen skapats.
+För en enskild databas ur en full dump tar MySQL och MariaDB `--one-database <namn>` på klientkommandot. En PostgreSQL-dump har ett avsnitt per databas, vart och ett inleds med en rad `\connect <namn>`: kopiera det avsnittet till en egen fil och importera det med `-d <namn>` efter att du skapat databasen.
 
-!!! warning "En dump tagen som root bär med sig serverns användare"
-    En full MySQL- eller MariaDB-dump tagen som root innehåller systemdatabasen `mysql`, så en import ersätter den nya serverns konton, root-lösenordet inräknat, med dem från dumpen. På PostgreSQL är `role ... already exists` för användaren som containern själv skapade väntat och ofarligt.
+!!! warning "En root-dump bär serverns användare"
+    En full MySQL- eller MariaDB-dump tagen som root innehåller systemdatabasen `mysql`, så att importera den ersätter den nya serverns konton, root-lösenordet inräknat, med dem från dumpen. På PostgreSQL är `role ... already exists` för användaren containern skapade väntat och ofarligt.

@@ -1,6 +1,6 @@
 # Android-app
 
-De Android-app zet elke BombVault-server van je groep op je telefoon. Hij start met een lijst van je servers met bovenaan het activiteitenlogboek van allemaal, dezelfde regels als op het Dashboard, en opent de telefoonweergave van de server die je aantikt. De app maakt zelf geen back-ups.
+De Android-app zet elke BombVault-server van je groep op je telefoon. Hij start met een lijst van je servers met bovenaan het activiteitenlogboek van allemaal, dezelfde regels als in het overzicht, en opent de telefoonweergave van de server die je aantikt. De app maakt zelf geen back-ups.
 
 ## De app downloaden {#install}
 
@@ -24,12 +24,15 @@ De telefoon treedt daarna tot de groep toe als een extra instantie. Hij leest vi
 
 ## Aangemeld op een gekoppelde telefoon {#sign-in}
 
-Een telefoon die met je groep is gekoppeld, opent elke server van die groep al aangemeld. Voordat hij een pagina laadt, vraagt hij die server via de groep om een sessie, en een server geeft er alleen een aan een lid dat een telefoon is. Een server die je via zijn adres hebt toegevoegd, vraagt net als in een browser om het wachtwoord. Wie de twaalf woorden heeft, kan al elke back-up van de groep openen, dus koppelen geeft geen nieuwe rechten.
+Een telefoon die met je groep is gekoppeld, opent elke server van die groep al aangemeld. Voordat hij een pagina laadt, vraagt hij die server via de groep om een sessie, en een server geeft er alleen een aan een lid dat een telefoon is. Een server die je via zijn adres hebt toegevoegd, vraagt net als in een browser om het wachtwoord.
+Een gekoppelde telefoon krijgt niet alles wat een wachtwoord geeft. Zijn sessie bereikt een vaste lijst van wat de app toont: het overzicht, de runs en het activiteitenlogboek, de back-ups om te bekijken, te starten en te herstellen, de anomalieën om te lezen en de pagina Instanties om te bekijken. Bestemmingen en commando's komen terug zonder hun adressen en geheimen. Een herstel dat het origineel vervangt, maakt eerst een back-up van de huidige staat. Sleutels, de herstelkit, bewaarkopieën van de sleutel, instellingen en het verwijderen van back-ups blijven bij een aanmelding op de server zelf, en al het andere antwoordt dat het die aanmelding nodig heeft.
+
+De schakelaar hiervoor is **Telefoons kunnen koppelen met de twaalf woorden van de groep** in de kaart **Android-app** onder **Instellingen, Beveiliging**. Een wachtwoordreset zet hem uit en meldt alle telefoons af, totdat je hem daar weer aanzet.
 
 ## Servers buiten een groep {#other-servers}
 
 - **Server toevoegen** neemt het adres waarmee je BombVault in een browser opent, zoals `192.168.1.10:3443`. Zonder `http://` of `https://` ervoor gebruikt de app https.
-- Servers die zich op het lokale netwerk bekendmaken, staan onder **In dit netwerk** en openen met één tik. Dat doen ze zolang **Vinden op het netwerk** is ingeschakeld onder Instellingen, Integraties. Een server in een ander netwerk of achter een VPN verschijnt daar niet.
+- Servers die zich op het lokale netwerk bekendmaken, staan onder **In dit netwerk** en openen met één tik. Dat doen ze zolang **Vinden op het netwerk** is ingeschakeld in de kaart **Diensten** onder **Instellingen, Integraties**. Een server in een ander netwerk of achter een VPN verschijnt daar niet.
 - Een zelfondertekend certificaat wordt één keer vertrouwd op basis van de SHA-256-vingerafdruk. Toont de server later een ander certificaat, dan waarschuwt de app je en opent hij de server pas nadat je het nieuwe certificaat vertrouwt.
 
 ## De telefoon op de Instanties-pagina {#instances}

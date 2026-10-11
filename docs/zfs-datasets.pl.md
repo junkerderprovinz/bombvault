@@ -1,6 +1,6 @@
 # Zbiory danych ZFS
 
-Strona **ZFS** tworzy kopie zapasowe zbiorów danych ZFS. Element to jeden zbiór danych razem ze wszystkimi zbiorami danych pod nim. Przy każdej kopii BombVault robi jedną migawkę ZFS całego drzewa, więc każdy zbiór danych w nim zostaje uchwycony w tej samej chwili. Następnie odczytuje pliki każdego zbioru danych z tej migawki, zapisuje je za pomocą restic tak samo jak folder i od razu potem usuwa migawkę. Kopie są deduplikowane, każdą z nich możesz przeglądać, a pojedyncze pliki da się przywrócić.
+Zbiory danych ZFS to elementy na liście **Kopie zapasowe**, tak jak kontenery i maszyny wirtualne. Element to jeden zbiór danych razem z każdym zbiorem poniżej niego. Przy każdej kopii BombVault robi jedną migawkę ZFS całego drzewa, więc każdy zbiór w nim jest uchwycony w tej samej chwili. Potem odczytuje pliki każdego zbioru z tej migawki i zapisuje je w restic, tak samo jak folder, a migawkę usuwa zaraz potem. Kopie są deduplikowane, możesz przeglądać każdą z nich i można przywracać pojedyncze pliki.
 
 Kopia zapasowa nigdy nie wysyła strumienia do restic i nigdy nie cofa zbioru danych do wcześniejszego stanu. BombVault niszczy tylko migawki, które sam utworzył. Opcjonalna [replika](#replica) to jedyne miejsce, które używa `zfs send`: kopiuje zbiory danych na drugi serwer ZFS i nie dotyka kopii zapasowej.
 
@@ -11,24 +11,24 @@ Kopia zapasowa nigdy nie wysyła strumienia do restic i nigdy nie cofa zbioru da
 - **Host Data zmapowane jako `/mnt` z Access Mode Read/Write - Slave.** To domyślne ustawienie szablonu. Migawka zbioru danych pojawia się w jego folderze `.zfs/snapshot` dopiero po uruchomieniu BombVault, więc kontener musi otrzymywać montowania, które host wykonuje później.
 - **Zbiory danych zamontowane pod `/mnt`.** W Unraid pule znajdują się pod `/mnt/<pool>`, więc tak już jest.
 
-Włącz domenę w **Ustawienia, Ogólne** (Zbiory danych ZFS). Strona ZFS pokaże wtedy kartę **Połączenie z tym serwerem**. Testuje ona połączenie SSH, podaje użytkownika i host, z którymi się łączy, i mówi, czego brakuje, gdy czegoś brakuje. Sprawdzenie integracji z hostem (`/spike`) pokazuje ten sam wynik.
+Włącz sekcję w **Ustawienia, Ogólne** (Zbiory danych ZFS). **Połączenie ZFS z tym serwerem** w **Więcej** na stronie Kopie zapasowe otwiera wtedy **Połączenie z tym serwerem**. Testuje łącze SSH, podaje użytkownika i host, z którym się łączy, i mówi, czego brakuje, gdy czegoś brakuje. Gdy łącze nie działa, lista Kopie zapasowe mówi o tym przez **Pokaż połączenie**, a karta **Integracja z hostem** w przeglądzie pokazuje ten sam wynik.
 
 ## Elementy i zbiory podrzędne {#items-and-children}
 
-Otwórz **Dodaj zbiory danych** na stronie ZFS. Lista pochodzi z serwera. Wybierz zbiór danych położony najwyżej w tym, co chcesz kopiować, na przykład `cache/appdata`, a element obejmie go i każdy zbiór danych pod nim.
+Wybierz **Dodaj** na stronie Kopie zapasowe, potem **Zbiór danych ZFS**. Lista pochodzi z serwera. Wskaż zbiór na szczycie tego, co chcesz kopiować, na przykład `cache/appdata`, a element obejmie go i każdy zbiór poniżej.
 
 - **Nowe zbiory podrzędne dołączają same.** Zbiór danych utworzony później pod elementem jest kopiowany w następnym przebiegu, który oznacza go jako nowy. Jego pierwsza kopia odczytuje go raz w całości; potem odczytywane są tylko zmiany.
-- **Możesz pominąć pojedyncze zbiory podrzędne.** Wyłącz jeden w ustawieniach elementu, a zostanie pominięty razem ze wszystkim pod nim. Pominięty zbiór podrzędny, którego nie ma już na serwerze, jest tak oznaczony i można go usunąć z listy.
-- **Zbiory podrzędne, których nie da się odczytać, są pomijane, nigdy po cichu.** Przebieg je wymienia, element pokazuje, ile pominięto, a karta pokrycia na panelu liczy każdy z nich jako niechroniony. Przebieg i tak kopiuje całą resztę i nie kończy się błędem z powodu pominiętego zbioru. Powody znajdziesz w [tabeli kodów przyczyn](#reason-codes): zbiór danych niezamontowany, z `canmount=off`, z punktem montowania `legacy` lub bez niego, z niezaładowanym kluczem szyfrowania, z wyłączonym dostępem do migawek albo z punktem montowania, którego BombVault nie widzi.
+- **Możesz pominąć pojedyncze zbiory podrzędne.** Wyłącz zbiór podrzędny na karcie Ustawienia elementu, a zostanie pominięty razem ze wszystkim poniżej. Pominięty zbiór podrzędny, którego już nie ma na serwerze, jest tak oznaczony i można go usunąć z listy.
+- **Zbiory podrzędne, których nie da się odczytać, są pomijane, nigdy po cichu.** Przebieg je wymienia, element pokazuje, ile pominięto, a karta **Bez kopii zapasowej** w przeglądzie liczy każdy z nich jako niechroniony. Przebieg nadal kopiuje wszystko inne i nie kończy się błędem przez pominięty zbiór podrzędny. Powody są w [tabeli kodów przyczyn](#reason-codes): zbiór niezamontowany, z `canmount=off`, z punktem montowania `legacy` lub bez niego, z niezaładowanym kluczem szyfrowania, z wyłączonym dostępem do migawek albo z punktem montowania, którego BombVault nie widzi.
 - **Pominięty zbiór danych nie pociąga za sobą swoich zbiorów podrzędnych.** Zbiór z `canmount=off`, który zawiera tylko inne zbiory danych, jest pomijany (pokazywany jako "tylko struktura"), a jego zamontowane zbiory podrzędne są kopiowane. Zaszyfrowany zbiór danych z niezaładowanym kluczem jest pomijany razem ze zbiorami podrzędnymi, które dzielą jego klucz.
 - **Zbiory podrzędne będące dyskami VM lub danymi systemowymi startują wyłączone** w oknie dodawania, z powodem obok przełącznika. Dodanie całej puli wymaga potwierdzenia, które wymienia, co ona zawiera.
 
 ### Wolumeny {#volumes}
 
-Wolumen (zvol) zawiera dysk wirtualny zamiast plików, a strona ZFS nigdy go nie kopiuje.
+Wolumen (zvol) zawiera dysk wirtualny zamiast plików, a element ZFS nigdy go nie kopiuje.
 
-- Wolumen używany przez VM jest kopiowany razem z tą VM na stronie **Maszyny wirtualne**.
-- Wolumen, którego nie używa żadna VM (extent iSCSI, odłączony dysk), **nie jest kopiowany przez BombVault**. Okno dodawania i strona ZFS liczą takie wolumeny i o tym informują. Przyszła wersja będzie je kopiować.
+- Wolumen używany przez maszynę wirtualną jest kopiowany razem z tą maszyną.
+- Wolumen, którego nie używa żadna maszyna wirtualna (extent iSCSI, odłączony dysk), **nie jest kopiowany przez BombVault**. Okno dodawania i strona Kopie zapasowe liczą te wolumeny i o tym mówią. Późniejsza wersja będzie je kopiować.
 
 Wolumeny w drzewie elementu są pomijane i wymieniane przy każdym przebiegu.
 
@@ -53,26 +53,25 @@ Co się dzieje, gdy coś pójdzie nie tak:
 - Zatrzymanie czeka na zakończenie trwającej kopii kontenera (do 30 minut przy ręcznym przebiegu, do limitu czasu kopii przy zaplanowanym), żeby oba nigdy jednocześnie nie zatrzymywały i nie uruchamiały tego samego kontenera.
 - Zanim zatrzyma się pierwszy kontener, BombVault zapisuje, które zatrzymuje. Jeśli BombVault zostanie zabity w trakcie okna, przy następnym starcie uruchomi te kontenery ponownie, wyśle powiadomienie, a element pokaże czerwoną notatkę przy każdym kontenerze, którego nie udało się uruchomić.
 
-Automatyczne zrzuty baz danych (zob. [Funkcje](features.md)) działają razem z własną kopią kontenera na stronie **Containers**, a nie z elementem ZFS. Baza danych, której kontener jest kopiowany tylko przez jego zbiór danych, nie dostaje zrzutu, więc daj jej tutaj polecenie.
+Automatyczne zrzuty baz danych (zob. [Funkcje](features.md)) działają razem z własną kopią kontenera, a nie z elementem ZFS. Baza danych, której kontener jest kopiowany tylko przez swój zbiór danych, nie dostaje zrzutu, więc podaj tu dla niej polecenie.
 
-Kontener może być jednocześnie na tej liście i na stronie **Containers**. Jego dane są wtedy zapisywane dwa razy, w dwóch repozytoriach, a **Pełna kopia** zatrzymuje go dwa razy. Element o tym informuje.
+Kontener może być jednocześnie na tej liście i kopiowany jako kontener. Jego dane są wtedy zapisane dwa razy, w dwóch repozytoriach, a pełna kopia zatrzymuje go dwukrotnie. Element o tym mówi.
 
 ## Przywracanie {#restore}
 
-Otwórz **Kopie zapasowe** przy elemencie, wybierz kopię, a potem zbiór danych. Domyślnie jest to najwyższy zbiór danych elementu.
+Otwórz element i wybierz **Przywracanie**, albo wskaż go na stronie **Przywracanie**. Okno przywracania pyta o kopię, potem o **Zbiór danych**. Domyślnie jest to zbiór najwyższego poziomu elementu. W **Co** przywracasz wszystko albo tylko wybrane pliki i foldery. **Dokąd** oferuje:
 
 - **Przywróć do samego zbioru danych.** Pliki z kopii są zapisywane w punkcie montowania zbioru danych. Pliki o tej samej nazwie są nadpisywane, pozostałe zostają. Zbiór danych nigdy nie jest cofany ani zastępowany. BombVault sprawdza, czy zbiór danych jest zamontowany, widoczny i zapisywalny, raz przed rozpoczęciem i ponownie tuż przed zapisem. Tam, gdzie wewnątrz zamontowany jest zbiór podrzędny, nic nie jest zapisywane: zbiór podrzędny zachowuje swoje pliki, właściciela i uprawnienia i jest przywracany z własnej kopii.
-- **Przywróć do folderu.** Wybierz folder pod `/mnt`. BombVault sprawdza, czy folder leży na zamontowanej puli lub udziale i czy jest dość wolnego miejsca. Działa to bez połączenia SSH i dla zbiorów danych, które już nie istnieją.
-- **Do nowego zbioru danych.** Podaj zbiór danych, który jeszcze nie istnieje. BombVault tworzy go z właściwościami ZFS zapisanymi w kopii i przywraca do niego, zobacz [Przywracanie jako nowy zbiór danych](#new-dataset).
-- **Wybierz pliki** (zaawansowane): zapisz z powrotem w zbiorze danych tylko wybrane pliki i foldery.
-- **Wszystkie zbiory danych tej kopii** (zaawansowane): każdy zbiór danych drzewa do własnego podfolderu wybranego folderu. Zbiory danych pominięte w tej kopii są wymieniane.
-- **Z innego serwera:** strona **Odzyskiwanie** przywraca z repozytorium innego BombVault, zawsze do folderu: wszystkie zbiory danych jednej kopii, każdy do własnego podfolderu, albo jeden zbiór danych drzewa, w całości lub wybrane pliki.
+- **Do folderu.** Wybierz folder poniżej `/mnt`. BombVault sprawdza, czy folder jest na zamontowanej puli lub udziale i czy jest dość wolnego miejsca. To działa bez łącza SSH i dla zbiorów, które już nie istnieją.
+- **Do nowego zbioru danych.** Podaj zbiór, który jeszcze nie istnieje; okno proponuje `<dataset>-restored`. BombVault tworzy go z właściwościami ZFS zapisanymi w kopii i przywraca do niego, zobacz [Przywracanie jako nowy zbiór danych](#new-dataset).
 
-Lista kontenerów do zatrzymania z elementu jest proponowana także przy przywracaniu do zbioru danych. Te kontenery pozostają zatrzymane przez całe przywracanie, a kopie kontenerów w tym czasie czekają.
+Wybranie **Wszystkie zbiory danych tej kopii** jako zbioru zapisuje każdy zbiór drzewa do osobnego podfolderu wskazanego folderu. Zbiory pominięte w tej kopii są wymienione. Aby przywracać z repozytorium innego BombVault, użyj **Ze starego folderu z kopiami** na stronie Przywracanie; zawsze przywraca do folderu: wszystkie zbiory jednej kopii, każdy do osobnego podfolderu, albo jeden zbiór drzewa, w całości lub z wybranymi plikami.
+
+Lista kontenerów do zatrzymania z elementu jest oferowana także przy przywracaniu do zbioru danych. Te kontenery pozostają zatrzymane przez całe przywracanie, a kopie kontenerów w tym czasie czekają.
 
 ### Migawka bezpieczeństwa {#safety-snapshot}
 
-Zanim zapisze coś w zbiorze danych, BombVault robi migawkę ZFS tylko tego zbioru danych o nazwie `bombvault-prerestore-<czas>`. Jest włączona domyślnie; jej wyłączenie wymaga drugiego potwierdzenia. Jeśli migawki nie da się zrobić, nic nie jest przywracane.
+Zanim zapisze coś w zbiorze danych, BombVault robi migawkę ZFS tylko tego zbioru, o nazwie `bombvault-prerestore-<time>`. **Najpierw zachowaj migawkę ZFS obecnego stanu** jest domyślnie włączone; wyłączenie wymaga drugiego potwierdzenia. Jeśli migawki nie da się zrobić, nic nie jest przywracane.
 
 BombVault nigdy sam nie usuwa migawki bezpieczeństwa. Element wymienia je z wiekiem i rozmiarem, każdą z akcją **Usuń**, i ostrzega, gdy najstarsza ma więcej niż 30 dni, bo trzyma na puli usunięte i zmienione dane.
 
@@ -108,16 +107,16 @@ Replika to kopia zbiorów danych elementu na drugim serwerze ZFS. BombVault aktu
 
 Replika nigdy nie zastępuje kopii zapasowej. Starsze wersje, pojedyncze pliki i sprawdzanie nadal pochodzą z kopii zapasowych, a replika zachowuje tylko tyle migawek, ile ustawisz. Aktualna replika liczy się jako kopia poza siedzibą, ale element z repliką i bez kopii zapasowej pozostaje pomarańczowy.
 
-Włącz ją na karcie **Replica** w ustawieniach elementu. Tam wybierasz, dokąd trafia replika, kiedy działa (**After every backup** albo **Own plan**) i ile migawek zostaje na celu. Karta pokazuje każdy zbiór danych i każdy wolumen wraz ze stanem, a **Replikuj teraz** uruchamia przebieg. Przebieg repliki ma własną blokadę, więc długi pierwszy transfer nigdy nie wstrzymuje kopii zapasowych.
+Włącz ją w karcie **Replika** na karcie Ustawienia elementu. Tam wybierasz, dokąd idzie replika, kiedy działa (**Po każdej kopii zapasowej** albo **Własny plan**) i ile migawek zostaje na celu. Karta wymienia każdy zbiór danych i wolumen z jego stanem, a **Replikuj teraz** uruchamia przebieg. Przebieg repliki ma własną blokadę, więc długi pierwszy transfer nigdy nie wstrzymuje kopii zapasowych.
 
 ### Wysyłanie na serwer ZFS {#replica-push}
 
 Odbierać może każda maszyna z ZFS i SSH, na przykład drugi Unraid albo TrueNAS. BombVault nie musi tam działać.
 
-1. Otwórz **Instancje, Serwery ZFS** i kliknij **Dodaj serwer ZFS**.
+1. W **Ustawienia, Parowanie** wybierz **Połącz przez SSH** w **Serwer ZFS bez BombVault** albo **Dodaj serwer ZFS** w karcie **Replika** elementu.
 2. Wpisz adres, użytkownika i port. Okno pokazuje klucz publiczny BombVault. Dodaj go do `~/.ssh/authorized_keys` tego użytkownika na serwerze. W Unraid znajdziesz to w **Settings, Users, root, SSH keys**.
 3. Przetestuj połączenie. Okno wyświetli wtedy pule serwera. Wybierz jedną i ustaw katalog główny, który domyślnie ma postać `<pool>/bombvault-replica`.
-4. Wybierz nowy serwer na karcie **Replica** elementu.
+4. Wybierz nowy serwer w karcie **Replika** elementu. Serwer ma wtedy własną kartę na stronie Instancje, a **Otwórz** prowadzi do jego strony.
 
 Dla roota nic więcej nie jest potrzebne. Osobny użytkownik potrzebuje tych uprawnień na puli celu, które okno również pokazuje:
 
@@ -139,8 +138,8 @@ BombVault zapamiętuje klucz hosta, który serwer pokazuje przy pierwszym połą
 
 Sparowany BombVault może sam odebrać replikę. Nikt nie dostaje dostępu SSH do drugiego hosta i żaden klucz nie trafia do pliku `authorized_keys`.
 
-1. Na karcie **Replica** elementu wybierz sparowaną instancję jako cel. Karta pokazuje **Czeka na zatwierdzenie**, dopóki instancja nie odpowie.
-2. Na instancji odbierającej otwórz **Instancje**, potem **Odbieranie**. Karta **ZFS** wyświetla prośbę. Wybierz pulę i katalog główny na tym serwerze oraz liczbę migawek, które zostają, potem naciśnij **Zezwól** albo **Odrzuć**.
+1. W karcie **Replika** elementu wybierz sparowaną instancję jako cel albo włącz rolę **Serwer ZFS** na karcie tej instancji na stronie Instancje i wybierz tam elementy ZFS. Karta pokazuje **Czeka na zatwierdzenie**, dopóki nie odpowie.
+2. Na instancji odbierającej otwórz **Instancje**. Prośba pojawia się na karcie instancji wysyłającej jako odznaka, a jej **Szczegóły** ją wymieniają. Wybierz pulę i korzeń na tym serwerze oraz ile migawek zostaje, potem naciśnij **Zezwól** lub **Odrzuć**.
 3. Po **Zezwól** źródło wysyła według własnego harmonogramu, jak do każdego innego celu.
 
 Instancja odbierająca przyjmuje tylko to, co obejmuje zatwierdzenie: zbiory danych elementu, do własnego katalogu głównego. Sama uruchamia `zfs receive`, a źródło nie ma żadnej możliwości usunięcia ani cofnięcia czegokolwiek na niej. Kopia przetrwa więc przejęcie źródła przez kogoś innego. Instancja odbierająca stosuje własną retencję. Źródło tylko proponuje regułę, gdy wysyła prośbę.
@@ -171,7 +170,7 @@ Zaszyfrowany zbiór danych jest wysyłany w postaci raw. Na celu pozostaje zaszy
 
 ### Korzystanie z repliki {#replica-use}
 
-Otwórz kartę **Kopie zapasowe** elementu i kliknij wiersz repliki na karcie **Storage locations**. Arkusz pokazuje migawki na celu oraz polecenia z Twoimi rzeczywistymi nazwami.
+Otwórz kartę **Kopie zapasowe** elementu i kliknij wiersz **Replika ZFS** wśród miejsc, które trzymają jego migawki. Arkusz wymienia migawki na celu i pokazuje polecenia z Twoimi prawdziwymi nazwami.
 
 Aby obejrzeć dawny stan, sklonuj migawkę na celu. Klon nie zajmuje miejsca, dopóki coś się nie zmieni, a replika pozostaje nietknięta:
 
@@ -212,13 +211,13 @@ Zbiór podrzędny, który został opróżniony, ledwo zmienia sumę dużego drze
 
 Zbiór danych, który poprzedni przebieg skopiował, a którego ten przebieg nie mógł odczytać, liczy się jako opróżniony, o ile wybór elementu się nie zmienił. Obejmuje to niezaładowany klucz, niezamontowany zbiór danych i taki, który zniknął z drzewa. Zbiór podrzędny, który sam wykluczysz, zmienia wybór, więc jego historia zaczyna się od nowa. Dopóki otwarte jest ustalenie o utraconych danych, retencja zachowuje stare kopie tylko tego zbioru danych, a resztę drzewa przycina jak zwykle.
 
-Na stronie **Anomalie** każdy zbiór danych ma własny wiersz w panelu elementu, który otwiera się przez **Monitorowanie** na karcie elementu albo, gdy dla elementu nic nie jest otwarte, z jego wiersza na karcie **Nic otwartego**. Drzewo elementu na tej stronie pokazuje otwarte ustalenia obok każdego zbioru danych. Link w ustaleniu otwiera panel przywracania elementu na ostatniej dobrej kopii zbioru danych. To, czy przebieg dobiega końca, ocenia się dla całego elementu, bo przebieg udaje się albo nie jako całość.
+Każdy zbiór danych ma własną linię w monitorowaniu elementu, które otwiera się przez **Monitorowanie** na stronie **Anomalie** i stoi na karcie **Integralność** elementu. Otwarte ustalenia widać obok każdego zbioru. Link w ustaleniu otwiera okno przywracania na ostatniej dobrej kopii zbioru. To, czy przebieg się kończy, ocenia się dla całego elementu, bo przebieg udaje się lub nie jako całość.
 
 Same kontrole opisano w [Funkcje](features.md). Asystent połączony przez [serwer MCP](mcp.md) może wypisać punkty przywracania elementu ZFS, uruchomić jego kopię i czytać ustalenia, ale potwierdzenie ustalenia odbywa się na stronie **Anomalie**.
 
 ## Kody przyczyn {#reason-codes}
 
-Strona, historia przebiegów i powiadomienia nazywają problem jednym z tych kodów. Przy większości rozwiązanie jest też widoczne obok na stronie.
+Strona elementu, historia przebiegów i powiadomienia nazywają problem jednym z tych kodów. Większość ma też poprawkę obok na stronie.
 
 | Kod | Znaczenie | Co zrobić |
 |---|---|---|
@@ -226,7 +225,7 @@ Strona, historia przebiegów i powiadomienia nazywają problem jednym z tych kod
 | `host-placeholder` | Host SSH: Address to wciąż wartość przykładowa, a `host.docker.internal` też nie odpowiedział. | Ustaw Host SSH: Address na adres IP LAN tego serwera. |
 | `host-fallback` | Host SSH: Address to wciąż wartość przykładowa, a `host.docker.internal` działa. | Nic, albo ustaw adres IP LAN. |
 | `ssh-unreachable` | Serwer jest nieosiągalny przez SSH. | Sprawdź adres i port oraz czy SSH jest włączone. |
-| `ssh-auth` | Serwer odrzucił klucz BombVault. | Uruchom raz na serwerze polecenie pokazane na karcie połączenia. |
+| `ssh-auth` | Serwer odrzucił klucz BombVault. | Uruchom raz na serwerze polecenie pokazane w **Połączenie z tym serwerem**. |
 | `zfs-not-found` | Host SSH nie ma polecenia `zfs`. | Skieruj Host SSH: Address na maszynę, do której należą pule. |
 | `zfs-permission` | Użytkownik SSH nie może uruchomić tego polecenia zfs. | Użyj roota albo zob. [TrueNAS SCALE](#truenas). |
 | `uri-mismatch` | `LIBVIRT_URI` wskazuje inny host lub użytkownika niż pola SSH. | Uzgodnij je albo wyczyść pola SSH, żeby oba pochodziły z URI. |
@@ -274,7 +273,7 @@ Strona, historia przebiegów i powiadomienia nazywają problem jednym z tych kod
 
 ### Sprawdzanie, co widzi kontener {#mountinfo}
 
-**Sprawdź dostęp do migawek** przy elemencie robi prawdziwą migawkę jego drzewa, szuka jej w BombVault dla każdego zbioru danych i ją usuwa. To najszybszy sposób, by sprawdzić całą ścieżkę przed pierwszym zaplanowanym przebiegiem.
+**Sprawdź dostęp do migawek** na karcie Ustawienia elementu robi prawdziwą migawkę jego drzewa, szuka jej wewnątrz BombVault dla każdego zbioru danych i usuwa ją z powrotem. To najszybszy sposób, by sprawdzić całą ścieżkę przed pierwszym zaplanowanym przebiegiem.
 
 Aby sprawdzić samodzielnie, uruchom to na serwerze:
 

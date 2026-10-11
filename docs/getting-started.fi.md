@@ -10,7 +10,7 @@ Tämä sivu opastaa sinut tuoreesta Unraid-laatikosta ensimmäiseen varmuuskopio
 | **Restic-repon sijainti** | Paikallinen polku (suositus: array tai cache), SMB, NFS tai mikä tahansa rclone-taustajärjestelmä. |
 | **Docker-soketti** | Malli liittää automaattisesti (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | Malli liittää kokonaan automaattisesti (`/boot` kohteeseen `/host/boot`). Mahdollistaa flash-varmuuskopioinnin ja sen, että palautettu kontti ilmestyy takaisin normaalina, muokattavana Unraid-sovelluksena. |
-| **KVM-virtuaalikoneet** (valinnainen) | VM-varmuuskopiointi keskustelee libvirtin kanssa SSH:n yli, ei libvirt-liitosta. Määritä se Asetuksissa (katso [Asetukset](configuration.md)). |
+| **KVM-virtuaalikoneet** (valinnainen) | VM-varmuuskopiointi keskustelee libvirtin kanssa SSH:n yli, ei libvirt-liitosta. Määritä se kohdassa **Asetukset, Integraatiot, Palvelimen SSH** (katso [Asetukset](configuration.md)). |
 | **ZFS-tietojoukot** (valinnainen) | Sama SSH-yhteys kuin virtuaalikoneiden varmuuskopioinnissa, `zfs` isännällä ja Host Data liitettynä polkuun `/mnt` käyttötilalla Read/Write - Slave, joka on mallin oletus. Katso [ZFS-tietojoukot](zfs-datasets.md). |
 | **Android-sovellus** (valinnainen) | Android 10 tai uudempi, pariliitettynä palvelimiin, joiden versio on 9.7.0 tai uudempi. Katso [Android-sovellus](android.md). |
 
@@ -37,12 +37,12 @@ Helpoin reitti on **Community Applications**.
 Ei Unraidia? BombVault toimii myös tavallisena konttina millä tahansa Docker-isännällä (tämä kannattelee myös TrueNAS Scalen konttituen, ennen kuin sillä on oma merkintänsä sikäläisessä sovelluskatalogissa).
 
 1. Nouda arkistosta valmiiksi muokattava [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml).
-2. Aseta `APP_KEY` (katso alta) ja osoita Host Data -taltio todelliseen datajuureesi: tiedoston kommentit käyvät läpi molemmat.
+2. Aseta `APP_KEY` (katso alta) ja osoita Host Data -taltio todelliseen datajuureesi. Tiedoston kommentit käyvät läpi molemmat.
 3. `docker compose up -d`, avaa sitten `https://<isännän-ip>:3443/`.
 
 Mikä poikkeaa Unraidista:
 
-- **Ei flash/USB-aluetta.** Käynnistys-USB:tä ei ole talteen otettavaksi tai palautettavaksi, joten asetusten Flash-alueella ei ole täällä tehtävää. Sen sijaan Kansiot-alue tarjoaa yhden napsautuksen ehdotuksen **Lisää esiasetus: isäntäjärjestelmän kokoonpano** (aloittava `/etc`-tiedostojoukko, jonka käyt läpi ja muokkaat ennen tallennusta) käytännöllisenä yleisenä vastineena.
+- **Ei Flash-osiota.** Käynnistys-USB:tä ei ole talteen otettavaksi tai palautettavaksi, joten Flash-osiolla ei ole täällä tehtävää. Sen sijaan Varmuuskopiot-sivun **Lisää** tarjoaa kansioehdotuksena **Järjestelmän asetukset**: aloittavan `/etc`-kansiojoukon, jonka käyt läpi ja muokkaat ennen tallennusta.
 - **Ei Unraidin omia ilmoituksia.** BombVaultin omat ilmoituskanavat (webhook, off-site-epäonnistumisen varoitukset ja niin edelleen) toimivat tavalliseen tapaan; pois jää vain Unraid-kohtainen lähetys sen omaan ilmoitusjärjestelmään, koska sellaista järjestelmää ei täällä ole.
 - **Virtuaalikoneiden varmuuskopiointi on valinnaista ja vaatii erillisen, SSH:n yli tavoitettavan libvirtd-isännän.** Katso compose-tiedoston kommentoitu lohko. Yleisessä Docker-isännässä ei ole omaa virtuaalikoneiden hallintaa.
 - **Ei kojelautawidgetiä.** BombVault Widget on Unraid-laajennus, joten tämäkin vaihe jää pois.
@@ -64,34 +64,45 @@ openssl rand -hex 32
 Liitä tulos mallin `APP_KEY`-kenttään (Unraid) tai `docker-compose.yml`-tiedoston `APP_KEY`-ympäristömuuttujaan (tavallinen Docker-isäntä).
 
 !!! danger "Älä menetä APP_KEY:tä"
-    `APP_KEY`:n menettäminen tekee salatuista varmuuskopioistasi palautuskelvottomia. Säilytä se turvallisessa paikassa erillään palvelimesta. Kun BombVault on käynnissä, käytä sen yhden napsautuksen **salausavaimen palautuspakettia** (katso [Etäsijainti ja palautus](offsite-recovery.md)) tallentaaksesi koko palautusnipun.
+    `APP_KEY`:n menettäminen tekee salatuista varmuuskopioistasi palautuskelvottomia. Säilytä se turvallisessa paikassa erillään palvelimesta. Kun BombVault on käynnissä, aseta kirjautumissalasana ja lataa **palautuspaketti** kohdassa **Asetukset, Palautus** (katso [Etäsijainti ja palautus](offsite-recovery.md#recovery-kit)). Siinä on avain, kaikki kohteet ja resticin komennot.
 
 Malli liittää myös Docker-soketin, flashin (`/boot`) ja **Host Data** -juuren (`/mnt`) puolestasi. Varmuuskopioinnin *lähteet* ja *kohteet* asuvat molemmat Host Datan alla. Täydellinen muuttujaviite ja etäsijainnin määritys löytyvät kohdasta [Asetukset](configuration.md).
 
 ## Ensimmäinen ajo
 
-![Koontinäyttö ensimmäisen varmuuskopion jälkeen: mikä on suojattu, mikä ajetaan seuraavaksi ja elävä loki.](assets/screenshots/dashboard.png)
+![Yleiskatsaus ensimmäisen varmuuskopion jälkeen: mikä vaatii sinua, kunkin osion suojaus, kohteet ja historia.](assets/screenshots/dashboard.png)
 
-*Koontinäyttö ensimmäisen varmuuskopion jälkeen: mikä on suojattu, mikä ajetaan seuraavaksi ja elävä loki.*
+*Yleiskatsaus ensimmäisen varmuuskopion jälkeen: mikä vaatii sinua, kunkin osion suojaus, kohteet ja historia.*
 
-1. Avaa verkkokäyttöliittymä osoitteessa `https://<your-unraid-ip>:3443` (itse allekirjoitettu varmenne valmiiksi).
-2. Ota **Asetuksissa** käyttöön haluamasi varmuuskopioinnin toimialueet (Kontit, VMs, Flash, Itsevarmuuskopio, Kansiot, ZFS-tietojoukot) ja valitse korostusväri.
-3. Valitse **Kontit**-välilehdellä kontti ja napsauta **Varmuuskopioi nyt** tehdäksesi ensimmäisen palautuspisteesi. Repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` ja ne luodaan ensimmäisen varmuuskopion yhteydessä.
-4. Määritä ajastus kohdasta **Asetukset, Aikataulut**. Konteille ja virtuaalikoneille on yhden napsautuksen *Sisällytä kaikki aikatauluun*.
+1. Avaa verkkokäyttöliittymä osoitteessa `https://<your-unraid-ip>:3443` (itse allekirjoitettu varmenne valmiiksi). Uusi asennus avautuu sivulle **Tervetuloa BombVaultiin**, jossa luetellaan, mitä BombVault löysi palvelimelta.
+2. Valitse **Aloitetaan**. Yleiskatsauksessa näkyy sitten **Ensimmäiset vaiheet** -kortti, jossa on kolme vaihetta:
+    1. **Valitse osiot**: ota käyttöön se, mitä BombVault varmuuskopioi (Kontit, VMs, Flash, Kansiot, ZFS-tietojoukot, Itsevarmuuskopio). **Valitse** avaa osion merkintöjen luettelon, jossa **Keskeytä aikataulu** jättää yhden pois. Tässä käyttöön ottamasi osiot ajetaan joka yö, mitä muutat kohdassa **Asetukset, Aikataulu**.
+    2. **Lisää kohde**: minne varmuuskopiot menevät. Aloittamiseen riittää paikallinen kansio. Turvallisin on toinen kohde tilojen ulkopuolella, kuten Storage Box tai Backblaze B2. Paikalliset repositoryt ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` ja ne luodaan ensimmäisen varmuuskopion yhteydessä.
+    3. **Ensimmäinen varmuuskopio**: sen jälkeen se ajetaan itsestään joka yö.
+3. Avaa **Varmuuskopiot** nähdäksesi kaikki merkinnät yhdessä luettelossa. **Varmuuskopioi kaikki nyt** käynnistää ajon kaikille käyttöön otetuille osioille, ja **Varmuuskopioi nyt** merkinnän sivulla varmuuskopioi vain sen yhden.
+
+Oletko käyttänyt BombVaultia ennen? **Palauta varmuuskopiosta** tervetulosivulla avaa Palautus-sivun, jossa **Hätäohjattu toiminto** tuo takaisin kadonneen palvelimen asetukset, kontit, virtuaalikoneet ja kansiot. Katso [Etäsijainti ja palautus](offsite-recovery.md#emergency).
 
 !!! tip "Valinnaista: valitse varmuuskopiojärjestys"
-    Jos jotkin kontit tulisi aina varmuuskopioida ennen muita (esimerkiksi tietokanta ennen sitä käyttävää sovellusta), avaa **Varmuuskopioiden järjestys**-paneeli Kontit-sivulla ja vedä ne haluamaasi järjestykseen. Ajoitetut ja monivalinnalla käynnistetyt ajot noudattavat sitä; kaikki järjestämättä jättämäsi varmuuskopioidaan erääntyneimmät ensin, kuten ennenkin.
+    Jos jotkin kontit tulisi aina varmuuskopioida ennen muita (esimerkiksi tietokanta ennen sitä käyttävää sovellusta), avaa **Järjestys**-kortti kohdassa **Asetukset, Aikataulu** ja vedä ne haluamaasi järjestykseen. Ajoitetut ajot ja täysvarmuuskopio noudattavat sitä; kaikki järjestämättä jättämäsi varmuuskopioidaan erääntyneimmät ensin.
 
 !!! note "Isäntäintegraation tarkistus"
-    Avaa `/spike` verkkokäyttöliittymässä kontin käynnistyttyä. Se koettaa jokaista liitosta ja komentorivityökalua (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat palaset, joten voit vahvistaa, että kontti on kytketty oikein ennen kuin luotat siihen.
+    Yleiskatsauksen **Isäntäintegraatio**-kortti koettaa jokaista liitosta ja komentorivityökalua (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat palaset, joten voit vahvistaa, että kontti on kytketty oikein ennen kuin luotat siihen. Se odottaa kohdassa **Mukauta**, kunnes lisäät sen.
 
-## Yksinkertainen vs Edistynyt
+## Tien löytäminen {#navigation}
 
-![Asetuksissa ei ole Tallenna-painiketta: jokainen muutos kirjoitetaan heti.](assets/screenshots/settings.png)
+![Asetukset ruutuina ja valitun ruudun kortit vieressä. Jokainen muutos kirjoitetaan heti.](assets/screenshots/settings.png)
 
-*Asetuksissa ei ole Tallenna-painiketta: jokainen muutos kirjoitetaan heti.*
+*Asetukset ruutuina ja valitun ruudun kortit vieressä. Jokainen muutos kirjoitetaan heti.*
 
-Oletuksena käyttöliittymä näyttää vain olennaiset (varmuuskopiointi, palautus, ajastus). Käytä sivupalkin **Yksinkertainen näkymä / Edistynyt näkymä** -kytkintä paljastaaksesi asiantuntijasäätimet: säilytys, etäkopio, ennen/jälkeen-koukut, tiedostotason palautus, ilmoitukset, Prometheus-mittarit sekä eheys- ja ylläpitotyökalut. Se on selainkohtainen asetus ja oletuksena pois päältä, joten uudet käyttäjät saavat siistin käyttöliittymän ja tehokäyttäjät kaiken.
+Sivupalkissa on viisi kohtaa: **Yleiskatsaus**, **Poikkeamat** (kun poikkeamien tunnistus on päällä), **Varmuuskopiot**, **Palautus** ja **Kirjaudu ulos** -kohdan alla **Asetukset**. Sivun pääasia kelluu oikeassa alakulmassa, ja **Lisää** sisältää harvinaisemmat. Puhelimessa palkissa ovat Yleiskatsaus, Varmuuskopiot, Palautus ja Asetukset, ja **Lisää** sisältää loput.
+
+- **Varmuuskopiot** luettelee merkintöinä jokaisen kontin, virtuaalikoneen, kansiojoukon, flash-aseman, jokaisen ZFS-tietojoukon ja itsevarmuuskopion. Luettelon yläpuolella olevat ruudut valitsevat lajin, ja **Suodattimet**, **Lajittelu** ja **Hae** rajaavat sitä. Jokaisella merkinnällä on oma sivunsa, jossa on kolme välilehteä: **Varmuuskopiot**, **Asetukset** ja **Eheys**.
+- **Palautus** on yksi sivu kaikelle: valitse osio, hae merkintä ja valitse varmuuskopio. Myös Hätäohjattu toiminto ja muut lähteet alkavat täältä.
+- **Asetukset** on neljätoista ruutua: Yleiset, Ulkoasu, Aikataulu, Kohteet, Palautus, Ilmoitukset, Tarkistus, Turvallisuus, Ilmentymät, Pariliitos, Integraatiot, Sovellukset, Järjestelmä ja Tieto. Paina `/` tai Ctrl+K hakeaksesi niistä kaikista, myös sivujen aiemmilla nimillä. Vedä ruudut omaan järjestykseesi kohdassa **Ulkoasu**.
+- **Kohteet** ja **Ilmentymät** ovat asetusruutuja, joilla on omat sivunsa. **Näytä myös sivupalkissa** niiden ruudussa kiinnittää ne sivupalkkiin.
+
+Missään ei ole Tallenna-painiketta, eikä mikään avaudu auki: harvinaisille asioille on oma kortti tai ikkuna, ja selitykset ovat (i)-kuplissa. Päivityksen jälkeen vihreät pisteet merkitsevät sitä, mikä on muuttunut. Napsautus piilottaa pisteen, ja **Asetukset, Tieto, Uutta** luettelee kaikki muutokset ja **Siirry sinne** vie perille.
 
 ## Kääntäminen lähdekoodista {#build-from-source}
 
@@ -106,12 +117,12 @@ golangci-lint run ./...
 go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signed certificate
 ```
 
-Käyttöliittymän käännös tarvitaan myös `go run` -komentoa varten. Repo seuraa polussa `web/dist` vain tyhjää merkkitiedostoa, joten ilman komentoa `npm --prefix web run build` binääri ei upota mitään ja vastaa `500 SPA index not found`, mikä on odotettua. Dockeria, libvirtiä ja Unraidia ei voi testata CI:ssä, joten tarkista liitokset, restic ja virtuaalikoneiden SSH-yhteys oikealla isännällä isäntäintegraation tarkistuksella (`/spike`) ennen kuin avaat pull requestin.
+Käyttöliittymän käännös tarvitaan myös `go run` -komentoa varten. Repo seuraa polussa `web/dist` vain tyhjää merkkitiedostoa, joten ilman komentoa `npm --prefix web run build` binääri ei upota mitään ja vastaa `500 SPA index not found`, mikä on odotettua. Dockeria, libvirtiä ja Unraidia ei voi testata CI:ssä, joten tarkista liitokset, restic ja virtuaalikoneiden SSH-yhteys oikealla isännällä yleiskatsauksen **Isäntäintegraatio**-kortilla (tai `GET /api/spike`) ennen kuin avaat pull requestin.
 
 ## Seuraavat vaiheet
 
 - Selaa täyttä **[Ominaisuudet](features.md)**-listaa.
 - Tuo ryhmäsi kaikki palvelimet puhelimeesi **[Android-sovelluksella](android.md)**.
-- Lisää yksi tai useampi **[Etäsijainti ja palautus](offsite-recovery.md)** -replika (kukin toimialue voi lähettää useaan kohteeseen kerralla) ja tallenna palautuspakettisi.
+- Lisää yksi tai useampi kohde tilojen ulkopuolelle (kukin osio voi kopioida usealle kerralla) ja tallenna palautuspakettisi, kuten kuvataan kohdassa **[Etäsijainti ja palautus](offsite-recovery.md)**.
 - Kloonaatko kokoonpanoa tai siirrytkö uuteen laatikkoon? Kanna koko kokoonpanosi mukanasi **Vie / tuo asetukset** -kortilla. Katso [Asetukset](configuration.md#portable-settings-export-and-import).
 - Törmäsitkö esteeseen? Katso **[Vianmääritys](troubleshooting.md)**.

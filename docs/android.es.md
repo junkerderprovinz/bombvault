@@ -1,6 +1,6 @@
 # App de Android
 
-La app de Android lleva todos los servidores BombVault de tu grupo al móvil. Arranca con una lista de tus servidores y, encima, el registro de actividad de todos ellos, las mismas líneas que muestra el Panel, y abre la vista móvil del servidor que toques. La app no hace ninguna copia por sí misma.
+La app de Android lleva todos los servidores BombVault de tu grupo al móvil. Arranca con una lista de tus servidores y, encima, el registro de actividad de todos ellos, las mismas líneas que muestra el resumen, y abre la vista móvil del servidor que toques. La app no hace ninguna copia por sí misma.
 
 ## Conseguir la app {#install}
 
@@ -24,12 +24,16 @@ A partir de ahí el móvil se une al grupo como una instancia más. Lee lo que s
 
 ## Sesión iniciada en un móvil emparejado {#sign-in}
 
-Un móvil emparejado con tu grupo abre cada uno de sus servidores con la sesión ya iniciada. Antes de cargar una página, pide una sesión a ese servidor a través del grupo, y un servidor solo la concede a un miembro que sea un móvil. Un servidor añadido por su dirección pide la contraseña, como en un navegador. Cualquiera que tenga las doce palabras ya puede abrir todas las copias del grupo, así que el emparejamiento no concede nada nuevo.
+Un móvil emparejado con tu grupo abre cada uno de sus servidores con la sesión ya iniciada. Antes de cargar una página, pide una sesión a ese servidor a través del grupo, y un servidor solo la concede a un miembro que sea un móvil. Un servidor añadido por su dirección pide la contraseña, como en un navegador.
+
+Un móvil emparejado no recibe todo lo que da una contraseña. Su sesión llega a una lista fija de lo que muestra la app: el resumen, las ejecuciones y el registro de actividad, las copias para consultar, iniciar y restaurar, las anomalías para leer y la página Instancias para consultar. Los destinos y los comandos llegan sin sus direcciones ni secretos. Una restauración que reemplaza el original hace antes una copia del estado actual. Las claves, el kit de recuperación, los depósitos de claves, los ajustes y el borrado de copias requieren iniciar sesión en el propio servidor, y todo lo demás responde que necesita ese inicio de sesión.
+
+El interruptor es **Los teléfonos pueden emparejarse con las doce palabras del grupo**, en la tarjeta **App de Android** de **Ajustes, Seguridad**. Un restablecimiento de la contraseña lo desactiva y cierra la sesión de todos los móviles, hasta que lo vuelvas a activar ahí.
 
 ## Servidores fuera de un grupo {#other-servers}
 
 - **Añadir servidor** acepta la dirección con la que abres BombVault en un navegador, por ejemplo `192.168.1.10:3443`. Sin `http://` ni `https://` delante, la app usa https.
-- Los servidores que se anuncian en la red local aparecen en **En esta red** y se abren con un toque. Lo hacen mientras **Encontrar en la red** está activado en Ajustes, Integraciones. Un servidor en otra red o detrás de una VPN no aparece ahí.
+- Los servidores que se anuncian en la red local aparecen en **En esta red** y se abren con un toque. Lo hacen mientras **Encontrar en la red** está activado en la tarjeta **Servicios** de **Ajustes, Integraciones**. Un servidor en otra red o detrás de una VPN no aparece ahí.
 - Un certificado autofirmado se acepta una vez por su huella SHA-256. Si más adelante el servidor presenta otro distinto, la app te avisa y solo lo abre después de que confíes en el certificado nuevo.
 
 ## El móvil en la página de Instancias {#instances}

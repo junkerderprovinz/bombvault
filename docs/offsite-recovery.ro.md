@@ -1,288 +1,328 @@
 # Off-site și recuperare
 
 !!! note "Copiile off-site așteaptă după o reconstrucție"
-    Când pasul 4 reconstruiește intrări fără setările vechi, replicarea off-site a acelor domenii se suspendă până când amplasarea implicită este confirmată. Vezi [Amplasare per element](#placement).
+    Când Asistentul de urgență sau **Descoperă copii de rezervă** reconstruiește elemente fără setările vechi, copiile off-site ale acelor secțiuni se opresc până când valoarea lor implicită este confirmată. Vezi [După o reconstruire](#after-a-rebuild).
 
-Backupurile locale te protejează de un container pierdut sau o actualizare defectuoasă. Replicarea off-site și un kit de recuperare testat te protejează de întreaga stație, de ransomware sau de un incendiu. Această pagină acoperă replicarea off-site, transformarea acelei copii în una rezistentă la manipulare, dovedirea că poți restaura și recuperarea când BombVault însuși a dispărut.
+Copiile locale te protejează de un container pierdut sau de o actualizare proastă. Copiile off-site și un kit de recuperare testat te protejează de pierderea întregii stații, de ransomware sau de un incendiu. Această pagină acoperă destinațiile și copiile off-site, cum faci o copie rezistentă la manipulare, cum dovedești că poți restaura, cum împerechezi mai multe servere și cum aduci totul înapoi când BombVault însuși a dispărut.
 
-## Replicare off-site
+## Copii off-site {#off-site-copies}
 
-Păstrează backupul local rapid și adaugă una sau mai multe replici off-site. Setează un depozit per domeniu în pagina **Setări, Extern**. BombVault replică acolo instantaneele noi cu `restic copy` pe bază de best-effort, astfel încât o problemă off-site nu eșuează niciodată backupul local. În această formă depozitul local rămâne primar, iar depozitul off-site este o replică, dar depozitul primar al unui domeniu nu trebuie deloc să fie local; vezi [Depozite primare la distanță](#remote-primary-repositories) mai jos pentru backup direct pe S3, rest-server etc., în loc de replicare către ele.
+Păstrează copia locală rapidă și adaugă una sau mai multe destinații în afara locuinței. BombVault copiază acolo instantaneele noi cu `restic copy` pe bază de best-effort, așa că un sughiț off-site nu face niciodată să eșueze copia locală. În această formă depozitul local rămâne primar, iar cel off-site este o copie, dar depozitul primar al unei secțiuni nu trebuie să fie deloc local; vezi mai jos [Depozite primare la distanță](#remote-primary-repositories) pentru copierea direct în S3, un rest-server și altele asemenea, în loc să copiezi spre ele.
 
-- **Mai multe ținte off-site per domeniu.** Fiecare domeniu (containere, VM-uri, flash, config, seturi de fișiere și seturi de date ZFS) poate replica către mai multe destinații off-site simultan, nu doar una, așa că poți păstra, de exemplu, un rest-server pe stația unui prieten și un bucket S3 în paralel. Adaugă ținte suplimentare în Setări, Extern, fiecare cu propriul depozit, clasă de stocare S3, indicator append-only, retenție și buget de creștere. O configurare off-site unică existentă este preluată neatinsă ca prima țintă, iar fiecare țintă a unui domeniu replică conform programării off-site a acelui domeniu.
-- **Programare off-site per domeniu** (editată alături de fiecare altă programare în Setări, Programări): las-o goală pentru a replica după fiecare backup local, sau setează o cadență (de exemplu `weekly Sun 03:00`) pentru a trimite off-site mai rar decât faci backup local. Un buton **Replică acum** acoperă rulările la cerere.
-- **Retenția off-site** se află în Setări, Retenție astfel încât să poți păstra copiile off-site mai mult timp ca arhivă. Las-o politica toată zero pentru a nu tăia niciodată automat instantaneele off-site.
-- **Limitele de lățime de bandă** (Setări, Extern) limitează rata de upload/download restic astfel încât replicarea să nu satureze WAN-ul tău.
-- Un **indicator de replicare** arată care domeniu se replică în timp ce rulează (pe pagina sa și pe panoul principal). Este un indicator activ, nu o bară de procente, deoarece `restic copy` nu expune niciun progres citibil de mașină.
+- **Mai multe destinații pe secțiune.** Fiecare secțiune (containere, VM-uri, flash, auto-backup, foldere și seturi de date ZFS) poate copia simultan în mai multe destinații off-site, așa că poți ține, de exemplu, un rest-server pe stația unui prieten și un bucket S3 în paralel. Cardul **Destinații pe secțiuni** de pe pagina Destinații pornește sau oprește fiecare linie de la o secțiune la o destinație.
+- **Când rulează copiile.** Cardul **Copiază** al unei destinații stabilește **Când se copiază**: **După fiecare copie de rezervă** sau după un plan propriu, care adună instantaneele și copiază la ore fixe. La **Setări, Programare, Copii externe pe domenii**, **Excepție** dă unei secțiuni un plan propriu de copiere. **Replică acum** în cardul de copie off-site al unei secțiuni de la **Setări, Destinații** pornește o copiere la cerere.
+- **Retenția** se stabilește pe fiecare destinație la **Cât timp se păstrează**, așa că poți ține copiile off-site mai mult, ca arhivă. Copia din câmpul off-site al unei secțiuni urmează cardul **Retenție externă** de la **Setări, Destinații**; las-o toată pe zero ca să nu tai niciodată automat instantaneele off-site.
+- **Limitele de lățime de bandă** (**Lățime de bandă externă** la **Setări, Destinații**, sau cardul **Copiază** al unei destinații) plafonează rata de upload/download restic ca să nu satureze copiile WAN-ul tău.
+- Cât timp rulează o copiere, antetul de stare din prezentare spune **Copie off-site în curs**. Este un indicator de activitate, nu o bară de procente, pentru că `restic copy` nu expune progres citibil automat.
 
 !!! note "Restaurează din orice loc"
-    Fiecare container, VM, set de fișiere, flash-ul și configurația aplicației își listează backupurile ca o singură cronologie de-a lungul tuturor locurilor unde stă o copie. O copie de siguranță trimisă în B2 apare o singură dată, marcată cu fiecare loc care o deține. O restaurare folosește primul loc pe care îl poate atinge, începând cu depozitul în care este scris elementul, și poți alege alt loc pentru fiecare rând. Locurile off-site sunt citite doar când le deschizi. Ștergerea într-un loc verifică mai întâi celelalte și spune dacă a fost ultima copie.
+    Fiecare element își listează copiile ca o singură axă a timpului peste toate locurile în care se află o copie, în fila lui **Copii de rezervă**. O copie trimisă la B2 apare o dată, marcată cu fiecare loc care o deține. O restaurare ia primul loc pe care îl poate atinge, începând cu depozitul în care este scris elementul, și poți alege alt loc per instantaneu. Destinațiile off-site sunt citite doar când apeși **Verifică**, pentru că listarea stocării cloud durează. Ștergerea dintr-un loc verifică întâi celelalte și spune dacă era ultima copie.
 
 ## Destinații {#destinations}
 
-Setări, Extern începe cu **Destinații**: locurile în care ajung copiile off-site, configurate o singură dată pentru toate domeniile. O destinație apare apoi ca buton în rândul **Amplasare** al fiecărui domeniu și element. Prima dată când este bifată pentru un domeniu, BombVault creează depozitul acelui domeniu într-un dosar sub ea, de exemplu `rclone:onedrive:BombVault/containers`. Flash, Auto-backup și seturile de date ZFS nu au rând **Amplasare**, așa că secțiunea lor off-site oferă în schimb **Adaugă din** și numele destinației.
+O destinație este un loc unde ajung copiile de rezervă: un folder local, o partajare, un server al tău sau un serviciu cloud. Se configurează o singură dată și servește apoi fiecare secțiune. Deschide **Destinații** din placa ei de setări sau pornește acolo **Arată și în bara laterală** ca să o fixezi.
 
-**Adaugă destinație** deschide un asistent în cinci pași:
+**Adaugă destinație** deschide o fereastră în patru pași:
 
-1. **Unde să meargă copiile de rezervă?** Fiecare serviciu este listat cu sigla lui, în patru grupuri: servicii de stocare cu bucket-uri S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 și altele), propriul tău server S3 (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), propriul tău server și partajările tale (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, o cale montată) și stocare în cloud (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud și restul serviciilor pe care le acceptă rclone). Fiecare spune cât de potrivit este pentru copii de rezervă: unitățile cloud încetinesc la multe cereri, așa că prima copie și curățarea durează mai mult acolo.
-2. **Autentifică-te la** serviciul ales. Câmpurile depind de serviciu: o cheie de acces pentru S3, un utilizator și o parolă pentru WebDAV și SMB, o parolă de aplicație acolo unde autentificarea în doi pași o blochează pe cea obișnuită, cheia SSH publică a BombVault pentru SFTP și Storage Box, sau un token pentru serviciile care cer autentificare prin browser. Pentru acestea, asistentul arată o comandă `rclone authorize` de rulat pe un calculator cu browser; tokenul pe care îl afișează se pune în câmp. **Testează conexiunea** verifică autentificarea înainte să se salveze ceva.
-3. **Alege un dosar.** Asistentul listează dosarele de pe destinație, cu **Dosar nou** pentru a crea unul și cu spațiul liber acolo unde serviciul îl raportează. Un dosar gol este cea mai sigură variantă.
-4. **Protecție împotriva ștergerii.** Asistentul spune deschis ce poate face serviciul. Un rest-server în modul append-only refuză ștergerea, iar testul de manipulare verifică asta. Un bucket S3 poate păstra versiuni vechi prin versionare și blocarea obiectelor, lucru pe care BombVault nu îl poate verifica încă. O unitate cloud nu poate refuza deloc ștergerea: cine ajunge pe server ajunge și la acea copie. Activează **Imuabil (append-only)** doar acolo unde partea îndepărtată refuză cu adevărat ștergerea; BombVault nu mai curăță atunci niciodată acolo.
-5. **Pentru o urgență.** Kitul de recuperare listează fiecare destinație cu depozitul fiecărui domeniu de sub ea. Autentificarea revine odată cu backupul de setări al BombVault; pe o instalare nouă fără el, configurează din nou destinația în același loc.
+1. **Furnizor.** Fiecare serviciu este listat cu logoul lui, cu o căutare deasupra, pe grupe: servicii de stocare cu bucket-uri S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 și altele), propriul tău server S3 (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), propriul tău server și partajări (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, o cale montată), stocare cloud (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud și restul pe care le acceptă rclone) și serverele receptoare ale grupului tău. Fiecare spune cât de bine se potrivește pentru copii de rezervă: unitățile cloud încetinesc la multe cereri, așa că prima copie și curățarea durează mai mult acolo.
+2. **Autentificare.** Câmpurile depind de serviciu: o cheie de acces pentru S3, un utilizator și o parolă pentru WebDAV și SMB, o parolă de aplicație acolo unde autentificarea în doi pași o blochează pe cea obișnuită, cheia publică SSH a BombVault pentru SFTP și Storage Box sau un token pentru serviciile care se autentifică printr-un browser. Pentru acestea, fereastra arată o comandă `rclone authorize` de rulat pe un calculator cu browser; tokenul pe care îl tipărește merge în câmp. **Testează** verifică autentificarea înainte să se salveze ceva. Fereastra listează apoi folderele de pe destinație, cu **Folder nou** pentru a crea unul și cu spațiul liber acolo unde serviciul îl raportează. Un folder gol este cel mai sigur; BombVault pune în el câte un folder pe secțiune.
+3. **Protecție.** Fereastra spune clar ce poate face serviciul. Un rest-server în mod append-only refuză ștergerea, iar testul de manipulare verifică asta. Un bucket S3 poate păstra versiuni vechi prin versionare și object lock, ceea ce BombVault nu poate verifica încă. O unitate cloud nu poate refuza deloc ștergerea: cine ajunge în server ajunge și la acea copie. Pornește **Protecție împotriva ștergerii (append-only)** doar acolo unde partea îndepărtată chiar refuză ștergerea; BombVault nu mai curăță atunci niciodată acolo. **Pentru urgențe** spune ce conține kitul de recuperare pentru această destinație.
+4. **Pentru ce secțiuni.** Alege secțiunile care se salvează aici. Prima copiere aduce tot istoricul. Elementele care și-au ales propriile destinații nu o primesc singure pe cea nouă, iar fereastra le numește.
 
-Serviciile S3 rulează prin backendul S3 propriu al restic, ceea ce permite aplicarea unei clase de stocare și a blocării obiectelor. Orice alt serviciu rulează prin rclone livrat cu BombVault, iar remote-ul lui apare apoi în configurația rclone de la Setări, Acces cloud. Un export al setărilor conține destinațiile; cu acreditările incluse, conține și autentificarea lor.
+Serviciile S3 rulează prin backendul S3 propriu al restic, ceea ce permite aplicarea unei clase de stocare și a object lock. Orice alt serviciu rulează prin rclone-ul livrat cu BombVault, iar remote-ul lui apare apoi în cardul **În afara sitului (rclone)** de la **Setări, Destinații**. Un export de setări poartă destinațiile; cu credențialele incluse poartă și autentificarea lor.
 
-Un server receptor pe care îl rulează o altă instanță a grupului tău apare în asistent la **Din grupul tău**; vezi [Server receptor](#receiving-server).
+Fiecare destinație are o pagină proprie:
 
-Ținta unui domeniu creată dintr-o destinație preia numele, locația, acreditările, clasa de stocare și comutatorul imuabil ale destinației. Retenția, compresia și bugetul de creștere rămân per domeniu, iar locația ei nu se poate muta, pentru că acolo se află depozitul domeniului. **Adaugă o țintă doar pentru acest domeniu** de sub fiecare domeniu primește în continuare un URL de depozit scris de mână.
+- **Conexiune** cu numele, comutatorul **Disponibil** (oprit înseamnă că BombVault nu mai scrie aici, iar elementele care se salvează aici eșuează cu un mesaj clar în loc să ajungă în altă parte), folderul, compresia, clasa de stocare și **În afara sediului**. **Schimbă conexiunea** testează și salvează o adresă sau o autentificare nouă.
+- **Credențiale**: setul partajat sau unul propriu.
+- **Protecție împotriva ștergerii**, cu **Testează acum protecția împotriva ștergerii** și cine curăță această copie.
+- **Copiază**: când se copiază și limitele de upload și download.
+- **Cât timp se păstrează**: **Scurt**, **Echilibrat**, **Lung** sau **Valori proprii**, cu o axă a timpului a copiilor pe care le păstrează regula. **Întreabă înainte de a păstra mai puțin** întreabă înainte ca o regulă mai scurtă să șteargă copii al căror unic exemplar este aici.
+- **Reguli pe secțiuni**: depozitul, retenția sau compresia proprie a unei secțiuni la această destinație. **Schimbă regulile** le deschide, iar **Revino la destinație** readuce o secțiune.
+- **Deja sub această destinație**: secțiuni a căror adresă tastată manual se află într-un folder al acestei destinații. Preluarea uneia lasă depozitul unde este; autentificarea, clasa de stocare și protecția la ștergere vin apoi de la destinație. BombVault verifică întâi dacă autentificarea destinației deschide depozitul și refuză să pună un depozit append-only sub o destinație care nu este append-only.
+- Un vas care arată cât de plină este destinația, cu marcajul unde se umple și câte săptămâni mai sunt la ritmul de creștere din ultimele săptămâni. O destinație care nu își raportează dimensiunea spune **Dimensiune necunoscută**.
 
-Câmpul off-site al unui domeniu, copia sa principală, poate urma și el o destinație. Sub câmp se află un buton **Folosește** pentru fiecare destinație pe care domeniul nu o copiază încă. Acesta mută copia principală în dosarul domeniului de sub destinație, iar copia preia apoi numele, acreditările, clasa de stocare și comutatorul imuabil ale destinației, în timp ce retenția ei rămâne pe pagina Retenție. De atunci câmpul arată locația blocată. **Introdu o locație** o deblochează, iar salvarea unei locații scrise de mână pune capăt legăturii.
+Un server receptor pe care îl rulează altă instanță a grupului tău apare printre furnizori ca **Din grupul tău**; vezi [Server receptor](#receiving-server).
 
-O țintă scrisă de mână, al cărei depozit se află într-un dosar al unei destinații, i se poate alătura. Destinația listează astfel de ținte la **Deja sub această destinație**, iar **Preia** agață una de ea. Ținta își păstrează depozitul, instantaneele, retenția și amplasarea, și preia numele, acreditările, clasa de stocare și comutatorul imuabil ale destinației. BombVault verifică mai întâi că autentificarea destinației deschide depozitul și refuză să pună o țintă append-only sub o destinație care nu este append-only. Ținta principală a unui domeniu care a fost preluată rămâne în câmpul off-site al acelui domeniu.
+### Mutare și eliminare {#move-remove}
+
+- **Mută** duce copia unei secțiuni la altă destinație, cu tot istoricul ei. Totul rămâne în locul vechi; BombVault nu șterge nimic acolo. Mutarea rulează în fundal și poate dura mult: aproximativ 9 minute la 100 GB între discuri locale, ore pe o legătură lentă. Prezentarea o arată cât timp rulează.
+- **Elimină destinația** oferă două căi. **Elimină destinația, păstrează copiile** nu mai scrie acolo și lasă copiile pe loc; le poți citi mai târziu la **Restaurare, Dintr-un folder vechi de copii**. **Elimină destinația și șterge copiile de acolo** citește întâi ce este stocat acolo și îl listează: ce copii dispar, care dintre ele nu mai sunt nicăieri altundeva și ce depozite rămân pentru că protecția la ștergere refuză, elemente încă se salvează direct în ele, altă destinație sau secțiune își păstrează copiile acolo ori nu au putut fi citite. Elementele care și-ar pierde unica copie sunt listate separat și sunt păstrate dacă nu bifezi **Șterge și acestea**. Confirmi tastând numele destinației, iar ștergerea rulează în fundal.
+- Ștergerea copiilor de la o destinație cere o parolă de conectare și o autentificare chiar pe instanță. Fără parolă destinația poate fi totuși eliminată, doar copiile ei nu pot fi șterse de aici.
 
 ## Amplasare per element {#placement}
 
-Fiecare card de container, VM și set de fișiere are un rând **Amplasare** de butoane: **Local** și câte un buton pentru fiecare țintă off-site a domeniului, urmate de destinațiile sub care domeniul nu are încă nicio țintă. Butoanele aprinse primesc copiile de rezervă ale elementului.
+Cardul **Programare și destinație** din fila Setări a unui element are un rând de butoane: **Local** și câte un buton pentru fiecare destinație off-site a secțiunii. Butoanele aprinse primesc copiile elementului.
 
-- Cu **Local** aprins, elementul este scris în depozitul arătat la **Stocat pe** și copiat la fiecare altă țintă aprinsă. Stinge o țintă și ea nu mai primește nimic nou de la acest element. Doar Local nu copiază nicăieri, ceea ce se potrivește datelor care au deja o a doua copie, de exemplu o partajare care trăiește pe un NAS.
-- Cu **Local** stins, elementul este scris direct în depozitul direct al primei ținte aprinse și copiat de acolo la celelalte ținte aprinse. Prima dată, un dialog creează acel depozit direct.
-- Un buton de destinație creează ținta domeniului sub acea destinație și o aprinde doar pentru acest element. Fiecare alt element începe fără copie acolo.
-- Un buton rămâne mereu aprins, pentru că o copie de rezervă are nevoie de un loc unde să meargă. Pentru a lăsa ceva în afara copiilor de rezervă, exclude-l.
+- Cu **Local** aprins, elementul este scris în depozitul arătat la **Stocat pe** și copiat în fiecare altă destinație aprinsă. Întunecă o destinație și nu mai primește nimic nou de la acest element. Doar Local nu copiază nicăieri, ceea ce se potrivește datelor care au deja o a doua copie, de exemplu o partajare aflată pe un NAS.
+- Cu **Local** întunecat, elementul este scris direct în depozitul direct al primei destinații aprinse și copiat de acolo în celelalte aprinse. Prima dată, o fereastră creează acel depozit direct.
+- Un buton rămâne aprins, pentru că o copie are nevoie de un loc unde să meargă. Ca să lași un element în afara copiilor, folosește **Fără copie de rezervă**.
 
-Locația este fixată de la prima copie de siguranță a elementului, pentru că BombVault nu mută niciodată copiile între depozite. Copiile se pot schimba oricând. O țintă care nu mai primește un element păstrează copiile pe care le are și le taie la propria retenție la următoarea rulare off-site a domeniului; **Șterge în B2** de pe card le elimină imediat. Când unele dintre acele copii nu există nicăieri altundeva, confirmarea le listează după dată și cere numele elementului. Din țintele append-only nu se poate șterge.
+Locul este fixat din prima copie a elementului, pentru că BombVault nu mută niciodată copii între depozite; cardul **Depozit** din fila Setări îl numește. Copiile se pot schimba oricând. O destinație care nu mai primește un element își păstrează copiile pe care le are și le taie la retenția ei la următoarea rulare off-site a secțiunii. Din destinațiile append-only nu se poate șterge.
 
-Sub rând, cardul spune unde ajunge elementul și ce se află de fapt acolo: câte locuri îl dețin, când a fost văzută ultima dată fiecare țintă și dacă este îndeplinită regula 3-2-1. Un loc este serverul cu datele originale, fiecare țintă off-site și fiecare depozit marcat **În afara sediului**. BombVault verifică copiile și locurile; nu verifică partea de „două medii” a regulii 3-2-1.
+Sub rând, cardul spune unde merge elementul și ce există efectiv: câte locuri îl păstrează, când a fost văzută ultima oară fiecare destinație și dacă 3-2-1 este îndeplinit. Un loc este serverul cu datele originale, fiecare destinație off-site și fiecare depozit marcat **În afara sediului**. BombVault verifică copiile și locurile; nu verifică partea „două suporturi” din 3-2-1.
 
-### Amplasări implicite
+### Valori implicite pe secțiuni {#placement-defaults}
 
-Setări, Stocare, **Amplasări implicite** are un rând per domeniu cu aceleași butoane. Copiile se aplică imediat fiecărui element fără alegere proprie, și folderelor de proiect ale stack-urilor Compose. Locația se aplică unui element nou la prima lui copie de siguranță; schimbarea ei nu mută nicio copie. Înainte de salvare, rândul numește fiecare țintă care câștigă sau pierde elemente și câte instantanee înseamnă asta. **Aplică elementelor fără copii de siguranță** readuce la valoarea implicită orice element care nu are încă o copie de siguranță.
+Cardul **Destinații pe secțiuni** de pe pagina Destinații este valoarea implicită a fiecărei secțiuni. În grafic, fiecare linie este o copie, iar un clic pe o linie sau pe un punct o pornește sau o oprește; liniile punctate sunt oprite. **Grafic / Comutatoare** arată același lucru ca rânduri de butoane. Copiile se aplică imediat fiecărui element fără alegere proprie și folderelor de proiect ale stack-urilor Compose. Destinația se aplică unui element nou la prima lui copie; schimbarea ei nu mută nicio copie. Înainte de salvare, BombVault numește fiecare destinație care câștigă sau pierde elemente și câte instantanee înseamnă asta.
 
-O țintă off-site nouă primește orice element care nu este setat pe Local. Dialogul care o adaugă spune câte elemente și, unde se știe, cât istoric înseamnă asta, și oferă opțiunea de a lăsa deoparte elementele deja excluse din alte ținte.
+Elementele care se salvează în altă parte decât secțiunea lor stau în cardul **Alegere proprie**, fiecare cu **Urmează setarea implicită**. Copiile noi merg atunci la destinațiile secțiunii, iar cele anterioare rămân unde sunt.
+
+O destinație off-site nouă primește fiecare element care nu este setat pe Local. Fereastra care o adaugă spune câte elemente și, unde se știe, cât istoric înseamnă asta.
 
 ### Depozite directe
 
-Oprirea opțiunii Local pentru un element, astfel încât o țintă fără depozit direct să devină casa lui, deschide un dialog cu o locație sugerată lângă țintă, de exemplu `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, și un test de conexiune care nu creează nimic. **Creează și folosește** creează depozitul și îndreaptă elementul spre el. Un depozit direct preia cheia, clasa de stocare, limitele, setarea append-only și retenția țintei, și se schimbă odată cu ele; cardul Depozite îl arată doar în citire. Când o cheie nouă a țintei nu îl poate deschide, depozitul direct păstrează cheia pe care o are, iar salvarea spune asta. Un element aflat pe un depozit direct este copiat de acolo la celelalte ținte aprinse, niciodată la ținta căreia îi aparține depozitul. Instantaneele lui poartă eticheta `bv:direct`, iar fiecare altă trecere de retenție le păstrează, așa că un depozit direct care și-a pierdut legătura cu ținta lui nu îmbătrânește niciodată după regulile locale. B2 se accesează prin punctul său final S3, cu ID-ul cheii și cheia aplicației introduse ca acreditări S3; o cheie limitată la dosarul propriu al țintei nu poate ajunge la dosarul alăturat, așa că limitează în schimb cheia la dosarul de deasupra țintei.
+Oprirea lui Local pentru un element, astfel încât o destinație fără depozit direct să devină locul lui, deschide o fereastră cu o locație sugerată alături, de exemplu `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, și un test de conexiune care nu creează nimic. **Creează și folosește** creează depozitul și îndreaptă elementul spre el. Un depozit direct preia cheia destinației, clasa de stocare, limitele, setarea append-only și retenția și se schimbă odată cu ele; cardul Depozite îl arată doar în citire. Când o cheie nouă a destinației nu îl poate deschide, depozitul direct își păstrează cheia pe care o are, iar salvarea spune asta. Un element dintr-un depozit direct este copiat de acolo în celelalte destinații aprinse, niciodată în destinația căreia îi aparține depozitul. Instantaneele lui poartă eticheta `bv:direct`, iar orice altă trecere de retenție le păstrează, deci un depozit direct care și-a pierdut legătura cu destinația lui nu îmbătrânește niciodată după regulile locale. B2 se atinge prin punctul său final S3, cu ID-ul cheii și cheia aplicației introduse ca acreditări S3; o cheie limitată la folderul propriu al destinației nu poate ajunge în folderul de lângă el, așa că limitează cheia la folderul de deasupra.
 
 ### În afara sediului
 
-Un depozit numit poate fi marcat **În afara sediului** pe cardul Depozite. Depozitele la distanță pornesc marcate; dezactivează asta pentru un rest-server din aceeași clădire. Marcajul contează doar pentru locuri și pentru regula 3-2-1 de pe carduri. Nu schimbă nicio copie.
+O destinație sau un depozit denumit poate fi marcat **În afara sediului**. Cele la distanță pornesc marcate; oprește marcajul pentru un rest-server din aceeași clădire. Marcajul doar numără locurile și 3-2-1 pe carduri. Nu schimbă nicio copie.
 
-### După o reconstrucție
+O replică ZFS este o copie în afara sediului, dar nu o copie de rezervă cu istoric. Păstrează doar instantaneele pe care le stabilești, iar versiunile vechi și fișierele individuale vin tot din copiile de rezervă. Merge de pe un server ZFS direct pe celălalt, prin SSH către un server ZFS sau către punctul de primire al unei instanțe împerecheate. Grupul de împerechere poartă doar cererea. Vezi [Replică](zfs-datasets.md#replica).
 
-Alegerile de copiere trăiesc în propriile setări ale BombVault. După o reconstrucție prin Descoperă copii de rezervă fără un `/config` restaurat, ele dispar, iar copierea a tot ar trimite din nou în B2 elementele pe care le lăsaseși deoparte. Replicarea off-site a fiecărui domeniu reconstruit se suspendă de aceea. Panoul principal arată asta în galben, iar Amplasările implicite oferă **Confirmă valoarea implicită** cu o previzualizare a ceea ce copiază următoarea rulare și numele din backupuri care nu au o intrare, pe care le poți lăsa deoparte acolo. Doar confirmarea încheie suspendarea; importarea unui fișier de setări readuce regulile și valorile implicite, dar nu o încheie.
+### După o reconstruire {#after-a-rebuild}
+
+Alegerile de copiere stau în setările proprii ale BombVault. După o reconstruire prin **Descoperă copii de rezervă** sau prin Asistentul de urgență fără setări restaurate, ele dispar, iar copierea a tot ar trimite din nou la B2 elementele pe care le lăsaseși deoparte. Copiile off-site ale fiecărei secțiuni reconstruite se opresc de aceea. Prezentarea spune asta, iar cardul **Destinații pe secțiuni** oferă **Confirmă valoarea implicită** cu o previzualizare a ce copiază rularea următoare și numele din copiile fără element, pe care le poți lăsa deoparte acolo. Doar confirmarea încheie pauza; importul unui fișier de setări readuce regulile și valorile implicite, dar nu o încheie.
 
 ## Depozite primare la distanță {#remote-primary-repositories}
 
-Calea de copiere a unui domeniu (Setări, Stocare) nu se limitează la un dosar local: îndreapt-o direct către un depozit restic la distanță (`s3:...`, `rest:http://gazda:8000/depozit`, `sftp:utilizator@gazda:/depozit`, `rclone:remote:bucket/cale`) și BombVault salvează direct acolo, fără copie locală separată și fără pas de replicare. Este o formă cu adevărat diferită de replicarea în afara sediului de mai sus: acolo depozitul local este cel primar, iar cel din afara sediului este o arhivă a lui, pe cât posibil; aici depozitul la distanță **este** cel primar și este singura copie, atâta timp cât nu configurezi și o replicare în afara sediului (sau un al doilea depozit la distanță) pentru acel domeniu.
+Calea proprie a unei secțiuni nu se limitează la un folder local: îndreapt-o direct spre un remote restic (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) și BombVault face copia direct acolo, fără o copie locală separată și fără pas de copiere. Aceasta este o altă formă decât copiile off-site de mai sus: acolo depozitul local este primar, iar cel off-site este o arhivă best-effort a lui; aici depozitul la distanță **este** cel primar și este unica copie, afară de cazul în care copiezi acea secțiune și într-o altă destinație.
 
-Fiecare dintre cele șase câmpuri de cale (Containere, VM-uri, Flash, Auto-backup, Foldere, Seturi de date ZFS) are chiar alături un comutator **Local / La distanță**:
+Calea fiecărei secțiuni (Containere, VM-uri, Flash, Auto-backup, Foldere, Seturi de date ZFS) se stabilește pe pagina destinației **Dosar local**: **Schimbă** de lângă secțiune, în cardul ei **Conexiune**, deschide o fereastră cu un comutator **Local / La distanță**:
 
-- **Local** arată exploratorul de dosare obișnuit.
-- **La distanță** îl schimbă cu un simplu câmp de URL, plus un buton care deschide același dialog de test al conexiunii și de acreditări folosit de destinațiile din afara sediului, configurat însă pentru acest depozit primar. De acolo obții:
-    - **Un test de conexiune** pe calea reală, înainte să te bazezi pe ea.
-    - **Limite de lățime de bandă** (încărcare și descărcare), ca o copie programată către un depozit primar la distanță să nu îți sature legătura WAN: aceleași opțiuni restic `--limit-upload` și `--limit-download` folosite de replicarea în afara sediului, aplicate acum copiei înseși.
-    - **Protecție append-only (imutabilitate)**, verificată cu același test activ de alterare (o sondă DELETE reală către cealaltă parte) pe care îl primesc destinațiile din afara sediului. Cu ea pornită, BombVault refuză să curețe el însuși depozitul: cum în spate nu există o copie locală separată, acreditările de pe această mașină nu trebuie să poată șterge singura copie a datelor salvate.
-    - **O alarmă de buget al creșterii**, luată din aceeași tendință a dimensiunii depozitului pe care fișa Stocare o urmărește deja.
+- **Local** arată navigatorul de foldere obișnuit.
+- **La distanță** îl înlocuiește cu un câmp URL simplu și cu setările de conexiune pe care le folosește o destinație off-site, configurate aici pentru acest depozit primar. De acolo primești:
+    - **Un test de conexiune** pe calea activă, înainte să te bazezi pe ea.
+    - **Limite de lățime de bandă** (upload/download) ca o copie programată către un depozit primar la distanță să nu satureze WAN-ul tău: aceleași opțiuni restic `--limit-upload`/`--limit-download` pe care le folosesc copiile off-site, aplicate copierii însăși.
+    - **Protecție append-only**, verificată cu același test activ de manipulare (o sondă DELETE reală către partea îndepărtată) pe care îl primesc destinațiile off-site. Cu ea pornită, BombVault refuză să curețe el însuși depozitul, pentru că în spatele lui nu există o copie locală separată, iar credențialele de pe această stație nu trebuie să poată șterge unica copie.
+    - **O alarmă pentru bugetul de creștere**, eșantionată din aceeași tendință a dimensiunii depozitului pe care o urmărește deja cardul Stocare.
 
-Nimic din toate acestea nu este obligatoriu: o cale la distanță scrisă de mână, fără setări de siguranță salvate, salvează exact ca înainte (lățime de bandă nelimitată, se poate curăța, fără alarmă de buget). Dialogul de siguranță este acolo pentru când vrei aceleași protecții pe care le primește o copie din afara sediului, fără să fii nevoit să creezi o destinație în afara sediului doar pentru asta.
+Nimic din acestea nu este obligatoriu: o cale la distanță tastată manual, fără setări de siguranță salvate, face copii nelimitate, curățabile și fără alarmă de buget. Setările de siguranță există pentru când vrei protecțiile pe care le primește o copie off-site, fără o destinație separată doar pentru ele.
 
-!!! note "Acreditările pentru cloud și REST sunt comune"
-    Un depozit primar la distanță se autentifică cu aceleași acreditări S3/REST configurate la Setări, Acces cloud, Credențiale cloud partajate. Nu există un depozit separat de acreditări pentru depozitele primare.
+!!! note "Credențialele cloud/REST sunt partajate"
+    Un depozit primar la distanță se autentifică cu credențialele cloud partajate de la **Setări, Destinații**; nu există un depozit de credențiale separat pentru depozitele primare.
 
 ### SMB și WebDAV fără montare pe gazdă {#smb-webdav}
 
-Setări, Acces cloud, rclone are un formular pentru o partajare Windows sau Samba și pentru un server WebDAV (Nextcloud, ownCloud, SharePoint sau oricare altul). Completează un nume scurt, gazda și partajarea (SMB) sau URL-ul și tipul serverului (WebDAV), utilizatorul și parola, iar BombVault scrie secțiunea rclone pentru tine. rclone ascunde singur parola înainte să fie stocată; adăugarea unei destinații cu un nume care există deja înlocuiește acea secțiune în loc să adauge una a doua.
+Cardul **În afara sitului (rclone)** de la **Setări, Destinații** are un formular pentru o partajare Windows sau Samba și pentru un server WebDAV (Nextcloud, ownCloud, SharePoint sau oricare altul). Completează un nume scurt, gazda și partajarea (SMB) sau URL-ul și tipul serverului (WebDAV), utilizatorul și parola, iar BombVault scrie secțiunea rclone pentru tine. rclone ofuscă parola singur înainte să fie stocată; adăugarea uneia cu un nume care există deja înlocuiește acea secțiune în loc să adauge una a doua. **Adaugă destinație** oferă SMB și WebDAV ca furnizori, cu aceleași câmpuri.
 
-Formularul răspunde cu locația finală, de exemplu `rclone:nas:backups`. Pune-o într-o cale de backup sau într-o destinație off-site și adaugă un subdosar dacă vrei (`rclone:nas:backups/bombvault`). Partajarea este primul segment al căii, nu face parte din nume.
+Formularul răspunde cu destinația gata făcută, de exemplu `rclone:nas:backups`. Folosește-o drept cale a unei secțiuni sau a unei destinații și adaugă un subfolder dacă vrei unul (`rclone:nas:backups/bombvault`). Partajarea este primul segment al căii, nu face parte din nume.
 
-Este o cale mai bună decât montarea partajării pe Unraid: restic nu recomandă păstrarea unui depozit pe o partajare CIFS montată, iar aici nu se montează nimic. NFS nu este în formular pentru că nici restic, nici rclone nu au un backend NFS; pentru NFS, montează exportul pe gazdă și îndreaptă o cale de backup către el.
+Aceasta este calea mai bună decât montarea partajării pe Unraid: restic nu recomandă păstrarea unui depozit pe o partajare CIFS montată, iar aici nu se montează nimic. NFS nu este în formular pentru că nici restic, nici rclone nu au un backend NFS; pentru NFS, montează exportul pe gazdă și folosește-l ca folder local.
 
-## Off-site imuabil (append-only)
+## Protecție împotriva ștergerii (append-only)
 
-Marchează un depozit off-site ca append-only astfel încât ransomware-ul, sau o gazdă compromisă, să nu poată șterge sau rescrie backupurile tale. Partea îndepărtată (un `restic/rest-server` rulând în mod `--append-only`) **o impune**. BombVault doar **o verifică** și nu arată niciodată verde doar pe baza unei afirmații de configurare.
+Pornește protecția împotriva ștergerii pentru o destinație off-site ca ransomware-ul sau o gazdă compromisă să nu poată șterge sau rescrie copiile tale. Partea îndepărtată (un `restic/rest-server` care rulează în modul `--append-only`) o **impune**. BombVault doar o **verifică** și nu arată niciodată verde pe baza unei simple afirmații de configurare. Un folder de pe acest server nu poate refuza ștergerea, pentru că cine controlează BombVault controlează și folderul, așa că destinațiile locale nu oferă comutatorul.
 
-Asistentul de **configurare off-site ghidată** te conduce de la alegerea backend-ului (rest-server / rclone / S3) printr-un fragment de deploy rest-server gata de lipit, un test de conexiune, comutatorul de imuabilitate (care rulează imediat testul de manipulare) și o strategie de retenție, astfel încât off-site-ul append-only este accesibil fără editarea manuală a configurațiilor.
+Cea mai rapidă cale spre o copie append-only este un BombVault împerecheat cu un [server receptor](#receiving-server): el rulează rest-server-ul pentru tine, în mod append-only.
 
-!!! note "O ștergere reușită sub `/locks/` este așteptată"
-    Append-only nu înseamnă că nu se mai poate șterge nimic. restic trebuie să își creeze și să își elibereze propriile blocaje, așa că `/locks/` rămâne intenționat inscriptibil și șterjibil. Instantaneele și datele din spatele lor, adică exact ținta unui ransomware, nu pot fi eliminate. Dacă testezi singur partea de la distanță, o ștergere reușită sub `/locks/` este comportament corect și nu o breșă.
+!!! note "O ștergere reușită sub `/locks/` este de așteptat"
+    Append-only nu înseamnă că nu se poate elimina niciodată nimic. restic trebuie să ia și să elibereze propriile lock-uri, așa că `/locks/` rămâne scriibil și ștergibil prin concepție. Instantaneele și datele din spatele lor, adică ținta ransomware-ului, nu pot fi eliminate. Dacă sondezi tu însuți partea îndepărtată, o ștergere reușită sub `/locks/` este comportament corect și nu o breșă în protecție.
 
-!!! warning "Depozitele imuabile nu sunt niciodată curățate de pe această stație"
-    Un off-site imuabil nu curăță niciodată în mod deliberat instantaneele vechi. Setează o **alarmă de buget de creștere** pentru el astfel încât să fii alertat înainte ca dimensiunea depozitului să scape de sub control.
+!!! warning "Depozitele append-only nu sunt niciodată curățate de pe această stație"
+    O destinație append-only nu curăță niciodată de aici instantaneele vechi; curățarea este treaba părții îndepărtate. Setează pentru ea o **alarmă pentru bugetul de creștere** ca să fii alertat înainte ca dimensiunea depozitului să scape de sub control.
 
 ## Test de manipulare
 
-BombVault dovedește periodic garanția append-only încercând efectiv o ștergere împotriva depozitului off-site, îndreptată către un obiect inexistent:
+BombVault dovedește periodic garanția append-only încercând efectiv o ștergere în depozitul off-site, țintită la un obiect inexistent. **Testează acum protecția împotriva ștergerii** pe pagina unei destinații îl rulează la cerere, iar **Verifică protecția la ștergere** la **Setări, Verificare, Verificări automate** îl rulează după un program.
 
-- **Refuzată** înseamnă protejat.
-- **Acceptată** înseamnă neprotejat.
-- Un rezultat **neconcludent** (server inaccesibil, eroare de autentificare) nu răstoarnă niciodată verdictul stocat.
+- **Refuzat** înseamnă protejat.
+- **Acceptat** înseamnă neprotejat.
+- Un rezultat **neconcludent** (server inaccesibil, eroare de autentificare) nu schimbă niciodată verdictul stocat.
 
 O trecere reală de la protejat la neprotejat declanșează o singură alertă.
 
 ## Exerciții DR
 
-BombVault oferă două niveluri de dovadă că backupurile tale sunt efectiv restaurabile, nu doar prezente.
+BombVault oferă două niveluri de dovadă că copiile tale chiar se pot restaura, nu doar că există.
 
-- **Exerciții de verificare a restaurării (local).** BombVault rulează periodic `restic check --read-data-subset` (mărginit, niciodată o restaurare completă care umple discul) și arată o insignă *Restaurare verificată* per domeniu. Cadența se află în Setări, Programări; insigna în Setări, Integritate.
-- **Exerciții DR (off-site).** BombVault restaurează o țintă reală din depozitul off-site într-un sandbox de unică folosință, o verifică fișier cu fișier și octet cu octet, apoi curăță. Aceasta dovedește că poți recupera din off-site, nu doar că depozitul răspunde.
+- **Exerciții de verificare a restaurării (local).** BombVault rulează periodic `restic check --read-data-subset` (limitat, niciodată o restaurare completă care umple discul). Cadența se află la **Setări, Verificare, Verificări automate**, iar cardul **Verifică copiile de rezervă** de pe aceeași placă arată rezultatul.
+- **Restaurare de probă (off-site).** BombVault restaurează o țintă reală din depozitul off-site într-un sandbox izolat, o verifică fișier cu fișier și octet cu octet, apoi curăță. Asta dovedește că poți recupera din off-site, nu doar că depozitul răspunde.
 
-**Fișa de evaluare a protecției împotriva ransomware** de pe panoul principal rezumă acestea într-o postură verde / galben / roșu per domeniu, cu o listă de verificare marcată cu vârsta (off-site configurat, append-only verificat, replicare curentă, exercițiu de restaurare trecut, criptare activată, strategie de curățare setată). Fiecare rând roșu are link direct către remediu, iar cardul devine verde doar pe fapte verificate.
+Cardul **Stare protecție** din prezentare rezumă asta pe secțiuni în patru verificări: o copie actuală pe acest server, o copie off-site, protecție la ștergere acolo și o restaurare de probă de acolo. Un clic pe o secțiune arată detaliile, iar cardul devine verde doar pe fapte verificate.
 
 ## Împerecherea instanțelor {#pairing}
 
-Receptorii, sursele de preluare, pagina Instanțe și Mesh off-site vorbesc toate cu un alt BombVault. O fac ca membri ai unui singur grup de împerechere, iar o instanță se alătură grupului cu douăsprezece cuvinte.
+Mai multe BombVault-uri lucrează împreună ca un grup: își arată reciproc starea de protecție, preiau roluri unul pentru altul și își pot păstra reciproc cheia. O instanță se alătură grupului cu douăsprezece cuvinte.
 
-Pe prima instanță, deschide **Setări → Împerechere** și apasă pe **Generează frază** în cardurile de împerechere. Apar douăsprezece cuvinte într-o fereastră cu un buton **Copiază**. Pe fiecare altă instanță, deschide același loc, apasă pe **Introdu frază** și lipește-le sau tastează-le, sau apasă pe **Lipește** în acea fereastră. Un cuvânt care nu se află pe listă este numit împreună cu poziția lui chiar în timp ce îl tastezi, iar ultimul cuvânt poartă o sumă de control, așa că un cuvânt scris greșit sau schimbat între ele este prins înainte să se formeze împerecherea. Generează fraza pe o singură instanță: două instanțe care generează amândouă câte o frază formează două grupuri separate. Dacă nu apare nimeni timp de un minut, fila oferă două căi de ieșire: afișează din nou cuvintele ca să le introduci acolo, sau introdu cuvintele celeilalte instanțe și alătură-te grupului ei într-un singur pas. Împerecherea funcționează și fără o parolă de autentificare, dar setează una: fără ea, oricine poate deschide această interfață web poate citi cuvintele și obține, prin grup, parola restic a fiecărei instanțe din el. Cardul de împerechere arată asta până când se setează o parolă. Cu o parolă, reafișarea frazei o cere. **Părăsește grupul** scoate o instanță din nou afară.
+Pe prima instanță deschide **Setări, Împerechere** și apasă **Generează frază**. Trei carduri de pași arată cum merge. Douăsprezece cuvinte apar într-o fereastră cu un buton **Copiază**. Pe fiecare altă instanță deschide același loc, apasă **Introdu frază** și lipește sau tastează cuvintele, sau apasă **Lipește** în acea fereastră. Un cuvânt care nu este în listă este numit cu poziția lui pe măsură ce tastezi, iar ultimul cuvânt poartă o sumă de control, așa că un cuvânt greșit sau schimbat este prins înainte să se împerecheze ceva. Generează fraza pe o singură instanță: două instanțe care generează fiecare una formează două grupuri separate. Dacă nu apare nimeni timp de un minut, pagina oferă două ieșiri: arată din nou cuvintele ca să le introduci dincolo, sau introdu cuvintele celeilalte instanțe și intră în grupul ei dintr-un singur pas. Împerecherea funcționează fără o parolă de conectare, dar setează una: fără ea oricine poate deschide interfața web poate citi cuvintele și, prin grup, poate cere roluri care dau mai departe parola restic a instanțelor din el. Cardul de împerechere spune asta până se setează o parolă. Cu o parolă, afișarea din nou a frazei o cere. **Părăsește grupul** scoate din nou o instanță.
 
-Oricine cunoaște cuvintele se poate alătura grupului, așa că tratează-le ca pe o parolă.
+Oricine cunoaște cuvintele poate intra în grup, așa că tratează-le ca pe o parolă.
 
-**Cum se găsesc membrii între ei.** Fiecare instanță își află propria adresă din rețea de la browserul tău chiar în momentul autentificării, arătată pe cardul de relay ca **Această instanță în rețeaua ta**; corecteaz-o acolo dacă în față se află un reverse proxy sau un port neobișnuit. În aceeași rețea, membrii anunță acea adresă prin multicast și vorbesc direct între ei, iar acolo unde multicast-ul nu poate traversa o rețea de containere, cum e rețeaua bridge implicită a Docker, o instanță își caută în schimb propriul subnet pentru a găsi celelalte, cu un apel semnat la care poate răspunde doar un membru al grupului, așa că împerecherea tot se încheie în câteva secunde, fără relay. Dacă nu apare nimic, **Nu o găsești?** de sub cardul de împerechere primește o adresă introdusă manual, pentru un alt subnet sau un port neobișnuit. Instanțele din rețele diferite trec printr-un relay, ales pe aceeași filă:
+**Cum se ajung membrii.** Fiecare instanță își află propria adresă din rețea de la browserul tău în clipa în care te autentifici, listată la **Adrese cunoscute** pe pagina de împerechere împreună cu cele găsite de instanță însăși; corecteaz-o acolo dacă în față stă un reverse proxy sau un port neobișnuit. În aceeași rețea membrii anunță acea adresă prin multicast și vorbesc direct, iar acolo unde multicastul nu poate trece printr-o rețea de containere, cum este puntea implicită Docker, o instanță își caută în schimb propria subrețea pentru ceilalți cu un apel semnat la care poate răspunde doar un membru al grupului, așa că împerecherea se încheie tot în câteva secunde fără relay. Dacă nu apare nimic, **Nu o găsești?** primește o adresă introdusă manual, pentru altă subrețea sau un port neobișnuit. Instanțele din rețele diferite trec printr-un relay, ales pe aceeași pagină; cele patru forme ale lui vin fiecare cu o imagine:
 
-- **Relay de proiect** (implicit): `parleyport.halleluja.design`, același relay pe care îl folosește și KnightLoader. Nimic de configurat.
-- **Relay propriu**: containerul [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) din Unraid Community Apps, sau una dintre instanțele tale care este deja accesibilă din exterior cu **Servește ca relay** activat. Acea instanță răspunde apoi la `/relay/connect` pe propria adresă, în spatele reverse proxy-ului și certificatului pe care le are deja, și lasă să intre doar grupul tău. Introdu adresa relay-ului pe fiecare instanță care ar trebui să îl folosească.
-- **Fără relay**: membrii se găsesc automat în aceeași rețea, și nicăieri altundeva.
+- **Relay-ul proiectului** (implicit): `parleyport.halleluja.design`, relay-ul pe care îl folosește și KnightLoader. Nu ai nimic de configurat.
+- **Relay propriu**: containerul [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) din Unraid Community Apps (și la **Setări, Aplicații**) sau una dintre instanțele tale care este deja accesibilă din exterior, cu **Servește ca relay** pornit. Acea instanță răspunde atunci la `/relay/connect` pe propria adresă, în spatele reverse proxy-ului și certificatului pe care le are deja, și lasă să intre doar grupul tău. Introdu adresa relay-ului pe fiecare instanță care ar trebui să-l folosească.
+- **Fără relay**: membrii se găsesc automat în aceeași rețea și nicăieri altundeva.
 
-**Ce vede relay-ul.** Fiecare apel dintre membri este sigilat cu AES-256-GCM sub o cheie derivată din cele douăsprezece cuvinte, iar acea cheie nu părăsește niciodată instanțele tale. Relay-ul află un hash care grupează conexiunile, pentru ce instanță este destinat un mesaj, cât de mare este și când trece. Un apel direct în rețeaua locală este sigilat la fel și semnat în plus, așa că nimic nu depinde de certificatul autosemnat pe care îl servește o instanță.
+**Ce vede relay-ul.** Fiecare apel între membri este sigilat cu AES-256-GCM sub o cheie derivată din cele douăsprezece cuvinte, iar acea cheie nu părăsește niciodată instanțele tale. Relay-ul află un hash care grupează conexiunile, pentru ce instanță este un mesaj, cât de mare e și când trece. Un apel direct în rețeaua locală este sigilat la fel și semnat în plus, așa că nimic nu depinde de certificatul autosemnat pe care îl servește o instanță. Apelurile care dau ceva mai departe (răspunsuri la roluri, o parolă restic, autentificări ale receptorului, depuneri de chei) sunt semnate și cu o cheie a membrului care le trimite, fixată la prima vedere; vezi [Model de securitate](configuration.md#security-model).
 
-**Ce circulă prin grup.** Fișele de evaluare de pe pagina Instanțe, o cerere de a verifica un domeniu acum, ofertele Mesh pentru off-site, și ce are nevoie un receptor sau o sursă de preluare: locațiile de depozit ale celeilalte instanțe și parola ei restic. Datele de backup nu circulă niciodată așa, ele merg în continuare direct la backend-urile restic. Nici APP_KEY: parola restic deschide doar depozitele acelei instanțe și nimic altceva, nici secretele ei stocate, sesiunile sau codurile de recuperare.
+**Ce circulă prin grup.** Starea de protecție de pe pagina Instanțe, o cerere de a verifica acum o secțiune, cererile de roluri și răspunsurile lor, ofertele de stocare și ce are nevoie un receptor sau un preluator odată ce rolul i-a fost permis: locațiile depozitelor celeilalte instanțe și parola ei restic. Datele de copie nu circulă niciodată; merg tot direct la backendurile restic. Nici APP_KEY: parola restic deschide depozitele acelei instanțe și nimic altceva, nu secretele ei stocate, sesiunile sau codurile de recuperare.
 
-**Intrări dinainte de împerechere.** Instanțele adăugate cu un token fleet, precum și receptorii și sursele de preluare configurate cu APP_KEY-ul celeilalte instanțe, rămân după actualizare și sunt marcați **Împerechează din nou**. Receptorii și sursele de preluare continuă să funcționeze: la prima pornire, BombVault înlocuiește fiecare APP_KEY stocat cu parola restic derivată din el. Împerechează ambele instanțe, apoi editează intrarea și alege instanța ei. O astfel de instanță își preia cardul vechi imediat ce o instanță cu același nume apare în grup.
+**Intrări de dinainte de împerechere.** Instanțele adăugate cu un token de flotă și depozitele primite și sursele de preluare configurate cu APP_KEY-ul celeilalte instanțe rămân după actualizare și sunt marcate **Împerechează din nou**. Continuă să funcționeze: la prima pornire, BombVault înlocuiește fiecare APP_KEY stocat cu parola restic derivată din el. Împerechează ambele instanțe, apoi editează intrarea și alege instanța ei. Până atunci astfel de intrări stau în cardul **Fără instanță** de pe pagina Instanțe.
 
-Singurul loc care încă cere un APP_KEY manual este [Restaurare dintr-un alt depozit BombVault](#restore-from-another-bombvault-repo), pentru cazul în care cealaltă instanță a dispărut și nu mai poate răspunde în niciun grup.
+Singurul loc care mai primește un APP_KEY introdus manual este [Dintr-un folder vechi de copii](#restore-from-another-bombvault-repo), pentru cazul în care cealaltă instanță a dispărut și nu poate răspunde într-un grup.
 
-## Panou de recepție (partea de recepție)
+## Instanțe și roluri {#roles}
 
-![Partea care primește, urmărită doar în citire, cu o verificare de integritate rulată pe această mașină.](assets/screenshots/receiver.png)
+Pagina **Instanțe** (o placă de setări care poate fi fixată în bara laterală) arată grupul ca o rețea cu cine ce face pentru cine, un card pentru această instanță și un card pentru fiecare alt membru, telefoanele Android și serverele ZFS. **Împerechează o instanță** plutește jos în dreapta. Ce părți sunt pornite se stabilește la **Setări, Instanțe, Mai multe servere**: **Instanțe**, **Receptor** și **Preluare**.
 
-*Partea care primește, urmărită doar în citire, cu o verificare de integritate rulată pe această mașină.*
+Fiecare card arată starea de protecție a membrului și rolurile lui ca plăci. Un rol este ceva ce o instanță face pentru alta:
 
-Tot ce este mai sus este partea de *trimitere*. Pe stația care **primește** copii off-site imuabile de la un alt BombVault, panoul de recepție îți oferă monitorizare independentă, doar în citire, a acelor depozite pe hardware-ul care primește, astfel încât o eșuare tăcută la capătul îndepărtat să nu treacă neobservată.
+- **Receptor** păstrează copiile off-site ale acestui server într-un rest-server în mod append-only. Acest server trimite după fiecare copie și nu poate șterge nimic acolo, chiar dacă îl preia cineva.
+- **Preluator** preia copiile acestui server după un program propriu. Acest server nu trebuie să fie treaz pentru asta.
+- **Server ZFS** preia replicile ZFS ale acestui server. Fiecare element ZFS îl alege la **Replică** în setările lui.
+- **Păstrător de cheie** păstrează o copie sigilată a kitului de recuperare al acestui server. Vezi [Păstrătorul de cheie](#key-keeper).
 
-Activează comutatorul **Receptor** în Setări pentru a dezvălui o filă **Receptor**. Este oprit implicit; activează-l doar pe o stație care primește efectiv backupuri off-site imuabile. Apoi înregistrează un depozit primit (doar în citire, deschis cu parola restic a instanței care trimite, primită prin [grupul de împerechere](#pairing)) pentru a obține:
+Pornirea unui rol trimite o cerere, și nimic nu începe până când cineva de pe cealaltă instanță apasă **Permite**. Cererea apare pe cardul acelei instanțe ca insignă, iar **Detalii** o listează cu **Permite** și **Refuză**; un rol permis poate fi revocat acolo oricând. O linie punctată în rețea este un rol care încă așteaptă. O instanță cu BombVault 9.x nu poate răspunde la o cerere, deci un rol este activ acolo imediat ce îl pornești, iar o cerere de la o instanță 9.x așteaptă aici **Permite**.
 
-- **Un inventar de instantanee grupat pe sursă**, astfel încât să poți vedea exact care containere, VM-uri și seturi de fișiere au sosit.
-- **Ultima primire** per sursă, astfel încât să știi cât de proaspătă este fiecare.
-- **Un `restic check` independent** rulat pe hardware-ul care primește, astfel încât integritatea este verificată acolo unde stau efectiv datele, nu doar pe expeditor.
-- **Un comutator de tip dead-man:** o alertă când o sursă încetează să trimită într-o fereastră pe care o setezi.
-- **Alerte de integritate:** o alertă când o verificare pe partea de recepție eșuează.
+**Detalii** pe un card deschide restul: depozitele primite și sursele de preluare ale acelui membru, ofertele de stocare, monitorizarea, **Elimină** și **Uită cheia**.
 
-Receptorul este strict doar în citire. Nu scrie niciodată în depozitul primit, deci nu poate niciodată strica garanția append-only pe care se bazează expeditorul.
+## Receptor și preluator {#receiver}
+
+![O copie off-site primită, în detaliile unei instanțe, urmărită doar în citire, cu o verificare de integritate rulată pe acest hardware.](assets/screenshots/receiver.png)
+
+*O copie off-site primită, în detaliile unei instanțe, urmărită doar în citire, cu o verificare de integritate rulată pe acest hardware.*
+
+Pe stația care **primește** copii append-only de la alt BombVault, depozitele primite îți oferă monitorizare independentă, doar în citire, pe hardware-ul care primește, ca un eșec silențios de la capătul îndepărtat să nu treacă neobservat. Pornește **Receptor** la **Setări, Instanțe**, apoi deschide **Detalii** ale instanței care trimite, pe pagina Instanțe, și adaugă depozitul primit (doar în citire, deschis cu parola restic a instanței care trimite, pe care o primește prin [grupul de împerechere](#pairing)). Primești:
+
+- **Un inventar pe surse**, ca să vezi exact ce containere, VM-uri și seturi de foldere au ajuns.
+- **Ultima primire** pe sursă, ca să știi cât de proaspătă este fiecare.
+- **Un `restic check` independent** rulat pe hardware-ul care primește, ca integritatea să fie verificată acolo unde se află datele, nu doar la expeditor.
+- **Un comutator de om mort:** o alertă când o sursă nu mai trimite într-o fereastră stabilită de tine.
+- **Alerte de integritate:** o alertă când o verificare de pe partea care primește eșuează.
+
+Receptorul este strict doar în citire. Nu scrie niciodată în depozitul primit, deci nu poate strica niciodată garanția append-only pe care se bazează expeditorul.
+
+Un preluator lucrează invers: cu **Preluare** pornită, o instanță citește copiile altui membru în propriul depozit după un program propriu. Sursele lui stau și ele în detaliile acelui membru.
 
 ### Server receptor {#receiving-server}
 
-Mașina care primește poate rula și rest-serverul către care copiază celelalte. **Configurează serverul receptor**, în partea de sus a filei Receptor, cere un folder de pe un share, cu **Dosar nou** pentru a crea unul, și un port (8000, dacă nu îl folosește alt container). Apoi BombVault:
+Stația care primește poate rula și rest-server-ul spre care copiază ceilalți. Se configurează prima dată când permiți o cerere **Receptor** care îl cere: fereastra spune că serverul are nevoie de un server receptor și cere un folder pe o partajare, cu **Dosar nou** pentru a crea unul, și un port (8000, dacă nu-l folosește alt container). BombVault apoi:
 
-1. refuză dacă există deja un container numit `rest-server` sau dacă alt container ocupă portul;
-2. descarcă `restic/rest-server` și îl pornește prin socket-ul Docker în modul append-only, cu depozite private și un fișier de autentificare în folder;
-3. scrie șablonul lui Unraid pe unitatea flash, astfel încât containerul rămâne editabil în fila Docker, sau oferă șablonul ca descărcare când unitatea flash nu poate fi atinsă;
+1. refuză dacă există deja un container numit `rest-server` sau dacă alt container ține portul;
+2. trage `restic/rest-server` și îl pornește prin socketul Docker în mod append-only, cu depozite private și un fișier de autentificare în folder;
+3. scrie șablonul lui Unraid pe unitatea flash, ca containerul să rămână editabil în fila Docker, sau oferă șablonul ca descărcare când unitatea flash nu poate fi atinsă;
 4. rulează testul de manipulare împotriva lui și arată dacă refuză ștergerile.
 
-Instanțele din grupul tău găsesc apoi serverul în asistentul de destinații, la **Din grupul tău**, cu numele mașinii care primește. Fiecare instanță primește un login propriu prima dată când alege serverul și scrie acolo doar în folderul ei. Cardul listează aceste login-uri, iar **Revocă autentificarea** îl elimină pe unul; ce a copiat deja instanța respectivă rămâne în folder. Configurarea creează și un login pentru cineva din afara grupului, a cărui parolă o arată cardul o singură dată.
+Instanțele din grupul tău găsesc apoi serverul printre furnizori la **Din grupul tău**, numit după stația care primește, iar rolul **Receptor** îl oferă ca alegerea sigură. Fiecare instanță primește o autentificare proprie prima dată când folosește serverul și scrie doar în propriul folder de acolo. Cu **Receptor** pornit la **Setări, Instanțe**, **Server receptor** pe cardul acestei instanțe redeschide serverul. Fereastra lui listează autentificările la **Parteneri cu autentificare**, iar **Revocă autentificarea** o scoate pe una; ce a copiat deja acea instanță rămâne în folder. Configurarea creează și o **Autentificare din afara grupului**, a cărei parolă fereastra o arată o singură dată.
 
-O instanță care ajunge la mașina de recepție doar prin relay nu poate folosi serverul, pentru că relay-ul nu transportă backupuri. Adaugă mai întâi adresa mașinii de recepție la Setări, Împerechere. Când BombVault rulează pe o adresă IP proprie (de exemplu pe br0), completează **Adresă pentru parteneri**, pentru că serverul ascultă pe adresa gazdei.
+O instanță care ajunge la stația receptoare doar prin relay nu poate folosi serverul, pentru că relay-ul nu transportă copii. Adaugă mai întâi adresa stației receptoare pe pagina de împerechere. Când BombVault rulează pe o adresă IP proprie (pe br0, de exemplu), completează **Adresă pentru parteneri**, pentru că serverul ascultă pe adresa gazdei.
 
-## Exemplu complet: două mașini Unraid, de la un capăt la altul
+## Exemplu complet: două stații Unraid, de la un capăt la altul
 
-Mai sus sunt descrise piesele. Aici este o configurație completă cu valori reale, pentru că piesele se asamblează mai ușor după ce le-ai văzut asamblate o dată.
+Tot ce e mai sus descrie piesele. Aceasta este o configurare completă, pentru că piesele se asamblează mai ușor după ce le-ai văzut asamblate o dată.
 
-Două mașini: **TOWER** rulează containerele și trimite copiile, **VAULT** le primește și impune imutabilitatea. Înlocuiește cu propriile nume, adrese și căi de partajare.
+Două stații: **TOWER** rulează containerele și trimite copiile; **VAULT** le primește și impune append-only. Înlocuiește cu propriile nume, adrese și căi de partajare.
 
-**1. Pe VAULT, ridică serverul append-only.** În BombVault pe TOWER mergi la *Setări → Extern → Configurează*, alege **rest-server** și generează rețeta. Copiază fila **Șablon Unraid (XML)**, salveaz-o pe VAULT ca `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, apoi *Docker → Add Container* și alege **rest-server** din lista de șabloane. Înainte de pornire, scrie linia `htpasswd` afișată în `/mnt/user/appdata/rest-server/.htpasswd` pe VAULT. Parola de unică folosință este afișată o singură dată și nu este niciodată păstrată: copiaz-o acum. Acea linie poartă aceeași parolă, deja criptată cu bcrypt pentru tine: textul simplu merge în datele de acces REST pe TOWER, linia criptată în `.htpasswd` pe VAULT. Nu trebuie să criptezi nimic tu.
+**1. Împerechează cele două stații.** Pe TOWER deschide **Setări, Împerechere**, apasă **Generează frază** și introdu cele douăsprezece cuvinte pe VAULT la **Introdu frază**. Setează mai întâi o parolă de conectare pe amândouă.
 
-    Lasă `--append-only` în câmpul OPTIONS. Acesta este tot rostul: fără el, VAULT redevine o partajare obișnuită.
+**2. Pe TOWER, cere ca VAULT să fie receptor.** Pe pagina Instanțe, pornește **Receptor** pe cardul VAULT, alege secțiunile și **serverul receptor al VAULT** ca loc și trimite cererea.
 
-**2. Pe TOWER, îndreaptă depozitul extern către el.** Adresa depozitului urmează modelul tipărit de rețetă:
+**3. Pe VAULT, permite.** Pagina Instanțe a VAULT arată cererea pe cardul TOWER. Apasă **Permite**. Prima dată, VAULT cere un folder pentru serverul lui receptor, de exemplu `user/appdata/rest-server`, pornește rest-server-ul în mod append-only și rulează testul de manipulare împotriva lui.
 
-    rest:http://VAULT:8000/bombvault-containers/containers
+**4. Înapoi pe TOWER.** De atunci TOWER copiază spre VAULT după fiecare copie de rezervă, iar noua destinație apare pe pagina Destinații a TOWER cu protecția ei la ștergere.
 
-Primul segment al căii este utilizatorul htpasswd, al doilea este depozitul. Introdu utilizatorul și parola generate ca acreditări REST ale destinației și rulează **testul de conexiune**.
-
-**3. Pe TOWER activează „Imutabil”.** Testul de alterare rulează imediat și trebuie să spună *protejat*. Ce înseamnă răspunsurile:
+Ce răspunde testul de manipulare:
 
 | Rezultat | Ce s-a întâmplat |
 | --- | --- |
-| **protejat** | VAULT a refuzat ștergerea. Este singura stare care trece. |
-| **NU este protejat** | VAULT a acceptat o ștergere. Lipsește `--append-only` sau a fost scos. |
-| **neconcludent** | Nici una, nici alta. De obicei adresa nu este cea folosită de restic însuși, sau acreditările s-au schimbat. Nu se înregistrează nimic și nu se declanșează nicio alertă. |
+| **protejat** | VAULT a refuzat ștergerea. Aceasta este singura stare de succes. |
+| **neprotejat** | VAULT a acceptat o ștergere. `--append-only` lipsește sau a fost scos. |
+| **neconcludent** | Niciuna. De obicei URL-ul nu este cel pe care îl folosește restic însuși sau credențialele s-au schimbat. Nu se înregistrează nimic și nu pornește nicio alertă. |
 
-**4. Pe VAULT, urmărește ce sosește.** Împerechează cele două stații ([Împerecherea instanțelor](#pairing)), activează *Setări → General → Receptor*, deschide fila **Receptor** și înregistrează depozitul doar pentru citire, cu TOWER ca instanță expeditoare.
+**5. Urmărește ce sosește, dacă vrei.** Pornește **Receptor** la **Setări, Instanțe** pe VAULT, deschide **Detalii** ale TOWER și adaugă depozitul primit. VAULT primește parola restic a TOWER prin grup; nimeni nu tastează o cheie.
 
-!!! warning "Locația este o cale **din interiorul** containerului, scrisă relativ la montarea gazdei"
-    Introdu `user/appdata/rest-server/bombvault-containers/containers`, **nu** `/mnt/user/appdata/…`. BombVault rulează într-un container unde `/mnt` al gazdei este montat în altă parte; o cale absolută a gazdei nu există acolo. Dacă lipești una, BombVault îți spune acum ce cale relativă să folosești.
+**6. Fă-l reciproc.** Repetă pașii în sens invers: VAULT cere ca TOWER să-i fie receptor. Fiecare stație impune atunci append-only pentru cealaltă, și niciuna nu poate șterge copiile celeilalte.
 
-    VAULT primește parola restic de la TOWER prin grup la salvare; nimeni nu trebuie să tasteze o cheie.
+Un rest-server pe care îl rulezi manual funcționează și el: adaugă-l cu **Adaugă destinație** ca rest-server, cu utilizatorul și parola din `.htpasswd`, și pornește protecția la ștergere. Păstrează `--append-only` în opțiunile lui; fără el partea îndepărtată este din nou o partajare obișnuită.
 
-**5. Fă-l reciproc, dacă vrei.** Repetă aceiași cinci pași în sens invers: un rest-server pe TOWER care primește copia VAULT. Atunci fiecare mașină impune imutabilitatea pentru cealaltă, și niciuna nu poate șterge copiile celeilalte.
+!!! warning "O cale locală este o cale din interiorul containerului"
+    Acolo unde BombVault cere un folder de pe acest server, introdu-l relativ la montarea gazdei, de exemplu `user/appdata/rest-server/bombvault-containers`, nu `/mnt/user/appdata/...`. BombVault rulează într-un container, unde `/mnt` al gazdei este montat în alt loc; o cale absolută de gazdă nu există în interior. Dacă lipești una, BombVault îți spune calea relativă de folosit în loc.
 
-## Recuperare ghidată
+## Asistent de urgență {#emergency}
 
-O filă dedicată **Recuperare** conduce o instalare nouă sau reconstruită prin cazul de dezastru, într-un singur loc:
+**Asistentul de urgență** readuce un server pierdut sau reinstalat. Pornește pe pagina **Restaurare** la **Urgență** și de la **Restaurează dintr-o copie de rezervă** pe pagina de bun venit a unei instalări noi. Rulează în patru pași: **Acces**, **Setări**, **Selecție** și **Restaurare**.
 
-1. **Restaurează mai întâi propriile setări ale BombVault**, astfel încât căile de backup, țintele off-site și credențialele de care restul fluxului are nevoie să fie precompletate (aplicate printr-o auto-repornire peste socket-ul Docker, astfel încât baza de date de setări în execuție să nu fie niciodată suprascrisă sub un handle deschis).
-2. **Verifică dacă BombVault poate citi backupurile tale** (capcana cheii de criptare, în față).
-3. Îți permite să **îndrepți către depozitul tău existent** (local sau off-site).
-4. **Descoperă** containerele, VM-urile, seturile de fișiere și seturile de date ZFS stocate în el.
-5. **Restaurează containerele și VM-urile dintr-odată** (lăsate oprite, ca să le pornești deliberat) și listează seturile de fișiere și elementele ZFS de restaurat unul câte unul; elementele ZFS revin dezactivate. Kitul tău de recuperare e la un clic distanță.
+1. **Acces.** Arată BombVault cheia vechilor copii, în unul din trei moduri:
+    - **Încarcă kitul de recuperare**: fișierul descărcat în timpul configurării. Conține cheia și fiecare destinație, iar BombVault completează restul din el. Un kit sigilat cu age cere identitatea pentru care a fost sigilat; este folosită o singură dată și nu este stocată.
+    - **Prin grup**: o instanță a grupului tău păstrează cheia ca depunere. Ai nevoie de cele douăsprezece cuvinte ale grupului, de codul tău de deblocare și de cineva la acea instanță. Vezi [Păstrătorul de cheie](#key-keeper).
+    - **Introdu cheia**: `APP_KEY` al vechiului server și unde sunt copiile lui.
+
+    BombVault încearcă apoi cheia pe fiecare destinație și spune pentru fiecare dacă este lizibilă, negăsită, blocată cu altă cheie, inaccesibilă sau încă fără autentificare. Încă nu s-a salvat nimic, iar cheia rămâne în memorie un timp limitat. **Preia cheia** face ca acest server să-și scrie de acum copiile cu acea cheie; **Anulează preluarea** revine la propria cheie până rulează prima copie. Un server care are deja copii proprii refuză preluarea și trimite la [Dintr-un folder vechi de copii](#restore-from-another-bombvault-repo). **Salvează credențialele** stochează autentificările pe care le poartă kitul pentru destinațiile la distanță și întreabă înainte să le înlocuiască pe cele pe care le are deja acest server.
+2. **Setări.** **Readu setările** restaurează propriile setări ale BombVault din cel mai nou auto-backup: destinații, credențiale, programări și reguli. BombVault repornește ca să le aplice, prin socketul Docker, deci baza de date activă de setări nu este niciodată suprascrisă sub un handle deschis, iar asistentul continuă singur după aceea. Autentificarea acestui server rămâne: continui să te autentifici cu parola pe care o folosești acum. Secretele stocate de vechiul server care nu pot fi preluate sunt listate, ca să le poți introduce din nou.
+3. **Selecție.** BombVault caută prin copiile tale și listează containerele, VM-urile, seturile de foldere și seturile de date ZFS pe care le găsește. Cel mai nou instantaneu este preselectat peste tot. Ce are încă acest server pornește oprit, pentru că o restaurare l-ar înlocui. Seturile de foldere nu mai știu de unde au venit după o reconstruire, așa că merg într-un folder ales de tine.
+4. **Restaurare.** Tot ce este selectat revine dintr-o dată, lăsat oprit dacă vrei să pornești tu fiecare container și VM, ceea ce este cel mai sigur după o pierdere totală. După aceea descarcă un kit de recuperare nou: cel vechi aparține instalării anterioare.
 
 !!! tip "Migrare planificată versus dezastru"
-    Recuperarea ghidată restaurează propriile setări ale BombVault dintr-un backup. Pentru o mutare *planificată* pe o stație nouă, poți în schimb să-ți muți configurația direct cu cardul **Exportă / importă setările** (un fișier JSON portabil). Vezi [Configurare](configuration.md#portable-settings-export-and-import).
+    Asistentul de urgență restaurează propriile setări ale BombVault dintr-o copie. Pentru o mutare *planificată* pe o stație nouă poți în schimb să-ți muți configurația direct cu cardul **Exportă / importă setările** (un fișier JSON portabil). Vezi [Configurare](configuration.md#portable-settings-export-and-import).
 
-### Restaurare dintr-un alt depozit BombVault {#restore-from-another-bombvault-repo}
+### Dintr-un folder vechi de copii {#restore-from-another-bombvault-repo}
 
-Un card separat în fila **Recuperare** deschide depozitul unei *alte* instanțe BombVault (o partajare montată sub `/mnt`, sau un URL la distanță) cu **`APP_KEY`-ul acelei instanțe**, într-o sesiune unică, doar în citire. Răsfoiește containerele, VM-urile și seturile de fișiere stocate acolo, alege un instantaneu și restaurează-l, iar obiectul restaurat devine un container, VM sau set de fișiere local normal. Nimic nu este scris vreodată în celălalt depozit, iar propriile tale setări de backup rămân neatinse (sesiunea trăiește în memorie și expiră singură). Mutarea unui container de pe serverul A pe serverul B nu mai înseamnă repointarea setărilor depozitului tău și revenirea lor ulterioară. Acest card este de unică folosință: deschide o sesiune, restaurează ce alegi și uită cealaltă instanță. Dacă vrei în schimb un aranjament permanent, în care această stație aduce după o programare instantaneele altei instanțe în propriul depozit, aceea este fila **Preluare** a paginii **Instanțe**.
+**Dintr-un folder vechi de copii**, la **Alte surse** pe pagina Restaurare, deschide depozitul unei instanțe BombVault *diferite* (o partajare montată sub `/mnt` sau o adresă la distanță) cu kitul de recuperare al acelei instanțe sau cu `APP_KEY` tastat, într-o sesiune unică, doar în citire. Răsfoiește containerele, VM-urile, seturile de foldere și seturile de date ZFS stocate acolo, alege un instantaneu și restaurează-l, iar obiectul restaurat devine un container, VM sau set de foldere local obișnuit. Nimic nu se scrie vreodată în celălalt depozit, iar setările tale de copii rămân neatinse (sesiunea trăiește în memorie și expiră singură). Mutarea unui container de pe serverul A pe serverul B nu înseamnă să-ți reîndrepți setările și să le reîntorci după aceea. Această fereastră este una unică: deschide o sesiune, restaurează ce alegi și uită cealaltă instanță. Dacă vrei în schimb o rânduială permanentă, în care această stație preia după un program instantaneele altei instanțe în propriul depozit, acesta este rolul **Preluator** de pe pagina Instanțe.
 
-Un container a cărui rețea nu există pe acest server, de exemplu o rețea `br0` din Unraid pe un host Docker obișnuit, arată sub rândul său o alegere de rețea. BombVault îl creează în rețeaua pe care o alegi, împreună cu celelalte rețele. Adresa IP fixă și adresa MAC aparțineau rețelei vechi și se renunță la ele, așa că le atribuie rețeaua nouă.
+Un container a cărui rețea nu există pe acest server, de exemplu o rețea Unraid `br0` pe o gazdă Docker simplă, arată sub rândul lui un selector de rețea. BombVault o creează în rețeaua pe care o alegi, împreună cu celelalte rețele ale lui. IP-ul fix și adresa MAC aparțineau vechii rețele și sunt eliminate, așa că rețeaua nouă le atribuie.
 
-## Kit de recuperare a cheii de criptare
+## Păstrător de cheie {#key-keeper}
 
-Aceasta este piesa care face recuperarea în caz de dezastru posibilă chiar și când nu există niciun BombVault în execuție.
+Un păstrător de cheie este o instanță a grupului tău care ține o copie sigilată a kitului de recuperare al acestui server. Nu poate deschide singur copia. Dacă acest server se pierde vreodată, o instalare nouă care se alătură grupului tău cere copia de la păstrător și o deschide cu codul tău de deblocare.
 
-Un clic descarcă **cheia principală**, **parola restic derivată** și **locațiile și comenzile exacte ale depozitului**, astfel încât să poți restaura direct cu CLI-ul restic pe orice mașină. O amintire pe panoul principal insistă până când l-ai stocat.
+1. Pe pagina Instanțe, pornește **Păstrător de cheie** pe cardul instanței care ar trebui să o păstreze și alege **Fă depunerea**. Depunerea cere o parolă de conectare.
+2. Acest server arată o singură dată **Codul de deblocare**: douăzeci de litere și cifre în patru grupuri de câte cinci. Notează-l și confirmă cu **Am notat codul**. Acest server nu stochează codul, ci doar ce îi trebuie ca să sigileze o depunere pentru el.
+3. Păstrătorul ține acum depunerea, iar acest server o reînnoiește când se schimbă kitul. **Depunerea cheii** pe cardul acestei instanțe listează **Depunerea acestui server** cu fiecare păstrător și starea lui, și **Depunerile păstrate de acest server** pentru ceilalți. **Creează un cod nou** înlocuiește codul; fiecare păstrător trece la codul nou când primește noua depunere.
 
-!!! danger "Stochează kitul de recuperare în afara serverului"
-    Kitul conține secretul care decriptează backupurile tale. Păstrează-l undeva în siguranță și separat de server (un manager de parole, o copie printată într-un seif). Dacă pierzi atât BombVault cât și `APP_KEY` fără niciun kit de recuperare, backupurile tale criptate nu pot fi recuperate.
+În acea zi ai nevoie de trei lucruri: cele douăsprezece cuvinte ale grupului tău, codul de deblocare și accesul la interfața păstrătorului, unde cineva trebuie să apese **Permite**. În Asistentul de urgență alege **Prin grup**, alege depunerea, cere-o și tastează codul de deblocare. Codul este folosit pe noul server și nu este trimis păstrătorului. Pe păstrător, cererea apare la **Depunerea cheii** cu cine o cere, dacă acea instanță a fost văzută vreodată acolo și de câte ori a cerut; **Permite** predă copia sigilată, iar permiterea cere o parolă de conectare. Instalarea nouă are 30 de minute ca s-o ridice după Permite, o cerere la care nimeni nu răspunde expiră după o zi, iar o instanță care cere prea des trebuie să aștepte o oră.
 
-!!! warning "Cel mai nou snapshot nu este întotdeauna cel de restaurat"
-    Începând cu restic 0.17, `restic snapshots` arată dimensiunea fiecărui snapshot. După o pierdere de date, cel mai nou snapshot poate fi cel golit, așa că nu restaura un snapshot mult mai mic decât cele dinaintea lui. După un ransomware poate fi cel criptat, de dimensiune obișnuită. Dacă BombVault încă rulează, uită-te mai întâi pe pagina sa **Anomalii**: ea numește ultimul backup bun. O restaurare nu are nevoie de niciun fel de date despre anomalii din BombVault, iar pauza retenției doar păstrează mai multe snapshoturi.
+Fără cod nimeni nu poate deschide copia, nici păstrătorul. Dacă codul se pierde, creează unul nou cât timp acest server încă rulează; dacă serverul a dispărut deja, kitul de recuperare și `APP_KEY` tastat funcționează în continuare. Păstrătorul poate șterge o depunere oricând, iar proprietarul trebuie atunci să ceară din nou.
+
+## Kit de recuperare {#recovery-kit}
+
+Aceasta este piesa care face posibilă recuperarea după dezastru chiar și când nu rulează niciun BombVault.
+
+**Descarcă kitul de recuperare** în cardul **Pentru urgențe** de la **Setări, Restaurare** îți dă **cheia**, **parola restic derivată**, fiecare **destinație** cu depozitul fiecărei secțiuni, autentificările de care are nevoie o instalare nouă ca să ajungă la ele și **comenzile restic exacte**, ca să poți restaura direct cu CLI-ul restic pe orice mașină. Cere o parolă de conectare. Kitul tipărește cheia și cu criptarea oprită, pentru că definițiile containerelor și ale VM-urilor sunt mereu sigilate cu ea. După o preluare tipărește cheia de rezervă preluată și `APP_KEY` al acestui server, de care o instalare nouă are nevoie doar pentru a readuce setările. Un card **Salvează-ți kitul de recuperare** din prezentare îți amintește până îl păstrezi.
+
+!!! danger "Păstrează kitul de recuperare în afara serverului"
+    Kitul conține secretul care decriptează copiile tale. Păstrează-l undeva în siguranță și separat de server (un manager de parole, o copie tipărită într-un seif). Dacă pierzi și BombVault, și `APP_KEY`, fără kit de recuperare și fără depunere de cheie, copiile tale criptate nu mai pot fi recuperate.
+
+!!! warning "Cel mai nou instantaneu nu este mereu cel de restaurat"
+    De la restic 0.17, `restic snapshots` arată dimensiunea fiecărui instantaneu. După o pierdere de date, cel mai nou instantaneu poate fi cel golit, așa că nu restaura un instantaneu mult mai mic decât cele dinaintea lui. După ransomware poate fi cel criptat, de dimensiunea obișnuită. Dacă BombVault încă rulează, verifică mai întâi pagina **Anomalii**: numește ultima copie bună, iar fereastra de restaurare o preselectează. O restaurare nu are nevoie de niciun dat de anomalii al BombVault, iar pauza de retenție doar păstrează mai multe instantanee.
 
 ### Sigilarea kitului
 
-Dacă ai activat criptarea age pentru exporturile în clar (Setări), kitul este sigilat și el și se descarcă drept `bombvault-recovery-kit.md.age`. Este în format ASCII armor, nu binar, așa că rămâne text: lipirea lui într-un manager de parole sau tipărirea funcționează exact ca înainte, doar că fără cheia ta conținutul nu poate fi citit.
+Dacă ai pornit **Criptează exporturile cu age** la **Setări, Sistem**, și kitul este sigilat cu el și se descarcă drept `bombvault-recovery-kit.md.age`. Este în armură ASCII, nu binar, deci rămâne text simplu: lipirea lui într-un manager de parole sau tipărirea funcționează exact ca înainte, conținutul pur și simplu nu poate fi citit fără cheia ta.
 
 !!! warning "Nu păstra cheia age în interiorul kitului"
-    Ai nevoie de cheia age **privată** ca să deschizi un kit sigilat. Păstreaz-o într-un loc care nu depinde de kitul însuși, altfel vei avea două lucruri de recuperat în loc de unul. Sigilarea merită când kitul este păstrat într-un loc pe care nu îl controlezi pe deplin (un manager de parole partajat, notițe în cloud, o copie tipărită la birou); un kit din propriul tău seif este deja protejat de seif.
+    Ai nevoie de cheia **privată** age ca să deschizi un kit sigilat. Păstreaz-o undeva care nu depinde de kitul însuși, altfel vei avea de recuperat două lucruri în loc de unul. Sigilarea merită când kitul este stocat undeva pe care nu-l controlezi pe deplin (un manager de parole partajat, notițe în cloud, o tipăritură într-un birou); un kit din propriul seif este deja protejat de seif.
 
-    Cu criptarea activată și niciun destinatar utilizabil configurat, descărcarea este refuzată de-a dreptul. BombVault nu recurge niciodată la predarea cheii principale în clar.
+    Cu criptarea pornită și fără niciun destinatar utilizabil configurat, descărcarea este refuzată categoric. BombVault nu revine niciodată la a da cheia principală în clar.
 
 ### Când kitul nu e la îndemână
 
-Parola nu este stocată nicăieri, se **calculează** din `APP_KEY`. Cu cheia și un shell o poți reproduce singur:
+Parola nu este stocată nicăieri, ea este **calculată** din cheia copiilor, așa că o poți reproduce singur cu nimic altceva decât cheia și un shell:
 
 ```sh
-printf 'bombvault:restic-repo' \
-  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
-  | cut -d' ' -f1
+printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r   | cut -d' ' -f1
 ```
 
-Este HMAC-SHA256 peste șirul fix `bombvault:restic-repo`, cu octeții bruți ai `APP_KEY` hexazecimal drept cheie, tipărit ca 64 de caractere hexazecimale mici. Aceeași valoare se află în kit, ca parolă restic derivată; secțiunea asta e pentru ziua în care kitul e în altă parte decât tine.
+Aceasta este HMAC-SHA256 peste șirul fix `bombvault:restic-repo`, cu cheia ca octeții bruți ai `APP_KEY` hex, tipărit ca 64 de caractere hex cu litere mici. Aceeași valoare este în kit, listată ca parola restic derivată; asta este pentru ziua în care kitul e într-un loc unde nu ești. Pe un server care a preluat copiile altuia, folosește cheia de rezervă preluată, care este vechiul APP_KEY al acelui server.
 
-!!! warning "Pentru un depozit primit, folosește cheia instanței EXPEDITOARE"
-    Un depozit ajuns aici prin replicare în afara sediului a fost creat de mașina care l-a trimis, cu `APP_KEY`-ul **ei**. Derivarea din cheia mașinii care primește dă o parolă pe care restic o refuză, ceea ce arată exact ca un depozit corupt fără să fie. Acesta e motivul obișnuit pentru care `restic check` pe un depozit primit cere parola iar și iar.
+!!! warning "Pentru un depozit primit, folosește cheia instanței CARE TRIMITE"
+    Un depozit care a ajuns aici printr-o copie off-site a fost creat de mașina care l-a trimis, cu cheia **ei**. Derivarea din cheia stației care primește produce o parolă pe care restic o va respinge, ceea ce arată exact ca un depozit corupt și nu este. Acesta este motivul obișnuit pentru care `restic check` pe un depozit primit cere parola iar și iar.
 
-Deoarece definițiile de recuperare se află **în interiorul** fiecărui depozit (`<repo>/def`, `<repo>/vm-def`), un folder de depozit copiat este complet autonom, așa că kitul plus depozitul este tot ce are nevoie o restaurare bare-metal.
+Pentru că definițiile de recuperare se află **în interiorul** fiecărui depozit (`<repo>/def`, `<repo>/vm-def`), un folder de depozit copiat este complet autonom, deci kitul plus depozitul este tot ce are nevoie o restaurare pe hardware gol.
 
 ## Recuperarea unui dump de bază de date {#database-dumps}
 
-Un dump de bază de date este un punct de restaurare de sine stătător în depozitul containerelor, cu eticheta `dbdump:<container>` și un singur fișier, `/dbdump/<container>.sql`. BombVault le listează, le descarcă și le importă la **Backupuri**; mai jos sunt aceiași pași doar cu restic, pentru ziua în care BombVault nu este la îndemână.
+Un dump de bază de date este un punct de restaurare propriu în depozitul containerelor, etichetat `dbdump:<container>`, care conține singurul fișier `/dbdump/<container>.sql`. BombVault le listează, le descarcă și le importă în fila **Copii de rezervă** a containerului; mai jos sunt aceiași pași doar cu restic, pentru ziua în care BombVault nu mai este.
 
 ```sh
 restic -r <repo> snapshots --tag dbdump:<container>
 restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
 
-Etichetele `dbversion:` și `dbname:` de pe fiecare dump spun din ce versiune de server provine și ce baze conține. Un fișier complet se termină cu `-- PostgreSQL database cluster dump complete` sau `-- Dump completed`.
+Etichetele `dbversion:` și `dbname:` de pe fiecare dump spun din ce versiune de server provine și ce baze de date conține. Un fișier complet se încheie cu `-- PostgreSQL database cluster dump complete` sau `-- Dump completed`.
 
-Importă-l într-un container de aceeași versiune sau una mai nouă (PostgreSQL), ori de aceeași versiune majoră (MySQL și MariaDB), pornit o dată cu folderul de date gol ca să se inițializeze. Gazda nu are nevoie de client de bază de date, containerul are unul:
+Importă-l într-un container de aceeași versiune sau mai nouă (PostgreSQL), sau de aceeași versiune majoră (MySQL și MariaDB), pornit o dată cu un folder de date gol, ca să se inițializeze. Gazda nu are nevoie de niciun client de bază de date, containerul are unul:
 
 ```sh
 docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
@@ -290,7 +330,7 @@ docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"
 docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
 ```
 
-Pentru o singură bază dintr-un dump complet, MySQL și MariaDB acceptă `--one-database <name>` în comanda clientului. Un dump PostgreSQL are câte o secțiune pentru fiecare bază, fiecare începând cu o linie `\connect <name>`: copiază secțiunea într-un fișier propriu și importă-l cu `-d <name>` după ce ai creat baza.
+Pentru o singură bază de date dintr-un dump complet, MySQL și MariaDB acceptă `--one-database <nume>` în comanda clientului. Un dump PostgreSQL are o secțiune pe bază de date, fiecare începând cu o linie `\connect <nume>`: copiază acea secțiune într-un fișier propriu și importă-o cu `-d <nume>` după ce ai creat baza de date.
 
-!!! warning "Un dump luat ca root aduce cu el utilizatorii serverului"
-    Un dump complet MySQL sau MariaDB luat ca root conține baza de sistem `mysql`, așa că importul înlocuiește conturile serverului nou, inclusiv parola de root, cu cele din dump. Pe PostgreSQL, `role ... already exists` pentru utilizatorul creat de container este de așteptat și inofensiv.
+!!! warning "Un dump făcut ca root poartă utilizatorii serverului"
+    Un dump complet MySQL sau MariaDB făcut ca root conține baza de date de sistem `mysql`, deci importul lui înlocuiește conturile noului server, inclusiv parola root, cu cele din dump. Pe PostgreSQL, `role ... already exists` pentru utilizatorul creat de container este de așteptat și inofensiv.

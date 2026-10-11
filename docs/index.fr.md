@@ -2,29 +2,33 @@
 
 **Vos données Unraid, scellées dans un coffre. Déposez une sauvegarde. Déclenchez une restauration.**
 
-BombVault est une application web auto-hébergée, native Unraid, pour la **sauvegarde et la reprise complète après sinistre** de vos conteneurs Docker et de vos VMs KVM/libvirt. Elle s'exécute comme un unique conteneur Docker multi-arch, vous offre une interface web moderne qui s'adapte au thème clair/sombre de votre système, et gère tout le cycle de vie : sauvegarder, planifier, vérifier et restaurer.
+BombVault est une application web auto-hébergée, native Unraid, pour la **sauvegarde et la reprise complète après sinistre** de vos conteneurs Docker et de vos VMs KVM/libvirt. Elle s'exécute comme un unique conteneur Docker multi-arch, vous offre une interface web en thème sombre, clair ou système, et gère tout le cycle de vie : sauvegarder, planifier, vérifier et restaurer.
 
 Les restaurations sont automatiques. Les conteneurs réapparaissent dans l'onglet Docker d'Unraid exactement comme avant, et les VMs sont redéfinies dans le VM Manager avec leurs disques et leur NVRAM UEFI rattachés. Aucune réinstallation manuelle, aucune reconfiguration, aucun drame.
 
 Propulsé par [restic](https://restic.net), chaque sauvegarde est donc dédupliquée, incrémentale et toujours chiffrée.
 
 !!! note "Gardez votre APP_KEY en lieu sûr"
-    BombVault dérive le mot de passe du dépôt restic d'un secret de 32 octets nommé `APP_KEY`. Le perdre rend les sauvegardes chiffrées irrécupérables. Générez-en un avec `openssl rand -hex 32` et conservez-le en lieu sûr. Voir [Configuration](configuration.md).
+    BombVault dérive le mot de passe du dépôt restic d'un secret de 32 octets nommé `APP_KEY`. Le perdre, avec le kit de récupération, rend les sauvegardes chiffrées irrécupérables. Générez-en un avec `openssl rand -hex 32` et conservez-le en lieu sûr. Voir [Configuration](configuration.md).
 
 ## Ce que protège BombVault
 
-| Domaine | Ce qui est enregistré |
+Chaque conteneur, chaque VM, chaque jeu de dossiers, la clé flash, chaque jeu de données ZFS et les réglages de BombVault eux-mêmes forment un **élément** doté de sa propre page. Les éléments d'un même type forment une **section**, que vous activez sous **Paramètres, Général**.
+
+| Section | Ce qui est enregistré |
 |---|---|
-| **Conteneurs Docker** | Le répertoire appdata plus la définition du conteneur (image, variables d'environnement, ports, labels, volumes). |
-| **VMs KVM / libvirt** | La ou les images disque de la VM, la définition XML et la NVRAM UEFI, sauvegardées via SSH (sans montage libvirt). |
-| **Flash Unraid** | Toute la clé USB flash (`/boot`) : OS, licence, config de la matrice, partages, réseau et config des plugins. |
-| **Configuration de l'application** | Le propre `/config` de BombVault : sa base de réglages, ses identifiants hors site et la paire de clés SSH libvirt. |
-| **Fichiers et dossiers** | Des **jeux de fichiers** nommés, n'importe quel dossier du serveur, chacun avec des motifs d'exclusion optionnels par jeu. |
+| **Conteneurs** | Le répertoire appdata plus la définition du conteneur (image, variables d'environnement, ports, labels, volumes). |
+| **VMs** | La ou les images disque de la VM, la définition XML et la NVRAM UEFI, sauvegardées via SSH (sans montage libvirt). |
+| **Flash** | Toute la clé USB flash (`/boot`) : OS, licence, config de la matrice, partages, réseau et config des plugins. |
+| **Auto-sauvegarde** | Le propre `/config` de BombVault : sa base de réglages, les identifiants de ses destinations et la paire de clés SSH libvirt. |
+| **Dossiers** | N'importe quel dossier du serveur comme jeu de dossiers, chacun avec des motifs d'exclusion optionnels. |
 | **Jeux de données ZFS** | Un jeu de données avec tous ceux qui se trouvent en dessous, lu depuis un instantané ZFS et stocké comme un dossier. Voir [Jeux de données ZFS](zfs-datasets.md). |
 
 ## La restauration est la vedette
 
 Après avoir recopié les données depuis l'instantané restic, BombVault rejoue la définition de conteneur enregistrée contre l'API Docker, de sorte que le conteneur réapparaît dans l'onglet Docker d'Unraid comme s'il avait toujours été là (même image, mêmes réglages, mêmes mappages de ports). Les VMs voient leur XML redéfini via SSH et leurs disques et leur NVRAM UEFI rattachés, même après la suppression de la VM.
+
+Une seule fenêtre restaure tous les types. Par défaut, elle choisit **À côté de l'original**, qui ramène la sauvegarde sous forme de copie et laisse l'original tel quel. **Remplacer l'original** sauvegarde d'abord l'état actuel, de sorte qu'une restauration peut être annulée. Un dossier ou un nouveau jeu de données ZFS sont les autres cibles.
 
 Lorsqu'une sauvegarde arrête des conteneurs dépendants, ils reviennent dans le bon ordre : BombVault les redémarre selon leur ordre `depends_on` de Compose et attend que chacun se signale sain avant de démarrer ceux qui en dépendent, afin que rien ne prenne les devants sur une base de données ou une passerelle qui n'est pas encore active. Voir [Fonctionnalités](features.md).
 
@@ -33,7 +37,7 @@ Lorsqu'une sauvegarde arrête des conteneurs dépendants, ils reviennent dans le
 ```
 Browser --HTTPS--> BombVault container
                    |- Go binary: JSON API + embedded React UI
-                   |- Background worker (per-domain scheduler + job executor)
+                   |- Background worker (per-section scheduler + job executor)
                    |
                    |- /var/run/docker.sock  -> Docker API (container stop/inspect/recreate)
                    |- qemu+ssh://host       -> libvirt / KVM on the HOST over SSH (no mount)
@@ -51,7 +55,7 @@ BombVault est la couche d'orchestration et d'interface, pas le moteur de stockag
 
 Nouveau ici ? Rendez-vous sur **[Prise en main](getting-started.md)** pour installer BombVault sur Unraid via Community Applications et lancer votre première sauvegarde. Explorez ensuite l'ensemble des **[Fonctionnalités](features.md)**, ajustez votre **[Configuration](configuration.md)**, et mettez en place la **[Sauvegarde hors site et récupération](offsite-recovery.md)**.
 
-Le hors site peut se répartir sur plusieurs cibles par domaine à la fois, un **tableau de bord récepteur** en lecture seule surveille ces copies sur la machine qui les reçoit, et vous pouvez emporter toute votre configuration vers une nouvelle machine avec la carte **Exporter / importer les paramètres**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) et [Configuration](configuration.md#portable-settings-export-and-import).
+Chaque section peut copier vers plusieurs destinations à la fois, un BombVault appairé peut garder vos copies hors site sur un serveur qui refuse les suppressions, et l'**Assistant d'urgence** remet en route un serveur perdu à partir de son kit de récupération, via votre groupe ou avec sa clé saisie. Pour emporter votre configuration vers une nouvelle machine, utilisez la carte **Exporter / importer les paramètres**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) et [Configuration](configuration.md#portable-settings-export-and-import).
 
 L'**[application Android](android.md)** met tous les serveurs de votre groupe sur votre téléphone, avec le journal d'activité de chacun d'eux sur un seul écran.
 
@@ -75,4 +79,4 @@ Le nom et l'identité visuelle ne sont pas couverts par la licence. L'AGPL ne co
 - **Tickets :** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Contrôle de l'hôte équivalent à root"
-    Via le socket Docker, BombVault peut arrêter, supprimer et recréer des conteneurs et lire/écrire dans appdata, et pour la sauvegarde de VM il se connecte à l'hôte via SSH pour exécuter `virsh`. Quiconque peut atteindre son interface web dispose de fait de root sur l'hôte. N'exécutez BombVault que sur un réseau de confiance et non exposé, et activez la protection par mot de passe optionnelle (Paramètres, Sécurité) dès que des sauvegardes hors site ou immuables sont utilisées. Voir [Configuration](configuration.md) pour le modèle de sécurité complet.
+    Via le socket Docker, BombVault peut arrêter, supprimer et recréer des conteneurs et lire/écrire dans appdata, et pour la sauvegarde de VM il se connecte à l'hôte via SSH pour exécuter `virsh`. Quiconque peut atteindre son interface web dispose de fait de root sur l'hôte. N'exécutez BombVault que sur un réseau de confiance et non exposé, et définissez un mot de passe de connexion sous **Paramètres, Sécurité**. Le kit de récupération, les copies déposées et la suppression des sauvegardes d'une destination en ont besoin. Voir [Configuration](configuration.md#security-model) pour le modèle de sécurité complet.
