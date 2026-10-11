@@ -151,7 +151,7 @@ export function OAuthConsent() {
               className="hidden h-16 w-16 object-contain dark:block"
             />
           </span>
-          <h1 className="text-2xl font-semibold text-carbon-text">{t("oauth.heading")}</h1>
+          <h1 className="text-status font-semibold text-carbon-text">{t("oauth.heading")}</h1>
         </div>
 
         {leaving !== null && (

@@ -142,7 +142,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               className="h-16 w-16 object-contain hidden dark:block"
             />
           </span>
-          <h1 className="text-2xl font-semibold text-carbon-text text-center">
+          <h1 className="text-status font-semibold text-carbon-text text-center">
             {t("auth.loginTitle")}
           </h1>
         </div>

@@ -144,7 +144,7 @@ export function EmergencyScene({ words = false }: { words?: boolean }) {
               className="glim-rescue-word flex flex-col items-center gap-1 px-1 text-center text-xs leading-tight"
               style={at(starts(k), { "--until": DONE[k] })}
             >
-              <b className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-[11px] tabular-nums">{k + 1}</b>
+              <b className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-meta tabular-nums">{k + 1}</b>
               <span>{t(key)}</span>
             </span>
           ))}

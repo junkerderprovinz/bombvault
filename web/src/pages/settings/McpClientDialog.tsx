@@ -204,7 +204,7 @@ export function McpClientDialog({
         if (name === undefined || !(name in values)) return part;
         if (name !== "var" && name !== "file") return values[name];
         return (
-          <code key={i} dir="ltr" className="rounded-control bg-carbon-surface2 px-1 font-mono text-[0.78em]">
+          <code key={i} dir="ltr" className="rounded-control bg-carbon-surface2 px-1 font-mono text-meta">
             {values[name]}
           </code>
         );

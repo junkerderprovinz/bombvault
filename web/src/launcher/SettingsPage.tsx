@@ -67,7 +67,7 @@ function Row({ label, sub, info, dim, children }: { label: string; sub?: string;
           <span className={`text-sm ${dim ? "text-carbon-textMuted" : "text-carbon-text"}`}>{label}</span>
           {info && <InfoBubble tip={info} />}
         </span>
-        {sub && <span className="text-[11px] leading-4 text-carbon-textMuted">{sub}</span>}
+        {sub && <span className="text-meta leading-4 text-carbon-textMuted">{sub}</span>}
       </div>
       {children}
     </div>
@@ -85,7 +85,7 @@ function Switch({ label, checked, onChange, hue }: { label: string; checked: boo
 
 /** The small caption over a picker. */
 function Axis({ children }: { children: ReactNode }) {
-  return <span className="mb-1.5 mt-3 text-[11px] tracking-[0.6px] text-carbon-textSub">{children}</span>;
+  return <span className="mb-1.5 mt-3 text-meta tracking-[0.6px] text-carbon-textSub">{children}</span>;
 }
 
 /** Flush segments in a shared groove, the chosen one filled in its position's colour. */
@@ -489,7 +489,7 @@ export function SettingsPage({
       <Section title={t("launcher.problems")} hue={2} info={t("launcher.problemsHint")}>
         <pre
           dir="ltr"
-          className="my-1 whitespace-pre-wrap break-words rounded-control bg-carbon-surface2 p-3 font-mono text-[11px] leading-[17px] text-carbon-textSub select-text"
+          className="my-1 whitespace-pre-wrap break-words rounded-control bg-carbon-surface2 p-3 font-mono text-meta leading-[17px] text-carbon-textSub select-text"
         >
           {report}
         </pre>
@@ -556,7 +556,7 @@ export function LanguagePage({ t, onBack }: { t: T; onBack: () => void }) {
         <button type="button" onClick={onBack} className="self-start text-xs text-carbon-textMuted glim-field-focus">
           ‹ {t("settings.title")}
         </button>
-        <h1 className="text-xl font-semibold text-carbon-text">{t("settings.language")}</h1>
+        <h1 className="text-status font-semibold text-carbon-text">{t("settings.language")}</h1>
       </header>
       <div className="flex flex-col gap-1.5">
         {languages.map((l) => {

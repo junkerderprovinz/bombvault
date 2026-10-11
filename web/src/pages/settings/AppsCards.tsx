@@ -85,7 +85,7 @@ export function PhoneAppCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
           href={`${REPO}/releases/tag/v${release}`}
           target="_blank"
           rel="noreferrer noopener"
-          className="absolute end-5 top-0 z-10 -translate-y-1/2 max-sm:top-auto max-sm:bottom-0 max-sm:translate-y-1/2 rounded-pill bg-carbon-surface2 px-2.5 py-[3px] pointer-coarse:py-[5px] font-mono text-[11px] leading-[15px] tabular-nums text-carbon-textMuted no-underline shadow-(--elevation) hover:text-carbon-text"
+          className="absolute end-5 top-0 z-10 -translate-y-1/2 max-sm:top-auto max-sm:bottom-0 max-sm:translate-y-1/2 rounded-pill bg-carbon-surface2 px-2.5 py-[3px] pointer-coarse:py-[5px] font-mono text-meta leading-[15px] tabular-nums text-carbon-textMuted no-underline shadow-(--elevation) hover:text-carbon-text"
         >
           v{release}
         </a>

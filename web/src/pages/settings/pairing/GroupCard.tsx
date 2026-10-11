@@ -44,7 +44,7 @@ function Row({ netKey, hot, glyph, name, mark, badge }: { netKey: string; hot: b
  *  words, followed by how the member is reached. */
 function PairedState({ via, t }: { via?: string; t: T }) {
   return (
-    <span className="inline-flex items-center gap-2 whitespace-nowrap text-[13px] text-carbon-textSub">
+    <span className="inline-flex items-center gap-2 whitespace-nowrap text-subline text-carbon-textSub">
       <i aria-hidden="true" className="h-[7px] w-[7px] flex-none rounded-full bg-statusOkSolid" />
       {via ? `${t("pairing.paired")} · ${via}` : t("pairing.paired")}
     </span>

@@ -121,7 +121,7 @@ export function RoleAskDialog({
       }
     >
       <div className="flex flex-col gap-3">
-        <span className="text-[13px] font-semibold text-carbon-textSub">
+        <span className="text-subline font-semibold text-carbon-textSub">
           {t(role === "receiver" ? "instances.role.sections" : "instances.role.sectionsFetch")}
         </span>
         {sections.map((s, i) => (
@@ -253,7 +253,7 @@ export function ZFSRoleDialog({
     >
       {usable && (
         <div className="flex flex-col gap-3">
-          <span className="text-[13px] font-semibold text-carbon-textSub">{t("instances.role.zfsEntries")}</span>
+          <span className="text-subline font-semibold text-carbon-textSub">{t("instances.role.zfsEntries")}</span>
           {replicas.map((r, i) => (
             <div key={r.itemId} className="flex flex-col gap-0.5">
               <ToggleRow

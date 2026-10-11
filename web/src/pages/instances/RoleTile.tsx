@@ -72,7 +72,7 @@ export function RoleTile({
         <span
           // A name wider than its tile is hyphenated in the page's language,
           // and split without a hyphen only where no dictionary exists.
-          className={`text-dense font-semibold wrap-anywhere hyphens-auto md:truncate md:text-[13px] ${
+          className={`text-dense font-semibold wrap-anywhere hyphens-auto md:truncate md:text-subline ${
             state === "off" ? "text-carbon-text" : ""
           }`}
         >
@@ -102,8 +102,8 @@ export function RoleTile({
         aria-describedby={tooltip.describedBy}
         onClick={onToggle}
         {...tooltip.handlers}
-        className={`${cls} glim-field-focus transition-[filter,background-color] ${
-          state === "off" ? "hover:bg-carbon-hoverRaised" : "hover:brightness-105"
+        className={`${cls} glim-field-focus transition-colors ${
+          state === "off" ? "hover:bg-carbon-hoverRaised" : "hover:bg-accentHover"
         }`}
         style={style}
       >
@@ -132,7 +132,7 @@ export function RoleTiles({
   if (shown.length === 0) return null;
   return (
     <div className="flex flex-col gap-2">
-      <span className="flex items-center gap-1.5 text-[13px] font-semibold text-carbon-textSub">
+      <span className="flex items-center gap-1.5 text-subline font-semibold text-carbon-textSub">
         {heading}
         <InfoBubble tip={t("instances.role.diff")} />
       </span>

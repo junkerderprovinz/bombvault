@@ -62,7 +62,7 @@ function ProtectionRing({ sections, needs, anyBackup, t }: { sections: Section[]
   const gap = sections.length > 1 ? GAP : 0;
   const centre =
     needs > 0 ? (
-      <b className="text-[22px] font-bold leading-none tabular-nums">{needs}</b>
+      <b className="text-status font-bold leading-none tabular-nums">{needs}</b>
     ) : anyBackup ? (
       <IconShieldOn />
     ) : (
@@ -135,7 +135,7 @@ function StationStrip({ run, t }: { run: LiveRun | null; t: T }) {
             key={station}
             data-station={station}
             data-here={i === at}
-            className={`relative flex min-w-0 flex-col items-center gap-1.5 text-xs max-md:text-[11px] ${
+            className={`relative flex min-w-0 flex-col items-center gap-1.5 text-meta ${
               i === at ? "text-carbon-text" : "text-carbon-textSub"
             }${skipped ? " opacity-45" : ""}`}
           >
@@ -162,7 +162,7 @@ function StationStrip({ run, t }: { run: LiveRun | null; t: T }) {
  */
 function DoneStack({ runs, t }: { runs: Run[]; t: T }) {
   return (
-    <div aria-hidden="true" className="flex flex-none flex-col items-center gap-1.5 text-xs text-carbon-textMuted max-md:text-[11px]">
+    <div aria-hidden="true" className="flex flex-none flex-col items-center gap-1.5 text-meta text-carbon-textMuted">
       <span data-testid="pass-marks" className="flex min-h-[22px] w-[50px] flex-wrap-reverse content-start gap-0.5">
         {runs.map((run, i) => (
           <i
@@ -284,7 +284,7 @@ export function StatusHead({
         <ProtectionRing sections={ready ? sections : []} needs={ready ? needs : 0} anyBackup={tally.ok > 0} t={t} />
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-xl font-semibold leading-tight text-carbon-text md:text-2xl">{title}</p>
+        <p className="text-status font-semibold leading-tight text-carbon-text">{title}</p>
         {line && <p className="mt-1 text-sm text-carbon-textSub">{line}</p>}
         {busy && (
           <div className="mt-3 flex items-end gap-4 max-md:gap-2.5">

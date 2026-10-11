@@ -41,7 +41,7 @@ export function RecoveryCodeDialog({ code, onDone }: { code: string; onDone: () 
         {code.split("-").map((group, i) => (
           <li
             key={i}
-            className="rounded-control bg-carbon-surface2 px-2 py-2.5 text-center font-mono text-xl font-semibold tracking-[.18em] text-carbon-text"
+            className="rounded-control bg-carbon-surface2 px-2 py-2.5 text-center font-mono text-status font-semibold tracking-[.18em] text-carbon-text"
           >
             {group}
           </li>
@@ -148,7 +148,7 @@ export function KeeperDialog({
       }
     >
       <div className="flex flex-col gap-2">
-        <span className="text-[13px] font-semibold text-carbon-textSub">{t("keeper.need.title")}</span>
+        <span className="text-subline font-semibold text-carbon-textSub">{t("keeper.need.title")}</span>
         <ol data-testid="keeper-needs" className="flex list-decimal flex-col gap-1 ps-5 text-sm text-carbon-text">
           <li>{t("keeper.need.words")}</li>
           <li>{t(hasCode ? "keeper.need.codeHave" : "keeper.need.code")}</li>

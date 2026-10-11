@@ -112,7 +112,7 @@ function RelayDownLine({ group, onRefresh, t }: { group: GroupState; onRefresh: 
               ) : (
                 <>
                   {before}
-                  <span dir="ltr" className="font-mono text-[0.92em] text-carbon-text">
+                  <span dir="ltr" className="font-mono text-subline text-carbon-text">
                     {hostOf(group.relay.projectUrl)}
                   </span>
                   {after}
@@ -371,7 +371,7 @@ export function PhraseCard({
         <PhraseGlyph kind="warn" size={22} />
       </span>
       <div className="min-w-0 flex-[1_1_18rem]">
-        <p className="text-[15px] font-semibold text-carbon-text">{t("pairing.noPasswordTitle")}</p>
+        <p className="text-title font-semibold text-carbon-text">{t("pairing.noPasswordTitle")}</p>
         <p className="mt-0.5 text-sm leading-relaxed text-carbon-text">{t("pairing.noPasswordHint")}</p>
       </div>
       <Button
@@ -605,7 +605,7 @@ export function PhraseCard({
         {relayHint}
         {stage === "new" && (
           <>
-            <div className="flex flex-wrap items-center justify-end gap-2 text-[13px] text-carbon-textMuted">
+            <div className="flex flex-wrap items-center justify-end gap-2 text-subline text-carbon-textMuted">
               {t("pairing.notFirst")}
               <Button
                 label={t("pairing.notFirstButton")}
@@ -672,8 +672,8 @@ function Choice({
         {glyph}
       </span>
       <span>
-        <span className="block text-[15px] font-semibold leading-snug text-carbon-text">{title}</span>
-        <span className="mt-0.5 block text-[13px] leading-snug text-carbon-textSub">{sub}</span>
+        <span className="block text-title font-semibold leading-snug text-carbon-text">{title}</span>
+        <span className="mt-0.5 block text-subline leading-snug text-carbon-textSub">{sub}</span>
       </span>
     </button>
   );

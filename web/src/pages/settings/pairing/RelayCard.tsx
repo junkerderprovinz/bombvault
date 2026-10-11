@@ -354,7 +354,7 @@ export function RelayCard({
                   {form === "project" ? (
                     <>
                       {beforeHost}
-                      <span dir="ltr" className="font-mono text-[0.92em] text-carbon-text">
+                      <span dir="ltr" className="font-mono text-subline text-carbon-text">
                         {hostOf(relay.projectUrl)}
                       </span>
                       {afterHost}

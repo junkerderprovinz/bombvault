@@ -42,7 +42,7 @@ function FirstStart({ items }: { items: BackupItem[] }) {
       <img src="/logo.svg" alt="" draggable={false} className="block w-[120px] dark:hidden" />
       <img src="/logo-light.svg" alt="" draggable={false} className="hidden w-[120px] dark:block" />
       {/* The page title says the same to a screen reader. */}
-      <p aria-hidden="true" className="text-xl font-semibold leading-tight text-carbon-text md:text-2xl">
+      <p aria-hidden="true" className="text-status font-semibold leading-tight text-carbon-text">
         {t("welcome.title")}
       </p>
       <p className="text-base text-carbon-textSub">{t(platform === "unraid" ? "welcome.leadUnraid" : "welcome.lead")}</p>
@@ -70,7 +70,7 @@ function FirstStart({ items }: { items: BackupItem[] }) {
                 {t(TITLE[step])}
                 {states[step] === "done" && <span className="sr-only">{` (${t("common.done")})`}</span>}
               </span>
-              {sub[step] && <span className="text-[13px] text-carbon-textMuted">{sub[step]}</span>}
+              {sub[step] && <span className="text-subline text-carbon-textMuted">{sub[step]}</span>}
             </div>
           </li>
         ))}

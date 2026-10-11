@@ -143,7 +143,7 @@ export function ProtectionCard({
         <p className="text-sm text-carbon-textMuted">{t("overview.protection.none")}</p>
       ) : (
         <div className="@container glim-content-fade">
-          <div aria-hidden="true" className={`px-1.5 pb-2 text-[11px] font-medium text-carbon-textMuted ${COLUMNS}`}>
+          <div aria-hidden="true" className={`px-1.5 pb-2 text-meta font-medium text-carbon-textMuted ${COLUMNS}`}>
             <span />
             <span />
             {CHECK_KEYS.map((key) => {

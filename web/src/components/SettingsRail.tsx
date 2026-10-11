@@ -167,7 +167,7 @@ function RailTile({ item, hue, on, tabStop, glyphs, reactive, showIcon, look, on
         }}
         className={[
           "glim-nav-row glim-hue glim-hue-icon group flex w-full min-w-0 shrink-0 grow basis-0 items-center",
-          "overflow-hidden rounded-pill text-[15px] font-medium transition-colors select-none [-webkit-touch-callout:none]",
+          "overflow-hidden rounded-pill text-sm font-medium transition-colors select-none [-webkit-touch-callout:none]",
           stacked
             ? `flex-col justify-center gap-0.5 px-2 ${reactive ? "min-h-12 py-1" : "min-h-10 py-1.5"}`
             : "min-h-10 flex-row gap-3 px-3",

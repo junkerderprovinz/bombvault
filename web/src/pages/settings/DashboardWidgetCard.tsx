@@ -350,7 +350,7 @@ export function DashboardWidgetCard({
           tone="accent"
           onClick={() => void handleGenerate()}
           disabled={busy}
-          className={`self-start rounded-pill bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+          className={`self-start rounded-pill px-4 py-1.5 text-sm font-medium disabled:opacity-50${
             shake.generate ? " glim-shake" : ""
           }${hueOn ? " glim-hue" : ""}`}
         />
@@ -373,7 +373,7 @@ export function DashboardWidgetCard({
               <IconTipButton
                 onClick={() => void handleCopy()}
                 tip={t("common.copy")}
-                className={`shrink-0 inline-flex items-center justify-center rounded-pill bg-accent h-8 w-8 text-accentContrast hover:opacity-90 transition-opacity${hueOn ? " glim-hue" : ""}`}
+                className={`shrink-0 inline-flex items-center justify-center rounded-pill bg-accent h-8 w-8 text-accentContrast hover:bg-accentHover transition-colors${hueOn ? " glim-hue" : ""}`}
                 style={hueStyle}
               >
                 <IconCopy />
