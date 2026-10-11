@@ -16,6 +16,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
@@ -6167,9 +6168,17 @@ func (h *Handler) handleMkdir(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	// os.Mkdir (not MkdirAll) so an existing folder is reported instead of silently
-	// reused; then force 0755 in case a strict umask stripped the mode.
-	if err := os.Mkdir(abs, 0o755); err != nil { //nolint:gosec // G301: a backup destination on a user-visible share must be operator-readable
+	// The folder is made through the root, like handleBrowse reads, so a link
+	// in the path cannot place it outside Host Data. Mkdir rather than MkdirAll
+	// reports an existing folder; the chmod undoes what a strict umask strips.
+	root, err := os.OpenRoot(h.cfg.HostMountRoot)
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "could not create folder"})
+		return
+	}
+	defer root.Close() //nolint:errcheck // a directory handle
+	rel := filepath.FromSlash(sub)
+	if err := root.Mkdir(rel, 0o755); err != nil {
 		if os.IsExist(err) {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a folder with that name already exists"})
 			return
@@ -6178,7 +6187,7 @@ func (h *Handler) handleMkdir(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "could not create folder"})
 		return
 	}
-	_ = os.Chmod(abs, 0o755) //nolint:gosec // G302: see above — must be readable by the non-root share user
+	_ = root.Chmod(rel, 0o755) //nolint:gosec // G302: a backup destination on a user-visible share must be operator-readable
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "path": sub, "name": name})
 }
 

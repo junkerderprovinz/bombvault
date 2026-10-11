@@ -251,8 +251,13 @@ func (s *Service) checkReceiverInput(in receiverServerInput) (receiverServerInpu
 	if in.Folder == "" {
 		return in, "", errors.New("choose the folder the repositories go into")
 	}
-	if _, err := paths.Resolve(s.cfg.HostMountRoot, in.Folder); err != nil {
+	abs, err := paths.Resolve(s.cfg.HostMountRoot, in.Folder)
+	if err != nil {
 		return in, "", s.repoPathError(in.Folder, err)
+	}
+	// The rest-server gets the folder to write in, which must not be ours.
+	if err := s.refuseOwnData(abs); err != nil {
+		return in, "", err
 	}
 	// Docker splits a bind at its colons.
 	if strings.Contains(in.Folder, ":") {
