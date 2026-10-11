@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Badge, type BadgeSize } from "../../components/Badge";
+import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { ConfirmPrompt } from "../../components/ConfirmPrompt";
-import { IconDisclosure } from "../../components/IconDisclosure";
-import { IconLink } from "../../components/glyphs";
+import { Note } from "../../components/entry/Note";
+import { IconInfo, IconKeyRevoke, IconLink, IconRefresh } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
 import { RevealInput } from "../../components/RevealInput";
 import { ReadmeButton } from "../../components/ReadmeButton";
+import { IconAdd, IconDownload, IconPencil, IconTrash } from "../../components/navGlyphs";
+import { SettingRow } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import {
   MCP_CERTIFICATE_URL,
@@ -33,9 +35,10 @@ import { useOwnLogin } from "../../lib/useOwnLogin";
 import { InstanceWindow } from "../instances/InstanceWindow";
 import { McpClientDialog, type FreshKey } from "./McpClientDialog";
 import { ClientMark } from "./McpClientMark";
-import { keyLogId, McpKeyLog } from "./McpKeyLog";
+import { CopyField } from "./CopyField";
+import { McpKeyLog } from "./McpKeyLog";
 import { McpOAuthSettings } from "./McpOAuthSettings";
-import { Card, useOpenPasswordField } from "./shared";
+import { Card, SubCard, useOpenPasswordField } from "./shared";
 
 // McpServerCard is where an MCP key comes from, and the only place it is ever
 // visible: the server keeps a hash, so a key that is not copied out of the
@@ -78,35 +81,6 @@ type Pending =
   | { kind: "rotate" | "revoke" | "purge"; item: McpKeyView }
   | { kind: "certificate" };
 
-// Each key is a tile laid out like an off-site target in OffsiteTargetsSection,
-// with its chips at the size those use. The log opens inside the tile the way a
-// fleet peer opens its details.
-const TILE_BADGE_SIZE: BadgeSize = "medium";
-
-function LogButton({
-  keyId,
-  open,
-  onClick,
-  t,
-}: {
-  keyId: string;
-  open: boolean;
-  onClick: () => void;
-  t: (key: TranslationKey) => string;
-}) {
-  return (
-    <Button
-      label={t("mcp.log")}
-      labelKey="mcp.log"
-      tone="neutral"
-      onClick={onClick}
-      glyph={<IconDisclosure open={open} />}
-      ariaExpanded={open}
-      ariaControls={open ? keyLogId(keyId) : undefined}
-    />
-  );
-}
-
 /** How often the card asks for the key list while a setup dialog waits for
  *  the client's first call. */
 const FIRST_CALL_POLL_MS = 3000;
@@ -128,20 +102,13 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   const [keyVisible, setKeyVisible] = useState(true);
   const [dialog, setDialog] = useState<McpClient | null>(null);
   const [choosing, setChoosing] = useState(false);
-  const [renaming, setRenaming] = useState("");
+  const [details, setDetails] = useState<string | null>(null);
+  const [logOf, setLogOf] = useState<McpKeyView | null>(null);
   const [draft, setDraft] = useState("");
-  const [revokedOpen, setRevokedOpen] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
   const [shake, setShake] = useState<Record<string, number>>({});
-  const [logOpen, setLogOpen] = useState<ReadonlySet<string>>(new Set());
 
   const bumpShake = (id: string) => setShake((s) => ({ ...s, [id]: (s[id] ?? 0) + 1 }));
-  const toggleLog = (id: string) =>
-    setLogOpen((open) => {
-      const next = new Set(open);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    });
 
   const reload = useCallback(async () => {
     try {
@@ -162,7 +129,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   }, []);
 
   // Switching sign-in through OAuth off, or moving its address, revokes every
-  // grant, so their tiles are read again.
+  // grant, so the keys are read again.
   const oauthChanged = (oauth: McpOAuthView) => {
     const ended = !oauth.enabled || oauth.issuer !== data?.oauth.issuer;
     setData((prev) => (prev ? { ...prev, oauth } : prev));
@@ -273,13 +240,9 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
 
   async function rename(item: McpKeyView) {
     const next = draft.trim();
-    if (next === "" || next === item.label) {
-      setRenaming("");
-      return;
-    }
+    if (next === "" || next === item.label) return;
     // A refused name stays in the field, so the operator can correct it.
-    const res = await act(`rename:${item.id}`, () => updateMcpKey(item.id, { label: next }), "");
-    if (res) setRenaming("");
+    await act(`rename:${item.id}`, () => updateMcpKey(item.id, { label: next }), t("mcp.renamed"));
   }
 
   async function setCanStart(item: McpKeyView, on: boolean) {
@@ -357,27 +320,68 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
     restoreRevoked > 0 && !keys.some((k) => Math.max(k.createdAt, k.rotatedAt) > restoreRevoked);
 
   const canMint = data?.hostAllowsKeys !== false;
+  const open = keys.find((k) => k.id === details) ?? null;
+  const allowStartHint = data
+    ? t("mcp.allowStartHint")
+        .replace("{n}", String(data.startsPerHour))
+        .replace("{minutes}", String(data.cooldownMinutes))
+        .replace("{perDay}", String(data.itemStartsPerDay))
+    : "";
+
+  function facts(k: McpKeyView): string {
+    const client = clientById(k.client);
+    const parts = [
+      client && client !== OTHER_CLIENT ? client.name : "",
+      k.viaOAuth
+        ? t("mcp.grantCreated").replace("{date}", formatTs(k.createdAt))
+        : `${t("mcp.keyHint").replace("{hint}", k.hint)} · ${
+            k.rotatedAt > 0
+              ? t("mcp.keyRotated").replace("{date}", formatTs(k.rotatedAt))
+              : t("mcp.keyCreated").replace("{date}", formatTs(k.createdAt))
+          }`,
+      k.unusable === "app-key-changed"
+        ? t("mcp.keyUnusable")
+        : k.lastUsedAt === 0
+          ? t("mcp.keyNeverUsed")
+          : t("mcp.keyLastUsedNoAddr").replace("{when}", relativeTime(t, k.lastUsedAt)),
+    ];
+    return parts.filter(Boolean).join(" · ");
+  }
+
+  function openDetails(k: McpKeyView) {
+    setDraft(k.label);
+    setDetails(k.id);
+  }
+
+  // A confirmation takes the place of the key's window, so only one dialog is
+  // ever open.
+  function confirmFor(kind: "rotate" | "revoke", item: McpKeyView) {
+    setDetails(null);
+    setPending({ kind, item });
+  }
 
   return (
     <Card title={t("mcp.title")} hint={t("mcp.hint")} hueIndex={hueIndex}>
       {failed && <p className="text-sm text-statusWarn">{t("mcp.loadFailed")}</p>}
 
       {!failed && (
-        <div className="flex items-center gap-2">
-          <span
-            className={`inline-block h-2 w-2 rounded-full ${working > 0 ? "bg-statusOkSolid" : "bg-carbon-textMuted"}`}
-          />
-          <span className="text-sm text-carbon-text">
-            {data === null
-              ? t("folder.loading")
-              : working > 0
-                ? t("mcp.statusOn", working)
-                : oauthActive
-                  ? t("mcp.statusOAuthOnly")
-                  : keys.length > 0
-                    ? t("mcp.statusNoneWorks")
-                    : t("mcp.statusOff")}
-          </span>
+        <div className="flex flex-col divide-y divide-carbon-border/60">
+          <SettingRow label={t("mcp.statusLabel")}>
+            <span className="flex items-center gap-2 text-sm text-carbon-text">
+              <span
+                className={`inline-block h-2 w-2 rounded-full ${working > 0 ? "bg-statusOkSolid" : "bg-carbon-textMuted"}`}
+              />
+              {data === null
+                ? t("folder.loading")
+                : working > 0
+                  ? t("mcp.statusOn", working)
+                  : oauthActive
+                    ? t("mcp.statusOAuthOnly")
+                    : keys.length > 0
+                      ? t("mcp.statusNoneWorks")
+                      : t("mcp.statusOff")}
+            </span>
+          </SettingRow>
         </div>
       )}
 
@@ -402,66 +406,14 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
             </p>
           )}
 
-          {secure && certificate !== null && !certCovers && (
-            <div className="flex flex-col items-start gap-2 rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">
-              <p>
-                {(certificate.selfIssued
-                  ? t("mcp.certNotForThisAddress")
-                  : t("mcp.certOwnNotForThisAddress")
-                ).replace("{host}", host)}
-              </p>
-              {certificate.selfIssued && canMint && (
-                <Button
-                  label={t("mcp.certAddAddress")}
-                  labelKey="mcp.certAddAddress"
-                  tone="subtle"
-                  onClick={() => setPending({ kind: "certificate" })}
-                  disabled={busy}
-                  className={`glim-btn-wrap${shake.certificate ? " glim-shake" : ""}`}
-                  hueIndex={hueIndex}
-                />
-              )}
-            </div>
-          )}
+          {showRestoreNotice && <Note tone="warn">{t("mcp.restoreRevokedNotice")}</Note>}
 
-          {showRestoreNotice && (
-            <p className="text-sm text-statusWarn">{t("mcp.restoreRevokedNotice")}</p>
-          )}
+          {keys.some((k) => k.unusable === "app-key-changed") && <Note tone="warn">{t("mcp.appKeyChanged")}</Note>}
 
-          {keys.some((k) => k.unusable === "app-key-changed") && (
-            <p className="text-sm text-statusWarn">{t("mcp.appKeyChanged")}</p>
-          )}
-
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("mcp.endpointLabel")}
-              <InfoBubble tip={t("mcp.endpointHint")} />
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                readOnly
-                value={endpoint}
-                aria-label={t("mcp.endpointLabel")}
-                dir="ltr"
-                className="min-w-0 max-w-96 flex-[1_1_18rem] rounded-control bg-carbon-surface2 px-3 py-1.5 text-start font-mono text-sm text-carbon-text glim-field-focus"
-              />
-              <Button
-                label={t("common.copy")}
-                labelKey="common.copy"
-                tone="subtle"
-                onClick={() => void copy(endpoint)}
-                hueIndex={hueIndex}
-              />
-              {ownCertificate && (
-                <Button
-                  label={t("mcp.certDownload")}
-                  labelKey="mcp.certDownload"
-                  tone="subtle"
-                  onClick={downloadCertificate}
-                  hueIndex={hueIndex}
-                />
-              )}
-            </div>
+          <div className="flex flex-col divide-y divide-carbon-border/60">
+            <SettingRow label={t("mcp.endpointLabel")} hint={t("mcp.endpointHint")}>
+              <CopyField value={endpoint} label={t("mcp.endpointLabel")} onCopy={() => void copy(endpoint)} t={t} />
+            </SettingRow>
           </div>
 
           <McpOAuthSettings
@@ -471,6 +423,17 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
             idPrefix="bv-mcp-card"
             t={t}
           />
+
+          <div className="flex flex-col divide-y divide-carbon-border/60">
+            <SettingRow label={t("mcp.snippetsLabel")} hint={t("mcp.connectHint")}>
+              <Button
+                label={t("mcp.chooseClient")}
+                labelKey="mcp.chooseClient"
+                glyph={<IconLink />}
+                onClick={() => setChoosing(true)}
+              />
+            </SettingRow>
+          </div>
         </>
       )}
 
@@ -514,201 +477,212 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
 
       {data !== null && !failed && (
         <>
-          <div data-search-row={t("mcp.snippetsLabel")} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-              {t("mcp.snippetsLabel")}
-              <InfoBubble tip={t("mcp.connectHint")} />
-            </span>
-            <Button
-              label={t("mcp.chooseClient")}
-              labelKey="mcp.chooseClient"
-              glyph={<IconLink />}
-              tone="subtle"
-              onClick={() => setChoosing(true)}
-              hueIndex={hueIndex}
-            />
-          </div>
-
-          {keys.length > 0 && (
-            <ul className="flex flex-col gap-3">
-              {keys.map((k) => (
-                <li key={k.id} className="glim-tile flex flex-col gap-3 rounded-card p-3">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <div className="flex min-w-0 items-center gap-2 max-md:flex-wrap">
-                        {renaming === k.id ? (
-                          <input
-                            autoFocus
-                            value={draft}
-                            maxLength={64}
-                            aria-label={t("mcp.labelLabel")}
-                            onChange={(e) => setDraft(e.target.value)}
-                            onBlur={() => {
-                              if (!busy) void rename(k);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") void rename(k);
-                              if (e.key === "Escape") setRenaming("");
-                            }}
-                            className={`w-64 rounded-control bg-carbon-surface3 px-3 py-1 text-sm text-carbon-text glim-field-focus-well${
-                              shake[`rename:${k.id}`] ? " glim-shake" : ""
-                            }`}
-                          />
-                        ) : (
-                          <>
-                            <span className="glim-client-mark" aria-hidden="true">
-                              <ClientMark client={clientById(k.client)} forKey />
-                            </span>
-                            <span className="truncate text-sm text-carbon-text max-md:min-w-24 max-md:flex-1 max-md:whitespace-normal max-md:wrap-anywhere">
-                              {k.label}
-                            </span>
-                            <Button
-                              label={t("common.edit")}
-                              labelKey="common.edit"
-                              variant="icon"
-                              tone="neutral"
-                              onClick={() => {
-                                setDraft(k.label);
-                                setRenaming(k.id);
-                              }}
-                              hueIndex={hueIndex}
-                            />
-                          </>
-                        )}
-                      </div>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-xs font-semibold text-carbon-textSub">{t("mcp.keysTitle")}</h3>
+            {keys.length === 0 ? (
+              <p className="text-xs text-carbon-textMuted">{t("mcp.keysEmpty")}</p>
+            ) : (
+              <ul className="flex flex-col divide-y divide-carbon-border/60">
+                {keys.map((k) => (
+                  <li key={k.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5">
+                    <span className="glim-client-mark" aria-hidden="true">
+                      <ClientMark client={clientById(k.client)} forKey />
+                    </span>
+                    <span className="flex min-w-0 flex-1 basis-48 flex-col gap-0.5">
+                      <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{k.label}</span>
+                      <span className="text-xs text-carbon-textMuted wrap-anywhere">{facts(k)}</span>
+                    </span>
+                    <span className="flex items-center gap-2">
                       {k.unusable === "app-key-changed" ? (
-                        <span className="text-xs text-statusWarn">{t("mcp.keyUnusable")}</span>
+                        <Badge tone="fail" size="small">
+                          {t("mcp.invalid")}
+                        </Badge>
                       ) : (
-                        <>
-                          <span className="text-xs text-carbon-textMuted">
-                            {k.viaOAuth ? (
-                              t("mcp.grantCreated").replace("{date}", formatTs(k.createdAt))
-                            ) : (
-                              <>
-                                {t("mcp.keyHint").replace("{hint}", k.hint)}
-                                {" · "}
-                                {k.rotatedAt > 0
-                                  ? t("mcp.keyRotated").replace("{date}", formatTs(k.rotatedAt))
-                                  : t("mcp.keyCreated").replace("{date}", formatTs(k.createdAt))}
-                              </>
-                            )}
-                          </span>
-                          {/* An IPv6 address has no break opportunity and runs
-                              past a phone's tile. */}
-                          <span className="text-xs text-carbon-textMuted max-md:wrap-anywhere">
-                            {k.lastUsedAt === 0
-                              ? t("mcp.keyNeverUsed")
-                              : k.lastUsedFrom === ""
-                                ? t("mcp.keyLastUsedNoAddr").replace("{when}", relativeTime(t, k.lastUsedAt))
-                                : t("mcp.keyLastUsed")
-                                    .replace("{when}", relativeTime(t, k.lastUsedAt))
-                                    .replace("{addr}", k.lastUsedFrom)}
-                          </span>
-                        </>
-                      )}
-                      <span className="flex flex-wrap gap-2">
-                        <Badge tone="neutral" size={TILE_BADGE_SIZE} wrap className="glim-tile-raise">
+                        <Badge tone="neutral" size="small">
                           {k.canStartBackups ? t("mcp.canStart") : t("mcp.readOnly")}
                         </Badge>
-                        <Badge tone="neutral" size={TILE_BADGE_SIZE} wrap className="glim-tile-raise">
-                          <span className="glim-num">{t("mcp.callsToday", k.callsToday)}</span>
-                        </Badge>
-                      </span>
-                    </div>
-                    <div className="flex min-w-0 flex-wrap items-start gap-2">
-                      <LogButton keyId={k.id} open={logOpen.has(k.id)} onClick={() => toggleLog(k.id)} t={t} />
-                      <Button
-                        label={t("mcp.revoke")}
-                        labelKey="mcp.revoke"
-                        tone="neutral"
-                        onClick={() => setPending({ kind: "revoke", item: k })}
-                        disabled={busy}
-                        className={shake[`revoke:${k.id}`] ? "glim-shake" : ""}
-                        hueIndex={hueIndex}
-                      />
-                      {canMint && !k.viaOAuth && (
-                        <Button
-                          label={t("mcp.rotate")}
-                          labelKey="mcp.rotate"
-                          tone="neutral"
-                          onClick={() => setPending({ kind: "rotate", item: k })}
-                          disabled={busy}
-                          className={`glim-btn-wrap${shake[`rotate:${k.id}`] ? " glim-shake" : ""}`}
-                          hueIndex={hueIndex}
-                        />
                       )}
-                    </div>
-                  </div>
+                      <Button
+                        label={t("mcp.details")}
+                        labelKey="mcp.details"
+                        glyph={<IconInfo />}
+                        onClick={() => openDetails(k)}
+                      />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-                  <Toggle
-                    key={shake[`start:${k.id}`] ?? 0}
-                    label={t("mcp.allowStart")}
-                    checked={k.canStartBackups}
-                    onChange={(v) => void setCanStart(k, v)}
-                    disabled={busy}
-                    className={shake[`start:${k.id}`] ? "glim-shake" : ""}
+          {secure && certificate !== null && (certificate.selfIssued || !certCovers) && (
+            <SubCard title={t("mcp.certTitle")}>
+              {ownCertificate && (
+                <SettingRow label={t("mcp.certRow")} hint={t("mcp.certRowHint")}>
+                  <Button
+                    label={t("mcp.certDownload")}
+                    labelKey="mcp.certDownload"
+                    glyph={<IconDownload />}
+                    onClick={downloadCertificate}
                   />
-
-                  {logOpen.has(k.id) && <McpKeyLog keyId={k.id} used={k.lastUsedAt > 0} t={t} />}
-                </li>
-              ))}
-            </ul>
+                </SettingRow>
+              )}
+              {!certCovers && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">
+                  <p className="min-w-0 flex-1 basis-60">
+                    {(certificate.selfIssued
+                      ? t("mcp.certNotForThisAddress")
+                      : t("mcp.certOwnNotForThisAddress")
+                    ).replace("{host}", host)}
+                  </p>
+                  {certificate.selfIssued && canMint && (
+                    <Button
+                      label={t("mcp.certAddAddress")}
+                      labelKey="mcp.certAddAddress"
+                      glyph={<IconAdd />}
+                      onClick={() => setPending({ kind: "certificate" })}
+                      disabled={busy}
+                      className={`glim-btn-wrap${shake.certificate ? " glim-shake" : ""}`}
+                    />
+                  )}
+                </div>
+              )}
+            </SubCard>
           )}
 
           {revoked.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => setRevokedOpen((v) => !v)}
-                aria-expanded={revokedOpen}
-                className="flex items-center gap-1.5 self-start text-xs text-carbon-textSub hover:text-carbon-text pointer-coarse:min-h-(--btn-h)"
-              >
-                <IconDisclosure open={revokedOpen} />
-                {t("mcp.revokedList", revoked.length)}
-              </button>
-              {revokedOpen && (
-                <ul className="flex flex-col gap-3">
-                  {revoked.map((k) => (
-                    <li key={k.id} className="glim-tile flex flex-col gap-3 rounded-card p-3">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="flex min-w-0 flex-col gap-1">
-                          <span className="truncate text-sm text-carbon-text">{k.label}</span>
-                          <span className="text-xs text-carbon-textMuted">
-                            {t(REVOKED_REASON[k.revokedReason] ?? "mcp.revokedAt").replace(
-                              "{date}",
-                              formatTs(k.revokedAt)
-                            )}
-                          </span>
-                          <span className="text-xs text-carbon-textMuted">
-                            {t("mcp.keyCreated").replace("{date}", formatTs(k.createdAt))}
-                            {" · "}
-                            {k.lastUsedAt === 0
-                              ? t("mcp.keyNeverUsed")
-                              : t("mcp.keyLastUsedNoAddr").replace("{when}", relativeTime(t, k.lastUsedAt))}
-                          </span>
-                        </div>
-                        <div className="flex min-w-0 flex-wrap items-center gap-2">
-                          <LogButton keyId={k.id} open={logOpen.has(k.id)} onClick={() => toggleLog(k.id)} t={t} />
-                          <Button
-                            label={t("common.delete")}
-                            labelKey="common.delete"
-                            tone="neutral"
-                            onClick={() => setPending({ kind: "purge", item: k })}
-                            disabled={busy || k.inUse}
-                            hint={k.inUse ? t("mcp.inUseTip") : undefined}
-                            className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
-                            hueIndex={hueIndex}
-                          />
-                        </div>
-                      </div>
-                      {logOpen.has(k.id) && <McpKeyLog keyId={k.id} used={k.lastUsedAt > 0} t={t} />}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <SubCard title={t("mcp.revokedList", revoked.length)}>
+              <ul className="flex flex-col divide-y divide-carbon-border/60">
+                {revoked.map((k) => (
+                  <li key={k.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5 first:pt-0">
+                    <span aria-hidden="true" className="inline-flex text-carbon-textMuted">
+                      <IconKeyRevoke />
+                    </span>
+                    <span className="flex min-w-0 flex-1 basis-48 flex-col gap-0.5">
+                      <span className="text-sm text-carbon-textSub wrap-anywhere">{k.label}</span>
+                      <span className="text-xs text-carbon-textMuted">
+                        {t(REVOKED_REASON[k.revokedReason] ?? "mcp.revokedAt").replace("{date}", formatTs(k.revokedAt))}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Button label={t("mcp.log")} labelKey="mcp.log" glyph={<IconInfo />} onClick={() => setLogOf(k)} />
+                      <span className="flex items-center gap-1.5">
+                        <Button
+                          label={t("common.delete")}
+                          labelKey="common.delete"
+                          glyph={<IconTrash />}
+                          variant="icon"
+                          glyphOnly
+                          onClick={() => setPending({ kind: "purge", item: k })}
+                          disabled={busy || k.inUse}
+                          className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
+                        />
+                        {/* A disabled button takes no hover or focus, so the reason
+                            sits beside it. */}
+                        {k.inUse && <InfoBubble tip={t("mcp.inUseTip")} />}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </SubCard>
           )}
         </>
+      )}
+
+      {open !== null && (
+        <InstanceWindow
+          title={open.label}
+          facts={facts(open)}
+          onClose={() => setDetails(null)}
+          footer={
+            <>
+              {canMint && !open.viaOAuth && (
+                <Button
+                  label={t("mcp.rotate")}
+                  labelKey="mcp.rotate"
+                  glyph={<IconRefresh />}
+                  tone="subtle"
+                  onClick={() => confirmFor("rotate", open)}
+                  disabled={busy}
+                />
+              )}
+              <Button
+                label={t("mcp.revoke")}
+                labelKey="mcp.revoke"
+                glyph={<IconKeyRevoke />}
+                tone="subtle"
+                onClick={() => confirmFor("revoke", open)}
+                disabled={busy}
+              />
+              <Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={() => setDetails(null)} />
+            </>
+          }
+        >
+          <div className="flex flex-col divide-y divide-carbon-border/60">
+            {open.unusable === "app-key-changed" && <Note tone="warn">{t("mcp.keyUnusable")}</Note>}
+            {!open.viaOAuth && (
+              <SettingRow label={t("mcp.labelLabel")}>
+                <input
+                  value={draft}
+                  maxLength={64}
+                  aria-label={t("mcp.labelLabel")}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void rename(open);
+                  }}
+                  className={`w-56 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus${
+                    shake[`rename:${open.id}`] ? " glim-shake" : ""
+                  }`}
+                />
+                <Button
+                  label={t("mcp.rename")}
+                  labelKey="mcp.rename"
+                  glyph={<IconPencil />}
+                  onClick={() => void rename(open)}
+                  disabled={busy || draft.trim() === "" || draft.trim() === open.label}
+                />
+              </SettingRow>
+            )}
+            <SettingRow label={t("mcp.allowStart")} hint={allowStartHint}>
+              <Toggle
+                key={shake[`start:${open.id}`] ?? 0}
+                label={t("mcp.allowStart")}
+                hideLabel
+                checked={open.canStartBackups}
+                onChange={(v) => void setCanStart(open, v)}
+                disabled={busy}
+                className={shake[`start:${open.id}`] ? "glim-shake" : ""}
+              />
+            </SettingRow>
+            {open.lastUsedAt > 0 && (
+              <SettingRow
+                label={t("mcp.lastUsedLabel")}
+                note={open.lastUsedFrom ? t("mcp.lastUsedFrom").replace("{addr}", open.lastUsedFrom) : undefined}
+              >
+                <span className="glim-num text-sm text-carbon-text">{formatTs(open.lastUsedAt)}</span>
+              </SettingRow>
+            )}
+            <div className="flex flex-col gap-2 pt-3">
+              <span className="flex items-center gap-2 text-xs font-semibold text-carbon-textSub">
+                {t("mcp.log")}
+                <span className="glim-num font-normal text-carbon-textMuted">{t("mcp.callsToday", open.callsToday)}</span>
+              </span>
+              <McpKeyLog keyId={open.id} used={open.lastUsedAt > 0} t={t} />
+            </div>
+          </div>
+        </InstanceWindow>
+      )}
+
+      {logOf !== null && (
+        <InstanceWindow
+          title={logOf.label}
+          facts={t(REVOKED_REASON[logOf.revokedReason] ?? "mcp.revokedAt").replace("{date}", formatTs(logOf.revokedAt))}
+          onClose={() => setLogOf(null)}
+          footer={<Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={() => setLogOf(null)} />}
+        >
+          <McpKeyLog keyId={logOf.id} used={logOf.lastUsedAt > 0} t={t} />
+        </InstanceWindow>
       )}
 
       {choosing && (
@@ -747,10 +721,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
           oauth={data.oauth}
           authEnabled={data.authEnabled}
           onOAuthChange={oauthChanged}
-          allowStartHint={t("mcp.allowStartHint")
-            .replace("{n}", String(data.startsPerHour))
-            .replace("{minutes}", String(data.cooldownMinutes))
-            .replace("{perDay}", String(data.itemStartsPerDay))}
+          allowStartHint={allowStartHint}
           onCreate={(label, canStart) => create(dialog, label, canStart)}
           onCopy={(text) => void copy(text)}
           onDownloadCertificate={downloadCertificate}
