@@ -356,6 +356,9 @@ export const en = {
   "run.kindKeyRelease": "Key deposit handed out",
   "update.afterBackup": "Update after a successful backup",
   "update.afterBackupHint": "Pull the image and recreate this container right after a successful backup, so you always have a fresh restore point first. It runs at the backup's time (backups run one after another), not a fixed clock time. For updates on a set schedule instead, version-gated, see ShipLog.",
+  "update.followsSchedule": "As set under Settings › Schedule",
+  "update.ownChoice": "Own choice",
+  "update.useDefault": "Use the default",
   "update.afterBackupOrphans":
     "Docker keeps the image the container ran on before, now untagged, which Unraid lists as an orphan image. That is the normal residue of a SUCCESSFUL update, not the sign of a failed one, and it is what a quick rollback to the previous image needs. If you would rather not keep it, Settings, Schedule, Image Cleanup & Update Status has a switch that deletes the superseded image right after the update.",
   "run.statusRunning": "Running",
@@ -743,6 +746,8 @@ export const en = {
   // share the Containers page: all of them serve the post-backup update pull.
   "settings.pruneImageAfterUpdate": "Remove the old image after an update",
   "settings.pruneImageAfterUpdateHint": "After a container is updated to a newer image, delete the superseded old image. Off by default. Keeping it makes rolling back cheap (a BombVault snapshot restores data, not the old image). A shared base image is never deleted.",
+  "settings.updateEveryContainer": "Update containers after a successful backup",
+  "settings.updateEveryContainerHint": "Pulls a new image only after the backup before it has finished. A single container can be set differently on its own page.",
   "settings.registriesTitle": "Container registries",
   "settings.registriesHint": "Credentials for private registries, used when \"update after backup\" checks a container for a newer image (for example a sponsor-gated ghcr.io image). Public images keep pulling anonymously. Leave a token blank to keep the saved one; removing a row deletes its credential.",
   "settings.registriesEmpty": "No registries configured. All images are pulled anonymously.",
@@ -5124,6 +5129,9 @@ export const de: Translations = {
   "run.kindKeyRelease": "Hinterlegung herausgegeben",
   "update.afterBackup": "Nach erfolgreicher Sicherung aktualisieren",
   "update.afterBackupHint": "Zieht das Image und baut diesen Container direkt nach einem erfolgreichen Backup neu, du hast also immer zuerst einen frischen Wiederherstellungspunkt. Läuft zur Backup-Zeit (Backups laufen nacheinander), nicht zu einer festen Uhrzeit. Für Updates nach festem Zeitplan (nach Version gestaffelt) gibt es ShipLog.",
+  "update.followsSchedule": "Wie unter Einstellungen › Zeitplan",
+  "update.ownChoice": "Eigene Wahl",
+  "update.useDefault": "Vorgabe übernehmen",
   "update.afterBackupOrphans":
     "Docker behält das Image, auf dem der Container vorher lief, jetzt ohne Tag, und Unraid führt es als verwaistes Image. Das ist der normale Rest eines ERFOLGREICHEN Updates und nicht die Spur eines fehlgeschlagenen; es ist genau das, was ein schnelles Zurückrollen auf das vorherige Image braucht. Wenn du es nicht behalten willst: Einstellungen, Zeitplan, Image-Bereinigung & Update-Status hat einen Schalter, der das abgelöste Image direkt nach dem Update löscht.",
   "run.statusRunning": "Läuft",
@@ -5477,6 +5485,8 @@ export const de: Translations = {
   "retentionPreview.sourceLabel": "Quelle",
   "settings.pruneImageAfterUpdate": "Altes Image nach Update entfernen",
   "settings.pruneImageAfterUpdateHint": "Nachdem ein Container auf ein neueres Image aktualisiert wurde, das abgelöste alte Image löschen. Standardmäßig aus. Es zu behalten macht ein Zurückrollen billig (ein BombVault-Snapshot stellt Daten wieder her, nicht das alte Image). Ein geteiltes Basis-Image wird nie gelöscht.",
+  "settings.updateEveryContainer": "Container nach erfolgreicher Sicherung aktualisieren",
+  "settings.updateEveryContainerHint": "Zieht ein neues Image erst, wenn die Sicherung davor fertig ist. Einzelne Container können auf ihrer Seite davon abweichen.",
   "settings.registriesTitle": "Container-Registries",
   "settings.registriesHint": "Zugangsdaten für private Registries, genutzt wenn Update nach Backup einen Container auf ein neueres Image prüft (z. B. ein Sponsor-exklusives ghcr.io-Image). Öffentliche Images werden weiter anonym gezogen. Token leer lassen, um das gespeicherte zu behalten; das Entfernen einer Zeile löscht deren Zugangsdaten.",
   "settings.registriesEmpty": "Keine Registries konfiguriert. Alle Images werden anonym gezogen.",

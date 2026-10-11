@@ -148,6 +148,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "schedules.updates",
       rows: [
+        { key: "settings.updateEveryContainer", hint: "settings.updateEveryContainerHint" },
         { key: "settings.pruneImageAfterUpdate", hint: "settings.pruneImageAfterUpdateHint" },
         { key: "settings.reconcileUnraidStatus", hint: "settings.reconcileUnraidStatusHint" },
       ],

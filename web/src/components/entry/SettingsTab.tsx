@@ -275,6 +275,8 @@ function ContainerCards({
           <UpdateAfterBackupRow
             name={container.name}
             initial={container.updateAfterBackup ?? false}
+            own={container.updateAfterBackupOwn ?? false}
+            onFollow={onChanged}
             lastUpdateCheck={container.lastUpdateCheck}
             lastUpdateResult={container.lastUpdateResult}
             databaseWarn={updateWarnKey(container)}

@@ -5935,7 +5935,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// are restarted only after the recreate. Only for a running, opted-in container;
 	// otherwise nil, so the dependents restart right after the backup (unchanged).
 	var whileDepsStopped func()
-	if tg.UpdateAfterBackup && in.Running && !isBeforeRestore(ctx) {
+	if tg.UpdatesAfterBackup(settings.UpdateContainersAfterBackup) && in.Running && !isBeforeRestore(ctx) {
 		whileDepsStopped = func() { s.updateContainerAfterBackup(ctx, name, in, tg.ID) }
 	}
 
@@ -10833,7 +10833,7 @@ func configuredStateLabels(t store.Target) []string {
 	if t.BackupOrder != 0 {
 		labels = append(labels, "backup order")
 	}
-	if t.UpdateAfterBackup {
+	if t.UpdateAfterBackupOwn {
 		labels = append(labels, "update-after-backup")
 	}
 	return labels
@@ -15610,7 +15610,8 @@ func (s *Service) SetContainerHooks(_ context.Context, name, preHook, postHook s
 	return s.store.SetHooks(name, preHook, postHook)
 }
 
-// SetUpdateAfterBackup toggles the post-backup image update for a container (#52).
+// SetUpdateAfterBackup gives a container its own choice about the post-backup
+// image update (#52).
 func (s *Service) SetUpdateAfterBackup(_ context.Context, name string, updateAfterBackup bool) error {
 	return s.store.SetUpdateAfterBackup(name, updateAfterBackup)
 }

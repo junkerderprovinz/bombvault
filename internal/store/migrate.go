@@ -3097,6 +3097,17 @@ ALTER TABLE key_deposits_sent ADD COLUMN changed_at INTEGER NOT NULL DEFAULT 0;`
   off INTEGER NOT NULL
 );`,
 	},
+	{
+		// The switch for every container starts off, and a container that was
+		// switched on keeps that as a choice of its own, so an existing
+		// install updates exactly what it updated before.
+		version:          updateEveryContainerMigration,
+		name:             "update_containers_after_backup",
+		alreadySatisfied: columnPresent("targets", "update_after_backup_own"),
+		sql: `ALTER TABLE settings ADD COLUMN update_containers_after_backup INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE targets ADD COLUMN update_after_backup_own INTEGER NOT NULL DEFAULT 0;
+UPDATE targets SET update_after_backup_own = 1 WHERE update_after_backup = 1;`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3220,6 +3231,10 @@ const depositProofMigration = 337
 // keyRolesMigration afterwards, from 350, the keys members sign with, 353,
 // and the switch for pairing phones, 354.
 const keyHardeningMigration = 350
+
+// updateEveryContainerMigration numbers the switch that updates every
+// container after its backup, 355.
+const updateEveryContainerMigration = 355
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

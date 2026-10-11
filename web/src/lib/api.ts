@@ -32,9 +32,12 @@ export interface Container {
   stopContainers: string[];
   /** restic --exclude patterns for this container's backup, one per line. */
   excludes: string[];
-  /** Opt-in (#52): after a successful backup, pull the image and recreate the
-   *  container if a newer image is available. Off by default. */
+  /** Whether the post-backup update (#52) runs for this container: after a
+   *  successful backup, pull the image and recreate the container if a newer
+   *  image is available. updateAfterBackupOwn says whether that is the
+   *  container's own choice rather than Settings' updateContainersAfterBackup. */
   updateAfterBackup?: boolean;
+  updateAfterBackupOwn?: boolean;
   /** How long a scheduled backup waits at most for the app to be idle, in
    *  hours; 0 when it does not wait. */
   idleWaitHours?: number;
@@ -398,6 +401,9 @@ export interface Settings {
    *  cached "update available" status over the host SSH link so the Docker tab's
    *  stale update banner clears. Best-effort and non-fatal. Default true. */
   reconcileUnraidUpdateStatus: boolean;
+  /** The post-backup update for every container without a choice of its own.
+   *  Off by default. */
+  updateContainersAfterBackup: boolean;
   /** #121: opt into per-item schedule overrides. Off by default, so every item
    *  follows its domain schedule and the UI is unchanged. When on, a container or
    *  VM with a non-empty scheduleCadence runs on its own cadence; an item left
@@ -1497,11 +1503,21 @@ export function setStopContainers(name: string, stopContainers: string[]): Promi
   });
 }
 
-/** PATCH /api/containers/{name} — toggle the post-backup image update (#52). */
+/** PATCH /api/containers/{name}: the container's own choice about the
+ *  post-backup image update (#52). */
 export function setUpdateAfterBackup(name: string, updateAfterBackup: boolean): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
     method: "PATCH",
     body: JSON.stringify({ updateAfterBackup }),
+  });
+}
+
+/** PATCH /api/containers/{name}: drops the container's own choice, so it
+ *  follows updateContainersAfterBackup again. */
+export function followUpdateAfterBackup(name: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ updateAfterBackupDefault: true }),
   });
 }
 
