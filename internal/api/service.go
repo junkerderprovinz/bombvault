@@ -15402,6 +15402,11 @@ func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) 
 		_ = s.store.FinishRun(runID, "failed", "", 0, rerr.Error())
 		return rerr
 	}
+	if terr := s.takeOverStagedSettings(ctx); terr != nil {
+		_ = os.RemoveAll(root)
+		_ = s.store.FinishRun(runID, "failed", "", 0, terr.Error())
+		return terr
+	}
 	if merr := selfrestore.WriteMarker(s.cfg.DataDir); merr != nil {
 		_ = s.store.FinishRun(runID, "failed", "", 0, merr.Error())
 		return merr

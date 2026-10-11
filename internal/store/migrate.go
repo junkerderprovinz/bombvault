@@ -2919,12 +2919,7 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
 		version:          keyRolesMigration,
 		name:             "backup_key",
 		alreadySatisfied: tablePresent("backup_key"),
-		sql: `CREATE TABLE IF NOT EXISTS backup_key (
-  id         INTEGER PRIMARY KEY CHECK (id = 1),
-  key_enc    BLOB    NOT NULL,
-  source     TEXT    NOT NULL,
-  adopted_at INTEGER NOT NULL
-);`,
+		sql:              backupKeyTable,
 	},
 }
 
