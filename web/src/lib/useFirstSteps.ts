@@ -12,10 +12,13 @@ import {
   type Found,
   type StepState,
 } from "./firstSteps";
+import type { BackupItems } from "./useBackupItems";
 import { usePlatform } from "./useHostLabel";
 
 export interface FirstSteps {
   states: Record<FirstStep, StepState>;
+  /** The entries as the server sent them, and the way to read them again. */
+  items: BackupItems;
   found: Found;
   /** "unraid", "truenas" or "generic", and "" until the server has said. */
   platform: string;
@@ -41,6 +44,7 @@ export function useFirstSteps(): FirstSteps {
   const added = addedLocations(locations);
   return {
     states: stepStates({ sections: chosen, location: added.length > 0 }),
+    items,
     found: foundOnServer(items.reported, platform),
     platform,
     locations,

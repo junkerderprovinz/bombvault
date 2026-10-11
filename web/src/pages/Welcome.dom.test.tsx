@@ -19,11 +19,12 @@ vi.mock("../lib/api", async (importOriginal) => {
 const host = vi.hoisted(() => ({ platform: "unraid" }));
 vi.mock("../lib/useHostLabel", () => ({ usePlatform: () => host.platform }));
 
-/** A container that was found and has never been backed up. */
+/** A container that was found, is in no schedule and has never been backed up. */
 const found = (key: string, over: Parameters<typeof item>[0] = {}) =>
   item({
     key,
     name: key,
+    included: false,
     lastBackup: 0,
     lastRunStatus: "",
     effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" },
@@ -137,7 +138,7 @@ describe("the three steps on the welcome page", () => {
     expect(within(step("backup")).queryByText(en["firstSteps.backupSub"])).toBeNull();
 
     cleanup();
-    server.items = [found("plex", { effectiveSchedule: { kind: "domain", spec: "daily 03:00", alsoSpec: "" } })];
+    server.items = [found("plex", { included: true, effectiveSchedule: { kind: "domain", spec: "daily 02:00", alsoSpec: "" } })];
     await open();
     expect(within(step("backup")).getByText(en["firstSteps.backupSub"])).toBeTruthy();
   });

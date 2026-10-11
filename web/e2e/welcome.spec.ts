@@ -3,7 +3,8 @@
 // overview, and an install with a backup never sees any of it. The harness
 // has no Docker, so the entries a server would find are staged at the route
 // layer, along with a failed run, an open finding and an unconfirmed recovery
-// kit: everything that raises a count on an install in use.
+// kit: everything that raises a count on an install in use. What the first
+// steps save is answered there too, the way the server would.
 import { expect, test, type Page } from "@playwright/test";
 
 import { measureLayout, settle } from "./storage";
@@ -17,12 +18,19 @@ test.afterEach(async ({ page }) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-function entry(over: Record<string, unknown>) {
+interface Entry {
+  kind: string;
+  self?: boolean;
+  effectiveSchedule: Record<string, string>;
+  [field: string]: unknown;
+}
+
+function entry(over: Partial<Entry>): Entry {
   return {
     kind: "container",
     key: "plex",
     name: "plex",
-    included: true,
+    included: false,
     paused: false,
     effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" },
     lastBackup: 0,
@@ -64,9 +72,13 @@ const FAILED_RUN = {
 interface Staged {
   /** The settings the page saved last. */
   saved: () => Record<string, unknown>;
+  /** The kinds whose entries the page took into the schedule. */
+  included: () => string[];
+  /** Whether the page asked the server to back up everything. */
+  fired: () => boolean;
 }
 
-async function stage(page: Page, items: unknown[] = FOUND): Promise<Staged> {
+async function stage(page: Page, items: Entry[] = FOUND, includeRefused = ""): Promise<Staged> {
   // The harness database serves every project of the run, so what the first
   // steps save stays here and is read back from here.
   let saved: Record<string, unknown> = {};
@@ -86,9 +98,33 @@ async function stage(page: Page, items: unknown[] = FOUND): Promise<Staged> {
       },
     });
   });
+  const included: string[] = [];
+  let fired = false;
+  for (const [path, kind] of [
+    ["containers", "container"],
+    ["vms", "vm"],
+  ]) {
+    await page.route(`**/api/${path}/schedule-include`, (route) => {
+      if (includeRefused) return route.fulfill({ json: { ok: false, error: includeRefused } });
+      included.push(kind);
+      return route.fulfill({ json: { ok: true } });
+    });
+  }
+  await page.route("**/api/backup-everything", (route) => {
+    fired = true;
+    return route.fulfill({ json: { ok: true, started: true } });
+  });
+  // An entry taken into the schedule follows the schedule of its section.
+  const listed = () =>
+    items.map((item) => {
+      const spec = saved[`${item.kind}sSchedule`];
+      if (!included.includes(item.kind) || item.self) return item;
+      const runs = typeof spec === "string" && spec !== "off";
+      return { ...item, included: true, effectiveSchedule: runs ? { kind: "domain", spec, alsoSpec: "" } : item.effectiveSchedule };
+    });
   await page.route(
     (url) => url.pathname === "/api/items",
-    (route) => route.fulfill({ json: { ok: true, items, unlisted: [] } }),
+    (route) => route.fulfill({ json: { ok: true, items: listed(), unlisted: [] } }),
   );
   await page.route(
     (url) => url.pathname === "/api/runs",
@@ -118,7 +154,7 @@ async function stage(page: Page, items: unknown[] = FOUND): Promise<Staged> {
   // must not replace it while the page boots.
   await page.route("**/api/display-prefs*", (route) => route.abort());
   await page.addInitScript(() => window.localStorage.setItem("bv-lang", "en"));
-  return { saved: () => saved };
+  return { saved: () => saved, included: () => included, fired: () => fired };
 }
 
 const step = (page: Page, name: string) => page.locator(`[data-step='${name}']`);
@@ -222,7 +258,7 @@ test("the welcome page promises nightly backups once an entry is in a schedule",
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
   const scheduled = { kind: "domain", spec: "daily 02:00", alsoSpec: "" };
-  await stage(page, [entry({ effectiveSchedule: scheduled }), ...FOUND.slice(1)]);
+  await stage(page, [entry({ included: true, effectiveSchedule: scheduled }), ...FOUND.slice(1)]);
   await openApp(page);
   await expect(step(page, "backup")).toContainText("After that it runs by itself every night");
 });
@@ -238,14 +274,57 @@ test("Next ticks off the first step, here and on the welcome page", async ({ pag
   await steps.nth(0).getByRole("button", { name: "Next" }).click();
 
   await expect(steps.nth(0)).toHaveAttribute("data-state", "done");
-  // The section that was on from the start gets its schedule here.
+  // The section that was on from the start gets its schedule here, and the
+  // containers found for it are taken in. The VMs' section is off.
   expect(staged.saved().containersSchedule).toBe("daily 02:00");
+  expect(staged.included()).toEqual(["container"]);
   await expect(steps.nth(1)).toHaveAttribute("data-state", "next");
   await expect(steps.nth(1).getByRole("button", { name: "Add storage location" })).toBeVisible();
 
   await openApp(page);
   await expect(step(page, "sections")).toHaveAttribute("data-state", "done");
   await expect(step(page, "location")).toHaveAttribute("data-state", "next");
+});
+
+test("the first backup and the nightly run hold what the first steps found", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: a phone asks before it starts the pass");
+  const staged = await stage(page);
+  await page.goto("/dashboard");
+  const steps = page.getByTestId("first-steps").locator("li[data-state]");
+  await steps.nth(0).getByRole("button", { name: "Next" }).click();
+  await expect(steps.nth(0)).toHaveAttribute("data-state", "done");
+
+  // BombVault's own container and the VMs of the section that is off stay out.
+  await expect(page.getByTestId("status-head")).toContainText("0 of 3 protected");
+  await page.getByTestId("page-actions").getByRole("button", { name: "Back up everything now" }).click();
+  await expect.poll(() => staged.fired()).toBe(true);
+
+  await openApp(page);
+  await expect(step(page, "backup")).toContainText("After that it runs by itself every night");
+});
+
+test("Choose takes the found entries in and opens their list, where one can be left out", async ({ page }) => {
+  const staged = await stage(page);
+  await page.goto("/dashboard");
+  const card = page.getByTestId("first-steps");
+  await expect(card.locator("[data-section='vm']").getByRole("button")).toHaveCount(0);
+
+  await card.locator("[data-section='container']").getByRole("button", { name: /^Choose/ }).click();
+
+  await expect(page).toHaveURL(/\/backups\?kind=container$/);
+  expect(staged.included()).toEqual(["container"]);
+  expect(staged.saved().containersSchedule).toBe("daily 02:00");
+});
+
+test("the first step stays open and says why when the entries cannot be taken in", async ({ page }) => {
+  await stage(page, FOUND, "list containers: the Docker socket did not answer");
+  await page.goto("/dashboard");
+  const steps = page.getByTestId("first-steps").locator("li[data-state]");
+
+  await steps.nth(0).getByRole("button", { name: "Next" }).click();
+
+  await expect(page.getByText("list containers: the Docker socket did not answer")).toBeVisible();
+  await expect(steps.nth(0)).toHaveAttribute("data-state", "next");
 });
 
 test("an install with a backup opens on the overview and carries its counts", async ({ page }, testInfo) => {
