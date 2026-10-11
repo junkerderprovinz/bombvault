@@ -5270,6 +5270,9 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 //     The status answers an unauthenticated caller with counts and whether this
 //     address can carry a passkey at all, never with a credential; the list of
 //     registered keys is gated inside the handler on a session.)
+//   - POST /api/auth/reset and POST /api/auth/reset/finish  (the way back in
+//     for somebody who lost the password. The first only writes a code to the
+//     container log, the second does nothing without that code.)
 //   - POST /mcp  (an assistant's MCP client carries no session cookie either.
 //     It is self-gated on its own keys and answers 404 while none exists, so it
 //     is never open. The key management routes under /api/mcp stay
@@ -5346,6 +5349,7 @@ func authGatePublicPath(path string) bool {
 		"/widget", "/api/widget/data",
 		"/api/group/call", relayConnectPath,
 		"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish",
+		"/api/auth/reset", "/api/auth/reset/finish",
 		mcpEndpointPath,
 		oauthResourceMeta, oauthServerMetaPath, oauthRegisterPath, oauthTokenPath, oauthRevokePath:
 		return true
