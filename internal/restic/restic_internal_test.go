@@ -610,3 +610,55 @@ func TestSnapshotDirRunsLeaveDeviceNumbersOut(t *testing.T) {
 		t.Fatalf("the caller's environment was written into: %v", backing)
 	}
 }
+
+// TestCallWatcherBracketsCommandsThatPrintStatus checks that a watcher learns
+// when a backup starts and ends, and hears nothing from a command that prints
+// no status lines even though it runs with the same context.
+func TestCallWatcherBracketsCommandsThatPrintStatus(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("needs a POSIX shell to exec a shebang script as the fake restic binary")
+	}
+
+	script := filepath.Join(t.TempDir(), "fake-restic.sh")
+	body := "#!/bin/sh\n" +
+		"case \"$*\" in *backup*) echo '{\"message_type\":\"status\",\"bytes_done\":100}';; esac\n" +
+		"echo '{\"message_type\":\"summary\",\"snapshot_id\":\"abc123\"}'\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil { //nolint:gosec // G306: test-only helper script, needs the exec bit
+		t.Fatalf("write fake restic script: %v", err)
+	}
+
+	var seen []string
+	ctx := progress.WithSink(context.Background(), func(float64) {})
+	ctx = WithWatcher(ctx, func(Progress) { seen = append(seen, "status") })
+	ctx = WithCallWatcher(ctx, func(running bool) { seen = append(seen, fmt.Sprint(running)) })
+	r := Restic{Bin: script}
+	bracketed := []string{"true", "status", "false"}
+
+	t.Run("a backup", func(t *testing.T) {
+		seen = nil
+		if _, err := r.run(ctx, []string{"-r", "/repo", "backup", "--json", "/data"}, Mode{}); err != nil {
+			t.Fatalf("backup: %v", err)
+		}
+		if !reflect.DeepEqual(seen, bracketed) {
+			t.Fatalf("watchers saw %v, want %v", seen, bracketed)
+		}
+	})
+	t.Run("a backup from a command", func(t *testing.T) {
+		seen = nil
+		if _, _, err := r.BackupFromCommand(ctx, "/repo", "/dbdump/pg.sql", nil, []string{"dump"}, Mode{}); err != nil {
+			t.Fatalf("BackupFromCommand: %v", err)
+		}
+		if !reflect.DeepEqual(seen, bracketed) {
+			t.Fatalf("watchers saw %v, want %v", seen, bracketed)
+		}
+	})
+	t.Run("a forget", func(t *testing.T) {
+		seen = nil
+		if _, err := r.run(ctx, []string{"-r", "/repo", "forget", "--json"}, Mode{}); err != nil {
+			t.Fatalf("forget: %v", err)
+		}
+		if len(seen) != 0 {
+			t.Fatalf("watchers saw %v from a command without status lines", seen)
+		}
+	})
+}
