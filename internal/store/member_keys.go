@@ -64,3 +64,20 @@ func (r *Repo) AdvanceMemberCounter(memberID string, counter int64) error {
 	}
 	return nil
 }
+
+// ForgetMemberKey drops the key pinned for a member, so that the next signed
+// call from it pins the key the member names itself.
+func (r *Repo) ForgetMemberKey(memberID string) error {
+	if _, err := r.db.Exec(`DELETE FROM member_keys WHERE member_id = ?`, memberID); err != nil {
+		return fmt.Errorf("ForgetMemberKey: %w", err)
+	}
+	return nil
+}
+
+// ForgetMemberKeys drops every pinned key, as leaving the group does.
+func (r *Repo) ForgetMemberKeys() error {
+	if _, err := r.db.Exec(`DELETE FROM member_keys`); err != nil {
+		return fmt.Errorf("ForgetMemberKeys: %w", err)
+	}
+	return nil
+}

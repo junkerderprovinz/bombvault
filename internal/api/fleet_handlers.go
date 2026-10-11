@@ -128,11 +128,18 @@ func (h *Handler) handleUpdateFleetPeer(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"peer": fleetPeerToView(p, h.svc.pairing().Members())}))
 }
 
-// handleDeleteFleetPeer removes a row without contacting the member. A
-// member still in the group comes back on the next list. An unknown id is not
-// an error. DELETE /api/fleet/peers/{id}
+// handleDeleteFleetPeer removes a row and the key pinned for its member
+// without contacting the member. A member still in the group comes back on
+// the next list. An unknown id is not an error. DELETE /api/fleet/peers/{id}
 func (h *Handler) handleDeleteFleetPeer(w http.ResponseWriter, r *http.Request) {
-	if err := h.store.DeleteFleetPeer(r.PathValue("id")); err != nil {
+	p, found, err := h.store.GetFleetPeer(r.PathValue("id"))
+	if err == nil && found && p.MemberID != "" {
+		err = h.store.ForgetMemberKey(p.MemberID)
+	}
+	if err == nil {
+		err = h.store.DeleteFleetPeer(r.PathValue("id"))
+	}
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

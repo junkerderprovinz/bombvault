@@ -11,6 +11,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -109,5 +110,53 @@ func TestAMemberIsAskedForItsKeyThroughTheGroup(t *testing.T) {
 	}
 	if string(key) != string(keydeposit.OwnerKey(signer.seed)) {
 		t.Fatal("the key pinned is not the one the member signs with")
+	}
+}
+
+func TestTheOwnerForgetsAMembersKeyAndRemovingOrLeavingDropsIt(t *testing.T) {
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	const member = "0123456789abcdef0123456789abcdef"
+	pinned := func() bool {
+		_, found, err := in.st.MemberKey(member)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return found
+	}
+	pin := func() {
+		if err := in.st.PinMemberKey(member, []byte("somebody's key")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	path := "/api/group/members/" + member + "/key"
+
+	pin()
+	own := in.session
+	hash, epoch, _ := in.h.authEnabled()
+	in.as(secret.NewPairedSessionToken(in.appKey, hash, epoch, time.Hour), func() {
+		if code, out := in.do(t, http.MethodDelete, path, nil); code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
+			t.Fatalf("forgetting a key with a paired session: %d %v", code, out)
+		}
+	})
+	if !pinned() {
+		t.Fatal("a paired session forgot a member's key")
+	}
+	in.session = own
+	if _, out := in.do(t, http.MethodDelete, path, nil); out["ok"] != true || pinned() {
+		t.Fatalf("forgetting the key: %v", out)
+	}
+
+	pin()
+	peer, err := in.st.CreateFleetPeer(store.FleetPeer{MemberID: member, Name: "tower", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, out := in.do(t, http.MethodDelete, "/api/fleet/peers/"+peer.ID, nil); out["ok"] != true || pinned() {
+		t.Fatalf("removing the member left its key: %v", out)
+	}
+
+	pin()
+	if code, _ := in.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK || pinned() {
+		t.Fatalf("leaving the group left a member's key: %d", code)
 	}
 }

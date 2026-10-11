@@ -763,7 +763,11 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 // Fleet rows stay, and pair again once this instance joins the group again.
 // DELETE /api/group
 func (h *Handler) handleGroupLeave(w http.ResponseWriter, _ *http.Request) {
-	if err := h.storeGroupSecret(nil); err != nil {
+	err := h.storeGroupSecret(nil)
+	if err == nil {
+		err = h.store.ForgetMemberKeys()
+	}
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

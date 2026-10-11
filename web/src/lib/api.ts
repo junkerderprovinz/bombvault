@@ -6375,6 +6375,12 @@ export function deleteFleetPeer(id: string): Promise<OkEnvelope> {
   });
 }
 
+/** DELETE /api/group/members/{id}/key drops the signing key pinned for a
+ *  member, which names it again on its next signed call. */
+export function forgetMemberKey(memberId: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/key`, { method: "DELETE" });
+}
+
 /** POST /api/fleet/peers/{id}/poll - poll this member now. */
 export function pollFleetPeer(id: string): Promise<OkEnvelope & { peer?: FleetPeer }> {
   return fetchJSON(`/api/fleet/peers/${encodeURIComponent(id)}/poll`, {

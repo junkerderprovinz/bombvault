@@ -115,3 +115,14 @@ func (s *Service) verifyCaller(ctx context.Context, caller group.Member, action 
 	}
 	return s.verifyMember(ctx, caller.ID, action, payload, p)
 }
+
+// handleForgetMemberKey drops the key pinned for a member, for when it is not
+// the member's own. The next signed call pins the key the member names
+// through the group. DELETE /api/group/members/{id}/key
+func (h *Handler) handleForgetMemberKey(w http.ResponseWriter, r *http.Request) {
+	if err := h.store.ForgetMemberKey(r.PathValue("id")); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
