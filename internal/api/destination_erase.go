@@ -23,10 +23,13 @@ import (
 const (
 	// erasureKeptAppendOnly is a repository BombVault may only add to.
 	erasureKeptAppendOnly = "append-only"
-	// erasureKeptInUse is a direct repository that entries still back up to,
-	// which outlives the destination as a repository of its own, or one that
-	// shares its place with another repository in use.
+	// erasureKeptInUse is a repository that entries still back up to: a direct
+	// repository, which outlives the destination as a repository of its own,
+	// or one that shares its place with a repository entries back up to.
 	erasureKeptInUse = "in-use"
+	// erasureKeptShared shares its place with another section's copy or
+	// another destination.
+	erasureKeptShared = "shared"
 	// erasureKeptUnreadable is a repository that could not be listed, so nobody
 	// can say what deleting from it would take.
 	erasureKeptUnreadable = "unreadable"
@@ -105,12 +108,23 @@ type erasurePlan struct {
 	live   []liveRepo
 }
 
-// shared reports whether the repository at raw is, holds or lies inside a
-// repository in use other than the rows named in self. Emptying it would take
-// backups that something else still counts on.
-func (p *erasurePlan) shared(s *Service, raw string, self ...string) bool {
+// sharedBy says why the repository at raw stays when it is, holds or lies
+// inside a repository in use other than the rows named in self: in-use for one
+// entries back up to, shared for another section's copy or another
+// destination, empty when the place is its own.
+func (p *erasurePlan) sharedBy(s *Service, raw string, self ...string) string {
 	loc, err := s.resolveRepo(raw)
-	return err == nil && overlapsLive(p.places, loc, p.live, self...)
+	if err != nil {
+		return ""
+	}
+	homes := slices.DeleteFunc(slices.Clone(p.live), func(r liveRepo) bool { return r.kind != liveHome })
+	switch {
+	case overlapsLive(p.places, loc, homes, self...):
+		return erasureKeptInUse
+	case overlapsLive(p.places, loc, p.live, self...):
+		return erasureKeptShared
+	}
+	return ""
 }
 
 // entryOf names the entry a backup belongs to: its settled owner, or the
@@ -236,12 +250,9 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 				return erasurePlan{}, err
 			}
 		}
-		kept := ""
-		switch {
-		case s.refusesDeletes(t):
+		kept := plan.sharedBy(s, t.Repo, t.ID, id)
+		if s.refusesDeletes(t) {
 			kept = erasureKeptAppendOnly
-		case plan.shared(s, t.Repo, t.ID, id):
-			kept = erasureKeptInUse
 		}
 		plan.add(ctx, s, settings, contexts[t.Domain], t, store.OffsiteTarget{}, kept)
 
@@ -256,11 +267,11 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 		if err != nil {
 			return erasurePlan{}, err
 		}
-		kept = ""
+		kept = plan.sharedBy(s, direct.Repo, direct.ID, id)
 		switch {
-		case use.InUse(), plan.shared(s, direct.Repo, direct.ID, id):
+		case use.InUse():
 			kept = erasureKeptInUse
-		case direct.Immutable:
+		case kept == "" && direct.Immutable:
 			kept = erasureKeptAppendOnly
 		}
 		plan.add(ctx, s, settings, contexts[t.Domain], t, direct, kept)
@@ -270,7 +281,7 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 	// left behind.
 	for _, domain := range offsiteConfigDomains {
 		if slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return t.Domain == domain }) ||
-			plan.shared(s, destinationLocation(d.Repo, domain), id) {
+			plan.sharedBy(s, destinationLocation(d.Repo, domain), id) != "" {
 			continue
 		}
 		left := store.OffsiteTarget{

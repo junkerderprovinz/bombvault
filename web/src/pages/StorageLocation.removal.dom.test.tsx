@@ -424,6 +424,15 @@ describe("removing a destination and deleting the backups there", () => {
     expect(erase(dialog).disabled).toBe(true);
   });
 
+  it("says when a repository stays because another section or location keeps its copies there", async () => {
+    const shared: ErasureSection[] = [{ ...ERASURE.sections[1], kept: "shared" }];
+    previewDestinationErasure.mockResolvedValue({ ok: true, erasure: { ...ERASURE, sections: shared, backups: 0, entries: 0, backupsOnlyThere: 0, lastCopies: [] } });
+    await renderPage();
+    const dialog = await openDeletion();
+
+    expect(within(dialog).getByText(en["storage.remove.keptShared"])).toBeTruthy();
+  });
+
   it("says what to do instead where nothing can be deleted", async () => {
     const kept: ErasureSection[] = [{ ...ERASURE.sections[1] }];
     previewDestinationErasure.mockResolvedValue({ ok: true, erasure: { ...ERASURE, sections: kept, backups: 0, entries: 0, backupsOnlyThere: 0, lastCopies: [] } });

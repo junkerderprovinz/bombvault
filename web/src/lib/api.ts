@@ -7121,7 +7121,8 @@ export function removeDestination(
  *  of a section, or the direct repository of its target when `repoId` is set.
  *  An empty `targetId` is what a section left behind when its copy moved to
  *  another destination. `kept` says why its backups stay: BombVault may only
- *  add to it, entries still back up to it, or it could not be listed. */
+ *  add to it, entries still back up to it, another section or destination
+ *  keeps its copies at the same place, or it could not be listed. */
 export interface ErasureSection {
   domain: OffsiteDomain;
   targetId: string;
@@ -7129,7 +7130,7 @@ export interface ErasureSection {
   repo: string;
   backups: number;
   entries: number;
-  kept?: "append-only" | "in-use" | "unreadable";
+  kept?: "append-only" | "in-use" | "shared" | "unreadable";
 }
 
 /** An entry by the identity its backups carry, such as "container:plex". */

@@ -417,6 +417,19 @@ func TestAnErasureLeavesTheRepositoriesEntriesBackUpToAlone(t *testing.T) {
 	}
 }
 
+func TestASectionAnotherSectionCopiesToStaysAsShared(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	box, _ := boxWithVMs(f)
+	f.target("vms", "By hand", boxRepo+"/vms")
+
+	preview := f.erasurePreview(box)
+
+	if got := preview.Sections[0]; got.Kept != erasureKeptShared {
+		t.Fatalf("the section another target copies to reads as %+v, want it kept as shared", got)
+	}
+}
+
 func TestAnErasureRefusesASectionLeftBehindThatWasNotShown(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.signIn()
