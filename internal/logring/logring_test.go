@@ -78,3 +78,18 @@ func TestRingTeesToTheUnderlyingWriter(t *testing.T) {
 		t.Fatalf("the ring recorded nothing: %q", r.String())
 	}
 }
+
+func TestTheLogKeepsNoPasswordANameHolds(t *testing.T) {
+	r := New(1 << 10)
+	var out strings.Builder
+	w := r.Tee(&out)
+	line := "receiver: rename the login of \"https://bob:hunter2@nas.local\"\n"
+	if n, err := w.Write([]byte(line)); err != nil || n != len(line) {
+		t.Fatalf("write = %d, %v", n, err)
+	}
+	for where, text := range map[string]string{"the ring": r.String(), "stdout": out.String()} {
+		if strings.Contains(text, "hunter2") {
+			t.Errorf("%s carries the password: %q", where, text)
+		}
+	}
+}

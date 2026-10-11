@@ -21,6 +21,8 @@ package logring
 import (
 	"io"
 	"sync"
+
+	"github.com/junkerderprovinz/bombvault/internal/redact"
 )
 
 // Ring is a fixed-size, thread-safe tail buffer of recent output. The zero
@@ -94,13 +96,26 @@ func (r *Ring) String() string {
 	return string(out)
 }
 
-// Tee returns a writer that records into the ring AND forwards to w.
+// Tee returns a writer that records into the ring and forwards to w, both
+// with the credentials taken out of each write, since a line can carry a name
+// or a location somebody typed a password into.
 //
 // A tee, never a replacement: stdout is what `docker logs` shows, and taking
 // that away to gain an in-memory copy would trade the log everyone already
 // knows how to reach for one only this app can read.
 func (r *Ring) Tee(w io.Writer) io.Writer {
-	return io.MultiWriter(w, r)
+	return scrubbed{io.MultiWriter(w, r)}
+}
+
+// scrubbed passes each write through redact.Credentials. The standard logger
+// writes one whole line per call, so a credential never spans two writes.
+type scrubbed struct{ w io.Writer }
+
+func (s scrubbed) Write(p []byte) (int, error) {
+	if _, err := io.WriteString(s.w, redact.Credentials(string(p))); err != nil {
+		return 0, err
+	}
+	return len(p), nil
 }
 
 // defaultSize is what the process-wide ring holds: enough to carry the startup

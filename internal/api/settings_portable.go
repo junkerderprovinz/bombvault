@@ -9,12 +9,12 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"regexp"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/redact"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -151,24 +151,13 @@ const redactedLocationMarker = redactedValue + "@"
 
 // redactedValue stands in for a parameter value of an rclone connection
 // string the same way.
-const redactedValue = "[redacted]"
+const redactedValue = redact.Marker
 
-// locationUserinfoRe is credentialRe for a single location: the whole string
-// is the location, so a quote in the password ends nothing.
-var locationUserinfoRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@]+@`)
-
-// rcloneParamRe is one key=value parameter of an rclone connection string
-// such as rclone::s3,access_key_id=...,secret_access_key=...:bucket. A value
-// that holds a comma or a colon is quoted, a quote inside it doubled.
-var rcloneParamRe = regexp.MustCompile(`,([\w-]+)=("(?:[^"]|"")*"|'(?:[^']|'')*'|[^,:]*)`)
-
-// scrubRepoLocation strips the credentials out of a restic repo location and
-// leaves scheme, host, bucket and path. scrubSecrets would not do: it
-// takes a location for a path and leaves nothing of it.
-func scrubRepoLocation(loc string) string {
-	loc = locationUserinfoRe.ReplaceAllString(loc, redactedLocationMarker)
-	return rcloneParamRe.ReplaceAllString(loc, ",${1}="+redactedValue)
-}
+// scrubRepoLocation strips the credentials out of a restic repo location, or
+// out of a name somebody typed one into, and leaves scheme, host, bucket and
+// path. scrubSecrets would not do: it takes a location for a path and leaves
+// nothing of it.
+func scrubRepoLocation(loc string) string { return redact.Credentials(loc) }
 
 // locationRedacted reports whether a repo location reached the import with its
 // embedded credential already stripped by a plain export.
