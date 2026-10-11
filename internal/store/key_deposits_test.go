@@ -157,7 +157,7 @@ func TestANewRecoveryCodeMakesEveryDepositStale(t *testing.T) {
 		t.Fatal(err)
 	}
 	identity, found, err := r.DepositIdentity()
-	if err != nil || !found || string(identity.Recipient) != "recipient-2" || string(identity.Salt) != "salt-2" {
+	if err != nil || !found || string(identity.RecipientEnc) != "recipient-2" || len(identity.Recipient) != 0 || string(identity.Salt) != "salt-2" {
 		t.Fatalf("the identity reads %+v, %v, %v", identity, found, err)
 	}
 	sent, err := r.SentDeposits()

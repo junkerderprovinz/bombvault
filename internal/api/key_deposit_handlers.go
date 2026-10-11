@@ -115,8 +115,10 @@ func (s *Service) depositsOverview() (depositsView, error) {
 	// else, which is before the next renewal finds out.
 	current := ""
 	if found && len(sent) > 0 {
-		if _, digest, err := s.depositContent(identity.Recipient); err == nil {
-			current = digest
+		if recipient, err := s.depositRecipient(identity); err == nil {
+			if _, digest, err := s.depositContent(recipient); err == nil {
+				current = digest
+			}
 		}
 	}
 	for _, d := range sent {
@@ -324,12 +326,16 @@ func (h *Handler) handleDropKeptDeposit(w http.ResponseWriter, r *http.Request) 
 }
 
 // offeredDeposit is a deposit a member keeps, as a new install chooses from.
+// Newest is false for one that another member lists a newer deposit of the
+// same install than.
 type offeredDeposit struct {
 	MemberID   string `json:"memberId"`
 	MemberName string `json:"memberName"`
 	OwnerID    string `json:"ownerId"`
 	OwnerName  string `json:"ownerName"`
 	UpdatedAt  string `json:"updatedAt"`
+	Newest     bool   `json:"newest"`
+	counter    int64
 }
 
 // OfferedDeposits asks every member in reach which deposits it keeps. silent
@@ -348,8 +354,16 @@ func (s *Service) OfferedDeposits(ctx context.Context) (offered []offeredDeposit
 		for _, d := range list.Deposits {
 			offered = append(offered, offeredDeposit{
 				MemberID: m.ID, MemberName: m.Name, OwnerID: d.OwnerID, OwnerName: d.OwnerName, UpdatedAt: unixRFC3339(d.UpdatedAt),
+				counter: d.Counter,
 			})
 		}
+	}
+	newest := map[string]int64{}
+	for _, d := range offered {
+		newest[d.OwnerID] = max(newest[d.OwnerID], d.counter)
+	}
+	for i, d := range offered {
+		offered[i].Newest = d.counter == newest[d.OwnerID]
 	}
 	slices.SortFunc(offered, func(a, b offeredDeposit) int {
 		return cmp.Or(cmp.Compare(a.OwnerName, b.OwnerName), cmp.Compare(a.MemberName, b.MemberName))
@@ -393,17 +407,42 @@ func (s *Service) EmergencyFromGroup(ctx context.Context, memberID, ownerID, cod
 	if err != nil {
 		return store.ReleaseAllowed, err
 	}
-	kit, err := readRecoveryKit(string(plain))
+	content, err := keydeposit.Unpack(plain)
 	if err != nil {
 		return store.ReleaseAllowed, err
 	}
-	if err := s.beginEmergencyFromKit(ctx, kit, store.KeyFromGroup); err != nil {
+	// The keeper says whose deposit it hands over. What counts is what the
+	// install sealed into it.
+	if content.OwnerID != ownerID {
+		return store.ReleaseAllowed, errDepositOtherOwner
+	}
+	kit, err := readRecoveryKit(content.Kit)
+	if err != nil {
+		return store.ReleaseAllowed, err
+	}
+	kit.Server, kit.WrittenAt = content.OwnerName, content.SealedAt
+	origin := kitOrigin{OwnerID: content.OwnerID, NewerWith: s.newerDepositWith(ctx, ownerID, content.Counter)}
+	if err := s.beginEmergencyFromKit(ctx, kit, store.KeyFromGroup, origin); err != nil {
 		return store.ReleaseAllowed, err
 	}
 	s.emergencyMu.Lock()
 	s.collected = nil
 	s.emergencyMu.Unlock()
 	return store.ReleaseAllowed, nil
+}
+
+// newerDepositWith names a member that lists a deposit of ownerID newer than
+// the one with counter, empty when there is none. A keeper that was out of
+// reach at the last renewal holds an older one, and so does a keeper that
+// hands back one it should have replaced.
+func (s *Service) newerDepositWith(ctx context.Context, ownerID string, counter int64) string {
+	offered, _ := s.OfferedDeposits(ctx)
+	for _, d := range offered {
+		if d.OwnerID == ownerID && d.counter > counter {
+			return d.MemberName
+		}
+	}
+	return ""
 }
 
 // collectDeposit returns the deposit once the keeper hands it over. Until

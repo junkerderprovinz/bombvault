@@ -76,6 +76,7 @@ type emergencyPlace struct {
 type emergencySession struct {
 	source                string
 	backupKey, sealingKey string
+	origin                kitOrigin
 	encrypted             bool
 	creds                 CloudCreds
 	rcloneConf            string
@@ -101,8 +102,26 @@ type emergencyView struct {
 	Session *emergencySessionView `json:"session,omitempty"`
 }
 
+// kitOrigin says whose kit an emergency reads and how old it is, as far as
+// the kit or the deposit it came out of says. A typed key has no origin.
+type kitOrigin struct {
+	// OwnerID is the install a deposit was sealed by, empty for a kit that
+	// was uploaded.
+	OwnerID string `json:"ownerId,omitempty"`
+	// Server is the name the install gave itself.
+	Server string `json:"server,omitempty"`
+	// WrittenAt is when the kit was written or the deposit sealed, in Unix
+	// seconds, zero when the kit does not say.
+	WrittenAt int64 `json:"writtenAt,omitempty"`
+	// NewerWith names a member that lists a newer deposit of the same
+	// install than the one that was opened.
+	NewerWith string `json:"newerWith,omitempty"`
+}
+
 type emergencySessionView struct {
-	Source    string           `json:"source"`
+	Source string `json:"source"`
+	// Kit is shown to the person before anything is taken over.
+	Kit       kitOrigin        `json:"kit"`
 	Encrypted bool             `json:"encrypted"`
 	Places    []emergencyPlace `json:"places"`
 	ExpiresAt int64            `json:"expiresAt"`
@@ -280,7 +299,7 @@ func (s *Service) EmergencyState() (emergencyView, error) {
 		return view, nil //nolint:nilerr // no emergency in progress is an answer
 	}
 	view.Session = &emergencySessionView{
-		Source: sess.source, Encrypted: sess.encrypted, Places: sess.places,
+		Source: sess.source, Kit: sess.origin, Encrypted: sess.encrypted, Places: sess.places,
 		ExpiresAt: sess.expires.Unix(), Refusal: emergencyCode(s.adoptionRefusal(sess)),
 		CloudSignIn: sess.creds != (CloudCreds{}), RcloneConfig: strings.TrimSpace(sess.rcloneConf) != "",
 	}
@@ -325,7 +344,7 @@ func (s *Service) ReadEmergency(ctx context.Context, in emergencyRead) error {
 		if err != nil {
 			return err
 		}
-		return s.beginEmergencyFromKit(ctx, kit, store.KeyFromKit)
+		return s.beginEmergencyFromKit(ctx, kit, store.KeyFromKit, kitOrigin{})
 	}
 	if sess.places == nil {
 		sess.places = []emergencyPlace{}
@@ -336,13 +355,15 @@ func (s *Service) ReadEmergency(ctx context.Context, in emergencyRead) error {
 }
 
 // beginEmergencyFromKit starts an emergency from a recovery kit, whether it
-// was uploaded or came out of a deposit.
-func (s *Service) beginEmergencyFromKit(ctx context.Context, kit recoveryKit, source string) error {
+// was uploaded or came out of a deposit. origin carries what only a deposit
+// says; the name and the time come from the kit.
+func (s *Service) beginEmergencyFromKit(ctx context.Context, kit recoveryKit, source string, origin kitOrigin) error {
 	if !kit.HasKey {
 		return errKitHasNoKey
 	}
+	origin.Server, origin.WrittenAt = kit.Server, kit.WrittenAt
 	sess := &emergencySession{
-		source: source, backupKey: kit.appKey, sealingKey: kit.sealingKey,
+		source: source, backupKey: kit.appKey, sealingKey: kit.sealingKey, origin: origin,
 		encrypted: kit.Encrypted, creds: kit.creds, rcloneConf: kit.rcloneConf,
 		places: []emergencyPlace{},
 	}

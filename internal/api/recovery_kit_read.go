@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"time"
 
 	"filippo.io/age"
 	"filippo.io/age/armor"
@@ -83,6 +84,10 @@ type recoveryKit struct {
 	// containers and VMs cannot be recreated from them.
 	HasKey    bool          `json:"hasKey"`
 	Locations []kitLocation `json:"locations"`
+	// Server is the name of the install that wrote the kit and WrittenAt when
+	// it did, in Unix seconds. A kit of an older version names no server.
+	Server    string `json:"server,omitempty"`
+	WrittenAt int64  `json:"writtenAt,omitempty"`
 	// appKey is the key of the backups. sealingKey is the APP_KEY the install
 	// sealed its settings with, the same key unless it had adopted another
 	// install's backups.
@@ -147,6 +152,14 @@ func readRecoveryKit(text string) (recoveryKit, error) {
 			continue
 		}
 		switch section {
+		case "":
+			if at, ok := strings.CutPrefix(line, "Generated: "); ok && kit.WrittenAt == 0 {
+				if t, err := time.Parse(time.RFC1123, at); err == nil {
+					kit.WrittenAt = t.Unix()
+				}
+			} else if name, ok := strings.CutPrefix(line, "Server: "); ok && kit.Server == "" {
+				kit.Server = name
+			}
 		case "Encryption":
 			switch {
 			case line == "Status: ENABLED":

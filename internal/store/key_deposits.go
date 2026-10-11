@@ -364,19 +364,22 @@ func (r *Repo) KeyReleases(limit int) ([]KeyRelease, error) {
 
 // DepositIdentity is what an install keeps of its own recovery code: the
 // public key deposits are sealed to and the salt the code is stretched with.
-// Neither opens a deposit.
+// Neither opens a deposit. The public key is kept sealed under APP_KEY in
+// RecipientEnc; Recipient is the clear form a database from before that has,
+// until SealDepositRecipient replaces it.
 type DepositIdentity struct {
-	Recipient []byte
-	Salt      []byte
-	CreatedAt int64
+	RecipientEnc []byte
+	Recipient    []byte
+	Salt         []byte
+	CreatedAt    int64
 }
 
 // DepositIdentity returns the install's deposit identity, found false while
 // it has none.
 func (r *Repo) DepositIdentity() (DepositIdentity, bool, error) {
 	var d DepositIdentity
-	err := r.db.QueryRow(`SELECT recipient, salt, created_at FROM key_deposit_identity WHERE id = 1`).
-		Scan(&d.Recipient, &d.Salt, &d.CreatedAt)
+	err := r.db.QueryRow(`SELECT recipient_enc, recipient, salt, created_at FROM key_deposit_identity WHERE id = 1`).
+		Scan(&d.RecipientEnc, &d.Recipient, &d.Salt, &d.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return DepositIdentity{}, false, nil
 	}
@@ -386,14 +389,25 @@ func (r *Repo) DepositIdentity() (DepositIdentity, bool, error) {
 	return d, true, nil
 }
 
-// SetDepositIdentity stores the identity of a new recovery code. Every deposit
-// sent before is stale from then on: it is sealed for the old code.
-func (r *Repo) SetDepositIdentity(recipient, salt []byte) error {
+// SealDepositRecipient replaces the clear public key of the identity by its
+// sealed form.
+func (r *Repo) SealDepositRecipient(recipientEnc []byte) error {
+	if _, err := r.db.Exec(`UPDATE key_deposit_identity SET recipient_enc = ?, recipient = x'' WHERE id = 1`, recipientEnc); err != nil {
+		return fmt.Errorf("SealDepositRecipient: %w", err)
+	}
+	return nil
+}
+
+// SetDepositIdentity stores the identity of a new recovery code, the public
+// key sealed. Every deposit sent before is stale from then on: it is sealed
+// for the old code.
+func (r *Repo) SetDepositIdentity(recipientEnc, salt []byte) error {
 	err := r.inTx(func(tx *sql.Tx) error {
 		if _, err := tx.Exec(`
-			INSERT INTO key_deposit_identity (id, recipient, salt, created_at) VALUES (1, ?, ?, ?)
-			ON CONFLICT (id) DO UPDATE SET recipient = excluded.recipient, salt = excluded.salt, created_at = excluded.created_at`,
-			recipient, salt, time.Now().Unix()); err != nil {
+			INSERT INTO key_deposit_identity (id, recipient, recipient_enc, salt, created_at) VALUES (1, x'', ?, ?, ?)
+			ON CONFLICT (id) DO UPDATE SET recipient = x'', recipient_enc = excluded.recipient_enc,
+				salt = excluded.salt, created_at = excluded.created_at`,
+			recipientEnc, salt, time.Now().Unix()); err != nil {
 			return err
 		}
 		_, err := tx.Exec(`UPDATE key_deposits_sent SET digest = '', state = ? WHERE state = ?`, DepositStale, DepositHeld)

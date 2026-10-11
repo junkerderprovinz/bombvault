@@ -17990,7 +17990,8 @@ func (s *Service) RecoveryKit() (string, error) {
 	}
 
 	w("# BombVault encryption-key recovery kit\n\n")
-	w("Generated: %s\n\n", time.Now().Format(time.RFC1123))
+	w("Generated: %s\n", time.Now().Format(time.RFC1123))
+	w("Server: %s\n\n", instanceDisplayName(settings))
 	w("> WARNING: this file is the master secret for your encrypted backups.\n")
 	w("> It contains your APP_KEY and the derived restic repository password.\n")
 	w("> Store it OFFLINE and securely (a password manager or printed copy in a safe).\n")

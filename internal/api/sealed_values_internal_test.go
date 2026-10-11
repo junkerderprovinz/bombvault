@@ -29,6 +29,8 @@ const (
 var sealSites = map[string]string{
 	"sealDefinition":         keptOutside,
 	"depositSeed":            "key_deposit_signer.seed_enc",
+	"depositRecipient":       "key_deposit_identity.recipient_enc",
+	"newDepositIdentity":     "key_deposit_identity.recipient_enc",
 	"takeOverStagedSettings": keptOutside,
 	"finishTakeover":         "backup_key.key_enc",
 	"AdoptEmergencyKey":      "backup_key.key_enc",

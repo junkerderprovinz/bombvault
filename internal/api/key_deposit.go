@@ -99,7 +99,10 @@ var (
 	errKeeperFull   = errors.New("that instance already keeps as many deposits as it can")
 	// errDepositChanged is recorded when a keeper holds other bytes than the
 	// ones this install sent, or none.
-	errDepositChanged = errors.New("the instance held something other than the deposit this server sent, so somebody else changed it there")
+	// errDepositOtherOwner is a deposit that opened and says inside that
+	// another install made it than the one the keeper held it for.
+	errDepositOtherOwner = errors.New("this deposit was not made by the server it was kept for, so it is not used")
+	errDepositChanged    = errors.New("the instance held something other than the deposit this server sent, so somebody else changed it there")
 )
 
 var depositCodes = []struct {
@@ -113,6 +116,8 @@ var depositCodes = []struct {
 	{errDepositNewer, "deposit-version"},
 	{errKeeperFull, "keeper-full"},
 	{errDepositChanged, "deposit-changed"},
+	{errDepositOtherOwner, "deposit-owner"},
+	{keydeposit.ErrNotADeposit, "deposit-unreadable"},
 	{keydeposit.ErrCode, "deposit-code-shape"},
 	{keydeposit.ErrWrongCode, "deposit-code"},
 	{errMemberGone, "member-gone"},
@@ -203,22 +208,47 @@ func (s *Service) depositSeed() ([]byte, error) {
 	return seed, s.store.SetDepositSigner(enc)
 }
 
-// proveToKeeper signs what this install says to a keeper about its deposit.
-func (s *Service) proveToKeeper(action, keeperID string, deposit, salt []byte) (peerProof, error) {
+// depositSigner is this install as it signs a call to a keeper: its id, the
+// seed of its proof key and the counter of the call.
+type depositSigner struct {
+	id      string
+	seed    []byte
+	counter int64
+}
+
+func (s *Service) nextDepositSigner() (depositSigner, error) {
 	seed, err := s.depositSeed()
 	if err != nil {
-		return peerProof{}, err
+		return depositSigner{}, err
 	}
 	g, err := s.store.GetGroupState()
 	if err != nil {
-		return peerProof{}, err
+		return depositSigner{}, err
 	}
 	counter, err := s.store.NextDepositCounter(time.Now().UnixMilli())
 	if err != nil {
-		return peerProof{}, err
+		return depositSigner{}, err
 	}
-	claim := keydeposit.Claim{Action: action, OwnerID: g.InstanceID, KeeperID: keeperID, Counter: counter, Deposit: deposit, Salt: salt}
-	return peerProof{Key: keydeposit.OwnerKey(seed), Counter: counter, Proof: keydeposit.Prove(seed, claim)}, nil
+	return depositSigner{id: g.InstanceID, seed: seed, counter: counter}, nil
+}
+
+// prove signs what this install says to a keeper about its deposit.
+func (d depositSigner) prove(action, keeperID string, deposit, salt []byte) peerProof {
+	claim := keydeposit.Claim{Action: action, OwnerID: d.id, KeeperID: keeperID, Counter: d.counter, Deposit: deposit, Salt: salt}
+	return peerProof{Key: keydeposit.OwnerKey(d.seed), Counter: d.counter, Proof: keydeposit.Prove(d.seed, claim)}
+}
+
+// depositRecipient opens the public key this install's deposits are sealed
+// to. One a database kept in the clear is sealed on the way.
+func (s *Service) depositRecipient(identity store.DepositIdentity) ([]byte, error) {
+	if len(identity.RecipientEnc) > 0 {
+		return secret.Decrypt(s.cfg.AppKey, identity.RecipientEnc)
+	}
+	enc, err := secret.Encrypt(s.cfg.AppKey, identity.Recipient)
+	if err != nil {
+		return nil, err
+	}
+	return identity.Recipient, s.store.SealDepositRecipient(enc)
 }
 
 // heldDigest names sealed bytes the way a keeper and the install they belong
@@ -239,11 +269,11 @@ func (s *Service) sendDeposit(ctx context.Context, memberID, memberName string, 
 	if !found {
 		return "", errors.New("this server has no recovery code yet")
 	}
-	kit, digest, err := s.depositContent(identity.Recipient)
+	recipient, err := s.depositRecipient(identity)
 	if err != nil {
 		return "", err
 	}
-	sealed, err := keydeposit.Seal([]byte(kit), identity.Recipient)
+	kit, digest, err := s.depositContent(recipient)
 	if err != nil {
 		return "", err
 	}
@@ -251,13 +281,24 @@ func (s *Service) sendDeposit(ctx context.Context, memberID, memberName string, 
 	if err != nil {
 		return "", err
 	}
-	proof, err := s.proveToKeeper(keydeposit.ProofKeep, memberID, sealed, identity.Salt)
+	signer, err := s.nextDepositSigner()
+	if err != nil {
+		return "", err
+	}
+	name := instanceDisplayName(settings)
+	plain, err := keydeposit.Pack(keydeposit.Content{
+		OwnerID: signer.id, OwnerName: name, Counter: signer.counter, SealedAt: time.Now().Unix(), Kit: kit,
+	})
+	if err != nil {
+		return "", err
+	}
+	sealed, err := keydeposit.Seal(plain, recipient)
 	if err != nil {
 		return "", err
 	}
 	in := peerDeposit{
-		Name: instanceDisplayName(settings), Deposit: sealed, Salt: identity.Salt,
-		Version: keydeposit.Version, Renew: renew, peerProof: proof,
+		Name: name, Deposit: sealed, Salt: identity.Salt,
+		Version: keydeposit.Version, Renew: renew, peerProof: signer.prove(keydeposit.ProofKeep, memberID, sealed, identity.Salt),
 	}
 	var ans peerDepositState
 	if err := s.callMember(ctx, memberID, http.MethodPut, "/api/group/peer/deposit", in, &ans); err != nil {
@@ -335,7 +376,11 @@ func (s *Service) newDepositIdentity() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return code, s.store.SetDepositIdentity(recipient, salt)
+	enc, err := secret.Encrypt(s.cfg.AppKey, recipient)
+	if err != nil {
+		return "", err
+	}
+	return code, s.store.SetDepositIdentity(enc, salt)
 }
 
 // NewDepositCode replaces the recovery code and seals the deposit of every
@@ -369,7 +414,12 @@ func (s *Service) renewDepositsLocked(ctx context.Context) {
 	if err != nil || !found {
 		return
 	}
-	_, digest, err := s.depositContent(identity.Recipient)
+	recipient, err := s.depositRecipient(identity)
+	if err != nil {
+		log.Printf("api: deposits: the recovery code's public key does not open: %v", err)
+		return
+	}
+	_, digest, err := s.depositContent(recipient)
 	if err != nil {
 		log.Printf("api: deposits: %v", scrubError(err))
 		return
@@ -441,11 +491,11 @@ func (s *Service) WithdrawDeposit(ctx context.Context, memberID string) (bool, e
 	}
 	told := false
 	if _, ok := s.reachableMember(memberID); ok {
-		proof, err := s.proveToKeeper(keydeposit.ProofDrop, memberID, nil, nil)
+		signer, err := s.nextDepositSigner()
 		if err != nil {
 			return false, err
 		}
-		told = s.callMember(ctx, memberID, http.MethodDelete, "/api/group/peer/deposit", proof, nil) == nil
+		told = s.callMember(ctx, memberID, http.MethodDelete, "/api/group/peer/deposit", signer.prove(keydeposit.ProofDrop, memberID, nil, nil), nil) == nil
 	}
 	left, err := s.store.SentDeposits()
 	if err != nil {
@@ -570,10 +620,13 @@ func (s *Service) handlePeerDepositDelete(w http.ResponseWriter, r *http.Request
 }
 
 // peerDepositEntry names a deposit a member keeps without anything of it.
+// Counter is the one the deposit was signed with, by which a new install
+// tells the newest of several.
 type peerDepositEntry struct {
 	OwnerID   string `json:"ownerId"`
 	OwnerName string `json:"ownerName"`
 	UpdatedAt int64  `json:"updatedAt"`
+	Counter   int64  `json:"counter"`
 }
 
 // peerDepositList is what a member keeps. Mine is the state of the caller's
@@ -609,7 +662,7 @@ func (s *Service) handlePeerDeposits(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if d.State == store.DepositHeld {
-			out.Deposits = append(out.Deposits, peerDepositEntry{OwnerID: d.OwnerID, OwnerName: d.OwnerName, UpdatedAt: d.UpdatedAt})
+			out.Deposits = append(out.Deposits, peerDepositEntry{OwnerID: d.OwnerID, OwnerName: d.OwnerName, UpdatedAt: d.UpdatedAt, Counter: d.Counter})
 		}
 	}
 	writeJSON(w, http.StatusOK, out)

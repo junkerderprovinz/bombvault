@@ -3029,6 +3029,15 @@ ALTER TABLE key_deposits ADD COLUMN counter INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE key_deposits_sent ADD COLUMN held_digest TEXT NOT NULL DEFAULT '';
 ALTER TABLE key_deposits_sent ADD COLUMN changed_at INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// The public half of the recovery code, sealed. Whoever reads it in
+		// the clear can seal a deposit of their own making that the code
+		// opens.
+		version:          keyHardeningMigration + 1,
+		name:             "key_deposit_recipient_enc",
+		alreadySatisfied: columnPresent("key_deposit_identity", "recipient_enc"),
+		sql:              `ALTER TABLE key_deposit_identity ADD COLUMN recipient_enc BLOB NOT NULL DEFAULT x'';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,

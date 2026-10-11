@@ -5322,6 +5322,11 @@ export interface RecoveryKitFacts {
   encrypted: boolean;
   hasKey: boolean;
   locations: RecoveryKitLocation[];
+  /** The name of the server that wrote the kit. A kit of an older version
+   *  names none. */
+  server?: string;
+  /** When the kit was written, in Unix seconds. */
+  writtenAt?: number;
 }
 
 /** Why a kit cannot be used: it is sealed with age and came without the
@@ -5390,6 +5395,12 @@ export type EmergencyRefusal =
  *  and ends on finish, on cancel and with a restart. */
 export interface EmergencySession {
   source: "kit" | "typed" | "group";
+  /** Whose kit the emergency reads and how old it is, to show before
+   *  anything is taken over. Empty for a typed key. `ownerId` is set for a
+   *  deposit, whose `server` and `writtenAt` were sealed into it by that
+   *  install. `newerWith` names a member that lists a newer deposit of the
+   *  same install than the one that was opened. */
+  kit: { ownerId?: string; server?: string; writtenAt?: number; newerWith?: string };
   encrypted: boolean;
   places: EmergencyPlace[];
   /** Unix seconds. */
@@ -6209,8 +6220,9 @@ export interface Deposits {
 /** Why a deposit call was refused: the member is too old to keep one, it
  *  keeps none of that server, the keeper's person declined, this server asked
  *  more than three times in an hour or all instances together more than six
- *  times, the member keeps as many deposits as it takes ("keeper-full"), the
- *  deposit is of a newer version, the
+ *  times, the member keeps as many deposits as it takes ("keeper-full"), what
+ *  the code opened says another install sealed it ("deposit-owner") or is no
+ *  deposit ("deposit-unreadable"), the deposit is of a newer version, the
  *  code is not twenty characters, the code does not open the deposit, the
  *  member is out of reach or did not answer, the backup key is locked, or the
  *  request was answered before. */
@@ -6227,6 +6239,8 @@ export type DepositRefusal =
   | "backup-key-locked"
   | "release-decided"
   | "keeper-full"
+  | "deposit-owner"
+  | "deposit-unreadable"
   | SecretsRefusal;
 
 type DepositAnswer<T> = Omit<OkEnvelope, "code"> & { code?: DepositRefusal } & T;
@@ -6292,6 +6306,8 @@ export interface OfferedDeposit {
   ownerId: string;
   ownerName: string;
   updatedAt: string;
+  /** False when another member lists a newer deposit of the same install. */
+  newest: boolean;
 }
 
 /** GET /api/emergency/deposits: asks every member in reach which deposits it

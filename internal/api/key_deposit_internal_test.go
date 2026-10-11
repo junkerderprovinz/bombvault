@@ -149,13 +149,17 @@ func TestAKeeperHoldsADepositItCannotRead(t *testing.T) {
 	if err != nil {
 		t.Fatalf("the deposit does not open with its code: %v", err)
 	}
-	if kit, err := readRecoveryKit(string(plain)); err != nil || kit.appKey != tower.appKey {
+	content, err := keydeposit.Unpack(plain)
+	if err != nil {
+		t.Fatalf("what the code opens: %v", err)
+	}
+	if kit, err := readRecoveryKit(content.Kit); err != nil || kit.appKey != tower.appKey {
 		t.Fatalf("the deposit is not the owner's kit: %v", err)
 	}
 
 	// The owner keeps the public half and the salt, not the code.
 	identity, found, err := tower.st.DepositIdentity()
-	if err != nil || !found || len(identity.Recipient) != 32 {
+	if err != nil || !found || len(identity.RecipientEnc) == 0 {
 		t.Fatalf("the owner's identity: %+v, %v, %v", identity, found, err)
 	}
 	if again := deposit(t, tower, attic); again["ok"] != true || again["code"] != nil {
