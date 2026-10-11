@@ -698,7 +698,8 @@
 
   /* GlimStone's type scale, five sizes, one per role: the status line and a
      tile's one figure, an emphasised title, body text, the line under a name,
-     and notch and meta. lib/typeScale.test.ts keeps every other size out. */
+     and notch and meta. A wordmark and text drawn inside a picture stand
+     outside it. lib/typeScale.test.ts keeps every other size out. */
   --text-status:  1.375rem;  /* 22px */
   --text-title:   1rem;      /* 16px */
   --text-body:    0.875rem;  /* 14px */
@@ -1626,9 +1627,6 @@ body {
    wherever white reaches 2:1 and near-black below that. */
 .glim-tile-github { --tile: #181717; --tile-ink: #ffffff; } /* 17.9:1 */
 .glim-tile-paypal { --tile: #003087; --tile-ink: #ffffff; } /* 13.4:1 */
-.glim-tile-docker { --tile: #1d63ed; --tile-ink: #ffffff; } /* 5.2:1 */
-.glim-tile-unraid { --tile: #f15a2c; --tile-ink: #ffffff; } /* 3.4:1 */
-.glim-tile-zip { --tile: #4d5562; --tile-ink: #ffffff; } /* 7.5:1 */
 .glim-tile-bitcoin { --tile: #f7931a; --tile-ink: #161616; } /* 7.9:1 */
 .glim-tile-android { --tile: #32de84; --tile-ink: #161616; } /* 10.3:1 */
 .glim-tile-play    { --tile: #01875f; --tile-ink: #ffffff; } /* 4.5:1 */
@@ -1645,9 +1643,7 @@ body {
 /* GlimStone's README button (reference/tokens.css, "The App tab"): 160 by
    46.6 on a 16px rem. At rest the mark keeps its colours and the name stands
    alone in the middle. Under the pointer the whole unit fills with its
-   brand's colour, the name moves up and the second line comes in below it.
-   The mark sits closer to the edge than in the reference, since a row of
-   many client buttons reads the marks as a column. */
+   brand's colour, the name moves up and the second line comes in below it. */
 .glim-readme-btn-rows {
   display: flex;
   flex-wrap: wrap;
@@ -1699,7 +1695,8 @@ body {
 }
 
 /* The height is the README's mark, and the box is wider than tall, so a wide
-   mark is not shrunk to a sliver. */
+   mark is not shrunk to a sliver. The start is where the README's own buttons
+   put their mark, 68.5 of 841.9 units. */
 .glim-readme-btn-mark {
   position: absolute;
   top: 50%;
