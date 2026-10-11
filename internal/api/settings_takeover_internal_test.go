@@ -216,9 +216,16 @@ func TestSettingsOfAnotherKeyAreRefusedOutsideAnEmergency(t *testing.T) {
 		t.Fatalf("settings of another key without an emergency: %v, want %v", err, errSettingsOtherKey)
 	}
 
-	// The server's own settings go through as they are, login included.
+	// The server's own settings go through as they are, login included, when
+	// they carry its check value.
 	own := newPlacementFixture(t)
-	staged := own.stage(settingsOfTheOldInstall(t, own.svc.cfg.AppKey))
+	path := settingsOfTheOldInstall(t, own.svc.cfg.AppKey)
+	svc, _, closeDB := fileInstall(t, path, own.svc.cfg.AppKey)
+	if err := svc.RecordKeyCheck(); err != nil {
+		t.Fatal(err)
+	}
+	closeDB()
+	staged := own.stage(path)
 	if err := own.svc.takeOverStagedSettings(context.Background()); err != nil {
 		t.Fatalf("the server's own settings: %v", err)
 	}
