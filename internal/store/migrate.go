@@ -2961,6 +2961,18 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
 );`,
 	},
 	{
+		// The version of BombVault that last opened this database, which an
+		// older one that refuses the database names.
+		version:          depositProofMigration + 3,
+		name:             "schema_writer",
+		alreadySatisfied: tablePresent("schema_writer"),
+		sql: `CREATE TABLE IF NOT EXISTS schema_writer (
+  id      INTEGER PRIMARY KEY CHECK (id = 1),
+  version TEXT    NOT NULL,
+  at      INTEGER NOT NULL
+);`,
+	},
+	{
 		// The key of another install's backups, sealed under this install's
 		// own. Without a row the install backs up under its own key.
 		version:          keyRolesMigration,
@@ -3168,8 +3180,8 @@ const declinedMigration = 335
 const oneLineMigration = 336
 
 // depositProofMigration numbers the key an install proves its deposits with,
-// 337, the check value of the APP_KEY, 338, and the sign-ins an emergency
-// replaced, 339.
+// 337, the check value of the APP_KEY, 338, the sign-ins an emergency
+// replaced, 339, and the version that last opened the database, 340.
 const depositProofMigration = 337
 
 // keyHardeningMigration numbers what was added to the tables of
@@ -3237,6 +3249,9 @@ func Migrate(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("migrate: create schema_migrations: %w", err)
 	}
+	if err := refuseNewerDatabase(db); err != nil {
+		return err
+	}
 	for _, r := range misnumbered {
 		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version = ? AND name = ?`, r.version, r.name); err != nil {
 			return fmt.Errorf("migrate: forget v%d (%s): %w", r.version, r.name, err)
@@ -3292,6 +3307,75 @@ func Migrate(db *sql.DB) error {
 		if err := tx.Commit(); err != nil {
 			return fmt.Errorf("migrate: commit v%d: %w", m.version, err)
 		}
+	}
+	return nil
+}
+
+// NewerDatabaseError is a database a newer version of BombVault migrated. An
+// older one would read and write it as if the newer tables and columns were
+// not there: backups under the wrong key, settings that look lost.
+type NewerDatabaseError struct {
+	// Version and Name are the newest migration the database carries.
+	Version int
+	Name    string
+	// Writer is the version of BombVault that last opened the database,
+	// empty when it is from before that was recorded.
+	Writer string
+}
+
+func (e *NewerDatabaseError) Error() string {
+	if e.Writer == "" {
+		return fmt.Sprintf("the database carries migration %d (%s), which this version does not know, so a newer version of BombVault wrote it. Start that version or a newer one with this data folder; nothing in the database was changed",
+			e.Version, e.Name)
+	}
+	return fmt.Sprintf("the database was last opened by BombVault %s and carries migration %d (%s), which this version does not know. Start BombVault %s or newer with this data folder; nothing in the database was changed",
+		e.Writer, e.Version, e.Name, e.Writer)
+}
+
+// refuseNewerDatabase returns a NewerDatabaseError for a database that carries
+// a migration above the newest this build knows under a name it does not
+// know. A known name under another number is a migration that was renumbered
+// when its branch was merged, and stays allowed.
+func refuseNewerDatabase(db *sql.DB) error {
+	newest, known := 0, map[string]bool{}
+	for _, m := range migrations {
+		newest = max(newest, m.version)
+		known[m.name] = true
+	}
+	rows, err := db.Query(`SELECT version, name FROM schema_migrations WHERE version > ? ORDER BY version DESC`, newest)
+	if err != nil {
+		return fmt.Errorf("migrate: check for a newer database: %w", err)
+	}
+	var e NewerDatabaseError
+	for rows.Next() && e.Name == "" {
+		var version int
+		var name string
+		if err := rows.Scan(&version, &name); err != nil {
+			rows.Close() //nolint:errcheck,gosec // the scan error is the one to report
+			return fmt.Errorf("migrate: check for a newer database: %w", err)
+		}
+		if !known[name] {
+			e.Version, e.Name = version, name
+		}
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("migrate: check for a newer database: %w", err)
+	}
+	if e.Name == "" {
+		return nil
+	}
+	// A database that has no such table yet names no writer.
+	_ = db.QueryRow(`SELECT version FROM schema_writer WHERE id = 1`).Scan(&e.Writer)
+	return &e
+}
+
+// RecordWriter notes the version of BombVault that opened the database, so
+// an older one that is started on it later can name it.
+func (r *Repo) RecordWriter(version string) error {
+	_, err := r.db.Exec(`INSERT INTO schema_writer (id, version, at) VALUES (1, ?, ?)
+		ON CONFLICT (id) DO UPDATE SET version = excluded.version, at = excluded.at`, version, time.Now().Unix())
+	if err != nil {
+		return fmt.Errorf("RecordWriter: %w", err)
 	}
 	return nil
 }

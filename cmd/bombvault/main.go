@@ -240,9 +240,12 @@ func run() error {
 	}
 	defer func() { _ = db.Close() }()
 	if err := store.Migrate(db); err != nil {
-		return err
+		return fmt.Errorf("BombVault %s cannot use this database: %w", api.Version, err)
 	}
 	st := store.New(db)
+	if err := st.RecordWriter(api.Version); err != nil {
+		log.Printf("main: recording the version that opened the database: %v", err)
+	}
 
 	if err := api.RevokeMCPKeysAfterConfigRestore(st, cfg.DataDir, time.Now()); err != nil {
 		return err
