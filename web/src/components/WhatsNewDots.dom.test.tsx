@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AttentionContext } from "../lib/attention";
 import { I18nProvider, en } from "../lib/i18n";
 import { CHANGES, WHATS_NEW_RELEASE } from "../lib/whatsNew";
-import { beginWhatsNew, markSeen, showDots } from "../lib/whatsNewStore";
+import { beginWhatsNew, markAbsent, markSeen, showDots } from "../lib/whatsNewStore";
 
 let desktop = true;
 vi.mock("../lib/useMediaQuery", async (importOriginal) => ({
@@ -130,6 +130,23 @@ describe("a change on the page", () => {
     expect(dotOf("overview-head")).not.toBeNull();
   });
 
+  it("has no dot while a box that scrolls keeps it out of view", async () => {
+    await renderAt(
+      "/dashboard",
+      <div id="scroller" style={{ overflowY: "auto" }}>
+        <span data-new="overview-head">ring</span>
+      </div>
+    );
+    expect(dotOf("overview-head")).not.toBeNull();
+
+    const scroller = document.getElementById("scroller")!;
+    scroller.getBoundingClientRect = () => new DOMRect(0, 60, 100, 200);
+    await act(async () => {
+      fireEvent.scroll(scroller);
+    });
+    expect(dotOf("overview-head")).toBeNull();
+  });
+
   it("has no dot for an element only a wide window shows, on a phone", async () => {
     desktop = false;
     await renderAt("/dashboard", overview);
@@ -146,6 +163,16 @@ describe("a change elsewhere", () => {
     const label = backups!.getAttribute("aria-label")!;
     expect(label.startsWith(en["whatsNew.way"].split("|other=")[1].replace("{n}", String(ON_BACKUPS.length)))).toBe(true);
     for (const id of ON_BACKUPS) expect(label).toContain(text(id));
+  });
+
+  it("names the changes behind a link one to a line", async () => {
+    await renderAt("/dashboard", overview);
+    const label = wayDots()
+      .find((dot) => dot.getAttribute("aria-label")?.includes(text("backups-tiles")))!
+      .getAttribute("aria-label")!;
+    const [head, ...lines] = label.split("\n");
+    expect(head.endsWith(":")).toBe(true);
+    expect(lines).toEqual(ON_BACKUPS.map((id) => `• ${text(id)}`));
   });
 
   it("follows the link at a click and marks nothing as seen", async () => {
@@ -193,6 +220,69 @@ describe("a change elsewhere", () => {
     const tab = wayDots().filter((dot) => dot.getAttribute("aria-label")?.includes(text("entry-defaults")));
     expect(tab).toHaveLength(1);
     expect(tab[0].getAttribute("aria-label")).not.toContain(text("entry-page"));
+  });
+
+  it("marks only the step furthest along that is in view", async () => {
+    const row = () => document.querySelector<HTMLElement>('[data-new-way="location"]')!;
+    const leading = () => wayDots().filter((dot) => dot.getAttribute("aria-label")?.includes(text("location-keep")));
+    await renderAt(
+      "/storage",
+      <div id="scroller" style={{ overflowY: "auto" }}>
+        <li data-new-way="location">Storage Box</li>
+      </div>
+    );
+    expect(leading()).toHaveLength(1);
+    expect(leading()[0].getAttribute("aria-label")).not.toContain(text("settings-week"));
+
+    // Scrolled out of view, the row hands the dot back to the link before it.
+    const scroller = document.getElementById("scroller")!;
+    scroller.getBoundingClientRect = () => new DOMRect(0, 60, 100, 200);
+    await act(async () => {
+      fireEvent.scroll(scroller);
+    });
+    expect(row()).not.toBeNull();
+    expect(leading()).toHaveLength(1);
+    expect(leading()[0].getAttribute("aria-label")).toContain(text("settings-week"));
+  });
+
+  it("leads to no change over the tab that is open", async () => {
+    await renderAt(
+      "/backups/container/plex",
+      <div data-new-way="entry-tabs">
+        <button data-sel-id="backups">Backups</button>
+        <button data-sel-id="settings" aria-selected="true">
+          Settings
+        </button>
+      </div>
+    );
+    expect(wayDots().filter((dot) => dot.getAttribute("aria-label")?.includes(text("entry-defaults")))).toEqual([]);
+  });
+
+  it("opens a row by its link and presses the button a wrapper holds", async () => {
+    await renderAt(
+      "/storage",
+      <ul>
+        <li data-new-way="location">
+          <Link to="/storage/box">Storage Box</Link>
+          <button>Test</button>
+        </li>
+      </ul>
+    );
+    const row = wayDots().find((dot) => dot.getAttribute("aria-label")?.startsWith(en["whatsNew.way"].split("|other=")[1].replace("{n}", "2")));
+    expect(row!.getAttribute("aria-label")).toContain(text("location-keep"));
+    await press(row!);
+    expect(screen.getByTestId("where").textContent).toBe("/storage/box");
+
+    cleanup();
+    const restore = vi.fn();
+    await renderAt(
+      "/restore",
+      <div data-new-way="restore-window">
+        <button onClick={restore}>Restore</button>
+      </div>
+    );
+    await press(wayDots().find((dot) => dot.getAttribute("aria-label")?.includes(text("restore-where")))!);
+    expect(restore).toHaveBeenCalledOnce();
   });
 
   it("marks More on a phone for a page its bar has no room for", async () => {
@@ -245,5 +335,68 @@ describe("where nothing is new", () => {
       </>
     );
     expect(dots()).toEqual([]);
+  });
+});
+
+describe("a change its page has nothing for", () => {
+  const absent = () => (JSON.parse(localStorage.getItem(`bv-whats-new@${WHATS_NEW_RELEASE}`)!) as { absent: string[] }).absent;
+  const toOverview = () => wayDots().find((dot) => dot.getAttribute("aria-label")?.includes(text("overview-head")));
+  const wait = (ms: number) => act(async () => void vi.advanceTimersByTime(ms));
+
+  // The frame the dots wait for stays the one that runs at once.
+  beforeEach(() => void vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] }));
+  afterEach(() => void vi.useRealTimers());
+
+  function OnOverview() {
+    return useLocation().pathname === "/dashboard" ? overview : null;
+  }
+
+  it("counts as absent once the page has stood without it, and nothing leads there any more", async () => {
+    await renderAt("/dashboard", <OnOverview />);
+    await wait(1900);
+    expect(absent()).toEqual([]);
+    await wait(200);
+    expect(absent()).toEqual(["overview-decline"]);
+
+    await press(screen.getByRole("link", { name: "Backups" }));
+    expect(toOverview()).toBeDefined();
+    expect(toOverview()!.getAttribute("aria-label")).not.toContain(text("overview-decline"));
+  });
+
+  it("is not absent while its page leads on to it", async () => {
+    await renderAt(
+      "/restore",
+      <div data-new-way="restore-window">
+        <button>Restore</button>
+      </div>
+    );
+    await wait(2100);
+    expect(absent()).toContain("restore-tiles");
+    expect(absent()).not.toContain("restore-where");
+  });
+
+  it("is not judged on another page", async () => {
+    await renderAt("/backups", <div />);
+    await wait(2100);
+    expect(absent().filter((id) => change(id).page !== "/backups")).toEqual([]);
+  });
+
+  it("is back as soon as its page draws it", async () => {
+    markAbsent(["overview-decline"]);
+    await renderAt("/dashboard", <div id="needs" />);
+    expect(dotOf("overview-decline")).toBeNull();
+    await act(async () => {
+      document.getElementById("needs")!.innerHTML = '<li data-new="overview-decline">gitea</li>';
+      await Promise.resolve();
+    });
+    expect(dotOf("overview-decline")).not.toBeNull();
+    expect(absent()).toEqual([]);
+  });
+
+  it("keeps its dot where a window on another page draws it", async () => {
+    markAbsent(["restore-where"]);
+    await renderAt("/backups/container/plex", <div data-new="restore-where">Where to</div>);
+    expect(dotOf("restore-where")).not.toBeNull();
+    expect(absent()).toEqual(["restore-where"]);
   });
 });

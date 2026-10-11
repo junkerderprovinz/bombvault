@@ -1,7 +1,8 @@
 // The green dots that mark what is new after an update: one on every changed
-// element in view, and one on each link, row and tab that leads to a change
-// elsewhere. They lie in a layer over the page and are placed from where the
-// marked elements stand, so a page only names its elements and draws nothing.
+// element in view, and one on the link, row or tab that leads furthest towards
+// a change elsewhere. They lie in a layer over the page and are placed from
+// where the marked elements stand, so a page only names its elements and draws
+// nothing.
 
 import { useContext, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -12,7 +13,11 @@ import { useT } from "../lib/i18n";
 import { useIsDesktop } from "../lib/useMediaQuery";
 import { useTipBubble } from "../lib/useTipBubble";
 import type { Change, WayStep } from "../lib/whatsNew";
-import { markSeen, useWhatsNew } from "../lib/whatsNewStore";
+import { markAbsent, markSeen, useWhatsNew } from "../lib/whatsNewStore";
+
+/** How long a page may take to draw a change or the way to it before the
+ *  change counts as absent. A page that draws it later brings it back. */
+const SETTLED_MS = 2000;
 
 interface Spot {
   key: string;
@@ -24,6 +29,14 @@ interface Spot {
   way?: HTMLElement;
 }
 
+interface Found {
+  spots: Spot[];
+  /** Of the changes whose page is open, those it draws or leads to. */
+  met: string[];
+  /** Of the changes whose page is open, those it has nothing for. */
+  lacking: string[];
+}
+
 function shown(el: Element): el is HTMLElement {
   return el instanceof HTMLElement && el.getClientRects().length > 0;
 }
@@ -33,59 +46,78 @@ function first(selector: string): HTMLElement | undefined {
 }
 
 /** The element of a step on the way, where the page shows one. A link in the
- *  navigation goes before one in the page. */
+ *  navigation goes before one in the page, and the tab that is open leads
+ *  nowhere. */
 function stepElement(step: WayStep): HTMLElement | undefined {
   if (typeof step !== "string") {
-    return first(`[data-new-way="${step.within}"] [data-sel-id="${step.tab}"]`);
+    return first(`[data-new-way="${step.within}"] [data-sel-id="${step.tab}"]:not([aria-selected="true"])`);
   }
   if (!step.startsWith("/")) return first(`[data-new-way="${step}"]`);
   return first(`nav a[href="${step}"]`) ?? first(`a[href="${step}"]`);
 }
 
-function find(unseen: Change[], pathname: string): Spot[] {
+/** Whether a box that scrolls or cuts its content keeps the point out of view. */
+function cutOff(el: HTMLElement, x: number, y: number): boolean {
+  const cuts = (overflow: string) => /auto|scroll|hidden|clip/.test(overflow);
+  for (let box = el.parentElement; box; box = box.parentElement) {
+    const { overflowX, overflowY } = getComputedStyle(box);
+    if (!cuts(overflowX) && !cuts(overflowY)) continue;
+    const edge = box.getBoundingClientRect();
+    if (cuts(overflowY) && (y < edge.top || y > edge.bottom)) return true;
+    if (cuts(overflowX) && (x < edge.left || x > edge.right)) return true;
+  }
+  return false;
+}
+
+/** What a click on a way's dot presses: the way itself, or the link or the
+ *  button that a row or a wrapper around it holds. */
+function pressed(way: HTMLElement): HTMLElement {
+  if (way.matches("a, button")) return way;
+  return way.querySelector<HTMLElement>("a[href]") ?? way.querySelector<HTMLElement>("button") ?? way;
+}
+
+function find(unseen: Change[], absent: ReadonlySet<string>, pathname: string): Found {
   // A window over the page hides the marks of everything behind it.
   const windows = document.querySelectorAll('[aria-modal="true"]');
   const front = windows[windows.length - 1];
-  const scroller = document.getElementById("bv-main");
-  const view = scroller?.getBoundingClientRect();
   const rtl = document.documentElement.dir === "rtl";
 
   const place = (el: HTMLElement): { x: number; y: number } | null => {
     if (front && !front.contains(el)) return null;
     const box = el.getBoundingClientRect();
-    const [x, y] = [rtl ? box.left + 4 : box.right - 4, box.top + 4];
-    if (view && scroller?.contains(el) && (y < view.top || y > view.bottom)) return null;
-    return { x: Math.round(x), y: Math.round(y) };
+    const [x, y] = [Math.round(rtl ? box.left + 4 : box.right - 4), Math.round(box.top + 4)];
+    return cutOff(el, x, y) ? null : { x, y };
   };
 
-  const spots: Spot[] = [];
+  const found: Found = { spots: [], met: [], lacking: [] };
   const ways = new Map<HTMLElement, Change[]>();
   for (const change of unseen) {
+    const onPage = matchPath(change.page, pathname) !== null;
     const el = first(`[data-new="${change.id}"]`);
     if (el) {
       const at = place(el);
-      if (at) spots.push({ key: change.id, ...at, changes: [change] });
+      if (at) found.spots.push({ key: change.id, ...at, changes: [change] });
+      if (onPage) found.met.push(change.id);
       continue;
     }
-    const onPage = matchPath(change.page, pathname) !== null;
-    let led = onPage;
-    for (const step of change.way) {
-      const link = typeof step === "string" && step.startsWith("/");
-      if (link && (onPage || step === pathname)) continue;
-      const on = stepElement(step);
-      if (!on) continue;
-      led = true;
-      ways.set(on, [...(ways.get(on) ?? []), change]);
-    }
-    // A phone keeps the entries its bar has no room for behind More.
-    const more = led ? undefined : first('[data-new-way="more"]');
-    if (more) ways.set(more, [...(ways.get(more) ?? []), change]);
+    const away = absent.has(change.id);
+    if (away && !onPage) continue;
+    const steps = change.way
+      .filter((step) => typeof step !== "string" || !step.startsWith("/") || (!onPage && step !== pathname))
+      .map(stepElement)
+      .filter((on) => on !== undefined);
+    if (onPage) (steps.length > 0 ? found.met : found.lacking).push(change.id);
+    if (away) continue;
+    // The step furthest along that is in view carries the dot, and a phone
+    // keeps the entries its bar has no room for behind More.
+    const way = steps.reverse().find(place) ?? (steps.length === 0 && !onPage ? first('[data-new-way="more"]') : undefined);
+    if (way) ways.set(way, [...(ways.get(way) ?? []), change]);
   }
   for (const [way, changes] of ways) {
     const at = place(way);
-    if (at) spots.push({ key: `way:${changes.map((c) => c.id).join(",")}:${at.x}:${at.y}`, ...at, changes, way });
+    if (at) found.spots.push({ key: `way:${changes.map((c) => c.id).join(",")}:${at.x}:${at.y}`, ...at, changes, way });
   }
-  return spots;
+  return found;
 }
 
 function same(a: Spot[], b: Spot[]): boolean {
@@ -95,7 +127,8 @@ function same(a: Spot[], b: Spot[]): boolean {
 function Dot({ spot }: { spot: Spot }) {
   const { t } = useT();
   const sentences = spot.changes.map((change) => t(change.text));
-  const tip = spot.way ? `${t("whatsNew.way", sentences.length)} ${sentences.join(" ")}` : sentences[0];
+  // A way lists its changes one to a line, so they can be told apart.
+  const tip = spot.way ? [t("whatsNew.way", sentences.length), ...sentences.map((sentence) => `• ${sentence}`)].join("\n") : sentences[0];
   const bubble = useTipBubble(tip);
   return (
     <>
@@ -108,7 +141,7 @@ function Dot({ spot }: { spot: Spot }) {
         {...bubble.handlers}
         onClick={() => {
           bubble.hide();
-          if (spot.way) spot.way.click();
+          if (spot.way) pressed(spot.way).click();
           else markSeen([spot.changes[0].id]);
         }}
         className="glim-new-dot"
@@ -129,7 +162,7 @@ export function WhatsNewDots() {
   // Whether this is a first start is known once the entries are read.
   const { fresh, items } = useContext(AttentionContext);
   const isDesktop = useIsDesktop();
-  const { on, unseen } = useWhatsNew();
+  const { on, unseen, absent } = useWhatsNew();
   const marked = useMemo(() => (isDesktop ? unseen : unseen.filter((change) => !change.wide)), [isDesktop, unseen]);
   const [spots, setSpots] = useState<Spot[]>([]);
   const active = on && items.loaded && !fresh && marked.length > 0 && pathname !== "/welcome";
@@ -140,11 +173,30 @@ export function WhatsNewDots() {
       return;
     }
     let frame = 0;
+    let settle = 0;
+    // Since when the open page has had nothing for a change.
+    const lackingSince = new Map<string, number>();
     const look = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const next = find(marked, pathname);
-        setSpots((prev) => (same(prev, next) ? prev : next));
+        const next = find(marked, absent, pathname);
+        setSpots((prev) => (same(prev, next.spots) ? prev : next.spots));
+
+        const back = next.met.filter((id) => absent.has(id));
+        if (back.length > 0) markAbsent(back, false);
+
+        const now = Date.now();
+        for (const id of lackingSince.keys()) if (!next.lacking.includes(id)) lackingSince.delete(id);
+        const waiting = next.lacking.filter((id) => !absent.has(id));
+        const gone: string[] = [];
+        for (const id of waiting) {
+          const since = lackingSince.get(id);
+          if (since === undefined) lackingSince.set(id, now);
+          else if (now - since >= SETTLED_MS) gone.push(id);
+        }
+        if (gone.length > 0) markAbsent(gone);
+        clearTimeout(settle);
+        if (waiting.length > gone.length) settle = window.setTimeout(look, SETTLED_MS);
       });
     };
     look();
@@ -153,17 +205,23 @@ export function WhatsNewDots() {
     const tree = new MutationObserver((changes) => {
       if (changes.some((change) => !(change.target instanceof Element && change.target.closest("[data-new-layer]")))) look();
     });
-    tree.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden", "aria-modal"] });
+    tree.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "hidden", "aria-modal", "aria-selected"],
+    });
     const moved = ["scroll", "transitionend", "animationend"] as const;
     for (const event of moved) document.addEventListener(event, look, true);
     window.addEventListener("resize", look);
     return () => {
       cancelAnimationFrame(frame);
+      clearTimeout(settle);
       tree.disconnect();
       for (const event of moved) document.removeEventListener(event, look, true);
       window.removeEventListener("resize", look);
     };
-  }, [active, marked, pathname]);
+  }, [active, marked, absent, pathname]);
 
   if (!active || spots.length === 0) return null;
   return createPortal(

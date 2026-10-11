@@ -14,6 +14,9 @@ interface Stored {
    *  never saw an older release. */
   on: boolean;
   seen: string[];
+  /** Changes whose page, when it was last open, drew neither them nor a way
+   *  to them. */
+  absent: string[];
 }
 
 function readRaw(): string {
@@ -24,17 +27,21 @@ function readRaw(): string {
   }
 }
 
+function ids(list: unknown): string[] {
+  return Array.isArray(list) ? list.filter((id): id is string => typeof id === "string") : [];
+}
+
 function parse(raw: string): Stored {
   try {
     const stored: unknown = raw ? JSON.parse(raw) : null;
     if (stored && typeof stored === "object") {
-      const { on, seen } = stored as Record<string, unknown>;
-      return { on: on === true, seen: Array.isArray(seen) ? seen.filter((id): id is string => typeof id === "string") : [] };
+      const { on, seen, absent } = stored as Record<string, unknown>;
+      return { on: on === true, seen: ids(seen), absent: ids(absent) };
     }
   } catch {
     // Anything else in the slot counts as nothing stored.
   }
-  return { on: false, seen: [] };
+  return { on: false, seen: [], absent: [] };
 }
 
 const listeners = new Set<() => void>();
@@ -85,14 +92,26 @@ export function beginWhatsNew(previous: string): void {
   } catch {
     // Without storage there is nothing to clear and nothing to switch on.
   }
-  write({ on: true, seen: [] });
+  write({ on: true, seen: [], absent: [] });
 }
 
-/** markSeen counts changes as seen, or as new again. */
+/** markSeen counts changes as seen, or as new again. Either way they are
+ *  looked for afresh. */
 export function markSeen(ids: string[], seen = true): void {
   const stored = parse(readRaw());
   const rest = stored.seen.filter((id) => !ids.includes(id));
-  write({ ...stored, seen: seen ? [...rest, ...ids] : rest });
+  write({ ...stored, seen: seen ? [...rest, ...ids] : rest, absent: stored.absent.filter((id) => !ids.includes(id)) });
+}
+
+/**
+ * markAbsent notes that the page of these changes showed neither them nor a
+ * way to them, or that it shows them again. No dot leads to an absent change,
+ * since the way would end at nothing.
+ */
+export function markAbsent(ids: string[], absent = true): void {
+  const stored = parse(readRaw());
+  const rest = stored.absent.filter((id) => !ids.includes(id));
+  write({ ...stored, absent: absent ? [...rest, ...ids] : rest });
 }
 
 export function showDots(on: boolean): void {
@@ -102,6 +121,7 @@ export function showDots(on: boolean): void {
 export interface WhatsNew {
   on: boolean;
   seen: ReadonlySet<string>;
+  absent: ReadonlySet<string>;
   /** The changes nobody has clicked away yet. */
   unseen: Change[];
 }
@@ -109,8 +129,8 @@ export interface WhatsNew {
 export function useWhatsNew(): WhatsNew {
   const raw = useSyncExternalStore(subscribe, readRaw);
   return useMemo(() => {
-    const { on, seen } = parse(raw);
+    const { on, seen, absent } = parse(raw);
     const known = new Set(seen);
-    return { on, seen: known, unseen: CHANGES.filter((change) => !known.has(change.id)) };
+    return { on, seen: known, absent: new Set(absent), unseen: CHANGES.filter((change) => !known.has(change.id)) };
   }, [raw]);
 }

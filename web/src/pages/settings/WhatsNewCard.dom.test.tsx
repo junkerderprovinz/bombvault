@@ -7,11 +7,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { I18nProvider, en } from "../../lib/i18n";
 import { CHANGES, WHATS_NEW_RELEASE } from "../../lib/whatsNew";
-import { beginWhatsNew, markSeen } from "../../lib/whatsNewStore";
+import { beginWhatsNew, markAbsent, markSeen } from "../../lib/whatsNewStore";
 import { WhatsNewCard } from "./WhatsNewCard";
 
 const KEY = `bv-whats-new@${WHATS_NEW_RELEASE}`;
-const stored = () => JSON.parse(localStorage.getItem(KEY)!) as { on: boolean; seen: string[] };
+const stored = () => JSON.parse(localStorage.getItem(KEY)!) as { on: boolean; seen: string[]; absent: string[] };
 const left = (n: number) => en["whatsNew.count"].replace("{left}", String(n)).replace("{all}", String(CHANGES.length));
 const line = (id: string) => document.querySelector<HTMLElement>(`[data-change="${id}"]`)!;
 
@@ -87,13 +87,26 @@ describe("the list of what is new", () => {
     expect(screen.getByTestId("whats-new-left").textContent).toBe(left(CHANGES.length));
   });
 
+  it("says of a change that its page does not show it, and still counts it", async () => {
+    markAbsent(["overview-decline"]);
+    await renderCard();
+    expect(line("overview-decline").dataset.absent).toBe("true");
+    expect(within(line("overview-decline")).getByText(en["whatsNew.absent"])).toBeTruthy();
+    expect(within(line("overview-head")).queryByText(en["whatsNew.absent"])).toBeNull();
+    expect(screen.getByTestId("whats-new-left").textContent).toBe(left(CHANGES.length));
+
+    await press(screen.getByRole("button", { name: en["whatsNew.showAll"] }));
+    expect(stored().absent).toEqual([]);
+    expect(line("overview-decline").dataset.absent).toBeUndefined();
+  });
+
   it("switches the dots off and on without touching what was seen", async () => {
     markSeen(["overview-head"]);
     await renderCard();
     const dots = screen.getByRole("switch", { name: en["whatsNew.show"] });
     expect(dots.getAttribute("aria-checked")).toBe("true");
     await press(dots);
-    expect(stored()).toEqual({ on: false, seen: ["overview-head"] });
+    expect(stored()).toEqual({ on: false, seen: ["overview-head"], absent: [] });
     await press(dots);
     expect(stored().on).toBe(true);
   });

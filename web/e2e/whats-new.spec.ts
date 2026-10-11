@@ -3,14 +3,29 @@
 // settings tile, the dot on the changed card, the click that hides it for
 // good, and the list that counts what is left. The harness runs a build
 // without a version, so the update is staged: the server says it is the
-// release, and the browser remembers the one before.
+// release, and the browser remembers the one before. After it: the way into
+// the restore window, the dots of an entry's page, a change whose page has
+// nothing to show for it, and the dots on a row of the overview and on the
+// move of a storage location.
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { mkdirSync } from "node:fs";
+import { join } from "node:path";
 
-const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
-const NOW = Math.floor(Date.now() / 1000);
+import { EVERY_KIND, MOBILE_PROJECTS, NOW, stageEntries } from "./entries";
+import { openOverview, stageOverview } from "./overview";
+import { STORAGE_BOX, stageStorage } from "./storage";
+
+// Set to a folder to keep pictures of the dots.
+const SHOTS = process.env.WHATS_NEW_SHOTS;
 
 const VERSION_NEWS = "Info holds Version, Help and About. Version lists BombVault, GlimStone, restic and rclone.";
 const WEEK_NEWS = "The week as a band, with every planned run from Monday to Sunday.";
+const HEAD_NEWS = "Green dots mark what is new.";
+const DECLINE_NEWS = "Don't back up takes an entry off this list";
+const TILES_NEWS = "Restore is one page for everything.";
+const WHERE_NEWS = "One window asks what to restore and where to.";
+const KEEP_NEWS = "Retention is Short, Balanced, Long or your own values.";
+const DEFAULTS_NEWS = "An entry follows the default schedule and storage location";
 
 function entry(lastBackup: number) {
   return {
@@ -34,18 +49,10 @@ interface Staged {
   firstStart?: boolean;
 }
 
-async function stage(page: Page, { from = "v9.9.1", firstStart = false }: Staged = {}): Promise<void> {
+/** Stages the update alone, for a test that brings its own entries. */
+async function stageUpdate(page: Page, from = "v9.9.1"): Promise<void> {
   await page.route("**/api/health", (route) => route.fulfill({ json: { ok: true, version: "v10.0.0" } }));
   await page.route("**/api/release-notes*", (route) => route.fulfill({ json: { ok: true, body: "## Added\n\n- One list.", htmlUrl: "" } }));
-  await page.route("**/api/items", (route) =>
-    route.fulfill({ json: { ok: true, items: [entry(firstStart ? 0 : NOW - 3600)], unlisted: [] } }),
-  );
-  await page.route("**/api/settings", async (route) => {
-    if (route.request().method() !== "GET") return route.continue();
-    const res = await route.fetch();
-    const body = await res.json();
-    await route.fulfill({ json: { ...body, settings: { ...body.settings, flashEnabled: true } } });
-  });
   // The stored look is the one under test, so the server's must not replace it.
   await page.route("**/api/display-prefs*", (route) => route.abort());
   // Once per tab: a reload has to find what the first visit left behind.
@@ -57,6 +64,19 @@ async function stage(page: Page, { from = "v9.9.1", firstStart = false }: Staged
   }, from);
 }
 
+async function stage(page: Page, { from = "v9.9.1", firstStart = false }: Staged = {}): Promise<void> {
+  await stageUpdate(page, from);
+  await page.route("**/api/items", (route) =>
+    route.fulfill({ json: { ok: true, items: [entry(firstStart ? 0 : NOW - 3600)], unlisted: [] } }),
+  );
+  await page.route("**/api/settings", async (route) => {
+    if (route.request().method() !== "GET") return route.continue();
+    const res = await route.fetch();
+    const body = await res.json();
+    await route.fulfill({ json: { ...body, settings: { ...body.settings, flashEnabled: true } } });
+  });
+}
+
 /** Opens the app on a page and puts away the release notes the update opens. */
 async function openUpdated(page: Page, path: string): Promise<void> {
   await page.goto(path);
@@ -66,6 +86,16 @@ async function openUpdated(page: Page, path: string): Promise<void> {
 }
 
 const dots = (page: Page) => page.locator("[data-new-dot]");
+const dotOf = (page: Page, id: string) => page.locator(`[data-new-dot="${id}"]`);
+const marked = (page: Page, id: string) => page.locator(`[data-new="${id}"]`).first();
+const absent = (page: Page) =>
+  page.evaluate(() => (JSON.parse(window.localStorage.getItem("bv-whats-new@10.0.0") ?? "{}") as { absent?: string[] }).absent ?? []);
+
+async function picture(page: Page, name: string): Promise<void> {
+  if (!SHOTS) return;
+  mkdirSync(SHOTS, { recursive: true });
+  await page.screenshot({ path: join(SHOTS, `${name}.png`) });
+}
 const wayTo = (page: Page, news: string) => page.locator(`[data-new-dot="way"][aria-label*="${news}"]`);
 
 /** Expects a dot on the top corner at the end of what it marks. */
@@ -100,7 +130,7 @@ test("a dot leads from the navigation over the settings tile to the change, and 
   await fromNavigation.click();
   await expect(page).toHaveURL(/\/settings\/\w+$/);
   const tile = page.locator('a[href="/settings/info"]');
-  const fromTile = page.locator(`[data-new-dot="way"][aria-label="This way to 1 change: ${VERSION_NEWS}"]`);
+  const fromTile = page.locator(`[data-new-dot="way"][aria-label^="This way to 1 change:"][aria-label*="${VERSION_NEWS}"]`);
   await expectOn(fromTile, tile);
 
   await fromTile.click();
@@ -175,4 +205,146 @@ test("nothing is marked during the first start, though the browser saw an older 
   await expect(page.getByRole("switch", { name: "Show glowing dots" })).toHaveAttribute("aria-checked", "true");
   await expect(page.locator('[data-new="settings-version"]')).toBeVisible();
   await expect(dots(page)).toHaveCount(0);
+});
+
+test("the dots lead from the navigation over a backup's button into the restore window", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "desktop-768", "the path runs once at desktop width and on both phones");
+  const phone = MOBILE_PROJECTS.has(testInfo.project.name);
+  await stageEntries(page, EVERY_KIND);
+  await stageUpdate(page);
+  await openUpdated(page, "/dashboard");
+
+  const restore = phone
+    ? page.getByRole("navigation", { name: "Mobile navigation" }).locator('a[href="/restore"]')
+    : page.locator('a[href="/restore"]').first();
+  const fromNavigation = page.locator(`[data-new-dot="way"][aria-label*="${TILES_NEWS}"][aria-label*="${WHERE_NEWS}"]`);
+  await expectOn(fromNavigation, restore);
+  // One change to a line.
+  expect((await fromNavigation.getAttribute("aria-label"))!.split("\n")).toHaveLength(4);
+  await fromNavigation.hover();
+  await picture(page, `way-bubble-${testInfo.project.name}`);
+
+  await fromNavigation.click();
+  await expect(page).toHaveURL(/\/restore$/);
+  await expectOn(dotOf(page, "restore-tiles"), marked(page, "restore-tiles"));
+  await expect(fromNavigation).toHaveCount(0);
+
+  const button = page.locator('[data-new-way="restore-window"]');
+  await button.scrollIntoViewIfNeeded();
+  const toWindow = wayTo(page, WHERE_NEWS);
+  await expectOn(toWindow, button);
+  await picture(page, `restore-page-${testInfo.project.name}`);
+
+  await toWindow.click();
+  const win = page.getByRole("dialog");
+  await expect(win).toBeVisible();
+  await win.locator('[data-new="restore-where"]').scrollIntoViewIfNeeded();
+  await expectOn(dotOf(page, "restore-where"), win.locator('[data-new="restore-where"]'));
+  // The window covers the page, so the page's dots wait behind it.
+  await expect(dotOf(page, "restore-tiles")).toHaveCount(0);
+  await expect(toWindow).toHaveCount(0);
+  await picture(page, `restore-window-${testInfo.project.name}`);
+
+  await dotOf(page, "restore-where").click();
+  await expect(dotOf(page, "restore-where")).toHaveCount(0);
+  await win.getByRole("button", { name: "Cancel" }).click();
+  await expect(toWindow).toHaveCount(0);
+
+  await marked(page, "restore-emergency").scrollIntoViewIfNeeded();
+  await expectOn(dotOf(page, "restore-emergency"), marked(page, "restore-emergency"));
+  await picture(page, `restore-emergency-${testInfo.project.name}`);
+});
+
+test("a container's page carries its dots, and the tab leads to the one on its settings", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "desktop-768", "the path runs once at desktop width and on both phones");
+  await stageEntries(page, EVERY_KIND);
+  await stageUpdate(page);
+  await openUpdated(page, "/backups");
+
+  // The first row leads to the pages of the entries.
+  const row = page.getByTestId("backup-row").first();
+  const fromRow = wayTo(page, DEFAULTS_NEWS);
+  await expect(fromRow).toHaveCount(1);
+  await fromRow.click();
+  await expect(page).toHaveURL(/\/backups\/\w+\/[^/]+$/);
+  await expect(row).toHaveCount(0);
+
+  await page.goto("/backups/container/immich");
+  await expectOn(dotOf(page, "entry-page"), marked(page, "entry-page"));
+  await expectOn(dotOf(page, "entry-menu"), marked(page, "entry-menu"));
+  const tab = page.getByRole("tablist", { name: "immich" }).getByRole("tab", { name: "Settings" });
+  const fromTab = wayTo(page, DEFAULTS_NEWS);
+  await expectOn(fromTab, tab);
+  await picture(page, `entry-container-${testInfo.project.name}`);
+
+  await fromTab.click();
+  await expect(tab).toHaveAttribute("aria-selected", "true");
+  await marked(page, "entry-defaults").scrollIntoViewIfNeeded();
+  await expectOn(dotOf(page, "entry-defaults"), marked(page, "entry-defaults"));
+  await expect(fromTab).toHaveCount(0);
+  await picture(page, `entry-container-settings-${testInfo.project.name}`);
+
+  await marked(page, "entry-menu").scrollIntoViewIfNeeded();
+  await marked(page, "entry-menu").getByRole("button").click();
+  await expect(page.getByRole("menu")).toBeVisible();
+  await picture(page, `entry-container-menu-${testInfo.project.name}`);
+});
+
+test("a change its page has nothing for is no longer promised, and is back when the page draws it", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "what decides it is the same at every width");
+  // Every entry is backed up, so the overview has no row to decline.
+  await stage(page);
+  await openUpdated(page, "/backups");
+  const toOverview = wayTo(page, HEAD_NEWS);
+  await expect(toOverview).toHaveAttribute("aria-label", new RegExp(DECLINE_NEWS));
+
+  await toOverview.click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(dotOf(page, "overview-head")).toBeVisible();
+  await expect.poll(() => absent(page)).toContain("overview-decline");
+  expect(await absent(page)).not.toContain("overview-head");
+
+  await page.locator('a[href="/backups"]').first().click();
+  await expect(toOverview).toBeVisible();
+  await expect(toOverview).not.toHaveAttribute("aria-label", new RegExp(DECLINE_NEWS));
+
+  await page.goto("/settings/info");
+  const line = page.locator('[data-change="overview-decline"]');
+  await expect(line).toHaveAttribute("data-absent", "true");
+  await expect(line).toContainText("Not on its page at the moment");
+  const left = page.getByTestId("whats-new-left");
+  const all = Number((await left.textContent())!.match(/of (\d+)/)![1]);
+  await expect(left).toHaveText(`${all} of ${all} left`);
+  await line.scrollIntoViewIfNeeded();
+  await picture(page, "list-absent");
+
+  // An entry nobody backs up brings the row, and the row its dot.
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  await stageOverview(page, undefined, { lang: "en" });
+  await stageUpdate(page);
+  await openOverview(page);
+  const needs = page.getByTestId("need-unprotected").first();
+  await needs.scrollIntoViewIfNeeded();
+  await expectOn(dotOf(page, "overview-decline"), needs);
+  await expect.poll(() => absent(page)).not.toContain("overview-decline");
+  await picture(page, "overview-decline");
+});
+
+test("a storage location's row leads to its page, where the move of a section carries a dot", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "what decides it is the same at every width");
+  // The staged entry has a backup, so this is no first start.
+  await stage(page);
+  await stageStorage(page, 1280, "en");
+  await openUpdated(page, "/storage");
+
+  const fromRow = wayTo(page, KEEP_NEWS);
+  await expect(fromRow).toHaveCount(1);
+  await picture(page, "storage-row");
+  await fromRow.click();
+  await expect(page).toHaveURL(/\/storage\/[^/]+$/);
+
+  await page.goto(`/storage/${encodeURIComponent(STORAGE_BOX.id)}`);
+  await marked(page, "location-move").scrollIntoViewIfNeeded();
+  await expectOn(dotOf(page, "location-move"), marked(page, "location-move"));
+  await picture(page, "location-move");
 });

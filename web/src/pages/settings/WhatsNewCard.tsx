@@ -30,7 +30,7 @@ function byPage(t: ReturnType<typeof useT>["t"]): { name: string; changes: Chang
 export function WhatsNewCard({ hueIndex }: { hueIndex?: number }) {
   const { t } = useT();
   const navigate = useNavigate();
-  const { on, seen, unseen } = useWhatsNew();
+  const { on, seen, absent, unseen } = useWhatsNew();
 
   return (
     <Card title={t("whatsNew.title")} hint={t("whatsNew.hint")} hueIndex={hueIndex}>
@@ -45,7 +45,7 @@ export function WhatsNewCard({ hueIndex }: { hueIndex?: number }) {
             labelKey="whatsNew.showAll"
             glyph={<IconEye />}
             onClick={() => markSeen(ALL, false)}
-            disabled={seen.size === 0}
+            disabled={seen.size === 0 && absent.size === 0}
             className="glim-btn-wrap"
           />
           <Button
@@ -64,15 +64,20 @@ export function WhatsNewCard({ hueIndex }: { hueIndex?: number }) {
           <ul className="flex flex-col gap-1.5">
             {page.changes.map((change) => {
               const done = seen.has(change.id);
+              const away = absent.has(change.id);
               return (
                 <li
                   key={change.id}
                   data-change={change.id}
                   data-seen={done || undefined}
+                  data-absent={away || undefined}
                   className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control bg-carbon-surface2 px-3 py-2.5${done ? " opacity-55" : ""}`}
                 >
                   <i aria-hidden="true" className={`glim-new-dot glim-new-dot-still${done ? " glim-new-dot-seen" : ""}`} />
-                  <span className="min-w-0 flex-[1_1_9rem] text-sm text-carbon-text wrap-break-word">{t(change.text)}</span>
+                  <span className="flex min-w-0 flex-[1_1_9rem] flex-col gap-0.5 text-sm text-carbon-text wrap-break-word">
+                    {t(change.text)}
+                    {away && <span className="text-xs text-carbon-textSub">{t("whatsNew.absent")}</span>}
+                  </span>
                   <Button
                     label={t("whatsNew.go")}
                     labelKey="whatsNew.go"

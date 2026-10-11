@@ -4,11 +4,11 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { CHANGES, WHATS_NEW_RELEASE } from "./whatsNew";
-import { beginWhatsNew, markSeen, showDots, useWhatsNew } from "./whatsNewStore";
+import { beginWhatsNew, markAbsent, markSeen, showDots, useWhatsNew } from "./whatsNewStore";
 
 const KEY = `bv-whats-new@${WHATS_NEW_RELEASE}`;
 const [FIRST, SECOND] = CHANGES.map((change) => change.id);
-const stored = () => JSON.parse(localStorage.getItem(KEY) ?? "null") as { on: boolean; seen: string[] } | null;
+const stored = () => JSON.parse(localStorage.getItem(KEY) ?? "null") as { on: boolean; seen: string[]; absent: string[] } | null;
 
 beforeEach(() => localStorage.clear());
 afterEach(cleanup);
@@ -16,7 +16,7 @@ afterEach(cleanup);
 describe("an update", () => {
   it("switches the dots on when it comes from a release before this one", () => {
     beginWhatsNew("v9.9.1");
-    expect(stored()).toEqual({ on: true, seen: [] });
+    expect(stored()).toEqual({ on: true, seen: [], absent: [] });
   });
 
   it("reads the release out of a build's version", () => {
@@ -34,7 +34,7 @@ describe("an update", () => {
     markSeen([FIRST]);
     showDots(false);
     beginWhatsNew("v9.9.1");
-    expect(stored()).toEqual({ on: false, seen: [FIRST] });
+    expect(stored()).toEqual({ on: false, seen: [FIRST], absent: [] });
   });
 
   it("drops what an earlier release kept", () => {
@@ -98,6 +98,13 @@ describe("what was seen", () => {
     expect([...again.result.current.seen]).toEqual([FIRST]);
   });
 
+  it("reads a slot that names no absent changes", () => {
+    localStorage.setItem(KEY, JSON.stringify({ on: true, seen: [FIRST] }));
+    const { result } = renderHook(() => useWhatsNew());
+    expect(result.current.absent.size).toBe(0);
+    expect(result.current.seen.has(FIRST)).toBe(true);
+  });
+
   it("follows another tab", () => {
     const { result } = renderHook(() => useWhatsNew());
     act(() => {
@@ -106,5 +113,32 @@ describe("what was seen", () => {
     });
     expect(result.current.on).toBe(true);
     expect(result.current.seen.has(FIRST)).toBe(true);
+  });
+});
+
+describe("a change its page has nothing for", () => {
+  it("is kept as absent and stays among what is left", () => {
+    beginWhatsNew("v9.9.1");
+    const { result } = renderHook(() => useWhatsNew());
+    act(() => markAbsent([FIRST]));
+    expect([...result.current.absent]).toEqual([FIRST]);
+    expect(result.current.unseen).toEqual(CHANGES);
+    expect(stored()?.absent).toEqual([FIRST]);
+  });
+
+  it("is not kept twice, and is there again once its page draws it", () => {
+    markAbsent([FIRST]);
+    markAbsent([FIRST, SECOND]);
+    expect(stored()?.absent).toEqual([FIRST, SECOND]);
+    markAbsent([FIRST], false);
+    expect(stored()?.absent).toEqual([SECOND]);
+  });
+
+  it("is looked for afresh when it is marked as seen or as new", () => {
+    markAbsent([FIRST, SECOND]);
+    markSeen([FIRST]);
+    expect(stored()).toMatchObject({ seen: [FIRST], absent: [SECOND] });
+    markSeen([FIRST, SECOND], false);
+    expect(stored()).toMatchObject({ seen: [], absent: [] });
   });
 });

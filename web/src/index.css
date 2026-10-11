@@ -1169,7 +1169,7 @@ body {
   text-transform: none;
   font-weight: 400;
   text-align: start;
-  white-space: normal;
+  white-space: pre-line;
 }
 
 /* The colour picker, from GlimStone's reference: a saturation/value square and
