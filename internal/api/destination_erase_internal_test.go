@@ -324,6 +324,105 @@ func TestAPlaceNothingCanNameHoldsNoSecondCopy(t *testing.T) {
 	}
 }
 
+func TestAnErasureLeavesTheRepositoriesEntriesBackUpToAlone(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.destination("Box", boxRepo)
+	files := f.tickDestination(box, "files")
+	containers := f.tickDestination(box, "containers")
+	f.container("nginx", f.namedRepo("Box containers", boxRepo+"/containers").ID)
+	f.vm("win", f.namedRepo("Box vms", boxRepo+"/vms").ID)
+	f.hold(boxRepo+"/containers", snap("n1", 10, "container:nginx"))
+	f.hold(boxRepo+"/vms", snap("w1", 10, "vm:win"))
+
+	preview := f.erasurePreview(box)
+	want := []erasureSection{
+		{Domain: "containers", TargetID: containers.ID, Repo: boxRepo + "/containers", Backups: 1, Entries: 1, Kept: erasureKeptInUse},
+		{Domain: "files", TargetID: files.ID, Repo: boxRepo + "/files"},
+	}
+	if !slices.Equal(preview.Sections, want) {
+		t.Fatalf("sections = %+v, want %+v", preview.Sections, want)
+	}
+
+	var named []string
+	for _, entry := range preview.LastCopies {
+		named = append(named, entry.Identity)
+	}
+	if res := f.erase(box, preview.Removal, named...); res["ok"] != true {
+		t.Fatalf("answer = %v, want a started run", res)
+	}
+	for _, domain := range []string{"containers", "files", "vms"} {
+		f.waitForErasure(domain)
+	}
+	if got := f.held(boxRepo + "/containers"); !slices.Equal(got, []string{"n1"}) {
+		t.Fatalf("the repository nginx backs up to holds %v", got)
+	}
+	if got := f.held(boxRepo + "/vms"); !slices.Equal(got, []string{"w1"}) {
+		t.Fatalf("the repository win backs up to holds %v", got)
+	}
+}
+
+func TestAnErasureRefusesASectionLeftBehindThatWasNotShown(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.destination("Box", boxRepo)
+	f.tickDestination(box, "files")
+	f.hold(f.domainPath("vms"), snap("a1", 100, "vm:win"))
+	preview := f.erasurePreview(box)
+
+	f.hold(boxRepo+"/vms", copied("c1", "a1", 100, "vm:win"))
+	res := f.erase(box, preview.Removal)
+
+	if res["ok"] != false || res["code"] != "stale" {
+		t.Fatalf("answer = %v, want the refusal stale", res)
+	}
+	if now := erasureOf(t, res); len(now.Sections) != 2 {
+		t.Fatalf("the refusal carries %+v, want the section left behind in it", now.Sections)
+	}
+	f.waitForErasure("vms")
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+}
+
+func TestAnErasureWaitsForABackupOfASectionLeftBehind(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.destination("Box", boxRepo)
+	f.tickDestination(box, "files")
+	f.hold(f.domainPath("vms"), snap("a1", 100, "vm:win"))
+	f.hold(boxRepo+"/vms", copied("c1", "a1", 100, "vm:win"))
+	preview := f.erasurePreview(box)
+
+	unlock, ok := f.svc.tryLockDomainFor("vms", "backup")
+	if !ok {
+		t.Fatal("the vms domain is busy before the test took it")
+	}
+	defer unlock()
+	if res := f.erase(box, preview.Removal); res["code"] != "domain-busy" {
+		t.Fatalf("answer while vms is backed up = %v, want domain-busy", res)
+	}
+	if len(f.eng.deletes) != 0 {
+		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
+	}
+}
+
+func TestADestinationOverAHomeOrAnotherDestinationIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	ctx := context.Background()
+	if _, err := f.svc.SaveNewDestination(ctx, draftRequest{Provider: "path", Settings: map[string]string{"path": "backups"}}); !errors.Is(err, errNestedLocation) {
+		t.Fatalf("a destination around the repositories at home = %v, want errNestedLocation", err)
+	}
+	rest := draftRequest{Provider: "rest", Name: "Box", Settings: map[string]string{"url": "https://box:8000/bv", "user": "bv", "pass": "one"}}
+	if _, err := f.svc.SaveNewDestination(ctx, rest); err != nil {
+		t.Fatal(err)
+	}
+	rest.Settings["url"] = "https://box:8000/bv/inner"
+	if _, err := f.svc.SaveNewDestination(ctx, rest); !errors.Is(err, errNestedLocation) {
+		t.Fatalf("a destination inside another = %v, want errNestedLocation", err)
+	}
+	if sets := f.storedCredSets(); len(sets) != 1 {
+		t.Fatalf("the refused destination left its sign-in behind: %+v", sets)
+	}
+}
+
 func TestAnErasureTakesWhatAMovedSectionLeftBehind(t *testing.T) {
 	f := newPlacementFixture(t)
 	box, vms := boxWithVMs(f)

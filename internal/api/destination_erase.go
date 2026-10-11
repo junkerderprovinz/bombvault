@@ -2,12 +2,15 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
 	"maps"
 	"net/http"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/progress"
@@ -20,8 +23,9 @@ import (
 const (
 	// erasureKeptAppendOnly is a repository BombVault may only add to.
 	erasureKeptAppendOnly = "append-only"
-	// erasureKeptInUse is a direct repository that entries still back up to. It
-	// outlives the destination as a repository of its own.
+	// erasureKeptInUse is a direct repository that entries still back up to,
+	// which outlives the destination as a repository of its own, or one that
+	// shares its place with another repository in use.
 	erasureKeptInUse = "in-use"
 	// erasureKeptUnreadable is a repository that could not be listed, so nobody
 	// can say what deleting from it would take.
@@ -96,7 +100,17 @@ type erasureRepo struct {
 
 type erasurePlan struct {
 	destinationErasure
-	repos []erasureRepo
+	repos  []erasureRepo
+	places places
+	live   []liveRepo
+}
+
+// shared reports whether the repository at raw is, holds or lies inside a
+// repository in use other than the rows named in self. Emptying it would take
+// backups that something else still counts on.
+func (p *erasurePlan) shared(s *Service, raw string, self ...string) bool {
+	loc, err := s.resolveRepo(raw)
+	return err == nil && overlapsLive(p.places, loc, p.live, self...)
 }
 
 // entryOf names the entry a backup belongs to: its settled owner, or the
@@ -208,9 +222,13 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 	if err != nil {
 		return erasurePlan{}, err
 	}
+	live, err := s.liveRepos(settings)
+	if err != nil {
+		return erasurePlan{}, err
+	}
 	plan := erasurePlan{destinationErasure: destinationErasure{
 		Removal: removal, Sections: []erasureSection{}, LastCopies: []erasureEntry{}, Key: "erase:" + id,
-	}}
+	}, places: s.placesNow(), live: live}
 	contexts := map[string]ownerContext{}
 	for _, t := range targets {
 		if _, known := contexts[t.Domain]; !known {
@@ -219,8 +237,11 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 			}
 		}
 		kept := ""
-		if t.Immutable {
+		switch {
+		case t.Immutable:
 			kept = erasureKeptAppendOnly
+		case plan.shared(s, t.Repo, t.ID, id):
+			kept = erasureKeptInUse
 		}
 		plan.add(ctx, s, settings, contexts[t.Domain], t, store.OffsiteTarget{}, kept)
 
@@ -237,7 +258,7 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 		}
 		kept = ""
 		switch {
-		case use.InUse():
+		case use.InUse(), plan.shared(s, direct.Repo, direct.ID, id):
 			kept = erasureKeptInUse
 		case direct.Immutable:
 			kept = erasureKeptAppendOnly
@@ -245,9 +266,11 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 		plan.add(ctx, s, settings, contexts[t.Domain], t, direct, kept)
 	}
 	// A section that moved to another destination left its repository here,
-	// where no target points at it.
+	// where no target points at it. One that a repository in use shares is not
+	// left behind.
 	for _, domain := range offsiteConfigDomains {
-		if slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return t.Domain == domain }) {
+		if slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return t.Domain == domain }) ||
+			plan.shared(s, destinationLocation(d.Repo, domain), id) {
 			continue
 		}
 		left := store.OffsiteTarget{
@@ -272,7 +295,19 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 		}
 	}
 	plan.count(ctx, s, settings, id, contexts)
+	plan.Removal.Erasure = plan.digest()
 	return plan, nil
+}
+
+// digest sums up what the erasure takes, so a request can show it was made on
+// the same.
+func (p erasurePlan) digest() string {
+	var b strings.Builder
+	for _, sec := range p.Sections {
+		fmt.Fprintf(&b, "%s\x00%s\x00%s\x00%s\x00%s\n", sec.Domain, sec.TargetID, sec.RepoID, sec.Repo, sec.Kept)
+	}
+	sum := sha256.Sum256([]byte(b.String()))
+	return hex.EncodeToString(sum[:])
 }
 
 // add lists one repository of a target, its copy or its direct repository,
@@ -379,19 +414,41 @@ func (s *Service) StartDestinationErasure(ctx context.Context, id string, expect
 		}
 	}
 	locked := map[string]bool{}
-	for _, t := range targets {
-		if locked[t.Domain] {
-			continue
+	lock := func(domain string) error {
+		if locked[domain] {
+			return nil
 		}
-		u, ok := s.tryLockDomainFor(t.Domain, "delete")
+		u, ok := s.tryLockDomainFor(domain, "delete")
 		if !ok {
-			unlock()
-			return destinationErasure{}, errDomainBusy
+			return errDomainBusy
 		}
-		locked[t.Domain] = true
+		locked[domain] = true
 		unlocks = append(unlocks, u)
+		return nil
 	}
-	plan, err := s.planErasure(ctx, id)
+	for _, t := range targets {
+		if err := lock(t.Domain); err != nil {
+			unlock()
+			return destinationErasure{}, err
+		}
+	}
+	// Only the plan finds what a moved section left behind, so its domain is
+	// locked after the plan and the plan is made again under that lock.
+	var plan erasurePlan
+	for {
+		if plan, err = s.planErasure(ctx, id); err != nil {
+			break
+		}
+		before := len(locked)
+		for _, sec := range plan.Sections {
+			if err = lock(sec.Domain); err != nil {
+				break
+			}
+		}
+		if err != nil || len(locked) == before {
+			break
+		}
+	}
 	if err == nil {
 		err = plan.refusal(expect, named)
 	}
@@ -430,6 +487,9 @@ func (s *Service) StartDestinationErasure(ctx context.Context, id string, expect
 func (p erasurePlan) refusal(expect destinationRemoval, named []string) error {
 	if !p.Removal.same(expect) {
 		return &removalChangedErr{now: p.Removal}
+	}
+	if p.Removal.Erasure != expect.Erasure {
+		return &erasureRefused{err: errPlacementStale, now: p.destinationErasure}
 	}
 	if !slices.ContainsFunc(p.Sections, func(sec erasureSection) bool { return sec.Kept == "" }) {
 		return &erasureRefused{err: errNothingToErase, now: p.destinationErasure}

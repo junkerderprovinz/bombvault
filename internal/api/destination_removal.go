@@ -14,6 +14,9 @@ import (
 // stay as they are and are no longer copied to, listed or aged.
 type destinationRemoval struct {
 	Sections []removalSection `json:"sections"`
+	// Erasure is set on the removal an erasure preview carries: a digest of
+	// what deleting the backups there takes, sections left behind included.
+	Erasure string `json:"erasure,omitempty"`
 }
 
 // removalSection is one section's part of a destination. Entries and Backups

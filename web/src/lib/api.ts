@@ -7093,6 +7093,9 @@ export interface RemovalSection {
 /** What removing a destination detaches. The backups there stay as they are. */
 export interface DestinationRemoval {
   sections: RemovalSection[];
+  /** Set on the removal an erasure preview carries: a digest of what deleting
+   *  the backups there takes, which the request sends back unchanged. */
+  erasure?: string;
 }
 
 /** GET /api/offsite/destinations/{id}/removal. */

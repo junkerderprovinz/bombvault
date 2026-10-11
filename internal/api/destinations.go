@@ -468,7 +468,11 @@ func (s *Service) SaveNewDestination(ctx context.Context, req draftRequest) (sto
 		}
 	}
 
-	saved, err := s.store.SaveDestination(d)
+	err = s.destinationClash(d.Repo)
+	var saved store.OffsiteTarget
+	if err == nil {
+		saved, err = s.store.SaveDestination(d)
+	}
 	if err != nil {
 		if undo != nil {
 			undo()
@@ -476,6 +480,29 @@ func (s *Service) SaveNewDestination(ctx context.Context, req draftRequest) (sto
 		return store.OffsiteTarget{}, err
 	}
 	return saved, nil
+}
+
+// destinationClash refuses a destination that is, holds or lies inside a
+// repository entries back up to or another destination. Its sections would
+// land on those backups, and deleting the backups there would take them.
+func (s *Service) destinationClash(repo string) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings to check this location: %w", err)
+	}
+	loc, err := s.resolveRepo(repo)
+	if err != nil {
+		return err
+	}
+	live, err := s.liveRepos(settings)
+	if err != nil {
+		return fmt.Errorf("read the repositories to check this location: %w", err)
+	}
+	live = slices.DeleteFunc(live, func(r liveRepo) bool { return r.kind == liveTarget })
+	if overlapsLive(s.placesNow(), loc, live) {
+		return errNestedLocation
+	}
+	return nil
 }
 
 func (s *Service) addCredSet(name string, c CloudCreds) (string, error) {

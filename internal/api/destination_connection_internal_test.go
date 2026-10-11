@@ -365,7 +365,7 @@ func TestARemoteNothingCopiesToIsListedBeforeItIsChanged(t *testing.T) {
 
 func TestTheConnectionRouteAnswersARefusedMoveWithItsCode(t *testing.T) {
 	f := newPlacementFixture(t)
-	d, err := f.svc.SaveNewDestination(context.Background(), draftRequest{Provider: "path", Settings: map[string]string{"path": "backups"}})
+	d, err := f.svc.SaveNewDestination(context.Background(), draftRequest{Provider: "path", Settings: map[string]string{"path": "offsite"}})
 	if err != nil {
 		t.Fatal(err)
 	}

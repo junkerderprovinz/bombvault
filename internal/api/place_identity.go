@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // place is where a repository keeps its data, named so that the spellings of
@@ -56,6 +57,66 @@ func sameDir(a, b string) bool {
 	}
 	bi, err := os.Stat(b)
 	return err == nil && os.SameFile(ai, bi)
+}
+
+// liveRepo is a repository in use, at its resolved location.
+type liveRepo struct {
+	id   string
+	loc  string
+	kind liveKind
+}
+
+type liveKind int
+
+const (
+	// liveHome is a domain's own or a named repository, which entries back up to.
+	liveHome liveKind = iota
+	liveTarget
+	liveDestination
+)
+
+// liveRepos lists every repository in use: each domain's own, every named and
+// direct repository, every off-site target and every destination. One whose
+// location does not resolve is left out.
+func (s *Service) liveRepos(settings store.Settings) ([]liveRepo, error) {
+	var out []liveRepo
+	for _, domain := range offsiteConfigDomains {
+		if loc, err := s.repoFor(settings, domain, "local"); err == nil {
+			out = append(out, liveRepo{loc: loc, kind: liveHome})
+		}
+	}
+	for _, list := range []struct {
+		rows func() ([]store.OffsiteTarget, error)
+		kind liveKind
+	}{{s.store.ListNamedRepos, liveHome}, {s.store.ListOffsiteTargets, liveTarget}, {s.store.ListDestinations, liveDestination}} {
+		rows, err := list.rows()
+		if err != nil {
+			return nil, err
+		}
+		for _, r := range rows {
+			if loc, err := s.resolveRepo(r.Repo); err == nil {
+				out = append(out, liveRepo{id: r.ID, loc: loc, kind: list.kind})
+			}
+		}
+	}
+	return out, nil
+}
+
+// overlapsLive reports whether loc is, holds or lies inside one of live other
+// than the rows named in self. Two places are compared by identity where both
+// can be named and by their locations otherwise.
+func overlapsLive(places places, loc string, live []liveRepo, self ...string) bool {
+	at, named := places.of(loc)
+	for _, r := range live {
+		if r.id != "" && slices.Contains(self, r.id) {
+			continue
+		}
+		other, ok := places.of(r.loc)
+		if named && ok && at.overlaps(other) || (!named || !ok) && repoLocationsOverlap(loc, r.loc) {
+			return true
+		}
+	}
+	return false
 }
 
 // places names the place of resolved repository locations.
