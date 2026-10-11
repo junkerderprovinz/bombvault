@@ -22,7 +22,6 @@ import { useReorder } from "../lib/dragLift";
 import { useLabelMode } from "../lib/useLabelMode";
 import { useIsWide } from "../lib/useIsWide";
 import { useTipBubble } from "../lib/useTipBubble";
-import { HUE_OFFSET } from "./Selector";
 
 export interface RailItem {
   id: string;
@@ -112,7 +111,7 @@ export function SettingsRail({ items, active, label, onReorder }: SettingsRailPr
           <RailTile
             key={item.id}
             item={item}
-            hue={i + HUE_OFFSET.tabs}
+            hue={i}
             on={item.id === active}
             tabStop={item.id === stop}
             glyphs={glyphs}

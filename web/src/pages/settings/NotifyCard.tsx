@@ -5,7 +5,7 @@ import { SelectField } from "../../components/SelectField";
 import { Card, ToggleRow, type SaveState } from "./shared";
 import { InfoBubble } from "../../components/InfoBubble";
 import { RevealInput } from "../../components/RevealInput";
-import { HUE_OFFSET, Selector } from "../../components/Selector";
+import { Selector } from "../../components/Selector";
 import { getNotify, setNotify, testNotify, type NotifyConfig } from "../../lib/api";
 import { tLtr } from "../../lib/ltrFragments";
 import { useEffect, useRef, useState } from "react";
@@ -204,7 +204,6 @@ export function NotifyCard({
           label={t("notify.on")}
           // Its own start, so it does not repeat the tab strip's colours
           // column for column one card above it.
-          hueOffset={HUE_OFFSET.notifyOn}
           select="one"
           // Configs saved before this setting existed hold "" here, which
           // Config.shouldSend treats as "never". Show it as such instead of

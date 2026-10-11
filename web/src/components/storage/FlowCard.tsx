@@ -89,7 +89,6 @@ function FlowSwitches({ rows, busy, onToggle }: { rows: FlowRow[]; busy: boolean
                   select="many"
                   inline
                   pairsOnPhone
-                  hueOffset={3 * i}
                   active={new Set(row.lines.filter((line) => line.on).map((line) => line.key))}
                   disabled={busy}
                   onChange={(key) => {

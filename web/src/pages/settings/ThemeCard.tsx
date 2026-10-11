@@ -1,5 +1,5 @@
 import type { Theme } from "../../lib/theme";
-import { HUE_OFFSET, Selector } from "../../components/Selector";
+import { Selector } from "../../components/Selector";
 import { getTheme, setTheme } from "../../lib/theme";
 import { useState } from "react";
 import { useT } from "../../lib/i18n";
@@ -54,7 +54,6 @@ export function ThemePicker({ t }: { t: ReturnType<typeof useT>["t"] }) {
         { id: "system", label: t("theme.system"), tip: t("theme.systemHint"), icon: systemIcon },
       ]}
       label={t("settings.theme")}
-      hueOffset={HUE_OFFSET.theme}
       select="one"
       active={theme}
       onChange={(id) => selectTheme(id as Theme)}

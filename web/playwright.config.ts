@@ -78,6 +78,7 @@ const testMatch = [
   "settings-phone.spec.ts",
   "activity-log-jump.spec.ts",
   "selector-span.spec.ts",
+  "selector-hue.spec.ts",
   "page-width.spec.ts",
   "narrow-window.spec.ts",
   "backups-list.spec.ts",

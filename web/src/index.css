@@ -1518,19 +1518,6 @@ body {
   color: var(--accent);
 }
 
-/* Except in a form row. A tab strip is a set of destinations, and each idle tab
-   may show its own hue. A Local/Off-site switch is one binary choice inside a
-   card that already has a hue, and an unchosen half in a third colour reads
-   as a status the control does not have. `.glim-seg-btn` is exactly the
-   form-row variant, so there the idle glyph inherits `text-carbon-textSub`
-   from its segment, like the label beside it. */
-.glim-seg-btn.glim-hue-icon:not(.glim-active) svg,
-[data-rainbow="reactive"] .glim-seg-btn.glim-hue-icon:not(.glim-active) svg,
-[data-rainbow="reactive"] .glim-seg-btn.glim-hue-icon:not(.glim-active):hover svg,
-[data-rainbow="reactive"] .glim-seg-btn.glim-hue-icon:not(.glim-active):focus-within svg {
-  color: inherit;
-}
-
 /* The figure on a navigation entry wears the colour of the entry's glyph, so it
    follows the accent and every colour mode with it. The current entry is filled
    with that colour itself, so there the pair is turned round: the fill's ink is

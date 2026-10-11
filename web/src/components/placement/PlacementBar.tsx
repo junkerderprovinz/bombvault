@@ -13,7 +13,6 @@ export interface PlacementBarProps {
   host: string;
   /** Destinations with no target in this domain yet. */
   destinations: Destination[];
-  hueOffset?: number;
   disabled?: boolean;
   onLocal: (on: boolean) => void;
   onTarget: (targetId: string, on: boolean) => void;
@@ -42,7 +41,6 @@ export function PlacementBar({
   options,
   host,
   destinations,
-  hueOffset,
   disabled,
   onLocal,
   onTarget,
@@ -78,7 +76,6 @@ export function PlacementBar({
         select="many"
         inline
         active={active}
-        hueOffset={hueOffset}
         disabled={disabled}
         onChange={(id) => {
           if (id === LOCAL) onLocal(!b.local);
