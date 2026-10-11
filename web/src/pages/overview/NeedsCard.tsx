@@ -79,7 +79,8 @@ function Row({
   );
 }
 
-const SUB = "text-sm text-carbon-textSub wrap-break-word";
+// On a phone a row keeps to one line of detail; the rest is a tap away on its page.
+const SUB = "text-sm text-carbon-textSub wrap-break-word max-md:truncate";
 // The height a finger needs, for the actions of a row on a touch screen.
 const TOUCH = "pointer-coarse:[--btn-h:2.75rem]";
 // Two long labels or three actions share a phone's row only cut short, so

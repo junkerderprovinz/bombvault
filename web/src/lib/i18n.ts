@@ -4852,7 +4852,7 @@ export const de: Translations = {
 
 
   "dashboard.summaryHealth": "Wiederherstellungspunkt",
-  "dashboard.summaryNextBackup": "Nächstes Backup",
+  "dashboard.summaryNextBackup": "Nächste Sicherung",
   "dashboard.summaryNextIn": "in {countdown}",
   "dashboard.summaryLastResult": "Letztes Ergebnis",
   "dashboard.noRuns": "Noch keine Ausführungen",
