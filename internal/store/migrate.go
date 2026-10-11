@@ -2922,6 +2922,64 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
 		sql:              backupKeyTable,
 	},
 	{
+		// What this install keeps for members of its group: for each the
+		// deposit that brings its backups back, sealed for a recovery code
+		// this install never sees. A declined row has no deposit and says
+		// that the one there was got deleted here.
+		version:          keyRolesMigration + 1,
+		name:             "key_deposits",
+		alreadySatisfied: tablePresent("key_deposits"),
+		sql: `CREATE TABLE IF NOT EXISTS key_deposits (
+  owner_id   TEXT    PRIMARY KEY,
+  owner_name TEXT    NOT NULL DEFAULT '',
+  state      TEXT    NOT NULL,
+  deposit    BLOB    NOT NULL DEFAULT x'',
+  salt       BLOB    NOT NULL DEFAULT x'',
+  version    INTEGER NOT NULL DEFAULT 1,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);`,
+	},
+	{
+		// The requests to hand a deposit out, kept after they are answered:
+		// they are the record of who asked and what a person here said, and
+		// the count the rate limit goes by.
+		version:          keyRolesMigration + 2,
+		name:             "key_releases",
+		alreadySatisfied: tablePresent("key_releases"),
+		sql: `CREATE TABLE IF NOT EXISTS key_releases (
+  id             TEXT    PRIMARY KEY,
+  owner_id       TEXT    NOT NULL,
+  requester_id   TEXT    NOT NULL,
+  requester_name TEXT    NOT NULL DEFAULT '',
+  state          TEXT    NOT NULL,
+  asked_at       INTEGER NOT NULL,
+  decided_at     INTEGER NOT NULL DEFAULT 0,
+  released_at    INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_key_releases_requester ON key_releases(requester_id, asked_at);`,
+	},
+	{
+		// This install's own side of its deposits: the public half of its
+		// recovery code, and which member holds what was last sealed.
+		version:          keyRolesMigration + 3,
+		name:             "key_deposits_sent",
+		alreadySatisfied: tablePresent("key_deposits_sent"),
+		sql: `CREATE TABLE IF NOT EXISTS key_deposit_identity (
+  id         INTEGER PRIMARY KEY CHECK (id = 1),
+  recipient  BLOB    NOT NULL,
+  salt       BLOB    NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS key_deposits_sent (
+  member_id   TEXT    PRIMARY KEY,
+  member_name TEXT    NOT NULL DEFAULT '',
+  state       TEXT    NOT NULL,
+  digest      TEXT    NOT NULL DEFAULT '',
+  sent_at     INTEGER NOT NULL DEFAULT 0
+);`,
+	},
+	{
 		version:          keyRolesMigration + 4,
 		name:             "backup_key_notes",
 		alreadySatisfied: columnPresent("backup_key", "lost"),
