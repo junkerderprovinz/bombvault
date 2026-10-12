@@ -113,6 +113,7 @@ export function RestoreCheckPanel({
       {state.phase === "error" && (
         <p className="text-sm text-statusFail">{t("restoreCheck.failed").replace("{error}", state.error)}</p>
       )}
+      {state.phase === "running" && <PendingLines t={t} />}
       {lines.length > 0 && <CheckLines lines={lines} t={t} />}
       {plan && <PlanView plan={plan} t={t} />}
       {members.map((m) => (
@@ -125,6 +126,25 @@ export function RestoreCheckPanel({
         </div>
       ))}
     </section>
+  );
+}
+
+/** The lines every check answers, shown while it runs so the list stands from
+ *  the start. A missing network only ever comes back as a failure. */
+const PENDING: CheckLine["id"][] = ["repository", "key", "snapshot", "space"];
+
+function PendingLines({ t }: { t: T }) {
+  return (
+    <ul className="flex flex-col rounded-control bg-carbon-surface2 px-3 py-1.5" data-testid="restore-check-pending">
+      {PENDING.map((id) => (
+        <li key={id} className="flex items-start gap-2.5 py-1.5 text-sm">
+          <span className="flex h-5 w-4 flex-none items-center justify-center">
+            <span className="h-3 w-3 animate-spin rounded-full border-2 border-carbon-textMuted border-t-transparent" />
+          </span>
+          <span className="text-carbon-textSub">{t(CHECK_LINE_LABEL[id])}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
