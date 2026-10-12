@@ -4567,6 +4567,9 @@ func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 		// The rule the password field enforces, so the frontend can say the
 		// number rather than hard-code a second copy of it.
 		"minPasswordLen": secret.MinPasswordLen,
+		// A page a phone opens through the relay can neither sign in nor
+		// out, so the interface leaves both out there.
+		"relayed": relayedPage(r),
 	}
 	if on {
 		if s, err := h.store.GetSettings(); err == nil {

@@ -1,10 +1,13 @@
 // What hands out or creates key material, or deletes backups for good, is
 // refused to the session the phone app opens this instance with, since the
 // group's words alone must not reach a key or the backups. The person signs in
-// at this instance's own interface and does it again from there.
+// at this instance's own interface and does it again from there. A page
+// opened through the relay cannot sign in, so there the person is only told
+// where to go.
 import type { ReactNode } from "react";
-import { logout } from "./api";
+import { logout, openedThroughRelay } from "./api";
 import { useT } from "./i18n";
+import { useToast } from "./toast";
 import { useConfirm } from "./useConfirm";
 
 /**
@@ -20,8 +23,14 @@ export function useOwnLogin(): {
 } {
   const { t } = useT();
   const { confirm, confirmDialog } = useConfirm();
+  const { push } = useToast();
 
   async function offer(declined?: () => void) {
+    if (openedThroughRelay()) {
+      push(t("auth.relayLoginNeeded"), "fail");
+      declined?.();
+      return;
+    }
     const yes = await confirm(t("secrets.ownLoginNeeded"), {
       confirmLabel: t("secrets.signInHere"),
       confirmLabelKey: "auth.signIn",

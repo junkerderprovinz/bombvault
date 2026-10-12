@@ -56,7 +56,7 @@ const ALL_ROWS = { anomalyEnabled: true, fleetEnabled: true } as Settings;
 /** Renders the open sheet under a router, plus a live pathname probe so the
  *  navigate assertion reads the router's own state instead of guessing. */
 function draw(
-  opts: { settings?: Settings | null; authEnabled?: boolean; path?: string; hueOffset?: number } = {},
+  opts: { settings?: Settings | null; authEnabled?: boolean; relayed?: boolean; path?: string; hueOffset?: number } = {},
 ) {
   const onClose = vi.fn();
   function PathProbe() {
@@ -71,6 +71,7 @@ function draw(
         onClose={onClose}
         settings={opts.settings ?? null}
         authEnabled={opts.authEnabled ?? false}
+        relayed={opts.relayed}
         hueOffset={opts.hueOffset}
       />
     </MemoryRouter>,
@@ -232,6 +233,14 @@ describe("MoreSheet sign-out (the desktop mechanism, muted, last)", () => {
     });
     expect(logout).toHaveBeenCalledTimes(1);
     expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("says how the phone is signed in through the relay, where signing out goes nowhere", () => {
+    draw({ authEnabled: true, relayed: true });
+    expect(screen.queryByRole("button", { name: /sign out/i })).toBeNull();
+    const note = screen.getByTestId("more-relayed");
+    expect(note.textContent).toContain("Signed in through the group");
+    expect(within(note).getByLabelText(/nothing to sign out of here/)).toBeTruthy();
   });
 });
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getAuth, setAuthPassword } from "../../../lib/api";
+import { getAuth, setAuthPassword, explainedError } from "../../../lib/api";
 import { PasskeyCard } from "../PasskeyCard";
 import { TwoFactorCard } from "../TwoFactorCard";
 import { EncryptionCard } from "../EncryptionCard";
@@ -75,9 +75,9 @@ export function SecurityPage() {
         push(res.error ?? t("auth.saveError"), "fail");
         setPwSaveShake((n) => n + 1);
       }
-    } catch {
+    } catch (err) {
       setPwSaveState("idle");
-      push(t("auth.saveError"), "fail");
+      push(explainedError(err) ?? t("auth.saveError"), "fail");
       setPwSaveShake((n) => n + 1);
     }
   }

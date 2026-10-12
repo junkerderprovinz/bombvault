@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { deleteAtTarget, getOffsiteRemoval, type ItemRef, type RemovalPreview } from "../../lib/api";
+import { deleteAtTarget, getOffsiteRemoval, type ItemRef, type RemovalPreview, explainedError } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { repoDisplayName } from "../../lib/directRepo";
 import { placementErrorText } from "../../lib/placementCodes";
@@ -113,9 +113,9 @@ export function OffsiteRemovalDialog({
         return;
       }
     }
-    run().catch(() => {
+    run().catch((err: unknown) => {
       if (!live) return;
-      push(t("settings.error"), "fail");
+      push(explainedError(err) ?? t("settings.error"), "fail");
       onClose();
     });
     // Runs once per mount: the dialog opens, asks, and closes itself. `live`

@@ -20,6 +20,7 @@ import {
   type ApiTokensResponse,
   type McpKeyView,
   type OkEnvelope,
+  explainedError,
 } from "../../lib/api";
 import { copyText } from "../../lib/clipboard";
 import { useT, type TranslationKey } from "../../lib/i18n";
@@ -196,21 +197,23 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       );
     setBusy(true);
     show(on);
+    let refused: string | undefined;
     try {
       const res = await updateApiToken(item.id, { canStartBackups: on });
       if (res.ok) {
         push(t("api.permissionSaved"), "success");
         return;
       }
-    } catch {
+    } catch (err) {
       // A refused save and an unreachable server leave the same wrong switch
       // on screen, so both take the way back below.
+      refused = explainedError(err);
     } finally {
       setBusy(false);
     }
     show(!on);
     bumpShake(`start:${item.id}`);
-    push(t("common.saveFailed"), "fail");
+    push(refused ?? t("common.saveFailed"), "fail");
   }
 
   async function copy(text: string) {

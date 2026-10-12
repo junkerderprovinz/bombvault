@@ -91,6 +91,9 @@ export interface BottomNavProps {
   /** Whether a login password exists. Gates the sign-out row inside the
    *  sheet, exactly like the desktop Sidebar footer. */
   authEnabled: boolean;
+  /** The page came through the relay; the sheet then says how the phone is
+   *  signed in in place of the sign-out row. */
+  relayed?: boolean;
   /** Layout's tap-on-active scroll (the scroller is Layout's
    *  <main id="bv-main">); passed on to the sheet's rows too. */
   scrollMainToTop: () => void;
@@ -112,7 +115,7 @@ const slotBase =
 // leading still fit under the glyph in the 56px row.
 const caption = "max-w-full text-center leading-[1.1] hyphens-auto wrap-anywhere";
 
-export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavProps) {
+export function BottomNav({ settings, authEnabled, relayed = false, scrollMainToTop }: BottomNavProps) {
   const { t } = useT();
   const location = useLocation();
   // The sheet belongs to the page it was opened on, so any way of leaving
@@ -249,6 +252,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
         onClose={() => setMoreOpenOn(null)}
         settings={settings}
         authEnabled={authEnabled}
+        relayed={relayed}
         scrollMainToTop={scrollMainToTop}
         hueOffset={slots.length + 1}
       />
