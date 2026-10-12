@@ -19,6 +19,8 @@ Par appen med servere på versjon 9.7.0 eller nyere. En server på en eldre vers
 
 Deretter blir telefonen med i gruppen som enda en instans. Den leser via gruppen hva som kjører på hver server, uten pålogging, direkte hjemme og over relayet når du er borte. Hvordan selve gruppen fungerer, står under [Koble instanser sammen](offsite-recovery.md#pairing).
 
+Appen blir med i gruppen via relayet, også hjemme. Står instansen din på **Ingen relay**, velg en under **Innstillinger, Paring** før du skanner koden.
+
 !!! note "Grensesnittet trenger fortsatt en vei til serveren"
     Serverlisten og aktivitetsloggen kommer via gruppen. Grensesnittet til en server åpnes direkte, så telefonen må nå adressen til serveren, hjemme eller over en VPN.
 

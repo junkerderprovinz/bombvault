@@ -19,6 +19,8 @@ Pair the app with servers on version 9.7.0 or later. A server on an older versio
 
 The phone then joins the group like another instance. It reads what runs on each server through the group without a sign-in, at home directly and away from home over the relay. How the group itself works is described under [Pairing instances](offsite-recovery.md#pairing).
 
+The app joins the group through the relay, also at home. If your instances use **No relay**, pick one under **Settings, Pairing** before you scan the code.
+
 !!! note "The interface still needs a way to the server"
     The server list and the activity log come through the group. The interface of a server opens directly, so the phone has to reach the server's address, at home or over a VPN.
 

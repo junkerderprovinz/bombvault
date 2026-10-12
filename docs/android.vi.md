@@ -19,6 +19,8 @@ Hãy ghép nối ứng dụng với các máy chủ phiên bản 9.7.0 trở lê
 
 Sau đó điện thoại gia nhập nhóm như một phiên bản khác. Nó đọc những gì đang chạy trên từng máy chủ qua nhóm mà không cần đăng nhập: ở nhà thì kết nối trực tiếp, khi ra ngoài thì qua relay. Cách nhóm hoạt động được mô tả trong [Ghép nối các phiên bản](offsite-recovery.md#pairing).
 
+Ứng dụng gia nhập nhóm qua relay, kể cả khi ở nhà. Nếu phiên bản của bạn đang để **Không dùng relay**, hãy chọn một relay trong **Cài đặt, Ghép nối** trước khi quét mã.
+
 !!! note "Giao diện vẫn cần đường tới máy chủ"
     Danh sách máy chủ và nhật ký hoạt động đến qua nhóm. Giao diện của một máy chủ thì mở trực tiếp, nên điện thoại phải tới được địa chỉ của máy chủ, ở nhà hoặc qua VPN.
 

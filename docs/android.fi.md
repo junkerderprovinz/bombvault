@@ -19,6 +19,8 @@ Pariliitä sovellus palvelimiin, joiden versio on 9.7.0 tai uudempi. Vanhemman v
 
 Puhelin liittyy sitten ryhmään kuin mikä tahansa muu instanssi. Se lukee ryhmän kautta ilman kirjautumista, mitä kullakin palvelimella on käynnissä: kotona suoraan ja kodin ulkopuolella releen kautta. Itse ryhmän toiminta kuvataan kohdassa [Instanssien pariliitos](offsite-recovery.md#pairing).
 
+Sovellus liittyy ryhmään releen kautta, myös kotona. Jos instanssisi asetuksena on **Ei relettä**, valitse rele kohdassa **Asetukset, Pariliitos** ennen kuin skannaat koodin.
+
 !!! note "Käyttöliittymä tarvitsee yhä reitin palvelimelle"
     Palvelinluettelo ja toimintaloki tulevat ryhmän kautta. Palvelimen käyttöliittymä avautuu kuitenkin suoraan, joten puhelimen on tavoitettava palvelimen osoite, kotona tai VPN:n kautta.
 

@@ -19,6 +19,8 @@ Appairez l'application avec des serveurs en version 9.7.0 ou ultérieure. Un ser
 
 Le téléphone rejoint alors le groupe comme une instance de plus. Il lit ce qui tourne sur chaque serveur via le groupe, sans connexion, directement à la maison et via le relais à l'extérieur. Le fonctionnement du groupe lui-même est décrit sous [Appairage des instances](offsite-recovery.md#pairing).
 
+L'application rejoint le groupe via le relais, même à la maison. Si votre instance est sur **Aucun relais**, choisissez-en un sous **Paramètres, Appairage** avant de scanner le code.
+
 !!! note "L'interface a toujours besoin d'un chemin vers le serveur"
     La liste des serveurs et le journal d'activité passent par le groupe. L'interface d'un serveur s'ouvre directement : le téléphone doit donc pouvoir joindre l'adresse du serveur, à la maison ou via un VPN.
 

@@ -19,6 +19,8 @@ Emparelhe a aplicação com servidores na versão 9.7.0 ou posterior. Um servido
 
 A partir daí o telemóvel junta-se ao grupo como mais uma instância. Lê o que corre em cada servidor através do grupo sem iniciar sessão, diretamente em casa e através do retransmissor fora de casa. O funcionamento do próprio grupo está descrito em [Emparelhamento de instâncias](offsite-recovery.md#pairing).
 
+A aplicação junta-se ao grupo através do retransmissor, também em casa. Se a tua instância estiver em **Sem relay**, escolhe um em **Definições, Emparelhamento** antes de digitalizares o código.
+
 !!! note "A interface continua a precisar de um caminho até ao servidor"
     A lista de servidores e o registo de atividade chegam através do grupo. A interface de um servidor abre diretamente, por isso o telemóvel tem de conseguir chegar ao endereço do servidor, em casa ou através de uma VPN.
 

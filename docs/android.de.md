@@ -19,6 +19,8 @@ Kopple die App mit Servern ab Version 9.7.0. Ein Server mit einer älteren Versi
 
 Danach tritt das Handy der Gruppe bei wie eine weitere Instanz. Es liest über die Gruppe ohne Anmeldung, was auf jedem Server läuft, zu Hause direkt und unterwegs über das Relay. Wie die Gruppe selbst funktioniert, steht unter [Instanzen koppeln](offsite-recovery.md#pairing).
 
+Die App tritt der Gruppe über das Relay bei, auch zu Hause. Steht deine Instanz auf **Kein Relay**, wähl unter **Einstellungen, Kopplung** eines aus, bevor du den Code scannst.
+
 !!! note "Die Oberfläche braucht trotzdem einen Weg zum Server"
     Die Serverliste und das Aktivitätsprotokoll kommen über die Gruppe. Die Oberfläche eines Servers öffnet sich direkt, das Handy muss die Adresse des Servers also erreichen, zu Hause oder über ein VPN.
 

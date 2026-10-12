@@ -19,6 +19,8 @@ Aplicația Android pune pe telefon toate serverele BombVault din grupul tău. Po
 
 Telefonul intră apoi în grup ca încă o instanță. Citește ce rulează pe fiecare server prin grup, fără autentificare, direct când ești acasă și prin releu când ești plecat. Felul în care funcționează grupul însuși este descris la [Împerecherea instanțelor](offsite-recovery.md#pairing).
 
+Aplicația intră în grup prin releu, și acasă. Dacă instanța ta este pe **Fără relay**, alege unul în **Setări, Împerechere** înainte să scanezi codul.
+
 !!! note "Interfața tot are nevoie de o cale până la server"
     Lista de servere și jurnalul de activitate vin prin grup. Interfața unui server se deschide direct, așa că telefonul trebuie să poată ajunge la adresa serverului, acasă sau printr-un VPN.
 

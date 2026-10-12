@@ -19,6 +19,8 @@ Parkoppla appen med servrar på version 9.7.0 eller senare. En server på en äl
 
 Telefonen går sedan med i gruppen som ännu en instans. Den läser via gruppen vad som körs på varje server utan inloggning, direkt hemma och via reläet borta. Hur själva gruppen fungerar beskrivs under [Parkoppling av instanser](offsite-recovery.md#pairing).
 
+Appen går med i gruppen via reläet, även hemma. Står din instans på **Inget relä**, välj ett under **Inställningar, Parkoppling** innan du skannar koden.
+
 !!! note "Gränssnittet behöver fortfarande en väg till servern"
     Serverlistan och aktivitetsloggen kommer via gruppen. En servers gränssnitt öppnas direkt, så telefonen måste nå serverns adress, hemma eller via ett VPN.
 

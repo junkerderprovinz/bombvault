@@ -19,6 +19,8 @@ Spáruj aplikaci se servery ve verzi 9.7.0 nebo novější. Server se starší v
 
 Telefon se pak připojí ke skupině jako další instance. Co na jednotlivých serverech běží, čte přes skupinu bez přihlášení, doma přímo a mimo domov přes relay. Jak funguje samotná skupina, popisuje [Párování instancí](offsite-recovery.md#pairing).
 
+Aplikace se ke skupině připojuje přes relay, i doma. Pokud je tvoje instance nastavená na **Bez přeposílače**, vyber v **Nastavení, Párování** relay dřív, než kód naskenuješ.
+
 !!! note "Rozhraní stále potřebuje cestu k serveru"
     Seznam serverů a protokol aktivit přicházejí přes skupinu. Rozhraní serveru se ale otevírá přímo, takže telefon musí dosáhnout na adresu serveru, doma nebo přes VPN.
 

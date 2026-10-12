@@ -19,6 +19,8 @@ Koppel de app met servers op versie 9.7.0 of nieuwer. Een server op een oudere v
 
 De telefoon treedt daarna tot de groep toe als een extra instantie. Hij leest via de groep zonder aanmelden wat er op elke server draait, thuis rechtstreeks en onderweg via de relay. Hoe de groep zelf werkt, staat bij [Koppeling van instanties](offsite-recovery.md#pairing).
 
+De app treedt via de relay tot de groep toe, ook thuis. Staat je instantie op **Geen relay**, kies er dan een onder **Instellingen, Koppeling** voordat je de code scant.
+
 !!! note "De interface heeft nog steeds een weg naar de server nodig"
     De serverlijst en het activiteitenlogboek komen via de groep. De interface van een server opent rechtstreeks, dus de telefoon moet het adres van de server kunnen bereiken, thuis of via een VPN.
 

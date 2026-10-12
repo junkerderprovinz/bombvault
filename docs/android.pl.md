@@ -19,6 +19,8 @@ Paruj aplikację z serwerami w wersji 9.7.0 lub nowszej. Serwer w starszej wersj
 
 Telefon dołącza wtedy do grupy jak kolejna instancja. To, co działa na każdym serwerze, odczytuje przez grupę bez logowania, w domu bezpośrednio, a poza domem przez przekaźnik. Jak działa sama grupa, opisuje [Parowanie instancji](offsite-recovery.md#pairing).
 
+Aplikacja dołącza do grupy przez przekaźnik, także w domu. Jeśli twoja instancja ma ustawione **Brak relay**, otwórz **Ustawienia, Parowanie** i wybierz przekaźnik, zanim zeskanujesz kod.
+
 !!! note "Interfejs nadal potrzebuje drogi do serwera"
     Lista serwerów i dziennik aktywności przychodzą przez grupę. Interfejs serwera otwiera się jednak bezpośrednio, więc telefon musi dotrzeć do adresu serwera, w domu albo przez VPN.
 

@@ -19,6 +19,8 @@ Empareja la app con servidores en la versión 9.7.0 o posterior. Un servidor con
 
 A partir de ahí el móvil se une al grupo como una instancia más. Lee lo que se ejecuta en cada servidor a través del grupo sin iniciar sesión, directamente en casa y a través del relay fuera de casa. Cómo funciona el propio grupo se describe en [Emparejamiento de instancias](offsite-recovery.md#pairing).
 
+La app se une al grupo a través del relay, también en casa. Si tu instancia está en **Sin repetidor**, elige uno en **Ajustes, Emparejamiento** antes de escanear el código.
+
 !!! note "La interfaz sigue necesitando un camino hasta el servidor"
     La lista de servidores y el registro de actividad llegan a través del grupo. La interfaz de un servidor se abre directamente, así que el móvil tiene que poder llegar a la dirección del servidor, en casa o por una VPN.
 

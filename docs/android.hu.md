@@ -19,6 +19,8 @@ Az alkalmazást 9.7.0-s vagy újabb verziójú szerverekkel párosítsd. Egy ré
 
 Ezután a telefon egy újabb példányként csatlakozik a csoporthoz. Azt, hogy mi fut az egyes szervereken, bejelentkezés nélkül, a csoporton keresztül olvassa: otthon közvetlenül, otthonon kívül a relén át. Magának a csoportnak a működését a [Példányok párosítása](offsite-recovery.md#pairing) írja le.
 
+Az alkalmazás a relén keresztül csatlakozik a csoporthoz, otthon is. Ha a példányod **Nincs relay** beállításon van, a kód beolvasása előtt válassz egyet a **Beállítások, Párosítás** oldalon.
+
 !!! note "A felületnek továbbra is el kell érnie a szervert"
     A szerverlista és a tevékenységnapló a csoporton át érkezik. Egy szerver felülete viszont közvetlenül nyílik meg, ezért a telefonnak el kell érnie a szerver címét, otthon vagy VPN-en keresztül.
 

@@ -19,6 +19,8 @@ Uygulamayı 9.7.0 veya daha yeni sürümdeki sunucularla eşleştir. Daha eski s
 
 Telefon bundan sonra gruba başka bir örnek gibi katılır. Her sunucuda neyin çalıştığını oturum açmadan grup üzerinden okur: evde doğrudan, evden uzaktayken röle üzerinden. Grubun kendisinin nasıl çalıştığı [Örnekleri eşleştirme](offsite-recovery.md#pairing) bölümünde anlatılıyor.
 
+Uygulama, evde de olsa gruba röle üzerinden katılır. Gruptaki örnek **Röle yok** durumundaysa, kodu taramadan önce **Ayarlar, Eşleştirme**'den bir röle seç.
+
 !!! note "Arayüzün sunucuya yine de bir yolu olmalı"
     Sunucu listesi ve etkinlik günlüğü grup üzerinden gelir. Bir sunucunun arayüzü ise doğrudan açılır, bu yüzden telefonun sunucunun adresine evde ya da bir VPN üzerinden ulaşabilmesi gerekir.
 

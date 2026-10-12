@@ -19,6 +19,8 @@ Associa l'app a server con versione 9.7.0 o successiva. Un server con una versio
 
 Da quel momento il telefono entra nel gruppo come un'altra istanza. Legge cosa gira su ogni server tramite il gruppo senza accesso, direttamente a casa e tramite il relay fuori casa. Il funzionamento del gruppo in sé è descritto in [Associazione delle istanze](offsite-recovery.md#pairing).
 
+L'app entra nel gruppo tramite il relay, anche a casa. Se la tua istanza è su **Nessun relay**, scegline uno in **Impostazioni, Associazione** prima di scansionare il codice.
+
 !!! note "L'interfaccia ha comunque bisogno di una strada verso il server"
     L'elenco dei server e il registro attività arrivano tramite il gruppo. L'interfaccia di un server si apre direttamente, quindi il telefono deve raggiungere l'indirizzo del server, a casa o tramite una VPN.
 
