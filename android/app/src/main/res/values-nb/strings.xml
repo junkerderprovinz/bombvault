@@ -4,4 +4,7 @@
     <string name="save_failed">Filen kunne ikke lagres: %1$s</string>
     <string name="save_untrusted">Serverens sertifikat er endret. Åpne den på nytt fra startskjermen for å sjekke det nye.</string>
     <string name="no_app">Ingen app på denne telefonen åpner denne lenken.</string>
+    <string name="relay_on">Åpnet via relay</string>
+    <string name="relay_explained">Appen når ikke denne serveren på dens egen adresse, så den åpner den via relayen til gruppen din. Pålogging med passord og lagring av filer fungerer bare på serverens egen adresse.</string>
+    <string name="relay_no_download">Lagring av filer fungerer bare på serverens egen adresse, ikke via relayen.</string>
 </resources>

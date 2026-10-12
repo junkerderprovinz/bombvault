@@ -4,4 +4,7 @@
     <string name="save_failed">Datoteku nije bilo moguće spremiti: %1$s</string>
     <string name="save_untrusted">Certifikat poslužitelja se promijenio. Otvorite ga ponovno s početnog zaslona da provjerite novi.</string>
     <string name="no_app">Nijedna aplikacija na ovom telefonu ne otvara ovu poveznicu.</string>
+    <string name="relay_on">Otvoreno preko releja</string>
+    <string name="relay_explained">Aplikacija ne može doći do ovog poslužitelja na njegovoj vlastitoj adresi pa ga otvara preko releja vaše grupe. Prijava lozinkom i spremanje datoteka rade samo na vlastitoj adresi poslužitelja.</string>
+    <string name="relay_no_download">Spremanje datoteka radi samo na vlastitoj adresi poslužitelja, ne preko releja.</string>
 </resources>

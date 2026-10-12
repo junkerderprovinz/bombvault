@@ -4,4 +4,7 @@
     <string name="save_failed">Ezin izan da fitxategia gorde: %1$s</string>
     <string name="save_untrusted">Zerbitzariaren ziurtagiria aldatu da. Ireki ezazu berriro hasierako pantailatik berria egiaztatzeko.</string>
     <string name="no_app">Telefono honetako aplikaziorik ez du esteka hau irekitzen.</string>
+    <string name="relay_on">Bitartekariaren bidez irekita</string>
+    <string name="relay_explained">Aplikazioak ezin du zerbitzari honetara bere helbidean iritsi, beraz zure taldearen bitartekariaren bidez irekitzen du. Pasahitzarekin saioa hasteak eta fitxategiak gordetzeak zerbitzariaren berezko helbidean soilik funtzionatzen dute.</string>
+    <string name="relay_no_download">Fitxategiak gordetzeak zerbitzariaren berezko helbidean soilik funtzionatzen du, ez bitartekariaren bidez.</string>
 </resources>

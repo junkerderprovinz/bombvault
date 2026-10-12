@@ -4,4 +4,7 @@
     <string name="save_failed">Het bestand kon niet worden opgeslagen: %1$s</string>
     <string name="save_untrusted">Het certificaat van de server is gewijzigd. Open de server opnieuw vanaf het startscherm om het nieuwe certificaat te controleren.</string>
     <string name="no_app">Geen enkele app op deze telefoon opent deze link.</string>
+    <string name="relay_on">Geopend via de relay</string>
+    <string name="relay_explained">De app kan deze server niet bereiken op zijn eigen adres en opent hem daarom via de relay van je groep. Aanmelden met het wachtwoord en bestanden opslaan werkt alleen op het eigen adres van de server.</string>
+    <string name="relay_no_download">Bestanden opslaan werkt alleen op het eigen adres van de server, niet via de relay.</string>
 </resources>

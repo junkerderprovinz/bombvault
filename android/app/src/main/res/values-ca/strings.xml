@@ -4,4 +4,7 @@
     <string name="save_failed">No s\'ha pogut desar el fitxer: %1$s</string>
     <string name="save_untrusted">El certificat del servidor ha canviat. Obre\'l de nou des de la pantalla d\'inici per comprovar el nou.</string>
     <string name="no_app">Cap app d\'aquest telèfon obre aquest enllaç.</string>
+    <string name="relay_on">Obert a través del repetidor</string>
+    <string name="relay_explained">L\'app no pot arribar a aquest servidor a la seva pròpia adreça, així que l\'obre a través del repetidor del teu grup. Iniciar sessió amb la contrasenya i desar fitxers només funciona a l\'adreça pròpia del servidor.</string>
+    <string name="relay_no_download">Desar fitxers només funciona a l\'adreça pròpia del servidor, no a través del repetidor.</string>
 </resources>

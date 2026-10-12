@@ -4,4 +4,7 @@
     <string name="save_failed">Non se puido gardar o ficheiro: %1$s</string>
     <string name="save_untrusted">O certificado do servidor cambiou. Ábreo de novo desde a pantalla de inicio para comprobar o novo certificado.</string>
     <string name="no_app">Ningunha app deste teléfono abre esta ligazón.</string>
+    <string name="relay_on">Aberto a través do relé</string>
+    <string name="relay_explained">A app non pode chegar a este servidor no seu propio enderezo, así que o abre a través do relé do teu grupo. Iniciar sesión co contrasinal e gardar ficheiros só funciona no enderezo propio do servidor.</string>
+    <string name="relay_no_download">Gardar ficheiros só funciona no enderezo propio do servidor, non a través do relé.</string>
 </resources>
