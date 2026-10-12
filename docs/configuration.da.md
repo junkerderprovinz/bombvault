@@ -132,7 +132,7 @@ Afvigelsesgenkendelse sættes op i kortet **Afvigelser** under **Indstillinger, 
 | **Send en notifikation for** | Kun kritiske fund | Den laveste alvorlighed, der sender en besked via de kanaler, der er sat op under Notifikationer. Gentagne fejlede sikkerhedskopier og dumps og fejlede planlagte gendannelsestjek sender allerede deres egen besked og sendes ikke to gange. |
 | **Behold gamle sikkerhedskopier, når en kilde skrumper kraftigt eller omskrives** | Til | Mens et element har et åbent fund om en næsten tom kilde, en kraftig skrumpning eller størstedelen af dets data gemt igen, lader opbevaring og oprydning elementets gamle sikkerhedskopier være. Kvittér for fundet eller markér det som forventet for at slippe dem. |
 
-Hvert element kan bruge sin egen følsomhed og sit eget notifikationsminimum. Sæt dem på elementets fane **Integritet** eller på siden **Afvigelser** under **Overvågning**. For et ZFS-element gælder de for hvert datasæt i dets træ.
+Hvert element kan bruge sin egen følsomhed og sit eget notifikationsminimum. Sæt dem på elementets fane **Verificering** eller på siden **Afvigelser** under **Overvågning**. For et ZFS-element gælder de for hvert datasæt i dets træ.
 
 ## Bærbare indstillinger (eksportér og importér) {#portable-settings-export-and-import}
 

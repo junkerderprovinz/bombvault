@@ -211,7 +211,7 @@ En tömd underordnad ändrar knappt totalen i ett stort träd, så avvikelsedete
 
 En datauppsättning som föregående körning säkerhetskopierade och den här körningen inte kunde läsa räknas som tömd, så länge postens urval inte ändrats. Det omfattar en nyckel som inte är inläst, en datauppsättning som inte är monterad och en som försvunnit ur trädet. En underordnad du själv undantar ändrar urvalet, så dess historik börjar i stället om. Medan ett fynd om förlorad data är öppet behåller retention just den datauppsättningens gamla säkerhetskopior och gallrar resten av trädet som vanligt.
 
-Varje datauppsättning har en egen rad i postens övervakning, som öppnas med **Övervakning** på sidan **Avvikelser** och står på postens flik **Integritet**. De öppna fynden visas bredvid varje datauppsättning. Länken i ett fynd öppnar återställningsfönstret på datauppsättningens sista goda säkerhetskopia. Om en körning blir klar bedöms för hela posten, eftersom en körning lyckas eller misslyckas som helhet.
+Varje datauppsättning har en egen rad i postens övervakning, som öppnas med **Övervakning** på sidan **Avvikelser** och står på postens flik **Verifiering**. De öppna fynden visas bredvid varje datauppsättning. Länken i ett fynd öppnar återställningsfönstret på datauppsättningens sista goda säkerhetskopia. Om en körning blir klar bedöms för hela posten, eftersom en körning lyckas eller misslyckas som helhet.
 
 Själva kontrollerna beskrivs under [Funktioner](features.md). En assistent ansluten via [MCP-servern](mcp.md) kan lista en ZFS-posts återställningspunkter, starta dess säkerhetskopia och läsa fynden, men att kvittera ett fynd görs på sidan **Avvikelser**.
 

@@ -132,7 +132,7 @@ Phát hiện bất thường được thiết lập trong thẻ **Bất thườn
 | **Gửi thông báo cho** | Chỉ các phát hiện nghiêm trọng | Mức nghiêm trọng thấp nhất gửi tin nhắn qua các kênh đã thiết lập tại Thông báo. Các lần sao lưu và dump thất bại lặp lại và các kiểm tra khôi phục theo lịch thất bại vốn đã gửi tin nhắn riêng và không bị gửi hai lần. |
 | **Giữ bản sao lưu cũ khi nguồn co lại mạnh hoặc bị ghi lại** | Bật | Khi một mục có phát hiện đang mở về nguồn gần như trống, co lại mạnh hoặc phần lớn dữ liệu được lưu lại, việc lưu giữ và dọn dẹp để yên các bản sao lưu cũ của mục đó. Xác nhận phát hiện hoặc đánh dấu là đã lường trước để thả chúng ra. |
 
-Mỗi mục có thể dùng độ nhạy và mức thông báo tối thiểu riêng. Đặt chúng trên tab **Toàn vẹn** của mục, hoặc trên trang Bất thường dưới **Giám sát**. Với một mục ZFS, chúng áp dụng cho mọi tập dữ liệu của cây.
+Mỗi mục có thể dùng độ nhạy và mức thông báo tối thiểu riêng. Đặt chúng trên tab **Xác minh** của mục, hoặc trên trang Bất thường dưới **Giám sát**. Với một mục ZFS, chúng áp dụng cho mọi tập dữ liệu của cây.
 
 ## Cài đặt di động (xuất và nhập) {#portable-settings-export-and-import}
 

@@ -102,7 +102,7 @@ describe("labels", () => {
   });
 
   it("gives each lock its reason", () => {
-    expect(lockHint(t, "no-target", "")).toBe("No off-site target set up");
+    expect(lockHint(t, "no-target", "")).toBe("No off-site storage location set up");
     expect(lockHint(t, "own-credentials", "")).toBe("Has its own credentials and is already off the premises");
     expect(lockHint(t, "at-target", "")).toBe("Already lies at the target");
     expect(lockHint(t, "home-fixed", "NAS Keller · mounted")).toBe("Fixed since the first backup: NAS Keller · mounted");

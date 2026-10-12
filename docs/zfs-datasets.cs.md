@@ -211,7 +211,7 @@ Podřízená sada, která byla vyprázdněna, sotva změní součet velkého str
 
 Datová sada, kterou předchozí běh zálohoval a kterou tento běh nemohl přečíst, se počítá jako vyprázdněná, pokud se výběr položky nezměnil. To pokrývá nenačtený klíč, nepřipojenou datovou sadu i sadu, která ze stromu zmizela. Podřízená sada, kterou sám vyloučíš, mění výběr, takže její historie začne znovu. Dokud je otevřené zjištění o ztracených datech, uchovávání ponechá staré zálohy právě této datové sady a zbytek stromu pročistí jako obvykle.
 
-Každá datová sada má vlastní řádek ve sledování položky, které se otevře přes **Sledování** na stránce **Anomálie** a je na záložce **Integrita** položky. Otevřená zjištění se ukazují u každé datové sady. Odkaz ve zjištění otevře okno obnovy u poslední dobré zálohy datové sady. Zda běh doběhne, se posuzuje pro celou položku, protože běh uspěje nebo selže jako celek.
+Každá datová sada má vlastní řádek ve sledování položky, které se otevře přes **Sledování** na stránce **Anomálie** a je na záložce **Ověření** položky. Otevřená zjištění se ukazují u každé datové sady. Odkaz ve zjištění otevře okno obnovy u poslední dobré zálohy datové sady. Zda běh doběhne, se posuzuje pro celou položku, protože běh uspěje nebo selže jako celek.
 
 Samotné kontroly popisuje [Funkce](features.md). Asistent připojený přes [server MCP](mcp.md) může vypsat body obnovy položky ZFS, spustit její zálohu a číst zjištění, ale potvrzení zjištění probíhá na stránce **Anomálie**.
 

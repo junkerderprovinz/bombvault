@@ -598,7 +598,7 @@ describe("the copy a section's off-site settings describe", () => {
     expect(within(card("How long to keep")).getByText("Long")).toBeTruthy();
     expect(
       screen.getByLabelText(
-        "This is the copy from the off-site field of Folders. You set its values in Settings, under Off-site and Retention. This page only shows them."
+        "This is the copy from the off-site field of Folders. You set its values in Settings, Storage locations. This page only shows them."
       )
     ).toBeTruthy();
   });

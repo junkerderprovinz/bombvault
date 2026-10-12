@@ -73,7 +73,7 @@ describe("the settings index in English", () => {
     const offsite = `storage: ${en["settings.retentionOffsiteTitle"]}`;
     expect(where("own off-site keep rules")).toContain(offsite);
     expect(where(en["nav.vms"])).toContain(offsite);
-    expect(where("additional off-site targets keep")).toEqual([offsite]);
+    expect(where("additional off-site storage locations keep")).toEqual([offsite]);
   });
 
   it("finds the preview on its own card", () => {

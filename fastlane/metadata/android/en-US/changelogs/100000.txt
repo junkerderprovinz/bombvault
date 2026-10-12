@@ -1,1 +1,1 @@
-The app itself is unchanged. Dashboards come from your server, where BombVault 10.0.0 brings a new interface.
+Update the app to keep opening your servers with the twelve words: BombVault 10.0.0 gives a session only to this version, and that session reaches what the app shows, but not keys or the login. Under Theme you can now pick System, which follows the light or dark mode of your phone. The dashboards come from your server, where BombVault 10.0.0 brings a new interface.

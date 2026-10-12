@@ -132,7 +132,7 @@ Avvikelsedetekteringen ställs in i kortet **Avvikelser** under **Inställningar
 | **Skicka avisering för** | Bara kritiska fynd | Den lägsta allvarlighetsgrad som skickar ett meddelande via kanalerna som ställts in under Aviseringar. Upprepade misslyckade säkerhetskopior och dumpar och misslyckade schemalagda återställningskontroller skickar redan ett eget meddelande och skickas inte två gånger. |
 | **Behåll gamla säkerhetskopior när en källa krymper kraftigt eller skrivs om** | På | Så länge en post har ett öppet fynd för en nästan tom källa, en kraftig krympning eller det mesta av datan sparad på nytt låter gallring och rensning postens gamla säkerhetskopior vara. Kvittera fyndet eller markera det som väntat för att släppa dem. |
 
-Varje post kan ha en egen känslighet och ett eget aviseringsminimum. Ställ in dem på postens flik **Integritet**, eller på sidan **Avvikelser** under **Övervakning**. För en ZFS-post gäller de för varje datauppsättning i dess träd.
+Varje post kan ha en egen känslighet och ett eget aviseringsminimum. Ställ in dem på postens flik **Verifiering**, eller på sidan **Avvikelser** under **Övervakning**. För en ZFS-post gäller de för varje datauppsättning i dess träd.
 
 ## Portabla inställningar (exportera och importera) {#portable-settings-export-and-import}
 

@@ -132,7 +132,7 @@ A deteção de anomalias configura-se no cartão **Anomalias** em **Definições
 | **Enviar uma notificação para** | Só achados críticos | A gravidade mínima que envia uma mensagem pelos canais configurados em Notificações. As falhas repetidas de backups e dumps e as verificações de restauro agendadas falhadas já enviam a sua própria mensagem e não são enviadas duas vezes. |
 | **Manter os backups antigos quando uma origem encolhe muito ou é reescrita** | Ligado | Enquanto uma entrada tiver uma deteção aberta por uma origem quase vazia, um encolhimento forte ou a maior parte dos dados guardada de novo, a retenção e a limpeza deixam os backups antigos dessa entrada em paz. Confirma a deteção ou marque-a como esperada para os libertar. |
 
-Cada entrada pode ter a sua própria sensibilidade e o seu próprio mínimo de notificação. Define-os no separador **Integridade** da entrada, ou na página **Anomalias**, em **Monitorização**. Numa entrada ZFS aplicam-se a cada conjunto de dados da sua árvore.
+Cada entrada pode ter a sua própria sensibilidade e o seu próprio mínimo de notificação. Define-os no separador **Verificação** da entrada, ou na página **Anomalias**, em **Monitorização**. Numa entrada ZFS aplicam-se a cada conjunto de dados da sua árvore.
 
 ## Definições portáteis (exportar e importar) {#portable-settings-export-and-import}
 

@@ -132,7 +132,7 @@ Zjišťování anomálií se nastavuje v kartě **Anomálie** v **Nastavení, Ov
 | **Posílat oznámení pro** | Jen kritické nálezy | Nejnižší závažnost, která pošle zprávu kanály nastavenými v Oznámení. Opakovaně selhané zálohy a výpisy a selhané plánované kontroly obnovy už posílají vlastní zprávu a neposílají se dvakrát. |
 | **Ponechat staré zálohy, když se zdroj prudce zmenší nebo je přepsán** | Zapnuto | Dokud má položka otevřené zjištění pro téměř prázdný zdroj, prudké zmenšení nebo znovu uložená většina dat, uchovávání a čištění nechají staré zálohy této položky být. Potvrď zjištění nebo ho označ jako očekávané, aby šly pryč. |
 
-Každá položka může mít vlastní citlivost a vlastní minimum pro oznámení. Nastav je na záložce **Integrita** položky, nebo na stránce **Anomálie** pod **Sledování**. U položky ZFS platí pro každou datovou sadu jejího stromu.
+Každá položka může mít vlastní citlivost a vlastní minimum pro oznámení. Nastav je na záložce **Ověření** položky, nebo na stránce **Anomálie** pod **Sledování**. U položky ZFS platí pro každou datovou sadu jejího stromu.
 
 ## Přenositelná nastavení (export a import) {#portable-settings-export-and-import}
 

@@ -211,7 +211,7 @@ Một tập con bị làm trống hầu như không đổi tổng của một c�
 
 Một tập dữ liệu mà lần chạy trước đã sao lưu và lần chạy này không đọc được được tính là bị làm trống, miễn là lựa chọn của mục không đổi. Điều đó bao gồm khóa chưa nạp, tập dữ liệu chưa gắn và tập đã biến mất khỏi cây. Một tập con bạn tự loại làm đổi lựa chọn, nên lịch sử của nó bắt đầu lại. Khi một phát hiện về mất dữ liệu đang mở, lưu giữ giữ các bản sao lưu cũ của đúng tập dữ liệu đó và dọn phần còn lại của cây như thường.
 
-Mỗi tập dữ liệu có một dòng riêng trong phần giám sát của mục, mở bằng **Giám sát** trên trang Bất thường và nằm trên tab **Toàn vẹn** của mục. Các phát hiện đang mở hiện cạnh từng tập dữ liệu. Liên kết trong một phát hiện mở cửa sổ khôi phục trên bản sao lưu tốt gần nhất của tập dữ liệu. Việc một lần chạy có hoàn tất không được đánh giá cho cả mục, vì một lần chạy thành công hay thất bại như một thể.
+Mỗi tập dữ liệu có một dòng riêng trong phần giám sát của mục, mở bằng **Giám sát** trên trang Bất thường và nằm trên tab **Xác minh** của mục. Các phát hiện đang mở hiện cạnh từng tập dữ liệu. Liên kết trong một phát hiện mở cửa sổ khôi phục trên bản sao lưu tốt gần nhất của tập dữ liệu. Việc một lần chạy có hoàn tất không được đánh giá cho cả mục, vì một lần chạy thành công hay thất bại như một thể.
 
 Bản thân các kiểm tra được mô tả trong [Tính năng](features.md). Một trợ lý kết nối qua [máy chủ MCP](mcp.md) có thể liệt kê các điểm khôi phục của một mục ZFS, bắt đầu sao lưu của nó và đọc các phát hiện, nhưng việc xác nhận một phát hiện diễn ra trên trang Bất thường.
 

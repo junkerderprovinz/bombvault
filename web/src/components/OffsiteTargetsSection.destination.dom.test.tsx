@@ -36,7 +36,7 @@ afterEach(cleanup);
 describe("a target made from a destination", () => {
   it("names the destination it came from", async () => {
     render(<OffsiteTargetsSection domain="vms" t={t} />);
-    expect(await screen.findByText("Made from the destination Box")).toBeTruthy();
+    expect(await screen.findByText("Made from the storage location Box")).toBeTruthy();
   });
 
   it("leaves only the domain's own settings editable", async () => {

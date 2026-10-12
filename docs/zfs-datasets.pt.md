@@ -211,7 +211,7 @@ Um filho que foi esvaziado mal altera o total de uma árvore grande, por isso a 
 
 Um conjunto de dados que a execução anterior guardou e que esta não conseguiu ler conta como esvaziado, desde que a seleção da entrada não tenha mudado. Isso abrange uma chave não carregada, um conjunto de dados não montado e um que desapareceu da árvore. Um filho que exclui por si próprio altera a seleção, por isso o seu histórico recomeça do zero. Enquanto uma deteção de dados perdidos estiver aberta, a retenção mantém os backups antigos apenas desse conjunto de dados e limpa o resto da árvore como de costume.
 
-Cada conjunto de dados tem uma linha própria na monitorização da entrada, que se abre com **Monitorização** na página **Anomalias** e está no separador **Integridade** da entrada. As deteções abertas aparecem junto de cada conjunto. A ligação numa deteção abre a janela de restauro no último backup bom do conjunto. Se uma execução termina é avaliado para a entrada inteira, porque uma execução tem êxito ou falha como um todo.
+Cada conjunto de dados tem uma linha própria na monitorização da entrada, que se abre com **Monitorização** na página **Anomalias** e está no separador **Verificação** da entrada. As deteções abertas aparecem junto de cada conjunto. A ligação numa deteção abre a janela de restauro no último backup bom do conjunto. Se uma execução termina é avaliado para a entrada inteira, porque uma execução tem êxito ou falha como um todo.
 
 As verificações em si estão descritas em [Funcionalidades](features.md). Um assistente ligado através do [servidor MCP](mcp.md) pode listar os pontos de restauro de uma entrada ZFS, iniciar o seu backup e ler as deteções, mas confirmar uma deteção faz-se na página **Anomalias**.
 

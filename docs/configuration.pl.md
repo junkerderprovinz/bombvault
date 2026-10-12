@@ -132,7 +132,7 @@ Wykrywanie anomalii ustawiasz w karcie **Anomalie** w **Ustawienia, Weryfikacja*
 | **Wysyłaj powiadomienie dla** | Tylko krytyczne znaleziska | Najniższa waga, która wysyła wiadomość przez kanały skonfigurowane w Powiadomienia. Powtarzające się nieudane kopie i zrzuty oraz nieudane zaplanowane kontrole przywracania wysyłają już własną wiadomość i nie są wysyłane podwójnie. |
 | **Zachowuj stare kopie, gdy źródło mocno się kurczy lub zostaje nadpisane** | Włączone | Dopóki element ma otwarte wykrycie prawie pustego źródła, silnego skurczenia lub ponownego zapisania większości danych, retencja i czyszczenie nie ruszają jego starych kopii. Potwierdź wykrycie lub oznacz je jako oczekiwane, aby je zwolnić. |
 
-Każdy element może mieć własną czułość i własne minimum powiadomień. Ustawisz je na karcie **Integralność** elementu albo na stronie **Anomalie** w **Monitorowanie**. W przypadku elementu ZFS obowiązują każdy zbiór danych jego drzewa.
+Każdy element może mieć własną czułość i własne minimum powiadomień. Ustawisz je na karcie **Weryfikacja** elementu albo na stronie **Anomalie** w **Monitorowanie**. W przypadku elementu ZFS obowiązują każdy zbiór danych jego drzewa.
 
 ## Przenośne ustawienia (eksport i import) {#portable-settings-export-and-import}
 
