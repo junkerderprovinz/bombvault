@@ -1,13 +1,25 @@
 import type { MouseEvent } from "react";
 import { IconCheck } from "../navGlyphs";
 
-/** The round mark by itself, for a row that is the control. */
-export function SelectDot({ checked, onAccent = false, className = "" }: { checked: boolean; onAccent?: boolean; className?: string }) {
+/** The round mark by itself, for a row that is the control. A mixed mark
+ *  stands for a folder of which only some entries are picked. */
+export function SelectDot({
+  checked,
+  mixed = false,
+  onAccent = false,
+  className = "",
+}: {
+  checked: boolean;
+  mixed?: boolean;
+  onAccent?: boolean;
+  className?: string;
+}) {
+  const on = checked || mixed;
   const ground = onAccent
-    ? checked
+    ? on
       ? "bg-accentContrast text-accentText"
       : "bg-black/20 text-transparent"
-    : checked
+    : on
       ? "bg-accent text-accentContrast"
       : "bg-carbon-surface3 text-transparent";
   return (
@@ -15,7 +27,7 @@ export function SelectDot({ checked, onAccent = false, className = "" }: { check
       aria-hidden="true"
       className={`flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full transition-colors [&_svg]:h-2.5 [&_svg]:w-2.5 ${ground} ${className}`}
     >
-      <IconCheck />
+      {mixed && !checked ? <span className="h-0.5 w-2 rounded-full bg-current" /> : <IconCheck />}
     </span>
   );
 }

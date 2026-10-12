@@ -28,6 +28,7 @@ import { Badge } from "./Badge";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
 import { Button } from "./Button";
+import { Selector } from "./Selector";
 import { CopyBlock } from "./CopyBlock";
 import { OffsiteLocationInput } from "./placement/OffsiteLocationInput";
 import { TestButton, VerdictLine } from "./TestButton";
@@ -512,25 +513,18 @@ export function OffsiteWizard({
       {/* Step 1: backend choice */}
       <div className="flex flex-col gap-2">
         <span className={stepTitle}>{t("offsite.wizard.step1")}</span>
-        <div className="flex flex-col gap-1.5">
-          {([
+        <Selector
+          items={([
             ["rest", "offsite.wizard.backendRest"],
             ["rclone", "offsite.wizard.backendRclone"],
             ["s3", "offsite.wizard.backendS3"],
             ["path", "offsite.wizard.backendPath"],
-          ] as const).map(([val, label]) => (
-            <label key={val} className="flex items-center gap-2 text-sm text-carbon-text cursor-pointer pointer-coarse:min-h-(--btn-h)">
-              <input
-                type="radio"
-                name={`backend-${domain}`}
-                checked={backend === val}
-                onChange={() => setBackend(val)}
-                style={{ accentColor: "var(--accent)" }}
-              />
-              {t(label)}
-            </label>
-          ))}
-        </div>
+          ] as const).map(([id, label]) => ({ id, label: t(label) }))}
+          label={t("offsite.wizard.step1")}
+          select="one"
+          active={backend}
+          onChange={(id) => setBackend(id as Backend)}
+        />
         {/* A mounted share needs no server, but its path is relative to the
             Host Data mount. */}
         {backend === "path" && (

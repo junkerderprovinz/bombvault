@@ -437,7 +437,7 @@ describe("FileSetFoldersEditor live save", () => {
       fireEvent.click(box);
     });
     // In flight: the row's checkbox disables (busyPaths).
-    expect(box.disabled).toBe(true);
+    expect(box.getAttribute("aria-disabled")).toBe("true");
 
     await act(async () => {
       first.resolve({ ok: false, error: "disk on fire" });
@@ -447,7 +447,7 @@ describe("FileSetFoldersEditor live save", () => {
     // new row is checked again, not busy, and shaking.
     const revertedMedia = screen.getByRole("treeitem", { name: /^media$/ });
     const revertedBox = within(revertedMedia).getByRole("checkbox", { hidden: true });
-    expect(revertedBox.disabled).toBe(false);
+    expect(revertedBox.getAttribute("aria-disabled")).toBeNull();
     expect(revertedMedia.getAttribute("aria-checked")).toBe("true");
     expect(revertedMedia.className).toContain("glim-shake");
   });
