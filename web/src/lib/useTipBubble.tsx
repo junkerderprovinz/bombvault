@@ -50,9 +50,14 @@ export interface TipBubble {
  * @param tip  What the bubble says. When empty, nothing opens or renders and
  *             `wrap` returns its node unchanged, so callers need not branch.
  * @param disabled  Whether the trigger is currently disabled; see `wrap`.
+ * @param readOnTap  Whether a tap on a touch screen is a request to read the
+ *             tip, as on an (i), so the bubble stays until the next tap
+ *             elsewhere. Any other trigger is tapped to act, and its bubble
+ *             only flashes.
  */
-export function useTipBubble(tip?: string, disabled = false): TipBubble {
+export function useTipBubble(tip?: string, disabled = false, readOnTap = false): TipBubble {
   const [open, setOpen] = useState(false);
+  const [tapped, setTapped] = useState(false);
   const triggerRef = useRef<HTMLElement | null>(null);
   const bubbleRef = useRef<HTMLDivElement | null>(null);
   const tooltipId = useId();
@@ -74,10 +79,22 @@ export function useTipBubble(tip?: string, disabled = false): TipBubble {
   function show() {
     if (!tip) return;
     setOpen(true);
+    setTapped(false);
   }
   function hide() {
     setOpen(false);
   }
+  // A tap reaches the trigger as a mouseenter with no mouseleave to follow,
+  // so without this the bubble would stay up after the tap did its work.
+  function showOnEnter() {
+    show();
+    if (touchWasLast && !readOnTap) setTapped(true);
+  }
+  useEffect(() => {
+    if (!shown || !tapped) return;
+    const timer = window.setTimeout(hide, TAP_TIP_MS);
+    return () => window.clearTimeout(timer);
+  }, [shown, tapped]);
   // Focus opens the bubble only when the keyboard was used last. Opening on
   // focus is for Tab users. A mouse user gets focus as a side effect, from a
   // click or from a dialog handing it back to its opener (useConfirm), and a
@@ -129,7 +146,7 @@ export function useTipBubble(tip?: string, disabled = false): TipBubble {
       triggerRef.current = el;
     },
     handlers: {
-      onMouseEnter: show,
+      onMouseEnter: showOnEnter,
       onMouseLeave: hide,
       onFocus: showOnFocus,
       onBlur: hide,
@@ -170,11 +187,20 @@ export function useTipBubble(tip?: string, disabled = false): TipBubble {
 // after React's focus handler, so inside the handler it reads false for
 // keyboard focus too, and no test could tell the two cases apart.
 let pointerWasLast = false;
+let touchWasLast = false;
 let tracking = false;
+
+/** How long the bubble of a tapped trigger stays. */
+const TAP_TIP_MS = 1500;
 
 function trackInputModality() {
   if (tracking || typeof document === "undefined") return;
   tracking = true;
-  document.addEventListener("pointerdown", () => (pointerWasLast = true), true);
+  const notePointer = (e: PointerEvent) => (touchWasLast = e.pointerType === "touch");
+  document.addEventListener("pointerover", notePointer, true);
+  document.addEventListener("pointerdown", (e) => {
+    pointerWasLast = true;
+    notePointer(e);
+  }, true);
   document.addEventListener("keydown", () => (pointerWasLast = false), true);
 }

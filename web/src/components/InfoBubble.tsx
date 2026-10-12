@@ -15,7 +15,7 @@ import { useTipBubble } from "../lib/useTipBubble";
 // heading badge on the accent fill or a button that HintSlot lays it over: it
 // inherits that surface's ink and keeps full opacity.
 export function InfoBubble({ tip, onAccent = false }: { tip: string; onAccent?: boolean }) {
-  const tooltip = useTipBubble(tip);
+  const tooltip = useTipBubble(tip, false, true);
 
   return (
     <>
