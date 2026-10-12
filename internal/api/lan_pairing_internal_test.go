@@ -6,7 +6,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -83,6 +85,16 @@ func TestOnlyASignedInRequestTeachesTheDirectAddress(t *testing.T) {
 	in.router.ServeHTTP(httptest.NewRecorder(), r)
 	if got := learned(); got != before {
 		t.Fatalf("a request without a session set DirectURL to %q", got)
+	}
+
+	// Whoever holds the group's words has a paired session and names no host.
+	hash, epoch, _ := in.h.authEnabled()
+	r = httptest.NewRequest(http.MethodGet, "/api/group", nil)
+	r.Host = "10.0.0.66:3443"
+	r.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: secret.NewPairedSessionToken(in.appKey, hash, epoch, time.Hour)}) //nolint:gosec // G124: request cookie, never set by a server
+	in.router.ServeHTTP(httptest.NewRecorder(), r)
+	if got := learned(); got != before {
+		t.Fatalf("a paired session set DirectURL to %q", got)
 	}
 
 	if _, err := in.st.MutateSettings(func(s *store.Settings) error {
