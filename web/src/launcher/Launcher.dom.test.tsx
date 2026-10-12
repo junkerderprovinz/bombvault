@@ -223,4 +223,10 @@ describe("Launcher", () => {
     expect(await screen.findByRole("tab", { name: "192.168.1.11:3443" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: new URL(server.url).host })).toBeTruthy();
   });
+  it("opens on the page the history holds, as after Android rebuilt the screen", async () => {
+    window.history.replaceState({ view: "settings" }, "");
+    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    expect(await screen.findByRole("heading", { name: "Settings" })).toBeTruthy();
+  });
 });

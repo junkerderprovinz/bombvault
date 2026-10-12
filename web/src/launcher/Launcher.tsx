@@ -46,6 +46,12 @@ const POLL_MS = 10000;
 /** The launcher shows the tail of the log; the whole one is on each server. */
 const LOG_LINES = 8;
 
+function viewIn(state: unknown): View {
+  return (state as { view?: View } | null)?.view ?? "list";
+}
+
+const viewInHistory = () => viewIn(window.history.state);
+
 /** Launcher lists the servers the app knows, with what is running on them
  *  above the list. A tap opens one; the pencil edits it; the plus adds one. */
 export function Launcher({ bridge }: { bridge: Bridge }) {
@@ -61,11 +67,14 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
     return off;
   }, [bridge]);
 
-  const [view, setView] = useState<View>("list");
-  const shown = useRef<View>("list");
+  // Android rebuilds the screen when the phone switches between dark and
+  // light; the WebView brings the history back with it, and the page that was
+  // open is read from there.
+  const [view, setView] = useState<View>(viewInHistory);
+  const shown = useRef<View>(view);
   useEffect(() => {
     const onPop = (e: PopStateEvent) => {
-      const next = ((e.state as { view?: View } | null)?.view ?? "list") as View;
+      const next = viewIn(e.state);
       if (shown.current === "pairing" && next !== "pairing") bridge.send({ op: "cancelJoin" });
       shown.current = next;
       setView(next);
