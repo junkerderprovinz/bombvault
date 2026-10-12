@@ -141,17 +141,16 @@ export function FileSetDialog({
           value={path}
           hostMountRoot={hostMountRoot}
           onChange={setPath}
+          hint={`${t("files.pathHint")} ${t("files.pathChangeHint")}`}
         />
-        {/* Saving a new path clears the ticked sub-folder selection on the
-            server, so the hint says so beforehand, whether or not a
-            selection exists. The tree itself lives on the card. */}
-        <p className="text-caption text-carbon-textMuted">{t("files.pathChangeHint")}</p>
-        <p className="text-caption text-carbon-textMuted">{t("files.pathHint")}</p>
       </div>
 
       {/* Exclude patterns, one per line */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs text-carbon-textSub">{t("files.excludes")}</label>
+        <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+          {t("files.excludes")}
+          <InfoBubble tip={t("files.excludesHint")} />
+        </label>
         <textarea
           value={excludesText}
           onChange={(e) => setExcludesText(e.target.value)}
@@ -161,7 +160,6 @@ export function FileSetDialog({
           dir="ltr"
           className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
         />
-        <p className="text-caption text-carbon-textMuted">{t("files.excludesHint")}</p>
       </div>
 
       {/* A new set has no card yet, so its placement is chosen here; an

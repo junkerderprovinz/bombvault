@@ -133,3 +133,32 @@ describe.each(FORMS)("the form for %s", (_, form, button) => {
     expect(topDialog().className).toContain("bottom-0");
   });
 });
+
+describe("the explanations in the forms", () => {
+  const BUBBLED: [string, () => ReactNode, (keyof typeof en)[]][] = [
+    [
+      "the received repository",
+      FORMS[0][1],
+      ["receiver.repoLocationHint", "receiver.deadManHoursHint", "pairing.memberHint"],
+    ],
+    ["the storage offer", FORMS[2][1], ["fleet.mesh.baseUrlHint"]],
+    ["the folder set", FORMS[5][1], ["files.excludesHint"]],
+  ];
+
+  it.each(BUBBLED)("sit in info bubbles in the form for %s", async (_, form, keys) => {
+    wide = true;
+    await open(form);
+    for (const key of keys) {
+      expect(screen.queryByText(en[key])).toBeNull();
+      expect(screen.getByLabelText(en[key])).toBeTruthy();
+    }
+  });
+
+  it("put the folder's rules in the bubble beside the folder", async () => {
+    wide = true;
+    await open(FORMS[5][1]);
+    expect(screen.queryByText(en["files.pathHint"])).toBeNull();
+    expect(screen.queryByText(en["files.pathChangeHint"])).toBeNull();
+    expect(screen.getByLabelText(`${en["files.pathHint"]} ${en["files.pathChangeHint"]}`)).toBeTruthy();
+  });
+});

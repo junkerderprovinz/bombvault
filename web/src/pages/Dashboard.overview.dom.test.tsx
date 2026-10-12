@@ -151,6 +151,14 @@ describe("customize mode", () => {
     expect(within(cell("needs")).getByText(en["overview.needs.none"])).toBeTruthy();
   });
 
+  it("explains arranging in a bubble rather than a line of text", async () => {
+    await renderPage();
+    await customize();
+
+    expect(screen.queryByText(en["overview.customizeHint"])).toBeNull();
+    expect(screen.getByLabelText(en["overview.customizeHint"])).toBeTruthy();
+  });
+
   it("hides a card into the tray", async () => {
     await renderPage();
     await customize();

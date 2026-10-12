@@ -627,34 +627,23 @@ describe("FileSetFoldersEditor exclusions list", () => {
 });
 
 describe("FileSetDialog path-change hint", () => {
-  it("always says under the folder picker that a new path clears the selection", async () => {
+  it("says in the folder's bubble that a new path clears the selection", async () => {
     render(
       <Providers>
         <DialogHarness initial={setView()} />
       </Providers>,
     );
     await act(async () => {});
-    const hint = screen.getByText("Changing the folder clears the ticked sub-folder selection.");
-    // The caption follows the path input inside the same field block.
-    const pathInput = screen.getByPlaceholderText("user/appdata");
-    expect(pathInput.compareDocumentPosition(hint) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // It shows even though this fixture stores no selection, next to the
-    // generic path hint.
-    expect(
-      screen.getByText("The folder to back up, a relative subpath under the host mount root."),
-    ).toBeTruthy();
+    expect(screen.getByLabelText("The folder to back up, a relative subpath under the host mount root. Changing the folder clears the ticked sub-folder selection.")).toBeTruthy();
   });
 
-  it("shows both captions for a set without a path", async () => {
+  it("says the same for a set without a path", async () => {
     render(
       <Providers>
         <DialogHarness initial={setView({ path: "", selectedPaths: undefined })} />
       </Providers>,
     );
     await act(async () => {});
-    expect(screen.getByText("Changing the folder clears the ticked sub-folder selection.")).toBeTruthy();
-    expect(
-      screen.getByText("The folder to back up, a relative subpath under the host mount root."),
-    ).toBeTruthy();
+    expect(screen.getByLabelText("The folder to back up, a relative subpath under the host mount root. Changing the folder clears the ticked sub-folder selection.")).toBeTruthy();
   });
 });

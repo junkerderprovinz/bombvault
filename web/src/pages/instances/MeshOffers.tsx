@@ -237,7 +237,10 @@ export function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T;
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("fleet.mesh.baseUrl")}</label>
+            <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+              {t("fleet.mesh.baseUrl")}
+              <InfoBubble tip={t("fleet.mesh.baseUrlHint")} />
+            </label>
             <input
               type="text"
               value={baseUrl}
@@ -248,7 +251,6 @@ export function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T;
               dir="ltr"
               className={`${inputCls} font-mono text-start`}
             />
-            <p className="text-caption text-carbon-textMuted">{t("fleet.mesh.baseUrlHint")}</p>
           </div>
         </>
       ) : (

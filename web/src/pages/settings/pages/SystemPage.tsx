@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { InfoBubble } from "../../../components/InfoBubble";
 import { NumberField } from "../../../components/NumberField";
 import { Rows, SettingRow } from "../../../components/storage/rows";
 import { useT } from "../../../lib/i18n";
@@ -48,7 +49,10 @@ export function SystemPage() {
           />
           {settings.exportEncryptEnabled && (
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("export.encrypt.recipients")}</span>
+              <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+                {t("export.encrypt.recipients")}
+                <InfoBubble tip={t("export.encrypt.recipientsHint")} />
+              </span>
               <textarea
                 value={settings.exportAgeRecipients}
                 spellCheck={false}
@@ -64,8 +68,6 @@ export function SystemPage() {
                 dir="ltr"
                 className="rounded-control bg-carbon-surface2 px-3 py-2 text-start font-mono text-sm text-carbon-text glim-field-focus"
               />
-              {/* The accepted key syntax is looked up while pasting, so it stays on the page. */}
-              <span className="text-xs text-carbon-textMuted">{t("export.encrypt.recipientsHint")}</span>
               {!settings.exportAgeRecipients.trim() && (
                 <span className="text-xs text-statusFail">{t("export.encrypt.recipientsRequired")}</span>
               )}

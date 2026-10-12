@@ -482,7 +482,10 @@ export function ReceiverDialog({
       />
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs text-carbon-textSub">{t("receiver.repoLocation")}</label>
+        <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+          {t("receiver.repoLocation")}
+          <InfoBubble tip={t("receiver.repoLocationHint")} />
+        </label>
         <input
           type="text"
           value={repo}
@@ -493,12 +496,14 @@ export function ReceiverDialog({
           dir="ltr"
           className={`${inputCls} font-mono text-start`}
         />
-        <p className="text-caption text-carbon-textMuted">{t("receiver.repoLocationHint")}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("receiver.deadManHours")}</label>
+          <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+            {t("receiver.deadManHours")}
+            <InfoBubble tip={t("receiver.deadManHoursHint")} />
+          </label>
           <NumberField
             min={1}
             value={deadManHours}
@@ -517,10 +522,12 @@ export function ReceiverDialog({
           />
         </div>
       </div>
-      <p className="text-caption text-carbon-textMuted -mt-2">{t("receiver.deadManHoursHint")}</p>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs text-carbon-textSub">{t("receiver.checkCadence")}</label>
+        <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+          {t("receiver.checkCadence")}
+          <InfoBubble tip={t("receiver.checkCadenceHint")} />
+        </label>
         <input
           type="text"
           value={checkCadence}
@@ -531,7 +538,6 @@ export function ReceiverDialog({
           dir="ltr"
           className={`${inputCls} font-mono text-start`}
         />
-        <p className="text-caption text-carbon-textMuted">{t("receiver.checkCadenceHint")}</p>
       </div>
 
       {/* ToggleRow puts the label at the start and the switch at the end,
