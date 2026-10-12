@@ -18,7 +18,7 @@ export function ThemePicker({ t }: { t: ReturnType<typeof useT>["t"] }) {
   // segment flips them to the contrast ink. The sun's rays are thin filled
   // rects rather than strokes (design-language.md, "Icon glyphs").
   const sunIcon = (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
       <circle cx="10" cy="10" r="4.25" />
       <rect x="9.15" y="2" width="1.7" height="2" rx="0.85" />
       <rect x="9.15" y="16" width="1.7" height="2" rx="0.85" />
@@ -31,7 +31,7 @@ export function ThemePicker({ t }: { t: ReturnType<typeof useT>["t"] }) {
     </svg>
   );
   const moonIcon = (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden="true">
       <path
         d="M17.5 12.5A7.5 7.5 0 017.5 2.5a7.5 7.5 0 100 15 7.5 7.5 0 0010-5z"
         fill="currentColor"
@@ -40,7 +40,7 @@ export function ThemePicker({ t }: { t: ReturnType<typeof useT>["t"] }) {
   );
 
   const systemIcon = (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
       <circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
       <path d="M10 3.5a6.5 6.5 0 0 1 0 13Z" />
     </svg>
@@ -58,6 +58,8 @@ export function ThemePicker({ t }: { t: ReturnType<typeof useT>["t"] }) {
       active={theme}
       onChange={(id) => selectTheme(id as Theme)}
       inline
+      // The strips around it on the Look page carry text only.
+      textHeight
     />
   );
 }
