@@ -2,7 +2,10 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
+
+	"github.com/junkerderprovinz/bombvault/internal/paths"
 )
 
 // pairedRoutes are the routes the session of a paired phone reaches, by the
@@ -94,7 +97,8 @@ var pairedRoutes = map[string]bool{
 	"POST /api/backup/cancel":                 true,
 
 	// Restoring and following a restore. The handlers back up what a restore
-	// in place replaces, or refuse it to a paired session.
+	// in place replaces, or refuse it to a paired session, and restore into a
+	// folder only while it holds nothing.
 	"POST /api/restore/check":                     true,
 	"POST /api/restore/cancel":                    true,
 	"POST /api/containers/{name}/restore":         true,
@@ -137,8 +141,31 @@ func withPaired(r *http.Request) *http.Request {
 // isPaired reports whether a request was made with the session of a paired
 // phone, which an answer that carries a location or a hook scrubs them for.
 func isPaired(r *http.Request) bool {
-	paired, _ := r.Context().Value(pairedKey{}).(bool)
+	return pairedContext(r.Context())
+}
+
+// pairedContext is isPaired for the context a handler hands to the service.
+func pairedContext(ctx context.Context) bool {
+	paired, _ := ctx.Value(pairedKey{}).(bool)
 	return paired
+}
+
+// errPairedFolderInUse refuses a paired phone a restore into a folder that
+// already holds something, which it could not undo.
+var errPairedFolderInUse = errors.New("a paired phone restores only into a new or empty folder")
+
+// makeRestoreFolder creates the folder a restore to a folder writes into with
+// ensure. A paired phone gets only a folder that holds nothing yet, and one
+// that is already there keeps its mode.
+func makeRestoreFolder(ctx context.Context, target string, ensure func(string) error) error {
+	if !pairedContext(ctx) {
+		return ensure(target)
+	}
+	err := paths.EnsureEmptyDir(target)
+	if errors.Is(err, paths.ErrNotEmpty) {
+		return errPairedFolderInUse
+	}
+	return err
 }
 
 // refusePaired answers a paired phone's request for a route it does not

@@ -3,8 +3,11 @@ package paths
 
 import (
 	"errors"
+	"io"
+	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -63,4 +66,42 @@ func EnsureDirReadable(path string) error {
 		return err
 	}
 	return os.Chmod(path, 0o755) //nolint:gosec // G302: must be readable by the non-root share user
+}
+
+// ErrNotEmpty is returned by EnsureEmptyDir for a path that holds something.
+var ErrNotEmpty = errors.New("paths: the folder is not empty")
+
+// EnsureEmptyDir creates dir like EnsureDirReadable, or accepts an empty
+// directory that is already there and leaves its mode alone. A file, a link
+// or a directory with anything in it returns ErrNotEmpty.
+func EnsureEmptyDir(dir string) error {
+	if err := os.MkdirAll(filepath.Dir(dir), 0o755); err != nil { //nolint:gosec // G301: restore target on a user-visible share must be operator-readable
+		return err
+	}
+	err := os.Mkdir(dir, 0o755) //nolint:gosec // G301: as above
+	if err == nil {
+		return os.Chmod(dir, 0o755) //nolint:gosec // G302: as above
+	}
+	if !errors.Is(err, fs.ErrExist) {
+		return err
+	}
+	info, err := os.Lstat(dir)
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() {
+		return ErrNotEmpty
+	}
+	f, err := os.Open(dir) //nolint:gosec // G304: dir is resolved under the host mount by the caller
+	if err != nil {
+		return err
+	}
+	defer f.Close() //nolint:errcheck // read-only
+	if _, err := f.Readdirnames(1); !errors.Is(err, io.EOF) {
+		if err == nil {
+			return ErrNotEmpty
+		}
+		return err
+	}
+	return nil
 }

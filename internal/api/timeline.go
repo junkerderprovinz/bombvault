@@ -834,6 +834,10 @@ func (e notInListing) Error() string {
 // snapshot-missing, so the timeline can read that place again and offer the
 // next one instead of showing a restic error.
 func restoreFail(w http.ResponseWriter, source string, err error) {
+	if errors.Is(err, errPairedFolderInUse) {
+		refusePaired(w)
+		return
+	}
 	if offsiteTargetIDFromSource(source) != "" && errors.As(err, new(notInListing)) {
 		err = fmt.Errorf("%w: %w", errSnapshotMissing, err)
 	}

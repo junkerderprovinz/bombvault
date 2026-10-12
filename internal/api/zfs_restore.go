@@ -399,7 +399,7 @@ func (s *Service) planZFSRestoreToFolder(ctx context.Context, plan *zfsRestorePl
 	if isPlanOnly(ctx) {
 		return ZFSRestoreAck{Target: target}, nil
 	}
-	if err := paths.EnsureDirReadable(target); err != nil {
+	if err := makeRestoreFolder(ctx, target, paths.EnsureDirReadable); err != nil {
 		return ZFSRestoreAck{}, fmt.Errorf("create target folder: %w", err)
 	}
 	return ZFSRestoreAck{Target: target}, nil

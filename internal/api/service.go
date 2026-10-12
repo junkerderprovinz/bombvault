@@ -9652,7 +9652,7 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 			return filesRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
 		if !isPlanOnly(ctx) {
-			if err := paths.EnsureDir(t); err != nil {
+			if err := makeRestoreFolder(ctx, t, paths.EnsureDir); err != nil {
 				return filesRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 			}
 		}
@@ -10015,7 +10015,7 @@ func (s *Service) prepareRestoreToPath(ctx context.Context, name, source, snapsh
 
 	// Create the target dir ONLY after containment passed.
 	if !isPlanOnly(ctx) {
-		if err := paths.EnsureDir(target); err != nil {
+		if err := makeRestoreFolder(ctx, target, paths.EnsureDir); err != nil {
 			return toPathRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 		}
 	}
@@ -14567,7 +14567,7 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	// share, so the operator's non-root SMB user must be able to read what root
 	// restored there (see EnsureDirReadable).
 	if plan.target != "" && !isPlanOnly(ctx) {
-		if err := paths.EnsureDirReadable(plan.target); err != nil {
+		if err := makeRestoreFolder(ctx, plan.target, paths.EnsureDirReadable); err != nil {
 			return fileSetRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 		}
 	}
@@ -14828,7 +14828,7 @@ func (s *Service) buildFileSetFilesPlan(ctx context.Context, snaps []restic.Snap
 	// (0o755) variant, so the operator's non-root SMB user can read what root
 	// restored to the synced share (see EnsureDirReadable / the v6.0.0 files fix).
 	if plan.target != "" && !isPlanOnly(ctx) {
-		if err := paths.EnsureDirReadable(plan.target); err != nil {
+		if err := makeRestoreFolder(ctx, plan.target, paths.EnsureDirReadable); err != nil {
 			return fileSetFilesRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 		}
 	}
