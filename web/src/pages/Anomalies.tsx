@@ -39,6 +39,7 @@ import { findingHasCurve } from "../lib/anomalyCurve";
 import { hueVars } from "../lib/appearance";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
+import { namedLocal } from "../lib/storageLocations";
 import { useToast } from "../lib/toast";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 import { useConfirm } from "../lib/useConfirm";
@@ -149,6 +150,7 @@ export function Anomalies() {
       })
       .catch(() => undefined);
   }, [aboutDisk]);
+  const places = namedLocal(t, locations);
 
   const globals: AnomalyGlobals = {
     sensitivity: settings?.anomalySensitivity ?? "balanced",
@@ -296,7 +298,7 @@ export function Anomalies() {
                   closed={view === "closed"}
                   lead={i === 0}
                   siblings={siblings.length > 1 ? siblings : undefined}
-                  place={findingPlace(a, locations)}
+                  place={findingPlace(a, places)}
                   onSettle={settle}
                   onDetails={(comparing) => setShownWindow({ kind: "finding", id: a.id, comparing })}
                 />
@@ -337,7 +339,7 @@ export function Anomalies() {
           a={windowFinding}
           t={t}
           comparing={shownWindow.comparing}
-          place={findingPlace(windowFinding, locations)}
+          place={findingPlace(windowFinding, places)}
           onCompare={() => setShownWindow({ ...shownWindow, comparing: true })}
           onMonitoring={
             byTarget.has(windowFinding.targetId)

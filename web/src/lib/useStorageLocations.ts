@@ -7,7 +7,9 @@ import {
   listStorageLocations,
   type StorageLocation,
 } from "./api";
+import { useT } from "./i18n";
 import { anyActive, useProgress } from "./progress";
+import { namedLocal } from "./storageLocations";
 import { storageRunning } from "./storageRuns";
 import type { LocationRecords } from "./storageWrites";
 
@@ -76,6 +78,7 @@ export function useStorageLocationsOnDemand(): StorageLocationList {
 }
 
 function useList(reloads: number, retry: () => void): StorageLocationList {
+  const { t } = useT();
   const [state, setState] = useState({ locations: [] as StorageLocation[], loaded: false, failed: false });
 
   useEffect(() => {
@@ -94,7 +97,7 @@ function useList(reloads: number, retry: () => void): StorageLocationList {
     };
   }, [reloads]);
 
-  return useMemo(() => ({ ...state, retry }), [state, retry]);
+  return useMemo(() => ({ ...state, locations: namedLocal(t, state.locations), retry }), [state, retry, t]);
 }
 
 export type LocationStatus = "loading" | "ready" | "missing" | "failed";
@@ -124,12 +127,16 @@ async function readRecords(location: StorageLocation): Promise<LocationRecords> 
  * page is up, because that probe can take as long as the remote does.
  */
 export function useStorageLocation(id: string): StorageLocationRead {
+  const { t } = useT();
   const [reloads, retry] = useReloadCount();
   const [state, setState] = useState<Omit<StorageLocationRead, "retry">>({
     location: null,
     records: { targets: [] },
     status: "loading",
   });
+  // A folder on this host is named after how many there are, which only the
+  // whole list tells.
+  const [all, setAll] = useState<StorageLocation[] | null>(null);
   const probed = useRef("");
 
   useEffect(() => {
@@ -137,8 +144,12 @@ export function useStorageLocation(id: string): StorageLocationRead {
     (async () => {
       const res = await getStorageLocation(id);
       if (!res.ok || !res.location) throw new Error(res.error);
-      const records = await readRecords(res.location);
+      const [records, list] = await Promise.all([
+        readRecords(res.location),
+        res.location.object === "path" ? listStorageLocations().catch(() => null) : null,
+      ]);
       if (!alive) return;
+      setAll(list?.locations ?? null);
       setState({ location: res.location, records, status: "ready" });
 
       const remote = res.location.backend !== "local" && !res.location.capacity.unsupported;
@@ -158,5 +169,7 @@ export function useStorageLocation(id: string): StorageLocationRead {
     };
   }, [id, reloads]);
 
-  return { ...state, retry };
+  const read = state.location;
+  const location = useMemo(() => read && namedLocal(t, [read], all ?? [read])[0], [read, all, t]);
+  return { ...state, location, retry };
 }

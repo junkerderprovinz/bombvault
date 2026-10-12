@@ -29,6 +29,18 @@ export function locationRoute(id: string): string {
   return `/storage/${encodeURIComponent(id)}`;
 }
 
+function ownFolder(location: StorageLocation): boolean {
+  return location.object === "path" && location.kind === "local";
+}
+
+/** namedLocal calls the sections' own folder on this host Local, as the
+ *  placement buttons do. Several such folders keep their own names to tell
+ *  them apart, so `all` is the whole list they are counted in. */
+export function namedLocal(t: T, locations: StorageLocation[], all = locations): StorageLocation[] {
+  if (all.filter(ownFolder).length !== 1) return locations;
+  return locations.map((location) => (ownFolder(location) ? { ...location, name: t("placement.segLocal") } : location));
+}
+
 /** The domains that keep backups at the location, each once, in the order the
  *  server lists their sections. */
 export function sectionDomains(location: StorageLocation): OffsiteDomain[] {

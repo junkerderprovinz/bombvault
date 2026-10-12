@@ -179,7 +179,7 @@ describe("the flow", () => {
   it("draws a line from each section to every place it can be backed up to, on or off", async () => {
     await renderPage();
 
-    expect(line("Containers to bombvault").getAttribute("aria-checked")).toBe("true");
+    expect(line("Containers to Local").getAttribute("aria-checked")).toBe("true");
     expect(line("Containers to B2").getAttribute("aria-checked")).toBe("true");
     expect(line("Containers to Storage Box").getAttribute("aria-checked")).toBe("false");
     expect(line("Flash to B2").getAttribute("aria-checked")).toBe("true");
@@ -249,11 +249,11 @@ describe("the flow", () => {
   it("marks a line that cannot be switched, says why in a bubble and takes no click", async () => {
     await renderPage();
 
-    const locked = line("Flash to bombvault");
+    const locked = line("Flash to Local");
     expect(locked.getAttribute("aria-disabled")).toBe("true");
     expect(locked.getAttribute("aria-checked")).toBe("true");
     expect(locked.getAttribute("tabindex")).toBeNull();
-    expect(screen.getByLabelText("Flash always backs up to its own folder.")).toBeTruthy();
+    expect(screen.getByLabelText("Flash always backs up to its own folder first. The off-site copies come from that backup, so it stays on.")).toBeTruthy();
 
     await click(locked);
     expect(fake.calls.filter((c) => c.fn.startsWith("put") || c.fn.startsWith("update"))).toEqual([]);
@@ -265,8 +265,8 @@ describe("the flow", () => {
     fake.reply("listPlacementDefaults", { ok: true, defaults: [defaultRow({ skip: ["*"] }), defaultRow({ domain: "vms" }), defaultRow({ domain: "files" })] });
     await renderPage();
 
-    expect(line("Containers to bombvault").getAttribute("aria-disabled")).toBe("true");
-    await click(line("Containers to bombvault"));
+    expect(line("Containers to Local").getAttribute("aria-disabled")).toBe("true");
+    await click(line("Containers to Local"));
     expect(fake.callsTo("previewPlacementDefault")).toEqual([]);
   });
 
@@ -315,7 +315,7 @@ describe("the flow", () => {
     expect(within(containers).getByRole("button", { name: "B2" }).getAttribute("aria-pressed")).toBe("true");
     expect(within(containers).getByRole("button", { name: "Storage Box" }).getAttribute("aria-pressed")).toBe("false");
     const flash = screen.getByRole("group", { name: "Flash" });
-    expect((within(flash).getByRole("button", { name: /^bombvault/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((within(flash).getByRole("button", { name: /^Local/ }) as HTMLButtonElement).disabled).toBe(true);
 
     await click(within(containers).getByRole("button", { name: "B2" }));
     await waitFor(() => expect(fake.callsTo("previewPlacementDefault")).toEqual([["containers", { skip: ["*"] }]]));
