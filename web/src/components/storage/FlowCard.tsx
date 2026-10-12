@@ -148,7 +148,6 @@ export function FlowCard({
           select="one"
           activation="manual"
           inline
-          hue={false}
           active={view}
           onChange={(id) => setFlowView(id as FlowView)}
         />

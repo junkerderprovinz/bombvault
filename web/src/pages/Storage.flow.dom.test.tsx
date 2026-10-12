@@ -298,6 +298,12 @@ describe("the flow", () => {
     await waitFor(() => expect(fake.callsTo("previewPlacementDefault")).toEqual([["containers", { skip: ["*"] }]]));
   });
 
+  it("gives the choice of view a colour of its own under rainbow", async () => {
+    await renderPage();
+
+    expect(screen.getByRole("radio", { name: "Graph" }).classList.contains("glim-hue")).toBe(true);
+  });
+
   it("brings the table of switches back and remembers the choice", async () => {
     await renderPage();
 
