@@ -9,9 +9,9 @@ import type { ProviderForm } from "../../lib/useProviders";
 import { useTestVerdict } from "../../lib/useTestVerdict";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
-import { DraftField, FIELD, masked } from "../destinations/steps";
+import { RemoteFolderBrowser } from "../destinations/RemoteFolderBrowser";
+import { DraftField, masked } from "../destinations/steps";
 import { formFields } from "../destinations/useDestinationDraft";
-import { InfoBubble } from "../InfoBubble";
 import { IconClose } from "../navGlyphs";
 import { TestButton, VerdictLine } from "../TestButton";
 import { Toggle } from "../Toggle";
@@ -111,20 +111,17 @@ export function ConnectionWindow({ edit, form, onClose }: { edit: LocationEdit; 
           />
         ))}
         {browsable && (
-          <label className="flex flex-col gap-1 md:col-span-2">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("storage.folder")}
-              <InfoBubble tip={t("storage.add.folderTip")} />
-            </span>
-            <input
+          <div className="md:col-span-2">
+            <RemoteFolderBrowser
+              label={t("storage.folder")}
+              hint={t("storage.add.folderTip")}
               value={folder}
-              onChange={(e) => setDir(e.target.value)}
-              autoComplete="off"
-              spellCheck={false}
-              dir="ltr"
-              className={`${FIELD} font-mono text-start`}
+              onChange={setDir}
+              provider={provider.id}
+              settings={{ ...stored.values, ...typed }}
+              needsSecret={stored.hidden.some((name) => !typed[name])}
             />
-          </label>
+          </div>
         )}
       </div>
       {fields.more.length > 0 && <Toggle label={t("dest.more")} checked={showMore} onChange={setShowMore} />}
