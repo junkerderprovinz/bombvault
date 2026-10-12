@@ -27,6 +27,8 @@ De app probeert een server eerst op zijn eigen adres. Antwoordt dat niet, bijvoo
 
 Via de relay bereikt de pagina wat een gekoppelde telefoon thuis bereikt, zoals hieronder beschreven. Aanmelden met het wachtwoord en bestanden opslaan werken alleen op het eigen adres van de server. Voortgangsbalken worden elke twee seconden bijgewerkt in plaats van doorlopend. De bestanden van de interface blijven na het eerste bezoek op de telefoon, dus latere bezoeken laden sneller. Een server ouder dan 10.0.0 opent alleen op zijn eigen adres.
 
+De app neemt een antwoord alleen aan als de server het heeft ondertekend met de sleutel die de app vastpinde toen ze die server voor het eerst tegenkwam. Antwoordt de server later met een andere sleutel, dan toont het startscherm de vingerafdruk van de nieuwe sleutel en opent de pagina pas nadat je die vertrouwt.
+
 ## Aangemeld op een gekoppelde telefoon {#sign-in}
 
 Een telefoon die met je groep is gekoppeld, opent elke server van die groep al aangemeld. Voordat hij een pagina laadt, vraagt hij die server via de groep om een sessie, en een server geeft er alleen een aan een lid dat een telefoon is. Een server die je via zijn adres hebt toegevoegd, vraagt net als in een browser om het wachtwoord.

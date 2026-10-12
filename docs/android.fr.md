@@ -27,6 +27,8 @@ L'application essaie d'abord un serveur à sa propre adresse. Quand celle-ci ne 
 
 Via le relais, la page atteint ce qu'un téléphone appairé atteint à la maison, comme décrit plus bas. La connexion avec le mot de passe et l'enregistrement de fichiers ne fonctionnent qu'à l'adresse propre du serveur. Les barres de progression se mettent à jour toutes les deux secondes au lieu de façon continue. Les fichiers de l'interface restent sur le téléphone après la première visite, donc les visites suivantes se chargent plus vite. Un serveur antérieur à 10.0.0 ne s'ouvre qu'à sa propre adresse.
 
+L'application n'accepte une réponse que si le serveur l'a signée avec la clé que l'application a épinglée lors de son premier contact avec ce serveur. Si le serveur répond plus tard avec une autre clé, l'écran d'accueil affiche l'empreinte de la nouvelle clé, et la page ne s'ouvre qu'après que vous l'avez approuvée.
+
 ## Connecté d'office sur un téléphone appairé {#sign-in}
 
 Un téléphone appairé à votre groupe ouvre chacun de ses serveurs avec la session déjà ouverte. Avant de charger une page, il demande une session à ce serveur via le groupe, et un serveur n'en accorde qu'à un membre qui est un téléphone. Un serveur ajouté par son adresse demande le mot de passe, comme dans un navigateur.

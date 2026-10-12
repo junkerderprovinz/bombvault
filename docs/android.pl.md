@@ -27,6 +27,8 @@ Aplikacja najpierw próbuje połączyć się z serwerem pod jego własnym adrese
 
 Przez przekaźnik strona sięga tego, czego sparowany telefon sięga w domu, jak opisano niżej. Logowanie hasłem i zapisywanie plików działają tylko pod własnym adresem serwera. Paski postępu odświeżają się co dwie sekundy, a nie na bieżąco. Pliki interfejsu zostają w telefonie po pierwszej wizycie, więc kolejne wizyty ładują się szybciej. Serwer starszy niż 10.0.0 otwiera się tylko pod własnym adresem.
 
+Aplikacja przyjmuje odpowiedź tylko wtedy, gdy serwer podpisał ją kluczem, który aplikacja przypięła przy pierwszym kontakcie z tym serwerem. Jeśli serwer później odpowie innym kluczem, ekran startowy pokaże odcisk nowego klucza, a strona otworzy się dopiero wtedy, gdy mu zaufasz.
+
 ## Logowanie na sparowanym telefonie {#sign-in}
 
 Telefon sparowany z Twoją grupą otwiera każdy z jej serwerów od razu zalogowany. Zanim załaduje stronę, prosi ten serwer przez grupę o sesję, a serwer wydaje ją tylko członkowi, który jest telefonem. Serwer dodany po adresie pyta o hasło, tak jak w przeglądarce.

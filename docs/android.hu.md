@@ -27,6 +27,8 @@ Az alkalmazás először a szerver saját címén próbálkozik. Ha az nem vála
 
 A relayen át az oldal azt éri el, amit egy párosított telefon otthon, ahogy lent le van írva. A jelszavas bejelentkezés és a fájlmentés csak a szerver saját címén működik. A folyamatjelzők kétmásodpercenként frissülnek folyamatos helyett. A felület fájljai az első látogatás után a telefonon maradnak, így a későbbi látogatások gyorsabban töltenek be. A 10.0.0-nál régebbi szerver csak a saját címén nyílik meg.
 
+Az alkalmazás csak akkor fogad el választ, ha a szerver azt azzal a kulccsal írta alá, amelyet az alkalmazás a szerverrel való első találkozáskor rögzített. Ha a szerver később más kulccsal válaszol, a kezdőképernyő az új kulcs ujjlenyomatát mutatja, és az oldal csak azután nyílik meg, hogy megbízhatónak jelölted.
+
 ## Bejelentkezve a párosított telefonon {#sign-in}
 
 A csoportoddal párosított telefon a csoport minden szerverét eleve bejelentkezve nyitja meg. Mielőtt betöltene egy oldalt, a csoporton át munkamenetet kér az adott szervertől, és a szerver csak olyan tagnak ad ilyet, amely telefon. A cím alapján hozzáadott szerver jelszót kér, ahogy egy böngészőben is. Aki ismeri a tizenkét szót, az amúgy is megnyithatja a csoport minden mentését, így a párosítás nem ad semmi újat.

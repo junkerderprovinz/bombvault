@@ -27,6 +27,8 @@ Aplikace zkusí server nejdřív na jeho vlastní adrese. Když neodpoví, třeb
 
 Přes relay stránka dosáhne na to, na co spárovaný telefon dosáhne doma, jak je popsáno níže. Přihlášení heslem a ukládání souborů fungují jen na vlastní adrese serveru. Ukazatele průběhu se obnovují každé dvě sekundy, ne průběžně. Soubory rozhraní zůstanou po první návštěvě v telefonu, takže se další návštěvy načtou rychleji. Server starší než 10.0.0 se otevře jen na vlastní adrese.
 
+Aplikace přijme odpověď jen tehdy, když ji server podepsal klíčem, který si aplikace připnula při prvním setkání s tímto serverem. Odpoví-li server později jiným klíčem, úvodní obrazovka ukáže otisk nového klíče a stránka se otevře až poté, co mu důvěřuješ.
+
 ## Přihlášení na spárovaném telefonu {#sign-in}
 
 Telefon spárovaný s tvou skupinou otevře každý z jejích serverů rovnou přihlášený. Před načtením stránky si u daného serveru přes skupinu vyžádá relaci a server ji vydá jen členovi, který je telefonem. Server přidaný podle adresy se zeptá na heslo, stejně jako v prohlížeči. 

@@ -27,6 +27,8 @@ Sovellus kokeilee palvelinta ensin sen omassa osoitteessa. Jos osoite ei vastaa,
 
 Releen kautta sivu yltää siihen, mihin pariliitetty puhelin yltää kotona, kuten alla kuvataan. Salasanalla kirjautuminen ja tiedostojen tallennus toimivat vain palvelimen omassa osoitteessa. Edistymispalkit päivittyvät kahden sekunnin välein eivätkä jatkuvasti. Käyttöliittymän tiedostot jäävät puhelimeen ensimmäisen käynnin jälkeen, joten myöhemmät käynnit latautuvat nopeammin. Ennen versiota 10.0.0 oleva palvelin avautuu vain omassa osoitteessaan.
 
+Sovellus hyväksyy vastauksen vain, jos palvelin on allekirjoittanut sen avaimella, jonka sovellus kiinnitti, kun se tapasi palvelimen ensimmäisen kerran. Jos palvelin vastaa myöhemmin toisella avaimella, aloitusnäyttö näyttää uuden avaimen sormenjäljen, ja sivu avautuu vasta, kun luotat siihen.
+
 ## Kirjautuneena pariliitetyllä puhelimella {#sign-in}
 
 Ryhmääsi pariliitetty puhelin avaa jokaisen ryhmän palvelimen valmiiksi kirjautuneena. Ennen sivun lataamista se pyytää ryhmän kautta palvelimelta istunnon, ja palvelin antaa sellaisen vain jäsenelle, joka on puhelin. Osoitteella lisätty palvelin kysyy salasanaa kuten selaimessa.

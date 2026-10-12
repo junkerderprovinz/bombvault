@@ -27,6 +27,8 @@ The app first tries a server at its own address. When that does not answer, as o
 
 Over the relay the page reaches what a paired phone reaches at home, described below. Signing in with the password and saving files work only at the server's own address. Progress bars update every two seconds instead of continuously. The interface's files stay on the phone after the first visit, so later visits load faster. A server older than 10.0.0 opens only at its own address.
 
+The app takes an answer only when the server signed it with the key the app pinned when it first met that server. If the server later answers with another key, the start screen shows the new key's fingerprint, and the page opens only after you trust it.
+
 ## Signed in on a paired phone {#sign-in}
 
 A phone paired with your group opens each of its servers already signed in. Before it loads a page, it asks that server over the group for a session, and a server hands one only to a member that is a phone. A server added by its address asks for the password, as in a browser.

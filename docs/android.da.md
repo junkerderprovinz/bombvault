@@ -27,6 +27,8 @@ Appen prøver først en server på dens egen adresse. Svarer den ikke, for eksem
 
 Via relayet når siden det, som en parret telefon når derhjemme, som beskrevet nedenfor. Login med adgangskoden og lagring af filer virker kun på serverens egen adresse. Fremdriftslinjer opdateres hvert andet sekund i stedet for løbende. Grænsefladens filer bliver på telefonen efter det første besøg, så senere besøg indlæses hurtigere. En server ældre end 10.0.0 åbner kun på sin egen adresse.
 
+Appen tager kun imod et svar, hvis serveren har signeret det med den nøgle, appen fastlåste, første gang den mødte serveren. Svarer serveren senere med en anden nøgle, viser startskærmen den nye nøgles fingeraftryk, og siden åbner først, når du stoler på den.
+
 ## Logget ind på en parret telefon {#sign-in}
 
 En telefon, der er parret med din gruppe, åbner hver af gruppens servere allerede logget ind. Før den indlæser en side, beder den serveren om en session via gruppen, og en server udleverer kun en session til et medlem, der er en telefon. En server, der er tilføjet med sin adresse, beder om adgangskoden, ligesom i en browser. 

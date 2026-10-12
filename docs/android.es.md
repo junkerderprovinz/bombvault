@@ -27,6 +27,8 @@ La app prueba primero un servidor en su propia dirección. Si no responde, por e
 
 A través del relay la página llega a lo que llega un móvil emparejado en casa, como se describe más abajo. Iniciar sesión con la contraseña y guardar archivos solo funcionan en la propia dirección del servidor. Las barras de progreso se actualizan cada dos segundos en vez de continuamente. Los archivos de la interfaz se quedan en el móvil tras la primera visita, así que las siguientes cargan más rápido. Un servidor anterior a 10.0.0 solo se abre en su propia dirección.
 
+La app solo acepta una respuesta si el servidor la firmó con la clave que la app fijó la primera vez que conoció a ese servidor. Si el servidor responde más tarde con otra clave, la pantalla de inicio muestra la huella de la clave nueva y la página se abre solo después de que confíes en ella.
+
 ## Sesión iniciada en un móvil emparejado {#sign-in}
 
 Un móvil emparejado con tu grupo abre cada uno de sus servidores con la sesión ya iniciada. Antes de cargar una página, pide una sesión a ese servidor a través del grupo, y un servidor solo la concede a un miembro que sea un móvil. Un servidor añadido por su dirección pide la contraseña, como en un navegador.

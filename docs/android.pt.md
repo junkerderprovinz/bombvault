@@ -27,6 +27,8 @@ A aplicação tenta primeiro o servidor no seu próprio endereço. Quando esse n
 
 Através do retransmissor, a página chega ao que um telemóvel emparelhado alcança em casa, como descrito mais abaixo. Iniciar sessão com a palavra-passe e guardar ficheiros só funcionam no endereço do próprio servidor. As barras de progresso atualizam a cada dois segundos, em vez de continuamente. Os ficheiros da interface ficam no telemóvel depois da primeira visita, por isso as visitas seguintes carregam mais depressa. Um servidor anterior à 10.0.0 só abre no seu próprio endereço.
 
+A aplicação só aceita uma resposta se o servidor a assinou com a chave que a aplicação fixou da primeira vez que encontrou esse servidor. Se o servidor responder mais tarde com outra chave, o ecrã inicial mostra a impressão digital da nova chave e a página só abre depois de confiares nela.
+
 ## Sessão iniciada num telemóvel emparelhado {#sign-in}
 
 Um telemóvel emparelhado com o teu grupo abre cada um dos servidores já com sessão iniciada. Antes de carregar uma página, pede uma sessão a esse servidor através do grupo, e um servidor só a concede a um membro que seja um telemóvel. Um servidor adicionado pelo endereço pede a palavra-passe, como num browser.

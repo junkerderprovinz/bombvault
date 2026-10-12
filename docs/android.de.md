@@ -27,6 +27,8 @@ Die App versucht einen Server zuerst unter seiner eigenen Adresse. Antwortet die
 
 Über das Relay erreicht die Seite das, was ein gekoppeltes Handy zu Hause erreicht, wie unten beschrieben. Anmelden mit dem Passwort und Dateien speichern gehen nur unter der eigenen Adresse des Servers. Fortschrittsbalken laufen alle zwei Sekunden weiter statt fortlaufend. Die Dateien der Oberfläche bleiben nach dem ersten Besuch auf dem Handy, spätere Besuche laden deshalb schneller. Ein Server vor 10.0.0 öffnet sich nur unter seiner eigenen Adresse.
 
+Die App nimmt eine Antwort nur an, wenn der Server sie mit dem Schlüssel signiert hat, den die App beim ersten Kontakt mit diesem Server festgehalten hat. Antwortet der Server später mit einem anderen Schlüssel, zeigt der Startbildschirm den Fingerabdruck des neuen Schlüssels, und die Seite öffnet sich erst, wenn du ihm vertraust.
+
 ## Angemeldet auf einem gekoppelten Handy {#sign-in}
 
 Ein mit deiner Gruppe gekoppeltes Handy öffnet jeden ihrer Server bereits angemeldet. Bevor es eine Seite lädt, bittet es diesen Server über die Gruppe um eine Sitzung, und ein Server gibt eine nur an ein Mitglied heraus, das ein Handy ist. Ein Server, den du über seine Adresse hinzugefügt hast, fragt wie im Browser nach dem Passwort.

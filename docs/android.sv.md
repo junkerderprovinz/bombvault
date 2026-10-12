@@ -27,6 +27,8 @@ Appen provar först en server på dess egen adress. Svarar den inte, till exempe
 
 Via reläet når sidan det en parkopplad telefon når hemma, som beskrivs nedan. Inloggning med lösenordet och sparande av filer fungerar bara på serverns egen adress. Förloppsindikatorer uppdateras varannan sekund i stället för löpande. Gränssnittets filer blir kvar på telefonen efter det första besöket, så senare besök laddas snabbare. En server äldre än 10.0.0 öppnas bara på sin egen adress.
 
+Appen tar bara emot ett svar om servern har signerat det med nyckeln som appen fäste när den första gången träffade servern. Svarar servern senare med en annan nyckel visar startskärmen den nya nyckelns fingeravtryck, och sidan öppnas först när du litar på den.
+
 ## Inloggad på en parkopplad telefon {#sign-in}
 
 En telefon som är parkopplad med din grupp öppnar varje server i gruppen redan inloggad. Innan den laddar en sida ber den servern om en session via gruppen, och en server lämnar bara ut en till en medlem som är en telefon. En server som har lagts till med sin adress frågar efter lösenordet, precis som i en webbläsare.

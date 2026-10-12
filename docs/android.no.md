@@ -27,6 +27,8 @@ Appen prøver først en server på dens egen adresse. Svarer den ikke, for eksem
 
 Via relayet når siden det en paret telefon når hjemme, som beskrevet nedenfor. Pålogging med passordet og lagring av filer fungerer bare på serverens egen adresse. Fremdriftslinjer oppdateres hvert andre sekund i stedet for fortløpende. Filene til grensesnittet blir liggende på telefonen etter det første besøket, så senere besøk laster raskere. En server eldre enn 10.0.0 åpnes bare på sin egen adresse.
 
+Appen tar bare imot et svar hvis serveren har signert det med nøkkelen appen festet første gang den møtte serveren. Svarer serveren senere med en annen nøkkel, viser startskjermen fingeravtrykket til den nye nøkkelen, og siden åpnes først når du stoler på den.
+
 ## Pålogget på en paret telefon {#sign-in}
 
 En telefon som er paret med gruppen din, åpner hver server i gruppen allerede pålogget. Før den laster en side, ber den serveren om en økt via gruppen, og en server gir bare ut en økt til et medlem som er en telefon. En server som er lagt til med adressen sin, spør etter passordet, slik som i en nettleser.

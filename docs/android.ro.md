@@ -27,6 +27,8 @@ Aplicația încearcă mai întâi serverul la adresa lui proprie. Când aceasta 
 
 Prin releu, pagina ajunge la ce ajunge un telefon împerecheat acasă, așa cum este descris mai jos. Autentificarea cu parola și salvarea fișierelor funcționează doar la adresa proprie a serverului. Barele de progres se actualizează o dată la două secunde, nu continuu. Fișierele interfeței rămân pe telefon după prima vizită, deci vizitele următoare se încarcă mai repede. Un server mai vechi de 10.0.0 se deschide doar la adresa lui proprie.
 
+Aplicația acceptă un răspuns doar dacă serverul l-a semnat cu cheia pe care aplicația a fixat-o la prima întâlnire cu acel server. Dacă serverul răspunde mai târziu cu altă cheie, ecranul de pornire arată amprenta noii chei, iar pagina se deschide doar după ce ai acceptat-o.
+
 ## Autentificat pe un telefon împerecheat {#sign-in}
 
 Un telefon împerecheat cu grupul tău deschide fiecare dintre serverele lui deja autentificat. Înainte să încarce o pagină, cere acelui server o sesiune prin grup, iar un server acordă una doar unui membru care este telefon. Un server adăugat după adresă cere parola, ca într-un browser. 

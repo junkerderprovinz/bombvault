@@ -27,6 +27,8 @@ Uygulama bir sunucuyu önce kendi adresinde dener. Adres yanıt vermezse, örne�
 
 Röle üzerinden sayfa, eşleştirilmiş bir telefonun evde eriştiği her şeye erişir, aşağıda anlatıldığı gibi. Parolayla oturum açma ve dosya kaydetme yalnızca sunucunun kendi adresinde çalışır. İlerleme çubukları sürekli değil, iki saniyede bir güncellenir. Arayüzün dosyaları ilk ziyaretten sonra telefonda kalır, bu yüzden sonraki ziyaretler daha hızlı yüklenir. 10.0.0'dan eski bir sunucu yalnızca kendi adresinde açılır.
 
+Uygulama bir yanıtı yalnızca sunucu onu, uygulamanın bu sunucuyla ilk karşılaştığında sabitlediği anahtarla imzalamışsa kabul eder. Sunucu daha sonra başka bir anahtarla yanıt verirse başlangıç ekranı yeni anahtarın parmak izini gösterir ve sayfa ancak ona güvendikten sonra açılır.
+
 ## Eşleştirilmiş telefonda oturum {#sign-in}
 
 Grubunla eşleştirilmiş bir telefon, grubun her sunucusunu oturum açılmış olarak açar. Bir sayfayı yüklemeden önce o sunucudan grup üzerinden bir oturum ister ve sunucu oturumu yalnızca telefon olan bir üyeye verir. Adresiyle eklenen bir sunucu, tarayıcıda olduğu gibi parola ister.

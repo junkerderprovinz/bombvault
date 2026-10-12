@@ -27,6 +27,8 @@ L'app prova prima un server al suo indirizzo. Se questo non risponde, per esempi
 
 Tramite il relay la pagina raggiunge ciò che un telefono associato raggiunge a casa, come descritto sotto. L'accesso con la password e il salvataggio dei file funzionano solo all'indirizzo del server stesso. Le barre di avanzamento si aggiornano ogni due secondi invece che di continuo. I file dell'interfaccia restano sul telefono dopo la prima visita, quindi le visite successive si caricano più in fretta. Un server precedente alla 10.0.0 si apre solo al proprio indirizzo.
 
+L'app accetta una risposta solo se il server l'ha firmata con la chiave che l'app ha fissato la prima volta che ha incontrato quel server. Se in seguito il server risponde con un'altra chiave, la schermata iniziale mostra l'impronta della nuova chiave e la pagina si apre solo dopo che l'hai accettata.
+
 ## Accesso già eseguito su un telefono associato {#sign-in}
 
 Un telefono associato al tuo gruppo apre ciascuno dei suoi server con l'accesso già eseguito. Prima di caricare una pagina chiede a quel server una sessione tramite il gruppo, e un server la concede solo a un membro che è un telefono. Un server aggiunto tramite il suo indirizzo chiede la password, come in un browser. Chiunque abbia le dodici parole può già aprire ogni backup del gruppo, quindi l'associazione non concede nulla di nuovo.
