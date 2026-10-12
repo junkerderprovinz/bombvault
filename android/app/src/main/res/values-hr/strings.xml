@@ -7,4 +7,5 @@
     <string name="relay_on">Otvoreno preko releja</string>
     <string name="relay_explained">Aplikacija ne može doći do ovog poslužitelja na njegovoj vlastitoj adresi pa ga otvara preko releja vaše grupe. Prijava lozinkom i spremanje datoteka rade samo na vlastitoj adresi poslužitelja.</string>
     <string name="relay_no_download">Spremanje datoteka radi samo na vlastitoj adresi poslužitelja, ne preko releja.</string>
+    <string name="page_crashed">Stranica se srušila pa ju je aplikacija zatvorila. Ponovno otvorite poslužitelj.</string>
 </resources>

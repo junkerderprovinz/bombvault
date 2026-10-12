@@ -7,4 +7,5 @@
     <string name="relay_on">Bitartekariaren bidez irekita</string>
     <string name="relay_explained">Aplikazioak ezin du zerbitzari honetara bere helbidean iritsi, beraz zure taldearen bitartekariaren bidez irekitzen du. Pasahitzarekin saioa hasteak eta fitxategiak gordetzeak zerbitzariaren berezko helbidean soilik funtzionatzen dute.</string>
     <string name="relay_no_download">Fitxategiak gordetzeak zerbitzariaren berezko helbidean soilik funtzionatzen du, ez bitartekariaren bidez.</string>
+    <string name="page_crashed">Orriak huts egin du, eta aplikazioak itxi egin du. Ireki ezazu zerbitzaria berriro.</string>
 </resources>

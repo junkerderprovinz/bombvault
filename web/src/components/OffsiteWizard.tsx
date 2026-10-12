@@ -11,6 +11,7 @@ import {
   listOffsiteTargets,
   updateOffsiteTarget,
   getCloud,
+  explainedError,
 } from "../lib/api";
 import type { OffsiteTarget } from "../lib/api";
 import { credSetLabel, useCloudCredSets } from "../lib/useCloudCredSets";
@@ -310,9 +311,9 @@ export function OffsiteWizard({
         return;
       }
       if (r.target) setPrimaryTarget(r.target);
-    } catch {
+    } catch (err) {
       setPrimaryTarget(row);
-      push(t("common.actionFailed"), "fail");
+      push(explainedError(err) ?? t("common.actionFailed"), "fail");
     }
   }
 
@@ -387,9 +388,9 @@ export function OffsiteWizard({
         setPCredsRef(prev);
         push(r.error ?? t("common.actionFailed"), "fail");
       }
-    } catch {
+    } catch (err) {
       setPCredsRef(prev);
-      push(t("common.actionFailed"), "fail");
+      push(explainedError(err) ?? t("common.actionFailed"), "fail");
     }
   }
 

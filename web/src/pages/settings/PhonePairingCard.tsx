@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getPhonePairing, setPhonePairing } from "../../lib/api";
+import { getPhonePairing, setPhonePairing, explainedError } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { secretsSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
@@ -39,9 +39,9 @@ export function PhonePairingCard({ hueIndex }: { hueIndex: number }) {
         setShake((n) => n + 1);
         push(secretsSentence(t, res.code) ?? res.error ?? t("auth.saveError"), "fail");
       }
-    } catch {
+    } catch (err) {
       setShake((n) => n + 1);
-      push(t("auth.saveError"), "fail");
+      push(explainedError(err) ?? t("auth.saveError"), "fail");
     } finally {
       setBusy(false);
     }

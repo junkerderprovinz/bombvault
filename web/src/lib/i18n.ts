@@ -3767,6 +3767,14 @@ export const en = {
   "launcher.unreachable": "Can't reach it.",
   "launcher.unreachableRelay": "Neither its address nor the relay answers.",
   "launcher.relayUnreachable": "The relay can't reach it right now.",
+  "launcher.reason.timeout": "It didn't answer in time.",
+  "launcher.reason.refused": "Nothing answers on this port. Is BombVault running?",
+  "launcher.reason.noRoute": "This address can't be reached from the phone's network.",
+  "launcher.reason.name": "The phone can't find this name. Check the address.",
+  "launcher.reason.offline": "The phone has no network connection.",
+  "launcher.reason.certificate": "The connection failed because of the server's certificate.",
+  "launcher.reason.dropped": "The connection broke off.",
+  "launcher.errorDetail": "The phone reported: {detail}",
   "launcher.trustTitle": "Trust this certificate?",
   "launcher.trustBody": "{host} uses a certificate that Android can't verify. BombVault makes one like that on its first start, so this is normal for a server at home. The app remembers this certificate and warns you if the server ever shows a different one.",
   "launcher.trust": "Trust and open",
@@ -4759,6 +4767,10 @@ export const en = {
   "secrets.deletePasswordNotSet": "Deleting backups takes a login password. Set one under Settings, Security.",
   "secrets.ownLoginNeeded": "This needs a sign-in at this instance's own web interface. The phone app's connection opens the pages, but no keys. Sign in here, then do it again.",
   "secrets.signInHere": "Sign in here",
+  "auth.ownLoginNeeded": "This needs a sign-in at this instance's own web interface. The phone app's connection only lets you look around, start backups and restore.",
+  "auth.relayLoginNeeded": "This needs a sign-in at this instance's own address. Over the relay you can't sign in, and you can only look around, start backups and restore.",
+  "auth.relaySignedIn": "Signed in through the group",
+  "auth.relaySignedInHint": "Over the relay this phone is signed in through its group, so there's nothing to sign out of here. To sign in with the password, open this instance at its own address.",
   "keeper.state.changed": "Changed there",
   "keeper.changedText": "{peer} held something this server did not send. Send the deposit again. If that keeps happening, take the Key keeper role away from {peer}.",
   "keeper.tile.tooOld": "Too old",
@@ -8328,6 +8340,14 @@ export const de: Translations = {
   "launcher.unreachable": "Nicht erreichbar.",
   "launcher.unreachableRelay": "Weder seine Adresse noch das Relay antwortet.",
   "launcher.relayUnreachable": "Das Relay erreicht ihn gerade nicht.",
+  "launcher.reason.timeout": "Er hat nicht rechtzeitig geantwortet.",
+  "launcher.reason.refused": "Auf diesem Port antwortet nichts. Läuft BombVault?",
+  "launcher.reason.noRoute": "Diese Adresse ist aus dem Netz des Handys nicht erreichbar.",
+  "launcher.reason.name": "Das Handy findet diesen Namen nicht. Prüf die Adresse.",
+  "launcher.reason.offline": "Das Handy hat keine Netzverbindung.",
+  "launcher.reason.certificate": "Die Verbindung ist am Zertifikat des Servers gescheitert.",
+  "launcher.reason.dropped": "Die Verbindung ist abgebrochen.",
+  "launcher.errorDetail": "Das Handy meldet: {detail}",
   "launcher.trustTitle": "Diesem Zertifikat vertrauen?",
   "launcher.trustBody": "{host} nutzt ein Zertifikat, das Android nicht prüfen kann. BombVault erzeugt so eines beim ersten Start, bei einem Server zu Hause ist das also normal. Die App merkt sich dieses Zertifikat und warnt dich, falls der Server einmal ein anderes zeigt.",
   "launcher.trust": "Vertrauen und öffnen",
@@ -9320,6 +9340,10 @@ export const de: Translations = {
   "secrets.deletePasswordNotSet": "Sicherungen lassen sich nur mit Login-Passwort löschen. Setz eins unter Einstellungen, Sicherheit.",
   "secrets.ownLoginNeeded": "Dafür musst du dich an der Weboberfläche dieser Instanz selbst anmelden. Die Verbindung der Handy-App öffnet die Seiten, aber keine Schlüssel. Melde dich hier an und mach es dann noch einmal.",
   "secrets.signInHere": "Hier anmelden",
+  "auth.ownLoginNeeded": "Dafür musst du dich an der Weboberfläche dieser Instanz selbst anmelden. Über die Verbindung der Handy-App kannst du dich nur umsehen, Sicherungen starten und wiederherstellen.",
+  "auth.relayLoginNeeded": "Dafür musst du dich unter der eigenen Adresse dieser Instanz anmelden. Über das Relay geht keine Anmeldung, und du kannst dich nur umsehen, Sicherungen starten und wiederherstellen.",
+  "auth.relaySignedIn": "Über die Gruppe angemeldet",
+  "auth.relaySignedInHint": "Über das Relay meldet die Gruppe dieses Handy an, hier gibt es also nichts abzumelden. Mit dem Passwort meldest du dich unter der eigenen Adresse dieser Instanz an.",
   "keeper.state.changed": "Dort verändert",
   "keeper.changedText": "{peer} hatte etwas, das dieser Server nicht geschickt hat. Schick die Hinterlegung noch einmal. Passiert das wieder, nimm {peer} die Rolle Schlüsselhüter weg.",
   "keeper.tile.tooOld": "Zu alt",
@@ -9564,6 +9588,15 @@ export function countText(value: string, lang: string, n?: number): string {
   return n === undefined ? text : text.split("{n}").join(new Intl.NumberFormat(lang).format(n));
 }
 
+// The table and language the provider shows, for words made outside React,
+// such as the message of a refused API call.
+let shown: { table: Partial<Translations>; lang: string } = { table: en, lang: DEFAULT_CODE };
+
+/** translate is t for code outside React, in the language on screen. */
+export function translate(key: TranslationKey): string {
+  return countText(shown.table[key] ?? en[key] ?? key, shown.lang);
+}
+
 // Provide a safe default so `useT()` never throws outside a Provider during tests.
 const I18nContext = createContext<I18nContextValue>({
   lang: DEFAULT_CODE,
@@ -9641,6 +9674,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     (key: TranslationKey, n?: number): string => countText(table[key] ?? en[key] ?? key, lang, n),
     [table, lang]
   );
+
+  useEffect(() => {
+    shown = { table, lang };
+  }, [table, lang]);
 
   return createElement(
     I18nContext.Provider,

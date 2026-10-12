@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "../../components/Button";
 import { QRCode } from "../../components/QRCode";
 import { IconCopy } from "../../components/navGlyphs";
-import { confirmTOTP, disableTOTP, setupTOTP } from "../../lib/api";
+import { confirmTOTP, disableTOTP, setupTOTP, explainedError } from "../../lib/api";
 import { copyText } from "../../lib/clipboard";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
@@ -55,8 +55,8 @@ export function TwoFactorCard({
       } else {
         push(res.error ?? t("auth.saveError"), "fail");
       }
-    } catch {
-      push(t("auth.saveError"), "fail");
+    } catch (err) {
+      push(explainedError(err) ?? t("auth.saveError"), "fail");
     } finally {
       setBusy(false);
     }
@@ -74,8 +74,8 @@ export function TwoFactorCard({
       } else {
         push(res.error ?? t("auth.codeInvalid"), "fail");
       }
-    } catch {
-      push(t("auth.saveError"), "fail");
+    } catch (err) {
+      push(explainedError(err) ?? t("auth.saveError"), "fail");
     } finally {
       setBusy(false);
     }
@@ -94,8 +94,8 @@ export function TwoFactorCard({
       } else {
         push(res.error ?? t("auth.codeInvalid"), "fail");
       }
-    } catch {
-      push(t("auth.saveError"), "fail");
+    } catch (err) {
+      push(explainedError(err) ?? t("auth.saveError"), "fail");
     } finally {
       setBusy(false);
     }

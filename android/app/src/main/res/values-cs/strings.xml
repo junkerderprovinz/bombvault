@@ -7,4 +7,5 @@
     <string name="relay_on">Otevřeno přes přeposílač</string>
     <string name="relay_explained">Aplikace se k tomuto serveru nedostane na jeho vlastní adrese, a proto ho otevírá přes přeposílač vaší skupiny. Přihlášení heslem a ukládání souborů funguje jen na vlastní adrese serveru.</string>
     <string name="relay_no_download">Ukládání souborů funguje jen na vlastní adrese serveru, ne přes přeposílač.</string>
+    <string name="page_crashed">Stránka spadla, a proto ji aplikace zavřela. Otevřete server znovu.</string>
 </resources>

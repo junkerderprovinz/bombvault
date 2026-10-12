@@ -36,7 +36,9 @@
 // confirmation; the exact Sidebar signOut mechanism copied verbatim
 // (best-effort logout, then a location reload, which is what puts the login
 // screen back). Gated by the same authEnabled flag as the desktop footer,
-// so an instance without a password offers the row on neither surface.
+// so an instance without a password offers the row on neither surface. A
+// page opened through the relay cannot sign out, so there the row says how
+// the phone is signed in instead.
 import { NavLink, useLocation } from "react-router-dom";
 import type { CSSProperties } from "react";
 import type { Settings } from "../../lib/api";
@@ -47,7 +49,9 @@ import { moreDestinations } from "../../lib/navModel";
 import { useNavCounts } from "../../lib/navCounts";
 import { useNavPins } from "../../lib/navPins";
 import { Badge } from "../Badge";
+import { InfoBubble } from "../InfoBubble";
 import { IconSignOut } from "../glyphs";
+import { IconFleet } from "../navGlyphs";
 import { BottomSheet } from "./BottomSheet";
 
 export interface MoreSheetProps {
@@ -62,6 +66,8 @@ export interface MoreSheetProps {
   /** Whether a login password exists. Gates the sign-out row exactly like
    *  the desktop Sidebar footer (one flag, both surfaces). */
   authEnabled: boolean;
+  /** The page came through the relay, where nobody signs in or out. */
+  relayed?: boolean;
   /** Layout's tap-on-active scroll (the scroller is Layout's
    *  <main id="bv-main">); fired when an already-current row is tapped. */
   scrollMainToTop: () => void;
@@ -77,7 +83,7 @@ export interface MoreSheetProps {
 // touch floor; the padding never carries the floor, the min-height does.
 const rowBase = "flex min-h-[3.25rem] items-center gap-3 rounded-control px-3 text-body hover:bg-carbon-hover";
 
-export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTop, hueOffset = 0 }: MoreSheetProps) {
+export function MoreSheet({ open, onClose, settings, authEnabled, relayed = false, scrollMainToTop, hueOffset = 0 }: MoreSheetProps) {
   const { t } = useT();
   const location = useLocation();
   const pins = useNavPins(settings);
@@ -156,7 +162,19 @@ export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTo
             to the rows above it, exactly as the desktop footer's row reads.
             The door glyph is the rail's; the power symbol means shutting a VM
             down. */}
-        {authEnabled && (
+        {relayed ? (
+          <div
+            data-testid="more-relayed"
+            className="mt-2 flex min-h-[3.25rem] items-center gap-3 px-3 pt-2 text-body text-carbon-textMuted glim-hue glim-hue-icon"
+            style={hueVars(signOutHue) as CSSProperties}
+          >
+            <span className="flex h-5 w-5 items-center justify-center [&_svg]:h-5 [&_svg]:w-5">
+              <IconFleet />
+            </span>
+            <span className="min-w-0 truncate">{t("auth.relaySignedIn")}</span>
+            <InfoBubble tip={t("auth.relaySignedInHint")} />
+          </div>
+        ) : authEnabled && (
           <div className="mt-2 pt-2">
             <button
               type="button"

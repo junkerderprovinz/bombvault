@@ -24,6 +24,7 @@ import {
   type McpKeysResponse,
   type McpOAuthView,
   type OkEnvelope,
+  explainedError,
 } from "../../lib/api";
 import { copyText } from "../../lib/clipboard";
 import { useT, type TranslationKey } from "../../lib/i18n";
@@ -256,21 +257,23 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       );
     setBusy(true);
     show(on);
+    let refused: string | undefined;
     try {
       const res = await updateMcpKey(item.id, { canStartBackups: on });
       if (res.ok) {
         push(t("mcp.permissionSaved"), "success");
         return;
       }
-    } catch {
+    } catch (err) {
       // A refused save and an unreachable server leave the same wrong switch
       // on screen, so both take the way back below.
+      refused = explainedError(err);
     } finally {
       setBusy(false);
     }
     show(!on);
     bumpShake(`start:${item.id}`);
-    push(t("common.saveFailed"), "fail");
+    push(refused ?? t("common.saveFailed"), "fail");
   }
 
   function downloadCertificate() {

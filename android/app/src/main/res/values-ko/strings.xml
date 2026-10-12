@@ -7,4 +7,5 @@
     <string name="relay_on">릴레이를 통해 열림</string>
     <string name="relay_explained">앱이 이 서버의 고유 주소로 접속할 수 없어 그룹의 릴레이를 통해 엽니다. 비밀번호 로그인과 파일 저장은 서버의 고유 주소에서만 됩니다.</string>
     <string name="relay_no_download">파일 저장은 릴레이가 아니라 서버의 고유 주소에서만 됩니다.</string>
+    <string name="page_crashed">페이지가 중단되어 앱이 닫았습니다. 서버를 다시 여세요.</string>
 </resources>

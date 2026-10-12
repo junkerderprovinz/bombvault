@@ -7,4 +7,5 @@
     <string name="relay_on">Atidaryta per relay</string>
     <string name="relay_explained">Programa negali pasiekti šio serverio jo paties adresu, todėl atidaro jį per jūsų grupės relay. Prisijungimas slaptažodžiu ir failų išsaugojimas veikia tik paties serverio adresu.</string>
     <string name="relay_no_download">Failų išsaugojimas veikia tik paties serverio adresu, o ne per relay.</string>
+    <string name="page_crashed">Puslapis užstrigo, todėl programa jį uždarė. Atidarykite serverį iš naujo.</string>
 </resources>

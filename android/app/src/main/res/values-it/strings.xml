@@ -7,4 +7,5 @@
     <string name="relay_on">Aperto tramite relay</string>
     <string name="relay_explained">L\'app non riesce a raggiungere questo server al suo indirizzo, quindi lo apre tramite il relay del tuo gruppo. L\'accesso con la password e il salvataggio dei file funzionano solo all\'indirizzo del server stesso.</string>
     <string name="relay_no_download">Il salvataggio dei file funziona solo all\'indirizzo del server stesso, non tramite il relay.</string>
+    <string name="page_crashed">La pagina è andata in crash, quindi l\'app l\'ha chiusa. Riapri il server.</string>
 </resources>

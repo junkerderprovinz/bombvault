@@ -36,6 +36,8 @@ export function Layout() {
   // Whether a password is set at all, which decides if the sidebar offers a
   // sign-out row. authGate only says whether this browser may enter.
   const [authEnabled, setAuthEnabled] = useState(false);
+  // A page opened through the relay can neither sign in nor out.
+  const [relayed, setRelayed] = useState(false);
   const [whatsNewVersion, setWhatsNewVersion] = useState<string | null>(null);
   const location = useLocation();
   // The page wrapper remounts per section, so moving between Settings pages
@@ -151,6 +153,7 @@ export function Layout() {
     getAuth()
       .then((res) => {
         setAuthEnabled(res.enabled);
+        setRelayed(res.relayed === true);
         if (res.enabled && !res.authed) {
           setAuthGate("blocked");
         } else {
@@ -349,7 +352,7 @@ export function Layout() {
               to both shells. */}
           {isDesktop ? (
             <>
-              <Sidebar settings={settings} authEnabled={authEnabled} />
+              <Sidebar settings={settings} authEnabled={authEnabled && !relayed} />
               {scroller}
             </>
           ) : (
@@ -358,6 +361,7 @@ export function Layout() {
               <BottomNav
                 settings={settings}
                 authEnabled={authEnabled}
+                relayed={relayed}
                 scrollMainToTop={scrollMainToTop}
               />
             </>

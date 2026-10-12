@@ -16,10 +16,12 @@ import { formatClockTime } from "../lib/reltime";
 import { useConfirm } from "../lib/useConfirm";
 import {
   displayAddress,
+  networkReason,
   normalizeAddress,
   origin,
   type Bridge,
   type LauncherState,
+  type NetworkReason,
   type Problem,
   type Server,
 } from "./bridge";
@@ -329,9 +331,11 @@ function ActivityCard({ t, lines, onOpen }: { t: T; lines: ServerLine[]; onOpen:
         }}
         className="rounded-card bg-carbon-surface p-2 pt-5 glim-field-focus"
       >
+        {/* A fixed height, so the servers below stay where a finger aims
+            while the log fills in. */}
         <div
           ref={box}
-          className="flex max-h-48 flex-col gap-1.5 overflow-y-auto rounded-card bg-black/20 px-3 py-2 font-mono text-xs leading-relaxed"
+          className="flex h-48 flex-col gap-1.5 overflow-y-auto rounded-card bg-black/20 px-3 py-2 font-mono text-xs leading-relaxed"
         >
           {lines.length === 0 && <p className="text-carbon-textMuted">{t("launcher.activityEmpty")}</p>}
           {lines.map((l) => (
@@ -405,10 +409,27 @@ const REACH_BADGE: Record<Reach, { tone: "ok" | "fail" | "warn"; key: Translatio
   offline: { tone: "fail", key: "instances.notConnected" },
 };
 
-/** Why a server did not open, in words; empty leaves it to the card's own line. */
-function unreachable(t: T, server: Server, problem: Problem): string {
-  if (!problem.relay) return problem.detail ?? "";
-  return t(server.url ? "launcher.unreachableRelay" : "launcher.relayUnreachable");
+const REASON_TEXT: Record<NetworkReason, TranslationKey> = {
+  timeout: "launcher.reason.timeout",
+  refused: "launcher.reason.refused",
+  noRoute: "launcher.reason.noRoute",
+  name: "launcher.reason.name",
+  offline: "launcher.reason.offline",
+  certificate: "launcher.reason.certificate",
+  dropped: "launcher.reason.dropped",
+};
+
+/** Why a server did not open: what that means for the person, and what the
+ *  WebView said, which the card keeps behind an info bubble. */
+interface Trouble {
+  text: string;
+  detail?: string;
+}
+
+function unreachable(t: T, server: Server, problem: Problem): Trouble {
+  if (problem.relay) return { text: t(server.url ? "launcher.unreachableRelay" : "launcher.relayUnreachable") };
+  const reason = problem.detail ? networkReason(problem.detail) : undefined;
+  return { text: t(reason ? REASON_TEXT[reason] : "launcher.unreachable"), detail: problem.detail || undefined };
 }
 
 function ServerCard({
@@ -426,38 +447,40 @@ function ServerCard({
   index: number;
   reach?: Reach;
   /** What went wrong the last time this server was opened. */
-  trouble?: string;
+  trouble?: Trouble;
   onOpen: () => void;
   onEdit: () => void;
 }) {
   const badge = reach && REACH_BADGE[reach];
   return (
-    <div
-      style={hueVars(index) as CSSProperties}
-      className="flex items-center gap-1 rounded-card bg-carbon-surface pe-2 glim-hue glim-content-fade"
-    >
-      <button
-        type="button"
-        onClick={onOpen}
-        className="flex min-h-[3.75rem] min-w-0 flex-1 items-center gap-3 rounded-card p-4 text-start glim-field-focus"
-      >
-        <span className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="truncate text-sm font-semibold text-carbon-text">{server.name}</span>
-          <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
-            {server.url ? displayAddress(server.url) : t("launcher.viaGroup")}
-          </span>
-          {trouble !== undefined && (
-            <span dir="ltr" className="text-start font-mono text-xs text-statusFail break-all" role="alert">
-              {trouble || t("launcher.unreachable")}
+    <div style={hueVars(index) as CSSProperties} className="rounded-card bg-carbon-surface glim-hue glim-content-fade">
+      <div className="flex items-center gap-1 pe-2">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="flex min-h-[3.75rem] min-w-0 flex-1 items-center gap-3 rounded-card p-4 text-start glim-field-focus"
+        >
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="truncate text-sm font-semibold text-carbon-text">{server.name}</span>
+            <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
+              {server.url ? displayAddress(server.url) : t("launcher.viaGroup")}
             </span>
-          )}
-        </span>
-        {badge && <Badge tone={badge.tone}>{t(badge.key)}</Badge>}
-      </button>
-      {/* A glyph alone: on a phone the name needs the width a label would take. */}
-      <Badge as="button" shape="square" size="icon" tone="neutral" tip={t("common.edit")} onClick={onEdit}>
-        <IconPencil />
-      </Badge>
+          </span>
+          {badge && <Badge tone={badge.tone}>{t(badge.key)}</Badge>}
+        </button>
+        {/* A glyph alone: on a phone the name needs the width a label would take. */}
+        <Badge as="button" shape="square" size="icon" tone="neutral" tip={t("common.edit")} onClick={onEdit}>
+          <IconPencil />
+        </Badge>
+      </div>
+      {/* Below the row rather than in it, so the info bubble is not part of
+          the button that opens the server. */}
+      {trouble && (
+        <p role="alert" className="-mt-2 flex items-center gap-2 px-4 pb-3 text-xs text-statusFail">
+          <span className="min-w-0">{trouble.text}</span>
+          {trouble.detail && <InfoBubble tip={t("launcher.errorDetail").replace("{detail}", trouble.detail)} />}
+        </p>
+      )}
     </div>
   );
 }

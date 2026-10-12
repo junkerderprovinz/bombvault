@@ -1,3 +1,5 @@
+import { translate } from "./i18n";
+
 // ---------------------------------------------------------------------------
 // API types — match the Go JSON shapes exactly
 // ---------------------------------------------------------------------------
@@ -704,6 +706,8 @@ export interface AuthStatusResponse {
   /** The minimum length the server enforces, so the field says the server's
    *  number rather than keeping a second copy of it. */
   minPasswordLen?: number;
+  /** The page came through the relay, where nobody signs in or out. */
+  relayed?: boolean;
 }
 
 /** Response from POST /api/login. */
@@ -744,23 +748,53 @@ export interface SetPasswordResponse extends OkEnvelope {
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
-    message: string
+    message: string,
+    /** The code the server refused the call with, when it named one. */
+    public readonly code?: string
   ) {
     super(message);
     this.name = "ApiError";
   }
 }
 
+let throughRelay = false;
+
+/** Whether this page was opened through the relay, as GET /api/auth said. */
+export function openedThroughRelay(): boolean {
+  return throughRelay;
+}
+
+/** refusalSentence is what a person reads for a refused call: the sentence
+ *  for a code this client knows, else what the server said. */
+export function refusalSentence(code: string | undefined, said: string | undefined): string | undefined {
+  if (code === "own-login-needed") return translate(throughRelay ? "auth.relayLoginNeeded" : "auth.ownLoginNeeded");
+  if (code === "password-not-set") return translate("secrets.passwordNotSet");
+  return said || undefined;
+}
+
+/** explainedError is the sentence of a refusal the server explained with a
+ *  code this client knows, for a caller that otherwise shows a fixed text. */
+export function explainedError(err: unknown): string | undefined {
+  return err instanceof ApiError && (err.code === "own-login-needed" || err.code === "password-not-set") ? err.message : undefined;
+}
+
+type Refusal = { code?: string; error?: string } | null;
+
+async function readRefusal(res: Response): Promise<Refusal> {
+  return (await res.json().catch(() => null)) as Refusal;
+}
+
+function apiError(res: Response, body: Refusal): ApiError {
+  const message = refusalSentence(body?.code, body?.error) ?? `HTTP ${res.status} ${res.statusText}`.trim();
+  return new ApiError(res.status, message, body?.code);
+}
+
 async function fetchJSON<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
-  // headers AFTER ...options, not before. Spread the other way round, a caller
-  // passing any headers of its own replaced this object wholesale and silently
-  // dropped the Content-Type — which the server now refuses a body without, so
-  // the next such caller would have got a 415 for a reason nothing on screen
-  // could explain. No caller passes headers today; this keeps it that way by
-  // construction rather than by everyone remembering.
+  // The caller's headers go after the default, so passing one of its own
+  // cannot drop the Content-Type the server refuses a body without.
   const res = await fetch(path, {
     ...options,
     headers: {
@@ -769,7 +803,7 @@ async function fetchJSON<T>(
     },
   });
   if (!res.ok) {
-    throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
+    throw apiError(res, await readRefusal(res));
   }
   return res.json() as Promise<T>;
 }
@@ -792,14 +826,14 @@ async function fetchKeyJSON<T>(path: string, options?: RequestInit): Promise<T> 
     },
   });
   if (res.status === 403) {
-    const body = (await res.json().catch(() => null)) as { code?: string } | null;
+    const body = await readRefusal(res);
     if (body?.code === "password-not-set" || body?.code === "own-login-needed") {
       return body as T;
     }
-    throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
+    throw apiError(res, body);
   }
   if (!res.ok) {
-    throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
+    throw apiError(res, await readRefusal(res));
   }
   return res.json() as Promise<T>;
 }
@@ -2062,11 +2096,11 @@ export async function exportSettings(includeCredentials: boolean): Promise<strin
     // A failure answers a plain JSON envelope with no attachment header; only the
     // real file streams as an attachment.
     if (!res.ok || !disposition.includes("attachment")) {
-      // Backend-provided error text shown verbatim BY DESIGN — the API answers
-      // English and is not translated client-side (i18n-wave decision).
+      // A refusal this client knows is said in the person's language, any
+      // other failure in the server's own English words.
       try {
-        const body = (await res.json()) as { error?: string };
-        return body.error || `export failed (HTTP ${res.status})`;
+        const body = (await res.json()) as { code?: string; error?: string };
+        return refusalSentence(body.code, body.error) ?? `export failed (HTTP ${res.status})`;
       } catch {
         return `export failed (HTTP ${res.status})`;
       }
@@ -2221,11 +2255,11 @@ export async function downloadRecoveryKit(): Promise<string | null> {
     // Every failure path (403 auth-off refusal, 200 fail envelope on a build
     // error) answers JSON; only the kit itself streams as text/markdown.
     if (!res.ok || ct.includes("application/json")) {
-      // Backend-provided error text shown verbatim BY DESIGN — the API answers
-      // English and is not translated client-side (i18n-wave decision).
+      // A refusal this client knows is said in the person's language, any
+      // other failure in the server's own English words.
       try {
-        const body = (await res.json()) as { error?: string };
-        return body.error || `download failed (HTTP ${res.status})`;
+        const body = (await res.json()) as { code?: string; error?: string };
+        return refusalSentence(body.code, body.error) ?? `download failed (HTTP ${res.status})`;
       } catch {
         return `download failed (HTTP ${res.status})`;
       }
@@ -6489,9 +6523,12 @@ export function proposeMeshOffer(
 // Auth API
 // ---------------------------------------------------------------------------
 
-/** GET /api/auth — returns current auth state (enabled, authed). */
-export function getAuth(): Promise<AuthStatusResponse> {
-  return fetchJSON("/api/auth");
+/** GET /api/auth: the current auth state, and whether the page came through
+ *  the relay, which openedThroughRelay tells from then on. */
+export async function getAuth(): Promise<AuthStatusResponse> {
+  const res = await fetchJSON<AuthStatusResponse>("/api/auth");
+  throughRelay = res.relayed === true;
+  return res;
 }
 
 /** POST /api/login — attempt password login; sets bv_session cookie on success.
@@ -6836,11 +6873,11 @@ export async function downloadDiagnostics(): Promise<string | null> {
     const res = await g.fetch("/api/diagnostics");
     const ct = res.headers.get("content-type") ?? "";
     if (!res.ok || ct.includes("application/json")) {
-      // Backend-provided error text shown verbatim by design: the API answers
-      // English, and the client does not translate it.
+      // A refusal this client knows is said in the person's language, any
+      // other failure in the server's own English words.
       try {
-        const body = (await res.json()) as { error?: string };
-        return body.error || `download failed (HTTP ${res.status})`;
+        const body = (await res.json()) as { code?: string; error?: string };
+        return refusalSentence(body.code, body.error) ?? `download failed (HTTP ${res.status})`;
       } catch {
         return `download failed (HTTP ${res.status})`;
       }

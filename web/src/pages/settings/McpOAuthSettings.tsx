@@ -3,7 +3,7 @@ import { Button } from "../../components/Button";
 import { IconSave } from "../../components/glyphs";
 import { SettingRow } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
-import { setMcpOAuth, type McpOAuthView } from "../../lib/api";
+import { setMcpOAuth, type McpOAuthView, explainedError } from "../../lib/api";
 import { copyText } from "../../lib/clipboard";
 import type { TranslationKey } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
@@ -66,8 +66,8 @@ export function McpOAuthSettings({
             : (res.error ?? t("common.saveFailed"));
       push(reason, "fail");
       setShake((n) => n + 1);
-    } catch {
-      push(t("common.saveFailed"), "fail");
+    } catch (err) {
+      push(explainedError(err) ?? t("common.saveFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
       setBusy(false);

@@ -7,4 +7,5 @@
     <string name="relay_on">Dibuka melalui relay</string>
     <string name="relay_explained">Aplikasi tidak dapat menjangkau server ini di alamatnya sendiri, jadi aplikasi membukanya melalui relay grup. Masuk dengan kata sandi dan menyimpan file hanya berfungsi di alamat server itu sendiri.</string>
     <string name="relay_no_download">Menyimpan file hanya berfungsi di alamat server itu sendiri, tidak melalui relay.</string>
+    <string name="page_crashed">Halaman mengalami crash, jadi aplikasi menutupnya. Buka server lagi.</string>
 </resources>

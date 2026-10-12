@@ -33,6 +33,25 @@ export interface Problem {
   relay?: boolean;
 }
 
+/** What kind of network failure kept a server from opening. */
+export type NetworkReason = "timeout" | "refused" | "noRoute" | "name" | "offline" | "certificate" | "dropped";
+
+const NETWORK_REASONS: [RegExp, NetworkReason][] = [
+  [/ERR_(CONNECTION_)?TIMED_OUT|ERR_TIMEOUT/, "timeout"],
+  [/ERR_CONNECTION_REFUSED/, "refused"],
+  [/ERR_ADDRESS_(UNREACHABLE|INVALID)|ERR_NETWORK_ACCESS_DENIED/, "noRoute"],
+  [/ERR_NAME_NOT_RESOLVED|ERR_NAME_RESOLUTION_FAILED/, "name"],
+  [/ERR_INTERNET_DISCONNECTED/, "offline"],
+  [/ERR_CERT_|ERR_SSL_|ERR_BAD_SSL/, "certificate"],
+  [/ERR_CONNECTION_(RESET|CLOSED|ABORTED|FAILED)|ERR_EMPTY_RESPONSE|ERR_NETWORK_CHANGED/, "dropped"],
+];
+
+/** networkReason reads the error the WebView named, such as
+ *  "net::ERR_CONNECTION_TIMED_OUT"; undefined for one it does not know. */
+export function networkReason(detail: string): NetworkReason | undefined {
+  return NETWORK_REASONS.find(([pattern]) => pattern.test(detail))?.[1];
+}
+
 /** An instance of the group as its announce names it. */
 export interface GroupMember {
   id: string;

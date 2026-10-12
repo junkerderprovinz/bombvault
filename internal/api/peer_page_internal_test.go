@@ -233,8 +233,8 @@ func TestAPageThroughTheRelayReachesWhatTheSessionOfAPhoneDoes(t *testing.T) {
 	if !strings.Contains(answer.Header["Content-Security-Policy"], "default-src 'self'") {
 		t.Fatalf("the shell came without its policy: %v", answer.Header)
 	}
-	if answer, body := ph.open(attic, http.MethodGet, "/api/auth", nil); answer.Status != http.StatusOK || decoded(t, body)["authed"] != true {
-		t.Fatalf("the page is not signed in: %d %s", answer.Status, body)
+	if answer, body := ph.open(attic, http.MethodGet, "/api/auth", nil); answer.Status != http.StatusOK || decoded(t, body)["authed"] != true || decoded(t, body)["relayed"] != true {
+		t.Fatalf("the page is not signed in through the relay: %d %s", answer.Status, body)
 	}
 	if answer, body := ph.open(attic, http.MethodGet, "/api/status", nil); answer.Status != http.StatusOK || decoded(t, body)["ok"] != true {
 		t.Fatalf("the status: %d %s", answer.Status, body)

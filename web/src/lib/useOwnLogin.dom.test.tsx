@@ -9,12 +9,14 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 
 import { I18nProvider, en } from "./i18n";
 import { secretsSentence } from "./secretsRefusal";
+import { ToastProvider } from "./toast";
 
 const logout = vi.fn(() => Promise.resolve({ ok: true }));
+let relayed = false;
 
 vi.mock("./api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./api")>();
-  return { ...actual, logout: () => logout() };
+  return { ...actual, logout: () => logout(), openedThroughRelay: () => relayed };
 });
 
 const { useOwnLogin } = await import("./useOwnLogin");
@@ -37,7 +39,9 @@ function Caller({ code }: { code?: string }) {
 async function call(code?: string) {
   render(
     <I18nProvider>
-      <Caller code={code} />
+      <ToastProvider>
+        <Caller code={code} />
+      </ToastProvider>
     </I18nProvider>
   );
   await act(async () => {
@@ -50,6 +54,7 @@ afterEach(() => {
   vi.clearAllMocks();
   vi.unstubAllGlobals();
   handled = null;
+  relayed = false;
 });
 
 describe("a call refused to the phone app's session", () => {
@@ -74,6 +79,16 @@ describe("a call refused to the phone app's session", () => {
     });
     expect(logout).not.toHaveBeenCalled();
     expect(reload).not.toHaveBeenCalled();
+  });
+
+  it("only says where to sign in on a page opened through the relay, which cannot sign in", async () => {
+    vi.stubGlobal("location", { ...window.location, reload });
+    relayed = true;
+    await call("own-login-needed");
+    expect(handled).toBe(true);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByText(en["auth.relayLoginNeeded"])).toBeTruthy();
+    expect(logout).not.toHaveBeenCalled();
   });
 
   it("leaves every other answer to the caller", async () => {

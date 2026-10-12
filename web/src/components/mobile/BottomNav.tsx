@@ -91,28 +91,30 @@ export interface BottomNavProps {
   /** Whether a login password exists. Gates the sign-out row inside the
    *  sheet, exactly like the desktop Sidebar footer. */
   authEnabled: boolean;
+  /** The page came through the relay; the sheet then says how the phone is
+   *  signed in in place of the sign-out row. */
+  relayed?: boolean;
   /** Layout's tap-on-active scroll (the scroller is Layout's
    *  <main id="bv-main">); passed on to the sheet's rows too. */
   scrollMainToTop: () => void;
 }
 
 // One bar slot, destination or More trigger alike: the 24px glyph box over
-// the caption, `flex-1` so the slots split the bar's width equally, and the
-// full 56px (h-14) row as the touch target; comfortably over the 44px floor.
+// the caption, and the full 56px (h-14) row as the touch target; comfortably
+// over the 44px floor. Each slot takes the width its caption needs and keeps
+// at least the 44px floor, so the bar spends its width where the words are.
 // The press scale reads the motion-engine token, so the app's motion levels
 // govern it (--motion-press-scale is 1 at "off": no scale at all there).
-// Below 360px equal fifths are too narrow for "Wiederherstellung", so each
-// slot takes the width its caption needs and keeps at least the 44px floor.
 const slotBase =
-  "flex min-w-0 flex-1 max-[359px]:min-w-11 max-[359px]:flex-auto flex-col items-center justify-center gap-1 text-caption motion-safe:active:scale-[var(--motion-press-scale)]";
+  "flex min-w-11 flex-col items-center justify-center gap-1 text-caption motion-safe:active:scale-[var(--motion-press-scale)]";
 
-// A fifth of a phone is narrower than "Wiederherstellung", and the caption is
-// already at the smallest size of the type scale, so a long word goes onto a
-// second line, hyphenated where the language allows it. Two lines at this
-// leading still fit under the glyph in the 56px row.
+// The caption is already at the smallest size of the type scale, so when the
+// captions together are wider than the bar, a long word goes onto a second
+// line, hyphenated where the language allows it. Two lines at this leading
+// still fit under the glyph in the 56px row.
 const caption = "max-w-full text-center leading-[1.1] hyphens-auto wrap-anywhere";
 
-export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavProps) {
+export function BottomNav({ settings, authEnabled, relayed = false, scrollMainToTop }: BottomNavProps) {
   const { t } = useT();
   const location = useLocation();
   // The sheet belongs to the page it was opened on, so any way of leaving
@@ -175,14 +177,17 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
           in landscape. The top margin is the card's own ground: the scroller
           above ends flush (its pb-0 contract), so without it the last card of
           every page would rest on the bar card's edge. Separation is shade,
-          not a line: no border or ring on the card. Below 360px the card
+          not a line: no border or ring on the card. Below 400px the card
           keeps half the gutter to leave the captions more room. */}
-      <div className="mt-2 ml-[max(1rem,var(--safe-area-left))] mr-[max(1rem,var(--safe-area-right))] max-[359px]:ml-[max(0.5rem,var(--safe-area-left))] max-[359px]:mr-[max(0.5rem,var(--safe-area-right))] mb-2 rounded-card bg-carbon-sidebar">
+      <div className="mt-2 ml-[max(1rem,var(--safe-area-left))] mr-[max(1rem,var(--safe-area-right))] max-[399px]:ml-[max(0.5rem,var(--safe-area-left))] max-[399px]:mr-[max(0.5rem,var(--safe-area-right))] mb-2 rounded-card bg-carbon-sidebar">
         {/* h-14 static height: svh semantics by construction; a fixed-height
             row never resizes when the dynamic viewport does (browser chrome,
             keyboard), which is the property that keeps the bar visible: static
-            chrome sizes against svh semantics, in every label mode. */}
-        <div className="flex h-14">
+            chrome sizes against svh semantics, in every label mode. The
+            slots are auto grid columns: each grows towards its caption's
+            one-line width from an equal share of the room, so when the room
+            runs short only the longest caption goes onto a second line. */}
+        <div className="grid h-14 grid-flow-col">
           {slots.map((d, i) => (
             <BarSlot
               key={d.to}
@@ -249,6 +254,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
         onClose={() => setMoreOpenOn(null)}
         settings={settings}
         authEnabled={authEnabled}
+        relayed={relayed}
         scrollMainToTop={scrollMainToTop}
         hueOffset={slots.length + 1}
       />

@@ -21,6 +21,7 @@ vi.mock("../../lib/api", async () => {
   tamperTest: vi.fn().mockResolvedValue({ ok: true }),
   getStatus: vi.fn().mockResolvedValue({ ok: true, domains: [domain({ domain: "containers", offsiteConfigured: false })] }),
   listItems: vi.fn().mockResolvedValue({ ok: true, items: [] }),
+  openedThroughRelay: () => false,
   };
 });
 

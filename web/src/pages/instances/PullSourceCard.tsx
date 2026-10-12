@@ -18,6 +18,7 @@ import {
   runPullSource,
   testPullSource,
   updatePullSource,
+  explainedError,
 } from "../../lib/api";
 import type { PullSourceInput, PullSourceView } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
@@ -260,8 +261,8 @@ export function PullDialog({
       }
       push(res.error ?? t("pull.saveError"), "fail");
       setShake((n) => n + 1);
-    } catch {
-      push(t("pull.saveError"), "fail");
+    } catch (err) {
+      push(explainedError(err) ?? t("pull.saveError"), "fail");
       setShake((n) => n + 1);
     } finally {
       setSaving(false);

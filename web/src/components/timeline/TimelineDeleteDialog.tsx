@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { deleteTimelineRow, getTimelineDeletePreview, type TimelineDomain, type TimelineRow } from "../../lib/api";
+import { deleteTimelineRow, getTimelineDeletePreview, type TimelineDomain, type TimelineRow, explainedError } from "../../lib/api";
 import { repoDisplayName } from "../../lib/directRepo";
 import { useT } from "../../lib/i18n";
 import { formatList } from "../../lib/placement";
@@ -114,9 +114,9 @@ export function TimelineDeleteDialog({
       } else if (skipped.length > 0) push(t("timeline.deleteSkipped").replace("{list}", () => names(skipped)));
       onDone();
     }
-    run().catch(() => {
+    run().catch((err: unknown) => {
       if (!live) return;
-      push(t("common.deleteFailed"), "fail");
+      push(explainedError(err) ?? t("common.deleteFailed"), "fail");
       onClose();
     });
     // One run per opening of the dialog; a `places` dependency would remount

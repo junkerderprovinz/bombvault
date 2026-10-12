@@ -7,4 +7,5 @@
     <string name="relay_on">Aberto a través do relé</string>
     <string name="relay_explained">A app non pode chegar a este servidor no seu propio enderezo, así que o abre a través do relé do teu grupo. Iniciar sesión co contrasinal e gardar ficheiros só funciona no enderezo propio do servidor.</string>
     <string name="relay_no_download">Gardar ficheiros só funciona no enderezo propio do servidor, non a través do relé.</string>
+    <string name="page_crashed">A páxina bloqueouse, así que a app pechouna. Volve abrir o servidor.</string>
 </resources>

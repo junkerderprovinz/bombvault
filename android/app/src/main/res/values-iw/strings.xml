@@ -7,4 +7,5 @@
     <string name="relay_on">נפתח דרך ממסר</string>
     <string name="relay_explained">האפליקציה לא מצליחה להגיע לשרת הזה בכתובת שלו, ולכן היא פותחת אותו דרך הממסר של הקבוצה שלך. התחברות עם הסיסמה ושמירת קבצים עובדות רק בכתובת של השרת עצמו.</string>
     <string name="relay_no_download">שמירת קבצים עובדת רק בכתובת של השרת עצמו, לא דרך הממסר.</string>
+    <string name="page_crashed">הדף קרס, ולכן האפליקציה סגרה אותו. פתח את השרת שוב.</string>
 </resources>
