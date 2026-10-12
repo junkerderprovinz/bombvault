@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { createRequire } from "node:module";
 import { execSync } from "node:child_process";
+import { LOGO_H, LOGO_W, OPT_CX, placeLogo } from "./logo.mjs";
 
 const require = createRequire(import.meta.url);
 const opentype = require(`${execSync("npm root -g").toString().trim()}/opentype.js`);
@@ -28,12 +29,8 @@ const THEMES = [
 ];
 const W = 1600, H = 500;
 const LH = 386;                    // logo height
-// The designer marked the logo's optical centre in the source file. The sparks
-// at the top right widen the bounding box without adding visual weight, so the
-// logo is centred on this point rather than on the box.
-const LOGO_W = 898.34, LOGO_H = 865.1;
-const OPT_CX = 441.6, OPT_CY = 461.2;
-const LW = LH * (LOGO_W / LOGO_H);
+const LS = LH / LOGO_H;
+const LW = LOGO_W * LS;
 const nameSize = 132, claimSize = 44, gap = 70, lineGap = 8;
 
 const fontPath = join(tmpdir(), "BombVault-BreeSerif-Regular.ttf");
@@ -59,7 +56,6 @@ const nameW = font.getAdvanceWidth(NAME, nameSize);
 const claimW = claimFont.getAdvanceWidth(CLAIM, claimSize);
 const groupW = LW + gap + Math.max(nameW, claimW);
 const startX = 165;
-const LX = startX, LY = H / 2 - OPT_CY * (LH / LOGO_H);
 const textX = startX + LW + gap;
 
 const sc = (s) => s / font.unitsPerEm;
@@ -78,12 +74,7 @@ const nameD = glyphD(font, NAME, textX, nameBaseline, nameSize);
 const claimD = glyphD(claimFont, CLAIM, textX, claimBaseline, claimSize);
 const paths = (ds, fill) => ds.map((d) => `<path d="${d}" fill="${fill}"/>`).join("");
 
-// Embed the logo verbatim: drop the XML decl, position its root <svg>.
-let logo = readFileSync(join(__dir, "icon.svg"), "utf8").replace(/<\?xml[^>]*\?>\s*/, "");
-logo = logo.replace(
-  /<svg\b[^>]*viewBox="0 0 898\.34 865\.1"[^>]*>/,
-  `<svg x="${LX.toFixed(1)}" y="${LY.toFixed(1)}" width="${LW.toFixed(1)}" height="${LH}" viewBox="0 0 ${LOGO_W} ${LOGO_H}" xmlns="http://www.w3.org/2000/svg">`,
-);
+const logo = placeLogo(startX + OPT_CX * LS, H / 2, LS);
 
 for (const t of THEMES) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
