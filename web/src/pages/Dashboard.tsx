@@ -41,7 +41,7 @@ import { sectionsOf } from "./overview/protectionChecks";
 import { ProtectionWindow } from "./overview/ProtectionWindow";
 import { SpikeCard } from "./overview/SpikeCard";
 import { StatCardsRow } from "./overview/StatCardsRow";
-import { headlineOf, liveRunOf, passOf, passRuns } from "./overview/headState";
+import { headlineOf, liveRunOf, passCounted, passOf, passRuns } from "./overview/headState";
 import { PassWindow } from "./overview/PassWindow";
 import { StatusHead } from "./overview/StatusHead";
 import { StorageCard } from "./overview/StorageCard";
@@ -163,11 +163,13 @@ export function Dashboard() {
 
   // The stream counts an entry of a pass as soon as it is through. Its mark
   // waits for the run that says how it ended.
-  const pass = passOf(progress);
-  const passDone = pass?.done;
+  const streamed = passOf(progress);
+  const passDone = streamed?.done;
   useEffect(() => {
     if (passDone !== undefined) refreshRuns();
   }, [passDone, refreshRuns]);
+  const finishedInPass = passRuns(runs);
+  const pass = streamed && passCounted(streamed, finishedInPass.length);
 
   // The window shows the freshest record of its run. A finished record wins
   // whichever feed carries it. Before that the watch's record wins while the
@@ -449,7 +451,7 @@ export function Dashboard() {
           nextRun={Number.isFinite(nextFire) ? Math.round(nextFire / 1000) : null}
           run={liveRun}
           pass={pass}
-          passRuns={passRuns(runs)}
+          passRuns={finishedInPass}
           onOpenRun={openLiveRun}
         />
 
@@ -483,7 +485,7 @@ export function Dashboard() {
           t={t}
           pass={pass}
           run={liveRun}
-          done={passRuns(runs)}
+          done={finishedInPass}
           onClose={() => {
             sheetDismissed.current = true;
             setSheetOpen(false);

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ProgressState } from "../../lib/progress";
 import { tallyEntries } from "../../lib/protectionTally";
-import { headlineOf, liveRunOf, passOf, passRuns, passShare, stationOf } from "./headState";
+import { headlineOf, liveRunOf, passCounted, passOf, passRuns, passShare, stationOf } from "./headState";
 import { domain, item, run } from "./overview.testsupport";
 import { sectionsOf } from "./protectionChecks";
 
@@ -202,6 +202,18 @@ describe("the pass over everything", () => {
 
   it("never passes the full ring when the total was corrected downwards", () => {
     expect(passShare({ done: 5, total: 4 }, null)).toBe(100);
+  });
+
+  it("counts an entry the run list already shows as finished before the stream does", () => {
+    expect(passCounted({ done: 0, total: 22 }, 1)).toEqual({ done: 1, total: 22 });
+  });
+
+  it("keeps the stream's count while the run list lags behind it", () => {
+    expect(passCounted({ done: 6, total: 22 }, 5)).toEqual({ done: 6, total: 22 });
+  });
+
+  it("never counts more entries than the pass has", () => {
+    expect(passCounted({ done: 3, total: 4 }, 6)).toEqual({ done: 4, total: 4 });
   });
 });
 

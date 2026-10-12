@@ -124,6 +124,16 @@ export function passOf(progress: ProgressMap): Pass | null {
 }
 
 /**
+ * passCounted counts the entries the run list already shows as finished. A
+ * backup records its run before it returns and the pass counts it, so for a
+ * while the list is ahead of the stream's count.
+ */
+export function passCounted(pass: Pass, finished: number): Pass {
+  if (finished <= pass.done) return pass;
+  return { ...pass, done: pass.total > 0 ? Math.min(finished, pass.total) : finished };
+}
+
+/**
  * passShare is how far a pass is, in percent: the entries behind it and the
  * part of the one being backed up.
  */
