@@ -116,7 +116,9 @@ for (const width of [320, 390]) {
       test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone layout lives below 48rem");
       await stageStorage(page, width);
       await page.goto(locationUrl(location.id));
-      await expect(page.getByRole("heading", { level: 1, name: location.name })).toBeAttached();
+      // The only folder on this host goes by Lokal, whatever its folder is called.
+      const name = location === LOCAL ? "Lokal" : location.name;
+      await expect(page.getByRole("heading", { level: 1, name })).toBeAttached();
       await expect(page.getByText("Wie lange aufheben", { exact: true })).toBeVisible();
       await settle(page);
       await expectNothingPansOrClips(page);
