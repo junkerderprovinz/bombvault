@@ -31,6 +31,18 @@ function offsiteRetentionOf(s: Settings, domain: string) {
   };
 }
 
+/** settleHookClears turns a sent hook removal into the state it left behind.
+ *  The clear flag holds for one write; kept, it would wipe the hook again on
+ *  every later save, including the one that sets a new command. */
+function settleHookClears(s: Settings): Settings {
+  const { everythingPreHookClear, everythingPostHookClear, ...rest } = s;
+  return {
+    ...rest,
+    everythingPreHookSet: everythingPreHookClear ? false : s.everythingPreHookSet,
+    everythingPostHookSet: everythingPostHookClear ? false : s.everythingPostHookSet,
+  };
+}
+
 // useSettingsStore loads the settings and owns every write to them.
 // SettingsPage calls it once and hands the result to its pages.
 export function useSettingsStore() {
@@ -242,9 +254,9 @@ export function useSettingsStore() {
       if (res.ok) {
         // Advance the baseline; reflect just the saved fields in the live state so
         // other cards' in-progress edits are left untouched.
-        savedBaseline.current = updated;
+        savedBaseline.current = settleHookClears(updated);
         setSettings((prev) =>
-          prev ? { ...prev, ...patch, ...(echo ? echo(prev) : null) } : updated
+          settleHookClears(prev ? { ...prev, ...patch, ...(echo ? echo(prev) : null) } : updated)
         );
         setSaveState("idle");
         setFieldPulse((p) => {

@@ -258,3 +258,21 @@ describe("scheduled entries", () => {
     await waitFor(() => expect(putBodies.at(-1)?.perItemSchedules).toBe(true));
   });
 });
+
+describe("commands before and after", () => {
+  it("removes a stored command once and keeps a command typed afterwards", async () => {
+    settingsOnServer = baseSettings({ everythingPreHookSet: true });
+    await renderPage();
+    const hooks = card("schedules.hooks");
+    fireEvent.click(within(hooks).getByRole("button", { name: en["offsite.targets.remove"] }));
+    await waitFor(() => expect(putBodies.some((b) => b.everythingPreHookClear)).toBe(true), SAVED);
+    expect(within(hooks).queryByRole("button", { name: en["offsite.targets.remove"] })).toBeNull();
+
+    putBodies.length = 0;
+    fireEvent.change(within(hooks).getByRole("textbox", { name: en["schedules.hookPre"] }), {
+      target: { value: "/boot/new.sh" },
+    });
+    await waitFor(() => expect(putBodies.at(-1)?.everythingPreHook).toBe("/boot/new.sh"), SAVED);
+    expect(putBodies.at(-1)?.everythingPreHookClear).toBeFalsy();
+  });
+});
