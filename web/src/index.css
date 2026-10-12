@@ -2175,6 +2175,12 @@ body {
   --motion-quake-tilt: .5deg;
   --motion-burst-reach: 1;
   --motion-reborn-dur: 550ms;
+  /* The shock the burst sends down the rail: how far a row is thrown and
+     tipped, how long it shakes, and how long the next row waits. */
+  --motion-rail-dist: 10px;
+  --motion-rail-tilt: 1.6deg;
+  --motion-rail-dur: 560ms;
+  --motion-rail-step: 70ms;
 
   /* The other animations, each described where it is defined:
      control  every ordinary transition: hovers, colour fades, open and close
@@ -2279,6 +2285,10 @@ body {
   --motion-quake-tilt: .8deg;
   --motion-burst-reach: 1.35;
   --motion-reborn-dur: 700ms;
+  --motion-rail-dist: 16px;
+  --motion-rail-tilt: 2.6deg;
+  --motion-rail-dur: 640ms;
+  --motion-rail-step: 65ms;
 
   --motion-control-dur: 300ms;
 
@@ -2361,6 +2371,10 @@ body {
   --motion-quake-tilt: .3deg;
   --motion-burst-reach: .7;
   --motion-reborn-dur: 380ms;
+  --motion-rail-dist: 5px;
+  --motion-rail-tilt: .8deg;
+  --motion-rail-dur: 400ms;
+  --motion-rail-step: 50ms;
 
   --motion-control-dur: 80ms;
 
@@ -2448,6 +2462,10 @@ body {
   --motion-quake-tilt: 0deg;
   --motion-burst-reach: 0;
   --motion-reborn-dur: 550ms;
+  --motion-rail-dist: 0px;
+  --motion-rail-tilt: 0deg;
+  --motion-rail-dur: 560ms;
+  --motion-rail-step: 0ms;
 
   /* Durations collapse to zero, so each end state paints at once, and a zero
      stagger step and cap make every row delay zero. */
@@ -2535,6 +2553,24 @@ body {
                     rotate(calc(var(--quake, 1) * .8 * var(--motion-quake-tilt, .5deg))); }
   100% { transform: translate(calc(var(--quake, 1) * var(--motion-quake-dist, 1px)), calc(var(--quake, 1) * -1 * var(--motion-quake-dist, 1px)))
                     rotate(calc(var(--quake, 1) * -1 * var(--motion-quake-tilt, .5deg))); }
+}
+
+/* A row of the rail hit by the shock. Neighbours start in opposite directions
+   (--rail-dir), so the rows never move as one block, and two axes and a tilt
+   keep it from reading as a slide. */
+@keyframes glim-rail-quake {
+  0%   { transform: none; }
+  12%  { transform: translate(calc(var(--rail-dir, 1) * var(--motion-rail-dist, 10px)), calc(.5 * var(--motion-rail-dist, 10px)))
+                    rotate(calc(var(--rail-dir, 1) * var(--motion-rail-tilt, 1.6deg))); }
+  28%  { transform: translate(calc(var(--rail-dir, 1) * -.75 * var(--motion-rail-dist, 10px)), calc(-.25 * var(--motion-rail-dist, 10px)))
+                    rotate(calc(var(--rail-dir, 1) * -.75 * var(--motion-rail-tilt, 1.6deg))); }
+  44%  { transform: translate(calc(var(--rail-dir, 1) * .5 * var(--motion-rail-dist, 10px)), calc(.15 * var(--motion-rail-dist, 10px)))
+                    rotate(calc(var(--rail-dir, 1) * .5 * var(--motion-rail-tilt, 1.6deg))); }
+  60%  { transform: translate(calc(var(--rail-dir, 1) * -.3 * var(--motion-rail-dist, 10px)), 0)
+                    rotate(calc(var(--rail-dir, 1) * -.3 * var(--motion-rail-tilt, 1.6deg))); }
+  78%  { transform: translate(calc(var(--rail-dir, 1) * .15 * var(--motion-rail-dist, 10px)), 0)
+                    rotate(calc(var(--rail-dir, 1) * .1 * var(--motion-rail-tilt, 1.6deg))); }
+  100% { transform: none; }
 }
 
 /* The mark growing back once the debris has settled. */
@@ -2830,6 +2866,11 @@ body {
   }
   .glim-logo-reborn .glim-logo-img {
     animation: glim-logo-reborn var(--motion-reborn-dur, 550ms) var(--motion-page-ease, ease-out) both;
+  }
+  /* --rail-i counts the footer rows too (Sidebar.tsx's railVars). */
+  .glim-rail-quake .glim-nav-row {
+    animation: glim-rail-quake var(--motion-rail-dur, 560ms) ease-out;
+    animation-delay: calc(var(--rail-i, 0) * var(--motion-rail-step, 70ms));
   }
 
   .glim-page-enter {
@@ -3267,6 +3308,10 @@ body {
   }
   :root[data-motion="storm"] .glim-logo-reborn .glim-logo-img {
     animation: glim-logo-reborn var(--motion-reborn-dur, 550ms) var(--motion-page-ease, ease-out) both;
+  }
+  :root[data-motion="storm"] .glim-rail-quake .glim-nav-row {
+    animation: glim-rail-quake var(--motion-rail-dur, 560ms) ease-out;
+    animation-delay: calc(var(--rail-i, 0) * var(--motion-rail-step, 70ms));
   }
   :root[data-motion="storm"] .glim-page-enter {
     animation:

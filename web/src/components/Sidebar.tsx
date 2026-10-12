@@ -79,6 +79,12 @@ const navActive =
 const navInactive =
   "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5 motion-safe:hover:rtl:-translate-x-0.5!";
 
+// railVars places a row in the rail: its rainbow hue, and its turn and first
+// direction in the shock that runs down the rail when the logo goes off.
+function railVars(i: number): CSSProperties {
+  return { ...hueVars(i), "--rail-i": i, "--rail-dir": i % 2 ? -1 : 1 } as CSSProperties;
+}
+
 // NavItem is one destination row. On the current route glim-active switches the
 // icon tint off, because the filled badge already shows the hue.
 function NavItem({ destination, hueIndex, count }: NavItem) {
@@ -109,7 +115,7 @@ function NavItem({ destination, hueIndex, count }: NavItem) {
         }
         style={
           {
-            ...hueVars(hueIndex),
+            ...railVars(hueIndex),
             ...(reactive ? { "--reactive-chars": labelWidth(label) } : {}),
           } as CSSProperties
         }
@@ -166,7 +172,7 @@ function SidebarSignOut({ hueIndex }: { hueIndex: number }) {
         className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon glim-nav-idle ${navInactive} w-full`}
         style={
           {
-            ...hueVars(hueIndex),
+            ...railVars(hueIndex),
             ...(reactive ? { "--reactive-chars": labelWidth(label) } : {}),
           } as CSSProperties
         }
@@ -223,7 +229,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
     // cutting off the bottom group with Settings.
     <aside
       data-testid="desktop-sidebar"
-      className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-x-hidden overflow-y-auto rounded-card bg-carbon-sidebar`}
+      className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-x-hidden overflow-y-auto rounded-card bg-carbon-sidebar${hold.phase === "gone" ? " glim-rail-quake" : ""}`}
       style={{ scrollbarWidth: "thin", scrollbarColor: "var(--carbon-border) transparent" }}
     >
       {/* A button rather than a link, so a click and a long press can be told
