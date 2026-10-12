@@ -61,6 +61,9 @@ export function flowMeasures(room: number): FlowMeasures {
 export interface FlowLayout {
   measures: FlowMeasures;
   height: number;
+  /** Where the first row starts. The rows and the bands they cross stand
+   *  centred beside a taller stack of boxes. */
+  rowsTop: number;
   rowsHeight: number;
   nodeHeight: number;
   rowY: (row: number) => number;
@@ -81,15 +84,17 @@ export function flowLayout(measures: FlowMeasures, rows: number, bands: number, 
   const nodeHeight = Math.max(m.nodeMin, m.nodePad * 2 + (rows - 1) * m.gap);
   const stack = nodes * nodeHeight + Math.max(0, nodes - 1) * NODE_GAP;
   const first = m.top + Math.max(0, (rowsHeight - stack) / 2);
+  const rowsTop = m.top + Math.max(0, (stack - rowsHeight) / 2);
   const pitch = bands > 1 && !m.narrow ? BAND_PITCH : m.bandWidth + BAND_GAP;
   const bandLeft = (band: number) => m.bandX + band * pitch;
   const nodeTop = (node: number) => first + node * (nodeHeight + NODE_GAP);
   return {
     measures,
     height: Math.max(m.top + rowsHeight, first + stack) + 6,
+    rowsTop,
     rowsHeight,
     nodeHeight,
-    rowY: (row) => m.top + m.row * (row + 0.5),
+    rowY: (row) => rowsTop + m.row * (row + 0.5),
     bandLeft,
     bandCentre: (band) => bandLeft(band) + m.bandWidth / 2,
     headWidth: bands > 1 ? pitch - 6 : HEAD_WIDTH,

@@ -13,14 +13,18 @@ const SIZES = {
 
 /**
  * LocationMark is a storage location's tile, like an app icon: the provider's
- * mark on its brand colour, and the accent for a folder on this host.
+ * mark on its brand colour, and the accent for a folder on this host. A bare
+ * mark has no tile: a brand keeps its own colours and every other glyph takes
+ * the colour of the text around it.
  */
 export function LocationMark({
   location,
   size = "row",
+  bare = false,
 }: {
   location: Pick<StorageLocation, "mark" | "kind">;
   size?: keyof typeof SIZES;
+  bare?: boolean;
 }) {
   const brand = location.mark ? PROVIDER_TILES[location.mark] : undefined;
   const local = !location.mark && location.kind === "local";
@@ -30,7 +34,7 @@ export function LocationMark({
     <span
       aria-hidden="true"
       className={`inline-flex flex-none items-center justify-center rounded-control ${SIZES[size]}`}
-      style={{ background: tile, color: ink, "--mark-ink": ink, "--mark-cut": "transparent" } as CSSProperties}
+      style={bare ? undefined : ({ background: tile, color: ink, "--mark-ink": ink, "--mark-cut": "transparent" } as CSSProperties)}
     >
       {local ? <IconLocal /> : <ProviderMark provider={location} />}
     </span>
