@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useState, useRef, useEffect, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { logout, type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { hueVars } from "../lib/appearance";
@@ -12,6 +12,7 @@ import { NavCount } from "./NavCount";
 import { useLabelMode } from "../lib/useLabelMode";
 import { hidesLabel, labelWidth } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
+import { useLogoHold } from "../lib/useLogoHold";
 
 // Many files import the glyphs from this module, so they are re-exported here.
 export {
@@ -57,53 +58,13 @@ interface NavItem {
   count?: Count;
 }
 
-// Easter egg: idle, then wobble, then boom.
-type EggState = "idle" | "wobble" | "boom";
-
-// On boom the logo breaks into an N×N grid of tiles, each painting its slice of
-// the logo through background-position and flying outward with some spin.
-// Computed at module load so re-renders during the boom do not re-randomise it.
-const FRAG_N = 6;
-const FRAG_TILES = Array.from({ length: FRAG_N * FRAG_N }, (_, i) => {
-  const row = Math.floor(i / FRAG_N);
-  const col = i % FRAG_N;
-  const mid = (FRAG_N - 1) / 2;
-  const vx = col - mid;
-  const vy = row - mid;
-  const spread = 15 + Math.random() * 13;
-  const dx = Math.round(vx * spread + (Math.random() - 0.5) * 12);
-  const dy = Math.round(vy * spread + (Math.random() - 0.5) * 12);
-  return {
-    left: `${(col * 100) / FRAG_N}%`,
-    top: `${(row * 100) / FRAG_N}%`,
-    size: `${100 / FRAG_N}%`,
-    bgPos: `${(col / (FRAG_N - 1)) * 100}% ${(row / (FRAG_N - 1)) * 100}%`,
-    dx: `${dx}px`,
-    dy: `${dy}px`,
-    rot: `${Math.round((Math.random() - 0.5) * 560)}deg`,
-    delay: `${Math.round(Math.random() * 90)}ms`,
-  };
-});
-
-// Soft radial puffs that overlap into the fire and smoke cloud.
-const BOOM_CLOUD = [
-  { cx: "-6px", cy: "-4px", delay: "0ms", hot: true },
-  { cx: "16px", cy: "-8px", delay: "40ms", hot: true },
-  { cx: "-18px", cy: "6px", delay: "70ms", hot: false },
-  { cx: "10px", cy: "14px", delay: "110ms", hot: false },
-  { cx: "0px", cy: "-16px", delay: "150ms", hot: false },
+// The stages build on each other, so the third keeps the first two's rules.
+const QUAKE_CLASS = [
+  "glim-logo-idle",
+  "glim-logo-quake",
+  "glim-logo-quake glim-logo-quake2",
+  "glim-logo-quake glim-logo-quake2 glim-logo-quake3",
 ];
-
-const BOOM_PARTICLES = Array.from({ length: 14 }, (_, i) => {
-  const angle = (Math.PI * 2 * i) / 14 + (i % 2) * 0.22;
-  const dist = 34 + (i % 3) * 12;
-  return {
-    tx: `${Math.round(Math.cos(angle) * dist)}px`,
-    ty: `${Math.round(Math.sin(angle) * dist)}px`,
-    spark: i % 2 === 0 ? "#fff57c" : "#f68e32",
-    delay: `${Math.round((i % 4) * 18)}ms`,
-  };
-});
 
 // `transition` rather than `transition-colors` so the hover and press transforms
 // animate too. Every transform is motion-safe, so reduced motion gets colour
@@ -117,12 +78,6 @@ const navActive =
 // rule whatever order Tailwind emits them in.
 const navInactive =
   "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5 motion-safe:hover:rtl:-translate-x-0.5!";
-
-// railVars places a row in the rail: its rainbow hue, and its turn and first
-// direction in the logo's blast (glim-egg-quake in index.css).
-function railVars(i: number): CSSProperties {
-  return { ...hueVars(i), "--rail-i": i, "--rail-dir": i % 2 ? -1 : 1 } as CSSProperties;
-}
 
 // NavItem is one destination row. On the current route glim-active switches the
 // icon tint off, because the filled badge already shows the hue.
@@ -154,7 +109,7 @@ function NavItem({ destination, hueIndex, count }: NavItem) {
         }
         style={
           {
-            ...railVars(hueIndex),
+            ...hueVars(hueIndex),
             ...(reactive ? { "--reactive-chars": labelWidth(label) } : {}),
           } as CSSProperties
         }
@@ -211,7 +166,7 @@ function SidebarSignOut({ hueIndex }: { hueIndex: number }) {
         className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon glim-nav-idle ${navInactive} w-full`}
         style={
           {
-            ...railVars(hueIndex),
+            ...hueVars(hueIndex),
             ...(reactive ? { "--reactive-chars": labelWidth(label) } : {}),
           } as CSSProperties
         }
@@ -254,62 +209,12 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
   const railLabels = !hidesLabel(railMode);
   const railReactive = railMode === "reactive";
   const railNarrow = railMode === "glyph";
-  // One size for all four boxes the mark is drawn in, or the shatter grid and
-  // the image end up in differently sized boxes.
   const markBox = railNarrow ? "h-11 w-11" : "h-26 w-26";
 
-
-  // Easter egg: hold the logo and it wobbles, explodes and comes back. A short
-  // click still goes to the overview; once the hold has fired, the click that
-  // follows is swallowed.
-  const [eggState, setEggState] = useState<EggState>("idle");
-  const holdRef = useRef<number | null>(null);
-  const seqRef = useRef<number[]>([]);
-  const firedRef = useRef(false);
-
-  function startHold() {
-    if (eggState !== "idle") return;
-    firedRef.current = false;
-    if (holdRef.current !== null) window.clearTimeout(holdRef.current);
-    holdRef.current = window.setTimeout(() => {
-      holdRef.current = null;
-      firedRef.current = true;
-      setEggState("wobble");
-      const toBoom = window.setTimeout(() => {
-        setEggState("boom");
-        const toIdle = window.setTimeout(() => {
-          setEggState("idle");
-          firedRef.current = false;
-        }, 1400);
-        seqRef.current.push(toIdle);
-      }, 900);
-      seqRef.current.push(toBoom);
-    }, 500);
-  }
-
-  // Releasing or leaving before the hold fires cancels it, so the click
-  // navigates normally. A sequence that already started plays out.
-  function cancelHold() {
-    if (holdRef.current !== null) {
-      window.clearTimeout(holdRef.current);
-      holdRef.current = null;
-    }
-  }
-
-  function handleLogoClick() {
-    if (firedRef.current) return;
-    navigate("/dashboard");
-  }
-
-  useEffect(() => {
-    return () => {
-      if (holdRef.current !== null) window.clearTimeout(holdRef.current);
-      for (const id of seqRef.current) window.clearTimeout(id);
-    };
-  }, []);
-
-  const eggClass =
-    eggState === "wobble" ? "glim-egg-wobble" : eggState === "boom" ? "glim-egg-boom" : "glim-logo-idle";
+  // Held, the logo shakes harder and harder and then goes off; a short click
+  // still goes to the overview.
+  const hold = useLogoHold(() => navigate("/dashboard"));
+  const markClass = hold.phase !== "idle" ? `glim-logo-${hold.phase}` : QUAKE_CLASS[hold.stage];
 
   return (
     // Only glyph mode narrows the rail. Reactive cannot: its labels slide back
@@ -318,85 +223,25 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
     // cutting off the bottom group with Settings.
     <aside
       data-testid="desktop-sidebar"
-      className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-x-hidden overflow-y-auto rounded-card bg-carbon-sidebar${eggState === "boom" ? " glim-egg-quake" : ""}`}
+      className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-x-hidden overflow-y-auto rounded-card bg-carbon-sidebar`}
       style={{ scrollbarWidth: "thin", scrollbarColor: "var(--carbon-border) transparent" }}
     >
       {/* A button rather than a link, so a click and a long press can be told
-          apart. The two images switch with the theme through `dark:`. */}
+          apart. */}
       <button
         type="button"
         aria-label={t("nav.overview")}
-        onClick={handleLogoClick}
-        onPointerDown={startHold}
-        onPointerUp={cancelHold}
-        onPointerLeave={cancelHold}
-        onPointerCancel={cancelHold}
-        onContextMenu={(e) => e.preventDefault()}
+        {...hold.handlers}
         className={`glim-logo-btn flex flex-col items-center gap-2 ${railNarrow ? "px-2 py-4" : "px-4 py-6"}${railReactive ? " glim-reactive" : ""} w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
       >
-        {/* `--egg-mark` passes the mark size to the shatter tiles, whose
-            background is sized to the whole mark. */}
-        <span
-          className={`relative inline-flex ${markBox} shrink-0 items-center justify-center`}
-          style={{ "--egg-mark": railNarrow ? "44px" : "104px" } as CSSProperties}
-        >
-          <span className={`glim-logo-mark flex ${markBox} items-center justify-center ${eggClass}`}>
-            <img
-              src="/logo.svg"
-              alt="BombVault"
-              draggable={false}
-              className={`glim-logo-img ${markBox} object-contain shrink-0 block`}
-            />
-            {/* At boom the CSS hides the <img> and the tiles take its place. */}
-            {eggState === "boom" && (
-              <span className="glim-frag-grid" aria-hidden="true">
-                {FRAG_TILES.map((f, i) => (
-                  <span
-                    key={i}
-                    className="glim-frag"
-                    style={
-                      {
-                        left: f.left,
-                        top: f.top,
-                        width: f.size,
-                        height: f.size,
-                        backgroundPosition: f.bgPos,
-                        "--dx": f.dx,
-                        "--dy": f.dy,
-                        "--rot": f.rot,
-                        "--delay": f.delay,
-                      } as React.CSSProperties
-                    }
-                  />
-                ))}
-              </span>
-            )}
-          </span>
-          {eggState === "boom" && (
-            <span className="glim-boom-fx" aria-hidden="true">
-              {BOOM_CLOUD.map((c, i) => (
-                <span
-                  key={`c${i}`}
-                  className={`glim-cloud ${c.hot ? "glim-cloud--hot" : "glim-cloud--smoke"}`}
-                  style={{ "--cx": c.cx, "--cy": c.cy, "--delay": c.delay } as React.CSSProperties}
-                />
-              ))}
-              {BOOM_PARTICLES.map((p, i) => (
-                <span
-                  key={`p${i}`}
-                  className="glim-particle"
-                  style={
-                    {
-                      "--tx": p.tx,
-                      "--ty": p.ty,
-                      "--spark": p.spark,
-                      "--delay": p.delay,
-                    } as React.CSSProperties
-                  }
-                />
-              ))}
-            </span>
-          )}
+        <span className={`glim-logo-mark flex ${markBox} shrink-0 items-center justify-center ${markClass}`}>
+          <img
+            ref={hold.markRef}
+            src="/logo.svg"
+            alt="BombVault"
+            draggable={false}
+            className={`glim-logo-img ${markBox} object-contain shrink-0 block`}
+          />
         </span>
         {/* Removed rather than `sr-only`, unlike the other labels in the rail:
             the button's aria-label is its name, and a hidden copy would make a

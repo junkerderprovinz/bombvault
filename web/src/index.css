@@ -2168,13 +2168,13 @@ body {
   --motion-shake-scale: 1;                /* multiplies glim-shake's translateX steps */
   --motion-shake-dur: 360ms;
 
-  /* How far each sidebar row is thrown and tipped when the logo goes off, and
-     how long the blast takes to reach the next row down. Step times eleven
-     rows plus the duration has to stay under Sidebar.tsx's 1400ms boom. */
-  --motion-quake-dist: 10px;
-  --motion-quake-tilt: 1.6deg;
-  --motion-quake-dur: 560ms;
-  --motion-quake-step: 70ms;
+  /* The held logo: how far one shake step moves and tips it (the last stage
+     moves it nearly four steps), how far the burst throws its debris, and how
+     long the mark takes to grow back. lib/logoBurst.ts reads the reach. */
+  --motion-quake-dist: 1px;
+  --motion-quake-tilt: .5deg;
+  --motion-burst-reach: 1;
+  --motion-reborn-dur: 550ms;
 
   /* The other animations, each described where it is defined:
      control  every ordinary transition: hovers, colour fades, open and close
@@ -2275,10 +2275,10 @@ body {
   --motion-shake-scale: 1.9;
   --motion-shake-dur: 520ms;
 
-  --motion-quake-dist: 16px;
-  --motion-quake-tilt: 2.6deg;
-  --motion-quake-dur: 640ms;
-  --motion-quake-step: 65ms;
+  --motion-quake-dist: 1.6px;
+  --motion-quake-tilt: .8deg;
+  --motion-burst-reach: 1.35;
+  --motion-reborn-dur: 700ms;
 
   --motion-control-dur: 300ms;
 
@@ -2357,10 +2357,10 @@ body {
   --motion-shake-scale: .5;
   --motion-shake-dur: 220ms;
 
-  --motion-quake-dist: 5px;
-  --motion-quake-tilt: .8deg;
-  --motion-quake-dur: 400ms;
-  --motion-quake-step: 50ms;
+  --motion-quake-dist: .6px;
+  --motion-quake-tilt: .3deg;
+  --motion-burst-reach: .7;
+  --motion-reborn-dur: 380ms;
 
   --motion-control-dur: 80ms;
 
@@ -2442,10 +2442,12 @@ body {
   --motion-shake-scale: 0;
   --motion-shake-dur: 300ms;
 
+  /* The hold never fires at this level (lib/motion.ts's motionStopped), so
+     these only keep the level answering every dial. */
   --motion-quake-dist: 0px;
   --motion-quake-tilt: 0deg;
-  --motion-quake-dur: 0ms;
-  --motion-quake-step: 0ms;
+  --motion-burst-reach: 0;
+  --motion-reborn-dur: 550ms;
 
   /* Durations collapse to zero, so each end state paints at once, and a zero
      stagger step and cap make every row delay zero. */
@@ -2520,69 +2522,25 @@ body {
   50%      { transform: rotate(2.5deg); }
 }
 
-/* The easter egg: the logo wobbles, then breaks into an N×N grid of fragments
-   that fly outward under a little gravity while a flash, a shockwave, a
-   fire-to-smoke cloud and sparks go off behind them. */
-@keyframes glim-egg-shake {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  15%      { transform: translate(-2px, 1px) rotate(-8deg); }
-  30%      { transform: translate(2px, -1px) rotate(7deg); }
-  45%      { transform: translate(-2px, 1px) rotate(-6deg); }
-  60%      { transform: translate(2px, -1px) rotate(6deg); }
-  80%      { transform: translate(-1px, 0) rotate(-4deg); }
+/* The held logo's shake. --quake is the stage's strength and multiplies the
+   level's step, so the same frames serve every stage and every level. */
+@keyframes glim-logo-quake {
+  0%   { transform: translate(calc(var(--quake, 1) * var(--motion-quake-dist, 1px)), calc(var(--quake, 1) * -1 * var(--motion-quake-dist, 1px)))
+                    rotate(calc(var(--quake, 1) * -1 * var(--motion-quake-tilt, .5deg))); }
+  25%  { transform: translate(calc(var(--quake, 1) * -1 * var(--motion-quake-dist, 1px)), calc(var(--quake, 1) * .6 * var(--motion-quake-dist, 1px)))
+                    rotate(calc(var(--quake, 1) * var(--motion-quake-tilt, .5deg))); }
+  50%  { transform: translate(calc(var(--quake, 1) * .7 * var(--motion-quake-dist, 1px)), calc(var(--quake, 1) * var(--motion-quake-dist, 1px)))
+                    rotate(calc(var(--quake, 1) * -.6 * var(--motion-quake-tilt, .5deg))); }
+  75%  { transform: translate(calc(var(--quake, 1) * -.8 * var(--motion-quake-dist, 1px)), calc(var(--quake, 1) * -.8 * var(--motion-quake-dist, 1px)))
+                    rotate(calc(var(--quake, 1) * .8 * var(--motion-quake-tilt, .5deg))); }
+  100% { transform: translate(calc(var(--quake, 1) * var(--motion-quake-dist, 1px)), calc(var(--quake, 1) * -1 * var(--motion-quake-dist, 1px)))
+                    rotate(calc(var(--quake, 1) * -1 * var(--motion-quake-tilt, .5deg))); }
 }
 
-/* The blast running down the sidebar: each row is thrown on its own, one after
-   the next from the top, and --rail-dir sends neighbours opposite ways first so
-   the rows never move as one block. Two axes and a tilt, because a shake on
-   one axis reads as a slide. */
-@keyframes glim-egg-quake {
-  0%   { transform: none; }
-  12%  { transform: translate(calc(var(--rail-dir, 1) * var(--motion-quake-dist, 10px)), calc(.5 * var(--motion-quake-dist, 10px)))
-                    rotate(calc(var(--rail-dir, 1) * var(--motion-quake-tilt, 1.6deg))); }
-  28%  { transform: translate(calc(var(--rail-dir, 1) * -.75 * var(--motion-quake-dist, 10px)), calc(-.25 * var(--motion-quake-dist, 10px)))
-                    rotate(calc(var(--rail-dir, 1) * -.75 * var(--motion-quake-tilt, 1.6deg))); }
-  44%  { transform: translate(calc(var(--rail-dir, 1) * .5 * var(--motion-quake-dist, 10px)), calc(.15 * var(--motion-quake-dist, 10px)))
-                    rotate(calc(var(--rail-dir, 1) * .5 * var(--motion-quake-tilt, 1.6deg))); }
-  60%  { transform: translate(calc(var(--rail-dir, 1) * -.3 * var(--motion-quake-dist, 10px)), 0)
-                    rotate(calc(var(--rail-dir, 1) * -.3 * var(--motion-quake-tilt, 1.6deg))); }
-  78%  { transform: translate(calc(var(--rail-dir, 1) * .15 * var(--motion-quake-dist, 10px)), 0)
-                    rotate(calc(var(--rail-dir, 1) * .1 * var(--motion-quake-tilt, 1.6deg))); }
-  100% { transform: none; }
-}
-
-/* Each fragment flies from rest to its per-tile (--dx,--dy) with spin, a downward
-   gravity nudge, shrink and fade. Custom props are set inline per tile in the TSX. */
-@keyframes glim-frag-fly {
-  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
-  12%  { opacity: 1; }
-  100% { transform: translate(var(--dx, 0), calc(var(--dy, 0) + 24px)) rotate(var(--rot, 0deg)) scale(.22); opacity: 0; }
-}
-
-/* The bright central flash, gone fast. */
-@keyframes glim-egg-flash {
-  0%   { transform: translate(-50%, -50%) scale(.25); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
-}
-
-/* Shockwave ring expanding outward. */
-@keyframes glim-egg-shock {
-  0%   { transform: translate(-50%, -50%) scale(.2); opacity: .85; }
-  100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; }
-}
-
-/* Each cloud puff scales up, drifts to (--cx,--cy) and fades. */
-@keyframes glim-cloud-billow {
-  0%   { transform: translate(-50%, -50%) translate(0, 0) scale(.2); opacity: 0; }
-  18%  { opacity: .95; }
-  55%  { opacity: .7; }
-  100% { transform: translate(-50%, -50%) translate(var(--cx, 0), var(--cy, 0)) scale(2.7); opacity: 0; }
-}
-
-/* Sparks fly out to (--tx,--ty) with a little gravity, shrinking and fading. */
-@keyframes glim-spark-fly {
-  0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
-  100% { transform: translate(-50%, -50%) translate(var(--tx, 0), calc(var(--ty, 0) + 18px)) scale(.2); opacity: 0; }
+/* The mark growing back once the debris has settled. */
+@keyframes glim-logo-reborn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: none; opacity: 1; }
 }
 
 @keyframes glim-egg-fade-pulse {
@@ -2775,82 +2733,21 @@ body {
   transition: translate var(--drag-settle-dur) var(--drag-settle-ease);
 }
 
-/* The logo mark holds the <img> and, during the boom, the fragment grid. The
-   effects overlay (.glim-boom-fx) is a sibling, so the mark never clips or
-   transforms the flash, shockwave, cloud and sparks. Both overflow the mark
-   and are absolutely positioned, so the sidebar layout never shifts. */
-.glim-logo-mark { transform-origin: center; will-change: transform; overflow: visible; }
+.glim-logo-mark { transform-origin: center; }
 
-/* The shatter grid: 6×6 slices of the logo over the mark. Each tile paints its
-   slice with its own background-position, so at rest they form the whole
-   mark. Position, size and --dx/--dy/--rot/--delay are set inline. */
-.glim-frag-grid { position: absolute; inset: 0; pointer-events: none; }
-.glim-frag {
-  position: absolute;
-  background-image: url("/logo.svg");
-  /* Sized to the whole mark, not the tile. `--egg-mark` comes from the logo
-     row, because the narrow rail draws a smaller mark. */
-  background-size: var(--egg-mark, 104px) var(--egg-mark, 104px);
-  background-repeat: no-repeat;
-  transform-origin: center;
-  will-change: transform, opacity;
-  opacity: 0;
-}
+/* Hidden rather than removed while its shards fly, so the rail keeps its
+   height. A state, not motion, so it sits outside the gate. */
+.glim-logo-gone .glim-logo-img { visibility: hidden; }
 
-.glim-boom-fx { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
-.glim-boom-fx::before,
-.glim-boom-fx::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  border-radius: 9999px;
-}
-.glim-boom-fx::before { /* flash core */
-  width: 48px;
-  height: 48px;
-  background: radial-gradient(circle, #ffffff 0%, #fff57c 40%, rgba(246, 142, 50, .5) 65%, transparent 78%);
-  transform: translate(-50%, -50%) scale(.25);
-  opacity: 0;
-}
-.glim-boom-fx::after { /* shockwave ring */
-  width: 40px;
-  height: 40px;
-  border: 2px solid var(--accent);
-  transform: translate(-50%, -50%) scale(.2);
-  opacity: 0;
-}
-
-/* Soft overlapping puffs build the fire-to-smoke cloud. Hot puffs keep a
-   yellow and orange core; smoke puffs fade to the logo's cool greys. */
-.glim-cloud {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 40px;
-  height: 40px;
-  border-radius: 9999px;
-  transform: translate(-50%, -50%) scale(.2);
-  opacity: 0;
-  filter: blur(2px);
-}
-.glim-cloud--hot {
-  background: radial-gradient(circle, rgba(255, 245, 124, .95) 0%, rgba(246, 142, 50, .82) 38%, rgba(125, 116, 110, .5) 66%, transparent 80%);
-}
-.glim-cloud--smoke {
-  background: radial-gradient(circle, rgba(246, 142, 50, .55) 0%, rgba(138, 130, 124, .55) 45%, rgba(92, 88, 84, .42) 70%, transparent 82%);
-}
-
-.glim-particle {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-  background: var(--spark, var(--accent));
-  transform: translate(-50%, -50%);
-  opacity: 0;
+/* The burst's canvas over the whole window. lib/logoBurst.ts removes it once
+   the debris has settled. */
+.glim-logo-burst {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 80;
 }
 
 /* The checkmark fully drawn, outside the motion block, so a reduced-motion
@@ -2919,34 +2816,20 @@ body {
   }
   :root[data-motion="off"] .glim-progress-fill::after { animation: none; opacity: 0; }
 
-  /* Gentle sway on hover, only while the logo is idle (not mid-egg). */
+  /* Gentle sway on hover, only while the logo is idle. */
   .glim-logo-btn:hover .glim-logo-idle { animation: glim-logo-sway 2.4s ease-in-out infinite; }
 
-  .glim-egg-wobble { animation: glim-egg-shake 240ms ease-in-out infinite; }
-
-  /* At the boom the logo hides through opacity, which does not fight the
-     Tailwind block/dark:block swap, and the tiles fly. */
-  .glim-egg-boom .glim-logo-img { opacity: 0; }
-  .glim-egg-boom .glim-frag {
-    animation: glim-frag-fly 950ms cubic-bezier(.22, .61, .3, 1) forwards;
-    animation-delay: var(--delay, 0ms);
+  /* The shake grows in three stages while the logo is held, and the last one
+     glows like something about to go off. */
+  .glim-logo-quake .glim-logo-img { --quake: 1; animation: glim-logo-quake 45ms linear infinite; }
+  .glim-logo-quake2 .glim-logo-img { --quake: 2.2; filter: brightness(1.15); }
+  .glim-logo-quake3 .glim-logo-img {
+    --quake: 3.8;
+    animation-duration: 32ms;
+    filter: brightness(1.45) drop-shadow(0 0 10px rgba(255, 140, 30, .9));
   }
-
-  .glim-boom-fx::before { animation: glim-egg-flash 160ms ease-out forwards; }
-  .glim-boom-fx::after  { animation: glim-egg-shock 620ms ease-out forwards; }
-  .glim-cloud {
-    animation: glim-cloud-billow 840ms cubic-bezier(.2, .6, .3, 1) forwards;
-    animation-delay: var(--delay, 0ms);
-  }
-  .glim-particle {
-    animation: glim-spark-fly 820ms cubic-bezier(.2, .6, .3, 1) forwards;
-    animation-delay: var(--delay, 0ms);
-  }
-  /* --rail-i is the row's position in the rail, footer included, and
-     --rail-dir alternates with it (Sidebar.tsx's railVars). */
-  .glim-egg-quake .glim-nav-row {
-    animation: glim-egg-quake var(--motion-quake-dur, 560ms) ease-out;
-    animation-delay: calc(var(--rail-i, 0) * var(--motion-quake-step, 70ms));
+  .glim-logo-reborn .glim-logo-img {
+    animation: glim-logo-reborn var(--motion-reborn-dur, 550ms) var(--motion-page-ease, ease-out) both;
   }
 
   .glim-page-enter {
@@ -3345,18 +3228,13 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Gentler stand-ins for the shatter, the page entrance and the shake. Storm
-     is exempt from each and gets its full animations back at the end of this
-     block: it takes five clicks on the same option, so it is a choice rather
-     than an inherited default. The micro-interactions in the no-preference
-     block (press, lift, spinner) stay gated by the OS at every level. */
-
-  /* No shatter: a quiet fade pulse of the logo, with the cloud, fragments and
-     sparks hidden. */
-  :root:not([data-motion="storm"]) .glim-egg-wobble { animation: glim-egg-fade-pulse 900ms ease-in-out; }
-  :root:not([data-motion="storm"]) .glim-egg-boom .glim-logo-img { animation: glim-egg-fade-pulse 600ms ease-in-out; }
-  :root:not([data-motion="storm"]) .glim-frag-grid,
-  :root:not([data-motion="storm"]) .glim-boom-fx { display: none; }
+  /* Gentler stand-ins for the page entrance, the dialogs, the toast and the
+     shake. Storm is exempt from each and gets its full animations back at the
+     end of this block, together with the held logo, which does not fire at
+     all here otherwise: it takes five clicks on the same option, so it is a
+     choice rather than an inherited default. The micro-interactions in the
+     no-preference block (press, lift, spinner) stay gated by the OS at every
+     level. */
   :root:not([data-motion="storm"]) .glim-page-enter { animation: glim-fade-in 200ms ease both; }
 
   /* Dialogs only fade. */
@@ -3380,28 +3258,15 @@ body {
      without this would leave these elements with no animation at all. The
      rules read the tokens, so the numbers still come from
      :root[data-motion="storm"]. Guarded by lib/stormOverridesOs.test.ts. */
-  :root[data-motion="storm"] .glim-egg-wobble { animation: glim-egg-shake 240ms ease-in-out infinite; }
-  :root[data-motion="storm"] .glim-egg-boom .glim-logo-img { opacity: 0; }
-  /* All of the debris has to animate: every layer in the grid and the overlay
-     rests at `opacity: 0` and only its animation reveals it, so without these
-     rules the logo would simply vanish for Sidebar.tsx's boom timer. */
-  :root[data-motion="storm"] .glim-egg-boom .glim-frag {
-    animation: glim-frag-fly 950ms cubic-bezier(.22, .61, .3, 1) forwards;
-    animation-delay: var(--delay, 0ms);
+  :root[data-motion="storm"] .glim-logo-quake .glim-logo-img { --quake: 1; animation: glim-logo-quake 45ms linear infinite; }
+  :root[data-motion="storm"] .glim-logo-quake2 .glim-logo-img { --quake: 2.2; filter: brightness(1.15); }
+  :root[data-motion="storm"] .glim-logo-quake3 .glim-logo-img {
+    --quake: 3.8;
+    animation-duration: 32ms;
+    filter: brightness(1.45) drop-shadow(0 0 10px rgba(255, 140, 30, .9));
   }
-  :root[data-motion="storm"] .glim-boom-fx::before { animation: glim-egg-flash 160ms ease-out forwards; }
-  :root[data-motion="storm"] .glim-boom-fx::after  { animation: glim-egg-shock 620ms ease-out forwards; }
-  :root[data-motion="storm"] .glim-cloud {
-    animation: glim-cloud-billow 840ms cubic-bezier(.2, .6, .3, 1) forwards;
-    animation-delay: var(--delay, 0ms);
-  }
-  :root[data-motion="storm"] .glim-particle {
-    animation: glim-spark-fly 820ms cubic-bezier(.2, .6, .3, 1) forwards;
-    animation-delay: var(--delay, 0ms);
-  }
-  :root[data-motion="storm"] .glim-egg-quake .glim-nav-row {
-    animation: glim-egg-quake var(--motion-quake-dur, 560ms) ease-out;
-    animation-delay: calc(var(--rail-i, 0) * var(--motion-quake-step, 70ms));
+  :root[data-motion="storm"] .glim-logo-reborn .glim-logo-img {
+    animation: glim-logo-reborn var(--motion-reborn-dur, 550ms) var(--motion-page-ease, ease-out) both;
   }
   :root[data-motion="storm"] .glim-page-enter {
     animation:
