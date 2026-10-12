@@ -32,7 +32,7 @@
 // Label axis: the bar has its own axis in the control label engine
 // ("bottombar", lib/controls.ts); the same four modes as buttons/sidebar/
 // tabs, consumed here the way Sidebar consumes "sidebar": hiding modes gate
-// the 11px caption under the glyph while the label survives as the slot's
+// the caption under the glyph while the label survives as the slot's
 // aria-label and opens the tip bubble, never as nothing. "reactive" pairs with the
 // coarse-pointer at-rest reveal rules in index.css (a tap fires before any
 // hover state can exist on a touch screen, so a reactive bar slot reads as
@@ -97,13 +97,18 @@ export interface BottomNavProps {
 }
 
 // One bar slot, destination or More trigger alike: the 24px glyph box over
-// the 11px caption, `flex-1` so the slots split the bar's width equally, and
-// the full 56px (h-14) row as the touch target; comfortably over the 44px
-// floor. min-w-0 + truncate keep de/fr labels single-line at 320px. The press
-// scale reads the motion-engine token, so the app's motion levels govern it
-// (--motion-press-scale is 1 at "off": no scale at all there).
+// the caption, `flex-1` so the slots split the bar's width equally, and the
+// full 56px (h-14) row as the touch target; comfortably over the 44px floor.
+// The press scale reads the motion-engine token, so the app's motion levels
+// govern it (--motion-press-scale is 1 at "off": no scale at all there).
 const slotBase =
   "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-caption motion-safe:active:scale-[var(--motion-press-scale)]";
+
+// A fifth of a phone is narrower than "Wiederherstellung", and the caption is
+// already at the smallest size of the type scale, so a long word goes onto a
+// second line, hyphenated where the language allows it. Two lines at this
+// leading still fit under the glyph in the 56px row.
+const caption = "max-w-full text-center leading-[1.1] hyphens-auto wrap-anywhere";
 
 export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavProps) {
   const { t } = useT();
@@ -228,7 +233,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
               )}
             </span>
             <span
-              className={`max-w-full truncate ${showLabel ? "" : reactive ? "glim-label-reactive" : "sr-only"}`}
+              className={showLabel ? caption : reactive ? "max-w-full truncate glim-label-reactive" : "sr-only"}
             >
               {t("nav.more")}
             </span>
@@ -315,9 +320,8 @@ function BarSlot({
                 .glim-coin-tile.glim-active / .glim-hue-icon in index.css;
                 filled is how this language says "this one is selected". The
                 fill is paint-only: no padding, height, width or gap token
-                changed, which is what keeps the narrow-viewport single-line /
-                no-overflow asserts and the 44px touch floor true by
-                construction. */}
+                changed, which is what keeps the narrow-viewport no-overflow
+                asserts and the 44px touch floor true by construction. */}
             <span className="relative flex h-6 w-6 items-center justify-center rounded-control [&_svg]:h-6 [&_svg]:w-6">
               <Icon />
               {counted && (
@@ -326,7 +330,7 @@ function BarSlot({
             </span>
             {/* 400 rest, 600 active; the caption's two sanctioned weights. */}
             <span
-              className={`max-w-full truncate ${isActive || here ? "font-semibold" : ""} ${showLabel ? "" : reactive ? "glim-label-reactive" : "sr-only"}`}
+              className={`${isActive || here ? "font-semibold" : ""} ${showLabel ? caption : reactive ? "max-w-full truncate glim-label-reactive" : "sr-only"}`}
             >
               {label}
             </span>
