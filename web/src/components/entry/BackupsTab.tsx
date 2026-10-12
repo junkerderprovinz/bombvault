@@ -208,6 +208,7 @@ export function BackupsTab({
       {opened && restoring && (
         <RestoreWindow
           key={opened.key}
+          item={item}
           entry={entry}
           name={name}
           timeline={timeline}

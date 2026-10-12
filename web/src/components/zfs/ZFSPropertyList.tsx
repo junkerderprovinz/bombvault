@@ -21,21 +21,25 @@ export function zfsPropertyFate(name: string, into: "new" | "existing"): "applie
 export function ZFSPropertyList({
   properties,
   into,
+  reading = false,
   t,
 }: {
   properties: Record<string, string>;
   into: "new" | "existing";
+  /** The backup is still being read. The list keeps its place meanwhile. */
+  reading?: boolean;
   t: T;
 }) {
   const names = Object.keys(properties).sort();
-  if (names.length === 0) return null;
+  if (names.length === 0 && !reading) return null;
   return (
     <div className="flex flex-col gap-1">
       <span className="flex items-center gap-1 text-xs text-carbon-textSub">
         {t("zfs.restore.propertiesTitle")}
         <InfoBubble tip={t(into === "new" ? "zfs.restore.propertiesNewHint" : "zfs.restore.propertiesExistingHint")} />
       </span>
-      <ul className="flex flex-col gap-0.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs">
+      <ul className="flex flex-col gap-0.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs" aria-busy={reading}>
+        {reading && <li className="text-carbon-textMuted">{t("folder.loading")}</li>}
         {names.map((name) => {
           const fate = zfsPropertyFate(name, into);
           return (

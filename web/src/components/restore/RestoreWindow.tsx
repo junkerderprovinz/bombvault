@@ -12,6 +12,7 @@ import {
   listSnapshotFilesZFS,
   zfsHostDatasets,
   zfsRestorePoints,
+  type BackupItem,
   type DBDumpView,
   type FileEntry,
   type TimelineMark,
@@ -245,8 +246,11 @@ function WhereOption({
 /**
  * RestoreWindow restores one entry from one of its backups. It reads nothing
  * about the entry itself: the caller hands it the entry and its timeline.
+ * It opens on the item alone, since the rest of the entry comes from the
+ * slow list of its kind, and fills in what depends on it once it is there.
  */
 export function RestoreWindow({
+  item,
   entry,
   name,
   timeline,
@@ -254,7 +258,9 @@ export function RestoreWindow({
   deletable = false,
   onClose,
 }: {
-  entry: Entry;
+  item: BackupItem;
+  /** null while the caller still reads it. */
+  entry: Entry | null;
   /** The entry's name as the page shows it. */
   name: string;
   timeline: TimelineState;
@@ -263,23 +269,26 @@ export function RestoreWindow({
   deletable?: boolean;
   onClose: () => void;
 }) {
-  if (entry.detail.kind === "config") {
+  if (item.kind === "config") {
     const { snapshot } = ask;
     const row = deletable && snapshot ? timeline.rows.find((r) => rowHolds(r, snapshot)) : undefined;
     const mark = row && (row.places.find((m) => m.place === ask.place) ?? autoMark(row, timeline.places) ?? row.places[0]);
     return (
       <SelfRestoreNote
         deletes={
-          row && mark && <DeleteBackup timeline={timeline} itemKey={entry.item.key} row={row} mark={mark} onDeleted={onClose} />
+          row && mark && <DeleteBackup timeline={timeline} itemKey={item.key} row={row} mark={mark} onDeleted={onClose} />
         }
         onClose={onClose}
       />
     );
   }
-  return <RestoreForm entry={entry} name={name} timeline={timeline} ask={ask} deletable={deletable} onClose={onClose} />;
+  return (
+    <RestoreForm item={item} entry={entry} name={name} timeline={timeline} ask={ask} deletable={deletable} onClose={onClose} />
+  );
 }
 
 function RestoreForm({
+  item,
   entry,
   name,
   timeline,
@@ -287,7 +296,8 @@ function RestoreForm({
   deletable,
   onClose,
 }: {
-  entry: Entry;
+  item: BackupItem;
+  entry: Entry | null;
   name: string;
   timeline: TimelineState;
   ask: RestoreAsk;
@@ -297,15 +307,15 @@ function RestoreForm({
   const { t, lang } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
-  const { item, detail, settings, hostMountRoot } = entry;
+  const detail = entry?.detail;
   const { kind } = item;
   const { rows, places, loadPlace, reload } = timeline;
   const labelOf = usePlaceLabel(places);
   const { list: openFindings, flagged: flaggedIds } = useOpenAnomalies();
-  const container = detail.kind === "container" ? detail.container : null;
-  const zfsItem = detail.kind === "zfs" ? detail.dataset : null;
+  const container = detail?.kind === "container" ? detail.container : null;
+  const zfsItem = detail?.kind === "zfs" ? detail.dataset : null;
   const gone = isGone(item);
-  const hasOriginal = detail.kind === "files" ? detail.set.path !== "" : !gone;
+  const hasOriginal = detail?.kind === "files" ? detail.set.path !== "" : !gone;
 
   const findings = useMemo(() => findingsOf(openFindings, kind, item.key), [openFindings, kind, item.key]);
   const recommendation = useMemo(() => recommend(rows, findings), [rows, findings]);
@@ -317,7 +327,9 @@ function RestoreForm({
   const [wherePick, setWherePick] = useState<RestoreWhere | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState("");
-  const [folder, setFolder] = useState(() => restoreFolderFor(settings, kind));
+  const [folderPick, setFolder] = useState<string | null>(null);
+  const defaultFolder = entry ? restoreFolderFor(entry.settings, kind) : "";
+  const folder = folderPick ?? defaultFolder;
   const [leaveStopped, setLeaveStopped] = useState(false);
   const [withoutRuntime, setWithoutRuntime] = useState(false);
   const [backupFirst, setBackupFirst] = useState(true);
@@ -335,9 +347,12 @@ function RestoreForm({
   const source = mark ? sourceOfPlace(mark.place) : "local";
   const snapshotId = mark ? newestId(mark) : "";
 
-  const [points, setPoints] = useState<ZFSRestorePoint[]>([]);
+  // null until the first answer, so the window can tell a tree without
+  // restore points from one whose points are still on the way.
+  const [points, setPoints] = useState<ZFSRestorePoint[] | null>(null);
   const [host, setHost] = useState<ReadonlyMap<string, ZFSHostDataset>>(new Map());
-  const zfsId = zfsItem?.id;
+  // A ZFS entry's key is the id of its item, so the points need not wait for the entry.
+  const zfsId = kind === "zfs" ? item.key : undefined;
   useEffect(() => {
     if (!zfsId) return;
     let current = true;
@@ -363,7 +378,10 @@ function RestoreForm({
       .catch(() => undefined);
   }, [zfsId]);
 
-  const point = points.find((p) => p.stamp === row?.key);
+  // Until the dataset and its points are read, the window stands on the
+  // targets a tree usually has and locks them.
+  const zfsReading = kind === "zfs" && (zfsItem === null || points === null);
+  const point = points?.find((p) => p.stamp === row?.key);
   const held = (point?.members ?? []).filter((m) => m.snapshotId !== "");
   const dataset =
     datasetPick ??
@@ -396,10 +414,14 @@ function RestoreForm({
 
   const facts = {
     hasOriginal,
-    writable: zfsItem !== null && !wholeTree && blocked === null,
-    oneDataset: zfsItem !== null && !wholeTree && (member?.snapshotId ?? "") !== "",
+    writable: kind === "zfs" && !wholeTree && (zfsReading || blocked === null),
+    oneDataset: kind === "zfs" && !wholeTree && (zfsReading || (member?.snapshotId ?? "") !== ""),
   };
-  const whats = whatsFor(kind, { database: container !== null && container.dbTier !== "" }).filter(
+  // The item carries what the window asks of a database as well, so the
+  // container is not waited for.
+  const database = (container?.dbTier ?? item.dbTier ?? "") !== "";
+  const coverage = container?.dbDataCoverage ?? item.dbDataCoverage;
+  const whats = whatsFor(kind, { database }).filter(
     (w) => w !== "files" || wheresFor(kind, "files", facts).length > 0
   );
   // A dataset that cannot take files leaves only the whole restore, whatever was picked before.
@@ -445,7 +467,6 @@ function RestoreForm({
   }, [what, kind, item.key, fileSnapshot, source, t]);
 
   const [dumps, setDumps] = useState<DBDumpView[]>([]);
-  const database = container !== null && container.dbTier !== "";
   const paired = row !== undefined && dumps.some((dump) => pairsWith(dump, { id: snapshotId, original: row.key }));
   useEffect(() => {
     if (!database) return;
@@ -455,7 +476,7 @@ function RestoreForm({
   }, [database, item.key, source]);
 
   const choice: RestoreChoice | null =
-    row && mark && where
+    row && mark && where && !zfsReading
       ? {
           kind,
           id: item.key,
@@ -482,6 +503,12 @@ function RestoreForm({
         }
       : null;
   const check = useRestoreCheck(choice ? checkRequest(choice) : null);
+  // While the tree is read, the check stands in its place wherever one will
+  // run, so the window keeps its height.
+  const checkComing =
+    zfsReading &&
+    what === "all" &&
+    (where === "newDataset" ? newDataset.trim() !== "" : where !== "folder" || folder.trim() !== "");
   const plan = check.state.phase === "done" ? check.state.result.plan : null;
 
   const progressKey = itemProgressKey(item);
@@ -853,13 +880,14 @@ function RestoreForm({
                 />
               </SettingRow>
             )}
-            {zfsItem && (
+            {kind === "zfs" && (
               <SettingRow label={t("zfs.restore.dataset")}>
                 <SelectField
                   value={dataset}
                   onChange={setDatasetPick}
                   label={t("zfs.restore.dataset")}
-                  options={datasetOptions}
+                  options={zfsReading ? [{ value: dataset, label: t("folder.loading") }] : datasetOptions}
+                  disabled={zfsReading}
                   className="max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
                 />
               </SettingRow>
@@ -929,21 +957,17 @@ function RestoreForm({
               />
             </div>
           )}
-          {what === "dumps" && container && (
+          {what === "dumps" && entry && detail?.kind === "container" && (
             <DatabaseDumpList
-              containerName={container.name}
+              containerName={detail.container.name}
               source={source}
               recognised
-              canImport={container.installed && container.state === "running"}
-              importStops={
-                detail.kind === "container"
-                  ? (container.stopContainers ?? []).filter((dep) =>
-                      detail.installed.some((c) => c.name === dep && c.state === "running")
-                    )
-                  : []
-              }
-              hostMountRoot={hostMountRoot}
-              defaultFolder={restoreFolderFor(settings, kind)}
+              canImport={detail.container.installed && detail.container.state === "running"}
+              importStops={(detail.container.stopContainers ?? []).filter((dep) =>
+                detail.installed.some((c) => c.name === dep && c.state === "running")
+              )}
+              hostMountRoot={entry.hostMountRoot}
+              defaultFolder={defaultFolder}
               reloadTick={0}
               t={t}
             />
@@ -965,7 +989,7 @@ function RestoreForm({
                         title={optionTitle}
                         sub={sub}
                         kept={replaceBacksUp && backupFirst}
-                        disabled={false}
+                        disabled={zfsReading}
                         onPick={() => {
                           if (w === "newDataset" && newDataset === "") setNewDataset(`${dataset}-restored`);
                           setWherePick(w);
@@ -977,8 +1001,8 @@ function RestoreForm({
                 {blocked !== null && <p className="text-xs text-statusWarn">{tLtr(t, blocked)}</p>}
               </div>
 
-              {where === "folder" && (
-                <FolderBrowser label={t("restore.targetPath")} value={folder} hostMountRoot={hostMountRoot} onChange={setFolder} />
+              {where === "folder" && entry && (
+                <FolderBrowser label={t("restore.targetPath")} value={folder} hostMountRoot={entry.hostMountRoot} onChange={setFolder} />
               )}
               {where === "newDataset" && (
                 <div className="flex flex-col gap-1">
@@ -997,9 +1021,11 @@ function RestoreForm({
                   />
                 </div>
               )}
-              {where === "newDataset" && hasProps && <ZFSPropertyList properties={storedProps} into="new" t={t} />}
-              {kind === "zfs" && where === "replace" && hasProps && (
-                <ZFSPropertyList properties={storedProps} into="existing" t={t} />
+              {where === "newDataset" && (hasProps || zfsReading) && (
+                <ZFSPropertyList properties={storedProps} into="new" reading={zfsReading} t={t} />
+              )}
+              {kind === "zfs" && where === "replace" && (hasProps || zfsReading) && (
+                <ZFSPropertyList properties={storedProps} into="existing" reading={zfsReading} t={t} />
               )}
 
               <div className="-my-3 flex flex-col [&>*]:border-t [&>*]:border-carbon-border/60 [&>*]:py-3">
@@ -1055,13 +1081,13 @@ function RestoreForm({
                 )}
               </div>
 
-              {container && what === "all" && where !== "folder" && (container.dbDataCoverage === "live" || container.dbDataCoverage === "none") && (
+              {kind === "container" && what === "all" && where !== "folder" && (coverage === "live" || coverage === "none") && (
                 <p className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs leading-relaxed text-statusWarn">
-                  {t(container.dbDataCoverage === "live" ? "restoreWindow.dbLive" : "restoreWindow.dbNone")}
+                  {t(coverage === "live" ? "restoreWindow.dbLive" : "restoreWindow.dbNone")}
                 </p>
               )}
 
-              <RestoreCheckPanel check={check} t={t} />
+              <RestoreCheckPanel check={checkComing ? { ...check, state: { phase: "running" } } : check} t={t} />
               <WhatHappens
                 kind={kind}
                 what={what}
@@ -1075,7 +1101,7 @@ function RestoreForm({
         </>
       )}
 
-      {comparing && row && (
+      {comparing && row && entry && (
         <CompareWindow entry={entry} name={name} row={row} timeline={timeline} onClose={() => setComparing(false)} />
       )}
       {confirmDialog}
