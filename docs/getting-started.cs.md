@@ -97,7 +97,7 @@ Už jsi BombVault používal? **Obnovit ze zálohy** na uvítací stránce otev�
 
 Postranní panel má pět položek: **Přehled**, **Anomálie** (dokud je zapnuté zjišťování anomálií), **Zálohy**, **Obnova** a pod **Odhlásit se** **Nastavení**. Hlavní akce stránky plave vpravo dole a **Více** skrývá ty vzácné. Na telefonu lišta obsahuje Přehled, Zálohy, Obnovu a Nastavení a **Více** má zbytek.
 
-- **Zálohy** vypisují každý kontejner, VM, sadu složek, flash disk, každou datovou sadu ZFS a autozálohu jako položky. Dlaždice nad seznamem vybírají druh a **Filtry**, **Řazení** a **Hledat** výběr zužují. Každá položka má vlastní stránku se třemi záložkami: **Zálohy**, **Nastavení** a **Integrita**.
+- **Zálohy** vypisují každý kontejner, VM, sadu složek, flash disk, každou datovou sadu ZFS a autozálohu jako položky. Dlaždice nad seznamem vybírají druh a **Filtry**, **Řazení** a **Hledat** výběr zužují. Každá položka má vlastní stránku se třemi záložkami: **Zálohy**, **Nastavení** a **Ověření**.
 - **Obnova** je jedna stránka pro všechno: vyber sekci, vyhledej položku a zvol zálohu. Odtud začíná i Nouzový průvodce a další zdroje.
 - **Nastavení** je čtrnáct dlaždic: Obecné, Vzhled, Plán, Cíle, Obnova, Oznámení, Ověření, Zabezpečení, Instance, Párování, Integrace, Aplikace, Systém a Info. Klávesa `/` nebo Ctrl+K prohledá všechny, i podle názvů, které stránky měly v dřívějších verzích. Dlaždice si přetáhni do vlastního pořadí pod **Vzhled**.
 - **Cíle** a **Instance** jsou dlaždice nastavení s vlastními stránkami. **Zobrazit také v postranním panelu** na jejich dlaždici je připne do postranního panelu.

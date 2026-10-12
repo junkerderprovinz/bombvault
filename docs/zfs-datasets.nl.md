@@ -211,7 +211,7 @@ Een onderliggende dataset die werd leeggemaakt, verandert het totaal van een gro
 
 Een dataset die de vorige run heeft geback-upt en die deze run niet kon lezen, telt als leeggemaakt, zolang de selectie van het item niet veranderde. Dat dekt een sleutel die niet geladen is, een dataset die niet gemount is en een die uit de boom is verdwenen. Een onderliggende dataset die je zelf uitsluit, verandert de selectie, dus zijn geschiedenis begint dan opnieuw. Zolang een bevinding over verloren data open staat, bewaart de retentie de oude back-ups van alleen die dataset en snoeit de rest van de boom zoals gewoonlijk.
 
-Elke dataset heeft een eigen regel in de bewaking van het item, die opent met **Bewaking** op de pagina **Anomalieën** en staat op het tabblad **Integriteit** van het item. De open bevindingen staan naast elke dataset. De link in een bevinding opent het herstelvenster op de laatste goede back-up van de dataset. Of een run slaagt, wordt voor het hele item beoordeeld, omdat een run als geheel slaagt of mislukt.
+Elke dataset heeft een eigen regel in de bewaking van het item, die opent met **Bewaking** op de pagina **Anomalieën** en staat op het tabblad **Verificatie** van het item. De open bevindingen staan naast elke dataset. De link in een bevinding opent het herstelvenster op de laatste goede back-up van de dataset. Of een run slaagt, wordt voor het hele item beoordeeld, omdat een run als geheel slaagt of mislukt.
 
 De controles zelf staan beschreven onder [Functies](features.md). Een assistent die via de [MCP-server](mcp.md) is verbonden, kan de herstelpunten van een ZFS-item opsommen, zijn back-up starten en de bevindingen lezen, maar een bevinding bevestigen gebeurt op de pagina **Anomalieën**.
 

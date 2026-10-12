@@ -132,7 +132,7 @@ La détection d'anomalies se règle dans la carte **Anomalies** de **Paramètres
 | **Envoyer une notification pour** | Seulement les constats critiques | La gravité minimale qui envoie un message par les canaux configurés dans Notifications. Les échecs répétés de sauvegardes et de dumps et les contrôles de restauration planifiés en échec envoient déjà leur propre message et ne sont pas envoyés deux fois. |
 | **Garder les anciennes sauvegardes quand une source rétrécit fortement ou est réécrite** | Activé | Tant qu'un élément a un constat ouvert pour une source presque vide, un fort rétrécissement ou la plupart de ses données réenregistrées, la rétention et le nettoyage laissent ses anciennes sauvegardes intactes. Accusez réception du constat ou marquez-le comme attendu pour les libérer. |
 
-Chaque élément peut avoir sa propre sensibilité et son propre minimum de notification. Réglez-les dans l'onglet **Intégrité** de l'élément, ou sur la page **Anomalies** sous **Surveillance**. Pour un élément ZFS, ils valent pour chaque jeu de données de son arborescence.
+Chaque élément peut avoir sa propre sensibilité et son propre minimum de notification. Réglez-les dans l'onglet **Vérification** de l'élément, ou sur la page **Anomalies** sous **Surveillance**. Pour un élément ZFS, ils valent pour chaque jeu de données de son arborescence.
 
 ## Réglages portables (exporter et importer) {#portable-settings-export-and-import}
 

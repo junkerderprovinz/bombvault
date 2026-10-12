@@ -211,7 +211,7 @@ Büyük bir ağaçta boşaltılmış bir alt küme toplamı pek değiştirmez; b
 
 Önceki çalışmanın yedeklediği ve bu çalışmanın okuyamadığı bir veri kümesi, ögenin seçimi değişmediği sürece boşaltılmış sayılır. Bu, yüklenmemiş bir anahtarı, bağlanmamış bir veri kümesini ve ağaçtan kaybolmuş birini kapsar. Kendi dışarıda bıraktığın bir alt küme seçimi değiştirir, bu yüzden geçmişi baştan başlar. Kayıp veri hakkında bir bulgu açıkken saklama, yalnızca o veri kümesinin eski yedeklerini tutar ve ağacın geri kalanını her zamanki gibi budar.
 
-Her veri kümesinin ögenin izlemesinde kendi satırı vardır; bu izleme **Anormallikler** sayfasında **İzleme** ile açılır ve ögenin **Bütünlük** sekmesinde durur. Açık bulgular her veri kümesinin yanında görünür. Bir bulgudaki bağlantı, geri yükleme penceresini veri kümesinin son iyi yedeğinde açar. Bir çalışmanın bitip bitmediği tüm öge için değerlendirilir, çünkü bir çalışma bütünüyle başarılı olur ya da başarısız olur.
+Her veri kümesinin ögenin izlemesinde kendi satırı vardır; bu izleme **Anormallikler** sayfasında **İzleme** ile açılır ve ögenin **Doğrulama** sekmesinde durur. Açık bulgular her veri kümesinin yanında görünür. Bir bulgudaki bağlantı, geri yükleme penceresini veri kümesinin son iyi yedeğinde açar. Bir çalışmanın bitip bitmediği tüm öge için değerlendirilir, çünkü bir çalışma bütünüyle başarılı olur ya da başarısız olur.
 
 Denetimlerin kendisi [Özellikler](features.md) altında anlatılır. [MCP sunucusu](mcp.md) üzerinden bağlanan bir asistan bir ZFS ögesinin geri yükleme noktalarını listeleyebilir, yedeğini başlatabilir ve bulguları okuyabilir, ama bir bulguyu onaylamak **Anormallikler** sayfasında yapılır.
 

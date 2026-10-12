@@ -211,7 +211,7 @@ Et underdatasæt, der er blevet tømt, ændrer næsten ikke totalen for et stort
 
 Et datasæt, som den forrige kørsel sikkerhedskopierede, og som denne kørsel ikke kunne læse, tæller som tømt, så længe elementets udvalg ikke er ændret. Det dækker en nøgle, der ikke er indlæst, et datasæt, der ikke er monteret, og et, der er forsvundet fra træet. Et underdatasæt, du selv udelukker, ændrer udvalget, så dets historik begynder forfra i stedet. Så længe et fund om mistede data er åbent, beholder opbevaringen de gamle sikkerhedskopier af netop det datasæt og beskærer resten af træet som normalt.
 
-Hvert datasæt har sin egen linje i elementets overvågning, som åbnes med **Overvågning** på siden **Afvigelser** og står på elementets fane **Integritet**. De åbne fund vises ved hvert datasæt. Linket i et fund åbner gendannelsesvinduet ved datasættets sidste gode sikkerhedskopi. Om en kørsel bliver færdig, vurderes for hele elementet, fordi en kørsel lykkes eller fejler som helhed.
+Hvert datasæt har sin egen linje i elementets overvågning, som åbnes med **Overvågning** på siden **Afvigelser** og står på elementets fane **Verificering**. De åbne fund vises ved hvert datasæt. Linket i et fund åbner gendannelsesvinduet ved datasættets sidste gode sikkerhedskopi. Om en kørsel bliver færdig, vurderes for hele elementet, fordi en kørsel lykkes eller fejler som helhed.
 
 Selve tjekkene er beskrevet under [Funktioner](features.md). En assistent, der er forbundet via [MCP-serveren](mcp.md), kan liste et ZFS-elements gendannelsespunkter, starte dets sikkerhedskopi og læse fundene, men et fund kvitteres på siden **Afvigelser**.
 

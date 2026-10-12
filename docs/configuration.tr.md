@@ -132,7 +132,7 @@ Anormallik algılama, **Ayarlar, Doğrulama** altındaki **Anormallikler** kart�
 | **Şunlar için bildirim gönder** | Yalnızca kritik bulgular | Bildirimler altında kurulan kanallar üzerinden mesaj gönderen en düşük önem derecesi. Tekrarlanan başarısız yedekler ve dökümler ile başarısız zamanlanmış geri yükleme denetimleri zaten kendi mesajlarını gönderir ve iki kez gönderilmez. |
 | **Bir kaynak sert biçimde küçüldüğünde veya yeniden yazıldığında eski yedekleri tut** | Açık | Bir ögenin kaynağı neredeyse boşken, sert biçimde küçülürken ya da verisinin çoğu yeniden depolanırken açık bir bulgusu varsa, saklama ve budama o ögenin eski yedeklerine dokunmaz. Bırakılmaları için bulguyu onayla veya beklenen olarak işaretle. |
 
-Her öge kendi hassasiyetini ve bildirim alt sınırını kullanabilir. Bunları ögenin **Bütünlük** sekmesinde ya da Anormallikler sayfasında **İzleme** altında ayarla. Bir ZFS ögesinde ağacının her veri kümesine uygulanırlar.
+Her öge kendi hassasiyetini ve bildirim alt sınırını kullanabilir. Bunları ögenin **Doğrulama** sekmesinde ya da Anormallikler sayfasında **İzleme** altında ayarla. Bir ZFS ögesinde ağacının her veri kümesine uygulanırlar.
 
 ## Taşınabilir ayarlar (dışa ve içe aktarma) {#portable-settings-export-and-import}
 

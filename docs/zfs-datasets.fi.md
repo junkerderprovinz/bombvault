@@ -211,7 +211,7 @@ Tyhjennetty lapsi muuttaa suuren puun kokonaismäärää tuskin lainkaan, joten 
 
 Tietojoukko, jonka edellinen ajo varmuuskopioi ja tämä ajo ei voinut lukea, lasketaan tyhjennetyksi, kunhan merkinnän valinta ei muuttunut. Tämä kattaa lataamattoman avaimen, liittämättömän tietojoukon ja puusta kadonneen. Lapsi, jonka suljet itse pois, muuttaa valintaa, joten sen historia alkaa alusta. Kun havainto menetetystä datasta on avoinna, säilytys pitää kyseisen yhden tietojoukon vanhat varmuuskopiot ja karsii loput puusta tavalliseen tapaan.
 
-Jokaisella tietojoukolla on oma rivinsä merkinnän valvonnassa, joka avautuu kohdalla **Valvonta** **Poikkeamat**-sivulla ja on merkinnän **Eheys**-välilehdellä. Avoimet havainnot näkyvät kunkin tietojoukon vieressä. Havainnon linkki avaa merkinnän palautusikkunan tietojoukon viimeisimmällä hyvällä varmuuskopiolla. Se, päättyykö ajo, arvioidaan koko merkinnälle, koska ajo onnistuu tai epäonnistuu kokonaisena.
+Jokaisella tietojoukolla on oma rivinsä merkinnän valvonnassa, joka avautuu kohdalla **Valvonta** **Poikkeamat**-sivulla ja on merkinnän **Tarkistus**-välilehdellä. Avoimet havainnot näkyvät kunkin tietojoukon vieressä. Havainnon linkki avaa merkinnän palautusikkunan tietojoukon viimeisimmällä hyvällä varmuuskopiolla. Se, päättyykö ajo, arvioidaan koko merkinnälle, koska ajo onnistuu tai epäonnistuu kokonaisena.
 
 Tarkistukset itse kuvataan kohdassa [Ominaisuudet](features.md). [MCP-palvelimen](mcp.md) kautta yhdistetty avustaja voi listata ZFS-merkinnän palautuspisteet, käynnistää sen varmuuskopion ja lukea havainnot, mutta yhden kuittaaminen tehdään **Poikkeamat**-sivulla.
 

@@ -211,7 +211,7 @@ Zbiór podrzędny, który został opróżniony, ledwo zmienia sumę dużego drze
 
 Zbiór danych, który poprzedni przebieg skopiował, a którego ten przebieg nie mógł odczytać, liczy się jako opróżniony, o ile wybór elementu się nie zmienił. Obejmuje to niezaładowany klucz, niezamontowany zbiór danych i taki, który zniknął z drzewa. Zbiór podrzędny, który sam wykluczysz, zmienia wybór, więc jego historia zaczyna się od nowa. Dopóki otwarte jest ustalenie o utraconych danych, retencja zachowuje stare kopie tylko tego zbioru danych, a resztę drzewa przycina jak zwykle.
 
-Każdy zbiór danych ma własną linię w monitorowaniu elementu, które otwiera się przez **Monitorowanie** na stronie **Anomalie** i stoi na karcie **Integralność** elementu. Otwarte ustalenia widać obok każdego zbioru. Link w ustaleniu otwiera okno przywracania na ostatniej dobrej kopii zbioru. To, czy przebieg się kończy, ocenia się dla całego elementu, bo przebieg udaje się lub nie jako całość.
+Każdy zbiór danych ma własną linię w monitorowaniu elementu, które otwiera się przez **Monitorowanie** na stronie **Anomalie** i stoi na karcie **Weryfikacja** elementu. Otwarte ustalenia widać obok każdego zbioru. Link w ustaleniu otwiera okno przywracania na ostatniej dobrej kopii zbioru. To, czy przebieg się kończy, ocenia się dla całego elementu, bo przebieg udaje się lub nie jako całość.
 
 Same kontrole opisano w [Funkcje](features.md). Asystent połączony przez [serwer MCP](mcp.md) może wypisać punkty przywracania elementu ZFS, uruchomić jego kopię i czytać ustalenia, ale potwierdzenie ustalenia odbywa się na stronie **Anomalie**.
 

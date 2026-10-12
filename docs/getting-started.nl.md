@@ -97,7 +97,7 @@ Eerder BombVault gebruikt? **Herstellen vanaf een back-up** op de welkomstpagina
 
 De zijbalk heeft vijf ingangen: **Overzicht**, **Anomalieën** (zolang anomaliedetectie aanstaat), **Back-ups**, **Herstel** en, onder **Afmelden**, **Instellingen**. De hoofdactie van een pagina zweeft rechtsonder, en **Meer** bevat de zeldzame. Op een telefoon bevat de balk Overzicht, Back-ups, Herstel en Instellingen, en **Meer** heeft de rest.
 
-- **Back-ups** toont elke container, VM, mappenset, de flash, elke ZFS-dataset en de zelf-back-up als items. Tegels boven de lijst kiezen een soort, en **Filters**, **Sorteren** en **Zoeken** versmallen de lijst. Elk item heeft een eigen pagina met drie tabbladen: **Back-ups**, **Instellingen** en **Integriteit**.
+- **Back-ups** toont elke container, VM, mappenset, de flash, elke ZFS-dataset en de zelf-back-up als items. Tegels boven de lijst kiezen een soort, en **Filters**, **Sorteren** en **Zoeken** versmallen de lijst. Elk item heeft een eigen pagina met drie tabbladen: **Back-ups**, **Instellingen** en **Verificatie**.
 - **Herstel** is één pagina voor alles: kies een onderdeel, zoek een item en kies een back-up. De Noodassistent en de andere bronnen beginnen hier ook.
 - **Instellingen** zijn veertien tegels: Algemeen, Uiterlijk, Planning, Bestemmingen, Herstel, Meldingen, Verificatie, Beveiliging, Instanties, Koppeling, Integraties, Apps, Systeem en Info. Druk op `/` of Ctrl+K om ze allemaal te doorzoeken, ook op de namen die pagina's in eerdere versies hadden. Sleep de tegels onder **Uiterlijk** in je eigen volgorde.
 - **Bestemmingen** en **Instanties** zijn instellingentegels met eigen pagina's. **Ook in de zijbalk tonen** op hun tegel zet ze vast in de zijbalk.

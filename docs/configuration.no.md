@@ -132,7 +132,7 @@ Avviksoppdagelsen stilles inn i kortet **Avvik** under **Innstillinger, Verifise
 | **Send varsel for** | Bare kritiske funn | Den laveste alvorlighetsgraden som sender en melding via kanalene som er satt opp under Varsler. Gjentatte mislykkede sikkerhetskopier og dumper og mislykkede planlagte gjenopprettingskontroller sender allerede en egen melding og sendes ikke to ganger. |
 | **Behold gamle sikkerhetskopier når en kilde krymper kraftig eller skrives om** | På | Så lenge et element har et åpent funn for en nesten tom kilde, en kraftig krymping eller det meste av dataene lagret på nytt, lar oppbevaring og opprydding elementets gamle sikkerhetskopier være. Kvitter for funnet eller merk det som forventet for å slippe dem. |
 
-Hvert element kan ha sin egen følsomhet og sitt eget varslingsminimum. Still dem inn på fanen **Integritet** til elementet, eller på siden **Avvik** under **Overvåking**. For et ZFS-element gjelder de for hvert datasett i treet.
+Hvert element kan ha sin egen følsomhet og sitt eget varslingsminimum. Still dem inn på fanen **Verifisering** til elementet, eller på siden **Avvik** under **Overvåking**. For et ZFS-element gjelder de for hvert datasett i treet.
 
 ## Portable innstillinger (eksporter og importer) {#portable-settings-export-and-import}
 

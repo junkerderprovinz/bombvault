@@ -211,7 +211,7 @@ Un copil golit schimbă abia totalul unui arbore mare, așa că detecția anomal
 
 Un set de date pe care rularea anterioară l-a salvat și această rulare nu l-a putut citi contează ca golit, atât timp cât selecția elementului nu s-a schimbat. Asta acoperă o cheie neîncărcată, un set de date nemontat și unul dispărut din arbore. Un copil pe care îl excluzi tu schimbă selecția, așa că istoricul lui începe de la zero. Cât timp o constatare despre date pierdute este deschisă, retenția păstrează copiile vechi ale acelui set de date și curăță restul arborelui ca de obicei.
 
-Fiecare set de date are o linie proprie în monitorizarea elementului, care se deschide cu **Monitorizare** pe pagina **Anomalii** și stă în fila **Integritate** a elementului. Constatările deschise apar lângă fiecare set de date. Linkul dintr-o constatare deschide fereastra de restaurare pe ultima copie bună a setului de date. Dacă o rulare se încheie se judecă pentru întregul element, pentru că o rulare reușește sau eșuează ca întreg.
+Fiecare set de date are o linie proprie în monitorizarea elementului, care se deschide cu **Monitorizare** pe pagina **Anomalii** și stă în fila **Verificare** a elementului. Constatările deschise apar lângă fiecare set de date. Linkul dintr-o constatare deschide fereastra de restaurare pe ultima copie bună a setului de date. Dacă o rulare se încheie se judecă pentru întregul element, pentru că o rulare reușește sau eșuează ca întreg.
 
 Verificările în sine sunt descrise la [Funcționalități](features.md). Un asistent conectat prin [serverul MCP](mcp.md) poate lista punctele de restaurare ale unui element ZFS, îi poate porni copia și poate citi constatările, dar confirmarea unei constatări se face pe pagina **Anomalii**.
 
