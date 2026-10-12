@@ -18,6 +18,7 @@ func TestAPairedSessionBacksUpTheContainerItReplaces(t *testing.T) {
 	h := NewHandler(r.svc.cfg, r.st, nil, r.svc, nil, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/containers/plex/restore", strings.NewReader(`{"snapshotId":"`+snap+`","confirm":true,"backupFirst":false}`))
+	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("name", "plex")
 	w := httptest.NewRecorder()
 	h.handleRestore(w, withPaired(req.WithContext(context.Background())))
