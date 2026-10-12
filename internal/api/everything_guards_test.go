@@ -16,6 +16,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 )
 
 // hcRecorder is a Healthchecks endpoint that records the path of every ping.
@@ -246,4 +247,45 @@ type pathErr struct{}
 
 func (*pathErr) Error() string {
 	return "restic: unable to read /mnt/user/appdata/secretpath/config.json"
+}
+
+// The count of a scheduled pass leaves out the sections it skips for their own
+// plan, so the progress ring reaches its end.
+func TestScheduledEverythingCountsOnlyTheSectionsItBacksUp(t *testing.T) {
+	log := &everythingOrderLog{}
+	eng := &orderedEngine{fakeResticEngine: &fakeResticEngine{}, log: log}
+	svc, st, _, _ := everythingTestService(t, eng)
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersSchedule = "daily 02:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	prog := progress.NewStore()
+	svc.SetProgress(prog)
+	events, stop := prog.Subscribe()
+	var seen []progress.Event
+	done := make(chan struct{})
+	go func() {
+		for e := range events {
+			if e.Key == progress.EverythingKey {
+				seen = append(seen, e)
+			}
+		}
+		close(done)
+	}()
+
+	if _, err := svc.BackupEverything(api.WithScheduledPass(context.Background())); err != nil {
+		t.Fatalf("scheduled BackupEverything: %v", err)
+	}
+	stop()
+	<-done
+	if len(seen) == 0 {
+		t.Fatal("the pass published no progress")
+	}
+	if last := seen[len(seen)-1]; last.Done != last.Total {
+		t.Fatalf("the pass ended at %d of %d", last.Done, last.Total)
+	}
 }

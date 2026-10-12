@@ -270,7 +270,7 @@ func TestEverythingPassDoesNotCountACancelledItemAsFailed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pass := s.beginEverythingPass(context.Background(), "", settings)
+	pass := s.beginEverythingPass(context.Background(), "", settings, []everythingStep{{domain: zfsDomain}})
 	res := s.everythingRunZFS(context.Background(), pass, settings)
 
 	if res.Failed != 0 || len(res.Failures) != 0 {
