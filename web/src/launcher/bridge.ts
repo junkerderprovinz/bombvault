@@ -18,13 +18,14 @@ export interface FoundServer {
   version: string;
 }
 
-export type ProblemKind = "untrusted" | "changed" | "unreachable";
+export type ProblemKind = "untrusted" | "changed" | "unreachable" | "keyChanged";
 
 /** Why the last attempt to open a server came back to the launcher. */
 export interface Problem {
   id: string;
   kind: ProblemKind;
-  /** SHA-256 of the certificate the server presented, for the two certificate kinds. */
+  /** SHA-256 of the certificate the server presented, for the two certificate kinds, or
+   *  of the key a server of the group answered with over the relay, for keyChanged. */
   fingerprint?: string;
   /** What the WebView reported, for an unreachable server. */
   detail?: string;
@@ -91,6 +92,7 @@ export type Request =
   | { op: "remove"; id: string }
   | { op: "open"; id: string }
   | { op: "trust"; id: string; fingerprint: string }
+  | { op: "trustKey"; id: string; fingerprint: string }
   | { op: "dismiss" }
   | { op: "activity"; ticket: number; id: string }
   | { op: "look"; ticket: number; id: string }

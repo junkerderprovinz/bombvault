@@ -13,7 +13,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import org.json.JSONException
 import org.json.JSONObject
@@ -41,6 +43,13 @@ class Pairing(private val context: Context, private val servers: Servers, privat
     // A page asks for its bundles in parallel, each in parts; the relay takes
     // a few dozen calls of one member at a time.
     private val pageCalls = Semaphore(PAGE_CALLS)
+
+    // The session each member gave the phone for its pages, empty for one
+    // without a password.
+    private val sessions = ConcurrentHashMap<String, String>()
+    private val sessionLock = Mutex()
+
+    @Volatile private var seed: ByteArray? = null
 
     // A group being looked at before it is taken over: its relay, and what
     // joining it would store.
@@ -94,6 +103,7 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         stop()
         prefs.edit().remove(SECRET).remove(RELAY).apply()
         servers.forgetMembers()
+        servers.forgetMemberKeys()
         onChange()
     }
 
@@ -106,6 +116,7 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         relay?.stop()
         relay = null
         asked.clear()
+        sessions.clear()
     }
 
     private fun open(secret: ByteArray, url: String): Relay {
@@ -160,11 +171,8 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         val r = relay ?: return null
         val member = server.member ?: return null
         if (!r.reaches(member)) return null
-        val ask = JSONObject().put("instanceId", prefs.getString(ID, "")).toString().toByteArray()
         return try {
-            val (status, body) = r.call(member, "POST", "/api/group/peer/session", ask)
-            if (status != 200) return null
-            val s = JSONObject(String(body))
+            val s = askSession(r, member) ?: return null
             if (!s.optBoolean("needed")) return null
             buildString {
                 append("${s.getString("name")}=${s.getString("value")}; Path=/; Max-Age=${s.optInt("maxAge")}; HttpOnly; SameSite=Lax")
@@ -177,34 +185,95 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         }
     }
 
+    /** Asks [member] for a session, signed with the phone's own key. */
+    private suspend fun askSession(r: Relay, member: String): JSONObject? {
+        val me = myId()
+        val at = System.currentTimeMillis()
+        val key = signSeed()
+        val proof = Proof.sign(key, Proof.message("session", me, member, at, PageWire.payload(me)))
+        val ask = JSONObject().put("instanceId", me).put("key", PageWire.b64(Proof.publicKey(key))).put("counter", at).put("proof", PageWire.b64(proof))
+        val (status, body) = r.call(member, "POST", "/api/group/peer/session", ask.toString().toByteArray())
+        return if (status == 200) JSONObject(String(body)) else null
+    }
+
+    /** Fetches a session for [member]'s pages unless one newer than [ended] is there. */
+    private suspend fun renewSession(r: Relay, member: String, ended: String?) = sessionLock.withLock {
+        if (sessions[member] != ended) return@withLock
+        val s = askSession(r, member) ?: return@withLock
+        sessions[member] = if (s.optBoolean("needed")) s.getString("value") else ""
+    }
+
+    /** The key [member] signs with as it names it now, if it proves it holds it. */
+    private suspend fun fetchKey(r: Relay, member: String): ByteArray? {
+        val (status, body) = r.call(member, "GET", "/api/group/peer/key")
+        if (status != 200) return null
+        val o = JSONObject(String(body))
+        val key = PageWire.unb64(o.optString("key"))
+        return key.takeIf { Proof.verify(it, Proof.message("key", member, myId(), 0), PageWire.unb64(o.optString("proof"))) }
+    }
+
+    /**
+     * The key pinned for [member], pinned now if the phone has none yet. A
+     * member that names another key later is not taken at its word: the
+     * person sees the new key and decides.
+     */
+    private suspend fun memberKey(r: Relay, member: String): ByteArray? =
+        servers.memberKey(member) ?: fetchKey(r, member)?.also { servers.pinMemberKey(member, it) }
+
     /** Whether group member [member] answers on the relay. */
     suspend fun reaches(member: String): Boolean = relay?.reaches(member) == true
 
     /**
      * One request of [server]'s interface through the group, with every part
-     * of its answer, or null when the group cannot carry it.
+     * of its answer. The answer counts only signed with the key pinned for
+     * the member, so another holder of the words in its place on the relay
+     * cannot answer for it.
      */
-    suspend fun page(server: Server, method: String, path: String, header: Map<String, String>, body: ByteArray?): PageAnswer? {
-        val r = relay ?: return null
-        val member = server.member ?: return null
-        if (!r.reaches(member)) return null
+    suspend fun page(server: Server, method: String, path: String, header: Map<String, String>, body: ByteArray?): PageResult {
+        val r = relay ?: return PageResult.Failed
+        val member = server.member ?: return PageResult.Failed
+        if (!r.reaches(member)) return PageResult.Failed
         return try {
-            val first = pageCall(r, member, PageWire.ask(method, path, header, body)) ?: return null
-            val rest = coroutineScope {
-                PageWire.offsets(first).map { at -> async { pageCall(r, member, PageWire.part(first.part, at))?.body } }.awaitAll()
+            val key = memberKey(r, member) ?: return PageResult.Failed
+            if (!sessions.containsKey(member)) renewSession(r, member, null)
+            val ask = PageWire.ask(method, path, header, body)
+            var session = sessions[member]
+            var at = System.currentTimeMillis()
+            var answered = pageCall(r, member, ask, session, at)
+            if (answered.first == 401) {
+                // The session ended, through a sign-out everywhere or a reset.
+                renewSession(r, member, session)
+                session = sessions[member]
+                at = System.currentTimeMillis()
+                answered = pageCall(r, member, ask, session, at)
             }
-            if (rest.any { it == null }) null else PageWire.whole(first, rest.filterNotNull())
+            val head = answered.second ?: return PageResult.Failed
+            val rest = coroutineScope {
+                PageWire.offsets(head).map { offset -> async { pageCall(r, member, PageWire.part(head.part, offset), session).second?.body } }.awaitAll()
+            }
+            if (rest.any { it == null }) return PageResult.Failed
+            val wire = PageWire.assemble(head, rest.filterNotNull())
+            val signed = PageWire.digest(ask, head.status, head.header, wire)
+            if (!Proof.verify(key, Proof.message("page-answer", member, myId(), at, signed), head.proof)) {
+                val named = fetchKey(r, member)
+                return if (named != null && !named.contentEquals(key)) PageResult.KeyChanged(named) else PageResult.Failed
+            }
+            PageResult.Done(PageWire.unpack(head.status, head.header, wire))
         } catch (_: Exception) {
             // A call that timed out, an answer that does not read: the page
             // gets a failed request, never a crash of the WebView's thread.
-            null
+            PageResult.Failed
         }
     }
 
-    private suspend fun pageCall(r: Relay, member: String, ask: ByteArray): PageWire.Piece? {
-        val (status, raw) = pageCalls.withPermit { r.call(member, "POST", PageWire.PATH, ask) }
-        return if (status == 200) PageWire.piece(raw) else null
+    private suspend fun pageCall(r: Relay, member: String, ask: ByteArray, session: String?, at: Long = System.currentTimeMillis()): Pair<Int, PageWire.Piece?> {
+        val call = PageWire.call(ask, session, signSeed(), myId(), member, at)
+        val (status, raw) = pageCalls.withPermit { r.call(member, "POST", PageWire.PATH, call) }
+        return status to if (status == 200) PageWire.piece(raw) else null
     }
+
+    /** Pins [key] for [member] in place of the one it had, once the person trusted it. */
+    fun trustKey(member: String, key: ByteArray) = servers.pinMemberKey(member, key, replace = true)
 
     /** Asks each instance that turned up where it takes calls and puts it in the list. */
     private fun adoptMembers() {
@@ -214,6 +283,9 @@ class Pairing(private val context: Context, private val servers: Servers, privat
             scope.launch {
                 val url = try {
                     val (status, body) = r.call(s.id, "GET", "/api/group/peer/hello")
+                    // The key is pinned on first contact, before anybody
+                    // could take the member's place for a page.
+                    memberKey(r, s.id)
                     if (status == 200) JSONObject(String(body)).optString("directUrl") else ""
                 } catch (_: Exception) {
                     asked.remove(s.id)
@@ -225,11 +297,31 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         }
     }
 
-    /** The app answers the hello a probe asks for, and nothing else. */
-    private fun serve(method: String, path: String): Pair<Int, ByteArray> {
-        if (method != "GET" || path != "/api/group/peer/hello") return 404 to ByteArray(0)
-        val hello = identity().put("ok", true).put("instanceId", prefs.getString(ID, ""))
-        return 200 to hello.toString().toByteArray()
+    /** The app answers the hello a probe asks for and names its key to [sender], and nothing else. */
+    private fun serve(method: String, path: String, sender: String): Pair<Int, ByteArray> {
+        if (method != "GET") return 404 to ByteArray(0)
+        return when (path) {
+            "/api/group/peer/hello" -> 200 to identity().put("ok", true).put("instanceId", myId()).toString().toByteArray()
+            "/api/group/peer/key" -> {
+                val key = signSeed()
+                val proof = Proof.sign(key, Proof.message("key", myId(), sender, 0))
+                200 to JSONObject().put("ok", true).put("key", PageWire.b64(Proof.publicKey(key))).put("proof", PageWire.b64(proof)).toString().toByteArray()
+            }
+            else -> 404 to ByteArray(0)
+        }
+    }
+
+    private fun myId(): String = prefs.getString(ID, "") ?: ""
+
+    // The key the phone signs its asks with. Whoever has the words can name
+    // the phone, but only the phone holds this, sealed like the secret.
+    @Synchronized
+    private fun signSeed(): ByteArray {
+        seed?.let { return it }
+        val stored = prefs.getString(SIGN, null)?.let(::unwrap)
+            ?: ByteArray(32).also(SecureRandom()::nextBytes).also { prefs.edit().putString(SIGN, wrap(it)).apply() }
+        seed = stored
+        return stored
     }
 
     private fun identity(): JSONObject {
@@ -274,6 +366,17 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         private const val ID = "id"
         private const val KEY_ALIAS = "group"
         private const val NAME = "name"
+        private const val SIGN = "sign"
         private const val PAGE_CALLS = 12
     }
+}
+
+/** What a request of a page through the relay came to. */
+sealed interface PageResult {
+    class Done(val answer: PageAnswer) : PageResult
+
+    /** The member answered with another key than the one pinned for it. */
+    class KeyChanged(val key: ByteArray) : PageResult
+
+    object Failed : PageResult
 }

@@ -20,8 +20,18 @@ import java.util.concurrent.TimeUnit
  * the member's relay origin becomes one sealed call, and the server answers
  * it as it would a paired phone at home.
  */
-class RelayPages(private val pairing: Pairing, private val servers: Servers, cacheDir: File, private val onLost: (Server) -> Unit) {
+class RelayPages(
+    private val pairing: Pairing,
+    private val servers: Servers,
+    cacheDir: File,
+    private val onLost: (Server) -> Unit,
+    private val onKeyChanged: (Server, ByteArray) -> Unit,
+) {
     private val cache = Bundles(File(cacheDir, "relay-pages"))
+
+    /** The member whose page the app opened through the relay, null while none is. */
+    @Volatile var shown: String? = null
+
     private val bodies = ConcurrentHashMap<String, CompletableFuture<ByteArray>>()
     private val polls = ConcurrentHashMap<String, ProgressPoll>()
 
@@ -40,6 +50,8 @@ class RelayPages(private val pairing: Pairing, private val servers: Servers, cac
 
     /** Answers one request the WebView makes to [member]'s relay origin. */
     fun serve(member: String, request: WebResourceRequest): WebResourceResponse {
+        val headers = request.requestHeaders.mapKeys { it.key.lowercase() }
+        if (!relayAllows(member, shown, headers["origin"], headers["referer"])) return plain(403)
         val server = servers.forMember(member) ?: return plain(404)
         val poll = polls.getOrPut(member) { ProgressPoll() }
         if (request.isForMainFrame) poll.reset()
@@ -55,7 +67,12 @@ class RelayPages(private val pairing: Pairing, private val servers: Servers, cac
         // A redirect from an intercepted request is not followed by the
         // WebView, so the app follows the few the interface makes.
         for (hop in 0..MAX_REDIRECTS) {
-            answer = runBlocking { pairing.page(server, method.takeIf { hop == 0 } ?: "GET", path, header, body.takeIf { hop == 0 }) }
+            val result = runBlocking { pairing.page(server, method.takeIf { hop == 0 } ?: "GET", path, header, body.takeIf { hop == 0 }) }
+            if (result is PageResult.KeyChanged) {
+                if (request.isForMainFrame) onKeyChanged(server, result.key)
+                return plain(502)
+            }
+            answer = (result as? PageResult.Done)?.answer
             val next = answer?.header?.get("Location")
             if (answer == null || answer.status !in 300..399 || next == null || !next.startsWith("/") || next.startsWith("//")) break
             path = next

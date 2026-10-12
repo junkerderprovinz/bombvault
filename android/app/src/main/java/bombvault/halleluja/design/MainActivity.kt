@@ -79,6 +79,9 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var pairing: Pairing
 
+    /** The key a member answered with in place of the one pinned for it, until the person decides. */
+    private var changedKey: ByteArray? = null
+
     /** Why the last pairing code was refused, shown once by the launcher. */
     private var pairError: JSONObject? = null
 
@@ -105,9 +108,20 @@ class MainActivity : ComponentActivity() {
             pushState()
         }
         pairing = Pairing(this, servers) { runOnUiThread(::pushState) }
-        pages = RelayPages(pairing, servers, cacheDir) { server ->
-            runOnUiThread { if (current?.id == server.id) fail(server, "unreachable", relay = true) }
-        }
+        pages = RelayPages(
+            pairing,
+            servers,
+            cacheDir,
+            onLost = { server -> runOnUiThread { if (current?.id == server.id) fail(server, "unreachable", relay = true) } },
+            onKeyChanged = { server, key ->
+                runOnUiThread {
+                    if (current?.id == server.id) {
+                        changedKey = key
+                        fail(server, "keyChanged", fingerprint = Proof.fingerprint(key))
+                    }
+                }
+            },
+        )
         loader = WebViewAssetLoader.Builder()
             .addPathHandler("/", LauncherAssets(WebViewAssetLoader.AssetsPathHandler(this)))
             .build()
@@ -176,6 +190,7 @@ class MainActivity : ComponentActivity() {
 
         val restored = savedInstanceState?.let { web.restoreState(it) } != null
         if (restored) {
+            pages.shown = web.url?.let { relayMember(Uri.parse(it).host) }
             current = web.url?.let { servers.forOrigin(originOf(it)) }
         } else {
             showLauncher()
@@ -254,7 +269,12 @@ class MainActivity : ComponentActivity() {
             }
             val relayed = member != null && withContext(Dispatchers.IO) { pairing.reaches(member) }
             if (current?.id != server.id) return@launch
-            if (relayed) web.loadUrl(relayOrigin(member!!) + "/") else fail(server, "unreachable", relay = true)
+            if (!relayed) {
+                fail(server, "unreachable", relay = true)
+                return@launch
+            }
+            pages.shown = member
+            web.loadUrl(relayOrigin(member!!) + "/")
         }
     }
 
@@ -294,8 +314,18 @@ class MainActivity : ComponentActivity() {
                 web.clearSslPreferences()
                 servers.get(msg.getString("id"))?.let(::open)
             }
+            "trustKey" -> {
+                val server = servers.get(msg.getString("id")) ?: return
+                val key = changedKey ?: return
+                if (server.member != null && Proof.fingerprint(key) == msg.getString("fingerprint")) {
+                    pairing.trustKey(server.member, key)
+                    changedKey = null
+                    open(server)
+                }
+            }
             "dismiss" -> {
                 problem = null
+                changedKey = null
                 pushState()
             }
             "activity", "look" -> {
@@ -463,7 +493,9 @@ class MainActivity : ComponentActivity() {
         // Every navigation passes here, Back included, so this is where the app
         // learns which page is on screen.
         override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
-            strip.visibility = if (relayMember(Uri.parse(url).host) != null) View.VISIBLE else View.GONE
+            val member = relayMember(Uri.parse(url).host)
+            strip.visibility = if (member != null) View.VISIBLE else View.GONE
+            pages.shown = member
             if (url.startsWith(LAUNCHER_ORIGIN)) {
                 if (current != null) {
                     current = null
