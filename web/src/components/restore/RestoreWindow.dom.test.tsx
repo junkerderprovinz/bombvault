@@ -579,6 +579,16 @@ describe("a ZFS entry", () => {
     await waitFor(() => expect(lastCheck().zfs).toMatchObject({ stamp: NEWEST, dataset: "", wholeTree: true }));
   });
 
+  it("restores the whole tree after files of one dataset were picked", async () => {
+    await open(zfsEntry());
+    await waitFor(() => expect(inPlace()).toBeTruthy());
+    await press(within(dialog()).getByRole("tab", { name: en["restore.mode.files"] }));
+    await press(within(dialog()).getByRole("combobox", { name: en["zfs.restore.dataset"] }));
+    await press(screen.getByRole("option", { name: en["zfs.restore.wholeTree"] }));
+    expect(toFolder()?.getAttribute("aria-checked")).toBe("true");
+    await waitFor(() => expect(lastCheck().zfs).toMatchObject({ stamp: NEWEST, dataset: "", wholeTree: true }));
+  });
+
   it("will not write through a read-only mapping", async () => {
     vi.mocked(api.zfsHostDatasets).mockResolvedValue({
       ok: true,
