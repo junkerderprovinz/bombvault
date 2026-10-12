@@ -3125,6 +3125,12 @@ UNION SELECT member_id FROM receiver_logins WHERE member_id <> ''
 UNION SELECT member_id FROM received_repos WHERE member_id <> ''
 UNION SELECT member_id FROM pull_sources WHERE member_id <> '';`,
 	},
+	{
+		// A member with a pinned key signs, so it has no place on the list.
+		version: legacyMembersMigration + 1,
+		name:    "legacy_members_without_keys",
+		sql:     `DELETE FROM legacy_members WHERE member_id IN (SELECT member_id FROM member_keys);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3253,7 +3259,8 @@ const keyHardeningMigration = 350
 // container after its backup, 355.
 const updateEveryContainerMigration = 355
 
-// legacyMembersMigration numbers the members that may call unsigned, 356.
+// legacyMembersMigration numbers the members that may call unsigned, 356,
+// and the removal of those that pinned a key, 357.
 const legacyMembersMigration = 356
 
 // oneLineColumns are the names and locations the recovery kit prints.
