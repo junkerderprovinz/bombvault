@@ -3136,6 +3136,15 @@ UNION SELECT member_id FROM pull_sources WHERE member_id <> '';`,
 		name:    "one_line_upserts_keep_stored_values",
 		sql:     oneLineInsertTriggers(),
 	},
+	{
+		// A phone that opened this server before paired sessions existed holds
+		// a full session, which the paired routes do not limit. A new epoch
+		// ends it, along with every other session. Without a password there
+		// are no sessions.
+		version: endSessionsMigration,
+		name:    "end_sessions_from_before_paired_ones",
+		sql:     `UPDATE settings SET session_epoch = lower(hex(randomblob(16))) WHERE auth_password_hash <> '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3271,6 +3280,10 @@ const legacyMembersMigration = 356
 // oneLineUpsertMigration numbers the guard against line breaks for the
 // saves that insert a row over itself, 358.
 const oneLineUpsertMigration = 358
+
+// endSessionsMigration numbers the sign-out of every session issued before
+// sessions of paired phones were told apart, 359.
+const endSessionsMigration = 359
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

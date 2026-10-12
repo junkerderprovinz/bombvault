@@ -57,3 +57,32 @@ func TestATargetWhoseNameSpansLinesCanStillBeSaved(t *testing.T) {
 		t.Fatal("a new target took the stored two-line name")
 	}
 }
+
+func TestTheFirstStartEndsEverySessionIssuedBefore(t *testing.T) {
+	db := OpenMem(t)
+	migrateThrough(t, db, legacyMembersMigration)
+	if _, err := db.Exec(`UPDATE settings SET session_epoch = '', auth_password_hash = 'hash'`); err != nil {
+		t.Fatal(err)
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := New(db)
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.SessionEpoch == "" {
+		t.Fatal("the session epoch did not move")
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	again, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if again.SessionEpoch != s.SessionEpoch {
+		t.Fatal("a later start ended the sessions again")
+	}
+}
