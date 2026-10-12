@@ -136,7 +136,10 @@ function Elsewhere() {
 
 const onClose = vi.fn();
 
-async function open(entry: Entry, props: { timeline?: TimelineState; snapshot?: string; place?: string; deletable?: boolean } = {}) {
+async function open(
+  entry: Entry,
+  props: { timeline?: TimelineState; snapshot?: string; place?: string; deletable?: boolean; reading?: boolean } = {}
+) {
   const timeline = props.timeline ?? timelineState(DOMAIN[entry.item.kind]);
   await act(async () => {
     render(
@@ -147,7 +150,8 @@ async function open(entry: Entry, props: { timeline?: TimelineState; snapshot?: 
               path="/here"
               element={
                 <RestoreWindow
-                  entry={entry}
+                  item={entry.item}
+                  entry={props.reading ? null : entry}
                   name={entry.item.name}
                   timeline={timeline}
                   ask={{ snapshot: props.snapshot, place: props.place }}
@@ -243,6 +247,14 @@ describe("a container", () => {
     await press(named("restoreWindow.besideNamed", "immich"));
     expect(restore).toHaveBeenCalledWith("immich", NEWEST, true, "local", false, false, { target: "beside" });
     expect(screen.getAllByRole("dialog")).toHaveLength(1);
+  });
+
+  it("opens before the container is read and checks the backup from the item alone", async () => {
+    await open(entryOf("container"), { reading: true });
+    expect(target("beside")?.getAttribute("aria-checked")).toBe("true");
+    expect(target("replace")).toBeTruthy();
+    await ready(() => named("restoreWindow.besideNamed", "immich"));
+    expect(lastCheck()).toEqual({ kind: "container", name: "immich", snapshotId: NEWEST, source: "local", target: "beside" });
   });
 
   it("replaces the original only once its name is typed, and backs it up first", async () => {
@@ -519,6 +531,15 @@ describe("a ZFS entry", () => {
     await waitFor(() =>
       expect(lastCheck().zfs).toMatchObject({ stamp: NEWEST, dataset: "tank/appdata", newDataset: "tank/appdata-restored" })
     );
+  });
+
+  it("holds the usual targets locked until the dataset is read, and checks nothing before", async () => {
+    await open(entryOf("zfs"), { reading: true });
+    await waitFor(() => expect(zfsRestorePoints).toHaveBeenCalledWith(TANK.key, "local"));
+    const radios = within(dialog()).getAllByRole<HTMLButtonElement>("radio");
+    expect(radios.map((r) => r.disabled)).toEqual([true, true, true]);
+    expect(within(dialog()).getByText(en["zfs.restore.propertiesTitle"])).toBeTruthy();
+    expect(checkRestore).not.toHaveBeenCalled();
   });
 
   it("writes into the dataset with a safety snapshot once its name is typed", async () => {

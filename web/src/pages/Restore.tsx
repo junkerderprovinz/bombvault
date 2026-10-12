@@ -47,7 +47,7 @@ function hasBackups(item: BackupItem): boolean {
 }
 
 /** EntryRestore reads what the window needs to know about the entry, which
- *  the list of all entries does not carry. */
+ *  the list of all entries does not carry. The window opens while it reads. */
 function EntryRestore({
   item,
   name,
@@ -63,8 +63,9 @@ function EntryRestore({
 }) {
   const { t } = useT();
   const { entry, status } = useEntry(item.kind, item.key);
-  if (entry) return <RestoreWindow entry={entry} name={name} timeline={timeline} ask={ask} onClose={onClose} />;
-  if (status === "loading") return null;
+  if (entry || status === "loading") {
+    return <RestoreWindow item={item} entry={entry} name={name} timeline={timeline} ask={ask} onClose={onClose} />;
+  }
   return (
     <InstanceWindow
       title={t("entry.restore.title").replace("{name}", () => name)}

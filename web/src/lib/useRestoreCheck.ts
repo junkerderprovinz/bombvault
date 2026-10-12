@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { checkRestore, type CheckLine, type RestoreCheckRequest, type RestoreCheckResponse } from "./api";
 import type { TranslationKey } from "./i18n";
 
@@ -29,11 +29,15 @@ export function useRestoreCheck(req: RestoreCheckRequest | null, delayMs = 400):
     round: number;
     state: RestoreCheckState;
   } | null>(null);
+  // The delay gathers quick changes of the choice. The first check of a
+  // window has none to wait for.
+  const sent = useRef(false);
 
   useEffect(() => {
     if (!key) return;
     const ctrl = new AbortController();
     const timer = setTimeout(() => {
+      sent.current = true;
       checkRestore(JSON.parse(key) as RestoreCheckRequest, ctrl.signal)
         .then((res) => {
           const state: RestoreCheckState = res.ok
@@ -52,7 +56,7 @@ export function useRestoreCheck(req: RestoreCheckRequest | null, delayMs = 400):
             },
           });
         });
-    }, delayMs);
+    }, sent.current ? delayMs : 0);
     return () => {
       clearTimeout(timer);
       ctrl.abort();

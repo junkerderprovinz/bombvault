@@ -279,6 +279,19 @@ describe("the backups of the picked entry", () => {
     );
   });
 
+  it("open the restore window at once while the container list is still read, and check the backup", async () => {
+    await renderPage();
+    mocks.listContainers.mockReturnValue(new Promise(() => {}));
+
+    await press(within(railRows()[1]).getByRole("button", { name: en["snapshots.restore"] }));
+
+    const window = screen.getByRole("dialog", { name: en["entry.restore.title"].replace("{name}", "immich") });
+    expect(within(window).getByRole("radio", { name: new RegExp(en["restoreWindow.beside"]) })).toBeTruthy();
+    await waitFor(() =>
+      expect(vi.mocked(api.checkRestore).mock.calls.at(-1)?.[0]).toMatchObject({ snapshotId: RUNS[1].snapshotId })
+    );
+  });
+
   it("can still be restored from an entry the person said not to back up", async () => {
     const setAside = {
       ...IMMICH,

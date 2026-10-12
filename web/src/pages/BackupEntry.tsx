@@ -98,11 +98,13 @@ function TakeoverNote({ entry, onDone }: { entry: Entry; onDone: () => void }) {
 function Loaded({
   entry,
   runs,
+  read,
   reload,
   setPlacement,
 }: {
   entry: Entry;
   runs: Run[];
+  read: ReturnType<typeof useTimeline>;
   reload: () => void;
   setPlacement: (placement: PlacementView) => void;
 }) {
@@ -124,10 +126,7 @@ function Loaded({
   const [request] = useState(() => readRestoreRequest(location.search));
   const nextHue = hueCounter();
 
-  // Read here and not in the tab, so the head can open the newest backup and
-  // a change of tab reads nothing again.
   const domain = ENTRY_KIND[item.kind].timelineDomain;
-  const read = useTimeline(domain, item.key, !self);
   const timeline = { ...read, domain };
   const reloadTimeline = read.reload;
   const [opened, setOpened] = useState<OpenBackup | null>(
@@ -256,8 +255,15 @@ function Loaded({
 function EntryView({ kind, entryKey }: { kind: EntryKind; entryKey: string }) {
   const { t } = useT();
   const { entry, runs, status, reload, setPlacement } = useEntry(kind, entryKey);
+  // Read beside the entry rather than after it, so a restore link does not
+  // wait for one read and then the other. Read above the tabs, so the head
+  // can open the newest backup and a change of tab reads nothing again.
+  const self = entry?.detail.kind === "container" && entry.detail.container.self === true;
+  const read = useTimeline(ENTRY_KIND[kind].timelineDomain, entry?.item.key ?? entryKey, status !== "missing" && !self);
 
-  if (entry) return <Loaded entry={entry} runs={runs} reload={() => void reload()} setPlacement={setPlacement} />;
+  if (entry) {
+    return <Loaded entry={entry} runs={runs} read={read} reload={() => void reload()} setPlacement={setPlacement} />;
+  }
   return (
     <>
       <PageTitle>{t("backups.title")}</PageTitle>
