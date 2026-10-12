@@ -14,6 +14,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import { MOBILE_PROJECTS, container, item, stageEntries } from "./entries";
 
+// 44px touch target; layout boxes can come back a few millionths short of it.
+const MIN_TARGET = 44 - 0.01;
+
 const PLEX_SOURCE = "/mnt/user/appdata/plex";
 
 const MOUNTS_BODY = {
@@ -77,7 +80,7 @@ test("touch rows are full-size targets and the chevron zone is disjoint from the
   // (min-h-[2.75rem] made real). Visible-first guards the null box.
   const rowBox = await row.boundingBox();
   expect(rowBox, "the tree row must be laid out to measure it").not.toBeNull();
-  expect(rowBox!.height).toBeGreaterThanOrEqual(44);
+  expect(rowBox!.height).toBeGreaterThanOrEqual(MIN_TARGET);
 
   // (2) The chevron is a real >=44x44 button. Its existence is already the
   // touch-mode tell: the desktop tree renders an aria-hidden 10px glyph.
@@ -87,8 +90,8 @@ test("touch rows are full-size targets and the chevron zone is disjoint from the
   await expect(chevron).toBeVisible();
   const chevronBox = await chevron.boundingBox();
   expect(chevronBox, "the chevron must be laid out to measure it").not.toBeNull();
-  expect(chevronBox!.width).toBeGreaterThanOrEqual(44);
-  expect(chevronBox!.height).toBeGreaterThanOrEqual(44);
+  expect(chevronBox!.width).toBeGreaterThanOrEqual(MIN_TARGET);
+  expect(chevronBox!.height).toBeGreaterThanOrEqual(MIN_TARGET);
 
   // (3) Dedicated zones: the chevron's hit area and the label's hit area are
   // horizontally disjoint; no shared tap surface between expand and check.

@@ -5,16 +5,15 @@
 // must fit 320-360px: the de compound words ("Einstellungen",
 // "Wiederherstellung") and fr accented long labels ("Paramètres",
 // "Récupération") are the stress cases. For every combination of {de, fr} x
-// {320px, 360px}, every bottom-bar slot caption and every More-sheet row
-// label stays on a single line box and the bar container shows no horizontal
-// overflow: the min-w-0 + truncate CSS contract's visible outcome.
+// {320px, 360px}, every bottom-bar slot caption fits in two line boxes without
+// being cut, every More-sheet row label stays on a single line box, and the
+// bar container shows no horizontal overflow.
 //
-// Geometry, not screenshots (fast + non-flaky): each caption's height is
-// measured against an explicitly normalized 20px line box, with the
-// truncate contract intact (white-space: nowrap) a caption is one line box;
-// a dropped contract lets a long label wrap into a second box (~40px),
-// which is the exact failure mode the 1.5x bound cannot pass. Overflow is
-// scrollWidth vs clientWidth on the bar itself. Both measurements tolerate
+// Geometry, not screenshots (fast + non-flaky): each label's height is
+// measured against an explicitly normalized 20px line box. A bar caption may
+// wrap once (a fifth of a phone is narrower than "Wiederherstellung"), so it
+// must stay under three boxes; a sheet label has the whole row and must stay
+// under two. Overflow is scrollWidth vs clientWidth. All measurements tolerate
 // subpixel rounding (+0.5/+1px) and nothing else.
 //
 // The locale is seeded the way a returning visitor's browser carries it,
@@ -94,7 +93,7 @@ const widths = [320, 360];
 
 for (const locale of locales) {
   for (const width of widths) {
-    test(`narrow viewport ${locale} @ ${width}px: bar and sheet labels single-line, bar never overflows`, async ({ page }, testInfo) => {
+    test(`narrow viewport ${locale} @ ${width}px: bar captions within two lines, sheet labels single-line, bar never overflows`, async ({ page }, testInfo) => {
       test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the backstop targets the mobile chrome");
       await bootSeededPage(page, locale, width);
 
@@ -103,19 +102,17 @@ for (const locale of locales) {
       const moreTrigger = bar.getByRole("button", { name: MORE_LABEL[locale] });
       await expect(moreTrigger).toBeVisible();
 
-      // Single-line contract, bar captions: every slot caption is one
-      // normalized line box (+subpixel), never two (~2x). Two full line
-      // boxes need >= 2 * LINE_BOX, so the 1.5x bound is strict about the
-      // two-line failure mode while tolerating subpixel rounding.
+      // Bar captions: at most two normalized line boxes, and none cut off
+      // (a clipped caption is wider inside than its box).
       const captionStats = await bar
-        .locator("span.truncate")
+        .locator("span.hyphens-auto")
         .evaluateAll(
           (els, box) =>
             els.map((el) => {
               el.style.lineHeight = `${box}px`;
               const height = el.getBoundingClientRect().height;
               el.style.lineHeight = "";
-              return { text: (el.textContent ?? "").trim(), height };
+              return { text: (el.textContent ?? "").trim(), height, clipped: el.scrollWidth > el.clientWidth + 1 };
             }),
           LINE_BOX,
         );
@@ -124,16 +121,17 @@ for (const locale of locales) {
       expect(captionStats.length, "the bar must carry all five captions to assert against").toBe(5);
       expect(captionStats.map((s) => s.text)).toContain(SETTINGS_LABEL[locale]);
       for (const s of captionStats) {
-        expect(s.height, `caption "${s.text}" must stay on one line`).toBeGreaterThan(0);
+        expect(s.height, `caption "${s.text}" must be rendered`).toBeGreaterThan(0);
         expect(
           s.height,
-          `caption "${s.text}" wrapped to a second line (height ${s.height}px vs one ${LINE_BOX}px line box)`,
-        ).toBeLessThanOrEqual(LINE_BOX * 1.5 + 0.5);
+          `caption "${s.text}" took a third line (height ${s.height}px vs one ${LINE_BOX}px line box)`,
+        ).toBeLessThanOrEqual(LINE_BOX * 2 + 0.5);
+        expect(s.clipped, `caption "${s.text}" is cut off`).toBe(false);
       }
 
-      // No-overflow contract: the bar never scrolls horizontally, with
-      // min-w-0 + truncate the slots shrink/ellipsis instead of pushing the
-      // bar wider than the viewport. (+1px subpixel tolerance.)
+      // No-overflow contract: the bar never scrolls horizontally; min-w-0
+      // lets the slots shrink instead of pushing the bar wider than the
+      // viewport. (+1px subpixel tolerance.)
       const barOverflow = await bar.evaluate((el) => ({
         scrollWidth: el.scrollWidth,
         clientWidth: el.clientWidth,
