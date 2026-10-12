@@ -563,6 +563,17 @@ describe("an entry the person said not to back up", () => {
   });
 });
 
+describe("the card of what is not backed up", () => {
+  it("says the entries could not be read instead of loading forever", async () => {
+    store({ v: 2, order: ALL, hidden: [], widths: {}, heights: {} });
+    server.items = "refused";
+    await renderPage();
+
+    expect(within(cell("coverage")).getByText(en["coverage.loadFailed"])).toBeTruthy();
+    expect(within(cell("coverage")).queryByText(en["folder.loading"])).toBeNull();
+  });
+});
+
 describe("one count on every card", () => {
   it("is the same in the head, on the protection card, on the coverage card and in the statistics", async () => {
     store({ v: 2, order: ALL, hidden: [], widths: {}, heights: {} });

@@ -324,7 +324,8 @@ export function Dashboard() {
           t={t}
           coverage={coverage}
           tally={tally}
-          loading={coverageLoading || !backupItems.loaded}
+          loading={coverageLoading || (!backupItems.loaded && !backupItems.failed)}
+          failed={(backupItems.failed && !backupItems.loaded) || (!coverageLoading && coverage === null)}
           hueIndex={hue}
         />
       ),

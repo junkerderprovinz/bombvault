@@ -62,6 +62,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     listFileSets: () => Promise.resolve({ ok: true, fileSets: [] }),
     listZFSDatasets: () => Promise.resolve({ ok: true, datasets: [] }),
     getStatus: () => Promise.resolve({ ok: true }),
+    listStorageLocations: () => Promise.reject(new Error("offline")),
     previewRetention: (domain: string, source?: string) => {
       previews.push([domain, source]);
       return Promise.resolve({
@@ -197,5 +198,13 @@ describe("the retention cards of the Storage locations tile", () => {
     for (const key of ["settings.retentionCombineInfo", "settings.retentionImmutableNotPruned"] as const) {
       expect(screen.queryByText(en[key])).toBeNull();
     }
+  });
+});
+
+describe("the storage locations tile", () => {
+  it("says the locations could not be read instead of checking forever", async () => {
+    await renderRetention();
+    await waitFor(() => expect(screen.getByText(en["storage.loadFailed"])).toBeTruthy());
+    expect(screen.queryByText(en["dashboard.checking"])).toBeNull();
   });
 });

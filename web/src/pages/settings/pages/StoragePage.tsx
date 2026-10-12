@@ -12,15 +12,23 @@ import { hueCounter } from "../shared";
 export function StoragePage() {
   const { t } = useT();
   const [counts, setCounts] = useState<{ all: number; offsite: number } | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let alive = true;
     listStorageLocations()
       .then((res) => {
+        if (!alive) return;
+        if (!res.ok) {
+          setFailed(true);
+          return;
+        }
         const locations = res.locations ?? [];
-        if (alive && res.ok) setCounts({ all: locations.length, offsite: locations.filter((l) => l.kind === "offsite").length });
+        setCounts({ all: locations.length, offsite: locations.filter((l) => l.kind === "offsite").length });
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (alive) setFailed(true);
+      });
     return () => {
       alive = false;
     };
@@ -37,7 +45,9 @@ export function StoragePage() {
         sub={
           counts
             ? t("tile.storage.sub").replace("{n}", String(counts.all)).replace("{m}", String(counts.offsite))
-            : t("dashboard.checking")
+            : failed
+              ? t("storage.loadFailed")
+              : t("dashboard.checking")
         }
         glyph={<IconTabStorage />}
         hueIndex={nextHue()}

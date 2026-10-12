@@ -25,12 +25,15 @@ export function CoverageCard({
   coverage,
   tally,
   loading,
+  failed,
   hueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
   coverage: CoverageReport | null;
   tally: Tally;
   loading: boolean;
+  /** The entries or the coverage could not be read, so the ratio would mislead. */
+  failed: boolean;
   hueIndex?: number;
 }) {
   const reasonKey: Record<string, TranslationKey> = {
@@ -58,6 +61,8 @@ export function CoverageCard({
     <Card title={t("coverage.title")} hint={t("overview.coverage.hint")} hueIndex={hueIndex}>
       {loading ? (
         <p className="text-sm text-carbon-textSub">{t("folder.loading")}</p>
+      ) : failed ? (
+        <p className="text-sm text-statusFail">{t("coverage.loadFailed")}</p>
       ) : (
         <div className="flex flex-col gap-2">
           <p className="flex items-center gap-1.5 text-base font-semibold tabular-nums text-carbon-text">
