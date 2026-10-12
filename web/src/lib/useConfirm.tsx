@@ -83,6 +83,12 @@ export function useConfirm() {
     });
   }, []);
 
+  // For a question whose words arrive after the window opened: the answer
+  // still settles the first confirm() call.
+  const revise = useCallback((message: string, options?: ConfirmOptions) => {
+    setPending((open) => (open ? { message, ...options } : open));
+  }, []);
+
   const settle = useCallback((result: boolean) => {
     resolveRef.current?.(result);
     resolveRef.current = null;
@@ -147,7 +153,7 @@ export function useConfirm() {
       )
     : null;
 
-  return { confirm, confirmDialog, dismiss };
+  return { confirm, confirmDialog, dismiss, revise };
 }
 
 /** useDialogKeys gives an open dialog Escape from anywhere and a Tab trap over

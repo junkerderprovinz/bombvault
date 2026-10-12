@@ -210,6 +210,32 @@ describe("the flow", () => {
     expect(fake.callsTo("previewPlacementDefault")).toEqual([["containers", { skip: ["*"] }]]);
   });
 
+  it("opens the question at once and fills it in when the server has worked out the impact", async () => {
+    const release = fake.hold("previewPlacementDefault");
+    await renderPage();
+
+    await click(line("Containers to B2"));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("Checking…");
+    expect((within(dialog).getByRole("button", { name: /Confirm/ }) as HTMLButtonElement).disabled).toBe(true);
+
+    await act(async () => release({ ok: true, impact: defaultImpact({ dropped: [targetImpact({ items: 15, snapshots: 210 })] }) }));
+    expect(dialog.textContent).toContain("Items and project folders that B2 no longer gets: 15.");
+    expect((within(dialog).getByRole("button", { name: "Confirm" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("writes nothing when the window is closed before the impact is in", async () => {
+    const release = fake.hold("previewPlacementDefault");
+    await renderPage();
+
+    await click(line("Containers to B2"));
+    await click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Cancel" }));
+    await act(async () => release({ ok: true, impact: defaultImpact({ dropped: [targetImpact()] }) }));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(fake.callsTo("putPlacementDefault")).toEqual([]);
+  });
+
   it("writes nothing when the question is answered with no", async () => {
     fake.reply("previewPlacementDefault", { ok: true, impact: defaultImpact({ dropped: [targetImpact()] }) });
     await renderPage();
