@@ -618,19 +618,14 @@ test("settings integrations on a phone: the MCP confirmations come up as a sheet
   await sheet.getByRole("button", { name: "Abbrechen" }).click();
   await expect(sheet).toBeHidden();
 
-  // The client dialog stays a dialog: it fits, and it scrolls inside.
+  // A client's setup is a full sheet. It starts sliding up a few frames after
+  // it mounts, too late for settle to wait on, so the check retries instead.
   const choose = page.getByRole("button", { name: "Client wählen" });
   await choose.scrollIntoViewIfNeeded();
   await scrollRest(page);
   await choose.click();
   await page.getByRole("dialog").getByRole("button", { name: /Claude Code/ }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible();
-  await settle(page);
-  const box = (await dialog.boundingBox())!;
-  expect(box.x).toBeGreaterThanOrEqual(0);
-  expect(box.x + box.width).toBeLessThanOrEqual(320);
-  expect(box.y + box.height).toBeLessThanOrEqual(800);
+  await expect(page.getByRole("dialog")).toBeInViewport({ ratio: 1 });
 });
 
 test("settings on the desktop keeps the 40px rhythm, with the rail's names once there is room", async ({ page }, testInfo) => {
