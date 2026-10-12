@@ -96,22 +96,6 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 		return EverythingSummary{}, fmt.Errorf("backup everything: read settings: %w", err)
 	}
 
-	// A failing or hanging pre-hook must not block the pass it gates.
-	// HostShell.Run has its own timeout, so ctx is passed through as is.
-	if settings.EverythingPreHook != "" {
-		if err := s.hostShell.Run(ctx, settings.EverythingPreHook); err != nil {
-			log.Printf("api: backup everything: pre-hook failed (best-effort, pass continues): %v", err)
-		}
-	}
-
-	// Every child run of the domain steps below gets group_id = runID. If the
-	// parent run cannot be recorded, return without the post-hook: a
-	// dead-man's-switch ping for a pass that never ran would be a false "done".
-	runID, err := s.startRun(ctx, store.EverythingTargetID, "backup")
-	if err != nil {
-		return EverythingSummary{}, fmt.Errorf("backup everything: start run: %w", err)
-	}
-
 	var pass *everythingPass
 	// A failing step, even one that fails before any item, is recorded in its
 	// own result and does not stop the others.
@@ -130,6 +114,7 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 	}
 	scheduled := scheduledPass(ctx)
 	var steps []everythingStep
+	ownPlan := 0
 	for _, step := range all {
 		switch {
 		case !step.enabled:
@@ -139,10 +124,34 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 			// scheduled pass would back it up a second time. A pass started by
 			// hand takes it.
 			log.Printf("api: backup everything: %s skipped, it runs on a plan of its own", step.domain)
+			ownPlan++
 		default:
 			steps = append(steps, step)
 		}
 	}
+	// Hooks and a run row for a pass with nothing to do would ping a
+	// dead-man's switch and log an empty success every night.
+	if len(steps) == 0 && ownPlan > 0 {
+		log.Print("api: backup everything: every section that is switched on runs on a plan of its own, so the scheduled pass has nothing to do")
+		return EverythingSummary{}, nil
+	}
+
+	// A failing or hanging pre-hook must not block the pass it gates.
+	// HostShell.Run has its own timeout, so ctx is passed through as is.
+	if settings.EverythingPreHook != "" {
+		if err := s.hostShell.Run(ctx, settings.EverythingPreHook); err != nil {
+			log.Printf("api: backup everything: pre-hook failed (best-effort, pass continues): %v", err)
+		}
+	}
+
+	// Every child run of the domain steps below gets group_id = runID. If the
+	// parent run cannot be recorded, return without the post-hook: a
+	// dead-man's-switch ping for a pass that never ran would be a false "done".
+	runID, err := s.startRun(ctx, store.EverythingTargetID, "backup")
+	if err != nil {
+		return EverythingSummary{}, fmt.Errorf("backup everything: start run: %w", err)
+	}
+
 	pass = s.beginEverythingPass(ctx, runID, settings, steps)
 	defer pass.end()
 

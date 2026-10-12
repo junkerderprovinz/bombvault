@@ -17,6 +17,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // hcRecorder is a Healthchecks endpoint that records the path of every ping.
@@ -287,5 +288,33 @@ func TestScheduledEverythingCountsOnlyTheSectionsItBacksUp(t *testing.T) {
 	}
 	if last := seen[len(seen)-1]; last.Done != last.Total {
 		t.Fatalf("the pass ended at %d of %d", last.Done, last.Total)
+	}
+}
+
+// When every section that is on runs on its own plan, the scheduled pass has
+// nothing to do: no hooks, and no empty success in the Activity Log.
+func TestScheduledEverythingWithEverySectionOnItsOwnPlanDoesNothing(t *testing.T) {
+	log := &everythingOrderLog{}
+	eng := &orderedEngine{fakeResticEngine: &fakeResticEngine{}, log: log}
+	svc, st, _, _ := everythingTestService(t, eng)
+	shell := &everythingFakeHostShell{log: log}
+	svc.SetHostShell(shell)
+	s := mustSettings(t, st)
+	s.EverythingPreHook = "echo pre"
+	s.EverythingPostHook = "echo post"
+	s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule = "daily 02:00", "daily 02:00", "daily 02:00"
+	s.FilesSchedule, s.ConfigSchedule = "daily 02:00", "daily 02:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := svc.BackupEverything(api.WithScheduledPass(context.Background())); err != nil {
+		t.Fatalf("scheduled BackupEverything: %v", err)
+	}
+	if len(shell.calls) != 0 {
+		t.Errorf("hooks ran: %v", shell.calls)
+	}
+	if run, err := st.LastRunOfKind(store.EverythingTargetID, "backup"); err != nil || run != nil {
+		t.Errorf("the pass recorded a run: %+v (%v)", run, err)
 	}
 }
