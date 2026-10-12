@@ -173,8 +173,9 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
           in landscape. The top margin is the card's own ground: the scroller
           above ends flush (its pb-0 contract), so without it the last card of
           every page would rest on the bar card's edge. Separation is shade,
-          not a line: no border or ring on the card. */}
-      <div className="mt-2 ml-[max(1rem,var(--safe-area-left))] mr-[max(1rem,var(--safe-area-right))] mb-2 rounded-card bg-carbon-sidebar">
+          not a line: no border or ring on the card. Below 360px the card
+          keeps half the gutter, or "Wiederherstellung" needs a third line. */}
+      <div className="mt-2 ml-[max(1rem,var(--safe-area-left))] mr-[max(1rem,var(--safe-area-right))] max-[359px]:ml-[max(0.5rem,var(--safe-area-left))] max-[359px]:mr-[max(0.5rem,var(--safe-area-right))] mb-2 rounded-card bg-carbon-sidebar">
         {/* h-14 static height: svh semantics by construction; a fixed-height
             row never resizes when the dynamic viewport does (browser chrome,
             keyboard), which is the property that keeps the bar visible: static
