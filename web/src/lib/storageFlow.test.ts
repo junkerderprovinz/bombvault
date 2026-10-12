@@ -206,7 +206,7 @@ describe("a section with placement", () => {
 describe("flash, ZFS and the self-backup", () => {
   it("keep their own folder for good and say so", () => {
     const local = line(rows([LOCAL, BOX]), "flash", LOCAL);
-    expect(local).toMatchObject({ on: true, locked: "Flash always backs up to its own folder." });
+    expect(local).toMatchObject({ on: true, locked: "Flash always backs up to its own folder first. The off-site copies come from that backup, so it stays on." });
     expect(local.action).toBeUndefined();
   });
 
