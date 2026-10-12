@@ -123,8 +123,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     <div className="flex items-center justify-center min-h-screen bg-carbon-background">
       <div className="w-full max-w-sm rounded-card bg-carbon-surface p-8 flex flex-col gap-6 shadow-lg">
         {/* This screen has no rail, so the mark tells which instance is being
-            unlocked. The theme marks switch like the rail's and stay hidden
-            from assistive technology, since the heading names the product. */}
+            unlocked. It stays hidden from assistive technology, since the
+            heading names the product. */}
         <div className="flex flex-col items-center gap-3">
           <span className="flex h-16 w-16 items-center justify-center">
             <img
@@ -132,14 +132,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               alt=""
               aria-hidden="true"
               draggable={false}
-              className="h-16 w-16 object-contain block dark:hidden"
-            />
-            <img
-              src="/logo-light.svg"
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-              className="h-16 w-16 object-contain hidden dark:block"
+              className="h-16 w-16 object-contain block"
             />
           </span>
           <h1 className="text-status font-semibold text-carbon-text text-center">

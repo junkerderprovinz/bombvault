@@ -220,8 +220,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-6 px-4 py-5">
       <header className="flex items-center gap-3">
-        <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className="block h-10 w-10 dark:hidden" />
-        <img src="/logo-light.svg" alt="" aria-hidden="true" draggable={false} className="hidden h-10 w-10 dark:block" />
+        <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className="block h-10 w-10" />
         <h1 className="min-w-0 flex-1 truncate text-xl font-bold text-carbon-text">BombVault</h1>
         <Badge as="button" shape="square" size="icon" tone="active" tip={t("launcher.add")} onClick={openPairing}>
           <IconAdd />
@@ -233,8 +232,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
 
       {state.servers.length === 0 ? (
         <div className="mt-6 flex flex-col items-center gap-4 rounded-card bg-carbon-surface px-6 py-8 text-center">
-          <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className="block h-12 w-12 opacity-50 dark:hidden" />
-          <img src="/logo-light.svg" alt="" aria-hidden="true" draggable={false} className="hidden h-12 w-12 opacity-50 dark:block" />
+          <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className="block h-12 w-12 opacity-50" />
           <p className="text-sm text-carbon-textMuted">{t("launcher.empty")}</p>
           <Button label={t("launcher.add")} labelKey="launcher.add" tone="accent" onClick={openPairing} />
         </div>

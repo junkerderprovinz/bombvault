@@ -3,6 +3,10 @@
  *   bombvault-banner[-dark].png  from the SVGs that gen-banner.mjs writes
  *   icon.png                     512x512 transparent icon from icon.svg
  *   bombvault-banner-logo.png    1600x500 banner without text
+ *   social-preview.png           1280x640 card for the GitHub repository
+ *   the Android launcher layers, the web app's icons and the docs favicon
+ * and writes android/store/icon.svg, the app icon that android/store/render.mjs
+ * puts on the store pages.
  *
  * The banner text is already converted to paths, so no font is needed here.
  *
@@ -13,96 +17,142 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { execSync } from "node:child_process";
+import { LOGO_H, LOGO_SVG, LOGO_W, OPT_CX, OPT_CY, placeLogo } from "./logo.mjs";
 
 const require = createRequire(import.meta.url);
 const { Resvg } = require(`${execSync("npm root -g").toString().trim()}/@resvg/resvg-js`);
 
 const __dir = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dir, "../..");
+
+const png = (svg, width, background) =>
+  new Resvg(svg, { fitTo: { mode: "width", value: width }, background }).render().asPng();
+const canvas = (w, h, body) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`;
 
 // The README picks the light or dark banner with <picture> and prefers-color-scheme.
 for (const [suffix, bg] of [["", "#ffffff"], ["-dark", "#0d1117"]]) {
   const svg = readFileSync(join(__dir, `bombvault-banner${suffix}.svg`), "utf8");
-  const png = new Resvg(svg, { fitTo: { mode: "width", value: 1600 }, background: bg });
-  writeFileSync(join(__dir, `bombvault-banner${suffix}.png`), png.render().asPng());
+  writeFileSync(join(__dir, `bombvault-banner${suffix}.png`), png(svg, 1600, bg));
   console.log(`bombvault-banner${suffix}.png written (1600x500)`);
 }
 
-// The designer marked the logo's optical centre in the source file. The sparks
-// at the top right widen the bounding box without adding visual weight, so
-// every placement centres on this point rather than on the box.
-const LOGO_W = 898.34, LOGO_H = 865.1;
-const OPT_CX = 441.6, OPT_CY = 461.2;
-const logoRaw = readFileSync(join(__dir, "icon.svg"), "utf8").replace(/<\?xml[^>]*\?>\s*/, "");
-const placeLogo = (x, y, w, h) =>
-  logoRaw.replace(
-    /<svg\b[^>]*viewBox="0 0 898\.34 865\.1"[^>]*>/,
-    `<svg x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${w.toFixed(2)}" height="${h.toFixed(2)}" viewBox="0 0 ${LOGO_W} ${LOGO_H}" xmlns="http://www.w3.org/2000/svg">`,
+// social-preview.png is the dark banner on GitHub's 1280x640 card. GitHub takes
+// it from the repository settings, not from this file, so upload it there.
+{
+  const banner = readFileSync(join(__dir, "bombvault-banner-dark.svg"), "utf8").replace(
+    /<svg\b[^>]*>/,
+    '<svg x="0" y="120" width="1280" height="400" viewBox="0 0 1600 500" xmlns="http://www.w3.org/2000/svg">',
   );
+  writeFileSync(join(__dir, "social-preview.png"), png(canvas(1280, 640, banner), 1280, "#0d1117"));
+  console.log("social-preview.png written (1280x640)");
+}
+
+// The largest distance from the optical centre to the box's edge along either
+// axis, and to any drawn pixel at all, which is the spark's tip.
+const HALF = Math.max(OPT_CX, LOGO_W - OPT_CX, OPT_CY, LOGO_H - OPT_CY);
+const REACH = (() => {
+  const img = new Resvg(LOGO_SVG, { fitTo: { mode: "width", value: Math.round(LOGO_W) } }).render();
+  const k = LOGO_W / img.width;
+  const px = img.pixels;
+  let max = 0;
+  for (let y = 0; y < img.height; y++) {
+    for (let x = 0; x < img.width; x++) {
+      if (px[(y * img.width + x) * 4 + 3] < 128) continue;
+      max = Math.max(max, Math.hypot((x + 0.5) * k - OPT_CX, (y + 0.5) * k - OPT_CY));
+    }
+  }
+  return max;
+})();
 
 // icon.png has no tile, since the logo reads on dark and light backgrounds. The
-// side is twice the largest distance from the optical centre plus 4 percent, so
-// nothing clips.
+// side is twice HALF plus 4 percent, so nothing clips. The docs use it as their
+// favicon.
 {
-  const half = Math.max(OPT_CX, LOGO_W - OPT_CX, OPT_CY, LOGO_H - OPT_CY) * 1.04;
-  const side = 2 * half;
-  const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${side.toFixed(2)}" height="${side.toFixed(2)}" viewBox="0 0 ${side.toFixed(2)} ${side.toFixed(2)}">
-  ${placeLogo(half - OPT_CX, half - OPT_CY, LOGO_W, LOGO_H)}
-</svg>`;
-  const iconPng = new Resvg(iconSvg, { fitTo: { mode: "width", value: 512 } });
-  writeFileSync(join(__dir, "icon.png"), iconPng.render().asPng());
-  console.log("icon.png written (512x512 transparent, optically centred)");
+  const side = 2 * HALF * 1.04;
+  const icon = png(canvas(side, side, placeLogo(side / 2, side / 2, 1)), 512);
+  writeFileSync(join(__dir, "icon.png"), icon);
+  writeFileSync(join(ROOT, "docs/assets/favicon.png"), icon);
+  console.log("icon.png and the docs favicon written (512x512 transparent, optically centred)");
 }
+
+// The web app's favicon is the logo as it is, 512 wide.
+writeFileSync(join(ROOT, "web/public/logo.png"), png(LOGO_SVG, 512));
+console.log("web/public/logo.png written (512 wide)");
 
 // bombvault-banner-logo.png is the support-thread banner: the logo on white.
 {
-  const BW = 1600, BH = 500, LH = 460;
-  const s = LH / LOGO_H, LW = LOGO_W * s;
-  const logoBanner = `<svg xmlns="http://www.w3.org/2000/svg" width="${BW}" height="${BH}" viewBox="0 0 ${BW} ${BH}">
-  <rect width="${BW}" height="${BH}" fill="#ffffff"/>
-  ${placeLogo(BW / 2 - OPT_CX * s, BH / 2 - OPT_CY * s, LW, LH)}
-</svg>`;
-  const lb = new Resvg(logoBanner, { fitTo: { mode: "width", value: 1600 }, background: "white" });
-  writeFileSync(join(__dir, "bombvault-banner-logo.png"), lb.render().asPng());
+  const BW = 1600, BH = 500;
+  const body = `<rect width="${BW}" height="${BH}" fill="#ffffff"/>${placeLogo(BW / 2, BH / 2, 460 / LOGO_H)}`;
+  writeFileSync(join(__dir, "bombvault-banner-logo.png"), png(canvas(BW, BH, body), BW, "white"));
   console.log("bombvault-banner-logo.png written (1600x500, textless, optically centred)");
 }
 
-// The Android app's launcher icon is two layers of 108dp. Only a circle of 66dp
-// in the middle survives every launcher's mask, so the logo's box takes 54dp
-// and its empty corners are what a round mask cuts.
+// The app tile: white, with the right half a shade darker so it meets the
+// vault's own dark half. Android draws it from ic_launcher_background.xml, the
+// web app's maskable icon and the store icon draw it here.
+const TILE_LIGHT = "#ffffff", TILE_SHADE = "#e2e2e2";
+const tile = (side) =>
+  `<rect width="${side}" height="${side}" fill="${TILE_LIGHT}"/><rect x="${side / 2}" width="${side / 2}" height="${side}" fill="${TILE_SHADE}"/>`;
+
+// The Android launcher icon is layers of 108dp, and only a circle of 66dp in
+// the middle survives every launcher's mask, so the spark's tip touches that
+// circle. The monochrome layer is the same shape in one colour for themed
+// icons; its alpha is doubled so the seams between the logo's parts close up.
 {
-  const RES = join(__dir, "../../android/app/src/main/res");
+  const RES = join(ROOT, "android/app/src/main/res");
   const DENSITIES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
-  const half = Math.max(OPT_CX, LOGO_W - OPT_CX, OPT_CY, LOGO_H - OPT_CY);
-  const s = 27 / half;
-  const fg = `<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
-  ${placeLogo(54 - OPT_CX * s, 54 - OPT_CY * s, LOGO_W * s, LOGO_H * s)}
-</svg>`;
+  const s = 33 / REACH;
+  const fg = canvas(108, 108, placeLogo(54, 54, s));
+  const flat = LOGO_SVG.replace(/fill="#[0-9a-fA-F]{3,6}"/g, 'fill="#000000"');
+  const mono = canvas(
+    108,
+    108,
+    `<filter id="solid"><feComponentTransfer><feFuncA type="table" tableValues="0 1 1"/></feComponentTransfer></filter><g filter="url(#solid)">${placeLogo(54, 54, s, flat)}</g>`,
+  );
   for (const [name, factor] of Object.entries(DENSITIES)) {
-    const png = new Resvg(fg, { fitTo: { mode: "width", value: Math.round(108 * factor) } });
-    writeFileSync(join(RES, `mipmap-${name}`, "ic_launcher_foreground.png"), png.render().asPng());
+    const width = Math.round(108 * factor);
+    writeFileSync(join(RES, `mipmap-${name}`, "ic_launcher_foreground.png"), png(fg, width));
+    writeFileSync(join(RES, `mipmap-${name}`, "ic_launcher_monochrome.png"), png(mono, width));
   }
-  console.log("android launcher foregrounds written (108dp, five densities)");
+  console.log("android launcher foreground and monochrome layers written (108dp, five densities)");
 }
 
 // The web app manifest's icons: the logo alone for launchers that show it as
-// is, and a maskable one on white whose logo stays inside the 80 percent
-// circle every mask keeps.
+// is, and a maskable one on the app tile whose logo stays inside the circle of
+// 80 percent that every mask keeps.
 {
-  const PUB = join(__dir, "../../web/public");
-  const half = Math.max(OPT_CX, LOGO_W - OPT_CX, OPT_CY, LOGO_H - OPT_CY);
-  const icon = (side, fill, bg) => {
-    const s = (side * fill) / 2 / half;
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${side}" height="${side}" viewBox="0 0 ${side} ${side}">
-  ${bg ? `<rect width="${side}" height="${side}" fill="${bg}"/>` : ""}
-  ${placeLogo(side / 2 - OPT_CX * s, side / 2 - OPT_CY * s, LOGO_W * s, LOGO_H * s)}
-</svg>`;
-  };
-  for (const [name, side, fill, bg] of [
-    ["icon-192.png", 192, 0.92, null],
-    ["icon-512.png", 512, 0.92, null],
-    ["icon-maskable-512.png", 512, 0.62, "#ffffff"],
+  const PUB = join(ROOT, "web/public");
+  for (const [name, side, maskable] of [
+    ["icon-192.png", 192, false],
+    ["icon-512.png", 512, false],
+    ["icon-maskable-512.png", 512, true],
   ]) {
-    writeFileSync(join(PUB, name), new Resvg(icon(side, fill, bg), { fitTo: { mode: "width", value: side } }).render().asPng());
+    const body = maskable
+      ? tile(side) + placeLogo(side / 2, side / 2, (0.38 * side) / REACH)
+      : placeLogo(side / 2, side / 2, (0.46 * side) / HALF);
+    writeFileSync(join(PUB, name), png(canvas(side, side, body), side));
   }
   console.log("web app manifest icons written (192, 512, maskable 512)");
+}
+
+// The store icon keeps the tile's rounded corners, which render.mjs squares off
+// for Play, and the vault as large as the store pages have always shown it.
+{
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+  <defs>
+    <style>
+      .cls-1 { fill: ${TILE_LIGHT}; }
+      .cls-2 { fill: ${TILE_SHADE}; }
+    </style>
+  </defs>
+  <g id="tile">
+    <rect id="background" class="cls-1" width="1000" height="1000" rx="68" ry="68"/>
+    <path class="cls-2" d="M932,0h-432v1000h432c37.56,0,68-30.44,68-68V68c0-37.56-30.44-68-68-68Z"/>
+  </g>
+  ${placeLogo(500, 503, 1)}
+</svg>
+`;
+  writeFileSync(join(ROOT, "android/store/icon.svg"), svg);
+  console.log("android/store/icon.svg written");
 }

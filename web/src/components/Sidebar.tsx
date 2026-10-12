@@ -345,13 +345,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
               src="/logo.svg"
               alt="BombVault"
               draggable={false}
-              className={`glim-logo-img ${markBox} object-contain shrink-0 block dark:hidden`}
-            />
-            <img
-              src="/logo-light.svg"
-              alt="BombVault"
-              draggable={false}
-              className={`glim-logo-img ${markBox} object-contain shrink-0 hidden dark:block`}
+              className={`glim-logo-img ${markBox} object-contain shrink-0 block`}
             />
             {/* At boom the CSS hides the <img> and the tiles take its place. */}
             {eggState === "boom" && (

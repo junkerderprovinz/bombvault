@@ -141,14 +141,7 @@ export function OAuthConsent() {
               alt=""
               aria-hidden="true"
               draggable={false}
-              className="block h-16 w-16 object-contain dark:hidden"
-            />
-            <img
-              src="/logo-light.svg"
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-              className="hidden h-16 w-16 object-contain dark:block"
+              className="block h-16 w-16 object-contain"
             />
           </span>
           <h1 className="text-status font-semibold text-carbon-text">{t("oauth.heading")}</h1>
