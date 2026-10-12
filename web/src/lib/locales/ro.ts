@@ -2449,7 +2449,6 @@ const ro: Partial<Translations> = {
   "instances.notConnected": "Neconectată",
   "instances.thisInstance": "Această instanță",
   "instances.open": "Deschide",
-  "instances.pair": "Împerechează o instanță",
   "instances.emptyTitle": "Nicio instanță conectată încă",
   "instances.emptyLead": "Împerechează un al doilea server BombVault sau aplicația Android cu aceleași douăsprezece cuvinte și va apărea aici cu starea ei de protecție.",
   "instances.requests": "one={n} cerere|few={n} cereri|other={n} de cereri",

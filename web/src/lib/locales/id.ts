@@ -1407,7 +1407,6 @@ const id: Partial<Translations> = {
   "instances.notConnected": "Tidak terhubung",
   "instances.thisInstance": "Instance ini",
   "instances.open": "Buka",
-  "instances.pair": "Pasangkan instance",
   "instances.emptyTitle": "Belum ada instance yang terhubung",
   "instances.emptyLead": "Pasangkan server BombVault kedua atau aplikasi Android dengan dua belas kata yang sama, lalu ia muncul di sini beserta status perlindungannya.",
   "instances.requests": "{n} permintaan",

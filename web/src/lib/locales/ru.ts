@@ -2445,7 +2445,6 @@ const ru: Partial<Translations> = {
   "instances.notConnected": "Не подключён",
   "instances.thisInstance": "Этот экземпляр",
   "instances.open": "Открыть",
-  "instances.pair": "Сопрячь экземпляр",
   "instances.emptyTitle": "Пока нет подключённых экземпляров",
   "instances.emptyLead": "Сопрягите второй сервер BombVault или приложение для Android с теми же двенадцатью словами, и он появится здесь со своим состоянием защиты.",
   "instances.requests": "one={n} запрос|few={n} запроса|many={n} запросов|other={n} запроса",

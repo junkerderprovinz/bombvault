@@ -1407,7 +1407,6 @@ const sk: Partial<Translations> = {
   "instances.notConnected": "Nepripojené",
   "instances.thisInstance": "Táto inštancia",
   "instances.open": "Otvoriť",
-  "instances.pair": "Spárovať inštanciu",
   "instances.emptyTitle": "Zatiaľ nie je pripojená žiadna inštancia",
   "instances.emptyLead": "Spáruj druhý server BombVault alebo aplikáciu pre Android rovnakými dvanástimi slovami a zobrazí sa tu so svojím stavom ochrany.",
   "instances.requests": "one={n} žiadosť|few={n} žiadosti|many={n} žiadosti|other={n} žiadostí",

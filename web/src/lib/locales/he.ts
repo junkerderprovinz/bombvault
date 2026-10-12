@@ -2448,7 +2448,6 @@ const he: Partial<Translations> = {
   "instances.notConnected": "לא מחובר",
   "instances.thisInstance": "המופע הזה",
   "instances.open": "פתיחה",
-  "instances.pair": "צימוד מופע",
   "instances.emptyTitle": "עדיין לא חובר אף מופע",
   "instances.emptyLead": "שרת BombVault שני או אפליקציית Android שמצומדים באותן שתים עשרה מילים יופיעו כאן עם מצב ההגנה שלהם.",
   "instances.requests": "one=בקשה אחת|two=שתי בקשות|other={n} בקשות",

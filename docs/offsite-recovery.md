@@ -165,7 +165,7 @@ The one place that still takes an APP_KEY by hand is [From an old backup folder]
 
 ## Instances and roles {#roles}
 
-The **Instances** page (a settings tile that can be pinned to the sidebar) shows the group as a net of who does what for whom, a card for this instance and a card for every other member, the Android phones and the ZFS servers. **Pair an instance** floats at the bottom right. Which parts are on is set under **Settings, Instances, Multiple servers**: **Instances**, **Receiver** and **Pull**.
+The **Instances** page (a settings tile that can be pinned to the sidebar) shows the group as a net of who does what for whom, a card for this instance and a card for every other member, the Android phones and the ZFS servers. **Pair** floats at the bottom right. Which parts are on is set under **Settings, Instances, Multiple servers**: **Instances**, **Receiver** and **Pull**.
 
 Each card shows the member's protection status and its roles as tiles. A role is something one instance does for another:
 

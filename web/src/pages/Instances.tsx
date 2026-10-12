@@ -21,7 +21,7 @@ import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
 import { useLoudAnomalies } from "../lib/useAnomalies";
-import { Facts, Figure, InstanceCard, PhoneMark } from "./instances/InstanceCard";
+import { Facts, Figure, InstanceCard } from "./instances/InstanceCard";
 import { NetPicture, useNetHover } from "./instances/NetPicture";
 import { KeyDepositWindow } from "./instances/KeyDepositWindow";
 import { PeerDetails } from "./instances/PeerDetails";
@@ -187,7 +187,6 @@ function PeerCard({
       cardKey={instance.key}
       name={name}
       eyebrow={instance.app ? t("fleet.kindAndroid") : undefined}
-      mark={instance.app ? <PhoneMark /> : undefined}
       badges={badges}
       facts={
         <Facts
@@ -403,7 +402,7 @@ export function Instances() {
       {modules && !state.loading && (
         <PageActions>
           <span data-new="instances-pair" className="flex">
-            <PageAction primary label={t("instances.pair")} glyph={<IconLink />} onClick={() => navigate("/settings/pairing")} />
+            <PageAction primary label={t("pairing.join")} glyph={<IconLink />} onClick={() => navigate("/settings/pairing")} />
           </span>
         </PageActions>
       )}

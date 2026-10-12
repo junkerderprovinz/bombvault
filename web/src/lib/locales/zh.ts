@@ -2439,7 +2439,6 @@ const zh: Partial<Translations> = {
   "instances.notConnected": "未连接",
   "instances.thisInstance": "本实例",
   "instances.open": "打开",
-  "instances.pair": "配对实例",
   "instances.emptyTitle": "尚未连接任何实例",
   "instances.emptyLead": "用同样的十二个词配对第二台 BombVault 服务器或 Android 应用，它就会连同保护状态一起显示在这里。",
   "instances.requests": "{n} 个请求",

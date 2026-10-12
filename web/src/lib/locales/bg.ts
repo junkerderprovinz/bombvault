@@ -1407,7 +1407,6 @@ const bg: Partial<Translations> = {
   "instances.notConnected": "Не е свързано",
   "instances.thisInstance": "Тази инстанция",
   "instances.open": "Отвори",
-  "instances.pair": "Сдвои инстанция",
   "instances.emptyTitle": "Още няма свързана инстанция",
   "instances.emptyLead": "Сдвои втори BombVault сървър или приложението за Android със същите дванайсет думи и ще се появи тук със състоянието на защитата си.",
   "instances.requests": "one={n} заявка|other={n} заявки",

@@ -2439,7 +2439,6 @@ const ja: Partial<Translations> = {
   "instances.notConnected": "未接続",
   "instances.thisInstance": "このインスタンス",
   "instances.open": "開く",
-  "instances.pair": "インスタンスをペアリング",
   "instances.emptyTitle": "接続済みのインスタンスはまだありません",
   "instances.emptyLead": "同じ 12 語で 2 台目の BombVault サーバーまたは Android アプリをペアリングすると、保護ステータスとともにここに表示されます。",
   "instances.requests": "{n} 件のリクエスト",

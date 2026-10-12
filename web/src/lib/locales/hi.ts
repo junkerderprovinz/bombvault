@@ -1407,7 +1407,6 @@ const hi: Partial<Translations> = {
   "instances.notConnected": "जुड़ा नहीं",
   "instances.thisInstance": "यह इंस्टेंस",
   "instances.open": "खोलें",
-  "instances.pair": "इंस्टेंस पेयर करें",
   "instances.emptyTitle": "अभी कोई इंस्टेंस कनेक्ट नहीं है",
   "instances.emptyLead": "इन्हीं बारह शब्दों से दूसरा BombVault सर्वर या Android ऐप पेयर करें, फिर वह अपनी सुरक्षा स्थिति के साथ यहाँ दिखेगा।",
   "instances.requests": "one={n} अनुरोध|other={n} अनुरोध",

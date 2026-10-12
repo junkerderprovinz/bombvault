@@ -1407,7 +1407,6 @@ const ca: Partial<Translations> = {
   "instances.notConnected": "No connectada",
   "instances.thisInstance": "Aquesta instància",
   "instances.open": "Obre",
-  "instances.pair": "Aparella una instància",
   "instances.emptyTitle": "Encara no hi ha cap instància connectada",
   "instances.emptyLead": "Aparella un segon servidor BombVault o l'aplicació d'Android amb les mateixes dotze paraules i apareixerà aquí amb el seu estat de protecció.",
   "instances.requests": "one={n} sol·licitud|other={n} sol·licituds",

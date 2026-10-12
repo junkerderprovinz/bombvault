@@ -1407,7 +1407,6 @@ const fa: Partial<Translations> = {
   "instances.notConnected": "متصل نیست",
   "instances.thisInstance": "این نمونه",
   "instances.open": "باز کردن",
-  "instances.pair": "جفت‌سازی نمونه",
   "instances.emptyTitle": "هنوز هیچ نمونه‌ای متصل نیست",
   "instances.emptyLead": "یک سرور BombVault دیگر یا برنامهٔ Android را با همان دوازده کلمه جفت کن تا با وضعیت محافظتش اینجا نمایش داده شود.",
   "instances.requests": "one={n} درخواست|other={n} درخواست",

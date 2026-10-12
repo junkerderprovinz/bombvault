@@ -1401,7 +1401,6 @@ const sr: Partial<Translations> = {
   "instances.notConnected": "Није повезано",
   "instances.thisInstance": "Ова инстанца",
   "instances.open": "Отвори",
-  "instances.pair": "Упари инстанцу",
   "instances.emptyTitle": "Још ниједна инстанца није повезана",
   "instances.emptyLead": "Упари други BombVault сервер или Android апликацију са истих дванаест речи и појавиће се овде са својим статусом заштите.",
   "instances.requests": "one={n} захтев|few={n} захтева|other={n} захтева",

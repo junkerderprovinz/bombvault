@@ -2448,7 +2448,6 @@ const fr: Partial<Translations> = {
   "instances.notConnected": "Non connectée",
   "instances.thisInstance": "Cette instance",
   "instances.open": "Ouvrir",
-  "instances.pair": "Appairer une instance",
   "instances.emptyTitle": "Aucune instance connectée pour le moment",
   "instances.emptyLead": "Appairez un second serveur BombVault ou l'application Android avec les mêmes douze mots, et il apparaîtra ici avec son état de protection.",
   "instances.requests": "one={n} demande|other={n} demandes",

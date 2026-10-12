@@ -2448,7 +2448,6 @@ const el: Partial<Translations> = {
   "instances.notConnected": "Μη συνδεδεμένο",
   "instances.thisInstance": "Αυτή η εγκατάσταση",
   "instances.open": "Άνοιγμα",
-  "instances.pair": "Σύζευξη εγκατάστασης",
   "instances.emptyTitle": "Δεν έχει συνδεθεί ακόμη καμία εγκατάσταση",
   "instances.emptyLead": "Συζεύξτε έναν δεύτερο διακομιστή BombVault ή την εφαρμογή Android με τις ίδιες δώδεκα λέξεις και θα εμφανιστεί εδώ με την κατάσταση προστασίας του.",
   "instances.requests": "one={n} αίτημα|other={n} αιτήματα",

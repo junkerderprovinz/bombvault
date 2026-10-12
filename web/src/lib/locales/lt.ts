@@ -1407,7 +1407,6 @@ const lt: Partial<Translations> = {
   "instances.notConnected": "Neprijungta",
   "instances.thisInstance": "Šis egzempliorius",
   "instances.open": "Atidaryti",
-  "instances.pair": "Susieti egzempliorių",
   "instances.emptyTitle": "Dar nėra prijungto egzemplioriaus",
   "instances.emptyLead": "Susiek antrą BombVault serverį arba Android programėlę tuo pačiu dvylikos žodžių rinkiniu, ir jis atsiras čia su savo apsaugos būsena.",
   "instances.requests": "one={n} užklausa|few={n} užklausos|many={n} užklausos|other={n} užklausų",

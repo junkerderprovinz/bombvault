@@ -2447,7 +2447,6 @@ const nl: Partial<Translations> = {
   "instances.notConnected": "Niet verbonden",
   "instances.thisInstance": "Deze instantie",
   "instances.open": "Openen",
-  "instances.pair": "Instantie koppelen",
   "instances.emptyTitle": "Nog geen instantie verbonden",
   "instances.emptyLead": "Koppel een tweede BombVault-server of de Android-app met dezelfde twaalf woorden, dan verschijnt die hier met zijn beschermingsstatus.",
   "instances.requests": "one={n} verzoek|other={n} verzoeken",

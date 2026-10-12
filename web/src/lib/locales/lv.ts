@@ -1407,7 +1407,6 @@ const lv: Partial<Translations> = {
   "instances.notConnected": "Nav savienots",
   "instances.thisInstance": "Šī instance",
   "instances.open": "Atvērt",
-  "instances.pair": "Pārot instanci",
   "instances.emptyTitle": "Vēl nav pievienota neviena instance",
   "instances.emptyLead": "Pārojiet otru BombVault serveri vai Android lietotni ar tiem pašiem divpadsmit vārdiem, un tā parādīsies šeit ar savu aizsardzības statusu.",
   "instances.requests": "zero={n} pieprasījumu|one={n} pieprasījums|other={n} pieprasījumi",

@@ -1407,7 +1407,6 @@ const et: Partial<Translations> = {
   "instances.notConnected": "Pole ühendatud",
   "instances.thisInstance": "See eksemplar",
   "instances.open": "Ava",
-  "instances.pair": "Seo eksemplar",
   "instances.emptyTitle": "Ühtegi eksemplari pole veel ühendatud",
   "instances.emptyLead": "Seo teine BombVaulti server või Androidi rakendus samade kaheteistkümne sõnaga ja see ilmub siia oma kaitseolekuga.",
   "instances.requests": "one={n} taotlus|other={n} taotlust",

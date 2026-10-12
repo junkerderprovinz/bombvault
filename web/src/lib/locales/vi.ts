@@ -2439,7 +2439,6 @@ const vi: Partial<Translations> = {
   "instances.notConnected": "Chưa kết nối",
   "instances.thisInstance": "Phiên bản này",
   "instances.open": "Mở",
-  "instances.pair": "Ghép nối phiên bản",
   "instances.emptyTitle": "Chưa có phiên bản nào được kết nối",
   "instances.emptyLead": "Hãy ghép nối máy chủ BombVault thứ hai hoặc ứng dụng Android bằng cùng mười hai từ, và nó sẽ hiện ở đây cùng trạng thái bảo vệ.",
   "instances.requests": "{n} yêu cầu",

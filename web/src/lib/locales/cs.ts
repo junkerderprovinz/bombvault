@@ -2446,7 +2446,6 @@ const cs: Partial<Translations> = {
   "instances.notConnected": "Nepřipojeno",
   "instances.thisInstance": "Tato instance",
   "instances.open": "Otevřít",
-  "instances.pair": "Spárovat instanci",
   "instances.emptyTitle": "Zatím není připojena žádná instance",
   "instances.emptyLead": "Spáruj druhý server BombVault nebo aplikaci pro Android pomocí stejných dvanácti slov a objeví se zde se svým stavem ochrany.",
   "instances.requests": "one={n} žádost|few={n} žádosti|many={n} žádosti|other={n} žádostí",

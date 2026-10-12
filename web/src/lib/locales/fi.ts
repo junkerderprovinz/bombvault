@@ -2448,7 +2448,6 @@ const fi: Partial<Translations> = {
   "instances.notConnected": "Ei yhteyttä",
   "instances.thisInstance": "Tämä instanssi",
   "instances.open": "Avaa",
-  "instances.pair": "Pariuta instanssi",
   "instances.emptyTitle": "Yhtään instanssia ei ole vielä yhdistetty",
   "instances.emptyLead": "Pariuta toinen BombVault-palvelin tai Android-sovellus samoilla kahdellatoista sanalla, niin se ilmestyy tähän suojaustilansa kanssa.",
   "instances.requests": "one={n} pyyntö|other={n} pyyntöä",

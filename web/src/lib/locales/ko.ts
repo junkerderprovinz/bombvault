@@ -2439,7 +2439,6 @@ const ko: Partial<Translations> = {
   "instances.notConnected": "연결 안 됨",
   "instances.thisInstance": "이 인스턴스",
   "instances.open": "열기",
-  "instances.pair": "인스턴스 페어링",
   "instances.emptyTitle": "아직 연결된 인스턴스가 없습니다",
   "instances.emptyLead": "같은 열두 단어로 두 번째 BombVault 서버나 Android 앱을 페어링하면 보호 상태와 함께 여기에 나타납니다.",
   "instances.requests": "요청 {n}개",

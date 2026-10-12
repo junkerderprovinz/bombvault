@@ -1407,7 +1407,6 @@ const is: Partial<Translations> = {
   "instances.notConnected": "Ekki tengt",
   "instances.thisInstance": "Þetta tilvik",
   "instances.open": "Opna",
-  "instances.pair": "Para tilvik",
   "instances.emptyTitle": "Ekkert tilvik er tengt enn",
   "instances.emptyLead": "Paraðu annan BombVault-þjón eða Android-forritið með sömu tólf orðunum, þá birtist það hér með verndarstöðu sinni.",
   "instances.requests": "one={n} beiðni|other={n} beiðnir",

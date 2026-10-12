@@ -2449,7 +2449,6 @@ const ar: Partial<Translations> = {
   "instances.notConnected": "غير متصل",
   "instances.thisInstance": "هذا المثيل",
   "instances.open": "فتح",
-  "instances.pair": "اقتران مثيل",
   "instances.emptyTitle": "لا يوجد مثيل متصل بعد",
   "instances.emptyLead": "عند إقران خادم BombVault ثانٍ أو تطبيق Android بالكلمات الاثنتي عشرة نفسها، يظهر هنا مع حالة حمايته.",
   "instances.requests": "zero=لا طلبات|one=طلب واحد|two=طلبان|few={n} طلبات|many={n} طلبًا|other={n} طلب",

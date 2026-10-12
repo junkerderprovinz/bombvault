@@ -1407,7 +1407,6 @@ const eu: Partial<Translations> = {
   "instances.notConnected": "Konektatu gabe",
   "instances.thisInstance": "Instantzia hau",
   "instances.open": "Ireki",
-  "instances.pair": "Parekatu instantzia bat",
   "instances.emptyTitle": "Oraindik ez dago instantziarik konektatuta",
   "instances.emptyLead": "Parekatu bigarren BombVault zerbitzari bat edo Android aplikazioa hamabi hitz berberekin, eta hemen agertuko da bere babes-egoerarekin.",
   "instances.requests": "one={n} eskaera|other={n} eskaera",

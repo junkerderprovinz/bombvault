@@ -1407,7 +1407,6 @@ const ms: Partial<Translations> = {
   "instances.notConnected": "Tidak bersambung",
   "instances.thisInstance": "Instans ini",
   "instances.open": "Buka",
-  "instances.pair": "Gandingkan instans",
   "instances.emptyTitle": "Belum ada instans yang disambungkan",
   "instances.emptyLead": "Gandingkan pelayan BombVault kedua atau aplikasi Android dengan dua belas perkataan yang sama, dan ia akan muncul di sini bersama status perlindungannya.",
   "instances.requests": "{n} permintaan",

@@ -2449,7 +2449,6 @@ const hu: Partial<Translations> = {
   "instances.notConnected": "Nincs csatlakozva",
   "instances.thisInstance": "Ez a példány",
   "instances.open": "Megnyitás",
-  "instances.pair": "Példány párosítása",
   "instances.emptyTitle": "Még nincs példány csatlakoztatva",
   "instances.emptyLead": "Párosíts egy második BombVault-kiszolgálót vagy az Android-alkalmazást ugyanazzal a tizenkét szóval, és megjelenik itt a védelmi állapotával.",
   "instances.requests": "one={n} kérés|other={n} kérés",

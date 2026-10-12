@@ -2448,7 +2448,6 @@ const no: Partial<Translations> = {
   "instances.notConnected": "Ikke tilkoblet",
   "instances.thisInstance": "Denne instansen",
   "instances.open": "Åpne",
-  "instances.pair": "Par en instans",
   "instances.emptyTitle": "Ingen instans er koblet til ennå",
   "instances.emptyLead": "Par en annen BombVault-server eller Android-appen med de samme tolv ordene, så vises den her med beskyttelsesstatusen sin.",
   "instances.requests": "one={n} forespørsel|other={n} forespørsler",

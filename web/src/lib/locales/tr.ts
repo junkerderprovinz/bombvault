@@ -2448,7 +2448,6 @@ const tr: Partial<Translations> = {
   "instances.notConnected": "Bağlı değil",
   "instances.thisInstance": "Bu örnek",
   "instances.open": "Aç",
-  "instances.pair": "Örnek eşleştir",
   "instances.emptyTitle": "Henüz bağlı örnek yok",
   "instances.emptyLead": "İkinci bir BombVault sunucusunu veya Android uygulamasını aynı on iki kelimeyle eşleştir, koruma durumuyla birlikte burada görünür.",
   "instances.requests": "one={n} istek|other={n} istek",

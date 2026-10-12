@@ -16,18 +16,6 @@ export function LogoImage({ x, y, size }: { x: number; y: number; size: number }
 export const PHONE_PATH =
   "M5 .8h6a1.6 1.6 0 0 1 1.6 1.6v11.2a1.6 1.6 0 0 1-1.6 1.6H5a1.6 1.6 0 0 1-1.6-1.6V2.4A1.6 1.6 0 0 1 5 .8Zm.6 2.2v8.6h4.8V3Zm2.4 9.6a.8.8 0 1 0 0 1.6.8.8 0 0 0 0-1.6Z";
 
-/** PhoneMark stands where the logo would on the card of a phone that runs
- *  the app. */
-export function PhoneMark() {
-  return (
-    <span className="grid h-[88px] w-16 shrink-0 place-items-center rounded-card bg-carbon-surface2 text-accentText">
-      <svg viewBox="0 0 16 16" width="34" height="34" fill="currentColor" aria-hidden="true">
-        <path fillRule="evenodd" d={PHONE_PATH} />
-      </svg>
-    </span>
-  );
-}
-
 /** GlyphMark stands where the logo would for something that is no BombVault:
  *  a glyph on the card's accent. */
 export function GlyphMark({ children }: { children: ReactNode }) {

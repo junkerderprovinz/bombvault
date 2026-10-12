@@ -2449,7 +2449,6 @@ const th: Partial<Translations> = {
   "instances.notConnected": "ไม่ได้เชื่อมต่อ",
   "instances.thisInstance": "อินสแตนซ์นี้",
   "instances.open": "เปิด",
-  "instances.pair": "จับคู่อินสแตนซ์",
   "instances.emptyTitle": "ยังไม่มีอินสแตนซ์ที่เชื่อมต่อ",
   "instances.emptyLead": "จับคู่เซิร์ฟเวอร์ BombVault เครื่องที่สองหรือแอป Android ด้วยคำสิบสองคำชุดเดียวกัน แล้วจะแสดงที่นี่พร้อมสถานะการป้องกัน",
   "instances.requests": "{n} คำขอ",
