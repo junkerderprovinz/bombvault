@@ -9,7 +9,9 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { IconDisclosure } from "../../components/IconDisclosure";
 import { InfoBubble } from "../../components/InfoBubble";
+import { EXACT_CADENCE_MODES } from "../../components/CadenceBuilder";
 import { NumberField } from "../../components/NumberField";
+import { PlanButton } from "../../components/PlanButton";
 import { Toggle } from "../../components/Toggle";
 import {
   checkReceivedRepo,
@@ -29,6 +31,8 @@ import { useIsDesktop } from "../../lib/useMediaQuery";
 import { ToggleRow } from "../settings/shared";
 import { InstanceWindow } from "./InstanceWindow";
 import { MemberField } from "./MemberField";
+
+const DEFAULT_CHECK_CADENCE = "daily 04:00";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -369,7 +373,8 @@ export function ReceiverDialog({
   const [repo, setRepo] = useState(initial?.repo ?? "");
   const [memberId, setMemberId] = useState(initial ? "" : member);
   const [deadManHours, setDeadManHours] = useState(initial?.deadManHours ?? 26);
-  const [checkCadence, setCheckCadence] = useState(initial?.checkCadence ?? "");
+  // The server reads a blank cadence as this one, and the picker reads blank as off.
+  const [checkCadence, setCheckCadence] = useState(initial?.checkCadence || DEFAULT_CHECK_CADENCE);
   const [readDataPercent, setReadDataPercent] = useState(initial?.readDataPercent ?? 0);
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
@@ -523,21 +528,12 @@ export function ReceiverDialog({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+      <div className="flex flex-col items-start gap-1.5">
+        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
           {t("receiver.checkCadence")}
-          <InfoBubble tip={t("receiver.checkCadenceHint")} />
-        </label>
-        <input
-          type="text"
-          value={checkCadence}
-          onChange={(e) => setCheckCadence(e.target.value)}
-          spellCheck={false}
-          autoComplete="off"
-          placeholder={t("receiver.checkCadencePlaceholder")}
-          dir="ltr"
-          className={`${inputCls} font-mono text-start`}
-        />
+          <InfoBubble tip={t("receiver.checkCadenceTip")} />
+        </span>
+        <PlanButton label={t("receiver.checkCadence")} value={checkCadence} onChange={setCheckCadence} modes={EXACT_CADENCE_MODES} />
       </div>
 
       {/* ToggleRow puts the label at the start and the switch at the end,

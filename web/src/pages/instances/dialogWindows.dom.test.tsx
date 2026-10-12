@@ -3,7 +3,7 @@
 // app's window: on a wide screen the buttons stay put while the form scrolls,
 // and on a phone the form is a sheet from the bottom edge.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { I18nProvider, en, useT } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
@@ -160,5 +160,25 @@ describe("the explanations in the forms", () => {
     expect(screen.queryByText(en["files.pathHint"])).toBeNull();
     expect(screen.queryByText(en["files.pathChangeHint"])).toBeNull();
     expect(screen.getByLabelText(`${en["files.pathHint"]} ${en["files.pathChangeHint"]}`)).toBeTruthy();
+  });
+});
+
+describe("the schedules in the forms", () => {
+  it.each([
+    ["the received repository", FORMS[0][1], en["receiver.checkCadence"]],
+    ["the pull source", FORMS[1][1], en["pull.cadence"]],
+  ])("are picked from a sentence in the form for %s", async (_, form, label) => {
+    wide = true;
+    await open(form);
+    const plan = screen.getByRole("button", { name: new RegExp(`^${label}:`) });
+    expect(plan.textContent).toContain("4:00");
+    await act(async () => {
+      fireEvent.click(plan);
+    });
+    const editor = screen.getByRole("dialog", { name: label });
+    await act(async () => {
+      fireEvent.click(within(editor).getByRole("tab", { name: en["cadence.off"] }));
+    });
+    expect(screen.getByRole("button", { name: new RegExp(`^${label}:`) }).textContent).toContain(en["cadence.off"]);
   });
 });

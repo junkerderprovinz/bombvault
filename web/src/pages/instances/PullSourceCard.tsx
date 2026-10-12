@@ -7,7 +7,9 @@ import { useState, type CSSProperties } from "react";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
+import { EXACT_CADENCE_MODES } from "../../components/CadenceBuilder";
 import { NumberField } from "../../components/NumberField";
+import { PlanButton } from "../../components/PlanButton";
 import { SelectField } from "../../components/SelectField";
 import { TestButton, VerdictLine } from "../../components/TestButton";
 import {
@@ -27,6 +29,8 @@ import { useTestVerdict } from "../../lib/useTestVerdict";
 import { ToggleRow } from "../settings/shared";
 import { InstanceWindow } from "./InstanceWindow";
 import { MemberField } from "./MemberField";
+
+const DEFAULT_PULL_CADENCE = "daily 04:00";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -211,7 +215,8 @@ export function PullDialog({
   const [repo, setRepo] = useState(initial?.repo ?? "");
   const [memberId, setMemberId] = useState(initial ? "" : member);
   const [domain, setDomain] = useState<PullDomain>((initial?.domain as PullDomain) ?? "containers");
-  const [cadence, setCadence] = useState(initial?.cadence ?? "");
+  // The server reads a blank cadence as this one, and the picker reads blank as off.
+  const [cadence, setCadence] = useState(initial?.cadence || DEFAULT_PULL_CADENCE);
   // The login for the storage the source repository lies on; the restic
   // password only opens the repository itself. pull.go withholds this box's
   // own credentials, so an s3:, b2: or authenticated rest: source needs a set
@@ -358,20 +363,12 @@ export function PullDialog({
         />
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col items-start gap-1.5">
         <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
           {t("pull.cadence")}
-          <InfoBubble tip={t("pull.cadenceHint")} />
+          <InfoBubble tip={t("pull.cadenceTip")} />
         </span>
-        <input
-          type="text"
-          value={cadence}
-          onChange={(e) => setCadence(e.target.value)}
-          spellCheck={false}
-          autoComplete="off"
-          placeholder="daily 04:00"
-          className={inputCls}
-        />
+        <PlanButton label={t("pull.cadence")} value={cadence} onChange={setCadence} modes={EXACT_CADENCE_MODES} />
       </div>
 
       <div className="flex flex-col gap-1.5 max-w-48">
