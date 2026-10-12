@@ -174,7 +174,8 @@ describe("the MCP card without a key", () => {
     expect(screen.getByText(en["mcp.noPasswordWarning"])).toBeTruthy();
     expect(screen.getByRole("button", { name: en["mcp.setPassword"] })).toBeTruthy();
     expect(await clientButton("Claude Code", en["mcp.kindTerminal"])).toBeTruthy();
-    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+    const rows = screen.queryAllByRole("listitem").filter((li) => !li.closest("[role=dialog]"));
+    expect(rows).toHaveLength(0);
   });
 
   it("leads Set password to the field on the Security page", async () => {

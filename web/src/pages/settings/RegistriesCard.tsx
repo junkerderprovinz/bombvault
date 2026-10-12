@@ -2,8 +2,9 @@
 // window: pick its kind from the tiles, then fill in what is missing.
 import { useState, type CSSProperties } from "react";
 import { Button } from "../../components/Button";
-import { IconBack, IconSave, IconSearch } from "../../components/glyphs";
-import { IconAdd, IconDatabase, IconPencil, IconTrash } from "../../components/navGlyphs";
+import { IconBack, IconSave } from "../../components/glyphs";
+import { IconAdd, IconClose, IconDatabase, IconPencil, IconTrash } from "../../components/navGlyphs";
+import { PickerGroup } from "../../components/Picker";
 import { ReadmeButton } from "../../components/ReadmeButton";
 import { RevealInput } from "../../components/RevealInput";
 import { Rows, SettingRow } from "../../components/storage/rows";
@@ -69,27 +70,14 @@ function Picker({ onPick, onClose }: { onPick: (kind: string) => void; onClose: 
     <InstanceWindow
       title={t("settings.registryAdd")}
       hint={t("settings.registriesHint")}
+      picker
+      search={{ value: query, onChange: setQuery, label: t("tile.registry.search") }}
       onClose={onClose}
-      footer={<Button label={t("common.cancel")} labelKey="common.cancel" onClick={onClose} />}
+      footer={<Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconClose />} onClick={onClose} />}
     >
-      <label className="flex h-(--btn-h) items-center gap-2 rounded-control bg-carbon-surface2 px-3 glim-field-focus-within">
-        <span className="shrink-0 text-carbon-textMuted [&_svg]:h-4 [&_svg]:w-4">
-          <IconSearch />
-        </span>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label={t("tile.registry.search")}
-          placeholder={t("tile.registry.search")}
-          spellCheck={false}
-          className="h-full min-w-0 flex-1 bg-transparent text-sm text-carbon-text outline-none placeholder:text-carbon-textMuted [&::-webkit-search-cancel-button]:hidden"
-        />
-      </label>
       {groups.length === 0 && <p className="text-sm text-carbon-textMuted">{t("tile.registry.noMatch")}</p>}
       {groups.map((g) => (
-        <section key={g.id} className="flex flex-col gap-2">
-          <h4 className="text-sm font-semibold text-carbon-text">{t(g.title)}</h4>
+        <PickerGroup key={g.id} title={t(g.title)}>
           <ul className="glim-provider-pick glim-registry-pick">
             {g.kinds.map((k) => (
               <li
@@ -115,7 +103,7 @@ function Picker({ onPick, onClose }: { onPick: (kind: string) => void; onClose: 
               </li>
             )}
           </ul>
-        </section>
+        </PickerGroup>
       ))}
     </InstanceWindow>
   );
@@ -166,6 +154,7 @@ function Form({
     <InstanceWindow
       title={t(entry ? "tile.registry.editTitle" : "tile.registry.addTitle").replace("{name}", () => name)}
       facts={kind?.host ?? t("tile.registry.withOwnAddress")}
+      picker
       onClose={onClose}
       footer={
         <>
