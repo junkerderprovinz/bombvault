@@ -3451,7 +3451,7 @@ const id: Partial<Translations> = {
   "launcher.cameraAllow": "Izinkan akses",
   "launcher.scanHint": "Pindai kode QR di samping frasa",
   "launcher.groupFound": "Di relai ini",
-  "launcher.noInstances": "Tidak ada instans di grup ini yang online sekarang. Periksa frasanya, dan pastikan setidaknya satu instans berjalan.",
+  "launcher.noInstances": "Belum ada instans dari grup ini yang muncul di relay. Periksa frasanya, dan pastikan setidaknya satu instans berjalan. Aplikasi tidak dapat dipasangkan dengan instans yang diatur ke “Tanpa relay”: pilih relay pada instans itu di Pengaturan > Pemasangan.",
   "launcher.adoptOne": "Tambahkan instans ini",
   "launcher.adoptAll": "Tambahkan semua ({count})",
   "launcher.device": "Perangkat ini",
@@ -4507,6 +4507,7 @@ const id: Partial<Translations> = {
   "whatsNew.entryActions": "Aksi sebuah entri adalah tombol di samping namanya.",
   "fleet.kindAndroid": "Aplikasi Android",
   "pairing.qrCaption": "Pindai kode ini dengan aplikasi BombVault untuk memasangkan ponsel.",
+  "pairing.phoneNeedsRelay": "Aplikasi BombVault hanya dapat dipasangkan melalui relay. Selama instans ini tidak memakai relay, tidak ada ponsel yang dapat bergabung ke grup. Di jaringan yang sama, aplikasi tetap dapat membuka instans ini melalui alamatnya.",
 };
 
 export default id;

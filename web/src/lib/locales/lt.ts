@@ -3451,7 +3451,7 @@ const lt: Partial<Translations> = {
   "launcher.cameraAllow": "Leisti prieigą",
   "launcher.scanHint": "Nuskaityk QR kodą šalia frazės",
   "launcher.groupFound": "Šioje relėje",
-  "launcher.noInstances": "Šiuo metu nė vienas šios grupės egzempliorius neprisijungęs. Patikrink frazę ir ar bent vienas egzempliorius veikia.",
+  "launcher.noInstances": "Relay dar nepasirodė nė vienas šios grupės egzempliorius. Patikrink frazę ir ar bent vienas egzempliorius veikia. Egzemplioriaus, nustatyto kaip „Be relay“, programa susieti negali: pasirink tame egzemplioriuje relay skiltyje Nustatymai > Susiejimas.",
   "launcher.adoptOne": "Pridėti šį egzempliorių",
   "launcher.adoptAll": "Pridėti visus {count}",
   "launcher.device": "Šis įrenginys",
@@ -4507,6 +4507,7 @@ const lt: Partial<Translations> = {
   "whatsNew.entryActions": "Įrašo veiksmai yra mygtukai šalia jo pavadinimo.",
   "fleet.kindAndroid": "Android programa",
   "pairing.qrCaption": "Nuskaityk šį kodą BombVault programa, kad susietum telefoną.",
+  "pairing.phoneNeedsRelay": "BombVault programa susiejama tik per relay. Kol šis egzempliorius jo nenaudoja, joks telefonas negali prisijungti prie grupės. Tame pačiame tinkle programa vis tiek gali atidaryti šį egzempliorių pagal jo adresą.",
 };
 
 export default lt;

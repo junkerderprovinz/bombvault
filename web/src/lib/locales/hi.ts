@@ -3451,7 +3451,7 @@ const hi: Partial<Translations> = {
   "launcher.cameraAllow": "एक्सेस की अनुमति दें",
   "launcher.scanHint": "वाक्यांश के बगल में दिख रहा QR कोड स्कैन करें",
   "launcher.groupFound": "इस रिले पर",
-  "launcher.noInstances": "इस समूह का कोई इंस्टेंस अभी ऑनलाइन नहीं है। वाक्यांश जाँचें, और कि कम से कम एक इंस्टेंस चल रहा हो।",
+  "launcher.noInstances": "रिले पर इस समूह का कोई इंस्टेंस अभी तक नहीं दिखा है। वाक्यांश जाँचें, और कि कम से कम एक इंस्टेंस चल रहा हो। ऐप “कोई रिले नहीं” पर सेट किए गए इंस्टेंस से पेयर नहीं हो सकता: उस इंस्टेंस पर सेटिंग्स > पेयरिंग में कोई रिले चुनें।",
   "launcher.adoptOne": "यह इंस्टेंस जोड़ें",
   "launcher.adoptAll": "सभी {count} जोड़ें",
   "launcher.device": "यह डिवाइस",
@@ -4507,6 +4507,7 @@ const hi: Partial<Translations> = {
   "whatsNew.entryActions": "किसी प्रविष्टि की क्रियाएँ उसके नाम के पास बटन के रूप में हैं।",
   "fleet.kindAndroid": "Android ऐप",
   "pairing.qrCaption": "फ़ोन पेयर करने के लिए इस कोड को BombVault ऐप से स्कैन करें।",
+  "pairing.phoneNeedsRelay": "BombVault ऐप केवल रिले के ज़रिए पेयर होता है। जब तक यह इंस्टेंस कोई रिले इस्तेमाल नहीं करता, कोई फ़ोन समूह से नहीं जुड़ सकता। एक ही नेटवर्क में ऐप फिर भी इस इंस्टेंस को उसके पते से खोल सकता है।",
 };
 
 export default hi;

@@ -3441,7 +3441,7 @@ const sv: Partial<Translations> = {
   "launcher.cameraAllow": "Tillåt åtkomst",
   "launcher.scanHint": "Skanna QR-koden bredvid frasen",
   "launcher.groupFound": "På det här relät",
-  "launcher.noInstances": "Ingen instans i den här gruppen är online just nu. Kontrollera frasen och att minst en instans körs.",
+  "launcher.noInstances": "Ingen instans i den här gruppen har ännu dykt upp på reläet. Kontrollera frasen och att minst en instans körs. Appen kan inte parkopplas med en instans som är inställd på ”Inget relä”: välj ett relä på den instansen under Inställningar > Parkoppling.",
   "launcher.adoptOne": "Lägg till den här instansen",
   "launcher.adoptAll": "Lägg till alla {count}",
   "launcher.device": "Den här enheten",
@@ -4497,6 +4497,7 @@ const sv: Partial<Translations> = {
   "whatsNew.entryActions": "En posts åtgärder är knappar bredvid dess namn.",
   "fleet.kindAndroid": "Android-app",
   "pairing.qrCaption": "Skanna den här koden med BombVault-appen för att parkoppla en telefon.",
+  "pairing.phoneNeedsRelay": "BombVault-appen parkopplas bara via ett relä. Så länge den här instansen inte använder något kan ingen telefon ansluta till gruppen. I samma nätverk kan appen ändå öppna den här instansen via dess adress.",
 };
 
 export default sv;

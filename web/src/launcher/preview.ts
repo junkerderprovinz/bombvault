@@ -87,8 +87,8 @@ export function previewBridge(): Bridge {
           emit({ pairError: { reason: "count", count } });
           return;
         }
-        emit({ group: { paired: false, connected: true, joining: { members: [] } } });
-        setTimeout(() => emit({ group: { paired: false, connected: true, joining: { members: MEMBERS } } }), 900);
+        emit({ group: { paired: false, connected: true, joining: { members: [], connected: true } } });
+        setTimeout(() => emit({ group: { paired: false, connected: true, joining: { members: MEMBERS, connected: true } } }), 900);
         return;
       }
       case "adopt": {

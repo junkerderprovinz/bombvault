@@ -3441,7 +3441,7 @@ const fr: Partial<Translations> = {
   "launcher.cameraAllow": "Autoriser l’accès",
   "launcher.scanHint": "Scannez le QR code affiché à côté de la phrase",
   "launcher.groupFound": "Sur ce relais",
-  "launcher.noInstances": "Aucune instance de ce groupe n’est en ligne pour le moment. Vérifiez la phrase et qu’au moins une instance fonctionne.",
+  "launcher.noInstances": "Aucune instance de ce groupe ne s’est encore manifestée sur le relais. Vérifiez la phrase et qu’au moins une instance fonctionne. L’app ne peut pas s’appairer avec une instance réglée sur « Aucun relais » : choisissez un relais sur cette instance dans Paramètres > Appairage.",
   "launcher.adoptOne": "Ajouter cette instance",
   "launcher.adoptAll": "Ajouter les {count}",
   "launcher.device": "Cet appareil",
@@ -4497,6 +4497,7 @@ const fr: Partial<Translations> = {
   "whatsNew.entryActions": "Les actions d'un élément sont des boutons à côté de son nom.",
   "fleet.kindAndroid": "App Android",
   "pairing.qrCaption": "Scannez ce code avec l'app BombVault pour appairer un téléphone.",
+  "pairing.phoneNeedsRelay": "L'app BombVault ne s'appaire que via un relais. Tant que cette instance n'en utilise aucun, aucun téléphone ne peut rejoindre le groupe. Sur le même réseau, l'app peut malgré tout ouvrir cette instance par son adresse.",
 };
 
 export default fr;

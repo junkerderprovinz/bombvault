@@ -3451,7 +3451,7 @@ const ms: Partial<Translations> = {
   "launcher.cameraAllow": "Benarkan akses",
   "launcher.scanHint": "Imbas kod QR di sebelah frasa",
   "launcher.groupFound": "Pada geganti ini",
-  "launcher.noInstances": "Tiada tika dalam kumpulan ini dalam talian sekarang. Semak frasa itu, dan pastikan sekurang-kurangnya satu tika sedang berjalan.",
+  "launcher.noInstances": "Belum ada tika daripada kumpulan ini yang muncul pada relay. Semak frasa itu, dan pastikan sekurang-kurangnya satu tika sedang berjalan. Aplikasi tidak boleh bergandingan dengan tika yang ditetapkan kepada “Tiada relay”: pilih relay pada tika itu di Tetapan > Gandingan.",
   "launcher.adoptOne": "Tambah tika ini",
   "launcher.adoptAll": "Tambah kesemua {count}",
   "launcher.device": "Peranti ini",
@@ -4507,6 +4507,7 @@ const ms: Partial<Translations> = {
   "whatsNew.entryActions": "Tindakan sesuatu entri ialah butang di sebelah namanya.",
   "fleet.kindAndroid": "Aplikasi Android",
   "pairing.qrCaption": "Imbas kod ini dengan aplikasi BombVault untuk menggandingkan telefon.",
+  "pairing.phoneNeedsRelay": "Aplikasi BombVault hanya bergandingan melalui relay. Selagi tika ini tidak menggunakan relay, tiada telefon yang boleh menyertai kumpulan. Dalam rangkaian yang sama, aplikasi masih boleh membuka tika ini melalui alamatnya.",
 };
 
 export default ms;

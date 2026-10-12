@@ -97,7 +97,7 @@ describe("Launcher", () => {
       { id: "a", name: "Tower", version: "v9.7.0" },
       { id: "b", name: "Offsite", version: "v9.7.0" },
     ];
-    const { bridge, sent } = fakeBridge({ servers: [], found: [], group: { paired: false, connected: true, joining: { members } }, camera: false, app });
+    const { bridge, sent } = fakeBridge({ servers: [], found: [], group: { paired: false, connected: true, joining: { members, connected: true } }, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
     expect(await screen.findByText("Offsite")).toBeTruthy();
@@ -107,7 +107,7 @@ describe("Launcher", () => {
 
   it("shows only what the words found and the step that takes it over", async () => {
     const members = [{ id: "a", name: "Tower", version: "v9.7.0" }];
-    const { bridge, sent } = fakeBridge({ servers: [], found: [], group: { paired: false, connected: true, joining: { members } }, camera: false, app });
+    const { bridge, sent } = fakeBridge({ servers: [], found: [], group: { paired: false, connected: true, joining: { members, connected: true } }, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
     expect(await screen.findByRole("button", { name: /Add this instance/ })).toBeTruthy();
@@ -223,6 +223,37 @@ describe("Launcher", () => {
     expect(await screen.findByRole("tab", { name: "192.168.1.11:3443" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: new URL(server.url).host })).toBeTruthy();
   });
+  it("keeps looking for a while before it says nothing turned up", async () => {
+    let push: (s: LauncherState) => void = () => undefined;
+    const start: LauncherState = { servers: [], found: [], group: alone, camera: false, app };
+    const bridge: Bridge = {
+      ...fakeBridge(start).bridge,
+      listen(onState) {
+        push = onState;
+        queueMicrotask(() => onState(start));
+        return () => undefined;
+      },
+    };
+    render(<Launcher bridge={bridge} />);
+    fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
+    const words = "legal winner thank year wave sausage worth useful legal winner thank yellow";
+    fireEvent.change(await screen.findByPlaceholderText(/Paste or type the words/), { target: { value: words } });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: /^Pair$/ })));
+    act(() => push({ ...start, group: { ...alone, joining: { members: [], connected: false } } }));
+    expect(await screen.findByText("Looking for other instances")).toBeTruthy();
+    expect(screen.queryByText(/No instance of this group/)).toBeNull();
+    expect(screen.queryByText("Relay not reachable")).toBeNull();
+  });
+
+  it("names the relay when the group it was given shows nobody", async () => {
+    const group = { paired: false, connected: false, joining: { members: [], connected: false } };
+    const { bridge } = fakeBridge({ servers: [], found: [], group, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
+    expect(await screen.findByText(/set to No relay/)).toBeTruthy();
+    expect(screen.getByText("Relay not reachable")).toBeTruthy();
+  });
+
   it("opens on the page the history holds, as after Android rebuilt the screen", async () => {
     window.history.replaceState({ view: "settings" }, "");
     const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });

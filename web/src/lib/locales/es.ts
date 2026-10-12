@@ -3439,7 +3439,7 @@ const es: Partial<Translations> = {
   "launcher.cameraAllow": "Permitir acceso",
   "launcher.scanHint": "Escanea el código QR que aparece junto a la frase",
   "launcher.groupFound": "En este relé",
-  "launcher.noInstances": "Ahora mismo no hay ninguna instancia de este grupo en línea. Comprueba la frase y que al menos una instancia esté funcionando.",
+  "launcher.noInstances": "Todavía no ha aparecido en el repetidor ninguna instancia de este grupo. Comprueba la frase y que al menos una instancia esté funcionando. La app no puede emparejarse con una instancia configurada en «Sin repetidor»: elige un repetidor en esa instancia en Ajustes > Emparejamiento.",
   "launcher.adoptOne": "Añadir esta instancia",
   "launcher.adoptAll": "Añadir las {count}",
   "launcher.device": "Este dispositivo",
@@ -4495,6 +4495,7 @@ const es: Partial<Translations> = {
   "whatsNew.entryActions": "Las acciones de un elemento son botones junto a su nombre.",
   "fleet.kindAndroid": "App de Android",
   "pairing.qrCaption": "Escanea este código con la app de BombVault para emparejar un teléfono.",
+  "pairing.phoneNeedsRelay": "La app de BombVault solo se empareja mediante un repetidor. Mientras esta instancia no use ninguno, ningún teléfono puede unirse al grupo. En la misma red, la app sí puede abrir esta instancia por su dirección.",
 };
 
 export default es;

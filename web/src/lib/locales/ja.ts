@@ -3432,7 +3432,7 @@ const ja: Partial<Translations> = {
   "launcher.cameraAllow": "アクセスを許可",
   "launcher.scanHint": "フレーズの横に表示された QR コードをスキャンしてください",
   "launcher.groupFound": "このリレー上のインスタンス",
-  "launcher.noInstances": "このグループのインスタンスは現在どれもオンラインではありません。フレーズと、少なくとも1台が動いているかを確認してください。",
+  "launcher.noInstances": "このグループのインスタンスは、まだリレーに現れていません。フレーズと、少なくとも1台のインスタンスが動いているかを確認してください。アプリは「リレーなし」に設定されたインスタンスとはペアリングできません。そのインスタンスで、設定 > ペアリングからリレーを選んでください。",
   "launcher.adoptOne": "このインスタンスを追加",
   "launcher.adoptAll": "{count} 件すべて追加",
   "launcher.device": "この端末",
@@ -4488,6 +4488,7 @@ const ja: Partial<Translations> = {
   "whatsNew.entryActions": "項目の操作は、名前の横のボタンにあります。",
   "fleet.kindAndroid": "Android アプリ",
   "pairing.qrCaption": "このコードを BombVault アプリで読み取って、端末をペアリングしてください。",
+  "pairing.phoneNeedsRelay": "BombVault アプリは、リレー経由でのみペアリングできます。このインスタンスがリレーを使っていない間は、どの端末もグループに参加できません。同じネットワーク内であれば、アプリはこのインスタンスをアドレスで開けます。",
 };
 
 export default ja;

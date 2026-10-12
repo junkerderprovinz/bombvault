@@ -3441,7 +3441,7 @@ const tr: Partial<Translations> = {
   "launcher.cameraAllow": "Erişime izin ver",
   "launcher.scanHint": "Cümlenin yanındaki QR kodu tara",
   "launcher.groupFound": "Bu rölede",
-  "launcher.noInstances": "Şu anda bu gruptan hiçbir örnek çevrimiçi değil. İfadeyi ve en az bir örneğin çalıştığını kontrol et.",
+  "launcher.noInstances": "Bu grubun hiçbir örneği henüz rölede görünmedi. İfadeyi ve en az bir örneğin çalıştığını kontrol et. Uygulama “Röle yok” olarak ayarlanmış bir örnekle eşleşemez: o örnekte Ayarlar > Eşleştirme bölümünden bir röle seç.",
   "launcher.adoptOne": "Bu örneği ekle",
   "launcher.adoptAll": "{count} tanesini de ekle",
   "launcher.device": "Bu cihaz",
@@ -4497,6 +4497,7 @@ const tr: Partial<Translations> = {
   "whatsNew.entryActions": "Bir ögenin eylemleri, adının yanındaki düğmelerdir.",
   "fleet.kindAndroid": "Android uygulaması",
   "pairing.qrCaption": "Bir telefonu eşleştirmek için bu kodu BombVault uygulamasıyla tara.",
+  "pairing.phoneNeedsRelay": "BombVault uygulaması yalnızca bir röle üzerinden eşleşir. Bu örnek röle kullanmadığı sürece hiçbir telefon gruba katılamaz. Aynı ağda uygulama bu örneği yine de adresiyle açabilir.",
 };
 
 export default tr;

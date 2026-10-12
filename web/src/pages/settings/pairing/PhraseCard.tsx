@@ -512,7 +512,11 @@ export function PhraseCard({
               // no other way to learn its address.
               qr={group.relay.mode === "own" ? `${phrase}\n${group.relay.url}` : phrase}
             />
-            <p className="text-end text-xs text-carbon-textMuted">{t("pairing.qrCaption")}</p>
+            {noRelay ? (
+              <p className="rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">{t("pairing.phoneNeedsRelay")}</p>
+            ) : (
+              <p className="text-center text-xs text-carbon-textMuted sm:text-end">{t("pairing.qrCaption")}</p>
+            )}
           </div>
         ) : (
           passwordPrompt

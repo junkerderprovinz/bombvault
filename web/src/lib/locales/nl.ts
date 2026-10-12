@@ -3440,7 +3440,7 @@ const nl: Partial<Translations> = {
   "launcher.cameraAllow": "Toegang toestaan",
   "launcher.scanHint": "Scan de QR-code naast de zin",
   "launcher.groupFound": "Op deze relay",
-  "launcher.noInstances": "Er is nu geen instantie uit deze groep online. Controleer de zin en of er minstens één instantie draait.",
+  "launcher.noInstances": "Er heeft zich nog geen instantie van deze groep gemeld op de relay. Controleer de zin en of er minstens één instantie draait. De app kan niet koppelen met een instantie die op “Geen relay” staat: kies op die instantie een relay onder Instellingen > Koppeling.",
   "launcher.adoptOne": "Deze instantie toevoegen",
   "launcher.adoptAll": "Alle {count} toevoegen",
   "launcher.device": "Dit apparaat",
@@ -4496,6 +4496,7 @@ const nl: Partial<Translations> = {
   "whatsNew.entryActions": "De acties van een item staan als knoppen naast zijn naam.",
   "fleet.kindAndroid": "Android-app",
   "pairing.qrCaption": "Scan deze code met de BombVault-app om een telefoon te koppelen.",
+  "pairing.phoneNeedsRelay": "De BombVault-app koppelt alleen via een relay. Zolang deze instantie er geen gebruikt, kan geen enkele telefoon zich bij de groep aansluiten. In hetzelfde netwerk kan de app deze instantie toch via het adres openen.",
 };
 
 export default nl;

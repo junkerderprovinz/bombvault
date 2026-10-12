@@ -3451,7 +3451,7 @@ const is: Partial<Translations> = {
   "launcher.cameraAllow": "Leyfa aðgang",
   "launcher.scanHint": "Skannaðu QR-kóðann við hliðina á frasanum",
   "launcher.groupFound": "Á þessum endurvarpa",
-  "launcher.noInstances": "Ekkert tilvik í þessum hópi er tengt núna. Athugaðu setninguna og hvort að minnsta kosti eitt tilvik sé í gangi.",
+  "launcher.noInstances": "Ekkert tilvik í þessum hópi hefur enn sést á relayinu. Athugaðu setninguna og hvort að minnsta kosti eitt tilvik sé í gangi. Appið getur ekki parast við tilvik sem er stillt á „Ekkert relay“: veldu relay á því tilviki undir Stillingar > Pörun.",
   "launcher.adoptOne": "Bæta þessu tilviki við",
   "launcher.adoptAll": "Bæta öllum {count} við",
   "launcher.device": "Þetta tæki",
@@ -4507,6 +4507,7 @@ const is: Partial<Translations> = {
   "whatsNew.entryActions": "Aðgerðir færslu eru hnappar við hlið nafns hennar.",
   "fleet.kindAndroid": "Android app",
   "pairing.qrCaption": "Skannaðu þennan kóða með BombVault appinu til að para síma.",
+  "pairing.phoneNeedsRelay": "BombVault appið parast aðeins í gegnum relay. Á meðan þetta tilvik notar ekkert, getur enginn sími bæst í hópinn. Á sama neti getur appið samt opnað þetta tilvik með vistfangi þess.",
 };
 
 export default is;

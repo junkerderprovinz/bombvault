@@ -3451,7 +3451,7 @@ const sk: Partial<Translations> = {
   "launcher.cameraAllow": "Povoliť prístup",
   "launcher.scanHint": "Naskenuj QR kód zobrazený vedľa frázy",
   "launcher.groupFound": "Na tomto relé",
-  "launcher.noInstances": "Žiadna inštancia tejto skupiny teraz nie je online. Skontroluj frázu a či beží aspoň jedna inštancia.",
+  "launcher.noInstances": "Žiadna inštancia tejto skupiny sa zatiaľ nehlásila cez relay. Skontroluj frázu a či beží aspoň jedna inštancia. Aplikácia sa nedokáže spárovať s inštanciou nastavenou na „Žiadny relay“: vyber na nej relay v Nastavenia > Párovanie.",
   "launcher.adoptOne": "Pridať túto inštanciu",
   "launcher.adoptAll": "Pridať všetkých {count}",
   "launcher.device": "Toto zariadenie",
@@ -4507,6 +4507,7 @@ const sk: Partial<Translations> = {
   "whatsNew.entryActions": "Akcie položky sú tlačidlá vedľa jej názvu.",
   "fleet.kindAndroid": "Aplikácia pre Android",
   "pairing.qrCaption": "Naskenuj tento kód aplikáciou BombVault a spáruj telefón.",
+  "pairing.phoneNeedsRelay": "Aplikácia BombVault sa páruje len cez relay. Kým táto inštancia žiadny nepoužíva, žiadny telefón sa nemôže pripojiť k skupine. V rovnakej sieti môže aplikácia túto inštanciu aj tak otvoriť podľa jej adresy.",
 };
 
 export default sk;

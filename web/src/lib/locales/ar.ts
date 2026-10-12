@@ -3442,7 +3442,7 @@ const ar: Partial<Translations> = {
   "launcher.cameraAllow": "السماح بالوصول",
   "launcher.scanHint": "مسح رمز QR الظاهر بجانب العبارة",
   "launcher.groupFound": "على هذا المُرحّل",
-  "launcher.noInstances": "لا توجد أي نسخة من هذه المجموعة متصلة الآن. يجب التحقق من العبارة ومن تشغيل نسخة واحدة على الأقل.",
+  "launcher.noInstances": "لم تظهر بعد أي نسخة من هذه المجموعة على المُرحِّل. يجب التحقق من العبارة ومن تشغيل نسخة واحدة على الأقل. لا يمكن للتطبيق الاقتران بنسخة مضبوطة على “بلا مُرحِّل”: يلزم اختيار مُرحِّل على تلك النسخة ضمن الإعدادات > الاقتران.",
   "launcher.adoptOne": "إضافة هذه النسخة",
   "launcher.adoptAll": "إضافة الكل ({count})",
   "launcher.device": "هذا الجهاز",
@@ -4498,6 +4498,7 @@ const ar: Partial<Translations> = {
   "whatsNew.entryActions": "إجراءات العنصر أزرار بجانب اسمه.",
   "fleet.kindAndroid": "تطبيق Android",
   "pairing.qrCaption": "يُمسح هذا الرمز بتطبيق BombVault لإقران هاتف.",
+  "pairing.phoneNeedsRelay": "يقترن تطبيق BombVault عبر مُرحِّل فقط. ما دامت هذه النسخة لا تستخدم مُرحِّلًا، لا يمكن لأي هاتف الانضمام إلى المجموعة. وفي الشبكة نفسها يمكن للتطبيق مع ذلك فتح هذه النسخة عبر عنوانها.",
 };
 
 export default ar;

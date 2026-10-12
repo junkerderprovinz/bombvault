@@ -3442,7 +3442,7 @@ const ro: Partial<Translations> = {
   "launcher.cameraAllow": "Permite accesul",
   "launcher.scanHint": "Scanează codul QR afișat lângă frază",
   "launcher.groupFound": "Pe acest releu",
-  "launcher.noInstances": "Nicio instanță din acest grup nu este online acum. Verifică fraza și dacă rulează cel puțin o instanță.",
+  "launcher.noInstances": "Nicio instanță din acest grup nu s-a anunțat încă pe relay. Verifică fraza și dacă rulează cel puțin o instanță. Aplicația nu se poate împerechea cu o instanță setată pe „Fără relay”: alege un relay pe acea instanță în Setări > Împerechere.",
   "launcher.adoptOne": "Adaugă această instanță",
   "launcher.adoptAll": "Adaugă toate cele {count}",
   "launcher.device": "Acest dispozitiv",
@@ -4498,6 +4498,7 @@ const ro: Partial<Translations> = {
   "whatsNew.entryActions": "Acțiunile unui element sunt butoane lângă numele lui.",
   "fleet.kindAndroid": "Aplicație Android",
   "pairing.qrCaption": "Scanează acest cod cu aplicația BombVault pentru a împerechea un telefon.",
+  "pairing.phoneNeedsRelay": "Aplicația BombVault se împerechează doar printr-un relay. Cât timp această instanță nu folosește unul, niciun telefon nu se poate alătura grupului. În aceeași rețea, aplicația poate totuși deschide această instanță după adresa ei.",
 };
 
 export default ro;

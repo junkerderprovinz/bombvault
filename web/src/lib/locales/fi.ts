@@ -3441,7 +3441,7 @@ const fi: Partial<Translations> = {
   "launcher.cameraAllow": "Salli käyttöoikeus",
   "launcher.scanHint": "Skannaa lauseen vieressä näkyvä QR-koodi",
   "launcher.groupFound": "Tässä releessä",
-  "launcher.noInstances": "Yksikään tämän ryhmän instanssi ei ole juuri nyt verkossa. Tarkista lause ja se, että ainakin yksi instanssi on käynnissä.",
+  "launcher.noInstances": "Releellä ei ole vielä näkynyt yhtään tämän ryhmän instanssia. Tarkista lause ja se, että ainakin yksi instanssi on käynnissä. Sovellus ei voi muodostaa pariliitosta instanssin kanssa, jonka asetus on ”Ei relettä”: valitse kyseisellä instanssilla rele kohdassa Asetukset > Pariliitos.",
   "launcher.adoptOne": "Lisää tämä instanssi",
   "launcher.adoptAll": "Lisää kaikki {count}",
   "launcher.device": "Tämä laite",
@@ -4497,6 +4497,7 @@ const fi: Partial<Translations> = {
   "whatsNew.entryActions": "Merkinnän toiminnot ovat painikkeita sen nimen vieressä.",
   "fleet.kindAndroid": "Android-sovellus",
   "pairing.qrCaption": "Skannaa tämä koodi BombVault-sovelluksella pariuttaaksesi puhelimen.",
+  "pairing.phoneNeedsRelay": "BombVault-sovellus muodostaa pariliitoksen vain releen kautta. Niin kauan kuin tämä instanssi ei käytä relettä, mikään puhelin ei voi liittyä ryhmään. Samassa verkossa sovellus voi silti avata tämän instanssin sen osoitteella.",
 };
 
 export default fi;

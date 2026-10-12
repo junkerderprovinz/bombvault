@@ -3451,7 +3451,7 @@ const ca: Partial<Translations> = {
   "launcher.cameraAllow": "Permet l'accés",
   "launcher.scanHint": "Escaneja el codi QR que hi ha al costat de la frase",
   "launcher.groupFound": "En aquest relé",
-  "launcher.noInstances": "Ara mateix no hi ha cap instància d’aquest grup en línia. Comprova la frase i que almenys una instància estigui funcionant.",
+  "launcher.noInstances": "Cap instància d’aquest grup no ha aparegut encara al repetidor. Comprova la frase i que almenys una instància estigui funcionant. L’app no es pot aparellar amb una instància configurada com a «Sense repetidor»: tria un repetidor en aquesta instància a Configuració > Aparellament.",
   "launcher.adoptOne": "Afegeix aquesta instància",
   "launcher.adoptAll": "Afegeix-les totes ({count})",
   "launcher.device": "Aquest dispositiu",
@@ -4507,6 +4507,7 @@ const ca: Partial<Translations> = {
   "whatsNew.entryActions": "Les accions d'un element són botons al costat del seu nom.",
   "fleet.kindAndroid": "App d'Android",
   "pairing.qrCaption": "Escaneja aquest codi amb l'app de BombVault per aparellar un telèfon.",
+  "pairing.phoneNeedsRelay": "L'app de BombVault només s'aparella mitjançant un repetidor. Mentre aquesta instància no n'utilitzi cap, cap telèfon pot unir-se al grup. A la mateixa xarxa, l'app encara pot obrir aquesta instància per la seva adreça.",
 };
 
 export default ca;

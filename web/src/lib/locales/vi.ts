@@ -3432,7 +3432,7 @@ const vi: Partial<Translations> = {
   "launcher.cameraAllow": "Cho phép truy cập",
   "launcher.scanHint": "Quét mã QR hiển thị bên cạnh cụm từ",
   "launcher.groupFound": "Trên relay này",
-  "launcher.noInstances": "Hiện không có phiên bản nào của nhóm này trực tuyến. Kiểm tra cụm từ và xem có ít nhất một phiên bản đang chạy không.",
+  "launcher.noInstances": "Chưa có phiên bản nào của nhóm này xuất hiện trên relay. Kiểm tra cụm từ và xem có ít nhất một phiên bản đang chạy không. Ứng dụng không thể ghép nối với phiên bản đặt ở “Không dùng relay”: hãy chọn một relay trên phiên bản đó tại Cài đặt > Ghép nối.",
   "launcher.adoptOne": "Thêm phiên bản này",
   "launcher.adoptAll": "Thêm tất cả {count}",
   "launcher.device": "Thiết bị này",
@@ -4488,6 +4488,7 @@ const vi: Partial<Translations> = {
   "whatsNew.entryActions": "Các thao tác của một mục là những nút nằm cạnh tên của mục.",
   "fleet.kindAndroid": "Ứng dụng Android",
   "pairing.qrCaption": "Quét mã này bằng ứng dụng BombVault để ghép nối điện thoại.",
+  "pairing.phoneNeedsRelay": "Ứng dụng BombVault chỉ ghép nối qua relay. Khi phiên bản này không dùng relay, không điện thoại nào tham gia nhóm được. Trong cùng một mạng, ứng dụng vẫn có thể mở phiên bản này bằng địa chỉ của nó.",
 };
 
 export default vi;

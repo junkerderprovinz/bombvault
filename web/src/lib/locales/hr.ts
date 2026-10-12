@@ -3451,7 +3451,7 @@ const hr: Partial<Translations> = {
   "launcher.cameraAllow": "Dopusti pristup",
   "launcher.scanHint": "Skenirajte QR kod prikazan uz frazu",
   "launcher.groupFound": "Na ovom releju",
-  "launcher.noInstances": "Nijedna instanca ove grupe trenutačno nije na mreži. Provjerite frazu i radi li barem jedna instanca.",
+  "launcher.noInstances": "Na releju se još nije javila nijedna instanca ove skupine. Provjerite frazu i radi li barem jedna instanca. Aplikacija se ne može upariti s instancom postavljenom na „Bez releja“: odaberite relej na toj instanci pod Postavke > Uparivanje.",
   "launcher.adoptOne": "Dodaj ovu instancu",
   "launcher.adoptAll": "Dodaj svih {count}",
   "launcher.device": "Ovaj uređaj",
@@ -4507,6 +4507,7 @@ const hr: Partial<Translations> = {
   "whatsNew.entryActions": "Radnje stavke su gumbi pored njezina naziva.",
   "fleet.kindAndroid": "Android aplikacija",
   "pairing.qrCaption": "Skenirajte ovaj kod aplikacijom BombVault da uparite telefon.",
+  "pairing.phoneNeedsRelay": "Aplikacija BombVault uparuje se samo preko releja. Dok ova instanca ne koristi nijedan, nijedan telefon ne može pristupiti skupini. U istoj mreži aplikacija ipak može otvoriti ovu instancu po njezinoj adresi.",
 };
 
 export default hr;

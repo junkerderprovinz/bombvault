@@ -3451,7 +3451,7 @@ const gl: Partial<Translations> = {
   "launcher.cameraAllow": "Permitir acceso",
   "launcher.scanHint": "Escanea o código QR que aparece xunto á frase",
   "launcher.groupFound": "Neste relé",
-  "launcher.noInstances": "Agora mesmo non hai ningunha instancia deste grupo en liña. Comproba a frase e que polo menos unha instancia estea a funcionar.",
+  "launcher.noInstances": "Aínda non apareceu no relé ningunha instancia deste grupo. Comproba a frase e que polo menos unha instancia estea a funcionar. A app non pode emparellarse cunha instancia configurada como «Sen relé»: escolle un relé nesa instancia en Configuración > Emparellamento.",
   "launcher.adoptOne": "Engade esta instancia",
   "launcher.adoptAll": "Engadilas todas ({count})",
   "launcher.device": "Este dispositivo",
@@ -4507,6 +4507,7 @@ const gl: Partial<Translations> = {
   "whatsNew.entryActions": "As accións dun elemento son botóns ao lado do seu nome.",
   "fleet.kindAndroid": "App de Android",
   "pairing.qrCaption": "Escanea este código coa app de BombVault para emparellar un teléfono.",
+  "pairing.phoneNeedsRelay": "A app de BombVault só se emparella a través dun relé. Mentres esta instancia non use ningún, ningún teléfono pode unirse ao grupo. Na mesma rede, a app aínda pode abrir esta instancia polo seu enderezo.",
 };
 
 export default gl;
