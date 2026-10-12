@@ -407,7 +407,8 @@ const place = (over: Record<string, unknown>) => ({
   capacity: {},
   ...over,
 });
-// One local location, so both findings about a disk can only mean it.
+// One local location, so both findings about a disk can only mean it. Being
+// the only one, it goes by Lokal rather than its folder name.
 const LOCATIONS = [
   place({ id: "path:local", kind: "local", backend: "local", name: "Cache-Pool", where: "/mnt/cache/backups", sections: ["containers", "vms", "files"].map(held) }),
   place({ id: "destination:box", object: "destination", kind: "offsite", backend: "sftp", name: "Storage Box", where: "sftp:box:/backups", sections: [held("containers")] }),
@@ -668,7 +669,7 @@ test.describe("on the desktop", () => {
     await stage(page, 1280);
     await openPage(page);
     const disk = findings(page).filter({ hasText: "Datenträger mit" }).first();
-    await expect(disk.getByRole("link", { name: "Cache-Pool" })).toBeVisible();
+    await expect(disk.getByRole("link", { name: "Lokal" })).toBeVisible();
     await disk.getByRole("button", { name: "Details" }).click();
     const window = page.getByRole("dialog");
     await expect(window.getByRole("button", { name: "Eintrag öffnen" })).toHaveCount(0);
