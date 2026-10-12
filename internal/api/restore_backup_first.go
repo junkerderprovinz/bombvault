@@ -68,10 +68,10 @@ func (s *Service) backupBeforeRestore(ctx context.Context, key, targetID, snapsh
 	return err
 }
 
-// saveContainerState backs up a container that is on the host. One that is
-// gone has no state a backup could save.
+// saveContainerState backs up a container that has state a backup could
+// save, see containerNothingToSave.
 func (s *Service) saveContainerState(ctx context.Context, name string) error {
-	if _, found, err := s.liveContainer(ctx, name); err != nil || !found {
+	if why, err := s.containerNothingToSave(ctx, name); err != nil || why != "" {
 		return err
 	}
 	_, err := s.Backup(ctx, name)
@@ -87,43 +87,65 @@ func (s *Service) saveVMState(ctx context.Context, name string) error {
 	return err
 }
 
-// saveFileSetState is saveContainerState for a file set, which is gone when
-// its folder is.
+// saveFileSetState is saveContainerState for a file set.
 func (s *Service) saveFileSetState(ctx context.Context, id string) error {
-	if found, err := s.fileSetOnHost(id); err != nil || !found {
+	if why, err := s.fileSetNothingToSave(id); err != nil || why != "" {
 		return err
 	}
 	_, err := s.BackupFileSet(ctx, id)
 	return err
 }
 
-func (s *Service) fileSetOnHost(id string) (bool, error) {
+// containerNothingToSave says why a container has no state a backup could
+// save: reasonGone when it is not on the host, reasonEmpty when the data its
+// last backup took is gone from disk, which the backup refuses. It is empty
+// when there is state to save.
+func (s *Service) containerNothingToSave(ctx context.Context, name string) (string, error) {
+	in, found, err := s.liveContainer(ctx, name)
+	switch {
+	case err != nil:
+		return "", err
+	case !found:
+		return reasonGone, nil
+	case s.emptyBackupIsUnreachable(name, s.effectiveBackupPaths(name, in)):
+		return reasonEmpty, nil
+	}
+	return "", nil
+}
+
+// fileSetNothingToSave is containerNothingToSave for a file set, which is gone
+// with its folder and empty when the folder holds no file.
+func (s *Service) fileSetNothingToSave(id string) (string, error) {
 	set, err := s.store.GetFileSet(id)
 	if err != nil {
-		return false, errFileSetNotFound
+		return "", errFileSetNotFound
 	}
 	if strings.TrimSpace(set.Path) == "" {
-		return false, nil
+		return reasonGone, nil
 	}
 	src, err := paths.Resolve(s.cfg.HostMountRoot, set.Path)
 	if err != nil {
-		return false, nil
+		return reasonGone, nil
 	}
 	if _, err := os.Stat(src); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			return false, nil
+			return reasonGone, nil
 		}
-		return false, err
+		return "", err
 	}
-	return true, nil
+	if empty, err := fileSetSourceEmpty(src); err == nil && empty {
+		return reasonEmpty, nil
+	}
+	return "", nil
 }
 
 // BackupFirstPlan says what becomes of the backup a restore in place is asked
 // to take first. Status is "ok" when it will be taken, "skip" with the reason
-// "gone" when the entry is not on the host and has no state to save, and
-// "fail" with Detail when it cannot be taken, which keeps the restore from
-// starting. Seconds and Bytes are what the entry's last backup took and
-// added, both zero for an entry that was never backed up from here.
+// "gone" when the entry is not on the host or "empty" when it has no data a
+// backup could take, and "fail" with Detail when it cannot be taken, which
+// keeps the restore from starting. Seconds and Bytes are what the entry's
+// last backup took and added, both zero for an entry that was never backed up
+// from here.
 type BackupFirstPlan struct {
 	Status  string `json:"status"`
 	Reason  string `json:"reason,omitempty"`
@@ -138,27 +160,28 @@ func (s *Service) backupFirstPlan(ctx context.Context, req RestoreCheckRequest, 
 	if !req.BackupFirst || !sc.inPlace {
 		return nil
 	}
-	var found bool
+	var why, targetID string
 	var err error
-	var targetID string
 	switch req.Kind {
 	case checkContainer:
 		if self := s.selfContainerName(ctx); self != "" && self == req.Name {
 			return &BackupFirstPlan{Status: lineFail, Detail: ErrSelfBackup.Error()}
 		}
-		_, found, err = s.liveContainer(ctx, req.Name)
+		why, err = s.containerNothingToSave(ctx, req.Name)
 		if tg, tErr := s.store.GetTargetByContainer(req.Name); tErr == nil {
 			targetID = tg.ID
 		}
 	case checkVM:
 		var state string
 		state, err = s.virsh.State(ctx, req.Name)
-		found = state != ""
+		if state == "" {
+			why = reasonGone
+		}
 		if tg, tErr := s.store.GetVMTargetByName(req.Name); tErr == nil {
 			targetID = tg.ID
 		}
 	case checkFileSet:
-		found, err = s.fileSetOnHost(req.Name)
+		why, err = s.fileSetNothingToSave(req.Name)
 		targetID = req.Name
 	default:
 		return nil
@@ -166,8 +189,8 @@ func (s *Service) backupFirstPlan(ctx context.Context, req RestoreCheckRequest, 
 	switch {
 	case err != nil:
 		return &BackupFirstPlan{Status: lineFail, Detail: scrubError(err)}
-	case !found:
-		return &BackupFirstPlan{Status: lineSkip, Reason: reasonGone}
+	case why != "":
+		return &BackupFirstPlan{Status: lineSkip, Reason: why}
 	}
 	plan := &BackupFirstPlan{Status: lineOK}
 	if last, lErr := s.store.LastSuccessfulBackup(targetID); lErr == nil && last != nil && last.FinishedAt != nil {
