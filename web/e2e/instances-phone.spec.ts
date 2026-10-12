@@ -639,9 +639,17 @@ for (const width of [320, 360]) {
     for (const name of ["Was Schwiegereltern Tower Gmunden Keller für diesen Server tut", "Was dieser Server für Schwiegereltern Tower Gmunden Keller tut", "Schutz je Bereich", "Überwachung"]) {
       await expect(win.getByRole("region", { name })).toBeAttached();
     }
+    // Each received repository opens its inventory in a window of its own.
     const details = win.getByRole("button", { name: "Details", exact: true });
-    for (let i = 0; i < (await details.count()); i++) await details.nth(i).click();
-    await expect(win.getByText("Gesamt", { exact: true })).toHaveCount(2);
+    await expect(details).toHaveCount(2);
+    for (let i = 0; i < 2; i++) {
+      await details.nth(i).click();
+      const inventory = page.getByRole("dialog", { name: "Bestand nach Quelle" });
+      await expect(inventory.getByText("Gesamt", { exact: true })).toBeVisible();
+      await expectDialogFits(page, inventory);
+      await inventory.getByRole("button", { name: "Fertig" }).click();
+      await expect(inventory).toHaveCount(0);
+    }
     // Each role has its switch, and what the instance asks for stands with
     // the ZFS request in one list.
     await expect(win.getByRole("region", { name: /^Was Schwiegereltern/ }).getByRole("switch")).toHaveCount(4);
@@ -712,8 +720,9 @@ for (const width of [320, 360]) {
     await win.getByRole("button", { name: "Neuen Code erstellen" }).click();
     await expectDialogFits(page, "Bestätigen");
     await page.getByRole("dialog", { name: "Bestätigen" }).getByRole("button", { name: "Neuen Code erstellen" }).click();
-    // The window's own name ends in its hint, which speaks of the code too.
-    const code = page.getByRole("dialog", { name: "Wiederherstellungscode", exact: true });
+    // On a phone the sheet's name carries its hint, which speaks of the code
+    // too, so only the start of the name tells the windows apart.
+    const code = page.getByRole("dialog", { name: /^Wiederherstellungscode/ });
     await expect(code.getByTestId("recovery-code").locator("li")).toHaveText(CODE.split("-"));
     await expectDialogFits(page, code);
     await expect(code.getByRole("button", { name: "Fertig" })).toBeDisabled();
@@ -988,11 +997,17 @@ test("an instance's window on the desktop holds its cards and fits", async ({ pa
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await openPage(page, testInfo.project.use.viewport!.width);
   const win = await openDetails(page);
-  const details = win.getByRole("button", { name: "Details", exact: true });
-  for (let i = 0; i < (await details.count()); i++) await details.nth(i).click();
-  // The inventory is a table where there is room for its four columns.
-  await expect(win.locator("table")).toHaveCount(2);
   await expectDialogFits(page, MEMBER_NAME, { desktop: true });
+  // The inventory is a table where there is room for its four columns.
+  const details = win.getByRole("button", { name: "Details", exact: true });
+  await expect(details).toHaveCount(2);
+  for (let i = 0; i < 2; i++) {
+    await details.nth(i).click();
+    const inventory = page.getByRole("dialog", { name: "Bestand nach Quelle" });
+    await expect(inventory.locator("table")).toHaveCount(1);
+    await inventory.getByRole("button", { name: "Fertig" }).click();
+    await expect(inventory).toHaveCount(0);
+  }
   await page.keyboard.press("Escape");
   await expect(win).toHaveCount(0);
 });
