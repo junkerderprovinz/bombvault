@@ -365,3 +365,28 @@ func TestAnImportedKeepPolicyForSomethingThatIsNotADomainIsRefused(t *testing.T)
 		t.Fatal("an import stored a keep-policy for something that is not a domain")
 	}
 }
+
+func TestAnAdditionalTargetIsPrunedByItsOwnRule(t *testing.T) {
+	st := newTestStore(t)
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersOffsite = "s3:primary/containers"
+	s.OffsiteRetentionKeepLast = 2
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	extra, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "Archive", Repo: "s3:archive/containers", Enabled: true,
+		RetentionKeepDaily: 7, RetentionKeepWeekly: 4,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := &Service{store: st}
+	want := restic.RetentionPolicy{KeepDaily: 7, KeepWeekly: 4, Direct: true}
+	if got := svc.retentionPolicyForSource(s, "containers", "offsite:"+extra.ID); got != want {
+		t.Fatalf("policy = %+v, want the target's own %+v", got, want)
+	}
+}

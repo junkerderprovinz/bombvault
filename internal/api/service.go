@@ -1918,20 +1918,18 @@ func (s *Service) applyTargetCreds(mode restic.Mode, settings store.Settings, ta
 
 // retentionPolicyForSource returns the keep-policy to apply for a given repo
 // source: the domain's local policy, the domain's off-site policy for its
-// built-in off-site repo, and the shared off-site policy for an additional
-// target, which a domain's own off-site rules do not reach.
+// built-in off-site repo, and an additional target's own rule, which the copy
+// pass ages the same repository by.
 func (s *Service) retentionPolicyForSource(settings store.Settings, domain, source string) restic.RetentionPolicy {
-	var p restic.RetentionPolicy
-	switch {
-	case !isOffsiteSource(source):
+	if !isOffsiteSource(source) {
 		return s.retentionPolicy(settings, domain)
-	case s.isBuiltInOffsiteSource(settings, domain, source):
-		p = s.offsiteRetentionPolicy(settings, domain)
-	default:
-		p = keepPolicy(sharedOffsiteKeep(settings))
+	}
+	if t, err := s.offsiteTargetForSource(settings, domain, source); err == nil && !isBuiltInOffsiteTarget(settings, domain, t) {
+		return targetAgingPolicy(t)
 	}
 	// A target ages its copies from a direct repository like any other copy,
 	// as the copy pass does (targetAgingPolicy).
+	p := s.offsiteRetentionPolicy(settings, domain)
 	p.Direct = true
 	return p
 }
