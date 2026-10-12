@@ -1,1 +1,1 @@
-Die App selbst ist unverändert. Die Dashboards kommen von deinem Server, und dort bringt BombVault 10.0.0 eine neue Oberfläche.
+Aktualisiere die App, damit du deine Server weiter mit den zwölf Wörtern öffnen kannst: BombVault 10.0.0 gibt nur dieser Version eine Sitzung, und die erreicht, was die App zeigt, aber keine Schlüssel und nicht die Anmeldung. Unter Design gibt es jetzt System, das dem hellen oder dunklen Modus deines Handys folgt. Die Dashboards kommen von deinem Server, und dort bringt BombVault 10.0.0 eine neue Oberfläche.
