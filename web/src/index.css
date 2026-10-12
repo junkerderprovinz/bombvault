@@ -3788,7 +3788,9 @@ body {
   flex-direction: column;
   gap: 5px;
   min-width: 35rem;
-  padding-block: 4px;
+  /* Room for the needle's head, which stands out past the lane near midnight
+     and would otherwise scroll the grid by a few pixels. */
+  padding: 4px;
 }
 .glim-week-row {
   display: grid;
