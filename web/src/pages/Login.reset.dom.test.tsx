@@ -2,7 +2,7 @@
 // The way back in for somebody who lost the password: the login page asks the
 // server to write a code to its container log, then takes the code and a new
 // password.
-import { render, screen, cleanup, waitFor, fireEvent, act } from "@testing-library/react";
+import { render, screen, cleanup, waitFor, fireEvent, act, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { en } from "../lib/i18n";
 
@@ -93,6 +93,7 @@ describe("LoginPage, a forgotten password", () => {
     await fillAndSubmit("ABCD-EFGH-JKLM", "correct horse battery");
 
     const status = await screen.findByRole("status");
+    expect(within(status).getByRole("heading", { name: en["auth.resetDoneTitle"] })).toBeTruthy();
     expect(status.textContent).toContain("2 passkeys removed");
     expect(status.textContent).toContain("1 API token revoked");
     expect(status.textContent).toContain(en["auth.twoFactorOffNow"]);

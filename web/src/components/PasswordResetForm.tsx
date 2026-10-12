@@ -86,7 +86,7 @@ export function PasswordResetForm({
     // looks for a key that no longer exists.
     return (
       <div className="flex flex-col gap-4" role="status">
-        <p className="text-sm font-semibold text-carbon-text">{t("auth.resetDoneTitle")}</p>
+        <h2 className="text-sm font-semibold text-carbon-text">{t("auth.resetDoneTitle")}</h2>
         <div className="flex flex-col gap-1.5">
           <p className={LABEL}>{t("auth.resetDoneIntro")}</p>
           <ul className="list-disc pl-5 text-sm text-carbon-text flex flex-col gap-1">

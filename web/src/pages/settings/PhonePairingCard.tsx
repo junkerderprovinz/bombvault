@@ -12,6 +12,8 @@ export function PhonePairingCard({ hueIndex }: { hueIndex: number }) {
   const { push } = useToast();
   const [on, setOn] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  const [shake, setShake] = useState(0);
+  const [pulse, setPulse] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -31,11 +33,14 @@ export function PhonePairingCard({ hueIndex }: { hueIndex: number }) {
       const res = await setPhonePairing(next);
       if (res.ok) {
         setOn(next);
+        setPulse((n) => n + 1);
         push(t("settings.saved"), "success");
       } else {
+        setShake((n) => n + 1);
         push(secretsSentence(t, res.code) ?? res.error ?? t("auth.saveError"), "fail");
       }
     } catch {
+      setShake((n) => n + 1);
       push(t("auth.saveError"), "fail");
     } finally {
       setBusy(false);
@@ -51,6 +56,8 @@ export function PhonePairingCard({ hueIndex }: { hueIndex: number }) {
         checked={on}
         onChange={(v) => void change(v)}
         disabled={busy}
+        shakeNonce={shake}
+        pulseNonce={pulse}
       />
     </Card>
   );
