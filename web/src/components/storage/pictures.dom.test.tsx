@@ -14,6 +14,7 @@ import { I18nProvider } from "../../lib/i18n";
 import { KEEP_PRESETS, sampleBackups, type KeepCounts, type KeepInput } from "../../lib/keepPlan";
 import { KeepTimeline } from "./KeepTimeline";
 import { CopyScene, LockScene } from "./scenes";
+import { Vessel } from "./Vessel";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -138,9 +139,42 @@ describe("the scenes", () => {
   });
 });
 
+describe("the vessel", () => {
+  function vessel(usedBytes: number) {
+    return render(
+      <I18nProvider>
+        <Vessel capacity={{ usedBytes, totalBytes: 100 }} />
+      </I18nProvider>
+    );
+  }
+
+  it("tells its bubbles how deep the liquid is, so they rise at one speed at any level", () => {
+    const { container } = vessel(35);
+    expect(container.querySelector("svg")?.style.getPropertyValue("--liquid-depth")).toBe("9.63");
+    expect(container.querySelector('[transform="translate(0 25.875)"]')).not.toBeNull();
+  });
+
+  it("rests flat, with every crest, bubble and burst in the markup for the stylesheet to move", () => {
+    const { container } = vessel(50);
+    expect(container.querySelectorAll(".glim-slosh-crest")).toHaveLength(2);
+    expect(container.querySelectorAll(".glim-slosh-bubble")).toHaveLength(3);
+    const pops = container.querySelectorAll(".glim-slosh-pop");
+    expect(pops).toHaveLength(3);
+    for (const pop of pops) {
+      expect([...pop.children].map((c) => c.getAttribute("class"))).toEqual([
+        "glim-slosh-pop-bubble",
+        "glim-slosh-pop-ring",
+        "glim-slosh-pop-drop",
+        "glim-slosh-pop-drop",
+        "glim-slosh-pop-drop",
+      ]);
+    }
+  });
+});
+
 describe("how the pictures are drawn", () => {
   const css = readFileSync(join(HERE, "..", "..", "index.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "));
-  const PICTURE = /\.glim-(vessel|keep|scene|parcel|lock)-/;
+  const PICTURE = /\.glim-(vessel-|keep-|scene-|parcel-|lock-|slosh\b)/;
 
   /** Every rule that names a picture class and sets `property`, with where it
    *  stands in the stylesheet. */
