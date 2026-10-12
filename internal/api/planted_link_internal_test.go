@@ -62,10 +62,10 @@ func TestAnExportDoesNotWriteThroughALinkedTempFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, _ := os.ReadFile(victim); string(got) != "keep" {
+	if got := read(t, victim); got != "keep" {
 		t.Fatalf("the linked file holds %q", got)
 	}
-	if got, _ := os.ReadFile(final); string(got) != "export" {
+	if got := read(t, final); got != "export" {
 		t.Fatalf("the export holds %q", got)
 	}
 }

@@ -348,7 +348,7 @@ func TestARepositoryExportLeavesWhatItFindsInItsPlace(t *testing.T) {
 	if err := (&Service{engine: refusingInit{}}).copyExport(context.Background(), plan, 0); err == nil {
 		t.Error("the copy went ahead over a file")
 	}
-	if got, err := os.ReadFile(dest); err != nil || string(got) != "the person's file" {
-		t.Fatalf("the file holds %q (%v)", got, err)
+	if got := read(t, dest); got != "the person's file" {
+		t.Fatalf("the file holds %q", got)
 	}
 }
