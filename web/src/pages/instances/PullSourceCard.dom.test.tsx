@@ -30,6 +30,7 @@ const base: PullSourceView = {
 
 const deleted: string[] = [];
 let refreshed = 0;
+let refusal: string | null = null;
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -37,7 +38,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     ...actual,
     deletePullSource: (id: string) => {
       deleted.push(id);
-      return Promise.resolve({ ok: true });
+      return Promise.resolve(refusal ? { ok: false, error: refusal } : { ok: true });
     },
   };
 });
@@ -64,6 +65,7 @@ async function renderCard(over: Partial<PullSourceView> = {}) {
 beforeEach(() => {
   deleted.length = 0;
   refreshed = 0;
+  refusal = null;
   localStorage.clear();
 });
 
@@ -112,5 +114,19 @@ describe("pull source card", () => {
     });
     expect(deleted).toEqual(["p1"]);
     expect(refreshed).toBe(1);
+  });
+
+  it("says why a removal was refused and asks again on the next click", async () => {
+    refusal = "database is locked";
+    await renderCard();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["receiver.remove"] }));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["offsite.targets.confirmRemove"] }));
+    });
+    expect(deleted).toEqual(["p1"]);
+    expect(screen.getByText("database is locked")).toBeTruthy();
+    expect(screen.getByRole("button", { name: en["receiver.remove"] })).toBeTruthy();
   });
 });

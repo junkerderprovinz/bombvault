@@ -80,7 +80,14 @@ export function PullSourceCard({
   }
 
   async function handleRemove() {
-    await deletePullSource(source.id).catch(() => undefined);
+    const res = await deletePullSource(source.id).catch((e: unknown) => ({
+      ok: false as const,
+      error: e instanceof Error ? e.message : undefined,
+    }));
+    if (!res.ok) {
+      setConfirmRemove(false);
+      push(res.error ?? t("common.removeFailed"), "fail");
+    }
     onRefresh();
   }
 
