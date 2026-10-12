@@ -7,4 +7,5 @@
     <string name="relay_on">Ouvert via le relais</string>
     <string name="relay_explained">L\'app ne peut pas joindre ce serveur à sa propre adresse, elle l\'ouvre donc via le relais de votre groupe. La connexion avec le mot de passe et l\'enregistrement de fichiers ne fonctionnent qu\'à l\'adresse propre du serveur.</string>
     <string name="relay_no_download">L\'enregistrement de fichiers ne fonctionne qu\'à l\'adresse propre du serveur, pas via le relais.</string>
+    <string name="page_crashed">La page a planté, l\'app l\'a donc fermée. Rouvrez le serveur.</string>
 </resources>

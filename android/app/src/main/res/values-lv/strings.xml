@@ -7,4 +7,5 @@
     <string name="relay_on">Atvērts caur relay</string>
     <string name="relay_explained">Lietotne nevar sasniegt šo serveri tā paša adresē, tāpēc atver to caur jūsu grupas relay. Pieteikšanās ar paroli un failu saglabāšana darbojas tikai paša servera adresē.</string>
     <string name="relay_no_download">Failu saglabāšana darbojas tikai paša servera adresē, nevis caur relay.</string>
+    <string name="page_crashed">Lapa avarēja, tāpēc lietotne to aizvēra. Atveriet serveri vēlreiz.</string>
 </resources>

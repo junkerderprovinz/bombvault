@@ -7,4 +7,5 @@
     <string name="relay_on">リレー経由で開いています</string>
     <string name="relay_explained">このサーバー自体のアドレスにアプリから接続できないため、グループのリレー経由で開いています。パスワードでのサインインとファイルの保存は、サーバー自体のアドレスでのみ使えます。</string>
     <string name="relay_no_download">ファイルの保存は、リレー経由ではなくサーバー自体のアドレスでのみ使えます。</string>
+    <string name="page_crashed">ページがクラッシュしたため、アプリが閉じました。サーバーをもう一度開いてください。</string>
 </resources>

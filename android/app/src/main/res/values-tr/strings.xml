@@ -7,4 +7,5 @@
     <string name="relay_on">Röle üzerinden açıldı</string>
     <string name="relay_explained">Uygulama bu sunucuya kendi adresinden ulaşamıyor, bu yüzden grubunuzun rölesi üzerinden açıyor. Parolayla oturum açma ve dosya kaydetme yalnızca sunucunun kendi adresinde çalışır.</string>
     <string name="relay_no_download">Dosya kaydetme yalnızca sunucunun kendi adresinde çalışır, röle üzerinden çalışmaz.</string>
+    <string name="page_crashed">Sayfa çöktü, bu yüzden uygulama onu kapattı. Sunucuyu tekrar açın.</string>
 </resources>

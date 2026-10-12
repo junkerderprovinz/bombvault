@@ -7,4 +7,5 @@
     <string name="relay_on">Dibuka melalui relay</string>
     <string name="relay_explained">Aplikasi tidak dapat mencapai pelayan ini pada alamatnya sendiri, jadi aplikasi membukanya melalui relay kumpulan anda. Log masuk dengan kata laluan dan menyimpan fail hanya berfungsi pada alamat pelayan itu sendiri.</string>
     <string name="relay_no_download">Menyimpan fail hanya berfungsi pada alamat pelayan itu sendiri, bukan melalui relay.</string>
+    <string name="page_crashed">Halaman ranap, jadi aplikasi menutupnya. Buka pelayan sekali lagi.</string>
 </resources>

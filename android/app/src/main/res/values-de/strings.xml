@@ -7,4 +7,5 @@
     <string name="relay_on">Über das Relay geöffnet</string>
     <string name="relay_explained">Die App erreicht diesen Server nicht unter seiner eigenen Adresse und öffnet ihn deshalb über das Relay deiner Gruppe. Anmelden mit dem Passwort und Dateien speichern geht nur unter der eigenen Adresse des Servers.</string>
     <string name="relay_no_download">Dateien speichern geht nur unter der eigenen Adresse des Servers, nicht über das Relay.</string>
+    <string name="page_crashed">Die Seite ist abgestürzt, deshalb hat die App sie geschlossen. Öffne den Server noch einmal.</string>
 </resources>

@@ -16,8 +16,10 @@ import android.provider.Settings
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.SslErrorHandler
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -99,7 +101,8 @@ class MainActivity : ComponentActivity() {
         pushState()
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
+    private val pageScript by lazy { assets.open("page.js").bufferedReader().use { it.readText() } }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         servers = Servers(this)
@@ -126,7 +129,7 @@ class MainActivity : ComponentActivity() {
             .addPathHandler("/", LauncherAssets(WebViewAssetLoader.AssetsPathHandler(this)))
             .build()
 
-        web = WebView(this)
+        web = newWebView()
         strip = TextView(this).apply {
             setText(R.string.relay_on)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
@@ -158,26 +161,6 @@ class MainActivity : ComponentActivity() {
         }
         paintBars(if (night()) DARK else LIGHT)
 
-        web.settings.javaScriptEnabled = true
-        web.settings.domStorageEnabled = true
-        web.settings.allowFileAccess = false
-        web.settings.allowContentAccess = false
-        // The scanner's camera picture plays without a tap.
-        web.settings.mediaPlaybackRequiresUserGesture = false
-        web.webViewClient = Client()
-        web.webChromeClient = Chrome()
-        web.setDownloadListener { url, _, disposition, mime, _ -> download(url, disposition, mime) }
-        // On the launcher a long press is a slow tap; a server's own page keeps
-        // the browser's menu for its links and text.
-        web.setOnLongClickListener { current == null }
-
-        // Registered for every origin because the list of servers changes while
-        // a page is open; onMessage decides who may ask for what.
-        WebViewCompat.addWebMessageListener(web, "bombvaultApp", setOf("*")) { _, message, origin, isMainFrame, reply ->
-            if (isMainFrame) onMessage(JSONObject(message.data ?: "{}"), origin.toString().trimEnd('/'), reply)
-        }
-        WebViewCompat.addDocumentStartJavaScript(web, assets.open("page.js").bufferedReader().readText(), setOf("*"))
-
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
@@ -195,6 +178,41 @@ class MainActivity : ComponentActivity() {
         } else {
             showLauncher()
         }
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun newWebView() = WebView(this).apply {
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        settings.allowFileAccess = false
+        settings.allowContentAccess = false
+        // The scanner's camera picture plays without a tap.
+        settings.mediaPlaybackRequiresUserGesture = false
+        webViewClient = Client()
+        webChromeClient = Chrome()
+        setDownloadListener { url, _, disposition, mime, _ -> download(url, disposition, mime) }
+        // On the launcher a long press is a slow tap; a server's own page keeps
+        // the browser's menu for its links and text.
+        setOnLongClickListener { current == null }
+
+        // Registered for every origin because the list of servers changes while
+        // a page is open; onMessage decides who may ask for what.
+        WebViewCompat.addWebMessageListener(this, "bombvaultApp", setOf("*")) { _, message, origin, isMainFrame, reply ->
+            if (isMainFrame) onMessage(JSONObject(message.data ?: "{}"), origin.toString().trimEnd('/'), reply)
+        }
+        WebViewCompat.addDocumentStartJavaScript(this, pageScript, setOf("*"))
+    }
+
+    /** Puts a fresh WebView in the place of [gone], whose renderer is gone and which cannot be used again. */
+    private fun replaceWeb(gone: WebView) {
+        val column = gone.parent as ViewGroup
+        val at = column.indexOfChild(gone)
+        column.removeView(gone)
+        gone.destroy()
+        web = newWebView()
+        column.addView(web, at, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+        launcher = null
+        strip.visibility = View.GONE
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -529,6 +547,22 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // Without this, a renderer that crashes, or that Android ends to free
+        // memory, takes the whole app down with it.
+        override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
+            val server = current
+            replaceWeb(view)
+            when (afterRendererGone(detail.didCrash(), server != null)) {
+                AfterRenderer.Reopen -> server?.let(::open)
+                AfterRenderer.Notice -> {
+                    toast(getString(R.string.page_crashed))
+                    showLauncher()
+                }
+                AfterRenderer.Launcher -> showLauncher()
+            }
+            return true
+        }
+
         override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
             val server = current ?: return
             if (request.isForMainFrame && originOf(request.url.toString()) == server.origin) {
@@ -591,4 +625,18 @@ class MainActivity : ComponentActivity() {
 
         private fun parseColor(s: String): Int? = runCatching { Color.parseColor(s) }.getOrNull()
     }
+}
+
+/** What the app shows once the renderer of its page is gone. */
+internal enum class AfterRenderer { Reopen, Notice, Launcher }
+
+/**
+ * A crash is worth telling, and its page goes back to the server list rather
+ * than being loaded into the next crash. A renderer Android ended to free
+ * memory only costs the server that was open a reload.
+ */
+internal fun afterRendererGone(crashed: Boolean, onServer: Boolean) = when {
+    crashed -> AfterRenderer.Notice
+    onServer -> AfterRenderer.Reopen
+    else -> AfterRenderer.Launcher
 }

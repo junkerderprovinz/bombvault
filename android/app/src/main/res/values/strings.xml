@@ -8,4 +8,5 @@
     <string name="relay_on">Opened over the relay</string>
     <string name="relay_explained">The app can\'t reach this server at its own address, so it opens it through your group\'s relay. Signing in with the password and saving files work only at the server\'s own address.</string>
     <string name="relay_no_download">Saving files works only at the server\'s own address, not over the relay.</string>
+    <string name="page_crashed">The page crashed, so the app closed it. Open the server again.</string>
 </resources>

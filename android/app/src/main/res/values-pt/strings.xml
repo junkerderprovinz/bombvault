@@ -7,4 +7,5 @@
     <string name="relay_on">Aberto através do relay</string>
     <string name="relay_explained">A app não consegue aceder a este servidor no seu próprio endereço, por isso abre-o através do relay do seu grupo. Iniciar sessão com a palavra-passe e guardar ficheiros só funciona no endereço próprio do servidor.</string>
     <string name="relay_no_download">Guardar ficheiros só funciona no endereço próprio do servidor, não através do relay.</string>
+    <string name="page_crashed">A página falhou, por isso a app fechou-a. Abra o servidor novamente.</string>
 </resources>

@@ -7,4 +7,5 @@
     <string name="relay_on">Relayen keresztül megnyitva</string>
     <string name="relay_explained">Az app nem éri el ezt a szervert a saját címén, ezért a csoportod relayén keresztül nyitja meg. A jelszavas bejelentkezés és a fájlok mentése csak a szerver saját címén működik.</string>
     <string name="relay_no_download">A fájlok mentése csak a szerver saját címén működik, a relayen keresztül nem.</string>
+    <string name="page_crashed">Az oldal összeomlott, ezért az app bezárta. Nyisd meg újra a szervert.</string>
 </resources>
