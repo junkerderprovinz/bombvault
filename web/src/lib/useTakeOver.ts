@@ -106,6 +106,7 @@ export function useTakeOver(entry: TakeoverEntry, onDone: () => void, t: T) {
     if (!(await send(() => entry.api.takeOver(entry.name, from), "takeover.failed", onRefused))) return;
     push(t("takeover.done").replace("{old}", from).replace("{new}", entry.displayName), "success", {
       label: t("takeover.undo"),
+      labelKey: "takeover.undo",
       onClick: () => void unlinkNow(from, () => {}),
     });
   }

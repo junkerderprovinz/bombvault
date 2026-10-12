@@ -54,7 +54,8 @@ const RULES: Rule[] = [
   // Backups and restores, the app's own verbs, before anything generic.
   [/backupNow|backupAll|backupSelected|runNow/i, () => <IconBackupNow />],
   // "restor" also catches the "restoring" keys shown while a run is in flight.
-  [/restor|recreate|rebuild/i, () => <IconRestore />],
+  // Undo puts back what was there, so it shares the mark.
+  [/restor|recreate|rebuild|\.undo$/i, () => <IconRestore />],
   [/replicate|sync|refreshStatus|pollNow/i, () => <IconSync />],
 
   // Destructive and corrective actions.
@@ -115,7 +116,7 @@ const RULES: Rule[] = [
   [/signIn|logIn\b/i, () => <IconSignIn />],
   [/logout|signOut/i, () => <IconSignOut />],
   [/twoFactorEnable|totpEnable/i, () => <IconShieldOn />],
-  [/twoFactorDisable|totpDisable/i, () => <IconShieldOff />],
+  [/twoFactorDisable|totpDisable|loginDisable/i, () => <IconShieldOff />],
   // Trusting a certificate is a security decision, like arming a factor.
   [/\.trust(Changed)?$/i, () => <IconShieldOn />],
   // Revoking takes one credential away, which is neither the row being

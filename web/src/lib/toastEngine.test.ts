@@ -30,7 +30,7 @@ describe("addToast", () => {
   });
 
   it("keeps a toast that offers an action for the longer action duration", () => {
-    const action = { label: "Undo", onClick: () => {} };
+    const action = { label: "Undo", labelKey: "takeover.undo" as const, onClick: () => {} };
     const list = addToast([], { id: "a", message: "Linked", severity: "success", action }, 1_000_000);
     expect(list[0].expiresAt).toBe(1_000_000 + ACTION_TOAST_DURATION_MS);
     expect(list[0].remainingMs).toBe(ACTION_TOAST_DURATION_MS);

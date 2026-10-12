@@ -56,7 +56,7 @@ export function SecurityPage() {
       setPwSaveShake((n) => n + 1);
       return;
     }
-    if (pwNew === "" && authEnabled && !(await confirm(t("auth.turnOffAsk"), { confirmKey: "auth.turnOff" }))) return;
+    if (pwNew === "" && authEnabled && !(await confirm(t("auth.turnOffAsk"), { confirmKey: "auth.loginDisable" }))) return;
     setPwSaveState("saving");
     setPwSaveMsg(null);
     try {

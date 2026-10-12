@@ -40,7 +40,7 @@ export function useDeclineBackup(onChanged: () => void) {
       push(
         t("backups.declined").replace("{name}", () => name),
         "success",
-        { label: t("takeover.undo"), onClick: () => void accept(item) }
+        { label: t("takeover.undo"), labelKey: "takeover.undo", onClick: () => void accept(item) }
       );
     },
     [send, accept, push, t]

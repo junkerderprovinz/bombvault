@@ -141,7 +141,7 @@ describe("ToastCard", () => {
     let dismissed: string | undefined;
     const tree = ToastCard({
       ...baseProps,
-      action: { label: "Undo", onClick: () => ran++ },
+      action: { label: "Undo", labelKey: "takeover.undo", onClick: () => ran++ },
       onDismiss: (id) => (dismissed = id),
     }) as ElementNode;
     const children = tree.props!.children as unknown[];

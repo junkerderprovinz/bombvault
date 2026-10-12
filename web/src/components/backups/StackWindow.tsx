@@ -236,7 +236,7 @@ export function StackWindow({
                   .replace("{place}", () => place)
                   .replace("{home}", () => host)}
               </span>
-              <Button label={t("backups.stack.useLocal")} labelKey={null} onClick={takeLocalFolder} />
+              <Button label={t("backups.stack.useLocal")} labelKey="backups.stack.useLocal" onClick={takeLocalFolder} />
             </ListNote>
           )}
           <ToggleRow

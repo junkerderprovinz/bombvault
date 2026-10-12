@@ -235,7 +235,7 @@ export function FolderBody({ draft }: { draft: DestinationDraftState }) {
                 placeholder={t("dest.folder.newName")}
                 className={`${FIELD} flex-1`}
               />
-              <Button label={t("dest.folder.create")} labelKey={null} tone="accent" onClick={() => void draft.makeFolder()} />
+              <Button label={t("dest.folder.create")} labelKey="dest.folder.create" tone="accent" onClick={() => void draft.makeFolder()} />
             </span>
           ) : (
             <Button label={t("dest.folder.new")} labelKey="dest.folder.new" tone="neutral" onClick={() => draft.setNewFolder("")} className="self-start" />

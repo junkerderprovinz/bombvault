@@ -100,7 +100,7 @@ describe("the login password", () => {
     await renderPage();
     await waitFor(() => expect(within(passwordCard()).getByText(en["auth.authOn"])).toBeTruthy());
     fireEvent.click(within(passwordCard()).getByRole("button", { name: en["settings.save"] }));
-    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["auth.turnOff"] }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["auth.loginDisable"] }));
     await waitFor(() => expect(passwords).toEqual([""]));
   });
 

@@ -21,7 +21,7 @@ afterEach(() => {
 it("keeps a toast with an action on screen past the plain duration, then lets it go", () => {
   render(
     <ToastProvider>
-      <Pusher message="radarr-movies now belongs to radarr." action={{ label: "Undo", onClick: () => {} }} />
+      <Pusher message="radarr-movies now belongs to radarr." action={{ label: "Undo", labelKey: "takeover.undo", onClick: () => {} }} />
     </ToastProvider>,
   );
   fireEvent.click(screen.getByText("push"));

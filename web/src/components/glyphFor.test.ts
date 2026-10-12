@@ -80,4 +80,13 @@ describe("glyphFor on credentials", () => {
   it("gives removing a passkey the same mark as revoking a key", () => {
     expect(glyphFor("auth.passkeyRemove")).toEqual(glyphFor("mcp.revoke"));
   });
+
+  it("gives undo the mark of putting something back", () => {
+    expect(glyphFor("emergency.undo")).toEqual(glyphFor("snapshots.restore"));
+    expect(glyphFor("takeover.undo")).toEqual(glyphFor("snapshots.restore"));
+  });
+
+  it("marks turning the login off like turning two-factor off", () => {
+    expect(glyphFor("auth.loginDisable")).toEqual(glyphFor("auth.twoFactorDisable"));
+  });
 });

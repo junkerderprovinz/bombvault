@@ -5,6 +5,8 @@
 // Hover or focus pauses the countdown and keeps the remaining time: resuming
 // continues from the frozen remainder, not from the full duration.
 
+import type { TranslationKey } from "./i18n";
+
 export type ToastSeverity = "success" | "warn" | "fail";
 
 export const TOAST_DURATION_MS = 4000;
@@ -17,6 +19,8 @@ export const MAX_VISIBLE_TOASTS = 4;
 /** The one control a toast may carry beside its message, such as Undo. */
 export interface ToastAction {
   label: string;
+  /** The key behind label, which gives the button its glyph. */
+  labelKey: TranslationKey;
   onClick: () => void;
 }
 

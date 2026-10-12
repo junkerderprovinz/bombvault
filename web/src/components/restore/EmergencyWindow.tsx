@@ -542,7 +542,7 @@ export function EmergencyWindow({
     footer = (
       <>
         <Button label={t("common.back")} labelKey="common.back" glyph={<IconBack />} tone="subtle" onClick={() => setLeaving(false)} />
-        <Button label={t("emergency.undo")} labelKey={null} onClick={() => void undoAndClose()} />
+        <Button label={t("emergency.undo")} labelKey="emergency.undo" onClick={() => void undoAndClose()} />
         <Button label={t("emergency.keep")} labelKey={null} glyph={<IconCheck />} tone="accent" onClick={() => void finish()} />
       </>
     );
