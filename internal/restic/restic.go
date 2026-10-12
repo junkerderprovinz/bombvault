@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/progress"
+	"github.com/junkerderprovinz/bombvault/internal/redact"
 	"sync/atomic"
 )
 
@@ -2041,7 +2042,7 @@ func scrubSecrets(s string) string {
 	last := 0
 	for _, m := range repoLocationRe.FindAllStringIndex(s, -1) {
 		b.WriteString(scrubOutsideARepoLocation(s[last:m[0]]))
-		b.WriteString(repoUserinfoRe.ReplaceAllString(s[m[0]:m[1]], "${1}:${2}[redacted]@"))
+		b.WriteString(redact.RcloneParams(repoUserinfoRe.ReplaceAllString(s[m[0]:m[1]], "${1}:${2}[redacted]@")))
 		last = m[1]
 	}
 	b.WriteString(scrubOutsideARepoLocation(s[last:]))

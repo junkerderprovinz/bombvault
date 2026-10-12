@@ -43,6 +43,12 @@ var repoScrubCases = []struct {
 		gone: []string{"wJalrXUtnFEMI", "K7MDENG", "backupuser"},
 	},
 	{
+		name: "the parameters of an rclone connection string go, the bucket stays",
+		in:   "Fatal: unable to open repository at rclone::s3,provider=AWS,access_key_id=AKIAEXAMPLE,secret_access_key=wJalrXUtnFEMIK7MDENG:bucket/bombvault: exit status 1",
+		keep: []string{"rclone::s3,", ":bucket/bombvault", "secret_access_key=[redacted]"},
+		gone: []string{"AKIAEXAMPLE", "wJalrXUtnFEMIK7MDENG"},
+	},
+	{
 		name: "the sftp form keeps its scheme",
 		in:   "sftp:backupuser@nas.local:/srv/restic refused the connection",
 		keep: []string{"sftp:", "nas.local", "[redacted]@"},

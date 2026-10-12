@@ -28,6 +28,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/compose"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
+	"github.com/junkerderprovinz/bombvault/internal/redact"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -1131,7 +1132,7 @@ func scrubRunErr(s string) string {
 	last := 0
 	for _, m := range runErrRepoLocationRe.FindAllStringIndex(s, -1) {
 		b.WriteString(scrubRunErrOutsideARepoLocation(s[last:m[0]]))
-		b.WriteString(runErrRepoUserinfoRe.ReplaceAllString(s[m[0]:m[1]], "${1}:${2}[redacted]@"))
+		b.WriteString(redact.RcloneParams(runErrRepoUserinfoRe.ReplaceAllString(s[m[0]:m[1]], "${1}:${2}[redacted]@")))
 		last = m[1]
 	}
 	b.WriteString(scrubRunErrOutsideARepoLocation(s[last:]))

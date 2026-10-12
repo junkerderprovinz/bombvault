@@ -21,6 +21,11 @@ var rcloneParamRe = regexp.MustCompile(`,([\w-]+)=("(?:[^"]|"")*"|'(?:[^']|'')*'
 // every parameter of an rclone connection string with Marker, and leaves
 // scheme, host, bucket and path.
 func Credentials(s string) string {
-	s = userinfoRe.ReplaceAllString(s, Marker+"@")
+	return RcloneParams(userinfoRe.ReplaceAllString(s, Marker+"@"))
+}
+
+// RcloneParams replaces the value of every parameter of an rclone connection
+// string in s with Marker.
+func RcloneParams(s string) string {
 	return rcloneParamRe.ReplaceAllString(s, ",${1}="+Marker)
 }
