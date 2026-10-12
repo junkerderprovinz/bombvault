@@ -105,9 +105,12 @@ export function TargetScene({
   } else if (where === "folder") {
     body = (
       <>
-        <path className="glim-target-folder glim-target-folder-back" d="M90 18h14l4 4h30v30H90z" />
+        <path
+          className="glim-target-folder glim-target-folder-back"
+          d="M95 21.5a2.5 2.5 0 0 1 2.5-2.5h8l3.5 3.5h21.5a2.5 2.5 0 0 1 2.5 2.5V53H95z"
+        />
         {FILE_TURNS.map((turn, k) => {
-          const x = 99 + k * 10;
+          const x = 102 + k * 8;
           const y = k % 3 ? 24 : 26;
           const at = 0.1 + k * 0.09;
           return (
@@ -121,7 +124,7 @@ export function TargetScene({
             </g>
           );
         })}
-        <path className="glim-target-folder" d="M90 32h48v20H90z" />
+        <path className="glim-target-folder" d="M95 33.5a2 2 0 0 1 2-2h34a2 2 0 0 1 2 2V51a2 2 0 0 1-2 2H97a2 2 0 0 1-2-2z" />
       </>
     );
   } else {
@@ -147,7 +150,7 @@ export function TargetScene({
       aria-hidden="true"
       data-testid={`target-scene-${where}`}
       className={`glim-pic h-[60px] w-[140px] flex-none overflow-visible max-md:h-[52px] max-md:w-[120px]${
-        playing ? " glim-clock" : " opacity-45"
+        playing ? " glim-clock glim-clock-quick" : " opacity-45"
       }`}
     >
       <LogoImage x={2} y={13} size={34} />

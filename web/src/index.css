@@ -3046,12 +3046,16 @@ body {
   }
 
   /* A picture on the clock plays one pass after the other. The emergency
-     has four stations to get through and takes half as long again. */
+     has four stations to get through and takes half as long again; a small
+     picture beside a choice tells one step and takes half as long. */
   :root:not([data-motion="off"]) .glim-clock {
     animation: glim-clock var(--motion-scene-dur, 6s) linear infinite;
   }
   :root:not([data-motion="off"]) .glim-clock-long {
     animation-duration: calc(var(--motion-scene-dur, 6s) * 1.5);
+  }
+  :root:not([data-motion="off"]) .glim-clock-quick {
+    animation-duration: calc(var(--motion-scene-dur, 6s) * .5);
   }
   :root:not([data-motion="off"]) .glim-rail-handle {
     transition: top var(--motion-tab-dur, 220ms) ease-out;
