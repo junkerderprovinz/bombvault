@@ -3131,6 +3131,11 @@ UNION SELECT member_id FROM pull_sources WHERE member_id <> '';`,
 		name:    "legacy_members_without_keys",
 		sql:     `DELETE FROM legacy_members WHERE member_id IN (SELECT member_id FROM member_keys);`,
 	},
+	{
+		version: oneLineUpsertMigration,
+		name:    "one_line_upserts_keep_stored_values",
+		sql:     oneLineInsertTriggers(),
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3263,6 +3268,10 @@ const updateEveryContainerMigration = 355
 // and the removal of those that pinned a key, 357.
 const legacyMembersMigration = 356
 
+// oneLineUpsertMigration numbers the guard against line breaks for the
+// saves that insert a row over itself, 358.
+const oneLineUpsertMigration = 358
+
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
 	table string
@@ -3297,6 +3306,23 @@ func oneLineTriggers() string {
 			t.table, strings.Join(fresh, " OR "), ErrLineBreakText)
 		fmt.Fprintf(&b, "CREATE TRIGGER IF NOT EXISTS one_line_%[1]s_update BEFORE UPDATE OF %[2]s ON %[1]s WHEN %[3]s BEGIN SELECT RAISE(ABORT, '%[4]s'); END;\n",
 			t.table, strings.Join(t.cols, ", "), strings.Join(changed, " OR "), ErrLineBreakText)
+	}
+	return b.String()
+}
+
+// oneLineInsertTriggers rebuilds the insert guards of oneLineTriggers to pass a
+// value the row already holds. SQLite fires the insert trigger of an upsert
+// before it turns into an update, so a value stored before the guard would
+// block every change to its row.
+func oneLineInsertTriggers() string {
+	var b strings.Builder
+	for _, t := range oneLineColumns {
+		var fresh []string
+		for _, c := range t.cols {
+			fresh = append(fresh, fmt.Sprintf("(instr(coalesce(NEW.%[1]s, ''), char(10)) + instr(coalesce(NEW.%[1]s, ''), char(13)) > 0 AND NOT EXISTS (SELECT 1 FROM %[2]s WHERE id = NEW.id AND %[1]s IS NEW.%[1]s))", c, t.table))
+		}
+		fmt.Fprintf(&b, "DROP TRIGGER IF EXISTS one_line_%[1]s_insert;\nCREATE TRIGGER one_line_%[1]s_insert BEFORE INSERT ON %[1]s WHEN %[2]s BEGIN SELECT RAISE(ABORT, '%[3]s'); END;\n",
+			t.table, strings.Join(fresh, " OR "), ErrLineBreakText)
 	}
 	return b.String()
 }

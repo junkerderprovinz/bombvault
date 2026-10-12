@@ -1,6 +1,7 @@
 package store
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -26,5 +27,33 @@ func TestAMemberThatPinnedAKeyIsNoLegacyMember(t *testing.T) {
 	}
 	if legacy, err := r.LegacyMember("old"); err != nil || !legacy {
 		t.Errorf("the member without a key is legacy=%v (%v)", legacy, err)
+	}
+}
+
+func TestATargetWhoseNameSpansLinesCanStillBeSaved(t *testing.T) {
+	db := OpenMem(t)
+	migrateThrough(t, db, oneLineMigration-1)
+	r := New(db)
+	stored, err := r.CreateOffsiteTarget(OffsiteTarget{Domain: "files", Name: "Two\nlines", Repo: "rest:https://box:8000/files", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatalf("a second start: %v", err)
+	}
+
+	stored.Schedule = "daily 03:00"
+	if _, err := r.UpsertOffsiteTarget(stored); err != nil {
+		t.Fatalf("saving another field of the target: %v", err)
+	}
+	stored.Name = "Two\nother lines"
+	if _, err := r.UpsertOffsiteTarget(stored); err == nil || !strings.Contains(err.Error(), ErrLineBreakText) {
+		t.Fatalf("a changed name with a line break: %v", err)
+	}
+	if _, err := r.CreateOffsiteTarget(OffsiteTarget{Domain: "files", Name: "Two\nlines", Repo: "rest:https://box:8000/other", Enabled: true}); err == nil {
+		t.Fatal("a new target took the stored two-line name")
 	}
 }
