@@ -172,14 +172,14 @@ test.describe("on the desktop", () => {
   test("a line the server would refuse is no switch, and the choice of view survives a reload", async ({ page }) => {
     const staged = await stageStorage(page, 1280);
     await page.goto("/storage");
-    const fixed = page.getByRole("switch", { name: "Flash nach bombvault" });
+    const fixed = page.getByRole("switch", { name: "Flash nach Lokal" });
     await expect(fixed).toBeDisabled();
-    await expect(page.getByLabel("Flash sichert immer in den eigenen Ordner.")).toBeVisible();
+    await expect(page.getByLabel("Flash sichert immer zuerst in den eigenen Ordner. Die Off-site-Kopien entstehen aus dieser Sicherung, deshalb bleibt sie an.")).toBeVisible();
     await fixed.click({ force: true });
     expect(staged.writes).toEqual([]);
 
     await page.getByRole("radio", { name: "Schalter" }).click();
-    await expect(page.getByRole("group", { name: "Flash" }).getByRole("button", { name: "bombvault" })).toBeDisabled();
+    await expect(page.getByRole("group", { name: "Flash" }).getByRole("button", { name: "Lokal" })).toBeDisabled();
     await page.reload();
     await expect(page.getByRole("radio", { name: "Schalter" })).toBeChecked();
     await expect(page.getByRole("group", { name: "Container" }).getByRole("button", { name: STORAGE_BOX.name })).toHaveAttribute("aria-pressed", "true");
