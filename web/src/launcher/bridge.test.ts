@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bridgeOver, displayAddress, normalizeAddress, type Port } from "./bridge";
+import { bridgeOver, displayAddress, networkReason, normalizeAddress, type Port } from "./bridge";
 
 describe("normalizeAddress", () => {
   it("gives a bare host https, as BombVault serves by default", () => {
@@ -48,5 +48,22 @@ describe("bridgeOver", () => {
 
     expect(await first).toEqual({ status: 200, body: "{}" });
     expect(await second).toEqual({ status: 401, body: "" });
+  });
+});
+
+describe("networkReason", () => {
+  it("names the network failures a person can act on", () => {
+    expect(networkReason("net::ERR_CONNECTION_TIMED_OUT")).toBe("timeout");
+    expect(networkReason("net::ERR_CONNECTION_REFUSED")).toBe("refused");
+    expect(networkReason("net::ERR_ADDRESS_UNREACHABLE")).toBe("noRoute");
+    expect(networkReason("net::ERR_NAME_NOT_RESOLVED")).toBe("name");
+    expect(networkReason("net::ERR_INTERNET_DISCONNECTED")).toBe("offline");
+    expect(networkReason("net::ERR_CERT_AUTHORITY_INVALID")).toBe("certificate");
+    expect(networkReason("net::ERR_CONNECTION_RESET")).toBe("dropped");
+  });
+
+  it("leaves an error it does not know to the plain sentence", () => {
+    expect(networkReason("net::ERR_BLOCKED_BY_CLIENT")).toBeUndefined();
+    expect(networkReason("")).toBeUndefined();
   });
 });

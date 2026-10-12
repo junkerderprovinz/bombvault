@@ -157,6 +157,15 @@ describe("Launcher", () => {
     expect(await screen.findByText("The relay can't reach it right now.")).toBeTruthy();
   });
 
+  it("says what a network error means and keeps the raw one in an info bubble", async () => {
+    const detail = "net::ERR_CONNECTION_TIMED_OUT";
+    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app, problem: { id: "s1", kind: "unreachable", detail } });
+    render(<Launcher bridge={bridge} />);
+    expect(await screen.findByText("It didn't answer in time.")).toBeTruthy();
+    expect(screen.queryByText(detail)).toBeNull();
+    expect(screen.getByLabelText(`The phone reported: ${detail}`)).toBeTruthy();
+  });
+
   it("renames the phone from the settings behind the gear", async () => {
     const { bridge, sent } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);
