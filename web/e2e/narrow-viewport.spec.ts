@@ -5,15 +5,16 @@
 // must fit 320-360px: the de compound words ("Einstellungen",
 // "Wiederherstellung") and fr accented long labels ("Paramètres",
 // "Récupération") are the stress cases. For every combination of {de, fr} x
-// {320px, 360px}, every bottom-bar slot caption fits in two line boxes without
-// being cut, every More-sheet row label stays on a single line box, and the
-// bar container shows no horizontal overflow.
+// {320px, 360px, 412px}, every bottom-bar slot caption fits in two line boxes
+// without being cut (in one at 412px, where the bar has room for all of
+// them), every More-sheet row label stays on a single line box, and the bar
+// container shows no horizontal overflow.
 //
 // Geometry, not screenshots (fast + non-flaky): each label's height is
 // measured against an explicitly normalized 20px line box. A bar caption may
-// wrap once (a fifth of a phone is narrower than "Wiederherstellung"), so it
-// must stay under three boxes; a sheet label has the whole row and must stay
-// under two. Overflow is scrollWidth vs clientWidth. All measurements tolerate
+// wrap once on a narrow phone (the five captions together are wider than its
+// bar), so it must stay under three boxes; a sheet label has the whole row and
+// must stay under two. Overflow is scrollWidth vs clientWidth. All measurements tolerate
 // subpixel rounding (+0.5/+1px) and nothing else.
 //
 // The locale is seeded the way a returning visitor's browser carries it,
@@ -89,11 +90,13 @@ async function bootSeededPage(
 }
 
 const locales = ["de", "fr"] as const;
-const widths = [320, 360];
+const widths = [320, 360, 412];
 
 for (const locale of locales) {
   for (const width of widths) {
-    test(`narrow viewport ${locale} @ ${width}px: bar captions within two lines, sheet labels single-line, bar never overflows`, async ({ page }, testInfo) => {
+    // From 412px the bar is wide enough for every caption on one line.
+    const captionLines = width >= 412 ? 1 : 2;
+    test(`narrow viewport ${locale} @ ${width}px: bar captions within ${captionLines} line(s), sheet labels single-line, bar never overflows`, async ({ page }, testInfo) => {
       test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the backstop targets the mobile chrome");
       await bootSeededPage(page, locale, width);
 
@@ -124,8 +127,8 @@ for (const locale of locales) {
         expect(s.height, `caption "${s.text}" must be rendered`).toBeGreaterThan(0);
         expect(
           s.height,
-          `caption "${s.text}" took a third line (height ${s.height}px vs one ${LINE_BOX}px line box)`,
-        ).toBeLessThanOrEqual(LINE_BOX * 2 + 0.5);
+          `caption "${s.text}" took more than ${captionLines} line(s) (height ${s.height}px vs one ${LINE_BOX}px line box)`,
+        ).toBeLessThanOrEqual(LINE_BOX * captionLines + 0.5);
         expect(s.clipped, `caption "${s.text}" is cut off`).toBe(false);
       }
 

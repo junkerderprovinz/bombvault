@@ -85,7 +85,7 @@ describe("BottomNav bar-card", () => {
 
   it("renders Overview, Backups, Restore and Settings, in that order, plus the More trigger", () => {
     draw("/dashboard");
-    const slots = bar().querySelectorAll("div.flex.h-14 > *");
+    const slots = bar().querySelectorAll("div.grid.h-14 > *");
     expect(slots).toHaveLength(5);
     expect(within(bar()).getAllByRole("link").map((slot) => slot.textContent)).toEqual([
       "Overview",
@@ -116,7 +116,7 @@ describe("BottomNav bar-card", () => {
 describe("BottomNav colour engine", () => {
   it("every slot carries glim-hue and its own --item-hue, pairwise distinct", () => {
     draw("/dashboard");
-    const slots = Array.from(bar().querySelectorAll("div.flex.h-14 > *")) as HTMLElement[];
+    const slots = Array.from(bar().querySelectorAll("div.grid.h-14 > *")) as HTMLElement[];
     const hues = slots.map((s) => s.style.getPropertyValue("--item-hue"));
     for (const hue of hues) {
       expect(hue).toMatch(/^var\(--rb-[0-7]\)$/);
@@ -218,7 +218,7 @@ describe("BottomNav More trigger", () => {
 
   it("hands the sheet a rotation position that continues the bar's, not a restart", () => {
     draw("/dashboard");
-    const slots = Array.from(bar().querySelectorAll("div.flex.h-14 > *")) as HTMLElement[];
+    const slots = Array.from(bar().querySelectorAll("div.grid.h-14 > *")) as HTMLElement[];
     // The DOM row ends with the More trigger; the destination slots are
     // everything before it, so the trigger's own position is the count of
     // destinations and the sheet's first row is the one after the trigger.
@@ -256,7 +256,7 @@ describe("BottomNav label axis (bottombar)", () => {
   }
 
   function allSlots(): HTMLElement[] {
-    return Array.from(bar().querySelectorAll("div.flex.h-14 > *")) as HTMLElement[];
+    return Array.from(bar().querySelectorAll("div.grid.h-14 > *")) as HTMLElement[];
   }
 
   it("text mode shows every caption and names slots through their text alone", () => {
