@@ -336,6 +336,12 @@ describe("a restore link from a finding", () => {
     expect(rows()[1].className).toContain("bg-carbon-surface3");
   });
 
+  it("reads the backups while the entry is still read", async () => {
+    mocks.listContainers.mockReturnValue(new Promise(() => {}));
+    await renderPage(`/backups/container/immich?restore=${RUNS[1].snapshotId}&at=${RUNS[1].finishedAt}`);
+    expect(getTimeline).toHaveBeenCalledWith("containers", "immich");
+  });
+
   it("says that the backup is gone and names the nearest one", async () => {
     await renderPage(`/backups/container/immich?restore=vanished&at=${IMMICH.lastBackup}`);
     expect(await screen.findByRole("status")).toBeTruthy();
