@@ -125,7 +125,7 @@ const bree = dataUrl(
   "font/ttf",
 );
 const lato = dataUrl(await cached("Lato-Regular.ttf", "https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf"), "font/ttf");
-const logo = dataUrl(readFileSync(join(root, "web", "public", "logo-light.svg")), "image/svg+xml");
+const logo = dataUrl(readFileSync(join(root, "web", "public", "logo.svg")), "image/svg+xml");
 
 async function page(browser, { base, path, accent, prepare }) {
   // A demo instance answers on its own self-signed certificate.

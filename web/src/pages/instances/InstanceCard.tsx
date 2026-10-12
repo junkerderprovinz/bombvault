@@ -2,27 +2,14 @@ import type { CSSProperties, ReactNode } from "react";
 
 import { hueVars } from "../../lib/appearance";
 
-/** InstanceMark is the BombVault logo on the start edge of a card, in the
- *  variant the colour mode needs, as in the sidebar. */
+/** InstanceMark is the BombVault logo on the start edge of a card, as in the sidebar. */
 export function InstanceMark() {
-  const cls = "h-20 md:h-[104px] w-auto shrink-0";
-  return (
-    <>
-      <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className={`${cls} block dark:hidden`} />
-      <img src="/logo-light.svg" alt="" aria-hidden="true" draggable={false} className={`${cls} hidden dark:block`} />
-    </>
-  );
+  return <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className="block h-20 md:h-[104px] w-auto shrink-0" />;
 }
 
 /** LogoImage is the same logo inside a picture, in user units. */
 export function LogoImage({ x, y, size }: { x: number; y: number; size: number }) {
-  const box = { x: x.toFixed(1), y: y.toFixed(1), width: size, height: size };
-  return (
-    <>
-      <image href="/logo.svg" {...box} className="glim-logo-image dark:hidden" />
-      <image href="/logo-light.svg" {...box} className="glim-logo-image hidden dark:inline" />
-    </>
-  );
+  return <image href="/logo.svg" x={x.toFixed(1)} y={y.toFixed(1)} width={size} height={size} className="glim-logo-image" />;
 }
 
 /** The outline of a phone on a 16 unit grid, with its screen and button cut out. */

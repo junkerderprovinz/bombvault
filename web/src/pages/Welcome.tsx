@@ -39,8 +39,7 @@ function FirstStart({ items }: { items: BackupItem[] }) {
 
   return (
     <div className="mx-auto mt-[6vh] flex w-full max-w-[47.5rem] flex-col items-center gap-[22px] pb-6 text-center">
-      <img src="/logo.svg" alt="" draggable={false} className="block w-[120px] dark:hidden" />
-      <img src="/logo-light.svg" alt="" draggable={false} className="hidden w-[120px] dark:block" />
+      <img src="/logo.svg" alt="" draggable={false} className="block w-[120px]" />
       {/* The page title says the same to a screen reader. */}
       <p aria-hidden="true" className="text-status font-semibold leading-tight text-carbon-text">
         {t("welcome.title")}

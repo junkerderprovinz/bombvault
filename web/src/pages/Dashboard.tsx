@@ -433,8 +433,7 @@ export function Dashboard() {
       <div className="flex flex-col gap-6">
         {/* "BombVault" is the product's name and is not translated. */}
         <div className="flex items-center gap-2 md:hidden">
-          <img src="/logo.svg" alt="" draggable={false} className="block h-6 w-6 object-contain dark:hidden" />
-          <img src="/logo-light.svg" alt="" draggable={false} className="hidden h-6 w-6 object-contain dark:block" />
+          <img src="/logo.svg" alt="" draggable={false} className="block h-6 w-6 object-contain" />
           <span className="text-lg font-semibold tracking-tight text-carbon-text">BombVault</span>
         </div>
         <PageTitle>{t("nav.overview")}</PageTitle>
