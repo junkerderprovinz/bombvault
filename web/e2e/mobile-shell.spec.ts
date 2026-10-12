@@ -68,7 +68,7 @@ test("the bar renders exactly the registry slots: enabled destinations + More, n
   const bar = page.getByTestId("bottom-nav");
   // The slot row is the only child of the bar-card (the More sheet is a portal
   // to document.body, never a slot); the row's direct children are the slots.
-  const slots = bar.locator("div.flex.h-14 > *");
+  const slots = bar.locator("div.h-14 > *");
   // The bar holds the registry's four bar destinations and the More trigger,
   // in the sidebar's order, whatever the instance has switched on.
   await expect(slots).toHaveCount(5);
