@@ -1146,12 +1146,6 @@
   --accent-glyph:      var(--accent-text);
 }
 
-/* The shatter egg slices whichever logo is on screen: the light mark on the
-   dark sidebar, the dark mark on the light one. Same specificity, so the dark
-   rule has to come after :root. */
-:root               { --egg-logo: url("/logo.svg"); }
-[data-theme="dark"] { --egg-logo: url("/logo-light.svg"); }
-
 /* The house font is Noto Sans, shipped with the app for Latin, Cyrillic,
    Greek, Vietnamese and Devanagari, with Noto's own cuts for Arabic, Hebrew and
    Thai. The "Variable" names are the shipped files, the plain ones an install
@@ -2787,14 +2781,13 @@ body {
    and are absolutely positioned, so the sidebar layout never shifts. */
 .glim-logo-mark { transform-origin: center; will-change: transform; overflow: visible; }
 
-/* The shatter grid: 6×6 slices of the current logo over the mark. Each tile
-   paints its slice from --egg-logo with its own background-position, so at
-   rest they form the whole mark. Position, size and --dx/--dy/--rot/--delay
-   are set inline. */
+/* The shatter grid: 6×6 slices of the logo over the mark. Each tile paints its
+   slice with its own background-position, so at rest they form the whole
+   mark. Position, size and --dx/--dy/--rot/--delay are set inline. */
 .glim-frag-grid { position: absolute; inset: 0; pointer-events: none; }
 .glim-frag {
   position: absolute;
-  background-image: var(--egg-logo);
+  background-image: url("/logo.svg");
   /* Sized to the whole mark, not the tile. `--egg-mark` comes from the logo
      row, because the narrow rail draws a smaller mark. */
   background-size: var(--egg-mark, 104px) var(--egg-mark, 104px);
