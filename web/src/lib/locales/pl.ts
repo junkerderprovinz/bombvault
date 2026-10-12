@@ -4405,6 +4405,7 @@ const pl: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "To, co otworzył kod odblokowania, nie jest depozytem klucza.",
   "deposit.code.deposit-busy": "Jednocześnie sprawdza się zbyt wiele kodów odblokowania. Spróbuj ponownie za chwilę.",
   "secrets.passwordNotSet": "Najpierw ustaw hasło logowania w sekcji Ustawienia, Bezpieczeństwo. Bez hasła ten serwer nie wydaje żadnego klucza.",
+  "secrets.deletePasswordNotSet": "Usuwanie kopii zapasowych wymaga hasła logowania. Ustaw je w sekcji Ustawienia, Bezpieczeństwo.",
   "secrets.ownLoginNeeded": "Wymaga to zalogowania się w interfejsie webowym samej tej instancji. Połączenie aplikacji w telefonie otwiera strony, ale nie klucze. Zaloguj się tutaj i powtórz.",
   "secrets.signInHere": "Zaloguj się tutaj",
   "keeper.state.changed": "Zmieniony tam",

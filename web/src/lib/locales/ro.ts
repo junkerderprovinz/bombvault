@@ -4409,6 +4409,7 @@ const ro: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Ce a deschis codul de deblocare nu este o depunere de cheie.",
   "deposit.code.deposit-busy": "Se încearcă prea multe coduri de deblocare deodată. Încearcă din nou peste puțin timp.",
   "secrets.passwordNotSet": "Setează mai întâi o parolă de autentificare la Setări, Securitate. Fără parolă, acest server nu dă nicio cheie.",
+  "secrets.deletePasswordNotSet": "Ștergerea copiilor de rezervă cere o parolă de conectare. Setează una în Setări, Securitate.",
   "secrets.ownLoginNeeded": "Pentru asta trebuie să te autentifici în interfața web a acestei instanțe. Conexiunea aplicației de telefon deschide paginile, dar nu cheile. Autentifică-te aici, apoi repetă.",
   "secrets.signInHere": "Autentifică-te aici",
   "keeper.state.changed": "Modificată acolo",

@@ -4,9 +4,11 @@ import { repoDisplayName } from "../../lib/directRepo";
 import { useT } from "../../lib/i18n";
 import { formatList } from "../../lib/placement";
 import { placementErrorText } from "../../lib/placementCodes";
+import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { hostLabelSettled } from "../../lib/useHostLabel";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 
 /** TimelineDeleteDialog deletes one row at one or more places: the server
  *  lists every other place live, so the question can say whether this is the
@@ -33,6 +35,7 @@ export function TimelineDeleteDialog({
   const { t, lang } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const ownLogin = useOwnLogin();
 
   useEffect(() => {
     let live = true;
@@ -100,10 +103,11 @@ export function TimelineDeleteDialog({
       }
       const out = await deleteTimelineRow(domain, itemKey, row.key, del);
       if (!live) return;
+      if (ownLogin.handled(out, onClose)) return;
       const skipped = out.skipped ?? [];
       const done = out.deleted ?? [];
       if (!out.ok) {
-        push(placementErrorText(t, lang, out, "common.deleteFailed"), "fail");
+        push(deleteSentence(t, out.code) ?? placementErrorText(t, lang, out, "common.deleteFailed"), "fail");
         // A refusal can come after places were emptied, and those copies are
         // gone for good, so the failure never stands on its own.
         if (done.length > 0) push(t("timeline.deletePartial").replace("{list}", () => names(done)));
@@ -123,5 +127,10 @@ export function TimelineDeleteDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <>{confirmDialog}</>;
+  return (
+    <>
+      {confirmDialog}
+      {ownLogin.dialog}
+    </>
+  );
 }

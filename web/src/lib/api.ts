@@ -774,7 +774,8 @@ async function fetchJSON<T>(
   return res.json() as Promise<T>;
 }
 
-/** What a route that makes or hands out key material answers a 403 with:
+/** What a route that makes or hands out key material, or deletes backups for
+ *  good, answers a 403 with:
  *  the server has no login password, or the session is the one a paired phone
  *  got for the group's words. After the second, signing in at this instance
  *  (login) and sending the same request again goes through. */
@@ -955,7 +956,7 @@ export function restore(
   withoutRuntime?: boolean,
   opts?: RestoreOptions
 ): Promise<OkEnvelope & { started?: boolean }> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
+  return fetchKeyJSON(`/api/containers/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, confirm, leaveStopped, withoutRuntime, ...opts }),
   });
@@ -1227,7 +1228,7 @@ export function restoreContainerFiles(
   confirm: boolean,
   source?: string
 ): Promise<RestoreFilesResponse> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore-files${srcParam(source)}`, {
+  return fetchKeyJSON(`/api/containers/${encodeURIComponent(name)}/restore-files${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, paths, targetPath, confirm }),
   });
@@ -1256,7 +1257,7 @@ export function restoreContainerToPath(
   targetPath: string,
   source?: string
 ): Promise<RestoreToResponse> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore-to${srcParam(source)}`, {
+  return fetchKeyJSON(`/api/containers/${encodeURIComponent(name)}/restore-to${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, targetPath }),
   });
@@ -1838,7 +1839,7 @@ function mergeDirectFindings(found: DirectRepoFinding[]): DirectRepoFinding[] {
 /** Delete every backup of a container from the selected source. Local also
  *  forgets the container; off-site keeps it. */
 export function deleteBackups(name: string, source?: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/backups${srcParam(source)}`, {
+  return fetchKeyJSON(`/api/containers/${encodeURIComponent(name)}/backups${srcParam(source)}`, {
     method: "DELETE",
   });
 }
@@ -1876,7 +1877,7 @@ export function unlinkContainerAlias(name: string, old: string): Promise<OkEnvel
  * the store; on off-site the target is kept (still restorable from local).
  */
 export function deleteBackupsVM(name: string, source?: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/backups${srcParam(source)}`, {
+  return fetchKeyJSON(`/api/vms/${encodeURIComponent(name)}/backups${srcParam(source)}`, {
     method: "DELETE",
   });
 }
@@ -2397,7 +2398,7 @@ export function pruneDomain(
   domain: "containers" | "vms" | "flash" | "config" | "files" | "zfs",
   source?: string
 ): Promise<OkEnvelope & { paused?: string[] }> {
-  return fetchJSON(`/api/prune/${domain}${srcParam(source)}`, { method: "POST" });
+  return fetchKeyJSON(`/api/prune/${domain}${srcParam(source)}`, { method: "POST" });
 }
 
 /** One snapshot in a retention preview, as restic reports it. */
@@ -3088,7 +3089,7 @@ export function deleteAtTarget(
   onlyThere: string[],
   typedName: string
 ): Promise<OkEnvelope & { deleted?: number; preview?: RemovalPreview }> {
-  return fetchJSON(removalPath(item, targetId), {
+  return fetchKeyJSON(removalPath(item, targetId), {
     method: "DELETE",
     body: JSON.stringify({ onlyThere, typedName }),
   });
@@ -3451,7 +3452,7 @@ export function deleteTimelineRow(
   rowKey: string,
   places: PlaceDelete[]
 ): Promise<OkEnvelope & { deleted?: PlaceDelete[]; skipped?: OtherPlace[] }> {
-  return fetchJSON(`${timelinePath(domain, key)}/${encodeURIComponent(rowKey)}`, {
+  return fetchKeyJSON(`${timelinePath(domain, key)}/${encodeURIComponent(rowKey)}`, {
     method: "DELETE",
     body: JSON.stringify({ places }),
   });
@@ -3587,7 +3588,7 @@ export function deleteSnapshot(
   id: string,
   source?: string
 ): Promise<OkEnvelope> {
-  return fetchJSON(`/api/snapshots/${domain}/${encodeURIComponent(id)}${srcParam(source)}`, { method: "DELETE" });
+  return fetchKeyJSON(`/api/snapshots/${domain}/${encodeURIComponent(id)}${srcParam(source)}`, { method: "DELETE" });
 }
 
 /** GET /api/rclone — configured rclone remote names (never secrets). */
@@ -4086,7 +4087,7 @@ export function restoreVM(
   leaveStopped?: boolean,
   opts?: RestoreOptions
 ): Promise<OkEnvelope & { started?: boolean }> {
-  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
+  return fetchKeyJSON(`/api/vms/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, confirm, leaveStopped, ...opts }),
   });
@@ -4425,7 +4426,7 @@ export function deleteFileSet(id: string): Promise<OkEnvelope> {
 /** DELETE /api/files/sets/{id}/backups: every backup of a file set from the
  *  selected source. Local also forgets the set; off-site keeps it. */
 export function deleteFileSetBackups(id: string, source?: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/backups${srcParam(source)}`, {
+  return fetchKeyJSON(`/api/files/sets/${encodeURIComponent(id)}/backups${srcParam(source)}`, {
     method: "DELETE",
   });
 }
@@ -4470,7 +4471,7 @@ export function restoreFileSet(
   source?: string,
   opts?: RestoreOptions
 ): Promise<OkEnvelope & { started?: boolean; target?: string }> {
-  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/restore${srcParam(source)}`, {
+  return fetchKeyJSON(`/api/files/sets/${encodeURIComponent(id)}/restore${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, targetPath, confirm, ...opts }),
   });
@@ -4504,7 +4505,7 @@ export function restoreFileSetFiles(
   confirm: boolean,
   source?: string
 ): Promise<OkEnvelope & { started?: boolean; target?: string }> {
-  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/restore-files${srcParam(source)}`, {
+  return fetchKeyJSON(`/api/files/sets/${encodeURIComponent(id)}/restore-files${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, paths, targetPath, confirm }),
   });
@@ -4821,7 +4822,7 @@ export function patchZFSDataset(id: string, patch: ZFSDatasetPatch): Promise<ZFS
 /** DELETE /api/zfs/datasets/{id}, keeping its backups. `safety` also destroys
  *  the safety snapshots earlier restores kept. */
 export function deleteZFSDataset(id: string, safety = false): Promise<ZFSDeleteResult> {
-  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}?safety=${safety}`, {
+  return fetchKeyJSON(`/api/zfs/datasets/${encodeURIComponent(id)}?safety=${safety}`, {
     method: "DELETE",
   });
 }
@@ -4829,7 +4830,7 @@ export function deleteZFSDataset(id: string, safety = false): Promise<ZFSDeleteR
 /** DELETE /api/zfs/datasets/{id}/backups: forget every member's snapshots,
  *  then the item. */
 export function deleteBackupsZFSDataset(id: string): Promise<ZFSCodedEnvelope> {
-  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/backups`, { method: "DELETE" });
+  return fetchKeyJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/backups`, { method: "DELETE" });
 }
 
 /** POST /api/zfs/datasets/{id}/backup. Answers before the run ends (see
@@ -4888,7 +4889,7 @@ export function restoreZFS(
   req: ZFSRestoreRequest,
   source?: string
 ): Promise<ZFSRestoreAck> {
-  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/restore${srcParam(source)}`, {
+  return fetchKeyJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/restore${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify(req),
   });
@@ -4921,7 +4922,7 @@ export function deleteZFSSafetySnapshot(
   name: string
 ): Promise<ZFSCodedEnvelope> {
   const qs = new URLSearchParams({ dataset, name }).toString();
-  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/safety-snapshots?${qs}`, {
+  return fetchKeyJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/safety-snapshots?${qs}`, {
     method: "DELETE",
   });
 }

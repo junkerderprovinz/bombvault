@@ -208,6 +208,7 @@ func TestDeletingAtAnUnknownTargetIsRefused(t *testing.T) {
 
 func TestBulkDeleteRoutesTakeASource(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	f.container("nginx", "")
 	set := f.fileSet("Photos", "")
 	b2c := f.target("containers", "B2", "b2:bucket:containers")

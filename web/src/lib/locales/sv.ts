@@ -4408,6 +4408,7 @@ const sv: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Det som utlämningskoden öppnade är inte en nyckeldeposition.",
   "deposit.code.deposit-busy": "För många utlämningskoder prövas samtidigt. Försök igen om en stund.",
   "secrets.passwordNotSet": "Ange först ett inloggningslösenord under Inställningar, Säkerhet. Utan lösenord lämnar den här servern inte ut någon nyckel.",
+  "secrets.deletePasswordNotSet": "För att radera säkerhetskopior krävs ett inloggningslösenord. Ange ett under Inställningar, Säkerhet.",
   "secrets.ownLoginNeeded": "Det här kräver inloggning i den här instansens eget webbgränssnitt. Mobilappens anslutning öppnar sidorna men inga nycklar. Logga in här och gör om det.",
   "secrets.signInHere": "Logga in här",
   "keeper.state.changed": "Ändrad där",

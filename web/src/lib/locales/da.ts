@@ -4408,6 +4408,7 @@ const da: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Det, frigivelseskoden åbnede, er ikke en nøgledeponering.",
   "deposit.code.deposit-busy": "Der prøves for mange frigivelseskoder på én gang. Prøv igen om lidt.",
   "secrets.passwordNotSet": "Sæt først en adgangskode til login under Indstillinger, Sikkerhed. Uden en udleverer denne server ingen nøgle.",
+  "secrets.deletePasswordNotSet": "Sletning af sikkerhedskopier kræver en loginadgangskode. Angiv en under Indstillinger, Sikkerhed.",
   "secrets.ownLoginNeeded": "Det kræver login i denne instans' egen webgrænseflade. Mobilappens forbindelse åbner siderne, men ingen nøgler. Log ind her, og gør det så igen.",
   "secrets.signInHere": "Log ind her",
   "keeper.state.changed": "Ændret dér",

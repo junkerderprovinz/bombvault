@@ -4418,6 +4418,7 @@ const is: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Það sem opnunarkóðinn opnaði er ekki lyklapakki.",
   "deposit.code.deposit-busy": "Of margir opnunarkóðar eru reyndir í einu. Reyndu aftur að augnabliki liðnu.",
   "secrets.passwordNotSet": "Settu fyrst innskráningarlykilorð undir Stillingar, Öryggi. Án lykilorðs afhendir þessi þjónn engan lykil.",
+  "secrets.deletePasswordNotSet": "Til að eyða afritum þarf innskráningarlykilorð. Settu eitt undir Stillingar, Öryggi.",
   "secrets.ownLoginNeeded": "Til þess þarf að skrá sig inn í vefviðmót þessa tilviks sjálfs. Tenging símaappsins opnar síðurnar en ekki lyklana. Skráðu þig inn hér og gerðu þetta aftur.",
   "secrets.signInHere": "Skrá inn hér",
   "keeper.state.changed": "Breytt þar",

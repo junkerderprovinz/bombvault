@@ -4399,6 +4399,7 @@ const zh: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "取回码打开的内容不是密钥托管副本。",
   "deposit.code.deposit-busy": "同时在尝试的取回码太多。请稍后再试。",
   "secrets.passwordNotSet": "请先在“设置”“安全”中设置登录密码。没有密码时，这台服务器不会交出任何密钥。",
+  "secrets.deletePasswordNotSet": "删除备份需要登录密码。请在“设置”“安全”中设置一个。",
   "secrets.ownLoginNeeded": "这需要登录该实例自己的网页界面。手机应用的连接可以打开页面，但打不开密钥。请在这里登录，然后再操作一次。",
   "secrets.signInHere": "在此登录",
   "keeper.state.changed": "已在对方被改动",

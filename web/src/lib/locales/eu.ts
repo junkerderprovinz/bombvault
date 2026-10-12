@@ -4418,6 +4418,7 @@ const eu: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Gordailu-kodeak ireki duena ez da gakoen gordailu bat.",
   "deposit.code.deposit-busy": "Gordailu-kode gehiegi probatzen ari dira aldi berean. Saiatu berriro une batean.",
   "secrets.passwordNotSet": "Ezarri lehenik saioa hasteko pasahitz bat Ezarpenak, Segurtasuna atalean. Pasahitzik gabe zerbitzari honek ez du gakorik ematen.",
+  "secrets.deletePasswordNotSet": "Babeskopiak ezabatzeko saioa hasteko pasahitza behar da. Ezarri bat Ezarpenak, Segurtasuna atalean.",
   "secrets.ownLoginNeeded": "Horretarako instantzia honen web-interfazean bertan hasi behar da saioa. Telefono-aplikazioaren konexioak orriak irekitzen ditu, baina ez gakoak. Hasi saioa hemen eta egin berriro.",
   "secrets.signInHere": "Hasi saioa hemen",
   "keeper.state.changed": "Han aldatua",

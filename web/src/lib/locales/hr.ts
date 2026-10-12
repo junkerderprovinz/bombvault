@@ -4418,6 +4418,7 @@ const hr: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Ono što je kod za otključavanje otvorio nije polog ključa.",
   "deposit.code.deposit-busy": "Istodobno se isprobava previše kodova za otključavanje. Pokušajte ponovno za trenutak.",
   "secrets.passwordNotSet": "Prvo postavite lozinku za prijavu pod Postavke, Sigurnost. Bez nje ovaj poslužitelj ne daje nijedan ključ.",
+  "secrets.deletePasswordNotSet": "Brisanje sigurnosnih kopija traži lozinku za prijavu. Postavite je pod Postavke, Sigurnost.",
   "secrets.ownLoginNeeded": "Za ovo je potrebna prijava u vlastito web-sučelje ove instance. Veza mobilne aplikacije otvara stranice, ali ne i ključeve. Prijavite se ovdje i ponovite.",
   "secrets.signInHere": "Prijavi se ovdje",
   "keeper.state.changed": "Promijenjeno tamo",

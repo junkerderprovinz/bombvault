@@ -20,10 +20,12 @@ import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { useProgress } from "../../lib/progress";
 import { isWarningNote, RunReasonText } from "../../lib/runReason";
+import { deleteSentence } from "../../lib/secretsRefusal";
 import { useConfirm } from "../../lib/useConfirm";
 import { checkRestoreOnce, restoreBlockReason } from "../../lib/useRestoreCheck";
 import { useToast } from "../../lib/toast";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
@@ -123,6 +125,7 @@ function DumpRow({
   const { lang } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const ownLogin = useOwnLogin();
   const [preparing, setPreparing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [shake, setShake] = useState(0);
@@ -220,7 +223,7 @@ function DumpRow({
       const res = await deleteSnapshot("containers", dump.id, source);
       if (res.ok) onChanged();
       else {
-        push(res.error ?? t("common.deleteFailed"), "fail");
+        if (!ownLogin.handled(res)) push(deleteSentence(t, res.code) ?? res.error ?? t("common.deleteFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
@@ -382,6 +385,7 @@ function DumpRow({
         />
       )}
       {confirmDialog}
+      {ownLogin.dialog}
     </div>
   );
 }

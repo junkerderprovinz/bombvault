@@ -4418,6 +4418,7 @@ const et: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "See, mille väljastuskood avas, ei ole võtme hoiustus.",
   "deposit.code.deposit-busy": "Korraga proovitakse liiga palju väljastuskoode. Proovi hetke pärast uuesti.",
   "secrets.passwordNotSet": "Määra kõigepealt sisselogimise parool jaotises Seaded, Turvalisus. Ilma paroolita see server ühtegi võtit välja ei anna.",
+  "secrets.deletePasswordNotSet": "Varunduste kustutamine nõuab sisselogimisparooli. Määra see jaotises Seaded, Turvalisus.",
   "secrets.ownLoginNeeded": "Selleks tuleb sisse logida selle eksemplari enda veebiliideses. Telefonirakenduse ühendus avab lehed, kuid mitte võtmeid. Logi siin sisse ja tee seda uuesti.",
   "secrets.signInHere": "Logi siin sisse",
   "keeper.state.changed": "Seal muudetud",

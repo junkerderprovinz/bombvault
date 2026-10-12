@@ -4407,6 +4407,7 @@ const nl: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Wat de vrijgavecode opende, is geen bewaarkopie van een sleutel.",
   "deposit.code.deposit-busy": "Er worden te veel vrijgavecodes tegelijk geprobeerd. Probeer het over een moment opnieuw.",
   "secrets.passwordNotSet": "Stel eerst een inlogwachtwoord in onder Instellingen, Beveiliging. Zonder wachtwoord geeft deze server geen sleutel af.",
+  "secrets.deletePasswordNotSet": "Om back-ups te wissen is een inlogwachtwoord nodig. Stel er een in onder Instellingen, Beveiliging.",
   "secrets.ownLoginNeeded": "Hiervoor moet je inloggen op de eigen webinterface van deze instantie. De verbinding van de telefoon-app opent de pagina's, maar geen sleutels. Log hier in en doe het daarna opnieuw.",
   "secrets.signInHere": "Hier inloggen",
   "keeper.state.changed": "Daar gewijzigd",

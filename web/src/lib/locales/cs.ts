@@ -4406,6 +4406,7 @@ const cs: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "To, co kód úschovy otevřel, není úschova klíče.",
   "deposit.code.deposit-busy": "Zkouší se příliš mnoho kódů úschovy najednou. Zkus to za chvíli znovu.",
   "secrets.passwordNotSet": "Nejdřív nastav přihlašovací heslo v části Nastavení, Zabezpečení. Bez něj tento server žádný klíč nevydá.",
+  "secrets.deletePasswordNotSet": "Mazání záloh vyžaduje přihlašovací heslo. Nastav ho v části Nastavení, Zabezpečení.",
   "secrets.ownLoginNeeded": "Je potřeba se přihlásit ve vlastním webovém rozhraní této instance. Připojení mobilní aplikace otevře stránky, ale ne klíče. Přihlas se tady a udělej to znovu.",
   "secrets.signInHere": "Přihlásit se tady",
   "keeper.state.changed": "Změněna tam",

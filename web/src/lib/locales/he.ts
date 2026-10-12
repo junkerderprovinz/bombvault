@@ -4408,6 +4408,7 @@ const he: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "מה שקוד הפתיחה פתח אינו פיקדון של מפתח.",
   "deposit.code.deposit-busy": "מנסים יותר מדי קודי פתיחה בבת אחת. יש לנסות שוב בעוד רגע.",
   "secrets.passwordNotSet": "יש להגדיר קודם סיסמת כניסה תחת הגדרות, אבטחה. בלי סיסמה השרת הזה לא מוסר מפתח.",
+  "secrets.deletePasswordNotSet": "מחיקת גיבויים דורשת סיסמת כניסה. מגדירים אותה תחת הגדרות, אבטחה.",
   "secrets.ownLoginNeeded": "הפעולה דורשת כניסה לממשק האינטרנט של המופע הזה עצמו. החיבור של אפליקציית הטלפון פותח את העמודים אבל לא מפתחות. יש להיכנס כאן ולבצע שוב.",
   "secrets.signInHere": "כניסה כאן",
   "keeper.state.changed": "שונה שם",

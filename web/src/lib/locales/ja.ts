@@ -4399,6 +4399,7 @@ const ja: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "取り出しコードで開いたものは、鍵の預け入れではありません。",
   "deposit.code.deposit-busy": "一度に試されている取り出しコードが多すぎます。少し待ってからもう一度お試しください。",
   "secrets.passwordNotSet": "先に「設定」の「セキュリティ」でログインパスワードを設定してください。パスワードがないと、このサーバーは鍵を渡しません。",
+  "secrets.deletePasswordNotSet": "バックアップを削除するには、ログインパスワードが必要です。「設定」の「セキュリティ」で設定してください。",
   "secrets.ownLoginNeeded": "この操作には、このインスタンス自身のウェブインターフェースへのサインインが必要です。スマートフォンアプリの接続ではページは開けますが、鍵は開けません。ここでサインインして、もう一度行ってください。",
   "secrets.signInHere": "ここでサインイン",
   "keeper.state.changed": "向こうで変更",

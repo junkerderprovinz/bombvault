@@ -4408,6 +4408,7 @@ const tr: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Teslim kodunun açtığı şey bir anahtar emaneti değil.",
   "deposit.code.deposit-busy": "Aynı anda çok fazla teslim kodu deneniyor. Birazdan yeniden dene.",
   "secrets.passwordNotSet": "Önce Ayarlar, Güvenlik altında bir giriş parolası belirle. Parola olmadan bu sunucu hiçbir anahtar vermez.",
+  "secrets.deletePasswordNotSet": "Yedekleri silmek için bir giriş parolası gerekir. Ayarlar, Güvenlik bölümünde bir tane belirle.",
   "secrets.ownLoginNeeded": "Bunun için bu örneğin kendi web arayüzünde oturum açmak gerekiyor. Telefon uygulamasının bağlantısı sayfaları açar ama anahtarları açmaz. Burada oturum aç ve yeniden dene.",
   "secrets.signInHere": "Burada oturum aç",
   "keeper.state.changed": "Orada değiştirildi",

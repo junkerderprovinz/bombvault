@@ -4409,6 +4409,7 @@ const hu: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Amit a feloldókód megnyitott, az nem kulcsletét.",
   "deposit.code.deposit-busy": "Egyszerre túl sok feloldókódot próbálnak ki. Próbáld újra egy pillanat múlva.",
   "secrets.passwordNotSet": "Először állíts be bejelentkezési jelszót a Beállítások, Biztonság alatt. Jelszó nélkül ez a szerver nem ad ki kulcsot.",
+  "secrets.deletePasswordNotSet": "A mentések törléséhez bejelentkezési jelszó kell. Állíts be egyet a Beállítások, Biztonság alatt.",
   "secrets.ownLoginNeeded": "Ehhez be kell jelentkezni ennek a példánynak a saját webes felületén. A telefonos alkalmazás kapcsolata megnyitja az oldalakat, a kulcsokat viszont nem. Jelentkezz be itt, és próbáld újra.",
   "secrets.signInHere": "Bejelentkezés itt",
   "keeper.state.changed": "Ott megváltoztatva",

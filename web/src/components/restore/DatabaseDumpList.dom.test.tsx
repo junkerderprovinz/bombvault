@@ -375,6 +375,17 @@ describe("the database dump list", () => {
     await waitFor(() => expect(deleteSnapshot).toHaveBeenCalledWith("containers", "aaaa1111bbbb2222", "local"));
   });
 
+  it("says that deleting a dump takes a login password when none is set", async () => {
+    deleteSnapshot.mockResolvedValueOnce({ ok: false, code: "password-not-set", error: "set a login password before deleting a backup" } as never);
+    renderList();
+
+    fireEvent.click(await screen.findByRole("button", { name: en["snapshots.delete"] }));
+    await waitFor(() => expect(screen.getByText(en["dbdump.deleteConfirm"])).toBeTruthy());
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["snapshots.delete"] }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith(en["secrets.deletePasswordNotSet"], "fail"));
+  });
+
   it("says so when a recognised database has no dump, and stays away otherwise", async () => {
     listDbDumps.mockResolvedValue({ ok: true, dumps: [] });
     const { container, rerender } = renderList();

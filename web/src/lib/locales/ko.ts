@@ -4399,6 +4399,7 @@ const ko: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "수령 코드로 연 것은 키 보관본이 아닙니다.",
   "deposit.code.deposit-busy": "한꺼번에 너무 많은 수령 코드를 시도하고 있습니다. 잠시 후 다시 시도하세요.",
   "secrets.passwordNotSet": "먼저 설정의 보안에서 로그인 비밀번호를 설정하세요. 비밀번호가 없으면 이 서버는 키를 내주지 않습니다.",
+  "secrets.deletePasswordNotSet": "백업을 삭제하려면 로그인 비밀번호가 필요합니다. 설정의 보안에서 비밀번호를 설정하세요.",
   "secrets.ownLoginNeeded": "이 작업은 이 인스턴스 자체의 웹 인터페이스에 로그인해야 합니다. 휴대폰 앱의 연결로는 페이지는 열리지만 키는 열리지 않습니다. 여기서 로그인한 뒤 다시 시도하세요.",
   "secrets.signInHere": "여기서 로그인",
   "keeper.state.changed": "그쪽에서 변경됨",

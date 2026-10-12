@@ -4402,6 +4402,7 @@ const sl: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Tisto, kar je odprla koda za sprostitev, ni depozit ključa.",
   "deposit.code.deposit-busy": "Hkrati se preizkuša preveč kod za sprostitev. Poskusi znova čez trenutek.",
   "secrets.passwordNotSet": "Najprej nastavi geslo za prijavo pod Nastavitve, Varnost. Brez gesla ta strežnik ne izda nobenega ključa.",
+  "secrets.deletePasswordNotSet": "Za brisanje varnostnih kopij je potrebno geslo za prijavo. Nastavi ga v razdelku Nastavitve, Varnost.",
   "secrets.ownLoginNeeded": "Za to se moraš prijaviti v spletni vmesnik tega primerka samega. Povezava mobilne aplikacije odpre strani, ne pa ključev. Prijavi se tukaj in poskusi znova.",
   "secrets.signInHere": "Prijava tukaj",
   "keeper.state.changed": "Spremenjeno tam",

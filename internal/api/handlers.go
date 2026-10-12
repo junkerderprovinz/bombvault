@@ -1049,7 +1049,7 @@ func (h *Handler) vmNameParam(w http.ResponseWriter, r *http.Request) (string, b
 // source. DELETE /api/containers/{name}/backups?source=
 func (h *Handler) handleDeleteBackups(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
-	if !ok {
+	if !ok || !h.requireAuthForSecrets(w, r, "deleting backups") {
 		return
 	}
 	if err := h.svc.DeleteBackups(r.Context(), name, sourceParam(r)); err != nil {
@@ -1180,7 +1180,7 @@ func (h *Handler) handleUnlinkVMAlias(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/vms/{name}/backups?source=
 func (h *Handler) handleDeleteBackupsVM(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.vmNameParam(w, r)
-	if !ok {
+	if !ok || !h.requireAuthForSecrets(w, r, "deleting backups") {
 		return
 	}
 	if err := h.svc.DeleteBackupsVM(r.Context(), name, sourceParam(r)); err != nil {
@@ -6591,7 +6591,7 @@ func (h *Handler) handleDeleteFileSet(w http.ResponseWriter, r *http.Request) {
 // selected source. DELETE /api/files/sets/{id}/backups?source=
 func (h *Handler) handleDeleteBackupsFileSet(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.fileSetIDParam(w, r)
-	if !ok {
+	if !ok || !h.requireAuthForSecrets(w, r, "deleting backups") {
 		return
 	}
 	if err := h.svc.DeleteBackupsFileSet(r.Context(), id, sourceParam(r)); err != nil {

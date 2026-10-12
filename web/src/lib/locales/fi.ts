@@ -4408,6 +4408,7 @@ const fi: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Se, minkä noutokoodi avasi, ei ole avaimen talletus.",
   "deposit.code.deposit-busy": "Liian monta noutokoodia kokeillaan yhtä aikaa. Yritä hetken kuluttua uudelleen.",
   "secrets.passwordNotSet": "Aseta ensin kirjautumissalasana kohdassa Asetukset, Turvallisuus. Ilman salasanaa tämä palvelin ei luovuta avainta.",
+  "secrets.deletePasswordNotSet": "Varmuuskopioiden poistaminen vaatii kirjautumissalasanan. Aseta sellainen kohdassa Asetukset, Turvallisuus.",
   "secrets.ownLoginNeeded": "Tämä vaatii kirjautumisen tämän ilmentymän omaan verkkokäyttöliittymään. Puhelinsovelluksen yhteys avaa sivut mutta ei avaimia. Kirjaudu tässä ja tee se uudelleen.",
   "secrets.signInHere": "Kirjaudu tässä",
   "keeper.state.changed": "Muutettu siellä",

@@ -185,7 +185,11 @@ func (h *Handler) handleDeleteZFSDataset(w http.ResponseWriter, r *http.Request)
 	if !ok {
 		return
 	}
-	res, err := h.svc.DeleteZFSDataset(r.Context(), id, r.URL.Query().Get("safety") == "true")
+	safety := r.URL.Query().Get("safety") == "true"
+	if safety && !h.requireAuthForSecrets(w, r, "deleting safety snapshots") {
+		return
+	}
+	res, err := h.svc.DeleteZFSDataset(r.Context(), id, safety)
 	if err != nil {
 		if errors.Is(err, errDomainBusy) {
 			writeJSON(w, http.StatusConflict, failEnvelope(err))
@@ -207,7 +211,7 @@ func (h *Handler) handleDeleteZFSDataset(w http.ResponseWriter, r *http.Request)
 // DELETE /api/zfs/datasets/{id}/backups?safety=true|false
 func (h *Handler) handleDeleteBackupsZFSDataset(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.zfsIDParam(w, r)
-	if !ok {
+	if !ok || !h.requireAuthForSecrets(w, r, "deleting backups") {
 		return
 	}
 	res, err := h.svc.DeleteBackupsZFSDataset(r.Context(), id, r.URL.Query().Get("safety") == "true")
@@ -249,7 +253,7 @@ func (h *Handler) handleListZFSSafetySnapshots(w http.ResponseWriter, r *http.Re
 // DELETE /api/zfs/datasets/{id}/safety-snapshots?dataset=&name=
 func (h *Handler) handleDeleteZFSSafetySnapshot(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.zfsIDParam(w, r)
-	if !ok {
+	if !ok || !h.requireAuthForSecrets(w, r, "deleting a safety snapshot") {
 		return
 	}
 	q := r.URL.Query()

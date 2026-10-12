@@ -4399,6 +4399,7 @@ const vi: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Thứ mà mã mở bản gửi mở ra không phải là bản gửi khóa.",
   "deposit.code.deposit-busy": "Đang có quá nhiều mã mở bản gửi được thử cùng lúc. Hãy thử lại sau ít phút.",
   "secrets.passwordNotSet": "Hãy đặt mật khẩu đăng nhập trước, trong Cài đặt, Bảo mật. Không có mật khẩu thì máy chủ này không giao khóa nào.",
+  "secrets.deletePasswordNotSet": "Xóa bản sao lưu cần có mật khẩu đăng nhập. Hãy đặt một mật khẩu trong Cài đặt, Bảo mật.",
   "secrets.ownLoginNeeded": "Việc này cần đăng nhập vào giao diện web của chính phiên bản này. Kết nối của ứng dụng điện thoại mở được các trang nhưng không mở được khóa. Hãy đăng nhập tại đây rồi làm lại.",
   "secrets.signInHere": "Đăng nhập tại đây",
   "keeper.state.changed": "Đã đổi ở đó",

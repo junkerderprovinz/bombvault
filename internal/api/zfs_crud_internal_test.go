@@ -14,6 +14,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
@@ -572,10 +573,18 @@ func TestDeleteBackupsZFSDatasetAnswersWhatStaysOnThePool(t *testing.T) {
 		if removeSafety {
 			target += "?safety=true"
 		}
+		h := NewHandler(s.cfg, st, nil, s, schedule.New(func(string) error { return nil }, st.ListTargets), nil)
+		hash, err := secret.HashPassword(s.cfg.AppKey, "a password of the owner")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := st.MutateSettings(func(set *store.Settings) error { set.AuthPasswordHash = hash; return nil }); err != nil {
+			t.Fatal(err)
+		}
 		req := httptest.NewRequest(http.MethodDelete, target, nil)
 		req.SetPathValue("id", d.ID)
+		req.Header = sessionOf(h)
 		w := httptest.NewRecorder()
-		h := NewHandler(s.cfg, st, nil, s, schedule.New(func(string) error { return nil }, st.ListTargets), nil)
 		h.handleDeleteBackupsZFSDataset(w, req)
 
 		var resp struct {

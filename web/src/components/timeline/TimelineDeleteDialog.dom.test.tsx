@@ -152,4 +152,24 @@ describe("TimelineDeleteDialog", () => {
     expect(await screen.findByText("the credentials of Hetzner have expired")).toBeTruthy();
     expect(await screen.findByText("Already deleted at: B2")).toBeTruthy();
   });
+
+  it("says that deleting takes a login password when none is set", async () => {
+    fake.reply("getTimelineDeletePreview", { ok: true, delete: [atHome], others: [] });
+    fake.reply("deleteTimelineRow", { ok: false, code: "password-not-set", error: "set a login password before deleting backups" });
+    open();
+    fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
+    expect(await screen.findByText("Deleting backups takes a login password. Set one under Settings, Security.")).toBeTruthy();
+    expect(screen.queryByText(/HTTP 403/)).toBeNull();
+  });
+
+  it("offers a paired phone the sign-in and closes when it is turned down", async () => {
+    fake.reply("getTimelineDeletePreview", { ok: true, delete: [atHome], others: [] });
+    fake.reply("deleteTimelineRow", { ok: false, code: "own-login-needed", error: "sign in at this instance's web interface" });
+    const { onDone, onClose } = open();
+    fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
+    expect(await screen.findByRole("button", { name: "Sign in here" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(onDone).not.toHaveBeenCalled();
+  });
 });

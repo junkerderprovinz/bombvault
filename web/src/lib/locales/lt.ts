@@ -4418,6 +4418,7 @@ const lt: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Tai, ką atidarė išdavimo kodas, nėra rakto depozitas.",
   "deposit.code.deposit-busy": "Vienu metu bandoma per daug išdavimo kodų. Bandyk dar kartą po akimirkos.",
   "secrets.passwordNotSet": "Pirmiausia nustatyk prisijungimo slaptažodį skiltyje Nustatymai, Saugumas. Be slaptažodžio šis serveris neišduoda rakto.",
+  "secrets.deletePasswordNotSet": "Atsargines kopijas ištrinti galima tik su prisijungimo slaptažodžiu. Nustatyk jį skiltyje Nustatymai, Saugumas.",
   "secrets.ownLoginNeeded": "Tam reikia prisijungti prie paties šio egzemplioriaus žiniatinklio sąsajos. Telefono programėlės ryšys atveria puslapius, bet ne raktus. Prisijunk čia ir pakartok.",
   "secrets.signInHere": "Prisijungti čia",
   "keeper.state.changed": "Pakeistas ten",
