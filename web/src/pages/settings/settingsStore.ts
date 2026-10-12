@@ -99,7 +99,8 @@ export function useSettingsStore() {
   // defaults to "unraid" like the Go side's platformFn(), so NotifyCard's
   // mismatch banner does not flash on before this loads.
   const [platformKind, setPlatformKind] = useState<string>("unraid");
-  const [loadError, setLoadError] = useState<string | null>(null);
+  // Which read failed: the first one, or the one after an import.
+  const [loadError, setLoadError] = useState<"load" | "import" | null>(null);
 
   // Auth state for the Security card.
   const [authEnabled, setAuthEnabled] = useState(false);
@@ -159,7 +160,8 @@ export function useSettingsStore() {
     savedBaseline.current = s;
   }
 
-  useEffect(() => {
+  function loadSettings() {
+    setLoadError(null);
     getSettings()
       .then((res) => {
         if (res.ok) {
@@ -167,10 +169,14 @@ export function useSettingsStore() {
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
           if (res.platform) setPlatformKind(res.platform);
         } else {
-          setLoadError("Failed to load settings");
+          setLoadError("load");
         }
       })
-      .catch(() => setLoadError("Failed to load settings"));
+      .catch(() => setLoadError("load"));
+  }
+
+  useEffect(() => {
+    loadSettings();
 
     getAuth()
       .then((res) => {
@@ -198,6 +204,7 @@ export function useSettingsStore() {
       .catch(() => {
         // Non-fatal: the order list stays empty.
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // fieldPulse holds a confirmation-pulse nonce per Settings field, bumped for
@@ -499,7 +506,7 @@ export function useSettingsStore() {
           if (fresh.hostMountRoot) setHostMountRoot(fresh.hostMountRoot);
           if (fresh.platform) setPlatformKind(fresh.platform);
         } else {
-          setLoadError("Settings were imported, but reloading them failed. Reload the page.");
+          setLoadError("import");
         }
         // Domains may have been switched on or off by the import: the sidebar and
         // layout listen for this and refetch, as they do after a save.
@@ -574,6 +581,7 @@ export function useSettingsStore() {
     setSettings,
     savedBaseline,
     loadError,
+    loadSettings,
     hostMountRoot,
     platformKind,
     confirmDialog,

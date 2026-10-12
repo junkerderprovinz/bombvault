@@ -1,4 +1,5 @@
 import { useEffect, useRef, type CSSProperties } from "react";
+import { Button } from "../components/Button";
 import { PageTitle } from "../components/PageTitle";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { useT } from "../lib/i18n";
@@ -25,7 +26,7 @@ export function SettingsPage() {
   const { t } = useT();
   const { push } = useToast();
   const store = useSettingsStore();
-  const { settings, loadError } = store;
+  const { settings, loadError, loadSettings } = store;
 
   const { page: param } = useParams();
   const page: SettingsPageId = isSettingsPage(param) ? param : FALLBACK_PAGE;
@@ -93,8 +94,12 @@ export function SettingsPage() {
 
   if (loadError) {
     return (
-      <div className="max-w-3xl">
-        <p className="text-sm text-statusFail">{loadError}</p>
+      <div className={`${PAGE_SHELL_RESPONSIVE} flex flex-col items-start gap-2`}>
+        <PageTitle>{t("settings.title")}</PageTitle>
+        <p className="text-sm text-statusFail">
+          {t(loadError === "import" ? "settings.importReloadFailed" : "settings.loadFailed")}
+        </p>
+        <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={loadSettings} />
       </div>
     );
   }

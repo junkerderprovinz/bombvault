@@ -674,6 +674,8 @@ export const en = {
   "settings.save": "Save",
   "settings.saved": "Settings saved",
   "settings.error": "Error saving settings",
+  "settings.loadFailed": "The settings could not be loaded.",
+  "settings.importReloadFailed": "The settings were imported, but reading them back failed.",
   "settings.notLoadedNoSave": "The current configuration could not be loaded, so nothing is saved. Reload the page and try again.",
 
   // Retention
@@ -5424,6 +5426,8 @@ export const de: Translations = {
   "settings.save": "Speichern",
   "settings.saved": "Einstellungen gespeichert",
   "settings.error": "Fehler beim Speichern",
+  "settings.loadFailed": "Die Einstellungen konnten nicht geladen werden.",
+  "settings.importReloadFailed": "Die Einstellungen wurden importiert, ließen sich danach aber nicht neu lesen.",
   "settings.notLoadedNoSave": "Die aktuelle Konfiguration konnte nicht geladen werden, daher wird nichts gespeichert. Lade die Seite neu und versuche es noch einmal.",
 
   // Retention
