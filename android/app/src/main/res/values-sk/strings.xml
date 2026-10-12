@@ -2,10 +2,10 @@
 <resources>
     <string name="saved">Uložené do Stiahnutých súborov: %1$s</string>
     <string name="save_failed">Súbor sa nepodarilo uložiť: %1$s</string>
-    <string name="save_untrusted">Certifikát servera sa zmenil. Otvorte ho znova z úvodnej obrazovky a skontrolujte nový.</string>
+    <string name="save_untrusted">Certifikát servera sa zmenil. Otvor ho znova z úvodnej obrazovky a skontroluj nový.</string>
     <string name="no_app">Žiadna aplikácia v telefóne tento odkaz neotvorí.</string>
     <string name="relay_on">Otvorené cez relay</string>
-    <string name="relay_explained">Aplikácia sa k tomuto serveru na jeho vlastnej adrese nedostane, a preto ho otvára cez relay vašej skupiny. Prihlásenie heslom a ukladanie súborov fungujú len na vlastnej adrese servera.</string>
+    <string name="relay_explained">Aplikácia sa k tomuto serveru na jeho vlastnej adrese nedostane, a preto ho otvára cez relay tvojej skupiny. Prihlásenie heslom a ukladanie súborov fungujú len na vlastnej adrese servera.</string>
     <string name="relay_no_download">Ukladanie súborov funguje len na vlastnej adrese servera, nie cez relay.</string>
-    <string name="page_crashed">Stránka spadla, preto ju aplikácia zavrela. Otvorte server znova.</string>
+    <string name="page_crashed">Stránka spadla, preto ju aplikácia zavrela. Otvor server znova.</string>
 </resources>
