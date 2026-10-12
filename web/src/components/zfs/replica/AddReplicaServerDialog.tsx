@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 
 import {
   createZFSReplicaServer,
@@ -14,7 +13,6 @@ import { tLtr } from "../../../lib/ltrFragments";
 import { useToast } from "../../../lib/toast";
 import { useTestVerdict } from "../../../lib/useTestVerdict";
 import { zfsCodeSentence } from "../../../lib/zfsCodes";
-import { Badge } from "../../Badge";
 import { Button } from "../../Button";
 import { CopyBlock } from "../../CopyBlock";
 import { InfoBubble } from "../../InfoBubble";
@@ -24,6 +22,7 @@ import { TestButton, VerdictLine } from "../../TestButton";
 import { IconZFS } from "../../navGlyphs";
 import { allowLine, defaultRoot, examplePath, poolLabel, testFailure } from "./replicaModel";
 import { useGroup } from "./replicaStore";
+import { InstanceWindow } from "../../../pages/instances/InstanceWindow";
 
 const inputCls = "w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus";
 
@@ -156,174 +155,159 @@ export function AddReplicaServerDialog({
     icon: <IconZFS />,
   }));
 
-  return createPortal(
-    <div
-      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
-      onClick={saving ? undefined : onClose}
-    >
-      <div className="relative w-full max-w-lg">
-        <h2 className="flex items-center px-5">
-          <Badge tone="heading" size="heading" wrap>
-            {heading}
-            <InfoBubble tip={t("zfs.replica.hint")} onAccent />
-          </Badge>
-        </h2>
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={heading}
-          onClick={(e) => e.stopPropagation()}
-          className="flex max-h-[90vh] w-full flex-col gap-4 overflow-y-auto rounded-card bg-carbon-surface p-5 shadow-2xl"
-        >
-          <Selector
-            label={heading}
-            items={[
-              { id: "1", label: t("zfs.replica.add.stepConnect") },
-              { id: "2", label: t("zfs.replica.add.stepPool"), disabled: !tested },
-            ]}
-            active={String(step)}
-            onChange={(id) => goTo(Number(id))}
-          />
-
+  return (
+    <InstanceWindow
+      title={heading}
+      hint={t("zfs.replica.hint")}
+      onClose={saving ? () => undefined : onClose}
+      footer={
+        <>
+          <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onClose} />
           {step === 1 ? (
-            <>
-              <Field label={t("zfs.replica.server.address")} hint={t("zfs.replica.add.addressHint")}>
-                <input
-                  type="text"
-                  value={host}
-                  onChange={(e) => setHost(e.target.value)}
-                  aria-label={t("zfs.replica.server.address")}
-                  placeholder="192.168.1.30"
-                  spellCheck={false}
-                  autoComplete="off"
-                  dir="ltr"
-                  className={inputCls}
-                />
-              </Field>
-              <Field label={t("zfs.replica.add.user")} hint={t("zfs.replica.add.userHint")}>
-                <input
-                  type="text"
-                  value={user}
-                  onChange={(e) => setUser(e.target.value)}
-                  aria-label={t("zfs.replica.add.user")}
-                  spellCheck={false}
-                  autoComplete="off"
-                  dir="ltr"
-                  className={inputCls}
-                />
-              </Field>
-              <Field label={t("zfs.replica.add.port")}>
-                <NumberField
-                  min={1}
-                  max={65535}
-                  value={port}
-                  aria-label={t("zfs.replica.add.port")}
-                  onChange={(e) => setPort(parseInt(e.target.value, 10) || 22)}
-                  className={inputCls}
-                  wrapperClassName="max-w-40"
-                />
-              </Field>
-              <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-                <span className="text-xs font-semibold text-carbon-textSub">{t("zfs.replica.add.authorize")}</span>
-                <p className="text-xs text-carbon-textSub">{tLtr(t, "zfs.replica.add.authorizeHint")}</p>
-                {publicKey && <CopyBlock text={publicKey} />}
-                {login !== "root" && (
-                  <>
-                    <p className="text-xs text-carbon-textSub">
-                      {t("zfs.replica.add.allowHint").replace("{user}", () => login)}
-                    </p>
-                    <CopyBlock text={allowLine(login)} />
-                  </>
-                )}
-              </div>
-              <VerdictLine verdict={check.verdict} />
-              <div className="flex justify-end">
-                <TestButton
-                  label={t("zfs.replica.server.test")}
-                  labelKey="zfs.replica.server.test"
-                  test={check}
-                  onClick={runTest}
-                />
-              </div>
-            </>
+            <Button
+              label={t("zfs.replica.add.next")}
+              labelKey="zfs.replica.add.next"
+              tone="accent"
+              onClick={() => goTo(2)}
+            />
           ) : (
             <>
-              <Field label={t("zfs.replica.add.stepPool")} hint={t("zfs.replica.add.poolHint")}>
-                <Selector
-                  label={t("zfs.replica.add.stepPool")}
-                  items={poolItems}
-                  active={pool || null}
-                  onChange={pickPool}
-                  activation="manual"
-                />
-              </Field>
-              <Field
-                label={t("zfs.replica.server.root")}
-                hint={t("zfs.replica.add.rootHint")}
-                aside={
-                  root.trim() && (
-                    <bdi dir="ltr">
-                      {t("zfs.replica.server.example").replace("{path}", () => examplePath(root.trim(), ownName))}
-                    </bdi>
-                  )
-                }
-              >
-                <input
-                  type="text"
-                  value={root}
-                  onChange={(e) => setRoot(e.target.value)}
-                  aria-label={t("zfs.replica.server.root")}
-                  spellCheck={false}
-                  autoComplete="off"
-                  dir="ltr"
-                  className={inputCls}
-                />
-              </Field>
-              <Field label={t("zfs.replica.add.name")}>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  aria-label={t("zfs.replica.add.name")}
-                  placeholder="Backup-NAS"
-                  spellCheck={false}
-                  autoComplete="off"
-                  className={inputCls}
-                />
-              </Field>
+              {!server && (
+                <Button label={t("common.back")} labelKey="common.back" tone="neutral" onClick={() => goTo(1)} />
+              )}
+              <Button
+                label={server ? t("settings.save") : t("zfs.replica.add.submit")}
+                labelKey={server ? "settings.save" : "zfs.replica.add.submit"}
+                tone="accent"
+                onClick={() => void save()}
+                busy={saving}
+                disabled={saving}
+              />
             </>
           )}
+        </>
+      }
+    >
+      <Selector
+        label={heading}
+        items={[
+          { id: "1", label: t("zfs.replica.add.stepConnect") },
+          { id: "2", label: t("zfs.replica.add.stepPool"), disabled: !tested },
+        ]}
+        active={String(step)}
+        onChange={(id) => goTo(Number(id))}
+      />
 
-          {error && <p className="text-xs text-statusFail">{error}</p>}
-
-          <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-            <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onClose} />
-            {step === 1 ? (
-              <Button
-                label={t("zfs.replica.add.next")}
-                labelKey="zfs.replica.add.next"
-                tone="accent"
-                onClick={() => goTo(2)}
-              />
-            ) : (
+      {step === 1 ? (
+        <>
+          <Field label={t("zfs.replica.server.address")} hint={t("zfs.replica.add.addressHint")}>
+            <input
+              type="text"
+              value={host}
+              onChange={(e) => setHost(e.target.value)}
+              aria-label={t("zfs.replica.server.address")}
+              placeholder="192.168.1.30"
+              spellCheck={false}
+              autoComplete="off"
+              dir="ltr"
+              className={inputCls}
+            />
+          </Field>
+          <Field label={t("zfs.replica.add.user")} hint={t("zfs.replica.add.userHint")}>
+            <input
+              type="text"
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
+              aria-label={t("zfs.replica.add.user")}
+              spellCheck={false}
+              autoComplete="off"
+              dir="ltr"
+              className={inputCls}
+            />
+          </Field>
+          <Field label={t("zfs.replica.add.port")}>
+            <NumberField
+              min={1}
+              max={65535}
+              value={port}
+              aria-label={t("zfs.replica.add.port")}
+              onChange={(e) => setPort(parseInt(e.target.value, 10) || 22)}
+              className={inputCls}
+              wrapperClassName="max-w-40"
+            />
+          </Field>
+          <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
+            <span className="text-xs font-semibold text-carbon-textSub">{t("zfs.replica.add.authorize")}</span>
+            <p className="text-xs text-carbon-textSub">{tLtr(t, "zfs.replica.add.authorizeHint")}</p>
+            {publicKey && <CopyBlock text={publicKey} />}
+            {login !== "root" && (
               <>
-                {!server && (
-                  <Button label={t("common.back")} labelKey="common.back" tone="neutral" onClick={() => goTo(1)} />
-                )}
-                <Button
-                  label={server ? t("settings.save") : t("zfs.replica.add.submit")}
-                  labelKey={server ? "settings.save" : "zfs.replica.add.submit"}
-                  tone="accent"
-                  onClick={() => void save()}
-                  busy={saving}
-                  disabled={saving}
-                />
+                <p className="text-xs text-carbon-textSub">
+                  {t("zfs.replica.add.allowHint").replace("{user}", () => login)}
+                </p>
+                <CopyBlock text={allowLine(login)} />
               </>
             )}
           </div>
-        </div>
-      </div>
-    </div>,
-    document.body,
+          <VerdictLine verdict={check.verdict} />
+          <div className="flex justify-end">
+            <TestButton
+              label={t("zfs.replica.server.test")}
+              labelKey="zfs.replica.server.test"
+              test={check}
+              onClick={runTest}
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <Field label={t("zfs.replica.add.stepPool")} hint={t("zfs.replica.add.poolHint")}>
+            <Selector
+              label={t("zfs.replica.add.stepPool")}
+              items={poolItems}
+              active={pool || null}
+              onChange={pickPool}
+              activation="manual"
+            />
+          </Field>
+          <Field
+            label={t("zfs.replica.server.root")}
+            hint={t("zfs.replica.add.rootHint")}
+            aside={
+              root.trim() && (
+                <bdi dir="ltr">
+                  {t("zfs.replica.server.example").replace("{path}", () => examplePath(root.trim(), ownName))}
+                </bdi>
+              )
+            }
+          >
+            <input
+              type="text"
+              value={root}
+              onChange={(e) => setRoot(e.target.value)}
+              aria-label={t("zfs.replica.server.root")}
+              spellCheck={false}
+              autoComplete="off"
+              dir="ltr"
+              className={inputCls}
+            />
+          </Field>
+          <Field label={t("zfs.replica.add.name")}>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              aria-label={t("zfs.replica.add.name")}
+              placeholder="Backup-NAS"
+              spellCheck={false}
+              autoComplete="off"
+              className={inputCls}
+            />
+          </Field>
+        </>
+      )}
+
+      {error && <p className="text-xs text-statusFail">{error}</p>}
+    </InstanceWindow>
   );
 }

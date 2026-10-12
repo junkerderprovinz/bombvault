@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 
 import { createZFSDatasets, probeZFSDataset, zfsHostDatasets } from "../../lib/api";
 import type { ZFSCheck, ZFSCreateResult, ZFSHostDataset, ZFSHostResult } from "../../lib/api";
@@ -7,12 +6,12 @@ import { useT } from "../../lib/i18n";
 import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
 import { zfsCodeSentence } from "../../lib/zfsCodes";
-import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import { RepoPicker } from "../RepoPicker";
 import { isBelow, ZFSDatasetTree } from "./ZFSDatasetTree";
 import { ZFSMemberList } from "./ZFSMemberList";
+import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 
 /** What one probe found about one freshly added item. `failed` is a probe the
  *  server did not run, for example while a ZFS backup holds the domain. */
@@ -282,36 +281,11 @@ export function ZFSAddDialog({ onClose, onAdded }: { onClose: () => void; onAdde
   const heading = t("zfs.add.title");
   return (
     <ZFSAddForm onClose={onClose} onAdded={onAdded}>
-      {({ body, actions, closable }) =>
-        createPortal(
-          <div
-            className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
-            onClick={closable ? onClose : undefined}
-          >
-            <div className="relative w-full max-w-3xl">
-              <h2 className="flex items-center px-5">
-                <Badge tone="heading" size="heading" wrap>
-                  {heading}
-                  <InfoBubble tip={t("zfs.add.hint")} onAccent />
-                </Badge>
-              </h2>
-              <div
-                role="dialog"
-                aria-modal="true"
-                aria-label={heading}
-                onClick={(e) => e.stopPropagation()}
-                className="flex max-h-[90vh] w-full flex-col gap-4 overflow-y-auto rounded-card bg-carbon-surface p-5 shadow-2xl"
-              >
-                {body}
-                {actions && (
-                  <div className="flex items-center justify-end gap-2 pt-1 max-md:flex-wrap">{actions}</div>
-                )}
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )
-      }
+      {({ body, actions, closable }) => (
+        <InstanceWindow title={heading} hint={t("zfs.add.hint")} onClose={closable ? onClose : () => undefined} footer={actions}>
+          {body}
+        </InstanceWindow>
+      )}
     </ZFSAddForm>
   );
 }
