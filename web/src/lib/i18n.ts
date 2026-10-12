@@ -1465,6 +1465,8 @@ export const en = {
   "auth.passwordMismatch": "Passwords do not match",
   "auth.passwordSaved": "Password saved",
   "auth.passwordCleared": "Authentication disabled",
+  "auth.turnOffAsk": "With both fields empty, saving turns the login off. Anyone on your network then gets full access without a password, and two-factor authentication goes off too.",
+  "auth.turnOff": "Turn login off",
   "auth.passwordHint":
     "Leave both fields empty to disable authentication. BombVault has root-equivalent host control. A password is recommended if this instance is reachable by untrusted LAN users.",
   "auth.logout": "Sign out",
@@ -6086,6 +6088,8 @@ export const de: Translations = {
   "auth.passwordMismatch": "Passwörter stimmen nicht überein",
   "auth.passwordSaved": "Passwort gespeichert",
   "auth.passwordCleared": "Authentifizierung deaktiviert",
+  "auth.turnOffAsk": "Mit zwei leeren Feldern schaltet Speichern die Anmeldung ab. Dann hat jeder in deinem Netzwerk ohne Passwort vollen Zugriff, und auch die Zwei-Faktor-Authentifizierung ist danach aus.",
+  "auth.turnOff": "Anmeldung abschalten",
   "auth.passwordHint":
     "Beide Felder leer lassen, um die Authentifizierung zu deaktivieren. BombVault hat root-ähnliche Host-Kontrolle. Ein Passwort ist empfohlen, wenn diese Instanz für nicht vertrauenswürdige LAN-Nutzer erreichbar ist.",
   "auth.logout": "Abmelden",
