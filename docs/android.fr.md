@@ -21,14 +21,17 @@ Le téléphone rejoint alors le groupe comme une instance de plus. Il lit ce qui
 
 L'application rejoint le groupe via le relais, même à la maison. Si votre instance est sur **Aucun relais**, choisissez-en un sous **Paramètres, Appairage** avant de scanner le code.
 
-!!! note "L'interface a toujours besoin d'un chemin vers le serveur"
-    La liste des serveurs et le journal d'activité passent par le groupe. L'interface d'un serveur s'ouvre directement : le téléphone doit donc pouvoir joindre l'adresse du serveur, à la maison ou via un VPN.
+## Hors de chez soi {#away}
+
+L'application essaie d'abord un serveur à sa propre adresse. Quand celle-ci ne répond pas, par exemple sur le réseau mobile, elle ouvre l'interface du serveur via le relais du groupe, et une ligne sous la page indique **Ouvert via le relais**. Un serveur du groupe dont l'application ne connaît pas encore l'adresse s'ouvre de la même façon. Si ni l'adresse ni le relais ne répondent, l'écran d'accueil le signale sur la carte du serveur.
+
+Via le relais, la page atteint ce qu'un téléphone appairé atteint à la maison, comme décrit plus bas. La connexion avec le mot de passe et l'enregistrement de fichiers ne fonctionnent qu'à l'adresse propre du serveur. Les barres de progression se mettent à jour toutes les deux secondes au lieu de façon continue. Les fichiers de l'interface restent sur le téléphone après la première visite, donc les visites suivantes se chargent plus vite. Un serveur antérieur à 10.0.0 ne s'ouvre qu'à sa propre adresse.
 
 ## Connecté d'office sur un téléphone appairé {#sign-in}
 
 Un téléphone appairé à votre groupe ouvre chacun de ses serveurs avec la session déjà ouverte. Avant de charger une page, il demande une session à ce serveur via le groupe, et un serveur n'en accorde qu'à un membre qui est un téléphone. Un serveur ajouté par son adresse demande le mot de passe, comme dans un navigateur.
 
-Un téléphone appairé n'obtient pas tout ce qu'un mot de passe donne. Sa session atteint une liste fixe de ce que montre l'application : l'aperçu, les exécutions et le journal d'activité, les sauvegardes à consulter, à lancer et à restaurer, les anomalies à lire et la page Instances à consulter. Les destinations et les commandes lui parviennent sans leurs adresses ni leurs secrets. Une restauration qui remplace l'original sauvegarde d'abord l'état actuel. Les clés, le kit de récupération, les copies déposées, les paramètres et la suppression de sauvegardes restent liés à une connexion sur le serveur lui-même, et tout le reste répond qu'il faut cette connexion.
+Un téléphone appairé n'obtient pas tout ce qu'un mot de passe donne. Sa session atteint une liste fixe de ce que montre l'application : l'aperçu, les exécutions et le journal d'activité, les sauvegardes à consulter, à lancer et à restaurer, les anomalies à lire et la page Instances à consulter. Les destinations et les commandes lui parviennent sans leurs adresses ni leurs secrets. Une restauration qui remplace l'original sauvegarde d'abord l'état actuel. Les clés, le kit de récupération, les copies déposées, les paramètres et la suppression de sauvegardes restent liés à une connexion sur le serveur lui-même, et tout le reste répond qu'il faut cette connexion. Via le relais, la même liste s'applique, aussi sur un serveur sans mot de passe.
 
 Le réglage correspondant est **Les téléphones peuvent s'appairer avec les douze mots du groupe**, sur la carte **App Android** sous **Paramètres, Sécurité**. Une réinitialisation du mot de passe le désactive et déconnecte tous les téléphones, jusqu'à ce que vous le réactiviez là.
 
@@ -54,7 +57,7 @@ La roue dentée à côté du bouton + ouvre les paramètres de l'application :
 
 ## Téléchargements et envois {#files}
 
-Les exports, les kits de récupération, les ZIP de la flash et les dumps de base de données arrivent dans le dossier Téléchargements du téléphone, comme depuis un navigateur. Un import de paramètres ouvre le sélecteur de fichiers du téléphone.
+Les exports, les kits de récupération, les ZIP de la flash et les dumps de base de données arrivent dans le dossier Téléchargements du téléphone, comme depuis un navigateur. Un import de paramètres ouvre le sélecteur de fichiers du téléphone. Via le relais, aucun fichier n'est enregistré ; ouvrez pour cela le serveur à sa propre adresse.
 
 ## Sur un écran tactile {#touch}
 

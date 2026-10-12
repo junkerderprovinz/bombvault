@@ -21,13 +21,16 @@ A partir daí o telemóvel junta-se ao grupo como mais uma instância. Lê o que
 
 A aplicação junta-se ao grupo através do retransmissor, também em casa. Se a tua instância estiver em **Sem relay**, escolhe um em **Definições, Emparelhamento** antes de digitalizares o código.
 
-!!! note "A interface continua a precisar de um caminho até ao servidor"
-    A lista de servidores e o registo de atividade chegam através do grupo. A interface de um servidor abre diretamente, por isso o telemóvel tem de conseguir chegar ao endereço do servidor, em casa ou através de uma VPN.
+## Fora de casa {#away}
+
+A aplicação tenta primeiro o servidor no seu próprio endereço. Quando esse não responde, por exemplo na rede móvel, abre antes a interface do servidor através do retransmissor do grupo, e uma linha por baixo da página diz **Aberto através do relay**. Um servidor do grupo cujo endereço a aplicação ainda não conhece abre da mesma forma. Se nem o endereço nem o retransmissor responderem, o ecrã inicial indica-o no cartão do servidor.
+
+Através do retransmissor, a página chega ao que um telemóvel emparelhado alcança em casa, como descrito mais abaixo. Iniciar sessão com a palavra-passe e guardar ficheiros só funcionam no endereço do próprio servidor. As barras de progresso atualizam a cada dois segundos, em vez de continuamente. Os ficheiros da interface ficam no telemóvel depois da primeira visita, por isso as visitas seguintes carregam mais depressa. Um servidor anterior à 10.0.0 só abre no seu próprio endereço.
 
 ## Sessão iniciada num telemóvel emparelhado {#sign-in}
 
 Um telemóvel emparelhado com o teu grupo abre cada um dos servidores já com sessão iniciada. Antes de carregar uma página, pede uma sessão a esse servidor através do grupo, e um servidor só a concede a um membro que seja um telemóvel. Um servidor adicionado pelo endereço pede a palavra-passe, como num browser.
-Um telemóvel emparelhado não recebe tudo o que uma palavra-passe dá. A sessão dele chega a uma lista fixa do que a aplicação mostra: a visão geral, as execuções e o registo de atividade, os backups para ver, iniciar e restaurar, as anomalias para ler e a página Instâncias para ver. Os destinos e os comandos voltam sem os endereços e os segredos. Um restauro que substitui o original faz primeiro backup do estado atual. As chaves, o kit de recuperação, os depósitos de chaves, as definições e a eliminação de backups ficam com um início de sessão no próprio servidor, e tudo o resto responde que precisa desse início de sessão.
+Um telemóvel emparelhado não recebe tudo o que uma palavra-passe dá. A sessão dele chega a uma lista fixa do que a aplicação mostra: a visão geral, as execuções e o registo de atividade, os backups para ver, iniciar e restaurar, as anomalias para ler e a página Instâncias para ver. Os destinos e os comandos voltam sem os endereços e os segredos. Um restauro que substitui o original faz primeiro backup do estado atual. As chaves, o kit de recuperação, os depósitos de chaves, as definições e a eliminação de backups ficam com um início de sessão no próprio servidor, e tudo o resto responde que precisa desse início de sessão. Através do retransmissor aplica-se a mesma lista, também num servidor sem palavra-passe.
 
 O interruptor para isto é **Os telemóveis podem emparelhar com as doze palavras do grupo**, no cartão **App Android** em **Definições, Segurança**. Uma reposição da palavra-passe desativa-o e termina a sessão de todos os telemóveis, até o voltares a ativar aí.
 
@@ -53,7 +56,7 @@ A roda dentada ao lado do botão + abre as definições da aplicação:
 
 ## Transferências e envios {#files}
 
-Exportações, kits de recuperação, ZIP do flash e dumps de bases de dados vão para a pasta Transferências do telemóvel, tal como a partir de um browser. Uma importação de definições abre o seletor de ficheiros do telemóvel.
+Exportações, kits de recuperação, ZIP do flash e dumps de bases de dados vão para a pasta Transferências do telemóvel, tal como a partir de um browser. Uma importação de definições abre o seletor de ficheiros do telemóvel. Através do retransmissor não se guarda nenhum ficheiro; para isso, abre o servidor no seu próprio endereço.
 
 ## Num ecrã tátil {#touch}
 

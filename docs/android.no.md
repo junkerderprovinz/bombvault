@@ -21,13 +21,16 @@ Deretter blir telefonen med i gruppen som enda en instans. Den leser via gruppen
 
 Appen blir med i gruppen via relayet, også hjemme. Står instansen din på **Ingen relay**, velg en under **Innstillinger, Paring** før du skanner koden.
 
-!!! note "Grensesnittet trenger fortsatt en vei til serveren"
-    Serverlisten og aktivitetsloggen kommer via gruppen. Grensesnittet til en server åpnes direkte, så telefonen må nå adressen til serveren, hjemme eller over en VPN.
+## Borte fra hjemmet {#away}
+
+Appen prøver først en server på dens egen adresse. Svarer den ikke, for eksempel på mobilnettet, åpner appen i stedet grensesnittet til serveren via relayet til gruppen, og en linje under siden sier **Åpnet via relay**. En server i gruppen som appen ikke kjenner adressen til ennå, åpnes på samme måte. Svarer verken adressen eller relayet, står det på kortet til serveren på startskjermen.
+
+Via relayet når siden det en paret telefon når hjemme, som beskrevet nedenfor. Pålogging med passordet og lagring av filer fungerer bare på serverens egen adresse. Fremdriftslinjer oppdateres hvert andre sekund i stedet for fortløpende. Filene til grensesnittet blir liggende på telefonen etter det første besøket, så senere besøk laster raskere. En server eldre enn 10.0.0 åpnes bare på sin egen adresse.
 
 ## Pålogget på en paret telefon {#sign-in}
 
 En telefon som er paret med gruppen din, åpner hver server i gruppen allerede pålogget. Før den laster en side, ber den serveren om en økt via gruppen, og en server gir bare ut en økt til et medlem som er en telefon. En server som er lagt til med adressen sin, spør etter passordet, slik som i en nettleser.
-En paret telefon får ikke alt et passord gir. Økten når en fast liste over det appen viser: oversikten, kjøringene og aktivitetsloggen, sikkerhetskopiene man kan se på, starte og gjenopprette, avvikene man kan lese og Instanser-siden man kan se på. Mål og kommandoer kommer tilbake uten adresser og hemmeligheter. En gjenoppretting som erstatter originalen, tar først en sikkerhetskopi av dagens tilstand. Nøkler, gjenopprettingssettet, nøkkeldeponeringer, innstillinger og sletting av sikkerhetskopier hører til en pålogging på selve serveren, og alt annet svarer at det trenger den påloggingen.
+En paret telefon får ikke alt et passord gir. Økten når en fast liste over det appen viser: oversikten, kjøringene og aktivitetsloggen, sikkerhetskopiene man kan se på, starte og gjenopprette, avvikene man kan lese og Instanser-siden man kan se på. Mål og kommandoer kommer tilbake uten adresser og hemmeligheter. En gjenoppretting som erstatter originalen, tar først en sikkerhetskopi av dagens tilstand. Nøkler, gjenopprettingssettet, nøkkeldeponeringer, innstillinger og sletting av sikkerhetskopier hører til en pålogging på selve serveren, og alt annet svarer at det trenger den påloggingen. Via relayet gjelder den samme listen, også på en server uten passord.
 
 Bryteren for dette er **Telefoner kan pare med gruppens tolv ord** i kortet **Android-app** under **Innstillinger, Sikkerhet**. En tilbakestilling av passordet slår den av og logger alle telefoner ut, til du slår den på igjen der.
 
@@ -53,7 +56,7 @@ Tannhjulet ved siden av plusstegnet åpner innstillingene i appen:
 
 ## Nedlastinger og opplastinger {#files}
 
-Eksporter, gjenopprettingssett, flash-ZIP-filer og databasedumper havner i mappen Nedlastinger på telefonen, akkurat som fra en nettleser. En import av innstillinger åpner filvelgeren på telefonen.
+Eksporter, gjenopprettingssett, flash-ZIP-filer og databasedumper havner i mappen Nedlastinger på telefonen, akkurat som fra en nettleser. En import av innstillinger åpner filvelgeren på telefonen. Via relayet lagres ingen fil. Åpne serveren på sin egen adresse for det.
 
 ## På en berøringsskjerm {#touch}
 

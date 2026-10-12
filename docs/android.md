@@ -21,14 +21,17 @@ The phone then joins the group like another instance. It reads what runs on each
 
 The app joins the group through the relay, also at home. If your instances use **No relay**, pick one under **Settings, Pairing** before you scan the code.
 
-!!! note "The interface still needs a way to the server"
-    The server list and the activity log come through the group. The interface of a server opens directly, so the phone has to reach the server's address, at home or over a VPN.
+## Away from home {#away}
+
+The app first tries a server at its own address. When that does not answer, as on the mobile network, it opens the server's interface through the group's relay instead, and a line under the page says **Opened over the relay**. A server of the group whose address the app does not know yet opens the same way. If neither the address nor the relay answers, the start screen says so on the server's card.
+
+Over the relay the page reaches what a paired phone reaches at home, described below. Signing in with the password and saving files work only at the server's own address. Progress bars update every two seconds instead of continuously. The interface's files stay on the phone after the first visit, so later visits load faster. A server older than 10.0.0 opens only at its own address.
 
 ## Signed in on a paired phone {#sign-in}
 
 A phone paired with your group opens each of its servers already signed in. Before it loads a page, it asks that server over the group for a session, and a server hands one only to a member that is a phone. A server added by its address asks for the password, as in a browser.
 
-A paired phone does not get everything a password does. Its session reaches a fixed list of what the app shows: the overview, the runs and the activity log, the backups to look at, start and restore, the anomalies to read and the Instances page to look at. Storage locations and commands come back with their addresses and secrets removed. A restore that replaces the original backs up the current state first. Keys, the recovery kit, key deposits, settings and deleting backups stay with a sign-in at the server itself, and everything else answers that it needs that sign-in.
+A paired phone does not get everything a password does. Its session reaches a fixed list of what the app shows: the overview, the runs and the activity log, the backups to look at, start and restore, the anomalies to read and the Instances page to look at. Storage locations and commands come back with their addresses and secrets removed. A restore that replaces the original backs up the current state first. Keys, the recovery kit, key deposits, settings and deleting backups stay with a sign-in at the server itself, and everything else answers that it needs that sign-in. Over the relay the same list applies, also on a server without a password.
 
 The switch for this is **Phones can pair with the group's twelve words** on the **Android app** card under **Settings, Security**. A password reset turns it off and signs every phone out, until you turn it back on there.
 
@@ -54,7 +57,7 @@ The gear beside the plus opens the app's settings:
 
 ## Downloads and uploads {#files}
 
-Exports, recovery kits, flash ZIPs and database dumps land in the phone's Downloads folder, as they would from a browser. A settings import opens the phone's file picker.
+Exports, recovery kits, flash ZIPs and database dumps land in the phone's Downloads folder, as they would from a browser. A settings import opens the phone's file picker. Over the relay no file is saved; open the server at its own address for that.
 
 ## On a touch screen {#touch}
 

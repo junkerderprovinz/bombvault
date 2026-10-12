@@ -21,13 +21,16 @@ De telefoon treedt daarna tot de groep toe als een extra instantie. Hij leest vi
 
 De app treedt via de relay tot de groep toe, ook thuis. Staat je instantie op **Geen relay**, kies er dan een onder **Instellingen, Koppeling** voordat je de code scant.
 
-!!! note "De interface heeft nog steeds een weg naar de server nodig"
-    De serverlijst en het activiteitenlogboek komen via de groep. De interface van een server opent rechtstreeks, dus de telefoon moet het adres van de server kunnen bereiken, thuis of via een VPN.
+## Onderweg {#away}
+
+De app probeert een server eerst op zijn eigen adres. Antwoordt dat niet, bijvoorbeeld op het mobiele netwerk, dan opent ze de interface van de server via de relay van de groep, en een regel onder de pagina zegt **Geopend via de relay**. Een server van de groep waarvan de app het adres nog niet kent, opent op dezelfde manier. Antwoorden noch het adres noch de relay, dan meldt het startscherm dat op de kaart van de server.
+
+Via de relay bereikt de pagina wat een gekoppelde telefoon thuis bereikt, zoals hieronder beschreven. Aanmelden met het wachtwoord en bestanden opslaan werken alleen op het eigen adres van de server. Voortgangsbalken worden elke twee seconden bijgewerkt in plaats van doorlopend. De bestanden van de interface blijven na het eerste bezoek op de telefoon, dus latere bezoeken laden sneller. Een server ouder dan 10.0.0 opent alleen op zijn eigen adres.
 
 ## Aangemeld op een gekoppelde telefoon {#sign-in}
 
 Een telefoon die met je groep is gekoppeld, opent elke server van die groep al aangemeld. Voordat hij een pagina laadt, vraagt hij die server via de groep om een sessie, en een server geeft er alleen een aan een lid dat een telefoon is. Een server die je via zijn adres hebt toegevoegd, vraagt net als in een browser om het wachtwoord.
-Een gekoppelde telefoon krijgt niet alles wat een wachtwoord geeft. Zijn sessie bereikt een vaste lijst van wat de app toont: het overzicht, de runs en het activiteitenlogboek, de back-ups om te bekijken, te starten en te herstellen, de anomalieën om te lezen en de pagina Instanties om te bekijken. Bestemmingen en commando's komen terug zonder hun adressen en geheimen. Een herstel dat het origineel vervangt, maakt eerst een back-up van de huidige staat. Sleutels, de herstelkit, bewaarkopieën van de sleutel, instellingen en het verwijderen van back-ups blijven bij een aanmelding op de server zelf, en al het andere antwoordt dat het die aanmelding nodig heeft.
+Een gekoppelde telefoon krijgt niet alles wat een wachtwoord geeft. Zijn sessie bereikt een vaste lijst van wat de app toont: het overzicht, de runs en het activiteitenlogboek, de back-ups om te bekijken, te starten en te herstellen, de anomalieën om te lezen en de pagina Instanties om te bekijken. Bestemmingen en commando's komen terug zonder hun adressen en geheimen. Een herstel dat het origineel vervangt, maakt eerst een back-up van de huidige staat. Sleutels, de herstelkit, bewaarkopieën van de sleutel, instellingen en het verwijderen van back-ups blijven bij een aanmelding op de server zelf, en al het andere antwoordt dat het die aanmelding nodig heeft. Via de relay geldt dezelfde lijst, ook op een server zonder wachtwoord.
 
 De schakelaar hiervoor is **Telefoons kunnen koppelen met de twaalf woorden van de groep** in de kaart **Android-app** onder **Instellingen, Beveiliging**. Een wachtwoordreset zet hem uit en meldt alle telefoons af, totdat je hem daar weer aanzet.
 
@@ -53,7 +56,7 @@ Het tandwiel naast het plusteken opent de instellingen van de app:
 
 ## Downloads en uploads {#files}
 
-Exports, herstelkits, flash-ZIP's en databasedumps komen in de map Downloads van de telefoon terecht, net als vanuit een browser. Een import van instellingen opent de bestandskiezer van de telefoon.
+Exports, herstelkits, flash-ZIP's en databasedumps komen in de map Downloads van de telefoon terecht, net als vanuit een browser. Een import van instellingen opent de bestandskiezer van de telefoon. Via de relay wordt geen bestand opgeslagen; open daarvoor de server op zijn eigen adres.
 
 ## Op een touchscreen {#touch}
 

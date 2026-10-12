@@ -21,8 +21,11 @@ Da quel momento il telefono entra nel gruppo come un'altra istanza. Legge cosa g
 
 L'app entra nel gruppo tramite il relay, anche a casa. Se la tua istanza è su **Nessun relay**, scegline uno in **Impostazioni, Associazione** prima di scansionare il codice.
 
-!!! note "L'interfaccia ha comunque bisogno di una strada verso il server"
-    L'elenco dei server e il registro attività arrivano tramite il gruppo. L'interfaccia di un server si apre direttamente, quindi il telefono deve raggiungere l'indirizzo del server, a casa o tramite una VPN.
+## Fuori casa {#away}
+
+L'app prova prima un server al suo indirizzo. Se questo non risponde, per esempio sulla rete mobile, apre invece l'interfaccia del server tramite il relay del gruppo, e una riga sotto la pagina dice **Aperto tramite relay**. Un server del gruppo il cui indirizzo l'app non conosce ancora si apre allo stesso modo. Se non rispondono né l'indirizzo né il relay, la schermata iniziale lo segnala sulla scheda del server.
+
+Tramite il relay la pagina raggiunge ciò che un telefono associato raggiunge a casa, come descritto sotto. L'accesso con la password e il salvataggio dei file funzionano solo all'indirizzo del server stesso. Le barre di avanzamento si aggiornano ogni due secondi invece che di continuo. I file dell'interfaccia restano sul telefono dopo la prima visita, quindi le visite successive si caricano più in fretta. Un server precedente alla 10.0.0 si apre solo al proprio indirizzo.
 
 ## Accesso già eseguito su un telefono associato {#sign-in}
 
@@ -50,7 +53,7 @@ L'ingranaggio accanto al pulsante + apre le impostazioni dell'app:
 
 ## Download e caricamenti {#files}
 
-Esportazioni, kit di ripristino, ZIP del flash e dump dei database finiscono nella cartella Download del telefono, come da un browser. Un'importazione delle impostazioni apre il selettore di file del telefono.
+Esportazioni, kit di ripristino, ZIP del flash e dump dei database finiscono nella cartella Download del telefono, come da un browser. Un'importazione delle impostazioni apre il selettore di file del telefono. Tramite il relay non viene salvato nessun file; per farlo apri il server al suo indirizzo.
 
 ## Su un touch screen {#touch}
 

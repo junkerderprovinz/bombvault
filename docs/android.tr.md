@@ -21,14 +21,17 @@ Telefon bundan sonra gruba başka bir örnek gibi katılır. Her sunucuda neyin 
 
 Uygulama, evde de olsa gruba röle üzerinden katılır. Gruptaki örnek **Röle yok** durumundaysa, kodu taramadan önce **Ayarlar, Eşleştirme**'den bir röle seç.
 
-!!! note "Arayüzün sunucuya yine de bir yolu olmalı"
-    Sunucu listesi ve etkinlik günlüğü grup üzerinden gelir. Bir sunucunun arayüzü ise doğrudan açılır, bu yüzden telefonun sunucunun adresine evde ya da bir VPN üzerinden ulaşabilmesi gerekir.
+## Evden uzakta {#away}
+
+Uygulama bir sunucuyu önce kendi adresinde dener. Adres yanıt vermezse, örneğin mobil ağda, sunucunun arayüzünü grubun rölesi üzerinden açar ve sayfanın altındaki bir satırda **Röle üzerinden açıldı** yazar. Grubun, adresini uygulamanın henüz bilmediği bir sunucusu da aynı şekilde açılır. Ne adres ne de röle yanıt verirse başlangıç ekranı bunu sunucunun kartında gösterir.
+
+Röle üzerinden sayfa, eşleştirilmiş bir telefonun evde eriştiği her şeye erişir, aşağıda anlatıldığı gibi. Parolayla oturum açma ve dosya kaydetme yalnızca sunucunun kendi adresinde çalışır. İlerleme çubukları sürekli değil, iki saniyede bir güncellenir. Arayüzün dosyaları ilk ziyaretten sonra telefonda kalır, bu yüzden sonraki ziyaretler daha hızlı yüklenir. 10.0.0'dan eski bir sunucu yalnızca kendi adresinde açılır.
 
 ## Eşleştirilmiş telefonda oturum {#sign-in}
 
 Grubunla eşleştirilmiş bir telefon, grubun her sunucusunu oturum açılmış olarak açar. Bir sayfayı yüklemeden önce o sunucudan grup üzerinden bir oturum ister ve sunucu oturumu yalnızca telefon olan bir üyeye verir. Adresiyle eklenen bir sunucu, tarayıcıda olduğu gibi parola ister.
 
-Eşleştirilmiş bir telefon, bir parolanın verdiği her şeyi almaz. Oturumu, uygulamanın gösterdiklerinden oluşan sabit bir listeye erişir: genel bakış, çalışmalar ve etkinlik günlüğü, bakılacak yedekler, başlatma ve geri yükleme, okunacak anormallikler ve bakılacak Örnekler sayfası. Hedefler ve komutlar, adresleri ve gizli bilgileri çıkarılmış olarak döner. Orijinali değiştiren bir geri yükleme önce mevcut durumu yedekler. Anahtarlar, kurtarma kiti, anahtar emanetleri, ayarlar ve yedekleri silme, sunucunun kendisindeki bir oturum açmayla kalır; geri kalan her şey bu oturum açmaya ihtiyaç duyduğunu söyler.
+Eşleştirilmiş bir telefon, bir parolanın verdiği her şeyi almaz. Oturumu, uygulamanın gösterdiklerinden oluşan sabit bir listeye erişir: genel bakış, çalışmalar ve etkinlik günlüğü, bakılacak yedekler, başlatma ve geri yükleme, okunacak anormallikler ve bakılacak Örnekler sayfası. Hedefler ve komutlar, adresleri ve gizli bilgileri çıkarılmış olarak döner. Orijinali değiştiren bir geri yükleme önce mevcut durumu yedekler. Anahtarlar, kurtarma kiti, anahtar emanetleri, ayarlar ve yedekleri silme, sunucunun kendisindeki bir oturum açmayla kalır; geri kalan her şey bu oturum açmaya ihtiyaç duyduğunu söyler. Röle üzerinden aynı liste geçerlidir, parolasız bir sunucuda da.
 
 Bunun anahtarı, **Ayarlar, Güvenlik** altındaki **Android uygulaması** kartında **Telefonlar grubun on iki kelimesiyle eşleşebilir**'dir. Bir parola sıfırlama onu kapatır ve her telefonun oturumunu sonlandırır; sen orada tekrar açana kadar böyle kalır.
 
@@ -55,7 +58,7 @@ Artı işaretinin yanındaki dişli, uygulamanın ayarlarını açar:
 
 ## İndirmeler ve yüklemeler {#files}
 
-Dışa aktarmalar, kurtarma kitleri, flash ZIP'leri ve veritabanı dökümleri, tarayıcıdan indirildiğinde olduğu gibi telefonun İndirilenler klasörüne düşer. Ayarları içe aktarmak telefonun dosya seçicisini açar.
+Dışa aktarmalar, kurtarma kitleri, flash ZIP'leri ve veritabanı dökümleri, tarayıcıdan indirildiğinde olduğu gibi telefonun İndirilenler klasörüne düşer. Ayarları içe aktarmak telefonun dosya seçicisini açar. Röle üzerinden hiçbir dosya kaydedilmez; bunun için sunucuyu kendi adresinde aç.
 
 ## Dokunmatik ekranda {#touch}
 
