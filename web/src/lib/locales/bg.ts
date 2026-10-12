@@ -253,7 +253,6 @@ const bg: Partial<Translations> = {
   "restoreCheck.plan.partial": "Сравнението спря при ограничението за време, затова числата са долна граница.",
   "restoreCheck.plan.error": "Сравнението е неуспешно: {error}",
   "restoreCheck.plan.showFiles": "Покажи файловете",
-  "restoreCheck.plan.hideFiles": "Скрий файловете",
   "restoreCheck.plan.capped": "Списъкът показва първите 200 файла от всеки вид.",
   "restoreCheck.def.missing": "В момента това не съществува. Възстановяването го създава от архива.",
   "restoreCheck.def.title": "Настройки в сравнение със сега",

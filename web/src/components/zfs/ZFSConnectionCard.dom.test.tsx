@@ -115,7 +115,8 @@ describe("ZFS connection card", () => {
     await screen.findByText(en["zfs.code.zfs-permission"]);
     expect(screen.getByLabelText(en["zfs.fix.zfs-permission"])).toBeTruthy();
     screen.getByRole("button", { name: en["zfs.connection.details"] }).click();
-    expect(await screen.findByText("cannot create snapshot: permission denied")).toBeTruthy();
+    const details = await screen.findByRole("dialog", { name: en["zfs.connection.details"] });
+    expect(details.textContent).toContain("cannot create snapshot: permission denied");
     expect(screen.getByRole("button", { name: en["verdict.notConnected"] })).toBeTruthy();
   });
 

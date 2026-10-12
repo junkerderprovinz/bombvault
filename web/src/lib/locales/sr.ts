@@ -253,7 +253,6 @@ const sr: Partial<Translations> = {
   "restoreCheck.plan.partial": "Поређење је стало на временском ограничењу, па су бројеви доња граница.",
   "restoreCheck.plan.error": "Поређење није успело: {error}",
   "restoreCheck.plan.showFiles": "Прикажи датотеке",
-  "restoreCheck.plan.hideFiles": "Сакриј датотеке",
   "restoreCheck.plan.capped": "Листа приказује првих 200 датотека сваке врсте.",
   "restoreCheck.def.missing": "Ово тренутно не постоји. Враћање га прави из копије.",
   "restoreCheck.def.title": "Подешавања у поређењу са садашњим",

@@ -214,7 +214,6 @@ const el: Partial<Translations> = {
   "restoreCheck.plan.partial": "Η σύγκριση σταμάτησε στο χρονικό όριο, οπότε οι αριθμοί είναι κατώτατο όριο.",
   "restoreCheck.plan.error": "Η σύγκριση απέτυχε: {error}",
   "restoreCheck.plan.showFiles": "Εμφάνιση αρχείων",
-  "restoreCheck.plan.hideFiles": "Απόκρυψη αρχείων",
   "restoreCheck.plan.capped": "Η λίστα δείχνει τα πρώτα 200 αρχεία κάθε είδους.",
   "restoreCheck.def.missing": "Αυτό δεν υπάρχει τώρα. Η επαναφορά το δημιουργεί από το αντίγραφο.",
   "restoreCheck.def.title": "Ρυθμίσεις σε σύγκριση με τώρα",

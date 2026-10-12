@@ -214,7 +214,6 @@ const vi: Partial<Translations> = {
   "restoreCheck.plan.partial": "Việc so sánh dừng ở giới hạn thời gian nên các con số là mức tối thiểu.",
   "restoreCheck.plan.error": "So sánh thất bại: {error}",
   "restoreCheck.plan.showFiles": "Hiện tệp",
-  "restoreCheck.plan.hideFiles": "Ẩn tệp",
   "restoreCheck.plan.capped": "Danh sách hiển thị 200 tệp đầu tiên của mỗi loại.",
   "restoreCheck.def.missing": "Hiện không tồn tại. Việc khôi phục sẽ tạo nó từ bản sao lưu.",
   "restoreCheck.def.title": "Cài đặt so với hiện tại",

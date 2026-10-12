@@ -253,7 +253,6 @@ const id: Partial<Translations> = {
   "restoreCheck.plan.partial": "Perbandingan berhenti di batas waktunya, jadi angkanya adalah batas bawah.",
   "restoreCheck.plan.error": "Perbandingan gagal: {error}",
   "restoreCheck.plan.showFiles": "Tampilkan berkas",
-  "restoreCheck.plan.hideFiles": "Sembunyikan berkas",
   "restoreCheck.plan.capped": "Daftar menampilkan 200 berkas pertama dari tiap jenis.",
   "restoreCheck.def.missing": "Ini tidak ada saat ini. Pemulihan membuatnya dari cadangan.",
   "restoreCheck.def.title": "Pengaturan dibandingkan dengan sekarang",

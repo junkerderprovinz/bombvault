@@ -253,7 +253,6 @@ const is: Partial<Translations> = {
   "restoreCheck.plan.partial": "Samanburðurinn stöðvaðist við tímamörkin, svo tölurnar eru lágmark.",
   "restoreCheck.plan.error": "Samanburðurinn mistókst: {error}",
   "restoreCheck.plan.showFiles": "Sýna skrár",
-  "restoreCheck.plan.hideFiles": "Fela skrár",
   "restoreCheck.plan.capped": "Listinn sýnir fyrstu 200 skrárnar af hverri gerð.",
   "restoreCheck.def.missing": "Þetta er ekki til núna. Endurheimtin býr það til úr afritinu.",
   "restoreCheck.def.title": "Stillingar bornar saman við núna",

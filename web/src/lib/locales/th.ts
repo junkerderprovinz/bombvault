@@ -214,7 +214,6 @@ const th: Partial<Translations> = {
   "restoreCheck.plan.partial": "การเทียบหยุดที่ขีดจำกัดเวลา ตัวเลขจึงเป็นค่าต่ำสุด",
   "restoreCheck.plan.error": "การเทียบล้มเหลว: {error}",
   "restoreCheck.plan.showFiles": "แสดงไฟล์",
-  "restoreCheck.plan.hideFiles": "ซ่อนไฟล์",
   "restoreCheck.plan.capped": "รายการแสดง 200 ไฟล์แรกของแต่ละประเภท",
   "restoreCheck.def.missing": "ตอนนี้ยังไม่มีสิ่งนี้ การกู้คืนจะสร้างจากข้อมูลสำรอง",
   "restoreCheck.def.title": "การตั้งค่าเทียบกับตอนนี้",

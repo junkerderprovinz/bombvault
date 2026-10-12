@@ -213,7 +213,6 @@ const no: Partial<Translations> = {
   "restoreCheck.plan.partial": "Sammenligningen stoppet ved tidsgrensen, så tallene er en nedre grense.",
   "restoreCheck.plan.error": "Sammenligningen feilet: {error}",
   "restoreCheck.plan.showFiles": "Vis filer",
-  "restoreCheck.plan.hideFiles": "Skjul filer",
   "restoreCheck.plan.capped": "Listen viser de første 200 filene av hver type.",
   "restoreCheck.def.missing": "Dette finnes ikke akkurat nå. Gjenopprettingen oppretter det fra sikkerhetskopien.",
   "restoreCheck.def.title": "Innstillinger sammenlignet med nå",

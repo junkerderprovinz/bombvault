@@ -253,7 +253,6 @@ const ms: Partial<Translations> = {
   "restoreCheck.plan.partial": "Perbandingan berhenti pada had masanya, jadi angka ini ialah had bawah.",
   "restoreCheck.plan.error": "Perbandingan gagal: {error}",
   "restoreCheck.plan.showFiles": "Tunjukkan fail",
-  "restoreCheck.plan.hideFiles": "Sembunyikan fail",
   "restoreCheck.plan.capped": "Senarai menunjukkan 200 fail pertama bagi setiap jenis.",
   "restoreCheck.def.missing": "Ini tidak wujud sekarang. Pemulihan menciptanya daripada sandaran.",
   "restoreCheck.def.title": "Tetapan berbanding sekarang",

@@ -214,7 +214,6 @@ const sv: Partial<Translations> = {
   "restoreCheck.plan.partial": "Jämförelsen stannade vid sin tidsgräns, så siffrorna är en nedre gräns.",
   "restoreCheck.plan.error": "Jämförelsen misslyckades: {error}",
   "restoreCheck.plan.showFiles": "Visa filer",
-  "restoreCheck.plan.hideFiles": "Dölj filer",
   "restoreCheck.plan.capped": "Listan visar de första 200 filerna av varje slag.",
   "restoreCheck.def.missing": "Det finns inte just nu. Återställningen skapar det från säkerhetskopian.",
   "restoreCheck.def.title": "Inställningar jämfört med nu",

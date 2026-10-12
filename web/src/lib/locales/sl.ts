@@ -253,7 +253,6 @@ const sl: Partial<Translations> = {
   "restoreCheck.plan.partial": "Primerjava se je ustavila pri časovni omejitvi, zato so številke spodnja meja.",
   "restoreCheck.plan.error": "Primerjava ni uspela: {error}",
   "restoreCheck.plan.showFiles": "Pokaži datoteke",
-  "restoreCheck.plan.hideFiles": "Skrij datoteke",
   "restoreCheck.plan.capped": "Seznam prikaže prvih 200 datotek vsake vrste.",
   "restoreCheck.def.missing": "Tega trenutno ni. Obnovitev to ustvari iz varnostne kopije.",
   "restoreCheck.def.title": "Nastavitve v primerjavi z zdajšnjimi",

@@ -214,7 +214,6 @@ const zh: Partial<Translations> = {
   "restoreCheck.plan.partial": "比较在时间上限处停止，因此数字是下限。",
   "restoreCheck.plan.error": "比较失败：{error}",
   "restoreCheck.plan.showFiles": "显示文件",
-  "restoreCheck.plan.hideFiles": "隐藏文件",
   "restoreCheck.plan.capped": "列表每类显示前 200 个文件。",
   "restoreCheck.def.missing": "目前不存在。恢复会从备份创建它。",
   "restoreCheck.def.title": "设置与当前对比",

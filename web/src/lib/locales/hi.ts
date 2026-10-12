@@ -253,7 +253,6 @@ const hi: Partial<Translations> = {
   "restoreCheck.plan.partial": "तुलना अपनी समय सीमा पर रुक गई, इसलिए संख्याएँ न्यूनतम हैं।",
   "restoreCheck.plan.error": "तुलना विफल रही: {error}",
   "restoreCheck.plan.showFiles": "फ़ाइलें दिखाएँ",
-  "restoreCheck.plan.hideFiles": "फ़ाइलें छिपाएँ",
   "restoreCheck.plan.capped": "सूची हर प्रकार की पहली 200 फ़ाइलें दिखाती है।",
   "restoreCheck.def.missing": "यह अभी मौजूद नहीं है। रीस्टोर इसे बैकअप से बनाता है।",
   "restoreCheck.def.title": "सेटिंग्स की अभी से तुलना",

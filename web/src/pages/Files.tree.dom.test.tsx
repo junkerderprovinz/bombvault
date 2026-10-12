@@ -5,7 +5,7 @@
 // step.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { I18nProvider, useT } from "../lib/i18n";
+import { I18nProvider, en, useT } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { BrowseResponse, FileSetView } from "../lib/api";
 import { placementOptions, placementView } from "../lib/placement.testsupport";
@@ -156,6 +156,17 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("FileSetFoldersEditor tree mount", () => {
+  it("opens the folders in a window whose bubble explains them", async () => {
+    browseReplies = [documentsListing()];
+    await renderEditor(setView());
+    expect(screen.queryByRole("tree")).toBeNull();
+    await openDisclosure();
+
+    const window = screen.getByRole("dialog", { name: en["folders.title"] });
+    expect(within(window).getByRole("tree")).toBeTruthy();
+    expect(within(window).getByLabelText(en["files.foldersHint"])).toBeTruthy();
+  });
+
   it("shows one level-1 treeitem: the resolved path, aria-setsize=1, mono root label", async () => {
     browseReplies = [documentsListing()];
     await renderEditor(setView());
@@ -471,9 +482,9 @@ describe("FileSetFoldersEditor live save", () => {
     const saved = patches[0].body.selectedPaths as string[];
     expect(saved).toEqual([ROOT, `!${ROOT}/media`]);
 
-    // Close the disclosure (the tree unmounts; the editor and its cache stay).
+    // Close the window (the tree unmounts; the editor and its cache stay).
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Choose folders" }));
+      fireEvent.click(screen.getByRole("button", { name: "Done" }));
     });
     expect(screen.queryByRole("tree")).toBeNull();
 
@@ -580,10 +591,10 @@ describe("FileSetFoldersEditor exclusions list", () => {
     });
     expect(screen.getByTitle("sub")).toBeTruthy();
 
-    // Closing and reopening Choose folders unmounts the tree; the list comes
-    // back collapsed and left nothing in localStorage.
+    // Closing and reopening the folders window unmounts the tree; the list
+    // comes back collapsed and left nothing in localStorage.
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Choose folders" }));
+      fireEvent.click(screen.getByRole("button", { name: "Done" }));
     });
     await openDisclosure();
     const reopened = screen.getByRole("button", { name: "1 exclusion" });

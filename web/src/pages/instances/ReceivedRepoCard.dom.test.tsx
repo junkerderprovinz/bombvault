@@ -2,7 +2,7 @@
 // A phone card has no room for the inventory's four columns, so there each
 // source is a short block that keeps its date and size in view.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { I18nProvider, en, useT } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import type { ReceivedRepoStatus } from "../../lib/api";
@@ -107,6 +107,12 @@ describe("the received inventory", () => {
     desktop = true;
     await openInventory();
     expect(screen.getByRole("table")).toBeTruthy();
+  });
+
+  it("opens in a window of its own", async () => {
+    desktop = true;
+    await openInventory();
+    expect(within(screen.getByRole("dialog", { name: en["receiver.inventoryTitle"] })).getByRole("table")).toBeTruthy();
   });
 
   it("lists each source with its size and date on a phone", async () => {

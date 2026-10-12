@@ -3,16 +3,16 @@
 // differs from the one in use, and which other containers share its folders.
 // The caller owns the check (useRestoreCheck) and gates its Start button on it.
 
-import { useId, useState } from "react";
+import { useState } from "react";
 import type { CheckLine, DefinitionChange, PlanChange, RestorePlan } from "../../lib/api";
 import type { TranslationKey, useT } from "../../lib/i18n";
 import { humanBytes } from "../../lib/forecast";
 import { CHECK_LINE_LABEL, type RestoreCheck } from "../../lib/useRestoreCheck";
 import { Button } from "../Button";
-import { IconDisclosure } from "../IconDisclosure";
 import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconClose } from "../navGlyphs";
 import { IconSync } from "../Sidebar";
+import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -149,7 +149,6 @@ function CheckLines({ lines, t }: { lines: CheckLine[]; t: T }) {
 
 function PlanView({ plan, t }: { plan: RestorePlan; t: T }) {
   const [open, setOpen] = useState(false);
-  const listId = useId();
   const counts: [number, TranslationKey][] = [
     [plan.added, "restoreCheck.plan.added"],
     [plan.changed, "restoreCheck.plan.changed"],
@@ -177,27 +176,31 @@ function PlanView({ plan, t }: { plan: RestorePlan; t: T }) {
       {plan.files.length > 0 && (
         <div className="flex flex-col gap-1">
           <Button
-            label={open ? t("restoreCheck.plan.hideFiles") : t("restoreCheck.plan.showFiles")}
-            labelKey={open ? "restoreCheck.plan.hideFiles" : "restoreCheck.plan.showFiles"}
-            glyph={<IconDisclosure open={open} />}
+            label={t("restoreCheck.plan.showFiles")}
+            labelKey="restoreCheck.plan.showFiles"
             tone="subtle"
-            onClick={() => setOpen((o) => !o)}
-            ariaExpanded={open}
-            ariaControls={listId}
+            onClick={() => setOpen(true)}
             hint={plan.listCapped ? t("restoreCheck.plan.capped") : undefined}
             className="self-start"
           />
           {open && (
-            <ul id={listId} className="max-h-64 overflow-y-auto rounded-card bg-carbon-background p-2 text-caption">
-              {plan.files.map((f) => (
-                <li key={f.change + f.path} className="flex items-baseline gap-2">
-                  <span className="min-w-20 shrink-0 text-carbon-textMuted">{t(CHANGE_LABEL[f.change])}</span>
-                  <span className="min-w-0 break-all font-mono text-carbon-text" dir="ltr">
-                    {f.path}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <InstanceWindow
+              title={t("restoreCheck.plan.title")}
+              hint={plan.listCapped ? t("restoreCheck.plan.capped") : undefined}
+              onClose={() => setOpen(false)}
+              footer={<Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={() => setOpen(false)} />}
+            >
+              <ul className="rounded-card bg-carbon-background p-2 text-caption">
+                {plan.files.map((f) => (
+                  <li key={f.change + f.path} className="flex items-baseline gap-2">
+                    <span className="min-w-20 shrink-0 text-carbon-textMuted">{t(CHANGE_LABEL[f.change])}</span>
+                    <span className="min-w-0 break-all font-mono text-carbon-text" dir="ltr">
+                      {f.path}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </InstanceWindow>
           )}
         </div>
       )}

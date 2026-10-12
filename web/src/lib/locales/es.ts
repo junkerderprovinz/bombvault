@@ -214,7 +214,6 @@ const es: Partial<Translations> = {
   "restoreCheck.plan.partial": "La comparación se detuvo en su límite de tiempo, así que las cifras son un mínimo.",
   "restoreCheck.plan.error": "La comparación falló: {error}",
   "restoreCheck.plan.showFiles": "Mostrar archivos",
-  "restoreCheck.plan.hideFiles": "Ocultar archivos",
   "restoreCheck.plan.capped": "La lista muestra los primeros 200 archivos de cada tipo.",
   "restoreCheck.def.missing": "Ahora mismo no existe. La restauración lo crea a partir de la copia.",
   "restoreCheck.def.title": "Ajustes comparados con ahora",

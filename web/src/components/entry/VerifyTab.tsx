@@ -93,7 +93,7 @@ export function VerifyTab({
         {newest?.sourceBytes != null && (
           <DedupScene id={`${item.kind}:${item.key}`} read={newest.sourceBytes} added={newest.bytes} />
         )}
-        {newest && breakdownDomain && <SizeBreakdown domain={breakdownDomain} item={item.key} t={t} expanded />}
+        {newest && breakdownDomain && <SizeBreakdown domain={breakdownDomain} item={item.key} t={t} />}
       </Card>
     </>
   );

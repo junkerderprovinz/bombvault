@@ -214,7 +214,6 @@ const pl: Partial<Translations> = {
   "restoreCheck.plan.partial": "Porównanie zatrzymało się na limicie czasu, więc liczby są dolną granicą.",
   "restoreCheck.plan.error": "Porównanie nie powiodło się: {error}",
   "restoreCheck.plan.showFiles": "Pokaż pliki",
-  "restoreCheck.plan.hideFiles": "Ukryj pliki",
   "restoreCheck.plan.capped": "Lista pokazuje pierwsze 200 plików każdego rodzaju.",
   "restoreCheck.def.missing": "To w tej chwili nie istnieje. Przywracanie utworzy to z kopii.",
   "restoreCheck.def.title": "Ustawienia w porównaniu z obecnymi",

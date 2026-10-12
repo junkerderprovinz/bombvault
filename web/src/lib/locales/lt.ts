@@ -253,7 +253,6 @@ const lt: Partial<Translations> = {
   "restoreCheck.plan.partial": "Palyginimas sustojo ties laiko riba, todėl skaičiai yra apatinė riba.",
   "restoreCheck.plan.error": "Palyginti nepavyko: {error}",
   "restoreCheck.plan.showFiles": "Rodyti failus",
-  "restoreCheck.plan.hideFiles": "Slėpti failus",
   "restoreCheck.plan.capped": "Sąraše rodomi pirmieji 200 kiekvienos rūšies failų.",
   "restoreCheck.def.missing": "Šiuo metu to nėra. Atkūrimas tai sukurs iš kopijos.",
   "restoreCheck.def.title": "Nustatymai, palyginti su dabartiniais",

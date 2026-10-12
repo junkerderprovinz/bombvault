@@ -214,7 +214,6 @@ const da: Partial<Translations> = {
   "restoreCheck.plan.partial": "Sammenligningen stoppede ved sin tidsgrænse, så tallene er en nedre grænse.",
   "restoreCheck.plan.error": "Sammenligningen fejlede: {error}",
   "restoreCheck.plan.showFiles": "Vis filer",
-  "restoreCheck.plan.hideFiles": "Skjul filer",
   "restoreCheck.plan.capped": "Listen viser de første 200 filer af hver slags.",
   "restoreCheck.def.missing": "Det findes ikke lige nu. Gendannelsen opretter det fra sikkerhedskopien.",
   "restoreCheck.def.title": "Indstillinger sammenlignet med nu",

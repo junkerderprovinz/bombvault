@@ -214,7 +214,6 @@ const it: Partial<Translations> = {
   "restoreCheck.plan.partial": "Il confronto si è fermato al limite di tempo, quindi i numeri sono un minimo.",
   "restoreCheck.plan.error": "Il confronto non è riuscito: {error}",
   "restoreCheck.plan.showFiles": "Mostra file",
-  "restoreCheck.plan.hideFiles": "Nascondi file",
   "restoreCheck.plan.capped": "L'elenco mostra i primi 200 file di ogni tipo.",
   "restoreCheck.def.missing": "Al momento non esiste. Il ripristino lo crea dal backup.",
   "restoreCheck.def.title": "Impostazioni a confronto con ora",

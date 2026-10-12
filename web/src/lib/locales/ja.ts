@@ -214,7 +214,6 @@ const ja: Partial<Translations> = {
   "restoreCheck.plan.partial": "比較が時間制限で止まったため、数は下限です。",
   "restoreCheck.plan.error": "比較に失敗しました: {error}",
   "restoreCheck.plan.showFiles": "ファイルを表示",
-  "restoreCheck.plan.hideFiles": "ファイルを隠す",
   "restoreCheck.plan.capped": "一覧には種類ごとに最初の 200 件を表示します。",
   "restoreCheck.def.missing": "今は存在しません。復元がバックアップから作成します。",
   "restoreCheck.def.title": "現在との設定比較",

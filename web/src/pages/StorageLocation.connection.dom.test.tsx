@@ -188,8 +188,9 @@ describe("the connection of an rclone destination", () => {
     expect(password.value).toBe("");
     expect(password.placeholder).toBe("saved (leave blank to keep)");
     expect((within(dialog).getByLabelText("Folder") as HTMLInputElement).value).toBe("bombvault");
-    // A setting nobody set stays behind the switch.
-    expect(within(dialog).queryByLabelText("Port")).toBeNull();
+    // A setting most people leave alone stands in a sub-card of its own.
+    expect(within(within(dialog).getByRole("region", { name: "More settings" })).getByLabelText("Port")).toBeTruthy();
+    expect(within(dialog).queryByRole("switch", { name: "More settings" })).toBeNull();
   });
 
   it("has nothing to save until a field differs from what is stored", async () => {
@@ -229,11 +230,10 @@ describe("the connection of an rclone destination", () => {
     expect(updateDestinationConnection).toHaveBeenCalledWith("box", { dir: "/archive/" });
   });
 
-  it("shows a setting behind the switch once it is asked for", async () => {
+  it("sends a further setting from its sub-card", async () => {
     await renderPage(location());
     const dialog = await openWindow("Storage Box");
 
-    await click(within(dialog).getByRole("switch", { name: "More settings" }));
     await type(within(dialog).getByLabelText("Port"), "23");
     await click(within(dialog).getByRole("button", { name: "Test and save" }));
 

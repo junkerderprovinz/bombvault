@@ -253,7 +253,6 @@ const sk: Partial<Translations> = {
   "restoreCheck.plan.partial": "Porovnanie skončilo na časovom limite, čísla sú preto dolná hranica.",
   "restoreCheck.plan.error": "Porovnanie zlyhalo: {error}",
   "restoreCheck.plan.showFiles": "Zobraziť súbory",
-  "restoreCheck.plan.hideFiles": "Skryť súbory",
   "restoreCheck.plan.capped": "Zoznam ukazuje prvých 200 súborov každého druhu.",
   "restoreCheck.def.missing": "Teraz to neexistuje. Obnova to vytvorí zo zálohy.",
   "restoreCheck.def.title": "Nastavenia v porovnaní s aktuálnymi",

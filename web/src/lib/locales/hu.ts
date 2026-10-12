@@ -214,7 +214,6 @@ const hu: Partial<Translations> = {
   "restoreCheck.plan.partial": "Az összevetés elérte az időkorlátot, ezért a számok alsó határt jelentenek.",
   "restoreCheck.plan.error": "Az összevetés sikertelen: {error}",
   "restoreCheck.plan.showFiles": "Fájlok mutatása",
-  "restoreCheck.plan.hideFiles": "Fájlok elrejtése",
   "restoreCheck.plan.capped": "A lista fajtánként az első 200 fájlt mutatja.",
   "restoreCheck.def.missing": "Ez most nem létezik. A visszaállítás a biztonsági mentésből hozza létre.",
   "restoreCheck.def.title": "Beállítások a mostanihoz képest",

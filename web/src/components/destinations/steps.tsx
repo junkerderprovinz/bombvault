@@ -1,6 +1,7 @@
 // What each step of setting up a destination shows, without its heading and
 // its buttons: the wizard on a card stacks the steps, the window to add a
 // storage location shows one at a time.
+import type { ReactNode } from "react";
 import type { BackendOption, Provider } from "../../lib/api";
 import { humanBytes } from "../../lib/forecast";
 import { useT, type TranslationKey } from "../../lib/i18n";
@@ -177,11 +178,30 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
         {fields.main.map((o) => (
           <DraftField key={o.name} draft={draft} option={o} />
         ))}
-        {draft.showMore && fields.more.map((o) => <DraftField key={o.name} draft={draft} option={o} />)}
       </div>
-      {fields.more.length > 0 && <Toggle label={t("dest.more")} checked={draft.showMore} onChange={draft.setShowMore} />}
+      {fields.more.length > 0 && (
+        <MoreSettings>
+          {fields.more.map((o) => (
+            <DraftField key={o.name} draft={draft} option={o} />
+          ))}
+        </MoreSettings>
+      )}
       <VerdictLine verdict={draft.test.verdict} />
     </>
+  );
+}
+
+/** MoreSettings holds the settings of a provider that most people leave as
+ *  they are, in a sub-card under the ones everybody fills in. */
+export function MoreSettings({ children }: { children: ReactNode }) {
+  const { t } = useT();
+  return (
+    <section aria-label={t("dest.more")} className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
+      <span className="text-[length:var(--text-caption)] font-medium uppercase tracking-[0.06em] text-carbon-textMuted">
+        {t("dest.more")}
+      </span>
+      <div className="grid gap-3 md:grid-cols-2">{children}</div>
+    </section>
   );
 }
 

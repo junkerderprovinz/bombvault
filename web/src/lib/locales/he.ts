@@ -214,7 +214,6 @@ const he: Partial<Translations> = {
   "restoreCheck.plan.partial": "ההשוואה נעצרה במגבלת הזמן, ולכן המספרים הם גבול תחתון.",
   "restoreCheck.plan.error": "ההשוואה נכשלה: {error}",
   "restoreCheck.plan.showFiles": "הצגת קבצים",
-  "restoreCheck.plan.hideFiles": "הסתרת קבצים",
   "restoreCheck.plan.capped": "הרשימה מציגה את 200 הקבצים הראשונים מכל סוג.",
   "restoreCheck.def.missing": "זה לא קיים כרגע. השחזור יוצר אותו מהגיבוי.",
   "restoreCheck.def.title": "הגדרות בהשוואה לעכשיו",

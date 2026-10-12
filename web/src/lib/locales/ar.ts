@@ -214,7 +214,6 @@ const ar: Partial<Translations> = {
   "restoreCheck.plan.partial": "توقفت المقارنة عند حدها الزمني، لذا الأرقام حد أدنى.",
   "restoreCheck.plan.error": "فشلت المقارنة: {error}",
   "restoreCheck.plan.showFiles": "إظهار الملفات",
-  "restoreCheck.plan.hideFiles": "إخفاء الملفات",
   "restoreCheck.plan.capped": "تعرض القائمة أول 200 ملف من كل نوع.",
   "restoreCheck.def.missing": "هذا غير موجود الآن. تنشئه الاستعادة من النسخة الاحتياطية.",
   "restoreCheck.def.title": "الإعدادات مقارنة بالحالية",

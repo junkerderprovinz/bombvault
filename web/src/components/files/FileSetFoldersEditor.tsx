@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { patchFileSet } from "../../lib/api";
 import type { AnomalyItem, BrowseResponse, FileSetView } from "../../lib/api";
 import { applyToggle, browseRelToHost, splitFlatSet, toFlatList } from "../../lib/selectionTree";
@@ -6,6 +6,9 @@ import { SelectionTree } from "../SelectionTree";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { ItemAnomalySettings } from "../ItemAnomalySettings";
+import { Button } from "../Button";
+import { IconFolder } from "../navGlyphs";
+import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -50,7 +53,6 @@ export function FileSetFoldersEditor({
   anomaly?: AnomalyItem;
   anomalyEnabled?: boolean;
 }) {
-  const regionId = useId();
   const [open, setOpen] = useState(false);
   const noPath = set.path === "";
   // The set's resolved host path, cleaned on both segments (browseRelToHost is
@@ -200,29 +202,20 @@ export function FileSetFoldersEditor({
 
   return (
     <div className="border-t border-carbon-border pt-3">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={regionId}
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2 py-1 text-start text-sm text-carbon-textSub"
-      >
-        <span className="w-4 shrink-0 flex items-center justify-center" aria-hidden="true">
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 12 12"
-            fill="none"
-            className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
-          >
-            <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-          </svg>
-        </span>
-        {t("files.foldersToggle")}
-      </button>
+      <Button
+        label={t("files.foldersToggle")}
+        labelKey="files.foldersToggle"
+        glyph={<IconFolder />}
+        tone="neutral"
+        onClick={() => setOpen(true)}
+      />
       {open && (
-        <div id={regionId} role="region" aria-label={t("folders.title")} className="mt-2 flex flex-col gap-2">
-          <p className="text-xs text-carbon-textMuted">{t("files.foldersHint")}</p>
+        <InstanceWindow
+          title={t("folders.title")}
+          hint={t("files.foldersHint")}
+          onClose={() => setOpen(false)}
+          footer={<Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={() => setOpen(false)} />}
+        >
           {/* One root: the resolved host path with an empty dest, so the row
               is labelled with the bare path. Its count comes from
               rootIncludeCount, the paths the next backup hands restic. */}
@@ -245,7 +238,7 @@ export function FileSetFoldersEditor({
             blockedMessage={t("files.emptySelectionBlocked")}
           />
           <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
-        </div>
+        </InstanceWindow>
       )}
     </div>
   );

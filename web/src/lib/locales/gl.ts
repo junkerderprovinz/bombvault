@@ -253,7 +253,6 @@ const gl: Partial<Translations> = {
   "restoreCheck.plan.partial": "A comparación detívose no seu límite de tempo, así que as cifras son un mínimo.",
   "restoreCheck.plan.error": "A comparación fallou: {error}",
   "restoreCheck.plan.showFiles": "Amosar ficheiros",
-  "restoreCheck.plan.hideFiles": "Agochar ficheiros",
   "restoreCheck.plan.capped": "A lista amosa os primeiros 200 ficheiros de cada tipo.",
   "restoreCheck.def.missing": "Agora mesmo non existe. A restauración créao a partir da copia.",
   "restoreCheck.def.title": "Configuración comparada con agora",

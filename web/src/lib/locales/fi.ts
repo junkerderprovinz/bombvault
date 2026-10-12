@@ -214,7 +214,6 @@ const fi: Partial<Translations> = {
   "restoreCheck.plan.partial": "Vertailu pysähtyi aikarajaansa, joten luvut ovat alaraja.",
   "restoreCheck.plan.error": "Vertailu epäonnistui: {error}",
   "restoreCheck.plan.showFiles": "Näytä tiedostot",
-  "restoreCheck.plan.hideFiles": "Piilota tiedostot",
   "restoreCheck.plan.capped": "Luettelo näyttää kustakin lajista ensimmäiset 200 tiedostoa.",
   "restoreCheck.def.missing": "Tätä ei ole juuri nyt olemassa. Palautus luo sen varmuuskopiosta.",
   "restoreCheck.def.title": "Asetukset verrattuna nykyisiin",

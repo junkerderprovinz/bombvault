@@ -253,7 +253,6 @@ const ca: Partial<Translations> = {
   "restoreCheck.plan.partial": "La comparació s'ha aturat al límit de temps, així que les xifres són un mínim.",
   "restoreCheck.plan.error": "La comparació ha fallat: {error}",
   "restoreCheck.plan.showFiles": "Mostra els fitxers",
-  "restoreCheck.plan.hideFiles": "Amaga els fitxers",
   "restoreCheck.plan.capped": "La llista mostra els 200 primers fitxers de cada tipus.",
   "restoreCheck.def.missing": "Ara mateix no existeix. La restauració el crea a partir de la còpia.",
   "restoreCheck.def.title": "Configuració comparada amb ara",

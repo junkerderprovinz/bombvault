@@ -214,7 +214,6 @@ const nl: Partial<Translations> = {
   "restoreCheck.plan.partial": "De vergelijking stopte bij haar tijdslimiet, dus de getallen zijn een ondergrens.",
   "restoreCheck.plan.error": "De vergelijking mislukte: {error}",
   "restoreCheck.plan.showFiles": "Bestanden tonen",
-  "restoreCheck.plan.hideFiles": "Bestanden verbergen",
   "restoreCheck.plan.capped": "De lijst toont per soort de eerste 200 bestanden.",
   "restoreCheck.def.missing": "Dit bestaat op dit moment niet. Het herstel maakt het aan uit de back-up.",
   "restoreCheck.def.title": "Instellingen vergeleken met nu",

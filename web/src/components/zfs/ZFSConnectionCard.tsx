@@ -12,7 +12,8 @@ import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { TestButton } from "../TestButton";
 import { useTestVerdict } from "../../lib/useTestVerdict";
-import { IconDisclosure } from "../IconDisclosure";
+import { IconInfo } from "../glyphs";
+import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { InfoBubble } from "../InfoBubble";
 import { IconCopy } from "../Sidebar";
 
@@ -185,25 +186,25 @@ export function ZFSConnectionStatus() {
           )}
 
           {result.detail && (
-            <div className="flex flex-col gap-1">
-              <button
-                type="button"
-                onClick={() => setDetailsOpen((open) => !open)}
-                aria-expanded={detailsOpen}
-                className="flex items-center gap-1.5 self-start text-xs text-carbon-textMuted hover:text-carbon-text pointer-coarse:min-h-11"
-              >
-                <IconDisclosure open={detailsOpen} />
-                {t("zfs.connection.details")}
-              </button>
-              {detailsOpen && (
-                <pre
-                  dir="ltr"
-                  className="overflow-x-auto rounded-control bg-carbon-surface2 p-2 text-caption text-carbon-textSub whitespace-pre-wrap text-start"
-                >
-                  {result.detail}
-                </pre>
-              )}
-            </div>
+            <Button
+              label={t("zfs.connection.details")}
+              labelKey="zfs.connection.details"
+              glyph={<IconInfo />}
+              tone="neutral"
+              onClick={() => setDetailsOpen(true)}
+              className="self-start"
+            />
+          )}
+          {result.detail && detailsOpen && (
+            <InstanceWindow
+              title={t("zfs.connection.details")}
+              onClose={() => setDetailsOpen(false)}
+              footer={<Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={() => setDetailsOpen(false)} />}
+            >
+              <pre dir="ltr" className="overflow-x-auto rounded-control bg-carbon-surface2 p-2 text-caption text-carbon-textSub whitespace-pre-wrap text-start">
+                {result.detail}
+              </pre>
+            </InstanceWindow>
           )}
 
           <div className="flex justify-end">

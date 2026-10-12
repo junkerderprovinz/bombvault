@@ -253,7 +253,6 @@ const lv: Partial<Translations> = {
   "restoreCheck.plan.partial": "Salīdzināšana apstājās pie laika ierobežojuma, tāpēc skaitļi ir apakšējā robeža.",
   "restoreCheck.plan.error": "Salīdzināšana neizdevās: {error}",
   "restoreCheck.plan.showFiles": "Rādīt failus",
-  "restoreCheck.plan.hideFiles": "Paslēpt failus",
   "restoreCheck.plan.capped": "Sarakstā redzami pirmie 200 katra veida faili.",
   "restoreCheck.def.missing": "Pašlaik tā nav. Atjaunošana to izveido no kopijas.",
   "restoreCheck.def.title": "Iestatījumi salīdzinājumā ar tagadējiem",

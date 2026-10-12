@@ -214,7 +214,6 @@ const ko: Partial<Translations> = {
   "restoreCheck.plan.partial": "비교가 시간 제한에서 멈춰 숫자는 최솟값입니다.",
   "restoreCheck.plan.error": "비교에 실패했습니다: {error}",
   "restoreCheck.plan.showFiles": "파일 보기",
-  "restoreCheck.plan.hideFiles": "파일 숨기기",
   "restoreCheck.plan.capped": "목록은 종류별로 처음 200개 파일을 보여 줍니다.",
   "restoreCheck.def.missing": "지금은 존재하지 않습니다. 복원이 백업에서 만듭니다.",
   "restoreCheck.def.title": "현재와 비교한 설정",

@@ -214,7 +214,6 @@ const ru: Partial<Translations> = {
   "restoreCheck.plan.partial": "Сравнение остановилось по лимиту времени, поэтому числа указаны как минимум.",
   "restoreCheck.plan.error": "Сравнение не удалось: {error}",
   "restoreCheck.plan.showFiles": "Показать файлы",
-  "restoreCheck.plan.hideFiles": "Скрыть файлы",
   "restoreCheck.plan.capped": "Список показывает первые 200 файлов каждого вида.",
   "restoreCheck.def.missing": "Сейчас этого нет. Восстановление создаст это из копии.",
   "restoreCheck.def.title": "Настройки в сравнении с текущими",

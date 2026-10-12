@@ -253,7 +253,6 @@ const eu: Partial<Translations> = {
   "restoreCheck.plan.partial": "Alderaketa denbora-mugan gelditu da, beraz zenbakiak gutxieneko bat dira.",
   "restoreCheck.plan.error": "Alderaketak huts egin du: {error}",
   "restoreCheck.plan.showFiles": "Erakutsi fitxategiak",
-  "restoreCheck.plan.hideFiles": "Ezkutatu fitxategiak",
   "restoreCheck.plan.capped": "Zerrendak mota bakoitzeko lehen 200 fitxategiak erakusten ditu.",
   "restoreCheck.def.missing": "Hau ez dago orain. Leheneratzeak babeskopiatik sortzen du.",
   "restoreCheck.def.title": "Ezarpenak oraingoekin alderatuta",

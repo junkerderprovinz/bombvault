@@ -213,7 +213,6 @@ const ro: Partial<Translations> = {
   "restoreCheck.plan.partial": "Comparația s-a oprit la limita de timp, așa că numerele sunt o limită inferioară.",
   "restoreCheck.plan.error": "Comparația a eșuat: {error}",
   "restoreCheck.plan.showFiles": "Arată fișierele",
-  "restoreCheck.plan.hideFiles": "Ascunde fișierele",
   "restoreCheck.plan.capped": "Lista arată primele 200 de fișiere din fiecare fel.",
   "restoreCheck.def.missing": "Acum nu există. Restaurarea îl creează din copia de rezervă.",
   "restoreCheck.def.title": "Setări comparate cu acum",

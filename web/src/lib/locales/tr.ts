@@ -214,7 +214,6 @@ const tr: Partial<Translations> = {
   "restoreCheck.plan.partial": "Karşılaştırma süre sınırında durdu, bu yüzden sayılar bir alt sınırdır.",
   "restoreCheck.plan.error": "Karşılaştırma başarısız oldu: {error}",
   "restoreCheck.plan.showFiles": "Dosyaları göster",
-  "restoreCheck.plan.hideFiles": "Dosyaları gizle",
   "restoreCheck.plan.capped": "Liste her türün ilk 200 dosyasını gösterir.",
   "restoreCheck.def.missing": "Bu şu anda yok. Geri yükleme onu yedekten oluşturur.",
   "restoreCheck.def.title": "Ayarlar, şimdiki ile karşılaştırmalı",

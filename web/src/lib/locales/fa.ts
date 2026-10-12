@@ -253,7 +253,6 @@ const fa: Partial<Translations> = {
   "restoreCheck.plan.partial": "مقایسه در سقف زمانی‌اش متوقف شد، پس عددها حداقل‌اند.",
   "restoreCheck.plan.error": "مقایسه ناموفق بود: {error}",
   "restoreCheck.plan.showFiles": "نمایش فایل‌ها",
-  "restoreCheck.plan.hideFiles": "پنهان کردن فایل‌ها",
   "restoreCheck.plan.capped": "فهرست ۲۰۰ فایل اول هر نوع را نشان می‌دهد.",
   "restoreCheck.def.missing": "این الان وجود ندارد. بازیابی آن را از نسخهٔ پشتیبان می‌سازد.",
   "restoreCheck.def.title": "تنظیمات در مقایسه با اکنون",

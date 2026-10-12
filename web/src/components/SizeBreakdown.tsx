@@ -1,11 +1,9 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { getSizeBreakdown, type BreakdownDomain, type SizeBreakdown as Breakdown } from "../lib/api";
 import { humanBytes } from "../lib/forecast";
 import type { useT } from "../lib/i18n";
 import { Button } from "./Button";
-import { IconDisclosure } from "./IconDisclosure";
-import { InfoBubble } from "./InfoBubble";
 import { IconFolder } from "./Sidebar";
 
 type T = ReturnType<typeof useT>["t"];
@@ -15,33 +13,18 @@ const POLL_MS = 2000;
 
 /**
  * SizeBreakdown shows which folders and files take the space in an item's
- * newest backup and how much of each the latest backup added. Opening it is
+ * newest backup and how much of each the latest backup added. Showing it is
  * what asks the server to work it out; a folder row opens one level further.
  */
-export function SizeBreakdown({
-  domain,
-  item,
-  t,
-  expanded = false,
-}: {
-  domain: BreakdownDomain;
-  item: string;
-  t: T;
-  /** Shows the breakdown at once, without the button that folds it out, for
-   *  a card that is there for nothing else. */
-  expanded?: boolean;
-}) {
-  const [open, setOpen] = useState(expanded);
+export function SizeBreakdown({ domain, item, t }: { domain: BreakdownDomain; item: string; t: T }) {
   const [path, setPath] = useState("");
   const [data, setData] = useState<Breakdown | null>(null);
   // null while the request went through; otherwise the server's reason, empty
   // when the request itself failed.
   const [failure, setFailure] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
-  const panelId = useId();
 
   useEffect(() => {
-    if (!open) return;
     let alive = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const load = (again: boolean) => {
@@ -65,88 +48,64 @@ export function SizeBreakdown({
       alive = false;
       clearTimeout(timer);
     };
-  }, [open, domain, item, path, retry]);
+  }, [domain, item, path, retry]);
 
   const failed = failure ?? (data?.state === "failed" ? (data.error ?? "") : null);
   const crumbs = path === "" ? [] : path.split("/");
   return (
-    <div className={expanded ? "flex flex-col gap-2" : "py-2 border-b border-carbon-border flex flex-col gap-2"}>
-      {!expanded && (
-        <div className="flex items-center gap-1.5">
+    <div className="flex flex-col gap-2 text-sm">
+      {failed !== null && (
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-caption text-statusFail">{t("breakdown.failed").replace("{error}", failed)}</p>
           <Button
-            label={t("breakdown.title")}
-            labelKey="breakdown.title"
-            glyph={<IconDisclosure open={open} />}
-            tone="subtle"
-            onClick={() => setOpen((o) => !o)}
-            ariaExpanded={open}
-            ariaControls={panelId}
-            keepLabel
+            label={t("breakdown.retry")}
+            labelKey="breakdown.retry"
+            tone="neutral"
+            onClick={() => setRetry((n) => n + 1)}
           />
-          <InfoBubble tip={t("breakdown.hint")} />
         </div>
       )}
-      {open && (
-        <div id={panelId} className="flex flex-col gap-2 text-sm">
-          {failed !== null && (
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-caption text-statusFail">{t("breakdown.failed").replace("{error}", failed)}</p>
+      {failed === null && (!data || data.state === "running") && (
+        <p role="status" className="text-caption text-carbon-textMuted">
+          {t("breakdown.running")}
+        </p>
+      )}
+      {failed === null && data?.state === "ready" && (
+        <>
+          <nav aria-label={t("breakdown.title")} className="flex flex-wrap items-center gap-1">
+            <Button
+              label={data.root ?? ""}
+              labelKey={null}
+              glyph={<IconFolder />}
+              tone="subtle"
+              onClick={() => setPath("")}
+              disabled={path === ""}
+              keepLabel
+            />
+            {crumbs.map((c, i) => (
               <Button
-                label={t("breakdown.retry")}
-                labelKey="breakdown.retry"
-                tone="neutral"
-                onClick={() => setRetry((n) => n + 1)}
+                key={crumbs.slice(0, i + 1).join("/")}
+                label={c}
+                labelKey={null}
+                glyph={<IconFolder />}
+                tone="subtle"
+                onClick={() => setPath(crumbs.slice(0, i + 1).join("/"))}
+                disabled={i === crumbs.length - 1}
+                keepLabel
               />
-            </div>
-          )}
-          {failed === null && (!data || data.state === "running") && (
-            <p role="status" className="text-caption text-carbon-textMuted">
-              {t("breakdown.running")}
-            </p>
-          )}
-          {/* A card that shows the breakdown at once has said what it knows
-              about the newest backup. Without folders to list it adds nothing. */}
-          {failed === null && data?.state === "none" && !expanded && (
-            <p className="text-caption text-carbon-textMuted">{t("breakdown.none")}</p>
-          )}
-          {failed === null && data?.state === "ready" && (
-            <>
-              <nav aria-label={t("breakdown.title")} className="flex flex-wrap items-center gap-1">
-                <Button
-                  label={data.root ?? ""}
-                  labelKey={null}
-                  glyph={<IconFolder />}
-                  tone="subtle"
-                  onClick={() => setPath("")}
-                  disabled={path === ""}
-                  keepLabel
-                />
-                {crumbs.map((c, i) => (
-                  <Button
-                    key={crumbs.slice(0, i + 1).join("/")}
-                    label={c}
-                    labelKey={null}
-                    glyph={<IconFolder />}
-                    tone="subtle"
-                    onClick={() => setPath(crumbs.slice(0, i + 1).join("/"))}
-                    disabled={i === crumbs.length - 1}
-                    keepLabel
-                  />
-                ))}
-              </nav>
-              <p className="text-caption text-carbon-textSub">
-                {t("breakdown.total")
-                  .replace("{size}", humanBytes(data.size))
-                  .replace("{files}", t("breakdown.files", data.files))
-                  .replace("{added}", humanBytes(data.added))}
-                {data.time && <> {t("breakdown.from").replace("{time}", new Date(data.time).toLocaleString())}</>}
-              </p>
-              {data.first && <p className="text-caption text-carbon-textMuted">{t("breakdown.first")}</p>}
-              {data.partial && <p className="text-caption text-statusWarn">{t("breakdown.partial")}</p>}
-              <BreakdownRows data={data} onOpen={(name) => setPath(path === "" ? name : `${path}/${name}`)} t={t} />
-            </>
-          )}
-        </div>
+            ))}
+          </nav>
+          <p className="text-caption text-carbon-textSub">
+            {t("breakdown.total")
+              .replace("{size}", humanBytes(data.size))
+              .replace("{files}", t("breakdown.files", data.files))
+              .replace("{added}", humanBytes(data.added))}
+            {data.time && <> {t("breakdown.from").replace("{time}", new Date(data.time).toLocaleString())}</>}
+          </p>
+          {data.first && <p className="text-caption text-carbon-textMuted">{t("breakdown.first")}</p>}
+          {data.partial && <p className="text-caption text-statusWarn">{t("breakdown.partial")}</p>}
+          <BreakdownRows data={data} onOpen={(name) => setPath(path === "" ? name : `${path}/${name}`)} t={t} />
+        </>
       )}
     </div>
   );

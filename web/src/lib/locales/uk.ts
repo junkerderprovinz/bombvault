@@ -215,7 +215,6 @@ const uk: Partial<Translations> = {
   "restoreCheck.plan.partial": "Порівняння зупинилося на ліміті часу, тому числа є нижньою межею.",
   "restoreCheck.plan.error": "Порівняння не вдалося: {error}",
   "restoreCheck.plan.showFiles": "Показати файли",
-  "restoreCheck.plan.hideFiles": "Сховати файли",
   "restoreCheck.plan.capped": "Список показує перші 200 файлів кожного виду.",
   "restoreCheck.def.missing": "Зараз цього немає. Відновлення створить це з копії.",
   "restoreCheck.def.title": "Налаштування порівняно з поточними",

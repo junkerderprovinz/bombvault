@@ -214,7 +214,6 @@ const cs: Partial<Translations> = {
   "restoreCheck.plan.partial": "Porovnání skončilo na časovém limitu, čísla jsou proto dolní hranice.",
   "restoreCheck.plan.error": "Porovnání selhalo: {error}",
   "restoreCheck.plan.showFiles": "Zobrazit soubory",
-  "restoreCheck.plan.hideFiles": "Skrýt soubory",
   "restoreCheck.plan.capped": "Seznam ukazuje prvních 200 souborů každého druhu.",
   "restoreCheck.def.missing": "Teď to neexistuje. Obnova to vytvoří ze zálohy.",
   "restoreCheck.def.title": "Nastavení ve srovnání s aktuálním",

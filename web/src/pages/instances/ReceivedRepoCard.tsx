@@ -7,7 +7,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { IconDisclosure } from "../../components/IconDisclosure";
+import { IconInfo } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
 import { EXACT_CADENCE_MODES } from "../../components/CadenceBuilder";
 import { NumberField } from "../../components/NumberField";
@@ -309,8 +309,8 @@ export function ReceivedRepoCard({
             label={t("receiver.details")}
             labelKey="receiver.details"
             tone="neutral"
-            onClick={() => setOpen((v) => !v)}
-            glyph={<IconDisclosure open={open} />}
+            onClick={() => setOpen(true)}
+            glyph={<IconInfo />}
           />
           <Button
             label={t("receiver.edit")}
@@ -344,10 +344,14 @@ export function ReceivedRepoCard({
       </div>
 
       {open && (
-        <div className="rounded-card bg-carbon-surface px-3 py-2">
-          <p className="text-xs font-medium text-carbon-textSub">{t("receiver.inventoryTitle")}</p>
+        <InstanceWindow
+          title={t("receiver.inventoryTitle")}
+          facts={repo.name}
+          onClose={() => setOpen(false)}
+          footer={<Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={() => setOpen(false)} />}
+        >
           <InventoryPanel repo={repo} t={t} />
-        </div>
+        </InstanceWindow>
       )}
     </div>
   );

@@ -253,7 +253,6 @@ const et: Partial<Translations> = {
   "restoreCheck.plan.partial": "Võrdlus peatus ajapiirangul, seega on arvud alampiir.",
   "restoreCheck.plan.error": "Võrdlus ebaõnnestus: {error}",
   "restoreCheck.plan.showFiles": "Näita faile",
-  "restoreCheck.plan.hideFiles": "Peida failid",
   "restoreCheck.plan.capped": "Loend näitab igast liigist esimest 200 faili.",
   "restoreCheck.def.missing": "Seda praegu ei ole. Taastamine loob selle varundusest.",
   "restoreCheck.def.title": "Seaded võrreldes praegusega",

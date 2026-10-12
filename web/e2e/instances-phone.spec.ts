@@ -602,17 +602,20 @@ for (const width of [320, 360]) {
     await expect(page.locator("#bv-main .glim-net-wide")).toBeHidden();
     await expect(page.locator("#bv-main .glim-net-narrow").getByRole("button", { name: MEMBER_NAME })).toBeVisible();
     await expect(page.getByText("Ohne Instanz", { exact: true })).toBeVisible();
+    // The inventory opens in a window, and lists each source with its date
+    // and size in view, not as a table whose last columns scroll away.
     await page.locator("#bv-main").getByRole("button", { name: "Details", exact: true }).last().click();
-    await expect(page.locator("#bv-main").getByText("Gesamt", { exact: true })).toBeVisible();
+    const inventory = page.getByRole("dialog", { name: "Bestand nach Quelle" });
+    await expect(inventory.getByText("Gesamt", { exact: true })).toBeVisible();
+    await expect(inventory.locator("table")).toHaveCount(0);
+    await expect(inventory.getByText("49,4 GB", { exact: true })).toHaveCount(1);
+    await expectDialogFits(page, inventory);
+    await inventory.getByRole("button", { name: "Fertig" }).click();
     await armRemoves(page, "#bv-main");
 
     expect(await pageGap(page)).toBe("24px");
     await expectFits(page, "#bv-main");
     await expectOnPage(page);
-    // The inventory lists each source with its date and size in view, and not
-    // as a table whose last columns scroll out of the card.
-    await expect(page.locator("#bv-main table")).toHaveCount(0);
-    await expect(page.locator("#bv-main").getByText("49,4 GB", { exact: true })).toHaveCount(1);
     // Four tiles stand two by two, each pair sharing the card's width however
     // long the names of the roles.
     for (const key of ["self", MEMBER]) {
