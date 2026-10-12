@@ -217,8 +217,7 @@ test.describe("on the desktop", () => {
     // A folder on this host comes first among the providers.
     await expect(window.locator(".glim-provider-pick button").nth(1)).toContainText("Lokaler Ordner");
 
-    await window.getByRole("button", { name: "Suchen" }).click();
-    await window.getByRole("searchbox").fill("rest");
+    await window.getByRole("searchbox", { name: "Anbieter suchen" }).fill("rest");
     await expect(window.locator(".glim-provider-pick button")).toHaveCount(1);
     await window.getByRole("button", { name: /^Rest server/ }).click();
 

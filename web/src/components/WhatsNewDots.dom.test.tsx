@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AttentionContext } from "../lib/attention";
 import { I18nProvider, en } from "../lib/i18n";
 import { CHANGES, WHATS_NEW_RELEASE } from "../lib/whatsNew";
-import { beginWhatsNew, markAbsent, markSeen, showDots } from "../lib/whatsNewStore";
+import { beginWhatsNew, markAbsent, markSeen } from "../lib/whatsNewStore";
 
 let desktop = true;
 vi.mock("../lib/useMediaQuery", async (importOriginal) => ({
@@ -316,11 +316,12 @@ describe("where nothing is new", () => {
     expect(dots()).toEqual([]);
   });
 
-  it("draws no dot while they are switched off, and all of them again when switched on", async () => {
-    showDots(false);
+  it("draws no dot once everything is marked as seen, and all of them again once it is new again", async () => {
+    const all = CHANGES.map((change) => change.id);
+    markSeen(all);
     await renderAt("/dashboard", overview);
     expect(dots()).toEqual([]);
-    await act(async () => showDots(true));
+    await act(async () => markSeen(all, false));
     expect(dotOf("overview-head")).not.toBeNull();
   });
 

@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { listGroupReceivers, type GroupReceiver } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { IconShieldOn } from "../glyphs";
+import { PickerGroup } from "../Picker";
 import { ReadmeButton } from "../ReadmeButton";
-import { ProviderGroupHeading } from "./ProviderPicker";
 
 /** Where a receiver's address points, without the scheme and the login. */
 function shownAddress(url: string): string {
@@ -46,12 +46,7 @@ export function GroupReceiverPicker({
   if (receivers.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-2">
-      <ProviderGroupHeading
-        title={t("dest.group.fromGroup")}
-        fit={{ label: t("dest.fit.best"), tone: "ok" }}
-        tip={t("dest.groupTip.fromGroup")}
-      />
+    <PickerGroup title={t("dest.group.fromGroup")} fit={{ label: t("dest.fit.best"), tone: "ok" }} tip={t("dest.groupTip.fromGroup")}>
       <ul className="glim-provider-pick">
         {receivers.map((r) => (
           <li key={r.memberId}>
@@ -70,6 +65,6 @@ export function GroupReceiverPicker({
           </li>
         ))}
       </ul>
-    </section>
+    </PickerGroup>
   );
 }

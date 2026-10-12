@@ -416,7 +416,7 @@ describe("adding a storage location", () => {
   it("opens from the page's main action with the providers in their groups, a local folder first", async () => {
     const window = await open();
 
-    const groups = within(window).getAllByRole("heading", { level: 4 }).map((h) => h.textContent ?? "");
+    const groups = within(window).getAllByRole("heading", { level: 3 }).map((h) => h.textContent ?? "");
     expect(groups.map((g) => g.replace(/(best|good) fit|works, but slower/, ""))).toEqual(["Local", "NAS or server", "S3 service", "Cloud storage"]);
     expect(tileNames(window)).toEqual(["Local folder", "Rest server", "Backblaze B2", "Google Drive"]);
   });
@@ -442,14 +442,13 @@ describe("adding a storage location", () => {
   it("narrows the tiles to what the search asks for", async () => {
     const window = await open();
 
-    await click(within(window).getByRole("button", { name: "Search" }));
     await act(async () => {
-      fireEvent.change(within(window).getByRole("searchbox", { name: "Search" }), { target: { value: "back" } });
+      fireEvent.change(within(window).getByRole("searchbox", { name: "Search providers" }), { target: { value: "back" } });
     });
     expect(tileNames(window)).toEqual(["Backblaze B2"]);
 
     await act(async () => {
-      fireEvent.change(within(window).getByRole("searchbox", { name: "Search" }), { target: { value: "zzz" } });
+      fireEvent.change(within(window).getByRole("searchbox", { name: "Search providers" }), { target: { value: "zzz" } });
     });
     expect(tileNames(window)).toEqual([]);
     expect(within(window).getByText(/^No provider matches\./)).toBeTruthy();

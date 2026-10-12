@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { ConfirmPrompt } from "../../components/ConfirmPrompt";
 import { Note } from "../../components/entry/Note";
 import { IconInfo, IconKeyRevoke, IconLink, IconRefresh } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
+import { PickerGroup } from "../../components/Picker";
 import { RevealInput } from "../../components/RevealInput";
 import { ReadmeButton } from "../../components/ReadmeButton";
-import { IconAdd, IconDownload, IconPencil, IconTrash } from "../../components/navGlyphs";
+import { IconAdd, IconClose, IconDownload, IconPencil, IconTrash } from "../../components/navGlyphs";
 import { SettingRow } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import {
@@ -39,6 +40,7 @@ import { ClientMark } from "./McpClientMark";
 import { CopyField } from "./CopyField";
 import { McpKeyLog } from "./McpKeyLog";
 import { McpOAuthSettings } from "./McpOAuthSettings";
+import { fold } from "./SettingsSearch";
 import { Card, SubCard, useOpenPasswordField } from "./shared";
 
 // McpServerCard is where an MCP key comes from, and the only place it is ever
@@ -85,6 +87,47 @@ type Pending =
 /** How often the card asks for the key list while a setup dialog waits for
  *  the client's first call. */
 const FIRST_CALL_POLL_MS = 3000;
+
+/** The window of clients: the ones on this computer, the cloud ones, and
+ *  Other client as the last tile. */
+function ClientPicker({ button, onClose }: { button: (c: McpClient) => ReactNode; onClose: () => void }) {
+  const { t } = useT();
+  const [query, setQuery] = useState("");
+  const q = fold(query.trim());
+  const hit = (c: McpClient) => fold(c === OTHER_CLIENT ? t("mcp.otherClient") : c.name).includes(q);
+  const groups = [
+    { id: "local", title: t("mcp.groupLocal"), tip: undefined, clients: LOCAL_CLIENTS.filter(hit) },
+    { id: "cloud", title: t("mcp.groupCloud"), tip: t("mcp.cloudWarning"), clients: CLOUD_CLIENTS.filter(hit) },
+  ].filter((g) => g.clients.length > 0);
+  const other = hit(OTHER_CLIENT);
+
+  return (
+    <InstanceWindow
+      title={t("mcp.chooseClient")}
+      hint={t("mcp.connectHint")}
+      picker
+      search={{ value: query, onChange: setQuery, label: t("mcp.search") }}
+      footer={<Button label={t("common.close")} labelKey="common.close" glyph={<IconClose />} onClick={onClose} />}
+      onClose={onClose}
+    >
+      {groups.map((g) => (
+        <PickerGroup key={g.id} title={g.title} tip={g.tip}>
+          <ul className="glim-provider-pick">
+            {g.clients.map((c) => (
+              <li key={c.id}>{button(c)}</li>
+            ))}
+          </ul>
+        </PickerGroup>
+      ))}
+      {other && (
+        <ul className="glim-provider-pick">
+          <li>{button(OTHER_CLIENT)}</li>
+        </ul>
+      )}
+      {groups.length === 0 && !other && <p className="text-sm text-carbon-textMuted">{t("mcp.noMatch")}</p>}
+    </InstanceWindow>
+  );
+}
 
 export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; passwordSet?: boolean }) {
   const { t } = useT();
@@ -688,30 +731,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
         </InstanceWindow>
       )}
 
-      {choosing && (
-        <InstanceWindow
-          title={t("mcp.chooseClient")}
-          footer={<Button label={t("common.close")} labelKey="common.close" tone="subtle" onClick={() => setChoosing(false)} />}
-          onClose={() => setChoosing(false)}
-        >
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <span className="text-[length:var(--text-caption)] font-medium uppercase tracking-[0.06em] text-carbon-textMuted">
-                {t("mcp.groupLocal")}
-              </span>
-              <div className="glim-readme-btn-rows">{LOCAL_CLIENTS.map(clientButton)}</div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <span className="flex items-center gap-1.5 text-[length:var(--text-caption)] font-medium uppercase tracking-[0.06em] text-carbon-textMuted">
-                {t("mcp.groupCloud")}
-                <InfoBubble tip={t("mcp.cloudWarning")} />
-              </span>
-              <div className="glim-readme-btn-rows">{CLOUD_CLIENTS.map(clientButton)}</div>
-            </div>
-            <div className="glim-readme-btn-rows">{clientButton(OTHER_CLIENT)}</div>
-          </div>
-        </InstanceWindow>
-      )}
+      {choosing && <ClientPicker button={clientButton} onClose={() => setChoosing(false)} />}
       {dialog !== null && data !== null && (
         <McpClientDialog
           key={dialog.id}

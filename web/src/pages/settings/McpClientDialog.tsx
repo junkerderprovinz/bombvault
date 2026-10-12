@@ -1,6 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
-import { Badge } from "../../components/Badge";
+import { useState, type ReactNode } from "react";
 import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
 import { IconCheck, IconCopy, IconDownload } from "../../components/navGlyphs";
@@ -9,11 +7,10 @@ import { Selector } from "../../components/Selector";
 import { Toggle } from "../../components/Toggle";
 import type { McpKeyView, McpOAuthView } from "../../lib/api";
 import type { TranslationKey } from "../../lib/i18n";
-import { useBackCloses } from "../../lib/useBackCloses";
 import { KIND_LABEL, OTHER_CLIENT, clientById, snippetFor, type ConfigPaths, type McpClient } from "../../lib/mcpClients";
 import { KEY_PLACEHOLDER, KEY_VARIABLE, type McpSnippetInput } from "../../lib/mcpSnippets";
 import { tLtr } from "../../lib/ltrFragments";
-import { focusableElements } from "../../lib/useConfirm";
+import { InstanceWindow } from "../instances/InstanceWindow";
 import { ClientMark } from "./McpClientMark";
 import { connectorUrl, McpOAuthSettings } from "./McpOAuthSettings";
 
@@ -90,7 +87,6 @@ export function McpClientDialog({
   const other = client.id === OTHER_CLIENT.id;
   const canMint = mintRefused === undefined;
   const name = other ? t("mcp.otherClient") : client.name;
-  const cardRef = useRef<HTMLDivElement>(null);
   // A grant belongs to the client that signed in and cannot be handed to
   // another one, so only keys are offered for reuse.
   const staticKeys = keys.filter((k) => !k.viaOAuth);
@@ -124,37 +120,7 @@ export function McpClientDialog({
     : undefined;
   const connected = client.oauth ? signedIn !== undefined : chosen !== undefined && chosen.lastUsedAt > since;
 
-  const closeRef = useRef(() => onClose(null));
-  closeRef.current = () => onClose(created && connected ? created.id : null);
-  useBackCloses(true, () => closeRef.current());
-
-  useEffect(() => {
-    const trigger = document.activeElement;
-    cardRef.current?.focus();
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        closeRef.current();
-        return;
-      }
-      const card = cardRef.current;
-      if (e.key !== "Tab" || !card) return;
-      const focusables = focusableElements(card);
-      if (focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      const inside = document.activeElement instanceof Node && card.contains(document.activeElement);
-      if (e.shiftKey ? !inside || document.activeElement === first : !inside || document.activeElement === last) {
-        e.preventDefault();
-        (e.shiftKey ? last : first).focus();
-      }
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      if (trigger instanceof HTMLElement && document.contains(trigger)) trigger.focus();
-    };
-  }, []);
+  const close = () => onClose(created && connected ? created.id : null);
 
   async function create() {
     const trimmed = label.trim();
@@ -632,41 +598,23 @@ export function McpClientDialog({
     );
   }
 
-  return createPortal(
-    <div
-      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) closeRef.current();
-      }}
+  return (
+    <InstanceWindow
+      title={other ? t("mcp.snippetsLabel") : fill("mcp.dialogTitle", { name })}
+      picker
+      onClose={close}
+      footer={
+        <Button
+          label={connected ? t("common.done") : t("common.close")}
+          labelKey={connected ? "common.done" : "common.close"}
+          glyph={connected ? <IconCheck /> : undefined}
+          tone="accent"
+          onClick={close}
+        />
+      }
     >
-      <div
-        ref={cardRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="bv-mcp-dialog-title"
-        className="glim-modal-card relative flex max-h-[88vh] w-full max-w-2xl flex-col rounded-card bg-carbon-surface shadow-2xl [--mark-ground:var(--carbon-surface)]"
-      >
-        <div className="flex items-start px-5 py-4">
-          <h2 id="bv-mcp-dialog-title" className="flex items-center">
-            <Badge tone="heading" size="heading" wrap>
-              {other ? t("mcp.snippetsLabel") : fill("mcp.dialogTitle", { name })}
-            </Badge>
-          </h2>
-        </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 pt-1 pb-4">{body}</div>
-        <div className="flex items-center justify-end gap-3 px-5 py-4">
-          <Button
-            label={connected ? t("common.done") : t("common.close")}
-            labelKey={connected ? "common.done" : "common.close"}
-            glyph={connected ? <IconCheck /> : undefined}
-            tone="accent"
-            onClick={() => closeRef.current()}
-          />
-        </div>
-      </div>
-    </div>,
-    document.body
+      <div className="flex flex-col gap-5 [--mark-ground:var(--carbon-surface)]">{body}</div>
+    </InstanceWindow>
   );
 }
 

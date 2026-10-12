@@ -5,8 +5,8 @@ import { IconEye, IconForward } from "../../components/glyphs";
 import { IconCheck } from "../../components/navGlyphs";
 import { useT } from "../../lib/i18n";
 import { CHANGES, type Change } from "../../lib/whatsNew";
-import { markSeen, showDots, useWhatsNew } from "../../lib/whatsNewStore";
-import { Card, ToggleRow } from "./shared";
+import { markSeen, useWhatsNew } from "../../lib/whatsNewStore";
+import { Card } from "./shared";
 
 const ALL = CHANGES.map((change) => change.id);
 
@@ -24,40 +24,31 @@ function byPage(t: ReturnType<typeof useT>["t"]): { name: string; changes: Chang
 
 /**
  * WhatsNewCard lists what the last update changed, page by page, with the way
- * to each change. It also holds the switch for the dots that mark the changes
- * on their pages, and counts the ones nobody has clicked away yet.
+ * to each change. One button in its heading marks everything as seen while
+ * something is left, which also hides the dots, and shows everything again
+ * once nothing is. It counts what it would mark.
  */
 export function WhatsNewCard({ hueIndex }: { hueIndex?: number }) {
   const { t } = useT();
   const navigate = useNavigate();
-  const { on, seen, absent, unseen } = useWhatsNew();
+  const { seen, absent, unseen } = useWhatsNew();
+  const left = unseen.length > 0;
 
   return (
-    <Card title={t("whatsNew.title")} hint={t("whatsNew.hint")} hueIndex={hueIndex}>
-      <ToggleRow label={t("whatsNew.show")} checked={on} onChange={showDots} />
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <span data-testid="whats-new-left" className="text-sm tabular-nums text-carbon-textSub">
-          {t("whatsNew.count").replace("{left}", String(unseen.length)).replace("{all}", String(CHANGES.length))}
-        </span>
-        <span className="flex min-w-0 flex-wrap items-center justify-end gap-2">
-          <Button
-            label={t("whatsNew.showAll")}
-            labelKey="whatsNew.showAll"
-            glyph={<IconEye />}
-            onClick={() => markSeen(ALL, false)}
-            disabled={seen.size === 0 && absent.size === 0}
-            className="glim-btn-wrap"
-          />
-          <Button
-            label={t("whatsNew.markAll")}
-            labelKey="whatsNew.markAll"
-            glyph={<IconCheck />}
-            onClick={() => markSeen(ALL)}
-            disabled={unseen.length === 0}
-            className="glim-btn-wrap"
-          />
-        </span>
-      </div>
+    <Card
+      title={t("whatsNew.title")}
+      hint={t("whatsNew.hint")}
+      hueIndex={hueIndex}
+      action={
+        <Button
+          label={`${t(left ? "whatsNew.markAll" : "whatsNew.showAll")} · ${left ? unseen.length : CHANGES.length}`}
+          labelKey={left ? "whatsNew.markAll" : "whatsNew.showAll"}
+          glyph={left ? <IconCheck /> : <IconEye />}
+          onClick={() => markSeen(ALL, left)}
+          className="glim-btn-wrap"
+        />
+      }
+    >
       {byPage(t).map((page) => (
         <section key={page.name} className="flex flex-col gap-1.5">
           <h3 className="text-caption font-semibold uppercase tracking-[.12em] text-carbon-textMuted">{page.name}</h3>

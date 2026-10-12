@@ -29,14 +29,14 @@ import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
 import { GroupReceiverPicker } from "../destinations/GroupReceiverPicker";
-import { ProviderGroupHeading, ProviderTiles, providerName } from "../destinations/ProviderPicker";
+import { ProviderTiles, providerName } from "../destinations/ProviderPicker";
 import { FolderBody, ProtectBody, RecoveryBody, SignInBody, type DestinationWords } from "../destinations/steps";
 import { useDestinationDraft } from "../destinations/useDestinationDraft";
 import { IconBack, IconForward, IconSave } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconClose, IconPencil } from "../navGlyphs";
+import { PickerGroup } from "../Picker";
 import { itemName } from "../placement/NewTargetQuestion";
-import { SearchFold } from "../SearchFold";
 import { Selector } from "../Selector";
 import { TestButton } from "../TestButton";
 import { Toggle } from "../Toggle";
@@ -241,11 +241,7 @@ export function AddLocationWindow({
     }))
     .filter(({ providers }) => providers.length > 0);
 
-  const cancel = (
-    <span className="me-auto">
-      <Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconClose />} tone="neutral" onClick={onClose} />
-    </span>
-  );
+  const cancel = <Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconClose />} tone="neutral" onClick={onClose} />;
   const back = <Button label={t("common.back")} labelKey="common.back" glyph={<IconBack />} tone="neutral" onClick={() => setStep(shown - 1)} />;
   const next = (disabled = false) => (
     <Button
@@ -286,14 +282,15 @@ export function AddLocationWindow({
     <InstanceWindow
       title={t("storage.add.title")}
       hint={t("storage.listHint")}
-      wide
+      picker
+      search={shown === 1 ? { value: query, onChange: setQuery, label: t("storage.add.search") } : undefined}
       onClose={onClose}
       footer={
         shown === 1 ? (
           cancel
         ) : (
           <>
-            {cancel}
+            <span className="me-auto">{cancel}</span>
             {back}
             {forward}
           </>
@@ -301,30 +298,25 @@ export function AddLocationWindow({
       }
     >
       {shown === 1 ? (
-        <div className="flex flex-col gap-4">
-          <div className="flex justify-end">
-            <SearchFold value={query} onChange={setQuery} label={t("backups.search")} placeholder={t("storage.add.search")} />
-          </div>
-          <div className="flex flex-col gap-4 rounded-card bg-carbon-surface2 p-4">
-            {draft.loadError && <p className="text-xs text-statusFail">{draft.loadError}</p>}
-            <GroupReceiverPicker
-              picked={draft.fromMember}
-              matches={matches}
-              onPick={(r) => void draft.pickFromGroup(r).then((filled) => filled && go(2))}
-            />
-            {tiles.map(({ section, providers }) => (
-              <section key={section.id} className="flex flex-col gap-2">
-                <ProviderGroupHeading
-                  title={t(section.title)}
-                  fit={section.fit && { label: t(section.fit.label), tone: section.fit.tone }}
-                  tip={section.tips.map((tip) => t(tip)).join(" ")}
-                />
-                <ProviderTiles providers={providers} picked={draft.fromMember ? undefined : picked?.id} onPick={pick} nameOf={nameOf} />
-              </section>
-            ))}
-            {tiles.length === 0 && q !== "" && <p className="text-sm text-carbon-textMuted">{t("storage.add.noMatch")}</p>}
-          </div>
-        </div>
+        <>
+          {draft.loadError && <p className="text-xs text-statusFail">{draft.loadError}</p>}
+          <GroupReceiverPicker
+            picked={draft.fromMember}
+            matches={matches}
+            onPick={(r) => void draft.pickFromGroup(r).then((filled) => filled && go(2))}
+          />
+          {tiles.map(({ section, providers }) => (
+            <PickerGroup
+              key={section.id}
+              title={t(section.title)}
+              fit={section.fit && { label: t(section.fit.label), tone: section.fit.tone }}
+              tip={section.tips.map((tip) => t(tip)).join(" ")}
+            >
+              <ProviderTiles providers={providers} picked={draft.fromMember ? undefined : picked?.id} onPick={pick} nameOf={nameOf} />
+            </PickerGroup>
+          ))}
+          {tiles.length === 0 && q !== "" && <p className="text-sm text-carbon-textMuted">{t("storage.add.noMatch")}</p>}
+        </>
       ) : (
         <div className="flex flex-col gap-4">
           <Selector

@@ -1,7 +1,7 @@
-// Which of the release's changes this browser has seen, and whether their dots
-// show. It is kept per release, so the next one starts with all of its dots,
-// and per browser: in the look that syncs through the server one person's
-// click would hide a dot for everybody.
+// Which of the release's changes this browser has seen. It is kept per
+// release, so the next one starts with all of its dots, and per browser: in the
+// look that syncs through the server one person's click would hide a dot for
+// everybody.
 
 import { useMemo, useSyncExternalStore } from "react";
 import { CHANGES, WHATS_NEW_RELEASE, type Change } from "./whatsNew";
@@ -10,9 +10,6 @@ const PREFIX = "bv-whats-new@";
 const KEY = PREFIX + WHATS_NEW_RELEASE;
 
 interface Stored {
-  /** The dots show. They start hidden: nothing is new to a browser that
-   *  never saw an older release. */
-  on: boolean;
   seen: string[];
   /** Changes whose page, when it was last open, drew neither them nor a way
    *  to them. */
@@ -31,17 +28,19 @@ function ids(list: unknown): string[] {
   return Array.isArray(list) ? list.filter((id): id is string => typeof id === "string") : [];
 }
 
+// Nothing is new to a browser that never saw an older release, so with nothing
+// stored every change counts as seen.
 function parse(raw: string): Stored {
   try {
     const stored: unknown = raw ? JSON.parse(raw) : null;
     if (stored && typeof stored === "object") {
-      const { on, seen, absent } = stored as Record<string, unknown>;
-      return { on: on === true, seen: ids(seen), absent: ids(absent) };
+      const { seen, absent } = stored as Record<string, unknown>;
+      return { seen: ids(seen), absent: ids(absent) };
     }
   } catch {
     // Anything else in the slot counts as nothing stored.
   }
-  return { on: false, seen: [], absent: [] };
+  return { seen: CHANGES.map((change) => change.id), absent: [] };
 }
 
 const listeners = new Set<() => void>();
@@ -77,8 +76,8 @@ function older(a: number[], b: number[]): boolean {
 
 /**
  * beginWhatsNew is told the release this browser saw before an update. Coming
- * from one older than the list's release switches the dots on, once: a later
- * patch of the same release leaves what was seen and hidden as it is. The
+ * from one older than the list's release makes every change new, once: a
+ * later patch of the same release leaves what was seen as it is. The
  * stores of earlier releases go, since their dots never show again.
  */
 export function beginWhatsNew(previous: string): void {
@@ -90,9 +89,9 @@ export function beginWhatsNew(previous: string): void {
       if (key?.startsWith(PREFIX) && key !== KEY) localStorage.removeItem(key);
     }
   } catch {
-    // Without storage there is nothing to clear and nothing to switch on.
+    // Without storage there is nothing to clear and nothing to mark.
   }
-  write({ on: true, seen: [], absent: [] });
+  write({ seen: [], absent: [] });
 }
 
 /** markSeen counts changes as seen, or as new again. Either way they are
@@ -114,12 +113,7 @@ export function markAbsent(ids: string[], absent = true): void {
   write({ ...stored, absent: absent ? [...rest, ...ids] : rest });
 }
 
-export function showDots(on: boolean): void {
-  write({ ...parse(readRaw()), on });
-}
-
 export interface WhatsNew {
-  on: boolean;
   seen: ReadonlySet<string>;
   absent: ReadonlySet<string>;
   /** The changes nobody has clicked away yet. */
@@ -129,8 +123,8 @@ export interface WhatsNew {
 export function useWhatsNew(): WhatsNew {
   const raw = useSyncExternalStore(subscribe, readRaw);
   return useMemo(() => {
-    const { on, seen, absent } = parse(raw);
+    const { seen, absent } = parse(raw);
     const known = new Set(seen);
-    return { on, seen: known, absent: new Set(absent), unseen: CHANGES.filter((change) => !known.has(change.id)) };
+    return { seen: known, absent: new Set(absent), unseen: CHANGES.filter((change) => !known.has(change.id)) };
   }, [raw]);
 }

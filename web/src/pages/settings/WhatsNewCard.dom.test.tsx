@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // The list of what is new: every change under its page with the way there,
-// what was seen dimmed, and the count of what is left.
+// what was seen dimmed, and the one button that marks the lot as seen or new.
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -11,8 +11,9 @@ import { beginWhatsNew, markAbsent, markSeen } from "../../lib/whatsNewStore";
 import { WhatsNewCard } from "./WhatsNewCard";
 
 const KEY = `bv-whats-new@${WHATS_NEW_RELEASE}`;
-const stored = () => JSON.parse(localStorage.getItem(KEY)!) as { on: boolean; seen: string[]; absent: string[] };
-const left = (n: number) => en["whatsNew.count"].replace("{left}", String(n)).replace("{all}", String(CHANGES.length));
+const stored = () => JSON.parse(localStorage.getItem(KEY)!) as { seen: string[]; absent: string[] };
+const markAll = (n: number) => `${en["whatsNew.markAll"]} · ${n}`;
+const showAll = `${en["whatsNew.showAll"]} · ${CHANGES.length}`;
 const line = (id: string) => document.querySelector<HTMLElement>(`[data-change="${id}"]`)!;
 
 function Where() {
@@ -54,10 +55,10 @@ describe("the list of what is new", () => {
     expect(screen.getByRole("heading", { level: 3, name: `${en["nav.settings"]} › ${en["pairing.title"]}` })).toBeTruthy();
   });
 
-  it("counts what is left and dims what was seen", async () => {
+  it("counts what is left on its button and dims what was seen", async () => {
     markSeen(["overview-head", "backups-bar"]);
     await renderCard();
-    expect(screen.getByTestId("whats-new-left").textContent).toBe(left(CHANGES.length - 2));
+    expect(screen.getByRole("button", { name: markAll(CHANGES.length - 2) })).toBeTruthy();
     expect(line("overview-head").dataset.seen).toBe("true");
     expect(line("overview-head").className).toContain("opacity-55");
     expect(line("backups-tiles").dataset.seen).toBeUndefined();
@@ -71,20 +72,17 @@ describe("the list of what is new", () => {
     expect(screen.getByTestId("where").textContent).toBe("/backups");
   });
 
-  it("marks everything as seen, and shows everything again", async () => {
+  it("marks everything as seen with one button, and shows everything again with the same", async () => {
     await renderCard();
-    const showAll = screen.getByRole("button", { name: en["whatsNew.showAll"] }) as HTMLButtonElement;
-    const markAll = screen.getByRole("button", { name: en["whatsNew.markAll"] }) as HTMLButtonElement;
-    expect(showAll.disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: showAll })).toBeNull();
 
-    await press(markAll);
+    await press(screen.getByRole("button", { name: markAll(CHANGES.length) }));
     expect(stored().seen).toHaveLength(CHANGES.length);
-    expect(screen.getByTestId("whats-new-left").textContent).toBe(left(0));
-    expect(markAll.disabled).toBe(true);
+    expect(document.querySelectorAll("[data-seen]")).toHaveLength(CHANGES.length);
 
-    await press(showAll);
+    await press(screen.getByRole("button", { name: showAll }));
     expect(stored().seen).toEqual([]);
-    expect(screen.getByTestId("whats-new-left").textContent).toBe(left(CHANGES.length));
+    expect(screen.getByRole("button", { name: markAll(CHANGES.length) })).toBeTruthy();
   });
 
   it("says of a change that its page does not show it, and still counts it", async () => {
@@ -93,28 +91,17 @@ describe("the list of what is new", () => {
     expect(line("overview-decline").dataset.absent).toBe("true");
     expect(within(line("overview-decline")).getByText(en["whatsNew.absent"])).toBeTruthy();
     expect(within(line("overview-head")).queryByText(en["whatsNew.absent"])).toBeNull();
-    expect(screen.getByTestId("whats-new-left").textContent).toBe(left(CHANGES.length));
+    expect(screen.getByRole("button", { name: markAll(CHANGES.length) })).toBeTruthy();
 
-    await press(screen.getByRole("button", { name: en["whatsNew.showAll"] }));
+    await press(screen.getByRole("button", { name: markAll(CHANGES.length) }));
     expect(stored().absent).toEqual([]);
     expect(line("overview-decline").dataset.absent).toBeUndefined();
   });
 
-  it("switches the dots off and on without touching what was seen", async () => {
-    markSeen(["overview-head"]);
-    await renderCard();
-    const dots = screen.getByRole("switch", { name: en["whatsNew.show"] });
-    expect(dots.getAttribute("aria-checked")).toBe("true");
-    await press(dots);
-    expect(stored()).toEqual({ on: false, seen: ["overview-head"], absent: [] });
-    await press(dots);
-    expect(stored().on).toBe(true);
-  });
-
-  it("is there with the dots off in a browser that saw no older release", async () => {
+  it("counts everything as seen in a browser that saw no older release", async () => {
     localStorage.removeItem(KEY);
     await renderCard();
-    expect(screen.getByRole("switch", { name: en["whatsNew.show"] }).getAttribute("aria-checked")).toBe("false");
-    expect(screen.getByTestId("whats-new-left").textContent).toBe(left(CHANGES.length));
+    expect(screen.getByRole("button", { name: showAll })).toBeTruthy();
+    expect(document.querySelectorAll("[data-seen]")).toHaveLength(CHANGES.length);
   });
 });
