@@ -12,6 +12,7 @@ import {
   saveExpanded,
 } from "../lib/selectionTree";
 import { Button } from "./Button";
+import { SelectDot } from "./backups/SelectMark";
 import { InfoBubble } from "./InfoBubble";
 import { Toggle } from "./Toggle";
 
@@ -422,11 +423,7 @@ export function SelectionTree({
           ? "text-carbon-textSub"
           : "text-carbon-text";
     const ariaChecked = state === "checked" ? "true" : state === "mixed" ? "mixed" : "false";
-    // React has no prop for indeterminate. A new callback ref on every render
-    // keeps it in sync.
-    const boxRef = (el: HTMLInputElement | null) => {
-      if (el) el.indeterminate = state === "mixed";
-    };
+    const boxDisabled = spec.unreachable || !!busyPaths?.has(spec.path);
     const indent = spec.depth > 0 ? { paddingInlineStart: spec.depth * 16 } : undefined;
     return (
       <Fragment key={`${spec.path}-${shakeCounts?.[spec.path] ?? 0}`}>
@@ -499,25 +496,23 @@ export function SelectionTree({
               </svg>
             )}
           </span>
-          {/* Hidden from assistive tech: the treeitem's aria-checked carries
-              the state, and for a mixed node the input would announce
-              "checked". Keyboard users toggle with Space on the row.
-              Touch mode makes the input purely presentational:
-              pointer-events-none lets a tap on the glyph fall through to the
-              row, and a readOnly input without onChange removes the native
-              toggle, which would otherwise double-fire with the row's own. */}
-          <input
-            ref={boxRef}
-            type="checkbox"
+          {/* Hidden from assistive tech, since the treeitem's aria-checked
+              carries the state and keyboard users toggle with Space on the
+              row. On touch the whole row toggles, so a tap on the mark falls
+              through to it instead of firing a second time. */}
+          <span
+            role="checkbox"
             aria-hidden="true"
-            tabIndex={-1}
-            checked={state === "checked" || state === "mixed"}
-            disabled={spec.unreachable || !!busyPaths?.has(spec.path)}
-            readOnly={touch || undefined}
-            onClick={(e) => e.stopPropagation()}
-            onChange={touch ? undefined : () => onToggle(spec.path)}
-            className={`mt-0.5 shrink-0 accent-(--accent)${touch ? " pointer-events-none" : ""}`}
-          />
+            aria-checked={ariaChecked}
+            aria-disabled={boxDisabled || undefined}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!touch && !boxDisabled) onToggle(spec.path);
+            }}
+            className={`mt-0.5 shrink-0 ${touch ? "pointer-events-none" : boxDisabled ? "opacity-50" : "cursor-pointer"}`}
+          >
+            <SelectDot checked={state === "checked"} mixed={state === "mixed"} />
+          </span>
           {spec.label}
           {spec.removable && (
             <span onClick={(e) => e.stopPropagation()}>

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 
 import { listRuns } from "../lib/api";
 import type { Run } from "../lib/api";
@@ -41,27 +41,22 @@ export function statusDotClass(status: string): string {
 /**
  * RecentRunsList shows one target's latest backups and imports with their
  * start and end time and duration. It fetches the run log when it mounts and
- * again whenever `refreshKey` changes, and filters it by domain and name. With
- * `renderDetail` each row opens to what that run did, which is where a domain
- * with per-run detail of its own puts it.
+ * again whenever `refreshKey` changes, and filters it by domain and name.
  */
 export function RecentRunsList({
   name,
   domain,
   t,
-  renderDetail,
   refreshKey,
 }: {
   name: string;
   domain: "container" | "vm" | "files" | "zfs";
   t: T;
-  renderDetail?: (run: Run) => ReactNode;
   /** Changes when a run of this target starts or ends. */
   refreshKey?: string;
 }) {
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openRun, setOpenRun] = useState("");
   const { byRunId } = useOpenAnomalies();
 
   useEffect(() => {
@@ -96,7 +91,6 @@ export function RecentRunsList({
       </p>
       {runs.map((run) => {
         const dur = run.finishedAt != null ? formatDuration(run.finishedAt - run.startedAt) : "";
-        const open = openRun === run.id;
         const line = (
           <>
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass(run.status)}`} />
@@ -121,34 +115,13 @@ export function RecentRunsList({
         const slow = run.bottleneck && (
           <p className="ps-3.5 text-caption text-carbon-textSub">{bottleneckText(run.bottleneck, t)}</p>
         );
-        if (!renderDetail) {
-          return (
-            <div key={run.id} className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-2 text-caption">
-                {line}
-                {badge}
-              </div>
-              {slow}
-            </div>
-          );
-        }
-        // The badge carries its own bubble button, so it sits beside the row's
-        // toggle and not inside it.
         return (
-          <div key={run.id} className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-expanded={open}
-                onClick={() => setOpenRun(open ? "" : run.id)}
-                className="flex items-center gap-2 text-caption text-start hover:text-carbon-text pointer-coarse:min-h-11"
-              >
-                {line}
-              </button>
+          <div key={run.id} className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2 text-caption">
+              {line}
               {badge}
             </div>
             {slow}
-            {open && renderDetail(run)}
           </div>
         );
       })}

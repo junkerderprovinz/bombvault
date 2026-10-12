@@ -1,5 +1,6 @@
 import type { ToastAction, ToastSeverity } from "../lib/toastEngine";
 import { Button } from "./Button";
+import { glyphFor } from "./glyphFor";
 
 // The presentational half of the toast system. These components use no hooks,
 // so tests can call them as plain functions; the queue, timers and portal live
@@ -103,6 +104,7 @@ export function ToastCard({
         <Button
           label={action.label}
           labelKey={null}
+          glyph={glyphFor(action.labelKey)}
           tone="neutral"
           onClick={() => {
             action.onClick();

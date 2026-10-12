@@ -278,3 +278,11 @@ it("stays quiet when the two agree, and when there is no user segment", async ()
   await renderWizard("rest:http://192.168.20.199:8000/containers");
   expect(screen.queryByText(/--private-repos/)).toBeNull();
 });
+
+it("explains the server recipe and the lock in bubbles", async () => {
+  await renderWizard();
+  for (const key of ["offsite.wizard.step2Hint", "offsite.immutableHint"] as const) {
+    expect(screen.queryByText(en[key])).toBeNull();
+    expect(screen.getByLabelText(en[key])).toBeTruthy();
+  }
+});

@@ -1031,7 +1031,7 @@ describe("Reset selection, narrowing note and hint copy", () => {
     expect(screen.queryByText(NARROWED_NOTE_EN)).toBeNull();
   });
 
-  it("a queue-collapsed burst nets to narrowing: 5 -> 3 -> 4 during one in-flight save fires the note and drains once", async () => {
+  it("a burst queued behind one in-flight save fires the note and drains once", async () => {
     const mounts: MountInfo[] = Array.from({ length: 5 }, (_, i) => ({
       source: `${HOST_ROOT}/user/appdata/d${String(i)}`,
       dest: `/d${i}`,
@@ -1048,26 +1048,22 @@ describe("Reset selection, narrowing note and hint copy", () => {
     await act(async () => {
       fireEvent.click(d0);
     });
-    // While it is in flight, uncheck and re-check d1; the burst collapses into
-    // the next drain. The first attempt (4) is already below the saved 5, so
-    // the note fires when it succeeds. Comparing against the last saved count,
-    // not the count before the click, is what nets stacked toggles correctly.
-    const d1 = within(screen.getByRole("treeitem", { name: /appdata\/d1/ })).getByRole("checkbox", { hidden: true });
-    await act(async () => {
-      fireEvent.click(d1);
-    });
-    await act(async () => {
-      fireEvent.click(d1);
-    });
+    // While it is in flight, uncheck d1 and d2; the burst collapses into the
+    // next drain. The first attempt (4) is already below the saved 5, so the
+    // note fires when it succeeds.
+    for (const name of [/appdata\/d1/, /appdata\/d2/]) {
+      const box = within(screen.getByRole("treeitem", { name })).getByRole("checkbox", { hidden: true });
+      await act(async () => {
+        fireEvent.click(box);
+      });
+    }
     await act(async () => {
       resolveFirst({ ok: true });
     });
     expect(screen.getByText(NARROWED_NOTE_EN)).toBeTruthy();
-    // The burst drained as one further fetch carrying the live 4-include list.
+    // The burst drained as one further fetch carrying the live 2-include list.
     expect(patches).toHaveLength(2);
-    expect(patches[1].paths).toEqual(
-      Array.from({ length: 5 }, (_, i) => `${HOST_ROOT}/user/appdata/d${String(i)}`).filter((p) => !p.endsWith("d0")),
-    );
+    expect(patches[1].paths).toEqual([`${HOST_ROOT}/user/appdata/d3`, `${HOST_ROOT}/user/appdata/d4`]);
     expect(patches[1].opts).toEqual({ selectionSource: "tree" });
   });
 

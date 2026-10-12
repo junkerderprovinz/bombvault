@@ -40,6 +40,14 @@ describe("the off-site targets and a new location", () => {
   });
   afterEach(cleanup);
 
+  it("explains the extra targets in the bubble beside their title", async () => {
+    renderWithProviders(<OffsiteTargetsSection domain="containers" t={t} />);
+    const tip = `${en["offsite.targets.hint"]} ${en["offsite.targets.scheduleNote"]}`;
+    expect(await screen.findByLabelText(tip)).toBeTruthy();
+    expect(screen.queryByText(en["offsite.targets.hint"])).toBeNull();
+    expect(screen.queryByText(en["offsite.targets.scheduleNote"])).toBeNull();
+  });
+
   it("asks before adding a target and sends the chosen exclusions along", async () => {
     fake.reply("getNewTargetPreview", {
       ok: true,

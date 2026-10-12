@@ -8,8 +8,7 @@ import { Card, useOpenPasswordField } from "../shared";
 import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { RevealInput } from "../../../components/RevealInput";
-import { IconDisclosure } from "../../../components/IconDisclosure";
-import { IconEye, IconRefresh, IconSignOut } from "../../../components/glyphs";
+import { IconEye, IconInfo, IconRefresh, IconSearch, IconSignOut } from "../../../components/glyphs";
 import { IconCheck, IconClose, IconCopy, IconPencil } from "../../../components/navGlyphs";
 import {
   createPhrase,
@@ -24,6 +23,7 @@ import { copyText } from "../../../lib/clipboard";
 import type { useT } from "../../../lib/i18n";
 import { useReveal } from "../../../lib/useReveal";
 import { useToast } from "../../../lib/toast";
+import { InstanceWindow } from "../../instances/InstanceWindow";
 import { PairingWindow } from "./PairingWindow";
 import { usePhraseEntry } from "./PhraseInput";
 import { WordSlots } from "./WordSlots";
@@ -95,17 +95,20 @@ function RelayDownLine({ group, onRefresh, t }: { group: GroupState; onRefresh: 
             label={t("pairing.relayCheckOpen")}
             labelKey="pairing.relayCheckOpen"
             tone="neutral"
-            onClick={() => setOpen((v) => !v)}
-            ariaExpanded={open}
-            glyph={<IconDisclosure open={open} />}
+            onClick={() => setOpen(true)}
+            glyph={<IconInfo />}
           />
           <Button label={t("pairing.checkAgain")} labelKey="pairing.checkAgain" glyph={<IconRefresh />} tone="neutral" onClick={onRefresh} />
         </span>
       </div>
       {open && (
-        <>
-          <p>{t("pairing.relayCheckLead")}</p>
-          <ul className="flex list-disc flex-col gap-1 ps-5">
+        <InstanceWindow
+          title={t("pairing.relayCheckOpen")}
+          onClose={() => setOpen(false)}
+          footer={<Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={() => setOpen(false)} />}
+        >
+          <p className="text-sm text-carbon-textSub">{t("pairing.relayCheckLead")}</p>
+          <ul className="flex list-disc flex-col gap-1 ps-5 text-sm text-carbon-textSub">
             <li>
               {own ? (
                 t("pairing.relayCheckOwn")
@@ -121,7 +124,7 @@ function RelayDownLine({ group, onRefresh, t }: { group: GroupState; onRefresh: 
             </li>
             <li>{t("pairing.relayCheckFilter")}</li>
           </ul>
-        </>
+        </InstanceWindow>
       )}
     </section>
   );
@@ -134,48 +137,45 @@ function CantFindIt({ onProbe, busy, t, shake }: { onProbe: (url: string) => voi
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   return (
-    <div className="flex flex-col gap-2">
-      <div>
-        <Button
-          label={t("pairing.cantFindTitle")}
-          labelKey="pairing.cantFindTitle"
-          tone="neutral"
-          onClick={() => setOpen((v) => !v)}
-          ariaExpanded={open}
-          glyph={<IconDisclosure open={open} />}
-        />
-      </div>
+    <div>
+      <Button label={t("pairing.cantFindTitle")} labelKey="pairing.cantFindTitle" tone="neutral" glyph={<IconSearch />} onClick={() => setOpen(true)} />
       {open && (
-        <div className="flex flex-col gap-2.5 rounded-control bg-carbon-surface2 p-3.5">
-          <p className="text-sm text-carbon-textSub">{t("pairing.cantFindBody")}</p>
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="flex min-w-0 flex-[1_1_16rem] flex-col gap-1.5">
-              <label htmlFor="pairing-cant-find" className="text-xs text-carbon-textSub">
-                {t("pairing.cantFindLabel")}
-              </label>
-              <input
-                id="pairing-cant-find"
-                type="url"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                spellCheck={false}
-                autoComplete="off"
-                placeholder="https://192.168.2.20:3443"
-                dir="ltr"
-                className="rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus"
+        <InstanceWindow
+          title={t("pairing.cantFindTitle")}
+          hint={t("pairing.cantFindBody")}
+          onClose={() => setOpen(false)}
+          footer={
+            <>
+              <Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconClose />} tone="neutral" onClick={() => setOpen(false)} />
+              <Button
+                key={`cant-find-${shake}`}
+                label={t("pairing.cantFindSearch")}
+                labelKey="pairing.cantFindSearch"
+                tone="accent"
+                onClick={() => onProbe(value)}
+                disabled={busy || value.trim() === ""}
+                busy={busy}
               />
-            </div>
-            <Button
-              key={`cant-find-${shake}`}
-              label={t("pairing.cantFindSearch")}
-              labelKey="pairing.cantFindSearch"
-              tone="accent"
-              onClick={() => onProbe(value)}
-              disabled={busy || value.trim() === ""}
-              busy={busy}
+            </>
+          }
+        >
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pairing-cant-find" className="text-xs text-carbon-textSub">
+              {t("pairing.cantFindLabel")}
+            </label>
+            <input
+              id="pairing-cant-find"
+              type="url"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder="https://192.168.2.20:3443"
+              dir="ltr"
+              className="rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus"
             />
           </div>
-        </div>
+        </InstanceWindow>
       )}
     </div>
   );

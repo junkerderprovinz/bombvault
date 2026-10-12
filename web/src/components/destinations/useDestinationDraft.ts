@@ -70,8 +70,6 @@ export interface DestinationDraftState {
   setSetting: (name: string, value: string) => void;
   name: string;
   setName: (name: string) => void;
-  showMore: boolean;
-  setShowMore: (show: boolean) => void;
   publicKey: string;
   fields: FormFields;
   test: TestVerdictState;
@@ -121,7 +119,6 @@ export function useDestinationDraft(): DestinationDraftState {
   const [fromMember, setFromMember] = useState<string | undefined>(undefined);
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [name, setName] = useState("");
-  const [showMore, setShowMore] = useState(false);
   const [publicKey, setPublicKey] = useState("");
   const [dir, setDir] = useState<string[]>([]);
   const [folders, setFolders] = useState<string[] | null>(null);
@@ -179,7 +176,6 @@ export function useDestinationDraft(): DestinationDraftState {
     setPicked(p);
     setSettings({});
     setName(providerName(p, t));
-    setShowMore(false);
     setDir([]);
     setFolders(null);
     setFree(null);
@@ -283,8 +279,6 @@ export function useDestinationDraft(): DestinationDraftState {
     setSetting: (field, value) => setSettings((s) => ({ ...s, [field]: value })),
     name,
     setName,
-    showMore,
-    setShowMore,
     publicKey,
     fields,
     test,

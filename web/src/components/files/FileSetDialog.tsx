@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import { patchFileSet } from "../../lib/api";
 import type { FileSetView, OkEnvelope } from "../../lib/api";
 import { PlacementDraft, type PlacementDraftValue } from "../placement/PlacementDraft";
@@ -7,11 +6,11 @@ import { placementErrorText } from "../../lib/placementCodes";
 import { createPlacedFileSet } from "./createPlacedFileSet";
 import { FolderBrowser } from "../FolderBrowser";
 import { useT } from "../../lib/i18n";
-import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import { ToggleRow } from "../../pages/settings/shared";
 import { useToast } from "../../lib/toast";
+import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -89,88 +88,12 @@ export function FileSetDialog({
     }
   }
 
-  // Portal to <body> so no ancestor's CSS transform can trap the fixed
-  // overlay. Centred rather than top-anchored, which would push the heading
-  // notch against the viewport edge; the box is capped at 90vh, so it never
-  // clips.
-  return createPortal(
-    <div
-      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
-      onClick={onClose}
-    >
-      {/* The heading notch sits on a non-scrolling shell around the
-          scrollable box, as in Receiver.tsx's ReceiverDialog. */}
-      <div className="relative w-full max-w-lg">
-      {/* px-5 matches the box's p-5 so the notch lands where a Card's does;
-          FolderBrowser.tsx explains why the notch has no offset of its own. */}
-      <h2 className="flex items-center px-5">
-        <Badge tone="heading" size="heading" wrap>{initial ? t("files.editSet") : t("files.addSet")}</Badge>
-      </h2>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={initial ? t("files.editSet") : t("files.addSet")}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
-      >
-        {/* The name becomes a restic tag, so the server validates it strictly. */}
-        <div className="flex flex-col gap-1.5">
-          <label className="flex items-center gap-1 text-xs text-carbon-textSub">
-            {t("files.name")}
-            {hasBackups && <InfoBubble tip={t("files.nameLocked")} />}
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={hasBackups}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder="documents"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus disabled:opacity-50"
-          />
-        </div>
-
-        {/* Source folder (relative subpath under the host mount root) */}
-        <div className="flex flex-col gap-1.5">
-          <FolderBrowser
-            inDialog
-            label={t("files.path")}
-            value={path}
-            hostMountRoot={hostMountRoot}
-            onChange={setPath}
-          />
-          {/* Saving a new path clears the ticked sub-folder selection on the
-              server, so the hint says so beforehand, whether or not a
-              selection exists. The tree itself lives on the card. */}
-          <p className="text-caption text-carbon-textMuted">{t("files.pathChangeHint")}</p>
-          <p className="text-caption text-carbon-textMuted">{t("files.pathHint")}</p>
-        </div>
-
-        {/* Exclude patterns, one per line */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("files.excludes")}</label>
-          <textarea
-            value={excludesText}
-            onChange={(e) => setExcludesText(e.target.value)}
-            spellCheck={false}
-            rows={4}
-            placeholder={"*.tmp\ncache/"}
-            dir="ltr"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
-          />
-          <p className="text-caption text-carbon-textMuted">{t("files.excludesHint")}</p>
-        </div>
-
-        {/* A new set has no card yet, so its placement is chosen here; an
-            existing set changes it on its card. */}
-        {!initial && <PlacementDraft value={placement} onChange={setPlacement} />}
-
-        {/* ToggleRow, not a bare Toggle: every setting row in this app puts
-            the words at the start and the switch at the end. */}
-        <ToggleRow checked={enabled} onChange={setEnabled} label={t("files.enabled")} />
-
-        <div className="flex items-center justify-end gap-2 pt-1">
+  return (
+    <InstanceWindow
+      title={initial ? t("files.editSet") : t("files.addSet")}
+      onClose={onClose}
+      footer={
+        <>
           <Button
             label={t("files.cancel")}
             labelKey="files.cancel"
@@ -189,10 +112,63 @@ export function FileSetDialog({
             title={saving ? t("common.saving") : undefined}
             className={shake ? "glim-shake" : ""}
           />
-        </div>
+        </>
+      }
+    >
+      {/* The name becomes a restic tag, so the server validates it strictly. */}
+      <div className="flex flex-col gap-1.5">
+        <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+          {t("files.name")}
+          {hasBackups && <InfoBubble tip={t("files.nameLocked")} />}
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={hasBackups}
+          spellCheck={false}
+          autoComplete="off"
+          placeholder="documents"
+          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus disabled:opacity-50"
+        />
       </div>
+
+      {/* Source folder (relative subpath under the host mount root) */}
+      <div className="flex flex-col gap-1.5">
+        <FolderBrowser
+          inDialog
+          label={t("files.path")}
+          value={path}
+          hostMountRoot={hostMountRoot}
+          onChange={setPath}
+          hint={`${t("files.pathHint")} ${t("files.pathChangeHint")}`}
+        />
       </div>
-    </div>,
-    document.body,
+
+      {/* Exclude patterns, one per line */}
+      <div className="flex flex-col gap-1.5">
+        <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+          {t("files.excludes")}
+          <InfoBubble tip={t("files.excludesHint")} />
+        </label>
+        <textarea
+          value={excludesText}
+          onChange={(e) => setExcludesText(e.target.value)}
+          spellCheck={false}
+          rows={4}
+          placeholder={"*.tmp\ncache/"}
+          dir="ltr"
+          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
+        />
+      </div>
+
+      {/* A new set has no card yet, so its placement is chosen here; an
+          existing set changes it on its card. */}
+      {!initial && <PlacementDraft value={placement} onChange={setPlacement} />}
+
+      {/* ToggleRow, not a bare Toggle: every setting row in this app puts
+          the words at the start and the switch at the end. */}
+      <ToggleRow checked={enabled} onChange={setEnabled} label={t("files.enabled")} />
+    </InstanceWindow>
   );
 }

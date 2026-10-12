@@ -388,11 +388,10 @@ export function OffsiteTargetsSection({
       {confirmDialog}
       {newTargetDialog}
       <div className="flex flex-col gap-0.5">
-        <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("offsite.targets.title")}
+          <InfoBubble tip={`${t("offsite.targets.hint")} ${t("offsite.targets.scheduleNote")}`} />
         </span>
-        <p className="text-xs text-carbon-textMuted">{t("offsite.targets.hint")}</p>
-        <p className="text-xs text-carbon-textMuted">{t("offsite.targets.scheduleNote")}</p>
       </div>
 
       {loadErr && <span className="text-xs text-statusFail wrap-break-word">{loadErr}</span>}

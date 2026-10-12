@@ -5,6 +5,7 @@ import { Badge } from "../../components/Badge";
 import { InfoBubble } from "../../components/InfoBubble";
 import { BottomSheet } from "../../components/mobile/BottomSheet";
 import { hueVars } from "../../lib/appearance";
+import { focusableElements } from "../../lib/useConfirm";
 import { useIsDesktop } from "../../lib/useMediaQuery";
 
 /** InstanceWindow is the window a card of the grid opens: a centred box on
@@ -40,10 +41,28 @@ export function InstanceWindow({
     if (!isDesktop) return;
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      // A dialog opened from inside the window answers Escape first.
+      const box = boxRef.current;
+      // A dialog opened from inside the window answers the keys first.
       const dialogs = document.querySelectorAll('[role="dialog"], [role="alertdialog"]');
-      if (dialogs[dialogs.length - 1] === boxRef.current) closeRef.current();
+      if (!box || dialogs[dialogs.length - 1] !== box) return;
+      if (e.key === "Escape") {
+        closeRef.current();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusables = focusableElements(box);
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      const inside = active instanceof Node && box.contains(active);
+      if (e.shiftKey && (!inside || active === first || active === box)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (!inside || active === last)) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", onKey);
     boxRef.current?.focus();

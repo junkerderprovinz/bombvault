@@ -440,6 +440,8 @@ describe("the System tile", () => {
     const data = within(card(en["settingsIO.title"]));
     expect(data.getByText(en["export.encrypt.recipients"])).toBeTruthy();
     expect(data.getByText(en["export.encrypt.recipientsRequired"])).toBeTruthy();
+    expect(data.queryByText(en["export.encrypt.recipientsHint"])).toBeNull();
+    expect(data.getByLabelText(en["export.encrypt.recipientsHint"])).toBeTruthy();
   });
 
   it("leaves the bug report to the Info page", async () => {

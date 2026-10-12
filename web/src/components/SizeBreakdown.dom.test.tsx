@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Opening the panel asks the server to work the breakdown out; it polls while
+// Showing the panel asks the server to work the breakdown out; it polls while
 // that runs, then lists the largest rows and opens a folder one level down.
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -49,14 +49,13 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-it("polls while the breakdown is worked out and then lists the rows", async () => {
+it("works the breakdown out at once, polls meanwhile and then lists the rows", async () => {
   getSizeBreakdown
     .mockResolvedValueOnce({ ok: true, breakdown: { state: "running", path: "", size: 0, files: 0, added: 0, children: [] } })
     .mockResolvedValueOnce(ready({}));
   render(<SizeBreakdown domain="containers" item="plex" t={t} />);
-  await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: /Size by folder/ }));
-  });
+  await act(async () => {});
+  expect(screen.queryByRole("button", { name: /Size by folder/ })).toBeNull();
   expect(screen.getByRole("status").textContent).toBe("Working it out…");
   await act(async () => {
     await vi.advanceTimersByTimeAsync(2000);
@@ -79,9 +78,7 @@ it("offers to try again after a failure", async () => {
     .mockResolvedValueOnce({ ok: true, breakdown: { state: "failed", error: "repository busy", path: "", size: 0, files: 0, added: 0, children: [] } })
     .mockResolvedValueOnce(ready({}));
   render(<SizeBreakdown domain="files" item="set-1" t={t} />);
-  await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: /Size by folder/ }));
-  });
+  await act(async () => {});
   expect(screen.getByText("Could not work it out. repository busy")).toBeTruthy();
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: /Try again/ }));

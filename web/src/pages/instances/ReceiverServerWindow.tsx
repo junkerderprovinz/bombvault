@@ -4,7 +4,6 @@
 // own, and the Unraid template that keeps it editable in the Docker tab.
 
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import {
   RECEIVER_TEMPLATE_URL,
   checkReceiverServer,
@@ -112,6 +111,7 @@ export function ReceiverServerWindow({
   }
 
   async function forget() {
+    if (!(await confirm(t("receiver.server.forgetAsk"), { confirmKey: "receiver.server.forget" }))) return;
     try {
       const r = await forgetReceiverServer();
       if (!r.ok) {
@@ -316,67 +316,58 @@ function ReceiverServerDialog({
     }
   }
 
-  return createPortal(
-    <div className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4" onClick={onClose}>
-      <div className="relative w-full max-w-lg">
-        <h2 className="flex items-center px-5">
-          <Badge tone="heading" size="heading" wrap>{t("receiver.server.setUp")}</Badge>
-        </h2>
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={t("receiver.server.setUp")}
-          onClick={(e) => e.stopPropagation()}
-          className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
-        >
-          {lead && <p className="text-sm text-carbon-text">{lead}</p>}
-          <p className="text-xs text-carbon-textSub">{t("receiver.server.formIntro")}</p>
-          <FolderBrowser
-            label={t("receiver.server.folder")}
-            hint={t("receiver.server.folderTip")}
-            value={folder}
-            hostMountRoot={defaults.hostMountRoot}
-            onChange={setFolder}
-            placeholder="user/restic"
-            inDialog
+  return (
+    <InstanceWindow
+      title={t("receiver.server.setUp")}
+      onClose={onClose}
+      footer={
+        <>
+          <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onClose} disabled={saving} />
+          <Button
+            label={t(lead ? "receiver.server.startContinue" : "receiver.server.start")}
+            labelKey={lead ? "receiver.server.startContinue" : "receiver.server.start"}
+            tone="accent"
+            onClick={() => void submit()}
+            disabled={!canSave}
+            busy={saving}
           />
-          <label className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("receiver.server.port")}
-              <InfoBubble tip={t("receiver.server.portTip")} />
-            </span>
-            <NumberField min={1} max={65535} value={port} onChange={(e) => setPort(parseInt(e.target.value, 10))} className={INPUT} />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("receiver.server.host")}
-              <InfoBubble tip={t("receiver.server.hostTip")} />
-            </span>
-            <input
-              type="text"
-              value={host}
-              onChange={(e) => setHost(e.target.value)}
-              placeholder={t("receiver.server.hostPlaceholder")}
-              spellCheck={false}
-              autoComplete="off"
-              dir="ltr"
-              className={`${INPUT} font-mono text-start`}
-            />
-          </label>
-          <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-            <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onClose} disabled={saving} />
-            <Button
-              label={t(lead ? "receiver.server.startContinue" : "receiver.server.start")}
-              labelKey={lead ? "receiver.server.startContinue" : "receiver.server.start"}
-              tone="accent"
-              onClick={() => void submit()}
-              disabled={!canSave}
-              busy={saving}
-            />
-          </div>
-        </div>
-      </div>
-    </div>,
-    document.body
+        </>
+      }
+    >
+      {lead && <p className="text-sm text-carbon-text">{lead}</p>}
+      <p className="text-xs text-carbon-textSub">{t("receiver.server.formIntro")}</p>
+      <FolderBrowser
+        label={t("receiver.server.folder")}
+        hint={t("receiver.server.folderTip")}
+        value={folder}
+        hostMountRoot={defaults.hostMountRoot}
+        onChange={setFolder}
+        placeholder="user/restic"
+        inDialog
+      />
+      <label className="flex flex-col gap-1.5">
+        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+          {t("receiver.server.port")}
+          <InfoBubble tip={t("receiver.server.portTip")} />
+        </span>
+        <NumberField min={1} max={65535} value={port} onChange={(e) => setPort(parseInt(e.target.value, 10))} className={INPUT} />
+      </label>
+      <label className="flex flex-col gap-1.5">
+        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+          {t("receiver.server.host")}
+          <InfoBubble tip={t("receiver.server.hostTip")} />
+        </span>
+        <input
+          type="text"
+          value={host}
+          onChange={(e) => setHost(e.target.value)}
+          placeholder={t("receiver.server.hostPlaceholder")}
+          spellCheck={false}
+          autoComplete="off"
+          dir="ltr"
+          className={`${INPUT} font-mono text-start`}
+        />
+      </label>
+    </InstanceWindow>
   );
 }

@@ -25,9 +25,10 @@ import { InfoBubble } from "./InfoBubble";
 import { NumberField } from "./NumberField";
 import { Toggle } from "./Toggle";
 import { Badge } from "./Badge";
-import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
+import { withLtrFragments, withLtrIsolates, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
 import { Button } from "./Button";
+import { Selector } from "./Selector";
 import { CopyBlock } from "./CopyBlock";
 import { OffsiteLocationInput } from "./placement/OffsiteLocationInput";
 import { TestButton, VerdictLine } from "./TestButton";
@@ -507,45 +508,38 @@ export function OffsiteWizard({
     : "";
 
   return (
-    <div className="mt-2 flex flex-col gap-4 rounded-card bg-carbon-surface2 p-4">
+    <div className="flex flex-col gap-4">
       {confirmDialog}
       {/* Step 1: backend choice */}
       <div className="flex flex-col gap-2">
-        <span className={stepTitle}>{t("offsite.wizard.step1")}</span>
-        <div className="flex flex-col gap-1.5">
-          {([
+        <span className="flex items-center gap-1.5">
+          <span className={stepTitle}>{t("offsite.wizard.step1")}</span>
+          {/* A mounted share needs no server, but its path is relative to the
+              Host Data mount. */}
+          {backend === "path" && <InfoBubble tip={withLtrIsolates(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)} />}
+        </span>
+        <Selector
+          items={([
             ["rest", "offsite.wizard.backendRest"],
             ["rclone", "offsite.wizard.backendRclone"],
             ["s3", "offsite.wizard.backendS3"],
             ["path", "offsite.wizard.backendPath"],
-          ] as const).map(([val, label]) => (
-            <label key={val} className="flex items-center gap-2 text-sm text-carbon-text cursor-pointer pointer-coarse:min-h-(--btn-h)">
-              <input
-                type="radio"
-                name={`backend-${domain}`}
-                checked={backend === val}
-                onChange={() => setBackend(val)}
-                style={{ accentColor: "var(--accent)" }}
-              />
-              {t(label)}
-            </label>
-          ))}
-        </div>
-        {/* A mounted share needs no server, but its path is relative to the
-            Host Data mount. */}
-        {backend === "path" && (
-          <p className="text-xs text-carbon-textMuted leading-relaxed">
-            {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
-          </p>
-        )}
+          ] as const).map(([id, label]) => ({ id, label: t(label) }))}
+          label={t("offsite.wizard.step1")}
+          select="one"
+          active={backend}
+          onChange={(id) => setBackend(id as Backend)}
+        />
       </div>
 
       {/* Step 2: rest-server deploy snippet. The deploy-snippet route does not
           cover "config". */}
       {backend === "rest" && domain !== "config" && (
         <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
-          <span className={stepTitle}>{t("offsite.wizard.step2")}</span>
-          <p className="text-xs text-carbon-textMuted">{t("offsite.wizard.step2Hint")}</p>
+          <span className="flex items-center gap-1.5">
+            <span className={stepTitle}>{t("offsite.wizard.step2")}</span>
+            <InfoBubble tip={t("offsite.wizard.step2Hint")} />
+          </span>
           {!snippet && (
             <Button
               label={t("offsite.wizard.generate")}
@@ -613,7 +607,10 @@ export function OffsiteWizard({
           // switching it back to local also leaves this mode. Shown read-only
           // so the other steps work from the right URL.
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-carbon-textSub">{t("offsite.wizard.repoUrl")}</span>
+            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+              {t("offsite.wizard.repoUrl")}
+              <InfoBubble tip={t("settings.primaryRemote.hint")} />
+            </span>
             {/* Pinned LTR, or a leading `/` moves to the trailing edge in ar
                 and he. */}
             <p
@@ -622,7 +619,6 @@ export function OffsiteWizard({
             >
               {repoURL || "—"}
             </p>
-            <span className="text-xs text-carbon-textMuted">{t("settings.primaryRemote.hint")}</span>
             {primaryLoadErr && <span className="text-xs text-statusFail">{primaryLoadErr}</span>}
           </div>
         ) : (
@@ -719,10 +715,10 @@ export function OffsiteWizard({
       <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
         <span className={stepTitle}>{t("offsite.wizard.step4")}</span>
         <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm text-carbon-text">{t("offsite.immutable")}</span>
-            <span className="text-xs text-carbon-textMuted">{t("offsite.immutableHint")}</span>
-          </div>
+          <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+            {t("offsite.immutable")}
+            <InfoBubble tip={t("offsite.immutableHint")} />
+          </span>
           <Toggle
             key={immShake}
             hideLabel
@@ -784,8 +780,10 @@ export function OffsiteWizard({
           mode: the prune state. */}
       {primary ? (
         <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
-          <span className={stepTitle}>{t("settings.offsiteLimits")}</span>
-          <p className="text-xs text-carbon-textMuted leading-relaxed">{t("settings.limitHint")}</p>
+          <span className="flex items-center gap-1.5">
+            <span className={stepTitle}>{t("settings.offsiteLimits")}</span>
+            <InfoBubble tip={t("settings.limitHint")} />
+          </span>
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t("settings.limitUpload")}</span>
@@ -815,7 +813,10 @@ export function OffsiteWizard({
             </label>
           </div>
           <label className="flex flex-col gap-1 max-w-48">
-            <span className="text-xs text-carbon-textSub">{t("offsite.retention.budget")}</span>
+            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+              {t("offsite.retention.budget")}
+              <InfoBubble tip={t("settings.primaryRemote.budgetHint")} />
+            </span>
             <NumberField
               min={0}
               value={pBudget}
@@ -827,7 +828,6 @@ export function OffsiteWizard({
               className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus-well"
             />
           </label>
-          <p className="text-xs text-carbon-textMuted leading-relaxed">{t("settings.primaryRemote.budgetHint")}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">

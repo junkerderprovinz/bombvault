@@ -53,7 +53,7 @@ export function KeyState({ state, onChanged }: { state: EmergencyState | null; o
       {state.undoable ? (
         <div className="flex flex-wrap items-center gap-3">
           <span className="min-w-0 flex-1 basis-48 text-xs text-carbon-textMuted">{t("emergency.undoable")}</span>
-          <Button label={t("emergency.undo")} labelKey={null} onClick={() => void undo()} disabled={undoing} busy={undoing} />
+          <Button label={t("emergency.undo")} labelKey="emergency.undo" onClick={() => void undo()} disabled={undoing} busy={undoing} />
         </div>
       ) : (
         <p className="text-xs text-carbon-textMuted">{t("emergency.code.adopt-in-use")}</p>

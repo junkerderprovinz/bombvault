@@ -2,10 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { ConfirmPrompt } from "../../components/ConfirmPrompt";
-import { IconDisclosure } from "../../components/IconDisclosure";
 import { InfoBubble } from "../../components/InfoBubble";
 import { RevealInput } from "../../components/RevealInput";
 import { Toggle } from "../../components/Toggle";
+import { IconInfo } from "../../components/glyphs";
 import { IconAdd, IconCopy } from "../../components/navGlyphs";
 import { SettingRow } from "../../components/storage/rows";
 import { InstanceWindow } from "../instances/InstanceWindow";
@@ -27,8 +27,8 @@ import { tLtr } from "../../lib/ltrFragments";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useOwnLogin } from "../../lib/useOwnLogin";
-import { keyLogId, McpKeyLog, type KeyLogWording } from "./McpKeyLog";
-import { Card, useOpenPasswordField } from "./shared";
+import { McpKeyLog, type KeyLogWording } from "./McpKeyLog";
+import { Card, SubCard, useOpenPasswordField } from "./shared";
 
 // ApiTokensCard hands out the tokens scripts and home automation use for the
 // API under /api/v1. A token is stored like an MCP key, so its tile and its log
@@ -88,18 +88,11 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   const [creating, setCreating] = useState(false);
   const [renaming, setRenaming] = useState("");
   const [draft, setDraft] = useState("");
-  const [revokedOpen, setRevokedOpen] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
   const [shake, setShake] = useState<Record<string, number>>({});
-  const [logOpen, setLogOpen] = useState<ReadonlySet<string>>(new Set());
+  const [logOf, setLogOf] = useState<McpKeyView | null>(null);
 
   const bumpShake = (id: string) => setShake((s) => ({ ...s, [id]: (s[id] ?? 0) + 1 }));
-  const toggleLog = (id: string) =>
-    setLogOpen((open) => {
-      const next = new Set(open);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    });
 
   const reload = useCallback(async () => {
     try {
@@ -386,15 +379,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                   </span>
                 </div>
                 <div className="flex min-w-0 flex-wrap items-start gap-2">
-                  <Button
-                    label={t("mcp.log")}
-                    labelKey="mcp.log"
-                    tone="neutral"
-                    onClick={() => toggleLog(k.id)}
-                    glyph={<IconDisclosure open={logOpen.has(k.id)} />}
-                    ariaExpanded={logOpen.has(k.id)}
-                    ariaControls={logOpen.has(k.id) ? keyLogId(k.id) : undefined}
-                  />
+                  <Button label={t("mcp.log")} labelKey="mcp.log" tone="neutral" glyph={<IconInfo />} onClick={() => setLogOf(k)} />
                   <Button
                     label={t("mcp.revoke")}
                     labelKey="mcp.revoke"
@@ -427,7 +412,6 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                 className={shake[`start:${k.id}`] ? "glim-shake" : ""}
               />
 
-              {logOpen.has(k.id) && <McpKeyLog keyId={k.id} used={k.lastUsedAt > 0} t={t} wording={TOKEN_WORDING} />}
             </li>
           ))}
         </ul>
@@ -502,58 +486,48 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       )}
 
       {data !== null && !failed && revoked.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => setRevokedOpen((v) => !v)}
-            aria-expanded={revokedOpen}
-            className="flex items-center gap-1.5 self-start text-xs text-carbon-textSub hover:text-carbon-text pointer-coarse:min-h-(--btn-h)"
-          >
-            <IconDisclosure open={revokedOpen} />
-            {t("api.revokedList", revoked.length)}
-          </button>
-          {revokedOpen && (
-            <ul className="flex flex-col gap-3">
-              {revoked.map((k) => (
-                <li key={k.id} className="glim-tile flex flex-col gap-3 rounded-card p-3">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <span className="truncate text-sm text-carbon-text">{k.label}</span>
-                      <span className="text-xs text-carbon-textMuted">
-                        {t(k.revokedReason === "config-restore" ? "mcp.revokedByRestore" : "mcp.revokedAt").replace(
-                          "{date}",
-                          formatTs(k.revokedAt)
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <Button
-                        label={t("mcp.log")}
-                        labelKey="mcp.log"
-                        tone="neutral"
-                        onClick={() => toggleLog(k.id)}
-                        glyph={<IconDisclosure open={logOpen.has(k.id)} />}
-                        ariaExpanded={logOpen.has(k.id)}
-                        ariaControls={logOpen.has(k.id) ? keyLogId(k.id) : undefined}
-                      />
-                      <Button
-                        label={t("common.delete")}
-                        labelKey="common.delete"
-                        tone="neutral"
-                        onClick={() => setPending({ kind: "purge", item: k })}
-                        disabled={busy || k.inUse}
-                        hint={k.inUse ? t("api.inUseTip") : undefined}
-                        className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
-                        hueIndex={hueIndex}
-                      />
-                    </div>
+        <SubCard title={t("api.revokedList", revoked.length)}>
+          <ul className="flex flex-col gap-3">
+            {revoked.map((k) => (
+              <li key={k.id} className="glim-tile flex flex-col gap-3 rounded-card p-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="truncate text-sm text-carbon-text">{k.label}</span>
+                    <span className="text-xs text-carbon-textMuted">
+                      {t(k.revokedReason === "config-restore" ? "mcp.revokedByRestore" : "mcp.revokedAt").replace(
+                        "{date}",
+                        formatTs(k.revokedAt)
+                      )}
+                    </span>
                   </div>
-                  {logOpen.has(k.id) && <McpKeyLog keyId={k.id} used={k.lastUsedAt > 0} t={t} wording={TOKEN_WORDING} />}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <Button label={t("mcp.log")} labelKey="mcp.log" tone="neutral" glyph={<IconInfo />} onClick={() => setLogOf(k)} />
+                    <Button
+                      label={t("common.delete")}
+                      labelKey="common.delete"
+                      tone="neutral"
+                      onClick={() => setPending({ kind: "purge", item: k })}
+                      disabled={busy || k.inUse}
+                      hint={k.inUse ? t("api.inUseTip") : undefined}
+                      className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
+                      hueIndex={hueIndex}
+                    />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </SubCard>
+      )}
+
+      {logOf !== null && (
+        <InstanceWindow
+          title={logOf.label}
+          onClose={() => setLogOf(null)}
+          footer={<Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={() => setLogOf(null)} />}
+        >
+          <McpKeyLog keyId={logOf.id} used={logOf.lastUsedAt > 0} t={t} wording={TOKEN_WORDING} />
+        </InstanceWindow>
       )}
 
       {pending?.kind === "rotate" && (

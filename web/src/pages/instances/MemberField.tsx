@@ -4,6 +4,7 @@
 // The member's restic password never reaches the browser: the server fetches
 // it over the group when the form is saved.
 import { useEffect, useState } from "react";
+import { InfoBubble } from "../../components/InfoBubble";
 import { SelectField } from "../../components/SelectField";
 import { getGroup, memberRepos, type GroupMember, type MemberRepo } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
@@ -69,13 +70,15 @@ export function MemberField({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs text-carbon-textSub">{label}</label>
+      <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+        {label}
+        <InfoBubble tip={t("pairing.memberHint")} />
+      </label>
       {members.length === 0 && !keepOption ? (
         <p className="text-caption text-carbon-textMuted">{t("pairing.memberNone")}</p>
       ) : (
         <SelectField value={value} onChange={onChange} label={label} options={options} className={inputCls} />
       )}
-      <p className="text-caption text-carbon-textMuted">{t("pairing.memberHint")}</p>
       {repos.length > 0 && (
         <div className="flex flex-col gap-1">
           <span className="text-caption text-carbon-textSub">{t("pairing.memberRepos")}</span>

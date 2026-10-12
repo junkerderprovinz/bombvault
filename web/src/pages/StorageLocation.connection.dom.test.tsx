@@ -36,6 +36,8 @@ vi.mock("../lib/api", async (importOriginal) => {
     getCloud: vi.fn(),
     getCloudCredSets: vi.fn(),
     getRcloneSections: vi.fn(),
+    draftFolders: vi.fn(),
+    draftMakeFolder: vi.fn(),
   };
 });
 
@@ -43,6 +45,8 @@ const api = await import("../lib/api");
 const getStorageLocation = vi.mocked(api.getStorageLocation);
 const updateDestinationConnection = vi.mocked(api.updateDestinationConnection);
 const getRcloneSections = vi.mocked(api.getRcloneSections);
+const draftFolders = vi.mocked(api.draftFolders);
+const draftMakeFolder = vi.mocked(api.draftMakeFolder);
 
 const { StorageLocationPage } = await import("./StorageLocation");
 
@@ -163,6 +167,8 @@ beforeEach(() => {
     ],
   });
   updateDestinationConnection.mockResolvedValue({ ok: true, warnings: [] });
+  draftFolders.mockImplementation(async (d) => ({ ok: true, folders: d.dir === "" ? ["archive", "bombvault"] : [] }));
+  draftMakeFolder.mockResolvedValue({ ok: true, dir: "fresh" });
 });
 
 afterEach(() => {
@@ -182,8 +188,9 @@ describe("the connection of an rclone destination", () => {
     expect(password.value).toBe("");
     expect(password.placeholder).toBe("saved (leave blank to keep)");
     expect((within(dialog).getByLabelText("Folder") as HTMLInputElement).value).toBe("bombvault");
-    // A setting nobody set stays behind the switch.
-    expect(within(dialog).queryByLabelText("Port")).toBeNull();
+    // A setting most people leave alone stands in a sub-card of its own.
+    expect(within(within(dialog).getByRole("region", { name: "More settings" })).getByLabelText("Port")).toBeTruthy();
+    expect(within(dialog).queryByRole("switch", { name: "More settings" })).toBeNull();
   });
 
   it("has nothing to save until a field differs from what is stored", async () => {
@@ -223,15 +230,61 @@ describe("the connection of an rclone destination", () => {
     expect(updateDestinationConnection).toHaveBeenCalledWith("box", { dir: "/archive/" });
   });
 
-  it("shows a setting behind the switch once it is asked for", async () => {
+  it("sends a further setting from its sub-card", async () => {
     await renderPage(location());
     const dialog = await openWindow("Storage Box");
 
-    await click(within(dialog).getByRole("switch", { name: "More settings" }));
     await type(within(dialog).getByLabelText("Port"), "23");
     await click(within(dialog).getByRole("button", { name: "Test and save" }));
 
     expect(updateDestinationConnection).toHaveBeenCalledWith("box", { settings: { port: "23" } });
+  });
+});
+
+describe("the folder of a destination", () => {
+  it("is picked by walking the remote's folders with the connection in the form", async () => {
+    await renderPage(location());
+    const dialog = await openWindow("Storage Box");
+
+    await type(within(dialog).getByLabelText("Password"), "hunter2");
+    await click(within(dialog).getByRole("button", { name: "Browse folders" }));
+    const picker = screen.getByRole("dialog", { name: "Folder" });
+    expect(draftFolders).toHaveBeenLastCalledWith({
+      provider: "storagebox",
+      settings: { host: "u123.your-storagebox.de", user: "u123", pass: "hunter2" },
+      dir: "bombvault",
+    });
+    await click(within(picker).getByRole("button", { name: ".." }));
+    await click(within(picker).getByRole("button", { name: "archive" }));
+    await click(within(picker).getByRole("button", { name: "Use this folder" }));
+
+    expect((within(dialog).getByLabelText("Folder") as HTMLInputElement).value).toBe("archive");
+    await click(within(dialog).getByRole("button", { name: "Test and save" }));
+    expect(updateDestinationConnection).toHaveBeenCalledWith("box", { settings: { pass: "hunter2" }, dir: "archive" });
+  });
+
+  it("makes a new folder where the walk stands", async () => {
+    await renderPage(location());
+    const dialog = await openWindow("Storage Box");
+
+    await click(within(dialog).getByRole("button", { name: "Browse folders" }));
+    const picker = screen.getByRole("dialog", { name: "Folder" });
+    await click(within(picker).getByRole("button", { name: ".." }));
+    await type(within(picker).getByLabelText("New folder name"), "fresh");
+    await click(within(picker).getByRole("button", { name: "New folder" }));
+
+    expect(draftMakeFolder).toHaveBeenCalledWith(expect.objectContaining({ provider: "storagebox", dir: "", folder: "fresh" }));
+    expect(draftFolders).toHaveBeenLastCalledWith(expect.objectContaining({ dir: "fresh" }));
+  });
+
+  it("says to type the saved secret again when the walk is refused", async () => {
+    draftFolders.mockResolvedValue({ ok: false, error: "ssh: unable to authenticate" });
+    await renderPage(location());
+    const dialog = await openWindow("Storage Box");
+
+    await click(within(dialog).getByRole("button", { name: "Browse folders" }));
+    const picker = screen.getByRole("dialog", { name: "Folder" });
+    expect(within(picker).getByText(/ssh: unable to authenticate.*type the saved password or secret key again/)).toBeTruthy();
   });
 });
 

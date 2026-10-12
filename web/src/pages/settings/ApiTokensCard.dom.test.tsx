@@ -147,4 +147,18 @@ describe("ApiTokensCard", () => {
     expect(await screen.findByText("POST /api/v1/backups")).toBeTruthy();
     expect(screen.getByText(en["api.outcomeNotPermitted"])).toBeTruthy();
   });
+
+  it("opens a token's log in a window of its own", async () => {
+    await renderCard(payload({ tokens: [token({ lastUsedAt: 1_700_000_100 })] }));
+    getApiTokenActivity.mockResolvedValue({ ok: true, runs: [], events: [] });
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(en["mcp.log"]) }));
+    const log = await screen.findByRole("dialog", { name: "Uptime Kuma" });
+    expect(within(log).getByRole("button", { name: en["common.done"] })).toBeTruthy();
+  });
+
+  it("lists the revoked tokens without a fold", async () => {
+    await renderCard(payload({ revoked: [token({ id: "t2", label: "Old script", revokedAt: 1_700_000_200 })] }));
+    expect(await screen.findByText("Old script")).toBeTruthy();
+    expect(document.querySelector("[aria-expanded]")).toBeNull();
+  });
 });

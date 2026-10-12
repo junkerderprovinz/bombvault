@@ -4,13 +4,14 @@
 // sending instance's restic password, which the server fetches over the
 // pairing group and never shows.
 import { useEffect, useState, type CSSProperties } from "react";
-import { createPortal } from "react-dom";
 
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { IconDisclosure } from "../../components/IconDisclosure";
+import { IconInfo } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
+import { EXACT_CADENCE_MODES } from "../../components/CadenceBuilder";
 import { NumberField } from "../../components/NumberField";
+import { PlanButton } from "../../components/PlanButton";
 import { Toggle } from "../../components/Toggle";
 import {
   checkReceivedRepo,
@@ -28,7 +29,10 @@ import { relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useIsDesktop } from "../../lib/useMediaQuery";
 import { ToggleRow } from "../settings/shared";
+import { InstanceWindow } from "./InstanceWindow";
 import { MemberField } from "./MemberField";
+
+const DEFAULT_CHECK_CADENCE = "daily 04:00";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -305,8 +309,8 @@ export function ReceivedRepoCard({
             label={t("receiver.details")}
             labelKey="receiver.details"
             tone="neutral"
-            onClick={() => setOpen((v) => !v)}
-            glyph={<IconDisclosure open={open} />}
+            onClick={() => setOpen(true)}
+            glyph={<IconInfo />}
           />
           <Button
             label={t("receiver.edit")}
@@ -340,10 +344,14 @@ export function ReceivedRepoCard({
       </div>
 
       {open && (
-        <div className="rounded-card bg-carbon-surface px-3 py-2">
-          <p className="text-xs font-medium text-carbon-textSub">{t("receiver.inventoryTitle")}</p>
+        <InstanceWindow
+          title={t("receiver.inventoryTitle")}
+          facts={repo.name}
+          onClose={() => setOpen(false)}
+          footer={<Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={() => setOpen(false)} />}
+        >
           <InventoryPanel repo={repo} t={t} />
-        </div>
+        </InstanceWindow>
       )}
     </div>
   );
@@ -369,7 +377,8 @@ export function ReceiverDialog({
   const [repo, setRepo] = useState(initial?.repo ?? "");
   const [memberId, setMemberId] = useState(initial ? "" : member);
   const [deadManHours, setDeadManHours] = useState(initial?.deadManHours ?? 26);
-  const [checkCadence, setCheckCadence] = useState(initial?.checkCadence ?? "");
+  // The server reads a blank cadence as this one, and the picker reads blank as off.
+  const [checkCadence, setCheckCadence] = useState(initial?.checkCadence || DEFAULT_CHECK_CADENCE);
   const [readDataPercent, setReadDataPercent] = useState(initial?.readDataPercent ?? 0);
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
@@ -432,129 +441,108 @@ export function ReceiverDialog({
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
-  // Centring is safe: the box is capped at 90vh, so its top never goes
-  // negative, and the backdrop scrolls if the content grows.
-  return createPortal(
-    <div
-      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
-      onClick={onClose}
-    >
-      {/* The box scrolls and would clip the heading badge that pokes above
-          its top edge, so a non-clipping shell carries the badge. */}
-      <div className="relative w-full max-w-lg">
-        {/* px-5 matches the box's p-5, so the notch sits where a Card's does. */}
-        <h2 className="flex items-center px-5">
-          <Badge tone="heading" size="heading" wrap>{editing ? t("receiver.editTitle") : t("receiver.addTitle")}</Badge>
-        </h2>
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={editing ? t("receiver.editTitle") : t("receiver.addTitle")}
-          onClick={(e) => e.stopPropagation()}
-          className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
-        >
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("receiver.name")}</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder="tower off-site"
-              className={inputCls}
-            />
-          </div>
-
-          <MemberField
-            t={t}
-            label={t("receiver.member")}
-            value={memberId}
-            onChange={setMemberId}
-            keepOption={keepPairing}
-            onPickLocation={setRepo}
+  return (
+    <InstanceWindow
+      title={editing ? t("receiver.editTitle") : t("receiver.addTitle")}
+      onClose={onClose}
+      footer={
+        <>
+          <Button
+            label={t("files.cancel")}
+            labelKey="files.cancel"
+            tone="neutral"
+            onClick={onClose}
+            disabled={saving}
           />
+          <Button
+            key={shake}
+            label={t("settings.save")}
+            labelKey="settings.save"
+            tone="accent"
+            onClick={() => void handleSave()}
+            disabled={!canSave}
+            busy={saving}
+            title={saving ? t("common.saving") : undefined}
+            className={shake ? "glim-shake" : ""}
+          />
+        </>
+      }
+    >
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs text-carbon-textSub">{t("receiver.name")}</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          spellCheck={false}
+          autoComplete="off"
+          placeholder="tower off-site"
+          className={inputCls}
+        />
+      </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("receiver.repoLocation")}</label>
-            <input
-              type="text"
-              value={repo}
-              onChange={(e) => setRepo(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder="rest:http://192.168.x.x:8000/tower-containers"
-              dir="ltr"
-              className={`${inputCls} font-mono text-start`}
-            />
-            <p className="text-caption text-carbon-textMuted">{t("receiver.repoLocationHint")}</p>
-          </div>
+      <MemberField
+        t={t}
+        label={t("receiver.member")}
+        value={memberId}
+        onChange={setMemberId}
+        keepOption={keepPairing}
+        onPickLocation={setRepo}
+      />
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-carbon-textSub">{t("receiver.deadManHours")}</label>
-              <NumberField
-                min={1}
-                value={deadManHours}
-                onChange={(e) => setDeadManHours(parseInt(e.target.value, 10))}
-                className={inputCls}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-carbon-textSub">{t("receiver.readDataPercent")}</label>
-              <NumberField
-                min={0}
-                max={100}
-                value={readDataPercent}
-                onChange={(e) => setReadDataPercent(parseInt(e.target.value, 10))}
-                className={inputCls}
-              />
-            </div>
-          </div>
-          <p className="text-caption text-carbon-textMuted -mt-2">{t("receiver.deadManHoursHint")}</p>
+      <div className="flex flex-col gap-1.5">
+        <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+          {t("receiver.repoLocation")}
+          <InfoBubble tip={t("receiver.repoLocationHint")} />
+        </label>
+        <input
+          type="text"
+          value={repo}
+          onChange={(e) => setRepo(e.target.value)}
+          spellCheck={false}
+          autoComplete="off"
+          placeholder="rest:http://192.168.x.x:8000/tower-containers"
+          dir="ltr"
+          className={`${inputCls} font-mono text-start`}
+        />
+      </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("receiver.checkCadence")}</label>
-            <input
-              type="text"
-              value={checkCadence}
-              onChange={(e) => setCheckCadence(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder={t("receiver.checkCadencePlaceholder")}
-              dir="ltr"
-              className={`${inputCls} font-mono text-start`}
-            />
-            <p className="text-caption text-carbon-textMuted">{t("receiver.checkCadenceHint")}</p>
-          </div>
-
-          {/* ToggleRow puts the label at the start and the switch at the end,
-              like every other settings row. */}
-          <ToggleRow checked={enabled} onChange={setEnabled} label={t("receiver.enabledLabel")} />
-
-          <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-            <Button
-              label={t("files.cancel")}
-              labelKey="files.cancel"
-              tone="neutral"
-              onClick={onClose}
-              disabled={saving}
-            />
-            <Button
-              key={shake}
-              label={t("settings.save")}
-              labelKey="settings.save"
-              tone="accent"
-              onClick={() => void handleSave()}
-              disabled={!canSave}
-              busy={saving}
-              title={saving ? t("common.saving") : undefined}
-              className={shake ? "glim-shake" : ""}
-            />
-          </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+            {t("receiver.deadManHours")}
+            <InfoBubble tip={t("receiver.deadManHoursHint")} />
+          </label>
+          <NumberField
+            min={1}
+            value={deadManHours}
+            onChange={(e) => setDeadManHours(parseInt(e.target.value, 10))}
+            className={inputCls}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs text-carbon-textSub">{t("receiver.readDataPercent")}</label>
+          <NumberField
+            min={0}
+            max={100}
+            value={readDataPercent}
+            onChange={(e) => setReadDataPercent(parseInt(e.target.value, 10))}
+            className={inputCls}
+          />
         </div>
       </div>
-    </div>,
-    document.body,
+
+      <div className="flex flex-col items-start gap-1.5">
+        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+          {t("receiver.checkCadence")}
+          <InfoBubble tip={t("receiver.checkCadenceTip")} />
+        </span>
+        <PlanButton label={t("receiver.checkCadence")} value={checkCadence} onChange={setCheckCadence} modes={EXACT_CADENCE_MODES} />
+      </div>
+
+      {/* ToggleRow puts the label at the start and the switch at the end,
+          like every other settings row. */}
+      <ToggleRow checked={enabled} onChange={setEnabled} label={t("receiver.enabledLabel")} />
+    </InstanceWindow>
   );
 }

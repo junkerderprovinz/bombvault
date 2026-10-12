@@ -37,13 +37,20 @@ function entry(key: string, lastBackup: number): BackupItem {
   };
 }
 
-function renderCard(coverage: CoverageReport | null, loading = false, items: BackupItem[] = []) {
-  return render(<CoverageCard t={t} coverage={coverage} tally={tallyEntries(items)} loading={loading} />);
+function renderCard(coverage: CoverageReport | null, loading = false, items: BackupItem[] = [], failed = false) {
+  return render(<CoverageCard t={t} coverage={coverage} tally={tallyEntries(items)} loading={loading} failed={failed} />);
 }
 
 afterEach(cleanup);
 
 describe("CoverageCard", () => {
+  it("says a failed read is no all-clear", () => {
+    renderCard(null, false, [], true);
+
+    expect(screen.getByText(en["coverage.loadFailed"])).toBeTruthy();
+    expect(screen.queryByText(en["coverage.allProtected"])).toBeNull();
+  });
+
   it("names the container nobody ever added", () => {
     renderCard({
       total: 2,

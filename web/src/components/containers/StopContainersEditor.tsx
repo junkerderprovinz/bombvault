@@ -4,6 +4,7 @@ import type { Container } from "../../lib/api";
 import { DropdownListbox } from "../DropdownListbox";
 import { useT } from "../../lib/i18n";
 import { Button } from "../Button";
+import { SelectDot } from "../backups/SelectMark";
 import { useToast } from "../../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
@@ -145,7 +146,7 @@ export function StopContainersEditor({
                     checked ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
                   }${rowShake[c.name] ? " glim-shake" : ""}`}
                 >
-                  <input type="checkbox" checked={checked} readOnly tabIndex={-1} className="pointer-events-none" style={{ accentColor: "var(--accent)" }} />
+                  <SelectDot checked={checked} />
                   <span className="min-w-0 flex-1 truncate">{c.name}</span>
                 </button>
               );
@@ -162,7 +163,7 @@ export function StopContainersEditor({
                 disabled={!!rowBusy[n]}
                 className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-60${rowShake[n] ? " glim-shake" : ""}`}
               >
-                <input type="checkbox" checked readOnly tabIndex={-1} className="pointer-events-none" style={{ accentColor: "var(--accent)" }} />
+                <SelectDot checked />
                 <span dir="ltr" className="min-w-0 flex-1 truncate font-mono text-start">{n}</span>
                 <span className="shrink-0 text-caption text-statusFail">{t("containers.notInstalled")}</span>
               </button>

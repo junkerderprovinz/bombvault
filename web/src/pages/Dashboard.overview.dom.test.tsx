@@ -151,6 +151,14 @@ describe("customize mode", () => {
     expect(within(cell("needs")).getByText(en["overview.needs.none"])).toBeTruthy();
   });
 
+  it("explains arranging in a bubble rather than a line of text", async () => {
+    await renderPage();
+    await customize();
+
+    expect(screen.queryByText(en["overview.customizeHint"])).toBeNull();
+    expect(screen.getByLabelText(en["overview.customizeHint"])).toBeTruthy();
+  });
+
   it("hides a card into the tray", async () => {
     await renderPage();
     await customize();
@@ -560,6 +568,17 @@ describe("an entry the person said not to back up", () => {
 
     expect(head().getByText("1 thing needs you")).toBeTruthy();
     expect(within(cell("needs")).getByRole("link", { name: "scratch" })).toBeTruthy();
+  });
+});
+
+describe("the card of what is not backed up", () => {
+  it("says the entries could not be read instead of loading forever", async () => {
+    store({ v: 2, order: ALL, hidden: [], widths: {}, heights: {} });
+    server.items = "refused";
+    await renderPage();
+
+    expect(within(cell("coverage")).getByText(en["coverage.loadFailed"])).toBeTruthy();
+    expect(within(cell("coverage")).queryByText(en["folder.loading"])).toBeNull();
   });
 });
 

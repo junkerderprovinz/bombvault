@@ -16,8 +16,8 @@ const TAGS = buttonTags(SRC);
 
 /**
  * The keys a single call site can produce, and whether it names any key at
- * all. `null` contributes nothing and is not a gap; the hygiene test checks
- * that the prop is present.
+ * all. `null` contributes no key; the hygiene test checks that the prop is
+ * present.
  */
 function keysOf(props: string): { keys: string[]; hasExpression: boolean } {
   const m = /\blabelKey\s*=\s*(?:"([^"]*)"|'([^']*)'|\{([\s\S]*?)\})/.exec(props);
@@ -52,7 +52,11 @@ for (const tag of TAGS) {
     gaps.push({ where, detail: "labelKey is an expression with no literal in it, so nothing here can say whether it resolves" });
     continue;
   }
-  if (keys.length === 0) continue; // null, or no labelKey: the hygiene test's business
+  if (/\blabelKey\s*=\s*\{\s*null\s*\}/.test(tag.props) && !/\bkeepLabel\b/.test(tag.props)) {
+    gaps.push({ where, detail: "labelKey is null and no glyph is given, so the button prints its word in glyph mode" });
+    continue;
+  }
+  if (keys.length === 0) continue; // no labelKey: the hygiene test's business
 
   const unreachable = keys.filter((k) => glyphFor(k) === undefined);
   if (unreachable.length > 0) {

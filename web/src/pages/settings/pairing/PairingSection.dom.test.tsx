@@ -487,14 +487,13 @@ describe("after a minute alone", () => {
 
     group = alone({ relay: noRelay() });
     await renderTab();
-    const disclosure = screen.getByRole("button", { name: en["pairing.cantFindTitle"] });
-    expect(disclosure.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByLabelText(en["pairing.cantFindLabel"])).toBeNull();
 
-    fireEvent.click(disclosure);
-    expect(disclosure.getAttribute("aria-expanded")).toBe("true");
-    const field = screen.getByLabelText(en["pairing.cantFindLabel"]) as HTMLInputElement;
-    const search = screen.getByRole("button", { name: en["pairing.cantFindSearch"] }) as HTMLButtonElement;
+    fireEvent.click(screen.getByRole("button", { name: en["pairing.cantFindTitle"] }));
+    const window = within(screen.getByRole("dialog", { name: en["pairing.cantFindTitle"] }));
+    expect(window.getByLabelText(en["pairing.cantFindBody"])).toBeTruthy();
+    const field = window.getByLabelText(en["pairing.cantFindLabel"]) as HTMLInputElement;
+    const search = window.getByRole("button", { name: en["pairing.cantFindSearch"] }) as HTMLButtonElement;
     expect(search.disabled).toBe(true);
 
     fireEvent.change(field, { target: { value: "https://192.168.2.20:3443" } });
@@ -512,8 +511,9 @@ describe("after a minute alone", () => {
     expect(card.getByText(en["relay.notConnected"])).not.toBeNull();
     expect(card.queryByText(en["pairing.relayCheckFilter"])).toBeNull();
     fireEvent.click(card.getByRole("button", { name: en["pairing.relayCheckOpen"] }));
-    expect(card.getByText("parleyport.halleluja.design", { selector: "span" })).not.toBeNull();
-    expect(card.getByText(en["pairing.relayCheckFilter"])).not.toBeNull();
+    const window = within(screen.getByRole("dialog", { name: en["pairing.relayCheckOpen"] }));
+    expect(window.getByText("parleyport.halleluja.design", { selector: "span" })).not.toBeNull();
+    expect(window.getByText(en["pairing.relayCheckFilter"])).not.toBeNull();
   });
 });
 

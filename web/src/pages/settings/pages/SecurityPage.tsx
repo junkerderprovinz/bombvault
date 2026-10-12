@@ -9,12 +9,14 @@ import { RevealInput } from "../../../components/RevealInput";
 import { useReveal } from "../../../lib/useReveal";
 import { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
+import { useConfirm } from "../../../lib/useConfirm";
 import { Card, LOGIN_PASSWORD_FIELD, hueCounter, type SaveState } from "../shared";
 import { useSettings } from "../settingsStore";
 
 export function SecurityPage() {
   const { t } = useT();
   const { push } = useToast();
+  const { confirm, confirmDialog } = useConfirm();
   const {
     authEnabled,
     setAuthEnabled,
@@ -54,6 +56,7 @@ export function SecurityPage() {
       setPwSaveShake((n) => n + 1);
       return;
     }
+    if (pwNew === "" && authEnabled && !(await confirm(t("auth.turnOffAsk"), { confirmKey: "auth.loginDisable" }))) return;
     setPwSaveState("saving");
     setPwSaveMsg(null);
     try {
@@ -184,6 +187,7 @@ export function SecurityPage() {
       <PasskeyCard passwordSet={authEnabled} hueIndex={nextHue()} />
       <PhonePairingCard hueIndex={nextHue()} />
       <EncryptionCard hueIndex={nextHue()} />
+      {confirmDialog}
     </>
   );
 }

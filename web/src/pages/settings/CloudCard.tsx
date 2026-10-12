@@ -112,14 +112,10 @@ export function CloudCard({
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
-    <Card title={t("cloud.title")} hueIndex={hueIndex} nested={nested}>
+    <Card title={t("cloud.title")} hint={t("cloud.hint")} hueIndex={hueIndex} nested={nested}>
       {/* The card refuses to save until the read succeeds, so a failed read
           has to be visible. */}
       {loadErr && <span className="text-xs text-statusFail">{t("settings.notLoadedNoSave")}</span>}
-      {/* Plain text rather than an info bubble: it is the only place that
-          lists the remote URL prefixes (s3:, rest:, sftp:) the
-          Backup Path fields accept, and people copy from it. */}
-      <p className="text-xs text-carbon-textMuted -mt-1">{t("cloud.hint")}</p>
 
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>

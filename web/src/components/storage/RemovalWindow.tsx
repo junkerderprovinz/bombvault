@@ -89,6 +89,9 @@ export function RemovalWindow({
   const id = objectId(location);
   const [how, setHow] = useState<How>("keep");
   const [removal, setRemoval] = useState<DestinationRemoval | null>(null);
+  // Counts the readings of what would be detached, so a failed one is read
+  // again when its way is picked.
+  const [removalReads, setRemovalReads] = useState(0);
   const [erasure, setErasure] = useState<DestinationErasure | null>(null);
   // Counts the readings of what would be deleted. None is taken before the
   // way is picked, because a reading lists every repository at the destination.
@@ -111,7 +114,7 @@ export function RemovalWindow({
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, removalReads]);
 
   useEffect(() => {
     if (readings === 0) return;
@@ -133,6 +136,7 @@ export function RemovalWindow({
     setHow(next);
     setProblem(null);
     if (next === "delete" && !erasure) setReadings((n) => n + 1);
+    if (next === "keep" && !removal) setRemovalReads((n) => n + 1);
   }
 
   function announce(done: string) {

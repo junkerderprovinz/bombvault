@@ -438,6 +438,14 @@ describe("a VM", () => {
     await confirmWith(en["snapshots.deleteAll"]);
     await waitFor(() => expect(deleteBackupsVM).toHaveBeenCalledWith("win11", "local"));
   });
+
+  it("reads its backups again once the local ones are deleted", async () => {
+    await renderPage("/backups/vm/win11");
+    const reads = vi.mocked(api.getTimeline).mock.calls.length;
+    await choose(en["entry.deleteLocal"]);
+    await confirmWith(en["snapshots.deleteAll"]);
+    await waitFor(() => expect(vi.mocked(api.getTimeline).mock.calls.length).toBeGreaterThan(reads));
+  });
 });
 
 describe("a folder set", () => {

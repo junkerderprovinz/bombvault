@@ -63,7 +63,7 @@ export function RcloneCard({
   }
 
   return (
-    <Card title={t("rclone.title")} hint={t("rclone.hint")} hueIndex={hueIndex} nested={nested}>
+    <Card title={t("rclone.title")} hint={`${t("rclone.hint")} ${t("rclone.pathHint")}`} hueIndex={hueIndex} nested={nested}>
       {/* The form comes FIRST, above the paste box. The two cover the same
           ground for different people: the box is the escape hatch for any of
           rclone seventy backends, the form covers the two that are asked for
@@ -91,16 +91,6 @@ export function RcloneCard({
         dir="ltr"
         className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 glim-field-focus text-start"
       />
-      {/* GlimStone follow-up pass (Phase 2 Task 4's remainder): stays permanent
-          text, NOT bubbled — it names the exact "rclone:<remote>:<bucket>/path"
-          Backup Path syntax, which is the ONLY place that convention is
-          documented (PathModeSwitch's own remote-mode placeholder shows only
-          s3:/rest: examples, never rclone:). Someone back on the Storage tab
-          filling in a Backup Path for a domain they just wired up here needs
-          this findable without already knowing to hover an icon on a
-          different tab — the same "exact syntax to copy correctly" carve-out
-          the task spec calls out by name. */}
-      <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
       <div className="flex items-center gap-3 pt-1">
         <Button
           key={shake || 0}

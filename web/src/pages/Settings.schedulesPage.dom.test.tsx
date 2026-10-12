@@ -62,13 +62,17 @@ const putBodies: Settings[] = [];
 const patches: [string, unknown][] = [];
 let settingsOnServer = baseSettings();
 let itemsOnServer: BackupItem[] | Error = [];
+let settingsReads = 0;
+let settingsFailFor = 0;
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
     getSettings: () =>
-      Promise.resolve({ ok: true, settings: settingsOnServer, hostMountRoot: "/host/user", platform: "unraid" }),
+      ++settingsReads <= settingsFailFor
+        ? Promise.reject(new Error("offline"))
+        : Promise.resolve({ ok: true, settings: settingsOnServer, hostMountRoot: "/host/user", platform: "unraid" }),
     putSettings: (s: Settings) => {
       putBodies.push(s);
       return Promise.resolve({ ok: true });
@@ -142,6 +146,8 @@ beforeEach(() => {
   patches.length = 0;
   settingsOnServer = baseSettings();
   itemsOnServer = [];
+  settingsReads = 0;
+  settingsFailFor = 0;
 });
 
 afterEach(() => {
@@ -256,5 +262,36 @@ describe("scheduled entries", () => {
     await renderPage();
     fireEvent.click(screen.getByRole("switch", { name: en["schedules.perItem"] }));
     await waitFor(() => expect(putBodies.at(-1)?.perItemSchedules).toBe(true));
+  });
+});
+
+describe("commands before and after", () => {
+  it("removes a stored command once and keeps a command typed afterwards", async () => {
+    settingsOnServer = baseSettings({ everythingPreHookSet: true });
+    await renderPage();
+    const hooks = card("schedules.hooks");
+    fireEvent.click(within(hooks).getByRole("button", { name: en["offsite.targets.remove"] }));
+    await waitFor(() => expect(putBodies.some((b) => b.everythingPreHookClear)).toBe(true), SAVED);
+    expect(within(hooks).queryByRole("button", { name: en["offsite.targets.remove"] })).toBeNull();
+
+    putBodies.length = 0;
+    fireEvent.change(within(hooks).getByRole("textbox", { name: en["schedules.hookPre"] }), {
+      target: { value: "/boot/new.sh" },
+    });
+    await waitFor(() => expect(putBodies.at(-1)?.everythingPreHook).toBe("/boot/new.sh"), SAVED);
+    expect(putBodies.at(-1)?.everythingPreHookClear).toBeFalsy();
+  });
+});
+
+describe("a failed load", () => {
+  it("says so in the reader's language and reads again on Retry", async () => {
+    settingsFailFor = 1;
+    await renderPage();
+    expect(screen.getByText(en["settings.loadFailed"])).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["anomaly.retry"] }));
+    });
+    expect(screen.queryByText(en["settings.loadFailed"])).toBeNull();
+    expect(card("settings.everythingTitle")).toBeTruthy();
   });
 });

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { countText, en } from "../../lib/i18n";
 import type { RestoreCheckResponse } from "../../lib/api";
 import { RestoreCheckPanel } from "./RestoreCheckPanel";
@@ -48,7 +48,8 @@ describe("the restore plan", () => {
     expect(screen.getByText("Needs 2.0 KB, 4.0 KB free.")).toBeTruthy();
     expect(screen.queryByText("/mnt/user/appdata/plex/new.conf")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: en["restoreCheck.plan.showFiles"] }));
-    expect(screen.getByText("/mnt/user/appdata/plex/new.conf")).toBeTruthy();
+    const files = screen.getByRole("dialog", { name: en["restoreCheck.plan.title"] });
+    expect(within(files).getByText("/mnt/user/appdata/plex/new.conf")).toBeTruthy();
     expect(screen.getByText(en["restoreCheck.change.extra"])).toBeTruthy();
   });
 

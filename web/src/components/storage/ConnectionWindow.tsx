@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getCloud, getRcloneSections, type RcloneSection } from "../../lib/api";
+import { getCloud, getRcloneSections, type BackendOption, type RcloneSection } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { connectionPatch, storedConnection, type StoredSignIn } from "../../lib/storageConnection";
@@ -9,12 +9,11 @@ import type { ProviderForm } from "../../lib/useProviders";
 import { useTestVerdict } from "../../lib/useTestVerdict";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
-import { DraftField, FIELD, masked } from "../destinations/steps";
+import { RemoteFolderBrowser } from "../destinations/RemoteFolderBrowser";
+import { DraftField, masked, MoreSettings } from "../destinations/steps";
 import { formFields } from "../destinations/useDestinationDraft";
-import { InfoBubble } from "../InfoBubble";
 import { IconClose } from "../navGlyphs";
 import { TestButton, VerdictLine } from "../TestButton";
-import { Toggle } from "../Toggle";
 import type { LocationEdit } from "./useLocationEdit";
 
 /**
@@ -31,7 +30,6 @@ export function ConnectionWindow({ edit, form, onClose }: { edit: LocationEdit; 
   const [section, setSection] = useState<RcloneSection>();
   const [typed, setTyped] = useState<Record<string, string>>({});
   const [dir, setDir] = useState<string | null>(null);
-  const [showMore, setShowMore] = useState(false);
   const test = useTestVerdict([typed, dir], t("offsite.testFailed"));
   const remote = rcloneRemote(location.where);
 
@@ -58,13 +56,26 @@ export function ConnectionWindow({ edit, form, onClose }: { edit: LocationEdit; 
   const fields = useMemo(() => formFields(provider, backend), [provider, backend]);
   const signIn = sets.find((s) => s.id === location.credsRef) ?? shared;
   const stored = useMemo(() => storedConnection(provider, location.where, signIn, section), [provider, location.where, signIn, section]);
-  const set = (name: string) => name in stored.values || stored.hidden.includes(name);
-  const more = fields.more.filter((o) => showMore || set(o.name) || o.name in typed);
-  const shown = [...fields.main, ...more];
+  const shown = [...fields.main, ...fields.more];
   const browsable = provider.route === "s3" || provider.route === "rclone";
   const folder = dir ?? stored.dir;
   const change = connectionPatch(shown, masked, stored, typed, folder);
   const changed = change.settings !== undefined || change.dir !== undefined;
+
+  function field(option: BackendOption) {
+    return (
+      <DraftField
+        key={option.name}
+        option={option}
+        kept={stored.hidden.includes(option.name) ? t("cloud.secretSet") : undefined}
+        draft={{
+          picked: provider,
+          settings: { ...stored.values, ...typed },
+          setSetting: (name, value) => setTyped((seen) => ({ ...seen, [name]: value })),
+        }}
+      />
+    );
+  }
 
   async function save() {
     const verdict = await test.run(async () => {
@@ -98,36 +109,22 @@ export function ConnectionWindow({ edit, form, onClose }: { edit: LocationEdit; 
       }
     >
       <div className="grid gap-3 md:grid-cols-2">
-        {shown.map((option) => (
-          <DraftField
-            key={option.name}
-            option={option}
-            kept={stored.hidden.includes(option.name) ? t("cloud.secretSet") : undefined}
-            draft={{
-              picked: provider,
-              settings: { ...stored.values, ...typed },
-              setSetting: (name, value) => setTyped((seen) => ({ ...seen, [name]: value })),
-            }}
-          />
-        ))}
+        {fields.main.map(field)}
         {browsable && (
-          <label className="flex flex-col gap-1 md:col-span-2">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("storage.folder")}
-              <InfoBubble tip={t("storage.add.folderTip")} />
-            </span>
-            <input
+          <div className="md:col-span-2">
+            <RemoteFolderBrowser
+              label={t("storage.folder")}
+              hint={t("storage.add.folderTip")}
               value={folder}
-              onChange={(e) => setDir(e.target.value)}
-              autoComplete="off"
-              spellCheck={false}
-              dir="ltr"
-              className={`${FIELD} font-mono text-start`}
+              onChange={setDir}
+              provider={provider.id}
+              settings={{ ...stored.values, ...typed }}
+              needsSecret={stored.hidden.some((name) => !typed[name])}
             />
-          </label>
+          </div>
         )}
       </div>
-      {fields.more.length > 0 && <Toggle label={t("dest.more")} checked={showMore} onChange={setShowMore} />}
+      {fields.more.length > 0 && <MoreSettings>{fields.more.map(field)}</MoreSettings>}
       <VerdictLine verdict={test.verdict} />
     </InstanceWindow>
   );

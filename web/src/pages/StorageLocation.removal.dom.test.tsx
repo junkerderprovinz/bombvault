@@ -274,6 +274,19 @@ describe("removing a destination", () => {
     expect(within(dialog).getByText("database is locked")).toBeTruthy();
     expect((within(dialog).getByRole("button", { name: "Remove storage location" }) as HTMLButtonElement).disabled).toBe(true);
   });
+
+  it("reads the preview again when its way is picked after a failed one", async () => {
+    previewDestinationRemoval.mockResolvedValueOnce({ ok: false, error: "database is locked" });
+    await renderPage();
+    const dialog = await openRemoval();
+
+    await click(within(dialog).getAllByRole("radio")[0]);
+    await act(async () => {});
+
+    expect(previewDestinationRemoval).toHaveBeenCalledTimes(2);
+    expect(within(dialog).queryByText("database is locked")).toBeNull();
+    expect((within(dialog).getByRole("button", { name: "Remove storage location" }) as HTMLButtonElement).disabled).toBe(false);
+  });
 });
 
 describe("removing a destination and deleting the backups there", () => {

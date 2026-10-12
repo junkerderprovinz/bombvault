@@ -9,6 +9,7 @@ import { IconCheck, IconPencil } from "../components/navGlyphs";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { Button } from "../components/Button";
+import { InfoBubble } from "../components/InfoBubble";
 import { IconRefresh } from "../components/glyphs";
 import { getCoverage, getScheduleNext, getStatus, listRuns } from "../lib/api";
 import type { CoverageReport, DomainStatus, Run, ScheduleNext } from "../lib/api";
@@ -324,7 +325,8 @@ export function Dashboard() {
           t={t}
           coverage={coverage}
           tally={tally}
-          loading={coverageLoading || !backupItems.loaded}
+          loading={coverageLoading || (!backupItems.loaded && !backupItems.failed)}
+          failed={(backupItems.failed && !backupItems.loaded) || (!coverageLoading && coverage === null)}
           hueIndex={hue}
         />
       ),
@@ -453,8 +455,8 @@ export function Dashboard() {
         />
 
         {arranging && (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="min-w-0 flex-1 basis-80 text-xs text-carbon-textMuted">{t("overview.customizeHint")}</p>
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <InfoBubble tip={t("overview.customizeHint")} />
             <Button label={t("dashboard.resetLayout")} labelKey="dashboard.resetLayout" glyph={<IconRefresh />} onClick={reset} />
           </div>
         )}

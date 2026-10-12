@@ -312,7 +312,7 @@ function RestoreForm({
 
   const [rowKey, setRowKey] = useState<string | null>(null);
   const [placePick, setPlacePick] = useState(ask.place);
-  const [what, setWhat] = useState<RestoreWhat>("all");
+  const [whatPick, setWhat] = useState<RestoreWhat>("all");
   const [wherePick, setWherePick] = useState<RestoreWhere | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState("");
@@ -401,6 +401,8 @@ function RestoreForm({
   const whats = whatsFor(kind, { database: container !== null && container.dbTier !== "" }).filter(
     (w) => w !== "files" || wheresFor(kind, "files", facts).length > 0
   );
+  // A dataset that cannot take files leaves only the whole restore, whatever was picked before.
+  const what = whats.includes(whatPick) ? whatPick : "all";
   const wheres = wheresFor(kind, what, facts);
   const where = wherePick !== null && wheres.includes(wherePick) ? wherePick : defaultWhere(wheres, hasOriginal);
   const replaces = where === "replace" && hasOriginal;

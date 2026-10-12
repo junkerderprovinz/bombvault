@@ -1,5 +1,6 @@
-// GlimStone rule 18: no native <select>. The operating system draws an open
-// <select>, so none of the app's shape, palette or type rules reach inside it.
+// GlimStone rule 18: no native <select>, checkbox or radio. The operating
+// system draws them, so none of the app's shape, palette or type rules reach
+// inside, and accent-color only tints them.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,6 +36,19 @@ it("has no native <select> left anywhere in src", () => {
     offenders,
     "Use SelectField (components/SelectField.tsx) instead; it is the app's own " +
       "replacement, and GlimStone rule 18 says a native control gets replaced, not persuaded.",
+  ).toEqual([]);
+});
+
+it("has no native checkbox or radio left anywhere in src", () => {
+  const offenders: string[] = [];
+  for (const path of sources(SRC)) {
+    const body = code(readFileSync(path, "utf8"));
+    if (/type=["'](checkbox|radio)["']/.test(body)) offenders.push(path.slice(SRC.length + 1));
+  }
+  expect(
+    offenders,
+    "Use Toggle for a setting, SelectDot or SelectMark (components/backups/SelectMark.tsx) " +
+      "for a row that is picked, and Selector for one of several.",
   ).toEqual([]);
 });
 

@@ -5,7 +5,7 @@
 // step.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { I18nProvider, useT } from "../lib/i18n";
+import { I18nProvider, en, useT } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { BrowseResponse, FileSetView } from "../lib/api";
 import { placementOptions, placementView } from "../lib/placement.testsupport";
@@ -156,6 +156,17 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("FileSetFoldersEditor tree mount", () => {
+  it("opens the folders in a window whose bubble explains them", async () => {
+    browseReplies = [documentsListing()];
+    await renderEditor(setView());
+    expect(screen.queryByRole("tree")).toBeNull();
+    await openDisclosure();
+
+    const window = screen.getByRole("dialog", { name: en["folders.title"] });
+    expect(within(window).getByRole("tree")).toBeTruthy();
+    expect(within(window).getByLabelText(en["files.foldersHint"])).toBeTruthy();
+  });
+
   it("shows one level-1 treeitem: the resolved path, aria-setsize=1, mono root label", async () => {
     browseReplies = [documentsListing()];
     await renderEditor(setView());
@@ -437,7 +448,7 @@ describe("FileSetFoldersEditor live save", () => {
       fireEvent.click(box);
     });
     // In flight: the row's checkbox disables (busyPaths).
-    expect(box.disabled).toBe(true);
+    expect(box.getAttribute("aria-disabled")).toBe("true");
 
     await act(async () => {
       first.resolve({ ok: false, error: "disk on fire" });
@@ -447,7 +458,7 @@ describe("FileSetFoldersEditor live save", () => {
     // new row is checked again, not busy, and shaking.
     const revertedMedia = screen.getByRole("treeitem", { name: /^media$/ });
     const revertedBox = within(revertedMedia).getByRole("checkbox", { hidden: true });
-    expect(revertedBox.disabled).toBe(false);
+    expect(revertedBox.getAttribute("aria-disabled")).toBeNull();
     expect(revertedMedia.getAttribute("aria-checked")).toBe("true");
     expect(revertedMedia.className).toContain("glim-shake");
   });
@@ -471,9 +482,9 @@ describe("FileSetFoldersEditor live save", () => {
     const saved = patches[0].body.selectedPaths as string[];
     expect(saved).toEqual([ROOT, `!${ROOT}/media`]);
 
-    // Close the disclosure (the tree unmounts; the editor and its cache stay).
+    // Close the window (the tree unmounts; the editor and its cache stay).
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Choose folders" }));
+      fireEvent.click(screen.getByRole("button", { name: "Done" }));
     });
     expect(screen.queryByRole("tree")).toBeNull();
 
@@ -580,10 +591,10 @@ describe("FileSetFoldersEditor exclusions list", () => {
     });
     expect(screen.getByTitle("sub")).toBeTruthy();
 
-    // Closing and reopening Choose folders unmounts the tree; the list comes
-    // back collapsed and left nothing in localStorage.
+    // Closing and reopening the folders window unmounts the tree; the list
+    // comes back collapsed and left nothing in localStorage.
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Choose folders" }));
+      fireEvent.click(screen.getByRole("button", { name: "Done" }));
     });
     await openDisclosure();
     const reopened = screen.getByRole("button", { name: "1 exclusion" });
@@ -627,34 +638,23 @@ describe("FileSetFoldersEditor exclusions list", () => {
 });
 
 describe("FileSetDialog path-change hint", () => {
-  it("always says under the folder picker that a new path clears the selection", async () => {
+  it("says in the folder's bubble that a new path clears the selection", async () => {
     render(
       <Providers>
         <DialogHarness initial={setView()} />
       </Providers>,
     );
     await act(async () => {});
-    const hint = screen.getByText("Changing the folder clears the ticked sub-folder selection.");
-    // The caption follows the path input inside the same field block.
-    const pathInput = screen.getByPlaceholderText("user/appdata");
-    expect(pathInput.compareDocumentPosition(hint) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // It shows even though this fixture stores no selection, next to the
-    // generic path hint.
-    expect(
-      screen.getByText("The folder to back up, a relative subpath under the host mount root."),
-    ).toBeTruthy();
+    expect(screen.getByLabelText("The folder to back up, a relative subpath under the host mount root. Changing the folder clears the ticked sub-folder selection.")).toBeTruthy();
   });
 
-  it("shows both captions for a set without a path", async () => {
+  it("says the same for a set without a path", async () => {
     render(
       <Providers>
         <DialogHarness initial={setView({ path: "", selectedPaths: undefined })} />
       </Providers>,
     );
     await act(async () => {});
-    expect(screen.getByText("Changing the folder clears the ticked sub-folder selection.")).toBeTruthy();
-    expect(
-      screen.getByText("The folder to back up, a relative subpath under the host mount root."),
-    ).toBeTruthy();
+    expect(screen.getByLabelText("The folder to back up, a relative subpath under the host mount root. Changing the folder clears the ticked sub-folder selection.")).toBeTruthy();
   });
 });

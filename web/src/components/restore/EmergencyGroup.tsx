@@ -282,7 +282,7 @@ export function EmergencyGroup({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button label={t("emergency.group.other")} labelKey={null} glyph={<IconBack />} tone="subtle" onClick={chooseAnother} disabled={busy} />
         {waiting ? (
-          <Button label={t("emergency.group.stop")} labelKey={null} onClick={() => setWaiting(false)} />
+          <Button label={t("emergency.group.stop")} labelKey="emergency.group.stop" onClick={() => setWaiting(false)} />
         ) : (
           <Button
             label={t(asked === null ? "emergency.group.ask" : wrongCode ? "emergency.group.tryCode" : "emergency.group.resume")}

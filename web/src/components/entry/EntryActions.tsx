@@ -286,7 +286,10 @@ export function EntryHeadActions({
       add("export", t("entry.menu.exportVM"), <IconDownload />, () => setShown("export"));
       if (hasBackups) {
         add("remove", t("entry.deleteLocal"), <IconTrash />, () =>
-          void removeAfter(t("snapshots.deleteAllConfirm"), "snapshots.deleteAll", () => deleteBackupsVM(vm.libvirtName, "local"), onChanged)
+          void removeAfter(t("snapshots.deleteAllConfirm"), "snapshots.deleteAll", () => deleteBackupsVM(vm.libvirtName, "local"), () => {
+            onChanged();
+            timeline.reload();
+          })
         );
       }
     } else {
