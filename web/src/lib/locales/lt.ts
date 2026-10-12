@@ -3844,7 +3844,7 @@ const lt: Partial<Translations> = {
   "storage.flow.offsite": "nuotolinė",
   "storage.flow.ownRules": "Savos taisyklės: {name}",
   "storage.flow.lockOff": "Ši paskirties vieta išjungta.",
-  "storage.flow.lockOwnFolder": "{domain} visada kuria kopijas savo aplanke.",
+  "storage.flow.lockOwnFolder": "{domain} visada pirmiausia kuria kopiją savo aplanke. Nuotolinės kopijos daromos iš šios kopijos, todėl ji lieka įjungta.",
   "storage.choice.title": "Savas pasirinkimas",
   "storage.choice.hint": "Šie įrašai kuria atsargines kopijas ne ten, kur jų sritis. „Sekti numatytąją reikšmę“ grąžina įrašą: naujos kopijos tada keliauja į srities paskirties vietas, o ankstesnės lieka ten, kur yra. Visi kiti įrašai seka numatytąją reikšmę, todėl čia neišvardyti.",
   "storage.choice.backsUpTo": "Kuria kopijas į {places}",

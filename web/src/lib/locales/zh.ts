@@ -3825,7 +3825,7 @@ const zh: Partial<Translations> = {
   "storage.flow.offsite": "异地",
   "storage.flow.ownRules": "在 {name} 的专属规则",
   "storage.flow.lockOff": "此目标已关闭。",
-  "storage.flow.lockOwnFolder": "{domain} 始终备份到它自己的文件夹。",
+  "storage.flow.lockOwnFolder": "{domain} 始终先备份到它自己的文件夹。异地副本由这份备份生成，因此它保持开启。",
   "storage.choice.title": "自行选择",
   "storage.choice.hint": "这些条目备份到其分区之外的位置。“遵循默认”会让条目回到默认：之后的新备份会进入该分区的目标，之前的备份留在原处。其他所有条目都遵循默认，因此不在此列出。",
   "storage.choice.backsUpTo": "备份到 {places}",

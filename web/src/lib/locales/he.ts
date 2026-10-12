@@ -3834,7 +3834,7 @@ const he: Partial<Translations> = {
   "storage.flow.offsite": "מחוץ לאתר",
   "storage.flow.ownRules": "כללים משלו אצל {name}",
   "storage.flow.lockOff": "היעד הזה כבוי.",
-  "storage.flow.lockOwnFolder": "{domain} מגבה תמיד לתיקייה משלו.",
+  "storage.flow.lockOwnFolder": "{domain} מגבה תמיד קודם לתיקייה משלו. ההעתקים מחוץ לאתר נוצרים מהגיבוי הזה, ולכן הוא נשאר פעיל.",
   "storage.choice.title": "בחירה אישית",
   "storage.choice.hint": "הפריטים האלה מגבים למקום אחר מזה של התחום שלהם. \"לעקוב אחר ברירת המחדל\" מחזיר פריט: גיבויים חדשים הולכים אז ליעדים של התחום, והקודמים נשארים איפה שהם. כל שאר הפריטים עוקבים אחר ברירת המחדל, ולכן הם לא מופיעים כאן.",
   "storage.choice.backsUpTo": "מגבה אל {places}",

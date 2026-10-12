@@ -3844,7 +3844,7 @@ const id: Partial<Translations> = {
   "storage.flow.offsite": "off-site",
   "storage.flow.ownRules": "Aturan sendiri di {name}",
   "storage.flow.lockOff": "Tujuan ini dimatikan.",
-  "storage.flow.lockOwnFolder": "{domain} selalu mencadangkan ke foldernya sendiri.",
+  "storage.flow.lockOwnFolder": "{domain} selalu mencadangkan ke foldernya sendiri terlebih dahulu. Salinan off-site dibuat dari cadangan itu, jadi tetap menyala.",
   "storage.choice.title": "Pilihan sendiri",
   "storage.choice.hint": "Entri ini mencadangkan ke tempat lain selain bagiannya. \"Ikuti default\" mengembalikan sebuah entri: cadangan baru lalu masuk ke tujuan bagian, dan yang lama tetap di tempatnya. Semua entri lain mengikuti default, jadi tidak tercantum di sini.",
   "storage.choice.backsUpTo": "Mencadangkan ke {places}",

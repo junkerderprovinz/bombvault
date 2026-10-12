@@ -3834,7 +3834,7 @@ const tr: Partial<Translations> = {
   "storage.flow.offsite": "site dışı",
   "storage.flow.ownRules": "{name} için kendi kuralları",
   "storage.flow.lockOff": "Bu hedef kapalı.",
-  "storage.flow.lockOwnFolder": "{domain} her zaman kendi klasörüne yedekler.",
+  "storage.flow.lockOwnFolder": "{domain} her zaman önce kendi klasörüne yedekler. Site dışı kopyalar bu yedekten oluşturulur, bu yüzden açık kalır.",
   "storage.choice.title": "Kendi seçimi",
   "storage.choice.hint": "Bu ögeler bölümlerinden başka bir yere yedekler. \"Varsayılanı izle\" bir ögeyi geri getirir: yeni yedekler bundan sonra bölümün hedeflerine gider, önceki yedekler olduğu yerde kalır. Diğer tüm ögeler varsayılanı izlediği için burada listelenmez.",
   "storage.choice.backsUpTo": "{places} hedefine yedekler",

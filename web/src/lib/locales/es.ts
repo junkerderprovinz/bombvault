@@ -3832,7 +3832,7 @@ const es: Partial<Translations> = {
   "storage.flow.offsite": "externa",
   "storage.flow.ownRules": "Reglas propias en {name}",
   "storage.flow.lockOff": "Este destino está desactivado.",
-  "storage.flow.lockOwnFolder": "{domain} siempre hace la copia en su propia carpeta.",
+  "storage.flow.lockOwnFolder": "{domain} siempre hace primero la copia en su propia carpeta. Las copias externas se hacen a partir de esa copia, por eso sigue activada.",
   "storage.choice.title": "Elección propia",
   "storage.choice.hint": "Estos elementos hacen la copia en otro sitio que su sección. «Seguir el valor por defecto» devuelve un elemento: las copias nuevas van entonces a los destinos de la sección, y las anteriores se quedan donde están. Todos los demás elementos siguen el valor por defecto, por eso no aparecen aquí.",
   "storage.choice.backsUpTo": "Hace la copia en {places}",

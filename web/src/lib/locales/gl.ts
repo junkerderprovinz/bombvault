@@ -3844,7 +3844,7 @@ const gl: Partial<Translations> = {
   "storage.flow.offsite": "externa",
   "storage.flow.ownRules": "Regras propias en {name}",
   "storage.flow.lockOff": "Este destino está desactivado.",
-  "storage.flow.lockOwnFolder": "{domain} sempre fai a copia no seu propio cartafol.",
+  "storage.flow.lockOwnFolder": "{domain} sempre fai primeiro a copia no seu propio cartafol. As copias externas saen desa copia, por iso segue activada.",
   "storage.choice.title": "Escolla propia",
   "storage.choice.hint": "Estes elementos fan a copia noutro sitio que a súa sección. «Seguir o valor predeterminado» devolve un elemento: as copias novas van entón aos destinos da sección, e as anteriores quedan onde están. Todos os demais elementos seguen o valor predeterminado, por iso non aparecen aquí.",
   "storage.choice.backsUpTo": "Fai a copia en {places}",

@@ -3834,7 +3834,7 @@ const fr: Partial<Translations> = {
   "storage.flow.offsite": "hors site",
   "storage.flow.ownRules": "Règles propres chez {name}",
   "storage.flow.lockOff": "Cette destination est désactivée.",
-  "storage.flow.lockOwnFolder": "{domain} sauvegarde toujours dans son propre dossier.",
+  "storage.flow.lockOwnFolder": "{domain} sauvegarde toujours d'abord dans son propre dossier. Les copies hors site sont faites à partir de cette sauvegarde, elle reste donc activée.",
   "storage.choice.title": "Choix personnel",
   "storage.choice.hint": "Ces éléments sauvegardent ailleurs que leur section. « Suivre le réglage par défaut » ramène un élément : les nouvelles sauvegardes vont alors vers les destinations de la section, et les précédentes restent où elles sont. Tous les autres éléments suivent le réglage par défaut et ne figurent donc pas ici.",
   "storage.choice.backsUpTo": "Sauvegarde vers {places}",

@@ -3844,7 +3844,7 @@ const is: Partial<Translations> = {
   "storage.flow.offsite": "fjarlægt",
   "storage.flow.ownRules": "Eigin reglur hjá {name}",
   "storage.flow.lockOff": "Þessi áfangastaður er slökktur.",
-  "storage.flow.lockOwnFolder": "{domain} afritar alltaf í sína eigin möppu.",
+  "storage.flow.lockOwnFolder": "{domain} afritar alltaf fyrst í sína eigin möppu. Fjarlægu afritin eru gerð út frá því afriti, þess vegna er það áfram á.",
   "storage.choice.title": "Eigið val",
   "storage.choice.hint": "Þessar færslur afrita annað en svæðið þeirra. „Fylgja sjálfgefnu“ sækir færslu aftur: ný afrit fara þá á áfangastaði svæðisins og eldri afrit eru áfram þar sem þau eru. Allar aðrar færslur fylgja sjálfgefnu gildi og eru því ekki taldar upp hér.",
   "storage.choice.backsUpTo": "Afritar á {places}",

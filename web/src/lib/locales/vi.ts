@@ -3825,7 +3825,7 @@ const vi: Partial<Translations> = {
   "storage.flow.offsite": "ngoài site",
   "storage.flow.ownRules": "Quy tắc riêng tại {name}",
   "storage.flow.lockOff": "Đích này đang tắt.",
-  "storage.flow.lockOwnFolder": "{domain} luôn sao lưu vào thư mục riêng của nó.",
+  "storage.flow.lockOwnFolder": "{domain} luôn sao lưu vào thư mục riêng của nó trước. Các bản sao ngoài site được tạo từ bản sao lưu này, nên nó luôn bật.",
   "storage.choice.title": "Lựa chọn riêng",
   "storage.choice.hint": "Các mục này sao lưu đến nơi khác với phần của chúng. \"Theo mặc định\" đưa một mục trở lại: các bản sao lưu mới sau đó đi đến đích của phần, còn các bản trước đó vẫn nằm nguyên chỗ cũ. Mọi mục khác đều theo mặc định nên không được liệt kê ở đây.",
   "storage.choice.backsUpTo": "Sao lưu đến {places}",

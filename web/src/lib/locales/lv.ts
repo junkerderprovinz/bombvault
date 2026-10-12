@@ -3844,7 +3844,7 @@ const lv: Partial<Translations> = {
   "storage.flow.offsite": "attālināti",
   "storage.flow.ownRules": "Paša noteikumi pie {name}",
   "storage.flow.lockOff": "Šis mērķis ir izslēgts.",
-  "storage.flow.lockOwnFolder": "{domain} vienmēr dublē savā mapē.",
+  "storage.flow.lockOwnFolder": "{domain} vienmēr vispirms dublē savā mapē. Attālinātās kopijas tiek veidotas no šīs dublēšanas, tāpēc tā paliek ieslēgta.",
   "storage.choice.title": "Paša izvēle",
   "storage.choice.hint": "Šie ieraksti dublē citur nekā to sadaļa. „Sekot noklusējumam“ ierakstu atgriež: jaunās dublēšanas tad iet uz sadaļas mērķiem, bet agrākās paliek tur, kur ir. Visi pārējie ieraksti seko noklusējumam, tāpēc šeit nav uzskaitīti.",
   "storage.choice.backsUpTo": "Dublē uz {places}",

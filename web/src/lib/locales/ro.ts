@@ -3835,7 +3835,7 @@ const ro: Partial<Translations> = {
   "storage.flow.offsite": "extern",
   "storage.flow.ownRules": "Reguli proprii la {name}",
   "storage.flow.lockOff": "Această destinație este oprită.",
-  "storage.flow.lockOwnFolder": "{domain} salvează întotdeauna în propriul dosar.",
+  "storage.flow.lockOwnFolder": "{domain} salvează întotdeauna mai întâi în propriul dosar. Copiile externe se fac din această salvare, de aceea rămâne activată.",
   "storage.choice.title": "Alegere proprie",
   "storage.choice.hint": "Aceste elemente salvează în altă parte decât secțiunea lor. „Urmează setarea implicită” readuce un element: copiile noi merg atunci la destinațiile secțiunii, iar cele de dinainte rămân unde sunt. Toate celelalte elemente urmează setarea implicită și de aceea nu apar aici.",
   "storage.choice.backsUpTo": "Salvează la {places}",

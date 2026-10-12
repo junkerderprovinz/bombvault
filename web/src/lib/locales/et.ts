@@ -3844,7 +3844,7 @@ const et: Partial<Translations> = {
   "storage.flow.offsite": "väline",
   "storage.flow.ownRules": "Omad reeglid sihtkohas {name}",
   "storage.flow.lockOff": "See sihtkoht on välja lülitatud.",
-  "storage.flow.lockOwnFolder": "{domain} varundab alati oma kausta.",
+  "storage.flow.lockOwnFolder": "{domain} varundab alati kõigepealt oma kausta. Välised koopiad tehakse sellest varundusest, seetõttu jääb see sisse lülitatuks.",
   "storage.choice.title": "Oma valik",
   "storage.choice.hint": "Need kirjed varundavad mujale kui nende valdkond. „Järgi vaikimisi valikut“ toob kirje tagasi: uued varundused lähevad siis valdkonna sihtkohtadesse ja varasemad jäävad sinna, kus nad on. Kõik teised kirjed järgivad vaikimisi valikut ega ole seetõttu siin loetletud.",
   "storage.choice.backsUpTo": "Varundab asukohta {places}",

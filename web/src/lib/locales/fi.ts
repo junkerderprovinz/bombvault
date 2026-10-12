@@ -3834,7 +3834,7 @@ const fi: Partial<Translations> = {
   "storage.flow.offsite": "etänä",
   "storage.flow.ownRules": "Omat säännöt kohteessa {name}",
   "storage.flow.lockOff": "Tämä kohde on pois päältä.",
-  "storage.flow.lockOwnFolder": "{domain} varmuuskopioi aina omaan kansioonsa.",
+  "storage.flow.lockOwnFolder": "{domain} varmuuskopioi aina ensin omaan kansioonsa. Etäkopiot tehdään tästä varmuuskopiosta, joten se pysyy päällä.",
   "storage.choice.title": "Oma valinta",
   "storage.choice.hint": "Nämä merkinnät varmuuskopioivat muualle kuin osionsa tekee. ”Noudata oletusta” tuo merkinnän takaisin: uudet varmuuskopiot menevät silloin osion kohteisiin, ja aiemmat jäävät sinne, missä ovat. Kaikki muut merkinnät noudattavat oletusta, joten niitä ei luetella tässä.",
   "storage.choice.backsUpTo": "Varmuuskopioi kohteeseen {places}",

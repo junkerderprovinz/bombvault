@@ -3828,7 +3828,7 @@ const sl: Partial<Translations> = {
   "storage.flow.offsite": "zunanje",
   "storage.flow.ownRules": "Lastna pravila pri {name}",
   "storage.flow.lockOff": "Ta cilj je izklopljen.",
-  "storage.flow.lockOwnFolder": "{domain} vedno varnostno kopira v lastno mapo.",
+  "storage.flow.lockOwnFolder": "{domain} vedno najprej varnostno kopira v lastno mapo. Zunanje kopije nastanejo iz te varnostne kopije, zato ostane vklopljena.",
   "storage.choice.title": "Lastna izbira",
   "storage.choice.hint": "Ti vnosi varnostno kopirajo drugam kot njihov razdelek. „Sledi privzetemu“ vnos vrne: nove varnostne kopije potem gredo na cilje razdelka, prejšnje pa ostanejo, kjer so. Vsi drugi vnosi sledijo privzeti nastavitvi, zato tu niso navedeni.",
   "storage.choice.backsUpTo": "Varnostno kopira na {places}",

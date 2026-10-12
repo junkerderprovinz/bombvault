@@ -3831,7 +3831,7 @@ const pl: Partial<Translations> = {
   "storage.flow.offsite": "off-site",
   "storage.flow.ownRules": "Własne reguły w {name}",
   "storage.flow.lockOff": "To miejsce docelowe jest wyłączone.",
-  "storage.flow.lockOwnFolder": "{domain} zawsze zapisuje kopie we własnym folderze.",
+  "storage.flow.lockOwnFolder": "{domain} zawsze najpierw zapisuje kopie we własnym folderze. Kopie off-site powstają z tej kopii, dlatego pozostaje włączona.",
   "storage.choice.title": "Własny wybór",
   "storage.choice.hint": "Te wpisy zapisują kopie gdzie indziej niż ich sekcja. „Użyj ustawienia domyślnego” przywraca wpis: nowe kopie trafiają wtedy do miejsc docelowych sekcji, a wcześniejsze zostają tam, gdzie są. Wszystkie pozostałe wpisy trzymają się ustawienia domyślnego, więc nie ma ich tutaj.",
   "storage.choice.backsUpTo": "Zapisuje kopie do {places}",

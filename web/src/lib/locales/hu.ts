@@ -3835,7 +3835,7 @@ const hu: Partial<Translations> = {
   "storage.flow.offsite": "telephelyen kívül",
   "storage.flow.ownRules": "Saját szabályok itt: {name}",
   "storage.flow.lockOff": "Ez a cél ki van kapcsolva.",
-  "storage.flow.lockOwnFolder": "A(z) {domain} mindig a saját mappájába ment.",
+  "storage.flow.lockOwnFolder": "A(z) {domain} mindig először a saját mappájába ment. A telephelyen kívüli másolatok ebből a mentésből készülnek, ezért bekapcsolva marad.",
   "storage.choice.title": "Saját választás",
   "storage.choice.hint": "Ezek az elemek máshová mentenek, mint a szakaszuk. Az „Alapértelmezés követése” visszahoz egy elemet: az új mentések ekkor a szakasz céljaira kerülnek, a korábbiak ott maradnak, ahol vannak. Az összes többi elem az alapértelmezést követi, ezért nem szerepel itt.",
   "storage.choice.backsUpTo": "Ide ment: {places}",

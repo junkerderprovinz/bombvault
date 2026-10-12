@@ -3833,7 +3833,7 @@ const nl: Partial<Translations> = {
   "storage.flow.offsite": "offsite",
   "storage.flow.ownRules": "Eigen regels bij {name}",
   "storage.flow.lockOff": "Deze bestemming staat uit.",
-  "storage.flow.lockOwnFolder": "{domain} maakt altijd een back-up naar een eigen map.",
+  "storage.flow.lockOwnFolder": "{domain} maakt altijd eerst een back-up naar een eigen map. De offsite-kopieën komen uit die back-up, daarom blijft die aan.",
   "storage.choice.title": "Eigen keuze",
   "storage.choice.hint": "Deze items maken een back-up naar een andere plek dan hun onderdeel. \"Standaard volgen\" haalt een item terug: nieuwe back-ups gaan dan naar de bestemmingen van het onderdeel, en eerdere blijven waar ze zijn. Alle andere items volgen de standaard en staan daarom niet in de lijst.",
   "storage.choice.backsUpTo": "Back-up naar {places}",

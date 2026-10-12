@@ -3825,7 +3825,7 @@ const ko: Partial<Translations> = {
   "storage.flow.offsite": "오프사이트",
   "storage.flow.ownRules": "{name}의 자체 규칙",
   "storage.flow.lockOff": "이 대상은 꺼져 있습니다.",
-  "storage.flow.lockOwnFolder": "{domain}은(는) 항상 자체 폴더로 백업합니다.",
+  "storage.flow.lockOwnFolder": "{domain}은(는) 항상 먼저 자체 폴더로 백업합니다. 오프사이트 사본은 이 백업에서 만들어지므로 켜진 상태로 유지됩니다.",
   "storage.choice.title": "직접 선택",
   "storage.choice.hint": "이 항목들은 섹션과 다른 곳으로 백업합니다. \"기본값 따르기\"를 누르면 항목이 되돌아오며, 이후 새 백업은 섹션의 대상으로 가고 이전 백업은 지금 위치에 남습니다. 나머지 항목은 모두 기본값을 따르므로 여기에 나열되지 않습니다.",
   "storage.choice.backsUpTo": "{places}(으)로 백업",

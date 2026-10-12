@@ -3825,7 +3825,7 @@ const ja: Partial<Translations> = {
   "storage.flow.offsite": "オフサイト",
   "storage.flow.ownRules": "{name} の独自ルール",
   "storage.flow.lockOff": "この保存先はオフになっています。",
-  "storage.flow.lockOwnFolder": "{domain} は常に専用のフォルダーにバックアップします。",
+  "storage.flow.lockOwnFolder": "{domain} は常に先に専用のフォルダーにバックアップします。オフサイトのコピーはこのバックアップから作られるため、オンのままになります。",
   "storage.choice.title": "個別の選択",
   "storage.choice.hint": "これらの項目は、セクションとは別の場所にバックアップします。「既定に従う」を押すと項目が元に戻り、以後の新しいバックアップはセクションの保存先に送られます。これまでのバックアップは今の場所に残ります。ほかの項目はすべて既定に従っているため、ここには表示されません。",
   "storage.choice.backsUpTo": "{places} にバックアップ",

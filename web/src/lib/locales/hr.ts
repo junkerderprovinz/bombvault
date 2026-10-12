@@ -3844,7 +3844,7 @@ const hr: Partial<Translations> = {
   "storage.flow.offsite": "izvan lokacije",
   "storage.flow.ownRules": "Vlastita pravila kod {name}",
   "storage.flow.lockOff": "Ovo je odredište isključeno.",
-  "storage.flow.lockOwnFolder": "{domain} uvijek sigurnosno kopira u vlastitu mapu.",
+  "storage.flow.lockOwnFolder": "{domain} uvijek prvo sigurnosno kopira u vlastitu mapu. Kopije izvan lokacije nastaju iz te sigurnosne kopije, zato ostaje uključena.",
   "storage.choice.title": "Vlastiti odabir",
   "storage.choice.hint": "Ove stavke sigurnosno kopiraju negdje drugdje, a ne kamo ide njihov odjeljak. „Prati zadano“ vraća stavku: nove sigurnosne kopije tada idu na odredišta odjeljka, a ranije ostaju gdje jesu. Sve ostale stavke prate zadano pa ih ovdje nema.",
   "storage.choice.backsUpTo": "Sigurnosno kopira na {places}",

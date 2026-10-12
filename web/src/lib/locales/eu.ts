@@ -3844,7 +3844,7 @@ const eu: Partial<Translations> = {
   "storage.flow.offsite": "kanpoan",
   "storage.flow.ownRules": "Arau propioak hemen: {name}",
   "storage.flow.lockOff": "Helmuga hau itzalita dago.",
-  "storage.flow.lockOwnFolder": "{domain}(e)k beti bere karpetan egiten du babeskopia.",
+  "storage.flow.lockOwnFolder": "{domain}(e)k beti lehenik bere karpetan egiten du babeskopia. Kanpoko kopiak babeskopia horretatik sortzen dira, beraz aktibo jarraitzen du.",
   "storage.choice.title": "Aukera propioa",
   "storage.choice.hint": "Elementu hauek beren atala ez den beste toki batean egiten dute babeskopia. «Jarraitu lehenetsiari» aukerak elementu bat itzultzen du: babeskopia berriak atalaren helmugetara joango dira orduan, eta lehengoek dauden tokian jarraitzen dute. Gainerako elementu guztiek lehenetsia jarraitzen dute, eta horregatik ez daude hemen zerrendatuta.",
   "storage.choice.backsUpTo": "Babeskopia hona egiten du: {places}",

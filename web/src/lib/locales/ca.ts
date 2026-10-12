@@ -3844,7 +3844,7 @@ const ca: Partial<Translations> = {
   "storage.flow.offsite": "externa",
   "storage.flow.ownRules": "Regles pròpies a {name}",
   "storage.flow.lockOff": "Aquesta destinació està desactivada.",
-  "storage.flow.lockOwnFolder": "{domain} sempre fa la còpia a la seva carpeta pròpia.",
+  "storage.flow.lockOwnFolder": "{domain} sempre fa primer la còpia a la seva carpeta pròpia. Les còpies externes es fan a partir d'aquesta còpia, per això continua activada.",
   "storage.choice.title": "Elecció pròpia",
   "storage.choice.hint": "Aquests elements fan la còpia en un altre lloc que la seva secció. «Segueix el valor per defecte» retorna un element: les còpies noves van llavors a les destinacions de la secció, i les anteriors es queden on són. Tots els altres elements segueixen el valor per defecte, per això no surten aquí.",
   "storage.choice.backsUpTo": "Fa la còpia a {places}",

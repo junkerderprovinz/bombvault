@@ -3832,7 +3832,7 @@ const cs: Partial<Translations> = {
   "storage.flow.offsite": "mimo lokalitu",
   "storage.flow.ownRules": "Vlastní pravidla u {name}",
   "storage.flow.lockOff": "Tento cíl je vypnutý.",
-  "storage.flow.lockOwnFolder": "{domain} vždy zálohuje do vlastní složky.",
+  "storage.flow.lockOwnFolder": "{domain} vždy zálohuje nejdřív do vlastní složky. Kopie mimo lokalitu vznikají z této zálohy, proto zůstává zapnutá.",
   "storage.choice.title": "Vlastní volba",
   "storage.choice.hint": "Tyto položky zálohují jinam než jejich sekce. „Převzít výchozí“ položku vrátí: nové zálohy pak jdou do cílů sekce, dřívější zůstávají, kde jsou. Všechny ostatní položky se řídí výchozím nastavením, proto zde nejsou uvedeny.",
   "storage.choice.backsUpTo": "Zálohuje do {places}",

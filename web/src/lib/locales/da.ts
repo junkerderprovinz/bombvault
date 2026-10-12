@@ -3834,7 +3834,7 @@ const da: Partial<Translations> = {
   "storage.flow.offsite": "off-site",
   "storage.flow.ownRules": "Egne regler hos {name}",
   "storage.flow.lockOff": "Denne destination er slået fra.",
-  "storage.flow.lockOwnFolder": "{domain} sikrer altid til sin egen mappe.",
+  "storage.flow.lockOwnFolder": "{domain} sikrer altid først til sin egen mappe. Off-site-kopierne laves ud fra denne sikring, derfor forbliver den slået til.",
   "storage.choice.title": "Eget valg",
   "storage.choice.hint": "Disse elementer sikrer et andet sted hen end deres område. „Følg standarden“ henter et element tilbage: Nye sikkerhedskopier går så til områdets destinationer, og de tidligere bliver, hvor de er. Alle andre elementer følger standarden og står derfor ikke her.",
   "storage.choice.backsUpTo": "Sikrer til {places}",

@@ -3835,7 +3835,7 @@ const ar: Partial<Translations> = {
   "storage.flow.offsite": "خارج الموقع",
   "storage.flow.ownRules": "قواعد خاصة عند {name}",
   "storage.flow.lockOff": "هذه الوجهة متوقفة.",
-  "storage.flow.lockOwnFolder": "{domain} ينسخ دائمًا إلى مجلده الخاص.",
+  "storage.flow.lockOwnFolder": "{domain} ينسخ دائمًا إلى مجلده الخاص أولًا. النسخ خارج الموقع تُنشأ من هذه النسخة، لذلك تبقى مفعّلة.",
   "storage.choice.title": "اختيار خاص",
   "storage.choice.hint": "هذه العناصر تنسخ احتياطيًا إلى مكان آخر غير قسمها. «اتباع الإعداد الافتراضي» يعيد العنصر: تذهب النسخ الجديدة عندها إلى وجهات القسم، وتبقى السابقة حيث هي. كل العناصر الأخرى تتبع الإعداد الافتراضي، ولذلك لا تظهر هنا.",
   "storage.choice.backsUpTo": "ينسخ إلى {places}",

@@ -3844,7 +3844,7 @@ const sk: Partial<Translations> = {
   "storage.flow.offsite": "externé",
   "storage.flow.ownRules": "Vlastné pravidlá pri {name}",
   "storage.flow.lockOff": "Tento cieľ je vypnutý.",
-  "storage.flow.lockOwnFolder": "{domain} vždy zálohuje do vlastného priečinka.",
+  "storage.flow.lockOwnFolder": "{domain} vždy zálohuje najprv do vlastného priečinka. Externé kópie vznikajú z tejto zálohy, preto zostáva zapnutá.",
   "storage.choice.title": "Vlastná voľba",
   "storage.choice.hint": "Tieto položky zálohujú inam než ich sekcia. „Prevziať predvolené“ položku vráti: nové zálohy potom idú do cieľov sekcie a skoršie ostávajú, kde sú. Všetky ostatné položky sa riadia predvoleným nastavením, preto tu nie sú uvedené.",
   "storage.choice.backsUpTo": "Zálohuje do {places}",
