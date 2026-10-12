@@ -3416,6 +3416,8 @@ const sl: Partial<Translations> = {
   "launcher.name": "Ime",
   "launcher.namePlaceholder": "Domači strežnik",
   "launcher.unreachable": "Nedosegljiv.",
+  "launcher.unreachableRelay": "Ne odgovarja ne njegov naslov ne relay.",
+  "launcher.relayUnreachable": "Relay ga trenutno ne more doseči.",
   "launcher.trustTitle": "Zaupaš temu certifikatu?",
   "launcher.trustBody": "{host} uporablja certifikat, ki ga Android ne more preveriti. BombVault takega ustvari ob prvem zagonu, zato je to pri domačem strežniku običajno. Aplikacija si ta certifikat zapomni in te opozori, če strežnik kdaj pokaže drugačnega.",
   "launcher.trust": "Zaupaj in odpri",

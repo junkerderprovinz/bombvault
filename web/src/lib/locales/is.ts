@@ -3432,6 +3432,8 @@ const is: Partial<Translations> = {
   "launcher.name": "Nafn",
   "launcher.namePlaceholder": "Heimanetþjónn",
   "launcher.unreachable": "Næst ekki í.",
+  "launcher.unreachableRelay": "Hvorki vistfang þess né relay svarar.",
+  "launcher.relayUnreachable": "Relay nær ekki í það núna.",
   "launcher.trustTitle": "Treysta þessu skírteini?",
   "launcher.trustBody": "{host} notar skírteini sem Android getur ekki staðfest. BombVault býr til svona skírteini við fyrstu ræsingu, svo það er eðlilegt fyrir netþjón heima. Appið man þetta skírteini og varar þig við ef netþjónninn sýnir einhvern tímann annað.",
   "launcher.trust": "Treysta og opna",

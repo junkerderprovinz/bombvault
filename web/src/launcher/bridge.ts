@@ -28,6 +28,8 @@ export interface Problem {
   fingerprint?: string;
   /** What the WebView reported, for an unreachable server. */
   detail?: string;
+  /** The relay was tried as well, for a server of the group. */
+  relay?: boolean;
 }
 
 /** An instance of the group as its announce names it. */

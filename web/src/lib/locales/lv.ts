@@ -3432,6 +3432,8 @@ const lv: Partial<Translations> = {
   "launcher.name": "Nosaukums",
   "launcher.namePlaceholder": "Mājas serveris",
   "launcher.unreachable": "Nav sasniedzams.",
+  "launcher.unreachableRelay": "Neatbild ne tā adrese, ne relay.",
+  "launcher.relayUnreachable": "Relay pašlaik nevar to sasniegt.",
   "launcher.trustTitle": "Uzticēties šim sertifikātam?",
   "launcher.trustBody": "{host} izmanto sertifikātu, ko Android nevar pārbaudīt. BombVault tādu izveido pirmās palaišanas laikā, tāpēc mājas serverim tas ir normāli. Lietotne atceras šo sertifikātu un brīdinās jūs, ja serveris jebkad parādīs citu.",
   "launcher.trust": "Uzticēties un atvērt",

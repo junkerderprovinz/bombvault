@@ -3413,6 +3413,8 @@ const zh: Partial<Translations> = {
   "launcher.name": "名称",
   "launcher.namePlaceholder": "家庭服务器",
   "launcher.unreachable": "无法连接。",
+  "launcher.unreachableRelay": "它的地址和中继都没有响应。",
+  "launcher.relayUnreachable": "中继目前无法连接到它。",
   "launcher.trustTitle": "要信任此证书吗？",
   "launcher.trustBody": "{host} 使用的证书 Android 无法验证。BombVault 在首次启动时就会生成这样的证书，所以家庭服务器出现这种情况很正常。应用会记住此证书，如果服务器日后显示不同的证书，会提醒你。",
   "launcher.trust": "信任并打开",

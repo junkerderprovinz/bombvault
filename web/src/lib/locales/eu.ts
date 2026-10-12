@@ -3432,6 +3432,8 @@ const eu: Partial<Translations> = {
   "launcher.name": "Izena",
   "launcher.namePlaceholder": "Etxeko zerbitzaria",
   "launcher.unreachable": "Ez dago eskuragarri.",
+  "launcher.unreachableRelay": "Ez bere helbideak ez bitartekariak ez dute erantzuten.",
+  "launcher.relayUnreachable": "Bitartekariak ezin du oraintxe bertara iritsi.",
   "launcher.trustTitle": "Ziurtagiri honetan konfiantza izan?",
   "launcher.trustBody": "{host}(e)k Android-ek egiaztatu ezin duen ziurtagiria erabiltzen du. BombVault-ek horrelako bat sortzen du lehen abioan, beraz hori normala da etxeko zerbitzari batean. Aplikazioak ziurtagiri hau gogoratzen du eta abisatuko dizu zerbitzariak inoiz beste bat erakusten badu.",
   "launcher.trust": "Konfiantza izan eta ireki",

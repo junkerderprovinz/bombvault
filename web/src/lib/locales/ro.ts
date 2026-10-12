@@ -3423,6 +3423,8 @@ const ro: Partial<Translations> = {
   "launcher.name": "Nume",
   "launcher.namePlaceholder": "Server de acasă",
   "launcher.unreachable": "Nu poate fi contactat.",
+  "launcher.unreachableRelay": "Nici adresa lui, nici relay nu răspunde.",
+  "launcher.relayUnreachable": "Relay nu îl poate contacta momentan.",
   "launcher.trustTitle": "Ai încredere în acest certificat?",
   "launcher.trustBody": "{host} folosește un certificat pe care Android nu îl poate verifica. BombVault creează unul așa la prima pornire, deci este normal pentru un server de acasă. Aplicația reține acest certificat și te avertizează dacă serverul arată vreodată unul diferit.",
   "launcher.trust": "Ai încredere și deschide",

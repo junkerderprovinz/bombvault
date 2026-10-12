@@ -3432,6 +3432,8 @@ const id: Partial<Translations> = {
   "launcher.name": "Nama",
   "launcher.namePlaceholder": "Server rumah",
   "launcher.unreachable": "Tidak bisa dijangkau.",
+  "launcher.unreachableRelay": "Alamatnya maupun relay tidak merespons.",
+  "launcher.relayUnreachable": "Relay tidak bisa menjangkaunya saat ini.",
   "launcher.trustTitle": "Percayai sertifikat ini?",
   "launcher.trustBody": "{host} memakai sertifikat yang tidak bisa diverifikasi Android. BombVault membuat sertifikat seperti itu saat pertama kali dijalankan, jadi ini wajar untuk server di rumah. Aplikasi mengingat sertifikat ini dan memperingatkan Anda jika server suatu saat menampilkan sertifikat yang berbeda.",
   "launcher.trust": "Percayai dan buka",

@@ -3420,6 +3420,8 @@ const cs: Partial<Translations> = {
   "launcher.name": "Název",
   "launcher.namePlaceholder": "Domácí server",
   "launcher.unreachable": "Nedostupný.",
+  "launcher.unreachableRelay": "Neodpovídá ani jeho adresa, ani přeposílač.",
+  "launcher.relayUnreachable": "Přeposílač se k němu teď nedostane.",
   "launcher.trustTitle": "Důvěřovat tomuto certifikátu?",
   "launcher.trustBody": "{host} používá certifikát, který Android nedokáže ověřit. BombVault takový vytvoří při prvním spuštění, takže je to u domácího serveru normální. Aplikace si tento certifikát zapamatuje a upozorní tě, pokud server někdy zobrazí jiný.",
   "launcher.trust": "Důvěřovat a otevřít",

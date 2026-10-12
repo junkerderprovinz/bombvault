@@ -3432,6 +3432,8 @@ const ca: Partial<Translations> = {
   "launcher.name": "Nom",
   "launcher.namePlaceholder": "Servidor de casa",
   "launcher.unreachable": "No s'hi pot arribar.",
+  "launcher.unreachableRelay": "Ni la seva adreça ni el repetidor responen.",
+  "launcher.relayUnreachable": "Ara mateix el repetidor no hi pot arribar.",
   "launcher.trustTitle": "Vols confiar en aquest certificat?",
   "launcher.trustBody": "{host} fa servir un certificat que Android no pot verificar. BombVault en crea un així en el primer inici, així que és normal en un servidor de casa. L'app recorda aquest certificat i t'avisa si el servidor mostra mai un de diferent.",
   "launcher.trust": "Confia i obre",

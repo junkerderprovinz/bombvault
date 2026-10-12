@@ -3419,6 +3419,8 @@ const pl: Partial<Translations> = {
   "launcher.name": "Nazwa",
   "launcher.namePlaceholder": "Serwer domowy",
   "launcher.unreachable": "Niedostępny.",
+  "launcher.unreachableRelay": "Nie odpowiada ani jego adres, ani relay.",
+  "launcher.relayUnreachable": "Relay nie może się teraz z nim połączyć.",
   "launcher.trustTitle": "Zaufać temu certyfikatowi?",
   "launcher.trustBody": "{host} używa certyfikatu, którego Android nie potrafi zweryfikować. BombVault tworzy taki przy pierwszym uruchomieniu, więc przy serwerze domowym to normalne. Aplikacja zapamiętuje ten certyfikat i ostrzega cię, jeśli serwer kiedyś pokaże inny.",
   "launcher.trust": "Zaufaj i otwórz",

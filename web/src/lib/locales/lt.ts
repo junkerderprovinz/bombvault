@@ -3432,6 +3432,8 @@ const lt: Partial<Translations> = {
   "launcher.name": "Pavadinimas",
   "launcher.namePlaceholder": "Namų serveris",
   "launcher.unreachable": "Nepasiekiamas.",
+  "launcher.unreachableRelay": "Neatsako nei jo adresas, nei relay.",
+  "launcher.relayUnreachable": "Relay šiuo metu negali jo pasiekti.",
   "launcher.trustTitle": "Pasitikėti šiuo sertifikatu?",
   "launcher.trustBody": "{host} naudoja sertifikatą, kurio Android negali patikrinti. BombVault tokį sukuria pirmo paleidimo metu, todėl namų serveriui tai įprasta. Programa įsimena šį sertifikatą ir įspės tave, jei serveris kada nors parodys kitą.",
   "launcher.trust": "Pasitikėti ir atidaryti",

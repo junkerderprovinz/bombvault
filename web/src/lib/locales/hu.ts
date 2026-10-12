@@ -3423,6 +3423,8 @@ const hu: Partial<Translations> = {
   "launcher.name": "Név",
   "launcher.namePlaceholder": "Otthoni szerver",
   "launcher.unreachable": "Nem érhető el.",
+  "launcher.unreachableRelay": "Sem a címe, sem a Relay nem válaszol.",
+  "launcher.relayUnreachable": "A Relay jelenleg nem éri el.",
   "launcher.trustTitle": "Megbízol ebben a tanúsítványban?",
   "launcher.trustBody": "A(z) {host} olyan tanúsítványt használ, amelyet az Android nem tud ellenőrizni. A BombVault ilyet hoz létre az első indításkor, így ez otthoni szerver esetén normális. Az app megjegyzi ezt a tanúsítványt, és figyelmeztet, ha a szerver valaha másikat mutat.",
   "launcher.trust": "Megbízás és megnyitás",

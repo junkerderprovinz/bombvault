@@ -3423,6 +3423,8 @@ const th: Partial<Translations> = {
   "launcher.name": "ชื่อ",
   "launcher.namePlaceholder": "เซิร์ฟเวอร์ที่บ้าน",
   "launcher.unreachable": "ติดต่อไม่ได้",
+  "launcher.unreachableRelay": "ทั้งที่อยู่และรีเลย์ไม่ตอบสนอง",
+  "launcher.relayUnreachable": "ตอนนี้รีเลย์ติดต่อกับมันไม่ได้",
   "launcher.trustTitle": "เชื่อถือใบรับรองนี้หรือไม่?",
   "launcher.trustBody": "{host} ใช้ใบรับรองที่ Android ตรวจสอบไม่ได้ BombVault สร้างใบรับรองแบบนี้ตอนเริ่มทำงานครั้งแรก จึงเป็นเรื่องปกติสำหรับเซิร์ฟเวอร์ที่บ้าน แอปจะจำใบรับรองนี้ไว้ และจะเตือนคุณหากเซิร์ฟเวอร์แสดงใบรับรองอื่นในภายหลัง",
   "launcher.trust": "เชื่อถือและเปิด",

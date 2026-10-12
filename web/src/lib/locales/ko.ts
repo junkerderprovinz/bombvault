@@ -3413,6 +3413,8 @@ const ko: Partial<Translations> = {
   "launcher.name": "이름",
   "launcher.namePlaceholder": "홈 서버",
   "launcher.unreachable": "연결할 수 없습니다.",
+  "launcher.unreachableRelay": "주소도 릴레이도 응답하지 않습니다.",
+  "launcher.relayUnreachable": "릴레이가 지금은 연결할 수 없습니다.",
   "launcher.trustTitle": "이 인증서를 신뢰할까요?",
   "launcher.trustBody": "{host}이(가) Android가 확인할 수 없는 인증서를 사용합니다. BombVault는 처음 시작할 때 이런 인증서를 만들므로 홈 서버에서는 정상입니다. 앱은 이 인증서를 기억하고, 서버가 언젠가 다른 인증서를 보여 주면 경고합니다.",
   "launcher.trust": "신뢰하고 열기",

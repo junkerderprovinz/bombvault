@@ -46,7 +46,12 @@ class Servers(context: Context) {
 
     fun get(id: String): Server? = all().firstOrNull { it.id == id }
 
-    fun forOrigin(origin: String): Server? = all().firstOrNull { it.url.isNotEmpty() && it.origin == origin }
+    /** The server a page at [origin] belongs to, at its own address or over the relay. */
+    fun forOrigin(origin: String): Server? = all().firstOrNull {
+        (it.url.isNotEmpty() && it.origin == origin) || (it.member != null && relayOrigin(it.member) == origin)
+    }
+
+    fun forMember(member: String): Server? = all().firstOrNull { it.member == member }
 
     /** Saves [name] and [url] under [id], or as a new server, and returns it. */
     @Synchronized

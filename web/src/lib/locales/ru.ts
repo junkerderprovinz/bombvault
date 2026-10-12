@@ -3419,6 +3419,8 @@ const ru: Partial<Translations> = {
   "launcher.name": "Имя",
   "launcher.namePlaceholder": "Домашний сервер",
   "launcher.unreachable": "Недоступен.",
+  "launcher.unreachableRelay": "Не отвечают ни его адрес, ни Relay.",
+  "launcher.relayUnreachable": "Relay сейчас не может связаться с ним.",
   "launcher.trustTitle": "Довериться этому сертификату?",
   "launcher.trustBody": "{host} использует сертификат, который Android не может проверить. BombVault создаёт такой при первом запуске, так что для домашнего сервера это нормально. Приложение запоминает этот сертификат и предупредит, если сервер когда-нибудь покажет другой.",
   "launcher.trust": "Довериться и открыть",

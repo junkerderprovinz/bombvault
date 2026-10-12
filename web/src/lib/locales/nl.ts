@@ -3421,6 +3421,8 @@ const nl: Partial<Translations> = {
   "launcher.name": "Naam",
   "launcher.namePlaceholder": "Thuisserver",
   "launcher.unreachable": "Niet bereikbaar.",
+  "launcher.unreachableRelay": "Noch het adres noch de relay antwoordt.",
+  "launcher.relayUnreachable": "De relay kan het nu niet bereiken.",
   "launcher.trustTitle": "Dit certificaat vertrouwen?",
   "launcher.trustBody": "{host} gebruikt een certificaat dat Android niet kan verifiëren. BombVault maakt er zo een aan bij de eerste start, dus dat is normaal voor een server thuis. De app onthoudt dit certificaat en waarschuwt je als de server ooit een ander certificaat toont.",
   "launcher.trust": "Vertrouwen en openen",

@@ -3422,6 +3422,8 @@ const fi: Partial<Translations> = {
   "launcher.name": "Nimi",
   "launcher.namePlaceholder": "Kotipalvelin",
   "launcher.unreachable": "Ei tavoiteta.",
+  "launcher.unreachableRelay": "Ei sen osoite eikä rele vastaa.",
+  "launcher.relayUnreachable": "Rele ei tavoita sitä juuri nyt.",
   "launcher.trustTitle": "Luotetaanko tähän varmenteeseen?",
   "launcher.trustBody": "{host} käyttää varmennetta, jota Android ei voi vahvistaa. BombVault luo tällaisen ensimmäisellä käynnistyksellä, joten se on normaalia kotipalvelimella. Sovellus muistaa tämän varmenteen ja varoittaa sinua, jos palvelin joskus näyttää toisen.",
   "launcher.trust": "Luota ja avaa",

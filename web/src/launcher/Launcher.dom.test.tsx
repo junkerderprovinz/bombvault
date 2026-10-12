@@ -135,6 +135,17 @@ describe("Launcher", () => {
     expect(sent).toContainEqual({ op: "trust", id: "s1", fingerprint });
   });
 
+  it("says when neither the address nor the relay reached a server", async () => {
+    const away = { id: "s2", name: "Attic", url: "", member: true };
+    const { bridge } = fakeBridge({ servers: [server, away], found: [], group: alone, camera: false, app, problem: { id: "s1", kind: "unreachable", relay: true } });
+    render(<Launcher bridge={bridge} />);
+    expect(await screen.findByText("Neither its address nor the relay answers.")).toBeTruthy();
+
+    const { bridge: again } = fakeBridge({ servers: [server, away], found: [], group: alone, camera: false, app, problem: { id: "s2", kind: "unreachable", relay: true } });
+    render(<Launcher bridge={again} />);
+    expect(await screen.findByText("The relay can't reach it right now.")).toBeTruthy();
+  });
+
   it("renames the phone from the settings behind the gear", async () => {
     const { bridge, sent } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);

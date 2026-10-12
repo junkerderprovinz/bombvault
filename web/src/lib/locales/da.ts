@@ -3422,6 +3422,8 @@ const da: Partial<Translations> = {
   "launcher.name": "Navn",
   "launcher.namePlaceholder": "Hjemmeserver",
   "launcher.unreachable": "Kan ikke nås.",
+  "launcher.unreachableRelay": "Hverken dens adresse eller videresenderen svarer.",
+  "launcher.relayUnreachable": "Videresenderen kan ikke nå den lige nu.",
   "launcher.trustTitle": "Stol på dette certifikat?",
   "launcher.trustBody": "{host} bruger et certifikat, som Android ikke kan verificere. BombVault laver sådan et ved første start, så det er normalt for en server derhjemme. Appen husker certifikatet og advarer dig, hvis serveren nogensinde viser et andet.",
   "launcher.trust": "Stol på og åbn",

@@ -3432,6 +3432,8 @@ const hi: Partial<Translations> = {
   "launcher.name": "नाम",
   "launcher.namePlaceholder": "घर का सर्वर",
   "launcher.unreachable": "पहुँचा नहीं जा सकता।",
+  "launcher.unreachableRelay": "न इसका पता जवाब देता है, न रिले।",
+  "launcher.relayUnreachable": "रिले अभी इस तक नहीं पहुँच पा रहा।",
   "launcher.trustTitle": "क्या इस प्रमाणपत्र पर भरोसा करें?",
   "launcher.trustBody": "{host} ऐसे प्रमाणपत्र का उपयोग करता है जिसे Android सत्यापित नहीं कर सकता। BombVault अपनी पहली शुरुआत में ऐसा ही एक बनाता है, इसलिए घर के सर्वर के लिए यह सामान्य है। ऐप इस प्रमाणपत्र को याद रखता है और अगर सर्वर कभी कोई अलग प्रमाणपत्र दिखाए तो आपको चेतावनी देता है।",
   "launcher.trust": "भरोसा करें और खोलें",

@@ -3432,6 +3432,8 @@ const ms: Partial<Translations> = {
   "launcher.name": "Nama",
   "launcher.namePlaceholder": "Pelayan rumah",
   "launcher.unreachable": "Tidak dapat dihubungi.",
+  "launcher.unreachableRelay": "Alamatnya mahupun relay tidak menjawab.",
+  "launcher.relayUnreachable": "Relay tidak dapat menghubunginya sekarang.",
   "launcher.trustTitle": "Percayai sijil ini?",
   "launcher.trustBody": "{host} menggunakan sijil yang tidak dapat disahkan oleh Android. BombVault mencipta sijil sebegini semasa permulaan pertama, jadi ini perkara biasa untuk pelayan di rumah. Aplikasi mengingati sijil ini dan akan memberi amaran kepada anda jika pelayan menunjukkan sijil berbeza pada bila-bila masa.",
   "launcher.trust": "Percayai dan buka",

@@ -3432,6 +3432,8 @@ const gl: Partial<Translations> = {
   "launcher.name": "Nome",
   "launcher.namePlaceholder": "Servidor de casa",
   "launcher.unreachable": "Non se pode acadar.",
+  "launcher.unreachableRelay": "Nin o seu enderezo nin o relé responden.",
+  "launcher.relayUnreachable": "O relé non pode acadalo agora mesmo.",
   "launcher.trustTitle": "Confiar neste certificado?",
   "launcher.trustBody": "{host} usa un certificado que Android non pode verificar. BombVault crea un así no seu primeiro inicio, así que é normal nun servidor de casa. A app lembra este certificado e avísache se o servidor amosa algunha vez un diferente.",
   "launcher.trust": "Confiar e abrir",

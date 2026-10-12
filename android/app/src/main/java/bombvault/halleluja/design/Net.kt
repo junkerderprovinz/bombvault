@@ -67,6 +67,27 @@ fun get(server: Server, path: String): Answer = try {
 }
 
 /**
+ * Whether BombVault answers at [server]'s own address within a few seconds.
+ * A certificate the app does not trust counts as an answer, so the person is
+ * asked about it rather than sent through the relay.
+ */
+fun answers(server: Server): Boolean = try {
+    val conn = open(server, server.url.trimEnd('/') + "/api/health")
+    conn.connectTimeout = PROBE_MS
+    conn.readTimeout = PROBE_MS
+    conn.instanceFollowRedirects = false
+    val status = conn.responseCode
+    conn.disconnect()
+    status == 200
+} catch (_: SSLException) {
+    true
+} catch (_: IOException) {
+    false
+}
+
+private const val PROBE_MS = 3000
+
+/**
  * Reads [stream] to its end, or to the first pause longer than the read
  * timeout. An older server keeps the progress stream open after its snapshot,
  * and what came before the pause is the answer.

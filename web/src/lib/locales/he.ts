@@ -3422,6 +3422,8 @@ const he: Partial<Translations> = {
   "launcher.name": "שם",
   "launcher.namePlaceholder": "שרת ביתי",
   "launcher.unreachable": "לא ניתן להגיע אליו.",
+  "launcher.unreachableRelay": "לא הכתובת שלו ולא הממסר עונים.",
+  "launcher.relayUnreachable": "הממסר לא מצליח להגיע אליו כרגע.",
   "launcher.trustTitle": "לבטוח בתעודה הזו?",
   "launcher.trustBody": "{host} משתמש בתעודה ש-Android לא מצליח לאמת. BombVault יוצר תעודה כזו בהפעלה הראשונה שלו, אז זה נורמלי בשרת ביתי. האפליקציה זוכרת את התעודה הזו ומזהירה אם השרת אי פעם מציג תעודה אחרת.",
   "launcher.trust": "לבטוח ולפתוח",

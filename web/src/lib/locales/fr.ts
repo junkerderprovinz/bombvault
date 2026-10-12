@@ -3422,6 +3422,8 @@ const fr: Partial<Translations> = {
   "launcher.name": "Nom",
   "launcher.namePlaceholder": "Serveur maison",
   "launcher.unreachable": "Impossible de le joindre.",
+  "launcher.unreachableRelay": "Ni son adresse ni le relais ne répondent.",
+  "launcher.relayUnreachable": "Le relais ne peut pas le joindre pour le moment.",
   "launcher.trustTitle": "Faire confiance à ce certificat ?",
   "launcher.trustBody": "{host} utilise un certificat qu'Android ne peut pas vérifier. BombVault en crée un comme ça à son premier démarrage, c'est donc normal pour un serveur à la maison. L'app mémorise ce certificat et vous avertit si le serveur en montre un jour un différent.",
   "launcher.trust": "Faire confiance et ouvrir",

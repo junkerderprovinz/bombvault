@@ -3413,6 +3413,8 @@ const vi: Partial<Translations> = {
   "launcher.name": "Tên",
   "launcher.namePlaceholder": "Máy chủ ở nhà",
   "launcher.unreachable": "Không thể kết nối.",
+  "launcher.unreachableRelay": "Cả địa chỉ của nó lẫn relay đều không phản hồi.",
+  "launcher.relayUnreachable": "Hiện relay không thể kết nối tới nó.",
   "launcher.trustTitle": "Tin tưởng chứng chỉ này?",
   "launcher.trustBody": "{host} dùng một chứng chỉ mà Android không thể xác minh. BombVault tạo ra chứng chỉ như vậy khi khởi động lần đầu, nên đây là điều bình thường với máy chủ ở nhà. Ứng dụng ghi nhớ chứng chỉ này và sẽ cảnh báo bạn nếu máy chủ từng hiện một chứng chỉ khác.",
   "launcher.trust": "Tin tưởng và mở",

@@ -9,7 +9,12 @@ import android.util.Base64
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
@@ -32,6 +37,10 @@ class Pairing(private val context: Context, private val servers: Servers, privat
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val asked = ConcurrentHashMap.newKeySet<String>()
     private var relay: Relay? = null
+
+    // A page asks for its bundles in parallel, each in parts; the relay takes
+    // a few dozen calls of one member at a time.
+    private val pageCalls = Semaphore(PAGE_CALLS)
 
     // A group being looked at before it is taken over: its relay, and what
     // joining it would store.
@@ -168,6 +177,35 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         }
     }
 
+    /** Whether group member [member] answers on the relay. */
+    suspend fun reaches(member: String): Boolean = relay?.reaches(member) == true
+
+    /**
+     * One request of [server]'s interface through the group, with every part
+     * of its answer, or null when the group cannot carry it.
+     */
+    suspend fun page(server: Server, method: String, path: String, header: Map<String, String>, body: ByteArray?): PageAnswer? {
+        val r = relay ?: return null
+        val member = server.member ?: return null
+        if (!r.reaches(member)) return null
+        return try {
+            val first = pageCall(r, member, PageWire.ask(method, path, header, body)) ?: return null
+            val rest = coroutineScope {
+                PageWire.offsets(first).map { at -> async { pageCall(r, member, PageWire.part(first.part, at))?.body } }.awaitAll()
+            }
+            if (rest.any { it == null }) null else PageWire.whole(first, rest.filterNotNull())
+        } catch (_: Exception) {
+            // A call that timed out, an answer that does not read: the page
+            // gets a failed request, never a crash of the WebView's thread.
+            null
+        }
+    }
+
+    private suspend fun pageCall(r: Relay, member: String, ask: ByteArray): PageWire.Piece? {
+        val (status, raw) = pageCalls.withPermit { r.call(member, "POST", PageWire.PATH, ask) }
+        return if (status == 200) PageWire.piece(raw) else null
+    }
+
     /** Asks each instance that turned up where it takes calls and puts it in the list. */
     private fun adoptMembers() {
         val r = relay ?: return
@@ -236,5 +274,6 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         private const val ID = "id"
         private const val KEY_ALIAS = "group"
         private const val NAME = "name"
+        private const val PAGE_CALLS = 12
     }
 }

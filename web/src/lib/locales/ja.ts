@@ -3413,6 +3413,8 @@ const ja: Partial<Translations> = {
   "launcher.name": "名前",
   "launcher.namePlaceholder": "自宅のサーバー",
   "launcher.unreachable": "接続できません。",
+  "launcher.unreachableRelay": "アドレスにもリレーにも応答がありません。",
+  "launcher.relayUnreachable": "リレーから今は接続できません。",
   "launcher.trustTitle": "この証明書を信頼しますか？",
   "launcher.trustBody": "{host} は Android が検証できない証明書を使っています。BombVault は初回起動時にこのような証明書を作るので、自宅のサーバーでは普通のことです。アプリはこの証明書を記憶し、サーバーが別の証明書を示したら警告します。",
   "launcher.trust": "信頼して開く",

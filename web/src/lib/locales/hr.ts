@@ -3432,6 +3432,8 @@ const hr: Partial<Translations> = {
   "launcher.name": "Naziv",
   "launcher.namePlaceholder": "Kućni poslužitelj",
   "launcher.unreachable": "Nedostupan.",
+  "launcher.unreachableRelay": "Ni njegova adresa ni relej ne odgovaraju.",
+  "launcher.relayUnreachable": "Relej ga trenutačno ne može dohvatiti.",
   "launcher.trustTitle": "Vjerovati ovom certifikatu?",
   "launcher.trustBody": "{host} koristi certifikat koji Android ne može provjeriti. BombVault takav izradi pri prvom pokretanju, pa je to uobičajeno za poslužitelj kod kuće. Aplikacija pamti taj certifikat i upozorit će vas ako poslužitelj ikad prikaže drugi.",
   "launcher.trust": "Vjeruj i otvori",

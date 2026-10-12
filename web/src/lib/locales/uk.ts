@@ -3419,6 +3419,8 @@ const uk: Partial<Translations> = {
   "launcher.name": "Назва",
   "launcher.namePlaceholder": "Домашній сервер",
   "launcher.unreachable": "Недоступний.",
+  "launcher.unreachableRelay": "Не відповідають ні його адреса, ні реле.",
+  "launcher.relayUnreachable": "Реле зараз не може з ним зв'язатися.",
   "launcher.trustTitle": "Довіритися цьому сертифікату?",
   "launcher.trustBody": "{host} використовує сертифікат, який Android не може перевірити. BombVault створює такий під час першого запуску, тож для домашнього сервера це нормально. Застосунок запам'ятовує цей сертифікат і попередить, якщо сервер колись покаже інший.",
   "launcher.trust": "Довіритися і відкрити",

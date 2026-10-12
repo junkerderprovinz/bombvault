@@ -3423,6 +3423,8 @@ const ar: Partial<Translations> = {
   "launcher.name": "الاسم",
   "launcher.namePlaceholder": "خادم منزلي",
   "launcher.unreachable": "يتعذر الوصول إليه.",
+  "launcher.unreachableRelay": "لا يستجيب عنوانه ولا المُرحِّل.",
+  "launcher.relayUnreachable": "لا يستطيع المُرحِّل الوصول إليه حاليًا.",
   "launcher.trustTitle": "الوثوق بهذه الشهادة؟",
   "launcher.trustBody": "{host} يستخدم شهادة لا يستطيع Android التحقق منها. ينشئ BombVault شهادة كهذه عند أول تشغيل، لذلك هذا أمر طبيعي لخادم منزلي. يتذكر التطبيق هذه الشهادة وينبّه إذا أظهر الخادم شهادة مختلفة يومًا ما.",
   "launcher.trust": "الثقة والفتح",

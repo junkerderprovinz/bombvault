@@ -3432,6 +3432,8 @@ const fa: Partial<Translations> = {
   "launcher.name": "نام",
   "launcher.namePlaceholder": "سرور خانگی",
   "launcher.unreachable": "در دسترس نیست.",
+  "launcher.unreachableRelay": "نه نشانی آن پاسخ می‌دهد و نه رله.",
+  "launcher.relayUnreachable": "رله اکنون نمی‌تواند به آن برسد.",
   "launcher.trustTitle": "به این گواهی اعتماد شود؟",
   "launcher.trustBody": "{host} از گواهی‌ای استفاده می‌کند که Android نمی‌تواند تأییدش کند. BombVault چنین گواهی‌ای را در اولین اجرا می‌سازد، پس این برای یک سرور خانگی طبیعی است. برنامه این گواهی را به خاطر می‌سپارد و اگر سرور روزی گواهی دیگری نشان دهد به تو هشدار می‌دهد.",
   "launcher.trust": "اعتماد و باز کردن",

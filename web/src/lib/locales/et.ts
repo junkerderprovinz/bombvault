@@ -3432,6 +3432,8 @@ const et: Partial<Translations> = {
   "launcher.name": "Nimi",
   "launcher.namePlaceholder": "Koduserver",
   "launcher.unreachable": "Ei ole saavutatav.",
+  "launcher.unreachableRelay": "Ei vasta ei selle aadress ega edastaja.",
+  "launcher.relayUnreachable": "Edastaja ei saa sellega praegu ühendust.",
   "launcher.trustTitle": "Kas usaldada seda sertifikaati?",
   "launcher.trustBody": "{host} kasutab sertifikaati, mida Android ei suuda kontrollida. BombVault loob sellise esimesel käivitamisel, nii et koduserveri puhul on see tavaline. Rakendus jätab selle sertifikaadi meelde ja hoiatab sind, kui server kunagi näitab teistsugust.",
   "launcher.trust": "Usalda ja ava",

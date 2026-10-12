@@ -3422,6 +3422,8 @@ const tr: Partial<Translations> = {
   "launcher.name": "Ad",
   "launcher.namePlaceholder": "Ev sunucusu",
   "launcher.unreachable": "Ulaşılamıyor.",
+  "launcher.unreachableRelay": "Ne adresi ne de röle yanıt veriyor.",
+  "launcher.relayUnreachable": "Röle şu an ona ulaşamıyor.",
   "launcher.trustTitle": "Bu sertifikaya güvenilsin mi?",
   "launcher.trustBody": "{host}, Android'in doğrulayamadığı bir sertifika kullanıyor. BombVault ilk başlatıldığında böyle bir sertifika oluşturur, bu yüzden evdeki bir sunucuda bu normaldir. Uygulama bu sertifikayı hatırlar ve sunucu bir gün farklı bir sertifika gösterirse seni uyarır.",
   "launcher.trust": "Güven ve aç",

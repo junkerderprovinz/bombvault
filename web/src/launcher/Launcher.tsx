@@ -249,7 +249,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
                 server={s}
                 index={i + 1}
                 reach={reach[s.id]}
-                trouble={problem?.id === s.id && problem.kind === "unreachable" ? (problem.detail ?? "") : undefined}
+                trouble={problem?.id === s.id && problem.kind === "unreachable" ? unreachable(t, s, problem) : undefined}
                 onOpen={() => bridge.send({ op: "open", id: s.id })}
                 onEdit={() => setEditing(s)}
               />
@@ -406,6 +406,12 @@ const REACH_BADGE: Record<Reach, { tone: "ok" | "fail" | "warn"; key: Translatio
   certificate: { tone: "warn", key: "launcher.checkCertificate" },
   offline: { tone: "fail", key: "instances.notConnected" },
 };
+
+/** Why a server did not open, in words; empty leaves it to the card's own line. */
+function unreachable(t: T, server: Server, problem: Problem): string {
+  if (!problem.relay) return problem.detail ?? "";
+  return t(server.url ? "launcher.unreachableRelay" : "launcher.relayUnreachable");
+}
 
 function ServerCard({
   t,
