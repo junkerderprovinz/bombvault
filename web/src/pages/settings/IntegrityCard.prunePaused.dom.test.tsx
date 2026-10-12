@@ -2,7 +2,8 @@
 /**
  * A manual prune that skipped items an open anomaly is holding has to say so.
  * Their backups were kept on purpose, and a plain success would read as the
- * policy having been applied everywhere.
+ * policy having been applied everywhere. A prune the server refuses over the
+ * login says why in a sentence of its own.
  */
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -88,4 +89,19 @@ it("stays quiet about anomalies when nothing was held", async () => {
   await prune();
   await waitFor(() => expect(push).toHaveBeenCalled());
   expect(push.mock.calls.every(([, tone]) => tone !== "warn")).toBe(true);
+});
+
+it("says that pruning takes a login password when none is set", async () => {
+  pruneDomain.mockResolvedValue({ ok: false, code: "password-not-set", error: "set a login password before pruning backups" });
+  await prune();
+  await waitFor(() => expect(push).toHaveBeenCalledWith(en["secrets.deletePasswordNotSet"], "fail"));
+});
+
+it("offers a paired phone the sign-in instead of a failed prune", async () => {
+  pruneDomain.mockResolvedValue({ ok: false, code: "own-login-needed", error: "sign in at this instance's web interface" });
+  await prune();
+  const ask = await screen.findByRole("dialog");
+  expect(within(ask).getByText(en["secrets.ownLoginNeeded"])).toBeTruthy();
+  expect(within(ask).getByRole("button", { name: en["secrets.signInHere"] })).toBeTruthy();
+  expect(push.mock.calls.some(([, tone]) => tone === "fail")).toBe(false);
 });

@@ -4418,6 +4418,7 @@ const id: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Yang dibuka oleh kode pembuka bukan titipan kunci.",
   "deposit.code.deposit-busy": "Terlalu banyak kode pembuka yang dicoba sekaligus. Coba lagi sebentar lagi.",
   "secrets.passwordNotSet": "Setel dulu kata sandi login di Pengaturan, Keamanan. Tanpa kata sandi, server ini tidak memberikan kunci apa pun.",
+  "secrets.deletePasswordNotSet": "Menghapus cadangan memerlukan kata sandi login. Atur satu di Pengaturan, Keamanan.",
   "secrets.ownLoginNeeded": "Ini memerlukan login di antarmuka web milik instance ini sendiri. Koneksi aplikasi ponsel membuka halaman, tetapi tidak kunci. Masuk di sini, lalu ulangi.",
   "secrets.signInHere": "Masuk di sini",
   "keeper.state.changed": "Diubah di sana",

@@ -4,9 +4,11 @@ import { useT } from "../../lib/i18n";
 import { repoDisplayName } from "../../lib/directRepo";
 import { placementErrorText } from "../../lib/placementCodes";
 import { formatTs } from "../../lib/reltime";
+import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useHostLabel } from "../../lib/useHostLabel";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 
 function OnlyThere({ preview }: { preview: RemovalPreview }) {
   const { t } = useT();
@@ -47,6 +49,7 @@ export function OffsiteRemovalDialog({
   const { t, lang } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const ownLogin = useOwnLogin();
 
   useEffect(() => {
     let live = true;
@@ -104,7 +107,8 @@ export function OffsiteRemovalDialog({
           res = { ok: true, ...del.preview };
           continue;
         }
-        push(placementErrorText(t, lang, del, "settings.error"), "fail");
+        if (ownLogin.handled(del, onClose)) return;
+        push(deleteSentence(t, del.code) ?? placementErrorText(t, lang, del, "settings.error"), "fail");
         onClose();
         return;
       }
@@ -122,5 +126,10 @@ export function OffsiteRemovalDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <>{confirmDialog}</>;
+  return (
+    <>
+      {confirmDialog}
+      {ownLogin.dialog}
+    </>
+  );
 }

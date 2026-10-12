@@ -132,4 +132,23 @@ describe("OffsiteRemovalDialog", () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(await screen.findByText("The target is append-only. Nothing here may delete from it.")).toBeTruthy();
   });
+
+  it("closes saying that deleting takes a login password when none is set", async () => {
+    fake.reply("deleteAtTarget", { ok: false, code: "password-not-set", error: "set a login password before deleting an off-site copy" });
+    const { onClose } = open();
+    fireEvent.click(await screen.findByRole("button", { name: "Delete in B2" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(await screen.findByText("Deleting backups takes a login password. Set one under Settings, Security.")).toBeTruthy();
+  });
+
+  it("offers a paired phone the sign-in before it closes", async () => {
+    fake.reply("deleteAtTarget", { ok: false, code: "own-login-needed", error: "sign in at this instance's web interface" });
+    const { onClose, onDone } = open();
+    fireEvent.click(await screen.findByRole("button", { name: "Delete in B2" }));
+    expect(await screen.findByRole("button", { name: "Sign in here" })).toBeTruthy();
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(onDone).not.toHaveBeenCalled();
+  });
 });

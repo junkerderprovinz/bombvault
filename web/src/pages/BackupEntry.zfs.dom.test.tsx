@@ -340,6 +340,17 @@ describe("removing a ZFS entry", () => {
     await waitFor(() => expect(deleteZFSDataset).toHaveBeenCalledWith(ZFS_ID, true));
   });
 
+  it("says that taking the safety snapshots along needs a login password", async () => {
+    serve({ safetyCount: 2 });
+    deleteZFSDataset.mockResolvedValue({ ok: false, code: "password-not-set", error: "set a login password before deleting safety snapshots" });
+    await renderPage();
+    const dialog = await openRemoval();
+    await press(within(dialog).getByRole("switch", { name: SAFETY_TOO }));
+    await press(within(dialog).getByRole("button", { name: en["entry.remove.keepGo"] }));
+    await waitFor(() => expect(pushed).toContainEqual({ message: en["secrets.deletePasswordNotSet"], severity: "fail" }));
+    expect(screen.queryByText("at /backups?kind=zfs")).toBeNull();
+  });
+
   it("says why a removal the server turned away did nothing", async () => {
     deleteZFSDataset.mockRejectedValue(new api.ApiError(409, "HTTP 409 Conflict"));
     await renderPage();
@@ -461,6 +472,18 @@ describe("the safety snapshots of a ZFS entry", () => {
     await press(within(list).getByRole("button", { name: en["common.delete"] }));
     await confirmWith(en["common.delete"]);
     await waitFor(() => expect(deleteZFSSafetySnapshot).toHaveBeenCalledWith(ZFS_ID, ROOT, SNAPSHOT.name));
+  });
+
+  it("offer a paired phone the sign-in when one is deleted", async () => {
+    serve({ safetyCount: 1 });
+    deleteZFSSafetySnapshot.mockResolvedValue({ ok: false, code: "own-login-needed", error: "sign in at this instance's web interface" });
+    const list = await showList();
+    await press(within(list).getByRole("button", { name: en["common.delete"] }));
+    await confirmWith(en["common.delete"]);
+    const ask = within(await screen.findByRole("dialog"));
+    expect(ask.getByText(en["secrets.ownLoginNeeded"])).toBeTruthy();
+    expect(ask.getByRole("button", { name: en["secrets.signInHere"] })).toBeTruthy();
+    expect(pushed).toEqual([]);
   });
 
   it("drop their count and the age warning once the last one is gone", async () => {

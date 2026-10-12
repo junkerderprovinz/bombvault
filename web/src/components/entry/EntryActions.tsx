@@ -18,10 +18,12 @@ import type { Entry } from "../../lib/entry";
 import { humanBytes } from "../../lib/forecast";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
+import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useDeclineBackup } from "../../lib/useDeclineBackup";
 import { useIsDesktop } from "../../lib/useMediaQuery";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { containerTakeover, vmTakeover, type TakeoverEntry } from "../../lib/useTakeOver";
 import { STOP_ACK_KEY } from "../BackupButton";
 import type { MenuAction } from "../backups/ActionMenu";
@@ -221,6 +223,7 @@ export function EntryHeadActions({
   const { t } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const ownLogin = useOwnLogin();
   const [shown, setShown] = useState<MenuWindow | null>(null);
   const [busy, setBusy] = useState(false);
   const { item, detail } = entry;
@@ -240,7 +243,7 @@ export function EntryHeadActions({
     try {
       const res = await call();
       if (res.ok) done();
-      else push(res.error ?? t("common.removeFailed"), "fail");
+      else if (!ownLogin.handled(res)) push(deleteSentence(t, res.code) ?? res.error ?? t("common.removeFailed"), "fail");
     } catch (err) {
       push(err instanceof Error ? err.message : t("common.removeFailed"), "fail");
     } finally {
@@ -353,6 +356,7 @@ export function EntryHeadActions({
         ))}
       </span>
       {confirmDialog}
+      {ownLogin.dialog}
       {shown === "link" && takeover && (
         <LinkWindow
           candidates={candidates}

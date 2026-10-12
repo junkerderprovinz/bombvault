@@ -4408,6 +4408,7 @@ const fr: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Ce que le code de déblocage a ouvert n'est pas une copie déposée de clé.",
   "deposit.code.deposit-busy": "Trop de codes de déblocage sont essayés en même temps. Réessayez dans un instant.",
   "secrets.passwordNotSet": "Définissez d'abord un mot de passe de connexion sous Paramètres, Sécurité. Sans mot de passe, ce serveur ne remet aucune clé.",
+  "secrets.deletePasswordNotSet": "Supprimer des sauvegardes demande un mot de passe de connexion. Définissez-en un sous Paramètres, Sécurité.",
   "secrets.ownLoginNeeded": "Il faut se connecter à l'interface web propre à cette instance. La connexion de l'appli mobile ouvre les pages, mais pas les clés. Connectez-vous ici, puis recommencez.",
   "secrets.signInHere": "Se connecter ici",
   "keeper.state.changed": "Modifiée là-bas",

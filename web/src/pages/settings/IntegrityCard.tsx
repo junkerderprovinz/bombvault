@@ -25,8 +25,10 @@ import {
 } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { STALE_MS, useProgress, type ProgressState } from "../../lib/progress";
+import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { useTipBubble } from "../../lib/useTipBubble";
 import { CHECK_LABEL, canDrill, sectionsOf, type Check, type Section } from "../overview/protectionChecks";
 import { TONE_DOT } from "../overview/ProtectionCard";
@@ -99,6 +101,7 @@ export function IntegrityCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
   const progressMap = useProgress();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const ownLogin = useOwnLogin();
   const [domains, setDomains] = useState<DomainStatus[]>([]);
   const [items, setItems] = useState<BackupItem[]>([]);
   const [busy, setBusy] = useState<Record<string, boolean>>({});
@@ -198,7 +201,9 @@ export function IntegrityCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
         if (skipped.length) push(t("integrity.unlockPartial").replace("{list}", skipped.join(", ")), "warn");
         const paused: string[] = "paused" in r && Array.isArray(r.paused) ? r.paused : [];
         if (r.ok && paused.length) push(t("anomaly.prunePaused").replace("{names}", heldTagLabels(paused, t).join(", ")), "warn");
-        if (!r.ok) push(r.error ?? t("integrity.failed"), "fail");
+        if (!r.ok) {
+          if (!ownLogin.handled(r)) push(deleteSentence(t, r.code) ?? r.error ?? t("integrity.failed"), "fail");
+        }
         else if (action === "unlock") push(say("integrity.unlocked"), "success");
         else if (action === "prune") push(say("integrity.pruned"), "success");
         else push(say("integrity.passed"), "success");
@@ -268,6 +273,7 @@ export function IntegrityCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
         })}
       </ul>
       {confirmDialog}
+      {ownLogin.dialog}
     </Card>
   );
 }

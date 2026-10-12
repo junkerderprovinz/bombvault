@@ -4418,6 +4418,7 @@ const lv: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Tas, ko atvēra izsniegšanas kods, nav atslēgas depozīts.",
   "deposit.code.deposit-busy": "Vienlaikus tiek mēģināti pārāk daudz izsniegšanas kodu. Mēģiniet vēlreiz pēc brīža.",
   "secrets.passwordNotSet": "Vispirms iestatiet pieteikšanās paroli sadaļā Iestatījumi, Drošība. Bez paroles šis serveris neizsniedz nevienu atslēgu.",
+  "secrets.deletePasswordNotSet": "Lai izdzēstu rezerves kopijas, nepieciešama pieteikšanās parole. Iestatiet to sadaļā Iestatījumi, Drošība.",
   "secrets.ownLoginNeeded": "Tam nepieciešams pieteikties šīs instances paša tīmekļa saskarnē. Tālruņa lietotnes savienojums atver lapas, bet ne atslēgas. Pieteiciet šeit un atkārtojiet.",
   "secrets.signInHere": "Pieteikties šeit",
   "keeper.state.changed": "Mainīts tur",

@@ -4406,6 +4406,7 @@ const es: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Lo que abrió el código de depósito no es un depósito de claves.",
   "deposit.code.deposit-busy": "Se están probando demasiados códigos de depósito a la vez. Inténtalo de nuevo en un momento.",
   "secrets.passwordNotSet": "Primero define una contraseña de inicio de sesión en Ajustes, Seguridad. Sin ella, este servidor no entrega ninguna clave.",
+  "secrets.deletePasswordNotSet": "Borrar copias de seguridad requiere una contraseña de inicio de sesión. Define una en Ajustes, Seguridad.",
   "secrets.ownLoginNeeded": "Para esto hay que iniciar sesión en la propia interfaz web de esta instancia. La conexión de la app del móvil abre las páginas, pero no las claves. Inicia sesión aquí y vuelve a hacerlo.",
   "secrets.signInHere": "Iniciar sesión aquí",
   "keeper.state.changed": "Cambiado allí",

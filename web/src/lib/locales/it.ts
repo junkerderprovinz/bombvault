@@ -4408,6 +4408,7 @@ const it: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Ciò che il codice di sblocco ha aperto non è un deposito della chiave.",
   "deposit.code.deposit-busy": "Si stanno provando troppi codici di sblocco insieme. Riprova tra un momento.",
   "secrets.passwordNotSet": "Imposta prima una password di accesso in Impostazioni, Sicurezza. Senza password questo server non consegna nessuna chiave.",
+  "secrets.deletePasswordNotSet": "Per eliminare i backup serve una password di accesso. Impostane una in Impostazioni, Sicurezza.",
   "secrets.ownLoginNeeded": "Serve un accesso all'interfaccia web di questa stessa istanza. La connessione dell'app del telefono apre le pagine, ma non le chiavi. Accedi qui e riprova.",
   "secrets.signInHere": "Accedi qui",
   "keeper.state.changed": "Modificato lì",

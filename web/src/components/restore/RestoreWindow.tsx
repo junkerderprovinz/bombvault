@@ -46,6 +46,7 @@ import {
   type RestoreWhat,
   type RestoreWhere,
 } from "../../lib/restorePlan";
+import { secretsSentence } from "../../lib/secretsRefusal";
 import { SNAPSHOT_MISSING, autoMark, newestId, sourceOfPlace } from "../../lib/timeline";
 import { useToast } from "../../lib/toast";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
@@ -506,7 +507,9 @@ function RestoreForm({
       setRefusalFix(null);
       const res = await startRestore({ ...run, withoutRuntime: run.withoutRuntime || retryWithoutRuntime.current });
       if (res.code === SNAPSHOT_MISSING) void missing();
+      const refusal = secretsSentence(t, res.code);
       if (res.ok) setAck({ target: res.target ?? "", created: res.created, safetySnapshot: res.safetySnapshot });
+      else if (refusal) return { ...res, error: refusal };
       else if (kind === "zfs" && res.code) {
         setRefusalFix(zfsFixKey(res.code));
         // What the server said beyond the dataset the restore was about,

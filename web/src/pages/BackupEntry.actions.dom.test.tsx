@@ -706,3 +706,38 @@ describe("BombVault's own container", () => {
     expect(screen.queryByText(en["placement.title"])).toBeNull();
   });
 });
+
+describe("a delete the server refuses over the login", () => {
+  const noPassword = { ok: false, code: "password-not-set", error: "set a login password before deleting backups" };
+  const phone = { ok: false, code: "own-login-needed", error: "sign in at this instance's web interface before deleting backups" };
+
+  it("says a container's backups need a login password", async () => {
+    deleteBackups.mockResolvedValue(noPassword);
+    await renderPage("/backups/container/pihole");
+    await choose(en["containers.deleteBackups"]);
+    await confirmWith(en["containers.deleteBackups"]);
+    await waitFor(() => expect(pushed.map((toast) => toast.message)).toEqual([en["secrets.deletePasswordNotSet"]]));
+  });
+
+  it("offers a paired phone the sign-in instead of a failure", async () => {
+    deleteBackupsVM.mockResolvedValue(phone);
+    await renderPage("/backups/vm/win11");
+    await choose(en["entry.deleteLocal"]);
+    await confirmWith(en["snapshots.deleteAll"]);
+    const ask = within(await screen.findByRole("dialog"));
+    expect(ask.getByText(en["secrets.ownLoginNeeded"])).toBeTruthy();
+    expect(ask.getByRole("button", { name: en["secrets.signInHere"] })).toBeTruthy();
+    expect(pushed).toEqual([]);
+  });
+
+  it("says a folder set's backups need a login password", async () => {
+    deleteFileSetBackups.mockResolvedValue(noPassword);
+    await renderPage(`/backups/files/${SET_ID}`);
+    await choose(en["zfs.removeMissing"]);
+    const window = within(await screen.findByRole("dialog"));
+    await press(window.getByRole("radio", { name: new RegExp(`^${en["entry.remove.drop"]}`) }));
+    await confirmWith(en["entry.remove.dropGo"]);
+    await waitFor(() => expect(pushed.map((toast) => toast.message)).toEqual([en["secrets.deletePasswordNotSet"]]));
+    expect(screen.queryByText("at /backups?kind=files")).toBeNull();
+  });
+});

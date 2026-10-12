@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { deleteBackupsZFSDataset, listContainers, patchZFSDataset, probeZFSDataset } from "../../lib/api";
 import type { AnomalySeriesInfo, Container, ZFSDatasetPatch, ZFSDatasetView } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { deleteSentence } from "../../lib/secretsRefusal";
 import { useConfirm } from "../../lib/useConfirm";
 import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { useToast } from "../../lib/toast";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { tLtr } from "../../lib/ltrFragments";
 import { zfsCodeSentence } from "../../lib/zfsCodes";
 import { SubCard } from "../../pages/settings/shared";
@@ -40,6 +42,7 @@ export function ZFSItemSettings({
 }) {
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const ownLogin = useOwnLogin();
   const [excluded, setExcluded] = useState(new Set(item.excludedChildren));
   const [busy, setBusy] = useState(false);
   const [containers, setContainers] = useState<Container[]>([]);
@@ -120,7 +123,7 @@ export function ZFSItemSettings({
     try {
       const res = await deleteBackupsZFSDataset(item.id);
       if (res.ok) onChanged();
-      else push(res.error ?? t("common.deleteBackupsFailed"), "fail");
+      else if (!ownLogin.handled(res)) push(deleteSentence(t, res.code) ?? res.error ?? t("common.deleteBackupsFailed"), "fail");
     } catch (err) {
       push(failText(t, err), "fail");
     }
@@ -290,6 +293,7 @@ export function ZFSItemSettings({
       </div>
       {connection && <ZFSConnectionWindow onClose={() => setConnection(false)} />}
       {confirmDialog}
+      {ownLogin.dialog}
     </div>
   );
 }

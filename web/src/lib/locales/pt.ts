@@ -4408,6 +4408,7 @@ const pt: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "O que o código de desbloqueio abriu não é um depósito de chave.",
   "deposit.code.deposit-busy": "Estão a ser tentados demasiados códigos de desbloqueio ao mesmo tempo. Tenta de novo daqui a pouco.",
   "secrets.passwordNotSet": "Define primeiro uma palavra-passe de início de sessão em Definições, Segurança. Sem ela, este servidor não entrega nenhuma chave.",
+  "secrets.deletePasswordNotSet": "Eliminar backups exige uma palavra-passe de início de sessão. Define uma em Definições, Segurança.",
   "secrets.ownLoginNeeded": "Isto exige iniciar sessão na interface web da própria instância. A ligação da aplicação do telemóvel abre as páginas, mas não as chaves. Inicia sessão aqui e volta a fazê-lo.",
   "secrets.signInHere": "Iniciar sessão aqui",
   "keeper.state.changed": "Alterado lá",

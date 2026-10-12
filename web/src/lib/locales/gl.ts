@@ -4418,6 +4418,7 @@ const gl: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "O que abriu o código de desbloqueo non é un depósito da chave.",
   "deposit.code.deposit-busy": "Estanse probando demasiados códigos de desbloqueo á vez. Téntao de novo nun momento.",
   "secrets.passwordNotSet": "Primeiro define un contrasinal de inicio de sesión en Configuración, Seguridade. Sen el, este servidor non entrega ningunha chave.",
+  "secrets.deletePasswordNotSet": "Eliminar copias de seguridade require un contrasinal de inicio de sesión. Define un en Configuración, Seguridade.",
   "secrets.ownLoginNeeded": "Para isto hai que iniciar sesión na propia interface web desta instancia. A conexión da aplicación do móbil abre as páxinas, pero non as chaves. Inicia sesión aquí e volve facelo.",
   "secrets.signInHere": "Iniciar sesión aquí",
   "keeper.state.changed": "Cambiado alí",

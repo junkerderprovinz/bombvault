@@ -4418,6 +4418,7 @@ const ms: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Apa yang dibuka oleh kod pengeluaran bukan deposit kunci.",
   "deposit.code.deposit-busy": "Terlalu banyak kod pengeluaran dicuba serentak. Cuba lagi sebentar lagi.",
   "secrets.passwordNotSet": "Tetapkan kata laluan log masuk dahulu di bawah Tetapan, Keselamatan. Tanpa kata laluan, pelayan ini tidak menyerahkan sebarang kunci.",
+  "secrets.deletePasswordNotSet": "Memadam sandaran memerlukan kata laluan log masuk. Tetapkan satu di Tetapan, Keselamatan.",
   "secrets.ownLoginNeeded": "Ini memerlukan log masuk pada antara muka web instans ini sendiri. Sambungan aplikasi telefon membuka halaman, tetapi bukan kunci. Log masuk di sini, kemudian lakukan sekali lagi.",
   "secrets.signInHere": "Log masuk di sini",
   "keeper.state.changed": "Diubah di sana",

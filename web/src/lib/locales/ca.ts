@@ -4418,6 +4418,7 @@ const ca: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "El que ha obert el codi de dipòsit no és un dipòsit de la clau.",
   "deposit.code.deposit-busy": "S'estan provant massa codis de dipòsit alhora. Torna-ho a provar d'aquí a un moment.",
   "secrets.passwordNotSet": "Primer defineix una contrasenya d'inici de sessió a Configuració, Seguretat. Sense una, aquest servidor no lliura cap clau.",
+  "secrets.deletePasswordNotSet": "Eliminar còpies de seguretat requereix una contrasenya d'inici de sessió. Defineix-ne una a Configuració, Seguretat.",
   "secrets.ownLoginNeeded": "Cal iniciar sessió a la interfície web d'aquesta mateixa instància. La connexió de l'aplicació del mòbil obre les pàgines, però no les claus. Inicia la sessió aquí i torna-ho a fer.",
   "secrets.signInHere": "Inicia la sessió aquí",
   "keeper.state.changed": "Canviat allà",

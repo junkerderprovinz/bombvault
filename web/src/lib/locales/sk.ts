@@ -4418,6 +4418,7 @@ const sk: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "To, čo kód na vydanie otvoril, nie je úschova kľúča.",
   "deposit.code.deposit-busy": "Skúša sa naraz príliš veľa kódov na vydanie. Skús to o chvíľu znova.",
   "secrets.passwordNotSet": "Najprv nastav prihlasovacie heslo v časti Nastavenia, Zabezpečenie. Bez hesla tento server nevydá žiadny kľúč.",
+  "secrets.deletePasswordNotSet": "Vymazanie záloh vyžaduje prihlasovacie heslo. Nastav ho v časti Nastavenia, Zabezpečenie.",
   "secrets.ownLoginNeeded": "Vyžaduje to prihlásenie vo vlastnom webovom rozhraní tejto inštancie. Pripojenie mobilnej aplikácie otvorí stránky, ale nie kľúče. Prihlás sa tu a zopakuj to.",
   "secrets.signInHere": "Prihlásiť sa tu",
   "keeper.state.changed": "Zmenená tam",

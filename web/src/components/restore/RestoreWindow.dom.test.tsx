@@ -280,6 +280,17 @@ describe("a container", () => {
     expect(restoreContainerToPath).toHaveBeenCalledWith("immich", NEWEST, "user/restore/containers", "local");
   });
 
+  it("says a paired phone has to sign in itself to restore into a folder that holds files", async () => {
+    restoreContainerToPath.mockResolvedValue({ ok: false, code: "own-login-needed", error: "sign in at this instance's web interface to do this" });
+    await open(entryOf("container", { settings: { ...SETTINGS, restoreFolders: { containers: "user/restore/containers" } } }));
+    await press(toFolder()!);
+    const start = () => within(dialog()).getByRole("button", { name: en["restoreWindow.toFolderNamed"] }) as HTMLButtonElement;
+    await ready(start);
+    await press(start());
+    expect(await screen.findByText(en["secrets.ownLoginNeeded"])).toBeTruthy();
+    expect(screen.queryByText(/HTTP 403/)).toBeNull();
+  });
+
   it("sends ticked files to the files route, which knows no copy next to the original", async () => {
     await open(entryOf("container"));
     await press(within(dialog()).getByRole("tab", { name: en["restore.mode.files"] }));

@@ -4408,6 +4408,7 @@ const no: Partial<Translations> = {
   "deposit.code.deposit-unreadable": "Det frigivelseskoden åpnet, er ikke en nøkkeldeponering.",
   "deposit.code.deposit-busy": "For mange frigivelseskoder prøves samtidig. Prøv igjen om litt.",
   "secrets.passwordNotSet": "Sett først et påloggingspassord under Innstillinger, Sikkerhet. Uten passord gir denne serveren ikke fra seg noen nøkkel.",
+  "secrets.deletePasswordNotSet": "Å slette sikkerhetskopier krever et påloggingspassord. Angi ett under Innstillinger, Sikkerhet.",
   "secrets.ownLoginNeeded": "Dette krever pålogging i denne instansens eget nettgrensesnitt. Mobilappens tilkobling åpner sidene, men ingen nøkler. Logg på her og gjør det igjen.",
   "secrets.signInHere": "Logg på her",
   "keeper.state.changed": "Endret der",

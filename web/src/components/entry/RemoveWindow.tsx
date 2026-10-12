@@ -10,7 +10,9 @@ import {
   type ZFSDeleteResult,
 } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { ToggleRow } from "../../pages/settings/shared";
 import { Button } from "../Button";
@@ -43,6 +45,7 @@ export function RemoveWindow({
 }) {
   const { t } = useT();
   const { push } = useToast();
+  const ownLogin = useOwnLogin();
   const [way, setWay] = useState<Way>("keep");
   const [safetyToo, setSafetyToo] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -60,7 +63,7 @@ export function RemoveWindow({
     try {
       const res = await call();
       if (!res.ok) {
-        push(res.error ?? t("common.removeFailed"), "fail");
+        if (!ownLogin.handled(res)) push(deleteSentence(t, res.code) ?? res.error ?? t("common.removeFailed"), "fail");
         return;
       }
       push(t(way === "keep" ? "entry.remove.kept" : "entry.remove.dropped").replace("{name}", () => name), "success");
@@ -119,6 +122,7 @@ export function RemoveWindow({
           />
         )}
       </Choices>
+      {ownLogin.dialog}
     </InstanceWindow>
   );
 }
