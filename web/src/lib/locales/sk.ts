@@ -4246,8 +4246,6 @@ const sk: Partial<Translations> = {
   "welcome.restoreHint": "Už BombVault poznáš? Potom „Obnoviť zo zálohy“ vráti všetko, aj nastavenia.",
   "whatsNew.title": "Novinky",
   "whatsNew.hint": "Čo zmenila posledná aktualizácia. Žiarivá bodka označuje každú zmenu na jej stránke a kliknutie na bodku ju skryje. Bodka na záložke, dlaždici alebo riadku zmizne, keď uvidíš všetko, čo je za ňou.",
-  "whatsNew.show": "Zobraziť žiarivé bodky",
-  "whatsNew.count": "Zostáva {left} z {all}",
   "whatsNew.showAll": "Zobraziť všetko znova",
   "whatsNew.markAll": "Označiť všetko ako videné",
   "whatsNew.go": "Prejsť tam",

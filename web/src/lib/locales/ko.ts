@@ -4227,8 +4227,6 @@ const ko: Partial<Translations> = {
   "welcome.restoreHint": "전에 BombVault를 사용한 적이 있나요? 그렇다면 “백업에서 복원”이 설정을 포함해 모든 것을 되돌려 줍니다.",
   "whatsNew.title": "새 소식",
   "whatsNew.hint": "마지막 업데이트에서 바뀐 내용입니다. 빛나는 점이 변경된 곳을 해당 페이지에 표시하고, 점을 클릭하면 숨겨집니다. 탭, 타일, 행에 붙은 점은 그 뒤의 내용을 모두 확인하면 사라집니다.",
-  "whatsNew.show": "빛나는 점 표시",
-  "whatsNew.count": "{all}개 중 {left}개 남음",
   "whatsNew.showAll": "모두 다시 표시",
   "whatsNew.markAll": "모두 확인함으로 표시",
   "whatsNew.go": "바로 가기",

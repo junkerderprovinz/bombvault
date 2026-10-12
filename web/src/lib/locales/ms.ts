@@ -4246,8 +4246,6 @@ const ms: Partial<Translations> = {
   "welcome.restoreHint": "Pernah guna BombVault sebelum ini? Maka “Pulihkan daripada sandaran” memulihkan semuanya, termasuk tetapan.",
   "whatsNew.title": "Baharu",
   "whatsNew.hint": "Apa yang diubah oleh kemas kini terakhir. Titik bercahaya menandakan setiap perubahan pada halamannya, dan satu klik pada titik menyembunyikannya. Titik pada tab, jubin atau baris hilang apabila anda sudah melihat semua yang ada di belakangnya.",
-  "whatsNew.show": "Tunjukkan titik bercahaya",
-  "whatsNew.count": "Baki {left} daripada {all}",
   "whatsNew.showAll": "Tunjukkan semua semula",
   "whatsNew.markAll": "Tandakan semua sebagai sudah dilihat",
   "whatsNew.go": "Pergi ke sana",

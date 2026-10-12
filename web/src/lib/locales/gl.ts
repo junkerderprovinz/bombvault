@@ -4246,8 +4246,6 @@ const gl: Partial<Translations> = {
   "welcome.restoreHint": "Xa usaches BombVault antes? Entón «Restaurar desde unha copia» recupera todo, incluída a configuración.",
   "whatsNew.title": "Novidades",
   "whatsNew.hint": "Que cambiou a última actualización. Un punto brillante marca cada cambio na súa páxina, e un clic nun punto agóchao. Un punto nunha lapela, un mosaico ou unha fila desaparece cando viches todo o que hai detrás.",
-  "whatsNew.show": "Amosar os puntos brillantes",
-  "whatsNew.count": "Quedan {left} de {all}",
   "whatsNew.showAll": "Amosar todos outra vez",
   "whatsNew.markAll": "Marcar todos como vistos",
   "whatsNew.go": "Ir alí",

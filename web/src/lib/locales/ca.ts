@@ -4246,8 +4246,6 @@ const ca: Partial<Translations> = {
   "welcome.restoreHint": "Ja has fet servir BombVault abans? Llavors «Restaura des d'una còpia de seguretat» ho recupera tot, també la configuració.",
   "whatsNew.title": "Novetats",
   "whatsNew.hint": "Què ha canviat l'última actualització. Un punt lluent marca cada canvi a la seva pàgina, i un clic en un punt l'amaga. Un punt en una pestanya, una rajola o una fila desapareix quan has vist tot el que hi ha al darrere.",
-  "whatsNew.show": "Mostra els punts lluents",
-  "whatsNew.count": "En queden {left} de {all}",
   "whatsNew.showAll": "Mostra-ho tot un altre cop",
   "whatsNew.markAll": "Marca-ho tot com a vist",
   "whatsNew.go": "Ves-hi",

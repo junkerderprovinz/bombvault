@@ -4233,8 +4233,6 @@ const pl: Partial<Translations> = {
   "welcome.restoreHint": "Znasz już BombVault? Wtedy „Przywróć z kopii zapasowej” przywraca wszystko, także ustawienia.",
   "whatsNew.title": "Nowości",
   "whatsNew.hint": "Co zmieniła ostatnia aktualizacja. Świecący punkt oznacza każdą zmianę na jej stronie, a kliknięcie punktu go ukrywa. Punkt na zakładce, kafelku lub wierszu znika, gdy zobaczysz wszystko, co za nim stoi.",
-  "whatsNew.show": "Pokaż świecące punkty",
-  "whatsNew.count": "Zostało {left} z {all}",
   "whatsNew.showAll": "Pokaż wszystkie ponownie",
   "whatsNew.markAll": "Oznacz wszystkie jako zobaczone",
   "whatsNew.go": "Przejdź tam",

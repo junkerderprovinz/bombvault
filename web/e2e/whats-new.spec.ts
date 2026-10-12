@@ -1,7 +1,7 @@
 // The green dots after an update, followed once from the navigation to the
 // change: the dot on the entry in the rail or the phone's bar, the dot on the
 // settings tile, the dot on the changed card, the click that hides it for
-// good, and the list that counts what is left. The harness runs a build
+// good, and the button that counts what is left. The harness runs a build
 // without a version, so the update is staged: the server says it is the
 // release, and the browser remembers the one before. After it: the way into
 // the restore window, the dots of an entry's page, a change whose page has
@@ -96,6 +96,8 @@ async function picture(page: Page, name: string): Promise<void> {
   mkdirSync(SHOTS, { recursive: true });
   await page.screenshot({ path: join(SHOTS, `${name}.png`) });
 }
+const markAll = (page: Page, n: number) => page.getByRole("button", { name: `Mark all as seen · ${n}` });
+const showAll = (page: Page, n: number) => page.getByRole("button", { name: `Show all again · ${n}` });
 const wayTo = (page: Page, news: string) => page.locator(`[data-new-dot="way"][aria-label*="${news}"]`);
 
 /** Expects a dot on the top corner at the end of what it marks. */
@@ -141,36 +143,31 @@ test("a dot leads from the navigation over the settings tile to the change, and 
   await expect(dot).toHaveAttribute("aria-label", VERSION_NEWS);
   await expect(fromTile).toHaveCount(0);
 
-  const left = page.getByTestId("whats-new-left");
-  const all = Number((await left.textContent())!.match(/of (\d+)/)![1]);
-  await expect(left).toHaveText(`${all} of ${all} left`);
+  const all = await page.locator("[data-change]").count();
+  await expect(markAll(page, all)).toBeVisible();
   const line = page.locator('[data-change="settings-version"]');
   await expect(line).not.toHaveAttribute("data-seen", "true");
 
   await dot.click();
   await expect(dot).toHaveCount(0);
-  await expect(left).toHaveText(`${all - 1} of ${all} left`);
+  await expect(markAll(page, all - 1)).toBeVisible();
   await expect(line).toHaveAttribute("data-seen", "true");
 
   await page.reload();
-  await expect(left).toHaveText(`${all - 1} of ${all} left`);
+  await expect(markAll(page, all - 1)).toBeVisible();
   await expect(dot).toHaveCount(0);
   // Nothing leads to the change any more, and the navigation still leads to the rest.
   await expect(wayTo(page, WEEK_NEWS).first()).toBeVisible();
   await expect(wayTo(page, VERSION_NEWS)).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Mark all as seen" }).click();
+  await markAll(page, all - 1).click();
   await expect(dots(page)).toHaveCount(0);
-  await expect(left).toHaveText(`0 of ${all} left`);
 
-  await page.getByRole("button", { name: "Show all again" }).click();
-  await expect(left).toHaveText(`${all} of ${all} left`);
+  await showAll(page, all).click();
+  await expect(markAll(page, all)).toBeVisible();
   // A dot shows while its element is in view.
   await card.scrollIntoViewIfNeeded();
   await expectOn(dot, card);
-
-  await page.getByRole("switch", { name: "Show glowing dots" }).click();
-  await expect(dots(page)).toHaveCount(0);
 });
 
 test("the dots breathe, and stand still where motion is reduced", async ({ page }, testInfo) => {
@@ -189,8 +186,7 @@ test("nothing is marked for a browser that saw no older release", async ({ page 
   test.skip(testInfo.project.name !== "desktop-1280", "what decides it is the same at every width");
   await stage(page, { from: "" });
   await page.goto("/settings/info");
-  await expect(page.getByTestId("whats-new-left")).toBeVisible();
-  await expect(page.getByRole("switch", { name: "Show glowing dots" })).toHaveAttribute("aria-checked", "false");
+  await expect(page.getByRole("button", { name: /^Show all again · \d+$/ })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(dots(page)).toHaveCount(0);
 });
@@ -202,7 +198,7 @@ test("nothing is marked during the first start, though the browser saw an older 
   await expect(page.getByRole("button", { name: "Restore from a backup" })).toBeVisible();
   await expect(dots(page)).toHaveCount(0);
   await page.goto("/settings/info");
-  await expect(page.getByRole("switch", { name: "Show glowing dots" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("button", { name: /^Mark all as seen · \d+$/ })).toBeVisible();
   await expect(page.locator('[data-new="settings-version"]')).toBeVisible();
   await expect(dots(page)).toHaveCount(0);
 });
@@ -311,9 +307,7 @@ test("a change its page has nothing for is no longer promised, and is back when 
   const line = page.locator('[data-change="overview-decline"]');
   await expect(line).toHaveAttribute("data-absent", "true");
   await expect(line).toContainText("Not on its page at the moment");
-  const left = page.getByTestId("whats-new-left");
-  const all = Number((await left.textContent())!.match(/of (\d+)/)![1]);
-  await expect(left).toHaveText(`${all} of ${all} left`);
+  await expect(markAll(page, await page.locator("[data-change]").count())).toBeVisible();
   await line.scrollIntoViewIfNeeded();
   await picture(page, "list-absent");
 

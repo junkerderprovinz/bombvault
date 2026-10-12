@@ -4235,8 +4235,6 @@ const nl: Partial<Translations> = {
   "welcome.restoreHint": "Heb je BombVault al eerder gebruikt? Dan haalt “Herstellen vanaf een back-up” alles terug, inclusief de instellingen.",
   "whatsNew.title": "Nieuw",
   "whatsNew.hint": "Wat de laatste update heeft veranderd. Een gloeiende stip markeert elke wijziging op haar pagina en een klik op een stip verbergt hem. Een stip op een tabblad, tegel of rij verdwijnt zodra je alles erachter hebt gezien.",
-  "whatsNew.show": "Gloeiende stippen tonen",
-  "whatsNew.count": "Nog {left} van {all}",
   "whatsNew.showAll": "Alles opnieuw tonen",
   "whatsNew.markAll": "Alles als gezien markeren",
   "whatsNew.go": "Ga erheen",

@@ -4227,8 +4227,6 @@ const vi: Partial<Translations> = {
   "welcome.restoreHint": "Bạn đã dùng BombVault trước đây chưa? Khi đó “Khôi phục từ bản sao lưu” sẽ đưa mọi thứ trở lại, kể cả cài đặt.",
   "whatsNew.title": "Mới",
   "whatsNew.hint": "Bản cập nhật gần nhất đã thay đổi gì. Một chấm sáng đánh dấu từng thay đổi trên trang của nó, và nhấp vào chấm sẽ ẩn nó. Chấm trên tab, ô hoặc dòng sẽ biến mất khi bạn đã xem hết những gì phía sau nó.",
-  "whatsNew.show": "Hiện các chấm sáng",
-  "whatsNew.count": "Còn {left} trên {all}",
   "whatsNew.showAll": "Hiện lại tất cả",
   "whatsNew.markAll": "Đánh dấu tất cả là đã xem",
   "whatsNew.go": "Đi tới đó",

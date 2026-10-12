@@ -4227,8 +4227,6 @@ const zh: Partial<Translations> = {
   "welcome.restoreHint": "以前用过 BombVault 吗？那么“从备份恢复”可以找回所有内容，包括设置。",
   "whatsNew.title": "新内容",
   "whatsNew.hint": "上次更新改了什么。发光的点会在对应页面上标出每处改动，点击圆点即可隐藏。标签页、磁贴或行上的点，会在你看完它背后的全部内容后消失。",
-  "whatsNew.show": "显示发光的点",
-  "whatsNew.count": "还剩 {left} / {all}",
   "whatsNew.showAll": "重新显示全部",
   "whatsNew.markAll": "全部标为已看",
   "whatsNew.go": "前往",

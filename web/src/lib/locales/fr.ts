@@ -4236,8 +4236,6 @@ const fr: Partial<Translations> = {
   "welcome.restoreHint": "Vous avez déjà utilisé BombVault ? Alors « Restaurer depuis une sauvegarde » ramène tout, paramètres compris.",
   "whatsNew.title": "Nouveautés",
   "whatsNew.hint": "Ce que la dernière mise à jour a changé. Un point lumineux marque chaque changement sur sa page, et un clic sur un point le masque. Un point sur un onglet, une tuile ou une ligne disparaît dès que vous avez vu tout ce qui se trouve derrière.",
-  "whatsNew.show": "Afficher les points lumineux",
-  "whatsNew.count": "Encore {left} sur {all}",
   "whatsNew.showAll": "Tout afficher à nouveau",
   "whatsNew.markAll": "Tout marquer comme vu",
   "whatsNew.go": "Y aller",

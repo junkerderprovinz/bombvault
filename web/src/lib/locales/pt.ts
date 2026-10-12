@@ -4236,8 +4236,6 @@ const pt: Partial<Translations> = {
   "welcome.restoreHint": "Já usaste o BombVault antes? Então «Restaurar a partir de um backup» traz tudo de volta, incluindo as definições.",
   "whatsNew.title": "Novidades",
   "whatsNew.hint": "O que a última atualização mudou. Um ponto luminoso marca cada mudança na sua página, e um clique num ponto esconde-o. Um ponto numa aba, num mosaico ou numa linha desaparece quando viste tudo o que está por trás.",
-  "whatsNew.show": "Mostrar os pontos luminosos",
-  "whatsNew.count": "Faltam {left} de {all}",
   "whatsNew.showAll": "Mostrar todos outra vez",
   "whatsNew.markAll": "Marcar tudo como visto",
   "whatsNew.go": "Ir para lá",

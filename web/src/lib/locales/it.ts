@@ -4236,8 +4236,6 @@ const it: Partial<Translations> = {
   "welcome.restoreHint": "Hai già usato BombVault? Allora «Ripristina da un backup» riporta tutto indietro, impostazioni comprese.",
   "whatsNew.title": "Novità",
   "whatsNew.hint": "Cosa ha cambiato l'ultimo aggiornamento. Un punto luminoso segna ogni modifica nella sua pagina, e un clic su un punto lo nasconde. Un punto su un tab, un riquadro o una riga sparisce quando hai visto tutto ciò che c'è dietro.",
-  "whatsNew.show": "Mostra i punti luminosi",
-  "whatsNew.count": "Ne restano {left} su {all}",
   "whatsNew.showAll": "Mostra di nuovo tutti",
   "whatsNew.markAll": "Segna tutto come visto",
   "whatsNew.go": "Vai lì",

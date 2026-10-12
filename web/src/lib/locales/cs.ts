@@ -4234,8 +4234,6 @@ const cs: Partial<Translations> = {
   "welcome.restoreHint": "Znáš BombVault už z dřívějška? Pak „Obnovit ze zálohy“ vrátí všechno, včetně nastavení.",
   "whatsNew.title": "Novinky",
   "whatsNew.hint": "Co změnila poslední aktualizace. Zářící tečka označuje každou změnu na její stránce a kliknutí na tečku ji skryje. Tečka na záložce, dlaždici nebo řádku zmizí, jakmile uvidíš vše, co za ní je.",
-  "whatsNew.show": "Zobrazit zářící tečky",
-  "whatsNew.count": "Zbývá {left} z {all}",
   "whatsNew.showAll": "Zobrazit vše znovu",
   "whatsNew.markAll": "Označit vše jako viděné",
   "whatsNew.go": "Přejít tam",

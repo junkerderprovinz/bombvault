@@ -4237,8 +4237,6 @@ const hu: Partial<Translations> = {
   "welcome.restoreHint": "Használtad már a BombVaultot? Akkor a „Visszaállítás mentésből” mindent visszahoz, a beállításokat is.",
   "whatsNew.title": "Újdonságok",
   "whatsNew.hint": "Mit változtatott az utolsó frissítés. Egy fénylő pont jelöli minden változás helyét a saját oldalán, és a pontra kattintva elrejtheted. A füleken, csempéken vagy soron lévő pont eltűnik, amint mindent láttál, ami mögötte van.",
-  "whatsNew.show": "Fénylő pontok mutatása",
-  "whatsNew.count": "{all} közül {left} van hátra",
   "whatsNew.showAll": "Mind megmutatása újra",
   "whatsNew.markAll": "Mind megjelölése láttként",
   "whatsNew.go": "Ugrás oda",

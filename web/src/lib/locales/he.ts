@@ -4236,8 +4236,6 @@ const he: Partial<Translations> = {
   "welcome.restoreHint": "כבר היה שימוש ב-BombVault בעבר? אז “שחזור מגיבוי” מחזיר הכול, כולל ההגדרות.",
   "whatsNew.title": "חדש",
   "whatsNew.hint": "מה שהעדכון האחרון שינה. נקודה זוהרת מסמנת כל שינוי בדף שלו, ולחיצה על נקודה מסתירה אותה. נקודה על לשונית, אריח או שורה נעלמת ברגע שכל מה שמאחוריה נראה.",
-  "whatsNew.show": "הצגת נקודות זוהרות",
-  "whatsNew.count": "נותרו {left} מתוך {all}",
   "whatsNew.showAll": "הצגת הכול שוב",
   "whatsNew.markAll": "סימון הכול כנראה",
   "whatsNew.go": "מעבר לשם",

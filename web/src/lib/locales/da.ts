@@ -4236,8 +4236,6 @@ const da: Partial<Translations> = {
   "welcome.restoreHint": "Har du brugt BombVault før? Så henter »Gendan fra en sikkerhedskopi« alt tilbage, også indstillingerne.",
   "whatsNew.title": "Nyt",
   "whatsNew.hint": "Hvad den seneste opdatering har ændret. En lysende prik markerer hver ændring på sin side, og et klik på en prik skjuler den. En prik på en fane, en flise eller en række forsvinder, når du har set alt bag den.",
-  "whatsNew.show": "Vis lysende prikker",
-  "whatsNew.count": "{left} af {all} tilbage",
   "whatsNew.showAll": "Vis alle igen",
   "whatsNew.markAll": "Markér alle som set",
   "whatsNew.go": "Gå derhen",

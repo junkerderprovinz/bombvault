@@ -4237,8 +4237,6 @@ const ro: Partial<Translations> = {
   "welcome.restoreHint": "Ai mai folosit BombVault? Atunci „Restaurează dintr-o copie de rezervă” aduce totul înapoi, inclusiv setările.",
   "whatsNew.title": "Noutăți",
   "whatsNew.hint": "Ce a schimbat ultima actualizare. Un punct luminos marchează fiecare schimbare pe pagina ei, iar un clic pe punct îl ascunde. Un punct pe o filă, o placă sau un rând dispare când ai văzut tot ce se află în spatele lui.",
-  "whatsNew.show": "Arată punctele luminoase",
-  "whatsNew.count": "Au rămas {left} din {all}",
   "whatsNew.showAll": "Arată din nou toate",
   "whatsNew.markAll": "Marchează tot ca văzut",
   "whatsNew.go": "Mergi acolo",

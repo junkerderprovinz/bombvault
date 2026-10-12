@@ -4246,8 +4246,6 @@ const et: Partial<Translations> = {
   "welcome.restoreHint": "Oled BombVaulti varem kasutanud? Siis toob „Taasta varundusest“ kõik tagasi, ka seaded.",
   "whatsNew.title": "Uut",
   "whatsNew.hint": "Mida viimane uuendus muutis. Helendav punkt märgib iga muudatust selle lehel ja klõps punktil peidab selle. Punkt vahelehel, paanil või real kaob, kui oled kõik selle taga näinud.",
-  "whatsNew.show": "Näita helendavaid punkte",
-  "whatsNew.count": "Alles on {left} / {all}",
   "whatsNew.showAll": "Näita kõiki uuesti",
   "whatsNew.markAll": "Märgi kõik nähtuks",
   "whatsNew.go": "Mine sinna",

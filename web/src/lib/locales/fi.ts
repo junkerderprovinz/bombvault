@@ -4236,8 +4236,6 @@ const fi: Partial<Translations> = {
   "welcome.restoreHint": "Oletko käyttänyt BombVaultia ennenkin? Silloin ”Palauta varmuuskopiosta” tuo kaiken takaisin, asetukset mukaan lukien.",
   "whatsNew.title": "Uutta",
   "whatsNew.hint": "Mitä viimeisin päivitys muutti. Hehkuva piste merkitsee jokaisen muutoksen sen omalle sivulle, ja pisteen napsautus piilottaa sen. Välilehden, ruudun tai rivin piste katoaa, kun olet nähnyt kaiken sen takana.",
-  "whatsNew.show": "Näytä hehkuvat pisteet",
-  "whatsNew.count": "{left} / {all} jäljellä",
   "whatsNew.showAll": "Näytä kaikki uudelleen",
   "whatsNew.markAll": "Merkitse kaikki nähdyiksi",
   "whatsNew.go": "Siirry sinne",

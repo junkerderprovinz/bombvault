@@ -4246,8 +4246,6 @@ const id: Partial<Translations> = {
   "welcome.restoreHint": "Pernah memakai BombVault sebelumnya? Maka “Pulihkan dari cadangan” mengembalikan semuanya, termasuk pengaturan.",
   "whatsNew.title": "Baru",
   "whatsNew.hint": "Apa yang diubah pembaruan terakhir. Titik bercahaya menandai setiap perubahan di halamannya, dan satu klik pada titik menyembunyikannya. Titik di tab, ubin, atau baris hilang setelah Anda melihat semua yang ada di baliknya.",
-  "whatsNew.show": "Tampilkan titik bercahaya",
-  "whatsNew.count": "Tersisa {left} dari {all}",
   "whatsNew.showAll": "Tampilkan semua lagi",
   "whatsNew.markAll": "Tandai semua sudah dilihat",
   "whatsNew.go": "Ke sana",

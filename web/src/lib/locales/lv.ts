@@ -4246,8 +4246,6 @@ const lv: Partial<Translations> = {
   "welcome.restoreHint": "Vai BombVault jums jau ir pazīstams? Tad “Atjaunot no rezerves kopijas” atgriež visu, arī iestatījumus.",
   "whatsNew.title": "Jaunumi",
   "whatsNew.hint": "Ko mainīja pēdējais atjauninājums. Mirdzošs punkts atzīmē katru izmaiņu tās lapā, un klikšķis uz punkta to paslēpj. Punkts uz cilnes, flīzes vai rindas pazūd, kad esat redzējuši visu, kas aiz tā ir.",
-  "whatsNew.show": "Rādīt mirdzošos punktus",
-  "whatsNew.count": "Atlicis {left} no {all}",
   "whatsNew.showAll": "Rādīt visus no jauna",
   "whatsNew.markAll": "Atzīmēt visu kā redzētu",
   "whatsNew.go": "Doties turp",

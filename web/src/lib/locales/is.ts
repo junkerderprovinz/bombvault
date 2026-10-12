@@ -4246,8 +4246,6 @@ const is: Partial<Translations> = {
   "welcome.restoreHint": "Hefurðu notað BombVault áður? Þá sækir „Endurheimta úr afriti“ allt aftur, líka stillingarnar.",
   "whatsNew.title": "Nýtt",
   "whatsNew.hint": "Hvað síðasta uppfærsla breytti. Ljómandi punktur merkir hverja breytingu á síðunni hennar og smellur á punkt felur hann. Punktur á flipa, flís eða línu hverfur þegar þú hefur séð allt á bak við hann.",
-  "whatsNew.show": "Sýna ljómandi punkta",
-  "whatsNew.count": "{left} af {all} eftir",
   "whatsNew.showAll": "Sýna alla aftur",
   "whatsNew.markAll": "Merkja allt sem séð",
   "whatsNew.go": "Fara þangað",

@@ -154,18 +154,17 @@ function Dot({ spot }: { spot: Spot }) {
 
 /**
  * WhatsNewDots draws the dots of the changes nobody has clicked away. It
- * draws none during the first start, where nothing can be new, and none while
- * they are switched off.
+ * draws none during the first start, where nothing can be new.
  */
 export function WhatsNewDots() {
   const { pathname } = useLocation();
   // Whether this is a first start is known once the entries are read.
   const { fresh, items } = useContext(AttentionContext);
   const isDesktop = useIsDesktop();
-  const { on, unseen, absent } = useWhatsNew();
+  const { unseen, absent } = useWhatsNew();
   const marked = useMemo(() => (isDesktop ? unseen : unseen.filter((change) => !change.wide)), [isDesktop, unseen]);
   const [spots, setSpots] = useState<Spot[]>([]);
-  const active = on && items.loaded && !fresh && marked.length > 0 && pathname !== "/welcome";
+  const active = items.loaded && !fresh && marked.length > 0 && pathname !== "/welcome";
 
   useEffect(() => {
     if (!active) {

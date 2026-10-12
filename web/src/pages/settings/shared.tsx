@@ -43,6 +43,7 @@ export function Card({
   hueIndex,
   nested,
   newId,
+  action,
 }: {
   /** Without a title but with a hint the heading badge still renders, so the
    *  card keeps its hue notch. A card with neither renders no heading. */
@@ -62,6 +63,8 @@ export function Card({
   nested?: boolean;
   /** The change in lib/whatsNew.ts the card is, which puts its dot on it. */
   newId?: string;
+  /** One button for the whole card, at the end of its heading's row. */
+  action?: React.ReactNode;
 }) {
   return (
     // `relative` anchors the absolutely positioned heading badge; the hint
@@ -87,6 +90,7 @@ export function Card({
           </Badge>
         </h2>
       )}
+      {action && <div className="flex justify-end">{action}</div>}
       {children}
     </div>
   );

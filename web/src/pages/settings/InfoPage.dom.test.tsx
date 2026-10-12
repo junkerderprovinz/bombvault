@@ -8,6 +8,7 @@ import { act, cleanup, fireEvent, render, waitFor, within } from "@testing-libra
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../../lib/i18n";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
+import { CHANGES } from "../../lib/whatsNew";
 
 const api = vi.hoisted(() => ({
   getVersions: vi.fn(),
@@ -210,7 +211,7 @@ describe("the list of what is new", () => {
     await renderPage();
     const titles = [...document.querySelectorAll("[data-search-card]")].map((el) => el.getAttribute("data-search-card"));
     expect(titles).toEqual([en["about.version"], en["tile.info.help"], en["whatsNew.title"], en["about.title"]]);
-    expect(within(card(en["whatsNew.title"])).getByRole("switch", { name: en["whatsNew.show"] })).toBeTruthy();
+    expect(within(card(en["whatsNew.title"])).getByRole("button", { name: `${en["whatsNew.showAll"]} · ${CHANGES.length}` })).toBeTruthy();
   });
 });
 

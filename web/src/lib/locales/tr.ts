@@ -4236,8 +4236,6 @@ const tr: Partial<Translations> = {
   "welcome.restoreHint": "BombVault'u daha önce kullandın mı? O zaman “Yedekten geri yükle” ayarlar dahil her şeyi geri getirir.",
   "whatsNew.title": "Yenilikler",
   "whatsNew.hint": "Son güncellemenin neyi değiştirdiği. Parlayan bir nokta her değişikliği kendi sayfasında işaretler, noktaya tıklamak onu gizler. Bir sekmedeki, kutucuktaki ya da satırdaki nokta, arkasındaki her şeyi gördüğünde kaybolur.",
-  "whatsNew.show": "Parlayan noktaları göster",
-  "whatsNew.count": "{all} içinden {left} kaldı",
   "whatsNew.showAll": "Hepsini yeniden göster",
   "whatsNew.markAll": "Hepsini görüldü olarak işaretle",
   "whatsNew.go": "Oraya git",

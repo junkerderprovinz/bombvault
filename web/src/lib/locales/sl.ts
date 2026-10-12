@@ -4230,8 +4230,6 @@ const sl: Partial<Translations> = {
   "welcome.restoreHint": "Ti je BombVault že znan? Potem „Obnovi iz varnostne kopije“ vrne vse, tudi nastavitve.",
   "whatsNew.title": "Novo",
   "whatsNew.hint": "Kaj je spremenila zadnja posodobitev. Svetleča pika označuje vsako spremembo na njeni strani, klik na piko pa jo skrije. Pika na zavihku, ploščici ali vrstici izgine, ko vidiš vse, kar je za njo.",
-  "whatsNew.show": "Pokaži svetleče pike",
-  "whatsNew.count": "Še {left} od {all}",
   "whatsNew.showAll": "Pokaži vse znova",
   "whatsNew.markAll": "Označi vse kot videno",
   "whatsNew.go": "Pojdi tja",

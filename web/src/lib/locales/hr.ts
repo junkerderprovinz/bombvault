@@ -4246,8 +4246,6 @@ const hr: Partial<Translations> = {
   "welcome.restoreHint": "Jeste li već koristili BombVault? Tada „Vrati iz sigurnosne kopije“ vraća sve, uključujući postavke.",
   "whatsNew.title": "Novo",
   "whatsNew.hint": "Što je promijenilo zadnje ažuriranje. Svjetleća točka označava svaku promjenu na njezinoj stranici, a klik na točku je skriva. Točka na jezičku, pločici ili retku nestaje kad vidite sve što je iza nje.",
-  "whatsNew.show": "Prikaži svjetleće točke",
-  "whatsNew.count": "Preostaje {left} od {all}",
   "whatsNew.showAll": "Prikaži sve ponovno",
   "whatsNew.markAll": "Označi sve kao viđeno",
   "whatsNew.go": "Idi tamo",

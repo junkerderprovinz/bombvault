@@ -4246,8 +4246,6 @@ const lt: Partial<Translations> = {
   "welcome.restoreHint": "Ar BombVault tau jau pažįstamas? Tada „Atkurti iš atsarginės kopijos“ grąžina viską, įskaitant nustatymus.",
   "whatsNew.title": "Naujienos",
   "whatsNew.hint": "Ką pakeitė paskutinis naujinimas. Šviečiantis taškas pažymi kiekvieną pakeitimą jo puslapyje, o spustelėjus tašką jis paslepiamas. Taškas ant skirtuko, plytelės ar eilutės dingsta, kai pamatai viską, kas už jo.",
-  "whatsNew.show": "Rodyti šviečiančius taškus",
-  "whatsNew.count": "Liko {left} iš {all}",
   "whatsNew.showAll": "Rodyti visus iš naujo",
   "whatsNew.markAll": "Pažymėti viską kaip matytą",
   "whatsNew.go": "Eiti ten",

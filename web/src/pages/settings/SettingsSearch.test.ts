@@ -57,10 +57,10 @@ describe("the settings index in English", () => {
     expect(hits.every((h) => h.startsWith("storage: "))).toBe(true);
   });
 
-  it("leads to the list of what is new by its name and by the switch for the dots", () => {
+  it("leads to the list of what is new by its name and by its button", () => {
     const named = search(items, "new").filter((h) => !h.inHint && h.item.page === "info");
     expect(named.map((h) => h.item.name)).toContain(en["whatsNew.title"]);
-    expect(where("glowing dots")).toEqual([`info: ${en["whatsNew.title"]}`]);
+    expect(where("mark all as seen")).toEqual([`info: ${en["whatsNew.title"]}`]);
   });
 
   it("leads compression to the named repositories and each off-site destination", () => {

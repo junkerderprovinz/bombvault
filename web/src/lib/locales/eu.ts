@@ -4246,8 +4246,6 @@ const eu: Partial<Translations> = {
   "welcome.restoreHint": "BombVault lehendik erabili duzu? Orduan «Berrezarri babeskopia batetik» aukerak dena itzultzen du, ezarpenak barne.",
   "whatsNew.title": "Berria",
   "whatsNew.hint": "Azken eguneratzeak zer aldatu duen. Puntu distiratsu batek aldaketa bakoitza markatzen du bere orrian, eta puntu baten gainean klik eginda ezkutatu egiten da. Fitxa, lauza edo errenkada bateko puntua desagertu egiten da atzean dagoen guztia ikusi duzunean.",
-  "whatsNew.show": "Erakutsi puntu distiratsuak",
-  "whatsNew.count": "Geratzen dira: {left} / {all}",
   "whatsNew.showAll": "Erakutsi guztiak berriro",
   "whatsNew.markAll": "Markatu guztiak ikusitzat",
   "whatsNew.go": "Joan hara",

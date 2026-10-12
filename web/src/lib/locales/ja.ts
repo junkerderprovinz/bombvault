@@ -4227,8 +4227,6 @@ const ja: Partial<Translations> = {
   "welcome.restoreHint": "以前に BombVault を使ったことがありますか。その場合は「バックアップから復元」で、設定を含めてすべてを元に戻せます。",
   "whatsNew.title": "新着",
   "whatsNew.hint": "直近のアップデートで変わった点です。光る点が変更箇所をそのページに表示し、点をクリックすると隠れます。タブ、タイル、行の点は、その先をすべて見ると消えます。",
-  "whatsNew.show": "光る点を表示",
-  "whatsNew.count": "残り {left} / {all}",
   "whatsNew.showAll": "すべて再表示",
   "whatsNew.markAll": "すべて確認済みにする",
   "whatsNew.go": "そこへ移動",

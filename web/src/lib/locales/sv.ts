@@ -4236,8 +4236,6 @@ const sv: Partial<Translations> = {
   "welcome.restoreHint": "Har du använt BombVault förut? Då hämtar ”Återställ från en säkerhetskopia” tillbaka allt, även inställningarna.",
   "whatsNew.title": "Nytt",
   "whatsNew.hint": "Vad den senaste uppdateringen ändrade. En lysande prick markerar varje ändring på sin sida, och ett klick på en prick döljer den. En prick på en flik, en ruta eller en rad försvinner när du har sett allt bakom den.",
-  "whatsNew.show": "Visa lysande prickar",
-  "whatsNew.count": "{left} av {all} kvar",
   "whatsNew.showAll": "Visa alla igen",
   "whatsNew.markAll": "Markera alla som sedda",
   "whatsNew.go": "Gå dit",
