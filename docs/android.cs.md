@@ -21,14 +21,19 @@ Telefon se pak připojí ke skupině jako další instance. Co na jednotlivých 
 
 Aplikace se ke skupině připojuje přes relay, i doma. Pokud je tvoje instance nastavená na **Bez přeposílače**, vyber v **Nastavení, Párování** relay dřív, než kód naskenuješ.
 
-!!! note "Rozhraní stále potřebuje cestu k serveru"
-    Seznam serverů a protokol aktivit přicházejí přes skupinu. Rozhraní serveru se ale otevírá přímo, takže telefon musí dosáhnout na adresu serveru, doma nebo přes VPN.
+## Mimo domov {#away}
+
+Aplikace zkusí server nejdřív na jeho vlastní adrese. Když neodpoví, třeba v mobilní síti, otevře rozhraní serveru místo toho přes relay skupiny a pod stránkou se objeví řádek **Otevřeno přes přeposílač**. Stejně se otevře server skupiny, jehož adresu aplikace ještě nezná. Pokud neodpoví ani adresa, ani relay, uvede to úvodní obrazovka na kartě serveru.
+
+Přes relay stránka dosáhne na to, na co spárovaný telefon dosáhne doma, jak je popsáno níže. Přihlášení heslem a ukládání souborů fungují jen na vlastní adrese serveru. Ukazatele průběhu se obnovují každé dvě sekundy, ne průběžně. Soubory rozhraní zůstanou po první návštěvě v telefonu, takže se další návštěvy načtou rychleji. Server starší než 10.0.0 se otevře jen na vlastní adrese.
+
+Aplikace přijme odpověď jen tehdy, když ji server podepsal klíčem, který si aplikace připnula při prvním setkání s tímto serverem. Odpoví-li server později jiným klíčem, úvodní obrazovka ukáže otisk nového klíče a stránka se otevře až poté, co mu důvěřuješ.
 
 ## Přihlášení na spárovaném telefonu {#sign-in}
 
 Telefon spárovaný s tvou skupinou otevře každý z jejích serverů rovnou přihlášený. Před načtením stránky si u daného serveru přes skupinu vyžádá relaci a server ji vydá jen členovi, který je telefonem. Server přidaný podle adresy se zeptá na heslo, stejně jako v prohlížeči. 
 
-Spárovaný telefon nedostane všechno, co dává heslo. Jeho relace sahá k pevnému seznamu toho, co aplikace ukazuje: přehled, běhy a protokol aktivit, zálohy k prohlížení, spuštění a obnově, anomálie ke čtení a stránku Instance k prohlížení. Cíle a příkazy se vrací bez adres a tajemství. Obnova, která nahrazuje originál, nejdřív zazálohuje aktuální stav. Klíče, sada pro obnovu, úschova klíčů, nastavení a mazání záloh zůstávají u přihlášení přímo na serveru a všechno ostatní odpoví, že toto přihlášení potřebuje.
+Spárovaný telefon nedostane všechno, co dává heslo. Jeho relace sahá k pevnému seznamu toho, co aplikace ukazuje: přehled, běhy a protokol aktivit, zálohy k prohlížení, spuštění a obnově, anomálie ke čtení a stránku Instance k prohlížení. Cíle a příkazy se vrací bez adres a tajemství. Obnova, která nahrazuje originál, nejdřív zazálohuje aktuální stav. Klíče, sada pro obnovu, úschova klíčů, nastavení a mazání záloh zůstávají u přihlášení přímo na serveru a všechno ostatní odpoví, že toto přihlášení potřebuje. Přes relay platí stejný seznam, i na serveru bez hesla.
 
 Přepínač je **Telefony se mohou spárovat s dvanácti slovy skupiny** v kartě **Aplikace pro Android** v části **Nastavení, Zabezpečení**. Reset hesla ho vypne a odhlásí všechny telefony, dokud ho tam zase nezapneš.
 
@@ -40,7 +45,7 @@ Přepínač je **Telefony se mohou spárovat s dvanácti slovy skupiny** v kart�
 
 ## Telefon na stránce Instance {#instances}
 
-Telefon dostane na stránce Instance každého serveru ve skupině vlastní kartu, označenou jako aplikace pro Android a pojmenovanou podle názvu, který jsi telefonu dal. Nemá vysvědčení, protože nic nezálohuje, a **Odebrat** ho ze stránky odstraní.
+Telefon dostane na stránce Instance každého serveru ve skupině vlastní kartu, označenou jako aplikace pro Android a pojmenovanou podle názvu, který jsi telefonu dal. Nemá vysvědčení, protože nic nezálohuje, a **Odebrat** ho ze stránky odstraní. Telefon, který zná slova, se může kdykoli znovu spárovat, takže u ztraceného telefonu vypni **Telefony se mohou spárovat s dvanácti slovy skupiny** v části **Nastavení, Zabezpečení** nebo nech každou instanci opustit skupinu přes **Opustit skupinu** a spáruj je znovu s novými slovy.
 
 ## Nastavení {#settings}
 
@@ -54,7 +59,7 @@ Ozubené kolo vedle plusu otevře nastavení aplikace:
 
 ## Stahování a nahrávání {#files}
 
-Exporty, sady pro obnovu, ZIPy flashe a dumpy databází se ukládají do složky Stažené soubory v telefonu, stejně jako z prohlížeče. Import nastavení otevře výběr souborů v telefonu.
+Exporty, sady pro obnovu, ZIPy flashe a dumpy databází se ukládají do složky Stažené soubory v telefonu, stejně jako z prohlížeče. Import nastavení otevře výběr souborů v telefonu. Přes relay se nic neukládá; otevři k tomu server na jeho vlastní adrese.
 
 ## Na dotykové obrazovce {#touch}
 

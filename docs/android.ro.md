@@ -21,14 +21,19 @@ Telefonul intră apoi în grup ca încă o instanță. Citește ce rulează pe f
 
 Aplicația intră în grup prin releu, și acasă. Dacă instanța ta este pe **Fără relay**, alege unul în **Setări, Împerechere** înainte să scanezi codul.
 
-!!! note "Interfața tot are nevoie de o cale până la server"
-    Lista de servere și jurnalul de activitate vin prin grup. Interfața unui server se deschide direct, așa că telefonul trebuie să poată ajunge la adresa serverului, acasă sau printr-un VPN.
+## În afara casei {#away}
+
+Aplicația încearcă mai întâi serverul la adresa lui proprie. Când aceasta nu răspunde, de exemplu în rețeaua mobilă, deschide în schimb interfața serverului prin releul grupului, iar un rând sub pagină spune **Deschis prin relay**. Un server al grupului a cărui adresă aplicația încă nu o cunoaște se deschide la fel. Dacă nu răspunde nici adresa, nici releul, ecranul de pornire arată asta pe cardul serverului.
+
+Prin releu, pagina ajunge la ce ajunge un telefon împerecheat acasă, așa cum este descris mai jos. Autentificarea cu parola și salvarea fișierelor funcționează doar la adresa proprie a serverului. Barele de progres se actualizează o dată la două secunde, nu continuu. Fișierele interfeței rămân pe telefon după prima vizită, deci vizitele următoare se încarcă mai repede. Un server mai vechi de 10.0.0 se deschide doar la adresa lui proprie.
+
+Aplicația acceptă un răspuns doar dacă serverul l-a semnat cu cheia pe care aplicația a fixat-o la prima întâlnire cu acel server. Dacă serverul răspunde mai târziu cu altă cheie, ecranul de pornire arată amprenta noii chei, iar pagina se deschide doar după ce ai acceptat-o.
 
 ## Autentificat pe un telefon împerecheat {#sign-in}
 
 Un telefon împerecheat cu grupul tău deschide fiecare dintre serverele lui deja autentificat. Înainte să încarce o pagină, cere acelui server o sesiune prin grup, iar un server acordă una doar unui membru care este telefon. Un server adăugat după adresă cere parola, ca într-un browser. 
 
-Un telefon împerecheat nu primește tot ce primește o parolă. Sesiunea lui ajunge la o listă fixă din ce arată aplicația: prezentarea, rulările și jurnalul de activitate, copiile de rezervă de privit, pornirea și restaurarea, anomaliile de citit și pagina Instanțe de privit. Destinațiile și comenzile ajung la el fără adrese și fără secrete. O restaurare care înlocuiește originalul face mai întâi o copie de rezervă a stării curente. Cheile, kitul de recuperare, depunerile de chei, setările și ștergerea copiilor de rezervă rămân la o autentificare chiar pe server, iar orice altceva răspunde că are nevoie de acea autentificare.
+Un telefon împerecheat nu primește tot ce primește o parolă. Sesiunea lui ajunge la o listă fixă din ce arată aplicația: prezentarea, rulările și jurnalul de activitate, copiile de rezervă de privit, pornirea și restaurarea, anomaliile de citit și pagina Instanțe de privit. Destinațiile și comenzile ajung la el fără adrese și fără secrete. O restaurare care înlocuiește originalul face mai întâi o copie de rezervă a stării curente. Cheile, kitul de recuperare, depunerile de chei, setările și ștergerea copiilor de rezervă rămân la o autentificare chiar pe server, iar orice altceva răspunde că are nevoie de acea autentificare. Prin releu se aplică aceeași listă, chiar și pe un server fără parolă.
 
 Comutatorul pentru asta este **Telefoanele se pot împerechea cu cele douăsprezece cuvinte ale grupului**, în cardul **Aplicația Android** de la **Setări, Securitate**. O resetare a parolei îl oprește și deconectează toate telefoanele, până când îl pornești la loc acolo.
 
@@ -40,7 +45,7 @@ Comutatorul pentru asta este **Telefoanele se pot împerechea cu cele douăsprez
 
 ## Telefonul pe pagina Instanțe {#instances}
 
-Telefonul primește propriul card pe pagina Instanțe a fiecărui server din grup, marcat ca aplicație Android și numit după numele pe care l-ai dat telefonului. Nu are fișă de evaluare, pentru că nu face backup la nimic, iar **Elimină** îl scoate de pe pagină.
+Telefonul primește propriul card pe pagina Instanțe a fiecărui server din grup, marcat ca aplicație Android și numit după numele pe care l-ai dat telefonului. Nu are fișă de evaluare, pentru că nu face backup la nimic, iar **Elimină** îl scoate de pe pagină. Un telefon care cunoaște cuvintele se poate împerechea din nou oricând, așa că pentru un telefon pierdut dezactivează **Telefoanele se pot împerechea cu cele douăsprezece cuvinte ale grupului** la **Setări, Securitate** sau lasă fiecare instanță să aleagă **Părăsește grupul** și împerechează-le din nou cu cuvinte noi.
 
 ## Setări {#settings}
 
@@ -54,7 +59,7 @@ Rotița de lângă butonul + deschide setările aplicației:
 
 ## Descărcări și încărcări {#files}
 
-Exporturile, kiturile de recuperare, arhivele ZIP ale flash-ului și dumpurile de baze de date ajung în dosarul Descărcări al telefonului, ca dintr-un browser. Un import de setări deschide selectorul de fișiere al telefonului.
+Exporturile, kiturile de recuperare, arhivele ZIP ale flash-ului și dumpurile de baze de date ajung în dosarul Descărcări al telefonului, ca dintr-un browser. Un import de setări deschide selectorul de fișiere al telefonului. Prin releu nu se salvează niciun fișier; pentru asta deschide serverul la adresa lui proprie.
 
 ## Pe un ecran tactil {#touch}
 

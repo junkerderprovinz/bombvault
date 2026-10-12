@@ -4,4 +4,7 @@
     <string name="save_failed">Neizdevās saglabāt failu: %1$s</string>
     <string name="save_untrusted">Servera sertifikāts ir mainījies. Atveriet to vēlreiz no sākuma ekrāna, lai pārbaudītu jauno.</string>
     <string name="no_app">Neviena lietotne šajā tālrunī neatver šo saiti.</string>
+    <string name="relay_on">Atvērts caur relay</string>
+    <string name="relay_explained">Lietotne nevar sasniegt šo serveri tā paša adresē, tāpēc atver to caur jūsu grupas relay. Pieteikšanās ar paroli un failu saglabāšana darbojas tikai paša servera adresē.</string>
+    <string name="relay_no_download">Failu saglabāšana darbojas tikai paša servera adresē, nevis caur relay.</string>
 </resources>

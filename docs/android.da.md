@@ -21,14 +21,19 @@ Derefter går telefonen med i gruppen som endnu en instans. Den læser via grupp
 
 Appen går med i gruppen via relayet, også hjemme. Står din instans på **Ingen videresender**, så vælg et under **Indstillinger, Parring**, før du scanner koden.
 
-!!! note "Grænsefladen skal stadig kunne nå serveren"
-    Serverlisten og aktivitetsloggen kommer via gruppen. En servers grænseflade åbnes direkte, så telefonen skal kunne nå serverens adresse, hjemme eller over en VPN.
+## Væk hjemmefra {#away}
+
+Appen prøver først en server på dens egen adresse. Svarer den ikke, for eksempel på mobilnettet, åbner appen i stedet serverens grænseflade via gruppens relay, og en linje under siden siger **Åbnet via videresenderen**. En server i gruppen, hvis adresse appen endnu ikke kender, åbnes på samme måde. Svarer hverken adressen eller relayet, står det på serverens kort på startskærmen.
+
+Via relayet når siden det, som en parret telefon når derhjemme, som beskrevet nedenfor. Login med adgangskoden og lagring af filer virker kun på serverens egen adresse. Fremdriftslinjer opdateres hvert andet sekund i stedet for løbende. Grænsefladens filer bliver på telefonen efter det første besøg, så senere besøg indlæses hurtigere. En server ældre end 10.0.0 åbner kun på sin egen adresse.
+
+Appen tager kun imod et svar, hvis serveren har signeret det med den nøgle, appen fastlåste, første gang den mødte serveren. Svarer serveren senere med en anden nøgle, viser startskærmen den nye nøgles fingeraftryk, og siden åbner først, når du stoler på den.
 
 ## Logget ind på en parret telefon {#sign-in}
 
 En telefon, der er parret med din gruppe, åbner hver af gruppens servere allerede logget ind. Før den indlæser en side, beder den serveren om en session via gruppen, og en server udleverer kun en session til et medlem, der er en telefon. En server, der er tilføjet med sin adresse, beder om adgangskoden, ligesom i en browser. 
 
-En parret telefon får ikke alt, hvad en adgangskode giver. Dens session når en fast liste over det, appen viser: oversigten, kørslerne og aktivitetsloggen, sikkerhedskopierne til at se på, starte og gendanne, anomalierne til at læse og siden Instanser til at se på. Destinationer og kommandoer kommer tilbage uden deres adresser og hemmeligheder. En gendannelse, der erstatter originalen, tager først en sikkerhedskopi af den aktuelle tilstand. Nøgler, gendannelseskittet, nøgledeponeringer, indstillinger og sletning af sikkerhedskopier kræver fortsat en login på selve serveren, og alt andet svarer, at det kræver denne login.
+En parret telefon får ikke alt, hvad en adgangskode giver. Dens session når en fast liste over det, appen viser: oversigten, kørslerne og aktivitetsloggen, sikkerhedskopierne til at se på, starte og gendanne, anomalierne til at læse og siden Instanser til at se på. Destinationer og kommandoer kommer tilbage uden deres adresser og hemmeligheder. En gendannelse, der erstatter originalen, tager først en sikkerhedskopi af den aktuelle tilstand. Nøgler, gendannelseskittet, nøgledeponeringer, indstillinger og sletning af sikkerhedskopier kræver fortsat en login på selve serveren, og alt andet svarer, at det kræver denne login. Via relayet gælder den samme liste, også på en server uden adgangskode.
 
 Kontakten hedder **Telefoner kan parre med gruppens tolv ord** og sidder i kortet **Android-app** under **Indstillinger, Sikkerhed**. En nulstilling af adgangskoden slår den fra og logger alle telefoner ud, indtil du slår den til igen der.
 
@@ -40,7 +45,7 @@ Kontakten hedder **Telefoner kan parre med gruppens tolv ord** og sidder i korte
 
 ## Telefonen på Instanser-siden {#instances}
 
-Telefonen får sit eget kort på Instanser-siden på hver server i gruppen, markeret som Android-app og med det navn, du har givet telefonen. Den har intet scorekort, fordi den ikke tager sikkerhedskopier, og **Fjern** tager den af siden.
+Telefonen får sit eget kort på Instanser-siden på hver server i gruppen, markeret som Android-app og med det navn, du har givet telefonen. Den har intet scorekort, fordi den ikke tager sikkerhedskopier, og **Fjern** tager den af siden. En telefon, der kender ordene, kan til enhver tid parre igen, så for en mistet telefon slår du **Telefoner kan parre med gruppens tolv ord** fra under **Indstillinger, Sikkerhed**, eller du lader hver instans forlade gruppen med **Forlad gruppen** og parrer dem igen med nye ord.
 
 ## Indstillinger {#settings}
 
@@ -54,7 +59,7 @@ Tandhjulet ved siden af plusset åbner appens indstillinger:
 
 ## Downloads og uploads {#files}
 
-Eksporter, gendannelseskit, flash-ZIP'er og databasedumps havner i telefonens mappe Downloads, ligesom fra en browser. En import af indstillinger åbner telefonens filvælger.
+Eksporter, gendannelseskit, flash-ZIP'er og databasedumps havner i telefonens mappe Downloads, ligesom fra en browser. En import af indstillinger åbner telefonens filvælger. Via relayet gemmes ingen fil. Åbn serveren på dens egen adresse til det.
 
 ## På en touchskærm {#touch}
 

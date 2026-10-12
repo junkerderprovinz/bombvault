@@ -5451,6 +5451,29 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			}
 			return
 		}
+		// A page a paired phone opens through the group reaches what the
+		// session of a phone does, with or without a login password, and of
+		// the public paths only the two the shell reads first. Every change
+		// has to come as JSON, which another page in the app's WebView
+		// cannot send there without asking first.
+		if relayedPage(r) {
+			mux, ok := next.(*http.ServeMux)
+			if !ok {
+				refusePaired(w)
+				return
+			}
+			_, pattern := mux.Handler(r)
+			if relayedRefused[pattern] || (pattern != "" && !pairedRoutes[pattern] && !relayedPublic[pattern]) {
+				refusePaired(w)
+				return
+			}
+			if r.Method != http.MethodGet && r.Method != http.MethodHead && !crossOriginGuard(w, r) {
+				return
+			}
+			next.ServeHTTP(w, withPaired(r))
+			return
+		}
+
 		hash := s.AuthPasswordHash
 		on := hash != ""
 		// Without a password any host on the network could name itself as

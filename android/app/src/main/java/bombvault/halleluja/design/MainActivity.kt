@@ -13,6 +13,9 @@ import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.View
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
 import android.webkit.SslErrorHandler
@@ -24,6 +27,8 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -56,6 +61,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var servers: Servers
     private lateinit var discovery: Discovery
     private lateinit var loader: WebViewAssetLoader
+    private lateinit var pages: RelayPages
+
+    /** The line under the page that says it came through the relay. */
+    private lateinit var strip: TextView
 
     /** The server on screen, null while the launcher is. */
     private var current: Server? = null
@@ -69,6 +78,9 @@ class MainActivity : ComponentActivity() {
     private var chooser: ValueCallback<Array<Uri>>? = null
 
     private lateinit var pairing: Pairing
+
+    /** The key a member answered with in place of the one pinned for it, until the person decides. */
+    private var changedKey: ByteArray? = null
 
     /** Why the last pairing code was refused, shown once by the launcher. */
     private var pairError: JSONObject? = null
@@ -96,13 +108,42 @@ class MainActivity : ComponentActivity() {
             pushState()
         }
         pairing = Pairing(this, servers) { runOnUiThread(::pushState) }
+        pages = RelayPages(
+            pairing,
+            servers,
+            cacheDir,
+            onLost = { server -> runOnUiThread { if (current?.id == server.id) fail(server, "unreachable", relay = true) } },
+            onKeyChanged = { server, key ->
+                runOnUiThread {
+                    if (current?.id == server.id) {
+                        changedKey = key
+                        fail(server, "keyChanged", fingerprint = Proof.fingerprint(key))
+                    }
+                }
+            },
+        )
         loader = WebViewAssetLoader.Builder()
             .addPathHandler("/", LauncherAssets(WebViewAssetLoader.AssetsPathHandler(this)))
             .build()
 
         web = WebView(this)
+        strip = TextView(this).apply {
+            setText(R.string.relay_on)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+            gravity = Gravity.CENTER
+            val pad = (4 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, pad)
+            visibility = View.GONE
+            setOnClickListener { toast(getString(R.string.relay_explained)) }
+        }
         root = FrameLayout(this)
-        root.addView(web)
+        root.addView(
+            LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(web, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+                addView(strip, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+            },
+        )
         setContentView(root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         // The bars take the page's colour, with icons chosen to read on it, so
@@ -149,6 +190,7 @@ class MainActivity : ComponentActivity() {
 
         val restored = savedInstanceState?.let { web.restoreState(it) } != null
         if (restored) {
+            pages.shown = web.url?.let { relayMember(Uri.parse(it).host) }
             current = web.url?.let { servers.forOrigin(originOf(it)) }
         } else {
             showLauncher()
@@ -202,19 +244,37 @@ class MainActivity : ComponentActivity() {
         discovery.start()
     }
 
+    /**
+     * Opens [server] at its own address when it answers there, and a server
+     * of the group through the relay when it does not. At home the own
+     * address wins: it is faster and reaches the sign-in and the downloads.
+     */
     private fun open(server: Server) {
         discovery.stop()
         current = server
         problem = null
-        // A server from the group signs the phone in itself, so its page
-        // opens without the password.
         lifecycleScope.launch {
-            val cookie = withContext(Dispatchers.IO) { pairing.session(server) }
-            if (cookie != null) {
-                CookieManager.getInstance().setCookie(server.url, cookie)
-                CookieManager.getInstance().flush()
+            val member = server.member
+            val direct = server.url.isNotEmpty() && (member == null || withContext(Dispatchers.IO) { answers(server) })
+            if (direct) {
+                // A server from the group signs the phone in itself, so its
+                // page opens without the password.
+                val cookie = withContext(Dispatchers.IO) { pairing.session(server) }
+                if (cookie != null) {
+                    CookieManager.getInstance().setCookie(server.url, cookie)
+                    CookieManager.getInstance().flush()
+                }
+                if (current?.id == server.id) web.loadUrl(server.url)
+                return@launch
             }
-            if (current?.id == server.id) web.loadUrl(server.url)
+            val relayed = member != null && withContext(Dispatchers.IO) { pairing.reaches(member) }
+            if (current?.id != server.id) return@launch
+            if (!relayed) {
+                fail(server, "unreachable", relay = true)
+                return@launch
+            }
+            pages.shown = member
+            web.loadUrl(relayOrigin(member!!) + "/")
         }
     }
 
@@ -226,6 +286,7 @@ class MainActivity : ComponentActivity() {
         }
         val server = servers.forOrigin(origin) ?: return
         when (msg.optString("op")) {
+            "body" -> if (relayMember(Uri.parse(origin).host) != null) pages.body(msg.getString("ticket"), msg.getString("data"))
             "file" -> saveFile(msg.getString("name"), msg.optString("type").ifEmpty { null }, msg.getString("data"))
             "bars" -> parseColor(msg.optString("color"))?.let { if (server.id == current?.id) paintBars(it) }
         }
@@ -245,16 +306,26 @@ class MainActivity : ComponentActivity() {
                 servers.remove(msg.getString("id"))
                 pushState()
             }
-            // A member known only over the group has no address to open yet.
-            "open" -> servers.get(msg.getString("id"))?.takeIf { it.url.isNotEmpty() }?.let(::open)
+            // A member known only over the group opens through the relay.
+            "open" -> servers.get(msg.getString("id"))?.takeIf { it.url.isNotEmpty() || it.member != null }?.let(::open)
             "trust" -> {
                 servers.trust(msg.getString("id"), msg.getString("fingerprint"))
                 // The WebView remembers the refusal for the host otherwise.
                 web.clearSslPreferences()
                 servers.get(msg.getString("id"))?.let(::open)
             }
+            "trustKey" -> {
+                val server = servers.get(msg.getString("id")) ?: return
+                val key = changedKey ?: return
+                if (server.member != null && Proof.fingerprint(key) == msg.getString("fingerprint")) {
+                    pairing.trustKey(server.member, key)
+                    changedKey = null
+                    open(server)
+                }
+            }
             "dismiss" -> {
                 problem = null
+                changedKey = null
                 pushState()
             }
             "activity", "look" -> {
@@ -335,16 +406,21 @@ class MainActivity : ComponentActivity() {
     }
 
     /** Goes back to the launcher, which tells the person why [server] did not open. */
-    private fun fail(server: Server, kind: String, fingerprint: String? = null, detail: String? = null) {
+    private fun fail(server: Server, kind: String, fingerprint: String? = null, detail: String? = null, relay: Boolean = false) {
         problem = JSONObject().put("id", server.id).put("kind", kind).apply {
             fingerprint?.let { put("fingerprint", it) }
             detail?.let { put("detail", it) }
+            if (relay) put("relay", true)
         }
         showLauncher()
     }
 
     private fun download(url: String, disposition: String?, mime: String?) {
         // blob: links never reach here alive; page.js saves those.
+        if (relayMember(Uri.parse(url).host) != null) {
+            toast(getString(R.string.relay_no_download))
+            return
+        }
         val server = servers.forOrigin(originOf(url)) ?: return
         lifecycleScope.launch {
             try {
@@ -383,6 +459,7 @@ class MainActivity : ComponentActivity() {
     private fun paintBars(color: Int) {
         root.setBackgroundColor(color)
         val light = ColorUtils.calculateLuminance(color) > 0.5
+        strip.setTextColor(if (light) STRIP_ON_LIGHT else STRIP_ON_DARK)
         WindowCompat.getInsetsController(window, root).apply {
             isAppearanceLightStatusBars = light
             isAppearanceLightNavigationBars = light
@@ -393,8 +470,10 @@ class MainActivity : ComponentActivity() {
         resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
     private inner class Client : WebViewClient() {
-        override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
-            loader.shouldInterceptRequest(request.url)
+        override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+            val member = relayMember(request.url.host) ?: return loader.shouldInterceptRequest(request.url)
+            return pages.serve(member, request)
+        }
 
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
             val uri = request.url
@@ -414,6 +493,9 @@ class MainActivity : ComponentActivity() {
         // Every navigation passes here, Back included, so this is where the app
         // learns which page is on screen.
         override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
+            val member = relayMember(Uri.parse(url).host)
+            strip.visibility = if (member != null) View.VISIBLE else View.GONE
+            pages.shown = member
             if (url.startsWith(LAUNCHER_ORIGIN)) {
                 if (current != null) {
                     current = null
@@ -502,6 +584,10 @@ class MainActivity : ComponentActivity() {
         // theme-color meta carries.
         private val DARK = Color.parseColor("#161616")
         private val LIGHT = Color.parseColor("#f4f4f4")
+
+        // The muted text of either theme, for the relay line on its ground.
+        private val STRIP_ON_LIGHT = Color.parseColor("#6f6f6f")
+        private val STRIP_ON_DARK = Color.parseColor("#a8a8a8")
 
         private fun parseColor(s: String): Int? = runCatching { Color.parseColor(s) }.getOrNull()
     }

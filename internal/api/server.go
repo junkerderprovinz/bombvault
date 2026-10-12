@@ -46,6 +46,9 @@ func NewServer(cfg config.Config, spaFS fs.FS, apiRouter http.Handler) *Server {
 	return &Server{cfg: cfg, handler: securityHeaders(withCompression(NewSPAHandler(spaFS, apiRouter)))}
 }
 
+// Handler is what the server answers every request with.
+func (s *Server) Handler() http.Handler { return s.handler }
+
 // securityHeaders sets baseline security headers on every response.
 //
 // The only inline script the CSP allows is the theme boot script in

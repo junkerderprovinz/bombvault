@@ -21,14 +21,19 @@ Sau đó điện thoại gia nhập nhóm như một phiên bản khác. Nó đ�
 
 Ứng dụng gia nhập nhóm qua relay, kể cả khi ở nhà. Nếu phiên bản của bạn đang để **Không dùng relay**, hãy chọn một relay trong **Cài đặt, Ghép nối** trước khi quét mã.
 
-!!! note "Giao diện vẫn cần đường tới máy chủ"
-    Danh sách máy chủ và nhật ký hoạt động đến qua nhóm. Giao diện của một máy chủ thì mở trực tiếp, nên điện thoại phải tới được địa chỉ của máy chủ, ở nhà hoặc qua VPN.
+## Khi ở xa nhà {#away}
+
+Ứng dụng thử máy chủ ở địa chỉ riêng của nó trước. Khi địa chỉ đó không trả lời, chẳng hạn trên mạng di động, ứng dụng mở giao diện của máy chủ qua relay của nhóm, và một dòng dưới trang ghi **Đã mở qua relay**. Một máy chủ của nhóm mà ứng dụng chưa biết địa chỉ cũng được mở theo cách này. Nếu cả địa chỉ lẫn relay đều không trả lời, màn hình chính báo điều đó trên thẻ của máy chủ.
+
+Qua relay, trang chạm tới những gì một điện thoại đã ghép nối chạm tới ở nhà, như mô tả bên dưới. Đăng nhập bằng mật khẩu và lưu tệp chỉ hoạt động ở địa chỉ riêng của máy chủ. Thanh tiến trình cập nhật mỗi hai giây thay vì liên tục. Các tệp của giao diện được giữ lại trên điện thoại sau lần truy cập đầu, nên những lần sau tải nhanh hơn. Máy chủ cũ hơn 10.0.0 chỉ mở được ở địa chỉ riêng của nó.
+
+Ứng dụng chỉ nhận một phản hồi khi máy chủ đã ký nó bằng khóa mà ứng dụng đã ghim lần đầu gặp máy chủ đó. Nếu sau này máy chủ phản hồi bằng khóa khác, màn hình chính hiển thị dấu vân tay của khóa mới, và trang chỉ mở sau khi bạn tin cậy khóa đó.
 
 ## Đăng nhập trên điện thoại đã ghép nối {#sign-in}
 
 Một điện thoại đã ghép nối với nhóm của bạn mở từng máy chủ của nhóm với trạng thái đã đăng nhập sẵn. Trước khi tải một trang, nó xin máy chủ đó một phiên qua nhóm, và máy chủ chỉ trao phiên cho một thành viên là điện thoại. Máy chủ được thêm bằng địa chỉ sẽ hỏi mật khẩu, như trong trình duyệt.
 
-Một điện thoại đã ghép nối không nhận được mọi thứ mà mật khẩu mang lại. Phiên của nó chỉ chạm tới một danh sách cố định những gì ứng dụng hiển thị: Tổng quan, các lần chạy và nhật ký hoạt động, các bản sao lưu để xem, bắt đầu và khôi phục, các bất thường để đọc và trang Phiên bản để xem. Các đích sao lưu và lệnh được trả về với địa chỉ và bí mật đã bị lược bỏ. Một lần khôi phục thay thế bản gốc sẽ sao lưu trạng thái hiện tại trước. Khóa, bộ khôi phục, bản gửi khóa, cài đặt và việc xóa bản sao lưu vẫn cần đăng nhập ngay tại máy chủ, còn mọi thứ khác đều trả lời rằng cần đăng nhập đó.
+Một điện thoại đã ghép nối không nhận được mọi thứ mà mật khẩu mang lại. Phiên của nó chỉ chạm tới một danh sách cố định những gì ứng dụng hiển thị: Tổng quan, các lần chạy và nhật ký hoạt động, các bản sao lưu để xem, bắt đầu và khôi phục, các bất thường để đọc và trang Phiên bản để xem. Các đích sao lưu và lệnh được trả về với địa chỉ và bí mật đã bị lược bỏ. Một lần khôi phục thay thế bản gốc sẽ sao lưu trạng thái hiện tại trước. Khóa, bộ khôi phục, bản gửi khóa, cài đặt và việc xóa bản sao lưu vẫn cần đăng nhập ngay tại máy chủ, còn mọi thứ khác đều trả lời rằng cần đăng nhập đó. Qua relay, danh sách này vẫn áp dụng, kể cả trên máy chủ không có mật khẩu.
 
 Công tắc cho việc này là **Điện thoại có thể ghép nối bằng mười hai từ của nhóm** trên thẻ **Ứng dụng Android** trong **Cài đặt, Bảo mật**. Việc đặt lại mật khẩu tắt nó và đăng xuất mọi điện thoại, cho đến khi bạn bật lại ở đó.
 
@@ -41,7 +46,7 @@ Công tắc cho việc này là **Điện thoại có thể ghép nối bằng m
 
 ## Điện thoại trên trang Phiên bản {#instances}
 
-Điện thoại có thẻ riêng trên trang Phiên bản của mọi máy chủ trong nhóm, được đánh dấu là ứng dụng Android và mang tên bạn đặt cho điện thoại. Thẻ này không có bảng điểm vì điện thoại không sao lưu gì, và **Xóa** sẽ gỡ nó khỏi trang.
+Điện thoại có thẻ riêng trên trang Phiên bản của mọi máy chủ trong nhóm, được đánh dấu là ứng dụng Android và mang tên bạn đặt cho điện thoại. Thẻ này không có bảng điểm vì điện thoại không sao lưu gì, và **Xóa** sẽ gỡ nó khỏi trang. Điện thoại biết các từ có thể ghép nối lại bất cứ lúc nào, nên với điện thoại bị mất, hãy tắt **Điện thoại có thể ghép nối bằng mười hai từ của nhóm** trong **Cài đặt, Bảo mật**, hoặc cho từng phiên bản chọn **Rời nhóm** rồi ghép nối lại bằng các từ mới.
 
 ## Cài đặt {#settings}
 
@@ -55,7 +60,7 @@ Biểu tượng bánh răng cạnh dấu cộng mở phần cài đặt của �
 
 ## Tải xuống và tải lên {#files}
 
-Các bản xuất, bộ khôi phục, tệp ZIP của flash và bản dump cơ sở dữ liệu được lưu vào thư mục Tải xuống của điện thoại, giống như khi tải từ trình duyệt. Nhập cài đặt sẽ mở trình chọn tệp của điện thoại.
+Các bản xuất, bộ khôi phục, tệp ZIP của flash và bản dump cơ sở dữ liệu được lưu vào thư mục Tải xuống của điện thoại, giống như khi tải từ trình duyệt. Nhập cài đặt sẽ mở trình chọn tệp của điện thoại. Qua relay, không có tệp nào được lưu; muốn lưu, hãy mở máy chủ ở địa chỉ riêng của nó.
 
 ## Trên màn hình cảm ứng {#touch}
 

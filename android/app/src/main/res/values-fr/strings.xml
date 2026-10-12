@@ -4,4 +4,7 @@
     <string name="save_failed">Impossible d\'enregistrer le fichier : %1$s</string>
     <string name="save_untrusted">Le certificat du serveur a changé. Rouvrez-le depuis l\'écran d\'accueil pour vérifier le nouveau.</string>
     <string name="no_app">Aucune app sur ce téléphone n\'ouvre ce lien.</string>
+    <string name="relay_on">Ouvert via le relais</string>
+    <string name="relay_explained">L\'app ne peut pas joindre ce serveur à sa propre adresse, elle l\'ouvre donc via le relais de votre groupe. La connexion avec le mot de passe et l\'enregistrement de fichiers ne fonctionnent qu\'à l\'adresse propre du serveur.</string>
+    <string name="relay_no_download">L\'enregistrement de fichiers ne fonctionne qu\'à l\'adresse propre du serveur, pas via le relais.</string>
 </resources>

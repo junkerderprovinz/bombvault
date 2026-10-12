@@ -21,14 +21,19 @@ A partir de ahí el móvil se une al grupo como una instancia más. Lee lo que s
 
 La app se une al grupo a través del relay, también en casa. Si tu instancia está en **Sin repetidor**, elige uno en **Ajustes, Emparejamiento** antes de escanear el código.
 
-!!! note "La interfaz sigue necesitando un camino hasta el servidor"
-    La lista de servidores y el registro de actividad llegan a través del grupo. La interfaz de un servidor se abre directamente, así que el móvil tiene que poder llegar a la dirección del servidor, en casa o por una VPN.
+## Fuera de casa {#away}
+
+La app prueba primero un servidor en su propia dirección. Si no responde, por ejemplo en la red móvil, abre la interfaz del servidor a través del relay del grupo, y una línea bajo la página dice **Abierto a través del repetidor**. Un servidor del grupo cuya dirección la app aún no conoce se abre igual. Si no responden ni la dirección ni el relay, la pantalla de inicio lo indica en la tarjeta del servidor.
+
+A través del relay la página llega a lo que llega un móvil emparejado en casa, como se describe más abajo. Iniciar sesión con la contraseña y guardar archivos solo funcionan en la propia dirección del servidor. Las barras de progreso se actualizan cada dos segundos en vez de continuamente. Los archivos de la interfaz se quedan en el móvil tras la primera visita, así que las siguientes cargan más rápido. Un servidor anterior a 10.0.0 solo se abre en su propia dirección.
+
+La app solo acepta una respuesta si el servidor la firmó con la clave que la app fijó la primera vez que conoció a ese servidor. Si el servidor responde más tarde con otra clave, la pantalla de inicio muestra la huella de la clave nueva y la página se abre solo después de que confíes en ella.
 
 ## Sesión iniciada en un móvil emparejado {#sign-in}
 
 Un móvil emparejado con tu grupo abre cada uno de sus servidores con la sesión ya iniciada. Antes de cargar una página, pide una sesión a ese servidor a través del grupo, y un servidor solo la concede a un miembro que sea un móvil. Un servidor añadido por su dirección pide la contraseña, como en un navegador.
 
-Un móvil emparejado no recibe todo lo que da una contraseña. Su sesión llega a una lista fija de lo que muestra la app: el resumen, las ejecuciones y el registro de actividad, las copias para consultar, iniciar y restaurar, las anomalías para leer y la página Instancias para consultar. Los destinos y los comandos llegan sin sus direcciones ni secretos. Una restauración que reemplaza el original hace antes una copia del estado actual. Las claves, el kit de recuperación, los depósitos de claves, los ajustes y el borrado de copias requieren iniciar sesión en el propio servidor, y todo lo demás responde que necesita ese inicio de sesión.
+Un móvil emparejado no recibe todo lo que da una contraseña. Su sesión llega a una lista fija de lo que muestra la app: el resumen, las ejecuciones y el registro de actividad, las copias para consultar, iniciar y restaurar, las anomalías para leer y la página Instancias para consultar. Los destinos y los comandos llegan sin sus direcciones ni secretos. Una restauración que reemplaza el original hace antes una copia del estado actual. Las claves, el kit de recuperación, los depósitos de claves, los ajustes y el borrado de copias requieren iniciar sesión en el propio servidor, y todo lo demás responde que necesita ese inicio de sesión. A través del relay se aplica la misma lista, también en un servidor sin contraseña.
 
 El interruptor es **Los teléfonos pueden emparejarse con las doce palabras del grupo**, en la tarjeta **App de Android** de **Ajustes, Seguridad**. Un restablecimiento de la contraseña lo desactiva y cierra la sesión de todos los móviles, hasta que lo vuelvas a activar ahí.
 
@@ -40,7 +45,7 @@ El interruptor es **Los teléfonos pueden emparejarse con las doce palabras del 
 
 ## El móvil en la página de Instancias {#instances}
 
-El móvil recibe su propia tarjeta en la página de Instancias de cada servidor del grupo, marcada como app de Android y con el nombre que le diste al móvil. No tiene cuadro de mando porque no hace copias, y **Eliminar** la quita de la página.
+El móvil recibe su propia tarjeta en la página de Instancias de cada servidor del grupo, marcada como app de Android y con el nombre que le diste al móvil. No tiene cuadro de mando porque no hace copias, y **Eliminar** la quita de la página. Un móvil que conoce las palabras puede volver a emparejarse en cualquier momento, así que para un móvil perdido desactiva **Los teléfonos pueden emparejarse con las doce palabras del grupo** en **Ajustes, Seguridad**, o haz que cada instancia use **Salir del grupo** y vuelve a emparejarlas con palabras nuevas.
 
 ## Ajustes {#settings}
 
@@ -54,7 +59,7 @@ El engranaje junto al botón + abre los ajustes de la app:
 
 ## Descargas y subidas {#files}
 
-Las exportaciones, los kits de recuperación, los ZIP del flash y los volcados de bases de datos van a la carpeta Descargas del móvil, como desde un navegador. Una importación de ajustes abre el selector de archivos del móvil.
+Las exportaciones, los kits de recuperación, los ZIP del flash y los volcados de bases de datos van a la carpeta Descargas del móvil, como desde un navegador. Una importación de ajustes abre el selector de archivos del móvil. A través del relay no se guarda ningún archivo; abre el servidor en su propia dirección para eso.
 
 ## En una pantalla táctil {#touch}
 

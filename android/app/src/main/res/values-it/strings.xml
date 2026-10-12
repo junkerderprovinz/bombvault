@@ -4,4 +4,7 @@
     <string name="save_failed">Impossibile salvare il file: %1$s</string>
     <string name="save_untrusted">Il certificato del server è cambiato. Aprilo di nuovo dalla schermata iniziale per controllare quello nuovo.</string>
     <string name="no_app">Nessuna app su questo telefono apre questo link.</string>
+    <string name="relay_on">Aperto tramite relay</string>
+    <string name="relay_explained">L\'app non riesce a raggiungere questo server al suo indirizzo, quindi lo apre tramite il relay del tuo gruppo. L\'accesso con la password e il salvataggio dei file funzionano solo all\'indirizzo del server stesso.</string>
+    <string name="relay_no_download">Il salvataggio dei file funziona solo all\'indirizzo del server stesso, non tramite il relay.</string>
 </resources>

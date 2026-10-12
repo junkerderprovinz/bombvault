@@ -46,7 +46,12 @@ class Servers(context: Context) {
 
     fun get(id: String): Server? = all().firstOrNull { it.id == id }
 
-    fun forOrigin(origin: String): Server? = all().firstOrNull { it.url.isNotEmpty() && it.origin == origin }
+    /** The server a page at [origin] belongs to, at its own address or over the relay. */
+    fun forOrigin(origin: String): Server? = all().firstOrNull {
+        (it.url.isNotEmpty() && it.origin == origin) || (it.member != null && relayOrigin(it.member) == origin)
+    }
+
+    fun forMember(member: String): Server? = all().firstOrNull { it.member == member }
 
     /** Saves [name] and [url] under [id], or as a new server, and returns it. */
     @Synchronized
@@ -87,6 +92,21 @@ class Servers(context: Context) {
     @Synchronized
     fun removeAll() = write(emptyList())
 
+    /** The key group member [member] signs with, as the phone pinned it. */
+    fun memberKey(member: String): ByteArray? =
+        JSONObject(prefs.getString(KEYS, "{}")!!).optString(member).takeIf { it.isNotEmpty() }?.let { PageWire.unb64(it) }
+
+    /** Pins [key] for [member], unless one is pinned already and [replace] is not set. */
+    @Synchronized
+    fun pinMemberKey(member: String, key: ByteArray, replace: Boolean = false) {
+        val keys = JSONObject(prefs.getString(KEYS, "{}")!!)
+        if (keys.has(member) && !replace) return
+        prefs.edit().putString(KEYS, keys.put(member, PageWire.b64(key)).toString()).apply()
+    }
+
+    @Synchronized
+    fun forgetMemberKeys() = prefs.edit().remove(KEYS).apply()
+
     @Synchronized
     fun trust(id: String, pin: String) = write(all().map { if (it.id == id) it.copy(pin = pin) else it })
 
@@ -98,5 +118,6 @@ class Servers(context: Context) {
 
     companion object {
         private const val KEY = "list"
+        private const val KEYS = "memberKeys"
     }
 }

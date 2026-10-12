@@ -21,13 +21,18 @@ Telefon dołącza wtedy do grupy jak kolejna instancja. To, co działa na każdy
 
 Aplikacja dołącza do grupy przez przekaźnik, także w domu. Jeśli twoja instancja ma ustawione **Brak relay**, otwórz **Ustawienia, Parowanie** i wybierz przekaźnik, zanim zeskanujesz kod.
 
-!!! note "Interfejs nadal potrzebuje drogi do serwera"
-    Lista serwerów i dziennik aktywności przychodzą przez grupę. Interfejs serwera otwiera się jednak bezpośrednio, więc telefon musi dotrzeć do adresu serwera, w domu albo przez VPN.
+## Poza domem {#away}
+
+Aplikacja najpierw próbuje połączyć się z serwerem pod jego własnym adresem. Gdy ten nie odpowiada, na przykład w sieci komórkowej, otwiera interfejs serwera przez przekaźnik grupy, a wiersz pod stroną informuje: **Otwarto przez relay**. Serwer grupy, którego adresu aplikacja jeszcze nie zna, otwiera się tak samo. Jeśli nie odpowiada ani adres, ani przekaźnik, informuje o tym ekran startowy na karcie serwera.
+
+Przez przekaźnik strona sięga tego, czego sparowany telefon sięga w domu, jak opisano niżej. Logowanie hasłem i zapisywanie plików działają tylko pod własnym adresem serwera. Paski postępu odświeżają się co dwie sekundy, a nie na bieżąco. Pliki interfejsu zostają w telefonie po pierwszej wizycie, więc kolejne wizyty ładują się szybciej. Serwer starszy niż 10.0.0 otwiera się tylko pod własnym adresem.
+
+Aplikacja przyjmuje odpowiedź tylko wtedy, gdy serwer podpisał ją kluczem, który aplikacja przypięła przy pierwszym kontakcie z tym serwerem. Jeśli serwer później odpowie innym kluczem, ekran startowy pokaże odcisk nowego klucza, a strona otworzy się dopiero wtedy, gdy mu zaufasz.
 
 ## Logowanie na sparowanym telefonie {#sign-in}
 
 Telefon sparowany z Twoją grupą otwiera każdy z jej serwerów od razu zalogowany. Zanim załaduje stronę, prosi ten serwer przez grupę o sesję, a serwer wydaje ją tylko członkowi, który jest telefonem. Serwer dodany po adresie pyta o hasło, tak jak w przeglądarce.
-Sparowany telefon nie dostaje wszystkiego, co daje hasło. Jego sesja sięga do stałej listy tego, co pokazuje aplikacja: przeglądu, uruchomień i dziennika aktywności, kopii zapasowych do podejrzenia, uruchomienia i przywrócenia, anomalii do przeczytania oraz strony Instancje do podejrzenia. Miejsca docelowe i polecenia wracają bez adresów i sekretów. Przywrócenie, które zastępuje oryginał, najpierw tworzy kopię zapasową bieżącego stanu. Klucze, zestaw odzyskiwania, depozyty kluczy, ustawienia i usuwanie kopii zapasowych zostają przy logowaniu na samym serwerze, a wszystko inne odpowiada, że potrzebuje tego logowania.
+Sparowany telefon nie dostaje wszystkiego, co daje hasło. Jego sesja sięga do stałej listy tego, co pokazuje aplikacja: przeglądu, uruchomień i dziennika aktywności, kopii zapasowych do podejrzenia, uruchomienia i przywrócenia, anomalii do przeczytania oraz strony Instancje do podejrzenia. Miejsca docelowe i polecenia wracają bez adresów i sekretów. Przywrócenie, które zastępuje oryginał, najpierw tworzy kopię zapasową bieżącego stanu. Klucze, zestaw odzyskiwania, depozyty kluczy, ustawienia i usuwanie kopii zapasowych zostają przy logowaniu na samym serwerze, a wszystko inne odpowiada, że potrzebuje tego logowania. Przez przekaźnik obowiązuje ta sama lista, także na serwerze bez hasła.
 
 Przełącznik tego ustawienia to **Telefony mogą się sparować z dwunastoma słowami grupy** w karcie **Aplikacja na Androida** w **Ustawienia, Bezpieczeństwo**. Zresetowanie hasła wyłącza go i wylogowuje wszystkie telefony, dopóki nie włączysz go tam z powrotem.
 
@@ -39,7 +44,7 @@ Przełącznik tego ustawienia to **Telefony mogą się sparować z dwunastoma s�
 
 ## Telefon na stronie Instancje {#instances}
 
-Telefon dostaje własną kartę na stronie Instancje każdego serwera w grupie, oznaczoną jako aplikacja na Androida i z nazwą nadaną telefonowi. Nie ma karty wyników, bo niczego nie kopiuje, a **Usuń** zdejmuje go ze strony.
+Telefon dostaje własną kartę na stronie Instancje każdego serwera w grupie, oznaczoną jako aplikacja na Androida i z nazwą nadaną telefonowi. Nie ma karty wyników, bo niczego nie kopiuje, a **Usuń** zdejmuje go ze strony. Telefon, który zna słowa, może w każdej chwili sparować się ponownie, więc w razie zgubienia telefonu wyłącz **Telefony mogą się sparować z dwunastoma słowami grupy** w **Ustawienia, Bezpieczeństwo** albo na każdej instancji wybierz **Opuść grupę** i sparuj je ponownie z nowymi słowami.
 
 ## Ustawienia {#settings}
 
@@ -53,7 +58,7 @@ Zębatka obok plusa otwiera ustawienia aplikacji:
 
 ## Pobieranie i wysyłanie plików {#files}
 
-Eksporty, zestawy odzyskiwania, pliki ZIP z flasha i zrzuty baz danych trafiają do folderu Pobrane na telefonie, tak jak z przeglądarki. Import ustawień otwiera okno wyboru plików telefonu.
+Eksporty, zestawy odzyskiwania, pliki ZIP z flasha i zrzuty baz danych trafiają do folderu Pobrane na telefonie, tak jak z przeglądarki. Import ustawień otwiera okno wyboru plików telefonu. Przez przekaźnik żaden plik nie jest zapisywany. Aby to zrobić, otwórz serwer pod jego własnym adresem.
 
 ## Na ekranie dotykowym {#touch}
 

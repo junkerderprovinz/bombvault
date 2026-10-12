@@ -135,6 +135,28 @@ describe("Launcher", () => {
     expect(sent).toContainEqual({ op: "trust", id: "s1", fingerprint });
   });
 
+  it("asks before it trusts a new key a server answered with over the relay", async () => {
+    const fingerprint = "12:34:56";
+    const { bridge, sent } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app, problem: { id: "s1", kind: "keyChanged", fingerprint } });
+    render(<Launcher bridge={bridge} />);
+    expect(await screen.findByText("Server key changed")).toBeTruthy();
+    expect(screen.getByText(fingerprint)).toBeTruthy();
+    expect(screen.getByText(/Tower answered over the relay/)).toBeTruthy();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: /Trust new key/ })));
+    expect(sent).toContainEqual({ op: "trustKey", id: "s1", fingerprint });
+  });
+
+  it("says when neither the address nor the relay reached a server", async () => {
+    const away = { id: "s2", name: "Attic", url: "", member: true };
+    const { bridge } = fakeBridge({ servers: [server, away], found: [], group: alone, camera: false, app, problem: { id: "s1", kind: "unreachable", relay: true } });
+    render(<Launcher bridge={bridge} />);
+    expect(await screen.findByText("Neither its address nor the relay answers.")).toBeTruthy();
+
+    const { bridge: again } = fakeBridge({ servers: [server, away], found: [], group: alone, camera: false, app, problem: { id: "s2", kind: "unreachable", relay: true } });
+    render(<Launcher bridge={again} />);
+    expect(await screen.findByText("The relay can't reach it right now.")).toBeTruthy();
+  });
+
   it("renames the phone from the settings behind the gear", async () => {
     const { bridge, sent } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);

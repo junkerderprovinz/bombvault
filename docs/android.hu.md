@@ -21,8 +21,13 @@ Ezután a telefon egy újabb példányként csatlakozik a csoporthoz. Azt, hogy 
 
 Az alkalmazás a relén keresztül csatlakozik a csoporthoz, otthon is. Ha a példányod **Nincs relay** beállításon van, a kód beolvasása előtt válassz egyet a **Beállítások, Párosítás** oldalon.
 
-!!! note "A felületnek továbbra is el kell érnie a szervert"
-    A szerverlista és a tevékenységnapló a csoporton át érkezik. Egy szerver felülete viszont közvetlenül nyílik meg, ezért a telefonnak el kell érnie a szerver címét, otthon vagy VPN-en keresztül.
+## Otthonról távol {#away}
+
+Az alkalmazás először a szerver saját címén próbálkozik. Ha az nem válaszol, például mobilhálózaton, a szerver felületét a csoport relayén keresztül nyitja meg, és az oldal alatti sor ezt írja: **Relayen keresztül megnyitva**. A csoport olyan szervere, amelynek címét az alkalmazás még nem ismeri, ugyanígy nyílik meg. Ha sem a cím, sem a relay nem válaszol, a kezdőképernyő ezt a szerver kártyáján jelzi.
+
+A relayen át az oldal azt éri el, amit egy párosított telefon otthon, ahogy lent le van írva. A jelszavas bejelentkezés és a fájlmentés csak a szerver saját címén működik. A folyamatjelzők kétmásodpercenként frissülnek folyamatos helyett. A felület fájljai az első látogatás után a telefonon maradnak, így a későbbi látogatások gyorsabban töltenek be. A 10.0.0-nál régebbi szerver csak a saját címén nyílik meg.
+
+Az alkalmazás csak akkor fogad el választ, ha a szerver azt azzal a kulccsal írta alá, amelyet az alkalmazás a szerverrel való első találkozáskor rögzített. Ha a szerver később más kulccsal válaszol, a kezdőképernyő az új kulcs ujjlenyomatát mutatja, és az oldal csak azután nyílik meg, hogy megbízhatónak jelölted.
 
 ## Bejelentkezve a párosított telefonon {#sign-in}
 
@@ -36,7 +41,7 @@ A csoportoddal párosított telefon a csoport minden szerverét eleve bejelentke
 
 ## A telefon a Példányok oldalon {#instances}
 
-A telefon saját kártyát kap a csoport minden szerverének Példányok oldalán, Android-alkalmazásként megjelölve, és azon a néven, amelyet a telefonnak adtál. Nincs eredménytáblája, mert semmit sem ment, és az **Eltávolítás** leveszi az oldalról.
+A telefon saját kártyát kap a csoport minden szerverének Példányok oldalán, Android-alkalmazásként megjelölve, és azon a néven, amelyet a telefonnak adtál. Nincs eredménytáblája, mert semmit sem ment, és az **Eltávolítás** leveszi az oldalról. A szavakat ismerő telefon bármikor újra párosítható, ezért elveszett telefonnál kapcsold ki a **A telefonok párosíthatók a csoport tizenkét szavával** kapcsolót a **Beállítások, Biztonság** alatt, vagy válaszd minden példánynál a **Csoport elhagyása** lehetőséget, és párosítsd őket újra új szavakkal.
 
 ## Beállítások {#settings}
 
@@ -50,7 +55,7 @@ A plusz melletti fogaskerék nyitja meg az alkalmazás beállításait:
 
 ## Letöltések és feltöltések {#files}
 
-Az exportok, a helyreállítási csomagok, a flash ZIP-ek és az adatbázis-mentések a telefon Letöltések mappájába kerülnek, ahogy egy böngészőből is. A beállítások importálása a telefon fájlválasztóját nyitja meg.
+Az exportok, a helyreállítási csomagok, a flash ZIP-ek és az adatbázis-mentések a telefon Letöltések mappájába kerülnek, ahogy egy böngészőből is. A beállítások importálása a telefon fájlválasztóját nyitja meg. A relayen át nem mentődik fájl; ehhez nyisd meg a szervert a saját címén.
 
 ## Érintőképernyőn {#touch}
 

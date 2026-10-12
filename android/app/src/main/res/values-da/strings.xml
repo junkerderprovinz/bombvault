@@ -4,4 +4,7 @@
     <string name="save_failed">Filen kunne ikke gemmes: %1$s</string>
     <string name="save_untrusted">Serverens certifikat er ændret. Åbn den igen fra startskærmen for at tjekke det nye.</string>
     <string name="no_app">Ingen app på denne telefon åbner dette link.</string>
+    <string name="relay_on">Åbnet via videresenderen</string>
+    <string name="relay_explained">Appen kan ikke nå denne server på dens egen adresse, så den åbner den via din gruppes videresender. Login med adgangskode og gemning af filer virker kun på serverens egen adresse.</string>
+    <string name="relay_no_download">Det virker kun at gemme filer på serverens egen adresse, ikke via videresenderen.</string>
 </resources>

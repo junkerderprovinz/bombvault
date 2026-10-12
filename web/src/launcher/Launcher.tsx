@@ -166,7 +166,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
         t={t}
         problem={certProblem}
         server={state.servers.find((s) => s.id === certProblem?.id)}
-        onTrust={(p) => bridge.send({ op: "trust", id: p.id, fingerprint: p.fingerprint ?? "" })}
+        onTrust={(p) => bridge.send({ op: p.kind === "keyChanged" ? "trustKey" : "trust", id: p.id, fingerprint: p.fingerprint ?? "" })}
         onCancel={() => bridge.send({ op: "dismiss" })}
       />
     </>
@@ -247,7 +247,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
                 server={s}
                 index={i + 1}
                 reach={reach[s.id]}
-                trouble={problem?.id === s.id && problem.kind === "unreachable" ? (problem.detail ?? "") : undefined}
+                trouble={problem?.id === s.id && problem.kind === "unreachable" ? unreachable(t, s, problem) : undefined}
                 onOpen={() => bridge.send({ op: "open", id: s.id })}
                 onEdit={() => setEditing(s)}
               />
@@ -404,6 +404,12 @@ const REACH_BADGE: Record<Reach, { tone: "ok" | "fail" | "warn"; key: Translatio
   certificate: { tone: "warn", key: "launcher.checkCertificate" },
   offline: { tone: "fail", key: "instances.notConnected" },
 };
+
+/** Why a server did not open, in words; empty leaves it to the card's own line. */
+function unreachable(t: T, server: Server, problem: Problem): string {
+  if (!problem.relay) return problem.detail ?? "";
+  return t(server.url ? "launcher.unreachableRelay" : "launcher.relayUnreachable");
+}
 
 function ServerCard({
   t,
@@ -596,14 +602,18 @@ function TrustSheet({
   onCancel: () => void;
 }) {
   const bodyId = useId();
-  const changed = problem?.kind === "changed";
+  const key = problem?.kind === "keyChanged";
+  const changed = problem?.kind === "changed" || key;
   const host = server ? displayAddress(server.url) : "";
+  const title = key ? "launcher.keyChangedTitle" : changed ? "launcher.changedTitle" : "launcher.trustTitle";
+  const trust = key ? "launcher.trustKey" : changed ? "launcher.trustChanged" : "launcher.trust";
+  const body = key ? "launcher.keyChangedBody" : changed ? "launcher.changedBody" : "launcher.trustBody";
   return (
     <BottomSheet
       open={problem !== undefined && server !== undefined}
       onClose={onCancel}
       headerClose={false}
-      title={changed ? t("launcher.changedTitle") : t("launcher.trustTitle")}
+      title={t(title)}
       describedBy={bodyId}
       footer={
         <div className="flex flex-col gap-3 py-3">
@@ -616,8 +626,8 @@ function TrustSheet({
             className="glim-btn-key w-full"
           />
           <Button
-            label={changed ? t("launcher.trustChanged") : t("launcher.trust")}
-            labelKey={changed ? "launcher.trustChanged" : "launcher.trust"}
+            label={t(trust)}
+            labelKey={key ? "launcher.trustKey" : changed ? "launcher.trustChanged" : "launcher.trust"}
             tone={changed ? "neutral" : "accent"}
             onClick={() => problem && onTrust(problem)}
             className="glim-btn-key w-full"
@@ -627,7 +637,7 @@ function TrustSheet({
     >
       <div className="flex flex-col gap-4 px-4 py-3">
         <p id={bodyId} className="text-sm leading-relaxed text-carbon-textSub wrap-break-word">
-          {(changed ? t("launcher.changedBody") : t("launcher.trustBody")).replace("{host}", host)}
+          {t(body).replace("{host}", host).replace("{name}", server?.name ?? "")}
         </p>
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-carbon-textSub">{t("launcher.fingerprint")}</span>

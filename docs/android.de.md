@@ -21,14 +21,19 @@ Danach tritt das Handy der Gruppe bei wie eine weitere Instanz. Es liest über d
 
 Die App tritt der Gruppe über das Relay bei, auch zu Hause. Steht deine Instanz auf **Kein Relay**, wähl unter **Einstellungen, Kopplung** eines aus, bevor du den Code scannst.
 
-!!! note "Die Oberfläche braucht trotzdem einen Weg zum Server"
-    Die Serverliste und das Aktivitätsprotokoll kommen über die Gruppe. Die Oberfläche eines Servers öffnet sich direkt, das Handy muss die Adresse des Servers also erreichen, zu Hause oder über ein VPN.
+## Unterwegs {#away}
+
+Die App versucht einen Server zuerst unter seiner eigenen Adresse. Antwortet die nicht, etwa im Mobilnetz, öffnet sie die Oberfläche des Servers stattdessen über das Relay der Gruppe, und eine Zeile unter der Seite sagt **Über das Relay geöffnet**. Ein Server der Gruppe, dessen Adresse die App noch nicht kennt, öffnet sich genauso. Antworten weder die Adresse noch das Relay, steht das auf dem Startbildschirm an der Karte des Servers.
+
+Über das Relay erreicht die Seite das, was ein gekoppeltes Handy zu Hause erreicht, wie unten beschrieben. Anmelden mit dem Passwort und Dateien speichern gehen nur unter der eigenen Adresse des Servers. Fortschrittsbalken laufen alle zwei Sekunden weiter statt fortlaufend. Die Dateien der Oberfläche bleiben nach dem ersten Besuch auf dem Handy, spätere Besuche laden deshalb schneller. Ein Server vor 10.0.0 öffnet sich nur unter seiner eigenen Adresse.
+
+Die App nimmt eine Antwort nur an, wenn der Server sie mit dem Schlüssel signiert hat, den die App beim ersten Kontakt mit diesem Server festgehalten hat. Antwortet der Server später mit einem anderen Schlüssel, zeigt der Startbildschirm den Fingerabdruck des neuen Schlüssels, und die Seite öffnet sich erst, wenn du ihm vertraust.
 
 ## Angemeldet auf einem gekoppelten Handy {#sign-in}
 
 Ein mit deiner Gruppe gekoppeltes Handy öffnet jeden ihrer Server bereits angemeldet. Bevor es eine Seite lädt, bittet es diesen Server über die Gruppe um eine Sitzung, und ein Server gibt eine nur an ein Mitglied heraus, das ein Handy ist. Ein Server, den du über seine Adresse hinzugefügt hast, fragt wie im Browser nach dem Passwort.
 
-Ein gekoppeltes Handy bekommt nicht alles, was ein Passwort öffnet. Seine Sitzung erreicht eine feste Liste dessen, was die App zeigt: die Übersicht, die Läufe und das Aktivitätsprotokoll, die Sicherungen zum Ansehen, Starten und Wiederherstellen, die Anomalien zum Lesen und die Seite Instanzen zum Ansehen. Speicherorte und Befehle kommen ohne ihre Adressen und Geheimnisse an. Eine Wiederherstellung, die das Original ersetzt, sichert vorher den heutigen Zustand. Schlüssel, das Recovery-Kit, Hinterlegungen, Einstellungen und das Löschen von Sicherungen bleiben einer Anmeldung am Server selbst vorbehalten, und alles andere antwortet, dass es diese Anmeldung braucht.
+Ein gekoppeltes Handy bekommt nicht alles, was ein Passwort öffnet. Seine Sitzung erreicht eine feste Liste dessen, was die App zeigt: die Übersicht, die Läufe und das Aktivitätsprotokoll, die Sicherungen zum Ansehen, Starten und Wiederherstellen, die Anomalien zum Lesen und die Seite Instanzen zum Ansehen. Speicherorte und Befehle kommen ohne ihre Adressen und Geheimnisse an. Eine Wiederherstellung, die das Original ersetzt, sichert vorher den heutigen Zustand. Schlüssel, das Recovery-Kit, Hinterlegungen, Einstellungen und das Löschen von Sicherungen bleiben einer Anmeldung am Server selbst vorbehalten, und alles andere antwortet, dass es diese Anmeldung braucht. Über das Relay gilt dieselbe Liste, auch auf einem Server ohne Passwort.
 
 Der Schalter dafür ist **Handys können sich mit den zwölf Wörtern der Gruppe koppeln** auf der Karte **Android-App** unter **Einstellungen, Sicherheit**. Ein Zurücksetzen des Passworts schaltet ihn ab und meldet jedes Handy ab, bis du ihn dort wieder einschaltest.
 
@@ -40,7 +45,7 @@ Der Schalter dafür ist **Handys können sich mit den zwölf Wörtern der Gruppe
 
 ## Das Handy auf der Instanzen-Seite {#instances}
 
-Das Handy bekommt auf der Instanzen-Seite jedes Servers der Gruppe eine eigene Karte, als Android-App gekennzeichnet und mit dem Namen, den du dem Handy gegeben hast. Es hat keine Scorecard, weil es nichts sichert, und **Entfernen** nimmt es von der Seite.
+Das Handy bekommt auf der Instanzen-Seite jedes Servers der Gruppe eine eigene Karte, als Android-App gekennzeichnet und mit dem Namen, den du dem Handy gegeben hast. Es hat keine Scorecard, weil es nichts sichert, und **Entfernen** nimmt es von der Seite. Ein Handy, das die Wörter kennt, kann sich jederzeit wieder koppeln. Für ein verlorenes Handy schaltest du deshalb **Handys können sich mit den zwölf Wörtern der Gruppe koppeln** unter **Einstellungen, Sicherheit** aus, oder du nimmst jede Instanz mit **Gruppe verlassen** aus der Gruppe und koppelst sie mit neuen Wörtern neu.
 
 ## Einstellungen {#settings}
 
@@ -54,7 +59,7 @@ Das Zahnrad neben dem Plus öffnet die Einstellungen der App:
 
 ## Downloads und Uploads {#files}
 
-Exporte, Recovery-Kits, Flash-ZIPs und Datenbank-Dumps landen im Download-Ordner des Handys, wie aus einem Browser. Ein Einstellungs-Import öffnet die Dateiauswahl des Handys.
+Exporte, Recovery-Kits, Flash-ZIPs und Datenbank-Dumps landen im Download-Ordner des Handys, wie aus einem Browser. Ein Einstellungs-Import öffnet die Dateiauswahl des Handys. Über das Relay speichert die App keine Datei; öffne den Server dafür unter seiner eigenen Adresse.
 
 ## Auf einem Touchscreen {#touch}
 

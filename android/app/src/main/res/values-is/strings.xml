@@ -4,4 +4,7 @@
     <string name="save_failed">Ekki tókst að vista skrána: %1$s</string>
     <string name="save_untrusted">Skírteini netþjónsins hefur breyst. Opnaðu hann aftur frá upphafsskjánum til að skoða nýja skírteinið.</string>
     <string name="no_app">Ekkert forrit á þessum síma opnar þennan hlekk.</string>
+    <string name="relay_on">Opnað í gegnum relay</string>
+    <string name="relay_explained">Forritið nær ekki í þennan netþjón á hans eigin heimilisfangi og opnar hann því í gegnum relay hópsins þíns. Innskráning með lykilorði og vistun skráa virkar aðeins á eigin heimilisfangi netþjónsins.</string>
+    <string name="relay_no_download">Vistun skráa virkar aðeins á eigin heimilisfangi netþjónsins, ekki í gegnum relay.</string>
 </resources>

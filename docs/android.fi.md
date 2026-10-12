@@ -21,14 +21,19 @@ Puhelin liittyy sitten ryhmään kuin mikä tahansa muu instanssi. Se lukee ryhm
 
 Sovellus liittyy ryhmään releen kautta, myös kotona. Jos instanssisi asetuksena on **Ei relettä**, valitse rele kohdassa **Asetukset, Pariliitos** ennen kuin skannaat koodin.
 
-!!! note "Käyttöliittymä tarvitsee yhä reitin palvelimelle"
-    Palvelinluettelo ja toimintaloki tulevat ryhmän kautta. Palvelimen käyttöliittymä avautuu kuitenkin suoraan, joten puhelimen on tavoitettava palvelimen osoite, kotona tai VPN:n kautta.
+## Poissa kotoa {#away}
+
+Sovellus kokeilee palvelinta ensin sen omassa osoitteessa. Jos osoite ei vastaa, esimerkiksi mobiiliverkossa, se avaa palvelimen käyttöliittymän ryhmän releen kautta, ja sivun alla oleva rivi kertoo **Avattu releen kautta**. Ryhmän palvelin, jonka osoitetta sovellus ei vielä tunne, avautuu samalla tavalla. Jos ei osoite eikä rele vastaa, aloitusnäyttö kertoo sen palvelimen kortissa.
+
+Releen kautta sivu yltää siihen, mihin pariliitetty puhelin yltää kotona, kuten alla kuvataan. Salasanalla kirjautuminen ja tiedostojen tallennus toimivat vain palvelimen omassa osoitteessa. Edistymispalkit päivittyvät kahden sekunnin välein eivätkä jatkuvasti. Käyttöliittymän tiedostot jäävät puhelimeen ensimmäisen käynnin jälkeen, joten myöhemmät käynnit latautuvat nopeammin. Ennen versiota 10.0.0 oleva palvelin avautuu vain omassa osoitteessaan.
+
+Sovellus hyväksyy vastauksen vain, jos palvelin on allekirjoittanut sen avaimella, jonka sovellus kiinnitti, kun se tapasi palvelimen ensimmäisen kerran. Jos palvelin vastaa myöhemmin toisella avaimella, aloitusnäyttö näyttää uuden avaimen sormenjäljen, ja sivu avautuu vasta, kun luotat siihen.
 
 ## Kirjautuneena pariliitetyllä puhelimella {#sign-in}
 
 Ryhmääsi pariliitetty puhelin avaa jokaisen ryhmän palvelimen valmiiksi kirjautuneena. Ennen sivun lataamista se pyytää ryhmän kautta palvelimelta istunnon, ja palvelin antaa sellaisen vain jäsenelle, joka on puhelin. Osoitteella lisätty palvelin kysyy salasanaa kuten selaimessa.
 
-Pariliitetty puhelin ei saa kaikkea, minkä salasana antaa. Sen istunto yltää kiinteään luetteloon siitä, mitä sovellus näyttää: yleiskatsaus, ajot ja toimintaloki, katseltavat varmuuskopiot, käynnistys ja palautus, luettavat poikkeamat ja katseltava Ilmentymät-sivu. Kohteet ja komennot tulevat sille ilman osoitteitaan ja salaisuuksiaan. Palautus, joka korvaa alkuperäisen, varmuuskopioi ensin nykytilan. Avaimet, palautuspaketti, avaintalletukset, asetukset ja varmuuskopioiden poistaminen vaativat kirjautumisen itse palvelimella, ja kaikki muu vastaa tarvitsevansa sen kirjautumisen.
+Pariliitetty puhelin ei saa kaikkea, minkä salasana antaa. Sen istunto yltää kiinteään luetteloon siitä, mitä sovellus näyttää: yleiskatsaus, ajot ja toimintaloki, katseltavat varmuuskopiot, käynnistys ja palautus, luettavat poikkeamat ja katseltava Ilmentymät-sivu. Kohteet ja komennot tulevat sille ilman osoitteitaan ja salaisuuksiaan. Palautus, joka korvaa alkuperäisen, varmuuskopioi ensin nykytilan. Avaimet, palautuspaketti, avaintalletukset, asetukset ja varmuuskopioiden poistaminen vaativat kirjautumisen itse palvelimella, ja kaikki muu vastaa tarvitsevansa sen kirjautumisen. Releen kautta pätee sama luettelo, myös palvelimella, jolla ei ole salasanaa.
 
 Kytkin tähän on **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** **Android-sovellus**-kortissa kohdassa **Asetukset, Turvallisuus**. Salasanan nollaus kytkee sen pois ja kirjaa jokaisen puhelimen ulos, kunnes kytket sen siellä takaisin päälle.
 
@@ -40,7 +45,7 @@ Kytkin tähän on **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla*
 
 ## Puhelin Ilmentymät-sivulla {#instances}
 
-Puhelin saa oman korttinsa ryhmän jokaisen palvelimen Ilmentymät-sivulle, merkittynä Android-sovellukseksi ja nimettynä puhelimelle antamasi nimen mukaan. Sillä ei ole tuloskorttia, koska se ei varmuuskopioi mitään, ja **Poista** poistaa sen sivulta.
+Puhelin saa oman korttinsa ryhmän jokaisen palvelimen Ilmentymät-sivulle, merkittynä Android-sovellukseksi ja nimettynä puhelimelle antamasi nimen mukaan. Sillä ei ole tuloskorttia, koska se ei varmuuskopioi mitään, ja **Poista** poistaa sen sivulta. Puhelin, joka tuntee sanat, voi pariutua uudelleen milloin tahansa, joten kadonneen puhelimen kohdalla kytke **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** pois kohdassa **Asetukset, Turvallisuus** tai anna jokaisen ilmentymän valita **Poistu ryhmästä** ja pariuta ne uudelleen uusilla sanoilla.
 
 ## Asetukset {#settings}
 
@@ -54,7 +59,7 @@ Plussan vieressä oleva ratas avaa sovelluksen asetukset:
 
 ## Lataukset ja lähetykset {#files}
 
-Viennit, palautuspaketit, flashin ZIP-tiedostot ja tietokantavedokset tallentuvat puhelimen Lataukset-kansioon samaan tapaan kuin selaimesta. Asetusten tuonti avaa puhelimen tiedostovalitsimen.
+Viennit, palautuspaketit, flashin ZIP-tiedostot ja tietokantavedokset tallentuvat puhelimen Lataukset-kansioon samaan tapaan kuin selaimesta. Asetusten tuonti avaa puhelimen tiedostovalitsimen. Releen kautta ei tallenneta tiedostoja. Avaa palvelin sitä varten sen omassa osoitteessa.
 
 ## Kosketusnäytöllä {#touch}
 

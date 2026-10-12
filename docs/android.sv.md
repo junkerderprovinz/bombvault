@@ -21,14 +21,19 @@ Telefonen går sedan med i gruppen som ännu en instans. Den läser via gruppen 
 
 Appen går med i gruppen via reläet, även hemma. Står din instans på **Inget relä**, välj ett under **Inställningar, Parkoppling** innan du skannar koden.
 
-!!! note "Gränssnittet behöver fortfarande en väg till servern"
-    Serverlistan och aktivitetsloggen kommer via gruppen. En servers gränssnitt öppnas direkt, så telefonen måste nå serverns adress, hemma eller via ett VPN.
+## Borta från hemmet {#away}
+
+Appen provar först en server på dess egen adress. Svarar den inte, till exempel i mobilnätet, öppnar appen i stället serverns gränssnitt via gruppens relä, och en rad under sidan säger **Öppnad via reläet**. En server i gruppen vars adress appen ännu inte känner till öppnas på samma sätt. Svarar varken adressen eller reläet visar startskärmen det på serverns kort.
+
+Via reläet når sidan det en parkopplad telefon når hemma, som beskrivs nedan. Inloggning med lösenordet och sparande av filer fungerar bara på serverns egen adress. Förloppsindikatorer uppdateras varannan sekund i stället för löpande. Gränssnittets filer blir kvar på telefonen efter det första besöket, så senare besök laddas snabbare. En server äldre än 10.0.0 öppnas bara på sin egen adress.
+
+Appen tar bara emot ett svar om servern har signerat det med nyckeln som appen fäste när den första gången träffade servern. Svarar servern senare med en annan nyckel visar startskärmen den nya nyckelns fingeravtryck, och sidan öppnas först när du litar på den.
 
 ## Inloggad på en parkopplad telefon {#sign-in}
 
 En telefon som är parkopplad med din grupp öppnar varje server i gruppen redan inloggad. Innan den laddar en sida ber den servern om en session via gruppen, och en server lämnar bara ut en till en medlem som är en telefon. En server som har lagts till med sin adress frågar efter lösenordet, precis som i en webbläsare.
 
-En parkopplad telefon får inte allt som ett lösenord ger. Dess session når en fast lista över det appen visar: översikten, körningarna och aktivitetsloggen, säkerhetskopiorna att titta på, start och återställning, avvikelserna att läsa och sidan Instanser att titta på. Mål och kommandon når den utan adresser och hemligheter. En återställning som ersätter originalet säkerhetskopierar först det nuvarande läget. Nycklar, återställningskitet, nyckeldepositioner, inställningar och borttagning av säkerhetskopior kräver en inloggning på servern själv, och allt annat svarar att det behöver den inloggningen.
+En parkopplad telefon får inte allt som ett lösenord ger. Dess session når en fast lista över det appen visar: översikten, körningarna och aktivitetsloggen, säkerhetskopiorna att titta på, start och återställning, avvikelserna att läsa och sidan Instanser att titta på. Mål och kommandon når den utan adresser och hemligheter. En återställning som ersätter originalet säkerhetskopierar först det nuvarande läget. Nycklar, återställningskitet, nyckeldepositioner, inställningar och borttagning av säkerhetskopior kräver en inloggning på servern själv, och allt annat svarar att det behöver den inloggningen. Via reläet gäller samma lista, även på en server utan lösenord.
 
 Reglaget för detta är **Telefoner kan parkopplas med gruppens tolv ord** på kortet **Android-app** under **Inställningar, Säkerhet**. En återställning av lösenordet stänger av det och loggar ut alla telefoner, tills du slår på det igen där.
 
@@ -40,7 +45,7 @@ Reglaget för detta är **Telefoner kan parkopplas med gruppens tolv ord** på k
 
 ## Telefonen på Instanser-sidan {#instances}
 
-Telefonen får ett eget kort på Instanser-sidan på varje server i gruppen, markerat som Android-app och med det namn du har gett telefonen. Den har inget poängkort eftersom den inte säkerhetskopierar något, och **Ta bort** tar bort den från sidan.
+Telefonen får ett eget kort på Instanser-sidan på varje server i gruppen, markerat som Android-app och med det namn du har gett telefonen. Den har inget poängkort eftersom den inte säkerhetskopierar något, och **Ta bort** tar bort den från sidan. En telefon som kan orden kan parkopplas igen när som helst, så för en borttappad telefon stänger du av **Telefoner kan parkopplas med gruppens tolv ord** under **Inställningar, Säkerhet**, eller låter varje instans välja **Lämna gruppen** och parkopplar dem på nytt med nya ord.
 
 ## Inställningar {#settings}
 
@@ -54,7 +59,7 @@ Kugghjulet bredvid plustecknet öppnar appens inställningar:
 
 ## Nedladdningar och uppladdningar {#files}
 
-Exporter, återställningskit, flash-ZIP-filer och databasdumpar hamnar i telefonens mapp Nedladdningar, precis som från en webbläsare. En import av inställningar öppnar telefonens filväljare.
+Exporter, återställningskit, flash-ZIP-filer och databasdumpar hamnar i telefonens mapp Nedladdningar, precis som från en webbläsare. En import av inställningar öppnar telefonens filväljare. Via reläet sparas ingen fil. Öppna servern på dess egen adress för det.
 
 ## På en pekskärm {#touch}
 

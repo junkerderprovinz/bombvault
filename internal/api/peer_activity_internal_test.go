@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -67,12 +69,13 @@ func TestAPhoneOnTheInstancesPageSignsInWithoutThePassword(t *testing.T) {
 	if _, err := h.store.CreateFleetPeer(store.FleetPeer{MemberID: "phone", Name: "Phone", Kind: "android", Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
+	seed := pinPhoneKey(t, h, "phone")
 
 	ask := func(sender, id string) (int, peerSessionResponse) {
 		status, body := h.svc.servePeer(context.Background(), relay.ProxyCall{
 			Method: http.MethodPost,
 			Path:   "/api/group/peer/session",
-			Body:   []byte(`{"instanceId":"` + id + `"}`),
+			Body:   sessionAsk(t, h, seed, id),
 			Sender: sender,
 		})
 		var resp peerSessionResponse
@@ -104,8 +107,39 @@ func TestAPhoneNeedsNoSessionWhereThereIsNoPassword(t *testing.T) {
 	if _, err := h.store.CreateFleetPeer(store.FleetPeer{MemberID: "phone", Name: "Phone", Kind: "android", Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
-	status, body := h.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/session", Body: []byte(`{"instanceId":"phone"}`), Sender: "phone"})
+	seed := pinPhoneKey(t, h, "phone")
+	status, body := h.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/session", Body: sessionAsk(t, h, seed, "phone"), Sender: "phone"})
 	if status != http.StatusOK || !strings.Contains(string(body), `"needed":false`) {
 		t.Fatalf("status %d: %s", status, body)
 	}
+}
+
+// pinPhoneKey gives phone a signing key and pins it on h's instance, as the
+// first call the phone answers would.
+func pinPhoneKey(t *testing.T, h *Handler, phone string) []byte {
+	t.Helper()
+	seed, err := keydeposit.NewOwnerSeed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := h.store.PinMemberKey(phone, keydeposit.OwnerKey(seed)); err != nil {
+		t.Fatal(err)
+	}
+	return seed
+}
+
+// sessionAsk is a phone's signed ask for a session on h's instance.
+func sessionAsk(t *testing.T, h *Handler, seed []byte, phone string) []byte {
+	t.Helper()
+	g, err := h.store.GetGroupState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	at := time.Now().UnixMilli()
+	claim := keydeposit.Claim{Action: keydeposit.ProofSession, OwnerID: phone, KeeperID: g.InstanceID, Counter: at, Deposit: callPayload(phone)}
+	b, err := json.Marshal(map[string]any{"instanceId": phone, "key": keydeposit.OwnerKey(seed), "counter": at, "proof": keydeposit.Prove(seed, claim)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b
 }
