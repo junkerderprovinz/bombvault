@@ -2,13 +2,11 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
-	"net/http/httptest"
 	"reflect"
 	"slices"
-	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -203,6 +201,7 @@ func TestTimelineDeleteOfARunFromBeforeARenameTakesItsDiskUnderTheFormerName(t *
 
 func TestTimelineDeleteRoutes(t *testing.T) {
 	f, b2 := nginxAtHomeAndB2(t)
+	f.signIn()
 
 	m := f.do("GET", "/api/items/containers/nginx/timeline/a1a1a1a1/delete?place=offsite:"+b2.ID, nil)
 	if m["ok"] != true || len(m["delete"].([]any)) != 1 || m["others"].([]any)[0].(map[string]any)["state"] != "holds" {
@@ -229,14 +228,12 @@ func TestTimelineDeleteRoutes(t *testing.T) {
 		{http.MethodGet, "/api/items/containers/nginx/timeline/a1a1a1a1/delete?place=offsite:NOPE", ""},
 		{http.MethodDelete, "/api/items/containers/nginx/timeline/a1a1a1a1", `{"places":[{"place":"local","snapshotIds":["nothex"]}]}`},
 	} {
-		var body io.Reader
+		var body any
 		if c.body != "" {
-			body = strings.NewReader(c.body)
+			body = json.RawMessage(c.body)
 		}
-		rec := httptest.NewRecorder()
-		f.h.Router().ServeHTTP(rec, jsonReq(c.method, c.path, body))
-		if rec.Code != http.StatusBadRequest {
-			t.Errorf("%s %s: status %d, want 400", c.method, c.path, rec.Code)
+		if code, _ := f.call(c.method, c.path, body); code != http.StatusBadRequest {
+			t.Errorf("%s %s: status %d, want 400", c.method, c.path, code)
 		}
 	}
 }

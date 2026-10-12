@@ -796,6 +796,9 @@ func (h *Handler) handleTimelineDelete(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if !h.requireAuthForSecrets(w, r, "deleting backups") {
+		return
+	}
 	var body struct {
 		Places []placeDelete `json:"places"`
 	}

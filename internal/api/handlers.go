@@ -3521,6 +3521,9 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
+	if !h.requireAuthForSecrets(w, r, "pruning backups") {
+		return
+	}
 	paused, err := h.svc.PruneDomain(r.Context(), domain, sourceParam(r))
 	if err != nil {
 		body := failEnvelope(err)
@@ -3579,6 +3582,9 @@ func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
 	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	if !h.requireAuthForSecrets(w, r, "deleting a backup") {
 		return
 	}
 	if err := h.svc.DeleteSnapshot(r.Context(), domain, r.PathValue("id"), sourceParam(r)); err != nil {
