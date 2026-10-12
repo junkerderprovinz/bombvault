@@ -1,6 +1,6 @@
 # Privacy policy: BombVault Android app
 
-Last updated: 5 October 2026. Applies to version 9.7.0 and later, until this
+Last updated: 12 October 2026. Applies to version 9.7.0 and later, until this
 date changes.
 
 ## The short version
@@ -32,6 +32,9 @@ We back none of this up ourselves, and uninstalling the app deletes all of it.
 - What the app's web view keeps for each server, as a browser would: the session
   cookie once you sign in, and the interface settings the server's own pages
   store.
+- For a server opened through the relay, the files of its interface (scripts,
+  styles, fonts) in the app's cache, so they come through the relay only once.
+  Android may clear this cache at any time.
 - Your settings: the interface language, the look (theme, corner shape, accent
   colour, rainbow mode, and whether to follow the first server's look), and the
   motion level.
@@ -67,7 +70,9 @@ connection to it carries:
   relay needs for routing.
 - Encrypted messages (AES-256-GCM, with a second key derived from your phrase
   that the relay never receives). The relay cannot read their content, which
-  includes the phone's name, what runs on your servers and their look.
+  includes the phone's name, what runs on your servers and their look, and,
+  when a server does not answer at its own address, the pages of its interface
+  the app opens through the relay instead.
 - Your IP address, as with any connection on the internet.
 
 The relay keeps no record of who connects or what they send, and its error log
