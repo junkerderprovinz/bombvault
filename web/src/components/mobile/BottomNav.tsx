@@ -108,7 +108,10 @@ const slotBase =
 export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavProps) {
   const { t } = useT();
   const location = useLocation();
-  const [moreOpen, setMoreOpen] = useState(false);
+  // The sheet belongs to the page it was opened on, so any way of leaving
+  // that page closes it.
+  const [moreOpenOn, setMoreOpenOn] = useState<string | null>(null);
+  const moreOpen = moreOpenOn === location.pathname;
   const pins = useNavPins(settings);
   const slots = barDestinations(settings, pins);
   const counts = useNavCounts();
@@ -192,7 +195,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
             type="button"
             ref={moreTip.ref}
             data-new-way="more"
-            onClick={() => setMoreOpen(true)}
+            onClick={() => setMoreOpenOn(location.pathname)}
             aria-label={showLabel ? undefined : t("nav.more")}
             aria-describedby={moreTip.describedBy}
             {...moreTip.handlers}
@@ -235,7 +238,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
       </div>
       <MoreSheet
         open={moreOpen}
-        onClose={() => setMoreOpen(false)}
+        onClose={() => setMoreOpenOn(null)}
         settings={settings}
         authEnabled={authEnabled}
         scrollMainToTop={scrollMainToTop}

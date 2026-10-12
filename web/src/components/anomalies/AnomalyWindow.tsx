@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { BottomSheet } from "../mobile/BottomSheet";
+import { useBackCloses } from "../../lib/useBackCloses";
 import { useT } from "../../lib/i18n";
 import { focusableElements } from "../../lib/useConfirm";
 import { useIsDesktop } from "../../lib/useMediaQuery";
@@ -60,6 +61,7 @@ function DesktopWindow({
   const cardRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  useBackCloses(true, onClose);
 
   useEffect(() => {
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;

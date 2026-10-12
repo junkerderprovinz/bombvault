@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { Button } from "../components/Button";
 import { IconCheck, IconClose } from "../components/navGlyphs";
 import type { useT } from "../lib/i18n";
+import { useBackCloses } from "../lib/useBackCloses";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -60,6 +61,7 @@ export function QRScanner({
   onClose: () => void;
 }) {
   const video = useRef<HTMLVideoElement>(null);
+  useBackCloses(true, onClose);
   // The latest callbacks, so a new render does not reopen the camera.
   const scanned = useRef(onScanned);
   const refused = useRef(onAskCamera);

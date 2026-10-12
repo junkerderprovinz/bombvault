@@ -21,7 +21,7 @@
 //     tip bubble (lib/useTipBubble), the sidebar's mechanism; the native
 //     title attribute is retired.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { I18nProvider } from "../../lib/i18n";
@@ -147,6 +147,26 @@ describe("BottomNav More trigger", () => {
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(trigger);
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("closes the sheet on Back and stays on the page", async () => {
+    // A sheet left open by an earlier test gives its entry back on unmount.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    draw("/backups");
+    const trigger = within(bar()).getByRole("button", { name: "More" });
+    fireEvent.click(trigger);
+    expect(screen.getByTestId("more-sheet")).toBeTruthy();
+    act(() => window.history.back());
+    await waitFor(() => expect(screen.queryByTestId("more-sheet")).toBeNull());
+    expect(within(bar()).getByRole("link", { name: "Backups" }).className).toContain("bg-accent");
+  });
+
+  it("closes the sheet when the page changes under it", () => {
+    draw("/backups");
+    fireEvent.click(within(bar()).getByRole("button", { name: "More" }));
+    expect(screen.getByTestId("more-sheet")).toBeTruthy();
+    fireEvent.click(within(bar()).getByRole("link", { name: "Restore" }));
+    expect(screen.queryByTestId("more-sheet")).toBeNull();
   });
 
   it("is filled while one of the sheet's pages is current, not while a bar destination is", () => {

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { useBackCloses } from "../lib/useBackCloses";
 import { InfoBubble } from "./InfoBubble";
 import { Button } from "./Button";
 import { Badge } from "./Badge";
@@ -99,6 +100,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
+
+  useBackCloses(open, handleClose);
 
   function handleUp() {
     const parts = browsePath.split("/").filter(Boolean);

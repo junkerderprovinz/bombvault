@@ -111,6 +111,10 @@ export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTo
             <NavLink
               key={d.to}
               to={d.to}
+              // The open sheet's own history entry is the one on top, and the
+              // destination takes its place, so Back from there returns to
+              // the page the sheet was opened on.
+              replace
               onClick={(e) => {
                 // NavLink's onClick fires before react-router's own Link
                 // handler, and Link checks event.defaultPrevented before

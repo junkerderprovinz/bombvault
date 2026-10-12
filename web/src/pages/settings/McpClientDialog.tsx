@@ -9,6 +9,7 @@ import { Selector } from "../../components/Selector";
 import { Toggle } from "../../components/Toggle";
 import type { McpKeyView, McpOAuthView } from "../../lib/api";
 import type { TranslationKey } from "../../lib/i18n";
+import { useBackCloses } from "../../lib/useBackCloses";
 import { KIND_LABEL, OTHER_CLIENT, clientById, snippetFor, type ConfigPaths, type McpClient } from "../../lib/mcpClients";
 import { KEY_PLACEHOLDER, KEY_VARIABLE, type McpSnippetInput } from "../../lib/mcpSnippets";
 import { tLtr } from "../../lib/ltrFragments";
@@ -125,6 +126,7 @@ export function McpClientDialog({
 
   const closeRef = useRef(() => onClose(null));
   closeRef.current = () => onClose(created && connected ? created.id : null);
+  useBackCloses(true, () => closeRef.current());
 
   useEffect(() => {
     const trigger = document.activeElement;

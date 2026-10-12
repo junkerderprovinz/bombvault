@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { restoreZFSReplica } from "../../../lib/api";
 import type { ZFSReplica } from "../../../lib/api";
 import { useT, type TranslationKey } from "../../../lib/i18n";
+import { useBackCloses } from "../../../lib/useBackCloses";
 import { formatTs } from "../../../lib/reltime";
 import { useConfirm } from "../../../lib/useConfirm";
 import { useToast } from "../../../lib/toast";
@@ -41,6 +42,9 @@ export function ReplicaSnapshotsSheet({
   const { confirm, confirmDialog } = useConfirm();
   const [picked, setPicked] = useState(replica.snapshots[0]?.name ?? "");
   const [starting, setStarting] = useState(false);
+  useBackCloses(true, () => {
+    if (!starting) onClose();
+  });
 
   const member = rootMember(replica, name);
   const snapshot = replica.snapshots.find((s) => s.name === picked) ?? replica.snapshots[0];
