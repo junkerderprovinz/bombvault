@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Badge } from "../../components/Badge";
 import { InfoBubble } from "../../components/InfoBubble";
 import { BottomSheet } from "../../components/mobile/BottomSheet";
+import { useBackCloses } from "../../lib/useBackCloses";
 import { hueVars } from "../../lib/appearance";
 import { focusableElements } from "../../lib/useConfirm";
 import { useIsDesktop } from "../../lib/useMediaQuery";
@@ -36,6 +37,7 @@ export function InstanceWindow({
   const boxRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  useBackCloses(isDesktop, onClose);
 
   useEffect(() => {
     if (!isDesktop) return;

@@ -3435,7 +3435,7 @@ const sl: Partial<Translations> = {
   "launcher.cameraAllow": "Dovoli dostop",
   "launcher.scanHint": "Skeniraj kodo QR ob frazi",
   "launcher.groupFound": "Na tem releju",
-  "launcher.noInstances": "Trenutno nobena instanca te skupine ni na spletu. Preveri frazo in ali teče vsaj ena instanca.",
+  "launcher.noInstances": "Na relayu se še ni oglasila nobena instanca te skupine. Preveri frazo in ali teče vsaj ena instanca. Aplikacija se ne more seznaniti z instanco, nastavljeno na „Brez relaya“: izberi relay na tej instanci v Nastavitve > Seznanjanje.",
   "launcher.adoptOne": "Dodaj to instanco",
   "launcher.adoptAll": "Dodaj vseh {count}",
   "launcher.device": "Ta naprava",
@@ -4491,6 +4491,7 @@ const sl: Partial<Translations> = {
   "whatsNew.entryActions": "Dejanja vnosa so gumbi ob njegovem imenu.",
   "fleet.kindAndroid": "Aplikacija za Android",
   "pairing.qrCaption": "Skeniraj to kodo z aplikacijo BombVault, da seznaniš telefon.",
+  "pairing.phoneNeedsRelay": "Aplikacija BombVault se seznani samo prek relaya. Dokler ta instanca nobenega ne uporablja, se noben telefon ne more pridružiti skupini. V istem omrežju lahko aplikacija to instanco vseeno odpre prek njenega naslova.",
 };
 
 export default sl;

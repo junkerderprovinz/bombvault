@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { listRuns, ackRuns } from "../lib/api";
 import { ATTENTION_CHANGED_EVENT } from "../lib/attention";
+import { useBackCloses } from "../lib/useBackCloses";
 import type { Run } from "../lib/api";
 import { useT } from "../lib/i18n";
 import type { TranslationKey } from "../lib/i18n";
@@ -57,6 +58,7 @@ export function ErrorDetailPanel({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
+  useBackCloses(true, onClose);
 
   const [filterText, setFilterText] = useState("");
   const [filterDomain, setFilterDomain] = useState<LogFilterDomain>("all");

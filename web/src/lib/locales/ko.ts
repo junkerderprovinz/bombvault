@@ -3432,7 +3432,7 @@ const ko: Partial<Translations> = {
   "launcher.cameraAllow": "접근 허용",
   "launcher.scanHint": "구문 옆에 표시된 QR 코드를 스캔하세요",
   "launcher.groupFound": "이 릴레이의 인스턴스",
-  "launcher.noInstances": "지금 이 그룹의 인스턴스가 하나도 온라인이 아닙니다. 문구와 인스턴스가 최소 하나 실행 중인지 확인하세요.",
+  "launcher.noInstances": "이 그룹의 인스턴스가 아직 릴레이에 나타나지 않았습니다. 문구와 인스턴스가 최소 하나 실행 중인지 확인하세요. 앱은 “릴레이 없음”으로 설정된 인스턴스와 페어링할 수 없습니다. 해당 인스턴스에서 설정 > 페어링의 릴레이를 선택하세요.",
   "launcher.adoptOne": "이 인스턴스 추가",
   "launcher.adoptAll": "{count}개 모두 추가",
   "launcher.device": "이 장치",
@@ -4488,6 +4488,7 @@ const ko: Partial<Translations> = {
   "whatsNew.entryActions": "항목의 작업은 이름 옆의 버튼입니다.",
   "fleet.kindAndroid": "Android 앱",
   "pairing.qrCaption": "휴대폰을 페어링하려면 BombVault 앱으로 이 코드를 스캔하세요.",
+  "pairing.phoneNeedsRelay": "BombVault 앱은 릴레이를 통해서만 페어링됩니다. 이 인스턴스가 릴레이를 사용하지 않는 동안에는 어떤 휴대폰도 그룹에 참여할 수 없습니다. 같은 네트워크에서는 앱이 이 인스턴스를 주소로 열 수 있습니다.",
 };
 
 export default ko;

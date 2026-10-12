@@ -3441,7 +3441,7 @@ const it: Partial<Translations> = {
   "launcher.cameraAllow": "Consenti accesso",
   "launcher.scanHint": "Scansiona il codice QR mostrato accanto alla frase",
   "launcher.groupFound": "Su questo relay",
-  "launcher.noInstances": "Al momento nessuna istanza di questo gruppo è online. Controlla la frase e che almeno un’istanza sia in funzione.",
+  "launcher.noInstances": "Nessuna istanza di questo gruppo si è ancora fatta vedere sul relay. Controlla la frase e che almeno un’istanza sia in funzione. L’app non può associarsi a un’istanza impostata su «Nessun relay»: scegli un relay su quell’istanza in Impostazioni > Associazione.",
   "launcher.adoptOne": "Aggiungi questa istanza",
   "launcher.adoptAll": "Aggiungi tutte e {count}",
   "launcher.device": "Questo dispositivo",
@@ -4497,6 +4497,7 @@ const it: Partial<Translations> = {
   "whatsNew.entryActions": "Le azioni di un elemento sono i pulsanti accanto al suo nome.",
   "fleet.kindAndroid": "App Android",
   "pairing.qrCaption": "Inquadra questo codice con l'app BombVault per associare un telefono.",
+  "pairing.phoneNeedsRelay": "L'app BombVault si associa solo tramite un relay. Finché questa istanza non ne usa nessuno, nessun telefono può unirsi al gruppo. Nella stessa rete l'app può comunque aprire questa istanza tramite il suo indirizzo.",
 };
 
 export default it;

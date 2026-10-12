@@ -3438,7 +3438,7 @@ const pl: Partial<Translations> = {
   "launcher.cameraAllow": "Zezwól na dostęp",
   "launcher.scanHint": "Zeskanuj kod QR pokazany obok frazy",
   "launcher.groupFound": "Na tym przekaźniku",
-  "launcher.noInstances": "Żadna instancja z tej grupy nie jest teraz online. Sprawdź frazę i to, czy działa przynajmniej jedna instancja.",
+  "launcher.noInstances": "Żadna instancja z tej grupy nie zgłosiła się jeszcze do relay. Sprawdź frazę i to, czy działa przynajmniej jedna instancja. Aplikacja nie może się sparować z instancją ustawioną na „Brak relay”: wybierz na niej relay w sekcji Ustawienia > Parowanie.",
   "launcher.adoptOne": "Dodaj tę instancję",
   "launcher.adoptAll": "Dodaj wszystkie ({count})",
   "launcher.device": "To urządzenie",
@@ -4494,6 +4494,7 @@ const pl: Partial<Translations> = {
   "whatsNew.entryActions": "Akcje elementu są przyciskami obok jego nazwy.",
   "fleet.kindAndroid": "Aplikacja na Androida",
   "pairing.qrCaption": "Zeskanuj ten kod aplikacją BombVault, aby sparować telefon.",
+  "pairing.phoneNeedsRelay": "Aplikacja BombVault paruje się tylko przez relay. Dopóki ta instancja go nie używa, żaden telefon nie może dołączyć do grupy. W tej samej sieci aplikacja nadal może otworzyć tę instancję pod jej adresem.",
 };
 
 export default pl;

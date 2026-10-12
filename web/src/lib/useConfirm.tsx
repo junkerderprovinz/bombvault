@@ -4,6 +4,7 @@ import type { ButtonTone } from "../components/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { ConfirmSheet } from "../components/mobile/ConfirmSheet";
 import { useT, type TranslationKey } from "./i18n";
+import { useBackCloses } from "./useBackCloses";
 import { useIsDesktop } from "./useMediaQuery";
 
 // useConfirm replaces window.confirm(): ConfirmDialog at desktop widths,
@@ -95,6 +96,8 @@ export function useConfirm() {
   // open, and for Escape.
   const dismiss = useCallback(() => settle(false), [settle]);
   useDialogKeys(pending !== null, dialogRef, dismiss);
+  // The sheet answers Back itself.
+  useBackCloses(pending !== null && isDesktop, dismiss);
 
   // Locked while a required text is still unmatched; undefined for every
   // caller that never asked for one, so the ordinary dialog stays unaffected.

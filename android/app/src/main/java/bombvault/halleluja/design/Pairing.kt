@@ -45,6 +45,9 @@ class Pairing(private val context: Context, private val servers: Servers, privat
     /** The instances of the group being looked at, or null when none is. */
     val joining: List<Sibling>? get() = preview?.siblings?.filter { it.kind.isEmpty() }
 
+    /** Whether the relay of the group being looked at answers. */
+    val joiningConnected: Boolean get() = preview?.connected == true
+
     /**
      * Looks at the group of [code], twelve words and an own relay's address on
      * a second line, without joining it yet: its instances turn up in

@@ -3439,7 +3439,7 @@ const cs: Partial<Translations> = {
   "launcher.cameraAllow": "Povolit přístup",
   "launcher.scanHint": "Naskenuj QR kód zobrazený vedle fráze",
   "launcher.groupFound": "Na tomto relé",
-  "launcher.noInstances": "Žádná instance této skupiny teď není online. Zkontroluj frázi a jestli běží aspoň jedna instance.",
+  "launcher.noInstances": "Na přeposílači se zatím neohlásila žádná instance této skupiny. Zkontroluj frázi a jestli běží aspoň jedna instance. S instancí nastavenou na „Bez přeposílače“ se aplikace spárovat nemůže: vyber na ní přeposílač v Nastavení > Párování.",
   "launcher.adoptOne": "Přidat tuto instanci",
   "launcher.adoptAll": "Přidat všech {count}",
   "launcher.device": "Toto zařízení",
@@ -4495,6 +4495,7 @@ const cs: Partial<Translations> = {
   "whatsNew.entryActions": "Akce položky jsou tlačítka vedle jejího názvu.",
   "fleet.kindAndroid": "Aplikace pro Android",
   "pairing.qrCaption": "Naskenuj tento kód aplikací BombVault a spáruj telefon.",
+  "pairing.phoneNeedsRelay": "Aplikace BombVault se páruje jen přes přeposílač. Dokud tato instance žádný nepoužívá, nemůže se ke skupině připojit žádný telefon. Ve stejné síti ale aplikace může tuto instanci otevřít podle její adresy.",
 };
 
 export default cs;

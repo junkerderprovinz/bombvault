@@ -3451,7 +3451,7 @@ const lv: Partial<Translations> = {
   "launcher.cameraAllow": "Atļaut piekļuvi",
   "launcher.scanHint": "Noskenējiet QR kodu blakus frāzei",
   "launcher.groupFound": "Šajā relejā",
-  "launcher.noInstances": "Neviena šīs grupas instance pašlaik nav tiešsaistē. Pārbaudiet frāzi un to, vai vismaz viena instance darbojas.",
+  "launcher.noInstances": "Relay vēl nav parādījusies neviena šīs grupas instance. Pārbaudiet frāzi un to, vai vismaz viena instance darbojas. Lietotne nevar sapārot ar instanci, kas iestatīta uz “Bez relay”: izvēlieties šajā instancē relay sadaļā Iestatījumi > Pārošana.",
   "launcher.adoptOne": "Pievienot šo instanci",
   "launcher.adoptAll": "Pievienot visas {count}",
   "launcher.device": "Šī ierīce",
@@ -4507,6 +4507,7 @@ const lv: Partial<Translations> = {
   "whatsNew.entryActions": "Ieraksta darbības ir pogas blakus tā nosaukumam.",
   "fleet.kindAndroid": "Android lietotne",
   "pairing.qrCaption": "Noskenējiet šo kodu ar BombVault lietotni, lai sapārotu tālruni.",
+  "pairing.phoneNeedsRelay": "BombVault lietotne pārojas tikai ar relay starpniecību. Kamēr šī instance relay neizmanto, neviens tālrunis nevar pievienoties grupai. Tajā pašā tīklā lietotne tomēr var atvērt šo instanci pēc tās adreses.",
 };
 
 export default lv;

@@ -299,6 +299,11 @@ export function RelayCard({
               </>
             }
           />
+          {form === "off" && (
+            <p data-testid="no-relay-phone" className="rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">
+              {t("pairing.phoneNeedsRelay")}
+            </p>
+          )}
           {form === "own" && (
             <div className="flex flex-col gap-3.5" data-testid="own-relay">
               {address("wss://relay.example.org")}

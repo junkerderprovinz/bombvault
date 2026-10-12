@@ -3451,7 +3451,7 @@ const eu: Partial<Translations> = {
   "launcher.cameraAllow": "Baimendu sarbidea",
   "launcher.scanHint": "Eskaneatu esaldiaren ondoan agertzen den QR kodea",
   "launcher.groupFound": "Erlai honetan",
-  "launcher.noInstances": "Une honetan talde honetako instantziarik ez dago linean. Egiaztatu esaldia eta gutxienez instantzia bat martxan dagoela.",
+  "launcher.noInstances": "Talde honetako instantziarik ez da oraindik bitartekarian agertu. Egiaztatu esaldia eta gutxienez instantzia bat martxan dagoela. Aplikazioak ezin du parekatu «Bitartekaririk ez» ezarrita duen instantziarekin: aukeratu bitartekari bat instantzia horretan, Ezarpenak > Parekatzea atalean.",
   "launcher.adoptOne": "Gehitu instantzia hau",
   "launcher.adoptAll": "Gehitu {count}ak",
   "launcher.device": "Gailu hau",
@@ -4507,6 +4507,7 @@ const eu: Partial<Translations> = {
   "whatsNew.entryActions": "Elementu baten ekintzak bere izenaren ondoko botoiak dira.",
   "fleet.kindAndroid": "Android aplikazioa",
   "pairing.qrCaption": "Eskaneatu kode hau BombVault aplikazioarekin telefono bat parekatzeko.",
+  "pairing.phoneNeedsRelay": "BombVault aplikazioa bitartekari baten bidez bakarrik parekatzen da. Instantzia honek bat ere erabiltzen ez duen bitartean, ezin da telefonorik taldera sartu. Sare berean, aplikazioak instantzia hau bere helbidearen bidez ireki dezake oraindik.",
 };
 
 export default eu;

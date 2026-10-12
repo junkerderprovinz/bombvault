@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useT } from "../lib/i18n";
+import { useBackCloses } from "../lib/useBackCloses";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 
@@ -138,6 +139,7 @@ function renderMarkdown(md: string): ReactNode[] {
 export function WhatsNewDialog({ version, onClose }: { version: string; onClose: () => void }) {
   const { t } = useT();
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
+  useBackCloses(true, onClose);
   const [info, setInfo] = useState<ReleaseInfo | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const autoTriesRef = useRef(0);

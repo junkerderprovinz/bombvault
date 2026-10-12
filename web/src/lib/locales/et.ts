@@ -3451,7 +3451,7 @@ const et: Partial<Translations> = {
   "launcher.cameraAllow": "Luba juurdepääs",
   "launcher.scanHint": "Skanni fraasi kõrval olev QR-kood",
   "launcher.groupFound": "Selles relees",
-  "launcher.noInstances": "Ükski selle rühma eksemplar ei ole praegu võrgus. Kontrolli fraasi ja seda, et vähemalt üks eksemplar töötab.",
+  "launcher.noInstances": "Edastajas pole ükski selle grupi eksemplar veel ilmunud. Kontrolli fraasi ja seda, et vähemalt üks eksemplar töötab. Rakendus ei saa siduda eksemplari, mis on seatud väärtusele „Edastajata“: vali sellel eksemplaril edastaja jaotises Seaded > Sidumine.",
   "launcher.adoptOne": "Lisa see eksemplar",
   "launcher.adoptAll": "Lisa kõik {count}",
   "launcher.device": "See seade",
@@ -4507,6 +4507,7 @@ const et: Partial<Translations> = {
   "whatsNew.entryActions": "Kirje toimingud on nupud tema nime kõrval.",
   "fleet.kindAndroid": "Androidi rakendus",
   "pairing.qrCaption": "Skanni seda koodi BombVault rakendusega, et siduda telefon.",
+  "pairing.phoneNeedsRelay": "BombVault rakendus seob ainult edastaja kaudu. Kuni see eksemplar ühtki edastajat ei kasuta, ei saa ükski telefon gruppi liituda. Samas võrgus saab rakendus selle eksemplari siiski aadressi järgi avada.",
 };
 
 export default et;

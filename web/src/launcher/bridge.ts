@@ -63,8 +63,9 @@ export interface LauncherState {
     paired: boolean;
     connected: boolean;
     /** The instances found with words not yet taken over, while the person
-     *  looks before adding them. */
-    joining?: { members: GroupMember[] };
+     *  looks before adding them, and whether the relay they are looked for on
+     *  answers. */
+    joining?: { members: GroupMember[]; connected: boolean };
   };
   /** Whether the app may use the camera, for the scanner. */
   camera: boolean;

@@ -459,7 +459,7 @@ class MainActivity : ComponentActivity() {
         val g = JSONObject().put("paired", pairing.paired).put("connected", pairing.connected)
         pairing.joining?.let { members ->
             val list = JSONArray(members.map { JSONObject().put("id", it.id).put("name", it.name).put("version", it.version) })
-            g.put("joining", JSONObject().put("members", list))
+            g.put("joining", JSONObject().put("members", list).put("connected", pairing.joiningConnected))
         }
         return g
     }

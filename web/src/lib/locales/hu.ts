@@ -3442,7 +3442,7 @@ const hu: Partial<Translations> = {
   "launcher.cameraAllow": "Hozzáférés engedélyezése",
   "launcher.scanHint": "Olvasd be a kifejezés mellett látható QR-kódot",
   "launcher.groupFound": "Ezen a relén",
-  "launcher.noInstances": "Ennek a csoportnak jelenleg egyetlen példánya sincs online. Ellenőrizd a kifejezést, és hogy legalább egy példány fut-e.",
+  "launcher.noInstances": "A csoport egyik példánya sem jelentkezett még a relayen. Ellenőrizd a kifejezést, és hogy legalább egy példány fut-e. Az alkalmazás nem tud párosítani egy „Nincs relay” beállítású példánnyal: válassz relayt azon a példányon a Beállítások > Párosítás alatt.",
   "launcher.adoptOne": "Példány hozzáadása",
   "launcher.adoptAll": "Mind a(z) {count} hozzáadása",
   "launcher.device": "Ez az eszköz",
@@ -4498,6 +4498,7 @@ const hu: Partial<Translations> = {
   "whatsNew.entryActions": "Egy elem műveletei a neve melletti gombok.",
   "fleet.kindAndroid": "Android-alkalmazás",
   "pairing.qrCaption": "Olvasd be ezt a kódot a BombVault alkalmazással egy telefon párosításához.",
+  "pairing.phoneNeedsRelay": "A BombVault alkalmazás csak relayen keresztül párosít. Amíg ez a példány nem használ ilyet, egyetlen telefon sem csatlakozhat a csoporthoz. Ugyanazon a hálózaton az alkalmazás ettől még megnyithatja ezt a példányt a címe alapján.",
 };
 
 export default hu;

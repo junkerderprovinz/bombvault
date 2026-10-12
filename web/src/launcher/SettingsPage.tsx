@@ -102,7 +102,7 @@ function Well<V extends string>({ label, options, value, onPick }: { label: stri
             aria-checked={on}
             onClick={() => onPick(o.value)}
             style={hueVars(i) as CSSProperties}
-            className={`glim-hue min-w-0 flex-1 truncate rounded-pill px-1.5 py-[7px] text-xs font-medium glim-field-focus ${
+            className={`glim-hue min-w-0 flex-1 truncate rounded-pill px-1.5 py-[7px] text-xs font-medium ${
               on ? "bg-accent text-accentContrast" : "text-carbon-textSub"
             }`}
           >
@@ -570,7 +570,7 @@ export function LanguagePage({ t, onBack }: { t: T; onBack: () => void }) {
                 setLanguage(l.code);
                 onBack();
               }}
-              className={`flex items-center gap-2 rounded-card px-4 py-3.5 text-start glim-field-focus ${chosen ? "bg-carbon-surface2" : "bg-carbon-surface"}`}
+              className={`flex items-center gap-2 rounded-card px-4 py-3.5 text-start ${chosen ? "bg-carbon-surface2" : "bg-carbon-surface"}`}
             >
               <span className="w-[30px] shrink-0">
                 <Flag code={l.flag} />

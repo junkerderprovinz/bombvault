@@ -3441,7 +3441,7 @@ const pt: Partial<Translations> = {
   "launcher.cameraAllow": "Permitir acesso",
   "launcher.scanHint": "Lê o código QR mostrado ao lado da frase",
   "launcher.groupFound": "Neste relay",
-  "launcher.noInstances": "Neste momento não há nenhuma instância deste grupo online. Verifica a frase e se pelo menos uma instância está a correr.",
+  "launcher.noInstances": "Ainda nenhuma instância deste grupo apareceu no relay. Verifica a frase e se pelo menos uma instância está a correr. A app não consegue emparelhar com uma instância definida como «Sem relay»: escolhe um relay nessa instância em Definições > Emparelhamento.",
   "launcher.adoptOne": "Adicionar esta instância",
   "launcher.adoptAll": "Adicionar as {count}",
   "launcher.device": "Este dispositivo",
@@ -4497,6 +4497,7 @@ const pt: Partial<Translations> = {
   "whatsNew.entryActions": "As ações de uma entrada são botões ao lado do nome.",
   "fleet.kindAndroid": "App para Android",
   "pairing.qrCaption": "Digitaliza este código com a app BombVault para emparelhar um telemóvel.",
+  "pairing.phoneNeedsRelay": "A app BombVault só emparelha através de um relay. Enquanto esta instância não usar nenhum, nenhum telemóvel pode juntar-se ao grupo. Na mesma rede, a app continua a poder abrir esta instância pelo seu endereço.",
 };
 
 export default pt;

@@ -3441,7 +3441,7 @@ const da: Partial<Translations> = {
   "launcher.cameraAllow": "Tillad adgang",
   "launcher.scanHint": "Skan QR-koden ved siden af frasen",
   "launcher.groupFound": "På dette relæ",
-  "launcher.noInstances": "Ingen instans i denne gruppe er online lige nu. Tjek sætningen, og at mindst én instans kører.",
+  "launcher.noInstances": "Ingen instans i denne gruppe har meldt sig på videresenderen endnu. Tjek sætningen, og at mindst én instans kører. Appen kan ikke parre med en instans, der er sat til „Ingen videresender“: vælg en videresender på den instans under Indstillinger > Parring.",
   "launcher.adoptOne": "Tilføj denne instans",
   "launcher.adoptAll": "Tilføj alle {count}",
   "launcher.device": "Denne enhed",
@@ -4497,6 +4497,7 @@ const da: Partial<Translations> = {
   "whatsNew.entryActions": "Et elements handlinger er knapper ved siden af dets navn.",
   "fleet.kindAndroid": "Android-app",
   "pairing.qrCaption": "Scan denne kode med BombVault-appen for at parre en telefon.",
+  "pairing.phoneNeedsRelay": "BombVault-appen parrer kun via en videresender. Så længe denne instans ikke bruger nogen, kan ingen telefon blive en del af gruppen. På samme netværk kan appen stadig åbne denne instans via dens adresse.",
 };
 
 export default da;

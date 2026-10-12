@@ -3441,7 +3441,7 @@ const he: Partial<Translations> = {
   "launcher.cameraAllow": "אפשרו גישה",
   "launcher.scanHint": "סריקת קוד ה-QR שמוצג ליד הצירוף",
   "launcher.groupFound": "על הממסר הזה",
-  "launcher.noInstances": "אף מופע בקבוצה הזו אינו מקוון כרגע. יש לבדוק את הביטוי, ושלפחות מופע אחד פועל.",
+  "launcher.noInstances": "עדיין לא הופיע בממסר אף מופע של הקבוצה הזו. יש לבדוק את הביטוי, ושלפחות מופע אחד פועל. האפליקציה אינה יכולה ליצור צימוד עם מופע שמוגדר “בלי ממסר”: יש לבחור ממסר באותו מופע דרך הגדרות > צימוד.",
   "launcher.adoptOne": "הוספת המופע הזה",
   "launcher.adoptAll": "הוספת כל {count}",
   "launcher.device": "המכשיר הזה",
@@ -4497,6 +4497,7 @@ const he: Partial<Translations> = {
   "whatsNew.entryActions": "הפעולות של פריט הן כפתורים לצד שמו.",
   "fleet.kindAndroid": "אפליקציית Android",
   "pairing.qrCaption": "סריקת הקוד הזה עם אפליקציית BombVault מצמדת טלפון.",
+  "pairing.phoneNeedsRelay": "הצימוד באפליקציית BombVault מתבצע רק דרך ממסר. כל עוד המופע הזה אינו משתמש בממסר, אף טלפון אינו יכול להצטרף לקבוצה. באותה רשת האפליקציה עדיין יכולה לפתוח את המופע הזה לפי כתובתו.",
 };
 
 export default he;

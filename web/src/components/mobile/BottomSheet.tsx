@@ -5,6 +5,7 @@ import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import { IconClose } from "../navGlyphs";
 import { useT } from "../../lib/i18n";
+import { useBackCloses } from "../../lib/useBackCloses";
 
 // BottomSheet; the mobile bottom-sheet primitive.
 //
@@ -16,8 +17,8 @@ import { useT } from "../../lib/i18n";
 // max-h-[85dvh] not 85vh (dvh tracks mobile browser chrome; 100vh is banned
 // from the mobile shell); var(--safe-area-bottom) padding for the
 // home-indicator gap; a motion-safe slide-up entrance, not glim-modal-card's
-// 10px pop; no drag-to-dismiss and no grabber, because the sheet closes via
-// exactly three paths (scrim click, Escape, header close button) and
+// 10px pop; no drag-to-dismiss and no grabber, because the sheet closes by
+// scrim click, Escape, the header close button and Back, and
 // background content is unreachable through the Tab trap.
 //
 // React 19's boolean `inert` on the scrim was probed and rejected: inert
@@ -29,7 +30,7 @@ import { useT } from "../../lib/i18n";
 export interface BottomSheetProps {
   /** Whether the sheet is open. The caller owns the state; every close path calls onClose. */
   open: boolean;
-  /** Called by every close path: scrim click, Escape, header close button. */
+  /** Called by every close path: scrim click, Escape, header close button, Back. */
   onClose: () => void;
   /** The header's close button, on by default. A sheet whose footer already
    *  answers turns it off: two ways to cancel read as a choice between two
@@ -82,6 +83,7 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
   // Flipped after a double rAF so the parked frame paints first and the
   // transform transition runs instead of coalescing both states into one paint.
   const [entered, setEntered] = useState(false);
+  useBackCloses(open, onClose);
 
   // Focus capture + initial focus-in + restore, in one effect. A controlled
   // component has no confirm()-style call to capture the trigger from, so the

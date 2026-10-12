@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { IconLink, IconSearch } from "../components/glyphs";
@@ -19,6 +19,11 @@ type T = ReturnType<typeof useT>["t"];
  *  one and nothing says the last has come, so this is a pause for the list to
  *  fill, not a timeout. */
 const SETTLE_MS = 3000;
+
+/** How long the page keeps saying it is looking before it says why nothing
+ *  may turn up. An instance that is reconnecting to the relay can take this
+ *  long to announce itself; the search goes on after it either way. */
+const LOOK_MS = 30000;
 
 /** The words of a refused code, in the sentences the pairing card uses. */
 function pairErrorText(t: T, e: PairError): string {
@@ -73,6 +78,9 @@ export function PairPage({
   const fieldId = useId();
   const [text, setText] = useState("");
   const [searching, setSearching] = useState(false);
+  const [looking, setLooking] = useState(false);
+  const lookTimer = useRef(0);
+  useEffect(() => () => window.clearTimeout(lookTimer.current), []);
   const [scanning, setScanning] = useState(false);
   const [shake, setShake] = useState(0);
   const { confirm, confirmDialog } = useConfirm();
@@ -91,13 +99,20 @@ export function PairPage({
     problem = t("pairing.errWordCount").replace("{count}", String(words.length));
   }
 
+  const lookFor = useCallback(() => {
+    setSearching(true);
+    window.setTimeout(() => setSearching(false), SETTLE_MS);
+    setLooking(true);
+    window.clearTimeout(lookTimer.current);
+    lookTimer.current = window.setTimeout(() => setLooking(false), LOOK_MS);
+  }, []);
+
   const join = useCallback(
     (entered: string) => {
       onJoin(checkPhrase(entered).words.join(" "));
-      setSearching(true);
-      window.setTimeout(() => setSearching(false), SETTLE_MS);
+      lookFor();
     },
-    [onJoin]
+    [onJoin, lookFor]
   );
 
   // A scanned code joins at once: it carries the words Pair would be pressed with.
@@ -107,10 +122,9 @@ export function PairPage({
       const [phrase] = code.trim().split("\n");
       setText(phrase);
       onJoin(code.trim());
-      setSearching(true);
-      window.setTimeout(() => setSearching(false), SETTLE_MS);
+      lookFor();
     },
-    [onJoin]
+    [onJoin, lookFor]
   );
   const closeScanner = useCallback(() => setScanning(false), []);
 
@@ -145,20 +159,24 @@ export function PairPage({
       ) : joining ? (
         <>
           <section className="mt-2 flex flex-col gap-1.5">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-carbon-textMuted">{t("launcher.groupFound")}</h2>
+            <h2 className="flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-carbon-textMuted">
+              {t("launcher.groupFound")}
+              {!looking && !joining.connected && <Badge tone="warn">{t("launcher.relayOffline")}</Badge>}
+            </h2>
             {joining.members.map((m) => (
               <div key={m.id} className="rounded-card bg-carbon-surface p-3.5">
                 <p className="truncate text-sm font-semibold text-carbon-text">{m.name || m.id}</p>
                 <p className="truncate text-xs text-carbon-textMuted">{m.version}</p>
               </div>
             ))}
-            {joining.members.length === 0 && searching && <p className="text-sm text-carbon-textMuted">{t("pairing.searching")}</p>}
-            {joining.members.length === 0 && !searching && (
+            {joining.members.length === 0 && (
               <div className="flex flex-col items-center gap-2.5 rounded-card bg-carbon-surface p-6 text-center">
                 <span className="text-carbon-textMuted opacity-50 [&_svg]:h-7 [&_svg]:w-7">
-                  <IconLink />
+                  {looking ? <IconSearch /> : <IconLink />}
                 </span>
-                <p className="text-sm text-carbon-textMuted">{t("launcher.noInstances")}</p>
+                <p role="status" className="text-sm text-carbon-textMuted">
+                  {looking ? t("pairing.searching") : t("launcher.noInstances")}
+                </p>
               </div>
             )}
           </section>

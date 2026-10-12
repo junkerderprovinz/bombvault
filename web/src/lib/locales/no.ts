@@ -3441,7 +3441,7 @@ const no: Partial<Translations> = {
   "launcher.cameraAllow": "Tillat tilgang",
   "launcher.scanHint": "Skann QR-koden ved siden av frasen",
   "launcher.groupFound": "På dette reléet",
-  "launcher.noInstances": "Ingen instans i denne gruppen er tilkoblet akkurat nå. Sjekk frasen, og at minst én instans kjører.",
+  "launcher.noInstances": "Ingen instans i denne gruppen har meldt seg på relayen ennå. Sjekk frasen, og at minst én instans kjører. Appen kan ikke pare med en instans som er satt til «Ingen relay»: velg en relay på den instansen under Innstillinger > Paring.",
   "launcher.adoptOne": "Legg til denne instansen",
   "launcher.adoptAll": "Legg til alle {count}",
   "launcher.device": "Denne enheten",
@@ -4497,6 +4497,7 @@ const no: Partial<Translations> = {
   "whatsNew.entryActions": "Handlingene til et element er knapper ved siden av navnet.",
   "fleet.kindAndroid": "Android-app",
   "pairing.qrCaption": "Skann denne koden med BombVault-appen for å pare en telefon.",
+  "pairing.phoneNeedsRelay": "BombVault-appen parer kun via en relay. Så lenge denne instansen ikke bruker noen, kan ingen telefon bli med i gruppen. På samme nettverk kan appen likevel åpne denne instansen via adressen.",
 };
 
 export default no;

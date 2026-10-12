@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { Badge } from "../../../components/Badge";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { hueVars } from "../../../lib/appearance";
+import { useBackCloses } from "../../../lib/useBackCloses";
 
 export function PairingWindow({
   title,
@@ -28,6 +29,7 @@ export function PairingWindow({
   const cardRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  useBackCloses(true, onClose);
 
   useEffect(() => {
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
