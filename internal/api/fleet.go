@@ -74,7 +74,8 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 		if adopted {
 			continue
 		}
-		p, err := s.store.CreateFleetPeer(store.FleetPeer{MemberID: m.ID, Name: m.Name, Kind: m.Kind, Enabled: true, SortOrder: len(rows)})
+		enabled := m.Kind != "android" || !phonesWaitToBeAllowed
+		p, err := s.store.CreateFleetPeer(store.FleetPeer{MemberID: m.ID, Name: m.Name, Kind: m.Kind, Enabled: enabled, SortOrder: len(rows)})
 		if err != nil {
 			return nil, err
 		}
@@ -83,6 +84,11 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 	}
 	return rows, nil
 }
+
+// phonesWaitToBeAllowed makes a phone that joins the group wait on the
+// Instances page until somebody switches it on, instead of being let in
+// as soon as it holds the words.
+var phonesWaitToBeAllowed = false
 
 // memberPresent reports whether the member is reachable in the group at the moment.
 func (s *Service) memberPresent(id string) error {

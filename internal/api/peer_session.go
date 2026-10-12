@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -33,12 +34,29 @@ func (h *Handler) phoneSession() peerSessionResponse {
 	return peerSessionResponse{OK: true, Needed: true, Name: c.Name, Value: c.Value, MaxAge: c.MaxAge, Secure: c.Secure}
 }
 
+// phoneSessionCookie is the cookie for a page a phone opens through the
+// relay with the session it holds. Without a login password none is needed.
+// A session that is not a phone's, or that a sign-out everywhere or a reset
+// ended, gives none.
+func (h *Handler) phoneSessionCookie(token string) (*http.Cookie, bool) {
+	hash, epoch, on := h.authEnabled()
+	if !on {
+		return nil, true
+	}
+	if !secret.PairedSessionToken(token) || !secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, token) {
+		return nil, false
+	}
+	return &http.Cookie{Name: h.newSessionCookie("", 0).Name, Value: token}, true //nolint:gosec // G124: a cookie on a request this instance builds for itself
+}
+
 // handlePeerSession gives a session to a member that is a phone. The phone
-// names itself inside the sealed call and has to be the member the call came
-// from, so a BombVault instance of the group never comes away with one.
+// names itself, has to be the member the call came from and signs the ask
+// with its own key, so a BombVault instance of the group never comes away
+// with one.
 func (s *Service) handlePeerSession(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		InstanceID string `json:"instanceId"`
+		peerProof
 	}
 	if s.peerSession == nil {
 		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no sessions here"})
@@ -52,9 +70,14 @@ func (s *Service) handlePeerSession(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "a session is only given to the member that asks for it"})
 		return
 	}
-	if s.admitPhone(w, body.InstanceID) {
-		writeJSON(w, http.StatusOK, s.peerSession())
+	if !s.admitPhone(w, body.InstanceID) {
+		return
 	}
+	if err := s.verifyPhone(r.Context(), body.InstanceID, keydeposit.ProofSession, callPayload(body.InstanceID), body.peerProof); err != nil {
+		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": errUnsignedCall.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, s.peerSession())
 }
 
 // admitPhone reports whether id is a phone the Instances page lists and lets

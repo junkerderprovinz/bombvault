@@ -4,15 +4,21 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 )
 
 // A paired phone away from home opens this instance's interface through the
@@ -30,18 +36,20 @@ const (
 	// pageAskLimit caps a request: the 1 MiB a handler reads at most, encoded.
 	pageAskLimit = 2 << 20
 	// pagePartsTTL is how long the rest of a large answer waits for the
-	// phone to fetch it.
-	pagePartsTTL = time.Minute
-	// pagePartsBudget bounds what waiting answers may hold in memory.
-	pagePartsBudget = 64 << 20
+	// phone, which fetches it right away.
+	pagePartsTTL = 20 * time.Second
+	// pagePartsBudget bounds what waiting answers may hold in memory, and
+	// pagePartsPerSender what one phone's may, so one cannot hold it all.
+	pagePartsBudget    = 64 << 20
+	pagePartsPerSender = 24 << 20
 )
 
 // pageHeadersIn are the request headers a page may send. The session is the
-// one this instance mints for the phone, never a cookie from the call.
+// one the phone names in its call, never a cookie from the page.
 var pageHeadersIn = []string{"Content-Type", "Accept", "Sec-Fetch-Site", "Sec-Fetch-Mode", "Sec-Fetch-Dest"}
 
 // pageHeadersOut are the response headers the phone gets back. Set-Cookie is
-// not among them: the phone holds no session over the relay.
+// not among them: the phone keeps its session itself.
 var pageHeadersOut = []string{
 	"Content-Type", "Content-Encoding", "Cache-Control", "Location",
 	"Content-Security-Policy", "X-Content-Type-Options", "Referrer-Policy", "Permissions-Policy",
@@ -59,6 +67,12 @@ var pageMethods = map[string]bool{
 var relayedPublic = map[string]bool{
 	"GET /api/auth":   true,
 	"GET /api/health": true,
+}
+
+// relayedRefused are routes of a phone's session a page over the relay does
+// not reach. Signing out would clear a cookie the phone does not keep there.
+var relayedRefused = map[string]bool{
+	"POST /api/logout": true,
 }
 
 type relayedKey struct{}
@@ -82,8 +96,18 @@ type peerPageAsk struct {
 	Offset int               `json:"offset,omitempty"`
 }
 
+// peerPageCall is what a phone sends: the ask as it signed it, the session
+// it holds on this instance, and its signature over the ask.
+type peerPageCall struct {
+	Ask     []byte `json:"ask"`
+	Session string `json:"session,omitempty"`
+	peerProof
+}
+
 // peerPageAnswer is what the page's handler answered. Size is the length of
-// the whole body; when it is longer than Body, Part names the rest.
+// the whole body; when it is longer than Body, Part names the rest. Proof is
+// this instance's signature over the whole answer, so a member that takes
+// over this instance's place on the relay cannot answer in its name.
 type peerPageAnswer struct {
 	OK     bool              `json:"ok"`
 	Status int               `json:"status,omitempty"`
@@ -91,7 +115,12 @@ type peerPageAnswer struct {
 	Body   []byte            `json:"body,omitempty"`
 	Size   int               `json:"size"`
 	Part   string            `json:"part,omitempty"`
+	Proof  []byte            `json:"proof,omitempty"`
 }
+
+// codeSessionEnded tells a phone that the session it named has ended, through
+// a sign-out everywhere or a reset, and that it has to ask for a new one.
+const codeSessionEnded = "session-ended"
 
 // ServePhonePages sets the handler a page over the relay runs through: the
 // whole of what a browser reaches, security headers included.
@@ -101,13 +130,18 @@ func (s *Service) ServePhonePages(h http.Handler) { s.pages.Store(&h) }
 // the group.
 // POST /api/group/peer/page
 func (s *Service) handlePeerPage(w http.ResponseWriter, r *http.Request) {
+	var call peerPageCall
 	var ask peerPageAsk
-	if err := json.NewDecoder(io.LimitReader(r.Body, pageAskLimit)).Decode(&ask); err != nil {
+	if json.NewDecoder(io.LimitReader(r.Body, pageAskLimit)).Decode(&call) != nil || json.Unmarshal(call.Ask, &ask) != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "the request could not be read"})
 		return
 	}
 	sender := peerSender(r)
 	if !s.admitPhone(w, sender) {
+		return
+	}
+	if err := s.verifyPhone(r.Context(), sender, keydeposit.ProofPage, call.Ask, call.peerProof); err != nil {
+		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": errUnsignedCall.Error()})
 		return
 	}
 	if ask.Part != "" {
@@ -129,14 +163,25 @@ func (s *Service) handlePeerPage(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
 		return
 	}
-	if s.peerSession != nil {
-		if session := s.peerSession(); session.Needed {
-			req.AddCookie(&http.Cookie{Name: session.Name, Value: session.Value}) //nolint:gosec // G124: a cookie on a request this instance builds for itself
-		}
+	if s.pageSession == nil {
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no pages here"})
+		return
+	}
+	cookie, ok := s.pageSession(call.Session)
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "the session has ended", "code": codeSessionEnded})
+		return
+	}
+	if cookie != nil {
+		req.AddCookie(cookie)
 	}
 	rec := &pageRecorder{header: http.Header{}}
 	(*pages).ServeHTTP(rec, req)
 	answer := rec.answer()
+	if answer.Proof, err = s.signPageAnswer(sender, call, answer); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	if len(answer.Body) > pagePart {
 		token, ok := s.pageParts.keep(sender, answer.Body)
 		if !ok {
@@ -146,6 +191,48 @@ func (s *Service) handlePeerPage(w http.ResponseWriter, r *http.Request) {
 		answer.Body, answer.Part = answer.Body[:pagePart], token
 	}
 	writeJSON(w, http.StatusOK, answer)
+}
+
+// signPageAnswer signs what goes back to the phone, bound to the call it
+// answers by the call's time and the digest of its ask.
+func (s *Service) signPageAnswer(phoneID string, call peerPageCall, a peerPageAnswer) ([]byte, error) {
+	seed, err := s.depositSeed()
+	if err != nil {
+		return nil, err
+	}
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		return nil, err
+	}
+	claim := keydeposit.Claim{Action: keydeposit.ProofPageAnswer, OwnerID: g.InstanceID, KeeperID: phoneID, Counter: call.Counter, Deposit: pageAnswerDigest(call.Ask, a)}
+	return keydeposit.Prove(seed, claim), nil
+}
+
+// pageAnswerDigest is what the signature over an answer covers: the ask it
+// answers, the status, every header and the whole body, each with its
+// length. The app spells it the same way.
+func pageAnswerDigest(ask []byte, a peerPageAnswer) []byte {
+	h := sha256.New()
+	h.Write([]byte("bombvault page answer 1\x00"))
+	field := func(b []byte) {
+		h.Write(binary.BigEndian.AppendUint64(nil, uint64(len(b))))
+		h.Write(b)
+	}
+	sum := sha256.Sum256(ask)
+	field(sum[:])
+	field([]byte(strconv.Itoa(a.Status)))
+	names := make([]string, 0, len(a.Header))
+	for k := range a.Header {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	for _, k := range names {
+		field([]byte(k))
+		field([]byte(a.Header[k]))
+	}
+	sum = sha256.Sum256(a.Body)
+	field(sum[:])
+	return h.Sum(nil)
 }
 
 // pageRequest turns a page's request into one for this instance's handler,
@@ -256,6 +343,7 @@ type pageParts struct {
 	mu      sync.Mutex
 	entries map[string]*pageEntry
 	held    int
+	by      map[string]int
 }
 
 // pageEntry is one waiting answer. left counts the parts not fetched yet,
@@ -280,17 +368,18 @@ func (p *pageParts) keep(sender string, body []byte) (string, bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.sweepLocked(time.Now())
-	if p.held+len(body) > pagePartsBudget {
+	if p.held+len(body) > pagePartsBudget || p.by[sender]+len(body) > pagePartsPerSender {
 		return "", false
 	}
 	if p.entries == nil {
-		p.entries = map[string]*pageEntry{}
+		p.entries, p.by = map[string]*pageEntry{}, map[string]int{}
 	}
 	parts := (len(body) + pagePart - 1) / pagePart
 	e := &pageEntry{sender: sender, body: body, taken: make([]bool, parts), left: parts - 1, expires: time.Now().Add(pagePartsTTL)}
 	e.taken[0] = true
 	p.entries[token] = e
 	p.held += len(body)
+	p.by[sender] += len(body)
 	return token, true
 }
 
@@ -311,8 +400,7 @@ func (p *pageParts) take(token, sender string, offset int) ([]byte, int, bool) {
 	}
 	part := e.body[offset:min(offset+pagePart, len(e.body))]
 	if e.left == 0 {
-		delete(p.entries, token)
-		p.held -= len(e.body)
+		p.dropLocked(token, e)
 	}
 	return part, len(e.body), true
 }
@@ -320,8 +408,15 @@ func (p *pageParts) take(token, sender string, offset int) ([]byte, int, bool) {
 func (p *pageParts) sweepLocked(now time.Time) {
 	for token, e := range p.entries {
 		if now.After(e.expires) {
-			delete(p.entries, token)
-			p.held -= len(e.body)
+			p.dropLocked(token, e)
 		}
+	}
+}
+
+func (p *pageParts) dropLocked(token string, e *pageEntry) {
+	delete(p.entries, token)
+	p.held -= len(e.body)
+	if p.by[e.sender] -= len(e.body); p.by[e.sender] <= 0 {
+		delete(p.by, e.sender)
 	}
 }

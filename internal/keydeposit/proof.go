@@ -26,6 +26,12 @@ const (
 	ProofReceiverLogin = "receiver-login"
 	ProofRelease       = "release"
 	ProofZFSReceive    = "zfs-receive"
+	// ProofSession and ProofPage are a phone's ask for a session and for a
+	// page through the relay, and ProofPageAnswer an instance's answer to
+	// the second.
+	ProofSession    = "session"
+	ProofPage       = "page"
+	ProofPageAnswer = "page-answer"
 )
 
 // Claim is what an install says and signs. Counter only ever grows, so a call

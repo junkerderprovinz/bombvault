@@ -138,6 +138,7 @@ func NewHandler(
 	if svc != nil {
 		svc.peerActivity = h.activity
 		svc.peerSession = h.phoneSession
+		svc.pageSession = h.phoneSessionCookie
 	}
 	return h
 }
