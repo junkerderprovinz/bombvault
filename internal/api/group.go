@@ -231,8 +231,8 @@ type peerRoute struct {
 // instance signs its calls with, starting a check, a request to replicate a
 // ZFS item here, asking this instance to be Receiver or Fetcher with the
 // answer and the withdrawal that go with it, what runs here and how it looks
-// for the Android app, a session for a phone of the group, and the bare hello
-// a blind probe gets.
+// for the Android app, a session for a phone of the group and the pages it
+// opens away from home, and the bare hello a blind probe gets.
 // Settings, secrets and the phrase are not among them; a member holds the key
 // to every backup already, so a session for its phone adds no reach the group
 // did not have. A function rather than a variable, since the session route
@@ -256,6 +256,7 @@ func peerRoutes() []peerRoute {
 		{"GET /api/group/peer/activity", (*Service).handlePeerActivity},
 		{"GET /api/group/peer/display-prefs", (*Service).handlePeerDisplayPrefs},
 		{"POST /api/group/peer/session", (*Service).handlePeerSession},
+		{"POST /api/group/peer/page", (*Service).handlePeerPage},
 		{"GET " + group.ProbePath, (*Service).handlePeerHello},
 	}
 }

@@ -647,6 +647,7 @@ func run() error {
 	svc.StartIdleWaits()
 
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
+	svc.ServePhonePages(server.Handler())
 	handler.StartIntegrations()
 	// An MCP listing of a repository that stopped answering holds its request
 	// open until the stop context ends; without this the server would wait out

@@ -5451,6 +5451,23 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			}
 			return
 		}
+		// A page a paired phone opens through the group reaches what the
+		// session of a phone does, with or without a login password, and of
+		// the public paths only the two the shell reads first.
+		if relayedPage(r) {
+			mux, ok := next.(*http.ServeMux)
+			if !ok {
+				refusePaired(w)
+				return
+			}
+			if _, pattern := mux.Handler(r); pattern != "" && !pairedRoutes[pattern] && !relayedPublic[pattern] {
+				refusePaired(w)
+				return
+			}
+			next.ServeHTTP(w, withPaired(r))
+			return
+		}
+
 		hash := s.AuthPasswordHash
 		on := hash != ""
 		// Without a password any host on the network could name itself as

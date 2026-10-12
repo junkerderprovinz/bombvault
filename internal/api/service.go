@@ -612,6 +612,10 @@ type Service struct {
 	// peerSession mints a session for a paired phone; NewHandler sets it,
 	// since the session cookie is the Handler's.
 	peerSession func() peerSessionResponse
+	// pages is what a page over the relay runs through, and pageParts the
+	// rest of the answers too large for one call.
+	pages     atomic.Pointer[http.Handler]
+	pageParts pageParts
 	// probeQueue holds the items waiting for the restore probe after their
 	// first backup, and probeWorking says whether its worker is running. Both
 	// are guarded by probeMu.

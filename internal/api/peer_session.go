@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/junkerderprovinz/bombvault/internal/secret"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // peerSessionResponse is what POST /api/group/peer/session answers: the
@@ -51,24 +52,45 @@ func (s *Service) handlePeerSession(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "a session is only given to the member that asks for it"})
 		return
 	}
+	if s.admitPhone(w, body.InstanceID) {
+		writeJSON(w, http.StatusOK, s.peerSession())
+	}
+}
+
+// admitPhone reports whether id is a phone the Instances page lists and lets
+// in while pairing phones is on, and answers the call itself when it is not.
+func (s *Service) admitPhone(w http.ResponseWriter, id string) bool {
 	if on, err := s.store.PhonePairing(); err != nil || !on {
 		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "pairing phones is switched off on this instance", "code": codePhonePairingOff})
-		return
+		return false
 	}
-	// Synced first: a member that joined since anybody last opened the
-	// Instances page has no row yet.
-	peers, err := s.syncFleetPeers()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	for _, p := range peers {
-		if p.MemberID == body.InstanceID && p.Kind == "android" && p.Enabled {
-			writeJSON(w, http.StatusOK, s.peerSession())
-			return
+	if id != "" {
+		// A page asks many times a minute, so the rows are read before they
+		// are synced. A member that joined since anybody last opened the
+		// Instances page has no row until they are.
+		if rows, err := s.store.ListFleetPeers(); err == nil && listsPhone(rows, id) {
+			return true
+		}
+		peers, err := s.syncFleetPeers()
+		if err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return false
+		}
+		if listsPhone(peers, id) {
+			return true
 		}
 	}
 	writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "no phone of this group by that name"})
+	return false
+}
+
+func listsPhone(peers []store.FleetPeer, id string) bool {
+	for _, p := range peers {
+		if p.MemberID == id && p.Kind == "android" && p.Enabled {
+			return true
+		}
+	}
+	return false
 }
 
 // handleGetPhonePairing says whether a phone of the group may pair.
