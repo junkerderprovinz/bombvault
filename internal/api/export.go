@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -104,7 +105,7 @@ func (s *Service) exportDir(settings store.Settings) (string, error) {
 		return "", err
 	}
 	if restic.IsRemoteRepo(repo) {
-		return paths.Resolve(s.cfg.HostMountRoot, "user/bombvault/export")
+		return paths.ResolveForWrite(s.cfg.HostMountRoot, "user/bombvault/export")
 	}
 	return filepath.Join(filepath.Dir(repo), "export"), nil
 }
@@ -166,7 +167,12 @@ func publishExport(dest string, recipients []age.Recipient, write func(io.Writer
 		final = dest + ".age"
 	}
 	tmp := final + ".tmp"
-	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) //nolint:gosec // G304: a checked file name under the export folder the operator chose
+	// A temp file left over is removed rather than truncated, which would
+	// write through a link planted under its name.
+	if err := os.Remove(tmp); err != nil && !errors.Is(err, fs.ErrNotExist) { //nolint:gosec // G703: as below
+		return "", err
+	}
+	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600) //nolint:gosec // G304: a checked file name under the export folder the operator chose
 	if err != nil {
 		return "", err
 	}

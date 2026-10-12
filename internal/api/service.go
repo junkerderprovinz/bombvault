@@ -1529,7 +1529,7 @@ func (s *Service) primaryRepo(settings store.Settings, domain, item string) (rep
 // plain LOCAL folder, so it applies only the containment half of resolveRepo:
 // paths.Resolve(HostMountRoot, …), which rejects absolute paths and traversal.
 func (s *Service) flashZipExportDir(settings store.Settings) (string, error) {
-	dir, err := paths.Resolve(s.cfg.HostMountRoot, settings.FlashZipExportPath)
+	dir, err := paths.ResolveForWrite(s.cfg.HostMountRoot, settings.FlashZipExportPath)
 	if err != nil {
 		return "", fmt.Errorf("flash zip export: resolve path: %w", err)
 	}
@@ -9647,7 +9647,7 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 	target := "/"
 	resolved := ""
 	if sub := strings.TrimSpace(targetSubPath); sub != "" {
-		t, err := paths.Resolve(s.cfg.HostMountRoot, sub)
+		t, err := paths.ResolveForWrite(s.cfg.HostMountRoot, sub)
 		if err != nil {
 			return filesRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
@@ -9986,7 +9986,7 @@ func (s *Service) prepareRestoreToPath(ctx context.Context, name, source, snapsh
 	// Resolve the target against the host mount root with the shared containment
 	// helper: it path.Cleans the input and rejects an absolute path or any "../"
 	// that would escape the mount. The result is guaranteed to sit under the mount.
-	target, err := paths.Resolve(s.cfg.HostMountRoot, targetSubPath)
+	target, err := paths.ResolveForWrite(s.cfg.HostMountRoot, targetSubPath)
 	if err != nil {
 		// paths.Resolve returns ErrTraversal/ErrAbsoluteSub — neither leaks a host
 		// path; keep the message generic (defense-in-depth, mirrors handleBrowse).
@@ -14474,7 +14474,7 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	if sub := strings.TrimSpace(targetSubPath); sub != "" {
 		// Alternate folder: shared containment helper (path.Cleans the input and
 		// rejects an absolute path or any "../" that would escape the mount).
-		t, rErr := paths.Resolve(s.cfg.HostMountRoot, sub)
+		t, rErr := paths.ResolveForWrite(s.cfg.HostMountRoot, sub)
 		if rErr != nil {
 			return fileSetRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
@@ -14796,7 +14796,7 @@ func (s *Service) buildFileSetFilesPlan(ctx context.Context, snaps []restic.Snap
 	}
 
 	if sub := strings.TrimSpace(targetSubPath); sub != "" {
-		t, rErr := paths.Resolve(s.cfg.HostMountRoot, sub)
+		t, rErr := paths.ResolveForWrite(s.cfg.HostMountRoot, sub)
 		if rErr != nil {
 			return fileSetFilesRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}

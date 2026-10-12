@@ -118,7 +118,7 @@ func (s *Service) planExport(ctx context.Context, domain, key, source string, re
 	plan := exportPlan{domain: domain, form: req.Form}
 	if req.Folder == "" {
 		plan.dir, err = s.exportDir(settings)
-	} else if plan.dir, err = paths.Resolve(s.cfg.HostMountRoot, req.Folder); err != nil {
+	} else if plan.dir, err = paths.ResolveForWrite(s.cfg.HostMountRoot, req.Folder); err != nil {
 		err = errors.New("invalid export folder: must be a relative subpath under the host mount")
 	}
 	if err != nil {

@@ -1316,7 +1316,7 @@ func (s *Service) StartSaveDBDumpToPath(ctx context.Context, name, source, snaps
 }
 
 func (s *Service) prepareSaveDBDump(ctx context.Context, name, source, snapshotID, targetSubPath string, gz bool) (dbDumpSavePlan, error) {
-	target, err := paths.Resolve(s.cfg.HostMountRoot, targetSubPath)
+	target, err := paths.ResolveForWrite(s.cfg.HostMountRoot, targetSubPath)
 	if err != nil {
 		return dbDumpSavePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 	}

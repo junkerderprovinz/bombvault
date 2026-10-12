@@ -41,6 +41,41 @@ func Resolve(root, sub string) (string, error) {
 	return cleaned, nil
 }
 
+// ErrLinkEscape is returned when a link below the root leads out of it.
+var ErrLinkEscape = errors.New("paths: a link leads out of the root")
+
+// ResolveForWrite is Resolve for a folder that is about to be written to. A
+// container that writes into its own share can plant a link there, so the
+// part of the path that exists has to stay inside root once its links are
+// followed.
+func ResolveForWrite(root, sub string) (string, error) {
+	p, err := Resolve(root, sub)
+	if err != nil {
+		return "", err
+	}
+	realRoot, err := filepath.EvalSymlinks(root)
+	if errors.Is(err, fs.ErrNotExist) {
+		return p, nil
+	}
+	if err != nil {
+		return "", err
+	}
+	for existing := p; ; existing = filepath.Dir(existing) {
+		real, err := filepath.EvalSymlinks(existing)
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return "", err
+		}
+		rel, err := filepath.Rel(realRoot, real)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || (rel == "." && existing == p) {
+			return "", ErrLinkEscape
+		}
+		return p, nil
+	}
+}
+
 // Within reports whether absPath is absolute and lies strictly inside root.
 // Restore uses it to re-check stored appdata paths before writing to them.
 func Within(root, absPath string) bool {

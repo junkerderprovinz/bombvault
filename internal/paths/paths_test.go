@@ -78,6 +78,32 @@ func TestEnsureEmptyDirTakesOnlyAFolderThatHoldsNothing(t *testing.T) {
 	}
 }
 
+func TestResolveForWriteRefusesALinkOutOfTheRoot(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "mount")
+	outside := filepath.Join(filepath.Dir(root), "config")
+	for _, dir := range []string{filepath.Join(root, "appdata", "app"), filepath.Join(root, "media"), outside} {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Symlink(outside, filepath.Join(root, "appdata", "app", "x")); err != nil {
+		t.Skipf("no symlinks here: %v", err)
+	}
+	if err := os.Symlink(filepath.Join(root, "media"), filepath.Join(root, "appdata", "media")); err != nil {
+		t.Fatal(err)
+	}
+	for _, sub := range []string{"appdata/app/x", "appdata/app/x/restore/new"} {
+		if _, err := paths.ResolveForWrite(root, sub); !errors.Is(err, paths.ErrLinkEscape) {
+			t.Errorf("%s: %v, want ErrLinkEscape", sub, err)
+		}
+	}
+	for _, sub := range []string{"appdata/app/restore", "appdata/media/new", "fresh/folder"} {
+		if _, err := paths.ResolveForWrite(root, sub); err != nil {
+			t.Errorf("%s: %v", sub, err)
+		}
+	}
+}
+
 func statPerm(t *testing.T, p string) os.FileMode {
 	t.Helper()
 	fi, err := os.Stat(p)
