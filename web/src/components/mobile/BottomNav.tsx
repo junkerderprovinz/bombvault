@@ -101,8 +101,10 @@ export interface BottomNavProps {
 // full 56px (h-14) row as the touch target; comfortably over the 44px floor.
 // The press scale reads the motion-engine token, so the app's motion levels
 // govern it (--motion-press-scale is 1 at "off": no scale at all there).
+// Below 360px equal fifths are too narrow for "Wiederherstellung", so each
+// slot takes the width its caption needs and keeps at least the 44px floor.
 const slotBase =
-  "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-caption motion-safe:active:scale-[var(--motion-press-scale)]";
+  "flex min-w-0 flex-1 max-[359px]:min-w-11 max-[359px]:flex-auto flex-col items-center justify-center gap-1 text-caption motion-safe:active:scale-[var(--motion-press-scale)]";
 
 // A fifth of a phone is narrower than "Wiederherstellung", and the caption is
 // already at the smallest size of the type scale, so a long word goes onto a
@@ -174,7 +176,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
           above ends flush (its pb-0 contract), so without it the last card of
           every page would rest on the bar card's edge. Separation is shade,
           not a line: no border or ring on the card. Below 360px the card
-          keeps half the gutter, or "Wiederherstellung" needs a third line. */}
+          keeps half the gutter to leave the captions more room. */}
       <div className="mt-2 ml-[max(1rem,var(--safe-area-left))] mr-[max(1rem,var(--safe-area-right))] max-[359px]:ml-[max(0.5rem,var(--safe-area-left))] max-[359px]:mr-[max(0.5rem,var(--safe-area-right))] mb-2 rounded-card bg-carbon-sidebar">
         {/* h-14 static height: svh semantics by construction; a fixed-height
             row never resizes when the dynamic viewport does (browser chrome,
