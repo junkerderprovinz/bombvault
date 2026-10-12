@@ -360,9 +360,22 @@ export function BackupRow({
           {name}
         </Link>
         {facts.sentences.length > 0 && (
-          <span className={`flex ${BUBBLE_TONE[facts.tone]}`} onClick={keepInRow}>
-            <InfoBubble tip={facts.sentences.join(" ")} onAccent={facts.tone !== "plain"} />
-          </span>
+          <>
+            <span className={`flex ${BUBBLE_TONE[facts.tone]}`} onClick={keepInRow}>
+              <InfoBubble tip={facts.sentences.join(" ")} onAccent={facts.tone !== "plain"} />
+            </span>
+            {/* The bubble's text in the row under a mouse, which has room to
+                spare there. The bubble already names it to a screen reader. */}
+            <span
+              aria-hidden="true"
+              data-testid="backup-row-facts"
+              className={`hidden min-w-0 flex-1 truncate text-xs pointer-fine:group-hover:block ${
+                facts.tone === "plain" ? "text-carbon-textMuted" : BUBBLE_TONE[facts.tone]
+              }`}
+            >
+              {facts.sentences.join(" ")}
+            </span>
+          </>
         )}
       </span>
       <span className={BEFORE_STATUS}>

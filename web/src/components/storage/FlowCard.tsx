@@ -81,7 +81,7 @@ function FlowSwitches({ rows, busy, onToggle }: { rows: FlowRow[]; busy: boolean
                   items={row.lines.map((line) => ({
                     id: line.key,
                     label: line.location.enabled ? line.location.name : t("placement.off").replace("{name}", () => line.location.name),
-                    icon: <LocationMark location={line.location} size="chip" />,
+                    icon: <LocationMark location={line.location} size="chip" bare />,
                     disabled: !!line.locked,
                     title: line.locked,
                   }))}

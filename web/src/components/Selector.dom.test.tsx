@@ -264,6 +264,19 @@ describe("Selector under a coarse pointer", () => {
   });
 });
 
+describe("Selector with textHeight", () => {
+  const mixed = [ITEMS[0], { id: "g", label: "Glyph", icon: <svg /> }];
+
+  it("keeps glyph segments at the text height", () => {
+    render(<Selector items={mixed} label="Test strip" active="a" onChange={() => {}} textHeight />);
+    const text = screen.getByRole("tab", { name: "Alpha" }).className;
+    const glyph = screen.getByRole("tab", { name: "Glyph" }).className;
+    expect(glyph).not.toContain("glim-seg-btn");
+    expect(glyph).toContain("py-1");
+    expect(text).toContain("py-1");
+  });
+});
+
 // jsdom lays nothing out, so the room and each segment's widths are stubbed:
 // the track, or the `data-room` box a hugging track sits in, reports `room` as
 // its clientWidth, and a segment measured at max-content or min-content

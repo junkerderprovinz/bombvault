@@ -85,7 +85,7 @@ function logoAnimations(body: string, gate?: RegExp): Set<string> {
   const clean = body.replace(/\/\*[\s\S]*?\*\//g, "");
   for (const m of clean.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     const selector = m[1];
-    if (!/\.glim-logo-(quake|reborn)\b/.test(selector)) continue;
+    if (!/\.glim-(logo-quake|logo-reborn|rail-quake)\b/.test(selector)) continue;
     if (gate && !gate.test(selector)) continue;
     const anim = /animation:\s*([\w-]+)/.exec(m[2]);
     if (anim?.[1]) out.add(anim[1]);

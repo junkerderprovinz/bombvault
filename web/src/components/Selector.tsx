@@ -82,6 +82,9 @@ interface SelectorCommon {
    *  one, for a strip beside a real Button. Opt-in because a strip cannot see
    *  its neighbours, and the dense strips should stay short. */
   buttonHeight?: boolean;
+  /** Keep glyph segments at the height of a text strip, for a picker that
+   *  stands among text strips rather than beside a button. */
+  textHeight?: boolean;
   /** Take a colour under rainbow. Default true. Turn it off where the colour
    *  means nothing, such as a single-item strip (Recovery's StepDisclosure),
    *  not for looks. */
@@ -387,6 +390,7 @@ export function Selector(props: SelectorProps) {
     label,
     size = "md",
     buttonHeight = false,
+    textHeight = false,
     hue = true,
     hueOffset,
     variant = "well",
@@ -679,10 +683,10 @@ export function Selector(props: SelectorProps) {
           well && equalWidth
             ? `text-center h-[var(--badge-md)] ${SIZE[size].padding} ${WELL_TOUCH}`
             : equalWidth || phoneWell || pairsOnPhone
-              ? `text-center ${segmentPadding(size, !!item.icon, buttonHeight, well)}`
+              ? `text-center ${segmentPadding(size, !!item.icon && !textHeight, buttonHeight, well)}`
               : item.iconOnly
                 ? "h-8 w-8 p-0"
-                : segmentPadding(size, !!item.icon, buttonHeight, well),
+                : segmentPadding(size, !!item.icon && !textHeight, buttonHeight, well),
         ]
           .filter(Boolean)
           .join(" ");

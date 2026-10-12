@@ -52,7 +52,7 @@ describe("TargetsCard", () => {
     await renderCard();
 
     const [local, box] = rows();
-    expect(local.getByRole("link", { name: "bombvault" }).getAttribute("href")).toBe("/storage/path%3A1");
+    expect(local.getByRole("link", { name: "Local" }).getAttribute("href")).toBe("/storage/path%3A1");
     expect(local.getByText(/Growing 10\.0 GB\/week/)).toBeTruthy();
     expect(local.getByText("full in about 33 weeks")).toBeTruthy();
     expect(box.getByRole("link", { name: "Storage Box" })).toBeTruthy();

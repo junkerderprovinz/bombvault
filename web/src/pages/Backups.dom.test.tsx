@@ -409,6 +409,16 @@ describe("a row", () => {
     expect(within(row("win11")).getByLabelText("The VM is off.")).toBeTruthy();
   });
 
+  it("writes the bubble's text into the row for a mouse that hovers it", async () => {
+    serve([entry({ kind: "vm", key: "win11", state: "shut off" })]);
+    await renderPage();
+    const facts = within(row("win11")).getByTestId("backup-row-facts");
+    expect(facts.textContent).toBe("The VM is off.");
+    expect(facts.className).toContain("hidden");
+    expect(facts.className).toContain("pointer-fine:group-hover:block");
+    expect(facts.getAttribute("aria-hidden")).toBe("true");
+  });
+
   it("has no bubble when it follows the common schedule and nothing is up", async () => {
     serve([entry({ key: "plex" })]);
     await renderPage();

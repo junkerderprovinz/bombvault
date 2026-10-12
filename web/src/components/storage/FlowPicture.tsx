@@ -144,14 +144,19 @@ export function FlowPicture({
             <rect
               className="glim-flow-band"
               x={layout.bandLeft(k)}
-              y={m.top + 2}
+              y={layout.rowsTop + 2}
               width={m.bandWidth}
               height={layout.rowsHeight - 4}
               rx="14"
             />
-            <foreignObject x={layout.bandCentre(k) - layout.headWidth / 2} y="0" width={layout.headWidth} height={m.top - 6}>
+            <foreignObject
+              x={layout.bandCentre(k) - layout.headWidth / 2}
+              y={layout.rowsTop - m.top}
+              width={layout.headWidth}
+              height={m.top - 6}
+            >
               <div className="glim-flow-head">
-                <LocationMark location={location} size="scene" />
+                <LocationMark location={location} size="scene" bare />
                 {/* Several bands in the small picture leave room for the mark alone. */}
                 <span className={m.narrow && bands.length > 1 ? "sr-only" : undefined}>{name(location)}</span>
               </div>
@@ -163,7 +168,7 @@ export function FlowPicture({
             <rect className="glim-flow-node" x={m.nodeX} y={layout.nodeTop(j)} width={m.nodeWidth} height={layout.nodeHeight} rx="12" />
             <foreignObject x={m.nodeX + 8} y={layout.nodeTop(j)} width={m.nodeWidth - 12} height={layout.nodeHeight}>
               <div className="glim-flow-name">
-                <LocationMark location={location} size="scene" />
+                <LocationMark location={location} size="scene" bare />
                 <span>{name(location)}</span>
               </div>
             </foreignObject>

@@ -394,7 +394,7 @@ describe("the status head", () => {
 
   it("reads the storage locations once for the count and for their card", async () => {
     vi.mocked(listStorageLocations).mockClear();
-    server.locations = [location({ name: "Storage Box", sections: [failedCopy()] })];
+    server.locations = [location({ id: "destination:box", object: "destination", kind: "offsite", name: "Storage Box", sections: [failedCopy()] })];
     await renderPage();
 
     expect(within(cell("targets")).getByRole("link", { name: "Storage Box" })).toBeTruthy();

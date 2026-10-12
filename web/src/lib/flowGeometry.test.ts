@@ -30,6 +30,16 @@ describe("flowLayout", () => {
     expect(flowLayout(flowMeasures(1000), 1, 1, 4).height).toBeGreaterThan(layout.height);
   });
 
+  it("centres the rows beside a taller stack of boxes", () => {
+    const tall = flowLayout(flowMeasures(1000), 6, 1, 7);
+    const stackTop = tall.nodeTop(0);
+    const stackBottom = tall.nodeTop(6) + tall.nodeHeight;
+    expect(tall.rowsTop).toBeGreaterThan(tall.measures.top);
+    expect(tall.rowsTop + tall.rowsHeight / 2).toBeCloseTo((stackTop + stackBottom) / 2);
+    expect(tall.rowY(0)).toBe(tall.rowsTop + tall.measures.row / 2);
+    expect(layout.rowsTop).toBe(layout.measures.top);
+  });
+
   it("sets several bands apart so each keeps room for its name", () => {
     const two = flowLayout(flowMeasures(1000), 3, 2, 1);
     expect(two.bandCentre(1) - two.bandCentre(0)).toBeGreaterThanOrEqual(two.headWidth);

@@ -348,7 +348,7 @@ describe("the instances grid", () => {
 
   it("opens pairing in Settings from the page's own action, the one filled button", async () => {
     await renderPage();
-    const pair = within(screen.getByTestId("page-actions")).getByRole("button", { name: en["instances.pair"] });
+    const pair = within(screen.getByTestId("page-actions")).getByRole("button", { name: en["pairing.join"] });
     expect(pair.className).toContain("bg-accent");
     await click(pair);
     expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
@@ -856,14 +856,14 @@ describe("a paired phone", () => {
     peers = [peer({}), peer({ id: "p3", memberId: "m3", name: "Pixel 8", kind: "android", direct: false, relay: true, lastPollDomains: [] })];
   });
 
-  it("is a card of its own, with no roles, no figures and no details", async () => {
+  it("is a card of its own with the logo, and no roles, figures or details", async () => {
     await renderPage();
     const phone = card("m3");
     expect(phone.textContent).toContain("Pixel 8");
     expect(phone.textContent).toContain(en["fleet.kindAndroid"]);
     expect(phone.textContent).toContain(en["instances.connected"]);
     expect(phone.querySelector("[data-role]")).toBeNull();
-    expect(phone.querySelector("img")).toBeNull();
+    expect(phone.querySelector("img")?.getAttribute("src")).toBe("/logo.svg");
     expect(within(phone).queryByRole("button", { name: en["fleet.details"] })).toBeNull();
     expect(within(phone).getByRole("button", { name: en["fleet.remove"] })).toBeTruthy();
   });
@@ -934,8 +934,8 @@ describe("an empty group", () => {
 
   it("offers pairing once, as the page's action and not on the card", async () => {
     await renderPage();
-    expect(screen.getAllByRole("button", { name: en["instances.pair"] })).toHaveLength(1);
-    await click(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["instances.pair"] }));
+    expect(screen.getAllByRole("button", { name: en["pairing.join"] })).toHaveLength(1);
+    await click(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["pairing.join"] }));
     expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
   });
 });

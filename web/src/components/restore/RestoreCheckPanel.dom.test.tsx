@@ -134,3 +134,21 @@ describe("the restore plan", () => {
     expect(screen.getByText(en["restoreCheck.reason.parentMissing"].replace("{name}", "tank/gone"))).toBeTruthy();
   });
 });
+
+describe("a check still running", () => {
+  it("lists the lines it will answer from the start", () => {
+    render(<RestoreCheckPanel check={{ state: { phase: "running" } }} t={t} />);
+    const pending = screen.getByTestId("restore-check-pending");
+    expect(within(pending).getAllByRole("listitem").map((line) => line.textContent)).toEqual([
+      en["restoreCheck.line.repository"],
+      en["restoreCheck.line.key"],
+      en["restoreCheck.line.snapshot"],
+      en["restoreCheck.line.space"],
+    ]);
+  });
+
+  it("gives way to the answers once they are in", () => {
+    show({ ok: true, ready: true, checks, plan: null });
+    expect(screen.queryByTestId("restore-check-pending")).toBeNull();
+  });
+});

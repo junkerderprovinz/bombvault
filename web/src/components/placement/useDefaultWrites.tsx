@@ -102,7 +102,7 @@ export function useDefaultWrites(): DefaultWrites {
   const { push } = useToast();
   const host = useHostLabel();
   const repos = useNamedRepos();
-  const { confirm, confirmDialog } = useConfirm();
+  const { confirm, confirmDialog, dismiss, revise } = useConfirm();
   const [direct, setDirect] = useState<{ ctx: DefaultContext; target: SendToOption; skip: string[] } | null>(null);
   const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState(0);
@@ -137,17 +137,23 @@ export function useDefaultWrites(): DefaultWrites {
     }
   }
 
+  function homeLead(ctx: DefaultContext, home: string): string {
+    const domain = domainLabel(t, ctx.row.domain);
+    return t("placementDefaults.confirmHome").replace("{domain}", () => domain).replace("{home}", () => ctx.homeName(home));
+  }
+
+  function asking(home: string | undefined, extra?: ReactNode): ConfirmOptions {
+    return home !== undefined
+      ? { extra, confirmLabel: t("placement.saveHome"), confirmLabelKey: "placement.saveHome", cancelTone: "neutral" }
+      : { extra, cancelTone: "neutral" };
+  }
+
   // A change that neither moves the location nor changes what a target
-  // receives is saved without a question.
-  async function agreed(ctx: DefaultContext, impact: DefaultImpact, home: string | undefined): Promise<boolean> {
-    const { row } = ctx;
-    const domain = domainLabel(t, row.domain);
-    const lines = impactLines(t, lang, row.domain, impact, ctx.homeName(home ?? row.home));
-    const lead =
-      home !== undefined
-        ? t("placementDefaults.confirmHome").replace("{domain}", () => domain).replace("{home}", () => ctx.homeName(home))
-        : lines.shift();
-    if (lead === undefined) return true;
+  // receives is saved without a question, and has none.
+  function question(ctx: DefaultContext, impact: DefaultImpact, home: string | undefined): [string, ConfirmOptions] | null {
+    const lines = impactLines(t, lang, ctx.row.domain, impact, ctx.homeName(home ?? ctx.row.home));
+    const lead = home !== undefined ? homeLead(ctx, home) : lines.shift();
+    if (lead === undefined) return null;
     const extra =
       lines.length > 0 ? (
         <div className="flex flex-col gap-1 text-sm text-carbon-textSub">
@@ -156,26 +162,34 @@ export function useDefaultWrites(): DefaultWrites {
           ))}
         </div>
       ) : undefined;
-    return confirm(
-      lead,
-      home !== undefined
-        ? { extra, confirmLabel: t("placement.saveHome"), confirmLabelKey: "placement.saveHome", cancelTone: "neutral" }
-        : { extra, cancelTone: "neutral" }
-    );
+    return [lead, asking(home, extra)];
   }
 
   function change(ctx: DefaultContext, next: DefaultChange) {
     const { row } = ctx;
     const home = next.home !== undefined && next.home !== row.home ? next.home : undefined;
     return guarded(async () => {
+      // Working out the impact takes the server a moment, as long as it takes
+      // to list the snapshots, so the window opens at once and waits for it.
+      const waiting = t("restoreCheck.running");
+      let answered = false;
+      const first = confirm(home !== undefined ? homeLead(ctx, home) : waiting, { ...asking(home), confirmBlocked: waiting });
+      void first.then(() => {
+        answered = true;
+      });
       const preview = await previewPlacementDefault(row.domain, next);
+      if (answered) return;
       if (!preview.ok || !preview.impact) {
+        dismiss();
         fail(preview);
         return;
       }
       let impact = preview.impact;
-      for (;;) {
-        if (!(await agreed(ctx, impact, home))) return;
+      let asked = question(ctx, impact, home);
+      if (asked) revise(...asked);
+      else dismiss();
+      for (let round = 0; ; round++) {
+        if (asked && !(await (round === 0 ? first : confirm(...asked)))) return;
         const res = await putPlacementDefault(row.domain, next, impact);
         if (res.ok) {
           placementChanged();
@@ -186,6 +200,7 @@ export function useDefaultWrites(): DefaultWrites {
           return;
         }
         impact = res.impact;
+        asked = question(ctx, impact, home);
       }
     });
   }

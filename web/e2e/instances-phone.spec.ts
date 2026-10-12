@@ -763,11 +763,11 @@ for (const width of [320, 360]) {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
     await openPage(page, width, { empty: true });
     await expect(card(page, "none").getByText("Noch keine Instanz verbunden")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Instanz koppeln" })).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "Koppeln", exact: true })).toHaveCount(1);
     expect(await pageGap(page)).toBe("24px");
     await expectFits(page, "#bv-main");
     await expectOnPage(page);
-    await page.getByRole("button", { name: "Instanz koppeln" }).click();
+    await page.getByRole("button", { name: "Koppeln", exact: true }).click();
     await expect(page).toHaveURL(/\/settings\/pairing$/);
   });
 }
@@ -799,9 +799,9 @@ test("the grid on the desktop keeps the 40px rhythm and cards of one size", asyn
   expect(await name.evaluate((node) => getComputedStyle(node).whiteSpace)).toBe("nowrap");
 
   // Pairing is the page's own action, in the corner.
-  const pair = page.getByTestId("page-actions").getByRole("button", { name: "Instanz koppeln" });
+  const pair = page.getByTestId("page-actions").getByRole("button", { name: "Koppeln", exact: true });
   await expect(pair).toBeVisible();
-  await expect(page.getByRole("button", { name: "Instanz koppeln" })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Koppeln", exact: true })).toHaveCount(1);
   await pair.click();
   await expect(page).toHaveURL(/\/settings\/pairing$/);
 });
