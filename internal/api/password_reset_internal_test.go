@@ -388,7 +388,7 @@ func TestResetRemovesEveryPasskeyAndRevokesEveryKey(t *testing.T) {
 	if len(h.mcp.oauth.codes) != 0 {
 		t.Error("an OAuth code allowed before the reset can still be exchanged")
 	}
-	want := map[string]any{"passkeys": 1.0, "apiTokens": 1.0, "mcpKeys": 2.0, "twoFactor": false}
+	want := map[string]any{"passkeys": 1.0, "apiTokens": 1.0, "mcpKeys": 2.0, "twoFactor": false, "phonePairingOff": true}
 	if !reflect.DeepEqual(body["removed"], want) {
 		t.Errorf("removed = %v, want %v", body["removed"], want)
 	}
@@ -514,5 +514,29 @@ func TestALockedOutOwnerResetsThePasswordThroughTheRouter(t *testing.T) {
 	}
 	if _, body := in.do(t, http.MethodPost, "/api/login", map[string]any{"password": resetNewPass}); body["ok"] != true {
 		t.Fatalf("the new password must sign in: %v", body)
+	}
+}
+
+func TestTheResetNamesEverythingItRemoved(t *testing.T) {
+	h, repo, out := newResetHandler(t)
+	if _, err := repo.MutateSettings(func(s *store.Settings) error { s.TOTPEnabled = true; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	ordinary := &bytes.Buffer{}
+	prev, flags := log.Writer(), log.Flags()
+	log.SetOutput(ordinary)
+	t.Cleanup(func() { log.SetOutput(prev); log.SetFlags(flags) })
+	code := askForResetCode(t, h, out)
+
+	body, _ := finishReset(t, h, code, resetNewPass)
+
+	removed, _ := body["removed"].(map[string]any)
+	if removed["twoFactor"] != true || removed["phonePairingOff"] != true {
+		t.Errorf("removed = %v, want two-factor and phone pairing named", body["removed"])
+	}
+	for _, want := range []string{"two-factor authentication turned off", "pairing phones switched off", "every other session ended"} {
+		if !strings.Contains(ordinary.String(), want) {
+			t.Errorf("the log line leaves out %q: %q", want, ordinary.String())
+		}
 	}
 }

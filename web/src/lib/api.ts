@@ -6518,6 +6518,8 @@ export interface PasswordResetRemoved {
   mcpKeys: number;
   /** Whether two-factor authentication was on and is now off. */
   twoFactor: boolean;
+  /** Whether phones cannot pair until somebody signed in switches it on. */
+  phonePairingOff: boolean;
 }
 
 export interface PasswordResetResult extends OkEnvelope {
