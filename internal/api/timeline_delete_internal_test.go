@@ -142,15 +142,23 @@ func TestTimelineDeleteLeavesAppendOnlyPlacesOutAndNamesThem(t *testing.T) {
 	}
 }
 
-func TestTimelineDeleteTakesOnlyWhatThePlaceHoldsOfTheRow(t *testing.T) {
-	f, _ := nginxAtHomeAndB2(t)
-	_, _, err := f.svc.timelineDelete(context.Background(), "containers", "nginx", "a1a1a1a1",
-		[]placeDelete{{Place: "local", SnapshotIDs: []string{"a1a1a1a1", "e1e1e1e1", "0badc0de"}}})
-	if err != nil {
-		t.Fatal(err)
+func TestTimelineDeleteIsRefusedWhenAPlaceHoldsOtherBackupsThanShown(t *testing.T) {
+	f, b2 := nginxAtHomeAndB2(t)
+	for name, home := range map[string][]string{
+		"more than the row":  {"a1a1a1a1", "e1e1e1e1"},
+		"less than the row":  {},
+		"another of the row": {"0badc0de"},
+	} {
+		_, _, err := f.svc.timelineDelete(context.Background(), "containers", "nginx", "a1a1a1a1", []placeDelete{
+			{Place: "offsite:" + b2.ID, SnapshotIDs: []string{"b1b1b1b1"}},
+			{Place: "local", SnapshotIDs: home},
+		})
+		if !errors.Is(err, errPlacementStale) {
+			t.Errorf("%s: err = %v, want the numbers changed", name, err)
+		}
 	}
-	if got := forgottenAt(f, f.domainPath("containers")); !slices.Equal(got, []string{"a1a1a1a1"}) {
-		t.Fatalf("forgotten = %v, want a1 only", got)
+	if got := append(forgottenAt(f, f.domainPath("containers")), forgottenAt(f, "b2:bucket:containers")...); len(got) != 0 {
+		t.Fatalf("forgotten = %v, want nothing at any place", got)
 	}
 }
 
