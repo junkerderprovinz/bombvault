@@ -36,6 +36,7 @@ const withPartners: ReceiverServer = {
 let initial: ReceiverServer | null = null;
 const sent: ReceiverServerInput[] = [];
 const revoked: string[] = [];
+let forgotten = 0;
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -45,6 +46,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
     setUpReceiverServer: (input: ReceiverServerInput) => {
       sent.push(input);
       return Promise.resolve({ ok: true, server: { ...server, port: input.port }, password: "one-time-pw", template: "download" });
+    },
+    forgetReceiverServer: () => {
+      forgotten++;
+      return Promise.resolve({ ok: true });
     },
     revokeReceiverLogin: (memberId: string) => {
       revoked.push(memberId);
@@ -80,6 +85,7 @@ afterEach(() => {
   sent.length = 0;
   revoked.length = 0;
   closed.length = 0;
+  forgotten = 0;
 });
 
 describe("ReceiverServerWindow", () => {
@@ -163,5 +169,21 @@ describe("ReceiverServerWindow", () => {
     expect(revoked).toEqual(["m-attic"]);
     expect(screen.queryByText("attic-login")).toBeNull();
     expect(screen.getByText("barn-login")).toBeTruthy();
+  });
+
+  it("stops offering the server only after asking", async () => {
+    initial = withPartners;
+    await renderWindow();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["receiver.server.forget"] }));
+    });
+    expect(forgotten).toBe(0);
+    expect(screen.getByText(en["receiver.server.forgetAsk"])).toBeTruthy();
+
+    const buttons = screen.getAllByRole("button", { name: en["receiver.server.forget"] });
+    await act(async () => {
+      fireEvent.click(buttons[buttons.length - 1]);
+    });
+    expect(forgotten).toBe(1);
   });
 });

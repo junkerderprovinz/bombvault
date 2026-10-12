@@ -112,6 +112,7 @@ export function ReceiverServerWindow({
   }
 
   async function forget() {
+    if (!(await confirm(t("receiver.server.forgetAsk"), { confirmKey: "receiver.server.forget" }))) return;
     try {
       const r = await forgetReceiverServer();
       if (!r.ok) {
