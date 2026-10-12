@@ -100,6 +100,7 @@ func TestRemovalPreviewCountsEveryCopyWhenTheHomeCannotBeRead(t *testing.T) {
 
 func TestRemovalWithNothingOnlyThereNeedsNoName(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	f.container("vaultwarden", "")
 	b2 := f.target("containers", "B2", "b2:bucket:containers")
 	f.hold(f.domainPath("containers"), snap("a1", 1_758_000_000, "container:vaultwarden"))
@@ -113,6 +114,7 @@ func TestRemovalWithNothingOnlyThereNeedsNoName(t *testing.T) {
 
 func TestRemovalOfSnapshotsFoundOnlyThereNeedsTheTypedName(t *testing.T) {
 	f, b2 := vaultwardenAtB2(t)
+	f.signIn()
 	m := f.do("DELETE", removalPath(b2.ID), map[string]any{"onlyThere": []string{"b9"}, "typedName": ""})
 	if m["ok"] != false || m["code"] != "name-mismatch" {
 		t.Fatalf("delete without the name = %v, want name-mismatch", m)
@@ -141,6 +143,7 @@ func TestRemovalOfSnapshotsFoundOnlyThereNeedsTheTypedName(t *testing.T) {
 // images included, and its count says so before anything is deleted.
 func TestRemovalOfAVMTakesItsDiskImages(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	f.vm("win11", "")
 	b2 := f.target("vms", "B2", "b2:bucket:vms")
 	f.hold("b2:bucket:vms",
@@ -167,6 +170,7 @@ func TestRemovalOfAVMTakesItsDiskImages(t *testing.T) {
 
 func TestRemovalRefusesAListThatGrew(t *testing.T) {
 	f, b2 := vaultwardenAtB2(t)
+	f.signIn()
 	m := f.do("DELETE", removalPath(b2.ID), map[string]any{"onlyThere": []string{}, "typedName": "vaultwarden"})
 	if m["ok"] != false || m["code"] != "removal-grown" {
 		t.Fatalf("delete = %v, want removal-grown", m)
@@ -181,6 +185,7 @@ func TestRemovalRefusesAListThatGrew(t *testing.T) {
 
 func TestRemovalRefusesWhenTheHomeTurnedUnreadable(t *testing.T) {
 	f, b2 := vaultwardenAtB2(t)
+	f.signIn()
 	f.do("GET", removalPath(b2.ID), nil)
 	f.eng.listErr[f.domainPath("containers")] = errors.New("permission denied")
 	m := f.do("DELETE", removalPath(b2.ID), map[string]any{"onlyThere": []string{"b9"}, "typedName": "vaultwarden"})
@@ -194,6 +199,7 @@ func TestRemovalRefusesWhenTheHomeTurnedUnreadable(t *testing.T) {
 
 func TestRemovalAtAnAppendOnlyTargetIsRefused(t *testing.T) {
 	f, b2 := vaultwardenAtB2(t)
+	f.signIn()
 	f.appendOnly(b2.ID)
 	if m := f.do("GET", removalPath(b2.ID), nil); m["target"].(map[string]any)["appendOnly"] != true {
 		t.Fatalf("preview = %v, want appendOnly", m)
@@ -206,6 +212,7 @@ func TestRemovalAtAnAppendOnlyTargetIsRefused(t *testing.T) {
 
 func TestRemovalWhileABackupRunsIsRefused(t *testing.T) {
 	f, b2 := vaultwardenAtB2(t)
+	f.signIn()
 	unlock, ok := f.svc.tryLockDomainFor("containers", "backup")
 	if !ok {
 		t.Fatal("could not take the domain lock")
