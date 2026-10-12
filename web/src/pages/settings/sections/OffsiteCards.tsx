@@ -13,8 +13,10 @@ import { Button } from "../../../components/Button";
 import type { Settings } from "../../../lib/api";
 import { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
-import { REPO_LOCAL_HINT_LTR_FRAGMENTS, withLtrFragments } from "../../../lib/ltrFragments";
+import { REPO_LOCAL_HINT_LTR_FRAGMENTS, withLtrIsolates } from "../../../lib/ltrFragments";
+import { InfoBubble } from "../../../components/InfoBubble";
 import { IconCheck, IconSync, IconGear, IconClose } from "../../../components/Sidebar";
+import { InstanceWindow } from "../../instances/InstanceWindow";
 import { Card, type SaveState } from "../shared";
 import { useSettings } from "../settingsStore";
 
@@ -65,13 +67,14 @@ function ReplicateNowButton({
 }
 
 // OffsiteDomainBar heads a domain's off-site card: the connection test,
-// replicate now and the setup switch, with the test's verdict line above them.
+// replicate now and the button that opens the setup, with the test's verdict
+// line above them.
 function OffsiteDomainBar({
   domain,
   label,
   repo,
   wizardOpen,
-  onToggleWizard,
+  onOpenWizard,
   t,
   hueIndex,
 }: {
@@ -79,7 +82,7 @@ function OffsiteDomainBar({
   label: string;
   repo: string;
   wizardOpen: boolean;
-  onToggleWizard: () => void;
+  onOpenWizard: () => void;
   t: ReturnType<typeof useT>["t"];
   hueIndex?: number;
 }) {
@@ -95,7 +98,10 @@ function OffsiteDomainBar({
     <>
       <VerdictLine verdict={test.verdict} />
       <div className="flex items-center justify-between">
-        <span className="text-xs text-carbon-textSub">{label}</span>
+        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+          {label}
+          <InfoBubble tip={withLtrIsolates(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)} />
+        </span>
         <span className="inline-flex items-center gap-2">
           {repo && !wizardOpen && (
             <>
@@ -112,17 +118,13 @@ function OffsiteDomainBar({
               <ReplicateNowButton domain={domain} t={t} hueIndex={hueIndex} />
             </>
           )}
-          {/* The one place a swapping label is right: open and close are
-              two different actions with two different glyphs, not one
-              action reporting its state. Both names are short enough to
-              share a width stage, so the control does not jump. */}
           <Button
-            label={wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
-            labelKey={wizardOpen ? "offsite.wizard.close" : "offsite.wizard.setup"}
-            glyph={wizardOpen ? <IconClose /> : <IconGear />}
+            label={t("offsite.wizard.setup")}
+            labelKey="offsite.wizard.setup"
+            glyph={<IconGear />}
             tone="accent"
             hueIndex={hueIndex}
-            onClick={onToggleWizard}
+            onClick={onOpenWizard}
           />
         </span>
       </div>
@@ -138,7 +140,7 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
 
   const [, setOffsiteSaveState] = useState<SaveState>("idle");
   const [, setOffsiteSaveError] = useState<string | null>(null);
-  // Which domain's guided off-site setup wizard is expanded (null = none).
+  // The domain whose setup window is open.
   const [offsiteWizard, setOffsiteWizard] = useState<OffsiteDomain | null>(null);
 
   const [, setLimSaveState] = useState<SaveState>("idle");
@@ -165,65 +167,65 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
         // control inside it, so a domain's buttons match its card.
         const hueIdx = nextHue();
         const fieldTarget = allTargets.find((x) => x.domain === domain && x.sortOrder === 0);
+        const title = t("offsite.copyDomainTitle").replace("{domain}", t(label));
         return (
-        <Card key={repoKey} title={t("offsite.copyDomainTitle").replace("{domain}", t(label))} hueIndex={hueIdx}>
-          {/* The repo URL prefixes (rest:, s3:, b2:) are visible reference
-              text. They apply to every domain, so they are shown once, in the
-              first card. */}
-          {domain === "containers" && (
-            <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
-          )}
+        <Card key={repoKey} title={title} hint={t("settings.offsiteHint")} hueIndex={hueIdx}>
           <div className="flex flex-col gap-1">
             <OffsiteDomainBar
               domain={domain}
               label={t(label)}
               repo={settings[repoKey]}
               wizardOpen={wizardOpen}
-              onToggleWizard={() => setOffsiteWizard(wizardOpen ? null : domain)}
+              onOpenWizard={() => setOffsiteWizard(domain)}
               t={t}
               hueIndex={hueIdx}
             />
-            {wizardOpen ? (
-              <OffsiteWizard
-                domain={domain}
-                settings={settings}
-                setSettings={setSettings}
-                save={save}
-                t={t}
-                hueIndex={hueIdx}
-              />
-            ) : (
-              <>
-                <OffsiteLocationInput
-                  domain={domain}
-                  value={settings[repoKey]}
-                  targetId={fieldTarget?.id}
-                  targetName={fieldTarget?.name}
-                  following={fieldTarget?.destinationId && fieldTarget.enabled ? fieldTarget.name : undefined}
-                  placeholder="rest:http://host:8000/repo"
-                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus text-start"
-                  onSave={(v) => save({ [repoKey]: v } as Partial<Settings>, setOffsiteSaveState, setOffsiteSaveError)}
-                  onFromDestination={(location, immutable) => {
-                    // The server already holds both, so the next save of
-                    // another card must not send the old values back.
-                    const patch = { [repoKey]: location, [`${domain}OffsiteImmutable`]: immutable } as Partial<Settings>;
-                    setSettings((s) => (s ? { ...s, ...patch } : s));
-                    if (savedBaseline.current) savedBaseline.current = { ...savedBaseline.current, ...patch };
-                  }}
-                />
-                {/* A mounted share is a valid off-site target, but the
-                    placeholder shows a REST URL, so this says a bare relative
-                    path works too (#138). */}
-                <span className="text-xs text-carbon-textMuted">
-                  {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
-                </span>
-                {settings[repoKey] && (
-                  <CompressionSelector
-                    value={settings.compression[`offsite:${domain}`]}
-                    onChange={(c) => void saveCompression(`offsite:${domain}`, c, settings, setSettings, save)}
+            {wizardOpen && (
+              <InstanceWindow
+                title={title}
+                onClose={() => setOffsiteWizard(null)}
+                footer={
+                  <Button
+                    label={t("offsite.wizard.close")}
+                    labelKey="offsite.wizard.close"
+                    glyph={<IconClose />}
+                    tone="accent"
+                    onClick={() => setOffsiteWizard(null)}
                   />
-                )}
-              </>
+                }
+              >
+                <OffsiteWizard
+                  domain={domain}
+                  settings={settings}
+                  setSettings={setSettings}
+                  save={save}
+                  t={t}
+                  hueIndex={hueIdx}
+                />
+              </InstanceWindow>
+            )}
+            <OffsiteLocationInput
+              domain={domain}
+              value={settings[repoKey]}
+              targetId={fieldTarget?.id}
+              targetName={fieldTarget?.name}
+              following={fieldTarget?.destinationId && fieldTarget.enabled ? fieldTarget.name : undefined}
+              placeholder="rest:http://host:8000/repo"
+              className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus text-start"
+              onSave={(v) => save({ [repoKey]: v } as Partial<Settings>, setOffsiteSaveState, setOffsiteSaveError)}
+              onFromDestination={(location, immutable) => {
+                // The server already holds both, so the next save of
+                // another card must not send the old values back.
+                const patch = { [repoKey]: location, [`${domain}OffsiteImmutable`]: immutable } as Partial<Settings>;
+                setSettings((s) => (s ? { ...s, ...patch } : s));
+                if (savedBaseline.current) savedBaseline.current = { ...savedBaseline.current, ...patch };
+              }}
+            />
+            {settings[repoKey] && (
+              <CompressionSelector
+                value={settings.compression[`offsite:${domain}`]}
+                onChange={(c) => void saveCompression(`offsite:${domain}`, c, settings, setSettings, save)}
+              />
             )}
             {/* Extra copies of this domain beyond the primary above, managed
                 through the CRUD API. */}

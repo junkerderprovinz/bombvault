@@ -7,7 +7,7 @@
 // because a test that sets the whole value passes either way.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { I18nProvider, useT } from "../lib/i18n";
+import { I18nProvider, en, useT } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 
 const setCloudCalls: Record<string, string>[] = [];
@@ -152,5 +152,13 @@ describe("CloudCard secret entry", () => {
     // Shown twice: a standing line in the card and a toast for the refused
     // edit.
     expect(screen.getAllByText(/could not be loaded/i).length).toBeGreaterThan(0);
+  });
+});
+
+describe("the explanation of the address prefixes", () => {
+  it("sits in the card's bubble", async () => {
+    await renderCard();
+    expect(screen.queryByText(en["cloud.hint"])).toBeNull();
+    expect(screen.getByLabelText(en["cloud.hint"])).toBeTruthy();
   });
 });

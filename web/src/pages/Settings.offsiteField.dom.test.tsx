@@ -221,3 +221,26 @@ describe("the off-site field", () => {
     expect(fake.callsTo("getNewTargetPreview")).toEqual([]);
   });
 });
+
+/** Matches a label whatever direction marks it carries around paths. */
+const bare = (text: string) => (label: string) => label.replace(/[\u2066-\u2069]/g, "") === text;
+
+describe("setting up an off-site copy", () => {
+  it("opens the wizard in a window and leaves the field on the card", async () => {
+    await renderOffsitePage();
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole("button", { name: en["offsite.wizard.setup"] })[0]);
+    });
+    const title = en["offsite.copyDomainTitle"].replace("{domain}", en["nav.containers"]);
+    const window = screen.getByRole("dialog", { name: title });
+    expect(within(window).getByText(en["offsite.wizard.step1"])).toBeTruthy();
+    expect(field(0)).toBeTruthy();
+  });
+
+  it("explains the location's syntax in bubbles instead of lines of text", async () => {
+    await renderOffsitePage();
+    expect(screen.queryByText(en["settings.offsiteHint"])).toBeNull();
+    expect(screen.getAllByLabelText(en["settings.offsiteHint"]).length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText(bare(en["offsite.repoLocalHint"])).length).toBeGreaterThan(0);
+  });
+});
