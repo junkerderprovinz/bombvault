@@ -3125,6 +3125,26 @@ UNION SELECT member_id FROM receiver_logins WHERE member_id <> ''
 UNION SELECT member_id FROM received_repos WHERE member_id <> ''
 UNION SELECT member_id FROM pull_sources WHERE member_id <> '';`,
 	},
+	{
+		// A member with a pinned key signs, so it has no place on the list.
+		version: legacyMembersMigration + 1,
+		name:    "legacy_members_without_keys",
+		sql:     `DELETE FROM legacy_members WHERE member_id IN (SELECT member_id FROM member_keys);`,
+	},
+	{
+		version: oneLineUpsertMigration,
+		name:    "one_line_upserts_keep_stored_values",
+		sql:     oneLineInsertTriggers(),
+	},
+	{
+		// A phone that opened this server before paired sessions existed holds
+		// a full session, which the paired routes do not limit. A new epoch
+		// ends it, along with every other session. Without a password there
+		// are no sessions.
+		version: endSessionsMigration,
+		name:    "end_sessions_from_before_paired_ones",
+		sql:     `UPDATE settings SET session_epoch = lower(hex(randomblob(16))) WHERE auth_password_hash <> '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3253,8 +3273,17 @@ const keyHardeningMigration = 350
 // container after its backup, 355.
 const updateEveryContainerMigration = 355
 
-// legacyMembersMigration numbers the members that may call unsigned, 356.
+// legacyMembersMigration numbers the members that may call unsigned, 356,
+// and the removal of those that pinned a key, 357.
 const legacyMembersMigration = 356
+
+// oneLineUpsertMigration numbers the guard against line breaks for the
+// saves that insert a row over itself, 358.
+const oneLineUpsertMigration = 358
+
+// endSessionsMigration numbers the sign-out of every session issued before
+// sessions of paired phones were told apart, 359.
+const endSessionsMigration = 359
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
@@ -3290,6 +3319,23 @@ func oneLineTriggers() string {
 			t.table, strings.Join(fresh, " OR "), ErrLineBreakText)
 		fmt.Fprintf(&b, "CREATE TRIGGER IF NOT EXISTS one_line_%[1]s_update BEFORE UPDATE OF %[2]s ON %[1]s WHEN %[3]s BEGIN SELECT RAISE(ABORT, '%[4]s'); END;\n",
 			t.table, strings.Join(t.cols, ", "), strings.Join(changed, " OR "), ErrLineBreakText)
+	}
+	return b.String()
+}
+
+// oneLineInsertTriggers rebuilds the insert guards of oneLineTriggers to pass a
+// value the row already holds. SQLite fires the insert trigger of an upsert
+// before it turns into an update, so a value stored before the guard would
+// block every change to its row.
+func oneLineInsertTriggers() string {
+	var b strings.Builder
+	for _, t := range oneLineColumns {
+		var fresh []string
+		for _, c := range t.cols {
+			fresh = append(fresh, fmt.Sprintf("(instr(coalesce(NEW.%[1]s, ''), char(10)) + instr(coalesce(NEW.%[1]s, ''), char(13)) > 0 AND NOT EXISTS (SELECT 1 FROM %[2]s WHERE id = NEW.id AND %[1]s IS NEW.%[1]s))", c, t.table))
+		}
+		fmt.Fprintf(&b, "DROP TRIGGER IF EXISTS one_line_%[1]s_insert;\nCREATE TRIGGER one_line_%[1]s_insert BEFORE INSERT ON %[1]s WHEN %[2]s BEGIN SELECT RAISE(ABORT, '%[3]s'); END;\n",
+			t.table, strings.Join(fresh, " OR "), ErrLineBreakText)
 	}
 	return b.String()
 }

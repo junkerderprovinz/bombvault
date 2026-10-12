@@ -749,7 +749,7 @@ func (s *Service) prepareForeignZFSRestore(ctx context.Context, sess foreignSess
 	if strings.TrimSpace(targetSubPath) == "" {
 		return zfsRestorePlan{}, errors.New("a ZFS dataset from another server can only be restored into a folder")
 	}
-	target, err := paths.Resolve(s.cfg.HostMountRoot, targetSubPath)
+	target, err := paths.ResolveForWrite(s.cfg.HostMountRoot, targetSubPath)
 	if err != nil {
 		return zfsRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 	}
@@ -1004,7 +1004,7 @@ func (s *Service) prepareForeignFileSetRestore(ctx context.Context, sess foreign
 	if sub == "" {
 		return fileSetRestorePlan{}, errors.New("a target folder is required to restore a file set from a foreign repository")
 	}
-	target, err := paths.Resolve(s.cfg.HostMountRoot, sub)
+	target, err := paths.ResolveForWrite(s.cfg.HostMountRoot, sub)
 	if err != nil {
 		return fileSetRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 	}

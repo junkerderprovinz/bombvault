@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"maps"
 	"net/http"
@@ -118,7 +119,7 @@ func (s *Service) planExport(ctx context.Context, domain, key, source string, re
 	plan := exportPlan{domain: domain, form: req.Form}
 	if req.Folder == "" {
 		plan.dir, err = s.exportDir(settings)
-	} else if plan.dir, err = paths.Resolve(s.cfg.HostMountRoot, req.Folder); err != nil {
+	} else if plan.dir, err = paths.ResolveForWrite(s.cfg.HostMountRoot, req.Folder); err != nil {
 		err = errors.New("invalid export folder: must be a relative subpath under the host mount")
 	}
 	if err != nil {
@@ -229,10 +230,25 @@ func (s *Service) planRepositoryExport(ctx context.Context, plan exportPlan, cho
 	return plan, nil
 }
 
-// freeForRepository refuses a folder that holds anything, so a copy never
-// lands in a repository that is in use.
+// freeForRepository accepts a folder that is not there yet or is empty, so a
+// copy never lands in a repository that is in use, and a failed one never
+// removes what somebody else put there.
 func freeForRepository(dir string) error {
-	if held, err := os.ReadDir(dir); err == nil && len(held) > 0 {
+	info, err := os.Lstat(dir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("%s already exists in the export folder; a copy needs a folder of its own, so remove it or choose another export folder", filepath.Base(dir))
+	}
+	held, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	if len(held) > 0 {
 		return fmt.Errorf("the folder %s is not empty; a copy needs a folder of its own, so remove it or choose another export folder", filepath.Base(dir))
 	}
 	return nil
@@ -361,15 +377,17 @@ func (s *Service) dumpPart(ctx context.Context, plan exportPlan, part exportPart
 // copyExport creates the repository and copies the planned snapshots into it.
 // It opens with the password of the repository it is copied from, which is
 // this instance's own, or with none where encryption is off. A copy that fails
-// leaves no folder behind.
+// removes the folder when it created it.
 func (s *Service) copyExport(ctx context.Context, plan exportPlan, startedAt int64) (err error) {
 	dest := filepath.Join(plan.dir, strings.TrimSuffix(plan.Files[0], "/"))
 	// Asked again here, because what follows removes the folder on a failure.
 	if err := freeForRepository(dest); err != nil {
 		return err
 	}
+	_, statErr := os.Lstat(dest)
+	created := errors.Is(statErr, fs.ErrNotExist)
 	defer func() {
-		if err != nil {
+		if err != nil && created {
 			_ = os.RemoveAll(dest)
 		}
 	}()

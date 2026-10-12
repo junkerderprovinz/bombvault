@@ -376,7 +376,7 @@ func (s *Service) prepareRestoreZFS(ctx context.Context, id, source string, req 
 // one member into the folder itself, or the whole tree with each member in its
 // own place below it.
 func (s *Service) planZFSRestoreToFolder(ctx context.Context, plan *zfsRestorePlan, point ZFSRestorePoint, req ZFSRestoreRequest, sub string) (ZFSRestoreAck, error) {
-	target, err := paths.Resolve(s.cfg.HostMountRoot, sub)
+	target, err := paths.ResolveForWrite(s.cfg.HostMountRoot, sub)
 	if err != nil {
 		return ZFSRestoreAck{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 	}
@@ -399,7 +399,7 @@ func (s *Service) planZFSRestoreToFolder(ctx context.Context, plan *zfsRestorePl
 	if isPlanOnly(ctx) {
 		return ZFSRestoreAck{Target: target}, nil
 	}
-	if err := paths.EnsureDirReadable(target); err != nil {
+	if err := makeRestoreFolder(ctx, target, paths.EnsureDirReadable); err != nil {
 		return ZFSRestoreAck{}, fmt.Errorf("create target folder: %w", err)
 	}
 	return ZFSRestoreAck{Target: target}, nil

@@ -1,6 +1,7 @@
 package paths_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -32,6 +33,74 @@ func TestEnsureDirReadable(t *testing.T) {
 	}
 	if perm := statPerm(t, target); perm != 0o755 {
 		t.Fatalf("EnsureDirReadable must heal 0o700 → 0o755, got %o", perm)
+	}
+}
+
+func TestEnsureEmptyDirTakesOnlyAFolderThatHoldsNothing(t *testing.T) {
+	root := t.TempDir()
+	if err := paths.EnsureEmptyDir(filepath.Join(root, "new", "folder")); err != nil {
+		t.Fatalf("a new folder: %v", err)
+	}
+	empty := filepath.Join(root, "empty")
+	if err := os.Mkdir(empty, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := paths.EnsureEmptyDir(empty); err != nil {
+		t.Fatalf("an empty folder: %v", err)
+	}
+	if runtime.GOOS != "windows" && statPerm(t, empty) != 0o700 {
+		t.Fatalf("the empty folder's mode changed to %o", statPerm(t, empty))
+	}
+	full := filepath.Join(root, "full")
+	if err := os.Mkdir(full, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(full, "a"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(root, "file")
+	if err := os.WriteFile(file, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range []string{full, file} {
+		if err := paths.EnsureEmptyDir(p); !errors.Is(err, paths.ErrNotEmpty) {
+			t.Errorf("%s: %v, want ErrNotEmpty", p, err)
+		}
+	}
+	if runtime.GOOS != "windows" {
+		link := filepath.Join(root, "link")
+		if err := os.Symlink(empty, link); err != nil {
+			t.Fatal(err)
+		}
+		if err := paths.EnsureEmptyDir(link); !errors.Is(err, paths.ErrNotEmpty) {
+			t.Errorf("a link to an empty folder: %v, want ErrNotEmpty", err)
+		}
+	}
+}
+
+func TestResolveForWriteRefusesALinkOutOfTheRoot(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "mount")
+	outside := filepath.Join(filepath.Dir(root), "config")
+	for _, dir := range []string{filepath.Join(root, "appdata", "app"), filepath.Join(root, "media"), outside} {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Symlink(outside, filepath.Join(root, "appdata", "app", "x")); err != nil {
+		t.Skipf("no symlinks here: %v", err)
+	}
+	if err := os.Symlink(filepath.Join(root, "media"), filepath.Join(root, "appdata", "media")); err != nil {
+		t.Fatal(err)
+	}
+	for _, sub := range []string{"appdata/app/x", "appdata/app/x/restore/new"} {
+		if _, err := paths.ResolveForWrite(root, sub); !errors.Is(err, paths.ErrLinkEscape) {
+			t.Errorf("%s: %v, want ErrLinkEscape", sub, err)
+		}
+	}
+	for _, sub := range []string{"appdata/app/restore", "appdata/media/new", "fresh/folder"} {
+		if _, err := paths.ResolveForWrite(root, sub); err != nil {
+			t.Errorf("%s: %v", sub, err)
+		}
 	}
 }
 

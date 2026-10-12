@@ -95,6 +95,7 @@ const (
 	reasonParentMissing = "parent-missing"
 	reasonNoNetwork     = "network-missing"
 	reasonGone          = "gone"
+	reasonEmpty         = "empty"
 )
 
 // CheckLine is one line of the pre-flight checklist. Detail carries the

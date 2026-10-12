@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -324,5 +325,30 @@ func TestArchiveRootIsTheMountForFoldersBelowIt(t *testing.T) {
 		if got := s.archiveRoot(c.set, c.snap); got != c.want {
 			t.Errorf("%s starts at %q, want %q", c.name, got, c.want)
 		}
+	}
+}
+
+// refusingInit fails to create a repository, as restic does over a file.
+type refusingInit struct{ ResticEngine }
+
+func (refusingInit) Init(context.Context, string, restic.Mode) error {
+	return errors.New("cannot create the repository")
+}
+
+func TestARepositoryExportLeavesWhatItFindsInItsPlace(t *testing.T) {
+	dir := t.TempDir()
+	dest := filepath.Join(dir, "plex-restic")
+	if err := os.WriteFile(dest, []byte("the person's file"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := freeForRepository(dest); err == nil {
+		t.Error("a file in the way counts as free")
+	}
+	plan := exportPlan{dir: dir, ExportPreview: ExportPreview{Files: []string{"plex-restic/"}}}
+	if err := (&Service{engine: refusingInit{}}).copyExport(context.Background(), plan, 0); err == nil {
+		t.Error("the copy went ahead over a file")
+	}
+	if got := read(t, dest); got != "the person's file" {
+		t.Fatalf("the file holds %q", got)
 	}
 }

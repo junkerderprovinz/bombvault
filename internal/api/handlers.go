@@ -32,6 +32,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
+	"github.com/junkerderprovinz/bombvault/internal/redact"
 	"github.com/junkerderprovinz/bombvault/internal/releasenotes"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -191,7 +192,7 @@ func scrubSecrets(s string) string {
 	last := 0
 	for _, m := range repoLocationRe.FindAllStringIndex(s, -1) {
 		b.WriteString(scrubOutsideARepoLocation(s[last:m[0]]))
-		b.WriteString(repoUserinfoRe.ReplaceAllString(s[m[0]:m[1]], "${1}:${2}[redacted]@"))
+		b.WriteString(redact.RcloneParams(repoUserinfoRe.ReplaceAllString(s[m[0]:m[1]], "${1}:${2}[redacted]@")))
 		last = m[1]
 	}
 	b.WriteString(scrubOutsideARepoLocation(s[last:]))
@@ -3520,6 +3521,9 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
+	if !h.requireAuthForSecrets(w, r, "pruning backups") {
+		return
+	}
 	paused, err := h.svc.PruneDomain(r.Context(), domain, sourceParam(r))
 	if err != nil {
 		body := failEnvelope(err)
@@ -3578,6 +3582,9 @@ func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
 	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	if !h.requireAuthForSecrets(w, r, "deleting a backup") {
 		return
 	}
 	if err := h.svc.DeleteSnapshot(r.Context(), domain, r.PathValue("id"), sourceParam(r)); err != nil {

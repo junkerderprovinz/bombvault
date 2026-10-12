@@ -1529,7 +1529,7 @@ func (s *Service) primaryRepo(settings store.Settings, domain, item string) (rep
 // plain LOCAL folder, so it applies only the containment half of resolveRepo:
 // paths.Resolve(HostMountRoot, …), which rejects absolute paths and traversal.
 func (s *Service) flashZipExportDir(settings store.Settings) (string, error) {
-	dir, err := paths.Resolve(s.cfg.HostMountRoot, settings.FlashZipExportPath)
+	dir, err := paths.ResolveForWrite(s.cfg.HostMountRoot, settings.FlashZipExportPath)
 	if err != nil {
 		return "", fmt.Errorf("flash zip export: resolve path: %w", err)
 	}
@@ -1918,20 +1918,18 @@ func (s *Service) applyTargetCreds(mode restic.Mode, settings store.Settings, ta
 
 // retentionPolicyForSource returns the keep-policy to apply for a given repo
 // source: the domain's local policy, the domain's off-site policy for its
-// built-in off-site repo, and the shared off-site policy for an additional
-// target, which a domain's own off-site rules do not reach.
+// built-in off-site repo, and an additional target's own rule, which the copy
+// pass ages the same repository by.
 func (s *Service) retentionPolicyForSource(settings store.Settings, domain, source string) restic.RetentionPolicy {
-	var p restic.RetentionPolicy
-	switch {
-	case !isOffsiteSource(source):
+	if !isOffsiteSource(source) {
 		return s.retentionPolicy(settings, domain)
-	case s.isBuiltInOffsiteSource(settings, domain, source):
-		p = s.offsiteRetentionPolicy(settings, domain)
-	default:
-		p = keepPolicy(sharedOffsiteKeep(settings))
+	}
+	if t, err := s.offsiteTargetForSource(settings, domain, source); err == nil && !isBuiltInOffsiteTarget(settings, domain, t) {
+		return targetAgingPolicy(t)
 	}
 	// A target ages its copies from a direct repository like any other copy,
 	// as the copy pass does (targetAgingPolicy).
+	p := s.offsiteRetentionPolicy(settings, domain)
 	p.Direct = true
 	return p
 }
@@ -9647,12 +9645,12 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 	target := "/"
 	resolved := ""
 	if sub := strings.TrimSpace(targetSubPath); sub != "" {
-		t, err := paths.Resolve(s.cfg.HostMountRoot, sub)
+		t, err := paths.ResolveForWrite(s.cfg.HostMountRoot, sub)
 		if err != nil {
 			return filesRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
 		if !isPlanOnly(ctx) {
-			if err := paths.EnsureDir(t); err != nil {
+			if err := makeRestoreFolder(ctx, t, paths.EnsureDir); err != nil {
 				return filesRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 			}
 		}
@@ -9986,7 +9984,7 @@ func (s *Service) prepareRestoreToPath(ctx context.Context, name, source, snapsh
 	// Resolve the target against the host mount root with the shared containment
 	// helper: it path.Cleans the input and rejects an absolute path or any "../"
 	// that would escape the mount. The result is guaranteed to sit under the mount.
-	target, err := paths.Resolve(s.cfg.HostMountRoot, targetSubPath)
+	target, err := paths.ResolveForWrite(s.cfg.HostMountRoot, targetSubPath)
 	if err != nil {
 		// paths.Resolve returns ErrTraversal/ErrAbsoluteSub — neither leaks a host
 		// path; keep the message generic (defense-in-depth, mirrors handleBrowse).
@@ -10015,7 +10013,7 @@ func (s *Service) prepareRestoreToPath(ctx context.Context, name, source, snapsh
 
 	// Create the target dir ONLY after containment passed.
 	if !isPlanOnly(ctx) {
-		if err := paths.EnsureDir(target); err != nil {
+		if err := makeRestoreFolder(ctx, target, paths.EnsureDir); err != nil {
 			return toPathRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 		}
 	}
@@ -14474,7 +14472,7 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	if sub := strings.TrimSpace(targetSubPath); sub != "" {
 		// Alternate folder: shared containment helper (path.Cleans the input and
 		// rejects an absolute path or any "../" that would escape the mount).
-		t, rErr := paths.Resolve(s.cfg.HostMountRoot, sub)
+		t, rErr := paths.ResolveForWrite(s.cfg.HostMountRoot, sub)
 		if rErr != nil {
 			return fileSetRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
@@ -14567,7 +14565,7 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	// share, so the operator's non-root SMB user must be able to read what root
 	// restored there (see EnsureDirReadable).
 	if plan.target != "" && !isPlanOnly(ctx) {
-		if err := paths.EnsureDirReadable(plan.target); err != nil {
+		if err := makeRestoreFolder(ctx, plan.target, paths.EnsureDirReadable); err != nil {
 			return fileSetRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 		}
 	}
@@ -14796,7 +14794,7 @@ func (s *Service) buildFileSetFilesPlan(ctx context.Context, snaps []restic.Snap
 	}
 
 	if sub := strings.TrimSpace(targetSubPath); sub != "" {
-		t, rErr := paths.Resolve(s.cfg.HostMountRoot, sub)
+		t, rErr := paths.ResolveForWrite(s.cfg.HostMountRoot, sub)
 		if rErr != nil {
 			return fileSetFilesRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
@@ -14828,7 +14826,7 @@ func (s *Service) buildFileSetFilesPlan(ctx context.Context, snaps []restic.Snap
 	// (0o755) variant, so the operator's non-root SMB user can read what root
 	// restored to the synced share (see EnsureDirReadable / the v6.0.0 files fix).
 	if plan.target != "" && !isPlanOnly(ctx) {
-		if err := paths.EnsureDirReadable(plan.target); err != nil {
+		if err := makeRestoreFolder(ctx, plan.target, paths.EnsureDirReadable); err != nil {
 			return fileSetFilesRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 		}
 	}

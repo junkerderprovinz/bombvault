@@ -44,16 +44,16 @@ func TestExpiredKeepsTheNewestSnapshotOfEachDay(t *testing.T) {
 
 func TestExpiredCountsDaysInTheGivenZone(t *testing.T) {
 	// 21:30 and 22:30 UTC on one day are two days in Vienna's summer time.
-	names := []string{"bombvault-replica-20261008213000", "bombvault-replica-20261008223000"}
+	names := []string{"bombvault-replica-20261007120000", "bombvault-replica-20261008213000", "bombvault-replica-20261008223000"}
 	vienna, err := time.LoadLocation("Europe/Vienna")
 	if err != nil {
 		t.Skip("no zone database")
 	}
-	if got := Expired(names, store.RetentionKeep{KeepDaily: 2}, "", vienna); got != nil {
-		t.Errorf("Expired in Vienna = %q, want both kept", got)
+	if got := Expired(names, store.RetentionKeep{KeepDaily: 2}, "", vienna); !slices.Equal(got, names[:1]) {
+		t.Errorf("Expired in Vienna = %q, want the day before gone", got)
 	}
-	if got := Expired(names, store.RetentionKeep{KeepDaily: 2}, "", time.UTC); !slices.Equal(got, names[:1]) {
-		t.Errorf("Expired in UTC = %q, want the earlier one gone", got)
+	if got := Expired(names, store.RetentionKeep{KeepDaily: 2}, "", time.UTC); !slices.Equal(got, names[1:2]) {
+		t.Errorf("Expired in UTC = %q, want the earlier one of the day gone", got)
 	}
 }
 
@@ -96,5 +96,19 @@ func TestExpiredNeverTouchesForeignNamesOrTheBase(t *testing.T) {
 func TestExpiredWithoutRulesKeepsEverything(t *testing.T) {
 	if got := Expired(daily(30), store.RetentionKeep{}, "", time.UTC); got != nil {
 		t.Errorf("Expired = %q, want nil", got)
+	}
+}
+
+func TestExpiredKeepsTheOldestWhileARuleHasCountsLeft(t *testing.T) {
+	day := time.Date(2026, 10, 8, 0, 0, 0, 0, time.UTC)
+	names := []string{
+		zfs.ReplicaSnapshotName(day.Add(8 * time.Hour)),
+		zfs.ReplicaSnapshotName(day.Add(12 * time.Hour)),
+		zfs.ReplicaSnapshotName(day.Add(16 * time.Hour)),
+		zfs.ReplicaSnapshotName(day.Add(32 * time.Hour)),
+	}
+	got := Expired(names, store.RetentionKeep{KeepDaily: 7, KeepWeekly: 3}, names[3], time.UTC)
+	if want := []string{names[1]}; !slices.Equal(got, want) {
+		t.Errorf("Expired = %q, want %q: restic keeps the oldest while daily has days left", got, want)
 	}
 }

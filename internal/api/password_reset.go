@@ -205,9 +205,13 @@ func (h *Handler) handleFinishPasswordReset(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	h.recordLoginSuccess(key)
+	twoFactor := ""
+	if removed.TwoFactor {
+		twoFactor = "two-factor authentication turned off, "
+	}
 	log.Printf("api: the login password was reset with a code from the container log: %d passkey(s) removed, "+
-		"%d API token(s) and %d MCP key(s) or OAuth grant(s) revoked, every other session ended, pairing phones switched off",
-		removed.Passkeys, removed.APITokens, removed.MCPKeys)
+		"%d API token(s) and %d MCP key(s) or OAuth grant(s) revoked, %severy other session ended, pairing phones switched off",
+		removed.Passkeys, removed.APITokens, removed.MCPKeys, twoFactor)
 
 	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
 	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
@@ -220,6 +224,9 @@ type resetRemoved struct {
 	APITokens int   `json:"apiTokens"`
 	MCPKeys   int   `json:"mcpKeys"`
 	TwoFactor bool  `json:"twoFactor"`
+	// PhonePairingOff says that phones cannot pair until somebody signed in
+	// switches it on again.
+	PhonePairingOff bool `json:"phonePairingOff"`
 }
 
 // resetLogin leaves whoever holds the code alone in the instance: every key,
@@ -254,6 +261,7 @@ func (h *Handler) resetLogin(hash string) (resetRemoved, string, error) {
 	if err := h.store.SetPhonePairing(false); err != nil {
 		return removed, "", err
 	}
+	removed.PhonePairingOff = true
 
 	epoch := ""
 	_, err = h.store.MutateSettings(func(s *store.Settings) error {

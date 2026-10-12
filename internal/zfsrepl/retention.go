@@ -55,7 +55,8 @@ func Expired(names []string, keep store.RetentionKeep, protect string, loc *time
 			if r.left == 0 {
 				continue
 			}
-			if b := r.bucket(s.at); b != r.last {
+			// Like restic, a rule with counts left keeps the oldest snapshot too.
+			if b := r.bucket(s.at); b != r.last || i == len(snaps)-1 {
 				r.last = b
 				r.left--
 				kept = true

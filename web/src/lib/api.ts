@@ -1076,13 +1076,14 @@ export interface RestorePlan {
 }
 
 /** What becomes of the backup before a restore: "ok" when it will be taken,
- *  "skip" with reason "gone" when the entry is not on the host and has no
- *  state to save, "fail" with the server's words in detail when it cannot be
- *  taken, which also makes the check not ready. seconds and bytes are what the
- *  entry's last backup took and added, 0 when there is none. */
+ *  "skip" with reason "gone" when the entry is not on the host or "empty"
+ *  when it has no data a backup could take, "fail" with the server's words
+ *  in detail when it cannot be taken, which also makes the check not ready.
+ *  seconds and bytes are what the entry's last backup took and added, 0 when
+ *  there is none. */
 export interface BackupFirstPlan {
   status: "ok" | "skip" | "fail";
-  reason?: "gone";
+  reason?: "gone" | "empty";
   detail?: string;
   seconds: number;
   bytes: number;
@@ -6517,6 +6518,8 @@ export interface PasswordResetRemoved {
   mcpKeys: number;
   /** Whether two-factor authentication was on and is now off. */
   twoFactor: boolean;
+  /** Whether phones cannot pair until somebody signed in switches it on. */
+  phonePairingOff: boolean;
 }
 
 export interface PasswordResetResult extends OkEnvelope {

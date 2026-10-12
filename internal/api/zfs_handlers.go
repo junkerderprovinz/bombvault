@@ -30,6 +30,10 @@ func (h *Handler) zfsIDParam(w http.ResponseWriter, r *http.Request) (string, bo
 // zfsFail answers a refusal that carries a reason code with that code, so the
 // page builds the sentence instead of showing the backend's text.
 func zfsFail(w http.ResponseWriter, err error) {
+	if errors.Is(err, errPairedFolderInUse) {
+		refusePaired(w)
+		return
+	}
 	if code, ok := zfsRefusalCode(err); ok {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(err, code))
 		return

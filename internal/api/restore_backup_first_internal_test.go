@@ -408,6 +408,60 @@ func TestRestoreOfAContainerThatIsGoneHasNoStateToBackUpFirst(t *testing.T) {
 	}
 }
 
+func TestRestoreOfAContainerWhoseDataIsGoneHasNoStateToBackUpFirst(t *testing.T) {
+	r := newRestoreRig(t)
+	tg, snap := r.seedPlex(t)
+	if err := os.RemoveAll(filepath.Join(r.root, "appdata/plex")); err != nil {
+		t.Fatal(err)
+	}
+
+	res := r.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: snap, BackupFirst: true})
+	if b := backupFirstOf(t, res); b.Status != lineSkip || b.Reason != reasonEmpty || !res.Ready {
+		t.Fatalf("backup first = %+v ready=%v", b, res.Ready)
+	}
+
+	if started, err := r.svc.StartRestore(context.Background(), "plex", snap, "local", RestoreOptions{BackupFirst: true}); err != nil || !started {
+		t.Fatalf("StartRestore: started=%v err=%v", started, err)
+	}
+	r.wait(t)
+
+	if run := r.lastRun(t, tg.ID, "restore"); run.Status != "success" {
+		t.Fatalf("run = %+v", run)
+	}
+	if got := read(t, filepath.Join(r.root, "appdata/plex/library.db")); got != "library at backup time" {
+		t.Fatalf("library.db = %q after the restore", got)
+	}
+}
+
+func TestRestoreOfAFileSetWhoseFolderWasEmptiedHasNoStateToBackUpFirst(t *testing.T) {
+	r := newRestoreRig(t)
+	set, snap := r.seedFotos(t)
+	fotos := filepath.Join(r.root, "fotos")
+	if err := os.RemoveAll(fotos); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(fotos, 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	res := r.check(t, RestoreCheckRequest{Kind: checkFileSet, Name: set.ID, SnapshotID: snap, BackupFirst: true})
+	if b := backupFirstOf(t, res); b.Status != lineSkip || b.Reason != reasonEmpty || !res.Ready {
+		t.Fatalf("backup first = %+v ready=%v", b, res.Ready)
+	}
+
+	if _, started, err := r.svc.StartRestoreFileSet(context.Background(), set.ID, snap, "local", "", true, RestoreOptions{BackupFirst: true}); err != nil || !started {
+		t.Fatalf("StartRestoreFileSet: started=%v err=%v", started, err)
+	}
+	r.wait(t)
+
+	if run := r.lastRun(t, set.ID, "restore"); run.Status != "success" {
+		t.Fatalf("run = %+v", run)
+	}
+	if got := read(t, filepath.Join(fotos, "2025/garten.jpg")); got != "garten" {
+		t.Fatalf("garten.jpg = %q after the restore", got)
+	}
+}
+
 func TestRestoreVMBacksUpTheCurrentStateFirstSoTheReplaceCanBeUndone(t *testing.T) {
 	r := newRestoreRig(t)
 	tg, snap := r.seedWin(t)

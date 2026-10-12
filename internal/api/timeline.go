@@ -683,8 +683,9 @@ func (s *Service) timelineDeletePreview(ctx context.Context, domain, key, rowKey
 }
 
 // timelineDelete forgets the confirmed ids of a row at each place, under the
-// domain lock. What a place no longer holds of the row stays untouched, and a
-// place that is append-only by now is left out and named.
+// domain lock. A place that holds other backups of the row than the question
+// showed refuses the whole delete before anything goes, and a place that is
+// append-only by now is left out and named.
 func (s *Service) timelineDelete(ctx context.Context, domain, key, rowKey string, del []placeDelete) ([]placeDelete, []otherPlace, error) {
 	deleted, skipped := []placeDelete{}, []otherPlace{}
 	unlock, ok := s.tryLockDomainFor(domain, "delete")
@@ -704,6 +705,12 @@ func (s *Service) timelineDelete(ctx context.Context, domain, key, rowKey string
 	if _, err := askedPlaces(refs, names); err != nil {
 		return deleted, skipped, err
 	}
+	type confirmed struct {
+		p   placeRef
+		own []restic.Snapshot
+		ids []string
+	}
+	var todo []confirmed
 	for _, d := range del {
 		// askedPlaces just confirmed every d.Place names one of refs, so the
 		// index below is never -1.
@@ -716,11 +723,16 @@ func (s *Service) timelineDelete(ctx context.Context, domain, key, rowKey string
 		if err != nil {
 			return deleted, skipped, err
 		}
-		held := it.rowIDs(own, rowKey)
-		ids := slices.DeleteFunc(slices.Clone(d.SnapshotIDs), func(id string) bool { return !slices.Contains(held, id) })
-		if len(ids) == 0 {
-			continue
+		held, ids := slices.Sorted(slices.Values(it.rowIDs(own, rowKey))), slices.Sorted(slices.Values(d.SnapshotIDs))
+		if !slices.Equal(held, ids) {
+			return deleted, skipped, errPlacementStale
 		}
+		if len(ids) > 0 {
+			todo = append(todo, confirmed{p, own, ids})
+		}
+	}
+	for _, c := range todo {
+		p, own, ids := c.p, c.own, c.ids
 		forget := func() error { return s.engine.Forget(ctx, p.repo, ids, false, p.mode) }
 		if err := s.retryAfterUnlock(ctx, p.repo, p.mode, forget); err != nil {
 			return deleted, skipped, fmt.Errorf("delete at %s: %w", cmp.Or(p.Label, "the item's location"), err)
@@ -796,6 +808,9 @@ func (h *Handler) handleTimelineDelete(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if !h.requireAuthForSecrets(w, r, "deleting backups") {
+		return
+	}
 	var body struct {
 		Places []placeDelete `json:"places"`
 	}
@@ -834,6 +849,10 @@ func (e notInListing) Error() string {
 // snapshot-missing, so the timeline can read that place again and offer the
 // next one instead of showing a restic error.
 func restoreFail(w http.ResponseWriter, source string, err error) {
+	if errors.Is(err, errPairedFolderInUse) {
+		refusePaired(w)
+		return
+	}
 	if offsiteTargetIDFromSource(source) != "" && errors.As(err, new(notInListing)) {
 		err = fmt.Errorf("%w: %w", errSnapshotMissing, err)
 	}

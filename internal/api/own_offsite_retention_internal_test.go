@@ -188,7 +188,7 @@ func TestAManualPruneOfAnAdditionalTargetIgnoresTheSourcesOwnOffsitePolicy(t *te
 	f := newPlacementFixture(t)
 	withOwnOffsiteRetention(f, 3, map[string]store.RetentionKeep{"containers": {KeepWeekly: 8}})
 	extra, err := f.st.UpsertOffsiteTarget(store.OffsiteTarget{
-		Domain: "containers", Name: "B2", Repo: "extra/containers", Enabled: true, SortOrder: 1,
+		Domain: "containers", Name: "B2", Repo: "extra/containers", Enabled: true, SortOrder: 1, RetentionKeepLast: 5,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -200,8 +200,8 @@ func TestAManualPruneOfAnAdditionalTargetIgnoresTheSourcesOwnOffsitePolicy(t *te
 	if _, err := f.svc.pruneDomain(context.Background(), "containers", offsiteSourcePrefix+extra.ID, false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
-	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3, Direct: true}) {
-		t.Fatalf("forgets = %+v, want the shared off-site keep-last 3", got)
+	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 5, Direct: true}) {
+		t.Fatalf("forgets = %+v, want the target's own keep-last 5", got)
 	}
 }
 

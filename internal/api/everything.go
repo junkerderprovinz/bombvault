@@ -96,6 +96,46 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 		return EverythingSummary{}, fmt.Errorf("backup everything: read settings: %w", err)
 	}
 
+	var pass *everythingPass
+	// A failing step, even one that fails before any item, is recorded in its
+	// own result and does not stop the others.
+	//
+	// A domain switched off in Settings is left out, as in rpoStatus, the
+	// overdue watchdog and drillTasks, and the UI hides its tab. Otherwise a
+	// host without an Unraid flash would fail the parent run on every pass, and
+	// FlashEnabled=false on Unraid would still create a flash repository.
+	all := []everythingStep{
+		{"containers", settings.ContainersEnabled, settings.ContainersSchedule, func() EverythingDomainResult { return s.everythingRunContainers(ctx, pass, settings) }},
+		{"vms", settings.VMsEnabled, settings.VMsSchedule, func() EverythingDomainResult { return s.everythingRunVMs(ctx, pass, settings) }},
+		{"flash", settings.FlashEnabled, settings.FlashSchedule, func() EverythingDomainResult { return s.everythingRunFlash(ctx, pass) }},
+		{"files", settings.FilesEnabled, settings.FilesSchedule, func() EverythingDomainResult { return s.everythingRunFiles(ctx, pass, settings) }},
+		{zfsDomain, settings.ZFSEnabled, settings.ZFSSchedule, func() EverythingDomainResult { return s.everythingRunZFS(ctx, pass, settings) }},
+		{"config", settings.ConfigEnabled, settings.ConfigSchedule, func() EverythingDomainResult { return s.everythingRunConfig(ctx, pass) }},
+	}
+	scheduled := scheduledPass(ctx)
+	var steps []everythingStep
+	ownPlan := 0
+	for _, step := range all {
+		switch {
+		case !step.enabled:
+			log.Printf("api: backup everything: %s skipped, the domain is switched off in Settings", step.domain)
+		case scheduled && schedule.CadenceRuns(step.cadence):
+			// A section with a plan of its own runs at its own time; the
+			// scheduled pass would back it up a second time. A pass started by
+			// hand takes it.
+			log.Printf("api: backup everything: %s skipped, it runs on a plan of its own", step.domain)
+			ownPlan++
+		default:
+			steps = append(steps, step)
+		}
+	}
+	// Hooks and a run row for a pass with nothing to do would ping a
+	// dead-man's switch and log an empty success every night.
+	if len(steps) == 0 && ownPlan > 0 {
+		log.Print("api: backup everything: every section that is switched on runs on a plan of its own, so the scheduled pass has nothing to do")
+		return EverythingSummary{}, nil
+	}
+
 	// A failing or hanging pre-hook must not block the pass it gates.
 	// HostShell.Run has its own timeout, so ctx is passed through as is.
 	if settings.EverythingPreHook != "" {
@@ -112,37 +152,11 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 		return EverythingSummary{}, fmt.Errorf("backup everything: start run: %w", err)
 	}
 
-	pass := s.beginEverythingPass(ctx, runID, settings)
+	pass = s.beginEverythingPass(ctx, runID, settings, steps)
 	defer pass.end()
 
-	// A failing step, even one that fails before any item, is recorded in its
-	// own result and does not stop the others.
-	//
-	// A domain switched off in Settings is left out, as in rpoStatus, the
-	// overdue watchdog and drillTasks, and the UI hides its tab. Otherwise a
-	// host without an Unraid flash would fail the parent run on every pass, and
-	// FlashEnabled=false on Unraid would still create a flash repository.
-	steps := []everythingStep{
-		{"containers", settings.ContainersEnabled, settings.ContainersSchedule, func() EverythingDomainResult { return s.everythingRunContainers(ctx, pass, settings) }},
-		{"vms", settings.VMsEnabled, settings.VMsSchedule, func() EverythingDomainResult { return s.everythingRunVMs(ctx, pass, settings) }},
-		{"flash", settings.FlashEnabled, settings.FlashSchedule, func() EverythingDomainResult { return s.everythingRunFlash(ctx, pass) }},
-		{"files", settings.FilesEnabled, settings.FilesSchedule, func() EverythingDomainResult { return s.everythingRunFiles(ctx, pass, settings) }},
-		{zfsDomain, settings.ZFSEnabled, settings.ZFSSchedule, func() EverythingDomainResult { return s.everythingRunZFS(ctx, pass, settings) }},
-		{"config", settings.ConfigEnabled, settings.ConfigSchedule, func() EverythingDomainResult { return s.everythingRunConfig(ctx, pass) }},
-	}
-	scheduled := scheduledPass(ctx)
 	results := make([]EverythingDomainResult, 0, len(steps))
 	for _, step := range steps {
-		if !step.enabled {
-			log.Printf("api: backup everything: %s skipped, the domain is switched off in Settings", step.domain)
-			continue
-		}
-		// A section with a plan of its own runs at its own time; the scheduled
-		// pass would back it up a second time. A pass started by hand takes it.
-		if scheduled && schedule.CadenceRuns(step.cadence) {
-			log.Printf("api: backup everything: %s skipped, it runs on a plan of its own", step.domain)
-			continue
-		}
 		results = append(results, step.run())
 	}
 	if len(results) == 0 {
@@ -246,31 +260,35 @@ type everythingPass struct {
 	total     int
 }
 
-// beginEverythingPass counts what the enabled domains would back up right now
-// and publishes the pass with that total.
-func (s *Service) beginEverythingPass(ctx context.Context, runID string, settings store.Settings) *everythingPass {
+// beginEverythingPass counts what the steps would back up right now and
+// publishes the pass with that total.
+func (s *Service) beginEverythingPass(ctx context.Context, runID string, settings store.Settings, steps []everythingStep) *everythingPass {
 	p := &everythingPass{svc: s, runID: runID, startedAt: time.Now().Unix(), planned: map[string]int{}}
 	skip := everythingSkips(ctx)
-	if settings.ContainersEnabled {
+	runs := map[string]bool{}
+	for _, step := range steps {
+		runs[step.domain] = true
+	}
+	if runs["containers"] {
 		targets, _ := s.everythingContainers(ctx, settings)
 		p.planned["containers"] = len(targets)
 	}
-	if settings.VMsEnabled {
+	if runs["vms"] {
 		vms, _ := s.everythingVMs(ctx, settings)
 		p.planned["vms"] = len(vms)
 	}
-	if settings.FlashEnabled && !skip[store.FlashTargetID] {
+	if runs["flash"] && !skip[store.FlashTargetID] {
 		p.planned["flash"] = 1
 	}
-	if settings.FilesEnabled {
+	if runs["files"] {
 		sets, _ := s.everythingFileSets(ctx, settings)
 		p.planned["files"] = len(sets)
 	}
-	if settings.ZFSEnabled {
+	if runs[zfsDomain] {
 		items, _ := s.everythingZFSItems(ctx, settings)
 		p.planned[zfsDomain] = len(items)
 	}
-	if settings.ConfigEnabled && !skip[store.ConfigTargetID] {
+	if runs["config"] && !skip[store.ConfigTargetID] {
 		p.planned["config"] = 1
 	}
 	for _, n := range p.planned {

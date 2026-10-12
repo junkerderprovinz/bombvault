@@ -84,7 +84,7 @@ describe("LoginPage, a forgotten password", () => {
   it("says what the reset removed before it signs in", async () => {
     finishPasswordReset.mockResolvedValue({
       ok: true,
-      removed: { passkeys: 2, apiTokens: 1, mcpKeys: 0, twoFactor: true },
+      removed: { passkeys: 2, apiTokens: 1, mcpKeys: 0, twoFactor: true, phonePairingOff: true },
     });
     const onLogin = vi.fn();
     render(<LoginPage onLogin={onLogin} />);
@@ -97,6 +97,7 @@ describe("LoginPage, a forgotten password", () => {
     expect(status.textContent).toContain("2 passkeys removed");
     expect(status.textContent).toContain("1 API token revoked");
     expect(status.textContent).toContain(en["auth.twoFactorOffNow"]);
+    expect(status.textContent).toContain(en["auth.resetDonePhones"]);
     expect(status.textContent).not.toContain("MCP");
     expect(status.textContent).toContain(en["auth.resetDoneHint"]);
     expect(onLogin).not.toHaveBeenCalled();
@@ -104,6 +105,21 @@ describe("LoginPage, a forgotten password", () => {
     await press(en["common.done"]);
 
     expect(onLogin).toHaveBeenCalledTimes(1);
+  });
+
+  it("lists phone pairing only when the answer says it was switched off", async () => {
+    finishPasswordReset.mockResolvedValue({
+      ok: true,
+      removed: { passkeys: 0, apiTokens: 0, mcpKeys: 0, twoFactor: false, phonePairingOff: false },
+    });
+    render(<LoginPage onLogin={vi.fn()} />);
+    await openReset();
+
+    await fillAndSubmit("ABCD-EFGH-JKLM", "correct horse battery");
+
+    const status = await screen.findByRole("status");
+    expect(status.textContent).toContain(en["auth.resetDoneSessions"]);
+    expect(status.textContent).not.toContain(en["auth.resetDonePhones"]);
   });
 
   it("sends nothing while the two passwords differ", async () => {

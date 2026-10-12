@@ -68,6 +68,7 @@ func TestZFSTimelineRouteReadsOnePlaceNewestFirst(t *testing.T) {
 
 func TestZFSTimelineDeleteTakesEveryDatasetOfTheRun(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	tank, home := f.zfsItem("tank/apps")
 	f.hold(home,
 		zfsSnap("a1a1a1a1", "tank/apps", firstRun),
