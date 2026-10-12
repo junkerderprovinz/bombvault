@@ -2,10 +2,10 @@
 <resources>
     <string name="saved">Išsaugota aplanke Atsisiuntimai: %1$s</string>
     <string name="save_failed">Nepavyko išsaugoti failo: %1$s</string>
-    <string name="save_untrusted">Serverio sertifikatas pasikeitė. Atidarykite jį iš naujo pradiniame ekrane, kad patikrintumėte naują.</string>
+    <string name="save_untrusted">Serverio sertifikatas pasikeitė. Atidaryk jį iš naujo pradiniame ekrane, kad patikrintum naują.</string>
     <string name="no_app">Jokia programa šiame telefone neatidaro šios nuorodos.</string>
     <string name="relay_on">Atidaryta per relay</string>
-    <string name="relay_explained">Programa negali pasiekti šio serverio jo paties adresu, todėl atidaro jį per jūsų grupės relay. Prisijungimas slaptažodžiu ir failų išsaugojimas veikia tik paties serverio adresu.</string>
+    <string name="relay_explained">Programa negali pasiekti šio serverio jo paties adresu, todėl atidaro jį per tavo grupės relay. Prisijungimas slaptažodžiu ir failų išsaugojimas veikia tik paties serverio adresu.</string>
     <string name="relay_no_download">Failų išsaugojimas veikia tik paties serverio adresu, o ne per relay.</string>
-    <string name="page_crashed">Puslapis užstrigo, todėl programa jį uždarė. Atidarykite serverį iš naujo.</string>
+    <string name="page_crashed">Puslapis užstrigo, todėl programa jį uždarė. Atidaryk serverį iš naujo.</string>
 </resources>
