@@ -19,6 +19,14 @@ describe("following the first server", () => {
     expect(localStorage.getItem("bv-accent")).toBe("#42be65");
   });
 
+  it("shows the server's last look again when following is switched back on before it answers", () => {
+    adopt(followed("#ff7eb6"));
+    setFollowing(false);
+    localStorage.setItem("bv-accent", "#42be65");
+    setFollowing(true);
+    expect(localStorage.getItem("bv-accent")).toBe("#ff7eb6");
+  });
+
   it("keeps the followed look the first time there is nothing to give back", () => {
     adopt(followed("#ff7eb6"));
     setFollowing(false);

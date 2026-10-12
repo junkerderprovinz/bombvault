@@ -17,6 +17,9 @@ const LOCAL_KEY = "bv-app-look-local";
 /** The phone's own look, put away while a server's is followed. */
 const SHELF_KEY = "bv-app-look-shelf";
 
+/** The followed server's last look, put away while the phone's own is shown. */
+const FOLLOWED_SHELF_KEY = "bv-app-look-followed";
+
 /** Fired after a followed look was written, so open pages read it again. */
 export const FOLLOWED_EVENT = "bv-app-look-followed";
 
@@ -29,30 +32,41 @@ export function following(): boolean {
 }
 
 /**
- * setFollowing goes back to following, putting the phone's own look away, or
- * stops following and gives that look back. The first time there is nothing
- * to give back, so the followed look stays on screen as the phone's own.
+ * setFollowing goes back to following, putting the phone's own look away and
+ * showing the server's last look until the server answers, or stops following
+ * and gives the phone's own look back. The first time there is nothing to give
+ * back, so the followed look stays on screen as the phone's own.
  */
 export function setFollowing(on: boolean): void {
   try {
     if (on) {
-      const shelf: Record<string, string> = {};
-      for (const key of FOLLOWED_KEYS) {
-        const value = localStorage.getItem(key);
-        if (value !== null) shelf[key] = value;
-      }
-      localStorage.setItem(SHELF_KEY, JSON.stringify(shelf));
+      localStorage.setItem(SHELF_KEY, JSON.stringify(current()));
       localStorage.removeItem(LOCAL_KEY);
+      unshelve(FOLLOWED_SHELF_KEY);
       return;
     }
     localStorage.setItem(LOCAL_KEY, "1");
-    const shelf = localStorage.getItem(SHELF_KEY);
-    if (shelf === null) return;
-    localStorage.removeItem(SHELF_KEY);
-    write(JSON.parse(shelf) as Record<string, unknown>);
+    localStorage.setItem(FOLLOWED_SHELF_KEY, JSON.stringify(current()));
+    unshelve(SHELF_KEY);
   } catch {
     // Without storage the look is the default either way.
   }
+}
+
+function current(): Record<string, string> {
+  const look: Record<string, string> = {};
+  for (const key of FOLLOWED_KEYS) {
+    const value = localStorage.getItem(key);
+    if (value !== null) look[key] = value;
+  }
+  return look;
+}
+
+function unshelve(shelfKey: string): void {
+  const shelf = localStorage.getItem(shelfKey);
+  if (shelf === null) return;
+  localStorage.removeItem(shelfKey);
+  write(JSON.parse(shelf) as Record<string, unknown>);
 }
 
 /**
