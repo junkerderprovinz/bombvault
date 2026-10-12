@@ -105,6 +105,14 @@ export function setMotionIntensity(intensity: MotionIntensity): void {
   applyMotionIntensity(intensity);
 }
 
+/** motionStopped reports whether nothing may move: the "off" level, or the OS
+ *  asking for less motion, which only the storm overrides. */
+export function motionStopped(): boolean {
+  const level = document.documentElement.getAttribute("data-motion");
+  if (level === "off") return true;
+  return level !== "storm" && (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
+}
+
 /** applyStoredMotionIntensity runs in main.tsx before the first render, so the
  *  page never paints at the wrong level. */
 export function applyStoredMotionIntensity(): void {

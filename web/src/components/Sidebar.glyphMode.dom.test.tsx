@@ -68,11 +68,8 @@ describe("glyph mode is the only mode that narrows the rail", () => {
     // The shared token, not a width of this app's own.
     expect(rail().className).toContain("w-(--rail-narrow)");
     expect(rail().className).not.toContain("w-56");
-    // The mark's box and the size the shatter tiles read have to change
-    // together, or the tiles slice an image scaled to the wrong box.
     const mark = document.querySelector<HTMLElement>(".glim-logo-mark");
     expect(mark?.className).toContain("h-11 w-11");
-    expect(mark?.parentElement?.style.getPropertyValue("--egg-mark")).toBe("44px");
   });
 
   it("keeps 224px and the 104px mark in the other three modes, reactive included", () => {
@@ -84,7 +81,6 @@ describe("glyph mode is the only mode that narrows the rail", () => {
       expect(rail().className, mode).not.toContain("w-(--rail-narrow)");
       const mark = document.querySelector<HTMLElement>(".glim-logo-mark");
       expect(mark?.className, mode).toContain("h-26 w-26");
-      expect(mark?.parentElement?.style.getPropertyValue("--egg-mark"), mode).toBe("104px");
     }
   });
 });

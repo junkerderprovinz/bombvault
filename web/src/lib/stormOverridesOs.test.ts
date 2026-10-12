@@ -7,9 +7,9 @@
 // an inherited default.
 //
 // Its gate lives in the `reduce` block. That block swaps in gentler substitutes
-// (a fade instead of a shake, a fade instead of the logo shattering), and those
-// are exactly the effects that make the storm, so each substitute excludes
-// storm and storm gets the full animation back in the same block. The
+// (a fade instead of a shake or a slide), and those are exactly the effects
+// that make the storm, so each substitute excludes storm and storm gets the
+// full animation back in the same block, the held logo's shake included. The
 // micro-interactions (press, lift, spinner) stay OS-gated.
 //
 // Node environment: this reads the stylesheet, it does not render.
@@ -67,30 +67,25 @@ function noPreferenceBlock(): string {
         depth--;
         if (depth === 0) {
           const body = css.slice(open + 1, j);
-          if (body.includes(".glim-egg-boom")) return body;
+          if (body.includes(".glim-logo-quake")) return body;
           i = j;
           break;
         }
       }
     }
   }
-  throw new Error("no-preference block holding the egg not found");
+  throw new Error("no-preference block holding the held logo not found");
 }
 
-/** Every animation name a block applies to the shatter egg's debris layers:
- *  the fragment tiles, the flash/shockwave pseudo elements, the cloud puffs
- *  and the sparks.
- *
- *  Names alone would also accept the five rules with their gates inverted (the
- *  full explosion for the reduced-motion user and nothing for the storm), since
- *  the set of names would be the same. `gate` says which selectors may
- *  contribute. */
-function boomAnimations(body: string, gate?: RegExp): Set<string> {
+/** Every animation name a block applies to the held logo's mark, through
+ *  selectors that `gate` accepts. Names alone would also accept the rules
+ *  with their gates inverted, since the set of names would be the same. */
+function logoAnimations(body: string, gate?: RegExp): Set<string> {
   const out = new Set<string>();
   const clean = body.replace(/\/\*[\s\S]*?\*\//g, "");
   for (const m of clean.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     const selector = m[1];
-    if (!/\.glim-(frag|boom-fx|cloud|particle)\b/.test(selector)) continue;
+    if (!/\.glim-logo-(quake|reborn)\b/.test(selector)) continue;
     if (gate && !gate.test(selector)) continue;
     const anim = /animation:\s*([\w-]+)/.exec(m[2]);
     if (anim?.[1]) out.add(anim[1]);
@@ -146,31 +141,22 @@ describe("the reduce block", () => {
     expect(compared).toBeGreaterThan(3);
   });
 
-  it("animates every layer it stops hiding, because their resting state is invisible", () => {
-    // The test above only compares selectors present on both sides, so it
-    // misses a target that is exempted and never restored. The shatter egg's
-    // layers (`.glim-frag`, `.glim-cloud`, `.glim-particle` and both
-    // `.glim-boom-fx` pseudo elements) rest at `opacity: 0` and appear only
-    // through their animation. Lifting `display: none` alone would make the
-    // logo vanish for the 1.4s of Sidebar.tsx's timer with no debris in its
-    // place.
-    const hidden = substitutes().filter((s) => /display:\s*none/.test(s.body));
-    expect(hidden.length).toBeGreaterThan(0);
-
+  it("gives the storm the held logo's shake and return, and nobody else", () => {
+    // lib/useLogoHold.ts lets the storm hold the logo under reduced motion,
+    // so without these rules the mark would vanish and pop back unmoved.
     // Derived from the no-preference block rather than listed here, so a new
-    // boom layer added there has to be answered here too.
-    const full = boomAnimations(noPreferenceBlock());
-    expect(full.size).toBeGreaterThan(2);
+    // stage added there has to be answered here too.
+    const full = logoAnimations(noPreferenceBlock());
+    expect(full.size).toBeGreaterThan(1);
 
     // Storm-gated selectors only, so inverted gates fail here.
-    const restored = boomAnimations(reduceBlock(), /:root\[data-motion="storm"\]/);
+    const restored = logoAnimations(reduceBlock(), /:root\[data-motion="storm"\]/);
     const missing = [...full].filter((name) => !restored.has(name));
     expect(missing).toEqual([]);
 
-    // And the other direction: no debris layer may be animated for everybody
-    // in here, which is what an inverted gate looks like. The reduced-motion
-    // user's substitute for the whole egg is the logo's quiet fade-pulse.
-    const ungated = boomAnimations(reduceBlock(), /^(?!.*\[data-motion=)/s);
+    // And the other direction: nothing in here may shake the logo for
+    // everybody, which is what an inverted gate looks like.
+    const ungated = logoAnimations(reduceBlock(), /^(?!.*\[data-motion=)/s);
     expect([...ungated]).toEqual([]);
   });
 });
