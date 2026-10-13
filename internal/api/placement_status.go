@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"log"
 	"slices"
 	"sync"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -44,7 +46,7 @@ type placementObserved struct {
 	Places   []observedPlace `json:"places"`
 	Sites    int             `json:"sites"`
 	Tone     string          `json:"tone"`    // "ok" | "warn" | "unconfirmed"
-	Rule321  string          `json:"rule321"` // "met" | "one-copy" | "unconfirmed"
+	Rule321  string          `json:"rule321"` // "met" | "one-copy" | "on-premises" | "unconfirmed"
 	Older    []olderCopies   `json:"older"`
 }
 
@@ -60,6 +62,7 @@ type statusFacts struct {
 	now        int64
 	grace      int64 // how far a listing or a copy may lag before a target stops counting, 0 for the strict reading
 	named      map[string]store.OffsiteTarget
+	dests      map[string]store.OffsiteTarget // destinations by id, which say whether their targets stand off the premises
 	directOf   func(store.OffsiteTarget) string
 	copies     map[string][]store.ItemCopies      // by identity
 	observed   map[string]store.TargetObservation // by target id
@@ -88,6 +91,9 @@ func (s *Service) statusFactsFor(ctx context.Context, settings store.Settings, p
 	}
 	for _, c := range rows {
 		f.copies[c.Identity] = append(f.copies[c.Identity], c)
+	}
+	if f.dests, err = s.destinationIndex(); err != nil {
+		return nil, err
 	}
 	if f.observed, err = s.store.TargetObservationsForDomain(p.Domain); err != nil {
 		return nil, err
@@ -143,6 +149,46 @@ func (s *Service) domainPathTags(ctx context.Context, settings store.Settings, d
 	return tags, nil
 }
 
+// targetOffPremises reports whether a target is a site of its own. A target
+// set up from a destination is what the destination says, any other is when
+// it names a remote repository, the rule a named repository starts from.
+func targetOffPremises(t store.OffsiteTarget, destinations map[string]store.OffsiteTarget) bool {
+	if t.DestinationID != "" {
+		return destinations[t.DestinationID].OffPremises
+	}
+	return restic.IsRemoteRepo(t.Repo)
+}
+
+// destinationIndex reads the destinations by id.
+func (s *Service) destinationIndex() (map[string]store.OffsiteTarget, error) {
+	rows, err := s.store.ListDestinations()
+	if err != nil {
+		return nil, err
+	}
+	return namedReposByID(rows), nil
+}
+
+// copiesOffPremises reports whether one of a domain's switched-on targets is
+// a site of its own. A read that fails answers no.
+func (s *Service) copiesOffPremises(settings store.Settings, domain string) bool {
+	targets, err := s.store.OffsiteTargetsForDomain(domain)
+	if err != nil {
+		log.Printf("api: the off-site targets of %s could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return false
+	}
+	if len(targets) == 0 {
+		targets = legacyTargets(domain, settings)
+	}
+	destinations, err := s.destinationIndex()
+	if err != nil {
+		log.Printf("api: the destinations could not be read: %v", err)
+		return false
+	}
+	return slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool {
+		return t.Enabled && targetOffPremises(t, destinations)
+	})
+}
+
 // homeOffPremises reports whether a home is a site of its own: a remote
 // domain path, a direct repository at its target, or a repository marked off
 // the premises.
@@ -157,15 +203,19 @@ func homeOffPremises(kind homeKind, repoID string, named map[string]store.Offsit
 }
 
 // placementCoverage answers what placement adds to a domain's status: whether
-// anything is copied to an enabled target, and whether every item already lives
-// off the premises. Without copy rules the first answer is yes, as it was before
-// there were any.
+// anything is copied to an enabled target, and whether every item lives or is
+// copied off the premises, the rule an item's 3-2-1 goes by. Without copy
+// rules the first answer is yes, as it was before there were any.
 func (s *Service) placementCoverage(settings store.Settings, domain string) (copied, offPremises bool, err error) {
 	p, err := s.readPlacement(settings, domain)
 	if err != nil {
 		return false, false, err
 	}
 	named, err := s.namedRepoIndex()
+	if err != nil {
+		return false, false, err
+	}
+	destinations, err := s.destinationIndex()
 	if err != nil {
 		return false, false, err
 	}
@@ -178,10 +228,12 @@ func (s *Service) placementCoverage(settings store.Settings, domain string) (cop
 	for identity, state := range homes {
 		repoID, _ := p.effectiveHome(state)
 		home := s.homeKindOf(settings, domain, repoID, named)
-		if len(p.targetsOf(identity, home, named[repoID].CompanionOf)) > 0 {
+		targets := p.targetsOf(identity, home, named[repoID].CompanionOf)
+		if len(targets) > 0 {
 			copied = true
 		}
-		if !homeOffPremises(home, repoID, named) {
+		away := slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return targetOffPremises(t, destinations) })
+		if !away && !homeOffPremises(home, repoID, named) {
 			offPremises = false
 		}
 	}
@@ -344,13 +396,16 @@ func observedState(p placementRead, item placementItem, f *statusFacts, repoID s
 		held[c.TargetID] = c
 	}
 	ticked := tickedTargets(p, item.Identity, home, f.named[repoID].CompanionOf)
+	nearby := map[string]bool{}
 	for _, t := range p.Targets {
 		c, has := held[t.ID]
 		switch {
 		case !ticked[t.ID] && has:
 			o.Older = append(o.Older, olderCopies{TargetID: t.ID, Name: placementTargetName(t), Count: c.SnapshotCount, SeenAt: c.ObservedAt, AppendOnly: t.Immutable})
 		case ticked[t.ID] && (t.Enabled || has):
-			o.Places = append(o.Places, f.targetPlace(t, c, has, item.LastSuccess))
+			place := f.targetPlace(t, c, has, item.LastSuccess)
+			nearby[place.Place] = !targetOffPremises(t, f.dests)
+			o.Places = append(o.Places, place)
 		}
 	}
 
@@ -361,7 +416,7 @@ func observedState(p placementRead, item placementItem, f *statusFacts, repoID s
 	case homeOffPremises(home, repoID, f.named):
 		homeSite = "home"
 	}
-	o.score(homeSite)
+	o.score(homeSite, nearby)
 	return o
 }
 
@@ -410,17 +465,19 @@ func (f *statusFacts) targetPlace(t store.OffsiteTarget, c store.ItemCopies, hol
 }
 
 // score fills in sites, 3-2-1 and tone. The server holding the original data is
-// always a site; a counting place off the premises adds its own. Every target is
-// a site of its own, so a second counting place is always one: there is no
-// verdict for two copies that both stay on the premises.
-func (o *placementObserved) score(homeSite string) {
+// always a site; a counting place off the premises adds its own. nearby names
+// the target places that stand on the premises, which share the server's site.
+func (o *placementObserved) score(homeSite string, nearby map[string]bool) {
 	sites := map[string]bool{"host": true}
 	counting, stale := 0, 0
 	offSite, staleOffSite, unreachable := false, false, false
 	for _, pl := range o.Places {
 		site := pl.Place
-		if pl.Place == "local" {
+		switch {
+		case pl.Place == "local":
 			site = homeSite
+		case nearby[pl.Place]:
+			site = "host"
 		}
 		switch {
 		case pl.Counts:
@@ -435,20 +492,28 @@ func (o *placementObserved) score(homeSite string) {
 		}
 	}
 	o.Sites = len(sites)
+	o.Rule321 = rule321(counting, stale, offSite, staleOffSite)
 	switch {
-	case counting >= 2 && offSite:
-		o.Rule321 = "met"
-	case counting+stale >= 2 && (offSite || staleOffSite):
-		o.Rule321 = "unconfirmed"
-	default:
-		o.Rule321 = "one-copy"
-	}
-	switch {
-	case unreachable || o.Rule321 == "one-copy":
+	case unreachable || o.Rule321 == "one-copy" || o.Rule321 == "on-premises":
 		o.Tone = "warn"
 	case o.Rule321 == "unconfirmed":
 		o.Tone = "unconfirmed"
 	default:
 		o.Tone = "ok"
 	}
+}
+
+// rule321 is the verdict on an item's copies: two that count with one of them
+// off the premises meet the rule, the same with a copy that is behind is
+// unconfirmed, and two or more that all stay on the premises are no 3-2-1.
+func rule321(counting, stale int, offSite, staleOffSite bool) string {
+	switch {
+	case counting >= 2 && offSite:
+		return "met"
+	case counting+stale >= 2 && (offSite || staleOffSite):
+		return "unconfirmed"
+	case counting+stale >= 2:
+		return "on-premises"
+	}
+	return "one-copy"
 }

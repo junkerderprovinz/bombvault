@@ -2827,8 +2827,9 @@ type DomainStatusEntry struct {
 	// domain (the dashboard then shows nothing for it). These extend /api/status so
 	// the dashboard card needs no second round-trip.
 	OffsiteConfigured bool `json:"offsiteConfigured"`
-	// OffPremisesCovered: every item of the domain lives somewhere that is a site
-	// of its own, so the dashboard does not claim there is no copy off the premises.
+	// OffPremisesCovered: every item of the domain lives or is copied somewhere
+	// that is a site of its own, the rule an item's 3-2-1 goes by, so the
+	// dashboard does not claim there is no copy off the premises.
 	OffPremisesCovered bool  `json:"offPremisesCovered"`
 	OffsiteImmutable   bool  `json:"offsiteImmutable"`
 	LastTamperAt       int64 `json:"lastTamperAt"`
@@ -3248,6 +3249,8 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 				offsiteConfigured = offsiteConfigured && copied
 				offPremisesCovered = covered
 			}
+		} else if offsiteConfigured {
+			offPremisesCovered = s.copiesOffPremises(settings, d.name)
 		}
 		offsiteImmutable := offsiteImmutableFor(d.name, settings)
 

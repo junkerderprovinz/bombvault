@@ -107,8 +107,9 @@ func (s *Service) zfsReplicaDomainState(now int64, settings store.Settings) stri
 // zfsItemSites is the 3-2-1 verdict of one ZFS item, scored the way the
 // placement line scores an item of the other domains: the host is a site,
 // a counting copy off the premises adds one, and two counting copies with one
-// of them off the premises meet the rule. A current replica is such a copy,
-// but no backup, so a replica without a backup is still one copy.
+// of them off the premises meet the rule. The off-site copy is off the
+// premises when one of the domain's targets is. A current replica is such a
+// copy, but no backup, so a replica without a backup is still one copy.
 func (s *Service) zfsItemSites(now int64, d store.ZFSDataset, settings store.Settings, lastBackup int64) (int, string) {
 	sites := map[string]bool{"host": true}
 	counting, stale := 0, 0
@@ -121,7 +122,9 @@ func (s *Service) zfsItemSites(now int64, d store.ZFSDataset, settings store.Set
 		if s.offsiteRepoFor(zfsDomain, settings) != "" {
 			if at, _ := s.aggregateReplicationCurrency(zfsDomain); at > 0 {
 				counting++
-				sites["offsite"], offSite = true, true
+				if s.copiesOffPremises(settings, zfsDomain) {
+					sites["offsite"], offSite = true, true
+				}
 			}
 		}
 	}
@@ -133,13 +136,7 @@ func (s *Service) zfsItemSites(now int64, d store.ZFSDataset, settings store.Set
 		stale++
 		staleOffSite = true
 	}
-	switch {
-	case counting >= 2 && offSite:
-		return len(sites), "met"
-	case counting+stale >= 2 && (offSite || staleOffSite):
-		return len(sites), "unconfirmed"
-	}
-	return len(sites), "one-copy"
+	return len(sites), rule321(counting, stale, offSite, staleOffSite)
 }
 
 // zfsReplicaDigestLines is the replica currency of every replicating ZFS

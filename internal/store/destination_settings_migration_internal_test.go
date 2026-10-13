@@ -104,3 +104,27 @@ func TestTheUpgradeLeavesEveryDerivedTargetWithItsSettings(t *testing.T) {
 		}
 	}
 }
+
+func TestTheUpgradeLeavesADestinationOnTheServerOnThePremises(t *testing.T) {
+	db := OpenMem(t)
+	bootAs(t, db, locationMigration-1)
+	if _, err := db.Exec(`
+		INSERT INTO offsite_targets (id, domain, name, repo, role, enabled, created_at, sort_order) VALUES
+		  ('far',  '', 'Box',     'rclone:box:bv',           'destination', 1, 1, 0),
+		  ('near', '', 'Offsite', '/mnt/user/offsite',       'destination', 1, 1, 0);`); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	r := New(db)
+	for id, want := range map[string]bool{"far": true, "near": false} {
+		d, ok, err := r.GetDestination(id)
+		if err != nil || !ok {
+			t.Fatalf("%s: found=%v err=%v", id, ok, err)
+		}
+		if d.OffPremises != want {
+			t.Errorf("%s at %s reads off the premises = %v, want %v", id, d.Repo, d.OffPremises, want)
+		}
+	}
+}

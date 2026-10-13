@@ -558,6 +558,19 @@ describe("stackNoteText", () => {
   });
 });
 
+describe("on-premises copies", () => {
+  it("say that two copies on the premises are no 3-2-1", () => {
+    expect(observedLine(tEn, placementObserved({ sites: 1, places: [], rule321: "on-premises", tone: "warn" }))).toEqual([
+      { text: "At one site", tone: "normal" },
+      { text: "3-2-1 not met: no copy off the premises", tone: "warn" },
+    ]);
+    expect(zfsObservedLine(tEn, { sites: 1, rule321: "on-premises", lastBackup: 1_758_170_400 })).toEqual([
+      { text: "At one site", tone: "normal" },
+      { text: "3-2-1 not met: no copy off the premises", tone: "warn" },
+    ]);
+  });
+});
+
 describe("zfsObservedLine", () => {
   it("counts a current replica as the second site", () => {
     expect(zfsObservedLine(tEn, { sites: 2, rule321: "met", lastBackup: 1_758_170_400 })).toEqual([

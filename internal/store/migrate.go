@@ -2813,12 +2813,13 @@ CREATE INDEX IF NOT EXISTS idx_zfs_replica_runs_item ON zfs_replica_runs(item_id
 		// at the upgrade every one it holds a different value for than its
 		// destination's row, so each target goes on with the values it has.
 		// The bits are OwnRetention, OwnCompression, OwnLimits and OwnEnabled.
-		// A destination counts as a site of its own, as every copy there does.
+		// A destination at a remote location counts as a site of its own, as
+		// a named repository there does; a folder on the server does not.
 		version:          locationMigration,
 		name:             "offsite_targets_own_settings",
 		alreadySatisfied: columnPresent("offsite_targets", "own_settings"),
 		sql: `ALTER TABLE offsite_targets ADD COLUMN own_settings INTEGER NOT NULL DEFAULT 0;
-UPDATE offsite_targets SET off_premises = 1 WHERE role = 'destination';
+UPDATE offsite_targets SET off_premises = 1 WHERE role = 'destination' AND (` + remoteLocation("repo") + `);
 UPDATE offsite_targets AS t SET own_settings = (
   SELECT (t.retention_keep_last <> d.retention_keep_last OR t.retention_keep_daily <> d.retention_keep_daily
           OR t.retention_keep_weekly <> d.retention_keep_weekly OR t.retention_keep_monthly <> d.retention_keep_monthly
