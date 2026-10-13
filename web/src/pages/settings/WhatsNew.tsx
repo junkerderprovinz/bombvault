@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Badge } from "../../components/Badge";
@@ -5,7 +6,7 @@ import { Button } from "../../components/Button";
 import { IconEye, IconForward } from "../../components/glyphs";
 import { IconCheck, IconClose } from "../../components/navGlyphs";
 import { ReleaseNotes, releasePage } from "../../components/ReleaseNotes";
-import { Selector } from "../../components/Selector";
+import { Selector, selectorTabId } from "../../components/Selector";
 import { useT } from "../../lib/i18n";
 import { CHANGES, WHATS_NEW_RELEASE, type Change } from "../../lib/whatsNew";
 import { markSeen, openWhatsNew, useWhatsNew, useWhatsNewOpen, type NewsTab } from "../../lib/whatsNewStore";
@@ -51,6 +52,7 @@ export function WhatsNewWindow({
   const listed = CHANGES.length > 0;
   const shown = listed ? tab : "notes";
   const release = version?.replace(/^v/, "") || WHATS_NEW_RELEASE;
+  const panelId = useId();
 
   return (
     <InstanceWindow
@@ -76,62 +78,78 @@ export function WhatsNewWindow({
           select="one"
           active={shown}
           onChange={(id) => onTab(id as NewsTab)}
+          panelId={panelId}
           fit
           buttonHeight
         />
       )}
-      {shown === "notes" ? (
-        <ReleaseNotes version={version} />
-      ) : (
-        <>
-          <div className="flex justify-end">
-            <Button
-              label={`${t(left ? "whatsNew.markAll" : "whatsNew.showAll")} · ${left ? unseen.length : CHANGES.length}`}
-              labelKey={left ? "whatsNew.markAll" : "whatsNew.showAll"}
-              glyph={left ? <IconCheck /> : <IconEye />}
-              tone="neutral"
-              onClick={() => markSeen(ALL, left)}
-              className="glim-btn-wrap"
-            />
-          </div>
-          {byPage(t).map((page) => (
-            <section key={page.name} className="flex flex-col gap-1.5">
-              <h3 className="glim-eyebrow">{page.name}</h3>
-              <ul className="flex flex-col gap-1.5">
-                {page.changes.map((change) => {
-                  const done = seen.has(change.id);
-                  const away = absent.has(change.id);
-                  return (
-                    <li
-                      key={change.id}
-                      data-change={change.id}
-                      data-seen={done || undefined}
-                      data-absent={away || undefined}
-                      className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control bg-carbon-surface2 px-3 py-2.5${done ? " opacity-55" : ""}`}
-                    >
-                      <i aria-hidden="true" className={`glim-new-dot glim-new-dot-still${done ? " glim-new-dot-seen" : ""}`} />
-                      <span className="flex min-w-0 flex-[1_1_9rem] flex-col gap-0.5 text-sm text-carbon-text wrap-break-word">
-                        {t(change.text)}
-                        {away && <span className="text-xs text-carbon-textSub">{t("whatsNew.absent")}</span>}
-                      </span>
-                      <Button
-                        label={t("whatsNew.go")}
-                        labelKey="whatsNew.go"
-                        glyph={<IconForward />}
-                        onClick={() => {
-                          onClose();
-                          navigate(change.go ?? change.page);
-                        }}
-                        className="ms-auto glim-btn-wrap"
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ))}
-        </>
-      )}
+      <div
+        id={panelId}
+        role={listed ? "tabpanel" : undefined}
+        aria-labelledby={listed ? selectorTabId(panelId, shown) : undefined}
+        className="flex flex-col gap-6"
+      >
+        {shown === "notes" ? (
+          <ReleaseNotes version={version} />
+        ) : (
+          <>
+            <div className="flex justify-end">
+              <Button
+                label={`${t(left ? "whatsNew.markAll" : "whatsNew.showAll")} · ${left ? unseen.length : CHANGES.length}`}
+                labelKey={left ? "whatsNew.markAll" : "whatsNew.showAll"}
+                glyph={left ? <IconCheck /> : <IconEye />}
+                tone="neutral"
+                onClick={() => markSeen(ALL, left)}
+                className="glim-btn-wrap"
+              />
+            </div>
+            {byPage(t).map((page) => (
+              <section key={page.name} className="flex flex-col gap-1.5">
+                <h3 className="glim-eyebrow">{page.name}</h3>
+                <ul className="flex flex-col gap-1.5">
+                  {page.changes.map((change) => {
+                    const done = seen.has(change.id);
+                    const away = absent.has(change.id);
+                    const textId = `${panelId}-${change.id}`;
+                    return (
+                      <li
+                        key={change.id}
+                        data-change={change.id}
+                        data-seen={done || undefined}
+                        data-absent={away || undefined}
+                        className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control bg-carbon-surface2 px-3 py-2.5"
+                      >
+                        <i aria-hidden="true" className={`glim-new-dot glim-new-dot-still${done ? " glim-new-dot-seen" : ""}`} />
+                        {/* A seen change is greyed in its words, which keep their
+                            contrast, and an unseen one says so to a screen reader. */}
+                        <span
+                          id={textId}
+                          className={`flex min-w-0 flex-[1_1_9rem] flex-col gap-0.5 text-sm wrap-break-word ${done ? "text-carbon-textSub" : "text-carbon-text"}`}
+                        >
+                          {!done && <span className="sr-only">{t("whatsNew.title")}: </span>}
+                          {t(change.text)}
+                          {away && <span className="text-xs text-carbon-textSub">{t("whatsNew.absent")}</span>}
+                        </span>
+                        <Button
+                          label={t("whatsNew.go")}
+                          labelKey="whatsNew.go"
+                          glyph={<IconForward />}
+                          ariaDescribedBy={textId}
+                          onClick={() => {
+                            onClose();
+                            navigate(change.go ?? change.page);
+                          }}
+                          className="ms-auto glim-btn-wrap"
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
+          </>
+        )}
+      </div>
     </InstanceWindow>
   );
 }

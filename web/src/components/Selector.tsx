@@ -118,7 +118,16 @@ interface SelectorCommon {
    *  Space, Enter or a click, as a radio group inside a toolbar does. For
    *  select="one". */
   activation?: "auto" | "manual";
+  /** The id of the panel a tab strip switches. The chosen tab names it as the
+   *  panel it controls, and the panel takes its name from that tab through
+   *  selectorTabId. */
+  panelId?: string;
   className?: string;
+}
+
+/** selectorTabId is the id of a tab in a strip that switches `panelId`. */
+export function selectorTabId(panelId: string, itemId: string): string {
+  return `${panelId}-tab-${itemId}`;
 }
 
 export type SelectorProps =
@@ -289,6 +298,7 @@ interface SelectorTabProps {
   onSelect: () => void;
   /** The label-mode axis the strip follows; see labelAxis in Selector. */
   axis: ControlAxis;
+  panelId?: string;
 }
 
 function SelectorTab({
@@ -304,6 +314,7 @@ function SelectorTab({
   squeezed,
   onSelect,
   axis,
+  panelId,
 }: SelectorTabProps) {
   const labelMode = useLabelMode(axis);
 
@@ -338,8 +349,10 @@ function SelectorTab({
           ref={tooltip.ref}
           type="button"
           data-sel-id={item.id}
+          id={panelId && kind === "tab" ? selectorTabId(panelId, item.id) : undefined}
           role={kind === "toggle" ? undefined : kind}
           aria-selected={kind === "tab" ? on : undefined}
+          aria-controls={panelId && kind === "tab" && on ? panelId : undefined}
           aria-checked={kind === "radio" ? on : undefined}
           aria-pressed={kind === "toggle" ? on : undefined}
           aria-label={nameHidden ? item.label : undefined}
@@ -400,6 +413,7 @@ export function Selector(props: SelectorProps) {
     pairsOnPhone = false,
     disabled = false,
     activation = "auto",
+    panelId,
     className = "",
   } = props;
   const well = variant === "well";
@@ -707,6 +721,7 @@ export function Selector(props: SelectorProps) {
             flex={segmentFlex}
             wraps={pinWidth || pairsOnPhone}
             squeezed={canSqueeze && squeezed}
+            panelId={panelId}
             onSelect={() => {
               if (!itemDisabled) onChange(item.id);
             }}

@@ -81,6 +81,7 @@ export function Button({
   autoFocus = false,
   ariaExpanded,
   ariaControls,
+  ariaDescribedBy,
   stage: stageOverride,
   keepLabel = false,
   glyphOnly = false,
@@ -126,6 +127,9 @@ export function Button({
   ariaExpanded?: boolean;
   /** The id of the panel a disclosure opens. */
   ariaControls?: string;
+  /** The id of the text a button needs to be told apart from its namesakes,
+   *  such as the line of a list it stands in. */
+  ariaDescribedBy?: string;
   /** Forces a width stage instead of deriving one from the label, for two
    *  buttons that must match but live in different components. Pass
    *  `groupStage([labelA, labelB])` to both so they agree in every language.
@@ -225,7 +229,7 @@ export function Button({
           autoFocus={autoFocus}
           aria-expanded={ariaExpanded}
           aria-controls={ariaControls}
-          aria-describedby={tooltip.describedBy}
+          aria-describedby={[ariaDescribedBy, tooltip.describedBy].filter(Boolean).join(" ") || undefined}
           {...tooltip.handlers}
           style={Object.keys(hueStyle).length ? hueStyle : undefined}
           className={`glim-btn ${stage} ${chip ? "" : TONE_CLASS[tone]}${hueOn ? " glim-hue" : ""}${reactive ? " glim-reactive" : ""} ${className}`.trim()}
