@@ -94,12 +94,38 @@ func countsAsBackedUp(p backupPresence, err error) (bool, error) {
 	return p == backupsPresent, err
 }
 
+// staysOnDomainPath reports whether an open item keeps backing up to the
+// domain path: it has backups there and never followed its section away. A
+// domain path that cannot be read gives no answer, so the item gets no
+// location yet.
+func (s *Service) staysOnDomainPath(ctx context.Context, item store.ItemRef) (bool, error) {
+	rowID, err := s.itemRowID(item)
+	if err != nil {
+		return false, err
+	}
+	if rowID != "" {
+		former, err := s.store.FormerHomes(item.Domain, rowID)
+		if err != nil || len(former) > 0 {
+			return false, err
+		}
+	}
+	presence, err := s.itemBackups(ctx, item)
+	switch {
+	case presence == backupsUnreadable:
+		return false, fmt.Errorf("the %s repository could not be read, so this item gets no location yet: %w", item.Domain, err)
+	case err != nil:
+		return false, err
+	}
+	return presence == backupsPresent, nil
+}
+
 // settleHome is the step before an open item's next backup, which goes where
-// the default points. Backups the item already has elsewhere stay there. It
-// returns the repo id the backup writes to and a commit the entry point calls
-// once EnsureRepo succeeded and the item exists; commit reports false when
-// the row changed.
-func (s *Service) settleHome(settings store.Settings, item store.ItemRef) (string, func() (bool, error), error) {
+// the default points. An item that never followed its section anywhere and
+// has backups on the domain path stays there, so its history is not split
+// without anybody moving it. It returns the repo id the backup writes to and
+// a commit the entry point calls once EnsureRepo succeeded and the item
+// exists; commit reports false when the row changed.
+func (s *Service) settleHome(ctx context.Context, settings store.Settings, item store.ItemRef) (string, func() (bool, error), error) {
 	read, err := s.store.ItemHome(item)
 	if err != nil {
 		return "", nil, err
@@ -113,7 +139,16 @@ func (s *Service) settleHome(settings store.Settings, item store.ItemRef) (strin
 	}
 	repoID, _ := p.effectiveHome(read)
 	if repoID == store.HomeNowhere {
-		return "", nil, errNoPlace
+		return "", nil, ErrNoPlace
+	}
+	if repoID != "" {
+		stays, err := s.staysOnDomainPath(ctx, item)
+		if err != nil {
+			return "", nil, err
+		}
+		if stays {
+			repoID = ""
+		}
 	}
 	if err := s.validateItemRepoID(item.Domain, repoID); err != nil {
 		return "", nil, fmt.Errorf("the %s default points at a repository that cannot take this backup: %w", item.Domain, err)
@@ -137,7 +172,7 @@ type homeStep struct {
 // A remote repository bills every call, so its stale locks are cleared only
 // when one stops the backup.
 func (s *Service) prepareHome(ctx context.Context, settings store.Settings, item store.ItemRef) (homeStep, error) {
-	repoID, commit, err := s.settleHome(settings, item)
+	repoID, commit, err := s.settleHome(ctx, settings, item)
 	if err != nil {
 		return homeStep{}, err
 	}

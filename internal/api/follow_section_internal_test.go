@@ -65,7 +65,7 @@ func TestAnEntryWithBackupsAtLocalFollowsItsSectionOffSite(t *testing.T) {
 	if h := sc.f.home(sc.nginx); h.Choice != store.RepoOpen {
 		t.Fatalf("nginx = %+v, want it to follow its section", h)
 	}
-	repoID, commit, err := sc.f.svc.settleHome(settings, sc.nginx)
+	repoID, commit, err := sc.f.svc.settleHome(context.Background(), settings, sc.nginx)
 	if err != nil || repoID != sc.direct.ID {
 		t.Fatalf("next backup of nginx goes to %q (%v), want B2's direct repository", repoID, err)
 	}
@@ -84,7 +84,7 @@ func TestTheBackupsAnEntryLeftAtLocalStayListedAndRestorable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, commit, err := sc.f.svc.settleHome(settings, sc.nginx); err != nil {
+	if _, commit, err := sc.f.svc.settleHome(context.Background(), settings, sc.nginx); err != nil {
 		t.Fatal(err)
 	} else if _, err := commit(); err != nil {
 		t.Fatal(err)

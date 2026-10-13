@@ -340,3 +340,26 @@ func TestBackupEverythingRunsZFSAfterFiles(t *testing.T) {
 		}
 	}
 }
+
+func TestBackupEverythingPassesOverSectionsWithNoPlace(t *testing.T) {
+	svc, st, _, _ := everythingTestService(t, &fakeResticEngine{})
+	if _, err := st.PutPlacementDefault("containers", store.HomeNowhere, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetLocal("flash", false); err != nil {
+		t.Fatal(err)
+	}
+
+	sum, err := svc.BackupEverything(context.Background())
+	if err != nil {
+		t.Fatalf("BackupEverything: %v", err)
+	}
+	if sum.Status != "success" {
+		t.Fatalf("Status = %q, want success for sections switched off on purpose (domains: %+v)", sum.Status, sum.Domains)
+	}
+	for _, d := range sum.Domains {
+		if (d.Domain == "containers" || d.Domain == "flash") && d.Failed != 0 {
+			t.Fatalf("%s counted %d failures, want none", d.Domain, d.Failed)
+		}
+	}
+}

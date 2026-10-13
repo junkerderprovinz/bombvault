@@ -534,6 +534,9 @@ func (s *Service) recordZFSLeftover(d store.ZFSDataset, root, snap string, err e
 
 // StartBackupZFSDataset runs one item in the background and returns at once.
 func (s *Service) StartBackupZFSDataset(ctx context.Context, id string) (bool, error) {
+	if err := s.refuseNoPlace(zfsDomain, id); err != nil {
+		return false, err
+	}
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
