@@ -139,3 +139,46 @@ test("the logo held until it goes off comes back once the debris has settled", a
   await expect(logo).toHaveCSS("opacity", "1");
   await expect(logo).toHaveCSS("transform", "none");
 });
+
+test("inside the app the name at the top is the server's own and switches to another", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the name over the overview is the phone's");
+  // The app's message port, which names one other server and keeps what the
+  // page asks of it.
+  await page.addInitScript(() => {
+    type Listener = (e: { data: string }) => void;
+    const listeners = new Set<Listener>();
+    const sent: unknown[] = [];
+    const tell = (msg: unknown) => setTimeout(() => listeners.forEach((fn) => fn({ data: JSON.stringify(msg) })));
+    Object.assign(window, {
+      appSent: sent,
+      bombvaultApp: {
+        postMessage(data: string) {
+          const msg = JSON.parse(data) as { op: string };
+          sent.push(msg);
+          if (msg.op === "servers") {
+            tell({ op: "servers", servers: [{ id: "b", name: "BV-RC-B" }] });
+            tell({ op: "reach", id: "b", status: 200 });
+          }
+        },
+        addEventListener: (_type: string, fn: Listener) => listeners.add(fn),
+        removeEventListener: (_type: string, fn: Listener) => listeners.delete(fn),
+      },
+    });
+  });
+  await stageOverview(page, 390, { instanceName: "BV-RC", lang: "en" });
+  await openOverview(page);
+
+  const name = page.getByRole("button", { name: "BV-RC, Instances" });
+  await expect(name).toBeVisible();
+  expect((await name.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await name.click();
+
+  const sheet = page.getByRole("dialog");
+  await expect(sheet.getByTestId("instance-current")).toContainText("BV-RC");
+  await expect(sheet.getByTestId("instance-row")).toContainText("Connected");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
+
+  await sheet.getByTestId("instance-row").click();
+  const sent = await page.evaluate(() => (window as unknown as { appSent: unknown[] }).appSent);
+  expect(sent[sent.length - 1]).toEqual({ op: "open", id: "b" });
+});

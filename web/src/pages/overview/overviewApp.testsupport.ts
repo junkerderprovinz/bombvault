@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { getSettings, type Settings } from "../../lib/api";
 import { AttentionProvider } from "../../lib/attentionProvider";
 import { I18nProvider } from "../../lib/i18n";
+import { InstanceNameContext } from "../../lib/instanceName";
 import { ToastProvider } from "../../lib/toast";
 import { AnomalyProvider } from "../../lib/useAnomalies";
 
@@ -17,7 +18,11 @@ function WithSettings({ children }: { children: ReactNode }) {
     window.addEventListener("bv:settings-changed", load);
     return () => window.removeEventListener("bv:settings-changed", load);
   }, []);
-  return createElement(AttentionProvider, { settings }, children);
+  return createElement(
+    AttentionProvider,
+    { settings },
+    createElement(InstanceNameContext.Provider, { value: settings?.instanceName ?? "" }, children)
+  );
 }
 
 /** Wraps a page in everything it reads from above. */
