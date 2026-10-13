@@ -62,8 +62,9 @@ class RelayPages(
         val body = request.requestHeaders.entries.firstOrNull { it.key.equals(BODY_HEADER, ignoreCase = true) }?.let { awaitBody(it.value) }
         val progress = method == "GET" && url.encodedPath == "/api/progress"
 
-        if (method == "GET") cache.get(member, path)?.let { return respond(it) }
-        var answer: PageAnswer? = null
+        val pinned = servers.memberKey(member)
+        if (method == "GET" && pinned != null) cache.get(member, pinned, path)?.let { return respond(it) }
+        var done: PageResult.Done? = null
         // A redirect from an intercepted request is not followed by the
         // WebView, so the app follows the few the interface makes.
         for (hop in 0..MAX_REDIRECTS) {
@@ -72,22 +73,30 @@ class RelayPages(
                 if (request.isForMainFrame) onKeyChanged(server, result.key)
                 return plain(502)
             }
-            answer = (result as? PageResult.Done)?.answer
-            val next = answer?.header?.get("Location")
-            if (answer == null || answer.status !in 300..399 || next == null || !next.startsWith("/") || next.startsWith("//")) break
+            done = result as? PageResult.Done
+            val next = done?.answer?.header?.get("Location")
+            if (done == null || done.answer.status !in 300..399 || next == null || !next.startsWith("/") || next.startsWith("//")) break
             path = next
         }
         if (progress) {
-            val stream = if (answer?.status == 200) poll.next(String(answer.body)) else ProgressPoll.QUIET
+            val snapshot = done?.answer?.takeIf { it.status == 200 }
+            val stream = if (snapshot != null) poll.next(String(snapshot.body)) else ProgressPoll.QUIET
             return WebResourceResponse("text/event-stream", "utf-8", 200, "OK", mapOf("Cache-Control" to "no-cache"), ByteArrayInputStream(stream.toByteArray()))
         }
-        if (answer == null) {
+        if (done == null) {
             if (request.isForMainFrame) onLost(server)
             return plain(502)
         }
-        if (method == "GET" && answer.status == 200 && answer.header["Cache-Control"]?.contains("immutable") == true) cache.put(member, path, answer)
+        val answer = done.answer
+        if (method == "GET" && answer.status == 200 && answer.header["Cache-Control"]?.contains("immutable") == true) cache.put(member, done.key, path, answer)
         return respond(answer)
     }
+
+    /** Drops what [member]'s pages left on the phone, once another key is trusted for it. */
+    fun forget(member: String) = cache.forget(member)
+
+    /** Drops what every member's pages left on the phone, once the phone left the group. */
+    fun forgetAll() = cache.forgetAll()
 
     private fun awaitBody(ticket: String): ByteArray? = try {
         bodies.computeIfAbsent(ticket) { CompletableFuture() }.get(BODY_WAIT_S, TimeUnit.SECONDS)
@@ -110,45 +119,6 @@ class RelayPages(
 
     private fun plain(status: Int) = WebResourceResponse("text/plain", "utf-8", status, "Error", emptyMap(), ByteArrayInputStream(ByteArray(0)))
 
-    /**
-     * Keeps the interface's bundles on the phone. Their names change with
-     * their content, so one fetched once never has to come through the relay
-     * again.
-     */
-    private class Bundles(private val dir: File) {
-        fun get(member: String, path: String): PageAnswer? {
-            val f = file(member, path)
-            if (!f.isFile) return null
-            return try {
-                DataInputStream(f.inputStream().buffered()).use {
-                    val type = it.readUTF()
-                    PageAnswer(200, mapOf("Content-Type" to type, "Cache-Control" to "public, max-age=31536000, immutable"), it.readBytes())
-                }
-            } catch (_: IOException) {
-                null
-            }
-        }
-
-        fun put(member: String, path: String, a: PageAnswer) {
-            try {
-                dir.mkdirs()
-                if ((dir.listFiles()?.sumOf { it.length() } ?: 0) > MAX_CACHE) dir.listFiles()?.forEach { it.delete() }
-                val tmp = File.createTempFile("part", null, dir)
-                DataOutputStream(tmp.outputStream().buffered()).use {
-                    it.writeUTF(a.header["Content-Type"] ?: "application/octet-stream")
-                    it.write(a.body)
-                }
-                tmp.renameTo(file(member, path))
-            } catch (_: IOException) {
-            }
-        }
-
-        private fun file(member: String, path: String): File {
-            val key = MessageDigest.getInstance("SHA-256").digest("$member\u0000$path".toByteArray())
-            return File(dir, key.joinToString("") { "%02x".format(it) })
-        }
-    }
-
     companion object {
         /** The header page.js names a request's body ticket in. */
         const val BODY_HEADER = "X-BombVault-Body"
@@ -156,6 +126,59 @@ class RelayPages(
         private const val MAX_BODY = 1 shl 20
         private const val MAX_WAITING = 64
         private const val MAX_REDIRECTS = 3
+    }
+}
+
+/**
+ * Keeps the interface's bundles on the phone. Their names change with their
+ * content, so one fetched once never has to come through the relay again.
+ * Each is kept under the key its member signed it with, so a bundle from a
+ * key the person trusted once does not outlast that trust.
+ */
+internal class Bundles(private val dir: File) {
+    fun get(member: String, key: ByteArray, path: String): PageAnswer? {
+        val f = file(member, key, path)
+        if (!f.isFile) return null
+        return try {
+            DataInputStream(f.inputStream().buffered()).use {
+                val type = it.readUTF()
+                PageAnswer(200, mapOf("Content-Type" to type, "Cache-Control" to "public, max-age=31536000, immutable"), it.readBytes())
+            }
+        } catch (_: IOException) {
+            null
+        }
+    }
+
+    fun put(member: String, key: ByteArray, path: String, a: PageAnswer) {
+        try {
+            if (dir.walk().filter { it.isFile }.sumOf { it.length() } > MAX_CACHE) dir.deleteRecursively()
+            val f = file(member, key, path)
+            f.parentFile!!.mkdirs()
+            val tmp = File.createTempFile("part", null, f.parentFile)
+            DataOutputStream(tmp.outputStream().buffered()).use {
+                it.writeUTF(a.header["Content-Type"] ?: "application/octet-stream")
+                it.write(a.body)
+            }
+            tmp.renameTo(f)
+        } catch (_: IOException) {
+        }
+    }
+
+    fun forget(member: String) {
+        memberDir(member).deleteRecursively()
+    }
+
+    fun forgetAll() {
+        dir.deleteRecursively()
+    }
+
+    private fun memberDir(member: String) = File(dir, sha(member.toByteArray()))
+
+    private fun file(member: String, key: ByteArray, path: String) = File(memberDir(member), sha(key + byteArrayOf(0) + path.toByteArray()))
+
+    private fun sha(b: ByteArray) = MessageDigest.getInstance("SHA-256").digest(b).joinToString("") { "%02x".format(it) }
+
+    companion object {
         private const val MAX_CACHE = 64L shl 20
     }
 }

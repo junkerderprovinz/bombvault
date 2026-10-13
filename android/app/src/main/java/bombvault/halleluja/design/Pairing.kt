@@ -258,7 +258,7 @@ class Pairing(private val context: Context, private val servers: Servers, privat
                 val named = fetchKey(r, member)
                 return if (named != null && !named.contentEquals(key)) PageResult.KeyChanged(named) else PageResult.Failed
             }
-            PageResult.Done(PageWire.unpack(head.status, head.header, wire))
+            PageResult.Done(PageWire.unpack(head.status, head.header, wire), key)
         } catch (_: Exception) {
             // A call that timed out, an answer that does not read: the page
             // gets a failed request, never a crash of the WebView's thread.
@@ -375,7 +375,8 @@ class Pairing(private val context: Context, private val servers: Servers, privat
 
 /** What a request of a page through the relay came to. */
 sealed interface PageResult {
-    class Done(val answer: PageAnswer) : PageResult
+    /** The member signed [answer] with [key]. */
+    class Done(val answer: PageAnswer, val key: ByteArray) : PageResult
 
     /** The member answered with another key than the one pinned for it. */
     class KeyChanged(val key: ByteArray) : PageResult
