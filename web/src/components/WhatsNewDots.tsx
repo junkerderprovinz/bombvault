@@ -8,6 +8,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { matchPath, useLocation } from "react-router-dom";
 
+import { inApp } from "../lib/appServers";
 import { AttentionContext } from "../lib/attention";
 import { useT } from "../lib/i18n";
 import { useIsDesktop } from "../lib/useMediaQuery";
@@ -162,7 +163,10 @@ export function WhatsNewDots() {
   const { fresh, items } = useContext(AttentionContext);
   const isDesktop = useIsDesktop();
   const { unseen, absent } = useWhatsNew();
-  const marked = useMemo(() => (isDesktop ? unseen : unseen.filter((change) => !change.wide)), [isDesktop, unseen]);
+  const marked = useMemo(
+    () => unseen.filter((change) => (isDesktop || !change.wide) && (!change.app || inApp())),
+    [isDesktop, unseen]
+  );
   const [spots, setSpots] = useState<Spot[]>([]);
   const active = items.loaded && !fresh && marked.length > 0 && pathname !== "/welcome";
 

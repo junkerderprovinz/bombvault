@@ -13,6 +13,7 @@ import { InfoBubble } from "../components/InfoBubble";
 import { IconRefresh } from "../components/glyphs";
 import { getCoverage, getScheduleNext, getStatus, listRuns } from "../lib/api";
 import type { CoverageReport, DomainStatus, Run, ScheduleNext } from "../lib/api";
+import { useAppServers } from "../lib/appServers";
 import { useAttention } from "../lib/attention";
 import type { EntryKind } from "../lib/backupEntry";
 import { cardSpan, useDashboardLayout } from "../lib/dashboardLayout";
@@ -34,6 +35,7 @@ import { EverythingAction } from "./overview/EverythingAction";
 import { FirstStepsCard } from "./overview/FirstStepsCard";
 import { HealthHeatmapCard } from "./overview/HealthHeatmapCard";
 import { HistoryCard, type HistoryView } from "./overview/HistoryCard";
+import { InstancesCard } from "./overview/InstancesCard";
 import { NeedsCard } from "./overview/NeedsCard";
 import { NextRunCard, nextBackupFireAt } from "./overview/NextRunCard";
 import { HiddenTray, OverviewGrid, type GridCard } from "./overview/OverviewGrid";
@@ -71,6 +73,7 @@ export function Dashboard() {
   const anomalySummary = useAnomalySummary().summary;
   const platform = usePlatform();
   const trial = useTrialRestore(t("verify.failed"));
+  const appServers = useAppServers();
 
   // The run window is opened by a row of the history, by the status head
   // while a run is under way, and by the watch of a pass started here. Once
@@ -401,10 +404,21 @@ export function Dashboard() {
     height: layout.heights[id],
     node: blocks[id].render(hues++),
   }));
+  // Right under what needs the person: inside the app the way to its other
+  // servers, and on a phone the next run and the repositories at a glance.
+  // The layout does not hold the servers' card, so it stays out of the way
+  // while the page is arranged.
+  const glance: GridCard[] = [];
+  if (appServers && appServers.servers.length > 0 && !arranging) {
+    glance.push({
+      id: "instances",
+      label: t("instances.title"),
+      span: 6,
+      node: <InstancesCard t={t} hueIndex={hues++} servers={appServers.servers} onOpen={appServers.open} />,
+    });
+  }
   if (!isDesktop) {
-    // A phone gets the next run and the repositories at a glance, right
-    // under what needs the person.
-    const glance: GridCard[] = [
+    glance.push(
       {
         id: "nextRun",
         label: t("dashboard.summaryNextBackup"),
@@ -425,10 +439,10 @@ export function Dashboard() {
             statusFailed={statusFailed}
           />
         ),
-      },
-    ];
-    cards.splice(cards[0]?.id === "needs" ? 1 : 0, 0, ...glance);
+      }
+    );
   }
+  cards.splice(cards[0]?.id === "needs" ? 1 : 0, 0, ...glance);
 
   const section = sections.find((s) => s.kind === openSection);
 
