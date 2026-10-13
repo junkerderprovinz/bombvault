@@ -120,7 +120,7 @@ export function WhatsNewWindow({
                         glyph={<IconForward />}
                         onClick={() => {
                           onClose();
-                          navigate(change.go ?? change.page);
+                          navigate(change.go ?? change.page, { replace: true });
                         }}
                         className="ms-auto glim-btn-wrap"
                       />

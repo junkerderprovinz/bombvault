@@ -194,7 +194,7 @@ function SelfRestoreNote({ deletes, onClose }: { deletes: React.ReactNode; onClo
             tone="accent"
             onClick={() => {
               onClose();
-              navigate(emergencyPath("settings"));
+              navigate(emergencyPath("settings"), { replace: true });
             }}
           />
         </>
