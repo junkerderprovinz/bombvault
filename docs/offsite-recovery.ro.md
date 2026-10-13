@@ -165,7 +165,7 @@ Singurul loc care mai primește un APP_KEY introdus manual este [Dintr-un folder
 
 ## Instanțe și roluri {#roles}
 
-Pagina **Instanțe** (o placă de setări care poate fi fixată în bara laterală) arată grupul ca o rețea cu cine ce face pentru cine, un card pentru această instanță și un card pentru fiecare alt membru, telefoanele Android și serverele ZFS. **Împerechează o instanță** plutește jos în dreapta. Ce părți sunt pornite se stabilește la **Setări, Instanțe, Mai multe servere**: **Instanțe**, **Receptor** și **Preluare**.
+Pagina **Instanțe** (o placă de setări care poate fi fixată în bara laterală) arată grupul ca o rețea cu cine ce face pentru cine, un card pentru această instanță și un card pentru fiecare alt membru, telefoanele Android și serverele ZFS. **Împerechere** plutește jos în dreapta. Ce părți sunt pornite se stabilește la **Setări, Instanțe, Mai multe servere**: **Instanțe**, **Receptor** și **Preluare**.
 
 Fiecare card arată starea de protecție a membrului și rolurile lui ca plăci. Un rol este ceva ce o instanță face pentru alta:
 

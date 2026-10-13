@@ -25,11 +25,10 @@ import { Badge } from "../Badge";
 import { changeLines } from "../ContainerChangeNotice";
 import type { ScheduleSentence } from "../EffectiveScheduleLine";
 import { InfoBubble } from "../InfoBubble";
-import { IconAnomalies } from "../navGlyphs";
+import { IconAnomalies, IconCheck } from "../navGlyphs";
 import { ProgressBar } from "../ProgressBar";
 import { TAKEOVER_REASONS } from "../RenameTakeoverRow";
 import { KindGlyph, kindHue } from "./kinds";
-import { SelectMark } from "./SelectMark";
 
 type T = (key: TranslationKey, n?: number) => string;
 
@@ -48,13 +47,8 @@ const NAME =
 const BEFORE_STATUS = "flex flex-none items-center gap-2 @max-[36rem]:hidden";
 const IP_COLUMN = "min-w-[7.5rem] flex-none text-end text-xs tabular-nums text-carbon-textMuted";
 
-/** The columns of the list, which its sub-lists and their rows pass on. A
- *  list whose rows are being picked has one more for their marks. */
-export function listColumns(selecting: boolean): string {
-  return selecting
-    ? "@min-[36rem]:grid @min-[36rem]:grid-cols-[auto_auto_minmax(0,1fr)_auto_minmax(9.5rem,max-content)]"
-    : "@min-[36rem]:grid @min-[36rem]:grid-cols-[auto_minmax(0,1fr)_auto_minmax(9.5rem,max-content)]";
-}
+/** The columns of the list, which its sub-lists and their rows pass on. */
+export const LIST_COLUMNS = "@min-[36rem]:grid @min-[36rem]:grid-cols-[auto_minmax(0,1fr)_auto_minmax(9.5rem,max-content)]";
 
 const STRIP_TONE: Record<RunTone, string> = {
   ok: "bg-statusOkSolid",
@@ -215,7 +209,6 @@ export function BackupRow({
   anomalyEnabled,
   scheduleSentence,
   picked,
-  selecting,
   showIp,
   onClick,
   onPick,
@@ -232,8 +225,6 @@ export function BackupRow({
   anomalyEnabled: boolean;
   scheduleSentence: (item: BackupItem) => ScheduleSentence | null;
   picked: boolean;
-  /** Rows are being picked, so every row shows its mark. */
-  selecting: boolean;
   showIp: boolean;
   /** Answers true when the click picked rows and must not open the entry. */
   onClick: (e: MouseEvent) => boolean;
@@ -308,7 +299,6 @@ export function BackupRow({
   // The tap that ends a long press has already picked the row.
   const taken = (e: MouseEvent) => press.took() || onClick(e);
   const pickLabel = t("common.selectItem").replace("{name}", name);
-  const mark = <SelectMark checked={picked} label={pickLabel} onChange={onPick} />;
 
   return (
     <li
@@ -335,19 +325,24 @@ export function BackupRow({
           : "hover:bg-carbon-hover"
       }${dim ? " opacity-55" : ""}`}
     >
-      {selecting && mark}
-      <span className={`glim-row-glyph relative ${GLYPH_TILE}`}>
-        <KindGlyph kind={item.kind} />
-        {!selecting && (
-          // Until a row is picked, the mark of the row under the pointer lies
-          // on the corner of its glyph, as on an icon in a file manager. No
-          // row moves when it appears, and the rest of the row still opens
-          // the entry. Its ring takes the row's ground, so the mark looks cut
-          // into the corner rather than laid on it.
-          <span className="absolute -start-1 -top-1 hidden rounded-full ring-2 ring-carbon-surface pointer-fine:group-hover:flex pointer-fine:group-hover:ring-carbon-hover pointer-fine:group-focus-within:flex">
-            <SelectMark checked={false} label={pickLabel} onChange={onPick} offered bare />
-          </span>
-        )}
+      <span
+        className={`glim-row-glyph ${GLYPH_TILE} has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-(--focus-ring)`}
+      >
+        {picked ? <IconCheck /> : <KindGlyph kind={item.kind} />}
+        {/* A mouse picks with Ctrl or Shift and a finger with a long press,
+            so the row draws no mark. The switch is there for the keyboard
+            and a screen reader, and its focus rings the glyph tile. */}
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={picked}
+          aria-label={pickLabel}
+          onClick={(e) => {
+            e.stopPropagation();
+            onPick(!picked);
+          }}
+          className="sr-only"
+        />
       </span>
       <span className="flex min-w-0 flex-1 items-center gap-2">
         <Link
@@ -394,19 +389,15 @@ export function BackupRow({
  */
 export function SelfRow({
   item,
-  selecting,
   showIp,
   t,
 }: {
   item: BackupItem;
-  /** Keeps the name in line with the rows that show a mark. */
-  selecting: boolean;
   showIp: boolean;
   t: T;
 }) {
   return (
     <li data-testid="backup-self-row" className={`${ROW} opacity-70`}>
-      {selecting && <span className="w-[18px] flex-none" />}
       <span className={`${GLYPH_TILE} text-carbon-textSub`}>
         <KindGlyph kind={item.kind} />
       </span>

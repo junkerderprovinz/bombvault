@@ -408,7 +408,6 @@ describe("the other sources", () => {
 });
 
 describe("restoring several entries", () => {
-  const mark = (name: string) => entries().getByRole("checkbox", { name: en["common.selectItem"].replace("{name}", name) });
   const many = () => screen.getByRole("dialog", { name: /^Restore \d+ entr/ });
   const lines = () => within(many()).getAllByTestId("restore-many-entry");
 
@@ -431,7 +430,8 @@ describe("restoring several entries", () => {
       fireEvent.click(entry("Windows 11"), { ctrlKey: true });
     });
     expect(within(screen.getByTestId("bulk-bar")).getByText("2 selected")).toBeTruthy();
-    expect(mark("immich").getAttribute("aria-checked")).toBe("true");
+    expect(entry("immich").getAttribute("aria-pressed")).toBe("true");
+    expect(entries().queryByRole("checkbox")).toBeNull();
     expect(railRows()).toHaveLength(0);
     expect(entry("tank/appdata").disabled).toBe(true);
     expect(entries().getByLabelText(en["restoreMany.leftOut.zfs"])).toBeTruthy();
@@ -440,9 +440,9 @@ describe("restoring several entries", () => {
   it("restores each one next to its original by default, one after the other", async () => {
     await renderPage();
     await press(screen.getByRole("button", { name: new RegExp(`^${en["backups.select"]}`) }));
-    await press(mark("immich"));
-    await press(mark("Windows 11"));
-    await press(mark("Photos"));
+    await press(entry("immich"));
+    await press(entry("Windows 11"));
+    await press(entry("Photos"));
     await press(within(screen.getByTestId("bulk-bar")).getByRole("button", { name: en["snapshots.restore"] }));
     expect(lines()).toHaveLength(3);
     expect(within(many()).getByRole("radio", { name: new RegExp(en["restoreWindow.beside"]) }).getAttribute("aria-checked")).toBe("true");
@@ -459,8 +459,8 @@ describe("restoring several entries", () => {
   it("asks before it replaces the originals, backs them up first, and creates a gone container again", async () => {
     await renderPage();
     await press(screen.getByRole("button", { name: new RegExp(`^${en["backups.select"]}`) }));
-    await press(mark("immich"));
-    await press(mark("pihole"));
+    await press(entry("immich"));
+    await press(entry("pihole"));
     await press(within(screen.getByTestId("bulk-bar")).getByRole("button", { name: en["snapshots.restore"] }));
     await press(within(many()).getByRole("radio", { name: new RegExp(en["restoreWindow.replace"]) }));
     await press(within(many()).getByRole("button", { name: `${en["snapshots.restore"]} · 2` }));
@@ -480,8 +480,8 @@ describe("restoring several entries", () => {
     vi.mocked(api.restore).mockResolvedValueOnce({ ok: false, error: RESTORE_NO_RUNTIME });
     await renderPage();
     await press(screen.getByRole("button", { name: new RegExp(`^${en["backups.select"]}`) }));
-    await press(mark("immich"));
-    await press(mark("Windows 11"));
+    await press(entry("immich"));
+    await press(entry("Windows 11"));
     await press(within(screen.getByTestId("bulk-bar")).getByRole("button", { name: en["snapshots.restore"] }));
     await press(within(many()).getByRole("button", { name: `${en["snapshots.restore"]} · 2` }));
     await waitFor(() => expect(lines()[1].dataset.outcome).toBe("done"));
@@ -500,8 +500,8 @@ describe("restoring several entries", () => {
     getTimeline.mockImplementation(async (domain) => timelineOf(domain === "vms" ? RUNS.slice(0, 1) : RUNS));
     await renderPage();
     await press(screen.getByRole("button", { name: new RegExp(`^${en["backups.select"]}`) }));
-    await press(mark("immich"));
-    await press(mark("Windows 11"));
+    await press(entry("immich"));
+    await press(entry("Windows 11"));
     await press(within(screen.getByTestId("bulk-bar")).getByRole("button", { name: en["snapshots.restore"] }));
     await press(within(many()).getByRole("tab", { name: en["restoreMany.at"] }));
     await press(within(many()).getByRole("combobox", { name: en["restoreMany.atLabel"] }));

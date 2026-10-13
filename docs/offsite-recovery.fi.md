@@ -165,7 +165,7 @@ Ainoa paikka, joka yhä ottaa APP_KEY:n käsin, on [Vanhasta varmuuskopiokansios
 
 ## Ilmentymät ja roolit {#roles}
 
-**Ilmentymät**-sivu (asetusruutu, jonka voi kiinnittää sivupalkkiin) näyttää ryhmän verkkona siitä, kuka tekee mitä kenelle, kortti tälle instanssille ja kortti jokaiselle muulle jäsenelle, Android-puhelimille ja ZFS-palvelimille. **Pariuta instanssi** kelluu oikeassa alakulmassa. Mitkä osat ovat päällä, asetetaan kohdassa **Asetukset, Ilmentymät, Useita palvelimia**: **Ilmentymät**, **Vastaanotin** ja **Nouto**.
+**Ilmentymät**-sivu (asetusruutu, jonka voi kiinnittää sivupalkkiin) näyttää ryhmän verkkona siitä, kuka tekee mitä kenelle, kortti tälle instanssille ja kortti jokaiselle muulle jäsenelle, Android-puhelimille ja ZFS-palvelimille. **Pariliitos** kelluu oikeassa alakulmassa. Mitkä osat ovat päällä, asetetaan kohdassa **Asetukset, Ilmentymät, Useita palvelimia**: **Ilmentymät**, **Vastaanotin** ja **Nouto**.
 
 Jokainen kortti näyttää jäsenen suojaustilan ja sen roolit ruutuina. Rooli on jotakin, mitä yksi instanssi tekee toiselle:
 

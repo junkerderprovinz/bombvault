@@ -945,27 +945,30 @@ describe("picking rows", () => {
     }
   });
 
-  it("lays the mark of a row on its glyph tile until something is picked, then sets it before the tile", async () => {
+  it("draws no mark on a row and leaves the keyboard a switch inside the glyph tile", async () => {
     await renderPage();
     const tile = () => row("plex").querySelector(".glim-row-glyph")!;
-    const mark = () => within(row("plex")).getByRole("checkbox", { name: "Select plex" });
-    expect(tile().contains(mark())).toBe(true);
+    const pick = () => within(row("plex")).getByRole("checkbox", { name: "Select plex" });
+    expect(tile().contains(pick())).toBe(true);
+    expect(pick().className).toBe("sr-only");
+    expect(tile().querySelector(".rounded-full")).toBeNull();
 
-    await click(mark());
+    await click(pick());
     expect(picked()).toEqual(["plex"]);
-    expect(tile().contains(mark())).toBe(false);
-    expect(mark().compareDocumentPosition(tile()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(pick().getAttribute("aria-checked")).toBe("true");
+    expect(tile().contains(pick())).toBe(true);
+    expect(row("gitea").querySelector(".glim-row-glyph .rounded-full")).toBeNull();
+    expect(within(row("gitea")).getAllByRole("checkbox")).toHaveLength(1);
   });
 
-  it("draws the mark as a disc that no shape squares off, and never as a form field", async () => {
+  it("shows a check in place of the glyph of a picked row", async () => {
     await renderPage();
+    const glyph = () => row("plex").querySelector(".glim-row-glyph svg")!.innerHTML;
+    const before = glyph();
     await click(row("plex"), { ctrlKey: true });
-    const marks = screen.getAllByRole("checkbox");
-    expect(marks.length).toBeGreaterThan(1);
-    for (const mark of marks) {
-      expect(mark.tagName).toBe("BUTTON");
-      expect(mark.firstElementChild!.className).toContain("rounded-full");
-    }
+    expect(glyph()).not.toBe(before);
+    await click(row("plex"), { ctrlKey: true });
+    expect(glyph()).toBe(before);
   });
 
   it("has no mark for BombVault's own container", async () => {

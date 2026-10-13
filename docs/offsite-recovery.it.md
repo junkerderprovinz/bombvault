@@ -165,7 +165,7 @@ L'unico posto che richiede ancora un APP_KEY a mano è [Da una vecchia cartella 
 
 ## Istanze e ruoli {#roles}
 
-La pagina **Istanze** (un riquadro delle impostazioni che si può fissare alla barra laterale) mostra il gruppo come una rete di chi fa cosa per chi, una scheda per questa istanza e una per ogni altro membro, i telefoni Android e i server ZFS. **Associa un'istanza** fluttua in basso a destra. Quali parti sono attive si imposta in **Impostazioni, Istanze, Più server**: **Istanze**, **Ricevitore** e **Prelievo**.
+La pagina **Istanze** (un riquadro delle impostazioni che si può fissare alla barra laterale) mostra il gruppo come una rete di chi fa cosa per chi, una scheda per questa istanza e una per ogni altro membro, i telefoni Android e i server ZFS. **Associazione** fluttua in basso a destra. Quali parti sono attive si imposta in **Impostazioni, Istanze, Più server**: **Istanze**, **Ricevitore** e **Prelievo**.
 
 Ogni scheda mostra lo stato di protezione del membro e i suoi ruoli come riquadri. Un ruolo è qualcosa che un'istanza fa per un'altra:
 

@@ -165,7 +165,7 @@ Le seul endroit qui accepte encore une APP_KEY à la main est [Depuis un ancien 
 
 ## Instances et rôles {#roles}
 
-La page **Instances** (une tuile de paramètres qu'on peut épingler à la barre latérale) montre le groupe comme un réseau de qui fait quoi pour qui, avec une carte pour cette instance et une carte pour chaque autre membre, les téléphones Android et les serveurs ZFS. **Appairer une instance** flotte en bas à droite. Les parties activées se règlent sous **Paramètres, Instances, Plusieurs serveurs** : **Instances**, **Récepteur** et **Rapatriement**.
+La page **Instances** (une tuile de paramètres qu'on peut épingler à la barre latérale) montre le groupe comme un réseau de qui fait quoi pour qui, avec une carte pour cette instance et une carte pour chaque autre membre, les téléphones Android et les serveurs ZFS. **Appairage** flotte en bas à droite. Les parties activées se règlent sous **Paramètres, Instances, Plusieurs serveurs** : **Instances**, **Récepteur** et **Rapatriement**.
 
 Chaque carte montre l'état de protection du membre et ses rôles sous forme de tuiles. Un rôle est quelque chose qu'une instance fait pour une autre :
 
