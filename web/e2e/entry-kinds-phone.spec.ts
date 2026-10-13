@@ -33,7 +33,7 @@ async function open(page: Page, path: string, name: string): Promise<void> {
 
 function cardGap(page: Page): Promise<string> {
   return page
-    .locator("#bv-main .max-w-6xl")
+    .locator("#bv-main .glim-page-enter > div")
     .first()
     .evaluate((root) => getComputedStyle(root).rowGap);
 }
