@@ -64,6 +64,12 @@ describe("logoBurst", () => {
     expect(done).not.toHaveBeenCalled();
   });
 
+  it("draws the window-sized canvas on the CPU", () => {
+    logoBurst(mark({ w: 845, h: 814 }), () => undefined);
+    const asked = vi.mocked(HTMLCanvasElement.prototype.getContext).mock.calls[0];
+    expect(asked).toEqual(["2d", { willReadFrequently: true }]);
+  });
+
   it("caps the canvas at twice the window's size", () => {
     vi.spyOn(window, "devicePixelRatio", "get").mockReturnValue(3);
     logoBurst(mark({ w: 845, h: 814 }), () => undefined);

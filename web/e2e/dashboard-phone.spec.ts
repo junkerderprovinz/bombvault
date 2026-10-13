@@ -109,3 +109,23 @@ test("the overview on the desktop keeps its grid, each card once and no phone bl
   // of the grid are not.
   await expect(page.locator("#bv-main section.glim-notch-card")).toHaveCount(0);
 });
+
+test("the logo held until it goes off comes back once the debris has settled", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the logo over the overview is the phone's");
+  await stageOverview(page, 390);
+  await openOverview(page);
+
+  const logo = page.locator("#bv-main img.glim-logo-img");
+  const burst = page.locator("canvas.glim-logo-burst");
+  const box = (await logo.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await expect(burst).toHaveCount(1, { timeout: 5000 });
+  await page.mouse.up();
+
+  await expect(burst).toHaveCount(0, { timeout: 5000 });
+  await expect(logo.locator("..")).toHaveClass(/glim-logo-idle/);
+  await expect(logo).toBeVisible();
+  await expect(logo).toHaveCSS("opacity", "1");
+  await expect(logo).toHaveCSS("transform", "none");
+});

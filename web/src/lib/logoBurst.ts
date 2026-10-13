@@ -69,7 +69,9 @@ export function logoBurst(img: HTMLImageElement, done: () => void): () => void {
   cv.width = innerWidth * dpr;
   cv.height = innerHeight * dpr;
   document.body.appendChild(cv);
-  const g = cv.getContext("2d");
+  // Drawn on the CPU, since a window-sized canvas on the GPU breaks the
+  // drawing of Android's WebView.
+  const g = cv.getContext("2d", { willReadFrequently: true });
   const src = raster(img, drawnW, drawnH, dpr);
 
   const cellW = drawnW / GRID;
