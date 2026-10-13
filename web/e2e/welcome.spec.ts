@@ -357,8 +357,9 @@ test("an install with a backup opens on the overview and carries its counts", as
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByTestId("status-head")).toBeVisible();
   await expect(page.getByTestId("first-steps")).toHaveCount(0);
-  // The failed run, the two entries no schedule reaches and the recovery kit.
-  await expect(page.getByLabel(NEEDS)).toHaveText("4");
+  // The failed run, the three entries no schedule reaches and the recovery
+  // kit. paperless is one of them: its old backup does not protect it.
+  await expect(page.getByLabel(NEEDS)).toHaveText("5");
   if (!MOBILE_PROJECTS.has(testInfo.project.name)) await expect(page.getByLabel(ANOMALIES)).toHaveText("1");
 
   await page.goto("/welcome");

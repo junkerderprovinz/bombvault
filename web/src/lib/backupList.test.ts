@@ -116,9 +116,18 @@ describe("where things lead", () => {
 });
 
 describe("protection", () => {
-  it("is given once a backup exists", () => {
+  it("is given while a schedule reaches the entry and a backup of it exists", () => {
     expect(protection(item())).toBe("ok");
-    expect(protection(item({ installed: false }))).toBe("ok");
+  });
+
+  it("is missing for an entry no schedule reaches, whatever old backups it has", () => {
+    expect(protection(item({ included: false }))).toBe("none");
+    expect(protection(item({ paused: true }))).toBe("none");
+    expect(protection(item({ effectiveSchedule: { kind: "none", spec: "" } }))).toBe("none");
+  });
+
+  it("is missing for an entry that is gone from the host", () => {
+    expect(protection(item({ installed: false }))).toBe("none");
   });
 
   it("is pending while the first scheduled run is still to come", () => {
@@ -154,6 +163,10 @@ describe("the one status of a row", () => {
   it("warns about an entry nothing will back up and waits for one that is scheduled", () => {
     expect(rowStatus(item({ lastBackup: 0, included: false }), 0)).toEqual({ is: "notProtected" });
     expect(rowStatus(item({ lastBackup: 0 }), 0)).toEqual({ is: "waiting" });
+  });
+
+  it("says not protected of an entry out of the schedule that still has a backup", () => {
+    expect(rowStatus(item({ included: false }), 0)).toEqual({ is: "notProtected" });
   });
 
   it("says not protected of an entry set aside that still has a backup", () => {

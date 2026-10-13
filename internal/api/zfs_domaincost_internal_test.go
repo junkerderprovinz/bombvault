@@ -240,6 +240,13 @@ func TestCoverageCountsAnItemWithASkippedMemberAsUnprotected(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("write members: %v", err)
 	}
+	run, err := st.StartRun(whole.ID, "backup")
+	if err != nil {
+		t.Fatalf("start run: %v", err)
+	}
+	if err := st.FinishRun(run, "success", "", 0, ""); err != nil {
+		t.Fatalf("finish run: %v", err)
+	}
 
 	report, err := s.Coverage(context.Background())
 	if err != nil {

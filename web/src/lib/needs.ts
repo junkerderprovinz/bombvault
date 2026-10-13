@@ -13,7 +13,7 @@ export type Need =
   /** A run that failed and was neither repeated with success nor acknowledged.
    *  `item` is the entry it ran for, where the list of entries still has it. */
   | { is: "failedRun"; run: Run; item?: BackupItem }
-  /** An entry no schedule reaches and that has no backup. */
+  /** An entry no schedule reaches, whatever old backups it has. */
   | { is: "unprotected"; item: BackupItem }
   /** The off-site copies to one storage location that have failed since they
    *  last worked. `since` is when the first of them began, in Unix seconds. */

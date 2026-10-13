@@ -162,7 +162,7 @@ function rowFacts({
 
   const state = protection(item);
   const failed = item.lastRunStatus === "failed";
-  if (failed && state === "ok") {
+  if (failed && item.lastBackup > 0) {
     facts.push(`${t("backups.fact.lastGood").replace("{when}", formatRecent(item.lastBackup, lang))}.`);
   }
   if (failed && item.lastRunError) facts.push(runReason(item.lastRunError, t));

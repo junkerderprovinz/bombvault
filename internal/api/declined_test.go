@@ -120,7 +120,7 @@ func TestAScheduleOutranksADeclineWithoutReadingWritingAnything(t *testing.T) {
 		}
 	}
 	setSchedule("daily 02:00")
-	if d := coverageDomain(t, h, "containers"); d["protected"] != float64(1) || d["declined"] != float64(0) {
+	if d := coverageDomain(t, h, "containers"); d["waiting"] != float64(1) || d["declined"] != float64(0) {
 		t.Fatalf("a scheduled container that was declined before reads as %v", d)
 	}
 	if item := getItem(t, h, "container", "plex"); item["backupDeclined"] != nil {
