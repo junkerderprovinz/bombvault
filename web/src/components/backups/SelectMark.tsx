@@ -76,7 +76,7 @@ export function SelectMark({
       aria-checked={checked}
       aria-label={label}
       onClick={toggle}
-      className={`group/mark flex flex-none cursor-pointer items-center justify-center rounded-pill focus-visible:outline-none ${bare ? "" : "-m-2 p-2"} ${className}`}
+      className={`group/mark flex flex-none cursor-pointer items-center justify-center rounded-pill focus-visible:outline-none ${bare ? "" : "-m-2 p-2 pointer-coarse:-m-[13px] pointer-coarse:p-[13px]"} ${className}`}
     >
       <SelectDot
         checked={checked}
