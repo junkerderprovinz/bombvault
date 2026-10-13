@@ -105,6 +105,11 @@ describe("the line under the name", () => {
     expect(entryReason(item({ lastBackup: 0, included: false, backupDeclined: true }))).toEqual({ is: "declined" });
   });
 
+  it("says of an entry whose section has no storage location switched on that it has nowhere to go", () => {
+    expect(entryReason(item({ noPlace: true }))).toEqual({ is: "noPlace" });
+    expect(entryReason(item({ lastBackup: 0, noPlace: true }))).toEqual({ is: "noPlace" });
+  });
+
   it("says of an entry that is gone only that", () => {
     expect(entryReason(item({ installed: false, lastRunStatus: "failed" }))).toEqual({ is: "gone" });
   });

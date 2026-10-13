@@ -3006,7 +3006,7 @@ export interface TargetUse {
 export const PLACEMENT_DOMAINS: readonly PlacementDomain[] = ["containers", "vms", "files"];
 
 export type SegmentId = "local" | "local-offsite" | "offsite-only";
-export type HomeKind = "domain" | "domain-remote" | "local" | "remote" | "direct" | "missing";
+export type HomeKind = "domain" | "domain-remote" | "local" | "remote" | "direct" | "missing" | "none";
 export type SegmentLockReason = "no-target" | "own-credentials" | "at-target" | "home-fixed";
 export type SegmentLocks = Partial<Record<SegmentId, SegmentLockReason>>;
 
@@ -3055,7 +3055,7 @@ export interface PlacementPlan {
   homeDirectOf?: string;
   targets: string[];
   warn: boolean;
-  reason: "" | "default-off" | "default-missing";
+  reason: "" | "default-off" | "default-missing" | "default-none";
   noCopy: boolean;
 }
 
@@ -3859,6 +3859,9 @@ export interface BackupItem {
   /** True while the person does not want the item backed up and no schedule
    *  reaches it. Such an item is not something that needs the person. */
   backupDeclined?: boolean;
+  /** True while the item's next backup goes where its section sends new
+   *  backups and the section has every storage location switched off. */
+  noPlace?: boolean;
   /** The newest fourteen backups, imports and restores, newest first. */
   runs: BackupItemRun[];
 }
@@ -6969,7 +6972,7 @@ export async function downloadDiagnostics(): Promise<string | null> {
 export type CoverageItem = {
   name: string;
   /** "not-set-up" | "not-included" | "override-off" | "no-schedule" |
-   *  "zfs-member-skipped" and the database-dump reasons */
+   *  "zfs-member-skipped" | "no-place" and the database-dump reasons */
   reason: string;
   /** With "zfs-member-skipped": the member outcome that left the dataset out. */
   code?: string;
@@ -7395,6 +7398,9 @@ export interface StorageLocationSection {
   /** The target's switch for a copy, the repository's for a home in one, the
    *  domain's own for its path. */
   enabled: boolean;
+  /** The own folder of a section without placement that takes no new
+   *  backups: they go to the section's targets directly. */
+  off?: boolean;
   /** The copy the domain's off-site settings describe. */
   primary?: boolean;
   immutable: boolean;
@@ -7466,6 +7472,17 @@ export interface StorageLocation {
  *  measured for it. Remotes are not asked here. */
 export function listStorageLocations(): Promise<OkEnvelope & { locations?: StorageLocation[] }> {
   return fetchJSON("/api/storage/locations");
+}
+
+/** The sections without placement, whose own folder can be switched off. */
+export const LOCAL_SWITCH_DOMAINS = ["flash", "config", "zfs"] as const;
+
+export type LocalSwitchDomain = (typeof LOCAL_SWITCH_DOMAINS)[number];
+
+/** PUT /api/storage/sections/{domain}/local: switches a section's own folder
+ *  on or off for new backups. What it holds stays there. */
+export function setSectionLocal(domain: LocalSwitchDomain, on: boolean): Promise<OkEnvelope> {
+  return fetchJSON(`/api/storage/sections/${domain}/local`, { method: "PUT", body: JSON.stringify({ on }) });
 }
 
 /** GET /api/storage/locations/{id}. With refreshCapacity the location's remote

@@ -5,7 +5,6 @@ import { farPath, flowLayout, flowMeasures, nearPath, stubPath, type FlowPath } 
 import { useT } from "../../lib/i18n";
 import type { FlowLine, FlowRow } from "../../lib/storageFlow";
 import { DOMAIN_LABEL } from "../../lib/storageLocations";
-import { InfoBubble } from "../InfoBubble";
 import { LocationMark } from "./LocationMark";
 import { DomainGlyph } from "./rows";
 
@@ -36,9 +35,8 @@ interface Drawn {
 
 /**
  * FlowPicture draws every section's backups as lines: from the section to the
- * local band it is stored on, and from there to each off-site box. A line is
- * a switch, a dashed one is off, and a line that cannot be switched carries
- * the reason in a bubble at its middle.
+ * local band it is stored on, and from there to each off-site box. Every line
+ * is a switch, and a dashed one is off.
  */
 export function FlowPicture({
   rows,
@@ -179,15 +177,6 @@ export function FlowPicture({
           const label = t("storage.flow.line")
             .replace("{domain}", () => t(DOMAIN_LABEL[line.domain]))
             .replace("{name}", () => line.location.name);
-          const live = line.action
-            ? {
-                role: "switch",
-                "aria-checked": line.on,
-                tabIndex: 0,
-                onClick: () => toggle(line),
-                onKeyDown: (e: KeyboardEvent<SVGGElement>) => onSwitchKey(e, () => toggle(line)),
-              }
-            : { role: "switch", "aria-checked": line.on, "aria-disabled": true };
           return (
             <g
               key={line.key}
@@ -196,7 +185,11 @@ export function FlowPicture({
               aria-label={label}
               className={`glim-flow-line glim-pic glim-hue${line.on ? " glim-flow-on" : ""}${near ? " glim-flow-near" : ""}`}
               style={hueStyle(row)}
-              {...live}
+              role="switch"
+              aria-checked={line.on}
+              tabIndex={0}
+              onClick={() => toggle(line)}
+              onKeyDown={(e) => onSwitchKey(e, () => toggle(line))}
             >
               <path className="glim-flow-hit" d={path.d} />
               <path className="glim-flow-stroke" d={path.d} />
@@ -224,11 +217,15 @@ export function FlowPicture({
                     <path d={stub.d} />
                     <path d={stub.cross} />
                   </g>
-                  <foreignObject x={stub.labelX} y={y - 17} width={m.stubLabel} height="34">
-                    <div className="glim-flow-stub-label">
-                      <span>{t(row.lines.some((line) => line.on) ? "dashboard.noOffsite" : "storage.flow.noPlace")}</span>
-                    </div>
-                  </foreignObject>
+                  {/* A row with nowhere to go says so under the picture, where the
+                      words have room at every width. */}
+                  {!row.nowhere && (
+                    <foreignObject x={stub.labelX} y={y - 17} width={m.stubLabel} height="34">
+                      <div className="glim-flow-stub-label">
+                        <span>{t("dashboard.noOffsite")}</span>
+                      </div>
+                    </foreignObject>
+                  )}
                 </>
               )}
               <foreignObject x="0" y={y - 17} width={m.label - 8} height="34">
@@ -240,16 +237,6 @@ export function FlowPicture({
             </g>
           );
         })}
-
-        {drawn
-          .filter(({ line }) => line.locked)
-          .map(({ line, path }) => (
-            <foreignObject key={line.key} x={path.middle[0] - 11} y={path.middle[1] - 11} width="22" height="22">
-              <div className="glim-flow-lock" data-row={line.domain}>
-                <InfoBubble tip={line.locked ?? ""} />
-              </div>
-            </foreignObject>
-          ))}
 
         <g pointerEvents="none" aria-hidden="true">
           {drawn

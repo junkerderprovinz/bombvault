@@ -5004,6 +5004,9 @@ body {
   stroke-linecap: round;
 }
 .glim-flow-stub path:first-child { stroke-dasharray: 4 4; }
+/* The end of a row only tells, so a click goes through to the line below. */
+.glim-flow-stub,
+.glim-flow foreignObject:has(> .glim-flow-stub-label) { pointer-events: none; }
 .glim-flow foreignObject > .glim-flow-stub-label {
   color: var(--status-fail-text);
   font-size: 13px;
@@ -5016,11 +5019,6 @@ body {
   background: var(--carbon-surface);
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
-}
-.glim-flow foreignObject > .glim-flow-lock {
-  justify-content: center;
-  border-radius: 999px;
-  background: var(--carbon-surface);
 }
 .glim-flow-narrow foreignObject > div {
   gap: 6px;

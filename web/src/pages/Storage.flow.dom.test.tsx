@@ -4,9 +4,8 @@
  * where, the entries that left their section's default, and the window that
  * adds a location.
  *
- * A line is a switch on a section's default, so a click has to go through the
- * same preview and confirmation as every other change to a default, and a
- * line the server would refuse must not take a click at all.
+ * Every line is a switch that one click turns on or off, with no window: it
+ * only decides where new backups go.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -17,7 +16,6 @@ import { I18nProvider, en } from "../lib/i18n";
 import {
   defaultImpact,
   defaultRow,
-  placementOptions,
   placementView,
   stubEventSource,
   targetImpact,
@@ -194,140 +192,121 @@ describe("the flow", () => {
     expect(count.textContent).toContain("1 off-site");
   });
 
-  it("asks before a line goes off, names what the target stops getting and saves with those numbers", async () => {
+  it("switches a line off with one click and no window, and saves with the numbers the server named", async () => {
     const impact = defaultImpact({ dropped: [targetImpact({ items: 15, snapshots: 210 })] });
     fake.reply("previewPlacementDefault", { ok: true, impact });
     await renderPage();
 
     await click(line("Containers to B2"));
-    const dialog = await screen.findByRole("dialog");
-    expect(dialog.textContent).toContain("Items and project folders that B2 no longer gets: 15. Copies that stay there: 210.");
-    expect(fake.callsTo("putPlacementDefault")).toEqual([]);
-    await click(within(dialog).getByRole("button", { name: "Confirm" }));
 
     await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toEqual([["containers", { skip: ["*"] }, impact]]));
     expect(fake.callsTo("previewPlacementDefault")).toEqual([["containers", { skip: ["*"] }]]);
-  });
-
-  it("opens the question at once and fills it in when the server has worked out the impact", async () => {
-    const release = fake.hold("previewPlacementDefault");
-    await renderPage();
-
-    await click(line("Containers to B2"));
-    const dialog = await screen.findByRole("dialog");
-    expect(dialog.textContent).toContain("Checking…");
-    expect((within(dialog).getByRole("button", { name: /Confirm/ }) as HTMLButtonElement).disabled).toBe(true);
-
-    await act(async () => release({ ok: true, impact: defaultImpact({ dropped: [targetImpact({ items: 15, snapshots: 210 })] }) }));
-    expect(dialog.textContent).toContain("Items and project folders that B2 no longer gets: 15.");
-    expect((within(dialog).getByRole("button", { name: "Confirm" }) as HTMLButtonElement).disabled).toBe(false);
-  });
-
-  it("writes nothing when the window is closed before the impact is in", async () => {
-    const release = fake.hold("previewPlacementDefault");
-    await renderPage();
-
-    await click(line("Containers to B2"));
-    await click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Cancel" }));
-    await act(async () => release({ ok: true, impact: defaultImpact({ dropped: [targetImpact()] }) }));
-
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(fake.callsTo("putPlacementDefault")).toEqual([]);
   });
 
-  it("writes nothing when the question is answered with no", async () => {
-    fake.reply("previewPlacementDefault", { ok: true, impact: defaultImpact({ dropped: [targetImpact()] }) });
+  it("writes again with the fresh numbers when the server calls the first ones stale", async () => {
+    const fresh = defaultImpact({ dropped: [targetImpact({ items: 16 })] });
+    fake.reply("putPlacementDefault", { ok: false, code: "stale", impact: fresh }, { ok: true });
     await renderPage();
 
     await click(line("Containers to B2"));
-    await click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Cancel" }));
 
-    expect(fake.callsTo("putPlacementDefault")).toEqual([]);
-    expect(line("Containers to B2").getAttribute("aria-checked")).toBe("true");
-  });
-
-  it("says in the window that a paired phone cannot change a default, and offers only the way out", async () => {
-    fake.reply("previewPlacementDefault", new api.ApiError(403, en["auth.relayLoginNeeded"], "own-login-needed"));
-    await renderPage();
-
-    await click(line("Containers to B2"));
-    const dialog = await screen.findByRole("dialog");
-    await waitFor(() => expect(dialog.textContent).toContain(en["auth.relayLoginNeeded"]));
-    expect(dialog.textContent).not.toContain("Checking…");
-    expect((within(dialog).getByRole("button", { name: /Confirm/ }) as HTMLButtonElement).disabled).toBe(true);
-    await click(within(dialog).getByRole("button", { name: "Cancel" }));
-
+    await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(2));
+    expect(fake.callsTo("putPlacementDefault")[1]).toEqual(["containers", { skip: ["*"] }, fresh]);
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(fake.callsTo("putPlacementDefault")).toEqual([]);
   });
 
-  it("can still save a default whose preview did not come back, and asks once the server names what it moves", async () => {
+  it("saves without numbers when the preview did not come back, then with the numbers the server names", async () => {
     const impact = defaultImpact({ dropped: [targetImpact({ items: 15, snapshots: 210 })] });
     fake.reply("previewPlacementDefault", new api.ApiError(502, en["apiError.gateway"]));
     fake.reply("putPlacementDefault", { ok: false, code: "stale", impact }, { ok: true });
     await renderPage();
 
     await click(line("Containers to B2"));
-    const dialog = await screen.findByRole("dialog");
-    await waitFor(() => expect(dialog.textContent).toContain(en["apiError.gateway"]));
-    expect(dialog.textContent).toContain(en["placementDefaults.previewFailed"].split(" {reason}")[0]);
-    await click(within(dialog).getByRole("button", { name: "Confirm" }));
-    await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toEqual([["containers", { skip: ["*"] }, undefined]]));
 
-    const asked = await screen.findByRole("dialog");
-    await waitFor(() => expect(asked.textContent).toContain("Items and project folders that B2 no longer gets: 15."));
-    await click(within(asked).getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(2));
-    expect(fake.callsTo("putPlacementDefault")[1]).toEqual(["containers", { skip: ["*"] }, impact]);
+    expect(fake.callsTo("putPlacementDefault")).toEqual([
+      ["containers", { skip: ["*"] }, undefined],
+      ["containers", { skip: ["*"] }, impact],
+    ]);
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("switches a line on for a destination without a target: makes the target, then asks with what it will receive", async () => {
-    const impact = defaultImpact({ added: [targetImpact({ targetId: "t-new", name: "Storage Box", items: 7, snapshots: 32 })] });
-    fake.reply("previewPlacementDefault", { ok: true, impact });
+  it("says in a message why the server refused, writes nothing and leaves the line as it was", async () => {
+    fake.reply("previewPlacementDefault", new api.ApiError(403, en["auth.relayLoginNeeded"], "own-login-needed"));
+    await renderPage();
+
+    await click(line("Containers to B2"));
+
+    expect(await screen.findByText(en["auth.relayLoginNeeded"])).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(fake.callsTo("putPlacementDefault")).toEqual([]);
+    expect(line("Containers to B2").getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("switches Local off for a section with placement: the target's direct repository is made beside it and takes the backups", async () => {
+    await renderPage();
+
+    await click(line("Containers to Local"));
+
+    await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(1));
+    expect(fake.callsTo("createDirectRepo")).toEqual([["t-b2", "", "b2:bucket:containers-direct"]]);
+    expect(fake.callsTo("putPlacementDefault")[0].slice(0, 2)).toEqual(["containers", { home: "repo-direct", skip: ["*"] }]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("lets every line of a section go off, and says the section is not backed up", async () => {
+    const nowhere = defaultRow({ home: "none", homeKind: "none" });
+    fake.reply("listPlacementDefaults", { ok: true, defaults: [nowhere, defaultRow({ domain: "vms" }), defaultRow({ domain: "files" })] });
+    await renderPage();
+
+    expect(line("Containers to Local").getAttribute("aria-checked")).toBe("false");
+    expect(line("Containers to B2").getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByText(`Containers: ${en["storage.flow.nowhere"]}`)).toBeTruthy();
+
+    await click(line("Containers to Local"));
+    await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(1));
+    expect(fake.callsTo("putPlacementDefault")[0].slice(0, 2)).toEqual(["containers", { home: "", skip: ["*"] }]);
+  });
+
+  it("switches a line on for a destination without a target: makes the target and lights it as a copy", async () => {
     await renderPage();
 
     await click(line("Containers to Storage Box"));
-    const dialog = await screen.findByRole("dialog");
-    expect(fake.callsTo("destinationForDomain")).toEqual([["box", "containers"]]);
-    expect(dialog.textContent).toContain("Storage Box gets from now on: 7.");
-    await click(within(dialog).getByRole("button", { name: "Confirm" }));
 
-    await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toEqual([["containers", { skip: [] }, impact]]));
+    await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(1));
+    expect(fake.callsTo("destinationForDomain")).toEqual([["box", "containers"]]);
+    expect(fake.callsTo("putPlacementDefault")[0].slice(0, 2)).toEqual(["containers", { skip: [] }]);
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("saves a change that affects nothing without a question, and reads the locations again", async () => {
+  it("reads the locations again after a change", async () => {
     await renderPage();
     expect(listStorageLocations).toHaveBeenCalledTimes(1);
 
     await click(line("Containers to B2"));
 
     await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(1));
-    expect(screen.queryByRole("dialog")).toBeNull();
     await waitFor(() => expect(listStorageLocations).toHaveBeenCalledTimes(2));
   });
 
-  it("marks a line that cannot be switched, says why in a bubble and takes no click", async () => {
+  it("switches the own folder of a section without placement off and on again", async () => {
     await renderPage();
 
-    const locked = line("Flash to Local");
-    expect(locked.getAttribute("aria-disabled")).toBe("true");
-    expect(locked.getAttribute("aria-checked")).toBe("true");
-    expect(locked.getAttribute("tabindex")).toBeNull();
-    expect(screen.getByLabelText("Flash always backs up to its own folder first. The off-site copies come from that backup, so it stays on.")).toBeTruthy();
+    const local = line("Flash to Local");
+    expect(local.getAttribute("aria-disabled")).toBeNull();
+    expect(local.getAttribute("tabindex")).toBe("0");
+    await click(local);
+    await waitFor(() => expect(fake.callsTo("setSectionLocal")).toEqual([["flash", false]]));
 
-    await click(locked);
-    expect(fake.calls.filter((c) => c.fn.startsWith("put") || c.fn.startsWith("update"))).toEqual([]);
-  });
-
-  it("locks Local where no target could take the backups in its place", async () => {
-    const alone = placementOptions({ sendTo: [], segmentLocks: { "offsite-only": "no-target" } });
-    fake.reply("getPlacementOptions", { ok: true, options: alone }, { ok: true, options: alone }, { ok: true, options: alone });
-    fake.reply("listPlacementDefaults", { ok: true, defaults: [defaultRow({ skip: ["*"] }), defaultRow({ domain: "vms" }), defaultRow({ domain: "files" })] });
-    await renderPage();
-
-    expect(line("Containers to Local").getAttribute("aria-disabled")).toBe("true");
-    await click(line("Containers to Local"));
-    expect(fake.callsTo("previewPlacementDefault")).toEqual([]);
+    listStorageLocations.mockResolvedValue({ ok: true, locations: [{ ...LOCAL, sections: [section({ domain: "containers" }), section({ domain: "flash", off: true })] }, B2, BOX] });
+    await act(async () => {
+      window.dispatchEvent(new Event("bv:storage-locations-changed"));
+    });
+    await waitFor(() => expect(line("Flash to Local").getAttribute("aria-checked")).toBe("false"));
+    await click(line("Flash to Local"));
+    await waitFor(() => expect(fake.callsTo("setSectionLocal")).toEqual([["flash", false], ["flash", true]]));
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("switches the copy of a section without placement with its target's own switch", async () => {
@@ -338,6 +317,16 @@ describe("the flow", () => {
     await waitFor(() => expect(fake.callsTo("updateOffsiteTarget")).toEqual([["t-b2-flash", { ...FLASH_TARGET, enabled: false }]]));
     expect(listOffsiteTargets).toHaveBeenCalledWith("flash");
     expect(fake.callsTo("previewPlacementDefault")).toEqual([]);
+  });
+
+  it("switches the copy the section's off-site settings describe like any other", async () => {
+    const primary = { ...B2, sections: [section({ domain: "containers", use: "copy", targetId: "t-b2" }), section({ domain: "flash", use: "copy", targetId: "t-b2-flash", primary: true })] };
+    listStorageLocations.mockResolvedValue({ ok: true, locations: [LOCAL, primary, BOX] });
+    await renderPage();
+
+    await click(line("Flash to B2"));
+
+    await waitFor(() => expect(fake.callsTo("updateOffsiteTarget")).toEqual([["t-b2-flash", { ...FLASH_TARGET, enabled: false }]]));
   });
 
   it("gives such a section a target under a destination that has none for it", async () => {
@@ -375,7 +364,7 @@ describe("the flow", () => {
     expect(within(containers).getByRole("button", { name: "B2" }).getAttribute("aria-pressed")).toBe("true");
     expect(within(containers).getByRole("button", { name: "Storage Box" }).getAttribute("aria-pressed")).toBe("false");
     const flash = screen.getByRole("group", { name: "Flash" });
-    expect((within(flash).getByRole("button", { name: /^Local/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((within(flash).getByRole("button", { name: /^Local/ }) as HTMLButtonElement).disabled).toBe(false);
 
     await click(within(containers).getByRole("button", { name: "B2" }));
     await waitFor(() => expect(fake.callsTo("previewPlacementDefault")).toEqual([["containers", { skip: ["*"] }]]));

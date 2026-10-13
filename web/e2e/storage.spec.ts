@@ -3,7 +3,7 @@
 // kind is staged at the route layer. On the phones: nothing pans and nothing
 // runs past the edge, on the list with its picture and its switches and on
 // every location's page. On the desktop: a row opens its location, a line of
-// the picture switches a section's default after its question, an entry goes
+// the picture switches with one click and no window, an entry goes
 // back to its default, a location is added in one window, a shorter rule asks
 // before it is saved, a section gets rules of its own and gives them back, a
 // destination's connection is changed, the destination is removed with or
@@ -147,7 +147,7 @@ test.describe("on the desktop", () => {
     await expect(page.getByText("Diesen Speicherort gibt es nicht mehr.")).toBeVisible();
   });
 
-  test("a line switches a section's default after saying what the place will receive", async ({ page }) => {
+  test("a line switches a section's default with one click and no window", async ({ page }) => {
     const staged = await stageStorage(page, 1280);
     await page.goto("/storage");
     const on = page.getByRole("switch", { name: `Container nach ${STORAGE_BOX.name}` });
@@ -157,12 +157,9 @@ test.describe("on the desktop", () => {
 
     await off.focus();
     await page.keyboard.press("Enter");
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toContainText(`${B2.name} ab jetzt bekommt: 7`);
-    expect(staged.writes.filter((w) => w.method === "PUT")).toEqual([]);
-    await dialog.getByRole("button", { name: "Bestätigen" }).click();
 
     await expect.poll(() => staged.writes.filter((w) => w.method === "PUT").length).toBe(1);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
     expect(staged.writes.map((w) => `${w.method} ${w.path}`)).toEqual([
       "POST /api/offsite/destinations/b2/domains/containers",
       "POST /api/placement/default/containers/preview",
@@ -171,7 +168,7 @@ test.describe("on the desktop", () => {
     expect(staged.writes[2].body).toMatchObject({ skip: [], expect: IMPACT });
   });
 
-  test("a line whose preview the server refuses says why in its window and saves nothing", async ({ page }) => {
+  test("a line whose preview the server refuses says why in a message and saves nothing", async ({ page }) => {
     const staged = await stageStorage(page, 1280);
     await page.route(
       (url) => url.pathname.startsWith("/api/placement/default/") && url.pathname.endsWith("/preview"),
@@ -181,15 +178,12 @@ test.describe("on the desktop", () => {
     await page.goto("/storage");
     await page.getByRole("switch", { name: `Container nach ${B2.name}` }).focus();
     await page.keyboard.press("Enter");
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toContainText("Dafür musst du dich an der Weboberfläche dieser Instanz selbst anmelden.");
-    await expect(dialog.getByRole("button", { name: "Bestätigen" })).toBeDisabled();
-    await dialog.getByRole("button", { name: "Abbrechen" }).click();
+    await expect(page.getByText("Dafür musst du dich an der Weboberfläche dieser Instanz selbst anmelden.")).toBeVisible();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     expect(staged.writes.filter((w) => w.method === "PUT")).toEqual([]);
   });
 
-  test("a line whose preview does not come back can still be saved, and the server checks it", async ({ page }) => {
+  test("a line whose preview does not come back is saved all the same, and the server checks it", async ({ page }) => {
     const staged = await stageStorage(page, 1280);
     await page.route(
       (url) => url.pathname.startsWith("/api/placement/default/") && url.pathname.endsWith("/preview"),
@@ -198,26 +192,25 @@ test.describe("on the desktop", () => {
     await page.goto("/storage");
     await page.getByRole("switch", { name: `Container nach ${B2.name}` }).focus();
     await page.keyboard.press("Enter");
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toContainText("Ein Proxy oder Gateway vor BombVault");
-    await dialog.getByRole("button", { name: "Bestätigen" }).click();
 
     await expect.poll(() => staged.writes.filter((w) => w.method === "PUT").length).toBe(1);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
     const put = staged.writes.find((w) => w.method === "PUT")!;
     expect(put.body).toEqual({ skip: [] });
   });
 
-  test("a line the server would refuse is no switch, and the choice of view survives a reload", async ({ page }) => {
+  test("the own folder of flash is a switch like every other line, and the choice of view survives a reload", async ({ page }) => {
     const staged = await stageStorage(page, 1280);
     await page.goto("/storage");
-    const fixed = page.getByRole("switch", { name: "Flash nach Lokal" });
-    await expect(fixed).toBeDisabled();
-    await expect(page.getByLabel("Flash sichert immer zuerst in den eigenen Ordner. Die Off-site-Kopien entstehen aus dieser Sicherung, deshalb bleibt sie an.")).toBeVisible();
-    await fixed.click({ force: true });
-    expect(staged.writes).toEqual([]);
+    const local = page.getByRole("switch", { name: "Flash nach Lokal" });
+    await expect(local).toBeChecked();
+    await local.click();
+    await expect.poll(() => staged.writes.map((w) => `${w.method} ${w.path}`)).toEqual(["PUT /api/storage/sections/flash/local"]);
+    expect(staged.writes[0].body).toEqual({ on: false });
+    await expect(page.getByRole("dialog")).toHaveCount(0);
 
     await page.getByRole("radio", { name: "Schalter" }).click();
-    await expect(page.getByRole("group", { name: "Flash" }).getByRole("button", { name: "Lokal" })).toBeDisabled();
+    await expect(page.getByRole("group", { name: "Flash" }).getByRole("button", { name: "Lokal" })).toBeEnabled();
     await page.reload();
     await expect(page.getByRole("radio", { name: "Schalter" })).toBeChecked();
     await expect(page.getByRole("group", { name: "Container" }).getByRole("button", { name: STORAGE_BOX.name })).toHaveAttribute("aria-pressed", "true");

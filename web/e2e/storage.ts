@@ -485,6 +485,7 @@ export async function stageStorage(page: Page, width: number, lang = "de"): Prom
     }),
   );
   await page.route("**/api/repos/*", (route) => record(route, { ok: true }));
+  await page.route("**/api/storage/sections/*/local", (route) => record(route, { ok: true }));
   await page.route("**/api/placement/defaults", (route) => route.fulfill({ json: { ok: true, defaults: DEFAULTS } }));
   await page.route(
     (url) => url.pathname === "/api/placement/options",
