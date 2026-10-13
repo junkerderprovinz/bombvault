@@ -46,6 +46,34 @@ const POLL_MS = 10000;
 /** The launcher shows the tail of the log; the whole one is on each server. */
 const LOG_LINES = 8;
 
+const SEEN_KEY = "bv-launcher-seen";
+/** Older than this, what the servers said is not shown as how they are. */
+const SEEN_FOR_MS = 10 * 60 * 1000;
+const SEEN_LINES = 200;
+
+interface Seen {
+  at: number;
+  reach: Record<string, Reach>;
+  lines: ServerLine[];
+}
+
+function lastSeen(): Seen | null {
+  try {
+    const seen = JSON.parse(localStorage.getItem(SEEN_KEY) ?? "null") as Seen | null;
+    return seen && Date.now() - seen.at < SEEN_FOR_MS ? seen : null;
+  } catch {
+    return null;
+  }
+}
+
+function remember(seen: Seen) {
+  try {
+    localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
+  } catch {
+    // A full or blocked storage only costs the head start on the next visit.
+  }
+}
+
 function viewIn(state: unknown): View {
   return (state as { view?: View } | null)?.view ?? "list";
 }
@@ -58,8 +86,12 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
   const { t } = useT();
   const [state, setState] = useState<LauncherState | null>(null);
   const [editing, setEditing] = useState<Server | "new" | null>(null);
-  const [reach, setReach] = useState<Record<string, Reach>>({});
-  const [lines, setLines] = useState<ServerLine[]>([]);
+  // The app loads the launcher anew on the way back from a server, and what
+  // the servers said a moment ago shows until they answer again.
+  const [seen] = useState(lastSeen);
+  const [reach, setReach] = useState<Record<string, Reach>>(seen?.reach ?? {});
+  const [lines, setLines] = useState<ServerLine[]>(seen?.lines ?? []);
+  const heard = useRef(false);
 
   useEffect(() => {
     const off = bridge.listen(setState);
@@ -123,25 +155,46 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
       if (params) for (const [name, value] of Object.entries(params)) s = s.split(`{${name}}`).join(value);
       return s;
     };
-    async function poll() {
+    const ids = new Set(list.map((s) => s.id));
+    // Each server shows its answer as it comes, so one that is away does not
+    // hold back the others.
+    function poll() {
+      // In the background the app drops the group, and every answer would be a miss.
+      if (document.visibilityState === "hidden") return;
       followFirst(list[0]?.id);
       const now = Date.now();
       const names = shownNames(list);
-      const results = await Promise.all(list.map((s) => readServer(bridge, s, names[s.id], resolveName, now)));
-      if (!live) return;
-      setReach(Object.fromEntries(results.map((r, i) => [list[i].id, r.reach])));
-      setLines(results.flatMap((r) => r.lines).sort((a, b) => a.atMs - b.atMs));
+      for (const s of list) {
+        void readServer(bridge, s, names[s.id], resolveName, now).then((r) => {
+          if (!live) return;
+          heard.current = true;
+          setReach((prev) => ({ ...prev, [s.id]: r.reach }));
+          setLines((prev) => [...prev.filter((l) => l.serverId !== s.id && ids.has(l.serverId)), ...r.lines].sort((a, b) => a.atMs - b.atMs));
+        });
+      }
     }
-    void poll();
-    const timer = setInterval(() => void poll(), POLL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") poll();
+    };
+    poll();
+    const timer = setInterval(poll, POLL_MS);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       live = false;
       clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [bridge, watched, t, followFirst]);
 
+  useEffect(() => {
+    if (heard.current) remember({ at: Date.now(), reach, lines: lines.slice(-SEEN_LINES) });
+  }, [reach, lines]);
+
   if (state === null) return null;
 
+  // What was remembered of a server removed since stays out of the log.
+  const listed = new Set(state.servers.map((s) => s.id));
+  const logged = lines.filter((l) => listed.has(l.serverId));
   const problem = state.problem;
   const certProblem = problem && problem.kind !== "unreachable" ? problem : undefined;
   const saved = new Set(state.servers.map((s) => origin(s.url)));
@@ -215,7 +268,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
 
   if (view === "language") return <LanguagePage t={t} onBack={back} />;
 
-  if (view === "activity") return <ActivityPage t={t} servers={state.servers} lines={lines} onBack={back} />;
+  if (view === "activity") return <ActivityPage t={t} servers={state.servers} lines={logged} onBack={back} />;
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-6 px-4 py-5">
@@ -238,7 +291,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
         </div>
       ) : (
         <>
-          <ActivityCard t={t} lines={lines.slice(-LOG_LINES)} onOpen={() => show("activity")} />
+          <ActivityCard t={t} lines={logged.slice(-LOG_LINES)} onOpen={() => show("activity")} />
           <div className="flex flex-col gap-2">
             {state.servers.map((s, i) => (
               <ServerCard

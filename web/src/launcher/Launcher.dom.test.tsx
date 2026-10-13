@@ -304,4 +304,57 @@ describe("Launcher", () => {
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByRole("heading", { name: "Settings" })).toBeTruthy();
   });
+
+  it("shows a server that answered while another one is still being asked", async () => {
+    const away = { id: "s2", name: "Attic", url: "https://192.168.1.11:3443/" };
+    const ok = { status: 200, body: JSON.stringify({ ok: true, runs: [], progress: [], next: [] }) };
+    const { bridge } = fakeBridge({ servers: [server, away], found: [], group: alone, camera: false, app });
+    bridge.activity = (id) => (id === "s1" ? Promise.resolve(ok) : new Promise<Fetched>(() => undefined));
+    render(<Launcher bridge={bridge} />);
+    expect(await screen.findByText("Connected")).toBeTruthy();
+  });
+
+  it("shows what the servers said a moment ago while they are asked again", async () => {
+    const ok = { status: 200, body: JSON.stringify({ ok: true, runs: [], progress: [], next: [] }) };
+    const state = { servers: [server], found: [], group: alone, camera: false, app };
+    const first = render(<Launcher bridge={fakeBridge(state, { s1: ok }).bridge} />);
+    await screen.findByText("Connected");
+    first.unmount();
+
+    const { bridge: again } = fakeBridge(state);
+    again.activity = () => new Promise<Fetched>(() => undefined);
+    render(<Launcher bridge={again} />);
+    expect(await screen.findByText("Connected")).toBeTruthy();
+  });
+
+  it("asks again as soon as the app is back in front, and not while it is away", async () => {
+    let visibility: DocumentVisibilityState = "visible";
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => visibility });
+    try {
+      let asked = 0;
+      const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+      bridge.activity = () => {
+        asked += 1;
+        return Promise.resolve({ status: 200, body: "{}" });
+      };
+      render(<Launcher bridge={bridge} />);
+      await screen.findByText("Tower");
+      await act(async () => undefined);
+      expect(asked).toBe(1);
+
+      visibility = "hidden";
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+      expect(asked).toBe(1);
+
+      visibility = "visible";
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+      expect(asked).toBe(2);
+    } finally {
+      delete (document as { visibilityState?: unknown }).visibilityState;
+    }
+  });
 });
