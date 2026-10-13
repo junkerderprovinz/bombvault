@@ -273,7 +273,7 @@ export function Anomalies() {
         />
       </div>
 
-      <Card title={t(view === "open" ? "anomaly.list.open" : "anomaly.closedRecent")} hueIndex={TILES.length}>
+      <Card title={t(view === "open" ? "anomaly.list.open" : "anomaly.closedRecent")} hueIndex={TILES.length} newId="anomalies-tiles">
         {current.failed ? (
           <div className="flex flex-col items-start gap-2">
             <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
@@ -397,7 +397,6 @@ function SeverityTiles({
     <div
       role="group"
       aria-label={t("anomaly.filter.severity")}
-      data-new="anomalies-tiles"
       className="grid grid-cols-2 gap-2 rounded-card bg-carbon-surface p-3 md:grid-cols-4"
     >
       {TILES.map(({ severity, label, glyph }, i) => {

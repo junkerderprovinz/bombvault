@@ -613,6 +613,94 @@ test("a learning ring is big enough to tap on a phone", async ({ page }, testInf
   expect(box.width, "a ring is narrower than a fingertip").toBeGreaterThanOrEqual(43.5);
 });
 
+interface Paint {
+  row: string;
+  edge: string;
+  badge: { bg: string; ink: string };
+}
+
+/** A finding's surface, its edge and its severity badge, as the browser paints them. */
+async function paintOf(row: Locator, label: string): Promise<Paint> {
+  return row.evaluate((li, label) => {
+    const badge = [...li.querySelectorAll<HTMLElement>("span")].find((el) => el.textContent === label)!;
+    const style = getComputedStyle(badge);
+    const own = getComputedStyle(li);
+    return { row: own.backgroundColor, edge: own.boxShadow, badge: { bg: style.backgroundColor, ink: style.color } };
+  }, label);
+}
+
+/** What a few custom properties resolve to inside the list's card. */
+async function resolved(page: Page, props: Record<string, string>): Promise<Record<string, string>> {
+  return findings(page)
+    .first()
+    .evaluate((li, props) => {
+      const card = li.closest("[data-search-card]")!;
+      const probe = document.createElement("i");
+      card.append(probe);
+      const out: Record<string, string> = {};
+      for (const [name, value] of Object.entries(props)) {
+        probe.style.color = value;
+        out[name] = getComputedStyle(probe).color;
+      }
+      probe.remove();
+      return out;
+    }, props);
+}
+
+for (const theme of ["dark", "light"] as const) {
+  test(`${theme}: a finding shows its severity by its edge and badge, on the surface every finding has`, async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "desktop-1280" && testInfo.project.name !== "mobile-iphone",
+      "the colours are the same at every width, so one desktop and one phone engine",
+    );
+    await page.addInitScript((theme) => {
+      window.localStorage.setItem("bv-theme", theme);
+      window.localStorage.setItem("bv-rainbow", JSON.stringify({ on: true, reactive: false }));
+    }, theme);
+    await stage(page, testInfo.project.name === "desktop-1280" ? 1280 : 390);
+    await openPage(page);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+
+    const want = await resolved(page, {
+      surface: "var(--carbon-surface2)",
+      failEdge: "var(--status-fail-solid)",
+      warnEdge: "var(--status-warn-solid)",
+      noteEdge: "var(--carbon-surface3)",
+      failBg: "var(--status-fail-bg)",
+      failInk: "var(--status-fail-text)",
+      warnBg: "var(--status-warn-bg-strong)",
+      warnInk: "var(--status-warn-text)",
+    });
+    const row = (severity: string) => page.locator(`#finding-${FINDINGS.find((f) => f.severity === severity)!.id}`);
+    const critical = row("critical");
+
+    const paints = {
+      critical: await paintOf(critical, "Kritisch"),
+      warning: await paintOf(row("warning"), "Warnung"),
+      info: await paintOf(row("info"), "Hinweis"),
+    };
+    for (const [severity, paint] of Object.entries(paints)) {
+      expect.soft(paint.row, `a ${severity} finding is tinted`).toBe(want.surface);
+    }
+    expect.soft(paints.critical.edge).toContain(want.failEdge);
+    expect.soft(paints.warning.edge).toContain(want.warnEdge);
+    expect.soft(paints.info.edge).toContain(want.noteEdge);
+    expect.soft(paints.critical.badge).toEqual({ bg: want.failBg, ink: want.failInk });
+    expect.soft(paints.warning.badge).toEqual({ bg: want.warnBg, ink: want.warnInk });
+
+    await critical.hover();
+    expect.soft((await paintOf(critical, "Kritisch")).row, "a critical finding is tinted under the pointer").toBe(want.surface);
+    await critical.getByRole("button", { name: "Quittieren", exact: true }).focus();
+    expect.soft((await paintOf(critical, "Kritisch")).row, "a critical finding is tinted under focus").toBe(want.surface);
+
+    await page.getByRole("tab", { name: "Geschlossen in den letzten 30 Tagen" }).click();
+    await expect(findings(page)).toHaveCount(CLOSED.length);
+    for (const li of await findings(page).all()) {
+      expect.soft(await li.evaluate((el) => getComputedStyle(el).backgroundColor), "a closed finding is tinted").toBe(want.surface);
+    }
+  });
+}
+
 test.describe("on the desktop", () => {
   test.skip(({ viewport, isMobile }) => isMobile || viewport?.width !== 1280, "the desktop checks run once, at 1280");
 
