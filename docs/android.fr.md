@@ -47,6 +47,8 @@ Le réglage correspondant est **Les téléphones peuvent s'appairer avec les dou
 
 Le téléphone obtient sa propre carte sur la page Instances de chaque serveur du groupe, marquée comme application Android et portant le nom que vous avez donné au téléphone. Elle n'a pas de fiche de protection, puisque le téléphone ne sauvegarde rien, et **Supprimer** la retire de la page. Un téléphone qui connaît les mots peut s'appairer de nouveau à tout moment. Pour un téléphone perdu, désactivez donc **Les téléphones peuvent s'appairer avec les douze mots du groupe** sous **Paramètres, Sécurité**, ou faites **Quitter le groupe** sur chaque instance et appairez-les de nouveau avec de nouveaux mots.
 
+Un téléphone appairé avant la version 10.0.0 commence à signer ses appels lors de sa première visite après la mise à jour, et chaque serveur garde la première clé qu'il reçoit pour ce téléphone. Si quelqu'un d'autre qui connaît les mots du groupe arrive le premier pendant que le téléphone est hors ligne, ce serveur refuse alors le téléphone, et l'application ne peut plus l'ouvrir via le relais. Pour y remédier, connectez-vous à ce serveur dans un navigateur, choisissez **Oublier la clé** sur la carte du téléphone dans la page Instances, puis **Confirmer l'oubli**, et rouvrez l'application. Le serveur prend la clé propre du téléphone à son prochain appel. Si le téléphone est de nouveau refusé, quelqu'un d'autre a les mots : faites **Quitter le groupe** sur chaque instance et appairez-les de nouveau avec de nouveaux mots, comme pour un téléphone perdu.
+
 ## Paramètres {#settings}
 
 La roue dentée à côté du bouton + ouvre les paramètres de l'application :

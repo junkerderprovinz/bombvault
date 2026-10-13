@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import {
+  ApiError,
   previewPlacementDefault,
   putPlacementDefault,
   type DefaultChange,
@@ -29,6 +30,7 @@ import { useToast } from "../../lib/toast";
 import { useConfirm, type ConfirmOptions } from "../../lib/useConfirm";
 import { useHostLabel } from "../../lib/useHostLabel";
 import { useNamedRepos } from "../../lib/useNamedRepos";
+import { InfoBubble } from "../InfoBubble";
 import { DirectRepoDialog } from "./DirectRepoDialog";
 
 type T = ReturnType<typeof useT>["t"];
@@ -131,7 +133,8 @@ export function useDefaultWrites(): DefaultWrites {
     try {
       await work();
     } catch (err) {
-      fail({ ok: false, error: err instanceof Error ? err.message : undefined });
+      dismiss();
+      fail({ ok: false, error: err instanceof ApiError ? err.message : undefined });
     } finally {
       setBusy(false);
     }
@@ -165,6 +168,32 @@ export function useDefaultWrites(): DefaultWrites {
     return [lead, asking(home, extra)];
   }
 
+  // A preview the server refused refuses the write as well, so only the way
+  // out is left. One that never came back leaves the write to the server,
+  // which without the numbers saves only a change that touches no storage
+  // location and answers any other with the numbers to ask about.
+  function unchecked(ctx: DefaultContext, home: string | undefined, err: unknown): [string, ConfirmOptions] {
+    const failed = err instanceof ApiError ? err : undefined;
+    const reason = failed?.message ?? t("apiError.serverFailed");
+    const detail = failed?.detail;
+    const said = detail && <InfoBubble tip={t("apiError.said").replace("{said}", () => detail)} />;
+    if (failed && failed.status >= 400 && failed.status < 500 && failed.status !== 408) {
+      return [reason, { extra: said, confirmBlocked: reason, cancelTone: "neutral" }];
+    }
+    const note = t("placementDefaults.previewFailed").replace("{reason}", () => reason);
+    if (home === undefined) return [note, asking(undefined, said)];
+    return [
+      homeLead(ctx, home),
+      asking(
+        home,
+        <p className="flex items-start gap-1 text-sm text-carbon-textSub">
+          <span>{note}</span>
+          {said}
+        </p>
+      ),
+    ];
+  }
+
   function change(ctx: DefaultContext, next: DefaultChange) {
     const { row } = ctx;
     const home = next.home !== undefined && next.home !== row.home ? next.home : undefined;
@@ -177,15 +206,22 @@ export function useDefaultWrites(): DefaultWrites {
       void first.then(() => {
         answered = true;
       });
-      const preview = await previewPlacementDefault(row.domain, next);
-      if (answered) return;
-      if (!preview.ok || !preview.impact) {
-        dismiss();
-        fail(preview);
-        return;
+      let impact: DefaultImpact | undefined;
+      let asked: [string, ConfirmOptions] | null;
+      try {
+        const preview = await previewPlacementDefault(row.domain, next);
+        if (answered) return;
+        if (!preview.ok || !preview.impact) {
+          dismiss();
+          fail(preview);
+          return;
+        }
+        impact = preview.impact;
+        asked = question(ctx, impact, home);
+      } catch (err) {
+        if (answered) return;
+        asked = unchecked(ctx, home, err);
       }
-      let impact = preview.impact;
-      let asked = question(ctx, impact, home);
       if (asked) revise(...asked);
       else dismiss();
       for (let round = 0; ; round++) {

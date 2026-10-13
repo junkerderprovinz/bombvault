@@ -137,7 +137,7 @@ export function WhatsNewWindow({
                           ariaDescribedBy={textId}
                           onClick={() => {
                             onClose();
-                            navigate(change.go ?? change.page);
+                            navigate(change.go ?? change.page, { replace: true });
                           }}
                           className="ms-auto glim-btn-wrap"
                         />

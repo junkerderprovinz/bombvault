@@ -165,7 +165,7 @@ Jediné místo, které pořád bere APP_KEY ručně, je [Ze staré složky se z�
 
 ## Instance a role {#roles}
 
-Stránka **Instance** (dlaždice nastavení, kterou lze připnout do postranního panelu) ukazuje skupinu jako síť toho, kdo co pro koho dělá, kartu pro tuto instanci a kartu pro každého dalšího člena, telefony s Androidem a servery ZFS. **Spárovat instanci** plave vpravo dole. Které části jsou zapnuté, se nastavuje v **Nastavení, Instance, Více serverů**: **Instance**, **Přijímač** a **Stažení**.
+Stránka **Instance** (dlaždice nastavení, kterou lze připnout do postranního panelu) ukazuje skupinu jako síť toho, kdo co pro koho dělá, kartu pro tuto instanci a kartu pro každého dalšího člena, telefony s Androidem a servery ZFS. **Párování** plave vpravo dole. Které části jsou zapnuté, se nastavuje v **Nastavení, Instance, Více serverů**: **Instance**, **Přijímač** a **Stažení**.
 
 Každá karta ukazuje stav ochrany člena a jeho role jako dlaždice. Role je něco, co jedna instance dělá pro druhou:
 

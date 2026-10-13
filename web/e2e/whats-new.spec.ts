@@ -202,6 +202,28 @@ test("a dot leads from the navigation over the settings tile to the change, and 
   await expectOn(dot, card);
 });
 
+test("Go there takes the place of the list in the history, so Back returns to where the list was opened", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "one desktop project is enough for the history");
+  await stage(page);
+  await openUpdated(page, "/dashboard");
+  await page.locator('a[href="/settings"]').first().click();
+  await expect(page).toHaveURL(/\/settings\/\w+$/);
+  const before = page.url();
+  await page.locator('a[href="/settings/info"]').click();
+  await expect(page).toHaveURL(/\/settings\/info$/);
+  expect(before).not.toMatch(/\/settings\/info$/);
+
+  await openList(page);
+  await list(page).locator("[data-change]").filter({ hasText: TILES_NEWS }).getByRole("button", { name: "Go there" }).click();
+  await expect(list(page)).toHaveCount(0);
+  await expect(page).not.toHaveURL(/\/settings\/info$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/settings\/info$/);
+  await expect(list(page)).toHaveCount(0);
+  await page.goBack();
+  await expect(page).toHaveURL(before);
+});
+
 test("the dots breathe, and stand still where motion is reduced", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-1280", "the motion is the same at every width");
   await stage(page);

@@ -481,6 +481,15 @@ describe("a folder set", () => {
     expect(restoreFileSet).toHaveBeenCalledWith(PHOTOS.key, NEWEST, true, "", "local", { target: "beside" });
   });
 
+  it("picks no target and checks nothing until the set is read", async () => {
+    await open(entryOf("files"), { reading: true });
+    const radios = within(dialog()).getAllByRole<HTMLButtonElement>("radio", { name: /./ });
+    const targets = radios.filter((r) => r.closest('[data-new="restore-where"]'));
+    expect(targets.length).toBeGreaterThan(0);
+    expect(targets.map((r) => [r.disabled, r.getAttribute("aria-checked")])).toEqual(targets.map(() => [true, "false"]));
+    expect(checkRestore).not.toHaveBeenCalled();
+  });
+
   it("only restores into a folder when it does not know where it came from", async () => {
     await open(entryOf("files", { detail: { kind: "files", set: fileSetView({ path: "" }) } }));
     expect(target("beside")).toBeNull();

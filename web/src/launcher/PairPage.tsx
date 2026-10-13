@@ -25,6 +25,18 @@ const SETTLE_MS = 3000;
  *  long to announce itself; the search goes on after it either way. */
 const LOOK_MS = 30000;
 
+/** When the look ends. It is kept where it outlasts the page, which Android
+ *  rebuilds when the phone switches between dark and light. */
+const LOOK_UNTIL = "bv-look-until";
+
+function lookEnd(): number {
+  try {
+    return Number(localStorage.getItem(LOOK_UNTIL)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 /** The words of a refused code, in the sentences the pairing card uses. */
 function pairErrorText(t: T, e: PairError): string {
   switch (e.reason) {
@@ -78,9 +90,13 @@ export function PairPage({
   const fieldId = useId();
   const [text, setText] = useState("");
   const [searching, setSearching] = useState(false);
-  const [looking, setLooking] = useState(false);
+  const [looking, setLooking] = useState(() => lookEnd() > Date.now());
   const lookTimer = useRef(0);
-  useEffect(() => () => window.clearTimeout(lookTimer.current), []);
+  useEffect(() => {
+    const left = lookEnd() - Date.now();
+    if (left > 0) lookTimer.current = window.setTimeout(() => setLooking(false), left);
+    return () => window.clearTimeout(lookTimer.current);
+  }, []);
   const [scanning, setScanning] = useState(false);
   const [shake, setShake] = useState(0);
   const { confirm, confirmDialog } = useConfirm();
@@ -103,6 +119,11 @@ export function PairPage({
     setSearching(true);
     window.setTimeout(() => setSearching(false), SETTLE_MS);
     setLooking(true);
+    try {
+      localStorage.setItem(LOOK_UNTIL, String(Date.now() + LOOK_MS));
+    } catch {
+      // The look then ends with the page.
+    }
     window.clearTimeout(lookTimer.current);
     lookTimer.current = window.setTimeout(() => setLooking(false), LOOK_MS);
   }, []);

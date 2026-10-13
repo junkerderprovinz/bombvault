@@ -99,6 +99,9 @@ object PageWire {
     /** The most an answer may unpack to. */
     const val MAX_UNPACKED = 48 shl 20
 
+    /** The length the server cuts every part of an answer but the last to, so an answer has 64 parts at most. */
+    const val PART = 256 shl 10
+
     /** The request headers the server takes from a page. */
     val HEADERS = listOf("Content-Type", "Accept", "Sec-Fetch-Site", "Sec-Fetch-Mode", "Sec-Fetch-Dest")
 
@@ -131,11 +134,15 @@ object PageWire {
         return Piece(o.optInt("status"), header, body, o.optInt("size", body.size), o.optString("part"), unb64(o.optString("proof")))
     }
 
-    /** Where the parts after [first] start; the server cuts every part but the last to one length. */
+    /**
+     * Where the parts after [first] start. The first part is not signed yet,
+     * so its size and length are checked before a single part is asked for.
+     */
     fun offsets(first: Piece): List<Int> {
-        val step = first.body.size
-        if (step == 0 || first.part.isEmpty()) return emptyList()
-        return (step until first.size step step).toList()
+        if (first.size !in 0..MAX_ANSWER) throw IOException("the answer is too large")
+        if (first.part.isEmpty()) return emptyList()
+        if (first.body.size != PART || first.size <= PART) throw IOException("the answer is cut where the server never cuts it")
+        return (PART until first.size step PART).toList()
     }
 
     /** Puts [first] and the [rest] of its parts, in order, back into the body as it was sent. */

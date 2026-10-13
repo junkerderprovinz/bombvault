@@ -162,7 +162,7 @@ function Location({ location, records }: { location: StorageLocation; records: L
       {moving && own?.targetId && (
         <MoveWindow location={location} domain={own.domain} targetId={own.targetId} onClose={() => setMoving(false)} />
       )}
-      {removing && <RemovalWindow location={location} onClose={() => setRemoving(false)} onRemoved={() => navigate("/storage")} />}
+      {removing && <RemovalWindow location={location} onClose={() => setRemoving(false)} onRemoved={() => navigate("/storage", { replace: true })} />}
 
       <ConnectionCard edit={edit} onChange={changeable ? () => setChanging(true) : undefined} hueIndex={nextHue()} />
       {kind && <CredentialsCard edit={edit} kind={kind} hueIndex={nextHue()} />}

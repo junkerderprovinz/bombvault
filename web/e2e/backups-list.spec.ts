@@ -421,37 +421,29 @@ test("every status keeps to one line and the run strips line up, in the longest 
   }
 });
 
-test("the mark that picks a row is a disc in every shape and lies on the row it picks", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-1280", "a mark under the pointer needs a pointer");
+test("a row draws no mark, and the keyboard picks it through its glyph tile", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "a pointer that hovers and a keyboard");
   await stage(page);
-  for (const shape of ["soft", "square", "round"]) {
-    await page.addInitScript((value) => window.localStorage.setItem("bv-shape", value), shape);
-    await openList(page);
-    const row = rows(page).filter({ hasText: "Dokumente" });
-    await row.hover();
-    const mark = row.getByRole("checkbox", { name: "Dokumente auswählen" });
-    await expect(mark).toBeVisible();
-    const disc = async () =>
-      mark.evaluate((el) => {
-        const shown = el.firstElementChild!;
-        const box = shown.getBoundingClientRect();
-        return { round: parseFloat(getComputedStyle(shown).borderTopLeftRadius) >= box.width / 2, width: box.width, height: box.height };
-      });
-    expect(await disc(), `the mark in the ${shape} shape`).toEqual({ round: true, width: 18, height: 18 });
+  await openList(page);
+  const row = rows(page).filter({ has: page.getByRole("link", { name: "Dokumente", exact: true }) });
+  const glyph = row.locator(".glim-row-glyph");
+  const name = async () => (await row.getByRole("link").boundingBox())!.x;
+  const at = await name();
 
-    const [at, around, name] = [(await mark.boundingBox())!, (await row.boundingBox())!, (await row.getByRole("link").boundingBox())!];
-    expect(at.x, "the mark hangs out of its row").toBeGreaterThanOrEqual(around.x);
-    expect(at.y).toBeGreaterThanOrEqual(around.y);
-    expect(at.x + at.width, "the mark is not at the start of the row").toBeLessThan(name.x);
+  await row.hover();
+  await expect(glyph.locator(".rounded-full")).toHaveCount(0);
+  const pick = row.getByRole("checkbox", { name: "Dokumente auswählen" });
+  expect((await pick.boundingBox())?.width ?? 0, "the switch takes no room").toBeLessThanOrEqual(1);
 
-    await mark.click();
-    await expect(page.getByTestId("bulk-bar")).toBeVisible();
-    await expect(page).toHaveURL(/\/backups$/);
-    expect(await disc(), `the mark of a picked row in the ${shape} shape`).toEqual({ round: true, width: 18, height: 18 });
-    const picked = (await mark.boundingBox())!;
-    const glyph = (await row.locator(".glim-row-glyph").boundingBox())!;
-    expect(picked.x + picked.width, "the mark of a picked row stands before its glyph").toBeLessThanOrEqual(glyph.x);
-  }
+  await page.mouse.move(0, 0);
+  await pick.focus();
+  expect(await glyph.evaluate((el) => getComputedStyle(el).outlineStyle), "the focus rings the glyph tile").toBe("solid");
+  await page.keyboard.press("Space");
+  await expect(page.getByTestId("bulk-bar")).toBeVisible();
+  await expect(page).toHaveURL(/\/backups$/);
+  await expect(pick).toHaveAttribute("aria-checked", "true");
+  await expect(row).toHaveAttribute("data-picked", "true");
+  expect(await name(), "no row moves when one is picked").toBe(at);
 });
 
 test("a row opens the page of its entry", async ({ page }, testInfo) => {

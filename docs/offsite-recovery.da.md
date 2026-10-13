@@ -165,7 +165,7 @@ Det eneste sted, der stadig tager en APP_KEY i hånden, er [Fra en gammel sikker
 
 ## Instanser og roller {#roles}
 
-Siden **Instanser** (et indstillingsfelt, der kan fæstnes til sidepanelet) viser gruppen som et net af, hvem der gør hvad for hvem, et kort for denne instans og et kort for hvert andet medlem, Android-telefonerne og ZFS-serverne. **Par en instans** flyder nederst til højre. Hvilke dele der er slået til, sættes under **Indstillinger, Instanser, Flere servere**: **Instanser**, **Modtager** og **Hentning**.
+Siden **Instanser** (et indstillingsfelt, der kan fæstnes til sidepanelet) viser gruppen som et net af, hvem der gør hvad for hvem, et kort for denne instans og et kort for hvert andet medlem, Android-telefonerne og ZFS-serverne. **Parring** flyder nederst til højre. Hvilke dele der er slået til, sættes under **Indstillinger, Instanser, Flere servere**: **Instanser**, **Modtager** og **Hentning**.
 
 Hvert kort viser medlemmets beskyttelsesstatus og dets roller som felter. En rolle er noget, en instans gør for en anden:
 

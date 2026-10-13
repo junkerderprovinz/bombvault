@@ -165,7 +165,7 @@ Jedyne miejsce, które nadal przyjmuje APP_KEY ręcznie, to [Ze starego folderu 
 
 ## Instancje i role {#roles}
 
-Strona **Instancje** (kafelek ustawień, który można przypiąć do paska bocznego) pokazuje grupę jako sieć tego, kto co robi dla kogo, kartę tej instancji i kartę każdego innego członka, telefony z Androidem i serwery ZFS. **Sparuj instancję** unosi się w prawym dolnym rogu. To, które części są włączone, ustawia się w **Ustawienia, Instancje, Wiele serwerów**: **Instancje**, **Odbiornik** i **Pobieranie**.
+Strona **Instancje** (kafelek ustawień, który można przypiąć do paska bocznego) pokazuje grupę jako sieć tego, kto co robi dla kogo, kartę tej instancji i kartę każdego innego członka, telefony z Androidem i serwery ZFS. **Parowanie** unosi się w prawym dolnym rogu. To, które części są włączone, ustawia się w **Ustawienia, Instancje, Wiele serwerów**: **Instancje**, **Odbiornik** i **Pobieranie**.
 
 Każda karta pokazuje stan ochrony członka i jego role jako kafelki. Rola to coś, co jedna instancja robi dla drugiej:
 

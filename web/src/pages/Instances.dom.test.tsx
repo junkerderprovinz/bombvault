@@ -76,6 +76,7 @@ const keeperWithdrawn: string[] = [];
 const calls: string[] = [];
 const polled: string[] = [];
 const removed: string[] = [];
+const forgotten: string[] = [];
 const asked: [string, string, unknown][] = [];
 const withdrawn: [string, string][] = [];
 const patched: [string, ZFSReplicaPatch][] = [];
@@ -109,6 +110,10 @@ vi.mock("../lib/api", async (importOriginal) => {
     deleteFleetPeer: (id: string) => {
       removed.push(id);
       peers = peers.filter((p) => p.id !== id);
+      return Promise.resolve({ ok: true });
+    },
+    forgetMemberKey: (memberId: string) => {
+      forgotten.push(memberId);
       return Promise.resolve({ ok: true });
     },
     listRoles: () => answer("listRoles", rolesOk ? { ok: true, members: roles, self: selfRoles } : { ok: false, error: "the roles are locked" }),
@@ -251,6 +256,7 @@ beforeEach(() => {
   calls.length = 0;
   polled.length = 0;
   removed.length = 0;
+  forgotten.length = 0;
   asked.length = 0;
   withdrawn.length = 0;
   patched.length = 0;
@@ -348,7 +354,7 @@ describe("the instances grid", () => {
 
   it("opens pairing in Settings from the page's own action, the one filled button", async () => {
     await renderPage();
-    const pair = within(screen.getByTestId("page-actions")).getByRole("button", { name: en["pairing.join"] });
+    const pair = within(screen.getByTestId("page-actions")).getByRole("button", { name: en["pairing.title"] });
     expect(pair.className).toContain("bg-accent");
     await click(pair);
     expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
@@ -868,6 +874,16 @@ describe("a paired phone", () => {
     expect(within(phone).getByRole("button", { name: en["fleet.remove"] })).toBeTruthy();
   });
 
+  it("forgets the key pinned for it on the second click, so the phone pins its own on its next call", async () => {
+    await renderPage();
+    const phone = card("m3");
+    await click(within(phone).getByRole("button", { name: en["instances.forgetKey"] }));
+    expect(forgotten).toEqual([]);
+    await click(within(phone).getByRole("button", { name: en["instances.forgetKeyConfirm"] }));
+    expect(forgotten).toEqual(["m3"]);
+    expect(within(card("m1")).queryByRole("button", { name: en["instances.forgetKey"] })).toBeNull();
+  });
+
   it("stands in the net picture as a phone, with no arrows", async () => {
     await renderPage();
     const node = screen.getByTestId("net-picture").querySelector('.glim-net-wide [data-net="m3"]')!;
@@ -934,8 +950,8 @@ describe("an empty group", () => {
 
   it("offers pairing once, as the page's action and not on the card", async () => {
     await renderPage();
-    expect(screen.getAllByRole("button", { name: en["pairing.join"] })).toHaveLength(1);
-    await click(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["pairing.join"] }));
+    expect(screen.getAllByRole("button", { name: en["pairing.title"] })).toHaveLength(1);
+    await click(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["pairing.title"] }));
     expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
   });
 });

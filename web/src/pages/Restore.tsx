@@ -7,14 +7,13 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { BarButton, BulkBar } from "../components/backups/BulkBar";
 import { KIND_LABEL, KindGlyph, entryName, kindHue } from "../components/backups/kinds";
 import { KindTile, TileRow } from "../components/backups/KindTiles";
-import { SelectMark } from "../components/backups/SelectMark";
 import { useRowSelection } from "../components/backups/useRowSelection";
 import { Button } from "../components/Button";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconArchive, IconForward, IconSearch, IconSelectAll } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { InstanceWindow } from "./instances/InstanceWindow";
-import { IconDownload, IconFolder, IconRecovery, IconRestore } from "../components/navGlyphs";
+import { IconCheck, IconDownload, IconFolder, IconRecovery, IconRestore } from "../components/navGlyphs";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { ProgressBar } from "../components/ProgressBar";
@@ -42,6 +41,7 @@ import { joinsMany, leftOut, type LeftOut } from "../lib/restoreMany";
 import { findingsOf, parseEmergencyStep, parseEmergencyWay, recommend, recommendationWhy } from "../lib/restorePlan";
 import { useLongPress } from "../lib/useLongPress";
 import { useOpenAnomalies } from "../lib/useAnomalies";
+import { leaveLayers } from "../lib/useBackCloses";
 import { useEntry } from "../lib/useEntry";
 import { useTimeline } from "../lib/useTimeline";
 import { Card, hueCounter } from "./settings/shared";
@@ -60,8 +60,10 @@ const LEFT_OUT_TIP: Record<LeftOut, TranslationKey> = {
 
 /**
  * EntryPick is one entry of the list. A click opens its backups below the
- * list; Ctrl+click, Shift+click, a long press or the mark on its glyph pick it
- * for a restore together with others, as rows are picked on the Backups page.
+ * list; Ctrl+click, Shift+click or a long press pick it for a restore together
+ * with others, as rows are picked on the Backups page. While entries are being
+ * picked a plain click or Space picks it, and a picked entry shows a check in
+ * place of its glyph.
  */
 function EntryPick({
   item,
@@ -69,7 +71,6 @@ function EntryPick({
   chosen,
   selecting,
   onClick,
-  onPick,
   onLongPress,
 }: {
   item: BackupItem;
@@ -78,7 +79,6 @@ function EntryPick({
   chosen: boolean;
   selecting: boolean;
   onClick: (e: MouseEvent) => void;
-  onPick: (on: boolean) => void;
   onLongPress: () => void;
 }) {
   const { t, lang } = useT();
@@ -90,7 +90,7 @@ function EntryPick({
   return (
     <li
       style={hueVars(kindHue(item.kind)) as CSSProperties}
-      className="glim-hue group relative min-w-0 pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none]"
+      className="glim-hue relative min-w-0 pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none]"
     >
       <button
         type="button"
@@ -115,7 +115,7 @@ function EntryPick({
             lit ? "bg-accent text-accentContrast" : "bg-carbon-surface2 text-accentText"
           }`}
         >
-          <KindGlyph kind={item.kind} />
+          {chosen ? <IconCheck /> : <KindGlyph kind={item.kind} />}
         </span>
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-semibold text-carbon-text">{name}</span>
@@ -126,23 +126,6 @@ function EntryPick({
           </span>
         </span>
       </button>
-      {joins && (
-        // Until something is picked the mark shows only under the pointer, on
-        // the corner of the glyph, so no row moves when it appears.
-        <span
-          className={`absolute start-1 top-1 rounded-full ring-2 ${chosen ? "ring-transparent" : "ring-carbon-surface pointer-fine:group-hover:ring-carbon-surface2"} ${
-            selecting ? "flex" : "hidden pointer-fine:group-hover:flex pointer-fine:group-focus-within:flex"
-          }`}
-        >
-          <SelectMark
-            checked={chosen}
-            offered={!selecting}
-            label={t("common.selectItem").replace("{name}", name)}
-            onChange={onPick}
-            bare
-          />
-        </span>
-      )}
       {selecting && out && hasBackups(item) && (
         <span className="absolute end-2 top-1/2 flex -translate-y-1/2">
           <InfoBubble tip={t(LEFT_OUT_TIP[out])} />
@@ -362,8 +345,15 @@ export function Restore() {
       .catch(() => undefined);
   }, [emergencyOpen]);
 
-  function closeEmergency() {
-    setParams({}, { replace: true });
+  // The window's URL takes the place of the page's entry and the window holds
+  // one above it, so closing steps back over that one and clears the URL in
+  // place: the page is left with the one entry it had.
+  const openEmergency = () => setParams({ emergency: "access" }, { replace: true });
+  function closeEmergency(then?: () => void) {
+    leaveLayers(() => {
+      setParams({}, { replace: true });
+      then?.();
+    });
     window.dispatchEvent(new Event(ATTENTION_CHANGED_EVENT));
   }
 
@@ -451,12 +441,9 @@ export function Restore() {
         <EmergencyWindow
           start={emergency}
           way={parseEmergencyWay(params.get("way"))}
-          onClose={closeEmergency}
-          onPairing={() => navigate("/settings/pairing?for=emergency")}
-          onOldFolder={() => {
-            closeEmergency();
-            setSource("oldFolder");
-          }}
+          onClose={() => closeEmergency()}
+          onPairing={() => navigate("/settings/pairing?for=emergency", { replace: true })}
+          onOldFolder={() => closeEmergency(() => setSource("oldFolder"))}
         />
       )}
       {source === "oldFolder" && <OldFolderWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
@@ -568,7 +555,6 @@ export function Restore() {
                         chosen={selection.picked.has(id)}
                         selecting={selection.selecting}
                         onClick={(e) => clickEntry(e, item)}
-                        onPick={(on) => selection.set(id, on)}
                         onLongPress={() => selection.begin(id)}
                       />
                     );
@@ -594,7 +580,7 @@ export function Restore() {
             name={t("restorePage.emergencyWay")}
             sub={t("restorePage.emergencyWayKit")}
             warn
-            onOpen={() => setParams({ emergency: "access" })}
+            onOpen={openEmergency}
           />
         </Card>
         <Card title={t("restorePage.otherSources")} hueIndex={nextHue()}>
@@ -620,7 +606,7 @@ export function Restore() {
           primary
           label={t("entry.config.startRecovery")}
           glyph={<IconRecovery />}
-          onClick={() => setParams({ emergency: "access" })}
+          onClick={openEmergency}
         />
       </PageActions>
     </div>

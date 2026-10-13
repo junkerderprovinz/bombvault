@@ -165,7 +165,7 @@ Nơi duy nhất vẫn nhận APP_KEY nhập tay là [Từ thư mục sao lưu c�
 
 ## Phiên bản và vai trò {#roles}
 
-Trang **Phiên bản** (một ô cài đặt có thể ghim vào thanh bên) hiển thị nhóm như một mạng lưới ai làm gì cho ai, một thẻ cho phiên bản này và một thẻ cho mọi thành viên khác, điện thoại Android và máy chủ ZFS. **Ghép nối phiên bản** nổi ở dưới cùng bên phải. Phần nào bật được đặt dưới **Cài đặt, Phiên bản, Nhiều máy chủ**: **Phiên bản**, **Bộ nhận** và **Kéo về**.
+Trang **Phiên bản** (một ô cài đặt có thể ghim vào thanh bên) hiển thị nhóm như một mạng lưới ai làm gì cho ai, một thẻ cho phiên bản này và một thẻ cho mọi thành viên khác, điện thoại Android và máy chủ ZFS. **Ghép nối** nổi ở dưới cùng bên phải. Phần nào bật được đặt dưới **Cài đặt, Phiên bản, Nhiều máy chủ**: **Phiên bản**, **Bộ nhận** và **Kéo về**.
 
 Mỗi thẻ hiển thị trạng thái bảo vệ của thành viên và các vai trò của nó dưới dạng ô. Một vai trò là điều một phiên bản làm cho phiên bản khác:
 

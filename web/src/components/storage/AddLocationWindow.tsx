@@ -223,7 +223,7 @@ export function AddLocationWindow({
         push(t("storage.add.sectionsFailed").replace("{name}", () => made.name).replace("{list}", () => list), "warn");
       }
       onClose();
-      navigate(locationRoute(`destination:${made.id}`));
+      navigate(locationRoute(`destination:${made.id}`), { replace: true });
     } finally {
       setPlacing(false);
     }

@@ -165,7 +165,7 @@ Det enda ställe som fortfarande tar en APP_KEY för hand är [Från en gammal s
 
 ## Instanser och roller {#roles}
 
-Sidan **Instanser** (en inställningsbricka som kan fästas i sidofältet) visar gruppen som ett nät över vem som gör vad för vem, ett kort för den här instansen och ett kort för varje annan medlem, Android-telefonerna och ZFS-servrarna. **Parkoppla en instans** flyter nere till höger. Vilka delar som är på ställs in under **Inställningar, Instanser, Flera servrar**: **Instanser**, **Mottagare** och **Hämtning**.
+Sidan **Instanser** (en inställningsbricka som kan fästas i sidofältet) visar gruppen som ett nät över vem som gör vad för vem, ett kort för den här instansen och ett kort för varje annan medlem, Android-telefonerna och ZFS-servrarna. **Parkoppling** flyter nere till höger. Vilka delar som är på ställs in under **Inställningar, Instanser, Flera servrar**: **Instanser**, **Mottagare** och **Hämtning**.
 
 Varje kort visar medlemmens skyddsstatus och dess roller som brickor. En roll är något en instans gör för en annan:
 

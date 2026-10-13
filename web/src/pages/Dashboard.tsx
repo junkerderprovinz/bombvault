@@ -518,7 +518,7 @@ export function Dashboard() {
           }}
           onRestore={() => {
             const path = runRestorePath(displayedRun);
-            if (path) navigate(path);
+            if (path) navigate(path, { replace: true });
           }}
         />
       )}

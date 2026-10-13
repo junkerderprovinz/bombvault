@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { useBackCloses } from "./useBackCloses";
+import { BrowserRouter, useSearchParams } from "react-router-dom";
+import { leaveLayers, useBackCloses } from "./useBackCloses";
 
 function Layer({ name, onClose }: { name: string; onClose: () => void }) {
   useBackCloses(true, onClose);
@@ -32,6 +33,31 @@ function Page() {
       )}
       {inner && <Layer name="inner" onClose={() => setInner(false)} />}
     </>
+  );
+}
+
+// A window its URL opens, as the emergency on the Restore page.
+function UrlWindow() {
+  const [params, setParams] = useSearchParams();
+  return (
+    <>
+      <button type="button" onClick={() => setParams({ window: "open" }, { replace: true })}>
+        open by url
+      </button>
+      {params.get("window") === "open" && (
+        <Layer name="by url" onClose={() => leaveLayers(() => setParams({}, { replace: true }))} />
+      )}
+    </>
+  );
+}
+
+function renderOnPage() {
+  window.history.pushState(null, "", "/before");
+  window.history.pushState(null, "", "/page");
+  render(
+    <BrowserRouter>
+      <UrlWindow />
+    </BrowserRouter>
   );
 }
 
@@ -83,5 +109,29 @@ describe("useBackCloses", () => {
     expect(screen.getByText("outer")).toBeTruthy();
     back();
     await waitFor(() => expect(screen.queryByText("outer")).toBeNull());
+  });
+
+  it("does not open a window its URL opened again on Back after it was closed by hand", async () => {
+    renderOnPage();
+    fireEvent.click(screen.getByText("open by url"));
+    await settled();
+    fireEvent.click(screen.getByText("close by url"));
+    await waitFor(() => expect(screen.queryByText("by url")).toBeNull());
+    expect(window.location.search).toBe("");
+    back();
+    await waitFor(() => expect(window.location.pathname).toBe("/before"));
+    expect(screen.queryByText("by url")).toBeNull();
+  });
+
+  it("closes a window its URL opened on Back and leaves the page's entry as it was", async () => {
+    renderOnPage();
+    fireEvent.click(screen.getByText("open by url"));
+    await settled();
+    back();
+    await waitFor(() => expect(screen.queryByText("by url")).toBeNull());
+    expect(window.location.pathname).toBe("/page");
+    expect(window.location.search).toBe("");
+    back();
+    await waitFor(() => expect(window.location.pathname).toBe("/before"));
   });
 });

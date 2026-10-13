@@ -763,11 +763,11 @@ for (const width of [320, 360]) {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
     await openPage(page, width, { empty: true });
     await expect(card(page, "none").getByText("Noch keine Instanz verbunden")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Koppeln", exact: true })).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "Kopplung", exact: true })).toHaveCount(1);
     expect(await pageGap(page)).toBe("24px");
     await expectFits(page, "#bv-main");
     await expectOnPage(page);
-    await page.getByRole("button", { name: "Koppeln", exact: true }).click();
+    await page.getByRole("button", { name: "Kopplung", exact: true }).click();
     await expect(page).toHaveURL(/\/settings\/pairing$/);
   });
 }
@@ -794,14 +794,20 @@ test("the grid on the desktop keeps the 40px rhythm and cards of one size", asyn
     const row = boxes.filter((b) => b.top === top);
     expect(new Set(row.map((b) => b.height)).size, "cards of one row differ in height").toBe(1);
   }
+  // Where the window leaves room beside the sidebar, a card is a wide
+  // rectangle; on a narrower one it fills the column and its content sets
+  // the height.
+  if (width >= 1024) {
+    for (const b of boxes) expect(b.width, "a card is clearly wider than high").toBeGreaterThanOrEqual(b.height * 1.5);
+  }
   // A name stays one line on the desktop, cut with an ellipsis if it must be.
   const name = card(page, MEMBER).locator("span.font-semibold").first();
   expect(await name.evaluate((node) => getComputedStyle(node).whiteSpace)).toBe("nowrap");
 
   // Pairing is the page's own action, in the corner.
-  const pair = page.getByTestId("page-actions").getByRole("button", { name: "Koppeln", exact: true });
+  const pair = page.getByTestId("page-actions").getByRole("button", { name: "Kopplung", exact: true });
   await expect(pair).toBeVisible();
-  await expect(page.getByRole("button", { name: "Koppeln", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Kopplung", exact: true })).toHaveCount(1);
   await pair.click();
   await expect(page).toHaveURL(/\/settings\/pairing$/);
 });

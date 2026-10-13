@@ -165,7 +165,7 @@ De enige plek die nog een APP_KEY met de hand vraagt, is [Uit een oude back-upma
 
 ## Instanties en rollen {#roles}
 
-De pagina **Instanties** (een instellingentegel die aan de zijbalk kan worden vastgezet) toont de groep als een net van wie wat voor wie doet, een kaart voor deze instantie en een kaart voor elk ander lid, de Android-telefoons en de ZFS-servers. **Instantie koppelen** zweeft rechtsonder. Welke onderdelen aanstaan, stel je in onder **Instellingen, Instanties, Meerdere servers**: **Instanties**, **Ontvanger** en **Ophalen**.
+De pagina **Instanties** (een instellingentegel die aan de zijbalk kan worden vastgezet) toont de groep als een net van wie wat voor wie doet, een kaart voor deze instantie en een kaart voor elk ander lid, de Android-telefoons en de ZFS-servers. **Koppeling** zweeft rechtsonder. Welke onderdelen aanstaan, stel je in onder **Instellingen, Instanties, Meerdere servers**: **Instanties**, **Ontvanger** en **Ophalen**.
 
 Elke kaart toont de beschermingsstatus van het lid en zijn rollen als tegels. Een rol is iets wat de ene instantie voor de andere doet:
 

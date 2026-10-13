@@ -47,6 +47,8 @@ The switch for this is **Phones can pair with the group's twelve words** on the 
 
 The phone gets its own card on the Instances page of every server in the group, marked as an Android app and named after the name you gave the phone. It has no scorecard because it backs nothing up, and **Remove** takes it off the page. A phone that knows the words can pair again at any time, so for a lost phone switch **Phones can pair with the group's twelve words** off under **Settings, Security**, or let every instance **Leave group** and pair them again with new words.
 
+A phone paired before 10.0.0 starts signing its calls on its first visit after the update, and each server keeps the first key it gets for the phone. If someone else who knows the group's words gets there first while the phone is offline, that server turns the phone away from then on, and the app can no longer open it over the relay. To fix this, sign in to that server in a browser, choose **Forget key** on the phone's card on the Instances page and then **Confirm forget**, and open the app again. The server takes the phone's own key on its next call. If the phone is turned away again, someone else has the words: let every instance **Leave group** and pair them again with new words, as for a lost phone.
+
 ## Settings {#settings}
 
 The gear beside the plus opens the app's settings:

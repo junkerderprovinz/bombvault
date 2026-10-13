@@ -21,6 +21,7 @@ import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
 import { useLoudAnomalies } from "../lib/useAnomalies";
+import { ForgetKeyButton } from "./instances/ForgetKeyButton";
 import { Facts, Figure, InstanceCard } from "./instances/InstanceCard";
 import { NetPicture, useNetHover } from "./instances/NetPicture";
 import { KeyDepositWindow } from "./instances/KeyDepositWindow";
@@ -217,6 +218,8 @@ function PeerCard({
           {paired && !instance.app && (
             <Button label={t("fleet.details")} labelKey="fleet.details" glyph={<IconInfo />} tone="neutral" onClick={onDetails} />
           )}
+          {/* A phone has no details window, so its card carries the button the window has for an instance. */}
+          {paired && instance.app && <ForgetKeyButton memberId={instance.memberId} />}
           {modules.fleet && peer && <RemoveInstanceButton peerId={peer.id} onRemoved={() => void state.reloadPeers()} />}
         </>
       }
@@ -343,7 +346,7 @@ export function Instances() {
       ))}
 
       {modules && !state.loading && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,24rem),1fr))] items-stretch gap-4 glim-content-fade" {...handlers}>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,36rem),1fr))] items-stretch gap-4 glim-content-fade" {...handlers}>
           {grouped && state.self && nodes.length > 0 && (
             <div className="col-span-full rounded-card bg-carbon-surface px-3 py-3 md:px-5 md:py-4 [--net-ground:var(--carbon-surface)]">
               <NetPicture selfName={state.self.name} nodes={nodes} hot={hot} />
@@ -402,7 +405,7 @@ export function Instances() {
       {modules && !state.loading && (
         <PageActions>
           <span data-new="instances-pair" className="flex">
-            <PageAction primary label={t("pairing.join")} glyph={<IconLink />} onClick={() => navigate("/settings/pairing")} />
+            <PageAction primary label={t("pairing.title")} glyph={<IconLink />} onClick={() => navigate("/settings/pairing")} />
           </span>
         </PageActions>
       )}

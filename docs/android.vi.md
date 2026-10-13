@@ -48,6 +48,8 @@ Công tắc cho việc này là **Điện thoại có thể ghép nối bằng m
 
 Điện thoại có thẻ riêng trên trang Phiên bản của mọi máy chủ trong nhóm, được đánh dấu là ứng dụng Android và mang tên bạn đặt cho điện thoại. Thẻ này không có bảng điểm vì điện thoại không sao lưu gì, và **Xóa** sẽ gỡ nó khỏi trang. Điện thoại biết các từ có thể ghép nối lại bất cứ lúc nào, nên với điện thoại bị mất, hãy tắt **Điện thoại có thể ghép nối bằng mười hai từ của nhóm** trong **Cài đặt, Bảo mật**, hoặc cho từng phiên bản chọn **Rời nhóm** rồi ghép nối lại bằng các từ mới.
 
+Điện thoại đã ghép nối trước 10.0.0 sẽ bắt đầu ký các lệnh gọi của mình ở lần truy cập đầu tiên sau khi cập nhật, và mỗi máy chủ giữ khóa đầu tiên nhận được cho điện thoại đó. Nếu một người khác biết các từ của nhóm đến trước khi điện thoại đang ngoại tuyến, máy chủ đó sẽ từ chối điện thoại kể từ lúc ấy, và ứng dụng không còn mở được nó qua relay. Để khắc phục, hãy đăng nhập vào máy chủ đó bằng trình duyệt, chọn **Quên khóa** trên thẻ của điện thoại ở trang Phiên bản rồi chọn **Xác nhận quên**, sau đó mở lại ứng dụng. Máy chủ sẽ lấy khóa riêng của điện thoại ở lệnh gọi tiếp theo. Nếu điện thoại lại bị từ chối, nghĩa là người khác có các từ: hãy cho từng phiên bản chọn **Rời nhóm** rồi ghép nối lại bằng các từ mới, như với điện thoại bị mất.
+
 ## Cài đặt {#settings}
 
 Biểu tượng bánh răng cạnh dấu cộng mở phần cài đặt của ứng dụng:

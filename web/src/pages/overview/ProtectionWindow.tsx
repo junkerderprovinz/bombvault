@@ -55,7 +55,7 @@ function CheckLine({ line, t }: { line: Line; t: T }) {
   if (!line.fix) return <li className={row}>{body}</li>;
   return (
     <li className="border-t border-carbon-border first:border-t-0">
-      <Link to={line.fix} className="flex items-center gap-3 rounded-control px-1.5 py-2.5 hover:bg-carbon-hover">
+      <Link to={line.fix} replace className="flex items-center gap-3 rounded-control px-1.5 py-2.5 hover:bg-carbon-hover">
         {body}
         <span className="inline-flex flex-none text-carbon-textMuted">
           <IconForward />
@@ -71,7 +71,7 @@ function EntryRow({ item, t }: { item: BackupItem; t: T }) {
   const why = sentence(item.effectiveSchedule, KIND_SCHEDULE_LABEL[item.kind]);
   return (
     <li className="border-t border-carbon-border first:border-t-0">
-      <Link to={entryTarget(item)} className="flex items-center gap-3 rounded-control px-1.5 py-2.5 hover:bg-carbon-hover">
+      <Link to={entryTarget(item)} replace className="flex items-center gap-3 rounded-control px-1.5 py-2.5 hover:bg-carbon-hover">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-sm font-semibold text-carbon-text">{entryName(item, t)}</span>
           {why && <span className="text-xs text-carbon-textMuted">{why.text}</span>}

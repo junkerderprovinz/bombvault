@@ -2,20 +2,16 @@ import type { MouseEvent } from "react";
 import { IconCheck } from "../navGlyphs";
 
 /** The round mark by itself, for a row that is the control. A mixed mark
- *  stands for a folder of which only some entries are picked. An offered
- *  mark is the empty ring in the row's colour that the pointer brings up
- *  before anything is picked. */
+ *  stands for a folder of which only some entries are picked. */
 export function SelectDot({
   checked,
   mixed = false,
   onAccent = false,
-  offered = false,
   className = "",
 }: {
   checked: boolean;
   mixed?: boolean;
   onAccent?: boolean;
-  offered?: boolean;
   className?: string;
 }) {
   const on = checked || mixed;
@@ -25,9 +21,7 @@ export function SelectDot({
       : "bg-black/20 text-transparent"
     : on
       ? "bg-accent text-accentContrast"
-      : offered
-        ? "bg-carbon-hover text-transparent shadow-[inset_0_0_0_2px_var(--accent)] group-hover/mark:text-(--accent)"
-        : "bg-carbon-surface3 text-transparent";
+      : "bg-carbon-surface3 text-transparent";
   return (
     <span
       aria-hidden="true"
@@ -48,7 +42,6 @@ export function SelectMark({
   label,
   onChange,
   onAccent = false,
-  offered = false,
   bare = false,
   className = "",
 }: {
@@ -57,8 +50,6 @@ export function SelectMark({
   onChange: (next: boolean) => void;
   /** Standing on a filled accent surface, which needs the colours turned. */
   onAccent?: boolean;
-  /** Shown under the pointer before anything is picked; see SelectDot. */
-  offered?: boolean;
   /** Without the room around the disc that makes it easier to hit, for a
    *  mark that lies on something else that takes clicks. */
   bare?: boolean;
@@ -81,7 +72,6 @@ export function SelectMark({
       <SelectDot
         checked={checked}
         onAccent={onAccent}
-        offered={offered}
         className="group-focus-visible/mark:outline-solid group-focus-visible/mark:outline-2 group-focus-visible/mark:outline-offset-2 group-focus-visible/mark:outline-(--focus-ring)"
       />
     </button>

@@ -165,7 +165,7 @@ O único sítio que ainda aceita uma APP_KEY à mão é [De uma pasta de backups
 
 ## Instâncias e funções {#roles}
 
-A página **Instâncias** (um mosaico de definições que pode ser fixado à barra lateral) mostra o grupo como uma rede de quem faz o quê por quem, um cartão para esta instância e um cartão para cada outro membro, os telemóveis Android e os servidores ZFS. **Emparelhar uma instância** flutua em baixo à direita. As partes que estão ligadas definem-se em **Definições, Instâncias, Vários servidores**: **Instâncias**, **Recetor** e **Recolha**.
+A página **Instâncias** (um mosaico de definições que pode ser fixado à barra lateral) mostra o grupo como uma rede de quem faz o quê por quem, um cartão para esta instância e um cartão para cada outro membro, os telemóveis Android e os servidores ZFS. **Emparelhamento** flutua em baixo à direita. As partes que estão ligadas definem-se em **Definições, Instâncias, Vários servidores**: **Instâncias**, **Recetor** e **Recolha**.
 
 Cada cartão mostra o estado de proteção do membro e as suas funções como mosaicos. Uma função é algo que uma instância faz por outra:
 

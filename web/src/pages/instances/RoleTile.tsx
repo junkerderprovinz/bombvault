@@ -137,8 +137,8 @@ export function RoleTiles({
         {heading}
         <InfoBubble tip={t("instances.role.diff")} />
       </span>
-      {/* Four tiles stand two by two, since a card is too narrow for four names in a row. */}
-      <div className={`grid gap-1.5 md:gap-2 ${shown.length > 3 ? "grid-cols-2" : "grid-cols-3"}`}>
+      {/* Four tiles stand two by two where the card is too narrow for four names in a row. */}
+      <div className={`grid gap-1.5 md:gap-2 ${shown.length > 3 ? "grid-cols-2 @min-[40rem]:grid-cols-4" : "grid-cols-3"}`}>
         {shown.map((k) => (
           <RoleTile
             key={k}

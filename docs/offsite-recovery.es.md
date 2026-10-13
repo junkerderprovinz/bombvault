@@ -165,7 +165,7 @@ El único sitio que aún acepta una APP_KEY a mano es [De una carpeta de copias 
 
 ## Instancias y roles {#roles}
 
-La página **Instancias** (un mosaico de ajustes que se puede fijar en la barra lateral) muestra el grupo como una red de quién hace qué para quién, con una tarjeta para esta instancia y una para cada otro miembro, los móviles Android y los servidores ZFS. **Emparejar una instancia** flota abajo a la derecha. Qué partes están activas se fija en **Ajustes, Instancias, Varios servidores**: **Instancias**, **Receptor** y **Recogida**.
+La página **Instancias** (un mosaico de ajustes que se puede fijar en la barra lateral) muestra el grupo como una red de quién hace qué para quién, con una tarjeta para esta instancia y una para cada otro miembro, los móviles Android y los servidores ZFS. **Emparejamiento** flota abajo a la derecha. Qué partes están activas se fija en **Ajustes, Instancias, Varios servidores**: **Instancias**, **Receptor** y **Recogida**.
 
 Cada tarjeta muestra el estado de protección del miembro y sus roles como mosaicos. Un rol es algo que una instancia hace para otra:
 

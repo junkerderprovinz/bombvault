@@ -255,6 +255,12 @@ class MainActivity : ComponentActivity() {
         pairError = null
     }
 
+    // The bundles came from members whose keys the phone forgets with the group.
+    private fun leaveGroup() {
+        pairing.leave()
+        pages.forgetAll()
+    }
+
     private fun showLauncher() {
         current = null
         forgetHistory = true
@@ -337,6 +343,7 @@ class MainActivity : ComponentActivity() {
                 val key = changedKey ?: return
                 if (server.member != null && Proof.fingerprint(key) == msg.getString("fingerprint")) {
                     pairing.trustKey(server.member, key)
+                    pages.forget(server.member)
                     changedKey = null
                     open(server)
                 }
@@ -368,7 +375,7 @@ class MainActivity : ComponentActivity() {
                 pushState()
             }
             "removeAll" -> {
-                if (pairing.paired) pairing.leave()
+                if (pairing.paired) leaveGroup()
                 servers.removeAll()
                 pushState()
             }
@@ -378,7 +385,7 @@ class MainActivity : ComponentActivity() {
                 pairing.cancelJoin()
                 pushState()
             }
-            "leave" -> pairing.leave()
+            "leave" -> leaveGroup()
             "camera" -> when {
                 cameraAllowed() -> pushState()
                 cameraBlocked -> startActivity(

@@ -1,6 +1,6 @@
-// A refused call says why in the person's language when the server names a
-// code this client knows, and in the server's words otherwise, never as a
-// bare status.
+// A failed call says why in the person's language: in a sentence of its own
+// where this client can explain it, else in a general one that keeps what the
+// server said apart. Never as a bare status or in the server's English.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { en } from "./i18n";
 
@@ -45,18 +45,67 @@ describe("a refused settings change", () => {
     expect((err as Error).message).toBe(en["auth.relayLoginNeeded"]);
   });
 
-  it("says what the server said for a refusal this client does not know", async () => {
+  it("keeps what the server said apart for a refusal this client does not know", async () => {
     answers(409, { ok: false, error: "a restore is running", code: "busy" });
     const api = await import("./api");
     const err = await api.putSettings({} as Parameters<typeof api.putSettings>[0]).catch((e: unknown) => e);
-    expect((err as Error).message).toBe("a restore is running");
+    expect((err as Error).message).toBe(en["apiError.refused"]);
+    expect((err as InstanceType<typeof api.ApiError>).detail).toBe("a restore is running");
     expect(api.explainedError(err)).toBeUndefined();
   });
 
-  it("falls back to the status when the answer is no JSON", async () => {
-    answers(502, undefined, "Bad Gateway");
+  it("calls a failure on the server one, whatever it said", async () => {
+    answers(500, { ok: false, error: "database is locked" });
     const api = await import("./api");
     const err = await api.putSettings({} as Parameters<typeof api.putSettings>[0]).catch((e: unknown) => e);
-    expect((err as Error).message).toBe("HTTP 502 Bad Gateway");
+    expect((err as Error).message).toBe(en["apiError.serverFailed"]);
+    expect((err as InstanceType<typeof api.ApiError>).detail).toBe("database is locked");
+  });
+
+  it.each([
+    [502, en["apiError.gateway"]],
+    [503, en["apiError.unavailable"]],
+    [504, en["apiError.timeout"]],
+  ])("names a proxy's %i without JSON for what it is", async (status, sentence) => {
+    answers(status, undefined, "Bad Gateway");
+    const api = await import("./api");
+    const err = await api.putSettings({} as Parameters<typeof api.putSettings>[0]).catch((e: unknown) => e);
+    expect((err as Error).message).toBe(sentence);
+    expect(api.explainedError(err)).toBe(sentence);
+  });
+
+  it("tells a session that ran out to sign in again", async () => {
+    answers(401, { ok: false, error: "authentication required" });
+    const api = await import("./api");
+    const err = await api.putSettings({} as Parameters<typeof api.putSettings>[0]).catch((e: unknown) => e);
+    expect((err as Error).message).toBe(en["apiError.signedOut"]);
+  });
+
+  it.each([
+    [401, "session-ended", en["apiError.sessionEnded"]],
+    [403, "phone-pairing-off", en["apiError.phonePairingOff"]],
+    [413, "relay-refused", en["apiError.relayTooLarge"]],
+    [403, "relay-refused", en["apiError.relayRefused"]],
+  ])("says what the relay's %i %s means", async (status, code, sentence) => {
+    answers(status, { ok: false, error: "the relay said no", code });
+    const api = await import("./api");
+    const err = await api.putSettings({} as Parameters<typeof api.putSettings>[0]).catch((e: unknown) => e);
+    expect((err as Error).message).toBe(sentence);
+  });
+
+  it("says the server cannot be reached when the call never got there", async () => {
+    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+    const api = await import("./api");
+    const err = await api.putSettings({} as Parameters<typeof api.putSettings>[0]).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(api.ApiError);
+    expect((err as Error).message).toBe(en["apiError.offline"]);
+    expect((err as InstanceType<typeof api.ApiError>).detail).toBe("Failed to fetch");
+  });
+
+  it("leaves a call its caller stopped as the AbortError it expects", async () => {
+    fetchMock.mockRejectedValue(new DOMException("aborted", "AbortError"));
+    const api = await import("./api");
+    const err = await api.putSettings({} as Parameters<typeof api.putSettings>[0]).catch((e: unknown) => e);
+    expect((err as Error).name).toBe("AbortError");
   });
 });

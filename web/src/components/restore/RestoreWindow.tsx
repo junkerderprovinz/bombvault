@@ -194,7 +194,7 @@ function SelfRestoreNote({ deletes, onClose }: { deletes: React.ReactNode; onClo
             tone="accent"
             onClick={() => {
               onClose();
-              navigate(emergencyPath("settings"));
+              navigate(emergencyPath("settings"), { replace: true });
             }}
           />
         </>
@@ -334,6 +334,10 @@ function RestoreForm({
   const zfsItem = detail?.kind === "zfs" ? detail.dataset : null;
   const gone = isGone(item);
   const hasOriginal = detail?.kind === "files" ? detail.set.path !== "" : !gone;
+  // Whether a folder set still has its original path, and so which targets
+  // it has, comes with the entry. Until then the targets wait and none is
+  // picked.
+  const targetsReading = kind === "files" && entry === null;
 
   const findings = useMemo(() => findingsOf(openFindings, kind, item.key), [openFindings, kind, item.key]);
   const recommendation = useMemo(() => recommend(rows, findings), [rows, findings]);
@@ -445,7 +449,8 @@ function RestoreForm({
   // A dataset that cannot take files leaves only the whole restore, whatever was picked before.
   const what = whats.includes(whatPick) ? whatPick : "all";
   const wheres = wheresFor(kind, what, facts);
-  const where = wherePick !== null && wheres.includes(wherePick) ? wherePick : defaultWhere(wheres, hasOriginal);
+  const where =
+    wherePick !== null && wheres.includes(wherePick) ? wherePick : targetsReading ? undefined : defaultWhere(wheres, hasOriginal);
   const replaces = where === "replace" && hasOriginal;
   const replaceBacksUp = backsUpFirst(kind, what, "replace", hasOriginal);
   const canBackUpFirst = where === "replace" && replaceBacksUp;
@@ -992,7 +997,7 @@ function RestoreForm({
           )}
           {what === "plugins" && <FlashPluginList snapshotId={snapshotId} source={source} t={t} />}
 
-          {!listed && where && (
+          {!listed && (where || targetsReading) && (
             <>
               <div data-new="restore-where" className="flex flex-col gap-2">
                 <h3 className="text-sm font-semibold text-carbon-textSub">{t("restoreWindow.where")}</h3>
@@ -1007,7 +1012,7 @@ function RestoreForm({
                         title={optionTitle}
                         sub={sub}
                         kept={replaceBacksUp && backupFirst}
-                        disabled={zfsReading}
+                        disabled={zfsReading || targetsReading}
                         onPick={() => {
                           if (w === "newDataset" && newDataset === "") setNewDataset(`${dataset}-restored`);
                           setWherePick(w);
@@ -1106,14 +1111,16 @@ function RestoreForm({
               )}
 
               <RestoreCheckPanel check={checkComing ? { ...check, state: { phase: "running" } } : check} t={t} />
-              <WhatHappens
-                kind={kind}
-                what={what}
-                where={where}
-                stopped={leaveStopped}
-                backupFirst={canBackUpFirst && backupFirst}
-                plan={plan}
-              />
+              {where && (
+                <WhatHappens
+                  kind={kind}
+                  what={what}
+                  where={where}
+                  stopped={leaveStopped}
+                  backupFirst={canBackUpFirst && backupFirst}
+                  plan={plan}
+                />
+              )}
             </>
           )}
         </>

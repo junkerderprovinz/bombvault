@@ -7,7 +7,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { ActionMenu, type MenuAction, type MenuPlace } from "../components/backups/ActionMenu";
 import { AddWindow } from "../components/backups/AddWindow";
-import { BackupRow, LIST_SPAN, SelfRow, listColumns } from "../components/backups/BackupRow";
+import { BackupRow, LIST_COLUMNS, LIST_SPAN, SelfRow } from "../components/backups/BackupRow";
 import { BarButton, BulkBar } from "../components/backups/BulkBar";
 import { KIND_LABEL, KIND_SCHEDULE_LABEL, entryName, tileLabel } from "../components/backups/kinds";
 import { KindTiles } from "../components/backups/KindTiles";
@@ -371,7 +371,6 @@ export function Backups() {
         anomalyEnabled={anomalyEnabled}
         scheduleSentence={(it) => sentence(it.effectiveSchedule, KIND_SCHEDULE_LABEL[it.kind])}
         picked={selection.picked.has(id)}
-        selecting={selection.selecting}
         showIp={showIp}
         onClick={(e) => selection.click(e, id)}
         onPick={(on) => selection.set(id, on)}
@@ -446,10 +445,10 @@ export function Backups() {
               <ListBar view={view} onView={changeView} query={query} onQuery={setQuery} t={t} />
               <Card title={tile === "all" ? t("backups.allEntries") : tileLabel(tile, t)} hueIndex={0}>
                 <div className={`@container glim-content-fade${selection.selecting ? " select-none" : ""}`}>
-                  <div className={listColumns(selection.selecting)}>
+                  <div className={LIST_COLUMNS}>
                     <ul className={LIST_SPAN}>
                       {installed.map(row)}
-                      {selfShown && <SelfRow item={self} selecting={selection.selecting} showIp={showIp} t={t} />}
+                      {selfShown && <SelfRow item={self} showIp={showIp} t={t} />}
                     </ul>
                     {notInstalled.length > 0 && (installed.length > 0 || selfShown) && (
                       <h3 className="col-span-full flex items-center gap-1.5 border-t border-carbon-border px-1.5 pb-1.5 pt-4 text-xs font-medium uppercase tracking-wider text-carbon-textMuted">
