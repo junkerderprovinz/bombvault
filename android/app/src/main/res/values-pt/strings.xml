@@ -4,8 +4,6 @@
     <string name="save_failed">Não foi possível guardar o ficheiro: %1$s</string>
     <string name="save_untrusted">O certificado do servidor mudou. Abre-o novamente a partir do ecrã inicial para verificar o novo.</string>
     <string name="no_app">Nenhuma app neste telemóvel abre esta ligação.</string>
-    <string name="relay_on">Aberto através do relay</string>
-    <string name="relay_explained">A app não consegue aceder a este servidor no seu próprio endereço, por isso abre-o através do relay do teu grupo. Iniciar sessão com a palavra-passe e guardar ficheiros só funciona no endereço próprio do servidor.</string>
     <string name="relay_no_download">Guardar ficheiros só funciona no endereço próprio do servidor, não através do relay.</string>
     <string name="page_crashed">A página falhou, por isso a app fechou-a. Abre o servidor novamente.</string>
 </resources>

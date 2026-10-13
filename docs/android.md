@@ -23,7 +23,7 @@ The app joins the group through the relay, also at home. If your instances use *
 
 ## Away from home {#away}
 
-The app first tries a server at its own address. When that does not answer, as on the mobile network, it opens the server's interface through the group's relay instead, and a line under the page says **Opened over the relay**. A server of the group whose address the app does not know yet opens the same way. If neither the address nor the relay answers, the start screen says so on the server's card.
+The app first tries a server at its own address. When that does not answer, as on the mobile network, it opens the server's interface through the group's relay instead. A server of the group whose address the app does not know yet opens the same way. If neither the address nor the relay answers, the start screen says so on the server's card.
 
 Over the relay the page reaches what a paired phone reaches at home, described below. Signing in with the password and saving files work only at the server's own address. Progress bars update every two seconds instead of continuously. The interface's files stay on the phone after the first visit, so later visits load faster. A server older than 10.0.0 opens only at its own address.
 

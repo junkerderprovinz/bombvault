@@ -23,7 +23,7 @@ Az alkalmazás a relén keresztül csatlakozik a csoporthoz, otthon is. Ha a pé
 
 ## Otthonról távol {#away}
 
-Az alkalmazás először a szerver saját címén próbálkozik. Ha az nem válaszol, például mobilhálózaton, a szerver felületét a csoport relayén keresztül nyitja meg, és az oldal alatti sor ezt írja: **Relayen keresztül megnyitva**. A csoport olyan szervere, amelynek címét az alkalmazás még nem ismeri, ugyanígy nyílik meg. Ha sem a cím, sem a relay nem válaszol, a kezdőképernyő ezt a szerver kártyáján jelzi.
+Az alkalmazás először a szerver saját címén próbálkozik. Ha az nem válaszol, például mobilhálózaton, a szerver felületét a csoport relayén keresztül nyitja meg. A csoport olyan szervere, amelynek címét az alkalmazás még nem ismeri, ugyanígy nyílik meg. Ha sem a cím, sem a relay nem válaszol, a kezdőképernyő ezt a szerver kártyáján jelzi.
 
 A relayen át az oldal azt éri el, amit egy párosított telefon otthon, ahogy lent le van írva. A jelszavas bejelentkezés és a fájlmentés csak a szerver saját címén működik. A folyamatjelzők kétmásodpercenként frissülnek folyamatos helyett. A felület fájljai az első látogatás után a telefonon maradnak, így a későbbi látogatások gyorsabban töltenek be. A 10.0.0-nál régebbi szerver csak a saját címén nyílik meg.
 

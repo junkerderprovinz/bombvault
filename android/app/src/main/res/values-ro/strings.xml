@@ -4,8 +4,6 @@
     <string name="save_failed">Fișierul nu a putut fi salvat: %1$s</string>
     <string name="save_untrusted">Certificatul serverului s-a schimbat. Deschide-l din nou din ecranul de pornire pentru a verifica noul certificat.</string>
     <string name="no_app">Nicio aplicație de pe acest telefon nu deschide acest link.</string>
-    <string name="relay_on">Deschis prin relay</string>
-    <string name="relay_explained">Aplicația nu poate ajunge la acest server la adresa lui proprie, așa că îl deschide prin relay-ul grupului tău. Autentificarea cu parola și salvarea fișierelor funcționează doar la adresa proprie a serverului.</string>
     <string name="relay_no_download">Salvarea fișierelor funcționează doar la adresa proprie a serverului, nu prin relay.</string>
     <string name="page_crashed">Pagina s-a blocat, așa că aplicația a închis-o. Deschide din nou serverul.</string>
 </resources>

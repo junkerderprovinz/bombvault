@@ -23,7 +23,7 @@ Sau đó điện thoại gia nhập nhóm như một phiên bản khác. Nó đ�
 
 ## Khi ở xa nhà {#away}
 
-Ứng dụng thử máy chủ ở địa chỉ riêng của nó trước. Khi địa chỉ đó không trả lời, chẳng hạn trên mạng di động, ứng dụng mở giao diện của máy chủ qua relay của nhóm, và một dòng dưới trang ghi **Đã mở qua relay**. Một máy chủ của nhóm mà ứng dụng chưa biết địa chỉ cũng được mở theo cách này. Nếu cả địa chỉ lẫn relay đều không trả lời, màn hình chính báo điều đó trên thẻ của máy chủ.
+Ứng dụng thử máy chủ ở địa chỉ riêng của nó trước. Khi địa chỉ đó không trả lời, chẳng hạn trên mạng di động, ứng dụng mở giao diện của máy chủ qua relay của nhóm. Một máy chủ của nhóm mà ứng dụng chưa biết địa chỉ cũng được mở theo cách này. Nếu cả địa chỉ lẫn relay đều không trả lời, màn hình chính báo điều đó trên thẻ của máy chủ.
 
 Qua relay, trang chạm tới những gì một điện thoại đã ghép nối chạm tới ở nhà, như mô tả bên dưới. Đăng nhập bằng mật khẩu và lưu tệp chỉ hoạt động ở địa chỉ riêng của máy chủ. Thanh tiến trình cập nhật mỗi hai giây thay vì liên tục. Các tệp của giao diện được giữ lại trên điện thoại sau lần truy cập đầu, nên những lần sau tải nhanh hơn. Máy chủ cũ hơn 10.0.0 chỉ mở được ở địa chỉ riêng của nó.
 

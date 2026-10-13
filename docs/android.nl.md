@@ -23,7 +23,7 @@ De app treedt via de relay tot de groep toe, ook thuis. Staat je instantie op **
 
 ## Onderweg {#away}
 
-De app probeert een server eerst op zijn eigen adres. Antwoordt dat niet, bijvoorbeeld op het mobiele netwerk, dan opent ze de interface van de server via de relay van de groep, en een regel onder de pagina zegt **Geopend via de relay**. Een server van de groep waarvan de app het adres nog niet kent, opent op dezelfde manier. Antwoorden noch het adres noch de relay, dan meldt het startscherm dat op de kaart van de server.
+De app probeert een server eerst op zijn eigen adres. Antwoordt dat niet, bijvoorbeeld op het mobiele netwerk, dan opent ze de interface van de server via de relay van de groep. Een server van de groep waarvan de app het adres nog niet kent, opent op dezelfde manier. Antwoorden noch het adres noch de relay, dan meldt het startscherm dat op de kaart van de server.
 
 Via de relay bereikt de pagina wat een gekoppelde telefoon thuis bereikt, zoals hieronder beschreven. Aanmelden met het wachtwoord en bestanden opslaan werken alleen op het eigen adres van de server. Voortgangsbalken worden elke twee seconden bijgewerkt in plaats van doorlopend. De bestanden van de interface blijven na het eerste bezoek op de telefoon, dus latere bezoeken laden sneller. Een server ouder dan 10.0.0 opent alleen op zijn eigen adres.
 

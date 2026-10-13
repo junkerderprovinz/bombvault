@@ -23,7 +23,7 @@ L'app entra nel gruppo tramite il relay, anche a casa. Se la tua istanza è su *
 
 ## Fuori casa {#away}
 
-L'app prova prima un server al suo indirizzo. Se questo non risponde, per esempio sulla rete mobile, apre invece l'interfaccia del server tramite il relay del gruppo, e una riga sotto la pagina dice **Aperto tramite relay**. Un server del gruppo il cui indirizzo l'app non conosce ancora si apre allo stesso modo. Se non rispondono né l'indirizzo né il relay, la schermata iniziale lo segnala sulla scheda del server.
+L'app prova prima un server al suo indirizzo. Se questo non risponde, per esempio sulla rete mobile, apre invece l'interfaccia del server tramite il relay del gruppo. Un server del gruppo il cui indirizzo l'app non conosce ancora si apre allo stesso modo. Se non rispondono né l'indirizzo né il relay, la schermata iniziale lo segnala sulla scheda del server.
 
 Tramite il relay la pagina raggiunge ciò che un telefono associato raggiunge a casa, come descritto sotto. L'accesso con la password e il salvataggio dei file funzionano solo all'indirizzo del server stesso. Le barre di avanzamento si aggiornano ogni due secondi invece che di continuo. I file dell'interfaccia restano sul telefono dopo la prima visita, quindi le visite successive si caricano più in fretta. Un server precedente alla 10.0.0 si apre solo al proprio indirizzo.
 

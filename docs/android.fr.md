@@ -23,7 +23,7 @@ L'application rejoint le groupe via le relais, même à la maison. Si votre inst
 
 ## Hors de chez soi {#away}
 
-L'application essaie d'abord un serveur à sa propre adresse. Quand celle-ci ne répond pas, par exemple sur le réseau mobile, elle ouvre l'interface du serveur via le relais du groupe, et une ligne sous la page indique **Ouvert via le relais**. Un serveur du groupe dont l'application ne connaît pas encore l'adresse s'ouvre de la même façon. Si ni l'adresse ni le relais ne répondent, l'écran d'accueil le signale sur la carte du serveur.
+L'application essaie d'abord un serveur à sa propre adresse. Quand celle-ci ne répond pas, par exemple sur le réseau mobile, elle ouvre l'interface du serveur via le relais du groupe. Un serveur du groupe dont l'application ne connaît pas encore l'adresse s'ouvre de la même façon. Si ni l'adresse ni le relais ne répondent, l'écran d'accueil le signale sur la carte du serveur.
 
 Via le relais, la page atteint ce qu'un téléphone appairé atteint à la maison, comme décrit plus bas. La connexion avec le mot de passe et l'enregistrement de fichiers ne fonctionnent qu'à l'adresse propre du serveur. Les barres de progression se mettent à jour toutes les deux secondes au lieu de façon continue. Les fichiers de l'interface restent sur le téléphone après la première visite, donc les visites suivantes se chargent plus vite. Un serveur antérieur à 10.0.0 ne s'ouvre qu'à sa propre adresse.
 

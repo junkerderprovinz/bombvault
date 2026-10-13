@@ -23,7 +23,7 @@ Appen går med i gruppen via relayet, også hjemme. Står din instans på **Inge
 
 ## Væk hjemmefra {#away}
 
-Appen prøver først en server på dens egen adresse. Svarer den ikke, for eksempel på mobilnettet, åbner appen i stedet serverens grænseflade via gruppens relay, og en linje under siden siger **Åbnet via videresenderen**. En server i gruppen, hvis adresse appen endnu ikke kender, åbnes på samme måde. Svarer hverken adressen eller relayet, står det på serverens kort på startskærmen.
+Appen prøver først en server på dens egen adresse. Svarer den ikke, for eksempel på mobilnettet, åbner appen i stedet serverens grænseflade via gruppens relay. En server i gruppen, hvis adresse appen endnu ikke kender, åbnes på samme måde. Svarer hverken adressen eller relayet, står det på serverens kort på startskærmen.
 
 Via relayet når siden det, som en parret telefon når derhjemme, som beskrevet nedenfor. Login med adgangskoden og lagring af filer virker kun på serverens egen adresse. Fremdriftslinjer opdateres hvert andet sekund i stedet for løbende. Grænsefladens filer bliver på telefonen efter det første besøg, så senere besøg indlæses hurtigere. En server ældre end 10.0.0 åbner kun på sin egen adresse.
 

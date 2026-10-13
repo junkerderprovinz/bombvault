@@ -23,7 +23,7 @@ Appen blir med i gruppen via relayet, også hjemme. Står instansen din på **In
 
 ## Borte fra hjemmet {#away}
 
-Appen prøver først en server på dens egen adresse. Svarer den ikke, for eksempel på mobilnettet, åpner appen i stedet grensesnittet til serveren via relayet til gruppen, og en linje under siden sier **Åpnet via relay**. En server i gruppen som appen ikke kjenner adressen til ennå, åpnes på samme måte. Svarer verken adressen eller relayet, står det på kortet til serveren på startskjermen.
+Appen prøver først en server på dens egen adresse. Svarer den ikke, for eksempel på mobilnettet, åpner appen i stedet grensesnittet til serveren via relayet til gruppen. En server i gruppen som appen ikke kjenner adressen til ennå, åpnes på samme måte. Svarer verken adressen eller relayet, står det på kortet til serveren på startskjermen.
 
 Via relayet når siden det en paret telefon når hjemme, som beskrevet nedenfor. Pålogging med passordet og lagring av filer fungerer bare på serverens egen adresse. Fremdriftslinjer oppdateres hvert andre sekund i stedet for fortløpende. Filene til grensesnittet blir liggende på telefonen etter det første besøket, så senere besøk laster raskere. En server eldre enn 10.0.0 åpnes bare på sin egen adresse.
 

@@ -4,8 +4,6 @@
     <string name="save_failed">Không thể lưu tệp: %1$s</string>
     <string name="save_untrusted">Chứng chỉ của máy chủ đã thay đổi. Mở lại từ màn hình bắt đầu để kiểm tra chứng chỉ mới.</string>
     <string name="no_app">Không có ứng dụng nào trên điện thoại này mở được liên kết này.</string>
-    <string name="relay_on">Đã mở qua relay</string>
-    <string name="relay_explained">Ứng dụng không truy cập được máy chủ này ở địa chỉ riêng của nó nên mở qua relay của nhóm bạn. Đăng nhập bằng mật khẩu và lưu tệp chỉ hoạt động ở địa chỉ riêng của máy chủ.</string>
     <string name="relay_no_download">Lưu tệp chỉ hoạt động ở địa chỉ riêng của máy chủ, không qua relay.</string>
     <string name="page_crashed">Trang đã bị treo nên ứng dụng đã đóng nó. Mở lại máy chủ.</string>
 </resources>

@@ -23,7 +23,7 @@ Uygulama, evde de olsa gruba röle üzerinden katılır. Gruptaki örnek **Röle
 
 ## Evden uzakta {#away}
 
-Uygulama bir sunucuyu önce kendi adresinde dener. Adres yanıt vermezse, örneğin mobil ağda, sunucunun arayüzünü grubun rölesi üzerinden açar ve sayfanın altındaki bir satırda **Röle üzerinden açıldı** yazar. Grubun, adresini uygulamanın henüz bilmediği bir sunucusu da aynı şekilde açılır. Ne adres ne de röle yanıt verirse başlangıç ekranı bunu sunucunun kartında gösterir.
+Uygulama bir sunucuyu önce kendi adresinde dener. Adres yanıt vermezse, örneğin mobil ağda, sunucunun arayüzünü grubun rölesi üzerinden açar. Grubun, adresini uygulamanın henüz bilmediği bir sunucusu da aynı şekilde açılır. Ne adres ne de röle yanıt verirse başlangıç ekranı bunu sunucunun kartında gösterir.
 
 Röle üzerinden sayfa, eşleştirilmiş bir telefonun evde eriştiği her şeye erişir, aşağıda anlatıldığı gibi. Parolayla oturum açma ve dosya kaydetme yalnızca sunucunun kendi adresinde çalışır. İlerleme çubukları sürekli değil, iki saniyede bir güncellenir. Arayüzün dosyaları ilk ziyaretten sonra telefonda kalır, bu yüzden sonraki ziyaretler daha hızlı yüklenir. 10.0.0'dan eski bir sunucu yalnızca kendi adresinde açılır.
 

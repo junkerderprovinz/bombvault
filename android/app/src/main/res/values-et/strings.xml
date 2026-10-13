@@ -4,8 +4,6 @@
     <string name="save_failed">Faili ei õnnestunud salvestada: %1$s</string>
     <string name="save_untrusted">Serveri sertifikaat on muutunud. Ava see uuesti avakuvalt, et kontrollida uut sertifikaati.</string>
     <string name="no_app">Ükski selle telefoni rakendus ei ava seda linki.</string>
-    <string name="relay_on">Avatud edastaja kaudu</string>
-    <string name="relay_explained">Rakendus ei pääse sellele serverile selle enda aadressil ligi, mistõttu avab selle sinu grupi edastaja kaudu. Parooliga sisselogimine ja failide salvestamine töötavad ainult serveri enda aadressil.</string>
     <string name="relay_no_download">Failide salvestamine töötab ainult serveri enda aadressil, mitte edastaja kaudu.</string>
     <string name="page_crashed">Leht jooksis kokku, mistõttu rakendus sulges selle. Ava server uuesti.</string>
 </resources>

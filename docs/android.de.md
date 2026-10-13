@@ -23,7 +23,7 @@ Die App tritt der Gruppe über das Relay bei, auch zu Hause. Steht deine Instanz
 
 ## Unterwegs {#away}
 
-Die App versucht einen Server zuerst unter seiner eigenen Adresse. Antwortet die nicht, etwa im Mobilnetz, öffnet sie die Oberfläche des Servers stattdessen über das Relay der Gruppe, und eine Zeile unter der Seite sagt **Über das Relay geöffnet**. Ein Server der Gruppe, dessen Adresse die App noch nicht kennt, öffnet sich genauso. Antworten weder die Adresse noch das Relay, steht das auf dem Startbildschirm an der Karte des Servers.
+Die App versucht einen Server zuerst unter seiner eigenen Adresse. Antwortet die nicht, etwa im Mobilnetz, öffnet sie die Oberfläche des Servers stattdessen über das Relay der Gruppe. Ein Server der Gruppe, dessen Adresse die App noch nicht kennt, öffnet sich genauso. Antworten weder die Adresse noch das Relay, steht das auf dem Startbildschirm an der Karte des Servers.
 
 Über das Relay erreicht die Seite das, was ein gekoppeltes Handy zu Hause erreicht, wie unten beschrieben. Anmelden mit dem Passwort und Dateien speichern gehen nur unter der eigenen Adresse des Servers. Fortschrittsbalken laufen alle zwei Sekunden weiter statt fortlaufend. Die Dateien der Oberfläche bleiben nach dem ersten Besuch auf dem Handy, spätere Besuche laden deshalb schneller. Ein Server vor 10.0.0 öffnet sich nur unter seiner eigenen Adresse.
 

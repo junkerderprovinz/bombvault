@@ -4,8 +4,6 @@
     <string name="save_failed">Dosya kaydedilemedi: %1$s</string>
     <string name="save_untrusted">Sunucunun sertifikası değişti. Yenisini kontrol etmek için başlangıç ekranından tekrar aç.</string>
     <string name="no_app">Bu telefonda bu bağlantıyı açan bir uygulama yok.</string>
-    <string name="relay_on">Röle üzerinden açıldı</string>
-    <string name="relay_explained">Uygulama bu sunucuya kendi adresinden ulaşamıyor, bu yüzden grubunun rölesi üzerinden açıyor. Parolayla oturum açma ve dosya kaydetme yalnızca sunucunun kendi adresinde çalışır.</string>
     <string name="relay_no_download">Dosya kaydetme yalnızca sunucunun kendi adresinde çalışır, röle üzerinden çalışmaz.</string>
     <string name="page_crashed">Sayfa çöktü, bu yüzden uygulama onu kapattı. Sunucuyu tekrar aç.</string>
 </resources>

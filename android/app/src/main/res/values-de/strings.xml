@@ -4,8 +4,6 @@
     <string name="save_failed">Die Datei konnte nicht gespeichert werden: %1$s</string>
     <string name="save_untrusted">Das Zertifikat des Servers hat sich geändert. Öffne ihn erneut über den Startbildschirm, um das neue zu prüfen.</string>
     <string name="no_app">Keine App auf diesem Handy öffnet diesen Link.</string>
-    <string name="relay_on">Über das Relay geöffnet</string>
-    <string name="relay_explained">Die App erreicht diesen Server nicht unter seiner eigenen Adresse und öffnet ihn deshalb über das Relay deiner Gruppe. Anmelden mit dem Passwort und Dateien speichern geht nur unter der eigenen Adresse des Servers.</string>
     <string name="relay_no_download">Dateien speichern geht nur unter der eigenen Adresse des Servers, nicht über das Relay.</string>
     <string name="page_crashed">Die Seite ist abgestürzt, deshalb hat die App sie geschlossen. Öffne den Server noch einmal.</string>
 </resources>

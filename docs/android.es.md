@@ -23,7 +23,7 @@ La app se une al grupo a través del relay, también en casa. Si tu instancia es
 
 ## Fuera de casa {#away}
 
-La app prueba primero un servidor en su propia dirección. Si no responde, por ejemplo en la red móvil, abre la interfaz del servidor a través del relay del grupo, y una línea bajo la página dice **Abierto a través del repetidor**. Un servidor del grupo cuya dirección la app aún no conoce se abre igual. Si no responden ni la dirección ni el relay, la pantalla de inicio lo indica en la tarjeta del servidor.
+La app prueba primero un servidor en su propia dirección. Si no responde, por ejemplo en la red móvil, abre la interfaz del servidor a través del relay del grupo. Un servidor del grupo cuya dirección la app aún no conoce se abre igual. Si no responden ni la dirección ni el relay, la pantalla de inicio lo indica en la tarjeta del servidor.
 
 A través del relay la página llega a lo que llega un móvil emparejado en casa, como se describe más abajo. Iniciar sesión con la contraseña y guardar archivos solo funcionan en la propia dirección del servidor. Las barras de progreso se actualizan cada dos segundos en vez de continuamente. Los archivos de la interfaz se quedan en el móvil tras la primera visita, así que las siguientes cargan más rápido. Un servidor anterior a 10.0.0 solo se abre en su propia dirección.
 

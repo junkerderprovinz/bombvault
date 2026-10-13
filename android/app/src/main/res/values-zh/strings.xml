@@ -4,8 +4,6 @@
     <string name="save_failed">无法保存文件: %1$s</string>
     <string name="save_untrusted">服务器的证书已更改。请从开始屏幕重新打开它以查看新证书。</string>
     <string name="no_app">此手机上没有应用能打开此链接。</string>
-    <string name="relay_on">已通过中继打开</string>
-    <string name="relay_explained">应用无法通过此服务器自己的地址访问它，因此改为通过你所在群组的中继打开。使用密码登录和保存文件只能在服务器自己的地址上进行。</string>
     <string name="relay_no_download">保存文件只能在服务器自己的地址上进行，不能通过中继。</string>
     <string name="page_crashed">页面崩溃了，因此应用已将其关闭。请重新打开服务器。</string>
 </resources>

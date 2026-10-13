@@ -4,8 +4,6 @@
     <string name="save_failed">Filen kunde inte sparas: %1$s</string>
     <string name="save_untrusted">Serverns certifikat har ändrats. Öppna den igen från startskärmen för att kontrollera det nya.</string>
     <string name="no_app">Ingen app på telefonen öppnar den här länken.</string>
-    <string name="relay_on">Öppnad via reläet</string>
-    <string name="relay_explained">Appen når inte den här servern på dess egen adress och öppnar den därför via din grupps relä. Inloggning med lösenord och att spara filer fungerar bara på serverns egen adress.</string>
     <string name="relay_no_download">Att spara filer fungerar bara på serverns egen adress, inte via reläet.</string>
     <string name="page_crashed">Sidan kraschade, så appen stängde den. Öppna servern igen.</string>
 </resources>

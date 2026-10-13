@@ -13,8 +13,6 @@ import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.util.TypedValue
-import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
@@ -30,7 +28,6 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -64,9 +61,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var discovery: Discovery
     private lateinit var loader: WebViewAssetLoader
     private lateinit var pages: RelayPages
-
-    /** The line under the page that says it came through the relay. */
-    private lateinit var strip: TextView
 
     /** The server on screen, null while the launcher is. */
     private var current: Server? = null
@@ -130,21 +124,11 @@ class MainActivity : ComponentActivity() {
             .build()
 
         web = newWebView()
-        strip = TextView(this).apply {
-            setText(R.string.relay_on)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-            gravity = Gravity.CENTER
-            val pad = (4 * resources.displayMetrics.density).toInt()
-            setPadding(pad, pad, pad, pad)
-            visibility = View.GONE
-            setOnClickListener { toast(getString(R.string.relay_explained)) }
-        }
         root = FrameLayout(this)
         root.addView(
             LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 addView(web, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
-                addView(strip, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
             },
         )
         setContentView(root)
@@ -212,7 +196,6 @@ class MainActivity : ComponentActivity() {
         web = newWebView()
         column.addView(web, at, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         launcher = null
-        strip.visibility = View.GONE
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -501,7 +484,6 @@ class MainActivity : ComponentActivity() {
     private fun paintBars(color: Int) {
         root.setBackgroundColor(color)
         val light = ColorUtils.calculateLuminance(color) > 0.5
-        strip.setTextColor(if (light) STRIP_ON_LIGHT else STRIP_ON_DARK)
         WindowCompat.getInsetsController(window, root).apply {
             isAppearanceLightStatusBars = light
             isAppearanceLightNavigationBars = light
@@ -536,7 +518,6 @@ class MainActivity : ComponentActivity() {
         // learns which page is on screen.
         override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
             val member = relayMember(Uri.parse(url).host)
-            strip.visibility = if (member != null) View.VISIBLE else View.GONE
             pages.shown = member
             if (url.startsWith(LAUNCHER_ORIGIN)) {
                 if (current != null) {
@@ -647,8 +628,6 @@ class MainActivity : ComponentActivity() {
         private val LIGHT = Color.parseColor("#f4f4f4")
 
         // The muted text of either theme, for the relay line on its ground.
-        private val STRIP_ON_LIGHT = Color.parseColor("#6f6f6f")
-        private val STRIP_ON_DARK = Color.parseColor("#a8a8a8")
 
         private fun parseColor(s: String): Int? = runCatching { Color.parseColor(s) }.getOrNull()
     }

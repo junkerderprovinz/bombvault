@@ -23,7 +23,7 @@ Aplicația intră în grup prin releu, și acasă. Dacă instanța ta este pe **
 
 ## În afara casei {#away}
 
-Aplicația încearcă mai întâi serverul la adresa lui proprie. Când aceasta nu răspunde, de exemplu în rețeaua mobilă, deschide în schimb interfața serverului prin releul grupului, iar un rând sub pagină spune **Deschis prin relay**. Un server al grupului a cărui adresă aplicația încă nu o cunoaște se deschide la fel. Dacă nu răspunde nici adresa, nici releul, ecranul de pornire arată asta pe cardul serverului.
+Aplicația încearcă mai întâi serverul la adresa lui proprie. Când aceasta nu răspunde, de exemplu în rețeaua mobilă, deschide în schimb interfața serverului prin releul grupului. Un server al grupului a cărui adresă aplicația încă nu o cunoaște se deschide la fel. Dacă nu răspunde nici adresa, nici releul, ecranul de pornire arată asta pe cardul serverului.
 
 Prin releu, pagina ajunge la ce ajunge un telefon împerecheat acasă, așa cum este descris mai jos. Autentificarea cu parola și salvarea fișierelor funcționează doar la adresa proprie a serverului. Barele de progres se actualizează o dată la două secunde, nu continuu. Fișierele interfeței rămân pe telefon după prima vizită, deci vizitele următoare se încarcă mai repede. Un server mai vechi de 10.0.0 se deschide doar la adresa lui proprie.
 

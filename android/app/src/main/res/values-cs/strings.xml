@@ -4,8 +4,6 @@
     <string name="save_failed">Soubor se nepodařilo uložit: %1$s</string>
     <string name="save_untrusted">Certifikát serveru se změnil. Otevři ho znovu z úvodní obrazovky a zkontroluj nový.</string>
     <string name="no_app">Žádná aplikace v telefonu tento odkaz neotevře.</string>
-    <string name="relay_on">Otevřeno přes přeposílač</string>
-    <string name="relay_explained">Aplikace se k tomuto serveru nedostane na jeho vlastní adrese, a proto ho otevírá přes přeposílač tvé skupiny. Přihlášení heslem a ukládání souborů funguje jen na vlastní adrese serveru.</string>
     <string name="relay_no_download">Ukládání souborů funguje jen na vlastní adrese serveru, ne přes přeposílač.</string>
     <string name="page_crashed">Stránka spadla, a proto ji aplikace zavřela. Otevři server znovu.</string>
 </resources>

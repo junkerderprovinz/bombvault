@@ -23,7 +23,7 @@ Appen går med i gruppen via reläet, även hemma. Står din instans på **Inget
 
 ## Borta från hemmet {#away}
 
-Appen provar först en server på dess egen adress. Svarar den inte, till exempel i mobilnätet, öppnar appen i stället serverns gränssnitt via gruppens relä, och en rad under sidan säger **Öppnad via reläet**. En server i gruppen vars adress appen ännu inte känner till öppnas på samma sätt. Svarar varken adressen eller reläet visar startskärmen det på serverns kort.
+Appen provar först en server på dess egen adress. Svarar den inte, till exempel i mobilnätet, öppnar appen i stället serverns gränssnitt via gruppens relä. En server i gruppen vars adress appen ännu inte känner till öppnas på samma sätt. Svarar varken adressen eller reläet visar startskärmen det på serverns kort.
 
 Via reläet når sidan det en parkopplad telefon når hemma, som beskrivs nedan. Inloggning med lösenordet och sparande av filer fungerar bara på serverns egen adress. Förloppsindikatorer uppdateras varannan sekund i stället för löpande. Gränssnittets filer blir kvar på telefonen efter det första besöket, så senare besök laddas snabbare. En server äldre än 10.0.0 öppnas bara på sin egen adress.
 

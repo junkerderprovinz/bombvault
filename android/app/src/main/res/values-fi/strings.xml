@@ -4,8 +4,6 @@
     <string name="save_failed">Tiedostoa ei voitu tallentaa: %1$s</string>
     <string name="save_untrusted">Palvelimen varmenne on vaihtunut. Avaa se uudelleen aloitusnäytöltä tarkistaaksesi uuden.</string>
     <string name="no_app">Mikään tämän puhelimen sovellus ei avaa tätä linkkiä.</string>
-    <string name="relay_on">Avattu releen kautta</string>
-    <string name="relay_explained">Sovellus ei tavoita tätä palvelinta sen omalla osoitteella, joten se avaa sen ryhmäsi releen kautta. Salasanalla kirjautuminen ja tiedostojen tallennus toimivat vain palvelimen omassa osoitteessa.</string>
     <string name="relay_no_download">Tiedostojen tallennus toimii vain palvelimen omassa osoitteessa, ei releen kautta.</string>
     <string name="page_crashed">Sivu kaatui, joten sovellus sulki sen. Avaa palvelin uudelleen.</string>
 </resources>

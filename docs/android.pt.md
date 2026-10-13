@@ -23,7 +23,7 @@ A aplicação junta-se ao grupo através do retransmissor, também em casa. Se a
 
 ## Fora de casa {#away}
 
-A aplicação tenta primeiro o servidor no seu próprio endereço. Quando esse não responde, por exemplo na rede móvel, abre antes a interface do servidor através do retransmissor do grupo, e uma linha por baixo da página diz **Aberto através do relay**. Um servidor do grupo cujo endereço a aplicação ainda não conhece abre da mesma forma. Se nem o endereço nem o retransmissor responderem, o ecrã inicial indica-o no cartão do servidor.
+A aplicação tenta primeiro o servidor no seu próprio endereço. Quando esse não responde, por exemplo na rede móvel, abre antes a interface do servidor através do retransmissor do grupo. Um servidor do grupo cujo endereço a aplicação ainda não conhece abre da mesma forma. Se nem o endereço nem o retransmissor responderem, o ecrã inicial indica-o no cartão do servidor.
 
 Através do retransmissor, a página chega ao que um telemóvel emparelhado alcança em casa, como descrito mais abaixo. Iniciar sessão com a palavra-passe e guardar ficheiros só funcionam no endereço do próprio servidor. As barras de progresso atualizam a cada dois segundos, em vez de continuamente. Os ficheiros da interface ficam no telemóvel depois da primeira visita, por isso as visitas seguintes carregam mais depressa. Um servidor anterior à 10.0.0 só abre no seu próprio endereço.
 

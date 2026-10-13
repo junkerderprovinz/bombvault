@@ -23,7 +23,7 @@ Sovellus liittyy ryhmään releen kautta, myös kotona. Jos instanssisi asetukse
 
 ## Poissa kotoa {#away}
 
-Sovellus kokeilee palvelinta ensin sen omassa osoitteessa. Jos osoite ei vastaa, esimerkiksi mobiiliverkossa, se avaa palvelimen käyttöliittymän ryhmän releen kautta, ja sivun alla oleva rivi kertoo **Avattu releen kautta**. Ryhmän palvelin, jonka osoitetta sovellus ei vielä tunne, avautuu samalla tavalla. Jos ei osoite eikä rele vastaa, aloitusnäyttö kertoo sen palvelimen kortissa.
+Sovellus kokeilee palvelinta ensin sen omassa osoitteessa. Jos osoite ei vastaa, esimerkiksi mobiiliverkossa, se avaa palvelimen käyttöliittymän ryhmän releen kautta. Ryhmän palvelin, jonka osoitetta sovellus ei vielä tunne, avautuu samalla tavalla. Jos ei osoite eikä rele vastaa, aloitusnäyttö kertoo sen palvelimen kortissa.
 
 Releen kautta sivu yltää siihen, mihin pariliitetty puhelin yltää kotona, kuten alla kuvataan. Salasanalla kirjautuminen ja tiedostojen tallennus toimivat vain palvelimen omassa osoitteessa. Edistymispalkit päivittyvät kahden sekunnin välein eivätkä jatkuvasti. Käyttöliittymän tiedostot jäävät puhelimeen ensimmäisen käynnin jälkeen, joten myöhemmät käynnit latautuvat nopeammin. Ennen versiota 10.0.0 oleva palvelin avautuu vain omassa osoitteessaan.
 

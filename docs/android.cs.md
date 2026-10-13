@@ -23,7 +23,7 @@ Aplikace se ke skupině připojuje přes relay, i doma. Pokud je tvoje instance 
 
 ## Mimo domov {#away}
 
-Aplikace zkusí server nejdřív na jeho vlastní adrese. Když neodpoví, třeba v mobilní síti, otevře rozhraní serveru místo toho přes relay skupiny a pod stránkou se objeví řádek **Otevřeno přes přeposílač**. Stejně se otevře server skupiny, jehož adresu aplikace ještě nezná. Pokud neodpoví ani adresa, ani relay, uvede to úvodní obrazovka na kartě serveru.
+Aplikace zkusí server nejdřív na jeho vlastní adrese. Když neodpoví, třeba v mobilní síti, otevře rozhraní serveru místo toho přes relay skupiny. Stejně se otevře server skupiny, jehož adresu aplikace ještě nezná. Pokud neodpoví ani adresa, ani relay, uvede to úvodní obrazovka na kartě serveru.
 
 Přes relay stránka dosáhne na to, na co spárovaný telefon dosáhne doma, jak je popsáno níže. Přihlášení heslem a ukládání souborů fungují jen na vlastní adrese serveru. Ukazatele průběhu se obnovují každé dvě sekundy, ne průběžně. Soubory rozhraní zůstanou po první návštěvě v telefonu, takže se další návštěvy načtou rychleji. Server starší než 10.0.0 se otevře jen na vlastní adrese.
 

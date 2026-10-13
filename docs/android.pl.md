@@ -23,7 +23,7 @@ Aplikacja dołącza do grupy przez przekaźnik, także w domu. Jeśli twoja inst
 
 ## Poza domem {#away}
 
-Aplikacja najpierw próbuje połączyć się z serwerem pod jego własnym adresem. Gdy ten nie odpowiada, na przykład w sieci komórkowej, otwiera interfejs serwera przez przekaźnik grupy, a wiersz pod stroną informuje: **Otwarto przez relay**. Serwer grupy, którego adresu aplikacja jeszcze nie zna, otwiera się tak samo. Jeśli nie odpowiada ani adres, ani przekaźnik, informuje o tym ekran startowy na karcie serwera.
+Aplikacja najpierw próbuje połączyć się z serwerem pod jego własnym adresem. Gdy ten nie odpowiada, na przykład w sieci komórkowej, otwiera interfejs serwera przez przekaźnik grupy. Serwer grupy, którego adresu aplikacja jeszcze nie zna, otwiera się tak samo. Jeśli nie odpowiada ani adres, ani przekaźnik, informuje o tym ekran startowy na karcie serwera.
 
 Przez przekaźnik strona sięga tego, czego sparowany telefon sięga w domu, jak opisano niżej. Logowanie hasłem i zapisywanie plików działają tylko pod własnym adresem serwera. Paski postępu odświeżają się co dwie sekundy, a nie na bieżąco. Pliki interfejsu zostają w telefonie po pierwszej wizycie, więc kolejne wizyty ładują się szybciej. Serwer starszy niż 10.0.0 otwiera się tylko pod własnym adresem.
 

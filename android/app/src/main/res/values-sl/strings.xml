@@ -4,8 +4,6 @@
     <string name="save_failed">Datoteke ni bilo mogoče shraniti: %1$s</string>
     <string name="save_untrusted">Certifikat strežnika se je spremenil. Odpri ga znova z začetnega zaslona in preveri novega.</string>
     <string name="no_app">Nobena aplikacija v tem telefonu ne odpre te povezave.</string>
-    <string name="relay_on">Odprto prek releja</string>
-    <string name="relay_explained">Aplikacija ne more doseči tega strežnika na njegovem lastnem naslovu, zato ga odpre prek releja tvoje skupine. Prijava z geslom in shranjevanje datotek delujeta samo na lastnem naslovu strežnika.</string>
     <string name="relay_no_download">Shranjevanje datotek deluje samo na lastnem naslovu strežnika, ne prek releja.</string>
     <string name="page_crashed">Stran se je zrušila, zato jo je aplikacija zaprla. Znova odpri strežnik.</string>
 </resources>
