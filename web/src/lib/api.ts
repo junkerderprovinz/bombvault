@@ -750,7 +750,9 @@ export class ApiError extends Error {
     public readonly status: number,
     message: string,
     /** The code the server refused the call with, when it named one. */
-    public readonly code?: string
+    public readonly code?: string,
+    /** What the server said, where the message is a general sentence in its place. */
+    public readonly detail?: string
   ) {
     super(message);
     this.name = "ApiError";
@@ -764,18 +766,61 @@ export function openedThroughRelay(): boolean {
   return throughRelay;
 }
 
-/** refusalSentence is what a person reads for a refused call: the sentence
- *  for a code this client knows, else what the server said. */
-export function refusalSentence(code: string | undefined, said: string | undefined): string | undefined {
-  if (code === "own-login-needed") return translate(throughRelay ? "auth.relayLoginNeeded" : "auth.ownLoginNeeded");
-  if (code === "password-not-set") return translate("secrets.passwordNotSet");
-  return said || undefined;
+/** The sentence of a failure this client can explain: a code it knows, a
+ *  session that ended, a relay that cannot carry the call, a proxy or gateway
+ *  in the way, an answer that did not come in time. Status 0 is a call that
+ *  never reached the server. */
+function knownSentence(status: number, code: string | undefined): string | undefined {
+  switch (code) {
+    case undefined:
+      break;
+    case "own-login-needed":
+      return translate(throughRelay ? "auth.relayLoginNeeded" : "auth.ownLoginNeeded");
+    case "password-not-set":
+      return translate("secrets.passwordNotSet");
+    case "session-ended":
+      return translate("apiError.sessionEnded");
+    case "phone-pairing-off":
+      return translate("apiError.phonePairingOff");
+    case "relay-refused":
+      return translate(status === 413 ? "apiError.relayTooLarge" : "apiError.relayRefused");
+    default:
+      return undefined;
+  }
+  switch (status) {
+    case 0:
+      return translate("apiError.offline");
+    case 401:
+      return translate("apiError.signedOut");
+    case 404:
+      return translate("apiError.notFound");
+    case 408:
+    case 504:
+      return translate("apiError.timeout");
+    case 502:
+      return translate("apiError.gateway");
+    case 503:
+      return translate("apiError.unavailable");
+    default:
+      return undefined;
+  }
 }
 
-/** explainedError is the sentence of a refusal the server explained with a
- *  code this client knows, for a caller that otherwise shows a fixed text. */
+/** failureOf is what a person reads for a call that failed, always in their
+ *  language. A failure this client cannot explain gets a general sentence,
+ *  and what the server said stays apart as its detail. */
+export function failureOf(status: number, code?: string, said?: string): { message: string; detail?: string } {
+  const known = knownSentence(status, code);
+  if (known) return { message: known };
+  // Below 400 the call went through and failed on the server all the same.
+  const general = status >= 400 && status < 500 ? "apiError.refused" : "apiError.serverFailed";
+  return { message: translate(general), detail: said || undefined };
+}
+
+/** explainedError is the sentence of a failure this client can explain, for
+ *  a caller that otherwise shows a fixed text. */
 export function explainedError(err: unknown): string | undefined {
-  return err instanceof ApiError && (err.code === "own-login-needed" || err.code === "password-not-set") ? err.message : undefined;
+  return err instanceof ApiError && knownSentence(err.status, err.code) !== undefined ? err.message : undefined;
 }
 
 type Refusal = { code?: string; error?: string } | null;
@@ -785,23 +830,34 @@ async function readRefusal(res: Response): Promise<Refusal> {
 }
 
 function apiError(res: Response, body: Refusal): ApiError {
-  const message = refusalSentence(body?.code, body?.error) ?? `HTTP ${res.status} ${res.statusText}`.trim();
-  return new ApiError(res.status, message, body?.code);
+  const { message, detail } = failureOf(res.status, body?.code, body?.error);
+  return new ApiError(res.status, message, body?.code, detail);
+}
+
+// A call that never reached the server fails as one that did, with a sentence
+// of its own. One the caller stopped stays the AbortError it expects.
+async function send(path: string, options?: RequestInit): Promise<Response> {
+  try {
+    // The caller's headers go after the default, so passing one of its own
+    // cannot drop the Content-Type the server refuses a body without.
+    return await fetch(path, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options?.headers ?? {}),
+      },
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") throw err;
+    throw new ApiError(0, failureOf(0).message, undefined, err instanceof Error ? err.message : undefined);
+  }
 }
 
 async function fetchJSON<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
-  // The caller's headers go after the default, so passing one of its own
-  // cannot drop the Content-Type the server refuses a body without.
-  const res = await fetch(path, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers ?? {}),
-    },
-  });
+  const res = await send(path, options);
   if (!res.ok) {
     throw apiError(res, await readRefusal(res));
   }
@@ -818,13 +874,7 @@ export type SecretsRefusal = "password-not-set" | "own-login-needed";
 /** fetchJSON for the routes that can answer with a SecretsRefusal: that 403
  *  comes back as the answer, with its code, and every other failure throws. */
 async function fetchKeyJSON<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers ?? {}),
-    },
-  });
+  const res = await send(path, options);
   if (res.status === 403) {
     const body = await readRefusal(res);
     if (body?.code === "password-not-set" || body?.code === "own-login-needed") {
@@ -2096,13 +2146,11 @@ export async function exportSettings(includeCredentials: boolean): Promise<strin
     // A failure answers a plain JSON envelope with no attachment header; only the
     // real file streams as an attachment.
     if (!res.ok || !disposition.includes("attachment")) {
-      // A refusal this client knows is said in the person's language, any
-      // other failure in the server's own English words.
       try {
         const body = (await res.json()) as { code?: string; error?: string };
-        return refusalSentence(body.code, body.error) ?? `export failed (HTTP ${res.status})`;
+        return failureOf(res.status, body.code, body.error).message;
       } catch {
-        return `export failed (HTTP ${res.status})`;
+        return failureOf(res.status).message;
       }
     }
     const match = /filename="?([^"]+)"?/.exec(disposition);
@@ -2255,13 +2303,11 @@ export async function downloadRecoveryKit(): Promise<string | null> {
     // Every failure path (403 auth-off refusal, 200 fail envelope on a build
     // error) answers JSON; only the kit itself streams as text/markdown.
     if (!res.ok || ct.includes("application/json")) {
-      // A refusal this client knows is said in the person's language, any
-      // other failure in the server's own English words.
       try {
         const body = (await res.json()) as { code?: string; error?: string };
-        return refusalSentence(body.code, body.error) ?? `download failed (HTTP ${res.status})`;
+        return failureOf(res.status, body.code, body.error).message;
       } catch {
-        return `download failed (HTTP ${res.status})`;
+        return failureOf(res.status).message;
       }
     }
     const blob = await res.blob();
@@ -3191,11 +3237,12 @@ export function previewPlacementDefault(
 }
 
 /** Writes a default. `expect` is the impact the question showed; code "stale"
- *  answers with the new one. */
+ *  answers with the new one. Without it the server writes only a change that
+ *  touches no storage location. */
 export function putPlacementDefault(
   domain: PlacementDomain,
   change: DefaultChange,
-  expect: DefaultImpact
+  expect: DefaultImpact | undefined
 ): Promise<OkEnvelope & { default?: DefaultRow; impact?: DefaultImpact }> {
   return fetchJSON(defaultPath(domain), { method: "PUT", body: JSON.stringify({ ...change, expect }) });
 }
@@ -5554,8 +5601,7 @@ export async function foreignRestore(req: {
   try {
     return (await res.json()) as OkEnvelope & { started?: boolean };
   } catch {
-    // Non-JSON body (proxy error page etc.) — fall back to the HTTP status.
-    throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
+    throw new ApiError(res.status, failureOf(res.status).message);
   }
 }
 
@@ -6873,13 +6919,11 @@ export async function downloadDiagnostics(): Promise<string | null> {
     const res = await g.fetch("/api/diagnostics");
     const ct = res.headers.get("content-type") ?? "";
     if (!res.ok || ct.includes("application/json")) {
-      // A refusal this client knows is said in the person's language, any
-      // other failure in the server's own English words.
       try {
         const body = (await res.json()) as { code?: string; error?: string };
-        return refusalSentence(body.code, body.error) ?? `download failed (HTTP ${res.status})`;
+        return failureOf(res.status, body.code, body.error).message;
       } catch {
-        return `download failed (HTTP ${res.status})`;
+        return failureOf(res.status).message;
       }
     }
     const blob = await res.blob();

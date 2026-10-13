@@ -13,7 +13,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { MemoryRouter, Route, Routes, useParams } from "react-router-dom";
 
 import type { Container, OffsiteTarget, Provider, StorageLocation, StorageLocationSection } from "../lib/api";
-import { I18nProvider } from "../lib/i18n";
+import { I18nProvider, en } from "../lib/i18n";
 import {
   defaultImpact,
   defaultRow,
@@ -245,6 +245,41 @@ describe("the flow", () => {
 
     expect(fake.callsTo("putPlacementDefault")).toEqual([]);
     expect(line("Containers to B2").getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("says in the window that a paired phone cannot change a default, and offers only the way out", async () => {
+    fake.reply("previewPlacementDefault", new api.ApiError(403, en["auth.relayLoginNeeded"], "own-login-needed"));
+    await renderPage();
+
+    await click(line("Containers to B2"));
+    const dialog = await screen.findByRole("dialog");
+    await waitFor(() => expect(dialog.textContent).toContain(en["auth.relayLoginNeeded"]));
+    expect(dialog.textContent).not.toContain("Checking…");
+    expect((within(dialog).getByRole("button", { name: /Confirm/ }) as HTMLButtonElement).disabled).toBe(true);
+    await click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(fake.callsTo("putPlacementDefault")).toEqual([]);
+  });
+
+  it("can still save a default whose preview did not come back, and asks once the server names what it moves", async () => {
+    const impact = defaultImpact({ dropped: [targetImpact({ items: 15, snapshots: 210 })] });
+    fake.reply("previewPlacementDefault", new api.ApiError(502, en["apiError.gateway"]));
+    fake.reply("putPlacementDefault", { ok: false, code: "stale", impact }, { ok: true });
+    await renderPage();
+
+    await click(line("Containers to B2"));
+    const dialog = await screen.findByRole("dialog");
+    await waitFor(() => expect(dialog.textContent).toContain(en["apiError.gateway"]));
+    expect(dialog.textContent).toContain(en["placementDefaults.previewFailed"].split(" {reason}")[0]);
+    await click(within(dialog).getByRole("button", { name: "Confirm" }));
+    await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toEqual([["containers", { skip: ["*"] }, undefined]]));
+
+    const asked = await screen.findByRole("dialog");
+    await waitFor(() => expect(asked.textContent).toContain("Items and project folders that B2 no longer gets: 15."));
+    await click(within(asked).getByRole("button", { name: "Confirm" }));
+    await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(2));
+    expect(fake.callsTo("putPlacementDefault")[1]).toEqual(["containers", { skip: ["*"] }, impact]);
   });
 
   it("switches a line on for a destination without a target: makes the target, then asks with what it will receive", async () => {
