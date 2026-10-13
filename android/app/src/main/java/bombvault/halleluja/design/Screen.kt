@@ -2,9 +2,8 @@ package bombvault.halleluja.design
 
 /**
  * Screen keeps which server the app shows and which one it is on its way to.
- * The page that asked for another server stays on screen while the app finds
- * a way to that one, and a step through its own history in that time does not
- * call the switch off.
+ * The page on screen stays there while the app finds a way to that one, and
+ * a step through its own history in that time does not call the switch off.
  */
 class Screen {
     /** The server whose page is on screen, null while the launcher is. */

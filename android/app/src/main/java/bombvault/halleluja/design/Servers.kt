@@ -28,16 +28,6 @@ fun originOf(url: String): String {
     return "${u.scheme}://${u.host}$port"
 }
 
-/** The servers the page of [asking] is told about: every other one the app can open. */
-fun othersThan(list: List<Server>, asking: Server): List<Server> = list.filter { it.id != asking.id && it.opens }
-
-/**
- * The server the page of [asking] may have the app open for [id]. A page
- * names a server of the app's own list by its id and never an address, so
- * it cannot send the app anywhere else.
- */
-fun openable(list: List<Server>, asking: Server, id: String): Server? = othersThan(list, asking).firstOrNull { it.id == id }
-
 /** The server list, kept in the app's own preferences. */
 class Servers(context: Context) {
     private val prefs = context.getSharedPreferences("servers", Context.MODE_PRIVATE)
