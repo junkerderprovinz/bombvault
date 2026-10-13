@@ -3,6 +3,7 @@ package api_test
 import (
 	"context"
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -343,5 +344,54 @@ func TestBackingUpAnEntryWithNoPlaceByHandIsRefusedAtOnce(t *testing.T) {
 	}
 	if len(rig.eng.backedUp) != 0 {
 		t.Fatalf("backed up to %v", rig.eng.backedUp)
+	}
+}
+
+func TestABatchCountsEntriesWithNoPlaceAsSkipped(t *testing.T) {
+	rig := newFirstBackupRig(t)
+	rig.setDefault(t, "containers", store.HomeNowhere)
+	rig.setDefault(t, "files", store.HomeNowhere)
+	set, err := rig.st.CreateFileSet(store.FileSet{Name: "docs", Path: "docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var out lockedBuffer
+	prev, flags := log.Writer(), log.Flags()
+	log.SetOutput(&out)
+	t.Cleanup(func() { log.SetOutput(prev); log.SetFlags(flags) })
+
+	for _, start := range []func() (bool, error){
+		func() (bool, error) { return rig.svc.StartBackupAll(context.Background(), []string{"nginx"}) },
+		func() (bool, error) { return rig.svc.StartBackupFilesAll(context.Background(), []string{set.ID}) },
+	} {
+		if started, err := start(); !started || err != nil {
+			t.Fatalf("batch did not start: %v, %v", started, err)
+		}
+		waitForBackupDone(t, rig.svc)
+	}
+
+	var done []string
+	for _, l := range strings.Split(out.String(), "\n") {
+		if strings.Contains(l, "all done:") {
+			done = append(done, l)
+		}
+	}
+	if len(done) != 2 {
+		t.Fatalf("batch summaries = %q, want two", done)
+	}
+	for _, l := range done {
+		if !strings.Contains(l, "1 skipped, 0 failed") {
+			t.Fatalf("batch summary %q, want the entry counted as skipped", l)
+		}
+	}
+	runs, err := rig.st.ListRuns(100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, run := range runs {
+		if run.Kind != "prune" {
+			t.Fatalf("run %+v recorded, want none for a section given no place", run)
+		}
 	}
 }

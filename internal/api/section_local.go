@@ -18,6 +18,20 @@ import (
 // switched off for it.
 var ErrNoPlace = errors.New("every storage location of this section is switched off, so there is nowhere to back it up to")
 
+// codeNoPlace is the code a refusal by ErrNoPlace carries, which the page
+// turns into a sentence in its language.
+const codeNoPlace = "no-place"
+
+// startRefusal is the body of the 409 for a backup pressed by hand that did
+// not start.
+func startRefusal(err error) map[string]any {
+	body := map[string]any{"ok": false, "error": err.Error()}
+	if errors.Is(err, ErrNoPlace) {
+		body["code"] = codeNoPlace
+	}
+	return body
+}
+
 // localSwitchDomain reports whether a section's own folder can be switched
 // off: the sections without placement, whose backups then go straight to
 // their off-site targets.

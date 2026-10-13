@@ -1346,7 +1346,7 @@ func (h *Handler) handleBackup(w http.ResponseWriter, r *http.Request) {
 	}
 	started, err := h.svc.StartBackup(r.Context(), name)
 	if err != nil { // the target domain is busy with another op, or the section has no place → 409 with the reason
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		writeJSON(w, http.StatusConflict, startRefusal(err))
 		return
 	}
 	if !started {
@@ -5690,7 +5690,7 @@ func (h *Handler) handleBackupVM(w http.ResponseWriter, r *http.Request) {
 	}
 	started, err := h.svc.StartBackupVM(r.Context(), name)
 	if err != nil { // the vms domain is busy with another op, or the section has no place → 409 with the reason
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		writeJSON(w, http.StatusConflict, startRefusal(err))
 		return
 	}
 	if !started {
@@ -5806,7 +5806,7 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleBackupFlash(w http.ResponseWriter, r *http.Request) {
 	started, err := h.svc.StartBackupFlash(r.Context())
 	if err != nil { // the flash domain is busy with another op, or the section has no place → 409 with the reason
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		writeJSON(w, http.StatusConflict, startRefusal(err))
 		return
 	}
 	if !started {
@@ -5836,7 +5836,7 @@ func (h *Handler) handleSnapshotsFlash(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleBackupConfig(w http.ResponseWriter, r *http.Request) {
 	started, err := h.svc.StartBackupConfig(r.Context())
 	if err != nil { // the config domain is busy with another op, or the section has no place → 409 with the reason
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		writeJSON(w, http.StatusConflict, startRefusal(err))
 		return
 	}
 	if !started {
@@ -6731,7 +6731,7 @@ func (h *Handler) handleBackupFileSet(w http.ResponseWriter, r *http.Request) {
 	}
 	started, err := h.svc.StartBackupFileSet(r.Context(), id)
 	if err != nil { // the files domain is busy with another op, or the section has no place → 409 with the reason
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		writeJSON(w, http.StatusConflict, startRefusal(err))
 		return
 	}
 	if !started {

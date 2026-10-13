@@ -166,6 +166,22 @@ func TestASectionWithEveryPlaceOffIsNotBackedUpAndCountsAsUnprotected(t *testing
 	}
 }
 
+func TestAPressRefusedForNoPlaceCarriesACodeThePageCanTranslate(t *testing.T) {
+	f, _, b2, box := flashScene(t)
+	switchLocal(t, f, "flash", false)
+	for _, target := range []store.OffsiteTarget{b2, box} {
+		target.Enabled = false
+		if _, err := f.st.UpsertOffsiteTarget(target); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	code, out := f.call(http.MethodPost, "/api/flash/backup", nil)
+	if code != http.StatusConflict || out["code"] != codeNoPlace {
+		t.Fatalf("POST /api/flash/backup = %d %v, want 409 with code %q", code, out, codeNoPlace)
+	}
+}
+
 func TestOnlySectionsWithoutPlacementHaveAFolderSwitch(t *testing.T) {
 	f := newPlacementFixture(t)
 	if code, _ := f.call(http.MethodPut, "/api/storage/sections/containers/local", map[string]bool{"on": false}); code != http.StatusBadRequest {

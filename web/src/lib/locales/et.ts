@@ -4480,6 +4480,7 @@ const et: Partial<Translations> = {
   "apiError.unavailable": "Server on hõivatud või alles käivitub. Proovi minuti pärast uuesti.",
   "apiError.sessionEnded": "See seanss on lõppenud, näiteks sellepärast, et keegi logis kõikjalt välja. Ava eksemplar uuesti.",
   "apiError.phonePairingOff": "Telefonide sidumine on selles eksemplaris välja lülitatud.",
+  "apiError.noPlace": "Seda pole kuhugi varundada, sest kõik tema valdkonna sihtkohad on välja lülitatud. Lülita üks sisse jaotises Sihtkohad.",
   "apiError.relayTooLarge": "See on liiga suur, et edastaja kaudu minna. Ava eksemplar selle enda aadressil.",
   "apiError.relayRefused": "See ei saa edastaja kaudu minna. Ava eksemplar selle enda aadressil.",
   "apiError.refused": "Server keeldus sellest.",

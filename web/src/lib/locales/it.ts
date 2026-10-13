@@ -4470,6 +4470,7 @@ const it: Partial<Translations> = {
   "apiError.unavailable": "Il server è occupato o si sta ancora avviando. Riprova tra un minuto.",
   "apiError.sessionEnded": "Questa sessione è terminata, per esempio perché qualcuno è uscito da ovunque. Riapri l'istanza.",
   "apiError.phonePairingOff": "L'associazione dei telefoni è disattivata su questa istanza.",
+  "apiError.noPlace": "Non c'è dove salvarlo, perché tutte le destinazioni della sua sezione sono disattivate. Attivane una in Destinazioni.",
   "apiError.relayTooLarge": "È troppo grande per passare dal relay. Apri l'istanza al suo indirizzo.",
   "apiError.relayRefused": "Non può passare dal relay. Apri l'istanza al suo indirizzo.",
   "apiError.refused": "Il server l'ha rifiutato.",

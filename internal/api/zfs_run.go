@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -581,9 +582,12 @@ func (s *Service) StartBackupZFSAll(ctx context.Context, ids []string) (bool, er
 		total := len(queue)
 		const key = "batch:zfs"
 		s.publishBatch(key, 0, true)
-		ok, fail := 0, 0
+		ok, fail, skipped := 0, 0, 0
 		for i, id := range queue {
-			if err := s.backupZFSOneForBatch(bctx, id); err != nil {
+			if err := s.backupZFSOneForBatch(bctx, id); errors.Is(err, ErrNoPlace) {
+				skipped++
+				log.Printf("api: backup-zfs-all: %q skipped: %v", id, err)
+			} else if err != nil {
 				fail++
 				log.Printf("api: backup-zfs-all: %q failed (continuing): %v", id, err)
 			} else {
@@ -595,7 +599,7 @@ func (s *Service) StartBackupZFSAll(ctx context.Context, ids []string) (bool, er
 		s.PruneAfterBulk(bctx, zfsDomain)
 		s.ReplicateOffsiteAfterBulk(bctx, zfsDomain)
 		s.maybeCollectStats(bctx, zfsDomain)
-		log.Printf("api: backup-zfs-all done: %d ok, %d failed (of %d requested %d)", ok, fail, total, len(ids))
+		log.Printf("api: backup-zfs-all done: %d ok, %d skipped, %d failed (of %d requested %d)", ok, skipped, fail, total, len(ids))
 	}()
 	return true, nil
 }

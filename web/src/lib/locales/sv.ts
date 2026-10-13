@@ -4470,6 +4470,7 @@ const sv: Partial<Translations> = {
   "apiError.unavailable": "Servern är upptagen eller håller fortfarande på att starta. Försök igen om en minut.",
   "apiError.sessionEnded": "Den här sessionen har avslutats, till exempel för att någon har loggat ut överallt. Öppna instansen igen.",
   "apiError.phonePairingOff": "Parkoppling av telefoner är avstängd på den här instansen.",
+  "apiError.noPlace": "Det finns ingenstans att säkerhetskopiera till, eftersom alla mål i dess avsnitt är avstängda. Slå på ett under Mål.",
   "apiError.relayTooLarge": "Det här är för stort för att gå via reläet. Öppna instansen på dess egen adress.",
   "apiError.relayRefused": "Det här kan inte gå via reläet. Öppna instansen på dess egen adress.",
   "apiError.refused": "Servern avvisade det här.",

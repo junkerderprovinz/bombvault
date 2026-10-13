@@ -4471,6 +4471,7 @@ const ro: Partial<Translations> = {
   "apiError.unavailable": "Serverul este ocupat sau încă pornește. Încearcă din nou peste un minut.",
   "apiError.sessionEnded": "Această sesiune s-a încheiat, de exemplu pentru că cineva s-a deconectat de peste tot. Deschide din nou instanța.",
   "apiError.phonePairingOff": "Împerecherea telefoanelor este dezactivată pe această instanță.",
+  "apiError.noPlace": "Nu există unde să se facă copia, pentru că toate destinațiile secțiunii sale sunt oprite. Pornește una la Destinații.",
   "apiError.relayTooLarge": "Este prea mare ca să treacă prin relay. Deschide instanța la adresa ei proprie.",
   "apiError.relayRefused": "Nu poate trece prin relay. Deschide instanța la adresa ei proprie.",
   "apiError.refused": "Serverul a refuzat acest lucru.",
