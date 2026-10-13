@@ -156,6 +156,18 @@ test("a dot leads from the navigation over the settings tile to the change, and 
   await expect(page).toHaveURL(/\/settings\/\w+$/);
   const tile = page.locator('a[href="/settings/info"]');
   const fromTile = page.locator(`[data-new-dot="way"][aria-label^="This way to 2 changes:"][aria-label*="${VERSION_NEWS}"]`);
+  // On a phone the rail is a strip that scrolls sideways, and a tile out of
+  // its view has the dot at the strip's edge until it is scrolled in.
+  if (phone) {
+    const strip = page.getByRole("navigation", { name: "Settings pages" }).locator(":scope > div");
+    await expect
+      .poll(async () => {
+        const [d, s] = [await fromTile.boundingBox(), await strip.boundingBox()];
+        return !!d && !!s && Math.abs(d.x + d.width / 2 - (s.x + s.width - 4)) <= 2;
+      })
+      .toBe(true);
+    await tile.scrollIntoViewIfNeeded();
+  }
   await expectOn(fromTile, tile);
 
   await fromTile.click();

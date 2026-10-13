@@ -76,6 +76,7 @@ const testMatch = [
   "instances-phone.spec.ts",
   "pairing.spec.ts",
   "settings-phone.spec.ts",
+  "settings-rail.spec.ts",
   "activity-log-jump.spec.ts",
   "selector-span.spec.ts",
   "selector-hue.spec.ts",

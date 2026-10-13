@@ -71,8 +71,11 @@ for (const path of PAGES) {
         const main = document.querySelector("#bv-main")!;
         const vw = document.documentElement.clientWidth;
         const name = (el: Element) => (el.getAttribute("aria-label") ?? el.textContent ?? "").trim().slice(0, 40);
-        const controls = [...main.querySelectorAll("button, a, input, select, textarea, [role='switch']")].filter(
-          (el) => el.getBoundingClientRect().width > 0,
+        // The Settings rail's strip scrolls sideways, so its tiles stand past
+        // the window by design; the strip itself has to stay inside.
+        const strip = "nav[data-rail-form='strip']";
+        const controls = [...main.querySelectorAll(`button, a, input, select, textarea, [role='switch'], ${strip}`)].filter(
+          (el) => el.getBoundingClientRect().width > 0 && !el.parentElement?.closest(strip),
         );
         return {
           pan: main.scrollWidth - main.clientWidth,

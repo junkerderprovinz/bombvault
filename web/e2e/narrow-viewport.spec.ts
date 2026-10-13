@@ -430,12 +430,15 @@ test("landscape 844x390: at >=48rem the desktop chrome owns the shell", async ({
 // switches on width alone, so anyone reaches this by dragging a window edge,
 // and it is where a real scrollbar shows up. The phone projects cover the same
 // widths in settings-phone.spec.ts.
-test("settings rail @ 390px in a desktop window: glyphs beside the content, nothing pans", async ({ page }, testInfo) => {
+test("settings rail @ 390px in a desktop window: a strip above the content, nothing pans", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-768", "one desktop project carries this; the pair would run it twice");
   await bootSeededPage(page, "en", 390, "/settings/general");
   const rail = page.getByRole("navigation", { name: "Settings pages" });
   await expect(rail.getByRole("link", { name: "General", exact: true })).toHaveAttribute("aria-current", "page");
-  expect((await rail.boundingBox())!.width, "the rail keeps to its glyphs").toBeLessThanOrEqual(56);
+  const railBox = (await rail.boundingBox())!;
+  const contentBox = (await page.locator("[data-settings-content]").boundingBox())!;
+  expect(railBox.y + railBox.height, "the strip stands above the content").toBeLessThanOrEqual(contentBox.y + 1);
+  expect(Math.abs(railBox.width - contentBox.width), "the strip spans the content's width").toBeLessThanOrEqual(1);
   const pan = await page.evaluate(() => {
     const main = document.querySelector("#bv-main")!;
     return main.scrollWidth - main.clientWidth;

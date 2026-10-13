@@ -639,6 +639,31 @@
   margin-top: 0.75rem;
 }
 
+/* A strip that scrolls sideways fades out on a side with tiles scrolled past
+   it, which is all that says there is more where the scrollbar is hidden. The
+   2rem match STRIP_FADE_PX in SettingsRail.tsx, which keeps a tile it brings
+   into view clear of them. */
+.glim-strip {
+  --strip-fade-left: 0rem;
+  --strip-fade-right: 0rem;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 var(--strip-fade-left),
+    #000 calc(100% - var(--strip-fade-right)),
+    transparent
+  );
+}
+.glim-strip[data-more-left] {
+  --strip-fade-left: 2rem;
+}
+.glim-strip[data-more-right] {
+  --strip-fade-right: 2rem;
+}
+.glim-strip::-webkit-scrollbar {
+  display: none;
+}
+
 /* A settings rail tile with names on hover keeps its glyph centred and opens
    the name as a caption under it, so the tile never changes size. The current
    page keeps its name, as every reactive strip does, and a coarse pointer
