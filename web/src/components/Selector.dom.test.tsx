@@ -277,6 +277,24 @@ describe("Selector with textHeight", () => {
   });
 });
 
+describe("Selector as a big well beside a button", () => {
+  const routes = [ITEMS[0], { id: "g", label: "Glyph", icon: <svg /> }];
+
+  it("takes the button height instead of the page-level one", () => {
+    render(<Selector items={routes} label="Test strip" active="a" onChange={() => {}} size="lg" equalWidth inline buttonHeight />);
+    for (const name of ["Alpha", "Glyph"]) {
+      const seg = screen.getByRole("tab", { name }).className.split(/\s+/);
+      expect(seg).toContain("glim-seg-btn");
+      expect(seg).not.toContain("glim-seg");
+    }
+  });
+
+  it("keeps the page-level height without it", () => {
+    render(<Selector items={routes} label="Test strip" active="a" onChange={() => {}} size="lg" equalWidth inline />);
+    expect(screen.getByRole("tab", { name: "Alpha" }).className.split(/\s+/)).toContain("glim-seg");
+  });
+});
+
 // jsdom lays nothing out, so the room and each segment's widths are stubbed:
 // the track, or the `data-room` box a hugging track sits in, reports `room` as
 // its clientWidth, and a segment measured at max-content or min-content

@@ -469,8 +469,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
     {
       title: "settings.fleet",
-      hint: "settings.fleetHint",
-      rows: [{ key: "settings.instanceName" }, { key: "pairing.knownAddresses", hint: "relay.selfAddressTip" }],
+      rows: [{ key: "settings.instanceName", hint: "settings.fleetHint" },{ key: "pairing.knownAddresses", hint: "relay.selfAddressTip" }],
     },
     {
       title: "relay.title",

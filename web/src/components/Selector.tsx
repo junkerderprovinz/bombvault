@@ -681,7 +681,9 @@ export function Selector(props: SelectorProps) {
           // size="icon"; Selector does not render through Badge, so the two
           // sizes have to be kept in step by hand.
           well && equalWidth
-            ? `text-center h-[var(--badge-md)] ${SIZE[size].padding} ${WELL_TOUCH}`
+            ? buttonHeight
+              ? `text-center px-3 glim-seg-btn ${WELL_TOUCH}`
+              : `text-center h-[var(--badge-md)] ${SIZE[size].padding} ${WELL_TOUCH}`
             : equalWidth || phoneWell || pairsOnPhone
               ? `text-center ${segmentPadding(size, !!item.icon && !textHeight, buttonHeight, well)}`
               : item.iconOnly
