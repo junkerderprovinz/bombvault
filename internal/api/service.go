@@ -333,6 +333,9 @@ type Service struct {
 	// for it: every volume in there is judged by the capacity rule.
 	probedMu      sync.Mutex
 	probedVolumes map[string]probedVolume
+	// snapLists keeps the newest snapshot listing of each local repository
+	// for the list pages, see cachedSnapshots.
+	snapLists snapshotListCache
 	// dirNonEmptyProbe is the container-restore overwrite guard's "does this
 	// destination already hold data" seam: nil uses the real filesystem
 	// (dirNonEmpty); tests inject a fake. Accessed via dirNonEmptyFn.
@@ -8424,7 +8427,7 @@ func (s *Service) eachBackupTime(ctx context.Context, domain, aliasDomain string
 		}
 		// Per repository, like every other reader: a named repository has its own
 		// mode.
-		all, lErr := s.listSnapshots(ctx, repo.Loc, s.primaryModeFor(settings, domain, repo.Loc))
+		all, lErr := s.cachedSnapshots(ctx, repo.Loc, s.primaryModeFor(settings, domain, repo.Loc))
 		if lErr != nil {
 			// One unreachable repository must not blank the whole column: the
 			// other entries' times are still true. The item whose repo this
