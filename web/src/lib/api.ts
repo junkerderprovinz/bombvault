@@ -5315,13 +5315,10 @@ export function listZFSLocalPools(): Promise<ZFSReplicaPool[]> {
   return fetchJSON("/api/zfs/replica/local-pools");
 }
 
-// ---------------------------------------------------------------------------
-// Foreign-repo restore API (#61) — a READ-ONLY session onto ANOTHER BombVault
-// instance's repository. Deliberately unlike the Recovery attach flow: nothing
-// is persisted (no putSettings) — the session lives server-side in memory with
-// a 30-minute TTL, and the foreign key/location never touch Settings. The UI
-// must call foreignClose on leave/unmount.
-// ---------------------------------------------------------------------------
+// A foreign-repo session reads another install's repository and persists
+// nothing: it lives in the server's memory for 30 minutes, and the foreign key
+// and location never reach the settings. The page closes it with foreignClose
+// when it unmounts, so the key does not outlive the visit.
 
 /** One restorable item (container, VM or file set) in a foreign repository,
  *  with all of its snapshots (oldest-first, as restic reports them). */
