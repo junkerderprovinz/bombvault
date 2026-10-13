@@ -784,7 +784,7 @@ describe("a location that cannot be shown", () => {
     await renderPage("destination:gone");
 
     expect(screen.getByText("This storage location no longer exists.")).toBeTruthy();
-    await click(screen.getByRole("link", { name: "Storage locations" }));
+    await click(screen.getByRole("button", { name: "Storage locations" }));
     expect(screen.getByText("the list")).toBeTruthy();
   });
 

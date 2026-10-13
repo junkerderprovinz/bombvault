@@ -269,7 +269,8 @@ describe("reading the entry", () => {
     await renderPage("/backups/container/vanished");
     expect(mocks.getBackupItem).toHaveBeenCalledWith("container", "vanished");
     expect(screen.getByText(en["entry.missing"])).toBeTruthy();
-    expect(screen.getByRole("link", { name: en["backups.title"] }).getAttribute("href")).toBe("/backups");
+    await press(screen.getByRole("button", { name: en["backups.title"] }));
+    expect(screen.getByText("at /backups")).toBeTruthy();
   });
 
   it("says an entry is gone when the list of its kind no longer holds it", async () => {

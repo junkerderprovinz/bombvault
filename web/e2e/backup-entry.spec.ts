@@ -470,9 +470,16 @@ test("the head says how the entry is doing and offers its two actions", async ({
 
   await expect(page.getByText("Geschützt", { exact: true })).toBeVisible();
   await expect(page.getByText("192.168.20.40")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sicherungen" }).first()).toHaveAttribute("href", "/backups");
   await expect(corner(page).getByRole("button", { name: "Jetzt sichern" })).toBeVisible();
   await expect(corner(page).getByRole("button", { name: "Zeitplan pausieren" })).toBeVisible();
+  // The way back is a button before the entry's glyph, in the same row.
+  const back = page.locator("#bv-main").getByRole("button", { name: "Sicherungen", exact: true });
+  const glyph = page.locator('[data-new="entry-page"]');
+  const [b, g] = [(await back.boundingBox())!, (await glyph.boundingBox())!];
+  expect(b.x + b.width).toBeLessThanOrEqual(g.x);
+  expect(Math.abs(b.y + b.height / 2 - (g.y + g.height / 2))).toBeLessThan(2);
+  await back.click();
+  await expect(page).toHaveURL(/\/backups$/);
 });
 
 test("a tab stays in the address over a reload, and Back leaves the entry", async ({ page }, testInfo) => {
