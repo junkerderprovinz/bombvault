@@ -569,3 +569,41 @@ func TestCheckRestoreDoesNotBlockOnADiskImageCountedAtItsCeiling(t *testing.T) {
 		t.Fatalf("space = %+v, want grey, since the images may fit without their holes", c)
 	}
 }
+
+func TestCheckRestoreRefusesToBringAGoneContainerBackOverARunningOne(t *testing.T) {
+	f := newCheckFixture(t)
+	f.docker.list = []dockercli.ContainerInfo{
+		{Name: "plex-new", State: "running", Mounts: []dockercli.MountPoint{{Source: "/mnt/user/appdata/plex", Destination: "/config"}}},
+	}
+	res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"})
+	c := lineOf(t, res, lineSpace)
+	if res.Ready || c.Status != lineFail || c.Reason != reasonRefused || !strings.Contains(c.Detail, "plex-new") {
+		t.Fatalf("ready = %v, space line = %+v", res.Ready, c)
+	}
+	if started, err := f.svc.StartRestore(context.Background(), "plex", "aaaa1111", "local", RestoreOptions{}); started || !isDestinationRefusal(err) {
+		t.Fatalf("StartRestore = %v, %v, want the refusal", started, err)
+	}
+}
+
+func TestCheckRestoreBringsAGoneContainerBackBesideAStoppedOne(t *testing.T) {
+	f := newCheckFixture(t)
+	f.docker.list = []dockercli.ContainerInfo{
+		{Name: "plex-new", State: "exited", Mounts: []dockercli.MountPoint{{Source: "/mnt/user/appdata/plex", Destination: "/config"}}},
+	}
+	res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"})
+	if !res.Ready {
+		t.Fatalf("checks = %+v", res.Checks)
+	}
+	if len(res.Plan.Shared) != 1 || !slices.Equal(res.Plan.Shared[0].Containers, []string{"plex-new"}) {
+		t.Fatalf("shared = %+v", res.Plan.Shared)
+	}
+}
+
+func TestCheckRestoreReplacesAContainerOnTheHostBesideARunningSharer(t *testing.T) {
+	f := newCheckFixture(t)
+	f.docker.list[1].State = "running"
+	res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"})
+	if !res.Ready {
+		t.Fatalf("a container that is on the host keeps the shared-folder warning, checks = %+v", res.Checks)
+	}
+}

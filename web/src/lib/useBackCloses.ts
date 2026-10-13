@@ -7,7 +7,8 @@ import { useEffect, useId, useRef } from "react";
 
 interface Layer {
   id: string;
-  close: () => void;
+  /** false keeps the layer open, and its entry is put back. */
+  close: () => void | boolean;
 }
 
 const KEY = "bvLayers";
@@ -57,7 +58,10 @@ function onPop() {
     const layer = open[i];
     if (here.includes(layer.id)) continue;
     open.splice(i, 1);
-    layer.close();
+    if (layer.close() === false) {
+      open.splice(i, 0, layer);
+      push(layer);
+    }
   }
 }
 
@@ -120,10 +124,11 @@ export function leaveLayers(then: () => void) {
   window.history.go(-steps);
 }
 
-/** useBackCloses lets Back close a sheet or dialog while it is open. A way
+/** useBackCloses lets Back close a sheet or dialog while it is open. An
+ *  onClose that returns false keeps it open, and Back stays with it. A way
  *  out of it to another page navigates with replace, so that page takes the
  *  layer's entry and Back from it skips the closed window. */
-export function useBackCloses(isOpen: boolean, onClose: () => void) {
+export function useBackCloses(isOpen: boolean, onClose: () => void | boolean) {
   const id = useId();
   const closeRef = useRef(onClose);
   closeRef.current = onClose;

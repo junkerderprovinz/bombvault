@@ -22,6 +22,7 @@ import { BackupRail } from "../components/restore/BackupRail";
 import { EmergencyScene } from "../components/restore/EmergencyScene";
 import { EmergencyWindow } from "../components/restore/EmergencyWindow";
 import { KeyState } from "../components/restore/KeyState";
+import { NotStartedNotice } from "../components/restore/NotStartedNotice";
 import { OldFolderWindow } from "../components/restore/OldFolderWindow";
 import { PlaceChecks } from "../components/restore/PlaceChecks";
 import { RestoreManyWindow } from "../components/restore/RestoreManyWindow";
@@ -446,6 +447,7 @@ export function Restore() {
       {source === "oldFolder" && <OldFolderWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
       {source === "appdata" && <AppdataWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
       {many && <RestoreManyWindow items={many} onClose={() => setMany(null)} />}
+      <NotStartedNotice />
 
       {failed ? (
         <div className="flex flex-col items-start gap-2">

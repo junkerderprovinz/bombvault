@@ -42,6 +42,7 @@ export function RuntimeRetry({
         matchRun: (r) => r.domain === "container" && r.target === name,
         start: () => restore(name, "latest", true, source, leaveStopped, true),
         t,
+        progressKey: `container:${name}`,
       });
       if (res.ok) ok++;
       else {

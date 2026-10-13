@@ -16,9 +16,11 @@ interface ProgressBarProps {
   label?: string;
   /** Render in normal document flow instead of pinned to a card's bottom edge. */
   inline?: boolean;
+  /** What a screen reader calls the bar where no caption names it. */
+  accessibleName?: string;
 }
 
-export function ProgressBar({ percent, active, indeterminate, label, inline }: ProgressBarProps) {
+export function ProgressBar({ percent, active, indeterminate, label, inline, accessibleName }: ProgressBarProps) {
   if (!active) return null;
 
   const isIndeterminate = indeterminate ?? percent <= 0;
@@ -33,6 +35,7 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
       }
       style={{ background: "var(--carbon-border)" }}
       role="progressbar"
+      aria-label={accessibleName ?? label}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={isIndeterminate ? undefined : Math.round(clamped)}

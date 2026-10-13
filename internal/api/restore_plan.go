@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
@@ -439,6 +440,37 @@ func (s *Service) sharedFolders(ctx context.Context, sc restoreScope) []SharedFo
 		}
 	}
 	return out
+}
+
+// guardRecreateOverRunning refuses to bring a container that is gone from
+// the host back in place while another running container binds a folder the
+// restore writes, since restic would overwrite that container's live files.
+func (s *Service) guardRecreateOverRunning(ctx context.Context, name string, plan containerRestorePlan) error {
+	if s.docker == nil {
+		return nil
+	}
+	list, err := s.docker.List(ctx)
+	if err != nil {
+		return fmt.Errorf("list containers: %w", err)
+	}
+	if slices.ContainsFunc(list, func(c dockercli.ContainerInfo) bool { return c.Name == name }) {
+		return nil
+	}
+	self, _ := s.docker.Self(ctx)
+	for _, w := range containerScope(plan, name).written {
+		host := s.toHostPath(w)
+		for _, c := range list {
+			if c.Name == self || !strings.EqualFold(c.State, "running") {
+				continue
+			}
+			for _, m := range c.Mounts {
+				if bindShares(host, m.Source) {
+					return destinationRefusal("the running container %s uses %s, so bringing %s back there would write into its files. Stop %s or restore into a folder instead", c.Name, host, name, c.Name)
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // bindShares reports whether a bind mount reaches into the folder a restore

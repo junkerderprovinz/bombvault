@@ -134,4 +134,28 @@ describe("useBackCloses", () => {
     back();
     await waitFor(() => expect(window.location.pathname).toBe("/before"));
   });
+
+  it("keeps a layer that refuses to close, and Back with it", async () => {
+    let held = true;
+    function Busy() {
+      const [open, setOpen] = useState(true);
+      useBackCloses(open, () => {
+        if (held) return false;
+        setOpen(false);
+      });
+      return open ? <span>busy</span> : <span>gone</span>;
+    }
+    render(<Busy />);
+    await settled();
+    const depth = window.history.length;
+    back();
+    await settled();
+    back();
+    await settled();
+    expect(screen.getByText("busy")).toBeTruthy();
+    expect(window.history.length).toBe(depth);
+    held = false;
+    back();
+    await waitFor(() => expect(screen.getByText("gone")).toBeTruthy());
+  });
 });

@@ -410,6 +410,15 @@ describe("the other sources", () => {
 describe("restoring several entries", () => {
   const many = () => screen.getByRole("dialog", { name: /^Restore \d+ entr/ });
   const lines = () => within(many()).getAllByTestId("restore-many-entry");
+  // The start waits for the check of every entry.
+  const start = async (count: number) => {
+    const button = await waitFor(() => {
+      const found = within(many()).getByRole("button", { name: `${en["snapshots.restore"]} · ${count}` });
+      expect(found).toHaveProperty("disabled", false);
+      return found;
+    });
+    await press(button);
+  };
 
   beforeEach(() => {
     fireAndWaitRun.mockImplementation(async ({ start }) => {
@@ -419,6 +428,7 @@ describe("restoring several entries", () => {
     vi.mocked(api.restore).mockResolvedValue({ ok: true, started: true });
     vi.mocked(api.restoreVM).mockResolvedValue({ ok: true, started: true });
     vi.mocked(api.restoreFileSet).mockResolvedValue({ ok: true, started: true });
+    vi.mocked(api.checkRestore).mockResolvedValue({ ok: true, ready: true, checks: [], plan: { shared: [] } } as never);
   });
 
   it("picks entries with Ctrl+click like the Backups list, and leaves ZFS to its own window", async () => {
@@ -447,7 +457,7 @@ describe("restoring several entries", () => {
     expect(lines()).toHaveLength(3);
     expect(within(many()).getByRole("radio", { name: new RegExp(en["restoreWindow.beside"]) }).getAttribute("aria-checked")).toBe("true");
 
-    await press(within(many()).getByRole("button", { name: `${en["snapshots.restore"]} · 3` }));
+    await start(3);
     await waitFor(() => expect(lines().every((line) => line.dataset.outcome === "done")).toBe(true));
     const snapshot = RUNS[0].snapshotId;
     expect(api.restore).toHaveBeenCalledWith("immich", snapshot, true, "local", false, false, { target: "beside" });
@@ -463,7 +473,9 @@ describe("restoring several entries", () => {
     await press(entry("pihole"));
     await press(within(screen.getByTestId("bulk-bar")).getByRole("button", { name: en["snapshots.restore"] }));
     await press(within(many()).getByRole("radio", { name: new RegExp(en["restoreWindow.replace"]) }));
-    await press(within(many()).getByRole("button", { name: `${en["snapshots.restore"]} · 2` }));
+    const gone = lines().find((line) => line.textContent?.includes("pihole"))!;
+    await press(await within(gone).findByRole("switch", { name: en["restoreMany.recreateYes"] }));
+    await start(2);
     expect(api.restore).not.toHaveBeenCalled();
     await press(within(screen.getAllByRole("dialog").at(-1)!).getByRole("button", { name: en["snapshots.restore"] }));
     await waitFor(() => expect(api.restore).toHaveBeenCalledTimes(2));
@@ -483,7 +495,7 @@ describe("restoring several entries", () => {
     await press(entry("immich"));
     await press(entry("Windows 11"));
     await press(within(screen.getByTestId("bulk-bar")).getByRole("button", { name: en["snapshots.restore"] }));
-    await press(within(many()).getByRole("button", { name: `${en["snapshots.restore"]} · 2` }));
+    await start(2);
     await waitFor(() => expect(lines()[1].dataset.outcome).toBe("done"));
     expect(lines()[0].dataset.outcome).toBe("failed");
     expect(within(lines()[1]).queryByRole("button", { name: en["restore.withoutRuntime"] })).toBeNull();
@@ -508,7 +520,7 @@ describe("restoring several entries", () => {
     const options = screen.getAllByRole("option");
     await press(options[options.length - 1]);
     expect(within(lines()[1]).getByText(en["restoreMany.noneBefore"])).toBeTruthy();
-    await press(within(many()).getByRole("button", { name: `${en["snapshots.restore"]} · 1` }));
+    await start(1);
     await waitFor(() => expect(lines()[1].dataset.outcome).toBe("skipped"));
     expect(api.restore).toHaveBeenCalledWith("immich", RUNS[2].snapshotId, true, "local", false, false, { target: "beside" });
     expect(api.restoreVM).not.toHaveBeenCalled();

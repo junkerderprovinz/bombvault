@@ -29,7 +29,7 @@
 
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { listRuns, type Run } from "./api";
-import { useProgress } from "./progress";
+import { progressNow, useProgress } from "./progress";
 import { useT } from "./i18n";
 import { isPageVisible } from "./useVisibilityGate";
 
@@ -371,15 +371,57 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
   return { state, fire, reset, isPending: state.phase === "pending" };
 }
 
+/** How a run that fireAndWaitRun watched ended. `cancelled` tells a cancel
+ *  apart from a failure; both have ok false. */
+export interface RunOutcome {
+  ok: boolean;
+  error?: string;
+  cancelled?: boolean;
+}
+
+/** How many times fireAndWaitRun asks for the runs before it fires. */
+const BASELINE_TRIES = 3;
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** The ids of the runs that already exist, or null when the list cannot be
+ *  read. A run counts as the new one only against such a list. */
+async function existingRunIds(mine: (run: Run) => boolean): Promise<Set<string> | null> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await listRuns();
+      if (res.ok && res.runs) return new Set(res.runs.filter(mine).map((r) => r.id));
+    } catch {
+      // asked again below
+    }
+    if (attempt === BASELINE_TRIES) return null;
+    await sleep(1000);
+  }
+}
+
+function outcomeOf(run: Run, kind: WatchKind, t: T): RunOutcome {
+  switch (run.status) {
+    case "success":
+    case "skipped": // a removed target is skipped, not failed
+      return { ok: true };
+    case "cancelled":
+      return { ok: false, cancelled: true, error: t("run.statusCancelled") };
+    default:
+      return { ok: false, error: run.error || t(kind === "backup" ? "common.backupFailed" : "common.restoreFailed") };
+  }
+}
+
 /**
  * fireAndWaitRun is the non-hook variant for bulk loops, which back up or
  * restore their targets one after another. It fires one run, retrying while
  * the previous target still holds the server's single-flight guard, then
- * waits for the new run to finish. The guard is released only when the
- * previous target's whole backup call returns, including its inline off-site
- * replication, so the retry shares the full watch deadline; a shorter budget
- * would drop a batch item without any run recorded for it. Like the hook, it
- * matches the run by a new id, not by the clock.
+ * waits until the new run has ended in any state but running. The guard is
+ * released only when the previous target's whole backup call returns,
+ * including its inline off-site replication, so the retry shares the full
+ * watch deadline. Like the hook, it matches the run by a new id, not by the
+ * clock, and it does not fire before it knows the ids that are there.
  */
 export async function fireAndWaitRun(opts: {
   kind: WatchKind;
@@ -388,15 +430,13 @@ export async function fireAndWaitRun(opts: {
   /** Required: every caller toasts the failure text as is, so it has to be
    *  translated. */
   t: T;
-}): Promise<{ ok: boolean; error?: string }> {
+  /** The key the run publishes its progress under. A run the server could
+   *  not record then ends once its progress has come and gone. */
+  progressKey?: string;
+}): Promise<RunOutcome> {
   const mine = (r: Run) => r.kind === opts.kind && opts.matchRun(r);
-  let baseline = new Set<string>();
-  try {
-    const before = await listRuns();
-    baseline = new Set((before.runs ?? []).filter(mine).map((r) => r.id));
-  } catch {
-    // without a baseline, the first terminal run for this target counts
-  }
+  const baseline = await existingRunIds(mine);
+  if (!baseline) return { ok: false, error: opts.t("common.networkError") };
   const deadline = Date.now() + watchTimeoutMs(opts.kind);
   for (;;) {
     let res: Awaited<ReturnType<StartBackupFn>>;
@@ -408,17 +448,20 @@ export async function fireAndWaitRun(opts: {
     if (res.ok) break;
     const busy = (res.error ?? "").toLowerCase().includes("already running");
     if (!busy || Date.now() > deadline) return { ok: false, error: res.error };
-    await new Promise((r) => setTimeout(r, 1000));
+    await sleep(1000);
   }
-  // Poll the recorded runs until this target's new run reaches a terminal state.
+  let sawProgress = false;
+  let quietPolls = 0;
   for (;;) {
-    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+    await sleep(POLL_INTERVAL_MS);
     try {
       const runs = await listRuns();
-      const run = runs.runs?.find((r) => mine(r) && !baseline.has(r.id));
-      if (run && run.status === "success") return { ok: true };
-      if (run && run.status === "skipped") return { ok: true }; // a removed target is skipped, not failed
-      if (run && run.status === "failed") return { ok: false, error: run.error };
+      const run = runs.ok ? runs.runs?.find((r) => mine(r) && !baseline.has(r.id)) : undefined;
+      if (run && run.status !== "running") return outcomeOf(run, opts.kind, opts.t);
+      if (!run && runs.ok && opts.progressKey) {
+        if (progressNow(opts.progressKey)?.active) sawProgress = true;
+        else if (sawProgress && ++quietPolls >= RUNLESS_GRACE_POLLS) return { ok: true };
+      }
     } catch {
       // transient, keep polling
     }

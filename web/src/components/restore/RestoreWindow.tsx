@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import {
   flashDownloadURL,
   listDbDumps,
+  openedAsPairedPhone,
   listSnapshotFiles,
   listSnapshotFilesFileSet,
   listSnapshotFilesZFS,
@@ -745,8 +746,12 @@ function RestoreForm({
   }
 
   const listed = what === "dumps" || what === "plugins";
+  // A paired phone's session is refused the download.
+  const downloadRefused = where === "zip" && openedAsPairedPhone();
   const blockReason = blockedByOther
     ? t(busyPhraseKey(running.phase, running.stage))
+    : downloadRefused
+      ? t("restoreMany.flashOwnLogin")
     : what === "files" && picked.size === 0
       ? t("files.selectHint")
       : where === "folder" && folder.trim() === ""
@@ -816,7 +821,7 @@ function RestoreForm({
               glyph={where === "zip" ? <IconDownload /> : <IconRestore />}
               tone="accent"
               onClick={() => void begin()}
-              disabled={!choice || blockedByOther || !check.ready || preparing}
+              disabled={!choice || blockedByOther || downloadRefused || !check.ready || preparing}
               busy={preparing}
               hint={blockReason}
             />

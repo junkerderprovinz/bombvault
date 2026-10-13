@@ -30,8 +30,9 @@ import { useBackCloses } from "../../lib/useBackCloses";
 export interface BottomSheetProps {
   /** Whether the sheet is open. The caller owns the state; every close path calls onClose. */
   open: boolean;
-  /** Called by every close path: scrim click, Escape, header close button, Back. */
-  onClose: () => void;
+  /** Called by every close path: scrim click, Escape, header close button,
+   *  Back. Returning false keeps the sheet open, and Back with it. */
+  onClose: () => void | boolean;
   /** The header's close button, on by default. A sheet whose footer already
    *  answers turns it off: two ways to cancel read as a choice between two
    *  answers, the same reason ConfirmDialog carries no corner X. Initial

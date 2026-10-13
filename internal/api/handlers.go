@@ -4602,9 +4602,13 @@ func (h *Handler) newSessionCookie(value string, maxAge int) *http.Cookie {
 func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 	hash, epoch, on := h.authEnabled()
 	authed := false
+	// A paired phone's session reaches only pairedRoutes, so the interface
+	// leaves out what it would be refused, such as the flash download.
+	paired := relayedPage(r)
 	if on {
 		if c, err := h.sessionCookie(r); err == nil {
 			authed = secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value)
+			paired = paired || (authed && secret.PairedSessionToken(c.Value))
 		}
 	}
 	out := map[string]any{
@@ -4621,6 +4625,7 @@ func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 		// A page a phone opens through the relay can neither sign in nor
 		// out, so the interface leaves both out there.
 		"relayed": relayedPage(r),
+		"paired":  paired,
 	}
 	if on {
 		if s, err := h.store.GetSettings(); err == nil {
