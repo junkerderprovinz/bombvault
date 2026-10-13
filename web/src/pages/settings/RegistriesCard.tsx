@@ -4,7 +4,7 @@ import { useState, type CSSProperties } from "react";
 import { Button } from "../../components/Button";
 import { IconBack, IconSave } from "../../components/glyphs";
 import { IconAdd, IconClose, IconDatabase, IconPencil, IconTrash } from "../../components/navGlyphs";
-import { PickerGroup } from "../../components/Picker";
+import { PickerGroup, PickerNoMatch } from "../../components/Picker";
 import { ReadmeButton } from "../../components/ReadmeButton";
 import { RevealInput } from "../../components/RevealInput";
 import { Rows, SettingRow } from "../../components/storage/rows";
@@ -86,7 +86,7 @@ function Picker({ onPick, onClose }: { onPick: (kind: string) => void; onClose: 
       onClose={onClose}
       footer={<Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconClose />} onClick={onClose} />}
     >
-      {groups.length === 0 && <p className="text-sm text-carbon-textMuted">{t("tile.registry.noMatch")}</p>}
+      <PickerNoMatch shown={groups.length === 0} text={t("tile.registry.noMatch")} />
       {groups.map((g) => (
         <PickerGroup key={g.id} title={t(g.title)}>
           <ul className="glim-provider-pick glim-registry-pick">

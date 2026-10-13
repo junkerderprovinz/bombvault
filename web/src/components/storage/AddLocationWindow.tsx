@@ -35,7 +35,7 @@ import { useDestinationDraft } from "../destinations/useDestinationDraft";
 import { IconBack, IconForward, IconSave } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconClose, IconPencil } from "../navGlyphs";
-import { PickerGroup } from "../Picker";
+import { PickerGroup, PickerNoMatch } from "../Picker";
 import { itemName } from "../placement/NewTargetQuestion";
 import { Selector } from "../Selector";
 import { TestButton } from "../TestButton";
@@ -315,7 +315,7 @@ export function AddLocationWindow({
               <ProviderTiles providers={providers} picked={draft.fromMember ? undefined : picked?.id} onPick={pick} nameOf={nameOf} />
             </PickerGroup>
           ))}
-          {tiles.length === 0 && q !== "" && <p className="text-sm text-carbon-textMuted">{t("storage.add.noMatch")}</p>}
+          <PickerNoMatch shown={tiles.length === 0 && q !== ""} text={t("storage.add.noMatch")} />
         </>
       ) : (
         <div className="flex flex-col gap-4">

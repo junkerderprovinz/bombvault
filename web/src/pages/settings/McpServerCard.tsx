@@ -5,7 +5,7 @@ import { ConfirmPrompt } from "../../components/ConfirmPrompt";
 import { Note } from "../../components/entry/Note";
 import { IconInfo, IconKeyRevoke, IconLink, IconRefresh } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
-import { PickerGroup } from "../../components/Picker";
+import { PickerGroup, PickerNoMatch } from "../../components/Picker";
 import { RevealInput } from "../../components/RevealInput";
 import { ReadmeButton } from "../../components/ReadmeButton";
 import { IconAdd, IconClose, IconDownload, IconPencil, IconTrash } from "../../components/navGlyphs";
@@ -124,7 +124,7 @@ function ClientPicker({ button, onClose }: { button: (c: McpClient) => ReactNode
           <li>{button(OTHER_CLIENT)}</li>
         </ul>
       )}
-      {groups.length === 0 && !other && <p className="text-sm text-carbon-textMuted">{t("mcp.noMatch")}</p>}
+      <PickerNoMatch shown={groups.length === 0 && !other} text={t("mcp.noMatch")} />
     </InstanceWindow>
   );
 }
