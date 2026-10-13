@@ -31,7 +31,7 @@ L'app accetta una risposta solo se il server l'ha firmata con la chiave che l'ap
 
 ## Cambiare server {#switch}
 
-Con un server aperto, in cima alla sua panoramica compare il nome del server. Quando l'app conosce altri server, accanto al nome c'è una freccia, e un tocco elenca ogni server che l'app conosce: quello aperto è contrassegnato **Questa istanza** e ciascuno degli altri con il suo stato: **Connessa**, **Non connessa**, **Accesso necessario** o **Verifica certificato**. Tocca un altro server per aprirlo, direttamente a casa e altrimenti tramite il relay.
+Con un server aperto, in cima alla sua panoramica compare il nome del server, preceduto da una freccia per tornare indietro. La freccia porta alla panoramica dell'app, la schermata iniziale, che elenca ogni server che l'app conosce con il suo stato: **Connessa**, **Non connessa**, **Accesso necessario** o **Verifica certificato**. Lì tocca un altro server per aprirlo, direttamente a casa e altrimenti tramite il relay.
 
 ## Accesso già eseguito su un telefono associato {#sign-in}
 

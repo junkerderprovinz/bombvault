@@ -31,7 +31,7 @@ Aplikacja przyjmuje odpowiedź tylko wtedy, gdy serwer podpisał ją kluczem, kt
 
 ## Przełączanie serwerów {#switch}
 
-Gdy serwer jest otwarty, u góry jego przeglądu widnieje nazwa serwera. Gdy aplikacja zna inne serwery, obok nazwy stoi strzałka, a dotknięcie wyświetla wszystkie serwery znane aplikacji: otwarty jest oznaczony jako **Ta instancja**, a każdy z pozostałych ma swój stan, **Połączono**, **Brak połączenia**, **Wymagane logowanie** lub **Sprawdź certyfikat**. Dotknij innego, aby go otworzyć, w domu bezpośrednio, a poza domem przez przekaźnik.
+Gdy serwer jest otwarty, u góry jego przeglądu widnieje nazwa serwera, a przed nią strzałka powrotu. Strzałka prowadzi do przeglądu aplikacji, czyli ekranu startowego, który wyświetla wszystkie serwery znane aplikacji wraz z ich stanem: **Połączono**, **Brak połączenia**, **Wymagane logowanie** lub **Sprawdź certyfikat**. Dotknij tam innego, aby go otworzyć, w domu bezpośrednio, a poza domem przez przekaźnik.
 
 ## Logowanie na sparowanym telefonie {#sign-in}
 

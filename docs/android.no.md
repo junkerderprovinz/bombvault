@@ -31,7 +31,7 @@ Appen tar bare imot et svar hvis serveren har signert det med nøkkelen appen fe
 
 ## Bytte server {#switch}
 
-Når en server er åpen, står navnet på serveren øverst i oversikten. Kjenner appen flere servere, står det en pil ved siden av navnet, og et trykk lister alle serverne appen kjenner: den åpne markert som **Denne instansen** og hver av de andre med tilstanden sin, **Tilkoblet**, **Ikke tilkoblet**, **Innlogging kreves** eller **Sjekk sertifikat**. Trykk på en annen for å åpne den, direkte hjemme og ellers via reléet.
+Når en server er åpen, står navnet på serveren øverst i oversikten, med en tilbakepil foran. Pilen fører til appens oversikt, startskjermen, som lister alle serverne appen kjenner med tilstanden sin: **Tilkoblet**, **Ikke tilkoblet**, **Innlogging kreves** eller **Sjekk sertifikat**. Trykk der på en annen for å åpne den, direkte hjemme og ellers via reléet.
 
 ## Pålogget på en paret telefon {#sign-in}
 

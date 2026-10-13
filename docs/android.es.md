@@ -31,7 +31,7 @@ La app solo acepta una respuesta si el servidor la firmó con la clave que la ap
 
 ## Cambiar de servidor {#switch}
 
-Con un servidor abierto, la parte superior de su resumen muestra el nombre del servidor. Cuando la app conoce otros servidores, una flecha aparece junto al nombre, y un toque lista todos los servidores que la app conoce, el abierto marcado como **Esta instancia** y cada uno de los demás con su estado: **Conectada**, **No conectada**, **Inicio de sesión necesario** o **Comprobar certificado**. Toca otro para abrirlo, directamente en casa y a través del relay en los demás casos.
+Con un servidor abierto, la parte superior de su resumen muestra el nombre del servidor, con una flecha para volver delante. La flecha lleva al resumen de la app, la pantalla de inicio, que lista todos los servidores que la app conoce con su estado: **Conectada**, **No conectada**, **Inicio de sesión necesario** o **Comprobar certificado**. Toca allí otro para abrirlo, directamente en casa y a través del relay en los demás casos.
 
 ## Sesión iniciada en un móvil emparejado {#sign-in}
 

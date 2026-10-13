@@ -300,24 +300,8 @@ class MainActivity : ComponentActivity() {
             "body" -> if (relayMember(Uri.parse(origin).host) != null) pages.body(msg.getString("ticket"), msg.getString("data"))
             "file" -> saveFile(msg.getString("name"), msg.optString("type").ifEmpty { null }, msg.getString("data"))
             "bars" -> parseColor(msg.optString("color"))?.let { if (server.id == current?.id) paintBars(it) }
-            "servers" -> if (server.id == current?.id) tellServers(server, reply)
-            "open" -> if (server.id == current?.id) openable(servers.all(), server, msg.optString("id"))?.let(::open)
-        }
-    }
-
-    /**
-     * Tells the page of [asking] which other servers the app knows, by id and
-     * name only, and then how each one answers, the way the launcher asks.
-     */
-    private fun tellServers(asking: Server, reply: JavaScriptReplyProxy) {
-        val others = othersThan(servers.all(), asking)
-        val list = JSONArray(others.map { JSONObject().put("id", it.id).put("name", it.name) })
-        reply.postMessage(JSONObject().put("op", "servers").put("servers", list).toString())
-        for (other in others) {
-            lifecycleScope.launch {
-                val answer = withContext(Dispatchers.IO) { pairing.ask(other, ACTIVITY) ?: activityOverHttp(other) }
-                reply.postMessage(JSONObject().put("op", "reach").put("id", other.id).put("status", answer.status).toString())
-            }
+            // Leaves the way Back from a server's first page does, so its history goes with it.
+            "home" -> if (server.id == current?.id) showLauncher()
         }
     }
 

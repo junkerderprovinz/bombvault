@@ -31,7 +31,7 @@ De app neemt een antwoord alleen aan als de server het heeft ondertekend met de 
 
 ## Van server wisselen {#switch}
 
-Is een server open, dan staat bovenaan zijn overzicht zijn naam. Kent de app meer servers, dan staat er een pijltje naast de naam, en een tik toont alle servers die de app kent: de open server gemarkeerd als **Deze instantie** en elke andere met zijn status, **Verbonden**, **Niet verbonden**, **Aanmelden nodig** of **Certificaat controleren**. Tik op een andere om hem te openen, thuis rechtstreeks en anders via de relay.
+Is een server open, dan staat bovenaan zijn overzicht zijn naam, met een pijl terug ervoor. De pijl leidt naar het overzicht van de app, het startscherm, dat elke server die de app kent met zijn status toont: **Verbonden**, **Niet verbonden**, **Aanmelden nodig** of **Certificaat controleren**. Tik daar op een andere om hem te openen, thuis rechtstreeks en anders via de relay.
 
 ## Aangemeld op een gekoppelde telefoon {#sign-in}
 

@@ -31,7 +31,7 @@ Aplikace přijme odpověď jen tehdy, když ji server podepsal klíčem, který 
 
 ## Přepínání serverů {#switch}
 
-Když je server otevřený, nahoře v jeho přehledu stojí jeho název. Zná-li aplikace další servery, vedle názvu je šipka a klepnutí vypíše každý server, který aplikace zná: otevřený označený **Tato instance** a každý další s jeho stavem, **Připojeno**, **Nepřipojeno**, **Je nutné přihlášení** nebo **Zkontrolovat certifikát**. Klepnutím na jiný ho otevřeš, doma přímo a jinak přes relay.
+Když je server otevřený, nahoře v jeho přehledu stojí jeho název a před ním šipka zpět. Šipka vede do přehledu aplikace, na úvodní obrazovku, která vypíše každý server, který aplikace zná, s jeho stavem: **Připojeno**, **Nepřipojeno**, **Je nutné přihlášení** nebo **Zkontrolovat certifikát**. Klepnutím na jiný ho tam otevřeš, doma přímo a jinak přes relay.
 
 ## Přihlášení na spárovaném telefonu {#sign-in}
 

@@ -31,7 +31,7 @@ Appen tager kun imod et svar, hvis serveren har signeret det med den nøgle, app
 
 ## Skift af server {#switch}
 
-Når en server er åben, viser toppen af dens oversigt serverens navn. Kender appen andre servere, står en pil ved siden af navnet, og et tryk oplister hver server, appen kender: den åbne markeret **Denne instans** og hver af de andre med sin tilstand, **Forbundet**, **Ikke forbundet**, **Login påkrævet** eller **Tjek certifikat**. Tryk på en anden for at åbne den, direkte hjemme og ellers gennem relayet.
+Når en server er åben, viser toppen af dens oversigt serverens navn med en tilbagepil foran. Pilen fører til appens oversigt, startskærmen, som viser hver server, appen kender, med sin tilstand: **Forbundet**, **Ikke forbundet**, **Login påkrævet** eller **Tjek certifikat**. Tryk der på en anden for at åbne den, direkte hjemme og ellers gennem relayet.
 
 ## Logget ind på en parret telefon {#sign-in}
 

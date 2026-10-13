@@ -31,7 +31,7 @@ Az alkalmazás csak akkor fogad el választ, ha a szerver azt azzal a kulccsal �
 
 ## Szerverváltás {#switch}
 
-Ha egy szerver meg van nyitva, az áttekintése tetején a szerver neve áll. Ha az alkalmazás más szervereket is ismer, a név mellett egy nyíl áll, és egy koppintás felsorolja az összes szervert, amelyet az alkalmazás ismer: a megnyitottat **Ez a példány** jelöléssel, a többit az állapotával: **Csatlakozva**, **Nincs csatlakozva**, **Bejelentkezés szükséges** vagy **Tanúsítvány ellenőrzése**. Koppints egy másikra a megnyitásához, otthon közvetlenül, egyébként a relayen át.
+Ha egy szerver meg van nyitva, az áttekintése tetején a szerver neve áll, előtte egy vissza nyíllal. A nyíl az alkalmazás áttekintéséhez, a kezdőképernyőre visz, amely felsorolja az összes szervert, amelyet az alkalmazás ismer, az állapotukkal: **Csatlakozva**, **Nincs csatlakozva**, **Bejelentkezés szükséges** vagy **Tanúsítvány ellenőrzése**. Ott koppints egy másikra a megnyitásához, otthon közvetlenül, egyébként a relayen át.
 
 ## Bejelentkezve a párosított telefonon {#sign-in}
 

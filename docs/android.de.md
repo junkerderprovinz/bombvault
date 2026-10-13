@@ -31,7 +31,7 @@ Die App nimmt eine Antwort nur an, wenn der Server sie mit dem Schlüssel signie
 
 ## Server wechseln {#switch}
 
-Ist ein Server offen, steht oben in seiner Übersicht sein Name. Kennt die App weitere Server, steht ein Pfeil neben dem Namen, und ein Tippen listet alle Server, die die App kennt: den offenen als **Diese Instanz** und jeden anderen mit seinem Zustand, **Verbunden**, **Nicht verbunden**, **Anmeldung nötig** oder **Zertifikat prüfen**. Tippe auf einen anderen, um ihn zu öffnen, zu Hause direkt und sonst über das Relay.
+Ist ein Server offen, steht oben in seiner Übersicht sein Name, davor ein Pfeil zurück. Der Pfeil führt zur Übersicht der App, dem Startbildschirm, der jeden Server, den die App kennt, mit seinem Zustand listet: **Verbunden**, **Nicht verbunden**, **Anmeldung nötig** oder **Zertifikat prüfen**. Tippe dort auf einen anderen, um ihn zu öffnen, zu Hause direkt und sonst über das Relay.
 
 ## Angemeldet auf einem gekoppelten Handy {#sign-in}
 

@@ -31,7 +31,7 @@ Sovellus hyväksyy vastauksen vain, jos palvelin on allekirjoittanut sen avaimel
 
 ## Palvelimen vaihtaminen {#switch}
 
-Kun palvelin on auki, sen yleiskatsauksen yläreunassa näkyy palvelimen nimi. Kun sovellus tuntee muitakin palvelimia, nimen vieressä on nuoli, ja napautus luettelee kaikki palvelimet, jotka sovellus tuntee: avoin palvelin merkittynä **Tämä instanssi** ja jokainen muu tilansa kanssa: **Yhdistetty**, **Ei yhteyttä**, **Kirjautuminen tarvitaan** tai **Tarkista varmenne**. Napauta toista avataksesi sen, kotona suoraan ja muulloin releen kautta.
+Kun palvelin on auki, sen yleiskatsauksen yläreunassa näkyy palvelimen nimi ja sen edessä paluunuoli. Nuoli vie sovelluksen yleiskatsaukseen eli aloitusnäyttöön, joka luettelee kaikki sovelluksen tuntemat palvelimet tiloineen: **Yhdistetty**, **Ei yhteyttä**, **Kirjautuminen tarvitaan** tai **Tarkista varmenne**. Napauta siellä toista avataksesi sen, kotona suoraan ja muulloin releen kautta.
 
 ## Kirjautuneena pariliitetyllä puhelimella {#sign-in}
 
