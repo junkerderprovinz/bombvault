@@ -146,6 +146,7 @@ func (s *Server) Run(ctx context.Context) error {
 			Handler:           s.handler,
 			ReadHeaderTimeout: 15 * time.Second,
 			TLSConfig:         servedTLSConfig(),
+			ErrorLog:          newHandshakeLogger(),
 		}
 		printBanner()
 		printReady("HTTPS", s.cfg.HTTPSPort)
