@@ -147,8 +147,11 @@ func TestASectionWithEveryPlaceOffIsNotBackedUpAndCountsAsUnprotected(t *testing
 		}
 	}
 
-	if _, err := f.svc.BackupFlash(context.Background()); !errors.Is(err, errNoPlace) {
-		t.Fatalf("BackupFlash = %v, want errNoPlace", err)
+	if _, err := f.svc.BackupFlash(context.Background()); !errors.Is(err, ErrNoPlace) {
+		t.Fatalf("BackupFlash = %v, want ErrNoPlace", err)
+	}
+	if started, err := f.svc.StartBackupFlash(context.Background()); started || !errors.Is(err, ErrNoPlace) {
+		t.Fatalf("StartBackupFlash = %v, %v, want the press refused with ErrNoPlace", started, err)
 	}
 	settings, err := f.st.GetSettings()
 	if err != nil {
@@ -286,8 +289,8 @@ func TestADefaultWithNoPlaceLeavesANewEntryUnbackedUpAndUnprotected(t *testing.T
 	set := openFileSet(t, f, "docs")
 	settled := f.fileSet("photos", "")
 
-	if _, err := f.svc.BackupFileSet(context.Background(), set.ID); !errors.Is(err, errNoPlace) {
-		t.Fatalf("BackupFileSet = %v, want errNoPlace", err)
+	if _, err := f.svc.BackupFileSet(context.Background(), set.ID); !errors.Is(err, ErrNoPlace) {
+		t.Fatalf("BackupFileSet = %v, want ErrNoPlace", err)
 	}
 	if row := itemRow(t, f, set.ID); row["noPlace"] != true {
 		t.Fatalf("docs = %v, want it marked without a place", row)

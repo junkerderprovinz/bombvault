@@ -113,7 +113,7 @@ func (s *Service) settleHome(settings store.Settings, item store.ItemRef) (strin
 	}
 	repoID, _ := p.effectiveHome(read)
 	if repoID == store.HomeNowhere {
-		return "", nil, errNoPlace
+		return "", nil, ErrNoPlace
 	}
 	if err := s.validateItemRepoID(item.Domain, repoID); err != nil {
 		return "", nil, fmt.Errorf("the %s default points at a repository that cannot take this backup: %w", item.Domain, err)

@@ -193,8 +193,10 @@ func logSchedulerTimezone() {
 
 // roundItemErr is an item's error as a scheduled round counts it: a backup the
 // user cancelled is no failure of the round, and its own run says cancelled.
+// Nor is an entry whose section was given no place to back up to, a state
+// chosen on purpose that the overview already counts as not protected.
 func roundItemErr(err error) error {
-	if api.IsBackupCancelled(err) {
+	if api.IsBackupCancelled(err) || errors.Is(err, api.ErrNoPlace) {
 		return nil
 	}
 	return err
@@ -390,11 +392,11 @@ func run() error {
 	)
 	scheduler.SetFlashJob(func() error {
 		_, bErr := svc.BackupFlash(context.Background())
-		return bErr
+		return roundItemErr(bErr)
 	})
 	scheduler.SetConfigJob(func() error {
 		_, bErr := svc.BackupConfig(context.Background())
-		return bErr
+		return roundItemErr(bErr)
 	})
 	// Files is a multi-item domain like containers/VMs: each scheduled file set
 	// runs with its per-item Healthchecks/summary pings suppressed so the ONE

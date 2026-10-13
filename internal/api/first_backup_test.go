@@ -297,3 +297,36 @@ func TestAnOpenVMTakesTheDefaultAtItsFirstBackup(t *testing.T) {
 		t.Fatalf("home = %+v, want NAS chosen", h)
 	}
 }
+
+func TestABackupOfAnEntryWithNoPlaceRecordsNoFailedRun(t *testing.T) {
+	rig := newFirstBackupRig(t)
+	rig.setDefault(t, "containers", store.HomeNowhere)
+	tg, err := rig.st.UpsertTarget(store.Target{ContainerName: "nginx", IncludeInSchedule: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := rig.svc.Backup(context.Background(), "nginx"); !errors.Is(err, api.ErrNoPlace) {
+		t.Fatalf("Backup = %v, want ErrNoPlace", err)
+	}
+	runs, err := rig.st.ListRuns(100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, run := range runs {
+		if run.TargetID == tg.ID {
+			t.Fatalf("run %+v recorded, want none for a section given no place", run)
+		}
+	}
+}
+
+func TestBackingUpAnEntryWithNoPlaceByHandIsRefusedAtOnce(t *testing.T) {
+	rig := newFirstBackupRig(t)
+	rig.setDefault(t, "containers", store.HomeNowhere)
+	started, err := rig.svc.StartBackup(context.Background(), "nginx")
+	if started || !errors.Is(err, api.ErrNoPlace) {
+		t.Fatalf("StartBackup = %v, %v, want a refusal with ErrNoPlace", started, err)
+	}
+	if len(rig.eng.backedUp) != 0 {
+		t.Fatalf("backed up to %v", rig.eng.backedUp)
+	}
+}

@@ -5848,7 +5848,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	}
 	orchestrated := false
 	defer func() {
-		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrContainerNotInstalled) {
+		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrContainerNotInstalled) && !errors.Is(retErr, ErrNoPlace) {
 			s.recordPreflightFailure(ctx, "Backup", name, targetID, retErr)
 		}
 	}()
@@ -6409,6 +6409,9 @@ func (s *Service) backupOneForBatch(ctx context.Context, name string) (err error
 // Returns (false, nil) if a backup/batch is already running (the caller answers
 // busy), or (false, err) if the containers domain is already busy with another op.
 func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
+	if err := s.refuseNoPlace("containers", name); err != nil {
+		return false, err
+	}
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
@@ -6443,6 +6446,9 @@ func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 // backup); returns (false, nil) if one is already running, or (false, err) if the
 // vms domain is already busy with another op.
 func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) {
+	if err := s.refuseNoPlace("vms", name); err != nil {
+		return false, err
+	}
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
@@ -6470,6 +6476,9 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 // "flash". Shares batchActive; returns (false, nil) if a backup is already
 // running, or (false, err) if the flash domain is already busy with another op.
 func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
+	if err := s.refuseNoPlace("flash", ""); err != nil {
+		return false, err
+	}
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
@@ -6496,6 +6505,9 @@ func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 // is already running, or (false, err) if the config domain is already busy with
 // another op.
 func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
+	if err := s.refuseNoPlace("config", ""); err != nil {
+		return false, err
+	}
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
@@ -6523,6 +6535,9 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 // returns (false, nil) if one is already running, or (false, err) if the files
 // domain is already busy with another op.
 func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, error) {
+	if err := s.refuseNoPlace("files", id); err != nil {
+		return false, err
+	}
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
@@ -12304,14 +12319,15 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// Everything down to the orchestrator returns before any run is recorded,
 	// so a failure there would leave the card that started this backup waiting
 	// for one. Record it as Backup does; a VM that is not defined on the host
-	// is a skip, not a failure.
+	// is a skip, not a failure, and so is one whose section was given no
+	// place, which a press by hand is refused before it starts.
 	var targetID string
 	if tg, tErr := s.store.GetVMTargetByName(name); tErr == nil {
 		targetID = tg.ID
 	}
 	orchestrated := false
 	defer func() {
-		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrVMNotInstalled) {
+		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrVMNotInstalled) && !errors.Is(retErr, ErrNoPlace) {
 			s.recordPreflightFailure(ctx, "BackupVM", name, targetID, retErr)
 		}
 	}()
