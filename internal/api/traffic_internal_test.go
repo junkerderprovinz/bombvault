@@ -5,9 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -357,15 +357,46 @@ func TestStreamingSettingsRejectOutOfRangeValues(t *testing.T) {
 	}
 }
 
-// envEngine records the environment each copy starts restic with.
+// envEngine records the environment each copy starts restic with and runs
+// during while the copy would be running.
 type envEngine struct {
 	*hookFakeEngine
-	envs [][]string
+	envs   [][]string
+	during func(env []string)
 }
 
 func (e *envEngine) Copy(ctx context.Context, dest, src string, ids []string, lim restic.Limits, m restic.Mode) error {
 	e.envs = append(e.envs, m.Env)
+	if e.during != nil {
+		e.during(m.Env)
+	}
 	return e.hookFakeEngine.Copy(ctx, dest, src, ids, lim, m)
+}
+
+func proxyOf(env []string) string {
+	for _, kv := range env {
+		if v, ok := strings.CutPrefix(kv, "HTTPS_PROXY="); ok {
+			return v
+		}
+	}
+	return ""
+}
+
+// tunnels reports whether a request reaches target through the proxy with
+// its credentials. Another listener that took the proxy's port after it
+// closed cannot pass this, which a bare dial to the port would.
+func tunnels(proxyURL string, target *httptest.Server) error {
+	u, err := url.Parse(proxyURL)
+	if err != nil {
+		return err
+	}
+	tr := &http.Transport{Proxy: http.ProxyURL(u), TLSClientConfig: target.Client().Transport.(*http.Transport).TLSClientConfig}
+	defer tr.CloseIdleConnections()
+	res, err := (&http.Client{Transport: tr, Timeout: 5 * time.Second}).Get(target.URL)
+	if err != nil {
+		return err
+	}
+	return res.Body.Close()
 }
 
 func TestReplicationToARestServerRunsThroughTheProxy(t *testing.T) {
@@ -379,23 +410,24 @@ func TestReplicationToARestServerRunsThroughTheProxy(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	target := httptest.NewTLSServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	defer target.Close()
+	var during error
+	eng.during = func(env []string) { during = tunnels(proxyOf(env), target) }
+
 	svc.replicateOffsite(context.Background(), "containers", settings, own, "container:plex")
 
 	if len(eng.envs) == 0 {
 		t.Fatal("nothing was copied")
 	}
-	var proxyURL string
-	for _, kv := range eng.envs[0] {
-		if v, ok := strings.CutPrefix(kv, "HTTPS_PROXY="); ok {
-			proxyURL = v
-		}
-	}
+	proxyURL := proxyOf(eng.envs[0])
 	if proxyURL == "" {
 		t.Fatalf("the copy to a REST server did not get the proxy: %v", eng.envs[0])
 	}
-	addr := proxyURL[strings.LastIndex(proxyURL, "@")+1:]
-	if c, err := (&net.Dialer{Timeout: time.Second}).Dial("tcp", addr); err == nil {
-		_ = c.Close()
-		t.Fatal("the proxy still listens after the copy ended")
+	if during != nil {
+		t.Fatalf("the proxy did not carry the copy: %v", during)
+	}
+	if tunnels(proxyURL, target) == nil {
+		t.Fatal("the proxy still carries traffic after the copy ended")
 	}
 }

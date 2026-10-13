@@ -329,7 +329,7 @@ function RestoreForm({
   const detail = entry?.detail;
   const { kind } = item;
   const { rows, places, loadPlace, reload } = timeline;
-  const labelOf = usePlaceLabel(places);
+  const labelOf = usePlaceLabel(places, timeline.domain);
   const { list: openFindings, flagged: flaggedIds } = useOpenAnomalies();
   const container = detail?.kind === "container" ? detail.container : null;
   const zfsItem = detail?.kind === "zfs" ? detail.dataset : null;

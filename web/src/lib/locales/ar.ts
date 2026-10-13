@@ -2994,7 +2994,6 @@ const ar: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "العناصر التي نسختها الوحيدة في {target} المباشر: {n}. بدون append-only يمكن لهذا الجهاز الحذف منه. الحفظ على أي حال؟",
 
   // Placement
-  "placement.hostGeneric": "مضيف",
   "placement.segLocal": "محلي",
   "placement.homeDomain": "{host} · مستودع القسم · {path}",
   "placement.homeDomainRemote": "مستودع القسم · عن بُعد · {scheme}",

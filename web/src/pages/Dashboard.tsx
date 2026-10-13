@@ -18,7 +18,7 @@ import type { EntryKind } from "../lib/backupEntry";
 import { cardSpan, useDashboardLayout } from "../lib/dashboardLayout";
 import { foundOnServer, foundSentence } from "../lib/firstSteps";
 import { useT } from "../lib/i18n";
-import { usePlatform } from "../lib/useHostLabel";
+import { usePlatform } from "../lib/usePlatform";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { anyActive, useProgress } from "../lib/progress";
 import { runRestorePath } from "../lib/restoreRequest";

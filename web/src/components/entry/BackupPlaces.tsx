@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { TimelineDomain, TimelinePlace, ZFSDatasetView } from "../../lib/api";
 import { repoDisplayName } from "../../lib/directRepo";
 import { useT } from "../../lib/i18n";
-import { useHostLabel } from "../../lib/useHostLabel";
+import { useLocalName } from "../../lib/useLocalName";
 import type { useTimeline } from "../../lib/useTimeline";
 import { Card } from "../../pages/settings/shared";
 import { Badge } from "../Badge";
@@ -17,13 +17,13 @@ import { ZFSSitesLine } from "../zfs/ZFSSitesLine";
 /** An entry's timeline as the page reads it once for all its cards. */
 export type TimelineState = ReturnType<typeof useTimeline> & { domain: TimelineDomain };
 
-/** usePlaceLabel names a place of the timeline the way the placement bar does. */
-export function usePlaceLabel(places: TimelinePlace[]): (place: string) => string {
+/** usePlaceLabel names a place of the timeline the way the storage pages do. */
+export function usePlaceLabel(places: TimelinePlace[], domain: TimelineDomain): (place: string) => string {
   const { t } = useT();
-  const host = useHostLabel();
+  const local = useLocalName(domain);
   return (place) => {
     const p = places.find((x) => x.place === place);
-    return (p && repoDisplayName(t, p.label, p.directOf)) || host;
+    return (p && repoDisplayName(t, p.label, p.directOf)) || local;
   };
 }
 
@@ -56,8 +56,8 @@ export function BackupPlaces({
   hueIndex: number;
 }) {
   const { t } = useT();
-  const { places, rows, reading, loadPlace } = timeline;
-  const labelOf = usePlaceLabel(places);
+  const { places, rows, reading, loadPlace, domain } = timeline;
+  const labelOf = usePlaceLabel(places, domain);
   if (places.length === 0 && !replicaOf) return null;
 
   return (

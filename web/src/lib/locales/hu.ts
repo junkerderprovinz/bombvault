@@ -2994,7 +2994,6 @@ const hu: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Elemek, amelyeknek egyetlen másolata a {target} közvetlenül elemen van: {n}. Append-only nélkül ez a gép törölhet belőle. Mégis mented?",
 
   // Placement
-  "placement.hostGeneric": "Host",
   "placement.segLocal": "Helyi",
   "placement.homeDomain": "{host} · szakasz tárolója · {path}",
   "placement.homeDomainRemote": "Szakasz tárolója · távoli · {scheme}",

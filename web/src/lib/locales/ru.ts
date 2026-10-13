@@ -2990,7 +2990,6 @@ const ru: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Записи, чья единственная копия в {target} напрямую: {n}. Без append-only эта машина сможет удалять из него. Всё равно сохранить?",
 
   // Placement
-  "placement.hostGeneric": "Хост",
   "placement.segLocal": "Локально",
   "placement.homeDomain": "{host} · репозиторий раздела · {path}",
   "placement.homeDomainRemote": "Репозиторий раздела · удалённый · {scheme}",

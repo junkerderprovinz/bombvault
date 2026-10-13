@@ -3003,7 +3003,6 @@ const hi: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "जिन प्रविष्टियों की एकमात्र कॉपी {target} डायरेक्ट में है: {n}। अपेंड-ओनली के बिना, यह मशीन उसमें से मिटा सकती है। फिर भी सहेजें?",
 
   // Placement
-  "placement.hostGeneric": "होस्ट",
   "placement.segLocal": "लोकल",
   "placement.homeDomain": "{host} · सेक्शन रिपॉज़िटरी · {path}",
   "placement.homeDomainRemote": "सेक्शन रिपॉज़िटरी · रिमोट · {scheme}",

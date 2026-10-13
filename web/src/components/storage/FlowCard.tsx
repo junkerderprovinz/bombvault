@@ -9,6 +9,7 @@ import { isPlacementDomain } from "../../lib/placement";
 import type { FlowCounts, FlowLine, FlowRow } from "../../lib/storageFlow";
 import { DOMAIN_LABEL, locationRoute } from "../../lib/storageLocations";
 import { Card } from "../../pages/settings/shared";
+import { BusyRing } from "../BusyRing";
 import { Selector } from "../Selector";
 import { Differs } from "./Differs";
 import { FlowPicture } from "./FlowPicture";
@@ -71,11 +72,13 @@ function FlowSwitches({
   rows,
   own,
   busy,
+  pending,
   onToggle,
 }: {
   rows: FlowRow[];
   own: PlacedEntry[];
   busy: boolean;
+  pending: string | null;
   onToggle: (line: FlowLine) => void;
 }) {
   const { t } = useT();
@@ -103,7 +106,7 @@ function FlowSwitches({
                   items={row.lines.map((line) => ({
                     id: line.key,
                     label: line.location.enabled ? line.location.name : t("placement.off").replace("{name}", () => line.location.name),
-                    icon: <LocationMark location={line.location} size="chip" bare />,
+                    icon: line.key === pending ? <BusyRing /> : <LocationMark location={line.location} size="chip" bare />,
                   }))}
                   label={label}
                   select="many"
@@ -183,7 +186,14 @@ export function FlowCard({
         <div key={flow.shake} className={`flex flex-col gap-3 ${flow.shake ? "glim-shake" : ""}`}>
           {graph ? (
             <>
-              <FlowPicture rows={rows} locations={locations} busy={flow.busy} onToggle={flow.toggle} onPoint={setPointed} />
+              <FlowPicture
+                rows={rows}
+                locations={locations}
+                busy={flow.busy}
+                pending={flow.pending}
+                onToggle={flow.toggle}
+                onPoint={setPointed}
+              />
               {counted && (
                 <p className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1 text-sm text-carbon-textSub" aria-live="polite">
                   <span className="font-semibold text-carbon-text max-sm:basis-full max-sm:text-center">{t(DOMAIN_LABEL[counted.domain])}</span>
@@ -212,7 +222,7 @@ export function FlowCard({
               ))}
             </>
           ) : (
-            <FlowSwitches rows={rows} own={own} busy={flow.busy} onToggle={flow.toggle} />
+            <FlowSwitches rows={rows} own={own} busy={flow.busy} pending={flow.pending} onToggle={flow.toggle} />
           )}
           {flow.paused.map((domain) => (
             <PausedDefault key={domain} domain={domain} />

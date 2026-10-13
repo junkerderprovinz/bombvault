@@ -2993,7 +2993,6 @@ const tr: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Tek kopyası {target} doğrudan içinde olan ögeler: {n}. Append-only olmadan bu makine oradan silebilir. Yine de kaydedilsin mi?",
 
   // Placement
-  "placement.hostGeneric": "Host",
   "placement.segLocal": "Yerel",
   "placement.homeDomain": "{host} · bölüm deposu · {path}",
   "placement.homeDomainRemote": "Bölüm deposu · uzak · {scheme}",

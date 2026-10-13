@@ -9,24 +9,24 @@ vi.mock("./api", async (importOriginal) => ({
   ...fake.api,
 }));
 
-const { useHostLabel } = await import("./useHostLabel");
+const { usePlatform } = await import("./usePlatform");
 
-function Label() {
-  return <span data-testid="host">{useHostLabel()}</span>;
+function Platform() {
+  return <span data-testid="platform">{usePlatform()}</span>;
 }
 
-describe("useHostLabel", () => {
+describe("usePlatform", () => {
   afterEach(cleanup);
 
-  it("says Host until the platform is known, then names the product", async () => {
-    render(<Label />);
-    expect(screen.getByTestId("host").textContent).toBe("Host");
-    await waitFor(() => expect(screen.getByTestId("host").textContent).toBe("Unraid"));
+  it("is empty until the platform is known", async () => {
+    render(<Platform />);
+    expect(screen.getByTestId("platform").textContent).toBe("");
+    await waitFor(() => expect(screen.getByTestId("platform").textContent).toBe("unraid"));
   });
 
   it("asks for the platform once per page", async () => {
-    render(<Label />);
-    await waitFor(() => expect(screen.getByTestId("host").textContent).toBe("Unraid"));
+    render(<Platform />);
+    await waitFor(() => expect(screen.getByTestId("platform").textContent).toBe("unraid"));
     expect(fake.callsTo("getSettings")).toHaveLength(1);
   });
 });

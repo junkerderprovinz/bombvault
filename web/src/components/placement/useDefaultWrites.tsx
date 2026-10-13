@@ -28,7 +28,7 @@ import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
 import { useToast } from "../../lib/toast";
 import { useConfirm, type ConfirmOptions } from "../../lib/useConfirm";
-import { useHostLabel } from "../../lib/useHostLabel";
+import { useLocalNames } from "../../lib/useLocalName";
 import { useNamedRepos } from "../../lib/useNamedRepos";
 import { InfoBubble } from "../InfoBubble";
 import { DirectRepoDialog } from "./DirectRepoDialog";
@@ -76,7 +76,6 @@ function impactLines(t: T, lang: string, domain: PlacementDomain, impact: Defaul
 }
 
 export interface DefaultWrites {
-  host: string;
   context: (row: DefaultRow, options: PlacementOptions) => DefaultContext;
   busy: boolean;
   /** Counts the writes that were refused, for a shake that replays. */
@@ -102,7 +101,7 @@ export interface DefaultWrites {
 export function useDefaultWrites(): DefaultWrites {
   const { t, lang } = useT();
   const { push } = useToast();
-  const host = useHostLabel();
+  const localOf = useLocalNames();
   const repos = useNamedRepos();
   const { confirm, confirmDialog, dismiss, revise } = useConfirm();
   const [direct, setDirect] = useState<{ ctx: DefaultContext; target: SendToOption; skip: string[] } | null>(null);
@@ -119,7 +118,7 @@ export function useDefaultWrites(): DefaultWrites {
       row,
       options,
       view,
-      homeName: (id) => viewHomeLabel(t, host, { ...view, repo: id, ...labelOf(id), repoOff: false }, options),
+      homeName: (id) => viewHomeLabel(t, localOf(row.domain), { ...view, repo: id, ...labelOf(id), repoOff: false }, options),
     };
   }
 
@@ -243,7 +242,7 @@ export function useDefaultWrites(): DefaultWrites {
 
   function run(ctx: DefaultContext, step: PlacementStep) {
     if (step.kind === "blocked") {
-      push(blockedText(t, step, viewHomeLabel(t, host, ctx.view, ctx.options)), "warn");
+      push(blockedText(t, step, viewHomeLabel(t, localOf(ctx.row.domain), ctx.view, ctx.options)), "warn");
       setShake((n) => n + 1);
       return;
     }
@@ -285,5 +284,5 @@ export function useDefaultWrites(): DefaultWrites {
     </>
   );
 
-  return { host, context, busy, shake, dialogs, confirm, fail, guarded, change, run, addDestination };
+  return { context, busy, shake, dialogs, confirm, fail, guarded, change, run, addDestination };
 }

@@ -3003,7 +3003,6 @@ const eu: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Kopia bakarra {target} zuzenean duten elementuak: {n}. Gehitu-soilik gabe, makina honek handik ezaba dezake. Gorde dena den?",
 
   // Placement
-  "placement.hostGeneric": "Ostalari",
   "placement.segLocal": "Lokala",
   "placement.homeDomain": "{host} · atalaren biltegia · {path}",
   "placement.homeDomainRemote": "Atalaren biltegia · urrunekoa · {scheme}",

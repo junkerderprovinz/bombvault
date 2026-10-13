@@ -35,7 +35,7 @@ import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
-import { useHostLabel } from "../../lib/useHostLabel";
+import { useLocalName } from "../../lib/useLocalName";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { droppedText, usePlacementSave } from "../../lib/usePlacementSave";
 import { DirectRepoDialog } from "./DirectRepoDialog";
@@ -79,7 +79,7 @@ export function PlacementRow({
   onView: (next: PlacementView) => void;
 }) {
   const { t, lang } = useT();
-  const host = useHostLabel();
+  const local = useLocalName(item.domain);
   const { options, error } = usePlacementOptions(item.domain);
   const { shown, shake, save } = usePlacementSave(item, view, onView);
   const { confirm, confirmDialog } = useConfirm();
@@ -125,7 +125,7 @@ export function PlacementRow({
       ).catch((e: unknown) => ({ ok: false, error: e instanceof Error ? e.message : undefined }));
       const after = shown.locked ? { ...shown, skip: options.default.skip } : defaultView(options.default, options);
       const names = placeNames(t, after, options);
-      const goes = names.length > 0 ? formatList(lang, names) : host;
+      const goes = names.length > 0 ? formatList(lang, names) : local;
       const added = (preview.added ?? []).filter((a) => a.snapshots > 0);
       const extra = (
         <div className="flex flex-col gap-1 text-sm text-carbon-textSub">
@@ -153,7 +153,7 @@ export function PlacementRow({
   async function run(step: PlacementStep) {
     if (step.kind === "none") return;
     if (step.kind === "blocked") {
-      push(blockedText(t, step, options ? viewHomeLabel(t, host, shown, options) : host), "warn");
+      push(blockedText(t, step, options ? viewHomeLabel(t, local, shown, options) : local), "warn");
       return;
     }
     if (step.kind === "direct") {
@@ -221,13 +221,13 @@ export function PlacementRow({
                 context="item"
                 view={shown}
                 options={options}
-                host={host}
+                local={local}
                 destinations={destinations}
                 disabled={asking}
-                onLocal={(on) => void run(stepForLocal(on, shown, options, t, host))}
+                onLocal={(on) => void run(stepForLocal(on, shown, options, t, local))}
                 onTarget={(id, on) => void run(stepForTarget(id, on, shown, options, t))}
                 onDestination={(id) => void addDestination(id)}
-                onHome={(id) => void run(stepForHome(id, shown, options, t, host))}
+                onHome={(id) => void run(stepForHome(id, shown, options, t, local))}
               />
             </div>
           )
@@ -239,7 +239,7 @@ export function PlacementRow({
             <p className="flex items-center gap-2 flex-wrap text-xs text-carbon-textMuted">
               <span>
                 {line === "home-set"
-                  ? t("placement.homeSet").replace("{home}", () => viewHomeLabel(t, host, shown, options))
+                  ? t("placement.homeSet").replace("{home}", () => viewHomeLabel(t, local, shown, options))
                   : t(FOLLOW_KEYS[line])}
               </span>
               {(line === "own-copies" || line === "home-set") && (

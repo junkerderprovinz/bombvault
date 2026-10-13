@@ -3003,7 +3003,6 @@ const lt: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Įrašai, kurių vienintelė kopija yra {target} tiesiogiai: {n}. Be tik pridėjimo režimo šis kompiuteris gali trinti iš jos. Vis tiek išsaugoti?",
 
   // Placement
-  "placement.hostGeneric": "Pagrindinis kompiuteris",
   "placement.segLocal": "Vietinis",
   "placement.homeDomain": "{host} · srities saugykla · {path}",
   "placement.homeDomainRemote": "Srities saugykla · nuotolinė · {scheme}",

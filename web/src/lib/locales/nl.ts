@@ -2992,7 +2992,6 @@ const nl: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Items waarvan de enige kopie op {target} direct staat: {n}. Zonder append-only mag deze machine er dingen uit verwijderen. Toch opslaan?",
 
   // Placement
-  "placement.hostGeneric": "Host",
   "placement.segLocal": "Lokaal",
   "placement.homeDomain": "{host} · repository van het onderdeel · {path}",
   "placement.homeDomainRemote": "Repository van het onderdeel · extern · {scheme}",

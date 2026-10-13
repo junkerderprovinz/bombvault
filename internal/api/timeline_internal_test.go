@@ -196,28 +196,40 @@ func TestTimelineReadsTheItemsOwnRepository(t *testing.T) {
 	}
 }
 
-func TestTimelineWaitsForARemoteHomeLikeATarget(t *testing.T) {
+func TestTimelineReadsARemoteHomeAtOnceAndLeavesRemoteTargetsToBeAsked(t *testing.T) {
 	f := newPlacementFixture(t)
 	box := f.namedRepo("Storagebox", "sftp:u@box:/bv")
 	f.container("nginx", box.ID)
+	f.target("containers", "B2", "b2:bucket/containers")
 	f.hold("sftp:u@box:/bv", snap("a1a1a1a1", 1_758_000_000, "container:nginx"))
-	ctx := context.Background()
+	f.hold("b2:bucket/containers", snap("a1a1a1a1", 1_758_000_000, "container:nginx"))
 
-	tl, err := f.svc.Timeline(ctx, "containers", "nginx")
+	tl, err := f.svc.Timeline(context.Background(), "containers", "nginx")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if p := tl.Places[0]; !p.Remote || p.State != "unchecked" || len(tl.Rows) != 0 || f.eng.lists["sftp:u@box:/bv"] != 0 {
-		t.Fatalf("home = %+v, rows %+v, want it unchecked and unlisted", p, tl.Rows)
+	if p := tl.Places[0]; !p.Remote || p.State != "read" {
+		t.Fatalf("home = %+v, want the remote home read", p)
 	}
-	place, rows, err := f.svc.TimelinePlace(ctx, "containers", "nginx", "local")
+	markOf(t, tl.Rows, "a1a1a1a1", "local")
+	if p := tl.Places[1]; p.State != "unchecked" || f.eng.lists["b2:bucket/containers"] != 0 {
+		t.Fatalf("target = %+v, want it unchecked and unlisted", p)
+	}
+}
+
+func TestTimelineNamesARemoteHomeThatCannotBeListed(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.namedRepo("Storagebox", "sftp:u@box:/bv")
+	f.container("nginx", box.ID)
+	f.eng.listErr["sftp:u@box:/bv"] = errors.New("connection refused")
+
+	tl, err := f.svc.Timeline(context.Background(), "containers", "nginx")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if place.State != "read" {
-		t.Fatalf("home = %+v", place)
+	if p := tl.Places[0]; p.State != "unreadable" || !strings.Contains(p.Error, "connection refused") {
+		t.Fatalf("home = %+v, want unreadable with the reason", p)
 	}
-	markOf(t, rows, "a1a1a1a1", "local")
 }
 
 func TestTimelineNamesAPlaceItCannotReadAndLeavesOtherItemsOut(t *testing.T) {

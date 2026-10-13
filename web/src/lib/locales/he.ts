@@ -2993,7 +2993,6 @@ const he: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "פריטים שהעותק היחיד שלהם ב-{target} ישיר: {n}. בלי append-only, המכונה הזו עשויה למחוק ממנו. לשמור בכל זאת?",
 
   // Placement
-  "placement.hostGeneric": "מארח",
   "placement.segLocal": "מקומי",
   "placement.homeDomain": "{host} · מאגר התחום · {path}",
   "placement.homeDomainRemote": "מאגר התחום · מרוחק · {scheme}",

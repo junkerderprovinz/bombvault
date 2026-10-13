@@ -2984,7 +2984,6 @@ const vi: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Các mục có bản sao duy nhất ở {target} trực tiếp: {n}. Nếu không có append-only, máy này có thể xóa khỏi đó. Vẫn lưu chứ?",
 
   // Placement
-  "placement.hostGeneric": "Máy chủ",
   "placement.segLocal": "Cục bộ",
   "placement.homeDomain": "{host} · kho của phần · {path}",
   "placement.homeDomainRemote": "Kho của phần · từ xa · {scheme}",

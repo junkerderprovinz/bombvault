@@ -2993,7 +2993,6 @@ const el: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Στοιχεία των οποίων το μοναδικό αντίγραφο βρίσκεται στο {target} άμεσο: {n}. Χωρίς append-only, αυτό το μηχάνημα μπορεί να διαγράψει από αυτό. Αποθήκευση ούτως ή άλλως;",
 
   // Placement
-  "placement.hostGeneric": "Κεντρικός υπολογιστής",
   "placement.segLocal": "Τοπικό",
   "placement.homeDomain": "{host} · αποθετήριο τομέα · {path}",
   "placement.homeDomainRemote": "Αποθετήριο τομέα · απομακρυσμένο · {scheme}",

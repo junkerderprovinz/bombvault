@@ -2984,7 +2984,6 @@ const zh: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "唯一副本在 {target} 直接的条目：{n}。没有 append-only，本机可以从中删除。仍要保存吗？",
 
   // Placement
-  "placement.hostGeneric": "主机",
   "placement.segLocal": "本地",
   "placement.homeDomain": "{host} · 分区存储库 · {path}",
   "placement.homeDomainRemote": "分区存储库 · 远程 · {scheme}",

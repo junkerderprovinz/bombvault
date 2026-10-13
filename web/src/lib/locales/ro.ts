@@ -2994,7 +2994,6 @@ const ro: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Elemente a căror unică copie este în {target} direct: {n}. Fără append-only, această mașină poate șterge din el. Salvezi oricum?",
 
   // Placement
-  "placement.hostGeneric": "Host",
   "placement.segLocal": "Local",
   "placement.homeDomain": "{host} · depozitul secțiunii · {path}",
   "placement.homeDomainRemote": "Depozitul secțiunii · la distanță · {scheme}",

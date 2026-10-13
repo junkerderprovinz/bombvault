@@ -3003,7 +3003,6 @@ const id: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Entri yang satu-satunya salinannya ada di {target} langsung: {n}. Tanpa append-only, mesin ini bisa menghapus darinya. Tetap simpan?",
 
   // Placement
-  "placement.hostGeneric": "Host",
   "placement.segLocal": "Lokal",
   "placement.homeDomain": "{host} · repositori bagian · {path}",
   "placement.homeDomainRemote": "Repositori bagian · jarak jauh · {scheme}",

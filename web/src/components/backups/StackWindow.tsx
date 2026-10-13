@@ -5,7 +5,7 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { useProgress } from "../../lib/progress";
 import { useToast } from "../../lib/toast";
-import { useHostLabel } from "../../lib/useHostLabel";
+import { useLocalName } from "../../lib/useLocalName";
 import { offsiteTargetLabel, useOffsiteTargets } from "../../lib/useOffsiteTargets";
 import { restoreBlockReason, useRestoreCheck } from "../../lib/useRestoreCheck";
 import { stackRestoreQuestion, useStackRestore } from "../../lib/useStackRestore";
@@ -95,7 +95,7 @@ export function StackWindow({
   const check = useRestoreCheck(step === "check" ? { kind: "stack", name: stack.project, source } : null);
   const refusal = restoreBlockReason(check, t);
   const progress = useProgress();
-  const host = useHostLabel();
+  const local = useLocalName("containers");
   const targets = useOffsiteTargets("containers");
 
   const target = source === "offsite" ? targets[0] : targets.find((x) => `offsite:${x.id}` === source);
@@ -234,7 +234,7 @@ export function StackWindow({
               <span className="min-w-[14rem] flex-1">
                 {t("timeline.stackDirMissing")
                   .replace("{place}", () => place)
-                  .replace("{home}", () => host)}
+                  .replace("{home}", () => local)}
               </span>
               <Button label={t("backups.stack.useLocal")} labelKey="backups.stack.useLocal" onClick={takeLocalFolder} />
             </ListNote>

@@ -17,7 +17,7 @@ vi.mock("../lib/api", async (importOriginal) => {
 });
 
 const host = vi.hoisted(() => ({ platform: "unraid" }));
-vi.mock("../lib/useHostLabel", () => ({ usePlatform: () => host.platform }));
+vi.mock("../lib/usePlatform", () => ({ usePlatform: () => host.platform }));
 
 /** A container that was found, is in no schedule and has never been backed up. */
 const found = (key: string, over: Parameters<typeof item>[0] = {}) =>

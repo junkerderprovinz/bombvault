@@ -2991,7 +2991,6 @@ const cs: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Položky, jejichž jediná kopie je v {target} přímo: {n}. Bez append-only smí tento stroj z něj mazat. Přesto uložit?",
 
   // Placement
-  "placement.hostGeneric": "Hostitel",
   "placement.segLocal": "Místní",
   "placement.homeDomain": "{host} · repozitář sekce · {path}",
   "placement.homeDomainRemote": "Repozitář sekce · vzdálený · {scheme}",

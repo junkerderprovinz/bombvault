@@ -3003,7 +3003,6 @@ const is: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Færslur sem eiga eina afritið í {target} beint: {n}. Án aðeins-bæta-við má þessi vél eyða úr því. Vista samt?",
 
   // Placement
-  "placement.hostGeneric": "Hýsill",
   "placement.segLocal": "Staðbundið",
   "placement.homeDomain": "{host} · geymsla svæðisins · {path}",
   "placement.homeDomainRemote": "Geymsla svæðisins · fjartengd · {scheme}",

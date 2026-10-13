@@ -9,7 +9,7 @@ import { IconCheck } from "../navGlyphs";
 export function PlaceChecks({ timeline }: { timeline: TimelineState }) {
   const { t } = useT();
   const { places, reading, loadPlace } = timeline;
-  const labelOf = usePlaceLabel(places);
+  const labelOf = usePlaceLabel(places, timeline.domain);
   const open = places.filter((p) => p.state !== "read");
   if (open.length === 0) return null;
   return (

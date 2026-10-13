@@ -48,11 +48,11 @@ export function formatList(lang: string, names: string[]): string {
   return new Intl.ListFormat(lang, { type: "conjunction" }).format(names);
 }
 
-export function homeOptionLabel(t: T, host: string, h: HomeOption): string {
+export function homeOptionLabel(t: T, local: string, h: HomeOption): string {
   switch (h.kind) {
     case "domain":
       return withLtrIsolates(
-        t("placement.homeDomain").replace("{host}", () => host).replace("{path}", () => h.location),
+        t("placement.homeDomain").replace("{host}", () => local).replace("{path}", () => h.location),
         [h.location]
       );
     case "domain-remote":
@@ -69,9 +69,9 @@ export function sendToLabel(t: T, s: SendToOption): string {
 }
 
 // homeLabel names a repository id the way the lists offer it, null when neither does.
-function homeLabel(t: T, host: string, repoId: string, options: PlacementOptions): string | null {
+function homeLabel(t: T, local: string, repoId: string, options: PlacementOptions): string | null {
   const home = options.homes.find((h) => h.id === repoId);
-  if (home) return homeOptionLabel(t, host, home);
+  if (home) return homeOptionLabel(t, local, home);
   const sendTo = options.sendTo.find((s) => s.repoId !== "" && s.repoId === repoId);
   return sendTo ? sendToLabel(t, sendTo) : null;
 }
@@ -80,10 +80,10 @@ function homeLabel(t: T, host: string, repoId: string, options: PlacementOptions
  *  is switched off or has no row any more. A direct repository the lists leave
  *  out, because its target is switched off, still takes backups and goes by
  *  its own name. */
-export function viewHomeLabel(t: T, host: string, view: PlacementView, options: PlacementOptions): string {
-  const listed = homeLabel(t, host, view.repo, options);
+export function viewHomeLabel(t: T, local: string, view: PlacementView, options: PlacementOptions): string {
+  const listed = homeLabel(t, local, view.repo, options);
   if (listed !== null) return listed;
-  if (view.repo === "") return host;
+  if (view.repo === "") return local;
   const name = repoDisplayName(t, view.repoLabel, view.repoDirectOf) || view.repo;
   if (view.repoOff) return t("placement.off").replace("{name}", () => name);
   if (view.repoKind === "direct") return name;
@@ -159,13 +159,13 @@ export type PlacementStep =
 
 const NONE: PlacementStep = { kind: "none" };
 
-export function stepForHome(repoId: string, view: PlacementView, options: PlacementOptions, t: T, host: string): PlacementStep {
+export function stepForHome(repoId: string, view: PlacementView, options: PlacementOptions, t: T, local: string): PlacementStep {
   if (repoId === view.repo && !view.homeFollows) return NONE;
   const home = options.homes.find((h) => h.id === repoId);
   return {
     kind: "save",
     change: { home: { repo: repoId } },
-    confirmHome: homeLabel(t, host, repoId, options) ?? repoId,
+    confirmHome: homeLabel(t, local, repoId, options) ?? repoId,
     optimistic: { repo: repoId, repoKind: home?.kind ?? view.repoKind, repoLabel: home?.name ?? "", homeFollows: false },
   };
 }
@@ -243,7 +243,7 @@ function moveHomeTo(targetId: string, rest: string[], view: PlacementView, optio
 
 /** stepForLocal turns Local on, which brings the item home and keeps every
  *  lit target as a copy, or off, which makes the first lit target the home. */
-export function stepForLocal(on: boolean, view: PlacementView, options: PlacementOptions, t: T, host: string): PlacementStep {
+export function stepForLocal(on: boolean, view: PlacementView, options: PlacementOptions, t: T, local: string): PlacementStep {
   const b = placementButtons(view, options);
   if (on === b.local) return NONE;
   if (!on) {
@@ -261,7 +261,7 @@ export function stepForLocal(on: boolean, view: PlacementView, options: Placemen
   return {
     kind: "save",
     change: { home: { repo }, copies: { skip } },
-    confirmHome: homeLabel(t, host, repo, options) ?? host,
+    confirmHome: homeLabel(t, local, repo, options) ?? local,
     optimistic: { repo, repoKind: home?.kind ?? "domain", repoTarget: undefined, repoLabel: home?.name ?? "", homeFollows: false, skip, copiesFollow: false },
   };
 }
@@ -373,12 +373,12 @@ function notBackedUp(t: T, domain: PlacementDomain, plan: PlacementPlan, home: s
 export function planLines(
   t: T,
   lang: string,
-  host: string,
+  local: string,
   domain: PlacementDomain,
   plan: PlacementPlan,
   noTargets: boolean
 ): StatusLine[] {
-  const home = repoDisplayName(t, plan.home, plan.homeDirectOf) || host;
+  const home = repoDisplayName(t, plan.home, plan.homeDirectOf) || local;
   const kind = plan.kind;
   if (kind === "paused") return [{ text: t("placement.paused"), tone: "warn" }];
   if (kind === "not-backed-up") return [{ text: notBackedUp(t, domain, plan, home), tone: "warn" }];
@@ -474,10 +474,10 @@ function placeLine(t: T, p: ObservedPlace): StatusLine {
   }
 }
 
-export function stackNoteText(t: T, lang: string, host: string, note: StackNote): string {
+export function stackNoteText(t: T, lang: string, local: string, note: StackNote): string {
   const text =
     note.targets.length > 0
       ? t("placement.stackNote").replace("{targets}", () => formatList(lang, note.targets))
       : t("placement.stackNoteNoCopy");
-  return text.replace("{project}", () => note.project).replace("{home}", () => note.home || host);
+  return text.replace("{project}", () => note.project).replace("{home}", () => note.home || local);
 }

@@ -2987,7 +2987,6 @@ const sr: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Ставке чија је једина копија у {target} директно: {n}. Без само додавања ова машина може да брише из њега. Ипак сачувам?",
 
   // Placement
-  "placement.hostGeneric": "Хост",
   "placement.segLocal": "Локално",
   "placement.homeDomain": "{host} · репозиторијум одељка · {path}",
   "placement.homeDomainRemote": "Репозиторијум одељка · удаљено · {scheme}",

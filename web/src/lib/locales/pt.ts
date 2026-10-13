@@ -2993,7 +2993,6 @@ const pt: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Entradas cuja única cópia está em {target} direto: {n}. Sem append-only, esta máquina pode apagar dele. Salvar mesmo assim?",
 
   // Placement
-  "placement.hostGeneric": "Host",
   "placement.segLocal": "Local",
   "placement.homeDomain": "{host} · repositório da secção · {path}",
   "placement.homeDomainRemote": "Repositório da secção · remoto · {scheme}",

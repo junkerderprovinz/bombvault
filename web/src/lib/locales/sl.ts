@@ -2987,7 +2987,6 @@ const sl: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Vnosi, katerih edina kopija je v {target} neposredno: {n}. Brez načina samo-dodajanja lahko ta računalnik briše iz njega. Vseeno shranim?",
 
   // Placement
-  "placement.hostGeneric": "Gostitelj",
   "placement.segLocal": "Lokalno",
   "placement.homeDomain": "{host} · repozitorij razdelka · {path}",
   "placement.homeDomainRemote": "Repozitorij razdelka · oddaljen · {scheme}",

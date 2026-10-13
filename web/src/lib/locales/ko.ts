@@ -2984,7 +2984,6 @@ const ko: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "유일한 사본이 {target} 직접에 있는 항목: {n}개. append-only가 없으면 이 장비가 여기서 삭제할 수 있습니다. 그래도 저장할까요?",
 
   // Placement
-  "placement.hostGeneric": "호스트",
   "placement.segLocal": "로컬",
   "placement.homeDomain": "{host} · 섹션 저장소 · {path}",
   "placement.homeDomainRemote": "섹션 저장소 · 원격 · {scheme}",

@@ -3003,7 +3003,6 @@ const bg: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Записи, чието единствено копие е в {target} директно: {n}. Без само-добавяне тази машина може да изтрива от него. Запази въпреки това?",
 
   // Placement
-  "placement.hostGeneric": "Хост",
   "placement.segLocal": "Локално",
   "placement.homeDomain": "{host} · хранилище на раздела · {path}",
   "placement.homeDomainRemote": "Хранилище на раздела · отдалечено · {scheme}",

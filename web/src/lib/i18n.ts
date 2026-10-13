@@ -2366,7 +2366,6 @@ export const en = {
   "offsite.directAppendOnlyAsk": "Items whose only copy is in {target} direct: {n}. Without append-only this box may delete from it. Save anyway?",
 
   // Placement
-  "placement.hostGeneric": "Host",
   "placement.segLocal": "Local",
   "placement.homeDomain": "{host} · domain repository · {path}",
   "placement.homeDomainRemote": "Domain repository · remote · {scheme}",
@@ -7011,7 +7010,6 @@ export const de: Translations = {
   "offsite.directAppendOnlyAsk": "Einträge, deren einzige Kopie in {target} direkt liegt: {n}. Ohne append-only darf dieser Rechner dort löschen. Trotzdem speichern?",
 
   // Placement
-  "placement.hostGeneric": "Host",
   "placement.segLocal": "Lokal",
   "placement.homeDomain": "{host} · Repository des Bereichs · {path}",
   "placement.homeDomainRemote": "Repository des Bereichs · entfernt · {scheme}",

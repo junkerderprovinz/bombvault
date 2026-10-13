@@ -2993,7 +2993,6 @@ const sv: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Poster vars enda kopia finns i {target} direkt: {n}. Utan append-only får den här maskinen radera från det. Spara ändå?",
 
   // Placement
-  "placement.hostGeneric": "Värd",
   "placement.segLocal": "Lokal",
   "placement.homeDomain": "{host} · avsnittets arkiv · {path}",
   "placement.homeDomainRemote": "Avsnittets arkiv · fjärr · {scheme}",

@@ -23,7 +23,7 @@ import { useToast } from "../../lib/toast";
 import { zfsCodeSentence } from "../../lib/zfsCodes";
 import { tLtr } from "../../lib/ltrFragments";
 import { lockHint, viewHomeLabel } from "../../lib/placement";
-import { useHostLabel } from "../../lib/useHostLabel";
+import { useLocalName } from "../../lib/useLocalName";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { containerTakeover, vmTakeover, type TakeoverEntry } from "../../lib/useTakeOver";
 import { FlashZipExportCard } from "../../pages/settings/FlashZipExportCard";
@@ -230,10 +230,10 @@ function RepositoryCard({
   hueIndex: number;
 }) {
   const { t } = useT();
-  const host = useHostLabel();
+  const local = useLocalName(domain);
   const { options } = usePlacementOptions(domain);
   if (!options) return null;
-  const home = viewHomeLabel(t, host, view, options);
+  const home = viewHomeLabel(t, local, view, options);
   return (
     <Card title={t("entry.settings.repository")} hueIndex={hueIndex}>
       <SettingRow label={t("placement.storedOn")} hint={t("entry.settings.storedOnHint")}>

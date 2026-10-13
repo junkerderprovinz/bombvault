@@ -7,12 +7,12 @@ import { formatTs } from "../../lib/reltime";
 import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
-import { useHostLabel } from "../../lib/useHostLabel";
+import { useLocalName } from "../../lib/useLocalName";
 import { useOwnLogin } from "../../lib/useOwnLogin";
 
-function OnlyThere({ preview }: { preview: RemovalPreview }) {
+function OnlyThere({ preview, domain }: { preview: RemovalPreview; domain: string }) {
   const { t } = useT();
-  const host = useHostLabel();
+  const local = useLocalName(domain);
   return (
     <div className="flex flex-col gap-2 text-sm text-carbon-textSub">
       <p>{t("offsiteRemoval.onlyThere")}</p>
@@ -22,7 +22,7 @@ function OnlyThere({ preview }: { preview: RemovalPreview }) {
         ))}
       </ul>
       {preview.homeUnreadable && (
-        <p>{t("offsiteRemoval.homeUnreadable").replace("{home}", () => repoDisplayName(t, preview.homeLabel, preview.homeDirectOf) || host)}</p>
+        <p>{t("offsiteRemoval.homeUnreadable").replace("{home}", () => repoDisplayName(t, preview.homeLabel, preview.homeDirectOf) || local)}</p>
       )}
     </div>
   );
@@ -80,7 +80,7 @@ export function OffsiteRemovalDialog({
             confirmLabel: t("offsiteRemoval.delete").replace("{target}", () => target.name),
             confirmLabelKey: "common.delete",
             confirmTone: "neutral",
-            extra: only ? <OnlyThere preview={preview} /> : undefined,
+            extra: only ? <OnlyThere preview={preview} domain={item.domain} /> : undefined,
             requireText: only ? preview.name : undefined,
             requirePrompt: t("offsiteRemoval.typeName").replace("{name}", () => preview.name),
           }
