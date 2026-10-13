@@ -286,6 +286,8 @@ export interface OverviewStage {
   /** Encryption is on and the recovery kit is not confirmed. */
   kitDue?: boolean;
   lang?: string;
+  /** The name the server goes by in its group. */
+  instanceName?: string;
   /** What localStorage holds for the layout before the page loads. */
   layout?: unknown;
 }
@@ -307,7 +309,13 @@ export async function stageOverview(page: Page, width: number | undefined, s: Ov
     await route.fulfill({
       json: {
         ...body,
-        settings: { ...body.settings, anomalyEnabled: true, encryptionEnabled: s.kitDue ?? true, recoveryKitAck: false },
+        settings: {
+          ...body.settings,
+          anomalyEnabled: true,
+          encryptionEnabled: s.kitDue ?? true,
+          recoveryKitAck: false,
+          instanceName: s.instanceName ?? body.settings.instanceName,
+        },
       },
     });
   });

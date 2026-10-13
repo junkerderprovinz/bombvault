@@ -9,6 +9,7 @@ import { WhatsNewHost } from "../pages/settings/WhatsNew";
 import { WhatsNewDots } from "../components/WhatsNewDots";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { AttentionProvider } from "../lib/attentionProvider";
+import { InstanceNameContext } from "../lib/instanceName";
 import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
 import { beginWhatsNew, openWhatsNew } from "../lib/whatsNewStore";
 
@@ -265,6 +266,12 @@ export function Layout() {
     return <LoginPage onLogin={checkAuth} />;
   }
 
+  const page = (
+    <InstanceNameContext.Provider value={settings?.instanceName ?? ""}>
+      <Outlet />
+    </InstanceNameContext.Provider>
+  );
+
   // The scroller; per-page content (the Outlet subtree) must never know which
   // chrome is mounted around it, so each branch keeps its own `main` contract
   // and both carry the `bv-main` id, the stable scroll target the bottom bar
@@ -280,7 +287,7 @@ export function Layout() {
           only: the first row starts on the rail's top line, and the last card
           ends level with the rail instead of 24px above it. */}
       <div key={section} className="glim-page-enter flex-1 flex flex-col px-6 pt-0 pb-0">
-        <Outlet />
+        {page}
       </div>
     </main>
   ) : (
@@ -307,7 +314,7 @@ export function Layout() {
       className="flex-1 flex flex-col overflow-y-auto p-4 pb-0 scroll-pb-[var(--sticky-action-h)] pl-[max(1rem,var(--safe-area-left))] pr-[max(1rem,var(--safe-area-right))] min-w-0"
     >
       <div key={section} className="glim-page-enter flex-1 flex flex-col">
-        <Outlet />
+        {page}
       </div>
     </main>
   );

@@ -21,6 +21,7 @@ const PICTURES = ["components/anomalies/SeriesCurve.tsx", "components/entry/Dump
 const WORDMARKS: Record<string, string> = {
   "components/Sidebar.tsx": "text-xl",
   "pages/Dashboard.tsx": "text-lg",
+  "pages/overview/InstanceSwitch.tsx": "text-lg",
   "launcher/Launcher.tsx": "text-xl",
 };
 

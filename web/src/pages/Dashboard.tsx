@@ -13,12 +13,13 @@ import { InfoBubble } from "../components/InfoBubble";
 import { IconRefresh } from "../components/glyphs";
 import { getCoverage, getScheduleNext, getStatus, listRuns } from "../lib/api";
 import type { CoverageReport, DomainStatus, Run, ScheduleNext } from "../lib/api";
-import { useAppServers } from "../lib/appServers";
+import { inApp, useAppServers } from "../lib/appServers";
 import { useAttention } from "../lib/attention";
 import type { EntryKind } from "../lib/backupEntry";
 import { cardSpan, useDashboardLayout } from "../lib/dashboardLayout";
 import { foundOnServer, foundSentence } from "../lib/firstSteps";
 import { useT } from "../lib/i18n";
+import { useInstanceName } from "../lib/instanceName";
 import { usePlatform } from "../lib/usePlatform";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { anyActive, useProgress } from "../lib/progress";
@@ -35,7 +36,7 @@ import { EverythingAction } from "./overview/EverythingAction";
 import { FirstStepsCard } from "./overview/FirstStepsCard";
 import { HealthHeatmapCard } from "./overview/HealthHeatmapCard";
 import { HistoryCard, type HistoryView } from "./overview/HistoryCard";
-import { InstancesCard } from "./overview/InstancesCard";
+import { InstanceSwitch } from "./overview/InstanceSwitch";
 import { NeedsCard } from "./overview/NeedsCard";
 import { NextRunCard, nextBackupFireAt } from "./overview/NextRunCard";
 import { HiddenTray, OverviewGrid, type GridCard } from "./overview/OverviewGrid";
@@ -58,6 +59,8 @@ const SCHEDULE_POLL_MS = 30000;
 
 const CARD = Object.fromEntries(OVERVIEW_CARDS.map((card) => [card.id, card]));
 
+const HOLDABLE = "touch-none select-none [-webkit-touch-callout:none]";
+
 function liveRunIn(runs: Run[]): Run | undefined {
   const running = runs.filter((r) => r.status === "running");
   return running.find((r) => r.domain === "everything") ?? running[0];
@@ -73,7 +76,9 @@ export function Dashboard() {
   const anomalySummary = useAnomalySummary().summary;
   const platform = usePlatform();
   const trial = useTrialRestore(t("verify.failed"));
+  const app = inApp();
   const appServers = useAppServers();
+  const instanceName = useInstanceName();
 
   // The run window is opened by a row of the history, by the status head
   // while a run is under way, and by the watch of a pass started here. Once
@@ -404,21 +409,10 @@ export function Dashboard() {
     height: layout.heights[id],
     node: blocks[id].render(hues++),
   }));
-  // Right under what needs the person: inside the app the way to its other
-  // servers, and on a phone the next run and the repositories at a glance.
-  // The layout does not hold the servers' card, so it stays out of the way
-  // while the page is arranged.
-  const glance: GridCard[] = [];
-  if (appServers && appServers.servers.length > 0 && !arranging) {
-    glance.push({
-      id: "instances",
-      label: t("instances.title"),
-      span: 6,
-      node: <InstancesCard t={t} hueIndex={hues++} servers={appServers.servers} onOpen={appServers.open} />,
-    });
-  }
   if (!isDesktop) {
-    glance.push(
+    // A phone gets the next run and the repositories at a glance, right
+    // under what needs the person.
+    const glance: GridCard[] = [
       {
         id: "nextRun",
         label: t("dashboard.summaryNextBackup"),
@@ -439,12 +433,18 @@ export function Dashboard() {
             statusFailed={statusFailed}
           />
         ),
-      }
-    );
+      },
+    ];
+    cards.splice(cards[0]?.id === "needs" ? 1 : 0, 0, ...glance);
   }
-  cards.splice(cards[0]?.id === "needs" ? 1 : 0, 0, ...glance);
 
   const section = sections.find((s) => s.kind === openSection);
+
+  const logoMark = (
+    <span className={`glim-logo-mark flex h-6 w-6 ${logoHold.markClass}`}>
+      <img ref={logoHold.markRef} src="/logo.svg" alt="" draggable={false} className="glim-logo-img block h-6 w-6 object-contain" />
+    </span>
+  );
 
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
@@ -452,22 +452,22 @@ export function Dashboard() {
         {/* "BombVault" is the product's name and is not translated. A held
             finger plays the rail logo's burst. The page is already the
             overview, so a tap has nowhere to go, and the press may neither
-            scroll, select the name nor open the image's long-press menu. */}
-        <div
-          {...logoHold.handlers}
-          className="flex w-fit touch-none select-none items-center gap-2 [-webkit-touch-callout:none] md:hidden"
-        >
-          <span className={`glim-logo-mark flex h-6 w-6 ${logoHold.markClass}`}>
-            <img
-              ref={logoHold.markRef}
-              src="/logo.svg"
-              alt=""
-              draggable={false}
-              className="glim-logo-img block h-6 w-6 object-contain"
-            />
-          </span>
-          <span className="text-lg font-semibold tracking-tight text-carbon-text">BombVault</span>
-        </div>
+            scroll, select the name nor open the image's long-press menu.
+            Inside the app the name is the server's own, since the app holds
+            several, and a tap on it switches to another. */}
+        {app ? (
+          <div className="flex min-w-0 items-center gap-2 md:hidden">
+            <span {...logoHold.handlers} className={`flex shrink-0 ${HOLDABLE}`}>
+              {logoMark}
+            </span>
+            <InstanceSwitch t={t} name={instanceName} servers={appServers?.servers ?? null} onOpen={(id) => appServers?.open(id)} />
+          </div>
+        ) : (
+          <div {...logoHold.handlers} className={`flex w-fit items-center gap-2 md:hidden ${HOLDABLE}`}>
+            {logoMark}
+            <span className="text-lg font-semibold tracking-tight text-carbon-text">BombVault</span>
+          </div>
+        )}
         <PageTitle>{t("nav.overview")}</PageTitle>
         <StatusHead
           t={t}
