@@ -84,8 +84,8 @@ describe("the Version card", () => {
     ]);
   });
 
-  it("names GlimStone 3.4.2", () => {
-    expect(GLIMSTONE_VERSION).toBe("3.4.2");
+  it("names GlimStone 3.5.0", () => {
+    expect(GLIMSTONE_VERSION).toBe("3.5.0");
   });
 
   it("asks the server only when the button is pressed", async () => {
@@ -175,7 +175,7 @@ describe("the Help card", () => {
   it("draws the manual's book closed at rest and brings the open one for the pointer, a finger and the focus", async () => {
     await renderPage();
     const manual = help().getByRole("button", { name: new RegExp(en["tile.info.manual"]) });
-    const drawings = [...manual.querySelectorAll(".glim-house-mark svg")];
+    const drawings = [...manual.querySelectorAll(".glim-docs-mark svg")];
     expect(drawings.map((svg) => svg.getAttribute("class"))).toEqual(["glim-mark-rest", "glim-mark-hover"]);
     // Each drawing in the square cropped to its own ink, like the envelope's two.
     expect(drawings.map((svg) => svg.getAttribute("viewBox"))).toEqual(["0 0 14 14", "0 0.125 14 14"]);
@@ -211,6 +211,17 @@ describe("the list of what is new", () => {
     const titles = [...document.querySelectorAll("[data-search-card]")].map((el) => el.getAttribute("data-search-card"));
     expect(titles).toEqual([en["about.version"], en["tile.info.help"], en["about.title"]]);
     expect(within(card(en["about.version"])).getByRole("button", { name: en["whatsNew.title"] })).toBeTruthy();
+  });
+
+  it("puts Release notes and New before the update check", async () => {
+    await renderPage();
+    const names = within(card(en["about.version"]))
+      .getAllByRole("button")
+      .map((button) => button.textContent ?? "");
+    const at = (label: string) => names.findIndex((name) => name.includes(label));
+    expect(at(en["whatsNew.notesTab"])).toBeGreaterThanOrEqual(0);
+    expect(at(en["whatsNew.notesTab"])).toBeLessThan(at(en["whatsNew.title"]));
+    expect(at(en["whatsNew.title"])).toBeLessThan(at(en["tile.info.check"]));
   });
 });
 

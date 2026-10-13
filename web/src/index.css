@@ -830,6 +830,7 @@
      The mail button has no brand colour: it reaches the workshop, not a third
      party, so it follows the colour engine. */
   --brand-coffee:  #ffdd00;
+  --brand-docs:    #ffdd00;
   --brand-bitcoin: #f7931a;
   --brand-paypal:  #4fb5f0;
   --brand-github:  #ffffff;
@@ -990,6 +991,7 @@
      were drawn for. The warm ones deepen until they reach 3:1, which yellow on
      light grey never does at its published value (1.14:1). */
   --brand-coffee:  #8a6d00;
+  --brand-docs:    #8a6d00;
   --brand-bitcoin: #a85d00;
   --brand-paypal:  #003087;
   --brand-github:  #181717;
@@ -1593,13 +1595,13 @@ body {
 /* A mark whose layers do not survive one ink brings the brand's own
    single-colour version for the hover. */
 .glim-mark-hover { display: none; }
-/* The house marks open: the envelope and the manual's book show their open
-   drawing on the focus as well, and under a finger, where nothing hovers. */
-.glim-brand-tile:focus-visible .glim-house-mark .glim-mark-rest { display: none; }
-.glim-brand-tile:focus-visible .glim-house-mark .glim-mark-hover { display: block; }
+/* The envelope and the manual's book show their open drawing on the focus
+   as well, and under a finger, where nothing hovers. */
+.glim-brand-tile:focus-visible :is(.glim-house-mark, .glim-docs-mark) .glim-mark-rest { display: none; }
+.glim-brand-tile:focus-visible :is(.glim-house-mark, .glim-docs-mark) .glim-mark-hover { display: block; }
 @media (hover: none) {
-  .glim-brand-tile:active .glim-house-mark .glim-mark-rest { display: none; }
-  .glim-brand-tile:active .glim-house-mark .glim-mark-hover { display: block; }
+  .glim-brand-tile:active :is(.glim-house-mark, .glim-docs-mark) .glim-mark-rest { display: none; }
+  .glim-brand-tile:active :is(.glim-house-mark, .glim-docs-mark) .glim-mark-hover { display: block; }
 }
 
 /* The About card's marks at rest. A published brand colour fails on one of
@@ -1611,6 +1613,8 @@ body {
 .glim-android-mark { color: var(--brand-android); }
 .glim-docker-mark { color: var(--brand-docker); }
 .glim-house-mark { color: var(--accent-glyph); }
+/* The manual's book, in the yellow of the README's docs button. */
+.glim-docs-mark { color: var(--brand-docs); }
 
 /* The phone app answers a press the way KnightLoader's does. Nothing hovers
    on a touch screen, so without this a tap that works looks like one that did
@@ -1664,6 +1668,7 @@ body {
 .glim-tile-zip     { --tile: #4d5562; --tile-ink: #ffffff; } /* 7.5:1 */
 /* Buy Me a Coffee's own near-black, the ink of their button. 13.8:1. */
 .glim-tile-coffee { --tile: #ffdd00; --tile-ink: #0d0c22; }
+.glim-tile-docs   { --tile: #ffdd00; --tile-ink: #161616; }
 /* The button that reaches the app's own authors follows the colour engine. */
 .glim-tile-house { --tile: var(--accent); --tile-ink: var(--accent-contrast); }
 

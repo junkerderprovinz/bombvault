@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { IconEye, IconForward } from "../../components/glyphs";
+import { IconEye, IconForward, IconInfo } from "../../components/glyphs";
 import { IconCheck, IconClose } from "../../components/navGlyphs";
 import { ReleaseNotes, releasePage } from "../../components/ReleaseNotes";
 import { Selector, selectorTabId } from "../../components/Selector";
@@ -164,6 +164,12 @@ export function WhatsNewHost({ version }: { version: string | null }) {
 
 /** WhatsNewButton stands in the Version card and opens the list of changes.
  *  It counts what is still unseen, and its dot goes grey once nothing is. */
+/** ReleaseNotesButton opens the same window on the running version's notes. */
+export function ReleaseNotesButton() {
+  const { t } = useT();
+  return <Button label={t("whatsNew.notesTab")} labelKey="whatsNew.notesTab" glyph={<IconInfo />} onClick={() => openWhatsNew("notes")} />;
+}
+
 export function WhatsNewButton() {
   const { t } = useT();
   const { unseen } = useWhatsNew();

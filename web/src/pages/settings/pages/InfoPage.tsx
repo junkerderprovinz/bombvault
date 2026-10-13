@@ -19,7 +19,7 @@ import { useT, type TranslationKey } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { AboutGive, GLIMSTONE_REPO, GLIMSTONE_VERSION, REPO, ReportButtons, releaseUrl } from "../AboutCard";
 import { Card, hueCounter } from "../shared";
-import { WhatsNewButton } from "../WhatsNew";
+import { ReleaseNotesButton, WhatsNewButton } from "../WhatsNew";
 
 const DOCS = "https://junkerderprovinz.github.io/bombvault/";
 
@@ -163,6 +163,7 @@ export function InfoPage() {
           </SettingRow>
         </Rows>
         <div className="flex flex-wrap items-end justify-end gap-2">
+          <ReleaseNotesButton />
           <WhatsNewButton />
           <UpdateButton />
         </div>
@@ -172,8 +173,9 @@ export function InfoPage() {
         <p className="text-sm text-carbon-textSub">{t("about.report")}</p>
         <div className="glim-readme-btn-rows">
           <ReportButtons />
+          {/* The README's docs button, so whoever opened the manual there knows it. */}
           <ReadmeButton
-            tile="glim-tile-house"
+            tile="glim-tile-docs"
             parts={[
               {
                 name: t("tile.info.manual"),
@@ -182,7 +184,7 @@ export function InfoPage() {
               },
             ]}
             mark={<BrandMark svg={MANUAL_SVG} />}
-            markClass="glim-house-mark"
+            markClass="glim-docs-mark"
           />
           {/* The file goes with an issue on GitHub, so it lights up beside it. */}
           <ReadmeButton
