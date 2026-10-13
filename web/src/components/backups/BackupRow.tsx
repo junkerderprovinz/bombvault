@@ -342,9 +342,10 @@ export function BackupRow({
           // Until a row is picked, the mark of the row under the pointer lies
           // on the corner of its glyph, as on an icon in a file manager. No
           // row moves when it appears, and the rest of the row still opens
-          // the entry.
-          <span className="absolute -start-1.5 -top-1.5 hidden rounded-full ring-2 ring-carbon-surface pointer-fine:group-hover:flex pointer-fine:group-focus-within:flex">
-            <SelectMark checked={false} label={pickLabel} onChange={onPick} bare />
+          // the entry. Its ring takes the row's ground, so the mark looks cut
+          // into the corner rather than laid on it.
+          <span className="absolute -start-1 -top-1 hidden rounded-full ring-2 ring-carbon-surface pointer-fine:group-hover:flex pointer-fine:group-hover:ring-carbon-hover pointer-fine:group-focus-within:flex">
+            <SelectMark checked={false} label={pickLabel} onChange={onPick} offered bare />
           </span>
         )}
       </span>
