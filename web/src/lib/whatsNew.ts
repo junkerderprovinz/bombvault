@@ -26,6 +26,9 @@ export interface Change {
   /** The element is there at desktop width only, so a phone marks neither it
    *  nor the way to it. */
   wide?: boolean;
+  /** The element is there in the Android app only, so a browser marks neither
+   *  it nor the way to it. */
+  app?: boolean;
   text: TranslationKey;
 }
 
@@ -37,6 +40,7 @@ export const CHANGES: Change[] = [
   { id: "overview-head", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], text: "whatsNew.overviewHead" },
   { id: "overview-customize", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], wide: true, text: "whatsNew.overviewCustomize" },
   { id: "overview-decline", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], text: "whatsNew.overviewDecline" },
+  { id: "overview-instances", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], app: true, text: "whatsNew.overviewInstances" },
 
   { id: "backups-tiles", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsTiles" },
   { id: "backups-bar", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsBar" },

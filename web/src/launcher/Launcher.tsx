@@ -9,6 +9,7 @@ import { Selector } from "../components/Selector";
 import { IconAdd, IconClose, IconGear, IconPencil } from "../components/navGlyphs";
 import { buildLogLines, domainLabel, type LogLine, type ResolveName } from "../lib/activityLog";
 import type { Run, ScheduleNext } from "../lib/api";
+import { REACH_BADGE, reachOf, type Reach } from "../lib/appServers";
 import { hueVars } from "../lib/appearance";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { parseProgressFrame, progressEntry, type ProgressMap } from "../lib/progress";
@@ -35,9 +36,6 @@ type T = ReturnType<typeof useT>["t"];
 /** The pages above the list, each a history entry of its own so the phone's
  *  Back key closes it the way Back closes every page. */
 type View = "list" | "pairing" | "settings" | "language" | "activity";
-
-/** How a server answered the last poll. */
-type Reach = "connected" | "signIn" | "certificate" | "offline";
 
 interface ServerLine extends LogLine {
   server: string;
@@ -283,9 +281,8 @@ async function readServer(
   now: number
 ): Promise<{ reach: Reach; lines: ServerLine[] }> {
   const answer = await bridge.activity(server.id);
-  if (answer.status === 401 || answer.status === 403) return { reach: "signIn", lines: [] };
-  if (answer.status === -1) return { reach: "certificate", lines: [] };
-  if (answer.status !== 200) return { reach: "offline", lines: [] };
+  const reach = reachOf(answer.status);
+  if (reach !== "connected") return { reach, lines: [] };
   try {
     const a = JSON.parse(answer.body) as { runs?: Run[]; progress?: unknown[]; next?: ScheduleNext[] };
     const lines = buildLogLines(a.runs ?? [], inFlight(a.progress ?? [], now), a.next ?? [], resolveName, now).map((l) => ({
@@ -401,13 +398,6 @@ function ActivityPage({ t, servers, lines, onBack }: { t: T; servers: Server[]; 
     </main>
   );
 }
-
-const REACH_BADGE: Record<Reach, { tone: "ok" | "fail" | "warn"; key: TranslationKey }> = {
-  connected: { tone: "ok", key: "instances.connected" },
-  signIn: { tone: "warn", key: "launcher.signIn" },
-  certificate: { tone: "warn", key: "launcher.checkCertificate" },
-  offline: { tone: "fail", key: "instances.notConnected" },
-};
 
 const REASON_TEXT: Record<NetworkReason, TranslationKey> = {
   timeout: "launcher.reason.timeout",

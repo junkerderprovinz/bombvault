@@ -14,6 +14,9 @@ import java.util.UUID
 data class Server(val id: String, val name: String, val url: String, val pin: String?, val member: String? = null) {
     val origin: String get() = originOf(url)
 
+    /** Whether the app has a way in: the own address, or the relay for a member of the group. */
+    val opens: Boolean get() = url.isNotEmpty() || member != null
+
     /** The fields the launcher sees; the pin stays in the app. */
     fun toJson(): JSONObject = JSONObject().put("id", id).put("name", name).put("url", url).put("member", member != null)
 }
@@ -24,6 +27,16 @@ fun originOf(url: String): String {
     val port = if (u.port == -1) "" else ":${u.port}"
     return "${u.scheme}://${u.host}$port"
 }
+
+/** The servers the page of [asking] is told about: every other one the app can open. */
+fun othersThan(list: List<Server>, asking: Server): List<Server> = list.filter { it.id != asking.id && it.opens }
+
+/**
+ * The server the page of [asking] may have the app open for [id]. A page
+ * names a server of the app's own list by its id and never an address, so
+ * it cannot send the app anywhere else.
+ */
+fun openable(list: List<Server>, asking: Server, id: String): Server? = othersThan(list, asking).firstOrNull { it.id == id }
 
 /** The server list, kept in the app's own preferences. */
 class Servers(context: Context) {

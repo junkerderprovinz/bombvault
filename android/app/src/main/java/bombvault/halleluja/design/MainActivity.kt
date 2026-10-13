@@ -313,6 +313,24 @@ class MainActivity : ComponentActivity() {
             "body" -> if (relayMember(Uri.parse(origin).host) != null) pages.body(msg.getString("ticket"), msg.getString("data"))
             "file" -> saveFile(msg.getString("name"), msg.optString("type").ifEmpty { null }, msg.getString("data"))
             "bars" -> parseColor(msg.optString("color"))?.let { if (server.id == current?.id) paintBars(it) }
+            "servers" -> if (server.id == current?.id) tellServers(server, reply)
+            "open" -> if (server.id == current?.id) openable(servers.all(), server, msg.optString("id"))?.let(::open)
+        }
+    }
+
+    /**
+     * Tells the page of [asking] which other servers the app knows, by id and
+     * name only, and then how each one answers, the way the launcher asks.
+     */
+    private fun tellServers(asking: Server, reply: JavaScriptReplyProxy) {
+        val others = othersThan(servers.all(), asking)
+        val list = JSONArray(others.map { JSONObject().put("id", it.id).put("name", it.name) })
+        reply.postMessage(JSONObject().put("op", "servers").put("servers", list).toString())
+        for (other in others) {
+            lifecycleScope.launch {
+                val answer = withContext(Dispatchers.IO) { pairing.ask(other, ACTIVITY) ?: activityOverHttp(other) }
+                reply.postMessage(JSONObject().put("op", "reach").put("id", other.id).put("status", answer.status).toString())
+            }
         }
     }
 
@@ -330,8 +348,7 @@ class MainActivity : ComponentActivity() {
                 servers.remove(msg.getString("id"))
                 pushState()
             }
-            // A member known only over the group opens through the relay.
-            "open" -> servers.get(msg.getString("id"))?.takeIf { it.url.isNotEmpty() || it.member != null }?.let(::open)
+            "open" -> servers.get(msg.getString("id"))?.takeIf { it.opens }?.let(::open)
             "trust" -> {
                 servers.trust(msg.getString("id"), msg.getString("fingerprint"))
                 // The WebView remembers the refusal for the host otherwise.
@@ -360,7 +377,7 @@ class MainActivity : ComponentActivity() {
                 lifecycleScope.launch {
                     val answer = withContext(Dispatchers.IO) {
                         if (op == "activity") {
-                            pairing.ask(server, "/api/group/peer/activity") ?: activityOverHttp(server)
+                            pairing.ask(server, ACTIVITY) ?: activityOverHttp(server)
                         } else {
                             pairing.ask(server, "/api/group/peer/display-prefs") ?: get(server, "/api/display-prefs")
                         }
@@ -620,6 +637,9 @@ class MainActivity : ComponentActivity() {
     companion object {
         private const val LAUNCHER_ORIGIN = "https://${WebViewAssetLoader.DEFAULT_DOMAIN}"
         private const val LAUNCHER_URL = "$LAUNCHER_ORIGIN/launcher.html"
+
+        /** What runs on a member, asked over the group. */
+        private const val ACTIVITY = "/api/group/peer/activity"
 
         // The ground of BombVault's dark and light themes, the same values its
         // theme-color meta carries.

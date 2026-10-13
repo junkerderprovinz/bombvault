@@ -85,6 +85,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 const overview = (
@@ -152,6 +153,17 @@ describe("a change on the page", () => {
     await renderAt("/dashboard", overview);
     expect(dotOf("overview-head")).not.toBeNull();
     expect(dotOf("overview-customize")).toBeNull();
+  });
+
+  it("has a dot for an element only the Android app shows, in the app alone", async () => {
+    const instances = <span data-new="overview-instances">Instances</span>;
+    await renderAt("/dashboard", instances);
+    expect(dotOf("overview-instances")).toBeNull();
+
+    cleanup();
+    vi.stubGlobal("bombvaultApp", { postMessage: () => {}, addEventListener: () => {}, removeEventListener: () => {} });
+    await renderAt("/dashboard", instances);
+    expect(dotOf("overview-instances")).not.toBeNull();
   });
 });
 
