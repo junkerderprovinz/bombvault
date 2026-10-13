@@ -665,6 +665,32 @@ test("the emergency and the other sources open their windows", async ({ page }, 
   await expect(page.getByRole("dialog", { name: "Aus dem Appdata.Backup-Plugin übernehmen" })).toBeVisible();
 });
 
+test("the emergency stays shut on Back once Cancel or Back closed it", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  await page.goto("/dashboard");
+  await openPage(page);
+  const start = page.getByTestId("page-actions").getByRole("button", { name: "Notfall-Assistent starten" });
+
+  await start.click();
+  await expect(wizard(page)).toBeVisible();
+  await wizard(page).getByRole("button", { name: "Abbrechen" }).click();
+  await expect(wizard(page)).toBeHidden();
+  await expect(page).toHaveURL(/\/restore$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(wizard(page)).toHaveCount(0);
+
+  await openPage(page);
+  await start.click();
+  await expect(wizard(page)).toBeVisible();
+  await page.goBack();
+  await expect(wizard(page)).toBeHidden();
+  await expect(page).toHaveURL(/\/restore$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/dashboard$/);
+});
+
 test("the emergency reads a sealed recovery kit, takes its key over when told to and undoes that on the way out", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
   await stage(page);

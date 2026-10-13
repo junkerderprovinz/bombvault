@@ -42,6 +42,7 @@ import { joinsMany, leftOut, type LeftOut } from "../lib/restoreMany";
 import { findingsOf, parseEmergencyStep, parseEmergencyWay, recommend, recommendationWhy } from "../lib/restorePlan";
 import { useLongPress } from "../lib/useLongPress";
 import { useOpenAnomalies } from "../lib/useAnomalies";
+import { leaveLayers } from "../lib/useBackCloses";
 import { useEntry } from "../lib/useEntry";
 import { useTimeline } from "../lib/useTimeline";
 import { Card, hueCounter } from "./settings/shared";
@@ -360,8 +361,15 @@ export function Restore() {
       .catch(() => undefined);
   }, [emergencyOpen]);
 
-  function closeEmergency() {
-    setParams({}, { replace: true });
+  // The window's URL takes the place of the page's entry and the window holds
+  // one above it, so closing steps back over that one and clears the URL in
+  // place: the page is left with the one entry it had.
+  const openEmergency = () => setParams({ emergency: "access" }, { replace: true });
+  function closeEmergency(then?: () => void) {
+    leaveLayers(() => {
+      setParams({}, { replace: true });
+      then?.();
+    });
     window.dispatchEvent(new Event(ATTENTION_CHANGED_EVENT));
   }
 
@@ -448,12 +456,9 @@ export function Restore() {
         <EmergencyWindow
           start={emergency}
           way={parseEmergencyWay(params.get("way"))}
-          onClose={closeEmergency}
-          onPairing={() => navigate("/settings/pairing?for=emergency")}
-          onOldFolder={() => {
-            closeEmergency();
-            setSource("oldFolder");
-          }}
+          onClose={() => closeEmergency()}
+          onPairing={() => navigate("/settings/pairing?for=emergency", { replace: true })}
+          onOldFolder={() => closeEmergency(() => setSource("oldFolder"))}
         />
       )}
       {source === "oldFolder" && <OldFolderWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
@@ -584,7 +589,7 @@ export function Restore() {
             name={t("restorePage.emergencyWay")}
             sub={t("restorePage.emergencyWayKit")}
             warn
-            onOpen={() => setParams({ emergency: "access" })}
+            onOpen={openEmergency}
           />
         </Card>
         <Card title={t("restorePage.otherSources")} hueIndex={nextHue()}>
@@ -610,7 +615,7 @@ export function Restore() {
           primary
           label={t("entry.config.startRecovery")}
           glyph={<IconRecovery />}
-          onClick={() => setParams({ emergency: "access" })}
+          onClick={openEmergency}
         />
       </PageActions>
     </div>
