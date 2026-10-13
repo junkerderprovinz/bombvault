@@ -6336,6 +6336,9 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 				if errors.Is(err, backup.ErrContainerNotInstalled) {
 					skipped++                                                                   // removed container: a skip (already recorded), not a batch failure (#57)
 					log.Printf("api: backup-all: %q skipped — not installed (backups only)", n) //nolint:gosec // G706: n is %q-quoted
+				} else if errors.Is(err, ErrNoPlace) {
+					skipped++
+					log.Printf("api: backup-all: %q skipped: %v", n, err) //nolint:gosec // G706: n is %q-quoted
 				} else {
 					fail++
 					log.Printf("api: backup-all: %q failed (continuing): %v", n, err) //nolint:gosec // G706: n is %q-quoted
@@ -6598,9 +6601,12 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 		total := len(queue)
 		const key = "batch:files"
 		s.publishBatch(key, 0, true)
-		ok, fail := 0, 0
+		ok, fail, skipped := 0, 0, 0
 		for i, id := range queue {
-			if err := s.backupFileSetOneForBatch(bctx, id); err != nil {
+			if err := s.backupFileSetOneForBatch(bctx, id); errors.Is(err, ErrNoPlace) {
+				skipped++
+				log.Printf("api: backup-files-all: %q skipped: %v", id, err) //nolint:gosec // G706: id is %q-quoted
+			} else if err != nil {
 				fail++
 				log.Printf("api: backup-files-all: %q failed (continuing): %v", id, err) //nolint:gosec // G706: id is %q-quoted
 			} else {
@@ -6619,7 +6625,7 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 		s.ReplicateOffsiteAfterBulk(bctx, "files")
 		// One sample for the whole round, exactly as the container batch does.
 		s.maybeCollectStats(bctx, "files")
-		log.Printf("api: backup-files-all done: %d ok, %d failed (of %d requested %d)", ok, fail, total, len(ids))
+		log.Printf("api: backup-files-all done: %d ok, %d skipped, %d failed (of %d requested %d)", ok, skipped, fail, total, len(ids))
 	}()
 	return true, nil
 }
@@ -6715,6 +6721,9 @@ func (s *Service) StartBackupVMsAll(ctx context.Context, names []string) (bool, 
 				if errors.Is(err, backup.ErrVMNotInstalled) {
 					skipped++
 					log.Printf("api: backup-vms-all: %q skipped: not defined on the host", n) //nolint:gosec // G706: n is %q-quoted
+				} else if errors.Is(err, ErrNoPlace) {
+					skipped++
+					log.Printf("api: backup-vms-all: %q skipped: %v", n, err) //nolint:gosec // G706: n is %q-quoted
 				} else {
 					fail++
 					log.Printf("api: backup-vms-all: %q failed (continuing): %v", n, err) //nolint:gosec // G706: n is %q-quoted
