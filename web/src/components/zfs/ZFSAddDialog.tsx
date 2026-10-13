@@ -292,7 +292,7 @@ export function ZFSAddDialog({ onClose, onAdded }: { onClose: () => void; onAdde
         <InstanceWindow
           title={heading}
           hint={t("zfs.add.hint")}
-          onClose={closable ? onClose : () => undefined}
+          onClose={closable ? onClose : () => false}
           footer={
             <>
               {cancel}

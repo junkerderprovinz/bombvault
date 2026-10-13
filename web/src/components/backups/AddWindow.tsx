@@ -131,7 +131,7 @@ export function AddWindow({
   const back = <Button label={t("backups.add.other")} labelKey={null} glyph={<IconBack />} tone="subtle" onClick={() => setKind(null)} />;
   const cancel = <Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={onClose} />;
   const frame = (title: string, hint: string, body: ReactNode, footer: ReactNode, closable = true) => (
-    <InstanceWindow title={title} hint={hint} footer={footer} onClose={closable ? onClose : () => undefined}>
+    <InstanceWindow title={title} hint={hint} footer={footer} onClose={closable ? onClose : () => false}>
       {body}
     </InstanceWindow>
   );

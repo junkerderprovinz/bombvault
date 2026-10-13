@@ -36,7 +36,8 @@ export function InstanceWindow({
   picker?: boolean;
   /** The picker's search, at the top right above the tiles. */
   search?: PickerSearchProps;
-  onClose: () => void;
+  /** Returning false keeps the window open, and Back with it. */
+  onClose: () => void | boolean;
   children: ReactNode;
 }) {
   const isDesktop = useIsDesktop();

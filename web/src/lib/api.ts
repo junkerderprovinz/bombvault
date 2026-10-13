@@ -708,6 +708,9 @@ export interface AuthStatusResponse {
   minPasswordLen?: number;
   /** The page came through the relay, where nobody signs in or out. */
   relayed?: boolean;
+  /** The session is a paired phone's, through the relay or not, which some
+   *  routes refuse. */
+  paired?: boolean;
 }
 
 /** Response from POST /api/login. */
@@ -758,10 +761,16 @@ export class ApiError extends Error {
 }
 
 let throughRelay = false;
+let pairedSession = false;
 
 /** Whether this page was opened through the relay, as GET /api/auth said. */
 export function openedThroughRelay(): boolean {
   return throughRelay;
+}
+
+/** Whether this page runs on a paired phone's session, as GET /api/auth said. */
+export function openedAsPairedPhone(): boolean {
+  return pairedSession;
 }
 
 /** refusalSentence is what a person reads for a refused call: the sentence
@@ -6528,6 +6537,7 @@ export function proposeMeshOffer(
 export async function getAuth(): Promise<AuthStatusResponse> {
   const res = await fetchJSON<AuthStatusResponse>("/api/auth");
   throughRelay = res.relayed === true;
+  pairedSession = res.paired === true;
   return res;
 }
 

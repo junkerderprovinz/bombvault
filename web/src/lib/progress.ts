@@ -162,6 +162,12 @@ const dropTimers = new Map<string, ReturnType<typeof setTimeout>>();
 let source: EventSource | null = null;
 let refCount = 0;
 
+/** progressNow is a key's entry at this moment, for a loop outside React. The
+ *  map is kept only while some component subscribes through useProgress. */
+export function progressNow(key: string): ProgressState | undefined {
+  return current[key];
+}
+
 function emit(): void {
   for (const listener of listeners) listener(current);
 }
