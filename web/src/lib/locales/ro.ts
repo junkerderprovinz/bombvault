@@ -781,6 +781,7 @@ const ro: Partial<Translations> = {
   "common.expand": "Extinde",
   "common.collapse": "Restrânge",
   "common.back": "Înapoi",
+  "common.backTo": "Înapoi la {page}",
   "common.loadMore": "Încarcă mai multe",
 
   // Failure fallbacks

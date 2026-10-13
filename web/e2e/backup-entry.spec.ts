@@ -473,7 +473,7 @@ test("the head says how the entry is doing and offers its two actions", async ({
   await expect(corner(page).getByRole("button", { name: "Jetzt sichern" })).toBeVisible();
   await expect(corner(page).getByRole("button", { name: "Zeitplan pausieren" })).toBeVisible();
   // The way back is a button before the entry's glyph, in the same row.
-  const back = page.locator("#bv-main").getByRole("button", { name: "Sicherungen", exact: true });
+  const back = page.locator("#bv-main").getByRole("button", { name: "Zurück zu Sicherungen", exact: true });
   const glyph = page.locator('[data-new="entry-page"]');
   const [b, g] = [(await back.boundingBox())!, (await glyph.boundingBox())!];
   expect(b.x + b.width).toBeLessThanOrEqual(g.x);
@@ -545,7 +545,7 @@ test("the Verify tab shows the checks, the runs and the size, and opens a run in
 
   await expect(card(page, "Prüfungen").getByRole("button", { name: "Wiederherstellung prüfen" })).toBeVisible();
   await expect(card(page, "Anomalien")).toBeVisible();
-  await expect(card(page, "Größe nach Ordner").getByRole("img")).toBeVisible();
+  await expect(card(page, "Größe nach Ordner").locator('svg[role="img"]')).toBeVisible();
 
   const runs = card(page, "Letzte Läufe").getByTestId("entry-run");
   await expect(runs).toHaveCount(8);

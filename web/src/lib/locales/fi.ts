@@ -784,6 +784,7 @@ const fi: Partial<Translations> = {
   "common.expand": "Laajenna",
   "common.collapse": "Tiivistä",
   "common.back": "Takaisin",
+  "common.backTo": "Takaisin: {page}",
   "common.loadMore": "Lataa lisää",
 
   // Failure fallbacks

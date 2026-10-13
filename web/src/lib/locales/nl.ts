@@ -780,6 +780,7 @@ const nl: Partial<Translations> = {
   "common.expand": "Uitklappen",
   "common.collapse": "Inklappen",
   "common.back": "Terug",
+  "common.backTo": "Terug naar {page}",
   "common.loadMore": "Meer laden",
 
   // Failure fallbacks

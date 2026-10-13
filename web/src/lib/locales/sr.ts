@@ -1310,6 +1310,7 @@ const sr: Partial<Translations> = {
   "common.expand": "Прошири",
   "common.collapse": "Сажми",
   "common.back": "Назад",
+  "common.backTo": "Назад: {page}",
   "common.loadMore": "Учитај још",
   "common.loadingBackups": "Учитавање резервних копија…",
   "common.saving": "Чување…",

@@ -1551,6 +1551,7 @@ export const en = {
   // Mobile stacked-detail back row: a visible label, never an icon-only
   // affordance: the row reads chevron + "Back".
   "common.back": "Back",
+  "common.backTo": "Back to {page}",
   // Load-more affordance for windowed lists.
   "common.loadMore": "Load more",
   "common.loadingBackups": "Loading backups…",
@@ -6206,6 +6207,7 @@ export const de: Translations = {
   "common.expand": "Ausklappen",
   "common.collapse": "Einklappen",
   "common.back": "Zurück",
+  "common.backTo": "Zurück zu {page}",
   "common.loadMore": "Mehr laden",
   "common.loadingBackups": "Sicherungen werden geladen…",
   "common.saving": "Speichern…",

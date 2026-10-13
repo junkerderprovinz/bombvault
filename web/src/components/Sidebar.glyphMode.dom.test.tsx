@@ -116,7 +116,7 @@ describe("glyph mode names the rows in a tooltip bubble", () => {
   it("drops the wordmark and keeps the mark centred", () => {
     setLabelMode("sidebar", "glyph");
     renderSidebar();
-    const logo = screen.getByRole("button", { name: "Overview" });
+    const logo = screen.getByRole("button", { name: "BombVault, Overview" });
     expect(logo.className).toContain("items-center");
     expect(screen.queryByText("BombVault")).toBeNull();
     // Removed, not `sr-only`: the button's own aria-label is the name, so a
@@ -129,7 +129,7 @@ describe("glyph mode names the rows in a tooltip bubble", () => {
       cleanup();
       setLabelMode("sidebar", mode);
       renderSidebar();
-      const logo = screen.getByRole("button", { name: "Overview" });
+      const logo = screen.getByRole("button", { name: "BombVault, Overview" });
       expect(logo.className, mode).toContain("flex-col");
       expect(logo.lastElementChild?.textContent, mode).toBe("BombVault");
     }

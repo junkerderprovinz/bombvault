@@ -781,6 +781,7 @@ const no: Partial<Translations> = {
   "common.expand": "Utvid",
   "common.collapse": "Slå sammen",
   "common.back": "Tilbake",
+  "common.backTo": "Tilbake til {page}",
   "common.loadMore": "Last inn flere",
 
   // Failure fallbacks

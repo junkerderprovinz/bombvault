@@ -227,7 +227,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
           apart. */}
       <button
         type="button"
-        aria-label={t("nav.overview")}
+        aria-label={`BombVault, ${t("nav.overview")}`}
         {...hold.handlers}
         className={`glim-logo-btn flex flex-col items-center gap-2 ${railNarrow ? "px-2 py-4" : "px-4 py-6"}${railReactive ? " glim-reactive" : ""} w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
       >

@@ -53,7 +53,7 @@ describe("ProtectionCard", () => {
     renderCard(sections([domain(), domain({ domain: "vms" })]));
 
     for (const name of [en["nav.containers"], en["nav.vms"]]) {
-      const dots = row(name).getAllByRole("img");
+      const dots = row(name).getAllByRole("img").filter((d) => d.hasAttribute("data-check"));
       expect(dots.map((d) => d.getAttribute("data-check"))).toEqual(["local", "offsite", "lock", "drill"]);
     }
   });

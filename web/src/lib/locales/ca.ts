@@ -1315,6 +1315,7 @@ const ca: Partial<Translations> = {
   "common.expand": "Desplega",
   "common.collapse": "Replega",
   "common.back": "Enrere",
+  "common.backTo": "Torna a {page}",
   "common.loadMore": "Carrega'n més",
   "common.loadingBackups": "Carregant còpies…",
   "common.saving": "Desant…",

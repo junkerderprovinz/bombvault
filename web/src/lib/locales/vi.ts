@@ -775,6 +775,7 @@ const vi: Partial<Translations> = {
   "common.expand": "Mở rộng",
   "common.collapse": "Thu gọn",
   "common.back": "Quay lại",
+  "common.backTo": "Quay lại {page}",
   "common.loadMore": "Tải thêm",
 
   // Failure fallbacks

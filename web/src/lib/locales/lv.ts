@@ -1315,6 +1315,7 @@ const lv: Partial<Translations> = {
   "common.expand": "Izvērst",
   "common.collapse": "Sakļaut",
   "common.back": "Atpakaļ",
+  "common.backTo": "Atpakaļ: {page}",
   "common.loadMore": "Ielādēt vēl",
   "common.loadingBackups": "Ielādē rezerves kopijas…",
   "common.saving": "Saglabā…",

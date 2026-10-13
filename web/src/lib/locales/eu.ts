@@ -1315,6 +1315,7 @@ const eu: Partial<Translations> = {
   "common.expand": "Zabaldu",
   "common.collapse": "Tolestu",
   "common.back": "Atzera",
+  "common.backTo": "Itzuli: {page}",
   "common.loadMore": "Kargatu gehiago",
   "common.loadingBackups": "Babeskopiak kargatzen…",
   "common.saving": "Gordetzen…",

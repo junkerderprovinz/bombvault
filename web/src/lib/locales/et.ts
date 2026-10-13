@@ -1315,6 +1315,7 @@ const et: Partial<Translations> = {
   "common.expand": "Laienda",
   "common.collapse": "Ahenda",
   "common.back": "Tagasi",
+  "common.backTo": "Tagasi: {page}",
   "common.loadMore": "Laadi veel",
   "common.loadingBackups": "Varunduste laadimine…",
   "common.saving": "Salvestamine…",

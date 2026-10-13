@@ -269,7 +269,7 @@ describe("reading the entry", () => {
     await renderPage("/backups/container/vanished");
     expect(mocks.getBackupItem).toHaveBeenCalledWith("container", "vanished");
     expect(screen.getByText(en["entry.missing"])).toBeTruthy();
-    await press(screen.getByRole("button", { name: en["backups.title"] }));
+    await press(screen.getByRole("button", { name: en["common.backTo"].replace("{page}", en["backups.title"]) }));
     expect(screen.getByText("at /backups")).toBeTruthy();
   });
 

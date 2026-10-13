@@ -781,6 +781,7 @@ const uk: Partial<Translations> = {
   "common.expand": "Розгорнути",
   "common.collapse": "Згорнути",
   "common.back": "Назад",
+  "common.backTo": "Назад: {page}",
   "common.loadMore": "Завантажити ще",
 
   // Failure fallbacks

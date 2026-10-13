@@ -1315,6 +1315,7 @@ const lt: Partial<Translations> = {
   "common.expand": "Išskleisti",
   "common.collapse": "Suskleisti",
   "common.back": "Atgal",
+  "common.backTo": "Atgal: {page}",
   "common.loadMore": "Įkelti daugiau",
   "common.loadingBackups": "Įkeliamos atsarginės kopijos…",
   "common.saving": "Saugoma…",

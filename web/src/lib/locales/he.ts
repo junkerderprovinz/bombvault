@@ -784,6 +784,7 @@ const he: Partial<Translations> = {
   "common.expand": "הרחב",
   "common.collapse": "כווץ",
   "common.back": "חזרה",
+  "common.backTo": "חזרה אל {page}",
   "common.loadMore": "טעינת עוד",
 
   // Failure fallbacks

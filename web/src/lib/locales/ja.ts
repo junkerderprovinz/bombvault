@@ -775,6 +775,7 @@ const ja: Partial<Translations> = {
   "common.expand": "展開",
   "common.collapse": "折りたたみ",
   "common.back": "戻る",
+  "common.backTo": "{page}に戻る",
   "common.loadMore": "さらに読み込む",
 
   // Failure fallbacks

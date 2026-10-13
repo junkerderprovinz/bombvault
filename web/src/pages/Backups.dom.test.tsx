@@ -438,7 +438,7 @@ describe("a row", () => {
   it("says so when an entry has not run yet", async () => {
     serve([entry({ key: "new", lastBackup: 0, lastRunStatus: "" })]);
     await renderPage();
-    expect(within(row("new")).getByRole("img").getAttribute("aria-label")).toBe("No runs yet");
+    expect(within(row("new")).getByRole("img", { name: "No runs yet" })).toBeTruthy();
   });
 
   it("opens the page of its entry from anywhere on it", async () => {

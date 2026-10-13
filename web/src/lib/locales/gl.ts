@@ -1315,6 +1315,7 @@ const gl: Partial<Translations> = {
   "common.expand": "Despregar",
   "common.collapse": "Pregar",
   "common.back": "Atrás",
+  "common.backTo": "Volver a {page}",
   "common.loadMore": "Cargar máis",
   "common.loadingBackups": "Cargando copias…",
   "common.saving": "Gardando…",
