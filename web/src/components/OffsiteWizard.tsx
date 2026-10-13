@@ -727,7 +727,7 @@ export function OffsiteWizard({
             checked={immutable}
             onChange={(next) => void toggleImmutable(next)}
             disabled={immState === "saving"}
-            className={`mt-0.5${immShake ? " glim-shake" : ""}`}
+            className={`mt-0.5 ${immShake ? "glim-shake" : ""}`}
           />
         </div>
 

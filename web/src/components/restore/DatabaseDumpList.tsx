@@ -236,8 +236,8 @@ function DumpRow({
 
   return (
     <div
-      className={`flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0${
-        preselected ? " bg-carbon-surface2 px-2 rounded-control" : ""
+      className={`flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0 ${
+        preselected ? "bg-carbon-surface2 px-2 rounded-control" : ""
       }`}
     >
       <div className="flex items-center gap-3 text-sm flex-wrap">

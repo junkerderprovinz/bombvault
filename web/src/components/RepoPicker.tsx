@@ -79,7 +79,7 @@ export function RepoPicker({
       options={options}
       label={t("zfs.repo")}
       disabled={disabled || locked || !loaded}
-      className={`rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus text-start${row ? " w-80 max-w-full" : ""}`}
+      className={`rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus text-start ${row ? "w-80 max-w-full" : ""}`}
     />
   );
   if (row) {

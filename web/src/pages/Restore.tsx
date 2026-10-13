@@ -544,8 +544,8 @@ export function Restore() {
                 </div>
                 <ul
                   data-testid="restore-entries"
-                  className={`grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-x-2 gap-y-0.5 max-md:max-h-[312px] max-md:grid-cols-1 max-md:overflow-y-auto${
-                    selection.selecting ? " select-none" : ""
+                  className={`grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-x-2 gap-y-0.5 max-md:max-h-[312px] max-md:grid-cols-1 max-md:overflow-y-auto ${
+                    selection.selecting ? "select-none" : ""
                   }`}
                 >
                   {shown.map((item) => {

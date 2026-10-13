@@ -149,8 +149,8 @@ export function TargetScene({
       viewBox="0 0 140 60"
       aria-hidden="true"
       data-testid={`target-scene-${where}`}
-      className={`glim-pic h-[60px] w-[140px] flex-none overflow-visible max-md:h-[52px] max-md:w-[120px]${
-        playing ? " glim-clock glim-clock-quick" : " opacity-45"
+      className={`glim-pic h-[60px] w-[140px] flex-none overflow-visible max-md:h-[52px] max-md:w-[120px] ${
+        playing ? "glim-clock glim-clock-quick" : "opacity-45"
       }`}
     >
       <LogoImage x={2} y={13} size={34} />

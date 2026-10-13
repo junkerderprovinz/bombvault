@@ -52,7 +52,7 @@ function SeriesLine({ t, label, series, ltr }: { t: TranslateAnomaly; label: str
     <div className="flex flex-wrap items-baseline gap-x-3 text-xs text-carbon-textSub">
       <span
         dir={ltr ? "ltr" : undefined}
-        className={`min-w-0 text-carbon-text text-start wrap-anywhere${ltr ? " font-mono" : ""}`}
+        className={`min-w-0 text-carbon-text text-start wrap-anywhere ${ltr ? "font-mono" : ""}`}
       >
         {label}
       </span>

@@ -313,7 +313,7 @@ export function NotifyCard({
               {t("notify.webhook")}
               <input key={fieldShake.webhookUrl} value={cfg.webhookUrl} onChange={(e) => set("webhookUrl", e.target.value)} spellCheck={false}
                 placeholder="https://discord.com/api/webhooks/..." dir="ltr"
-                className={`${inputCls} ${fieldInputCls} text-start${fieldShake.webhookUrl ? " glim-shake" : ""}`} />
+                className={`${inputCls} ${fieldInputCls} text-start ${fieldShake.webhookUrl ? "glim-shake" : ""}`} />
             </label>
             <label className={fieldCls}>
               {t("notify.webhookFormat")}
@@ -353,7 +353,7 @@ export function NotifyCard({
               {t("notify.appriseUrl")}
               <input key={fieldShake.appriseUrl} value={cfg.appriseUrl} onChange={(e) => set("appriseUrl", e.target.value)} spellCheck={false}
                 placeholder="http://apprise:8000/notify/bombvault" dir="ltr"
-                className={`${inputCls} ${fieldInputCls} text-start${fieldShake.appriseUrl ? " glim-shake" : ""}`} />
+                className={`${inputCls} ${fieldInputCls} text-start ${fieldShake.appriseUrl ? "glim-shake" : ""}`} />
             </label>
             <label className={fieldCls}>
               {t("notify.appriseTags")}
@@ -378,19 +378,19 @@ export function NotifyCard({
               {t("notify.matrixHomeserver")}
               <input key={fieldShake.matrixHomeserver} value={cfg.matrixHomeserver} onChange={(e) => set("matrixHomeserver", e.target.value)} spellCheck={false}
                 placeholder="https://matrix.org" dir="ltr"
-                className={`${inputCls} ${fieldInputCls} text-start${fieldShake.matrixHomeserver ? " glim-shake" : ""}`} />
+                className={`${inputCls} ${fieldInputCls} text-start ${fieldShake.matrixHomeserver ? "glim-shake" : ""}`} />
             </label>
             <label className={fieldCls}>
               {t("notify.matrixToken")}
               <RevealInput {...revealMatrixToken} key={fieldShake.matrixToken} value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
                 placeholder={secretSet.matrix ? t("cloud.secretSet") : ""} wrapperClassName={fieldInputCls}
-                className={`${inputCls} w-full${fieldShake.matrixToken ? " glim-shake" : ""}`} />
+                className={`${inputCls} w-full ${fieldShake.matrixToken ? "glim-shake" : ""}`} />
             </label>
             <label className={fieldCls}>
               {t("notify.matrixRoom")}
               <input key={fieldShake.matrixRoom} value={cfg.matrixRoom} onChange={(e) => set("matrixRoom", e.target.value)} spellCheck={false}
                 placeholder="!abcdef:matrix.org" dir="ltr"
-                className={`${inputCls} ${fieldInputCls} text-start${fieldShake.matrixRoom ? " glim-shake" : ""}`} />
+                className={`${inputCls} ${fieldInputCls} text-start ${fieldShake.matrixRoom ? "glim-shake" : ""}`} />
             </label>
           </>
         )}
@@ -409,7 +409,7 @@ export function NotifyCard({
             <label className={fieldCls}>
               {t("notify.smtpHost")}
               <input key={fieldShake.smtpHost} value={cfg.smtpHost} onChange={(e) => set("smtpHost", e.target.value)} spellCheck={false}
-                placeholder="smtp.example.com" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start${fieldShake.smtpHost ? " glim-shake" : ""}`} />
+                placeholder="smtp.example.com" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start ${fieldShake.smtpHost ? "glim-shake" : ""}`} />
             </label>
             <label className={fieldCls}>
               {t("notify.smtpPort")}
@@ -435,23 +435,23 @@ export function NotifyCard({
             <label className={fieldCls}>
               {t("notify.smtpUser")}
               <input key={fieldShake.smtpUsername} value={cfg.smtpUsername} onChange={(e) => set("smtpUsername", e.target.value)} spellCheck={false}
-                dir="ltr" className={`${inputCls} ${fieldInputCls} text-start${fieldShake.smtpUsername ? " glim-shake" : ""}`} />
+                dir="ltr" className={`${inputCls} ${fieldInputCls} text-start ${fieldShake.smtpUsername ? "glim-shake" : ""}`} />
             </label>
             <label className={fieldCls}>
               {t("notify.smtpPass")}
               <RevealInput {...revealSmtpPassword} key={fieldShake.smtpPassword} value={cfg.smtpPassword} onChange={(e) => set("smtpPassword", e.target.value)} spellCheck={false}
                 placeholder={secretSet.smtp ? t("cloud.secretSet") : ""} wrapperClassName={fieldInputCls}
-                className={`${inputCls} w-full${fieldShake.smtpPassword ? " glim-shake" : ""}`} />
+                className={`${inputCls} w-full ${fieldShake.smtpPassword ? "glim-shake" : ""}`} />
             </label>
             <label className={fieldCls}>
               {t("notify.smtpFrom")}
               <input key={fieldShake.smtpFrom} value={cfg.smtpFrom} onChange={(e) => set("smtpFrom", e.target.value)} spellCheck={false}
-                placeholder="bombvault@example.com" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start${fieldShake.smtpFrom ? " glim-shake" : ""}`} />
+                placeholder="bombvault@example.com" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start ${fieldShake.smtpFrom ? "glim-shake" : ""}`} />
             </label>
             <label className={fieldCls}>
               {t("notify.smtpTo")}
               <input key={fieldShake.smtpTo} value={cfg.smtpTo} onChange={(e) => set("smtpTo", e.target.value)} spellCheck={false}
-                placeholder="admin@example.com" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start${fieldShake.smtpTo ? " glim-shake" : ""}`} />
+                placeholder="admin@example.com" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start ${fieldShake.smtpTo ? "glim-shake" : ""}`} />
             </label>
           </>
         )}
@@ -468,7 +468,7 @@ export function NotifyCard({
           <InfoBubble tip={t("notify.healthchecksLifecycle")} />
         </span>
         <input key={fieldShake.healthchecksUrl} value={cfg.healthchecksUrl} onChange={(e) => set("healthchecksUrl", e.target.value)} spellCheck={false}
-          placeholder="https://hc-ping.com/your-uuid" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start${fieldShake.healthchecksUrl ? " glim-shake" : ""}`} />
+          placeholder="https://hc-ping.com/your-uuid" dir="ltr" className={`${inputCls} ${fieldInputCls} text-start ${fieldShake.healthchecksUrl ? "glim-shake" : ""}`} />
       </label>
 
       {(() => {
@@ -512,7 +512,7 @@ export function NotifyCard({
                   spellCheck={false}
                   placeholder="https://hc-ping.com/your-uuid"
                   dir="ltr"
-                  className={`${inputCls} ${fieldInputCls} text-start${fieldShake[`hc-${key}`] ? " glim-shake" : ""}`}
+                  className={`${inputCls} ${fieldInputCls} text-start ${fieldShake[`hc-${key}`] ? "glim-shake" : ""}`}
                 />
               );
             }}

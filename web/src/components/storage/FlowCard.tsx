@@ -155,7 +155,7 @@ export function FlowCard({
       {!flow.ready ? (
         <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
       ) : (
-        <div key={flow.shake} className={`flex flex-col gap-3${flow.shake ? " glim-shake" : ""}`}>
+        <div key={flow.shake} className={`flex flex-col gap-3 ${flow.shake ? "glim-shake" : ""}`}>
           {graph ? (
             <>
               <FlowPicture rows={rows} locations={locations} busy={flow.busy} onToggle={flow.toggle} onPoint={setPointed} />

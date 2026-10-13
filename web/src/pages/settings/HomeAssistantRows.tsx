@@ -154,7 +154,7 @@ export function HomeAssistantRows() {
         )}
       </SettingRow>
       {form?.enabled && (
-        <div key={shake} className={`flex flex-col divide-y divide-carbon-border/60 py-3 ps-4${shake ? " glim-shake" : ""}`}>
+        <div key={shake} className={`flex flex-col divide-y divide-carbon-border/60 py-3 ps-4 ${shake ? "glim-shake" : ""}`}>
           <SettingRow label={t("ha.host")}>
             <input
               value={form.host}

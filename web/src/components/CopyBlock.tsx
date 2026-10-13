@@ -34,7 +34,7 @@ export function CopyBlock({ text }: { text: string }) {
         labelKey="common.copy"
         tone="neutral"
         onClick={() => void copy()}
-        className={`shrink-0${shake ? " glim-shake" : ""}`}
+        className={`shrink-0 ${shake ? "glim-shake" : ""}`}
       />
     </div>
   );

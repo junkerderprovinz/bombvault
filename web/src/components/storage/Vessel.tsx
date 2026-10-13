@@ -78,7 +78,7 @@ export function Vessel({
         aria-label={tip}
         aria-describedby={bubble.describedBy}
         {...bubble.handlers}
-        className={`glim-pic glim-vessel inline-flex min-w-0 max-w-full items-stretch gap-2 rounded-control text-carbon-textSub${warn ? " glim-vessel-warn" : ""}`}
+        className={`glim-pic glim-vessel inline-flex min-w-0 max-w-full items-stretch gap-2 rounded-control text-carbon-textSub ${warn ? "glim-vessel-warn" : ""}`}
       >
         <svg
           viewBox="0 0 34 40"

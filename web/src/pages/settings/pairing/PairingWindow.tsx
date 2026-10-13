@@ -57,8 +57,8 @@ export function PairingWindow({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`glim-modal-card relative flex w-full max-w-3xl flex-col gap-5 rounded-card bg-carbon-surface p-5 shadow-2xl outline-none${
-          hueIndex !== undefined ? " glim-hue" : ""
+        className={`glim-modal-card relative flex w-full max-w-3xl flex-col gap-5 rounded-card bg-carbon-surface p-5 shadow-2xl outline-none ${
+          hueIndex !== undefined ? "glim-hue" : ""
         }`}
         style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
       >

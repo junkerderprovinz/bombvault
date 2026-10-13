@@ -205,7 +205,7 @@ export function SettingsPortabilityCard({
           disabled={busy}
           busy={exporting}
           title={exporting ? t("settingsIO.exporting") : undefined}
-          className={`glim-btn-wrap self-start${shake.export ? " glim-shake" : ""}`}
+          className={`glim-btn-wrap self-start ${shake.export ? "glim-shake" : ""}`}
         />
       </div>
 
@@ -235,7 +235,7 @@ export function SettingsPortabilityCard({
           hueIndex={hueIndex}
           busy={importBusy === "reading"}
           title={importBusy === "reading" ? t("settingsIO.reading") : undefined}
-          className={`glim-btn-wrap self-start${shake.chooseFile ? " glim-shake" : ""}`}
+          className={`glim-btn-wrap self-start ${shake.chooseFile ? "glim-shake" : ""}`}
         />
 
         {/* Preview + confirmation before anything is written. */}
@@ -318,7 +318,7 @@ export function SettingsPortabilityCard({
                 tone="neutral"
                 onClick={resetImport}
                 disabled={busy}
-                className={`rounded-pill px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
+                className={`rounded-pill px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50 ${hueOn ? "glim-hue" : ""}`}
                 hueIndex={hueIndex}
               />
               <Button

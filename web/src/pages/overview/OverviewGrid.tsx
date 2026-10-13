@@ -161,7 +161,7 @@ export function OverviewGrid({
     <div
       ref={grid}
       data-testid="overview-grid"
-      className={`relative grid grid-cols-1 gap-6 md:grid-cols-6 md:gap-10${drag.held !== null ? " glim-drag-armed" : ""}`}
+      className={`relative grid grid-cols-1 gap-6 md:grid-cols-6 md:gap-10 ${drag.held !== null ? "glim-drag-armed" : ""}`}
     >
       {shown.map((card, i) => {
         const height = sizing?.id === card.id ? sizing.height : card.height;

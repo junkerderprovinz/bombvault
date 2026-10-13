@@ -189,7 +189,7 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
           not a line: no border or ring on the card. Below 400px the card
           keeps half the gutter to leave the captions more room. */}
       <div
-        className={`mt-2 ml-[max(1rem,var(--safe-area-left))] mr-[max(1rem,var(--safe-area-right))] max-[399px]:ml-[max(0.5rem,var(--safe-area-left))] max-[399px]:mr-[max(0.5rem,var(--safe-area-right))] mb-2 rounded-card bg-carbon-sidebar${quaking ? " glim-rail-quake" : ""}`}
+        className={`mt-2 ml-[max(1rem,var(--safe-area-left))] mr-[max(1rem,var(--safe-area-right))] max-[399px]:ml-[max(0.5rem,var(--safe-area-left))] max-[399px]:mr-[max(0.5rem,var(--safe-area-right))] mb-2 rounded-card bg-carbon-sidebar ${quaking ? "glim-rail-quake" : ""}`}
       >
         {/* h-14 static height: svh semantics by construction; a fixed-height
             row never resizes when the dynamic viewport does (browser chrome,

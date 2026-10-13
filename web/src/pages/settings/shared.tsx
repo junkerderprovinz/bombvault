@@ -204,7 +204,7 @@ export function ToggleRow({
   // The switch dims itself (Toggle.tsx), so only the label needs `dim`. A
   // plain <div> rather than <fieldset disabled>: around a single control a
   // fieldset only adds an unnamed group to the accessibility tree.
-  const dim = disabled ? " opacity-50" : "";
+  const dim = disabled ? "opacity-50" : "";
   const hueOn = hueIndex !== undefined;
   // shakeNonce and pulseNonce count independently, so the key combines both;
   // either alone would stop changing once the other one fired. It stays
@@ -213,7 +213,7 @@ export function ToggleRow({
   return (
     <div
       data-search-row={label}
-      className={`flex items-start justify-between gap-4${hueOn ? " glim-hue" : ""}`}
+      className={`flex items-start justify-between gap-4 ${hueOn ? "glim-hue" : ""}`}
       style={hueOn ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
       <div className="flex min-w-0 flex-col gap-0.5">
@@ -221,7 +221,7 @@ export function ToggleRow({
             bubble: a child cannot be less transparent than its parent, and
             on a disabled row the bubble is what explains why. */}
         <span className="flex items-center gap-1.5 text-sm">
-          <span className={`min-w-0 wrap-break-word text-carbon-text${dim}`}>{label}</span>
+          <span className={`min-w-0 wrap-break-word text-carbon-text ${dim}`}>{label}</span>
           {hint && <InfoBubble tip={hint} />}
         </span>
       </div>
@@ -232,7 +232,7 @@ export function ToggleRow({
         checked={checked}
         onChange={onChange}
         disabled={disabled}
-        className={`mt-0.5${shakeNonce ? " glim-shake" : pulseNonce ? " glim-confirm" : ""}`}
+        className={`mt-0.5 ${shakeNonce ? "glim-shake" : pulseNonce ? "glim-confirm" : ""}`}
       />
     </div>
   );

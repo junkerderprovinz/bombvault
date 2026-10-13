@@ -50,7 +50,7 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
           // `glim-progress-fill` is the travelling band of light (index.css,
           // behind the reduced-motion gate). It stops at 100, where a light
           // still sweeping the bar would contradict the number.
-          className={`h-full transition-[width] duration-300 ease-out${clamped < 100 ? " glim-progress-fill" : ""}`}
+          className={`h-full transition-[width] duration-300 ease-out ${clamped < 100 ? "glim-progress-fill" : ""}`}
           style={{ width: `${clamped}%`, background: "var(--accent)" }}
         />
       )}

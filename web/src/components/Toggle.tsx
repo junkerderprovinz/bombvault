@@ -22,7 +22,7 @@ export interface ToggleProps {
 // take taps from a neighbouring control.
 export function Toggle({ checked, onChange, label, hideLabel = false, disabled, className }: ToggleProps) {
   return (
-    <span className={`inline-flex items-center gap-2${className ? ` ${className}` : ""}`}>
+    <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>
       {!hideLabel && <span className="text-sm text-carbon-text">{label}</span>}
       <button
         type="button"
