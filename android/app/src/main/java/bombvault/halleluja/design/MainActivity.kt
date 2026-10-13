@@ -62,8 +62,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var loader: WebViewAssetLoader
     private lateinit var pages: RelayPages
 
-    /** The server on screen, null while the launcher is. */
-    private var current: Server? = null
+    private val screen = Screen()
+
+    /** The server on screen or on its way, null while the launcher is. */
+    private val current: Server? get() = screen.current
     private var found: List<Found> = emptyList()
 
     /** Why the last server did not open, shown once by the launcher. */
@@ -148,6 +150,8 @@ class MainActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    // Back while another server is on its way stays with the page on screen.
+                    screen.cancel() -> if (current == null) discovery.start()
                     web.canGoBack() -> web.goBack()
                     current != null -> showLauncher()
                     else -> finish()
@@ -158,7 +162,7 @@ class MainActivity : ComponentActivity() {
         val restored = savedInstanceState?.let { web.restoreState(it) } != null
         if (restored) {
             pages.shown = web.url?.let { relayMember(Uri.parse(it).host) }
-            current = web.url?.let { servers.forOrigin(originOf(it)) }
+            screen.shows(web.url?.let { servers.forOrigin(originOf(it)) })
         } else {
             showLauncher()
         }
@@ -245,7 +249,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showLauncher() {
-        current = null
+        screen.launcher()
         forgetHistory = true
         web.loadUrl(LAUNCHER_URL)
         discovery.start()
@@ -258,7 +262,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun open(server: Server) {
         discovery.stop()
-        current = server
+        screen.open(server)
         problem = null
         lifecycleScope.launch {
             val member = server.member
@@ -271,11 +275,11 @@ class MainActivity : ComponentActivity() {
                     CookieManager.getInstance().setCookie(server.url, cookie)
                     CookieManager.getInstance().flush()
                 }
-                if (current?.id == server.id) web.loadUrl(server.url)
+                if (screen.opens(server)) web.loadUrl(server.url)
                 return@launch
             }
             val relayed = member != null && withContext(Dispatchers.IO) { pairing.reaches(member) }
-            if (current?.id != server.id) return@launch
+            if (!screen.opens(server)) return@launch
             if (!relayed) {
                 fail(server, "unreachable", relay = true)
                 return@launch
@@ -517,15 +521,14 @@ class MainActivity : ComponentActivity() {
         // Every navigation passes here, Back included, so this is where the app
         // learns which page is on screen.
         override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
-            val member = relayMember(Uri.parse(url).host)
-            pages.shown = member
             if (url.startsWith(LAUNCHER_ORIGIN)) {
+                pages.shown = null
                 if (current != null) {
-                    current = null
+                    screen.launcher()
                     discovery.start()
                 }
-            } else {
-                current = servers.forOrigin(originOf(url)) ?: current
+            } else if (screen.shows(servers.forOrigin(originOf(url)))) {
+                pages.shown = relayMember(Uri.parse(url).host)
             }
         }
 

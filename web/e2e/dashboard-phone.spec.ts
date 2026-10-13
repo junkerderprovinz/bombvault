@@ -179,6 +179,7 @@ test("inside the app the name at the top is the server's own and switches to ano
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
 
   await sheet.getByTestId("instance-row").click();
-  const sent = await page.evaluate(() => (window as unknown as { appSent: unknown[] }).appSent);
-  expect(sent[sent.length - 1]).toEqual({ op: "open", id: "b" });
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { appSent: unknown[] }).appSent.slice(-1)[0]))
+    .toEqual({ op: "open", id: "b" });
 });

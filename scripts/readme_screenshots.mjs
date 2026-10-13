@@ -28,11 +28,11 @@ const docs = join(root, "docs", "assets", "screenshots");
 const [sender, receiver] = process.argv.slice(2);
 if (!sender || !receiver) throw new Error("usage: node scripts/readme_screenshots.mjs <sender url> <receiver url>");
 
-// Scrolls the card holding the given text to the top of whatever scrolls
-// around it, the page or an open window.
-async function cardToTop(tab, text) {
-  await tab
-    .getByText(text, { exact: true })
+// Scrolls the card holding the located element, or the element itself
+// outside a card, to the top of whatever scrolls around it, the page or an
+// open window.
+async function cardToTop(locator) {
+  await locator
     .first()
     .evaluate((el) => {
       const card = el.closest(".rounded-card") ?? el;
@@ -60,12 +60,12 @@ const SHOTS = [
     shown: "192.168.1.20:3443",
     accent: "#1D99F3",
     caption: "Server gone? <em>Bring it all back.</em>",
-    // A container with few snapshots keeps its rail short enough for the
-    // emergency card below it to fit.
+    // With the picker at the top, the chosen container's newest snapshot and
+    // its Restore button fit above the emergency button.
     prepare: async (tab) => {
       await tab.getByText("immich", { exact: true }).first().click();
-      await tab.mouse.move(VIEW_W / 2, VIEW_H / 2);
-      await tab.mouse.wheel(0, 4000);
+      await tab.getByText("Recommended", { exact: true }).first().waitFor();
+      await cardToTop(tab.getByPlaceholder("What do you want to bring back?"));
     },
   },
   {
@@ -75,10 +75,12 @@ const SHOTS = [
     shown: "192.168.1.20:3443",
     accent: "#6FDC8C",
     caption: "Every container, <em>every run in view</em>",
-    // The one-time tip about database dumps would push the list down.
+    // The one-time tip about database dumps would push the list down. Scrolled
+    // past the kind tiles, every container fits above the floating buttons.
     prepare: async (tab) => {
       const tip = tab.getByRole("button", { name: "Got it" });
       if (await tip.count()) await tip.first().click();
+      await cardToTop(tab.getByRole("button", { name: "Filters" }));
     },
   },
   {
@@ -102,7 +104,7 @@ const SHOTS = [
       await tab.getByRole("button", { name: "Details" }).first().click();
       await tab.getByRole("button", { name: "Details" }).nth(1).click();
       await tab.waitForFunction(() => !/Loading/.test(document.body.innerText), null, { timeout: 60000 });
-      await cardToTop(tab, "Deep check (read data)");
+      await cardToTop(tab.getByText("Deep check (read data)", { exact: true }));
     },
   },
 ];
@@ -149,6 +151,8 @@ async function page(browser, { base, path, accent, prepare }) {
   // The cards fill in from their own requests after the first paint.
   await tab.waitForTimeout(2500);
   if (prepare) await prepare(tab);
+  // The pointer of the last click would light up whatever row scrolled under it.
+  await tab.mouse.move(0, VIEW_H - 1);
   await tab.waitForFunction(() => !/Loading/.test(document.body.innerText), null, { timeout: 60000 });
   if (prepare) await tab.waitForTimeout(800);
   const png = await tab.screenshot();
