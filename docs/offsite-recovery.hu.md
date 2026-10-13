@@ -165,7 +165,7 @@ Az egyetlen hely, amely még kézzel kér APP_KEY-t, a [Régi mentési mappábó
 
 ## Példányok és szerepek {#roles}
 
-A **Példányok** oldal (egy beállítási csempe, amelyet kitűzhetsz az oldalsávra) a csoportot hálóként mutatja, hogy ki mit csinál kinek, egy kártyával ehhez a példányhoz, és egyel minden más taghoz, az Android-telefonokhoz és a ZFS-kiszolgálókhoz. A **Példány párosítása** lebeg jobb alul. Hogy mely részek vannak bekapcsolva, azt a **Beállítások, Példányok, Több szerver** alatt állítod: **Példányok**, **Fogadó** és **Lehívás**.
+A **Példányok** oldal (egy beállítási csempe, amelyet kitűzhetsz az oldalsávra) a csoportot hálóként mutatja, hogy ki mit csinál kinek, egy kártyával ehhez a példányhoz, és egyel minden más taghoz, az Android-telefonokhoz és a ZFS-kiszolgálókhoz. A **Párosítás** lebeg jobb alul. Hogy mely részek vannak bekapcsolva, azt a **Beállítások, Példányok, Több szerver** alatt állítod: **Példányok**, **Fogadó** és **Lehívás**.
 
 Minden kártya mutatja a tag védelmi állapotát és a szerepeit csempékként. A szerep olyasmi, amit egy példány egy másikért tesz:
 

@@ -165,7 +165,7 @@ APP_KEY'in hâlâ elle girildiği tek yer, öbür örneğin gittiği ve bir grup
 
 ## Örnekler ve roller {#roles}
 
-**Örnekler** sayfası (kenar çubuğuna sabitlenebilen bir ayar kutucuğu) grubu kimin kimin için ne yaptığının bir ağı olarak gösterir; bu örnek için bir kart ve diğer her üye, Android telefonları ve ZFS sunucuları için bir kart. **Örnek eşleştir** sağ altta durur. Hangi parçaların açık olduğu **Ayarlar, Örnekler, Birden çok sunucu** altında ayarlanır: **Örnekler**, **Alıcı** ve **Çekme**.
+**Örnekler** sayfası (kenar çubuğuna sabitlenebilen bir ayar kutucuğu) grubu kimin kimin için ne yaptığının bir ağı olarak gösterir; bu örnek için bir kart ve diğer her üye, Android telefonları ve ZFS sunucuları için bir kart. **Eşleştirme** sağ altta durur. Hangi parçaların açık olduğu **Ayarlar, Örnekler, Birden çok sunucu** altında ayarlanır: **Örnekler**, **Alıcı** ve **Çekme**.
 
 Her kart üyenin koruma durumunu ve rollerini kutucuklar olarak gösterir. Bir rol, bir örneğin bir diğeri için yaptığı şeydir:
 

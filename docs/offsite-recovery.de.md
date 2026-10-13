@@ -165,7 +165,7 @@ Die eine Stelle, die noch einen APP_KEY von Hand nimmt, ist [Aus einem alten Sic
 
 ## Instanzen und Rollen {#roles}
 
-Die Seite **Instanzen** (eine Einstellungskachel, die sich an die Seitenleiste heften lässt) zeigt die Gruppe als Netz, wer was für wen tut, eine Karte für diese Instanz und eine Karte für jedes andere Mitglied, die Android-Handys und die ZFS-Server. **Koppeln** schwebt unten rechts. Welche Teile an sind, legst du unter **Einstellungen, Instanzen, Mehrere Server** fest: **Instanzen**, **Empfänger** und **Holen**.
+Die Seite **Instanzen** (eine Einstellungskachel, die sich an die Seitenleiste heften lässt) zeigt die Gruppe als Netz, wer was für wen tut, eine Karte für diese Instanz und eine Karte für jedes andere Mitglied, die Android-Handys und die ZFS-Server. **Kopplung** schwebt unten rechts. Welche Teile an sind, legst du unter **Einstellungen, Instanzen, Mehrere Server** fest: **Instanzen**, **Empfänger** und **Holen**.
 
 Jede Karte zeigt den Schutzstatus des Mitglieds und seine Rollen als Kacheln. Eine Rolle ist etwas, das eine Instanz für eine andere tut:
 

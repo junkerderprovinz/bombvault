@@ -348,7 +348,7 @@ describe("the instances grid", () => {
 
   it("opens pairing in Settings from the page's own action, the one filled button", async () => {
     await renderPage();
-    const pair = within(screen.getByTestId("page-actions")).getByRole("button", { name: en["pairing.join"] });
+    const pair = within(screen.getByTestId("page-actions")).getByRole("button", { name: en["pairing.title"] });
     expect(pair.className).toContain("bg-accent");
     await click(pair);
     expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
@@ -934,8 +934,8 @@ describe("an empty group", () => {
 
   it("offers pairing once, as the page's action and not on the card", async () => {
     await renderPage();
-    expect(screen.getAllByRole("button", { name: en["pairing.join"] })).toHaveLength(1);
-    await click(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["pairing.join"] }));
+    expect(screen.getAllByRole("button", { name: en["pairing.title"] })).toHaveLength(1);
+    await click(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["pairing.title"] }));
     expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
   });
 });
