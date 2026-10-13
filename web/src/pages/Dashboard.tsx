@@ -25,6 +25,7 @@ import { runRestorePath } from "../lib/restoreRequest";
 import { tallyEntries } from "../lib/protectionTally";
 import { failedRunsNeedingAttention } from "../lib/runFailures";
 import { useAnomalySummary } from "../lib/useAnomalies";
+import { useLogoHold } from "../lib/useLogoHold";
 import { useIsDesktop } from "../lib/useMediaQuery";
 import { AnomaliesBlock } from "./overview/AnomaliesCard";
 import { OVERVIEW_CARDS, OVERVIEW_MIGRATION, PHONE_ORDER } from "./overview/cards";
@@ -62,6 +63,7 @@ function liveRunIn(runs: Run[]): Run | undefined {
 
 export function Dashboard() {
   const { t, lang } = useT();
+  const logoHold = useLogoHold();
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
   const progress = useProgress();
@@ -433,9 +435,23 @@ export function Dashboard() {
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
       <div className="flex flex-col gap-6">
-        {/* "BombVault" is the product's name and is not translated. */}
-        <div className="flex items-center gap-2 md:hidden">
-          <img src="/logo.svg" alt="" draggable={false} className="block h-6 w-6 object-contain" />
+        {/* "BombVault" is the product's name and is not translated. A held
+            finger plays the rail logo's burst. The page is already the
+            overview, so a tap has nowhere to go, and the press may neither
+            scroll, select the name nor open the image's long-press menu. */}
+        <div
+          {...logoHold.handlers}
+          className="flex w-fit touch-none select-none items-center gap-2 [-webkit-touch-callout:none] md:hidden"
+        >
+          <span className={`glim-logo-mark flex h-6 w-6 ${logoHold.markClass}`}>
+            <img
+              ref={logoHold.markRef}
+              src="/logo.svg"
+              alt=""
+              draggable={false}
+              className="glim-logo-img block h-6 w-6 object-contain"
+            />
+          </span>
           <span className="text-lg font-semibold tracking-tight text-carbon-text">BombVault</span>
         </div>
         <PageTitle>{t("nav.overview")}</PageTitle>

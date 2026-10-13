@@ -454,6 +454,21 @@
   height: var(--btn-h-key);
 }
 
+/* The actions a phone window keeps behind More, stacked like the rows of a
+   menu: each one key height and the full width, its words at the start and
+   its (i) at the end. The span is the box a hint or a disabled tip puts
+   around a button. */
+.glim-fold-stack {
+  --btn-h: var(--btn-h-key);
+}
+.glim-fold-stack .glim-btn,
+.glim-fold-stack span:has(.glim-btn) {
+  width: 100%;
+}
+.glim-fold-stack .glim-btn {
+  justify-content: flex-start;
+}
+
 /* The mark grows with the box, or a text-sized glyph in a 40px frame reads as
    a small symbol in a large button. */
 .glim-btn-key .glim-btn-glyph > svg {
@@ -2925,8 +2940,10 @@ body {
   .glim-logo-reborn .glim-logo-img {
     animation: glim-logo-reborn var(--motion-reborn-dur, 550ms) var(--motion-page-ease, ease-out) both;
   }
-  /* --rail-i counts the footer rows too (Sidebar.tsx's railVars). */
-  .glim-rail-quake .glim-nav-row {
+  /* --rail-i counts the footer rows too (Sidebar.tsx's railVars), and on a
+     phone the bar's slots from the start (BottomNav.tsx's barVars). */
+  .glim-rail-quake .glim-nav-row,
+  .glim-rail-quake .glim-bar-slot {
     animation: glim-rail-quake var(--motion-rail-dur, 560ms) ease-out;
     animation-delay: calc(var(--rail-i, 0) * var(--motion-rail-step, 70ms));
   }
@@ -3436,7 +3453,8 @@ body {
   :root[data-motion="storm"] .glim-logo-reborn .glim-logo-img {
     animation: glim-logo-reborn var(--motion-reborn-dur, 550ms) var(--motion-page-ease, ease-out) both;
   }
-  :root[data-motion="storm"] .glim-rail-quake .glim-nav-row {
+  :root[data-motion="storm"] .glim-rail-quake .glim-nav-row,
+  :root[data-motion="storm"] .glim-rail-quake .glim-bar-slot {
     animation: glim-rail-quake var(--motion-rail-dur, 560ms) ease-out;
     animation-delay: calc(var(--rail-i, 0) * var(--motion-rail-step, 70ms));
   }

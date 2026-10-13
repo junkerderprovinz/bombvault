@@ -11,7 +11,7 @@ vi.mock("./logoBurst", () => ({
   },
 }));
 
-import { BURST_AT, QUAKE_AT, REBORN_MS, useLogoHold } from "./useLogoHold";
+import { BURST_AT, QUAKE_AT, REBORN_MS, useLogoBursting, useLogoHold } from "./useLogoHold";
 
 const navigate = vi.fn();
 
@@ -209,5 +209,32 @@ describe("clicking the logo", () => {
     release();
     fireEvent.click(logo(), { detail: 0 });
     expect(navigate).toHaveBeenCalledOnce();
+  });
+});
+
+describe("the rest of the page", () => {
+  function Watcher() {
+    return <output data-testid="watcher">{useLogoBursting() ? "flying" : "still"}</output>;
+  }
+  const watcher = () => screen.getByTestId("watcher").textContent;
+
+  it("hears of the burst while the debris flies and of nothing else", () => {
+    render(<Watcher />);
+    press();
+    advance(BURST_AT - 1);
+    expect(watcher()).toBe("still");
+    advance(1);
+    expect(watcher()).toBe("flying");
+    act(() => bursts[0].done());
+    expect(watcher()).toBe("still");
+  });
+
+  it("is told the burst is over when the logo goes away mid-flight", () => {
+    render(<Watcher />);
+    press();
+    advance(BURST_AT);
+    cleanup();
+    render(<Watcher />);
+    expect(watcher()).toBe("still");
   });
 });

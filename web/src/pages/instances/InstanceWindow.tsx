@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Badge } from "../../components/Badge";
 import { InfoBubble } from "../../components/InfoBubble";
 import { BottomSheet } from "../../components/mobile/BottomSheet";
+import { SheetFoot } from "../../components/mobile/SheetFoot";
 import { PickerSearch, type PickerSearchProps } from "../../components/Picker";
 import { useBackCloses } from "../../lib/useBackCloses";
 import { hueVars } from "../../lib/appearance";
@@ -104,7 +105,7 @@ export function InstanceWindow({
         hint={hint}
         fullHeight
         headerClose={false}
-        footer={<div className="flex flex-wrap items-center justify-end gap-2 py-3">{footer}</div>}
+        footer={<SheetFoot>{footer}</SheetFoot>}
       >
         <div className="flex flex-col gap-6 pb-4 pt-1">
           {facts && <p className="text-xs text-carbon-textMuted wrap-anywhere">{facts}</p>}

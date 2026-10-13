@@ -78,6 +78,7 @@ import { useNavPins } from "../../lib/navPins";
 import { hidesLabel, labelWidth } from "../../lib/controls";
 import { hueVars } from "../../lib/appearance";
 import { useLabelMode } from "../../lib/useLabelMode";
+import { useLogoBursting } from "../../lib/useLogoHold";
 import { useTipBubble } from "../../lib/useTipBubble";
 import { IconMore } from "../navGlyphs";
 import { NavCount } from "../NavCount";
@@ -106,13 +107,20 @@ export interface BottomNavProps {
 // The press scale reads the motion-engine token, so the app's motion levels
 // govern it (--motion-press-scale is 1 at "off": no scale at all there).
 const slotBase =
-  "flex min-w-11 flex-col items-center justify-center gap-1 text-caption motion-safe:active:scale-[var(--motion-press-scale)]";
+  "glim-bar-slot flex min-w-11 flex-col items-center justify-center gap-1 text-caption motion-safe:active:scale-[var(--motion-press-scale)]";
 
 // The caption is already at the smallest size of the type scale, so when the
 // captions together are wider than the bar, a long word goes onto a second
 // line, hyphenated where the language allows it. Two lines at this leading
 // still fit under the glyph in the 56px row.
 const caption = "max-w-full text-center leading-[1.1] hyphens-auto wrap-anywhere";
+
+// barVars places a slot in the bar: its rainbow hue, and its turn and first
+// direction in the shake the overview's logo sends through the bar when it
+// goes off, the way the rail's rows take it on the desktop.
+function barVars(i: number): CSSProperties {
+  return { ...hueVars(i), "--rail-i": i, "--rail-dir": i % 2 ? -1 : 1 } as CSSProperties;
+}
 
 export function BottomNav({ settings, authEnabled, relayed = false, scrollMainToTop }: BottomNavProps) {
   const { t } = useT();
@@ -136,6 +144,7 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
   // the sidebar's rows follow (reactive mode brings the word back on hover).
   const moreTip = useTipBubble(showLabel || reactive ? undefined : t("nav.more"));
   const anomalyDot = (settings?.anomalyEnabled ?? false) && counts.anomalies.value > 0;
+  const quaking = useLogoBursting();
 
   // NavLink's onClick fires before react-router's own Link handler, and Link
   // checks event.defaultPrevented before navigating (verified against the
@@ -179,7 +188,9 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
           every page would rest on the bar card's edge. Separation is shade,
           not a line: no border or ring on the card. Below 400px the card
           keeps half the gutter to leave the captions more room. */}
-      <div className="mt-2 ml-[max(1rem,var(--safe-area-left))] mr-[max(1rem,var(--safe-area-right))] max-[399px]:ml-[max(0.5rem,var(--safe-area-left))] max-[399px]:mr-[max(0.5rem,var(--safe-area-right))] mb-2 rounded-card bg-carbon-sidebar">
+      <div
+        className={`mt-2 ml-[max(1rem,var(--safe-area-left))] mr-[max(1rem,var(--safe-area-right))] max-[399px]:ml-[max(0.5rem,var(--safe-area-left))] max-[399px]:mr-[max(0.5rem,var(--safe-area-right))] mb-2 rounded-card bg-carbon-sidebar${quaking ? " glim-rail-quake" : ""}`}
+      >
         {/* h-14 static height: svh semantics by construction; a fixed-height
             row never resizes when the dynamic viewport does (browser chrome,
             keyboard), which is the property that keeps the bar visible: static
@@ -223,7 +234,7 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
             className={`${slotBase} rounded-control ${reactive && !showLabel ? "glim-reactive" : ""} glim-hue glim-hue-icon ${moreActive ? "bg-accent text-accentContrast glim-active" : "text-carbon-textMuted"}`}
             style={
               {
-                ...(hueVars(slots.length) as CSSProperties),
+                ...barVars(slots.length),
                 ...(reactive && !showLabel ? { "--reactive-chars": labelWidth(t("nav.more")) } : {}),
               } as CSSProperties
             }
@@ -315,7 +326,7 @@ function BarSlot({
         }
         style={
           {
-            ...(hueVars(hueIndex) as CSSProperties),
+            ...barVars(hueIndex),
             ...(reactive && !showLabel ? { "--reactive-chars": labelWidth(label) } : {}),
           } as CSSProperties
         }

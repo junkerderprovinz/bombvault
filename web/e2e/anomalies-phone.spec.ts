@@ -536,6 +536,18 @@ async function closeWindow(page: Page): Promise<void> {
   await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
+// A phone's window keeps Close and its main action in the foot and the rest
+// behind Mehr, in a sheet of its own that closes again on the choice.
+async function fromMore(page: Page, name: RegExp | string): Promise<void> {
+  const window = page.getByRole("dialog");
+  await expect(window.getByRole("button", { name })).toHaveCount(0);
+  await window.getByRole("button", { name: "Mehr" }).click();
+  const more = page.getByRole("dialog", { name: "Mehr" });
+  await expect(more).toBeVisible();
+  await more.getByRole("button", { name }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(1);
+}
+
 for (const width of [320, 390]) {
   test(`anomalies @ ${width}px: every kind of finding, the rings and both windows fit`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
@@ -548,11 +560,13 @@ for (const width of [320, 390]) {
 
     await findingOf(page, NEXTCLOUD).getByRole("button", { name: "Details" }).click();
     await expect(page.getByRole("dialog").getByRole("img", { name: /Größe der Quelle je Sicherung/ })).toBeVisible();
-    await page.getByRole("dialog").getByRole("button", { name: /vergleichen/ }).click();
+    await expect(page.getByRole("dialog").getByRole("button", { name: /wiederherstellen/ })).toBeVisible();
+    await expectWindowFits(page);
+    await fromMore(page, /vergleichen/);
     await expect(page.getByRole("dialog").getByText(/Fast alles davon liegt in/)).toBeVisible();
     await expectWindowFits(page);
 
-    await page.getByRole("dialog").getByRole("button", { name: "Überwachung" }).click();
+    await fromMore(page, "Überwachung");
     await expect(page.getByRole("dialog").getByRole("radiogroup", { name: "Empfindlichkeit" })).toBeVisible();
     await expectWindowFits(page);
     await closeWindow(page);
