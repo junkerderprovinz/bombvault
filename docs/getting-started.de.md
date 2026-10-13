@@ -102,7 +102,7 @@ Die Seitenleiste hat fünf Einträge: **Übersicht**, **Anomalien** (solange die
 - **Einstellungen** sind vierzehn Kacheln: Allgemein, Aussehen, Zeitplan, Speicherorte, Wiederherstellung, Benachrichtigungen, Prüfung, Sicherheit, Instanzen, Kopplung, Anbindungen, Apps, System und Info. Mit `/` oder Strg+K durchsuchst du alle, auch nach den Namen, die Seiten in früheren Versionen hatten. Unter **Aussehen** ziehst du die Kacheln in deine eigene Reihenfolge.
 - **Speicherorte** und **Instanzen** sind Einstellungskacheln mit eigenen Seiten. **Auch in der Seitenleiste zeigen** auf ihrer Kachel heftet sie an die Seitenleiste.
 
-Nichts hat einen Speichern-Knopf und nichts klappt auf: Seltenes hat eine eigene Karte oder ein Fenster, und Erklärungen stehen in den (i)-Blasen. Nach einem Update markieren grüne Punkte, was sich geändert hat. Ein Klick blendet einen Punkt aus, und **Einstellungen, Info, Neu** listet jede Änderung mit **Hingehen**.
+Nichts hat einen Speichern-Knopf und nichts klappt auf: Seltenes hat eine eigene Karte oder ein Fenster, und Erklärungen stehen in den (i)-Blasen. Nach einem Update markieren grüne Punkte, was sich geändert hat. Ein Klick blendet einen Punkt aus, und **Neu** in der Karte Version unter **Einstellungen, Info** listet jede Änderung mit **Hingehen**.
 
 ## Aus dem Quellcode bauen {#build-from-source}
 

@@ -561,7 +561,6 @@ test("a right click opens a row's actions at the pointer", async ({ page }, test
   await expect(menu.getByRole("menuitem")).toHaveText([
     "Jetzt sichern",
     "Zeitplan pausieren",
-    "Neueste Sicherung wiederherstellen",
     "Öffnen",
     "Auswählen",
   ]);

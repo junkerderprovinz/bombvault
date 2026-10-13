@@ -102,7 +102,7 @@ Postranní panel má pět položek: **Přehled**, **Anomálie** (dokud je zapnut
 - **Nastavení** je čtrnáct dlaždic: Obecné, Vzhled, Plán, Cíle, Obnova, Oznámení, Ověření, Zabezpečení, Instance, Párování, Integrace, Aplikace, Systém a Info. Klávesa `/` nebo Ctrl+K prohledá všechny, i podle názvů, které stránky měly v dřívějších verzích. Dlaždice si přetáhni do vlastního pořadí pod **Vzhled**.
 - **Cíle** a **Instance** jsou dlaždice nastavení s vlastními stránkami. **Zobrazit také v postranním panelu** na jejich dlaždici je připne do postranního panelu.
 
-Nic nemá tlačítko Uložit a nic se nerozbaluje: vzácné věci mají vlastní kartu nebo okno a vysvětlení jsou v bublinách (i). Po aktualizaci zelené tečky označují, co se změnilo. Klepnutím tečku skryješ a **Nastavení, Info, Novinky** vypíše každou změnu s **Přejít tam**.
+Nic nemá tlačítko Uložit a nic se nerozbaluje: vzácné věci mají vlastní kartu nebo okno a vysvětlení jsou v bublinách (i). Po aktualizaci zelené tečky označují, co se změnilo. Klepnutím tečku skryješ a **Novinky** na kartě Verze v **Nastavení, Info** vypíše každou změnu s **Přejít tam**.
 
 ## Sestavení ze zdrojového kódu {#build-from-source}
 

@@ -102,7 +102,7 @@ Kenar çubuğunda beş giriş var: **Genel bakış**, **Anormallikler** (anormal
 - **Ayarlar** on dört kutucuktur: Genel, Görünüm, Zamanlama, Hedefler, Geri Yükleme, Bildirimler, Doğrulama, Güvenlik, Örnekler, Eşleştirme, Entegrasyonlar, Uygulamalar, Sistem ve Bilgi. Hepsinde aramak için `/` ya da Ctrl+K'ye bas; sayfaların önceki sürümlerdeki adlarıyla da bulunur. Kutucukları **Görünüm** altında kendi sıranda sürükle.
 - **Hedefler** ve **Örnekler**, kendi sayfaları olan ayar kutucuklarıdır. Kutucuklarındaki **Kenar çubuğunda da göster** onları kenar çubuğuna sabitler.
 
-Hiçbir şeyin Kaydet düğmesi yoktur ve hiçbir şey açılıp katlanmaz: seyrek şeylerin kendi kartı ya da penceresi vardır, açıklamalar da (i) baloncuklarında durur. Bir güncellemeden sonra yeşil noktalar nelerin değiştiğini gösterir. Bir tıklama noktayı gizler; **Ayarlar, Bilgi, Yenilikler** her değişikliği **Oraya git** ile listeler.
+Hiçbir şeyin Kaydet düğmesi yoktur ve hiçbir şey açılıp katlanmaz: seyrek şeylerin kendi kartı ya da penceresi vardır, açıklamalar da (i) baloncuklarında durur. Bir güncellemeden sonra yeşil noktalar nelerin değiştiğini gösterir. Bir tıklama noktayı gizler; **Ayarlar, Bilgi** altındaki Sürüm kartında **Yenilikler** her değişikliği **Oraya git** ile listeler.
 
 ## Kaynaktan derleme {#build-from-source}
 

@@ -335,11 +335,6 @@ export function canBackUp(item: BackupItem): boolean {
   return !isGone(item) && !item.self && !item.kindDisabled;
 }
 
-/** The kinds whose newest backup can be restored for several entries at once. */
-export function restoresInBulk(item: BackupItem): boolean {
-  return (item.kind === "container" || item.kind === "vm") && item.lastBackup > 0 && !item.kindDisabled;
-}
-
 export interface BatchPart {
   kind: EntryKind;
   keys: string[];

@@ -19,7 +19,7 @@ import { useT, type TranslationKey } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { AboutGive, GLIMSTONE_REPO, GLIMSTONE_VERSION, REPO, ReportButtons, releaseUrl } from "../AboutCard";
 import { Card, hueCounter } from "../shared";
-import { WhatsNewCard } from "../WhatsNewCard";
+import { WhatsNewButton } from "../WhatsNew";
 
 const DOCS = "https://junkerderprovinz.github.io/bombvault/";
 
@@ -162,7 +162,10 @@ export function InfoPage() {
             {tool(versions?.rclone)}
           </SettingRow>
         </Rows>
-        <UpdateButton />
+        <div className="flex flex-wrap items-end justify-end gap-2">
+          <WhatsNewButton />
+          <UpdateButton />
+        </div>
       </Card>
 
       <Card title={t("tile.info.help")} hint={t("tile.info.helpHint")} hueIndex={nextHue()}>
@@ -190,8 +193,6 @@ export function InfoPage() {
           />
         </div>
       </Card>
-
-      <WhatsNewCard hueIndex={nextHue()} />
 
       <Card title={t("about.title")} hueIndex={nextHue()}>
         <AboutGive />

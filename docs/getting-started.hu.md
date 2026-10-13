@@ -102,7 +102,7 @@ Az oldalsávnak öt eleme van: **Áttekintés**, **Anomáliák** (amíg az anom�
 - A **Beállítások** tizennégy csempe: Általános, Megjelenés, Ütemezés, Célok, Visszaállítás, Értesítések, Ellenőrzés, Biztonság, Példányok, Párosítás, Integrációk, Alkalmazások, Rendszer és Információ. A `/` vagy a Ctrl+K lenyomásával mindben kereshetsz, a korábbi verziókban használt oldalnevekre is. A csempéket a **Megjelenés** alatt húzhatod saját sorrendbe.
 - A **Célok** és a **Példányok** beállítási csempék, saját oldalakkal. A csempéjükön a **Mutatás az oldalsávban is** kitűzi őket az oldalsávra.
 
-Semminek nincs Mentés gombja, és semmi sem hajlik szét: a ritka dolgoknak saját kártyájuk vagy ablakuk van, a magyarázatok pedig az (i) buborékokban vannak. Frissítés után zöld pontok jelzik, mi változott. Egy kattintás elrejti a pontot, a **Beállítások, Információ, Újdonságok** pedig minden változást felsorol az **Ugrás oda** gombbal.
+Semminek nincs Mentés gombja, és semmi sem hajlik szét: a ritka dolgoknak saját kártyájuk vagy ablakuk van, a magyarázatok pedig az (i) buborékokban vannak. Frissítés után zöld pontok jelzik, mi változott. Egy kattintás elrejti a pontot, a **Beállítások, Információ** alatti Verzió kártyán az **Újdonságok** gomb pedig minden változást felsorol az **Ugrás oda** gombbal.
 
 ## Fordítás forráskódból {#build-from-source}
 

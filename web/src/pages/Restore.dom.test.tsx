@@ -13,7 +13,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { AnomalyView } from "../lib/api";
 import { I18nProvider, countText, en } from "../lib/i18n";
 import type { ProgressMap } from "../lib/progress";
-import { BOX, IMMICH, backupRun, serveEntries, timelineOf } from "./backupEntry.testsupport";
+import { BOX, IMMICH, PHOTOS, backupRun, serveEntries, timelineOf } from "./backupEntry.testsupport";
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -34,11 +34,19 @@ vi.mock("../lib/api", async (importOriginal) => {
     cancelRestore: vi.fn(),
     listDbDumps: vi.fn(),
     getVMSSH: vi.fn(async () => ({ ok: false })),
+    restore: vi.fn(),
+    restoreVM: vi.fn(),
+    restoreFileSet: vi.fn(),
     getRclone: vi.fn(async () => ({ ok: false })),
   };
 });
 
 vi.mock("../lib/toast", () => ({ useToast: () => ({ push: () => {} }) }));
+
+vi.mock("../lib/backupWatch", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/backupWatch")>()),
+  fireAndWaitRun: vi.fn(),
+}));
 
 let openFindings: AnomalyView[] = [];
 vi.mock("../lib/useAnomalies", () => ({
@@ -65,6 +73,7 @@ const mocks = {
 const getTimeline = vi.mocked(api.getTimeline);
 const getTimelinePlace = vi.mocked(api.getTimelinePlace);
 const cancelRestore = vi.mocked(api.cancelRestore);
+const fireAndWaitRun = vi.mocked((await import("../lib/backupWatch")).fireAndWaitRun);
 
 const { Restore } = await import("./Restore");
 
@@ -394,5 +403,89 @@ describe("the other sources", () => {
   it("do not offer another instance through the group, which the server cannot reach yet", async () => {
     await renderPage();
     expect(screen.queryByText(/another BombVault instance/i)).toBeNull();
+  });
+});
+
+describe("restoring several entries", () => {
+  const mark = (name: string) => entries().getByRole("checkbox", { name: en["common.selectItem"].replace("{name}", name) });
+  const many = () => screen.getByRole("dialog", { name: /^Restore \d+ entr/ });
+  const lines = () => within(many()).getAllByTestId("restore-many-entry");
+
+  beforeEach(() => {
+    fireAndWaitRun.mockImplementation(async ({ start }) => {
+      const res = await start();
+      return res.ok ? { ok: true } : { ok: false, error: res.error };
+    });
+    vi.mocked(api.restore).mockResolvedValue({ ok: true, started: true });
+    vi.mocked(api.restoreVM).mockResolvedValue({ ok: true, started: true });
+    vi.mocked(api.restoreFileSet).mockResolvedValue({ ok: true, started: true });
+  });
+
+  it("picks entries with Ctrl+click like the Backups list, and leaves ZFS to its own window", async () => {
+    await renderPage();
+    await act(async () => {
+      fireEvent.click(entry("immich"), { ctrlKey: true });
+    });
+    await act(async () => {
+      fireEvent.click(entry("Windows 11"), { ctrlKey: true });
+    });
+    expect(within(screen.getByTestId("bulk-bar")).getByText("2 selected")).toBeTruthy();
+    expect(mark("immich").getAttribute("aria-checked")).toBe("true");
+    expect(railRows()).toHaveLength(0);
+    expect(entry("tank/appdata").disabled).toBe(true);
+    expect(entries().getByLabelText(en["restoreMany.leftOut.zfs"])).toBeTruthy();
+  });
+
+  it("restores each one next to its original by default, one after the other", async () => {
+    await renderPage();
+    await press(screen.getByRole("button", { name: new RegExp(`^${en["backups.select"]}`) }));
+    await press(mark("immich"));
+    await press(mark("Windows 11"));
+    await press(mark("Photos"));
+    await press(within(screen.getByTestId("bulk-bar")).getByRole("button", { name: en["snapshots.restore"] }));
+    expect(lines()).toHaveLength(3);
+    expect(within(many()).getByRole("radio", { name: new RegExp(en["restoreWindow.beside"]) }).getAttribute("aria-checked")).toBe("true");
+
+    await press(within(many()).getByRole("button", { name: `${en["snapshots.restore"]} · 3` }));
+    await waitFor(() => expect(lines().every((line) => line.dataset.outcome === "done")).toBe(true));
+    const snapshot = RUNS[0].snapshotId;
+    expect(api.restore).toHaveBeenCalledWith("immich", snapshot, true, "local", false, false, { target: "beside" });
+    expect(api.restoreVM).toHaveBeenCalledWith("win11", snapshot, true, "local", false, { target: "beside" });
+    expect(api.restoreFileSet).toHaveBeenCalledWith(PHOTOS.key, snapshot, true, "", "local", { target: "beside" });
+    expect(fireAndWaitRun.mock.calls.map(([call]) => call.kind)).toEqual(["restore", "restore", "restore"]);
+  });
+
+  it("asks before it replaces the originals, backs them up first, and creates a gone container again", async () => {
+    await renderPage();
+    await press(screen.getByRole("button", { name: new RegExp(`^${en["backups.select"]}`) }));
+    await press(mark("immich"));
+    await press(mark("pihole"));
+    await press(within(screen.getByTestId("bulk-bar")).getByRole("button", { name: en["snapshots.restore"] }));
+    await press(within(many()).getByRole("radio", { name: new RegExp(en["restoreWindow.replace"]) }));
+    await press(within(many()).getByRole("button", { name: `${en["snapshots.restore"]} · 2` }));
+    expect(api.restore).not.toHaveBeenCalled();
+    await press(within(screen.getAllByRole("dialog").at(-1)!).getByRole("button", { name: en["snapshots.restore"] }));
+    await waitFor(() => expect(api.restore).toHaveBeenCalledTimes(2));
+    const snapshot = RUNS[0].snapshotId;
+    expect(api.restore).toHaveBeenCalledWith("immich", snapshot, true, "local", false, false, { backupFirst: true });
+    expect(api.restore).toHaveBeenCalledWith("pihole", snapshot, true, "local", false, false, {});
+  });
+
+  it("leaves out an entry without a backup from the moment picked for all", async () => {
+    getTimeline.mockImplementation(async (domain) => timelineOf(domain === "vms" ? RUNS.slice(0, 1) : RUNS));
+    await renderPage();
+    await press(screen.getByRole("button", { name: new RegExp(`^${en["backups.select"]}`) }));
+    await press(mark("immich"));
+    await press(mark("Windows 11"));
+    await press(within(screen.getByTestId("bulk-bar")).getByRole("button", { name: en["snapshots.restore"] }));
+    await press(within(many()).getByRole("tab", { name: en["restoreMany.at"] }));
+    await press(within(many()).getByRole("combobox", { name: en["restoreMany.atLabel"] }));
+    const options = screen.getAllByRole("option");
+    await press(options[options.length - 1]);
+    expect(within(lines()[1]).getByText(en["restoreMany.noneBefore"])).toBeTruthy();
+    await press(within(many()).getByRole("button", { name: `${en["snapshots.restore"]} · 1` }));
+    await waitFor(() => expect(lines()[1].dataset.outcome).toBe("skipped"));
+    expect(api.restore).toHaveBeenCalledWith("immich", RUNS[2].snapshotId, true, "local", false, false, { target: "beside" });
+    expect(api.restoreVM).not.toHaveBeenCalled();
   });
 });

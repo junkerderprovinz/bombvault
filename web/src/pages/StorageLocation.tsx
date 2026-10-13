@@ -3,12 +3,13 @@
 // four kinds of object, and a card shows only where its object has something
 // to say.
 import { useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { ActionMenu, type MenuAction } from "../components/backups/ActionMenu";
+import { BackButton } from "../components/BackButton";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
-import { IconBack, IconForward } from "../components/glyphs";
+import { IconForward } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconMore, IconPencil, IconTrash } from "../components/navGlyphs";
 import { PageTitle } from "../components/PageTitle";
@@ -61,17 +62,9 @@ function connectionProbe(location: StorageLocation): Probe | null {
   return null;
 }
 
-function Crumb() {
+function Back() {
   const { t } = useT();
-  return (
-    <Link
-      to="/storage"
-      className="inline-flex items-center gap-1.5 self-start rounded-control text-sm text-carbon-textSub hover:text-carbon-text"
-    >
-      <IconBack />
-      {t("storage.title")}
-    </Link>
-  );
+  return <BackButton to="/storage" label={t("storage.title")} />;
 }
 
 function Location({ location, records }: { location: StorageLocation; records: LocationRecords }) {
@@ -117,9 +110,11 @@ function Location({ location, records }: { location: StorageLocation; records: L
     <>
       <PageTitle>{location.name}</PageTitle>
       <div className="flex flex-col gap-4">
-        <Crumb />
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-          <LocationMark location={location} size="head" />
+          <span className="flex flex-none items-center gap-2">
+            <Back />
+            <LocationMark location={location} size="head" />
+          </span>
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="truncate text-status font-semibold text-carbon-text">{location.name}</span>
             <span className="flex flex-wrap items-center gap-x-1.5 text-sm text-carbon-textMuted">
@@ -189,7 +184,7 @@ function LocationView({ id }: { id: string }) {
   return (
     <>
       <PageTitle>{t("storage.title")}</PageTitle>
-      <Crumb />
+      <Back />
       {status === "missing" ? (
         <p className="text-sm text-carbon-textSub">{t("storage.gone")}</p>
       ) : status === "failed" ? (

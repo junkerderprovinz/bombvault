@@ -1,5 +1,5 @@
-// What the Backups list does with several entries at once: back them up, take
-// them out of the schedule or back into it, and restore their newest backup.
+// What the Backups list does with several entries at once: back them up, and
+// take them out of the schedule or back into it.
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -11,24 +11,13 @@ import {
   backupVMsAll,
   backupZFSAll,
   cancelBackup as cancelRunning,
-  restore,
-  restoreVM,
   type BackupItem,
   type OkEnvelope,
 } from "../../lib/api";
 import { ENTRY_KIND, type EntryKind } from "../../lib/backupEntry";
-import {
-  batchParts,
-  canBackUp,
-  itemProgressKey,
-  restoresInBulk,
-  runsNow,
-  type BatchPart,
-} from "../../lib/backupList";
-import { fireAndWaitRun } from "../../lib/backupWatch";
+import { batchParts, canBackUp, itemProgressKey, runsNow, type BatchPart } from "../../lib/backupList";
 import type { TranslationKey } from "../../lib/i18n";
 import type { ProgressState } from "../../lib/progress";
-import { isRuntimeRefusal } from "../../lib/runReason";
 import type { ConfirmOptions } from "../../lib/useConfirm";
 
 type T = (key: TranslationKey, n?: number) => string;
@@ -75,15 +64,11 @@ export interface BulkActions {
   /** An action started here has not returned yet. */
   busy: boolean;
   batch: BatchProgress | null;
-  /** The containers the last restore could not recreate for a GPU or runtime
-   *  this host lacks. */
-  runtimeRefused: string[];
   backUp: (items: BackupItem[]) => Promise<void>;
   /** Starts the backup of one entry, which reports on its own row. */
   backUpOne: (item: BackupItem) => Promise<void>;
   cancelBackup: (item: BackupItem, name: string) => Promise<void>;
   setIncluded: (items: BackupItem[], include: boolean, nameOf: (item: BackupItem) => string) => Promise<void>;
-  restoreNewest: (items: BackupItem[]) => Promise<void>;
 }
 
 export function useBulkActions({
@@ -104,8 +89,6 @@ export function useBulkActions({
   // the last of them that has reported, -1 before the first does. The plan
   // ends when one has reported and none does any more.
   const [plan, setPlan] = useState<{ parts: BatchPart[]; seen: number } | null>(null);
-  const [restoring, setRestoring] = useState<{ done: number; of: number } | null>(null);
-  const [runtimeRefused, setRuntimeRefused] = useState<string[]>([]);
   const gone = useRef(false);
   useEffect(
     () => () => {
@@ -225,52 +208,8 @@ export function useBulkActions({
     await reload();
   }
 
-  // Restores share the server's one slot, so each waits for the run of the
-  // one before it.
-  async function restoreNewest(items: BackupItem[]) {
-    const fit = items.filter(restoresInBulk);
-    if (fit.length === 0) return;
-    const containers = fit.some((item) => item.kind === "container");
-    const vms = fit.some((item) => item.kind === "vm");
-    const question = !containers
-      ? t("vms.restoreSelectedConfirm")
-      : vms
-        ? `${t("backups.restore.confirm")} ${t("backups.restore.alsoVMs")}`
-        : t("backups.restore.confirm");
-    if (!(await confirm(question, { confirmKey: "snapshots.restore" }))) return;
-
-    setBusy(true);
-    setRuntimeRefused([]);
-    setRestoring({ done: 0, of: fit.length });
-    let ok = 0;
-    const refused: string[] = [];
-    for (const [i, item] of fit.entries()) {
-      const res = await fireAndWaitRun({
-        kind: "restore",
-        matchRun: (run) => run.domain === item.kind && run.target === item.key,
-        start: () => (item.kind === "vm" ? restoreVM(item.key, "latest", true) : restore(item.key, "latest", true)),
-        t,
-      });
-      if (gone.current) return;
-      if (res.ok) ok++;
-      else if (isRuntimeRefusal(res.error)) refused.push(item.key);
-      setRestoring({ done: i + 1, of: fit.length });
-    }
-    setBusy(false);
-    setRestoring(null);
-    setRuntimeRefused(refused);
-    const failed = fit.length - ok;
-    push(
-      t("containers.bulkResult").replace("{ok}", String(ok)).replace("{fail}", String(failed)),
-      failed > 0 ? "warn" : "success"
-    );
-    await reload();
-  }
-
   let batch: BatchProgress | null = null;
-  if (restoring) {
-    batch = { label: t("backups.restore.running"), done: restoring.done, of: restoring.of };
-  } else if (plan && (liveAt >= 0 || busy)) {
+  if (plan && (liveAt >= 0 || busy)) {
     // Between two kinds, the ones that have reported are done.
     const sizes = plan.parts.map((part) => part.keys.length);
     const of = sizes.reduce((sum, n) => sum + n, 0);
@@ -281,5 +220,5 @@ export function useBulkActions({
     batch = { label: t("backups.batch.running"), percent: progress[liveBatch].percent };
   }
 
-  return { busy, batch, runtimeRefused, backUp, backUpOne, cancelBackup, setIncluded, restoreNewest };
+  return { busy, batch, backUp, backUpOne, cancelBackup, setIncluded };
 }

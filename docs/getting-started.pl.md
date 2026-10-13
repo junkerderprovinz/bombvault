@@ -102,7 +102,7 @@ Pasek boczny ma pięć pozycji: **Przegląd**, **Anomalie** (gdy wykrywanie anom
 - **Ustawienia** to czternaście kafelków: Ogólne, Wygląd, Harmonogram, Miejsca docelowe, Przywracanie, Powiadomienia, Weryfikacja, Bezpieczeństwo, Instancje, Parowanie, Integracje, Aplikacje, System i Info. Naciśnij `/` lub Ctrl+K, aby przeszukać je wszystkie, także po nazwach, które strony miały we wcześniejszych wersjach. Przeciągnij kafelki w swoją kolejność w **Wygląd**.
 - **Miejsca docelowe** i **Instancje** to kafelki ustawień z własnymi stronami. **Pokaż także na pasku bocznym** na ich kafelku przypina je do paska bocznego.
 
-Nic nie ma przycisku Zapisz i nic się nie rozwija: rzadkie rzeczy mają własną kartę albo okno, a wyjaśnienia są w dymkach (i). Po aktualizacji zielone kropki oznaczają, co się zmieniło. Kliknięcie ukrywa kropkę, a **Ustawienia, Info, Nowości** wymienia każdą zmianę z **Przejdź tam**.
+Nic nie ma przycisku Zapisz i nic się nie rozwija: rzadkie rzeczy mają własną kartę albo okno, a wyjaśnienia są w dymkach (i). Po aktualizacji zielone kropki oznaczają, co się zmieniło. Kliknięcie ukrywa kropkę, a **Nowości** na karcie Wersja w **Ustawienia, Info** wymienia każdą zmianę z **Przejdź tam**.
 
 ## Budowanie ze źródeł {#build-from-source}
 

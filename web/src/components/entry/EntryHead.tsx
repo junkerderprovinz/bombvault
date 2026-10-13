@@ -111,6 +111,7 @@ function AnomalyState({ anomaly, enabled }: { anomaly?: AnomalyItem; enabled: bo
  * backup or restore of the entry runs, the state gives way to the run.
  */
 export function EntryHead({
+  back,
   entry,
   name,
   progress,
@@ -118,6 +119,8 @@ export function EntryHead({
   anomalyEnabled,
   actions,
 }: {
+  /** The way back to the list, before the glyph. */
+  back: ReactNode;
   entry: Entry;
   name: string;
   progress: ProgressState | undefined;
@@ -139,8 +142,11 @@ export function EntryHead({
       style={hueVars(kindHue(item.kind)) as CSSProperties}
       className={`glim-hue flex flex-wrap items-center gap-x-4 gap-y-3 ${running ? "glim-active" : ""}`}
     >
-      <span data-new="entry-page" className="glim-row-glyph flex h-10 w-10 flex-none items-center justify-center rounded-control bg-carbon-surface2 [&_svg]:h-5 [&_svg]:w-5">
-        <KindGlyph kind={item.kind} />
+      <span className="flex flex-none items-center gap-2">
+        {back}
+        <span data-new="entry-page" className="glim-row-glyph flex h-10 w-10 flex-none items-center justify-center rounded-control bg-carbon-surface2 [&_svg]:h-5 [&_svg]:w-5">
+          <KindGlyph kind={item.kind} />
+        </span>
       </span>
       <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5">
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">

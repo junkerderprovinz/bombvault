@@ -18,7 +18,7 @@ import { STORAGE_BOX, stageStorage } from "./storage";
 // Set to a folder to keep pictures of the dots.
 const SHOTS = process.env.WHATS_NEW_SHOTS;
 
-const VERSION_NEWS = "Info holds Version, Help and About. Version lists BombVault, GlimStone, restic and rclone.";
+const VERSION_NEWS = "Info holds Version, Help and About. Version lists BombVault, GlimStone, restic and rclone, and its New button opens the list of changes.";
 const WEEK_NEWS = "The week as a band, with every planned run from Monday to Sunday.";
 const HEAD_NEWS = "Green dots mark what is new.";
 const DECLINE_NEWS = "Don't back up takes an entry off this list";
@@ -98,6 +98,21 @@ async function picture(page: Page, name: string): Promise<void> {
 }
 const markAll = (page: Page, n: number) => page.getByRole("button", { name: `Mark all as seen · ${n}` });
 const showAll = (page: Page, n: number) => page.getByRole("button", { name: `Show all again · ${n}` });
+const newButton = (page: Page, n?: number) =>
+  page.locator("#bv-main").getByRole("button", { name: n === undefined ? /^New( · \d+)?$/ : n > 0 ? `New · ${n}` : "New", exact: true });
+const list = (page: Page) => page.getByRole("dialog", { name: "New in 10.0.0" });
+
+/** Opens the list of changes from the Version card. */
+async function openList(page: Page, n?: number): Promise<Locator> {
+  await newButton(page, n).click();
+  await expect(list(page)).toBeVisible();
+  return list(page);
+}
+
+async function closeList(page: Page): Promise<void> {
+  await list(page).getByRole("button", { name: "Close" }).click();
+  await expect(list(page)).toHaveCount(0);
+}
 const wayTo = (page: Page, news: string) => page.locator(`[data-new-dot="way"][aria-label*="${news}"]`);
 
 /** Expects a dot on the top corner at the end of what it marks. */
@@ -143,28 +158,43 @@ test("a dot leads from the navigation over the settings tile to the change, and 
   await expect(dot).toHaveAttribute("aria-label", VERSION_NEWS);
   await expect(fromTile).toHaveCount(0);
 
+  // The Version card's button counts what is left and opens the list.
+  await openList(page);
   const all = await page.locator("[data-change]").count();
   await expect(markAll(page, all)).toBeVisible();
   const line = page.locator('[data-change="settings-version"]');
   await expect(line).not.toHaveAttribute("data-seen", "true");
+  await closeList(page);
+  await expect(newButton(page, all)).toBeVisible();
 
   await dot.click();
   await expect(dot).toHaveCount(0);
+  await expect(newButton(page, all - 1)).toBeVisible();
+  await openList(page, all - 1);
   await expect(markAll(page, all - 1)).toBeVisible();
   await expect(line).toHaveAttribute("data-seen", "true");
+  await closeList(page);
 
   await page.reload();
-  await expect(markAll(page, all - 1)).toBeVisible();
+  await expect(newButton(page, all - 1)).toBeVisible();
   await expect(dot).toHaveCount(0);
   // Nothing leads to the change any more, and the navigation still leads to the rest.
   await expect(wayTo(page, WEEK_NEWS).first()).toBeVisible();
   await expect(wayTo(page, VERSION_NEWS)).toHaveCount(0);
 
+  await openList(page, all - 1);
   await markAll(page, all - 1).click();
+  await expect(showAll(page, all)).toBeVisible();
+  await closeList(page);
   await expect(dots(page)).toHaveCount(0);
+  await expect(newButton(page, 0)).toBeVisible();
 
+  await openList(page, 0);
   await showAll(page, all).click();
   await expect(markAll(page, all)).toBeVisible();
+  // A change's Go there closes the list on the way.
+  await line.getByRole("button", { name: "Go there" }).click();
+  await expect(list(page)).toHaveCount(0);
   // A dot shows while its element is in view.
   await card.scrollIntoViewIfNeeded();
   await expectOn(dot, card);
@@ -186,9 +216,10 @@ test("nothing is marked for a browser that saw no older release", async ({ page 
   test.skip(testInfo.project.name !== "desktop-1280", "what decides it is the same at every width");
   await stage(page, { from: "" });
   await page.goto("/settings/info");
-  await expect(page.getByRole("button", { name: /^Show all again · \d+$/ })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(dots(page)).toHaveCount(0);
+  await openList(page, 0);
+  await expect(page.getByRole("button", { name: /^Show all again · \d+$/ })).toBeVisible();
 });
 
 test("nothing is marked during the first start, though the browser saw an older release", async ({ page }, testInfo) => {
@@ -198,9 +229,9 @@ test("nothing is marked during the first start, though the browser saw an older 
   await expect(page.getByRole("button", { name: "Restore from a backup" })).toBeVisible();
   await expect(dots(page)).toHaveCount(0);
   await page.goto("/settings/info");
-  await expect(page.getByRole("button", { name: /^Mark all as seen · \d+$/ })).toBeVisible();
   await expect(page.locator('[data-new="settings-version"]')).toBeVisible();
   await expect(dots(page)).toHaveCount(0);
+  await expect(newButton(page)).toHaveText(/^New · \d+$/);
 });
 
 test("the dots lead from the navigation over a backup's button into the restore window", async ({ page }, testInfo) => {
@@ -216,7 +247,7 @@ test("the dots lead from the navigation over a backup's button into the restore 
   const fromNavigation = page.locator(`[data-new-dot="way"][aria-label*="${TILES_NEWS}"][aria-label*="${WHERE_NEWS}"]`);
   await expectOn(fromNavigation, restore);
   // One change to a line.
-  expect((await fromNavigation.getAttribute("aria-label"))!.split("\n")).toHaveLength(4);
+  expect((await fromNavigation.getAttribute("aria-label"))!.split("\n")).toHaveLength(5);
   await fromNavigation.hover();
   await picture(page, `way-bubble-${testInfo.project.name}`);
 
@@ -224,6 +255,8 @@ test("the dots lead from the navigation over a backup's button into the restore 
   await expect(page).toHaveURL(/\/restore$/);
   await expectOn(dotOf(page, "restore-tiles"), marked(page, "restore-tiles"));
   await expect(fromNavigation).toHaveCount(0);
+  // Picking several entries starts at the button beside the search.
+  await expectOn(dotOf(page, "restore-many"), marked(page, "restore-many"));
 
   const button = page.locator('[data-new-way="restore-window"]');
   await button.scrollIntoViewIfNeeded();
@@ -304,6 +337,7 @@ test("a change its page has nothing for is no longer promised, and is back when 
   await expect(toOverview).not.toHaveAttribute("aria-label", new RegExp(DECLINE_NEWS));
 
   await page.goto("/settings/info");
+  await openList(page);
   const line = page.locator('[data-change="overview-decline"]');
   await expect(line).toHaveAttribute("data-absent", "true");
   await expect(line).toContainText("Not on its page at the moment");

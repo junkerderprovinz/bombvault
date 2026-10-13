@@ -2,8 +2,9 @@
 // is doing, and under three tabs its backups, its settings and the checks
 // that say whether the backups are any good.
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
+import { BackButton } from "../components/BackButton";
 import { entryName } from "../components/backups/kinds";
 import { Button } from "../components/Button";
 import type { OpenBackup } from "../components/entry/BackupList";
@@ -14,7 +15,6 @@ import { KindHead } from "../components/entry/KindHead";
 import { Note } from "../components/entry/Note";
 import { SettingsTab } from "../components/entry/SettingsTab";
 import { VerifyTab } from "../components/entry/VerifyTab";
-import { IconBack } from "../components/glyphs";
 import { IconDatabase, IconGear, IconTabIntegrity } from "../components/navGlyphs";
 import { PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
@@ -47,17 +47,9 @@ const TAB_GLYPH: Record<EntryTab, () => React.ReactNode> = {
   verify: IconTabIntegrity,
 };
 
-function Crumb() {
+function Back() {
   const { t } = useT();
-  return (
-    <Link
-      to={ENTRY_LIST_PATH}
-      className="inline-flex items-center gap-1.5 self-start rounded-control text-sm text-carbon-textSub hover:text-carbon-text"
-    >
-      <IconBack />
-      {t("backups.title")}
-    </Link>
-  );
+  return <BackButton to={ENTRY_LIST_PATH} label={t("backups.title")} />;
 }
 
 /** The look-alike a rename leaves behind, offered for takeover. Containers
@@ -153,8 +145,8 @@ function Loaded({
     <>
       <PageTitle>{name}</PageTitle>
       <div className="flex flex-col gap-3">
-        <Crumb />
         <EntryHead
+          back={<Back />}
           entry={entry}
           name={name}
           progress={progress}
@@ -267,7 +259,7 @@ function EntryView({ kind, entryKey }: { kind: EntryKind; entryKey: string }) {
   return (
     <>
       <PageTitle>{t("backups.title")}</PageTitle>
-      <Crumb />
+      <Back />
       {status === "missing" ? (
         <p className="text-sm text-carbon-textSub">{t("entry.missing")}</p>
       ) : status === "failed" ? (
@@ -294,7 +286,7 @@ export function BackupEntryPage() {
       ) : (
         <>
           <PageTitle>{t("backups.title")}</PageTitle>
-          <Crumb />
+          <Back />
           <p className="text-sm text-carbon-textSub">{t("entry.missing")}</p>
         </>
       )}

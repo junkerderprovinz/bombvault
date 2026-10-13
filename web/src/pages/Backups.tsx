@@ -8,11 +8,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ActionMenu, type MenuAction, type MenuPlace } from "../components/backups/ActionMenu";
 import { AddWindow } from "../components/backups/AddWindow";
 import { BackupRow, LIST_SPAN, SelfRow, listColumns } from "../components/backups/BackupRow";
-import { BulkBar } from "../components/backups/BulkBar";
+import { BarButton, BulkBar } from "../components/backups/BulkBar";
 import { KIND_LABEL, KIND_SCHEDULE_LABEL, entryName, tileLabel } from "../components/backups/kinds";
 import { KindTiles } from "../components/backups/KindTiles";
 import { ListBar } from "../components/backups/ListBar";
-import { BatchNote, DumpIntro, ListNote, ZFSDownNote } from "../components/backups/ListNotes";
+import { BatchNote, DumpIntro, ZFSDownNote } from "../components/backups/ListNotes";
 import { StacksCard, StackWindow } from "../components/backups/StackWindow";
 import { useBulkActions } from "../components/backups/useBulkActions";
 import { useRowSelection } from "../components/backups/useRowSelection";
@@ -26,7 +26,6 @@ import { InfoBubble } from "../components/InfoBubble";
 import { IconAdd, IconBackupNow, IconClose, IconMore, IconRestore, IconSchedules, IconZFS } from "../components/navGlyphs";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
-import { RuntimeRetry } from "../components/restore/RuntimeRetry";
 import { zfsReaches } from "../components/zfs/ZFSConnectionCard";
 import { Card } from "./settings/shared";
 import {
@@ -57,7 +56,6 @@ import {
   listedItems,
   loadListView,
   parseTile,
-  restoresInBulk,
   runStrip,
   runsNow,
   saveListView,
@@ -335,9 +333,6 @@ export function Backups() {
           : { id: "resume", label: t("schedule.resume"), glyph: <IconSchedules />, onSelect: () => void actions.setIncluded([item], true, nameOf) }
       );
     }
-    if (restoresInBulk(item)) {
-      list.push({ id: "restore", label: t("backups.restoreNewest"), glyph: <IconRestore />, onSelect: () => void actions.restoreNewest([item]) });
-    }
     list.push(
       { id: "open", label: t("instances.open"), glyph: <IconEye />, onSelect: () => navigate(entryTarget(item)) },
       { id: "select", label: t("backups.select"), glyph: <IconSelectAll />, onSelect: () => selection.set(id, true) }
@@ -415,30 +410,28 @@ export function Backups() {
 
           {!introDismissed && databases.length > 0 && <DumpIntro databases={databases} onDismiss={dismissIntro} t={t} />}
           {actions.batch && <BatchNote {...actions.batch} t={t} />}
-          {actions.runtimeRefused.length > 0 && (
-            <ListNote tone="warn" testId="runtime-retry">
-              <RuntimeRetry
-                key={actions.runtimeRefused.join(",")}
-                names={actions.runtimeRefused}
-                onDone={() => void load()}
-                t={t}
-              />
-            </ListNote>
-          )}
           {selection.selecting && (
-            <BulkBar
-              count={selection.picked.size}
-              allPicked={selection.allPicked}
-              onAll={selection.setAll}
-              onBackUp={() => void actions.backUp(pickedItems)}
-              onResume={() => void actions.setIncluded(pickedItems, true, nameOf)}
-              onPause={() => void actions.setIncluded(pickedItems, false, nameOf)}
-              onRestore={pickedItems.some(restoresInBulk) ? () => void actions.restoreNewest(pickedItems) : undefined}
-              onDone={selection.clear}
-              busy={actions.busy}
-              blocked={busyTitle}
-              t={t}
-            />
+            <BulkBar count={selection.picked.size} allPicked={selection.allPicked} onAll={selection.setAll} onDone={selection.clear} t={t}>
+              <BarButton
+                label={t("containers.backupSelected")}
+                glyph={<IconBackupNow />}
+                onClick={() => void actions.backUp(pickedItems)}
+                disabled={actions.busy || running.active}
+                title={busyTitle}
+              />
+              <BarButton
+                label={t("schedule.resume")}
+                glyph={<IconSchedules />}
+                onClick={() => void actions.setIncluded(pickedItems, true, nameOf)}
+                disabled={actions.busy}
+              />
+              <BarButton
+                label={t("schedule.pause")}
+                glyph={<IconPause />}
+                onClick={() => void actions.setIncluded(pickedItems, false, nameOf)}
+                disabled={actions.busy}
+              />
+            </BulkBar>
           )}
           {onZFS && zfsDown && <ZFSDownNote result={zfsDown} onView={() => setZfsOpen(true)} t={t} />}
 

@@ -16,7 +16,6 @@ import { I18nProvider, en } from "../lib/i18n";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { DESKTOP_QUERY } from "../lib/useMediaQuery";
 import { formatRecent } from "../lib/reltime";
-import { RESTORE_NO_RUNTIME } from "../lib/runReason";
 import type { AnomalyItem, AnomalyView, BackupItem, BackupItemKind, Settings } from "../lib/api";
 
 vi.mock("../lib/api", async (importOriginal) => {
@@ -86,10 +85,7 @@ const cancelBackup = vi.mocked(api.cancelBackup);
 const setInclude = vi.mocked(api.setInclude);
 const setVMInclude = vi.mocked(api.setVMInclude);
 const patchFileSet = vi.mocked(api.patchFileSet);
-const restore = vi.mocked(api.restore);
-const restoreVM = vi.mocked(api.restoreVM);
 const zfsConnection = vi.mocked(api.zfsConnection);
-const fireAndWaitRun = vi.mocked((await import("../lib/backupWatch")).fireAndWaitRun);
 
 const { Backups } = await import("./Backups");
 
@@ -1058,47 +1054,17 @@ describe("the bar above picked rows", () => {
     expect(pushed).toEqual([{ message: en["schedule.updateFailed"], severity: "fail" }]);
   });
 
-  it("restores the newest backup of containers and VMs after asking, one after the other", async () => {
-    fireAndWaitRun.mockResolvedValue({ ok: true });
+  it("restores nothing from here, since several entries come back on the Restore page", async () => {
     await renderPage();
-    await pick("plex", "Windows 11", "Documents");
-    await press(barButton("Restore newest snapshot"));
-    expect(fireAndWaitRun).not.toHaveBeenCalled();
-    expect(screen.getByText(`${en["backups.restore.confirm"]} ${en["backups.restore.alsoVMs"]}`)).toBeTruthy();
-    await press(within(screen.getByRole("dialog")).getByRole("button", { name: "Restore" }));
-    // The folder set is not restored from here: it needs a folder to go to.
-    expect(fireAndWaitRun).toHaveBeenCalledTimes(2);
-    fireAndWaitRun.mock.calls[0][0].start();
-    fireAndWaitRun.mock.calls[1][0].start();
-    expect(restore).toHaveBeenCalledWith("plex", "latest", true);
-    expect(restoreVM).toHaveBeenCalledWith("win11", "latest", true);
-    expect(pushed).toEqual([{ message: "2 ok, 0 failed", severity: "success" }]);
+    await pick("plex", "Windows 11");
+    expect(within(bar()!).queryByRole("button", { name: /restore/i })).toBeNull();
   });
 
-  it("offers a container Docker could not recreate again without its GPU", async () => {
-    fireAndWaitRun.mockResolvedValue({ ok: false, error: RESTORE_NO_RUNTIME });
-    await renderPage();
-    await pick("plex");
-    await press(barButton("Restore newest snapshot"));
-    await press(within(screen.getByRole("dialog")).getByRole("button", { name: "Restore" }));
-    expect(pushed).toEqual([{ message: "0 ok, 1 failed", severity: "warn" }]);
-    const retry = within(screen.getByTestId("runtime-retry"));
-    expect(retry.getByText(en["restore.noRuntimeList"].replace("{names}", "plex"))).toBeTruthy();
-    expect(retry.getByRole("button", { name: "Restore without GPU and runtime" })).toBeTruthy();
-  });
-
-  it("offers no restore when nothing picked can be restored together", async () => {
-    await renderPage();
-    await pick("Documents", "gitea");
-    expect(within(bar()!).queryByRole("button", { name: "Restore newest snapshot" })).toBeNull();
-  });
-
-  it("holds backup and restore back while something runs, and says what", async () => {
+  it("holds a backup back while something runs, and says what", async () => {
     await renderPage();
     await pick("plex");
     progress({ key: "vm:win11", phase: "backup", percent: 5, active: true });
     expect((barButton("Back up selected") as HTMLButtonElement).disabled).toBe(true);
-    expect((barButton("Restore newest snapshot") as HTMLButtonElement).disabled).toBe(true);
     expect((barButton("Pause schedule") as HTMLButtonElement).disabled).toBe(false);
   });
 
@@ -1116,10 +1082,10 @@ describe("a right click on a row", () => {
     await renderPage();
     await rightClick(row("plex"));
     expect(screen.getByRole("menu", { name: "plex" })).toBeTruthy();
-    expect(menuItems()).toEqual(["Back up now", "Pause schedule", "Restore newest snapshot", "Open", "Select"]);
+    expect(menuItems()).toEqual(["Back up now", "Pause schedule", "Open", "Select"]);
   });
 
-  it("offers a paused entry its schedule back and a folder set no restore", async () => {
+  it("offers a paused entry its schedule back", async () => {
     await renderPage();
     await rightClick(row("gitea"));
     expect(menuItems()).toEqual(["Back up now", "Resume schedule", "Open", "Select"]);
@@ -1134,7 +1100,7 @@ describe("a right click on a row", () => {
   it("offers an entry that is gone no backup, and the flash drive no schedule", async () => {
     await renderPage();
     await rightClick(row("pihole"));
-    expect(menuItems()).toEqual(["Pause schedule", "Restore newest snapshot", "Open", "Select"]);
+    expect(menuItems()).toEqual(["Pause schedule", "Open", "Select"]);
     await act(async () => {
       fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
     });
