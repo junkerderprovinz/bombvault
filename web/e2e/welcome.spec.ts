@@ -8,6 +8,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { measureLayout, settle } from "./storage";
+import { blockServerLook } from "./serverLook";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 const NOW = Math.floor(Date.now() / 1000);
@@ -158,7 +159,7 @@ async function stage(page: Page, items: Entry[] = FOUND, includeRefused = ""): P
   );
   // The stored language is the look, and the server's display preferences
   // must not replace it while the page boots.
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript(() => window.localStorage.setItem("bv-lang", "en"));
   return { saved: () => saved, included: () => included, pauseAll: () => inSchedule.clear(), fired: () => fired };
 }

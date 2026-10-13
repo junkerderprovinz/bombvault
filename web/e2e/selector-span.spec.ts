@@ -6,6 +6,7 @@
 // segments, well short of its row.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { EVERY_KIND, MOBILE_PROJECTS, stageEntries } from "./entries";
+import { blockServerLook } from "./serverLook";
 
 // A test can end while a route handler still waits on the real server. Closing
 // the context then disposes the response it is about to read, and Playwright
@@ -15,7 +16,7 @@ test.afterEach(async ({ page }) => {
 });
 
 async function stage(page: Page): Promise<void> {
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript(() => window.localStorage.setItem("bv-lang", "en"));
   await page.route("**/api/settings", async (route) => {
     if (route.request().method() !== "GET") return route.continue();

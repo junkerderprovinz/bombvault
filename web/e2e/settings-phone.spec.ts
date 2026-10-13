@@ -10,6 +10,7 @@
 // desktop: the 40px rhythm and the rail with its names once there is room.
 // German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
+import { blockServerLook } from "./serverLook";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -322,7 +323,7 @@ async function stage(page: Page): Promise<void> {
   const json = (body: unknown) => (route: import("@playwright/test").Route) => route.fulfill({ json: body });
   // Same seeding as narrow-viewport.spec.ts: the stored look is the look, and
   // the server's display prefs must not overwrite it mid-boot.
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript(() => {
     window.localStorage.setItem("bv-lang", "de");
   });

@@ -5,6 +5,7 @@
 import type { Page } from "@playwright/test";
 
 import { LOCATIONS, STORAGE_BOX } from "./storage";
+import { blockServerLook } from "./serverLook";
 
 export const NOW = Math.floor(Date.now() / 1000);
 const HOUR = 3600;
@@ -360,7 +361,7 @@ export async function stageOverview(page: Page, width: number | undefined, s: Ov
   );
   // The stored language is the look, and the server's display preferences
   // must not replace it while the page boots.
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript(
     ([lang, layout]) => {
       window.localStorage.setItem("bv-lang", lang as string);

@@ -11,6 +11,7 @@
 // /pull and /fleet with their hash forms.
 // German, because its labels run longest.
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { blockServerLook } from "./serverLook";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -464,7 +465,7 @@ async function stage(page: Page, { empty = false }: Staged = {}): Promise<void> 
   await json("**/api/offsite/group-receivers", { ok: true, receivers: [] });
   // Same seeding as narrow-viewport.spec.ts: the stored locale is the look,
   // and the server's display prefs must not overwrite it mid-boot.
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript(() => window.localStorage.setItem("bv-lang", "de"));
 }
 

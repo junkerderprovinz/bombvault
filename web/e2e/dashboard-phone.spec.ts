@@ -4,11 +4,17 @@
 // no pan, nothing past the edge of the screen or of its card, and actions a
 // finger can hit. On the desktop: the grid in its default layout, with no
 // phone block beside it.
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { FAIL_REASON, LONG_NAME, openOverview, stageOverview } from "./overview";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
+
+// A handler can still wait on the real server when its test has passed;
+// what it throws then is dropped.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
 
 const PHONE_ORDER = ["needs", "nextRun", "storageGlance", "protection", "targets", "history"];
 const DESKTOP_ORDER = ["needs", "protection", "targets", "history"];
@@ -68,21 +74,25 @@ test("what needs the person on a phone: every action is big enough to tap", asyn
   await stageOverview(page, 360);
   await openOverview(page);
 
+  // One read per kind of target: a height does not depend on the scroll
+  // position, and each call into a busy browser costs up to a second.
+  const heights = (targets: Locator) =>
+    targets.evaluateAll((els) =>
+      els.map((el) => ({ name: (el.textContent ?? "").slice(0, 30), height: el.getBoundingClientRect().height })),
+    );
+  const needs = await heights(page.locator("[data-grid-block='needs']").getByRole("button"));
   const targets = [
-    ...(await page.locator("[data-grid-block='needs']").getByRole("button").all()),
-    ...(await page.getByTestId("protection-row").all()),
-    ...(await page.getByTestId("target-row").all()),
-    ...(await page.getByTestId("page-actions").getByRole("button").all()),
+    ...needs,
+    ...(await heights(page.getByTestId("protection-row"))),
+    ...(await heights(page.getByTestId("target-row"))),
+    ...(await heights(page.getByTestId("page-actions").getByRole("button"))),
   ];
   expect(targets.length, "the staged server leaves nothing to tap").toBeGreaterThan(8);
-  for (const target of targets) {
-    await target.scrollIntoViewIfNeeded();
-    const box = (await target.boundingBox())!;
-    expect(box.height, `${(await target.textContent())?.slice(0, 30)} is shorter than a fingertip`).toBeGreaterThanOrEqual(39.5);
+  for (const { name, height } of targets) {
+    expect(height, `${name} is shorter than a fingertip`).toBeGreaterThanOrEqual(39.5);
   }
-  for (const button of await page.locator("[data-grid-block='needs']").getByRole("button").all()) {
-    const box = (await button.boundingBox())!;
-    expect(box.height, `${await button.textContent()} is shorter than a fingertip`).toBeGreaterThanOrEqual(43.5);
+  for (const { name, height } of needs) {
+    expect(height, `${name} is shorter than a fingertip`).toBeGreaterThanOrEqual(43.5);
   }
 });
 

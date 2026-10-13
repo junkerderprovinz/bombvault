@@ -3,6 +3,7 @@
 // ZFS to list any, so they are staged at the route layer. The SPA, its
 // requests and the binary are real, only the answers are staged.
 import type { Page } from "@playwright/test";
+import { blockServerLook } from "./serverLook";
 
 export const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -339,7 +340,7 @@ export async function stageEntries(page: Page, staged: Staged): Promise<void> {
     await route.fulfill({ json: { ...body, settings: { ...body.settings, ...KINDS_ON } } });
   });
   // The stored language is the one under test, so the server's look must not replace it.
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript((lang) => window.localStorage.setItem("bv-lang", lang), staged.lang ?? "en");
 }
 

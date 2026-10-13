@@ -9,6 +9,7 @@
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { blockServerLook } from "./serverLook";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -280,7 +281,7 @@ async function stage(page: Page, s: Stage = {}): Promise<{ posts: string[] }> {
     return route.fulfill({ json: { ok: true, started: true } });
   });
   // The stored look is the one under test, so the server's must not replace it.
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript((theme) => {
     window.localStorage.setItem("bv-lang", "de");
     window.localStorage.setItem("bv-theme", theme);

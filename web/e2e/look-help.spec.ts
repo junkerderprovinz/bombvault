@@ -4,6 +4,7 @@
 // the eye compares from one button to the next.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { MOBILE_PROJECTS } from "./entries";
+import { blockServerLook } from "./serverLook";
 
 const GROUND = { dark: "#161616", light: "#f4f4f4" } as const;
 type Scheme = keyof typeof GROUND;
@@ -11,7 +12,7 @@ type Scheme = keyof typeof GROUND;
 async function stage(page: Page, device: Scheme, stored?: string): Promise<void> {
   // The harness database may hold a look from another spec, and adopting it
   // would overwrite the one under test.
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.emulateMedia({ colorScheme: device, reducedMotion: "reduce" });
   await page.addInitScript((theme) => {
     window.localStorage.setItem("bv-lang", "en");
