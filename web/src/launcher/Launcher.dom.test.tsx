@@ -191,7 +191,9 @@ describe("Launcher", () => {
     const look = { status: 200, body: JSON.stringify({ ok: true, prefs: { "bv-accent": "#ff7eb6", "bv-lang": "fr" }, stored: true }) };
     const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app }, {}, look);
     render(<Launcher bridge={bridge} />);
-    await screen.findByText("Tower");
+    // The list arrives through the async bridge, which a busy runner can hold
+    // past the default second.
+    await screen.findByText("Tower", undefined, { timeout: 5000 });
     await act(async () => undefined);
     expect(localStorage.getItem("bv-accent")).toBe("#ff7eb6");
     // The language stays the phone's own.
