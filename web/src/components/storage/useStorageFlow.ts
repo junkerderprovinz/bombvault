@@ -151,14 +151,12 @@ export function useStorageFlow(locations: StorageLocation[], defaults: Placement
     pushSaveWarnings(push, t, must(await updateOffsiteTarget(target.id, { ...target, enabled: on })).warnings);
   }
 
-  // A target's direct repository goes beside the target, where the server
-  // suggests it. A target whose address leaves no room beside it says so.
+  // A target's direct repository goes where the server places it, so a click
+  // never asks for a path.
   async function directRepo(targetId: string): Promise<string> {
     const found = must(await getDirectRepo(targetId));
     if (found.repo) return found.repo.id;
-    const location = found.suggestion?.location ?? "";
-    if (location === "") throw new Refused({ ok: false, error: t("directRepo.pathNeeded") });
-    const made = must(await createDirectRepo(targetId, "", location));
+    const made = must(await createDirectRepo(targetId, "", found.suggestion?.location ?? ""));
     if (!made.repo) throw new Refused(made);
     reposChanged();
     return made.repo.id;

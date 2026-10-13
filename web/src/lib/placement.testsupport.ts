@@ -110,7 +110,7 @@ export function targetImpact(over?: Partial<TargetImpact>): TargetImpact {
 }
 
 export function defaultImpact(over?: Partial<DefaultImpact>): DefaultImpact {
-  return { dropped: [], added: [], openTakeHome: 0, home: "", skip: [], ...over };
+  return { dropped: [], added: [], openTakeHome: 0, follow: 0, home: "", skip: [], ...over };
 }
 
 export function targetPreview(over?: Partial<TargetPreview>): TargetPreview {
@@ -268,7 +268,7 @@ const DEFAULTS: Record<string, Reply> = {
   previewItemPlacement: () => ({ ok: true, added: [], dropped: [] }),
   getNewTargetPreview: () => ({ ok: true, preview: targetPreview() }),
   excludeFromTarget: () => ({ ok: true }),
-  getDirectRepo: () => ({ ok: true, repo: null, suggestion: { location: "b2:bucket:containers-direct", note: "" } }),
+  getDirectRepo: () => ({ ok: true, repo: null, suggestion: { location: "b2:bucket:containers-direct" } }),
   testDirectLocation: () => ({ ok: true, reachable: true, initialized: false }),
   createDirectRepo: (...args) => ({
     ok: true,

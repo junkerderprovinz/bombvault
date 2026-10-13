@@ -11,10 +11,12 @@ import { IconLocal, IconCloud } from "./Sidebar";
 
 /**
  * A repo source: the local repo, the domain's primary off-site target
- * ("offsite"), or one specific off-site target ("offsite:<id>"), matching what
- * the backend's normalizeSource parses.
+ * ("offsite"), one specific off-site target ("offsite:<id>"), or a place an
+ * entry's backups were written to before it followed its section elsewhere
+ * ("folder" for the section's own folder, "repo:<id>"), matching what the
+ * backend's normalizeSource parses.
  */
-export type RepoSource = "local" | "offsite" | `offsite:${string}`;
+export type RepoSource = "local" | "offsite" | `offsite:${string}` | "folder" | `repo:${string}`;
 
 /**
  * Reports whether a source addresses an off-site repo. It takes a plain string

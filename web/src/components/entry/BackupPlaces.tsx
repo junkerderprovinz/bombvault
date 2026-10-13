@@ -67,7 +67,18 @@ export function BackupPlaces({
           const count = rows.filter((row) => row.places.some((m) => m.place === p.place)).length;
           const busy = reading.has(p.place);
           return (
-            <PlaceRow key={p.place} glyph={p.remote ? <IconCloud /> : <IconLocal />} name={labelOf(p.place)}>
+            <PlaceRow
+              key={p.place}
+              glyph={p.remote ? <IconCloud /> : <IconLocal />}
+              name={
+                <>
+                  {labelOf(p.place)}
+                  {p.kind === "earlier" && (
+                    <span className="block text-xs font-normal text-carbon-textMuted">{t("entry.places.earlier")}</span>
+                  )}
+                </>
+              }
+            >
               {busy ? (
                 <Badge tone="active">{t("entry.places.reading")}</Badge>
               ) : p.state === "read" ? (

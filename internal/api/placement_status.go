@@ -1,10 +1,8 @@
 package api
 
 import (
-	"context"
 	"log"
 	"slices"
-	"sync"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -12,7 +10,7 @@ import (
 )
 
 type placementPlan struct {
-	Kind         string   `json:"kind"`                   // "home" | "stays-domain" | "default-home" | "decides-at-first-backup" | "paused" | "not-backed-up"
+	Kind         string   `json:"kind"`                   // "home" | "default-home" | "paused" | "not-backed-up"
 	Home         string   `json:"home"`                   // label of the home, "" for the domain path
 	HomeDirectOf string   `json:"homeDirectOf,omitempty"` // the target a direct home without a name of its own goes by
 	Targets      []string `json:"targets"`                // names of the targets it is copied to
@@ -59,21 +57,20 @@ type stackNote struct {
 // statusFacts is what the result line of every item in one list needs, read
 // once per request.
 type statusFacts struct {
-	now        int64
-	grace      int64 // how far a listing or a copy may lag before a target stops counting, 0 for the strict reading
-	named      map[string]store.OffsiteTarget
-	dests      map[string]store.OffsiteTarget // destinations by id, which say whether their targets stand off the premises
-	directOf   func(store.OffsiteTarget) string
-	copies     map[string][]store.ItemCopies      // by identity
-	observed   map[string]store.TargetObservation // by target id
-	failedAt   map[string]int64                   // first failed run after the last listing, by target id
-	domainTags func() (map[string]bool, error)    // tags at the local domain path, listed at most once
+	now      int64
+	grace    int64 // how far a listing or a copy may lag before a target stops counting, 0 for the strict reading
+	named    map[string]store.OffsiteTarget
+	dests    map[string]store.OffsiteTarget // destinations by id, which say whether their targets stand off the premises
+	directOf func(store.OffsiteTarget) string
+	copies   map[string][]store.ItemCopies      // by identity
+	observed map[string]store.TargetObservation // by target id
+	failedAt map[string]int64                   // first failed run after the last listing, by target id
 }
 
 // statusFactsFor reads what every item of one list is judged against. It runs
 // only behind a certain target list, so every target it asks about has a row
 // and an id of its own.
-func (s *Service) statusFactsFor(ctx context.Context, settings store.Settings, p placementRead, named map[string]store.OffsiteTarget) (*statusFacts, error) {
+func (s *Service) statusFactsFor(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget) (*statusFacts, error) {
 	f := &statusFacts{
 		now:      time.Now().Unix(),
 		grace:    s.statusGrace(settings, p.Domain),
@@ -81,9 +78,6 @@ func (s *Service) statusFactsFor(ctx context.Context, settings store.Settings, p
 		directOf: s.directOf,
 		copies:   map[string][]store.ItemCopies{},
 		failedAt: map[string]int64{},
-		domainTags: sync.OnceValues(func() (map[string]bool, error) {
-			return s.domainPathTags(ctx, settings, p.Domain)
-		}),
 	}
 	rows, err := s.store.ItemCopiesForDomain(p.Domain)
 	if err != nil {
@@ -127,26 +121,6 @@ func (f *statusFacts) label(repoID string) (label, directOf string) {
 		return r.Name, f.directOf(r)
 	}
 	return repoID, ""
-}
-
-// domainPathTags lists the local domain path and returns every tag found
-// there, the question the step before a first backup asks.
-func (s *Service) domainPathTags(ctx context.Context, settings store.Settings, domain string) (map[string]bool, error) {
-	repo, err := s.repoFor(settings, domain, "local")
-	if err != nil {
-		return nil, err
-	}
-	snaps, err := s.listRepo(ctx, repo, s.primaryModeFor(settings, domain, repo))
-	if err != nil {
-		return nil, err
-	}
-	tags := map[string]bool{}
-	for _, snap := range snaps {
-		for _, tag := range snap.Tags {
-			tags[tag] = true
-		}
-	}
-	return tags, nil
 }
 
 // targetOffPremises reports whether a target is a site of its own. A target
@@ -308,27 +282,13 @@ func stackNoteFor(p placementRead, item placementItem, plan *placementPlan) *sta
 // handed to both halves, so the sentence cannot name one repository while the
 // state scores another.
 func (s *Service) placementStatus(settings store.Settings, p placementRead, item placementItem, f *statusFacts) (*placementPlan, *placementObserved) {
-	kind, repoID := s.plannedHome(settings, p, item, f)
-	home := s.homeKindOf(settings, p.Domain, repoID, f.named)
-	return planFor(p, item, f, kind, repoID, home), observedState(p, item, f, repoID, home)
-}
-
-// plannedHome is where an item's next backup goes and how the plan phrases it:
-// its own repository once chosen, otherwise what the default and the local
-// domain path make of an open one.
-func (s *Service) plannedHome(settings store.Settings, p placementRead, item placementItem, f *statusFacts) (kind, repoID string) {
 	repoID, fromDefault := p.effectiveHome(item.Home)
-	kind = "home"
-	switch {
-	case fromDefault && repoID != "":
-		kind = s.openKind(settings, p.Domain, item.Identity, f)
-	case fromDefault:
+	kind := "home"
+	if fromDefault {
 		kind = "default-home"
 	}
-	if kind == "stays-domain" {
-		repoID = ""
-	}
-	return kind, repoID
+	home := s.homeKindOf(settings, p.Domain, repoID, f.named)
+	return planFor(p, item, f, kind, repoID, home), observedState(p, item, f, repoID, home)
 }
 
 // planFor is the plan half of the result line: where the next backup goes and
@@ -356,26 +316,9 @@ func planFor(p placementRead, item placementItem, f *statusFacts, kind, repoID s
 			plan.Targets = append(plan.Targets, placementTargetName(t))
 		}
 	}
-	plan.NoCopy = kind != "decides-at-first-backup" && len(plan.Targets) == 0 && !homeOffPremises(home, repoID, f.named)
+	plan.NoCopy = len(plan.Targets) == 0 && !homeOffPremises(home, repoID, f.named)
 	plan.Warn = plan.NoCopy
 	return plan
-}
-
-// openKind answers the first-backup question for an open item whose default
-// names a repository: a remote or unreadable domain path cannot tell, a
-// local one that holds the name keeps it, otherwise the default applies.
-func (s *Service) openKind(settings store.Settings, domain, identity string, f *statusFacts) string {
-	if s.homeKindOf(settings, domain, "", f.named) == homeDomainRemote {
-		return "decides-at-first-backup"
-	}
-	tags, err := f.domainTags()
-	switch {
-	case err != nil:
-		return "decides-at-first-backup"
-	case tags[identity]:
-		return "stays-domain"
-	}
-	return "default-home"
 }
 
 // observedState is the state half of the result line: the last successful

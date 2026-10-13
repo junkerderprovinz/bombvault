@@ -24,18 +24,12 @@ const (
 // itemBackups asks the item's current location: a successful run, or snapshots
 // of its identity there. An open item's location is the domain path.
 func (s *Service) itemBackups(ctx context.Context, item store.ItemRef) (backupPresence, error) {
-	rowID, err := s.itemRowID(item)
-	if err != nil {
+	ran, err := s.hasBackupRun(item)
+	switch {
+	case err != nil:
 		return backupsNone, err
-	}
-	if rowID != "" {
-		run, err := s.store.LastSuccessfulBackup(rowID)
-		if err != nil {
-			return backupsNone, err
-		}
-		if run != nil {
-			return backupsPresent, nil
-		}
+	case ran:
+		return backupsPresent, nil
 	}
 	var snaps []restic.Snapshot
 	switch item.Domain {
@@ -80,6 +74,17 @@ func (s *Service) itemRowID(item store.ItemRef) (string, error) {
 	return id, err
 }
 
+// hasBackupRun reports whether a backup of the item succeeded in this
+// database.
+func (s *Service) hasBackupRun(item store.ItemRef) (bool, error) {
+	rowID, err := s.itemRowID(item)
+	if err != nil || rowID == "" {
+		return false, err
+	}
+	run, err := s.store.LastSuccessfulBackup(rowID)
+	return run != nil, err
+}
+
 // countsAsBackedUp folds an unreadable location into yes: moving an item whose
 // history cannot be seen risks splitting it.
 func countsAsBackedUp(p backupPresence, err error) (bool, error) {
@@ -89,10 +94,12 @@ func countsAsBackedUp(p backupPresence, err error) (bool, error) {
 	return p == backupsPresent, err
 }
 
-// settleHome is the step before an open item's first backup. It returns the repo
-// id the backup writes to and a commit the entry point calls once EnsureRepo
-// succeeded and the item exists; commit reports false when the row changed.
-func (s *Service) settleHome(ctx context.Context, settings store.Settings, item store.ItemRef) (string, func() (bool, error), error) {
+// settleHome is the step before an open item's next backup, which goes where
+// the default points. Backups the item already has elsewhere stay there. It
+// returns the repo id the backup writes to and a commit the entry point calls
+// once EnsureRepo succeeded and the item exists; commit reports false when
+// the row changed.
+func (s *Service) settleHome(settings store.Settings, item store.ItemRef) (string, func() (bool, error), error) {
 	read, err := s.store.ItemHome(item)
 	if err != nil {
 		return "", nil, err
@@ -100,26 +107,16 @@ func (s *Service) settleHome(ctx context.Context, settings store.Settings, item 
 	if read.Choice != store.RepoOpen {
 		return read.Repo, func() (bool, error) { return true, nil }, nil
 	}
-	presence, err := s.itemBackups(ctx, item)
-	switch {
-	case presence == backupsUnreadable:
-		return "", nil, fmt.Errorf("the %s repository could not be read, so this item gets no location yet: %w", item.Domain, err)
-	case err != nil:
+	p, err := s.readPlacement(settings, item.Domain)
+	if err != nil {
 		return "", nil, err
 	}
-	repoID := ""
-	if presence == backupsNone {
-		p, err := s.readPlacement(settings, item.Domain)
-		if err != nil {
-			return "", nil, err
-		}
-		repoID, _ = p.effectiveHome(read)
-		if repoID == store.HomeNowhere {
-			return "", nil, errNoPlace
-		}
-		if err := s.validateItemRepoID(item.Domain, repoID); err != nil {
-			return "", nil, fmt.Errorf("the %s default points at a repository that cannot take this backup: %w", item.Domain, err)
-		}
+	repoID, _ := p.effectiveHome(read)
+	if repoID == store.HomeNowhere {
+		return "", nil, errNoPlace
+	}
+	if err := s.validateItemRepoID(item.Domain, repoID); err != nil {
+		return "", nil, fmt.Errorf("the %s default points at a repository that cannot take this backup: %w", item.Domain, err)
 	}
 	commit := func() (bool, error) {
 		return s.store.WritePlacement(item, &store.HomeWrite{Repo: repoID, Choice: store.RepoChosen}, nil, &read)
@@ -140,7 +137,7 @@ type homeStep struct {
 // A remote repository bills every call, so its stale locks are cleared only
 // when one stops the backup.
 func (s *Service) prepareHome(ctx context.Context, settings store.Settings, item store.ItemRef) (homeStep, error) {
-	repoID, commit, err := s.settleHome(ctx, settings, item)
+	repoID, commit, err := s.settleHome(settings, item)
 	if err != nil {
 		return homeStep{}, err
 	}
@@ -255,12 +252,19 @@ func (s *Service) discoverWrite(domain, name, found string, readErr error) store
 }
 
 // discoverHome gives an existing row the location Discover found, while the row
-// is open or was left empty by an unreadable pass. It needs the domain lock and
-// reports true when the row stays as it is because a backup held the domain.
+// is open or was left empty by an unreadable pass. An open row this database
+// has backed up follows its section, wherever its earlier backups lie, and
+// stays open. It needs the domain lock and reports true when the row stays as
+// it is because a backup held the domain.
 func (s *Service) discoverHome(ctx context.Context, item store.ItemRef, found string, readErr error, locked bool) (bool, error) {
 	read, err := s.store.ItemHome(item)
 	if err != nil || read.Choice == store.RepoChosen {
 		return false, err
+	}
+	if read.Choice == store.RepoOpen {
+		if ran, err := s.hasBackupRun(item); err != nil || ran {
+			return false, err
+		}
 	}
 	if !locked {
 		return true, nil

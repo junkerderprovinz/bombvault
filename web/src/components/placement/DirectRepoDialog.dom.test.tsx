@@ -74,15 +74,6 @@ describe("DirectRepoDialog", () => {
     expect(fake.callsTo("getDirectRepo")).toEqual([["t-b2"]]);
   });
 
-  it.each([
-    ["bucket-root", "B2 sits at the root of its bucket, so every path in that bucket lies inside it. Choose another bucket."],
-    ["path-needed", "This rest-server keeps private repositories. Enter the path for the direct repository."],
-  ])("explains a %s suggestion", async (note, text) => {
-    fake.reply("getDirectRepo", { ok: true, repo: null, suggestion: { location: "b2:other-direct", note } });
-    renderDialog();
-    expect(await screen.findByText(text)).toBeTruthy();
-  });
-
   it("says why the suggestion could not be loaded", async () => {
     fake.reply("getDirectRepo", { ok: false, error: "unknown target" });
     renderDialog();

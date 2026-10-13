@@ -230,16 +230,9 @@ func (h *Handler) nestedTargetLocation(id string, t store.OffsiteTarget) error {
 	if err != nil {
 		return err
 	}
-	self := locationSelf{target: true}
-	if id != "" {
-		self.ids = []string{id}
-		field, ok, err := h.store.FieldOffsiteTarget(t.Domain)
-		if err != nil {
-			return err
-		}
-		if ok && field.ID == id {
-			self.field = t.Domain
-		}
+	self, err := h.svc.targetSelf(id, t)
+	if err != nil {
+		return err
 	}
 	return h.svc.locationClash(settings, loc, self)
 }

@@ -964,8 +964,8 @@ func (s *Service) dbDumpsOf(ctx context.Context, settings store.Settings, name, 
 	if !validResourceName(name) {
 		return nil, dbDumpSource{}, errors.New("invalid container name")
 	}
-	if source != "local" && !isOffsiteSource(source) {
-		return nil, dbDumpSource{}, errors.New("invalid source (must be local or offsite)")
+	if !validItemSource(source) {
+		return nil, dbDumpSource{}, errInvalidItemSource
 	}
 	repo, err := s.containerRepoForName(settings, name, source)
 	if err != nil {

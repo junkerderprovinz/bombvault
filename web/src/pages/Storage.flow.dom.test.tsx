@@ -255,6 +255,18 @@ describe("the flow", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("switches Local off at a rest-server user root with the place the server picks, asking for nothing", async () => {
+    fake.reply("getDirectRepo", { ok: true, repo: null, suggestion: { location: "rest:https://box:8000/jdp/containers-direct" } });
+    await renderPage();
+
+    await click(line("Containers to Local"));
+
+    await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(1));
+    expect(fake.callsTo("createDirectRepo")).toEqual([["t-b2", "", "rest:https://box:8000/jdp/containers-direct"]]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("lets every line of a section go off, and says the section is not backed up", async () => {
     const nowhere = defaultRow({ home: "none", homeKind: "none" });
     fake.reply("listPlacementDefaults", { ok: true, defaults: [nowhere, defaultRow({ domain: "vms" }), defaultRow({ domain: "files" })] });
@@ -418,6 +430,22 @@ describe("entries that differ", () => {
     expect(jellyfin.closest("li")!.textContent).toContain("Backs up to Local · Default: Local and B2");
     expect(within(window).getByRole("link", { name: "plex" }).getAttribute("href")).toBe("/backups/container/plex?tab=settings");
     expect(within(window).queryByRole("link", { name: "gitea" })).toBeNull();
+  });
+
+  it("count only the entries with a choice of their own once the section went elsewhere", async () => {
+    const moved = defaultRow({ home: "repo-direct", homeKind: "direct", homeTarget: "t-b2" });
+    fake.reply("listPlacementDefaults", { ok: true, defaults: [moved, defaultRow({ domain: "vms" }), defaultRow({ domain: "files" })] });
+    const followed = placementView({ repo: "repo-direct", repoKind: "direct", homeFollows: true, segment: "offsite-only" });
+    const kept = placementView({ repo: "repo-nas", repoKind: "local", repoLabel: "NAS Keller" });
+    listContainers.mockResolvedValue({
+      ok: true,
+      containers: [container("gitea", followed), container("immich", followed), container("jellyfin", own), container("plex", kept)],
+    });
+    await renderPage();
+
+    await click(await screen.findByRole("button", { name: "2 entries differ" }));
+    const window = await screen.findByRole("dialog", { name: "Containers: 2 entries differ" });
+    expect(within(window).getAllByRole("link").map((a) => a.textContent)).toEqual(["jellyfin", "plex"]);
   });
 
   it("show in the switches as well", async () => {

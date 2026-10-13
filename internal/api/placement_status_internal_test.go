@@ -60,7 +60,7 @@ func TestPlanCountsAHomeMarkedOffThePremises(t *testing.T) {
 		&placementPlan{Kind: "home", Home: "NAS Keller", Targets: []string{}})
 }
 
-func TestPlanOfAnOpenItemAsksTheLocalDomainPathOncePerList(t *testing.T) {
+func TestPlanOfAnOpenItemIsTheDefaultWhereverItsBackupsLie(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS Keller", "nas/bv")
 	f.target("containers", "B2", "b2:bucket:containers")
@@ -70,25 +70,11 @@ func TestPlanOfAnOpenItemAsksTheLocalDomainPathOncePerList(t *testing.T) {
 	f.hold(f.domainPath("containers"), snap("a1", 1_758_000_000, "container:nginx"))
 
 	views := f.views("containers", f.item("containers", "nginx", 0), f.item("containers", "plex", 0))
-	assertPlan(t, views["nginx"].Plan, &placementPlan{Kind: "stays-domain", Targets: []string{"B2"}})
-	assertPlan(t, views["plex"].Plan, &placementPlan{Kind: "default-home", Home: "NAS Keller", Targets: []string{"B2"}})
-	if n := f.eng.lists[f.domainPath("containers")]; n != 1 {
+	for _, name := range []string{"nginx", "plex"} {
+		assertPlan(t, views[name].Plan, &placementPlan{Kind: "default-home", Home: "NAS Keller", Targets: []string{"B2"}})
+	}
+	if n := f.eng.lists[f.domainPath("containers")]; n != 0 {
 		t.Fatalf("the domain path was listed %d times for one list", n)
-	}
-}
-
-func TestPlanOfAnOpenItemOnARemoteDomainPathDecidesAtTheFirstBackup(t *testing.T) {
-	f := newPlacementFixture(t)
-	f.settings(func(s *store.Settings) { s.ContainersPath = "s3:https://s3.example.com/containers" })
-	nas := f.namedRepo("NAS Keller", "nas/bv")
-	f.setDefault("containers", nas.ID)
-	f.openContainer("nginx")
-	got := f.cardOf("containers", "nginx", 0).Plan
-	if got.Kind != "decides-at-first-backup" || got.NoCopy || got.Warn {
-		t.Fatalf("plan = %+v, want decides-at-first-backup without a warning", got)
-	}
-	if n := f.eng.lists["s3:https://s3.example.com/containers"]; n != 0 {
-		t.Fatalf("a remote domain path was listed %d times for a card", n)
 	}
 }
 

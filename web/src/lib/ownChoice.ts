@@ -53,8 +53,9 @@ export async function readPlacedEntries(domains: PlacementDomain[]): Promise<Pla
 
 /**
  * hasOwnChoice reports whether an entry left its section's default: it copies
- * by a rule of its own, or it is stored somewhere else. The first backup fixes
- * where an entry is stored, so that alone is no choice of its own.
+ * by a rule of its own, or it is stored somewhere else. An entry that follows
+ * its section moves along when the section's place changes, so only a place
+ * set on the entry itself still differs afterwards.
  */
 export function hasOwnChoice(view: PlacementView, row: DefaultRow): boolean {
   if (view.unreadable) return false;

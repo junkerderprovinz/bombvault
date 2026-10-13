@@ -25,7 +25,7 @@ type timelinePlace struct {
 	Place      string `json:"place"`              // "local" | "offsite:<id>"
 	Label      string `json:"label"`              // "" for the domain path
 	DirectOf   string `json:"directOf,omitempty"` // the target a direct home without a name of its own goes by
-	Kind       string `json:"kind"`               // "home" | "target"
+	Kind       string `json:"kind"`               // "home" | "target" | "earlier"
 	Remote     bool   `json:"remote"`
 	Enabled    bool   `json:"enabled"`
 	AppendOnly bool   `json:"appendOnly"`
@@ -63,6 +63,7 @@ type timelineItem struct {
 	domain       string
 	identity     string   // "" for flash and config, whose repositories hold nothing else
 	homeID       string   // named repository id, "" for the domain path
+	earlier      []string // homes the item held before it followed its section elsewhere
 	zvolDevs     []string // disks a restore of the VM looks up by their own snapshot
 	diskPrefixes []string // vm:<name>:zvol: for a VM's name and each of its former names
 	zfsRoot      string   // root dataset of a ZFS entry
@@ -102,6 +103,17 @@ func (s *Service) timelineItemFor(domain, key string) (timelineItem, error) {
 		return timelineItem{}, err
 	}
 	it := timelineItem{domain: domain, identity: identity, homeID: home.Repo}
+	rowID, err := s.itemRowID(ref)
+	if err != nil {
+		return timelineItem{}, err
+	}
+	if rowID != "" {
+		former, err := s.store.FormerHomes(domain, rowID)
+		if err != nil {
+			return timelineItem{}, err
+		}
+		it.earlier = slices.DeleteFunc(former, func(repo string) bool { return repo == home.Repo })
+	}
 	if domain != "vms" {
 		return it, nil
 	}
@@ -185,19 +197,39 @@ func (it timelineItem) incomplete(run restic.Snapshot, own []restic.Snapshot) bo
 // unreadable, the same answer a restore from it gives, rather than a silent fall
 // back to the domain path.
 func (s *Service) homePlace(settings store.Settings, it timelineItem) placeRef {
-	p := placeRef{timelinePlace: timelinePlace{Place: "local", Kind: "home", Enabled: true}}
-	if it.homeID != "" {
-		if named, err := s.store.GetNamedRepo(it.homeID); err == nil {
-			p.Label, p.DirectOf, p.Enabled = named.Name, s.directOf(named), named.Enabled
+	p, _ := s.ownPlace(settings, it.domain, it.homeID, timelinePlace{Place: "local", Kind: "home", Enabled: true})
+	return p
+}
+
+// earlierPlaces are the item's former homes as places. One whose repository
+// was deleted since has nothing left to list.
+func (s *Service) earlierPlaces(settings store.Settings, it timelineItem) []placeRef {
+	var out []placeRef
+	for _, repoID := range it.earlier {
+		p, known := s.ownPlace(settings, it.domain, repoID, timelinePlace{Place: earlierPlace(repoID), Kind: "earlier", Enabled: true})
+		if known {
+			out = append(out, p)
 		}
 	}
-	p.repo, p.openErr = s.itemRepoPath(it.homeID, func() (string, error) { return s.repoFor(settings, it.domain, "local") })
-	if p.openErr == nil {
-		p.mode = s.primaryModeFor(settings, it.domain, p.repo)
-		p.Remote = restic.IsRemoteRepo(p.repo)
-		p.AppendOnly = s.primaryIsImmutable(it.domain, p.repo)
+	return out
+}
+
+// ownPlace is a place the item writes to or wrote to: the named repository
+// repoID, or the domain path for "". known is false for an id without a row.
+func (s *Service) ownPlace(settings store.Settings, domain, repoID string, tp timelinePlace) (p placeRef, known bool) {
+	p, known = placeRef{timelinePlace: tp}, repoID == ""
+	if !known {
+		if named, err := s.store.GetNamedRepo(repoID); err == nil {
+			p.Label, p.DirectOf, p.Enabled, known = named.Name, s.directOf(named), named.Enabled, true
+		}
 	}
-	return p
+	p.repo, p.openErr = s.itemRepoPath(repoID, func() (string, error) { return s.repoFor(settings, domain, "local") })
+	if p.openErr == nil {
+		p.mode = s.primaryModeFor(settings, domain, p.repo)
+		p.Remote = restic.IsRemoteRepo(p.repo)
+		p.AppendOnly = s.primaryIsImmutable(domain, p.repo)
+	}
+	return p, known
 }
 
 func (s *Service) targetPlace(settings store.Settings, t store.OffsiteTarget) placeRef {
@@ -218,7 +250,8 @@ func (s *Service) targetPlace(settings store.Settings, t store.OffsiteTarget) pl
 }
 
 // timelineRefs is the item and its places: the home, then every target row of
-// the domain, switched on or off, in the domain's order.
+// the domain, switched on or off, in the domain's order, then the homes it
+// held before it followed its section elsewhere.
 func (s *Service) timelineRefs(domain, key string) (timelineItem, []placeRef, error) {
 	it, err := s.timelineItemFor(domain, key)
 	if err != nil {
@@ -236,7 +269,7 @@ func (s *Service) timelineRefs(domain, key string) (timelineItem, []placeRef, er
 	for _, t := range targets {
 		refs = append(refs, s.targetPlace(settings, t))
 	}
-	return it, refs, nil
+	return it, append(refs, s.earlierPlaces(settings, it)...), nil
 }
 
 // ownedAt lists one place and keeps the snapshots the item owns there.
@@ -461,6 +494,11 @@ func (s *Service) Timeline(ctx context.Context, domain, key string) (timeline, e
 			continue
 		}
 		place, rows := s.readPlace(ctx, it, p)
+		// A former home the item left before any backup of it landed there
+		// has nothing of it to show.
+		if p.Kind == "earlier" && place.State == "read" && len(rows) == 0 {
+			continue
+		}
 		out.Places = append(out.Places, place)
 		parts = append(parts, rows)
 	}
@@ -509,9 +547,17 @@ func (s *Service) TimelinePlace(ctx context.Context, domain, key, place string) 
 		return timelinePlace{}, nil, fmt.Errorf("read settings: %w", err)
 	}
 	var p placeRef
-	if place == "local" {
+	switch {
+	case place == "local":
 		p = s.homePlace(settings, it)
-	} else {
+	case isEarlierSource(place):
+		earlier := s.earlierPlaces(settings, it)
+		i := slices.IndexFunc(earlier, func(r placeRef) bool { return r.Place == place })
+		if i < 0 {
+			return timelinePlace{}, nil, errNotEarlierPlace
+		}
+		p = earlier[i]
+	default:
 		t, err := s.offsiteTargetForSource(settings, domain, place)
 		if err != nil {
 			return timelinePlace{}, nil, err
@@ -533,10 +579,10 @@ func (s *Service) TimelinePlace(ctx context.Context, domain, key, place string) 
 // one of their own.
 var timelineDomains = []string{"containers", "vms", "files", "flash", "config", zfsDomain}
 
-// validTimelinePlace reports whether place is "local" or "offsite:" followed
-// by a well-formed target id.
+// validTimelinePlace reports whether place is "local", "offsite:" followed by
+// a well-formed target id, or a well-formed earlier place.
 func validTimelinePlace(place string) bool {
-	if place == "local" {
+	if _, ok := earlierRepoID(place); ok || place == "local" {
 		return true
 	}
 	id, ok := strings.CutPrefix(place, offsiteSourcePrefix)

@@ -40,8 +40,8 @@ type backupSet struct {
 // routes of the domain take: a container or VM name, the id of a folder set or
 // ZFS entry, and the domain itself for flash and config.
 func (s *Service) backupsOf(ctx context.Context, domain, key, source string) (backupSet, error) {
-	if source != "local" && !isOffsiteSource(source) {
-		return backupSet{}, errors.New("invalid source (must be local or offsite)")
+	if !validItemSource(source) {
+		return backupSet{}, errInvalidItemSource
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {

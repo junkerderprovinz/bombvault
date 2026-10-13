@@ -1425,8 +1425,16 @@ func sourceParam(r *http.Request) string {
 // normalizeSource maps a raw ?source= value onto a source the service
 // understands. "offsite" and a well-formed "offsite:<id>" stay as they are; a
 // malformed id becomes "offsite:" with no id, which offsiteTargetForSource
-// refuses; anything else is the local repo.
+// refuses. An earlier place stays as it is, and a malformed one becomes
+// "repo:" with no id, which earlierRepo refuses. Anything else is the local
+// repo.
 func normalizeSource(raw string) string {
+	if isEarlierSource(raw) {
+		if _, ok := earlierRepoID(raw); ok {
+			return raw
+		}
+		return repoPlacePrefix
+	}
 	if id, ok := strings.CutPrefix(raw, offsiteSourcePrefix); ok {
 		if validOffsiteTargetID(id) {
 			return offsiteSourcePrefix + id

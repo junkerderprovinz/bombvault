@@ -250,16 +250,23 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 				return erasurePlan{}, err
 			}
 		}
-		kept := plan.sharedBy(s, t.Repo, t.ID, id)
+		direct, found, err := s.store.CompanionFor(t.ID)
+		if err != nil {
+			return erasurePlan{}, err
+		}
+		// A direct repository in a folder inside its target is a repository of
+		// its own there, which a delete in the target never reaches.
+		inside := found && insideOwnTarget(t, direct.Repo)
+		self := []string{t.ID, id}
+		if inside {
+			self = append(self, direct.ID)
+		}
+		kept := plan.sharedBy(s, t.Repo, self...)
 		if s.refusesDeletes(t) {
 			kept = erasureKeptAppendOnly
 		}
 		plan.add(ctx, s, settings, contexts[t.Domain], t, store.OffsiteTarget{}, kept)
 
-		direct, found, err := s.store.CompanionFor(t.ID)
-		if err != nil {
-			return erasurePlan{}, err
-		}
 		if !found {
 			continue
 		}
@@ -267,7 +274,11 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 		if err != nil {
 			return erasurePlan{}, err
 		}
-		kept = plan.sharedBy(s, direct.Repo, direct.ID, id)
+		self = []string{direct.ID, id}
+		if inside {
+			self = append(self, t.ID)
+		}
+		kept = plan.sharedBy(s, direct.Repo, self...)
 		switch {
 		case use.InUse():
 			kept = erasureKeptInUse

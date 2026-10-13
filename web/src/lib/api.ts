@@ -1017,18 +1017,21 @@ export function backupAll(names: string[]): Promise<OkEnvelope & { started?: num
   });
 }
 
+const NAMED_SOURCE = /^(offsite|folder)$|^(offsite|repo):/;
+
 /**
- * Query suffix selecting the off-site repo (else local, which needs no param).
- * Accepts BOTH off-site forms the backend parses (normalizeSource in
- * internal/api/handlers.go): bare "offsite" = the domain's primary target, and
- * "offsite:<id>" = one specific target. Anything else is the local repo.
+ * Query suffix selecting the repo a source names (local needs no param).
+ * Accepts the forms the backend parses (normalizeSource in
+ * internal/api/handlers.go): bare "offsite" = the domain's primary target,
+ * "offsite:<id>" = one specific target, and an entry's earlier place,
+ * "folder" or "repo:<id>". Anything else is the local repo.
  *
  * The `offsite:` form used to be dropped here, which silently downgraded a
  * per-target restore to the LOCAL repo — so the picker could not be wired up at
  * all (issue #138).
  */
 export function srcParam(source?: string, sep: "?" | "&" = "?"): string {
-  if (source !== "offsite" && !source?.startsWith("offsite:")) return "";
+  if (!source || !NAMED_SOURCE.test(source)) return "";
   return `${sep}source=${encodeURIComponent(source)}`;
 }
 
@@ -3227,6 +3230,8 @@ export interface DefaultImpact {
   dropped: TargetImpact[];
   added: TargetImpact[];
   openTakeHome: number;
+  /** Entries kept at the old home that move along with a new one. */
+  follow: number;
   /** The home and skip this impact was computed against, so a stale PUT can
    *  be told from one whose numbers just happen to match. */
   home: string;
@@ -3409,7 +3414,6 @@ export interface NewTargetPreview {
 
 export interface DirectSuggestion {
   location: string;
-  note: "" | "bucket-root" | "path-needed";
 }
 
 export interface DirectRepoFinding {
@@ -3471,7 +3475,7 @@ export interface TimelinePlace {
   label: string;
   /** The target a direct home without a name of its own goes by. */
   directOf?: string;
-  kind: "home" | "target";
+  kind: "home" | "target" | "earlier";
   remote: boolean;
   enabled: boolean;
   appendOnly: boolean;

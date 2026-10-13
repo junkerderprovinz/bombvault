@@ -90,7 +90,7 @@ func settle(t *testing.T, f *placementFixture, item store.ItemRef) (string, func
 	if err != nil {
 		t.Fatal(err)
 	}
-	return f.svc.settleHome(context.Background(), settings, item)
+	return f.svc.settleHome(settings, item)
 }
 
 func TestSettleHomeTakesTheDefaultForAnOpenItem(t *testing.T) {
@@ -114,37 +114,26 @@ func TestSettleHomeTakesTheDefaultForAnOpenItem(t *testing.T) {
 	}
 }
 
-func TestSettleHomeKeepsAnItemWithHistoryOnTheDomainPath(t *testing.T) {
+func TestSettleHomeTakesTheDefaultForAnOpenItemWithBackupsElsewhere(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")
 	f.setDefault("containers", nas.ID)
 	f.openContainer("nginx")
 	f.hold(f.domainPath("containers"), snap("aaaa0001", 100, "container:nginx"))
+	f.eng.listErr = map[string]error{f.domainPath("containers"): errors.New("share not mounted")}
 	item := store.ItemRef{Domain: "containers", Key: "nginx"}
 	repoID, commit, err := settle(t, f, item)
-	if err != nil || repoID != "" {
-		t.Fatalf("settleHome = %q, %v, want the domain path", repoID, err)
+	if err != nil || repoID != nas.ID {
+		t.Fatalf("settleHome = %q, %v, want NAS", repoID, err)
 	}
 	if _, err := commit(); err != nil {
 		t.Fatal(err)
 	}
-	if got := f.home(item); got.Repo != "" || got.Choice != store.RepoChosen {
-		t.Fatalf("home = %+v, want the domain path chosen", got)
+	if got := f.home(item); got.Repo != nas.ID || got.Choice != store.RepoChosen {
+		t.Fatalf("home = %+v, want NAS chosen", got)
 	}
-}
-
-func TestSettleHomeStopsWhenTheDomainPathCannotBeRead(t *testing.T) {
-	f := newPlacementFixture(t)
-	nas := f.namedRepo("NAS", "nas")
-	f.setDefault("containers", nas.ID)
-	f.openContainer("nginx")
-	f.eng.listErr = map[string]error{f.domainPath("containers"): errors.New("share not mounted")}
-	item := store.ItemRef{Domain: "containers", Key: "nginx"}
-	if _, _, err := settle(t, f, item); err == nil {
-		t.Fatal("an unreadable domain path let the first backup pick a location")
-	}
-	if got := f.home(item); got.Choice != store.RepoOpen {
-		t.Fatalf("home = %+v, want it still open", got)
+	if n := f.eng.lists[f.domainPath("containers")]; n != 0 {
+		t.Fatalf("settling listed the domain path %d times, want none", n)
 	}
 }
 
@@ -255,8 +244,9 @@ func TestRecordHomeStartsOverWhenTheRowAppearedMeanwhile(t *testing.T) {
 
 // TestRecordHomeGivesUpAfterAFewTurns pins a bound on the retry loop: a row
 // under constant contention must not hold the domain lock forever. The hook
-// mutates the row right after settleHome reads it, so every turn's commit
-// finds a mismatch and recordHome must eventually report the cap itself.
+// mutates the row after settleHome read it and before the commit, so every
+// turn's commit finds a mismatch and recordHome must eventually report the
+// cap itself.
 func TestRecordHomeGivesUpAfterAFewTurns(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.setDefault("containers", "")
@@ -266,7 +256,7 @@ func TestRecordHomeGivesUpAfterAFewTurns(t *testing.T) {
 	}
 	item := store.ItemRef{Domain: "containers", Key: "nginx"}
 	toggle := 0
-	f.eng.onSnapshots = func() {
+	f.eng.onUnlock = func() {
 		toggle++
 		if toggle%2 == 1 {
 			if _, err := f.st.WritePlacement(item, &store.HomeWrite{Choice: store.RepoOpen}, nil, nil); err != nil {
