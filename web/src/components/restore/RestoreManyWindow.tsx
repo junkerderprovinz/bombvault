@@ -162,7 +162,7 @@ function EntryLine({
   const flash = downloadsOnly(item);
   const name = entryName(item, t);
   const target = whereFor(item, where);
-  const gone = !flash && target !== where;
+  const gone = !flash && isGone(item);
 
   const choice: RestoreChoice | null =
     plan && !flash && outcome === undefined
@@ -400,7 +400,7 @@ export function RestoreManyWindow({ items, onClose }: { items: BackupItem[]; onC
   const startable = (item: BackupItem) => {
     const key = itemProgressKey(item);
     if (!plans[key] || verdicts[key] !== "ready") return false;
-    return whereFor(item, where) === where || recreate[key] === true;
+    return !isGone(item) || recreate[key] === true;
   };
   const ready = queue.filter(startable);
   const reading = items.some((item) => timelines[itemProgressKey(item)] === undefined);

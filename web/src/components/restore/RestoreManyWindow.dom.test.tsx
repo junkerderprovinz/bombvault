@@ -385,6 +385,14 @@ describe("the check before the start", () => {
     await readyToStart(2);
   });
 
+  it("asks for the same yes when the originals are replaced", async () => {
+    open([item("plex"), item("jellyfin", { installed: false })]);
+    fireEvent.click(screen.getByRole("radio", { name: new RegExp(en["restoreWindow.replace"]) }));
+    await readyToStart(1);
+    fireEvent.click(within(entry("jellyfin")).getByRole("switch", { name: en["restoreMany.recreateYes"] }));
+    await readyToStart(2);
+  });
+
   it("refuses an entry gone from the server whose folder a running container uses", async () => {
     checkRestore.mockImplementation(async (req) =>
       req.name === "plex"
