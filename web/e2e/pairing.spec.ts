@@ -7,6 +7,7 @@
 // (https://github.com/junkerderprovinz/bombvault/issues/270), and one where
 // the second enters the phrase and pairs with the first one's words.
 import { expect, test, type Page } from "@playwright/test";
+import { blockServerLook } from "./serverLook";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -139,7 +140,7 @@ async function stage(page: Page, f: Instance): Promise<void> {
     if (patch.url !== undefined) f.url = patch.url;
     await route.fulfill({ json: view(f) });
   });
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript(() => window.localStorage.setItem("bv-lang", "de"));
 }
 

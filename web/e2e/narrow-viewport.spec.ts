@@ -37,6 +37,7 @@
 // sweeps beside their own treatments, in the specs where the surfaces they
 // guard actually exist.
 import { expect, test, type Page } from "@playwright/test";
+import { blockServerLook } from "./serverLook";
 
 // The two device projects from playwright.config.ts, the backstop targets
 // the mobile chrome, which only exists below the 48rem switch.
@@ -78,7 +79,7 @@ async function bootSeededPage(
   // height; the portrait sweep keeps the original 700.
   height = 700,
 ): Promise<void> {
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript(
     ([key, value]) => {
       window.localStorage.setItem(key, value);

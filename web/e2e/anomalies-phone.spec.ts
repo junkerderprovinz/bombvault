@@ -7,6 +7,7 @@
 // and the actions reaching the API with the ids they name. German, because its
 // labels run longest.
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { blockServerLook } from "./serverLook";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -444,7 +445,7 @@ async function stage(page: Page, width: number, s: Stage = {}): Promise<void> {
   await page.route("**/api/storage/locations", (route) => route.fulfill({ json: { ok: true, locations: LOCATIONS } }));
   // Same seeding as narrow-viewport.spec.ts: the stored locale is the look,
   // and the server's display prefs must not overwrite it mid-boot.
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   const lang = s.lang ?? "de";
   await page.addInitScript((code) => window.localStorage.setItem("bv-lang", code), lang);
   await page.setViewportSize({ width, height: 800 });

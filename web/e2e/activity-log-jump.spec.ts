@@ -2,6 +2,7 @@
 // browser: it has to sit centred under the lines and leave the log's
 // scrollbar free, on every width the app ships.
 import { expect, test, type Page } from "@playwright/test";
+import { blockServerLook } from "./serverLook";
 
 const HOUR = 3600;
 const NOW = Math.floor(Date.now() / 1000);
@@ -24,7 +25,7 @@ const RUNS = Array.from({ length: 60 }, (_, i) => ({
 
 async function openLog(page: Page) {
   await page.route("**/api/runs", (route) => route.fulfill({ json: { ok: true, runs: RUNS } }));
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript(() => window.localStorage.setItem("bv-lang", "de"));
   await page.goto("/dashboard");
   // The log stands behind the selector of the history card.

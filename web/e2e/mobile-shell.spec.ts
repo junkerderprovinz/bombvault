@@ -25,6 +25,7 @@
 // a fresh instance can be given without a backup, and read the colours the
 // browser computed: the pairing lives in index.css, which jsdom does not apply.
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { blockServerLook } from "./serverLook";
 
 // The two device projects from playwright.config.ts. Everything else is a
 // desktop project.
@@ -42,7 +43,7 @@ const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 // keeps every worker on the harness default locale regardless of what its
 // siblings do, with nothing PUT back to the shared server.
 async function bootWithoutServerLook(page: Page): Promise<void> {
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.goto("/dashboard");
 }
 
@@ -258,7 +259,7 @@ async function entryColours(entry: Locator) {
 test("the count on Overview wears the entry's colours and turns them round on the current entry", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: the sidebar's form of the count");
   await stageTwoUnprotected(page);
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.goto("/backups");
   const overview = page.getByTestId("desktop-sidebar").getByRole("link", { name: /^Overview/ });
 
@@ -277,7 +278,7 @@ test("the count on Overview wears the entry's colours and turns them round on th
 test("the bar's count on Overview is grey and takes the fill's ink on the current tab", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the bar's form of the count");
   await stageTwoUnprotected(page);
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.goto("/backups");
   const bar = page.getByTestId("bottom-nav");
   // The count hangs on the glyph, which stands before the caption.

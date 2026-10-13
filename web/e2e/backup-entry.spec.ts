@@ -7,6 +7,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { blockServerLook } from "./serverLook";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -432,7 +433,7 @@ async function stage(page: Page, theme: "dark" | "light" = "dark"): Promise<void
     });
   });
   // The stored look is the one under test, so the server's must not replace it.
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript((mode) => {
     window.localStorage.setItem("bv-lang", "de");
     window.localStorage.setItem("bv-theme", mode);

@@ -4,6 +4,7 @@
 // providers a new location is set up with.
 import type { Page, Route } from "@playwright/test";
 import { PLACEMENT } from "./placement";
+import { blockServerLook } from "./serverLook";
 
 const NOW = Math.floor(Date.now() / 1000);
 const DAY = 86400;
@@ -524,7 +525,7 @@ export async function stageStorage(page: Page, width: number, lang = "de"): Prom
   await page.route("**/api/offsite/drafts/check", (route) => route.fulfill({ json: { ok: true, reachable: true, initialized: false } }));
   // The stored locale is the look, and the server's display prefs must not
   // overwrite it while the page boots.
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript((code) => window.localStorage.setItem("bv-lang", code), lang);
   await page.setViewportSize({ width, height: 900 });
   return staged;

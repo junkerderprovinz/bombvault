@@ -16,6 +16,12 @@ import {
 } from "./overview";
 import { LOCATIONS, STORAGE_BOX } from "./storage";
 
+// A handler can still wait on the real server when its test has passed;
+// what it throws then is dropped.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 const LAYOUT_KEY = "bombvault.dashboardLayout";
 const ALL = ["needs", "protection", "targets", "history", "anomalies", "coverage", "heatmap", "storage", "summary", "stats", "spike"];

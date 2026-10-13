@@ -3,6 +3,7 @@
 // section joins the exceptions from the Exception list, and a section's
 // entries come up in a window. On a phone nothing reaches past the viewport.
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { blockServerLook } from "./serverLook";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -43,7 +44,7 @@ const ITEMS = [
 }));
 
 async function stage(page: Page): Promise<void> {
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   await page.addInitScript(() => window.localStorage.setItem("bv-lang", "en"));
   await page.route("**/api/settings", async (route: Route) => {
     if (route.request().method() !== "GET") return route.fulfill({ json: { ok: true } });

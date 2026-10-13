@@ -20,6 +20,12 @@ import { openOverview, stageOverview } from "./overview";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
+// A handler can still wait on the real server when its test has passed;
+// what it throws then is dropped.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 const START = "Back up everything now";
 
 function action(page: Page) {

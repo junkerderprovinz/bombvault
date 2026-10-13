@@ -14,6 +14,7 @@ import { join } from "node:path";
 import { EVERY_KIND, MOBILE_PROJECTS, NOW, stageEntries } from "./entries";
 import { openOverview, stageOverview } from "./overview";
 import { STORAGE_BOX, stageStorage } from "./storage";
+import { blockServerLook } from "./serverLook";
 
 // Set to a folder to keep pictures of the dots.
 const SHOTS = process.env.WHATS_NEW_SHOTS;
@@ -55,7 +56,7 @@ async function stageUpdate(page: Page, from = "v9.9.1"): Promise<void> {
   await page.route("**/api/health", (route) => route.fulfill({ json: { ok: true, version: "v10.0.0" } }));
   await page.route("**/api/release-notes*", (route) => route.fulfill({ json: { ok: true, body: "## Added\n\n- One list.", htmlUrl: "" } }));
   // The stored look is the one under test, so the server's must not replace it.
-  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await blockServerLook(page);
   // Once per tab: a reload has to find what the first visit left behind.
   await page.addInitScript((seen) => {
     if (window.sessionStorage.getItem("staged")) return;
