@@ -94,7 +94,7 @@ export function InstanceCard({
           {figures && <div className="flex flex-wrap items-baseline gap-x-7 gap-y-3 empty:hidden">{figures}</div>}
         </div>
       </div>
-      {children && <div className="flex flex-col gap-4 px-4 pb-4 md:px-5">{children}</div>}
+      {children && <div className="@container flex flex-col gap-4 px-4 pb-4 md:px-5">{children}</div>}
       {actions && (
         <div className="mt-auto flex flex-wrap items-center gap-2 px-4 pb-4 md:px-5 md:pb-5 [&>:first-child]:flex-auto">
           {actions}

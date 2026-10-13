@@ -343,7 +343,7 @@ export function Instances() {
       ))}
 
       {modules && !state.loading && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,24rem),1fr))] items-stretch gap-4 glim-content-fade" {...handlers}>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,36rem),1fr))] items-stretch gap-4 glim-content-fade" {...handlers}>
           {grouped && state.self && nodes.length > 0 && (
             <div className="col-span-full rounded-card bg-carbon-surface px-3 py-3 md:px-5 md:py-4 [--net-ground:var(--carbon-surface)]">
               <NetPicture selfName={state.self.name} nodes={nodes} hot={hot} />

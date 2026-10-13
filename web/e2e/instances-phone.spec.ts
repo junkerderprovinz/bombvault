@@ -794,6 +794,12 @@ test("the grid on the desktop keeps the 40px rhythm and cards of one size", asyn
     const row = boxes.filter((b) => b.top === top);
     expect(new Set(row.map((b) => b.height)).size, "cards of one row differ in height").toBe(1);
   }
+  // Where the window leaves room beside the sidebar, a card is a wide
+  // rectangle; on a narrower one it fills the column and its content sets
+  // the height.
+  if (width >= 1024) {
+    for (const b of boxes) expect(b.width, "a card is clearly wider than high").toBeGreaterThanOrEqual(b.height * 1.5);
+  }
   // A name stays one line on the desktop, cut with an ellipsis if it must be.
   const name = card(page, MEMBER).locator("span.font-semibold").first();
   expect(await name.evaluate((node) => getComputedStyle(node).whiteSpace)).toBe("nowrap");
