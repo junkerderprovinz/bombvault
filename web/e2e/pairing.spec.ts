@@ -161,7 +161,12 @@ async function expectFits(page: Page): Promise<void> {
     const root = document.querySelector("#bv-main")!;
     const vw = window.innerWidth;
     const name = (el: Element) => (el.getAttribute("aria-label") ?? el.textContent ?? "").trim().slice(0, 40);
-    const controls = [...root.querySelectorAll("button, a, input, textarea, [role='switch'], [role='tab']")];
+    // The Settings rail's strip scrolls sideways, so its tiles stand past the
+    // window by design; the strip itself has to stay inside.
+    const strip = "nav[data-rail-form='strip']";
+    const controls = [...root.querySelectorAll(`button, a, input, textarea, [role='switch'], [role='tab'], ${strip}`)].filter(
+      (el) => !el.parentElement?.closest(strip),
+    );
     return {
       docPan: document.documentElement.scrollWidth - vw,
       pastViewport: controls

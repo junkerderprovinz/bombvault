@@ -477,11 +477,14 @@ for (const width of [320, 360]) {
             return box.width > 1 && box.height > 1;
           },
         );
+        // The rail's strip scrolls sideways, so its tiles stand past the
+        // window by design; the strip itself is held to the content's width.
+        const onPage = controls.filter((el) => !el.closest('nav[data-rail-form="strip"]'));
         const card = (el: Element) => el.parentElement?.closest(".rounded-card, .glim-card, .glim-tile") ?? null;
         return {
           docPan: document.documentElement.scrollWidth - vw,
           mainPan: main.scrollWidth - main.clientWidth,
-          pastViewport: controls
+          pastViewport: onPage
             .filter((el) => {
               const box = el.getBoundingClientRect();
               return box.right > vw + 1 || box.left < -1;
@@ -524,13 +527,16 @@ for (const width of [320, 360]) {
   }
 }
 
-test("settings on a phone: the rail shows its glyphs alone and keeps their names", async ({ page }, testInfo) => {
+test("settings on a phone: the rail is one row of named tiles above the page", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
   await openPage(page, 360, "general", "Allgemein");
-  // The names stay the links' accessible names; shown, they would squeeze the
-  // content column.
-  expect((await railNames(page)).shown).toBe(0);
+  // The strip scrolls sideways, so the names take no room from the page.
+  const names = await railNames(page);
+  expect(names.shown).toBe(PAGES.length);
+  expect(names.cut, "names cut off").toEqual([]);
   for (const [, name] of PAGES) await expect(rail(page).getByRole("link", { name, exact: true })).toBeVisible();
+  const rows = await rail(page).evaluate((nav) => new Set([...nav.querySelectorAll("a")].map((a) => Math.round(a.getBoundingClientRect().top))).size);
+  expect(rows, "rows of tiles").toBe(1);
   expect((await railTiles(page)).belowWindow, "tiles below the window").toBe(0);
 });
 
@@ -629,7 +635,7 @@ test("settings integrations on a phone: the MCP confirmations come up as a sheet
   await expect(page.getByRole("dialog")).toBeInViewport({ ratio: 1 });
 });
 
-test("settings on the desktop keeps the 40px rhythm, with the rail's names once there is room", async ({ page }, testInfo) => {
+test("settings on the desktop keeps the 40px rhythm, with the rail's names", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   const width = testInfo.project.use.viewport!.width;
   await openPage(page, width, "general", "Allgemein");
@@ -638,9 +644,10 @@ test("settings on the desktop keeps the 40px rhythm, with the rail's names once 
   const tiles = await railTiles(page);
   expect(tiles.tiles).toBe(PAGES.length);
   expect(tiles.belowWindow, "tiles below the window").toBe(0);
-  // Below 64rem the content column needs the room, so the rail keeps its glyphs.
+  // A column where the page keeps its room beside it, a strip above it where
+  // it would not; both show the names.
   const names = await railNames(page);
-  expect(names.shown).toBe(width >= 1024 ? PAGES.length : 0);
+  expect(names.shown).toBe(PAGES.length);
   expect(names.cut, "names cut off").toEqual([]);
 });
 

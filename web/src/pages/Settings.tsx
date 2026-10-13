@@ -1,11 +1,11 @@
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Button } from "../components/Button";
 import { PageTitle } from "../components/PageTitle";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { useT } from "../lib/i18n";
 import { useToast } from "../lib/toast";
 import { Navigate, useLocation, useParams } from "react-router-dom";
-import { SettingsRail } from "../components/SettingsRail";
+import { SettingsRail, useRailForm } from "../components/SettingsRail";
 import { SettingsSearch, jumpTarget, markHit, type SearchJump } from "./settings/SettingsSearch";
 import {
   FALLBACK_PAGE,
@@ -21,7 +21,7 @@ import { SettingsStoreContext, useSettingsStore } from "./settings/settingsStore
 import { PAGE_COMPONENTS } from "./settings/pages";
 
 // bv-convention-exception: page-uses-page-shell: the rail stands beside the
-// page, and the content column next to it carries PAGE_SHELL_RESPONSIVE.
+// page or above it, and the content column carries PAGE_SHELL_RESPONSIVE.
 export function SettingsPage() {
   const { t } = useT();
   const { push } = useToast();
@@ -35,6 +35,8 @@ export function SettingsPage() {
   const redirect = redirectFor(param, hash);
   const order = useSettingsOrder();
   const pages = orderPages(order);
+  const [frame, setFrame] = useState<HTMLDivElement | null>(null);
+  const railForm = useRailForm(frame);
   // A page slides in from the side its tile sits on in the rail.
   const shownPage = useRef(page);
   const pageDir = useRef<1 | -1>(1);
@@ -115,12 +117,16 @@ export function SettingsPage() {
   const Page = PAGE_COMPONENTS[page];
 
   return (
-    <div className="flex flex-1 gap-3 md:gap-10">
+    <div
+      ref={setFrame}
+      className={`flex min-w-0 flex-1 ${railForm === "strip" ? "flex-col gap-4" : "gap-3 md:gap-10"}`}
+    >
       {redirect && <Navigate to={`/settings/${redirect}`} replace />}
       <SettingsRail
         items={pages.map((p) => ({ id: p.id, label: t(p.label), icon: p.icon, to: `/settings/${p.id}` }))}
         active={page}
         label={t("settings.railLabel")}
+        form={railForm}
         onReorder={writeOrder}
       />
       <div data-settings-content className={`${PAGE_SHELL_RESPONSIVE} min-w-0 flex-1`}>

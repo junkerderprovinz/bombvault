@@ -57,17 +57,26 @@ function stepElement(step: WayStep): HTMLElement | undefined {
   return first(`nav a[href="${step}"]`) ?? first(`a[href="${step}"]`);
 }
 
-/** Whether a box that scrolls or cuts its content keeps the point out of view. */
-function cutOff(el: HTMLElement, x: number, y: number): boolean {
+/**
+ * inView is where the dot for a point stands, or null where a box that scrolls
+ * or cuts its content keeps the point out of view. A strip that scrolls only
+ * sideways, such as the Settings rail above a narrow page, keeps the dot at
+ * its edge on the side the point lies past, where a swipe brings it in.
+ */
+function inView(el: HTMLElement, x: number, y: number): { x: number; y: number } | null {
   const cuts = (overflow: string) => /auto|scroll|hidden|clip/.test(overflow);
   for (let box = el.parentElement; box; box = box.parentElement) {
     const { overflowX, overflowY } = getComputedStyle(box);
     if (!cuts(overflowX) && !cuts(overflowY)) continue;
     const edge = box.getBoundingClientRect();
-    if (cuts(overflowY) && (y < edge.top || y > edge.bottom)) return true;
-    if (cuts(overflowX) && (x < edge.left || x > edge.right)) return true;
+    if (cuts(overflowY) && (y < edge.top || y > edge.bottom)) return null;
+    if (cuts(overflowX) && (x < edge.left || x > edge.right)) {
+      const sideways = box.scrollWidth > box.clientWidth && box.scrollHeight <= box.clientHeight;
+      if (!sideways) return null;
+      x = Math.min(Math.max(x, edge.left + 4), edge.right - 4);
+    }
   }
-  return false;
+  return { x: Math.round(x), y };
 }
 
 /** What a click on a way's dot presses: the way itself, or the link or the
@@ -87,7 +96,7 @@ function find(unseen: Change[], absent: ReadonlySet<string>, pathname: string): 
     if (front && !front.contains(el)) return null;
     const box = el.getBoundingClientRect();
     const [x, y] = [Math.round(rtl ? box.left + 4 : box.right - 4), Math.round(box.top + 4)];
-    return cutOff(el, x, y) ? null : { x, y };
+    return inView(el, x, y);
   };
 
   const found: Found = { spots: [], met: [], lacking: [] };

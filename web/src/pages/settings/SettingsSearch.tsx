@@ -138,6 +138,9 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
   const { pathname } = useLocation();
   const { revealed, barRef, show, hide } = useRevealOnScrollUp(pathname, pinned);
   const [summoned, setSummoned] = useState(0);
+  // The cursor goes in once per summons. A bar that comes back because the
+  // page scrolled up leaves the focus where it is.
+  const cursorOwed = useRef(false);
 
   // A slash outside a field and Ctrl+K anywhere bring the search up with the
   // cursor in it.
@@ -149,6 +152,7 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
       const palette = e.key.toLowerCase() === "k" && (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey;
       if (!slash && !palette) return;
       e.preventDefault();
+      cursorOwed.current = true;
       show();
       setSummoned((n) => n + 1);
     }
@@ -157,7 +161,9 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
   }, [show]);
 
   useEffect(() => {
-    if (summoned > 0) field.current?.focus();
+    if (!cursorOwed.current || !field.current) return;
+    cursorOwed.current = false;
+    field.current.focus();
   }, [summoned, revealed]);
 
   const items = useMemo(() => buildItems(t, pages), [t, pages]);
