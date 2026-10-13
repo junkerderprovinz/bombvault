@@ -2,7 +2,7 @@ import { createElement, useCallback, useEffect, useMemo, useRef, useState, type 
 import { getEmergency, listRuns, type AnomalyView, type Run, type Settings } from "./api";
 import { ATTENTION_CHANGED_EVENT, AttentionContext, AttentionCountContext, FreshInstallContext, LocationsContext } from "./attention";
 import { forgetFirstSteps } from "./firstSteps";
-import { isFreshInstall } from "./freshInstall";
+import { isFreshInstall, rememberInUse } from "./freshInstall";
 import { needsOf } from "./needs";
 import { useAnomalySummary, useOpenAnomalies } from "./useAnomalies";
 import { useBackupItems } from "./useBackupItems";
@@ -123,7 +123,9 @@ export function AttentionProvider({ settings, children }: { settings: Settings |
   );
   const fresh = items.loaded && isFreshInstall(items.items);
   useEffect(() => {
-    if (items.loaded && !fresh) forgetFirstSteps();
+    if (!items.loaded) return;
+    if (!fresh) forgetFirstSteps();
+    rememberInUse(!fresh);
   }, [items.loaded, fresh]);
   const value = useMemo(
     () => ({ needs, fresh, items, runs, runsReady, runsFailed, refreshRuns, locations, watch }),
