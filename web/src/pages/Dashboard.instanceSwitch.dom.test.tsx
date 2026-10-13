@@ -2,7 +2,7 @@
 // The name at the top of the overview inside the Android app: the server's
 // own, and once the app names other servers, the way to switch to one.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { en } from "../lib/i18n";
 import { Dashboard } from "./Dashboard";
@@ -14,18 +14,24 @@ vi.mock("../lib/api", async (importOriginal) => {
   return stagedApi(await importOriginal<typeof import("../lib/api")>());
 });
 
-/** The app's message port as the page sees it, with what the page sent. */
+/** The app's message port as the page sees it, with what the page sent and
+ *  the history entry the page was on when it sent it. */
 function fakeApp() {
   const listeners = new Set<(e: { data: string }) => void>();
   const sent: unknown[] = [];
+  const sentFrom: unknown[] = [];
   const port = {
-    postMessage: (data: string) => sent.push(JSON.parse(data)),
+    postMessage: (data: string) => {
+      sent.push(JSON.parse(data));
+      sentFrom.push(window.history.state);
+    },
     addEventListener: (_type: string, fn: (e: { data: string }) => void) => listeners.add(fn),
     removeEventListener: (_type: string, fn: (e: { data: string }) => void) => listeners.delete(fn),
   };
   vi.stubGlobal("bombvaultApp", port);
   return {
     sent,
+    sentFrom,
     answer: (message: unknown) =>
       act(async () => {
         for (const fn of listeners) fn({ data: JSON.stringify(message) });
@@ -57,6 +63,8 @@ async function renderPage() {
   await act(async () => {});
 }
 
+/** The sheets and dialogs whose Back entry a history entry sits on. */
+const layersOf = (state: unknown) => (state as { bvLayers?: string[] } | null)?.bvLayers ?? [];
 const shownCards = () => [...document.querySelectorAll("[data-grid-block]")].map((el) => el.getAttribute("data-grid-block"));
 const switcher = () => screen.queryByRole("button", { name: `BV-RC, ${en["instances.title"]}` });
 
@@ -138,8 +146,24 @@ describe("the top of the overview in the app", () => {
     fireEvent.click(switcher()!);
     fireEvent.click(within(screen.getByRole("dialog")).getAllByTestId("instance-row")[1]);
 
-    expect(app.sent.at(-1)).toEqual({ op: "open", id: "c" });
+    await waitFor(() => expect(app.sent.at(-1)).toEqual({ op: "open", id: "c" }));
     expect(screen.queryByRole("dialog")).toBeNull();
+    expect(app.sent.filter((m) => (m as { op: string }).op === "open")).toHaveLength(1);
+  });
+
+  it("asks for the other server only once the sheet's Back entry is gone", async () => {
+    const app = fakeApp();
+    await renderPage();
+    await app.answer({ op: "servers", servers: [B, C] });
+    const below = window.history.state;
+
+    fireEvent.click(switcher()!);
+    expect(layersOf(window.history.state)).toHaveLength(1);
+    fireEvent.click(within(screen.getByRole("dialog")).getAllByTestId("instance-row")[0]);
+
+    await waitFor(() => expect(app.sent.at(-1)).toEqual({ op: "open", id: "b" }));
+    expect(layersOf(app.sentFrom.at(-1))).toEqual([]);
+    expect(window.history.state).toEqual(below);
   });
 
   it("keeps a server's answer when the app names the servers again", async () => {

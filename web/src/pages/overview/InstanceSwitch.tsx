@@ -4,6 +4,7 @@ import { Badge } from "../../components/Badge";
 import { BottomSheet } from "../../components/mobile/BottomSheet";
 import { REACH_BADGE, type AppServer } from "../../lib/appServers";
 import type { useT } from "../../lib/i18n";
+import { leaveLayers } from "../../lib/useBackCloses";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -28,6 +29,14 @@ export function InstanceSwitch({
   onOpen: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+
+  // The sheet's Back entry is dropped before the app is asked: a step back
+  // still on its way once the other server loads takes the WebView back here.
+  const pick = (id: string) =>
+    leaveLayers(() => {
+      setOpen(false);
+      onOpen(id);
+    });
 
   if (!servers || servers.length === 0) {
     return <span className={NAME}>{name}</span>;
@@ -74,10 +83,7 @@ export function InstanceSwitch({
                 <button
                   type="button"
                   data-testid="instance-row"
-                  onClick={() => {
-                    setOpen(false);
-                    onOpen(server.id);
-                  }}
+                  onClick={() => pick(server.id)}
                   className={`${ROW} hover:bg-carbon-hover glim-field-focus`}
                 >
                   <span className="min-w-0 flex-1 truncate font-semibold text-carbon-text">{server.name}</span>
