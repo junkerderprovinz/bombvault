@@ -115,20 +115,35 @@ func TestAnOpenContainerTakesTheDefaultAtItsFirstBackup(t *testing.T) {
 	}
 }
 
-func TestAnOpenContainerWithHistoryOnTheDomainPathStillTakesTheDefault(t *testing.T) {
+func TestHistoryOnTheDomainPathKeepsAnOpenContainerThere(t *testing.T) {
 	rig := newFirstBackupRig(t)
 	nas := rig.named(t, "NAS", "nas")
 	rig.setDefault(t, "containers", nas.ID)
 	rig.eng.snapsByRepo[rig.root+"/backups/containers"] = []restic.Snapshot{{ID: "1111aaaa", Tags: []string{"container:nginx"}}}
-	rig.eng.snapsErrFor[rig.root+"/backups/containers"] = errWrongKey
 	if _, err := rig.svc.Backup(context.Background(), "nginx"); err != nil {
 		t.Fatalf("Backup: %v", err)
 	}
-	if !hasRepo(rig.eng.backedUp, rig.root+"/nas") || hasRepo(rig.eng.backedUp, rig.root+"/backups/containers") {
-		t.Fatalf("backed up to %v, want NAS alone", rig.eng.backedUp)
+	if !hasRepo(rig.eng.backedUp, rig.root+"/backups/containers") || hasRepo(rig.eng.backedUp, rig.root+"/nas") {
+		t.Fatalf("backed up to %v, want the domain path alone", rig.eng.backedUp)
 	}
-	if got := rig.home(t, "containers", "nginx"); got.Repo != nas.ID || got.Choice != store.RepoChosen {
-		t.Fatalf("home = %+v, want NAS chosen", got)
+	if got := rig.home(t, "containers", "nginx"); got.Repo != "" || got.Choice != store.RepoChosen {
+		t.Fatalf("home = %+v, want the domain path chosen", got)
+	}
+}
+
+func TestAnUnreadableDomainPathStopsTheFirstBackup(t *testing.T) {
+	rig := newFirstBackupRig(t)
+	nas := rig.named(t, "NAS", "nas")
+	rig.setDefault(t, "containers", nas.ID)
+	rig.eng.snapsErrFor[rig.root+"/backups/containers"] = errWrongKey
+	if _, err := rig.svc.Backup(context.Background(), "nginx"); err == nil {
+		t.Fatal("the first backup ran although the domain path could not be read")
+	}
+	if len(rig.eng.backedUp) != 0 {
+		t.Fatalf("backed up to %v", rig.eng.backedUp)
+	}
+	if got := rig.home(t, "containers", "nginx"); got.Choice != store.RepoOpen {
+		t.Fatalf("home = %+v, want it still open", got)
 	}
 }
 
