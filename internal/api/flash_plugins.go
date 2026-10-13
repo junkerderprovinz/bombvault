@@ -107,7 +107,7 @@ func (s *Service) scanFlashPlugins(ctx context.Context, snapshotID, source strin
 		return flashPluginScan{}, fmt.Errorf("scratch folder: %w", err)
 	}
 	defer func() { _ = os.RemoveAll(tmp) }()
-	if err := s.engine.RestoreInclude(ctx, repo, id, escapeGlobLiteral(pluginsDir+"/")+"*.plg", tmp, mode); err != nil {
+	if err := s.engine.RestoreInclude(ctx, repo, id, restic.EscapeGlob(pluginsDir+"/")+"*.plg", tmp, mode); err != nil {
 		return flashPluginScan{}, fmt.Errorf("read the plugin files: %w", err)
 	}
 
@@ -249,7 +249,7 @@ func (s *Service) restoreFlashPlugin(ctx context.Context, scan flashPluginScan, 
 		includes = append(includes, scan.root+"/"+strings.TrimPrefix(pkg, "/boot/"))
 	}
 	for _, inc := range includes {
-		if err := s.engine.RestoreInclude(ctx, scan.repo, scan.id, escapeGlobLiteral(inc), tmp, scan.mode); err != nil {
+		if err := s.engine.RestoreInclude(ctx, scan.repo, scan.id, restic.EscapeGlob(inc), tmp, scan.mode); err != nil {
 			return fmt.Errorf("restore %s: %w", strings.TrimPrefix(inc, scan.root), err)
 		}
 	}

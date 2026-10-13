@@ -175,6 +175,9 @@ type ResticEngine interface {
 	// original owner/mode after a remapped restore, since restic's restorer
 	// never re-applies that metadata to the subtree root it creates.
 	LsPath(ctx context.Context, repo, snapshotID, dirPath string, mode restic.Mode) ([]restic.FileEntry, error)
+	// HoldsFile reports whether a snapshot holds p as a file rather than a
+	// folder, which RestoreSubtreeTo makes target itself.
+	HoldsFile(ctx context.Context, repo, snapshotID, p string, mode restic.Mode) (bool, error)
 	// RestoreInclude restores a single path from a snapshot to target (file-level
 	// restore; target "/" = in-place to its original location).
 	RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, mode restic.Mode) error
@@ -1737,7 +1740,7 @@ func (s *Service) resolveExcludeLine(line string, in model.Inspect) (pattern, st
 			// glob away from the half the user owns, where "*" and "?" are the
 			// point.
 			if cpHead, headOK := s.toContainerPath(path.Clean(bestSrc)); headOK {
-				return escapeGlobLiteral(cpHead) + strings.TrimPrefix(clean, bestDest), "translated"
+				return restic.EscapeGlob(cpHead) + strings.TrimPrefix(clean, bestDest), "translated"
 			}
 			return cp, "translated"
 		}
@@ -9765,12 +9768,12 @@ func (s *Service) runRestoreFiles(ctx context.Context, plan filesRestorePlan) er
 	unlock := s.lockDomainFor("containers", "restore")
 	defer unlock()
 	for i, c := range plan.paths {
-		// escapeGlobLiteral, because --include is a GLOB like --exclude and c is
+		// EscapeGlob, because --include is a glob like --exclude and c is
 		// a path the user ticked in the file picker, not a pattern anyone wrote.
 		// Measured against the shipped restic: a raw "/Inception (2010)
-		// [1080p]" restored ZERO files and still exited 0, so the run was
+		// [1080p]" restored no files and still exited 0, so the run was
 		// recorded a success with an empty target folder.
-		if err := s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, escapeGlobLiteral(c), plan.target, plan.mode); err != nil {
+		if err := s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, restic.EscapeGlob(c), plan.target, plan.mode); err != nil {
 			if len(plan.paths) > 1 {
 				return fmt.Errorf("restored %d of %d files, then failed on %q: %w", i, len(plan.paths), c, err)
 			}
@@ -14039,14 +14042,15 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 var walkFileSetSource = filepath.WalkDir
 
 // fileSetSourceEmpty reports whether src holds nothing but directories.
-// Excludes play no part: a fully excluded folder is still the real folder.
+// Excludes play no part: a fully excluded folder is still the real folder. A
+// set whose path is a file holds that file.
 func fileSetSourceEmpty(src string) (bool, error) {
 	empty := true
 	err := walkFileSetSource(src, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if p == src || d.IsDir() {
+		if d.IsDir() || (p == src && !d.Type().IsRegular()) {
 			return nil
 		}
 		empty = false
@@ -14535,6 +14539,9 @@ type fileSetRestorePlan struct {
 	inPlace    string // in-place: the set's resolved source path (engine.RestorePath); "" = to-folder
 	target     string // to-folder: the resolved alternate folder under the host mount ("" = in-place)
 	subtree    string // to-folder: the SNAPSHOT's own tree node covering ALL its recorded paths - the <id>:<subtree> restore root ("" = path-less snapshot or roots with no shared ancestor -> whole-tree fallback)
+	// file is set when subtree is a single file, which lands inside target
+	// under its own name.
+	file bool
 	// beside is set for a restore next to the set's folder: target then lies
 	// in the copy this names, which the restore creates.
 	beside *besideRoot
@@ -14656,6 +14663,9 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	}
 	plan.repo = repo
 	plan.mode = s.repoModeFor(settings, "files", source, repo)
+	if err := s.markFileSubtree(ctx, &plan); err != nil {
+		return fileSetRestorePlan{}, err
+	}
 
 	// Create the alternate target dir ONLY after every validation passed. Use the
 	// readable (0o755) variant: the restore target lives on a user-visible / synced
@@ -14685,11 +14695,34 @@ func (s *Service) runRestoreFileSet(ctx context.Context, plan fileSetRestorePlan
 		// Restore the snapshot's OWN subtree directly INTO the chosen folder, so its
 		// contents land at <target>/… — not <target>/host/user/… (issue #62's nested
 		// restore, which a bare RestoreInclude("/") produces).
-		return s.engine.RestoreSubtreeTo(ctx, plan.repo, plan.snapshotID, plan.subtree, plan.target, plan.mode)
+		return s.engine.RestoreSubtreeTo(ctx, plan.repo, plan.snapshotID, plan.subtree, plan.subtreeTarget(), plan.mode)
 	}
 	// Degenerate fallback: a snapshot with no recorded path — restore the whole tree
 	// rather than emit an invalid "<id>:" selector.
 	return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, "/", plan.target, plan.mode)
+}
+
+// markFileSubtree finds out whether a to-folder plan's subtree is a single
+// file. A folder's contents land in the target folder, which a file would
+// take the place of.
+func (s *Service) markFileSubtree(ctx context.Context, plan *fileSetRestorePlan) error {
+	if plan.target == "" || plan.subtree == "" {
+		return nil
+	}
+	file, err := s.engine.HoldsFile(ctx, plan.repo, plan.snapshotID, plan.subtree, plan.mode)
+	if err != nil {
+		return fmt.Errorf("read snapshot contents: %w", err)
+	}
+	plan.file = file
+	return nil
+}
+
+// subtreeTarget is where a to-folder plan restores its subtree.
+func (p fileSetRestorePlan) subtreeTarget() string {
+	if p.file {
+		return path.Join(p.target, path.Base(p.subtree))
+	}
+	return p.target
 }
 
 // StartRestoreFileSet launches a file-set restore in a background goroutine
@@ -14960,7 +14993,7 @@ func (s *Service) restoreOneFileSetFile(ctx context.Context, plan fileSetFilesRe
 	if plan.target == "" {
 		// In place: restore each selected path back to its own absolute location.
 		// Same glob rule as the to-folder branch above: sel is a picked path.
-		return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, escapeGlobLiteral(sel), "/", plan.mode)
+		return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, restic.EscapeGlob(sel), "/", plan.mode)
 	}
 	// To a folder: root the restore at the selection's IMMEDIATE PARENT and include
 	// only its basename, so the picked file or folder lands directly as
@@ -14978,7 +15011,7 @@ func (s *Service) restoreOneFileSetFile(ctx context.Context, plan fileSetFilesRe
 	}
 	// The subtree root travels as a SELECTOR (not a pattern) and stays raw; the
 	// include is a glob and is escaped.
-	return s.engine.RestoreSubtreeInclude(ctx, plan.repo, plan.snapshotID, parent, escapeGlobLiteral("/"+base), plan.target, plan.mode)
+	return s.engine.RestoreSubtreeInclude(ctx, plan.repo, plan.snapshotID, parent, restic.EscapeGlob("/"+base), plan.target, plan.mode)
 }
 
 // StartRestoreFileSetFiles launches a selective file-set restore in a background

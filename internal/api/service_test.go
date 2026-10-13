@@ -5965,6 +5965,12 @@ func (f *fakeResticEngine) LsPath(_ context.Context, _, _, dirPath string, _ res
 	return f.lsPathEntries, nil
 }
 
+// HoldsFile answers that every path is a folder, the shape almost every
+// backup has.
+func (f *fakeResticEngine) HoldsFile(context.Context, string, string, string, restic.Mode) (bool, error) {
+	return false, nil
+}
+
 func (f *fakeResticEngine) RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
 	if f.restorePanic {
 		panic("boom during restore")

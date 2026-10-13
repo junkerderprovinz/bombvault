@@ -822,7 +822,7 @@ func (s *Service) restoreZFSStep(ctx context.Context, plan zfsRestorePlan, step 
 	if len(plan.paths) == 0 {
 		excludes := make([]string, len(plan.covered))
 		for i, c := range plan.covered {
-			excludes[i] = escapeGlobLiteral(c)
+			excludes[i] = restic.EscapeGlob(c)
 		}
 		return s.engine.RestoreAll(ctx, plan.repo, step.snapshotID, step.target, plan.mode, excludes...)
 	}
@@ -846,11 +846,11 @@ func (s *Service) restoreZFSStep(ctx context.Context, plan zfsRestorePlan, step 
 func (s *Service) restoreZFSFile(ctx context.Context, plan zfsRestorePlan, step zfsRestoreStep, sel string) error {
 	parent, base := path.Dir(sel), path.Base(sel)
 	if plan.inPlace || parent == "/" {
-		return s.engine.RestoreInclude(ctx, plan.repo, step.snapshotID, escapeGlobLiteral(sel), step.target, plan.mode)
+		return s.engine.RestoreInclude(ctx, plan.repo, step.snapshotID, restic.EscapeGlob(sel), step.target, plan.mode)
 	}
 	// The subtree root travels as a selector and stays raw; the include is a
 	// glob and is escaped.
-	return s.engine.RestoreSubtreeInclude(ctx, plan.repo, step.snapshotID, parent, escapeGlobLiteral("/"+base), step.target, plan.mode)
+	return s.engine.RestoreSubtreeInclude(ctx, plan.repo, step.snapshotID, parent, restic.EscapeGlob("/"+base), step.target, plan.mode)
 }
 
 // ListZFSSafetySnapshots reads the item's tree on the host and returns the

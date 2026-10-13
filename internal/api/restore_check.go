@@ -399,7 +399,7 @@ func (s *Service) restoreCheckScope(ctx context.Context, req RestoreCheckRequest
 		}
 		sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, owner: req.Name, inPlace: plan.resolved == ""}
 		for _, p := range plan.paths {
-			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: plan.snapshotID, Target: plan.target, Include: escapeGlobLiteral(p)})
+			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: plan.snapshotID, Target: plan.target, Include: restic.EscapeGlob(p)})
 			if sc.inPlace {
 				sc.written = append(sc.written, p)
 			}
@@ -528,7 +528,7 @@ func fileSetScope(plan fileSetRestorePlan) restoreScope {
 		sc.written = []string{plan.inPlace}
 		sc.steps = []restic.PreviewStep{{SnapshotID: plan.snapshotID, Subtree: plan.inPlace, Target: plan.inPlace}}
 	case plan.subtree != "":
-		sc.steps = []restic.PreviewStep{{SnapshotID: plan.snapshotID, Subtree: plan.subtree, Target: plan.target}}
+		sc.steps = []restic.PreviewStep{{SnapshotID: plan.snapshotID, Subtree: plan.subtree, Target: plan.subtreeTarget()}}
 	default:
 		sc.steps = []restic.PreviewStep{{SnapshotID: plan.snapshotID, Target: plan.target, Include: "/"}}
 	}
@@ -540,7 +540,7 @@ func fileSetFilesScope(plan fileSetFilesRestorePlan) restoreScope {
 	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: plan.target == ""}
 	for _, sel := range plan.paths {
 		if sc.inPlace {
-			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: plan.snapshotID, Target: "/", Include: escapeGlobLiteral(sel)})
+			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: plan.snapshotID, Target: "/", Include: restic.EscapeGlob(sel)})
 			sc.written = append(sc.written, sel)
 			continue
 		}
@@ -549,7 +549,7 @@ func fileSetFilesScope(plan fileSetFilesRestorePlan) restoreScope {
 			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: plan.snapshotID, Subtree: sel, Target: plan.target})
 			continue
 		}
-		sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: plan.snapshotID, Subtree: parent, Target: plan.target, Include: escapeGlobLiteral("/" + base)})
+		sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: plan.snapshotID, Subtree: parent, Target: plan.target, Include: restic.EscapeGlob("/" + base)})
 	}
 	return sc
 }
@@ -559,7 +559,7 @@ func zfsScope(plan zfsRestorePlan) restoreScope {
 	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: plan.inPlace, newDataset: plan.newDataset}
 	excludes := make([]string, len(plan.covered))
 	for i, c := range plan.covered {
-		excludes[i] = escapeGlobLiteral(c)
+		excludes[i] = restic.EscapeGlob(c)
 	}
 	for _, step := range plan.steps {
 		if plan.inPlace {
@@ -572,10 +572,10 @@ func zfsScope(plan zfsRestorePlan) restoreScope {
 		for _, sel := range plan.paths {
 			parent, base := path.Dir(sel), path.Base(sel)
 			if plan.inPlace || parent == "/" {
-				sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: step.snapshotID, Target: step.target, Include: escapeGlobLiteral(sel)})
+				sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: step.snapshotID, Target: step.target, Include: restic.EscapeGlob(sel)})
 				continue
 			}
-			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: step.snapshotID, Subtree: parent, Target: step.target, Include: escapeGlobLiteral("/" + base)})
+			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: step.snapshotID, Subtree: parent, Target: step.target, Include: restic.EscapeGlob("/" + base)})
 		}
 	}
 	return sc

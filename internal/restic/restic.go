@@ -823,6 +823,29 @@ func RestoreIncludeArgs(repo, snapshotID, includePath, target string, m Mode) []
 	return args
 }
 
+// EscapeGlob backslash-escapes restic's glob characters so a pattern derived
+// from a path matches exactly that path. Unescaped, a folder name can miss
+// itself ("[1080p]" is a character class), exclude its siblings ("Season [01]"
+// matches "Season 0" and "Season 1"), or fail the whole backup as an invalid
+// pattern ("Movies [2024"). TestDerivedExcludePatternsAreLiteral checks the
+// escaped forms against the real engine.
+//
+// The backslash is escaped as well: "back\slash" would read "\s" as a literal
+// "s" and miss the folder. Patterns the user writes in the exclusions editor
+// are globs on purpose and never pass through here.
+func EscapeGlob(p string) string {
+	var b strings.Builder
+	b.Grow(len(p))
+	for _, r := range p {
+		switch r {
+		case '\\', '*', '?', '[', ']':
+			b.WriteByte('\\')
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
 // RestoreVerifyArgs returns the argv for restoring the given files of a
 // snapshot into target and reading every restored file back against its
 // content hashes (--verify). The paths are include patterns, so a caller must
@@ -2667,16 +2690,23 @@ func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs 
 // RestorePath restores a single backed-up path (p) back to its own location as a
 // subtree, so restic never reconciles the shared parent directory.
 func (r Restic) RestorePath(ctx context.Context, repo, snapshotID, p string, m Mode) error {
-	_, err := r.run(ctx, RestorePathArgs(repo, snapshotID, p, m), m)
-	return err
+	return r.RestoreSubtreeTo(ctx, repo, snapshotID, p, p, m)
 }
 
-// RestoreSubtreeTo restores the subtree at subtreePath from a snapshot INTO
-// target, so target receives that subtree's contents directly (no absolute-path
-// nesting — see RestoreSubtreeToArgs). subtreePath must be one of the snapshot's
-// own backed-up paths (Paths[0]).
+// RestoreSubtreeTo restores the subtree at subtreePath from a snapshot into
+// target, so target receives that subtree's contents directly, without the
+// absolute path above it (see RestoreSubtreeToArgs). subtreePath must be a node
+// of the snapshot's tree. When the snapshot holds it as a file, such as a
+// database a container binds on its own, target becomes that file.
 func (r Restic) RestoreSubtreeTo(ctx context.Context, repo, snapshotID, subtreePath, target string, m Mode) error {
-	_, err := r.run(ctx, RestoreSubtreeToArgs(repo, snapshotID, subtreePath, target, m), m)
+	file, err := r.HoldsFile(ctx, repo, snapshotID, subtreePath, m)
+	if err != nil {
+		return err
+	}
+	if file {
+		return r.restoreFileTo(ctx, repo, snapshotID, subtreePath, target, m)
+	}
+	_, err = r.run(ctx, RestoreSubtreeToArgs(repo, snapshotID, subtreePath, target, m), m)
 	return err
 }
 

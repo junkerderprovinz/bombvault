@@ -113,6 +113,14 @@ func TestFileSetSourceEmptyCountsOnlyFilesAsContent(t *testing.T) {
 	if got {
 		t.Fatal("a tree with a deeply nested file must not read as empty")
 	}
+
+	got, err = fileSetSourceEmpty(filepath.Join(withFile, "nested", "leaf.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got {
+		t.Fatal("a set whose path is a file must not read as empty")
+	}
 }
 
 func TestDefaultHostConfigFileSet(t *testing.T) {

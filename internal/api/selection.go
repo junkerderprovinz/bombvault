@@ -9,6 +9,8 @@ import (
 	"path"
 	"sort"
 	"strings"
+
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
 // ExclusionPrefix marks a deselected branch in the flat selection, as in
@@ -153,35 +155,12 @@ func excludedBranches(entries []string) []string {
 		}
 		for _, inc := range includes {
 			if isStrictDescendant(bare, inc) {
-				out = append(out, escapeGlobLiteral(bare))
+				out = append(out, restic.EscapeGlob(bare))
 				break
 			}
 		}
 	}
 	return out
-}
-
-// escapeGlobLiteral backslash-escapes restic's glob characters so a pattern
-// derived from a folder matches exactly that folder. Unescaped, a folder name
-// can miss itself ("[1080p]" is a character class), exclude its siblings
-// ("Season [01]" matches "Season 0" and "Season 1"), or fail the whole backup
-// as an invalid pattern ("Movies [2024"). TestDerivedExcludePatternsAreLiteral
-// in internal/restic checks the escaped forms against the real engine.
-//
-// The backslash is escaped as well: "back\slash" would read "\s" as a literal
-// "s" and miss the folder. Patterns the user writes in the exclusions editor
-// are globs on purpose and never pass through here.
-func escapeGlobLiteral(p string) string {
-	var b strings.Builder
-	b.Grow(len(p))
-	for _, r := range p {
-		switch r {
-		case '\\', '*', '?', '[', ']':
-			b.WriteByte('\\')
-		}
-		b.WriteRune(r)
-	}
-	return b.String()
 }
 
 // fileSetPositionals turns a stored file-set selection into restic positionals.

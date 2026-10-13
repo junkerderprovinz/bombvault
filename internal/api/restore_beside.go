@@ -635,7 +635,12 @@ func (s *Service) prepareRestoreFileSetBeside(ctx context.Context, id, snapshotI
 	}
 	// A snapshot of folders inside the set keeps them at their place below the
 	// copy. One taken from elsewhere has no such place and fills the copy itself.
-	if inside, ok := besidePath(roots, path.Clean(plan.subtree)); ok {
+	// A single file keeps the place of the folder it lies in.
+	at := path.Clean(plan.subtree)
+	if plan.file {
+		at = path.Dir(at)
+	}
+	if inside, ok := besidePath(roots, at); ok {
 		plan.target = inside
 	}
 	plan.beside = &roots[0]
