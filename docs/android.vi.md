@@ -29,6 +29,10 @@ Qua relay, trang chạm tới những gì một điện thoại đã ghép nối
 
 Ứng dụng chỉ nhận một phản hồi khi máy chủ đã ký nó bằng khóa mà ứng dụng đã ghim lần đầu gặp máy chủ đó. Nếu sau này máy chủ phản hồi bằng khóa khác, màn hình chính hiển thị dấu vân tay của khóa mới, và trang chỉ mở sau khi bạn tin cậy khóa đó.
 
+## Chuyển máy chủ {#switch}
+
+Khi một máy chủ đang mở, đầu trang Tổng quan của nó hiển thị tên máy chủ. Khi ứng dụng biết các máy chủ khác, một mũi tên nằm cạnh tên, và một lần chạm liệt kê mọi máy chủ mà ứng dụng biết, máy chủ đang mở được đánh dấu **Phiên bản này** và mỗi máy chủ khác kèm trạng thái của nó: **Đã kết nối**, **Chưa kết nối**, **Cần đăng nhập** hoặc **Kiểm tra chứng chỉ**. Chạm vào máy chủ khác để mở nó, trực tiếp khi ở nhà và qua relay trong các trường hợp còn lại.
+
 ## Đăng nhập trên điện thoại đã ghép nối {#sign-in}
 
 Một điện thoại đã ghép nối với nhóm của bạn mở từng máy chủ của nhóm với trạng thái đã đăng nhập sẵn. Trước khi tải một trang, nó xin máy chủ đó một phiên qua nhóm, và máy chủ chỉ trao phiên cho một thành viên là điện thoại. Máy chủ được thêm bằng địa chỉ sẽ hỏi mật khẩu, như trong trình duyệt.

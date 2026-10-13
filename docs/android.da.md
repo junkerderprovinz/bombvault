@@ -29,6 +29,10 @@ Via relayet når siden det, som en parret telefon når derhjemme, som beskrevet 
 
 Appen tager kun imod et svar, hvis serveren har signeret det med den nøgle, appen fastlåste, første gang den mødte serveren. Svarer serveren senere med en anden nøgle, viser startskærmen den nye nøgles fingeraftryk, og siden åbner først, når du stoler på den.
 
+## Skift af server {#switch}
+
+Når en server er åben, viser toppen af dens oversigt serverens navn. Kender appen andre servere, står en pil ved siden af navnet, og et tryk oplister hver server, appen kender: den åbne markeret **Denne instans** og hver af de andre med sin tilstand, **Forbundet**, **Ikke forbundet**, **Login påkrævet** eller **Tjek certifikat**. Tryk på en anden for at åbne den, direkte hjemme og ellers gennem relayet.
+
 ## Logget ind på en parret telefon {#sign-in}
 
 En telefon, der er parret med din gruppe, åbner hver af gruppens servere allerede logget ind. Før den indlæser en side, beder den serveren om en session via gruppen, og en server udleverer kun en session til et medlem, der er en telefon. En server, der er tilføjet med sin adresse, beder om adgangskoden, ligesom i en browser. 

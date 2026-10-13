@@ -3,7 +3,7 @@
 // run share the list; lib/activityLog.ts merges, dedupes and orders them. The
 // card around it is the caller's.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { listRuns, getScheduleNext } from "../lib/api";
 import type { Run, ScheduleNext } from "../lib/api";
 import { useProgress } from "../lib/progress";
@@ -172,17 +172,17 @@ export function ActivityLog({
 
   // buildLogLines takes this instead of `t`, so it can be tested without an
   // I18nProvider.
-  const resolveName: ResolveName = (key, params, count) => {
+  const resolveName = useCallback<ResolveName>((key, params, count) => {
     let s = t(key as TranslationKey, count);
     if (params) {
       for (const [name, value] of Object.entries(params)) s = s.split(`{${name}}`).join(value);
     }
     return s;
-  };
+  }, [t]);
 
   const lines = useMemo(
     () => buildLogLines(runs, progressMap, scheduleNext, resolveName, now, liveNow, waits),
-    [runs, progressMap, scheduleNext, now, liveNow, waits, t]
+    [runs, progressMap, scheduleNext, resolveName, now, liveNow, waits]
   );
 
   // Without lang the date search uses the browser locale, the same one

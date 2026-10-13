@@ -102,6 +102,14 @@ describe("a refused settings change", () => {
     expect((err as InstanceType<typeof api.ApiError>).detail).toBe("Failed to fetch");
   });
 
+  it("says in the person's language why a backup of a section with no place is refused", async () => {
+    answers(409, { ok: false, error: "every storage location of this section is switched off", code: "no-place" });
+    const api = await import("./api");
+    const err = await api.backupFlashNow().catch((e: unknown) => e);
+    expect((err as Error).message).toBe(en["apiError.noPlace"]);
+    expect(api.explainedError(err)).toBe(en["apiError.noPlace"]);
+  });
+
   it("leaves a call its caller stopped as the AbortError it expects", async () => {
     fetchMock.mockRejectedValue(new DOMException("aborted", "AbortError"));
     const api = await import("./api");

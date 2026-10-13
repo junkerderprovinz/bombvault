@@ -3,6 +3,7 @@ package api_test
 import (
 	"context"
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -115,20 +116,35 @@ func TestAnOpenContainerTakesTheDefaultAtItsFirstBackup(t *testing.T) {
 	}
 }
 
-func TestAnOpenContainerWithHistoryOnTheDomainPathStillTakesTheDefault(t *testing.T) {
+func TestHistoryOnTheDomainPathKeepsAnOpenContainerThere(t *testing.T) {
 	rig := newFirstBackupRig(t)
 	nas := rig.named(t, "NAS", "nas")
 	rig.setDefault(t, "containers", nas.ID)
 	rig.eng.snapsByRepo[rig.root+"/backups/containers"] = []restic.Snapshot{{ID: "1111aaaa", Tags: []string{"container:nginx"}}}
-	rig.eng.snapsErrFor[rig.root+"/backups/containers"] = errWrongKey
 	if _, err := rig.svc.Backup(context.Background(), "nginx"); err != nil {
 		t.Fatalf("Backup: %v", err)
 	}
-	if !hasRepo(rig.eng.backedUp, rig.root+"/nas") || hasRepo(rig.eng.backedUp, rig.root+"/backups/containers") {
-		t.Fatalf("backed up to %v, want NAS alone", rig.eng.backedUp)
+	if !hasRepo(rig.eng.backedUp, rig.root+"/backups/containers") || hasRepo(rig.eng.backedUp, rig.root+"/nas") {
+		t.Fatalf("backed up to %v, want the domain path alone", rig.eng.backedUp)
 	}
-	if got := rig.home(t, "containers", "nginx"); got.Repo != nas.ID || got.Choice != store.RepoChosen {
-		t.Fatalf("home = %+v, want NAS chosen", got)
+	if got := rig.home(t, "containers", "nginx"); got.Repo != "" || got.Choice != store.RepoChosen {
+		t.Fatalf("home = %+v, want the domain path chosen", got)
+	}
+}
+
+func TestAnUnreadableDomainPathStopsTheFirstBackup(t *testing.T) {
+	rig := newFirstBackupRig(t)
+	nas := rig.named(t, "NAS", "nas")
+	rig.setDefault(t, "containers", nas.ID)
+	rig.eng.snapsErrFor[rig.root+"/backups/containers"] = errWrongKey
+	if _, err := rig.svc.Backup(context.Background(), "nginx"); err == nil {
+		t.Fatal("the first backup ran although the domain path could not be read")
+	}
+	if len(rig.eng.backedUp) != 0 {
+		t.Fatalf("backed up to %v", rig.eng.backedUp)
+	}
+	if got := rig.home(t, "containers", "nginx"); got.Choice != store.RepoOpen {
+		t.Fatalf("home = %+v, want it still open", got)
 	}
 }
 
@@ -295,5 +311,87 @@ func TestAnOpenVMTakesTheDefaultAtItsFirstBackup(t *testing.T) {
 	}
 	if h.Repo != nas.ID || h.Choice != store.RepoChosen {
 		t.Fatalf("home = %+v, want NAS chosen", h)
+	}
+}
+
+func TestABackupOfAnEntryWithNoPlaceRecordsNoFailedRun(t *testing.T) {
+	rig := newFirstBackupRig(t)
+	rig.setDefault(t, "containers", store.HomeNowhere)
+	tg, err := rig.st.UpsertTarget(store.Target{ContainerName: "nginx", IncludeInSchedule: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := rig.svc.Backup(context.Background(), "nginx"); !errors.Is(err, api.ErrNoPlace) {
+		t.Fatalf("Backup = %v, want ErrNoPlace", err)
+	}
+	runs, err := rig.st.ListRuns(100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, run := range runs {
+		if run.TargetID == tg.ID {
+			t.Fatalf("run %+v recorded, want none for a section given no place", run)
+		}
+	}
+}
+
+func TestBackingUpAnEntryWithNoPlaceByHandIsRefusedAtOnce(t *testing.T) {
+	rig := newFirstBackupRig(t)
+	rig.setDefault(t, "containers", store.HomeNowhere)
+	started, err := rig.svc.StartBackup(context.Background(), "nginx")
+	if started || !errors.Is(err, api.ErrNoPlace) {
+		t.Fatalf("StartBackup = %v, %v, want a refusal with ErrNoPlace", started, err)
+	}
+	if len(rig.eng.backedUp) != 0 {
+		t.Fatalf("backed up to %v", rig.eng.backedUp)
+	}
+}
+
+func TestABatchCountsEntriesWithNoPlaceAsSkipped(t *testing.T) {
+	rig := newFirstBackupRig(t)
+	rig.setDefault(t, "containers", store.HomeNowhere)
+	rig.setDefault(t, "files", store.HomeNowhere)
+	set, err := rig.st.CreateFileSet(store.FileSet{Name: "docs", Path: "docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var out lockedBuffer
+	prev, flags := log.Writer(), log.Flags()
+	log.SetOutput(&out)
+	t.Cleanup(func() { log.SetOutput(prev); log.SetFlags(flags) })
+
+	for _, start := range []func() (bool, error){
+		func() (bool, error) { return rig.svc.StartBackupAll(context.Background(), []string{"nginx"}) },
+		func() (bool, error) { return rig.svc.StartBackupFilesAll(context.Background(), []string{set.ID}) },
+	} {
+		if started, err := start(); !started || err != nil {
+			t.Fatalf("batch did not start: %v, %v", started, err)
+		}
+		waitForBackupDone(t, rig.svc)
+	}
+
+	var done []string
+	for _, l := range strings.Split(out.String(), "\n") {
+		if strings.Contains(l, "all done:") {
+			done = append(done, l)
+		}
+	}
+	if len(done) != 2 {
+		t.Fatalf("batch summaries = %q, want two", done)
+	}
+	for _, l := range done {
+		if !strings.Contains(l, "1 skipped, 0 failed") {
+			t.Fatalf("batch summary %q, want the entry counted as skipped", l)
+		}
+	}
+	runs, err := rig.st.ListRuns(100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, run := range runs {
+		if run.Kind != "prune" {
+			t.Fatalf("run %+v recorded, want none for a section given no place", run)
+		}
 	}
 }

@@ -29,6 +29,10 @@ Prin releu, pagina ajunge la ce ajunge un telefon împerecheat acasă, așa cum 
 
 Aplicația acceptă un răspuns doar dacă serverul l-a semnat cu cheia pe care aplicația a fixat-o la prima întâlnire cu acel server. Dacă serverul răspunde mai târziu cu altă cheie, ecranul de pornire arată amprenta noii chei, iar pagina se deschide doar după ce ai acceptat-o.
 
+## Schimbarea serverului {#switch}
+
+Cu un server deschis, partea de sus a prezentării lui arată numele serverului. Când aplicația cunoaște și alte servere, lângă nume apare o săgeată, iar o atingere listează fiecare server pe care îl cunoaște aplicația, cel deschis marcat **Această instanță** și fiecare dintre celelalte cu starea lui: **Conectată**, **Neconectată**, **Este nevoie de autentificare** sau **Verifică certificatul**. Atinge altul ca să-l deschizi, direct acasă și altfel prin releu.
+
 ## Autentificat pe un telefon împerecheat {#sign-in}
 
 Un telefon împerecheat cu grupul tău deschide fiecare dintre serverele lui deja autentificat. Înainte să încarce o pagină, cere acelui server o sesiune prin grup, iar un server acordă una doar unui membru care este telefon. Un server adăugat după adresă cere parola, ca într-un browser. 

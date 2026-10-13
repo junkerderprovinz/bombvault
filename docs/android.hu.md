@@ -29,6 +29,10 @@ A relayen át az oldal azt éri el, amit egy párosított telefon otthon, ahogy 
 
 Az alkalmazás csak akkor fogad el választ, ha a szerver azt azzal a kulccsal írta alá, amelyet az alkalmazás a szerverrel való első találkozáskor rögzített. Ha a szerver később más kulccsal válaszol, a kezdőképernyő az új kulcs ujjlenyomatát mutatja, és az oldal csak azután nyílik meg, hogy megbízhatónak jelölted.
 
+## Szerverváltás {#switch}
+
+Ha egy szerver meg van nyitva, az áttekintése tetején a szerver neve áll. Ha az alkalmazás más szervereket is ismer, a név mellett egy nyíl áll, és egy koppintás felsorolja az összes szervert, amelyet az alkalmazás ismer: a megnyitottat **Ez a példány** jelöléssel, a többit az állapotával: **Csatlakozva**, **Nincs csatlakozva**, **Bejelentkezés szükséges** vagy **Tanúsítvány ellenőrzése**. Koppints egy másikra a megnyitásához, otthon közvetlenül, egyébként a relayen át.
+
 ## Bejelentkezve a párosított telefonon {#sign-in}
 
 A csoportoddal párosított telefon a csoport minden szerverét eleve bejelentkezve nyitja meg. Mielőtt betöltene egy oldalt, a csoporton át munkamenetet kér az adott szervertől, és a szerver csak olyan tagnak ad ilyet, amely telefon. A cím alapján hozzáadott szerver jelszót kér, ahogy egy böngészőben is. Aki ismeri a tizenkét szót, az amúgy is megnyithatja a csoport minden mentését, így a párosítás nem ad semmi újat.

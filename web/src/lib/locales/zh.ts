@@ -4461,6 +4461,7 @@ const zh: Partial<Translations> = {
   "apiError.unavailable": "服务器正忙，或仍在启动。请一分钟后重试。",
   "apiError.sessionEnded": "此会话已结束，例如有人在所有设备上退出了登录。请重新打开该实例。",
   "apiError.phonePairingOff": "此实例已关闭手机配对。",
+  "apiError.noPlace": "无处可备份：其所属分区的所有目标都已关闭。请在“目标”中开启一个。",
   "apiError.relayTooLarge": "内容太大，无法通过中继。请在该实例自己的地址上打开它。",
   "apiError.relayRefused": "这无法通过中继。请在该实例自己的地址上打开它。",
   "apiError.refused": "服务器拒绝了此操作。",

@@ -4470,6 +4470,7 @@ const fi: Partial<Translations> = {
   "apiError.unavailable": "Palvelin on kiireinen tai vielä käynnistymässä. Yritä minuutin kuluttua uudelleen.",
   "apiError.sessionEnded": "Tämä istunto on päättynyt, esimerkiksi koska joku kirjautui ulos kaikkialta. Avaa instanssi uudelleen.",
   "apiError.phonePairingOff": "Puhelinten pariliitos on pois päältä tässä instanssissa.",
+  "apiError.noPlace": "Tätä ei voi varmuuskopioida minnekään, koska kaikki sen osion kohteet on kytketty pois päältä. Kytke jokin päälle kohdassa Kohteet.",
   "apiError.relayTooLarge": "Tämä on liian suuri kulkemaan releen kautta. Avaa instanssi sen omassa osoitteessa.",
   "apiError.relayRefused": "Tämä ei voi kulkea releen kautta. Avaa instanssi sen omassa osoitteessa.",
   "apiError.refused": "Palvelin hylkäsi tämän.",

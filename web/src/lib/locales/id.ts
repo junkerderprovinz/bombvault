@@ -4480,6 +4480,7 @@ const id: Partial<Translations> = {
   "apiError.unavailable": "Server sedang sibuk atau masih memulai. Coba lagi dalam semenit.",
   "apiError.sessionEnded": "Sesi ini telah berakhir, misalnya karena seseorang keluar dari semua perangkat. Buka instance sekali lagi.",
   "apiError.phonePairingOff": "Pemasangan ponsel dimatikan di instance ini.",
+  "apiError.noPlace": "Tidak ada tempat untuk mencadangkannya, karena semua tujuan di bagiannya dimatikan. Nyalakan salah satunya di Tujuan.",
   "apiError.relayTooLarge": "Ini terlalu besar untuk melewati relay. Buka instance di alamatnya sendiri.",
   "apiError.relayRefused": "Ini tidak bisa melewati relay. Buka instance di alamatnya sendiri.",
   "apiError.refused": "Server menolak ini.",

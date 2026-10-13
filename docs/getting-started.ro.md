@@ -99,10 +99,10 @@ Bara laterală are cinci intrări: **Prezentare**, **Anomalii** (cât timp detec
 
 - **Copii de rezervă** enumeră ca elemente fiecare container, VM, set de foldere, unitatea flash, fiecare set de date ZFS și Auto-backup. Plăcile de deasupra listei aleg un fel, iar **Filtre**, **Sortare** și **Caută** restrâng lista. Fiecare element are o pagină proprie cu trei file: **Copii de rezervă**, **Setări** și **Verificare**.
 - **Restaurare** este o singură pagină pentru tot: alegi o secțiune, cauți un element și alegi o copie de rezervă. Asistentul de urgență și celelalte surse pornesc tot de aici.
-- **Setările** sunt paisprezece plăci: General, Aspect, Programare, Destinații, Restaurare, Notificări, Verificare, Securitate, Instanțe, Împerechere, Integrări, Aplicații, Sistem și Info. Apasă `/` sau Ctrl+K ca să le cauți pe toate, și după numele pe care paginile le aveau în versiunile mai vechi. Trage plăcile în ordinea ta la **Aspect**.
+- **Setările** sunt paisprezece plăci: General, Aspect, Programare, Destinații, Restaurare, Notificări, Verificare, Securitate, Instanțe, Împerechere, Integrări, Aplicații, Sistem și Info. Apasă `/` sau Ctrl+K ca să le cauți pe toate, și după numele pe care paginile le aveau în versiunile mai vechi. Trage plăcile în ordinea ta la **Aspect**. Unde o coloană de plăci de lângă pagină ar strânge pagina, ca într-o fereastră lată de aproximativ 1200 de pixeli, plăcile devin o bandă deasupra paginii, care derulează lateral. Un telefon arată aceeași bandă.
 - **Destinații** și **Instanțe** sunt plăci de setări cu pagini proprii. **Arată și în bara laterală** pe placa lor le fixează în bara laterală.
 
-Nimic nu are buton de salvare și nimic nu se desfășoară: lucrurile rare au un card al lor sau o fereastră, iar explicațiile stau în baloanele (i). După o actualizare, punctele verzi marchează ce s-a schimbat. Un clic ascunde un punct, iar **Noutăți** din cardul Versiune de la **Setări, Info** listează fiecare schimbare cu **Mergi acolo**.
+Nimic nu are buton de salvare și nimic nu se desfășoară: lucrurile rare au un card al lor sau o fereastră, iar explicațiile stau în baloanele (i). După o actualizare se deschid singure notele de lansare, iar punctele verzi marchează ce s-a schimbat. Un clic ascunde un punct. **Noutăți** din cardul Versiune de la **Setări, Info** numără ce nu ai văzut încă și deschide notele de lansare și lista cu toate schimbările, cu **Mergi acolo**, ca două file ale unei ferestre.
 
 ## Compilare din sursă {#build-from-source}
 

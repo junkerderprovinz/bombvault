@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -13,9 +14,23 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// errNoPlace refuses a backup whose section has every storage location
+// ErrNoPlace refuses a backup whose section has every storage location
 // switched off for it.
-var errNoPlace = errors.New("every storage location of this section is switched off, so there is nowhere to back it up to")
+var ErrNoPlace = errors.New("every storage location of this section is switched off, so there is nowhere to back it up to")
+
+// codeNoPlace is the code a refusal by ErrNoPlace carries, which the page
+// turns into a sentence in its language.
+const codeNoPlace = "no-place"
+
+// startRefusal is the body of the 409 for a backup pressed by hand that did
+// not start.
+func startRefusal(err error) map[string]any {
+	body := map[string]any{"ok": false, "error": err.Error()}
+	if errors.Is(err, ErrNoPlace) {
+		body["code"] = codeNoPlace
+	}
+	return body
+}
 
 // localSwitchDomain reports whether a section's own folder can be switched
 // off: the sections without placement, whose backups then go straight to
@@ -67,10 +82,12 @@ func (s *Service) sectionPlaces(settings store.Settings, domain, own string) ([]
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", placementTargetName(t), err)
 		}
-		places = append(places, sectionPlace{repo: repo, mode: s.offsiteModeForTarget(settings, t), target: &t})
+		mode := s.offsiteModeForTarget(settings, t)
+		mode.Limits = targetOffsiteLimits(t)
+		places = append(places, sectionPlace{repo: repo, mode: mode, target: &t})
 	}
 	if len(places) == 0 {
-		return nil, errNoPlace
+		return nil, ErrNoPlace
 	}
 	return places, nil
 }
@@ -195,6 +212,64 @@ func (s *Service) placelessSections() (placeless, error) {
 		}
 	}
 	return out, nil
+}
+
+// takesSectionPlace reports whether the entry key of domain backs up where
+// its section sends new backups. key is a container or VM name, the id of a
+// folder set or ZFS entry, and unused for flash and config. An entry without
+// a row yet is open.
+func (s *Service) takesSectionPlace(domain, key string) (bool, error) {
+	var choice store.RepoChoice
+	switch domain {
+	case "flash", "config":
+		return true, nil
+	case zfsDomain:
+		d, err := s.store.GetZFSDataset(key)
+		return err == nil && d.Repo == "", err
+	case "containers":
+		tg, err := s.store.GetTargetByContainer(key)
+		if errors.Is(err, sql.ErrNoRows) {
+			return true, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		choice = tg.RepoChosen
+	case "vms":
+		vm, err := s.store.GetVMTargetByName(key)
+		if errors.Is(err, sql.ErrNoRows) {
+			return true, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		choice = vm.RepoChosen
+	case "files":
+		set, err := s.store.GetFileSet(key)
+		if err != nil {
+			return false, err
+		}
+		choice = set.RepoChosen
+	}
+	return choice == store.RepoOpen, nil
+}
+
+// refuseNoPlace answers a backup pressed by hand for an entry whose section
+// has nowhere to put it with ErrNoPlace at once. The run itself starts in the
+// background, where the refusal would only reach the log.
+func (s *Service) refuseNoPlace(domain, key string) error {
+	takes, err := s.takesSectionPlace(domain, key)
+	if err != nil || !takes {
+		return nil //nolint:nilerr // the backup itself reports an entry it cannot read
+	}
+	nowhere, err := s.placelessSections()
+	if err != nil {
+		return nil //nolint:nilerr // see above
+	}
+	if nowhere[domain] {
+		return ErrNoPlace
+	}
+	return nil
 }
 
 // handleSetSectionLocal serves PUT /api/storage/sections/{domain}/local:

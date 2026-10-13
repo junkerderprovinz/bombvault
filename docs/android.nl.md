@@ -29,6 +29,10 @@ Via de relay bereikt de pagina wat een gekoppelde telefoon thuis bereikt, zoals 
 
 De app neemt een antwoord alleen aan als de server het heeft ondertekend met de sleutel die de app vastpinde toen ze die server voor het eerst tegenkwam. Antwoordt de server later met een andere sleutel, dan toont het startscherm de vingerafdruk van de nieuwe sleutel en opent de pagina pas nadat je die vertrouwt.
 
+## Van server wisselen {#switch}
+
+Is een server open, dan staat bovenaan zijn overzicht zijn naam. Kent de app meer servers, dan staat er een pijltje naast de naam, en een tik toont alle servers die de app kent: de open server gemarkeerd als **Deze instantie** en elke andere met zijn status, **Verbonden**, **Niet verbonden**, **Aanmelden nodig** of **Certificaat controleren**. Tik op een andere om hem te openen, thuis rechtstreeks en anders via de relay.
+
 ## Aangemeld op een gekoppelde telefoon {#sign-in}
 
 Een telefoon die met je groep is gekoppeld, opent elke server van die groep al aangemeld. Voordat hij een pagina laadt, vraagt hij die server via de groep om een sessie, en een server geeft er alleen een aan een lid dat een telefoon is. Een server die je via zijn adres hebt toegevoegd, vraagt net als in een browser om het wachtwoord.

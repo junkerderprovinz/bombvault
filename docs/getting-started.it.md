@@ -99,10 +99,10 @@ La barra laterale ha cinque voci: **Panoramica**, **Anomalie** (finché il rilev
 
 - **Backup** elenca come elementi ogni container, VM, set di cartelle, la flash, ogni dataset ZFS e l'auto-backup. I riquadri sopra l'elenco scelgono un tipo, e **Filtri**, **Ordina** e **Cerca** restringono la scelta. Ogni elemento ha una pagina propria con tre schede: **Backup**, **Impostazioni** e **Verifica**.
 - **Ripristino** è un'unica pagina per tutto: scegli una sezione, cerca un elemento e scegli un backup. Anche la Procedura guidata di emergenza e le altre sorgenti partono da qui.
-- **Impostazioni** sono quattordici riquadri: Generale, Aspetto, Calendario, Destinazioni, Ripristino, Notifiche, Verifica, Sicurezza, Istanze, Associazione, Integrazioni, App, Sistema e Info. Premi `/` o Ctrl+K per cercare in tutti, anche con i nomi che le pagine avevano nelle versioni precedenti. Trascina i riquadri nel tuo ordine in **Aspetto**.
+- **Impostazioni** sono quattordici riquadri: Generale, Aspetto, Calendario, Destinazioni, Ripristino, Notifiche, Verifica, Sicurezza, Istanze, Associazione, Integrazioni, App, Sistema e Info. Premi `/` o Ctrl+K per cercare in tutti, anche con i nomi che le pagine avevano nelle versioni precedenti. Trascina i riquadri nel tuo ordine in **Aspetto**. Dove una colonna di riquadri accanto alla pagina la stringerebbe, come in una finestra larga circa 1200 pixel, i riquadri diventano una striscia sopra la pagina che scorre di lato. Un telefono mostra la stessa striscia.
 - **Destinazioni** e **Istanze** sono riquadri delle impostazioni con pagine proprie. **Mostra anche nella barra laterale** sul loro riquadro le fissa alla barra laterale.
 
-Niente ha un pulsante Salva e niente si apre a fisarmonica: le cose rare hanno una scheda propria o una finestra, e le spiegazioni stanno nei fumetti (i). Dopo un aggiornamento, puntini verdi segnalano ciò che è cambiato. Un clic nasconde un puntino, e **Novità** nella scheda Versione in **Impostazioni, Info** elenca ogni modifica con **Vai lì**.
+Niente ha un pulsante Salva e niente si apre a fisarmonica: le cose rare hanno una scheda propria o una finestra, e le spiegazioni stanno nei fumetti (i). Dopo un aggiornamento le note di rilascio si aprono da sole, e puntini verdi segnalano ciò che è cambiato. Un clic nasconde un puntino. **Novità** nella scheda Versione in **Impostazioni, Info** conta ciò che non hai ancora visto e apre le note di rilascio e l'elenco di ogni modifica con **Vai lì**, come due schede di una finestra.
 
 ## Compilare dai sorgenti {#build-from-source}
 

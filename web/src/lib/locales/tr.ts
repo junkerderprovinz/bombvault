@@ -4470,6 +4470,7 @@ const tr: Partial<Translations> = {
   "apiError.unavailable": "Sunucu meşgul ya da hâlâ başlıyor. Bir dakika sonra tekrar dene.",
   "apiError.sessionEnded": "Bu oturum sona erdi, örneğin biri her yerden oturumu kapattığı için. Örneği yeniden aç.",
   "apiError.phonePairingOff": "Bu örnekte telefon eşleştirme kapalı.",
+  "apiError.noPlace": "Yedeklenecek bir yer yok, çünkü bölümünün tüm hedefleri kapalı. Hedefler bölümünden birini aç.",
   "apiError.relayTooLarge": "Bu, röleden geçemeyecek kadar büyük. Örneği kendi adresinde aç.",
   "apiError.relayRefused": "Bu röleden geçemez. Örneği kendi adresinde aç.",
   "apiError.refused": "Sunucu bunu reddetti.",

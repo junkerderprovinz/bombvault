@@ -49,21 +49,45 @@ for (const [suffix, bg] of [["", "#ffffff"], ["-dark", "#0d1117"]]) {
 }
 
 // The largest distance from the optical centre to the box's edge along either
-// axis, and to any drawn pixel at all, which is the spark's tip.
+// axis.
 const HALF = Math.max(OPT_CX, LOGO_W - OPT_CX, OPT_CY, LOGO_H - OPT_CY);
-const REACH = (() => {
+const INK = (() => {
   const img = new Resvg(LOGO_SVG, { fitTo: { mode: "width", value: Math.round(LOGO_W) } }).render();
-  const k = LOGO_W / img.width;
-  const px = img.pixels;
+  return { width: img.width, height: img.height, px: img.pixels };
+})();
+
+/** The distance from cx, cy to the logo's farthest drawn pixel, in the logo's units. */
+function reach(cx, cy) {
+  const k = LOGO_W / INK.width;
   let max = 0;
-  for (let y = 0; y < img.height; y++) {
-    for (let x = 0; x < img.width; x++) {
-      if (px[(y * img.width + x) * 4 + 3] < 128) continue;
-      max = Math.max(max, Math.hypot((x + 0.5) * k - OPT_CX, (y + 0.5) * k - OPT_CY));
+  for (let y = 0; y < INK.height; y++) {
+    for (let x = 0; x < INK.width; x++) {
+      if (INK.px[(y * INK.width + x) * 4 + 3] < 128) continue;
+      max = Math.max(max, Math.hypot((x + 0.5) * k - cx, (y + 0.5) * k - cy));
     }
   }
   return max;
+}
+
+// On a round mask the logo goes as large as it can when it stays on the tile's
+// split line and moves up or down until the spark's tip and the vault's bottom
+// corners are equally far out. SNUG.cy is that height, SNUG.r that distance.
+const SNUG = (() => {
+  let [lo, hi] = [0, LOGO_H];
+  while (hi - lo > 0.1) {
+    const a = lo + (hi - lo) / 3, b = hi - (hi - lo) / 3;
+    if (reach(OPT_CX, a) < reach(OPT_CX, b)) hi = b;
+    else lo = a;
+  }
+  const cy = (lo + hi) / 2;
+  return { cy, r: reach(OPT_CX, cy) };
 })();
+
+/** The logo as large as fits a circle of radius r around cx, cy. */
+const fillCircle = (cx, cy, r, svg) => {
+  const s = r / SNUG.r;
+  return placeLogo(cx, cy + (OPT_CY - SNUG.cy) * s, s, svg);
+};
 
 // icon.png has no tile, since the logo reads on dark and light backgrounds. The
 // side is twice HALF plus 4 percent, so nothing clips. The docs use it as their
@@ -95,20 +119,20 @@ const TILE_LIGHT = "#ffffff", TILE_SHADE = "#e2e2e2";
 const tile = (side) =>
   `<rect width="${side}" height="${side}" fill="${TILE_LIGHT}"/><rect x="${side / 2}" width="${side / 2}" height="${side}" fill="${TILE_SHADE}"/>`;
 
-// The Android launcher icon is layers of 108dp, and only a circle of 66dp in
-// the middle survives every launcher's mask, so the spark's tip touches that
-// circle. The monochrome layer is the same shape in one colour for themed
-// icons; its alpha is doubled so the seams between the logo's parts close up.
+// The Android launcher icon is layers of 108dp, of which the launcher shows the
+// middle 72dp through its mask, at the tightest a circle that fills it. The logo
+// fills that circle less half a dp. The monochrome layer is the same shape in
+// one colour for themed icons; its alpha is doubled so the seams between the
+// logo's parts close up.
 {
   const RES = join(ROOT, "android/app/src/main/res");
   const DENSITIES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
-  const s = 33 / REACH;
-  const fg = canvas(108, 108, placeLogo(54, 54, s));
+  const fg = canvas(108, 108, fillCircle(54, 54, 35.5));
   const flat = LOGO_SVG.replace(/fill="#[0-9a-fA-F]{3,6}"/g, 'fill="#000000"');
   const mono = canvas(
     108,
     108,
-    `<filter id="solid"><feComponentTransfer><feFuncA type="table" tableValues="0 1 1"/></feComponentTransfer></filter><g filter="url(#solid)">${placeLogo(54, 54, s, flat)}</g>`,
+    `<filter id="solid"><feComponentTransfer><feFuncA type="table" tableValues="0 1 1"/></feComponentTransfer></filter><g filter="url(#solid)">${fillCircle(54, 54, 35.5, flat)}</g>`,
   );
   for (const [name, factor] of Object.entries(DENSITIES)) {
     const width = Math.round(108 * factor);
@@ -119,20 +143,20 @@ const tile = (side) =>
 }
 
 // The web app manifest's icons: the logo alone for launchers that show it as
-// is, and a maskable one on the app tile whose logo stays inside the circle of
-// 80 percent that every mask keeps.
+// is, and a maskable one on the app tile. Every mask keeps the centred circle of
+// 80 percent, so on a 108 grid like Android's the logo fills a radius of 43.2
+// less half a unit.
 {
   const PUB = join(ROOT, "web/public");
-  for (const [name, side, maskable] of [
-    ["icon-192.png", 192, false],
-    ["icon-512.png", 512, false],
-    ["icon-maskable-512.png", 512, true],
+  for (const [name, side] of [
+    ["icon-192.png", 192],
+    ["icon-512.png", 512],
   ]) {
-    const body = maskable
-      ? tile(side) + placeLogo(side / 2, side / 2, (0.38 * side) / REACH)
-      : placeLogo(side / 2, side / 2, (0.46 * side) / HALF);
+    const body = placeLogo(side / 2, side / 2, (0.46 * side) / HALF);
     writeFileSync(join(PUB, name), png(canvas(side, side, body), side));
   }
+  const maskable = canvas(108, 108, tile(108) + fillCircle(54, 54, 0.4 * 108 - 0.5));
+  writeFileSync(join(PUB, "icon-maskable-512.png"), png(maskable, 512));
   console.log("web app manifest icons written (192, 512, maskable 512)");
 }
 

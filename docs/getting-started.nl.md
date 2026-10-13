@@ -99,10 +99,10 @@ De zijbalk heeft vijf ingangen: **Overzicht**, **Anomalieën** (zolang anomalied
 
 - **Back-ups** toont elke container, VM, mappenset, de flash, elke ZFS-dataset en de zelf-back-up als items. Tegels boven de lijst kiezen een soort, en **Filters**, **Sorteren** en **Zoeken** versmallen de lijst. Elk item heeft een eigen pagina met drie tabbladen: **Back-ups**, **Instellingen** en **Verificatie**.
 - **Herstel** is één pagina voor alles: kies een onderdeel, zoek een item en kies een back-up. De Noodassistent en de andere bronnen beginnen hier ook.
-- **Instellingen** zijn veertien tegels: Algemeen, Uiterlijk, Planning, Bestemmingen, Herstel, Meldingen, Verificatie, Beveiliging, Instanties, Koppeling, Integraties, Apps, Systeem en Info. Druk op `/` of Ctrl+K om ze allemaal te doorzoeken, ook op de namen die pagina's in eerdere versies hadden. Sleep de tegels onder **Uiterlijk** in je eigen volgorde.
+- **Instellingen** zijn veertien tegels: Algemeen, Uiterlijk, Planning, Bestemmingen, Herstel, Meldingen, Verificatie, Beveiliging, Instanties, Koppeling, Integraties, Apps, Systeem en Info. Druk op `/` of Ctrl+K om ze allemaal te doorzoeken, ook op de namen die pagina's in eerdere versies hadden. Sleep de tegels onder **Uiterlijk** in je eigen volgorde. Waar een kolom tegels naast de pagina die te smal zou maken, zoals in een venster van ongeveer 1200 pixels breed, worden de tegels een strook boven de pagina die zijwaarts scrolt. Een telefoon toont dezelfde strook.
 - **Bestemmingen** en **Instanties** zijn instellingentegels met eigen pagina's. **Ook in de zijbalk tonen** op hun tegel zet ze vast in de zijbalk.
 
-Niets heeft een Opslaan-knop en niets klapt uit: zeldzame dingen hebben een eigen kaart of een venster, en uitleg staat in de (i)-bellen. Na een update markeren groene stippen wat er veranderd is. Een klik verbergt een stip, en **Nieuw** in de kaart Versie onder **Instellingen, Info** toont elke wijziging met **Ga erheen**.
+Niets heeft een Opslaan-knop en niets klapt uit: zeldzame dingen hebben een eigen kaart of een venster, en uitleg staat in de (i)-bellen. Na een update openen de releasenotes vanzelf, en groene stippen markeren wat er veranderd is. Een klik verbergt een stip. **Nieuw** in de kaart Versie onder **Instellingen, Info** telt wat je nog niet hebt gezien en opent de releasenotes en de lijst van elke wijziging met **Ga erheen**, als twee tabbladen van één venster.
 
 ## Bouwen vanaf de broncode {#build-from-source}
 

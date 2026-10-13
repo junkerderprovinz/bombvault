@@ -94,6 +94,17 @@ describe("NeedsCard", () => {
     expect(called("backupNow")).toEqual([["plex"]]);
   });
 
+  it("says why a retry is refused when the entry's section has no place", async () => {
+    vi.spyOn(api, "backupNow").mockRejectedValueOnce(new api.ApiError(409, en["apiError.noPlace"], "no-place"));
+    renderCard([{ is: "failedRun", run: run({ id: "r1", status: "failed" }), item: item() }]);
+
+    fireEvent.click(within(screen.getByTestId("need-failed-run")).getByRole("button", { name: en["breakdown.retry"] }));
+    await act(async () => {});
+
+    expect(screen.getByText(en["apiError.noPlace"])).toBeTruthy();
+    expect(screen.queryByText(en["containers.batchAlreadyRunning"])).toBeNull();
+  });
+
   it("opens the failures from a failed run", () => {
     renderCard([{ is: "failedRun", run: run({ id: "r1", status: "failed" }), item: item() }]);
     const row = within(screen.getByTestId("need-failed-run"));

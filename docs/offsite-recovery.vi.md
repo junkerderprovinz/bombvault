@@ -31,6 +31,8 @@ Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều đích sao 
 
 Dịch vụ S3 chạy qua backend S3 riêng của restic, điều cho phép áp dụng lớp lưu trữ và object lock. Mọi dịch vụ khác chạy qua rclone mà BombVault đi kèm, và remote của nó khi đó hiện trong thẻ **Ngoại vi (rclone)** dưới **Cài đặt, Đích sao lưu**. Một bản xuất cài đặt mang theo các đích sao lưu; khi gồm cả thông tin xác thực, nó mang theo cả đăng nhập của chúng.
 
+Thư mục trên máy chủ này được gọi là **Cục bộ** ở mọi nơi: trên các trang đích sao lưu, trong luồng, trên một mục và trong Khôi phục. Khi máy chủ này có nhiều thư mục, mỗi thư mục mang tên riêng của nó. Một đích sao lưu do trường off-site của một phần tạo ra được đặt tên theo nơi của nó, tức thư mục cuối cùng trong địa chỉ hoặc, nếu không có, máy chủ của nó, và nhận thêm một số khi đã có đích khác mang tên đó. Tên bạn đặt cho nó trên trang của nó được giữ nguyên. Khi hai đích cùng tên đứng cạnh nhau, mỗi đích kèm theo máy chủ hoặc thư mục của nó.
+
 Mỗi đích sao lưu có một trang riêng:
 
 - **Kết nối** với tên của nó, công tắc **Sẵn dùng** (tắt nghĩa là BombVault không còn ghi vào đây, và các mục sao lưu tới đây thất bại với thông báo rõ ràng thay vì rơi vào nơi khác), thư mục, nén, lớp lưu trữ và **Ngoài cơ sở**. **Đổi kết nối** kiểm tra và lưu một địa chỉ hoặc đăng nhập mới.
@@ -58,21 +60,29 @@ Thẻ **Lịch trình và đích sao lưu** ở tab Cài đặt của một mụ
 - Khi **Cục bộ** tối, mục được ghi thẳng vào kho trực tiếp của đích sáng đầu tiên và được sao chép từ đó tới các đích sáng khác. Lần đầu, một hộp thoại tạo kho trực tiếp đó.
 - Một nút luôn sáng, vì một bản sao lưu cần một nơi để đi. Để loại một mục khỏi sao lưu, dùng **Không sao lưu**.
 
-Vị trí được cố định từ bản sao lưu đầu tiên của mục, vì BombVault không bao giờ di chuyển bản sao lưu giữa các kho; thẻ **Kho** ở tab Cài đặt nêu tên nó. Các bản sao có thể đổi bất cứ lúc nào. Một đích không còn nhận một mục giữ các bản sao nó có và cắt tỉa chúng theo lưu giữ của riêng nó ở lần chạy off-site kế tiếp của phần. Không xóa được khỏi đích append-only.
+BombVault không bao giờ di chuyển bản sao lưu giữa các kho. Một mục theo phần của nó sẽ đi theo khi mặc định của phần đổi: bản sao lưu kế tiếp của nó rơi vào nơi mới, còn các bản sao lưu nó đã có ở nguyên chỗ. Một vị trí được chọn trên chính mục đó được cố định từ bản sao lưu đầu tiên của nó; thẻ **Kho** ở tab Cài đặt nêu tên nó. Các bản sao có thể đổi bất cứ lúc nào. Một đích không còn nhận một mục giữ các bản sao nó có và cắt tỉa chúng theo lưu giữ của riêng nó ở lần chạy off-site kế tiếp của phần. Không xóa được khỏi đích append-only.
+
+Nơi mà một mục đã rời đi vẫn giữ các bản sao lưu của nó. Trên tab **Bản sao lưu** của mục và trong **Khôi phục**, nó hiển thị là **Chỉ các bản sao lưu cũ hơn**, một lần khôi phục vẫn có thể đọc từ đó, và một lần cắt tỉa ở đó bỏ qua các bản sao lưu này.
+
+**Theo mặc định** đưa một mục có lựa chọn riêng trở về phần của nó. Nó hỏi trước, cho biết các bản sao lưu mới khi đó đi đâu, và nêu tên những gì mỗi đích thôi nhận và những gì lần chạy kế tiếp sẽ tải lên.
 
 Dưới hàng nút, thẻ cho biết mục đi đâu và thực tế có gì ở đó: có bao nhiêu nơi giữ nó, lần cuối thấy mỗi đích là khi nào, và 3-2-1 đã đạt chưa. Một nơi là máy chủ có dữ liệu gốc, mỗi đích off-site và mỗi kho được đánh dấu **Ngoài cơ sở**. BombVault kiểm tra các bản sao và các nơi; nó không kiểm tra phần "hai loại phương tiện" của 3-2-1.
 
 ### Mặc định theo từng phần {#placement-defaults}
 
-Thẻ **Đích theo phần** trên trang Đích sao lưu là mặc định của mọi phần. Trong biểu đồ mỗi đường là một bản sao, và nhấp vào một đường hay một điểm sẽ bật hay tắt nó; đường nét đứt là đang tắt. **Biểu đồ / Công tắc** hiển thị cùng thứ dưới dạng các hàng nút. Các bản sao áp dụng ngay cho mọi mục không có lựa chọn riêng và cho các thư mục dự án của Compose stack. Đích áp dụng cho một mục mới ở bản sao lưu đầu tiên của nó; đổi nó không di chuyển bản sao lưu nào. Trước khi lưu, BombVault nêu tên mọi đích được thêm hay mất mục và điều đó có nghĩa là bao nhiêu bản sao lưu.
+Thẻ **Đích theo phần** trên trang Đích sao lưu vẽ mặc định của mọi phần dưới dạng một luồng 3-2-1. Mỗi đường từ một phần tới một đích sao lưu là một công tắc, kể cả **Cục bộ**, và áp dụng cho mọi phần, cả ổ flash, các tập dữ liệu ZFS và mục tự sao lưu. Nhấp vào một đường hay một điểm sẽ chuyển nó ngay, không hỏi; đường nét đứt là đang tắt. **Biểu đồ / Công tắc** hiển thị cùng thứ dưới dạng các hàng nút. Một công tắc quyết định các bản sao lưu mới đi đâu. Các mục không có lựa chọn riêng và các thư mục dự án của Compose stack đi theo ngay, nên bản sao lưu kế tiếp của chúng đi tới các nơi mới. Các bản sao lưu đã lưu ở nguyên chỗ và vẫn có thể khôi phục từ đó.
 
-Các mục sao lưu ở nơi khác phần của chúng nằm trong thẻ **Lựa chọn riêng**, mỗi mục có **Theo mặc định**. Các bản sao lưu mới khi đó đi tới các đích của phần, và những bản trước ở nguyên chỗ.
+Khi **Cục bộ** tắt và chỉ các đích off-site đang bật, một phần sao lưu thẳng tới chúng, và BombVault tự chọn kho ở đó. Container, VM và bộ thư mục đi vào kho trực tiếp của đích đang bật đầu tiên, mô tả bên dưới, và được sao chép từ đó tới các đích khác. Ổ flash, các tập dữ liệu ZFS và mục tự sao lưu ghi mỗi bản sao lưu vào mọi đích đang bật, và mỗi đích giữ chúng theo lưu giữ của riêng nó.
+
+Một phần có mọi đường đều tắt hiển thị **Chưa được sao lưu**. Các mục của nó không nhận bản sao lưu nào và được tính là không được bảo vệ.
+
+Các mục đã chọn đích sao lưu riêng trên trang của chúng giữ nguyên chúng. Luồng cho biết trong một phần có bao nhiêu mục như vậy, ví dụ **2 mục khác biệt**, và dẫn tới chúng: tới tab Cài đặt của mục khi chỉ có một, tới một danh sách cho biết mỗi mục sao lưu ở đâu khi có nhiều mục. **Theo mặc định** ở đó đưa một mục trở lại.
 
 Một đích off-site mới nhận mọi mục không đặt là Cục bộ. Cửa sổ thêm nó cho biết có bao nhiêu mục và, nơi biết, lịch sử bao nhiêu.
 
 ### Kho trực tiếp
 
-Tắt Cục bộ cho một mục, để một đích không có kho trực tiếp trở thành nhà của nó, mở một hộp thoại với một vị trí gợi ý bên cạnh, ví dụ `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, và một lần kiểm tra kết nối không tạo gì cả. **Tạo và dùng** tạo kho và trỏ mục vào đó. Một kho trực tiếp lấy khóa, lớp lưu trữ, giới hạn, thiết lập append-only và lưu giữ của đích, và đổi theo chúng; thẻ Kho hiển thị nó ở chế độ chỉ đọc. Khi khóa mới của đích không mở được nó, kho trực tiếp giữ khóa nó đang có và lần lưu nói điều đó. Một mục trên kho trực tiếp được sao chép từ đó tới các đích sáng khác, không bao giờ tới đích mà kho thuộc về. Bản sao lưu của nó mang thẻ `bv:direct`, và mọi lượt lưu giữ khác để yên chúng, nên một kho trực tiếp mất liên kết với đích của nó không bao giờ bị già đi theo quy tắc cục bộ. B2 được truy cập qua điểm cuối S3 của nó, với ID khóa và khóa ứng dụng nhập làm thông tin xác thực S3; một khóa giới hạn ở thư mục riêng của đích không tới được thư mục bên cạnh, nên hãy giới hạn khóa ở thư mục bên trên.
+Kho trực tiếp là nơi các mục sao lưu thẳng tới một đích off-site. BombVault đặt nó cạnh thư mục của đích, thêm `-direct` vào tên, hoặc, khi đích nằm ở gốc của bucket, remote hoặc người dùng rest-server của nó, đặt trong một thư mục bên trong mang tên phần, ví dụ `containers-direct`. Trong luồng trên trang Đích sao lưu, nó được tạo mà không hỏi. Tắt Cục bộ cho một mục riêng lẻ, để một đích không có kho trực tiếp trở thành nhà của nó, mở một hộp thoại với vị trí gợi ý, ví dụ `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, và một lần kiểm tra kết nối không tạo gì cả. **Tạo và dùng** tạo kho và trỏ mục vào đó. Một kho trực tiếp lấy khóa, lớp lưu trữ, giới hạn, thiết lập append-only và lưu giữ của đích, và đổi theo chúng; thẻ Kho hiển thị nó ở chế độ chỉ đọc. Khi khóa mới của đích không mở được nó, kho trực tiếp giữ khóa nó đang có và lần lưu nói điều đó. Một mục trên kho trực tiếp được sao chép từ đó tới các đích sáng khác, không bao giờ tới đích mà kho thuộc về. Bản sao lưu của nó mang thẻ `bv:direct`, và mọi lượt lưu giữ khác để yên chúng, nên một kho trực tiếp mất liên kết với đích của nó không bao giờ bị già đi theo quy tắc cục bộ. B2 được truy cập qua điểm cuối S3 của nó, với ID khóa và khóa ứng dụng nhập làm thông tin xác thực S3; một khóa giới hạn ở thư mục riêng của đích không tới được thư mục bên cạnh, nên hãy giới hạn khóa ở thư mục bên trên.
 
 ### Ngoài cơ sở
 
@@ -88,7 +98,7 @@ Lựa chọn sao chép nằm trong cài đặt riêng của BombVault. Sau khi d
 
 Đường dẫn riêng của một phần không bị giới hạn ở thư mục cục bộ: trỏ nó thẳng vào một restic remote (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) và BombVault sao lưu thẳng vào đó, không có bản sao cục bộ riêng và không có bước sao chép. Đây là một hình thức khác với các bản sao off-site ở trên: ở đó kho cục bộ là kho chính và kho off-site là bản lưu trữ hết sức có thể của nó; ở đây kho từ xa **chính là** kho chính, và là bản sao duy nhất trừ khi bạn cũng sao chép phần đó sang một đích sao lưu khác.
 
-Đường dẫn của mỗi phần (Containers, VMs, Flash, Tự sao lưu, Thư mục, Tập dữ liệu ZFS) được đặt trên trang của đích sao lưu **Thư mục cục bộ**: **Đổi** cạnh phần trong thẻ **Kết nối** của nó mở một cửa sổ có công tắc **Cục bộ / Từ xa**:
+Đường dẫn của mỗi phần (Containers, VMs, Flash, Tự sao lưu, Thư mục, Tập dữ liệu ZFS) được đặt trên trang của đích sao lưu **Cục bộ**: **Đổi** cạnh phần trong thẻ **Kết nối** của nó mở một cửa sổ có công tắc **Cục bộ / Từ xa**:
 
 - **Cục bộ** hiển thị trình duyệt thư mục quen thuộc.
 - **Từ xa** thay nó bằng một trường URL thuần và các thiết lập kết nối mà một đích off-site dùng, được cấu hình cho kho chính này. Từ đó bạn có:

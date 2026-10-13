@@ -1,11 +1,14 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 )
 
@@ -115,5 +118,14 @@ func TestLogSchedulerTimezone(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestARoundPassesOverAnEntryWhoseSectionHasNoPlace(t *testing.T) {
+	if err := roundItemErr(fmt.Errorf("files: %w", api.ErrNoPlace)); err != nil {
+		t.Fatalf("roundItemErr = %v, want no failure for a section with no place", err)
+	}
+	if err := roundItemErr(errors.New("disk full")); err == nil {
+		t.Fatal("roundItemErr dropped a real failure")
 	}
 }

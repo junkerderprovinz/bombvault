@@ -65,6 +65,37 @@ func TestAFlashDriveWithItsFolderOffBacksUpStraightToEachTarget(t *testing.T) {
 	}
 }
 
+// limitsEngine remembers the bandwidth caps each backup ran with, by repository.
+type limitsEngine struct {
+	ResticEngine
+	limits map[string]restic.Limits
+}
+
+func (e *limitsEngine) Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error) {
+	e.limits[repo] = mode.Limits
+	return e.ResticEngine.Backup(ctx, repo, paths, tags, mode, excludes...)
+}
+
+func TestABackupStraightToATargetKeepsToItsBandwidthCaps(t *testing.T) {
+	f, _, b2, _ := flashScene(t)
+	b2.LimitUpload, b2.LimitDownload = 512, 2048
+	if _, err := f.st.UpsertOffsiteTarget(b2); err != nil {
+		t.Fatal(err)
+	}
+	switchLocal(t, f, "flash", false)
+	e := &limitsEngine{ResticEngine: countCalls(f), limits: map[string]restic.Limits{}}
+	f.svc.engine = e
+
+	if _, err := f.svc.BackupFlash(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+
+	want := restic.Limits{UploadKBps: 512, DownloadKBps: 2048}
+	if got, ok := e.limits[b2.Repo]; !ok || got != want {
+		t.Fatalf("the backup to B2 ran with %+v (ran: %v), want its caps %+v", got, ok, want)
+	}
+}
+
 func TestSwitchingTheFolderOffLeavesWhatItHoldsWhereItIs(t *testing.T) {
 	f, local, _, _ := flashScene(t)
 	switchLocal(t, f, "flash", false)
@@ -116,8 +147,11 @@ func TestASectionWithEveryPlaceOffIsNotBackedUpAndCountsAsUnprotected(t *testing
 		}
 	}
 
-	if _, err := f.svc.BackupFlash(context.Background()); !errors.Is(err, errNoPlace) {
-		t.Fatalf("BackupFlash = %v, want errNoPlace", err)
+	if _, err := f.svc.BackupFlash(context.Background()); !errors.Is(err, ErrNoPlace) {
+		t.Fatalf("BackupFlash = %v, want ErrNoPlace", err)
+	}
+	if started, err := f.svc.StartBackupFlash(context.Background()); started || !errors.Is(err, ErrNoPlace) {
+		t.Fatalf("StartBackupFlash = %v, %v, want the press refused with ErrNoPlace", started, err)
 	}
 	settings, err := f.st.GetSettings()
 	if err != nil {
@@ -129,6 +163,22 @@ func TestASectionWithEveryPlaceOffIsNotBackedUpAndCountsAsUnprotected(t *testing
 	}
 	if row := itemRow(t, f, "flash"); row["noPlace"] != true {
 		t.Fatalf("flash row = %v, want it marked without a place", row)
+	}
+}
+
+func TestAPressRefusedForNoPlaceCarriesACodeThePageCanTranslate(t *testing.T) {
+	f, _, b2, box := flashScene(t)
+	switchLocal(t, f, "flash", false)
+	for _, target := range []store.OffsiteTarget{b2, box} {
+		target.Enabled = false
+		if _, err := f.st.UpsertOffsiteTarget(target); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	code, out := f.call(http.MethodPost, "/api/flash/backup", nil)
+	if code != http.StatusConflict || out["code"] != codeNoPlace {
+		t.Fatalf("POST /api/flash/backup = %d %v, want 409 with code %q", code, out, codeNoPlace)
 	}
 }
 
@@ -255,8 +305,8 @@ func TestADefaultWithNoPlaceLeavesANewEntryUnbackedUpAndUnprotected(t *testing.T
 	set := openFileSet(t, f, "docs")
 	settled := f.fileSet("photos", "")
 
-	if _, err := f.svc.BackupFileSet(context.Background(), set.ID); !errors.Is(err, errNoPlace) {
-		t.Fatalf("BackupFileSet = %v, want errNoPlace", err)
+	if _, err := f.svc.BackupFileSet(context.Background(), set.ID); !errors.Is(err, ErrNoPlace) {
+		t.Fatalf("BackupFileSet = %v, want ErrNoPlace", err)
 	}
 	if row := itemRow(t, f, set.ID); row["noPlace"] != true {
 		t.Fatalf("docs = %v, want it marked without a place", row)

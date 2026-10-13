@@ -99,10 +99,10 @@ A barra lateral tem cinco entradas: **Visão geral**, **Anomalias** (enquanto a 
 
 - **Backups** lista cada container, VM, conjunto de pastas, a flash, cada conjunto de dados ZFS e o Auto-backup como entradas. Os mosaicos por cima da lista escolhem um tipo, e **Filtros**, **Ordenar** e **Pesquisar** restringem-na. Cada entrada tem uma página própria com três separadores: **Backups**, **Definições** e **Verificação**.
 - **Restauração** é uma única página para tudo: escolhe uma secção, procura uma entrada e escolhe um backup. O Assistente de emergência e as outras origens também começam aqui.
-- **Definições** são catorze mosaicos: Geral, Aspeto, Agendamento, Destinos, Restauro, Notificações, Verificação, Segurança, Instâncias, Emparelhamento, Integrações, Aplicações, Sistema e Info. Prime `/` ou Ctrl+K para pesquisar todos, também pelos nomes que as páginas tinham em versões anteriores. Arrasta os mosaicos para a tua própria ordem em **Aspeto**.
+- **Definições** são catorze mosaicos: Geral, Aspeto, Agendamento, Destinos, Restauro, Notificações, Verificação, Segurança, Instâncias, Emparelhamento, Integrações, Aplicações, Sistema e Info. Prime `/` ou Ctrl+K para pesquisar todos, também pelos nomes que as páginas tinham em versões anteriores. Arrasta os mosaicos para a tua própria ordem em **Aspeto**. Onde uma coluna de mosaicos ao lado da página a apertaria, como numa janela com cerca de 1200 píxeis de largura, os mosaicos passam a uma faixa por cima da página que se desloca para os lados. Um telemóvel mostra a mesma faixa.
 - **Destinos** e **Instâncias** são mosaicos de definições com páginas próprias. **Mostrar também na barra lateral** no mosaico deles fixa-os à barra lateral.
 
-Nada tem um botão Guardar e nada se desdobra: as coisas raras têm um cartão próprio ou uma janela, e as explicações estão nos balões (i). Depois de uma atualização, pontos verdes marcam o que mudou. Um clique esconde um ponto, e **Novidades** no cartão Versão em **Definições, Info** lista cada alteração com **Ir para lá**.
+Nada tem um botão Guardar e nada se desdobra: as coisas raras têm um cartão próprio ou uma janela, e as explicações estão nos balões (i). Depois de uma atualização, as notas de versão abrem-se sozinhas, e pontos verdes marcam o que mudou. Um clique esconde um ponto. **Novidades** no cartão Versão em **Definições, Info** conta o que ainda não viste e abre as notas de versão e a lista de cada alteração com **Ir para lá**, como dois separadores de uma janela.
 
 ## Compilar a partir do código-fonte {#build-from-source}
 

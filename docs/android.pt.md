@@ -29,6 +29,10 @@ Através do retransmissor, a página chega ao que um telemóvel emparelhado alca
 
 A aplicação só aceita uma resposta se o servidor a assinou com a chave que a aplicação fixou da primeira vez que encontrou esse servidor. Se o servidor responder mais tarde com outra chave, o ecrã inicial mostra a impressão digital da nova chave e a página só abre depois de confiares nela.
 
+## Mudar de servidor {#switch}
+
+Com um servidor aberto, o topo da sua visão geral mostra o nome do servidor. Quando a aplicação conhece outros servidores, há uma seta ao lado do nome, e um toque lista todos os servidores que a aplicação conhece: o aberto marcado como **Esta instância** e cada um dos outros com o seu estado, **Ligada**, **Não ligada**, **Início de sessão necessário** ou **Verificar certificado**. Toca noutro para o abrir, diretamente em casa e, fora dela, pelo relay.
+
 ## Sessão iniciada num telemóvel emparelhado {#sign-in}
 
 Um telemóvel emparelhado com o teu grupo abre cada um dos servidores já com sessão iniciada. Antes de carregar uma página, pede uma sessão a esse servidor através do grupo, e um servidor só a concede a um membro que seja um telemóvel. Um servidor adicionado pelo endereço pede a palavra-passe, como num browser.

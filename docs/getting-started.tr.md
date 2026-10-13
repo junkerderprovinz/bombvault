@@ -99,10 +99,10 @@ Kenar çubuğunda beş giriş var: **Genel bakış**, **Anormallikler** (anormal
 
 - **Yedekler**, her konteyneri, VM'yi, klasör kümesini, flash sürücüyü, her ZFS veri kümesini ve öz yedeği öge olarak listeler. Listenin üstündeki kutucuklar bir tür seçer; **Filtreler**, **Sırala** ve **Ara** daraltır. Her ögenin kendi sayfası ve üç sekmesi vardır: **Yedekler**, **Ayarlar** ve **Doğrulama**.
 - **Geri yükleme** her şey için tek sayfadır: bir bölüm seç, bir öge ara ve bir yedek seç. Acil durum sihirbazı ve diğer kaynaklar da buradan başlar.
-- **Ayarlar** on dört kutucuktur: Genel, Görünüm, Zamanlama, Hedefler, Geri Yükleme, Bildirimler, Doğrulama, Güvenlik, Örnekler, Eşleştirme, Entegrasyonlar, Uygulamalar, Sistem ve Bilgi. Hepsinde aramak için `/` ya da Ctrl+K'ye bas; sayfaların önceki sürümlerdeki adlarıyla da bulunur. Kutucukları **Görünüm** altında kendi sıranda sürükle.
+- **Ayarlar** on dört kutucuktur: Genel, Görünüm, Zamanlama, Hedefler, Geri Yükleme, Bildirimler, Doğrulama, Güvenlik, Örnekler, Eşleştirme, Entegrasyonlar, Uygulamalar, Sistem ve Bilgi. Hepsinde aramak için `/` ya da Ctrl+K'ye bas; sayfaların önceki sürümlerdeki adlarıyla da bulunur. Kutucukları **Görünüm** altında kendi sıranda sürükle. Sayfanın yanındaki bir kutucuk sütunu sayfayı sıkıştıracaksa, örneğin yaklaşık 1200 piksel genişliğinde bir pencerede, kutucuklar sayfanın üstünde yana kayan bir şerit olur. Bir telefon aynı şeridi gösterir.
 - **Hedefler** ve **Örnekler**, kendi sayfaları olan ayar kutucuklarıdır. Kutucuklarındaki **Kenar çubuğunda da göster** onları kenar çubuğuna sabitler.
 
-Hiçbir şeyin Kaydet düğmesi yoktur ve hiçbir şey açılıp katlanmaz: seyrek şeylerin kendi kartı ya da penceresi vardır, açıklamalar da (i) baloncuklarında durur. Bir güncellemeden sonra yeşil noktalar nelerin değiştiğini gösterir. Bir tıklama noktayı gizler; **Ayarlar, Bilgi** altındaki Sürüm kartında **Yenilikler** her değişikliği **Oraya git** ile listeler.
+Hiçbir şeyin Kaydet düğmesi yoktur ve hiçbir şey açılıp katlanmaz: seyrek şeylerin kendi kartı ya da penceresi vardır, açıklamalar da (i) baloncuklarında durur. Bir güncellemeden sonra sürüm notları kendiliğinden açılır ve yeşil noktalar nelerin değiştiğini gösterir. Bir tıklama noktayı gizler. **Ayarlar, Bilgi** altındaki Sürüm kartında **Yenilikler** henüz görmediklerini sayar ve sürüm notlarını ile her değişikliği **Oraya git** ile listeleyen listeyi tek bir pencerenin iki sekmesi olarak açar.
 
 ## Kaynaktan derleme {#build-from-source}
 
