@@ -34,12 +34,12 @@ import { formatNumber } from "../../lib/numberFormat";
 export type SettleFindings = (list: AnomalyView[], how: "acknowledge" | "expected") => Promise<boolean>;
 
 // The bar on the leading edge, which flips sides with the reading direction.
+// It and the badge are all that show the severity: every finding keeps the
+// same surface, so a red one does not read as a different kind of card.
 const EDGE: Record<AnomalySeverity, string> = {
-  critical:
-    "bg-statusFailBgSoft shadow-[inset_3px_0_0_var(--status-fail-solid)] rtl:shadow-[inset_-3px_0_0_var(--status-fail-solid)]",
-  warning:
-    "bg-carbon-surface2 shadow-[inset_3px_0_0_var(--status-warn-solid)] rtl:shadow-[inset_-3px_0_0_var(--status-warn-solid)]",
-  info: "bg-carbon-surface2 shadow-[inset_3px_0_0_var(--carbon-surface3)] rtl:shadow-[inset_-3px_0_0_var(--carbon-surface3)]",
+  critical: "shadow-[inset_3px_0_0_var(--status-fail-solid)] rtl:shadow-[inset_-3px_0_0_var(--status-fail-solid)]",
+  warning: "shadow-[inset_3px_0_0_var(--status-warn-solid)] rtl:shadow-[inset_-3px_0_0_var(--status-warn-solid)]",
+  info: "shadow-[inset_3px_0_0_var(--carbon-surface3)] rtl:shadow-[inset_-3px_0_0_var(--carbon-surface3)]",
 };
 
 export function findingWhen(unix: number): string {
@@ -123,7 +123,7 @@ export function FindingLine({
   return (
     <li
       id={`finding-${a.id}`}
-      className={`flex min-w-0 scroll-mt-10 flex-col gap-1.5 rounded-card px-4 pb-3.5 pt-3 max-sm:px-3 ${EDGE[a.severity]}`}
+      className={`flex min-w-0 scroll-mt-10 flex-col gap-1.5 rounded-card bg-carbon-surface2 px-4 pb-3.5 pt-3 max-sm:px-3 ${EDGE[a.severity]}`}
     >
       <div className="flex flex-wrap items-center gap-2">
         {closed && (

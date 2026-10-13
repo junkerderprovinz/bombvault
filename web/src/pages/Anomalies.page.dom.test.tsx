@@ -320,17 +320,16 @@ describe("the list", () => {
     ).toBeTruthy();
   });
 
-  it("puts the worst finding first and tints only a critical one", async () => {
+  it("puts the worst finding first, on the same surface as the others", async () => {
     serve([
       finding({ targetId: "tg-a", name: "calm", severity: "info" }),
       finding({ targetId: "tg-b", name: "loud", severity: "critical" }),
     ]);
     await renderPage();
 
-    const [first, second] = findings();
+    const surfaces = findings().map((li) => li.className.split(" ").filter((c) => c.startsWith("bg-")));
     expect(names()).toEqual(["loud", "calm"]);
-    expect(first!.className).toContain("bg-statusFailBgSoft");
-    expect(second!.className).not.toContain("bg-statusFailBgSoft");
+    expect(surfaces).toEqual([["bg-carbon-surface2"], ["bg-carbon-surface2"]]);
   });
 
   it("says what happened without repeating the name, and the whole sentence in the window", async () => {
