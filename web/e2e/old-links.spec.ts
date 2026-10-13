@@ -87,7 +87,7 @@ test("a link to a container that is gone says so and leads back to the list", as
   await stageEntries(page, EVERY_KIND);
   await page.goto("/containers?item=vanished");
   await expect(page).toHaveURL(/\/backups\/container\/vanished$/);
-  await page.locator("#bv-main").getByRole("link", { name: "Backups" }).click();
+  await page.locator("#bv-main").getByRole("button", { name: "Backups" }).click();
   await expect(page).toHaveURL(/\/backups$/);
 });
 
