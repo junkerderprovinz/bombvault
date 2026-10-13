@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { Route, Routes, useLocation } from "react-router-dom";
 
+import { rememberInUse, seenInUse } from "../lib/freshInstall";
 import { en } from "../lib/i18n";
 import { FakeEventSource, installMatchMedia, item, location, resetServer, server } from "./overview/overview.testsupport";
 import { inApp } from "./overview/overviewApp.testsupport";
@@ -191,5 +192,24 @@ describe("an install the welcome page is not for", () => {
 
     expect(where()).toBe("/welcome");
     expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+  });
+
+  it("goes on to the overview at once when this browser saw the install in use", async () => {
+    rememberInUse(true);
+    server.items = "pending";
+    await open();
+
+    expect(where()).toBe("/dashboard");
+  });
+
+  it("greets again on the next start once the entries hold no backup any more", async () => {
+    rememberInUse(true);
+    await open();
+    expect(seenInUse()).toBe(false);
+
+    cleanup();
+    await open();
+    expect(where()).toBe("/welcome");
+    expect(screen.getByRole("heading", { level: 1, name: en["welcome.title"] })).toBeTruthy();
   });
 });

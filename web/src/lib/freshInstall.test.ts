@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+// @vitest-environment jsdom
+import { beforeEach, describe, expect, it } from "vitest";
 
 import type { BackupItem } from "./api";
-import { isFreshInstall } from "./freshInstall";
+import { isFreshInstall, rememberInUse, seenInUse } from "./freshInstall";
 
 const entry = (over: Partial<BackupItem>) => ({ kind: "container", key: "plex", lastBackup: 0, ...over }) as BackupItem;
 
@@ -25,5 +26,21 @@ describe("isFreshInstall", () => {
 
   it("is not ended by a run that failed", () => {
     expect(isFreshInstall([entry({ lastRunStatus: "failed" })])).toBe(true);
+  });
+});
+
+describe("seenInUse", () => {
+  beforeEach(() => localStorage.clear());
+
+  it("holds once the entries were read with a backup among them", () => {
+    expect(seenInUse()).toBe(false);
+    rememberInUse(true);
+    expect(seenInUse()).toBe(true);
+  });
+
+  it("ends when the entries are read without any backup again", () => {
+    rememberInUse(true);
+    rememberInUse(false);
+    expect(seenInUse()).toBe(false);
   });
 });

@@ -12,6 +12,7 @@ import type { BackupItem } from "../lib/api";
 import { hueVars } from "../lib/appearance";
 import { useAttention } from "../lib/attention";
 import { FIRST_STEPS, foundSentence, type FirstStep } from "../lib/firstSteps";
+import { seenInUse } from "../lib/freshInstall";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { tallyEntries } from "../lib/protectionTally";
@@ -101,8 +102,11 @@ export function Welcome() {
   const { items, fresh } = useAttention();
 
   // An install that has a backup starts on the overview, and so does one
-  // whose entries cannot be read: the overview says what is wrong.
-  if (!fresh) return items.loaded || items.failed ? <Navigate to="/dashboard" replace /> : null;
+  // whose entries cannot be read: the overview says what is wrong. One this
+  // browser saw in use goes there at once, so the overview's own reads do not
+  // wait for the entries, which are slow to read on a host with many
+  // containers.
+  if (!fresh) return items.loaded || items.failed || seenInUse() ? <Navigate to="/dashboard" replace /> : null;
 
   return (
     <div className={PAGE_SHELL}>
