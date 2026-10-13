@@ -192,6 +192,15 @@ describe("plans per section", () => {
     expect(within(plans).getByText(en["schedules.plansRuleOthers"])).toBeTruthy();
   });
 
+  it("does not send the other sections to a full backup that is off", async () => {
+    settingsOnServer = baseSettings({ everythingSchedule: "off" });
+    await renderPage();
+    const plans = card("schedules.plans");
+    expect(within(plans).getByText(en["schedules.plansRuleFullOff"])).toBeTruthy();
+    expect(within(plans).queryByText(en["schedules.plansRuleOthers"])).toBeNull();
+    expect(within(plans).queryByText(en["schedules.plansRuleAll"])).toBeNull();
+  });
+
   it("has no warning about a double backup, since a section with its own plan leaves the full backup", async () => {
     await renderPage();
     expect(within(card("schedules.plans")).queryByText(/backed up twice/)).toBeNull();

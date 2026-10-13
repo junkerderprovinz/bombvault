@@ -219,7 +219,13 @@ export function SchedulesPage() {
                 label={t("schedules.plans")}
                 taken={ownPlans.map(asException)}
                 free={inFull.map(asException)}
-                rule={t(ownPlans.length > 0 ? "schedules.plansRuleOthers" : "schedules.plansRuleAll")}
+                rule={t(
+                  !fullOn
+                    ? "schedules.plansRuleFullOff"
+                    : ownPlans.length > 0
+                      ? "schedules.plansRuleOthers"
+                      : "schedules.plansRuleAll"
+                )}
                 control={(kind) => (
                   <PlanButton
                     label={label(kind as EntryKind)}
