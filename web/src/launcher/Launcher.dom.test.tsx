@@ -278,6 +278,17 @@ describe("Launcher", () => {
     expect(screen.queryByText("Relay not reachable")).toBeNull();
   });
 
+  it("goes on looking after Android rebuilt the screen during the look", async () => {
+    localStorage.setItem("bv-look-until", String(Date.now() + 20_000));
+    window.history.replaceState({ view: "pairing" }, "");
+    const group = { paired: false, connected: false, joining: { members: [], connected: false } };
+    const { bridge } = fakeBridge({ servers: [], found: [], group, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    expect(await screen.findByText("Looking for other instances")).toBeTruthy();
+    expect(screen.queryByText(/No instance of this group/)).toBeNull();
+    expect(screen.queryByText("Relay not reachable")).toBeNull();
+  });
+
   it("names the relay when the group it was given shows nobody", async () => {
     const group = { paired: false, connected: false, joining: { members: [], connected: false } };
     const { bridge } = fakeBridge({ servers: [], found: [], group, camera: false, app });
