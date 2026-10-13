@@ -96,6 +96,7 @@ export function ReceiverServerWindow({
   }, [t, lead]);
 
   const close = () => onClose(server !== null);
+  const offerSetUp = loaded && !server && !error;
 
   async function runCheck() {
     setChecking(true);
@@ -158,24 +159,21 @@ export function ReceiverServerWindow({
               />
             </>
           )}
-          <Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={close} />
+          <Button label={t("common.done")} labelKey="common.done" tone={offerSetUp ? "neutral" : "accent"} onClick={close} />
+          {offerSetUp && (
+            <Button
+              label={t("receiver.server.setUp")}
+              labelKey="receiver.server.setUp"
+              tone="accent"
+              onClick={() => setFormOpen(true)}
+            />
+          )}
         </>
       }
     >
       {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
 
-      {loaded && !server && !error && (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm text-carbon-textSub">{t("receiver.server.intro")}</p>
-          <Button
-            label={t("receiver.server.setUp")}
-            labelKey="receiver.server.setUp"
-            tone="neutral"
-            onClick={() => setFormOpen(true)}
-            className="self-start"
-          />
-        </div>
-      )}
+      {offerSetUp && <p className="text-sm text-carbon-textSub">{t("receiver.server.intro")}</p>}
 
       {server && (
         <div className="flex flex-col gap-3">

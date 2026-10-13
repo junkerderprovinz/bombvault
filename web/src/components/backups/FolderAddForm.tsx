@@ -24,7 +24,8 @@ export interface FoundFolder {
 /** What FolderAddForm hands to the window it stands in. */
 export interface FolderAddParts {
   body: ReactNode;
-  actions: ReactNode;
+  cancel: ReactNode;
+  forward: ReactNode;
 }
 
 // A set's name becomes a restic tag, which takes letters, digits, dot,
@@ -220,22 +221,20 @@ export function FolderAddForm({
     </>
   );
 
-  const actions = (
-    <>
-      <Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={onClose} disabled={saving} />
-      <Button
-        key={shake}
-        label={t("dest.folder.create")}
-        labelKey={null}
-        glyph={<IconAdd />}
-        tone="accent"
-        onClick={() => void create()}
-        disabled={saving || name.trim() === "" || path.trim() === ""}
-        busy={saving}
-        className={shake ? "glim-shake" : ""}
-      />
-    </>
+  const cancel = <Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={onClose} disabled={saving} />;
+  const forward = (
+    <Button
+      key={shake}
+      label={t("dest.folder.create")}
+      labelKey={null}
+      glyph={<IconAdd />}
+      tone="accent"
+      onClick={() => void create()}
+      disabled={saving || name.trim() === "" || path.trim() === ""}
+      busy={saving}
+      className={shake ? "glim-shake" : ""}
+    />
   );
 
-  return children({ body, actions });
+  return children({ body, cancel, forward });
 }

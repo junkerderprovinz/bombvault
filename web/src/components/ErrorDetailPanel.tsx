@@ -181,28 +181,10 @@ export function ErrorDetailPanel({ onClose }: { onClose: () => void }) {
         aria-labelledby="errorpanel-title"
         className="glim-modal-card relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">
+        <div className="flex items-start border-b border-carbon-border px-5 py-4">
           <h2 id="errorpanel-title" className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{t("errorPanel.title")}</Badge>
           </h2>
-          <div className="flex items-center gap-2">
-            <Button
-              label={t("errorPanel.resolveAll")}
-              labelKey="errorPanel.resolveAll"
-              tone="neutral"
-              onClick={() => acknowledge({ all: true })}
-              disabled={busy || groups.length === 0}
-            />
-            <Button
-              ref={closeRef}
-              label={t("common.close")}
-              labelKey="common.close"
-              glyph={<IconClose />}
-              tone="neutral"
-              onClick={onClose}
-              className="shrink-0"
-            />
-          </div>
         </div>
 
         {/* The same text, domain and type filters as the Activity Log. */}
@@ -316,6 +298,25 @@ export function ErrorDetailPanel({ onClose }: { onClose: () => void }) {
               })}
             </div>
           )}
+        </div>
+
+        <div className="flex items-center justify-end gap-3 px-5 py-4">
+          <Button
+            label={t("errorPanel.resolveAll")}
+            labelKey="errorPanel.resolveAll"
+            tone="neutral"
+            onClick={() => acknowledge({ all: true })}
+            disabled={busy || groups.length === 0}
+          />
+          <Button
+            ref={closeRef}
+            label={t("common.close")}
+            labelKey="common.close"
+            glyph={<IconClose />}
+            tone="neutral"
+            onClick={onClose}
+            className="shrink-0"
+          />
         </div>
       </div>
     </div>,

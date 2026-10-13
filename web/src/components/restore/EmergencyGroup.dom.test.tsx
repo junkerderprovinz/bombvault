@@ -42,11 +42,14 @@ const OPENED: EmergencyState = {
 const onEmergency = vi.fn();
 const onPairing = vi.fn();
 
+/** Opens the way with a stand-in for the window's foot, where its request
+ *  and its way back stand. */
 async function open(active: boolean | null = true) {
+  const footer = document.body.appendChild(document.createElement("div"));
   await act(async () => {
     render(
       <I18nProvider>
-        <EmergencyGroup active={active} onEmergency={onEmergency} onPairing={onPairing} />
+        <EmergencyGroup active={active} footer={footer} onEmergency={onEmergency} onPairing={onPairing} />
       </I18nProvider>
     );
   });
@@ -82,6 +85,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   cleanup();
+  document.body.replaceChildren();
   vi.clearAllMocks();
 });
 

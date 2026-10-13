@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { getVMSSH, zfsConnection } from "../../lib/api";
 import type { ZFSConnectionResult } from "../../lib/api";
@@ -48,8 +49,9 @@ export function ZFSConnectionCard() {
 }
 
 /** ZFSConnectionStatus reports whether zfs commands reach the server, and
- *  what to do when they do not. It tests the connection when it appears. */
-export function ZFSConnectionStatus() {
+ *  what to do when they do not. It tests the connection when it appears. In a
+ *  window, `foot` is the place in the window's foot for the test button. */
+export function ZFSConnectionStatus({ foot }: { foot?: HTMLElement | null } = {}) {
   const { t } = useT();
   const { push } = useToast();
   const [result, setResult] = useState<ZFSConnectionResult | null>(null);
@@ -99,6 +101,9 @@ export function ZFSConnectionStatus() {
 
   const connected = CONNECTED.has(code);
   const fixKey = zfsFixKey(code);
+  const testAgain = (
+    <TestButton label={t("zfs.connection.test")} labelKey="zfs.connection.test" test={check} onClick={() => test(true)} />
+  );
   const authorizeCmd = authorizeCommand(publicKey);
 
   return (
@@ -108,13 +113,7 @@ export function ZFSConnectionStatus() {
       {!testing && !result && (
         <div className="flex flex-col gap-2">
           <p className="text-sm text-statusFail">{t("common.networkError")}</p>
-          <TestButton
-            label={t("zfs.connection.test")}
-            labelKey="zfs.connection.test"
-            test={check}
-            onClick={() => test(true)}
-            className="self-end"
-          />
+          {foot === undefined && <div className="flex justify-end">{testAgain}</div>}
         </div>
       )}
 
@@ -207,16 +206,10 @@ export function ZFSConnectionStatus() {
             </InstanceWindow>
           )}
 
-          <div className="flex justify-end">
-            <TestButton
-              label={t("zfs.connection.test")}
-              labelKey="zfs.connection.test"
-              test={check}
-              onClick={() => test(true)}
-            />
-          </div>
+          {foot === undefined && <div className="flex justify-end">{testAgain}</div>}
         </div>
       )}
+      {foot && !testing && createPortal(testAgain, foot)}
     </>
   );
 }

@@ -86,6 +86,73 @@ export function FindingWindow({
       title={
         <span className="min-w-0 normal-case tracking-normal wrap-anywhere">{place?.name ?? anomalyEntryName(a, t)}</span>
       }
+      actions={
+        open ? (
+          <>
+            {findingHasChanges(a) && !comparing && (
+              <Button
+                label={t("anomaly.changes.title")}
+                labelKey="anomaly.changes.title"
+                glyph={<IconCompare />}
+                onClick={onCompare}
+                className="glim-btn-wrap"
+              />
+            )}
+            <Button
+              label={t("anomaly.action.acknowledge")}
+              labelKey="anomaly.action.acknowledge"
+              onClick={() => void onSettle([a], "acknowledge")}
+              hint={t("anomaly.acknowledgeHint")}
+              className="glim-btn-wrap"
+            />
+            {a.expectable && (
+              <Button
+                label={t("anomaly.action.expected")}
+                labelKey="anomaly.action.expected"
+                onClick={() => void onSettle([a], "expected")}
+                hint={t("anomaly.expectedHint")}
+                className="glim-btn-wrap"
+              />
+            )}
+            {onMonitoring && (
+              <Button
+                label={t("anomaly.card.monitoring")}
+                labelKey="anomaly.card.monitoring"
+                glyph={<IconAnomalies />}
+                onClick={onMonitoring}
+                className="glim-btn-wrap"
+              />
+            )}
+            {itemPath && (
+              <Button
+                label={t("anomaly.openItem")}
+                labelKey="anomaly.openItem"
+                glyph={<IconEye />}
+                onClick={() => leave(itemPath)}
+                className="glim-btn-wrap"
+              />
+            )}
+            {place && (
+              <Button
+                label={t("anomaly.openLocation")}
+                labelKey="anomaly.openLocation"
+                glyph={<IconEye />}
+                onClick={() => leave(place.path)}
+                className="glim-btn-wrap"
+              />
+            )}
+            {restorePath && a.lastGood && (
+              <Button
+                label={t("anomaly.action.restoreLastGood").replace("{date}", findingWhen(a.lastGood.at))}
+                labelKey="anomaly.action.restoreLastGood"
+                tone={a.severity === "critical" ? "accent" : "neutral"}
+                onClick={() => leave(restorePath)}
+                className="glim-btn-wrap"
+              />
+            )}
+          </>
+        ) : undefined
+      }
       onClose={onClose}
     >
       <div className="flex flex-wrap items-center gap-2 text-sm text-carbon-textMuted">
@@ -138,72 +205,6 @@ export function FindingWindow({
           )}
           {a.stillPresent && <span>{t("anomaly.stillPresent")}</span>}
         </p>
-      )}
-
-      {open && (
-        <div className="flex flex-wrap items-center gap-2 md:justify-end">
-          {findingHasChanges(a) && !comparing && (
-            <Button
-              label={t("anomaly.changes.title")}
-              labelKey="anomaly.changes.title"
-              glyph={<IconCompare />}
-              onClick={onCompare}
-              className="glim-btn-wrap"
-            />
-          )}
-          <Button
-            label={t("anomaly.action.acknowledge")}
-            labelKey="anomaly.action.acknowledge"
-            onClick={() => void onSettle([a], "acknowledge")}
-            hint={t("anomaly.acknowledgeHint")}
-            className="glim-btn-wrap"
-          />
-          {a.expectable && (
-            <Button
-              label={t("anomaly.action.expected")}
-              labelKey="anomaly.action.expected"
-              onClick={() => void onSettle([a], "expected")}
-              hint={t("anomaly.expectedHint")}
-              className="glim-btn-wrap"
-            />
-          )}
-          {onMonitoring && (
-            <Button
-              label={t("anomaly.card.monitoring")}
-              labelKey="anomaly.card.monitoring"
-              glyph={<IconAnomalies />}
-              onClick={onMonitoring}
-              className="glim-btn-wrap"
-            />
-          )}
-          {itemPath && (
-            <Button
-              label={t("anomaly.openItem")}
-              labelKey="anomaly.openItem"
-              glyph={<IconEye />}
-              onClick={() => leave(itemPath)}
-              className="glim-btn-wrap"
-            />
-          )}
-          {place && (
-            <Button
-              label={t("anomaly.openLocation")}
-              labelKey="anomaly.openLocation"
-              glyph={<IconEye />}
-              onClick={() => leave(place.path)}
-              className="glim-btn-wrap"
-            />
-          )}
-          {restorePath && a.lastGood && (
-            <Button
-              label={t("anomaly.action.restoreLastGood").replace("{date}", findingWhen(a.lastGood.at))}
-              labelKey="anomaly.action.restoreLastGood"
-              tone={a.severity === "critical" ? "accent" : "neutral"}
-              onClick={() => leave(restorePath)}
-              className="glim-btn-wrap"
-            />
-          )}
-        </div>
       )}
     </AnomalyWindow>
   );

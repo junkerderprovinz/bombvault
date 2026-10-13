@@ -123,12 +123,12 @@ export function AddWindow({
   else if (host === "down") datasetLine = t("backups.add.datasetDown");
   else if (host !== "loading") datasetLine = t("zfs.notInItem", host.notInItem);
 
-  const back = (label: string) => (
-    <div className="flex flex-wrap items-center justify-end gap-2">
-      <Button label={t("backups.add.other")} labelKey={null} glyph={<IconBack />} tone="subtle" onClick={() => setKind(null)} />
+  const chosen = (label: string) => (
+    <div className="flex justify-end">
       <Badge tone="neutral">{label}</Badge>
     </div>
   );
+  const back = <Button label={t("backups.add.other")} labelKey={null} glyph={<IconBack />} tone="subtle" onClick={() => setKind(null)} />;
   const cancel = <Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={onClose} />;
   const frame = (title: string, hint: string, body: ReactNode, footer: ReactNode, closable = true) => (
     <InstanceWindow title={title} hint={hint} footer={footer} onClose={closable ? onClose : () => undefined}>
@@ -148,15 +148,19 @@ export function AddWindow({
         onClose={onClose}
         onAdded={onAdded}
       >
-        {({ body, actions }) =>
+        {({ body, cancel: formCancel, forward }) =>
           frame(
             t("backups.add.title"),
             t("backups.add.hint"),
             <>
-              {back(t("storage.folder"))}
+              {chosen(t("storage.folder"))}
               {body}
             </>,
-            actions
+            <>
+              {formCancel}
+              {back}
+              {forward}
+            </>
           )
         }
       </FolderAddForm>
@@ -166,15 +170,19 @@ export function AddWindow({
   if (kind === "zfs") {
     return (
       <ZFSAddForm onClose={onClose} onAdded={onAdded}>
-        {({ body, actions, closable }) =>
+        {({ body, cancel: formCancel, forward, closable }) =>
           frame(
             t("zfs.add.title"),
             t("zfs.add.hint"),
             <>
-              {closable && back(t("backups.add.zfsDataset"))}
+              {closable && chosen(t("backups.add.zfsDataset"))}
               {body}
             </>,
-            actions ?? cancel,
+            <>
+              {formCancel}
+              {closable && back}
+              {forward}
+            </>,
             closable
           )
         }

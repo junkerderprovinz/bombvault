@@ -165,7 +165,7 @@ export function EmergencyWindow({
   const undecided = session !== undefined && !sessionKeyInUse(emergency);
   const [leaving, setLeaving] = useState(false);
   const ownLogin = useOwnLogin();
-  // Where the first step puts its own way forward while a key is undecided.
+  // Where the first step puts its own buttons, ahead of the window's Next.
   const [accessFoot, setAccessFoot] = useState<HTMLElement | null>(null);
 
   const [useBackup, setUseBackup] = useState(true);
@@ -458,6 +458,7 @@ export function EmergencyWindow({
   }
 
   const configBusy = configPhase === "saving" || configPhase === "restarting";
+  const reloadable = configPhase === "reload" || configPhase === "restarting";
   const at = EMERGENCY_STEPS.indexOf(step) + 1;
   const total = found ? found.containers + found.vms + found.files + found.zfs : 0;
   const offered = restorable.length + backedUpVMs.length + fileSets.length + zfsItems.length + dumpOnly.length;
@@ -490,7 +491,8 @@ export function EmergencyWindow({
     footer = (
       <>
         {cancel}
-        {undecided ? <span ref={setAccessFoot} className="flex" /> : next("settings")}
+        <span ref={setAccessFoot} className="contents" />
+        {!undecided && next("settings")}
       </>
     );
   } else if (step === "settings") {
@@ -502,13 +504,21 @@ export function EmergencyWindow({
             label={t("emergency.settingsGo")}
             labelKey={null}
             glyph={<IconRestore />}
-            tone="accent"
+            tone={reloadable ? "neutral" : "accent"}
             onClick={() => void restoreOwnSettings()}
             disabled={!settings || configBusy}
             busy={configBusy}
           />
         ) : (
           next("selection", () => void attachPlaces().then((ok) => ok && setStep("selection")))
+        )}
+        {reloadable && (
+          <Button
+            label={t("recovery.configReload")}
+            labelKey="recovery.configReload"
+            tone="accent"
+            onClick={() => window.location.reload()}
+          />
         )}
       </>
     );
@@ -632,12 +642,7 @@ export function EmergencyWindow({
             </>
           )}
           {configPhase === "manual" && <Note tone="warn">{t("recovery.configManualRestart")}</Note>}
-          {(configPhase === "reload" || configPhase === "restarting") && (
-            <div className="flex flex-wrap items-center gap-3">
-              {configPhase === "reload" && <span className="text-xs text-statusWarn">{t("recovery.configReloadWhenBack")}</span>}
-              <Button label={t("recovery.configReload")} labelKey="recovery.configReload" onClick={() => window.location.reload()} />
-            </div>
-          )}
+          {configPhase === "reload" && <p className="text-xs text-statusWarn">{t("recovery.configReloadWhenBack")}</p>}
           {configPhase === "error" && configError && <Note tone="fail">{configError}</Note>}
         </>
       )}

@@ -235,12 +235,27 @@ describe("RunDetailSheet", () => {
     expect(reason.getAttribute("dir")).toBeNull();
   });
 
-  it("footer rows exist with the >=44px min-height token", () => {
+  it("footer actions take the 44px touch height", () => {
     renderSheet(DONE_RUN);
     const browse = screen.getByRole("button", { name: en["recovery.foreignStepBrowse"] });
     const verify = screen.getByRole("button", { name: en["integrity.verify"] });
-    expect(browse.className).toContain("min-h-[2.75rem]");
-    expect(verify.className).toContain("min-h-[2.75rem]");
+    expect(browse.className).toContain("pointer-coarse:[--btn-h:2.75rem]");
+    expect(verify.className).toContain("pointer-coarse:[--btn-h:2.75rem]");
+  });
+
+  it("closes from the footer, after the actions, with no close button in the header", () => {
+    const onClose = vi.fn();
+    render(
+      <I18nProvider>
+        <RunDetailSheet run={DONE_RUN} open onClose={onClose} />
+      </I18nProvider>
+    );
+    const closes = screen.getAllByRole("button", { name: en["common.close"] });
+    expect(closes).toHaveLength(1);
+    const verify = screen.getByRole("button", { name: en["integrity.verify"] });
+    expect(verify.compareDocumentPosition(closes[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(closes[0]);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("restore entry sits in the scroll body ahead of the footer rows, never accent", () => {
@@ -740,13 +755,13 @@ describe("RunDetailSheet", () => {
     // This sheet's own wrappers, not the primitive's: the primitive never had
     // a px-4, so asserting on its scroll container and footer slot would hold
     // whatever this file does. The body wrapper is the scroll container's one
-    // child; the footer wrapper is the one this sheet puts its rows in.
+    // child; the footer wrapper is the row this sheet puts its actions in.
     const bodySlot = (document.body.querySelector("div.overflow-y-auto") as HTMLElement)
       .firstElementChild as HTMLElement;
     expect(bodySlot.className).not.toContain("px-4");
     const footerSlot = screen
       .getByRole("button", { name: en["integrity.verify"] })
-      .closest("div.py-4") as HTMLElement;
+      .closest("div.py-3") as HTMLElement;
     expect(footerSlot).not.toBeNull();
     expect(footerSlot.className).not.toContain("px-4");
     // The inner rounded cards keep their own px-4: they inset from the slot,

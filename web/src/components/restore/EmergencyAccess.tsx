@@ -155,8 +155,8 @@ export function EmergencyAccess({
   settings: Settings | null;
   setSettings: Dispatch<SetStateAction<Settings | null>>;
   hostMountRoot: string;
-  /** The place in the window's foot for taking the key over, which is the
-   *  way forward while a key is shown and undecided. */
+  /** The place in the window's foot for this step's own buttons: reading a
+   *  key, and taking it over while it is shown and undecided. */
   footer: HTMLElement | null;
   /** The way a link opened the window on. */
   start?: EmergencyWay | null;
@@ -390,30 +390,31 @@ export function EmergencyAccess({
           </Section>
         )}
 
-        {!taken && (
-          <div>
-            <Button
-              label={t("emergency.another")}
-              labelKey={null}
-              glyph={<IconBack />}
-              tone="subtle"
-              onClick={() => void anotherWay(session.id)}
-              disabled={busy}
-            />
-          </div>
-        )}
-        {!inUse &&
-          footer &&
+        {footer &&
           createPortal(
-            <Button
-              label={t("emergency.adopt")}
-              labelKey={null}
-              glyph={<IconKey />}
-              tone="accent"
-              onClick={() => void adopt(session.id)}
-              disabled={busy || session.refusal !== undefined}
-              busy={busy}
-            />,
+            <>
+              {!taken && (
+                <Button
+                  label={t("emergency.another")}
+                  labelKey={null}
+                  glyph={<IconBack />}
+                  tone="subtle"
+                  onClick={() => void anotherWay(session.id)}
+                  disabled={busy}
+                />
+              )}
+              {!inUse && (
+                <Button
+                  label={t("emergency.adopt")}
+                  labelKey={null}
+                  glyph={<IconKey />}
+                  tone="accent"
+                  onClick={() => void adopt(session.id)}
+                  disabled={busy || session.refusal !== undefined}
+                  busy={busy}
+                />
+              )}
+            </>,
             footer
           )}
         {confirmDialog}
@@ -491,17 +492,6 @@ export function EmergencyAccess({
             <Section title={t("emergency.way.kit")}>
               <p className="text-sm text-carbon-text">{t("emergency.code.kit-sealed")}</p>
               <KitIdentityField inputRef={identity} onEnter={() => void openSealed()} />
-              <div className="flex justify-end">
-                <Button
-                  label={t("kit.open")}
-                  labelKey={null}
-                  glyph={<IconKey />}
-                  tone="accent"
-                  onClick={() => void openSealed()}
-                  disabled={busy}
-                  busy={busy}
-                />
-              </div>
             </Section>
           )}
         </>
@@ -510,6 +500,7 @@ export function EmergencyAccess({
       {way === "group" && (
         <EmergencyGroup
           active={inGroup}
+          footer={footer}
           onEmergency={(state) => {
             setRefusal(null);
             onEmergency(state);
@@ -571,21 +562,36 @@ export function EmergencyAccess({
               {credField("restUser", "recovery.foreignRestUser", "recovery.foreignRestHint")}
               {secretField("restPassword", "recovery.foreignRestPassword", revealPassword)}
             </div>
-            <div className="flex justify-end">
-              <Button
-                label={t("emergency.connect")}
-                labelKey={null}
-                glyph={<IconCheck />}
-                tone="accent"
-                onClick={() => void readKey()}
-                disabled={busy || key.trim() === ""}
-                busy={busy}
-              />
-            </div>
           </Section>
         ) : (
           <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
         ))}
+
+      {footer &&
+        createPortal(
+          way === "kit" && sealed !== null ? (
+            <Button
+              label={t("kit.open")}
+              labelKey={null}
+              glyph={<IconKey />}
+              tone="accent"
+              onClick={() => void openSealed()}
+              disabled={busy}
+              busy={busy}
+            />
+          ) : way === "key" && settings ? (
+            <Button
+              label={t("emergency.connect")}
+              labelKey={null}
+              glyph={<IconCheck />}
+              tone="accent"
+              onClick={() => void readKey()}
+              disabled={busy || key.trim() === ""}
+              busy={busy}
+            />
+          ) : null,
+          footer
+        )}
     </>
   );
 }

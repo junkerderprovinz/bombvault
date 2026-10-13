@@ -35,8 +35,10 @@ function directChildren(entries: ZFSHostDataset[], root: string): string[] {
 /** What ZFSAddForm hands to the window it stands in. */
 export interface ZFSAddParts {
   body: ReactNode;
-  /** The buttons of the step, null while there is nothing to decide. */
-  actions: ReactNode;
+  /** The way out, null once the added items are being probed. */
+  cancel: ReactNode;
+  /** The step's forward button, null while there is nothing to decide. */
+  forward: ReactNode;
   /** False once closing would leave freshly added items unprobed. */
   closable: boolean;
 }
@@ -148,7 +150,7 @@ export function ZFSAddForm({
   }
 
   let body: ReactNode;
-  let actions: ReactNode = null;
+  let forward: ReactNode = null;
   if (results !== null) {
     body = (
       <div className="flex flex-col gap-2">
@@ -192,7 +194,7 @@ export function ZFSAddForm({
         )}
       </div>
     );
-    actions = (
+    forward = (
       <Button
         label={t("zfs.add.done")}
         labelKey="zfs.add.done"
@@ -208,9 +210,9 @@ export function ZFSAddForm({
       <div className="flex flex-col items-start gap-2">
         <p className="text-sm text-statusFail">{t("zfs.add.unavailable")}</p>
         {host && <p className="text-sm text-carbon-textSub">{zfsCodeSentence(t, host.code, { target: host.target })}</p>}
-        <Button label={t("zfs.add.retry")} labelKey="zfs.add.retry" tone="neutral" onClick={load} />
       </div>
     );
+    forward = <Button label={t("zfs.add.retry")} labelKey="zfs.add.retry" tone="accent" onClick={load} />;
   } else {
     body = (
       <>
@@ -250,18 +252,15 @@ export function ZFSAddForm({
         <RepoPicker value={repo} onChange={setRepo} />
       </>
     );
-    actions = (
-      <>
-        <Button label={t("files.cancel")} labelKey="files.cancel" tone="neutral" onClick={onClose} disabled={submitting} />
-        <Button
-          label={t("zfs.add.submit").replace("{n}", String(selected.size))}
-          labelKey="zfs.add.submit"
-          tone="accent"
-          onClick={() => void handleSubmit()}
-          disabled={submitting || selected.size === 0}
-          busy={submitting}
-        />
-      </>
+    forward = (
+      <Button
+        label={t("zfs.add.submit").replace("{n}", String(selected.size))}
+        labelKey="zfs.add.submit"
+        tone="accent"
+        onClick={() => void handleSubmit()}
+        disabled={submitting || selected.size === 0}
+        busy={submitting}
+      />
     );
   }
 
@@ -269,7 +268,15 @@ export function ZFSAddForm({
   // it would otherwise reach a backdrop's close handler.
   return (
     <>
-      {children({ body, actions, closable: results === null && !submitting })}
+      {children({
+        body,
+        cancel:
+          results === null ? (
+            <Button label={t("files.cancel")} labelKey="files.cancel" tone="neutral" onClick={onClose} disabled={submitting} />
+          ) : null,
+        forward,
+        closable: results === null && !submitting,
+      })}
       {confirmDialog}
     </>
   );
@@ -281,8 +288,18 @@ export function ZFSAddDialog({ onClose, onAdded }: { onClose: () => void; onAdde
   const heading = t("zfs.add.title");
   return (
     <ZFSAddForm onClose={onClose} onAdded={onAdded}>
-      {({ body, actions, closable }) => (
-        <InstanceWindow title={heading} hint={t("zfs.add.hint")} onClose={closable ? onClose : () => undefined} footer={actions}>
+      {({ body, cancel, forward, closable }) => (
+        <InstanceWindow
+          title={heading}
+          hint={t("zfs.add.hint")}
+          onClose={closable ? onClose : () => undefined}
+          footer={
+            <>
+              {cancel}
+              {forward}
+            </>
+          }
+        >
           {body}
         </InstanceWindow>
       )}

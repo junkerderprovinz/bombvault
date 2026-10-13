@@ -164,12 +164,20 @@ export function AddReplicaServerDialog({
         <>
           <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onClose} />
           {step === 1 ? (
-            <Button
-              label={t("zfs.replica.add.next")}
-              labelKey="zfs.replica.add.next"
-              tone="accent"
-              onClick={() => goTo(2)}
-            />
+            <>
+              <TestButton
+                label={t("zfs.replica.server.test")}
+                labelKey="zfs.replica.server.test"
+                test={check}
+                onClick={runTest}
+              />
+              <Button
+                label={t("zfs.replica.add.next")}
+                labelKey="zfs.replica.add.next"
+                tone="accent"
+                onClick={() => goTo(2)}
+              />
+            </>
           ) : (
             <>
               {!server && (
@@ -250,14 +258,6 @@ export function AddReplicaServerDialog({
             )}
           </div>
           <VerdictLine verdict={check.verdict} />
-          <div className="flex justify-end">
-            <TestButton
-              label={t("zfs.replica.server.test")}
-              labelKey="zfs.replica.server.test"
-              test={check}
-              onClick={runTest}
-            />
-          </div>
         </>
       ) : (
         <>

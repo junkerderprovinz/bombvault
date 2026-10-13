@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { BottomSheet } from "../mobile/BottomSheet";
+import { IconClose } from "../navGlyphs";
 import { useBackCloses } from "../../lib/useBackCloses";
 import { useT } from "../../lib/i18n";
 import { focusableElements } from "../../lib/useConfirm";
@@ -25,6 +26,7 @@ export function AnomalyWindow({
   actions?: ReactNode;
   children: ReactNode;
 }) {
+  const { t } = useT();
   const isDesktop = useIsDesktop();
   if (!isDesktop) {
     return (
@@ -32,7 +34,19 @@ export function AnomalyWindow({
         open
         onClose={onClose}
         title={title}
-        footer={actions ? <div className="flex flex-wrap items-center justify-end gap-2 py-3">{actions}</div> : undefined}
+        headerClose={false}
+        footer={
+          <div className="flex flex-wrap items-center justify-end gap-2 py-3">
+            {actions}
+            <Button
+              label={t("common.close")}
+              labelKey="common.close"
+              glyph={<IconClose />}
+              tone={actions ? "neutral" : "accent"}
+              onClick={onClose}
+            />
+          </div>
+        }
       >
         <div className="flex flex-col gap-4 pb-4">{children}</div>
       </BottomSheet>
