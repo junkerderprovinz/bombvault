@@ -1982,12 +1982,10 @@ const sk: Partial<Translations> = {
   "settings.cacheLimitLabel": "Limit veľkosti vyrovnávacej pamäte (MB, 0 = bez obmedzenia)",
 
   // What is new dialog
-  "whatsnew.title": "Novinky vo verzii {version}",
   "whatsnew.loading": "Načítavajú sa poznámky k vydaniu…",
   "whatsnew.loadFailed": "Poznámky k vydaniu sa tu nepodarilo načítať. Otvor ich na GitHube.",
   "whatsnew.retry": "Skúsiť znova",
   "whatsnew.viewOnGitHub": "Zobraziť celé vydanie na GitHube",
-  "whatsnew.close": "Zavrieť",
 
   // Files domain
   "nav.files": "Priečinky",
@@ -4264,6 +4262,8 @@ const sk: Partial<Translations> = {
   "welcome.restoreHint": "Už BombVault poznáš? Potom „Obnoviť zo zálohy“ vráti všetko, aj nastavenia.",
   "whatsNew.title": "Novinky",
   "whatsNew.windowTitle": "Novinky vo verzii {version}",
+  "whatsNew.notesTab": "Poznámky k vydaniu",
+  "whatsNew.changesTab": "Zmeny",
   "whatsNew.hint": "Čo zmenila posledná aktualizácia. Žiarivá bodka označuje každú zmenu na jej stránke a kliknutie na bodku ju skryje. Bodka na záložke, dlaždici alebo riadku zmizne, keď uvidíš všetko, čo je za ňou.",
   "whatsNew.showAll": "Zobraziť všetko znova",
   "whatsNew.markAll": "Označiť všetko ako videné",

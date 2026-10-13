@@ -290,7 +290,7 @@ export function AddLocationWindow({
           cancel
         ) : (
           <>
-            <span className="me-auto">{cancel}</span>
+            {cancel}
             {back}
             {forward}
           </>

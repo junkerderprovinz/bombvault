@@ -1982,12 +1982,10 @@ const fa: Partial<Translations> = {
   "settings.cacheLimitLabel": "حد اندازه کش (MB، ۰ = نامحدود)",
 
   // What is new dialog
-  "whatsnew.title": "تازه‌های نسخه {version}",
   "whatsnew.loading": "در حال بارگذاری یادداشت‌های انتشار…",
   "whatsnew.loadFailed": "یادداشت‌های انتشار اینجا بارگذاری نشد. آن‌ها را در GitHub باز کن.",
   "whatsnew.retry": "تلاش دوباره",
   "whatsnew.viewOnGitHub": "مشاهده انتشار کامل در GitHub",
-  "whatsnew.close": "بستن",
 
   // Files domain
   "nav.files": "پوشه‌ها",
@@ -4264,6 +4262,8 @@ const fa: Partial<Translations> = {
   "welcome.restoreHint": "قبلاً از BombVault استفاده کرده‌ای؟ در این صورت «بازیابی از یک پشتیبان» همه‌چیز را برمی‌گرداند، از جمله تنظیمات.",
   "whatsNew.title": "تازه‌ها",
   "whatsNew.windowTitle": "تازه‌های نسخهٔ {version}",
+  "whatsNew.notesTab": "یادداشت‌های انتشار",
+  "whatsNew.changesTab": "تغییرات",
   "whatsNew.hint": "آخرین به‌روزرسانی چه چیزی را تغییر داده است. یک نقطهٔ درخشان هر تغییر را در صفحهٔ خودش نشان می‌دهد و کلیک روی نقطه آن را پنهان می‌کند. نقطه‌ای روی یک تب، کاشی یا ردیف وقتی ناپدید می‌شود که هرچه پشت آن است دیده باشی.",
   "whatsNew.showAll": "نمایش دوبارهٔ همه",
   "whatsNew.markAll": "علامت‌گذاری همه به‌عنوان دیده‌شده",

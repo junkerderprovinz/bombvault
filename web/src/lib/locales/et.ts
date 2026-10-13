@@ -1982,12 +1982,10 @@ const et: Partial<Translations> = {
   "settings.cacheLimitLabel": "Vahemälu suuruse piirang (MB, 0 = piiramatu)",
 
   // What is new dialog
-  "whatsnew.title": "Uuendused versioonis {version}",
   "whatsnew.loading": "Väljalaskemärkmete laadimine…",
   "whatsnew.loadFailed": "Väljalaskemärkmeid ei õnnestunud siin laadida. Ava need GitHubis.",
   "whatsnew.retry": "Proovi uuesti",
   "whatsnew.viewOnGitHub": "Vaata täielikku väljalasket GitHubis",
-  "whatsnew.close": "Sulge",
 
   // Files domain
   "nav.files": "Kaustad",
@@ -4264,6 +4262,8 @@ const et: Partial<Translations> = {
   "welcome.restoreHint": "Oled BombVaulti varem kasutanud? Siis toob „Taasta varundusest“ kõik tagasi, ka seaded.",
   "whatsNew.title": "Uut",
   "whatsNew.windowTitle": "Uut versioonis {version}",
+  "whatsNew.notesTab": "Väljalaskemärkmed",
+  "whatsNew.changesTab": "Muudatused",
   "whatsNew.hint": "Mida viimane uuendus muutis. Helendav punkt märgib iga muudatust selle lehel ja klõps punktil peidab selle. Punkt vahelehel, paanil või real kaob, kui oled kõik selle taga näinud.",
   "whatsNew.showAll": "Näita kõiki uuesti",
   "whatsNew.markAll": "Märgi kõik nähtuks",

@@ -1982,12 +1982,10 @@ const lt: Partial<Translations> = {
   "settings.cacheLimitLabel": "Talpyklos dydžio riba (MB, 0 = neribota)",
 
   // What is new dialog
-  "whatsnew.title": "Kas naujo {version}",
   "whatsnew.loading": "Įkeliamos leidimo pastabos…",
   "whatsnew.loadFailed": "Nepavyko čia įkelti leidimo pastabų. Atidaryk jas GitHub.",
   "whatsnew.retry": "Bandyti dar kartą",
   "whatsnew.viewOnGitHub": "Žiūrėti visą leidimą GitHub",
-  "whatsnew.close": "Uždaryti",
 
   // Files domain
   "nav.files": "Aplankai",
@@ -4264,6 +4262,8 @@ const lt: Partial<Translations> = {
   "welcome.restoreHint": "Ar BombVault tau jau pažįstamas? Tada „Atkurti iš atsarginės kopijos“ grąžina viską, įskaitant nustatymus.",
   "whatsNew.title": "Naujienos",
   "whatsNew.windowTitle": "Naujienos versijoje {version}",
+  "whatsNew.notesTab": "Leidimo pastabos",
+  "whatsNew.changesTab": "Pakeitimai",
   "whatsNew.hint": "Ką pakeitė paskutinis naujinimas. Šviečiantis taškas pažymi kiekvieną pakeitimą jo puslapyje, o spustelėjus tašką jis paslepiamas. Taškas ant skirtuko, plytelės ar eilutės dingsta, kai pamatai viską, kas už jo.",
   "whatsNew.showAll": "Rodyti visus iš naujo",
   "whatsNew.markAll": "Pažymėti viską kaip matytą",

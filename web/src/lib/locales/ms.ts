@@ -1982,12 +1982,10 @@ const ms: Partial<Translations> = {
   "settings.cacheLimitLabel": "Had saiz cache (MB, 0 = tanpa had)",
 
   // What is new dialog
-  "whatsnew.title": "Apa baharu dalam {version}",
   "whatsnew.loading": "Memuatkan nota keluaran…",
   "whatsnew.loadFailed": "Nota keluaran gagal dimuatkan di sini. Buka di GitHub.",
   "whatsnew.retry": "Cuba lagi",
   "whatsnew.viewOnGitHub": "Lihat keluaran penuh di GitHub",
-  "whatsnew.close": "Tutup",
 
   // Files domain
   "nav.files": "Folder",
@@ -4264,6 +4262,8 @@ const ms: Partial<Translations> = {
   "welcome.restoreHint": "Pernah guna BombVault sebelum ini? Maka “Pulihkan daripada sandaran” memulihkan semuanya, termasuk tetapan.",
   "whatsNew.title": "Baharu",
   "whatsNew.windowTitle": "Baharu dalam {version}",
+  "whatsNew.notesTab": "Nota keluaran",
+  "whatsNew.changesTab": "Perubahan",
   "whatsNew.hint": "Apa yang diubah oleh kemas kini terakhir. Titik bercahaya menandakan setiap perubahan pada halamannya, dan satu klik pada titik menyembunyikannya. Titik pada tab, jubin atau baris hilang apabila anda sudah melihat semua yang ada di belakangnya.",
   "whatsNew.showAll": "Tunjukkan semua semula",
   "whatsNew.markAll": "Tandakan semua sebagai sudah dilihat",

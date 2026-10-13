@@ -143,18 +143,9 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   // Rendered by both branches below, as a dialog or in place.
   const panel = (
     <>
-      <div className="flex items-center justify-between gap-2">
-        <span dir="ltr" className="text-xs font-mono text-carbon-textSub min-w-0 truncate text-start">
-          {hostMountRoot}/{browsePath || ""}
-        </span>
-        <Button
-          label={t("common.close")}
-          labelKey="common.close"
-          tone="neutral"
-          onClick={handleClose}
-          className="shrink-0"
-        />
-      </div>
+      <span dir="ltr" className="text-xs font-mono text-carbon-textSub min-w-0 truncate text-start">
+        {hostMountRoot}/{browsePath || ""}
+      </span>
 
       {browseError && (
         <p className="text-xs text-statusFail">{browseError}</p>
@@ -241,13 +232,17 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         </div>
       )}
 
-      {!manualFallback && (
-        <div className="flex items-center gap-2 pt-1">
-          <span dir="ltr" className="text-xs text-carbon-textMuted font-mono min-w-0 flex-1 truncate text-start">
-            {browsePath || "(root)"}
-          </span>
-          {/* justify-start keeps the words from floating in the middle of the
-              wide pill. */}
+      <div className="flex items-center justify-end gap-2 pt-1">
+        <Button
+          label={t("common.close")}
+          labelKey="common.close"
+          tone="neutral"
+          onClick={handleClose}
+          className="shrink-0"
+        />
+        {/* justify-start keeps the words from floating in the middle of the
+            wide pill. */}
+        {!manualFallback && (
           <Button
             label={t("folder.use")}
             labelKey="folder.use"
@@ -257,8 +252,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             stage={folderActionStage}
             className="shrink-0 justify-start"
           />
-        </div>
-      )}
+        )}
+      </div>
     </>
   );
 

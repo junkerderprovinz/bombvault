@@ -1982,12 +1982,10 @@ const hi: Partial<Translations> = {
   "settings.cacheLimitLabel": "कैश आकार सीमा (MB, 0 = असीमित)",
 
   // What is new dialog
-  "whatsnew.title": "{version} में नया क्या है",
   "whatsnew.loading": "रिलीज़ नोट्स लोड हो रहे हैं…",
   "whatsnew.loadFailed": "रिलीज़ नोट्स यहाँ लोड नहीं हो पाए। इन्हें GitHub पर खोलें।",
   "whatsnew.retry": "फिर से कोशिश करें",
   "whatsnew.viewOnGitHub": "GitHub पर पूरी रिलीज़ देखें",
-  "whatsnew.close": "बंद करें",
 
   // Files domain
   "nav.files": "फ़ोल्डर",
@@ -4264,6 +4262,8 @@ const hi: Partial<Translations> = {
   "welcome.restoreHint": "क्या आपने पहले BombVault इस्तेमाल किया है? तो “बैकअप से रीस्टोर करें” सेटिंग्स समेत सब कुछ वापस ले आता है।",
   "whatsNew.title": "नया",
   "whatsNew.windowTitle": "{version} में नया",
+  "whatsNew.notesTab": "रिलीज़ नोट्स",
+  "whatsNew.changesTab": "बदलाव",
   "whatsNew.hint": "पिछले अपडेट ने क्या बदला। चमकता बिंदु हर बदलाव को उसके पेज पर चिह्नित करता है, और बिंदु पर क्लिक करने से वह छिप जाता है। टैब, टाइल या पंक्ति पर लगा बिंदु तब हट जाता है, जब आप उसके पीछे का सब कुछ देख लेते हैं।",
   "whatsNew.showAll": "सभी फिर से दिखाएँ",
   "whatsNew.markAll": "सभी को देखा हुआ चिह्नित करें",

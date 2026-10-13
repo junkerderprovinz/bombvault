@@ -1,5 +1,4 @@
-import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
-import { hueVars } from "../../lib/appearance";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   checkDomain,
   listSnapshotFiles,
@@ -26,9 +25,11 @@ import { useIsDesktop } from "../../lib/useMediaQuery";
 import { runRestorePath } from "../../lib/restoreRequest";
 import { AnomalyWindow } from "../anomalies/AnomalyWindow";
 import { Badge } from "../Badge";
+import { Button } from "../Button";
 import { CheckDraw } from "../CheckDraw";
 import { colorFor, glyphFor, glyphLabelKey } from "../ActivityLog";
 import { ProgressBar } from "../ProgressBar";
+import { IconClose } from "../navGlyphs";
 import { SnapshotFileTree } from "../SnapshotFileTree";
 import { BottomSheet, type BottomSheetProps } from "./BottomSheet";
 
@@ -64,7 +65,7 @@ import { BottomSheet, type BottomSheetProps } from "./BottomSheet";
 //   - log: buildLogLines + ActivityLog's mono pattern (font-mono text-xs +
 //     formatLogDate/formatClockTime stamps, colorFor/glyphFor vocabulary);
 //     never a second log style
-//   - browse: SnapshotFileTree behind a tonal row, the parent owning the fetch
+//   - browse: SnapshotFileTree behind a tonal button, the parent owning the fetch
 //     as in the restore window
 //   - verify: checkDomain() with the Settings integrity tab's own labels
 //   - restore entry: the desktop restore surface's own label
@@ -111,17 +112,44 @@ export interface RunDetailSheetProps {
   onRestore?: () => void;
 }
 
-/** The sheet, or with `windowed` at desktop widths a window that carries the
- *  sheet's footer under its body. */
-function RunFrame({ windowed, ...sheet }: BottomSheetProps & { windowed: boolean }) {
+// The 44px target a thumb needs, on touch screens only.
+const TOUCH = "pointer-coarse:[--btn-h:2.75rem]";
+
+/** The sheet, or with `windowed` at desktop widths a window. Both carry the
+ *  run's actions in the footer row, ahead of the button that closes it. */
+function RunFrame({
+  windowed,
+  actions,
+  ...sheet
+}: Omit<BottomSheetProps, "footer" | "headerClose"> & { windowed: boolean; actions?: ReactNode }) {
+  const { t } = useT();
   const isDesktop = useIsDesktop();
-  if (!windowed || !isDesktop) return <BottomSheet {...sheet} />;
-  if (!sheet.open) return null;
+  if (windowed && isDesktop) {
+    if (!sheet.open) return null;
+    return (
+      <AnomalyWindow title={sheet.title} onClose={sheet.onClose} actions={actions}>
+        {sheet.children}
+      </AnomalyWindow>
+    );
+  }
   return (
-    <AnomalyWindow title={sheet.title} onClose={sheet.onClose}>
-      {sheet.children}
-      {sheet.footer}
-    </AnomalyWindow>
+    <BottomSheet
+      {...sheet}
+      headerClose={false}
+      footer={
+        <div className="flex flex-wrap items-center justify-end gap-2 py-3">
+          {actions}
+          <Button
+            label={t("common.close")}
+            labelKey="common.close"
+            glyph={<IconClose />}
+            tone={actions ? "neutral" : "accent"}
+            onClick={sheet.onClose}
+            className={TOUCH}
+          />
+        </div>
+      }
+    />
   );
 }
 
@@ -297,53 +325,6 @@ function HistoryLogSection({ run }: { run: Run }) {
   // and Date.now() is only the ordering anchor for a finished line.
   const lines = buildLogLines([run], {}, [], resolveName, Date.now()).filter((l) => !l.idle);
   return <LogList lines={lines} />;
-}
-
-// Tonal touch row (>=44px); the sheet's action-row shape, shared by the
-// footer's verify/browse rows and the body's restore entry. Hand-rolled rather
-// than Button because the browse disclosure row needs aria-expanded
-// /aria-controls, which the Button engine does not pass through; the classes
-// are the Button "subtle"/"neutral" tone tokens (bg-carbon-surface2 /
-// surface3, rounded-control) so the rows read as the same engine language.
-// Never accent: restore and browse are secondary actions, and the accent
-// belongs to the one primary action on a surface. Each row
-// still takes its position in the sheet's hue rotation (.glim-hue): the
-// rotation's focus ring and any accent reading inside the row follow the
-// position, while the row's own fill stays the tonal token above.
-function SheetActionRow({
-  label,
-  onClick,
-  disabled,
-  expanded,
-  controlsId,
-  tone = "subtle",
-  hueIndex,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  /** Disclosure state; set only for the rows that expand the browse section. */
-  expanded?: boolean;
-  controlsId?: string;
-  tone?: "subtle" | "neutral";
-  /** The row's position in the sheet's hue rotation. */
-  hueIndex?: number;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-expanded={expanded}
-      aria-controls={controlsId}
-      className={`flex min-h-[2.75rem] w-full items-center justify-center gap-2 rounded-control text-sm text-carbon-text hover:bg-carbon-hover motion-safe:active:scale-[var(--motion-press-scale)] disabled:opacity-60 glim-hue ${
-        tone === "neutral" ? "bg-carbon-surface3" : "bg-carbon-surface2"
-      }`}
-      style={hueVars(hueIndex ?? 0) as CSSProperties}
-    >
-      {label}
-    </button>
-  );
 }
 
 export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore }: RunDetailSheetProps) {
@@ -593,53 +574,47 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
   const volumeText = hasSnapshot ? humanBytes(run.bytes) : NO_VALUE;
   const volumeMissing = !hasSnapshot;
 
-  // No horizontal padding on either slot wrapper (footer below, body in the
-  // JSX): the BottomSheet slots already inset-clamp every side to
-  // max(1rem, safe-area), so a wrapper px-4 doubled the edge to 32px, which is 16px
-  // past every other sheet surface, worse in landscape where the clamp has
-  // widened to the cutout. The inner
-  // rounded cards keep their own px-4: they inset from the slot, not from
-  // the screen.
+  // The body wrapper and the footer row take no horizontal padding, since the
+  // BottomSheet slots already inset every side to max(1rem, safe-area). The
+  // inner cards keep their px-4, which insets them from the slot.
   const restorable = onRestore !== undefined && runRestorePath(run) !== null;
-  const footerContent =
+  const actions =
     browseSupported || verifyDomain || restorable ? (
-      <div className="flex flex-col gap-2 py-4">
-        {restorable && <SheetActionRow label={t("restore.open")} onClick={onRestore} tone="neutral" hueIndex={3} />}
-        <div className={browseSupported && verifyDomain ? "grid grid-cols-2 gap-2" : "flex"}>
-          {browseSupported && (
-            <SheetActionRow
-              label={t("recovery.foreignStepBrowse")}
-              onClick={() => setBrowseOpen((o) => !o)}
-              expanded={browseOpen}
-              controlsId={browseId}
-              hueIndex={0}
-            />
-          )}
-          {verifyDomain && (
-            <SheetActionRow
-              label={verifyBusy ? t("integrity.checking") : t("integrity.verify")}
-              onClick={() => void runVerify()}
-              disabled={verifyBusy}
-              tone="neutral"
-              hueIndex={1}
-            />
-          )}
-        </div>
-        {/* The verify row's own result, adjacent to its control; the same
-            vocabulary IntegrityCard renders after a check (CheckDraw +
-            integrity.ok / the scrubbed server reason over verify.failed). */}
-        {verifyState === "ok" && (
-          <p className="flex items-center gap-2 text-xs text-statusOk">
-            <CheckDraw />
-            {t("integrity.ok")}
-          </p>
+      <>
+        {browseSupported && (
+          <Button
+            label={t("recovery.foreignStepBrowse")}
+            labelKey="recovery.foreignStepBrowse"
+            tone="subtle"
+            hueIndex={0}
+            onClick={() => setBrowseOpen((o) => !o)}
+            ariaExpanded={browseOpen}
+            ariaControls={browseId}
+            className={TOUCH}
+          />
         )}
-        {verifyState === "fail" && verifyError != null && (
-          <p className="rounded-card bg-statusFailBgSoft px-4 py-2 text-xs text-statusFail leading-relaxed wrap-break-word">
-            {verifyError}
-          </p>
+        {verifyDomain && (
+          <Button
+            label={verifyBusy ? t("integrity.checking") : t("integrity.verify")}
+            labelKey={verifyBusy ? "integrity.checking" : "integrity.verify"}
+            tone="neutral"
+            hueIndex={1}
+            onClick={() => void runVerify()}
+            disabled={verifyBusy}
+            className={TOUCH}
+          />
         )}
-      </div>
+        {restorable && (
+          <Button
+            label={t("restore.open")}
+            labelKey="restore.open"
+            tone="neutral"
+            hueIndex={3}
+            onClick={onRestore}
+            className={TOUCH}
+          />
+        )}
+      </>
     ) : undefined;
 
   return (
@@ -653,7 +628,7 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
       // dashes (the em-dash ban is lint-enforced and a hyphen reads as a
       // hyphenation, not a separator).
       title={`${runKindLabel(t, run.kind)} · ${runTargetText(t, run)}`}
-      footer={footerContent}
+      actions={actions}
     >
       <div className="flex flex-col gap-4 py-4">
         {/* Status headline: the shared status chip + completion time. The
@@ -738,6 +713,21 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
           <HistoryLogSection run={run} />
         )}
 
+        {/* The verify check's result, in the vocabulary IntegrityCard renders
+            after a check (CheckDraw + integrity.ok / the scrubbed server
+            reason over verify.failed). */}
+        {verifyState === "ok" && (
+          <p className="flex items-center gap-2 text-xs text-statusOk">
+            <CheckDraw />
+            {t("integrity.ok")}
+          </p>
+        )}
+        {verifyState === "fail" && verifyError != null && (
+          <p className="rounded-card bg-statusFailBgSoft px-4 py-2 text-xs text-statusFail leading-relaxed wrap-break-word">
+            {verifyError}
+          </p>
+        )}
+
         {/* Browse section; the SnapshotFileTree mount (a purely
             presentational tree, the parent
             owns the fetch). Revealed by the footer browse disclosure, or
@@ -757,25 +747,27 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
           </div>
         )}
 
-        {/* Restore entry; in the scroll body, above the footer rows, so it
-            sits away from the thumb's default path: a restore is a decision.
-            The row restores the tree's selection in place behind the desktop
+        {/* Restore entry; in the scroll body with the tree whose selection it
+            acts on, away from the thumb's default path: a restore is a
+            decision. It restores the selection in place behind the desktop
             confirm gate (restoreSelection above); it carries no
-            aria-expanded/aria-controls: the footer's Browse & restore row
-            is the section's one disclosure owner, and a second control
+            aria-expanded/aria-controls: the footer's Browse button is the
+            section's one disclosure owner, and a second control
             answering "expanded" about a different action read as a
             duplicate disclosure to a screen reader. */}
         {browseSupported && (
-          <SheetActionRow
+          <Button
             label={t("snapshots.restore")}
-            onClick={() => void restoreSelection()}
-            disabled={restoring}
+            labelKey="snapshots.restore"
             tone="neutral"
             hueIndex={2}
+            onClick={() => void restoreSelection()}
+            disabled={restoring}
+            className={`w-full ${TOUCH}`}
           />
         )}
         {/* The restore's own line, adjacent to its control; the same shape as
-            the verify result below the footer rows. A started restore is
+            the verify result above. A started restore is
             muted, not green: the tick belongs to the recorded run, which the
             live section above and the run list behind the sheet both carry. */}
         {restoreResult != null && (

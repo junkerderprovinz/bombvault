@@ -1,5 +1,5 @@
 // page-uses-page-shell: every page uses the shared shell from
-// src/lib/pageShell.ts, one max-width and one card gap. Two ways to drift are
+// src/lib/pageShell.ts, one width and one card gap. Two ways to drift are
 // checked:
 //
 //   1. The root of the page component, the one the file is named for, must be
@@ -77,7 +77,7 @@ export default {
     ],
     messages: {
       notShelled:
-        "The `{{component}}` page's root element does not use the shared page shell. Return `<div className={{{shell}}}>` from lib/pageShell.ts, which holds the one app-wide max-width and Card gap, so this page cannot drift from the others.{{hatch}}",
+        "The `{{component}}` page's root element does not use the shared page shell. Return `<div className={{{shell}}}>` from lib/pageShell.ts, which holds the one app-wide width and Card gap, so this page cannot drift from the others.{{hatch}}",
       handRolled:
         "This element hand-rolls the page shell in literal classes (`{{tokens}}`). Import PAGE_SHELL from lib/pageShell.ts instead; every literal copy of the width and gap is one more page width to drift.{{hatch}}",
     },

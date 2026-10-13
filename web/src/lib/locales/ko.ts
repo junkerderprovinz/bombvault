@@ -1455,11 +1455,9 @@ const ko: Partial<Translations> = {
   "filter.button": "필터",
 
   // What's new dialog (#48)
-  "whatsnew.title": "{version}의 새로운 기능",
   "whatsnew.loading": "릴리스 노트를 불러오는 중…",
   "whatsnew.loadFailed": "여기에서 릴리스 노트를 불러올 수 없습니다. GitHub에서 여세요.",
   "whatsnew.viewOnGitHub": "GitHub에서 전체 릴리스 보기",
-  "whatsnew.close": "닫기",
   "notify.scheduledSummary": "예약 실행 요약",
   "notify.scheduledSummaryHint": "예약 백업 실행마다 컨테이너나 VM별로 개별 메시지를 보내는 대신 요약 하나만 보냅니다(예: 45개 중 42개 성공). Healthchecks는 이미 요약되어 있습니다. 수동 백업은 여전히 항목별로 알립니다.",
   "notify.notifyOnUpdate": "컨테이너 업데이트 시 알림",
@@ -4245,6 +4243,8 @@ const ko: Partial<Translations> = {
   "welcome.restoreHint": "전에 BombVault를 사용한 적이 있나요? 그렇다면 “백업에서 복원”이 설정을 포함해 모든 것을 되돌려 줍니다.",
   "whatsNew.title": "새 소식",
   "whatsNew.windowTitle": "{version} 새 소식",
+  "whatsNew.notesTab": "릴리스 노트",
+  "whatsNew.changesTab": "변경 사항",
   "whatsNew.hint": "마지막 업데이트에서 바뀐 내용입니다. 빛나는 점이 변경된 곳을 해당 페이지에 표시하고, 점을 클릭하면 숨겨집니다. 탭, 타일, 행에 붙은 점은 그 뒤의 내용을 모두 확인하면 사라집니다.",
   "whatsNew.showAll": "모두 다시 표시",
   "whatsNew.markAll": "모두 확인함으로 표시",

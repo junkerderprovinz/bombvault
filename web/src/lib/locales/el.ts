@@ -1464,11 +1464,9 @@ const el: Partial<Translations> = {
   "filter.button": "Φίλτρα",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Τι νέο υπάρχει στην {version}",
   "whatsnew.loading": "Φόρτωση σημειώσεων έκδοσης…",
   "whatsnew.loadFailed": "Δεν ήταν δυνατή η φόρτωση των σημειώσεων έκδοσης εδώ. Ανοίξτε τις στο GitHub.",
   "whatsnew.viewOnGitHub": "Προβολή πλήρους έκδοσης στο GitHub",
-  "whatsnew.close": "Κλείσιμο",
   "notify.scheduledSummary": "Σύνοψη προγραμματισμένων εκτελέσεων",
   "notify.scheduledSummaryHint": "Αποστολή μιας σύνοψης ανά προγραμματισμένη εκτέλεση αντιγράφου ασφαλείας (για παράδειγμα: 42 από 45 πέτυχαν) αντί για ξεχωριστό μήνυμα για κάθε container ή VM. Το Healthchecks συνοψίζεται ήδη. Τα χειροκίνητα αντίγραφα ασφαλείας εξακολουθούν να ειδοποιούν ανά στοιχείο.",
   "notify.notifyOnUpdate": "Ειδοποίηση κατά την ενημέρωση container",
@@ -4254,6 +4252,8 @@ const el: Partial<Translations> = {
   "welcome.restoreHint": "Έχετε ξαναχρησιμοποιήσει το BombVault; Τότε η «Επαναφορά από αντίγραφο ασφαλείας» επαναφέρει τα πάντα, μαζί με τις ρυθμίσεις.",
   "whatsNew.title": "Νέα",
   "whatsNew.windowTitle": "Νέα στην έκδοση {version}",
+  "whatsNew.notesTab": "Σημειώσεις έκδοσης",
+  "whatsNew.changesTab": "Αλλαγές",
   "whatsNew.hint": "Τι άλλαξε η τελευταία ενημέρωση. Μια φωτεινή κουκκίδα σημαδεύει κάθε αλλαγή στη σελίδα της και ένα κλικ στην κουκκίδα την κρύβει. Μια κουκκίδα σε καρτέλα, πλακίδιο ή γραμμή εξαφανίζεται μόλις δείτε όλα όσα κρύβονται πίσω της.",
   "whatsNew.showAll": "Εμφάνιση όλων ξανά",
   "whatsNew.markAll": "Σήμανση όλων ως ήδη γνωστών",

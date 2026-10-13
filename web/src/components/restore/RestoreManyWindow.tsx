@@ -10,7 +10,7 @@ import { useT } from "../../lib/i18n";
 import { useProgress } from "../../lib/progress";
 import { formatRecent } from "../../lib/reltime";
 import { commonTimes, downloadsOnly, rowAt, runTarget, snapshotOf, whereFor, type ManyWhere } from "../../lib/restoreMany";
-import { RunReasonText } from "../../lib/runReason";
+import { isRuntimeRefusal, RunReasonText } from "../../lib/runReason";
 import { secretsSentence } from "../../lib/secretsRefusal";
 import { useConfirm } from "../../lib/useConfirm";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
@@ -37,6 +37,10 @@ type Outcome = { is: "waiting" } | { is: "running" } | { is: "done" } | { is: "f
 
 const NEWEST = "newest";
 
+function refusedRuntime(outcome: Outcome | undefined): boolean {
+  return outcome?.is === "failed" && isRuntimeRefusal(outcome.error);
+}
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section aria-label={title} className="flex flex-col gap-2">
@@ -60,12 +64,16 @@ function EntryLine({
   at,
   where,
   outcome,
+  onWithoutRuntime,
 }: {
   item: BackupItem;
   timeline: Timeline | undefined;
   at: number | null;
   where: ManyWhere;
   outcome: Outcome | undefined;
+  /** Restores this entry again without its GPU and runtime, offered once
+   *  Docker refused it for them and nothing else runs. */
+  onWithoutRuntime?: () => void;
 }) {
   const { t, lang } = useT();
   const live = useProgress()[itemProgressKey(item)];
@@ -120,6 +128,15 @@ function EntryLine({
             a.download = `flash-${backup.snapshotId.slice(0, 8)}.zip`;
             a.click();
           }}
+        />
+      ) : onWithoutRuntime ? (
+        <Button
+          label={t("restore.withoutRuntime")}
+          labelKey="restore.withoutRuntime"
+          tone="neutral"
+          hint={t("restore.withoutRuntimeHint")}
+          onClick={onWithoutRuntime}
+          className="glim-btn-wrap"
         />
       ) : (
         outcome && <OutcomeMark outcome={outcome} />
@@ -192,6 +209,43 @@ export function RestoreManyWindow({ items, onClose }: { items: BackupItem[]; onC
   const ready = queue.filter((item) => backupOf(timelines[itemProgressKey(item)], at));
   const reading = items.some((item) => timelines[itemProgressKey(item)] === undefined);
 
+  const mark = (item: BackupItem, outcome: Outcome) => setOutcomes((was) => ({ ...was, [itemProgressKey(item)]: outcome }));
+
+  // One entry from the backup and to the place the window was set to. Returns
+  // false once the window is gone.
+  async function restoreOne(item: BackupItem, withoutRuntime: boolean): Promise<boolean> {
+    const backup = backupOf(timelines[itemProgressKey(item)], at);
+    if (!backup) return true;
+    const target = whereFor(item, where);
+    mark(item, { is: "running" });
+    const res = await fireAndWaitRun({
+      kind: "restore",
+      matchRun: (r) => r.domain === item.kind && r.target === runTarget(item),
+      start: async () => {
+        const answer = await startRestore({
+          kind: item.kind,
+          id: item.key,
+          snapshotId: backup.snapshotId,
+          source: backup.source,
+          what: "all",
+          where: target,
+          paths: [],
+          folder: "",
+          leaveStopped: false,
+          withoutRuntime,
+          // The first attempt already kept today's state.
+          backupFirst: !withoutRuntime && where === "replace" && !isGone(item) && backupFirst,
+        });
+        const refusal = secretsSentence(t, answer.code);
+        return refusal && !answer.ok ? { ...answer, error: refusal } : answer;
+      },
+      t,
+    });
+    if (gone.current) return false;
+    mark(item, res.ok ? { is: "done" } : { is: "failed", error: res.error ?? "" });
+    return true;
+  }
+
   async function run() {
     if (where === "replace" && !(await confirm(t("restoreMany.replaceConfirm", ready.length), { confirmKey: "snapshots.restore" }))) {
       return;
@@ -201,40 +255,17 @@ export function RestoreManyWindow({ items, onClose }: { items: BackupItem[]; onC
     setOutcomes(start);
     setRunning(true);
     stopping.current = false;
-    const mark = (item: BackupItem, outcome: Outcome) => setOutcomes((was) => ({ ...was, [itemProgressKey(item)]: outcome }));
 
     for (const item of ready) {
       if (stopping.current) break;
-      const backup = backupOf(timelines[itemProgressKey(item)], at);
-      if (!backup) continue;
-      const target = whereFor(item, where);
-      mark(item, { is: "running" });
-      const res = await fireAndWaitRun({
-        kind: "restore",
-        matchRun: (r) => r.domain === item.kind && r.target === runTarget(item),
-        start: async () => {
-          const answer = await startRestore({
-            kind: item.kind,
-            id: item.key,
-            snapshotId: backup.snapshotId,
-            source: backup.source,
-            what: "all",
-            where: target,
-            paths: [],
-            folder: "",
-            leaveStopped: false,
-            withoutRuntime: false,
-            backupFirst: where === "replace" && !isGone(item) && backupFirst,
-          });
-          const refusal = secretsSentence(t, answer.code);
-          return refusal && !answer.ok ? { ...answer, error: refusal } : answer;
-        },
-        t,
-      });
-      if (gone.current) return;
-      mark(item, res.ok ? { is: "done" } : { is: "failed", error: res.error ?? "" });
+      if (!(await restoreOne(item, false))) return;
     }
     setRunning(false);
+  }
+
+  async function withoutRuntime(item: BackupItem) {
+    setRunning(true);
+    if (await restoreOne(item, true)) setRunning(false);
   }
 
   const finished = outcomes !== null && !running;
@@ -309,7 +340,7 @@ export function RestoreManyWindow({ items, onClose }: { items: BackupItem[]; onC
                     value: String(time),
                     label: new Date(time * 1000).toLocaleString(lang, { dateStyle: "medium", timeStyle: "short" }),
                   }))}
-                  className="h-10 w-full max-w-sm rounded-control bg-carbon-surface2 px-3 text-sm text-carbon-text glim-field-focus"
+                  className="h-10 w-full rounded-control bg-carbon-surface2 px-3 text-sm text-carbon-text glim-field-focus"
                 />
               </div>
             )}
@@ -364,6 +395,11 @@ export function RestoreManyWindow({ items, onClose }: { items: BackupItem[]; onC
               at={at}
               where={where}
               outcome={outcomes?.[itemProgressKey(item)]}
+              onWithoutRuntime={
+                !running && item.kind === "container" && refusedRuntime(outcomes?.[itemProgressKey(item)])
+                  ? () => void withoutRuntime(item)
+                  : undefined
+              }
             />
           ))}
         </ul>

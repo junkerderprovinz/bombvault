@@ -132,7 +132,7 @@ function DeleteBackup({
   const place = timeline.places.find((p) => p.place === mark.place);
   if (!place) return null;
   return (
-    <span className="me-auto flex flex-wrap gap-2">
+    <span className="flex flex-wrap gap-2">
       <Button
         label={t("common.delete")}
         labelKey="common.delete"

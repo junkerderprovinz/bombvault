@@ -1967,12 +1967,10 @@ const sr: Partial<Translations> = {
   "settings.cacheLimitLabel": "Ограничење величине кеша (MB, 0 = неограничено)",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Новости у {version}",
   "whatsnew.loading": "Учитавање напомена о издању…",
   "whatsnew.loadFailed": "Напомене о издању нису могле да се учитају овде. Отвори их на GitHub-у.",
   "whatsnew.retry": "Покушај поново",
   "whatsnew.viewOnGitHub": "Погледај цело издање на GitHub-у",
-  "whatsnew.close": "Затвори",
 
   // Files domain (folder-set backups, #62)
   "nav.files": "Фасцикле",
@@ -4248,6 +4246,8 @@ const sr: Partial<Translations> = {
   "welcome.restoreHint": "Да ли ти је BombVault већ познат? Онда „Врати из резервне копије“ враћа све, укључујући подешавања.",
   "whatsNew.title": "Ново",
   "whatsNew.windowTitle": "Шта је ново у верзији {version}",
+  "whatsNew.notesTab": "Напомене о издању",
+  "whatsNew.changesTab": "Измене",
   "whatsNew.hint": "Шта је променило последње ажурирање. Светлећа тачка означава сваку промену на њеној страници, а клик на тачку је скрива. Тачка на табу, плочици или реду нестаје кад видиш све што је иза ње.",
   "whatsNew.showAll": "Прикажи све поново",
   "whatsNew.markAll": "Означи све као виђено",

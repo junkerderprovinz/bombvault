@@ -13,6 +13,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { AnomalyView } from "../lib/api";
 import { I18nProvider, countText, en } from "../lib/i18n";
 import type { ProgressMap } from "../lib/progress";
+import { RESTORE_NO_RUNTIME } from "../lib/runReason";
 import { BOX, IMMICH, PHOTOS, backupRun, serveEntries, timelineOf } from "./backupEntry.testsupport";
 
 vi.mock("../lib/api", async (importOriginal) => {
@@ -469,6 +470,30 @@ describe("restoring several entries", () => {
     const snapshot = RUNS[0].snapshotId;
     expect(api.restore).toHaveBeenCalledWith("immich", snapshot, true, "local", false, false, { backupFirst: true });
     expect(api.restore).toHaveBeenCalledWith("pihole", snapshot, true, "local", false, false, {});
+  });
+
+  it("offers a container Docker refused for its GPU or runtime one more try without them, to the same place", async () => {
+    fireAndWaitRun.mockImplementation(async ({ start }) => {
+      const res = await start();
+      return res.ok ? { ok: true } : { ok: false, error: res.error };
+    });
+    vi.mocked(api.restore).mockResolvedValueOnce({ ok: false, error: RESTORE_NO_RUNTIME });
+    await renderPage();
+    await press(screen.getByRole("button", { name: new RegExp(`^${en["backups.select"]}`) }));
+    await press(mark("immich"));
+    await press(mark("Windows 11"));
+    await press(within(screen.getByTestId("bulk-bar")).getByRole("button", { name: en["snapshots.restore"] }));
+    await press(within(many()).getByRole("button", { name: `${en["snapshots.restore"]} · 2` }));
+    await waitFor(() => expect(lines()[1].dataset.outcome).toBe("done"));
+    expect(lines()[0].dataset.outcome).toBe("failed");
+    expect(within(lines()[1]).queryByRole("button", { name: en["restore.withoutRuntime"] })).toBeNull();
+
+    await press(within(lines()[0]).getByRole("button", { name: en["restore.withoutRuntime"] }));
+    await waitFor(() => expect(lines()[0].dataset.outcome).toBe("done"));
+    const snapshot = RUNS[0].snapshotId;
+    expect(api.restore).toHaveBeenLastCalledWith("immich", snapshot, true, "local", false, true, { target: "beside" });
+    expect(api.restoreVM).toHaveBeenCalledTimes(1);
+    expect(within(lines()[0]).queryByRole("button", { name: en["restore.withoutRuntime"] })).toBeNull();
   });
 
   it("leaves out an entry without a backup from the moment picked for all", async () => {

@@ -2,6 +2,7 @@
 // sealed recovery kit of the install that is gone. This server asks for it, a
 // person at that instance allows it, and the recovery code opens it here.
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { emergencyFromGroup, listOfferedDeposits, type EmergencyState, type OfferedDeposit } from "../../lib/api";
 import { RELEASE_OVER, recoveryCodeComplete, recoveryCodeShown, refusalText } from "../../lib/emergency";
 import { useT } from "../../lib/i18n";
@@ -57,11 +58,15 @@ type Notice = { code?: string; said?: string } | { over: keyof typeof RELEASE_OV
 
 export function EmergencyGroup({
   active,
+  footer,
   onEmergency,
   onPairing,
 }: {
   /** This install is in a group, null until the server has said so. */
   active: boolean | null;
+  /** The place in the window's foot for the request and the way back to the
+   *  list. */
+  footer: HTMLElement | null;
   onEmergency: (state: EmergencyState) => void;
   /** Leads to the page where this install joins a group. */
   onPairing?: () => void;
@@ -279,22 +284,26 @@ export function EmergencyGroup({
         />
       </label>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button label={t("emergency.group.other")} labelKey={null} glyph={<IconBack />} tone="subtle" onClick={chooseAnother} disabled={busy} />
-        {waiting ? (
-          <Button label={t("emergency.group.stop")} labelKey="emergency.group.stop" onClick={() => setWaiting(false)} />
-        ) : (
-          <Button
-            label={t(asked === null ? "emergency.group.ask" : wrongCode ? "emergency.group.tryCode" : "emergency.group.resume")}
-            labelKey={null}
-            glyph={<IconKey />}
-            tone="accent"
-            onClick={() => void send(asked === null)}
-            disabled={busy || !complete}
-            busy={busy}
-          />
+      {footer &&
+        createPortal(
+          <>
+            <Button label={t("emergency.group.other")} labelKey={null} glyph={<IconBack />} tone="subtle" onClick={chooseAnother} disabled={busy} />
+            {waiting ? (
+              <Button label={t("emergency.group.stop")} labelKey="emergency.group.stop" onClick={() => setWaiting(false)} />
+            ) : (
+              <Button
+                label={t(asked === null ? "emergency.group.ask" : wrongCode ? "emergency.group.tryCode" : "emergency.group.resume")}
+                labelKey={null}
+                glyph={<IconKey />}
+                tone="accent"
+                onClick={() => void send(asked === null)}
+                disabled={busy || !complete}
+                busy={busy}
+              />
+            )}
+          </>,
+          footer
         )}
-      </div>
     </Section>
   );
 }

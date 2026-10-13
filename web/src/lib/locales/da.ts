@@ -1464,11 +1464,9 @@ const da: Partial<Translations> = {
   "filter.button": "Filtre",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Nyheder i {version}",
   "whatsnew.loading": "Indlæser udgivelsesnoter…",
   "whatsnew.loadFailed": "Udgivelsesnoterne kunne ikke indlæses her. Åbn dem på GitHub.",
   "whatsnew.viewOnGitHub": "Se hele udgivelsen på GitHub",
-  "whatsnew.close": "Luk",
   "notify.scheduledSummary": "Opsummer planlagte kørsler",
   "notify.scheduledSummaryHint": "Send én opsummering pr. planlagt backupkørsel (for eksempel: 42 af 45 lykkedes) i stedet for en separat besked for hver container eller VM. Healthchecks er allerede opsummeret. Manuelle sikkerhedskopier giver stadig besked pr. element.",
   "notify.notifyOnUpdate": "Giv besked ved containeropdatering",
@@ -4254,6 +4252,8 @@ const da: Partial<Translations> = {
   "welcome.restoreHint": "Har du brugt BombVault før? Så henter »Gendan fra en sikkerhedskopi« alt tilbage, også indstillingerne.",
   "whatsNew.title": "Nyt",
   "whatsNew.windowTitle": "Nyt i {version}",
+  "whatsNew.notesTab": "Udgivelsesnoter",
+  "whatsNew.changesTab": "Ændringer",
   "whatsNew.hint": "Hvad den seneste opdatering har ændret. En lysende prik markerer hver ændring på sin side, og et klik på en prik skjuler den. En prik på en fane, en flise eller en række forsvinder, når du har set alt bag den.",
   "whatsNew.showAll": "Vis alle igen",
   "whatsNew.markAll": "Markér alle som set",

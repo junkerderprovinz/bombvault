@@ -9,6 +9,7 @@ import { Badge } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { Selector } from "../../../components/Selector";
+import { SettingRow } from "../../../components/storage/rows";
 import { IconEye, IconRefresh } from "../../../components/glyphs";
 import { IconClose } from "../../../components/navGlyphs";
 import { setDirectAddress, setRelay, type GroupState, type RelayMode } from "../../../lib/api";
@@ -47,10 +48,10 @@ function hostOf(url: string): string {
   }
 }
 
-/** SelfAddressField is the addresses this instance is known under: the ones
- *  it found by itself, which nobody can edit, and below them the one members
- *  are told, prefilled from the browser, corrected by hand when it is wrong
- *  and saved on its own. */
+/** SelfAddressField is the row of addresses this instance is known under:
+ *  the ones it found by itself, which nobody can edit, and below them the one
+ *  members are told, prefilled from the browser, corrected by hand when it is
+ *  wrong and saved on its own. */
 export function SelfAddressField({ group, onGroup, t }: { group: GroupState; onGroup: (g: GroupState) => void; t: T }) {
   const [value, setValue] = useState(group.selfAddress);
   const [error, setError] = useState<string | null>(null);
@@ -92,39 +93,37 @@ export function SelfAddressField({ group, onGroup, t }: { group: GroupState; onG
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor="self-address" className="inline-flex items-center gap-1.5 text-xs text-carbon-textSub">
-        {t("pairing.knownAddresses")}
-        <InfoBubble tip={t("relay.selfAddressTip")} />
-      </label>
-      {found.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <span className="text-caption text-carbon-textMuted">{t("pairing.foundAddresses")}</span>
-          <ul data-testid="own-addresses" aria-label={t("pairing.foundAddresses")} className="flex flex-col gap-0.5">
-            {found.map((address) => (
-              <li key={address} className="text-sm text-carbon-text wrap-anywhere">
-                <bdi dir="ltr" className="font-mono">
-                  {address}
-                </bdi>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <input
-        id="self-address"
-        data-testid="self-address-input"
-        type="url"
-        value={value}
-        onChange={(e) => type(e.target.value)}
-        spellCheck={false}
-        autoComplete="off"
-        placeholder="https://192.168.1.20:3443"
-        dir="ltr"
-        className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 text-start glim-field-focus"
-      />
-      {error && <p className="text-caption text-statusFail">{error}</p>}
-    </div>
+    <SettingRow label={t("pairing.knownAddresses")} hint={t("relay.selfAddressTip")} htmlFor="self-address">
+      <div className="flex w-[18rem] max-w-full flex-col gap-2">
+        {found.length > 0 && (
+          <div className="flex flex-col gap-1 px-3">
+            <ul data-testid="own-addresses" aria-label={t("pairing.foundAddresses")} className="flex flex-col gap-0.5">
+              {found.map((address) => (
+                <li key={address} className="text-sm text-carbon-text wrap-anywhere">
+                  <bdi dir="ltr" className="font-mono">
+                    {address}
+                  </bdi>
+                </li>
+              ))}
+            </ul>
+            <span className="glim-eyebrow">{t("pairing.foundAddresses")}</span>
+          </div>
+        )}
+        <input
+          id="self-address"
+          data-testid="self-address-input"
+          type="url"
+          value={value}
+          onChange={(e) => type(e.target.value)}
+          spellCheck={false}
+          autoComplete="off"
+          placeholder="https://192.168.1.20:3443"
+          dir="ltr"
+          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 text-start glim-field-focus"
+        />
+        {error && <p className="text-caption text-statusFail">{error}</p>}
+      </div>
+    </SettingRow>
   );
 }
 
@@ -260,19 +259,21 @@ export function RelayCard({
 
   return (
     <Card title={t("relay.title")} hint={t("relay.hint")} hueIndex={hueIndex}>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-        <div className="min-w-0 flex-[1_1_24rem]">
-          <Selector
-            items={FORMS.map((f) => ({ id: f, label: t(COPY[f].name), icon: <RouteGlyph kind={COPY[f].glyph} /> }))}
-            label={t("relay.title")}
-            select="one"
-            active={form}
-            onChange={(id) => pick(id as RelayForm)}
-            size="lg"
-            equalWidth
-          />
-        </div>
-        <span className="ms-auto flex flex-wrap items-center gap-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Selector
+          items={FORMS.map((f) => ({ id: f, label: t(COPY[f].name), icon: <RouteGlyph kind={COPY[f].glyph} /> }))}
+          label={t("relay.title")}
+          select="one"
+          active={form}
+          onChange={(id) => pick(id as RelayForm)}
+          size="lg"
+          equalWidth
+          inline
+          buttonHeight
+        />
+        {/* Where the two do not fit beside the picker, they go under it at
+            the end of the row. */}
+        <span className="ms-auto flex flex-wrap items-center justify-end gap-2.5">
           <Button
             label={t("relay.sees.title")}
             labelKey="relay.sees.title"

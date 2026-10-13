@@ -1464,11 +1464,9 @@ const fi: Partial<Translations> = {
   "filter.button": "Suodattimet",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Uutta versiossa {version}",
   "whatsnew.loading": "Ladataan julkaisutietoja…",
   "whatsnew.loadFailed": "Julkaisutietoja ei voitu ladata tässä. Avaa ne GitHubissa.",
   "whatsnew.viewOnGitHub": "Näytä koko julkaisu GitHubissa",
-  "whatsnew.close": "Sulje",
   "notify.scheduledSummary": "Tiivistä ajastetut ajot",
   "notify.scheduledSummaryHint": "Lähetä yksi yhteenveto jokaista ajastettua varmuuskopiointiajoa kohti (esimerkiksi: 42/45 onnistui) sen sijaan, että jokaisesta containerista tai VM:stä lähetettäisiin erillinen viesti. Healthchecks tiivistetään jo valmiiksi. Manuaaliset varmuuskopiot ilmoittavat edelleen merkintäkohtaisesti.",
   "notify.notifyOnUpdate": "Ilmoita containerin päivityksestä",
@@ -4254,6 +4252,8 @@ const fi: Partial<Translations> = {
   "welcome.restoreHint": "Oletko käyttänyt BombVaultia ennenkin? Silloin ”Palauta varmuuskopiosta” tuo kaiken takaisin, asetukset mukaan lukien.",
   "whatsNew.title": "Uutta",
   "whatsNew.windowTitle": "Uutta versiossa {version}",
+  "whatsNew.notesTab": "Julkaisutiedot",
+  "whatsNew.changesTab": "Muutokset",
   "whatsNew.hint": "Mitä viimeisin päivitys muutti. Hehkuva piste merkitsee jokaisen muutoksen sen omalle sivulle, ja pisteen napsautus piilottaa sen. Välilehden, ruudun tai rivin piste katoaa, kun olet nähnyt kaiken sen takana.",
   "whatsNew.showAll": "Näytä kaikki uudelleen",
   "whatsNew.markAll": "Merkitse kaikki nähdyiksi",

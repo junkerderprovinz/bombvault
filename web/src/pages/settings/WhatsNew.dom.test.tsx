@@ -2,14 +2,15 @@
 // The list of what is new: a button of the Version card that counts what is
 // left and opens a window with every change under its page, the way there,
 // what was seen dimmed, and the one button that marks the lot as seen or new.
+// The same window holds the release notes on a tab of their own.
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { I18nProvider, en } from "../../lib/i18n";
 import { CHANGES, WHATS_NEW_RELEASE } from "../../lib/whatsNew";
-import { beginWhatsNew, markAbsent, markSeen } from "../../lib/whatsNewStore";
-import { WhatsNewButton, WhatsNewWindow } from "./WhatsNew";
+import { beginWhatsNew, markAbsent, markSeen, openWhatsNew } from "../../lib/whatsNewStore";
+import { WhatsNewButton, WhatsNewHost } from "./WhatsNew";
 
 const KEY = `bv-whats-new@${WHATS_NEW_RELEASE}`;
 const stored = () => JSON.parse(localStorage.getItem(KEY)!) as { seen: string[]; absent: string[] };
@@ -21,32 +22,24 @@ function Where() {
   return <output data-testid="where">{useLocation().pathname}</output>;
 }
 
-let closed = 0;
-
-async function renderCard() {
-  await act(async () => {
-    render(
-      <I18nProvider>
-        <MemoryRouter initialEntries={["/settings/info"]}>
-          <WhatsNewWindow onClose={() => closed++} />
-          <Where />
-        </MemoryRouter>
-      </I18nProvider>
-    );
-  });
-}
-
-async function renderButton() {
+async function renderApp(tab: "notes" | "changes" | null) {
   await act(async () => {
     render(
       <I18nProvider>
         <MemoryRouter initialEntries={["/settings/info"]}>
           <WhatsNewButton />
+          <WhatsNewHost version="v10.0.0" />
+          <Where />
         </MemoryRouter>
       </I18nProvider>
     );
+    openWhatsNew(tab);
   });
 }
+
+const renderCard = () => renderApp("changes");
+const renderButton = () => renderApp(null);
+const isOpen = () => screen.queryByRole("dialog") !== null;
 
 async function press(el: HTMLElement) {
   await act(async () => {
@@ -58,9 +51,16 @@ beforeEach(() => {
   localStorage.clear();
   localStorage.setItem("bv-lang", "en");
   beginWhatsNew("v9.9.1");
-  closed = 0;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => new Response(JSON.stringify({ ok: true, body: "## Added\n\n- One list." }), { status: 200 }))
+  );
 });
-afterEach(cleanup);
+afterEach(() => {
+  act(() => openWhatsNew(null));
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("the New button", () => {
   it("counts what is left and opens the list in a window", async () => {
@@ -100,7 +100,8 @@ describe("the list of what is new", () => {
     await renderCard();
     await press(within(line("settings-week")).getByRole("button", { name: en["whatsNew.go"] }));
     expect(screen.getByTestId("where").textContent).toBe("/settings/schedules");
-    expect(closed).toBe(1);
+    expect(isOpen()).toBe(false);
+    await act(async () => openWhatsNew("changes"));
     await press(within(line("entry-page")).getByRole("button", { name: en["whatsNew.go"] }));
     expect(screen.getByTestId("where").textContent).toBe("/backups");
   });
@@ -136,5 +137,29 @@ describe("the list of what is new", () => {
     await renderCard();
     expect(screen.getByRole("button", { name: showAll })).toBeTruthy();
     expect(document.querySelectorAll("[data-seen]")).toHaveLength(CHANGES.length);
+  });
+});
+
+describe("the release notes", () => {
+  const tab = (name: string) => screen.getByRole("tab", { name: new RegExp(`^${name}`) });
+
+  it("open on their own tab beside the list, which counts what is left", async () => {
+    markSeen(["overview-head"]);
+    await renderApp("notes");
+    expect(tab(en["whatsNew.notesTab"]).getAttribute("aria-selected")).toBe("true");
+    expect(tab(en["whatsNew.changesTab"]).textContent).toContain(`· ${CHANGES.length - 1}`);
+    expect(await screen.findByText("One list.")).toBeTruthy();
+    expect(document.querySelectorAll("[data-change]")).toHaveLength(0);
+
+    await press(tab(en["whatsNew.changesTab"]));
+    expect(document.querySelectorAll("[data-change]")).toHaveLength(CHANGES.length);
+    await press(tab(en["whatsNew.notesTab"]));
+    expect(screen.getByText("One list.")).toBeTruthy();
+  });
+
+  it("link to the release on GitHub from the window's foot", async () => {
+    await renderApp("notes");
+    const link = screen.getByRole("link", { name: en["whatsnew.viewOnGitHub"] });
+    expect(link.getAttribute("href")).toBe("https://github.com/junkerderprovinz/bombvault/releases/tag/v10.0.0");
   });
 });

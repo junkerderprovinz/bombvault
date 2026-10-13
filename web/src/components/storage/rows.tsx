@@ -16,12 +16,15 @@ export function Rows({ children }: { children: ReactNode }) {
 export function SettingRow({
   label,
   hint,
+  htmlFor,
   note,
   children,
 }: {
   label: string;
   /** Explanation in an (i) bubble beside the label. */
   hint?: string;
+  /** The id of the field the label names. */
+  htmlFor?: string;
   /** What the control cannot say itself, under the label. */
   note?: string;
   /** The control. A row without one only says something. */
@@ -32,7 +35,13 @@ export function SettingRow({
       {/* A long note wraps beside the control instead of pushing it onto a line of its own. */}
       <div className={`flex min-w-0 flex-col gap-0.5 ${note ? "flex-1 basis-56" : ""}`}>
         <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-          <span className="min-w-0 wrap-break-word">{label}</span>
+          {htmlFor ? (
+            <label htmlFor={htmlFor} className="min-w-0 wrap-break-word">
+              {label}
+            </label>
+          ) : (
+            <span className="min-w-0 wrap-break-word">{label}</span>
+          )}
           {hint && <InfoBubble tip={hint} />}
         </span>
         {note && <span className="text-xs text-carbon-textMuted wrap-break-word">{note}</span>}

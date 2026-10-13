@@ -52,7 +52,7 @@ vi.mock("../pages/Login", () => ({
   ),
 }));
 vi.mock("../components/Sidebar", () => ({ Sidebar: () => null }));
-vi.mock("../components/WhatsNewDialog", () => ({ WhatsNewDialog: () => null }));
+vi.mock("../pages/settings/WhatsNew", () => ({ WhatsNewHost: () => null }));
 
 import { Layout } from "./Layout";
 

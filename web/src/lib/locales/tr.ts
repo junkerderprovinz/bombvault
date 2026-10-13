@@ -1464,11 +1464,9 @@ const tr: Partial<Translations> = {
   "filter.button": "Filtreler",
 
   // What's new dialog (#48)
-  "whatsnew.title": "{version} sürümündeki yenilikler",
   "whatsnew.loading": "Sürüm notları yükleniyor…",
   "whatsnew.loadFailed": "Sürüm notları burada yüklenemedi. GitHub'da aç.",
   "whatsnew.viewOnGitHub": "Sürümün tamamını GitHub'da görüntüle",
-  "whatsnew.close": "Kapat",
   "notify.scheduledSummary": "Zamanlanmış çalıştırmaları özetle",
   "notify.scheduledSummaryHint": "Her container veya VM için ayrı bir mesaj yerine, zamanlanmış her yedekleme çalıştırması için tek bir özet gönder (örneğin: 45'ten 42'si başarılı). Healthchecks zaten özetlenir. Manuel yedeklemeler yine öge başına bildirim gönderir.",
   "notify.notifyOnUpdate": "Container güncellemesinde bildir",
@@ -4254,6 +4252,8 @@ const tr: Partial<Translations> = {
   "welcome.restoreHint": "BombVault'u daha önce kullandın mı? O zaman “Yedekten geri yükle” ayarlar dahil her şeyi geri getirir.",
   "whatsNew.title": "Yenilikler",
   "whatsNew.windowTitle": "{version} sürümündeki yenilikler",
+  "whatsNew.notesTab": "Sürüm notları",
+  "whatsNew.changesTab": "Değişiklikler",
   "whatsNew.hint": "Son güncellemenin neyi değiştirdiği. Parlayan bir nokta her değişikliği kendi sayfasında işaretler, noktaya tıklamak onu gizler. Bir sekmedeki, kutucuktaki ya da satırdaki nokta, arkasındaki her şeyi gördüğünde kaybolur.",
   "whatsNew.showAll": "Hepsini yeniden göster",
   "whatsNew.markAll": "Hepsini görüldü olarak işaretle",

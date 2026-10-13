@@ -127,7 +127,24 @@ export function ProtectionWindow({
   ];
 
   return (
-    <AnomalyWindow title={t(KIND_LABEL[section.kind])} onClose={onClose}>
+    <AnomalyWindow
+      title={t(KIND_LABEL[section.kind])}
+      onClose={onClose}
+      actions={
+        drillable && (
+          <Button
+            label={t(status.lastDrDrillAt > 0 ? "overview.drill.again" : "overview.drill.start")}
+            labelKey={status.lastDrDrillAt > 0 ? "overview.drill.again" : "overview.drill.start"}
+            glyph={<IconPlay />}
+            onClick={() => trial.start(status.domain)}
+            disabled={drilling}
+            busy={drilling}
+            title={drilling ? t("overview.check.drillRunning") : undefined}
+            className="glim-btn-wrap pointer-coarse:[--btn-h:2.75rem]"
+          />
+        )
+      }
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm text-carbon-textSub">{t("dashboard.protectionTitle")}</span>
         <Badge tone={VERDICT_BADGE[section.tone]}>{t(VERDICT[section.tone])}</Badge>
@@ -163,18 +180,8 @@ export function ProtectionWindow({
         </div>
       )}
 
-      {drillable && (
+      {drillable && ((drillFailed && status.drillDetail && !drilling) || refused) && (
         <div className="flex flex-col items-start gap-2">
-          <Button
-            label={t(status.lastDrDrillAt > 0 ? "overview.drill.again" : "overview.drill.start")}
-            labelKey={status.lastDrDrillAt > 0 ? "overview.drill.again" : "overview.drill.start"}
-            glyph={<IconPlay />}
-            onClick={() => trial.start(status.domain)}
-            disabled={drilling}
-            busy={drilling}
-            title={drilling ? t("overview.check.drillRunning") : undefined}
-            className="glim-btn-wrap pointer-coarse:[--btn-h:2.75rem]"
-          />
           {drillFailed && status.drillDetail && !drilling && (
             <p className="text-xs text-statusFail wrap-break-word">
               {t("drill.failReasonPrefix")} <bdi dir="ltr">{status.drillDetail}</bdi>

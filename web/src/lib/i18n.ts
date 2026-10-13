@@ -2267,12 +2267,10 @@ export const en = {
   "settings.cacheLimitLabel": "Cache size limit (MB, 0 = unlimited)",
 
   // What's new dialog (#48) — shown once when a new version is running
-  "whatsnew.title": "What's new in {version}",
   "whatsnew.loading": "Loading release notes…",
   "whatsnew.loadFailed": "Couldn't load the release notes here. Open them on GitHub.",
   "whatsnew.retry": "Try again",
   "whatsnew.viewOnGitHub": "View full release on GitHub",
-  "whatsnew.close": "Close",
 
   // Files domain (folder-set backups, #62) — shown to the user as "Folders".
   // The files.* KEY names, the "files" domain literal, routes and types are
@@ -4597,6 +4595,8 @@ export const en = {
   "welcome.restoreHint": "Have you used BombVault before? Then \"Restore from a backup\" brings everything back, settings included.",
   "whatsNew.title": "New",
   "whatsNew.windowTitle": "New in {version}",
+  "whatsNew.notesTab": "Release notes",
+  "whatsNew.changesTab": "Changes",
   "whatsNew.hint": "What the last update changed. A glowing dot marks each change on its page, and a click on a dot hides it. A dot on a tab, a tile or a row goes once everything behind it has been seen.",
   "whatsNew.showAll": "Show all again",
   "whatsNew.markAll": "Mark all as seen",
@@ -6883,12 +6883,10 @@ export const de: Translations = {
   "settings.cacheLimitLabel": "Cache-Größenlimit (MB, 0 = unbegrenzt)",
 
   // Neu-Dialog (#48) — einmalig bei einer neuen laufenden Version
-  "whatsnew.title": "Neu in {version}",
   "whatsnew.loading": "Lade Release-Notes…",
   "whatsnew.loadFailed": "Release-Notes konnten hier nicht geladen werden. Auf GitHub öffnen.",
   "whatsnew.retry": "Erneut versuchen",
   "whatsnew.viewOnGitHub": "Vollständige Release-Notes auf GitHub",
-  "whatsnew.close": "Schließen",
 
   // Ordner-Domäne (Ordner-Set-Backups, #62) — der Ordner-Tab (Keys behalten
   // die historischen files.*-Namen; nur die angezeigten Werte heißen "Ordner")
@@ -9188,6 +9186,8 @@ export const de: Translations = {
   "welcome.restoreHint": "Hattest du BombVault schon einmal? Dann holt „Aus einer Sicherung wiederherstellen“ alles zurück, auch die Einstellungen.",
   "whatsNew.title": "Neu",
   "whatsNew.windowTitle": "Neu in {version}",
+  "whatsNew.notesTab": "Versionshinweise",
+  "whatsNew.changesTab": "Änderungen",
   "whatsNew.hint": "Was das letzte Update geändert hat. Ein leuchtender Punkt markiert jede Änderung auf ihrer Seite, und ein Klick auf einen Punkt blendet ihn aus. Ein Punkt auf einem Reiter, einer Kachel oder einer Zeile verschwindet, sobald alles dahinter gesehen ist.",
   "whatsNew.showAll": "Alle wieder zeigen",
   "whatsNew.markAll": "Alle als gesehen markieren",

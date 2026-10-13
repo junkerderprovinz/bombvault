@@ -1967,12 +1967,10 @@ const sl: Partial<Translations> = {
   "settings.cacheLimitLabel": "Omejitev velikosti predpomnilnika (MB, 0 = neomejeno)",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Novosti v {version}",
   "whatsnew.loading": "Nalaganje opomb o izdaji…",
   "whatsnew.loadFailed": "Opomb o izdaji tukaj ni bilo mogoče naložiti. Odpri jih na GitHubu.",
   "whatsnew.retry": "Poskusi znova",
   "whatsnew.viewOnGitHub": "Ogled celotne izdaje na GitHubu",
-  "whatsnew.close": "Zapri",
 
   // Files domain (folder-set backups, #62)
   "nav.files": "Mape",
@@ -4248,6 +4246,8 @@ const sl: Partial<Translations> = {
   "welcome.restoreHint": "Ti je BombVault že znan? Potem „Obnovi iz varnostne kopije“ vrne vse, tudi nastavitve.",
   "whatsNew.title": "Novo",
   "whatsNew.windowTitle": "Novosti v različici {version}",
+  "whatsNew.notesTab": "Opombe o izdaji",
+  "whatsNew.changesTab": "Spremembe",
   "whatsNew.hint": "Kaj je spremenila zadnja posodobitev. Svetleča pika označuje vsako spremembo na njeni strani, klik na piko pa jo skrije. Pika na zavihku, ploščici ali vrstici izgine, ko vidiš vse, kar je za njo.",
   "whatsNew.showAll": "Pokaži vse znova",
   "whatsNew.markAll": "Označi vse kot videno",

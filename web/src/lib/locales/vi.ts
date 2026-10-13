@@ -1455,11 +1455,9 @@ const vi: Partial<Translations> = {
   "filter.button": "Bộ lọc",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Có gì mới trong {version}",
   "whatsnew.loading": "Đang tải ghi chú phát hành…",
   "whatsnew.loadFailed": "Không thể tải ghi chú phát hành tại đây. Hãy mở trên GitHub.",
   "whatsnew.viewOnGitHub": "Xem bản phát hành đầy đủ trên GitHub",
-  "whatsnew.close": "Đóng",
   "notify.scheduledSummary": "Tóm tắt các lần chạy theo lịch",
   "notify.scheduledSummaryHint": "Gửi một bản tóm tắt cho mỗi lần sao lưu theo lịch (ví dụ: 42 trên 45 thành công) thay vì một thông báo riêng cho từng container hoặc VM. Healthchecks vốn đã được tóm tắt. Sao lưu thủ công vẫn thông báo theo từng mục.",
   "notify.notifyOnUpdate": "Thông báo khi container được cập nhật",
@@ -4245,6 +4243,8 @@ const vi: Partial<Translations> = {
   "welcome.restoreHint": "Bạn đã dùng BombVault trước đây chưa? Khi đó “Khôi phục từ bản sao lưu” sẽ đưa mọi thứ trở lại, kể cả cài đặt.",
   "whatsNew.title": "Mới",
   "whatsNew.windowTitle": "Có gì mới trong {version}",
+  "whatsNew.notesTab": "Ghi chú phát hành",
+  "whatsNew.changesTab": "Thay đổi",
   "whatsNew.hint": "Bản cập nhật gần nhất đã thay đổi gì. Một chấm sáng đánh dấu từng thay đổi trên trang của nó, và nhấp vào chấm sẽ ẩn nó. Chấm trên tab, ô hoặc dòng sẽ biến mất khi bạn đã xem hết những gì phía sau nó.",
   "whatsNew.showAll": "Hiện lại tất cả",
   "whatsNew.markAll": "Đánh dấu tất cả là đã xem",

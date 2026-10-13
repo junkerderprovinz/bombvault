@@ -1462,11 +1462,9 @@ const cs: Partial<Translations> = {
   "filter.button": "Filtry",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Novinky ve verzi {version}",
   "whatsnew.loading": "Načítání poznámek k vydání…",
   "whatsnew.loadFailed": "Poznámky k vydání se zde nepodařilo načíst. Otevři je na GitHubu.",
   "whatsnew.viewOnGitHub": "Zobrazit celé vydání na GitHubu",
-  "whatsnew.close": "Zavřít",
   "notify.scheduledSummary": "Shrnout naplánované běhy",
   "notify.scheduledSummaryHint": "Odeslat jedno shrnutí za každý naplánovaný běh zálohy (například: 42 z 45 úspěšných) místo samostatné zprávy pro každý kontejner nebo VM. Healthchecks se už shrnuje. Ruční zálohy stále upozorňují pro každou položku.",
   "notify.notifyOnUpdate": "Upozornit na aktualizaci kontejneru",
@@ -4252,6 +4250,8 @@ const cs: Partial<Translations> = {
   "welcome.restoreHint": "Znáš BombVault už z dřívějška? Pak „Obnovit ze zálohy“ vrátí všechno, včetně nastavení.",
   "whatsNew.title": "Novinky",
   "whatsNew.windowTitle": "Novinky ve verzi {version}",
+  "whatsNew.notesTab": "Poznámky k vydání",
+  "whatsNew.changesTab": "Změny",
   "whatsNew.hint": "Co změnila poslední aktualizace. Zářící tečka označuje každou změnu na její stránce a kliknutí na tečku ji skryje. Tečka na záložce, dlaždici nebo řádku zmizí, jakmile uvidíš vše, co za ní je.",
   "whatsNew.showAll": "Zobrazit vše znovu",
   "whatsNew.markAll": "Označit vše jako viděné",

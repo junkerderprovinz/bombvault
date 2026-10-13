@@ -1464,11 +1464,9 @@ const fr: Partial<Translations> = {
   "filter.button": "Filtres",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Nouveautés de {version}",
   "whatsnew.loading": "Chargement des notes de version…",
   "whatsnew.loadFailed": "Impossible de charger les notes de version ici. Ouvrez-les sur GitHub.",
   "whatsnew.viewOnGitHub": "Voir la version complète sur GitHub",
-  "whatsnew.close": "Fermer",
   "notify.scheduledSummary": "Résumer les exécutions planifiées",
   "notify.scheduledSummaryHint": "Envoyer un seul résumé par sauvegarde planifiée (par exemple : 42 sur 45 réussies) au lieu d'un message distinct pour chaque container ou VM. Healthchecks est déjà résumé. Les sauvegardes manuelles notifient toujours élément par élément.",
   "notify.notifyOnUpdate": "Notifier lors de la mise à jour d'un container",
@@ -4254,6 +4252,8 @@ const fr: Partial<Translations> = {
   "welcome.restoreHint": "Vous avez déjà utilisé BombVault ? Alors « Restaurer depuis une sauvegarde » ramène tout, paramètres compris.",
   "whatsNew.title": "Nouveautés",
   "whatsNew.windowTitle": "Nouveautés de la version {version}",
+  "whatsNew.notesTab": "Notes de version",
+  "whatsNew.changesTab": "Changements",
   "whatsNew.hint": "Ce que la dernière mise à jour a changé. Un point lumineux marque chaque changement sur sa page, et un clic sur un point le masque. Un point sur un onglet, une tuile ou une ligne disparaît dès que vous avez vu tout ce qui se trouve derrière.",
   "whatsNew.showAll": "Tout afficher à nouveau",
   "whatsNew.markAll": "Tout marquer comme vu",

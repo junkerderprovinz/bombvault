@@ -1464,11 +1464,9 @@ const it: Partial<Translations> = {
   "filter.button": "Filtri",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Novità di {version}",
   "whatsnew.loading": "Caricamento delle note di rilascio…",
   "whatsnew.loadFailed": "Impossibile caricare le note di rilascio qui. Aprile su GitHub.",
   "whatsnew.viewOnGitHub": "Vedi la versione completa su GitHub",
-  "whatsnew.close": "Chiudi",
   "notify.scheduledSummary": "Riepiloga le esecuzioni pianificate",
   "notify.scheduledSummaryHint": "Invia un solo riepilogo per ogni esecuzione di backup pianificata (per esempio: 42 di 45 riuscite) invece di un messaggio separato per ogni container o VM. Healthchecks è già riepilogato. I backup manuali notificano comunque per ogni singolo elemento.",
   "notify.notifyOnUpdate": "Notifica all'aggiornamento del container",
@@ -4254,6 +4252,8 @@ const it: Partial<Translations> = {
   "welcome.restoreHint": "Hai già usato BombVault? Allora «Ripristina da un backup» riporta tutto indietro, impostazioni comprese.",
   "whatsNew.title": "Novità",
   "whatsNew.windowTitle": "Novità della versione {version}",
+  "whatsNew.notesTab": "Note di rilascio",
+  "whatsNew.changesTab": "Modifiche",
   "whatsNew.hint": "Cosa ha cambiato l'ultimo aggiornamento. Un punto luminoso segna ogni modifica nella sua pagina, e un clic su un punto lo nasconde. Un punto su un tab, un riquadro o una riga sparisce quando hai visto tutto ciò che c'è dietro.",
   "whatsNew.showAll": "Mostra di nuovo tutti",
   "whatsNew.markAll": "Segna tutto come visto",

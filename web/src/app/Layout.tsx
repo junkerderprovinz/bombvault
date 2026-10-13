@@ -5,21 +5,21 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { getSettings, getAuth, getHealth, type Settings } from "../lib/api";
 import { useIsDesktop } from "../lib/useMediaQuery";
 import { LoginPage } from "../pages/Login";
-import { WhatsNewDialog } from "../components/WhatsNewDialog";
+import { WhatsNewHost } from "../pages/settings/WhatsNew";
 import { WhatsNewDots } from "../components/WhatsNewDots";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { AttentionProvider } from "../lib/attentionProvider";
 import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
-import { beginWhatsNew } from "../lib/whatsNewStore";
+import { beginWhatsNew, openWhatsNew } from "../lib/whatsNewStore";
 
-// The last BombVault version this browser has seen. The "What's new" dialog
+// The last BombVault version this browser has seen. The "What's new" window
 // opens once when the running version differs.
 const LAST_SEEN_VERSION_KEY = "bombvault.lastSeenVersion";
 
 // releaseTag reduces a build version such as "v5.0.0+main.fcc0544" to the
 // release tag "v5.0.0". The release notes are published under that tag, and
 // comparing tags keeps a :latest rebuild with a new short SHA from reopening
-// the dialog. It returns null for "dev", "0.0.0" and anything without an x.y.z
+// the window. It returns null for "dev", "0.0.0" and anything without an x.y.z
 // core.
 function releaseTag(version: string): string | null {
   const m = version.match(/\d+\.\d+\.\d+/);
@@ -38,7 +38,8 @@ export function Layout() {
   const [authEnabled, setAuthEnabled] = useState(false);
   // A page opened through the relay can neither sign in nor out.
   const [relayed, setRelayed] = useState(false);
-  const [whatsNewVersion, setWhatsNewVersion] = useState<string | null>(null);
+  // The running release tag, for the release notes in the What's new window.
+  const [release, setRelease] = useState<string | null>(null);
   const location = useLocation();
   // The page wrapper remounts per section, so moving between Settings pages
   // keeps the page and its loaded settings.
@@ -206,10 +207,10 @@ export function Layout() {
     return () => window.removeEventListener("bv:settings-changed", onChange);
   }, [loadSettings]);
 
-  // Show "What's new" when the running release differs from the last one this
-  // browser saw. A browser's first visit only records the version. The stored
-  // value is updated as soon as the dialog is shown, so it opens once per
-  // release.
+  // Open "What's new" on its release notes when the running release differs
+  // from the last one this browser saw. A browser's first visit only records
+  // the version. The stored value is updated as soon as the window is shown,
+  // so it opens once per release.
   useEffect(() => {
     if (authGate !== "pass") return;
     let active = true;
@@ -218,11 +219,12 @@ export function Layout() {
         if (!active) return;
         const tag = h.version ? releaseTag(h.version) : null;
         if (!tag) return;
+        setRelease(tag);
         let last: string | null;
         try {
           last = localStorage.getItem(LAST_SEEN_VERSION_KEY);
         } catch {
-          /* no localStorage, so no dialog */
+          /* no localStorage, so no window */
           return;
         }
         if (last === null) {
@@ -240,11 +242,11 @@ export function Layout() {
             /* ignore */
           }
           beginWhatsNew(last);
-          setWhatsNewVersion(tag);
+          openWhatsNew("notes");
         }
       })
       .catch(() => {
-        /* version is best-effort; no dialog on a failed health probe */
+        /* version is best-effort; no window on a failed health probe */
       });
     return () => {
       active = false;
@@ -348,7 +350,7 @@ export function Layout() {
           {/* Exactly one chrome surface is rendered. The other is left out of
               the tree instead of hidden with CSS: a display:none sidebar would
               still run its subscriptions and its label engine below the
-              breakpoint. The dialog sits outside the switch because it belongs
+              breakpoint. The window sits outside the switch because it belongs
               to both shells. */}
           {isDesktop ? (
             <>
@@ -367,9 +369,7 @@ export function Layout() {
             </>
           )}
           <WhatsNewDots />
-          {whatsNewVersion && (
-            <WhatsNewDialog version={whatsNewVersion} onClose={() => setWhatsNewVersion(null)} />
-          )}
+          <WhatsNewHost version={release} />
         </div>
       </AttentionProvider>
     </AnomalyProvider>
