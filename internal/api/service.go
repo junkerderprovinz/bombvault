@@ -14663,9 +14663,6 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	}
 	plan.repo = repo
 	plan.mode = s.repoModeFor(settings, "files", source, repo)
-	if err := s.markFileSubtree(ctx, &plan); err != nil {
-		return fileSetRestorePlan{}, err
-	}
 
 	// Create the alternate target dir ONLY after every validation passed. Use the
 	// readable (0o755) variant: the restore target lives on a user-visible / synced
@@ -14675,6 +14672,9 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 		if err := makeRestoreFolder(ctx, plan.target, paths.EnsureDirReadable); err != nil {
 			return fileSetRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 		}
+	}
+	if err := s.markFileSubtree(ctx, &plan); err != nil {
+		return fileSetRestorePlan{}, err
 	}
 	return plan, nil
 }
