@@ -94,7 +94,9 @@ function EntryPick({
     >
       <button
         type="button"
-        aria-pressed={selecting ? chosen : open}
+        role={selecting ? "checkbox" : undefined}
+        aria-checked={selecting ? chosen : undefined}
+        aria-expanded={selecting ? undefined : open}
         disabled={!hasBackups(item) || (selecting && !joins)}
         onClick={(e) => {
           if (!press.took()) onClick(e);
@@ -117,7 +119,7 @@ function EntryPick({
         </span>
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-semibold text-carbon-text">{name}</span>
-          <span className="truncate text-xs text-carbon-textMuted">
+          <span className={`truncate text-xs ${lit ? "text-carbon-textSub" : "text-carbon-textMuted"}`}>
             {hasBackups(item)
               ? t("restorePage.newest").replace("{when}", () => formatRecent(item.lastBackup, lang))
               : t("restorePage.none")}
@@ -417,6 +419,7 @@ export function Restore() {
   const joinable = shown.filter(joinsMany).map(itemId);
   const joinableKey = joinable.join(" ");
   const selection = useRowSelection(useMemo(() => (joinableKey === "" ? [] : joinableKey.split(" ")), [joinableKey]));
+  const selectStart = useRef<HTMLSpanElement>(null);
   const chosenItems = shown.filter((item) => selection.picked.has(itemId(item)));
 
   function clickEntry(e: MouseEvent, item: BackupItem) {
@@ -500,7 +503,14 @@ export function Restore() {
               </TileRow>
 
               {selection.selecting && (
-                <BulkBar count={selection.picked.size} allPicked={selection.allPicked} onAll={selection.setAll} onDone={selection.clear} t={t}>
+                <BulkBar
+                  count={selection.picked.size}
+                  allPicked={selection.allPicked}
+                  onAll={selection.setAll}
+                  onDone={selection.clear}
+                  returnFocus={() => selectStart.current?.querySelector("button")?.focus()}
+                  t={t}
+                >
                   <BarButton label={t("snapshots.restore")} glyph={<IconRestore />} onClick={() => setMany(chosenItems)} wide />
                 </BulkBar>
               )}
@@ -529,7 +539,7 @@ export function Restore() {
                     />
                   </label>
                   {!selection.selecting && joinable.length > 1 && (
-                    <span data-new="restore-many" className="flex">
+                    <span ref={selectStart} data-new="restore-many" className="flex">
                       <Button
                         label={t("backups.select")}
                         labelKey={null}

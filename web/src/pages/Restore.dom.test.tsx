@@ -119,7 +119,10 @@ async function press(el: HTMLElement) {
 }
 
 const entries = () => within(screen.getByTestId("restore-entries"));
-const entry = (name: string) => entries().getByRole("button", { name: new RegExp(`^${name}`) }) as HTMLButtonElement;
+// While entries are being picked, each one is a checkbox.
+const entry = (name: string) =>
+  (entries().queryByRole("button", { name: new RegExp(`^${name}`) }) ??
+    entries().getByRole("checkbox", { name: new RegExp(`^${name}`) })) as HTMLButtonElement;
 const tile = (label: string) => screen.getByRole("button", { name: new RegExp(`^${label}`), pressed: undefined });
 const railRows = () => screen.queryAllByTestId("rail-row");
 const rail = () => screen.getByRole("listbox", { name: en["restoreWindow.backup"] });
@@ -205,7 +208,7 @@ describe("the backups of the picked entry", () => {
     await renderPage();
     await press(entry("Windows 11"));
     expect(getTimeline).toHaveBeenLastCalledWith("vms", "win11");
-    expect(entry("Windows 11").getAttribute("aria-pressed")).toBe("true");
+    expect(entry("Windows 11").getAttribute("aria-expanded")).toBe("true");
   });
 
   it("show their size and the storage locations that hold them", async () => {
@@ -435,6 +438,34 @@ describe("restoring several entries", () => {
     expect(railRows()).toHaveLength(0);
     expect(entry("tank/appdata").disabled).toBe(true);
     expect(entries().getByLabelText(en["restoreMany.leftOut.zfs"])).toBeTruthy();
+  });
+
+  it("keeps the focus in place when the bar opens and closes", async () => {
+    await renderPage();
+    const select = () => screen.getByRole("button", { name: new RegExp(`^${en["backups.select"]}`) });
+    await press(select());
+    const bar = within(screen.getByTestId("bulk-bar"));
+    expect(document.activeElement).toBe(bar.getByRole("checkbox", { name: en["containers.selectAll"] }));
+    const done = bar.getByRole("button", { name: en["common.done"] });
+    done.focus();
+    await press(done);
+    expect(screen.queryByTestId("bulk-bar")).toBeNull();
+    expect(document.activeElement).toBe(select());
+
+    await press(select());
+    await act(async () => {
+      fireEvent.keyDown(document, { key: "Escape" });
+    });
+    expect(screen.queryByTestId("bulk-bar")).toBeNull();
+    expect(document.activeElement).toBe(select());
+  });
+
+  it("tells a screen reader how many entries are picked", async () => {
+    await renderPage();
+    await act(async () => {
+      fireEvent.click(entry("immich"), { ctrlKey: true });
+    });
+    expect(within(screen.getByTestId("bulk-bar")).getByRole("status").textContent).toBe("1 selected");
   });
 
   it("restores each one next to its original by default, one after the other", async () => {

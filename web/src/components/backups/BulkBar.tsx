@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import type { TranslationKey } from "../../lib/i18n";
 import { useIsDesktop } from "../../lib/useMediaQuery";
 import { Button } from "../Button";
@@ -49,12 +49,18 @@ export function BarButton({
  * BulkBar stands above a list while rows are being picked: how many are
  * picked, what can be done with them, and the way out. It stays in view while
  * the list scrolls under it.
+ *
+ * A bar opened from a button that then leaves the page would drop the focus
+ * on the body, so the bar takes it on its mark. A bar that closes with the
+ * focus in it hands the focus to `returnFocus`, or else back to where it was
+ * when the bar opened.
  */
 export function BulkBar({
   count,
   allPicked,
   onAll,
   onDone,
+  returnFocus,
   children,
   t,
 }: {
@@ -62,18 +68,32 @@ export function BulkBar({
   allPicked: boolean;
   onAll: (pick: boolean) => void;
   onDone: () => void;
+  returnFocus?: () => void;
   /** The actions for the picked rows, shown once one is picked. */
   children: ReactNode;
   t: T;
 }) {
   const isDesktop = useIsDesktop();
+  const bar = useRef<HTMLDivElement>(null);
+  const returnRef = useRef(returnFocus);
+  returnRef.current = returnFocus;
+  useEffect(() => {
+    const before = document.activeElement === document.body ? null : document.activeElement;
+    if (!before) bar.current?.querySelector<HTMLElement>('[role="checkbox"]')?.focus({ preventScroll: true });
+    return () => {
+      if (document.activeElement !== document.body) return;
+      if (returnRef.current) returnRef.current();
+      else if (before instanceof HTMLElement && before.isConnected) before.focus();
+    };
+  }, []);
   return (
     <div
+      ref={bar}
       data-testid="bulk-bar"
       className="sticky top-0 z-[3] flex flex-wrap items-center gap-2.5 rounded-card bg-accent py-2 pe-2.5 ps-4 text-sm font-semibold text-accentContrast"
     >
       <SelectMark checked={allPicked} label={t("containers.selectAll")} onChange={onAll} onAccent />
-      <span className="min-w-0 flex-1">
+      <span role="status" className="min-w-0 flex-1">
         {count > 0 ? t("zfs.add.selected", count) : t(isDesktop ? "backups.select.hint" : "backups.select.hintTouch")}
       </span>
       {count > 0 && children}
