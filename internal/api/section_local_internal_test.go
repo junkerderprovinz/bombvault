@@ -65,6 +65,37 @@ func TestAFlashDriveWithItsFolderOffBacksUpStraightToEachTarget(t *testing.T) {
 	}
 }
 
+// limitsEngine remembers the bandwidth caps each backup ran with, by repository.
+type limitsEngine struct {
+	ResticEngine
+	limits map[string]restic.Limits
+}
+
+func (e *limitsEngine) Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error) {
+	e.limits[repo] = mode.Limits
+	return e.ResticEngine.Backup(ctx, repo, paths, tags, mode, excludes...)
+}
+
+func TestABackupStraightToATargetKeepsToItsBandwidthCaps(t *testing.T) {
+	f, _, b2, _ := flashScene(t)
+	b2.LimitUpload, b2.LimitDownload = 512, 2048
+	if _, err := f.st.UpsertOffsiteTarget(b2); err != nil {
+		t.Fatal(err)
+	}
+	switchLocal(t, f, "flash", false)
+	e := &limitsEngine{ResticEngine: countCalls(f), limits: map[string]restic.Limits{}}
+	f.svc.engine = e
+
+	if _, err := f.svc.BackupFlash(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+
+	want := restic.Limits{UploadKBps: 512, DownloadKBps: 2048}
+	if got, ok := e.limits[b2.Repo]; !ok || got != want {
+		t.Fatalf("the backup to B2 ran with %+v (ran: %v), want its caps %+v", got, ok, want)
+	}
+}
+
 func TestSwitchingTheFolderOffLeavesWhatItHoldsWhereItIs(t *testing.T) {
 	f, local, _, _ := flashScene(t)
 	switchLocal(t, f, "flash", false)
