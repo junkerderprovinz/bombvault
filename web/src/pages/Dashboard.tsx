@@ -13,7 +13,7 @@ import { InfoBubble } from "../components/InfoBubble";
 import { IconRefresh } from "../components/glyphs";
 import { getCoverage, getScheduleNext, getStatus, listRuns } from "../lib/api";
 import type { CoverageReport, DomainStatus, Run, ScheduleNext } from "../lib/api";
-import { inApp, useAppServers } from "../lib/appServers";
+import { inApp } from "../lib/appServers";
 import { useAttention } from "../lib/attention";
 import type { EntryKind } from "../lib/backupEntry";
 import { cardSpan, useDashboardLayout } from "../lib/dashboardLayout";
@@ -36,13 +36,13 @@ import { EverythingAction } from "./overview/EverythingAction";
 import { FirstStepsCard } from "./overview/FirstStepsCard";
 import { HealthHeatmapCard } from "./overview/HealthHeatmapCard";
 import { HistoryCard, type HistoryView } from "./overview/HistoryCard";
-import { InstanceSwitch } from "./overview/InstanceSwitch";
 import { NeedsCard } from "./overview/NeedsCard";
 import { NextRunCard, nextBackupFireAt } from "./overview/NextRunCard";
 import { HiddenTray, OverviewGrid, type GridCard } from "./overview/OverviewGrid";
 import { ProtectionCard } from "./overview/ProtectionCard";
 import { sectionsOf } from "./overview/protectionChecks";
 import { ProtectionWindow } from "./overview/ProtectionWindow";
+import { ServerHeader } from "./overview/ServerHeader";
 import { SpikeCard } from "./overview/SpikeCard";
 import { StatCardsRow } from "./overview/StatCardsRow";
 import { headlineOf, liveRunOf, passCounted, passOf, passRuns } from "./overview/headState";
@@ -77,7 +77,6 @@ export function Dashboard() {
   const platform = usePlatform();
   const trial = useTrialRestore(t("verify.failed"));
   const app = inApp();
-  const appServers = useAppServers();
   const instanceName = useInstanceName();
 
   // The run window is opened by a row of the history, by the status head
@@ -454,14 +453,18 @@ export function Dashboard() {
             overview, so a tap has nowhere to go, and the press may neither
             scroll, select the name nor open the image's long-press menu.
             Inside the app the name is the server's own, since the app holds
-            several, and a tap on it switches to another. */}
+            several, and the arrow before it leads back to the app's list of
+            them. */}
         {app ? (
-          <div className="flex min-w-0 items-center gap-2 md:hidden">
-            <span {...logoHold.handlers} className={`flex shrink-0 ${HOLDABLE}`}>
-              {logoMark}
-            </span>
-            <InstanceSwitch t={t} name={instanceName} servers={appServers?.servers ?? null} onOpen={(id) => appServers?.open(id)} />
-          </div>
+          <ServerHeader
+            t={t}
+            name={instanceName}
+            logo={
+              <span {...logoHold.handlers} className={`flex shrink-0 ${HOLDABLE}`}>
+                {logoMark}
+              </span>
+            }
+          />
         ) : (
           <div {...logoHold.handlers} className={`flex w-fit items-center gap-2 md:hidden ${HOLDABLE}`}>
             {logoMark}
