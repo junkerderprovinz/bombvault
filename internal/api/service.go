@@ -8185,6 +8185,9 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 		plan, err = s.prepareRestoreBeside(ctx, name, snapshotID, source)
 	} else {
 		plan, err = s.prepareRestore(ctx, name, snapshotID, true, source)
+		if err == nil {
+			err = s.guardRecreateOverRunning(ctx, name, plan)
+		}
 	}
 	if err != nil {
 		s.batchActive.Store(false)

@@ -80,3 +80,21 @@ func TestTheGateRefusesAPairedSessionItCannotRouteFirst(t *testing.T) {
 		t.Fatalf("a paired session behind a wrapped handler: %d %s", w.Code, w.Body.String())
 	}
 }
+
+func TestAuthStatusTellsAPairedSessionApart(t *testing.T) {
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	for _, c := range []struct {
+		cookie *http.Cookie
+		want   bool
+	}{{pairedCookie(in), true}, {nil, false}} {
+		req := httptest.NewRequest(http.MethodGet, "/api/auth", nil)
+		if c.cookie != nil {
+			req.AddCookie(c.cookie)
+		}
+		w := httptest.NewRecorder()
+		in.router.ServeHTTP(w, req)
+		if got := strings.Contains(w.Body.String(), `"paired":true`); got != c.want {
+			t.Errorf("cookie %v: paired = %v, want %v (%s)", c.cookie != nil, got, c.want, w.Body.String())
+		}
+	}
+}

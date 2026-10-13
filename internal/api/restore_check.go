@@ -388,6 +388,9 @@ func (s *Service) restoreCheckScope(ctx context.Context, req RestoreCheckRequest
 		if err != nil {
 			return restoreScope{}, err
 		}
+		if err := s.guardRecreateOverRunning(ctx, req.Name, plan); err != nil {
+			return restoreScope{}, err
+		}
 		return containerScope(plan, req.Name), nil
 	case checkContainerFiles:
 		plan, err := s.prepareRestoreFiles(ctx, req.Name, req.Source, req.SnapshotID, req.Paths, req.TargetPath, true)
