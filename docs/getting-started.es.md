@@ -102,7 +102,7 @@ La barra lateral tiene cinco entradas: **Resumen**, **Anomalías** (mientras la 
 - **Ajustes** son catorce mosaicos: General, Aspecto, Calendario, Destinos, Restauración, Notificaciones, Verificación, Seguridad, Instancias, Emparejamiento, Integraciones, Apps, Sistema e Info. Pulsa `/` o Ctrl+K para buscar en todos, también por los nombres que tenían las páginas en versiones anteriores. Arrastra los mosaicos a tu propio orden en **Aspecto**.
 - **Destinos** e **Instancias** son mosaicos de ajustes con páginas propias. **Mostrar también en la barra lateral** en su mosaico los fija en la barra lateral.
 
-Nada tiene botón Guardar y nada se despliega: lo poco habitual tiene una tarjeta propia o una ventana, y las explicaciones están en las burbujas (i). Tras una actualización, unos puntos verdes marcan lo que ha cambiado. Un clic oculta un punto, y **Ajustes, Info, Novedades** lista todos los cambios con **Ir allí**.
+Nada tiene botón Guardar y nada se despliega: lo poco habitual tiene una tarjeta propia o una ventana, y las explicaciones están en las burbujas (i). Tras una actualización, unos puntos verdes marcan lo que ha cambiado. Un clic oculta un punto, y **Novedades** en la tarjeta Versión de **Ajustes, Info** lista todos los cambios con **Ir allí**.
 
 ## Compilar desde el código fuente {#build-from-source}
 

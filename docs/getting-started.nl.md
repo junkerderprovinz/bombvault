@@ -102,7 +102,7 @@ De zijbalk heeft vijf ingangen: **Overzicht**, **Anomalieën** (zolang anomalied
 - **Instellingen** zijn veertien tegels: Algemeen, Uiterlijk, Planning, Bestemmingen, Herstel, Meldingen, Verificatie, Beveiliging, Instanties, Koppeling, Integraties, Apps, Systeem en Info. Druk op `/` of Ctrl+K om ze allemaal te doorzoeken, ook op de namen die pagina's in eerdere versies hadden. Sleep de tegels onder **Uiterlijk** in je eigen volgorde.
 - **Bestemmingen** en **Instanties** zijn instellingentegels met eigen pagina's. **Ook in de zijbalk tonen** op hun tegel zet ze vast in de zijbalk.
 
-Niets heeft een Opslaan-knop en niets klapt uit: zeldzame dingen hebben een eigen kaart of een venster, en uitleg staat in de (i)-bellen. Na een update markeren groene stippen wat er veranderd is. Een klik verbergt een stip, en **Instellingen, Info, Nieuw** toont elke wijziging met **Ga erheen**.
+Niets heeft een Opslaan-knop en niets klapt uit: zeldzame dingen hebben een eigen kaart of een venster, en uitleg staat in de (i)-bellen. Na een update markeren groene stippen wat er veranderd is. Een klik verbergt een stip, en **Nieuw** in de kaart Versie onder **Instellingen, Info** toont elke wijziging met **Ga erheen**.
 
 ## Bouwen vanaf de broncode {#build-from-source}
 

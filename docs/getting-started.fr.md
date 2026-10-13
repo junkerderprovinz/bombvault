@@ -102,7 +102,7 @@ La barre latérale compte cinq entrées : **Aperçu**, **Anomalies** (tant que l
 - **Paramètres** sont quatorze tuiles : Général, Apparence, Planning, Destinations, Restauration, Notifications, Vérification, Sécurité, Instances, Appairage, Intégrations, Applications, Système et Info. Appuyez sur `/` ou Ctrl+K pour les chercher toutes, y compris par les noms que les pages portaient dans les versions précédentes. Faites glisser les tuiles dans l'ordre de votre choix sous **Apparence**.
 - **Destinations** et **Instances** sont des tuiles de paramètres avec des pages à elles. **Afficher aussi dans la barre latérale** sur leur tuile les épingle à la barre latérale.
 
-Rien n'a de bouton Enregistrer et rien ne se déplie : les choses rares ont une carte à elles ou une fenêtre, et les explications se trouvent dans les bulles (i). Après une mise à jour, des points verts marquent ce qui a changé. Un clic masque un point, et **Paramètres, Info, Nouveautés** liste chaque changement avec **Y aller**.
+Rien n'a de bouton Enregistrer et rien ne se déplie : les choses rares ont une carte à elles ou une fenêtre, et les explications se trouvent dans les bulles (i). Après une mise à jour, des points verts marquent ce qui a changé. Un clic masque un point, et **Nouveautés** dans la carte Version sous **Paramètres, Info** liste chaque changement avec **Y aller**.
 
 ## Compiler depuis les sources {#build-from-source}
 

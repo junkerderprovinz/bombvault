@@ -102,7 +102,7 @@ Sidepanelet har fem punkter: **Oversigt**, **Afvigelser** (så længe afvigelses
 - **Indstillinger** er fjorten felter: Generelt, Udseende, Tidsplan, Destinationer, Gendannelse, Notifikationer, Verificering, Sikkerhed, Instanser, Parring, Integrationer, Apps, System og Info. Tryk på `/` eller Ctrl+K for at søge i dem alle, også efter de navne, siderne havde i tidligere versioner. Træk felterne i din egen rækkefølge under **Udseende**.
 - **Destinationer** og **Instanser** er indstillingsfelter med sider for sig. **Vis også i sidepanelet** på deres felt fæstner dem til sidepanelet.
 
-Intet har en Gem-knap, og intet folder sig ud: sjældne ting har et kort eller et vindue for sig, og forklaringer står i (i)-boblerne. Efter en opdatering markerer grønne prikker, hvad der er ændret. Et klik skjuler en prik, og **Indstillinger, Info, Nyt** oplister hver ændring med **Gå derhen**.
+Intet har en Gem-knap, og intet folder sig ud: sjældne ting har et kort eller et vindue for sig, og forklaringer står i (i)-boblerne. Efter en opdatering markerer grønne prikker, hvad der er ændret. Et klik skjuler en prik, og **Nyt** i kortet Version under **Indstillinger, Info** oplister hver ændring med **Gå derhen**.
 
 ## Byg fra kildekoden {#build-from-source}
 

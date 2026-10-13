@@ -102,7 +102,7 @@ Thanh bên có năm mục: **Tổng quan**, **Bất thường** (khi bật phát
 - **Cài đặt** gồm mười bốn ô: Chung, Giao diện, Lịch trình, Đích sao lưu, Khôi phục, Thông báo, Xác minh, Bảo mật, Phiên bản, Ghép nối, Tích hợp, Ứng dụng, Hệ thống và Thông tin. Nhấn `/` hoặc Ctrl+K để tìm trong tất cả, kể cả theo tên mà các trang từng có ở các phiên bản trước. Kéo các ô vào thứ tự riêng của bạn trong **Giao diện**.
 - **Đích sao lưu** và **Phiên bản** là các ô cài đặt có trang riêng. **Hiện cả trong thanh bên** trên ô của chúng ghim chúng vào thanh bên.
 
-Không có gì có nút Lưu và không có gì bung ra: những thứ hiếm dùng có thẻ riêng hoặc một cửa sổ, và phần giải thích nằm trong các bong bóng (i). Sau một bản cập nhật, các chấm xanh đánh dấu những gì đã đổi. Một cú nhấp sẽ ẩn chấm, và **Cài đặt, Thông tin, Mới** liệt kê mọi thay đổi kèm **Đi tới đó**.
+Không có gì có nút Lưu và không có gì bung ra: những thứ hiếm dùng có thẻ riêng hoặc một cửa sổ, và phần giải thích nằm trong các bong bóng (i). Sau một bản cập nhật, các chấm xanh đánh dấu những gì đã đổi. Một cú nhấp sẽ ẩn chấm, và **Mới** trong thẻ Phiên bản dưới **Cài đặt, Thông tin** liệt kê mọi thay đổi kèm **Đi tới đó**.
 
 ## Dựng từ mã nguồn {#build-from-source}
 

@@ -102,7 +102,7 @@ The sidebar has five entries: **Overview**, **Anomalies** (while anomaly detecti
 - **Settings** are fourteen tiles: General, Look, Schedule, Storage locations, Restore, Notifications, Verify, Security, Instances, Pairing, Integrations, Apps, System and Info. Press `/` or Ctrl+K to search them all, also by the names pages had in earlier versions. Drag the tiles into your own order under **Look**.
 - **Storage locations** and **Instances** are settings tiles with pages of their own. **Also show in the sidebar** on their tile pins them to the sidebar.
 
-Nothing has a Save button and nothing folds out: rare things have a card of their own or a window, and explanations sit in the (i) bubbles. After an update, green dots mark what changed. A click hides a dot, and **Settings, Info, New** lists every change with **Go there**.
+Nothing has a Save button and nothing folds out: rare things have a card of their own or a window, and explanations sit in the (i) bubbles. After an update, green dots mark what changed. A click hides a dot, and **New** in the Version card under **Settings, Info** lists every change with **Go there**.
 
 ## Building from source {#build-from-source}
 

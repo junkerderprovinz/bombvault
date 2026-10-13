@@ -102,7 +102,7 @@ Sidofältet har fem poster: **Översikt**, **Avvikelser** (så länge avvikelsed
 - **Inställningarna** är fjorton brickor: Allmänt, Utseende, Schema, Mål, Återställning, Aviseringar, Verifiering, Säkerhet, Instanser, Parkoppling, Integrationer, Appar, System och Info. Tryck `/` eller Ctrl+K för att söka i alla, även efter de namn sidorna hade i tidigare versioner. Dra brickorna till din egen ordning under **Utseende**.
 - **Mål** och **Instanser** är inställningsbrickor med egna sidor. **Visa även i sidofältet** på deras bricka fäster dem i sidofältet.
 
-Inget har en Spara-knapp och inget fälls ut: ovanliga saker har ett eget kort eller ett fönster, och förklaringarna finns i (i)-bubblorna. Efter en uppdatering markerar gröna prickar vad som ändrats. Ett klick döljer en prick, och **Inställningar, Info, Nytt** listar varje ändring med **Gå dit**.
+Inget har en Spara-knapp och inget fälls ut: ovanliga saker har ett eget kort eller ett fönster, och förklaringarna finns i (i)-bubblorna. Efter en uppdatering markerar gröna prickar vad som ändrats. Ett klick döljer en prick, och **Nytt** i kortet Version under **Inställningar, Info** listar varje ändring med **Gå dit**.
 
 ## Bygga från källkod {#build-from-source}
 

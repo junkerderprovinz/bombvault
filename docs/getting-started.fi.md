@@ -102,7 +102,7 @@ Sivupalkissa on viisi kohtaa: **Yleiskatsaus**, **Poikkeamat** (kun poikkeamien 
 - **Asetukset** on neljätoista ruutua: Yleiset, Ulkoasu, Aikataulu, Kohteet, Palautus, Ilmoitukset, Tarkistus, Turvallisuus, Ilmentymät, Pariliitos, Integraatiot, Sovellukset, Järjestelmä ja Tieto. Paina `/` tai Ctrl+K hakeaksesi niistä kaikista, myös sivujen aiemmilla nimillä. Vedä ruudut omaan järjestykseesi kohdassa **Ulkoasu**.
 - **Kohteet** ja **Ilmentymät** ovat asetusruutuja, joilla on omat sivunsa. **Näytä myös sivupalkissa** niiden ruudussa kiinnittää ne sivupalkkiin.
 
-Missään ei ole Tallenna-painiketta, eikä mikään avaudu auki: harvinaisille asioille on oma kortti tai ikkuna, ja selitykset ovat (i)-kuplissa. Päivityksen jälkeen vihreät pisteet merkitsevät sitä, mikä on muuttunut. Napsautus piilottaa pisteen, ja **Asetukset, Tieto, Uutta** luettelee kaikki muutokset ja **Siirry sinne** vie perille.
+Missään ei ole Tallenna-painiketta, eikä mikään avaudu auki: harvinaisille asioille on oma kortti tai ikkuna, ja selitykset ovat (i)-kuplissa. Päivityksen jälkeen vihreät pisteet merkitsevät sitä, mikä on muuttunut. Napsautus piilottaa pisteen, ja **Uutta** Versio-kortissa kohdassa **Asetukset, Tieto** luettelee kaikki muutokset ja **Siirry sinne** vie perille.
 
 ## Kääntäminen lähdekoodista {#build-from-source}
 

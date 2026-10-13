@@ -102,7 +102,7 @@ La barra laterale ha cinque voci: **Panoramica**, **Anomalie** (finché il rilev
 - **Impostazioni** sono quattordici riquadri: Generale, Aspetto, Calendario, Destinazioni, Ripristino, Notifiche, Verifica, Sicurezza, Istanze, Associazione, Integrazioni, App, Sistema e Info. Premi `/` o Ctrl+K per cercare in tutti, anche con i nomi che le pagine avevano nelle versioni precedenti. Trascina i riquadri nel tuo ordine in **Aspetto**.
 - **Destinazioni** e **Istanze** sono riquadri delle impostazioni con pagine proprie. **Mostra anche nella barra laterale** sul loro riquadro le fissa alla barra laterale.
 
-Niente ha un pulsante Salva e niente si apre a fisarmonica: le cose rare hanno una scheda propria o una finestra, e le spiegazioni stanno nei fumetti (i). Dopo un aggiornamento, puntini verdi segnalano ciò che è cambiato. Un clic nasconde un puntino, e **Impostazioni, Info, Novità** elenca ogni modifica con **Vai lì**.
+Niente ha un pulsante Salva e niente si apre a fisarmonica: le cose rare hanno una scheda propria o una finestra, e le spiegazioni stanno nei fumetti (i). Dopo un aggiornamento, puntini verdi segnalano ciò che è cambiato. Un clic nasconde un puntino, e **Novità** nella scheda Versione in **Impostazioni, Info** elenca ogni modifica con **Vai lì**.
 
 ## Compilare dai sorgenti {#build-from-source}
 

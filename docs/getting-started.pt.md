@@ -102,7 +102,7 @@ A barra lateral tem cinco entradas: **Visão geral**, **Anomalias** (enquanto a 
 - **Definições** são catorze mosaicos: Geral, Aspeto, Agendamento, Destinos, Restauro, Notificações, Verificação, Segurança, Instâncias, Emparelhamento, Integrações, Aplicações, Sistema e Info. Prime `/` ou Ctrl+K para pesquisar todos, também pelos nomes que as páginas tinham em versões anteriores. Arrasta os mosaicos para a tua própria ordem em **Aspeto**.
 - **Destinos** e **Instâncias** são mosaicos de definições com páginas próprias. **Mostrar também na barra lateral** no mosaico deles fixa-os à barra lateral.
 
-Nada tem um botão Guardar e nada se desdobra: as coisas raras têm um cartão próprio ou uma janela, e as explicações estão nos balões (i). Depois de uma atualização, pontos verdes marcam o que mudou. Um clique esconde um ponto, e **Definições, Info, Novidades** lista cada alteração com **Ir para lá**.
+Nada tem um botão Guardar e nada se desdobra: as coisas raras têm um cartão próprio ou uma janela, e as explicações estão nos balões (i). Depois de uma atualização, pontos verdes marcam o que mudou. Um clique esconde um ponto, e **Novidades** no cartão Versão em **Definições, Info** lista cada alteração com **Ir para lá**.
 
 ## Compilar a partir do código-fonte {#build-from-source}
 

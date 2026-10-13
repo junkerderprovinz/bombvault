@@ -102,7 +102,7 @@ Sidefeltet har fem oppføringer: **Oversikt**, **Avvik** (så lenge avviksdeteks
 - **Innstillinger** er fjorten fliser: Generelt, Utseende, Tidsplan, Mål, Gjenoppretting, Varsler, Verifisering, Sikkerhet, Instanser, Paring, Integrasjoner, Apper, System og Info. Trykk `/` eller Ctrl+K for å søke i alle, også etter navnene sidene hadde i tidligere versjoner. Dra flisene i din egen rekkefølge under **Utseende**.
 - **Mål** og **Instanser** er innstillingsfliser med egne sider. **Vis også i sidefeltet** på flisen deres fester dem til sidefeltet.
 
-Ingenting har en Lagre-knapp og ingenting folder seg ut: sjeldne ting har et eget kort eller et vindu, og forklaringer står i (i)-boblene. Etter en oppdatering markerer grønne prikker det som er endret. Et klikk skjuler en prikk, og **Innstillinger, Info, Nytt** lister hver endring med **Gå dit**.
+Ingenting har en Lagre-knapp og ingenting folder seg ut: sjeldne ting har et eget kort eller et vindu, og forklaringer står i (i)-boblene. Etter en oppdatering markerer grønne prikker det som er endret. Et klikk skjuler en prikk, og **Nytt** i kortet Versjon under **Innstillinger, Info** lister hver endring med **Gå dit**.
 
 ## Bygge fra kildekode {#build-from-source}
 
