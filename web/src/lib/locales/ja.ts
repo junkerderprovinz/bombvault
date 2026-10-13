@@ -4461,6 +4461,7 @@ const ja: Partial<Translations> = {
   "apiError.unavailable": "サーバーが混み合っているか、まだ起動中です。1分ほどしてからもう一度お試しください。",
   "apiError.sessionEnded": "このセッションは終了しました。たとえば、誰かがすべての場所でサインアウトした場合です。インスタンスを開き直してください。",
   "apiError.phonePairingOff": "このインスタンスでは、スマートフォンのペアリングがオフになっています。",
+  "apiError.noPlace": "所属セクションの保存先がすべてオフのため、バックアップ先がありません。保存先の画面でいずれかをオンにしてください。",
   "apiError.relayTooLarge": "サイズが大きすぎて、リレーを通せません。インスタンス自身のアドレスで開いてください。",
   "apiError.relayRefused": "これはリレーを通せません。インスタンス自身のアドレスで開いてください。",
   "apiError.refused": "サーバーに拒否されました。",

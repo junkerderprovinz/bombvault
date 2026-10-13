@@ -4480,6 +4480,7 @@ const ms: Partial<Translations> = {
   "apiError.unavailable": "Pelayan sibuk atau masih bermula. Cuba lagi dalam seminit.",
   "apiError.sessionEnded": "Sesi ini telah tamat, contohnya kerana seseorang log keluar di semua tempat. Buka instans itu semula.",
   "apiError.phonePairingOff": "Gandingan telefon dimatikan pada instans ini.",
+  "apiError.noPlace": "Tiada tempat untuk menyandarkannya kerana semua destinasi bahagiannya dimatikan. Hidupkan salah satu di Destinasi.",
   "apiError.relayTooLarge": "Ini terlalu besar untuk melalui relay. Buka instans pada alamatnya sendiri.",
   "apiError.relayRefused": "Ini tidak boleh melalui relay. Buka instans pada alamatnya sendiri.",
   "apiError.refused": "Pelayan menolak ini.",

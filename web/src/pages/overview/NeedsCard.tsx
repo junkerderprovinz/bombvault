@@ -147,7 +147,8 @@ function FailedRunRow({
       if (res.ok) push(t("containers.backupStarted"), "success");
       else push(res.error ?? t("containers.backupStartFailed"), "fail");
     } catch (err) {
-      if (err instanceof ApiError && err.status === 409) push(t("containers.batchAlreadyRunning"), "warn");
+      if (err instanceof ApiError && err.code === "no-place") push(err.message, "warn");
+      else if (err instanceof ApiError && err.status === 409) push(t("containers.batchAlreadyRunning"), "warn");
       else push(err instanceof Error ? err.message : t("containers.backupStartFailed"), "fail");
     } finally {
       setStarting(false);

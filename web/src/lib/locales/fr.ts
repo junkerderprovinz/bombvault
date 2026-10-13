@@ -4470,6 +4470,7 @@ const fr: Partial<Translations> = {
   "apiError.unavailable": "Le serveur est occupé ou démarre encore. Réessayez dans une minute.",
   "apiError.sessionEnded": "Cette session est terminée, par exemple parce que quelqu'un s'est déconnecté partout. Rouvrez l'instance.",
   "apiError.phonePairingOff": "L'appairage des téléphones est désactivé sur cette instance.",
+  "apiError.noPlace": "Il n'y a nulle part où sauvegarder cet élément, car toutes les destinations de sa section sont désactivées. Activez-en une sous Destinations.",
   "apiError.relayTooLarge": "C'est trop volumineux pour passer par le relais. Ouvrez l'instance à son adresse propre.",
   "apiError.relayRefused": "Cela ne peut pas passer par le relais. Ouvrez l'instance à son adresse propre.",
   "apiError.refused": "Le serveur l'a refusé.",

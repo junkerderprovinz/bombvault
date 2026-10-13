@@ -4464,6 +4464,7 @@ const sl: Partial<Translations> = {
   "apiError.unavailable": "Strežnik je zaseden ali se še zaganja. Čez minuto poskusi znova.",
   "apiError.sessionEnded": "Ta seja se je končala, na primer ker se je nekdo odjavil povsod. Znova odpri primerek.",
   "apiError.phonePairingOff": "Seznanjanje telefonov je na tem primerku izklopljeno.",
+  "apiError.noPlace": "Ni kam varnostno kopirati, ker so vsi cilji njegovega razdelka izklopljeni. Vklopi enega v razdelku Cilji.",
   "apiError.relayTooLarge": "To je preveliko, da bi šlo prek relaya. Odpri primerek na njegovem lastnem naslovu.",
   "apiError.relayRefused": "To ne more iti prek relaya. Odpri primerek na njegovem lastnem naslovu.",
   "apiError.refused": "Strežnik je to zavrnil.",

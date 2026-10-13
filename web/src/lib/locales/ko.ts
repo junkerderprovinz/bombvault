@@ -4461,6 +4461,7 @@ const ko: Partial<Translations> = {
   "apiError.unavailable": "서버가 바쁘거나 아직 시작하는 중입니다. 1분 뒤에 다시 시도하세요.",
   "apiError.sessionEnded": "이 세션이 끝났습니다. 예를 들어 누군가 모든 곳에서 로그아웃했기 때문일 수 있습니다. 인스턴스를 다시 여세요.",
   "apiError.phonePairingOff": "이 인스턴스에서는 휴대폰 페어링이 꺼져 있습니다.",
+  "apiError.noPlace": "해당 섹션의 모든 대상이 꺼져 있어 백업할 곳이 없습니다. 대상 화면에서 하나를 켜 주세요.",
   "apiError.relayTooLarge": "크기가 너무 커서 릴레이를 통과할 수 없습니다. 인스턴스를 자체 주소로 여세요.",
   "apiError.relayRefused": "이것은 릴레이를 통과할 수 없습니다. 인스턴스를 자체 주소로 여세요.",
   "apiError.refused": "서버가 이 요청을 거부했습니다.",

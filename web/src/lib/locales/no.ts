@@ -4470,6 +4470,7 @@ const no: Partial<Translations> = {
   "apiError.unavailable": "Serveren er opptatt eller starter fortsatt. Prøv igjen om et minutt.",
   "apiError.sessionEnded": "Denne økten er avsluttet, for eksempel fordi noen har logget ut overalt. Åpne instansen på nytt.",
   "apiError.phonePairingOff": "Paring av telefoner er slått av på denne instansen.",
+  "apiError.noPlace": "Det finnes ikke noe sted å sikkerhetskopiere til, fordi alle mål i området er slått av. Slå på ett under Mål.",
   "apiError.relayTooLarge": "Dette er for stort til å gå gjennom relay. Åpne instansen på sin egen adresse.",
   "apiError.relayRefused": "Dette kan ikke gå gjennom relay. Åpne instansen på sin egen adresse.",
   "apiError.refused": "Serveren avviste dette.",

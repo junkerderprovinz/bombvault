@@ -4480,6 +4480,7 @@ const is: Partial<Translations> = {
   "apiError.unavailable": "Þjónninn er upptekinn eða enn að ræsast. Reyndu aftur eftir eina mínútu.",
   "apiError.sessionEnded": "Þessari lotu er lokið, til dæmis vegna þess að einhver skráði sig út alls staðar. Opnaðu tilvikið aftur.",
   "apiError.phonePairingOff": "Slökkt er á pörun síma á þessu tilviki.",
+  "apiError.noPlace": "Hvergi er hægt að afrita þetta, því allir áfangastaðir svæðisins eru slökktir. Kveiktu á einum undir Áfangastaðir.",
   "apiError.relayTooLarge": "Þetta er of stórt til að fara í gegnum relay. Opnaðu tilvikið á eigin heimilisfangi.",
   "apiError.relayRefused": "Þetta kemst ekki í gegnum relay. Opnaðu tilvikið á eigin heimilisfangi.",
   "apiError.refused": "Þjónninn hafnaði þessu.",
