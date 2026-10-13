@@ -3059,8 +3059,6 @@ const da: Partial<Translations> = {
   "directRepo.testEmpty": "Tilgængelig, tom",
   "directRepo.testExisting": "Indeholder allerede et depot",
   "directRepo.testFailed": "Ikke tilgængelig: {error}",
-  "directRepo.bucketRoot": "{target} ligger ved roden af sin bucket, så enhver sti i den bucket ligger inde i det. Vælg en anden bucket.",
-  "directRepo.pathNeeded": "Denne rest-server holder private depoter. Angiv stien til det direkte depot.",
   "directRepo.addAndUse": "Opret og brug",
   "directRepo.draftNote": "Oprettes sammen med mappesættet.",
 

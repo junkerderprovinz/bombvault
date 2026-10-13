@@ -3060,8 +3060,6 @@ const ro: Partial<Translations> = {
   "directRepo.testEmpty": "Accesibil, gol",
   "directRepo.testExisting": "Conține deja un depozit",
   "directRepo.testFailed": "Inaccesibil: {error}",
-  "directRepo.bucketRoot": "{target} se află la rădăcina bucket-ului său, deci orice cale din acel bucket ar sta în interiorul lui. Alege alt bucket.",
-  "directRepo.pathNeeded": "Acest rest-server păstrează depozite private. Introdu calea pentru depozitul direct.",
   "directRepo.addAndUse": "Creează și folosește",
   "directRepo.draftNote": "Creat împreună cu setul de foldere.",
 

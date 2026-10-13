@@ -295,30 +295,65 @@ func TestAnImportWithATargetInsideADomainPathIsNotRefused(t *testing.T) {
 }
 
 func TestDirectLocationForSuggestsAPlaceBesideTheTarget(t *testing.T) {
-	cases := []struct {
-		repo string
-		want directSuggestion
-	}{
-		{"b2:bkt:containers", directSuggestion{Location: "b2:bkt:containers-direct"}},
-		{"b2:bkt:containers/", directSuggestion{Location: "b2:bkt:containers-direct"}},
-		{"b2:bkt", directSuggestion{Location: "b2:bkt-direct", Note: "bucket-root"}},
-		{"b2:bkt:", directSuggestion{Location: "b2:bkt-direct", Note: "bucket-root"}},
-		{"gs:bkt:/", directSuggestion{Location: "gs:bkt-direct", Note: "bucket-root"}},
-		{"s3:https://s3.example.com/bkt", directSuggestion{Location: "s3:https://s3.example.com/bkt-direct", Note: "bucket-root"}},
-		{"s3:https://s3.example.com/bkt/vms", directSuggestion{Location: "s3:https://s3.example.com/bkt/vms-direct"}},
-		{"rest:https://u:p@host:8000/u", directSuggestion{Note: "path-needed"}},
-		{"rest:https://host:8000/", directSuggestion{Note: "path-needed"}},
-		{"rest:https://u:p@host:8000/u/containers", directSuggestion{Location: "rest:https://u:p@host:8000/u/containers-direct"}}, //nolint:gosec // G101: a test-fixture literal, not a real credential
-		{"sftp:u@nas:/srv/restic/files", directSuggestion{Location: "sftp:u@nas:/srv/restic/files-direct"}},
-		{"sftp:u@nas:", directSuggestion{Note: "path-needed"}},
-		{"rclone:remote:", directSuggestion{Note: "path-needed"}},
-		{"rclone:remote:bkt/x", directSuggestion{Location: "rclone:remote:bkt/x-direct"}},
-		{"backups/offsite", directSuggestion{Location: "backups/offsite-direct"}},
+	cases := []struct{ repo, want string }{
+		{"b2:bkt:containers", "b2:bkt:containers-direct"},
+		{"b2:bkt:containers/", "b2:bkt:containers-direct"},
+		{"s3:https://s3.example.com/bkt/vms", "s3:https://s3.example.com/bkt/vms-direct"},
+		{"rest:https://u:p@host:8000/u/containers", "rest:https://u:p@host:8000/u/containers-direct"}, //nolint:gosec // G101: a test-fixture literal, not a real credential
+		{"sftp:u@nas:/srv/restic/files", "sftp:u@nas:/srv/restic/files-direct"},
+		{"rclone:remote:bkt/x", "rclone:remote:bkt/x-direct"},
+		{"backups/offsite", "backups/offsite-direct"},
 	}
 	for _, c := range cases {
-		if got := directLocationFor(store.OffsiteTarget{Repo: c.repo}); got != c.want {
-			t.Errorf("directLocationFor(%q) = %+v, want %+v", c.repo, got, c.want)
+		if got := directLocationFor(store.OffsiteTarget{Domain: "containers", Repo: c.repo}).Location; got != c.want {
+			t.Errorf("directLocationFor(%q) = %q, want %q", c.repo, got, c.want)
 		}
+	}
+}
+
+func TestATargetAtTheRootOfItsStoreGetsItsDirectRepositoryInside(t *testing.T) {
+	cases := []struct{ repo, want string }{
+		{"rest:https://u:p@host:8000/u", "rest:https://u:p@host:8000/u/containers-direct"}, //nolint:gosec // G101: a test-fixture literal, not a real credential
+		{"rest:https://host:8000/u/", "rest:https://host:8000/u/containers-direct"},
+		{"rest:https://host:8000/", "rest:https://host:8000/containers-direct"},
+		{"b2:bkt", "b2:bkt:containers-direct"},
+		{"b2:bkt:", "b2:bkt:containers-direct"},
+		{"gs:bkt:/", "gs:bkt:/containers-direct"},
+		{"s3:https://s3.example.com/bkt", "s3:https://s3.example.com/bkt/containers-direct"},
+		{"sftp:u@nas:", "sftp:u@nas:containers-direct"},
+		{"rclone:remote:", "rclone:remote:containers-direct"},
+	}
+	for _, c := range cases {
+		target := store.OffsiteTarget{Domain: "containers", Repo: c.repo}
+		got := directLocationFor(target).Location
+		if got != c.want {
+			t.Errorf("directLocationFor(%q) = %q, want %q", c.repo, got, c.want)
+		}
+		if !insideOwnTarget(target, got) {
+			t.Errorf("%q is not taken as the folder inside %q", got, c.repo)
+		}
+	}
+	if insideOwnTarget(store.OffsiteTarget{Domain: "containers", Repo: "b2:bkt:vms"}, "b2:bkt:vms/inner") {
+		t.Error("a folder inside a target that is not at a root was taken as its direct repository's place")
+	}
+}
+
+func TestADirectRepositoryAtARestServerUsersRootIsMadeInsideItWithoutAskingForAPath(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "Box", "rest:https://box:8000/jdp")
+	res := f.do("GET", "/api/offsite/targets/"+target.ID+"/direct", nil)
+	suggestion, _ := res["suggestion"].(map[string]any)
+	loc, _ := suggestion["location"].(string)
+	if loc != "rest:https://box:8000/jdp/containers-direct" {
+		t.Fatalf("suggestion = %v, want a folder under the user's root", res["suggestion"])
+	}
+
+	direct, err := f.svc.createDirectRepo(context.Background(), target.ID, "", loc)
+	if err != nil {
+		t.Fatalf("creating the direct repository inside the user's root: %v", err)
+	}
+	if direct.CompanionOf != target.ID || direct.Repo != loc {
+		t.Fatalf("direct repository = %+v", direct)
 	}
 }
 
@@ -330,7 +365,7 @@ func TestTestingADirectLocationCreatesNothing(t *testing.T) {
 		t.Fatalf("GET direct = %v", res)
 	}
 	sug := res["suggestion"].(map[string]any)
-	if sug["location"] != "backups/nas-offsite-direct" || sug["note"] != "" {
+	if sug["location"] != "backups/nas-offsite-direct" {
 		t.Fatalf("suggestion = %v", sug)
 	}
 	res = f.do("POST", "/api/offsite/targets/"+target.ID+"/direct/test", map[string]any{"location": "backups/nas-offsite-direct"})

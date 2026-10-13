@@ -3059,8 +3059,6 @@ const tr: Partial<Translations> = {
   "directRepo.testEmpty": "Erişilebilir, boş",
   "directRepo.testExisting": "Zaten bir depo içeriyor",
   "directRepo.testFailed": "Erişilemiyor: {error}",
-  "directRepo.bucketRoot": "{target}, kendi bucket'ının kökünde, bu yüzden o bucket'taki her yol bunun içinde kalır. Başka bir bucket seç.",
-  "directRepo.pathNeeded": "Bu rest-server özel depolar tutar. Doğrudan depo için yolu gir.",
   "directRepo.addAndUse": "Oluştur ve kullan",
   "directRepo.draftNote": "Klasör setiyle birlikte oluşturulur.",
 

@@ -3059,8 +3059,6 @@ const he: Partial<Translations> = {
   "directRepo.testEmpty": "נגיש, ריק",
   "directRepo.testExisting": "כבר מכיל מאגר",
   "directRepo.testFailed": "לא נגיש: {error}",
-  "directRepo.bucketRoot": "{target} נמצא בשורש ה-bucket שלו, כך שכל נתיב באותו bucket יימצא בתוכו. נדרש bucket אחר.",
-  "directRepo.pathNeeded": "ה-rest-server הזה שומר מאגרים פרטיים. יש להזין את הנתיב למאגר הישיר.",
   "directRepo.addAndUse": "יצירה ושימוש",
   "directRepo.draftNote": "נוצר יחד עם ערכת התיקיות.",
 

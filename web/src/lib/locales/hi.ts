@@ -3069,8 +3069,6 @@ const hi: Partial<Translations> = {
   "directRepo.testEmpty": "पहुँच योग्य, खाली",
   "directRepo.testExisting": "इसमें पहले से एक रिपॉज़िटरी है",
   "directRepo.testFailed": "पहुँच योग्य नहीं: {error}",
-  "directRepo.bucketRoot": "{target} अपने bucket की जड़ में है, इसलिए उस bucket में हर पथ उसके अंदर होगा। कोई और bucket चुनें।",
-  "directRepo.pathNeeded": "यह rest-server निजी रिपॉज़िटरी रखता है। डायरेक्ट रिपॉज़िटरी के लिए पथ दर्ज करें।",
   "directRepo.addAndUse": "बनाएँ और उपयोग करें",
   "directRepo.draftNote": "फ़ोल्डर सेट के साथ बनेगा।",
 

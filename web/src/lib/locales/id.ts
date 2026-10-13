@@ -3069,8 +3069,6 @@ const id: Partial<Translations> = {
   "directRepo.testEmpty": "Dapat dijangkau, kosong",
   "directRepo.testExisting": "Sudah berisi repositori",
   "directRepo.testFailed": "Tidak dapat dijangkau: {error}",
-  "directRepo.bucketRoot": "{target} berada di root bucket-nya, jadi setiap jalur di bucket itu akan berada di dalamnya. Pilih bucket lain.",
-  "directRepo.pathNeeded": "rest-server ini menyimpan repositori pribadi. Masukkan jalur untuk repositori langsung.",
   "directRepo.addAndUse": "Buat dan gunakan",
   "directRepo.draftNote": "Dibuat bersama set folder.",
 

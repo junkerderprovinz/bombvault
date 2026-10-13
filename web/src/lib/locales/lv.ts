@@ -3069,8 +3069,6 @@ const lv: Partial<Translations> = {
   "directRepo.testEmpty": "Sasniedzams, tukšs",
   "directRepo.testExisting": "Jau satur krātuvi",
   "directRepo.testFailed": "Nav sasniedzams: {error}",
-  "directRepo.bucketRoot": "{target} atrodas sava bucket saknē, tāpēc jebkurš ceļš tajā bucket atrastos tā iekšpusē. Izvēlieties citu bucket.",
-  "directRepo.pathNeeded": "Šis rest-server tur privātas krātuves. Ievadiet tiešās krātuves ceļu.",
   "directRepo.addAndUse": "Izveidot un lietot",
   "directRepo.draftNote": "Tiek izveidota kopā ar mapju kopu.",
 

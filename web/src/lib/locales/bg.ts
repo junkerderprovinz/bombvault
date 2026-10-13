@@ -3069,8 +3069,6 @@ const bg: Partial<Translations> = {
   "directRepo.testEmpty": "Достъпно, празно",
   "directRepo.testExisting": "Вече съдържа хранилище",
   "directRepo.testFailed": "Недостъпно: {error}",
-  "directRepo.bucketRoot": "{target} се намира в корена на своя bucket, затова всеки път в този bucket лежи вътре в него. Избери друг bucket.",
-  "directRepo.pathNeeded": "Този rest-server пази частни хранилища. Въведи пътя за директното хранилище.",
   "directRepo.addAndUse": "Създай и използвай",
   "directRepo.draftNote": "Създава се заедно с набора от папки.",
 

@@ -3059,8 +3059,6 @@ const fr: Partial<Translations> = {
   "directRepo.testEmpty": "Joignable, vide",
   "directRepo.testExisting": "Contient déjà un dépôt",
   "directRepo.testFailed": "Non joignable : {error}",
-  "directRepo.bucketRoot": "{target} se trouve à la racine de son bucket, donc tout chemin de ce bucket se trouverait à l'intérieur. Choisissez un autre bucket.",
-  "directRepo.pathNeeded": "Ce rest-server garde des dépôts privés. Saisissez le chemin du dépôt direct.",
   "directRepo.addAndUse": "Créer et utiliser",
   "directRepo.draftNote": "Créé en même temps que le jeu de dossiers.",
 

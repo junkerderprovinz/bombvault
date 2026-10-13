@@ -3069,8 +3069,6 @@ const eu: Partial<Translations> = {
   "directRepo.testEmpty": "Eskuragarri, hutsik",
   "directRepo.testExisting": "Jada biltegi bat du",
   "directRepo.testFailed": "Ez dago eskuragarri: {error}",
-  "directRepo.bucketRoot": "{target} bere bucketaren erroan dago, beraz bucket horretako bide oro barruan legoke. Aukeratu beste bucket bat.",
-  "directRepo.pathNeeded": "rest-server honek biltegi pribatuak dauzka. Sartu biltegi zuzenaren bidea.",
   "directRepo.addAndUse": "Sortu eta erabili",
   "directRepo.draftNote": "Karpeta-multzoarekin batera sortzen da.",
 

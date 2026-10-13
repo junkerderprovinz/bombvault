@@ -3058,8 +3058,6 @@ const nl: Partial<Translations> = {
   "directRepo.testEmpty": "Bereikbaar, leeg",
   "directRepo.testExisting": "Bevat al een repository",
   "directRepo.testFailed": "Niet bereikbaar: {error}",
-  "directRepo.bucketRoot": "{target} ligt aan de root van zijn bucket, dus elk pad in die bucket zou daarbinnen liggen. Kies een andere bucket.",
-  "directRepo.pathNeeded": "Deze rest-server bewaart privérepositories. Voer het pad voor de directe repository in.",
   "directRepo.addAndUse": "Aanmaken en gebruiken",
   "directRepo.draftNote": "Wordt samen met de mappenset aangemaakt.",
 

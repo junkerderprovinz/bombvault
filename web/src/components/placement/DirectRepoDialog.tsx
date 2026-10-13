@@ -7,11 +7,10 @@ import {
   createDirectRepo,
   getDirectRepo,
   testDirectLocation,
-  type DirectSuggestion,
   type NamedRepo,
   type OkEnvelope,
 } from "../../lib/api";
-import { useT, type TranslationKey } from "../../lib/i18n";
+import { useT } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { useToast } from "../../lib/toast";
 import { useDialogKeys } from "../../lib/useConfirm";
@@ -22,11 +21,6 @@ import { reposChanged } from "../../lib/useNamedRepos";
 export type DirectRepoResult =
   | { kind: "created"; repo: NamedRepo }
   | { kind: "remembered"; name: string; location: string };
-
-const NOTE_KEYS: Record<Exclude<DirectSuggestion["note"], "">, TranslationKey> = {
-  "bucket-root": "directRepo.bucketRoot",
-  "path-needed": "directRepo.pathNeeded",
-};
 
 const FIELD = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
@@ -51,7 +45,6 @@ export function DirectRepoDialog({
   const locationTouched = useRef(false);
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
-  const [note, setNote] = useState<DirectSuggestion["note"]>("");
   const verdict = useTestVerdict(location.trim(), t("settings.error"));
   const isDesktop = useIsDesktop();
   useDialogKeys(isDesktop, dialogRef, onClose);
@@ -67,7 +60,6 @@ export function DirectRepoDialog({
         }
         if (!r.suggestion || locationTouched.current) return;
         setLocation(r.suggestion.location);
-        setNote(r.suggestion.note);
       })
       .catch((err: unknown) => {
         if (alive) push(err instanceof Error ? err.message : t("settings.error"), "fail");
@@ -153,7 +145,6 @@ export function DirectRepoDialog({
             className={`${FIELD} font-mono text-start`}
           />
         </label>
-        {note !== "" && <p className="text-xs text-carbon-textSub">{withTarget(t(NOTE_KEYS[note]))}</p>}
         {mode === "remember" && <p className="text-xs text-carbon-textMuted">{t("directRepo.draftNote")}</p>}
         <VerdictLine verdict={verdict.verdict} />
         <div className="flex items-center gap-2 flex-wrap">

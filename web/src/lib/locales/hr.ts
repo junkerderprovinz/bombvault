@@ -3069,8 +3069,6 @@ const hr: Partial<Translations> = {
   "directRepo.testEmpty": "Dostupno, prazno",
   "directRepo.testExisting": "Već sadrži repozitorij",
   "directRepo.testFailed": "Nije dostupno: {error}",
-  "directRepo.bucketRoot": "{target} se nalazi u korijenu svog bucketa, pa bi svaka putanja u tom bucketu ležala unutar njega. Odaberite drugi bucket.",
-  "directRepo.pathNeeded": "Ovaj rest-server čuva privatne repozitorije. Unesite putanju za izravni repozitorij.",
   "directRepo.addAndUse": "Stvori i koristi",
   "directRepo.draftNote": "Stvara se zajedno sa skupom mapa.",
 

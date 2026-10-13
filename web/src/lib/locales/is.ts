@@ -3069,8 +3069,6 @@ const is: Partial<Translations> = {
   "directRepo.testEmpty": "Aðgengilegt, tómt",
   "directRepo.testExisting": "Inniheldur nú þegar geymslu",
   "directRepo.testFailed": "Ekki aðgengilegt: {error}",
-  "directRepo.bucketRoot": "{target} er við rót bucketsins síns, svo öll slóð í þeim bucket lægi innan hans. Veldu annan bucket.",
-  "directRepo.pathNeeded": "Þessi rest-server geymir einkageymslur. Sláðu inn slóðina fyrir beinu geymsluna.",
   "directRepo.addAndUse": "Búa til og nota",
   "directRepo.draftNote": "Verður til samhliða möppusettinu.",
 

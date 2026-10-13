@@ -202,29 +202,53 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 	return nil
 }
 
-// directSuggestion is the location the create dialog starts from.
+// directSuggestion is the location a target's direct repository is created at.
 type directSuggestion struct {
 	Location string `json:"location"`
-	Note     string `json:"note"` // "" | "bucket-root" | "path-needed"
 }
 
-// directLocationFor derives where a target's direct repository goes: beside the
-// target, never inside it. A bucket root has nothing beside it in its bucket,
-// and a rest-server user root may forbid everything outside it, so those two
-// get a note instead of a plain suggestion.
+// directLocationFor derives where a target's direct repository goes: beside
+// the target. A target at the root of its bucket, its remote or a rest-server
+// has nothing beside it the same key may reach, since a rest-server running
+// --private-repos gives a user only the tree under its own name, so there the
+// direct repository takes a folder inside the target, which restic leaves
+// alone.
 func directLocationFor(target store.OffsiteTarget) directSuggestion {
 	loc := strings.TrimRight(strings.TrimSpace(target.Repo), "/:")
+	if !atStoreRoot(loc) {
+		return directSuggestion{Location: loc + "-direct"}
+	}
+	place, _ := locationParts(loc)
+	scheme, _, _ := strings.Cut(place, ":")
+	name := target.Domain + "-direct"
+	switch {
+	case scheme == "rest", scheme == "s3", strings.HasPrefix(loc, "sftp://"):
+		return directSuggestion{Location: loc + "/" + name}
+	case scheme == "gs", scheme == "azure", scheme == "swift":
+		return directSuggestion{Location: loc + ":/" + name}
+	}
+	return directSuggestion{Location: loc + ":" + name}
+}
+
+// atStoreRoot reports whether a remote location is the root of its bucket,
+// remote or rest-server, or a rest-server user's root.
+func atStoreRoot(loc string) bool {
 	place, elems := locationParts(loc)
 	scheme, _, _ := strings.Cut(place, ":")
-	switch {
-	case scheme == "rest" && len(elems) < 2,
-		(scheme == "sftp" || scheme == "rclone") && len(elems) == 0:
-		return directSuggestion{Note: "path-needed"}
-	case scheme == "s3" && len(elems) < 2,
-		(scheme == "b2" || scheme == "gs" || scheme == "azure" || scheme == "swift") && len(elems) == 0:
-		return directSuggestion{Location: loc + "-direct", Note: "bucket-root"}
+	switch scheme {
+	case "rest", "s3":
+		return len(elems) < 2
+	case "sftp", "rclone", "b2", "gs", "azure", "swift":
+		return len(elems) == 0
 	}
-	return directSuggestion{Location: loc + "-direct"}
+	return false
+}
+
+// insideOwnTarget reports whether loc is the folder inside target that
+// directLocationFor gives a target at the root of its store.
+func insideOwnTarget(target store.OffsiteTarget, loc string) bool {
+	tLoc := strings.TrimRight(strings.TrimSpace(target.Repo), "/:")
+	return atStoreRoot(tLoc) && sameRepoLocation(directLocationFor(target).Location, loc)
 }
 
 // directLocation checks a direct repository location the way the Repositories
@@ -240,10 +264,44 @@ func (s *Service) directLocation(settings store.Settings, target store.OffsiteTa
 	if place, elems := locationParts(loc); strings.HasPrefix(place, "rest:") && len(elems) > restDepth(target) {
 		return "", errRestPathTooDeep
 	}
-	if err := s.locationClash(settings, loc, locationSelf{}); err != nil {
+	self := locationSelf{}
+	if insideOwnTarget(target, loc) {
+		if self, err = s.targetSelf(target.ID, target); err != nil {
+			return "", err
+		}
+		self.target = false
+	}
+	if err := s.locationClash(settings, loc, self); err != nil {
 		return "", err
 	}
 	return loc, nil
+}
+
+// targetSelf is what a target's own location stands for: the target, the
+// direct repository it may hold inside it, and the domain's off-site field
+// when the target is the one that field describes. id is "" for a target not
+// saved yet.
+func (s *Service) targetSelf(id string, target store.OffsiteTarget) (locationSelf, error) {
+	self := locationSelf{target: true}
+	if id == "" {
+		return self, nil
+	}
+	self.ids = []string{id}
+	field, ok, err := s.store.FieldOffsiteTarget(target.Domain)
+	if err != nil {
+		return self, err
+	}
+	if ok && field.ID == id {
+		self.field = target.Domain
+	}
+	direct, found, err := s.store.CompanionFor(id)
+	if err != nil {
+		return self, err
+	}
+	if found && insideOwnTarget(target, direct.Repo) {
+		self.ids = append(self.ids, direct.ID)
+	}
+	return self, nil
 }
 
 // restDepth is how many path levels a direct repository beside target may

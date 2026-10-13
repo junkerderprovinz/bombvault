@@ -3069,8 +3069,6 @@ const fa: Partial<Translations> = {
   "directRepo.testEmpty": "در دسترس، خالی",
   "directRepo.testExisting": "از قبل یک مخزن دارد",
   "directRepo.testFailed": "در دسترس نیست: {error}",
-  "directRepo.bucketRoot": "{target} در ریشه bucket خود قرار دارد، بنابراین هر مسیری در آن bucket درون آن قرار می‌گیرد. bucket دیگری انتخاب کن.",
-  "directRepo.pathNeeded": "این rest-server مخزن‌های خصوصی نگه می‌دارد. مسیر مخزن مستقیم را وارد کن.",
   "directRepo.addAndUse": "ایجاد و استفاده",
   "directRepo.draftNote": "همراه با مجموعه پوشه ساخته می‌شود.",
 

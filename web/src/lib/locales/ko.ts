@@ -3050,8 +3050,6 @@ const ko: Partial<Translations> = {
   "directRepo.testEmpty": "도달 가능, 비어 있음",
   "directRepo.testExisting": "이미 저장소가 있음",
   "directRepo.testFailed": "도달 불가: {error}",
-  "directRepo.bucketRoot": "{target}은 자신의 버킷 루트에 있어서, 그 버킷의 모든 경로가 그 안에 들어갑니다. 다른 버킷을 선택하세요.",
-  "directRepo.pathNeeded": "이 rest-server는 비공개 저장소를 유지합니다. 직접 저장소의 경로를 입력하세요.",
   "directRepo.addAndUse": "만들고 사용",
   "directRepo.draftNote": "폴더 세트와 함께 생성됩니다.",
 

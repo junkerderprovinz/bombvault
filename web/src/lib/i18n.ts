@@ -2435,9 +2435,6 @@ export const en = {
   "directRepo.testEmpty": "Reachable, empty",
   "directRepo.testExisting": "Already holds a repository",
   "directRepo.testFailed": "Not reachable: {error}",
-  "directRepo.bucketRoot":
-    "{target} sits at the root of its bucket, so every path in that bucket lies inside it. Choose another bucket.",
-  "directRepo.pathNeeded": "This rest-server keeps private repositories. Enter the path for the direct repository.",
   "directRepo.addAndUse": "Create and use",
   "directRepo.draftNote": "Created together with the folder set.",
 
@@ -7082,9 +7079,6 @@ export const de: Translations = {
   "directRepo.testEmpty": "Erreichbar, leer",
   "directRepo.testExisting": "Enthält schon ein Repository",
   "directRepo.testFailed": "Nicht erreichbar: {error}",
-  "directRepo.bucketRoot":
-    "{target} liegt an der Wurzel seines Buckets, jeder Pfad darin läge also in diesem Speicherort. Wähl einen anderen Bucket.",
-  "directRepo.pathNeeded": "Dieser rest-server hält private Repositories. Pfad für das Direkt-Repository eingeben.",
   "directRepo.addAndUse": "Anlegen und nutzen",
   "directRepo.draftNote": "Entsteht zusammen mit dem Ordner-Set.",
 

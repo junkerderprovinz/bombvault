@@ -3059,8 +3059,6 @@ const sv: Partial<Translations> = {
   "directRepo.testEmpty": "Nåbar, tom",
   "directRepo.testExisting": "Innehåller redan ett arkiv",
   "directRepo.testFailed": "Inte nåbar: {error}",
-  "directRepo.bucketRoot": "{target} ligger i roten av sin bucket, så varje sökväg i den bucketen skulle ligga inuti den. Välj en annan bucket.",
-  "directRepo.pathNeeded": "Den här rest-servern håller privata arkiv. Ange sökvägen för det direkta arkivet.",
   "directRepo.addAndUse": "Skapa och använd",
   "directRepo.draftNote": "Skapas tillsammans med mappuppsättningen.",
 

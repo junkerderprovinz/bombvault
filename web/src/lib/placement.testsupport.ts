@@ -268,7 +268,7 @@ const DEFAULTS: Record<string, Reply> = {
   previewItemPlacement: () => ({ ok: true, added: [], dropped: [] }),
   getNewTargetPreview: () => ({ ok: true, preview: targetPreview() }),
   excludeFromTarget: () => ({ ok: true }),
-  getDirectRepo: () => ({ ok: true, repo: null, suggestion: { location: "b2:bucket:containers-direct", note: "" } }),
+  getDirectRepo: () => ({ ok: true, repo: null, suggestion: { location: "b2:bucket:containers-direct" } }),
   testDirectLocation: () => ({ ok: true, reachable: true, initialized: false }),
   createDirectRepo: (...args) => ({
     ok: true,

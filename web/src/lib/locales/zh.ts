@@ -3050,8 +3050,6 @@ const zh: Partial<Translations> = {
   "directRepo.testEmpty": "可达，为空",
   "directRepo.testExisting": "已经包含一个存储库",
   "directRepo.testFailed": "不可达：{error}",
-  "directRepo.bucketRoot": "{target} 位于其桶的根部，因此该桶中的每个路径都会落在它里面。选择另一个桶。",
-  "directRepo.pathNeeded": "这个 rest-server 保存私有存储库。输入直接存储库的路径。",
   "directRepo.addAndUse": "创建并使用",
   "directRepo.draftNote": "与文件夹集一起创建。",
 

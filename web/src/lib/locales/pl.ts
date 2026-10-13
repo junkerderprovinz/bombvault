@@ -3056,8 +3056,6 @@ const pl: Partial<Translations> = {
   "directRepo.testEmpty": "Dostępne, puste",
   "directRepo.testExisting": "Zawiera już repozytorium",
   "directRepo.testFailed": "Niedostępne: {error}",
-  "directRepo.bucketRoot": "{target} leży w katalogu głównym swojego zasobnika, więc każda ścieżka w tym zasobniku leżałaby wewnątrz niego. Wybierz inny zasobnik.",
-  "directRepo.pathNeeded": "Ten rest-server przechowuje prywatne repozytoria. Podaj ścieżkę dla bezpośredniego repozytorium.",
   "directRepo.addAndUse": "Utwórz i użyj",
   "directRepo.draftNote": "Zostanie utworzone razem z zestawem folderów.",
 

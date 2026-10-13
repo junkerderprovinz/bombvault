@@ -3069,8 +3069,6 @@ const gl: Partial<Translations> = {
   "directRepo.testEmpty": "Accesible, baleiro",
   "directRepo.testExisting": "Xa contén un repositorio",
   "directRepo.testFailed": "Non accesible: {error}",
-  "directRepo.bucketRoot": "{target} está na raíz do seu bucket, así que calquera camiño dese bucket quedaría dentro del. Escolle outro bucket.",
-  "directRepo.pathNeeded": "Este rest-server mantén repositorios privados. Introduce o camiño do repositorio directo.",
   "directRepo.addAndUse": "Crear e usar",
   "directRepo.draftNote": "Créase xunto co conxunto de cartafoles.",
 

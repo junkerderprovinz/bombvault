@@ -3060,8 +3060,6 @@ const th: Partial<Translations> = {
   "directRepo.testEmpty": "เข้าถึงได้ ว่างเปล่า",
   "directRepo.testExisting": "มีที่เก็บข้อมูลอยู่แล้ว",
   "directRepo.testFailed": "เข้าถึงไม่ได้ {error}",
-  "directRepo.bucketRoot": "{target} อยู่ที่รากของ bucket ตัวเอง ดังนั้นทุกพาธใน bucket นั้นจะอยู่ภายในนี้ เลือก bucket อื่น",
-  "directRepo.pathNeeded": "rest-server นี้เก็บที่เก็บข้อมูลส่วนตัว กรอกพาธสำหรับที่เก็บข้อมูลโดยตรง",
   "directRepo.addAndUse": "สร้างและใช้งาน",
   "directRepo.draftNote": "จะสร้างพร้อมกับชุดโฟลเดอร์",
 

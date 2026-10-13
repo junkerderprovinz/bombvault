@@ -3060,8 +3060,6 @@ const ar: Partial<Translations> = {
   "directRepo.testEmpty": "قابل للوصول، فارغ",
   "directRepo.testExisting": "يحتوي بالفعل على مستودع",
   "directRepo.testFailed": "غير قابل للوصول: {error}",
-  "directRepo.bucketRoot": "{target} يقع عند جذر الـ bucket الخاص به، فكل مسار في ذلك الـ bucket يقع داخله. يلزم bucket آخر.",
-  "directRepo.pathNeeded": "يحتفظ هذا الـ rest-server بمستودعات خاصة. يجب إدخال المسار الخاص بالمستودع المباشر.",
   "directRepo.addAndUse": "إنشاء واستخدام",
   "directRepo.draftNote": "يُنشأ مع مجموعة المجلدات.",
 

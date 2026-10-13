@@ -3069,8 +3069,6 @@ const et: Partial<Translations> = {
   "directRepo.testEmpty": "Kättesaadav, tühi",
   "directRepo.testExisting": "Sisaldab juba hoidlat",
   "directRepo.testFailed": "Pole kättesaadav: {error}",
-  "directRepo.bucketRoot": "{target} asub oma bucketi juures, seega iga tee selles bucketis jääb selle sisse. Vali mõni teine bucket.",
-  "directRepo.pathNeeded": "See rest-server hoiab privaatseid hoidlaid. Sisesta otsehoidla tee.",
   "directRepo.addAndUse": "Loo ja kasuta",
   "directRepo.draftNote": "Luuakse koos kaustakomplektiga.",
 

@@ -3050,8 +3050,6 @@ const vi: Partial<Translations> = {
   "directRepo.testEmpty": "Có thể truy cập, trống",
   "directRepo.testExisting": "Đã có sẵn một kho",
   "directRepo.testFailed": "Không thể truy cập: {error}",
-  "directRepo.bucketRoot": "{target} nằm ở gốc bucket của nó, nên mọi đường dẫn trong bucket đó đều nằm bên trong. Chọn bucket khác.",
-  "directRepo.pathNeeded": "rest-server này giữ các kho riêng tư. Nhập đường dẫn cho kho trực tiếp.",
   "directRepo.addAndUse": "Tạo và dùng",
   "directRepo.draftNote": "Được tạo cùng với bộ thư mục.",
 

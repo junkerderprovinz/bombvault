@@ -255,6 +255,18 @@ describe("the flow", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("switches Local off at a rest-server user root with the place the server picks, asking for nothing", async () => {
+    fake.reply("getDirectRepo", { ok: true, repo: null, suggestion: { location: "rest:https://box:8000/jdp/containers-direct" } });
+    await renderPage();
+
+    await click(line("Containers to Local"));
+
+    await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(1));
+    expect(fake.callsTo("createDirectRepo")).toEqual([["t-b2", "", "rest:https://box:8000/jdp/containers-direct"]]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("lets every line of a section go off, and says the section is not backed up", async () => {
     const nowhere = defaultRow({ home: "none", homeKind: "none" });
     fake.reply("listPlacementDefaults", { ok: true, defaults: [nowhere, defaultRow({ domain: "vms" }), defaultRow({ domain: "files" })] });

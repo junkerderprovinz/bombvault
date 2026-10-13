@@ -3059,8 +3059,6 @@ const el: Partial<Translations> = {
   "directRepo.testEmpty": "Προσβάσιμο, άδειο",
   "directRepo.testExisting": "Περιέχει ήδη αποθετήριο",
   "directRepo.testFailed": "Μη προσβάσιμο: {error}",
-  "directRepo.bucketRoot": "Το {target} βρίσκεται στη ρίζα του bucket του, οπότε κάθε διαδρομή σε αυτό το bucket βρίσκεται μέσα του. Διαλέξτε άλλο bucket.",
-  "directRepo.pathNeeded": "Αυτός ο rest-server κρατά ιδιωτικά αποθετήρια. Εισαγάγετε τη διαδρομή για το άμεσο αποθετήριο.",
   "directRepo.addAndUse": "Δημιουργία και χρήση",
   "directRepo.draftNote": "Δημιουργείται μαζί με το σύνολο φακέλων.",
 

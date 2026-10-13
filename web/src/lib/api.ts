@@ -3409,7 +3409,6 @@ export interface NewTargetPreview {
 
 export interface DirectSuggestion {
   location: string;
-  note: "" | "bucket-root" | "path-needed";
 }
 
 export interface DirectRepoFinding {

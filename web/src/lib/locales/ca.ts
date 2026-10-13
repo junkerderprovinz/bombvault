@@ -3069,8 +3069,6 @@ const ca: Partial<Translations> = {
   "directRepo.testEmpty": "Accessible, buit",
   "directRepo.testExisting": "Ja conté un repositori",
   "directRepo.testFailed": "No accessible: {error}",
-  "directRepo.bucketRoot": "{target} es troba a l'arrel del seu bucket, per la qual cosa tots els camins d'aquest bucket hi quedarien dins. Tria un altre bucket.",
-  "directRepo.pathNeeded": "Aquest rest-server manté repositoris privats. Introdueix el camí per al repositori directe.",
   "directRepo.addAndUse": "Crea i utilitza",
   "directRepo.draftNote": "Es crea juntament amb el conjunt de carpetes.",
 

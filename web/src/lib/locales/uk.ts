@@ -3056,8 +3056,6 @@ const uk: Partial<Translations> = {
   "directRepo.testEmpty": "Доступний, порожній",
   "directRepo.testExisting": "Вже містить репозиторій",
   "directRepo.testFailed": "Недоступний: {error}",
-  "directRepo.bucketRoot": "{target} лежить у корені свого бакета, тож будь-який шлях у цьому бакеті опиниться всередині нього. Оберіть інший бакет.",
-  "directRepo.pathNeeded": "Цей rest-server зберігає приватні репозиторії. Введіть шлях для прямого репозиторію.",
   "directRepo.addAndUse": "Створити і використати",
   "directRepo.draftNote": "Створюється разом із набором папок.",
 

@@ -3056,8 +3056,6 @@ const ru: Partial<Translations> = {
   "directRepo.testEmpty": "Доступен, пуст",
   "directRepo.testExisting": "Уже содержит репозиторий",
   "directRepo.testFailed": "Недоступен: {error}",
-  "directRepo.bucketRoot": "{target} находится в корне своего бакета, поэтому любой путь в этом бакете окажется внутри него. Выберите другой бакет.",
-  "directRepo.pathNeeded": "Этот rest-server хранит частные репозитории. Введите путь для прямого репозитория.",
   "directRepo.addAndUse": "Создать и использовать",
   "directRepo.draftNote": "Создаётся вместе с набором папок.",
 

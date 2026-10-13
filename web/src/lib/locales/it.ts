@@ -3059,8 +3059,6 @@ const it: Partial<Translations> = {
   "directRepo.testEmpty": "Raggiungibile, vuoto",
   "directRepo.testExisting": "Contiene già un repository",
   "directRepo.testFailed": "Non raggiungibile: {error}",
-  "directRepo.bucketRoot": "{target} si trova alla radice del suo bucket, quindi ogni percorso in quel bucket si troverebbe al suo interno. Scegli un altro bucket.",
-  "directRepo.pathNeeded": "Questo rest-server mantiene repository privati. Inserisci il percorso per il repository diretto.",
   "directRepo.addAndUse": "Crea e usa",
   "directRepo.draftNote": "Creato insieme al set di cartelle.",
 

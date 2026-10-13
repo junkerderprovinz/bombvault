@@ -3057,8 +3057,6 @@ const cs: Partial<Translations> = {
   "directRepo.testEmpty": "Dostupné, prázdné",
   "directRepo.testExisting": "Už obsahuje repozitář",
   "directRepo.testFailed": "Nedostupné: {error}",
-  "directRepo.bucketRoot": "{target} leží v kořeni svého bucketu, takže každá cesta v tomto bucketu by ležela uvnitř něj. Zvol jiný bucket.",
-  "directRepo.pathNeeded": "Tento rest-server drží privátní repozitáře. Zadej cestu pro přímý repozitář.",
   "directRepo.addAndUse": "Vytvořit a použít",
   "directRepo.draftNote": "Vytvoří se spolu se sadou složek.",
 

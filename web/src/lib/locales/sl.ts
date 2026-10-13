@@ -3053,8 +3053,6 @@ const sl: Partial<Translations> = {
   "directRepo.testEmpty": "Dosegljivo, prazno",
   "directRepo.testExisting": "Že vsebuje repozitorij",
   "directRepo.testFailed": "Ni dosegljivo: {error}",
-  "directRepo.bucketRoot": "{target} leži na korenu svojega vedra, zato bi vsaka pot v tem vedru ležala znotraj njega. Izberi drugo vedro.",
-  "directRepo.pathNeeded": "Ta rest-server hrani zasebne repozitorije. Vnesi pot za neposredni repozitorij.",
   "directRepo.addAndUse": "Ustvari in uporabi",
   "directRepo.draftNote": "Ustvarjeno skupaj z naborom map.",
 

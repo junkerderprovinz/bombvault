@@ -3069,8 +3069,6 @@ const lt: Partial<Translations> = {
   "directRepo.testEmpty": "Pasiekiama, tuščia",
   "directRepo.testExisting": "Jau turi saugyklą",
   "directRepo.testFailed": "Nepasiekiama: {error}",
-  "directRepo.bucketRoot": "{target} yra savo bucket šaknyje, todėl kiekvienas kelias tame bucket atsidurtų jo viduje. Pasirink kitą bucket.",
-  "directRepo.pathNeeded": "Šis rest-server laiko privačias saugyklas. Įvesk tiesioginės saugyklos kelią.",
   "directRepo.addAndUse": "Sukurti ir naudoti",
   "directRepo.draftNote": "Sukuriama kartu su aplankų rinkiniu.",
 

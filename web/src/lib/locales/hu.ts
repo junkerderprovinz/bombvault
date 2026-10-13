@@ -3060,8 +3060,6 @@ const hu: Partial<Translations> = {
   "directRepo.testEmpty": "Elérhető, üres",
   "directRepo.testExisting": "Már tartalmaz egy tárolót",
   "directRepo.testFailed": "Nem érhető el: {error}",
-  "directRepo.bucketRoot": "{target} a saját bucketjének gyökerén van, így az adott bucket minden útvonala ezen belülre esne. Válassz másik bucketet.",
-  "directRepo.pathNeeded": "Ez a rest-server privát tárolókat tart. Add meg a közvetlen tároló útvonalát.",
   "directRepo.addAndUse": "Létrehozás és használat",
   "directRepo.draftNote": "A mappakészlettel együtt jön létre.",
 

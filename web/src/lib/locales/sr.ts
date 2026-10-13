@@ -3053,8 +3053,6 @@ const sr: Partial<Translations> = {
   "directRepo.testEmpty": "Доступно, празно",
   "directRepo.testExisting": "Већ садржи репозиторијум",
   "directRepo.testFailed": "Није доступно: {error}",
-  "directRepo.bucketRoot": "{target} се налази у корену своје кофе, па би сваки пут у тој кофи лежао унутар њега. Изабери другу кофу.",
-  "directRepo.pathNeeded": "Овај rest-server чува приватне репозиторијуме. Унеси путању за директни репозиторијум.",
   "directRepo.addAndUse": "Направи и користи",
   "directRepo.draftNote": "Прави се заједно са скупом фасцикли.",
 
