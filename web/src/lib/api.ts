@@ -5327,8 +5327,8 @@ export interface ForeignItem {
   snapshots: Snapshot[];
 }
 
-/** The foreign repository's contents grouped by domain (matches
- *  ForeignInventory in internal/api/foreign.go — arrays are never null). */
+/** The foreign repository's contents grouped by domain, as ForeignInventory in
+ *  internal/api/foreign.go sends them; the arrays are never null. */
 export interface ForeignInventory {
   containers: ForeignItem[];
   vms: ForeignItem[];
