@@ -1041,26 +1041,32 @@ func (s *Service) prepareForeignFileSetRestore(ctx context.Context, sess foreign
 		return fileSetRestorePlan{}, err
 	}
 
-	// Create the target dir ONLY after every validation passed. Readable (0o755)
-	// so the operator's non-root SMB user can read what root restored onto the
-	// user-visible share (see EnsureDirReadable).
-	if !isPlanOnly(ctx) {
-		if err := paths.EnsureDirReadable(target); err != nil {
-			return fileSetRestorePlan{}, fmt.Errorf("create target folder: %w", err)
-		}
-	}
-	return fileSetRestorePlan{
+	plan := fileSetRestorePlan{
 		repo:       sess.repo,
 		mode:       sess.mode,
 		snapshotID: snapshotID,
 		setID:      setID,
 		setName:    item,
 		target:     target,
-		// Subtree from the SNAPSHOT itself (Paths[0]) so the to-folder restore drops
+		// Subtree from the snapshot itself (Paths[0]) so the to-folder restore drops
 		// the set's contents directly into target instead of nesting the absolute
-		// path (issue #62); "" (path-less snapshot) → whole-tree fallback.
+		// path (issue #62); a path-less snapshot leaves it empty and restores the
+		// whole tree.
 		subtree: snapshotRestoreRoot(snaps, snapshotID),
-	}, nil
+	}
+	if err := s.markFileSubtree(ctx, &plan); err != nil {
+		return fileSetRestorePlan{}, err
+	}
+
+	// Create the target dir once every validation passed. Readable (0o755) so
+	// the operator's non-root SMB user can read what root restored onto the
+	// user-visible share (see EnsureDirReadable).
+	if !isPlanOnly(ctx) {
+		if err := paths.EnsureDirReadable(target); err != nil {
+			return fileSetRestorePlan{}, fmt.Errorf("create target folder: %w", err)
+		}
+	}
+	return plan, nil
 }
 
 // prepareForeignFileSetFilesRestore is the selective (pick-some-files/subfolder)

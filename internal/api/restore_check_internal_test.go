@@ -42,6 +42,10 @@ func (e *checkEngine) StatsRestoreSize(context.Context, string, string, restic.M
 	return 1, e.size, nil
 }
 
+func (e *checkEngine) HoldsFile(context.Context, string, string, string, restic.Mode) (bool, error) {
+	return false, nil
+}
+
 func (e *checkEngine) RestorePreview(ctx context.Context, _ string, st restic.PreviewStep, _ restic.Mode, onItem func(restic.PreviewItem)) error {
 	e.steps = append(e.steps, st)
 	if e.hook != nil {

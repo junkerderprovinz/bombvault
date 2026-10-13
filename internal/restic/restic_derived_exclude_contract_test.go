@@ -10,9 +10,9 @@ import (
 	"testing"
 )
 
-// TestDerivedExcludePatternsAreLiteral shows why internal/api's
-// escapeGlobLiteral exists: restic reads an --exclude value as a glob, and the
-// tree builds those values from folder names the user unticked. Unescaped,
+// TestDerivedExcludePatternsAreLiteral shows why EscapeGlob exists: restic
+// reads an --exclude value as a glob, and the tree builds those values from
+// folder names the user unticked. Unescaped,
 // "Inception (2010) [1080p]" stays in the snapshot because "[1080p]" is a
 // one-character class, "Season [01]" drops its siblings "Season 0" and
 // "Season 1" but keeps itself, and "Movies [2024" is an invalid pattern that

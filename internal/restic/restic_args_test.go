@@ -866,6 +866,29 @@ func TestCacheCleanupArgs(t *testing.T) {
 	}
 }
 
+// A folder name becomes a restic --exclude pattern that matches exactly that
+// folder. The bracket cases are failures seen with the real engine.
+func TestEscapeGlob(t *testing.T) {
+	for _, tc := range []struct{ in, want string }{
+		// Plain names pass through unchanged, or every stored selection changes.
+		{"/host/user/appdata/plex/Cache", "/host/user/appdata/plex/Cache"},
+		// A character class that cannot match the name it came from.
+		{"/media/Movies/Inception (2010) [1080p]", `/media/Movies/Inception (2010) \[1080p\]`},
+		// A class that matches the siblings "Season 0" and "Season 1" instead.
+		{"/media/Season [01]", `/media/Season \[01\]`},
+		// An unmatched bracket makes restic refuse the whole backup run.
+		{"/media/Movies [2024", `/media/Movies \[2024`},
+		{"/media/star*name", `/media/star\*name`},
+		{"/media/q?mark", `/media/q\?mark`},
+		{`/media/back\slash`, `/media/back\\slash`},
+		{"", ""},
+	} {
+		if got := EscapeGlob(tc.in); got != tc.want {
+			t.Errorf("EscapeGlob(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
 func TestRestorePathArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
 		got := RestorePathArgs("/repo", "abc123", "/host/user/user/appdata/plex", Mode{Encrypted: true})

@@ -56,8 +56,22 @@ func RestorePreviewArgs(repo string, st PreviewStep, m Mode) []string {
 
 // RestorePreview runs the dry run of one restore step and hands each item to
 // onItem as restic reports it. Cancelling ctx stops restic, which is how a
-// caller caps a preview of a very large tree.
+// caller caps a preview of a very large tree. A step whose subtree is a file
+// is previewed the way RestoreSubtreeTo restores it.
 func (r Restic) RestorePreview(ctx context.Context, repo string, st PreviewStep, m Mode, onItem func(PreviewItem)) error {
+	if st.Subtree != "" && st.Include == "" {
+		file, err := r.HoldsFile(ctx, repo, st.SnapshotID, st.Subtree, m)
+		if err != nil {
+			return err
+		}
+		if file {
+			return r.previewFile(ctx, repo, st, m, onItem)
+		}
+	}
+	return r.preview(ctx, repo, st, m, onItem)
+}
+
+func (r Restic) preview(ctx context.Context, repo string, st PreviewStep, m Mode, onItem func(PreviewItem)) error {
 	args := RestorePreviewArgs(repo, st, m)
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 	configureProcGroup(cmd)
