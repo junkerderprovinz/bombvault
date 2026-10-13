@@ -20,11 +20,13 @@ import (
 // exactly like one that is fine: absent from every list, absent from every
 // error, and absent from the traffic light.
 //
-// "Protected" here means precisely what the scheduler means: some automatic run
-// would back this item up. It is computed with schedule.Effective*Schedule, the
-// same functions the scheduler's own reasoning uses, rather than by re-deriving
-// the rules: three toggles and an override reach every item, and three of the
-// four can silently mean "never".
+// "Protected" here means that some automatic run would back this item up and
+// that a backup of it exists, the rule the web interface counts entries by. An
+// item a schedule reaches that has no backup yet is waiting. Whether a schedule
+// reaches it is computed with schedule.Effective*Schedule, the same functions
+// the scheduler's own reasoning uses, rather than by re-deriving the rules:
+// three toggles and an override reach every item, and three of the four can
+// silently mean "never".
 
 // CoverageReason says WHY an item is unprotected, so the interface can offer
 // the fix rather than only the fact.
@@ -82,9 +84,11 @@ type CoverageDomain struct {
 	// not a failure: its items are reported as neither protected nor
 	// unprotected, because counting them would make the card cry wolf on a
 	// correctly configured server, and a card that cries wolf gets hidden.
-	Enabled     bool           `json:"enabled"`
-	Total       int            `json:"total"`
-	Protected   int            `json:"protected"`
+	Enabled   bool `json:"enabled"`
+	Total     int  `json:"total"`
+	Protected int  `json:"protected"`
+	// Waiting counts the items a schedule reaches that have no backup yet.
+	Waiting     int            `json:"waiting"`
 	Unprotected []CoverageItem `json:"unprotected"`
 	// Declined counts the items the person said not to back up. They are in
 	// neither Total nor Unprotected.
@@ -99,6 +103,7 @@ type CoverageReport struct {
 	// is actually protected".
 	Total     int `json:"total"`
 	Protected int `json:"protected"`
+	Waiting   int `json:"waiting"`
 	// Declined counts what the person said not to back up, in the same domains.
 	Declined int `json:"declined"`
 }
@@ -128,6 +133,7 @@ func (s *Service) Coverage(ctx context.Context) (CoverageReport, error) {
 		if d.Enabled {
 			report.Total += d.Total
 			report.Protected += d.Protected
+			report.Waiting += d.Waiting
 			report.Declined += d.Declined
 		}
 		report.Domains = append(report.Domains, d)
@@ -215,9 +221,19 @@ func (s *Service) coverContainers(ctx context.Context, settings store.Settings, 
 			})
 			continue
 		}
-		out.Protected++
+		out.count(s.neverBackedUp(row.ID))
 	}
 	return out
+}
+
+// count adds an item a schedule reaches and nothing else is missing from:
+// protected once it has a backup, waiting before.
+func (d *CoverageDomain) count(neverBackedUp bool) {
+	if neverBackedUp {
+		d.Waiting++
+		return
+	}
+	d.Protected++
 }
 
 // dbDumpGap names what is missing from a scheduled database container's dumps,
@@ -276,7 +292,7 @@ func (s *Service) coverVMs(settings store.Settings, declined declinedBackups) Co
 		}
 		out.Total++
 		if eff.Kind != schedule.EffectiveNone {
-			out.Protected++
+			out.count(s.neverBackedUp(v.ID))
 			continue
 		}
 		out.Unprotected = append(out.Unprotected, CoverageItem{
@@ -313,7 +329,7 @@ func (s *Service) coverFileSets(settings store.Settings, declined declinedBackup
 		}
 		out.Total++
 		if eff.Kind != schedule.EffectiveNone {
-			out.Protected++
+			out.count(s.neverBackedUp(fs.ID))
 			continue
 		}
 		out.Unprotected = append(out.Unprotected, CoverageItem{
@@ -366,7 +382,7 @@ func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBac
 			out.Unprotected = append(out.Unprotected, skipped...)
 			continue
 		}
-		out.Protected++
+		out.count(s.neverBackedUp(d.ID))
 	}
 	return out
 }

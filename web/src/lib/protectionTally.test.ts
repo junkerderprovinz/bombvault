@@ -40,8 +40,12 @@ describe("tallyEntries", () => {
     expect(tally).toMatchObject({ total: 3, ok: 1, pending: 1, none: 1 });
   });
 
-  it("keeps an entry with a backup protected after it was taken out of the schedule", () => {
-    expect(tallyEntries([item(excluded)])).toMatchObject({ total: 1, ok: 1, none: 0 });
+  it("does not count an old backup as protection once the entry is out of every schedule", () => {
+    expect(tallyEntries([item(excluded)])).toMatchObject({ total: 1, ok: 0, none: 1 });
+    expect(tallyEntries([item({ paused: true })])).toMatchObject({ total: 1, ok: 0, none: 1 });
+    expect(
+      tallyEntries([item({ effectiveSchedule: { kind: "none", spec: "", reason: "schedule-off" } })])
+    ).toMatchObject({ total: 1, ok: 0, none: 1 });
   });
 
   it("leaves out what is gone from the host and says how many", () => {

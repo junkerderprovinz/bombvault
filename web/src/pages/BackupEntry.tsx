@@ -23,7 +23,7 @@ import { Selector } from "../components/Selector";
 import type { PlacementView, Run, TimelineRow } from "../lib/api";
 import { ENTRY_KIND, ENTRY_LIST_PATH, entryListPath, isEntryKind, type EntryKind } from "../lib/backupEntry";
 import { isGone, itemProgressKey } from "../lib/backupList";
-import { ENTRY_TABS, entryTabPath, parseEntryTab, type Entry, type EntryTab } from "../lib/entry";
+import { ENTRY_TABS, entryTabPath, hostSilent, parseEntryTab, type Entry, type EntryTab } from "../lib/entry";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { readRestoreRequest } from "../lib/restoreRequest";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
@@ -176,6 +176,7 @@ function Loaded({
         )}
         <TakeoverNote entry={entry} onDone={reload} />
         {gone && <Note>{t(item.kind === "vm" ? "entry.gone.vm" : "entry.gone.container")}</Note>}
+        {hostSilent(detail) && <Note>{t(item.kind === "vm" ? "entry.hostSilent.vm" : "entry.hostSilent.container")}</Note>}
         {!self && <KindHead entry={entry} tab={tab} onChanged={reload} />}
         {!self && (
           <div data-new-way="entry-tabs" className="mt-2 max-w-xl">

@@ -30,6 +30,7 @@ import {
   containerView,
   serveEntries,
   timelineOf,
+  vmView,
   watched,
   zfsView,
 } from "./backupEntry.testsupport";
@@ -42,6 +43,8 @@ vi.mock("../lib/api", async (importOriginal) => {
     listItems: vi.fn(),
     listContainers: vi.fn(),
     listVMs: vi.fn(),
+    getContainer: vi.fn(),
+    getVM: vi.fn(),
     listFileSets: vi.fn(),
     listZFSDatasets: vi.fn(),
     listItemRuns: vi.fn(),
@@ -296,6 +299,57 @@ describe("reading the entry", () => {
     await renderPage("/backups/tapes/1");
     expect(screen.getByText(en["entry.missing"])).toBeTruthy();
     expect(mocks.getBackupItem).not.toHaveBeenCalled();
+  });
+
+  it("opens a container from its entry while Docker does not answer", async () => {
+    serveEntries(mocks, { items: [{ ...IMMICH, state: undefined, installed: undefined }] });
+    mocks.listContainers.mockResolvedValue({ ok: false, containers: [] });
+    vi.mocked(api.getContainer).mockResolvedValue({
+      ok: true,
+      container: containerView({ state: "", ip: "", installed: false }),
+      hostAnswered: false,
+    });
+    await renderPage("/backups/container/immich");
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("immich");
+    expect(screen.queryByText(en["backups.loadFailed"])).toBeNull();
+    expect(screen.getByText(en["entry.hostSilent.container"])).toBeTruthy();
+    expect(screen.getByText(en["entry.hostSilent.state"], { exact: false })).toBeTruthy();
+    expect(screen.queryByText("192.168.20.40")).toBeNull();
+    expect(whyHeld()).toBe(en["entry.hostSilent.needsDocker"]);
+    expect(document.querySelector('[data-new="entry-menu"]')).toBeNull();
+  });
+
+  it("keeps a container's stored settings and marks what needs Docker while it does not answer", async () => {
+    serveEntries(mocks, { items: [{ ...IMMICH, state: undefined, installed: undefined }] });
+    mocks.listContainers.mockResolvedValue({ ok: false, containers: [] });
+    vi.mocked(api.getContainer).mockResolvedValue({
+      ok: true,
+      container: containerView({ state: "", ip: "", installed: false, stopContainers: ["redis"] }),
+      hostAnswered: false,
+    });
+    await renderPage("/backups/container/immich?tab=settings");
+
+    expect(screen.getAllByText(en["entry.hostSilent.needsDocker"])).toHaveLength(2);
+    expect(screen.getByText(en["excludes.title"])).toBeTruthy();
+  });
+
+  it("opens a VM from its entry while libvirt does not answer", async () => {
+    mocks.listVMs.mockResolvedValue({ ok: false, vms: [] });
+    vi.mocked(api.getVM).mockResolvedValue({ ok: true, vm: vmView({ state: "" }), hostAnswered: false });
+    await renderPage("/backups/vm/win11");
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(WIN11.name);
+    expect(screen.getByText(en["entry.hostSilent.vm"])).toBeTruthy();
+    expect(whyHeld()).toBe(en["entry.hostSilent.needsLibvirt"]);
+  });
+
+  it("says a container is gone when Docker does not answer and no entry has its name", async () => {
+    vi.mocked(api.getContainer).mockRejectedValue(new api.ApiError(404, "not found"));
+    serveEntries(mocks, { items: [{ ...IMMICH, key: "ghost", name: "ghost" }] });
+    mocks.listContainers.mockResolvedValue({ ok: false, containers: [] });
+    await renderPage("/backups/container/ghost");
+    expect(screen.getByText(en["entry.missing"])).toBeTruthy();
   });
 
   it("offers to try again when the entry could not be read", async () => {

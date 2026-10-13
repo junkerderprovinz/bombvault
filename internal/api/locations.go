@@ -469,7 +469,7 @@ func (b *locationBuilder) targetLocation(t store.OffsiteTarget) storageLocation 
 		ID: locationTarget + ":" + t.ID, Object: locationTarget, Kind: "offsite",
 		Provider: t.Provider, Mark: providerMark(t.Provider), Backend: backendOf(t.Repo),
 		Name: t.Name, Where: scrubRepoLocation(t.Repo), CredsRef: t.CredsRef,
-		Enabled: t.Enabled, OffPremises: true,
+		Enabled: t.Enabled, OffPremises: targetOffPremises(t, nil),
 		Retention: &keep, Compression: normalizedCompression(t.Compression),
 		LimitUpload: &t.LimitUpload, LimitDownload: &t.LimitDownload,
 		Protection: locationProtection{Immutable: t.Immutable, Testable: backendOf(t.Repo) == "rest"},

@@ -38,6 +38,7 @@ const SINGLE_KEYS = new Set<string>([
 const RULE_321: Key[] = [
   "placement.rule321Met",
   "placement.rule321OneCopy",
+  "placement.rule321OnPremises",
   "placement.rule321Unconfirmed",
 ];
 

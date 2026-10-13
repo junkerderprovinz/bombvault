@@ -53,8 +53,15 @@ const paperless: BackupItem = {
   runs: [],
 };
 
-/** A container with a backup, which makes the install one that is in use. */
-const plex: BackupItem = { ...paperless, key: "plex", name: "plex", lastBackup: 1_700_000_000 };
+/** A protected container, which makes the install one that is in use. */
+const plex: BackupItem = {
+  ...paperless,
+  key: "plex",
+  name: "plex",
+  lastBackup: 1_700_000_000,
+  included: true,
+  effectiveSchedule: { kind: "domain", spec: "daily 03:00" },
+};
 
 const kitDue = { encryptionEnabled: true, recoveryKitAck: false } as Settings;
 const calm = { encryptionEnabled: true, recoveryKitAck: true } as Settings;

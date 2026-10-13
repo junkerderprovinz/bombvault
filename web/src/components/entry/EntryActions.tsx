@@ -14,7 +14,7 @@ import { useEntriesReload } from "../../lib/attention";
 import { ENTRY_KIND } from "../../lib/backupEntry";
 import { inSchedule, isGone, itemProgressKey } from "../../lib/backupList";
 import { useBackupWatch } from "../../lib/backupWatch";
-import type { Entry } from "../../lib/entry";
+import { hostSilent, type Entry } from "../../lib/entry";
 import { humanBytes } from "../../lib/forecast";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
@@ -120,9 +120,11 @@ function BackupAction({ entry, onDone }: { entry: Entry; onDone: () => void }) {
   }
 
   const noFolder = detail.kind === "files" && detail.set.path === "";
+  const silent = hostSilent(detail);
   const blockedByOther = running.active && !isPending;
   let title: string | undefined;
   if (noFolder) title = t("files.noPathHint");
+  else if (silent) title = t(item.kind === "vm" ? "entry.hostSilent.needsLibvirt" : "entry.hostSilent.needsDocker");
   else if (isPending) {
     title =
       progress?.stage === "dbdump"
@@ -139,7 +141,7 @@ function BackupAction({ entry, onDone }: { entry: Entry; onDone: () => void }) {
         label={t("containers.backupNow")}
         glyph={<IconBackupNow />}
         onClick={() => void start()}
-        disabled={isPending || blockedByOther || noFolder}
+        disabled={isPending || blockedByOther || noFolder || silent}
         busy={isPending}
         title={title}
         shake={shake > 0}
@@ -260,7 +262,11 @@ export function EntryHeadActions({
   let takeover: TakeoverEntry | null = null;
   let candidates: string[] = [];
 
-  if (detail.kind === "container" && !detail.container.self) {
+  if (hostSilent(detail)) {
+    // Whether the container or VM is still there is unknown, so nothing that
+    // acts on it or takes its entry away is offered.
+    exportNewest();
+  } else if (detail.kind === "container" && !detail.container.self) {
     const c = detail.container;
     if (c.installed) {
       takeover = { name: c.name, displayName: c.name, api: containerTakeover };

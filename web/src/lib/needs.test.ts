@@ -110,6 +110,11 @@ describe("needsOf", () => {
     expect(needsOf({ ...nothing, items: [item({}), gitea] })).toEqual([{ is: "unprotected", item: gitea }]);
   });
 
+  it("lists an entry no schedule reaches that still has an old backup", () => {
+    const gitea = item({ key: "gitea", ...leftOut, lastBackup: 1_700_000_000 });
+    expect(needsOf({ ...nothing, items: [item({}), gitea] })).toEqual([{ is: "unprotected", item: gitea }]);
+  });
+
   it("does not list an entry the person said not to back up", () => {
     const backedUp = item({ key: "immich" });
     const scratch = item({ key: "scratch", ...leftOut, backupDeclined: true });

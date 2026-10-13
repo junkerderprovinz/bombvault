@@ -64,7 +64,8 @@ function leftOut(name: string, over: Partial<BackupItem> = {}): BackupItem {
   };
 }
 
-const backedUp = leftOut("plex", { lastBackup: 1_700_000_000 });
+/** A container a schedule reaches and that has a backup. */
+const backedUp = leftOut("plex", { lastBackup: 1_700_000_000, included: true, effectiveSchedule: { kind: "domain", spec: "daily 03:00" } });
 
 /** The entries of an install that has a backup of plex. */
 const items = (list: BackupItem[]) => ({ ok: true, items: [backedUp, ...list], unlisted: [] });
@@ -212,7 +213,7 @@ describe("AttentionProvider", () => {
   });
 
   it("leaves out an entry the person said not to back up", async () => {
-    const backedUp = leftOut("immich", { included: true, lastBackup: 1_700_000_000 });
+    const backedUp = leftOut("immich", { lastBackup: 1_700_000_000, included: true, effectiveSchedule: { kind: "domain", spec: "daily 03:00" } });
     listItems.mockResolvedValue(items([backedUp, leftOut("gitea"), leftOut("scratch", { backupDeclined: true })]));
     draw(kitStored, true);
 
@@ -311,7 +312,7 @@ describe("AttentionProvider", () => {
     expect(listItems).toHaveBeenCalledTimes(1);
 
     listRuns.mockResolvedValue({ ok: true, runs: [run({ status: "success" })] });
-    listItems.mockResolvedValue(items([leftOut("gitea", { lastBackup: 1_700_000_500 })]));
+    listItems.mockResolvedValue(items([leftOut("gitea", { lastBackup: 1_700_000_500, included: true, effectiveSchedule: { kind: "domain", spec: "daily 03:00" } })]));
     act(() => {
       window.dispatchEvent(new Event(ATTENTION_CHANGED_EVENT));
     });
@@ -400,7 +401,9 @@ describe("AttentionProvider", () => {
     await waitFor(() => expect(fresh()).toBe("true"));
     expect(shown()).toBe("0");
 
-    listItems.mockResolvedValue(freshItems([leftOut("gitea", { lastBackup: 1_700_000_500 })]));
+    listItems.mockResolvedValue(
+      freshItems([leftOut("gitea", { lastBackup: 1_700_000_500, included: true, effectiveSchedule: { kind: "domain", spec: "daily 03:00" } })])
+    );
     act(() => {
       window.dispatchEvent(new Event("bv:settings-changed"));
     });

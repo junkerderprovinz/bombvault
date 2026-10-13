@@ -97,13 +97,15 @@ export function tileEntries(entries: BackupItem[], tile: Tile): BackupItem[] {
 
 export type Protection = "ok" | "pending" | "none";
 
-/** protection is how an entry stands. One the person said not to back up is
- *  not protected, whatever backups it still has. */
+/**
+ * protection is how an entry stands. It is protected while a schedule reaches
+ * it and a backup of it exists. One no schedule reaches is not, whatever old
+ * backups it has, and neither is one the person said not to back up. The
+ * server counts by the same rule in GET /api/coverage.
+ */
 export function protection(item: BackupItem): Protection {
-  if (item.backupDeclined) return "none";
-  if (item.lastBackup > 0) return "ok";
-  if (isGone(item) || neverRuns(item)) return "none";
-  return "pending";
+  if (item.backupDeclined || isGone(item) || neverRuns(item)) return "none";
+  return item.lastBackup > 0 ? "ok" : "pending";
 }
 
 /** The one thing a row's status says when no backup of it is running. */

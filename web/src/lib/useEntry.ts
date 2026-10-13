@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ApiError,
   getBackupItem,
+  getContainer,
   getSettings,
+  getVM,
   listContainers,
   listFileSets,
   listItemRuns,
@@ -40,12 +42,27 @@ function linkable<T extends { aliases?: string[] }>(
     .filter((name) => !former.has(name));
 }
 
-/** readDetail reads the list of the entry's kind and picks the entry out of it. */
+/** orMissing turns the 404 of an entry nobody knows into null. */
+function orMissing(err: unknown): null {
+  if (err instanceof ApiError && err.status === 404) return null;
+  throw err;
+}
+
+/**
+ * readDetail reads the list of the entry's kind and picks the entry out of
+ * it. While Docker or libvirt does not answer, the list fails, and the entry's
+ * own route still has what BombVault keeps of it.
+ */
 async function readDetail(kind: EntryKind, key: string): Promise<EntryDetail | null> {
   switch (kind) {
     case "container": {
       const res = await listContainers();
-      if (!res.ok) throw new ReadFailed();
+      if (!res.ok) {
+        const one = await getContainer(key).catch(orMissing);
+        if (!one) return null;
+        if (!one.ok || !one.container) throw new ReadFailed();
+        return { kind, container: one.container, installed: [], linkCandidates: [], hostAnswered: one.hostAnswered !== false };
+      }
       const containers = res.containers ?? [];
       const container = containers.find((c) => c.name === key);
       if (!container) return null;
@@ -54,11 +71,17 @@ async function readDetail(kind: EntryKind, key: string): Promise<EntryDetail | n
         container,
         installed: containers.filter((c) => c.installed),
         linkCandidates: linkable(containers, (c) => !c.installed, (c) => c.name),
+        hostAnswered: true,
       };
     }
     case "vm": {
       const res = await listVMs();
-      if (!res.ok) throw new ReadFailed();
+      if (!res.ok) {
+        const one = await getVM(key).catch(orMissing);
+        if (!one) return null;
+        if (!one.ok || !one.vm) throw new ReadFailed();
+        return { kind, vm: one.vm, linkCandidates: [], hostAnswered: one.hostAnswered !== false };
+      }
       const vms = res.vms ?? [];
       const vm = vms.find((v) => v.libvirtName === key);
       if (!vm) return null;
@@ -66,6 +89,7 @@ async function readDetail(kind: EntryKind, key: string): Promise<EntryDetail | n
         kind,
         vm,
         linkCandidates: linkable(vms, (v) => v.state === "not-installed", (v) => v.libvirtName),
+        hostAnswered: true,
       };
     }
     case "files": {
@@ -92,10 +116,7 @@ async function readDetail(kind: EntryKind, key: string): Promise<EntryDetail | n
  * of the entry's kind.
  */
 async function readEntry(kind: EntryKind, key: string): Promise<Entry | null> {
-  const row = getBackupItem(kind, key).catch((err: unknown) => {
-    if (err instanceof ApiError && err.status === 404) return null;
-    throw err;
-  });
+  const row = getBackupItem(kind, key).catch(orMissing);
   const [found, detail, settings] = await Promise.all([row, readDetail(kind, key), getSettings()]);
   if (!found || !detail) return null;
   if (!found.ok || !found.item || !settings.ok) throw new ReadFailed();

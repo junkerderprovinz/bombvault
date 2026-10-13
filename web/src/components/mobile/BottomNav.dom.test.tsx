@@ -406,7 +406,7 @@ describe("BottomNav's count on Overview", () => {
     runs: [],
   });
 
-  const plex = { ...leftOut("plex"), lastBackup: 1_700_000_000 };
+  const plex = { ...leftOut("plex"), lastBackup: 1_700_000_000, included: true, effectiveSchedule: { kind: "domain", spec: "daily 03:00" } } satisfies BackupItem;
 
   async function drawWithUnprotected(path: string, mode?: string, entries = [leftOut("gitea"), leftOut("immich"), plex]) {
     if (mode) localStorage.setItem("bv-labels-bottombar", mode);

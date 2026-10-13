@@ -5,7 +5,7 @@ import type { AnomalyItem } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
 import { ENTRY_KIND } from "../../lib/backupEntry";
 import { inSchedule, isGone, itemProgressKey, protection, runsNow } from "../../lib/backupList";
-import { entryReason, type Entry } from "../../lib/entry";
+import { entryReason, hostSilent, type Entry } from "../../lib/entry";
 import { stateLabel, useT } from "../../lib/i18n";
 import type { ProgressState } from "../../lib/progress";
 import { formatRecent } from "../../lib/reltime";
@@ -57,16 +57,19 @@ function ltr(text: string, mono = false): ReactNode {
 function facts(entry: Entry, t: ReturnType<typeof useT>["t"]): ReactNode[] {
   const { detail, hostMountRoot } = entry;
   const gone = isGone(entry.item);
+  const silent = hostSilent(detail);
   switch (detail.kind) {
     case "container": {
       const c = detail.container;
       const out: ReactNode[] = [];
-      if (!gone) out.push(stateLabel(t, c.state));
+      if (silent) out.push(t("entry.hostSilent.state"));
+      else if (!gone) out.push(stateLabel(t, c.state));
       if (!gone && c.ip) out.push(ltr(c.ip, true));
       if (c.image) out.push(ltr(c.image));
       return out;
     }
     case "vm":
+      if (silent) return [t("entry.hostSilent.state")];
       return gone ? [] : [stateLabel(t, detail.vm.state)];
     case "files":
       return detail.set.path === "" ? [] : [ltr(`${hostMountRoot}/${detail.set.path}`, true)];

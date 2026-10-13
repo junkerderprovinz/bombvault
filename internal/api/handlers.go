@@ -2,6 +2,7 @@ package api
 
 import (
 	"cmp"
+	"context"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
@@ -28,6 +29,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/hostload"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
@@ -693,7 +695,48 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	views, err := h.containerViews(r, infos, true)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "containers": views})
+}
 
+// handleGetContainer serves GET /api/containers/{name}: the row GET
+// /api/containers has for one container. While Docker does not answer, a
+// stored entry is still served from what BombVault keeps of it. hostAnswered
+// is false then, and the row's state and installed say nothing.
+func (h *Handler) handleGetContainer(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	infos, err := h.docker.List(r.Context())
+	answered := err == nil
+	if !answered {
+		log.Printf("api: get container: the container list is unavailable: %v", err)
+	}
+	views, err := h.containerViews(r, infos, answered)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	i := slices.IndexFunc(views, func(v containerView) bool { return v.Name == name })
+	switch {
+	case i >= 0:
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"container": views[i], "hostAnswered": answered}))
+	case answered:
+		writeJSON(w, http.StatusNotFound, codedFailEnvelope(errNoSuchItem, "not-found"))
+	default:
+		writeJSON(w, http.StatusOK, failEnvelope(errHostSilent))
+	}
+}
+
+// containerViews builds the rows of GET /api/containers from what Docker
+// listed. Without an answer from Docker, infos is empty and every stored
+// entry gets a row with an empty state.
+func (h *Handler) containerViews(r *http.Request, infos []dockercli.ContainerInfo, answered bool) ([]containerView, error) {
 	targets, _ := h.store.ListTargets()
 	byName := make(map[string]store.Target, len(targets))
 	for _, t := range targets {
@@ -708,8 +751,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 
 	settings, sErr := h.store.GetSettings()
 	if sErr != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(sErr))
-		return
+		return nil, sErr
 	}
 	dbRows := h.svc.dbDumpRows(r.Context(), infos, byName)
 
@@ -788,18 +830,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 				v.DBDumpEngine = t.DBDumpEngine
 				v.LastDBDump = h.lastDBDump(t.ID)
 			}
-			v.IncludeInSchedule = t.IncludeInSchedule
-			v.PreHook = t.PreHook
-			v.PostHook = t.PostHook
-			v.StopContainers = t.StopContainers
-			v.Excludes = t.Excludes
-			v.UpdateAfterBackup = t.UpdatesAfterBackup(settings.UpdateContainersAfterBackup)
-			v.UpdateAfterBackupOwn = t.UpdateAfterBackupOwn
-			v.LastUpdateCheck = t.LastUpdateCheck
-			v.LastUpdateResult = t.LastUpdateResult
-			v.BackupOrder = t.BackupOrder
-			v.ScheduleCadence = t.ScheduleCadence
-			v.IdleWaitHours = idleHours[t.ID]
+			v.takeStored(t, settings, idleHours[t.ID])
 			run, _ = h.store.LastSuccessfulBackup(t.ID)
 		}
 		home, hErr := h.svc.primaryRepo(settings, "containers", c.Name)
@@ -837,6 +868,10 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			ScheduleCadence:   t.ScheduleCadence,
 			AliasConflicts:    aliasConflicts.of(t.ID),
 			Aliases:           formerNames.of(t.ID),
+		}
+		if !answered {
+			v.State = ""
+			v.takeStored(t, settings, idleHours[t.ID])
 		}
 		if t.Definition != "" {
 			var def containerDefinition
@@ -893,7 +928,23 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			views[i].PreHook, views[i].PostHook = "", ""
 		}
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "containers": views})
+	return views, nil
+}
+
+// takeStored fills in what the container's entry keeps for itself.
+func (v *containerView) takeStored(t store.Target, settings store.Settings, idleWaitHours int) {
+	v.IncludeInSchedule = t.IncludeInSchedule
+	v.PreHook = t.PreHook
+	v.PostHook = t.PostHook
+	v.StopContainers = t.StopContainers
+	v.Excludes = t.Excludes
+	v.UpdateAfterBackup = t.UpdatesAfterBackup(settings.UpdateContainersAfterBackup)
+	v.UpdateAfterBackupOwn = t.UpdateAfterBackupOwn
+	v.LastUpdateCheck = t.LastUpdateCheck
+	v.LastUpdateResult = t.LastUpdateResult
+	v.BackupOrder = t.BackupOrder
+	v.ScheduleCadence = t.ScheduleCadence
+	v.IdleWaitHours = idleWaitHours
 }
 
 // lastBackupDate is the newest backup an entry owns, so a card's date agrees
@@ -5564,6 +5615,37 @@ func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 	if views == nil {
 		views = []VMView{}
 	}
+	h.placeVMs(r.Context(), views)
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "vms": views})
+}
+
+// handleGetVM serves GET /api/vms/{name}: the row GET /api/vms has for one VM,
+// by its libvirt name. While libvirt does not answer, a stored entry is still
+// served, hostAnswered is false and the row's state is empty.
+func (h *Handler) handleGetVM(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.vmNameParam(w, r)
+	if !ok {
+		return
+	}
+	views, answered, err := h.svc.listVMs(r.Context(), false)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	i := slices.IndexFunc(views, func(v VMView) bool { return v.LibvirtName == name })
+	switch {
+	case i >= 0:
+		h.placeVMs(r.Context(), views)
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"vm": views[i], "hostAnswered": answered}))
+	case answered:
+		writeJSON(w, http.StatusNotFound, codedFailEnvelope(errNoSuchItem, "not-found"))
+	default:
+		writeJSON(w, http.StatusOK, failEnvelope(errHostSilent))
+	}
+}
+
+// placeVMs gives each row the placement its card shows.
+func (h *Handler) placeVMs(ctx context.Context, views []VMView) {
 	targets, _ := h.store.ListVMTargets()
 	byName := make(map[string]store.VMTarget, len(targets))
 	for _, t := range targets {
@@ -5580,11 +5662,10 @@ func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 		}
 		items = append(items, it)
 	}
-	placements := h.svc.listPlacements(r.Context(), "vms", items)
+	placements := h.svc.listPlacements(ctx, "vms", items)
 	for i := range views {
 		views[i].Placement = placements[views[i].LibvirtName]
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "vms": views})
 }
 
 // handleBackupVM starts a single VM backup ON THE SERVER and returns

@@ -365,9 +365,11 @@ func TestCoverageCountsZFSItemsBackupEverythingReaches(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true}); err != nil {
+	appdata, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})
+	if err != nil {
 		t.Fatal(err)
 	}
+	seedRun(t, st, appdata.ID, "backup", "success", store.RunMeta{})
 	if _, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "tank/media", Enabled: false}); err != nil {
 		t.Fatal(err)
 	}
@@ -433,4 +435,50 @@ func TestCoverageLeavesOutACopyRestoredNextToItsOriginalUntilItHasAnEntry(t *tes
 	if total, _ := report["total"].(float64); total != 2 {
 		t.Fatalf("total = %v, want plex and the copy that has an entry", report["total"])
 	}
+}
+
+// An entry counts as protected while a schedule reaches it and it has a
+// backup, the rule the overview counts by. An old backup does not protect an
+// entry no schedule reaches, and one without a backup yet is waiting.
+func TestCoverageCountsOnlyScheduledEntriesWithABackupAsProtected(t *testing.T) {
+	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	s := mustSettings(t, st)
+	s.FilesEnabled, s.FilesSchedule = true, "daily 02:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	set := func(name string, enabled, backedUp bool) {
+		t.Helper()
+		fs, err := st.CreateFileSet(store.FileSet{Name: name, Path: name, Enabled: enabled})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if backedUp {
+			seedRun(t, st, fs.ID, "backup", "success", store.RunMeta{})
+		}
+	}
+	set("documents", true, true)
+	set("photos", true, false)
+	set("archive", false, true)
+
+	report, _ := mustCoverage(t, h)["coverage"].(map[string]any)
+	for _, d := range report["domains"].([]any) {
+		dm, _ := d.(map[string]any)
+		if dm["domain"] != "files" {
+			continue
+		}
+		if dm["total"] != float64(3) || dm["protected"] != float64(1) || dm["waiting"] != float64(1) {
+			t.Fatalf("the folders count %v protected and %v waiting of %v, want 1 and 1 of 3", dm["protected"], dm["waiting"], dm["total"])
+		}
+		items, _ := dm["unprotected"].([]any)
+		if len(items) != 1 {
+			t.Fatalf("unprotected = %v, want the archive alone", items)
+		}
+		archive, _ := items[0].(map[string]any)
+		if archive["name"] != "archive" || archive["reason"] != "not-included" || archive["neverBackedUp"] != false {
+			t.Fatalf("the archive reads %v, want not-included with its old backup", archive)
+		}
+		return
+	}
+	t.Fatalf("the report has no folders domain: %v", report)
 }
