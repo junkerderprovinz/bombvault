@@ -1982,12 +1982,10 @@ const lv: Partial<Translations> = {
   "settings.cacheLimitLabel": "Kešatmiņas izmēra ierobežojums (MB, 0 = neierobežots)",
 
   // What is new dialog
-  "whatsnew.title": "Jaunumi versijā {version}",
   "whatsnew.loading": "Ielādē izlaidumu piezīmes…",
   "whatsnew.loadFailed": "Neizdevās šeit ielādēt izlaidumu piezīmes. Atveriet tās GitHub.",
   "whatsnew.retry": "Mēģināt vēlreiz",
   "whatsnew.viewOnGitHub": "Skatīt pilnu izlaidumu GitHub",
-  "whatsnew.close": "Aizvērt",
 
   // Files domain
   "nav.files": "Mapes",
@@ -4264,6 +4262,8 @@ const lv: Partial<Translations> = {
   "welcome.restoreHint": "Vai BombVault jums jau ir pazīstams? Tad “Atjaunot no rezerves kopijas” atgriež visu, arī iestatījumus.",
   "whatsNew.title": "Jaunumi",
   "whatsNew.windowTitle": "Jaunumi versijā {version}",
+  "whatsNew.notesTab": "Izlaidumu piezīmes",
+  "whatsNew.changesTab": "Izmaiņas",
   "whatsNew.hint": "Ko mainīja pēdējais atjauninājums. Mirdzošs punkts atzīmē katru izmaiņu tās lapā, un klikšķis uz punkta to paslēpj. Punkts uz cilnes, flīzes vai rindas pazūd, kad esat redzējuši visu, kas aiz tā ir.",
   "whatsNew.showAll": "Rādīt visus no jauna",
   "whatsNew.markAll": "Atzīmēt visu kā redzētu",

@@ -1462,11 +1462,9 @@ const es: Partial<Translations> = {
   "filter.button": "Filtros",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Novedades de {version}",
   "whatsnew.loading": "Cargando las notas de la versión…",
   "whatsnew.loadFailed": "No se pudieron cargar las notas de la versión aquí. Ábrelas en GitHub.",
   "whatsnew.viewOnGitHub": "Ver la versión completa en GitHub",
-  "whatsnew.close": "Cerrar",
   "notify.scheduledSummary": "Resumir las ejecuciones programadas",
   "notify.scheduledSummaryHint": "Envía un solo resumen por cada copia de seguridad programada (por ejemplo: 42 de 45 correctas) en lugar de un mensaje aparte por cada contenedor o VM. Healthchecks ya se resume. Las copias manuales siguen notificando por elemento.",
   "notify.notifyOnUpdate": "Notificar al actualizar un contenedor",
@@ -4252,6 +4250,8 @@ const es: Partial<Translations> = {
   "welcome.restoreHint": "¿Ya has usado BombVault antes? Entonces «Restaurar desde una copia» lo recupera todo, ajustes incluidos.",
   "whatsNew.title": "Novedades",
   "whatsNew.windowTitle": "Novedades de la versión {version}",
+  "whatsNew.notesTab": "Notas de la versión",
+  "whatsNew.changesTab": "Cambios",
   "whatsNew.hint": "Lo que cambió la última actualización. Un punto brillante marca cada cambio en su página, y un clic en un punto lo oculta. Un punto en una pestaña, un mosaico o una fila desaparece cuando has visto todo lo que hay detrás.",
   "whatsNew.showAll": "Mostrar todos otra vez",
   "whatsNew.markAll": "Marcar todos como vistos",

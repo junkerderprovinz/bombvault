@@ -1455,11 +1455,9 @@ const zh: Partial<Translations> = {
   "filter.button": "筛选",
 
   // What's new dialog (#48)
-  "whatsnew.title": "{version} 新增内容",
   "whatsnew.loading": "正在加载发行说明…",
   "whatsnew.loadFailed": "无法在此加载发行说明。请在 GitHub 上打开。",
   "whatsnew.viewOnGitHub": "在 GitHub 上查看完整发行版",
-  "whatsnew.close": "关闭",
   "notify.scheduledSummary": "汇总计划运行",
   "notify.scheduledSummaryHint": "每次计划备份运行只发送一条汇总消息（例如：45 个中成功 42 个），而不是为每个容器或虚拟机单独发送一条消息。Healthchecks 已自动汇总。手动备份仍会逐项通知。",
   "notify.notifyOnUpdate": "容器更新时通知",
@@ -4245,6 +4243,8 @@ const zh: Partial<Translations> = {
   "welcome.restoreHint": "以前用过 BombVault 吗？那么“从备份恢复”可以找回所有内容，包括设置。",
   "whatsNew.title": "新内容",
   "whatsNew.windowTitle": "{version} 的新内容",
+  "whatsNew.notesTab": "发行说明",
+  "whatsNew.changesTab": "更改",
   "whatsNew.hint": "上次更新改了什么。发光的点会在对应页面上标出每处改动，点击圆点即可隐藏。标签页、磁贴或行上的点，会在你看完它背后的全部内容后消失。",
   "whatsNew.showAll": "重新显示全部",
   "whatsNew.markAll": "全部标为已看",

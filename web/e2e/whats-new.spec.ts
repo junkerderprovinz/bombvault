@@ -77,10 +77,12 @@ async function stage(page: Page, { from = "v9.9.1", firstStart = false }: Staged
   });
 }
 
-/** Opens the app on a page and puts away the release notes the update opens. */
+/** Opens the app on a page and puts away the window the update opens on its release notes. */
 async function openUpdated(page: Page, path: string): Promise<void> {
   await page.goto(path);
-  const notes = page.getByRole("dialog", { name: /What's new/ });
+  const notes = page.getByRole("dialog", { name: "New in 10.0.0" });
+  await expect(notes.getByRole("tab", { name: "Release notes" })).toHaveAttribute("aria-selected", "true");
+  await expect(notes.getByText("One list.")).toBeVisible();
   await notes.getByRole("button", { name: "Close" }).click();
   await expect(notes).toHaveCount(0);
 }

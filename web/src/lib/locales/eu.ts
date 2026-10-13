@@ -1982,12 +1982,10 @@ const eu: Partial<Translations> = {
   "settings.cacheLimitLabel": "Cachearen tamaina-muga (MB, 0 = mugarik gabe)",
 
   // What is new dialog
-  "whatsnew.title": "{version} bertsioaren berritasunak",
   "whatsnew.loading": "Bertsio-oharrak kargatzen…",
   "whatsnew.loadFailed": "Ezin izan dira bertsio-oharrak hemen kargatu. Ireki GitHub-en.",
   "whatsnew.retry": "Saiatu berriro",
   "whatsnew.viewOnGitHub": "Ikusi bertsio osoa GitHub-en",
-  "whatsnew.close": "Itxi",
 
   // Files domain
   "nav.files": "Karpetak",
@@ -4264,6 +4262,8 @@ const eu: Partial<Translations> = {
   "welcome.restoreHint": "BombVault lehendik erabili duzu? Orduan «Berrezarri babeskopia batetik» aukerak dena itzultzen du, ezarpenak barne.",
   "whatsNew.title": "Berria",
   "whatsNew.windowTitle": "{version} bertsioko berritasunak",
+  "whatsNew.notesTab": "Bertsio-oharrak",
+  "whatsNew.changesTab": "Aldaketak",
   "whatsNew.hint": "Azken eguneratzeak zer aldatu duen. Puntu distiratsu batek aldaketa bakoitza markatzen du bere orrian, eta puntu baten gainean klik eginda ezkutatu egiten da. Fitxa, lauza edo errenkada bateko puntua desagertu egiten da atzean dagoen guztia ikusi duzunean.",
   "whatsNew.showAll": "Erakutsi guztiak berriro",
   "whatsNew.markAll": "Markatu guztiak ikusitzat",

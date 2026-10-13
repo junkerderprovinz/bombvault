@@ -1465,11 +1465,9 @@ const hu: Partial<Translations> = {
   "filter.button": "Szűrők",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Újdonságok a(z) {version} verzióban",
   "whatsnew.loading": "Kiadási megjegyzések betöltése…",
   "whatsnew.loadFailed": "A kiadási megjegyzéseket itt nem sikerült betölteni. Nyisd meg őket a GitHubon.",
   "whatsnew.viewOnGitHub": "Teljes kiadás megtekintése a GitHubon",
-  "whatsnew.close": "Bezárás",
   "notify.scheduledSummary": "Ütemezett futások összegzése",
   "notify.scheduledSummaryHint": "Ütemezett biztonsági mentésenként egyetlen összegzést küld (például: 45-ből 42 sikerült) minden egyes container vagy VM külön üzenete helyett. A Healthchecks már összegezve van. A kézi mentések továbbra is elemenként küldenek értesítést.",
   "notify.notifyOnUpdate": "Értesítés container frissítésekor",
@@ -4255,6 +4253,8 @@ const hu: Partial<Translations> = {
   "welcome.restoreHint": "Használtad már a BombVaultot? Akkor a „Visszaállítás mentésből” mindent visszahoz, a beállításokat is.",
   "whatsNew.title": "Újdonságok",
   "whatsNew.windowTitle": "{version} újdonságai",
+  "whatsNew.notesTab": "Kiadási megjegyzések",
+  "whatsNew.changesTab": "Változások",
   "whatsNew.hint": "Mit változtatott az utolsó frissítés. Egy fénylő pont jelöli minden változás helyét a saját oldalán, és a pontra kattintva elrejtheted. A füleken, csempéken vagy soron lévő pont eltűnik, amint mindent láttál, ami mögötte van.",
   "whatsNew.showAll": "Mind megmutatása újra",
   "whatsNew.markAll": "Mind megjelölése láttként",

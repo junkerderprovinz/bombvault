@@ -1982,12 +1982,10 @@ const hr: Partial<Translations> = {
   "settings.cacheLimitLabel": "Ograničenje veličine predmemorije (MB, 0 = bez ograničenja)",
 
   // What is new dialog
-  "whatsnew.title": "Novosti u {version}",
   "whatsnew.loading": "Učitavanje bilješki o izdanju…",
   "whatsnew.loadFailed": "Bilješke o izdanju nisu se mogle učitati ovdje. Otvorite ih na GitHubu.",
   "whatsnew.retry": "Pokušaj ponovno",
   "whatsnew.viewOnGitHub": "Pogledaj cijelo izdanje na GitHubu",
-  "whatsnew.close": "Zatvori",
 
   // Files domain
   "nav.files": "Mape",
@@ -4264,6 +4262,8 @@ const hr: Partial<Translations> = {
   "welcome.restoreHint": "Jeste li već koristili BombVault? Tada „Vrati iz sigurnosne kopije“ vraća sve, uključujući postavke.",
   "whatsNew.title": "Novo",
   "whatsNew.windowTitle": "Novo u verziji {version}",
+  "whatsNew.notesTab": "Bilješke o izdanju",
+  "whatsNew.changesTab": "Promjene",
   "whatsNew.hint": "Što je promijenilo zadnje ažuriranje. Svjetleća točka označava svaku promjenu na njezinoj stranici, a klik na točku je skriva. Točka na jezičku, pločici ili retku nestaje kad vidite sve što je iza nje.",
   "whatsNew.showAll": "Prikaži sve ponovno",
   "whatsNew.markAll": "Označi sve kao viđeno",

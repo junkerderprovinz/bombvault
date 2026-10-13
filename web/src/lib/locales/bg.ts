@@ -1982,12 +1982,10 @@ const bg: Partial<Translations> = {
   "settings.cacheLimitLabel": "Лимит на размера на кеша (MB, 0 = без ограничение)",
 
   // What's new dialog
-  "whatsnew.title": "Новото в {version}",
   "whatsnew.loading": "Зареждане на бележките по изданието…",
   "whatsnew.loadFailed": "Бележките по изданието не можаха да се заредят тук. Отвори ги в GitHub.",
   "whatsnew.retry": "Опитай отново",
   "whatsnew.viewOnGitHub": "Виж пълното издание в GitHub",
-  "whatsnew.close": "Затвори",
 
   // Files domain
   "nav.files": "Папки",
@@ -4264,6 +4262,8 @@ const bg: Partial<Translations> = {
   "welcome.restoreHint": "Познаваш ли вече BombVault? Тогава „Възстановяване от архив“ връща всичко, включително настройките.",
   "whatsNew.title": "Ново",
   "whatsNew.windowTitle": "Ново във версия {version}",
+  "whatsNew.notesTab": "Бележки по изданието",
+  "whatsNew.changesTab": "Промени",
   "whatsNew.hint": "Какво е променила последната актуализация. Светеща точка отбелязва всяка промяна на нейната страница, а щракване върху точка я скрива. Точка върху раздел, плочка или ред изчезва, щом видиш всичко зад нея.",
   "whatsNew.showAll": "Покажи всички отново",
   "whatsNew.markAll": "Отбележи всички като видени",

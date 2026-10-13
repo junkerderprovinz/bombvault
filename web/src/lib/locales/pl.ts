@@ -1461,11 +1461,9 @@ const pl: Partial<Translations> = {
   "filter.button": "Filtry",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Nowości w {version}",
   "whatsnew.loading": "Wczytywanie informacji o wersji…",
   "whatsnew.loadFailed": "Nie udało się tutaj wczytać informacji o wersji. Otwórz je w GitHub.",
   "whatsnew.viewOnGitHub": "Zobacz pełne wydanie na GitHub",
-  "whatsnew.close": "Zamknij",
   "notify.scheduledSummary": "Podsumowuj zaplanowane przebiegi",
   "notify.scheduledSummaryHint": "Wysyłaj jedno podsumowanie na zaplanowany przebieg kopii zapasowej (na przykład: 42 z 45 zakończyło się powodzeniem) zamiast osobnej wiadomości dla każdego kontenera lub VM. Healthchecks jest już podsumowywany. Ręczne kopie zapasowe nadal powiadamiają o każdym elemencie.",
   "notify.notifyOnUpdate": "Powiadamiaj o aktualizacji kontenera",
@@ -4251,6 +4249,8 @@ const pl: Partial<Translations> = {
   "welcome.restoreHint": "Znasz już BombVault? Wtedy „Przywróć z kopii zapasowej” przywraca wszystko, także ustawienia.",
   "whatsNew.title": "Nowości",
   "whatsNew.windowTitle": "Nowości w wersji {version}",
+  "whatsNew.notesTab": "Informacje o wersji",
+  "whatsNew.changesTab": "Zmiany",
   "whatsNew.hint": "Co zmieniła ostatnia aktualizacja. Świecący punkt oznacza każdą zmianę na jej stronie, a kliknięcie punktu go ukrywa. Punkt na zakładce, kafelku lub wierszu znika, gdy zobaczysz wszystko, co za nim stoi.",
   "whatsNew.showAll": "Pokaż wszystkie ponownie",
   "whatsNew.markAll": "Oznacz wszystkie jako zobaczone",

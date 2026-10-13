@@ -1455,11 +1455,9 @@ const ja: Partial<Translations> = {
   "filter.button": "フィルター",
 
   // What's new dialog (#48)
-  "whatsnew.title": "{version} の新機能",
   "whatsnew.loading": "リリースノートを読み込んでいます…",
   "whatsnew.loadFailed": "ここでリリースノートを読み込めませんでした。GitHub で開いてください。",
   "whatsnew.viewOnGitHub": "GitHub で完全なリリースを表示",
-  "whatsnew.close": "閉じる",
   "notify.scheduledSummary": "スケジュール実行をまとめて通知",
   "notify.scheduledSummaryHint": "スケジュールされたバックアップ実行ごとに、コンテナや VM 個別のメッセージではなく、まとめて 1 通の要約を送信します（例: 45 件中 42 件成功）。Healthchecks はすでに要約されています。手動バックアップは引き続き項目ごとに通知します。",
   "notify.notifyOnUpdate": "コンテナ更新時に通知",
@@ -4245,6 +4243,8 @@ const ja: Partial<Translations> = {
   "welcome.restoreHint": "以前に BombVault を使ったことがありますか。その場合は「バックアップから復元」で、設定を含めてすべてを元に戻せます。",
   "whatsNew.title": "新着",
   "whatsNew.windowTitle": "{version} の新着",
+  "whatsNew.notesTab": "リリースノート",
+  "whatsNew.changesTab": "変更点",
   "whatsNew.hint": "直近のアップデートで変わった点です。光る点が変更箇所をそのページに表示し、点をクリックすると隠れます。タブ、タイル、行の点は、その先をすべて見ると消えます。",
   "whatsNew.showAll": "すべて再表示",
   "whatsNew.markAll": "すべて確認済みにする",

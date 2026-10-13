@@ -1464,11 +1464,9 @@ const he: Partial<Translations> = {
   "filter.button": "מסננים",
 
   // What's new dialog (#48)
-  "whatsnew.title": "מה חדש ב-{version}",
   "whatsnew.loading": "טוען הערות גרסה…",
   "whatsnew.loadFailed": "לא ניתן היה לטעון כאן את הערות הגרסה. אפשר לפתוח אותן ב-GitHub.",
   "whatsnew.viewOnGitHub": "הצגת ההשקה המלאה ב-GitHub",
-  "whatsnew.close": "סגירה",
   "notify.scheduledSummary": "סיכום הרצות מתוזמנות",
   "notify.scheduledSummaryHint": "שליחת סיכום אחד לכל הרצת גיבוי מתוזמנת (לדוגמה: 42 מתוך 45 הצליחו) במקום הודעה נפרדת לכל container או VM. Healthchecks כבר מסוכם. גיבויים ידניים עדיין שולחים התראה לכל פריט.",
   "notify.notifyOnUpdate": "התראה על עדכון container",
@@ -4254,6 +4252,8 @@ const he: Partial<Translations> = {
   "welcome.restoreHint": "כבר היה שימוש ב-BombVault בעבר? אז “שחזור מגיבוי” מחזיר הכול, כולל ההגדרות.",
   "whatsNew.title": "חדש",
   "whatsNew.windowTitle": "מה חדש בגרסה {version}",
+  "whatsNew.notesTab": "הערות גרסה",
+  "whatsNew.changesTab": "שינויים",
   "whatsNew.hint": "מה שהעדכון האחרון שינה. נקודה זוהרת מסמנת כל שינוי בדף שלו, ולחיצה על נקודה מסתירה אותה. נקודה על לשונית, אריח או שורה נעלמת ברגע שכל מה שמאחוריה נראה.",
   "whatsNew.showAll": "הצגת הכול שוב",
   "whatsNew.markAll": "סימון הכול כנראה",

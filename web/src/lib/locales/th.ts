@@ -1465,11 +1465,9 @@ const th: Partial<Translations> = {
   "filter.button": "ตัวกรอง",
 
   // What's new dialog (#48)
-  "whatsnew.title": "มีอะไรใหม่ใน {version}",
   "whatsnew.loading": "กำลังโหลดบันทึกการเผยแพร่…",
   "whatsnew.loadFailed": "ไม่สามารถโหลดบันทึกการเผยแพร่ที่นี่ได้ เปิดบน GitHub",
   "whatsnew.viewOnGitHub": "ดูรุ่นเต็มบน GitHub",
-  "whatsnew.close": "ปิด",
   "notify.scheduledSummary": "สรุปการรันตามกำหนดเวลา",
   "notify.scheduledSummaryHint": "ส่งสรุปเพียงหนึ่งข้อความต่อการสำรองข้อมูลตามกำหนดเวลาแต่ละครั้ง (เช่น สำเร็จ 42 จาก 45) แทนที่จะส่งข้อความแยกสำหรับทุก container หรือ VM ส่วน Healthchecks มีการสรุปอยู่แล้ว การสำรองข้อมูลด้วยตนเองยังคงแจ้งเตือนแยกทีละรายการ",
   "notify.notifyOnUpdate": "แจ้งเตือนเมื่ออัปเดต container",
@@ -4255,6 +4253,8 @@ const th: Partial<Translations> = {
   "welcome.restoreHint": "เคยใช้ BombVault มาก่อนหรือไม่ ถ้าเคย “กู้คืนจากข้อมูลสำรอง” จะนำทุกอย่างกลับมา รวมถึงการตั้งค่า",
   "whatsNew.title": "ใหม่",
   "whatsNew.windowTitle": "ใหม่ใน {version}",
+  "whatsNew.notesTab": "บันทึกการเผยแพร่",
+  "whatsNew.changesTab": "การเปลี่ยนแปลง",
   "whatsNew.hint": "สิ่งที่การอัปเดตล่าสุดเปลี่ยนแปลง จุดเรืองแสงจะทำเครื่องหมายแต่ละการเปลี่ยนแปลงในหน้าของมัน และการคลิกที่จุดจะซ่อนจุดนั้น จุดบนแท็บ ไทล์ หรือแถวจะหายไปเมื่อคุณดูทุกอย่างที่อยู่ข้างหลังครบแล้ว",
   "whatsNew.showAll": "แสดงทั้งหมดอีกครั้ง",
   "whatsNew.markAll": "ทำเครื่องหมายว่าดูทั้งหมดแล้ว",

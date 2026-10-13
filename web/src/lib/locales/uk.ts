@@ -1461,11 +1461,9 @@ const uk: Partial<Translations> = {
   "filter.button": "Фільтри",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Що нового у {version}",
   "whatsnew.loading": "Завантаження приміток до випуску…",
   "whatsnew.loadFailed": "Не вдалося завантажити примітки до випуску тут. Відкрийте їх на GitHub.",
   "whatsnew.viewOnGitHub": "Переглянути повний випуск на GitHub",
-  "whatsnew.close": "Закрити",
   "notify.scheduledSummary": "Підсумовувати заплановані запуски",
   "notify.scheduledSummaryHint": "Надсилати один підсумок на кожен запланований запуск резервного копіювання (наприклад: 42 з 45 успішно) замість окремого повідомлення для кожного контейнера чи VM. Healthchecks уже підсумовується. Ручні резервні копії все одно сповіщають окремо про кожен запис.",
   "notify.notifyOnUpdate": "Сповіщати про оновлення контейнера",
@@ -4251,6 +4249,8 @@ const uk: Partial<Translations> = {
   "welcome.restoreHint": "BombVault вам вже знайомий? Тоді «Відновити з резервної копії» поверне все, зокрема налаштування.",
   "whatsNew.title": "Нове",
   "whatsNew.windowTitle": "Що нового у версії {version}",
+  "whatsNew.notesTab": "Примітки до випуску",
+  "whatsNew.changesTab": "Зміни",
   "whatsNew.hint": "Що змінило останнє оновлення. Світла точка позначає кожну зміну на її сторінці, а клацання по точці приховує її. Точка на вкладці, плитці чи рядку зникає, коли ви побачите все, що за нею.",
   "whatsNew.showAll": "Показати всі знову",
   "whatsNew.markAll": "Позначити всі як переглянуті",

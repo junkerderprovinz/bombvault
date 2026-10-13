@@ -1463,11 +1463,9 @@ const nl: Partial<Translations> = {
   "filter.button": "Filters",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Nieuw in {version}",
   "whatsnew.loading": "Release-opmerkingen laden…",
   "whatsnew.loadFailed": "De release-opmerkingen konden hier niet worden geladen. Open ze op GitHub.",
   "whatsnew.viewOnGitHub": "Volledige release op GitHub bekijken",
-  "whatsnew.close": "Sluiten",
   "notify.scheduledSummary": "Geplande runs samenvatten",
   "notify.scheduledSummaryHint": "Verstuur één samenvatting per geplande backuprun (bijvoorbeeld: 42 van 45 geslaagd) in plaats van een apart bericht voor elke container of VM. Healthchecks wordt al samengevat. Handmatige backups blijven per item melden.",
   "notify.notifyOnUpdate": "Melden bij containerupdate",
@@ -4253,6 +4251,8 @@ const nl: Partial<Translations> = {
   "welcome.restoreHint": "Heb je BombVault al eerder gebruikt? Dan haalt “Herstellen vanaf een back-up” alles terug, inclusief de instellingen.",
   "whatsNew.title": "Nieuw",
   "whatsNew.windowTitle": "Nieuw in {version}",
+  "whatsNew.notesTab": "Release-opmerkingen",
+  "whatsNew.changesTab": "Wijzigingen",
   "whatsNew.hint": "Wat de laatste update heeft veranderd. Een gloeiende stip markeert elke wijziging op haar pagina en een klik op een stip verbergt hem. Een stip op een tabblad, tegel of rij verdwijnt zodra je alles erachter hebt gezien.",
   "whatsNew.showAll": "Alles opnieuw tonen",
   "whatsNew.markAll": "Alles als gezien markeren",

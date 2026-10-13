@@ -1982,12 +1982,10 @@ const gl: Partial<Translations> = {
   "settings.cacheLimitLabel": "Límite de tamaño da caché (MB, 0 = sen límite)",
 
   // What is new dialog
-  "whatsnew.title": "Novidades de {version}",
   "whatsnew.loading": "Cargando as notas da versión…",
   "whatsnew.loadFailed": "Non se puideron cargar aquí as notas da versión. Ábreas en GitHub.",
   "whatsnew.retry": "Tentar de novo",
   "whatsnew.viewOnGitHub": "Ver a versión completa en GitHub",
-  "whatsnew.close": "Pechar",
 
   // Files domain
   "nav.files": "Cartafoles",
@@ -4264,6 +4262,8 @@ const gl: Partial<Translations> = {
   "welcome.restoreHint": "Xa usaches BombVault antes? Entón «Restaurar desde unha copia» recupera todo, incluída a configuración.",
   "whatsNew.title": "Novidades",
   "whatsNew.windowTitle": "Novidades da versión {version}",
+  "whatsNew.notesTab": "Notas da versión",
+  "whatsNew.changesTab": "Cambios",
   "whatsNew.hint": "Que cambiou a última actualización. Un punto brillante marca cada cambio na súa páxina, e un clic nun punto agóchao. Un punto nunha lapela, un mosaico ou unha fila desaparece cando viches todo o que hai detrás.",
   "whatsNew.showAll": "Amosar todos outra vez",
   "whatsNew.markAll": "Marcar todos como vistos",

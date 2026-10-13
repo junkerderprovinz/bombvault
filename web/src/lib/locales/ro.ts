@@ -1465,11 +1465,9 @@ const ro: Partial<Translations> = {
   "filter.button": "Filtre",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Noutăți în {version}",
   "whatsnew.loading": "Se încarcă notele de lansare…",
   "whatsnew.loadFailed": "Notele de lansare nu au putut fi încărcate aici. Deschide-le pe GitHub.",
   "whatsnew.viewOnGitHub": "Vezi lansarea completă pe GitHub",
-  "whatsnew.close": "Închide",
   "notify.scheduledSummary": "Rezumă rulările programate",
   "notify.scheduledSummaryHint": "Trimite un singur rezumat pentru fiecare rulare de backup programată (de exemplu: 42 din 45 reușite) în loc de un mesaj separat pentru fiecare container sau VM. Healthchecks este deja rezumat. Backupurile manuale notifică în continuare pentru fiecare element.",
   "notify.notifyOnUpdate": "Notifică la actualizarea containerului",
@@ -4255,6 +4253,8 @@ const ro: Partial<Translations> = {
   "welcome.restoreHint": "Ai mai folosit BombVault? Atunci „Restaurează dintr-o copie de rezervă” aduce totul înapoi, inclusiv setările.",
   "whatsNew.title": "Noutăți",
   "whatsNew.windowTitle": "Noutăți în versiunea {version}",
+  "whatsNew.notesTab": "Note de lansare",
+  "whatsNew.changesTab": "Modificări",
   "whatsNew.hint": "Ce a schimbat ultima actualizare. Un punct luminos marchează fiecare schimbare pe pagina ei, iar un clic pe punct îl ascunde. Un punct pe o filă, o placă sau un rând dispare când ai văzut tot ce se află în spatele lui.",
   "whatsNew.showAll": "Arată din nou toate",
   "whatsNew.markAll": "Marchează tot ca văzut",

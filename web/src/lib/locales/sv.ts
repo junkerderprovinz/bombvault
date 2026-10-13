@@ -1464,11 +1464,9 @@ const sv: Partial<Translations> = {
   "filter.button": "Filter",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Nyheter i {version}",
   "whatsnew.loading": "Läser in versionsinformation…",
   "whatsnew.loadFailed": "Det gick inte att läsa in versionsinformationen här. Öppna den på GitHub.",
   "whatsnew.viewOnGitHub": "Visa hela versionen på GitHub",
-  "whatsnew.close": "Stäng",
   "notify.scheduledSummary": "Sammanfatta schemalagda körningar",
   "notify.scheduledSummaryHint": "Skicka en sammanfattning per schemalagd säkerhetskopieringskörning (till exempel: 42 av 45 lyckades) i stället för ett separat meddelande för varje container eller VM. Healthchecks sammanfattas redan. Manuella säkerhetskopior aviserar fortfarande per post.",
   "notify.notifyOnUpdate": "Avisera vid containeruppdatering",
@@ -4254,6 +4252,8 @@ const sv: Partial<Translations> = {
   "welcome.restoreHint": "Har du använt BombVault förut? Då hämtar ”Återställ från en säkerhetskopia” tillbaka allt, även inställningarna.",
   "whatsNew.title": "Nytt",
   "whatsNew.windowTitle": "Nytt i {version}",
+  "whatsNew.notesTab": "Versionsinformation",
+  "whatsNew.changesTab": "Ändringar",
   "whatsNew.hint": "Vad den senaste uppdateringen ändrade. En lysande prick markerar varje ändring på sin sida, och ett klick på en prick döljer den. En prick på en flik, en ruta eller en rad försvinner när du har sett allt bakom den.",
   "whatsNew.showAll": "Visa alla igen",
   "whatsNew.markAll": "Markera alla som sedda",

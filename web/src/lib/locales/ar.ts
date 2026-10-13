@@ -1465,11 +1465,9 @@ const ar: Partial<Translations> = {
   "filter.button": "عوامل التصفية",
 
   // What's new dialog (#48)
-  "whatsnew.title": "الجديد في {version}",
   "whatsnew.loading": "جارٍ تحميل ملاحظات الإصدار…",
   "whatsnew.loadFailed": "تعذّر تحميل ملاحظات الإصدار هنا. يمكن فتحها على GitHub.",
   "whatsnew.viewOnGitHub": "عرض الإصدار الكامل على GitHub",
-  "whatsnew.close": "إغلاق",
   "notify.scheduledSummary": "تلخيص عمليات التشغيل المجدولة",
   "notify.scheduledSummaryHint": "إرسال ملخص واحد لكل عملية نسخ احتياطي مجدولة (مثلاً: نجحت 42 من 45) بدلاً من رسالة منفصلة لكل حاوية أو جهاز ظاهري. Healthchecks مُلخَّص بالفعل. أما النسخ الاحتياطية اليدوية فتُرسِل إشعاراً لكل عنصر.",
   "notify.notifyOnUpdate": "إشعار عند تحديث الحاوية",
@@ -4255,6 +4253,8 @@ const ar: Partial<Translations> = {
   "welcome.restoreHint": "سبق استخدام BombVault؟ عندها يعيد «الاستعادة من نسخة احتياطية» كل شيء، بما في ذلك الإعدادات.",
   "whatsNew.title": "الجديد",
   "whatsNew.windowTitle": "الجديد في {version}",
+  "whatsNew.notesTab": "ملاحظات الإصدار",
+  "whatsNew.changesTab": "التغييرات",
   "whatsNew.hint": "ما الذي غيّره التحديث الأخير. تُعلّم نقطة متوهجة كل تغيير في صفحته، والنقر على نقطة يخفيها. تزول النقطة على تبويب أو مربع أو صف بمجرد رؤية كل ما خلفها.",
   "whatsNew.showAll": "إظهار الكل مجددًا",
   "whatsNew.markAll": "تعليم الكل على أنه شوهد",

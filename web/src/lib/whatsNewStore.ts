@@ -128,3 +128,28 @@ export function useWhatsNew(): WhatsNew {
     return { seen: known, absent: new Set(absent), unseen: CHANGES.filter((change) => !known.has(change.id)) };
   }, [raw]);
 }
+
+/** The two tabs of the window: the release notes, or the list of changes. */
+export type NewsTab = "notes" | "changes";
+
+// One window for the whole app, opened by an update and by the Version card's
+// button, so the two cannot show different things.
+let openTab: NewsTab | null = null;
+const windowListeners = new Set<() => void>();
+
+/** openWhatsNew opens the window on a tab, or closes it with null. */
+export function openWhatsNew(tab: NewsTab | null): void {
+  openTab = tab;
+  for (const listener of windowListeners) listener();
+}
+
+/** The tab the window is open on, or null while it is closed. */
+export function useWhatsNewOpen(): NewsTab | null {
+  return useSyncExternalStore(
+    (listener) => {
+      windowListeners.add(listener);
+      return () => windowListeners.delete(listener);
+    },
+    () => openTab,
+  );
+}

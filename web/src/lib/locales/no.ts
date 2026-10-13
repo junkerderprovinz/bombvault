@@ -1464,11 +1464,9 @@ const no: Partial<Translations> = {
   "filter.button": "Filtre",
 
   // What's new dialog (#48)
-  "whatsnew.title": "Nyheter i {version}",
   "whatsnew.loading": "Laster inn utgivelsesnotater…",
   "whatsnew.loadFailed": "Utgivelsesnotatene kunne ikke lastes inn her. Åpne dem på GitHub.",
   "whatsnew.viewOnGitHub": "Se hele utgivelsen på GitHub",
-  "whatsnew.close": "Lukk",
   "notify.scheduledSummary": "Oppsummer planlagte kjøringer",
   "notify.scheduledSummaryHint": "Send én oppsummering per planlagt sikkerhetskopiering (for eksempel: 42 av 45 lyktes) i stedet for en egen melding for hver container eller VM. Healthchecks er allerede oppsummert. Manuelle sikkerhetskopier varsler fortsatt per element.",
   "notify.notifyOnUpdate": "Varsle ved containeroppdatering",
@@ -4254,6 +4252,8 @@ const no: Partial<Translations> = {
   "welcome.restoreHint": "Har du brukt BombVault før? Da henter «Gjenopprett fra en sikkerhetskopi» alt tilbake, også innstillingene.",
   "whatsNew.title": "Nytt",
   "whatsNew.windowTitle": "Nytt i {version}",
+  "whatsNew.notesTab": "Utgivelsesnotater",
+  "whatsNew.changesTab": "Endringer",
   "whatsNew.hint": "Hva den siste oppdateringen endret. En lysende prikk markerer hver endring på siden sin, og et klikk på en prikk skjuler den. En prikk på en fane, en flis eller en rad forsvinner når du har sett alt bak den.",
   "whatsNew.showAll": "Vis alle igjen",
   "whatsNew.markAll": "Merk alle som sett",

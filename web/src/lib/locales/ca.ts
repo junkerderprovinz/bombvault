@@ -1982,12 +1982,10 @@ const ca: Partial<Translations> = {
   "settings.cacheLimitLabel": "Límit de mida de la caché (MB, 0 = sense límit)",
 
   // What is new dialog
-  "whatsnew.title": "Novetats a {version}",
   "whatsnew.loading": "Carregant les notes de la versió…",
   "whatsnew.loadFailed": "No s'han pogut carregar aquí les notes de la versió. Obre-les a GitHub.",
   "whatsnew.retry": "Torna-ho a provar",
   "whatsnew.viewOnGitHub": "Mira la versió completa a GitHub",
-  "whatsnew.close": "Tanca",
 
   // Files domain
   "nav.files": "Carpetes",
@@ -4264,6 +4262,8 @@ const ca: Partial<Translations> = {
   "welcome.restoreHint": "Ja has fet servir BombVault abans? Llavors «Restaura des d'una còpia de seguretat» ho recupera tot, també la configuració.",
   "whatsNew.title": "Novetats",
   "whatsNew.windowTitle": "Novetats de la versió {version}",
+  "whatsNew.notesTab": "Notes de la versió",
+  "whatsNew.changesTab": "Canvis",
   "whatsNew.hint": "Què ha canviat l'última actualització. Un punt lluent marca cada canvi a la seva pàgina, i un clic en un punt l'amaga. Un punt en una pestanya, una rajola o una fila desapareix quan has vist tot el que hi ha al darrere.",
   "whatsNew.showAll": "Mostra-ho tot un altre cop",
   "whatsNew.markAll": "Marca-ho tot com a vist",
