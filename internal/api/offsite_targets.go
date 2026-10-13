@@ -35,7 +35,8 @@ func validOffsiteDomain(domain string) bool {
 // When the domain's off-site repo is cleared, the primary is switched off
 // rather than deleted: its copy rules, observations and direct repository name
 // it by id, and filling the field again brings back the same target. Other
-// additional targets sort after it and are never touched here.
+// additional targets sort after it and are never touched here. A primary
+// switched off by hand stays off while the field names the place it had.
 //
 // The storage class comes from the cloud credentials. If they cannot be
 // decoded it stays empty, which offsiteModeForTarget treats as the global
@@ -66,6 +67,9 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 		primary.DestinationID = ""
 	}
 	if repo == "" {
+		if err := s.store.SetPrimaryOff(domain, "", false); err != nil {
+			return err
+		}
 		if primary == nil || !primary.Enabled {
 			return nil
 		}
@@ -83,6 +87,11 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 	}
 
 	t := settingsOffsiteTarget(domain, settings, repo)
+	offAt, err := s.store.PrimaryOffAt(domain)
+	if err != nil {
+		return err
+	}
+	t.Enabled = offAt != repo
 	// Unreadable cloud credentials leave the class empty, which
 	// offsiteModeForTarget reads as the global class.
 	if c, cErr := s.decodeCloud(settings); cErr == nil {

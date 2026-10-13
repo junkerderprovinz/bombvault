@@ -398,6 +398,7 @@ var pairedRefused = []string{
 	"PUT /api/offsite/targets/{id}",
 	"PUT /api/placement/default/{domain}",
 	"PUT /api/settings/primary-remote/{domain}",
+	"PUT /api/storage/sections/{domain}/local",
 	// Settings, notifications, integrations, discovery and the settings backup.
 	"DELETE /api/anomalies/items/{targetId}/expectations/{family}",
 	"GET /api/config/snapshots",

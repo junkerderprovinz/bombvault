@@ -145,6 +145,11 @@ describe("protection", () => {
     expect(protection(item({ included: false, backupDeclined: true }))).toBe("none");
     expect(protection(item({ lastBackup: 0, included: false, backupDeclined: true }))).toBe("none");
   });
+
+  it("is missing for an entry whose section has every storage location switched off, whatever backups it has", () => {
+    expect(protection(item({ noPlace: true }))).toBe("none");
+    expect(protection(item({ lastBackup: 0, noPlace: true }))).toBe("none");
+  });
 });
 
 describe("the one status of a row", () => {

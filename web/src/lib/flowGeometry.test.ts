@@ -62,14 +62,13 @@ describe("the lines", () => {
     expect(farPath(layout, 0, 1, null).d.startsWith(`M${layout.measures.label} ${layout.rowY(0)}H${layout.past}C`)).toBe(true);
   });
 
-  it("put a mark at the middle of a line", () => {
-    const [px, py] = layout.port(0, 2);
-    expect(farPath(layout, 2, 0, 0).middle).toEqual([(layout.bandCentre(0) + px) / 2, (layout.rowY(2) + py) / 2]);
-  });
-
   it("end a row that reaches no box in a short stub after its band", () => {
     const stub = stubPath(layout, 0, 0);
     expect(stub.d).toBe(`M${layout.bandCentre(0) + 7} ${layout.rowY(0)}H${layout.bandCentre(0) + 7 + layout.measures.stub}`);
     expect(stub.labelX).toBeGreaterThan(layout.bandCentre(0));
+  });
+
+  it("end a row stored on no band past the bands, clear of its lines to them", () => {
+    expect(stubPath(layout, 0, null).d.startsWith(`M${layout.past} ${layout.rowY(0)}H`)).toBe(true);
   });
 });

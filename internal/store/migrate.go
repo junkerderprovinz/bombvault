@@ -3146,6 +3146,22 @@ UNION SELECT member_id FROM pull_sources WHERE member_id <> '';`,
 		name:    "end_sessions_from_before_paired_ones",
 		sql:     `UPDATE settings SET session_epoch = lower(hex(randomblob(16))) WHERE auth_password_hash <> '';`,
 	},
+	{
+		// The places a section was switched off at by hand: the own folder of a
+		// section without placement, and the target its off-site field
+		// describes, at the location it had then. Without a row a place is
+		// used, as on every install before.
+		version:          placesOffMigration,
+		name:             "places_off",
+		alreadySatisfied: tablePresent("places_off"),
+		sql: `CREATE TABLE IF NOT EXISTS places_off (
+  domain     TEXT    NOT NULL,
+  place      TEXT    NOT NULL,
+  repo       TEXT    NOT NULL DEFAULT '',
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (domain, place)
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3285,6 +3301,10 @@ const oneLineUpsertMigration = 358
 // endSessionsMigration numbers the sign-out of every session issued before
 // sessions of paired phones were told apart, 359.
 const endSessionsMigration = 359
+
+// placesOffMigration numbers the places a section was switched off at by
+// hand, 360.
+const placesOffMigration = 360
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

@@ -288,7 +288,8 @@ const DEFAULTS: Record<string, Reply> = {
   createFileSet: () => ({ ok: true, id: "set-new" }),
   createOffsiteTarget: (...args) => ({ ok: true, target: { ...(args[0] as object), id: "t-new", createdAt: 1 } }),
   listDestinations: () => ({ ok: true, destinations: [] }),
-  destinationForDomain: (...args) => ({ ok: true, created: true, target: { id: "t-new", domain: args[1], destinationId: args[0] } }),
+  destinationForDomain: (...args) => ({ ok: true, created: true, target: { id: "t-new", domain: args[1], destinationId: args[0], enabled: true } }),
+  setSectionLocal: () => ({ ok: true }),
   primaryFromDestination: (...args) => ({
     ok: true,
     location: `rclone:b2:bv/${args[1] as string}`,

@@ -95,6 +95,7 @@ function FlowSwitches({
                 <OwnRules row={row} own={own} />
               </span>
               {row.unreadable && <span className="text-xs text-statusWarn">{t("placement.unreadable")}</span>}
+              {row.nowhere && <span className="text-xs text-statusWarn">{t("storage.flow.nowhere")}</span>}
             </div>
             {row.lines.length > 0 && (
               <div className="min-w-0 max-w-full max-md:w-full">
@@ -103,8 +104,6 @@ function FlowSwitches({
                     id: line.key,
                     label: line.location.enabled ? line.location.name : t("placement.off").replace("{name}", () => line.location.name),
                     icon: <LocationMark location={line.location} size="chip" bare />,
-                    disabled: !!line.locked,
-                    title: line.locked,
                   }))}
                   label={label}
                   select="many"
@@ -157,13 +156,13 @@ export function FlowCard({
   const counted = rows.find((row) => row.domain === pointed) ?? best;
   const withRules = rows.filter((row) => row.ownRules.length > 0 || differing(own, row).length > 0);
   const unreadable = rows.filter((row) => row.unreadable);
+  const nowhere = rows.filter((row) => row.nowhere);
   const graph = view === "graph";
 
   return (
     // The dot goes to the entries that differ where there are any, since a
     // page shows it on the first element that carries the change.
     <Card title={t("storage.flow.title")} hint={t("storage.flow.hint")} hueIndex={hueIndex} newId={own.length > 0 ? undefined : "storage-flow"}>
-      {flow.dialogs}
       <div className={`flex justify-end ${graph ? "md:absolute md:end-5 md:top-5 md:z-1" : ""}`}>
         <Selector
           items={[
@@ -204,6 +203,11 @@ export function FlowCard({
               {unreadable.map((row) => (
                 <p key={row.domain} className="text-center text-xs text-statusWarn">
                   {t(DOMAIN_LABEL[row.domain])}: {t("placement.unreadable")}
+                </p>
+              ))}
+              {nowhere.map((row) => (
+                <p key={row.domain} className="text-center text-xs text-statusWarn">
+                  {t(DOMAIN_LABEL[row.domain])}: {t("storage.flow.nowhere")}
                 </p>
               ))}
             </>

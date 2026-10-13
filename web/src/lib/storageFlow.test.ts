@@ -1,5 +1,5 @@
-// The lines of the flow picture: which section is backed up where, which of
-// the lines can be switched, and why the others cannot.
+// The lines of the flow picture: which section is backed up where, and what a
+// click on each line switches.
 import { describe, expect, it } from "vitest";
 import type {
   DefaultRow,
@@ -10,11 +10,9 @@ import type {
   StorageLocationSection,
   TargetOption,
 } from "./api";
-import { en, type TranslationKey } from "./i18n";
 import { defaultView } from "./placement";
-import { flowCounts, flowDomains, flowRows, type FlowDefault, type FlowLine, type FlowRow } from "./storageFlow";
+import { flowCounts, flowDomains, flowRows, HOME_NOWHERE, type FlowDefault, type FlowLine, type FlowRow } from "./storageFlow";
 
-const t = (key: TranslationKey) => en[key];
 const KEEP = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 1 };
 
 function section(domain: OffsiteDomain, over: Partial<StorageLocationSection> = {}): StorageLocationSection {
@@ -105,7 +103,7 @@ function placed(default_: DefaultRow, over: Partial<PlacementOptions> = {}): Flo
 }
 
 function rows(locations: StorageLocation[], defaults: Parameters<typeof flowRows>[1] = {}): FlowRow[] {
-  return flowRows(locations, defaults, t, "tower");
+  return flowRows(locations, defaults);
 }
 
 function line(found: FlowRow[], domain: OffsiteDomain, location: StorageLocation): FlowLine {
@@ -126,14 +124,11 @@ describe("a section with placement", () => {
 
   it("reads a line to a destination off the default: on while the target is not skipped", () => {
     const on = line(rows([LOCAL, BOX], { containers }), "containers", BOX);
-    expect(on.on).toBe(true);
-    expect(on.locked).toBeUndefined();
-    expect(on.action).toMatchObject({ kind: "step", step: { kind: "save", change: { copies: { skip: ["*"] } } } });
+    expect(on).toMatchObject({ on: true, action: { kind: "default", change: { skip: ["*"] } } });
 
     const skipped = placed(row("containers", { skip: ["*"] }), { targets: [target("t-box")] });
     const off = line(rows([LOCAL, BOX], { containers: skipped }), "containers", BOX);
-    expect(off.on).toBe(false);
-    expect(off.action).toMatchObject({ kind: "step", step: { kind: "save", change: { copies: { skip: [] } } } });
+    expect(off).toMatchObject({ on: false, action: { kind: "default", change: { skip: [] } } });
   });
 
   it("offers a destination without a target for the section, and creates the target on the click", () => {
@@ -142,40 +137,66 @@ describe("a section with placement", () => {
     expect(fresh.action).toEqual({ kind: "destination", destinationId: "b2" });
   });
 
-  it("locks Local while nothing else could take the backups, and says why", () => {
+  it("lets Local go off while nothing else is on, which leaves the section without a place", () => {
     const alone = placed(row("containers", { skip: ["*"] }), { targets: [target("t-box")] });
     const local = line(rows([LOCAL, BOX], { containers: alone }), "containers", LOCAL);
-    expect(local.on).toBe(true);
-    expect(local.action).toBeUndefined();
-    expect(local.locked).toBe(en["placement.lastButton"]);
+    expect(local).toMatchObject({ on: true, action: { kind: "default", change: { home: HOME_NOWHERE } } });
   });
 
-  it("lets Local go off once a target can become the place the backups are written to", () => {
-    const local = line(rows([LOCAL, BOX], { containers }), "containers", LOCAL);
-    expect(local.locked).toBeUndefined();
-    expect(local.action).toMatchObject({ kind: "step", step: { kind: "direct", target: { targetId: "t-box" } } });
+  it("hands Local over to the first lit target, which writes the backups itself from then on", () => {
+    expect(line(rows([LOCAL, BOX], { containers }), "containers", LOCAL).action).toEqual({ kind: "direct", targetId: "t-box", skip: ["*"] });
+
+    const made = placed(row("containers"), { targets: [target("t-box")], sendTo: [direct("t-box", "r-box")] });
+    expect(line(rows([LOCAL, BOX], { containers: made }), "containers", LOCAL).action).toEqual({
+      kind: "default",
+      change: { home: "r-box", skip: ["*"] },
+    });
   });
 
-  it("locks every copy of a section that is stored on a repository with its own credentials", () => {
+  it("brings Local back with every lit target as a copy, and moves the place on when its target goes off", () => {
+    const B2_COPY = { ...B2, sections: [section("containers", { use: "copy", targetId: "t-b2" })] };
+    const atBox = placed(row("containers", { home: "r-box", homeKind: "direct", homeTarget: "t-box" }), {
+      targets: [target("t-box"), target("t-b2")],
+      sendTo: [direct("t-box", "r-box"), direct("t-b2")],
+    });
+    const found = rows([LOCAL, BOX, B2_COPY], { containers: atBox });
+
+    expect(line(found, "containers", LOCAL)).toMatchObject({ on: false, action: { kind: "default", change: { home: "", skip: [] } } });
+    expect(line(found, "containers", BOX)).toMatchObject({ on: true, action: { kind: "direct", targetId: "t-b2", skip: ["*"] } });
+  });
+
+  it("marks a section with every line off and offers each line again", () => {
+    const none = placed(row("containers", { home: HOME_NOWHERE, homeKind: "none" }), {
+      targets: [target("t-box")],
+      sendTo: [direct("t-box")],
+    });
+    const found = rows([LOCAL, BOX], { containers: none });
+
+    expect(found[0].nowhere).toBe(true);
+    expect(line(found, "containers", LOCAL)).toMatchObject({ on: false, action: { kind: "default", change: { home: "", skip: ["*"] } } });
+    expect(line(found, "containers", BOX)).toMatchObject({ on: false, action: { kind: "direct", targetId: "t-box", skip: ["*"] } });
+  });
+
+  it("switches on a target that is switched off together with its line", () => {
+    const skipped = placed(row("containers", { skip: ["*"] }), { targets: [target("t-box", { enabled: false })] });
+    expect(line(rows([LOCAL, BOX], { containers: skipped }), "containers", BOX)).toMatchObject({
+      on: false,
+      action: { kind: "default", change: { skip: [] }, enable: "t-box" },
+    });
+
+    const ticked = placed(row("containers"), { targets: [target("t-box", { enabled: false })] });
+    expect(line(rows([LOCAL, BOX], { containers: ticked }), "containers", BOX)).toMatchObject({
+      on: false,
+      action: { kind: "enable", targetId: "t-box", on: true },
+    });
+  });
+
+  it("makes a target the place to write to where the section is stored on a repository with its own credentials", () => {
     const remote = placed(row("containers", { home: "r1", homeKind: "remote" }), {
       targets: [target("t-box")],
-      sendTo: [{ kind: "remote", repoId: "r1", targetId: "", name: "Hetzner", location: "" }],
+      sendTo: [direct("t-box"), { kind: "remote", repoId: "r1", targetId: "", name: "Hetzner", location: "" }],
     });
-    const found = rows([LOCAL, BOX, B2], { containers: remote });
-    expect(line(found, "containers", BOX).locked).toBe(en["placement.lockOwnCredentials"]);
-    expect(line(found, "containers", B2).locked).toBe(en["placement.lockOwnCredentials"]);
-    expect(line(found, "containers", B2).action).toBeUndefined();
-  });
-
-  it("locks a line to a target or a location that is switched off, unless the line is on", () => {
-    const offTarget = placed(row("containers", { skip: ["*"] }), { targets: [target("t-box", { enabled: false })] });
-    expect(line(rows([LOCAL, BOX], { containers: offTarget }), "containers", BOX).locked).toBe(en["storage.flow.lockOff"]);
-
-    const offPlace = { ...B2, enabled: false };
-    expect(line(rows([LOCAL, offPlace], { containers }), "containers", offPlace).locked).toBe(en["storage.flow.lockOff"]);
-
-    const stillOn = placed(row("containers"), { targets: [target("t-box", { enabled: false })] });
-    expect(line(rows([LOCAL, BOX], { containers: stillOn }), "containers", BOX).action).toBeDefined();
+    expect(line(rows([LOCAL, BOX], { containers: remote }), "containers", BOX).action).toEqual({ kind: "direct", targetId: "t-box", skip: ["*"] });
   });
 
   it("offers a named repository as the place to write to, and only one place at a time", () => {
@@ -188,7 +209,7 @@ describe("a section with placement", () => {
     });
     const found = rows([LOCAL, archive], { containers: two });
     expect(line(found, "containers", LOCAL).on).toBe(true);
-    expect(line(found, "containers", archive)).toMatchObject({ on: false, action: { kind: "default", change: { home: "archive" } } });
+    expect(line(found, "containers", archive)).toMatchObject({ on: false, action: { kind: "default", change: { home: "archive", skip: ["*"] } } });
   });
 
   it("draws no line to a repository the section cannot be written to", () => {
@@ -199,35 +220,36 @@ describe("a section with placement", () => {
 
   it("shows no lines for a section whose default cannot be read", () => {
     const found = rows([LOCAL, BOX], { containers: "unreadable" });
-    expect(found[0]).toMatchObject({ domain: "containers", unreadable: true, lines: [] });
+    expect(found[0]).toMatchObject({ domain: "containers", unreadable: true, nowhere: false, lines: [] });
   });
 });
 
 describe("flash, ZFS and the self-backup", () => {
-  it("keep their own folder for good and say so", () => {
-    const local = line(rows([LOCAL, BOX]), "flash", LOCAL);
-    expect(local).toMatchObject({ on: true, locked: "Flash always backs up to its own folder first. The off-site copies come from that backup, so it stays on." });
-    expect(local.action).toBeUndefined();
+  it("switch their own folder", () => {
+    expect(line(rows([LOCAL, BOX]), "flash", LOCAL)).toMatchObject({ on: true, action: { kind: "local", on: false } });
+
+    const off = { ...LOCAL, sections: [section("flash", { off: true })] };
+    expect(line(rows([off, BOX]), "flash", off)).toMatchObject({ on: false, action: { kind: "local", on: true } });
   });
 
-  it("switch a copy with the target's own switch", () => {
+  it("switch a copy with the target's own switch, the one their off-site settings describe as well", () => {
     expect(line(rows([LOCAL, BOX]), "flash", BOX)).toMatchObject({
       on: true,
       action: { kind: "enable", targetId: "t-box-flash", on: false },
     });
-    const off = { ...BOX, sections: [section("flash", { use: "copy", targetId: "t-box-flash", enabled: false })] };
-    expect(line(rows([LOCAL, off]), "flash", off)).toMatchObject({ on: false, action: { kind: "enable", on: true } });
+
+    const primary = { ...BOX, sections: [section("flash", { use: "copy", targetId: "t-box-flash", primary: true, enabled: false })] };
+    expect(line(rows([LOCAL, primary]), "flash", primary)).toMatchObject({ on: false, action: { kind: "enable", on: true } });
   });
 
   it("create the target under a destination that has none for them", () => {
     expect(line(rows([LOCAL, B2]), "flash", B2).action).toEqual({ kind: "create", destinationId: "b2" });
   });
 
-  it("cannot switch the copy their off-site settings describe", () => {
-    const primary = { ...BOX, sections: [section("flash", { use: "copy", targetId: "t-box-flash", primary: true })] };
-    const copy = line(rows([LOCAL, primary]), "flash", primary);
-    expect(copy.action).toBeUndefined();
-    expect(copy.locked).toBe(en["storage.own.primary"]);
+  it("have no place while their folder and every copy are off", () => {
+    const off = { ...LOCAL, sections: [section("flash", { off: true })] };
+    const copyOff = { ...BOX, sections: [section("flash", { use: "copy", targetId: "t-box-flash", enabled: false })] };
+    expect(rows([off, copyOff])[0]).toMatchObject({ domain: "flash", nowhere: true, counts: { copies: 1, media: 1, offsite: 0 } });
   });
 });
 

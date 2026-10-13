@@ -419,6 +419,14 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	// The settings write every other value of the primary on each save, so
+	// its switch is kept apart for that save to leave alone.
+	if stored.SortOrder == 0 && stored.Enabled != existing.Enabled {
+		if err := h.store.SetPrimaryOff(stored.Domain, stored.Repo, !stored.Enabled); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
 	if v.AlsoExclude != nil {
 		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *v.AlsoExclude); err != nil {
 			// The row keeps its id, so there is nothing to take back here; the

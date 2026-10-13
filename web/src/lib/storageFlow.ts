@@ -1,52 +1,37 @@
 // Which section is backed up to which storage location, as the lines of one
 // picture. A line of a section with placement is read off the section's
-// default; flash, ZFS and the self-backup have no placement, and their line is
-// the switch of their target.
+// default; flash, ZFS and the self-backup have no placement, and their lines
+// are the switch of their own folder and of their targets. Every line can be
+// switched, and switching one off moves nothing that is already stored.
 
-import type {
-  DefaultChange,
-  OffsiteDomain,
-  PlacementOptions,
-  PlacementView,
-  StorageLocation,
-  StorageLocationSection,
-} from "./api";
-import type { useT } from "./i18n";
-import {
-  defaultChangeOf,
-  isPlacementDomain,
-  lockHint,
-  newTargetRefused,
-  placementButtons,
-  stepForLocal,
-  stepForTarget,
-  viewHomeLabel,
-  type PlacementStep,
-} from "./placement";
-import { blockedText } from "./placementButtons";
-import { DOMAIN_LABEL } from "./storageLocations";
-
-type T = ReturnType<typeof useT>["t"];
+import type { DefaultChange, OffsiteDomain, PlacementOptions, PlacementView, StorageLocation, StorageLocationSection } from "./api";
+import { isPlacementDomain, placementButtons, type PlacementButtons } from "./placement";
 
 export const FLOW_DOMAINS: readonly OffsiteDomain[] = ["containers", "vms", "flash", "files", "zfs", "config"];
 
+/** The default home that gives new entries no place at all. */
+export const HOME_NOWHERE = "none";
+
 /** What a click on a line does. */
 export type FlowAction =
-  | { kind: "step"; step: PlacementStep }
-  | { kind: "default"; change: DefaultChange }
+  /** A new default for a section with placement; `enable` switches a target
+   *  on first. */
+  | { kind: "default"; change: DefaultChange; enable?: string }
+  /** The target's direct repository becomes the place backups are written
+   *  to, made first where it does not exist yet. */
+  | { kind: "direct"; targetId: string; skip: string[]; enable?: string }
   /** The destination has no target for the section yet. */
   | { kind: "destination"; destinationId: string }
   | { kind: "enable"; targetId: string; on: boolean }
-  | { kind: "create"; destinationId: string };
+  | { kind: "create"; destinationId: string }
+  | { kind: "local"; on: boolean };
 
 export interface FlowLine {
   key: string;
   domain: OffsiteDomain;
   location: StorageLocation;
   on: boolean;
-  /** Why the line cannot be switched. A line with a reason has no action. */
-  locked?: string;
-  action?: FlowAction;
+  action: FlowAction;
 }
 
 export interface FlowCounts {
@@ -61,8 +46,10 @@ export interface FlowRow {
   counts: FlowCounts;
   /** The storage locations at which the section holds rules of its own. */
   ownRules: StorageLocation[];
-  /** The section's default could not be read, so its lines only show. */
+  /** The section's default could not be read, so it has no lines. */
   unreadable: boolean;
+  /** Every line of the section is off, so nothing new of it is backed up. */
+  nowhere: boolean;
 }
 
 /** A placement section's default, as its buttons read it. */
@@ -90,97 +77,114 @@ function copyOf(location: StorageLocation, domain: OffsiteDomain): StorageLocati
   return location.sections.find((section) => section.domain === domain && section.use === "copy");
 }
 
-function locked(step: PlacementStep, t: T, home: string, fallback: string): string | undefined {
-  if (step.kind === "blocked") return blockedText(t, step, home);
-  return step.kind === "none" ? fallback : undefined;
+function ownsFolder(location: StorageLocation, domain: OffsiteDomain): StorageLocationSection | undefined {
+  return location.sections.find((section) => section.domain === domain && section.use === "home");
 }
 
-function stepLine(base: Omit<FlowLine, "locked" | "action">, step: PlacementStep, t: T, home: string, fallback: string): FlowLine {
-  const reason = locked(step, t, home, fallback);
-  return reason ? { ...base, locked: reason } : { ...base, action: { kind: "step", step } };
+/** skipFor is the skip list that copies to exactly the given targets. A list
+ *  of every other target lets a target added later arrive ticked; nothing at
+ *  all is ["*"]. */
+function skipFor(options: PlacementOptions, copies: string[]): string[] {
+  return copies.length === 0 ? ["*"] : options.targets.filter((x) => !copies.includes(x.id)).map((x) => x.id);
+}
+
+/** One placement default with what its lines are read from. `copies` are the
+ *  targets copies go to now, the home's own target left out, and `copying`
+ *  says whether backups are written somewhere copies can be made from. */
+interface Placed {
+  def: FlowDefault;
+  buttons: PlacementButtons;
+  copies: string[];
+  copying: boolean;
+}
+
+function placedOf(def: FlowDefault): Placed {
+  const buttons = placementButtons(def.view, def.options);
+  return {
+    def,
+    buttons,
+    copies: buttons.ticked.filter((id) => id !== buttons.home),
+    copying: buttons.local || buttons.home !== null,
+  };
+}
+
+function lit(placed: Placed, id: string): boolean {
+  return placed.buttons.ticked.includes(id) && placed.def.options.targets.some((x) => x.id === id && x.enabled);
+}
+
+/** Writes backups straight to a target, copying to rest from there. */
+function homeAt(placed: Placed, targetId: string, rest: string[], enable?: string): FlowAction {
+  const { options } = placed.def;
+  const skip = skipFor(options, rest);
+  const made = options.sendTo.find((s) => s.kind === "direct" && s.targetId === targetId && s.repoId !== "");
+  return made ? { kind: "default", change: { home: made.repoId, skip }, enable } : { kind: "direct", targetId, skip, enable };
+}
+
+/** Takes away the place backups are written to: the first target that is
+ *  lit takes over, or nothing does. */
+function leaveHome(placed: Placed): FlowAction {
+  const [next, ...rest] = placed.copies.filter((id) => lit(placed, id));
+  return next ? homeAt(placed, next, rest) : { kind: "default", change: { home: HOME_NOWHERE } };
 }
 
 /** The line to a place backups are written to: the section's own folder or a
  *  named repository. Only one of them is the home at a time. */
-function homeLine(
-  base: Omit<FlowLine, "on" | "locked" | "action">,
-  repo: string,
-  def: FlowDefault,
-  t: T,
-  host: string
-): FlowLine | null {
-  const { options, view } = def;
+function homeLine(base: Omit<FlowLine, "on" | "action">, repo: string, placed: Placed): FlowLine | null {
+  const { options, view } = placed.def;
   const listed = options.homes.some((home) => home.id === repo);
   const remote = options.sendTo.some((option) => option.kind === "remote" && option.repoId === repo);
   const on = view.repo === repo && view.repoKind !== "missing";
-  if (!on && !listed && !remote) return null;
-  const home = viewHomeLabel(t, host, view, options);
-  const buttons = placementButtons(view, options);
-  if (on) {
-    const step = stepForLocal(!buttons.local, view, options, t, host);
-    return stepLine({ ...base, on }, step, t, home, t("placement.lastButton"));
-  }
-  if (remote || buttons.local) return { ...base, on, action: { kind: "default", change: { home: repo } } };
-  const step = stepForLocal(true, view, options, t, host);
-  const change = defaultChangeOf(step);
-  if (!change) return stepLine({ ...base, on }, step, t, home, t("placement.lastButton"));
-  return { ...base, on, action: { kind: "default", change: { ...change, home: repo } } };
+  if (on) return { ...base, on, action: leaveHome(placed) };
+  if (!listed && !remote) return null;
+  // A remote repository is read with its own credentials, so nothing is
+  // copied from it and the copies stay as they are for the next home.
+  if (remote) return { ...base, on, action: { kind: "default", change: { home: repo } } };
+  return { ...base, on, action: { kind: "default", change: { home: repo, skip: skipFor(options, placed.buttons.ticked) } } };
 }
 
-function placementLine(
-  base: Omit<FlowLine, "on" | "locked" | "action">,
-  def: FlowDefault,
-  t: T,
-  host: string
-): FlowLine | null {
+function placementLine(base: Omit<FlowLine, "on" | "action">, def: FlowDefault): FlowLine | null {
   const { location, domain } = base;
-  const { options, view } = def;
-  if (location.object === "path") {
-    const own = location.sections.some((section) => section.domain === domain && section.use === "home");
-    return own ? homeLine(base, "", def, t, host) : null;
-  }
-  if (location.object === "repo") return homeLine(base, objectId(location), def, t, host);
+  const placed = placedOf(def);
+  if (location.object === "path") return ownsFolder(location, domain) ? homeLine(base, "", placed) : null;
+  if (location.object === "repo") return homeLine(base, objectId(location), placed);
 
   const copy = copyOf(location, domain);
   if (location.object === "target" && !copy) return null;
-  const home = viewHomeLabel(t, host, view, options);
-  const target = copy?.targetId ? options.targets.find((option) => option.id === copy.targetId) : undefined;
+  const target = copy?.targetId ? def.options.targets.find((option) => option.id === copy.targetId) : undefined;
   if (!target) {
-    const off = { ...base, on: false };
-    if (!location.enabled) return { ...off, locked: t("storage.flow.lockOff") };
-    if (newTargetRefused(view)) return { ...off, locked: lockHint(t, "own-credentials", home) };
-    return location.object === "destination"
-      ? { ...off, action: { kind: "destination", destinationId: objectId(location) } }
-      : null;
+    if (location.object !== "destination") return null;
+    return { ...base, on: false, action: { kind: "destination", destinationId: objectId(location) } };
   }
-  const on = placementButtons(view, options).ticked.includes(target.id);
-  if (!on && !target.enabled) return { ...base, on, locked: t("storage.flow.lockOff") };
-  const step = stepForTarget(target.id, !on, view, options, t);
-  return stepLine({ ...base, on }, step, t, home, t("placementDefaults.homeMissing"));
+  const { options } = def;
+  const { buttons, copies } = placed;
+  if (lit(placed, target.id)) {
+    const action: FlowAction =
+      buttons.home === target.id
+        ? leaveHome(placed)
+        : { kind: "default", change: { skip: skipFor(options, copies.filter((id) => id !== target.id)) } };
+    return { ...base, on: true, action };
+  }
+  // A target that is ticked and switched off only needs its switch.
+  if (buttons.ticked.includes(target.id)) return { ...base, on: false, action: { kind: "enable", targetId: target.id, on: true } };
+  const enable = target.enabled ? undefined : target.id;
+  const action: FlowAction = placed.copying
+    ? { kind: "default", change: { skip: skipFor(options, [...copies, target.id]) }, enable }
+    : homeAt(placed, target.id, [], enable);
+  return { ...base, on: false, action };
 }
 
-/** The line of a section without placement: its folder is fixed, and a copy
- *  is the switch of its target. */
-function switchLine(base: Omit<FlowLine, "on" | "locked" | "action">, t: T): FlowLine | null {
+/** The line of a section without placement: the switch of its own folder or
+ *  of a target. */
+function switchLine(base: Omit<FlowLine, "on" | "action">): FlowLine | null {
   const { location, domain } = base;
   if (location.object === "path") {
-    const own = location.sections.some((section) => section.domain === domain && section.use === "home");
-    if (!own) return null;
-    const reason = t("storage.flow.lockOwnFolder").replace("{domain}", () => t(DOMAIN_LABEL[domain]));
-    return { ...base, on: true, locked: reason };
+    const own = ownsFolder(location, domain);
+    return own ? { ...base, on: !own.off, action: { kind: "local", on: !!own.off } } : null;
   }
   if (location.object === "repo") return null;
   const copy = copyOf(location, domain);
-  if (!copy?.targetId) {
-    if (location.object !== "destination") return null;
-    const off = { ...base, on: false };
-    if (!location.enabled) return { ...off, locked: t("storage.flow.lockOff") };
-    return { ...off, action: { kind: "create", destinationId: objectId(location) } };
-  }
-  const line = { ...base, on: copy.enabled };
-  if (copy.primary) return { ...line, locked: t("storage.own.primary") };
-  if (!copy.enabled && !location.enabled) return { ...line, locked: t("storage.flow.lockOff") };
-  return { ...line, action: { kind: "enable", targetId: copy.targetId, on: !copy.enabled } };
+  if (copy?.targetId) return { ...base, on: copy.enabled, action: { kind: "enable", targetId: copy.targetId, on: !copy.enabled } };
+  return location.object === "destination" ? { ...base, on: false, action: { kind: "create", destinationId: objectId(location) } } : null;
 }
 
 /** The original counts as a copy on a medium of its own. A local place shares
@@ -195,20 +199,15 @@ export function flowCounts(lines: FlowLine[]): FlowCounts {
   };
 }
 
-export function flowRows(
-  locations: StorageLocation[],
-  defaults: Partial<Record<OffsiteDomain, FlowDefault | "unreadable">>,
-  t: T,
-  host: string
-): FlowRow[] {
+export function flowRows(locations: StorageLocation[], defaults: Partial<Record<OffsiteDomain, FlowDefault | "unreadable">>): FlowRow[] {
   return flowDomains(locations).map((domain) => {
     const def = defaults[domain];
     const lines: FlowLine[] = [];
     for (const location of locations) {
       const base = { key: `${domain}@${location.id}`, domain, location };
       let line: FlowLine | null;
-      if (!isPlacementDomain(domain)) line = switchLine(base, t);
-      else if (def && def !== "unreadable") line = placementLine(base, def, t, host);
+      if (!isPlacementDomain(domain)) line = switchLine(base);
+      else if (def && def !== "unreadable") line = placementLine(base, def);
       else line = null;
       if (line) lines.push(line);
     }
@@ -216,6 +215,7 @@ export function flowRows(
       .filter((line) => line.on && line.location.object === "destination")
       .filter((line) => (copyOf(line.location, domain)?.own.length ?? 0) > 0)
       .map((line) => line.location);
-    return { domain, lines, counts: flowCounts(lines), ownRules, unreadable: def === "unreadable" };
+    const unreadable = def === "unreadable";
+    return { domain, lines, counts: flowCounts(lines), ownRules, unreadable, nowhere: !unreadable && !lines.some((line) => line.on) };
   });
 }

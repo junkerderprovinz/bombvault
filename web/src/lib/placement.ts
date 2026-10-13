@@ -87,6 +87,7 @@ export function viewHomeLabel(t: T, host: string, view: PlacementView, options: 
   const name = repoDisplayName(t, view.repoLabel, view.repoDirectOf) || view.repo;
   if (view.repoOff) return t("placement.off").replace("{name}", () => name);
   if (view.repoKind === "direct") return name;
+  if (view.repoKind === "none") return t("storage.flow.noPlace");
   return t("placement.unknown").replace("{name}", () => name);
 }
 
@@ -358,6 +359,17 @@ const WHERE: Record<Exclude<PlanKind, "paused" | "not-backed-up">, TranslationKe
   "decides-at-first-backup": "placement.planDecides",
 };
 
+function notBackedUp(t: T, domain: PlacementDomain, plan: PlacementPlan, home: string): string {
+  switch (plan.reason) {
+    case "default-off":
+      return t("placement.planNotBackedUpOff").replace("{home}", () => home);
+    case "default-none":
+      return t("placement.planNotBackedUpNone").replace("{domain}", () => domainLabel(t, domain));
+    default:
+      return t("placement.planNotBackedUpMissing");
+  }
+}
+
 export function planLines(
   t: T,
   lang: string,
@@ -369,13 +381,7 @@ export function planLines(
   const home = repoDisplayName(t, plan.home, plan.homeDirectOf) || host;
   const kind = plan.kind;
   if (kind === "paused") return [{ text: t("placement.paused"), tone: "warn" }];
-  if (kind === "not-backed-up") {
-    const text =
-      plan.reason === "default-off"
-        ? t("placement.planNotBackedUpOff").replace("{home}", () => home)
-        : t("placement.planNotBackedUpMissing");
-    return [{ text, tone: "warn" }];
-  }
+  if (kind === "not-backed-up") return [{ text: notBackedUp(t, domain, plan, home), tone: "warn" }];
   const tone: StatusLine["tone"] = plan.warn ? "warn" : "normal";
   const lines: StatusLine[] = [{ text: t(WHERE[kind]).replace("{home}", () => home), tone }];
   if (plan.targets.length > 0) {

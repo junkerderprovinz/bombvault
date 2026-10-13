@@ -211,9 +211,9 @@ func (s *Service) defaultCountsFor(p placementRead) (defaultCounts, error) {
 
 // checkDefaultChange refuses a default the card could not have offered: a
 // repository that cannot take backups, or a skip that is malformed or names a
-// target of another domain.
+// target of another domain. No place at all is a choice the card offers.
 func (s *Service) checkDefaultChange(p placementRead, change defaultChange) error {
-	if change.Home != nil {
+	if change.Home != nil && strings.TrimSpace(*change.Home) != store.HomeNowhere {
 		if err := s.validateItemRepoID(p.Domain, strings.TrimSpace(*change.Home)); err != nil {
 			return fmt.Errorf("%w: %w", errRepoInvalid, err)
 		}
@@ -986,7 +986,7 @@ func (h *Handler) checkImportedPlacement(exp settingsExport) error {
 			return errNotATarget
 		}
 		home := strings.TrimSpace(d.Home)
-		if home == "" {
+		if home == "" || home == store.HomeNowhere {
 			continue
 		}
 		if repo, inFile := fileRepos[home]; inFile {

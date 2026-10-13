@@ -326,6 +326,7 @@ const (
 	homeRemote       homeKind = "remote"        // remote named repository with its own credentials
 	homeDirect       homeKind = "direct"        // a target's own direct repository
 	homeMissing      homeKind = "missing"       // an id without a row
+	homeNowhere      homeKind = "none"          // a default that gives new items no place
 )
 
 // copySource reports whether snapshots at a home of this kind are copied off
@@ -338,6 +339,9 @@ func (k homeKind) copySource() bool {
 // homeKindOf is the kind of home a repo id names. named is ListNamedRepos by id,
 // read once per request.
 func (s *Service) homeKindOf(settings store.Settings, domain, repoID string, named map[string]store.OffsiteTarget) homeKind {
+	if repoID == store.HomeNowhere {
+		return homeNowhere
+	}
 	row, ok := named[repoID]
 	if ok && row.CompanionOf != "" {
 		return homeDirect

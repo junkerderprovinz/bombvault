@@ -17,7 +17,7 @@ type placementPlan struct {
 	HomeDirectOf string   `json:"homeDirectOf,omitempty"` // the target a direct home without a name of its own goes by
 	Targets      []string `json:"targets"`                // names of the targets it is copied to
 	Warn         bool     `json:"warn"`
-	Reason       string   `json:"reason"` // not-backed-up: "default-off" | "default-missing"
+	Reason       string   `json:"reason"` // not-backed-up: "default-off" | "default-missing" | "default-none"
 	NoCopy       bool     `json:"noCopy"`
 }
 
@@ -334,6 +334,9 @@ func (s *Service) plannedHome(settings store.Settings, p placementRead, item pla
 // planFor is the plan half of the result line: where the next backup goes and
 // where it is copied, asked the way the step before the first backup asks.
 func planFor(p placementRead, item placementItem, f *statusFacts, kind, repoID string, home homeKind) *placementPlan {
+	if home == homeNowhere {
+		return &placementPlan{Kind: "not-backed-up", Targets: []string{}, Warn: true, Reason: "default-none"}
+	}
 	if kind == "default-home" && repoID != "" {
 		switch {
 		case home == homeMissing:

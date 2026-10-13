@@ -45,6 +45,7 @@ export function CoverageCard({
     "db-dump-only-copy-off": "coverage.reason.dbDumpOnlyCopyOff",
     "db-not-scheduled": "coverage.reason.dbNotScheduled",
     "zfs-member-skipped": "coverage.reason.zfsMemberSkipped",
+    "no-place": "coverage.reason.noPlace",
   };
 
   function skippedTip(code: string): string {

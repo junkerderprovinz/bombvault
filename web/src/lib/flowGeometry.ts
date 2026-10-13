@@ -106,8 +106,6 @@ export function flowLayout(measures: FlowMeasures, rows: number, bands: number, 
 
 export interface FlowPath {
   d: string;
-  /** The middle of the line, where a mark that belongs to it sits. */
-  middle: [number, number];
 }
 
 function bend(x1: number, y1: number, x2: number, y2: number): string {
@@ -120,7 +118,7 @@ export function nearPath(layout: FlowLayout, row: number, band: number): FlowPat
   const y = layout.rowY(row);
   const from = layout.measures.label;
   const to = layout.bandCentre(band);
-  return { d: `M${from} ${y}H${to}`, middle: [(from + to) / 2, y] };
+  return { d: `M${from} ${y}H${to}` };
 }
 
 /** The line to an off-site box. It leaves the band the section is stored on,
@@ -130,13 +128,10 @@ export function farPath(layout: FlowLayout, row: number, node: number, fromBand:
   const [px, py] = layout.port(node, row);
   if (fromBand !== null) {
     const from = layout.bandCentre(fromBand);
-    return { d: `M${from} ${y}${bend(from, y, px, py)}`, middle: [(from + px) / 2, (y + py) / 2] };
+    return { d: `M${from} ${y}${bend(from, y, px, py)}` };
   }
   const { past } = layout;
-  return {
-    d: `M${layout.measures.label} ${y}H${past}${bend(past, y, px, py)}`,
-    middle: [(past + px) / 2, (y + py) / 2],
-  };
+  return { d: `M${layout.measures.label} ${y}H${past}${bend(past, y, px, py)}` };
 }
 
 export interface FlowStub {
@@ -145,10 +140,12 @@ export interface FlowStub {
   labelX: number;
 }
 
-/** The short dashed end of a row that reaches no off-site box. */
+/** The short dashed end of a row that reaches no off-site box. A row stored
+ *  on no band ends in its cross past the bands, so its lines to them stay in
+ *  sight. */
 export function stubPath(layout: FlowLayout, row: number, fromBand: number | null): FlowStub {
   const y = layout.rowY(row);
-  const start = fromBand !== null ? layout.bandCentre(fromBand) + 7 : layout.measures.label;
-  const end = start + layout.measures.stub;
+  const start = fromBand !== null ? layout.bandCentre(fromBand) + 7 : layout.past;
+  const end = start + (fromBand !== null ? layout.measures.stub : 4);
   return { d: `M${start} ${y}H${end}`, cross: `M${end - 4} ${y - 4}l8 8m0 -8l-8 8`, labelX: end + 8 };
 }

@@ -61,6 +61,9 @@ const (
 	// not read this dataset of its tree, so the green item covers less than its
 	// name suggests.
 	CoverageZFSMemberSkipped = "zfs-member-skipped"
+	// CoverageNoPlace: a schedule reaches the item, but its section has every
+	// storage location switched off for it, so the run has nowhere to write.
+	CoverageNoPlace = "no-place"
 )
 
 // CoverageItem is one unprotected item.
@@ -119,13 +122,17 @@ func (s *Service) Coverage(ctx context.Context) (CoverageReport, error) {
 	if err != nil {
 		return CoverageReport{}, err
 	}
+	nowhere, err := s.placelessSections()
+	if err != nil {
+		return CoverageReport{}, err
+	}
 
 	report := CoverageReport{}
 	for _, d := range []CoverageDomain{
-		s.coverContainers(ctx, settings, declined),
-		s.coverVMs(settings, declined),
-		s.coverFileSets(settings, declined),
-		s.coverZFSDatasets(settings, declined),
+		s.coverContainers(ctx, settings, declined, nowhere),
+		s.coverVMs(settings, declined, nowhere),
+		s.coverFileSets(settings, declined, nowhere),
+		s.coverZFSDatasets(settings, declined, nowhere),
 	} {
 		if d.Unprotected == nil {
 			d.Unprotected = []CoverageItem{}
@@ -147,7 +154,7 @@ func (s *Service) Coverage(ctx context.Context) (CoverageReport, error) {
 // the host with no row has no include flag, no override and no backup, because
 // there is no row to hold any of them. Reading only stored rows would miss
 // exactly the item that most needs naming.
-func (s *Service) coverContainers(ctx context.Context, settings store.Settings, declined declinedBackups) CoverageDomain {
+func (s *Service) coverContainers(ctx context.Context, settings store.Settings, declined declinedBackups, nowhere placeless) CoverageDomain {
 	out := CoverageDomain{Domain: "containers", Enabled: settings.ContainersEnabled}
 	// A switched-off domain produces no unprotected items, only the fact that it
 	// is off. Listing its items would put a permanent red list in front of an
@@ -212,6 +219,10 @@ func (s *Service) coverContainers(ctx context.Context, settings store.Settings, 
 			})
 			continue
 		}
+		if nowhere["containers"] && row.RepoChosen == store.RepoOpen {
+			out.Unprotected = append(out.Unprotected, CoverageItem{Name: c.Name, Reason: CoverageNoPlace, NeverBackedUp: s.neverBackedUp(row.ID)})
+			continue
+		}
 		// A database whose dumps are missing counts as unprotected although the
 		// schedule reaches it: for these containers the files alone are not an
 		// answer to what is backed up.
@@ -269,7 +280,7 @@ func (s *Service) dbDumpGap(settings store.Settings, tg store.Target, db dbDumpR
 // not be the thing that starts doing that. The cost is that a VM defined on the
 // host but never added to BombVault is not named here the way an unknown
 // container is; the VM tab is where that one shows up.
-func (s *Service) coverVMs(settings store.Settings, declined declinedBackups) CoverageDomain {
+func (s *Service) coverVMs(settings store.Settings, declined declinedBackups, nowhere placeless) CoverageDomain {
 	out := CoverageDomain{Domain: "vms", Enabled: settings.VMsEnabled}
 	// A switched-off domain produces no unprotected items, only the fact that it
 	// is off. Listing its items would put a permanent red list in front of an
@@ -292,6 +303,10 @@ func (s *Service) coverVMs(settings store.Settings, declined declinedBackups) Co
 		}
 		out.Total++
 		if eff.Kind != schedule.EffectiveNone {
+			if nowhere["vms"] && v.RepoChosen == store.RepoOpen {
+				out.Unprotected = append(out.Unprotected, CoverageItem{Name: v.Name, Reason: CoverageNoPlace, NeverBackedUp: s.neverBackedUp(v.ID)})
+				continue
+			}
 			out.count(s.neverBackedUp(v.ID))
 			continue
 		}
@@ -306,7 +321,7 @@ func (s *Service) coverVMs(settings store.Settings, declined declinedBackups) Co
 
 // coverFileSets walks the stored sets; a file set has no existence outside
 // BombVault, so there is no "never added" case to find.
-func (s *Service) coverFileSets(settings store.Settings, declined declinedBackups) CoverageDomain {
+func (s *Service) coverFileSets(settings store.Settings, declined declinedBackups, nowhere placeless) CoverageDomain {
 	out := CoverageDomain{Domain: "files", Enabled: settings.FilesEnabled}
 	// A switched-off domain produces no unprotected items, only the fact that it
 	// is off. Listing its items would put a permanent red list in front of an
@@ -329,6 +344,10 @@ func (s *Service) coverFileSets(settings store.Settings, declined declinedBackup
 		}
 		out.Total++
 		if eff.Kind != schedule.EffectiveNone {
+			if nowhere["files"] && fs.RepoChosen == store.RepoOpen {
+				out.Unprotected = append(out.Unprotected, CoverageItem{Name: fs.Name, Reason: CoverageNoPlace, NeverBackedUp: s.neverBackedUp(fs.ID)})
+				continue
+			}
 			out.count(s.neverBackedUp(fs.ID))
 			continue
 		}
@@ -350,7 +369,7 @@ func (s *Service) coverFileSets(settings store.Settings, declined declinedBackup
 // carries system, Docker-layer, VM and share datasets that other domains cover
 // or that nobody wants backed up, so counting them here would make the card cry
 // wolf; the ZFS page lists them instead.
-func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBackups) CoverageDomain {
+func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBackups, nowhere placeless) CoverageDomain {
 	out := CoverageDomain{Domain: "zfs", Enabled: settings.ZFSEnabled}
 	if !out.Enabled {
 		return out
@@ -374,6 +393,10 @@ func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBac
 				Reason:        reasonFor(d.Enabled, d.ScheduleCadence, settings.PerItemSchedules),
 				NeverBackedUp: s.neverBackedUp(d.ID),
 			})
+			continue
+		}
+		if nowhere[zfsDomain] && d.Repo == "" {
+			out.Unprotected = append(out.Unprotected, CoverageItem{Name: d.Dataset, Reason: CoverageNoPlace, NeverBackedUp: s.neverBackedUp(d.ID)})
 			continue
 		}
 		// An item with a skipped member is short of protected the way a

@@ -31,6 +31,8 @@ function useReasonText(entry: Entry): string {
       return t("entry.reason.gone");
     case "declined":
       return t("entry.reason.declined");
+    case "noPlace":
+      return t("entry.reason.noPlace");
     case "lastFailed":
       return t("entry.reason.lastFailed").replace("{when}", formatRecent(reason.lastGood, lang));
     case "lastBackup":
