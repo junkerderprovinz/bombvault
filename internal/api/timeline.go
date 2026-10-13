@@ -319,6 +319,17 @@ func (s *Service) readPlace(ctx context.Context, it timelineItem, p placeRef) (t
 	return p.timelinePlace, rowsAt(it, p.Place, own)
 }
 
+// readNow is readPlace for a place Timeline reads at once. A remote one, the
+// home, gets remoteHomeListTimeout.
+func (s *Service) readNow(ctx context.Context, it timelineItem, p placeRef) (timelinePlace, []timelineRow) {
+	if !p.Remote {
+		return s.readPlace(ctx, it, p)
+	}
+	ctx, cancel := context.WithTimeout(ctx, remoteHomeListTimeout)
+	defer cancel()
+	return s.readPlace(ctx, it, p)
+}
+
 // rowsAt groups one place's snapshots by restic.Identity. A VM's disk snapshots
 // are no rows of their own; two snapshots of one key, as restic leaves after
 // copying a re-tagged snapshot again, share a mark.
@@ -477,9 +488,14 @@ func mergeRows(parts [][]timelineRow) []timelineRow {
 	return out
 }
 
-// Timeline lists an item's backups over all its places. Local places are read
-// at once; a remote one stays unchecked until TimelinePlace reads it, so opening
-// a timeline never reaches for a bucket.
+// remoteHomeListTimeout bounds the one remote listing opening a timeline
+// waits for, so a home that does not answer leaves the page readable.
+const remoteHomeListTimeout = 20 * time.Second
+
+// Timeline lists an item's backups over all its places. Local places and the
+// home are read at once, the home also off the premises, since it is where the
+// newest backups land. Any other remote place stays unchecked until
+// TimelinePlace reads it.
 func (s *Service) Timeline(ctx context.Context, domain, key string) (timeline, error) {
 	it, refs, err := s.timelineRefs(domain, key)
 	if err != nil {
@@ -488,12 +504,12 @@ func (s *Service) Timeline(ctx context.Context, domain, key string) (timeline, e
 	out := timeline{Places: make([]timelinePlace, 0, len(refs))}
 	var parts [][]timelineRow
 	for _, p := range refs {
-		if p.Remote {
+		if p.Remote && p.Kind != "home" {
 			p.State = "unchecked"
 			out.Places = append(out.Places, p.timelinePlace)
 			continue
 		}
-		place, rows := s.readPlace(ctx, it, p)
+		place, rows := s.readNow(ctx, it, p)
 		// A former home the item left before any backup of it landed there
 		// has nothing of it to show.
 		if p.Kind == "earlier" && place.State == "read" && len(rows) == 0 {
