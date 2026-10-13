@@ -31,7 +31,7 @@ Uygulama bir yanıtı yalnızca sunucu onu, uygulamanın bu sunucuyla ilk karş�
 
 ## Sunucu değiştirme {#switch}
 
-Bir sunucu açıkken genel bakışının üstünde sunucunun adı görünür. Uygulama başka sunucuları da biliyorsa adın yanında bir ok durur ve dokununca uygulamanın bildiği her sunucu listelenir: açık olan **Bu örnek** olarak işaretlenir, diğerlerinin her biri durumuyla gösterilir: **Bağlı**, **Bağlı değil**, **Oturum açma gerekiyor** ya da **Sertifikayı kontrol et**. Açmak için başka birine dokun; evde doğrudan, aksi halde röle üzerinden açılır.
+Bir sunucu açıkken genel bakışının üstünde sunucunun adı, önünde de bir geri oku görünür. Ok, uygulamanın genel bakışına, yani başlangıç ekranına götürür; orada uygulamanın bildiği her sunucu durumuyla listelenir: **Bağlı**, **Bağlı değil**, **Oturum açma gerekiyor** ya da **Sertifikayı kontrol et**. Açmak için orada başka birine dokun; evde doğrudan, aksi halde röle üzerinden açılır.
 
 ## Eşleştirilmiş telefonda oturum {#sign-in}
 

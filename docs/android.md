@@ -31,7 +31,7 @@ The app takes an answer only when the server signed it with the key the app pinn
 
 ## Switching servers {#switch}
 
-With a server open, the top of its overview shows the server's name. Once the app knows other servers, a chevron stands beside the name, and a tap lists every server the app knows, the open one marked **This instance** and each of the others with its state: **Connected**, **Not connected**, **Sign-in needed** or **Check certificate**. Tap another one to open it, directly at home and through the relay otherwise.
+With a server open, the top of its overview shows the server's name, with a back arrow before it. The arrow leads to the app's overview, the start screen, which lists every server the app knows with its state: **Connected**, **Not connected**, **Sign-in needed** or **Check certificate**. Tap another one there to open it, directly at home and through the relay otherwise.
 
 ## Signed in on a paired phone {#sign-in}
 

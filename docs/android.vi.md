@@ -31,7 +31,7 @@ Qua relay, trang chạm tới những gì một điện thoại đã ghép nối
 
 ## Chuyển máy chủ {#switch}
 
-Khi một máy chủ đang mở, đầu trang Tổng quan của nó hiển thị tên máy chủ. Khi ứng dụng biết các máy chủ khác, một mũi tên nằm cạnh tên, và một lần chạm liệt kê mọi máy chủ mà ứng dụng biết, máy chủ đang mở được đánh dấu **Phiên bản này** và mỗi máy chủ khác kèm trạng thái của nó: **Đã kết nối**, **Chưa kết nối**, **Cần đăng nhập** hoặc **Kiểm tra chứng chỉ**. Chạm vào máy chủ khác để mở nó, trực tiếp khi ở nhà và qua relay trong các trường hợp còn lại.
+Khi một máy chủ đang mở, đầu trang Tổng quan của nó hiển thị tên máy chủ, với một mũi tên quay lại phía trước. Mũi tên dẫn về tổng quan của ứng dụng, tức màn hình chính, nơi liệt kê mọi máy chủ mà ứng dụng biết kèm trạng thái: **Đã kết nối**, **Chưa kết nối**, **Cần đăng nhập** hoặc **Kiểm tra chứng chỉ**. Chạm vào máy chủ khác ở đó để mở nó, trực tiếp khi ở nhà và qua relay trong các trường hợp còn lại.
 
 ## Đăng nhập trên điện thoại đã ghép nối {#sign-in}
 

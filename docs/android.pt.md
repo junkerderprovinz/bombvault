@@ -31,7 +31,7 @@ A aplicação só aceita uma resposta se o servidor a assinou com a chave que a 
 
 ## Mudar de servidor {#switch}
 
-Com um servidor aberto, o topo da sua visão geral mostra o nome do servidor. Quando a aplicação conhece outros servidores, há uma seta ao lado do nome, e um toque lista todos os servidores que a aplicação conhece: o aberto marcado como **Esta instância** e cada um dos outros com o seu estado, **Ligada**, **Não ligada**, **Início de sessão necessário** ou **Verificar certificado**. Toca noutro para o abrir, diretamente em casa e, fora dela, pelo relay.
+Com um servidor aberto, o topo da sua visão geral mostra o nome do servidor, com uma seta para voltar antes dele. A seta leva à visão geral da aplicação, o ecrã inicial, que lista todos os servidores que a aplicação conhece com o seu estado: **Ligada**, **Não ligada**, **Início de sessão necessário** ou **Verificar certificado**. Toca aí noutro para o abrir, diretamente em casa e, fora dela, pelo relay.
 
 ## Sessão iniciada num telemóvel emparelhado {#sign-in}
 

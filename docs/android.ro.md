@@ -31,7 +31,7 @@ Aplicația acceptă un răspuns doar dacă serverul l-a semnat cu cheia pe care 
 
 ## Schimbarea serverului {#switch}
 
-Cu un server deschis, partea de sus a prezentării lui arată numele serverului. Când aplicația cunoaște și alte servere, lângă nume apare o săgeată, iar o atingere listează fiecare server pe care îl cunoaște aplicația, cel deschis marcat **Această instanță** și fiecare dintre celelalte cu starea lui: **Conectată**, **Neconectată**, **Este nevoie de autentificare** sau **Verifică certificatul**. Atinge altul ca să-l deschizi, direct acasă și altfel prin releu.
+Cu un server deschis, partea de sus a prezentării lui arată numele serverului, cu o săgeată înapoi în fața lui. Săgeata duce la prezentarea generală a aplicației, ecranul de pornire, care listează fiecare server pe care îl cunoaște aplicația, cu starea lui: **Conectată**, **Neconectată**, **Este nevoie de autentificare** sau **Verifică certificatul**. Atinge acolo altul ca să-l deschizi, direct acasă și altfel prin releu.
 
 ## Autentificat pe un telefon împerecheat {#sign-in}
 

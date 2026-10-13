@@ -31,7 +31,7 @@ Appen tar bara emot ett svar om servern har signerat det med nyckeln som appen f
 
 ## Byta server {#switch}
 
-När en server är öppen visar översikten överst serverns namn. Känner appen till fler servrar står en pil bredvid namnet, och en tryckning listar varje server som appen känner till, den öppna markerad som **Den här instansen** och var och en av de andra med sitt tillstånd: **Ansluten**, **Inte ansluten**, **Inloggning behövs** eller **Kontrollera certifikat**. Tryck på en annan för att öppna den, direkt hemma och annars via reläet.
+När en server är öppen visar översikten överst serverns namn, med en bakåtpil före. Pilen leder till appens översikt, startskärmen, som listar varje server som appen känner till med sitt tillstånd: **Ansluten**, **Inte ansluten**, **Inloggning behövs** eller **Kontrollera certifikat**. Tryck där på en annan för att öppna den, direkt hemma och annars via reläet.
 
 ## Inloggad på en parkopplad telefon {#sign-in}
 

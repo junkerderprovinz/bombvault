@@ -31,7 +31,7 @@ L'application n'accepte une réponse que si le serveur l'a signée avec la clé 
 
 ## Changer de serveur {#switch}
 
-Quand un serveur est ouvert, le haut de son aperçu affiche le nom du serveur. Dès que l'application connaît d'autres serveurs, une flèche se trouve à côté du nom, et un toucher liste tous les serveurs que l'application connaît, celui qui est ouvert marqué **Cette instance** et chacun des autres avec son état : **Connectée**, **Non connectée**, **Connexion nécessaire** ou **Vérifier le certificat**. Touchez-en un autre pour l'ouvrir, directement à la maison et via le relais sinon.
+Quand un serveur est ouvert, le haut de son aperçu affiche le nom du serveur, précédé d'une flèche de retour. La flèche mène à l'aperçu de l'application, l'écran d'accueil, qui liste tous les serveurs que l'application connaît avec leur état : **Connectée**, **Non connectée**, **Connexion nécessaire** ou **Vérifier le certificat**. Touchez-y un autre serveur pour l'ouvrir, directement à la maison et via le relais sinon.
 
 ## Connecté d'office sur un téléphone appairé {#sign-in}
 
