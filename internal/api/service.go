@@ -1988,17 +1988,31 @@ func isBuiltInOffsiteTarget(settings store.Settings, domain string, t store.Offs
 // finding that says the source lost its data keeps its own item's snapshots
 // until the user has seen it. An empty hold is never held.
 func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, id entryIdentity, domain string, hold anomalyScope) {
+	p := s.retentionPolicyForRef(settings, domain, s.refFor(settings, domain, repo))
+	if !p.Any() {
+		return
+	}
+	s.forgetAt(ctx, repo, p, s.primaryIsImmutable(domain, repo), mode, id, domain, hold)
+}
+
+// agePlace is applyRetention for one place a section without placement wrote
+// to, by the keep-policy of that place.
+func (s *Service) agePlace(ctx context.Context, settings store.Settings, domain string, pl sectionPlace, id entryIdentity, hold anomalyScope) {
+	if p, appendOnly := s.keepAt(settings, domain, pl); p.Any() {
+		s.forgetAt(ctx, pl.repo, p, appendOnly, pl.mode, id, domain, hold)
+	}
+}
+
+// forgetAt ages id's snapshots in repo by p, unless the repository refuses
+// deletes or a finding holds them.
+func (s *Service) forgetAt(ctx context.Context, repo string, p restic.RetentionPolicy, appendOnly bool, mode restic.Mode, id entryIdentity, domain string, hold anomalyScope) {
 	// The backup before a restore would count against the policy and could
 	// age out the very snapshot that restore is about to read. The entry's
 	// next backup applies the policy to both.
 	if isBeforeRestore(ctx) {
 		return
 	}
-	p := s.retentionPolicyForRef(settings, domain, s.refFor(settings, domain, repo))
-	if !p.Any() {
-		return
-	}
-	if s.primaryIsImmutable(domain, repo) {
+	if appendOnly {
 		// NAMED, so the operator can tell which repository was spared while the
 		// rest of the domain pruned normally. It used to say "primary repo is
 		// remote", which is two words wrong for a named repository on a local
@@ -3926,6 +3940,11 @@ func repoLocationKey(loc string) string {
 var offsiteProgressHeartbeat = 5 * time.Second
 
 func (s *Service) copyToOffsite(ctx context.Context, domain string, settings store.Settings, item string, localRepos []domainRepoRef, skipped []repoSkip) (err error) {
+	localRepos, nothing := s.skipOwnCopySource(domain, localRepos)
+	if nothing {
+		log.Printf("api: offsite %s: its own folder is switched off and its backups go to the targets directly, so there is nothing to copy", domain) //nolint:gosec // G706: domain is a fixed literal
+		return nil
+	}
 	// One read of the rules, the default and the targets, before any restic call.
 	p, perr := s.readPlacement(settings, domain)
 	if perr == nil && p.State.Paused() {
@@ -13630,13 +13649,16 @@ func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr err
 		return backup.Summary{}, err
 	}
 	// issue #152 (bandwidth caps) and #182 (this domain's own credential set)
-	mode := s.primaryModeFor(settings, "flash", repo)
-	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
+	places, err := s.sectionPlaces(settings, "flash", repo)
+	if err != nil {
 		return backup.Summary{}, err
 	}
-	// Clear any stale lock left by a previously interrupted run so it can't block
-	// this backup (BombVault is the sole writer; an active lock is never stale).
-	s.unlockStale(ctx, repo, mode)
+	// Clears any stale lock an interrupted run left in the own folder, so it
+	// can't block this backup (BombVault is the sole writer there).
+	if err := s.readyPlaces(ctx, places); err != nil {
+		return backup.Summary{}, err
+	}
+	repo, mode := places[0].repo, places[0].mode
 	// Healthchecks /start ping: deferred to here, past the /boot-mounted + EnsureRepo
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "flash")
@@ -13645,7 +13667,7 @@ func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr err
 		SourceDir: s.cfg.FlashDir,
 		Repo:      repo,
 		TargetID:  store.FlashTargetID,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFingerprint(itemSelection{Kind: "flash"})},
+		Restic:    s.placesAdapter(settings, "flash", places, selectionFingerprint(itemSelection{Kind: "flash"})),
 		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "flash"},
 	})
 	s.progEnd("flash", "backup", err == nil, startedAt)
@@ -13654,11 +13676,15 @@ func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr err
 		return backup.Summary{}, err
 	}
 	s.queueFirstProbe(store.FlashTargetID)
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity("flash"), "flash", anomalyScope{Kind: anomalyScopeItem, ID: store.FlashTargetID})
-	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
-	s.replicateOffsite(ctx, "flash", settings, repo, "")
+	for _, pl := range places {
+		s.agePlace(ctx, settings, "flash", pl, tagIdentity("flash"), anomalyScope{Kind: anomalyScopeItem, ID: store.FlashTargetID})
+	}
+	if places[0].own() {
+		makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
+		s.replicateOffsite(ctx, "flash", settings, repo, "")
+		s.checkPrimaryRemoteBudget(ctx, "flash", repo, settings)
+	}
 	s.collectStatsAfterItem(ctx, "flash")
-	s.checkPrimaryRemoteBudget(ctx, "flash", repo, settings)
 	if err := s.exportFlashZip(ctx, settings, sum.SnapshotID, mode, repo); err != nil {
 		log.Printf("flash zip export failed (backup is still valid): %v", err)
 	}
@@ -15150,13 +15176,16 @@ func (s *Service) BackupConfig(ctx context.Context) (_ backup.Summary, retErr er
 		return backup.Summary{}, err
 	}
 	// issue #152 (bandwidth caps) and #182 (this domain's own credential set)
-	mode := s.primaryModeFor(settings, "config", repo)
-	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
+	places, err := s.sectionPlaces(settings, "config", repo)
+	if err != nil {
 		return backup.Summary{}, err
 	}
-	// Clear any stale lock left by a previously interrupted run so it can't block
-	// this backup (BombVault is the sole writer; an active lock is never stale).
-	s.unlockStale(ctx, repo, mode)
+	// Clears any stale lock an interrupted run left in the own folder, so it
+	// can't block this backup (BombVault is the sole writer there).
+	if err := s.readyPlaces(ctx, places); err != nil {
+		return backup.Summary{}, err
+	}
+	repo = places[0].repo
 	// Healthchecks /start ping: deferred to here, past staging + EnsureRepo guards,
 	// so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "config")
@@ -15165,7 +15194,7 @@ func (s *Service) BackupConfig(ctx context.Context) (_ backup.Summary, retErr er
 		SourceDir: stagingDir,
 		Repo:      repo,
 		TargetID:  store.ConfigTargetID,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFingerprint(itemSelection{Kind: "config"})},
+		Restic:    s.placesAdapter(settings, "config", places, selectionFingerprint(itemSelection{Kind: "config"})),
 		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "config"},
 	})
 	s.progEnd("config", "backup", err == nil, startedAt)
@@ -15174,10 +15203,14 @@ func (s *Service) BackupConfig(ctx context.Context) (_ backup.Summary, retErr er
 		return backup.Summary{}, err
 	}
 	s.queueFirstProbe(store.ConfigTargetID)
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity("config"), "config", anomalyScope{Kind: anomalyScopeItem, ID: store.ConfigTargetID})
-	s.replicateOffsite(ctx, "config", settings, repo, "")
+	for _, pl := range places {
+		s.agePlace(ctx, settings, "config", pl, tagIdentity("config"), anomalyScope{Kind: anomalyScopeItem, ID: store.ConfigTargetID})
+	}
+	if places[0].own() {
+		s.replicateOffsite(ctx, "config", settings, repo, "")
+		s.checkPrimaryRemoteBudget(ctx, "config", repo, settings)
+	}
 	s.collectStatsAfterItem(ctx, "config")
-	s.checkPrimaryRemoteBudget(ctx, "config", repo, settings)
 	return sum, nil
 }
 

@@ -11,6 +11,10 @@ import (
 // PlacementDomains are the domains whose items choose where they are copied.
 var PlacementDomains = []string{"containers", "vms", "files"}
 
+// HomeNowhere is the home of a default that gives a new item no place at all,
+// set while every storage location of the domain is switched off for it.
+const HomeNowhere = "none"
+
 // ItemRef names one container, VM or file set.
 type ItemRef struct {
 	Domain string // "containers", "vms" or "files"

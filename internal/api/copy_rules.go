@@ -294,7 +294,7 @@ func (s *Service) checkCopies(settings store.Settings, p placementRead, named ma
 		if own := named[repoID].CompanionOf; !skipsTarget(copies.Skip, own) {
 			return errCopiesToOwnTarget
 		}
-	case homeRemote, homeMissing:
+	case homeRemote, homeMissing, homeNowhere:
 		return errCopiesNotAllowed
 	}
 	return nil

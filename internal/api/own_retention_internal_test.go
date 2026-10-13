@@ -119,7 +119,7 @@ func TestZFSDatasetsAgeByTheirOwnPolicy(t *testing.T) {
 	nas := f.namedRepo("NAS", "nas")
 	f.container("nginx", nas.ID)
 	settings := withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{zfsDomain: {KeepWeekly: 8}})
-	f.svc.applyRetentionTags(context.Background(), f.root+"/nas", settings, restic.Mode{}, []string{"zfs:tank/media"}, zfsDomain)
+	f.svc.applyRetentionTags(context.Background(), settings, sectionPlace{repo: f.root + "/nas"}, []string{"zfs:tank/media"}, zfsDomain)
 	if len(f.eng.forgets) != 1 || f.eng.forgets[0].Policy != (restic.RetentionPolicy{KeepWeekly: 8}) {
 		t.Fatalf("forgets = %+v, want one with the ZFS domain's own keep-weekly 8", f.eng.forgets)
 	}

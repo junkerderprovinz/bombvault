@@ -81,6 +81,9 @@ type locationSection struct {
 	// Enabled is the target's switch for a copy, the repository's for a home
 	// in one, and the domain's own for its path.
 	Enabled bool `json:"enabled"`
+	// Off marks the own folder of a section without placement that takes no
+	// new backups: they go to the section's targets directly.
+	Off bool `json:"off,omitempty"`
 	// Primary marks the copy the domain's off-site settings describe.
 	Primary       bool                `json:"primary,omitempty"`
 	Immutable     bool                `json:"immutable"`
@@ -184,7 +187,9 @@ type locationBuilder struct {
 	directs map[string]store.OffsiteTarget
 	// copying counts the enabled targets of each domain.
 	copying map[string]int
-	reader  capacityReader
+	// localOff holds the sections whose own folder takes no new backups.
+	localOff map[string]bool
+	reader   capacityReader
 }
 
 // StorageLocations lists every place backups are kept: the domain folders,
@@ -199,6 +204,9 @@ func (s *Service) StorageLocations() ([]storageLocation, error) {
 	b := locationBuilder{s: s, settings: settings, now: time.Now(), reader: capacityReader{s: s},
 		directs: map[string]store.OffsiteTarget{}, copying: map[string]int{}}
 	if b.targets, err = s.store.ListOffsiteTargets(); err != nil {
+		return nil, err
+	}
+	if b.localOff, err = s.store.LocalOff(); err != nil {
 		return nil, err
 	}
 	for _, t := range b.targets {
@@ -386,6 +394,7 @@ func (b *locationBuilder) pathLocations() []storageLocation {
 func (b *locationBuilder) pathSection(domain, raw string) locationSection {
 	sec := locationSection{
 		Domain: domain, Use: useHome, Where: scrubRepoLocation(raw), Enabled: domainEnabled(b.settings, domain),
+		Off:         b.localOff[domain],
 		Retention:   localKeep(b.settings, domain),
 		Compression: normalizedCompression(b.settings.CompressionFor(domain)),
 		Own:         b.ownLocalKeep(domain),

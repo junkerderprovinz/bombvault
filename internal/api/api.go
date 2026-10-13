@@ -450,6 +450,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/stats", h.handleStats)
 	mux.HandleFunc("GET /api/storage/locations", h.handleListStorageLocations)
 	mux.HandleFunc("GET /api/storage/locations/{id}", h.handleGetStorageLocation)
+	mux.HandleFunc("PUT /api/storage/sections/{domain}/local", h.handleSetSectionLocal)
 	mux.HandleFunc("GET /api/browse", h.handleBrowse)
 	mux.HandleFunc("POST /api/browse/mkdir", h.handleMkdir)
 	mux.HandleFunc("GET /api/progress", h.handleProgress)

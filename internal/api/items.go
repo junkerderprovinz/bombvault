@@ -18,52 +18,64 @@ import (
 
 // itemFacts is what a stored row and the settings say about one backed-up
 // item, whatever its kind. ID is the target id its runs carry, empty for a
-// container or VM the host knows and no row exists for yet.
+// container or VM the host knows and no row exists for yet. Section is the
+// domain it belongs to, and TakesSectionPlace says that its next backup goes
+// where the section sends new backups rather than to a place of its own.
 type itemFacts struct {
-	ID       string
-	Name     string
-	Included bool
-	Paused   bool
-	Schedule schedule.EffectiveSchedule
+	ID                string
+	Name              string
+	Included          bool
+	Paused            bool
+	Schedule          schedule.EffectiveSchedule
+	Section           string
+	TakesSectionPlace bool
 }
 
 func containerFacts(t store.Target, s store.Settings) itemFacts {
 	return itemFacts{
-		ID:       t.ID,
-		Name:     t.ContainerName,
-		Included: t.IncludeInSchedule,
-		Paused:   schedule.PausedByOverride(t.ScheduleCadence, s.PerItemSchedules),
-		Schedule: schedule.EffectiveContainerSchedule(t, s),
+		ID:                t.ID,
+		Name:              t.ContainerName,
+		Included:          t.IncludeInSchedule,
+		Paused:            schedule.PausedByOverride(t.ScheduleCadence, s.PerItemSchedules),
+		Schedule:          schedule.EffectiveContainerSchedule(t, s),
+		Section:           "containers",
+		TakesSectionPlace: t.RepoChosen == store.RepoOpen,
 	}
 }
 
 func vmFacts(vm store.VMTarget, s store.Settings) itemFacts {
 	return itemFacts{
-		ID:       vm.ID,
-		Name:     vm.Name,
-		Included: vm.IncludeInSchedule,
-		Paused:   schedule.PausedByOverride(vm.ScheduleCadence, s.PerItemSchedules),
-		Schedule: schedule.EffectiveVMSchedule(vm, s),
+		ID:                vm.ID,
+		Name:              vm.Name,
+		Included:          vm.IncludeInSchedule,
+		Paused:            schedule.PausedByOverride(vm.ScheduleCadence, s.PerItemSchedules),
+		Schedule:          schedule.EffectiveVMSchedule(vm, s),
+		Section:           "vms",
+		TakesSectionPlace: vm.RepoChosen == store.RepoOpen,
 	}
 }
 
 func fileSetFacts(set store.FileSet, s store.Settings) itemFacts {
 	return itemFacts{
-		ID:       set.ID,
-		Name:     set.Name,
-		Included: set.Enabled,
-		Paused:   schedule.PausedByOverride(set.ScheduleCadence, s.PerItemSchedules),
-		Schedule: schedule.EffectiveFileSetSchedule(set, s),
+		ID:                set.ID,
+		Name:              set.Name,
+		Included:          set.Enabled,
+		Paused:            schedule.PausedByOverride(set.ScheduleCadence, s.PerItemSchedules),
+		Schedule:          schedule.EffectiveFileSetSchedule(set, s),
+		Section:           "files",
+		TakesSectionPlace: set.RepoChosen == store.RepoOpen,
 	}
 }
 
 func zfsDatasetFacts(d store.ZFSDataset, s store.Settings) itemFacts {
 	return itemFacts{
-		ID:       d.ID,
-		Name:     d.Dataset,
-		Included: d.Enabled,
-		Paused:   schedule.PausedByOverride(d.ScheduleCadence, s.PerItemSchedules),
-		Schedule: schedule.EffectiveZFSDatasetSchedule(d, s),
+		ID:                d.ID,
+		Name:              d.Dataset,
+		Included:          d.Enabled,
+		Paused:            schedule.PausedByOverride(d.ScheduleCadence, s.PerItemSchedules),
+		Schedule:          schedule.EffectiveZFSDatasetSchedule(d, s),
+		Section:           zfsDomain,
+		TakesSectionPlace: d.Repo == "",
 	}
 }
 
@@ -139,20 +151,30 @@ type backupItemView struct {
 	RenameReason string `json:"renameReason,omitempty"`
 	// BackupDeclined is set while the person does not want the item backed up
 	// and no schedule reaches it.
-	BackupDeclined bool             `json:"backupDeclined,omitempty"`
-	Runs           []store.RunBrief `json:"runs"`
+	BackupDeclined bool `json:"backupDeclined,omitempty"`
+	// NoPlace is set while the item's next backup would go where its section
+	// sends new backups and the section has every storage location switched
+	// off for them.
+	NoPlace bool             `json:"noPlace,omitempty"`
+	Runs    []store.RunBrief `json:"runs"`
 }
 
-// itemHistory is what the runs table says about the items of one answer.
+// itemHistory is what the runs table says about the items of one answer, with
+// the items the person declined and the sections that have no place for them.
 type itemHistory struct {
-	stamps   map[string]store.BackupStamp
-	sizes    map[string]int64
-	runs     map[string][]store.RunBrief
-	declined declinedBackups
+	stamps    map[string]store.BackupStamp
+	sizes     map[string]int64
+	runs      map[string][]store.RunBrief
+	declined  declinedBackups
+	placeless placeless
 }
 
 func (h *Handler) readItemHistory() (itemHistory, error) {
 	declined, err := h.svc.declinedBackups()
+	if err != nil {
+		return itemHistory{}, err
+	}
+	placeless, err := h.svc.placelessSections()
 	if err != nil {
 		return itemHistory{}, err
 	}
@@ -168,15 +190,19 @@ func (h *Handler) readItemHistory() (itemHistory, error) {
 	if err != nil {
 		return itemHistory{}, err
 	}
-	return itemHistory{stamps: stamps, sizes: sizes, runs: runs, declined: declined}, nil
+	return itemHistory{stamps: stamps, sizes: sizes, runs: runs, declined: declined, placeless: placeless}, nil
 }
 
 // readHistoryOf is readItemHistory for one target. An item without a stored
 // row has no id and no runs.
 func (h *Handler) readHistoryOf(targetID string) (itemHistory, error) {
 	declined, err := h.svc.declinedBackups()
+	if err != nil {
+		return itemHistory{}, err
+	}
+	placeless, err := h.svc.placelessSections()
 	if err != nil || targetID == "" {
-		return itemHistory{declined: declined}, err
+		return itemHistory{declined: declined, placeless: placeless}, err
 	}
 	stamps, err := h.store.LatestBackupsOf(targetID)
 	if err != nil {
@@ -190,7 +216,7 @@ func (h *Handler) readHistoryOf(targetID string) (itemHistory, error) {
 	if err != nil {
 		return itemHistory{}, err
 	}
-	return itemHistory{stamps: stamps, sizes: sizes, runs: runs, declined: declined}, nil
+	return itemHistory{stamps: stamps, sizes: sizes, runs: runs, declined: declined, placeless: placeless}, nil
 }
 
 func (hist itemHistory) row(kind, key string, f itemFacts) backupItemView {
@@ -206,6 +232,7 @@ func (hist itemHistory) row(kind, key string, f itemFacts) backupItemView {
 		LastRunStatus:     stamp.LastRunStatus,
 		LastRunError:      stamp.LastRunError,
 		BackupDeclined:    hist.declined.holds(kind, key, f.Schedule),
+		NoPlace:           f.TakesSectionPlace && hist.placeless[f.Section],
 		Runs:              []store.RunBrief{},
 	}
 	if size, ok := hist.sizes[f.ID]; ok {
@@ -298,14 +325,14 @@ func zfsDatasetRow(hist itemHistory, d store.ZFSDataset, settings store.Settings
 
 func flashRow(hist itemHistory, settings store.Settings) backupItemView {
 	return hist.row("flash", "flash", itemFacts{
-		ID: store.FlashTargetID, Name: "flash", Included: true,
+		ID: store.FlashTargetID, Name: "flash", Included: true, Section: "flash", TakesSectionPlace: true,
 		Schedule: schedule.EffectiveFlashSchedule(settings),
 	})
 }
 
 func configRow(hist itemHistory, settings store.Settings) backupItemView {
 	return hist.row("config", "config", itemFacts{
-		ID: store.ConfigTargetID, Name: "config", Included: true,
+		ID: store.ConfigTargetID, Name: "config", Included: true, Section: "config", TakesSectionPlace: true,
 		Schedule: schedule.EffectiveConfigSchedule(settings),
 	})
 }

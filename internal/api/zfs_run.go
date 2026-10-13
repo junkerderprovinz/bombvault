@@ -9,7 +9,6 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
-	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
@@ -196,12 +195,13 @@ func (s *Service) notifyZFSUnsuppressed(ev notify.Event) {
 // its datasets into a single keep-N group and age whole datasets out. A
 // dataset whose data a finding says was lost keeps its old backups, the way a
 // container's do, while its siblings prune.
-func (s *Service) applyRetentionTags(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, tags []string, domain string) {
-	p := s.retentionPolicyForRef(settings, domain, s.refFor(settings, domain, repo))
+func (s *Service) applyRetentionTags(ctx context.Context, settings store.Settings, pl sectionPlace, tags []string, domain string) {
+	p, appendOnly := s.keepAt(settings, domain, pl)
 	if !p.Any() || len(tags) == 0 {
 		return
 	}
-	if s.primaryIsImmutable(domain, repo) {
+	repo, mode := pl.repo, pl.mode
+	if appendOnly {
 		log.Printf("api: %s: retention skipped: %s is flagged append-only", domain, shortRepoName(repo))
 		return
 	}
@@ -361,11 +361,18 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Sum
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	mode := s.primaryModeFor(settings, zfsDomain, repo)
-	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
+	// A repository of the item's own is not the section's folder, so the
+	// folder's switch leaves it alone.
+	places := []sectionPlace{{repo: repo, mode: s.primaryModeFor(settings, zfsDomain, repo)}}
+	if d.Repo == "" {
+		if places, err = s.sectionPlaces(settings, zfsDomain, repo); err != nil {
+			return backup.Summary{}, err
+		}
+	}
+	if err := s.readyPlaces(ctx, places); err != nil {
 		return backup.Summary{}, err
 	}
-	s.unlockStale(ctx, repo, mode)
+	repo = places[0].repo
 	s.notifyBackupStart(ctx, zfsDomain)
 	rctx, startedAt := s.progBegin(ctx, key, "backup")
 
@@ -382,7 +389,7 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Sum
 		Now:           time.Now,
 		Clock:         time.Now,
 		ZFS:           zfsRunHost{h: s.zfs},
-		Restic:        &resticAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, zfsDomain, repo)},
+		Restic:        s.placesAdapter(settings, zfsDomain, places, ""),
 		Visible:       s.visibleSnapshot,
 		DirEmpty:      zfsDirEmpty,
 		Consistency:   s.newZFSConsistency(d, settings, zfsLockWait(ctx)),
@@ -411,11 +418,15 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Sum
 	// cancelled or stalled run skips the aftercare, which would only fail on
 	// its ended context.
 	if ctx.Err() == nil {
-		s.applyRetentionTags(ctx, repo, settings, mode, tags, zfsDomain)
-		makeRepoReadable(repo, s.cfg.DataDir)
-		s.replicateOffsite(ctx, zfsDomain, settings, repo, "")
+		for _, pl := range places {
+			s.applyRetentionTags(ctx, settings, pl, tags, zfsDomain)
+		}
+		if places[0].own() {
+			makeRepoReadable(repo, s.cfg.DataDir)
+			s.replicateOffsite(ctx, zfsDomain, settings, repo, "")
+			s.checkPrimaryRemoteBudget(ctx, zfsDomain, repo, settings)
+		}
 		s.collectStatsAfterItem(ctx, zfsDomain)
-		s.checkPrimaryRemoteBudget(ctx, zfsDomain, repo, settings)
 	}
 	if runErr != nil {
 		return backup.Summary{}, runErr
