@@ -4314,6 +4314,7 @@ const gl: Partial<Translations> = {
   "whatsNew.pairingSteps": "Tres tarxetas amosan como funciona o emparellamento. Debaixo, o relé ten catro formas, cada unha co seu debuxo.",
   "whatsNew.settingsVersion": "Info contén Versión, Axuda e Sobre. Versión lista BombVault, GlimStone, restic e rclone. O seu botón Novidades abre a lista de cambios, ou as notas da versión cando xa as viches todas.",
   "whatsNew.settingsManual": "O botón amarelo baixo Axuda abre o manual.",
+  "whatsNew.lookGlyphs": "Esquinas e Animación amosan un símbolo para cada opción, como Tema.",
   "firstSteps.title": "Primeiros pasos",
   "firstSteps.hint": "Queda aquí ata que remate a primeira copia.",
   "firstSteps.sections": "Escolle as seccións",

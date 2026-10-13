@@ -4295,6 +4295,7 @@ const zh: Partial<Translations> = {
   "whatsNew.pairingSteps": "三张卡片展示配对的工作方式。下面的中继有四种形式，每种都配有图。",
   "whatsNew.settingsVersion": "信息包含版本、帮助和关于。版本列出 BombVault、GlimStone、restic 和 rclone。其中的新内容按钮会打开变更列表，全部看过之后则打开发行说明。",
   "whatsNew.settingsManual": "帮助下方的黄色按钮会打开手册。",
+  "whatsNew.lookGlyphs": "圆角和动画像主题一样，为每个选项显示一个符号。",
   "firstSteps.title": "入门步骤",
   "firstSteps.hint": "它会一直留在这里，直到第一次备份完成。",
   "firstSteps.sections": "选择分区",

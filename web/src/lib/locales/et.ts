@@ -4314,6 +4314,7 @@ const et: Partial<Translations> = {
   "whatsNew.pairingSteps": "Kolm kaarti näitavad, kuidas sidumine käib. Nende all on edastajal neli vormi, igaühel oma pilt.",
   "whatsNew.settingsVersion": "Info sisaldab kaarte Versioon, Abi ja Rakendusest. Versioon loetleb tooted BombVault, GlimStone, restic ja rclone. Selle nupp Uut avab muudatuste loendi või väljalaskemärkmed, kui oled need kõik näinud.",
   "whatsNew.settingsManual": "Kollane nupp Abi all avab käsiraamatu.",
+  "whatsNew.lookGlyphs": "Nurgad ja Animatsioon näitavad iga valiku juures sümbolit, nagu Teema.",
   "firstSteps.title": "Esimesed sammud",
   "firstSteps.hint": "Jääb siia, kuni esimene varundus on valmis.",
   "firstSteps.sections": "Vali valdkonnad",

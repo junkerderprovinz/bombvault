@@ -4302,6 +4302,7 @@ const es: Partial<Translations> = {
   "whatsNew.pairingSteps": "Tres tarjetas muestran cómo funciona el emparejamiento. Debajo, el repetidor tiene cuatro formas, cada una con su dibujo.",
   "whatsNew.settingsVersion": "Info contiene Versión, Ayuda y Acerca de. Versión lista BombVault, GlimStone, restic y rclone. Su botón Novedades abre la lista de cambios, o las notas de la versión cuando ya las has visto todas.",
   "whatsNew.settingsManual": "El botón amarillo bajo Ayuda abre el manual.",
+  "whatsNew.lookGlyphs": "Esquinas y Animación muestran un símbolo para cada opción, como Tema.",
   "firstSteps.title": "Primeros pasos",
   "firstSteps.hint": "Se queda aquí hasta que termine la primera copia.",
   "firstSteps.sections": "Elige las secciones",

@@ -4314,6 +4314,7 @@ const lv: Partial<Translations> = {
   "whatsNew.pairingSteps": "Trīs kartes rāda, kā darbojas pārošana. Zem tām relay ir četras formas, katra ar savu attēlu.",
   "whatsNew.settingsVersion": "Info ietver Versiju, Palīdzību un Par lietotni. Versija uzskaita BombVault, GlimStone, restic un rclone. Tās poga Jaunumi atver izmaiņu sarakstu vai izlaidumu piezīmes, kad tās visas ir apskatītas.",
   "whatsNew.settingsManual": "Dzeltenā poga zem Palīdzības atver rokasgrāmatu.",
+  "whatsNew.lookGlyphs": "Stūri un Animācija rāda simbolu katrai izvēlei, tāpat kā Tēma.",
   "firstSteps.title": "Pirmie soļi",
   "firstSteps.hint": "Paliek šeit, līdz pabeigta pirmā rezerves kopija.",
   "firstSteps.sections": "Izvēlieties sadaļas",

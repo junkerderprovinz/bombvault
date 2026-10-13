@@ -4314,6 +4314,7 @@ const is: Partial<Translations> = {
   "whatsNew.pairingSteps": "Þrjú spjöld sýna hvernig pörun virkar. Fyrir neðan þau hefur relay fjögur form, hvert með sinni mynd.",
   "whatsNew.settingsVersion": "Upplýsingar innihalda Útgáfa, Hjálp og Um appið. Útgáfa telur upp BombVault, GlimStone, restic og rclone. Hnappurinn Nýtt þar opnar lista yfir breytingar, eða útgáfuathugasemdirnar þegar þú hefur séð þær allar.",
   "whatsNew.settingsManual": "Guli hnappurinn undir Hjálp opnar handbókina.",
+  "whatsNew.lookGlyphs": "Horn og Hreyfimynd sýna tákn fyrir hvern valkost, eins og Þema.",
   "firstSteps.title": "Fyrstu skref",
   "firstSteps.hint": "Helst hér þar til fyrsta afritið er búið.",
   "firstSteps.sections": "Veldu svæði",

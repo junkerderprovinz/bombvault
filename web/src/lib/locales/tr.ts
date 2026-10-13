@@ -4304,6 +4304,7 @@ const tr: Partial<Translations> = {
   "whatsNew.pairingSteps": "Üç kart eşleştirmenin nasıl çalıştığını gösterir. Altında rölenin dört biçimi var, her birinin kendi resmi ile.",
   "whatsNew.settingsVersion": "Bilgi, Sürüm, Yardım ve Hakkında kutularını içerir. Sürüm kutusunda BombVault, GlimStone, restic ve rclone listelenir. İçindeki Yenilikler düğmesi değişiklik listesini açar; hepsini gördüğünde sürüm notlarını açar.",
   "whatsNew.settingsManual": "Yardım'ın altındaki sarı düğme kılavuzu açar.",
+  "whatsNew.lookGlyphs": "Köşeler ve Animasyon, Tema gibi her seçenek için bir simge gösterir.",
   "firstSteps.title": "İlk adımlar",
   "firstSteps.hint": "İlk yedekleme bitene kadar burada kalır.",
   "firstSteps.sections": "Bölümleri seç",

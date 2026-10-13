@@ -4301,6 +4301,7 @@ const pl: Partial<Translations> = {
   "whatsNew.pairingSteps": "Trzy karty pokazują, jak działa parowanie. Pod nimi relay ma cztery postaci, każdą z własnym obrazkiem.",
   "whatsNew.settingsVersion": "Info zawiera Wersję, Pomoc i O aplikacji. Wersja wymienia BombVault, GlimStone, restic i rclone. Jej przycisk Nowości otwiera listę zmian, a gdy zobaczysz wszystkie, informacje o wersji.",
   "whatsNew.settingsManual": "Żółty przycisk pod Pomocą otwiera podręcznik.",
+  "whatsNew.lookGlyphs": "Narożniki i Animacja pokazują symbol dla każdej opcji, tak jak Motyw.",
   "firstSteps.title": "Pierwsze kroki",
   "firstSteps.hint": "Zostaje tutaj, dopóki nie zakończy się pierwsza kopia zapasowa.",
   "firstSteps.sections": "Wybierz sekcje",

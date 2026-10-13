@@ -4305,6 +4305,7 @@ const hu: Partial<Translations> = {
   "whatsNew.pairingSteps": "Három kártya mutatja, hogyan működik a párosítás. Alattuk a relének négy formája van, mindegyik a saját képével.",
   "whatsNew.settingsVersion": "Az Információ a Verzió, a Súgó és a Névjegy részeket tartalmazza. A Verzió felsorolja a BombVault, GlimStone, restic és rclone termékeket. Az Újdonságok gombja megnyitja a változások listáját, vagy a kiadási megjegyzéseket, ha már mindet láttad.",
   "whatsNew.settingsManual": "A Súgó alatti sárga gomb megnyitja a kézikönyvet.",
+  "whatsNew.lookGlyphs": "A Sarkok és az Animáció minden választáshoz szimbólumot mutat, mint a Téma.",
   "firstSteps.title": "Első lépések",
   "firstSteps.hint": "Itt marad, amíg az első mentés el nem készül.",
   "firstSteps.sections": "Válaszd ki a szakaszokat",

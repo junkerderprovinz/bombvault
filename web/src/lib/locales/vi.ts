@@ -4295,6 +4295,7 @@ const vi: Partial<Translations> = {
   "whatsNew.pairingSteps": "Ba thẻ cho thấy cách ghép nối hoạt động. Bên dưới, relay có bốn dạng, mỗi dạng kèm hình minh họa riêng.",
   "whatsNew.settingsVersion": "Thông tin gồm Phiên bản, Trợ giúp và Giới thiệu. Phiên bản liệt kê BombVault, GlimStone, restic và rclone. Nút Mới trong đó mở danh sách thay đổi, hoặc ghi chú phát hành khi bạn đã xem hết.",
   "whatsNew.settingsManual": "Nút màu vàng bên dưới Trợ giúp mở phần hướng dẫn.",
+  "whatsNew.lookGlyphs": "Góc và Hoạt ảnh hiển thị một biểu tượng cho từng lựa chọn, giống như Giao diện.",
   "firstSteps.title": "Bước đầu tiên",
   "firstSteps.hint": "Thẻ này ở lại đây cho đến khi bản sao lưu đầu tiên hoàn tất.",
   "firstSteps.sections": "Chọn các mục",

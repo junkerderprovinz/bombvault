@@ -4298,6 +4298,7 @@ const sr: Partial<Translations> = {
   "whatsNew.pairingSteps": "Три картице показују како упаривање ради. Испод њих релеј има четири облика, сваки са својом сликом.",
   "whatsNew.settingsVersion": "Инфо садржи Верзију, Помоћ и О апликацији. Верзија наводи BombVault, GlimStone, restic и rclone. Њено дугме Ново отвара листу промена, а када видиш све, напомене о издању.",
   "whatsNew.settingsManual": "Жуто дугме испод Помоћи отвара приручник.",
+  "whatsNew.lookGlyphs": "Углови и Анимација приказују симбол за сваки избор, као и Тема.",
   "firstSteps.title": "Први кораци",
   "firstSteps.hint": "Остаје овде док се прва резервна копија не заврши.",
   "firstSteps.sections": "Изабери одељке",

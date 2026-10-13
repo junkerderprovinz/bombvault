@@ -4314,6 +4314,7 @@ const lt: Partial<Translations> = {
   "whatsNew.pairingSteps": "Trys kortelės rodo, kaip veikia susiejimas. Po jomis relay turi keturias formas, kiekviena su savo paveikslu.",
   "whatsNew.settingsVersion": "Info apima Versiją, Pagalbą ir Apie programą. Versija išvardija BombVault, GlimStone, restic ir rclone. Jos mygtukas Naujienos atidaro pakeitimų sąrašą arba leidimo pastabas, kai peržiūri jas visas.",
   "whatsNew.settingsManual": "Geltonas mygtukas po Pagalba atidaro vadovą.",
+  "whatsNew.lookGlyphs": "Kampai ir Animacija rodo kiekvieno pasirinkimo simbolį, kaip ir Tema.",
   "firstSteps.title": "Pirmieji žingsniai",
   "firstSteps.hint": "Lieka čia, kol bus baigta pirmoji atsarginė kopija.",
   "firstSteps.sections": "Pasirink sritis",

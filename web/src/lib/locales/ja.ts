@@ -4295,6 +4295,7 @@ const ja: Partial<Translations> = {
   "whatsNew.pairingSteps": "3 枚のカードでペアリングの仕組みを説明します。その下にあるリレーには 4 つの形があり、それぞれに図が付いています。",
   "whatsNew.settingsVersion": "情報には、バージョン、ヘルプ、このアプリについてがあります。バージョンには BombVault、GlimStone、restic、rclone が並びます。その中の新着ボタンで変更の一覧を開けます。すべて確認済みの場合はリリースノートが開きます。",
   "whatsNew.settingsManual": "ヘルプの下の黄色いボタンでマニュアルが開きます。",
+  "whatsNew.lookGlyphs": "角の形状とアニメーションは、テーマと同じく選択肢ごとに記号が表示されます。",
   "firstSteps.title": "最初のステップ",
   "firstSteps.hint": "最初のバックアップが完了するまで、ここに表示されます。",
   "firstSteps.sections": "セクションを選ぶ",

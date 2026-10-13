@@ -4295,6 +4295,7 @@ const ko: Partial<Translations> = {
   "whatsNew.pairingSteps": "카드 세 장이 페어링 방식을 보여 줍니다. 그 아래 릴레이는 네 가지 형태이고, 각각 그림이 있습니다.",
   "whatsNew.settingsVersion": "정보에는 버전, 도움말, 앱 정보가 있습니다. 버전에는 BombVault, GlimStone, restic, rclone이 나열됩니다. 그 안의 새 소식 버튼으로 변경 목록을 열 수 있고, 모두 확인한 뒤에는 릴리스 노트가 열립니다.",
   "whatsNew.settingsManual": "도움말 아래의 노란색 버튼으로 설명서를 엽니다.",
+  "whatsNew.lookGlyphs": "모서리와 애니메이션은 테마처럼 선택지마다 기호를 표시합니다.",
   "firstSteps.title": "첫 단계",
   "firstSteps.hint": "첫 백업이 끝날 때까지 여기에 남아 있습니다.",
   "firstSteps.sections": "섹션 선택",

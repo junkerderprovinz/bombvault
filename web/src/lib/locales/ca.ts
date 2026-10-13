@@ -4314,6 +4314,7 @@ const ca: Partial<Translations> = {
   "whatsNew.pairingSteps": "Tres targetes mostren com funciona l'aparellament. A sota, el repetidor té quatre formes, cadascuna amb el seu dibuix.",
   "whatsNew.settingsVersion": "Info conté Versió, Ajuda i Quant a. Versió llista BombVault, GlimStone, restic i rclone. El seu botó Novetats obre la llista de canvis, o les notes de la versió quan ja les has vist totes.",
   "whatsNew.settingsManual": "El botó groc sota Ajuda obre el manual.",
+  "whatsNew.lookGlyphs": "Cantonades i Animació mostren un símbol per a cada opció, com Tema.",
   "firstSteps.title": "Primers passos",
   "firstSteps.hint": "Es queda aquí fins que acabi la primera còpia de seguretat.",
   "firstSteps.sections": "Tria les seccions",

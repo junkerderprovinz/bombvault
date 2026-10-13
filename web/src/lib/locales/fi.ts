@@ -4304,6 +4304,7 @@ const fi: Partial<Translations> = {
   "whatsNew.pairingSteps": "Kolme korttia näyttää, miten pariliitos toimii. Niiden alla releellä on neljä muotoa, kullakin oma kuvansa.",
   "whatsNew.settingsVersion": "Tieto sisältää kohdat Versio, Ohje ja Tietoja. Versio listaa tuotteet BombVault, GlimStone, restic ja rclone. Sen painike Uutta avaa muutosluettelon tai julkaisutiedot, kun olet nähnyt ne kaikki.",
   "whatsNew.settingsManual": "Keltainen painike Ohjeen alla avaa käyttöoppaan.",
+  "whatsNew.lookGlyphs": "Kulmat ja Animaatio näyttävät jokaiselle valinnalle symbolin, kuten Teema.",
   "firstSteps.title": "Ensimmäiset vaiheet",
   "firstSteps.hint": "Pysyy tässä, kunnes ensimmäinen varmuuskopio on valmis.",
   "firstSteps.sections": "Valitse osiot",

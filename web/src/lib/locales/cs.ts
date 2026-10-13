@@ -4302,6 +4302,7 @@ const cs: Partial<Translations> = {
   "whatsNew.pairingSteps": "Tři karty ukazují, jak párování funguje. Pod nimi má přeposílač čtyři podoby, každou s vlastním obrázkem.",
   "whatsNew.settingsVersion": "Info obsahuje Verzi, Nápovědu a O aplikaci. Verze uvádí BombVault, GlimStone, restic a rclone. Její tlačítko Novinky otevře seznam změn, nebo poznámky k vydání, až si projdeš všechny.",
   "whatsNew.settingsManual": "Žluté tlačítko pod Nápovědou otevře příručku.",
+  "whatsNew.lookGlyphs": "Rohy a Animace zobrazují u každé volby symbol, stejně jako Motiv.",
   "firstSteps.title": "První kroky",
   "firstSteps.hint": "Zůstane tu, dokud neskončí první záloha.",
   "firstSteps.sections": "Vyber sekce",
