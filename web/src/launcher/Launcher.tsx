@@ -379,7 +379,7 @@ function ActivityCard({ t, lines, onOpen }: { t: T; lines: ServerLine[]; onOpen:
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") onOpen();
         }}
-        className="rounded-card bg-carbon-surface p-2 pt-5 glim-field-focus"
+        className="rounded-card bg-carbon-surface p-2 pt-5"
       >
         {/* A fixed height, so the servers below stay where a finger aims
             while the log fills in. */}
@@ -501,7 +501,7 @@ function ServerCard({
         <button
           type="button"
           onClick={onOpen}
-          className="flex min-h-[3.75rem] min-w-0 flex-1 items-center gap-3 rounded-card p-4 text-start glim-field-focus"
+          className="flex min-h-[3.75rem] min-w-0 flex-1 items-center gap-3 rounded-card p-4 text-start"
         >
           <span className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="truncate text-sm font-semibold text-carbon-text">{server.name}</span>
