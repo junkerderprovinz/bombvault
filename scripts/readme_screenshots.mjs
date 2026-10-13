@@ -75,6 +75,11 @@ const SHOTS = [
     shown: "192.168.1.20:3443",
     accent: "#6FDC8C",
     caption: "Every container, <em>every run in view</em>",
+    // The one-time tip about database dumps would push the list down.
+    prepare: async (tab) => {
+      const tip = tab.getByRole("button", { name: "Got it" });
+      if (await tip.count()) await tip.first().click();
+    },
   },
   {
     file: "settings.png",
