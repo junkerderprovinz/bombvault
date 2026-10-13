@@ -2,7 +2,13 @@ package bombvault.halleluja.design
 
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.json.JSONException
+import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -28,6 +34,8 @@ class RelayPages(
     private val onKeyChanged: (Server, ByteArray) -> Unit,
 ) {
     private val cache = Bundles(File(cacheDir, "relay-pages"))
+    private val documents = Documents(File(cacheDir, "relay-documents"))
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /** The member whose page the app opened through the relay, null while none is. */
     @Volatile var shown: String? = null
@@ -63,7 +71,16 @@ class RelayPages(
         val progress = method == "GET" && url.encodedPath == "/api/progress"
 
         val pinned = servers.memberKey(member)
-        if (method == "GET" && pinned != null) cache.get(member, pinned, path)?.let { return respond(it) }
+        if (method == "GET" && pinned != null) {
+            cache.get(member, pinned, path)?.let { return respond(it) }
+            if (request.isForMainFrame) {
+                kept(member, pinned, path)?.let {
+                    refresh(server, member, path, header)
+                    return respond(it)
+                }
+            }
+        }
+        val asked = path
         var done: PageResult.Done? = null
         // A redirect from an intercepted request is not followed by the
         // WebView, so the app follows the few the interface makes.
@@ -89,14 +106,48 @@ class RelayPages(
         }
         val answer = done.answer
         if (method == "GET" && answer.status == 200 && answer.header["Cache-Control"]?.contains("immutable") == true) cache.put(member, done.key, path, answer)
+        if (request.isForMainFrame && method == "GET" && path == asked && isDocument(answer)) documents.put(member, done.key, path, answer)
         return respond(answer)
     }
 
+    /**
+     * The document [member]'s page last opened with at [path], when every
+     * bundle it loads is on the phone too. A document whose bundles are gone
+     * would ask the member for files a newer build no longer has.
+     */
+    private fun kept(member: String, key: ByteArray, path: String): PageAnswer? {
+        val doc = documents.get(member, key, path) ?: return null
+        return doc.takeIf { bundlesOf(String(doc.body)).all { cache.has(member, key, it) } }
+    }
+
+    /**
+     * Asks for the document the page opened with a kept copy of, for the next
+     * open. A member that answers with something else, such as a refusal,
+     * gets asked first again next time.
+     */
+    private fun refresh(server: Server, member: String, path: String, header: Map<String, String>) = scope.launch {
+        when (val result = pairing.page(server, "GET", path, header, null)) {
+            is PageResult.Done -> if (isDocument(result.answer)) {
+                documents.put(member, result.key, path, result.answer)
+            } else {
+                documents.drop(member, result.key, path)
+            }
+            is PageResult.KeyChanged -> onKeyChanged(server, result.key)
+            PageResult.Failed -> {}
+        }
+    }
+
     /** Drops what [member]'s pages left on the phone, once another key is trusted for it. */
-    fun forget(member: String) = cache.forget(member)
+    fun forget(member: String) {
+        cache.forget(member)
+        documents.forget(member)
+    }
 
     /** Drops what every member's pages left on the phone, once the phone left the group. */
-    fun forgetAll() = cache.forgetAll()
+    fun forgetAll() {
+        cache.forgetAll()
+        documents.forgetAll()
+    }
 
     private fun awaitBody(ticket: String): ByteArray? = try {
         bodies.computeIfAbsent(ticket) { CompletableFuture() }.get(BODY_WAIT_S, TimeUnit.SECONDS)
@@ -136,6 +187,8 @@ class RelayPages(
  * key the person trusted once does not outlast that trust.
  */
 internal class Bundles(private val dir: File) {
+    fun has(member: String, key: ByteArray, path: String): Boolean = file(member, key, path).isFile
+
     fun get(member: String, key: ByteArray, path: String): PageAnswer? {
         val f = file(member, key, path)
         if (!f.isFile) return null
@@ -165,20 +218,82 @@ internal class Bundles(private val dir: File) {
     }
 
     fun forget(member: String) {
-        memberDir(member).deleteRecursively()
+        memberDir(dir, member).deleteRecursively()
     }
 
     fun forgetAll() {
         dir.deleteRecursively()
     }
 
-    private fun memberDir(member: String) = File(dir, sha(member.toByteArray()))
-
-    private fun file(member: String, key: ByteArray, path: String) = File(memberDir(member), sha(key + byteArrayOf(0) + path.toByteArray()))
-
-    private fun sha(b: ByteArray) = MessageDigest.getInstance("SHA-256").digest(b).joinToString("") { "%02x".format(it) }
+    private fun file(member: String, key: ByteArray, path: String) = keptFile(dir, member, key, path)
 
     companion object {
         private const val MAX_CACHE = 64L shl 20
     }
 }
+
+/**
+ * Keeps the document each member's page last opened with, with its headers,
+ * under the key that signed it. The next open starts on it while the member
+ * is asked for the current one, instead of waiting for the relay first.
+ */
+internal class Documents(private val dir: File) {
+    fun get(member: String, key: ByteArray, path: String): PageAnswer? {
+        val f = file(member, key, path)
+        if (!f.isFile) return null
+        return try {
+            DataInputStream(f.inputStream().buffered()).use {
+                val h = JSONObject(it.readUTF())
+                PageAnswer(200, h.keys().asSequence().associateWith { k -> h.getString(k) }, it.readBytes())
+            }
+        } catch (_: IOException) {
+            null
+        } catch (_: JSONException) {
+            null
+        }
+    }
+
+    fun put(member: String, key: ByteArray, path: String, a: PageAnswer) {
+        try {
+            val f = file(member, key, path)
+            f.parentFile!!.mkdirs()
+            val tmp = File.createTempFile("part", null, f.parentFile)
+            DataOutputStream(tmp.outputStream().buffered()).use {
+                it.writeUTF(JSONObject(a.header).toString())
+                it.write(a.body)
+            }
+            tmp.renameTo(f)
+        } catch (_: IOException) {
+        }
+    }
+
+    fun drop(member: String, key: ByteArray, path: String) {
+        file(member, key, path).delete()
+    }
+
+    fun forget(member: String) {
+        memberDir(dir, member).deleteRecursively()
+    }
+
+    fun forgetAll() {
+        dir.deleteRecursively()
+    }
+
+    private fun file(member: String, key: ByteArray, path: String) = keptFile(dir, member, key, path)
+}
+
+/** Whether [a] is a page the WebView opens, as opposed to data or a bundle. */
+internal fun isDocument(a: PageAnswer): Boolean =
+    a.status == 200 && a.header["Content-Type"]?.startsWith("text/html") == true
+
+/** The hashed bundles a document loads from its own origin. */
+internal fun bundlesOf(html: String): List<String> = BUNDLE.findAll(html).map { it.groupValues[1] }.distinct().toList()
+
+private val BUNDLE = Regex("""(?:src|href)="(/assets/[^"?#]+)"""")
+
+private fun memberDir(dir: File, member: String) = File(dir, sha(member.toByteArray()))
+
+private fun keptFile(dir: File, member: String, key: ByteArray, path: String) =
+    File(memberDir(dir, member), sha(key + byteArrayOf(0) + path.toByteArray()))
+
+private fun sha(b: ByteArray) = MessageDigest.getInstance("SHA-256").digest(b).joinToString("") { "%02x".format(it) }
