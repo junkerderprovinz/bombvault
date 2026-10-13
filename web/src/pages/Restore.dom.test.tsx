@@ -289,7 +289,7 @@ describe("the backups of the picked entry", () => {
     );
   });
 
-  it("open the restore window at once while the container list is still read, and check the backup", async () => {
+  it("opens the restore window at once while the container list is still read, and checks the backup", async () => {
     await renderPage();
     mocks.listContainers.mockReturnValue(new Promise(() => {}));
 

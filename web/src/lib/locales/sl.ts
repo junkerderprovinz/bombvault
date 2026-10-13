@@ -4439,7 +4439,7 @@ const sl: Partial<Translations> = {
   "auth.ownLoginNeeded": "Za to se moraš prijaviti v spletni vmesnik tega primerka samega. Povezava mobilne aplikacije dovoljuje le brskanje, zagon varnostnih kopij in obnovo.",
   "auth.relayLoginNeeded": "Za to se moraš prijaviti na naslovu tega primerka samega. Prek relaya se ni mogoče prijaviti, mogoče je le brskati, zagnati varnostne kopije in jih obnavljati.",
   "auth.relaySignedIn": "Prijavljen prek skupine",
-  "auth.relaySignedInHint": "Prek relaya je ta telefon prijavljen prek svoje skupine, zato se tu ni iz česa odjaviti. Če se želiš prijaviti z geslom, odpri ta primerek na njegovem lastnem naslovu.",
+  "auth.relaySignedInHint": "Prek relaya je ta telefon prijavljen prek svoje skupine, zato se tu ni iz česa odjaviti. Če se želiš prijaviti z geslom, odpri to instanco na njegovem lastnem naslovu.",
   "keeper.state.changed": "Spremenjeno tam",
   "keeper.changedText": "Primerek {peer} je imel nekaj, česar ta strežnik ni poslal. Pošlji depozit znova. Če se to ponavlja, primerku {peer} odvzemi vlogo Skrbnik ključa.",
   "keeper.tile.tooOld": "Prestar",

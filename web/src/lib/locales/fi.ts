@@ -4445,7 +4445,7 @@ const fi: Partial<Translations> = {
   "auth.ownLoginNeeded": "Tämä vaatii kirjautumisen tämän ilmentymän omaan verkkokäyttöliittymään. Puhelinsovelluksen yhteys sallii vain katselun, varmuuskopioiden käynnistämisen ja palauttamisen.",
   "auth.relayLoginNeeded": "Tämä vaatii kirjautumisen tämän ilmentymän omassa osoitteessa. Releen kautta ei voi kirjautua, vaan voit vain katsella, käynnistää varmuuskopioita ja palauttaa.",
   "auth.relaySignedIn": "Kirjautunut ryhmän kautta",
-  "auth.relaySignedInHint": "Releen kautta tämä puhelin on kirjautunut ryhmänsä kautta, joten täällä ei ole mistä kirjautua ulos. Jos haluat kirjautua salasanalla, avaa tämä ilmentymä sen omassa osoitteessa.",
+  "auth.relaySignedInHint": "Releen kautta tämä puhelin on kirjautunut ryhmänsä kautta, joten täällä ei ole mistä kirjautua ulos. Jos haluat kirjautua salasanalla, avaa tämä instanssi sen omassa osoitteessa.",
   "keeper.state.changed": "Muutettu siellä",
   "keeper.changedText": "Ilmentymällä {peer} oli jotain, mitä tämä palvelin ei lähettänyt. Lähetä talletus uudelleen. Jos näin käy yhä uudestaan, poista ilmentymältä {peer} rooli Säilyttäjä.",
   "keeper.tile.tooOld": "Liian vanha",

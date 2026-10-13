@@ -3828,7 +3828,7 @@ const no: Partial<Translations> = {
   "storage.flow.offsite": "off-site",
   "storage.flow.ownRules": "Egne regler hos {name}",
   "storage.flow.lockOff": "Dette målet er slått av.",
-  "storage.flow.lockOwnFolder": "{domain} sikrer alltid først til sin egen mappe. Off-site-kopiene lages fra denne sikringen, så den blir stående på.",
+  "storage.flow.lockOwnFolder": "{domain} sikkerhetskopierer alltid først til sin egen mappe. Off-site-kopiene lages fra denne sikkerhetskopien, så den blir stående på.",
   "storage.choice.title": "Eget valg",
   "storage.choice.hint": "Disse elementene sikrer et annet sted enn området sitt. «Følg standarden» henter et element tilbake: Nye sikkerhetskopier går da til områdets mål, og de tidligere blir der de er. Alle andre elementer følger standarden og står derfor ikke her.",
   "storage.choice.backsUpTo": "Sikrer til {places}",

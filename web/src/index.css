@@ -1888,7 +1888,7 @@ body {
   color: var(--carbon-text-muted);
 }
 
-/* A picker's grid: README buttons straight on the window's surface, three
+/* A picker's grid: provider tiles straight on the window's surface, three
    across a picker window. A phone takes two, where the floor of one tile
    would leave a single column to scroll through. */
 .glim-provider-pick {

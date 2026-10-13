@@ -3828,7 +3828,7 @@ const sv: Partial<Translations> = {
   "storage.flow.offsite": "off-site",
   "storage.flow.ownRules": "Egna regler hos {name}",
   "storage.flow.lockOff": "Det här målet är avstängt.",
-  "storage.flow.lockOwnFolder": "{domain} säkerhetskopierar alltid först till sin egen mapp. Off-site-kopiorna skapas från den säkerhetskopian, därför förblir den på.",
+  "storage.flow.lockOwnFolder": "{domain} säkerhetskopierar alltid först till sin egen mapp. De externa kopiorna skapas från den säkerhetskopian, därför förblir den på.",
   "storage.choice.title": "Eget val",
   "storage.choice.hint": "De här posterna säkerhetskopierar någon annanstans än sitt avsnitt. ”Följ standarden” hämtar tillbaka en post: Nya säkerhetskopior går då till avsnittets mål, och de tidigare ligger kvar där de är. Alla andra poster följer standarden och står därför inte här.",
   "storage.choice.backsUpTo": "Säkerhetskopierar till {places}",

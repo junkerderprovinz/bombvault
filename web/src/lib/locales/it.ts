@@ -3828,7 +3828,7 @@ const it: Partial<Translations> = {
   "storage.flow.offsite": "off-site",
   "storage.flow.ownRules": "Regole proprie presso {name}",
   "storage.flow.lockOff": "Questa destinazione è disattivata.",
-  "storage.flow.lockOwnFolder": "{domain} salva sempre prima nella propria cartella. Le copie off-site nascono da questo salvataggio, perciò resta attivo.",
+  "storage.flow.lockOwnFolder": "{domain} salva sempre prima nella propria cartella. Le copie off-site nascono da questo backup, perciò resta attivo.",
   "storage.choice.title": "Scelta propria",
   "storage.choice.hint": "Questi elementi salvano altrove rispetto alla loro sezione. «Segui l'impostazione predefinita» riporta indietro un elemento: i nuovi backup vanno allora alle destinazioni della sezione, e quelli precedenti restano dove sono. Tutti gli altri elementi seguono l'impostazione predefinita e per questo non sono elencati qui.",
   "storage.choice.backsUpTo": "Salva su {places}",
