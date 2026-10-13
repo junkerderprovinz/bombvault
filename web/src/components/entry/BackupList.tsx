@@ -104,7 +104,7 @@ function Row({
 }) {
   const { t, lang } = useT();
   const { places } = timeline;
-  const labelOf = usePlaceLabel(places);
+  const labelOf = usePlaceLabel(places, timeline.domain);
   const orderOf = (place: string) => places.findIndex((p) => p.place === place);
   const marks = [...row.places].sort((a, b) => orderOf(a.place) - orderOf(b.place));
   const allRead = places.every((p) => p.state === "read");

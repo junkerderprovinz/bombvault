@@ -9,7 +9,7 @@ import {
 } from "./api";
 import { useT } from "./i18n";
 import { anyActive, useProgress } from "./progress";
-import { namedLocal } from "./storageLocations";
+import { distinctNames, namedLocal } from "./storageLocations";
 import { storageRunning } from "./storageRuns";
 import type { LocationRecords } from "./storageWrites";
 
@@ -97,7 +97,7 @@ function useList(reloads: number, retry: () => void): StorageLocationList {
     };
   }, [reloads]);
 
-  return useMemo(() => ({ ...state, locations: namedLocal(t, state.locations), retry }), [state, retry, t]);
+  return useMemo(() => ({ ...state, locations: distinctNames(namedLocal(t, state.locations)), retry }), [state, retry, t]);
 }
 
 export type LocationStatus = "loading" | "ready" | "missing" | "failed";

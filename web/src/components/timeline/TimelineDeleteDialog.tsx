@@ -7,7 +7,7 @@ import { placementErrorText } from "../../lib/placementCodes";
 import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
-import { hostLabelSettled } from "../../lib/useHostLabel";
+import { useLocalName } from "../../lib/useLocalName";
 import { useOwnLogin } from "../../lib/useOwnLogin";
 
 /** TimelineDeleteDialog deletes one row at one or more places: the server
@@ -36,20 +36,15 @@ export function TimelineDeleteDialog({
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const ownLogin = useOwnLogin();
+  const local = useLocalName(domain);
 
   useEffect(() => {
     let live = true;
     async function run() {
-      // Fetched alongside the preview rather than read from useHostLabel():
-      // that hook's value only reaches this component on a re-render, which
-      // this effect, run once per opening, never sees.
-      const [res, host] = await Promise.all([
-        getTimelineDeletePreview(domain, itemKey, row.key, places),
-        hostLabelSettled().then((label) => label || t("placement.hostGeneric")),
-      ]);
+      const res = await getTimelineDeletePreview(domain, itemKey, row.key, places);
       if (!live) return;
       const names = (list: { label: string; directOf?: string }[]) =>
-        formatList(lang, list.map((p) => repoDisplayName(t, p.label, p.directOf) || host));
+        formatList(lang, list.map((p) => repoDisplayName(t, p.label, p.directOf) || local));
       const del = res.delete ?? [];
       const others = res.others ?? [];
       if (!res.ok) {

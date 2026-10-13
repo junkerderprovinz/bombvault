@@ -2994,7 +2994,6 @@ const th: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "รายการที่มีสำเนาเดียวอยู่ใน {target} โดยตรง: {n} รายการ หากไม่มี append-only เครื่องนี้อาจลบจากที่นั่นได้ บันทึกต่อไปหรือไม่?",
 
   // Placement
-  "placement.hostGeneric": "โฮสต์",
   "placement.segLocal": "ในเครื่อง",
   "placement.homeDomain": "{host} · ที่เก็บข้อมูลของส่วน · {path}",
   "placement.homeDomainRemote": "ที่เก็บข้อมูลของส่วน · ระยะไกล · {scheme}",

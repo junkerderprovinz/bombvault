@@ -3003,7 +3003,6 @@ const ms: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Entri yang satu-satunya salinan ada di {target} terus: {n}. Tanpa tambah-sahaja, mesin ini boleh memadam daripadanya. Tetap simpan?",
 
   // Placement
-  "placement.hostGeneric": "Hos",
   "placement.segLocal": "Setempat",
   "placement.homeDomain": "{host} · repositori bahagian · {path}",
   "placement.homeDomainRemote": "Repositori bahagian · jauh · {scheme}",

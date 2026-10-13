@@ -23,7 +23,7 @@ import { placementChanged } from "../../lib/placementEvents";
 import { DOMAIN_LABEL, locationRoute } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
 import { destinationsChanged } from "../../lib/useDestinations";
-import { useHostLabel } from "../../lib/useHostLabel";
+import { useLocalNames } from "../../lib/useLocalName";
 import { offsiteTargetsChanged } from "../../lib/useOffsiteTargets";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
@@ -131,7 +131,7 @@ export function AddLocationWindow({
 }) {
   const { t, lang } = useT();
   const { push } = useToast();
-  const host = useHostLabel();
+  const localOf = useLocalNames();
   const navigate = useNavigate();
   const draft = useDestinationDraft();
   const { picked } = draft;
@@ -187,7 +187,7 @@ export function AddLocationWindow({
     const offered = options[domain];
     if (!row || !offered || row.unreadable || offered.unreadable) return { domain, locked: t("placement.unreadable") };
     const view = defaultView(row, offered);
-    if (view.repoKind === "remote") return { domain, locked: lockHint(t, "own-credentials", viewHomeLabel(t, host, view, offered)) };
+    if (view.repoKind === "remote") return { domain, locked: lockHint(t, "own-credentials", viewHomeLabel(t, localOf(domain), view, offered)) };
     return { domain, preview: previews[domain] };
   });
 

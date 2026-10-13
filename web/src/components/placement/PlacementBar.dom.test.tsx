@@ -24,7 +24,7 @@ function renderBar(view: PlacementView, options: PlacementOptions = two, destina
       context="item"
       view={view}
       options={options}
-      host="Unraid"
+      local="Local"
       destinations={destinations}
       {...handlers}
     />

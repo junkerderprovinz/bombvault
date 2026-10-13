@@ -3003,7 +3003,6 @@ const et: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Kirjed, mille ainus koopia on {target} otse: {n}. Ilma ainult-lisamiseta võib see masin sealt kustutada. Kas salvestada ikkagi?",
 
   // Placement
-  "placement.hostGeneric": "Host",
   "placement.segLocal": "Kohalik",
   "placement.homeDomain": "{host} · valdkonna hoidla · {path}",
   "placement.homeDomainRemote": "Valdkonna hoidla · kauge · {scheme}",

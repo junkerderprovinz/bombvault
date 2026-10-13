@@ -4,7 +4,7 @@
 // which a reader of the count has no use for.
 
 import { createContext, useContext, useEffect } from "react";
-import type { Run } from "./api";
+import type { Run, StorageLocation } from "./api";
 import type { Need } from "./needs";
 import type { BackupItems } from "./useBackupItems";
 import type { StorageLocationList } from "./useStorageLocations";
@@ -49,6 +49,10 @@ export const AttentionContext = createContext<Attention & { watch: () => () => v
 export const AttentionCountContext = createContext(0);
 
 export const FreshInstallContext = createContext(false);
+
+/** The storage locations alone, for naming a place without being drawn again
+ *  with every poll of the runs. */
+export const LocationsContext = createContext<StorageLocation[]>([]);
 
 /**
  * useAttention is for the page that shows the lists themselves. While it is

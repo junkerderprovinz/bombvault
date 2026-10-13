@@ -2984,7 +2984,6 @@ const ja: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "唯一のコピーが{target} ダイレクトにある項目: {n}。append-only なしでは、この機械はそこから削除できます。それでも保存しますか？",
 
   // Placement
-  "placement.hostGeneric": "ホスト",
   "placement.segLocal": "ローカル",
   "placement.homeDomain": "{host} · セクションリポジトリ · {path}",
   "placement.homeDomainRemote": "セクションリポジトリ · リモート · {scheme}",

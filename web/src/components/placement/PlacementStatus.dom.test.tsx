@@ -69,7 +69,7 @@ describe("PlacementStatus", () => {
       <PlacementStatus item={item} name="nginx" view={placementView({ stackNote: stackNote() })} onChanged={vi.fn()} />
     );
     expect(
-      await screen.findByText("Project folder immich: on Unraid, copied to B2 (follows the containers default)")
+      await screen.findByText("Project folder immich: on Local, copied to B2 (follows the containers default)")
     ).toBeTruthy();
   });
 });

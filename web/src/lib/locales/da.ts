@@ -2993,7 +2993,6 @@ const da: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Elementer hvis eneste kopi ligger i {target} direkte: {n}. Uden append-only må denne maskine slette fra det. Gem alligevel?",
 
   // Placement
-  "placement.hostGeneric": "Vært",
   "placement.segLocal": "Lokal",
   "placement.homeDomain": "{host} · områdets depot · {path}",
   "placement.homeDomainRemote": "Områdets depot · fjern · {scheme}",

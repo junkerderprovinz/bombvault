@@ -1,6 +1,6 @@
 import { createElement, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getEmergency, listRuns, type AnomalyView, type Run, type Settings } from "./api";
-import { ATTENTION_CHANGED_EVENT, AttentionContext, AttentionCountContext, FreshInstallContext } from "./attention";
+import { ATTENTION_CHANGED_EVENT, AttentionContext, AttentionCountContext, FreshInstallContext, LocationsContext } from "./attention";
 import { forgetFirstSteps } from "./firstSteps";
 import { isFreshInstall } from "./freshInstall";
 import { needsOf } from "./needs";
@@ -136,7 +136,11 @@ export function AttentionProvider({ settings, children }: { settings: Settings |
     createElement(
       AttentionCountContext.Provider,
       { value: needs.length },
-      createElement(FreshInstallContext.Provider, { value: fresh }, children)
+      createElement(
+        FreshInstallContext.Provider,
+        { value: fresh },
+        createElement(LocationsContext.Provider, { value: locations.locations }, children)
+      )
     )
   );
 }

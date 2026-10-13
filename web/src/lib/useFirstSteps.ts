@@ -13,7 +13,7 @@ import {
   type StepState,
 } from "./firstSteps";
 import type { BackupItems } from "./useBackupItems";
-import { usePlatform } from "./useHostLabel";
+import { usePlatform } from "./usePlatform";
 
 export interface FirstSteps {
   states: Record<FirstStep, StepState>;

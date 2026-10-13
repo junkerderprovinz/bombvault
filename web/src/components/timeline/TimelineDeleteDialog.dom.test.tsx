@@ -45,7 +45,7 @@ describe("TimelineDeleteDialog", () => {
       others: [{ place: "offsite:t-b2", label: "B2", state: "holds" }],
     });
     const { onDone } = open();
-    expect(await screen.findByText("Delete this backup here: Unraid?")).toBeTruthy();
+    expect(await screen.findByText("Delete this backup here: Local?")).toBeTruthy();
     expect(screen.getByText("Still held by: B2")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     await waitFor(() => expect(onDone).toHaveBeenCalled());

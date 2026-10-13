@@ -10,7 +10,7 @@ export interface PlacementBarProps {
   context: "item" | "default" | "draft";
   view: PlacementView;
   options: PlacementOptions;
-  host: string;
+  local: string;
   /** Destinations with no target in this domain yet. */
   destinations: Destination[];
   disabled?: boolean;
@@ -39,7 +39,7 @@ function withStored(list: SelectOption<string>[], value: string, label: string):
 export function PlacementBar({
   view,
   options,
-  host,
+  local,
   destinations,
   disabled,
   onLocal,
@@ -49,7 +49,7 @@ export function PlacementBar({
 }: PlacementBarProps) {
   const { t } = useT();
   const b = placementButtons(view, options);
-  const home = viewHomeLabel(t, host, view, options);
+  const home = viewHomeLabel(t, local, view, options);
   const fixed = view.locked ? lockHint(t, "home-fixed", home) : undefined;
   const items: SelectorItem[] = [
     { id: LOCAL, label: t("placement.segLocal"), title: b.local ? fixed : undefined },
@@ -67,7 +67,7 @@ export function PlacementBar({
   const active = new Set<string>(b.ticked);
   if (b.local) active.add(LOCAL);
   if (view.repoKind === "remote") active.add(REMOTE_HOME + view.repo);
-  const localHomes = options.homes.map((h) => ({ value: h.id, label: homeOptionLabel(t, host, h) }));
+  const localHomes = options.homes.map((h) => ({ value: h.id, label: homeOptionLabel(t, local, h) }));
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <Selector

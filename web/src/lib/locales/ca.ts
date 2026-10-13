@@ -3003,7 +3003,6 @@ const ca: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Elements l'única còpia dels quals és a {target} directe: {n}. Sense append-only, aquesta màquina pot esborrar-ne. Desa igualment?",
 
   // Placement
-  "placement.hostGeneric": "Amfitrió",
   "placement.segLocal": "Local",
   "placement.homeDomain": "{host} · repositori de la secció · {path}",
   "placement.homeDomainRemote": "Repositori de la secció · remot · {scheme}",

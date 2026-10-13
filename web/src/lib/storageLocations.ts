@@ -41,6 +41,36 @@ export function namedLocal(t: T, locations: StorageLocation[], all = locations):
   return locations.map((location) => (ownFolder(location) ? { ...location, name: t("placement.segLocal") } : location));
 }
 
+// The part of an address that tells two places apart: the server it is on,
+// or else its last folder.
+function placeHint(where: string): string {
+  const server = /:\/\/(?:[^@/]*@)?([^/:]+)/.exec(where);
+  if (server) return server[1];
+  const parts = where.split(/[/:]/).filter(Boolean);
+  return parts[parts.length - 1] ?? where;
+}
+
+/** distinctNames adds to each of two or more locations with the same name
+ *  where it is, so a list that shows them side by side can tell them apart. */
+export function distinctNames(locations: StorageLocation[]): StorageLocation[] {
+  const named = (location: StorageLocation) => location.name.trim().toLowerCase();
+  return locations.map((location) => {
+    const same = locations.filter((other) => named(other) === named(location));
+    if (same.length < 2) return location;
+    const hint = placeHint(location.where);
+    const clear = same.filter((other) => placeHint(other.where) === hint).length === 1;
+    return { ...location, name: `${location.name} · ${clear ? hint : location.where}` };
+  });
+}
+
+/** localName is what the storage pages call a section's own folder, read off
+ *  the list namedLocal named: Local while it is the only folder on this host,
+ *  its own name otherwise, and Local until the list is in. */
+export function localName(t: T, locations: StorageLocation[], domain: string): string {
+  const at = locations.find((location) => location.object === "path" && location.sections.some((s) => s.domain === domain));
+  return at?.name ?? t("placement.segLocal");
+}
+
 /** The domains that keep backups at the location, each once, in the order the
  *  server lists their sections. */
 export function sectionDomains(location: StorageLocation): OffsiteDomain[] {

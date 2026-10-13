@@ -3,7 +3,7 @@ import { Button } from "../Button";
 import type { ItemRef, PlacementView } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { observedLine, planLines, STATUS_TONE_CLASS, stackNoteText } from "../../lib/placement";
-import { useHostLabel } from "../../lib/useHostLabel";
+import { useLocalName } from "../../lib/useLocalName";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { OffsiteRemovalDialog } from "./OffsiteRemovalDialog";
 
@@ -22,11 +22,11 @@ export function PlacementStatus({
   onChanged: () => void;
 }) {
   const { t, lang } = useT();
-  const host = useHostLabel();
+  const local = useLocalName(item.domain);
   const { options } = usePlacementOptions(item.domain);
   const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null);
 
-  const plan = view.plan ? planLines(t, lang, host, item.domain, view.plan, options?.targets.length === 0) : [];
+  const plan = view.plan ? planLines(t, lang, local, item.domain, view.plan, options?.targets.length === 0) : [];
   const observed = view.observed ? observedLine(t, view.observed) : [];
 
   return (
@@ -64,7 +64,7 @@ export function PlacementStatus({
           />
         </div>
       ))}
-      {view.stackNote && <p className="text-carbon-textSub">{stackNoteText(t, lang, host, view.stackNote)}</p>}
+      {view.stackNote && <p className="text-carbon-textSub">{stackNoteText(t, lang, local, view.stackNote)}</p>}
       {removing && (
         <OffsiteRemovalDialog
           item={item}

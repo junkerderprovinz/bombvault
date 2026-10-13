@@ -3003,7 +3003,6 @@ const lv: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "Ieraksti, kuru vienīgā kopija ir {target} tieši: {n}. Bez tikai-pievienot šis dators var dzēst no tās. Vai tik un tā saglabāt?",
 
   // Placement
-  "placement.hostGeneric": "Saimniekdators",
   "placement.segLocal": "Vietējs",
   "placement.homeDomain": "{host} · sadaļas krātuve · {path}",
   "placement.homeDomainRemote": "Sadaļas krātuve · attālināta · {scheme}",

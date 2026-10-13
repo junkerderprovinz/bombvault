@@ -15,7 +15,7 @@ import {
 import { blockedText, tickDestination, useNewDestinations } from "../../lib/placementButtons";
 import { placementErrorText } from "../../lib/placementCodes";
 import { useToast } from "../../lib/toast";
-import { useHostLabel } from "../../lib/useHostLabel";
+import { useLocalName } from "../../lib/useLocalName";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { DirectRepoDialog } from "./DirectRepoDialog";
 import { PlacementBar } from "./PlacementBar";
@@ -77,7 +77,7 @@ export function PlacementDraft({
   onChange: (next: PlacementDraftValue) => void;
 }) {
   const { t, lang } = useT();
-  const host = useHostLabel();
+  const local = useLocalName("files");
   const { push } = useToast();
   const { options } = usePlacementOptions("files");
   const destinations = useNewDestinations("files", options);
@@ -89,7 +89,7 @@ export function PlacementDraft({
   const view = valueView(value, ready);
 
   function run(step: PlacementStep) {
-    if (step.kind === "blocked") push(blockedText(t, step, host), "warn");
+    if (step.kind === "blocked") push(blockedText(t, step, local), "warn");
     else if (step.kind === "direct") setDirect({ target: step.target, skip: step.skip ?? ["*"] });
     else if (step.kind === "save") onChange(withChange(value, step.change));
   }
@@ -116,12 +116,12 @@ export function PlacementDraft({
         context="draft"
         view={view}
         options={options}
-        host={host}
+        local={local}
         destinations={destinations}
-        onLocal={(on) => run(stepForLocal(on, view, ready, t, host))}
+        onLocal={(on) => run(stepForLocal(on, view, ready, t, local))}
         onTarget={(id, on) => run(stepForTarget(id, on, view, ready, t))}
         onDestination={(id) => void addDestination(id)}
-        onHome={(id) => run(stepForHome(id, view, ready, t, host))}
+        onHome={(id) => run(stepForHome(id, view, ready, t, local))}
       />
       {direct && (
         <DirectRepoDialog

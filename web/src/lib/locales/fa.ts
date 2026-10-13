@@ -3003,7 +3003,6 @@ const fa: Partial<Translations> = {
   "offsite.directAppendOnlyAsk": "موردهایی که تنها نسخه‌شان در {target} مستقیم است: {n}. بدون فقط-افزودنی، این دستگاه می‌تواند از آن حذف کند. با این حال ذخیره شود؟",
 
   // Placement
-  "placement.hostGeneric": "میزبان",
   "placement.segLocal": "محلی",
   "placement.homeDomain": "{host} · مخزن حوزه · {path}",
   "placement.homeDomainRemote": "مخزن حوزه · از راه دور · {scheme}",

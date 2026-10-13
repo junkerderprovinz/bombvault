@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
 import type { StorageLocation, StorageLocationSection } from "./api";
-import { canFollow, credentialKind, deviating, fillOf, keepCounts, rcloneRemote, retentionKeep, sectionDomains } from "./storageLocations";
+import { en } from "./i18n";
+import {
+  canFollow,
+  credentialKind,
+  deviating,
+  distinctNames,
+  fillOf,
+  keepCounts,
+  localName,
+  namedLocal,
+  rcloneRemote,
+  retentionKeep,
+  sectionDomains,
+} from "./storageLocations";
 
 const KEEP = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 1 };
 
@@ -37,6 +50,63 @@ function location(over: Partial<StorageLocation> = {}): StorageLocation {
     ...over,
   };
 }
+
+const t = ((key: string) => en[key as keyof typeof en] ?? key) as never;
+
+function folder(name: string, ...domains: StorageLocationSection["domain"][]): StorageLocation {
+  return location({
+    id: `path:${name}`,
+    object: "path",
+    kind: "local",
+    backend: "local",
+    name,
+    where: `user/${name}`,
+    sections: domains.map((domain) => section({ domain, use: "home" })),
+  });
+}
+
+describe("localName", () => {
+  it("calls the only folder on this host Local, as the storage pages do", () => {
+    const list = namedLocal(t, [folder("bombvault", "files", "containers"), location()]);
+    expect(localName(t, list, "files")).toBe(en["placement.segLocal"]);
+  });
+
+  it("names each of several folders after itself", () => {
+    const list = namedLocal(t, [folder("bombvault", "containers"), folder("cache", "files")]);
+    expect(localName(t, list, "files")).toBe("cache");
+    expect(localName(t, list, "containers")).toBe("bombvault");
+  });
+
+  it("names a section's remote folder after itself", () => {
+    const remote = location({ id: "path:box", object: "path", name: "bv", sections: [section({ domain: "files", use: "home" })] });
+    expect(localName(t, namedLocal(t, [folder("bombvault", "containers"), remote]), "files")).toBe("bv");
+  });
+
+  it("says Local until the storage locations are read", () => {
+    expect(localName(t, [], "files")).toBe(en["placement.segLocal"]);
+  });
+});
+
+describe("distinctNames", () => {
+  const names = (list: StorageLocation[]) => distinctNames(list).map((l) => l.name);
+
+  it("adds the server or the folder to places that share a name", () => {
+    const rest = location({ id: "target:t1", name: "Primary", where: "rest:http://192.168.20.185:8000/rc-b-files" });
+    const folder = location({ id: "target:t2", name: "Primary", where: "user/offsite/config" });
+    expect(names([rest, folder, location()])).toEqual(["Primary · 192.168.20.185", "Primary · config", "NAS"]);
+  });
+
+  it("falls back to the whole address where the short part is the same", () => {
+    const a = location({ id: "target:a", name: "Box", where: "rest:https://box:8000/a" });
+    const b = location({ id: "target:b", name: "box", where: "rest:https://box:8000/b" });
+    expect(names([a, b])).toEqual(["Box · rest:https://box:8000/a", "box · rest:https://box:8000/b"]);
+  });
+
+  it("leaves a name nobody else has alone", () => {
+    const list = [location(), location({ id: "target:t1", name: "B2", where: "b2:bucket:files" })];
+    expect(distinctNames(list)).toEqual(list);
+  });
+});
 
 describe("fillOf", () => {
   it("reads the used share of a measured volume", () => {

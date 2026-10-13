@@ -35,7 +35,7 @@ export function BackupRail({
 }) {
   const { t, lang } = useT();
   const { rows, places } = timeline;
-  const labelOf = usePlaceLabel(places);
+  const labelOf = usePlaceLabel(places, timeline.domain);
   const list = useRef<HTMLDivElement>(null);
   // Where the handle is while it is held, measured from the top of the list.
   const [held, setHeld] = useState<number | null>(null);

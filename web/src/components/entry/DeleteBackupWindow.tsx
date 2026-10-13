@@ -35,7 +35,7 @@ export function DeleteBackupWindow({
 }) {
   const { t, lang } = useT();
   const { places, reload } = timeline;
-  const labelOf = usePlaceLabel(places);
+  const labelOf = usePlaceLabel(places, timeline.domain);
   const locked = (place: string) => places.find((p) => p.place === place)?.appendOnly === true;
   const free = row.places.filter((mark) => !locked(mark.place));
   const kept = row.places.filter((mark) => locked(mark.place));

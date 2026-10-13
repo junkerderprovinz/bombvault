@@ -17,14 +17,14 @@ const { PlacementFlow } = await import("./PlacementFlow");
 describe("PlacementFlow", () => {
   afterEach(cleanup);
 
-  it("names this server and every enabled target it copies to", async () => {
+  it("names the section's folder and every enabled target it copies to", async () => {
     listed.targets = [
       { id: "t1", domain: "flash", name: "B2", repo: "b2:bucket:flash", enabled: true, sortOrder: 0 },
       { id: "t2", domain: "flash", name: "", repo: "sftp:u1@box:/flash", enabled: true, sortOrder: 1 },
       { id: "t3", domain: "flash", name: "Old", repo: "s3:old", enabled: false, sortOrder: 2 },
     ];
     renderWithProviders(<PlacementFlow domain="flash" />);
-    expect(await screen.findByText("Unraid → B2 and sftp:u1@box:/flash")).toBeTruthy();
+    expect(await screen.findByText("Local → B2 and sftp:u1@box:/flash")).toBeTruthy();
   });
 
   it("leaves the password out of a target without a name", async () => {
@@ -32,7 +32,7 @@ describe("PlacementFlow", () => {
       { id: "t1", domain: "flash", name: "", repo: "rest:https://bv:hunter2@tower:8000/flash", enabled: true, sortOrder: 0 },
     ];
     renderWithProviders(<PlacementFlow domain="flash" />);
-    expect(await screen.findByText("Unraid → rest:https://[redacted]@tower:8000/flash")).toBeTruthy();
+    expect(await screen.findByText("Local → rest:https://[redacted]@tower:8000/flash")).toBeTruthy();
   });
 
   it("says nothing without an enabled target", async () => {
