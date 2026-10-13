@@ -575,6 +575,65 @@ test("the restore window starts on the copy next to the original and asks for th
   await expect(win).toBeHidden();
 });
 
+test("several entries are picked like rows of the list and restored one after the other next to their originals", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  const started: { path: string; body: Record<string, unknown> }[] = [];
+  await page.route(
+    (url) => /^\/api\/(containers|vms|files\/sets)\/[^/]+\/restore$/.test(url.pathname),
+    (route) => {
+      started.push({ path: new URL(route.request().url()).pathname, body: route.request().postDataJSON() as Record<string, unknown> });
+      return route.fulfill({ json: { ok: true, started: true } });
+    },
+  );
+  // Each restore has finished by the time its run is read.
+  const TARGET: Record<string, [string, string]> = {
+    containers: ["container", "homeassistant"],
+    vms: ["vm", "win11"],
+    files: ["files", "Fotos"],
+  };
+  await page.route(
+    (url) => url.pathname === "/api/runs",
+    (route) =>
+      route.fulfill({
+        json: {
+          ok: true,
+          runs: started.map(({ path }, i) => {
+            const [domain, target] = TARGET[path.split("/")[2]];
+            return { id: `restore-${i}`, kind: "restore", status: "success", domain, target, startedAt: NOW, error: "" };
+          }),
+        },
+      }),
+  );
+  await openPage(page);
+
+  const entry = (name: RegExp) => entries(page).getByRole("button", { name });
+  await entry(/^homeassistant/).click({ modifiers: ["ControlOrMeta"] });
+  await entry(/^Windows 11/).click({ modifiers: ["ControlOrMeta"] });
+  await entry(/^Fotos/).click({ modifiers: ["ControlOrMeta"] });
+  const bar = page.getByTestId("bulk-bar");
+  await expect(bar).toContainText("3 ausgewählt");
+  // The configuration comes back through the emergency wizard, and says so.
+  await expect(page.getByLabel("Die Konfiguration stellst du für sich allein wieder her, über den Notfall-Assistenten.")).toBeVisible();
+  await expect(rows(page)).toHaveCount(0);
+
+  await bar.getByRole("button", { name: "Wiederherstellen" }).click();
+  const win = page.getByRole("dialog", { name: "3 Einträge wiederherstellen" });
+  await expect(win.getByRole("radio", { name: /^Neben das Original/ })).toHaveAttribute("aria-checked", "true");
+  await expect(win.getByTestId("restore-many-entry")).toHaveCount(3);
+  await win.getByRole("button", { name: "Wiederherstellen · 3" }).click();
+  await expect(win.locator('[data-outcome="done"]')).toHaveCount(3, { timeout: 20_000 });
+  expect(started.map(({ path }) => path)).toEqual([
+    "/api/containers/homeassistant/restore",
+    "/api/vms/win11/restore",
+    `/api/files/sets/${SET_ID}/restore`,
+  ]);
+  for (const { body } of started) expect(body).toMatchObject({ snapshotId: expect.any(String), target: "beside" });
+  await expect(win).toContainText("3 wiederhergestellt, 0 fehlgeschlagen.");
+  await win.getByRole("button", { name: "Schließen" }).click();
+  await expect(win).toBeHidden();
+});
+
 test("the old address leads to the page and keeps what the link asked for", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
   await stage(page);

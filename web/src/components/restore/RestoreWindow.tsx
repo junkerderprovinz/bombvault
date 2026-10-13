@@ -205,7 +205,8 @@ function SelfRestoreNote({ deletes, onClose }: { deletes: React.ReactNode; onClo
   );
 }
 
-function WhereOption({
+/** WhereOption is one target of a restore, with the scene that plays it. */
+export function WhereOption({
   where,
   on,
   title,

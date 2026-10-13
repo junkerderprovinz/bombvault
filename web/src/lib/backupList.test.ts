@@ -15,7 +15,6 @@ import {
   parseTile,
   protection,
   rangeIds,
-  restoresInBulk,
   rowStatus,
   runStrip,
   showsSelf,
@@ -360,14 +359,6 @@ describe("acting on several entries", () => {
     expect(canBackUp(item({ self: true }))).toBe(false);
     expect(canBackUp(item({ kindDisabled: true }))).toBe(false);
     expect(canBackUp(item({ kind: "files", installed: undefined }))).toBe(true);
-  });
-
-  it("restores the newest backup of containers and VMs only, gone ones included", () => {
-    expect(restoresInBulk(item({ installed: false }))).toBe(true);
-    expect(restoresInBulk(item({ kind: "vm" }))).toBe(true);
-    expect(restoresInBulk(item({ lastBackup: 0 }))).toBe(false);
-    expect(restoresInBulk(item({ kind: "files" }))).toBe(false);
-    expect(restoresInBulk(item({ kind: "flash" }))).toBe(false);
   });
 
   it("splits a selection into one batch per kind, each with the keys of its routes", () => {

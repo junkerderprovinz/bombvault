@@ -1,14 +1,18 @@
 // The Restore page. Most restores bring one entry back to one moment, so the
 // page opens on the entries and the backups of the one that is picked. The
 // rare ways, the emergency and the other sources, wait at the bottom.
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+import { BarButton, BulkBar } from "../components/backups/BulkBar";
 import { KIND_LABEL, KindGlyph, entryName, kindHue } from "../components/backups/kinds";
 import { KindTile, TileRow } from "../components/backups/KindTiles";
+import { SelectMark } from "../components/backups/SelectMark";
+import { useRowSelection } from "../components/backups/useRowSelection";
 import { Button } from "../components/Button";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { IconArchive, IconForward, IconSearch } from "../components/glyphs";
+import { IconArchive, IconForward, IconSearch, IconSelectAll } from "../components/glyphs";
+import { InfoBubble } from "../components/InfoBubble";
 import { InstanceWindow } from "./instances/InstanceWindow";
 import { IconDownload, IconFolder, IconRecovery, IconRestore } from "../components/navGlyphs";
 import { PageAction, PageActions } from "../components/PageActions";
@@ -21,6 +25,7 @@ import { EmergencyWindow } from "../components/restore/EmergencyWindow";
 import { KeyState } from "../components/restore/KeyState";
 import { OldFolderWindow } from "../components/restore/OldFolderWindow";
 import { PlaceChecks } from "../components/restore/PlaceChecks";
+import { RestoreManyWindow } from "../components/restore/RestoreManyWindow";
 import { RestoreWindow, type RestoreAsk } from "../components/restore/RestoreWindow";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { Rows } from "../components/storage/rows";
@@ -29,11 +34,13 @@ import { ATTENTION_CHANGED_EVENT } from "../lib/attention";
 import { hueVars } from "../lib/appearance";
 import { ENTRY_KIND, ENTRY_KINDS, type EntryKind } from "../lib/backupEntry";
 import { entriesOf, entryTarget, itemId, itemProgressKey, listedItems } from "../lib/backupList";
-import { useT } from "../lib/i18n";
+import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { anyActive, useProgress, type ProgressState } from "../lib/progress";
 import { formatRecent } from "../lib/reltime";
+import { joinsMany, leftOut, type LeftOut } from "../lib/restoreMany";
 import { findingsOf, parseEmergencyStep, parseEmergencyWay, recommend, recommendationWhy } from "../lib/restorePlan";
+import { useLongPress } from "../lib/useLongPress";
 import { useOpenAnomalies } from "../lib/useAnomalies";
 import { useEntry } from "../lib/useEntry";
 import { useTimeline } from "../lib/useTimeline";
@@ -44,6 +51,103 @@ const TILE_ORDER: EntryKind[] = ["container", "vm", "flash", "files", "zfs", "co
 
 function hasBackups(item: BackupItem): boolean {
   return item.lastBackup > 0;
+}
+
+const LEFT_OUT_TIP: Record<LeftOut, TranslationKey> = {
+  zfs: "restoreMany.leftOut.zfs",
+  config: "restoreMany.leftOut.config",
+};
+
+/**
+ * EntryPick is one entry of the list. A click opens its backups below the
+ * list; Ctrl+click, Shift+click, a long press or the mark on its glyph pick it
+ * for a restore together with others, as rows are picked on the Backups page.
+ */
+function EntryPick({
+  item,
+  open,
+  chosen,
+  selecting,
+  onClick,
+  onPick,
+  onLongPress,
+}: {
+  item: BackupItem;
+  /** Its backups stand below the list. */
+  open: boolean;
+  chosen: boolean;
+  selecting: boolean;
+  onClick: (e: MouseEvent) => void;
+  onPick: (on: boolean) => void;
+  onLongPress: () => void;
+}) {
+  const { t, lang } = useT();
+  const press = useLongPress(onLongPress);
+  const joins = joinsMany(item);
+  const out = leftOut(item.kind);
+  const name = entryName(item, t);
+  const lit = open || chosen;
+  return (
+    <li
+      style={hueVars(kindHue(item.kind)) as CSSProperties}
+      className="glim-hue group relative min-w-0 pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none]"
+    >
+      <button
+        type="button"
+        aria-pressed={selecting ? chosen : open}
+        disabled={!hasBackups(item) || (selecting && !joins)}
+        onClick={(e) => {
+          if (!press.took()) onClick(e);
+        }}
+        // Shift+click would otherwise mark the text between the two rows.
+        onMouseDown={(e) => {
+          if (e.shiftKey) e.preventDefault();
+        }}
+        {...(joins ? press.handlers : {})}
+        className={`flex w-full items-center gap-3 rounded-control p-2 text-start transition-colors disabled:opacity-55 ${
+          lit ? "bg-accentSoft" : "enabled:hover:bg-carbon-surface2"
+        }${selecting && out ? " pe-9" : ""}`}
+      >
+        <span
+          className={`flex h-9 w-9 flex-none items-center justify-center rounded-control [&_svg]:h-[18px] [&_svg]:w-[18px] ${
+            lit ? "bg-accent text-accentContrast" : "bg-carbon-surface2 text-accentText"
+          }`}
+        >
+          <KindGlyph kind={item.kind} />
+        </span>
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate text-sm font-semibold text-carbon-text">{name}</span>
+          <span className="truncate text-xs text-carbon-textMuted">
+            {hasBackups(item)
+              ? t("restorePage.newest").replace("{when}", () => formatRecent(item.lastBackup, lang))
+              : t("restorePage.none")}
+          </span>
+        </span>
+      </button>
+      {joins && (
+        // Until something is picked the mark shows only under the pointer, on
+        // the corner of the glyph, so no row moves when it appears.
+        <span
+          className={`absolute start-1 top-1 rounded-full ring-2 ${chosen ? "ring-transparent" : "ring-carbon-surface pointer-fine:group-hover:ring-carbon-surface2"} ${
+            selecting ? "flex" : "hidden pointer-fine:group-hover:flex pointer-fine:group-focus-within:flex"
+          }`}
+        >
+          <SelectMark
+            checked={chosen}
+            offered={!selecting}
+            label={t("common.selectItem").replace("{name}", name)}
+            onChange={onPick}
+            bare
+          />
+        </span>
+      )}
+      {selecting && out && hasBackups(item) && (
+        <span className="absolute end-2 top-1/2 flex -translate-y-1/2">
+          <InfoBubble tip={t(LEFT_OUT_TIP[out])} />
+        </span>
+      )}
+    </li>
+  );
 }
 
 /** EntryRestore reads what the window needs to know about the entry, which
@@ -242,6 +346,7 @@ export function Restore() {
   const [source, setSource] = useState<"oldFolder" | "appdata" | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
   const [keyState, setKeyState] = useState<EmergencyState | null>(null);
+  const [many, setMany] = useState<BackupItem[] | null>(null);
 
   // The emergency window can take a key over or give it back, so the key is
   // read again each time it closes.
@@ -309,6 +414,23 @@ export function Restore() {
       (kind === null || item.kind === kind) &&
       `${entryName(item, t)} ${t(KIND_LABEL[item.kind])}`.toLowerCase().includes(needle)
   );
+  const joinable = shown.filter(joinsMany).map(itemId);
+  const joinableKey = joinable.join(" ");
+  const selection = useRowSelection(useMemo(() => (joinableKey === "" ? [] : joinableKey.split(" ")), [joinableKey]));
+  const chosenItems = shown.filter((item) => selection.picked.has(itemId(item)));
+
+  function clickEntry(e: MouseEvent, item: BackupItem) {
+    const id = itemId(item);
+    const adds = e.ctrlKey || e.metaKey || e.shiftKey;
+    if (joinsMany(item) && (selection.selecting || adds)) {
+      // The entry opened by hand counts as picked, as the item under the
+      // cursor does in a file manager, so a Shift+click reaches from it.
+      if (!selection.selecting && pick !== null && picked && joinsMany(picked) && itemId(picked) !== id) selection.set(itemId(picked), true);
+      selection.click(e, id);
+      return;
+    }
+    setPick(id);
+  }
 
   const running = Object.entries(progress).filter(([, state]) => state.active && !state.finished && state.phase === "restore");
   const runningName = (key: string) => {
@@ -336,6 +458,7 @@ export function Restore() {
       )}
       {source === "oldFolder" && <OldFolderWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
       {source === "appdata" && <AppdataWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
+      {many && <RestoreManyWindow items={many} onClose={() => setMany(null)} />}
 
       {failed ? (
         <div className="flex flex-col items-start gap-2">
@@ -376,70 +499,77 @@ export function Restore() {
                   })}
               </TileRow>
 
+              {selection.selecting && (
+                <BulkBar count={selection.picked.size} allPicked={selection.allPicked} onAll={selection.setAll} onDone={selection.clear} t={t}>
+                  <BarButton label={t("snapshots.restore")} glyph={<IconRestore />} onClick={() => setMany(chosenItems)} wide />
+                </BulkBar>
+              )}
+
               <div className="flex flex-col gap-3 rounded-card bg-carbon-surface p-4">
-                <label className="flex h-11 items-center gap-2.5 rounded-control bg-carbon-surface2 px-3.5 glim-field-focus-within">
-                  <span className="shrink-0 text-carbon-textMuted [&_svg]:h-[18px] [&_svg]:w-[18px]">
-                    <IconSearch />
-                  </span>
-                  <input
-                    type="search"
-                    aria-label={t("restorePage.search")}
-                    placeholder={t("restorePage.search")}
-                    value={query}
-                    spellCheck={false}
-                    autoComplete="off"
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape" && query !== "") {
-                        e.stopPropagation();
-                        setQuery("");
-                      }
-                    }}
-                    className="min-w-0 flex-1 bg-transparent text-base text-carbon-text outline-none placeholder:text-carbon-textMuted"
-                  />
-                </label>
+                <div className="flex items-center gap-2">
+                  <label className="flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-control bg-carbon-surface2 px-3.5 glim-field-focus-within">
+                    <span className="shrink-0 text-carbon-textMuted [&_svg]:h-[18px] [&_svg]:w-[18px]">
+                      <IconSearch />
+                    </span>
+                    <input
+                      type="search"
+                      aria-label={t("restorePage.search")}
+                      placeholder={t("restorePage.search")}
+                      value={query}
+                      spellCheck={false}
+                      autoComplete="off"
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape" && query !== "") {
+                          e.stopPropagation();
+                          setQuery("");
+                        }
+                      }}
+                      className="min-w-0 flex-1 bg-transparent text-base text-carbon-text outline-none placeholder:text-carbon-textMuted"
+                    />
+                  </label>
+                  {!selection.selecting && joinable.length > 1 && (
+                    <span data-new="restore-many" className="flex">
+                      <Button
+                        label={t("backups.select")}
+                        labelKey={null}
+                        glyph={<IconSelectAll />}
+                        tone="subtle"
+                        hint={t("restoreMany.selectHint")}
+                        onClick={() => selection.begin()}
+                        className="glim-btn-key"
+                      />
+                    </span>
+                  )}
+                </div>
                 <ul
                   data-testid="restore-entries"
-                  className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-x-2 gap-y-0.5 max-md:max-h-[312px] max-md:grid-cols-1 max-md:overflow-y-auto"
+                  className={`grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-x-2 gap-y-0.5 max-md:max-h-[312px] max-md:grid-cols-1 max-md:overflow-y-auto${
+                    selection.selecting ? " select-none" : ""
+                  }`}
                 >
                   {shown.map((item) => {
-                    const on = picked !== undefined && itemId(item) === itemId(picked);
+                    const id = itemId(item);
                     return (
-                      <li key={itemId(item)} className="min-w-0">
-                        <button
-                          type="button"
-                          aria-pressed={on}
-                          disabled={!hasBackups(item)}
-                          onClick={() => setPick(itemId(item))}
-                          style={hueVars(kindHue(item.kind)) as CSSProperties}
-                          className={`glim-hue flex w-full items-center gap-3 rounded-control p-2 text-start transition-colors disabled:opacity-55 ${
-                            on ? "bg-accentSoft" : "enabled:hover:bg-carbon-surface2"
-                          }`}
-                        >
-                          <span
-                            className={`flex h-9 w-9 flex-none items-center justify-center rounded-control [&_svg]:h-[18px] [&_svg]:w-[18px] ${
-                              on ? "bg-accent text-accentContrast" : "bg-carbon-surface2 text-accentText"
-                            }`}
-                          >
-                            <KindGlyph kind={item.kind} />
-                          </span>
-                          <span className="flex min-w-0 flex-col">
-                            <span className="truncate text-sm font-semibold text-carbon-text">{entryName(item, t)}</span>
-                            <span className="truncate text-xs text-carbon-textMuted">
-                              {hasBackups(item)
-                                ? t("restorePage.newest").replace("{when}", () => formatRecent(item.lastBackup, lang))
-                                : t("restorePage.none")}
-                            </span>
-                          </span>
-                        </button>
-                      </li>
+                      <EntryPick
+                        key={id}
+                        item={item}
+                        open={!selection.selecting && picked !== undefined && id === itemId(picked)}
+                        chosen={selection.picked.has(id)}
+                        selecting={selection.selecting}
+                        onClick={(e) => clickEntry(e, item)}
+                        onPick={(on) => selection.set(id, on)}
+                        onLongPress={() => selection.begin(id)}
+                      />
                     );
                   })}
                 </ul>
                 {shown.length === 0 && <p className="text-sm text-carbon-textMuted">{t("restorePage.noMatch")}</p>}
               </div>
 
-              {picked && <PickedEntry key={itemId(picked)} item={picked} reveal={pick !== null} hueIndex={nextHue()} />}
+              {picked && !selection.selecting && (
+                <PickedEntry key={itemId(picked)} item={picked} reveal={pick !== null} hueIndex={nextHue()} />
+              )}
             </>
           )}
         </>

@@ -56,6 +56,7 @@ export const CHANGES: Change[] = [
 
   { id: "restore-tiles", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreTiles" },
   { id: "restore-where", page: "/restore", where: ["nav.restore"], way: ["/restore", "restore-window"], text: "whatsNew.restoreWhere" },
+  { id: "restore-many", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreMany" },
   { id: "restore-emergency", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreEmergency" },
 
   { id: "anomalies-tiles", page: "/anomalies", where: ["nav.anomalies"], way: ["/anomalies"], text: "whatsNew.anomaliesTiles" },
