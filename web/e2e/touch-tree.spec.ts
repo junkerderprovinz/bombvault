@@ -14,6 +14,12 @@
 import { expect, test, type Page } from "@playwright/test";
 import { MOBILE_PROJECTS, container, item, stageEntries } from "./entries";
 
+// A handler can still wait on the real server when its test has passed;
+// what it throws then is dropped.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 // 44px touch target; layout boxes can come back a few millionths short of it.
 const MIN_TARGET = 44 - 0.01;
 

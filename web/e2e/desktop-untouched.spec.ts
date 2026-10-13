@@ -13,6 +13,12 @@
 import { expect, test, type Page } from "@playwright/test";
 import { container, item, stageEntries } from "./entries";
 
+// A handler can still wait on the real server when its test has passed;
+// what it throws then is dropped.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 // The two desktop projects from playwright.config.ts (>= the 48rem chrome
 // switch). Branching on the project name, the mobile-shell.spec.ts pattern,
 // keeps every assertion honest about which contract each project verifies.

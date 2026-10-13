@@ -13,6 +13,12 @@
 import { expect, test, type Page } from "@playwright/test";
 import { MOBILE_PROJECTS, container, item, stageEntries } from "./entries";
 
+// A handler can still wait on the real server when its test has passed;
+// what it throws then is dropped.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 const RUN_ID = "0f1e2d3c4b5a69788796a5b4c3d2e1f0";
 const STARTED_AT = Math.floor(Date.now() / 1000) - 60;
 

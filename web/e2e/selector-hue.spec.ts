@@ -8,6 +8,12 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { EVERY_KIND, settle, stageEntries } from "./entries";
 
+// A handler can still wait on the real server when its test has passed;
+// what it throws then is dropped.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 async function look(page: Page, theme: "dark" | "light", reactive = false): Promise<void> {
   // The stored look is the one under test, so the server's must not replace it.
   await page.route("**/api/display-prefs*", (route) => route.abort());
