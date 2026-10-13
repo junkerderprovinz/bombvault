@@ -629,16 +629,16 @@ describe("relay card", () => {
 
   it("offers the four routes and starts on the stored one", async () => {
     await renderTab();
-    const tabs = screen.getAllByRole("tab").map((tab) => tab.textContent);
-    expect(tabs).toEqual([en["relay.project"], en["relay.own"], en["relay.instanceName"], en["relay.off"]]);
-    expect(screen.getByRole("tab", { name: en["relay.project"] }).getAttribute("aria-selected")).toBe("true");
+    const routes = screen.getAllByRole("radio").map((route) => route.textContent);
+    expect(routes).toEqual([en["relay.project"], en["relay.own"], en["relay.instanceName"], en["relay.off"]]);
+    expect(screen.getByRole("radio", { name: en["relay.project"] }).getAttribute("aria-checked")).toBe("true");
     expect(screen.queryByLabelText(en["relay.addressLabel"], { exact: false })).toBeNull();
   });
 
   it("switches the picture and saves the route when another is picked", async () => {
     await renderTab();
     await act(async () => {
-      fireEvent.click(screen.getByRole("tab", { name: en["relay.off"] }));
+      fireEvent.click(screen.getByRole("radio", { name: en["relay.off"] }));
     });
     expect(relayCalls).toContainEqual({ mode: "off" });
     expect(routePicture("relay.pic.direct")).not.toBeNull();
@@ -646,11 +646,26 @@ describe("relay card", () => {
     expect(screen.queryByTestId("own-relay")).toBeNull();
   });
 
+  it("moves through the routes with the arrow keys and saves only the one pressed", async () => {
+    await renderTab();
+    const project = screen.getByRole("radio", { name: en["relay.project"] });
+    project.focus();
+    fireEvent.keyDown(project, { key: "ArrowRight" });
+    fireEvent.keyDown(document.activeElement!, { key: "ArrowRight" });
+    expect(document.activeElement).toBe(screen.getByRole("radio", { name: en["relay.instanceName"] }));
+    expect(relayCalls).toEqual([]);
+    expect(project.getAttribute("aria-checked")).toBe("true");
+    await act(async () => {
+      fireEvent.click(document.activeElement!);
+    });
+    expect(relayCalls).toEqual([{ mode: "own" }]);
+  });
+
   it("shows the address field and where to get a relay for an own relay", async () => {
     await renderTab();
     expect(screen.queryByTestId("own-relay")).toBeNull();
     await act(async () => {
-      fireEvent.click(screen.getByRole("tab", { name: en["relay.own"] }));
+      fireEvent.click(screen.getByRole("radio", { name: en["relay.own"] }));
     });
     const own = within(screen.getByTestId("own-relay"));
     expect(own.getByText(en["relay.containerName"], { selector: "strong" })).not.toBeNull();
@@ -663,10 +678,10 @@ describe("relay card", () => {
   it("offers a paired BombVault as the relay, stored as an own relay", async () => {
     await renderTab();
     await act(async () => {
-      fireEvent.click(screen.getByRole("tab", { name: en["relay.instanceName"] }));
+      fireEvent.click(screen.getByRole("radio", { name: en["relay.instanceName"] }));
     });
     expect(relayCalls).toEqual([{ mode: "own" }]);
-    expect(screen.getByRole("tab", { name: en["relay.instanceName"] }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("radio", { name: en["relay.instanceName"] }).getAttribute("aria-checked")).toBe("true");
     expect(routePicture("relay.pic.instance")).not.toBeNull();
     expect(screen.queryByTestId("own-relay")).toBeNull();
     const route = within(screen.getByTestId("instance-relay"));
@@ -680,10 +695,10 @@ describe("relay card", () => {
   it("moves between the two own routes without saving the same mode twice", async () => {
     await renderTab();
     await act(async () => {
-      fireEvent.click(screen.getByRole("tab", { name: en["relay.instanceName"] }));
+      fireEvent.click(screen.getByRole("radio", { name: en["relay.instanceName"] }));
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole("tab", { name: en["relay.own"] }));
+      fireEvent.click(screen.getByRole("radio", { name: en["relay.own"] }));
     });
     expect(relayCalls).toEqual([{ mode: "own" }]);
     expect(screen.getByTestId("own-relay")).not.toBeNull();
@@ -692,7 +707,7 @@ describe("relay card", () => {
   it("starts on the BombVault route when the stored address belongs to a paired instance", async () => {
     group = makeGroup({ relay: { ...makeGroup().relay, mode: "own", url: "wss://192.168.1.21:8443/relay" } });
     await renderTab();
-    expect(screen.getByRole("tab", { name: en["relay.instanceName"] }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("radio", { name: en["relay.instanceName"] }).getAttribute("aria-checked")).toBe("true");
     expect(routePicture("relay.pic.instance")).not.toBeNull();
   });
 
