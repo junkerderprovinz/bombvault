@@ -137,7 +137,7 @@ export function FlowPicture({
         role="group"
         aria-label={t("storage.flow.alt")}
         aria-busy={busy}
-        className={`[direction:ltr]${m.narrow ? " glim-flow-narrow" : ""}`}
+        className={`[direction:ltr] ${m.narrow ? "glim-flow-narrow" : ""}`}
       >
         {bands.map((location, k) => (
           <g key={location.id} className={location.enabled ? undefined : "glim-flow-off"}>

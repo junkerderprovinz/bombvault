@@ -775,6 +775,7 @@ const ko: Partial<Translations> = {
   "common.expand": "펼치기",
   "common.collapse": "접기",
   "common.back": "뒤로",
+  "common.backTo": "{page}(으)로 돌아가기",
   "common.loadMore": "더 불러오기",
 
   // Failure fallbacks

@@ -193,8 +193,8 @@ export function VMBackupOrderPanel({
                 tone="subtle"
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
-                className={`inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
-                  shakeReset ? " glim-shake" : ""
+                className={`inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50 ${
+                  shakeReset ? "glim-shake" : ""
                 }`}
               />
             </div>

@@ -454,6 +454,24 @@
   height: var(--btn-h-key);
 }
 
+/* A finger gets 44px on every button without the button growing: the heights
+   above line up with the fields, so the extra target is an invisible margin
+   around the button. It sits in the components layer, where a utility such as
+   `absolute` on a button still wins over the `relative` it needs. */
+@layer components {
+  @media (pointer: coarse) {
+    .glim-btn {
+      position: relative;
+    }
+    .glim-btn::before {
+      content: "";
+      position: absolute;
+      inset-block: min(0px, calc(50% - 1.375rem));
+      inset-inline: min(0px, calc(50% - 1.375rem));
+    }
+  }
+}
+
 /* The actions a phone window keeps behind More, stacked like the rows of a
    menu: each one key height and the full width, its words at the start and
    its (i) at the end. The span is the box a hint or a disabled tip puts
@@ -1919,6 +1937,9 @@ body {
 }
 :is(.glim-provider-picked > .glim-brand-tile, .glim-provider-pick .glim-brand-tile:focus-visible) .glim-mark-rest { display: none; }
 :is(.glim-provider-picked > .glim-brand-tile, .glim-provider-pick .glim-brand-tile:focus-visible) .glim-mark-hover { display: block; }
+/* The second line on a lit tile is small text on the brand colour and needs
+   the ink's full contrast. */
+.glim-provider-pick .glim-readme-btn-unit:is(:hover, :focus-within) .glim-readme-btn-sub { opacity: 1; }
 
 /* The MCP clients' tile colours (McpServerCard's client buttons), from the
    brands' own palettes, with the ink as GlimStone's brand tiles pick it: white
@@ -3996,8 +4017,8 @@ body {
 .glim-crypt-looker { color: var(--carbon-text-sub); }
 
 /* A registry's logo is an image. It keeps its own colours on a picker tile,
-   turns white where the tile lights up in the brand's colour, and a logo in
-   dark ink is flipped on a dark ground. */
+   takes the tile's ink where the tile lights up in the brand's colour, and a
+   logo in dark ink is flipped on a dark ground. */
 .glim-registry-pick .glim-readme-btn-mark img {
   display: block;
   width: 100%;
@@ -4011,9 +4032,9 @@ body {
   filter: brightness(0) invert(1);
 }
 :root:not([data-theme="light"]) .glim-registry-dark .glim-readme-btn-mark img { filter: invert(1); }
-.glim-registry-pick .glim-brand-tile:focus-visible .glim-readme-btn-mark img { filter: brightness(0) invert(1); }
+.glim-registry-pick .glim-brand-tile:focus-visible .glim-readme-btn-mark img { filter: var(--logo-lit, brightness(0) invert(1)); }
 @media (hover: hover) {
-  .glim-registry-pick .group:hover > .glim-brand-tile .glim-readme-btn-mark img { filter: brightness(0) invert(1); }
+  .glim-registry-pick .group:hover > .glim-brand-tile .glim-readme-btn-mark img { filter: var(--logo-lit, brightness(0) invert(1)); }
 }
 
 /* The week of planned runs. Each kind of run has a colour of its own, which

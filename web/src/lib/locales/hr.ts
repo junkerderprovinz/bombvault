@@ -1315,6 +1315,7 @@ const hr: Partial<Translations> = {
   "common.expand": "Proširi",
   "common.collapse": "Sažmi",
   "common.back": "Natrag",
+  "common.backTo": "Natrag: {page}",
   "common.loadMore": "Učitaj više",
   "common.loadingBackups": "Učitavanje sigurnosnih kopija…",
   "common.saving": "Spremanje…",

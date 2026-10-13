@@ -173,7 +173,7 @@ export function PlacementRow({
           options && (
             // Beside the label a phone leaves the bar too narrow for its
             // buttons, so there it takes a line of its own.
-            <div key={shake} className={`min-w-0 flex-1 max-md:basis-full${shake ? " glim-shake" : ""}`}>
+            <div key={shake} className={`min-w-0 flex-1 max-md:basis-full ${shake ? "glim-shake" : ""}`}>
               <PlacementBar
                 domain={item.domain}
                 context="item"

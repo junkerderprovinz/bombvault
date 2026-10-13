@@ -1310,6 +1310,7 @@ const sl: Partial<Translations> = {
   "common.expand": "Razpri",
   "common.collapse": "Zapri",
   "common.back": "Nazaj",
+  "common.backTo": "Nazaj: {page}",
   "common.loadMore": "Naloži več",
   "common.loadingBackups": "Nalaganje varnostnih kopij…",
   "common.saving": "Shranjevanje…",

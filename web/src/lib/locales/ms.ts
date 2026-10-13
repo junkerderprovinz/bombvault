@@ -1315,6 +1315,7 @@ const ms: Partial<Translations> = {
   "common.expand": "Kembangkan",
   "common.collapse": "Runtuhkan",
   "common.back": "Kembali",
+  "common.backTo": "Kembali ke {page}",
   "common.loadMore": "Muatkan lagi",
   "common.loadingBackups": "Memuatkan sandaran…",
   "common.saving": "Menyimpan…",

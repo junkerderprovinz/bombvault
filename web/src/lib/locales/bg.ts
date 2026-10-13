@@ -1315,6 +1315,7 @@ const bg: Partial<Translations> = {
   "common.expand": "Разгъване",
   "common.collapse": "Свиване",
   "common.back": "Назад",
+  "common.backTo": "Обратно към {page}",
   "common.loadMore": "Зареди още",
   "common.loadingBackups": "Зареждане на архивиранията…",
   "common.saving": "Запазване…",

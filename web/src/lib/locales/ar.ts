@@ -784,6 +784,7 @@ const ar: Partial<Translations> = {
   "common.expand": "توسيع",
   "common.collapse": "طي",
   "common.back": "رجوع",
+  "common.backTo": "العودة إلى {page}",
   "common.loadMore": "تحميل المزيد",
 
   // Failure fallbacks

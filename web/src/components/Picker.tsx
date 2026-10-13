@@ -42,6 +42,18 @@ export function PickerSearch({ value, onChange, label }: PickerSearchProps) {
 }
 
 /**
+ * PickerNoMatch says that a search left no tile. It stays in the page while
+ * tiles are found, so a screen reader announces the sentence when it appears.
+ */
+export function PickerNoMatch({ shown, text }: { shown: boolean; text: string }) {
+  return (
+    <p role="status" className={shown ? "text-sm text-carbon-textMuted" : "sr-only"}>
+      {shown ? text : ""}
+    </p>
+  );
+}
+
+/**
  * PickerGroup is one group of a picker's tiles under an eyebrow heading. The
  * heading can say how well the group suits the job and carry an (i).
  */

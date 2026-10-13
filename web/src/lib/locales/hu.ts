@@ -784,6 +784,7 @@ const hu: Partial<Translations> = {
   "common.expand": "Kibontás",
   "common.collapse": "Összecsukás",
   "common.back": "Vissza",
+  "common.backTo": "Vissza: {page}",
   "common.loadMore": "Továbbiak betöltése",
 
   // Failure fallbacks

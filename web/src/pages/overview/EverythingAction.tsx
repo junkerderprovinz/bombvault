@@ -97,7 +97,7 @@ export function EverythingAction({
       ) : (
         // The key remounts the button after a failed start, which replays
         // its shake.
-        <span key={shake} className={`flex${shake ? " glim-shake" : ""}`}>
+        <span key={shake} className={`flex ${shake ? "glim-shake" : ""}`}>
           <PageAction primary label={t("backups.backUpEverything")} glyph={<IconBackupNow />} onClick={() => void start()} />
         </span>
       )}

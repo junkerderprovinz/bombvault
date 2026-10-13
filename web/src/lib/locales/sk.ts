@@ -1315,6 +1315,7 @@ const sk: Partial<Translations> = {
   "common.expand": "Rozbaliť",
   "common.collapse": "Zbaliť",
   "common.back": "Späť",
+  "common.backTo": "Späť: {page}",
   "common.loadMore": "Načítať ďalšie",
   "common.loadingBackups": "Načítavajú sa zálohy…",
   "common.saving": "Ukladá sa…",

@@ -784,6 +784,7 @@ const th: Partial<Translations> = {
   "common.expand": "ขยาย",
   "common.collapse": "ย่อ",
   "common.back": "ย้อนกลับ",
+  "common.backTo": "กลับไปที่ {page}",
   "common.loadMore": "โหลดเพิ่มเติม",
 
   // Failure fallbacks

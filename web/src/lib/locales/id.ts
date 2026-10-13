@@ -1315,6 +1315,7 @@ const id: Partial<Translations> = {
   "common.expand": "Perluas",
   "common.collapse": "Ciutkan",
   "common.back": "Kembali",
+  "common.backTo": "Kembali ke {page}",
   "common.loadMore": "Muat lebih banyak",
   "common.loadingBackups": "Memuat cadangan…",
   "common.saving": "Menyimpan…",

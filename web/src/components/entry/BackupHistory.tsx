@@ -106,7 +106,7 @@ export function BackupHistory({
             <Day key={day.start} day={day} largest={largest} lang={lang} onLocate={onLocate} />
           ))}
         </div>
-        <div aria-hidden="true" className={`${COLUMNS} text-center text-caption text-carbon-textMuted`}>
+        <div aria-hidden="true" className={`${COLUMNS} text-center text-caption text-carbon-textSub`}>
           {days.map((day, i) => {
             const last = i === HISTORY_DAYS - 1;
             // A phone has room for every fourth date and no weekdays.

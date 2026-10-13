@@ -1315,6 +1315,7 @@ const is: Partial<Translations> = {
   "common.expand": "Opna",
   "common.collapse": "Loka",
   "common.back": "Til baka",
+  "common.backTo": "Til baka: {page}",
   "common.loadMore": "Hlaða inn fleiri",
   "common.loadingBackups": "Hleð afritum…",
   "common.saving": "Vista…",

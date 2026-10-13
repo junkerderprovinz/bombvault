@@ -35,7 +35,7 @@ export function StepCard({
   const hueStyle = hueOn ? (hueVars(hueIndex) as CSSProperties) : undefined;
   return (
     <div
-      className={`relative glim-notch-card rounded-card bg-carbon-surface p-4${state ? "" : " pt-7"}${hueOn ? " glim-hue" : ""}`}
+      className={`relative glim-notch-card rounded-card bg-carbon-surface p-4 ${state ? "" : "pt-7"}${hueOn ? " glim-hue" : ""}`}
       style={hueStyle}
     >
       {/* The number and the title are two heading badges in the flow of one

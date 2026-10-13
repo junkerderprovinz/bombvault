@@ -784,6 +784,7 @@ const es: Partial<Translations> = {
   "common.expand": "Desplegar",
   "common.collapse": "Plegar",
   "common.back": "Atrás",
+  "common.backTo": "Volver a {page}",
   "common.loadMore": "Cargar más",
 
   // Failure fallbacks

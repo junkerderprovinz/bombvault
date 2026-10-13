@@ -313,7 +313,7 @@ describe("the backup each entry takes", () => {
     let answer: (value: Awaited<ReturnType<typeof api.getTimeline>>) => void = () => undefined;
     getTimeline.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
     open([item("plex")]);
-    fireEvent.click(screen.getByRole("tab", { name: en["restoreMany.at"] }));
+    fireEvent.click(screen.getByRole("radio", { name: en["restoreMany.at"] }));
     answer({ ok: true, places: [LOCAL], rows: [row("plex-new", 0), row("plex-old", 2)] });
     await readyToStart(1);
     expect(lastCheckOf("plex")).toMatchObject({ snapshotId: "plex-new" });

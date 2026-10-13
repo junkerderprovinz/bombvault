@@ -57,7 +57,7 @@ function PluginRow({ plugin, snapshotId, source, t }: { plugin: FlashPlugin; sna
           onClick={() => void handleRestore()}
           disabled={isPending}
           busy={isPending}
-          className={`shrink-0${shake ? " glim-shake" : ""}`}
+          className={`shrink-0 ${shake ? "glim-shake" : ""}`}
         />
       </div>
       {confirmDialog}

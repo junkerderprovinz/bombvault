@@ -782,6 +782,7 @@ const cs: Partial<Translations> = {
   "common.expand": "Rozbalit",
   "common.collapse": "Sbalit",
   "common.back": "Zpět",
+  "common.backTo": "Zpět: {page}",
   "common.loadMore": "Načíst další",
 
   // Failure fallbacks

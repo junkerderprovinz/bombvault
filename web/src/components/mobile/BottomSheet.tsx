@@ -206,7 +206,10 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={titleId}
+        // A plain title names the sheet by itself, without the tip of the (i)
+        // that sits in the heading.
+        aria-label={typeof title === "string" ? title : undefined}
+        aria-labelledby={typeof title === "string" ? undefined : titleId}
         aria-describedby={describedBy}
         className={`fixed z-50 flex ${
           fullHeight

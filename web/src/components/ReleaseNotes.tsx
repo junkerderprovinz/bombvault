@@ -218,5 +218,11 @@ export function ReleaseNotes({ version }: { version: string | null }) {
       </div>
     );
   }
-  return <div data-testid="release-notes">{renderMarkdown(body)}</div>;
+  // The notes are published in English only, so a screen reader has to read
+  // them as English whatever language the app is in.
+  return (
+    <div data-testid="release-notes" lang="en" dir="ltr">
+      {renderMarkdown(body)}
+    </div>
+  );
 }

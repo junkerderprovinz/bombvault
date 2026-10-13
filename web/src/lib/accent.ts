@@ -48,6 +48,17 @@ export function contrastOn(hex: string): string {
   return contrastRatio(bg, darkInk) >= contrastRatio(bg, whiteInk) ? "#161616" : "#FFFFFF";
 }
 
+/** textInkOn is the ink for text on a brand colour: contrastOn's pick where it
+ * reaches the 4.5:1 that small text needs, and black on the mid tones where
+ * neither of its inks does. */
+export function textInkOn(hex: string): string {
+  const parsed = parseHex(hex);
+  if (!parsed) return DEFAULT_ACCENT_CONTRAST;
+  const ink = contrastOn(hex);
+  const inkLuminance = ink === "#FFFFFF" ? 1 : luminance(0x16, 0x16, 0x16);
+  return contrastRatio(luminance(parsed.r, parsed.g, parsed.b), inkLuminance) >= 4.5 ? ink : "#000000";
+}
+
 /** contrastRatio is the WCAG contrast ratio of two relative luminances, given
  * in either order. */
 function contrastRatio(l1: number, l2: number): number {

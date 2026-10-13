@@ -778,6 +778,7 @@ const ru: Partial<Translations> = {
   "common.expand": "Развернуть",
   "common.collapse": "Свернуть",
   "common.back": "Назад",
+  "common.backTo": "Назад: {page}",
   "common.loadMore": "Загрузить ещё",
 
   // Failure fallbacks

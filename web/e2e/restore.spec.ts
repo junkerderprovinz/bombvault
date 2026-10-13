@@ -488,7 +488,7 @@ test("the page opens on the entry that needs a restore, with its backups on the 
   await expect(page.getByRole("button", { name: /^Container 3 mit Sicherungen/ })).toBeVisible();
   await expect(entries(page).getByRole("button")).toHaveCount(8);
   await expect(entries(page).getByRole("button", { name: /^gitea/ })).toBeDisabled();
-  await expect(entries(page).getByRole("button", { name: /^immich/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(entries(page).getByRole("button", { name: /^immich/ })).toHaveAttribute("aria-expanded", "true");
 
   await expect(rows(page)).toHaveCount(5);
   await expect(rows(page).nth(1)).toHaveAttribute("aria-selected", "true");
@@ -607,7 +607,8 @@ test("several entries are picked like rows of the list and restored one after th
   );
   await openPage(page);
 
-  const entry = (name: RegExp) => entries(page).getByRole("button", { name });
+  // Once one is picked, every entry is a checkbox.
+  const entry = (name: RegExp) => entries(page).locator("li > button").filter({ hasText: name });
   await entry(/^homeassistant/).click({ modifiers: ["ControlOrMeta"] });
   await entry(/^Windows 11/).click({ modifiers: ["ControlOrMeta"] });
   await entry(/^Fotos/).click({ modifiers: ["ControlOrMeta"] });

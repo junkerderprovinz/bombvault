@@ -599,7 +599,7 @@ test("the findings and a finding's window read right to left without panning", a
 
   // Details leads the second group of a finding's buttons, whatever it is called.
   await findingOf(page, NEXTCLOUD).locator(":scope > div:last-child > span:last-child button").first().click();
-  await expect(page.getByRole("dialog").getByRole("img")).toBeVisible();
+  await expect(page.getByRole("dialog").locator('svg[role="img"]')).toBeVisible();
   await expectWindowFits(page);
 });
 

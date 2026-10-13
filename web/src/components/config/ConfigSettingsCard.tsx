@@ -67,8 +67,8 @@ export function ConfigSettingsCard({
     // focus is anywhere in the card; glim-hue sets the rainbow accent for
     // everything inside it.
     <div
-      className={`relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4${
-        hueIndex !== undefined ? " glim-hue" : ""
+      className={`relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4 ${
+        hueIndex !== undefined ? "glim-hue" : ""
       }`}
       style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >

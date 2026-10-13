@@ -338,7 +338,7 @@ test("the list shows every kind with its count, its last runs and one status", a
   await expect(page.getByTestId("backup-self-row")).toContainText("Sichert sich nicht selbst");
   // The strip needs room beside the name, which the column beside the rail
   // at 768px does not have.
-  const strip = rows(page).filter({ hasText: "paperless-ngx" }).getByRole("img");
+  const strip = rows(page).filter({ hasText: "paperless-ngx" }).getByRole("img", { name: /^Letzte Läufe/ });
   if (testInfo.project.name === "desktop-1280") {
     await expect(strip).toHaveAttribute("aria-label", "Letzte Läufe: 5 ok, 1 fehlgeschlagen");
   } else {
@@ -410,7 +410,7 @@ test("every status keeps to one line and the run strips line up, in the longest 
     const cells = await rows(page).evaluateAll((all) =>
       all.map((row) => {
         const status = row.lastElementChild!.getBoundingClientRect();
-        const strip = row.querySelector("[role=img]")!.getBoundingClientRect();
+        const strip = row.querySelector("[role=img]:not([tabindex])")!.getBoundingClientRect();
         return { height: Math.round(status.height), width: Math.round(status.width), strip: Math.round(strip.right) };
       }),
     );
@@ -730,7 +730,7 @@ for (const width of [320, 390]) {
     expect(new Set(tops).size, "the chips stand in one row").toBe(1);
 
     const first = rows(page).first();
-    await expect(first.getByRole("img")).toBeHidden();
+    await expect(first.getByRole("img", { name: /^Letzte Läufe/ })).toBeHidden();
     await expect(rows(page).filter({ hasText: "paperless-ngx" })).toContainText("Fehlgeschlagen");
 
     const actions = page.getByTestId("page-actions");

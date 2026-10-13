@@ -567,6 +567,7 @@ export function RestoreManyWindow({ items, onClose }: { items: BackupItem[]; onC
               ]}
               label={t("restoreMany.which")}
               select="one"
+              activation="manual"
               fit
               active={mode}
               onChange={(id) => setMode(id === AT ? AT : RECOMMENDED)}

@@ -784,6 +784,7 @@ const da: Partial<Translations> = {
   "common.expand": "Udvid",
   "common.collapse": "Sammenfold",
   "common.back": "Tilbage",
+  "common.backTo": "Tilbage til {page}",
   "common.loadMore": "Indlæs flere",
 
   // Failure fallbacks

@@ -4,10 +4,11 @@ import { useState, type CSSProperties } from "react";
 import { Button } from "../../components/Button";
 import { IconBack, IconSave } from "../../components/glyphs";
 import { IconAdd, IconClose, IconDatabase, IconPencil, IconTrash } from "../../components/navGlyphs";
-import { PickerGroup } from "../../components/Picker";
+import { PickerGroup, PickerNoMatch } from "../../components/Picker";
 import { ReadmeButton } from "../../components/ReadmeButton";
 import { RevealInput } from "../../components/RevealInput";
 import { Rows, SettingRow } from "../../components/storage/rows";
+import { textInkOn } from "../../lib/accent";
 import type { RegistryAuthEntry } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { REGISTRY_KINDS, registryKind, type RegistryGroup, type RegistryKind } from "../../lib/registryMarks";
@@ -27,6 +28,16 @@ const FIELD = "rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbo
 
 function Logo({ kind }: { kind: RegistryKind }) {
   return <img src={`data:image/svg+xml;utf8,${encodeURIComponent(kind.mark)}`} alt="" />;
+}
+
+/** The ink of a lit registry tile, for its words and its logo alike. */
+function tileInk(tile: string): CSSProperties {
+  const ink = textInkOn(tile);
+  return {
+    "--provider-tile": tile,
+    "--provider-ink": ink,
+    "--logo-lit": ink === "#FFFFFF" ? "brightness(0) invert(1)" : "brightness(0)",
+  } as CSSProperties;
 }
 
 /** RegistryMark is a registry's logo on a tile of its colour, a plain glyph
@@ -75,7 +86,7 @@ function Picker({ onPick, onClose }: { onPick: (kind: string) => void; onClose: 
       onClose={onClose}
       footer={<Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconClose />} onClick={onClose} />}
     >
-      {groups.length === 0 && <p className="text-sm text-carbon-textMuted">{t("tile.registry.noMatch")}</p>}
+      <PickerNoMatch shown={groups.length === 0} text={t("tile.registry.noMatch")} />
       {groups.map((g) => (
         <PickerGroup key={g.id} title={t(g.title)}>
           <ul className="glim-provider-pick glim-registry-pick">
@@ -83,7 +94,7 @@ function Picker({ onPick, onClose }: { onPick: (kind: string) => void; onClose: 
               <li
                 key={k.id}
                 className={k.dark ? "glim-registry-dark" : undefined}
-                style={{ "--provider-tile": k.tile, "--provider-ink": "#ffffff" } as CSSProperties}
+                style={tileInk(k.tile)}
               >
                 <ReadmeButton
                   tile="glim-tile-provider"

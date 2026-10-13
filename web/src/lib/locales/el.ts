@@ -784,6 +784,7 @@ const el: Partial<Translations> = {
   "common.expand": "Ανάπτυξη",
   "common.collapse": "Σύμπτυξη",
   "common.back": "Πίσω",
+  "common.backTo": "Πίσω: {page}",
   "common.loadMore": "Φόρτωση περισσότερων",
 
   // Failure fallbacks

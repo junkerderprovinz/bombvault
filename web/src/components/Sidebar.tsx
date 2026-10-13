@@ -220,14 +220,14 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
     // cutting off the bottom group with Settings.
     <aside
       data-testid="desktop-sidebar"
-      className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-x-hidden overflow-y-auto rounded-card bg-carbon-sidebar${hold.phase === "gone" ? " glim-rail-quake" : ""}`}
+      className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-x-hidden overflow-y-auto rounded-card bg-carbon-sidebar ${hold.phase === "gone" ? "glim-rail-quake" : ""}`}
       style={{ scrollbarWidth: "thin", scrollbarColor: "var(--carbon-border) transparent" }}
     >
       {/* A button rather than a link, so a click and a long press can be told
           apart. */}
       <button
         type="button"
-        aria-label={t("nav.overview")}
+        aria-label={`BombVault, ${t("nav.overview")}`}
         {...hold.handlers}
         className={`glim-logo-btn flex flex-col items-center gap-2 ${railNarrow ? "px-2 py-4" : "px-4 py-6"}${railReactive ? " glim-reactive" : ""} w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
       >
@@ -248,8 +248,8 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
         {(railLabels || railReactive) && (
           <span
             aria-hidden={railReactive || undefined}
-            className={`text-carbon-text font-bold text-xl tracking-tight leading-none whitespace-nowrap${
-              railReactive ? " glim-label-reactive" : ""
+            className={`text-carbon-text font-bold text-xl tracking-tight leading-none whitespace-nowrap ${
+              railReactive ? "glim-label-reactive" : ""
             }`}
           >
             BombVault

@@ -682,7 +682,7 @@ export function SelectionTree({
           // them it reads as the first subfolder.
           <div role="presentation">
             <div
-              className={`flex items-center gap-2 py-1${shakeCounts?.[spec.path] ? " glim-shake" : ""}`}
+              className={`flex items-center gap-2 py-1 ${shakeCounts?.[spec.path] ? "glim-shake" : ""}`}
               style={{ paddingInlineStart: 16 }}
             >
               <Toggle

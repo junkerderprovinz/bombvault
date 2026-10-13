@@ -171,7 +171,7 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
                   // The shared reactive label: collapsed at rest, shown on
                   // hover, focus and `.glim-active`.
                   <span
-                    className={`text-xs font-medium${reactive ? " glim-label-reactive" : ""}`}
+                    className={`text-xs font-medium ${reactive ? "glim-label-reactive" : ""}`}
                     style={reactive ? ({ "--reactive-chars": c.symbol.length } as CSSProperties) : undefined}
                   >
                     {c.symbol}

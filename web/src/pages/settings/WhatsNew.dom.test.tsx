@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The list of what is new: a button of the Version card that counts what is
 // left and opens a window with every change under its page, the way there,
-// what was seen dimmed, and the one button that marks the lot as seen or new.
+// what was seen greyed, and the one button that marks the lot as seen or new.
 // The same window holds the release notes on a tab of their own.
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
@@ -87,13 +87,22 @@ describe("the list of what is new", () => {
     expect(screen.getByRole("heading", { level: 3, name: `${en["nav.settings"]} › ${en["pairing.title"]}` })).toBeTruthy();
   });
 
-  it("counts what is left on its button and dims what was seen", async () => {
+  it("counts what is left on its button and greys what was seen", async () => {
     markSeen(["overview-head", "backups-bar"]);
     await renderCard();
     expect(screen.getByRole("button", { name: markAll(CHANGES.length - 2) })).toBeTruthy();
     expect(line("overview-head").dataset.seen).toBe("true");
-    expect(line("overview-head").className).toContain("opacity-55");
+    expect(line("overview-head").className).not.toContain("opacity");
     expect(line("backups-tiles").dataset.seen).toBeUndefined();
+  });
+
+  it("tells a screen reader which changes are new and where each button leads", async () => {
+    markSeen(["overview-head"]);
+    await renderCard();
+    const go = (id: string) => within(line(id)).getByRole("button", { name: en["whatsNew.go"] });
+    const said = (id: string) => document.getElementById(go(id).getAttribute("aria-describedby")!.split(" ")[0])!.textContent;
+    expect(said("overview-head")).toBe(en["whatsNew.overviewHead"]);
+    expect(said("backups-tiles")).toBe(`${en["whatsNew.title"]}: ${en["whatsNew.backupsTiles"]}`);
   });
 
   it("leads to the page of a change and closes, and to the list for a page that belongs to one entry", async () => {
@@ -147,8 +156,12 @@ describe("the release notes", () => {
     markSeen(["overview-head"]);
     await renderApp("notes");
     expect(tab(en["whatsNew.notesTab"]).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("tabpanel", { name: en["whatsNew.notesTab"] }).getAttribute("id")).toBe(
+      tab(en["whatsNew.notesTab"]).getAttribute("aria-controls")
+    );
     expect(tab(en["whatsNew.changesTab"]).textContent).toContain(`· ${CHANGES.length - 1}`);
     expect(await screen.findByText("One list.")).toBeTruthy();
+    expect(screen.getByTestId("release-notes").getAttribute("lang")).toBe("en");
     expect(document.querySelectorAll("[data-change]")).toHaveLength(0);
 
     await press(tab(en["whatsNew.changesTab"]));

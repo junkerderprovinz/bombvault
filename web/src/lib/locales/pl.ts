@@ -778,6 +778,7 @@ const pl: Partial<Translations> = {
   "common.expand": "Rozwiń",
   "common.collapse": "Zwiń",
   "common.back": "Wstecz",
+  "common.backTo": "Wstecz: {page}",
   "common.loadMore": "Wczytaj więcej",
 
   // Failure fallbacks

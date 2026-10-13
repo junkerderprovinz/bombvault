@@ -1315,6 +1315,7 @@ const fa: Partial<Translations> = {
   "common.expand": "باز کردن",
   "common.collapse": "بستن",
   "common.back": "بازگشت",
+  "common.backTo": "بازگشت به {page}",
   "common.loadMore": "بارگیری بیشتر",
   "common.loadingBackups": "در حال بارگذاری پشتیبان‌ها…",
   "common.saving": "در حال ذخیره…",

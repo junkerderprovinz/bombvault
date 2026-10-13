@@ -161,7 +161,7 @@ export function StopContainersEditor({
                 aria-selected
                 onClick={() => void toggle(n)}
                 disabled={!!rowBusy[n]}
-                className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-60${rowShake[n] ? " glim-shake" : ""}`}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-60 ${rowShake[n] ? "glim-shake" : ""}`}
               >
                 <SelectDot checked />
                 <span dir="ltr" className="min-w-0 flex-1 truncate font-mono text-start">{n}</span>
@@ -176,7 +176,7 @@ export function StopContainersEditor({
           {sortedSelected.map((n) => (
             <span
               key={`${n}-${rowShake[n] ?? 0}`}
-              className={`inline-flex items-center gap-1.5 rounded-pill bg-carbon-surface2 px-2 py-0.5 text-xs text-carbon-textSub${rowShake[n] ? " glim-shake" : ""}`}
+              className={`inline-flex items-center gap-1.5 rounded-pill bg-carbon-surface2 px-2 py-0.5 text-xs text-carbon-textSub ${rowShake[n] ? "glim-shake" : ""}`}
             >
               {n}
               {/* A backup or an import passes over a name no container has, so

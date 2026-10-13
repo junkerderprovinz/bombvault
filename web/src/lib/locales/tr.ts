@@ -784,6 +784,7 @@ const tr: Partial<Translations> = {
   "common.expand": "Genişlet",
   "common.collapse": "Daralt",
   "common.back": "Geri",
+  "common.backTo": "Geri: {page}",
   "common.loadMore": "Daha fazla yükle",
 
   // Failure fallbacks

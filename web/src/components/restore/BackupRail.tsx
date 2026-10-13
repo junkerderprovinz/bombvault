@@ -105,8 +105,8 @@ export function BackupRail({
       aria-label={t("restoreWindow.backup")}
       aria-activedescendant={railRowId(chosen)}
       onKeyDown={onKeyDown}
-      className={`relative select-none rounded-control outline-none focus-visible:ring-2 focus-visible:ring-(--focus-ring)${
-        held === null ? "" : " glim-rail-held"
+      className={`relative select-none rounded-control outline-none focus-visible:ring-2 focus-visible:ring-(--focus-ring) ${
+        held === null ? "" : "glim-rail-held"
       }`}
     >
       <div className="flex flex-col">
@@ -132,8 +132,8 @@ export function BackupRail({
               }`}
             >
               <span
-                className={`absolute start-3 top-1/2 -mt-1.5 h-3 w-3 rounded-full bg-carbon-surface${
-                  recommended ? " glim-rail-pulse" : ""
+                className={`absolute start-3 top-1/2 -mt-1.5 h-3 w-3 rounded-full bg-carbon-surface ${
+                  recommended ? "glim-rail-pulse" : ""
                 }`}
                 style={{ boxShadow: `inset 0 0 0 3px ${ring}` }}
               />
@@ -178,8 +178,8 @@ export function BackupRail({
               </div>
               <div
                 data-new-way={on ? "restore-window" : undefined}
-                className={`ms-auto max-md:w-full max-md:[&_button]:w-full max-md:[&_button]:justify-center${
-                  on ? "" : " md:opacity-0 md:focus-within:opacity-100 md:group-hover:opacity-100"
+                className={`ms-auto max-md:w-full max-md:[&_button]:w-full max-md:[&_button]:justify-center ${
+                  on ? "" : "md:opacity-0 md:focus-within:opacity-100 md:group-hover:opacity-100"
                 }`}
               >
                 <Button

@@ -775,6 +775,7 @@ const zh: Partial<Translations> = {
   "common.expand": "展开",
   "common.collapse": "折叠",
   "common.back": "返回",
+  "common.backTo": "返回{page}",
   "common.loadMore": "加载更多",
 
   // Failure fallbacks

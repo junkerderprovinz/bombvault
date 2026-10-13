@@ -264,6 +264,7 @@ export function RelayCard({
           items={FORMS.map((f) => ({ id: f, label: t(COPY[f].name), icon: <RouteGlyph kind={COPY[f].glyph} /> }))}
           label={t("relay.title")}
           select="one"
+          activation="manual"
           active={form}
           onChange={(id) => pick(id as RelayForm)}
           size="lg"

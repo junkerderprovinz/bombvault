@@ -1315,6 +1315,7 @@ const hi: Partial<Translations> = {
   "common.expand": "विस्तारित करें",
   "common.collapse": "संकुचित करें",
   "common.back": "वापस",
+  "common.backTo": "{page} पर वापस",
   "common.loadMore": "और लोड करें",
   "common.loadingBackups": "बैकअप लोड हो रहे हैं…",
   "common.saving": "सहेजा जा रहा है…",

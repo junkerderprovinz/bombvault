@@ -35,7 +35,7 @@ export function HintSlot({
   return (
     // w-fit keeps a flex column from stretching the box, which would carry the
     // (i) away from the control to the far edge of the row.
-    <span className={`relative inline-flex w-fit max-w-full${hue ? " glim-hue" : ""}`} style={hue}>
+    <span className={`relative inline-flex w-fit max-w-full ${hue ? "glim-hue" : ""}`} style={hue}>
       {children}
       <span
         className={`pointer-events-none absolute inset-y-0 flex items-center ${ink}`}
