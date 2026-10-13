@@ -102,11 +102,59 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 		t.CreatedAt = primary.CreatedAt
 		t.CredsRef = primary.CredsRef
 		if primary.DestinationID != "" {
-			t.Name, t.StorageClass, t.Immutable, t.Provider = primary.Name, primary.StorageClass, primary.Immutable, primary.Provider
+			t.StorageClass, t.Immutable, t.Provider = primary.StorageClass, primary.Immutable, primary.Provider
 		}
+	}
+	if primary != nil && primary.Repo == repo && primary.Name != "" {
+		t.Name = primary.Name
+	} else if t.Name, err = s.freeTargetName(locationName(repo), t.ID); err != nil {
+		return err
 	}
 	_, err = s.store.UpsertOffsiteTarget(t)
 	return err
+}
+
+// locationName is what a target is called before anyone names it: the last
+// folder of its location, or the server of an address that has none.
+func locationName(repo string) string {
+	loc := strings.TrimRight(scrubRepoLocation(repo), "/:")
+	host := 0
+	if i := strings.Index(loc, "://"); i >= 0 {
+		host = i + len("://")
+	}
+	if i := strings.LastIndexByte(loc[host:], '/'); i >= 0 {
+		return loc[host+i+1:]
+	}
+	if host > 0 {
+		server := loc[host:]
+		return server[strings.LastIndexByte(server, '@')+1:]
+	}
+	return loc[strings.LastIndexByte(loc, ':')+1:]
+}
+
+// freeTargetName is name, numbered from 2 on while another target or
+// destination goes by it, since the storage pages list them all side by side.
+// The target with id self does not count against its own name.
+func (s *Service) freeTargetName(name, self string) (string, error) {
+	targets, err := s.store.ListOffsiteTargets()
+	if err != nil {
+		return "", err
+	}
+	destinations, err := s.store.ListDestinations()
+	if err != nil {
+		return "", err
+	}
+	taken := map[string]bool{}
+	for _, t := range append(targets, destinations...) {
+		if t.ID != self {
+			taken[strings.ToLower(t.Name)] = true
+		}
+	}
+	free := name
+	for n := 2; taken[strings.ToLower(free)]; n++ {
+		free = fmt.Sprintf("%s %d", name, n)
+	}
+	return free, nil
 }
 
 // linkedPrimaries returns, by domain, each primary off-site target that

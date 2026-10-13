@@ -348,3 +348,81 @@ func TestStartupMovesEveryAdditionalTargetOffThePrimarySortOrder(t *testing.T) {
 		}
 	}
 }
+
+// Two sections whose off-site fields point at different places get targets
+// with names the storage pages can tell apart.
+func TestSyncPrimaryOffsiteTargetNamesANewTargetAfterItsPlace(t *testing.T) {
+	s, st := newSyncTestService(t)
+	settings, err := st.MutateSettings(func(s *store.Settings) error {
+		s.ConfigOffsite = "user/offsite/config"
+		s.FilesOffsite = "rest:http://192.168.20.185:8000/rc-b-files"
+		s.VMsOffsite = "rest:http://other:8000/rc-b-files"
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{"config": "config", "files": "rc-b-files", "vms": "rc-b-files 2"}
+	for _, d := range []string{"config", "files", "vms"} {
+		if err := s.syncPrimaryOffsiteTarget(d, settings); err != nil {
+			t.Fatal(err)
+		}
+		got, _, err := st.FieldOffsiteTarget(d)
+		if err != nil || got.Name != want[d] {
+			t.Fatalf("%s target = %q, %v, want %q", d, got.Name, err, want[d])
+		}
+	}
+}
+
+// A name given to the field's target survives the next save of the settings,
+// and an existing Primary stays Primary while its place stays the same.
+func TestSyncPrimaryOffsiteTargetKeepsANameWhileThePlaceStays(t *testing.T) {
+	s, st := newSyncTestService(t)
+	settings, err := st.MutateSettings(func(s *store.Settings) error {
+		s.ContainersOffsite = "s3:b2/containers"
+		s.FilesOffsite = "s3:b2/files"
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for d, name := range map[string]string{"containers": "Hetzner", "files": "Primary"} {
+		if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: d, Name: name, Repo: offsiteRepoFromSettings(d, settings), Enabled: true}); err != nil {
+			t.Fatal(err)
+		}
+		if err := s.syncPrimaryOffsiteTarget(d, settings); err != nil {
+			t.Fatal(err)
+		}
+		if got, _, _ := st.FieldOffsiteTarget(d); got.Name != name {
+			t.Fatalf("%s target = %q after a save, want %q", d, got.Name, name)
+		}
+	}
+
+	settings, err = st.MutateSettings(func(s *store.Settings) error { s.FilesOffsite = "s3:wasabi/bv-files"; return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.syncPrimaryOffsiteTarget("files", settings); err != nil {
+		t.Fatal(err)
+	}
+	if got, _, _ := st.FieldOffsiteTarget("files"); got.Name != "bv-files" {
+		t.Fatalf("files target = %q after the field moved, want it named after the new place", got.Name)
+	}
+}
+
+func TestLocationNameIsTheLastFolderOrTheServer(t *testing.T) {
+	for repo, want := range map[string]string{
+		"rest:http://192.168.20.185:8000/rc-b-files": "rc-b-files",
+		"rest:https://u:secret@box:8000/":            "box:8000",
+		"user/offsite/config":                        "config",
+		"/mnt/user/offsite/":                         "offsite",
+		"sftp:u@box:/bv":                             "bv",
+		"rclone:gdrive:":                             "gdrive",
+		"b2:bucket":                                  "bucket",
+		"s3:s3.amazonaws.com/bucket/flash":           "flash",
+	} {
+		if got := locationName(repo); got != want {
+			t.Errorf("locationName(%q) = %q, want %q", repo, got, want)
+		}
+	}
+}

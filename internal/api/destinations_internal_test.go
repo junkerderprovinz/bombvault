@@ -295,8 +295,8 @@ func TestAPrimaryStopsFollowingItsDestinationWhenTheFieldMoves(t *testing.T) {
 		t.Fatal(err)
 	}
 	got, _, err := st.FieldOffsiteTarget("vms")
-	if err != nil || got.DestinationID != "" || got.Name != "Primary" || got.Repo != "rest:http://other:8000/vms" {
-		t.Fatalf("primary = %+v, %v, want a hand-typed primary on the new location", got, err)
+	if err != nil || got.DestinationID != "" || got.Name != "vms" || got.Repo != "rest:http://other:8000/vms" {
+		t.Fatalf("primary = %+v, %v, want a hand-typed primary named after the new location", got, err)
 	}
 	if v, err := svc.destinationView(d); err != nil || len(v.Domains) != 0 {
 		t.Fatalf("B2 used by %v, %v, want no domain", v.Domains, err)
