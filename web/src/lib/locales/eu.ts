@@ -4313,6 +4313,7 @@ const eu: Partial<Translations> = {
   "whatsNew.pairingSteps": "Hiru txartelek parekatzea nola dabilen erakusten dute. Haien azpian bitartekariak lau forma ditu, bakoitza bere irudiarekin.",
   "whatsNew.settingsVersion": "Infok Bertsioa, Laguntza eta Honi buruz biltzen ditu. Bertsioak BombVault, GlimStone, restic eta rclone zerrendatzen ditu. Bere Berria botoiak aldaketen zerrenda irekitzen du, edo bertsio-oharrak guztiak ikusi dituzunean.",
   "whatsNew.settingsManual": "Laguntzaren azpiko botoi horiak eskuliburua irekitzen du.",
+  "whatsNew.lookGlyphs": "Ertzak eta Animazioak aukera bakoitzeko ikur bat erakusten dute, Itxura bezala.",
   "firstSteps.title": "Lehen urratsak",
   "firstSteps.hint": "Hemen geratzen da lehen babeskopia amaitu arte.",
   "firstSteps.sections": "Aukeratu atalak",

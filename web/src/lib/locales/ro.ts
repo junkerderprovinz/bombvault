@@ -4304,6 +4304,7 @@ const ro: Partial<Translations> = {
   "whatsNew.pairingSteps": "Trei carduri arată cum funcționează împerecherea. Dedesubt, relay-ul are patru forme, fiecare cu imaginea ei.",
   "whatsNew.settingsVersion": "Info conține Versiune, Ajutor și Despre. Versiune listează BombVault, GlimStone, restic și rclone. Butonul ei Noutăți deschide lista schimbărilor sau notele de lansare, după ce le-ai văzut pe toate.",
   "whatsNew.settingsManual": "Butonul galben de sub Ajutor deschide manualul.",
+  "whatsNew.lookGlyphs": "Colțuri și Animație afișează un simbol pentru fiecare opțiune, ca Temă.",
   "firstSteps.title": "Primii pași",
   "firstSteps.hint": "Rămâne aici până se termină prima copie de rezervă.",
   "firstSteps.sections": "Alege secțiunile",

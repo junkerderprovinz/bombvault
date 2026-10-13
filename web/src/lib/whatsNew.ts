@@ -132,4 +132,11 @@ export const CHANGES: Change[] = [
     way: ["/settings", "/settings/info"],
     text: "whatsNew.settingsManual",
   },
+  {
+    id: "look-glyphs",
+    page: "/settings/look",
+    where: ["nav.settings", "settings.tab.look"],
+    way: ["/settings", "/settings/look"],
+    text: "whatsNew.lookGlyphs",
+  },
 ];

@@ -4313,6 +4313,7 @@ const sk: Partial<Translations> = {
   "whatsNew.pairingSteps": "Tri karty ukazujú, ako funguje párovanie. Pod nimi má relay štyri podoby, každú s vlastným obrázkom.",
   "whatsNew.settingsVersion": "Info obsahuje Verziu, Pomoc a O aplikácii. Verzia uvádza BombVault, GlimStone, restic a rclone. Jej tlačidlo Novinky otvorí zoznam zmien, alebo poznámky k vydaniu, keď si pozrieš všetky.",
   "whatsNew.settingsManual": "Žlté tlačidlo pod Pomocou otvorí príručku.",
+  "whatsNew.lookGlyphs": "Rohy a Animácia zobrazujú pri každej voľbe symbol, rovnako ako Motív.",
   "firstSteps.title": "Prvé kroky",
   "firstSteps.hint": "Zostáva tu, kým neskončí prvá záloha.",
   "firstSteps.sections": "Vyber sekcie",

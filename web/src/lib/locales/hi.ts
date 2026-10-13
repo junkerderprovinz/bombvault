@@ -4313,6 +4313,7 @@ const hi: Partial<Translations> = {
   "whatsNew.pairingSteps": "तीन कार्ड दिखाते हैं कि पेयरिंग कैसे काम करती है। उनके नीचे रिले के चार रूप हैं, हर एक की अपनी तस्वीर के साथ।",
   "whatsNew.settingsVersion": "जानकारी में संस्करण, मदद और ऐप के बारे में हैं। संस्करण में BombVault, GlimStone, restic और rclone की सूची है। उसका नया बटन बदलावों की सूची खोलता है, और सभी देख लेने के बाद रिलीज़ नोट्स।",
   "whatsNew.settingsManual": "मदद के नीचे का पीला बटन मैनुअल खोलता है।",
+  "whatsNew.lookGlyphs": "कोने और एनिमेशन हर विकल्प के लिए एक प्रतीक दिखाते हैं, जैसे थीम।",
   "firstSteps.title": "पहले कदम",
   "firstSteps.hint": "पहला बैकअप पूरा होने तक यह यहीं रहता है।",
   "firstSteps.sections": "सेक्शन चुनें",

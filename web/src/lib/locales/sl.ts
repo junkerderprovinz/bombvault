@@ -4297,6 +4297,7 @@ const sl: Partial<Translations> = {
   "whatsNew.pairingSteps": "Tri kartice kažejo, kako deluje seznanjanje. Pod njimi ima relay štiri oblike, vsako s svojo sliko.",
   "whatsNew.settingsVersion": "Info vsebuje Različico, Pomoč in O aplikaciji. Različica našteje BombVault, GlimStone, restic in rclone. Njen gumb Novo odpre seznam sprememb, ko pa vidiš vse, opombe o izdaji.",
   "whatsNew.settingsManual": "Rumeni gumb pod Pomočjo odpre priročnik.",
+  "whatsNew.lookGlyphs": "Oglišča in Animacija prikazujeta simbol za vsako izbiro, tako kot Tema.",
   "firstSteps.title": "Prvi koraki",
   "firstSteps.hint": "Ostane tu, dokler ni končana prva varnostna kopija.",
   "firstSteps.sections": "Izberi razdelke",

@@ -1,9 +1,19 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { AccentCard, IconResetArrow } from "../AccentCard";
 import { ThemePicker } from "../ThemeCard";
 import { LanguagePicker } from "../LanguageCard";
 import { Button } from "../../../components/Button";
-import { IconRefresh } from "../../../components/glyphs";
+import {
+  IconCornerLeaf,
+  IconCornerRound,
+  IconCornerSoft,
+  IconCornerSquare,
+  IconMotionOff,
+  IconMotionStorm,
+  IconMotionSubtle,
+  IconMotionWild,
+  IconRefresh,
+} from "../../../components/glyphs";
 import { Rows, SettingRow } from "../../../components/storage/rows";
 import { useToast } from "../../../lib/toast";
 import { SETTINGS_PAGES, orderPages, useSettingsOrder, writeOrder } from "../settingsPages";
@@ -31,6 +41,20 @@ import {
 import { applyStoredDisco, discoTap, getDisco, setDisco } from "../../../lib/disco";
 import { Selector } from "../../../components/Selector";
 import { Card, ToggleRow, hueCounter } from "../shared";
+
+const SHAPE_GLYPHS: Record<Shape, ReactNode> = {
+  round: <IconCornerRound />,
+  soft: <IconCornerSoft />,
+  square: <IconCornerSquare />,
+  leaf: <IconCornerLeaf />,
+};
+
+const MOTION_GLYPHS: Record<MotionIntensity, ReactNode> = {
+  off: <IconMotionOff />,
+  subtle: <IconMotionSubtle />,
+  wild: <IconMotionWild />,
+  storm: <IconMotionStorm />,
+};
 
 // PaletteSwatch is one editable colour in the rainbow palette editor. It opens
 // the shared colour popover instead of a native colour input, which would open
@@ -139,8 +163,10 @@ export function LookPage() {
               items={[...SHAPES, ...(leafFound || shape === "leaf" ? (["leaf"] as const) : [])].map((s) => ({
                 id: s,
                 label: t(`settings.shape.${s}` as TranslationKey),
+                icon: SHAPE_GLYPHS[s],
               }))}
               label={t("settings.shape")}
+              newId="look-glyphs"
               select="one"
               active={shape}
               onChange={(id) => {
@@ -159,9 +185,11 @@ export function LookPage() {
                 (m) => ({
                   id: m,
                   label: t(`settings.motion.${m}` as TranslationKey),
+                  icon: MOTION_GLYPHS[m],
                 }),
               )}
               label={t("settings.motion")}
+              newId="look-glyphs"
               select="one"
               active={motion}
               onChange={(id) => {

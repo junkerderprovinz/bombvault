@@ -4313,6 +4313,7 @@ const id: Partial<Translations> = {
   "whatsNew.pairingSteps": "Tiga kartu menunjukkan cara kerja pemasangan. Di bawahnya relay punya empat bentuk, masing-masing dengan gambarnya.",
   "whatsNew.settingsVersion": "Info berisi Versi, Bantuan, dan Tentang. Versi mencantumkan BombVault, GlimStone, restic, dan rclone. Tombol Baru di dalamnya membuka daftar perubahan, atau catatan rilis setelah semuanya dilihat.",
   "whatsNew.settingsManual": "Tombol kuning di bawah Bantuan membuka panduan.",
+  "whatsNew.lookGlyphs": "Sudut dan Animasi menampilkan simbol untuk setiap pilihan, seperti Tema.",
   "firstSteps.title": "Langkah pertama",
   "firstSteps.hint": "Tetap di sini sampai cadangan pertama selesai.",
   "firstSteps.sections": "Pilih bagian",

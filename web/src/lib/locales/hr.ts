@@ -4313,6 +4313,7 @@ const hr: Partial<Translations> = {
   "whatsNew.pairingSteps": "Tri kartice pokazuju kako uparivanje radi. Ispod njih relej ima četiri oblika, svaki sa svojom slikom.",
   "whatsNew.settingsVersion": "Info sadrži Verziju, Pomoć i O aplikaciji. Verzija navodi BombVault, GlimStone, restic i rclone. Njezin gumb Novo otvara popis promjena ili bilješke o izdanju nakon što ih sve pogledate.",
   "whatsNew.settingsManual": "Žuti gumb ispod Pomoći otvara priručnik.",
+  "whatsNew.lookGlyphs": "Kutovi i Animacija prikazuju simbol za svaki izbor, kao i Tema.",
   "firstSteps.title": "Prvi koraci",
   "firstSteps.hint": "Ostaje ovdje dok prva sigurnosna kopija ne završi.",
   "firstSteps.sections": "Odaberite odjeljke",

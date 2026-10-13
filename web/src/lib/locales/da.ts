@@ -4303,6 +4303,7 @@ const da: Partial<Translations> = {
   "whatsNew.pairingSteps": "Tre kort viser, hvordan parring virker. Under dem har videresenderen fire former, hver med sit billede.",
   "whatsNew.settingsVersion": "Info rummer Version, Hjælp og Om appen. Version viser BombVault, GlimStone, restic og rclone. Dens knap Nyt åbner listen over ændringer, eller udgivelsesnoterne, når du har set dem alle.",
   "whatsNew.settingsManual": "Den gule knap under Hjælp åbner manualen.",
+  "whatsNew.lookGlyphs": "Hjørner og Animation viser et symbol for hvert valg, ligesom Tema.",
   "firstSteps.title": "Første trin",
   "firstSteps.hint": "Bliver her, indtil den første sikkerhedskopi er færdig.",
   "firstSteps.sections": "Vælg områder",

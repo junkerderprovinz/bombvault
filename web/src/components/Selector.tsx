@@ -82,9 +82,6 @@ interface SelectorCommon {
    *  one, for a strip beside a real Button. Opt-in because a strip cannot see
    *  its neighbours, and the dense strips should stay short. */
   buttonHeight?: boolean;
-  /** Keep glyph segments at the height of a text strip, for a picker that
-   *  stands among text strips rather than beside a button. */
-  textHeight?: boolean;
   /** Take a colour under rainbow. Default true. Turn it off where the colour
    *  means nothing, such as a single-item strip (Recovery's StepDisclosure),
    *  not for looks. */
@@ -122,6 +119,8 @@ interface SelectorCommon {
    *  panel it controls, and the panel takes its name from that tab through
    *  selectorTabId. */
   panelId?: string;
+  /** The change in lib/whatsNew.ts the strip is, which puts its dot on it. */
+  newId?: string;
   className?: string;
 }
 
@@ -403,7 +402,6 @@ export function Selector(props: SelectorProps) {
     label,
     size = "md",
     buttonHeight = false,
-    textHeight = false,
     hue = true,
     hueOffset,
     variant = "well",
@@ -414,6 +412,7 @@ export function Selector(props: SelectorProps) {
     disabled = false,
     activation = "auto",
     panelId,
+    newId,
     className = "",
   } = props;
   const well = variant === "well";
@@ -638,6 +637,7 @@ export function Selector(props: SelectorProps) {
       role={many ? "group" : manual ? "radiogroup" : "tablist"}
       aria-label={label}
       aria-orientation="horizontal"
+      data-new={newId}
       onKeyDown={onKeyDown}
       // The "well" groove is surface3 to stand out from both parents it sits
       // on, a Card (surface) and a CadenceBuilder well (surface2), and 0.2rem is
@@ -699,10 +699,10 @@ export function Selector(props: SelectorProps) {
               ? `text-center px-3 glim-seg-btn ${WELL_TOUCH}`
               : `text-center h-[var(--badge-md)] ${SIZE[size].padding} ${WELL_TOUCH}`
             : equalWidth || phoneWell || pairsOnPhone
-              ? `text-center ${segmentPadding(size, !!item.icon && !textHeight, buttonHeight, well)}`
+              ? `text-center ${segmentPadding(size, !!item.icon, buttonHeight, well)}`
               : item.iconOnly
                 ? "h-8 w-8 p-0"
-                : segmentPadding(size, !!item.icon && !textHeight, buttonHeight, well),
+                : segmentPadding(size, !!item.icon, buttonHeight, well),
         ]
           .filter(Boolean)
           .join(" ");

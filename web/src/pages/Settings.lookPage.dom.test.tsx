@@ -7,6 +7,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
+import { LABEL_MODES } from "../lib/controls";
 
 function baseSettings(over: Partial<Settings> = {}): Settings {
   return {
@@ -157,5 +158,29 @@ it("sets each label axis in a row of its own, the name at the start and its sele
     const selector = within(card).getByRole("tablist", { name });
     const row = selector.closest(".justify-between")!;
     expect(within(row as HTMLElement).getByText(name), axis).toBeTruthy();
+  }
+});
+
+// The strips are card-sized, so they follow the Buttons label mode. Text mode
+// shows the words alone; the others show the glyph, with or without them.
+it.each(LABEL_MODES)("gives each corner and motion choice its glyph and keeps its name in %s mode", async (mode) => {
+  localStorage.setItem("bv-labels-buttons", mode);
+  try {
+    await renderAt("/settings/look");
+    for (const [axis, choices] of [
+      ["settings.shape", ["round", "soft", "square"]],
+      ["settings.motion", ["off", "subtle", "wild"]],
+    ] as const) {
+      const strip = await screen.findByRole("tablist", { name: en[axis] });
+      for (const choice of choices) {
+        const name = en[`${axis}.${choice}`];
+        const segment = within(strip).getByRole("tab", { name });
+        expect(segment.querySelector("svg") !== null, `${name} glyph`).toBe(mode !== "text");
+        const words = segment.querySelector("[data-sel-label]");
+        expect(words !== null, `${name} words`).toBe(mode !== "glyph");
+      }
+    }
+  } finally {
+    localStorage.removeItem("bv-labels-buttons");
   }
 });

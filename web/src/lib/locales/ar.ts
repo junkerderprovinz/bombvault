@@ -4304,6 +4304,7 @@ const ar: Partial<Translations> = {
   "whatsNew.pairingSteps": "ثلاث بطاقات تُظهر كيف يعمل الاقتران. تحتها للمُرحِّل أربعة أشكال، لكل منها صورته.",
   "whatsNew.settingsVersion": "تضم «معلومات» كلًّا من «الإصدار» و«مساعدة» و«حول التطبيق». يعرض «الإصدار» BombVault وGlimStone وrestic وrclone. ويفتح زر «الجديد» فيه قائمة التغييرات، أو ملاحظات الإصدار بعد أن تكون قد اطلعت عليها كلها.",
   "whatsNew.settingsManual": "الزر الأصفر تحت «مساعدة» يفتح الدليل.",
+  "whatsNew.lookGlyphs": "تعرض «الزوايا» و«الرسوم المتحركة» رمزًا لكل خيار، مثل «المظهر».",
   "firstSteps.title": "الخطوات الأولى",
   "firstSteps.hint": "تبقى هنا حتى تنتهي أول نسخة احتياطية.",
   "firstSteps.sections": "اختيار الأقسام",

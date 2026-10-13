@@ -4303,6 +4303,7 @@ const fr: Partial<Translations> = {
   "whatsNew.pairingSteps": "Trois cartes montrent comment fonctionne l'appairage. En dessous, le relais a quatre formes, chacune avec son image.",
   "whatsNew.settingsVersion": "Info contient Version, Aide et À propos. Version liste BombVault, GlimStone, restic et rclone. Son bouton Nouveautés ouvre la liste des changements, ou les notes de version une fois que vous les avez toutes vues.",
   "whatsNew.settingsManual": "Le bouton jaune sous Aide ouvre le manuel.",
+  "whatsNew.lookGlyphs": "Angles et Animation affichent un symbole pour chaque choix, comme Thème.",
   "firstSteps.title": "Premiers pas",
   "firstSteps.hint": "Reste ici jusqu'à la fin de la première sauvegarde.",
   "firstSteps.sections": "Choisir les sections",

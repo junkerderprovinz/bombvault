@@ -4303,6 +4303,7 @@ const it: Partial<Translations> = {
   "whatsNew.pairingSteps": "Tre schede mostrano come funziona l'associazione. Sotto, il relay ha quattro forme, ciascuna con la sua immagine.",
   "whatsNew.settingsVersion": "Info contiene Versione, Aiuto e Informazioni. Versione elenca BombVault, GlimStone, restic e rclone. Il suo pulsante Novità apre l'elenco delle modifiche, oppure le note di rilascio quando le hai viste tutte.",
   "whatsNew.settingsManual": "Il pulsante giallo sotto Aiuto apre il manuale.",
+  "whatsNew.lookGlyphs": "Angoli e Animazione mostrano un simbolo per ogni scelta, come Tema.",
   "firstSteps.title": "Primi passi",
   "firstSteps.hint": "Resta qui finché il primo backup non è finito.",
   "firstSteps.sections": "Scegli le sezioni",

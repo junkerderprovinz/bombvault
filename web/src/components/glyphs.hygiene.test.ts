@@ -28,10 +28,10 @@ describe("glyph sizing", () => {
       // Zero or negative is a typo; the crop would divide by it.
       expect(w, `${name} has no recorded width`).toBeGreaterThan(0);
       expect(h, `${name} has no recorded height`).toBeGreaterThan(0);
-      // Nothing in this set is beyond 4:1 either way, so a ratio past that is a
-      // transposed or half-copied measurement.
+      // The flattest drawing in this set is the 7:1 line of no motion, so a
+      // ratio past 8:1 either way is a transposed or half-copied measurement.
       const ratio = Math.max(w / h, h / w);
-      expect(ratio, `${name} is ${ratio.toFixed(1)}:1, measurement transposed?`).toBeLessThan(4);
+      expect(ratio, `${name} is ${ratio.toFixed(1)}:1, measurement transposed?`).toBeLessThan(8);
     },
   );
 });

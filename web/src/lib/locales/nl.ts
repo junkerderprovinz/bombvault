@@ -4302,6 +4302,7 @@ const nl: Partial<Translations> = {
   "whatsNew.pairingSteps": "Drie kaarten laten zien hoe koppelen werkt. Daaronder heeft de relay vier vormen, elk met een eigen plaatje.",
   "whatsNew.settingsVersion": "Info bevat Versie, Help en Over deze app. Versie noemt BombVault, GlimStone, restic en rclone. De knop Nieuw daarin opent de lijst met wijzigingen, of de release-opmerkingen als je ze allemaal hebt gezien.",
   "whatsNew.settingsManual": "De gele knop onder Help opent de handleiding.",
+  "whatsNew.lookGlyphs": "Hoeken en Animatie tonen voor elke keuze een symbool, net als Thema.",
   "firstSteps.title": "Eerste stappen",
   "firstSteps.hint": "Blijft hier staan tot de eerste back-up klaar is.",
   "firstSteps.sections": "Kies onderdelen",

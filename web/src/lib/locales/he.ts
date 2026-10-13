@@ -4303,6 +4303,7 @@ const he: Partial<Translations> = {
   "whatsNew.pairingSteps": "שלושה כרטיסים מראים איך הצימוד עובד. מתחתיהם לממסר יש ארבע צורות, לכל אחת התמונה שלה.",
   "whatsNew.settingsVersion": "“מידע” כולל “גרסה”, “עזרה” ו“אודות”. “גרסה” מפרטת את BombVault, GlimStone, restic ו-rclone. הכפתור “חדש” בה פותח את רשימת השינויים, או את הערות הגרסה אחרי שראו את כולן.",
   "whatsNew.settingsManual": "הכפתור הצהוב מתחת ל“עזרה” פותח את המדריך.",
+  "whatsNew.lookGlyphs": "“פינות” ו“אנימציה” מציגים סמל לכל בחירה, כמו “ערכת נושא”.",
   "firstSteps.title": "צעדים ראשונים",
   "firstSteps.hint": "נשאר כאן עד שהגיבוי הראשון מסתיים.",
   "firstSteps.sections": "בחירת תחומים",

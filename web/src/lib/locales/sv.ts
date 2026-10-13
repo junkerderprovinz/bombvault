@@ -4303,6 +4303,7 @@ const sv: Partial<Translations> = {
   "whatsNew.pairingSteps": "Tre kort visar hur parkoppling fungerar. Under dem har reläet fyra former, var och en med sin bild.",
   "whatsNew.settingsVersion": "Info rymmer Version, Hjälp och Om appen. Version listar BombVault, GlimStone, restic och rclone. Knappen Nytt där öppnar listan över ändringar, eller versionsinformationen när du har sett alla.",
   "whatsNew.settingsManual": "Den gula knappen under Hjälp öppnar manualen.",
+  "whatsNew.lookGlyphs": "Hörn och Animation visar en symbol för varje val, som Tema.",
   "firstSteps.title": "Första stegen",
   "firstSteps.hint": "Stannar här tills den första säkerhetskopian är klar.",
   "firstSteps.sections": "Välj avsnitt",
