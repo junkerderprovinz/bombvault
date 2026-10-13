@@ -99,10 +99,10 @@ Sidofältet har fem poster: **Översikt**, **Avvikelser** (så länge avvikelsed
 
 - **Säkerhetskopior** listar varje container, VM, mappuppsättning, flashenheten, varje ZFS-datauppsättning och auto-säkerhetskopian som poster. Brickor ovanför listan väljer slag, och **Filter**, **Sortera** och **Sök** snävar in den. Varje post har en egen sida med tre flikar: **Säkerhetskopior**, **Inställningar** och **Verifiering**.
 - **Återställning** är en enda sida för allt: välj ett avsnitt, sök efter en post och välj en säkerhetskopia. Nödguiden och de andra källorna startar också här.
-- **Inställningarna** är fjorton brickor: Allmänt, Utseende, Schema, Mål, Återställning, Aviseringar, Verifiering, Säkerhet, Instanser, Parkoppling, Integrationer, Appar, System och Info. Tryck `/` eller Ctrl+K för att söka i alla, även efter de namn sidorna hade i tidigare versioner. Dra brickorna till din egen ordning under **Utseende**.
+- **Inställningarna** är fjorton brickor: Allmänt, Utseende, Schema, Mål, Återställning, Aviseringar, Verifiering, Säkerhet, Instanser, Parkoppling, Integrationer, Appar, System och Info. Tryck `/` eller Ctrl+K för att söka i alla, även efter de namn sidorna hade i tidigare versioner. Dra brickorna till din egen ordning under **Utseende**. Där en kolumn med brickor bredvid sidan skulle göra sidan för smal, som i ett fönster omkring 1200 pixlar brett, blir brickorna en remsa ovanför sidan som scrollar i sidled. En telefon visar samma remsa.
 - **Mål** och **Instanser** är inställningsbrickor med egna sidor. **Visa även i sidofältet** på deras bricka fäster dem i sidofältet.
 
-Inget har en Spara-knapp och inget fälls ut: ovanliga saker har ett eget kort eller ett fönster, och förklaringarna finns i (i)-bubblorna. Efter en uppdatering markerar gröna prickar vad som ändrats. Ett klick döljer en prick, och **Nytt** i kortet Version under **Inställningar, Info** listar varje ändring med **Gå dit**.
+Inget har en Spara-knapp och inget fälls ut: ovanliga saker har ett eget kort eller ett fönster, och förklaringarna finns i (i)-bubblorna. Efter en uppdatering öppnas versionsanteckningarna av sig själva, och gröna prickar markerar vad som ändrats. Ett klick döljer en prick. **Nytt** i kortet Version under **Inställningar, Info** räknar vad du inte sett ännu och öppnar versionsanteckningarna och listan över alla ändringar med **Gå dit** som två flikar i ett fönster.
 
 ## Bygga från källkod {#build-from-source}
 

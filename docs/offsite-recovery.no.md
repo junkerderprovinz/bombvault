@@ -31,6 +31,8 @@ Et mål er et sted sikkerhetskopier havner: en lokal mappe, en deling, en egen s
 
 S3-tjenester går gjennom resticts egen S3-backend, og det er det som lar en lagringsklasse og objektlås gjelde. Alle andre tjenester går gjennom rclone som følger med BombVault, og remoten vises da i kortet **Off-site (rclone)** under **Innstillinger, Mål**. En eksport av innstillinger tar med målene; med legitimasjon inkludert tar den med påloggingen deres også.
 
+Mappen på denne serveren heter **Lokal** overalt: på målsidene, i flyten, på et element og under Gjenopprett. Finnes det flere mapper på denne serveren, har hver sitt eget navn. Et mål som det eksterne feltet til et område oppretter, får navn etter stedet sitt, den siste mappen i adressen eller, uten mappe, serveren, og får et nummer når et annet mål allerede heter det. Et navn du gir det på siden sin, blir stående. Står to mål med samme navn side om side, har hvert med serveren eller mappen sin.
+
 Hvert mål har en egen side:
 
 - **Tilkobling** med navnet, bryteren **Tilgjengelig** (av betyr at BombVault ikke lenger skriver hit, og elementer som sikkerhetskopieres hit, feiler med en tydelig melding i stedet for å havne et annet sted), mappen, komprimering, lagringsklasse og **Utenfor lokalet**. **Endre tilkobling** tester og lagrer en ny adresse eller pålogging.
@@ -58,21 +60,29 @@ Kortet **Tidsplan og mål** på fanen Innstillinger til et element har en rad me
 - Med **Lokal** mørk skrives elementet rett til det direkte repoet til det første tente målet og kopieres derfra til de andre tente. Første gang oppretter en dialog det direkte repoet.
 - Én knapp forblir tent, fordi en sikkerhetskopi trenger et sted å havne. For å utelate et element fra sikkerhetskopier bruker du **Ikke sikkerhetskopier**.
 
-Plasseringen er fast fra første sikkerhetskopi av elementet, fordi BombVault aldri flytter sikkerhetskopier mellom arkiver; kortet **Repository** på fanen Innstillinger navngir den. Kopiene kan endres når som helst. Et mål som ikke lenger får et element, beholder kopiene det har og trimmer dem til sin egen oppbevaring ved neste eksterne kjøring av området. Fra append-only-mål kan man ikke slette.
+BombVault flytter aldri sikkerhetskopier mellom arkiver. Et element som følger området sitt, flytter med når standarden til området endres: den neste sikkerhetskopien havner på det nye stedet, og sikkerhetskopiene det allerede har, blir der de er. Et mål som er valgt på selve elementet, er fast fra første sikkerhetskopi; kortet **Repository** på fanen Innstillinger navngir det. Kopiene kan endres når som helst. Et mål som ikke lenger får et element, beholder kopiene det har og trimmer dem til sin egen oppbevaring ved neste eksterne kjøring av området. Fra append-only-mål kan man ikke slette.
+
+Stedet et element har forlatt, beholder sikkerhetskopiene sine. På fanen **Sikkerhetskopier** til elementet og under **Gjenopprett** står det som **Bare eldre sikkerhetskopier**, en gjenoppretting kan fortsatt lese derfra, og en prune der lar disse sikkerhetskopiene være i fred.
+
+**Følg standarden** henter et element med eget valg tilbake til området sitt. Det spør først, sier hvor nye sikkerhetskopier da går, og navngir hva hvert mål slutter å få og hva neste kjøring ville laste opp.
 
 Under raden sier kortet hvor elementet går og hva som faktisk er der: hvor mange steder som har det, når hvert mål sist ble sett og om 3-2-1 er oppfylt. Et sted er serveren med de opprinnelige dataene, hvert eksternt mål og hvert arkiv merket **Utenfor bygningen**. BombVault sjekker kopier og steder; det sjekker ikke «to medier»-delen av 3-2-1.
 
 ### Standarder per område {#placement-defaults}
 
-Kortet **Mål per område** på siden Mål er standarden for hvert område. I grafen er hver linje en kopi, og et klikk på en linje eller en prikk slår den av eller på; stiplede linjer er av. **Graf / Brytere** viser det samme som rader med knapper. Kopiene gjelder med en gang for hvert element uten eget valg, og for prosjektmappene til Compose-stakker. Plasseringen gjelder for et nytt element ved første sikkerhetskopi; å endre den flytter ingen sikkerhetskopier. Før lagring navngir BombVault hvert mål som får eller mister elementer og hvor mange sikkerhetskopier det betyr.
+Kortet **Mål per område** på siden Mål tegner standarden for hvert område som en 3-2-1-flyt. Hver linje fra et område til et mål er en bryter, også **Lokal**, og det for hvert område, altså også for flash-stikken, ZFS-datasettene og auto-sikkerhetskopien. Et klikk på en linje eller en prikk slår den om med en gang, uten spørsmål; stiplede linjer er av. **Graf / Brytere** viser det samme som rader med knapper. En bryter bestemmer hvor nye sikkerhetskopier går. Elementer uten eget valg og prosjektmappene til Compose-stakker følger med en gang, så den neste sikkerhetskopien deres går til de nye stedene. Det som allerede er lagret, blir der det er, og kan fortsatt gjenopprettes derfra.
 
-Elementer som sikkerhetskopieres et annet sted enn området sitt, står i kortet **Eget valg**, hvert med **Følg standarden**. Nye sikkerhetskopier går da til målene til området, og de tidligere blir der de er.
+Er **Lokal** av og bare eksterne mål på, sikkerhetskopierer et område rett dit, og BombVault velger repoet der selv. Kontainere, VM-er og mappesett går til det direkte repoet til det første målet som er på, beskrevet nedenfor, og kopieres derfra til de andre. Flash-stikken, ZFS-datasettene og auto-sikkerhetskopien skriver hver sikkerhetskopi til hvert mål som er på, og hvert mål beholder dem etter sin egen oppbevaring.
+
+Et område der alle linjer er av, viser **Sikkerhetskopieres ikke**. Elementene får ingen sikkerhetskopier og regnes som ubeskyttet.
+
+Elementer som har valgt egne mål på siden sin, beholder dem. Flyten sier hvor mange det er i et område, for eksempel **2 elementer avviker**, og fører til dem: til fanen Innstillinger for elementet når det er ett, til en liste som viser hvor hvert sikkerhetskopierer når det er flere. Der henter **Følg standarden** et element tilbake.
 
 Et nytt eksternt mål får hvert element som ikke er satt til Lokal. Vinduet som legger det til, sier hvor mange elementer og, der det er kjent, hvor mye historikk det er.
 
 ### Direkte repoer
 
-Å slå Lokal av for et element, slik at et mål uten direkte repo blir hjemmet, åpner en dialog med en foreslått plassering ved siden av det, for eksempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, og en tilkoblingstest som ikke oppretter noe. **Opprett og bruk** oppretter repoet og peker elementet dit. Et direkte repo overtar nøkkelen, lagringsklassen, grensene, append-only-innstillingen og oppbevaringen til målet og endres med dem; kortet Repoer viser det skrivebeskyttet. Når en ny nøkkel for målet ikke kan åpne det, beholder det direkte repoet nøkkelen det har, og lagringen sier det. Et element på et direkte repo kopieres derfra til de andre tente målene, aldri til målet repoet hører til. Øyeblikksbildene bærer taggen `bv:direct`, og hver annen oppbevaringsrunde beholder dem, så et direkte repo som mistet koblingen til målet sitt, aldri eldes etter de lokale reglene. B2 nås gjennom S3-endepunktet, med nøkkel-ID-en og applikasjonsnøkkelen som S3-legitimasjon; en nøkkel som er begrenset til målets egen mappe, når ikke mappen ved siden av, så begrens nøkkelen til mappen over i stedet.
+Et direkte repo er stedet der elementer sikkerhetskopierer rett til et eksternt mål. BombVault legger det ved siden av mappen til målet med `-direct` lagt til navnet, eller, når målet ligger i roten av bucketen, remoten eller en rest-server-bruker, i en mappe inni som er oppkalt etter området, for eksempel `containers-direct`. I flyten på siden Mål opprettes det uten spørsmål. Å slå Lokal av for ett enkelt element, slik at et mål uten direkte repo blir hjemmet, åpner en dialog med den foreslåtte plasseringen, for eksempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, og en tilkoblingstest som ikke oppretter noe. **Opprett og bruk** oppretter repoet og peker elementet dit. Et direkte repo overtar nøkkelen, lagringsklassen, grensene, append-only-innstillingen og oppbevaringen til målet og endres med dem; kortet Repoer viser det skrivebeskyttet. Når en ny nøkkel for målet ikke kan åpne det, beholder det direkte repoet nøkkelen det har, og lagringen sier det. Et element på et direkte repo kopieres derfra til de andre tente målene, aldri til målet repoet hører til. Øyeblikksbildene bærer taggen `bv:direct`, og hver annen oppbevaringsrunde beholder dem, så et direkte repo som mistet koblingen til målet sitt, aldri eldes etter de lokale reglene. B2 nås gjennom S3-endepunktet, med nøkkel-ID-en og applikasjonsnøkkelen som S3-legitimasjon; en nøkkel som er begrenset til målets egen mappe, når ikke mappen ved siden av, så begrens nøkkelen til mappen over i stedet.
 
 ### Utenfor lokalet
 
@@ -88,7 +98,7 @@ Kopivalg bor i BombVaults egne innstillinger. Etter en ombygging via **Oppdag si
 
 Stien til et område er ikke begrenset til en lokal mappe: pek den rett på en restic-remote (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`), så sikkerhetskopierer BombVault rett dit, uten egen lokal kopi og uten kopieringstrinn. Dette er en annen form enn de eksterne kopiene ovenfor: der er det lokale repoet primært og det eksterne repoet et best-effort-arkiv av det; her **er** det eksterne repoet primæren, og det er den eneste kopien med mindre du også kopierer området til et annet mål.
 
-Stien til hvert område (Kontainere, VM-er, Flash, Auto-sikkerhetskopi, Mapper, ZFS-datasett) settes på siden til målet **Lokal mappe**: **Endre** ved siden av området i kortet **Tilkobling** åpner et vindu med en **Lokal / Ekstern**-bryter:
+Stien til hvert område (Kontainere, VM-er, Flash, Auto-sikkerhetskopi, Mapper, ZFS-datasett) settes på siden til målet **Lokal**: **Endre** ved siden av området i kortet **Tilkobling** åpner et vindu med en **Lokal / Ekstern**-bryter:
 
 - **Lokal** viser den kjente mappevelgeren.
 - **Ekstern** bytter den ut med et vanlig URL-felt og tilkoblingsinnstillingene et eksternt mål bruker, satt opp for denne primæren i stedet. Derfra får du:

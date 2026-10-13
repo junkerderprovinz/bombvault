@@ -99,10 +99,10 @@ Thanh bên có năm mục: **Tổng quan**, **Bất thường** (khi bật phát
 
 - **Bản sao lưu** liệt kê mọi container, VM, bộ thư mục, ổ flash, mọi tập dữ liệu ZFS và mục tự sao lưu. Các ô phía trên danh sách chọn một loại, còn **Bộ lọc**, **Sắp xếp** và **Tìm kiếm** thu hẹp danh sách. Mỗi mục có một trang riêng với ba tab: **Bản sao lưu**, **Cài đặt** và **Xác minh**.
 - **Khôi phục** là một trang cho mọi thứ: chọn một phần, tìm một mục và chọn một bản sao lưu. Trình hướng dẫn khẩn cấp và các nguồn khác cũng bắt đầu từ đây.
-- **Cài đặt** gồm mười bốn ô: Chung, Giao diện, Lịch trình, Đích sao lưu, Khôi phục, Thông báo, Xác minh, Bảo mật, Phiên bản, Ghép nối, Tích hợp, Ứng dụng, Hệ thống và Thông tin. Nhấn `/` hoặc Ctrl+K để tìm trong tất cả, kể cả theo tên mà các trang từng có ở các phiên bản trước. Kéo các ô vào thứ tự riêng của bạn trong **Giao diện**.
+- **Cài đặt** gồm mười bốn ô: Chung, Giao diện, Lịch trình, Đích sao lưu, Khôi phục, Thông báo, Xác minh, Bảo mật, Phiên bản, Ghép nối, Tích hợp, Ứng dụng, Hệ thống và Thông tin. Nhấn `/` hoặc Ctrl+K để tìm trong tất cả, kể cả theo tên mà các trang từng có ở các phiên bản trước. Kéo các ô vào thứ tự riêng của bạn trong **Giao diện**. Khi một cột ô bên cạnh trang sẽ làm trang quá hẹp, như trong cửa sổ rộng khoảng 1200 pixel, các ô trở thành một dải phía trên trang và cuộn ngang được. Điện thoại hiển thị cùng dải đó.
 - **Đích sao lưu** và **Phiên bản** là các ô cài đặt có trang riêng. **Hiện cả trong thanh bên** trên ô của chúng ghim chúng vào thanh bên.
 
-Không có gì có nút Lưu và không có gì bung ra: những thứ hiếm dùng có thẻ riêng hoặc một cửa sổ, và phần giải thích nằm trong các bong bóng (i). Sau một bản cập nhật, các chấm xanh đánh dấu những gì đã đổi. Một cú nhấp sẽ ẩn chấm, và **Mới** trong thẻ Phiên bản dưới **Cài đặt, Thông tin** liệt kê mọi thay đổi kèm **Đi tới đó**.
+Không có gì có nút Lưu và không có gì bung ra: những thứ hiếm dùng có thẻ riêng hoặc một cửa sổ, và phần giải thích nằm trong các bong bóng (i). Sau một bản cập nhật, ghi chú phát hành tự mở, và các chấm xanh đánh dấu những gì đã đổi. Một cú nhấp sẽ ẩn chấm. **Mới** trong thẻ Phiên bản dưới **Cài đặt, Thông tin** đếm những gì bạn chưa xem và mở ghi chú phát hành cùng danh sách mọi thay đổi kèm **Đi tới đó** thành hai tab của một cửa sổ.
 
 ## Dựng từ mã nguồn {#build-from-source}
 

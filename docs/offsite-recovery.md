@@ -31,6 +31,8 @@ A storage location is a place backups go: a local folder, a share, a server of y
 
 S3 services run through restic's own S3 backend, which is what lets a storage class and object lock apply. Every other service runs through the rclone BombVault ships, and its remote then appears in the **Off-site (rclone)** card under **Settings, Storage locations**. A settings export carries the storage locations; with credentials included it carries their sign-in as well.
 
+The folder on this server is called **Local** everywhere: on the storage pages, in the flow, on an entry and on Restore. With several folders on this server, each goes by its own name. A storage location that a section's off-site field sets up is named after its place, the last folder of its address or, without one, its server, and gets a number when another location already goes by that name. A name you give it on its page stays. Where two locations with the same name stand side by side, each carries its server or folder.
+
 Every storage location has a page of its own:
 
 - **Connection** with its name, the switch **Available** (off means BombVault no longer writes here, and entries that back up here fail with a clear message instead of landing somewhere else), the folder, compression, storage class and **Off the premises**. **Change connection** tests and saves a new address or sign-in.
@@ -58,21 +60,29 @@ The **Schedule and storage location** card on an entry's Settings tab has a row 
 - With **Local** dark, the entry is written straight to the direct repository of the first lit location and copied from there to the other lit ones. The first time, a dialog creates that direct repository.
 - One button stays lit, because a backup needs a place to go. To leave an entry out of backups, use **Don't back up**.
 
-The location is fixed from the entry's first backup on, because BombVault never moves backups between repositories; the **Repository** card on the Settings tab names it. The copies can change at any time. A location that no longer gets an entry keeps the copies it has and trims them to its own retention at the next off-site run of the section. Append-only locations cannot be deleted from.
+BombVault never moves backups between repositories. An entry that follows its section goes along when the section's default changes: its next backup lands in the new place, and the backups it has stay where they are. A location chosen on the entry itself stays fixed from its first backup on; the **Repository** card on the Settings tab names it. The copies can change at any time. A location that no longer gets an entry keeps the copies it has and trims them to its own retention at the next off-site run of the section. Append-only locations cannot be deleted from.
+
+The place an entry left keeps its backups. On the entry's **Backups** tab and on **Restore** it stands as **Earlier backups only**, a restore can still read from it, and a prune there leaves those backups alone.
+
+**Follow the default** brings an entry with a choice of its own back to its section. It asks first, says where new backups go then, and names what each location stops getting and what the next run would upload.
 
 Under the row the card says where the entry goes and what is actually there: how many sites hold it, when each location was last seen, and whether 3-2-1 is met. A site is the server with the original data, each off-site location and each repository marked **Off the premises**. BombVault checks copies and sites; it does not check the "two media" part of 3-2-1.
 
 ### Defaults per section {#placement-defaults}
 
-The **Storage locations per section** card on the Storage locations page is the default of every section. In the graph every line is a copy, and clicking a line or a dot switches it on or off; dashed lines are off. **Graph / Switches** shows the same as rows of buttons. The copies apply at once to every entry without a choice of its own, and to the project folders of Compose stacks. The location applies to a new entry at its first backup; changing it moves no backups. Before saving, BombVault names every location that gains or loses entries and how many snapshots that means.
+The **Storage locations per section** card on the Storage locations page draws the default of every section as a 3-2-1 flow. Every line from a section to a storage location is a switch, **Local** included, for every section, the flash drive, ZFS datasets and the self-backup as well. A click on a line or a dot switches it at once, without a question; dashed lines are off. **Graph / Switches** shows the same as rows of buttons. A switch decides where new backups go. Entries without a choice of their own, and the project folders of Compose stacks, follow at once, so their next backup goes to the new places. Backups already stored stay where they are and can still be restored from there.
 
-Entries that back up somewhere other than their section stand in the **Own choice** card, each with **Follow the default**. New backups then go to the section's storage locations, and the earlier ones stay where they are.
+With **Local** off and only off-site locations on, a section backs up straight to them, and BombVault picks the repository there itself. Containers, VMs and folder sets go to the direct repository of the first location that is on, described below, and are copied from there to the others. The flash drive, ZFS datasets and the self-backup write each backup to every location that is on, and each location keeps them by its own retention.
+
+A section with every line off says **Not backed up**. Its entries get no backups and count as not protected.
+
+Entries that chose their own storage locations on their page keep them. The flow says how many there are in a section, for example **2 entries differ**, and leads to them: to the entry's Settings tab when there is one, to a list with where each backs up when there are several. **Follow the default** there brings an entry back.
 
 A new off-site location receives every entry that is not set to Local. The window that adds it says how many entries and, where known, how much history that is.
 
 ### Direct repositories
 
-Turning Local off for an entry, so that a location without a direct repository becomes its home, opens a dialog with a suggested location next to it, for example `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, and a connection test that creates nothing. **Create and use** creates the repository and points the entry at it. A direct repository takes the location's key, storage class, limits, append-only setting and retention, and changes with them; the Repositories card shows it read-only. When a new key for the location cannot open it, the direct repository keeps the key it has and the save says so. An entry on a direct repository is copied from there to the other lit locations, never to the location the repository belongs to. Its snapshots carry the tag `bv:direct`, and every other retention pass keeps them, so a direct repository that lost its link to its location never ages by the local rules. B2 is reached through its S3 endpoint, with the key ID and application key entered as the S3 credentials; a key limited to the location's own folder cannot reach the folder next to it, so limit the key to the folder above instead.
+A direct repository is where entries back up straight to an off-site location. BombVault puts it beside the location's folder with `-direct` added to the name, or, when the location sits at the root of its bucket, its remote or a rest-server user, in a folder inside it named after the section, such as `containers-direct`. In the flow on the Storage locations page it is created without a question. Turning Local off for a single entry, so that a location without a direct repository becomes its home, opens a dialog with the suggested location, for example `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, and a connection test that creates nothing. **Create and use** creates the repository and points the entry at it. A direct repository takes the location's key, storage class, limits, append-only setting and retention, and changes with them; the Repositories card shows it read-only. When a new key for the location cannot open it, the direct repository keeps the key it has and the save says so. An entry on a direct repository is copied from there to the other lit locations, never to the location the repository belongs to. Its snapshots carry the tag `bv:direct`, and every other retention pass keeps them, so a direct repository that lost its link to its location never ages by the local rules. B2 is reached through its S3 endpoint, with the key ID and application key entered as the S3 credentials; a key limited to the location's own folder cannot reach the folder next to it, so limit the key to the folder above instead.
 
 ### Off the premises
 
@@ -88,7 +98,7 @@ Copy choices live in BombVault's own settings. After a rebuild through **Discove
 
 A section's own path is not limited to a local folder: point it straight at a restic remote (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) and BombVault backs up to it directly, with no separate local copy and no copy step. This is a different shape from the off-site copies above: there the local repo is primary and the off-site repo is a best-effort archive of it; here the remote repo **is** the primary, and it is the only copy unless you also copy that section to another storage location.
 
-The path of each section (Containers, VMs, Flash, Self-backup, Folders, ZFS datasets) is set on the page of the **Local folder** storage location: **Change** beside the section in its **Connection** card opens a window with a **Local / Remote** switch:
+The path of each section (Containers, VMs, Flash, Self-backup, Folders, ZFS datasets) is set on the page of the storage location **Local**: **Change** beside the section in its **Connection** card opens a window with a **Local / Remote** switch:
 
 - **Local** shows the familiar folder browser.
 - **Remote** swaps it for a plain URL field and the connection settings an off-site location uses, configured for this primary instead. From there you get:

@@ -99,10 +99,10 @@ The sidebar has five entries: **Overview**, **Anomalies** (while anomaly detecti
 
 - **Backups** lists every container, VM, folder set, the flash drive, every ZFS dataset and the self-backup as entries. Tiles above the list pick a kind, and **Filters**, **Sort** and **Search** narrow it down. Every entry has a page of its own with three tabs: **Backups**, **Settings** and **Verify**.
 - **Restore** is one page for everything: pick a section, search for an entry and choose a backup. The Emergency wizard and the other sources start here too.
-- **Settings** are fourteen tiles: General, Look, Schedule, Storage locations, Restore, Notifications, Verify, Security, Instances, Pairing, Integrations, Apps, System and Info. Press `/` or Ctrl+K to search them all, also by the names pages had in earlier versions. Drag the tiles into your own order under **Look**.
+- **Settings** are fourteen tiles: General, Look, Schedule, Storage locations, Restore, Notifications, Verify, Security, Instances, Pairing, Integrations, Apps, System and Info. Press `/` or Ctrl+K to search them all, also by the names pages had in earlier versions. Drag the tiles into your own order under **Look**. Where a column of tiles beside the page would squeeze it, as in a window about 1200 pixels wide, the tiles become a strip above the page that scrolls sideways. A phone shows the same strip.
 - **Storage locations** and **Instances** are settings tiles with pages of their own. **Also show in the sidebar** on their tile pins them to the sidebar.
 
-Nothing has a Save button and nothing folds out: rare things have a card of their own or a window, and explanations sit in the (i) bubbles. After an update, green dots mark what changed. A click hides a dot, and **New** in the Version card under **Settings, Info** lists every change with **Go there**.
+Nothing has a Save button and nothing folds out: rare things have a card of their own or a window, and explanations sit in the (i) bubbles. After an update the release notes open by themselves, and green dots mark what changed. A click hides a dot. **New** in the Version card under **Settings, Info** counts what you have not seen yet and opens the release notes and the list of every change with **Go there**, as two tabs of one window.
 
 ## Building from source {#build-from-source}
 

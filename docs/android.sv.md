@@ -29,6 +29,10 @@ Via reläet når sidan det en parkopplad telefon når hemma, som beskrivs nedan.
 
 Appen tar bara emot ett svar om servern har signerat det med nyckeln som appen fäste när den första gången träffade servern. Svarar servern senare med en annan nyckel visar startskärmen den nya nyckelns fingeravtryck, och sidan öppnas först när du litar på den.
 
+## Byta server {#switch}
+
+När en server är öppen visar översikten överst serverns namn. Känner appen till fler servrar står en pil bredvid namnet, och en tryckning listar varje server som appen känner till, den öppna markerad som **Den här instansen** och var och en av de andra med sitt tillstånd: **Ansluten**, **Inte ansluten**, **Inloggning behövs** eller **Kontrollera certifikat**. Tryck på en annan för att öppna den, direkt hemma och annars via reläet.
+
 ## Inloggad på en parkopplad telefon {#sign-in}
 
 En telefon som är parkopplad med din grupp öppnar varje server i gruppen redan inloggad. Innan den laddar en sida ber den servern om en session via gruppen, och en server lämnar bara ut en till en medlem som är en telefon. En server som har lagts till med sin adress frågar efter lösenordet, precis som i en webbläsare.

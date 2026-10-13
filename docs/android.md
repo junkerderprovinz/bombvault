@@ -29,6 +29,10 @@ Over the relay the page reaches what a paired phone reaches at home, described b
 
 The app takes an answer only when the server signed it with the key the app pinned when it first met that server. If the server later answers with another key, the start screen shows the new key's fingerprint, and the page opens only after you trust it.
 
+## Switching servers {#switch}
+
+With a server open, the top of its overview shows the server's name. Once the app knows other servers, a chevron stands beside the name, and a tap lists every server the app knows, the open one marked **This instance** and each of the others with its state: **Connected**, **Not connected**, **Sign-in needed** or **Check certificate**. Tap another one to open it, directly at home and through the relay otherwise.
+
 ## Signed in on a paired phone {#sign-in}
 
 A phone paired with your group opens each of its servers already signed in. Before it loads a page, it asks that server over the group for a session, and a server hands one only to a member that is a phone. A server added by its address asks for the password, as in a browser.

@@ -29,6 +29,10 @@ Przez przekaźnik strona sięga tego, czego sparowany telefon sięga w domu, jak
 
 Aplikacja przyjmuje odpowiedź tylko wtedy, gdy serwer podpisał ją kluczem, który aplikacja przypięła przy pierwszym kontakcie z tym serwerem. Jeśli serwer później odpowie innym kluczem, ekran startowy pokaże odcisk nowego klucza, a strona otworzy się dopiero wtedy, gdy mu zaufasz.
 
+## Przełączanie serwerów {#switch}
+
+Gdy serwer jest otwarty, u góry jego przeglądu widnieje nazwa serwera. Gdy aplikacja zna inne serwery, obok nazwy stoi strzałka, a dotknięcie wyświetla wszystkie serwery znane aplikacji: otwarty jest oznaczony jako **Ta instancja**, a każdy z pozostałych ma swój stan, **Połączono**, **Brak połączenia**, **Wymagane logowanie** lub **Sprawdź certyfikat**. Dotknij innego, aby go otworzyć, w domu bezpośrednio, a poza domem przez przekaźnik.
+
 ## Logowanie na sparowanym telefonie {#sign-in}
 
 Telefon sparowany z Twoją grupą otwiera każdy z jej serwerów od razu zalogowany. Zanim załaduje stronę, prosi ten serwer przez grupę o sesję, a serwer wydaje ją tylko członkowi, który jest telefonem. Serwer dodany po adresie pyta o hasło, tak jak w przeglądarce.

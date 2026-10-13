@@ -29,6 +29,10 @@ Tramite il relay la pagina raggiunge ciò che un telefono associato raggiunge a 
 
 L'app accetta una risposta solo se il server l'ha firmata con la chiave che l'app ha fissato la prima volta che ha incontrato quel server. Se in seguito il server risponde con un'altra chiave, la schermata iniziale mostra l'impronta della nuova chiave e la pagina si apre solo dopo che l'hai accettata.
 
+## Cambiare server {#switch}
+
+Con un server aperto, in cima alla sua panoramica compare il nome del server. Quando l'app conosce altri server, accanto al nome c'è una freccia, e un tocco elenca ogni server che l'app conosce: quello aperto è contrassegnato **Questa istanza** e ciascuno degli altri con il suo stato: **Connessa**, **Non connessa**, **Accesso necessario** o **Verifica certificato**. Tocca un altro server per aprirlo, direttamente a casa e altrimenti tramite il relay.
+
 ## Accesso già eseguito su un telefono associato {#sign-in}
 
 Un telefono associato al tuo gruppo apre ciascuno dei suoi server con l'accesso già eseguito. Prima di caricare una pagina chiede a quel server una sessione tramite il gruppo, e un server la concede solo a un membro che è un telefono. Un server aggiunto tramite il suo indirizzo chiede la password, come in un browser. Chiunque abbia le dodici parole può già aprire ogni backup del gruppo, quindi l'associazione non concede nulla di nuovo.
