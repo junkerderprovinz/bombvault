@@ -8,7 +8,6 @@ import { act, cleanup, fireEvent, render, waitFor, within } from "@testing-libra
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../../lib/i18n";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
-import { CHANGES } from "../../lib/whatsNew";
 
 const api = vi.hoisted(() => ({
   getVersions: vi.fn(),
@@ -50,7 +49,7 @@ function card(title: string): HTMLElement {
   return el;
 }
 
-const checkButton = () => within(card(en["about.version"])).getByRole("button");
+const checkButton = () => within(card(en["about.version"])).getAllByRole("button").at(-1)!;
 
 beforeEach(() => {
   localStorage.setItem("bv-lang", "en");
@@ -207,11 +206,11 @@ describe("the Help card", () => {
 });
 
 describe("the list of what is new", () => {
-  it("stands between Help and About, where the settings search finds it by its name", async () => {
+  it("is a button of the Version card, and Help and About follow without a card of its own", async () => {
     await renderPage();
     const titles = [...document.querySelectorAll("[data-search-card]")].map((el) => el.getAttribute("data-search-card"));
-    expect(titles).toEqual([en["about.version"], en["tile.info.help"], en["whatsNew.title"], en["about.title"]]);
-    expect(within(card(en["whatsNew.title"])).getByRole("button", { name: `${en["whatsNew.showAll"]} · ${CHANGES.length}` })).toBeTruthy();
+    expect(titles).toEqual([en["about.version"], en["tile.info.help"], en["about.title"]]);
+    expect(within(card(en["about.version"])).getByRole("button", { name: en["whatsNew.title"] })).toBeTruthy();
   });
 });
 

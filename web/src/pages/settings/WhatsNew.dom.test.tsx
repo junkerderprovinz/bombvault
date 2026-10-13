@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-// The list of what is new: every change under its page with the way there,
+// The list of what is new: a button of the Version card that counts what is
+// left and opens a window with every change under its page, the way there,
 // what was seen dimmed, and the one button that marks the lot as seen or new.
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
@@ -8,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { I18nProvider, en } from "../../lib/i18n";
 import { CHANGES, WHATS_NEW_RELEASE } from "../../lib/whatsNew";
 import { beginWhatsNew, markAbsent, markSeen } from "../../lib/whatsNewStore";
-import { WhatsNewCard } from "./WhatsNewCard";
+import { WhatsNewButton, WhatsNewWindow } from "./WhatsNew";
 
 const KEY = `bv-whats-new@${WHATS_NEW_RELEASE}`;
 const stored = () => JSON.parse(localStorage.getItem(KEY)!) as { seen: string[]; absent: string[] };
@@ -20,13 +21,27 @@ function Where() {
   return <output data-testid="where">{useLocation().pathname}</output>;
 }
 
+let closed = 0;
+
 async function renderCard() {
   await act(async () => {
     render(
       <I18nProvider>
         <MemoryRouter initialEntries={["/settings/info"]}>
-          <WhatsNewCard />
+          <WhatsNewWindow onClose={() => closed++} />
           <Where />
+        </MemoryRouter>
+      </I18nProvider>
+    );
+  });
+}
+
+async function renderButton() {
+  await act(async () => {
+    render(
+      <I18nProvider>
+        <MemoryRouter initialEntries={["/settings/info"]}>
+          <WhatsNewButton />
         </MemoryRouter>
       </I18nProvider>
     );
@@ -43,8 +58,25 @@ beforeEach(() => {
   localStorage.clear();
   localStorage.setItem("bv-lang", "en");
   beginWhatsNew("v9.9.1");
+  closed = 0;
 });
 afterEach(cleanup);
+
+describe("the New button", () => {
+  it("counts what is left and opens the list in a window", async () => {
+    markSeen(["overview-head"]);
+    await renderButton();
+    await press(screen.getByRole("button", { name: `${en["whatsNew.title"]} · ${CHANGES.length - 1}` }));
+    const window = screen.getByRole("dialog", { name: en["whatsNew.windowTitle"].replace("{version}", WHATS_NEW_RELEASE) });
+    expect(window.querySelectorAll("[data-change]")).toHaveLength(CHANGES.length);
+  });
+
+  it("drops the count once everything was seen", async () => {
+    markSeen(CHANGES.map((change) => change.id));
+    await renderButton();
+    expect(screen.getByRole("button", { name: en["whatsNew.title"] })).toBeTruthy();
+  });
+});
 
 describe("the list of what is new", () => {
   it("names every change once, under the page it is on", async () => {
@@ -64,10 +96,11 @@ describe("the list of what is new", () => {
     expect(line("backups-tiles").dataset.seen).toBeUndefined();
   });
 
-  it("leads to the page of a change, and to the list for a page that belongs to one entry", async () => {
+  it("leads to the page of a change and closes, and to the list for a page that belongs to one entry", async () => {
     await renderCard();
     await press(within(line("settings-week")).getByRole("button", { name: en["whatsNew.go"] }));
     expect(screen.getByTestId("where").textContent).toBe("/settings/schedules");
+    expect(closed).toBe(1);
     await press(within(line("entry-page")).getByRole("button", { name: en["whatsNew.go"] }));
     expect(screen.getByTestId("where").textContent).toBe("/backups");
   });

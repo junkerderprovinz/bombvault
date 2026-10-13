@@ -588,7 +588,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "about.version",
       hint: "tile.info.versionHint",
-      rows: [{ key: "tile.info.check" }],
+      rows: [{ key: "tile.info.check" }, { key: "whatsNew.title", hint: "whatsNew.hint" }, { key: "whatsNew.markAll" }, { key: "whatsNew.showAll" }],
       body: ["tile.info.glimstoneHint", "tile.info.resticHint", "tile.info.rcloneHint"],
     },
     {
@@ -596,11 +596,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       hint: "tile.info.helpHint",
       rows: [{ key: "tile.info.manual" }, { key: "tile.info.bugReport" }],
       body: ["about.report"],
-    },
-    {
-      title: "whatsNew.title",
-      hint: "whatsNew.hint",
-      rows: [{ key: "whatsNew.markAll" }, { key: "whatsNew.showAll" }],
     },
     { title: "about.title", rows: [], body: ["about.body"] },
   ],
