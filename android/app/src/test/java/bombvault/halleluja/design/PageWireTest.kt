@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.Base64
 import java.util.zip.GZIPOutputStream
+import kotlin.random.Random
 
 // The field names are the ones internal/api/peer_page.go reads and writes.
 class PageWireTest {
@@ -50,9 +51,10 @@ class PageWireTest {
 
     @Test
     fun anAnswerInPartsComesBackWholeAndUnpacked() {
-        val bundle = ByteArray(700) { (it * 7).toByte() }
+        // Random bytes stay larger than two parts once packed.
+        val bundle = Random(1).nextBytes(PageWire.PART * 5 / 2)
         val packed = ByteArrayOutputStream().also { out -> GZIPOutputStream(out).use { it.write(bundle) } }.toByteArray()
-        val step = 100
+        val step = PageWire.PART
         val first = PageWire.piece(
             JSONObject()
                 .put("ok", true)
@@ -64,7 +66,7 @@ class PageWireTest {
                 .toString().toByteArray(),
         )
         val offsets = PageWire.offsets(first)
-        assertEquals((step until packed.size step step).toList(), offsets)
+        assertEquals(listOf(step, 2 * step), offsets)
         val rest = offsets.map { packed.copyOfRange(it, minOf(it + step, packed.size)) }
         val wire = PageWire.assemble(first, rest)
         assertArrayEquals(packed, wire)
@@ -84,6 +86,20 @@ class PageWireTest {
         val one = PageWire.piece("""{"ok":true,"status":404,"body":"bm8=","size":2}""".toByteArray())
         assertTrue(PageWire.offsets(one).isEmpty())
         assertEquals("no", String(PageWire.unpack(one.status, one.header, PageWire.assemble(one, emptyList())).body))
+    }
+
+    @Test
+    fun anUnsignedFirstPartCannotAskForMorePartsThanTheCapHolds() {
+        val part = Base64.getEncoder().encodeToString(ByteArray(PageWire.PART))
+        fun first(body: String, size: Long) =
+            PageWire.piece("""{"ok":true,"status":200,"body":"$body","size":$size,"part":"t"}""".toByteArray())
+
+        assertEquals(PageWire.MAX_ANSWER / PageWire.PART - 1, PageWire.offsets(first(part, PageWire.MAX_ANSWER.toLong())).size)
+        assertThrows(IOException::class.java) { PageWire.offsets(first("AA==", 2_000_000_000)) }
+        assertThrows(IOException::class.java) { PageWire.offsets(first(part, PageWire.MAX_ANSWER + 1L)) }
+        assertThrows(IOException::class.java) { PageWire.offsets(first(part, -1)) }
+        assertThrows(IOException::class.java) { PageWire.offsets(first("AA==", 2 * PageWire.PART.toLong())) }
+        assertThrows(IOException::class.java) { PageWire.offsets(first(part, PageWire.PART.toLong())) }
     }
 
     @Test

@@ -263,6 +263,8 @@ class Pairing(private val context: Context, private val servers: Servers, privat
             // A call that timed out, an answer that does not read: the page
             // gets a failed request, never a crash of the WebView's thread.
             PageResult.Failed
+        } catch (_: OutOfMemoryError) {
+            PageResult.Failed
         }
     }
 
