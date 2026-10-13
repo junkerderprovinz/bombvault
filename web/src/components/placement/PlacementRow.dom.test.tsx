@@ -310,28 +310,54 @@ describe("PlacementRow", () => {
     expect(fake.callsTo("setItemPlacement")).toEqual([]);
   });
 
-  it("says what the card follows and resets a location set before the first backup", async () => {
+  it("brings a location set before the first backup back to the default after saying what that changes", async () => {
+    fake.reply("previewItemPlacement", {
+      ok: true,
+      added: [uploadEstimate()],
+      dropped: [{ targetId: "t-hz", name: "Hetzner", copies: 4, appendOnly: false }],
+    });
     renderRow(placementView({ repo: "repo-nas", repoKind: "local", repoLabel: "NAS Keller" }));
     expect(await screen.findByText("Location set: NAS Keller · mounted")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
-    await waitFor(() =>
-      expect(fake.callsTo("setItemPlacement")).toEqual([[item, { home: { follow: true }, copies: { follow: true } }]])
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Follow the default" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("Should nginx follow the default? New backups then go to Local and B2. The earlier ones stay where they are.");
+    expect(dialog.textContent).toContain("Hetzner keeps its copies (4)");
+    expect(dialog.textContent).toContain("B2: about 40");
+    expect(fake.callsTo("setItemPlacement")).toEqual([]);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Follow the default" }));
+    const follow = { home: { follow: true }, copies: { follow: true } };
+    await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, follow]]));
+    expect(fake.callsTo("previewItemPlacement")).toEqual([[item, follow]]);
   });
 
-  it("takes no second reset while the first one's question is being prepared", async () => {
+  it("gives back only the copies once the first backup fixed the place", async () => {
+    renderRow(placementView({ repo: "repo-nas", repoKind: "local", repoLabel: "NAS Keller", locked: true, copiesFollow: false, skip: ["*"] }));
+    fireEvent.click(await screen.findByRole("button", { name: "Follow the default" }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Follow the default" }));
+    await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { copies: { follow: true } }]]));
+  });
+
+  it("keeps the entry as it is when the question is answered with no", async () => {
+    renderRow(placementView({ copiesFollow: false, skip: ["*"] }));
+    fireEvent.click(await screen.findByRole("button", { name: "Follow the default" }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect((screen.getByRole("button", { name: "Follow the default" }) as HTMLButtonElement).disabled).toBe(false));
+    expect(fake.callsTo("setItemPlacement")).toEqual([]);
+  });
+
+  it("asks once while the first question is being prepared", async () => {
     const release = fake.hold("previewItemPlacement");
     fake.reply("previewItemPlacement", { ok: true, added: [uploadEstimate()], dropped: [] });
     renderRow(placementView({ repo: "repo-nas", repoKind: "local", repoLabel: "NAS Keller" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Reset" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Follow the default" }));
     await waitFor(() => expect(fake.callsTo("previewItemPlacement")).toHaveLength(1));
-    const reset = screen.getByRole("button", { name: "Reset" }) as HTMLButtonElement;
-    expect(reset.disabled).toBe(true);
-    fireEvent.click(reset);
+    const follow = screen.getByRole("button", { name: "Follow the default" }) as HTMLButtonElement;
+    expect(follow.disabled).toBe(true);
+    fireEvent.click(follow);
     await act(async () => release());
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
-    await waitFor(() => expect((screen.getByRole("button", { name: "Reset" }) as HTMLButtonElement).disabled).toBe(false));
+    await waitFor(() => expect((screen.getByRole("button", { name: "Follow the default" }) as HTMLButtonElement).disabled).toBe(false));
     expect(fake.callsTo("previewItemPlacement")).toHaveLength(1);
   });
 
@@ -343,7 +369,7 @@ describe("PlacementRow", () => {
       expect((await button("Storagebox · remote")).getAttribute("aria-pressed")).toBe("true");
       expect(screen.queryByText("Copies follow the default")).toBeNull();
       expect(screen.queryByText("Own copies")).toBeNull();
-      expect(screen.queryByRole("button", { name: "Reset" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Follow the default" })).toBeNull();
       cleanup();
     }
   });
@@ -351,7 +377,7 @@ describe("PlacementRow", () => {
   it("follows the default while nothing is chosen", async () => {
     renderRow(placementView({ homeFollows: true }));
     expect(await screen.findByText("Follows the default")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Reset" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Follow the default" })).toBeNull();
   });
 
   it("shows the pause of its domain once", async () => {

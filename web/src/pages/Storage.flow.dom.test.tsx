@@ -21,7 +21,6 @@ import {
   placementView,
   stubEventSource,
   targetImpact,
-  uploadEstimate,
 } from "../lib/placement.testsupport";
 import { ToastProvider } from "../lib/toast";
 
@@ -395,69 +394,49 @@ describe("the flow", () => {
   });
 });
 
-describe("own choice", () => {
-  it("is not shown while every entry follows its section", async () => {
+describe("entries that differ", () => {
+  const own = placementView({ copiesFollow: false, skip: ["*"] });
+
+  it("are not mentioned while every entry follows its section", async () => {
     await renderPage();
 
-    expect(screen.queryByText("Own choice")).toBeNull();
+    expect(screen.queryByText(/entr(y|ies) differs?$/)).toBeNull();
+    expect(document.querySelector('[data-new="storage-flow"]')?.getAttribute("data-search-card")).toBe("Storage locations per section");
   });
 
-  it("lists only the entries that left the default, with what each uses and the way to its page", async () => {
-    listContainers.mockResolvedValue({
-      ok: true,
-      containers: [container("gitea"), container("jellyfin", placementView({ copiesFollow: false, skip: ["*"] }))],
-    });
+  it("are counted under the section, and one leads to the settings of that entry", async () => {
+    listContainers.mockResolvedValue({ ok: true, containers: [container("gitea"), container("jellyfin", own)] });
     await renderPage();
 
-    const row = (await screen.findByRole("link", { name: "jellyfin" })).closest("li")!;
-    expect(row.textContent).toContain("Backs up to Local · Default: Local and B2");
-    expect(screen.getByRole("link", { name: "jellyfin" }).getAttribute("href")).toBe("/backups/container/jellyfin");
-    expect(screen.queryByRole("link", { name: "gitea" })).toBeNull();
+    const hint = await screen.findByRole("link", { name: "1 entry differs" });
+    expect(hint.getAttribute("href")).toBe("/backups/container/jellyfin?tab=settings");
+    expect(hint.getAttribute("data-new")).toBe("storage-flow");
+    expect(hint.closest("p")!.textContent).toContain("Containers:");
   });
 
-  it("brings an entry back after saying where its backups go then and what is uploaded", async () => {
-    listContainers.mockResolvedValue({
-      ok: true,
-      containers: [container("jellyfin", placementView({ copiesFollow: false, skip: ["*"] }))],
-    });
-    fake.reply("previewItemPlacement", { ok: true, added: [uploadEstimate()], dropped: [] });
-    await renderPage();
-
-    await click(await screen.findByRole("button", { name: "Follow the default" }));
-    const dialog = await screen.findByRole("dialog");
-    expect(dialog.textContent).toContain(
-      "Should jellyfin follow the default? New backups then go to Local and B2. The earlier ones stay where they are."
-    );
-    expect(dialog.textContent).toContain("B2: about 40");
-    expect(fake.callsTo("setItemPlacement")).toEqual([]);
-    await click(within(dialog).getByRole("button", { name: "Follow the default" }));
-
-    const follow = { home: { follow: true }, copies: { follow: true } };
-    await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[{ domain: "containers", key: "jellyfin" }, follow]]));
-    expect(fake.callsTo("previewItemPlacement")).toEqual([[{ domain: "containers", key: "jellyfin" }, follow]]);
-  });
-
-  it("keeps the entry as it is when the question is answered with no", async () => {
-    listContainers.mockResolvedValue({
-      ok: true,
-      containers: [container("jellyfin", placementView({ copiesFollow: false, skip: ["*"] }))],
-    });
-    await renderPage();
-
-    await click(await screen.findByRole("button", { name: "Follow the default" }));
-    await click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Cancel" }));
-
-    expect(fake.callsTo("setItemPlacement")).toEqual([]);
-  });
-
-  it("offers no button where the first backup fixed the place and nothing else differs, and says why", async () => {
+  it("open a list where there are several, with what each uses and the way to its settings", async () => {
     const fixed = placementView({ repo: "repo-nas", repoKind: "local", repoLabel: "NAS Keller", locked: true, lockReason: "first-backup" });
-    listContainers.mockResolvedValue({ ok: true, containers: [container("plex", fixed)] });
+    listContainers.mockResolvedValue({
+      ok: true,
+      containers: [container("gitea"), container("jellyfin", own), container("plex", fixed)],
+    });
     await renderPage();
 
-    const row = (await screen.findByRole("link", { name: "plex" })).closest("li")!;
-    expect(within(row).queryByRole("button", { name: "Follow the default" })).toBeNull();
-    expect(within(row).getByLabelText(/^Fixed since the first backup: /)).toBeTruthy();
+    await click(await screen.findByRole("button", { name: "2 entries differ" }));
+    const window = await screen.findByRole("dialog", { name: "Containers: 2 entries differ" });
+    const jellyfin = within(window).getByRole("link", { name: "jellyfin" });
+    expect(jellyfin.getAttribute("href")).toBe("/backups/container/jellyfin?tab=settings");
+    expect(jellyfin.closest("li")!.textContent).toContain("Backs up to Local · Default: Local and B2");
+    expect(within(window).getByRole("link", { name: "plex" }).getAttribute("href")).toBe("/backups/container/plex?tab=settings");
+    expect(within(window).queryByRole("link", { name: "gitea" })).toBeNull();
+  });
+
+  it("show in the switches as well", async () => {
+    listContainers.mockResolvedValue({ ok: true, containers: [container("jellyfin", own)] });
+    await renderPage();
+    await click(screen.getByRole("radio", { name: "Switches" }));
+
+    expect(await screen.findByRole("link", { name: "1 entry differs" })).toBeTruthy();
   });
 });
 

@@ -13,7 +13,6 @@ import { PageTitle } from "../components/PageTitle";
 import { AddLocationWindow } from "../components/storage/AddLocationWindow";
 import { FlowCard } from "../components/storage/FlowCard";
 import { LocationMark } from "../components/storage/LocationMark";
-import { OwnChoiceCard } from "../components/storage/OwnChoiceCard";
 import { StreamingCard } from "../components/storage/StreamingCard";
 import { Vessel } from "../components/storage/Vessel";
 import type { StorageLocation } from "../lib/api";
@@ -117,8 +116,7 @@ export function StoragePage() {
           </ul>
         )}
       </Card>
-      {sections.length > 0 && <FlowCard locations={locations} defaults={defaults} hueIndex={nextHue()} />}
-      {own.length > 0 && defaults.rows && <OwnChoiceCard entries={own} defaults={defaults.rows} hueIndex={nextHue()} />}
+      {sections.length > 0 && <FlowCard locations={locations} defaults={defaults} own={own} hueIndex={nextHue()} />}
       <StreamingCard hueIndex={nextHue()} />
       {adding && <AddLocationWindow domains={sections} defaults={defaults.rows} onClose={() => setAdding(false)} />}
       <PageActions>

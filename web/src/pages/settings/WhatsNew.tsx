@@ -162,18 +162,18 @@ export function WhatsNewHost({ version }: { version: string | null }) {
   return <WhatsNewWindow tab={tab} version={version} onTab={openWhatsNew} onClose={() => openWhatsNew(null)} />;
 }
 
-/** WhatsNewButton stands in the Version card and opens the list of changes.
- *  It counts what is still unseen, and its dot goes grey once nothing is. */
-/** ReleaseNotesButton opens the same window on the running version's notes. */
-export function ReleaseNotesButton() {
-  const { t } = useT();
-  return <Button label={t("whatsNew.notesTab")} labelKey="whatsNew.notesTab" glyph={<IconInfo />} onClick={() => openWhatsNew("notes")} />;
-}
-
+/**
+ * WhatsNewButton stands in the Version card and opens the window: on the list
+ * of changes while one is left unseen, on the release notes after that. It
+ * counts what is still unseen, and its dot goes grey once nothing is. A
+ * release without a list opens its notes.
+ */
 export function WhatsNewButton() {
   const { t } = useT();
   const { unseen } = useWhatsNew();
-  if (CHANGES.length === 0) return null;
+  if (CHANGES.length === 0) {
+    return <Button label={t("whatsNew.notesTab")} labelKey="whatsNew.notesTab" glyph={<IconInfo />} onClick={() => openWhatsNew("notes")} />;
+  }
   const left = unseen.length;
   return (
     <Button
@@ -181,7 +181,7 @@ export function WhatsNewButton() {
       labelKey={null}
       glyph={<i aria-hidden="true" className={`glim-new-dot glim-new-dot-still${left > 0 ? "" : " glim-new-dot-seen"}`} />}
       keepLabel
-      onClick={() => openWhatsNew("changes")}
+      onClick={() => openWhatsNew(left > 0 ? "changes" : "notes")}
     />
   );
 }

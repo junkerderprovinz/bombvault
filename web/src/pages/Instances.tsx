@@ -22,7 +22,7 @@ import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
 import { useLoudAnomalies } from "../lib/useAnomalies";
 import { ForgetKeyButton } from "./instances/ForgetKeyButton";
-import { Facts, Figure, InstanceCard } from "./instances/InstanceCard";
+import { Facts, Figure, InstanceCard, InstanceMark } from "./instances/InstanceCard";
 import { NetPicture, useNetHover } from "./instances/NetPicture";
 import { KeyDepositWindow } from "./instances/KeyDepositWindow";
 import { PeerDetails } from "./instances/PeerDetails";
@@ -188,6 +188,13 @@ function PeerCard({
       cardKey={instance.key}
       name={name}
       eyebrow={instance.app ? t("fleet.kindAndroid") : undefined}
+      mark={
+        instance.app ? (
+          <span data-new="instances-phones" className="flex">
+            <InstanceMark />
+          </span>
+        ) : undefined
+      }
       badges={badges}
       facts={
         <Facts

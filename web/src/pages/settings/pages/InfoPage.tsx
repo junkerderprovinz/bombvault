@@ -19,7 +19,7 @@ import { useT, type TranslationKey } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { AboutGive, GLIMSTONE_REPO, GLIMSTONE_VERSION, REPO, ReportButtons, releaseUrl } from "../AboutCard";
 import { Card, hueCounter } from "../shared";
-import { ReleaseNotesButton, WhatsNewButton } from "../WhatsNew";
+import { WhatsNewButton } from "../WhatsNew";
 
 const DOCS = "https://junkerderprovinz.github.io/bombvault/";
 
@@ -147,7 +147,7 @@ export function InfoPage() {
 
   return (
     <>
-      <Card title={t("about.version")} hint={t("tile.info.versionHint")} hueIndex={nextHue()} newId="settings-version">
+      <Card title={t("about.version")} hint={t("tile.info.versionHint")} hueIndex={nextHue()}>
         <Rows>
           <SettingRow label="BombVault">
             {versions?.bombvault ? <Version version={versions.bombvault} repo={REPO} /> : unknown}
@@ -163,8 +163,9 @@ export function InfoPage() {
           </SettingRow>
         </Rows>
         <div className="flex flex-wrap items-end justify-end gap-2">
-          <ReleaseNotesButton />
-          <WhatsNewButton />
+          <span data-new="settings-version" className="flex">
+            <WhatsNewButton />
+          </span>
           <UpdateButton />
         </div>
       </Card>
@@ -185,6 +186,7 @@ export function InfoPage() {
             ]}
             mark={<BrandMark svg={MANUAL_SVG} />}
             markClass="glim-docs-mark"
+            newId="settings-manual"
           />
           {/* The file goes with an issue on GitHub, so it lights up beside it. */}
           <ReadmeButton

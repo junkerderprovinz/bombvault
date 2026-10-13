@@ -63,18 +63,23 @@ afterEach(() => {
 });
 
 describe("the New button", () => {
-  it("counts what is left and opens the list in a window", async () => {
+  const selected = () => screen.getByRole("tab", { selected: true }).textContent ?? "";
+
+  it("counts what is left and opens the window on the list", async () => {
     markSeen(["overview-head"]);
     await renderButton();
     await press(screen.getByRole("button", { name: `${en["whatsNew.title"]} · ${CHANGES.length - 1}` }));
     const window = screen.getByRole("dialog", { name: en["whatsNew.windowTitle"].replace("{version}", WHATS_NEW_RELEASE) });
+    expect(selected()).toContain(en["whatsNew.changesTab"]);
     expect(window.querySelectorAll("[data-change]")).toHaveLength(CHANGES.length);
   });
 
-  it("drops the count once everything was seen", async () => {
+  it("drops the count once everything was seen, and opens the release notes", async () => {
     markSeen(CHANGES.map((change) => change.id));
     await renderButton();
-    expect(screen.getByRole("button", { name: en["whatsNew.title"] })).toBeTruthy();
+    await press(screen.getByRole("button", { name: en["whatsNew.title"] }));
+    expect(selected()).toBe(en["whatsNew.notesTab"]);
+    expect(await screen.findByText("One list.")).toBeTruthy();
   });
 });
 

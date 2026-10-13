@@ -4,10 +4,13 @@ import type { OffsiteDomain, StorageLocation } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
 import { setFlowView, useFlowView, type FlowView } from "../../lib/flowView";
 import { useT, type TranslationKey } from "../../lib/i18n";
+import type { PlacedEntry } from "../../lib/ownChoice";
+import { isPlacementDomain } from "../../lib/placement";
 import type { FlowCounts, FlowLine, FlowRow } from "../../lib/storageFlow";
 import { DOMAIN_LABEL, locationRoute } from "../../lib/storageLocations";
 import { Card } from "../../pages/settings/shared";
 import { Selector } from "../Selector";
+import { Differs } from "./Differs";
 import { FlowPicture } from "./FlowPicture";
 import { LocationMark } from "./LocationMark";
 import { PausedDefault } from "./PausedDefault";
@@ -38,8 +41,11 @@ function Counts({ counts }: { counts: FlowCounts }) {
   );
 }
 
-function OwnRules({ row }: { row: FlowRow }) {
+/** What a section does other than its default: the storage locations with
+ *  rules of its own, and the entries that back up somewhere else. */
+function OwnRules({ row, own }: { row: FlowRow; own: PlacedEntry[] }) {
   const { t } = useT();
+  const { domain } = row;
   return (
     <>
       {row.ownRules.map((location) => (
@@ -51,12 +57,27 @@ function OwnRules({ row }: { row: FlowRow }) {
           {t("storage.flow.ownRules").replace("{name}", () => location.name)}
         </Link>
       ))}
+      {isPlacementDomain(domain) && <Differs domain={domain} entries={differing(own, row)} />}
     </>
   );
 }
 
+function differing(own: PlacedEntry[], row: FlowRow): PlacedEntry[] {
+  return own.filter((entry) => entry.item.domain === row.domain);
+}
+
 /** The same lines as plain switches: a row of buttons per section. */
-function FlowSwitches({ rows, busy, onToggle }: { rows: FlowRow[]; busy: boolean; onToggle: (line: FlowLine) => void }) {
+function FlowSwitches({
+  rows,
+  own,
+  busy,
+  onToggle,
+}: {
+  rows: FlowRow[];
+  own: PlacedEntry[];
+  busy: boolean;
+  onToggle: (line: FlowLine) => void;
+}) {
   const { t } = useT();
   return (
     <div className="flex flex-col divide-y divide-carbon-border/60">
@@ -71,7 +92,7 @@ function FlowSwitches({ rows, busy, onToggle }: { rows: FlowRow[]; busy: boolean
               </span>
               <span className="flex flex-wrap items-baseline gap-x-2 text-xs text-carbon-textMuted">
                 <Counts counts={row.counts} />
-                <OwnRules row={row} />
+                <OwnRules row={row} own={own} />
               </span>
               {row.unreadable && <span className="text-xs text-statusWarn">{t("placement.unreadable")}</span>}
             </div>
@@ -112,15 +133,18 @@ function score(counts: FlowCounts): number {
 /**
  * FlowCard shows where each section is backed up and switches it: as a
  * picture whose lines are the switches, or as rows of buttons. The choice
- * between the two is remembered.
+ * between the two is remembered. `own` holds the entries that back up
+ * somewhere other than their section's default.
  */
 export function FlowCard({
   locations,
   defaults,
+  own,
   hueIndex,
 }: {
   locations: StorageLocation[];
   defaults: PlacementDefaults;
+  own: PlacedEntry[];
   hueIndex: number;
 }) {
   const { t } = useT();
@@ -131,12 +155,14 @@ export function FlowCard({
 
   const best = rows.reduce<FlowRow | undefined>((top, row) => (top && score(top.counts) >= score(row.counts) ? top : row), undefined);
   const counted = rows.find((row) => row.domain === pointed) ?? best;
-  const withRules = rows.filter((row) => row.ownRules.length > 0);
+  const withRules = rows.filter((row) => row.ownRules.length > 0 || differing(own, row).length > 0);
   const unreadable = rows.filter((row) => row.unreadable);
   const graph = view === "graph";
 
   return (
-    <Card title={t("storage.flow.title")} hint={t("storage.flow.hint")} hueIndex={hueIndex} newId="storage-flow">
+    // The dot goes to the entries that differ where there are any, since a
+    // page shows it on the first element that carries the change.
+    <Card title={t("storage.flow.title")} hint={t("storage.flow.hint")} hueIndex={hueIndex} newId={own.length > 0 ? undefined : "storage-flow"}>
       {flow.dialogs}
       <div className={`flex justify-end ${graph ? "md:absolute md:end-5 md:top-5 md:z-1" : ""}`}>
         <Selector
@@ -170,7 +196,7 @@ export function FlowCard({
                   {withRules.map((row) => (
                     <span key={row.domain} className="inline-flex flex-wrap gap-x-1.5">
                       {t(DOMAIN_LABEL[row.domain])}:
-                      <OwnRules row={row} />
+                      <OwnRules row={row} own={own} />
                     </span>
                   ))}
                 </p>
@@ -182,7 +208,7 @@ export function FlowCard({
               ))}
             </>
           ) : (
-            <FlowSwitches rows={rows} busy={flow.busy} onToggle={flow.toggle} />
+            <FlowSwitches rows={rows} own={own} busy={flow.busy} onToggle={flow.toggle} />
           )}
           {flow.paused.map((domain) => (
             <PausedDefault key={domain} domain={domain} />

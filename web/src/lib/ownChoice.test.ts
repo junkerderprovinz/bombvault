@@ -1,9 +1,9 @@
 // Which entries count as backed up somewhere other than their section, and
-// what brings one back.
+// how the places they use are named.
 import { describe, expect, it } from "vitest";
 import type { DefaultRow, PlacementOptions, PlacementView } from "./api";
 import { en, type TranslationKey } from "./i18n";
-import { followChange, hasOwnChoice, placeNames } from "./ownChoice";
+import { hasOwnChoice, placeNames } from "./ownChoice";
 
 const t = (key: TranslationKey) => en[key];
 
@@ -68,23 +68,6 @@ describe("hasOwnChoice", () => {
 
   it("is false for an entry whose placement could not be read", () => {
     expect(hasOwnChoice(view({ unreadable: true, copiesFollow: false }), ROW)).toBe(false);
-  });
-});
-
-describe("followChange", () => {
-  it("gives the place and the copies back while the entry has no backup", () => {
-    expect(followChange(view({ homeFollows: false, copiesFollow: false }))).toEqual({
-      home: { follow: true },
-      copies: { follow: true },
-    });
-  });
-
-  it("gives only the copies back once the first backup fixed the place", () => {
-    expect(followChange(view({ locked: true, homeFollows: false, copiesFollow: false }))).toEqual({ copies: { follow: true } });
-  });
-
-  it("has nothing to offer an entry that is fixed elsewhere and already copies like its section", () => {
-    expect(followChange(view({ locked: true, homeFollows: false, repo: "archive", repoKind: "local" }))).toBeNull();
   });
 });
 

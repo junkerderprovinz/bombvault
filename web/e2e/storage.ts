@@ -297,8 +297,8 @@ export const IMPACT = {
   skip: [],
 };
 
-/** A container that copies by a rule of its own, so the page lists one entry
- *  under Own choice. */
+/** A container that copies by a rule of its own, so the page counts one entry
+ *  that differs. */
 export const OWN_ENTRY = "jellyfin";
 
 const CONTAINERS = [

@@ -88,6 +88,13 @@ export const CHANGES: Change[] = [
     way: ["/settings", "/settings/instances", "/instances"],
     text: "whatsNew.instancesPair",
   },
+  {
+    id: "instances-phones",
+    page: "/instances",
+    where: ["instances.title"],
+    way: ["/settings", "/settings/instances", "/instances"],
+    text: "whatsNew.instancesPhones",
+  },
 
   { id: "settings-tiles", page: "/settings/:page?", go: "/settings", where: ["nav.settings"], way: ["/settings"], text: "whatsNew.settingsTiles" },
   {
@@ -117,5 +124,12 @@ export const CHANGES: Change[] = [
     where: ["nav.settings", "activityLog.glyphInfo"],
     way: ["/settings", "/settings/info"],
     text: "whatsNew.settingsVersion",
+  },
+  {
+    id: "settings-manual",
+    page: "/settings/info",
+    where: ["nav.settings", "activityLog.glyphInfo"],
+    way: ["/settings", "/settings/info"],
+    text: "whatsNew.settingsManual",
   },
 ];

@@ -70,7 +70,7 @@ for (const width of [320, 390]) {
     await settle(page);
     await expect(page.getByRole("listitem").filter({ has: page.getByRole("link", { name: STORAGE_BOX.name, exact: true }) })).toHaveCount(1);
     await expect(page.getByRole("switch", { name: `Container nach ${STORAGE_BOX.name}` })).toBeAttached();
-    await expect(page.getByRole("link", { name: OWN_ENTRY })).toBeVisible();
+    await expect(page.getByRole("link", { name: "1 Eintrag weicht ab" })).toBeVisible();
     await expectNothingPansOrClips(page);
   });
 
@@ -223,27 +223,16 @@ test.describe("on the desktop", () => {
     await expect(page.getByRole("group", { name: "Container" }).getByRole("button", { name: STORAGE_BOX.name })).toHaveAttribute("aria-pressed", "true");
   });
 
-  test("an entry with its own choice goes back to its section's default after a question", async ({ page }) => {
-    const staged = await stageStorage(page, 1280);
+  test("a section counts the entries that back up elsewhere and leads to their settings", async ({ page }) => {
+    await stageStorage(page, 1280);
     await page.goto("/storage");
-    const row = page.getByRole("listitem").filter({ has: page.getByRole("link", { name: OWN_ENTRY }) });
-    await expect(row).toContainText(`Sichert nach Lokal · Vorgabe: Lokal und ${STORAGE_BOX.name}`);
-    await expect(page.getByRole("link", { name: "gitea" })).toHaveCount(0);
-    await expect(row.getByRole("link", { name: OWN_ENTRY })).toHaveAttribute("href", `/backups/container/${OWN_ENTRY}`);
+    const hint = page.getByRole("link", { name: "1 Eintrag weicht ab" });
+    await expect(hint).toBeVisible();
+    await expect(hint).toHaveAttribute("href", `/backups/container/${OWN_ENTRY}?tab=settings`);
+    await expect(page.getByText("Eigene Wahl")).toHaveCount(0);
 
-    await row.getByRole("button", { name: "Vorgabe übernehmen" }).click();
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toContainText(`Neue Sicherungen gehen dann nach Lokal und ${STORAGE_BOX.name}`);
-    await expect(dialog).toContainText(`${STORAGE_BOX.name}: etwa 12`);
-    expect(staged.writes).toEqual([]);
-    await dialog.getByRole("button", { name: "Vorgabe übernehmen" }).click();
-
-    await expect.poll(() => staged.writes.length).toBe(1);
-    expect(staged.writes[0]).toMatchObject({
-      method: "PATCH",
-      path: `/api/containers/${OWN_ENTRY}`,
-      body: { home: { follow: true }, copies: { follow: true } },
-    });
+    await page.getByRole("radio", { name: "Schalter" }).click();
+    await expect(page.getByRole("link", { name: "1 Eintrag weicht ab" })).toBeVisible();
   });
 
   test("a storage location is added in one window, from the provider to the sections that use it", async ({ page }) => {

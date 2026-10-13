@@ -182,7 +182,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         "storage.keep.title",
         "storage.rules.title",
         "storage.flow.title",
-        "storage.choice.title",
         "storage.streaming.title",
         "streaming.toggle",
         "streaming.servers",
