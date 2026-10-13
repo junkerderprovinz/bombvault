@@ -47,7 +47,7 @@ describe("placement calls", () => {
 
   it("puts a default together with the numbers it was shown", async () => {
     const { putPlacementDefault } = await import("./api");
-    const expect_ = { dropped: [], added: [], openTakeHome: 2, home: "", skip: [] };
+    const expect_ = { dropped: [], added: [], openTakeHome: 2, follow: 0, home: "", skip: [] };
     await putPlacementDefault("files", { skip: ["*"] }, expect_);
     expect(sent(0)).toEqual({ url: "/api/placement/default/files", method: "PUT", body: { skip: ["*"], expect: expect_ } });
   });

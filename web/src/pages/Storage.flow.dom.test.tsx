@@ -432,6 +432,22 @@ describe("entries that differ", () => {
     expect(within(window).queryByRole("link", { name: "gitea" })).toBeNull();
   });
 
+  it("count only the entries with a choice of their own once the section went elsewhere", async () => {
+    const moved = defaultRow({ home: "repo-direct", homeKind: "direct", homeTarget: "t-b2" });
+    fake.reply("listPlacementDefaults", { ok: true, defaults: [moved, defaultRow({ domain: "vms" }), defaultRow({ domain: "files" })] });
+    const followed = placementView({ repo: "repo-direct", repoKind: "direct", homeFollows: true, segment: "offsite-only" });
+    const kept = placementView({ repo: "repo-nas", repoKind: "local", repoLabel: "NAS Keller" });
+    listContainers.mockResolvedValue({
+      ok: true,
+      containers: [container("gitea", followed), container("immich", followed), container("jellyfin", own), container("plex", kept)],
+    });
+    await renderPage();
+
+    await click(await screen.findByRole("button", { name: "2 entries differ" }));
+    const window = await screen.findByRole("dialog", { name: "Containers: 2 entries differ" });
+    expect(within(window).getAllByRole("link").map((a) => a.textContent)).toEqual(["jellyfin", "plex"]);
+  });
+
   it("show in the switches as well", async () => {
     listContainers.mockResolvedValue({ ok: true, containers: [container("jellyfin", own)] });
     await renderPage();

@@ -110,7 +110,7 @@ export function targetImpact(over?: Partial<TargetImpact>): TargetImpact {
 }
 
 export function defaultImpact(over?: Partial<DefaultImpact>): DefaultImpact {
-  return { dropped: [], added: [], openTakeHome: 0, home: "", skip: [], ...over };
+  return { dropped: [], added: [], openTakeHome: 0, follow: 0, home: "", skip: [], ...over };
 }
 
 export function targetPreview(over?: Partial<TargetPreview>): TargetPreview {

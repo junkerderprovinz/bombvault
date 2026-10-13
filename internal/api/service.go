@@ -1456,11 +1456,13 @@ func (s *Service) containerRepoForName(settings store.Settings, name, source str
 		return s.repoFor(settings, "containers", source)
 	}
 	tg, err := s.store.GetTargetByContainer(name)
-	if errors.Is(err, sql.ErrNoRows) {
-		return s.containersRepoPath(settings)
-	}
-	if err != nil {
+	switch {
+	case err != nil && !errors.Is(err, sql.ErrNoRows):
 		return "", fmt.Errorf("read this container's repository: %w", err)
+	case isEarlierSource(source):
+		return s.earlierRepo(settings, "containers", tg.ID, source)
+	case err != nil:
+		return s.containersRepoPath(settings)
 	}
 	return s.containerRepoPath(settings, tg)
 }
@@ -1472,11 +1474,13 @@ func (s *Service) vmRepoForName(settings store.Settings, name, source string) (s
 		return s.repoFor(settings, "vms", source)
 	}
 	vm, err := s.store.GetVMTargetByName(name)
-	if errors.Is(err, sql.ErrNoRows) {
-		return s.vmsRepoPath(settings)
-	}
-	if err != nil {
+	switch {
+	case err != nil && !errors.Is(err, sql.ErrNoRows):
 		return "", fmt.Errorf("read this VM's repository: %w", err)
+	case isEarlierSource(source):
+		return s.earlierRepo(settings, "vms", vm.ID, source)
+	case err != nil:
+		return s.vmsRepoPath(settings)
 	}
 	return s.vmRepoPath(settings, vm)
 }
@@ -1492,8 +1496,11 @@ func (s *Service) vmRepoPath(settings store.Settings, vm store.VMTarget) (string
 // off-site copy is configured per domain and a per-set override says nothing
 // about where its replica lives. Only the primary is per set.
 func (s *Service) fileSetRepoFor(settings store.Settings, set store.FileSet, source string) (string, error) {
-	if isOffsiteSource(source) {
+	switch {
+	case isOffsiteSource(source):
 		return s.repoFor(settings, "files", source)
+	case isEarlierSource(source):
+		return s.earlierRepo(settings, "files", set.ID, source)
 	}
 	return s.fileSetRepoPath(settings, set)
 }
@@ -2196,8 +2203,8 @@ func domainIdentityTags(tags []string, domain string) []string {
 // A named repository can hold several domains (#204), so it asks for the
 // holds of the whole installation and returns every tag it left alone. The
 // repo-wide pass cannot spare a held item, so it refuses while anything is
-// held.
-func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo, domain string, p restic.RetentionPolicy, mode restic.Mode) ([]string, error) {
+// held. The identities in spared are left as they are.
+func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo, domain string, p restic.RetentionPolicy, mode restic.Mode, spared ...string) ([]string, error) {
 	if !p.Any() {
 		return nil, nil
 	}
@@ -2222,7 +2229,8 @@ func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo, domain st
 		}
 		return nil, s.forgetWithLockHeal(ctx, repo, p, mode, nil, true)
 	}
-	return s.applyRetentionToTags(ctx, repo, p, mode, domainIdentityTags(tags, domain), snaps, held)
+	kept := slices.DeleteFunc(domainIdentityTags(tags, domain), func(t string) bool { return slices.Contains(spared, t) })
+	return s.applyRetentionToTags(ctx, repo, p, mode, kept, snaps, held)
 }
 
 // applyRetentionToTags forgets per identity and prunes once, for a caller that
@@ -9646,8 +9654,8 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 	if !validResourceName(name) {
 		return filesRestorePlan{}, errors.New("invalid container name")
 	}
-	if source != "local" && !isOffsiteSource(source) {
-		return filesRestorePlan{}, errors.New("invalid source (must be local or offsite)")
+	if !validItemSource(source) {
+		return filesRestorePlan{}, errInvalidItemSource
 	}
 	if !backup.ValidSnapshotID(snapshotID) {
 		return filesRestorePlan{}, backup.ErrInvalidSnapshotID
@@ -10008,8 +10016,8 @@ func (s *Service) prepareRestoreToPath(ctx context.Context, name, source, snapsh
 	if !validResourceName(name) {
 		return toPathRestorePlan{}, errors.New("invalid container name")
 	}
-	if source != "local" && !isOffsiteSource(source) {
-		return toPathRestorePlan{}, errors.New("invalid source (must be local or offsite)")
+	if !validItemSource(source) {
+		return toPathRestorePlan{}, errInvalidItemSource
 	}
 	if !backup.ValidSnapshotID(snapshotID) {
 		return toPathRestorePlan{}, backup.ErrInvalidSnapshotID
@@ -10335,6 +10343,9 @@ func sanitizeTags(in []string) ([]string, error) {
 // old name falls to whichever entry uses that name next. The user asked for
 // these backups to go, so that is the answer they want.
 func (s *Service) DeleteBackups(ctx context.Context, name, source string) error {
+	if isEarlierSource(source) {
+		return errEarlierDeleteAll
+	}
 	if isOffsiteSource(source) {
 		if err := refuseDeleteWithPartialIdentity(name, s.containerIdentity(name)); err != nil {
 			return err
@@ -10458,6 +10469,9 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 // It is serialised against VM backups by the domain lock and clears stale locks
 // first, so a leftover lock cannot fail it.
 func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) error {
+	if isEarlierSource(source) {
+		return errEarlierDeleteAll
+	}
 	if isOffsiteSource(source) {
 		if err := refuseDeleteWithPartialIdentity(name, s.vmIdentity(name)); err != nil {
 			return err
@@ -14519,8 +14533,8 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	if err != nil {
 		return fileSetRestorePlan{}, errFileSetNotFound
 	}
-	if source != "local" && !isOffsiteSource(source) {
-		return fileSetRestorePlan{}, errors.New("invalid source (must be local or offsite)")
+	if !validItemSource(source) {
+		return fileSetRestorePlan{}, errInvalidItemSource
 	}
 	if !backup.ValidSnapshotID(snapshotID) {
 		return fileSetRestorePlan{}, backup.ErrInvalidSnapshotID
@@ -14769,8 +14783,8 @@ func (s *Service) prepareRestoreFileSetFiles(ctx context.Context, id, source, sn
 	if err != nil {
 		return fileSetFilesRestorePlan{}, errFileSetNotFound
 	}
-	if source != "local" && !isOffsiteSource(source) {
-		return fileSetFilesRestorePlan{}, errors.New("invalid source (must be local or offsite)")
+	if !validItemSource(source) {
+		return fileSetFilesRestorePlan{}, errInvalidItemSource
 	}
 	// Cheap guards BEFORE the snapshot listing: a malformed id or an empty
 	// selection must fail fast without a (possibly remote, slow) restic snapshots
@@ -14990,6 +15004,9 @@ func (s *Service) StartRestoreFileSetFiles(ctx context.Context, id, source, snap
 // it also forgets the set; from an off-site source it deletes at that target only
 // and the set stays.
 func (s *Service) DeleteBackupsFileSet(ctx context.Context, id, source string) error {
+	if isEarlierSource(source) {
+		return errEarlierDeleteAll
+	}
 	// Loaded first for its repository override (#204): this deletes the
 	// snapshots of ONE set, and they live wherever that set backs up. Reading
 	// the domain repository would report "no backups to delete yet" for a set
@@ -17259,12 +17276,16 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)
 		s.unlockStale(ctx, r.Loc, rMode)
 		policy := restic.RetentionPolicy{}
+		var spared []string
 		switch {
 		case afterBulk:
 		case isOffsiteSource(source):
 			policy = s.retentionPolicyForSource(settings, domain, source)
 		default:
 			policy = s.retentionPolicyForRef(settings, domain, r)
+			if spared, err = s.leftBehind(settings, domain, r); err != nil {
+				return paused, err
+			}
 		}
 		if policy.Any() {
 			// Per-identity: a tag-scoped, ungrouped forget per item of this
@@ -17272,7 +17293,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 			// grouped forget leaves behind (issue #91). Another domain's items in a shared
 			// repository age by that domain's rules, on its own prune.
 			var repoPaused []string
-			repoPaused, err = s.applyRetentionPerIdentity(ctx, r.Loc, domain, policy, rMode)
+			repoPaused, err = s.applyRetentionPerIdentity(ctx, r.Loc, domain, policy, rMode, spared...)
 			paused = append(paused, repoPaused...)
 			if err != nil {
 				err = fmt.Errorf("pruning %s: %w", s.refName(r), err)

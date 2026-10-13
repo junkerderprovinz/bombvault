@@ -11,7 +11,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -42,7 +41,8 @@ type defaultRow struct {
 type defaultImpact struct {
 	Dropped      []targetImpact `json:"dropped"`
 	Added        []targetImpact `json:"added"`
-	OpenTakeHome int            `json:"openTakeHome"` // open items that take the new home at their first backup
+	OpenTakeHome int            `json:"openTakeHome"` // open items that take the new home at their next backup
+	Follow       int            `json:"follow"`       // items at the old home that move along with the default
 	Home         string         `json:"home"`
 	Skip         []string       `json:"skip"`
 }
@@ -68,7 +68,7 @@ func (d defaultImpact) sameCounts(o defaultImpact) bool {
 			return x.TargetID == y.TargetID && x.Items == y.Items
 		})
 	}
-	return d.OpenTakeHome == o.OpenTakeHome && same(d.Dropped, o.Dropped) && same(d.Added, o.Added) &&
+	return d.OpenTakeHome == o.OpenTakeHome && d.Follow == o.Follow && same(d.Dropped, o.Dropped) && same(d.Added, o.Added) &&
 		d.Home == o.Home && slices.Equal(d.Skip, o.Skip)
 }
 
@@ -250,10 +250,14 @@ func (s *Service) defaultImpactFor(ctx context.Context, domain string, change de
 	if err != nil {
 		return impact, err
 	}
-	if change.Home != nil && strings.TrimSpace(*change.Home) != p.State.Default.Home {
-		if impact.OpenTakeHome, err = s.openTakers(ctx, settings, domain, items); err != nil {
-			return impact, err
+	moving := change.Home != nil && strings.TrimSpace(*change.Home) != p.State.Default.Home
+	if moving {
+		for _, it := range items {
+			if it.home.Choice == store.RepoOpen {
+				impact.OpenTakeHome++
+			}
 		}
+		impact.Follow = len(followers(p, items))
 	}
 	if change.Skip == nil {
 		return impact, nil
@@ -271,13 +275,18 @@ func (s *Service) defaultImpactFor(ctx context.Context, domain string, change de
 		return impact, err
 	}
 	next := p.withDefaultSkip(*change.Skip)
-	// An open item moving into a target's direct repository lands there
-	// itself, so that target does not lose it.
+	// An item moving into a target's direct repository lands there itself, so
+	// that target does not lose it.
 	landsAt := map[string]string{}
 	if change.Home != nil {
 		if own := named[strings.TrimSpace(*change.Home)].CompanionOf; own != "" {
 			for _, it := range items {
 				if it.home.Choice == store.RepoOpen {
+					landsAt[it.identity] = own
+				}
+			}
+			if moving {
+				for _, it := range followers(p, items) {
 					landsAt[it.identity] = own
 				}
 			}
@@ -368,43 +377,39 @@ func (s *Service) copySubjects(settings store.Settings, p placementRead, named m
 	return append(out, slices.Sorted(maps.Keys(stacks))...)
 }
 
-// openTakers counts the open items that take the default's location at their
-// first backup: those without snapshots of their name on a local domain path.
-// A remote domain path is not listed here, so every open item counts there.
-func (s *Service) openTakers(ctx context.Context, settings store.Settings, domain string, items []domainItem) (int, error) {
-	var open []domainItem
+// followers are the items a new home of the default takes along at once: the
+// ones without a rule of their own that are kept at the home the default
+// names now. An open item follows by itself, and one kept anywhere else or
+// with a rule of its own made a choice of its own and keeps it.
+func followers(p placementRead, items []domainItem) []domainItem {
+	var out []domainItem
 	for _, it := range items {
-		if it.home.Choice == store.RepoOpen {
-			open = append(open, it)
+		if _, own := p.State.Rules[it.identity]; own || it.home.Choice == store.RepoOpen {
+			continue
+		}
+		if it.home.Repo == p.State.Default.Home {
+			out = append(out, it)
 		}
 	}
-	if len(open) == 0 {
-		return 0, nil
+	return out
+}
+
+// canFollow refuses a new home a folder set among the followers cannot take:
+// backups of another folder under its name there would become its own.
+func (s *Service) canFollow(ctx context.Context, domain, home string, moving []domainItem) error {
+	if domain != "files" || home == store.HomeNowhere {
+		return nil
 	}
-	repo, err := s.repoFor(settings, domain, "local")
-	if err != nil {
-		return 0, err
-	}
-	if restic.IsRemoteRepo(repo) || localRepoMissing(repo) {
-		return len(open), nil
-	}
-	snaps, err := s.listSnapshots(ctx, repo, s.primaryModeFor(settings, domain, repo))
-	if err != nil {
-		return len(open), nil //nolint:nilerr // an unreadable domain path decides nothing, so every open item may take the home
-	}
-	held := map[string]bool{}
-	for _, sn := range snaps {
-		for _, tag := range sn.Tags {
-			held[tag] = true
+	for _, it := range moving {
+		set, err := s.store.GetFileSet(it.ref.Key)
+		if err != nil {
+			return err
+		}
+		if err := s.fileSetNameAdoptable(ctx, set.Name, home, set.Path); err != nil {
+			return err
 		}
 	}
-	n := 0
-	for _, it := range open {
-		if !held[it.identity] {
-			n++
-		}
-	}
-	return n, nil
+	return nil
 }
 
 func impactFor(m map[string]*targetImpact, t store.OffsiteTarget) *targetImpact {
@@ -459,19 +464,37 @@ func (s *Service) putDefault(ctx context.Context, domain string, change defaultC
 	if err != nil {
 		return defaultRow{}, impact, err
 	}
-	current, _, err := s.store.PlacementDefaultFor(domain)
+	p, err := s.readPlacement(settings, domain)
 	if err != nil {
 		return defaultRow{}, impact, err
 	}
-	home, skip := current.Home, current.Skip
+	home, skip := p.State.Default.Home, p.State.Default.Skip
 	if change.Home != nil {
 		home = strings.TrimSpace(*change.Home)
 	}
 	if change.Skip != nil && !s.setsOnlyHome(settings, domain, named, change) {
 		skip = *change.Skip
 	}
+	var moving []domainItem
+	if home != p.State.Default.Home {
+		items, err := s.domainItems(domain)
+		if err != nil {
+			return defaultRow{}, impact, err
+		}
+		moving = followers(p, items)
+		if err := s.canFollow(ctx, domain, home, moving); err != nil {
+			return defaultRow{}, impact, err
+		}
+	}
 	if _, err := s.store.PutPlacementDefault(domain, home, skip); err != nil {
 		return defaultRow{}, impact, err
+	}
+	// A follower whose row changed since it was read made a choice of its own
+	// meanwhile and keeps it.
+	for _, it := range moving {
+		if _, err := s.store.FollowSection(it.ref, it.home); err != nil {
+			return defaultRow{}, impact, err
+		}
 	}
 	impact.Home, impact.Skip = home, append([]string{}, skip...)
 	for _, t := range impact.Dropped {

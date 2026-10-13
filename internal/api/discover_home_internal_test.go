@@ -47,7 +47,7 @@ func TestDiscoverWritesTheFoundLocationChosen(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if repoID, _, err := f.svc.settleHome(context.Background(), settings, item); err != nil || repoID != nas.ID {
+	if repoID, _, err := f.svc.settleHome(settings, item); err != nil || repoID != nas.ID {
 		t.Fatalf("after a default on the domain path the item goes to %q, %v, want NAS", repoID, err)
 	}
 	if err := f.svc.DeleteBackups(context.Background(), "nginx", ""); err != nil {
@@ -136,6 +136,34 @@ func TestDiscoverChoosesAnOpenRowWithHistoryWhereItIs(t *testing.T) {
 	}
 	if got := f.home(store.ItemRef{Domain: "vms", Key: "win11"}); got.Repo != "" || got.Choice != store.RepoChosen {
 		t.Fatalf("home = %+v, want the domain path chosen", got)
+	}
+}
+
+func TestDiscoverLeavesAnOpenRowThisDatabaseBackedUpFollowingItsSection(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.openVM("win11")
+	vm, err := f.st.GetVMTargetByName("win11")
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.backupRun(vm.ID, 100)
+	f.hold(f.domainPath("vms"), snap("aaaa0001", 100, "vm:win11"))
+	dir := filepath.Join(filepath.FromSlash(f.domainPath("vms")), "vm-def")
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	enc, err := secret.Encrypt(f.svc.cfg.AppKey, []byte(`{"method":"graceful"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "win11.def"), enc, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.svc.DiscoverVMs(context.Background(), false); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.home(store.ItemRef{Domain: "vms", Key: "win11"}); got.Choice != store.RepoOpen {
+		t.Fatalf("home = %+v, want it still following its section", got)
 	}
 }
 

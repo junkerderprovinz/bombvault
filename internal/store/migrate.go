@@ -3162,6 +3162,21 @@ UNION SELECT member_id FROM pull_sources WHERE member_id <> '';`,
   PRIMARY KEY (domain, place)
 );`,
 	},
+	{
+		// The places an item's backups were written to before it followed its
+		// section somewhere else, so the backups there stay listed and
+		// restorable. An install that never moves an item has no rows.
+		version:          formerHomesMigration,
+		name:             "former_homes",
+		alreadySatisfied: tablePresent("former_homes"),
+		sql: `CREATE TABLE IF NOT EXISTS former_homes (
+  domain  TEXT    NOT NULL,
+  item_id TEXT    NOT NULL,
+  repo    TEXT    NOT NULL,
+  left_at INTEGER NOT NULL,
+  PRIMARY KEY (domain, item_id, repo)
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3305,6 +3320,10 @@ const endSessionsMigration = 359
 // placesOffMigration numbers the places a section was switched off at by
 // hand, 360.
 const placesOffMigration = 360
+
+// formerHomesMigration numbers the places an item left when it followed its
+// section, 361.
+const formerHomesMigration = 361
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

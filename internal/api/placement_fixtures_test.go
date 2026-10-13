@@ -552,6 +552,8 @@ type placementEngine struct {
 	onCopy, onForget func()
 	// onCheck, when set, runs as a Check starts.
 	onCheck func()
+	// onUnlock, when set, runs as a stale-lock clear starts.
+	onUnlock func()
 	// copyDrops are the source snapshot ids a Copy leaves out without a word.
 	copyDrops map[string]bool
 	// signIns lists the environment each Init, Snapshots, Check and Copy ran
@@ -741,7 +743,12 @@ func (e *placementEngine) ForgetPreview(_ context.Context, repo string, _ restic
 	return []restic.ForgetGroup{{Tags: []string{tag}, Keep: snapshotsTagged(e.snaps[filepath.ToSlash(repo)], tag)}}, nil
 }
 
-func (e *placementEngine) Unlock(context.Context, string, bool, restic.Mode) error { return nil }
+func (e *placementEngine) Unlock(context.Context, string, bool, restic.Mode) error {
+	if e.onUnlock != nil {
+		e.onUnlock()
+	}
+	return nil
+}
 
 // DiffStream reports the changes set for the pair and counts each as a changed
 // file of ten new bytes.

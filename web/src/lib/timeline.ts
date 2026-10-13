@@ -44,5 +44,5 @@ export function newestId(mark: TimelineMark): string {
 }
 
 export function sourceOfPlace(place: string): RepoSource {
-  return place === "local" ? "local" : (place as `offsite:${string}`);
+  return place as RepoSource;
 }

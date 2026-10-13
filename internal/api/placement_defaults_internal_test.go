@@ -158,16 +158,18 @@ func TestAnOffsiteOnlyHomeLeavesTheDefaultSkipAlone(t *testing.T) {
 // must leave the skip list untouched the same way a remote named repository
 // does.
 // A default on a direct repository still decides the copies: of the items it
-// sends there, to every target but that one, and of the items that stay put.
+// sends there, to every target but that one, and of the items kept on a
+// repository of their own.
 func TestADefaultOnADirectRepositoryTakesItsSkip(t *testing.T) {
 	f := newPlacementFixture(t)
 	repo := f.direct(f.target("containers", "NAS", "backups/nas-containers"))
+	archive := f.namedRepo("Archive", "archive")
 	f.setDefault("containers", "")
-	f.container("web", "")
+	f.container("web", archive.ID)
 	body := map[string]any{"home": repo.ID, "skip": []string{store.SkipAll}}
 	impact := f.do(http.MethodPost, "/api/placement/default/containers/preview", body)["impact"].(map[string]any)
 	if len(impact["dropped"].([]any)) != 1 {
-		t.Fatalf("impact = %v, want NAS to lose web, which stays on the domain path", impact)
+		t.Fatalf("impact = %v, want NAS to lose web, which stays on its own repository", impact)
 	}
 	body["expect"] = impact
 	if res := f.do(http.MethodPut, "/api/placement/default/containers", body); res["ok"] != true {
@@ -322,15 +324,18 @@ func TestAPutWithoutAnExpectBlockIsRefusedWhenSomethingWould(t *testing.T) {
 	}
 }
 
-func TestOpenItemsWithoutHistoryTakeTheNewHome(t *testing.T) {
+func TestEveryOpenItemTakesTheNewHomeWhereverItsBackupsLie(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")
 	f.openContainer("fresh")
 	f.openContainer("returning")
 	f.hold(f.domainPath("containers"), snap("aaaa0001", 100, "container:returning"))
 	res := f.do(http.MethodPost, "/api/placement/default/containers/preview", map[string]any{"home": nas.ID})
-	if got := res["impact"].(map[string]any)["openTakeHome"]; got != float64(1) {
-		t.Fatalf("openTakeHome = %v, want 1", got)
+	if got := res["impact"].(map[string]any)["openTakeHome"]; got != float64(2) {
+		t.Fatalf("openTakeHome = %v, want 2", got)
+	}
+	if n := f.eng.lists[f.domainPath("containers")]; n != 0 {
+		t.Errorf("the domain path was listed %d times", n)
 	}
 }
 

@@ -25,6 +25,11 @@ describe("srcParam", () => {
     expect(srcParam(`offsite:${id}`, "&")).toBe(`&source=offsite%3A${id}`);
   });
 
+  it("carries an entry's earlier place, so its old backups are read where they lie", () => {
+    expect(srcParam("folder")).toBe("?source=folder");
+    expect(srcParam("repo:a1b2", "&")).toBe("&source=repo%3Aa1b2");
+  });
+
   it("ignores a source that merely starts with 'offsite' as a word", () => {
     expect(srcParam("offsitex")).toBe("");
     expect(srcParam("nonsense")).toBe("");
