@@ -32,6 +32,7 @@ import { ProgressBar } from "../ProgressBar";
 import { IconClose } from "../navGlyphs";
 import { SnapshotFileTree } from "../SnapshotFileTree";
 import { BottomSheet, type BottomSheetProps } from "./BottomSheet";
+import { SheetFoot } from "./SheetFoot";
 
 // RunDetailSheet; the run's details: a full-screen sheet on a phone and a
 // window over the page at desktop widths, with the same content in both.
@@ -137,16 +138,20 @@ function RunFrame({
       {...sheet}
       headerClose={false}
       footer={
-        <div className="flex flex-wrap items-center justify-end gap-2 py-3">
-          {actions}
-          <Button
-            label={t("common.close")}
-            labelKey="common.close"
-            glyph={<IconClose />}
-            tone={actions ? "neutral" : "accent"}
-            onClick={sheet.onClose}
-            className={TOUCH}
-          />
+        <div className={TOUCH}>
+          <SheetFoot
+            close={
+              <Button
+                label={t("common.close")}
+                labelKey="common.close"
+                glyph={<IconClose />}
+                tone={actions ? "neutral" : "accent"}
+                onClick={sheet.onClose}
+              />
+            }
+          >
+            {actions}
+          </SheetFoot>
         </div>
       }
     />

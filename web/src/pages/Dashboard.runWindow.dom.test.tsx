@@ -234,10 +234,12 @@ describe("the run window on a phone", () => {
     await renderPage();
 
     fireEvent.click(historyRow("plex"));
+    // Three actions and Close are one too many for a phone's foot, so two of
+    // them wait behind More.
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["nav.more"] }));
 
-    const sheet = within(screen.getByRole("dialog"));
     for (const key of ["recovery.foreignStepBrowse", "integrity.verify", "snapshots.restore"] as const) {
-      const row = sheet.getByRole("button", { name: en[key] });
+      const row = screen.getByRole("button", { name: en[key] });
       expect(row.className, key).toContain("glim-hue");
       expect(row.style.getPropertyValue("--item-hue"), key).not.toBe("");
     }
