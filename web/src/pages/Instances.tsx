@@ -21,6 +21,7 @@ import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
 import { useLoudAnomalies } from "../lib/useAnomalies";
+import { ForgetKeyButton } from "./instances/ForgetKeyButton";
 import { Facts, Figure, InstanceCard } from "./instances/InstanceCard";
 import { NetPicture, useNetHover } from "./instances/NetPicture";
 import { KeyDepositWindow } from "./instances/KeyDepositWindow";
@@ -217,6 +218,8 @@ function PeerCard({
           {paired && !instance.app && (
             <Button label={t("fleet.details")} labelKey="fleet.details" glyph={<IconInfo />} tone="neutral" onClick={onDetails} />
           )}
+          {/* A phone has no details window, so its card carries the button the window has for an instance. */}
+          {paired && instance.app && <ForgetKeyButton memberId={instance.memberId} />}
           {modules.fleet && peer && <RemoveInstanceButton peerId={peer.id} onRemoved={() => void state.reloadPeers()} />}
         </>
       }

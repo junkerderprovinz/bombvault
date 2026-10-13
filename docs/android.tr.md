@@ -48,6 +48,8 @@ Bunun anahtarı, **Ayarlar, Güvenlik** altındaki **Android uygulaması** kart�
 
 Telefon, gruptaki her sunucunun Örnekler sayfasında kendi kartını alır; kart Android uygulaması olarak işaretlenir ve telefona verdiğin adı taşır. Hiçbir şeyi yedeklemediği için karnesi yoktur ve **Kaldır** onu sayfadan çıkarır. Kelimeleri bilen bir telefon istediği zaman yeniden eşleşebilir; bu yüzden kaybolan bir telefon için **Ayarlar, Güvenlik** altındaki **Telefonlar grubun on iki kelimesiyle eşleşebilir** anahtarını kapat ya da her örnekte **Gruptan ayrıl** seçeneğini kullan ve onları yeni kelimelerle yeniden eşleştir.
 
+10.0.0 sürümünden önce eşleştirilmiş bir telefon, güncellemeden sonraki ilk ziyaretinde çağrılarını imzalamaya başlar ve her sunucu telefon için aldığı ilk anahtarı saklar. Telefon çevrimdışıyken grubun kelimelerini bilen başka biri önce davranırsa, o sunucu o andan itibaren telefonu geri çevirir ve uygulama onu artık röle üzerinden açamaz. Düzeltmek için o sunucuda bir tarayıcıdan oturum aç, Örnekler sayfasında telefonun kartında **Anahtarı unut** seçeneğini, ardından **Unutmayı onayla** seçeneğini seç ve uygulamayı yeniden aç. Sunucu, bir sonraki çağrıda telefonun kendi anahtarını alır. Telefon yine geri çevrilirse kelimeler başkasındadır: her örnekte **Gruptan ayrıl** seçeneğini kullan ve onları yeni kelimelerle yeniden eşleştir, tıpkı kaybolan bir telefonda olduğu gibi.
+
 ## Ayarlar {#settings}
 
 Artı işaretinin yanındaki dişli, uygulamanın ayarlarını açar:

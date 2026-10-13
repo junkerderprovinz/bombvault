@@ -47,6 +47,8 @@ Der Schalter dafür ist **Handys können sich mit den zwölf Wörtern der Gruppe
 
 Das Handy bekommt auf der Instanzen-Seite jedes Servers der Gruppe eine eigene Karte, als Android-App gekennzeichnet und mit dem Namen, den du dem Handy gegeben hast. Es hat keine Scorecard, weil es nichts sichert, und **Entfernen** nimmt es von der Seite. Ein Handy, das die Wörter kennt, kann sich jederzeit wieder koppeln. Für ein verlorenes Handy schaltest du deshalb **Handys können sich mit den zwölf Wörtern der Gruppe koppeln** unter **Einstellungen, Sicherheit** aus, oder du nimmst jede Instanz mit **Gruppe verlassen** aus der Gruppe und koppelst sie mit neuen Wörtern neu.
 
+Ein Handy, das vor 10.0.0 gekoppelt wurde, signiert seine Aufrufe ab dem ersten Besuch nach dem Update, und jeder Server behält den ersten Schlüssel, den er für das Handy bekommt. Kommt jemand anderes mit den Wörtern der Gruppe dem Handy zuvor, während es offline ist, weist dieser Server das Handy von da an ab, und die App kann ihn über das Relay nicht mehr öffnen. Melde dich dann im Browser an diesem Server an, wähl auf der Instanzen-Seite an der Karte des Handys **Schlüssel vergessen** und danach **Vergessen bestätigen**, und öffne die App neu. Beim nächsten Aufruf übernimmt der Server den eigenen Schlüssel des Handys. Wird das Handy wieder abgewiesen, hat noch jemand die Wörter. Nimm dann wie bei einem verlorenen Handy jede Instanz mit **Gruppe verlassen** aus der Gruppe und kopple sie mit neuen Wörtern neu.
+
 ## Einstellungen {#settings}
 
 Das Zahnrad neben dem Plus öffnet die Einstellungen der App:

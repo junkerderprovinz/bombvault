@@ -46,6 +46,8 @@ De schakelaar hiervoor is **Telefoons kunnen koppelen met de twaalf woorden van 
 
 De telefoon krijgt een eigen kaart op de Instanties-pagina van elke server in de groep, gemarkeerd als Android-app en met de naam die je de telefoon hebt gegeven. Hij heeft geen scorecard omdat hij geen back-ups maakt, en **Verwijderen** haalt hem van de pagina. Een telefoon die de woorden kent, kan op elk moment opnieuw koppelen. Zet voor een verloren telefoon daarom **Telefoons kunnen koppelen met de twaalf woorden van de groep** uit onder **Instellingen, Beveiliging**, of laat elke instantie **Groep verlaten** en koppel ze opnieuw met nieuwe woorden.
 
+Een telefoon die voor 10.0.0 is gekoppeld, gaat zijn aanroepen ondertekenen bij het eerste bezoek na de update, en elke server bewaart de eerste sleutel die hij voor de telefoon krijgt. Als iemand anders die de woorden van de groep kent er eerder bij is terwijl de telefoon offline is, wijst die server de telefoon vanaf dat moment af, en kan de app hem niet meer openen via de relay. Los dit op door in een browser in te loggen op die server, op de kaart van de telefoon op de Instanties-pagina **Sleutel vergeten** te kiezen en daarna **Vergeten bevestigen**, en de app opnieuw te openen. De server neemt bij de volgende aanroep de eigen sleutel van de telefoon over. Wordt de telefoon opnieuw afgewezen, dan heeft iemand anders de woorden: laat elke instantie **Groep verlaten** en koppel ze opnieuw met nieuwe woorden, net als bij een verloren telefoon.
+
 ## Instellingen {#settings}
 
 Het tandwiel naast het plusteken opent de instellingen van de app:

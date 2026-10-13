@@ -46,6 +46,8 @@ Bryteren for dette er **Telefoner kan pare med gruppens tolv ord** i kortet **An
 
 Telefonen får sitt eget kort på Instanser-siden på hver server i gruppen, merket som Android-app og med navnet du har gitt telefonen. Den har ikke noe poengkort, fordi den ikke tar sikkerhetskopier, og **Fjern** tar den bort fra siden. En telefon som kjenner ordene, kan pare seg igjen når som helst. For en mistet telefon slår du derfor av **Telefoner kan pare med gruppens tolv ord** under **Innstillinger, Sikkerhet**, eller lar hver instans bruke **Forlat gruppen** og parer dem på nytt med nye ord.
 
+En telefon som ble paret før 10.0.0, begynner å signere kallene sine ved første besøk etter oppdateringen, og hver server beholder den første nøkkelen den får for telefonen. Hvis noen andre som kjenner gruppens ord, kommer først mens telefonen er frakoblet, avviser den serveren telefonen fra da av, og appen kan ikke lenger åpne den over relayet. Slik løser du det: logg inn på den serveren i en nettleser, velg **Glem nøkkelen** på telefonens kort på Instanser-siden og deretter **Bekreft glemming**, og åpne appen igjen. Serveren tar telefonens egen nøkkel ved neste kall. Blir telefonen avvist igjen, har noen andre ordene: la hver instans bruke **Forlat gruppen** og par dem på nytt med nye ord, som for en mistet telefon.
+
 ## Innstillinger {#settings}
 
 Tannhjulet ved siden av plusstegnet åpner innstillingene i appen:

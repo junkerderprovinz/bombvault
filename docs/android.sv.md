@@ -47,6 +47,8 @@ Reglaget för detta är **Telefoner kan parkopplas med gruppens tolv ord** på k
 
 Telefonen får ett eget kort på Instanser-sidan på varje server i gruppen, markerat som Android-app och med det namn du har gett telefonen. Den har inget poängkort eftersom den inte säkerhetskopierar något, och **Ta bort** tar bort den från sidan. En telefon som kan orden kan parkopplas igen när som helst, så för en borttappad telefon stänger du av **Telefoner kan parkopplas med gruppens tolv ord** under **Inställningar, Säkerhet**, eller låter varje instans välja **Lämna gruppen** och parkopplar dem på nytt med nya ord.
 
+En telefon som parkopplades före 10.0.0 börjar signera sina anrop vid första besöket efter uppdateringen, och varje server behåller den första nyckeln den får för telefonen. Om någon annan som kan gruppens ord hinner först medan telefonen är offline, avvisar den servern telefonen från och med då, och appen kan inte längre öppna den via reläet. Så här åtgärdar du det: logga in på den servern i en webbläsare, välj **Glöm nyckeln** på telefonens kort på Instanser-sidan och sedan **Bekräfta att glömma**, och öppna appen igen. Servern tar telefonens egen nyckel vid nästa anrop. Avvisas telefonen igen har någon annan orden: låt varje instans välja **Lämna gruppen** och parkoppla dem på nytt med nya ord, som för en borttappad telefon.
+
 ## Inställningar {#settings}
 
 Kugghjulet bredvid plustecknet öppnar appens inställningar:

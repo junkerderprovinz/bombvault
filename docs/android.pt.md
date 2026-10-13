@@ -46,6 +46,8 @@ O interruptor para isto é **Os telemóveis podem emparelhar com as doze palavra
 
 O telemóvel recebe um cartão próprio na página Instâncias de cada servidor do grupo, marcado como aplicação Android e com o nome que deste ao telemóvel. Não tem scorecard porque não faz backups, e **Remover** retira-o da página. Um telemóvel que conhece as palavras pode emparelhar de novo a qualquer momento, por isso, para um telemóvel perdido, desativa **Os telemóveis podem emparelhar com as doze palavras do grupo** em **Definições, Segurança**, ou faz **Sair do grupo** em cada instância e emparelha-as de novo com palavras novas.
 
+Um telemóvel emparelhado antes da 10.0.0 começa a assinar as suas chamadas na primeira visita depois da atualização, e cada servidor guarda a primeira chave que recebe para o telemóvel. Se outra pessoa que conhece as palavras do grupo chegar primeiro enquanto o telemóvel está offline, esse servidor passa a recusar o telemóvel, e a aplicação já não consegue abri-lo através do relay. Para resolver, inicia sessão nesse servidor num navegador, escolhe **Esquecer a chave** no cartão do telemóvel na página Instâncias e depois **Confirmar esquecimento**, e abre a aplicação de novo. O servidor fica com a chave própria do telemóvel na chamada seguinte. Se o telemóvel for recusado outra vez, outra pessoa tem as palavras: faz **Sair do grupo** em cada instância e emparelha-as de novo com palavras novas, como para um telemóvel perdido.
+
 ## Definições {#settings}
 
 A roda dentada ao lado do botão + abre as definições da aplicação:

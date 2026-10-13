@@ -43,6 +43,8 @@ A csoportoddal párosított telefon a csoport minden szerverét eleve bejelentke
 
 A telefon saját kártyát kap a csoport minden szerverének Példányok oldalán, Android-alkalmazásként megjelölve, és azon a néven, amelyet a telefonnak adtál. Nincs eredménytáblája, mert semmit sem ment, és az **Eltávolítás** leveszi az oldalról. A szavakat ismerő telefon bármikor újra párosítható, ezért elveszett telefonnál kapcsold ki a **A telefonok párosíthatók a csoport tizenkét szavával** kapcsolót a **Beállítások, Biztonság** alatt, vagy válaszd minden példánynál a **Csoport elhagyása** lehetőséget, és párosítsd őket újra új szavakkal.
 
+A 10.0.0 előtt párosított telefon a frissítés utáni első látogatásakor kezdi aláírni a hívásait, és minden szerver megtartja az első kulcsot, amelyet a telefonhoz kap. Ha a telefon offline állapota alatt valaki más, aki ismeri a csoport szavait, előbb ér oda, az a szerver attól kezdve elutasítja a telefont, és az alkalmazás már nem tudja megnyitni a relayen keresztül. A javításhoz jelentkezz be arra a szerverre böngészőből, válaszd a **Kulcs elfelejtése** gombot a telefon kártyáján a Példányok oldalon, majd az **Elfelejtés megerősítése** gombot, és nyisd meg újra az alkalmazást. A szerver a következő híváskor a telefon saját kulcsát veszi át. Ha a telefont újra elutasítják, valaki másnak megvannak a szavak: válaszd minden példánynál a **Csoport elhagyása** lehetőséget, és párosítsd őket újra új szavakkal, mint elveszett telefon esetén.
+
 ## Beállítások {#settings}
 
 A plusz melletti fogaskerék nyitja meg az alkalmazás beállításait:
