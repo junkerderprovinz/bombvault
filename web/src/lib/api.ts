@@ -924,6 +924,14 @@ export function listContainers(): Promise<ListContainersResponse> {
   return fetchJSON("/api/containers");
 }
 
+/** GET /api/containers/{name}: the row listContainers has for one container.
+ *  While Docker does not answer, a container with an entry is still served
+ *  from what BombVault keeps of it, with `hostAnswered` false and an empty
+ *  state. One nobody knows rejects with an ApiError of status 404. */
+export function getContainer(name: string): Promise<OkEnvelope & { container?: Container; hostAnswered?: boolean }> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`);
+}
+
 /**
  * Start a single container backup. ASYNC: returns as soon as the server has
  * fired the job ({ok:true, started:true}); the backup runs detached on the
@@ -4088,6 +4096,11 @@ export interface ListVMsResponse {
 
 export function listVMs(): Promise<ListVMsResponse> {
   return fetchJSON("/api/vms");
+}
+
+/** GET /api/vms/{name}: getContainer for a VM, by its libvirt name. */
+export function getVM(libvirtName: string): Promise<OkEnvelope & { vm?: VM; hostAnswered?: boolean }> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(libvirtName)}`);
 }
 
 /** Start a single VM backup. ASYNC — see backupNow. */

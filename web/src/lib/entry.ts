@@ -51,8 +51,11 @@ export type EntryDetail =
       installed: Container[];
       /** The not-installed entries this one can take over by hand. */
       linkCandidates: string[];
+      /** False while Docker does not answer. The container is then what
+       *  BombVault keeps of it, and its state says nothing. */
+      hostAnswered: boolean;
     }
-  | { kind: "vm"; vm: VM; linkCandidates: string[] }
+  | { kind: "vm"; vm: VM; linkCandidates: string[]; hostAnswered: boolean }
   | { kind: "files"; set: FileSetView }
   | { kind: "zfs"; dataset: ZFSDatasetView }
   | { kind: "flash" }
@@ -79,6 +82,12 @@ export function withPlacement(entry: Entry, placement: PlacementView): Entry {
     default:
       return entry;
   }
+}
+
+/** hostSilent says that Docker or libvirt did not answer for the entry's
+ *  container or VM. */
+export function hostSilent(detail: EntryDetail): boolean {
+  return (detail.kind === "container" || detail.kind === "vm") && !detail.hostAnswered;
 }
 
 /** The one sentence about an entry's protection that leads the line under

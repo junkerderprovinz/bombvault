@@ -11964,6 +11964,14 @@ func vmDisplayName(vm virshcli.VMInfo, trueNAS bool) string {
 // ListVMs returns all known VMs (from virsh) merged with the DB targets.
 // VMs with no virsh entry but with backup history appear as state="not-installed".
 func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
+	views, _, err := s.listVMs(ctx, true)
+	return views, err
+}
+
+// listVMs is ListVMs. Without needHost, libvirt not answering is no error:
+// every stored entry then gets a row with an empty state, and answered is
+// false.
+func (s *Service) listVMs(ctx context.Context, needHost bool) (views []VMView, answered bool, err error) {
 	// Only reach libvirt over SSH when the VMs domain is enabled. The dashboard
 	// calls this on every GUI load; for users who don't back up VMs at all, an
 	// unconditional virsh-over-SSH connect spams the container log with
@@ -11972,13 +11980,18 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	// is skipped.
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return nil, fmt.Errorf("read settings: %w", err)
+		return nil, false, fmt.Errorf("read settings: %w", err)
 	}
 	var infos []virshcli.VMInfo
+	answered = true
 	if settings.VMsEnabled {
 		infos, err = s.virsh.List(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("list vms: virsh: %w", err)
+			if needHost {
+				return nil, false, fmt.Errorf("list vms: virsh: %w", err)
+			}
+			log.Printf("api: list vms: the VM list is unavailable: %v", err)
+			answered = false
 		}
 	}
 	targets, _ := s.store.ListVMTargets()
@@ -12045,7 +12058,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		}
 	}
 
-	views := make([]VMView, 0, len(infos)+len(targets))
+	views = make([]VMView, 0, len(infos)+len(targets))
 	viewIndex := make(map[string]int, len(infos)) // live rows only
 	hasOwnBackup := make(map[string]bool, len(infos))
 	for _, vm := range infos {
@@ -12081,6 +12094,10 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	// Orphans: targets whose VM is not defined on the host.
 	for _, t := range orphanTargets {
 		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence, AliasConflicts: aliasConflicts.of(t.ID), Aliases: formerNames.of(t.ID)}
+		if !answered {
+			v.State = ""
+			withBlocks(&v, t.ID)
+		}
 		run, _ := s.store.LastSuccessfulBackup(t.ID)
 		home, hErr := s.primaryRepo(settings, "vms", t.Name)
 		unlisted := snapTimesFailed || (hErr == nil && restic.IsRemoteRepo(home))
@@ -12088,7 +12105,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		v.homeBackups = homeCounts.at(home, t.Name)
 		views = append(views, v)
 	}
-	return views, nil
+	return views, answered, nil
 }
 
 // BackupVM orchestrates a full VM backup: resolve repo + mode, ensure repo,

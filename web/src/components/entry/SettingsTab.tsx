@@ -244,14 +244,22 @@ function RepositoryCard({
   );
 }
 
+function NeedsDocker() {
+  const { t } = useT();
+  return <p className="text-sm text-carbon-textSub">{t("entry.hostSilent.needsDocker")}</p>;
+}
+
 function ContainerCards({
   container,
   installed,
+  hostAnswered,
   onChanged,
   nextHue,
 }: {
   container: Container;
   installed: Container[];
+  /** Without Docker the folders and the containers to stop cannot be read. */
+  hostAnswered: boolean;
   onChanged: () => void;
   nextHue: () => number;
 }) {
@@ -287,19 +295,27 @@ function ContainerCards({
         <IdleWaitLine name={container.name} />
       </Card>
       <Card title={t("folders.title")} hint={t("folders.hint")} hueIndex={nextHue()}>
-        <FoldersEditor name={container.name} stack={container.stack} open t={t} lastBackup={container.lastBackup} />
+        {hostAnswered ? (
+          <FoldersEditor name={container.name} stack={container.stack} open t={t} lastBackup={container.lastBackup} />
+        ) : (
+          <NeedsDocker />
+        )}
       </Card>
       <Card title={t("excludes.title")} hint={tLtr(t, "excludes.hint")} hueIndex={nextHue()}>
         <ExcludesEditor name={container.name} initial={container.excludes ?? []} open t={t} />
       </Card>
       <Card title={t("stophook.title")} hint={t("stophook.hint")} hueIndex={nextHue()}>
-        <StopContainersEditor
-          name={container.name}
-          initial={container.stopContainers ?? []}
-          installedContainers={installed}
-          open
-          t={t}
-        />
+        {hostAnswered ? (
+          <StopContainersEditor
+            name={container.name}
+            initial={container.stopContainers ?? []}
+            installedContainers={installed}
+            open
+            t={t}
+          />
+        ) : (
+          <NeedsDocker />
+        )}
       </Card>
       <Card title={t("entry.settings.hooks")} hint={t("hooks.hint")} hueIndex={nextHue()}>
         <HooksEditor name={container.name} initialPre={container.preHook} initialPost={container.postHook} open t={t} />
@@ -479,6 +495,7 @@ export function SettingsTab({
         <ContainerCards
           container={detail.container}
           installed={detail.installed}
+          hostAnswered={detail.hostAnswered}
           onChanged={onChanged}
           nextHue={nextHue}
         />
