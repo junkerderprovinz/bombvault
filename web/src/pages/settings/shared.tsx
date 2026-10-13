@@ -101,7 +101,7 @@ export function Card({
 export function SubCard({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col rounded-card bg-carbon-surface2 px-4 pb-3">
-      <h3 className="flex items-center gap-1.5 pb-2 pt-3 text-xs font-semibold uppercase tracking-[.14em] text-carbon-textMuted">
+      <h3 className="flex items-center gap-1.5 pb-2 pt-3 text-xs font-semibold uppercase tracking-[.14em] text-carbon-textSub">
         {title}
         {hint && <InfoBubble tip={hint} />}
       </h3>

@@ -25,7 +25,7 @@ function Row({ glyph, name, mark, badge }: { glyph: ReactNode; name: string; mar
     <li className="flex min-h-11 flex-wrap items-center gap-x-2.5 gap-y-0.5 rounded-control bg-carbon-surface2 px-3 py-1.5 md:flex-nowrap">
       <span className="shrink-0 text-accentText [&>svg]:h-4.5 [&>svg]:w-4.5">{glyph}</span>
       <span className="min-w-0 flex-1 text-sm font-semibold text-carbon-text wrap-anywhere md:truncate">{name}</span>
-      {mark && <span className="shrink-0 text-caption uppercase tracking-[.12em] text-carbon-textMuted">{mark}</span>}
+      {mark && <span className="shrink-0 text-caption uppercase tracking-[.12em] text-carbon-textSub">{mark}</span>}
       {badge && <span className="flex shrink-0 items-center gap-2">{badge}</span>}
     </li>
   );
