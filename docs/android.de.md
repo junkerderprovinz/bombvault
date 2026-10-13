@@ -29,6 +29,10 @@ Die App versucht einen Server zuerst unter seiner eigenen Adresse. Antwortet die
 
 Die App nimmt eine Antwort nur an, wenn der Server sie mit dem Schlüssel signiert hat, den die App beim ersten Kontakt mit diesem Server festgehalten hat. Antwortet der Server später mit einem anderen Schlüssel, zeigt der Startbildschirm den Fingerabdruck des neuen Schlüssels, und die Seite öffnet sich erst, wenn du ihm vertraust.
 
+## Server wechseln {#switch}
+
+Ist ein Server offen, steht oben in seiner Übersicht sein Name. Kennt die App weitere Server, steht ein Pfeil neben dem Namen, und ein Tippen listet alle Server, die die App kennt: den offenen als **Diese Instanz** und jeden anderen mit seinem Zustand, **Verbunden**, **Nicht verbunden**, **Anmeldung nötig** oder **Zertifikat prüfen**. Tippe auf einen anderen, um ihn zu öffnen, zu Hause direkt und sonst über das Relay.
+
 ## Angemeldet auf einem gekoppelten Handy {#sign-in}
 
 Ein mit deiner Gruppe gekoppeltes Handy öffnet jeden ihrer Server bereits angemeldet. Bevor es eine Seite lädt, bittet es diesen Server über die Gruppe um eine Sitzung, und ein Server gibt eine nur an ein Mitglied heraus, das ein Handy ist. Ein Server, den du über seine Adresse hinzugefügt hast, fragt wie im Browser nach dem Passwort.

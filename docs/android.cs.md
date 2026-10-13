@@ -29,6 +29,10 @@ Přes relay stránka dosáhne na to, na co spárovaný telefon dosáhne doma, ja
 
 Aplikace přijme odpověď jen tehdy, když ji server podepsal klíčem, který si aplikace připnula při prvním setkání s tímto serverem. Odpoví-li server později jiným klíčem, úvodní obrazovka ukáže otisk nového klíče a stránka se otevře až poté, co mu důvěřuješ.
 
+## Přepínání serverů {#switch}
+
+Když je server otevřený, nahoře v jeho přehledu stojí jeho název. Zná-li aplikace další servery, vedle názvu je šipka a klepnutí vypíše každý server, který aplikace zná: otevřený označený **Tato instance** a každý další s jeho stavem, **Připojeno**, **Nepřipojeno**, **Je nutné přihlášení** nebo **Zkontrolovat certifikát**. Klepnutím na jiný ho otevřeš, doma přímo a jinak přes relay.
+
 ## Přihlášení na spárovaném telefonu {#sign-in}
 
 Telefon spárovaný s tvou skupinou otevře každý z jejích serverů rovnou přihlášený. Před načtením stránky si u daného serveru přes skupinu vyžádá relaci a server ji vydá jen členovi, který je telefonem. Server přidaný podle adresy se zeptá na heslo, stejně jako v prohlížeči. 

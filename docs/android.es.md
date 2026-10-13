@@ -29,6 +29,10 @@ A través del relay la página llega a lo que llega un móvil emparejado en casa
 
 La app solo acepta una respuesta si el servidor la firmó con la clave que la app fijó la primera vez que conoció a ese servidor. Si el servidor responde más tarde con otra clave, la pantalla de inicio muestra la huella de la clave nueva y la página se abre solo después de que confíes en ella.
 
+## Cambiar de servidor {#switch}
+
+Con un servidor abierto, la parte superior de su resumen muestra el nombre del servidor. Cuando la app conoce otros servidores, una flecha aparece junto al nombre, y un toque lista todos los servidores que la app conoce, el abierto marcado como **Esta instancia** y cada uno de los demás con su estado: **Conectada**, **No conectada**, **Inicio de sesión necesario** o **Comprobar certificado**. Toca otro para abrirlo, directamente en casa y a través del relay en los demás casos.
+
 ## Sesión iniciada en un móvil emparejado {#sign-in}
 
 Un móvil emparejado con tu grupo abre cada uno de sus servidores con la sesión ya iniciada. Antes de cargar una página, pide una sesión a ese servidor a través del grupo, y un servidor solo la concede a un miembro que sea un móvil. Un servidor añadido por su dirección pide la contraseña, como en un navegador.

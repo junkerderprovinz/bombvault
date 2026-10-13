@@ -31,6 +31,8 @@ Cíl je místo, kam zálohy jdou: místní složka, sdílená složka, tvůj vla
 
 Služby S3 běží přes vlastní backend S3 resticu, díky čemuž lze použít třídu úložiště a zámek objektů. Každá další služba běží přes rclone, který BombVault dodává, a její remote se pak objeví v kartě **Off-site (rclone)** v **Nastavení, Cíle**. Export nastavení nese cíle; s přihlašovacími údaji nese i jejich přihlášení.
 
+Složka na tomto serveru se všude jmenuje **Místní**: na stránkách cílů, v toku, u položky i v Obnově. Je-li na tomto serveru složek víc, nese každá svůj vlastní název. Cíl, který založí pole mimo lokalitu u sekce, se jmenuje podle svého místa, tedy podle poslední složky své adresy, nebo když žádnou nemá, podle svého serveru, a dostane číslo, pokud už takto jmenovaný cíl existuje. Název, který mu dáš na jeho stránce, zůstane. Stojí-li vedle sebe dva cíle se stejným názvem, nese každý navíc svůj server nebo složku.
+
 Každý cíl má vlastní stránku:
 
 - **Připojení** s jeho názvem, přepínačem **Dostupné** (vypnuto znamená, že BombVault sem už nezapisuje a položky, které se sem zálohují, selžou s jasnou zprávou, místo aby skončily jinde), složkou, kompresí, třídou úložiště a **Mimo objekt**. **Změnit připojení** otestuje a uloží novou adresu nebo přihlášení.
@@ -58,21 +60,29 @@ Karta **Plán a cíl** na záložce Nastavení položky má řadu tlačítek: **
 - Se zhasnutým **Místní** se položka zapisuje přímo do přímého repozitáře prvního rozsvíceného cíle a odtud se kopíruje do ostatních rozsvícených. Poprvé ten přímý repozitář vytvoří dialog.
 - Jedno tlačítko zůstává rozsvícené, protože záloha potřebuje místo, kam jít. Chceš-li položku ze záloh vynechat, použij **Nezálohovat**.
 
-Místo je pevné od první zálohy položky, protože BombVault nikdy nepřesouvá zálohy mezi repozitáři; názvem ho pojmenovává karta **Repozitář** na záložce Nastavení. Kopie se mohou měnit kdykoli. Cíl, který položku už nedostává, si ponechá kopie, které má, a při dalším běhu mimo lokalitu té sekce je ořeže podle vlastního uchovávání. Z cílů append-only nelze mazat.
+BombVault nikdy nepřesouvá zálohy mezi repozitáři. Položka, která se řídí svou sekcí, se přesune s ní, když se změní výchozí nastavení sekce: její další záloha skončí na novém místě a zálohy, které už má, zůstanou, kde jsou. Místo zvolené přímo u položky je pevné od její první zálohy; názvem ho pojmenovává karta **Repozitář** na záložce Nastavení. Kopie se mohou měnit kdykoli. Cíl, který položku už nedostává, si ponechá kopie, které má, a při dalším běhu mimo lokalitu té sekce je ořeže podle vlastního uchovávání. Z cílů append-only nelze mazat.
+
+Místo, které položka opustila, si své zálohy ponechá. Na záložce **Zálohy** položky a v **Obnově** stojí jako **Jen starší zálohy**, obnova z něj může dál číst a prune tam tyto zálohy nechá být.
+
+**Převzít výchozí** vrátí položku s vlastní volbou k její sekci. Nejdřív se zeptá, řekne, kam pak půjdou nové zálohy, a pojmenuje, co každý cíl přestane dostávat a co by příští běh nahrál.
 
 Pod řádkem karta říká, kam položka jde a co tam skutečně je: kolik míst ji drží, kdy byl každý cíl naposledy vidět a zda je splněno 3-2-1. Místo je server s původními daty, každý cíl mimo lokalitu a každý repozitář označený **Mimo objekt**. BombVault kontroluje kopie a místa; část „dvě média“ z 3-2-1 nekontroluje.
 
 ### Výchozí umístění podle sekce {#placement-defaults}
 
-Karta **Cíle podle sekcí** na stránce Cíle je výchozí nastavení každé sekce. V grafu je každá čára kopie a klepnutí na čáru nebo tečku ji zapne či vypne; čárkované čáry jsou vypnuté. **Graf / Přepínače** ukazuje totéž jako řady tlačítek. Kopie platí hned pro každou položku bez vlastní volby a pro projektové složky stacků Compose. Cíl platí pro novou položku při její první záloze; jeho změna nepřesouvá žádné zálohy. Před uložením BombVault jmenuje každý cíl, který položky získá nebo ztratí, a kolik snímků to znamená.
+Karta **Cíle podle sekcí** na stránce Cíle kreslí výchozí nastavení každé sekce jako tok 3-2-1. Každá čára ze sekce do cíle je přepínač, včetně **Místní**, a to u každé sekce, tedy i u flash disku, datových sad ZFS a autozálohy. Klepnutí na čáru nebo tečku ji přepne hned, bez dotazu; čárkované čáry jsou vypnuté. **Graf / Přepínače** ukazuje totéž jako řady tlačítek. Přepínač určuje, kam jdou nové zálohy. Položky bez vlastní volby a projektové složky stacků Compose se řídí hned, takže jejich další záloha jde na nová místa. Co už je zálohované, zůstane, kde je, a lze odtud dál obnovovat.
 
-Položky, které se zálohují jinam než jejich sekce, stojí v kartě **Vlastní volba**, každá s **Převzít výchozí**. Nové zálohy pak jdou do cílů sekce a dřívější zůstanou, kde jsou.
+Když je **Místní** vypnuté a zapnuté jsou jen cíle mimo lokalitu, sekce zálohuje přímo na ně a BombVault tam repozitář vybere sám. Kontejnery, VM a sady složek jdou do přímého repozitáře prvního zapnutého cíle, jak je popsáno níže, a odtud se kopírují do ostatních. Flash disk, datové sady ZFS a autozáloha zapisují každou zálohu do každého zapnutého cíle a každý cíl je drží podle vlastního uchovávání.
+
+Sekce, jejíž čáry jsou všechny vypnuté, ukazuje **Nezálohuje se**. Její položky nedostanou žádné zálohy a počítají se jako nechráněné.
+
+Položky, které si na své stránce zvolily vlastní cíle, si je ponechají. Tok říká, kolik jich v sekci je, například **2 položky se liší**, a vede k nim: u jedné na záložku Nastavení položky, u více na seznam, který ukazuje, kam každá zálohuje. **Převzít výchozí** tam položku vrátí.
 
 Nový cíl mimo lokalitu dostane každou položku, která není nastavená na Místní. Okno, které ho přidává, říká, kolik je to položek a, kde je to známo, kolik historie.
 
 ### Přímé repozitáře
 
-Vypnutí Místní u položky, takže jejím domovem se stane cíl bez přímého repozitáře, otevře dialog s navrženým umístěním vedle, například `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, a test připojení, který nic nevytvoří. **Vytvořit a použít** repozitář vytvoří a nasměruje na něj položku. Přímý repozitář přebírá klíč cíle, třídu úložiště, limity, nastavení append-only a uchovávání a mění se s nimi; karta Repozitáře ho ukazuje jen pro čtení. Když nový klíč cíle nedokáže repozitář otevřít, ponechá si přímý repozitář klíč, který má, a uložení to říká. Položka na přímém repozitáři se kopíruje odtud do ostatních rozsvícených cílů, nikdy do cíle, ke kterému repozitář patří. Její snímky nesou značku `bv:direct` a každý jiný průchod uchovávání je ponechá, takže přímý repozitář, který ztratil vazbu na svůj cíl, nikdy nestárne podle místních pravidel. B2 se dosahuje přes jeho endpoint S3, s ID klíče a aplikačním klíčem zadanými jako přihlašovací údaje S3; klíč omezený na vlastní složku cíle se nedostane do složky vedle ní, takže klíč omez raději na složku nad ní.
+Přímý repozitář je místo, kam položky zálohují přímo na cíl mimo lokalitu. BombVault ho umístí vedle složky cíle a k jejímu názvu přidá `-direct`, nebo, když cíl leží v kořeni svého bucketu, svého remote nebo uživatele rest-serveru, do složky v něm pojmenované podle sekce, například `containers-direct`. V toku na stránce Cíle vznikne bez dotazu. Vypnutí Místní u jedné položky, takže jejím domovem se stane cíl bez přímého repozitáře, otevře dialog s navrženým umístěním, například `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, a test připojení, který nic nevytvoří. **Vytvořit a použít** repozitář vytvoří a nasměruje na něj položku. Přímý repozitář přebírá klíč cíle, třídu úložiště, limity, nastavení append-only a uchovávání a mění se s nimi; karta Repozitáře ho ukazuje jen pro čtení. Když nový klíč cíle nedokáže repozitář otevřít, ponechá si přímý repozitář klíč, který má, a uložení to říká. Položka na přímém repozitáři se kopíruje odtud do ostatních rozsvícených cílů, nikdy do cíle, ke kterému repozitář patří. Její snímky nesou značku `bv:direct` a každý jiný průchod uchovávání je ponechá, takže přímý repozitář, který ztratil vazbu na svůj cíl, nikdy nestárne podle místních pravidel. B2 se dosahuje přes jeho endpoint S3, s ID klíče a aplikačním klíčem zadanými jako přihlašovací údaje S3; klíč omezený na vlastní složku cíle se nedostane do složky vedle ní, takže klíč omez raději na složku nad ní.
 
 ### Mimo objekt
 
@@ -88,7 +98,7 @@ Volby kopírování žijí ve vlastním nastavení BombVaultu. Po opětovném se
 
 Vlastní cesta sekce není omezená na místní složku: nasměruj ji rovnou na restic remote (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) a BombVault zálohuje přímo tam, bez samostatné místní kopie a bez kroku kopírování. To je jiný tvar než kopie mimo lokalitu výše: tam je místní repozitář primární a repozitář mimo lokalitu je jeho archiv na základě nejlepší snahy; tady vzdálený repozitář **je** primární a je jedinou kopií, pokud tu sekci nekopíruješ ještě do jiného cíle.
 
-Cesta každé sekce (Kontejnery, VMs, Flash, Autozáloha, Složky, Datové sady ZFS) se nastavuje na stránce cíle **Místní složka**: **Změnit** vedle sekce v jeho kartě **Připojení** otevře okno s přepínačem **Místní / Vzdálené**:
+Cesta každé sekce (Kontejnery, VMs, Flash, Autozáloha, Složky, Datové sady ZFS) se nastavuje na stránce cíle **Místní**: **Změnit** vedle sekce v jeho kartě **Připojení** otevře okno s přepínačem **Místní / Vzdálené**:
 
 - **Místní** zobrazí známý prohlížeč složek.
 - **Vzdálené** jej vymění za prosté pole URL a nastavení připojení, jaké používá cíl mimo lokalitu, nastavené místo toho pro tento primární repozitář. Odtud dostaneš:

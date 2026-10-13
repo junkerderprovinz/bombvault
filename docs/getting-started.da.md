@@ -99,10 +99,10 @@ Sidepanelet har fem punkter: **Oversigt**, **Afvigelser** (så længe afvigelses
 
 - **Sikkerhedskopier** oplister hver container, VM, hvert mappesæt, flashdrevet, hvert ZFS-datasæt og auto-sikkerhedskopien som elementer. Felter over listen vælger en slags, og **Filtre**, **Sortér** og **Søg** indsnævrer den. Hvert element har en side for sig med tre faner: **Sikkerhedskopier**, **Indstillinger** og **Verificering**.
 - **Gendannelse** er én side til alt: vælg et område, søg efter et element, og vælg en sikkerhedskopi. Nødguiden og de andre kilder starter også her.
-- **Indstillinger** er fjorten felter: Generelt, Udseende, Tidsplan, Destinationer, Gendannelse, Notifikationer, Verificering, Sikkerhed, Instanser, Parring, Integrationer, Apps, System og Info. Tryk på `/` eller Ctrl+K for at søge i dem alle, også efter de navne, siderne havde i tidligere versioner. Træk felterne i din egen rækkefølge under **Udseende**.
+- **Indstillinger** er fjorten felter: Generelt, Udseende, Tidsplan, Destinationer, Gendannelse, Notifikationer, Verificering, Sikkerhed, Instanser, Parring, Integrationer, Apps, System og Info. Tryk på `/` eller Ctrl+K for at søge i dem alle, også efter de navne, siderne havde i tidligere versioner. Træk felterne i din egen rækkefølge under **Udseende**. Hvor en kolonne af felter ved siden af siden ville presse den sammen, som i et vindue omkring 1200 pixel bredt, bliver felterne en stribe over siden, der ruller sidelæns. En telefon viser den samme stribe.
 - **Destinationer** og **Instanser** er indstillingsfelter med sider for sig. **Vis også i sidepanelet** på deres felt fæstner dem til sidepanelet.
 
-Intet har en Gem-knap, og intet folder sig ud: sjældne ting har et kort eller et vindue for sig, og forklaringer står i (i)-boblerne. Efter en opdatering markerer grønne prikker, hvad der er ændret. Et klik skjuler en prik, og **Nyt** i kortet Version under **Indstillinger, Info** oplister hver ændring med **Gå derhen**.
+Intet har en Gem-knap, og intet folder sig ud: sjældne ting har et kort eller et vindue for sig, og forklaringer står i (i)-boblerne. Efter en opdatering åbner udgivelsesnoterne sig selv, og grønne prikker markerer, hvad der er ændret. Et klik skjuler en prik. **Nyt** i kortet Version under **Indstillinger, Info** tæller det, du endnu ikke har set, og åbner udgivelsesnoterne og listen over hver ændring med **Gå derhen** som to faner i ét vindue.
 
 ## Byg fra kildekoden {#build-from-source}
 

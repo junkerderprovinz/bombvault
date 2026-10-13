@@ -29,6 +29,10 @@ Röle üzerinden sayfa, eşleştirilmiş bir telefonun evde eriştiği her şeye
 
 Uygulama bir yanıtı yalnızca sunucu onu, uygulamanın bu sunucuyla ilk karşılaştığında sabitlediği anahtarla imzalamışsa kabul eder. Sunucu daha sonra başka bir anahtarla yanıt verirse başlangıç ekranı yeni anahtarın parmak izini gösterir ve sayfa ancak ona güvendikten sonra açılır.
 
+## Sunucu değiştirme {#switch}
+
+Bir sunucu açıkken genel bakışının üstünde sunucunun adı görünür. Uygulama başka sunucuları da biliyorsa adın yanında bir ok durur ve dokununca uygulamanın bildiği her sunucu listelenir: açık olan **Bu örnek** olarak işaretlenir, diğerlerinin her biri durumuyla gösterilir: **Bağlı**, **Bağlı değil**, **Oturum açma gerekiyor** ya da **Sertifikayı kontrol et**. Açmak için başka birine dokun; evde doğrudan, aksi halde röle üzerinden açılır.
+
 ## Eşleştirilmiş telefonda oturum {#sign-in}
 
 Grubunla eşleştirilmiş bir telefon, grubun her sunucusunu oturum açılmış olarak açar. Bir sayfayı yüklemeden önce o sunucudan grup üzerinden bir oturum ister ve sunucu oturumu yalnızca telefon olan bir üyeye verir. Adresiyle eklenen bir sunucu, tarayıcıda olduğu gibi parola ister.

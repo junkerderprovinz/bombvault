@@ -29,6 +29,10 @@ Via relayet når siden det en paret telefon når hjemme, som beskrevet nedenfor.
 
 Appen tar bare imot et svar hvis serveren har signert det med nøkkelen appen festet første gang den møtte serveren. Svarer serveren senere med en annen nøkkel, viser startskjermen fingeravtrykket til den nye nøkkelen, og siden åpnes først når du stoler på den.
 
+## Bytte server {#switch}
+
+Når en server er åpen, står navnet på serveren øverst i oversikten. Kjenner appen flere servere, står det en pil ved siden av navnet, og et trykk lister alle serverne appen kjenner: den åpne markert som **Denne instansen** og hver av de andre med tilstanden sin, **Tilkoblet**, **Ikke tilkoblet**, **Innlogging kreves** eller **Sjekk sertifikat**. Trykk på en annen for å åpne den, direkte hjemme og ellers via reléet.
+
 ## Pålogget på en paret telefon {#sign-in}
 
 En telefon som er paret med gruppen din, åpner hver server i gruppen allerede pålogget. Før den laster en side, ber den serveren om en økt via gruppen, og en server gir bare ut en økt til et medlem som er en telefon. En server som er lagt til med adressen sin, spør etter passordet, slik som i en nettleser.

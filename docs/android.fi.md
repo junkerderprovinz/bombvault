@@ -29,6 +29,10 @@ Releen kautta sivu yltää siihen, mihin pariliitetty puhelin yltää kotona, ku
 
 Sovellus hyväksyy vastauksen vain, jos palvelin on allekirjoittanut sen avaimella, jonka sovellus kiinnitti, kun se tapasi palvelimen ensimmäisen kerran. Jos palvelin vastaa myöhemmin toisella avaimella, aloitusnäyttö näyttää uuden avaimen sormenjäljen, ja sivu avautuu vasta, kun luotat siihen.
 
+## Palvelimen vaihtaminen {#switch}
+
+Kun palvelin on auki, sen yleiskatsauksen yläreunassa näkyy palvelimen nimi. Kun sovellus tuntee muitakin palvelimia, nimen vieressä on nuoli, ja napautus luettelee kaikki palvelimet, jotka sovellus tuntee: avoin palvelin merkittynä **Tämä instanssi** ja jokainen muu tilansa kanssa: **Yhdistetty**, **Ei yhteyttä**, **Kirjautuminen tarvitaan** tai **Tarkista varmenne**. Napauta toista avataksesi sen, kotona suoraan ja muulloin releen kautta.
+
 ## Kirjautuneena pariliitetyllä puhelimella {#sign-in}
 
 Ryhmääsi pariliitetty puhelin avaa jokaisen ryhmän palvelimen valmiiksi kirjautuneena. Ennen sivun lataamista se pyytää ryhmän kautta palvelimelta istunnon, ja palvelin antaa sellaisen vain jäsenelle, joka on puhelin. Osoitteella lisätty palvelin kysyy salasanaa kuten selaimessa.

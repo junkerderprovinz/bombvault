@@ -31,6 +31,8 @@ Ett mål är en plats dit säkerhetskopior går: en lokal mapp, en resurs, en eg
 
 S3-tjänster körs via restics eget S3-backend, vilket är det som låter en lagringsklass och object lock gälla. Varje annan tjänst körs via rclone som BombVault levereras med, och dess fjärr dyker sedan upp i kortet **Off-site (rclone)** under **Inställningar, Mål**. En inställningsexport bär målen; med autentiseringsuppgifter inkluderade bär den också deras inloggning.
 
+Mappen på den här servern heter **Lokal** överallt: på sidorna för mål, i flödet, på en post och under Återställning. Finns det flera mappar på den här servern har var och en sitt eget namn. Ett mål som ett avsnitts off-site-fält skapar får namn efter sin plats, alltså adressens sista mapp eller, om den saknar mapp, dess server, och får ett nummer när ett annat mål redan heter så. Ett namn du ger det på dess sida består. Där två mål med samma namn står bredvid varandra bär var och en dessutom sin server eller mapp.
+
 Varje mål har en egen sida:
 
 - **Anslutning** med namn, reglaget **Tillgängligt** (av betyder att BombVault inte längre skriver hit, och poster som säkerhetskopieras hit misslyckas med ett tydligt meddelande i stället för att hamna någon annanstans), mappen, komprimering, lagringsklass och **Utanför lokalerna**. **Ändra anslutning** testar och sparar en ny adress eller inloggning.
@@ -58,21 +60,29 @@ Kortet **Schema och mål** på en posts flik Inställningar har en rad knappar: 
 - Med **Lokal** släckt skrivs posten rakt till det första tända målets direkta arkiv och kopieras därifrån till de andra tända. Första gången skapar en dialog det direkta arkivet.
 - En knapp förblir tänd, eftersom en säkerhetskopia behöver en plats att gå till. För att lämna en post utanför säkerhetskopiorna, använd **Säkerhetskopiera inte**.
 
-Platsen är fastlagd från postens första säkerhetskopia, eftersom BombVault aldrig flyttar säkerhetskopior mellan arkiv; kortet **Arkiv** på fliken Inställningar namnger den. Kopiorna kan ändras när som helst. Ett mål som inte längre får en post behåller kopiorna det har och trimmar dem enligt sin egen retention vid avsnittets nästa off-site-körning. Från append-only-mål går det inte att radera.
+BombVault flyttar aldrig säkerhetskopior mellan arkiv. En post som följer sitt avsnitt följer med när avsnittets standard ändras: dess nästa säkerhetskopia hamnar på den nya platsen, och de säkerhetskopior den redan har blir kvar där de är. En plats som valts på själva posten är fastlagd från dess första säkerhetskopia; kortet **Arkiv** på fliken Inställningar namnger den. Kopiorna kan ändras när som helst. Ett mål som inte längre får en post behåller kopiorna det har och trimmar dem enligt sin egen retention vid avsnittets nästa off-site-körning. Från append-only-mål går det inte att radera.
+
+Platsen som en post har lämnat behåller sina säkerhetskopior. På postens flik **Säkerhetskopior** och under Återställning står den som **Bara äldre säkerhetskopior**, en återställning kan fortfarande läsa därifrån, och en rensning där låter de säkerhetskopiorna vara.
+
+**Följ standarden** för tillbaka en post med eget val till sitt avsnitt. Den frågar först, säger vart nya säkerhetskopior går då och namnger vad varje mål slutar få och vad nästa körning skulle ladda upp.
 
 Under raden anger kortet vart posten går och vad som faktiskt finns där: hur många platser som håller den, när varje mål senast sågs och om 3-2-1 är uppfyllt. En plats är servern med originaldatan, varje off-site-mål och varje arkiv markerat **Utanför lokalerna**. BombVault kontrollerar kopior och platser; det kontrollerar inte delen "två medier" i 3-2-1.
 
 ### Standard per avsnitt {#placement-defaults}
 
-Kortet **Mål per avsnitt** på sidan Mål är varje avsnitts standard. I grafen är varje linje en kopia, och ett klick på en linje eller en punkt slår på eller av den; streckade linjer är av. **Graf / Reglage** visar samma sak som rader med knappar. Kopiorna gäller direkt för varje post utan eget val och för projektmapparna i Compose-stackar. Platsen gäller en ny post vid dess första säkerhetskopia; att ändra den flyttar inga säkerhetskopior. Före sparandet namnger BombVault varje mål som får eller förlorar poster och hur många säkerhetskopior det innebär.
+Kortet **Mål per avsnitt** på sidan Mål ritar varje avsnitts standard som ett 3-2-1-flöde. Varje linje från ett avsnitt till ett mål är ett reglage, **Lokal** inräknat, för varje avsnitt, även flashenheten, ZFS-datauppsättningarna och auto-säkerhetskopian. Ett klick på en linje eller en punkt slår om den direkt, utan fråga; streckade linjer är av. **Graf / Reglage** visar samma sak som rader med knappar. Ett reglage avgör vart nya säkerhetskopior går. Poster utan eget val och projektmapparna i Compose-stackar följer direkt, så deras nästa säkerhetskopia går till de nya platserna. Säkerhetskopior som redan är lagrade blir kvar där de är och kan fortfarande återställas därifrån.
 
-Poster som säkerhetskopieras någon annanstans än sitt avsnitt står i kortet **Eget val**, var och en med **Följ standarden**. Nya säkerhetskopior går då till avsnittets mål, och de tidigare blir kvar där de är.
+Med **Lokal** av och bara off-site-mål på säkerhetskopierar ett avsnitt rakt till dem, och BombVault väljer arkivet där själv. Containers, VMs och mappuppsättningar går till det direkta arkivet hos det första mål som är på, beskrivet nedan, och kopieras därifrån till de andra. Flashenheten, ZFS-datauppsättningarna och auto-säkerhetskopian skriver varje säkerhetskopia till varje mål som är på, och varje mål behåller dem enligt sin egen retention.
+
+Ett avsnitt där alla linjer är av säger **Ingen säkerhetskopia**. Dess poster får inga säkerhetskopior och räknas som oskyddade.
+
+Poster som har valt egna mål på sin sida behåller dem. Flödet säger hur många det är i ett avsnitt, till exempel **2 poster avviker**, och leder till dem: till postens flik Inställningar när det är en, till en lista med vart var och en säkerhetskopierar när det är flera. **Följ standarden** där för tillbaka en post.
 
 Ett nytt off-site-mål får varje post som inte är satt till Lokal. Fönstret som lägger till det säger hur många poster och, där det är känt, hur mycket historik det är.
 
 ### Direkta arkiv
 
-Att stänga av Lokal för en post, så att ett mål utan direkt arkiv blir dess hem, öppnar en dialog med en föreslagen plats bredvid, till exempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, och ett anslutningstest som inte skapar något. **Skapa och använd** skapar arkivet och pekar posten mot det. Ett direkt arkiv tar målets nyckel, lagringsklass, gränser, append-only-inställning och retention och ändras med dem; kortet Arkiv visar det skrivskyddat. När en ny nyckel för målet inte kan öppna det behåller det direkta arkivet den nyckel det har, och sparandet säger det. En post på ett direkt arkiv kopieras därifrån till de andra tända målen, aldrig till målet arkivet tillhör. Dess säkerhetskopior bär taggen `bv:direct`, och varje annan retentionsomgång behåller dem, så ett direkt arkiv som förlorat kopplingen till sitt mål åldras aldrig enligt de lokala reglerna. B2 nås via sin S3-slutpunkt, med nyckel-ID och programnyckel inskrivna som S3-uppgifter; en nyckel begränsad till målets egen mapp kan inte nå mappen bredvid, så begränsa nyckeln till mappen ovanför i stället.
+Ett direkt arkiv är platsen där poster säkerhetskopieras rakt till ett off-site-mål. BombVault lägger det bredvid målets mapp med `-direct` tillagt i namnet, eller, när målet ligger i roten av sin bucket, sitt fjärrmål eller en rest-server-användare, i en mapp i det som är uppkallad efter avsnittet, till exempel `containers-direct`. I flödet på sidan Mål skapas det utan fråga. Att stänga av Lokal för en enskild post, så att ett mål utan direkt arkiv blir dess hem, öppnar en dialog med den föreslagna platsen, till exempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, och ett anslutningstest som inte skapar något. **Skapa och använd** skapar arkivet och pekar posten mot det. Ett direkt arkiv tar målets nyckel, lagringsklass, gränser, append-only-inställning och retention och ändras med dem; kortet Arkiv visar det skrivskyddat. När en ny nyckel för målet inte kan öppna det behåller det direkta arkivet den nyckel det har, och sparandet säger det. En post på ett direkt arkiv kopieras därifrån till de andra tända målen, aldrig till målet arkivet tillhör. Dess säkerhetskopior bär taggen `bv:direct`, och varje annan retentionsomgång behåller dem, så ett direkt arkiv som förlorat kopplingen till sitt mål åldras aldrig enligt de lokala reglerna. B2 nås via sin S3-slutpunkt, med nyckel-ID och programnyckel inskrivna som S3-uppgifter; en nyckel begränsad till målets egen mapp kan inte nå mappen bredvid, så begränsa nyckeln till mappen ovanför i stället.
 
 ### Utanför lokalerna
 
@@ -88,7 +98,7 @@ Kopieringsvalen finns i BombVaults egna inställningar. Efter en ombyggnad via *
 
 Ett avsnitts egen sökväg är inte begränsad till en lokal mapp: peka den direkt mot en restic-fjärr (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) så säkerhetskopierar BombVault direkt dit, utan separat lokal kopia och utan kopieringssteg. Det är en annan form än off-site-kopiorna ovan: där är det lokala arkivet primärt och off-site-arkivet ett best-effort-arkiv av det; här **är** fjärrarkivet det primära och den enda kopian, om du inte också kopierar avsnittet till ett annat mål.
 
-Varje avsnitts sökväg (Containers, VMs, Flash, Auto-säkerhetskopia, Mappar, ZFS-datauppsättningar) anges på sidan för målet **Lokal mapp**: **Ändra** bredvid avsnittet i dess kort **Anslutning** öppnar ett fönster med en omkopplare **Lokal / Fjärran**:
+Varje avsnitts sökväg (Containers, VMs, Flash, Auto-säkerhetskopia, Mappar, ZFS-datauppsättningar) anges på sidan för målet **Lokal**: **Ändra** bredvid avsnittet i dess kort **Anslutning** öppnar ett fönster med en omkopplare **Lokal / Fjärran**:
 
 - **Lokal** visar den välbekanta mappbläddraren.
 - **Fjärran** byter ut den mot ett vanligt URL-fält och anslutningsinställningarna ett off-site-mål använder, konfigurerade för det här primära i stället. Därifrån får du:

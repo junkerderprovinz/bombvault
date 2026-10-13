@@ -31,6 +31,8 @@ Bir hedef, yedeklerin gittiği yerdir: yerel bir klasör, bir paylaşım, kendi 
 
 S3 hizmetleri restic'in kendi S3 arka ucu üzerinden çalışır; bir depolama sınıfının ve nesne kilidinin uygulanabilmesi bundandır. Diğer her hizmet BombVault'un birlikte gönderdiği rclone üzerinden çalışır ve remote'u **Ayarlar, Hedefler** altındaki **Site dışı (rclone)** kartında görünür. Bir ayar dışa aktarması hedefleri taşır; kimlik bilgileri dahil edilirse oturum bilgilerini de taşır.
 
+Bu sunucudaki klasör her yerde **Yerel** olarak adlandırılır: hedef sayfalarında, akışta, bir ögede ve Geri yüklemede. Bu sunucuda birden çok klasör varsa her biri kendi adıyla anılır. Bir bölümün site dışı alanının oluşturduğu hedef, yerinin adını alır; bu, adresinin son klasörüdür, yoksa sunucusudur, ve aynı adı taşıyan başka bir hedef varsa bir numara alır. Sayfasında ona verdiğin ad kalır. Aynı adı taşıyan iki hedef yan yana durduğunda her biri sunucusunu ya da klasörünü de taşır.
+
 Her hedefin kendi sayfası vardır:
 
 - Adıyla **Bağlantı**, **Kullanılabilir** anahtarı (kapalı, BombVault'un artık buraya yazmadığı anlamına gelir ve burada yedekleyen ögeler başka bir yere düşmek yerine açık bir iletiyle başarısız olur), klasör, sıkıştırma, depolama sınıfı ve **Bina dışında**. **Bağlantıyı değiştir** yeni bir adresi veya oturum bilgisini sınar ve kaydeder.
@@ -58,21 +60,29 @@ Bir ögenin Ayarlar sekmesindeki **Zamanlama ve hedef** kartında bir düğme s�
 - **Yerel** karanlıkken öge doğrudan yanan ilk hedefin doğrudan deposuna yazılır ve oradan yanan diğerlerine kopyalanır. İlk seferde bir pencere o doğrudan depoyu oluşturur.
 - Bir düğme yanık kalır, çünkü bir yedeğin gidecek bir yere ihtiyacı vardır. Bir ögeyi yedeklerden dışarıda bırakmak için **Yedeklenmesin**'i kullan.
 
-Konum ögenin ilk yedeğinden itibaren sabittir, çünkü BombVault yedekleri depolar arasında asla taşımaz; Ayarlar sekmesindeki **Depo** kartı onu adlandırır. Kopyalar her an değişebilir. Artık bir öge almayan bir hedef elindeki kopyaları tutar ve bölümün bir sonraki site dışı çalışmasında kendi saklamasına göre kırpar. Append-only hedeflerden silinemez.
+BombVault yedekleri depolar arasında asla taşımaz. Bölümünü izleyen bir öge, bölümün varsayılanı değiştiğinde onunla birlikte gider: bir sonraki yedeği yeni yere düşer ve zaten sahip olduğu yedekler olduğu yerde kalır. Ögenin kendisinde seçilen bir konum ilk yedeğinden itibaren sabittir; Ayarlar sekmesindeki **Depo** kartı onu adlandırır. Kopyalar her an değişebilir. Artık bir öge almayan bir hedef elindeki kopyaları tutar ve bölümün bir sonraki site dışı çalışmasında kendi saklamasına göre kırpar. Append-only hedeflerden silinemez.
+
+Bir ögenin terk ettiği yer yedeklerini tutar. Ögenin **Yedekler** sekmesinde ve **Geri yükleme** sayfasında **Yalnızca eski yedekler** olarak durur, bir geri yükleme yine de oradan okuyabilir ve oradaki bir budama bu yedeklere dokunmaz.
+
+**Varsayılanı izle**, kendi seçimi olan bir ögeyi bölümüne geri getirir. Önce sorar, yeni yedeklerin o zaman nereye gideceğini söyler ve her hedefin neyi almayı bırakacağını ve bir sonraki çalışmanın neyi yükleyeceğini adlandırır.
 
 Düğme sırasının altında kart, ögenin nereye gittiğini ve gerçekte orada ne olduğunu söyler: kaç site onu tutuyor, her hedef en son ne zaman görüldü ve 3-2-1 sağlanıyor mu. Bir site, özgün verinin bulunduğu sunucu, her site dışı hedef ve **Bina dışında** işaretli her depodur. BombVault kopyaları ve siteleri denetler; 3-2-1'in "iki ortam" kısmını denetlemez.
 
 ### Bölüm başına varsayılanlar {#placement-defaults}
 
-Hedefler sayfasındaki **Bölüme göre hedefler** kartı her bölümün varsayılanıdır. Grafikte her çizgi bir kopyadır ve bir çizgiye ya da noktaya tıklamak onu açar veya kapatır; kesikli çizgiler kapalıdır. **Grafik / Anahtarlar** aynısını düğme satırları olarak gösterir. Kopyalar, kendi seçimi olmayan her öge için ve Compose stack'lerinin proje klasörleri için hemen geçerli olur. Hedef yeni bir öge için ilk yedeğinde geçerli olur; değiştirmek hiçbir yedeği taşımaz. Kaydetmeden önce BombVault ögeleri kazanan ya da kaybeden her hedefi ve bunun kaç yedek demek olduğunu adlandırır.
+Hedefler sayfasındaki **Bölüme göre hedefler** kartı her bölümün varsayılanını 3-2-1 akışı olarak çizer. Bir bölümden bir hedefe giden her çizgi bir anahtardır, **Yerel** de dahil, ve bu her bölüm için geçerlidir; flash sürücü, ZFS veri kümeleri ve öz yedek de dahil. Bir çizgiye ya da noktaya tıklamak onu soru sormadan hemen değiştirir; kesikli çizgiler kapalıdır. **Grafik / Anahtarlar** aynısını düğme satırları olarak gösterir. Bir anahtar, yeni yedeklerin nereye gideceğini belirler. Kendi seçimi olmayan ögeler ve Compose stack'lerinin proje klasörleri hemen izler; bir sonraki yedekleri yeni yerlere gider. Zaten depolanmış yedekler olduğu yerde kalır ve oradan yine geri yüklenebilir.
 
-Bölümlerinden başka bir yere yedeklenen ögeler **Kendi seçimi** kartında durur, her biri **Varsayılanı izle** ile. Yeni yedekler o zaman bölümün hedeflerine gider ve öncekiler olduğu yerde kalır.
+**Yerel** kapalı ve yalnızca site dışı hedefler açıkken bir bölüm doğrudan onlara yedekler ve depoyu orada BombVault kendisi seçer. Konteynerler, VM'ler ve klasör kümeleri aşağıda anlatılan, açık olan ilk hedefin doğrudan deposuna gider ve oradan diğerlerine kopyalanır. Flash sürücü, ZFS veri kümeleri ve öz yedek her yedeği açık olan her hedefe yazar ve her hedef onları kendi saklamasına göre tutar.
+
+Her çizgisi kapalı olan bir bölüm **Yedeklenmiyor** der. Ögeleri yedek almaz ve korumasız sayılır.
+
+Kendi hedeflerini sayfalarında seçmiş ögeler onları korur. Akış, bir bölümde kaç tane olduğunu söyler, örneğin **2 öge farklı**, ve onlara götürür: bir tane varsa ögenin Ayarlar sekmesine, birkaç tane varsa her birinin nereye yedeklediğini gösteren bir listeye. Oradaki **Varsayılanı izle** bir ögeyi geri getirir.
 
 Yeni bir site dışı hedef, Yerel'e ayarlı olmayan her ögeyi alır. Onu ekleyen pencere kaç öge olduğunu ve biliniyorsa ne kadar geçmiş olduğunu söyler.
 
 ### Doğrudan depolar
 
-Bir ögede Yerel'i kapatmak, böylece doğrudan deposu olmayan bir hedef onun evi olur, yanında önerilen bir konumla bir pencere açar, örneğin `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, ve hiçbir şey oluşturmayan bir bağlantı testi. **Oluştur ve kullan** depoyu oluşturur ve ögeyi ona yöneltir. Doğrudan bir depo hedefin anahtarını, depolama sınıfını, sınırlarını, append-only ayarını ve saklamasını alır ve onlarla birlikte değişir; Depolar kartı onu salt okunur gösterir. Hedef için yeni bir anahtar onu açamazsa doğrudan depo elindeki anahtarı korur ve kayıt bunu söyler. Doğrudan bir depodaki öge oradan yanan diğer hedeflere kopyalanır, deponun ait olduğu hedefe asla. Yedekleri `bv:direct` etiketini taşır ve diğer her saklama geçişi onları tutar; böylece hedefiyle bağını yitirmiş bir doğrudan depo yerel kurallara göre asla yaşlanmaz. B2'ye S3 uç noktası üzerinden, anahtar kimliği ve uygulama anahtarı S3 kimlik bilgileri olarak girilerek ulaşılır; hedefin kendi klasörüyle sınırlı bir anahtar yanındaki klasöre ulaşamaz, bu yüzden anahtarı bir üstteki klasörle sınırla.
+Doğrudan depo, ögelerin doğrudan bir site dışı hedefe yedeklediği yerdir. BombVault onu hedefin klasörünün yanına, adına `-direct` ekleyerek koyar; hedef bucket'ının, remote'unun ya da bir rest-server kullanıcısının kökündeyse onun yerine içinde, bölümün adını taşıyan bir klasöre koyar, örneğin `containers-direct`. Hedefler sayfasındaki akışta soru sorulmadan oluşturulur. Tek bir ögede Yerel'i kapatmak, böylece doğrudan deposu olmayan bir hedef onun evi olur, önerilen konumla bir pencere açar, örneğin `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, ve hiçbir şey oluşturmayan bir bağlantı testi. **Oluştur ve kullan** depoyu oluşturur ve ögeyi ona yöneltir. Doğrudan bir depo hedefin anahtarını, depolama sınıfını, sınırlarını, append-only ayarını ve saklamasını alır ve onlarla birlikte değişir; Depolar kartı onu salt okunur gösterir. Hedef için yeni bir anahtar onu açamazsa doğrudan depo elindeki anahtarı korur ve kayıt bunu söyler. Doğrudan bir depodaki öge oradan yanan diğer hedeflere kopyalanır, deponun ait olduğu hedefe asla. Yedekleri `bv:direct` etiketini taşır ve diğer her saklama geçişi onları tutar; böylece hedefiyle bağını yitirmiş bir doğrudan depo yerel kurallara göre asla yaşlanmaz. B2'ye S3 uç noktası üzerinden, anahtar kimliği ve uygulama anahtarı S3 kimlik bilgileri olarak girilerek ulaşılır; hedefin kendi klasörüyle sınırlı bir anahtar yanındaki klasöre ulaşamaz, bu yüzden anahtarı bir üstteki klasörle sınırla.
 
 ### Bina dışında
 
@@ -88,7 +98,7 @@ Kopya seçimleri BombVault'un kendi ayarlarında yaşar. **Yedekleri keşfet** y
 
 Bir bölümün kendi yolu yerel bir klasörle sınırlı değildir: onu doğrudan bir restic remote'una yönelt (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) ve BombVault ayrı bir yerel kopya ve kopyalama adımı olmadan doğrudan ona yedekler. Bu, yukarıdaki site dışı kopyalardan farklı bir biçimdir: orada yerel depo birincildir ve site dışı depo onun en iyi çabayla bir arşividir; burada uzak depo birincilin **kendisidir** ve o bölümü başka bir hedefe de kopyalamadıkça tek kopyadır.
 
-Her bölümün (Konteynerler, VM'ler, Flash, Öz yedek, Klasörler, ZFS veri kümeleri) yolu **Yerel klasör** hedefinin sayfasında ayarlanır: **Bağlantı** kartında bölümün yanındaki **Değiştir**, bir **Yerel / Uzak** anahtarı olan bir pencere açar:
+Her bölümün (Konteynerler, VM'ler, Flash, Öz yedek, Klasörler, ZFS veri kümeleri) yolu **Yerel** hedefinin sayfasında ayarlanır: **Bağlantı** kartında bölümün yanındaki **Değiştir**, bir **Yerel / Uzak** anahtarı olan bir pencere açar:
 
 - **Yerel** alışılmış klasör tarayıcısını gösterir.
 - **Uzak**, bunu düz bir URL alanıyla ve bir site dışı hedefin kullandığı bağlantı ayarlarıyla değiştirir; bu kez bu birincil için yapılandırılır. Oradan şunları alırsın:

@@ -29,6 +29,10 @@ Via le relais, la page atteint ce qu'un téléphone appairé atteint à la maiso
 
 L'application n'accepte une réponse que si le serveur l'a signée avec la clé que l'application a épinglée lors de son premier contact avec ce serveur. Si le serveur répond plus tard avec une autre clé, l'écran d'accueil affiche l'empreinte de la nouvelle clé, et la page ne s'ouvre qu'après que vous l'avez approuvée.
 
+## Changer de serveur {#switch}
+
+Quand un serveur est ouvert, le haut de son aperçu affiche le nom du serveur. Dès que l'application connaît d'autres serveurs, une flèche se trouve à côté du nom, et un toucher liste tous les serveurs que l'application connaît, celui qui est ouvert marqué **Cette instance** et chacun des autres avec son état : **Connectée**, **Non connectée**, **Connexion nécessaire** ou **Vérifier le certificat**. Touchez-en un autre pour l'ouvrir, directement à la maison et via le relais sinon.
+
 ## Connecté d'office sur un téléphone appairé {#sign-in}
 
 Un téléphone appairé à votre groupe ouvre chacun de ses serveurs avec la session déjà ouverte. Avant de charger une page, il demande une session à ce serveur via le groupe, et un serveur n'en accorde qu'à un membre qui est un téléphone. Un serveur ajouté par son adresse demande le mot de passe, comme dans un navigateur.
