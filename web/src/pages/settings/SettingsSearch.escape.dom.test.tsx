@@ -107,3 +107,17 @@ it("leads a name from an earlier version to where its cards went, and says so", 
   fireEvent.click(hit);
   expect(screen.getByTestId("where").textContent).toBe("/settings/storage#offsite");
 });
+
+it("leaves the focus where it is when the bar comes back on a scroll up after a search", () => {
+  renderSearch();
+  fireEvent.keyDown(document.body, { key: "/" });
+  fireEvent.change(searchField() as HTMLElement, { target: { value: "off-site" } });
+  fireEvent.click(screen.getAllByRole("option")[0]);
+  expect(searchField()).toBeNull();
+
+  const other = screen.getByLabelText("another field");
+  act(() => other.focus());
+  act(() => void main.dispatchEvent(new WheelEvent("wheel", { deltaY: -40 })));
+  expect(searchField()).not.toBeNull();
+  expect(document.activeElement).toBe(other);
+});
