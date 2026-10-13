@@ -58,14 +58,6 @@ interface NavItem {
   count?: Count;
 }
 
-// The stages build on each other, so the third keeps the first two's rules.
-const QUAKE_CLASS = [
-  "glim-logo-idle",
-  "glim-logo-quake",
-  "glim-logo-quake glim-logo-quake2",
-  "glim-logo-quake glim-logo-quake2 glim-logo-quake3",
-];
-
 // `transition` rather than `transition-colors` so the hover and press transforms
 // animate too. Every transform is motion-safe, so reduced motion gets colour
 // feedback only.
@@ -220,7 +212,6 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
   // Held, the logo shakes harder and harder and then goes off; a short click
   // still goes to the overview.
   const hold = useLogoHold(() => navigate("/dashboard"));
-  const markClass = hold.phase !== "idle" ? `glim-logo-${hold.phase}` : QUAKE_CLASS[hold.stage];
 
   return (
     // Only glyph mode narrows the rail. Reactive cannot: its labels slide back
@@ -240,7 +231,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
         {...hold.handlers}
         className={`glim-logo-btn flex flex-col items-center gap-2 ${railNarrow ? "px-2 py-4" : "px-4 py-6"}${railReactive ? " glim-reactive" : ""} w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
       >
-        <span className={`glim-logo-mark flex ${markBox} shrink-0 items-center justify-center ${markClass}`}>
+        <span className={`glim-logo-mark flex ${markBox} shrink-0 items-center justify-center ${hold.markClass}`}>
           <img
             ref={hold.markRef}
             src="/logo.svg"
