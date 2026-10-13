@@ -16,6 +16,9 @@ func TestMain(m *testing.M) {
 	if os.Getenv(fakeRcloneEnv) != "" {
 		os.Exit(runFakeRclone(os.Args[1:]))
 	}
+	if calls := os.Getenv(fakeResticEnv); calls != "" {
+		os.Exit(runFakeResticWithoutRepo(calls, os.Args[1:]))
+	}
 	mcpShipped = true
 	os.Exit(m.Run())
 }

@@ -94,6 +94,55 @@ func TestResticTalker(t *testing.T) {
 	case "fail":
 		fmt.Fprintln(os.Stderr, talkerLine)
 		os.Exit(1)
+	case "norepo":
+		fmt.Fprintln(os.Stderr, noRepoLine)
+		fmt.Fprintln(os.Stderr, "Is there a repository at the following location?")
+		fmt.Fprintln(os.Stderr, "/host/user/user/bombvault/vms")
+		os.Exit(10)
+	case "wrongkey":
+		fmt.Fprintln(os.Stderr, wrongKeyLine)
+		os.Exit(12)
+	}
+}
+
+const noRepoLine = "Fatal: repository does not exist: unable to open config file: stat /host/user/user/bombvault/vms/config: no such file or directory"
+
+const wrongKeyLine = "Fatal: wrong password or no key found"
+
+// A section that was never backed up has no repository, and every page load
+// asks it for its config.
+func TestMissingRepositoryKeepsResticsStderrOutOfTheLog(t *testing.T) {
+	r := Restic{Bin: os.Args[0]}
+	t.Setenv(resticTalkerEnv, "norepo")
+
+	var err error
+	out := capturedLog(func() {
+		_, err = r.run(context.Background(), []string{"-test.run=^TestResticTalker$", "--", "cat", "config"}, Mode{})
+	})
+	if !errors.Is(err, ErrRepositoryNotExist) {
+		t.Fatalf("want ErrRepositoryNotExist, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "repository does not exist") {
+		t.Fatalf("the error must still name the cause, got %q", err)
+	}
+	if out != "" {
+		t.Fatalf("a missing repository put restic's stderr into the log:\n%s", out)
+	}
+}
+
+func TestWrongPasswordStillLogsResticsStderr(t *testing.T) {
+	r := Restic{Bin: os.Args[0]}
+	t.Setenv(resticTalkerEnv, "wrongkey")
+
+	var err error
+	out := capturedLog(func() {
+		_, err = r.run(context.Background(), []string{"-test.run=^TestResticTalker$", "--", "cat", "config"}, Mode{})
+	})
+	if err == nil || errors.Is(err, ErrRepositoryNotExist) {
+		t.Fatalf("a wrong password is a failure of its own, got %v", err)
+	}
+	if !strings.Contains(out, wrongKeyLine) {
+		t.Fatalf("a wrong password must log restic's stderr, got:\n%s", out)
 	}
 }
 

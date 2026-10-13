@@ -1457,6 +1457,9 @@ func runBuffered(ctx context.Context, cmd *exec.Cmd, args []string) ([]byte, err
 		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
 			return stdout.Bytes(), werr
 		}
+		if nerr := repoNotExistErrFor(args, err, stderr.String()); nerr != nil {
+			return nil, nerr
+		}
 		if ctx.Err() != nil {
 			return nil, stderrError(args, stderr.String())
 		}
@@ -1840,6 +1843,30 @@ type backupUnreadableErr struct{ msg string }
 func (e *backupUnreadableErr) Error() string { return e.msg }
 
 func (e *backupUnreadableErr) Is(target error) bool { return target == ErrBackupSourceUnreadable }
+
+// ErrRepositoryNotExist tags a run that restic ended with exit code 10: the
+// location holds no repository yet. A section that was never backed up is in
+// that state on every page load, so restic's stderr for it stays out of the
+// log and the caller decides whether the absence matters.
+var ErrRepositoryNotExist = errors.New("repository does not exist")
+
+type repoNotExistErr struct{ msg string }
+
+func (e *repoNotExistErr) Error() string { return e.msg }
+
+func (e *repoNotExistErr) Is(target error) bool { return target == ErrRepositoryNotExist }
+
+// resticExitNoRepository is the code restic exits with, from 0.17 on, when the
+// repository does not exist.
+const resticExitNoRepository = 10
+
+func repoNotExistErrFor(args []string, err error, stderr string) error {
+	var ee *exec.ExitError
+	if !errors.As(err, &ee) || ee.ExitCode() != resticExitNoRepository {
+		return nil
+	}
+	return &repoNotExistErr{msg: stderrError(args, stderr).Error()}
+}
 
 // backupExit3Err returns a backupUnreadableErr (success-with-warning) when a BACKUP
 // command exited with restic's code 3 (source file unreadable), else nil. It is
