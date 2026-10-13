@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Button } from "../Button";
+import { IconRefresh } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import {
   previewItemPlacement,
+  type DroppedTarget,
   type ItemRef,
   type OkEnvelope,
   type PlacementChange,
@@ -11,8 +13,10 @@ import {
   type UploadEstimate,
 } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
+import { placeNames } from "../../lib/ownChoice";
 import {
   addsTargets,
+  defaultView,
   followLine,
   formatList,
   newTargetRefused,
@@ -33,7 +37,7 @@ import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useHostLabel } from "../../lib/useHostLabel";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
-import { usePlacementSave } from "../../lib/usePlacementSave";
+import { droppedText, usePlacementSave } from "../../lib/usePlacementSave";
 import { DirectRepoDialog } from "./DirectRepoDialog";
 import { PlacementBar } from "./PlacementBar";
 import { PlacementStatus } from "./PlacementStatus";
@@ -106,6 +110,44 @@ export function PlacementRow({
     if (added.length === 0) return true;
     const intro = t("placement.uploadIntro").replace("{name}", () => name);
     return confirm(intro, { extra: <UploadLines added={added} />, cancelTone: "neutral" });
+  }
+
+  /** Asks before an entry follows its section's default again, saying where
+   *  its backups go then and what that drops or uploads. */
+  async function follow() {
+    const step = stepForReset(shown);
+    if (!options || step.kind !== "save") return;
+    setAsking(true);
+    try {
+      const preview: OkEnvelope & { added?: UploadEstimate[]; dropped?: DroppedTarget[] } = await previewItemPlacement(
+        item,
+        step.change
+      ).catch((e: unknown) => ({ ok: false, error: e instanceof Error ? e.message : undefined }));
+      const after = shown.locked ? { ...shown, skip: options.default.skip } : defaultView(options.default, options);
+      const names = placeNames(t, after, options);
+      const goes = names.length > 0 ? formatList(lang, names) : host;
+      const added = (preview.added ?? []).filter((a) => a.snapshots > 0);
+      const extra = (
+        <div className="flex flex-col gap-1 text-sm text-carbon-textSub">
+          {!preview.ok && <p>{placementErrorText(t, lang, preview, "settings.error")}</p>}
+          {(preview.dropped ?? []).map((d) => (
+            <p key={d.targetId}>{droppedText(t, d)}</p>
+          ))}
+          {added.length > 0 && <UploadLines added={added} />}
+        </div>
+      );
+      const question = t("placement.followAsk").replace("{name}", () => name).replace("{places}", () => goes);
+      const yes = await confirm(question, {
+        extra,
+        confirmLabel: t("placement.follow"),
+        confirmLabelKey: "placement.follow",
+        cancelTone: "neutral",
+      });
+      if (!yes) return;
+    } finally {
+      setAsking(false);
+    }
+    save(step.change, step.optimistic);
   }
 
   async function run(step: PlacementStep) {
@@ -202,11 +244,12 @@ export function PlacementRow({
               </span>
               {(line === "own-copies" || line === "home-set") && (
                 <Button
-                  label={t("placement.reset")}
-                  labelKey="placement.reset"
+                  label={t("placement.follow")}
+                  labelKey="placement.follow"
+                  glyph={<IconRefresh />}
                   tone="neutral"
                   disabled={asking}
-                  onClick={() => void run(stepForReset(shown))}
+                  onClick={() => void follow()}
                 />
               )}
             </p>

@@ -18,7 +18,8 @@ import { STORAGE_BOX, stageStorage } from "./storage";
 // Set to a folder to keep pictures of the dots.
 const SHOTS = process.env.WHATS_NEW_SHOTS;
 
-const VERSION_NEWS = "Info holds Version, Help and About. Version lists BombVault, GlimStone, restic and rclone, and its New button opens the list of changes.";
+const VERSION_NEWS =
+  "Info holds Version, Help and About. Version lists BombVault, GlimStone, restic and rclone. Its New button opens the list of changes, or the release notes once you have seen them all.";
 const WEEK_NEWS = "The week as a band, with every planned run from Monday to Sunday.";
 const HEAD_NEWS = "Green dots mark what is new.";
 const DECLINE_NEWS = "Don't back up takes an entry off this list";
@@ -104,10 +105,15 @@ const newButton = (page: Page, n?: number) =>
   page.locator("#bv-main").getByRole("button", { name: n === undefined ? /^New( · \d+)?$/ : n > 0 ? `New · ${n}` : "New", exact: true });
 const list = (page: Page) => page.getByRole("dialog", { name: "New in 10.0.0" });
 
-/** Opens the list of changes from the Version card. */
+/** Opens the list of changes from the Version card. With nothing left to see
+ *  the button opens the release notes, and the list is the tab beside them. */
 async function openList(page: Page, n?: number): Promise<Locator> {
   await newButton(page, n).click();
   await expect(list(page)).toBeVisible();
+  if (n === 0) {
+    await expect(list(page).getByRole("tab", { name: "Release notes" })).toHaveAttribute("aria-selected", "true");
+    await list(page).getByRole("tab", { name: /^Changes/ }).click();
+  }
   return list(page);
 }
 
@@ -149,7 +155,7 @@ test("a dot leads from the navigation over the settings tile to the change, and 
   await fromNavigation.click();
   await expect(page).toHaveURL(/\/settings\/\w+$/);
   const tile = page.locator('a[href="/settings/info"]');
-  const fromTile = page.locator(`[data-new-dot="way"][aria-label^="This way to 1 change:"][aria-label*="${VERSION_NEWS}"]`);
+  const fromTile = page.locator(`[data-new-dot="way"][aria-label^="This way to 2 changes:"][aria-label*="${VERSION_NEWS}"]`);
   await expectOn(fromTile, tile);
 
   await fromTile.click();

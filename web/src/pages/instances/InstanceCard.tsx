@@ -77,8 +77,10 @@ export function InstanceCard({
       }`}
     >
       <div className="flex items-stretch">
-        <div className="flex shrink-0 items-center ps-4">{mark ?? <InstanceMark />}</div>
-        <div className="flex min-w-0 flex-1 flex-col gap-4 p-5 md:p-7">
+        {/* A card with little beside the mark, such as a phone's, keeps the
+            mark off its edge and its words beside the mark's middle. */}
+        <div className="flex shrink-0 items-center py-5 ps-4 md:py-6">{mark ?? <InstanceMark />}</div>
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-4 p-5 md:p-7">
           <div className="flex flex-col gap-1">
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
               <span className="min-w-0 truncate font-semibold text-carbon-text max-md:whitespace-normal max-md:wrap-break-word">

@@ -315,7 +315,7 @@ describe("the storage locations", () => {
   it("say that an entry follows the default", async () => {
     await renderSettings("container/immich");
     expect(await screen.findByText(en["placement.followsDefault"])).toBeTruthy();
-    expect(screen.queryByRole("button", { name: en["placement.reset"] })).toBeNull();
+    expect(screen.queryByRole("button", { name: en["placement.follow"] })).toBeNull();
   });
 
   it("send an entry with copies of its own back to the default", async () => {
@@ -324,7 +324,8 @@ describe("the storage locations", () => {
     });
     await renderSettings("container/immich");
     expect(await screen.findByText(en["placement.ownCopies"])).toBeTruthy();
-    await press(screen.getByRole("button", { name: en["placement.reset"] }));
+    await press(screen.getByRole("button", { name: en["placement.follow"] }));
+    await press(within(await screen.findByRole("dialog")).getByRole("button", { name: en["placement.follow"] }));
     await waitFor(() =>
       expect(setItemPlacement).toHaveBeenCalledWith(
         { domain: "containers", key: "immich" },

@@ -1,5 +1,4 @@
-// The entries that are backed up somewhere other than their section's default,
-// and the way back for each.
+// The entries that are backed up somewhere other than their section's default.
 
 import {
   listContainers,
@@ -7,14 +6,13 @@ import {
   listVMs,
   type DefaultRow,
   type ItemRef,
-  type PlacementChange,
   type PlacementDomain,
   type PlacementOptions,
   type PlacementView,
 } from "./api";
 import type { EntryKind } from "./backupEntry";
 import type { useT } from "./i18n";
-import { placementButtons, stepForReset } from "./placement";
+import { placementButtons } from "./placement";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -61,15 +59,6 @@ export async function readPlacedEntries(domains: PlacementDomain[]): Promise<Pla
 export function hasOwnChoice(view: PlacementView, row: DefaultRow): boolean {
   if (view.unreadable) return false;
   return !view.copiesFollow || view.repo !== row.home;
-}
-
-/** The change that brings an entry back to its default, or null where nothing
- *  can change: an entry that copies like its section and is stored where its
- *  first backup put it. */
-export function followChange(view: PlacementView): PlacementChange | null {
-  if (view.locked && view.copiesFollow) return null;
-  const step = stepForReset(view);
-  return step.kind === "save" ? step.change : null;
 }
 
 /** Where a placement puts backups, by name: the place they are written to,

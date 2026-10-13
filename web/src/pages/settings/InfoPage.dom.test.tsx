@@ -213,15 +213,15 @@ describe("the list of what is new", () => {
     expect(within(card(en["about.version"])).getByRole("button", { name: en["whatsNew.title"] })).toBeTruthy();
   });
 
-  it("puts Release notes and New before the update check", async () => {
+  it("has one button for the window, before the update check", async () => {
     await renderPage();
     const names = within(card(en["about.version"]))
       .getAllByRole("button")
       .map((button) => button.textContent ?? "");
     const at = (label: string) => names.findIndex((name) => name.includes(label));
-    expect(at(en["whatsNew.notesTab"])).toBeGreaterThanOrEqual(0);
-    expect(at(en["whatsNew.notesTab"])).toBeLessThan(at(en["whatsNew.title"]));
-    expect(at(en["whatsNew.title"])).toBeLessThan(at(en["tile.info.check"]));
+    expect(at(en["whatsNew.notesTab"])).toBe(-1);
+    expect(at(en["whatsNew.title"])).toBeGreaterThanOrEqual(0);
+    expect(at(en["tile.info.check"])).toBe(at(en["whatsNew.title"]) + 1);
   });
 });
 

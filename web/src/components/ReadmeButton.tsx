@@ -37,6 +37,8 @@ export interface ReadmeButtonProps {
   onLinkClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
   /** Extra classes on the unit. */
   className?: string;
+  /** The change in lib/whatsNew.ts the unit is, which puts its dot on it. */
+  newId?: string;
 }
 
 export function ReadmeButton({
@@ -50,6 +52,7 @@ export function ReadmeButton({
   soonLabel,
   onLinkClick,
   className,
+  newId,
 }: ReadmeButtonProps) {
   const ref = useRef<HTMLDivElement>(null);
   const soon = !parts[0].href && !parts[0].onClick;
@@ -72,7 +75,7 @@ export function ReadmeButton({
   if (className) unit.push(className);
 
   return (
-    <div ref={ref} className={unit.join(" ")}>
+    <div ref={ref} data-new={newId} className={unit.join(" ")}>
       {parts.map((part, i) => {
         const sub = soon ? soonLabel : part.sub;
         const label = sub ? `${part.name} ${sub}` : part.name;
