@@ -433,8 +433,8 @@ describe("restoring several entries", () => {
       fireEvent.click(entry("Windows 11"), { ctrlKey: true });
     });
     expect(within(screen.getByTestId("bulk-bar")).getByText("2 selected")).toBeTruthy();
-    expect(entry("immich").getAttribute("aria-pressed")).toBe("true");
-    expect(entries().queryByRole("checkbox")).toBeNull();
+    expect(entry("immich").getAttribute("aria-checked")).toBe("true");
+    expect(entries().getAllByRole("checkbox", { name: /^immich/ })).toHaveLength(1);
     expect(railRows()).toHaveLength(0);
     expect(entry("tank/appdata").disabled).toBe(true);
     expect(entries().getByLabelText(en["restoreMany.leftOut.zfs"])).toBeTruthy();
