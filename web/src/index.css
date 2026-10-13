@@ -1937,6 +1937,9 @@ body {
 .glim-tile-grok { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
 .glim-tile-jan { --tile: #f17455; --tile-ink: #ffffff; } /* 2.8:1 */
 .glim-tile-jetbrains { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
+/* The second line on a lit tile is small text on the brand colour and needs
+   the ink's full contrast. */
+.glim-provider-pick .glim-readme-btn-unit:is(:hover, :focus-within) .glim-readme-btn-sub { opacity: 1; }
 .glim-tile-kimi { --tile: #007cff; --tile-ink: #ffffff; } /* 3.9:1 */
 .glim-tile-lmstudio { --tile: #4f46e5; --tile-ink: #ffffff; } /* 6.3:1 */
 .glim-tile-mistral { --tile: #fa520f; --tile-ink: #ffffff; } /* 3.3:1 */
@@ -3996,8 +3999,8 @@ body {
 .glim-crypt-looker { color: var(--carbon-text-sub); }
 
 /* A registry's logo is an image. It keeps its own colours on a picker tile,
-   turns white where the tile lights up in the brand's colour, and a logo in
-   dark ink is flipped on a dark ground. */
+   takes the tile's ink where the tile lights up in the brand's colour, and a
+   logo in dark ink is flipped on a dark ground. */
 .glim-registry-pick .glim-readme-btn-mark img {
   display: block;
   width: 100%;
@@ -4011,9 +4014,9 @@ body {
   filter: brightness(0) invert(1);
 }
 :root:not([data-theme="light"]) .glim-registry-dark .glim-readme-btn-mark img { filter: invert(1); }
-.glim-registry-pick .glim-brand-tile:focus-visible .glim-readme-btn-mark img { filter: brightness(0) invert(1); }
+.glim-registry-pick .glim-brand-tile:focus-visible .glim-readme-btn-mark img { filter: var(--logo-lit, brightness(0) invert(1)); }
 @media (hover: hover) {
-  .glim-registry-pick .group:hover > .glim-brand-tile .glim-readme-btn-mark img { filter: brightness(0) invert(1); }
+  .glim-registry-pick .group:hover > .glim-brand-tile .glim-readme-btn-mark img { filter: var(--logo-lit, brightness(0) invert(1)); }
 }
 
 /* The week of planned runs. Each kind of run has a colour of its own, which
