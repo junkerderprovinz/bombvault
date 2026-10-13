@@ -322,6 +322,7 @@ export function RestoreManyWindow({ items, onClose }: { items: BackupItem[]; onC
               ]}
               label={t("restoreMany.which")}
               select="one"
+              activation="manual"
               fit
               active={moment === NEWEST ? NEWEST : "at"}
               onChange={(id) => setMoment(id === NEWEST ? NEWEST : String(times[0] ?? ""))}

@@ -205,7 +205,11 @@ function SelfRestoreNote({ deletes, onClose }: { deletes: React.ReactNode; onClo
   );
 }
 
-/** WhereOption is one target of a restore, with the scene that plays it. */
+const ARROW_STEP: Record<string, number> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
+
+/** WhereOption is one target of a restore, with the scene that plays it. Its
+ *  radio group is one tab stop, and the arrow keys pick the next target, as
+ *  in any radio group. */
 export function WhereOption({
   where,
   on,
@@ -228,8 +232,21 @@ export function WhereOption({
       type="button"
       role="radio"
       aria-checked={on}
+      tabIndex={on ? 0 : -1}
       disabled={disabled}
       onClick={onPick}
+      onKeyDown={(e) => {
+        const step = ARROW_STEP[e.key];
+        const group = e.currentTarget.closest('[role="radiogroup"]');
+        if (!step || !group) return;
+        e.preventDefault();
+        // Left and right follow the reading direction.
+        const flip = (e.key === "ArrowLeft" || e.key === "ArrowRight") && getComputedStyle(group).direction === "rtl";
+        const radios = Array.from(group.querySelectorAll<HTMLButtonElement>('[role="radio"]:not(:disabled)'));
+        const next = radios[(radios.indexOf(e.currentTarget) + (flip ? -step : step) + radios.length) % radios.length];
+        next.focus();
+        next.click();
+      }}
       className={`flex items-center gap-3 rounded-control bg-carbon-surface2 p-3 text-start ring-2 ring-inset transition-colors hover:bg-carbon-surface3 ${
         on ? "ring-accent" : "ring-transparent"
       }`}

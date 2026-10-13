@@ -534,7 +534,7 @@ describe("restoring several entries", () => {
     await press(mark("immich"));
     await press(mark("Windows 11"));
     await press(within(screen.getByTestId("bulk-bar")).getByRole("button", { name: en["snapshots.restore"] }));
-    await press(within(many()).getByRole("tab", { name: en["restoreMany.at"] }));
+    await press(within(many()).getByRole("radio", { name: en["restoreMany.at"] }));
     await press(within(many()).getByRole("combobox", { name: en["restoreMany.atLabel"] }));
     const options = screen.getAllByRole("option");
     await press(options[options.length - 1]);
