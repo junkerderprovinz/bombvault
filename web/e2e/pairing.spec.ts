@@ -231,9 +231,8 @@ for (const width of [1280, 390]) {
     const known = page.getByLabel(/^Bekannte Adressen/);
     await expect(known).toHaveValue("https://tower-linz.familie-hofer.example.at:3443");
     expect((await found.boundingBox())!.y).toBeLessThan((await known.boundingBox())!.y);
-    // Beside it the group stands as a network, with an arrow for the role.
-    const picture = page.getByTestId("net-picture");
-    await expect(picture.locator('[data-lane="out:receiver:on"]').first()).toBeAttached();
+    // The group as a network stands on the Instances page and not here.
+    await expect(page.getByTestId("net-picture")).toHaveCount(0);
     await expectFits(page);
     await zfsRow.getByRole("button", { name: "Per SSH verbinden" }).click();
     const connect = page.getByRole("dialog", { name: "ZFS-Server hinzufügen" });

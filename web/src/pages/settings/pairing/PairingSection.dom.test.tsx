@@ -556,16 +556,13 @@ describe("the instances card", () => {
     expect(screen.queryByTestId("zfs-row")).toBeNull();
   });
 
-  it("draws the group as a network beside the list, with the roles between its members", async () => {
+  it("lists the group without drawing it, since the Instances page draws the network", async () => {
     zfs = true;
     servers = [server()];
     roles = [memberRoles({ byMember: roleSide({ receiver: roleRequest({ state: "allowed" }) }) })];
     await renderTab();
-    const picture = within(screen.getByTestId("net-picture"));
-    for (const name of ["cellar", "attic", "Backup-NAS"]) {
-      expect(picture.getAllByRole("button", { name }).length).toBeGreaterThan(0);
-    }
-    expect(screen.getByTestId("net-picture").querySelectorAll('[data-lane="out:receiver:on"]').length).toBeGreaterThan(0);
+    expect(within(screen.getByTestId("members")).getAllByRole("listitem").length).toBeGreaterThan(1);
+    expect(screen.queryByTestId("net-picture")).toBeNull();
   });
 
   it("is only the list while this instance is alone", async () => {
