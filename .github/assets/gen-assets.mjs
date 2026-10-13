@@ -51,19 +51,24 @@ for (const [suffix, bg] of [["", "#ffffff"], ["-dark", "#0d1117"]]) {
 // The largest distance from the optical centre to the box's edge along either
 // axis, and to any drawn pixel at all, which is the spark's tip.
 const HALF = Math.max(OPT_CX, LOGO_W - OPT_CX, OPT_CY, LOGO_H - OPT_CY);
-const REACH = (() => {
+const INK = (() => {
   const img = new Resvg(LOGO_SVG, { fitTo: { mode: "width", value: Math.round(LOGO_W) } }).render();
-  const k = LOGO_W / img.width;
-  const px = img.pixels;
+  return { width: img.width, height: img.height, px: img.pixels };
+})();
+
+/** The distance from cx, cy to the logo's farthest drawn pixel, in the logo's units. */
+function reach(cx, cy) {
+  const k = LOGO_W / INK.width;
   let max = 0;
-  for (let y = 0; y < img.height; y++) {
-    for (let x = 0; x < img.width; x++) {
-      if (px[(y * img.width + x) * 4 + 3] < 128) continue;
-      max = Math.max(max, Math.hypot((x + 0.5) * k - OPT_CX, (y + 0.5) * k - OPT_CY));
+  for (let y = 0; y < INK.height; y++) {
+    for (let x = 0; x < INK.width; x++) {
+      if (INK.px[(y * INK.width + x) * 4 + 3] < 128) continue;
+      max = Math.max(max, Math.hypot((x + 0.5) * k - cx, (y + 0.5) * k - cy));
     }
   }
   return max;
-})();
+}
+const REACH = reach(OPT_CX, OPT_CY);
 
 // icon.png has no tile, since the logo reads on dark and light backgrounds. The
 // side is twice HALF plus 4 percent, so nothing clips. The docs use it as their
@@ -95,20 +100,30 @@ const TILE_LIGHT = "#ffffff", TILE_SHADE = "#e2e2e2";
 const tile = (side) =>
   `<rect width="${side}" height="${side}" fill="${TILE_LIGHT}"/><rect x="${side / 2}" width="${side / 2}" height="${side}" fill="${TILE_SHADE}"/>`;
 
-// The Android launcher icon is layers of 108dp, and only a circle of 66dp in
-// the middle survives every launcher's mask, so the spark's tip touches that
-// circle. The monochrome layer is the same shape in one colour for themed
-// icons; its alpha is doubled so the seams between the logo's parts close up.
+// The Android launcher icon is layers of 108dp, of which the launcher shows the
+// middle 72dp through its mask, at the tightest a circle that fills it. The logo
+// stays on the split line and moves up or down until the spark's tip and the
+// vault's bottom corners are equally far out, half a dp inside that circle. The
+// monochrome layer is the same shape in one colour for themed icons; its alpha
+// is doubled so the seams between the logo's parts close up.
 {
   const RES = join(ROOT, "android/app/src/main/res");
   const DENSITIES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
-  const s = 33 / REACH;
-  const fg = canvas(108, 108, placeLogo(54, 54, s));
+  let [lo, hi] = [0, LOGO_H];
+  while (hi - lo > 0.1) {
+    const a = lo + (hi - lo) / 3, b = hi - (hi - lo) / 3;
+    if (reach(OPT_CX, a) < reach(OPT_CX, b)) hi = b;
+    else lo = a;
+  }
+  const centre = (lo + hi) / 2;
+  const s = 35.5 / reach(OPT_CX, centre);
+  const y = 54 + (OPT_CY - centre) * s;
+  const fg = canvas(108, 108, placeLogo(54, y, s));
   const flat = LOGO_SVG.replace(/fill="#[0-9a-fA-F]{3,6}"/g, 'fill="#000000"');
   const mono = canvas(
     108,
     108,
-    `<filter id="solid"><feComponentTransfer><feFuncA type="table" tableValues="0 1 1"/></feComponentTransfer></filter><g filter="url(#solid)">${placeLogo(54, 54, s, flat)}</g>`,
+    `<filter id="solid"><feComponentTransfer><feFuncA type="table" tableValues="0 1 1"/></feComponentTransfer></filter><g filter="url(#solid)">${placeLogo(54, y, s, flat)}</g>`,
   );
   for (const [name, factor] of Object.entries(DENSITIES)) {
     const width = Math.round(108 * factor);
