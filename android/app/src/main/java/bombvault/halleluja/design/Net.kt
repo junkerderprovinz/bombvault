@@ -1,6 +1,10 @@
 package bombvault.halleluja.design
 
 import android.webkit.CookieManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -31,7 +35,7 @@ fun fingerprint(cert: Certificate): String =
  */
 fun open(server: Server, url: String): HttpURLConnection {
     val conn = URL(url).openConnection() as HttpURLConnection
-    conn.connectTimeout = TIMEOUT_MS
+    conn.connectTimeout = connectTimeout(conn.url.host)
     conn.readTimeout = TIMEOUT_MS
     CookieManager.getInstance().getCookie(url)?.let { conn.setRequestProperty("Cookie", it) }
     val pin = server.pin
@@ -73,7 +77,7 @@ fun get(server: Server, path: String): Answer = try {
  */
 fun answers(server: Server): Boolean = try {
     val conn = open(server, server.url.trimEnd('/') + "/api/health")
-    conn.connectTimeout = PROBE_MS
+    conn.connectTimeout = minOf(conn.connectTimeout, PROBE_MS)
     conn.readTimeout = PROBE_MS
     conn.instanceFollowRedirects = false
     val status = conn.responseCode
@@ -130,12 +134,11 @@ private const val TIMEOUT_MS = 5000
  * group's activity route answers in: runs, the progress snapshot as events,
  * and the next scheduled runs.
  */
-fun activityOverHttp(server: Server): Answer {
-    val runs = get(server, "/api/runs")
-    if (runs.status != 200) return runs
-    val live = get(server, "/api/progress?snapshot=1")
-    val next = get(server, "/api/schedule/next")
-    return try {
+suspend fun activityOverHttp(server: Server): Answer = coroutineScope {
+    val asked = listOf("/api/runs", "/api/progress?snapshot=1", "/api/schedule/next").map { async(Dispatchers.IO) { get(server, it) } }
+    val (runs, live, next) = asked.awaitAll()
+    if (runs.status != 200) return@coroutineScope runs
+    try {
         val progress = JSONArray()
         if (live.status == 200) {
             for (line in live.body.lines()) if (line.startsWith("data: ")) progress.put(JSONObject(line.removePrefix("data: ")))

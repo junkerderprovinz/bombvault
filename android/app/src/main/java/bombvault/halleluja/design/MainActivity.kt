@@ -42,6 +42,7 @@ import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -63,6 +64,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var pages: RelayPages
 
     private val screen = Screen()
+    private val routes = Routes()
 
     /** The server on screen or on its way, null while the launcher is. */
     private val current: Server? get() = screen.current
@@ -215,6 +217,8 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         pairing.stop()
+        // The phone may be on another network when it comes back.
+        routes.forget()
     }
 
     override fun onResume() {
@@ -266,11 +270,21 @@ class MainActivity : ComponentActivity() {
         problem = null
         lifecycleScope.launch {
             val member = server.member
-            val direct = server.url.isNotEmpty() && (member == null || withContext(Dispatchers.IO) { answers(server) })
-            if (direct) {
-                // A server from the group signs the phone in itself, so its
-                // page opens without the password.
-                val cookie = withContext(Dispatchers.IO) { pairing.session(server) }
+            val known = routes.direct(server.id)
+            val tryDirect = server.url.isNotEmpty() && known != false
+            // A server from the group signs the phone in itself, so its page
+            // opens without the password. The session comes over the group,
+            // and is asked for while the way in is still being looked for.
+            val session = if (member != null && tryDirect) async(Dispatchers.IO) { pairing.session(server) } else null
+            val way = if (member == null) {
+                Way.Direct
+            } else {
+                val direct = if (tryDirect) async(Dispatchers.IO) { answers(server).also { routes.heard(server.id, it) } } else null
+                val relay = async(Dispatchers.IO) { pairing.reaches(member) }
+                pickWay(direct, relay, if (known == true) Long.MAX_VALUE else HEAD_START_MS).also { relay.cancel() }
+            }
+            if (way == Way.Direct) {
+                val cookie = session?.await()
                 if (cookie != null) {
                     CookieManager.getInstance().setCookie(server.url, cookie)
                     CookieManager.getInstance().flush()
@@ -278,15 +292,28 @@ class MainActivity : ComponentActivity() {
                 if (screen.opens(server)) web.loadUrl(server.url)
                 return@launch
             }
-            val relayed = member != null && withContext(Dispatchers.IO) { pairing.reaches(member) }
+            session?.cancel()
             if (!screen.opens(server)) return@launch
-            if (!relayed) {
+            if (way == Way.None) {
                 fail(server, "unreachable", relay = true)
                 return@launch
             }
             pages.shown = member
             web.loadUrl(relayOrigin(member!!) + "/")
         }
+    }
+
+    /**
+     * Asks [server] over the group for [path] and at its own address with
+     * [direct], both at once: at home the own address answers first, away
+     * only the group does.
+     */
+    private suspend fun askBoth(server: Server, path: String, direct: suspend () -> Answer): Answer {
+        val relayed = lifecycleScope.async(Dispatchers.IO) { pairing.ask(server, path) }
+        val own = lifecycleScope.async(Dispatchers.IO) {
+            if (server.url.isEmpty()) null else direct().also { routes.heard(server.id, it.status != 0) }
+        }
+        return firstAnswer(listOf(relayed, own)) ?: Answer(0, "not reached")
     }
 
     private fun onMessage(msg: JSONObject, origin: String, reply: JavaScriptReplyProxy) {
@@ -346,12 +373,10 @@ class MainActivity : ComponentActivity() {
                 val server = servers.get(msg.getString("id")) ?: return
                 val ticket = msg.getInt("ticket")
                 lifecycleScope.launch {
-                    val answer = withContext(Dispatchers.IO) {
-                        if (op == "activity") {
-                            pairing.ask(server, ACTIVITY) ?: activityOverHttp(server)
-                        } else {
-                            pairing.ask(server, "/api/group/peer/display-prefs") ?: get(server, "/api/display-prefs")
-                        }
+                    val answer = if (op == "activity") {
+                        askBoth(server, ACTIVITY) { activityOverHttp(server) }
+                    } else {
+                        askBoth(server, "/api/group/peer/display-prefs") { get(server, "/api/display-prefs") }
                     }
                     launcher?.postMessage(
                         JSONObject().put("op", op).put("ticket", ticket).put("status", answer.status).put("body", answer.body).toString(),
@@ -558,6 +583,7 @@ class MainActivity : ComponentActivity() {
         override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
             val server = current ?: return
             if (request.isForMainFrame && originOf(request.url.toString()) == server.origin) {
+                routes.heard(server.id, false)
                 fail(server, "unreachable", detail = error.description.toString())
             }
         }
@@ -608,6 +634,9 @@ class MainActivity : ComponentActivity() {
 
         /** What runs on a member, asked over the group. */
         private const val ACTIVITY = "/api/group/peer/activity"
+
+        // A server at home answers its own address well within this.
+        private const val HEAD_START_MS = 1000L
 
         // The ground of BombVault's dark and light themes, the same values its
         // theme-color meta carries.
