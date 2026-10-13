@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/ic_launcher_light" />
-    <item android:left="54dp" android:drawable="@color/ic_launcher_shade" />
-</layer-list>
+<!-- A vector, so the shaded half starts at the middle at whatever size the
+     launcher draws this layer; a dp inset would not scale with it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="@color/ic_launcher_light"
+        android:pathData="M0,0h54v108h-54z" />
+    <path
+        android:fillColor="@color/ic_launcher_shade"
+        android:pathData="M54,0h54v108h-54z" />
+</vector>
