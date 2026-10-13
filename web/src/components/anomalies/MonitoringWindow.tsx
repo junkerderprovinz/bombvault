@@ -48,7 +48,7 @@ export function MonitoringWindow({
               glyph={<IconEye />}
               onClick={() => {
                 onClose();
-                navigate(itemPath);
+                navigate(itemPath, { replace: true });
               }}
             />
           )}

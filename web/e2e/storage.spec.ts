@@ -171,6 +171,42 @@ test.describe("on the desktop", () => {
     expect(staged.writes[2].body).toMatchObject({ skip: [], expect: IMPACT });
   });
 
+  test("a line whose preview the server refuses says why in its window and saves nothing", async ({ page }) => {
+    const staged = await stageStorage(page, 1280);
+    await page.route(
+      (url) => url.pathname.startsWith("/api/placement/default/") && url.pathname.endsWith("/preview"),
+      (route) =>
+        route.fulfill({ status: 403, json: { ok: false, error: "sign in at this instance's web interface to do this", code: "own-login-needed" } }),
+    );
+    await page.goto("/storage");
+    await page.getByRole("switch", { name: `Container nach ${B2.name}` }).focus();
+    await page.keyboard.press("Enter");
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toContainText("Dafür musst du dich an der Weboberfläche dieser Instanz selbst anmelden.");
+    await expect(dialog.getByRole("button", { name: "Bestätigen" })).toBeDisabled();
+    await dialog.getByRole("button", { name: "Abbrechen" }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    expect(staged.writes.filter((w) => w.method === "PUT")).toEqual([]);
+  });
+
+  test("a line whose preview does not come back can still be saved, and the server checks it", async ({ page }) => {
+    const staged = await stageStorage(page, 1280);
+    await page.route(
+      (url) => url.pathname.startsWith("/api/placement/default/") && url.pathname.endsWith("/preview"),
+      (route) => route.fulfill({ status: 502, contentType: "text/html", body: "<h1>502 Bad Gateway</h1>" }),
+    );
+    await page.goto("/storage");
+    await page.getByRole("switch", { name: `Container nach ${B2.name}` }).focus();
+    await page.keyboard.press("Enter");
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toContainText("Ein Proxy oder Gateway vor BombVault");
+    await dialog.getByRole("button", { name: "Bestätigen" }).click();
+
+    await expect.poll(() => staged.writes.filter((w) => w.method === "PUT").length).toBe(1);
+    const put = staged.writes.find((w) => w.method === "PUT")!;
+    expect(put.body).toEqual({ skip: [] });
+  });
+
   test("a line the server would refuse is no switch, and the choice of view survives a reload", async ({ page }) => {
     const staged = await stageStorage(page, 1280);
     await page.goto("/storage");

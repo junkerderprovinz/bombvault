@@ -19,6 +19,8 @@ let waiting: Layer[] = [];
 let returning = 0;
 /** Layers closed in this task whose entries are still to be dropped. */
 let leaving: string[] = [];
+/** What waits for the layer entries to be gone, see leaveLayers. */
+let landed: (() => void)[] = [];
 let listening = false;
 
 function stackHere(): string[] {
@@ -32,14 +34,22 @@ function push(layer: Layer) {
   window.history.pushState({ ...state, [KEY]: [...stackHere(), layer.id] }, "");
 }
 
+// Once our own steps back have landed, what waited for that runs first, so a
+// URL it replaces is the entry below the layers and not a layer pushed next.
+function settle() {
+  const then = landed;
+  landed = [];
+  then.forEach((fn) => fn());
+  if (returning > 0) return;
+  const next = waiting;
+  waiting = [];
+  next.forEach(push);
+}
+
 function onPop() {
   if (returning > 0) {
     returning--;
-    if (returning === 0) {
-      const next = waiting;
-      waiting = [];
-      next.forEach(push);
-    }
+    if (returning === 0) settle();
     return;
   }
   const here = stackHere();
@@ -81,11 +91,7 @@ function release(layer: Layer) {
     const steps = leaving.filter((id) => here.includes(id)).length;
     leaving = [];
     if (steps === 0) {
-      if (returning === 0) {
-        const next = waiting;
-        waiting = [];
-        next.forEach(push);
-      }
+      if (returning === 0) settle();
       return;
     }
     returning++;
@@ -93,7 +99,30 @@ function release(layer: Layer) {
   });
 }
 
-/** useBackCloses lets Back close a sheet or dialog while it is open. */
+/**
+ * leaveLayers drops the history entries of the open layers and then runs then
+ * on the entry below them. A window that its URL opens closes through it, so
+ * the URL it clears is its own entry and Back afterwards does not open it
+ * again.
+ */
+export function leaveLayers(then: () => void) {
+  if (returning > 0 || leaving.length > 0) {
+    landed.push(() => leaveLayers(then));
+    return;
+  }
+  const steps = stackHere().length;
+  if (steps === 0) {
+    then();
+    return;
+  }
+  landed.push(then);
+  returning++;
+  window.history.go(-steps);
+}
+
+/** useBackCloses lets Back close a sheet or dialog while it is open. A way
+ *  out of it to another page navigates with replace, so that page takes the
+ *  layer's entry and Back from it skips the closed window. */
 export function useBackCloses(isOpen: boolean, onClose: () => void) {
   const id = useId();
   const closeRef = useRef(onClose);

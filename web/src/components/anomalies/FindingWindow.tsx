@@ -78,7 +78,7 @@ export function FindingWindow({
 
   const leave = (to: string) => {
     onClose();
-    navigate(to);
+    navigate(to, { replace: true });
   };
 
   return (

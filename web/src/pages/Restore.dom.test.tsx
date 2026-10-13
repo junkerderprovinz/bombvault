@@ -376,7 +376,7 @@ describe("the emergency", () => {
     await press(screen.getByRole("button", { name: new RegExp(`^${en["restorePage.emergencyWay"]}`) }));
     expect(wizard()).not.toBeNull();
     await press(within(wizard()!).getByRole("button", { name: en["common.cancel"] }));
-    expect(wizard()).toBeNull();
+    await waitFor(() => expect(wizard()).toBeNull());
 
     await press(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["entry.config.startRecovery"] }));
     expect(within(wizard()!).getByText(en["emergency.waysIntro"])).toBeTruthy();
