@@ -207,7 +207,7 @@ describe("the ZFS form", () => {
     await open("choose");
     fireEvent.click(choice(/^A ZFS dataset/));
     expect(await screen.findByRole("dialog", { name: "Add ZFS datasets" })).toBeTruthy();
-    expect(screen.getByPlaceholderText("Filter datasets…")).toBeTruthy();
+    expect(await screen.findByPlaceholderText("Filter datasets…")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Other selection" }));
     expect(screen.getByRole("dialog", { name: "What else should BombVault back up?" })).toBeTruthy();
   });
