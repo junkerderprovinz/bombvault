@@ -47,6 +47,8 @@ Comutatorul pentru asta este **Telefoanele se pot împerechea cu cele douăsprez
 
 Telefonul primește propriul card pe pagina Instanțe a fiecărui server din grup, marcat ca aplicație Android și numit după numele pe care l-ai dat telefonului. Nu are fișă de evaluare, pentru că nu face backup la nimic, iar **Elimină** îl scoate de pe pagină. Un telefon care cunoaște cuvintele se poate împerechea din nou oricând, așa că pentru un telefon pierdut dezactivează **Telefoanele se pot împerechea cu cele douăsprezece cuvinte ale grupului** la **Setări, Securitate** sau lasă fiecare instanță să aleagă **Părăsește grupul** și împerechează-le din nou cu cuvinte noi.
 
+Un telefon împerecheat înainte de 10.0.0 începe să-și semneze apelurile la prima vizită după actualizare, iar fiecare server păstrează prima cheie pe care o primește pentru telefon. Dacă altcineva care cunoaște cuvintele grupului ajunge primul în timp ce telefonul este offline, serverul acela respinge telefonul din acel moment, iar aplicația nu-l mai poate deschide prin relay. Ca să rezolvi, autentifică-te pe serverul respectiv într-un browser, alege **Uită cheia** pe cardul telefonului din pagina Instanțe, apoi **Confirmă uitarea**, și deschide din nou aplicația. Serverul preia cheia proprie a telefonului la următorul apel. Dacă telefonul este respins din nou, altcineva are cuvintele: lasă fiecare instanță să aleagă **Părăsește grupul** și împerechează-le din nou cu cuvinte noi, ca în cazul unui telefon pierdut.
+
 ## Setări {#settings}
 
 Rotița de lângă butonul + deschide setările aplicației:

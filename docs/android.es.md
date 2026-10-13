@@ -47,6 +47,8 @@ El interruptor es **Los teléfonos pueden emparejarse con las doce palabras del 
 
 El móvil recibe su propia tarjeta en la página de Instancias de cada servidor del grupo, marcada como app de Android y con el nombre que le diste al móvil. No tiene cuadro de mando porque no hace copias, y **Eliminar** la quita de la página. Un móvil que conoce las palabras puede volver a emparejarse en cualquier momento, así que para un móvil perdido desactiva **Los teléfonos pueden emparejarse con las doce palabras del grupo** en **Ajustes, Seguridad**, o haz que cada instancia use **Salir del grupo** y vuelve a emparejarlas con palabras nuevas.
 
+Un móvil emparejado antes de la versión 10.0.0 empieza a firmar sus llamadas en su primera visita tras la actualización, y cada servidor se queda con la primera clave que recibe para ese móvil. Si otra persona que conoce las palabras del grupo llega antes mientras el móvil está sin conexión, ese servidor rechaza el móvil a partir de entonces y la app ya no puede abrirlo a través del relay. Para solucionarlo, inicia sesión en ese servidor desde un navegador, elige **Olvidar la clave** en la tarjeta del móvil en la página de Instancias y después **Confirmar olvido**, y abre la app de nuevo. El servidor toma la clave propia del móvil en su siguiente llamada. Si el móvil vuelve a ser rechazado, otra persona tiene las palabras: haz que cada instancia use **Salir del grupo** y vuelve a emparejarlas con palabras nuevas, como con un móvil perdido.
+
 ## Ajustes {#settings}
 
 El engranaje junto al botón + abre los ajustes de la app:

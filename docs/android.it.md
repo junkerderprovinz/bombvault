@@ -43,6 +43,8 @@ Un telefono associato al tuo gruppo apre ciascuno dei suoi server con l'accesso 
 
 Il telefono riceve una scheda propria nella pagina Istanze di ogni server del gruppo, contrassegnata come app Android e con il nome che hai dato al telefono. Non ha una scorecard perché non esegue backup, e **Rimuovi** la toglie dalla pagina. Un telefono che conosce le parole può associarsi di nuovo in qualsiasi momento, quindi per un telefono smarrito disattiva **I telefoni possono associarsi con le dodici parole del gruppo** in **Impostazioni, Sicurezza**, oppure fai usare a ogni istanza **Lascia il gruppo** e associale di nuovo con parole nuove.
 
+Un telefono associato prima della 10.0.0 inizia a firmare le sue chiamate alla prima visita dopo l'aggiornamento, e ogni server conserva la prima chiave che riceve per il telefono. Se qualcun altro che conosce le parole del gruppo arriva prima mentre il telefono è offline, quel server da quel momento rifiuta il telefono, e l'app non può più aprirlo tramite il relay. Per risolvere, accedi a quel server da un browser, scegli **Dimentica la chiave** sulla scheda del telefono nella pagina Istanze e poi **Conferma di dimenticare**, e apri di nuovo l'app. Il server prende la chiave propria del telefono alla chiamata successiva. Se il telefono viene rifiutato di nuovo, qualcun altro ha le parole: fai usare a ogni istanza **Lascia il gruppo** e associale di nuovo con parole nuove, come per un telefono smarrito.
+
 ## Impostazioni {#settings}
 
 L'ingranaggio accanto al pulsante + apre le impostazioni dell'app:

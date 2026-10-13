@@ -47,6 +47,8 @@ Kontakten hedder **Telefoner kan parre med gruppens tolv ord** og sidder i korte
 
 Telefonen får sit eget kort på Instanser-siden på hver server i gruppen, markeret som Android-app og med det navn, du har givet telefonen. Den har intet scorekort, fordi den ikke tager sikkerhedskopier, og **Fjern** tager den af siden. En telefon, der kender ordene, kan til enhver tid parre igen, så for en mistet telefon slår du **Telefoner kan parre med gruppens tolv ord** fra under **Indstillinger, Sikkerhed**, eller du lader hver instans forlade gruppen med **Forlad gruppen** og parrer dem igen med nye ord.
 
+En telefon, der blev parret før 10.0.0, begynder at signere sine kald ved det første besøg efter opdateringen, og hver server beholder den første nøgle, den får til telefonen. Hvis en anden, der kender gruppens ord, kommer først, mens telefonen er offline, afviser den server telefonen fra da af, og appen kan ikke længere åbne den over relayet. Sådan løser du det: log ind på den server i en browser, vælg **Glem nøglen** på telefonens kort på Instanser-siden og derefter **Bekræft at glemme**, og åbn appen igen. Serveren tager telefonens egen nøgle ved næste kald. Bliver telefonen afvist igen, har en anden ordene: lad hver instans **Forlad gruppen** og par dem igen med nye ord, som ved en mistet telefon.
+
 ## Indstillinger {#settings}
 
 Tandhjulet ved siden af plusset åbner appens indstillinger:

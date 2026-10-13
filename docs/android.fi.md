@@ -47,6 +47,8 @@ Kytkin tähän on **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla*
 
 Puhelin saa oman korttinsa ryhmän jokaisen palvelimen Ilmentymät-sivulle, merkittynä Android-sovellukseksi ja nimettynä puhelimelle antamasi nimen mukaan. Sillä ei ole tuloskorttia, koska se ei varmuuskopioi mitään, ja **Poista** poistaa sen sivulta. Puhelin, joka tuntee sanat, voi pariutua uudelleen milloin tahansa, joten kadonneen puhelimen kohdalla kytke **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** pois kohdassa **Asetukset, Turvallisuus** tai anna jokaisen ilmentymän valita **Poistu ryhmästä** ja pariuta ne uudelleen uusilla sanoilla.
 
+Ennen versiota 10.0.0 pariutettu puhelin alkaa allekirjoittaa kutsunsa ensimmäisellä käynnillä päivityksen jälkeen, ja jokainen palvelin pitää ensimmäisen puhelimelle saamansa avaimen. Jos joku muu, joka tuntee ryhmän sanat, ehtii ensin puhelimen ollessa offline-tilassa, palvelin hylkää puhelimen siitä lähtien, eikä sovellus enää voi avata sitä releen kautta. Korjaa tämä kirjautumalla kyseiselle palvelimelle selaimella, valitsemalla puhelimen kortista Ilmentymät-sivulla **Unohda avain** ja sitten **Vahvista unohtaminen**, ja avaamalla sovellus uudelleen. Palvelin ottaa puhelimen oman avaimen seuraavassa kutsussa. Jos puhelin hylätään uudelleen, joku muu tuntee sanat: anna jokaisen ilmentymän valita **Poistu ryhmästä** ja pariuta ne uudelleen uusilla sanoilla, kuten kadonneen puhelimen kohdalla.
+
 ## Asetukset {#settings}
 
 Plussan vieressä oleva ratas avaa sovelluksen asetukset:
