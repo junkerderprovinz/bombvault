@@ -169,3 +169,30 @@ test("inside the app the server's name stands behind an arrow back to the app", 
     .poll(() => page.evaluate(() => (window as unknown as { appSent: unknown[] }).appSent.slice(-1)[0]))
     .toEqual({ op: "home" });
 });
+
+test("inside the app the logo is as tall as the arrow beside it and centred on it", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the name over the overview is the phone's");
+  await page.addInitScript(() => {
+    Object.assign(window, {
+      bombvaultApp: { postMessage: () => {}, addEventListener: () => {}, removeEventListener: () => {} },
+    });
+  });
+  const server = "Hauptserver im Keller mit einem sehr langen Namen";
+  await stageOverview(page, 360, { instanceName: server, lang: "en" });
+  await openOverview(page);
+
+  const back = page.getByRole("button", { name: "Back to the app's overview" });
+  const logo = page.locator("#bv-main img.glim-logo-img");
+  const name = page.getByText(server, { exact: true });
+  await expect(back).toBeVisible();
+  const arrow = (await back.boundingBox())!;
+  const mark = (await logo.boundingBox())!;
+  expect(Math.abs(mark.height - arrow.height), `logo ${mark.height}px beside an arrow of ${arrow.height}px`).toBeLessThanOrEqual(1);
+  expect(Math.abs(mark.y + mark.height / 2 - (arrow.y + arrow.height / 2))).toBeLessThanOrEqual(1);
+
+  // A long name gives way on one line rather than pushing the row wider.
+  const label = (await name.boundingBox())!;
+  expect(Math.abs(label.y + label.height / 2 - (arrow.y + arrow.height / 2))).toBeLessThanOrEqual(1);
+  expect(await name.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
+});

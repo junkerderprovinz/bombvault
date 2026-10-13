@@ -439,9 +439,12 @@ export function Dashboard() {
 
   const section = sections.find((s) => s.kind === openSection);
 
+  // Beside the arrow the mark takes the arrow's height so the two read as one
+  // row; beside the bare name it keeps to the size of the words.
+  const markBox = app ? "h-(--btn-h-key) w-(--btn-h-key)" : "h-6 w-6";
   const logoMark = (
-    <span className={`glim-logo-mark flex h-6 w-6 ${logoHold.markClass}`}>
-      <img ref={logoHold.markRef} src="/logo.svg" alt="" draggable={false} className="glim-logo-img block h-6 w-6 object-contain" />
+    <span className={`glim-logo-mark flex ${markBox} ${logoHold.markClass}`}>
+      <img ref={logoHold.markRef} src="/logo.svg" alt="" draggable={false} className={`glim-logo-img block ${markBox} object-contain`} />
     </span>
   );
 
