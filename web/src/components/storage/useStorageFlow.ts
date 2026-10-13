@@ -43,6 +43,8 @@ export interface StorageFlow {
   /** The sections whose off-site copies wait for their default to be confirmed. */
   paused: PlacementDomain[];
   busy: boolean;
+  /** The key of the line whose switch the server is still working on. */
+  pending: string | null;
   shake: number;
   toggle: (line: FlowLine) => void;
 }
@@ -111,7 +113,7 @@ function announce(action: FlowAction) {
 export function useStorageFlow(locations: StorageLocation[], defaults: PlacementDefaults): StorageFlow {
   const { t, lang } = useT();
   const { push } = useToast();
-  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<string | null>(null);
   const [shake, setShake] = useState(0);
   const options = {
     containers: usePlacementOptions("containers"),
@@ -208,13 +210,13 @@ export function useStorageFlow(locations: StorageLocation[], defaults: Placement
   }
 
   function toggle(line: FlowLine) {
-    if (busy) return;
-    setBusy(true);
+    if (pending !== null) return;
+    setPending(line.key);
     apply(line.domain, line.action)
       .catch(fail)
       .finally(() => {
         announce(line.action);
-        setBusy(false);
+        setPending(null);
       });
   }
 
@@ -222,7 +224,8 @@ export function useStorageFlow(locations: StorageLocation[], defaults: Placement
     ready,
     rows: ready ? flowRows(locations, read) : [],
     paused: PLACEMENT_DOMAINS.filter((domain) => shown.includes(domain) && defaults.rows?.find((r) => r.domain === domain)?.paused),
-    busy,
+    busy: pending !== null,
+    pending,
     shake,
     toggle,
   };

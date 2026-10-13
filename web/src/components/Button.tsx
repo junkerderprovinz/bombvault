@@ -4,6 +4,7 @@ import { hidesLabel, labelWidth, widthStage, type WidthStage } from "../lib/cont
 import { mergeRefs } from "../lib/mergeRefs";
 import { useLabelMode } from "../lib/useLabelMode";
 import { useTipBubble } from "../lib/useTipBubble";
+import { BusyRing } from "./BusyRing";
 import { glyphFor } from "./glyphFor";
 import { HintSlot, HintSpace } from "./HintSlot";
 import { IconClose } from "./navGlyphs";
@@ -236,14 +237,7 @@ export function Button({
         >
           {showGlyph && (
             <span className="glim-btn-glyph">
-              {busy ? (
-                <span
-                  className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                  style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
-                />
-              ) : (
-                resolved
-              )}
+              {busy ? <BusyRing /> : resolved}
             </span>
           )}
           {/* Hidden rather than removed, so the button keeps its accessible

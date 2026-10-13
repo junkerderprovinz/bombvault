@@ -5,6 +5,7 @@ import { farPath, flowLayout, flowMeasures, nearPath, stubPath, type FlowPath } 
 import { useT } from "../../lib/i18n";
 import type { FlowLine, FlowRow } from "../../lib/storageFlow";
 import { DOMAIN_LABEL } from "../../lib/storageLocations";
+import { BusyRing } from "../BusyRing";
 import { LocationMark } from "./LocationMark";
 import { DomainGlyph } from "./rows";
 
@@ -42,12 +43,15 @@ export function FlowPicture({
   rows,
   locations,
   busy,
+  pending,
   onToggle,
   onPoint,
 }: {
   rows: FlowRow[];
   locations: StorageLocation[];
   busy: boolean;
+  /** The key of the line whose switch the server is still working on. */
+  pending: string | null;
   onToggle: (line: FlowLine) => void;
   /** The section under the pointer or the focus, null when it left. */
   onPoint: (domain: OffsiteDomain | null) => void;
@@ -187,6 +191,7 @@ export function FlowPicture({
               style={hueStyle(row)}
               role="switch"
               aria-checked={line.on}
+              aria-busy={line.key === pending || undefined}
               tabIndex={0}
               onClick={() => toggle(line)}
               onKeyDown={(e) => onSwitchKey(e, () => toggle(line))}
@@ -201,6 +206,11 @@ export function FlowPicture({
                 </>
               )}
               {!near && line.on && <circle className="glim-flow-dock" cx={end[0]} cy={end[1]} r="3.5" />}
+              {line.key === pending && (
+                <foreignObject x={end[0] - 12} y={end[1] - 12} width="24" height="24" className="glim-flow-busy">
+                  <BusyRing />
+                </foreignObject>
+              )}
             </g>
           );
         })}

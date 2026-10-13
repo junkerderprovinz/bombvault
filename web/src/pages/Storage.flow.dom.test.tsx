@@ -267,6 +267,36 @@ describe("the flow", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  it("shows the line busy until the server has made the direct repository and saved", async () => {
+    const release = fake.hold("createDirectRepo");
+    await renderPage();
+
+    await click(line("Containers to Local"));
+
+    const busy = line("Containers to Local");
+    expect(busy.getAttribute("aria-busy")).toBe("true");
+    expect(busy.querySelector(".animate-spin")).toBeTruthy();
+    expect(line("Containers to B2").getAttribute("aria-busy")).toBeNull();
+    await act(async () => release());
+    await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(1));
+    await waitFor(() => expect(line("Containers to Local").getAttribute("aria-busy")).toBeNull());
+    expect(line("Containers to Local").querySelector(".animate-spin")).toBeNull();
+  });
+
+  it("shows the busy switch in the table of switches too", async () => {
+    const release = fake.hold("createDirectRepo");
+    await renderPage();
+    await click(screen.getByRole("radio", { name: "Switches" }));
+    const containers = screen.getByRole("group", { name: "Containers" });
+
+    await click(within(containers).getByRole("button", { name: /^Local/ }));
+
+    expect(within(containers).getByRole("button", { name: /^Local/ }).querySelector(".animate-spin")).toBeTruthy();
+    expect(within(containers).getByRole("button", { name: "B2" }).querySelector(".animate-spin")).toBeNull();
+    await act(async () => release());
+    await waitFor(() => expect(within(containers).getByRole("button", { name: /^Local/ }).querySelector(".animate-spin")).toBeNull());
+  });
+
   it("lets every line of a section go off, and says the section is not backed up", async () => {
     const nowhere = defaultRow({ home: "none", homeKind: "none" });
     fake.reply("listPlacementDefaults", { ok: true, defaults: [nowhere, defaultRow({ domain: "vms" }), defaultRow({ domain: "files" })] });

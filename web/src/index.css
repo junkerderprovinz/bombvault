@@ -4984,6 +4984,15 @@ body {
 .glim-flow-near:not([aria-disabled]):is(:hover, :focus-visible) .glim-flow-ring { opacity: .6; }
 .glim-flow-dock,
 .glim-flow-parcel { fill: var(--pic); }
+/* The ring sits around the port, which grows to 8px under the pointer. */
+.glim-flow-busy { pointer-events: none; }
+.glim-flow-busy > span {
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin: 2px;
+  color: var(--pic);
+}
 /* Parcels and their rings show only while they move. */
 .glim-flow-parcel {
   offset-rotate: 0deg;
