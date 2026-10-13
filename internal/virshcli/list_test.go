@@ -3,6 +3,8 @@ package virshcli
 import (
 	"context"
 	"errors"
+	"slices"
+	"strings"
 	"testing"
 )
 
@@ -131,5 +133,88 @@ func TestVMInfoFromNamesStateFailureFallsBackToUnknown(t *testing.T) {
 
 	if len(vms) != 1 || vms[0].State != "unknown" {
 		t.Fatalf("vms = %+v, want a single entry with State=unknown on a state lookup error", vms)
+	}
+}
+
+// fakeRun answers virsh calls from a table of outputs and records each call.
+func fakeRun(outputs map[string]string, calls *[]string) func(context.Context, ...string) (string, error) {
+	return func(_ context.Context, args ...string) (string, error) {
+		call := strings.Join(args, " ")
+		*calls = append(*calls, call)
+		out, ok := outputs[call]
+		if !ok {
+			return "", errors.New("virshcli: " + args[0] + ": failed to get domain")
+		}
+		return out, nil
+	}
+}
+
+func noTitle(context.Context, string) (string, error) { return "", nil }
+
+func TestListReadsEveryStateFromOneCall(t *testing.T) {
+	table := " Id   Name          State\n" +
+		"------------------------------\n" +
+		" 1    heimserver    running\n" +
+		" -    Windows 11    shut off\n" +
+		" 3    idle box      paused\n"
+	var calls []string
+	vms, err := listDomains(context.Background(), fakeRun(map[string]string{"list --all": table}, &calls), noTitle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(calls) != 1 {
+		t.Fatalf("virsh was called %d times (%q), want once", len(calls), calls)
+	}
+	want := []VMInfo{
+		{Name: "heimserver", State: "running", FriendlyName: "heimserver"},
+		{Name: "Windows 11", State: "shut off", FriendlyName: "Windows 11"},
+		{Name: "idle box", State: "paused", FriendlyName: "idle box"},
+	}
+	if !slices.Equal(vms, want) {
+		t.Fatalf("vms = %+v, want %+v", vms, want)
+	}
+}
+
+func TestListReadsTheNarrowColumnsOfOlderVirsh(t *testing.T) {
+	table := " Id    Name                           State\n" +
+		"----------------------------------------------------\n" +
+		" 12    a-name-longer-than-thirty-columns running\n" +
+		" -     in shutdown test               in shutdown\n"
+	var calls []string
+	vms, err := listDomains(context.Background(), fakeRun(map[string]string{"list --all": table}, &calls), noTitle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(vms) != 2 || vms[0].Name != "a-name-longer-than-thirty-columns" || vms[0].State != "running" ||
+		vms[1].Name != "in shutdown test" || vms[1].State != "in shutdown" {
+		t.Fatalf("vms = %+v", vms)
+	}
+}
+
+func TestListWithoutDomainsIsEmpty(t *testing.T) {
+	table := " Id   Name   State\n--------------------\n"
+	var calls []string
+	vms, err := listDomains(context.Background(), fakeRun(map[string]string{"list --all": table}, &calls), noTitle)
+	if err != nil || len(vms) != 0 || len(calls) != 1 {
+		t.Fatalf("vms = %+v, err = %v, calls = %q", vms, err, calls)
+	}
+}
+
+func TestListAsksEachStateWhenTheTableIsTranslated(t *testing.T) {
+	outputs := map[string]string{
+		"list --all":         " Id   Name    Status\n-------------------------\n 1    debian  laufend\n",
+		"list --all --name":  "debian\n",
+		"domstate -- debian": "running",
+	}
+	var calls []string
+	vms, err := listDomains(context.Background(), fakeRun(outputs, &calls), noTitle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(calls) != 3 {
+		t.Fatalf("calls = %q, want the table, the names and one state", calls)
+	}
+	if len(vms) != 1 || vms[0].Name != "debian" || vms[0].State != "running" {
+		t.Fatalf("vms = %+v", vms)
 	}
 }

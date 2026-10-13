@@ -7,6 +7,7 @@ import (
 	"log"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -81,9 +82,28 @@ func lastReason(stderr string) string {
 	return "unknown error"
 }
 
-// List returns all domains (running and stopped), one per name line.
+// List returns all domains, running and stopped.
 func (c *Client) List(ctx context.Context) ([]VMInfo, error) {
-	out, err := c.run(ctx, "list", "--all", "--name")
+	return listDomains(ctx, c.run, c.titleFromXML)
+}
+
+// listDomains reads names and states from one virsh table. Over qemu+ssh every
+// virsh call is an SSH handshake of its own, so asking for each state apart
+// costs a handshake per VM on every page load. Only a table it cannot read,
+// such as one with translated states, falls back to that.
+func listDomains(
+	ctx context.Context,
+	run func(ctx context.Context, args ...string) (string, error),
+	titleFn func(ctx context.Context, name string) (string, error),
+) ([]VMInfo, error) {
+	out, err := run(ctx, "list", "--all")
+	if err != nil {
+		return nil, err
+	}
+	if rows, ok := parseDomainTable(out); ok {
+		return vmInfoFromRows(ctx, rows, titleFn), nil
+	}
+	out, err = run(ctx, "list", "--all", "--name")
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +113,69 @@ func (c *Client) List(ctx context.Context) ([]VMInfo, error) {
 			names = append(names, name)
 		}
 	}
-	return vmInfoFromNames(ctx, names, c.State, c.titleFromXML), nil
+	stateFn := func(ctx context.Context, name string) (string, error) {
+		out, err := run(ctx, "domstate", "--", name)
+		if err != nil {
+			if IsNotFound(err) {
+				return "", nil
+			}
+			return "", err
+		}
+		return strings.TrimSpace(out), nil
+	}
+	return vmInfoFromNames(ctx, names, stateFn, titleFn), nil
+}
+
+// domainStates are the states virsh prints in English.
+var domainStates = []string{"in shutdown", "pmsuspended", "shut off", "no state", "running", "crashed", "paused", "idle"}
+
+type domainRow struct {
+	name  string
+	state string
+}
+
+// parseDomainTable reads the rows of "virsh list --all". A name may hold
+// spaces, so the state is matched at the end of the row and the name is what
+// stands between the id and the state.
+func parseDomainTable(out string) ([]domainRow, bool) {
+	lines := strings.Split(out, "\n")
+	start := slices.IndexFunc(lines, func(l string) bool {
+		l = strings.TrimSpace(l)
+		return l != "" && strings.Trim(l, "-") == ""
+	})
+	if start < 0 {
+		return nil, false
+	}
+	var rows []domainRow
+	for _, line := range lines[start+1:] {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		_, rest, ok := strings.Cut(line, " ")
+		if !ok {
+			return nil, false
+		}
+		row, ok := splitNameState(strings.TrimSpace(rest))
+		if !ok {
+			return nil, false
+		}
+		rows = append(rows, row)
+	}
+	return rows, true
+}
+
+func splitNameState(rest string) (domainRow, bool) {
+	for _, state := range domainStates {
+		name, ok := strings.CutSuffix(rest, state)
+		if !ok || strings.TrimRight(name, " \t") == name {
+			continue
+		}
+		if name = strings.TrimSpace(name); name != "" {
+			return domainRow{name: name, state: state}, true
+		}
+	}
+	return domainRow{}, false
 }
 
 // titleFromXML returns a domain's <title>. List calls it for UUID-named
@@ -142,12 +224,21 @@ func vmInfoFromNames(
 	stateFn func(ctx context.Context, name string) (string, error),
 	titleFn func(ctx context.Context, name string) (string, error),
 ) []VMInfo {
-	var vms []VMInfo
+	rows := make([]domainRow, 0, len(names))
 	for _, name := range names {
 		state, stErr := stateFn(ctx, name)
 		if stErr != nil {
 			state = "unknown"
 		}
+		rows = append(rows, domainRow{name: name, state: state})
+	}
+	return vmInfoFromRows(ctx, rows, titleFn)
+}
+
+func vmInfoFromRows(ctx context.Context, rows []domainRow, titleFn func(ctx context.Context, name string) (string, error)) []VMInfo {
+	var vms []VMInfo
+	for _, row := range rows {
+		name, state := row.name, row.state
 		friendly, versioned26 := normalizeDomainName(name)
 		if versioned26 {
 			// A missing or unreadable <title> keeps the UUID rather than
