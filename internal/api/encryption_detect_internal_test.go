@@ -5,8 +5,11 @@ package api
 // unknown rather than absent, and only a definite verdict writes the setting.
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -477,4 +480,60 @@ func (e *lockRecordingEngine) RepoOpensErr(ctx context.Context, repo string, m r
 		e.locking++
 	}
 	return e.modeStubEngine.RepoOpensErr(ctx, repo, m)
+}
+
+// fakeResticEnv makes the test binary answer as restic in front of a location
+// that holds no repository. Its value is the file each call is recorded in.
+const fakeResticEnv = "BOMBVAULT_TEST_FAKE_RESTIC"
+
+func runFakeResticWithoutRepo(calls string, args []string) int {
+	f, err := os.OpenFile(calls, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600) //nolint:gosec // G304: the file the test named
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	_, _ = fmt.Fprintln(f, strings.Join(args, " "))
+	_ = f.Close()
+	fmt.Fprintln(os.Stderr, "Fatal: repository does not exist: unable to open config file: <config/> does not exist")
+	fmt.Fprintln(os.Stderr, "Is there a repository at the following location?")
+	return 10
+}
+
+// Sections that were never backed up are asked on every visit of the restore
+// page, so their absence must cost neither a log line nor more restic runs
+// than it takes to see it.
+func TestSectionsWithoutRepositoryStayOutOfTheLog(t *testing.T) {
+	exe, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	calls := filepath.Join(t.TempDir(), "calls")
+	t.Setenv(fakeResticEnv, calls)
+	s, st, _ := newDetectSvc(t, &restic.Restic{Bin: exe})
+	setPaths(t, st, map[string]string{"vms": "backups/vms", "containersOffsite": "rest:http://offsite:8000/repo"})
+
+	var buf bytes.Buffer
+	prev, flags := log.Writer(), log.Flags()
+	log.SetOutput(&buf)
+	log.SetFlags(0)
+	t.Cleanup(func() { log.SetOutput(prev); log.SetFlags(flags) })
+
+	det, err := s.DetectEncryption(context.Background())
+	if err != nil {
+		t.Fatalf("detect: %v", err)
+	}
+	if det.Verdict != VerdictAbsent {
+		t.Fatalf("verdict = %q, want absent (repos: %+v)", det.Verdict, det.Repos)
+	}
+	if out := buf.String(); out != "" {
+		t.Fatalf("missing repositories reached the log:\n%s", out)
+	}
+	raw, err := os.ReadFile(calls) //nolint:gosec // G304: the file the test named
+	if err != nil {
+		t.Fatal(err)
+	}
+	ran := strings.Split(strings.TrimSpace(string(raw)), "\n")
+	if len(ran) != 1 || !strings.Contains(ran[0], "rest:http://offsite:8000/repo") {
+		t.Fatalf("want one restic run against the remote and none against the local path, got %q", ran)
+	}
 }

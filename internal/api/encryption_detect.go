@@ -309,6 +309,12 @@ func (s *Service) probeOneEncryptionMode(ctx context.Context, t encryptionProbeT
 		out.Err = scrubError(t.err)
 		return out
 	}
+	// A local location without a `config` file has nothing for restic to open
+	// in either mode.
+	if localRepoMissing(t.repo) {
+		out.State, out.Err = s.classifyClosedRepo(t.repo, nil)
+		return out
+	}
 
 	encMode := t.mode
 	encMode.Encrypted = true
@@ -330,6 +336,12 @@ func (s *Service) probeOneEncryptionMode(ctx context.Context, t encryptionProbeT
 	encErr := probe(encMode)
 	if encErr == nil {
 		out.State = RepoEncrypted
+		return out
+	}
+	// Absence does not depend on the mode, so a second probe would only ask
+	// the backend the same question again.
+	if restic.IsRemoteRepo(t.repo) && isRepoDefinitelyAbsent(encErr) {
+		out.State = RepoAbsent
 		return out
 	}
 	if plainErr := probe(plainMode); plainErr == nil {
