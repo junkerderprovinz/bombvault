@@ -2,9 +2,9 @@ name: Instant Repo-Watch Ping
 
 # The same file sits in every repository of this account; repo-watch's README lists
 # them and explains how to add a new one. It hands new issues, pull requests,
-# comments and reviews from other people to junkerderprovinz/repo-watch as a
-# repository_dispatch event, and repo-watch posts to Matrix with its own credentials,
-# so no Matrix secret ever reaches this repository.
+# discussions, comments and reviews from other people to junkerderprovinz/repo-watch
+# as a repository_dispatch event, and repo-watch posts to Matrix with its own
+# credentials, so no Matrix secret ever reaches this repository.
 #
 # Repositories the account does not own cannot run this, because GitHub only fires
 # these triggers for a repository's own workflows. Replies there are picked up by
@@ -23,6 +23,10 @@ on:
     types: [created]
   pull_request_review:
     types: [submitted]
+  discussion:
+    types: [created]
+  discussion_comment:
+    types: [created]
 
 permissions:
   contents: read
@@ -43,12 +47,15 @@ jobs:
           REPO_NAME: ${{ github.event.repository.name }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+          DISCUSSION_TITLE: ${{ github.event.discussion.title }}
           COMMENT_URL: ${{ github.event.comment.html_url }}
           REVIEW_URL: ${{ github.event.review.html_url }}
           ISSUE_URL: ${{ github.event.issue.html_url }}
           PR_URL: ${{ github.event.pull_request.html_url }}
+          DISCUSSION_URL: ${{ github.event.discussion.html_url }}
           ACTOR: ${{ github.event.sender.login }}
         # Titles are attacker-controlled on a public repository. Read from the
         # environment they stay plain strings; interpolated with ${{ }} they would be
@@ -66,6 +73,10 @@ jobs:
               kind="comment"; number="$ISSUE_NUMBER"; title="$ISSUE_TITLE"; url="$COMMENT_URL" ;;
             pull_request_review)
               kind="review"; number="$PR_NUMBER"; title="$PR_TITLE"; url="$REVIEW_URL" ;;
+            discussion)
+              kind="discussion"; number="$DISCUSSION_NUMBER"; title="$DISCUSSION_TITLE"; url="$DISCUSSION_URL" ;;
+            discussion_comment)
+              kind="discussion_comment"; number="$DISCUSSION_NUMBER"; title="$DISCUSSION_TITLE"; url="$COMMENT_URL" ;;
           esac
           gh api "repos/junkerderprovinz/repo-watch/dispatches" \
             -f event_type=repo-activity \
