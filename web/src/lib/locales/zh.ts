@@ -3440,7 +3440,7 @@ const zh: Partial<Translations> = {
   "launcher.cameraAllow": "允许访问",
   "launcher.scanHint": "扫描口令旁边显示的二维码",
   "launcher.groupFound": "此中继上的实例",
-  "launcher.noInstances": "这一组还没有任何实例出现在中继上。请检查词语，并确认至少有一台实例正在运行。应用无法与设为“不用中继”的实例配对：请在该实例的设置 > 配对中选择一个中继。",
+  "launcher.noInstances": "这个群组还没有任何实例出现在中继上。请检查词语，并确认至少有一台实例正在运行。应用无法与设为“不用中继”的实例配对：请在该实例的设置 > 配对中选择一个中继。",
   "launcher.adoptOne": "添加此实例",
   "launcher.adoptAll": "全部添加（{count} 台）",
   "launcher.device": "此设备",
@@ -4523,7 +4523,7 @@ const zh: Partial<Translations> = {
   "whatsNew.entryActions": "条目的操作是名称旁边的按钮。",
   "fleet.kindAndroid": "Android 应用",
   "pairing.qrCaption": "用 BombVault 应用扫描这个码来配对手机。",
-  "pairing.phoneNeedsRelay": "BombVault 应用只能通过中继配对。只要这个实例没有使用中继，就没有手机能加入这一组。在同一网络内，应用仍然可以通过地址打开这个实例。",
+  "pairing.phoneNeedsRelay": "BombVault 应用只能通过中继配对。只要这个实例没有使用中继，就没有手机能加入这个群组。在同一网络内，应用仍然可以通过地址打开这个实例。",
 };
 
 export default zh;

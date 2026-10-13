@@ -2,10 +2,10 @@
 <resources>
     <string name="saved">נשמר בהורדות: %1$s</string>
     <string name="save_failed">לא ניתן היה לשמור את הקובץ: %1$s</string>
-    <string name="save_untrusted">תעודת השרת השתנתה. פתח אותו שוב ממסך הפתיחה כדי לבדוק את התעודה החדשה.</string>
+    <string name="save_untrusted">תעודת השרת השתנתה. יש לפתוח אותו שוב ממסך הפתיחה כדי לבדוק את התעודה החדשה.</string>
     <string name="no_app">אין אפליקציה בטלפון הזה שפותחת את הקישור הזה.</string>
     <string name="relay_on">נפתח דרך ממסר</string>
-    <string name="relay_explained">האפליקציה לא מצליחה להגיע לשרת הזה בכתובת שלו, ולכן היא פותחת אותו דרך הממסר של הקבוצה שלך. התחברות עם הסיסמה ושמירת קבצים עובדות רק בכתובת של השרת עצמו.</string>
+    <string name="relay_explained">האפליקציה לא מצליחה להגיע לשרת הזה בכתובת שלו, ולכן היא פותחת אותו דרך הממסר של הקבוצה. התחברות עם הסיסמה ושמירת קבצים עובדות רק בכתובת של השרת עצמו.</string>
     <string name="relay_no_download">שמירת קבצים עובדת רק בכתובת של השרת עצמו, לא דרך הממסר.</string>
-    <string name="page_crashed">הדף קרס, ולכן האפליקציה סגרה אותו. פתח את השרת שוב.</string>
+    <string name="page_crashed">הדף קרס, ולכן האפליקציה סגרה אותו. יש לפתוח את השרת שוב.</string>
 </resources>

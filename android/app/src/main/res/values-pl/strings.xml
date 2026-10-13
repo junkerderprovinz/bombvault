@@ -5,7 +5,7 @@
     <string name="save_untrusted">Certyfikat serwera się zmienił. Otwórz go ponownie z ekranu startowego, aby sprawdzić nowy.</string>
     <string name="no_app">Żadna aplikacja na tym telefonie nie otwiera tego linku.</string>
     <string name="relay_on">Otwarto przez relay</string>
-    <string name="relay_explained">Aplikacja nie może połączyć się z tym serwerem pod jego własnym adresem, więc otwiera go przez relay Twojej grupy. Logowanie hasłem i zapisywanie plików działają tylko pod własnym adresem serwera.</string>
+    <string name="relay_explained">Aplikacja nie może połączyć się z tym serwerem pod jego własnym adresem, więc otwiera go przez relay twojej grupy. Logowanie hasłem i zapisywanie plików działają tylko pod własnym adresem serwera.</string>
     <string name="relay_no_download">Zapisywanie plików działa tylko pod własnym adresem serwera, nie przez relay.</string>
     <string name="page_crashed">Strona uległa awarii, więc aplikacja ją zamknęła. Otwórz serwer ponownie.</string>
 </resources>

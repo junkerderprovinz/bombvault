@@ -3444,7 +3444,7 @@ const ms: Partial<Translations> = {
   "launcher.changedBody": "{host} menunjukkan sijil yang berbeza daripada yang anda percayai sebelum ini. Ini berlaku apabila sijil diperbaharui atau digantikan, atau apabila seseorang menyusup antara telefon ini dengan pelayan. Percayai sijil ini hanya jika anda tahu sebabnya ia berubah.",
   "launcher.trustChanged": "Percayai sijil baharu",
   "launcher.keyChangedTitle": "Kunci pelayan berubah",
-  "launcher.keyChangedBody": "{name} menjawab melalui Relay dengan kunci yang berbeza daripada yang dikenali aplikasi ini. Ini berlaku apabila pelayan disediakan semula, atau apabila seseorang dalam kumpulan anda menyamar sebagai pelayan itu. Percayai kunci baharu hanya jika anda tahu sebabnya ia berubah.",
+  "launcher.keyChangedBody": "{name} menjawab melalui relay dengan kunci yang berbeza daripada yang dikenali aplikasi ini. Ini berlaku apabila pelayan disediakan semula, atau apabila seseorang dalam kumpulan anda menyamar sebagai pelayan itu. Percayai kunci baharu hanya jika anda tahu sebabnya ia berubah.",
   "launcher.trustKey": "Percayai kunci baharu",
   "launcher.fingerprint": "Cap jari SHA-256",
   "launcher.pairTitle": "Gandingkan dengan kumpulan anda",

@@ -3435,7 +3435,7 @@ const ro: Partial<Translations> = {
   "launcher.changedBody": "{host} arată un certificat diferit de cel în care ai avut încredere. Asta se întâmplă când certificatul a fost reînnoit sau înlocuit, sau când cineva se interpune între acest telefon și server. Ai încredere în el doar dacă știi de ce s-a schimbat.",
   "launcher.trustChanged": "Ai încredere în noul certificat",
   "launcher.keyChangedTitle": "Cheia serverului s-a schimbat",
-  "launcher.keyChangedBody": "{name} a răspuns prin Relay cu o cheie diferită de cea pe care o cunoaște această aplicație. Asta se întâmplă când serverul a fost configurat din nou sau când cineva din grupul tău se dă drept el. Ai încredere în noua cheie doar dacă știi de ce s-a schimbat.",
+  "launcher.keyChangedBody": "{name} a răspuns prin relay cu o cheie diferită de cea pe care o cunoaște această aplicație. Asta se întâmplă când serverul a fost configurat din nou sau când cineva din grupul tău se dă drept el. Ai încredere în noua cheie doar dacă știi de ce s-a schimbat.",
   "launcher.trustKey": "Ai încredere în noua cheie",
   "launcher.fingerprint": "Amprentă SHA-256",
   "launcher.pairTitle": "Împerechează-te cu grupul tău",
