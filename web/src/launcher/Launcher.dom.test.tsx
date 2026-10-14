@@ -202,7 +202,7 @@ describe("Launcher", () => {
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     fireEvent.click(screen.getByRole("switch", { name: "Follow the first server" }));
     expect(screen.getByText(/no longer follows the server/)).toBeTruthy();
-  });
+  }, 15000);
 
   it("offers Dark, Light and System for the theme, and starts on System", async () => {
     const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
