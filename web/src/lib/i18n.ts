@@ -74,13 +74,6 @@ export const en = {
   // the desktop Sidebar's nav, and a <nav> landmark needs an accessible
   // name even though exactly one of the two mounts at a time.
   "nav.mobileNavigation": "Mobile navigation",
-  // The phone's bottom bar gives each of its five slots a fifth of the screen,
-  // so a word that does not fit there gets a shorter one.
-  "nav.overviewShort": "Overview",
-  "nav.backupsShort": "Backups",
-  "nav.restoreShort": "Restore",
-  "nav.settingsShort": "Settings",
-  "nav.moreShort": "More",
   "about.title": "About BombVault",
   "about.body":
     "A one-knight crusade: good-looking open-source tools that did not exist in the shape I wanted, built until nothing is missing. It is free, with no accounts, no telemetry, no ads and no paid tier. No asterisk anywhere. Nothing readable ever leaves your own walls. Forged on evenings and weekends, with heart and stubbornness.",
@@ -4940,11 +4933,6 @@ export const de: Translations = {
   "nav.settings": "Einstellungen",
   "nav.more": "Mehr",
   "nav.mobileNavigation": "Mobile Navigation",
-  "nav.overviewShort": "Übersicht",
-  "nav.backupsShort": "Sicherung",
-  "nav.restoreShort": "Rückholen",
-  "nav.settingsShort": "Optionen",
-  "nav.moreShort": "Mehr",
   "about.title": "Über BombVault",
   "about.body":
     "Ein einzelner Ritter, ein Feldzug: ansehnliche quelloffene Werkzeuge, die es in der Form, die ich wollte, nicht gab, gebaut, bis nichts mehr fehlt. Alles kostenlos, ohne Konten, ohne Telemetrie, ohne Werbung, ohne Bezahlstufen. Nirgends ein Sternchen. Nichts Lesbares verlässt je deine eigenen Mauern. An Abenden und Wochenenden geschmiedet, mit Herz und Dickkopf.",

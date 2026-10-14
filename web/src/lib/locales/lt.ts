@@ -19,11 +19,6 @@ const lt: Partial<Translations> = {
   "nav.settings": "Nustatymai",
   "nav.more": "Daugiau",
   "nav.mobileNavigation": "Mobilioji navigacija",
-  "nav.overviewShort": "Apžvalga",
-  "nav.backupsShort": "Kopijos",
-  "nav.restoreShort": "Atkurti",
-  "nav.settingsShort": "Parinktys",
-  "nav.moreShort": "Daugiau",
 
   "about.title": "Apie BombVault",
   "about.body": "Vienas riteris, vienas žygis: tvarkingi atvirojo kodo įrankiai, kurių tokios formos, kokios norėjau, nebuvo, statomi tol, kol nieko netrūks. Viskas nemokama, be paskyrų, be telemetrijos, be reklamų ir be mokamų lygių. Niekur jokios žvaigždutės. Niekas skaitomo niekada neišeina už tavo paties sienų. Kalta vakarais ir savaitgaliais, su širdimi ir užsispyrimu.",

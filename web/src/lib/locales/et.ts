@@ -19,11 +19,6 @@ const et: Partial<Translations> = {
   "nav.settings": "Seaded",
   "nav.more": "Rohkem",
   "nav.mobileNavigation": "Mobiilne navigeerimine",
-  "nav.overviewShort": "Ülevaade",
-  "nav.backupsShort": "Koopiad",
-  "nav.restoreShort": "Taasta",
-  "nav.settingsShort": "Seaded",
-  "nav.moreShort": "Rohkem",
 
   "about.title": "Teave BombVaulti kohta",
   "about.body": "Üks rüütel, üks ristisõda: korralikud avatud lähtekoodiga tööriistad, mida sellisel kujul, nagu tahtsin, ei olnud, ehitatud seni, kuni midagi puudu ei ole. Kõik tasuta, ilma kontodeta, ilma telemeetriata, ilma reklaamideta ja ilma tasuliste tasemeteta. Mitte kusagil tärnikest. Miski loetav ei lahku kunagi sinu enda müüride vahelt. Sepistatud õhtuti ja nädalavahetustel, südame ja kangekaelsusega.",

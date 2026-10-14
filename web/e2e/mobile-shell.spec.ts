@@ -281,8 +281,9 @@ test("the bar's count on Overview is grey and takes the fill's ink on the curren
   await blockServerLook(page);
   await page.goto("/backups");
   const bar = page.getByTestId("bottom-nav");
-  // The count hangs on the glyph, which stands before the caption.
-  const overview = bar.getByRole("link", { name: /Overview$/ });
+  // A phone's bar shows glyphs alone, so the slot's name says the count after
+  // the page's name.
+  const overview = bar.getByRole("link", { name: /^Overview, / });
 
   const resting = await entryColours(overview);
   expect(resting.countFill, "a resting count is the grey of the resting captions").toBe(resting.rowInk);

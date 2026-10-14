@@ -19,11 +19,6 @@ const ms: Partial<Translations> = {
   "nav.settings": "Tetapan",
   "nav.more": "Lagi",
   "nav.mobileNavigation": "Navigasi mudah alih",
-  "nav.overviewShort": "Ikhtisar",
-  "nav.backupsShort": "Sandaran",
-  "nav.restoreShort": "Pulihkan",
-  "nav.settingsShort": "Tetapan",
-  "nav.moreShort": "Lagi",
 
   "about.title": "Perihal BombVault",
   "about.body": "Satu kesateria, satu ekspedisi: alat sumber terbuka yang kemas, yang tidak wujud dalam bentuk yang saya mahukan, dibina sehingga tiada apa yang kurang. Semuanya percuma, tanpa akaun, tanpa telemetri, tanpa iklan dan tanpa peringkat berbayar. Tiada tanda bintang di mana-mana. Tiada apa yang boleh dibaca pernah meninggalkan tembok anda sendiri. Ditempa pada waktu malam dan hujung minggu, dengan hati dan sifat degil.",

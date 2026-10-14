@@ -19,11 +19,6 @@ const is: Partial<Translations> = {
   "nav.settings": "Stillingar",
   "nav.more": "Meira",
   "nav.mobileNavigation": "Farsímaflakk",
-  "nav.overviewShort": "Yfirlit",
-  "nav.backupsShort": "Afrit",
-  "nav.restoreShort": "Sækja",
-  "nav.settingsShort": "Stillingar",
-  "nav.moreShort": "Meira",
 
   "about.title": "Um BombVault",
   "about.body": "Einn riddari, ein krossferð: falleg opin verkfæri sem voru ekki til í þeirri mynd sem ég vildi, smíðuð þar til ekkert vantar. Allt ókeypis, án aðganga, án fjarmælinga, án auglýsinga og án greiddra þrepa. Engin stjarna neins staðar. Ekkert læsilegt fer nokkurn tíma út fyrir þína eigin múra. Smíðað á kvöldin og um helgar, með hjarta og þrjósku.",

@@ -39,7 +39,10 @@
 // text at rest under coarse pointers and reveals on hover/focus on fine
 // ones). The bar's own height is the static h-14 in every mode; the height
 // never follows the label mode, which is what keeps the shell's chrome
-// geometry stable across the whole settings surface.
+// geometry stable across the whole settings surface. Below 45rem the bar is
+// in glyph mode whatever the setting says: a fifth of a phone holds no
+// page name in German, Greek or a dozen other languages, and a bar that
+// switched by language would look different on the same phone.
 //
 // Colour engine: every slot carries `glim-hue` + `hueVars(i)`
 // exactly like a Sidebar row; position i being the slot's own rank among
@@ -68,14 +71,14 @@
 // duplicate history entry. The scroller is Layout's <main id="bv-main">, so
 // the mechanism is passed down from Layout as a prop and nothing here queries
 // the DOM for it.
-import { useState, type CSSProperties, type MouseEvent } from "react";
+import { useState, useSyncExternalStore, type CSSProperties, type MouseEvent } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import type { Settings } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { barDestinations, moreDestinations, onDestination, type NavDestination } from "../../lib/navModel";
 import { useNavCounts, type NavCount as Count } from "../../lib/navCounts";
 import { useNavPins } from "../../lib/navPins";
-import { hidesLabel, labelWidth } from "../../lib/controls";
+import { hidesLabel, labelWidth, type LabelMode } from "../../lib/controls";
 import { hueVars } from "../../lib/appearance";
 import { useLabelMode } from "../../lib/useLabelMode";
 import { useLogoBursting } from "../../lib/useLogoHold";
@@ -100,21 +103,40 @@ export interface BottomNavProps {
   scrollMainToTop: () => void;
 }
 
-// One bar slot, destination or More trigger alike: the 24px glyph box over
-// the caption, and the full 56px (h-14) row as the touch target; comfortably
-// over the 44px floor. The side padding keeps two neighbouring captions apart
-// even when both fill their slots, and is halved on the narrowest phones,
-// where every pixel of the caption counts. The press scale reads the
-// motion-engine token, so the app's motion levels govern it
-// (--motion-press-scale is 1 at "off": no scale at all there).
+// One bar slot, destination or More trigger alike: the glyph box over the
+// caption, and the full 56px (h-14) row as the touch target; comfortably over
+// the 44px floor. The side padding keeps two neighbouring captions apart even
+// when both fill their slots. The press scale reads the motion-engine token,
+// so the app's motion levels govern it (--motion-press-scale is 1 at "off":
+// no scale at all there).
 const slotBase =
-  "glim-bar-slot flex min-w-11 flex-col items-center justify-center gap-1 px-0.5 min-[360px]:px-0.75 text-caption motion-safe:active:scale-[var(--motion-press-scale)]";
+  "glim-bar-slot flex min-w-11 flex-col items-center justify-center gap-1 px-0.75 text-caption motion-safe:active:scale-[var(--motion-press-scale)]";
 
-// The caption is already at the smallest size of the type scale, so it stays
-// on one line and the words are chosen to fit: each language keeps a short
-// bar caption (nav.*Short) for names that run longer than a fifth of a phone.
-// The ellipsis is for the narrowest screens only.
-const captionClass = "max-w-full truncate";
+// The caption is already at the smallest size of the type scale and stays on
+// one line; the ellipsis only catches a name longer than any the locales hold.
+const caption = "max-w-full truncate";
+
+// The glyph box: 24px under a caption, 28px when the glyph stands alone.
+function glyphBox(alone: boolean): string {
+  return alone
+    ? "relative flex h-7 w-7 items-center justify-center rounded-control [&_svg]:h-7 [&_svg]:w-7"
+    : "relative flex h-6 w-6 items-center justify-center rounded-control [&_svg]:h-6 [&_svg]:w-6";
+}
+
+// From this width every page name in every language fits its slot on one
+// line: the longest, Greek's "Αντίγραφα ασφαλείας", needs 130px of a slot
+// that is a fifth of the bar.
+const NAMES_FIT_QUERY = "(min-width: 45rem)";
+
+function subscribeNamesFit(onChange: () => void): () => void {
+  const mql = window.matchMedia(NAMES_FIT_QUERY);
+  mql.addEventListener("change", onChange);
+  return () => mql.removeEventListener("change", onChange);
+}
+
+function useNamesFit(): boolean {
+  return useSyncExternalStore(subscribeNamesFit, () => window.matchMedia(NAMES_FIT_QUERY).matches, () => true);
+}
 
 // barVars places a slot in the bar: its rainbow hue, and its turn and first
 // direction in the shake the overview's logo sends through the bar when it
@@ -135,7 +157,8 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
   const counts = useNavCounts();
   // The bar's own label axis (see the header): hiding modes gate the caption,
   // reactive pairs with index.css's coarse-pointer at-rest reveal.
-  const labelMode = useLabelMode("bottombar");
+  const axisMode = useLabelMode("bottombar");
+  const labelMode = useNamesFit() ? axisMode : "glyph";
   const showLabel = !hidesLabel(labelMode);
   const reactive = labelMode === "reactive";
   // The trigger is filled for the pages its sheet leads to, including the
@@ -144,7 +167,6 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
   // The More trigger's bubble: worded only in hiding modes, the same rule
   // the sidebar's rows follow (reactive mode brings the word back on hover).
   const moreTip = useTipBubble(showLabel || reactive ? undefined : t("nav.more"));
-  const moreCaption = t("nav.moreShort");
   const anomalyDot = (settings?.anomalyEnabled ?? false) && counts.anomalies.value > 0;
   const quaking = useLogoBursting();
 
@@ -189,7 +211,7 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
           above ends flush (its pb-0 contract), so without it the last card of
           every page would rest on the bar card's edge. Separation is shade,
           not a line: no border or ring on the card. Below 400px the card
-          keeps half the gutter to leave the captions more room. */}
+          keeps half the gutter to leave the slots more room. */}
       <div
         className={`mt-2 ml-[max(1rem,var(--safe-area-left))] mr-[max(1rem,var(--safe-area-right))] max-[399px]:ml-[max(0.5rem,var(--safe-area-left))] max-[399px]:mr-[max(0.5rem,var(--safe-area-right))] mb-2 rounded-card bg-carbon-sidebar ${quaking ? "glim-rail-quake" : ""}`}
       >
@@ -222,7 +244,7 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
             ref={moreTip.ref}
             data-new-way="more"
             onClick={() => setMoreOpenOn(location.pathname)}
-            aria-label={showLabel ? undefined : reactive ? moreCaption : t("nav.more")}
+            aria-label={showLabel ? undefined : t("nav.more")}
             aria-describedby={moreTip.describedBy}
             {...moreTip.handlers}
             aria-haspopup="dialog"
@@ -237,13 +259,13 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
             style={
               {
                 ...barVars(slots.length),
-                ...(reactive && !showLabel ? { "--reactive-chars": labelWidth(moreCaption) } : {}),
+                ...(reactive && !showLabel ? { "--reactive-chars": labelWidth(t("nav.more")) } : {}),
               } as CSSProperties
             }
           >
-            {/* The glyph box is the 24px slot-icon box (the 16px generated
-                glyph scales up to it, the same scaling the rail applies). */}
-            <span className="relative flex h-6 w-6 items-center justify-center rounded-control [&_svg]:h-6 [&_svg]:w-6">
+            {/* The 16px generated glyph scales up to the box, the same
+                scaling the rail applies. */}
+            <span className={glyphBox(labelMode === "glyph")}>
               <IconMore />
               {anomalyDot && (
                 <span
@@ -254,9 +276,9 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
               )}
             </span>
             <span
-              className={showLabel ? captionClass : reactive ? "max-w-full truncate glim-label-reactive" : "sr-only"}
+              className={showLabel ? caption : reactive ? "max-w-full truncate glim-label-reactive" : "sr-only"}
             >
-              {moreCaption}
+              {t("nav.more")}
             </span>
           </button>
           {moreTip.bubble}
@@ -297,13 +319,12 @@ function BarSlot({
   destination: NavDestination;
   hueIndex: number;
   count?: Count;
-  labelMode: ReturnType<typeof useLabelMode>;
+  labelMode: LabelMode;
   onTap: (e: MouseEvent) => void;
 }) {
   const { t } = useT();
   const Icon = destination.icon;
   const label = t(destination.labelKey);
-  const caption = t(destination.barLabelKey ?? destination.labelKey);
   const showLabel = !hidesLabel(labelMode);
   const reactive = labelMode === "reactive";
   // A slot whose caption is hidden names itself in the tip bubble, the
@@ -312,10 +333,8 @@ function BarSlot({
   const tooltip = useTipBubble(showLabel || reactive ? undefined : label);
   const counted = count && count.value > 0 ? count : undefined;
   // An aria-label replaces what the slot contains, the figure included, so a
-  // slot without a caption says both. Reactive mode shows the caption on hover,
-  // so its name is the word that appears; glyph mode says the full name.
-  const name = reactive ? caption : label;
-  const hiddenName = counted ? `${name}, ${counted.label}` : name;
+  // slot without a caption says both.
+  const hiddenName = counted ? `${label}, ${counted.label}` : label;
   const here = onDestination(useLocation().pathname, destination);
   return (
     <>
@@ -332,7 +351,7 @@ function BarSlot({
         style={
           {
             ...barVars(hueIndex),
-            ...(reactive && !showLabel ? { "--reactive-chars": labelWidth(caption) } : {}),
+            ...(reactive && !showLabel ? { "--reactive-chars": labelWidth(label) } : {}),
           } as CSSProperties
         }
       >
@@ -347,7 +366,7 @@ function BarSlot({
                 fill is paint-only: no padding, height, width or gap token
                 changed, which is what keeps the narrow-viewport no-overflow
                 asserts and the 44px touch floor true by construction. */}
-            <span className="relative flex h-6 w-6 items-center justify-center rounded-control [&_svg]:h-6 [&_svg]:w-6">
+            <span className={glyphBox(labelMode === "glyph")}>
               <Icon />
               {counted && (
                 <NavCount count={counted} quiet size="corner" className="absolute -end-2.5 -top-1" />
@@ -355,9 +374,9 @@ function BarSlot({
             </span>
             {/* 400 rest, 600 active; the caption's two sanctioned weights. */}
             <span
-              className={`${isActive || here ? "font-semibold" : ""} ${showLabel ? captionClass : reactive ? "max-w-full truncate glim-label-reactive" : "sr-only"}`}
+              className={`${isActive || here ? "font-semibold" : ""} ${showLabel ? caption : reactive ? "max-w-full truncate glim-label-reactive" : "sr-only"}`}
             >
-              {caption}
+              {label}
             </span>
           </>
         )}

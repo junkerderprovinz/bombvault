@@ -41,9 +41,6 @@ export interface NavDestination {
   /** A slot of the phone's bottom bar. Every other phone entry waits in the
    *  More sheet. */
   bar: boolean;
-  /** The caption under the slot's glyph, which has a fifth of a phone's width
-   *  to stand in. */
-  barLabelKey?: TranslationKey;
 }
 
 /**
@@ -55,16 +52,16 @@ export function destinations(settings: Settings | null, pins: NavPins): NavDesti
   // Detection is a switch, not a place, so its entry goes when it is off.
   const detection = settings?.anomalyEnabled ?? false;
   return [
-    { to: "/dashboard", labelKey: "nav.overview", icon: IconDashboard, count: "attention", sidebar: true, footer: false, phone: true, bar: true, barLabelKey: "nav.overviewShort" },
+    { to: "/dashboard", labelKey: "nav.overview", icon: IconDashboard, count: "attention", sidebar: true, footer: false, phone: true, bar: true },
     { to: "/anomalies", labelKey: "nav.anomalies", icon: IconAnomalies, count: "anomalies", sidebar: detection, footer: false, phone: detection, bar: false },
-    { to: "/backups", labelKey: "backups.title", icon: IconArchive, sidebar: true, footer: false, phone: true, bar: true, barLabelKey: "nav.backupsShort" },
-    { to: "/restore", labelKey: "nav.restore", icon: IconTabRecovery, sidebar: true, footer: false, phone: true, bar: true, barLabelKey: "nav.restoreShort" },
+    { to: "/backups", labelKey: "backups.title", icon: IconArchive, sidebar: true, footer: false, phone: true, bar: true },
+    { to: "/restore", labelKey: "nav.restore", icon: IconTabRecovery, sidebar: true, footer: false, phone: true, bar: true },
     // The two Settings pages that can be pinned to the sidebar. A phone always
     // lists the storage locations, which keeps its More sheet from ever
     // opening empty.
     { to: "/storage", labelKey: "storage.title", icon: IconTabStorage, sidebar: pins.storage, footer: false, phone: true, bar: false },
     { to: "/instances", labelKey: "instances.title", icon: IconFleet, sidebar: pins.instances, footer: false, phone: pins.instances, bar: false },
-    { to: "/settings", labelKey: "nav.settings", icon: IconGear, sidebar: true, footer: true, phone: true, bar: true, barLabelKey: "nav.settingsShort" },
+    { to: "/settings", labelKey: "nav.settings", icon: IconGear, sidebar: true, footer: true, phone: true, bar: true },
   ];
 }
 

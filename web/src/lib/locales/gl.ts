@@ -19,11 +19,6 @@ const gl: Partial<Translations> = {
   "nav.settings": "Configuración",
   "nav.more": "Máis",
   "nav.mobileNavigation": "Navegación móbil",
-  "nav.overviewShort": "Resumo",
-  "nav.backupsShort": "Copias",
-  "nav.restoreShort": "Restaurar",
-  "nav.settingsShort": "Opcións",
-  "nav.moreShort": "Máis",
 
   "about.title": "Sobre BombVault",
   "about.body": "Un só cabaleiro, unha cruzada: ferramentas de código aberto ben feitas que non existían na forma que eu quería, construídas ata que non falte nada. Todo de balde, sen contas, sen telemetría, sen anuncios e sen plans de pago. Ningún asterisco en ningures. Nada lexible sae nunca das túas propias murallas. Forxado polas noites e as fins de semana, con corazón e teimosía.",

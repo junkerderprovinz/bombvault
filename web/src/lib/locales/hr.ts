@@ -19,11 +19,6 @@ const hr: Partial<Translations> = {
   "nav.settings": "Postavke",
   "nav.more": "Više",
   "nav.mobileNavigation": "Mobilna navigacija",
-  "nav.overviewShort": "Pregled",
-  "nav.backupsShort": "Kopije",
-  "nav.restoreShort": "Vraćanje",
-  "nav.settingsShort": "Postavke",
-  "nav.moreShort": "Više",
 
   "about.title": "O aplikaciji BombVault",
   "about.body": "Jedan vitez, jedan pohod: uredni alati otvorenog koda kojih u obliku kakav sam želio nije bilo, građeni dok ništa ne nedostaje. Sve besplatno, bez računa, bez telemetrije, bez reklama i bez plaćenih razina. Nigdje nijedne zvjezdice. Ništa čitljivo nikada ne napušta vaše zidove. Kovano navečer i vikendima, sa srcem i tvrdoglavošću.",

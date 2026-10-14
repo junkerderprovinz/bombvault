@@ -19,11 +19,6 @@ const ca: Partial<Translations> = {
   "nav.settings": "Configuració",
   "nav.more": "Més",
   "nav.mobileNavigation": "Navegació mòbil",
-  "nav.overviewShort": "Resum",
-  "nav.backupsShort": "Còpies",
-  "nav.restoreShort": "Restaurar",
-  "nav.settingsShort": "Opcions",
-  "nav.moreShort": "Més",
 
   "about.title": "Quant a BombVault",
   "about.body": "Un sol cavaller, una croada: eines de codi obert ben fetes que no existien en la forma que jo volia, construïdes fins que no hi falti res. Tot gratuït, sense comptes, sense telemetria, sense anuncis i sense plans de pagament. Cap asterisc enlloc. Res llegible no surt mai de les teves pròpies muralles. Forjat als vespres i els caps de setmana, amb cor i tossuderia.",

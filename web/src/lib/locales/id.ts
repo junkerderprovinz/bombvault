@@ -19,11 +19,6 @@ const id: Partial<Translations> = {
   "nav.settings": "Pengaturan",
   "nav.more": "Lainnya",
   "nav.mobileNavigation": "Navigasi seluler",
-  "nav.overviewShort": "Ikhtisar",
-  "nav.backupsShort": "Cadangan",
-  "nav.restoreShort": "Pulihkan",
-  "nav.settingsShort": "Setelan",
-  "nav.moreShort": "Lainnya",
 
   "about.title": "Tentang BombVault",
   "about.body": "Satu ksatria, satu perjalanan: perkakas sumber terbuka yang rapi, yang tidak ada dalam bentuk yang saya inginkan, dibangun sampai tidak ada yang kurang. Semuanya gratis, tanpa akun, tanpa telemetri, tanpa iklan dan tanpa tingkatan berbayar. Tidak ada tanda bintang di mana pun. Tidak ada yang terbaca pernah meninggalkan tembok Anda sendiri. Ditempa pada malam hari dan akhir pekan, dengan hati dan kekeraskepalaan.",

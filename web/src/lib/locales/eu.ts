@@ -19,11 +19,6 @@ const eu: Partial<Translations> = {
   "nav.settings": "Ezarpenak",
   "nav.more": "Gehiago",
   "nav.mobileNavigation": "Mugikorreko nabigazioa",
-  "nav.overviewShort": "Ikuspegia",
-  "nav.backupsShort": "Kopiak",
-  "nav.restoreShort": "Berrezarri",
-  "nav.settingsShort": "Aukerak",
-  "nav.moreShort": "Gehiago",
 
   "about.title": "BombVault-i buruz",
   "about.body": "Zaldun bakarra, gurutzada bakarra: nahi nuen moduan existitzen ez ziren kode irekiko tresna dotoreak, ezer falta ez den arte eraikiak. Dena doan, konturik gabe, telemetriarik gabe, iragarkirik gabe eta ordainpeko mailarik gabe. Inon ez dago izartxorik. Irakurgai denik ez da inoiz zure harresietatik ateratzen. Arratsaldeetan eta asteburuetan forjatua, bihotzez eta setaz.",

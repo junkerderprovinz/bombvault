@@ -19,11 +19,6 @@ const sk: Partial<Translations> = {
   "nav.settings": "Nastavenia",
   "nav.more": "Viac",
   "nav.mobileNavigation": "Mobilná navigácia",
-  "nav.overviewShort": "Prehľad",
-  "nav.backupsShort": "Zálohy",
-  "nav.restoreShort": "Obnova",
-  "nav.settingsShort": "Možnosti",
-  "nav.moreShort": "Viac",
 
   "about.title": "O aplikácii BombVault",
   "about.body": "Jeden rytier, jedna výprava: pekné open source nástroje, ktoré v podobe, akú som chcel, neexistovali, stavané, kým nič nechýba. Všetko zadarmo, bez účtov, bez telemetrie, bez reklám a bez platených verzií. Nikde žiadna hviezdička. Nič čitateľné nikdy neopustí tvoje vlastné múry. Kované po večeroch a cez víkendy, so srdcom a tvrdohlavosťou.",
