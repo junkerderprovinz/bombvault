@@ -44,7 +44,7 @@ var (
 	ErrNotConfirmed = errors.New("restore: not confirmed (confirm must be true)")
 	// ErrInvalidSnapshotID is returned when the snapshot id fails the strict
 	// hex validation (arg-injection guard).
-	ErrInvalidSnapshotID = errors.New("restore: invalid snapshot id (must be 8–64 lowercase hex)")
+	ErrInvalidSnapshotID = errors.New("restore: invalid snapshot id (must be 8 to 64 lowercase hex)")
 	// ErrRestoreConflict is returned by the pre-flight check when the container's
 	// static IP or a published host port is already held by another container.
 	// It wraps a human-readable list of the conflicts; nothing destructive has
