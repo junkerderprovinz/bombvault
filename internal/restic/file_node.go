@@ -44,6 +44,15 @@ func fileStep(snapshotID, p, dir string) PreviewStep {
 // that folder alone. Under another name it goes through a scratch folder next
 // to target and is renamed into place.
 func (r Restic) restoreFileTo(ctx context.Context, repo, snapshotID, p, target string, m Mode) error {
+	// An empty folder in the file's place gives way. A folder with something
+	// in it is refused here, because restic gives it the file's mode before it
+	// fails, which can lock its owner out of it.
+	to := filepath.FromSlash(target)
+	if info, err := os.Lstat(to); err == nil && info.IsDir() {
+		if err := os.Remove(to); err != nil {
+			return fmt.Errorf("restore %s: a folder with files in it is in the way: %w", path.Base(target), err)
+		}
+	}
 	st := fileStep(snapshotID, p, path.Dir(target))
 	if path.Base(target) == path.Base(p) {
 		_, err := r.run(ctx, RestoreSubtreeIncludeArgs(repo, snapshotID, st.Subtree, st.Include, st.Target, m), m)
@@ -60,14 +69,6 @@ func (r Restic) restoreFileTo(ctx context.Context, repo, snapshotID, p, target s
 	defer func() { _ = os.RemoveAll(scratch) }()
 	if _, err := r.run(ctx, RestoreSubtreeIncludeArgs(repo, snapshotID, st.Subtree, st.Include, filepath.ToSlash(scratch), m), m); err != nil {
 		return err
-	}
-	// restic puts a file in the place of an empty folder and refuses a folder
-	// with something in it. The rename does the same.
-	to := filepath.FromSlash(target)
-	if info, err := os.Lstat(to); err == nil && info.IsDir() {
-		if err := os.Remove(to); err != nil {
-			return fmt.Errorf("restore %s: a folder with files in it is in the way: %w", path.Base(target), err)
-		}
 	}
 	return os.Rename(filepath.Join(scratch, path.Base(p)), to)
 }
