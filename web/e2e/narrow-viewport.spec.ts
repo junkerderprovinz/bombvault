@@ -1,21 +1,18 @@
 // Narrow-viewport backstop: the UI-considerations long-text row,
 // operationalized.
 //
-// The one backstop state, made executable evidence: German and French chrome
-// must fit 320-360px: the de compound words ("Einstellungen",
-// "Wiederherstellung") and fr accented long labels ("Paramètres",
-// "Récupération") are the stress cases. For every combination of {de, fr} x
-// {320px, 360px, 412px}, every bottom-bar slot caption fits in two line boxes
-// without being cut (in one at 412px, where the bar has room for all of
-// them), every More-sheet row label stays on a single line box, and the bar
-// container shows no horizontal overflow.
+// The one backstop state, made executable evidence: German and French chrome,
+// the longest, must fit 320-360px. Their bar captions are the short phone
+// words ("Rückholen", "Restaurer") that stand in for names a fifth of a phone
+// cannot hold. For every combination of {de, fr} x
+// {320px, 360px, 412px}, every bottom-bar slot caption stays on one line and
+// is cut by no ellipsis from 360px up, every More-sheet row label stays on a
+// single line box, and the bar container shows no horizontal overflow.
 //
 // Geometry, not screenshots (fast + non-flaky): each label's height is
-// measured against an explicitly normalized 20px line box. A bar caption may
-// wrap once on a narrow phone (the five captions together are wider than its
-// bar), so it must stay under three boxes; a sheet label has the whole row and
-// must stay under two. Overflow is scrollWidth vs clientWidth. All measurements tolerate
-// subpixel rounding (+0.5/+1px) and nothing else.
+// measured against an explicitly normalized 20px line box, and a label must
+// stay under two. Overflow is scrollWidth vs clientWidth. All measurements
+// tolerate subpixel rounding (+0.5/+1px) and nothing else.
 //
 // The locale is seeded the way a returning visitor's browser carries it,
 // the persisted `bv-lang` localStorage key (web/src/lib/i18n.ts STORAGE_KEY;
@@ -56,7 +53,7 @@ const MORE_LABEL = { de: "Mehr", fr: "Plus" } as const;
 const STORAGE_LABEL = { de: "Speicherorte", fr: "Destinations" } as const;
 // A long bar caption per locale, to prove the sweep measures the stress case
 // and not an English fallback.
-const SETTINGS_LABEL = { de: "Einstellungen", fr: "Paramètres" } as const;
+const RESTORE_LABEL = { de: "Rückholen", fr: "Restaurer" } as const;
 
 // Explicit single-line box used for the height arithmetic (see header).
 const LINE_BOX = 20;
@@ -95,9 +92,10 @@ const widths = [320, 360, 412];
 
 for (const locale of locales) {
   for (const width of widths) {
-    // From 412px the bar is wide enough for every caption on one line.
-    const captionLines = width >= 412 ? 1 : 2;
-    test(`narrow viewport ${locale} @ ${width}px: bar captions within ${captionLines} line(s), sheet labels single-line, bar never overflows`, async ({ page }, testInfo) => {
+    // On the narrowest phones a caption may give its last letters to an
+    // ellipsis; from 360px every word fits.
+    const mayCut = width < 360;
+    test(`narrow viewport ${locale} @ ${width}px: bar captions single-line, sheet labels single-line, bar never overflows`, async ({ page }, testInfo) => {
       test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the backstop targets the mobile chrome");
       await bootSeededPage(page, locale, width);
 
@@ -106,10 +104,10 @@ for (const locale of locales) {
       const moreTrigger = bar.getByRole("button", { name: MORE_LABEL[locale] });
       await expect(moreTrigger).toBeVisible();
 
-      // Bar captions: at most two normalized line boxes, and none cut off
-      // (a clipped caption is wider inside than its box).
+      // Bar captions: one normalized line box each, and none cut off where
+      // the words fit (a clipped caption is wider inside than its box).
       const captionStats = await bar
-        .locator("span.hyphens-auto")
+        .locator(".glim-bar-slot > span:last-child")
         .evaluateAll(
           (els, box) =>
             els.map((el) => {
@@ -123,14 +121,14 @@ for (const locale of locales) {
       // Four destinations and More: the fullest bar there is, so every slot is
       // at its narrowest here.
       expect(captionStats.length, "the bar must carry all five captions to assert against").toBe(5);
-      expect(captionStats.map((s) => s.text)).toContain(SETTINGS_LABEL[locale]);
+      expect(captionStats.map((s) => s.text)).toContain(RESTORE_LABEL[locale]);
       for (const s of captionStats) {
         expect(s.height, `caption "${s.text}" must be rendered`).toBeGreaterThan(0);
         expect(
           s.height,
-          `caption "${s.text}" took more than ${captionLines} line(s) (height ${s.height}px vs one ${LINE_BOX}px line box)`,
-        ).toBeLessThanOrEqual(LINE_BOX * captionLines + 0.5);
-        expect(s.clipped, `caption "${s.text}" is cut off`).toBe(false);
+          `caption "${s.text}" wrapped (height ${s.height}px vs one ${LINE_BOX}px line box)`,
+        ).toBeLessThanOrEqual(LINE_BOX + 0.5);
+        if (!mayCut) expect(s.clipped, `caption "${s.text}" is cut off`).toBe(false);
       }
 
       // No-overflow contract: the bar never scrolls horizontally; min-w-0
@@ -178,6 +176,40 @@ for (const locale of locales) {
       }
     });
   }
+}
+
+// The bar's slots share its width equally, and each caption keeps to its own
+// slot with room on both sides, in the languages whose words run longest.
+for (const locale of ["de", "ru"] as const) {
+  test(`bottom bar @ 360px in ${locale}: equal slots, each caption inside its own with a gap to the next`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the bar exists below the 48rem switch");
+    await bootSeededPage(page, locale, 360);
+    const bar = page.getByTestId("bottom-nav");
+    await expect(bar.getByRole("button", { name: { de: "Mehr", ru: "Ещё" }[locale] })).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+
+    const slots = await bar.locator(".glim-bar-slot").evaluateAll((els) =>
+      els.map((slot) => {
+        const box = slot.getBoundingClientRect();
+        const caption = slot.querySelector(":scope > span:last-child")!.getBoundingClientRect();
+        return { text: slot.textContent ?? "", left: box.left, right: box.right, captionLeft: caption.left, captionRight: caption.right };
+      }),
+    );
+    expect(slots).toHaveLength(5);
+    for (const s of slots) {
+      expect(s.captionLeft, `caption "${s.text}" starts outside its slot`).toBeGreaterThanOrEqual(s.left - 0.5);
+      expect(s.captionRight, `caption "${s.text}" ends outside its slot`).toBeLessThanOrEqual(s.right + 0.5);
+    }
+    const byPosition = [...slots].sort((a, b) => a.left - b.left);
+    for (let i = 1; i < byPosition.length; i++) {
+      const gap = byPosition[i].captionLeft - byPosition[i - 1].captionRight;
+      expect(gap, `"${byPosition[i - 1].text}" and "${byPosition[i].text}" run into each other`).toBeGreaterThanOrEqual(4);
+    }
+    const width = slots[0].right - slots[0].left;
+    for (const s of slots) {
+      expect(s.right - s.left, `slot "${s.text}" differs in width from the first`).toBeCloseTo(width, 0);
+    }
+  });
 }
 
 // Helpers shared by the geometry sweeps below, the measurement approach in

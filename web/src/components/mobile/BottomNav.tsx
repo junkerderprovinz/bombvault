@@ -102,18 +102,19 @@ export interface BottomNavProps {
 
 // One bar slot, destination or More trigger alike: the 24px glyph box over
 // the caption, and the full 56px (h-14) row as the touch target; comfortably
-// over the 44px floor. Each slot takes the width its caption needs and keeps
-// at least the 44px floor, so the bar spends its width where the words are.
-// The press scale reads the motion-engine token, so the app's motion levels
-// govern it (--motion-press-scale is 1 at "off": no scale at all there).
+// over the 44px floor. The side padding keeps two neighbouring captions apart
+// even when both fill their slots, and is halved on the narrowest phones,
+// where every pixel of the caption counts. The press scale reads the
+// motion-engine token, so the app's motion levels govern it
+// (--motion-press-scale is 1 at "off": no scale at all there).
 const slotBase =
-  "glim-bar-slot flex min-w-11 flex-col items-center justify-center gap-1 text-caption motion-safe:active:scale-[var(--motion-press-scale)]";
+  "glim-bar-slot flex min-w-11 flex-col items-center justify-center gap-1 px-0.5 min-[360px]:px-0.75 text-caption motion-safe:active:scale-[var(--motion-press-scale)]";
 
-// The caption is already at the smallest size of the type scale, so when the
-// captions together are wider than the bar, a long word goes onto a second
-// line, hyphenated where the language allows it. Two lines at this leading
-// still fit under the glyph in the 56px row.
-const caption = "max-w-full text-center leading-[1.1] hyphens-auto wrap-anywhere";
+// The caption is already at the smallest size of the type scale, so it stays
+// on one line and the words are chosen to fit: each language keeps a short
+// bar caption (nav.*Short) for names that run longer than a fifth of a phone.
+// The ellipsis is for the narrowest screens only.
+const captionClass = "max-w-full truncate";
 
 // barVars places a slot in the bar: its rainbow hue, and its turn and first
 // direction in the shake the overview's logo sends through the bar when it
@@ -143,6 +144,7 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
   // The More trigger's bubble: worded only in hiding modes, the same rule
   // the sidebar's rows follow (reactive mode brings the word back on hover).
   const moreTip = useTipBubble(showLabel || reactive ? undefined : t("nav.more"));
+  const moreCaption = t("nav.moreShort");
   const anomalyDot = (settings?.anomalyEnabled ?? false) && counts.anomalies.value > 0;
   const quaking = useLogoBursting();
 
@@ -195,10 +197,10 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
             row never resizes when the dynamic viewport does (browser chrome,
             keyboard), which is the property that keeps the bar visible: static
             chrome sizes against svh semantics, in every label mode. The
-            slots are auto grid columns: each grows towards its caption's
-            one-line width from an equal share of the room, so when the room
-            runs short only the longest caption goes onto a second line. */}
-        <div className="grid h-14 grid-flow-col">
+            slots share the width equally whatever their captions say, so the
+            filled slot is as wide as the others and no caption can push its
+            neighbour against the next one. */}
+        <div className="grid h-14 auto-cols-fr grid-flow-col">
           {slots.map((d, i) => (
             <BarSlot
               key={d.to}
@@ -220,7 +222,7 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
             ref={moreTip.ref}
             data-new-way="more"
             onClick={() => setMoreOpenOn(location.pathname)}
-            aria-label={showLabel ? undefined : t("nav.more")}
+            aria-label={showLabel ? undefined : reactive ? moreCaption : t("nav.more")}
             aria-describedby={moreTip.describedBy}
             {...moreTip.handlers}
             aria-haspopup="dialog"
@@ -235,7 +237,7 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
             style={
               {
                 ...barVars(slots.length),
-                ...(reactive && !showLabel ? { "--reactive-chars": labelWidth(t("nav.more")) } : {}),
+                ...(reactive && !showLabel ? { "--reactive-chars": labelWidth(moreCaption) } : {}),
               } as CSSProperties
             }
           >
@@ -252,9 +254,9 @@ export function BottomNav({ settings, authEnabled, relayed = false, scrollMainTo
               )}
             </span>
             <span
-              className={showLabel ? caption : reactive ? "max-w-full truncate glim-label-reactive" : "sr-only"}
+              className={showLabel ? captionClass : reactive ? "max-w-full truncate glim-label-reactive" : "sr-only"}
             >
-              {t("nav.more")}
+              {moreCaption}
             </span>
           </button>
           {moreTip.bubble}
@@ -301,6 +303,7 @@ function BarSlot({
   const { t } = useT();
   const Icon = destination.icon;
   const label = t(destination.labelKey);
+  const caption = t(destination.barLabelKey ?? destination.labelKey);
   const showLabel = !hidesLabel(labelMode);
   const reactive = labelMode === "reactive";
   // A slot whose caption is hidden names itself in the tip bubble, the
@@ -309,8 +312,10 @@ function BarSlot({
   const tooltip = useTipBubble(showLabel || reactive ? undefined : label);
   const counted = count && count.value > 0 ? count : undefined;
   // An aria-label replaces what the slot contains, the figure included, so a
-  // slot without a caption says both.
-  const hiddenName = counted ? `${label}, ${counted.label}` : label;
+  // slot without a caption says both. Reactive mode shows the caption on hover,
+  // so its name is the word that appears; glyph mode says the full name.
+  const name = reactive ? caption : label;
+  const hiddenName = counted ? `${name}, ${counted.label}` : name;
   const here = onDestination(useLocation().pathname, destination);
   return (
     <>
@@ -327,7 +332,7 @@ function BarSlot({
         style={
           {
             ...barVars(hueIndex),
-            ...(reactive && !showLabel ? { "--reactive-chars": labelWidth(label) } : {}),
+            ...(reactive && !showLabel ? { "--reactive-chars": labelWidth(caption) } : {}),
           } as CSSProperties
         }
       >
@@ -350,9 +355,9 @@ function BarSlot({
             </span>
             {/* 400 rest, 600 active; the caption's two sanctioned weights. */}
             <span
-              className={`${isActive || here ? "font-semibold" : ""} ${showLabel ? caption : reactive ? "max-w-full truncate glim-label-reactive" : "sr-only"}`}
+              className={`${isActive || here ? "font-semibold" : ""} ${showLabel ? captionClass : reactive ? "max-w-full truncate glim-label-reactive" : "sr-only"}`}
             >
-              {label}
+              {caption}
             </span>
           </>
         )}
