@@ -105,7 +105,9 @@ An encrypted dataset is backed up only while its key is loaded. Otherwise it is 
 
 A replica is a copy of an entry's datasets on a second ZFS server. BombVault keeps it current with `zfs send` and `zfs receive`. The first run sends everything, after that only the changed blocks travel. On the other server you can mount the copy right away.
 
-A replica never replaces the backup. Older versions, single files and the check still come from the backups, and the replica keeps only as many snapshots as you set. A current replica counts as a copy off the premises, but an entry with a replica and no backup stays orange.
+A replica never replaces the backup. Older versions, single files and the check still come from the backups, and the replica keeps only as many snapshots as you set. A current replica counts as a copy off the premises, but not as a backup.
+
+The replica does not wait for the backup. **After every backup** means after the entry's backup run, whether that run worked, failed or found nothing to do. When the ZFS section has no storage location switched on and the entry has no repository of its own, a backup run of the entry only sends the replica, and the Replica card says so in the bubble beside **When**. The Backups list, the entry's header and the run history show the replica: **Replicating** while it runs, and **Replicated** with the time once it has.
 
 Switch it on in the **Replica** card on the entry's Settings tab. There you pick where the replica goes, when it runs (**After every backup** or **Own plan**) and how many snapshots stay on the target. The card lists every dataset and volume with its state, and **Replicate now** starts a run. A replica run has a lock of its own, so a long first transfer never holds up the backups.
 

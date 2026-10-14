@@ -93,6 +93,13 @@ describe("the line under the name", () => {
     expect(entryReason(item({ lastBackup: 0, lastRunStatus: "" }))).toEqual({ is: "nextRun" });
   });
 
+  it("names the replica of an entry that has no backup yet", () => {
+    expect(entryReason(item({ lastBackup: 0, lastRunStatus: "", replica: { lastAt: at(2), lastStatus: "success" } }))).toEqual({
+      is: "replicated",
+      at: at(2),
+    });
+  });
+
   it("tells a paused entry from one whose schedule is off", () => {
     expect(entryReason(item({ lastBackup: 0, included: false }))).toEqual({ is: "pausedNever" });
     expect(

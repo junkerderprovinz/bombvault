@@ -3868,6 +3868,10 @@ export interface BackupItem {
   /** True while the item's next backup goes where its section sends new
    *  backups and the section has every storage location switched off. */
   noPlace?: boolean;
+  /** ZFS items that replicate: when the replica last succeeded and what its
+   *  newest run did ("success", "failed", "running", "cancelled", "" before
+   *  the first). */
+  replica?: { lastAt: number; lastStatus: string };
   /** The newest fourteen backups, imports and restores, newest first. */
   runs: BackupItemRun[];
 }
@@ -4654,6 +4658,8 @@ export interface ZFSMemberView {
   isNew: boolean;
   usedByDataset: number;
   lastBackupAt: number;
+  /** True once the dataset has a copy on the replica target. */
+  replicated?: boolean;
 }
 
 /** One ZFS item from GET /api/zfs. */
@@ -5160,6 +5166,9 @@ export interface ZFSReplica {
   members: ZFSReplicaMember[];
   /** What the paired instance answered; empty for any other target. */
   peerState: ZFSPeerState | "";
+  /** True while the item has no place for a backup, so its backup run only
+   *  sends the replica. */
+  only?: boolean;
 }
 
 export interface ZFSReplicaPatch {

@@ -53,6 +53,27 @@ func (s *Service) zfsReplicaCurrency(now int64, d store.ZFSDataset, settings sto
 	return lastOK, lastOK >= lastBackup
 }
 
+// zfsReplicaOnlyLastSuccess is when the newest replica of an enabled item
+// that has no backup of its own last succeeded, 0 for none. The domain has
+// nothing else to be current by while such items are all it holds.
+func (s *Service) zfsReplicaOnlyLastSuccess() int64 {
+	items, err := s.store.ListZFSDatasets()
+	if err != nil {
+		log.Printf("api: zfs replica: listing the items for the status failed: %v", err)
+		return 0
+	}
+	var newest int64
+	for _, d := range items {
+		if !d.Enabled || !s.zfsReplicaOnly(d) {
+			continue
+		}
+		if at, err := s.store.LastZFSReplicaSuccess(d.ID); err == nil {
+			newest = max(newest, at)
+		}
+	}
+	return newest
+}
+
 // zfsReplicaCoverage reports whether every enabled ZFS item has a current
 // replica, which makes the replicas the domain's copy off the premises, with
 // the oldest of their last successes and the longest period among them.

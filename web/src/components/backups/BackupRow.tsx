@@ -16,7 +16,7 @@ import {
 import { humanBytes } from "../../lib/forecast";
 import type { TranslationKey } from "../../lib/i18n";
 import type { ProgressState } from "../../lib/progress";
-import { formatRecent } from "../../lib/reltime";
+import { formatRecent, relativeTime } from "../../lib/reltime";
 import { runReason } from "../../lib/runReason";
 import { useLongPress } from "../../lib/useLongPress";
 import { useTipBubble } from "../../lib/useTipBubble";
@@ -205,6 +205,7 @@ export function BackupRow({
   name,
   tones,
   progress,
+  replicaProgress,
   anomaly,
   anomalyEnabled,
   scheduleSentence,
@@ -221,6 +222,8 @@ export function BackupRow({
   name: string;
   tones: RunTone[];
   progress: ProgressState | undefined;
+  /** The item's replica run, which reports apart from its backup. */
+  replicaProgress?: ProgressState;
   anomaly: AnomalyItem | undefined;
   anomalyEnabled: boolean;
   scheduleSentence: (item: BackupItem) => ScheduleSentence | null;
@@ -238,6 +241,7 @@ export function BackupRow({
   const press = useLongPress(onLongPress);
   const target = entryTarget(item);
   const running = runsNow(progress);
+  const replicating = !running && replicaProgress?.active === true;
   const facts = rowFacts({ item, running, anomaly, anomalyEnabled, scheduleSentence, t, lang });
   const status = rowStatus(item, loudAnomalies(anomaly));
   const dim = isGone(item) || item.kindDisabled || item.backupDeclined;
@@ -264,8 +268,30 @@ export function BackupRow({
         )}
       </span>
     );
+  } else if (replicating) {
+    cell = (
+      <span className="flex min-w-0 flex-col gap-1 @min-[36rem]:w-0 @min-[36rem]:min-w-full @max-[36rem]:max-w-[9.5rem]">
+        <span className="flex items-center gap-2 text-dense tabular-nums text-carbon-textSub">
+          <span
+            className="inline-block h-2.5 w-2.5 shrink-0 animate-spin rounded-full border-2"
+            style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
+          />
+          <span className="min-w-0 leading-tight wrap-break-word">{t("zfs.replica.state.running")}</span>
+        </span>
+        <ProgressBar percent={replicaProgress.percent} active inline />
+      </span>
+    );
   } else if (status.is === "failed") {
     cell = <Status tone="fail">{t("run.statusFailed")}</Status>;
+  } else if (status.is === "replicaFailed") {
+    cell = <Status tone="fail">{t("zfs.replica.state.failed")}</Status>;
+  } else if (status.is === "replicated") {
+    cell = (
+      <Status tone="neutral">
+        <span className="h-[7px] w-[7px] flex-none rounded-full bg-statusOkSolid" />
+        <span className="tabular-nums">{t("zfs.replica.state.ok").replace("{when}", () => relativeTime(t, status.at))}</span>
+      </Status>
+    );
   } else if (status.is === "anomalies" && anomaly) {
     cell = (
       <Link

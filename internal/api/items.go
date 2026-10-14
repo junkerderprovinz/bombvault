@@ -75,7 +75,7 @@ func zfsDatasetFacts(d store.ZFSDataset, s store.Settings) itemFacts {
 		Paused:            schedule.PausedByOverride(d.ScheduleCadence, s.PerItemSchedules),
 		Schedule:          schedule.EffectiveZFSDatasetSchedule(d, s),
 		Section:           zfsDomain,
-		TakesSectionPlace: d.Repo == "",
+		TakesSectionPlace: zfsTakesSectionPlace(d),
 	}
 }
 
@@ -155,8 +155,19 @@ type backupItemView struct {
 	// NoPlace is set while the item's next backup would go where its section
 	// sends new backups and the section has every storage location switched
 	// off for them.
-	NoPlace bool             `json:"noPlace,omitempty"`
+	NoPlace bool `json:"noPlace,omitempty"`
+	// Replica is how a ZFS item's replica stands, absent for an item that
+	// replicates nowhere.
+	Replica *itemReplicaView `json:"replica,omitempty"`
 	Runs    []store.RunBrief `json:"runs"`
+}
+
+// itemReplicaView is the newest word on an item's replica: when it last
+// succeeded and what its latest run did, "success", "failed", "running" or
+// "cancelled", empty before the first.
+type itemReplicaView struct {
+	LastAt     int64  `json:"lastAt"`
+	LastStatus string `json:"lastStatus"`
 }
 
 // itemHistory is what the runs table says about the items of one answer, with
@@ -167,6 +178,7 @@ type itemHistory struct {
 	runs      map[string][]store.RunBrief
 	declined  declinedBackups
 	placeless placeless
+	replicas  map[string]itemReplicaView
 }
 
 func (h *Handler) readItemHistory() (itemHistory, error) {
@@ -190,7 +202,39 @@ func (h *Handler) readItemHistory() (itemHistory, error) {
 	if err != nil {
 		return itemHistory{}, err
 	}
-	return itemHistory{stamps: stamps, sizes: sizes, runs: runs, declined: declined, placeless: placeless}, nil
+	replicas, err := h.readReplicaViews("")
+	if err != nil {
+		return itemHistory{}, err
+	}
+	return itemHistory{stamps: stamps, sizes: sizes, runs: runs, declined: declined, placeless: placeless, replicas: replicas}, nil
+}
+
+// readReplicaViews reads how the replica of each ZFS item that has one
+// stands, of the one item id names or of all of them for an empty id.
+func (h *Handler) readReplicaViews(id string) (map[string]itemReplicaView, error) {
+	items, err := h.store.ListZFSDatasets()
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]itemReplicaView{}
+	for _, d := range items {
+		if (id != "" && d.ID != id) || d.Replica.TargetKind == store.ZFSReplicaTargetNone {
+			continue
+		}
+		var v itemReplicaView
+		if v.LastAt, err = h.store.LastZFSReplicaSuccess(d.ID); err != nil {
+			return nil, err
+		}
+		run, ok, err := h.store.LatestZFSReplicaRun(d.ID)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			v.LastStatus = run.Status
+		}
+		out[d.ID] = v
+	}
+	return out, nil
 }
 
 // readHistoryOf is readItemHistory for one target. An item without a stored
@@ -216,7 +260,11 @@ func (h *Handler) readHistoryOf(targetID string) (itemHistory, error) {
 	if err != nil {
 		return itemHistory{}, err
 	}
-	return itemHistory{stamps: stamps, sizes: sizes, runs: runs, declined: declined, placeless: placeless}, nil
+	replicas, err := h.readReplicaViews(targetID)
+	if err != nil {
+		return itemHistory{}, err
+	}
+	return itemHistory{stamps: stamps, sizes: sizes, runs: runs, declined: declined, placeless: placeless, replicas: replicas}, nil
 }
 
 func (hist itemHistory) row(kind, key string, f itemFacts) backupItemView {
@@ -320,6 +368,9 @@ func fileSetRow(hist itemHistory, set store.FileSet, settings store.Settings) ba
 func zfsDatasetRow(hist itemHistory, d store.ZFSDataset, settings store.Settings) backupItemView {
 	v := hist.row(zfsDomain, d.ID, zfsDatasetFacts(d, settings))
 	v.KindDisabled = !settings.ZFSEnabled
+	if r, ok := hist.replicas[d.ID]; ok {
+		v.Replica = &r
+	}
 	return v
 }
 

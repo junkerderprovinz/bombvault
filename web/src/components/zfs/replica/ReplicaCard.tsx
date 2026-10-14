@@ -270,7 +270,10 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
 
       {hasTarget && (
         <>
-          <Row label={t("zfs.replica.when")} hint={t("zfs.replica.whenHint")}>
+          <Row
+            label={t("zfs.replica.when")}
+            hint={view.only ? `${t("zfs.replica.whenHint")} ${t("zfs.replica.onlyHint")}` : t("zfs.replica.whenHint")}
+          >
             <Selector
               label={t("zfs.replica.when")}
               items={[

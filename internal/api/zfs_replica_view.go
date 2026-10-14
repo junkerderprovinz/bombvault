@@ -28,6 +28,9 @@ type ZFSReplicaView struct {
 	// PeerState is what a paired instance answered, empty for any other
 	// target.
 	PeerState string `json:"peerState"`
+	// Only is set while the item has no place for a backup, so its backup
+	// run only sends the replica.
+	Only bool `json:"only"`
 }
 
 // ZFSReplicaSnapshotView is one replica snapshot kept on the target.
@@ -80,6 +83,7 @@ func (s *Service) ZFSReplicaView(ctx context.Context, id string) (ZFSReplicaView
 		State:       zfsReplicaNever,
 		Snapshots:   []ZFSReplicaSnapshotView{},
 		Members:     []ZFSReplicaMemberView{},
+		Only:        s.zfsReplicaOnly(d),
 	}
 	run, hasRun, err := s.store.LatestZFSReplicaRun(id)
 	if err != nil {

@@ -49,6 +49,23 @@ describe("buildLogLines", () => {
     expect(line.text).toContain("duration=30s");
   });
 
+  it("words a replica run as a replica and finds it under the backup filter", () => {
+    const done = buildLogLines([makeRun({ kind: "replica", domain: "zfs", target: "cache/appdata" })], {}, [], resolveName, 2_000_000)[0];
+    expect(done.status).toBe("success");
+    expect(done.kind).toBe("backup");
+    expect(done.text).toContain("activityLog.lineReplicaSuccess");
+    expect(done.text).toContain("name=cache/appdata");
+    const failed = buildLogLines(
+      [makeRun({ kind: "replica", domain: "zfs", target: "cache/appdata", status: "failed", error: "zfs replica: link down" })],
+      {},
+      [],
+      resolveName,
+      2_000_000,
+    )[0];
+    expect(failed.status).toBe("failed");
+    expect(failed.text).toContain("activityLog.lineReplicaFailed");
+  });
+
   it("keeps live lines last and suppresses the finished run they supersede", () => {
     const progress: ProgressMap = {
       "container:plex": { phase: "backup", percent: 41.4, active: true, lastSeen: 5_000_000 },

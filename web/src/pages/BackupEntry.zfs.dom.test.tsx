@@ -316,6 +316,58 @@ describe("the head of a ZFS entry", () => {
   });
 });
 
+describe("the head of a ZFS entry that replicates", () => {
+  const AT = Math.floor(Date.now() / 1000) - 2 * 3600;
+  const replicated = (replica: { lastAt: number; lastStatus: string }) =>
+    serveEntries(mocks, {
+      items: [{ ...TANK, lastBackup: 0, lastRunStatus: "", replica }],
+      datasets: [zfsView({ lastBackup: 0, lastRunStatus: "" })],
+    });
+
+  it("names the replica instead of waiting for a first backup", async () => {
+    replicated({ lastAt: AT, lastStatus: "success" });
+    await renderPage();
+    expect(screen.getByText(en["zfs.replica.state.ok"].replace("{when}", formatRecent(AT, "en")))).toBeTruthy();
+    expect(screen.queryByText(en["backups.status.waiting"])).toBeNull();
+  });
+
+  it("still waits for the first backup before any replica has run", async () => {
+    replicated({ lastAt: 0, lastStatus: "" });
+    await renderPage();
+    expect(screen.getByText(en["backups.status.waiting"])).toBeTruthy();
+  });
+
+  it("says when the replica failed", async () => {
+    replicated({ lastAt: AT, lastStatus: "failed" });
+    await renderPage();
+    expect(screen.getByText(en["zfs.replica.state.failed"])).toBeTruthy();
+  });
+
+  it("says Replicating while the replica runs and reads the entry again when it ends", async () => {
+    const streams: { onmessage: ((ev: MessageEvent<string>) => void) | null }[] = [];
+    class Stream {
+      onmessage: ((ev: MessageEvent<string>) => void) | null = null;
+      constructor() {
+        streams.push(this);
+      }
+      close() {}
+    }
+    vi.stubGlobal("EventSource", Stream);
+    replicated({ lastAt: 0, lastStatus: "" });
+    await renderPage();
+    const frame = (active: boolean) =>
+      act(() => {
+        const data = JSON.stringify({ key: `zfs-replica:${ZFS_ID}`, phase: "maintenance", percent: 50, active });
+        streams.at(-1)?.onmessage?.({ data } as MessageEvent<string>);
+      });
+    await frame(true);
+    expect(screen.getByText(en["zfs.replica.state.running"])).toBeTruthy();
+    replicated({ lastAt: AT, lastStatus: "success" });
+    await frame(false);
+    expect(await screen.findByText(en["zfs.replica.state.ok"].replace("{when}", formatRecent(AT, "en")))).toBeTruthy();
+  });
+});
+
 describe("removing a ZFS entry", () => {
   const SAFETY_TOO = countText(en["entry.remove.safety"], "en", 2);
 
@@ -407,6 +459,21 @@ describe("the settings of a ZFS entry", () => {
     const settings = await renderSettings();
     await press(settings.getByRole("button", { name: en["zfs.connection.view"] }));
     expect(await screen.findByRole("dialog", { name: en["zfs.connection.title"] })).toBeTruthy();
+  });
+
+  it("calls a dataset no backup has reached yet by that, never an unknown state", async () => {
+    serve({ members: [member({ outcome: "", lastBackupAt: 0 }), plex({ outcome: "", lastBackupAt: 0 })] });
+    const settings = await renderSettings();
+    expect(settings.getAllByText(en["zfs.member.pending"])).toHaveLength(2);
+    expect(screen.queryByText(/Unknown state/)).toBeNull();
+    expect(screen.queryByText(countText(en["zfs.skippedCount"], "en", 2))).toBeNull();
+  });
+
+  it("calls a dataset that only has a replica replicated", async () => {
+    serve({ members: [member({ outcome: "", lastBackupAt: 0, replicated: true }), plex({ outcome: "", lastBackupAt: 0 })] });
+    const settings = await renderSettings();
+    expect(settings.getAllByText(en["zfs.member.replicated"])).toHaveLength(1);
+    expect(settings.getAllByText(en["zfs.member.pending"])).toHaveLength(1);
   });
 
   it("pick the repository in a card of its own", async () => {

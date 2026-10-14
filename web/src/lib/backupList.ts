@@ -106,12 +106,28 @@ export type Protection = "ok" | "pending" | "none";
  */
 export function protection(item: BackupItem): Protection {
   if (item.backupDeclined || item.noPlace || isGone(item) || neverRuns(item)) return "none";
-  return item.lastBackup > 0 ? "ok" : "pending";
+  return item.lastBackup > 0 || replicatedAlone(item) ? "ok" : "pending";
+}
+
+/** replicatedAlone is an entry whose replica has succeeded while no backup of
+ *  it has. The replica is then the copy it has, and it counts as protected
+ *  the way the server counts it. */
+export function replicatedAlone(item: BackupItem): boolean {
+  return item.lastBackup === 0 && (item.replica?.lastAt ?? 0) > 0;
+}
+
+/** itemReplicaKey is the key a replica run of a ZFS item reports under, apart
+ *  from the backup's, so a replica never reads as a backup in flight. */
+export function itemReplicaKey(item: BackupItem): string {
+  return `zfs-replica:${item.key}`;
 }
 
 /** The one thing a row's status says when no backup of it is running. */
 export type RowStatus =
   | { is: "failed" }
+  | { is: "replicaFailed" }
+  /** The replica is the only copy so far. */
+  | { is: "replicated"; at: number }
   | { is: "anomalies"; count: number }
   /** The date of the last backup. `quiet` is the protected entry; without it
    *  the date is all that is left of an entry BombVault has stopped backing up. */
@@ -122,6 +138,7 @@ export type RowStatus =
 export function rowStatus(item: BackupItem, openAnomalies: number): RowStatus {
   const gone = isGone(item);
   if (!gone && item.lastRunStatus === "failed") return { is: "failed" };
+  if (!gone && item.replica?.lastStatus === "failed") return { is: "replicaFailed" };
   if (openAnomalies > 0) return { is: "anomalies", count: openAnomalies };
   if (gone || item.kindDisabled) return { is: "last", quiet: false };
   switch (protection(item)) {
@@ -130,7 +147,7 @@ export function rowStatus(item: BackupItem, openAnomalies: number): RowStatus {
     case "pending":
       return { is: "waiting" };
     default:
-      return { is: "last", quiet: true };
+      return replicatedAlone(item) ? { is: "replicated", at: item.replica?.lastAt ?? 0 } : { is: "last", quiet: true };
   }
 }
 

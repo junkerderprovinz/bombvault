@@ -111,26 +111,50 @@ func (s *Service) ReplicateZFSDataset(ctx context.Context, id string) error {
 	if !d.Enabled {
 		return nil
 	}
+	return s.replicateZFSItem(ctx, d)
+}
+
+// replicateZFSItem is ReplicateZFSDataset for an item already loaded, whether
+// or not it is switched on.
+func (s *Service) replicateZFSItem(ctx context.Context, d store.ZFSDataset) error {
 	if err := s.zfsReplicaRunRefusal(d); err != nil {
 		log.Printf("api: zfs replica: %s skipped: %v", d.Dataset, err)
 		return nil
 	}
-	unlock, ok := s.lockZFSReplica(id)
+	unlock, ok := s.lockZFSReplica(d.ID)
 	if !ok {
 		log.Printf("api: zfs replica: %s skipped, it is still replicating", d.Dataset)
 		return nil
 	}
 	defer unlock()
-	runID, err := s.startRun(ctx, id, store.ZFSReplicaRunKind)
+	runID, err := s.startRun(ctx, d.ID, store.ZFSReplicaRunKind)
 	if err != nil {
 		return err
 	}
 	return s.replicateZFS(ctx, d, runID, unlock)
 }
 
-// replicateAfterZFSBackup starts the replica a successful backup is followed
-// by. It runs on its own, so the domain lock the backup holds is released
-// while a long send is still going.
+// zfsReplicaOnly reports whether an item has a replica and nowhere else to
+// go: it takes its section's place, and the section has none. Its backup run
+// then only sends the replica.
+func (s *Service) zfsReplicaOnly(d store.ZFSDataset) bool {
+	if d.Repo != "" || d.Replica.TargetKind == store.ZFSReplicaTargetNone {
+		return false
+	}
+	nowhere, err := s.placelessSections()
+	return err == nil && nowhere[zfsDomain]
+}
+
+// zfsTakesSectionPlace reports whether an item's backup goes where the ZFS
+// section sends new backups. An item that replicates has somewhere to go
+// even when the section has no place, so it is never left without one.
+func zfsTakesSectionPlace(d store.ZFSDataset) bool {
+	return d.Repo == "" && d.Replica.TargetKind == store.ZFSReplicaTargetNone
+}
+
+// replicateAfterZFSBackup starts the replica a backup run is followed by,
+// whatever became of the backup. It runs on its own, so the domain lock the
+// backup holds is released while a long send is still going.
 func (s *Service) replicateAfterZFSBackup(ctx context.Context, d store.ZFSDataset) {
 	if !d.Replica.AfterBackup || d.Replica.TargetKind == store.ZFSReplicaTargetNone {
 		return

@@ -24,7 +24,7 @@ function isStructure(m: ZFSMemberView): boolean {
  *  structure datasets stay in the list, but no setting on this page would ever
  *  back them up, so they are not counted as skipped. */
 export function zfsMemberActionable(m: ZFSMemberView): boolean {
-  if (zfsMemberKey(m.outcome)) return false;
+  if (m.outcome === "" || zfsMemberKey(m.outcome)) return false;
   return m.outcome !== "zvol" && !isStructure(m);
 }
 
@@ -65,7 +65,9 @@ export function ZFSMemberList({
       {members.map((m) => {
         const off = excluded?.has(m.dataset) ?? false;
         const outcome = off ? "excluded" : m.outcome;
-        const memberKey = zfsMemberKey(outcome);
+        // A readable dataset that no backup has reached yet has no outcome.
+        const memberKey =
+          outcome === "" ? (m.replicated ? "zfs.member.replicated" : "zfs.member.pending") : zfsMemberKey(outcome);
         const fixKey = memberKey ? null : zfsFixKey(outcome);
         const structure = isStructure(m);
         // A state the reader has to act on reads as a sentence under the name;

@@ -3244,6 +3244,9 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		if !last.IsZero() {
 			lastUnix = last.Unix()
 		}
+		if d.name == zfsDomain {
+			lastUnix = max(lastUnix, s.zfsReplicaOnlyLastSuccess())
+		}
 
 		// A period is only meaningful for an enabled domain that something
 		// actually backs up on a cadence — its own, or the "Backup Everything"
