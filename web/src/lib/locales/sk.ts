@@ -2357,7 +2357,7 @@ const sk: Partial<Translations> = {
   "zfs.replica.add.userHint": "S rootom to funguje bez ďalších oprávnení. Vlastný používateľ potrebuje oprávnenia z riadku nižšie.",
   "zfs.replica.add.port": "Port",
   "zfs.replica.add.authorize": "Pridať na serveri ZFS",
-  "zfs.replica.add.authorizeHint": "Pripoj tento kľúč do súboru ~/.ssh/authorized_keys používateľa. Na Unraide to nájdeš v Nastavenia › Používatelia › root › Kľúče SSH.",
+  "zfs.replica.add.authorizeHint": "Pripoj tento kľúč do súboru ~/.ssh/authorized_keys používateľa. Na Unraide to nájdeš v Používatelia › root › Kľúče SSH. Podľa Nastavení zobrazenia je Používatelia v hornom menu alebo v Nastavenia.",
   "zfs.replica.add.allowHint": "Bez rootu potrebuje {user} na poole tieto oprávnenia:",
   "zfs.replica.add.stepConnect": "Pripojenie",
   "zfs.replica.add.stepPool": "Pool",

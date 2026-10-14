@@ -1852,7 +1852,7 @@ const he: Partial<Translations> = {
   "zfs.replica.add.userHint": "עם root זה עובד בלי הרשאות נוספות. משתמש משלו צריך את ההרשאות מהשורה שלמטה.",
   "zfs.replica.add.port": "פורט",
   "zfs.replica.add.authorize": "הוספה בשרת ה-ZFS",
-  "zfs.replica.add.authorizeHint": "יש להוסיף את המפתח הזה לסוף הקובץ ~/.ssh/authorized_keys של המשתמש. ב-Unraid זה נמצא תחת הגדרות › משתמשים › root › מפתחות SSH.",
+  "zfs.replica.add.authorizeHint": "יש להוסיף את המפתח הזה לסוף הקובץ ~/.ssh/authorized_keys של המשתמש. ב-Unraid זה נמצא תחת משתמשים › root › מפתחות SSH. בהתאם להגדרות התצוגה, משתמשים נמצא בתפריט הכותרת או תחת הגדרות.",
   "zfs.replica.add.allowHint": "בלי root ל-{user} דרושות ההרשאות האלה על הבריכה:",
   "zfs.replica.add.stepConnect": "חיבור",
   "zfs.replica.add.stepPool": "בריכה",

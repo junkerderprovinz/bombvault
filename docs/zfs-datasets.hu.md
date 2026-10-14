@@ -114,7 +114,7 @@ Kapcsold be az elem Beállítások lapján a **Replika** kártyán. Ott választ
 Bármely gép fogadhat, amelyen van ZFS és SSH, például egy második Unraid vagy egy TrueNAS. A BombVaultnak nem kell ott futnia.
 
 1. A **Beállítások, Párosítás** alatt válaszd a **ZFS-kiszolgáló BombVault nélkül** részben a **Csatlakozás SSH-n át** gombot, vagy az elem **Replika** kártyáján a **ZFS-kiszolgáló hozzáadása** gombot.
-2. Add meg a címet, a felhasználót és a portot. A párbeszédablak megmutatja a BombVault nyilvános kulcsát. Add hozzá a felhasználó `~/.ssh/authorized_keys` fájljához a kiszolgálón. Unraidon ez a **Settings, Users, root, SSH keys** alatt van.
+2. Add meg a címet, a felhasználót és a portot. A párbeszédablak megmutatja a BombVault nyilvános kulcsát. Add hozzá a felhasználó `~/.ssh/authorized_keys` fájljához a kiszolgálón. Unraidon ez a **Users, root, SSH keys** alatt van. A **Display Settings** beállításától függően a Users a fejléc menüjében vagy a Settings alatt található.
 3. Teszteld a kapcsolatot. A párbeszédablak ezután felsorolja a kiszolgáló poolait. Válassz egyet, és add meg a gyökeret, amelynek alapértéke `<pool>/bombvault-replica`.
 4. Válaszd ki az új kiszolgálót az elem **Replika** kártyáján. A kiszolgálónak ezután saját kártyája van a Példányok oldalon, és a **Megnyitás** az oldalára visz.
 

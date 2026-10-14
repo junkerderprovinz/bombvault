@@ -1852,7 +1852,7 @@ const pt: Partial<Translations> = {
   "zfs.replica.add.userHint": "Com root funciona sem mais permissões. Um utilizador próprio precisa das permissões da linha abaixo.",
   "zfs.replica.add.port": "Porta",
   "zfs.replica.add.authorize": "Adicionar no servidor ZFS",
-  "zfs.replica.add.authorizeHint": "Acrescenta esta chave ao ficheiro ~/.ssh/authorized_keys do utilizador. Num Unraid está em Definições › Utilizadores › root › Chaves SSH.",
+  "zfs.replica.add.authorizeHint": "Acrescenta esta chave ao ficheiro ~/.ssh/authorized_keys do utilizador. Num Unraid está em Utilizadores › root › Chaves SSH. Conforme as Definições de visualização, Utilizadores fica no menu do cabeçalho ou em Definições.",
   "zfs.replica.add.allowHint": "Sem root, {user} precisa destas permissões no pool:",
   "zfs.replica.add.stepConnect": "Ligar",
   "zfs.replica.add.stepPool": "Pool",

@@ -1853,7 +1853,7 @@ const ro: Partial<Translations> = {
   "zfs.replica.add.userHint": "Cu root merge fără permisiuni suplimentare. Un utilizator propriu are nevoie de permisiunile din rândul de mai jos.",
   "zfs.replica.add.port": "Port",
   "zfs.replica.add.authorize": "Adaugă pe serverul ZFS",
-  "zfs.replica.add.authorizeHint": "Adaugă această cheie la fișierul ~/.ssh/authorized_keys al utilizatorului. Pe un Unraid se află la Setări › Utilizatori › root › Chei SSH.",
+  "zfs.replica.add.authorizeHint": "Adaugă această cheie la fișierul ~/.ssh/authorized_keys al utilizatorului. Pe un Unraid se află la Utilizatori › root › Chei SSH. În funcție de Setări afișare, Utilizatori este în meniul din antet sau la Setări.",
   "zfs.replica.add.allowHint": "Fără root, {user} are nevoie de aceste permisiuni pe pool:",
   "zfs.replica.add.stepConnect": "Conectare",
   "zfs.replica.add.stepPool": "Pool",

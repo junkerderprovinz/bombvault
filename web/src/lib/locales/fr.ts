@@ -1852,7 +1852,7 @@ const fr: Partial<Translations> = {
   "zfs.replica.add.userHint": "Avec root, cela fonctionne sans autorisations supplémentaires. Un utilisateur dédié a besoin des autorisations de la ligne ci-dessous.",
   "zfs.replica.add.port": "Port",
   "zfs.replica.add.authorize": "Ajouter sur le serveur ZFS",
-  "zfs.replica.add.authorizeHint": "Ajoutez cette clé à la fin du fichier ~/.ssh/authorized_keys de l'utilisateur. Sur un Unraid, cela se trouve sous Paramètres › Utilisateurs › root › Clés SSH.",
+  "zfs.replica.add.authorizeHint": "Ajoutez cette clé à la fin du fichier ~/.ssh/authorized_keys de l'utilisateur. Sur un Unraid, cela se trouve sous Utilisateurs › root › Clés SSH. Selon les Paramètres d'affichage, Utilisateurs figure dans le menu d'en-tête ou sous Paramètres.",
   "zfs.replica.add.allowHint": "Sans root, {user} a besoin de ces autorisations sur le pool :",
   "zfs.replica.add.stepConnect": "Connexion",
   "zfs.replica.add.stepPool": "Pool",

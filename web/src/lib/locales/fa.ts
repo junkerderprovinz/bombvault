@@ -2357,7 +2357,7 @@ const fa: Partial<Translations> = {
   "zfs.replica.add.userHint": "با root بدون مجوز اضافه کار می‌کند. یک کاربر جداگانه به مجوزهای خط زیر نیاز دارد.",
   "zfs.replica.add.port": "درگاه",
   "zfs.replica.add.authorize": "روی سرور ZFS اضافه کن",
-  "zfs.replica.add.authorizeHint": "این کلید را به انتهای پروندهٔ ~/.ssh/authorized_keys کاربر اضافه کن. روی Unraid این مورد در تنظیمات › کاربران › root › کلیدهای SSH است.",
+  "zfs.replica.add.authorizeHint": "این کلید را به انتهای پروندهٔ ~/.ssh/authorized_keys کاربر اضافه کن. روی Unraid این مورد در کاربران › root › کلیدهای SSH است. بسته به تنظیمات نمایش، کاربران در منوی سربرگ یا زیر تنظیمات قرار دارد.",
   "zfs.replica.add.allowHint": "بدون root، {user} این مجوزها را روی استخر لازم دارد:",
   "zfs.replica.add.stepConnect": "اتصال",
   "zfs.replica.add.stepPool": "استخر",

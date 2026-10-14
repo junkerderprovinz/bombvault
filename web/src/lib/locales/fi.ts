@@ -1852,7 +1852,7 @@ const fi: Partial<Translations> = {
   "zfs.replica.add.userHint": "Rootilla toimii ilman lisäoikeuksia. Omalla käyttäjällä on oltava oikeudet alla olevalta riviltä.",
   "zfs.replica.add.port": "Portti",
   "zfs.replica.add.authorize": "Lisää ZFS-palvelimelle",
-  "zfs.replica.add.authorizeHint": "Lisää tämä avain käyttäjän tiedoston ~/.ssh/authorized_keys loppuun. Unraidissa se löytyy kohdasta Asetukset › Käyttäjät › root › SSH-avaimet.",
+  "zfs.replica.add.authorizeHint": "Lisää tämä avain käyttäjän tiedoston ~/.ssh/authorized_keys loppuun. Unraidissa se löytyy kohdasta Käyttäjät › root › SSH-avaimet. Näyttöasetuksista riippuen Käyttäjät on ylävalikossa tai kohdassa Asetukset.",
   "zfs.replica.add.allowHint": "Ilman rootia käyttäjällä {user} on oltava nämä oikeudet poolissa:",
   "zfs.replica.add.stepConnect": "Yhdistä",
   "zfs.replica.add.stepPool": "Pooli",

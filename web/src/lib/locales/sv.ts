@@ -1852,7 +1852,7 @@ const sv: Partial<Translations> = {
   "zfs.replica.add.userHint": "Med root fungerar det utan fler behörigheter. En egen användare behöver behörigheterna från raden nedan.",
   "zfs.replica.add.port": "Port",
   "zfs.replica.add.authorize": "Lägg till på ZFS-servern",
-  "zfs.replica.add.authorizeHint": "Lägg till nyckeln i användarens fil ~/.ssh/authorized_keys. På en Unraid finns det under Inställningar › Användare › root › SSH-nycklar.",
+  "zfs.replica.add.authorizeHint": "Lägg till nyckeln i användarens fil ~/.ssh/authorized_keys. På en Unraid finns det under Användare › root › SSH-nycklar. Beroende på Visningsinställningar ligger Användare i huvudmenyn eller under Inställningar.",
   "zfs.replica.add.allowHint": "Utan root behöver {user} de här behörigheterna på poolen:",
   "zfs.replica.add.stepConnect": "Anslut",
   "zfs.replica.add.stepPool": "Pool",

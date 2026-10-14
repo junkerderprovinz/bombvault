@@ -1850,7 +1850,7 @@ const cs: Partial<Translations> = {
   "zfs.replica.add.userHint": "S rootem to funguje bez dalších oprávnění. Vlastní uživatel potřebuje oprávnění z řádku níže.",
   "zfs.replica.add.port": "Port",
   "zfs.replica.add.authorize": "Přidat na serveru ZFS",
-  "zfs.replica.add.authorizeHint": "Připoj tento klíč do souboru ~/.ssh/authorized_keys uživatele. Na Unraidu to najdeš v Nastavení › Uživatelé › root › Klíče SSH.",
+  "zfs.replica.add.authorizeHint": "Připoj tento klíč do souboru ~/.ssh/authorized_keys uživatele. Na Unraidu to najdeš v Uživatelé › root › Klíče SSH. Podle Nastavení zobrazení je Uživatelé v horním menu nebo v Nastavení.",
   "zfs.replica.add.allowHint": "Bez rootu potřebuje {user} na poolu tato oprávnění:",
   "zfs.replica.add.stepConnect": "Připojení",
   "zfs.replica.add.stepPool": "Pool",

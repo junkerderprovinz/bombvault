@@ -2357,7 +2357,7 @@ const bg: Partial<Translations> = {
   "zfs.replica.add.userHint": "С root работи без допълнителни права. Отделен потребител има нужда от правата от реда по-долу.",
   "zfs.replica.add.port": "Порт",
   "zfs.replica.add.authorize": "Добави на ZFS сървъра",
-  "zfs.replica.add.authorizeHint": "Добави този ключ във файла ~/.ssh/authorized_keys на потребителя. В Unraid това е под Settings › Users › root › SSH keys.",
+  "zfs.replica.add.authorizeHint": "Добави този ключ във файла ~/.ssh/authorized_keys на потребителя. В Unraid това е под Users › root › SSH keys. Според Display Settings Users е в менюто в заглавната лента или под Settings.",
   "zfs.replica.add.allowHint": "Без root потребителят {user} има нужда от тези права върху пула:",
   "zfs.replica.add.stepConnect": "Връзка",
   "zfs.replica.add.stepPool": "Пул",

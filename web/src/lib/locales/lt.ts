@@ -2357,7 +2357,7 @@ const lt: Partial<Translations> = {
   "zfs.replica.add.userHint": "Su root veikia be papildomų teisių. Atskiram naudotojui reikia teisių iš eilutės žemiau.",
   "zfs.replica.add.port": "Prievadas",
   "zfs.replica.add.authorize": "Pridėti ZFS serveryje",
-  "zfs.replica.add.authorizeHint": "Pridėk šį raktą prie naudotojo failo ~/.ssh/authorized_keys. Unraid tai yra skiltyje Nustatymai › Naudotojai › root › SSH raktai.",
+  "zfs.replica.add.authorizeHint": "Pridėk šį raktą prie naudotojo failo ~/.ssh/authorized_keys. Unraid tai yra skiltyje Naudotojai › root › SSH raktai. Pagal ekrano nustatymus Naudotojai yra antraštės meniu arba skiltyje Nustatymai.",
   "zfs.replica.add.allowHint": "Be root naudotojui {user} telkinyje reikia šių teisių:",
   "zfs.replica.add.stepConnect": "Prisijungti",
   "zfs.replica.add.stepPool": "Telkinys",

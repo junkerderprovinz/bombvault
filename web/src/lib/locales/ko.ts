@@ -1843,7 +1843,7 @@ const ko: Partial<Translations> = {
   "zfs.replica.add.userHint": "root는 추가 권한 없이 동작합니다. 별도 사용자에게는 아래 줄의 권한이 필요합니다.",
   "zfs.replica.add.port": "포트",
   "zfs.replica.add.authorize": "ZFS 서버에 추가",
-  "zfs.replica.add.authorizeHint": "이 키를 사용자의 ~/.ssh/authorized_keys 파일 끝에 추가하세요. Unraid에서는 설정 › 사용자 › root › SSH 키에 있습니다.",
+  "zfs.replica.add.authorizeHint": "이 키를 사용자의 ~/.ssh/authorized_keys 파일 끝에 추가하세요. Unraid에서는 사용자 › root › SSH 키에 있습니다. 디스플레이 설정에 따라 사용자는 헤더 메뉴 또는 설정 아래에 있습니다.",
   "zfs.replica.add.allowHint": "root가 아니면 {user}에게 풀에 대한 다음 권한이 필요합니다:",
   "zfs.replica.add.stepConnect": "연결",
   "zfs.replica.add.stepPool": "풀",

@@ -1853,7 +1853,7 @@ const th: Partial<Translations> = {
   "zfs.replica.add.userHint": "ถ้าใช้ root จะทำงานได้โดยไม่ต้องมีสิทธิ์เพิ่ม ผู้ใช้ที่เป็นของตัวเองต้องมีสิทธิ์ตามบรรทัดด้านล่าง",
   "zfs.replica.add.port": "พอร์ต",
   "zfs.replica.add.authorize": "เพิ่มบนเซิร์ฟเวอร์ ZFS",
-  "zfs.replica.add.authorizeHint": "ต่อคีย์นี้ท้ายไฟล์ ~/.ssh/authorized_keys ของผู้ใช้ บน Unraid อยู่ที่การตั้งค่า › ผู้ใช้ › root › คีย์ SSH",
+  "zfs.replica.add.authorizeHint": "ต่อคีย์นี้ท้ายไฟล์ ~/.ssh/authorized_keys ของผู้ใช้ บน Unraid อยู่ที่ผู้ใช้ › root › คีย์ SSH ขึ้นอยู่กับการตั้งค่าการแสดงผล ผู้ใช้จะอยู่ในเมนูส่วนหัวหรืออยู่ใต้การตั้งค่า",
   "zfs.replica.add.allowHint": "ถ้าไม่ใช้ root {user} ต้องมีสิทธิ์เหล่านี้บนพูล:",
   "zfs.replica.add.stepConnect": "เชื่อมต่อ",
   "zfs.replica.add.stepPool": "พูล",

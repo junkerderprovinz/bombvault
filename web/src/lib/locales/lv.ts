@@ -2357,7 +2357,7 @@ const lv: Partial<Translations> = {
   "zfs.replica.add.userHint": "Ar root tas darbojas bez papildu tiesībām. Savam lietotājam vajag tiesības no rindas zemāk.",
   "zfs.replica.add.port": "Ports",
   "zfs.replica.add.authorize": "Pievienot ZFS serverī",
-  "zfs.replica.add.authorizeHint": "Pievienojiet šo atslēgu lietotāja failam ~/.ssh/authorized_keys. Unraid tas ir sadaļā Iestatījumi › Lietotāji › root › SSH atslēgas.",
+  "zfs.replica.add.authorizeHint": "Pievienojiet šo atslēgu lietotāja failam ~/.ssh/authorized_keys. Unraid tas ir sadaļā Lietotāji › root › SSH atslēgas. Atkarībā no displeja iestatījumiem Lietotāji ir galvenes izvēlnē vai sadaļā Iestatījumi.",
   "zfs.replica.add.allowHint": "Bez root lietotājam {user} kopnē vajag šīs tiesības:",
   "zfs.replica.add.stepConnect": "Savienot",
   "zfs.replica.add.stepPool": "Kopne",

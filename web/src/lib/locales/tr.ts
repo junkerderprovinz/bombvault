@@ -1852,7 +1852,7 @@ const tr: Partial<Translations> = {
   "zfs.replica.add.userHint": "root ile ek izin gerekmeden çalışır. Kendi kullanıcısının alttaki satırdaki izinlere ihtiyacı vardır.",
   "zfs.replica.add.port": "Bağlantı noktası",
   "zfs.replica.add.authorize": "ZFS sunucusuna ekle",
-  "zfs.replica.add.authorizeHint": "Bu anahtarı kullanıcının ~/.ssh/authorized_keys dosyasının sonuna ekle. Bir Unraid'de bu, Settings › Users › root › SSH keys altındadır.",
+  "zfs.replica.add.authorizeHint": "Bu anahtarı kullanıcının ~/.ssh/authorized_keys dosyasının sonuna ekle. Bir Unraid'de bu, Users › root › SSH keys altındadır. Display Settings ayarına göre Users üst menüde ya da Settings altında yer alır.",
   "zfs.replica.add.allowHint": "root olmadan {user} kullanıcısının havuzda şu izinlere ihtiyacı var:",
   "zfs.replica.add.stepConnect": "Bağlan",
   "zfs.replica.add.stepPool": "Havuz",

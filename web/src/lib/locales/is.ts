@@ -2357,7 +2357,7 @@ const is: Partial<Translations> = {
   "zfs.replica.add.userHint": "Með root virkar þetta án frekari réttinda. Eigin notandi þarf réttindin úr línunni hér fyrir neðan.",
   "zfs.replica.add.port": "Tengi",
   "zfs.replica.add.authorize": "Bæta við á ZFS-þjóninum",
-  "zfs.replica.add.authorizeHint": "Bættu þessum lykli við skrá notandans ~/.ssh/authorized_keys. Á Unraid er það undir Stillingar › Notendur › root › SSH-lyklar.",
+  "zfs.replica.add.authorizeHint": "Bættu þessum lykli við skrá notandans ~/.ssh/authorized_keys. Á Unraid er það undir Notendur › root › SSH-lyklar. Eftir skjástillingum er Notendur í valmyndinni efst eða undir Stillingar.",
   "zfs.replica.add.allowHint": "Án root þarf {user} þessi réttindi á diskasafninu:",
   "zfs.replica.add.stepConnect": "Tengjast",
   "zfs.replica.add.stepPool": "Diskasafn",

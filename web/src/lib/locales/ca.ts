@@ -2357,7 +2357,7 @@ const ca: Partial<Translations> = {
   "zfs.replica.add.userHint": "Amb root funciona sense més permisos. Un usuari propi necessita els permisos de la línia de sota.",
   "zfs.replica.add.port": "Port",
   "zfs.replica.add.authorize": "Afegeix al servidor ZFS",
-  "zfs.replica.add.authorizeHint": "Afegeix aquesta clau al final del fitxer ~/.ssh/authorized_keys de l'usuari. En un Unraid és a Configuració › Usuaris › root › Claus SSH.",
+  "zfs.replica.add.authorizeHint": "Afegeix aquesta clau al final del fitxer ~/.ssh/authorized_keys de l'usuari. En un Unraid és a Usuaris › root › Claus SSH. Segons la Configuració de la pantalla, Usuaris és al menú de la capçalera o a Configuració.",
   "zfs.replica.add.allowHint": "Sense root, {user} necessita aquests permisos sobre el pool:",
   "zfs.replica.add.stepConnect": "Connecta",
   "zfs.replica.add.stepPool": "Pool",

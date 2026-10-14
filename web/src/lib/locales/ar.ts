@@ -1853,7 +1853,7 @@ const ar: Partial<Translations> = {
   "zfs.replica.add.userHint": "مع root يعمل الأمر دون أذونات إضافية. المستخدم الخاص يحتاج إلى الأذونات المذكورة في السطر أدناه.",
   "zfs.replica.add.port": "المنفذ",
   "zfs.replica.add.authorize": "الإضافة على خادم ZFS",
-  "zfs.replica.add.authorizeHint": "يُلحق هذا المفتاح بملف ~/.ssh/authorized_keys الخاص بالمستخدم. على Unraid يكون ذلك ضمن الإعدادات › المستخدمون › root › مفاتيح SSH.",
+  "zfs.replica.add.authorizeHint": "يُلحق هذا المفتاح بملف ~/.ssh/authorized_keys الخاص بالمستخدم. على Unraid يكون ذلك ضمن المستخدمون › root › مفاتيح SSH. بحسب إعدادات العرض يوجد المستخدمون في قائمة الرأس أو ضمن الإعدادات.",
   "zfs.replica.add.allowHint": "من دون root يحتاج {user} إلى هذه الأذونات على المجمّع:",
   "zfs.replica.add.stepConnect": "اتصال",
   "zfs.replica.add.stepPool": "المجمّع",

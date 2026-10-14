@@ -1852,7 +1852,7 @@ const el: Partial<Translations> = {
   "zfs.replica.add.userHint": "Με root δουλεύει χωρίς περαιτέρω δικαιώματα. Ένας δικός του χρήστης χρειάζεται τα δικαιώματα από την παρακάτω γραμμή.",
   "zfs.replica.add.port": "Θύρα",
   "zfs.replica.add.authorize": "Προσθέστε στον διακομιστή ZFS",
-  "zfs.replica.add.authorizeHint": "Προσθέστε αυτό το κλειδί στο αρχείο ~/.ssh/authorized_keys του χρήστη. Σε Unraid βρίσκεται στο Settings › Users › root › SSH keys.",
+  "zfs.replica.add.authorizeHint": "Προσθέστε αυτό το κλειδί στο αρχείο ~/.ssh/authorized_keys του χρήστη. Σε Unraid βρίσκεται στο Users › root › SSH keys. Ανάλογα με το Display Settings, το Users είναι στο μενού κεφαλίδας ή στο Settings.",
   "zfs.replica.add.allowHint": "Χωρίς root, ο χρήστης {user} χρειάζεται αυτά τα δικαιώματα στο pool:",
   "zfs.replica.add.stepConnect": "Σύνδεση",
   "zfs.replica.add.stepPool": "Pool",

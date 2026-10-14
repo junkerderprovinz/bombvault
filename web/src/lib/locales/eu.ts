@@ -2357,7 +2357,7 @@ const eu: Partial<Translations> = {
   "zfs.replica.add.userHint": "Root-ekin ez da baimen gehiagorik behar. Erabiltzaile propio batek beheko lerroko baimenak behar ditu.",
   "zfs.replica.add.port": "Ataka",
   "zfs.replica.add.authorize": "Gehitu ZFS zerbitzarian",
-  "zfs.replica.add.authorizeHint": "Gehitu gako hau erabiltzailearen ~/.ssh/authorized_keys fitxategiaren amaieran. Unraid batean Ezarpenak › Erabiltzaileak › root › SSH gakoak atalean dago.",
+  "zfs.replica.add.authorizeHint": "Gehitu gako hau erabiltzailearen ~/.ssh/authorized_keys fitxategiaren amaieran. Unraid batean Erabiltzaileak › root › SSH gakoak atalean dago. Pantaila-ezarpenen arabera, Erabiltzaileak goiburuko menuan edo Ezarpenak atalean dago.",
   "zfs.replica.add.allowHint": "Root gabe, {user} erabiltzaileak baimen hauek behar ditu pool-ean:",
   "zfs.replica.add.stepConnect": "Konektatu",
   "zfs.replica.add.stepPool": "Pool-a",
