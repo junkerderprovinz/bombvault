@@ -31,9 +31,10 @@ import { ZFSConnectionWindow } from "../backups/ZFSConnectionWindow";
 import { Button } from "../Button";
 import { IconClearSelection, IconLink, IconSelectAll } from "../glyphs";
 import { RunDetailSheet } from "../mobile/RunDetailSheet";
-import { IconBackupNow, IconDownload, IconRestore, IconTrash, IconZFS } from "../navGlyphs";
+import { IconBackupNow, IconDownload, IconRestore, IconSync, IconTrash, IconZFS } from "../navGlyphs";
 import { PageAction } from "../PageActions";
 import { PauseButton } from "../SchedulePause";
+import { useReplicateNow } from "../zfs/replica/useReplicateNow";
 import type { TimelineState } from "./BackupPlaces";
 import { ExportWindow, LiveExportWindow } from "./ExportWindow";
 import { LinkWindow } from "./LinkWindow";
@@ -161,6 +162,25 @@ function BackupAction({ entry, onDone }: { entry: Entry; onDone: () => void }) {
 }
 
 /**
+ * ReplicateAction runs the replica of a ZFS entry. It is there only while the
+ * entry has somewhere to replicate to.
+ */
+function ReplicateAction({ id, dataset }: { id: string; dataset: string }) {
+  const { t } = useT();
+  const { offered, busy, replicate } = useReplicateNow(id, dataset);
+  if (!offered) return null;
+  return (
+    <PageAction
+      label={t("zfs.replica.replicateNow")}
+      glyph={<IconSync />}
+      onClick={() => void replicate()}
+      disabled={busy}
+      busy={busy}
+    />
+  );
+}
+
+/**
  * EntryCorner is the content of the page's action corner. An entry that is
  * gone has nothing to back up and offers its newest backup instead.
  */
@@ -192,6 +212,7 @@ export function EntryCorner({
           onSaved={onChanged}
         />
       )}
+      {entry.detail.kind === "zfs" && <ReplicateAction id={entry.detail.dataset.id} dataset={entry.detail.dataset.dataset} />}
       <BackupAction entry={entry} onDone={onChanged} />
     </>
   );

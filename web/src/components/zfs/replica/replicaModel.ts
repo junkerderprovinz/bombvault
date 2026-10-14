@@ -173,3 +173,10 @@ export function serverFree(t: Translate, server: ZFSReplicaServer): string {
     .replace("{free}", () => humanBytes(server.freeBytes))
     .replace("{size}", () => humanBytes(server.sizeBytes));
 }
+
+/** canReplicate is true when a run can be started from a button: the item has
+ *  a target, a paired instance has allowed it, and the replica is not parked
+ *  behind a switched-off server or module. */
+export function canReplicate(replica: ZFSReplica): boolean {
+  return replica.target.kind !== "none" && !peerHolds(replica) && replica.state !== "waiting";
+}

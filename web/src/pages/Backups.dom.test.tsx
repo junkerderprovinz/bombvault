@@ -9,9 +9,10 @@
  * has tests of its own.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
+import { replica } from "../components/zfs/replica/replica.testsupport";
 import { I18nProvider, en } from "../lib/i18n";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { DESKTOP_QUERY } from "../lib/useMediaQuery";
@@ -43,6 +44,8 @@ vi.mock("../lib/api", async (importOriginal) => {
     restore: vi.fn(),
     restoreVM: vi.fn(),
     zfsConnection: vi.fn(),
+    getZFSReplica: vi.fn(),
+    runZFSReplica: vi.fn(),
   };
 });
 
@@ -86,6 +89,8 @@ const setInclude = vi.mocked(api.setInclude);
 const setVMInclude = vi.mocked(api.setVMInclude);
 const patchFileSet = vi.mocked(api.patchFileSet);
 const zfsConnection = vi.mocked(api.zfsConnection);
+const getZFSReplica = vi.mocked(api.getZFSReplica);
+const runZFSReplica = vi.mocked(api.runZFSReplica);
 
 const { Backups } = await import("./Backups");
 
@@ -284,6 +289,7 @@ beforeEach(() => {
   getAnomalyItems.mockResolvedValue({ ok: true, items: [] });
   getAnomalies.mockResolvedValue({ ok: true, anomalies: [], nextCursor: "" });
   zfsConnection.mockReturnValue(new Promise(() => {}));
+  getZFSReplica.mockResolvedValue(replica({ target: { kind: "none", id: "" }, state: "never" }));
   serve(MIXED);
 });
 
@@ -1288,6 +1294,88 @@ describe("the More menu", () => {
     await openMore();
     await chooseFromMenu("ZFS connection to this server");
     expect(screen.getByTestId("zfs-window")).toBeTruthy();
+  });
+});
+
+describe("Replicate all now", () => {
+  const dataset = (key: string) => entry({ kind: "zfs", key, name: `tank/${key}`, state: undefined, installed: undefined });
+  const ZFS = [dataset("a"), dataset("b"), dataset("c")];
+  const withTargets = (...ids: string[]) =>
+    getZFSReplica.mockImplementation((id) =>
+      Promise.resolve(ids.includes(id) ? replica() : replica({ target: { kind: "none", id: "" }, state: "never" }))
+    );
+  const REPLICATE = en["zfs.replica.replicateAll"];
+
+  it("stands beside Back up all now on the ZFS tile once an entry has a target", async () => {
+    serve(ZFS);
+    withTargets("b");
+    await renderPage("/backups?kind=zfs");
+    await waitFor(() => expect(action(REPLICATE)).toBeTruthy());
+    const names = within(screen.getByTestId("page-actions"))
+      .getAllByRole("button")
+      .map((b) => b.getAttribute("aria-label") ?? b.textContent);
+    expect(names).toEqual(["More", "Back up all now", REPLICATE, "Add dataset"]);
+  });
+
+  it("is absent while no ZFS entry replicates anywhere", async () => {
+    serve(ZFS);
+    await renderPage("/backups?kind=zfs");
+    await waitFor(() => expect(getZFSReplica).toHaveBeenCalledTimes(3));
+    expect(action("Back up all now")).toBeTruthy();
+    expect(action(REPLICATE)).toBeNull();
+  });
+
+  it("is absent from the other tiles", async () => {
+    serve([...MIXED, ...ZFS]);
+    withTargets("a");
+    await renderPage("/backups?kind=files");
+    await waitFor(() => expect(getZFSReplica).toHaveBeenCalled());
+    expect(action(REPLICATE)).toBeNull();
+    cleanup();
+    await renderPage("/backups");
+    expect(action(REPLICATE)).toBeNull();
+  });
+
+  it("runs the entries with a target one after the other", async () => {
+    serve(ZFS);
+    withTargets("a", "c");
+    runZFSReplica.mockResolvedValue({ ok: true, runId: "r1" });
+    await renderPage("/backups?kind=zfs");
+    await waitFor(() => expect(action(REPLICATE)).toBeTruthy());
+    await press(action(REPLICATE)!);
+    expect(runZFSReplica.mock.calls).toEqual([["a"]]);
+    expect(screen.getByTestId("batch-note").textContent).toContain(en["zfs.replica.batch.running"]);
+    progress({ key: "zfs-replica:a", phase: "replicate", percent: 40, active: true });
+    expect(runZFSReplica.mock.calls).toEqual([["a"]]);
+    progress({ key: "zfs-replica:a", phase: "replicate", percent: 100, active: false });
+    await waitFor(() => expect(runZFSReplica.mock.calls).toEqual([["a"], ["c"]]), { timeout: 3000 });
+    progress({ key: "zfs-replica:c", phase: "replicate", percent: 10, active: true });
+    progress({ key: "zfs-replica:c", phase: "replicate", percent: 100, active: false });
+    await waitFor(() => expect(screen.queryByTestId("batch-note")).toBeNull(), { timeout: 3000 });
+  });
+
+  it("names the entry whose run was refused and goes on with the next", async () => {
+    serve(ZFS);
+    withTargets("a", "c");
+    runZFSReplica.mockResolvedValueOnce({ ok: false, code: "domain-off" }).mockResolvedValue({ ok: true, runId: "r2" });
+    await renderPage("/backups?kind=zfs");
+    await waitFor(() => expect(action(REPLICATE)).toBeTruthy());
+    await press(action(REPLICATE)!);
+    await waitFor(() => expect(runZFSReplica.mock.calls).toEqual([["a"], ["c"]]));
+    expect(pushed).toContainEqual({ message: `tank/a: ${en["zfs.code.domain-off"]}`, severity: "fail" });
+  });
+
+  it("sits in the More menu on a phone, where the row has no room", async () => {
+    desktop = false;
+    serve(ZFS);
+    withTargets("a");
+    await renderPage("/backups?kind=zfs");
+    await waitFor(() => expect(getZFSReplica).toHaveBeenCalled());
+    await waitFor(async () => {
+      await openMore();
+      expect(menuItems()).toContain(REPLICATE);
+    });
+    expect(action(REPLICATE)).toBeNull();
   });
 });
 

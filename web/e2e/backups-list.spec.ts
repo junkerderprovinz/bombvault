@@ -119,6 +119,8 @@ interface Stage {
   theme?: "dark" | "light";
   /** What the ZFS connection test answers, "ok" unless said otherwise. */
   zfsCode?: string;
+  /** True when the ZFS entries replicate to a server. */
+  replicates?: boolean;
 }
 
 function dataset(name: string, over: Record<string, unknown> = {}) {
@@ -222,6 +224,28 @@ async function stage(page: Page, s: Stage = {}): Promise<{ posts: string[] }> {
   await page.route("**/api/containers/*", patched);
   await page.route("**/api/vms/*", patched);
   await page.route("**/api/zfs/datasets/*", patched);
+  await page.route("**/api/zfs/datasets/*/replica", (route) =>
+    route.fulfill({
+      json: {
+        target: s.replicates ? { kind: "server", id: "nas" } : { kind: "none", id: "" },
+        afterBackup: true,
+        cadence: "",
+        keep: { preset: "own", own: [0, 7, 3, 0, 0] },
+        state: s.replicates ? "ok" : "never",
+        code: "",
+        lastRun: "",
+        lastBytes: 0,
+        lastSeconds: 0,
+        snapshots: [],
+        members: [],
+        peerState: "",
+      },
+    }),
+  );
+  await page.route("**/api/zfs/datasets/*/replica/run", (route) => {
+    posts.push(`POST ${new URL(route.request().url()).pathname}`);
+    return route.fulfill({ json: { ok: true, runId: "r1" } });
+  });
   await page.route("**/api/zfs/connection", (route) =>
     route.fulfill({
       json: {
@@ -675,6 +699,28 @@ test("a ZFS connection that is down stands above the ZFS entries", async ({ page
   await expect(note).toBeVisible();
   await note.getByRole("button", { name: "Verbindung ansehen" }).click();
   await expect(page.getByRole("dialog", { name: "Verbindung zu diesem Server" })).toBeVisible();
+});
+
+test("Replicate all now stands on the ZFS tile when an entry has a target", async ({ page }, testInfo) => {
+  const { posts } = await stage(page, { replicates: true });
+  await openList(page, "/backups?kind=zfs");
+  const actions = page.getByTestId("page-actions");
+  if (MOBILE_PROJECTS.has(testInfo.project.name)) {
+    await expect(actions.getByRole("button", { name: "Alle jetzt replizieren" })).toHaveCount(0);
+    await actions.getByRole("button", { name: "Mehr" }).click();
+    await page.getByRole("menuitem", { name: "Alle jetzt replizieren" }).click();
+  } else {
+    await actions.getByRole("button", { name: "Alle jetzt replizieren" }).click();
+  }
+  await expect.poll(() => posts).toContain("POST /api/zfs/datasets/z1/replica/run");
+});
+
+test("Replicate all now is absent while no ZFS entry has a target", async ({ page }) => {
+  await stage(page);
+  await openList(page, "/backups?kind=zfs");
+  const actions = page.getByTestId("page-actions");
+  await expect(actions.getByRole("button", { name: "Alle jetzt sichern" })).toBeVisible();
+  await expect(actions.getByRole("button", { name: "Alle jetzt replizieren" })).toHaveCount(0);
 });
 
 test("the search finds an image, an address and a former name, and the list sorts by address", async ({ page }, testInfo) => {

@@ -29,6 +29,7 @@ import { isolateLtr } from "../lib/ltrFragments";
 import { placementChanged } from "../lib/placementEvents";
 import { formatRecent } from "../lib/reltime";
 import { AnomalyProvider } from "../lib/useAnomalies";
+import { replica } from "../components/zfs/replica/replica.testsupport";
 import { TANK, ZFS_ID, backupRun, serveEntries, timelineOf, watched, zfsView } from "./backupEntry.testsupport";
 
 vi.mock("../lib/api", async (importOriginal) => {
@@ -52,6 +53,9 @@ vi.mock("../lib/api", async (importOriginal) => {
     getTimeline: vi.fn(),
     getSizeBreakdown: vi.fn(),
     getZFSReplica: vi.fn(),
+    runZFSReplica: vi.fn(),
+    listZFSReplicaServers: vi.fn(),
+    getGroup: vi.fn(),
     zfsHostDatasets: vi.fn(),
     zfsRestorePoints: vi.fn(),
     zfsRunMembers: vi.fn(),
@@ -237,6 +241,8 @@ beforeEach(() => {
     breakdown: { state: "none", path: "", size: 0, files: 0, added: 0, children: [] },
   });
   vi.mocked(api.getZFSReplica).mockRejectedValue(new Error("no replica"));
+  vi.mocked(api.listZFSReplicaServers).mockResolvedValue([]);
+  vi.mocked(api.getGroup).mockRejectedValue(new Error("no group"));
   vi.mocked(api.zfsHostDatasets).mockResolvedValue({ ok: false, available: false } as never);
   zfsRestorePoints.mockResolvedValue({ ok: true, points: [] } as never);
   zfsRunMembers.mockResolvedValue({ ok: true, members: [], windowSeconds: -1 } as ZFSRunDetail);
@@ -365,6 +371,45 @@ describe("the head of a ZFS entry that replicates", () => {
     replicated({ lastAt: AT, lastStatus: "success" });
     await frame(false);
     expect(await screen.findByText(en["zfs.replica.state.ok"].replace("{when}", formatRecent(AT, "en")))).toBeTruthy();
+  });
+});
+
+describe("the replica action of a ZFS entry", () => {
+  const corner = () => within(screen.getByTestId("page-actions"));
+
+  it("starts the replica from the corner, before the backup action", async () => {
+    vi.mocked(api.getZFSReplica).mockResolvedValue(replica());
+    vi.mocked(api.runZFSReplica).mockResolvedValue({ ok: true, runId: "r1" });
+    await renderPage();
+    const run = await corner().findByRole("button", { name: en["zfs.replica.replicateNow"] });
+    const names = corner().getAllByRole("button").map((b) => b.getAttribute("aria-label") ?? b.textContent);
+    expect(names.indexOf(en["zfs.replica.replicateNow"])).toBeLessThan(names.indexOf(en["containers.backupNow"]));
+    await press(run);
+    expect(api.runZFSReplica).toHaveBeenCalledWith(ZFS_ID);
+  });
+
+  it("says why a run was refused", async () => {
+    vi.mocked(api.getZFSReplica).mockResolvedValue(replica());
+    vi.mocked(api.runZFSReplica).mockResolvedValue({ ok: false, code: "domain-off" });
+    await renderPage();
+    await press(await corner().findByRole("button", { name: en["zfs.replica.replicateNow"] }));
+    expect(pushed).toContainEqual({ message: en["zfs.code.domain-off"], severity: "fail" });
+  });
+
+  it("is absent while the entry replicates nowhere", async () => {
+    vi.mocked(api.getZFSReplica).mockResolvedValue(replica({ target: { kind: "none", id: "" }, state: "never" }));
+    await renderPage();
+    await corner().findByRole("button", { name: en["containers.backupNow"] });
+    expect(corner().queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+  });
+
+  it("is absent while a paired instance has not allowed the replica", async () => {
+    vi.mocked(api.getZFSReplica).mockResolvedValue(
+      replica({ target: { kind: "peer", id: "peer-1" }, state: "never", peerState: "asked" })
+    );
+    await renderPage();
+    await corner().findByRole("button", { name: en["containers.backupNow"] });
+    expect(corner().queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
   });
 });
 
