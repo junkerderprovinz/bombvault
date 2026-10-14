@@ -259,6 +259,9 @@ func destinationRefusal(format string, a ...any) error {
 // failure's ZFS dataset name the same way, even though scrubError itself had
 // already solved precisely this problem for its own callers.
 func scrubBypassMessage(err error) (string, bool) {
+	if sl, ok := err.(*skipListErr); ok { //nolint:errorlint // only a skip list on its own, not one inside another message
+		return sl.msg, true
+	}
 	switch {
 	case errors.Is(err, backup.ErrRestoreConflict):
 		// Already user-safe (IP / host-port / container names, no host paths) and
@@ -310,7 +313,7 @@ func scrubError(err error) string {
 	case errors.Is(err, backup.ErrNotConfirmed):
 		return "restore not confirmed: set confirm:true to proceed"
 	case errors.Is(err, backup.ErrInvalidSnapshotID):
-		return "invalid snapshot id (must be 8–64 lowercase hex)"
+		return "invalid snapshot id (must be 8 to 64 lowercase hex)"
 	}
 	if msg, ok := scrubBypassMessage(err); ok {
 		return msg
@@ -2954,7 +2957,7 @@ func rejectInvalidSettingsPaths(v settingsView, mountRoot string) string {
 		// "rclone:BackBlaze:bucket"); reject it with guidance rather than
 		// silently treating it as a local folder named after the string.
 		if restic.LooksLikeUnprefixedRemote(sub) {
-			return fmt.Sprintf("%q looks like a remote backend but is missing its prefix — off-site backends need one of rclone:/s3:/rest:/sftp:/b2:, for example rclone:%s", sub, sub)
+			return fmt.Sprintf("%q looks like a remote backend but is missing its prefix. Off-site backends need one of rclone:/s3:/rest:/sftp:/b2:, for example rclone:%s", sub, sub)
 		}
 		if _, err := paths.Resolve(mountRoot, sub); err != nil {
 			log.Printf("api: settings: rejected path %q: %v", sub, err)
@@ -3186,6 +3189,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.ConfigPath = v.ConfigPath
 		cur.FilesPath = v.FilesPath
 		cur.ZFSPath = v.ZFSPath
+		cur.FillSectionPaths()
 		cur.RestoreFolder = v.RestoreFolder
 		applyRestoreFolders(cur, v)
 		applyOffsiteSettings(cur, v)
@@ -4955,7 +4959,7 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	key := h.loginClientKey(r)
 	if h.loginThrottled(key) {
-		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts — wait a minute and try again"})
+		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
 		return
 	}
 
@@ -5309,14 +5313,14 @@ func (h *Handler) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 	if s.AuthPasswordHash == "" {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":    false,
-			"error": "set a login password first — a second factor with no first one protects nothing",
+			"error": "set a login password first, because a second factor with no first one protects nothing",
 		})
 		return
 	}
 	if s.TOTPEnabled {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":    false,
-			"error": "two-factor authentication is already on — turn it off before setting it up again",
+			"error": "two-factor authentication is already on. Turn it off before setting it up again",
 		})
 		return
 	}
@@ -5378,14 +5382,14 @@ func (h *Handler) handleTOTPConfirm(w http.ResponseWriter, r *http.Request) {
 	if err != nil || plain == "" {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":    false,
-			"error": "no pending setup — start again",
+			"error": "no pending setup, start again",
 		})
 		return
 	}
 	if !secret.ValidTOTP(plain, body.Code, time.Now()) {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":    false,
-			"error": "that code is not valid — check the clock on your phone and try the next one",
+			"error": "that code is not valid. Check the clock on your phone and try the next one",
 		})
 		return
 	}

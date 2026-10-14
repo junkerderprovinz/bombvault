@@ -4471,6 +4471,7 @@ const sv: Partial<Translations> = {
   "apiError.sessionEnded": "Den här sessionen har avslutats, till exempel för att någon har loggat ut överallt. Öppna instansen igen.",
   "apiError.phonePairingOff": "Parkoppling av telefoner är avstängd på den här instansen.",
   "apiError.noPlace": "Det finns ingenstans att säkerhetskopiera till, eftersom alla mål i dess avsnitt är avstängda. Slå på ett under Mål.",
+  "apiError.noLocation": "Det här avsnittet har ännu inget mål. Öppna Inställningar, Mål, och slå på en linje för det.",
   "apiError.relayTooLarge": "Det här är för stort för att gå via reläet. Öppna instansen på dess egen adress.",
   "apiError.relayRefused": "Det här kan inte gå via reläet. Öppna instansen på dess egen adress.",
   "apiError.refused": "Servern avvisade det här.",

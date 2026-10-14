@@ -4481,6 +4481,7 @@ const lt: Partial<Translations> = {
   "apiError.sessionEnded": "Šis seansas pasibaigė, pavyzdžiui, nes kažkas atsijungė visur. Iš naujo atidaryk egzempliorių.",
   "apiError.phonePairingOff": "Telefonų susiejimas šiame egzemplioriuje išjungtas.",
   "apiError.noPlace": "Nėra kur sukurti atsarginės kopijos, nes visos jo srities paskirties vietos yra išjungtos. Įjunk vieną skiltyje Paskirties vietos.",
+  "apiError.noLocation": "Ši sritis dar neturi paskirties vietos. Atidaryk Nustatymai, Paskirties vietos, ir įjunk jai vieną liniją.",
   "apiError.relayTooLarge": "Tai per didelės apimties, kad praeitų per relay. Atidaryk egzempliorių jo paties adresu.",
   "apiError.relayRefused": "Tai negali praeiti per relay. Atidaryk egzempliorių jo paties adresu.",
   "apiError.refused": "Serveris tai atmetė.",

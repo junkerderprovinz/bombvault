@@ -4468,6 +4468,7 @@ const pl: Partial<Translations> = {
   "apiError.sessionEnded": "Ta sesja się zakończyła, na przykład dlatego, że ktoś wylogował się wszędzie. Otwórz instancję ponownie.",
   "apiError.phonePairingOff": "Parowanie telefonów jest wyłączone w tej instancji.",
   "apiError.noPlace": "Nie ma gdzie utworzyć kopii zapasowej, bo wszystkie miejsca docelowe jego sekcji są wyłączone. Włącz jedno w sekcji Miejsca docelowe.",
+  "apiError.noLocation": "Ta sekcja nie ma jeszcze miejsca docelowego. Otwórz Ustawienia, Miejsca docelowe, i włącz dla niej jedną linię.",
   "apiError.relayTooLarge": "To zbyt duże, żeby przejść przez relay. Otwórz instancję pod jej własnym adresem.",
   "apiError.relayRefused": "To nie może przejść przez relay. Otwórz instancję pod jej własnym adresem.",
   "apiError.refused": "Serwer to odrzucił.",

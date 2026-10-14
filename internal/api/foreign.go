@@ -128,7 +128,7 @@ func checkForeignCreds(location string, creds *CloudCreds) error {
 	switch {
 	case strings.HasPrefix(loc, "s3:"), strings.HasPrefix(loc, "b2:"):
 		if strings.TrimSpace(creds.S3KeyID) == "" || creds.S3Secret == "" {
-			return errors.New("this repository needs an access key ID and a secret access key — the ones belonging to the OTHER server's bucket" + remedy)
+			return errors.New("this repository needs an access key ID and a secret access key, the ones belonging to the other server's bucket" + remedy)
 		}
 	case strings.HasPrefix(loc, "rest:"):
 		if strings.TrimSpace(creds.RESTUser) == "" || creds.RESTPassword == "" {

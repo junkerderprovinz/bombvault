@@ -4481,6 +4481,7 @@ const gl: Partial<Translations> = {
   "apiError.sessionEnded": "Esta sesión rematou, por exemplo porque alguén pechou sesión en todas partes. Abre a instancia de novo.",
   "apiError.phonePairingOff": "O emparellamento de teléfonos está desactivado nesta instancia.",
   "apiError.noPlace": "Non hai onde facer a copia, porque todos os destinos da súa sección están desactivados. Activa un en Destinos.",
+  "apiError.noLocation": "Esta sección aínda non ten ningún destino. Abre Configuración, Destinos, e activa unha liña para ela.",
   "apiError.relayTooLarge": "Isto é demasiado grande para pasar polo relé. Abre a instancia no seu propio enderezo.",
   "apiError.relayRefused": "Isto non pode pasar polo relé. Abre a instancia no seu propio enderezo.",
   "apiError.refused": "O servidor rexeitouno.",

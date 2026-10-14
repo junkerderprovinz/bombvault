@@ -4481,6 +4481,7 @@ const is: Partial<Translations> = {
   "apiError.sessionEnded": "Þessari lotu er lokið, til dæmis vegna þess að einhver skráði sig út alls staðar. Opnaðu tilvikið aftur.",
   "apiError.phonePairingOff": "Slökkt er á pörun síma á þessu tilviki.",
   "apiError.noPlace": "Hvergi er hægt að afrita þetta, því allir áfangastaðir svæðisins eru slökktir. Kveiktu á einum undir Áfangastaðir.",
+  "apiError.noLocation": "Þetta svæði á sér ekki áfangastað enn. Opnaðu Stillingar, Áfangastaðir, og kveiktu á línu fyrir það.",
   "apiError.relayTooLarge": "Þetta er of stórt til að fara í gegnum relay. Opnaðu tilvikið á eigin heimilisfangi.",
   "apiError.relayRefused": "Þetta kemst ekki í gegnum relay. Opnaðu tilvikið á eigin heimilisfangi.",
   "apiError.refused": "Þjónninn hafnaði þessu.",

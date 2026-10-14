@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/paths"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // A backup or off-site location is either a restic remote URL or a path
@@ -71,4 +72,52 @@ func (s *Service) repoPathError(loc string, err error) error {
 			loc, s.hostRootName(), remoteURLHint)}
 	}
 	return fmt.Errorf("resolve repo path: %w", err)
+}
+
+// ErrNoLocation refuses a backup or an off-site copy of a section whose own
+// repository has no location, before anything reaches restic.
+var ErrNoLocation = errors.New("section has no storage location")
+
+// codeNoLocation is the code a refusal by ErrNoLocation carries, which the page
+// turns into a sentence in its language.
+const codeNoLocation = "no-location"
+
+// sectionNames are the labels the settings page gives the sections.
+var sectionNames = map[string]string{
+	"containers": "Containers",
+	"vms":        "VMs",
+	"flash":      "Flash",
+	"config":     "Self-backup",
+	"files":      "Folders",
+	zfsDomain:    "ZFS datasets",
+}
+
+type noLocationErr struct{ domain string }
+
+func (e *noLocationErr) Error() string {
+	name := sectionNames[e.domain]
+	return fmt.Sprintf("%s has no storage location yet. Open Settings, Storage locations and switch on a line for %s.", name, name)
+}
+
+func (e *noLocationErr) Is(target error) bool { return target == ErrNoLocation }
+
+// sectionRepo resolves a section's own repository location, refusing an empty
+// one: path.Clean would turn it into the mount root and call that a traversal.
+func (s *Service) sectionRepo(domain, loc string) (string, error) {
+	if strings.TrimSpace(loc) == "" {
+		return "", &noLocationErr{domain: domain}
+	}
+	return s.resolveRepo(loc)
+}
+
+// requireOwnLocation refuses a section without placement whose own folder is
+// in use but has no location.
+func (s *Service) requireOwnLocation(settings store.Settings, domain string) error {
+	if strings.TrimSpace(domainPathRaw(domain, settings)) != "" {
+		return nil
+	}
+	if off, err := s.localOff(domain); err == nil && off {
+		return nil
+	}
+	return &noLocationErr{domain: domain}
 }

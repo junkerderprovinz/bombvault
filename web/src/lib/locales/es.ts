@@ -4469,6 +4469,7 @@ const es: Partial<Translations> = {
   "apiError.sessionEnded": "Esta sesión ha terminado, por ejemplo porque alguien cerró sesión en todas partes. Vuelve a abrir la instancia.",
   "apiError.phonePairingOff": "El emparejamiento de teléfonos está desactivado en esta instancia.",
   "apiError.noPlace": "No hay dónde respaldarlo, porque todos los destinos de su sección están desactivados. Activa uno en Destinos.",
+  "apiError.noLocation": "Esta sección aún no tiene ningún destino. Abre Ajustes, Destinos, y activa una línea para ella.",
   "apiError.relayTooLarge": "Esto es demasiado grande para pasar por el repetidor. Abre la instancia en su propia dirección.",
   "apiError.relayRefused": "Esto no puede pasar por el repetidor. Abre la instancia en su propia dirección.",
   "apiError.refused": "El servidor lo ha rechazado.",

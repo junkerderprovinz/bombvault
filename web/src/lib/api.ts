@@ -793,6 +793,8 @@ function knownSentence(status: number, code: string | undefined): string | undef
       return translate("apiError.phonePairingOff");
     case "no-place":
       return translate("apiError.noPlace");
+    case "no-location":
+      return translate("apiError.noLocation");
     case "relay-refused":
       return translate(status === 413 ? "apiError.relayTooLarge" : "apiError.relayRefused");
     default:

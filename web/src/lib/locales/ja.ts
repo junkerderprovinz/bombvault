@@ -4462,6 +4462,7 @@ const ja: Partial<Translations> = {
   "apiError.sessionEnded": "このセッションは終了しました。たとえば、誰かがすべての場所でサインアウトした場合です。インスタンスを開き直してください。",
   "apiError.phonePairingOff": "このインスタンスでは、スマートフォンのペアリングがオフになっています。",
   "apiError.noPlace": "所属セクションの保存先がすべてオフのため、バックアップ先がありません。保存先の画面でいずれかをオンにしてください。",
+  "apiError.noLocation": "このセクションにはまだ保存先がありません。設定の保存先を開き、このセクション用の線をオンにしてください。",
   "apiError.relayTooLarge": "サイズが大きすぎて、リレーを通せません。インスタンス自身のアドレスで開いてください。",
   "apiError.relayRefused": "これはリレーを通せません。インスタンス自身のアドレスで開いてください。",
   "apiError.refused": "サーバーに拒否されました。",
