@@ -243,7 +243,7 @@ func (s *Service) makeBesideFolders(roots []besideRoot, dirs []backup.RestoreDir
 // copies, when that folder is still there.
 func likeOriginal(r besideRoot) {
 	info, err := os.Stat(r.original)
-	if err != nil {
+	if err != nil || !info.IsDir() {
 		return
 	}
 	if uid, gid, ok := dirOwner(info); ok {
