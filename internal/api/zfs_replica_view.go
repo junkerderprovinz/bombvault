@@ -48,6 +48,10 @@ type ZFSReplicaMemberView struct {
 	State      string `json:"state"`
 	Code       string `json:"code"`
 	LastBytes  int64  `json:"lastBytes"`
+	// Mount says how mounting the copy on its server turned out: mounted,
+	// locked, no-mountpoint or failed. It is empty when the server is not asked
+	// to mount.
+	Mount string `json:"mount"`
 }
 
 // The states a replica and each of its members can be in.
@@ -142,6 +146,7 @@ func (s *Service) zfsReplicaMemberViews(d store.ZFSDataset, run store.ZFSReplica
 	for _, st := range states {
 		m := add(st.Dataset)
 		m.Volume, m.TargetPath, m.State = st.Volume, st.TargetPath, zfsReplicaOK
+		m.Mount = st.Mount
 	}
 	if hasRun {
 		for _, rm := range run.Members {
@@ -178,9 +183,10 @@ func (s *Service) zfsReplicaMemberViews(d store.ZFSDataset, run store.ZFSReplica
 			}
 		}
 	}
-	base := ""
+	base, mounting := "", false
 	if d.Replica.TargetKind == store.ZFSReplicaTargetServer {
 		if srv, ok, err := s.store.GetZFSReplicaServer(d.Replica.TargetID); err == nil && ok {
+			mounting = srv.MountReadOnly
 			if folder, fErr := s.zfsReplicaFolder(d); fErr == nil {
 				base = srv.Root + "/" + folder
 			}
@@ -193,6 +199,10 @@ func (s *Service) zfsReplicaMemberViews(d store.ZFSDataset, run store.ZFSReplica
 		}
 		if running {
 			m.State = zfsReplicaRunning
+		}
+		// What the last run said is stale once the server stops mounting.
+		if !mounting {
+			m.Mount = ""
 		}
 		out = append(out, *m)
 	}

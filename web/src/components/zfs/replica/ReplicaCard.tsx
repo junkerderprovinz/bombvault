@@ -312,7 +312,13 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
         <div className="flex flex-col gap-1.5">
           <span className="flex items-center gap-1.5 text-sm text-carbon-text">
             {t("zfs.replica.members")}
-            <InfoBubble tip={t("zfs.replica.membersHint")} />
+            <InfoBubble
+              tip={t(
+                servers.find((s) => s.id === view.target.id)?.mountReadOnly
+                  ? "zfs.replica.membersMountedHint"
+                  : "zfs.replica.membersHint",
+              )}
+            />
           </span>
           <ul aria-label={t("zfs.replica.members")} className="flex flex-col gap-2">
             {view.members.map((m) => (
@@ -338,6 +344,12 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
                         <span className="glim-num">
                           {t("zfs.replica.memberAdded").replace("{size}", () => humanBytes(m.lastBytes))}
                         </span>
+                      </>
+                    )}
+                    {m.mount && (
+                      <>
+                        {(!peer || (m.state === "ok" && m.lastBytes > 0)) && " · "}
+                        {t(`zfs.replica.mount.${m.mount}`)}
                       </>
                     )}
                   </span>

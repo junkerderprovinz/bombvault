@@ -5074,6 +5074,8 @@ export interface ZFSReplicaServer {
   /** The dataset below which every source server gets a folder of its own. */
   root: string;
   enabled: boolean;
+  /** The copies on the server are mounted read only after each run. */
+  mountReadOnly: boolean;
   freeBytes: number;
   sizeBytes: number;
   /** The ZFS items that replicate here, by id. */
@@ -5091,6 +5093,7 @@ export interface ZFSReplicaServerInput {
   port: number;
   pool: string;
   root: string;
+  mountReadOnly?: boolean;
 }
 
 export type ZFSReplicaServerPatch = Partial<ZFSReplicaServerInput> & { enabled?: boolean };
@@ -5141,6 +5144,9 @@ export interface ZFSReplicaMember {
   state: ZFSReplicaState;
   code: string;
   lastBytes: number;
+  /** How mounting the copy went: mounted, locked, no-mountpoint or failed.
+   *  Empty when the server is not asked to mount. */
+  mount: "" | "mounted" | "locked" | "no-mountpoint" | "failed";
 }
 
 /** Where a request to receive a replica stands on the receiving instance. */

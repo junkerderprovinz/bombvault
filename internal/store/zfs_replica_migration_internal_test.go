@@ -106,3 +106,71 @@ func TestReplicaColumnMigrationIsSatisfiedWhenAlreadyApplied(t *testing.T) {
 		t.Fatalf("item after the second run = %+v, %v", d.Replica, err)
 	}
 }
+
+// A server and the members stored before the mount setting stay unmounted.
+func TestReplicaMountMigrationLeavesExistingServersAndMembersUnmounted(t *testing.T) {
+	db := OpenMem(t)
+	bootAs(t, db, replicaMountMigration-1)
+	if _, err := db.Exec(`INSERT INTO zfs_replica_servers (id, name, host, pool, root, created_at) VALUES ('s1', 'attic', 'attic.lan', 'tank', 'tank/r', 1700000000)`); err != nil {
+		t.Fatalf("seed server: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO zfs_replica_state (item_id, dataset, target_path) VALUES ('z1', 'cache/appdata', 'tank/r/bottich/cache/appdata')`); err != nil {
+		t.Fatalf("seed state: %v", err)
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+
+	repo := New(db)
+	srv, ok, err := repo.GetZFSReplicaServer("s1")
+	if err != nil || !ok || srv.MountReadOnly {
+		t.Fatalf("server after the upgrade = %+v, %v, %v; want it kept and not mounting", srv, ok, err)
+	}
+	st, ok, err := repo.GetZFSReplicaState("z1", "cache/appdata")
+	if err != nil || !ok || st.Mount != "" {
+		t.Fatalf("state after the upgrade = %+v, %v, %v; want it kept without a mount note", st, ok, err)
+	}
+	if applied := appliedVersions(t, db); applied[replicaMountMigration] != "zfs_replica_mount" {
+		t.Fatalf("migration %d = %q, want zfs_replica_mount", replicaMountMigration, applied[replicaMountMigration])
+	}
+}
+
+func TestReplicaMountMigrationIsSatisfiedWhenAlreadyApplied(t *testing.T) {
+	db := OpenMem(t)
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = 'zfs_replica_mount'`); err != nil {
+		t.Fatal(err)
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate over a database that already has the mount columns: %v", err)
+	}
+}
+
+func TestTheMountSettingAndNoteSurviveASave(t *testing.T) {
+	repo := New(OpenMem(t))
+	if err := Migrate(repo.db); err != nil {
+		t.Fatal(err)
+	}
+	srv, err := repo.CreateZFSReplicaServer(ZFSReplicaServer{Name: "attic", Host: "attic.lan", Pool: "tank", Root: "tank/r", Enabled: true, MountReadOnly: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _, _ := repo.GetZFSReplicaServer(srv.ID); !got.MountReadOnly {
+		t.Fatal("a server created with the setting lost it")
+	}
+	srv.MountReadOnly = false
+	if err := repo.UpdateZFSReplicaServer(srv); err != nil {
+		t.Fatal(err)
+	}
+	if got, _, _ := repo.GetZFSReplicaServer(srv.ID); got.MountReadOnly {
+		t.Fatal("the edit did not switch the setting off")
+	}
+	if err := repo.PutZFSReplicaState(ZFSReplicaState{ItemID: "z1", Dataset: "cache/appdata", Mount: "locked"}); err != nil {
+		t.Fatal(err)
+	}
+	if got, _, _ := repo.GetZFSReplicaState("z1", "cache/appdata"); got.Mount != "locked" {
+		t.Fatalf("mount note = %q, want locked", got.Mount)
+	}
+}

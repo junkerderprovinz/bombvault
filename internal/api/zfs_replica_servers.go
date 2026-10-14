@@ -29,25 +29,27 @@ const zfsReplicaCleanTimeout = 2 * time.Minute
 // folder below Root their members land in. Reachable is set in a list and
 // says whether the server answered while the list was read.
 type ZFSReplicaServerView struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	Host      string   `json:"host"`
-	User      string   `json:"user"`
-	Port      int      `json:"port"`
-	Pool      string   `json:"pool"`
-	Root      string   `json:"root"`
-	Enabled   bool     `json:"enabled"`
-	FreeBytes int64    `json:"freeBytes"`
-	SizeBytes int64    `json:"sizeBytes"`
-	UsedBy    []string `json:"usedBy"`
-	Folder    string   `json:"folder"`
-	Reachable bool     `json:"reachable"`
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Host    string `json:"host"`
+	User    string `json:"user"`
+	Port    int    `json:"port"`
+	Pool    string `json:"pool"`
+	Root    string `json:"root"`
+	Enabled bool   `json:"enabled"`
+	// MountReadOnly keeps the copies on the server mounted read only.
+	MountReadOnly bool     `json:"mountReadOnly"`
+	FreeBytes     int64    `json:"freeBytes"`
+	SizeBytes     int64    `json:"sizeBytes"`
+	UsedBy        []string `json:"usedBy"`
+	Folder        string   `json:"folder"`
+	Reachable     bool     `json:"reachable"`
 }
 
 func (v ZFSReplicaServerView) fields() map[string]any {
 	return map[string]any{
 		"id": v.ID, "name": v.Name, "host": v.Host, "user": v.User, "port": v.Port,
-		"pool": v.Pool, "root": v.Root, "enabled": v.Enabled,
+		"pool": v.Pool, "root": v.Root, "enabled": v.Enabled, "mountReadOnly": v.MountReadOnly,
 		"freeBytes": v.FreeBytes, "sizeBytes": v.SizeBytes, "usedBy": v.UsedBy, "folder": v.Folder,
 	}
 }
@@ -62,6 +64,8 @@ type ZFSReplicaServerPatch struct {
 	Pool    *string `json:"pool"`
 	Root    *string `json:"root"`
 	Enabled *bool   `json:"enabled"`
+	// MountReadOnly switches the read only mount of the copies on or off.
+	MountReadOnly *bool `json:"mountReadOnly"`
 }
 
 func (s *Service) zfsReplicaServerView(srv store.ZFSReplicaServer, users []string) ZFSReplicaServerView {
@@ -71,7 +75,7 @@ func (s *Service) zfsReplicaServerView(srv store.ZFSReplicaServer, users []strin
 	}
 	return ZFSReplicaServerView{
 		ID: srv.ID, Name: srv.Name, Host: srv.Host, User: srv.User, Port: srv.Port,
-		Pool: srv.Pool, Root: srv.Root, Enabled: srv.Enabled,
+		Pool: srv.Pool, Root: srv.Root, Enabled: srv.Enabled, MountReadOnly: srv.MountReadOnly,
 		FreeBytes: pool.FreeBytes, SizeBytes: pool.SizeBytes, UsedBy: users,
 		Folder: s.zfsReplicaServerFolder(users),
 	}
@@ -179,6 +183,9 @@ func (s *Service) PatchZFSReplicaServer(id string, p ZFSReplicaServerPatch) (ZFS
 	}
 	if p.Enabled != nil {
 		srv.Enabled = *p.Enabled
+	}
+	if p.MountReadOnly != nil {
+		srv.MountReadOnly = *p.MountReadOnly
 	}
 	if err := zfsReplicaServerRefusalErr(srv); err != nil {
 		return ZFSReplicaServerView{}, err

@@ -1215,3 +1215,78 @@ func TestTheServerListSaysWhetherEachServerAnswered(t *testing.T) {
 		t.Errorf("reachable = %v, want false for a server that is switched off and not asked", got)
 	}
 }
+
+func TestAServerThatMountsHandsItsItemsTheMountSwitchAndShowsHowEachMemberFared(t *testing.T) {
+	r := newReplicaRig(t)
+	r.result = func(e zfsrepl.Entry) (zfsrepl.Result, error) {
+		res := zfsrepl.Result{Snapshot: replicaSnap}
+		for ds, mount := range map[string]string{e.Root: zfsrepl.MountDone, e.Root + "/vault": zfsrepl.MountLocked} {
+			m := zfsrepl.MemberResult{Dataset: ds, Target: e.TargetBase + "/" + ds, Snapshot: replicaSnap, GUID: 1, Bytes: 1}
+			if e.Mount {
+				m.Mount = mount
+			}
+			e.Finished(m)
+			res.Members = append(res.Members, m)
+		}
+		return res, nil
+	}
+	run := func() {
+		r.t.Helper()
+		if _, m, _ := r.call(http.MethodPost, "/api/zfs/datasets/"+r.item.ID+"/replica/run", ""); m["ok"] != true {
+			r.t.Fatalf("run = %v", m)
+		}
+		r.s.replica.work.Wait()
+	}
+	mountOf := func(dataset string) any {
+		r.t.Helper()
+		v, err := r.s.ZFSReplicaView(context.Background(), r.item.ID)
+		if err != nil {
+			r.t.Fatal(err)
+		}
+		for _, m := range v.Members {
+			if m.Dataset == dataset {
+				return m.Mount
+			}
+		}
+		r.t.Fatalf("no member %s in %+v", dataset, v.Members)
+		return nil
+	}
+
+	run()
+	if r.entries[0].Mount || mountOf("cache/appdata") != "" {
+		t.Errorf("by default the entry mounts (%v) or the card says %q", r.entries[0].Mount, mountOf("cache/appdata"))
+	}
+
+	_, m, _ := r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"mountReadOnly":true}`)
+	if m["ok"] != true || m["mountReadOnly"] != true {
+		t.Fatalf("patch = %v, want the switch on", m)
+	}
+	run()
+	if !r.entries[1].Mount {
+		t.Error("the run after the switch does not ask for the mount")
+	}
+	if got, locked := mountOf("cache/appdata"), mountOf("cache/appdata/vault"); got != zfsrepl.MountDone || locked != zfsrepl.MountLocked {
+		t.Errorf("card says %q and %q, want mounted and locked", got, locked)
+	}
+
+	_, m, _ = r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"mountReadOnly":false}`)
+	if m["ok"] != true || m["mountReadOnly"] != false {
+		t.Fatalf("patch = %v, want the switch off", m)
+	}
+	if got := mountOf("cache/appdata"); got != "" {
+		t.Errorf("card says %q once the server stops mounting, want nothing", got)
+	}
+}
+
+func TestANewServerCanBeCreatedMounting(t *testing.T) {
+	r := newReplicaRig(t)
+	_, m, _ := r.call(http.MethodPost, "/api/zfs/replica/servers",
+		`{"name":"second","host":"two.lan","user":"root","port":22,"pool":"pool","root":"pool/bombvault-replica","mountReadOnly":true}`)
+	id, _ := m["id"].(string)
+	if m["ok"] != true || m["mountReadOnly"] != true {
+		t.Fatalf("create = %v, want the setting kept", m)
+	}
+	if got, ok, _ := r.st.GetZFSReplicaServer(id); !ok || !got.MountReadOnly {
+		t.Errorf("stored server = %+v", got)
+	}
+}

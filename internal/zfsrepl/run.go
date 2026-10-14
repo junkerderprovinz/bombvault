@@ -110,6 +110,9 @@ func (r *run) member(ctx context.Context, d zfs.ListEntry) MemberResult {
 		log.Printf("zfs replica: %s to %s failed: %v", m.Dataset, m.Target, err)
 		return m
 	}
+	if r.e.Mount && !m.Volume {
+		m.Mount = r.mount(context.WithoutCancel(ctx), m.Target)
+	}
 	r.clear(context.WithoutCancel(ctx), m.Dataset, src)
 	// A target that prunes itself does so after this receive, so a bookmark
 	// whose snapshot it drops now goes with the next run.

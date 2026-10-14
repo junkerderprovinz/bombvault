@@ -18,7 +18,7 @@ func seedReplica(t *testing.T, st *store.Repo) (store.ZFSReplicaServer, store.ZF
 	t.Helper()
 	server, err := st.CreateZFSReplicaServer(store.ZFSReplicaServer{
 		Name: "attic", Host: "10.0.0.5", User: "replica", Port: 2222, Pool: "tank", Root: "tank/bombvault-replica",
-		Enabled: true, KeyDir: "/config/ssh-replica/hidden-key-dir",
+		Enabled: true, MountReadOnly: true, KeyDir: "/config/ssh-replica/hidden-key-dir",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -100,7 +100,7 @@ func TestExportImportCarriesZFSServersAndReplicaSettingsButNoKeysOrSlots(t *test
 		t.Fatalf("the server did not arrive: %v", err)
 	}
 	if got.Name != "attic" || got.Host != "10.0.0.5" || got.User != "replica" || got.Port != 2222 ||
-		got.Pool != "tank" || got.Root != "tank/bombvault-replica" || !got.Enabled || got.KeyDir != "" {
+		got.Pool != "tank" || got.Root != "tank/bombvault-replica" || !got.Enabled || !got.MountReadOnly || got.KeyDir != "" {
 		t.Fatalf("imported server = %+v, want the source's fields and no key directory", got)
 	}
 	d, err := dstStore.GetZFSDataset(item.ID)

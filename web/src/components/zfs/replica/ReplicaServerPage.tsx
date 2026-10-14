@@ -69,6 +69,7 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
   const [datasets, setDatasets] = useState<ReadonlyMap<string, string>>(new Map());
   const [editing, setEditing] = useState(false);
   const [enabledBusy, setEnabledBusy] = useState(false);
+  const [mountBusy, setMountBusy] = useState(false);
   const [forgetting, setForgetting] = useState(false);
   const server = servers.find((s) => s.id === serverId);
   const check = useTestVerdict([server?.host, server?.user, server?.port], t("common.networkError"));
@@ -93,6 +94,19 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setEnabledBusy(false);
+    }
+  }
+
+  async function setMountReadOnly(next: boolean) {
+    setMountBusy(true);
+    try {
+      const res = await patchZFSReplicaServer(serverId, { mountReadOnly: next });
+      if (res.ok) reload();
+      else push(res.code ? zfsCodeSentence(t, res.code) : (res.error ?? t("settings.error")), "fail");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      setMountBusy(false);
     }
   }
 
@@ -188,6 +202,13 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
           checked={server.enabled}
           onChange={(next) => void setEnabled(next)}
           disabled={enabledBusy}
+        />
+        <ToggleRow
+          label={t("zfs.replica.server.mount")}
+          hint={t("zfs.replica.server.mountHint")}
+          checked={server.mountReadOnly}
+          onChange={(next) => void setMountReadOnly(next)}
+          disabled={mountBusy}
         />
         <VerdictLine verdict={check.verdict} />
         <div className="flex flex-wrap items-center justify-end gap-2">

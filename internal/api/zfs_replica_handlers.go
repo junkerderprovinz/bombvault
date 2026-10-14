@@ -70,6 +70,8 @@ type zfsReplicaServerBody struct {
 	Port int    `json:"port"`
 	Pool string `json:"pool"`
 	Root string `json:"root"`
+	// MountReadOnly is the dialog's read only mount switch.
+	MountReadOnly bool `json:"mountReadOnly"`
 }
 
 // POST /api/zfs/replica/servers
@@ -79,7 +81,7 @@ func (h *Handler) handleCreateZFSReplicaServer(w http.ResponseWriter, r *http.Re
 		return
 	}
 	v, err := h.svc.CreateZFSReplicaServer(store.ZFSReplicaServer{
-		Name: body.Name, Host: body.Host, User: body.User, Port: body.Port, Pool: body.Pool, Root: body.Root,
+		Name: body.Name, Host: body.Host, User: body.User, Port: body.Port, Pool: body.Pool, Root: body.Root, MountReadOnly: body.MountReadOnly,
 	})
 	if err != nil {
 		zfsReplicaFail(w, err)

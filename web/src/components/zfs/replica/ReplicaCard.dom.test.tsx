@@ -327,4 +327,17 @@ describe("replica card", () => {
     expect(screen.queryByText(en["zfs.replica.members"])).toBeNull();
     expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
   });
+
+  it("says how each copy was mounted on a server that mounts", async () => {
+    const base = replica();
+    current = replica({
+      members: [
+        { ...base.members[0], mount: "mounted" },
+        { ...base.members[1], volume: false, mount: "locked" },
+      ],
+    });
+    renderCard();
+    expect(await screen.findByText(en["zfs.replica.mount.mounted"], { exact: false })).toBeTruthy();
+    expect(screen.getByText(en["zfs.replica.mount.locked"], { exact: false })).toBeTruthy();
+  });
 });

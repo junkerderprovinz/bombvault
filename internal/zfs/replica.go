@@ -345,6 +345,83 @@ func MountArgs(dataset string) ([]string, error) {
 	return []string{zfsBinary, "mount", dataset}, nil
 }
 
+const mountProps = "mountpoint,keystatus,mounted,canmount,readonly"
+
+// MountState is what deciding whether a received filesystem can be mounted
+// takes. KeyStatus is "-" on a dataset that is not encrypted.
+type MountState struct {
+	Mountpoint string
+	KeyStatus  string
+	Mounted    bool
+	CanMount   string
+	ReadOnly   bool
+}
+
+// MountStateArgs reads the MountState of a filesystem.
+func MountStateArgs(dataset string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "get", "-H", "-p", "-o", "property,value", mountProps, dataset}, nil
+}
+
+// ParseMountState reads the output of MountStateArgs. Every property has to be
+// there, so a half-read dataset is never taken for an unmounted one.
+func ParseMountState(out string) (MountState, error) {
+	var s MountState
+	seen := 0
+	for _, line := range splitLines(out) {
+		prop, value, ok := strings.Cut(line, "\t")
+		if !ok {
+			return MountState{}, fmt.Errorf("zfs get %s: %q has no value", mountProps, line)
+		}
+		switch prop {
+		case "mountpoint":
+			s.Mountpoint = value
+		case "keystatus":
+			s.KeyStatus = value
+		case "mounted":
+			s.Mounted = value == "yes"
+		case "canmount":
+			s.CanMount = value
+		case "readonly":
+			s.ReadOnly = value == "on"
+		default:
+			return MountState{}, fmt.Errorf("zfs get %s: unexpected property %q", mountProps, prop)
+		}
+		seen++
+	}
+	if seen != 5 {
+		return MountState{}, fmt.Errorf("zfs get %s: %d properties, want 5", mountProps, seen)
+	}
+	return s, nil
+}
+
+// HasMountpoint reports whether the mountpoint is a path. None, legacy and a
+// volume's "-" leave nothing for zfs mount to use.
+func (s MountState) HasMountpoint() bool { return strings.HasPrefix(s.Mountpoint, "/") }
+
+// Locked reports whether the dataset is encrypted and its key not loaded.
+func (s MountState) Locked() bool { return s.KeyStatus == "unavailable" }
+
+// ReadOnlyArgs makes a replica read only, which a mounted copy needs so that
+// nothing but the receive writes to it.
+func ReadOnlyArgs(dataset string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "set", "readonly=on", dataset}, nil
+}
+
+// CanMountArgs lets a replica mount by itself after a reboot or an import. It
+// does not mount the copy now.
+func CanMountArgs(dataset string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "set", "canmount=on", dataset}, nil
+}
+
 // Pool is one pool as PoolsArgs reports it. Size is what its top dataset holds
 // plus what is still free there, which is what a replica can fill.
 type Pool struct {

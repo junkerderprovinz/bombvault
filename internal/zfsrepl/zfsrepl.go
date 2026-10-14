@@ -45,6 +45,9 @@ type Entry struct {
 	// Owner is the instance id every parent this run creates is marked with,
 	// as zfs.SourceProperty. Empty marks nothing.
 	Owner string
+	// Mount leaves the filesystems of the target mounted read only, and
+	// mountable after a reboot, once each one is current.
+	Mount bool
 	// Keep is the target's retention over the replica snapshots. All zero
 	// keeps every one.
 	Keep store.RetentionKeep
@@ -83,8 +86,10 @@ type MemberResult struct {
 	// Resumed says that an earlier interrupted stream was finished first.
 	Resumed bool
 	Pruned  []string
-	Code    string
-	Err     error
+	// Mount is what mounting the member came to, one of the Mount constants.
+	Mount string
+	Code  string
+	Err   error
 }
 
 // Refusal is a failure the engine decided on itself. Err is the host's own

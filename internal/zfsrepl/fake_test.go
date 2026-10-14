@@ -68,6 +68,10 @@ type fakeDS struct {
 	token     string
 	modified  bool
 	props     map[string]string
+	mounted   bool
+	keyLoaded bool
+	// mountFails makes zfs mount of the dataset fail with this stderr.
+	mountFails string
 }
 
 type fakePoint struct {
@@ -200,6 +204,9 @@ func (h *fakeHost) Run(_ context.Context, args []string) (string, error) {
 		if d == nil {
 			return "", missing(args, last)
 		}
+		if args[len(args)-2] == "mountpoint,keystatus,mounted,canmount,readonly" {
+			return h.mountState(last, d), nil
+		}
 		enc, tok := "off", "-"
 		if d.encrypted {
 			enc = "aes-256-gcm"
@@ -208,6 +215,10 @@ func (h *fakeHost) Run(_ context.Context, args []string) (string, error) {
 			tok = d.token
 		}
 		return "type\t" + d.typ + "\nencryption\t" + enc + "\nreceive_resume_token\t" + tok + "\n", nil
+	case "mount":
+		return "", h.mount(args, last)
+	case "set":
+		return "", h.set(args, last)
 	case "snapshot":
 		root, snap, _ := strings.Cut(last, "@")
 		if h.ds[root] == nil {
@@ -278,6 +289,59 @@ func (h *fakeHost) Run(_ context.Context, args []string) (string, error) {
 		return h.estimate(args)
 	}
 	return "", fail(args, 2, "fake: unknown command %q", args)
+}
+
+// mountState answers the property read the mounting of a replica starts with.
+func (h *fakeHost) mountState(name string, d *fakeDS) string {
+	mountpoint, key, mounted, canmount, readonly := "/mnt/"+name, "-", "no", "on", "off"
+	if v, ok := d.props["mountpoint"]; ok {
+		mountpoint = v
+	}
+	if d.encrypted {
+		key = "unavailable"
+		if d.keyLoaded {
+			key = "available"
+		}
+	}
+	if d.mounted {
+		mounted = "yes"
+	}
+	if v, ok := d.props["canmount"]; ok {
+		canmount = v
+	}
+	if v, ok := d.props["readonly"]; ok {
+		readonly = v
+	}
+	return fmt.Sprintf("mountpoint\t%s\nkeystatus\t%s\nmounted\t%s\ncanmount\t%s\nreadonly\t%s\n", mountpoint, key, mounted, canmount, readonly)
+}
+
+func (h *fakeHost) mount(args []string, name string) error {
+	d := h.ds[name]
+	if d == nil {
+		return missing(args, name)
+	}
+	switch {
+	case d.mountFails != "":
+		return fail(args, 1, "%s", d.mountFails)
+	case d.mounted:
+		return fail(args, 1, "cannot mount '%s': filesystem already mounted", name)
+	case d.encrypted && !d.keyLoaded:
+		return fail(args, 1, "cannot mount '%s': encryption key not loaded", name)
+	case d.props["canmount"] == "off":
+		return fail(args, 1, "cannot mount '%s': 'canmount' property is set to 'off'", name)
+	}
+	d.mounted = true
+	return nil
+}
+
+func (h *fakeHost) set(args []string, name string) error {
+	d := h.ds[name]
+	if d == nil {
+		return missing(args, name)
+	}
+	k, v, _ := strings.Cut(args[2], "=")
+	d.props[k] = v
+	return nil
 }
 
 func (h *fakeHost) tree(args []string, root string) (string, error) {

@@ -219,6 +219,7 @@ func (s *Service) runZFSReplica(ctx context.Context, d store.ZFSDataset, runID, 
 	}
 	// A paired instance creates and marks its folders itself.
 	if tgt.server != nil {
+		entry.Mount = tgt.server.MountReadOnly
 		entry.Owner = s.instanceID()
 		if entry.Placeholders, err = s.claimZFSReplicaFolder(ctx, tgt.end, d, tgt.base, entry.Owner); err != nil {
 			return zfsrepl.Result{}, err
@@ -343,6 +344,7 @@ func (s *Service) recordZFSReplicaMember(d store.ZFSDataset, runID string, m zfs
 		TargetBase:    m.Snapshot,
 		TargetGUID:    guid,
 		CreatedParent: placeholder,
+		Mount:         m.Mount,
 	}); err != nil {
 		log.Printf("api: zfs replica: recording where %s stands failed: %v", m.Dataset, err)
 	}

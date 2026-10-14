@@ -106,6 +106,9 @@ type ZFSReplicaServer struct {
 	Pool    string
 	Root    string
 	Enabled bool
+	// MountReadOnly leaves the copies on the server mounted read only, so the
+	// files can be read there without a zfs mount by hand.
+	MountReadOnly bool
 	// KeyDir holds the connection's key and known_hosts. Only Create and
 	// SetZFSReplicaServerKeyDir write it.
 	KeyDir    string
@@ -129,7 +132,10 @@ type ZFSReplicaState struct {
 	// CreatedParent is set when BombVault created TargetPath as an empty
 	// parent, the one case where a first full receive may use -F.
 	CreatedParent bool
-	UpdatedAt     int64
+	// Mount is how mounting the copy on its server turned out, empty when the
+	// server was not asked to mount it.
+	Mount     string
+	UpdatedAt int64
 }
 
 // ZFSReplicaRunMember is what one replica run did to one member.
@@ -161,7 +167,7 @@ type ZFSReplicaImport struct {
 	Items   map[string]ZFSReplica
 }
 
-const zfsReplicaServerCols = `id, name, host, ssh_user, port, pool, root, enabled, key_dir, created_at`
+const zfsReplicaServerCols = `id, name, host, ssh_user, port, pool, root, enabled, key_dir, created_at, mount_readonly`
 
 // CreateZFSReplicaServer inserts a server, assigning an ID and CreatedAt when
 // they are unset, and returns the stored row.
@@ -173,8 +179,8 @@ func (r *Repo) CreateZFSReplicaServer(s ZFSReplicaServer) (ZFSReplicaServer, err
 		s.CreatedAt = time.Now().Unix()
 	}
 	_, err := r.db.Exec(`INSERT INTO zfs_replica_servers (`+zfsReplicaServerCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		s.ID, s.Name, s.Host, s.User, s.Port, s.Pool, s.Root, boolInt(s.Enabled), s.KeyDir, s.CreatedAt)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		s.ID, s.Name, s.Host, s.User, s.Port, s.Pool, s.Root, boolInt(s.Enabled), s.KeyDir, s.CreatedAt, boolInt(s.MountReadOnly))
 	if err != nil {
 		return ZFSReplicaServer{}, fmt.Errorf("CreateZFSReplicaServer: %w", err)
 	}
@@ -192,9 +198,9 @@ func (r *Repo) UpdateZFSReplicaServer(s ZFSReplicaServer) error {
 			return fmt.Errorf("UpdateZFSReplicaServer: %w", err)
 		}
 		res, err := tx.Exec(`UPDATE zfs_replica_servers
-			SET name = ?, host = ?, ssh_user = ?, port = ?, pool = ?, root = ?, enabled = ?
+			SET name = ?, host = ?, ssh_user = ?, port = ?, pool = ?, root = ?, enabled = ?, mount_readonly = ?
 			WHERE id = ?`,
-			s.Name, s.Host, s.User, s.Port, s.Pool, s.Root, boolInt(s.Enabled), s.ID)
+			s.Name, s.Host, s.User, s.Port, s.Pool, s.Root, boolInt(s.Enabled), boolInt(s.MountReadOnly), s.ID)
 		if err != nil {
 			return fmt.Errorf("UpdateZFSReplicaServer: %w", err)
 		}
@@ -330,13 +336,13 @@ func forgetZFSReplicaServerPlace(tx *sql.Tx, id string) error {
 
 func scanZFSReplicaServer(s scanner) (ZFSReplicaServer, error) {
 	var srv ZFSReplicaServer
-	var enabled int
+	var enabled, mount int
 	err := s.Scan(&srv.ID, &srv.Name, &srv.Host, &srv.User, &srv.Port, &srv.Pool, &srv.Root,
-		&enabled, &srv.KeyDir, &srv.CreatedAt)
+		&enabled, &srv.KeyDir, &srv.CreatedAt, &mount)
 	if err != nil {
 		return ZFSReplicaServer{}, fmt.Errorf("scanZFSReplicaServer: %w", err)
 	}
-	srv.Enabled = enabled != 0
+	srv.Enabled, srv.MountReadOnly = enabled != 0, mount != 0
 	return srv, nil
 }
 
@@ -440,12 +446,12 @@ func (r *Repo) ImportZFSReplica(in ZFSReplicaImport) error {
 				}
 			}
 			_, err = tx.Exec(`INSERT INTO zfs_replica_servers (`+zfsReplicaServerCols+`)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', ?)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?)
 				ON CONFLICT(id) DO UPDATE SET
 					name = excluded.name, host = excluded.host, ssh_user = excluded.ssh_user,
 					port = excluded.port, pool = excluded.pool, root = excluded.root,
-					enabled = excluded.enabled`,
-				s.ID, s.Name, s.Host, s.User, s.Port, s.Pool, s.Root, boolInt(s.Enabled), created)
+					enabled = excluded.enabled, mount_readonly = excluded.mount_readonly`,
+				s.ID, s.Name, s.Host, s.User, s.Port, s.Pool, s.Root, boolInt(s.Enabled), created, boolInt(s.MountReadOnly))
 			if err != nil {
 				return fmt.Errorf("ImportZFSReplica server %s: %w", s.ID, err)
 			}
@@ -513,7 +519,7 @@ func zfsReplicaServerIDs(tx *sql.Tx) ([]string, error) {
 }
 
 const zfsReplicaStateCols = `item_id, dataset, target_path, volume, source_base, source_guid,
-	target_base, target_guid, created_parent, updated_at`
+	target_base, target_guid, created_parent, updated_at, mount`
 
 // PutZFSReplicaState stores where one member stands, replacing what was
 // there. An unset UpdatedAt is now.
@@ -522,9 +528,9 @@ func (r *Repo) PutZFSReplicaState(st ZFSReplicaState) error {
 		st.UpdatedAt = time.Now().Unix()
 	}
 	_, err := r.db.Exec(`INSERT OR REPLACE INTO zfs_replica_state (`+zfsReplicaStateCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		st.ItemID, st.Dataset, st.TargetPath, boolInt(st.Volume), st.SourceBase, st.SourceGUID,
-		st.TargetBase, st.TargetGUID, boolInt(st.CreatedParent), st.UpdatedAt)
+		st.TargetBase, st.TargetGUID, boolInt(st.CreatedParent), st.UpdatedAt, st.Mount)
 	if err != nil {
 		return fmt.Errorf("PutZFSReplicaState %s: %w", st.Dataset, err)
 	}
@@ -579,7 +585,7 @@ func scanZFSReplicaState(s scanner) (ZFSReplicaState, error) {
 	var st ZFSReplicaState
 	var volume, parent int
 	err := s.Scan(&st.ItemID, &st.Dataset, &st.TargetPath, &volume, &st.SourceBase, &st.SourceGUID,
-		&st.TargetBase, &st.TargetGUID, &parent, &st.UpdatedAt)
+		&st.TargetBase, &st.TargetGUID, &parent, &st.UpdatedAt, &st.Mount)
 	if err != nil {
 		return ZFSReplicaState{}, fmt.Errorf("scanZFSReplicaState: %w", err)
 	}
