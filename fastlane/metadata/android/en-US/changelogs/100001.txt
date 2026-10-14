@@ -1,1 +1,1 @@
-The app itself is unchanged. Dashboards come from your server, where BombVault 10.0.1 shows only symbols in the bar at the bottom of a phone and runs ZFS replicas without a backup.
+The app itself put its feet up this time, your server did the work: with BombVault 10.0.1 the bar at the bottom of your phone shows only symbols, so long page names stop elbowing each other. And ZFS replicas now run even when the backup is having a bad day.
