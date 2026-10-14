@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import { patchZFSReplica, runZFSReplica } from "../../../lib/api";
+import { patchZFSReplica } from "../../../lib/api";
 import type {
   ZFSPeerState,
   ZFSReplica,
@@ -23,8 +23,9 @@ import { IconFleet, IconZFS } from "../../navGlyphs";
 import { AddReplicaServerDialog } from "./AddReplicaServerDialog";
 import { ReplicaKeepField } from "./ReplicaKeepField";
 import { ReplicaStatePill } from "./ReplicaStatePill";
-import { isRunning, peerHolds, targetName, unixOf } from "./replicaModel";
-import { useGroup, useReplica, useReplicaServers } from "./replicaStore";
+import { unixOf } from "./replicaModel";
+import { useGroup, useReplicaServers } from "./replicaStore";
+import { useReplicateNow } from "./useReplicateNow";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -86,42 +87,17 @@ function MemberState({ member, replica, running, t }: { member: ZFSReplicaMember
 export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) {
   const { t } = useT();
   const { push } = useToast();
-  const { replica, reload, progressActive, restoreActive } = useReplica(itemId);
+  const { replica, reload, running, shownName, busy, replicate, offered } = useReplicateNow(itemId, name);
   const { servers, reload: reloadServers } = useReplicaServers();
   const group = useGroup();
   const [draft, setDraft] = useState<ZFSReplicaPatch>({});
   const [adding, setAdding] = useState(false);
-  const [starting, setStarting] = useState(false);
   const { debouncedSave } = useDebouncedSave();
   const pending = useRef<ZFSReplicaPatch>({});
-  const watched = useRef<{ first: boolean; seen: boolean } | null>(null);
 
   // A fresh answer from the server replaces whatever was shown ahead of it,
   // apart from the edits still waiting to be sent.
   useEffect(() => setDraft({ ...pending.current }), [replica]);
-
-  const running = replica ? isRunning(replica.state, progressActive) : false;
-  const shownName = replica ? targetName(replica, servers, group?.members ?? []) : "";
-
-  // A run started here ends in a sentence about it once the card reads the
-  // replica again.
-  useEffect(() => {
-    const w = watched.current;
-    if (!w || !replica) return;
-    if (running) {
-      w.seen = true;
-      return;
-    }
-    if (!w.seen) return;
-    watched.current = null;
-    if (replica.state !== "ok") return;
-    push(
-      w.first
-        ? t("zfs.replica.firstDone").replace("{name}", () => name).replace("{target}", () => shownName)
-        : t("zfs.replica.upToDate").replace("{name}", () => name),
-      "success",
-    );
-  }, [running, replica, name, shownName, push, t]);
 
   if (!replica) return null;
   const view: ZFSReplica = { ...replica, ...draft };
@@ -187,30 +163,17 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
     }
   }
 
-  async function replicateNow() {
-    setStarting(true);
-    try {
-      const res = await runZFSReplica(itemId);
-      if (!res.ok) {
-        push(res.code ? zfsCodeSentence(t, res.code) : (res.error ?? t("settings.error")), "fail");
-        return;
-      }
-      watched.current = { first: replica?.state !== "ok", seen: false };
-      reload();
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("settings.error"), "fail");
-    } finally {
-      setStarting(false);
-    }
-  }
-
   const peers = (group?.members ?? []).filter((m) => m.kind !== "android");
   const targets = [
     { id: NONE, label: t("zfs.replica.targetNone") },
     ...servers
       .filter((s) => s.enabled || (view.target.kind === "server" && view.target.id === s.id))
-      .map((s) => ({ id: `server:${s.id}`, label: s.name, icon: <IconZFS /> })),
-    ...peers.map((m) => ({ id: `peer:${m.id}`, label: m.name || m.id, icon: <IconFleet /> })),
+      .map((s) => ({ id: `server:${s.id}`, label: t("zfs.replica.targetOption.server").replace("{name}", () => s.name), icon: <IconZFS /> })),
+    ...peers.map((m) => ({
+      id: `peer:${m.id}`,
+      label: t("zfs.replica.targetOption.peer").replace("{name}", () => m.name || m.id),
+      icon: <IconFleet />,
+    })),
   ];
   const hasTarget = view.target.kind !== "none";
   const peer = view.target.kind === "peer";
@@ -226,7 +189,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
 
       <Row
         label={t("zfs.replica.target")}
-        hint={t("zfs.replica.targetHint")}
+        hint={`${t("zfs.replica.targetHint")} ${t("zfs.replica.targetKindHint")}`}
         aside={hasTarget && <ReplicaStatePill replica={view} running={running} peerName={shownName} />}
       >
         <div className="flex items-center gap-2 flex-wrap">
@@ -355,15 +318,15 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
         </p>
       )}
 
-      {hasTarget && !peerHolds(view) && view.state !== "waiting" && (
+      {offered && (
         <div className="flex justify-end">
           <Button
             label={t("zfs.replica.replicateNow")}
             labelKey="zfs.replica.replicateNow"
             tone="accent"
-            onClick={() => void replicateNow()}
-            disabled={running || starting || restoreActive}
-            busy={running || starting || restoreActive}
+            onClick={() => void replicate()}
+            disabled={busy}
+            busy={busy}
           />
         </div>
       )}

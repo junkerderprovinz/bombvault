@@ -15,6 +15,7 @@ import { ListBar } from "../components/backups/ListBar";
 import { BatchNote, DumpIntro, ZFSDownNote } from "../components/backups/ListNotes";
 import { StacksCard, StackWindow } from "../components/backups/StackWindow";
 import { useBulkActions } from "../components/backups/useBulkActions";
+import { useReplicateAll } from "../components/backups/useReplicateAll";
 import { useRowSelection } from "../components/backups/useRowSelection";
 import { ZFSConnectionWindow } from "../components/backups/ZFSConnectionWindow";
 import { stopAcknowledged } from "../components/BackupButton";
@@ -23,7 +24,7 @@ import { useScheduleSentence } from "../components/EffectiveScheduleLine";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconArchive, IconClearSelection, IconEye, IconPause, IconSearch, IconSelectAll } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
-import { IconAdd, IconBackupNow, IconClose, IconMore, IconRestore, IconSchedules, IconZFS } from "../components/navGlyphs";
+import { IconAdd, IconBackupNow, IconClose, IconMore, IconRestore, IconSchedules, IconSync, IconZFS } from "../components/navGlyphs";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { zfsReaches } from "../components/zfs/ZFSConnectionCard";
@@ -201,6 +202,8 @@ export function Backups() {
   const pickedItems = shown.filter((item) => selection.picked.has(itemId(item)));
   const actions = useBulkActions({ progress, reload: load, confirm, push, t });
   const nameOf = (item: BackupItem) => entryName(item, t);
+  const zfsEntries = useMemo(() => entries.filter((item) => item.kind === "zfs" && !isGone(item)), [entries]);
+  const replicas = useReplicateAll({ items: zfsEntries, progress, push, t });
 
   // A reload replaces the array, which would send a phone back to its first
   // rows. The key keeps the reader's place until the view itself changes.
@@ -346,6 +349,9 @@ export function Backups() {
     ...(stacks.length > 0
       ? [{ id: "stack", label: t("backups.stack.restore"), glyph: <IconRestore />, onSelect: () => setStackOpen(stacks[0].project) }]
       : []),
+    ...(!isDesktop && onZFS && replicas.available
+      ? [{ id: "replicate", label: t("zfs.replica.replicateAll"), glyph: <IconSync />, onSelect: () => void replicas.start() }]
+      : []),
     ...(enabled.zfs
       ? [{ id: "zfs", label: t("backups.zfsConnection"), glyph: <IconZFS />, onSelect: () => setZfsOpen(true) }]
       : []),
@@ -409,6 +415,7 @@ export function Backups() {
 
           {!introDismissed && databases.length > 0 && <DumpIntro databases={databases} onDismiss={dismissIntro} t={t} />}
           {actions.batch && <BatchNote {...actions.batch} t={t} />}
+          {replicas.batch && <BatchNote {...replicas.batch} t={t} />}
           {selection.selecting && (
             <BulkBar count={selection.picked.size} allPicked={selection.allPicked} onAll={selection.setAll} onDone={selection.clear} t={t}>
               <BarButton
@@ -536,6 +543,15 @@ export function Backups() {
                 title={busyTitle}
               />
             )
+          )}
+          {isDesktop && onZFS && replicas.available && (
+            <PageAction
+              label={t("zfs.replica.replicateAll")}
+              glyph={<IconSync />}
+              onClick={() => void replicas.start()}
+              disabled={replicas.busy || actions.busy || running.active}
+              title={busyTitle}
+            />
           )}
           {addWith && (
             <PageAction

@@ -67,7 +67,19 @@ describe("replica card", () => {
     renderCard();
     const picker = await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
     const names = within(picker).getAllByRole("radio").map((r) => r.textContent);
-    expect(names).toEqual([en["zfs.replica.targetNone"], "Backup-NAS", "tower-2"]);
+    expect(names).toEqual([
+      en["zfs.replica.targetNone"],
+      `Backup-NAS (${en["instances.overSsh"]})`,
+      "tower-2 (paired instance)",
+    ]);
+  });
+
+  it("tells a ZFS server over SSH from a paired instance in German too", async () => {
+    localStorage.setItem("bv-lang", "de");
+    renderCard();
+    const picker = await screen.findByRole("radiogroup", { name: de["zfs.replica.target"] });
+    const names = within(picker).getAllByRole("radio").map((r) => r.textContent);
+    expect(names).toEqual([de["zfs.replica.targetNone"], "Backup-NAS (über SSH)", "tower-2 (gekoppelte Instanz)"]);
   });
 
   it("says when a replica has never run", async () => {
@@ -233,7 +245,7 @@ describe("replica card", () => {
   it("points the replica at another target", async () => {
     renderCard();
     const picker = await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
-    fireEvent.click(within(picker).getByRole("radio", { name: "tower-2" }));
+    fireEvent.click(within(picker).getByRole("radio", { name: "tower-2 (paired instance)" }));
     await waitFor(() => expect(patches).toEqual([{ target: { kind: "peer", id: "peer-1" } }]));
     expect(await screen.findByText("Request sent to tower-2.")).toBeTruthy();
   });
@@ -248,10 +260,10 @@ describe("replica card", () => {
     patchAnswer = { ok: false, code: "peer-unreachable" };
     renderCard();
     const picker = await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
-    fireEvent.click(within(picker).getByRole("radio", { name: "tower-2" }));
+    fireEvent.click(within(picker).getByRole("radio", { name: "tower-2 (paired instance)" }));
     expect(await screen.findByText(en["zfs.code.peer-unreachable"])).toBeTruthy();
     await waitFor(() =>
-      expect(within(picker).getByRole("radio", { name: "tower-2" }).getAttribute("aria-checked")).toBe("true"),
+      expect(within(picker).getByRole("radio", { name: "tower-2 (paired instance)" }).getAttribute("aria-checked")).toBe("true"),
     );
   });
 
