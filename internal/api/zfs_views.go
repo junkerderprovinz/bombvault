@@ -20,6 +20,8 @@ type ZFSMemberView struct {
 	IsNew          bool   `json:"isNew"`
 	UsedByDataset  int64  `json:"usedByDataset"`
 	LastBackupAt   int64  `json:"lastBackupAt"`
+	// Replicated is set once the dataset has a copy on the replica target.
+	Replicated bool `json:"replicated"`
 }
 
 // ZFSDatasetView is one item of the ZFS domain as the page shows it.
@@ -107,8 +109,17 @@ func (s *Service) ListZFSDatasetViews(_ context.Context) ([]ZFSDatasetView, erro
 		if mErr != nil {
 			return nil, mErr
 		}
+		replicated := map[string]bool{}
+		states, rErr := s.store.ListZFSReplicaStates(d.ID)
+		if rErr != nil {
+			return nil, rErr
+		}
+		for _, st := range states {
+			replicated[st.Dataset] = true
+		}
 		for _, m := range members {
 			v.Members = append(v.Members, ZFSMemberView{
+				Replicated:     replicated[m.Dataset],
 				Dataset:        m.Dataset,
 				RelPath:        zfsRelPath(d.Dataset, m.Dataset),
 				HostMountpoint: m.HostMountpoint,

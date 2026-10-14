@@ -53,6 +53,7 @@ import {
   isGone,
   itemId,
   itemProgressKey,
+  itemReplicaKey,
   listedItems,
   loadListView,
   parseTile,
@@ -170,6 +171,15 @@ export function Backups() {
     if (wasBusy.current && !running.active) void load();
     wasBusy.current = running.active;
   }, [running.active, load]);
+
+  // A replica run reports apart from the backups and ends the same way, so
+  // the list is read again when the last one does.
+  const replicating = Object.entries(progress).some(([key, state]) => key.startsWith("zfs-replica:") && state.active);
+  const wasReplicating = useRef(false);
+  useEffect(() => {
+    if (wasReplicating.current && !replicating) void load();
+    wasReplicating.current = replicating;
+  }, [replicating, load]);
 
   const items = useMemo(() => listedItems(list?.items ?? []), [list]);
   const entries = useMemo(() => entriesOf(items), [items]);
@@ -367,6 +377,7 @@ export function Backups() {
         name={nameOf(item)}
         tones={runStrip(item, flagged)}
         progress={progress[itemProgressKey(item)]}
+        replicaProgress={progress[itemReplicaKey(item)]}
         anomaly={anomalies.find(item.kind, item.key)}
         anomalyEnabled={anomalyEnabled}
         scheduleSentence={(it) => sentence(it.effectiveSchedule, KIND_SCHEDULE_LABEL[it.kind])}

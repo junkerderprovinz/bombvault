@@ -321,9 +321,30 @@ func zfsSelection(d store.ZFSDataset) itemSelection {
 	return itemSelection{Kind: zfsDomain, Root: d.Dataset, Children: d.ExcludedChildren, Excludes: d.Excludes}
 }
 
-// BackupZFSDataset backs up one item: its whole tree from a single recursive
+// BackupZFSDataset runs an item's backup and, after it, its replica. The
+// replica does not depend on the backup: it follows one that failed or found
+// no place as well, and an item with no place of its own only sends it.
+func (s *Service) BackupZFSDataset(ctx context.Context, id string) (backup.Summary, error) {
+	d, err := s.store.GetZFSDataset(id)
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("zfs backup: load dataset: %w", err)
+	}
+	if s.zfsReplicaOnly(d) {
+		return backup.Summary{}, s.replicateZFSItem(ctx, d)
+	}
+	sum, err := s.backupZFSToRepo(ctx, id)
+	if IsBackupCancelled(err) || ctx.Err() != nil {
+		return sum, err
+	}
+	if fresh, gErr := s.store.GetZFSDataset(id); gErr == nil {
+		s.replicateAfterZFSBackup(ctx, fresh)
+	}
+	return sum, err
+}
+
+// backupZFSToRepo backs up one item: its whole tree from a single recursive
 // snapshot, one restic run per readable member, then the snapshot is destroyed.
-func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Summary, retErr error) {
+func (s *Service) backupZFSToRepo(ctx context.Context, id string) (_ backup.Summary, retErr error) {
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	defer s.lockDomain(zfsDomain)()
@@ -433,7 +454,6 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Sum
 		return backup.Summary{}, runErr
 	}
 	s.queueFirstProbe(d.ID)
-	s.replicateAfterZFSBackup(ctx, d)
 	return sum, nil
 }
 

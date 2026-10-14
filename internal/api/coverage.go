@@ -395,8 +395,12 @@ func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBac
 			})
 			continue
 		}
-		if nowhere[zfsDomain] && d.Repo == "" {
+		if nowhere[zfsDomain] && zfsTakesSectionPlace(d) {
 			out.Unprotected = append(out.Unprotected, CoverageItem{Name: d.Dataset, Reason: CoverageNoPlace, NeverBackedUp: s.neverBackedUp(d.ID)})
+			continue
+		}
+		if s.zfsReplicaOnly(d) {
+			out.count(!s.zfsReplicated(d.ID))
 			continue
 		}
 		// An item with a skipped member is short of protected the way a
@@ -405,9 +409,16 @@ func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBac
 			out.Unprotected = append(out.Unprotected, skipped...)
 			continue
 		}
-		out.count(s.neverBackedUp(d.ID))
+		out.count(s.neverBackedUp(d.ID) && !s.zfsReplicated(d.ID))
 	}
 	return out
+}
+
+// zfsReplicated reports whether an item's replica has ever succeeded on its
+// current target. An item with a copy there is not waiting for its first one.
+func (s *Service) zfsReplicated(itemID string) bool {
+	at, err := s.store.LastZFSReplicaSuccess(itemID)
+	return err == nil && at > 0
 }
 
 // zfsStructureLimit is the most a canmount=off dataset may hold and still count

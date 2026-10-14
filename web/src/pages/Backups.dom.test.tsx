@@ -650,6 +650,56 @@ describe("a running backup", () => {
   });
 });
 
+describe("a ZFS entry that replicates", () => {
+  const zfs = (over: Partial<BackupItem> = {}) =>
+    entry({ kind: "zfs", key: "z1", name: "cache/appdata", state: undefined, installed: undefined, lastBackup: 0, lastRunStatus: "", ...over });
+
+  it("shows the replica instead of waiting for a first backup", async () => {
+    serve([zfs({ replica: { lastAt: NOW - 2 * HOUR, lastStatus: "success" } })]);
+    await renderPage();
+    expect(row("cache/appdata").textContent).toContain("Replicated");
+    expect(row("cache/appdata").textContent).not.toContain(en["backups.status.waiting"]);
+  });
+
+  it("still waits for the first backup of an entry whose replica has not run", async () => {
+    serve([zfs({ replica: { lastAt: 0, lastStatus: "" } })]);
+    await renderPage();
+    expect(row("cache/appdata").textContent).toContain(en["backups.status.waiting"]);
+  });
+
+  it("says Replicating while the replica runs, apart from any backup", async () => {
+    serve([zfs({ replica: { lastAt: 0, lastStatus: "running" } })]);
+    await renderPage();
+    progress({ key: "zfs-replica:z1", phase: "maintenance", percent: 40, active: true });
+    expect(row("cache/appdata").textContent).toContain(en["zfs.replica.state.running"]);
+    expect(within(row("cache/appdata")).getByRole("progressbar").getAttribute("aria-valuenow")).toBe("40");
+    expect(within(row("cache/appdata")).queryByRole("button", { name: "Cancel backup" })).toBeNull();
+  });
+
+  it("names a replica that failed", async () => {
+    serve([zfs({ lastBackup: NOW - HOUR, lastRunStatus: "success", replica: { lastAt: 0, lastStatus: "failed" } })]);
+    await renderPage();
+    expect(row("cache/appdata").textContent).toContain(en["zfs.replica.state.failed"]);
+  });
+
+  it("reads the list again when the replica ends", async () => {
+    vi.useFakeTimers();
+    try {
+      serve([zfs({ replica: { lastAt: 0, lastStatus: "running" } })]);
+      await renderPage();
+      progress({ key: "zfs-replica:z1", phase: "maintenance", percent: 50, active: true });
+      expect(listItems).toHaveBeenCalledTimes(1);
+      progress({ key: "zfs-replica:z1", phase: "maintenance", percent: 100, active: false });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+      expect(listItems).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe("loading, nothing and failure", () => {
   it("says it is checking until the list arrives", async () => {
     listItems.mockReturnValue(new Promise(() => {}));

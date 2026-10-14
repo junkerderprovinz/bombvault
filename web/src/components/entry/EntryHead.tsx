@@ -37,6 +37,8 @@ function useReasonText(entry: Entry): string {
       return t("entry.reason.lastFailed").replace("{when}", formatRecent(reason.lastGood, lang));
     case "lastBackup":
       return t("entry.reason.lastBackup").replace("{when}", formatRecent(reason.at, lang));
+    case "replicated":
+      return t("zfs.replica.state.ok").replace("{when}", () => formatRecent(reason.at, lang));
     case "pausedNever":
       return t("entry.reason.pausedNever");
     case "nextRun":
@@ -80,9 +82,11 @@ function facts(entry: Entry, t: ReturnType<typeof useT>["t"]): ReactNode[] {
   }
 }
 
-function ProtectionBadge({ entry }: { entry: Entry }) {
+function ProtectionBadge({ entry, replicating }: { entry: Entry; replicating: boolean }) {
   const { t } = useT();
   if (isGone(entry.item)) return <Badge tone="neutral">{t("containers.notInstalled")}</Badge>;
+  if (replicating) return <Badge tone="active">{t("zfs.replica.state.running")}</Badge>;
+  if (entry.item.replica?.lastStatus === "failed") return <Badge tone="fail">{t("zfs.replica.state.failed")}</Badge>;
   switch (protection(entry.item)) {
     case "ok":
       return <Badge tone="ok">{t("ransomware.protGreen")}</Badge>;
@@ -120,6 +124,7 @@ export function EntryHead({
   entry,
   name,
   progress,
+  replicaProgress,
   anomaly,
   anomalyEnabled,
   actions,
@@ -129,6 +134,8 @@ export function EntryHead({
   entry: Entry;
   name: string;
   progress: ProgressState | undefined;
+  /** The entry's replica run, which reports apart from its backup. */
+  replicaProgress?: ProgressState;
   anomaly?: AnomalyItem;
   anomalyEnabled: boolean;
   actions: ReactNode;
@@ -205,7 +212,7 @@ export function EntryHead({
           <>
             {paused && <PausedBadge />}
             <AnomalyState anomaly={anomaly} enabled={anomalyEnabled} />
-            <ProtectionBadge entry={entry} />
+            <ProtectionBadge entry={entry} replicating={replicaProgress?.active === true} />
           </>
         )}
         {actions}

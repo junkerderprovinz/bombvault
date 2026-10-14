@@ -11,6 +11,7 @@ import {
   filterEntries,
   itemId,
   itemProgressKey,
+  itemReplicaKey,
   listedItems,
   parseTile,
   protection,
@@ -181,6 +182,37 @@ describe("the one status of a row", () => {
   it("leaves only the date on an entry that is gone or whose kind is off, failed or not", () => {
     expect(rowStatus(item({ installed: false, lastRunStatus: "failed" }), 0)).toEqual({ is: "last", quiet: false });
     expect(rowStatus(item({ kindDisabled: true }), 0)).toEqual({ is: "last", quiet: false });
+  });
+});
+
+describe("an entry with a replica", () => {
+  const zfs = (over: Partial<BackupItem> = {}) => item({ kind: "zfs", key: "z1", lastBackup: 0, lastRunStatus: "", ...over });
+
+  it("counts as protected once the replica has succeeded without a backup", () => {
+    expect(protection(zfs({ replica: { lastAt: 1_700_000_000, lastStatus: "success" } }))).toBe("ok");
+    expect(protection(zfs({ replica: { lastAt: 0, lastStatus: "failed" } }))).toBe("pending");
+    expect(protection(zfs())).toBe("pending");
+  });
+
+  it("shows the replica where the first backup is still awaited", () => {
+    expect(rowStatus(zfs({ replica: { lastAt: 1_700_000_000, lastStatus: "success" } }), 0)).toEqual({
+      is: "replicated",
+      at: 1_700_000_000,
+    });
+    expect(rowStatus(zfs({ replica: { lastAt: 0, lastStatus: "" } }), 0)).toEqual({ is: "waiting" });
+  });
+
+  it("names a failed replica before the date of a backup", () => {
+    expect(rowStatus(item({ replica: { lastAt: 1, lastStatus: "failed" } }), 0)).toEqual({ is: "replicaFailed" });
+  });
+
+  it("keeps the date of a backup when there is one", () => {
+    expect(rowStatus(item({ replica: { lastAt: 1, lastStatus: "success" } }), 0)).toEqual({ is: "last", quiet: true });
+  });
+
+  it("reports its run under a key of its own", () => {
+    expect(itemReplicaKey(zfs())).toBe("zfs-replica:z1");
+    expect(itemReplicaKey(zfs())).not.toBe(itemProgressKey(zfs()));
   });
 });
 

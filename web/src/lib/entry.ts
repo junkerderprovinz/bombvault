@@ -17,7 +17,7 @@ import type {
   ZFSDatasetView,
 } from "./api";
 import { entryPath, type EntryKind } from "./backupEntry";
-import { inSchedule, isGone, protection } from "./backupList";
+import { inSchedule, isGone, protection, replicatedAlone } from "./backupList";
 import { autoMark } from "./timeline";
 
 export const ENTRY_TABS = ["backups", "settings", "verify"] as const;
@@ -98,6 +98,7 @@ export type EntryReason =
   | { is: "noPlace" }
   | { is: "lastFailed"; lastGood: number }
   | { is: "lastBackup"; at: number }
+  | { is: "replicated"; at: number }
   | { is: "pausedNever" }
   | { is: "notScheduled" }
   | { is: "nextRun" };
@@ -111,6 +112,7 @@ export function entryReason(item: BackupItem): EntryReason {
       ? { is: "lastFailed", lastGood: item.lastBackup }
       : { is: "lastBackup", at: item.lastBackup };
   }
+  if (replicatedAlone(item)) return { is: "replicated", at: item.replica?.lastAt ?? 0 };
   if (protection(item) === "pending") return { is: "nextRun" };
   return inSchedule(item) ? { is: "notScheduled" } : { is: "pausedNever" };
 }

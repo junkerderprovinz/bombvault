@@ -308,6 +308,18 @@ describe("replica card", () => {
     expect(button.disabled).toBe(true);
   });
 
+  it("explains in the When bubble that an entry without a place only sends the replica", async () => {
+    current = replica({ only: true });
+    renderCard();
+    expect(await screen.findByLabelText(`${en["zfs.replica.whenHint"]} ${en["zfs.replica.onlyHint"]}`)).toBeTruthy();
+  });
+
+  it("leaves the When bubble alone for an entry that has a place", async () => {
+    renderCard();
+    expect(await screen.findByLabelText(en["zfs.replica.whenHint"])).toBeTruthy();
+    expect(screen.queryByLabelText(new RegExp(en["zfs.replica.onlyHint"].slice(0, 30)))).toBeNull();
+  });
+
   it("hides everything but the picker while there is no target", async () => {
     current = replica({ target: { kind: "none", id: "" }, state: "never" });
     renderCard();

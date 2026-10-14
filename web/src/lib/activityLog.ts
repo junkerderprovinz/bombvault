@@ -554,6 +554,14 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
         : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
   }
 
+  if (run.kind === "replica") {
+    return run.status === "success"
+      ? { status: "success", text: resolveName("activityLog.lineReplicaSuccess", { name, bytes: humanBytes(run.bytes), duration }) }
+      : run.status === "failed"
+        ? { status: "failed", text: resolveName("activityLog.lineReplicaFailed", { name, error: reasonText(run.error, resolveName) }) }
+        : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
+  }
+
   // backup, and any kind this client does not know yet.
   if (run.status === "success") {
     return { status: "success", text: resolveName("activityLog.lineBackupSuccess", { name, bytes: humanBytes(run.bytes), duration }) };
@@ -575,7 +583,7 @@ function asLogKind(kind: string): LogKind {
   if (kind === "dbdumpsave" || kind === "dbimport") return "restore";
   if (kind === "dbdump") return "dbdump";
   // An import writes restore points, which is what the backup filter finds.
-  if (kind === "import") return "backup";
+  if (kind === "import" || kind === "replica") return "backup";
   if (
     kind === "backup" ||
     kind === "restore" ||

@@ -225,7 +225,7 @@ func (s *Service) takesSectionPlace(domain, key string) (bool, error) {
 		return true, nil
 	case zfsDomain:
 		d, err := s.store.GetZFSDataset(key)
-		return err == nil && d.Repo == "", err
+		return err == nil && zfsTakesSectionPlace(d), err
 	case "containers":
 		tg, err := s.store.GetTargetByContainer(key)
 		if errors.Is(err, sql.ErrNoRows) {

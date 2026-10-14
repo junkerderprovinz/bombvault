@@ -22,7 +22,7 @@ import { RenameTakeoverRow } from "../components/RenameTakeoverRow";
 import { Selector } from "../components/Selector";
 import type { PlacementView, Run, TimelineRow } from "../lib/api";
 import { ENTRY_KIND, ENTRY_LIST_PATH, entryListPath, isEntryKind, type EntryKind } from "../lib/backupEntry";
-import { isGone, itemProgressKey } from "../lib/backupList";
+import { isGone, itemProgressKey, itemReplicaKey } from "../lib/backupList";
 import { ENTRY_TABS, entryTabPath, hostSilent, parseEntryTab, type Entry, type EntryTab } from "../lib/entry";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { readRestoreRequest } from "../lib/restoreRequest";
@@ -106,7 +106,9 @@ function Loaded({
   const { item, detail } = entry;
   const tab = parseEntryTab(location.search);
   const name = entryName(item, t);
-  const progress = useProgress()[itemProgressKey(item)];
+  const progressMap = useProgress();
+  const progress = progressMap[itemProgressKey(item)];
+  const replicaProgress = progressMap[itemReplicaKey(item)];
   const anomaly = useAnomalyItems().find(item.kind, item.key);
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const gone = isGone(item);
@@ -132,6 +134,14 @@ function Loaded({
     wasActive.current = active;
   }, [active, reloadTimeline]);
 
+  // A replica ends apart from the backup and says how it went in the entry.
+  const replicating = replicaProgress?.active === true;
+  const wasReplicating = useRef(false);
+  useEffect(() => {
+    if (wasReplicating.current && !replicating) reload();
+    wasReplicating.current = replicating;
+  }, [replicating, reload]);
+
   const tabPath = (next: EntryTab) => entryTabPath(item.kind, item.key, next, location.search);
   const newest: TimelineRow | undefined = read.rows[0];
   const openNewest = newest
@@ -150,6 +160,7 @@ function Loaded({
           entry={entry}
           name={name}
           progress={progress}
+          replicaProgress={replicaProgress}
           anomaly={anomaly}
           anomalyEnabled={anomalyEnabled}
           actions={
