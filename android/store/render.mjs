@@ -3,8 +3,10 @@
 //
 // The screens are the launcher itself, served from the app's built assets and
 // fed example servers through a stand-in for the app's bridge, so every run
-// shows the launcher as it is. Each one sits in a drawn phone on the dark
-// relief background, under a caption.
+// shows the launcher as it is. A server opened in the app is a BombVault
+// binary booted on an empty data directory, its answers about entries, runs
+// and storage replaced with the example server's. Each screen sits in a drawn
+// phone on the dark relief background, under a caption.
 //
 // Every page is rendered at twice the size and scaled down in a second page,
 // which keeps the text sharp through the phone's tilt.
@@ -14,11 +16,12 @@
 // screenshots, and the call for Android testers, testers.png at 1920x640.
 //
 // Deps (global): playwright-core with its Chromium installed.
-// Run: (cd web && npm run build:launcher) && node android/store/render.mjs [readme]
+// Run: (cd web && npm run build && npm run build:launcher) && go build ./cmd/bombvault && node android/store/render.mjs [readme]
 
-import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { execSync, spawn } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
+import { createServer as createNetServer } from "node:net";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, extname, join, normalize } from "node:path";
@@ -40,7 +43,8 @@ const CAPTIONS = {
     list: "Jedes Backup live, <em>auch vom Sofa aus</em>",
     activity: "Alle Server reden. <em>Du liest mit.</em>",
     pairing: "Zwölf Wörter rein, <em>alle Server da</em>",
-    settings: "Dein Server gibt den Look vor. <em>Die App zieht mit.</em>",
+    server: "Jeder Server neu gestaltet. <em>Ein Tipp bringt dich zurück.</em>",
+    backups: "Alle Backups <em>in einer Liste</em>",
     servers: ["Home-NAS", "Offsite", "Büro"],
     photos: "Fotos",
     documents: "Dokumente",
@@ -52,7 +56,8 @@ const CAPTIONS = {
     list: "Every backup live, <em>even from the couch</em>",
     activity: "Your servers talk. <em>You listen in.</em>",
     pairing: "Type twelve words. <em>Every server shows up.</em>",
-    settings: "Your server picks the look. <em>The app follows.</em>",
+    server: "Each server, redesigned. <em>One tap takes you back.</em>",
+    backups: "All your backups <em>in one list</em>",
     servers: ["Home NAS", "Offsite", "Office"],
     photos: "Photos",
     documents: "Documents",
@@ -60,8 +65,13 @@ const CAPTIONS = {
 };
 
 // The order on the store page. `lift` names an element of the screen drawn
-// floating in front of the phone.
-const SHOTS = [{ name: "list", lift: "section" }, { name: "activity" }, { name: "pairing" }, { name: "settings" }];
+// floating in front of the phone, `page` a page of the first server's own
+// interface. The activity log is drawn only for the feature graphic.
+const SHOTS = [{ name: "list", lift: "section" }, { name: "server", page: "/dashboard" }, { name: "pairing" }, { name: "backups", page: "/backups" }];
+const ACTIVITY = { name: "activity" };
+
+// The release the example group and the app run.
+const VERSION = "10.0.0";
 
 // The clock in the status bar, and the time the example runs are counted from.
 const NOW = new Date("2026-10-02T21:45:00");
@@ -138,7 +148,7 @@ function group(text) {
     },
     s3: { runs: [run("c1", text.documents, "files", 1200, 55, 212)], progress: [], next: next(2) },
   };
-  const members = servers.map((s) => ({ id: s.id, name: s.name, version: "v9.7.0" }));
+  const members = servers.map((s) => ({ id: s.id, name: s.name, version: `v${VERSION}` }));
   return { servers, activity, members };
 }
 
@@ -195,16 +205,239 @@ const STATUS_ICONS = `<svg viewBox="0 0 42 14" width="42" height="14" fill="#e8e
   <rect x="33" y="2" width="8" height="11" rx="1.4"/><rect x="35.5" y=".8" width="3" height="1.8" rx=".5"/>
 </svg>`;
 
-/** Takes one screen of the launcher as the phone shows it, 1080x1920. */
-async function capture(browser, url, text, shot) {
+/** A port that was free a moment ago. */
+function freePort() {
+  return new Promise((resolve) => {
+    const probe = createNetServer().listen(0, "127.0.0.1", () => {
+      const { port } = probe.address();
+      probe.close(() => resolve(port));
+    });
+  });
+}
+
+/** Starts the BombVault binary at the repo root on an empty data directory. */
+async function boot() {
+  const binary = join(root, process.platform === "win32" ? "bombvault.exe" : "bombvault");
+  if (!existsSync(binary)) throw new Error(`${binary} is missing: go build ./cmd/bombvault`);
+  const data = mkdtempSync(join(tmpdir(), "BombVault-store-"));
+  const port = await freePort();
+  const home = join(data, "home");
+  mkdirSync(home);
+  const child = spawn(binary, [], {
+    env: {
+      ...process.env,
+      APP_KEY: "0".repeat(64),
+      DATA_DIR: data,
+      BIND_HOST: "127.0.0.1",
+      HOME: home,
+      USERPROFILE: home,
+      HTTP_ONLY: "true",
+      PORT: String(port),
+    },
+    stdio: "ignore",
+  });
+  const url = `http://127.0.0.1:${port}`;
+  for (let i = 0; ; i++) {
+    if (await fetch(`${url}/api/health`).then((res) => res.ok, () => false)) break;
+    if (i > 150) throw new Error("bombvault did not start");
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  return {
+    url,
+    stop() {
+      child.kill();
+      // Windows holds the database open until the process is gone.
+      setTimeout(() => rmSync(data, { recursive: true, force: true, maxRetries: 5 }), 500);
+    },
+  };
+}
+
+/** What the first server of the group has backed up, and where it keeps it. */
+function homeServer(text) {
+  const now = Math.floor(NOW.getTime() / 1000);
+  const H = 3600;
+  const D = 86400;
+  const GB = 1024 ** 3;
+  const TB = 1024 * GB;
+  const run = (target, domain, ago, took, gb) => ({
+    id: `run-${target}`,
+    targetId: target,
+    kind: "backup",
+    status: "success",
+    startedAt: now - ago,
+    finishedAt: now - ago + took,
+    snapshotId: "5f3a9c1e7b2d4a60",
+    bytes: gb * GB,
+    error: "",
+    acknowledged: false,
+    groupId: "",
+    target,
+    domain,
+  });
+  const runs = [
+    run("immich", "container", 25 * 60, 240, 1.8),
+    run("paperless", "container", 32 * 60, 70, 0.1),
+    run("nextcloud", "container", 18 * H, 95, 0.4),
+    run("Home Assistant", "vm", 19 * H, 410, 2.3),
+    run(text.photos, "files", 20 * H, 380, 5.1),
+    run("flash", "flash", 21 * H, 20, 0.2),
+  ];
+  const item = (kind, key, ago, extra = {}) => ({
+    kind,
+    key,
+    name: key,
+    included: true,
+    paused: false,
+    effectiveSchedule: { kind: "domain", spec: "daily 03:00" },
+    lastBackup: now - ago,
+    lastRunStatus: "success",
+    sourceBytes: 4 * GB,
+    runs: [{ id: `run-${key}`, kind: "backup", status: "success", startedAt: now - ago }],
+    ...extra,
+  });
+  const app = { state: "running", installed: true };
+  const items = [
+    item("container", "immich", 25 * 60, app),
+    item("container", "paperless", 32 * 60, app),
+    item("container", "nextcloud", 18 * H, app),
+    item("vm", "Home Assistant", 19 * H, { state: "running" }),
+    item("files", text.photos, 20 * H),
+    item("flash", "flash", 21 * H),
+  ];
+  const domain = (name, ago) => ({
+    domain: name,
+    enabled: true,
+    schedule: "daily 03:00",
+    coveredBy: "",
+    lastSuccess: now - ago,
+    periodSeconds: D,
+    status: "ok",
+    lastVerified: now - D,
+    lastVerifiedOK: true,
+    verifiedDetail: "",
+    drillDetail: "",
+    offsiteConfigured: true,
+    offPremisesCovered: true,
+    offsiteImmutable: true,
+    lastTamperAt: now - 3 * D,
+    lastTamperOK: true,
+    lastReplicationAt: now - 3 * H,
+    lastReplicationOK: true,
+    lastDrDrillAt: now - 5 * D,
+    lastDrDrillOK: true,
+    lastOffsiteSubsetAt: now - 2 * D,
+    lastOffsiteSubsetOK: true,
+    offsiteDrillScheduled: true,
+    protection: "green",
+    tamperState: "ok",
+    replicationState: "ok",
+    drillState: "ok",
+    encryptionOn: true,
+    pruneStrategySet: true,
+  });
+  const keep = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 1 };
+  const section = (name, where, use, lastCopy) => ({
+    domain: name,
+    use,
+    where,
+    enabled: true,
+    immutable: false,
+    retention: keep,
+    compression: "auto",
+    limitUpload: 0,
+    limitDownload: 0,
+    own: [],
+    ...(lastCopy ? { lastCopy: { at: now - lastCopy, ok: true } } : {}),
+  });
+  const kinds = ["containers", "vms", "flash", "files"];
+  const local = {
+    id: "path:local",
+    object: "path",
+    kind: "local",
+    provider: "",
+    backend: "local",
+    name: "bombvault",
+    where: "/mnt/user/backups/bombvault",
+    enabled: true,
+    offPremises: false,
+    sections: kinds.map((k) => section(k, `/mnt/user/backups/bombvault/${k}`, "home")),
+    retention: keep,
+    protection: { immutable: false, testable: false },
+    capacity: { at: now, usedBytes: 412 * GB, freeBytes: 3.1 * TB, totalBytes: 3.5 * TB, source: "statfs", storedBytes: 380 * GB, growthBytesPerWeek: 9 * GB, weeksToFull: 300 },
+  };
+  const box = {
+    id: "destination:box",
+    object: "destination",
+    kind: "offsite",
+    provider: "storagebox",
+    mark: "IconHetzner",
+    backend: "rclone",
+    name: "Storage Box",
+    where: "rclone:storagebox:bombvault",
+    enabled: true,
+    offPremises: true,
+    sections: kinds.map((k) => section(k, `rclone:storagebox:bombvault/${k}`, "copy", 3 * H)),
+    retention: keep,
+    compression: "auto",
+    limitUpload: 0,
+    limitDownload: 0,
+    protection: { immutable: true, testable: false },
+    capacity: { at: now, usedBytes: 268 * GB, freeBytes: 756 * GB, totalBytes: TB, source: "sftp", storedBytes: 268 * GB, growthBytesPerWeek: 6 * GB, weeksToFull: 126 },
+  };
+  return {
+    runs,
+    items,
+    domains: kinds.map((k, i) => domain(k, [25 * 60, 19 * H, 21 * H, 20 * H][i])),
+    locations: [local, box],
+    // Repository size and restored size in GB, and the snapshot count, per kind.
+    stats: { containers: [38, 92, 168], vms: [61, 74, 28], flash: [0.4, 0.9, 30], files: [118, 121, 30] },
+    next: [{ job: "backup", domain: "containers", next: new Date((now + 5 * H + 15 * 60) * 1000).toISOString() }],
+  };
+}
+
+/** Answers the routes the server's pages read with `homeServer`. */
+async function stageServer(page, text) {
+  const s = homeServer(text);
+  const json = (body) => (route) => route.fulfill({ json: { ok: true, ...body } });
+  const at = (path) => (url) => url.pathname === path;
+  // The look is the one set in the browser, not the empty server's.
+  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await page.route("**/api/settings", async (route) => {
+    if (route.request().method() !== "GET") return route.continue();
+    const body = await (await route.fetch()).json();
+    const settings = { ...body.settings, anomalyEnabled: true, encryptionEnabled: true, recoveryKitAck: true, instanceName: text.servers[0] };
+    await route.fulfill({ json: { ...body, settings } });
+  });
+  await page.route(at("/api/status"), json({ domains: s.domains }));
+  await page.route(at("/api/coverage"), json({ coverage: { total: s.items.length, protected: s.items.length, domains: [] } }));
+  await page.route(at("/api/items"), json({ items: s.items, unlisted: [] }));
+  await page.route(at("/api/runs"), json({ runs: s.runs }));
+  await page.route(at("/api/schedule/next"), json({ runs: s.next }));
+  await page.route(at("/api/storage/locations"), json({ locations: s.locations }));
+  await page.route(at("/api/stats"), (route) => {
+    const domain = new URL(route.request().url()).searchParams.get("domain");
+    const [raw, restore, snapshots] = s.stats[domain] ?? [];
+    const latest = raw ? { domain, source: "local", at: NOW.getTime() / 1000, rawSize: raw * 1024 ** 3, restoreSize: restore * 1024 ** 3, snapshots } : null;
+    return route.fulfill({ json: { ok: true, stats: latest ? [latest] : [], latest, forecast: null } });
+  });
+  const quiet = { critical: 0, warning: 0, info: 0 };
+  const backfill = { slots: 0, done: 0, failed: 0, filled: 0, withoutSummary: 0 };
+  const summary = { enabled: true, ready: true, generation: 7, open: quiet, recoveredCritical: 0, learningItems: 0, retentionHeld: 0 };
+  await page.route(at("/api/anomalies/summary"), json({ summary: { ...summary, evalErrors: 0, notifyMuted: false, backfill, unmeasuredVolumes: [] } }));
+  await page.route(at("/api/anomalies/items"), json({ items: [] }));
+  await page.route(at("/api/anomalies"), json({ anomalies: [], nextCursor: "" }));
+}
+
+/** Takes one screen of the app as the phone shows it, 1080x1920. */
+async function capture(browser, urls, text, shot) {
   const { servers, activity, members } = group(text);
   const paired = shot.name !== "pairing";
   const state = {
     servers: paired ? servers : [],
     found: [],
-    group: paired ? { paired: true, connected: true } : { paired: false, connected: true, joining: { members } },
+    group: paired ? { paired: true, connected: true } : { paired: false, connected: true, joining: { members, connected: true } },
     camera: true,
-    app: { version: "9.7.0", versionCode: 90700, android: "36", model: "Pixel 8", deviceName: "" },
+    app: { version: VERSION, versionCode: 100000, android: "36", model: "Pixel 8", deviceName: "" },
   };
   const look = { "bv-theme": "dark", "bv-accent": "#FCC419" };
 
@@ -221,24 +454,20 @@ async function capture(browser, url, text, shot) {
     localStorage.setItem("bv-theme", "dark");
   }, text);
   await page.addInitScript(fakeApp, { state, activity, look });
-  await page.goto(`${url}/launcher.html`);
-  await page.waitForSelector("main");
+  if (shot.page) {
+    await stageServer(page, text);
+    await page.goto(`${urls.server}${shot.page}`);
+    await page.waitForSelector("#bv-main [data-testid], #bv-main section");
+  } else {
+    await page.goto(`${urls.launcher}/launcher.html`);
+    await page.waitForSelector("main");
+  }
   await page.evaluate(() => document.fonts.ready);
 
   const header = page.locator("header button");
   if (shot.name === "activity") await page.locator("section [role=button]").click();
   if (shot.name === "pairing") await header.nth(0).click();
-  if (shot.name === "settings") {
-    await header.nth(1).click();
-    // Down to the end of the look section, the one with the follow switch.
-    await page
-      .locator("section:has([role=switch])")
-      .first()
-      .evaluate((el) => {
-        window.scrollBy(0, el.getBoundingClientRect().bottom - window.innerHeight + 16);
-      });
-  }
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(shot.page ? 1500 : 600);
 
   // The card's label sits above its edge, so the lifted part spans everything
   // drawn in it but the lines scrolled out of its log.
@@ -455,9 +684,9 @@ async function render(browser, html, width, height, file) {
   await small.close();
 }
 
-async function readme(browser, url) {
+async function readme(browser, urls) {
   const text = CAPTIONS["en-US"];
-  const shot = (name) => capture(browser, url, text, SHOTS.find((s) => s.name === name));
+  const shot = (name) => capture(browser, urls, text, [...SHOTS, ACTIVITY].find((s) => s.name === name));
   const out = join(root, ".github", "assets", "screenshots");
   const [list, activity, pairing] = [await shot("list"), await shot("activity"), await shot("pairing")];
   await render(browser, androidShot(activity, list, pairing, text), 1920, 1000, join(out, "android.png"));
@@ -466,34 +695,40 @@ async function readme(browser, url) {
   console.log("wrote .github/assets/screenshots/testers.png");
 }
 
-async function store(browser, url) {
-  for (const [locale, text] of Object.entries(CAPTIONS)) {
-    const images = join(metadata, locale, "images");
-    mkdirSync(join(images, "phoneScreenshots"), { recursive: true });
-    const shots = {};
-    for (const [i, shot] of SHOTS.entries()) {
-      shots[shot.name] = await capture(browser, url, text, shot);
-      await render(
-        browser,
-        screenshot(shots[shot.name], text[shot.name], text.sub),
-        1080,
-        1920,
-        join(images, "phoneScreenshots", `${i + 1}.png`),
-      );
-      console.log(`wrote ${locale}/images/phoneScreenshots/${i + 1}.png`);
+async function store(browser, urls) {
+  const bombvault = await boot();
+  try {
+    for (const [locale, text] of Object.entries(CAPTIONS)) {
+      const images = join(metadata, locale, "images");
+      mkdirSync(join(images, "phoneScreenshots"), { recursive: true });
+      const shots = {};
+      for (const [i, shot] of SHOTS.entries()) {
+        shots[shot.name] = await capture(browser, { ...urls, server: bombvault.url }, text, shot);
+        await render(
+          browser,
+          screenshot(shots[shot.name], text[shot.name], text.sub),
+          1080,
+          1920,
+          join(images, "phoneScreenshots", `${i + 1}.png`),
+        );
+        console.log(`wrote ${locale}/images/phoneScreenshots/${i + 1}.png`);
+      }
+      const activity = await capture(browser, urls, text, ACTIVITY);
+      await render(browser, featureGraphic(activity, shots.list, text.tagline), 1024, 500, join(images, "featureGraphic.png"));
+      console.log(`wrote ${locale}/images/featureGraphic.png`);
+      await render(browser, storeIcon(), 512, 512, join(images, "icon.png"));
+      console.log(`wrote ${locale}/images/icon.png`);
     }
-    await render(browser, featureGraphic(shots.activity, shots.list, text.tagline), 1024, 500, join(images, "featureGraphic.png"));
-    console.log(`wrote ${locale}/images/featureGraphic.png`);
-    await render(browser, storeIcon(), 512, 512, join(images, "icon.png"));
-    console.log(`wrote ${locale}/images/icon.png`);
+  } finally {
+    bombvault.stop();
   }
 }
 
 const server = await serve();
-const url = `http://127.0.0.1:${server.address().port}`;
+const launcher = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch();
 try {
-  await (process.argv[2] === "readme" ? readme : store)(browser, url);
+  await (process.argv[2] === "readme" ? readme : store)(browser, { launcher });
 } finally {
   await browser.close();
   server.close();
