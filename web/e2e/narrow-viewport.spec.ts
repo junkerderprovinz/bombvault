@@ -2,20 +2,16 @@
 // operationalized.
 //
 // The one backstop state, made executable evidence: German and French chrome
-// must fit 320-360px: the de compound words ("Einstellungen",
-// "Wiederherstellung") and fr accented long labels ("Paramètres",
-// "Récupération") are the stress cases. For every combination of {de, fr} x
-// {320px, 360px, 412px}, every bottom-bar slot caption fits in two line boxes
-// without being cut (in one at 412px, where the bar has room for all of
-// them), every More-sheet row label stays on a single line box, and the bar
-// container shows no horizontal overflow.
+// must fit 320-412px. For every combination of {de, fr} x {320px, 360px,
+// 390px, 412px}, the bottom bar shows its glyphs alone in equal slots, each
+// slot named after its page, every More-sheet row label stays on a single line
+// box, and the bar container shows no horizontal overflow. From 45rem the bar
+// has room for the names and shows them, each on one line in its own slot.
 //
 // Geometry, not screenshots (fast + non-flaky): each label's height is
-// measured against an explicitly normalized 20px line box. A bar caption may
-// wrap once on a narrow phone (the five captions together are wider than its
-// bar), so it must stay under three boxes; a sheet label has the whole row and
-// must stay under two. Overflow is scrollWidth vs clientWidth. All measurements tolerate
-// subpixel rounding (+0.5/+1px) and nothing else.
+// measured against an explicitly normalized 20px line box, and a label must
+// stay under two. Overflow is scrollWidth vs clientWidth. All measurements
+// tolerate subpixel rounding (+0.5/+1px) and nothing else.
 //
 // The locale is seeded the way a returning visitor's browser carries it,
 // the persisted `bv-lang` localStorage key (web/src/lib/i18n.ts STORAGE_KEY;
@@ -49,14 +45,14 @@ const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 // its async locale chunk): measuring before that would silently assert the
 // English fallback instead of the stress-case strings.
 const LOCALE_STORAGE_KEY = "bv-lang";
-const MORE_LABEL = { de: "Mehr", fr: "Plus" } as const;
-// The sheet's row that is there on every instance: the storage locations. The
-// long captions ("Wiederherstellung", "Einstellungen", "Paramètres") stand in
-// the bar and are covered by the bar-caption sweep below.
+// The bar's names per locale, in slot order: the pages' own names.
+const NAMES = {
+  de: ["Übersicht", "Sicherungen", "Wiederherstellung", "Einstellungen", "Mehr"],
+  fr: ["Aperçu", "Sauvegardes", "Restauration", "Paramètres", "Plus"],
+  el: ["Επισκόπηση", "Αντίγραφα ασφαλείας", "Επαναφορά", "Ρυθμίσεις", "Περισσότερα"],
+};
+// The sheet's row that is there on every instance: the storage locations.
 const STORAGE_LABEL = { de: "Speicherorte", fr: "Destinations" } as const;
-// A long bar caption per locale, to prove the sweep measures the stress case
-// and not an English fallback.
-const SETTINGS_LABEL = { de: "Einstellungen", fr: "Paramètres" } as const;
 
 // Explicit single-line box used for the height arithmetic (see header).
 const LINE_BOX = 20;
@@ -93,49 +89,79 @@ async function bootSeededPage(
 const locales = ["de", "fr"] as const;
 const widths = [320, 360, 412];
 
+// The slots of the bar in order, with the role each one has.
+const BAR = [
+  { role: "link", key: "overview" },
+  { role: "link", key: "backups" },
+  { role: "link", key: "restore" },
+  { role: "link", key: "settings" },
+  { role: "button", key: "more" },
+] as const;
+
+/** The geometry of every bar slot and of its caption. */
+async function barSlots(page: Page) {
+  return page
+    .getByTestId("bottom-nav")
+    .locator(".glim-bar-slot")
+    .evaluateAll((els, box) =>
+      els.map((slot) => {
+        const r = slot.getBoundingClientRect();
+        const caption = slot.querySelector<HTMLElement>(":scope > span:last-child")!;
+        const c = caption.getBoundingClientRect();
+        caption.style.lineHeight = `${box}px`;
+        const lineHeight = caption.getBoundingClientRect().height;
+        caption.style.lineHeight = "";
+        return {
+          text: (caption.textContent ?? "").trim(),
+          left: r.left,
+          right: r.right,
+          caption: { left: c.left, right: c.right, width: c.width, height: c.height, lineHeight },
+          clipped: caption.scrollWidth > caption.clientWidth + 1,
+        };
+      }),
+    LINE_BOX);
+}
+
+async function expectSlotNames(page: Page, locale: keyof typeof NAMES): Promise<void> {
+  const bar = page.getByTestId("bottom-nav");
+  for (const [i, slot] of BAR.entries()) {
+    // The overview's name carries what needs the person after a comma.
+    const name = new RegExp(`^${NAMES[locale][i]}(,|$)`);
+    await expect(bar.getByRole(slot.role, { name }), `the ${slot.key} slot is named "${NAMES[locale][i]}"`).toBeVisible();
+  }
+}
+
+function expectEqualWidths(slots: { text: string; left: number; right: number }[]): void {
+  expect(slots).toHaveLength(BAR.length);
+  const width = slots[0].right - slots[0].left;
+  for (const s of slots) {
+    expect(s.right - s.left, `slot "${s.text}" differs in width from the first`).toBeCloseTo(width, 0);
+  }
+}
+
 for (const locale of locales) {
-  for (const width of widths) {
-    // From 412px the bar is wide enough for every caption on one line.
-    const captionLines = width >= 412 ? 1 : 2;
-    test(`narrow viewport ${locale} @ ${width}px: bar captions within ${captionLines} line(s), sheet labels single-line, bar never overflows`, async ({ page }, testInfo) => {
+  for (const width of [...widths, 390]) {
+    test(`narrow viewport ${locale} @ ${width}px: the bar shows glyphs named after their pages, sheet labels single-line, bar never overflows`, async ({ page }, testInfo) => {
       test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the backstop targets the mobile chrome");
       await bootSeededPage(page, locale, width);
 
-      // The locale table is live: the trigger carries its localized label.
+      // The locale table is live: the trigger carries its localized name.
       const bar = page.getByTestId("bottom-nav");
-      const moreTrigger = bar.getByRole("button", { name: MORE_LABEL[locale] });
+      const moreTrigger = bar.getByRole("button", { name: NAMES[locale][4] });
       await expect(moreTrigger).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
 
-      // Bar captions: at most two normalized line boxes, and none cut off
-      // (a clipped caption is wider inside than its box).
-      const captionStats = await bar
-        .locator("span.hyphens-auto")
-        .evaluateAll(
-          (els, box) =>
-            els.map((el) => {
-              el.style.lineHeight = `${box}px`;
-              const height = el.getBoundingClientRect().height;
-              el.style.lineHeight = "";
-              return { text: (el.textContent ?? "").trim(), height, clipped: el.scrollWidth > el.clientWidth + 1 };
-            }),
-          LINE_BOX,
-        );
-      // Four destinations and More: the fullest bar there is, so every slot is
-      // at its narrowest here.
-      expect(captionStats.length, "the bar must carry all five captions to assert against").toBe(5);
-      expect(captionStats.map((s) => s.text)).toContain(SETTINGS_LABEL[locale]);
-      for (const s of captionStats) {
-        expect(s.height, `caption "${s.text}" must be rendered`).toBeGreaterThan(0);
-        expect(
-          s.height,
-          `caption "${s.text}" took more than ${captionLines} line(s) (height ${s.height}px vs one ${LINE_BOX}px line box)`,
-        ).toBeLessThanOrEqual(LINE_BOX * captionLines + 0.5);
-        expect(s.clipped, `caption "${s.text}" is cut off`).toBe(false);
+      // A phone this narrow has no room for the names, so no slot shows one
+      // and each says it to a screen reader and in its bubble instead.
+      const slots = await barSlots(page);
+      for (const s of slots) {
+        expect(s.caption.width * s.caption.height, `slot "${s.text}" shows its caption`).toBeLessThanOrEqual(1);
       }
+      await expectSlotNames(page, locale);
+      expectEqualWidths(slots);
 
-      // No-overflow contract: the bar never scrolls horizontally; min-w-0
-      // lets the slots shrink instead of pushing the bar wider than the
-      // viewport. (+1px subpixel tolerance.)
+      // No-overflow contract: the bar never scrolls horizontally. (+1px
+      // subpixel tolerance.)
       const barOverflow = await bar.evaluate((el) => ({
         scrollWidth: el.scrollWidth,
         clientWidth: el.clientWidth,
@@ -145,7 +171,7 @@ for (const locale of locales) {
         `the bar overflows horizontally at ${width}px (${barOverflow.scrollWidth} > ${barOverflow.clientWidth})`,
       ).toBeLessThanOrEqual(barOverflow.clientWidth + 1);
 
-      // Same single-line contract inside the More sheet: open it and measure
+      // Single-line contract inside the More sheet: open it and measure
       // every destination row's label span.
       await moreTrigger.click();
       const sheet = page.getByTestId("more-sheet");
@@ -178,6 +204,34 @@ for (const locale of locales) {
       }
     });
   }
+}
+
+// From 45rem the bar has room for every name in every language, each on one
+// line inside its own slot with a gap to the next. German and Greek carry the
+// longest ones.
+for (const locale of ["de", "el"] as const) {
+  test(`bottom bar @ 740px in ${locale}: equal slots, each name inside its own with a gap to the next`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the bar exists below the 48rem switch");
+    await bootSeededPage(page, locale, 740, "/dashboard", 1000);
+    await expect(page.getByTestId("bottom-nav").getByRole("button", { name: NAMES[locale][4] })).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+
+    const slots = await barSlots(page);
+    expect(slots.map((s) => s.text)).toEqual(NAMES[locale]);
+    for (const s of slots) {
+      expect(s.caption.lineHeight, `caption "${s.text}" wrapped`).toBeLessThanOrEqual(LINE_BOX + 0.5);
+      expect(s.clipped, `caption "${s.text}" is cut off`).toBe(false);
+      expect(s.caption.left, `caption "${s.text}" starts outside its slot`).toBeGreaterThanOrEqual(s.left - 0.5);
+      expect(s.caption.right, `caption "${s.text}" ends outside its slot`).toBeLessThanOrEqual(s.right + 0.5);
+    }
+    const byPosition = [...slots].sort((a, b) => a.left - b.left);
+    for (let i = 1; i < byPosition.length; i++) {
+      const gap = byPosition[i].caption.left - byPosition[i - 1].caption.right;
+      expect(gap, `"${byPosition[i - 1].text}" and "${byPosition[i].text}" run into each other`).toBeGreaterThanOrEqual(4);
+    }
+    await expectSlotNames(page, locale);
+    expectEqualWidths(slots);
+  });
 }
 
 // Helpers shared by the geometry sweeps below, the measurement approach in
