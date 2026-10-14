@@ -345,3 +345,20 @@ test("the customize mode is a desktop tool: a phone has no button for it", async
   expect(history.width).toBeGreaterThan(viewport.width * 0.8);
   expect(history.height).not.toBe(200);
 });
+
+test("at the end of the page a phone's floating action leaves the last row uncovered", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
+  await stageOverview(page, undefined, { lang: "en" });
+  await openOverview(page);
+  await page.locator("#bv-main").evaluate((el) => el.scrollTo(0, el.scrollHeight));
+  await settle(page);
+
+  const action = await box(page.getByTestId("page-actions").getByRole("button").last());
+  const last = await box(page.locator("[data-grid-block]").last());
+  expect(last.y + last.height, "the last card reaches under the floating action").toBeLessThanOrEqual(action.y);
+  for (const row of await page.getByTestId("protection-row").all()) {
+    const r = await box(row);
+    const overlaps = r.x < action.x + action.width && action.x < r.x + r.width && r.y < action.y + action.height && action.y < r.y + r.height;
+    expect(overlaps, "a protection row lies under the floating action").toBe(false);
+  }
+});
