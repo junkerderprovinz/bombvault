@@ -1,0 +1,1 @@
+Die App selbst ist unverändert. Die Dashboards kommen von deinem Server: Mit BombVault 10.0.1 zeigt die Leiste unten am Handy nur noch Symbole, und ZFS-Repliken laufen auch ohne Sicherung.
