@@ -1843,7 +1843,7 @@ const ja: Partial<Translations> = {
   "zfs.replica.add.userHint": "root なら追加の権限なしで動きます。専用のユーザーには、下の行にある権限が必要です。",
   "zfs.replica.add.port": "ポート",
   "zfs.replica.add.authorize": "ZFS サーバーに追加",
-  "zfs.replica.add.authorizeHint": "このキーを、そのユーザーの ~/.ssh/authorized_keys ファイルの末尾に追加します。Unraid では 設定 › ユーザー › root › SSH キー にあります。",
+  "zfs.replica.add.authorizeHint": "このキーを、そのユーザーの ~/.ssh/authorized_keys ファイルの末尾に追加します。Unraid では ユーザー › root › SSH キー にあります。表示設定によって、ユーザーはヘッダーメニューか 設定 の下に表示されます。",
   "zfs.replica.add.allowHint": "root 以外では、{user} にプールへの次の権限が必要です:",
   "zfs.replica.add.stepConnect": "接続",
   "zfs.replica.add.stepPool": "プール",

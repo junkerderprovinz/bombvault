@@ -114,7 +114,7 @@ Kytke se päälle merkinnän Asetukset-välilehden kortissa **Replika**. Siellä
 Mikä tahansa kone, jossa on ZFS ja SSH, voi vastaanottaa, esimerkiksi toinen Unraid tai TrueNAS. BombVaultin ei tarvitse toimia siellä.
 
 1. Valitse kohdassa **Asetukset, Pariliitos** **Yhdistä SSH:n kautta** kohdassa **ZFS-palvelin ilman BombVaultia**, tai **Lisää ZFS-palvelin** merkinnän **Replika**-kortissa.
-2. Anna osoite, käyttäjä ja portti. Ikkuna näyttää BombVaultin julkisen avaimen. Lisää se käyttäjän tiedostoon `~/.ssh/authorized_keys` palvelimella. Unraidissa se on kohdassa **Settings, Users, root, SSH keys**.
+2. Anna osoite, käyttäjä ja portti. Ikkuna näyttää BombVaultin julkisen avaimen. Lisää se käyttäjän tiedostoon `~/.ssh/authorized_keys` palvelimella. Unraidissa se on kohdassa **Users, root, SSH keys**. Asetuksesta **Display Settings** riippuen Users on ylävalikossa tai kohdassa Settings.
 3. Testaa yhteys. Ikkuna luettelee sitten palvelimen poolit. Valitse yksi ja aseta juuri, jonka oletus on `<pool>/bombvault-replica`.
 4. Valitse uusi palvelin merkinnän **Replika**-kortissa. Palvelimella on sen jälkeen oma korttinsa Ilmentymät-sivulla, ja **Avaa** vie sen sivulle.
 

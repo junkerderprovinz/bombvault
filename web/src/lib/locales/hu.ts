@@ -1853,7 +1853,7 @@ const hu: Partial<Translations> = {
   "zfs.replica.add.userHint": "Rootként további jogosultságok nélkül működik. Egy saját felhasználónak az alábbi sorban lévő jogosultságok kellenek.",
   "zfs.replica.add.port": "Port",
   "zfs.replica.add.authorize": "Hozzáadás a ZFS-kiszolgálón",
-  "zfs.replica.add.authorizeHint": "Fűzd hozzá ezt a kulcsot a felhasználó ~/.ssh/authorized_keys fájljához. Unraidon ez a Beállítások › Felhasználók › root › SSH-kulcsok alatt van.",
+  "zfs.replica.add.authorizeHint": "Fűzd hozzá ezt a kulcsot a felhasználó ~/.ssh/authorized_keys fájljához. Unraidon ez a Felhasználók › root › SSH-kulcsok alatt van. A Megjelenítési beállításoktól függően a Felhasználók a fejléc menüjében vagy a Beállítások alatt található.",
   "zfs.replica.add.allowHint": "Root nélkül {user} számára ezek a jogosultságok kellenek a poolon:",
   "zfs.replica.add.stepConnect": "Kapcsolat",
   "zfs.replica.add.stepPool": "Pool",

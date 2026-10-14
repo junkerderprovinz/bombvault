@@ -2357,7 +2357,7 @@ const hi: Partial<Translations> = {
   "zfs.replica.add.userHint": "root के साथ यह बिना अतिरिक्त अनुमतियों के चलता है। अलग उपयोगकर्ता को नीचे की पंक्ति वाली अनुमतियाँ चाहिए।",
   "zfs.replica.add.port": "पोर्ट",
   "zfs.replica.add.authorize": "ZFS सर्वर पर जोड़ें",
-  "zfs.replica.add.authorizeHint": "इस कुंजी को उपयोगकर्ता की ~/.ssh/authorized_keys फ़ाइल के अंत में जोड़ें। Unraid पर यह सेटिंग्स › उपयोगकर्ता › root › SSH कुंजियाँ में है।",
+  "zfs.replica.add.authorizeHint": "इस कुंजी को उपयोगकर्ता की ~/.ssh/authorized_keys फ़ाइल के अंत में जोड़ें। Unraid पर यह उपयोगकर्ता › root › SSH कुंजियाँ में है। डिस्प्ले सेटिंग्स के अनुसार उपयोगकर्ता हेडर मेनू में या सेटिंग्स के अंतर्गत होता है।",
   "zfs.replica.add.allowHint": "root के बिना {user} को पूल पर ये अनुमतियाँ चाहिए:",
   "zfs.replica.add.stepConnect": "कनेक्ट करें",
   "zfs.replica.add.stepPool": "पूल",

@@ -1843,7 +1843,7 @@ const zh: Partial<Translations> = {
   "zfs.replica.add.userHint": "使用 root 时无需额外权限。独立用户需要下一行列出的权限。",
   "zfs.replica.add.port": "端口",
   "zfs.replica.add.authorize": "在 ZFS 服务器上添加",
-  "zfs.replica.add.authorizeHint": "把这个密钥追加到该用户的 ~/.ssh/authorized_keys 文件末尾。在 Unraid 上，它位于 设置 › 用户 › root › SSH 密钥。",
+  "zfs.replica.add.authorizeHint": "把这个密钥追加到该用户的 ~/.ssh/authorized_keys 文件末尾。在 Unraid 上，它位于 用户 › root › SSH 密钥。根据 显示设置，用户 位于页眉菜单或 设置 下。",
   "zfs.replica.add.allowHint": "不使用 root 时，{user} 需要在存储池上拥有这些权限：",
   "zfs.replica.add.stepConnect": "连接",
   "zfs.replica.add.stepPool": "存储池",

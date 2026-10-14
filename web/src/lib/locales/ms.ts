@@ -2357,7 +2357,7 @@ const ms: Partial<Translations> = {
   "zfs.replica.add.userHint": "Dengan root ia berfungsi tanpa kebenaran tambahan. Pengguna sendiri memerlukan kebenaran daripada baris di bawah.",
   "zfs.replica.add.port": "Port",
   "zfs.replica.add.authorize": "Tambah pada pelayan ZFS",
-  "zfs.replica.add.authorizeHint": "Tambahkan kunci ini pada fail ~/.ssh/authorized_keys milik pengguna. Pada Unraid ia berada di bawah Tetapan › Pengguna › root › Kunci SSH.",
+  "zfs.replica.add.authorizeHint": "Tambahkan kunci ini pada fail ~/.ssh/authorized_keys milik pengguna. Pada Unraid ia berada di bawah Pengguna › root › Kunci SSH. Bergantung pada Tetapan Paparan, Pengguna terletak dalam menu pengepala atau di bawah Tetapan.",
   "zfs.replica.add.allowHint": "Tanpa root, {user} memerlukan kebenaran ini pada pool:",
   "zfs.replica.add.stepConnect": "Sambung",
   "zfs.replica.add.stepPool": "Pool",

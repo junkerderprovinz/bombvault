@@ -1843,7 +1843,7 @@ const vi: Partial<Translations> = {
   "zfs.replica.add.userHint": "Với root thì chạy được mà không cần thêm quyền. Người dùng riêng cần các quyền ở dòng bên dưới.",
   "zfs.replica.add.port": "Cổng",
   "zfs.replica.add.authorize": "Thêm trên máy chủ ZFS",
-  "zfs.replica.add.authorizeHint": "Thêm khóa này vào cuối tệp ~/.ssh/authorized_keys của người dùng. Trên Unraid, nó nằm ở Settings › Users › root › SSH keys.",
+  "zfs.replica.add.authorizeHint": "Thêm khóa này vào cuối tệp ~/.ssh/authorized_keys của người dùng. Trên Unraid, nó nằm ở Users › root › SSH keys. Tùy theo Display Settings, Users nằm trong menu tiêu đề hoặc trong Settings.",
   "zfs.replica.add.allowHint": "Không dùng root thì {user} cần các quyền này trên pool:",
   "zfs.replica.add.stepConnect": "Kết nối",
   "zfs.replica.add.stepPool": "Pool",

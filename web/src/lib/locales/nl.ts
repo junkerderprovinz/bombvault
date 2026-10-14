@@ -1851,7 +1851,7 @@ const nl: Partial<Translations> = {
   "zfs.replica.add.userHint": "Met root werkt het zonder extra rechten. Een eigen gebruiker heeft de rechten uit de regel hieronder nodig.",
   "zfs.replica.add.port": "Poort",
   "zfs.replica.add.authorize": "Toevoegen op de ZFS-server",
-  "zfs.replica.add.authorizeHint": "Voeg deze sleutel onderaan toe aan het bestand ~/.ssh/authorized_keys van de gebruiker. Op een Unraid staat dat onder Instellingen › Gebruikers › root › SSH-sleutels.",
+  "zfs.replica.add.authorizeHint": "Voeg deze sleutel onderaan toe aan het bestand ~/.ssh/authorized_keys van de gebruiker. Op een Unraid staat dat onder Gebruikers › root › SSH-sleutels. Afhankelijk van Weergave-instellingen staat Gebruikers in het koptekstmenu of onder Instellingen.",
   "zfs.replica.add.allowHint": "Zonder root heeft {user} deze rechten op de pool nodig:",
   "zfs.replica.add.stepConnect": "Verbinden",
   "zfs.replica.add.stepPool": "Pool",

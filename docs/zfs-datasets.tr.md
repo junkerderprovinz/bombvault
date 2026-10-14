@@ -114,7 +114,7 @@ Bunu ögenin Ayarlar sekmesindeki **Replika** kartında aç. Orada replikanın n
 ZFS ve SSH olan her makine alabilir, örneğin ikinci bir Unraid veya bir TrueNAS. BombVault'un orada çalışması gerekmez.
 
 1. **Ayarlar, Eşleştirme** altında **BombVault olmayan ZFS sunucusu** içinde **SSH ile bağlan**'ı ya da ögenin **Replika** kartında **ZFS sunucusu ekle**'yi seç.
-2. Adresi, kullanıcıyı ve portu gir. Pencere BombVault'un genel anahtarını gösterir. Onu sunucuda kullanıcının `~/.ssh/authorized_keys` dosyasına ekle. Unraid'de bu **Settings, Users, root, SSH keys** altındadır.
+2. Adresi, kullanıcıyı ve portu gir. Pencere BombVault'un genel anahtarını gösterir. Onu sunucuda kullanıcının `~/.ssh/authorized_keys` dosyasına ekle. Unraid'de bu **Users, root, SSH keys** altındadır. **Display Settings** ayarına göre Users üst menüde ya da Settings altında yer alır.
 3. Bağlantıyı sına. Pencere ardından sunucunun havuzlarını listeler. Birini seç ve varsayılanı `<pool>/bombvault-replica` olan kökü belirle.
 4. Yeni sunucuyu ögenin **Replika** kartında seç. Sunucunun o zaman Örnekler sayfasında kendi kartı olur ve **Aç** onun sayfasına götürür.
 

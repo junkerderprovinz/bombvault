@@ -114,7 +114,7 @@ BombVault는 백업할 때마다 각 데이터세트에 로컬로 설정된 ZFS 
 ZFS와 SSH가 있는 컴퓨터라면 어디든 받을 수 있습니다. 예를 들어 두 번째 Unraid나 TrueNAS입니다. 그곳에서 BombVault가 실행될 필요는 없습니다.
 
 1. **설정, 페어링**의 **BombVault 없는 ZFS 서버**에서 **SSH로 연결**을 고르거나, 항목의 **복제본** 카드에서 **ZFS 서버 추가**를 고릅니다.
-2. 주소, 사용자, 포트를 입력합니다. 대화 상자에 BombVault의 공개 키가 표시됩니다. 이를 서버에 있는 그 사용자의 `~/.ssh/authorized_keys`에 추가합니다. Unraid에서는 **Settings, Users, root, SSH keys**에 있습니다.
+2. 주소, 사용자, 포트를 입력합니다. 대화 상자에 BombVault의 공개 키가 표시됩니다. 이를 서버에 있는 그 사용자의 `~/.ssh/authorized_keys`에 추가합니다. Unraid에서는 **Users, root, SSH keys**에 있습니다. **Display Settings**에 따라 Users는 헤더 메뉴 또는 Settings 아래에 있습니다.
 3. 연결을 테스트합니다. 그러면 대화 상자에 서버의 풀이 나열됩니다. 하나를 고르고 루트를 정합니다. 기본값은 `<pool>/bombvault-replica`입니다.
 4. 항목의 **복제본** 카드에서 새 서버를 고릅니다. 그러면 서버에 인스턴스 페이지의 전용 카드가 생기고, **열기**를 누르면 그 페이지로 이동합니다.
 

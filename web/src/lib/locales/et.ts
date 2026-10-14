@@ -2357,7 +2357,7 @@ const et: Partial<Translations> = {
   "zfs.replica.add.userHint": "Rootiga töötab see ilma lisaõigusteta. Oma kasutaja vajab õigusi allolevalt realt.",
   "zfs.replica.add.port": "Port",
   "zfs.replica.add.authorize": "Lisa ZFS-serverisse",
-  "zfs.replica.add.authorizeHint": "Lisa see võti kasutaja faili ~/.ssh/authorized_keys lõppu. Unraidis on see jaotises Seaded › Kasutajad › root › SSH-võtmed.",
+  "zfs.replica.add.authorizeHint": "Lisa see võti kasutaja faili ~/.ssh/authorized_keys lõppu. Unraidis on see jaotises Kasutajad › root › SSH-võtmed. Kuvaseadete järgi asub Kasutajad päisemenüüs või jaotises Seaded.",
   "zfs.replica.add.allowHint": "Ilma rootita vajab {user} kogumis neid õigusi:",
   "zfs.replica.add.stepConnect": "Ühenda",
   "zfs.replica.add.stepPool": "Kogum",

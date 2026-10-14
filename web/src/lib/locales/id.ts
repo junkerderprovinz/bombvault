@@ -2357,7 +2357,7 @@ const id: Partial<Translations> = {
   "zfs.replica.add.userHint": "Dengan root semuanya jalan tanpa izin tambahan. Pengguna tersendiri membutuhkan izin dari baris di bawah.",
   "zfs.replica.add.port": "Port",
   "zfs.replica.add.authorize": "Tambahkan di server ZFS",
-  "zfs.replica.add.authorizeHint": "Tambahkan kunci ini ke akhir berkas ~/.ssh/authorized_keys milik pengguna. Di Unraid itu ada di Settings › Users › root › SSH keys.",
+  "zfs.replica.add.authorizeHint": "Tambahkan kunci ini ke akhir berkas ~/.ssh/authorized_keys milik pengguna. Di Unraid itu ada di Users › root › SSH keys. Bergantung pada Display Settings, Users berada di menu header atau di bawah Settings.",
   "zfs.replica.add.allowHint": "Tanpa root, {user} membutuhkan izin ini pada pool:",
   "zfs.replica.add.stepConnect": "Hubungkan",
   "zfs.replica.add.stepPool": "Pool",
