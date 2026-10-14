@@ -29,6 +29,9 @@ func startRefusal(err error) map[string]any {
 	if errors.Is(err, ErrNoPlace) {
 		body["code"] = codeNoPlace
 	}
+	if errors.Is(err, ErrNoLocation) {
+		body["code"] = codeNoLocation
+	}
 	return body
 }
 
@@ -261,6 +264,11 @@ func (s *Service) refuseNoPlace(domain, key string) error {
 	takes, err := s.takesSectionPlace(domain, key)
 	if err != nil || !takes {
 		return nil //nolint:nilerr // the backup itself reports an entry it cannot read
+	}
+	if settings, sErr := s.store.GetSettings(); sErr == nil && localSwitchDomain(domain) {
+		if err := s.requireOwnLocation(settings, domain); err != nil {
+			return err
+		}
 	}
 	nowhere, err := s.placelessSections()
 	if err != nil {

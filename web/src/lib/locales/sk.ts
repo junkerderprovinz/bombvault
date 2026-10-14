@@ -4499,6 +4499,7 @@ const sk: Partial<Translations> = {
   "apiError.sessionEnded": "Táto relácia skončila, napríklad preto, že sa niekto odhlásil všade. Otvor inštanciu znova.",
   "apiError.phonePairingOff": "Párovanie telefónov je v tejto inštancii vypnuté.",
   "apiError.noPlace": "Nie je kam zálohovať, pretože všetky ciele jeho sekcie sú vypnuté. Zapni niektorý v časti Ciele.",
+  "apiError.noLocation": "Táto sekcia zatiaľ nemá cieľ. Otvor Nastavenia, Ciele, a zapni pre ňu jednu líniu.",
   "apiError.relayTooLarge": "Je to príliš veľké na to, aby to prešlo cez relay. Otvor inštanciu na jej vlastnej adrese.",
   "apiError.relayRefused": "Cez relay to nejde. Otvor inštanciu na jej vlastnej adrese.",
   "apiError.refused": "Server to odmietol.",

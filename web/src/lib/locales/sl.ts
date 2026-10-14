@@ -4483,6 +4483,7 @@ const sl: Partial<Translations> = {
   "apiError.sessionEnded": "Ta seja se je končala, na primer ker se je nekdo odjavil povsod. Znova odpri primerek.",
   "apiError.phonePairingOff": "Seznanjanje telefonov je na tem primerku izklopljeno.",
   "apiError.noPlace": "Ni kam varnostno kopirati, ker so vsi cilji njegovega razdelka izklopljeni. Vklopi enega v razdelku Cilji.",
+  "apiError.noLocation": "Ta razdelek še nima cilja. Odpri Nastavitve, Cilji, in vklopi zanj eno črto.",
   "apiError.relayTooLarge": "To je preveliko, da bi šlo prek relaya. Odpri primerek na njegovem lastnem naslovu.",
   "apiError.relayRefused": "To ne more iti prek relaya. Odpri primerek na njegovem lastnem naslovu.",
   "apiError.refused": "Strežnik je to zavrnil.",

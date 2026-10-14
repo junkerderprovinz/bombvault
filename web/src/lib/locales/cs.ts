@@ -4487,6 +4487,7 @@ const cs: Partial<Translations> = {
   "apiError.sessionEnded": "Tato relace skončila, třeba proto, že se někdo odhlásil všude. Otevři instanci znovu.",
   "apiError.phonePairingOff": "Párování telefonů je u této instance vypnuté.",
   "apiError.noPlace": "Není kam zálohovat, protože všechny cíle jeho sekce jsou vypnuté. Zapni některý v části Cíle.",
+  "apiError.noLocation": "Tato sekce zatím nemá žádný cíl. Otevři Nastavení, Cíle, a zapni pro ni jednu linii.",
   "apiError.relayTooLarge": "Je to příliš velké na to, aby to šlo přes přeposílač. Otevři instanci na její vlastní adrese.",
   "apiError.relayRefused": "Přes přeposílač to nejde. Otevři instanci na její vlastní adrese.",
   "apiError.refused": "Server to odmítl.",

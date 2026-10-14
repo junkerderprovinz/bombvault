@@ -976,8 +976,8 @@ func (s *Service) warnUnraidPlatformMismatch() {
 // repo_path.go) already use for the identical reason.
 func (s *Service) unraidPlatformMismatchError(feature string) error {
 	return &platformMismatchErr{msg: fmt.Sprintf(
-		"%s is only available on Unraid hosts (BombVault detected platform=%q — "+
-			"if this IS an Unraid host, verify the host's /boot is bind-mounted to /host/boot "+
+		"%s is only available on Unraid hosts (BombVault detected platform=%q). "+
+			"If this is an Unraid host, verify the host's /boot is bind-mounted to /host/boot "+
 			"inside the container, see the BombVault Unraid template, and restart the container)",
 		feature, s.platformFn().Kind())}
 }
@@ -1334,27 +1334,27 @@ func (s *Service) DiscoverSource(domain string) string {
 }
 
 func (s *Service) containersRepoPath(settings store.Settings) (string, error) {
-	return s.resolveRepo(settings.ContainersPath)
+	return s.sectionRepo("containers", settings.ContainersPath)
 }
 
 // vmsRepoPath resolves the restic repo for the vms domain.
 func (s *Service) vmsRepoPath(settings store.Settings) (string, error) {
-	return s.resolveRepo(settings.VMsPath)
+	return s.sectionRepo("vms", settings.VMsPath)
 }
 
 // flashRepoPath resolves the restic repo for the flash domain.
 func (s *Service) flashRepoPath(settings store.Settings) (string, error) {
-	return s.resolveRepo(settings.FlashPath)
+	return s.sectionRepo("flash", settings.FlashPath)
 }
 
 // configRepoPath resolves the restic repo for the config self-backup domain.
 func (s *Service) configRepoPath(settings store.Settings) (string, error) {
-	return s.resolveRepo(settings.ConfigPath)
+	return s.sectionRepo("config", settings.ConfigPath)
 }
 
 // filesRepoPath resolves the restic repo for the files domain.
 func (s *Service) filesRepoPath(settings store.Settings) (string, error) {
-	return s.resolveRepo(settings.FilesPath)
+	return s.sectionRepo("files", settings.FilesPath)
 }
 
 // fileSetRepoPath resolves the repository of one file set: its own named
@@ -2458,8 +2458,8 @@ func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string)
 		return
 	}
 	subject := "Retention prune FAILED for " + tag
-	msg := fmt.Sprintf("Applying the retention policy for %s failed — old snapshots are not being pruned (the new backup itself is safe): %s", tag, detail)
-	notify.Send(ctx, c, tag, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
+	msg := fmt.Sprintf("Applying the retention policy for %s failed, so old snapshots are not being pruned (the new backup itself is safe): %s", tag, detail)
+	notify.Send(ctx, c, tag, notify.Event{Title: "BombVault", Message: subject + ". " + msg, OK: false})
 	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
@@ -4569,7 +4569,7 @@ func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, bud
 		action = "Adjust the retention policy, prune it, or raise the budget."
 	}
 	msg := fmt.Sprintf("The %s repository for %s has grown to %s, over the configured growth budget of %s. %s", kind, domain, humanBytes(size), humanBytes(budget), action)
-	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + ". " + msg, OK: false})
 	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
@@ -4788,6 +4788,9 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 	if s.offsiteRepoFor(domain, settings) == "" {
 		return errNoOffsiteRepo
 	}
+	if err := s.requireOwnLocation(settings, domain); err != nil {
+		return err
+	}
 	defer s.lockDomainFor(domain, "replicate")()
 	// The skip list goes IN, so the run row this opens records it too rather than
 	// being stamped a success the caller then contradicts.
@@ -4871,8 +4874,8 @@ func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail st
 		return
 	}
 	subject := "Off-site replication FAILED for " + domain
-	msg := fmt.Sprintf("The scheduled off-site replication for %s failed — the off-site copy is not current: %s", domain, detail)
-	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
+	msg := fmt.Sprintf("The scheduled off-site replication for %s failed, so the off-site copy is not current: %s", domain, detail)
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + ". " + msg, OK: false})
 	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
@@ -8022,7 +8025,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 			if !overwrite {
 				for _, d := range restoreDirs {
 					if d.Target != d.Subtree && s.dirNonEmptyFn()(d.Target) {
-						return containerRestorePlan{}, destinationRefusal("restore destination %q already contains data — it may belong to a different container; confirm overwrite to proceed", s.toHostPath(d.Target))
+						return containerRestorePlan{}, destinationRefusal("restore destination %q already contains data. It may belong to a different container; confirm overwrite to proceed", s.toHostPath(d.Target))
 					}
 				}
 			}
@@ -8842,8 +8845,15 @@ func skippedError(what string, skipped []repoSkip) error {
 	for _, s := range real {
 		parts = append(parts, fmt.Sprintf("%s (%s)", s.Name, s.Reason))
 	}
-	return fmt.Errorf("%s covered only part of this domain: %s", what, strings.Join(parts, ", "))
+	return &skipListErr{msg: fmt.Sprintf("%s covered only part of this domain: %s", what, strings.Join(parts, ", "))}
 }
+
+// skipListErr is a skip list as an error. Every reason in it went through
+// scrubError when the skip was made, so scrubbing the sentence again would only
+// turn the mount folder a reason names into a placeholder.
+type skipListErr struct{ msg string }
+
+func (e *skipListErr) Error() string { return e.msg }
 
 // retentionPausedNote is what a pass that left held items alone records and
 // reports, in the same shape as skippedError: the work was done, except for
@@ -8872,7 +8882,7 @@ func nothingCoveredError(skipped []repoSkip) error {
 	for _, s := range real {
 		parts = append(parts, fmt.Sprintf("%s (%s)", s.Name, s.Reason))
 	}
-	return fmt.Errorf("nothing in this domain could be opened: %s", strings.Join(parts, ", "))
+	return &skipListErr{msg: fmt.Sprintf("nothing in this domain could be opened: %s", strings.Join(parts, ", "))}
 }
 
 // discoverNamesAcrossRepos collects the item names a domain's snapshots carry
@@ -13201,7 +13211,7 @@ func (s *Service) guardVMRestoreDestination(ctx context.Context, ref repoRef, sn
 func (s *Service) guardContainerRestoreDestination(ctx context.Context, ref repoRef, snapshotID string, appdataPaths []string) error {
 	for _, p := range appdataPaths {
 		if !s.restoreTargetMounted(p) {
-			return destinationRefusal("appdata destination %q is not on a mounted pool or share on this system — the source backed it up from a pool this host does not have, so restoring would write it to the wrong place. Create or mount that share here, then retry", s.toHostPath(p))
+			return destinationRefusal("appdata destination %q is not on a mounted pool or share on this system. The source backed it up from a pool this host does not have, so restoring would write it to the wrong place. Create or mount that share here, then retry", s.toHostPath(p))
 		}
 	}
 	// Free-space preflight ONLY when the whole restore lands in a SINGLE appdata
@@ -16745,7 +16755,7 @@ func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail
 	if domain != "flash" {
 		target = domain
 	}
-	msg := fmt.Sprintf("Restore verification of %s (%s) FAILED — the backup may not be restorable: %s", target, source, detail)
+	msg := fmt.Sprintf("Restore verification of %s (%s) FAILED, so the backup may not be restorable: %s", target, source, detail)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: false})
 	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: restore verification FAILED", msg, "warning"); e != nil {

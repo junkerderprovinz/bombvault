@@ -110,6 +110,13 @@ describe("a refused settings change", () => {
     expect(api.explainedError(err)).toBe(en["apiError.noPlace"]);
   });
 
+  it("says in the person's language why a backup of a section with no storage location is refused", async () => {
+    answers(409, { ok: false, error: "ZFS datasets has no storage location yet.", code: "no-location" });
+    const api = await import("./api");
+    const err = await api.backupFlashNow().catch((e: unknown) => e);
+    expect((err as Error).message).toBe(en["apiError.noLocation"]);
+  });
+
   it("leaves a call its caller stopped as the AbortError it expects", async () => {
     fetchMock.mockRejectedValue(new DOMException("aborted", "AbortError"));
     const api = await import("./api");

@@ -4488,6 +4488,7 @@ const nl: Partial<Translations> = {
   "apiError.sessionEnded": "Deze sessie is beëindigd, bijvoorbeeld omdat iemand overal is uitgelogd. Open de instantie opnieuw.",
   "apiError.phonePairingOff": "Telefoons koppelen staat uit op deze instantie.",
   "apiError.noPlace": "Er is geen plek om dit naartoe te back-uppen, want alle bestemmingen van zijn onderdeel staan uit. Schakel er een in onder Bestemmingen.",
+  "apiError.noLocation": "Dit onderdeel heeft nog geen bestemming. Open Instellingen, Bestemmingen, en schakel een lijn voor dit onderdeel in.",
   "apiError.relayTooLarge": "Dit is te groot om via de relay te gaan. Open de instantie op het eigen adres.",
   "apiError.relayRefused": "Dit kan niet via de relay. Open de instantie op het eigen adres.",
   "apiError.refused": "De server heeft dit geweigerd.",

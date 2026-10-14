@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -112,7 +113,7 @@ func healthcheckAt(host, port, httpsPort string) int {
 			return 0
 		}
 	}
-	fmt.Fprintln(os.Stderr, "bombvault: healthcheck failed — /api/health did not answer 200")
+	fmt.Fprintln(os.Stderr, "bombvault: healthcheck failed: /api/health did not answer 200")
 	return 1
 }
 
@@ -154,11 +155,11 @@ func platformFor(kind platform.Kind) platform.Platform {
 // silently persisting state to the container's ephemeral layer.
 func ensureDataDirWritable(dir string) error {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return fmt.Errorf("data dir %q is not creatable — is the /config mount present? %w", dir, err)
+		return fmt.Errorf("data dir %q is not creatable. Is the /config mount present? %w", dir, err)
 	}
 	probe := filepath.Join(dir, ".bombvault-write-test")
 	if err := os.WriteFile(probe, []byte("ok"), 0o600); err != nil {
-		return fmt.Errorf("data dir %q is not writable — is the /config mount present and read-write? %w", dir, err)
+		return fmt.Errorf("data dir %q is not writable. Is the /config mount present and read-write? %w", dir, err)
 	}
 	_ = os.Remove(probe)
 	return nil
@@ -247,6 +248,11 @@ func run() error {
 	st := store.New(db)
 	if err := st.RecordWriter(api.Version); err != nil {
 		log.Printf("main: recording the version that opened the database: %v", err)
+	}
+	if filled, err := st.RepairSectionPaths(); err != nil {
+		log.Printf("main: giving switched-on sections their default folder: %v", err)
+	} else if len(filled) > 0 {
+		log.Printf("main: %s had no storage location and now write to their default folder", strings.Join(filled, ", "))
 	}
 
 	if err := api.RevokeMCPKeysAfterConfigRestore(st, cfg.DataDir, time.Now()); err != nil {

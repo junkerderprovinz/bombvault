@@ -4489,6 +4489,7 @@ const no: Partial<Translations> = {
   "apiError.sessionEnded": "Denne økten er avsluttet, for eksempel fordi noen har logget ut overalt. Åpne instansen på nytt.",
   "apiError.phonePairingOff": "Paring av telefoner er slått av på denne instansen.",
   "apiError.noPlace": "Det finnes ikke noe sted å sikkerhetskopiere til, fordi alle mål i området er slått av. Slå på ett under Mål.",
+  "apiError.noLocation": "Dette området har ikke noe mål ennå. Åpne Innstillinger, Mål, og slå på en linje for det.",
   "apiError.relayTooLarge": "Dette er for stort til å gå gjennom relay. Åpne instansen på sin egen adresse.",
   "apiError.relayRefused": "Dette kan ikke gå gjennom relay. Åpne instansen på sin egen adresse.",
   "apiError.refused": "Serveren avviste dette.",

@@ -162,7 +162,7 @@ func zfsRelPath(root, dataset string) string {
 
 // zfsRepoPath resolves the domain repository.
 func (s *Service) zfsRepoPath(settings store.Settings) (string, error) {
-	return s.resolveRepo(settings.ZFSPath)
+	return s.sectionRepo(zfsDomain, settings.ZFSPath)
 }
 
 // zfsDatasetRepoPath resolves where one item's members are written: its own

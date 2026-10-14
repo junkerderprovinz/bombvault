@@ -4480,6 +4480,7 @@ const vi: Partial<Translations> = {
   "apiError.sessionEnded": "Phiên này đã kết thúc, ví dụ vì ai đó đã đăng xuất ở mọi nơi. Hãy mở lại phiên bản này.",
   "apiError.phonePairingOff": "Tính năng ghép nối điện thoại đang tắt trên phiên bản này.",
   "apiError.noPlace": "Không có nơi nào để sao lưu, vì mọi đích của phần chứa nó đều đang tắt. Hãy bật một đích trong Đích sao lưu.",
+  "apiError.noLocation": "Phần này chưa có đích sao lưu nào. Mở Cài đặt, Đích sao lưu, rồi bật một đường cho phần này.",
   "apiError.relayTooLarge": "Dữ liệu này quá lớn để đi qua relay. Hãy mở phiên bản này tại địa chỉ riêng của nó.",
   "apiError.relayRefused": "Việc này không thể đi qua relay. Hãy mở phiên bản này tại địa chỉ riêng của nó.",
   "apiError.refused": "Máy chủ đã từ chối việc này.",

@@ -4489,6 +4489,7 @@ const tr: Partial<Translations> = {
   "apiError.sessionEnded": "Bu oturum sona erdi, örneğin biri her yerden oturumu kapattığı için. Örneği yeniden aç.",
   "apiError.phonePairingOff": "Bu örnekte telefon eşleştirme kapalı.",
   "apiError.noPlace": "Yedeklenecek bir yer yok, çünkü bölümünün tüm hedefleri kapalı. Hedefler bölümünden birini aç.",
+  "apiError.noLocation": "Bu bölümün henüz bir hedefi yok. Ayarlar, Hedefler bölümünü aç ve bu bölüm için bir çizgiyi aç.",
   "apiError.relayTooLarge": "Bu, röleden geçemeyecek kadar büyük. Örneği kendi adresinde aç.",
   "apiError.relayRefused": "Bu röleden geçemez. Örneği kendi adresinde aç.",
   "apiError.refused": "Sunucu bunu reddetti.",

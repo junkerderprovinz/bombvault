@@ -4499,6 +4499,7 @@ const eu: Partial<Translations> = {
   "apiError.sessionEnded": "Saio hau amaitu da, adibidez norbaitek leku guztietan saioa itxi duelako. Ireki instantzia berriro.",
   "apiError.phonePairingOff": "Telefonoak parekatzea desaktibatuta dago instantzia honetan.",
   "apiError.noPlace": "Ez dago non babestu, bere ataleko helmuga guztiak desaktibatuta daudelako. Aktibatu bat Helmugak atalean.",
+  "apiError.noLocation": "Atal honek ez du oraindik helmugarik. Ireki Ezarpenak, Helmugak, eta aktibatu lerro bat atal horretarako.",
   "apiError.relayTooLarge": "Hau handiegia da bitartekariaren bidez joateko. Ireki instantzia bere helbidean.",
   "apiError.relayRefused": "Hau ezin da bitartekariaren bidez joan. Ireki instantzia bere helbidean.",
   "apiError.refused": "Zerbitzariak ukatu egin du.",
