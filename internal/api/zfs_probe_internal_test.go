@@ -285,6 +285,75 @@ func TestDiscoverZFSHostMarksOnlyTheDatasetThatHoldsAVMDisk(t *testing.T) {
 	}
 }
 
+// unraidVMXML is a domain as Unraid's VM manager defines it: a file disk, an
+// installer image on a cdrom and the VirtIO driver disc.
+func unraidVMXML(name, disk string) string {
+	return `<domain type="kvm"><name>` + name + `</name><devices>` +
+		`<disk type="file" device="disk"><driver name="qemu" type="qcow2" cache="writeback"/>` +
+		`<source file="` + disk + `"/><target dev="hdc" bus="virtio"/></disk>` +
+		`<disk type="file" device="cdrom"><driver name="qemu" type="raw"/>` +
+		`<source file="/mnt/user/isos/virtio-win-0.1.262-2.iso"/><target dev="hdb" bus="sata"/><readonly/></disk>` +
+		`</devices></domain>`
+}
+
+func TestDiscoverZFSHostMarksVMFoldersReachedThroughTheUserShare(t *testing.T) {
+	s, _, host := zfsProbeFixture(t, config.Config{})
+	vms := []string{"Alpine_template", "DietPi_template", "Home Assistant", "Windows Server 2022", "Windows Server 2025"}
+	host.tree = []zfs.ListEntry{
+		zfsEntry("cache", "/mnt/cache"),
+		zfsEntry("cache/appdata", "/mnt/cache/appdata"),
+		zfsEntry("cache/domains", "/mnt/cache/domains"),
+		zfsEntry("cache/isos", "/mnt/cache/isos"),
+	}
+	for _, vm := range vms {
+		host.tree = append(host.tree, zfsEntry("cache/domains/"+vm, "/mnt/cache/domains/"+vm))
+	}
+	s.virsh = &zfsFakeVirsh{domains: map[string]string{
+		"Alpine_template":     unraidVMXML("Alpine_template", "/mnt/user/domains/Alpine_template/vdisk1.img"),
+		"DietPi_template":     unraidVMXML("DietPi_template", "/mnt/cache/domains/DietPi_template/vdisk1.img"),
+		"Home Assistant":      unraidVMXML("Home Assistant", "/mnt/user/domains/Home Assistant/haos_ova-16.2.qcow2"),
+		"Windows Server 2022": unraidVMXML("Windows Server 2022", "/mnt/user/domains/Windows Server 2022/vdisk1.img"),
+		"Windows Server 2025": unraidVMXML("Windows Server 2025", "/mnt/user/domains/Windows Server 2025/disks/vdisk1.img"),
+	}}
+
+	res := s.DiscoverZFSHost(context.Background(), true)
+	marked := map[string]bool{}
+	for _, e := range res.Datasets {
+		marked[e.Dataset] = e.VMDisk
+	}
+	for _, vm := range vms {
+		if !marked["cache/domains/"+vm] {
+			t.Errorf("cache/domains/%s is not marked as a VM's disk folder", vm)
+		}
+	}
+	for _, other := range []string{"cache", "cache/appdata", "cache/domains", "cache/isos"} {
+		if marked[other] {
+			t.Errorf("%s is marked as a VM's disk folder, but no writable disk lives on it", other)
+		}
+	}
+}
+
+func TestZFSVMDiskDatasetsPicksThePoolThatHoldsASplitShare(t *testing.T) {
+	list := []zfs.ListEntry{
+		zfsEntry("cache", "/mnt/cache"),
+		zfsEntry("cache/domains", "/mnt/cache/domains"),
+		zfsEntry("cache/domains/haos", "/mnt/cache/domains/haos"),
+		zfsEntry("fast", "/mnt/fast"),
+		zfsEntry("fast/domains", "/mnt/fast/domains"),
+	}
+	disks := map[string]bool{"/mnt/user/domains/haos/haos.qcow2": true}
+
+	onCache := func(p string) bool { return p == "/mnt/cache/domains/haos/haos.qcow2" }
+	if got := zfsVMDiskDatasets(list, disks, onCache); !got["cache/domains/haos"] || got["fast/domains"] {
+		t.Errorf("marked %v, want only the dataset on the pool that holds the disk", got)
+	}
+
+	unknown := func(string) bool { return false }
+	if got := zfsVMDiskDatasets(list, disks, unknown); !got["cache/domains/haos"] || !got["fast/domains"] {
+		t.Errorf("marked %v, want every pool the share lives on when none can be looked at", got)
+	}
+}
+
 func TestDiscoverZFSHostCachedAnswersFromTheLastListing(t *testing.T) {
 	s, st, host := zfsProbeFixture(t, config.Config{})
 	host.tree = zfsTwoDatasetTree()

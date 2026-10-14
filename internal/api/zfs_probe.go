@@ -170,7 +170,7 @@ func (s *Service) ZFSSpikeStatus() (string, error) {
 type zfsHostListing struct {
 	list      []zfs.ListEntry
 	truncated bool
-	vmDirs    map[string]bool
+	vmDisks   map[string]bool
 	vmVolumes map[string]bool
 	at        time.Time
 }
@@ -201,7 +201,14 @@ func (s *Service) DiscoverZFSHost(ctx context.Context, fresh bool) ZFSDiscoverRe
 	if err != nil {
 		log.Printf("api: zfs: the host listing could not read which datasets are already items: %v", err)
 	}
-	vmDisks := zfsVMDiskDatasets(list, last.vmDirs)
+	vmDisks := zfsVMDiskDatasets(list, last.vmDisks, func(host string) bool {
+		cp, ok := s.toContainerPath(host)
+		if !ok {
+			return false
+		}
+		_, err := zfsStat(cp)
+		return err == nil
+	})
 	recs := zfsMountRecords()
 	legacyBelow := zfsLegacyCounts(list)
 
@@ -268,7 +275,7 @@ func (s *Service) listZFSHost(ctx context.Context) (zfsHostListing, string) {
 	if len(list) > zfsMaxDiscoverEntries {
 		listing.list, listing.truncated = list[:zfsMaxDiscoverEntries], true
 	}
-	listing.vmDirs, listing.vmVolumes = s.zfsVMOwned(ctx)
+	listing.vmDisks, listing.vmVolumes = s.zfsVMOwned(ctx)
 	s.zfsHostMu.Lock()
 	s.zfsHostLast = &listing
 	s.zfsHostMu.Unlock()
@@ -418,18 +425,18 @@ func (s *Service) recordZFSCheck(d store.ZFSDataset, check ZFSCheck) {
 	}
 }
 
-// zfsVMOwned reads the defined VMs once and reports which directories hold
-// their disk images and which volumes they use. A dataset of either kind is
-// already backed up on the VMs page, so the add dialog leaves it out.
-func (s *Service) zfsVMOwned(ctx context.Context) (dirs map[string]bool, volumes map[string]bool) {
-	dirs, volumes = map[string]bool{}, map[string]bool{}
+// zfsVMOwned reads the defined VMs once and reports their disk image files
+// and the volumes they use. A dataset holding either is already backed up on
+// the VMs page, so the add dialog leaves it out.
+func (s *Service) zfsVMOwned(ctx context.Context) (disks map[string]bool, volumes map[string]bool) {
+	disks, volumes = map[string]bool{}, map[string]bool{}
 	if s.virsh == nil {
-		return dirs, volumes
+		return disks, volumes
 	}
 	vms, err := s.virsh.List(ctx)
 	if err != nil {
 		log.Printf("api: zfs: the host listing could not ask libvirt which datasets belong to a VM: %v", err)
-		return dirs, volumes
+		return disks, volumes
 	}
 	for _, vm := range vms {
 		xml, xErr := s.virsh.DumpXML(ctx, vm.Name)
@@ -441,7 +448,7 @@ func (s *Service) zfsVMOwned(ctx context.Context) (dirs map[string]bool, volumes
 			continue
 		}
 		for _, disk := range info.DiskPaths {
-			dirs[path.Dir(disk)] = true
+			disks[path.Clean(disk)] = true
 		}
 		for _, disk := range info.BlockDisks {
 			if dataset, ok := virshcli.ZvolDatasetFromDevPath(disk.Source); ok {
@@ -449,30 +456,82 @@ func (s *Service) zfsVMOwned(ctx context.Context) (dirs map[string]bool, volumes
 			}
 		}
 	}
-	return dirs, volumes
+	return disks, volumes
 }
 
 // zfsVMDiskDatasets names the datasets a VM keeps its disk images on: for each
-// disk directory the mounted filesystem with the deepest mountpoint above it.
-// Its ancestors only contain that dataset, and flagging them would leave their
+// disk the mounted filesystem with the deepest mountpoint above it. Its
+// ancestors only contain that dataset, and flagging them would leave their
 // other children out of the add dialog's default.
-func zfsVMDiskDatasets(list []zfs.ListEntry, dirs map[string]bool) map[string]bool {
+//
+// Unraid's VM manager stores a disk as /mnt/user/<share>/..., which no dataset
+// is mounted at; the file lives at /mnt/<pool>/<share>/... on one of the pools.
+// When the share spans several pools, exists tells which one holds the file,
+// and every candidate stays marked if it cannot.
+func zfsVMDiskDatasets(list []zfs.ListEntry, disks map[string]bool, exists func(host string) bool) map[string]bool {
 	out := map[string]bool{}
-	for dir := range dirs {
-		owner, depth := "", -1
-		for _, e := range list {
-			if e.Type != "filesystem" || !e.Mounted || !strings.HasPrefix(e.Mountpoint, "/") {
-				continue
-			}
-			if (dir == e.Mountpoint || strings.HasPrefix(dir, e.Mountpoint+"/")) && len(e.Mountpoint) > depth {
-				owner, depth = e.Name, len(e.Mountpoint)
+	for disk := range disks {
+		candidates := []string{disk}
+		if rel, user, ok := shareRel(disk); ok && user {
+			candidates = nil
+			for _, pool := range zfsPoolRoots(list) {
+				candidates = append(candidates, pool+rel)
 			}
 		}
-		if owner != "" {
+		owners := map[string]string{}
+		for _, c := range candidates {
+			if owner := zfsDeepestOwner(list, c); owner != "" {
+				owners[c] = owner
+			}
+		}
+		if len(owners) > 1 {
+			held := map[string]string{}
+			for c, owner := range owners {
+				if exists(c) {
+					held[c] = owner
+				}
+			}
+			if len(held) > 0 {
+				owners = held
+			}
+		}
+		for _, owner := range owners {
 			out[owner] = true
 		}
 	}
 	return out
+}
+
+// zfsPoolRoots lists the /mnt/<pool> folders the mounted datasets live under.
+func zfsPoolRoots(list []zfs.ListEntry) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, e := range list {
+		segs := strings.Split(strings.TrimPrefix(path.Clean(e.Mountpoint), "/"), "/")
+		if len(segs) < 2 || segs[0] != "mnt" || segs[1] == "user" || segs[1] == "user0" {
+			continue
+		}
+		if root := "/mnt/" + segs[1]; !seen[root] {
+			seen[root] = true
+			out = append(out, root)
+		}
+	}
+	return out
+}
+
+// zfsDeepestOwner is the mounted filesystem with the deepest mountpoint above
+// file, empty when none is.
+func zfsDeepestOwner(list []zfs.ListEntry, file string) string {
+	owner, depth := "", -1
+	for _, e := range list {
+		if e.Type != "filesystem" || !e.Mounted || !strings.HasPrefix(e.Mountpoint, "/") {
+			continue
+		}
+		if strings.HasPrefix(file, e.Mountpoint+"/") && len(e.Mountpoint) > depth {
+			owner, depth = e.Name, len(e.Mountpoint)
+		}
+	}
+	return owner
 }
 
 // zfsHoldsSystemImage reports whether a dataset carries Docker's or libvirt's
