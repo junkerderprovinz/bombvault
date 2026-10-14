@@ -492,3 +492,47 @@ func TestMountArgs(t *testing.T) {
 		t.Errorf("MountArgs took a flag: %q, %v", args, err)
 	}
 }
+
+func TestMountStateAndTheCommandsThatChangeIt(t *testing.T) {
+	read, err := MountStateArgs("tank/r/cache/appdata")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"zfs", "get", "-H", "-p", "-o", "property,value", "mountpoint,keystatus,mounted,canmount,readonly", "tank/r/cache/appdata"}
+	if !equalArgs(read, want) {
+		t.Fatalf("MountStateArgs = %q, want %q", read, want)
+	}
+	for _, c := range []struct {
+		build func(string) ([]string, error)
+		want  []string
+	}{
+		{ReadOnlyArgs, []string{"zfs", "set", "readonly=on", "tank/r/cache/appdata"}},
+		{CanMountArgs, []string{"zfs", "set", "canmount=on", "tank/r/cache/appdata"}},
+	} {
+		build, want := c.build, c.want
+		got, err := build("tank/r/cache/appdata")
+		if err != nil || !equalArgs(got, want) {
+			t.Errorf("got %q, %v, want %q", got, err, want)
+		}
+		if args, err := build("a@b"); err == nil || args != nil {
+			t.Errorf("took a snapshot name: %q, %v", args, err)
+		}
+	}
+
+	st, err := ParseMountState("mountpoint\t/zfs/r/cache/appdata\nkeystatus\t-\nmounted\tno\ncanmount\tnoauto\nreadonly\ton\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st != (MountState{Mountpoint: "/zfs/r/cache/appdata", KeyStatus: "-", CanMount: "noauto", ReadOnly: true}) || !st.HasMountpoint() || st.Locked() {
+		t.Errorf("state = %+v", st)
+	}
+	st, err = ParseMountState("mountpoint\tnone\nkeystatus\tunavailable\nmounted\tno\ncanmount\tnoauto\nreadonly\ton\n")
+	if err != nil || st.HasMountpoint() || !st.Locked() {
+		t.Errorf("state = %+v, %v; want a locked dataset without a mountpoint path", st, err)
+	}
+	for _, bad := range []string{"", "mountpoint\t/a\nkeystatus\t-\n", "size\t1\nkeystatus\t-\nmounted\tno\ncanmount\ton\nreadonly\ton\n", "mountpoint /a\n"} {
+		if _, err := ParseMountState(bad); err == nil {
+			t.Errorf("ParseMountState took %q", bad)
+		}
+	}
+}

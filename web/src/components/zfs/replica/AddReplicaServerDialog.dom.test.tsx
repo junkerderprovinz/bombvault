@@ -136,10 +136,26 @@ describe("adding a ZFS server", () => {
     fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.add.submit"] }));
     await waitFor(() =>
       expect(created).toEqual([
-        { name: "Backup-NAS", host: "192.168.1.30", user: "root", port: 22, pool: "tank", root: "tank/bombvault-replica" },
+        { name: "Backup-NAS", host: "192.168.1.30", user: "root", port: 22, pool: "tank", root: "tank/bombvault-replica", mountReadOnly: false },
       ]),
     );
     expect(saved).toEqual(["new"]);
+  });
+
+  it("adds a server that mounts its copies read only when the switch is on", async () => {
+    renderDialog();
+    fireEvent.change(address(), { target: { value: "192.168.1.30" } });
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.server.test"] }));
+    await screen.findByRole("button", { name: en["verdict.connected"] });
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.add.next"] }));
+    fireEvent.click(screen.getByRole("radio", { name: "tank · 409.6 GB free" }));
+
+    const mount = screen.getByRole("switch", { name: en["zfs.replica.server.mount"] });
+    expect(mount.getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(mount);
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.add.submit"] }));
+    await waitFor(() => expect(created).toHaveLength(1));
+    expect(created[0].mountReadOnly).toBe(true);
   });
 
   it("goes back to the connection step", async () => {

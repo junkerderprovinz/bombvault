@@ -23,6 +23,7 @@ export function replica(overrides: Partial<ZFSReplica> = {}): ZFSReplica {
         state: "ok",
         code: "",
         lastBytes: 31 * 1024 * 1024,
+        mount: "",
       },
       {
         dataset: "cache/appdata/vm-disk",
@@ -31,6 +32,7 @@ export function replica(overrides: Partial<ZFSReplica> = {}): ZFSReplica {
         state: "ok",
         code: "",
         lastBytes: 0,
+        mount: "",
       },
     ],
     peerState: "",
@@ -48,6 +50,7 @@ export function server(overrides: Partial<ZFSReplicaServer> = {}): ZFSReplicaSer
     pool: "backup",
     root: "backup/bombvault-replica",
     enabled: true,
+    mountReadOnly: false,
     freeBytes: 3.1 * 1024 ** 4,
     sizeBytes: 8 * 1024 ** 4,
     usedBy: [],

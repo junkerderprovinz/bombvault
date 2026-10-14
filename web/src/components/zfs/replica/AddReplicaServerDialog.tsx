@@ -19,6 +19,7 @@ import { InfoBubble } from "../../InfoBubble";
 import { NumberField } from "../../NumberField";
 import { Selector } from "../../Selector";
 import { TestButton, VerdictLine } from "../../TestButton";
+import { ToggleRow } from "../../../pages/settings/shared";
 import { IconZFS } from "../../navGlyphs";
 import { allowLine, defaultRoot, examplePath, poolLabel, testFailure } from "./replicaModel";
 import { useGroup } from "./replicaStore";
@@ -62,6 +63,7 @@ export function AddReplicaServerDialog({
   const [pool, setPool] = useState(server?.pool ?? "");
   const [root, setRoot] = useState(server?.root ?? "");
   const [name, setName] = useState(server?.name ?? "");
+  const [mountReadOnly, setMountReadOnly] = useState(server?.mountReadOnly ?? false);
   const [publicKey, setPublicKey] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -124,7 +126,7 @@ export function AddReplicaServerDialog({
     if (!root.trim()) return setError(t("zfs.replica.add.needRoot"));
     setError(null);
     setSaving(true);
-    const body = { name: name.trim() || host.trim(), host: host.trim(), user: login, port, pool, root: root.trim() };
+    const body = { name: name.trim() || host.trim(), host: host.trim(), user: login, port, pool, root: root.trim(), mountReadOnly };
     try {
       let id = server?.id ?? "";
       let res: ZFSCodedEnvelope;
@@ -304,6 +306,12 @@ export function AddReplicaServerDialog({
               className={inputCls}
             />
           </Field>
+          <ToggleRow
+            label={t("zfs.replica.server.mount")}
+            hint={t("zfs.replica.server.mountHint")}
+            checked={mountReadOnly}
+            onChange={setMountReadOnly}
+          />
         </>
       )}
 

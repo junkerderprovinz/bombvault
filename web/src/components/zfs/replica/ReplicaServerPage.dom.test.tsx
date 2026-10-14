@@ -99,6 +99,15 @@ describe("a ZFS server", () => {
     await waitFor(() => expect(patched).toEqual([{ enabled: false }]));
   });
 
+  it("mounts its copies read only once the switch is on, and says it leaves what is mounted alone", async () => {
+    await renderServer();
+    const mount = await screen.findByRole("switch", { name: en["zfs.replica.server.mount"] });
+    expect(mount.getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(mount);
+    await waitFor(() => expect(patched).toEqual([{ mountReadOnly: true }]));
+    expect(en["zfs.replica.server.mountHint"]).toContain("unmounts nothing");
+  });
+
   it("forgets its host key only once the question is answered", async () => {
     await renderServer();
     fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.server.forgetHostKey"] }));

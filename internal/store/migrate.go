@@ -3177,6 +3177,16 @@ UNION SELECT member_id FROM pull_sources WHERE member_id <> '';`,
   PRIMARY KEY (domain, item_id, repo)
 );`,
 	},
+	{
+		// Whether a ZFS server keeps the replicas it receives mounted read only,
+		// and how mounting each member of a replica turned out, for the card to
+		// say so. Both are off and empty until a run mounts something.
+		version:          replicaMountMigration,
+		name:             "zfs_replica_mount",
+		alreadySatisfied: columnPresent("zfs_replica_servers", "mount_readonly"),
+		sql: `ALTER TABLE zfs_replica_servers ADD COLUMN mount_readonly INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE zfs_replica_state ADD COLUMN mount TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3324,6 +3334,9 @@ const placesOffMigration = 360
 // formerHomesMigration numbers the places an item left when it followed its
 // section, 361.
 const formerHomesMigration = 361
+
+// replicaMountMigration numbers the mount setting of the replica servers.
+const replicaMountMigration = 366
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

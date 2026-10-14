@@ -29,6 +29,8 @@ type zfsReplicaServerExport struct {
 	Pool    string `json:"pool"`
 	Root    string `json:"root"`
 	Enabled bool   `json:"enabled"`
+	// MountReadOnly is absent from a file of an older build, which reads as off.
+	MountReadOnly bool `json:"mountReadOnly"`
 }
 
 type zfsReplicaTargetExport struct {
@@ -58,7 +60,7 @@ func (h *Handler) exportZFSReplica(exp *settingsExport) error {
 	out := &zfsReplicaExport{Servers: []zfsReplicaServerExport{}, Items: []zfsReplicaItemExport{}}
 	for _, s := range servers {
 		out.Servers = append(out.Servers, zfsReplicaServerExport{
-			ID: s.ID, Name: s.Name, Host: s.Host, User: s.User, Port: s.Port, Pool: s.Pool, Root: s.Root, Enabled: s.Enabled,
+			ID: s.ID, Name: s.Name, Host: s.Host, User: s.User, Port: s.Port, Pool: s.Pool, Root: s.Root, Enabled: s.Enabled, MountReadOnly: s.MountReadOnly,
 		})
 	}
 	for _, d := range items {
@@ -202,7 +204,7 @@ func (h *Handler) applyImportedZFSReplica(exp settingsExport) error {
 	for _, s := range rep.Servers {
 		in.Servers = append(in.Servers, store.ZFSReplicaServer{
 			ID: s.ID, Name: strings.TrimSpace(s.Name), Host: s.Host, User: s.User, Port: s.Port,
-			Pool: s.Pool, Root: s.Root, Enabled: s.Enabled,
+			Pool: s.Pool, Root: s.Root, Enabled: s.Enabled, MountReadOnly: s.MountReadOnly,
 		})
 	}
 	for _, it := range rep.Items {
