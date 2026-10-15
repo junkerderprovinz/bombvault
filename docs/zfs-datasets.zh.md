@@ -114,7 +114,7 @@ BombVault 每次备份都会保存每个数据集在本地设置的 ZFS 属性�
 任何装有 ZFS 和 SSH 的机器都可以接收，例如第二台 Unraid 或 TrueNAS。BombVault 不必在那里运行。
 
 1. 在**设置、配对**下，选择**没有 BombVault 的 ZFS 服务器**中的**通过 SSH 连接**，或条目**副本**卡片中的**添加 ZFS 服务器**。
-2. 输入地址、用户和端口。对话框会显示 BombVault 的公钥。把它加入服务器上该用户的 `~/.ssh/authorized_keys`。在 Unraid 上，它位于 **Users, root, SSH keys**。根据 **Display Settings**，Users 位于页眉菜单或 Settings 下。
+2. 输入地址、用户和端口。对话框会显示 BombVault 的公钥。把它加入服务器上该用户的 `~/.ssh/authorized_keys`。在 Unraid 上，它位于 **Users, root, SSH keys**。根据 **Display Settings**，Users 位于页眉菜单或 Settings 下。 这是副本密钥。它与虚拟机和主机 SSH 连接所用的密钥不同，即使那个密钥已经授权，也请添加这一个。
 3. 测试连接。对话框随后列出服务器的存储池。选择一个并设置根路径，默认是 `<pool>/bombvault-replica`。
 4. 在条目的**副本**卡片中选择新服务器。该服务器随后在实例页面上有自己的卡片，**打开**会通向它的页面。
 

@@ -114,7 +114,7 @@ Włącz ją w karcie **Replika** na karcie Ustawienia elementu. Tam wybierasz, d
 Odbierać może każda maszyna z ZFS i SSH, na przykład drugi Unraid albo TrueNAS. BombVault nie musi tam działać.
 
 1. W **Ustawienia, Parowanie** wybierz **Połącz przez SSH** w **Serwer ZFS bez BombVault** albo **Dodaj serwer ZFS** w karcie **Replika** elementu.
-2. Wpisz adres, użytkownika i port. Okno pokazuje klucz publiczny BombVault. Dodaj go do `~/.ssh/authorized_keys` tego użytkownika na serwerze. W Unraid znajdziesz to w **Users, root, SSH keys**. W zależności od **Display Settings** Users jest w menu nagłówka albo w Settings.
+2. Wpisz adres, użytkownika i port. Okno pokazuje klucz publiczny BombVault. Dodaj go do `~/.ssh/authorized_keys` tego użytkownika na serwerze. W Unraid znajdziesz to w **Users, root, SSH keys**. W zależności od **Display Settings** Users jest w menu nagłówka albo w Settings. To jest klucz repliki. Różni się od klucza połączenia SSH dla maszyn wirtualnych i hosta, więc dodaj go, nawet jeśli tamten jest już autoryzowany.
 3. Przetestuj połączenie. Okno wyświetli wtedy pule serwera. Wybierz jedną i ustaw katalog główny, który domyślnie ma postać `<pool>/bombvault-replica`.
 4. Wybierz nowy serwer w karcie **Replika** elementu. Serwer ma wtedy własną kartę na stronie Instancje, a **Otwórz** prowadzi do jego strony.
 
