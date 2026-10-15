@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 
 import { decideZFSReceiveRequest, listZFSLocalPools, patchZFSReceiveRequest } from "../../../lib/api";
 import type { ZFSReceiveDecision, ZFSReceiveRequest, ZFSReplicaKeep, ZFSReplicaPool } from "../../../lib/api";
@@ -11,14 +11,16 @@ import { useToast } from "../../../lib/toast";
 import { zfsCodeSentence } from "../../../lib/zfsCodes";
 import { Button } from "../../Button";
 import { InfoBubble } from "../../InfoBubble";
-import { Selector } from "../../Selector";
+import { SelectField } from "../../SelectField";
+import { Rows, SettingRow } from "../../storage/rows";
 import { IconCheck } from "../../Sidebar";
 import { IconZFS } from "../../navGlyphs";
 import { ReplicaKeepField } from "./ReplicaKeepField";
 import { defaultRoot, examplePath, poolLabel, unixOf } from "./replicaModel";
 import { useReceiveRequests } from "./replicaStore";
 
-const inputCls = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus";
+const FIELD = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
+const inputCls = `${FIELD} w-72 max-w-full`;
 
 function senderOf(request: ZFSReceiveRequest): string {
   return request.peerName || request.sourceServer || request.peer;
@@ -85,6 +87,7 @@ function AskedRequest({
   const { t } = useT();
   const { push } = useToast();
   const answer = useAnswer(onDecided);
+  const rootId = useId();
   const [pool, setPool] = useState(request.pool);
   // Null until someone types or picks a pool, so the default can follow the
   // pools once they have loaded.
@@ -135,53 +138,52 @@ function AskedRequest({
 
       <Members members={request.members} />
 
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs text-carbon-textSub">{t("zfs.receive.pool")}</span>
-        {pools === null ? null : offered.length === 0 ? (
-          <p className="text-xs text-carbon-textMuted">{t("zfs.receive.noPools")}</p>
-        ) : (
-          <Selector
-            label={t("zfs.receive.pool")}
-            items={offered.map((p) => ({ id: p.name, label: poolLabel(t, p), icon: <IconZFS /> }))}
-            active={shownPool || null}
-            onChange={pickPool}
-            activation="manual"
+      <Rows>
+        <SettingRow
+          label={t("zfs.receive.pool")}
+          note={pools !== null && offered.length === 0 ? t("zfs.receive.noPools") : undefined}
+        >
+          {pools !== null && offered.length > 0 && (
+            <SelectField
+              label={t("zfs.receive.pool")}
+              value={shownPool}
+              options={offered.map((p) => ({ value: p.name, label: poolLabel(t, p), glyph: <IconZFS /> }))}
+              onChange={pickPool}
+              className={FIELD}
+            />
+          )}
+        </SettingRow>
+        <SettingRow label={t("zfs.replica.server.root")} hint={t("zfs.receive.rootHint")} htmlFor={rootId}>
+          <input
+            id={rootId}
+            type="text"
+            value={shownRoot}
+            onChange={(e) => setRoot(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+            dir="ltr"
+            className={inputCls}
           />
-        )}
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-          {t("zfs.replica.server.root")}
-          <InfoBubble tip={t("zfs.receive.rootHint")} />
+        </SettingRow>
+      </Rows>
+      {shownRoot.trim() && (
+        <span className="text-caption text-carbon-textMuted">
+          <bdi dir="ltr">
+            {t("zfs.replica.server.example").replace("{path}", () =>
+              examplePath(shownRoot.trim(), request.sourceServer, request.members[0] ?? request.item),
+            )}
+          </bdi>
         </span>
-        <input
-          type="text"
-          value={shownRoot}
-          onChange={(e) => setRoot(e.target.value)}
-          aria-label={t("zfs.replica.server.root")}
-          spellCheck={false}
-          autoComplete="off"
-          dir="ltr"
-          className={inputCls}
-        />
-        {shownRoot.trim() && (
-          <span className="text-caption text-carbon-textMuted">
-            <bdi dir="ltr">
-              {t("zfs.replica.server.example").replace("{path}", () =>
-                examplePath(shownRoot.trim(), request.sourceServer, request.members[0] ?? request.item),
-              )}
-            </bdi>
-          </span>
-        )}
-      </div>
+      )}
 
-      <ReplicaKeepField
-        label={t("zfs.receive.keep")}
-        hint={t("zfs.receive.keepHint")}
-        keep={keep}
-        onChange={setKeep}
-      />
+      <Rows>
+        <ReplicaKeepField
+          label={t("zfs.receive.keep")}
+          hint={t("zfs.receive.keepHint")}
+          keep={keep}
+          onChange={setKeep}
+        />
+      </Rows>
 
       {error && <p className="text-xs text-statusFail">{error}</p>}
 
@@ -272,7 +274,9 @@ function ReceiveSlot({ request, onChanged }: { request: ZFSReceiveRequest; onCha
           busy={revoking}
         />
       </div>
-      <ReplicaKeepField label={t("zfs.receive.keep")} hint={t("zfs.receive.keepHint")} keep={keep} onChange={changeKeep} />
+      <Rows>
+        <ReplicaKeepField label={t("zfs.receive.keep")} hint={t("zfs.receive.keepHint")} keep={keep} onChange={changeKeep} />
+      </Rows>
       {confirmDialog}
     </li>
   );

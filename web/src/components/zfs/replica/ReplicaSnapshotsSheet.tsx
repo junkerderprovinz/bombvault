@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { restoreZFSReplica } from "../../../lib/api";
@@ -14,6 +14,7 @@ import { Button } from "../../Button";
 import { CopyBlock } from "../../CopyBlock";
 import { InfoBubble } from "../../InfoBubble";
 import { SelectField } from "../../SelectField";
+import { SettingRow } from "../../storage/rows";
 import { cloneCommand, restorePreview, rootMember, takeoverCommand, unixOf } from "./replicaModel";
 
 /** ReplicaSnapshotsSheet lists the snapshots a replica keeps on its target,
@@ -38,6 +39,7 @@ export function ReplicaSnapshotsSheet({
   onRestoring: (dataset: string, keyNeeded: boolean) => void;
 }) {
   const { t } = useT();
+  const snapshotId = useId();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [picked, setPicked] = useState(replica.snapshots[0]?.name ?? "");
@@ -107,25 +109,24 @@ export function ReplicaSnapshotsSheet({
               </p>
             )}
 
-            <div className="flex flex-col gap-1.5">
-              <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-                {t("zfs.replica.sheet.snapshot")}
-                <InfoBubble
-                  tip={
-                    onPeer
-                      ? forPeer("zfs.replica.sheet.snapshotHintPeer")
-                      : t("zfs.replica.sheet.snapshotHint", replica.snapshots.length)
-                  }
-                />
-              </span>
+            <SettingRow
+              label={t("zfs.replica.sheet.snapshot")}
+              hint={
+                onPeer
+                  ? forPeer("zfs.replica.sheet.snapshotHintPeer")
+                  : t("zfs.replica.sheet.snapshotHint", replica.snapshots.length)
+              }
+              htmlFor={snapshotId}
+            >
               <SelectField
+                id={snapshotId}
                 value={snapshot.name}
                 onChange={setPicked}
                 label={t("zfs.replica.sheet.snapshot")}
                 options={replica.snapshots.map((s) => ({ value: s.name, label: formatTs(unixOf(s.created)) }))}
-                className="w-72 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
               />
-            </div>
+            </SettingRow>
 
             {onPeer ? (
               <p className="text-xs text-carbon-textSub">{forPeer("zfs.replica.sheet.peerCommands")}</p>

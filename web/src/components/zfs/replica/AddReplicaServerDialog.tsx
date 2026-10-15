@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useId, useState } from "react";
 
 import {
   createZFSReplicaServer,
@@ -15,9 +15,10 @@ import { useTestVerdict } from "../../../lib/useTestVerdict";
 import { zfsCodeSentence } from "../../../lib/zfsCodes";
 import { Button } from "../../Button";
 import { CopyBlock } from "../../CopyBlock";
-import { InfoBubble } from "../../InfoBubble";
 import { NumberField } from "../../NumberField";
+import { SelectField } from "../../SelectField";
 import { Selector } from "../../Selector";
+import { Rows, SettingRow } from "../../storage/rows";
 import { TestButton, VerdictLine } from "../../TestButton";
 import { ToggleRow } from "../../../pages/settings/shared";
 import { IconZFS } from "../../navGlyphs";
@@ -26,19 +27,8 @@ import { useGroup } from "./replicaStore";
 import { InstanceWindow } from "../../../pages/instances/InstanceWindow";
 
 const inputCls = "w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus";
-
-function Field({ label, hint, aside, children }: { label: string; hint?: string; aside?: ReactNode; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-        {label}
-        {hint && <InfoBubble tip={hint} />}
-      </span>
-      {children}
-      {aside && <span className="text-caption text-carbon-textMuted">{aside}</span>}
-    </div>
-  );
-}
+const textCls = "w-72 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus";
+const selectCls = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 /** AddReplicaServerDialog connects BombVault to a ZFS server in two steps:
  *  first the address with the key to put there and a test, then the pool and
@@ -53,6 +43,7 @@ export function AddReplicaServerDialog({
   onSaved: (id: string) => void;
 }) {
   const { t } = useT();
+  const fid = useId();
   const { push } = useToast();
   const group = useGroup();
   const [step, setStep] = useState(server ? 2 : 1);
@@ -152,9 +143,9 @@ export function AddReplicaServerDialog({
 
   const heading = server ? t("zfs.replica.server.edit") : t("zfs.replica.addServer");
   const poolItems = (pools.length > 0 ? pools : pool ? [{ name: pool, sizeBytes: 0, freeBytes: 0 }] : []).map((p) => ({
-    id: p.name,
+    value: p.name,
     label: poolLabel(t, p),
-    icon: <IconZFS />,
+    glyph: <IconZFS />,
   }));
 
   return (
@@ -210,42 +201,47 @@ export function AddReplicaServerDialog({
 
       {step === 1 ? (
         <>
-          <Field label={t("zfs.replica.server.address")} hint={t("zfs.replica.add.addressHint")}>
-            <input
-              type="text"
-              value={host}
-              onChange={(e) => setHost(e.target.value)}
-              aria-label={t("zfs.replica.server.address")}
-              placeholder="192.168.1.30"
-              spellCheck={false}
-              autoComplete="off"
-              dir="ltr"
-              className={inputCls}
-            />
-          </Field>
-          <Field label={t("zfs.replica.add.user")} hint={t("zfs.replica.add.userHint")}>
-            <input
-              type="text"
-              value={user}
-              onChange={(e) => setUser(e.target.value)}
-              aria-label={t("zfs.replica.add.user")}
-              spellCheck={false}
-              autoComplete="off"
-              dir="ltr"
-              className={inputCls}
-            />
-          </Field>
-          <Field label={t("zfs.replica.add.port")}>
-            <NumberField
-              min={1}
-              max={65535}
-              value={port}
-              aria-label={t("zfs.replica.add.port")}
-              onChange={(e) => setPort(parseInt(e.target.value, 10) || 22)}
-              className={inputCls}
-              wrapperClassName="max-w-40"
-            />
-          </Field>
+          <Rows>
+            <SettingRow label={t("zfs.replica.server.address")} hint={t("zfs.replica.add.addressHint")} htmlFor={`${fid}-host`}>
+              <input
+                id={`${fid}-host`}
+                type="text"
+                value={host}
+                onChange={(e) => setHost(e.target.value)}
+                aria-label={t("zfs.replica.server.address")}
+                placeholder="192.168.1.30"
+                spellCheck={false}
+                autoComplete="off"
+                dir="ltr"
+                className={textCls}
+              />
+            </SettingRow>
+            <SettingRow label={t("zfs.replica.add.user")} hint={t("zfs.replica.add.userHint")} htmlFor={`${fid}-user`}>
+              <input
+                id={`${fid}-user`}
+                type="text"
+                value={user}
+                onChange={(e) => setUser(e.target.value)}
+                aria-label={t("zfs.replica.add.user")}
+                spellCheck={false}
+                autoComplete="off"
+                dir="ltr"
+                className={textCls}
+              />
+            </SettingRow>
+            <SettingRow label={t("zfs.replica.add.port")} htmlFor={`${fid}-port`}>
+              <NumberField
+                id={`${fid}-port`}
+                min={1}
+                max={65535}
+                value={port}
+                aria-label={t("zfs.replica.add.port")}
+                onChange={(e) => setPort(parseInt(e.target.value, 10) || 22)}
+                className={inputCls}
+                wrapperClassName="w-28"
+              />
+            </SettingRow>
+          </Rows>
           <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
             <span className="text-xs font-semibold text-carbon-textSub">{t("zfs.replica.add.authorize")}</span>
             <p className="text-xs text-carbon-textSub">{tLtr(t, "zfs.replica.add.authorizeHint")}</p>
@@ -263,49 +259,53 @@ export function AddReplicaServerDialog({
         </>
       ) : (
         <>
-          <Field label={t("zfs.replica.add.stepPool")} hint={t("zfs.replica.add.poolHint")}>
-            <Selector
-              label={t("zfs.replica.add.stepPool")}
-              items={poolItems}
-              active={pool || null}
-              onChange={pickPool}
-              activation="manual"
-            />
-          </Field>
-          <Field
-            label={t("zfs.replica.server.root")}
-            hint={t("zfs.replica.add.rootHint")}
-            aside={
-              root.trim() && (
-                <bdi dir="ltr">
-                  {t("zfs.replica.server.example").replace("{path}", () => examplePath(root.trim(), ownName))}
-                </bdi>
-              )
-            }
-          >
-            <input
-              type="text"
-              value={root}
-              onChange={(e) => setRoot(e.target.value)}
-              aria-label={t("zfs.replica.server.root")}
-              spellCheck={false}
-              autoComplete="off"
-              dir="ltr"
-              className={inputCls}
-            />
-          </Field>
-          <Field label={t("zfs.replica.add.name")}>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              aria-label={t("zfs.replica.add.name")}
-              placeholder="Backup-NAS"
-              spellCheck={false}
-              autoComplete="off"
-              className={inputCls}
-            />
-          </Field>
+          <Rows>
+            <SettingRow label={t("zfs.replica.add.stepPool")} hint={t("zfs.replica.add.poolHint")} htmlFor={`${fid}-pool`}>
+              <SelectField
+                id={`${fid}-pool`}
+                label={t("zfs.replica.add.stepPool")}
+                value={pool}
+                options={poolItems}
+                onChange={pickPool}
+                className={selectCls}
+              />
+            </SettingRow>
+            <SettingRow label={t("zfs.replica.server.root")} hint={t("zfs.replica.add.rootHint")} htmlFor={`${fid}-root`}>
+              <input
+                id={`${fid}-root`}
+                type="text"
+                value={root}
+                onChange={(e) => setRoot(e.target.value)}
+                aria-label={t("zfs.replica.server.root")}
+                spellCheck={false}
+                autoComplete="off"
+                dir="ltr"
+                className={textCls}
+              />
+            </SettingRow>
+          </Rows>
+          {root.trim() && (
+            <span className="text-caption text-carbon-textMuted">
+              <bdi dir="ltr">
+                {t("zfs.replica.server.example").replace("{path}", () => examplePath(root.trim(), ownName))}
+              </bdi>
+            </span>
+          )}
+          <Rows>
+            <SettingRow label={t("zfs.replica.add.name")} htmlFor={`${fid}-name`}>
+              <input
+                id={`${fid}-name`}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                aria-label={t("zfs.replica.add.name")}
+                placeholder="Backup-NAS"
+                spellCheck={false}
+                autoComplete="off"
+                className={textCls}
+              />
+            </SettingRow>
+          </Rows>
           <ToggleRow
             label={t("zfs.replica.server.mount")}
             hint={t("zfs.replica.server.mountHint")}

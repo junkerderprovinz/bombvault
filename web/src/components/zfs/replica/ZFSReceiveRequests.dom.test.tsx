@@ -120,8 +120,8 @@ describe("receiving a ZFS replica", () => {
 
   it("allows with the pool, root and keep rule on screen", async () => {
     renderCard();
-    const poolPicker = await screen.findByRole("radiogroup", { name: en["zfs.receive.pool"] });
-    fireEvent.click(await within(poolPicker).findByRole("radio", { name: /^backup/ }));
+    fireEvent.click(await screen.findByRole("combobox", { name: en["zfs.receive.pool"] }));
+    fireEvent.click(await screen.findByRole("option", { name: /^backup/ }));
     const root = screen.getByLabelText(en["zfs.replica.server.root"]) as HTMLInputElement;
     expect(root.value).toBe("backup/bombvault-replica");
     fireEvent.change(root, { target: { value: "backup/from-tower" } });
@@ -150,7 +150,7 @@ describe("receiving a ZFS replica", () => {
   it("reads the requests again and says so when the source asked for more since they were shown", async () => {
     renderCard();
     // Allow refuses until a pool is on screen, so the pools have to be there first.
-    await screen.findByRole("radiogroup", { name: en["zfs.receive.pool"] });
+    await screen.findByRole("combobox", { name: en["zfs.receive.pool"] });
     const members = ["cache/appdata", "cache/appdata/vm-disk", "cache/appdata/media"];
     decide = () => {
       requests = [receiveRequest({ members })];

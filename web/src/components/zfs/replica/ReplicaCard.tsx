@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { patchZFSReplica } from "../../../lib/api";
 import type {
@@ -18,7 +18,9 @@ import { Badge } from "../../Badge";
 import { Button } from "../../Button";
 import { CadenceBuilder, EXACT_CADENCE_MODES } from "../../CadenceBuilder";
 import { InfoBubble } from "../../InfoBubble";
+import { SelectField } from "../../SelectField";
 import { Selector } from "../../Selector";
+import { Rows, SettingRow } from "../../storage/rows";
 import { IconFleet, IconZFS } from "../../navGlyphs";
 import { AddReplicaServerDialog } from "./AddReplicaServerDialog";
 import { ReplicaKeepField } from "./ReplicaKeepField";
@@ -30,6 +32,8 @@ import { useReplicateNow } from "./useReplicateNow";
 type T = ReturnType<typeof useT>["t"];
 
 const NONE = "none";
+
+const FIELD = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 const PEER_SENTENCE = {
   asked: "zfs.replica.peer.askedText",
@@ -47,21 +51,6 @@ function parseTarget(id: string): ZFSReplicaTarget {
   if (id === NONE) return { kind: "none", id: "" };
   const at = id.indexOf(":");
   return { kind: id.slice(0, at) as ZFSReplicaTarget["kind"], id: id.slice(at + 1) };
-}
-
-function Row({ label, hint, aside, children }: { label: string; hint?: string; aside?: ReactNode; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-          {label}
-          {hint && <InfoBubble tip={hint} />}
-        </span>
-        {aside && <span className="ms-auto">{aside}</span>}
-      </div>
-      {children}
-    </div>
-  );
 }
 
 function MemberState({ member, replica, running, t }: { member: ZFSReplicaMember; replica: ZFSReplica; running: boolean; t: T }) {
@@ -165,14 +154,14 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
 
   const peers = (group?.members ?? []).filter((m) => m.kind !== "android");
   const targets = [
-    { id: NONE, label: t("zfs.replica.targetNone") },
+    { value: NONE, label: t("zfs.replica.targetNone") },
     ...servers
       .filter((s) => s.enabled || (view.target.kind === "server" && view.target.id === s.id))
-      .map((s) => ({ id: `server:${s.id}`, label: t("zfs.replica.targetOption.server").replace("{name}", () => s.name), icon: <IconZFS /> })),
+      .map((s) => ({ value: `server:${s.id}`, label: t("zfs.replica.targetOption.server").replace("{name}", () => s.name), glyph: <IconZFS /> })),
     ...peers.map((m) => ({
-      id: `peer:${m.id}`,
+      value: `peer:${m.id}`,
       label: t("zfs.replica.targetOption.peer").replace("{name}", () => m.name || m.id),
-      icon: <IconFleet />,
+      glyph: <IconFleet />,
     })),
   ];
   const hasTarget = view.target.kind !== "none";
@@ -187,23 +176,19 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
         </Badge>
       </h3>
 
-      <Row
-        label={t("zfs.replica.target")}
-        hint={`${t("zfs.replica.targetHint")} ${t("zfs.replica.targetKindHint")}`}
-        aside={hasTarget && <ReplicaStatePill replica={view} running={running} peerName={shownName} />}
-      >
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Without a floor the strip gives up its width to the button
-              beside it and cuts the names short; with one the button wraps. */}
-          <div className="min-w-[min(12rem,100%)] flex-1">
-            <Selector
-              label={t("zfs.replica.target")}
-              items={targets}
-              active={targetId(view.target)}
-              onChange={(id) => void pickTarget(id)}
-              activation="manual"
-            />
-          </div>
+      <Rows>
+        <SettingRow
+          label={t("zfs.replica.target")}
+          hint={`${t("zfs.replica.targetHint")} ${t("zfs.replica.targetKindHint")}`}
+        >
+          {hasTarget && <ReplicaStatePill replica={view} running={running} peerName={shownName} />}
+          <SelectField
+            label={t("zfs.replica.target")}
+            value={targetId(view.target)}
+            options={targets}
+            onChange={(id) => void pickTarget(id)}
+            className={FIELD}
+          />
           <Button
             label={t("zfs.replica.addServer")}
             labelKey="zfs.replica.addServer"
@@ -212,8 +197,8 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
             className="glim-btn-wrap"
             onClick={() => setAdding(true)}
           />
-        </div>
-      </Row>
+        </SettingRow>
+      </Rows>
 
       {peer && view.peerState !== "" && (
         <div className="flex items-center gap-3 flex-wrap">
@@ -232,8 +217,8 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
       )}
 
       {hasTarget && (
-        <>
-          <Row
+        <Rows>
+          <SettingRow
             label={t("zfs.replica.when")}
             hint={view.only ? `${t("zfs.replica.whenHint")} ${t("zfs.replica.onlyHint")}` : t("zfs.replica.whenHint")}
           >
@@ -246,17 +231,19 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
               active={view.afterBackup ? "after" : "own"}
               onChange={(id) => change({ afterBackup: id === "after" })}
               activation="manual"
+              inline
             />
-          </Row>
+          </SettingRow>
           {!view.afterBackup && (
-            <Row label={t("zfs.replica.plan")}>
+            <div className="flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0">
+              <span className="text-sm text-carbon-text">{t("zfs.replica.plan")}</span>
               <CadenceBuilder
                 label={t("zfs.replica.plan")}
                 value={view.cadence}
                 modes={EXACT_CADENCE_MODES}
                 onChange={(cadence) => changeSoon({ cadence })}
               />
-            </Row>
+            </div>
           )}
           {/* A paired instance runs its own retention; until it has
               allowed the replica, the rule here is what it is offered. */}
@@ -268,7 +255,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
               onChange={(keep) => changeSoon({ keep })}
             />
           )}
-        </>
+        </Rows>
       )}
 
       {hasTarget && (

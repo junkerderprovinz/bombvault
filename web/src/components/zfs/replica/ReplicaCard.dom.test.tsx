@@ -65,8 +65,8 @@ afterEach(cleanup);
 describe("replica card", () => {
   it("offers only the targets that can take a replica, plus none", async () => {
     renderCard();
-    const picker = await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
-    const names = within(picker).getAllByRole("radio").map((r) => r.textContent);
+    fireEvent.click(await screen.findByRole("combobox", { name: en["zfs.replica.target"] }));
+    const names = screen.getAllByRole("option").map((r) => r.textContent);
     expect(names).toEqual([
       en["zfs.replica.targetNone"],
       `Backup-NAS (${en["instances.overSsh"]})`,
@@ -77,8 +77,8 @@ describe("replica card", () => {
   it("tells a ZFS server over SSH from a paired instance in German too", async () => {
     localStorage.setItem("bv-lang", "de");
     renderCard();
-    const picker = await screen.findByRole("radiogroup", { name: de["zfs.replica.target"] });
-    const names = within(picker).getAllByRole("radio").map((r) => r.textContent);
+    fireEvent.click(await screen.findByRole("combobox", { name: de["zfs.replica.target"] }));
+    const names = screen.getAllByRole("option").map((r) => r.textContent);
     expect(names).toEqual([de["zfs.replica.targetNone"], "Backup-NAS (über SSH)", "tower-2 (gekoppelte Instanz)"]);
   });
 
@@ -244,8 +244,8 @@ describe("replica card", () => {
 
   it("points the replica at another target", async () => {
     renderCard();
-    const picker = await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
-    fireEvent.click(within(picker).getByRole("radio", { name: "tower-2 (paired instance)" }));
+    fireEvent.click(await screen.findByRole("combobox", { name: en["zfs.replica.target"] }));
+    fireEvent.click(screen.getByRole("option", { name: "tower-2 (paired instance)" }));
     await waitFor(() => expect(patches).toEqual([{ target: { kind: "peer", id: "peer-1" } }]));
     expect(await screen.findByText("Request sent to tower-2.")).toBeTruthy();
   });
@@ -259,12 +259,11 @@ describe("replica card", () => {
   it("shows what the server holds after a change it stored but answered with a refusal", async () => {
     patchAnswer = { ok: false, code: "peer-unreachable" };
     renderCard();
-    const picker = await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
-    fireEvent.click(within(picker).getByRole("radio", { name: "tower-2 (paired instance)" }));
+    const picker = await screen.findByRole("combobox", { name: en["zfs.replica.target"] });
+    fireEvent.click(picker);
+    fireEvent.click(screen.getByRole("option", { name: "tower-2 (paired instance)" }));
     expect(await screen.findByText(en["zfs.code.peer-unreachable"])).toBeTruthy();
-    await waitFor(() =>
-      expect(within(picker).getByRole("radio", { name: "tower-2 (paired instance)" }).getAttribute("aria-checked")).toBe("true"),
-    );
+    await waitFor(() => expect(picker.textContent).toContain("tower-2 (paired instance)"));
   });
 
   it("sends a schedule and a keep rule edited close together in one save", async () => {
@@ -282,6 +281,19 @@ describe("replica card", () => {
     await waitFor(() => expect(patches).toHaveLength(1));
     expect(patches[0].cadence).toMatch(/^weekly/);
     expect(patches[0].keep?.preset).toBe("long");
+  });
+
+  it("stands every one-line control on the row of its label", async () => {
+    renderCard();
+    const rowOf = (control: HTMLElement) => control.closest("[data-search-row]");
+    const target = await screen.findByRole("combobox", { name: en["zfs.replica.target"] });
+    expect(rowOf(target)?.getAttribute("data-search-row")).toBe(en["zfs.replica.target"]);
+    const when = screen.getByRole("radiogroup", { name: en["zfs.replica.when"] });
+    expect(rowOf(when)?.getAttribute("data-search-row")).toBe(en["zfs.replica.when"]);
+    const keep = screen.getByRole("radiogroup", { name: en["zfs.replica.keepTarget"] });
+    expect(rowOf(keep)?.getAttribute("data-search-row")).toBe(en["zfs.replica.keepTarget"]);
+    const days = screen.getByLabelText(en["zfs.replica.keep.daily"]);
+    expect(rowOf(days)?.getAttribute("data-search-row")).toBe(en["zfs.replica.keep.daily"]);
   });
 
   it("offers no interval in days for its own plan, which a replica cannot keep", async () => {
@@ -335,7 +347,7 @@ describe("replica card", () => {
   it("hides everything but the picker while there is no target", async () => {
     current = replica({ target: { kind: "none", id: "" }, state: "never" });
     renderCard();
-    await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
+    await screen.findByRole("combobox", { name: en["zfs.replica.target"] });
     expect(screen.queryByText(en["zfs.replica.members"])).toBeNull();
     expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
   });

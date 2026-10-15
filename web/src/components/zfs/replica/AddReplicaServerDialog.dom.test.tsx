@@ -126,7 +126,8 @@ describe("adding a ZFS server", () => {
     fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.add.submit"] }));
     expect(screen.getByText(en["zfs.replica.add.needPool"])).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("radio", { name: "tank · 409.6 GB free" }));
+    fireEvent.click(screen.getByRole("combobox", { name: en["zfs.replica.add.stepPool"] }));
+    fireEvent.click(screen.getByRole("option", { name: "tank · 409.6 GB free" }));
     const root = screen.getByLabelText(en["zfs.replica.server.root"]) as HTMLInputElement;
     expect(root.value).toBe("tank/bombvault-replica");
     expect(screen.getByText("for example tank/bombvault-replica/tower/tank/appdata")).toBeTruthy();
@@ -148,7 +149,8 @@ describe("adding a ZFS server", () => {
     fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.server.test"] }));
     await screen.findByRole("button", { name: en["verdict.connected"] });
     fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.add.next"] }));
-    fireEvent.click(screen.getByRole("radio", { name: "tank · 409.6 GB free" }));
+    fireEvent.click(screen.getByRole("combobox", { name: en["zfs.replica.add.stepPool"] }));
+    fireEvent.click(screen.getByRole("option", { name: "tank · 409.6 GB free" }));
 
     const mount = screen.getByRole("switch", { name: en["zfs.replica.server.mount"] });
     expect(mount.getAttribute("aria-checked")).toBe("false");

@@ -142,3 +142,77 @@ for (const [what, path, name] of ENTRIES) {
     }
   });
 }
+
+const REPLICA = {
+  target: { kind: "server", id: "nas" },
+  afterBackup: true,
+  cadence: "",
+  keep: { preset: "own", own: [0, 7, 3, 0, 0] },
+  state: "never",
+  code: "",
+  lastRun: "",
+  lastBytes: 0,
+  lastSeconds: 0,
+  snapshots: [],
+  members: [],
+  peerState: "",
+};
+
+async function openReplica(page: Page) {
+  await stageEntries(page, { ...EVERY_KIND, lang: "de" });
+  await page.route("**/api/zfs/datasets/*/replica", (route) => route.fulfill({ json: REPLICA }));
+  await open(page, `/backups/zfs/${ZFS_ID}?tab=settings`, "tank/appdata");
+  const card = page.locator(".glim-notch-card").filter({ has: page.getByRole("heading", { name: /^Replik/ }) });
+  await expect(card.getByRole("radiogroup", { name: "Wann" })).toBeVisible();
+  return card;
+}
+
+// The geometry of the first label and control of each row in the Replica card.
+async function rowBoxes(card: Awaited<ReturnType<typeof openReplica>>) {
+  return card.locator("[data-search-row]").evaluateAll((rows) =>
+    rows.map((row) => {
+      const box = (el: Element | null) => {
+        const r = el?.getBoundingClientRect();
+        return r ? { top: r.top, bottom: r.bottom, left: r.left, right: r.right, mid: (r.top + r.bottom) / 2 } : null;
+      };
+      return {
+        name: row.getAttribute("data-search-row"),
+        row: box(row),
+        label: box(row.querySelector("label, span.text-sm")),
+        control: box(row.querySelector("[role=combobox], [role=radiogroup], input")),
+        end: box(row.lastElementChild),
+      };
+    }),
+  );
+}
+
+test("the Replica card puts each control on the row of its label on the desktop", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const rows = await rowBoxes(await openReplica(page));
+  expect(rows.map((r) => r.name)).toEqual(
+    expect.arrayContaining(["Repliziert nach", "Wann", "Auf dem Ziel behalten", "Tage"]),
+  );
+  for (const r of rows) {
+    if (!r.label || !r.control || !r.row) continue;
+    expect(Math.abs(r.control.mid - r.label.mid), `${r.name}: control on the label's line`).toBeLessThan(16);
+    expect(r.end?.right, `${r.name}: controls at the row's end`).toBeGreaterThan(r.row.right - 4);
+  }
+});
+
+for (const width of [320, 360]) {
+  test(`the Replica card moves each control under its label and keeps the row end @ ${width}px`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout lives below 48rem");
+    await page.setViewportSize({ width, height: 800 });
+    const card = await openReplica(page);
+    const rows = await rowBoxes(card);
+    for (const r of rows) {
+      if (!r.label || !r.control || !r.row) continue;
+      expect(r.control.right, `${r.name}: control inside its row`).toBeLessThanOrEqual(r.row.right + 1);
+      expect(r.control.left, `${r.name}: control inside its row`).toBeGreaterThanOrEqual(r.row.left - 1);
+    }
+    const layout = await overflow(page);
+    expect(layout.pan).toBeLessThanOrEqual(1);
+    expect(layout.past).toEqual([]);
+  });
+}
