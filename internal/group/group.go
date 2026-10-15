@@ -224,6 +224,8 @@ type Manager struct {
 	cfg    Config
 	keys   *keys
 	client *relay.Client
+	// setup is what client was made with.
+	setup relaySetup
 
 	addrMu sync.Mutex
 	addrs  map[string]*remoteAddr
@@ -322,29 +324,23 @@ func (m *Manager) Apply(cfg Config) {
 		k = deriveKeys(cfg.Secret)
 	}
 
-	var next *relay.Client
+	var setup relaySetup
 	if k != nil {
 		if url := relayURLFor(cfg); url != "" {
-			c, err := relay.NewClient(relay.ClientOptions{
-				URL:        url,
-				Key:        k.relayKey,
-				FrameKey:   k.frameKey,
-				InstanceID: cfg.InstanceID,
-				Identity:   relay.Identity{Name: cfg.Name, Version: cfg.Version},
-				Serve:      m.serve,
-				Replay:     m.replay,
-			})
-			if err != nil {
-				log.Printf("group: relay not started: %v", err)
-			} else {
-				next = c
-			}
+			setup = relaySetup{url: url, key: k.relayKey, instanceID: cfg.InstanceID, name: cfg.Name, version: cfg.Version}
 		}
 	}
 
 	m.mu.Lock()
 	prev, prevKeys := m.client, m.keys
-	m.cfg, m.keys, m.client = cfg, k, next
+	// A change the relay does not see, such as this instance's own direct
+	// address, keeps the connection: a new one would take this instance off
+	// every member's list until it is back.
+	next := prev
+	if prev == nil || setup != m.setup {
+		next = m.newRelayClient(setup, k)
+	}
+	m.cfg, m.keys, m.client, m.setup = cfg, k, next, setup
 	m.mu.Unlock()
 	if !sameKeys(prevKeys, k) {
 		// A different group, or none, makes every address this instance
@@ -359,10 +355,10 @@ func (m *Manager) Apply(cfg Config) {
 		m.lastSweep = time.Time{}
 		m.sweepMu.Unlock()
 	}
-	if prev != nil {
+	if prev != nil && prev != next {
 		_ = prev.Close()
 	}
-	if next != nil {
+	if next != nil && next != prev {
 		next.Start()
 	}
 
@@ -379,6 +375,32 @@ func (m *Manager) Apply(cfg Config) {
 		}
 		return hmac.Equal([]byte(p.Tag), []byte(announceTag(k.peerAuth, p)))
 	})
+}
+
+// relaySetup is everything a relay connection is made with that can change.
+type relaySetup struct {
+	url, key, instanceID, name, version string
+}
+
+// newRelayClient returns a relay client for setup, or nil for none.
+func (m *Manager) newRelayClient(setup relaySetup, k *keys) *relay.Client {
+	if setup.url == "" {
+		return nil
+	}
+	c, err := relay.NewClient(relay.ClientOptions{
+		URL:        setup.url,
+		Key:        setup.key,
+		FrameKey:   k.frameKey,
+		InstanceID: setup.instanceID,
+		Identity:   relay.Identity{Name: setup.name, Version: setup.version},
+		Serve:      m.serve,
+		Replay:     m.replay,
+	})
+	if err != nil {
+		log.Printf("group: relay not started: %v", err)
+		return nil
+	}
+	return c
 }
 
 // maxNameBytes keeps the name an instance goes by inside what a discovery
