@@ -376,8 +376,13 @@ func (s *Service) noteMemberAddresses() {
 }
 
 // strangerProof is this instance's signed word, to a caller from a group it
-// is not in, that it is no member of that group.
+// is not in, that it is no member of that group. An instance that still keeps
+// a group's phrase but cannot open it, after an APP_KEY change for example,
+// has not left and says nothing.
 func (s *Service) strangerProof(caller, challenge string) []byte {
+	if g, err := s.store.GetGroupState(); err != nil || len(g.SecretEnc) > 0 {
+		return nil
+	}
 	signer, err := s.nextDepositSigner()
 	if err != nil {
 		log.Printf("group: sign an answer to %q: %v", caller, err)

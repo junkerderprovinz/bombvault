@@ -1179,3 +1179,37 @@ func TestAnInstanceInNoGroupSaysSoInItsOwnName(t *testing.T) {
 		t.Fatalf("Call to b in another group = %v, want a plain refusal", err)
 	}
 }
+
+func TestAMemberThatChangesItsOwnAddressStaysListedOnTheRelay(t *testing.T) {
+	a, b := relayPair(t, echo)
+	b.mu.Lock()
+	cfg := b.cfg
+	b.mu.Unlock()
+	cfg.DirectURL = "https://192.0.2.9:3443"
+	b.Apply(cfg)
+	if !b.RelayConnected() {
+		t.Fatal("b dropped its relay connection to change its own address")
+	}
+	for deadline := time.Now().Add(500 * time.Millisecond); time.Now().Before(deadline); {
+		if got := a.Members(); len(got) != 1 || !got[0].Relay {
+			t.Fatalf("a's members while b changes its address = %+v, want b on the relay throughout", got)
+		}
+	}
+}
+
+func TestARenamedMemberShowsUpUnderItsNewNameOnTheRelay(t *testing.T) {
+	a, b := relayPair(t, echo)
+	b.mu.Lock()
+	cfg := b.cfg
+	b.mu.Unlock()
+	cfg.Name = "Loft"
+	b.Apply(cfg)
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) {
+		if got := a.Members(); len(got) == 1 && got[0].Name == "Loft" {
+			return
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	t.Fatalf("a's members after b's rename = %+v, want b as Loft", a.Members())
+}

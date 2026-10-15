@@ -964,3 +964,26 @@ func TestAWordThatAMemberLeftCountsOnlyUnderItsOwnKey(t *testing.T) {
 		t.Fatalf("b's own word over the challenge left its row: %+v", rows)
 	}
 }
+
+func TestAnInstanceThatCannotOpenItsPhraseDoesNotSayItLeft(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, a, b)
+	const challenge = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+	b.svc.cfg.AppKey = strings.Repeat("c3", 32)
+	b.svc.applyGroup()
+	if b.svc.pairing().Active() {
+		t.Fatal("b still runs the group with a phrase it cannot open")
+	}
+	if word := b.svc.strangerProof(a.id(t), challenge); word != nil {
+		t.Fatalf("b, still holding the group's phrase, said it left: %s", word)
+	}
+
+	if code, _ := b.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK {
+		t.Fatalf("leave: %d", code)
+	}
+	if word := b.svc.strangerProof(a.id(t), challenge); word == nil {
+		t.Fatal("b, out of the group, gave no word")
+	}
+}
