@@ -178,8 +178,11 @@ func sweepZvolLeftovers(ctx context.Context, host ZFSHost, dataset string) {
 			log.Printf("zvol backup: %s is left from an earlier backup but kept, since %s was cloned from it", snap.Name, strings.Join(foreign, ", "))
 			continue
 		}
-		if len(snap.Clones) > 0 && !destroyOrLog(cleanup, host, ours) {
-			continue
+		if len(snap.Clones) > 0 {
+			if !destroyOrLog(cleanup, host, ours) {
+				continue
+			}
+			log.Printf("zvol backup: removed the clone %s left by an earlier backup that did not finish", ours)
 		}
 		if destroyOrLog(cleanup, host, snap.Name) {
 			log.Printf("zvol backup: removed %s left by an earlier backup that did not finish", snap.Name)
