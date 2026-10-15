@@ -563,7 +563,7 @@ func TestCheckRestorePlansTheDisksOfAChangedBlockSnapshot(t *testing.T) {
 	if need[dir] != 250 {
 		t.Fatalf("need = %v, want 250", need)
 	}
-	if c := svc.spaceLine(sc, need, false); c.Status != lineOK || c.Need != 250 {
+	if c := svc.spaceLine(sc, need, nil, false); c.Status != lineOK || c.Need != 250 {
 		t.Fatalf("space = %+v", c)
 	}
 }
@@ -574,7 +574,7 @@ func TestCheckRestoreDoesNotBlockOnADiskImageCountedAtItsCeiling(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c := svc.spaceLine(sc, need, plan.Partial); c.Status != lineSkip || c.Reason != reasonUnmeasured {
+	if c := svc.spaceLine(sc, need, nil, plan.Partial); c.Status != lineSkip || c.Reason != reasonUnmeasured {
 		t.Fatalf("space = %+v, want grey, since the images may fit without their holes", c)
 	}
 }

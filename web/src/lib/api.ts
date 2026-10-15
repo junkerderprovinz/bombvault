@@ -1191,6 +1191,21 @@ export interface RestorePlan {
   /** Set when the check asked for a backup first and the restore replaces
    *  the original. */
   backupFirst?: BackupFirstPlan;
+  /** The VM disks on ZFS volumes, which the restore writes whole. */
+  zvols?: PlanZvol[];
+}
+
+/** A zvol a VM restore writes whole. change is "changed" for one it
+ *  replaces, "added" for one it creates and "" when the host could not be
+ *  read. safety starts the name of the snapshot taken before a replaced zvol
+ *  is written. */
+export interface PlanZvol {
+  dataset: string;
+  size: number;
+  change: "" | "added" | "changed";
+  safety?: string;
+  free: number;
+  noPool?: boolean;
 }
 
 /** What becomes of the backup before a restore: "ok" when it will be taken,

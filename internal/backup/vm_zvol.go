@@ -244,6 +244,10 @@ type RestoreZvolDeps struct {
 	Restic ZvolRestic
 }
 
+// ZvolSafetySnapshotPrefix starts the name of the snapshot RestoreZvolDisk
+// takes of an existing zvol before it writes over it.
+const ZvolSafetySnapshotPrefix = "bombvault-before-restore-"
+
 // RestoreZvolDisk writes a zvol's image back onto the zvol, as a file disk
 // is restored onto its file, so the redefined VM boots the restored data. An
 // existing zvol is first snapshotted, and the returned snapshot name is how
@@ -256,7 +260,7 @@ func RestoreZvolDisk(ctx context.Context, d RestoreZvolDeps) (string, error) {
 	}
 	var safety string
 	if exists {
-		snapName := "bombvault-before-restore-" + time.Now().UTC().Format("20060102150405")
+		snapName := ZvolSafetySnapshotPrefix + time.Now().UTC().Format("20060102150405")
 		if err := d.Host.SnapshotCreate(ctx, d.Dataset, snapName); err != nil {
 			return "", fmt.Errorf("zvol restore: snapshot %s before writing to it: %w", d.Dataset, err)
 		}

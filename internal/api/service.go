@@ -12142,6 +12142,33 @@ func (h sshZFSHost) VolSize(ctx context.Context, dataset string) (int64, bool, e
 	return 0, false, nil
 }
 
+// zfsSpace is how much room ZFS has for a dataset and whether it is a zvol.
+type zfsSpace struct {
+	volume    bool
+	available int64
+}
+
+// Space reads every filesystem and zvol on the host by name.
+func (h sshZFSHost) Space(ctx context.Context) (map[string]zfsSpace, error) {
+	out, err := h.ssh.Run(ctx, virshcli.ZFSListSpaceArgs()...)
+	if err != nil {
+		return nil, err
+	}
+	space := map[string]zfsSpace{}
+	for line := range strings.Lines(out) {
+		f := strings.Split(strings.TrimSpace(line), "\t")
+		if len(f) != 3 {
+			continue
+		}
+		avail, err := strconv.ParseInt(f[2], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("available space of %s: %w", f[0], err)
+		}
+		space[f[0]] = zfsSpace{volume: f[1] == "volume", available: avail}
+	}
+	return space, nil
+}
+
 func (h sshZFSHost) CreateVolume(ctx context.Context, dataset string, size int64) error {
 	_, err := h.ssh.Run(ctx, virshcli.ZFSCreateVolumeArgs(dataset, size)...)
 	return err
