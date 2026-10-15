@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -890,5 +891,110 @@ func TestServeDirectBlocksAnAddressAfterRepeatedBadSignatures(t *testing.T) {
 	b.ServeDirect(w2, r2)
 	if w2.Code != http.StatusOK {
 		t.Fatalf("a correctly signed call from an unrelated address got HTTP %d, want 200", w2.Code)
+	}
+}
+
+// relayPair joins a and b to one relay and waits until a sees b there.
+func relayPair(t *testing.T, serveB relay.Handler) (a, b *Manager) {
+	t.Helper()
+	rs := httptest.NewServer(relay.NewServer())
+	t.Cleanup(rs.Close)
+	a = NewManager(echo)
+	b = NewManager(serveB)
+	t.Cleanup(a.Close)
+	t.Cleanup(b.Close)
+	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOwn, RelayURL: rs.URL})
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOwn, RelayURL: rs.URL})
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) && len(a.Members()) == 0 {
+		time.Sleep(20 * time.Millisecond)
+	}
+	if len(a.Members()) == 0 {
+		t.Fatal("b never showed up on the relay")
+	}
+	return a, b
+}
+
+// silentListener accepts connections and never answers on them, the way a
+// hung instance or a half-open port forward behaves.
+func silentListener(t *testing.T) string {
+	t.Helper()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var held []net.Conn
+	var mu sync.Mutex
+	go func() {
+		for {
+			c, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			mu.Lock()
+			held = append(held, c)
+			mu.Unlock()
+		}
+	}()
+	t.Cleanup(func() {
+		_ = ln.Close()
+		mu.Lock()
+		defer mu.Unlock()
+		for _, c := range held {
+			_ = c.Close()
+		}
+	})
+	return "https://" + ln.Addr().String()
+}
+
+func TestCallReachesTheRelayInTimeWhenTheDirectAddressNeverAnswers(t *testing.T) {
+	for name, addr := range map[string]func(*testing.T) string{
+		"accepts and stays silent": silentListener,
+		"unroutable":               func(*testing.T) string { return "https://10.255.255.1:3443" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			a, _ := relayPair(t, echo)
+			a.NoteAddress("id-b", addr(t))
+			ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+			defer cancel()
+			start := time.Now()
+			status, body, err := a.Call(ctx, "id-b", http.MethodGet, "/api/group/peer/status", nil)
+			if err != nil || status != http.StatusOK || string(body) != "GET /api/group/peer/status " {
+				t.Fatalf("Call = %d %q %v after %v, want the relay's answer within the deadline", status, body, err, time.Since(start))
+			}
+		})
+	}
+}
+
+func TestASlowDirectAnswerStillArrivesDirectly(t *testing.T) {
+	a, b := relayPair(t, echo)
+	var direct atomic.Int32
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(2 * time.Second)
+		direct.Add(1)
+		b.ServeDirect(w, r)
+	})
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+	a.NoteAddress("id-b", srv.URL)
+
+	status, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
+	if err != nil || status != http.StatusOK || direct.Load() != 1 {
+		t.Fatalf("Call = %d %v with %d direct answers, want the slow direct answer", status, err, direct.Load())
+	}
+}
+
+func TestADirectAddressThatDropsPacketsFailsFastWithoutARelay(t *testing.T) {
+	a := NewManager(echo)
+	t.Cleanup(a.Close)
+	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
+	a.NoteAddress("id-b", "https://10.255.255.1:3443")
+	start := time.Now()
+	if _, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil); err == nil {
+		t.Fatal("Call reached an unroutable address")
+	}
+	if took := time.Since(start); took > directDialTimeout+2*time.Second {
+		t.Fatalf("Call took %v to give up on an unroutable address, want about %v", took, directDialTimeout)
 	}
 }
