@@ -305,8 +305,10 @@ file, so the restored VM boots the restored data:
 1. Before anything is touched, BombVault checks that the run holds an image of
    every zvol disk. A run that lacks one is refused and the VM is left as it is.
 2. An existing zvol gets a snapshot first, `<dataset>@bombvault-before-restore-<time>`.
-   The log names it, and `zfs rollback` to it undoes the restore. It stays
-   until you remove it with `zfs destroy` once the restored VM works.
+   The log names it, and `zfs rollback` to it undoes the restore while it is
+   the newest snapshot of the zvol. Once a newer one exists, such as the next
+   restore's, `zfs rollback -r` does it and destroys the newer snapshots. It
+   stays until you remove it with `zfs destroy` once the restored VM works.
 3. A zvol that no longer exists is created at the size it had when it was
    backed up, and an existing one of another size is set back to that size.
 4. `dd` writes the image onto `/dev/zvol/<dataset>`. With compression on (the
