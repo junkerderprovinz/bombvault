@@ -16,7 +16,7 @@ describe("RepoPicker", () => {
         <RepoPicker value="" onChange={() => {}} locked />
       </I18nProvider>,
     );
-    const label = screen.getByText(en["zfs.repo"]).closest("label")!;
+    const label = screen.getByText(en["zfs.repo"]).parentElement!;
     const bubbles = [...label.querySelectorAll("[aria-label]")];
     expect(bubbles).toHaveLength(1);
     const tip = bubbles[0].getAttribute("aria-label") ?? "";

@@ -10,6 +10,7 @@ import { CopyBlock } from "../../components/CopyBlock";
 import { InfoBubble } from "../../components/InfoBubble";
 import { SelectField } from "../../components/SelectField";
 import { useNewTargetQuestion } from "../../components/placement/NewTargetQuestion";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { acceptMeshOffer, declineMeshOffer, proposeMeshOffer } from "../../lib/api";
 import type { DeploySnippetData, FleetPeer, MeshOffer, OffsiteDomain } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
@@ -226,32 +227,31 @@ export function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T;
 
       {!snippet ? (
         <>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("fleet.mesh.domain")}</label>
-            <SelectField
-              value={domain}
-              onChange={setDomain}
-              label={t("fleet.mesh.domain")}
-              options={MESH_DOMAINS.map((d) => ({ value: d, label: t(domainLabelKey(d)) }))}
-              className={inputCls}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("fleet.mesh.baseUrl")}
-              <InfoBubble tip={t("fleet.mesh.baseUrlHint")} />
-            </label>
-            <input
-              type="text"
-              value={baseUrl}
-              onChange={(e) => setBaseUrl(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder="http://192.168.1.50:8000"
-              dir="ltr"
-              className={`${inputCls} font-mono text-start`}
-            />
-          </div>
+          <Rows>
+            <SettingRow label={t("fleet.mesh.domain")} htmlFor="bv-mesh-domain">
+              <SelectField
+                id="bv-mesh-domain"
+                value={domain}
+                onChange={setDomain}
+                label={t("fleet.mesh.domain")}
+                options={MESH_DOMAINS.map((d) => ({ value: d, label: t(domainLabelKey(d)) }))}
+                className={inputCls}
+              />
+            </SettingRow>
+            <SettingRow label={t("fleet.mesh.baseUrl")} hint={t("fleet.mesh.baseUrlHint")} htmlFor="bv-mesh-base-url">
+              <input
+                id="bv-mesh-base-url"
+                type="text"
+                value={baseUrl}
+                onChange={(e) => setBaseUrl(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+                placeholder="http://192.168.1.50:8000"
+                dir="ltr"
+                className={`${inputCls} w-72 max-w-full font-mono text-start`}
+              />
+            </SettingRow>
+          </Rows>
         </>
       ) : (
         <>

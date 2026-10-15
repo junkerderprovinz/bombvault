@@ -3,9 +3,9 @@
 // locations that member reports so nobody has to copy one across by hand.
 // The member's restic password never reaches the browser: the server fetches
 // it over the group when the form is saved.
-import { useEffect, useState } from "react";
-import { InfoBubble } from "../../components/InfoBubble";
+import { useEffect, useId, useState } from "react";
 import { SelectField } from "../../components/SelectField";
+import { SettingRow } from "../../components/storage/rows";
 import { getGroup, memberRepos, type GroupMember, type MemberRepo } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
 
@@ -31,6 +31,7 @@ export function MemberField({
   keepOption: boolean;
   onPickLocation: (location: string) => void;
 }) {
+  const id = useId();
   const [members, setMembers] = useState<GroupMember[] | null>(null);
   const [repos, setRepos] = useState<MemberRepo[]>([]);
 
@@ -69,18 +70,16 @@ export function MemberField({
   ];
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-        {label}
-        <InfoBubble tip={t("pairing.memberHint")} />
-      </label>
+    <>
       {members.length === 0 && !keepOption ? (
-        <p className="text-caption text-carbon-textMuted">{t("pairing.memberNone")}</p>
+        <SettingRow label={label} hint={t("pairing.memberHint")} note={t("pairing.memberNone")} />
       ) : (
-        <SelectField value={value} onChange={onChange} label={label} options={options} className={inputCls} />
+        <SettingRow label={label} hint={t("pairing.memberHint")} htmlFor={id}>
+          <SelectField id={id} value={value} onChange={onChange} label={label} options={options} className={inputCls} />
+        </SettingRow>
       )}
       {repos.length > 0 && (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 py-3">
           <span className="text-caption text-carbon-textSub">{t("pairing.memberRepos")}</span>
           <ul className="flex flex-col gap-1">
             {repos.map((r, i) => (
@@ -100,6 +99,6 @@ export function MemberField({
           </ul>
         </div>
       )}
-    </div>
+    </>
   );
 }

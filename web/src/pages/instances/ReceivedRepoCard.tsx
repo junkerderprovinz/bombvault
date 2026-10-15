@@ -12,6 +12,7 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { EXACT_CADENCE_MODES } from "../../components/CadenceBuilder";
 import { NumberField } from "../../components/NumberField";
 import { PlanButton } from "../../components/PlanButton";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import {
   checkReceivedRepo,
@@ -468,77 +469,74 @@ export function ReceiverDialog({
         </>
       }
     >
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs text-carbon-textSub">{t("receiver.name")}</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          spellCheck={false}
-          autoComplete="off"
-          placeholder="tower off-site"
-          className={inputCls}
+      <Rows>
+        <SettingRow label={t("receiver.name")} htmlFor="bv-receiver-name">
+          <input
+            id="bv-receiver-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+            placeholder="tower off-site"
+            className={`${inputCls} w-72 max-w-full`}
+          />
+        </SettingRow>
+
+        <MemberField
+          t={t}
+          label={t("receiver.member")}
+          value={memberId}
+          onChange={setMemberId}
+          keepOption={keepPairing}
+          onPickLocation={setRepo}
         />
-      </div>
 
-      <MemberField
-        t={t}
-        label={t("receiver.member")}
-        value={memberId}
-        onChange={setMemberId}
-        keepOption={keepPairing}
-        onPickLocation={setRepo}
-      />
+        <SettingRow label={t("receiver.repoLocation")} hint={t("receiver.repoLocationHint")} htmlFor="bv-receiver-repo">
+          <input
+            id="bv-receiver-repo"
+            type="text"
+            value={repo}
+            onChange={(e) => setRepo(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+            placeholder="rest:http://192.168.x.x:8000/tower-containers"
+            dir="ltr"
+            className={`${inputCls} w-72 max-w-full font-mono text-start`}
+          />
+        </SettingRow>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-          {t("receiver.repoLocation")}
-          <InfoBubble tip={t("receiver.repoLocationHint")} />
-        </label>
-        <input
-          type="text"
-          value={repo}
-          onChange={(e) => setRepo(e.target.value)}
-          spellCheck={false}
-          autoComplete="off"
-          placeholder="rest:http://192.168.x.x:8000/tower-containers"
-          dir="ltr"
-          className={`${inputCls} font-mono text-start`}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1.5">
-          <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-            {t("receiver.deadManHours")}
-            <InfoBubble tip={t("receiver.deadManHoursHint")} />
-          </label>
+        <SettingRow label={t("receiver.deadManHours")} hint={t("receiver.deadManHoursHint")} htmlFor="bv-receiver-deadman">
           <NumberField
+            id="bv-receiver-deadman"
+            wrapperClassName="w-28"
             min={1}
             value={deadManHours}
             onChange={(e) => setDeadManHours(parseInt(e.target.value, 10))}
-            className={inputCls}
+            className={`${inputCls} w-full`}
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("receiver.readDataPercent")}</label>
+        </SettingRow>
+
+        <SettingRow label={t("receiver.readDataPercent")} htmlFor="bv-receiver-readdata">
           <NumberField
+            id="bv-receiver-readdata"
+            wrapperClassName="w-28"
             min={0}
             max={100}
             value={readDataPercent}
             onChange={(e) => setReadDataPercent(parseInt(e.target.value, 10))}
-            className={inputCls}
+            className={`${inputCls} w-full`}
           />
-        </div>
-      </div>
+        </SettingRow>
 
-      <div className="flex flex-col items-start gap-1.5">
-        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-          {t("receiver.checkCadence")}
-          <InfoBubble tip={t("receiver.checkCadenceTip")} />
-        </span>
-        <PlanButton label={t("receiver.checkCadence")} value={checkCadence} onChange={setCheckCadence} modes={EXACT_CADENCE_MODES} />
-      </div>
+        <div className="flex flex-col items-start gap-1.5 py-3 last:pb-0">
+          <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+            {t("receiver.checkCadence")}
+            <InfoBubble tip={t("receiver.checkCadenceTip")} />
+          </span>
+          <PlanButton label={t("receiver.checkCadence")} value={checkCadence} onChange={setCheckCadence} modes={EXACT_CADENCE_MODES} />
+        </div>
+      </Rows>
 
       {/* ToggleRow puts the label at the start and the switch at the end,
           like every other settings row. */}

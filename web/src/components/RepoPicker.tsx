@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { listRepos, type NamedRepo } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { repoDisplayName } from "../lib/directRepo";
 import { offQualifier } from "../lib/placement";
-import { InfoBubble } from "./InfoBubble";
 import { SelectField } from "./SelectField";
 import { SettingRow } from "./storage/rows";
 
@@ -20,7 +19,6 @@ export function RepoPicker({
   onChange,
   locked = false,
   disabled = false,
-  row = false,
 }: {
   /** The chosen repository's id, or "" for the domain repository. */
   value: string;
@@ -28,10 +26,9 @@ export function RepoPicker({
   /** True once the item has backups: the choice is frozen with a reason. */
   locked?: boolean;
   disabled?: boolean;
-  /** Puts the label beside the choice, as a row of a settings card. */
-  row?: boolean;
 }) {
   const { t } = useT();
+  const id = useId();
   const [repos, setRepos] = useState<NamedRepo[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -72,31 +69,17 @@ export function RepoPicker({
 
   // One (i) per label: a frozen choice adds its reason to the hint.
   const hint = locked ? `${t("zfs.repoHint")} ${t("zfs.repoLocked")}` : t("zfs.repoHint");
-  const select = (
-    <SelectField
-      value={value}
-      onChange={onChange}
-      options={options}
-      label={t("zfs.repo")}
-      disabled={disabled || locked || !loaded}
-      className={`rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus text-start ${row ? "w-80 max-w-full" : ""}`}
-    />
-  );
-  if (row) {
-    return (
-      <SettingRow label={t("zfs.repo")} hint={hint}>
-        {select}
-      </SettingRow>
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-1">
-      <label className="flex items-center gap-1 text-xs text-carbon-textSub">
-        {t("zfs.repo")}
-        <InfoBubble tip={hint} />
-      </label>
-      {select}
-    </div>
+    <SettingRow label={t("zfs.repo")} hint={hint} htmlFor={id}>
+      <SelectField
+        id={id}
+        value={value}
+        onChange={onChange}
+        options={options}
+        label={t("zfs.repo")}
+        disabled={disabled || locked || !loaded}
+        className="w-80 max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus text-start"
+      />
+    </SettingRow>
   );
 }

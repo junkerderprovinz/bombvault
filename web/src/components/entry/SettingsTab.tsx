@@ -441,7 +441,7 @@ function ZFSCards({
   return (
     <>
       <Card title={t("entry.settings.repository")} hueIndex={nextHue()}>
-        <RepoPicker value={dataset.repo} onChange={(repo) => void saveRepo(repo)} locked={dataset.lastBackup > 0} disabled={busy} row />
+        <RepoPicker value={dataset.repo} onChange={(repo) => void saveRepo(repo)} locked={dataset.lastBackup > 0} disabled={busy} />
       </Card>
       <Card title={t("entry.settings.zfs")} hueIndex={nextHue()}>
         <ZFSItemSettings item={dataset} t={t} onChanged={onChanged} series={series} />

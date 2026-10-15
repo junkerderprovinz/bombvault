@@ -24,6 +24,7 @@ import { CopyBlock } from "../../components/CopyBlock";
 import { FolderBrowser } from "../../components/FolderBrowser";
 import { InfoBubble } from "../../components/InfoBubble";
 import { NumberField } from "../../components/NumberField";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { InstanceWindow } from "./InstanceWindow";
 
 type T = ReturnType<typeof useT>["t"];
@@ -343,29 +344,32 @@ function ReceiverServerDialog({
         placeholder="user/restic"
         inDialog
       />
-      <label className="flex flex-col gap-1.5">
-        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-          {t("receiver.server.port")}
-          <InfoBubble tip={t("receiver.server.portTip")} />
-        </span>
-        <NumberField min={1} max={65535} value={port} onChange={(e) => setPort(parseInt(e.target.value, 10))} className={INPUT} />
-      </label>
-      <label className="flex flex-col gap-1.5">
-        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-          {t("receiver.server.host")}
-          <InfoBubble tip={t("receiver.server.hostTip")} />
-        </span>
-        <input
-          type="text"
-          value={host}
-          onChange={(e) => setHost(e.target.value)}
-          placeholder={t("receiver.server.hostPlaceholder")}
-          spellCheck={false}
-          autoComplete="off"
-          dir="ltr"
-          className={`${INPUT} font-mono text-start`}
-        />
-      </label>
+      <Rows>
+        <SettingRow label={t("receiver.server.port")} hint={t("receiver.server.portTip")} htmlFor="bv-receiver-server-port">
+          <NumberField
+            id="bv-receiver-server-port"
+            wrapperClassName="w-28"
+            min={1}
+            max={65535}
+            value={port}
+            onChange={(e) => setPort(parseInt(e.target.value, 10))}
+            className={`${INPUT} w-full`}
+          />
+        </SettingRow>
+        <SettingRow label={t("receiver.server.host")} hint={t("receiver.server.hostTip")} htmlFor="bv-receiver-server-host">
+          <input
+            id="bv-receiver-server-host"
+            type="text"
+            value={host}
+            onChange={(e) => setHost(e.target.value)}
+            placeholder={t("receiver.server.hostPlaceholder")}
+            spellCheck={false}
+            autoComplete="off"
+            dir="ltr"
+            className={`${INPUT} w-72 max-w-full font-mono text-start`}
+          />
+        </SettingRow>
+      </Rows>
     </InstanceWindow>
   );
 }

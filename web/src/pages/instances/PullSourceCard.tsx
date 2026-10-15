@@ -11,6 +11,7 @@ import { EXACT_CADENCE_MODES } from "../../components/CadenceBuilder";
 import { NumberField } from "../../components/NumberField";
 import { PlanButton } from "../../components/PlanButton";
 import { SelectField } from "../../components/SelectField";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { TestButton, VerdictLine } from "../../components/TestButton";
 import {
   createPullSource,
@@ -36,7 +37,7 @@ const DEFAULT_PULL_CADENCE = "daily 04:00";
 type T = ReturnType<typeof useT>["t"];
 
 const inputCls =
-  "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus";
+  "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 /** Which local repository a source's snapshots land in. The same ones the
  *  backup side knows; the server rejects anything else. */
@@ -292,95 +293,89 @@ export function PullDialog({
         </>
       }
     >
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs text-carbon-textSub">{t("pull.name")}</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          spellCheck={false}
-          autoComplete="off"
-          placeholder="tower next door"
-          className={inputCls}
+      <Rows>
+        <SettingRow label={t("pull.name")} htmlFor="bv-pull-name">
+          <input
+            id="bv-pull-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+            placeholder="tower next door"
+            className={`${inputCls} w-72 max-w-full`}
+          />
+        </SettingRow>
+
+        <MemberField
+          t={t}
+          label={t("pull.member")}
+          value={memberId}
+          onChange={setMemberId}
+          keepOption={keepPairing}
+          onPickLocation={setRepo}
         />
-      </div>
 
-      <MemberField
-        t={t}
-        label={t("pull.member")}
-        value={memberId}
-        onChange={setMemberId}
-        keepOption={keepPairing}
-        onPickLocation={setRepo}
-      />
+        <SettingRow label={t("pull.repoLocation")} hint={t("pull.repoLocationHint")} htmlFor="bv-pull-repo">
+          <input
+            id="bv-pull-repo"
+            type="text"
+            value={repo}
+            onChange={(e) => setRepo(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+            dir="ltr"
+            placeholder="rest:http://192.168.1.9:8000/their-containers"
+            className={`${inputCls} w-72 max-w-full`}
+          />
+        </SettingRow>
 
-      <div className="flex flex-col gap-1.5">
-        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-          {t("pull.repoLocation")}
-          <InfoBubble tip={t("pull.repoLocationHint")} />
-        </span>
-        <input
-          type="text"
-          value={repo}
-          onChange={(e) => setRepo(e.target.value)}
-          spellCheck={false}
-          autoComplete="off"
-          dir="ltr"
-          placeholder="rest:http://192.168.1.9:8000/their-containers"
-          className={inputCls}
-        />
-      </div>
+        <SettingRow label={t("offsite.targets.credsLabel")} hint={t("pull.credsHint")} htmlFor="bv-pull-creds">
+          <SelectField
+            id="bv-pull-creds"
+            value={credsRef}
+            onChange={setCredsRef}
+            label={t("offsite.targets.credsLabel")}
+            options={[
+              // Unlike on an off-site target, "" is not the shared default: a
+              // pull never falls back to this box's credentials.
+              { value: "", label: t("pull.credsNone") },
+              ...credSets.map((c) => ({ value: c.id, label: credSetLabel(t, c) })),
+            ]}
+            className={inputCls}
+          />
+        </SettingRow>
 
-      <div className="flex flex-col gap-1.5">
-        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-          {t("offsite.targets.credsLabel")}
-          <InfoBubble tip={t("pull.credsHint")} />
-        </span>
-        <SelectField
-          value={credsRef}
-          onChange={setCredsRef}
-          label={t("offsite.targets.credsLabel")}
-          options={[
-            // Unlike on an off-site target, "" is not the shared default: a
-            // pull never falls back to this box's credentials.
-            { value: "", label: t("pull.credsNone") },
-            ...credSets.map((c) => ({ value: c.id, label: credSetLabel(t, c) })),
-          ]}
-          className={inputCls}
-        />
-      </div>
+        <SettingRow label={t("pull.domain")} hint={t("pull.domainHint")} htmlFor="bv-pull-domain">
+          <SelectField
+            id="bv-pull-domain"
+            value={domain}
+            onChange={setDomain}
+            label={t("pull.domain")}
+            options={DOMAINS.map((d) => ({ value: d, label: t(`nav.${d}` as never) }))}
+            className={inputCls}
+          />
+        </SettingRow>
 
-      <div className="flex flex-col gap-1.5">
-        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-          {t("pull.domain")}
-          <InfoBubble tip={t("pull.domainHint")} />
-        </span>
-        <SelectField
-          value={domain}
-          onChange={setDomain}
-          label={t("pull.domain")}
-          options={DOMAINS.map((d) => ({ value: d, label: t(`nav.${d}` as never) }))}
-          className={inputCls}
-        />
-      </div>
+        <div className="flex flex-col items-start gap-1.5 py-3">
+          <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+            {t("pull.cadence")}
+            <InfoBubble tip={t("pull.cadenceTip")} />
+          </span>
+          <PlanButton label={t("pull.cadence")} value={cadence} onChange={setCadence} modes={EXACT_CADENCE_MODES} />
+        </div>
 
-      <div className="flex flex-col items-start gap-1.5">
-        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-          {t("pull.cadence")}
-          <InfoBubble tip={t("pull.cadenceTip")} />
-        </span>
-        <PlanButton label={t("pull.cadence")} value={cadence} onChange={setCadence} modes={EXACT_CADENCE_MODES} />
-      </div>
-
-      <div className="flex flex-col gap-1.5 max-w-48">
-        <label className="text-xs text-carbon-textSub">{t("pull.limitDownload")}</label>
-        <NumberField
-          min={0}
-          value={limitDownload}
-          onChange={(e) => setLimitDownload(Math.max(0, parseInt(e.target.value, 10) || 0))}
-          className={inputCls}
-        />
-      </div>
+        <SettingRow label={t("pull.limitDownload")} htmlFor="bv-pull-limit">
+          <NumberField
+            id="bv-pull-limit"
+            wrapperClassName="w-28"
+            min={0}
+            value={limitDownload}
+            onChange={(e) => setLimitDownload(Math.max(0, parseInt(e.target.value, 10) || 0))}
+            className={`${inputCls} w-full`}
+          />
+        </SettingRow>
+      </Rows>
 
       <ToggleRow
         label={t("pull.pullFrom")}
