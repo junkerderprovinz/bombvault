@@ -998,3 +998,96 @@ func TestADirectAddressThatDropsPacketsFailsFastWithoutARelay(t *testing.T) {
 		t.Fatalf("Call took %v to give up on an unroutable address, want about %v", took, directDialTimeout)
 	}
 }
+
+// switchListener hands connections to the server while it answers and
+// otherwise holds them without a word, the way a firewall that starts
+// dropping packets looks from the caller's side once TLS is involved.
+type switchListener struct {
+	net.Listener
+	silent atomic.Bool
+	mu     sync.Mutex
+	held   []net.Conn
+}
+
+func (l *switchListener) Accept() (net.Conn, error) {
+	for {
+		c, err := l.Listener.Accept()
+		if err != nil || !l.silent.Load() {
+			return c, err
+		}
+		l.mu.Lock()
+		l.held = append(l.held, c)
+		l.mu.Unlock()
+	}
+}
+
+func (l *switchListener) Close() error {
+	l.mu.Lock()
+	for _, c := range l.held {
+		_ = c.Close()
+	}
+	l.mu.Unlock()
+	return l.Listener.Close()
+}
+
+func TestADirectAddressThatStoppedAnsweringCostsOnlyTheFirstCall(t *testing.T) {
+	a, b := relayPair(t, echo)
+	var direct atomic.Int32
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, func(w http.ResponseWriter, r *http.Request) {
+		direct.Add(1)
+		b.ServeDirect(w, r)
+	})
+	srv := httptest.NewUnstartedServer(mux)
+	ln := &switchListener{Listener: srv.Listener}
+	ln.silent.Store(true)
+	srv.Listener = ln
+	srv.StartTLS()
+	t.Cleanup(srv.Close)
+	a.NoteAddress("id-b", srv.URL)
+
+	call := func() time.Duration {
+		t.Helper()
+		ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+		defer cancel()
+		start := time.Now()
+		status, _, err := a.Call(ctx, "id-b", http.MethodGet, "/api/group/peer/status", nil)
+		if err != nil || status != http.StatusOK {
+			t.Fatalf("Call = %d %v, want an answer", status, err)
+		}
+		return time.Since(start)
+	}
+	t.Logf("first call over a silent address: %v", call())
+	for i := range 3 {
+		if took := call(); took > time.Second {
+			t.Fatalf("call %d after the direct address failed took %v, want the relay at once", i+2, took)
+		} else {
+			t.Logf("call %d: %v", i+2, took)
+		}
+	}
+	if n := direct.Load(); n != 0 {
+		t.Fatalf("%d calls reached the silent address's handler", n)
+	}
+
+	ln.silent.Store(false)
+	a.refresh(context.Background())
+	direct.Store(0)
+	call()
+	if direct.Load() == 0 {
+		t.Fatal("the address answers again, but the next call still went through the relay")
+	}
+}
+
+// Without a relay the address is the only route, so one that failed a call
+// is still tried on the next.
+func TestWithoutARelayAFailedAddressIsTriedAgainOnTheNextCall(t *testing.T) {
+	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
+	_, pb := member(t, "id-b", "Attic", testSecret, echo)
+	a.NoteAddress("id-b", pb.URL)
+	a.directFailed(context.Background(), pb.URL)
+
+	status, body, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
+	if err != nil || status != http.StatusOK || string(body) != "GET /api/group/peer/status " {
+		t.Fatalf("Call = %d %q %v, want the address that failed before", status, body, err)
+	}
+}

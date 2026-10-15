@@ -179,6 +179,13 @@ type remoteAddr struct {
 // answering.
 const addrTTL = 5 * time.Minute
 
+// directRetry is how long Call leaves a direct address alone after a call to
+// it failed, as long as the relay reaches the member instead. Without it every
+// call to a member behind a dead address waits out the dial timeout before
+// the relay gets its turn. The refresh keeps probing the address meanwhile and
+// puts it back to use as soon as it answers.
+const directRetry = addrTTL
+
 // Manager keeps this instance's side of the group running: the discovery
 // announce, the relay connection and the direct transport.
 type Manager struct {
@@ -197,6 +204,8 @@ type Manager struct {
 
 	addrMu sync.Mutex
 	addrs  map[string]*remoteAddr
+	// failed holds when a call to a direct address last failed, by address.
+	failed map[string]time.Time
 
 	sweepMu   sync.Mutex
 	lastSweep time.Time
@@ -215,6 +224,7 @@ func NewManager(serve relay.Handler) *Manager {
 		limiter: relay.NewLimiter(),
 		slots:   make(chan struct{}, maxDirectCalls),
 		addrs:   map[string]*remoteAddr{},
+		failed:  map[string]time.Time{},
 		stop:    make(chan struct{}),
 		hc: &http.Client{
 			Timeout: relay.CallTimeout,
@@ -316,6 +326,7 @@ func (m *Manager) Apply(cfg Config) {
 		// group must not carry over and skip the new one's first sweep.
 		m.addrMu.Lock()
 		m.addrs = map[string]*remoteAddr{}
+		m.failed = map[string]time.Time{}
 		m.addrMu.Unlock()
 		m.sweepMu.Lock()
 		m.lastSweep = time.Time{}
@@ -520,6 +531,41 @@ func (m *Manager) knownAddress(memberID string) (string, bool) {
 	return a.url, true
 }
 
+// directFailed records that a call to url got no answer. A call whose
+// caller gave up says nothing about the address and is not recorded.
+func (m *Manager) directFailed(ctx context.Context, url string) {
+	if ctx.Err() != nil {
+		return
+	}
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	m.failed[url] = time.Now()
+}
+
+func (m *Manager) directAnswered(url string) {
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	delete(m.failed, url)
+}
+
+// directDown reports whether a call to url failed within directRetry.
+func (m *Manager) directDown(url string) bool {
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	at, ok := m.failed[url]
+	return ok && time.Since(at) < directRetry
+}
+
+// stillDown restarts directRetry for url when it is down already, so an
+// address the refresh finds dead stays out of the way of calls.
+func (m *Manager) stillDown(url string) {
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	if _, ok := m.failed[url]; ok {
+		m.failed[url] = time.Now()
+	}
+}
+
 func (m *Manager) confirmedDirect(memberID string) bool {
 	m.addrMu.Lock()
 	defer m.addrMu.Unlock()
@@ -546,7 +592,11 @@ func (m *Manager) confirmedAddresses() map[string]remoteAddr {
 // this network is asked directly first; a member reachable only through an
 // address the exchange or the sweep found is asked directly next; if neither
 // answers and the member is on the relay too, the relay carries the call
-// instead. An error means no answer came.
+// instead. A direct address that failed recently is skipped while the relay
+// reaches the member. An error means no answer came.
+//
+// The routes are tried one after another rather than raced, since a call can
+// change something on the member and must not arrive twice.
 func (m *Manager) Call(ctx context.Context, memberID, method, path string, body []byte) (int, []byte, error) {
 	m.mu.Lock()
 	k, c, self := m.keys, m.client, m.cfg.InstanceID
@@ -566,19 +616,24 @@ func (m *Manager) Call(ctx context.Context, memberID, method, path string, body 
 			continue
 		}
 		tried[p.URL] = true
+		if relayed && m.directDown(p.URL) {
+			continue
+		}
 		res, err := m.callDirect(dctx, k, self, p, call)
 		if err == nil {
 			m.ConfirmAddress(memberID, p.URL, p.Name, p.Version)
 			return res.Status, res.Body, nil
 		}
+		m.directFailed(ctx, p.URL)
 		directErr = err
 	}
-	if addr, ok := m.knownAddress(memberID); ok && !tried[addr] {
+	if addr, ok := m.knownAddress(memberID); ok && !tried[addr] && !(relayed && m.directDown(addr)) {
 		res, err := m.callDirect(dctx, k, self, discovery.Peer{ID: memberID, URL: addr}, call)
 		if err == nil {
 			m.ConfirmAddress(memberID, addr, "", "")
 			return res.Status, res.Body, nil
 		}
+		m.directFailed(ctx, addr)
 		directErr = err
 	}
 	if c != nil {
@@ -687,7 +742,8 @@ func (m *Manager) keepAlive() {
 }
 
 // refresh probes every member address on record, which confirms the ones that
-// still answer, and then starts a sweep if one is due.
+// still answer and puts a failed one back to use, and then starts a sweep if
+// one is due.
 func (m *Manager) refresh(ctx context.Context) {
 	m.mu.Lock()
 	active := m.keys != nil
@@ -697,7 +753,9 @@ func (m *Manager) refresh(ctx context.Context) {
 	}
 	for _, url := range m.knownURLs() {
 		cctx, cancel := context.WithTimeout(ctx, sweepTimeout)
-		_, _ = m.Probe(cctx, url)
+		if _, err := m.Probe(cctx, url); err != nil {
+			m.stillDown(url)
+		}
 		cancel()
 	}
 	m.MaybeSweep()
@@ -887,7 +945,11 @@ func (m *Manager) callDirect(ctx context.Context, k *keys, self string, p discov
 	if err := json.Unmarshal(raw, &out); err != nil || out.RequestID != id {
 		return relay.ProxyResult{}, fmt.Errorf("group: %s answered unreadably", p.Name)
 	}
-	return relay.OpenResult(k.frameKey, id, out.Sealed)
+	res, err := relay.OpenResult(k.frameKey, id, out.Sealed)
+	if err == nil {
+		m.directAnswered(p.URL)
+	}
+	return res, err
 }
 
 // directSignature binds a direct call's sender, time and exact body to the
