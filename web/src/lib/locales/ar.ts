@@ -1710,7 +1710,6 @@ const ar: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} موجود على أكثر من قرص أو مجمّع",
   "snapshot.reason.shareNotFound": "لم يُعثر على {path} على أي قرص أو مجمّع",
   "snapshot.reason.nestedMount": "نظام ملفات آخر مركّب في {path}",
-  "snapshot.reason.subdirMount": "{path} مجلد فرعي من مجموعة بيانات مركّبة بمفردها",
   "snapshot.reason.sshMissing": "لم يُعدّ اتصال SSH بالمضيف",
   "snapshot.reason.hostUnreachable": "لم يردّ المضيف عبر SSH",
   "snapshot.reason.viewUnavailable": "هذا المضيف لا يسمح بعرض اللقطات",

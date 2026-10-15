@@ -1709,7 +1709,6 @@ const he: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} נמצא ביותר מדיסק או pool אחד",
   "snapshot.reason.shareNotFound": "{path} לא נמצא באף דיסק או pool",
   "snapshot.reason.nestedMount": "מערכת קבצים אחרת מחוברת ב-{path}",
-  "snapshot.reason.subdirMount": "{path} הוא תיקיית משנה של מערך נתונים שמחובר בנפרד",
   "snapshot.reason.sshMissing": "לא הוגדר חיבור SSH אל המארח",
   "snapshot.reason.hostUnreachable": "המארח לא ענה דרך SSH",
   "snapshot.reason.viewUnavailable": "המארח הזה לא מאפשר את תצוגת התצלומים",

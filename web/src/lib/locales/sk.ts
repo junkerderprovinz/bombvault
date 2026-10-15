@@ -2214,7 +2214,6 @@ const sk: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} leží na viac ako jednom disku alebo fonde",
   "snapshot.reason.shareNotFound": "{path} sa nenašlo na žiadnom disku ani fonde",
   "snapshot.reason.nestedMount": "v {path} je pripojený iný súborový systém",
-  "snapshot.reason.subdirMount": "{path} je podpriečinok samostatne pripojenej dátovej sady",
   "snapshot.reason.sshMissing": "nie je nastavené pripojenie SSH k hostiteľovi",
   "snapshot.reason.hostUnreachable": "hostiteľ neodpovedal cez SSH",
   "snapshot.reason.viewUnavailable": "tento hostiteľ nepovoľuje zobrazenie snímok",

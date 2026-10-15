@@ -1700,7 +1700,6 @@ const vi: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} nằm trên nhiều hơn một đĩa hoặc pool",
   "snapshot.reason.shareNotFound": "không tìm thấy {path} trên đĩa hay pool nào",
   "snapshot.reason.nestedMount": "một hệ thống tệp khác được gắn tại {path}",
-  "snapshot.reason.subdirMount": "{path} là thư mục con của một tập dữ liệu được gắn riêng",
   "snapshot.reason.sshMissing": "chưa thiết lập kết nối SSH tới máy chủ",
   "snapshot.reason.hostUnreachable": "máy chủ không phản hồi qua SSH",
   "snapshot.reason.viewUnavailable": "máy chủ này không cho phép xem ảnh chụp",

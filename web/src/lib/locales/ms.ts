@@ -2214,7 +2214,6 @@ const ms: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} terletak pada lebih daripada satu cakera atau pool",
   "snapshot.reason.shareNotFound": "{path} tidak ditemui pada mana-mana cakera atau pool",
   "snapshot.reason.nestedMount": "sistem fail lain dilekapkan pada {path}",
-  "snapshot.reason.subdirMount": "{path} ialah subfolder set data yang dilekapkan sendiri",
   "snapshot.reason.sshMissing": "tiada sambungan SSH ke hos disediakan",
   "snapshot.reason.hostUnreachable": "hos tidak menjawab melalui SSH",
   "snapshot.reason.viewUnavailable": "hos ini tidak membenarkan paparan syot kilat",

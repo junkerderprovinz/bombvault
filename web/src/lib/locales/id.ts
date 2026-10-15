@@ -2214,7 +2214,6 @@ const id: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} berada di lebih dari satu disk atau pool",
   "snapshot.reason.shareNotFound": "{path} tidak ditemukan di disk atau pool mana pun",
   "snapshot.reason.nestedMount": "sistem berkas lain dipasang di {path}",
-  "snapshot.reason.subdirMount": "{path} adalah subfolder dari set data yang dipasang sendiri",
   "snapshot.reason.sshMissing": "koneksi SSH ke host belum diatur",
   "snapshot.reason.hostUnreachable": "host tidak menjawab lewat SSH",
   "snapshot.reason.viewUnavailable": "host ini tidak mengizinkan tampilan snapshot",

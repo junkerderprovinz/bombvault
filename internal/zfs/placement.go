@@ -30,27 +30,34 @@ const (
 	CodeSplitShare  = "split-share"
 	CodeNoBranch    = "share-not-found"
 	CodeNestedMount = "nested-mount"
-	CodeSubdirMount = "subdir-mount"
 )
 
+// Lookup is how PlaceOnZFS sees the filesystem: whether a path exists, and
+// where it really lies once symlinks are followed.
+type Lookup struct {
+	Exists func(string) bool
+	Real   func(string) string
+}
+
 // PlaceOnZFS finds the datasets that hold paths, as this container's mount
-// table shows them. A path on an Unraid user share is followed to the one
-// disk or pool below mountRoot that holds it. Every path has to lie on ZFS,
-// and so does every mount below it; the first one that does not is returned
-// instead, since then the whole container is stopped the ordinary way.
-// exists reports whether a path is present.
-func PlaceOnZFS(recs []MountRecord, paths []string, mountRoot string, exists func(string) bool) ([]Binding, *Unplaced) {
+// table shows them. A path is followed through its symlinks first, so an
+// Unraid exclusive share, which is a link from the user share into its pool,
+// lands on the pool. A path left on a user share is followed to the one disk
+// or pool below mountRoot that holds it. Every path has to lie on ZFS, and so
+// does every mount below it; the first one that does not is returned instead,
+// since then the whole container is stopped the ordinary way.
+func PlaceOnZFS(recs []MountRecord, paths []string, mountRoot string, fs Lookup) ([]Binding, *Unplaced) {
 	var out []Binding
 	for _, p := range paths {
 		p = path.Clean(p)
-		source := p
-		top, ok := coveringMount(recs, p)
+		source := path.Clean(fs.Real(p))
+		top, ok := coveringMount(recs, source)
 		if !ok {
 			return nil, &Unplaced{Code: CodeNotOnZFS, Path: p}
 		}
 		if top.FSType == "fuse.shfs" {
-			rel := strings.TrimPrefix(strings.TrimPrefix(p, top.MountPoint), "/")
-			branch, u := shareBranch(recs, rel, mountRoot, exists)
+			rel := strings.TrimPrefix(strings.TrimPrefix(source, top.MountPoint), "/")
+			branch, u := shareBranch(recs, rel, mountRoot, fs.Exists)
 			if u != nil {
 				u.Path = p
 				return nil, u
@@ -60,17 +67,10 @@ func PlaceOnZFS(recs []MountRecord, paths []string, mountRoot string, exists fun
 				return nil, &Unplaced{Code: CodeNotOnZFS, Path: p}
 			}
 		}
-		if top.FSType != "zfs" {
+		if top.FSType != "zfs" || strings.Contains(top.Source, "@") {
 			return nil, &Unplaced{Code: CodeNotOnZFS, Path: p}
 		}
-		if top.Root != "/" {
-			return nil, &Unplaced{Code: CodeSubdirMount, Path: p}
-		}
-		out = append(out, Binding{
-			Dataset: top.Source,
-			Rel:     strings.TrimPrefix(strings.TrimPrefix(source, top.MountPoint), "/"),
-			Target:  p,
-		})
+		out = append(out, Binding{Dataset: top.Source, Rel: inDataset(top, source), Target: p})
 
 		for _, r := range recs {
 			if !under(r.MountPoint, source) || strings.Contains(r.Source, "@") {
@@ -79,13 +79,18 @@ func PlaceOnZFS(recs []MountRecord, paths []string, mountRoot string, exists fun
 			if r.FSType != "zfs" {
 				return nil, &Unplaced{Code: CodeNestedMount, Path: p + strings.TrimPrefix(r.MountPoint, source)}
 			}
-			if r.Root != "/" {
-				return nil, &Unplaced{Code: CodeSubdirMount, Path: p + strings.TrimPrefix(r.MountPoint, source)}
-			}
-			out = append(out, Binding{Dataset: r.Source, Target: p + strings.TrimPrefix(r.MountPoint, source)})
+			out = append(out, Binding{Dataset: r.Source, Rel: inDataset(r, r.MountPoint), Target: p + strings.TrimPrefix(r.MountPoint, source)})
 		}
 	}
 	return out, nil
+}
+
+// inDataset is where p lies inside the dataset mounted by r, "" for its top.
+// A mount of a subdirectory, such as an Unraid exclusive share bound from its
+// pool, starts below the top by its root.
+func inDataset(r MountRecord, p string) string {
+	rel := strings.TrimPrefix(strings.TrimPrefix(p, r.MountPoint), "/")
+	return strings.Trim(path.Join(r.Root, rel), "/")
 }
 
 // coveringMount returns the mount p is read through: the deepest one at or

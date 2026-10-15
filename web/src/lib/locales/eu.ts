@@ -2214,7 +2214,6 @@ const eu: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} disko edo pool bat baino gehiagotan dago",
   "snapshot.reason.shareNotFound": "{path} ez da aurkitu inongo disko edo poolean",
   "snapshot.reason.nestedMount": "beste fitxategi-sistema bat muntatuta dago hemen: {path}",
-  "snapshot.reason.subdirMount": "{path} bereizita muntatutako datu multzo baten azpikarpeta da",
   "snapshot.reason.sshMissing": "ez dago ostalariarekiko SSH konexiorik konfiguratuta",
   "snapshot.reason.hostUnreachable": "ostalariak ez du SSH bidez erantzun",
   "snapshot.reason.viewUnavailable": "ostalari honek ez du argazkien ikuspegia onartzen",

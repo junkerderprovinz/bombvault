@@ -1710,7 +1710,6 @@ const hu: Partial<Translations> = {
   "snapshot.reason.splitShare": "a(z) {path} több lemezen vagy poolon van",
   "snapshot.reason.shareNotFound": "a(z) {path} egyetlen lemezen vagy poolon sem található",
   "snapshot.reason.nestedMount": "a(z) {path} helyen másik fájlrendszer van csatolva",
-  "snapshot.reason.subdirMount": "a(z) {path} külön csatolt adatkészlet almappája",
   "snapshot.reason.sshMissing": "nincs beállítva SSH-kapcsolat a hoszthoz",
   "snapshot.reason.hostUnreachable": "a hoszt nem válaszolt SSH-n",
   "snapshot.reason.viewUnavailable": "ez a hoszt nem engedi a pillanatkép-nézetet",

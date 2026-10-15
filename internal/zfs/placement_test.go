@@ -2,6 +2,7 @@ package zfs
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -18,17 +19,18 @@ var unraidMounts = []MountRecord{
 	{MountPoint: "/host/user/user0", Root: "/", FSType: "fuse.shfs", Source: "shfs"},
 }
 
-func existsIn(paths ...string) func(string) bool {
+// fsWith is a filesystem where exactly paths exist and nothing is a symlink.
+func fsWith(paths ...string) Lookup {
 	set := map[string]bool{}
 	for _, p := range paths {
 		set[p] = true
 	}
-	return func(p string) bool { return set[p] }
+	return Lookup{Exists: func(p string) bool { return set[p] }, Real: func(p string) string { return p }}
 }
 
 func TestPlaceOnZFSFollowsAUserShareToItsPool(t *testing.T) {
 	got, u := PlaceOnZFS(unraidMounts, []string{"/host/user/user/appdata/sonarr"}, "/host/user",
-		existsIn("/host/user/cache/appdata/sonarr"))
+		fsWith("/host/user/cache/appdata/sonarr"))
 	if u != nil {
 		t.Fatalf("unplaced: %v", u)
 	}
@@ -40,7 +42,7 @@ func TestPlaceOnZFSFollowsAUserShareToItsPool(t *testing.T) {
 
 func TestPlaceOnZFSBindsEveryDatasetBelowThePath(t *testing.T) {
 	got, u := PlaceOnZFS(unraidMounts, []string{"/host/user/user/appdata/plex"}, "/host/user",
-		existsIn("/host/user/cache/appdata/plex"))
+		fsWith("/host/user/cache/appdata/plex"))
 	if u != nil {
 		t.Fatalf("unplaced: %v", u)
 	}
@@ -54,7 +56,7 @@ func TestPlaceOnZFSBindsEveryDatasetBelowThePath(t *testing.T) {
 }
 
 func TestPlaceOnZFSReadsADirectPoolPath(t *testing.T) {
-	got, u := PlaceOnZFS(unraidMounts, []string{"/host/user/cache/appdata/sonarr/config"}, "/host/user", existsIn())
+	got, u := PlaceOnZFS(unraidMounts, []string{"/host/user/cache/appdata/sonarr/config"}, "/host/user", fsWith())
 	if u != nil {
 		t.Fatalf("unplaced: %v", u)
 	}
@@ -66,7 +68,7 @@ func TestPlaceOnZFSReadsADirectPoolPath(t *testing.T) {
 
 func TestPlaceOnZFSRefusesAShareOnTheArray(t *testing.T) {
 	_, u := PlaceOnZFS(unraidMounts, []string{"/host/user/user/media/x"}, "/host/user",
-		existsIn("/host/user/disk1/media/x"))
+		fsWith("/host/user/disk1/media/x"))
 	if u == nil || u.Code != CodeNotOnZFS || u.Path != "/host/user/user/media/x" {
 		t.Fatalf("got %+v, want %s for the share path", u, CodeNotOnZFS)
 	}
@@ -74,14 +76,14 @@ func TestPlaceOnZFSRefusesAShareOnTheArray(t *testing.T) {
 
 func TestPlaceOnZFSRefusesAShareSpreadOverDisks(t *testing.T) {
 	_, u := PlaceOnZFS(unraidMounts, []string{"/host/user/user/appdata/sonarr"}, "/host/user",
-		existsIn("/host/user/cache/appdata/sonarr", "/host/user/disk1/appdata/sonarr"))
+		fsWith("/host/user/cache/appdata/sonarr", "/host/user/disk1/appdata/sonarr"))
 	if u == nil || u.Code != CodeSplitShare {
 		t.Fatalf("got %+v, want %s", u, CodeSplitShare)
 	}
 }
 
 func TestPlaceOnZFSRefusesAShareItCannotFind(t *testing.T) {
-	_, u := PlaceOnZFS(unraidMounts, []string{"/host/user/user/appdata/gone"}, "/host/user", existsIn())
+	_, u := PlaceOnZFS(unraidMounts, []string{"/host/user/user/appdata/gone"}, "/host/user", fsWith())
 	if u == nil || u.Code != CodeNoBranch {
 		t.Fatalf("got %+v, want %s", u, CodeNoBranch)
 	}
@@ -91,17 +93,41 @@ func TestPlaceOnZFSRefusesAnotherFilesystemBelowThePath(t *testing.T) {
 	recs := append(append([]MountRecord(nil), unraidMounts...),
 		MountRecord{MountPoint: "/host/user/cache/appdata/sonarr/tmp", Root: "/", FSType: "tmpfs", Source: "tmpfs"})
 	_, u := PlaceOnZFS(recs, []string{"/host/user/user/appdata/sonarr"}, "/host/user",
-		existsIn("/host/user/cache/appdata/sonarr"))
+		fsWith("/host/user/cache/appdata/sonarr"))
 	if u == nil || u.Code != CodeNestedMount || u.Path != "/host/user/user/appdata/sonarr/tmp" {
 		t.Fatalf("got %+v, want %s at the share path of the mount", u, CodeNestedMount)
 	}
 }
 
-func TestPlaceOnZFSRefusesABindOfASubdirectory(t *testing.T) {
-	recs := []MountRecord{{MountPoint: "/data", Root: "/appdata/x", FSType: "zfs", Source: "tank/apps"}}
-	_, u := PlaceOnZFS(recs, []string{"/data/config"}, "/host/user", existsIn())
-	if u == nil || u.Code != CodeSubdirMount {
-		t.Fatalf("got %+v, want %s", u, CodeSubdirMount)
+func TestPlaceOnZFSReadsABoundSubdirectoryInsideItsDataset(t *testing.T) {
+	recs := []MountRecord{
+		{MountPoint: "/data", Root: "/appdata/x", FSType: "zfs", Source: "tank/apps"},
+		{MountPoint: "/data/db", Root: "/", FSType: "zfs", Source: "tank/apps/db"},
+	}
+	got, u := PlaceOnZFS(recs, []string{"/data/config"}, "/host/user", fsWith())
+	want := []Binding{{Dataset: "tank/apps", Rel: "appdata/x/config", Target: "/data/config"}}
+	if u != nil || !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %+v, %v; want %+v", got, u, want)
+	}
+	got, _ = PlaceOnZFS(recs, []string{"/data"}, "/host/user", fsWith())
+	want = []Binding{
+		{Dataset: "tank/apps", Rel: "appdata/x", Target: "/data"},
+		{Dataset: "tank/apps/db", Target: "/data/db"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %+v, want %+v", got, want)
+	}
+}
+
+func TestPlaceOnZFSFollowsAnExclusiveShareLinkIntoItsPool(t *testing.T) {
+	fs := fsWith()
+	fs.Real = func(p string) string {
+		return strings.Replace(p, "/host/user/user/appdata", "/host/user/cache/appdata", 1)
+	}
+	got, u := PlaceOnZFS(unraidMounts, []string{"/host/user/user/appdata/sonarr"}, "/host/user", fs)
+	want := []Binding{{Dataset: "cache/appdata", Rel: "sonarr", Target: "/host/user/user/appdata/sonarr"}}
+	if u != nil || !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %+v, %v; want %+v without looking for a branch", got, u, want)
 	}
 }
 
@@ -110,7 +136,7 @@ func TestPlaceOnZFSIgnoresSnapshotsMountedBelowThePath(t *testing.T) {
 		MountPoint: "/host/user/cache/appdata/sonarr/.zfs/snapshot/bombvault-20261015000000",
 		Root:       "/", FSType: "zfs", Source: "cache/appdata@bombvault-20261015000000",
 	})
-	got, u := PlaceOnZFS(recs, []string{"/host/user/cache/appdata/sonarr"}, "/host/user", existsIn())
+	got, u := PlaceOnZFS(recs, []string{"/host/user/cache/appdata/sonarr"}, "/host/user", fsWith())
 	if u != nil || len(got) != 1 {
 		t.Fatalf("got %+v, %v; want the dataset alone", got, u)
 	}
@@ -121,7 +147,7 @@ func TestPlaceOnZFSTakesTheMountThatHidesTheOthers(t *testing.T) {
 		{MountPoint: "/mnt/tank", Root: "/", FSType: "xfs", Source: "/dev/sdb1"},
 		{MountPoint: "/mnt/tank", Root: "/", FSType: "zfs", Source: "tank"},
 	}
-	got, u := PlaceOnZFS(recs, []string{"/mnt/tank/apps"}, "/host/user", existsIn())
+	got, u := PlaceOnZFS(recs, []string{"/mnt/tank/apps"}, "/host/user", fsWith())
 	if u != nil || len(got) != 1 || got[0].Dataset != "tank" {
 		t.Fatalf("got %+v, %v; want tank", got, u)
 	}

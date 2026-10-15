@@ -1706,7 +1706,6 @@ const pl: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} leży na więcej niż jednym dysku lub puli",
   "snapshot.reason.shareNotFound": "nie znaleziono {path} na żadnym dysku ani w żadnej puli",
   "snapshot.reason.nestedMount": "w {path} jest zamontowany inny system plików",
-  "snapshot.reason.subdirMount": "{path} jest podfolderem osobno zamontowanego zbioru danych",
   "snapshot.reason.sshMissing": "nie skonfigurowano połączenia SSH z hostem",
   "snapshot.reason.hostUnreachable": "host nie odpowiedział przez SSH",
   "snapshot.reason.viewUnavailable": "ten host nie zezwala na widok migawek",

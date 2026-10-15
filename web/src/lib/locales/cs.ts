@@ -1707,7 +1707,6 @@ const cs: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} leží na více discích nebo fondech",
   "snapshot.reason.shareNotFound": "{path} se nenašlo na žádném disku ani fondu",
   "snapshot.reason.nestedMount": "v {path} je připojen jiný souborový systém",
-  "snapshot.reason.subdirMount": "{path} je podsložka datové sady připojené samostatně",
   "snapshot.reason.sshMissing": "není nastaveno připojení SSH k hostiteli",
   "snapshot.reason.hostUnreachable": "hostitel neodpověděl přes SSH",
   "snapshot.reason.viewUnavailable": "tento hostitel nepovoluje zobrazení snímků",

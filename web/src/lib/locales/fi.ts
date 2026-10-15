@@ -1709,7 +1709,6 @@ const fi: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} on useammalla kuin yhdellä levyllä tai poolissa",
   "snapshot.reason.shareNotFound": "Polkua {path} ei löytynyt miltään levyltä eikä poolista",
   "snapshot.reason.nestedMount": "polkuun {path} on liitetty toinen tiedostojärjestelmä",
-  "snapshot.reason.subdirMount": "{path} on erikseen liitetyn tietojoukon alikansio",
   "snapshot.reason.sshMissing": "isäntään ei ole määritetty SSH-yhteyttä",
   "snapshot.reason.hostUnreachable": "isäntä ei vastannut SSH:n kautta",
   "snapshot.reason.viewUnavailable": "tämä isäntä ei salli tilannevedosnäkymää",

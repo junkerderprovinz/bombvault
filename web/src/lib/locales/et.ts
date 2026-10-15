@@ -2214,7 +2214,6 @@ const et: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} asub rohkem kui ühel kettal või kogumis",
   "snapshot.reason.shareNotFound": "{path} ei leitud ühelt kettalt ega kogumist",
   "snapshot.reason.nestedMount": "kohas {path} on ühendatud mõni muu failisüsteem",
-  "snapshot.reason.subdirMount": "{path} on eraldi ühendatud andmestiku alamkaust",
   "snapshot.reason.sshMissing": "hostiga pole SSH-ühendust seadistatud",
   "snapshot.reason.hostUnreachable": "host ei vastanud SSH kaudu",
   "snapshot.reason.viewUnavailable": "see host ei luba hetktõmmiste vaadet",

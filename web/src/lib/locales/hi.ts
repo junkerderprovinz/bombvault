@@ -2214,7 +2214,6 @@ const hi: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} एक से अधिक डिस्क या पूल पर है",
   "snapshot.reason.shareNotFound": "{path} किसी डिस्क या पूल पर नहीं मिला",
   "snapshot.reason.nestedMount": "{path} पर कोई दूसरा फ़ाइल सिस्टम माउंट है",
-  "snapshot.reason.subdirMount": "{path} अलग से माउंट किए गए डेटासेट का सबफ़ोल्डर है",
   "snapshot.reason.sshMissing": "होस्ट से SSH कनेक्शन सेट नहीं है",
   "snapshot.reason.hostUnreachable": "होस्ट ने SSH पर जवाब नहीं दिया",
   "snapshot.reason.viewUnavailable": "यह होस्ट स्नैपशॉट व्यू की अनुमति नहीं देता",

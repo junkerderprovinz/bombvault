@@ -1710,7 +1710,6 @@ const th: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} อยู่บนดิสก์หรือพูลมากกว่าหนึ่งแห่ง",
   "snapshot.reason.shareNotFound": "ไม่พบ {path} บนดิสก์หรือพูลใดเลย",
   "snapshot.reason.nestedMount": "มีระบบไฟล์อื่นเมานต์อยู่ที่ {path}",
-  "snapshot.reason.subdirMount": "{path} เป็นโฟลเดอร์ย่อยของชุดข้อมูลที่เมานต์แยกต่างหาก",
   "snapshot.reason.sshMissing": "ยังไม่ได้ตั้งค่าการเชื่อมต่อ SSH ไปยังโฮสต์",
   "snapshot.reason.hostUnreachable": "โฮสต์ไม่ตอบกลับผ่าน SSH",
   "snapshot.reason.viewUnavailable": "โฮสต์นี้ไม่อนุญาตให้ดูสแนปช็อต",

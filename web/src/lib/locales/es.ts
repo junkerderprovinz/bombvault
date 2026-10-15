@@ -1707,7 +1707,6 @@ const es: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} está en más de un disco o pool",
   "snapshot.reason.shareNotFound": "{path} no se encontró en ningún disco ni pool",
   "snapshot.reason.nestedMount": "hay otro sistema de archivos montado en {path}",
-  "snapshot.reason.subdirMount": "{path} es una subcarpeta de un conjunto de datos montado por separado",
   "snapshot.reason.sshMissing": "no hay ninguna conexión SSH con el host configurada",
   "snapshot.reason.hostUnreachable": "el host no respondió por SSH",
   "snapshot.reason.viewUnavailable": "este host no permite la vista de instantáneas",

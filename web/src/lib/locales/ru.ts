@@ -1706,7 +1706,6 @@ const ru: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} находится на нескольких дисках или пулах",
   "snapshot.reason.shareNotFound": "{path} не найден ни на одном диске или пуле",
   "snapshot.reason.nestedMount": "в {path} смонтирована другая файловая система",
-  "snapshot.reason.subdirMount": "{path} является подпапкой отдельно смонтированного набора данных",
   "snapshot.reason.sshMissing": "подключение к хосту по SSH не настроено",
   "snapshot.reason.hostUnreachable": "хост не ответил по SSH",
   "snapshot.reason.viewUnavailable": "этот хост не разрешает просмотр снимков",

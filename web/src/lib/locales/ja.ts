@@ -1700,7 +1700,6 @@ const ja: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} は複数のディスクまたはプールにまたがっています",
   "snapshot.reason.shareNotFound": "{path} はどのディスクにもプールにも見つかりませんでした",
   "snapshot.reason.nestedMount": "{path} に別のファイルシステムがマウントされています",
-  "snapshot.reason.subdirMount": "{path} は単独でマウントされたデータセットのサブフォルダです",
   "snapshot.reason.sshMissing": "ホストへのSSH接続が設定されていません",
   "snapshot.reason.hostUnreachable": "ホストがSSHで応答しませんでした",
   "snapshot.reason.viewUnavailable": "このホストではスナップショットビューが許可されていません",

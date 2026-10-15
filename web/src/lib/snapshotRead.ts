@@ -10,7 +10,6 @@ const REASON_KEY: Record<string, TranslationKey> = {
   "split-share": "snapshot.reason.splitShare",
   "share-not-found": "snapshot.reason.shareNotFound",
   "nested-mount": "snapshot.reason.nestedMount",
-  "subdir-mount": "snapshot.reason.subdirMount",
   "ssh-missing": "snapshot.reason.sshMissing",
   "zfs-unreachable": "snapshot.reason.hostUnreachable",
   "view-unavailable": "snapshot.reason.viewUnavailable",

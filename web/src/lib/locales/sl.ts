@@ -2198,7 +2198,6 @@ const sl: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} leži na več kot enem disku ali poolu",
   "snapshot.reason.shareNotFound": "{path} ni bil najden na nobenem disku ali poolu",
   "snapshot.reason.nestedMount": "na {path} je priklopljen drug datotečni sistem",
-  "snapshot.reason.subdirMount": "{path} je podmapa samostojno priklopljene zbirke podatkov",
   "snapshot.reason.sshMissing": "povezava SSH do gostitelja ni nastavljena",
   "snapshot.reason.hostUnreachable": "gostitelj ni odgovoril prek SSH",
   "snapshot.reason.viewUnavailable": "ta gostitelj ne dovoli pogleda posnetkov",

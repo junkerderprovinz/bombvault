@@ -1708,7 +1708,6 @@ const nl: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} staat op meer dan één schijf of pool",
   "snapshot.reason.shareNotFound": "{path} is op geen enkele schijf of pool gevonden",
   "snapshot.reason.nestedMount": "op {path} is een ander bestandssysteem gemount",
-  "snapshot.reason.subdirMount": "{path} is een submap van een dataset die apart is gemount",
   "snapshot.reason.sshMissing": "er is geen SSH-verbinding met de host ingesteld",
   "snapshot.reason.hostUnreachable": "de host antwoordde niet via SSH",
   "snapshot.reason.viewUnavailable": "deze host staat de snapshotweergave niet toe",

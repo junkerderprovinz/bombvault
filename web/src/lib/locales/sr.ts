@@ -2198,7 +2198,6 @@ const sr: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} се налази на више од једног диска или пула",
   "snapshot.reason.shareNotFound": "{path} није пронађен ни на једном диску ни пулу",
   "snapshot.reason.nestedMount": "на {path} је монтиран други систем датотека",
-  "snapshot.reason.subdirMount": "{path} је подфасцикла скупа података који је монтиран засебно",
   "snapshot.reason.sshMissing": "није подешена SSH веза са хостом",
   "snapshot.reason.hostUnreachable": "хост није одговорио преко SSH-а",
   "snapshot.reason.viewUnavailable": "овај хост не дозвољава приказ снимака",

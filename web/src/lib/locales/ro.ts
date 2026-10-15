@@ -1710,7 +1710,6 @@ const ro: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} se află pe mai multe discuri sau pool-uri",
   "snapshot.reason.shareNotFound": "{path} nu a fost găsit pe niciun disc sau pool",
   "snapshot.reason.nestedMount": "un alt sistem de fișiere este montat la {path}",
-  "snapshot.reason.subdirMount": "{path} este un subdosar al unui set de date montat separat",
   "snapshot.reason.sshMissing": "nu este configurată nicio conexiune SSH la gazdă",
   "snapshot.reason.hostUnreachable": "gazda nu a răspuns prin SSH",
   "snapshot.reason.viewUnavailable": "această gazdă nu permite vizualizarea instantaneelor",

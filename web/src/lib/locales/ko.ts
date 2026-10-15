@@ -1700,7 +1700,6 @@ const ko: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path}은(는) 디스크 또는 풀 두 곳 이상에 걸쳐 있습니다",
   "snapshot.reason.shareNotFound": "{path}을(를) 어떤 디스크나 풀에서도 찾지 못했습니다",
   "snapshot.reason.nestedMount": "{path}에 다른 파일 시스템이 마운트되어 있습니다",
-  "snapshot.reason.subdirMount": "{path}은(는) 따로 마운트된 데이터세트의 하위 폴더입니다",
   "snapshot.reason.sshMissing": "호스트로의 SSH 연결이 설정되어 있지 않습니다",
   "snapshot.reason.hostUnreachable": "호스트가 SSH로 응답하지 않았습니다",
   "snapshot.reason.viewUnavailable": "이 호스트는 스냅샷 보기를 허용하지 않습니다",

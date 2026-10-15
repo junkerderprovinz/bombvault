@@ -2214,7 +2214,6 @@ const ca: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} és a més d'un disc o d'un pool",
   "snapshot.reason.shareNotFound": "{path} no s'ha trobat en cap disc ni pool",
   "snapshot.reason.nestedMount": "hi ha un altre sistema de fitxers muntat a {path}",
-  "snapshot.reason.subdirMount": "{path} és una subcarpeta d'un conjunt de dades muntat per separat",
   "snapshot.reason.sshMissing": "no hi ha cap connexió SSH amb l'amfitrió configurada",
   "snapshot.reason.hostUnreachable": "l'amfitrió no ha respost per SSH",
   "snapshot.reason.viewUnavailable": "aquest amfitrió no permet la vista d'instantànies",

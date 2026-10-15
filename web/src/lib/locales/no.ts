@@ -1709,7 +1709,6 @@ const no: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} ligger på mer enn én disk eller pool",
   "snapshot.reason.shareNotFound": "{path} ble ikke funnet på noen disk eller pool",
   "snapshot.reason.nestedMount": "et annet filsystem er montert på {path}",
-  "snapshot.reason.subdirMount": "{path} er en undermappe i et datasett som er montert for seg",
   "snapshot.reason.sshMissing": "det er ikke satt opp noen SSH-forbindelse til hosten",
   "snapshot.reason.hostUnreachable": "hosten svarte ikke over SSH",
   "snapshot.reason.viewUnavailable": "denne hosten tillater ikke visning av øyeblikksbilder",

@@ -2214,7 +2214,6 @@ const lt: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} yra daugiau nei viename diske ar pool",
   "snapshot.reason.shareNotFound": "{path} nerasta jokiame diske ar pool",
   "snapshot.reason.nestedMount": "ties {path} prijungta kita failų sistema",
-  "snapshot.reason.subdirMount": "{path} yra atskirai prijungto duomenų rinkinio poaplankis",
   "snapshot.reason.sshMissing": "nenustatytas SSH ryšys su pagrindiniu kompiuteriu",
   "snapshot.reason.hostUnreachable": "pagrindinis kompiuteris neatsakė per SSH",
   "snapshot.reason.viewUnavailable": "šis pagrindinis kompiuteris neleidžia momentinių kopijų rodinio",

@@ -1709,7 +1709,6 @@ const el: Partial<Translations> = {
   "snapshot.reason.splitShare": "το {path} βρίσκεται σε περισσότερους από έναν δίσκους ή pools",
   "snapshot.reason.shareNotFound": "το {path} δεν βρέθηκε σε κανέναν δίσκο ή pool",
   "snapshot.reason.nestedMount": "άλλο σύστημα αρχείων είναι προσαρτημένο στο {path}",
-  "snapshot.reason.subdirMount": "το {path} είναι υποφάκελος συνόλου δεδομένων με δική του προσάρτηση",
   "snapshot.reason.sshMissing": "δεν έχει ρυθμιστεί σύνδεση SSH με τον host",
   "snapshot.reason.hostUnreachable": "ο host δεν απάντησε μέσω SSH",
   "snapshot.reason.viewUnavailable": "αυτός ο host δεν επιτρέπει την προβολή στιγμιοτύπων",

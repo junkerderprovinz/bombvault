@@ -2214,7 +2214,6 @@ const lv: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} atrodas vairāk nekā uz viena diska vai pool",
   "snapshot.reason.shareNotFound": "{path} netika atrasts nevienā diskā vai pool",
   "snapshot.reason.nestedMount": "uz {path} ir pievienota cita failu sistēma",
-  "snapshot.reason.subdirMount": "{path} ir atsevišķi pievienotas datu kopas apakšmape",
   "snapshot.reason.sshMissing": "nav iestatīts SSH savienojums ar saimniekdatoru",
   "snapshot.reason.hostUnreachable": "saimniekdators neatbildēja pa SSH",
   "snapshot.reason.viewUnavailable": "šis saimniekdators neatļauj momentuzņēmumu skatu",

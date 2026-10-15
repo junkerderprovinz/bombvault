@@ -119,10 +119,10 @@ func newSnapFixture(t *testing.T) *snapFixture {
 		t.Fatal(err)
 	}
 
-	previousRecs, previousStat := zfsMountRecords, zfsStat
+	previousRecs, previousStat, previousReal := zfsMountRecords, zfsStat, zfsRealPath
 	previousProc, previousWait, previousEnter := procDir, viewPIDWait, snapViewEnter
 	t.Cleanup(func() {
-		zfsMountRecords, zfsStat = previousRecs, previousStat
+		zfsMountRecords, zfsStat, zfsRealPath = previousRecs, previousStat, previousReal
 		procDir, viewPIDWait, snapViewEnter = previousProc, previousWait, previousEnter
 	})
 	recs := zfsTestRecords(t, snapMountinfo)
@@ -134,6 +134,7 @@ func newSnapFixture(t *testing.T) *snapFixture {
 		}
 		return nil, fs.ErrNotExist
 	}
+	zfsRealPath = func(p string) string { return p }
 	procDir, viewPIDWait = proc, 50*time.Millisecond
 	snapViewEnter = func(string) error { return nil }
 	return &snapFixture{svc: s, st: st, host: host, docker: docker, target: tg, in: model.Inspect{Running: true}}

@@ -2214,7 +2214,6 @@ const is: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} er á fleiri en einum diski eða pool",
   "snapshot.reason.shareNotFound": "{path} fannst á engum diski eða pool",
   "snapshot.reason.nestedMount": "annað skráakerfi er tengt á {path}",
-  "snapshot.reason.subdirMount": "{path} er undirmappa gagnasafns sem er tengt sér",
   "snapshot.reason.sshMissing": "engin SSH-tenging við hýsilinn er sett upp",
   "snapshot.reason.hostUnreachable": "hýsillinn svaraði ekki um SSH",
   "snapshot.reason.viewUnavailable": "þessi hýsill leyfir ekki sýn á skyndimyndir",

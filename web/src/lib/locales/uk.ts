@@ -1706,7 +1706,6 @@ const uk: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} лежить на кількох дисках або пулах",
   "snapshot.reason.shareNotFound": "{path} не знайдено ні на одному диску чи пулі",
   "snapshot.reason.nestedMount": "у {path} змонтовано іншу файлову систему",
-  "snapshot.reason.subdirMount": "{path} є підпапкою окремо змонтованого набору даних",
   "snapshot.reason.sshMissing": "SSH-з'єднання з хостом не налаштовано",
   "snapshot.reason.hostUnreachable": "хост не відповів по SSH",
   "snapshot.reason.viewUnavailable": "цей хост не дозволяє перегляд знімків",

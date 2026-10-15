@@ -2214,7 +2214,6 @@ const hr: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} je na više od jednog diska ili poola",
   "snapshot.reason.shareNotFound": "{path} nije pronađen ni na jednom disku ni poolu",
   "snapshot.reason.nestedMount": "na {path} je montiran drugi datotečni sustav",
-  "snapshot.reason.subdirMount": "{path} je podmapa skupa podataka koji je zasebno montiran",
   "snapshot.reason.sshMissing": "nije postavljena SSH veza s hostom",
   "snapshot.reason.hostUnreachable": "host nije odgovorio putem SSH-a",
   "snapshot.reason.viewUnavailable": "ovaj host ne dopušta prikaz snimaka",

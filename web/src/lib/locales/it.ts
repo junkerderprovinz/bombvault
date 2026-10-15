@@ -1709,7 +1709,6 @@ const it: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} si trova su più di un disco o pool",
   "snapshot.reason.shareNotFound": "{path} non è stato trovato su alcun disco o pool",
   "snapshot.reason.nestedMount": "un altro file system è montato in {path}",
-  "snapshot.reason.subdirMount": "{path} è una sottocartella di un dataset montato a parte",
   "snapshot.reason.sshMissing": "non è configurata alcuna connessione SSH all'host",
   "snapshot.reason.hostUnreachable": "l'host non ha risposto via SSH",
   "snapshot.reason.viewUnavailable": "questo host non consente la vista degli snapshot",

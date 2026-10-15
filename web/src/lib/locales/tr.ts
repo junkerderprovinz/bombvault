@@ -1709,7 +1709,6 @@ const tr: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} birden fazla disk ya da pool üzerinde",
   "snapshot.reason.shareNotFound": "{path} hiçbir disk veya pool üzerinde bulunamadı",
   "snapshot.reason.nestedMount": "{path} konumuna başka bir dosya sistemi bağlı",
-  "snapshot.reason.subdirMount": "{path}, ayrı bağlanmış bir veri kümesinin alt klasörü",
   "snapshot.reason.sshMissing": "host ile SSH bağlantısı kurulmamış",
   "snapshot.reason.hostUnreachable": "host SSH üzerinden yanıt vermedi",
   "snapshot.reason.viewUnavailable": "bu host anlık görüntü görünümüne izin vermiyor",

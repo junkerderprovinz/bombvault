@@ -2214,7 +2214,6 @@ const bg: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} се намира на повече от един диск или пул",
   "snapshot.reason.shareNotFound": "{path} не е намерен на нито един диск или пул",
   "snapshot.reason.nestedMount": "на {path} е монтирана друга файлова система",
-  "snapshot.reason.subdirMount": "{path} е подпапка на набор от данни с отделно монтиране",
   "snapshot.reason.sshMissing": "не е настроена SSH връзка към хоста",
   "snapshot.reason.hostUnreachable": "хостът не отговори по SSH",
   "snapshot.reason.viewUnavailable": "този хост не позволява изгледа на снимките",

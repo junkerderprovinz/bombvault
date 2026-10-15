@@ -99,13 +99,16 @@ func (s *Service) planContainerSnapshot(ctx context.Context, settings store.Sett
 		return nil, ""
 	}
 	recs := zfsMountRecords()
-	exists := func(p string) bool {
-		_, err := zfsStat(p)
-		return err == nil
+	lookup := zfs.Lookup{
+		Exists: func(p string) bool {
+			_, err := zfsStat(p)
+			return err == nil
+		},
+		Real: zfsRealPath,
 	}
-	bindings, unplaced := zfs.PlaceOnZFS(recs, paths, s.cfg.HostMountRoot, exists)
+	bindings, unplaced := zfs.PlaceOnZFS(recs, paths, s.cfg.HostMountRoot, lookup)
 	if unplaced != nil {
-		if !anyOnZFS(recs, paths, s.cfg.HostMountRoot, exists) {
+		if !anyOnZFS(recs, paths, s.cfg.HostMountRoot, lookup) {
 			return nil, ""
 		}
 		return nil, unplaced.Code + ": " + s.toHostPath(unplaced.Path)
@@ -142,9 +145,9 @@ func (s *Service) planContainerSnapshot(ctx context.Context, settings store.Sett
 
 // anyOnZFS reports whether at least one of paths lies on ZFS, which is when
 // it is worth saying why the container was stopped the ordinary way.
-func anyOnZFS(recs []zfs.MountRecord, paths []string, mountRoot string, exists func(string) bool) bool {
+func anyOnZFS(recs []zfs.MountRecord, paths []string, mountRoot string, lookup zfs.Lookup) bool {
 	for _, p := range paths {
-		if _, u := zfs.PlaceOnZFS(recs, []string{p}, mountRoot, exists); u == nil || u.Code != zfs.CodeNotOnZFS && u.Code != zfs.CodeNoBranch {
+		if _, u := zfs.PlaceOnZFS(recs, []string{p}, mountRoot, lookup); u == nil || u.Code != zfs.CodeNotOnZFS && u.Code != zfs.CodeNoBranch {
 			return true
 		}
 	}
@@ -197,6 +200,15 @@ func (s *Service) removeSnapView(ctx context.Context, name string) {
 // at the Docker host can tell whose it is.
 func snapViewName(instance, run string) string {
 	return dockercli.SnapViewPrefix + truncateName(instance, 8) + "-" + run
+}
+
+// zfsRealPath is where a path lies once its symlinks are followed, or the path
+// itself when they cannot be. A var so a test can stand in for the links.
+var zfsRealPath = func(p string) string {
+	if real, err := filepath.EvalSymlinks(p); err == nil {
+		return real
+	}
+	return p
 }
 
 // viewPIDWait bounds the wait for a view's shell to appear, and snapViewEnter

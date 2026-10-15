@@ -1700,7 +1700,6 @@ const zh: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} 分布在多个磁盘或池上",
   "snapshot.reason.shareNotFound": "在任何磁盘或池上都找不到 {path}",
   "snapshot.reason.nestedMount": "{path} 下挂载了另一个文件系统",
-  "snapshot.reason.subdirMount": "{path} 是单独挂载的数据集的子文件夹",
   "snapshot.reason.sshMissing": "尚未设置到主机的 SSH 连接",
   "snapshot.reason.hostUnreachable": "主机没有通过 SSH 响应",
   "snapshot.reason.viewUnavailable": "此主机不允许使用快照视图",

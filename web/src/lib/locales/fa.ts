@@ -2214,7 +2214,6 @@ const fa: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} روی بیش از یک دیسک یا پول است",
   "snapshot.reason.shareNotFound": "{path} روی هیچ دیسک یا پولی پیدا نشد",
   "snapshot.reason.nestedMount": "سامانه‌پرونده دیگری در {path} سوار شده است",
-  "snapshot.reason.subdirMount": "{path} زیرپوشه‌ای از یک مجموعه‌داده است که جداگانه سوار شده",
   "snapshot.reason.sshMissing": "اتصال SSH به میزبان تنظیم نشده است",
   "snapshot.reason.hostUnreachable": "میزبان از راه SSH پاسخ نداد",
   "snapshot.reason.viewUnavailable": "این میزبان نمای عکس‌های لحظه‌ای را اجازه نمی‌دهد",

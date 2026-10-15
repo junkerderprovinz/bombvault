@@ -2214,7 +2214,6 @@ const gl: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} está en máis dun disco ou pool",
   "snapshot.reason.shareNotFound": "{path} non se atopou en ningún disco nin pool",
   "snapshot.reason.nestedMount": "hai outro sistema de ficheiros montado en {path}",
-  "snapshot.reason.subdirMount": "{path} é un subcartafol dun conxunto de datos montado á parte",
   "snapshot.reason.sshMissing": "non hai ningunha conexión SSH co host configurada",
   "snapshot.reason.hostUnreachable": "o host non respondeu por SSH",
   "snapshot.reason.viewUnavailable": "este host non permite a vista de instantáneas",

@@ -1709,7 +1709,6 @@ const fr: Partial<Translations> = {
   "snapshot.reason.splitShare": "{path} se trouve sur plusieurs disques ou pools",
   "snapshot.reason.shareNotFound": "{path} est introuvable sur tous les disques et pools",
   "snapshot.reason.nestedMount": "un autre système de fichiers est monté sur {path}",
-  "snapshot.reason.subdirMount": "{path} est un sous-dossier d'un jeu de données monté à part",
   "snapshot.reason.sshMissing": "aucune connexion SSH à l'hôte n'est configurée",
   "snapshot.reason.hostUnreachable": "l'hôte n'a pas répondu par SSH",
   "snapshot.reason.viewUnavailable": "cet hôte n'autorise pas la vue des instantanés",
