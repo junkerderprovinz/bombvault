@@ -104,3 +104,21 @@ func TestSwitchingTheTargetBackOnBringsTheDrillBack(t *testing.T) {
 		t.Fatalf("offsiteTargetForSource = %+v, %v; want the switched-on row %q", got, err, on.ID)
 	}
 }
+
+func TestTheSchedulerIsToldADomainWithEveryTargetOffHasNoOffsite(t *testing.T) {
+	s, _ := switchedOffPrimaryService(t)
+	if s.OffsiteInUse("containers") {
+		t.Fatal("OffsiteInUse = true with the only target switched off")
+	}
+
+	legacy := &Service{store: newSourceSeamStore(t)}
+	if _, err := legacy.store.MutateSettings(func(st *store.Settings) error {
+		st.ContainersOffsite = "rest:http://192.168.20.112:38000/bv/containers"
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if !legacy.OffsiteInUse("containers") {
+		t.Fatal("OffsiteInUse = false for a domain the off-site setting alone describes")
+	}
+}
