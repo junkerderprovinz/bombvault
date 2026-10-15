@@ -337,6 +337,44 @@ func TestDashboardPluginPlatformMismatchErrorIsActionable(t *testing.T) {
 	}
 }
 
+// TrueNAS is only set by the PLATFORM override, so it is never an Unraid host
+// with a missing mount and the advice would only confuse.
+func TestUnraidOnlyRefusalOnTrueNASLeavesOutTheMountAdvice(t *testing.T) {
+	s := unraidNotifyService(t, failIfCalledSSH{t})
+	s.SetPlatform(platform.TrueNAS{})
+	err := s.TestNotify(context.Background(), notify.Config{Unraid: true})
+	want := "unraid: the Unraid notification channel is only available on Unraid hosts, and this one runs TrueNAS."
+	if got := scrubError(err); got != want {
+		t.Fatalf("TestNotify on TrueNAS = %q, want %q", got, want)
+	}
+}
+
+func TestUnraidOnlyRefusalEndsAsASentence(t *testing.T) {
+	s := &Service{}
+	s.SetPlatform(platform.Generic{})
+	msg := s.unraidPlatformMismatchError("the flash backup").Error()
+	if strings.Count(msg, "(") != strings.Count(msg, ")") || !strings.HasSuffix(msg, "restart the container.") {
+		t.Fatalf("refusal = %q, want balanced brackets and a closing full stop", msg)
+	}
+}
+
+func TestUnraidGateMismatchOnTrueNASLogsNoMountAdvice(t *testing.T) {
+	s := unraidNotifyService(t, failIfCalledSSH{t})
+	s.SetPlatform(platform.TrueNAS{})
+
+	var buf strings.Builder
+	prev := log.Writer()
+	log.SetOutput(&buf)
+	defer log.SetOutput(prev)
+
+	if s.unraidGate(true) {
+		t.Fatal("unraidGate must stay closed on TrueNAS")
+	}
+	if out := buf.String(); !strings.Contains(out, "TrueNAS") || strings.Contains(out, "/boot") {
+		t.Fatalf("log = %q, want it to name TrueNAS without the Unraid mount advice", out)
+	}
+}
+
 // Scrubbed, the platform-mismatch hint would read "verify the host's [path] is
 // bind-mounted to [path] inside the container".
 func TestScrubErrorKeepsUnraidPlatformMismatchPaths(t *testing.T) {

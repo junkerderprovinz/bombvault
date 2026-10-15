@@ -850,6 +850,7 @@ const ja: Partial<Translations> = {
   "notify.unraid": "Unraid 通知",
   "notify.unraidHint": "Unraid 自身の通知システムに送信します（Pushover、メール、Discord、… へ転送可能）。設定、連携、ホスト SSH の SSH 接続経由で動作するため、キーはそこで承認されている必要があります。ただし libvirt/VMs は不要です（VMs をバックアップしない場合は「libvirt not reachable」の結果を無視してください）。確認するには下の「テスト送信」を使用してください。",
   "notify.unraidPlatformMismatch": "BombVault はこのホストを Unraid ではなく \"{platform}\" として検出しました。このオプションが有効でも Unraid 通知は無効のままです。実際に Unraid ホストである場合は、ホストの /boot がコンテナ内の /host/boot にバインドマウントされているか確認し（BombVault の Unraid テンプレートを参照）、コンテナを再起動してください。",
+  "notify.unraidOffOnTrueNAS": "このホストは TrueNAS で動作しているため、このオプションが有効でも Unraid の通知はオフのままです。",
   "notify.test": "テスト送信",
   "notify.anomaliesWhere": "どの異常で通知を送るかは、「{page}」で選べます。",
   "stophook.title": "他のコンテナを停止",

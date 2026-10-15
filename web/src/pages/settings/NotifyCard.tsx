@@ -271,10 +271,13 @@ export function NotifyCard({
       {/* The toggle is on but platform detection did not find Unraid, so the
           backend (unraidGate) sends nothing. Usually an Unraid host whose
           container lacks the template's /boot -> /host/boot mount. Without
-          this banner only "Send test" would reveal it. */}
+          this banner only "Send test" would reveal it. TrueNAS is only ever
+          set explicitly, so there is no mount to suggest there. */}
       {cfg.unraid && platformKind !== "unraid" && (
         <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
-          {tLtr(t, "notify.unraidPlatformMismatch").replace("{platform}", platformKind)}
+          {platformKind === "truenas"
+            ? t("notify.unraidOffOnTrueNAS")
+            : tLtr(t, "notify.unraidPlatformMismatch").replace("{platform}", platformKind)}
         </div>
       )}
 

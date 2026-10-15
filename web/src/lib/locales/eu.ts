@@ -802,6 +802,7 @@ const eu: Partial<Translations> = {
   "notify.unraid": "Unraid-en jakinarazpenak",
   "notify.unraidHint": "Unraid-en bere jakinarazpen-sistemara bidaltzen du (Pushover, posta elektronikoa, Discord, … helburura birbidal dezakeena). Ezarpenak, Integrazioak, Ostalariaren SSH-ko SSH konexioaren bidez exekutatzen da, beraz gakoak han baimenduta egon behar du, baina libvirt/MB ez dira beharrezkoak (ez ikusi «libvirt not reachable» emaitza MBrik babesten ez baduzu). Erabili beheko Bidali proba egiaztatzeko.",
   "notify.unraidPlatformMismatch": "BombVaultek ostalari hau «{platform}» gisa detektatu du, ez Unraid gisa. Unraid-en jakinarazpenak itzalita jarraitzen dute etengailu hau piztuta egon arren. Hau benetan Unraid ostalari bat bada, egiaztatu ostalariaren /boot edukiontziaren barruko /host/boot-era lotuta dagoela (ikusi BombVaulten Unraid txantiloia) eta berrabiarazi edukiontzia.",
+  "notify.unraidOffOnTrueNAS": "Ostalari honek TrueNAS erabiltzen du, beraz Unraid-en jakinarazpenak itzalita jarraitzen dute etengailu hau piztuta egon arren.",
   "notify.smtp": "Posta elektronikoa (SMTP)",
   "notify.smtpHost": "SMTP ostalaria",
   "notify.smtpPort": "Ataka",

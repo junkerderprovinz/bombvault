@@ -802,6 +802,7 @@ const fa: Partial<Translations> = {
   "notify.unraid": "اعلان‌های Unraid",
   "notify.unraidHint": "به سیستم اعلان خود Unraid ارسال می‌کند (که می‌تواند به Pushover، ایمیل، Discord، … بازارسال کند). از طریق اتصال SSH بخش تنظیمات، یکپارچه‌سازی‌ها، SSH میزبان اجرا می‌شود، پس کلید باید آنجا مجاز شده باشد، اما libvirt/ماشین‌های مجازی لازم نیستند (اگر از ماشین مجازی پشتیبان نمی‌گیری، نتیجه «libvirt not reachable» را نادیده بگیر). برای بررسی از دکمه ارسال آزمایش زیر استفاده کن.",
   "notify.unraidPlatformMismatch": "BombVault این میزبان را «{platform}» تشخیص داده، نه Unraid. اعلان‌های Unraid حتی با فعال بودن این گزینه، خاموش می‌مانند. اگر این واقعاً یک میزبان Unraid است، بررسی کن /boot میزبان به /host/boot داخل کانتینر متصل شده باشد (به قالب Unraid مخصوص BombVault مراجعه کن) و کانتینر را دوباره راه‌اندازی کن.",
+  "notify.unraidOffOnTrueNAS": "این میزبان TrueNAS اجرا می‌کند، بنابراین اعلان‌های Unraid حتی با فعال بودن این گزینه خاموش می‌مانند.",
   "notify.smtp": "ایمیل (SMTP)",
   "notify.smtpHost": "میزبان SMTP",
   "notify.smtpPort": "پورت",

@@ -859,6 +859,7 @@ const it: Partial<Translations> = {
   "notify.unraid": "Notifiche Unraid",
   "notify.unraidHint": "Invia al sistema di notifiche di Unraid (che può inoltrare a Pushover, email, Discord, …). Funziona tramite la connessione SSH da Impostazioni, Integrazioni, SSH dell'host, quindi la chiave deve essere autorizzata lì, ma libvirt/VMs non sono necessari (ignora un risultato «libvirt not reachable» se non esegui il backup delle VMs). Per verificare, usa «Invia test» qui sotto.",
   "notify.unraidPlatformMismatch": "BombVault ha rilevato questo host come \"{platform}\", non come Unraid. Le notifiche Unraid restano disattivate anche con questa opzione attiva. Se questo È davvero un host Unraid, verifica che il /boot dell'host sia montato (bind-mount) su /host/boot all'interno del container (vedi il template Unraid di BombVault) e riavvia il container.",
+  "notify.unraidOffOnTrueNAS": "Questo host usa TrueNAS, quindi le notifiche Unraid restano disattivate anche con questa opzione attiva.",
   "notify.test": "Invia test",
   "notify.anomaliesWhere": "Quali anomalie inviano una notifica lo decidi in {page}.",
   "stophook.title": "Arresta altri container",

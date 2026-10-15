@@ -802,6 +802,7 @@ const id: Partial<Translations> = {
   "notify.unraid": "Notifikasi Unraid",
   "notify.unraidHint": "Mengirim ke sistem notifikasi Unraid sendiri (yang dapat meneruskan ke Pushover, email, Discord, …). Berjalan melalui koneksi SSH dari Pengaturan, Integrasi, SSH host, jadi kunci harus diotorisasi di sana, tetapi libvirt/VM tidak diperlukan (abaikan hasil \"libvirt not reachable\" jika Anda tidak mencadangkan VM). Gunakan Kirim tes di bawah untuk memeriksa.",
   "notify.unraidPlatformMismatch": "BombVault mendeteksi host ini sebagai \"{platform}\", bukan Unraid. Notifikasi Unraid tetap mati bahkan dengan tombol ini dinyalakan. Jika ini memang host Unraid, periksa apakah /boot host telah di-bind-mount ke /host/boot di dalam container (lihat template Unraid BombVault) dan mulai ulang container.",
+  "notify.unraidOffOnTrueNAS": "Host ini menjalankan TrueNAS, jadi notifikasi Unraid tetap mati meskipun tombol ini dinyalakan.",
   "notify.smtp": "Email (SMTP)",
   "notify.smtpHost": "Host SMTP",
   "notify.smtpPort": "Port",

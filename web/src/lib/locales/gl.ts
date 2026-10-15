@@ -802,6 +802,7 @@ const gl: Partial<Translations> = {
   "notify.unraid": "Notificacións de Unraid",
   "notify.unraidHint": "Envía ao propio sistema de notificacións de Unraid (que pode reenviar a Pushover, correo, Discord, …). Execútase a través da conexión SSH de Configuración, Integracións, SSH do host, así que a clave debe estar autorizada alí, pero libvirt/MV non son necesarios (ignora un resultado «libvirt not reachable» se non fas copia de MV). Usa Enviar proba abaixo para comprobalo.",
   "notify.unraidPlatformMismatch": "BombVault detectou este host como «{platform}», non como Unraid. As notificacións de Unraid quedan desactivadas mesmo con este interruptor activado. Se isto É un host Unraid, comproba que o /boot do host estea montado en /host/boot dentro do contedor (mira o modelo de Unraid de BombVault) e reinicia o contedor.",
+  "notify.unraidOffOnTrueNAS": "Este host usa TrueNAS, así que as notificacións de Unraid quedan desactivadas mesmo con este interruptor activado.",
   "notify.smtp": "Correo (SMTP)",
   "notify.smtpHost": "Host SMTP",
   "notify.smtpPort": "Porto",

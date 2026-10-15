@@ -802,6 +802,7 @@ const ca: Partial<Translations> = {
   "notify.unraid": "Notificacions d'Unraid",
   "notify.unraidHint": "Envia al sistema propi de notificacions d'Unraid (que pot reenviar a Pushover, correu, Discord, …). S'executa a través de la connexió SSH de Configuració, Integracions, SSH de l'amfitrió, així que la clau ha d'estar autoritzada allà, però libvirt/MV no són necessaris (ignora un resultat «libvirt not reachable» si no fas còpia de MV). Fes servir Envia prova a sota per comprovar-ho.",
   "notify.unraidPlatformMismatch": "BombVault ha detectat aquest amfitrió com a «{platform}», no com a Unraid. Les notificacions d'Unraid es mantenen desactivades encara que això estigui activat. Si realment és un amfitrió Unraid, comprova que el /boot de l'amfitrió estigui muntat a /host/boot dins del contenidor (mira la plantilla d'Unraid de BombVault) i reinicia el contenidor.",
+  "notify.unraidOffOnTrueNAS": "Aquest amfitrió funciona amb TrueNAS, de manera que les notificacions d'Unraid es mantenen desactivades encara que aquesta opció estigui activada.",
   "notify.smtp": "Correu (SMTP)",
   "notify.smtpHost": "Amfitrió SMTP",
   "notify.smtpPort": "Port",

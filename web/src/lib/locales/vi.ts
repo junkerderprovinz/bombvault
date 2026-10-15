@@ -850,6 +850,7 @@ const vi: Partial<Translations> = {
   "notify.unraid": "Thông báo Unraid",
   "notify.unraidHint": "Gửi đến hệ thống thông báo của chính Unraid (có thể chuyển tiếp tới Pushover, email, Discord, …). Chạy qua kết nối SSH từ Cài đặt, Tích hợp, SSH máy chủ, nên khóa phải được ủy quyền ở đó, nhưng không bắt buộc phải có libvirt/VMs (bỏ qua kết quả “libvirt not reachable” nếu bạn không sao lưu VMs). Để kiểm tra, dùng “Gửi thử” bên dưới.",
   "notify.unraidPlatformMismatch": "BombVault đã phát hiện máy chủ này là \"{platform}\", không phải Unraid. Thông báo Unraid vẫn tắt dù tùy chọn này đang bật. Nếu đây thực sự là máy chủ Unraid, hãy kiểm tra xem /boot của máy chủ đã được bind-mount tới /host/boot bên trong container chưa (xem mẫu Unraid của BombVault), rồi khởi động lại container.",
+  "notify.unraidOffOnTrueNAS": "Máy chủ này chạy TrueNAS, nên thông báo Unraid vẫn tắt dù tùy chọn này đang bật.",
   "notify.test": "Gửi thử",
   "notify.anomaliesWhere": "Bạn chọn bất thường nào sẽ gửi thông báo trong mục “{page}”.",
   "stophook.title": "Dừng các container khác",

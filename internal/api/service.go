@@ -942,6 +942,10 @@ func (s *Service) unraidGate(unraidWanted bool) bool {
 // underlying gate does not just trust the toggle instead.
 func (s *Service) warnUnraidPlatformMismatch() {
 	s.platformMismatchOnce.Do(func() {
+		if s.platformFn().Kind() == platform.KindTrueNAS {
+			log.Printf("platform: notify.Config.Unraid is enabled but this host runs TrueNAS, so the Unraid-only host features stay disabled")
+			return
+		}
 		log.Printf("platform: notify.Config.Unraid is enabled but BombVault detected platform=%q (not %q) — "+
 			"Unraid-only host features (webGUI notifications, the update-status reconcile, the dashboard-tile "+
 			"plugin) stay disabled. If this IS an Unraid host, verify the host's /boot is bind-mounted to "+
@@ -951,35 +955,25 @@ func (s *Service) warnUnraidPlatformMismatch() {
 	})
 }
 
-// unraidPlatformMismatchError builds the user-facing refusal for a
-// request-scoped, Unraid-only action (TestNotify's Unraid channel, the
-// dashboard-tile plugin's install/remove — see runDashPluginCmd) attempted
-// while platform detection did not resolve to Unraid. feature names the
-// specific thing being refused (e.g. "the Unraid notification channel").
+// unraidPlatformMismatchError builds the refusal for an Unraid-only action
+// (the Unraid notification test, the dashboard plugin, the flash backup) on a
+// host that did not resolve to Unraid. feature names what is refused.
 //
-// Unlike unraidGate's best-effort background paths (which log
-// warnUnraidPlatformMismatch instead — nobody is waiting on those), these
-// are explicit, synchronous user actions: the caller must see the reason
-// immediately in the response, including the same actionable /host/boot
-// hint, not go dig through the container log for it.
-//
-// Returns a *platformMismatchErr (not a plain fmt.Errorf) so the message
-// bypasses handlers.go's scrubError: that scrubber strips every absolute
-// path from an error before it reaches the client (defense-in-depth against
-// leaking a repo path or secret), which would otherwise reduce this whole
-// hint to "the ... is only available on Unraid hosts (BombVault detected
-// platform=\"generic\" — if this IS an Unraid host, verify the host's
-// [path] is bind-mounted to [path] inside the container ...)" — useless.
-// /boot and /host/boot are BombVault's own fixed, publicly-documented mount
-// points (see the Unraid template), never a repo path or secret, so this is
-// the same bypass errRestoreDestination/errRepoPathGuidance (handlers.go,
-// repo_path.go) already use for the identical reason.
+// A generic host may be Unraid without the /boot mount, so its refusal says
+// how to mount it. The message is a *platformMismatchErr so scrubError keeps
+// /boot and /host/boot, which are BombVault's own documented mount points.
+// TrueNAS is only ever set by the PLATFORM override, never detected, so it
+// gets no mount advice.
 func (s *Service) unraidPlatformMismatchError(feature string) error {
+	kind := s.platformFn().Kind()
+	if kind == platform.KindTrueNAS {
+		return &platformMismatchErr{msg: feature + " is only available on Unraid hosts, and this one runs TrueNAS."}
+	}
 	return &platformMismatchErr{msg: fmt.Sprintf(
-		"%s is only available on Unraid hosts (BombVault detected platform=%q). "+
-			"If this is an Unraid host, verify the host's /boot is bind-mounted to /host/boot "+
-			"inside the container, see the BombVault Unraid template, and restart the container)",
-		feature, s.platformFn().Kind())}
+		"%s is only available on Unraid hosts, and BombVault detected platform=%q. "+
+			"If this is an Unraid host, bind-mount the host's /boot to /host/boot "+
+			"inside the container as the BombVault Unraid template does, and restart the container.",
+		feature, kind)}
 }
 
 // errUnraidPlatformMismatch is the scrubber-bypass sentinel unraidPlatformMismatchError's
@@ -13753,6 +13747,11 @@ var _ backup.FlashRestic = (*resticAdapter)(nil)
 // flash repo via restic. Fails with a clear message if the flash directory is
 // not mounted (the /boot → /host/boot mount is required for this domain).
 func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr error) {
+	// The schedule and the everything run call this without going through
+	// StartBackupFlash, so the platform check has to live here as well.
+	if s.platformFn().Kind() != platform.KindUnraid {
+		return backup.Summary{}, s.unraidPlatformMismatchError("the flash backup")
+	}
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)

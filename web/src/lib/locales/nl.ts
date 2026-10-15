@@ -855,6 +855,7 @@ const nl: Partial<Translations> = {
   "notify.unraid": "Unraid-meldingen",
   "notify.unraidHint": "Stuur naar Unraids eigen meldingssysteem (dat kan doorsturen naar Pushover, e-mail, Discord, …). Werkt via de SSH-verbinding uit Instellingen, Integraties, Host-SSH, dus de sleutel moet daar geautoriseerd zijn, maar libvirt/VMs zijn niet vereist (negeer een “libvirt not reachable”-resultaat als je geen VMs back-upt). Controleer het met “Test versturen” hieronder.",
   "notify.unraidPlatformMismatch": "BombVault heeft deze host gedetecteerd als \"{platform}\", niet als Unraid. Unraid-meldingen blijven uit, ook als deze optie aan staat. Als dit echt een Unraid-host is, controleer dan of het /boot van de host is bind-mounted naar /host/boot binnen de container (zie de BombVault Unraid-template) en start de container opnieuw.",
+  "notify.unraidOffOnTrueNAS": "Deze host draait TrueNAS, dus Unraid-meldingen blijven uit, ook als deze optie aan staat.",
   "notify.test": "Test versturen",
   "notify.anomaliesWhere": "Welke anomalieën een melding sturen, stel je in onder {page}.",
   "stophook.title": "Andere containers stoppen",

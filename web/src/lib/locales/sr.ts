@@ -802,6 +802,7 @@ const sr: Partial<Translations> = {
   "notify.unraid": "Unraid обавештења",
   "notify.unraidHint": "Пошаљи сопственом Unraid систему обавештења (који може проследити на Pushover, е-пошту, Discord …). Извршава се преко SSH везе из Подешавања, Интеграције, SSH домаћина, па кључ мора бити овлашћен тамо — али libvirt/ВМ-ови нису потребни (занемари резултат \"libvirt недоступан\" ако не правиш резервне копије ВМ-ова). За проверу испод користи Пошаљи тест.",
   "notify.unraidPlatformMismatch": "BombVault је овај хост препознао као \"{platform}\", не као Unraid — Unraid обавештења остају искључена чак и уз укључен овај прекидач. Ако је ово заиста Unraid хост, провери да ли је /boot хоста повезан (bind-mount) са /host/boot унутар контејнера (погледај BombVault Unraid шаблон) и поново покрени контејнер.",
+  "notify.unraidOffOnTrueNAS": "Овај хост ради на TrueNAS-у, па Unraid обавештења остају искључена чак и када је ова опција укључена.",
   "notify.smtp": "Е-пошта (SMTP)",
   "notify.smtpHost": "SMTP хост",
   "notify.smtpPort": "Порт",

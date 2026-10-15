@@ -857,6 +857,7 @@ const cs: Partial<Translations> = {
   "notify.unraid": "Oznámení Unraid",
   "notify.unraidHint": "Odeslat do vlastního systému oznámení Unraidu (který umí přeposlat do Pushover, e-mailu, Discordu, …). Běží přes připojení SSH z Nastavení, Integrace, SSH k hostiteli, takže klíč tam musí být autorizovaný, ale libvirt/VMs nejsou vyžadovány (pokud nezálohuješ VMs, ignoruj výsledek „libvirt not reachable“). Pro ověření použij „Odeslat test“ níže.",
   "notify.unraidPlatformMismatch": "BombVault rozpoznal tento hostitel jako \"{platform}\", nikoli jako Unraid. Oznámení Unraid tak zůstávají vypnutá, i když je tato možnost zapnutá. Pokud je to skutečně hostitel Unraid, zkontroluj, že cesta /boot hostitele je připojena (bind-mount) do kontejneru na /host/boot (viz šablona BombVault pro Unraid), a kontejner restartuj.",
+  "notify.unraidOffOnTrueNAS": "Tento hostitel běží na TrueNAS, takže oznámení Unraid zůstávají vypnutá, i když je tato volba zapnutá.",
   "notify.test": "Odeslat test",
   "notify.anomaliesWhere": "Které anomálie pošlou oznámení, nastavíš v části „{page}“.",
   "stophook.title": "Zastavit ostatní kontejnery",

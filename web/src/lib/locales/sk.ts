@@ -802,6 +802,7 @@ const sk: Partial<Translations> = {
   "notify.unraid": "Upozornenia Unraid",
   "notify.unraidHint": "Odosiela do vlastného systému upozornení Unraid (ktorý môže preposielať do Pushover, e-mailu, Discordu, …). Beží cez SSH pripojenie z Nastavenia, Integrácie, SSH hostiteľa, takže kľúč tam musí byť autorizovaný, libvirt/VM však nie sú potrebné (ignoruj výsledok „libvirt not reachable“, ak nezálohuješ VM). Na kontrolu použi nižšie uvedenú funkciu Odoslať test.",
   "notify.unraidPlatformMismatch": "BombVault zistil tohto hostiteľa ako „{platform}“, nie ako Unraid. Upozornenia Unraid zostávajú vypnuté aj pri zapnutom tomto prepínači. Ak toto skutočne je hostiteľ Unraid, skontroluj, či je /boot hostiteľa naviazané (bind-mount) na /host/boot vnútri kontajnera (pozri šablónu BombVault pre Unraid), a reštartuj kontajner.",
+  "notify.unraidOffOnTrueNAS": "Tento hostiteľ beží na TrueNAS, preto upozornenia Unraid zostávajú vypnuté aj pri zapnutom tomto prepínači.",
   "notify.smtp": "E-mail (SMTP)",
   "notify.smtpHost": "Hostiteľ SMTP",
   "notify.smtpPort": "Port",

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/platform"
@@ -403,5 +404,17 @@ func TestFlashBackupIsRefusedOffUnraid(t *testing.T) {
 	started, err := f.svc.StartBackupFlash(context.Background())
 	if started || !errors.Is(err, errUnraidPlatformMismatch) {
 		t.Fatalf("StartBackupFlash = %v, %v, want a refusal that says the flash backup is Unraid only", started, err)
+	}
+}
+
+func TestScheduledFlashBackupIsRefusedOnTrueNASWithoutMountAdvice(t *testing.T) {
+	f, _, _, _ := flashScene(t)
+	f.svc.SetPlatform(platform.TrueNAS{})
+	_, err := f.svc.BackupFlash(context.Background())
+	if !errors.Is(err, errUnraidPlatformMismatch) {
+		t.Fatalf("BackupFlash = %v, want the Unraid-only refusal", err)
+	}
+	if msg := scrubError(err); strings.Contains(msg, "/boot") || !strings.Contains(msg, "TrueNAS") {
+		t.Fatalf("refusal = %q, want it to name TrueNAS and leave out the Unraid mount", msg)
 	}
 }

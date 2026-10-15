@@ -859,6 +859,7 @@ const he: Partial<Translations> = {
   "notify.unraid": "התראות Unraid",
   "notify.unraidHint": "שליחה למערכת ההתראות של Unraid עצמו (שיכולה להעביר ל-Pushover, אימייל, Discord, …). פועל דרך חיבור ה-SSH מתוך הגדרות, אינטגרציות, SSH למארח, ולכן המפתח חייב להיות מורשה שם, אך libvirt/VMs אינם נדרשים (אפשר להתעלם מתוצאת “libvirt not reachable” אם VMs לא מגובים). לבדיקה יש את “שליחת בדיקה” למטה.",
   "notify.unraidPlatformMismatch": "BombVault זיהה את המארח הזה כ-\"{platform}\", לא כ-Unraid. לכן התראות Unraid נשארות כבויות גם כשהאפשרות הזו מופעלת. אם זהו אכן מארח Unraid, יש לבדוק שה-/boot של המארח מחובר (bind-mount) אל /host/boot בתוך הקונטיינר (כמו בתבנית ה-Unraid של BombVault), ולהפעיל מחדש את הקונטיינר.",
+  "notify.unraidOffOnTrueNAS": "המארח הזה מריץ TrueNAS, ולכן התראות Unraid נשארות כבויות גם כשהאפשרות הזו מופעלת.",
   "notify.test": "שליחת בדיקה",
   "notify.anomaliesWhere": "אילו חריגות ישלחו התראה נקבע תחת “{page}”.",
   "stophook.title": "עצירת מכולות אחרות",

@@ -802,6 +802,7 @@ const lv: Partial<Translations> = {
   "notify.unraid": "Unraid paziņojumi",
   "notify.unraidHint": "Sūta uz Unraid pašas paziņojumu sistēmu (kas var pārsūtīt uz Pushover, e-pastu, Discord, …). Darbojas caur SSH savienojumu no Iestatījumi, Integrācijas, Resursdatora SSH, tāpēc atslēgai tur jābūt autorizētai, bet libvirt/VM nav nepieciešami (ignorējiet rezultātu „libvirt not reachable”, ja nedublējat VM). Izmantojiet zemāk Sūtīt testu, lai pārbaudītu.",
   "notify.unraidPlatformMismatch": "BombVault noteica šo saimniekdatoru kā „{platform}”, nevis Unraid. Unraid paziņojumi paliek izslēgti pat ja šis slēdzis ir ieslēgts. Ja tas tiešām ir Unraid saimniekdators, pārbaudiet, vai saimniekdatora /boot ir piesaistīts pie /host/boot konteinera iekšpusē (skatiet BombVault Unraid veidni), un restartējiet konteineru.",
+  "notify.unraidOffOnTrueNAS": "Šis saimniekdators darbojas ar TrueNAS, tāpēc Unraid paziņojumi paliek izslēgti pat tad, ja šis slēdzis ir ieslēgts.",
   "notify.smtp": "E-pasts (SMTP)",
   "notify.smtpHost": "SMTP saimniekdators",
   "notify.smtpPort": "Ports",
