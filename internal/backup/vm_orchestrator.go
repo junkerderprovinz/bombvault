@@ -478,10 +478,13 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 		if wasRunning {
 			atStep(d.Step, progress.StepRead)
 		}
-		summary, backupErr = d.Restic.Backup(ctx, d.RepoPath, paths, tags)
-		if backupErr != nil {
-			backupErr = fmt.Errorf("vm backup: restic: %w", backupErr)
-			return
+		// A VM whose disks are all zvols has nothing for restic to read here.
+		if len(paths) > 0 {
+			summary, backupErr = d.Restic.Backup(ctx, d.RepoPath, paths, tags)
+			if backupErr != nil {
+				backupErr = fmt.Errorf("vm backup: restic: %w", backupErr)
+				return
+			}
 		}
 
 		// Block-device-backed (zvol) disks, if any, go through the SEPARATE
@@ -493,9 +496,7 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 			backupErr = zErr
 			return
 		}
-		if len(d.BlockDisks) > 0 {
-			summary = summary.Plus(disks)
-		}
+		summary = withBlockDisks(summary, disks, len(paths) > 0, len(d.BlockDisks))
 	}()
 
 	return summary, backupErr
@@ -544,6 +545,15 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	commitDevs := d.CommitDevs
 	if len(commitDevs) == 0 && d.DiskDevice != "" {
 		commitDevs = []string{d.DiskDevice}
+	}
+	// ZFS snapshots the zvols atomically, so a VM with only zvol disks needs
+	// no qemu overlay.
+	if len(commitDevs) == 0 && len(d.DiskPaths) == 0 && len(d.BlockDisks) > 0 {
+		disks, zErr := backupBlockDisksAndLog(ctx, d, "vm live backup")
+		if zErr != nil {
+			return Summary{}, zErr
+		}
+		return disks, nil
 	}
 	if len(commitDevs) == 0 {
 		return Summary{}, fmt.Errorf("vm live backup: no writable disk to snapshot/commit. Use the graceful method for this VM")
@@ -608,10 +618,20 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	if zErr != nil {
 		return Summary{}, zErr
 	}
-	if len(d.BlockDisks) > 0 {
-		summary = summary.Plus(disks)
+	return withBlockDisks(summary, disks, true, len(d.BlockDisks)), nil
+}
+
+// withBlockDisks adds the zvol disks' summary to the file disks' one. With no
+// file snapshot the zvol summary stands alone, since an unmeasured empty
+// summary would otherwise mark the whole run as unmeasured.
+func withBlockDisks(files, disks Summary, hadFiles bool, blockDisks int) Summary {
+	switch {
+	case blockDisks == 0:
+		return files
+	case !hadFiles:
+		return disks
 	}
-	return summary, nil
+	return files.Plus(disks)
 }
 
 // waitShutOff polls the VM state until it reaches "shut off". On timeout it
@@ -1134,6 +1154,9 @@ func backupBlockDisksAndLog(ctx context.Context, d VMBackupDeps, logPrefix strin
 				firstErr = fmt.Errorf("%s: zvol disk %q: %w", logPrefix, bd.Dataset, err)
 			}
 			continue
+		}
+		if total.SnapshotID == "" {
+			total.SnapshotID = sum.SnapshotID
 		}
 		total = total.Plus(sum)
 		log.Printf("%s: zvol disk %q: backed up as restic snapshot %s (%d bytes), tags %v", logPrefix, bd.Dataset, sum.SnapshotID, sum.Bytes, tags)
