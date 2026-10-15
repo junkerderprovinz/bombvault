@@ -1,8 +1,10 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -274,5 +276,26 @@ func TestOwnSettingsSurviveARoundTrip(t *testing.T) {
 	}
 	if got := dst.storedTarget(tgt.ID); got.Own != store.OwnRetention || got.LimitUpload != 32 {
 		t.Errorf("target = %+v, own %d, want its keep-policy still its own and the limit followed", got, got.Own)
+	}
+}
+
+func TestATargetAskedForAppendOnlyItsDestinationLacksSaysWhere(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.destination("Box", "rest:http://box:8000/bv")
+	tgt := f.tickDestination(box, "containers")
+
+	body := map[string]any{"domain": "containers", "repo": tgt.Repo, "enabled": true, "immutable": true}
+	res := f.do(http.MethodPut, "/api/offsite/targets/"+tgt.ID, body)
+	if res["ok"] != false || !strings.Contains(fmt.Sprint(res["error"]), "storage location") {
+		t.Fatalf("append-only on a target whose destination has it off = %v, want a refusal that names where it is set", res)
+	}
+	if f.storedTarget(tgt.ID).Immutable {
+		t.Fatal("the target took append-only behind its destination's back")
+	}
+
+	f.editDestination(box, map[string]any{"immutable": true})
+	body["immutable"] = false
+	if res := f.do(http.MethodPut, "/api/offsite/targets/"+tgt.ID, body); res["ok"] != true || !f.storedTarget(tgt.ID).Immutable {
+		t.Errorf("a save without the flag = %v, want it accepted and the destination's append-only kept", res)
 	}
 }

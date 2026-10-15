@@ -377,6 +377,13 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "this target was made from a destination and its location holds the domain's repository, so it cannot move"})
 			return
 		}
+		// The flag is the destination's, and taking it over silently would
+		// answer ok with the protection still off. A body without the flag is
+		// a partial one and keeps it.
+		if t.Immutable && !existing.Immutable {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "this target takes append-only from its storage location, which has it off: switch on append-only for that location under Storage locations"})
+			return
+		}
 		t.Name, t.CredsRef, t.StorageClass, t.Immutable = existing.Name, existing.CredsRef, existing.StorageClass, existing.Immutable
 		t.Own = existing.Own
 	}
