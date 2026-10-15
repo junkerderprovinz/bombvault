@@ -2027,7 +2027,8 @@ func statusPercent(line []byte) (float64, bool) {
 
 // reasonPathRe matches absolute-path-like tokens so they can be stripped from a
 // surfaced restic error (defense-in-depth: repo/appdata paths must not leak).
-var reasonPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
+// Closing punctuation after a path stays in the sentence.
+var reasonPathRe = regexp.MustCompile(`(/[^\s:"']*[^\s:"').,;])+`)
 
 // credentialRe matches a "user:password@" URL-userinfo segment, e.g. the
 // backupuser:Tr0ub4dor&3@ in "rest:https://backupuser:Tr0ub4dor&3@host:8000/repo"

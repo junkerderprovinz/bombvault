@@ -87,8 +87,10 @@ func codedFailEnvelope(err error, code string) map[string]any {
 }
 
 // absPathRe matches absolute unix paths so they can be stripped from any error
-// message that slips through to the API surface.
-var absPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
+// message that slips through to the API surface. The last character of a match
+// is never the punctuation that closes the sentence or bracket around the path,
+// so "(/dev/zvol/tank/vm)." scrubs to "([path]).".
+var absPathRe = regexp.MustCompile(`(/[^\s:"']*[^\s:"').,;])+`)
 
 // credentialRe matches a "user:password@" URL-userinfo segment, e.g. the
 // backupuser:Tr0ub4dor&3@ in "rest:https://backupuser:Tr0ub4dor&3@host:8000/repo"
@@ -204,7 +206,7 @@ func scrubSecrets(s string) string {
 // httpURLRe matches an http(s) URL inside a sentence, such as the endpoint a
 // notification test could not reach. The path scrubber would turn
 // "http://ntfy:8080/topic" into "http:[path]:8[path]", which names nothing.
-var httpURLRe = regexp.MustCompile(`\bhttps?://[^\s"']+`)
+var httpURLRe = regexp.MustCompile(`\bhttps?://[^\s"']*[^\s"').,;:]`)
 
 // keptLocationRe finds the parts of a message that keep their host and port:
 // remote repository locations and http(s) URLs.
