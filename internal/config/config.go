@@ -2,6 +2,7 @@
 package config
 
 import (
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
@@ -146,7 +147,7 @@ func defaultHostName() string {
 // defaultGateway returns the gateway of the default route in a /proc/net/route
 // table, or "" when there is none.
 func defaultGateway(path string) string {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: /proc/net/route, or a table a test wrote
 	if err != nil {
 		return ""
 	}
@@ -155,12 +156,12 @@ func defaultGateway(path string) string {
 		if len(f) < 3 || f[1] != "00000000" {
 			continue
 		}
-		raw, err := strconv.ParseUint(f[2], 16, 32)
-		if err != nil || raw == 0 {
+		b, err := hex.DecodeString(f[2])
+		if err != nil || len(b) != 4 || f[2] == "00000000" {
 			continue
 		}
 		// The kernel prints the address as a little-endian hex word.
-		return net.IPv4(byte(raw), byte(raw>>8), byte(raw>>16), byte(raw>>24)).String()
+		return net.IPv4(b[3], b[2], b[1], b[0]).String()
 	}
 	return ""
 }

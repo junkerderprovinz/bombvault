@@ -148,13 +148,13 @@ func TestMoveContentsCopiesATreeAcrossFilesystems(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(src, "a", "b"), 0o750); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(src, "a", "b", "f"), []byte("data"), 0o640); err != nil {
+	if err := os.WriteFile(filepath.Join(src, "a", "b", "f"), []byte("data"), 0o640); err != nil { //nolint:gosec // G306: the copy has to keep a group-readable mode
 		t.Fatal(err)
 	}
 	if err := cloneTree(filepath.Join(src, "a"), filepath.Join(dst, "a")); err != nil {
 		t.Fatal(err)
 	}
-	got, err := os.ReadFile(filepath.Join(dst, "a", "b", "f"))
+	got, err := os.ReadFile(filepath.Join(dst, "a", "b", "f")) //nolint:gosec // G304: a file inside the test's temp folder
 	if err != nil || string(got) != "data" {
 		t.Fatalf("copy holds %q (%v), want the file", got, err)
 	}

@@ -2446,7 +2446,7 @@ func TestFileSetPresetHostConfig(t *testing.T) {
 	}
 
 	svc.SetPlatform(platform.Generic{})
-	w, m = doJSON(t, h, http.MethodGet, "/api/files/sets/preset", "")
+	_, m = doJSON(t, h, http.MethodGet, "/api/files/sets/preset", "")
 	if m["offered"] != false {
 		t.Fatalf("preset must not be offered while the host mount has no etc folder, got %v", m)
 	}
