@@ -406,6 +406,14 @@ describe("a destination", () => {
     }
   });
 
+  it("points the primary copy's own keep rules to the off-site retention settings", async () => {
+    await renderPage("destination:box");
+
+    const link = within(card("How long to keep")).getByRole("link", { name: "Off-site retention" });
+    expect(link.getAttribute("href")).toBe("/settings/storage#retention");
+    expect(within(card("How long to keep")).getAllByRole("link")).toHaveLength(1);
+  });
+
   it("says when each section copies", async () => {
     await renderPage("destination:box");
 
