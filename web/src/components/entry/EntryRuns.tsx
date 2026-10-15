@@ -5,6 +5,7 @@ import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { formatClockTime, formatDuration, formatRecent } from "../../lib/reltime";
 import { runKindLabel } from "../../lib/runKind";
+import { dataOutsideHost, RunReasonText } from "../../lib/runReason";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
 import { AnomalyWindow } from "../anomalies/AnomalyWindow";
 import { Badge } from "../Badge";
@@ -83,6 +84,9 @@ export function EntryRuns({
                     </Badge>
                   )}
                 </span>
+                {run.status === "success" && dataOutsideHost(run.error) && (
+                  <span className="text-xs text-statusWarn"><RunReasonText reason={run.error} t={t} /></span>
+                )}
                 {run.bottleneck && (
                   <span className="text-xs text-statusWarn">{bottleneckText(run.bottleneck, t)}</span>
                 )}

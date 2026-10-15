@@ -3805,6 +3805,8 @@ export interface BackupItemRun {
   kind: string;
   status: string;
   startedAt: number;
+  /** What a successful run recorded beside its success. */
+  note?: string;
 }
 
 /** A row from GET /api/items: a container, a VM, a folder set, a ZFS item, or

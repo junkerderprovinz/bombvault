@@ -157,6 +157,7 @@ const eu: Partial<Translations> = {
   "snapshots.recreate": "Berriz sortu gordetako konfiguraziotik",
   "snapshots.recreateConfirm": "Edukiontzi hau bere gordetako konfiguraziotik berriz sortu nahi duzu? Gordetako definiziotik (irudia, ingurunea, ataka, bolumenak) sortu eta abiarazten da.",
   "snapshots.configOnlyHint": "Konfigurazio soileko babeskopia: edukiontziaren definizioa gordeta dago, baina ez du daturik argazkiak ateratzeko. Edukiontzia ezabatzen baduzu, «Instalatu gabe» atalean agertuko da, eta hortik konfigurazio horrekin berriz sor dezakezu.",
+  "snapshots.outsideHostHint": "Edukiontzi honen definizioa soilik gordetzen da. Bere datuak Host Data-tik kanpo daude, eta BombVault-ek ezin du hura irakurri. TrueNAS-en, ixVolume biltegiratzeko datuak /mnt/.ix-apps azpian daude eta ez dira eskuragarri; eman aplikazioari bere datuetarako ostalariaren bide bat.",
 
   // Snapshot tags + compare
   "snapshot.addTag": "Gehitu etiketa",
@@ -885,6 +886,7 @@ const eu: Partial<Translations> = {
   "stophook.remove": "Kendu {name}",
   "export.exportedTo": "Hona esportatuta:",
   "backup.configOnly": "Konfigurazioa bakarrik, datu-karpetarik gabe (definizioa gordeta berrsortzeko)",
+  "backup.outsideHost": "Definizioa gorde da, baina datuak Host Data-tik kanpo daude eta ez dira babeskopiatu",
 
   // Per-container exclude patterns
   "excludes.title": "Baztertze-ereduak",
@@ -1022,6 +1024,7 @@ const eu: Partial<Translations> = {
   "runReason.dbimportRollback": "inportazioak huts egin du eta datu zaharrak ezin izan dira bere lekura itzuli",
   "runReason.dbimportFailed": "inportazio-tresnak errore bat eman du",
   "runReason.dbimportKeptOld": "aurreko datu-karpeta gorde da",
+  "runReason.dataOutsideHost": "datuak Host Data-tik kanpo daude eta ez dira babeskopiatu",
   "runReason.dbimportErrors": "{n} errore, aurreko datu-karpeta gorde da",
   "runReason.dbimportAppsDown": "one=aplikazio hau ezin izan da berriro abiarazi: {apps}|other=aplikazio hauek ezin izan dira berriro abiarazi: {apps}",
   "runReason.dbimportAppsStopped": "one=aplikazio hau geldituta geratzen da datu-karpeta konpondu arte: {apps}|other=aplikazio hauek geldituta geratzen dira datu-karpeta konpondu arte: {apps}",

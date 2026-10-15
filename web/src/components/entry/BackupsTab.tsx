@@ -4,6 +4,8 @@ import type { Run } from "../../lib/api";
 import { isGone } from "../../lib/backupList";
 import { historyDays, rowHolds, rowOfRun, rowTime, type Entry } from "../../lib/entry";
 import { useT } from "../../lib/i18n";
+import { tLtr } from "../../lib/ltrFragments";
+import { dataOutsideHost } from "../../lib/runReason";
 import type { RestoreRequest } from "../../lib/restoreRequest";
 import { restoreFolderFor, snapshotIds } from "../../lib/restorePlan";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
@@ -168,7 +170,9 @@ export function BackupsTab({
             ) : (
               <p className="text-sm text-carbon-textMuted">
                 {container && item.lastBackup > 0
-                  ? t("snapshots.configOnlyHint")
+                  ? dataOutsideHost(runs.find((run) => run.kind === "backup" && run.status === "success")?.error)
+                    ? tLtr(t, "snapshots.outsideHostHint")
+                    : t("snapshots.configOnlyHint")
                   : t("entry.list.empty").replace("{name}", () => name)}
               </p>
             ))}

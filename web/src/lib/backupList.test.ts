@@ -229,6 +229,11 @@ describe("the run strip", () => {
     expect(runStrip(item({ runs }), (id) => id === "b").slice(12)).toEqual(["warn", "ok"]);
   });
 
+  it("colours a successful run that left the container's data out", () => {
+    const note = "data folders outside Host Data were not backed up: /mnt/.ix-apps/app_mounts/nc/data";
+    expect(runStrip(item({ runs: [run("success", { note })] }), () => false).slice(13)).toEqual(["warn"]);
+  });
+
   it("keeps a cancelled and a skipped run grey", () => {
     expect(runStrip(item({ runs: [run("cancelled"), run("skipped")] }), () => false).slice(12)).toEqual(["none", "none"]);
   });

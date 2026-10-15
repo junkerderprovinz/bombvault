@@ -213,6 +213,7 @@ export const en = {
   "snapshots.recreate": "Recreate from saved config",
   "snapshots.recreateConfirm": "Recreate this container from its saved configuration? It is created and started from the stored definition (image, env, ports, volumes).",
   "snapshots.configOnlyHint": "Config-only backup: the container's definition is saved, but it has no data folders to snapshot. If you delete the container it appears under \"Not installed\", where you can recreate it from this config.",
+  "snapshots.outsideHostHint": "Only this container's definition is saved. Its data sits outside Host Data, which BombVault cannot read. On TrueNAS, data on ixVolume storage lives under /mnt/.ix-apps and is out of reach; give the app a host path for its data instead.",
 
   // Snapshot tags + compare (diff)
   "snapshot.addTag": "Add tag",
@@ -1014,6 +1015,7 @@ export const en = {
   "stophook.remove": "Remove {name}",
   "export.exportedTo": "Exported to:",
   "backup.configOnly": "Config only: no data folders (definition saved for recreate)",
+  "backup.outsideHost": "Definition saved, but the data sits outside Host Data and was not backed up",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Exclude patterns",
@@ -1232,6 +1234,7 @@ export const en = {
   "runReason.dbimportRollback": "the import failed and the old data could not be put back",
   "runReason.dbimportFailed": "the import tool reported an error",
   "runReason.dbimportKeptOld": "the previous data folder was kept",
+  "runReason.dataOutsideHost": "the data sits outside Host Data and was not backed up",
   "runReason.dbimportErrors":
     "one={n} error, the previous data folder was kept|other={n} errors, the previous data folder was kept",
   "runReason.dbimportAppsDown":
@@ -5086,6 +5089,7 @@ export const de: Translations = {
   "snapshots.recreate": "Aus gespeicherter Konfig neu erstellen",
   "snapshots.recreateConfirm": "Diesen Container aus seiner gespeicherten Konfiguration neu erstellen? Er wird aus der gespeicherten Definition (Image, Env, Ports, Volumes) angelegt und gestartet.",
   "snapshots.configOnlyHint": "Nur-Konfig-Sicherung: die Definition des Containers ist gesichert, es gibt aber keine Datenordner zum Snapshotten. Wird der Container gelöscht, erscheint er unter „Nicht installiert“ und kann von dort aus dieser Konfig neu erstellt werden.",
+  "snapshots.outsideHostHint": "Nur die Definition dieses Containers ist gesichert. Seine Daten liegen außerhalb von Host Data, das BombVault nicht lesen kann. Unter TrueNAS liegen Daten auf ixVolume-Speicher unter /mnt/.ix-apps und sind nicht erreichbar; gib der App stattdessen einen Host-Pfad für ihre Daten.",
 
   // Snapshot tags + compare (diff)
   "snapshot.addTag": "Tag hinzufügen",
@@ -5820,6 +5824,7 @@ export const de: Translations = {
   "stophook.remove": "{name} entfernen",
   "export.exportedTo": "Exportiert nach:",
   "backup.configOnly": "Nur Konfiguration: keine Datenordner (Definition für Wiederherstellung gesichert)",
+  "backup.outsideHost": "Definition gesichert, aber die Daten liegen außerhalb von Host Data und wurden nicht gesichert",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Ausschlussmuster",
@@ -5959,6 +5964,7 @@ export const de: Translations = {
   "runReason.dbimportRollback": "der Import scheiterte und die alten Daten ließen sich nicht zurücklegen",
   "runReason.dbimportFailed": "das Import-Werkzeug hat einen Fehler gemeldet",
   "runReason.dbimportKeptOld": "der bisherige Datenordner wurde behalten",
+  "runReason.dataOutsideHost": "die Daten liegen außerhalb von Host Data und wurden nicht gesichert",
   "runReason.dbimportErrors": "{n} Fehler, der bisherige Datenordner wurde behalten",
   "runReason.dbimportAppsDown":
     "one=diese App ließ sich nicht wieder starten: {apps}|other=diese Apps ließen sich nicht wieder starten: {apps}",

@@ -5351,6 +5351,39 @@ func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 	return out
 }
 
+// dataOutsideHostMount returns the host sources of the container's bind mounts
+// that look like data but cannot be read through Host Data: the path is not under
+// HostSourceRoot, or it is and the translated path does not exist here. Docker
+// creates a missing bind source, so a path it reports that BombVault cannot see
+// lies on storage the host mount does not carry, such as TrueNAS ixVolume data
+// under /mnt/.ix-apps. System mounts (/etc/localtime, the Docker socket) are not
+// data and stay out.
+func (s *Service) dataOutsideHostMount(in model.Inspect) []string {
+	labelOverride := bombvaultDataLabelTruthy(in.Config.Labels)
+	var out []string
+	seen := map[string]bool{}
+	for _, m := range in.Mounts {
+		if m.Type != "bind" || m.Source == "" {
+			continue
+		}
+		src := path.Clean(m.Source)
+		if !labelOverride && !matchesAnyDataRootSegment(src, s.cfg.DataRootSegments) && !strings.HasPrefix(src, "/mnt/") {
+			continue
+		}
+		if cp, ok := s.toContainerPath(src); ok {
+			if _, err := os.Stat(cp); err == nil || !errors.Is(err, fs.ErrNotExist) { //nolint:gosec // G703: cp is a mount source translated under the host mount, not raw user input
+				continue
+			}
+		}
+		if !seen[src] {
+			seen[src] = true
+			out = append(out, src)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
 // hasSegment reports whether slash-separated path p contains seg as a full path
 // segment (so "/mnt/user/appdata/x" matches "appdata" but "/mnt/appdataX" does not).
 func hasSegment(p, seg string) bool {
@@ -6044,6 +6077,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		ContainerName:          name,
 		RepoPath:               repo,
 		AppdataPaths:           effective,
+		UnreachableData:        s.dataOutsideHostMount(in),
 		StopTimeout:            30 * time.Second,
 		TargetID:               tg.ID,
 		SnapshotTemplatesDir:   filepath.Join(s.cfg.DataDir, "templates"),
@@ -6509,6 +6543,9 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 // "flash". Shares batchActive; returns (false, nil) if a backup is already
 // running, or (false, err) if the flash domain is already busy with another op.
 func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
+	if s.platformFn().Kind() != platform.KindUnraid {
+		return false, s.unraidPlatformMismatchError("the flash backup")
+	}
 	if err := s.refuseNoPlace("flash", ""); err != nil {
 		return false, err
 	}

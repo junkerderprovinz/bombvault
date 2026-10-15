@@ -40,6 +40,9 @@ type fakeDocker struct {
 	// can assert run-state / leave-stopped handling.
 	createdStart bool
 
+	// networks is what Networks returns.
+	networks []string
+
 	// allocations is what Allocations returns (restore pre-flight conflict check).
 	allocations []model.Allocation
 	allocErr    error
@@ -143,6 +146,11 @@ func (d *fakeDocker) InspectName(_ context.Context, name string) (string, error)
 func (d *fakeDocker) Allocations(_ context.Context) ([]model.Allocation, error) {
 	d.log = append(d.log, "allocations")
 	return d.allocations, d.allocErr
+}
+
+func (d *fakeDocker) Networks(_ context.Context) ([]string, error) {
+	d.log = append(d.log, "networks")
+	return d.networks, nil
 }
 
 func (d *fakeDocker) Exec(_ context.Context, name string, cmd []string) error {
@@ -540,6 +548,20 @@ func TestBackupContainerFinishCarriesMeasuredSummary(t *testing.T) {
 		}
 		if got.sum.SnapshotID != "" || got.sum.Measured {
 			t.Fatalf("summary = %+v, want no snapshot and no measurement where restic never ran", got.sum)
+		}
+	})
+
+	t.Run("data outside Host Data is named in the note of a successful run", func(t *testing.T) {
+		runs := &fakeRuns{}
+		d := deps(&fakeRestic{summary: measured}, runs, nil)
+		d.UnreachableData = []string{"/mnt/.ix-apps/app_mounts/nc/data", "/mnt/pool2/nc"}
+		if _, err := backup.BackupContainer(t.Context(), d); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		got := runs.finishOf(t, "run-1")
+		want := "data folders outside Host Data were not backed up: /mnt/.ix-apps/app_mounts/nc/data, /mnt/pool2/nc"
+		if got.status != "success" || got.note != want {
+			t.Fatalf("finish = %+v, want a success noting %q", got, want)
 		}
 	})
 }
@@ -1025,6 +1047,34 @@ func TestRestoreAbortsOnIPConflict(t *testing.T) {
 	}
 	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
 		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
+	}
+}
+
+func TestRestoreAbortsWhenItsNetworkIsGone(t *testing.T) {
+	d := &fakeDocker{networks: []string{"bridge", "host", "none"}}
+	r := &fakeRestic{}
+	runs := &fakeRuns{}
+	deps := restoreDeps(d, r, &fakeTemplates{}, runs)
+	deps.Inspect.HostConfig.NetworkMode = "ix-nextcloud_default"
+
+	err := backup.RestoreContainer(t.Context(), deps)
+	if err == nil || !strings.Contains(err.Error(), `network "ix-nextcloud_default" does not exist`) || !strings.Contains(err.Error(), "reinstall") {
+		t.Fatalf("error = %v, want a refusal that names the network and says to reinstall the app", err)
+	}
+	if contains(d.log, "pull:") || contains(d.log, "stop:") || contains(d.log, "remove:") || contains(d.log, "create:") || contains(r.log, "restore:") {
+		t.Fatalf("nothing may run before the refusal: docker=%v restic=%v", d.log, r.log)
+	}
+	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
+		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
+	}
+}
+
+func TestRestoreOnAnExistingUserNetworkProceeds(t *testing.T) {
+	d := &fakeDocker{networks: []string{"bridge", "ix-nextcloud_default"}}
+	deps := restoreDeps(d, &fakeRestic{}, &fakeTemplates{}, &fakeRuns{})
+	deps.Inspect.HostConfig.NetworkMode = "ix-nextcloud_default"
+	if err := backup.RestoreContainer(t.Context(), deps); err != nil {
+		t.Fatalf("restore onto an existing network failed: %v", err)
 	}
 }
 

@@ -157,6 +157,7 @@ const hi: Partial<Translations> = {
   "snapshots.recreate": "सहेजी गई कॉन्फ़िगरेशन से फिर बनाएँ",
   "snapshots.recreateConfirm": "इस कंटेनर को इसकी सहेजी गई कॉन्फ़िगरेशन से फिर से बनाएँ? यह सहेजी गई परिभाषा (इमेज, एनवायरनमेंट, पोर्ट, वॉल्यूम) से बनाया और शुरू किया जाता है।",
   "snapshots.configOnlyHint": "केवल-कॉन्फ़िगरेशन बैकअप: कंटेनर की परिभाषा सहेजी गई है, लेकिन इसमें बैकअप के लिए डेटा फ़ोल्डर नहीं हैं। कंटेनर हटाने पर, यह \"इंस्टॉल नहीं है\" के अंतर्गत दिखता है, जहाँ से आप इसे इस कॉन्फ़िगरेशन से फिर से बना सकते हैं।",
+  "snapshots.outsideHostHint": "सिर्फ़ इस कंटेनर की परिभाषा सहेजी गई है। इसका डेटा Host Data के बाहर है, जिसे BombVault पढ़ नहीं सकता। TrueNAS पर ixVolume स्टोरेज का डेटा /mnt/.ix-apps के अंतर्गत होता है और पहुँच से बाहर है; इसके बजाय ऐप को उसके डेटा के लिए होस्ट पाथ दें।",
 
   // Snapshot tags + compare
   "snapshot.addTag": "टैग जोड़ें",
@@ -885,6 +886,7 @@ const hi: Partial<Translations> = {
   "stophook.remove": "{name} हटाएं",
   "export.exportedTo": "यहाँ एक्सपोर्ट किया गया:",
   "backup.configOnly": "केवल कॉन्फ़िगरेशन, कोई डेटा फ़ोल्डर नहीं (फिर से बनाने के लिए परिभाषा सहेजी गई)",
+  "backup.outsideHost": "परिभाषा सहेजी गई, लेकिन डेटा Host Data के बाहर है और उसका बैकअप नहीं लिया गया",
 
   // Per-container exclude patterns
   "excludes.title": "एक्सक्लूड पैटर्न",
@@ -1022,6 +1024,7 @@ const hi: Partial<Translations> = {
   "runReason.dbimportRollback": "आयात विफल हुआ और पुराना डेटा वापस अपनी जगह पर नहीं रखा जा सका",
   "runReason.dbimportFailed": "आयात उपकरण ने एक त्रुटि बताई",
   "runReason.dbimportKeptOld": "पिछला डेटा फ़ोल्डर रखा गया",
+  "runReason.dataOutsideHost": "डेटा Host Data के बाहर है और उसका बैकअप नहीं लिया गया",
   "runReason.dbimportErrors": "one={n} त्रुटि, पिछला डेटा फ़ोल्डर रखा गया|other={n} त्रुटियाँ, पिछला डेटा फ़ोल्डर रखा गया",
   "runReason.dbimportAppsDown": "one=यह ऐप फिर से शुरू नहीं हो सका: {apps}|other=ये ऐप्स फिर से शुरू नहीं हो सके: {apps}",
   "runReason.dbimportAppsStopped": "one=डेटा फ़ोल्डर ठीक होने तक यह ऐप रुका रहेगा: {apps}|other=डेटा फ़ोल्डर ठीक होने तक ये ऐप्स रुके रहेंगे: {apps}",

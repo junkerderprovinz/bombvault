@@ -157,6 +157,7 @@ const fa: Partial<Translations> = {
   "snapshots.recreate": "بازسازی از پیکربندی ذخیره‌شده",
   "snapshots.recreateConfirm": "این کانتینر از پیکربندی ذخیره‌شده‌اش بازسازی شود؟ از تعریف ذخیره‌شده (ایمیج، محیط، پورت‌ها، volumeها) ساخته و اجرا می‌شود.",
   "snapshots.configOnlyHint": "پشتیبان فقط-پیکربندی: تعریف کانتینر ذخیره شده، اما پوشه داده‌ای برای پشتیبان‌گیری ندارد. اگر کانتینر را حذف کنی، زیر «نصب‌نشده» ظاهر می‌شود و می‌توانی از همین پیکربندی بازسازی‌اش کنی.",
+  "snapshots.outsideHostHint": "فقط تعریف این کانتینر ذخیره می‌شود. داده‌های آن خارج از Host Data است که BombVault نمی‌تواند آن را بخواند. در TrueNAS داده‌های فضای ixVolume زیر /mnt/.ix-apps قرار دارند و در دسترس نیستند؛ به‌جای آن یک مسیر میزبان برای داده‌های برنامه تعیین کنید.",
 
   // Snapshot tags + compare
   "snapshot.addTag": "افزودن برچسب",
@@ -885,6 +886,7 @@ const fa: Partial<Translations> = {
   "stophook.remove": "حذف {name}",
   "export.exportedTo": "خروجی گرفته‌شده به:",
   "backup.configOnly": "فقط پیکربندی، بدون پوشه داده (تعریف برای بازسازی ذخیره شده)",
+  "backup.outsideHost": "تعریف ذخیره شد، اما داده‌ها خارج از Host Data هستند و پشتیبان‌گیری نشدند",
 
   // Per-container exclude patterns
   "excludes.title": "الگوهای مستثنی‌سازی",
@@ -1022,6 +1024,7 @@ const fa: Partial<Translations> = {
   "runReason.dbimportRollback": "درون‌ریزی شکست خورد و داده‌های پیشین به جای خود بازنگشتند",
   "runReason.dbimportFailed": "ابزار درون‌ریزی خطایی گزارش کرد",
   "runReason.dbimportKeptOld": "پوشه داده پیشین نگه داشته شد",
+  "runReason.dataOutsideHost": "داده‌ها خارج از Host Data هستند و پشتیبان‌گیری نشدند",
   "runReason.dbimportErrors": "{n} خطا، پوشه داده پیشین نگه داشته شد",
   "runReason.dbimportAppsDown": "one=این برنامه دوباره راه‌اندازی نشد: {apps}|other=این برنامه‌ها دوباره راه‌اندازی نشدند: {apps}",
   "runReason.dbimportAppsStopped": "one=این برنامه تا روشن شدن وضعیت پوشهٔ داده متوقف می‌ماند: {apps}|other=این برنامه‌ها تا روشن شدن وضعیت پوشهٔ داده متوقف می‌مانند: {apps}",

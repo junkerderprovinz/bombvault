@@ -538,6 +538,7 @@ const zh: Partial<Translations> = {
   "snapshots.recreate": "从已保存的配置重新创建",
   "snapshots.recreateConfirm": "从已保存的配置重新创建此容器？将根据存储的定义创建并启动。",
   "snapshots.configOnlyHint": "仅配置备份：容器的定义已保存，但没有可备份的数据文件夹。如果删除该容器，它会出现在“未安装”中，你可以从此配置重新创建它。",
+  "snapshots.outsideHostHint": "只保存了此容器的定义。它的数据位于 BombVault 无法读取的 Host Data 之外。在 TrueNAS 上，ixVolume 存储中的数据位于 /mnt/.ix-apps 下，无法访问；请改为给应用的数据指定主机路径。",
 
   "files.restored": "已恢复",
   "files.restoreConfirm": "将所选文件恢复到各自的原始位置？现有文件将被覆盖。",
@@ -857,6 +858,7 @@ const zh: Partial<Translations> = {
   "stophook.remove": "移除 {name}",
   "export.exportedTo": "已导出到：",
   "backup.configOnly": "仅配置，无数据文件夹（已保存定义以便重新创建）",
+  "backup.outsideHost": "已保存定义，但数据位于 Host Data 之外，未备份",
 
   // Backups — delete all
   "snapshots.deleteAll": "删除所有备份",
@@ -1031,6 +1033,7 @@ const zh: Partial<Translations> = {
   "runReason.dbimportRollback": "导入失败，旧数据也无法放回原处",
   "runReason.dbimportFailed": "导入工具报告了一个错误",
   "runReason.dbimportKeptOld": "已保留之前的数据文件夹",
+  "runReason.dataOutsideHost": "数据位于 Host Data 之外，未备份",
   "runReason.dbimportErrors": "{n} 个错误，已保留之前的数据文件夹",
   "runReason.dbimportAppsDown": "以下应用未能重新启动：{apps}",
   "runReason.dbimportAppsStopped": "在数据文件夹处理好之前，以下应用保持停止：{apps}",

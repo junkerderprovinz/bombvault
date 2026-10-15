@@ -2,6 +2,8 @@ package api
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 )
@@ -12,8 +14,8 @@ import (
 //
 // The name has no spaces because it becomes the restic tag fileset:<name>. The
 // path is relative to HostMountRoot and assumes the host's root filesystem is
-// mounted there; with a narrower mount "etc" does not exist and the operator
-// has to change the path before validateFileSet accepts it.
+// mounted there. With a narrower mount "etc" does not exist and the preset is
+// not offered, see handleFileSetPreset.
 func defaultHostConfigFileSet(kind platform.Kind) (name, path string, excludes []string, ok bool) {
 	switch kind {
 	case platform.KindGeneric, platform.KindTrueNAS:
@@ -28,6 +30,11 @@ func defaultHostConfigFileSet(kind platform.Kind) (name, path string, excludes [
 // GET /api/files/sets/preset
 func (h *Handler) handleFileSetPreset(w http.ResponseWriter, _ *http.Request) {
 	name, path, excludes, ok := defaultHostConfigFileSet(h.svc.platformFn().Kind())
+	if ok {
+		if _, err := os.Stat(filepath.Join(h.svc.cfg.HostMountRoot, path)); err != nil {
+			ok = false
+		}
+	}
 	if excludes == nil {
 		excludes = []string{}
 	}

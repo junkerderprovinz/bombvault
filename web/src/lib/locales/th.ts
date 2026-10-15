@@ -539,6 +539,7 @@ const th: Partial<Translations> = {
   "snapshots.recreate": "สร้างใหม่จากการตั้งค่าที่บันทึกไว้",
   "snapshots.recreateConfirm": "สร้างคอนเทนเนอร์นี้ใหม่จากการตั้งค่าที่บันทึกไว้หรือไม่? จะถูกสร้างและเริ่มทำงานจากคำจำกัดความที่จัดเก็บไว้",
   "snapshots.configOnlyHint": "การสำรองข้อมูลเฉพาะการตั้งค่า: คำจำกัดความของคอนเทนเนอร์ถูกบันทึกไว้ แต่ไม่มีโฟลเดอร์ข้อมูลให้สำรอง หากคุณลบคอนเทนเนอร์ จะปรากฏใน \"ยังไม่ได้ติดตั้ง\" ซึ่งคุณสามารถสร้างใหม่จากการตั้งค่านี้ได้",
+  "snapshots.outsideHostHint": "บันทึกเฉพาะคำจำกัดความของคอนเทนเนอร์นี้ ข้อมูลของคอนเทนเนอร์อยู่นอก Host Data ซึ่ง BombVault อ่านไม่ได้ บน TrueNAS ข้อมูลในพื้นที่เก็บข้อมูล ixVolume อยู่ใต้ /mnt/.ix-apps และเข้าถึงไม่ได้ ให้กำหนดพาธของโฮสต์สำหรับข้อมูลของแอปแทน",
 
   // File-level restore
   "files.restored": "กู้คืนแล้ว",
@@ -866,6 +867,7 @@ const th: Partial<Translations> = {
   "stophook.remove": "ลบ {name}",
   "export.exportedTo": "ส่งออกไปที่:",
   "backup.configOnly": "เฉพาะการตั้งค่า ไม่มีโฟลเดอร์ข้อมูล (บันทึกคำจำกัดความไว้สำหรับสร้างใหม่)",
+  "backup.outsideHost": "บันทึกคำจำกัดความแล้ว แต่ข้อมูลอยู่นอก Host Data และไม่ได้สำรองไว้",
 
   // Backups — delete all
   "snapshots.deleteAll": "ลบการสำรองข้อมูลทั้งหมด",
@@ -1041,6 +1043,7 @@ const th: Partial<Translations> = {
   "runReason.dbimportRollback": "การนำเข้าล้มเหลวและนำข้อมูลเดิมกลับเข้าที่ไม่ได้",
   "runReason.dbimportFailed": "เครื่องมือนำเข้ารายงานข้อผิดพลาด",
   "runReason.dbimportKeptOld": "เก็บโฟลเดอร์ข้อมูลเดิมไว้",
+  "runReason.dataOutsideHost": "ข้อมูลอยู่นอก Host Data และไม่ได้สำรองไว้",
   "runReason.dbimportErrors": "ข้อผิดพลาด {n} รายการ เก็บโฟลเดอร์ข้อมูลเดิมไว้",
   "runReason.dbimportAppsDown": "เริ่มแอปเหล่านี้ใหม่ไม่ได้: {apps}",
   "runReason.dbimportAppsStopped": "แอปเหล่านี้จะหยุดอยู่จนกว่าจะจัดการโฟลเดอร์ข้อมูลเรียบร้อย: {apps}",

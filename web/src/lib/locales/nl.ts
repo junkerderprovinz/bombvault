@@ -535,6 +535,7 @@ const nl: Partial<Translations> = {
   "snapshots.recreate": "Opnieuw maken uit opgeslagen config",
   "snapshots.recreateConfirm": "Deze container opnieuw maken vanuit de opgeslagen configuratie? Hij wordt aangemaakt en gestart vanuit de opgeslagen definitie.",
   "snapshots.configOnlyHint": "Alleen-config back-up: de definitie van de container is opgeslagen, maar hij heeft geen datamappen om te snapshotten. Als je hem verwijdert verschijnt hij onder \"Niet geïnstalleerd\", waar je hem opnieuw kunt maken vanuit deze config.",
+  "snapshots.outsideHostHint": "Alleen de definitie van deze container wordt opgeslagen. De gegevens staan buiten Host Data, dat BombVault niet kan lezen. Op TrueNAS staan gegevens op ixVolume-opslag onder /mnt/.ix-apps en zijn die onbereikbaar; geef de app in plaats daarvan een hostpad voor haar gegevens.",
 
   // File-level restore
   "files.restored": "Hersteld",
@@ -862,6 +863,7 @@ const nl: Partial<Translations> = {
   "stophook.remove": "{name} verwijderen",
   "export.exportedTo": "Geëxporteerd naar:",
   "backup.configOnly": "Alleen configuratie, geen datamappen (definitie opgeslagen voor opnieuw aanmaken)",
+  "backup.outsideHost": "Definitie opgeslagen, maar de gegevens staan buiten Host Data en zijn niet geback-upt",
 
   // Encryption-key recovery kit
   "recovery.title": "Herstelkit",
@@ -1028,6 +1030,7 @@ const nl: Partial<Translations> = {
   "runReason.dbimportRollback": "het importeren mislukte en de oude gegevens konden niet worden teruggezet",
   "runReason.dbimportFailed": "het importgereedschap meldde een fout",
   "runReason.dbimportKeptOld": "de vorige gegevensmap is bewaard",
+  "runReason.dataOutsideHost": "de gegevens staan buiten Host Data en zijn niet geback-upt",
   "runReason.dbimportErrors": "one={n} fout, de vorige gegevensmap is bewaard|other={n} fouten, de vorige gegevensmap is bewaard",
   "runReason.dbimportAppsDown": "one=deze app kon niet opnieuw starten: {apps}|other=deze apps konden niet opnieuw starten: {apps}",
   "runReason.dbimportAppsStopped": "one=deze app blijft gestopt tot de datamap is uitgezocht: {apps}|other=deze apps blijven gestopt tot de datamap is uitgezocht: {apps}",

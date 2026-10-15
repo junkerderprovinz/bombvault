@@ -539,6 +539,7 @@ const it: Partial<Translations> = {
   "snapshots.recreate": "Ricrea dalla config salvata",
   "snapshots.recreateConfirm": "Ricreare questo container dalla sua configurazione salvata? Viene creato e avviato dalla definizione memorizzata.",
   "snapshots.configOnlyHint": "Backup solo configurazione: la definizione del container è salvata, ma non ha cartelle dati di cui fare snapshot. Se lo elimini compare in \"Non installato\", dove puoi ricrearlo da questa configurazione.",
+  "snapshots.outsideHostHint": "Viene salvata solo la definizione di questo container. I suoi dati sono fuori da Host Data, che BombVault non può leggere. Su TrueNAS i dati dell'archiviazione ixVolume si trovano in /mnt/.ix-apps e non sono raggiungibili; dai invece all'app un percorso dell'host per i suoi dati.",
 
   // File-level restore
   "files.restored": "Ripristinato",
@@ -866,6 +867,7 @@ const it: Partial<Translations> = {
   "stophook.remove": "Rimuovi {name}",
   "export.exportedTo": "Esportato in:",
   "backup.configOnly": "Solo configurazione, nessuna cartella dati (definizione salvata per la ricreazione)",
+  "backup.outsideHost": "Definizione salvata, ma i dati sono fuori da Host Data e non sono stati salvati",
 
   // Backups — delete all
   "snapshots.deleteAll": "Elimina tutti i backup",
@@ -1022,6 +1024,7 @@ const it: Partial<Translations> = {
   "runReason.dbimportRollback": "l'importazione non è riuscita e i dati precedenti non sono stati rimessi al loro posto",
   "runReason.dbimportFailed": "lo strumento di importazione ha segnalato un errore",
   "runReason.dbimportKeptOld": "la cartella dati precedente è stata conservata",
+  "runReason.dataOutsideHost": "i dati sono fuori da Host Data e non sono stati salvati",
   "runReason.dbimportErrors": "one={n} errore, la cartella dati precedente è stata conservata|other={n} errori, la cartella dati precedente è stata conservata",
   "runReason.dbimportAppsDown": "one=non è stato possibile riavviare questa applicazione: {apps}|many=non è stato possibile riavviare queste applicazioni: {apps}|other=non è stato possibile riavviare queste applicazioni: {apps}",
   "runReason.dbimportAppsStopped": "one=questa applicazione resta ferma finché la cartella dei dati non è sistemata: {apps}|many=queste applicazioni restano ferme finché la cartella dei dati non è sistemata: {apps}|other=queste applicazioni restano ferme finché la cartella dei dati non è sistemata: {apps}",

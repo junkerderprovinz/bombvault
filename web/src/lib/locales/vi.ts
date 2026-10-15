@@ -538,6 +538,7 @@ const vi: Partial<Translations> = {
   "snapshots.recreate": "Tạo lại từ cấu hình đã lưu",
   "snapshots.recreateConfirm": "Tạo lại container này từ cấu hình đã lưu? Nó được tạo và khởi động từ định nghĩa đã lưu.",
   "snapshots.configOnlyHint": "Bản sao lưu chỉ cấu hình: định nghĩa của container được lưu, nhưng không có thư mục dữ liệu để chụp nhanh. Nếu bạn xóa container, nó xuất hiện trong \"Chưa cài đặt\", nơi bạn có thể tạo lại từ cấu hình này.",
+  "snapshots.outsideHostHint": "Chỉ định nghĩa của vùng chứa này được lưu. Dữ liệu của nó nằm ngoài Host Data, nơi BombVault không đọc được. Trên TrueNAS, dữ liệu trong bộ nhớ ixVolume nằm dưới /mnt/.ix-apps và không thể truy cập; hãy cấp cho ứng dụng một đường dẫn trên máy chủ cho dữ liệu của nó.",
 
   "files.restored": "Đã khôi phục",
   "files.restoreConfirm": "Khôi phục các tập tin đã chọn về vị trí gốc của chúng? Các tập tin hiện có sẽ bị ghi đè.",
@@ -857,6 +858,7 @@ const vi: Partial<Translations> = {
   "stophook.remove": "Xóa {name}",
   "export.exportedTo": "Đã xuất tới:",
   "backup.configOnly": "Chỉ cấu hình, không có thư mục dữ liệu (đã lưu định nghĩa để tạo lại)",
+  "backup.outsideHost": "Đã lưu định nghĩa, nhưng dữ liệu nằm ngoài Host Data và chưa được sao lưu",
 
   // Backups — delete all
   "snapshots.deleteAll": "Xóa tất cả bản sao lưu",
@@ -1031,6 +1033,7 @@ const vi: Partial<Translations> = {
   "runReason.dbimportRollback": "việc nhập đã thất bại và không đưa được dữ liệu cũ về chỗ cũ",
   "runReason.dbimportFailed": "công cụ nhập báo một lỗi",
   "runReason.dbimportKeptOld": "thư mục dữ liệu trước đó được giữ lại",
+  "runReason.dataOutsideHost": "dữ liệu nằm ngoài Host Data và chưa được sao lưu",
   "runReason.dbimportErrors": "{n} lỗi, thư mục dữ liệu trước đó được giữ lại",
   "runReason.dbimportAppsDown": "không thể khởi động lại các ứng dụng sau: {apps}",
   "runReason.dbimportAppsStopped": "các ứng dụng sau vẫn dừng cho đến khi thư mục dữ liệu được xử lý xong: {apps}",

@@ -18,6 +18,7 @@ import { hostSilent, type Entry } from "../../lib/entry";
 import { humanBytes } from "../../lib/forecast";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
+import { dataOutsideHost } from "../../lib/runReason";
 import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
@@ -97,7 +98,11 @@ function BackupAction({ entry, onDone }: { entry: Entry; onDone: () => void }) {
     if (state.phase === "success") {
       const id = state.snapshotId ? ` · ${state.snapshotId.slice(0, 8)}` : "";
       // A container without data folders has only its definition saved.
-      push(item.kind === "container" && !state.snapshotId ? t("backup.configOnly") : `${t("common.done")}${id}`, "success");
+      if (item.kind === "container" && dataOutsideHost(state.note)) {
+        push(t("backup.outsideHost"), "warn");
+      } else {
+        push(item.kind === "container" && !state.snapshotId ? t("backup.configOnly") : `${t("common.done")}${id}`, "success");
+      }
     } else if (state.phase === "error") {
       push(state.message, "fail");
       setShake((n) => n + 1);

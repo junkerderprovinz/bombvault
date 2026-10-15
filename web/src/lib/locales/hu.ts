@@ -539,6 +539,7 @@ const hu: Partial<Translations> = {
   "snapshots.recreate": "Újralétrehozás mentett konfigból",
   "snapshots.recreateConfirm": "Újralétrehozza ezt a konténert a mentett konfigurációjából? A tárolt definícióból jön létre és indul el.",
   "snapshots.configOnlyHint": "Csak-konfiguráció biztonsági mentés: a konténer definíciója mentve van, de nincsenek adatmappái mentéshez. Ha törlöd, a „Nincs telepítve“ alatt jelenik meg, ahonnan újralétrehozhatod ebből a konfigból.",
+  "snapshots.outsideHostHint": "Csak ennek a konténernek a definíciója kerül mentésre. Az adatai a Host Data területén kívül vannak, amelyet a BombVault nem tud olvasni. TrueNAS-on az ixVolume-tárhely adatai a /mnt/.ix-apps alatt találhatók, és nem érhetők el; adj inkább az alkalmazásnak gazdagép-útvonalat az adataihoz.",
 
   // File-level restore
   "files.restored": "Visszaállítva",
@@ -866,6 +867,7 @@ const hu: Partial<Translations> = {
   "stophook.remove": "{name} eltávolítása",
   "export.exportedTo": "Exportálva ide:",
   "backup.configOnly": "Csak konfiguráció, nincsenek adatmappák (a definíció mentve az újralétrehozáshoz)",
+  "backup.outsideHost": "A definíció elmentve, de az adatok a Host Data területén kívül vannak, és nem készült róluk mentés",
 
   // Backups — delete all
   "snapshots.deleteAll": "Összes biztonsági mentés törlése",
@@ -1033,6 +1035,7 @@ const hu: Partial<Translations> = {
   "runReason.dbimportRollback": "az importálás meghiúsult, és a régi adatokat nem sikerült visszatenni",
   "runReason.dbimportFailed": "az importáló eszköz hibát jelzett",
   "runReason.dbimportKeptOld": "a korábbi adatmappa megmaradt",
+  "runReason.dataOutsideHost": "az adatok a Host Data területén kívül vannak, és nem készült róluk mentés",
   "runReason.dbimportErrors": "{n} hiba, a korábbi adatmappa megmaradt",
   "runReason.dbimportAppsDown": "one=ezt az alkalmazást nem sikerült újraindítani: {apps}|other=ezeket az alkalmazásokat nem sikerült újraindítani: {apps}",
   "runReason.dbimportAppsStopped": "one=ez az alkalmazás leállítva marad, amíg az adatmappa rendbe nem kerül: {apps}|other=ezek az alkalmazások leállítva maradnak, amíg az adatmappa rendbe nem kerül: {apps}",

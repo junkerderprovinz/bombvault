@@ -535,6 +535,7 @@ const pl: Partial<Translations> = {
   "snapshots.recreate": "Odtwórz z zapisanej konfiguracji",
   "snapshots.recreateConfirm": "Odtworzyć ten kontener z zapisanej konfiguracji? Zostanie utworzony i uruchomiony z zapisanej definicji.",
   "snapshots.configOnlyHint": "Kopia tylko konfiguracji: definicja kontenera jest zapisana, ale nie ma folderów danych do kopii zapasowej. Po usunięciu pojawi się w sekcji „Niezainstalowane“, gdzie można go odtworzyć z tej konfiguracji.",
+  "snapshots.outsideHostHint": "Zapisywana jest tylko definicja tego kontenera. Jego dane są poza Host Data, którego BombVault nie może odczytać. W TrueNAS dane w magazynie ixVolume są w /mnt/.ix-apps i są niedostępne; zamiast tego podaj aplikacji ścieżkę hosta na jej dane.",
   "files.restored": "Przywrócono",
   "files.restoreConfirm": "Przywrócić wybrane pliki do ich oryginalnych lokalizacji? Istniejące pliki zostaną nadpisane.",
   "files.selectHint": "Zaznacz pliki i foldery do przywrócenia, a następnie wybierz miejsce docelowe.",
@@ -860,6 +861,7 @@ const pl: Partial<Translations> = {
   "stophook.remove": "Usuń {name}",
   "export.exportedTo": "Wyeksportowano do:",
   "backup.configOnly": "Tylko konfiguracja, brak folderów danych (definicja zapisana do odtworzenia)",
+  "backup.outsideHost": "Definicja zapisana, ale dane są poza Host Data i nie zostały zarchiwizowane",
 
   // Backups — delete all
   "snapshots.deleteAll": "Usuń wszystkie kopie zapasowe",
@@ -1026,6 +1028,7 @@ const pl: Partial<Translations> = {
   "runReason.dbimportRollback": "import nie powiódł się i starych danych nie dało się odłożyć na miejsce",
   "runReason.dbimportFailed": "narzędzie do importu zgłosiło błąd",
   "runReason.dbimportKeptOld": "poprzedni folder z danymi został zachowany",
+  "runReason.dataOutsideHost": "dane są poza Host Data i nie zostały zarchiwizowane",
   "runReason.dbimportErrors": "one={n} błąd, poprzedni folder z danymi został zachowany|few={n} błędy, poprzedni folder z danymi został zachowany|many={n} błędów, poprzedni folder z danymi został zachowany|other={n} błędu, poprzedni folder z danymi został zachowany",
   "runReason.dbimportAppsDown": "one=nie udało się ponownie uruchomić tej aplikacji: {apps}|few=nie udało się ponownie uruchomić tych aplikacji: {apps}|many=nie udało się ponownie uruchomić tych aplikacji: {apps}|other=nie udało się ponownie uruchomić tych aplikacji: {apps}",
   "runReason.dbimportAppsStopped": "one=ta aplikacja pozostaje zatrzymana, dopóki folder danych nie zostanie uporządkowany: {apps}|few=te aplikacje pozostają zatrzymane, dopóki folder danych nie zostanie uporządkowany: {apps}|many=te aplikacje pozostają zatrzymane, dopóki folder danych nie zostanie uporządkowany: {apps}|other=te aplikacje pozostają zatrzymane, dopóki folder danych nie zostanie uporządkowany: {apps}",

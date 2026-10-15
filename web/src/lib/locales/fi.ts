@@ -539,6 +539,7 @@ const fi: Partial<Translations> = {
   "snapshots.recreate": "Luo uudelleen tallennetusta asetuksesta",
   "snapshots.recreateConfirm": "Luodaanko tämä säiliö uudelleen tallennetusta asetuksesta? Se luodaan ja käynnistetään tallennetusta määrityksestä.",
   "snapshots.configOnlyHint": "Vain-asetukset-varmuuskopio: säiliön määritys on tallennettu, mutta sillä ei ole datakansioita kuvattavaksi. Jos poistat säiliön, se näkyy kohdassa \"Ei asennettu\", jossa voit luoda sen uudelleen tästä asetuksesta.",
+  "snapshots.outsideHostHint": "Vain tämän kontin määritys tallennetaan. Sen tiedot ovat Host Datan ulkopuolella, jota BombVault ei voi lukea. TrueNASissa ixVolume-tallennustilan tiedot ovat polussa /mnt/.ix-apps eivätkä ole tavoitettavissa; anna sovellukselle sen sijaan isännän polku tiedoilleen.",
 
   // File-level restore
   "files.restored": "Palautettu",
@@ -866,6 +867,7 @@ const fi: Partial<Translations> = {
   "stophook.remove": "Poista {name}",
   "export.exportedTo": "Viety kohteeseen:",
   "backup.configOnly": "Vain asetukset, ei datakansioita (määritys tallennettu uudelleenluontia varten)",
+  "backup.outsideHost": "Määritys tallennettu, mutta tiedot ovat Host Datan ulkopuolella eikä niistä otettu varmuuskopiota",
 
   // Backups — delete all
   "snapshots.deleteAll": "Poista kaikki varmuuskopiot",
@@ -1040,6 +1042,7 @@ const fi: Partial<Translations> = {
   "runReason.dbimportRollback": "tuonti epäonnistui eikä vanhoja tietoja saatu takaisin paikalleen",
   "runReason.dbimportFailed": "tuontityökalu ilmoitti virheestä",
   "runReason.dbimportKeptOld": "aiempi datakansio säilytettiin",
+  "runReason.dataOutsideHost": "tiedot ovat Host Datan ulkopuolella eikä niistä otettu varmuuskopiota",
   "runReason.dbimportErrors": "one={n} virhe, aiempi datakansio säilytettiin|other={n} virhettä, aiempi datakansio säilytettiin",
   "runReason.dbimportAppsDown": "one=tätä sovellusta ei saatu käynnistettyä uudelleen: {apps}|other=näitä sovelluksia ei saatu käynnistettyä uudelleen: {apps}",
   "runReason.dbimportAppsStopped": "one=tämä sovellus pysyy pysäytettynä, kunnes datakansio on selvitetty: {apps}|other=nämä sovellukset pysyvät pysäytettyinä, kunnes datakansio on selvitetty: {apps}",

@@ -539,6 +539,7 @@ const he: Partial<Translations> = {
   "snapshots.recreate": "יצירה מחדש מההגדרה השמורה",
   "snapshots.recreateConfirm": "ליצור מחדש את הקונטיינר הזה מההגדרה השמורה? הוא ייווצר ויופעל מההגדרה המאוחסנת.",
   "snapshots.configOnlyHint": "גיבוי הגדרה בלבד: הגדרת הקונטיינר נשמרה, אך אין לו תיקיות נתונים לגיבוי. אם הקונטיינר נמחק הוא יופיע תחת \"לא מותקן\", ושם אפשר ליצור אותו מחדש מההגדרה הזו.",
+  "snapshots.outsideHostHint": "רק ההגדרה של המכל הזה נשמרת. הנתונים שלו נמצאים מחוץ ל-Host Data, ש-BombVault לא יכול לקרוא. ב-TrueNAS נתוני אחסון ixVolume נמצאים תחת /mnt/.ix-apps ואינם נגישים; תן ליישום במקום זאת נתיב מארח לנתונים שלו.",
 
   // File-level restore
   "files.restored": "שוחזר",
@@ -866,6 +867,7 @@ const he: Partial<Translations> = {
   "stophook.remove": "הסרת {name}",
   "export.exportedTo": "יוצא אל:",
   "backup.configOnly": "תצורה בלבד, אין תיקיות נתונים (ההגדרה נשמרה לשחזור)",
+  "backup.outsideHost": "ההגדרה נשמרה, אבל הנתונים נמצאים מחוץ ל-Host Data ולא גובו",
 
   // Backups — delete all
   "snapshots.deleteAll": "מחיקת כל הגיבויים",
@@ -1032,6 +1034,7 @@ const he: Partial<Translations> = {
   "runReason.dbimportRollback": "הייבוא נכשל ולא ניתן היה להחזיר את הנתונים הישנים למקומם",
   "runReason.dbimportFailed": "כלי הייבוא דיווח על שגיאה",
   "runReason.dbimportKeptOld": "תיקיית הנתונים הקודמת נשמרה",
+  "runReason.dataOutsideHost": "הנתונים נמצאים מחוץ ל-Host Data ולא גובו",
   "runReason.dbimportErrors": "one=שגיאה אחת, תיקיית הנתונים הקודמת נשמרה|two=שתי שגיאות, תיקיית הנתונים הקודמת נשמרה|other={n} שגיאות, תיקיית הנתונים הקודמת נשמרה",
   "runReason.dbimportAppsDown": "one=לא ניתן היה להפעיל מחדש את היישום הזה: {apps}|two=לא ניתן היה להפעיל מחדש את שני היישומים האלה: {apps}|other=לא ניתן היה להפעיל מחדש את היישומים האלה: {apps}",
   "runReason.dbimportAppsStopped": "one=היישום הזה נשאר עצור עד שתיקיית הנתונים תוסדר: {apps}|two=שני היישומים האלה נשארים עצורים עד שתיקיית הנתונים תוסדר: {apps}|other=היישומים האלה נשארים עצורים עד שתיקיית הנתונים תוסדר: {apps}",

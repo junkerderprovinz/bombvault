@@ -539,6 +539,7 @@ const sv: Partial<Translations> = {
   "snapshots.recreate": "Återskapa från sparad konfig",
   "snapshots.recreateConfirm": "Återskapa den här containern från dess sparade konfiguration? Den skapas och startas från den lagrade definitionen.",
   "snapshots.configOnlyHint": "Endast-konfig-säkerhetskopia: containerns definition är sparad, men den har inga datamappar att ta ögonblicksbild av. Om du tar bort den visas den under \"Ej installerad\", där du kan återskapa den från denna konfiguration.",
+  "snapshots.outsideHostHint": "Bara den här containerns definition sparas. Dess data ligger utanför Host Data, som BombVault inte kan läsa. På TrueNAS ligger data i ixVolume-lagring under /mnt/.ix-apps och är onåbara; ge i stället appen en värdsökväg för sina data.",
 
   // File-level restore
   "files.restored": "Återställd",
@@ -866,6 +867,7 @@ const sv: Partial<Translations> = {
   "stophook.remove": "Ta bort {name}",
   "export.exportedTo": "Exporterad till:",
   "backup.configOnly": "Endast konfiguration, inga datamappar (definition sparad för återskapande)",
+  "backup.outsideHost": "Definitionen är sparad, men data ligger utanför Host Data och säkerhetskopierades inte",
 
   // Backups — delete all
   "snapshots.deleteAll": "Ta bort alla säkerhetskopior",
@@ -1040,6 +1042,7 @@ const sv: Partial<Translations> = {
   "runReason.dbimportRollback": "importen misslyckades och de gamla data kunde inte läggas tillbaka",
   "runReason.dbimportFailed": "importverktyget rapporterade ett fel",
   "runReason.dbimportKeptOld": "den tidigare datamappen behölls",
+  "runReason.dataOutsideHost": "data ligger utanför Host Data och säkerhetskopierades inte",
   "runReason.dbimportErrors": "{n} fel, den tidigare datamappen behölls",
   "runReason.dbimportAppsDown": "one=den här appen gick inte att starta igen: {apps}|other=de här apparna gick inte att starta igen: {apps}",
   "runReason.dbimportAppsStopped": "one=den här appen förblir stoppad tills datamappen är ordnad: {apps}|other=de här apparna förblir stoppade tills datamappen är ordnad: {apps}",

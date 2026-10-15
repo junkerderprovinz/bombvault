@@ -1938,3 +1938,32 @@ func TestZFSBackupSizesByStampLeavesOutAPartlyMeasuredRun(t *testing.T) {
 		t.Fatalf("sizes = %v, want %v", got, want)
 	}
 }
+
+func TestRecentRunsCarryTheNoteOfASuccessfulRunOnly(t *testing.T) {
+	r := newRepo(t)
+	ok, err := r.StartRun("t1", "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.FinishRun(ok, "success", "", 0, "data folders outside Host Data were not backed up: /mnt/x"); err != nil {
+		t.Fatal(err)
+	}
+	bad, err := r.StartRun("t1", "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.FinishRun(bad, "failed", "", 0, "repository is locked"); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.RecentRunsByTarget(5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	notes := map[string]string{}
+	for _, run := range got["t1"] {
+		notes[run.ID] = run.Note
+	}
+	if notes[ok] != "data folders outside Host Data were not backed up: /mnt/x" || notes[bad] != "" {
+		t.Fatalf("notes = %v", notes)
+	}
+}

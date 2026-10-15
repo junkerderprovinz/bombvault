@@ -167,6 +167,9 @@ export const CRON_EXAMPLE_LTR_FRAGMENTS = ["0 */6 * * *"] as const;
  *  through for sign-in through OAuth. */
 export const MCP_OAUTH_PATHS_LTR_FRAGMENTS = ["/.well-known/", "/oauth/", "/mcp"] as const;
 
+/** Where TrueNAS keeps the data of an app that uses ixVolume storage. */
+export const IX_APPS_LTR_FRAGMENTS = ["/mnt/.ix-apps"] as const;
+
 /** Where a restored plugin's file sits on the flash. The name is put in after
  *  the isolation, so it lands inside it. */
 export const FLASH_PLUGIN_PATH_LTR_FRAGMENTS = ["/boot/config/plugins/{name}.plg"] as const;
@@ -207,6 +210,7 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "zfs.excludesHint": ZFS_EXCLUDE_EXAMPLE_LTR_FRAGMENTS,
   "mcp.oauthProxyNote": MCP_OAUTH_PATHS_LTR_FRAGMENTS,
   "flash.pluginRestored": FLASH_PLUGIN_PATH_LTR_FRAGMENTS,
+  "snapshots.outsideHostHint": IX_APPS_LTR_FRAGMENTS,
   "api.hint": API_BASE_LTR_FRAGMENTS,
   "api.addressHint": API_DESCRIPTION_LTR_FRAGMENTS,
   "api.descriptionHint": API_DESCRIPTION_LTR_FRAGMENTS,

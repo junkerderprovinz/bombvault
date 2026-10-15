@@ -124,6 +124,8 @@ type Docker interface {
 	// Allocations reports the static IP / published host ports every container
 	// currently holds, for the restore pre-flight conflict check.
 	Allocations(ctx context.Context) ([]model.Allocation, error)
+	// Networks returns the names of the networks on this host.
+	Networks(ctx context.Context) ([]string, error)
 	// Exec runs cmd inside the running container (pre/post-backup hooks).
 	Exec(ctx context.Context, name string, cmd []string) error
 }
@@ -215,6 +217,9 @@ type BackupDeps struct {
 	RepoPath string
 	// AppdataPaths are the paths included in the backup.
 	AppdataPaths []string
+	// UnreachableData are host paths of the container's data folders that sit
+	// outside the Host Data mount. They are not backed up, and the run says so.
+	UnreachableData []string
 	// StopTimeout is how long to wait for a graceful stop before SIGKILL.
 	StopTimeout time.Duration
 	// TargetID is the run-recording target id.
@@ -647,6 +652,14 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	if summarySeen {
 		recorded = summary
 	}
+	if len(d.UnreachableData) > 0 {
+		outside := store.NoteDataOutsideHost + ": " + strings.Join(d.UnreachableData, ", ")
+		if dumpNote == "" {
+			dumpNote = outside
+		} else {
+			dumpNote += "; " + outside
+		}
+	}
 	if err := d.Runs.Finish(runID, statusSuccess, recorded, dumpNote); err != nil {
 		return summary, fmt.Errorf("backup: record run finish: %w", err)
 	}
@@ -921,6 +934,9 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 	if err := checkRestoreConflicts(ctx, d); err != nil {
 		return err
 	}
+	if err := checkRestoreNetwork(ctx, d); err != nil {
+		return err
+	}
 
 	// PRE-FLIGHT: when restoring data, confirm the snapshot is readable BEFORE the
 	// destructive stop/remove, so a missing snapshot or an unreadable repo never
@@ -1045,6 +1061,40 @@ func checkRestoreConflicts(ctx context.Context, d RestoreDeps) error {
 		return fmt.Errorf("%w. Free these and retry: %s", ErrRestoreConflict, strings.Join(conflicts, "; "))
 	}
 	return nil
+}
+
+// checkRestoreNetwork refuses a restore whose primary user-defined network is
+// gone from the host, before anything is stopped or removed. BombVault does not
+// create the network itself: its driver, subnet and the labels the tool that
+// owned it expects are not part of the saved definition, and a network made with
+// guesses would clash with that tool the next time it runs. A TrueNAS app, for
+// one, drops its compose network when the app is deleted and makes it again on
+// reinstall.
+func checkRestoreNetwork(ctx context.Context, d RestoreDeps) error {
+	name := userDefinedNetwork(d.Inspect.HostConfig.NetworkMode)
+	if name == "" {
+		return nil
+	}
+	have, err := d.Docker.Networks(ctx)
+	if err != nil {
+		return fmt.Errorf("restore: list networks: %w", err)
+	}
+	if slices.Contains(have, name) {
+		return nil
+	}
+	return fmt.Errorf("restore: network %q does not exist on this host. "+
+		"If an app or compose project created it, such as a TrueNAS app, reinstall that app first so the network exists, then restore its data", name)
+}
+
+// userDefinedNetwork returns the network a container's network mode names, or
+// "" for Docker's built-in modes and a shared namespace.
+func userDefinedNetwork(mode string) string {
+	switch {
+	case mode == "", mode == "default", mode == "bridge", mode == "host", mode == "none",
+		strings.HasPrefix(mode, "container:"):
+		return ""
+	}
+	return mode
 }
 
 // publishedHostPorts returns the set of host ports the inspect publishes, keyed

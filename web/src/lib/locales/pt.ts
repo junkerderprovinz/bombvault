@@ -536,6 +536,7 @@ const pt: Partial<Translations> = {
   "snapshots.recreate": "Recriar a partir da config salva",
   "snapshots.recreateConfirm": "Recriar este contêiner a partir da configuração salva? Ele é criado e iniciado a partir da definição armazenada.",
   "snapshots.configOnlyHint": "Backup só de configuração: a definição do contêiner está salva, mas ele não tem pastas de dados para o backup. Se o excluíres, ele aparece em \"Não instalado\", onde o podes recriar a partir desta configuração.",
+  "snapshots.outsideHostHint": "Só a definição deste contêiner é guardada. Os dados estão fora de Host Data, que o BombVault não consegue ler. No TrueNAS, os dados do armazenamento ixVolume ficam em /mnt/.ix-apps e não são acessíveis; dá antes à aplicação um caminho do anfitrião para os dados dela.",
 
   // File-level restore
   "files.restored": "Restaurado",
@@ -863,6 +864,7 @@ const pt: Partial<Translations> = {
   "stophook.remove": "Remover {name}",
   "export.exportedTo": "Exportado para:",
   "backup.configOnly": "Apenas configuração: sem pastas de dados (definição guardada para recriação)",
+  "backup.outsideHost": "Definição guardada, mas os dados estão fora de Host Data e não foram copiados",
 
   // Backups — delete all
   "snapshots.deleteAll": "Eliminar todos os backups",
@@ -1029,6 +1031,7 @@ const pt: Partial<Translations> = {
   "runReason.dbimportRollback": "a importação falhou e os dados anteriores não puderam ser repostos",
   "runReason.dbimportFailed": "a ferramenta de importação comunicou um erro",
   "runReason.dbimportKeptOld": "a pasta de dados anterior foi mantida",
+  "runReason.dataOutsideHost": "os dados estão fora de Host Data e não foram copiados",
   "runReason.dbimportErrors": "one={n} erro, a pasta de dados anterior foi mantida|other={n} erros, a pasta de dados anterior foi mantida",
   "runReason.dbimportAppsDown": "one=não foi possível voltar a iniciar esta aplicação: {apps}|many=não foi possível voltar a iniciar estas aplicações: {apps}|other=não foi possível voltar a iniciar estas aplicações: {apps}",
   "runReason.dbimportAppsStopped": "one=esta aplicação fica parada até a pasta de dados ser resolvida: {apps}|many=estas aplicações ficam paradas até a pasta de dados ser resolvida: {apps}|other=estas aplicações ficam paradas até a pasta de dados ser resolvida: {apps}",

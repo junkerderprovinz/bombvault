@@ -157,6 +157,7 @@ const gl: Partial<Translations> = {
   "snapshots.recreate": "Recrear desde a configuración gardada",
   "snapshots.recreateConfirm": "Recrear este contedor a partir da súa configuración gardada? Créase e inícianse a partir da definición gardada (imaxe, contorno, portos, volumes).",
   "snapshots.configOnlyHint": "Copia só de configuración: a definición do contedor está gardada, pero non ten cartafoles de datos para a copia. Se eliminas o contedor, aparece en «Non instalado», desde onde o podes recrear con esta configuración.",
+  "snapshots.outsideHostHint": "Só se garda a definición deste contedor. Os seus datos están fóra de Host Data, que BombVault non pode ler. En TrueNAS, os datos do almacenamento ixVolume están en /mnt/.ix-apps e non son accesibles; dálle á aplicación unha ruta do host para os seus datos.",
 
   // Snapshot tags + compare
   "snapshot.addTag": "Engadir etiqueta",
@@ -885,6 +886,7 @@ const gl: Partial<Translations> = {
   "stophook.remove": "Eliminar {name}",
   "export.exportedTo": "Exportado a:",
   "backup.configOnly": "Só configuración, sen cartafoles de datos (definición gardada para recrear)",
+  "backup.outsideHost": "Definición gardada, pero os datos están fóra de Host Data e non se copiaron",
 
   // Per-container exclude patterns
   "excludes.title": "Patróns de exclusión",
@@ -1022,6 +1024,7 @@ const gl: Partial<Translations> = {
   "runReason.dbimportRollback": "a importación fallou e os datos anteriores non se puideron devolver ao seu sitio",
   "runReason.dbimportFailed": "a ferramenta de importación informou dun erro",
   "runReason.dbimportKeptOld": "conservouse o cartafol de datos anterior",
+  "runReason.dataOutsideHost": "os datos están fóra de Host Data e non se copiaron",
   "runReason.dbimportErrors": "one={n} erro, conservouse o cartafol de datos anterior|other={n} erros, conservouse o cartafol de datos anterior",
   "runReason.dbimportAppsDown": "one=esta aplicación non se puido volver iniciar: {apps}|other=estas aplicacións non se puideron volver iniciar: {apps}",
   "runReason.dbimportAppsStopped": "one=esta aplicación segue detida ata que se resolva o cartafol de datos: {apps}|other=estas aplicacións seguen detidas ata que se resolva o cartafol de datos: {apps}",

@@ -157,6 +157,7 @@ const lt: Partial<Translations> = {
   "snapshots.recreate": "Atkurti iš išsaugotos konfigūracijos",
   "snapshots.recreateConfirm": "Sukurti šį konteinerį iš naujo pagal jo išsaugotą konfigūraciją? Jis sukuriamas ir paleidžiamas pagal išsaugotą apibrėžimą (atvaizdas, aplinka, prievadai, tomai).",
   "snapshots.configOnlyHint": "Tik konfigūracijos atsarginė kopija: konteinerio apibrėžimas išsaugotas, tačiau jis neturi duomenų aplankų, kuriuos būtų galima kopijuoti. Ištrynus konteinerį, jis atsiranda skiltyje „Neįdiegtas“, iš kur gali jį atkurti pagal šią konfigūraciją.",
+  "snapshots.outsideHostHint": "Išsaugoma tik šio konteinerio apibrėžtis. Jo duomenys yra už Host Data ribų, kurių BombVault negali skaityti. TrueNAS sistemoje ixVolume saugyklos duomenys yra aplanke /mnt/.ix-apps ir nepasiekiami; vietoj to nurodyk programai pagrindinio kompiuterio kelią jos duomenims.",
 
   // Snapshot tags + compare
   "snapshot.addTag": "Pridėti žymę",
@@ -885,6 +886,7 @@ const lt: Partial<Translations> = {
   "stophook.remove": "Pašalinti {name}",
   "export.exportedTo": "Eksportuota į:",
   "backup.configOnly": "Tik konfigūracija, be duomenų aplankų (apibrėžimas išsaugotas kūrimui iš naujo)",
+  "backup.outsideHost": "Apibrėžtis išsaugota, bet duomenys yra už Host Data ribų ir nebuvo sukurtos jų atsarginės kopijos",
 
   // Per-container exclude patterns
   "excludes.title": "Išskyrimo šablonai",
@@ -1022,6 +1024,7 @@ const lt: Partial<Translations> = {
   "runReason.dbimportRollback": "importas nepavyko ir senų duomenų nepavyko grąžinti į vietą",
   "runReason.dbimportFailed": "importo įrankis pranešė apie klaidą",
   "runReason.dbimportKeptOld": "ankstesnis duomenų aplankas paliktas",
+  "runReason.dataOutsideHost": "duomenys yra už Host Data ribų ir nebuvo sukurtos jų atsarginės kopijos",
   "runReason.dbimportErrors": "one={n} klaida, ankstesnis duomenų aplankas paliktas|few={n} klaidos, ankstesnis duomenų aplankas paliktas|many={n} klaidos, ankstesnis duomenų aplankas paliktas|other={n} klaidų, ankstesnis duomenų aplankas paliktas",
   "runReason.dbimportAppsDown": "one=šios programos nepavyko vėl paleisti: {apps}|few=šių programų nepavyko vėl paleisti: {apps}|many=šių programų nepavyko vėl paleisti: {apps}|other=šių programų nepavyko vėl paleisti: {apps}",
   "runReason.dbimportAppsStopped": "one=ši programa lieka sustabdyta, kol bus sutvarkytas duomenų aplankas: {apps}|few=šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}|many=šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}|other=šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}",

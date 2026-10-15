@@ -157,6 +157,7 @@ const ms: Partial<Translations> = {
   "snapshots.recreate": "Cipta semula daripada konfigurasi tersimpan",
   "snapshots.recreateConfirm": "Cipta semula bekas ini daripada konfigurasi tersimpannya? Ia dicipta dan dimulakan mengikut takrifan tersimpan (imej, persekitaran, port, volum).",
   "snapshots.configOnlyHint": "Sandaran konfigurasi sahaja: takrifan bekas telah disimpan, tetapi ia tiada folder data untuk disandarkan. Jika anda padam bekas, ia akan muncul di bawah \"Tidak dipasang\", dari mana anda boleh cipta semula daripada konfigurasi ini.",
+  "snapshots.outsideHostHint": "Hanya definisi kontena ini disimpan. Datanya berada di luar Host Data, yang tidak boleh dibaca BombVault. Di TrueNAS, data pada storan ixVolume berada di /mnt/.ix-apps dan tidak dapat dicapai; berikan aplikasi laluan hos untuk datanya sebagai ganti.",
 
   // Snapshot tags + compare
   "snapshot.addTag": "Tambah tag",
@@ -885,6 +886,7 @@ const ms: Partial<Translations> = {
   "stophook.remove": "Alih keluar {name}",
   "export.exportedTo": "Dieksport ke:",
   "backup.configOnly": "Konfigurasi sahaja, tiada folder data (takrifan disimpan untuk penciptaan semula)",
+  "backup.outsideHost": "Definisi disimpan, tetapi data berada di luar Host Data dan tidak disandarkan",
 
   // Per-container exclude patterns
   "excludes.title": "Corak pengecualian",
@@ -1022,6 +1024,7 @@ const ms: Partial<Translations> = {
   "runReason.dbimportRollback": "import gagal dan data lama tidak dapat dikembalikan ke tempatnya",
   "runReason.dbimportFailed": "alat import melaporkan satu ralat",
   "runReason.dbimportKeptOld": "folder data sebelumnya dikekalkan",
+  "runReason.dataOutsideHost": "data berada di luar Host Data dan tidak disandarkan",
   "runReason.dbimportErrors": "{n} ralat, folder data sebelumnya dikekalkan",
   "runReason.dbimportAppsDown": "aplikasi berikut tidak dapat dimulakan semula: {apps}",
   "runReason.dbimportAppsStopped": "aplikasi berikut kekal berhenti sehingga folder data dibereskan: {apps}",
