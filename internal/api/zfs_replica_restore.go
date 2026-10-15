@@ -80,8 +80,8 @@ func (s *Service) StartZFSReplicaRestore(ctx context.Context, id, snapshot strin
 			if warn != "" {
 				detail += "; " + warn
 			}
-			// The dataset names are the message, and the run error scrubber
-			// would turn each of them into [path].
+			// The dataset names are the message, so it goes out as a refusal
+			// the run error scrubber passes untouched.
 			s.finishRestoreRun(ack.RunID, "", &backup.ZFSRefusal{Detail: zfsRefusalSentence("replica restore", d.Dataset, &backup.ZFSRefusal{
 				Code: zfsReplicaCode(err), Detail: detail,
 			})})

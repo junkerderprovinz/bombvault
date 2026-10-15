@@ -211,8 +211,8 @@ func (h *Handler) rejectOffsiteTargetOnNamedRepo(t store.OffsiteTarget) string {
 		if oErr != nil || !repoLocationsOverlap(other, loc) {
 			continue
 		}
-		// The row's name is left out: it is free text, and scrubError turns a
-		// name with a slash into "[path]".
+		// The row's name is left out: it is free text, and scrubError takes a
+		// slash that opens a word in it for a path.
 		return "that location is a named repository, or lies inside or around one; backups written there would be their own off-site copy, and the off-site retention would then age the only copy"
 	}
 	return ""

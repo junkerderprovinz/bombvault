@@ -178,8 +178,11 @@ func sweepZvolLeftovers(ctx context.Context, host ZFSHost, dataset string) {
 			log.Printf("zvol backup: %s is left from an earlier backup but kept, since %s was cloned from it", snap.Name, strings.Join(foreign, ", "))
 			continue
 		}
-		if len(snap.Clones) > 0 && !destroyOrLog(cleanup, host, ours) {
-			continue
+		if len(snap.Clones) > 0 {
+			if !destroyOrLog(cleanup, host, ours) {
+				continue
+			}
+			log.Printf("zvol backup: removed the clone %s left by an earlier backup that did not finish", ours)
 		}
 		if destroyOrLog(cleanup, host, snap.Name) {
 			log.Printf("zvol backup: removed %s left by an earlier backup that did not finish", snap.Name)
@@ -306,7 +309,9 @@ func restoreBlockDisksAndLog(ctx context.Context, d VMRestoreDeps) error {
 			Restic:     d.ZvolRestic,
 		})
 		if safety != "" {
-			log.Printf("vm restore: zvol disk %q: its contents from before the restore are kept in %s; zfs rollback %s undoes the restore", bd.Dataset, safety, safety)
+			// zfs rollback refuses any snapshot but the newest without -r, and
+			// the next restore of the same disk takes a newer one.
+			log.Printf("vm restore: zvol disk %q: its contents from before the restore are kept in %s. zfs rollback %s undoes the restore while that is the newest snapshot of the zvol; once a newer one exists, such as the next restore's, zfs rollback -r %s does it and destroys the newer snapshots", bd.Dataset, safety, safety, safety)
 		}
 		if err != nil {
 			log.Printf("vm restore: zvol disk %q: %v", bd.Dataset, err)

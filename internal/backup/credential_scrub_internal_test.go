@@ -118,3 +118,24 @@ func TestZFSHostDetailKeepsThePunctuationAfterAPath(t *testing.T) {
 		t.Fatalf("zfsHostDetail = %q, want %q", got, want)
 	}
 }
+
+func TestTruncateErrScrubsPathsButNotDatasetNames(t *testing.T) {
+	for _, tc := range []struct{ name, in, want string }{
+		{"zvol dataset", "no image of the zvol disk tank/vms/testvm in this run", "no image of the zvol disk tank/vms/testvm in this run"},
+		{"quoted dataset", `snapshot "tank/appdata/pg" failed`, `snapshot "tank/appdata/pg" failed`},
+		{"dataset in parentheses", "only zvol disks (tank/vms/win11-disk0).", "only zvol disks (tank/vms/win11-disk0)."},
+		{"host port", "host port 8080/tcp is taken", "host port 8080/tcp is taken"},
+		{"zvol device path", "only zvol disks (/dev/zvol/tank/vms/win11-disk0).", "only zvol disks ([path])."},
+		{"path at the start", "/mnt/user/appdata/plex: no such file", "[path]: no such file"},
+		{"path after an equals sign", "bind source=/mnt/user/appdata/plex", "bind source=[path]"},
+		{"socket url", "dial unix:///var/run/docker.sock: refused", "dial unix:[path]: refused"},
+		{"repository location", "open rest:https://nas.lan:8000/containers failed", "open rest:https://nas.lan:8000/containers failed"},
+		{"password with a slash", "ftp://user:wJalrXUtnFEMI/K7MDENG@ftp.example/x refused", "[redacted]@ftp.example/x refused"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := truncateErr(errors.New(tc.in)); got != tc.want {
+				t.Fatalf("truncateErr(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}

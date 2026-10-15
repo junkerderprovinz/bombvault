@@ -326,6 +326,7 @@ const offsiteSourcePrefix = "offsite:"
 
 var (
 	errNoOffsiteRepo        = errors.New("no off-site repo configured for this domain")
+	errOffsiteTargetsOff    = errors.New("every off-site target of this domain is switched off")
 	errUnknownOffsiteTarget = errors.New("no such off-site target in this domain")
 )
 

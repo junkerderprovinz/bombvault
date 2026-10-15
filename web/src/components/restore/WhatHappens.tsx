@@ -10,7 +10,7 @@ function sentences(
   kind: EntryKind,
   what: RestoreWhat,
   where: RestoreWhere,
-  o: { stopped: boolean; backupFirst: boolean }
+  o: { stopped: boolean; backupFirst: boolean; exists: boolean }
 ): TranslationKey[] {
   if (where === "zip") return ["restoreWindow.says.zip", "restoreWindow.says.zipStick", "restoreWindow.says.zipFlash"];
   if (where === "folder") return ["restoreWindow.says.folder", "restoreWindow.untouched"];
@@ -22,6 +22,15 @@ function sentences(
   }
   const first: TranslationKey[] = o.backupFirst ? ["restoreWindow.says.backupFirst"] : [];
   if (what === "files") return ["restoreWindow.says.replaceFiles"];
+  if (kind === "container" && !o.exists) {
+    return [
+      "restoreWindow.says.createContainer",
+      o.stopped ? "restoreWindow.says.containerStopped" : "restoreWindow.says.createdContainerStarts",
+    ];
+  }
+  if (kind === "vm" && !o.exists) {
+    return ["restoreWindow.says.createVM", o.stopped ? "restoreWindow.says.vmOff" : "restoreWindow.says.createdVMStarts"];
+  }
   if (kind === "container") {
     return [
       "restoreWindow.says.replaceContainer",
@@ -42,6 +51,7 @@ export function WhatHappens({
   where,
   stopped,
   backupFirst,
+  exists,
   plan,
 }: {
   kind: EntryKind;
@@ -49,6 +59,8 @@ export function WhatHappens({
   where: RestoreWhere;
   stopped: boolean;
   backupFirst: boolean;
+  /** Whether the container or VM is there now, or the restore creates it. */
+  exists: boolean;
   /** The plan of the last check, once it is back. */
   plan: RestorePlan | null | undefined;
 }) {
@@ -61,7 +73,7 @@ export function WhatHappens({
     <section className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3 text-sm text-carbon-text">
       <h4 className="font-semibold">{t("restoreWindow.happens")}</h4>
       <p className="text-carbon-textSub">
-        {sentences(kind, what, where, { stopped, backupFirst })
+        {sentences(kind, what, where, { stopped, backupFirst, exists })
           .map((key) => t(key))
           .join(" ")}
       </p>
