@@ -280,7 +280,9 @@ export function ExcludesEditor({
                 : t("excludes.willExclude")
               : row.status === "passthrough"
                 ? t("excludes.noMatch")
-                : t("excludes.excludesNothing");
+                : row.status === "basename"
+                  ? t("excludes.nameMatchesNothing")
+                  : t("excludes.excludesNothing");
             return (
               <div
                 key={i}

@@ -1395,6 +1395,7 @@ const tr: Partial<Translations> = {
   "excludes.error": "Hariç tutmalar kaydedilemedi",
   "excludes.noMatch": "restic'e olduğu gibi iletilir (tanınan bir kapsayıcı yolu değil).",
   "excludes.excludesNothing": "Bu klasörün birimi yedeğe dahil değil, bu yüzden bu satır hiçbir şeyi hariç tutmaz.",
+  "excludes.nameMatchesNothing": "Bu yedekte bu ada sahip hiçbir şey yok, bu yüzden bu satır hiçbir şeyi hariç tutmaz.",
   // Exclude preview status (#38)
   "excludes.willExclude": "yedekten hariç tutulacak",
   "excludes.matchesAnywhere": "göründüğü her yerde hariç tutulacak",

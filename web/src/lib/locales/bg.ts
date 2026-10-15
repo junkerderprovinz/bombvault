@@ -897,6 +897,7 @@ const bg: Partial<Translations> = {
   "excludes.error": "Изключванията не можаха да бъдат запазени",
   "excludes.noMatch": "Предава се на restic непроменено (не е разпознат път в контейнера).",
   "excludes.excludesNothing": "Томът на тази папка не е в архивирането, така че този ред не изключва нищо.",
+  "excludes.nameMatchesNothing": "Нищо в това архивиране няма това име, така че този ред не изключва нищо.",
   // Exclude preview status
   "excludes.willExclude": "ще бъде изключено от архивирането",
   "excludes.matchesAnywhere": "ще бъде изключено навсякъде, където се появи",

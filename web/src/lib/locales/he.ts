@@ -1395,6 +1395,7 @@ const he: Partial<Translations> = {
   "excludes.error": "לא ניתן היה לשמור את ההחרגות",
   "excludes.noMatch": "מועבר ל-restic כפי שהוא (אינו נתיב מוכר של מכל).",
   "excludes.excludesNothing": "אמצעי האחסון של תיקייה זו אינו בגיבוי, כך שהשורה הזו אינה מחריגה דבר.",
+  "excludes.nameMatchesNothing": "שום דבר בגיבוי הזה אינו נושא את השם הזה, כך שהשורה הזו אינה מחריגה דבר.",
   // Exclude preview status (#38)
   "excludes.willExclude": "יוחרג מהגיבוי",
   "excludes.matchesAnywhere": "יוחרג בכל מקום שבו הוא מופיע",

@@ -1386,6 +1386,7 @@ const vi: Partial<Translations> = {
   "excludes.error": "Không thể lưu loại trừ",
   "excludes.noMatch": "Được chuyển tới restic nguyên trạng (không phải đường dẫn container được nhận diện).",
   "excludes.excludesNothing": "Ổ đĩa của thư mục này không nằm trong bản sao lưu, nên dòng này không loại trừ gì cả.",
+  "excludes.nameMatchesNothing": "Không có gì trong bản sao lưu này mang tên này, nên dòng này không loại trừ gì cả.",
   // Exclude preview status (#38)
   "excludes.willExclude": "sẽ bị loại trừ khỏi bản sao lưu",
   "excludes.matchesAnywhere": "sẽ bị loại trừ ở bất kỳ nơi nào xuất hiện",

@@ -897,6 +897,7 @@ const hr: Partial<Translations> = {
   "excludes.error": "Izuzimanja se nisu mogla spremiti",
   "excludes.noMatch": "Prosljeđuje se resticu nepromijenjeno (nije prepoznata putanja kontejnera).",
   "excludes.excludesNothing": "Volumen ove mape nije u sigurnosnoj kopiji, pa ovaj redak ništa ne izuzima.",
+  "excludes.nameMatchesNothing": "Ništa u ovoj sigurnosnoj kopiji nema ovaj naziv, pa ovaj redak ništa ne izuzima.",
   // Exclude preview status
   "excludes.willExclude": "bit će izuzeto iz sigurnosne kopije",
   "excludes.matchesAnywhere": "bit će izuzeto gdje god se pojavi",

@@ -1773,25 +1773,97 @@ func isUnderAny(p string, roots []string) bool {
 // previewExcludes resolves each non-empty raw line against the live inspect and
 // reports, per line, the resolved --exclude pattern and whether it would match
 // anything in this container's backup (effective = the volumes actually backed
-// up). A basename matches at any depth; a translated path matches only when it
-// is under a backed-up volume; a passthrough is reported as matching nothing.
-// The user's original text round-trips in Raw.
-func (s *Service) previewExcludes(raw []string, in model.Inspect, effective []string) []ExcludePreview {
-	var out []ExcludePreview
+// up). A basename matches when some file or folder in those volumes has that
+// name; a translated path matches only when it is under a backed-up volume; a
+// passthrough is reported as matching nothing. The user's original text
+// round-trips in Raw.
+func (s *Service) previewExcludes(ctx context.Context, raw []string, in model.Inspect, effective []string) []ExcludePreview {
+	type resolved struct{ line, pattern, status string }
+	var lines []resolved
+	var names []string
 	for _, line := range raw {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
 		pattern, status := s.resolveExcludeLine(line, in)
-		matches := status == "basename" || (status == "translated" && isUnderAny(pattern, effective))
+		lines = append(lines, resolved{line, pattern, status})
+		if status == "basename" {
+			names = append(names, pattern)
+		}
+	}
+	found := basenamesFound(ctx, names, effective)
+	var out []ExcludePreview
+	for _, l := range lines {
+		matches := (l.status == "basename" && found[l.pattern]) || (l.status == "translated" && isUnderAny(l.pattern, effective))
 		out = append(out, ExcludePreview{
-			Raw:      line,
-			Resolved: pattern,
-			Status:   status,
+			Raw:      l.line,
+			Resolved: l.pattern,
+			Status:   l.status,
 			Matches:  matches,
 		})
 	}
 	return out
+}
+
+// basenameSearchBudget bounds the search for a bare-name exclude. An appdata
+// folder can hold millions of files and the editor asks again after each edit.
+const basenameSearchBudget = 2 * time.Second
+
+// basenamesFound reports which of names, restic excludes without a slash,
+// match the name of something in roots. restic tests such a pattern against
+// every component of a path, so the components of the roots themselves count
+// too. A name the search has not settled when the budget runs out counts as
+// found: the editor warns about a line that excludes nothing, and that warning
+// must not rest on a search that stopped early.
+func basenamesFound(ctx context.Context, names, roots []string) map[string]bool {
+	found := make(map[string]bool, len(names))
+	for _, n := range names {
+		found[n] = false
+	}
+	left := len(found)
+	check := func(component string) {
+		for _, n := range names {
+			if found[n] {
+				continue
+			}
+			if ok, _ := path.Match(n, component); ok {
+				found[n] = true
+				left--
+			}
+		}
+	}
+	for _, root := range roots {
+		for _, c := range strings.Split(filepath.ToSlash(root), "/") {
+			if c != "" {
+				check(c)
+			}
+		}
+	}
+	ctx, cancel := context.WithTimeout(ctx, basenameSearchBudget)
+	defer cancel()
+	for _, root := range roots {
+		if left == 0 {
+			break
+		}
+		_ = filepath.WalkDir(root, func(_ string, d fs.DirEntry, err error) error {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			if err == nil {
+				check(d.Name())
+			}
+			if left == 0 {
+				return fs.SkipAll
+			}
+			return nil
+		})
+	}
+	if ctx.Err() != nil {
+		for _, n := range names {
+			found[n] = true
+		}
+	}
+	return found
 }
 
 // retentionPolicy is the local keep-policy of a domain: its own when it has
@@ -15973,7 +16045,7 @@ func (s *Service) PreviewExcludes(ctx context.Context, name string, candidate []
 		return nil, fmt.Errorf("inspect container: %w", err)
 	}
 	effective := s.effectiveBackupPaths(name, in)
-	return s.previewExcludes(candidate, in, effective), nil
+	return s.previewExcludes(ctx, candidate, in, effective), nil
 }
 
 // CheckDomain verifies the integrity of a domain's restic repo (restic check).

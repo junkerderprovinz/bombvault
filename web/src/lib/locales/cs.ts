@@ -1393,6 +1393,7 @@ const cs: Partial<Translations> = {
   "excludes.error": "Vyloučení se nepodařilo uložit",
   "excludes.noMatch": "Předáno do restic tak, jak je (nerozpoznaná cesta kontejneru).",
   "excludes.excludesNothing": "Svazek této složky není v záloze, takže tento řádek nic nevylučuje.",
+  "excludes.nameMatchesNothing": "Nic v této záloze nemá tento název, takže tento řádek nic nevylučuje.",
   // Exclude preview status (#38)
   "excludes.willExclude": "bude vyloučeno ze zálohy",
   "excludes.matchesAnywhere": "bude vyloučeno všude, kde se vyskytuje",

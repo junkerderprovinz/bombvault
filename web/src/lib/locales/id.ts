@@ -897,6 +897,7 @@ const id: Partial<Translations> = {
   "excludes.error": "Pengecualian gagal disimpan",
   "excludes.noMatch": "Diteruskan ke restic apa adanya (bukan jalur container yang dikenali).",
   "excludes.excludesNothing": "Volume folder ini tidak ada dalam pencadangan, jadi baris ini tidak mengecualikan apa pun.",
+  "excludes.nameMatchesNothing": "Tidak ada apa pun dalam pencadangan ini yang bernama ini, jadi baris ini tidak mengecualikan apa pun.",
   // Exclude preview status
   "excludes.willExclude": "akan dikecualikan dari pencadangan",
   "excludes.matchesAnywhere": "akan dikecualikan di mana pun muncul",

@@ -1386,6 +1386,7 @@ const ko: Partial<Translations> = {
   "excludes.error": "제외를 저장할 수 없습니다",
   "excludes.noMatch": "restic에 그대로 전달됩니다(인식된 컨테이너 경로 아님).",
   "excludes.excludesNothing": "이 폴더의 볼륨이 백업에 없으므로 이 줄은 아무것도 제외하지 않습니다.",
+  "excludes.nameMatchesNothing": "이 백업에는 이 이름을 가진 항목이 없으므로 이 줄은 아무것도 제외하지 않습니다.",
   // Exclude preview status (#38)
   "excludes.willExclude": "백업에서 제외됩니다",
   "excludes.matchesAnywhere": "나타나는 모든 위치에서 제외됩니다",

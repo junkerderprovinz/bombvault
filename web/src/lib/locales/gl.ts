@@ -897,6 +897,7 @@ const gl: Partial<Translations> = {
   "excludes.error": "Non se puideron gardar as exclusións",
   "excludes.noMatch": "Pásase a restic tal cal (non é un camiño de contedor recoñecido).",
   "excludes.excludesNothing": "O volume deste cartafol non está na copia, así que esta liña non exclúe nada.",
+  "excludes.nameMatchesNothing": "Nada nesta copia ten este nome, así que esta liña non exclúe nada.",
   // Exclude preview status
   "excludes.willExclude": "excluirase da copia",
   "excludes.matchesAnywhere": "excluirase en calquera lugar onde apareza",

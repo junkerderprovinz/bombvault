@@ -897,6 +897,7 @@ const lt: Partial<Translations> = {
   "excludes.error": "Nepavyko išsaugoti išskyrimų",
   "excludes.noMatch": "Perduodama restic tokia, kokia yra (neatpažintas konteinerio kelias).",
   "excludes.excludesNothing": "Šio aplanko tomas nėra atsarginėje kopijoje, todėl ši eilutė nieko neišskiria.",
+  "excludes.nameMatchesNothing": "Šioje atsarginėje kopijoje nėra nieko šiuo pavadinimu, todėl ši eilutė nieko neišskiria.",
   // Exclude preview status
   "excludes.willExclude": "bus išskirta iš atsarginės kopijos",
   "excludes.matchesAnywhere": "bus išskirta bet kur, kur pasirodo",

@@ -897,6 +897,7 @@ const lv: Partial<Translations> = {
   "excludes.error": "Neizdevās saglabāt izslēgšanas",
   "excludes.noMatch": "Tiek nodots restic nemainīts (nav atpazīts konteinera ceļš).",
   "excludes.excludesNothing": "Šīs mapes sējums nav rezerves kopijā, tāpēc šī rinda neko neizslēdz.",
+  "excludes.nameMatchesNothing": "Šajā rezerves kopijā nekam nav šāda nosaukuma, tāpēc šī rinda neko neizslēdz.",
   // Exclude preview status
   "excludes.willExclude": "tiks izslēgts no rezerves kopijas",
   "excludes.matchesAnywhere": "tiks izslēgts jebkur, kur tas parādās",

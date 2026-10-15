@@ -1394,6 +1394,7 @@ const nl: Partial<Translations> = {
   "excludes.error": "Kon uitsluitingen niet opslaan",
   "excludes.noMatch": "Wordt ongewijzigd aan restic doorgegeven (geen herkend containerpad).",
   "excludes.excludesNothing": "Het volume van deze map zit niet in de back-up, dus deze regel sluit niets uit.",
+  "excludes.nameMatchesNothing": "Niets in deze back-up heeft deze naam, dus deze regel sluit niets uit.",
   // Exclude preview status (#38)
   "excludes.willExclude": "wordt uitgesloten van de back-up",
   "excludes.matchesAnywhere": "wordt overal uitgesloten waar het voorkomt",

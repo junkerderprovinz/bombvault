@@ -1396,6 +1396,7 @@ const ro: Partial<Translations> = {
   "excludes.error": "Excluderile nu au putut fi salvate",
   "excludes.noMatch": "Transmis către restic ca atare (cale de container nerecunoscută).",
   "excludes.excludesNothing": "Volumul acestui folder nu este în backup, așa că această linie nu exclude nimic.",
+  "excludes.nameMatchesNothing": "Nimic din acest backup nu are acest nume, așa că această linie nu exclude nimic.",
   // Exclude preview status (#38)
   "excludes.willExclude": "va fi exclus din backup",
   "excludes.matchesAnywhere": "va fi exclus oriunde apare",

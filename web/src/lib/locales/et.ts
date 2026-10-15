@@ -897,6 +897,7 @@ const et: Partial<Translations> = {
   "excludes.error": "Väljajätte ei õnnestunud salvestada",
   "excludes.noMatch": "Antakse restic'ule edasi muutmata kujul (pole tuntud konteineri rada).",
   "excludes.excludesNothing": "Selle kausta köide pole varunduses, seega see rida ei jäta midagi välja.",
+  "excludes.nameMatchesNothing": "Selles varunduses pole midagi selle nimega, seega see rida ei jäta midagi välja.",
   // Exclude preview status
   "excludes.willExclude": "jäetakse varundusest välja",
   "excludes.matchesAnywhere": "jäetakse välja kõikjal, kus see esineb",

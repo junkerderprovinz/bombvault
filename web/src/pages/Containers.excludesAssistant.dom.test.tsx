@@ -481,3 +481,34 @@ describe("an editor given its own preview", () => {
     expect(screen.getByTitle("/mnt/tank/appdata/cache")).toBeTruthy();
   });
 });
+
+describe("a bare name that matches nothing", () => {
+  it("says no file or folder has that name", async () => {
+    function NoMatch() {
+      const { t } = useT();
+      return (
+        <ExcludesEditor
+          name="plex"
+          initial={[]}
+          open
+          t={t}
+          preview={(_name, lines) =>
+            Promise.resolve([{ raw: lines[0], resolved: lines[0], status: "basename", matches: false }])
+          }
+        />
+      );
+    }
+
+    render(
+      <I18nProvider>
+        <ToastProvider>
+          <NoMatch />
+        </ToastProvider>
+      </I18nProvider>
+    );
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "nomatch.zzz" } });
+
+    expect(await screen.findByText(/Nothing in this backup has this name/)).toBeTruthy();
+    expect(screen.queryByText(/volume is not in the backup/)).toBeNull();
+  });
+});

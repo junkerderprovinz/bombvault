@@ -897,6 +897,7 @@ const sr: Partial<Translations> = {
   "excludes.error": "Изузимања нису могла да се сачувају",
   "excludes.noMatch": "Прослеђено resticu онакво какво јесте (није препозната путања контејнера).",
   "excludes.excludesNothing": "Диск ове фасцикле није у резервној копији, па овај ред ништа не изузима.",
+  "excludes.nameMatchesNothing": "Ништа у овој резервној копији нема овај назив, па овај ред ништа не изузима.",
   "excludes.willExclude": "биће изузето из резервне копије",
   "excludes.matchesAnywhere": "биће изузето где год се појави",
   "excludes.assistTitle": "Помоћник за изузимања",

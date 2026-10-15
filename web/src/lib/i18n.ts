@@ -1026,6 +1026,7 @@ export const en = {
   "excludes.error": "Could not save excludes",
   "excludes.noMatch": "Passed to restic as-is (not a recognized container path).",
   "excludes.excludesNothing": "This folder's volume is not in the backup, so this line excludes nothing.",
+  "excludes.nameMatchesNothing": "Nothing in this backup has this name, so this line excludes nothing.",
   // Exclude preview status (#38)
   "excludes.willExclude": "will be excluded from the backup",
   "excludes.matchesAnywhere": "will be excluded wherever it appears",
@@ -5836,6 +5837,7 @@ export const de: Translations = {
   "excludes.error": "Ausschlüsse konnten nicht gespeichert werden",
   "excludes.noMatch": "Wird unverändert an restic übergeben (kein erkannter Container-Pfad).",
   "excludes.excludesNothing": "Das Volume dieses Ordners ist nicht in der Sicherung, diese Zeile schließt also nichts aus.",
+  "excludes.nameMatchesNothing": "Nichts in dieser Sicherung trägt diesen Namen, diese Zeile schließt also nichts aus.",
   // Exclude preview status (#38)
   "excludes.willExclude": "wird von der Sicherung ausgeschlossen",
   "excludes.matchesAnywhere": "wird überall ausgeschlossen, wo es vorkommt",

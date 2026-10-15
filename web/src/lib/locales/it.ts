@@ -1395,6 +1395,7 @@ const it: Partial<Translations> = {
   "excludes.error": "Impossibile salvare le esclusioni",
   "excludes.noMatch": "Passato a restic così com'è (non è un percorso del contenitore riconosciuto).",
   "excludes.excludesNothing": "Il volume di questa cartella non è nel backup, quindi questa riga non esclude nulla.",
+  "excludes.nameMatchesNothing": "Nulla in questo backup ha questo nome, quindi questa riga non esclude nulla.",
   // Exclude preview status (#38)
   "excludes.willExclude": "sarà escluso dal backup",
   "excludes.matchesAnywhere": "sarà escluso ovunque compaia",

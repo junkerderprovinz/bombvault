@@ -897,6 +897,7 @@ const is: Partial<Translations> = {
   "excludes.error": "Ekki tókst að vista undanskilningana",
   "excludes.noMatch": "Er skilað óbreyttu til restic (ekki þekkt slóð gáms).",
   "excludes.excludesNothing": "Gagnahirsla þessarar möppu er ekki í afrituninni, svo þessi lína útilokar ekkert.",
+  "excludes.nameMatchesNothing": "Ekkert í þessari afritun ber þetta nafn, svo þessi lína útilokar ekkert.",
   // Exclude preview status
   "excludes.willExclude": "verður útilokað úr afrituninni",
   "excludes.matchesAnywhere": "verður útilokað hvar sem það birtist",

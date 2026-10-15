@@ -897,6 +897,7 @@ const ca: Partial<Translations> = {
   "excludes.error": "No s'han pogut desar les exclusions",
   "excludes.noMatch": "Es passa a restic tal qual (no és un camí de contenidor reconegut).",
   "excludes.excludesNothing": "El volum d'aquesta carpeta no és a la còpia, així que aquesta línia no exclou res.",
+  "excludes.nameMatchesNothing": "Res d'aquesta còpia no té aquest nom, així que aquesta línia no exclou res.",
   // Exclude preview status
   "excludes.willExclude": "s'exclourà de la còpia",
   "excludes.matchesAnywhere": "s'exclourà arreu on aparegui",
