@@ -152,6 +152,25 @@ func (r *Repo) DeleteFleetPeer(id string) error {
 	return nil
 }
 
+// DropMemberFleetPeers removes the rows of group members, the one of memberID
+// or, with an empty memberID, every one. A row from before pairing that a
+// member took over keeps its address and waits for pairing again, as it did
+// before. Rows nobody paired are left alone.
+func (r *Repo) DropMemberFleetPeers(memberID string) error {
+	err := r.inTx(func(tx *sql.Tx) error {
+		match := `member_id != '' AND (? = '' OR member_id = ?)`
+		if _, err := tx.Exec(`UPDATE fleet_peers SET member_id = '', kind = '' WHERE url != '' AND `+match, memberID, memberID); err != nil {
+			return err
+		}
+		_, err := tx.Exec(`DELETE FROM fleet_peers WHERE `+match, memberID, memberID)
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("DropMemberFleetPeers: %w", err)
+	}
+	return nil
+}
+
 func scanFleetPeer(s scanner) (FleetPeer, error) {
 	var p FleetPeer
 	var enabled int

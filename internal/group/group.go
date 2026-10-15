@@ -20,7 +20,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -186,6 +185,11 @@ const addrTTL = 5 * time.Minute
 // puts it back to use as soon as it answers.
 const directRetry = addrTTL
 
+// departGrace is how long a member that said it left stays out of Members:
+// long enough for its relay connection to close and its last multicast
+// announce to age out, either of which would otherwise list it again.
+const departGrace = time.Minute
+
 // Manager keeps this instance's side of the group running: the discovery
 // announce, the relay connection and the direct transport.
 type Manager struct {
@@ -206,6 +210,8 @@ type Manager struct {
 	addrs  map[string]*remoteAddr
 	// failed holds when a call to a direct address last failed, by address.
 	failed map[string]time.Time
+	// departed holds when a member said it left, by id.
+	departed map[string]time.Time
 
 	sweepMu   sync.Mutex
 	lastSweep time.Time
@@ -218,14 +224,15 @@ type Manager struct {
 // in no group until Apply is called with a secret.
 func NewManager(serve relay.Handler) *Manager {
 	return &Manager{
-		serve:   serve,
-		replay:  relay.NewReplayGuard(),
-		disc:    discovery.New(),
-		limiter: relay.NewLimiter(),
-		slots:   make(chan struct{}, maxDirectCalls),
-		addrs:   map[string]*remoteAddr{},
-		failed:  map[string]time.Time{},
-		stop:    make(chan struct{}),
+		serve:    serve,
+		replay:   relay.NewReplayGuard(),
+		disc:     discovery.New(),
+		limiter:  relay.NewLimiter(),
+		slots:    make(chan struct{}, maxDirectCalls),
+		addrs:    map[string]*remoteAddr{},
+		failed:   map[string]time.Time{},
+		departed: map[string]time.Time{},
+		stop:     make(chan struct{}),
 		hc: &http.Client{
 			Timeout: relay.CallTimeout,
 			CheckRedirect: func(*http.Request, []*http.Request) error {
@@ -327,6 +334,7 @@ func (m *Manager) Apply(cfg Config) {
 		m.addrMu.Lock()
 		m.addrs = map[string]*remoteAddr{}
 		m.failed = map[string]time.Time{}
+		m.departed = map[string]time.Time{}
 		m.addrMu.Unlock()
 		m.sweepMu.Lock()
 		m.lastSweep = time.Time{}
@@ -447,8 +455,12 @@ func (m *Manager) Members() []Member {
 		}
 		byID[id] = &Member{ID: id, Name: a.name, Version: a.version, Direct: true, Address: a.url}
 	}
+	gone := m.departedNow()
 	out := make([]Member, 0, len(byID))
 	for id, mem := range byID {
+		if gone[id] {
+			continue
+		}
 		if mem.Address == "" {
 			mem.Address, _ = m.knownAddress(id)
 		}
@@ -460,6 +472,34 @@ func (m *Manager) Members() []Member {
 		}
 		return out[i].ID < out[j].ID
 	})
+	return out
+}
+
+// Forget drops every address on record for memberID and keeps it out of
+// Members for departGrace. It is for a member that said it left the group.
+func (m *Manager) Forget(memberID string) {
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	if a := m.addrs[memberID]; a != nil {
+		delete(m.failed, a.url)
+	}
+	delete(m.addrs, memberID)
+	m.departed[memberID] = time.Now()
+}
+
+// departedNow lists the members that left within departGrace and drops the
+// older ones.
+func (m *Manager) departedNow() map[string]bool {
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	out := map[string]bool{}
+	for id, at := range m.departed {
+		if time.Since(at) < departGrace {
+			out[id] = true
+		} else {
+			delete(m.departed, id)
+		}
+	}
 	return out
 }
 
@@ -605,9 +645,19 @@ func (m *Manager) Call(ctx context.Context, memberID, method, path string, body 
 		return 0, nil, ErrNotMember
 	}
 	call := relay.ProxyCall{Method: method, Path: path, Body: body, Sender: self}
-	relayed := c != nil && slices.ContainsFunc(c.Siblings(), func(s relay.Sibling) bool { return s.InstanceID == memberID })
+	var sib relay.Sibling
+	relayed := false
+	if c != nil {
+		for _, s := range c.Siblings() {
+			if s.InstanceID == memberID {
+				sib, relayed = s, true
+				break
+			}
+		}
+	}
 	dctx, cancel := directContext(ctx, relayed)
 	defer cancel()
+	skip := func(url string) bool { return relayed && m.directDown(url) }
 
 	var directErr error
 	tried := map[string]bool{}
@@ -616,7 +666,7 @@ func (m *Manager) Call(ctx context.Context, memberID, method, path string, body 
 			continue
 		}
 		tried[p.URL] = true
-		if relayed && m.directDown(p.URL) {
+		if skip(p.URL) {
 			continue
 		}
 		res, err := m.callDirect(dctx, k, self, p, call)
@@ -627,10 +677,10 @@ func (m *Manager) Call(ctx context.Context, memberID, method, path string, body 
 		m.directFailed(ctx, p.URL)
 		directErr = err
 	}
-	if addr, ok := m.knownAddress(memberID); ok && !tried[addr] && !(relayed && m.directDown(addr)) {
+	if addr, ok := m.knownAddress(memberID); ok && !tried[addr] && !skip(addr) {
 		res, err := m.callDirect(dctx, k, self, discovery.Peer{ID: memberID, URL: addr}, call)
 		if err == nil {
-			m.ConfirmAddress(memberID, addr, "", "")
+			m.ConfirmAddress(memberID, addr, sib.Name, sib.Version)
 			return res.Status, res.Body, nil
 		}
 		m.directFailed(ctx, addr)

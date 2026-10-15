@@ -1091,3 +1091,52 @@ func TestWithoutARelayAFailedAddressIsTriedAgainOnTheNextCall(t *testing.T) {
 		t.Fatalf("Call = %d %q %v, want the address that failed before", status, body, err)
 	}
 }
+
+func TestAMemberThatSaidItLeftStaysOutOfTheListUntilItsRoutesAgeOut(t *testing.T) {
+	a, _ := relayPair(t, echo)
+	_, pc := member(t, "id-c", "Barn", testSecret, echo)
+	a.disc.Observe(pc)
+	a.ConfirmAddress("id-b", "https://192.0.2.1:3443", "Attic", "9.9.9")
+
+	a.Forget("id-b")
+	a.Forget("id-c")
+	if got := a.Members(); len(got) != 0 {
+		t.Fatalf("members right after both said they left = %+v, want nobody", got)
+	}
+	if _, ok := a.knownAddress("id-b"); ok {
+		t.Fatal("the address of a member that left is still on record")
+	}
+
+	a.addrMu.Lock()
+	a.departed["id-b"] = time.Now().Add(-departGrace)
+	a.addrMu.Unlock()
+	if got := a.Members(); len(got) != 1 || got[0].ID != "id-b" || !got[0].Relay {
+		t.Fatalf("members once the grace ran out = %+v, want b back through the relay", got)
+	}
+}
+
+func TestAMemberCalledAtItsAddressKeepsTheNameTheRelayGaveIt(t *testing.T) {
+	a, b := relayPair(t, echo)
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, b.ServeDirect)
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+	a.NoteAddress("id-b", srv.URL)
+	if _, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil); err != nil {
+		t.Fatal(err)
+	}
+
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOff})
+	onRelay := func() bool {
+		got := a.Members()
+		return len(got) > 0 && got[0].Relay
+	}
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) && onRelay() {
+		time.Sleep(20 * time.Millisecond)
+	}
+	got := a.Members()
+	if len(got) != 1 || got[0].Relay || got[0].Name != "Attic" {
+		t.Fatalf("members once b is off the relay = %+v, want b by its address under its name", got)
+	}
+}

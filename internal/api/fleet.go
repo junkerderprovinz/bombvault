@@ -48,8 +48,10 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 	}
 	for _, m := range s.pairing().Members() {
 		if i, ok := known[m.ID]; ok {
-			if rows[i].Name != m.Name || (m.Kind != "" && rows[i].Kind != m.Kind) {
-				rows[i].Name = m.Name
+			if (m.Name != "" && rows[i].Name != m.Name) || (m.Kind != "" && rows[i].Kind != m.Kind) {
+				if m.Name != "" {
+					rows[i].Name = m.Name
+				}
 				if m.Kind != "" {
 					rows[i].Kind = m.Kind
 				}

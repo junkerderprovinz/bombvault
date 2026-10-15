@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -798,6 +799,94 @@ func TestPairedTestInstancesHaveNoDirectAddressOutsideTheTest(t *testing.T) {
 			if strings.Contains(m.Address, "example.com") {
 				t.Fatalf("%s calls %s at %q first", in.svc.selfDirectURL(), m.Name, m.Address)
 			}
+		}
+	}
+}
+
+func TestLeavingTheGroupTakesTheMembersOffBothInstancesLists(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, a, b)
+	for _, in := range []*instance{a, b} {
+		if _, err := in.st.CreateFleetPeer(store.FleetPeer{Name: "barn", URL: "https://192.168.1.10:3443", Enabled: true}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	listed := func(in *instance) []string {
+		t.Helper()
+		_, out := in.do(t, http.MethodGet, "/api/fleet/peers", nil)
+		peers, _ := out["peers"].([]any)
+		var names []string
+		for _, p := range peers {
+			row, _ := p.(map[string]any)
+			names = append(names, row["name"].(string))
+		}
+		slices.Sort(names)
+		return names
+	}
+	if got := listed(a); !slices.Equal(got, []string{"attic", "barn"}) {
+		t.Fatalf("a lists %v before anybody left", got)
+	}
+	if got := listed(b); !slices.Equal(got, []string{"barn", "cellar"}) {
+		t.Fatalf("b lists %v before anybody left", got)
+	}
+
+	if code, out := b.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK || out["active"] != false {
+		t.Fatalf("leave: %d %v", code, out)
+	}
+	if got := listed(b); !slices.Equal(got, []string{"barn"}) {
+		t.Fatalf("b lists %v after it left, want only the row nobody paired", got)
+	}
+	if got := listed(a); !slices.Equal(got, []string{"barn"}) {
+		t.Fatalf("a lists %v right after b left, want b gone", got)
+	}
+
+	if code, _ := a.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK {
+		t.Fatalf("leave: %d", code)
+	}
+	if got := listed(a); !slices.Equal(got, []string{"barn"}) {
+		t.Fatalf("a lists %v after both left", got)
+	}
+}
+
+func TestOnlyTheMemberItselfCanSayThatItLeaves(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, a, b)
+	if _, err := a.svc.syncFleetPeers(); err != nil {
+		t.Fatal(err)
+	}
+	forged, err := b.svc.signCall(keydeposit.ProofLeave, a.id(t), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A third member that names b signs with its own key, not b's.
+	forged.Key = keydeposit.OwnerKey(bytes.Repeat([]byte{7}, 32))
+	if out := peerCallAs(t, a, b.id(t), "/api/group/peer/leave", forged); out["ok"] != false {
+		t.Fatalf("a leave signed with another key was taken: %v", out)
+	}
+	peers, err := a.st.ListFleetPeers()
+	if err != nil || len(peers) != 1 || len(a.svc.pairing().Members()) != 1 {
+		t.Fatalf("after a forged leave a keeps rows %+v and members %+v, want b on both", peers, a.svc.pairing().Members())
+	}
+}
+
+func TestAMemberKnownOnlyByItsAddressKeepsTheNameItsRowHas(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, a, b)
+	const barn = "0123456789abcdef0123456789abcdef"
+	if _, err := a.st.CreateFleetPeer(store.FleetPeer{MemberID: barn, Name: "barn", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	a.svc.pairing().ConfirmAddress(barn, "https://192.0.2.7:3443", "", "")
+	peers, err := a.svc.syncFleetPeers()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range peers {
+		if p.MemberID == barn && p.Name != "barn" {
+			t.Fatalf("the row of a member listed without a name = %+v, want its name kept", p)
 		}
 	}
 }

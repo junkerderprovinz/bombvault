@@ -26,6 +26,8 @@ const (
 	ProofReceiverLogin = "receiver-login"
 	ProofRelease       = "release"
 	ProofZFSReceive    = "zfs-receive"
+	// ProofLeave is a member's word that it leaves the group.
+	ProofLeave = "leave"
 	// ProofSession and ProofPage are a phone's ask for a session and for a
 	// page through the relay, and ProofPageAnswer an instance's answer to
 	// the second.

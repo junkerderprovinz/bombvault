@@ -15,6 +15,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/discovery"
@@ -232,7 +233,8 @@ type peerRoute struct {
 // ZFS item here, asking this instance to be Receiver or Fetcher with the
 // answer and the withdrawal that go with it, what runs here and how it looks
 // for the Android app, a session for a phone of the group and the pages it
-// opens away from home, and the bare hello a blind probe gets.
+// opens away from home, the word that a member leaves the group, and the bare
+// hello a blind probe gets.
 // Settings, secrets and the phrase are not among them; a member holds the key
 // to every backup already, so a session for its phone adds no reach the group
 // did not have. A function rather than a variable, since the session route
@@ -257,6 +259,7 @@ func peerRoutes() []peerRoute {
 		{"GET /api/group/peer/display-prefs", (*Service).handlePeerDisplayPrefs},
 		{"POST /api/group/peer/session", (*Service).handlePeerSession},
 		{"POST /api/group/peer/page", (*Service).handlePeerPage},
+		{"POST /api/group/peer/leave", (*Service).handlePeerLeave},
 		{"GET " + group.ProbePath, (*Service).handlePeerHello},
 	}
 }
@@ -760,19 +763,79 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 	h.writeGroupView(w)
 }
 
-// handleGroupLeave forgets the group secret. Receivers, pull sources and
-// Fleet rows stay, and pair again once this instance joins the group again.
+// handleGroupLeave tells the members in reach that this instance leaves,
+// forgets the group secret and drops the members' Fleet rows. Receivers and
+// pull sources stay, and pair again once this instance joins the group again.
 // DELETE /api/group
-func (h *Handler) handleGroupLeave(w http.ResponseWriter, _ *http.Request) {
+func (h *Handler) handleGroupLeave(w http.ResponseWriter, r *http.Request) {
+	h.svc.tellMembersLeaving(r.Context())
 	err := h.storeGroupSecret(nil)
 	if err == nil {
 		err = h.store.ForgetMemberKeys()
+	}
+	if err == nil {
+		err = h.store.DropMemberFleetPeers("")
 	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	h.writeGroupView(w)
+}
+
+// leaveNoticeTimeout bounds telling the members about a leave, so a member out
+// of reach holds the page up only briefly.
+const leaveNoticeTimeout = 5 * time.Second
+
+// tellMembersLeaving lets every instance in reach know that this one leaves
+// the group, so each takes it off its list at once. A member that does not
+// hear keeps the row until a person removes it.
+func (s *Service) tellMembersLeaving(ctx context.Context) {
+	ctx, cancel := context.WithTimeout(ctx, leaveNoticeTimeout)
+	defer cancel()
+	var wg sync.WaitGroup
+	for _, m := range s.pairing().Members() {
+		if m.Kind != "" {
+			continue
+		}
+		proof, err := s.signCall(keydeposit.ProofLeave, m.ID, nil)
+		if err != nil {
+			log.Printf("group: sign the leave for member %q: %v", m.ID, err)
+			continue
+		}
+		wg.Go(func() {
+			_ = s.callMember(ctx, m.ID, http.MethodPost, "/api/group/peer/leave", proof, nil) //nolint:errcheck // callMember logs what went wrong, and the leave goes ahead anyway
+		})
+	}
+	wg.Wait()
+}
+
+// handlePeerLeave takes a member that leaves the group off this instance's
+// lists: its Fleet row goes, and the group keeps it out of the members until
+// its relay connection and announces are gone. Anybody in the group can name
+// any member, so the call has to carry the member's own signature.
+// POST /api/group/peer/leave
+func (s *Service) handlePeerLeave(w http.ResponseWriter, r *http.Request) {
+	var proof peerProof
+	if err := json.NewDecoder(io.LimitReader(r.Body, peerRoleBodyMax)).Decode(&proof); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "malformed leave"})
+		return
+	}
+	sender, ok := s.roleAsker(r)
+	if !ok {
+		refuseUnnamedPeer(w)
+		return
+	}
+	if err := s.verifyMember(r.Context(), sender, keydeposit.ProofLeave, nil, proof); err != nil {
+		writeJSON(w, http.StatusForbidden, failEnvelope(err))
+		return
+	}
+	s.pairing().Forget(sender)
+	if err := s.store.DropMemberFleetPeers(sender); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
 // handleGroupRelay changes how this instance reaches members elsewhere and
