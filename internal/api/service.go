@@ -12339,11 +12339,12 @@ func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
 }
 
 // vmDiskContainerPaths is where restic reads the file disks of domain through
-// the Host Data mount, the paths a VM definition stores. A domain with no file
-// disk, or with one outside the mount, is an error: a snapshot of it would
-// restore nothing.
+// the Host Data mount, the paths a VM definition stores. A domain with no disk
+// at all, or with a file disk outside the mount, is an error: a snapshot of it
+// would restore nothing. Zvol disks are backed up on their own path and need
+// no entry here, so a domain with only those gets an empty list.
 func (s *Service) vmDiskContainerPaths(name string, domain virshcli.DomainInfo) ([]string, error) {
-	if len(domain.DiskPaths) == 0 {
+	if len(domain.DiskPaths) == 0 && len(domain.BlockDisks) == 0 {
 		return nil, fmt.Errorf("no disk paths found in domain XML for %q", name)
 	}
 	diskPaths := make([]string, 0, len(domain.DiskPaths))
@@ -12381,6 +12382,13 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	orchestrated := false
 	defer func() {
 		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrVMNotInstalled) && !errors.Is(retErr, ErrNoPlace) {
+			// A VM that fails on its first backup has no row yet, and without
+			// one the failure would not show in the history.
+			if targetID == "" {
+				if tg, uErr := s.store.UpsertVMTarget(store.VMTarget{Name: name, Method: "graceful"}); uErr == nil {
+					targetID = tg.ID
+				}
+			}
 			s.recordPreflightFailure(ctx, "BackupVM", name, targetID, retErr)
 		}
 	}()
