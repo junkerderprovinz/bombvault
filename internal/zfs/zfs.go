@@ -211,7 +211,8 @@ func Classify(stderr string, err error) string {
 		return "encryption-mismatch"
 	case strings.Contains(low, "must specify -f to overwrite it"):
 		return "dataset-exists"
-	case strings.Contains(low, "dataset is busy"), strings.Contains(low, "pool or dataset is busy"):
+	case strings.Contains(low, "dataset is busy"), strings.Contains(low, "pool or dataset is busy"),
+		strings.Contains(low, "being held"):
 		return codeBusy
 	case strings.Contains(low, "dataset does not exist"),
 		strings.HasPrefix(low, "bookmark '") && strings.HasSuffix(low, "does not exist."),

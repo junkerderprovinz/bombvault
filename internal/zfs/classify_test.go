@@ -26,6 +26,7 @@ func TestClassify(t *testing.T) {
 		{"nothing to destroy", "could not find any snapshots to destroy; check snapshot names.", exitStatus(1), "not-found"},
 		{"busy", "cannot destroy 'cache/appdata@bombvault-20260917031500': dataset is busy", exitStatus(1), "busy"},
 		{"pool busy", "cannot destroy 'cache/appdata': pool or dataset is busy", exitStatus(1), "busy"},
+		{"held", "cannot destroy snapshot cache/appdata@bombvault-replica-1: it's being held. Run 'zfs holds -r' to see holders.", exitStatus(1), "busy"},
 		{"already there", "cannot create snapshot 'cache/appdata@bombvault-20260917031500': dataset already exists", exitStatus(1), "exists"},
 		{"no zfs on PATH", "bash: line 1: zfs: command not found", exitStatus(127), "zfs-not-found"},
 		{"no zfs, no message", "", exitStatus(127), "zfs-not-found"},
