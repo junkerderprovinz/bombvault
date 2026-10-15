@@ -5071,7 +5071,7 @@ func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, in
 	}
 	loc := s.offsiteRepoFor(domain, settings)
 	if loc == "" {
-		return false, false, errNoOffsiteRepo
+		return false, false, s.noOffsiteRepoErr(domain)
 	}
 	repo, err := s.resolveRepo(loc)
 	if err != nil {

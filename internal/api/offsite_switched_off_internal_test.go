@@ -34,8 +34,8 @@ func TestADrillRefusesWhenTheOnlyOffsiteTargetIsSwitchedOff(t *testing.T) {
 	s, _ := switchedOffPrimaryService(t)
 
 	drill, err := s.runDRDrill(context.Background(), "containers", "offsite", false)
-	if !errors.Is(err, errNoOffsiteRepo) {
-		t.Fatalf("runDRDrill = %+v, %v; want errNoOffsiteRepo, as the copy answers", drill, err)
+	if !errors.Is(err, errOffsiteTargetsOff) {
+		t.Fatalf("runDRDrill = %+v, %v; want errOffsiteTargetsOff, as the copy answers", drill, err)
 	}
 	drills, err := s.store.ListRestoreDrills("containers", "offsite", 0)
 	if err != nil || len(drills) != 0 {
@@ -53,24 +53,24 @@ func TestASwitchedOffTargetCountsAsNoOffsiteRepoEverywhere(t *testing.T) {
 	if targets := s.offsiteReplicationTargets("containers", settings); len(targets) != 0 {
 		t.Errorf("offsiteReplicationTargets = %+v, want none", targets)
 	}
-	if _, err := s.offsiteTargetForSource(settings, "containers", "offsite"); !errors.Is(err, errNoOffsiteRepo) {
-		t.Errorf("offsiteTargetForSource = %v, want errNoOffsiteRepo", err)
+	if _, err := s.offsiteTargetForSource(settings, "containers", "offsite"); !errors.Is(err, errOffsiteTargetsOff) {
+		t.Errorf("offsiteTargetForSource = %v, want errOffsiteTargetsOff", err)
 	}
-	if _, err := s.repoFor(settings, "containers", "offsite"); !errors.Is(err, errNoOffsiteRepo) {
-		t.Errorf("repoFor = %v, want errNoOffsiteRepo", err)
+	if _, err := s.repoFor(settings, "containers", "offsite"); !errors.Is(err, errOffsiteTargetsOff) {
+		t.Errorf("repoFor = %v, want errOffsiteTargetsOff", err)
 	}
 	places, err := s.backupPlaces(settings, "containers", nil)
 	if err != nil || len(places) != 0 {
 		t.Errorf("backupPlaces = %+v, %v; want no off-site place", places, err)
 	}
-	if _, _, err := s.TestOffsite(ctx, "containers"); !errors.Is(err, errNoOffsiteRepo) {
-		t.Errorf("TestOffsite = %v, want errNoOffsiteRepo", err)
+	if _, _, err := s.TestOffsite(ctx, "containers"); !errors.Is(err, errOffsiteTargetsOff) {
+		t.Errorf("TestOffsite = %v, want errOffsiteTargetsOff", err)
 	}
-	if err := s.ReplicateOffsite(ctx, "containers"); !errors.Is(err, errNoOffsiteRepo) {
-		t.Errorf("ReplicateOffsite = %v, want errNoOffsiteRepo", err)
+	if err := s.ReplicateOffsite(ctx, "containers"); !errors.Is(err, errOffsiteTargetsOff) {
+		t.Errorf("ReplicateOffsite = %v, want errOffsiteTargetsOff", err)
 	}
-	if _, err := s.RunTamperTest(ctx, "containers"); !errors.Is(err, errNoOffsiteRepo) {
-		t.Errorf("RunTamperTest = %v, want errNoOffsiteRepo", err)
+	if _, err := s.RunTamperTest(ctx, "containers"); !errors.Is(err, errOffsiteTargetsOff) {
+		t.Errorf("RunTamperTest = %v, want errOffsiteTargetsOff", err)
 	}
 }
 

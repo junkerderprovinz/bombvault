@@ -382,7 +382,7 @@ func (s *Service) offsiteTargetForSource(settings store.Settings, domain, source
 	if targets := s.offsiteReplicationTargets(domain, settings); len(targets) > 0 {
 		return targets[0], nil
 	}
-	return store.OffsiteTarget{}, errNoOffsiteRepo
+	return store.OffsiteTarget{}, s.noOffsiteRepoErr(domain)
 }
 
 // offsiteSourceImmutable reports whether the destination a source addresses is
