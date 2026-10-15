@@ -92,6 +92,13 @@ describe("NumberField, the wrapper", () => {
     expect(wrap.className).toContain("justify-self-start");
   });
 
+  it("takes the width the caller gives it instead of its content's", () => {
+    render(<NumberField defaultValue={5} aria-label="n" wrapperClassName="w-28" className="w-full" />);
+    const wrap = (screen.getByLabelText("n") as HTMLInputElement).parentElement!;
+    expect(wrap.className).toContain("w-28");
+    expect(wrap.className).not.toContain("w-fit");
+  });
+
   it("still cannot outgrow a narrow parent", () => {
     render(<NumberField defaultValue={5} aria-label="n" />);
     const wrap = (screen.getByLabelText("n") as HTMLInputElement).parentElement!;

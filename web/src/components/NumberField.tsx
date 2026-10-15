@@ -46,6 +46,10 @@ function setValueLikeAUser(el: HTMLInputElement, next: string) {
   el.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
+// A width the caller gives the wrapper replaces w-fit; both set the same
+// property, and the stylesheet would let w-fit win.
+const SIZED = /(?:^|\s)w-/;
+
 export function NumberField({ className = "", wrapperClassName = "", ...rest }: NumberFieldProps) {
   const ref = useRef<HTMLInputElement>(null);
   // State rather than a value computed during render: it reads the DOM node's
@@ -118,7 +122,7 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
     // Sized by its content: in a labelled field's column flex container a
     // stretched wrapper would put the arrows at the far end of the row, away
     // from the input. The input therefore needs a definite width.
-    <span className={`relative block w-fit max-w-full self-start justify-self-start ${wrapperClassName}`}>
+    <span className={`relative block ${SIZED.test(wrapperClassName) ? "" : "w-fit "}max-w-full self-start justify-self-start ${wrapperClassName}`}>
       <input
         {...rest}
         ref={ref}
