@@ -623,17 +623,17 @@ export function EmergencyWindow({
                   onChange={(v) => setSettings((prev) => (prev ? { ...prev, configPath: v } : prev))}
                 />
               ) : (
-                <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-                  {t("recovery.configOffsiteUrl")}
+                <SettingRow label={t("recovery.configOffsiteUrl")} htmlFor="emergency-config-offsite">
                   <input
+                    id="emergency-config-offsite"
                     value={settings.configOffsite}
                     spellCheck={false}
                     onChange={(e) => setSettings((prev) => (prev ? { ...prev, configOffsite: e.target.value } : prev))}
                     placeholder="rest:http://host:8000/repo"
                     dir="ltr"
-                    className={EMERGENCY_FIELD.replace("bg-carbon-surface3", "bg-carbon-surface2")}
+                    className={`w-72 max-w-full ${EMERGENCY_FIELD.replace("bg-carbon-surface3", "bg-carbon-surface2")}`}
                   />
-                </label>
+                </SettingRow>
               )}
               <p className="text-xs text-carbon-textMuted">
                 {taken && <>{t("emergency.loginStays")} </>}

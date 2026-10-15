@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import type { ButtonTone } from "../components/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { ConfirmSheet } from "../components/mobile/ConfirmSheet";
+import { SettingRow } from "../components/storage/rows";
 import { useT, type TranslationKey } from "./i18n";
 import { useBackCloses } from "./useBackCloses";
 import { useIsDesktop } from "./useMediaQuery";
@@ -68,6 +69,7 @@ export function useConfirm() {
   const isDesktop = useIsDesktop();
   const [pending, setPending] = useState<PendingConfirm | null>(null);
   const [typed, setTyped] = useState("");
+  const typedId = useId();
   const resolveRef = useRef<((value: boolean) => void) | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -114,17 +116,19 @@ export function useConfirm() {
     ) : (
       <>
         {pending.extra}
-        <label className="mt-3 flex flex-col gap-1 text-xs text-carbon-textSub">
-          {pending.requirePrompt}
-          <input
-            type="text"
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            autoComplete="off"
-            spellCheck={false}
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
-          />
-        </label>
+        <div className="mt-3">
+          <SettingRow label={pending.requirePrompt ?? ""} htmlFor={typedId}>
+            <input
+              id={typedId}
+              type="text"
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              className="w-72 max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+            />
+          </SettingRow>
+        </div>
       </>
     );
 

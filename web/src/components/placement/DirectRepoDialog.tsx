@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ConfirmDialog } from "../ConfirmDialog";
 import { ConfirmSheet } from "../mobile/ConfirmSheet";
+import { Rows, SettingRow } from "../storage/rows";
 import { TestButton, VerdictLine } from "../TestButton";
 import {
   createDirectRepo,
@@ -22,7 +23,7 @@ export type DirectRepoResult =
   | { kind: "created"; repo: NamedRepo }
   | { kind: "remembered"; name: string; location: string };
 
-const FIELD = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
+const FIELD = "w-72 max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 /** DirectRepoDialog sets up a target's direct repository. Nothing is created
  *  before "Create and use"; in "remember" mode nothing is created at all, the
@@ -41,6 +42,8 @@ export function DirectRepoDialog({
   const { t, lang } = useT();
   const { push } = useToast();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const nameId = useId();
+  const locationId = useId();
   const creating = useRef(false);
   const locationTouched = useRef(false);
   const [name, setName] = useState("");
@@ -120,31 +123,33 @@ export function DirectRepoDialog({
     cancelTone: "neutral" as const,
     extra: (
       <div className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-          {t("repos.name")}
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={withTarget(t("placement.homeDirect"))}
-            spellCheck={false}
-            autoComplete="off"
-            className={FIELD}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-          {t("repos.location")}
-          <input
-            value={location}
-            onChange={(e) => {
-              locationTouched.current = true;
-              setLocation(e.target.value);
-            }}
-            spellCheck={false}
-            autoComplete="off"
-            dir="ltr"
-            className={`${FIELD} font-mono text-start`}
-          />
-        </label>
+        <Rows>
+          <SettingRow label={t("repos.name")} htmlFor={nameId}>
+            <input
+              id={nameId}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={withTarget(t("placement.homeDirect"))}
+              spellCheck={false}
+              autoComplete="off"
+              className={FIELD}
+            />
+          </SettingRow>
+          <SettingRow label={t("repos.location")} htmlFor={locationId}>
+            <input
+              id={locationId}
+              value={location}
+              onChange={(e) => {
+                locationTouched.current = true;
+                setLocation(e.target.value);
+              }}
+              spellCheck={false}
+              autoComplete="off"
+              dir="ltr"
+              className={`${FIELD} font-mono text-start`}
+            />
+          </SettingRow>
+        </Rows>
         {mode === "remember" && <p className="text-xs text-carbon-textMuted">{t("directRepo.draftNote")}</p>}
         <VerdictLine verdict={verdict.verdict} />
         <div className="flex items-center gap-2 flex-wrap">

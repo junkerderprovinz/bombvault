@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { patchFileSet } from "../../lib/api";
 import type { FileSetView, OkEnvelope } from "../../lib/api";
 import { PlacementDraft, type PlacementDraftValue } from "../placement/PlacementDraft";
@@ -8,6 +8,7 @@ import { FolderBrowser } from "../FolderBrowser";
 import { useT } from "../../lib/i18n";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
+import { SettingRow } from "../storage/rows";
 import { ToggleRow } from "../../pages/settings/shared";
 import { useToast } from "../../lib/toast";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
@@ -36,6 +37,7 @@ export function FileSetDialog({
 }) {
   const { push } = useToast();
   const { lang } = useT();
+  const nameId = useId();
   const [name, setName] = useState(initial?.name ?? presetSeed?.name ?? "");
   const [path, setPath] = useState(initial?.path ?? presetSeed?.path ?? "");
   const [excludesText, setExcludesText] = useState(
@@ -116,12 +118,9 @@ export function FileSetDialog({
       }
     >
       {/* The name becomes a restic tag, so the server validates it strictly. */}
-      <div className="flex flex-col gap-1.5">
-        <label className="flex items-center gap-1 text-xs text-carbon-textSub">
-          {t("files.name")}
-          {hasBackups && <InfoBubble tip={t("files.nameLocked")} />}
-        </label>
+      <SettingRow label={t("files.name")} hint={hasBackups ? t("files.nameLocked") : undefined} htmlFor={nameId}>
         <input
+          id={nameId}
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -129,9 +128,9 @@ export function FileSetDialog({
           spellCheck={false}
           autoComplete="off"
           placeholder="documents"
-          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus disabled:opacity-50"
+          className="w-72 max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus disabled:opacity-50"
         />
-      </div>
+      </SettingRow>
 
       {/* Source folder (relative subpath under the host mount root) */}
       <div className="flex flex-col gap-1.5">

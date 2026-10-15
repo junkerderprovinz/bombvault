@@ -34,7 +34,7 @@ import { IconBack, IconKey, IconUpload } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconFleet, IconRestore } from "../navGlyphs";
 import { RevealInput } from "../RevealInput";
-import { Rows } from "../storage/rows";
+import { Rows, SettingRow } from "../storage/rows";
 import { EMERGENCY_FIELD, Note, SECTION_OFFSITE, SECTION_PATHS, Section } from "./EmergencyParts";
 import { EmergencyGroup, askedDeposit } from "./EmergencyGroup";
 import { EmergencyScene } from "./EmergencyScene";
@@ -424,33 +424,30 @@ export function EmergencyAccess({
   }
 
   const credField = (name: "s3KeyId" | "s3Region" | "restUser", label: TranslationKey, hint?: TranslationKey) => (
-    <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-      <span className="flex items-center gap-1">
-        {t(label)}
-        {hint && <InfoBubble tip={t(hint)} />}
-      </span>
+    <SettingRow label={t(label)} hint={hint && t(hint)} htmlFor={`emergency-cred-${name}`}>
       <input
+        id={`emergency-cred-${name}`}
         value={creds[name]}
         spellCheck={false}
         autoComplete="off"
         onChange={(e) => setCreds((prev) => ({ ...prev, [name]: e.target.value }))}
-        className={EMERGENCY_FIELD}
+        className={`w-72 max-w-full ${EMERGENCY_FIELD}`}
       />
-    </label>
+    </SettingRow>
   );
   const secretField = (name: "s3Secret" | "restPassword", label: TranslationKey, reveal: ReturnType<typeof useReveal>) => (
-    <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-      {t(label)}
+    <SettingRow label={t(label)} htmlFor={`emergency-cred-${name}`}>
       <RevealInput
         {...reveal}
+        id={`emergency-cred-${name}`}
         value={creds[name]}
         spellCheck={false}
         autoComplete="off"
         onChange={(e) => setCreds((prev) => ({ ...prev, [name]: e.target.value }))}
-        wrapperClassName="w-full"
+        wrapperClassName="w-72 max-w-full"
         className={EMERGENCY_FIELD}
       />
-    </label>
+    </SettingRow>
   );
 
   return (
@@ -512,21 +509,18 @@ export function EmergencyAccess({
       {way === "key" &&
         (settings ? (
           <Section title={t("emergency.way.key")} hint={t("emergency.attachHint")}>
-            <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-              <span className="flex items-center gap-1">
-                {t("emergency.key")}
-                <InfoBubble tip={t("emergency.keyHint")} />
-              </span>
+            <SettingRow label={t("emergency.key")} hint={t("emergency.keyHint")} htmlFor="emergency-key">
               <RevealInput
                 {...revealKey}
+                id="emergency-key"
                 value={key}
                 spellCheck={false}
                 autoComplete="off"
                 onChange={(e) => setKey(e.target.value)}
-                wrapperClassName="w-full"
+                wrapperClassName="w-72 max-w-full"
                 className={EMERGENCY_FIELD}
               />
-            </label>
+            </SettingRow>
             {SECTION_PATHS.map(([name, label], i) => (
               <FolderBrowser
                 key={name}
@@ -538,30 +532,32 @@ export function EmergencyAccess({
               />
             ))}
             <h4 className="pt-1 text-xs font-semibold text-carbon-textSub">{t("emergency.offsite")}</h4>
-            {SECTION_OFFSITE.map(([name, label]) => (
-              <label key={name} className="flex flex-col gap-1 text-xs text-carbon-textSub">
-                {t(label)}
-                <input
-                  value={settings[name]}
-                  spellCheck={false}
-                  onChange={(e) => setSettings((prev) => (prev ? { ...prev, [name]: e.target.value } : prev))}
-                  placeholder="rest:http://host:8000/repo"
-                  dir="ltr"
-                  className={EMERGENCY_FIELD}
-                />
-              </label>
-            ))}
+            <Rows>
+              {SECTION_OFFSITE.map(([name, label]) => (
+                <SettingRow key={name} label={t(label)} htmlFor={`emergency-offsite-${name}`}>
+                  <input
+                    id={`emergency-offsite-${name}`}
+                    value={settings[name]}
+                    spellCheck={false}
+                    onChange={(e) => setSettings((prev) => (prev ? { ...prev, [name]: e.target.value } : prev))}
+                    placeholder="rest:http://host:8000/repo"
+                    dir="ltr"
+                    className={`w-72 max-w-full ${EMERGENCY_FIELD}`}
+                  />
+                </SettingRow>
+              ))}
+            </Rows>
             <h4 className="flex items-center gap-1.5 pt-1 text-xs font-semibold text-carbon-textSub">
               {t("recovery.cloudCreds")}
               <InfoBubble tip={t("recovery.cloudCredsHint")} />
             </h4>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <Rows>
               {credField("s3KeyId", "recovery.foreignS3KeyId")}
               {secretField("s3Secret", "recovery.foreignS3Secret", revealSecret)}
               {credField("s3Region", "recovery.foreignS3Region")}
               {credField("restUser", "recovery.foreignRestUser", "recovery.foreignRestHint")}
               {secretField("restPassword", "recovery.foreignRestPassword", revealPassword)}
-            </div>
+            </Rows>
           </Section>
         ) : (
           <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>

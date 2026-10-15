@@ -1,7 +1,7 @@
 // What each step of setting up a destination shows, without its heading and
 // its buttons: the wizard on a card stacks the steps, the window to add a
 // storage location shows one at a time.
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import type { BackendOption, Provider } from "../../lib/api";
 import { humanBytes } from "../../lib/forecast";
 import { useT, type TranslationKey } from "../../lib/i18n";
@@ -12,6 +12,7 @@ import { CopyBlock } from "../CopyBlock";
 import { InfoBubble } from "../InfoBubble";
 import { IconFolder } from "../navGlyphs";
 import { SelectField } from "../SelectField";
+import { Rows, SettingRow } from "../storage/rows";
 import { VerdictLine } from "../TestButton";
 import { Toggle } from "../Toggle";
 import type { DestinationDraftState } from "./useDestinationDraft";
@@ -87,6 +88,7 @@ export function DraftField({
   kept?: string;
 }) {
   const { t } = useT();
+  const id = useId();
   const { picked, settings, setSetting } = draft;
   const o = option;
   const label = FIELD_LABELS[o.name] ? t(FIELD_LABELS[o.name]) : o.name;
@@ -100,14 +102,10 @@ export function DraftField({
       : o.examples
           .filter((e) => (s3Provider ? !!e.provider && e.provider.split(",").includes(s3Provider) : !e.provider))
           .slice(0, 12);
-  const wide = o.name === "url" || o.name === "token" || o.name === "endpoint" || o.name === "path";
   return (
-    <label className={`flex flex-col gap-1 ${wide ? "md:col-span-2" : ""}`}>
-      <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-        {label}
-        {tip && <InfoBubble tip={tip} />}
-      </span>
+    <SettingRow label={label} hint={tip || undefined} htmlFor={id}>
       <input
+        id={id}
         type={masked(o) ? "password" : "text"}
         value={settings[o.name] ?? ""}
         onChange={(e) => setSetting(o.name, e.target.value)}
@@ -115,10 +113,10 @@ export function DraftField({
         autoComplete={masked(o) ? "new-password" : "off"}
         spellCheck={false}
         dir="ltr"
-        className={`${FIELD} font-mono text-start`}
+        className={`w-72 max-w-full ${FIELD} font-mono text-start`}
       />
       {examples.length > 0 && (
-        <span className="flex flex-wrap gap-1.5">
+        <span className="flex w-full flex-wrap justify-end gap-1.5">
           {examples.map((e) => (
             <Badge
               key={e.value}
@@ -132,7 +130,7 @@ export function DraftField({
           ))}
         </span>
       )}
-    </label>
+    </SettingRow>
   );
 }
 
@@ -141,6 +139,7 @@ export function DraftField({
 export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftState; providerLabel: string }) {
   const { t } = useT();
   const { picked, fields } = draft;
+  const nameId = useId();
   if (!picked) return null;
   const note = fitNote(t, picked, providerLabel);
   return (
@@ -167,18 +166,20 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
         </div>
       )}
       {picked.route === "s3" && <p className="text-xs text-carbon-textMuted">{t("dest.key.note")}</p>}
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="flex flex-col gap-1">
-          <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-            {t("dest.name")}
-            <InfoBubble tip={t("dest.nameHint")} />
-          </span>
-          <input value={draft.name} onChange={(e) => draft.setName(e.target.value)} autoComplete="off" className={FIELD} />
-        </label>
+      <Rows>
+        <SettingRow label={t("dest.name")} hint={t("dest.nameHint")} htmlFor={nameId}>
+          <input
+            id={nameId}
+            value={draft.name}
+            onChange={(e) => draft.setName(e.target.value)}
+            autoComplete="off"
+            className={`w-72 max-w-full ${FIELD}`}
+          />
+        </SettingRow>
         {fields.main.map((o) => (
           <DraftField key={o.name} draft={draft} option={o} />
         ))}
-      </div>
+      </Rows>
       {fields.more.length > 0 && (
         <MoreSettings>
           {fields.more.map((o) => (
@@ -200,7 +201,7 @@ export function MoreSettings({ children }: { children: ReactNode }) {
       <span className="text-[length:var(--text-caption)] font-medium uppercase tracking-[0.06em] text-carbon-textMuted">
         {t("dest.more")}
       </span>
-      <div className="grid gap-3 md:grid-cols-2">{children}</div>
+      <Rows>{children}</Rows>
     </section>
   );
 }
@@ -214,6 +215,7 @@ export function FolderBody({ draft }: { draft: DestinationDraftState }) {
   return (
     <>
       {draft.browsable && (
+        // bv-convention-exception: setting-row-beside-label -- this is a folder browser, its new-folder input belongs to the list it extends.
         <div className="flex flex-col gap-1 rounded-card bg-carbon-surface p-2">
           <div className="flex flex-wrap items-center gap-1 px-2 py-1 text-xs text-carbon-textMuted" dir="ltr">
             <button type="button" className="text-carbon-textSub hover:text-carbon-text" onClick={() => void draft.loadFolders([])}>

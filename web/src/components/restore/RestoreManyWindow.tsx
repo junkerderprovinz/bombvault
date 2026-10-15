@@ -46,6 +46,7 @@ import { Button } from "../Button";
 import { CheckDraw } from "../CheckDraw";
 import { IconPause } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
+import { SettingRow } from "../storage/rows";
 import { IconClose, IconDownload, IconRestore } from "../navGlyphs";
 import { ProgressBar } from "../ProgressBar";
 import { RestoreCancelButton } from "../RestoreCancelButton";
@@ -573,12 +574,9 @@ export function RestoreManyWindow({ items, onClose }: { items: BackupItem[]; onC
               onChange={(id) => setMode(id === AT ? AT : RECOMMENDED)}
             />
             {mode === AT && times.length > 0 && (
-              <div className="flex flex-col gap-1.5">
-                <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                  {t("restoreMany.atLabel")}
-                  <InfoBubble tip={t("restoreMany.atHint")} />
-                </span>
+              <SettingRow label={t("restoreMany.atLabel")} hint={t("restoreMany.atHint")} htmlFor="restore-many-at">
                 <SelectField
+                  id="restore-many-at"
                   value={String(at)}
                   onChange={(value) => setMomentPick(Number(value))}
                   label={t("restoreMany.atLabel")}
@@ -586,9 +584,9 @@ export function RestoreManyWindow({ items, onClose }: { items: BackupItem[]; onC
                     value: String(time),
                     label: new Date(time * 1000).toLocaleString(lang, { dateStyle: "medium", timeStyle: "short" }),
                   }))}
-                  className="h-10 w-full rounded-control bg-carbon-surface2 px-3 text-sm text-carbon-text glim-field-focus"
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
                 />
-              </div>
+              </SettingRow>
             )}
           </Section>
 

@@ -110,7 +110,8 @@ describe("PathModeSwitch, Selector integration", () => {
     renderSwitch();
     const label = screen.getByText("Containers path");
     const tablist = screen.getByRole("tablist", { name: "Containers path" });
-    expect(label.parentElement).toBe(tablist.parentElement);
+    expect(label.closest("[data-search-row]")).toBe(tablist.closest("[data-search-row]"));
+    expect(label.closest("[data-search-row]")).not.toBeNull();
   });
 
   it("shows the domain repository's compression and saves a new choice", async () => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { previewRetention, type OffsiteDomain, type RetentionPreview as Preview } from "../lib/api";
 import { dbDumpNameOf, isDbDumpIdentity } from "../lib/dbdump";
@@ -6,6 +6,7 @@ import { useT } from "../lib/i18n";
 
 import { Button } from "./Button";
 import { SelectField } from "./SelectField";
+import { SettingRow } from "./storage/rows";
 
 type Domain = OffsiteDomain;
 
@@ -80,6 +81,7 @@ export function RetentionPreview({
   /** Whether the domain has a built-in off-site repository to ask about. */
   hasOffsite: (domain: Domain) => boolean;
 }) {
+  const sourceId = useId();
   const [domain, setDomain] = useState<Domain>("containers");
   const [busy, setBusy] = useState(false);
   const [parts, setParts] = useState<Record<Source, Part> | null>(null);
@@ -107,22 +109,20 @@ export function RetentionPreview({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textSub">{t("retentionPreview.sourceLabel")}</span>
-          <SelectField
-            value={domain}
-            label={t("retentionPreview.sourceLabel")}
-            options={DOMAINS.map((d) => ({ value: d.key, label: t(d.labelKey) }))}
-            onChange={(next) => {
-              setDomain(next);
-              // A stale answer under a new domain name would be worse than no
-              // answer: it would read as that domain's verdict.
-              setParts(null);
-            }}
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
-          />
-        </label>
+      <SettingRow label={t("retentionPreview.sourceLabel")} htmlFor={sourceId}>
+        <SelectField
+          id={sourceId}
+          value={domain}
+          label={t("retentionPreview.sourceLabel")}
+          options={DOMAINS.map((d) => ({ value: d.key, label: t(d.labelKey) }))}
+          onChange={(next) => {
+            setDomain(next);
+            // A stale answer under a new domain name would be worse than no
+            // answer: it would read as that domain's verdict.
+            setParts(null);
+          }}
+          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+        />
         <Button
           label={t("retentionPreview.show")}
           labelKey="retentionPreview.show"
@@ -131,7 +131,7 @@ export function RetentionPreview({
           onClick={() => void run()}
           className="glim-btn-wrap"
         />
-      </div>
+      </SettingRow>
 
       {parts &&
         SOURCES.map(([source, titleKey]) => (

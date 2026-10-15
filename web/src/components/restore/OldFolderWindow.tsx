@@ -35,6 +35,7 @@ import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
 import { IconBack, IconLink } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
+import { Rows, SettingRow } from "../storage/rows";
 import { IconCheck, IconClose, IconGear, IconRestore } from "../navGlyphs";
 import { RevealInput } from "../RevealInput";
 import { Selector } from "../Selector";
@@ -594,33 +595,30 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
   const browsing = session !== null && inventory !== null;
 
   const credField = (name: keyof typeof creds, label: TranslationKey, hint?: TranslationKey) => (
-    <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-      <span className="flex items-center gap-1">
-        {t(label)}
-        {hint && <InfoBubble tip={t(hint)} />}
-      </span>
+    <SettingRow label={t(label)} hint={hint && t(hint)} htmlFor={`old-folder-cred-${name}`}>
       <input
+        id={`old-folder-cred-${name}`}
         value={creds[name]}
         spellCheck={false}
         autoComplete="off"
         onChange={(e) => setCreds((prev) => ({ ...prev, [name]: e.target.value }))}
-        className={FIELD}
+        className={`w-72 max-w-full ${FIELD}`}
       />
-    </label>
+    </SettingRow>
   );
   const secretField = (name: "s3Secret" | "restPassword", label: TranslationKey, reveal: ReturnType<typeof useReveal>) => (
-    <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-      {t(label)}
+    <SettingRow label={t(label)} htmlFor={`old-folder-cred-${name}`}>
       <RevealInput
         {...reveal}
+        id={`old-folder-cred-${name}`}
         value={creds[name]}
         spellCheck={false}
         autoComplete="off"
         onChange={(e) => setCreds((prev) => ({ ...prev, [name]: e.target.value }))}
-        wrapperClassName="w-full"
+        wrapperClassName="w-72 max-w-full"
         className={FIELD}
       />
-    </label>
+    </SettingRow>
   );
 
   let foot: ReactNode;
@@ -665,11 +663,7 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
 
       {!browsing && (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-              {t("recovery.foreignLocation")}
-              <InfoBubble tip={t("recovery.foreignLocationHint")} />
-            </span>
+          <SettingRow label={t("recovery.foreignLocation")} hint={t("recovery.foreignLocationHint")}>
             <Selector
               items={[
                 { id: "folder", label: t("oldFolder.folder") },
@@ -681,7 +675,7 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
               onChange={(id) => setRemote(id === "remote")}
               inline
             />
-          </div>
+          </SettingRow>
           {remote ? (
             <>
               <input
@@ -697,13 +691,13 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
               <p className="rounded-card bg-carbon-surface2 px-3 py-2.5 text-xs leading-relaxed text-carbon-textSub">
                 {t("recovery.foreignCredsIntro")}
               </p>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <Rows>
                 {credField("s3KeyId", "recovery.foreignS3KeyId")}
                 {secretField("s3Secret", "recovery.foreignS3Secret", revealSecret)}
                 {credField("s3Region", "recovery.foreignS3Region")}
                 {credField("restUser", "recovery.foreignRestUser", "recovery.foreignRestHint")}
                 {secretField("restPassword", "recovery.foreignRestPassword", revealPassword)}
-              </div>
+              </Rows>
             </>
           ) : (
             <FolderBrowser
@@ -714,11 +708,7 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
               hint={t("oldFolder.folderHint")}
             />
           )}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-              {t("oldFolder.keyVia")}
-              <InfoBubble tip={t("recovery.foreignKeyHint")} />
-            </span>
+          <SettingRow label={t("oldFolder.keyVia")} hint={t("recovery.foreignKeyHint")}>
             <Selector
               items={[
                 { id: "kit", label: t("oldFolder.viaKit") },
@@ -730,7 +720,7 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
               onChange={(id) => setVia(id as "kit" | "key")}
               inline
             />
-          </div>
+          </SettingRow>
           {via === "kit" ? (
             <>
               <KitPicker
@@ -750,18 +740,18 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
               )}
             </>
           ) : (
-            <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-              {t("recovery.foreignKey")}
+            <SettingRow label={t("recovery.foreignKey")} htmlFor="old-folder-key">
               <RevealInput
                 {...revealKey}
+                id="old-folder-key"
                 value={key}
                 spellCheck={false}
                 autoComplete="off"
                 onChange={(e) => setKey(e.target.value)}
-                wrapperClassName="w-full"
+                wrapperClassName="w-72 max-w-full"
                 className={FIELD}
               />
-            </label>
+            </SettingRow>
           )}
           {connectError && (
             <p className="rounded-card bg-statusFailBgSoft px-3 py-2.5 text-xs leading-relaxed text-statusFail wrap-break-word">

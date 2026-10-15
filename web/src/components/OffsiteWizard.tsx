@@ -29,7 +29,7 @@ import { Badge } from "./Badge";
 import { withLtrFragments, withLtrIsolates, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
 import { Button } from "./Button";
-import { Selector } from "./Selector";
+import { Rows, SettingRow } from "./storage/rows";
 import { CopyBlock } from "./CopyBlock";
 import { OffsiteLocationInput } from "./placement/OffsiteLocationInput";
 import { TestButton, VerdictLine } from "./TestButton";
@@ -512,26 +512,27 @@ export function OffsiteWizard({
     <div className="flex flex-col gap-4">
       {confirmDialog}
       {/* Step 1: backend choice */}
-      <div className="flex flex-col gap-2">
-        <span className="flex items-center gap-1.5">
-          <span className={stepTitle}>{t("offsite.wizard.step1")}</span>
-          {/* A mounted share needs no server, but its path is relative to the
-              Host Data mount. */}
-          {backend === "path" && <InfoBubble tip={withLtrIsolates(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)} />}
-        </span>
-        <Selector
-          items={([
+      {/* A mounted share needs no server, but its path is relative to the
+          Host Data mount. */}
+      <SettingRow
+        label={t("offsite.wizard.step1")}
+        hint={backend === "path" ? withLtrIsolates(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS) : undefined}
+        htmlFor="offsite-wizard-backend"
+      >
+        <SelectField
+          id="offsite-wizard-backend"
+          options={([
             ["rest", "offsite.wizard.backendRest"],
             ["rclone", "offsite.wizard.backendRclone"],
             ["s3", "offsite.wizard.backendS3"],
             ["path", "offsite.wizard.backendPath"],
-          ] as const).map(([id, label]) => ({ id, label: t(label) }))}
+          ] as const).map(([value, label]) => ({ value, label: t(label) }))}
           label={t("offsite.wizard.step1")}
-          select="one"
-          active={backend}
-          onChange={(id) => setBackend(id as Backend)}
+          value={backend}
+          onChange={(value) => setBackend(value as Backend)}
+          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
         />
-      </div>
+      </SettingRow>
 
       {/* Step 2: rest-server deploy snippet. The deploy-snippet route does not
           cover "config". */}
@@ -780,15 +781,16 @@ export function OffsiteWizard({
           alarm, since there is no separate off-site copy to prune. Off-site
           mode: the prune state. */}
       {primary ? (
-        <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
+        <div className="flex flex-col gap-3 border-t border-carbon-border pt-3">
           <span className="flex items-center gap-1.5">
             <span className={stepTitle}>{t("settings.offsiteLimits")}</span>
             <InfoBubble tip={t("settings.limitHint")} />
           </span>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("settings.limitUpload")}</span>
+          <Rows>
+            <SettingRow label={t("settings.limitUpload")} htmlFor="offsite-wizard-limit-up">
               <NumberField
+                id="offsite-wizard-limit-up"
+                wrapperClassName="w-28"
                 min={0}
                 value={pLimitUpload}
                 onChange={(e) => {
@@ -798,10 +800,11 @@ export function OffsiteWizard({
                 }}
                 className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus-well"
               />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("settings.limitDownload")}</span>
+            </SettingRow>
+            <SettingRow label={t("settings.limitDownload")} htmlFor="offsite-wizard-limit-down">
               <NumberField
+                id="offsite-wizard-limit-down"
+                wrapperClassName="w-28"
                 min={0}
                 value={pLimitDownload}
                 onChange={(e) => {
@@ -811,24 +814,22 @@ export function OffsiteWizard({
                 }}
                 className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus-well"
               />
-            </label>
-          </div>
-          <label className="flex flex-col gap-1 max-w-48">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("offsite.retention.budget")}
-              <InfoBubble tip={t("settings.primaryRemote.budgetHint")} />
-            </span>
-            <NumberField
-              min={0}
-              value={pBudget}
-              onChange={(e) => {
-                const n = Math.max(0, parseInt(e.target.value, 10) || 0);
-                setPBudget(n);
-                debounced("pBudget", () => void persistPrimarySafety({ growthBudgetGb: n }));
-              }}
-              className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus-well"
-            />
-          </label>
+            </SettingRow>
+            <SettingRow label={t("offsite.retention.budget")} hint={t("settings.primaryRemote.budgetHint")} htmlFor="offsite-wizard-budget-primary">
+              <NumberField
+                id="offsite-wizard-budget-primary"
+                wrapperClassName="w-28"
+                min={0}
+                value={pBudget}
+                onChange={(e) => {
+                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+                  setPBudget(n);
+                  debounced("pBudget", () => void persistPrimarySafety({ growthBudgetGb: n }));
+                }}
+                className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus-well"
+              />
+            </SettingRow>
+          </Rows>
         </div>
       ) : (
         <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
@@ -862,12 +863,10 @@ export function OffsiteWizard({
 
           {/* Always shown: the wizard is the only editor for the growth
               budget. */}
-          <label className="flex flex-col gap-1 max-w-48">
-            <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-              {t("offsite.retention.budget")}
-              <InfoBubble tip={t("offsite.prune.budgetInfo")} />
-            </span>
+          <SettingRow label={t("offsite.retention.budget")} hint={t("offsite.prune.budgetInfo")} htmlFor="offsite-wizard-budget">
             <NumberField
+              id="offsite-wizard-budget"
+              wrapperClassName="w-28"
               min={0}
               value={settings.offsiteGrowthBudgetGB}
               onChange={(e) => {
@@ -879,7 +878,7 @@ export function OffsiteWizard({
               }}
               className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus-well"
             />
-          </label>
+          </SettingRow>
         </div>
       )}
     </div>

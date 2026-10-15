@@ -3,6 +3,7 @@ import type { Settings, PrimaryRemoteDomain } from "../lib/api";
 import { FolderBrowser } from "./FolderBrowser";
 import { OffsiteWizard } from "./OffsiteWizard";
 import { Selector } from "./Selector";
+import { SettingRow } from "./storage/rows";
 import { IconCloud, IconLocal } from "./Sidebar";
 import { Badge } from "./Badge";
 import { CompressionSelector, saveCompression } from "./CompressionSelector";
@@ -73,31 +74,34 @@ export function PathModeSwitch({
     <div className="flex flex-col gap-1.5">
       {/* The label heads the switch and the path under it, so the paths of a
           card line up; FolderBrowser's own label is turned off below. */}
-      <label className="text-xs text-carbon-textSub">{label}</label>
-      <Selector
-        items={[
-          {
-            id: "local",
-            label: t("settings.pathMode.local"),
-            icon: <IconLocal />,
-            tip: t("settings.pathMode.localTip"),
-          },
-          {
-            id: "remote",
-            label: t("settings.pathMode.remote"),
-            icon: <IconCloud />,
-            tip: t("settings.pathMode.remoteTip"),
-          },
-        ]}
-        label={label}
-        size="sm"
-        select="one"
-        equalWidth
-        active={remoteMode ? "remote" : "local"}
-        onChange={(id) => (id === "remote" ? setRemoteMode(true) : switchToLocal())}
-      />
+      <SettingRow label={label}>
+        <Selector
+          inline
+          items={[
+            {
+              id: "local",
+              label: t("settings.pathMode.local"),
+              icon: <IconLocal />,
+              tip: t("settings.pathMode.localTip"),
+            },
+            {
+              id: "remote",
+              label: t("settings.pathMode.remote"),
+              icon: <IconCloud />,
+              tip: t("settings.pathMode.remoteTip"),
+            },
+          ]}
+          label={label}
+          size="sm"
+          select="one"
+          equalWidth
+          active={remoteMode ? "remote" : "local"}
+          onChange={(id) => (id === "remote" ? setRemoteMode(true) : switchToLocal())}
+        />
+      </SettingRow>
 
       {remoteMode ? (
+        // bv-convention-exception: setting-row-beside-label -- the URL input has no caption of its own, the row above names it.
         <div className="flex flex-col gap-1.5">
           {/* Pinned LTR like FolderBrowser's path field, or a leading `/` or
               `:` lands at the wrong edge in ar and he. */}

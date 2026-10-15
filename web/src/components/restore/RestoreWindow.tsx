@@ -1033,21 +1033,18 @@ function RestoreForm({
                 <FolderBrowser label={t("restore.targetPath")} value={folder} hostMountRoot={entry.hostMountRoot} onChange={setFolder} />
               )}
               {where === "newDataset" && (
-                <div className="flex flex-col gap-1">
-                  <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                    {t("zfs.restore.newDatasetName")}
-                    <InfoBubble tip={t("zfs.restore.newDatasetHint")} />
-                  </span>
+                <SettingRow label={t("zfs.restore.newDatasetName")} hint={t("zfs.restore.newDatasetHint")} htmlFor="restore-new-dataset">
                   <input
+                    id="restore-new-dataset"
                     type="text"
                     dir="ltr"
                     aria-label={t("zfs.restore.newDatasetName")}
                     value={newDataset}
                     onChange={(e) => setNewDataset(e.target.value)}
                     spellCheck={false}
-                    className="w-full max-w-md rounded-control bg-carbon-surface2 px-3 py-1.5 text-start font-mono text-xs text-carbon-text glim-field-focus"
+                    className="w-72 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-start font-mono text-xs text-carbon-text glim-field-focus"
                   />
-                </div>
+                </SettingRow>
               )}
               {where === "newDataset" && (hasProps || zfsReading) && (
                 <ZFSPropertyList properties={storedProps} into="new" reading={zfsReading} t={t} />

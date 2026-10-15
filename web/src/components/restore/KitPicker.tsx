@@ -1,10 +1,10 @@
 // Takes a recovery kit as a file, picked or dropped, and the age identity of
 // one that is sealed.
-import { useRef, useState, type DragEvent, type RefObject } from "react";
+import { useId, useRef, useState, type DragEvent, type RefObject } from "react";
 import { useT } from "../../lib/i18n";
 import { Button } from "../Button";
 import { IconUpload } from "../glyphs";
-import { InfoBubble } from "../InfoBubble";
+import { SettingRow } from "../storage/rows";
 
 // A kit is a page of text. Anything far beyond that is another file.
 const MAX_BYTES = 1024 * 1024;
@@ -98,13 +98,11 @@ export function KitPicker({
  */
 export function KitIdentityField({ inputRef, onEnter }: { inputRef: RefObject<HTMLInputElement | null>; onEnter?: () => void }) {
   const { t } = useT();
+  const id = useId();
   return (
-    <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-      <span className="flex items-center gap-1">
-        {t("kit.identity")}
-        <InfoBubble tip={t("kit.identityHint")} />
-      </span>
+    <SettingRow label={t("kit.identity")} hint={t("kit.identityHint")} htmlFor={id}>
       <input
+        id={id}
         ref={inputRef}
         type="password"
         dir="ltr"
@@ -114,9 +112,9 @@ export function KitIdentityField({ inputRef, onEnter }: { inputRef: RefObject<HT
         onKeyDown={(e) => {
           if (e.key === "Enter") onEnter?.();
         }}
-        className="rounded-control bg-carbon-surface2 px-3 py-2 text-start font-mono text-sm text-carbon-text glim-field-focus"
+        className="w-72 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-start font-mono text-sm text-carbon-text glim-field-focus"
       />
-    </label>
+    </SettingRow>
   );
 }
 

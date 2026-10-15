@@ -9,8 +9,7 @@ import { useT } from "../../lib/i18n";
 import { formatRecent } from "../../lib/reltime";
 import { Button } from "../Button";
 import { IconBack, IconKey, IconLink, IconRefresh } from "../glyphs";
-import { InfoBubble } from "../InfoBubble";
-import { Rows } from "../storage/rows";
+import { Rows, SettingRow } from "../storage/rows";
 import { EMERGENCY_FIELD, Note, Section } from "./EmergencyParts";
 
 /** A request this server sent for a deposit. It waits on the instance that
@@ -259,12 +258,9 @@ export function EmergencyGroup({
           <Note tone={wrongCode ? "warn" : "fail"}>{refusalText(t, notice.code, notice.said)}</Note>
         ))}
 
-      <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-        <span className="flex items-center gap-1">
-          {t("emergency.group.code")}
-          <InfoBubble tip={t("emergency.group.codeHint")} />
-        </span>
+      <SettingRow label={t("emergency.group.code")} hint={t("emergency.group.codeHint")} htmlFor="emergency-group-code">
         <input
+          id="emergency-group-code"
           ref={codeField}
           type="text"
           dir="ltr"
@@ -280,9 +276,9 @@ export function EmergencyGroup({
           onKeyDown={(e) => {
             if (e.key === "Enter" && complete && !busy) void send(asked === null);
           }}
-          className={`${EMERGENCY_FIELD} tracking-widest disabled:opacity-60`}
+          className={`w-72 max-w-full ${EMERGENCY_FIELD} tracking-widest disabled:opacity-60`}
         />
-      </label>
+      </SettingRow>
 
       {footer &&
         createPortal(

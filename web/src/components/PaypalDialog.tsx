@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Selector } from "./Selector";
+import { SettingRow } from "./storage/rows";
 import { useT } from "../lib/i18n";
 import { PAYPAL, PAYPAL_AMOUNTS, PAYPAL_DEFAULT_AMOUNT, PAYPAL_DESCRIPTION } from "../lib/donate";
 import { parseAmount, type GiveFrequency } from "../lib/paypal";
@@ -81,10 +82,7 @@ export function PaypalDialog({ onClose }: { onClose: () => void }) {
           <p className="text-sm text-carbon-text">{t("about.donateAppeal")}</p>
           <p className="text-sm text-carbon-textSub">{t("about.paypalIntro")}</p>
 
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase tracking-widest text-carbon-textSub">
-              {t("about.paypalFrequency")}
-            </span>
+          <SettingRow label={t("about.paypalFrequency")}>
             <Selector
               items={FREQUENCIES.map((f) => ({ id: f, label: labels[f] }))}
               label={t("about.paypalFrequency")}
@@ -95,8 +93,9 @@ export function PaypalDialog({ onClose }: { onClose: () => void }) {
                 setStatus("idle");
               }}
               buttonHeight
+              inline
             />
-          </div>
+          </SettingRow>
 
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-semibold uppercase tracking-widest text-carbon-textSub">

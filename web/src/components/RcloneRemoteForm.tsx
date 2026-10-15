@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { addRcloneRemote, type RcloneRemoteForm as Form } from "../lib/api";
 import { useT } from "../lib/i18n";
@@ -6,6 +6,7 @@ import { useToast } from "../lib/toast";
 
 import { Button } from "./Button";
 import { SelectField } from "./SelectField";
+import { Rows, SettingRow } from "./storage/rows";
 
 type RemoteType = "smb" | "webdav";
 
@@ -32,6 +33,7 @@ export function RcloneRemoteForm({
   onAdded?: (location: string) => void;
 }) {
   const { push } = useToast();
+  const fid = useId();
   const [type, setType] = useState<RemoteType>("smb");
   const [name, setName] = useState("");
   const [host, setHost] = useState("");
@@ -74,14 +76,15 @@ export function RcloneRemoteForm({
     }
   }
 
-  const field = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus";
+  const text = "w-72 max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
+  const select = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textSub">{t("rcloneRemote.type")}</span>
+      <Rows>
+        <SettingRow label={t("rcloneRemote.type")} htmlFor={`${fid}-type`}>
           <SelectField
+            id={`${fid}-type`}
             value={type}
             label={t("rcloneRemote.type")}
             options={[
@@ -89,34 +92,30 @@ export function RcloneRemoteForm({
               { value: "webdav" as const, label: t("rcloneRemote.typeWebdav") },
             ]}
             onChange={(next) => setType(next)}
-            className={field}
+            className={select}
           />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textSub">{t("rcloneRemote.name")}</span>
-          <input className={field} value={name} onChange={(e) => setName(e.target.value)} />
-        </label>
+        </SettingRow>
+        <SettingRow label={t("rcloneRemote.name")} htmlFor={`${fid}-name`}>
+          <input id={`${fid}-name`} className={text} value={name} onChange={(e) => setName(e.target.value)} />
+        </SettingRow>
 
         {type === "smb" ? (
           <>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("rcloneRemote.host")}</span>
-              <input className={field} value={host} onChange={(e) => setHost(e.target.value)} />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("rcloneRemote.share")}</span>
-              <input className={field} value={share} onChange={(e) => setShare(e.target.value)} />
-            </label>
+            <SettingRow label={t("rcloneRemote.host")} htmlFor={`${fid}-host`}>
+              <input id={`${fid}-host`} className={text} value={host} onChange={(e) => setHost(e.target.value)} />
+            </SettingRow>
+            <SettingRow label={t("rcloneRemote.share")} htmlFor={`${fid}-share`}>
+              <input id={`${fid}-share`} className={text} value={share} onChange={(e) => setShare(e.target.value)} />
+            </SettingRow>
           </>
         ) : (
           <>
-            <label className="flex flex-col gap-1 sm:col-span-2">
-              <span className="text-xs text-carbon-textSub">{t("rcloneRemote.url")}</span>
-              <input className={field} value={url} onChange={(e) => setUrl(e.target.value)} />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("rcloneRemote.vendor")}</span>
+            <SettingRow label={t("rcloneRemote.url")} htmlFor={`${fid}-url`}>
+              <input id={`${fid}-url`} className={text} value={url} onChange={(e) => setUrl(e.target.value)} />
+            </SettingRow>
+            <SettingRow label={t("rcloneRemote.vendor")} htmlFor={`${fid}-vendor`}>
               <SelectField
+                id={`${fid}-vendor`}
                 value={vendor}
                 label={t("rcloneRemote.vendor")}
                 options={[
@@ -126,26 +125,25 @@ export function RcloneRemoteForm({
                   { value: "other", label: t("rcloneRemote.vendorOther") },
                 ]}
                 onChange={(next) => setVendor(next)}
-                className={field}
+                className={select}
               />
-            </label>
+            </SettingRow>
           </>
         )}
 
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textSub">{t("rcloneRemote.user")}</span>
-          <input className={field} value={user} onChange={(e) => setUser(e.target.value)} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textSub">{t("rcloneRemote.password")}</span>
+        <SettingRow label={t("rcloneRemote.user")} htmlFor={`${fid}-user`}>
+          <input id={`${fid}-user`} className={text} value={user} onChange={(e) => setUser(e.target.value)} />
+        </SettingRow>
+        <SettingRow label={t("rcloneRemote.password")} htmlFor={`${fid}-password`}>
           <input
-            className={field}
+            id={`${fid}-password`}
+            className={text}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-        </label>
-      </div>
+        </SettingRow>
+      </Rows>
 
       <Button
         label={t("rcloneRemote.add")}

@@ -18,6 +18,7 @@ import { STORAGE_CLASSES } from "../lib/storageClasses";
 import { SelectField } from "./SelectField";
 import { Toggle } from "./Toggle";
 import { NumberField } from "./NumberField";
+import { Rows, SettingRow } from "./storage/rows";
 import { InfoBubble } from "./InfoBubble";
 import { CompressionSelector } from "./CompressionSelector";
 import { Badge, type BadgeSize } from "./Badge";
@@ -446,60 +447,64 @@ export function OffsiteTargetsSection({
           {draftFrom !== null && (
             <p className="text-xs text-carbon-textMuted">{t("offsite.targets.fromDestinationEdit").replace("{name}", () => draftFrom)}</p>
           )}
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-carbon-textSub">{t("offsite.targets.name")}</span>
-            <input
-              value={draft.name}
-              onChange={(e) => setDraft((d) => (d ? { ...d, name: e.target.value } : d))}
-              disabled={draftFrom !== null}
-              spellCheck={false}
-              placeholder={t("offsite.targets.namePlaceholder")}
-              className={inputCls}
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-carbon-textSub">{t("offsite.wizard.repoUrl")}</span>
-            <input
-              value={draft.repo}
-              onChange={(e) => setDraft((d) => (d ? { ...d, repo: e.target.value } : d))}
-              disabled={draftFrom !== null}
-              spellCheck={false}
-              placeholder={t("offsite.wizard.repoUrlPlaceholder")}
-              dir="ltr"
-              className={`${inputCls} text-start`}
-            />
-            <span className="text-xs text-carbon-textMuted">
-              {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
-            </span>
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-carbon-textSub">{t("offsite.targets.credsLabel")}</span>
-            <SelectField
-              value={draft.credsRef}
-              onChange={(v) => setDraft((d) => (d ? { ...d, credsRef: v } : d))}
-              disabled={draftFrom !== null}
-              label={t("offsite.targets.credsLabel")}
-              options={[
-                { value: "", label: t("offsite.targets.credsDefault") },
-                ...credSets.map((c) => ({ value: c.id, label: credSetLabel(t, c) })),
-              ]}
-              className={inputCls}
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-carbon-textSub">{t("cloud.storageClass.label")}</span>
-            <SelectField
-              value={draft.storageClass}
-              onChange={(v) => setDraft((d) => (d ? { ...d, storageClass: v } : d))}
-              disabled={draftFrom !== null}
-              label={t("cloud.storageClass.label")}
-              options={[
-                { value: "", label: t("cloud.storageClass.default") },
-                ...STORAGE_CLASSES.map((sc) => ({ value: sc, label: sc })),
-              ]}
-              className={inputCls}
-            />
-          </label>
+          <Rows>
+            <SettingRow label={t("offsite.targets.name")} htmlFor="offsite-target-name">
+              <input
+                id="offsite-target-name"
+                value={draft.name}
+                onChange={(e) => setDraft((d) => (d ? { ...d, name: e.target.value } : d))}
+                disabled={draftFrom !== null}
+                spellCheck={false}
+                placeholder={t("offsite.targets.namePlaceholder")}
+                className={`w-72 max-w-full ${inputCls}`}
+              />
+            </SettingRow>
+            <SettingRow label={t("offsite.wizard.repoUrl")} htmlFor="offsite-target-repo">
+              <input
+                id="offsite-target-repo"
+                value={draft.repo}
+                onChange={(e) => setDraft((d) => (d ? { ...d, repo: e.target.value } : d))}
+                disabled={draftFrom !== null}
+                spellCheck={false}
+                placeholder={t("offsite.wizard.repoUrlPlaceholder")}
+                dir="ltr"
+                className={`w-72 max-w-full ${inputCls} text-start`}
+              />
+            </SettingRow>
+          </Rows>
+          <span className="-mt-1 text-xs text-carbon-textMuted">
+            {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
+          </span>
+          <Rows>
+            <SettingRow label={t("offsite.targets.credsLabel")} htmlFor="offsite-target-creds">
+              <SelectField
+                id="offsite-target-creds"
+                value={draft.credsRef}
+                onChange={(v) => setDraft((d) => (d ? { ...d, credsRef: v } : d))}
+                disabled={draftFrom !== null}
+                label={t("offsite.targets.credsLabel")}
+                options={[
+                  { value: "", label: t("offsite.targets.credsDefault") },
+                  ...credSets.map((c) => ({ value: c.id, label: credSetLabel(t, c) })),
+                ]}
+                className={inputCls}
+              />
+            </SettingRow>
+            <SettingRow label={t("cloud.storageClass.label")} htmlFor="offsite-target-class">
+              <SelectField
+                id="offsite-target-class"
+                value={draft.storageClass}
+                onChange={(v) => setDraft((d) => (d ? { ...d, storageClass: v } : d))}
+                disabled={draftFrom !== null}
+                label={t("cloud.storageClass.label")}
+                options={[
+                  { value: "", label: t("cloud.storageClass.default") },
+                  ...STORAGE_CLASSES.map((sc) => ({ value: sc, label: sc })),
+                ]}
+                className={inputCls}
+              />
+            </SettingRow>
+          </Rows>
 
           <CompressionSelector
             value={draft.compression}
@@ -523,9 +528,9 @@ export function OffsiteTargetsSection({
           </div>
 
           {/* Retention */}
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             <span className="text-xs text-carbon-textSub">{t("offsite.targets.retentionTitle")}</span>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            <Rows>
               {([
                 ["retentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
                 ["retentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
@@ -533,12 +538,10 @@ export function OffsiteTargetsSection({
                 ["retentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
                 ["retentionKeepYearly", "settings.retentionYearly", "settings.retentionYearlyInfo"],
               ] as const).map(([key, label, info]) => (
-                <label key={key} className="flex flex-col gap-1">
-                  <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                    {t(label)}
-                    <InfoBubble tip={t(info)} />
-                  </span>
+                <SettingRow key={key} label={t(label)} hint={t(info)} htmlFor={`offsite-target-${key}`}>
                   <NumberField
+                    id={`offsite-target-${key}`}
+                    wrapperClassName="w-28"
                     min={0}
                     value={draft[key]}
                     onChange={(e) => {
@@ -547,15 +550,16 @@ export function OffsiteTargetsSection({
                     }}
                     className={numCls}
                   />
-                </label>
+                </SettingRow>
               ))}
-            </div>
+            </Rows>
           </div>
 
           {/* Growth budget */}
-          <label className="flex flex-col gap-1 max-w-56">
-            <span className="text-xs text-carbon-textSub">{t("offsite.retention.budget")}</span>
+          <SettingRow label={t("offsite.retention.budget")} htmlFor="offsite-target-budget">
             <NumberField
+              id="offsite-target-budget"
+              wrapperClassName="w-28"
               min={0}
               value={draft.growthBudgetGb}
               onChange={(e) => {
@@ -564,7 +568,7 @@ export function OffsiteTargetsSection({
               }}
               className={numCls}
             />
-          </label>
+          </SettingRow>
 
           <div className="flex items-center gap-3 flex-wrap">
             <Button
