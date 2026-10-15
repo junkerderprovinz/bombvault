@@ -48,6 +48,7 @@ export function HooksEditor({
 
   return (
     <div className="rounded-card bg-carbon-background p-3 flex flex-col gap-2">
+      {/* bv-convention-exception: setting-row-beside-label -- a shell command is long text that needs the panel width under its name. */}
       <label className="flex flex-col gap-1">
         <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
         <input value={pre} onChange={(e) => {
@@ -57,6 +58,7 @@ export function HooksEditor({
         }} spellCheck={false}
           placeholder="redis-cli SAVE" className={inputCls} />
       </label>
+      {/* bv-convention-exception: setting-row-beside-label -- a shell command is long text that needs the panel width under its name. */}
       <label className="flex flex-col gap-1">
         <span className="text-xs text-carbon-textSub">{t("hooks.post")}</span>
         <input value={post} onChange={(e) => {

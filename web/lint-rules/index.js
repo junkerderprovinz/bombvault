@@ -21,6 +21,7 @@ import noEmDashInUserText from "./no-em-dash-in-user-text.js";
 import noStatusColorOnControl from "./no-status-color-on-control.js";
 import oneIconBadgeSize from "./one-icon-badge-size.js";
 import pageUsesPageShell from "./page-uses-page-shell.js";
+import settingRowBesideLabel from "./setting-row-beside-label.js";
 import userMessageIsTranslated from "./user-message-is-translated.js";
 
 export default {
@@ -32,6 +33,7 @@ export default {
     "no-status-color-on-control": noStatusColorOnControl,
     "one-icon-badge-size": oneIconBadgeSize,
     "page-uses-page-shell": pageUsesPageShell,
+    "setting-row-beside-label": settingRowBesideLabel,
     "user-message-is-translated": userMessageIsTranslated,
   },
 };

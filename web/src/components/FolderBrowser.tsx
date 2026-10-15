@@ -260,6 +260,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   const hue = usePortalHue(open, triggerRef);
 
   return (
+    // bv-convention-exception: setting-row-beside-label -- a folder browser keeps its name above it, its panel opens inline under the path.
     <div className="flex flex-col gap-1.5" ref={triggerRef}>
       {renderLabel && (
         <label className="flex items-center gap-1 text-xs text-carbon-textSub">

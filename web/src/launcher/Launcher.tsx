@@ -612,6 +612,7 @@ function ServerSheet({
               save();
             }}
           >
+            {/* bv-convention-exception: setting-row-beside-label -- the address sheet is part of the launcher start screen; its fields keep the label above them */}
             <div className="flex flex-col gap-1.5">
               <label htmlFor={urlId} className="flex items-center gap-2 text-xs font-medium text-carbon-textSub">
                 {t("launcher.address")}
@@ -638,6 +639,7 @@ function ServerSheet({
                 </p>
               )}
             </div>
+            {/* bv-convention-exception: setting-row-beside-label -- the address sheet is part of the launcher start screen; its fields keep the label above them */}
             <div className="flex flex-col gap-1.5">
               <label htmlFor={nameId} className="text-xs font-medium text-carbon-textSub">
                 {t("launcher.name")}

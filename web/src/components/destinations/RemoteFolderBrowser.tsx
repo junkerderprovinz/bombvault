@@ -85,6 +85,7 @@ export function RemoteFolderBrowser({
   }
 
   return (
+    // bv-convention-exception: setting-row-beside-label -- a folder browser keeps its name above it, like FolderBrowser.
     <div className="flex items-end gap-2 max-md:flex-wrap">
       <label className="flex min-w-0 flex-1 flex-col gap-1 max-md:basis-full">
         <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">

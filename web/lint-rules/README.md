@@ -82,6 +82,7 @@ path data that is not a message at all.
 | `page-uses-page-shell` | A routed page's root is `PAGE_SHELL`; nothing hand-rolls the shell in literal width/gap classes. |
 | `no-status-color-on-control` | Status green/amber/red is a readout, never control chrome — and a destructive action gets no bespoke red either. |
 | `control-reads-engine-tokens` | An interactive control reads its radius from the shape engine and its colour from the colour engine. |
+| `setting-row-beside-label` | A dropdown, segmented selector, number field or one-line text field stands beside its label in a `SettingRow`, never under it. A list, text area or code editor keeps its name above. |
 | `user-message-is-translated` | A string the user reads goes through `t()`, including the fallback on an error path. |
 | `no-em-dash-in-user-text` | No em dash (U+2014) in text a user reads: the translation tables, rendered JSX text, and the four text-bearing attributes. `ru`, `uk`, `bg` and `sr` are exempt. |
 

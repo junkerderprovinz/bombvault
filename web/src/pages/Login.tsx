@@ -144,6 +144,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           <PasswordResetForm onDone={onLogin} onBack={() => setResetting(false)} />
         ) : (
           <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">
+            {/* bv-convention-exception: setting-row-beside-label -- a sign-in form is a page of its own; its fields keep the label above them */}
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="bv-password"
@@ -164,6 +165,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </div>
 
             {/* Second factor, once the password has been accepted. */}
+            {/* bv-convention-exception: setting-row-beside-label -- a sign-in form is a page of its own; its fields keep the label above them */}
             {needCode && (
               <div className="flex flex-col gap-1.5">
                 <label

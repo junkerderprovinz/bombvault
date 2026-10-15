@@ -773,3 +773,39 @@ describe("page-uses-page-shell sees every routed page", () => {
     ).toBe(true);
   });
 });
+
+// A one-line control under its name.
+ruleTester.run("setting-row-beside-label", rules["setting-row-beside-label"], {
+  valid: [
+    // The row the settings cards use.
+    `<SettingRow label={t("a")}><NumberField value={n} /></SettingRow>`,
+    // A text area needs the card's width and keeps its name above it.
+    `<label className="flex flex-col gap-1"><span>{t("a")}</span><textarea rows={3} /></label>`,
+    // So does a cadence builder.
+    `<div className="flex flex-col gap-1.5"><span>{t("a")}</span><CadenceBuilder value={v} /></div>`,
+    // A titled box whose controls already stand in rows.
+    `<div className="flex flex-col gap-2"><span>{t("a")}</span><Rows><SettingRow label={t("b")}><NumberField value={n} /></SettingRow></Rows></div>`,
+    // A checkbox is a switch, not a field.
+    `<label className="flex flex-col gap-1"><span>{t("a")}</span><input type="checkbox" /></label>`,
+    // A box with a large gap lays out whole sections.
+    `<div className="flex flex-col gap-4"><span>{t("a")}</span><NumberField value={n} /></div>`,
+    // The escape hatch, with a reason.
+    `
+      {/* bv-convention-exception: setting-row-beside-label -- the sign-in
+          form is a page of its own and keeps the label above the field. */}
+      <label className="flex flex-col gap-1"><span>{t("a")}</span><input type="text" /></label>
+    `,
+  ],
+  invalid: [
+    { code: `<label className="flex flex-col gap-1"><span>{t("a")}</span><NumberField value={n} /></label>`, errors: [{ messageId: "stacked" }] },
+    { code: `<label className="flex flex-col gap-1.5"><span>{t("a")}</span><input type="text" /></label>`, errors: [{ messageId: "stacked" }] },
+    {
+      code: `<div className="flex flex-col gap-1.5"><span>{t("a")}</span><Selector items={i} /></div>`,
+      errors: [{ messageId: "stacked" }],
+    },
+    {
+      code: `<div className="flex flex-col gap-1"><span>{t("a")}</span><div className="min-w-0"><SelectField options={o} /></div></div>`,
+      errors: [{ messageId: "stacked" }],
+    },
+  ],
+});

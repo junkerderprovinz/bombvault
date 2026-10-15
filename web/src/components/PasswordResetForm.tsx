@@ -106,6 +106,7 @@ export function PasswordResetForm({
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">
+      {/* bv-convention-exception: setting-row-beside-label -- the reset form is part of the sign-in page; its fields keep the label above them */}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bv-reset-code" className={`${LABEL} flex items-center gap-1.5`}>
           {t("auth.resetCodeLabel")}
@@ -124,6 +125,7 @@ export function PasswordResetForm({
         />
       </div>
 
+      {/* bv-convention-exception: setting-row-beside-label -- the reset form is part of the sign-in page; its fields keep the label above them */}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bv-reset-password" className={LABEL}>
           {t("auth.newPassword")}
@@ -139,6 +141,7 @@ export function PasswordResetForm({
         />
       </div>
 
+      {/* bv-convention-exception: setting-row-beside-label -- the reset form is part of the sign-in page; its fields keep the label above them */}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bv-reset-confirm" className={LABEL}>
           {t("auth.confirmPassword")}

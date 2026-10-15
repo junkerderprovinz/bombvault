@@ -97,6 +97,7 @@ export default [
       "bombvault/one-icon-badge-size": "error",
       "bombvault/no-status-color-on-control": "error",
       "bombvault/control-reads-engine-tokens": "error",
+      "bombvault/setting-row-beside-label": "error",
       "bombvault/user-message-is-translated": "error",
       // No options: the ru/uk/bg/sr exemption is a fact about those languages,
       // not a project setting, so it lives in the rule.
