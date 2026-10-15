@@ -156,6 +156,25 @@ func zvolDevsOf(definition string) []string {
 	return devs
 }
 
+// firstZvolOf returns the dataset of the first zvol disk in a stored VM
+// definition.
+func firstZvolOf(definition string) (string, bool) {
+	var def vmDefinition
+	if err := json.Unmarshal([]byte(definition), &def); err != nil {
+		return "", false
+	}
+	parsed, err := virshcli.ParseDomain(def.DomainXML)
+	if err != nil {
+		return "", false
+	}
+	for _, bd := range parsed.BlockDisks {
+		if dataset, ok := virshcli.ZvolDatasetFromDevPath(bd.Source); ok {
+			return dataset, true
+		}
+	}
+	return "", false
+}
+
 // isDisk reports whether snap is one of the VM's disk snapshots rather than a
 // run. A run from before a rename keeps its disks under the name it had then.
 func (it timelineItem) isDisk(snap restic.Snapshot) bool {
