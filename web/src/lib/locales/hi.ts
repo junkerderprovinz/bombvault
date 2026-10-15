@@ -898,6 +898,7 @@ const hi: Partial<Translations> = {
   "excludes.noMatch": "जैसा है वैसा restic को पास किया जाता है (कोई पहचाना गया कंटेनर पथ नहीं है)।",
   "excludes.excludesNothing": "इस फ़ोल्डर का वॉल्यूम बैकअप में नहीं है, इसलिए यह पंक्ति कुछ भी एक्सक्लूड नहीं करती।",
   "excludes.nameMatchesNothing": "इस बैकअप में इस नाम का कुछ भी नहीं है, इसलिए यह पंक्ति कुछ भी एक्सक्लूड नहीं करती।",
+  "excludes.pathMissing": "यह पथ बैकअप में मौजूद नहीं है, इसलिए यह पंक्ति कुछ भी एक्सक्लूड नहीं करती।",
   // Exclude preview status
   "excludes.willExclude": "बैकअप से एक्सक्लूड कर दिया जाएगा",
   "excludes.matchesAnywhere": "यह जहाँ भी दिखेगा वहाँ एक्सक्लूड कर दिया जाएगा",

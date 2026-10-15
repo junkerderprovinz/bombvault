@@ -898,6 +898,7 @@ const sk: Partial<Translations> = {
   "excludes.noMatch": "Odovzdáva sa do restic bez zmeny (nie je rozpoznaná cesta kontajnera).",
   "excludes.excludesNothing": "Zväzok tohto priečinka nie je v zálohe, takže tento riadok nič nevylučuje.",
   "excludes.nameMatchesNothing": "Nič v tejto zálohe nemá tento názov, takže tento riadok nič nevylučuje.",
+  "excludes.pathMissing": "Táto cesta v zálohe neexistuje, takže tento riadok nič nevylučuje.",
   // Exclude preview status
   "excludes.willExclude": "bude vylúčené zo zálohy",
   "excludes.matchesAnywhere": "bude vylúčené všade, kde sa objaví",

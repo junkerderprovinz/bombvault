@@ -1396,6 +1396,7 @@ const fr: Partial<Translations> = {
   "excludes.noMatch": "Transmis tel quel à restic (chemin de conteneur non reconnu).",
   "excludes.excludesNothing": "Le volume de ce dossier n'est pas dans la sauvegarde, cette ligne n'exclut donc rien.",
   "excludes.nameMatchesNothing": "Rien dans cette sauvegarde ne porte ce nom, cette ligne n'exclut donc rien.",
+  "excludes.pathMissing": "Ce chemin n'existe pas dans la sauvegarde, cette ligne n'exclut donc rien.",
   // Exclude preview status (#38)
   "excludes.willExclude": "sera exclu de la sauvegarde",
   "excludes.matchesAnywhere": "sera exclu partout où il apparaît",

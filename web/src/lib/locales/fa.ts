@@ -898,6 +898,7 @@ const fa: Partial<Translations> = {
   "excludes.noMatch": "بدون تغییر به restic منتقل می‌شود (مسیر شناخته‌شده کانتینر نیست).",
   "excludes.excludesNothing": "volume این پوشه در پشتیبان‌گیری نیست، پس این خط چیزی را مستثنی نمی‌کند.",
   "excludes.nameMatchesNothing": "هیچ چیزی در این پشتیبان این نام را ندارد، پس این خط چیزی را مستثنی نمی‌کند.",
+  "excludes.pathMissing": "این مسیر در پشتیبان وجود ندارد، پس این خط چیزی را مستثنی نمی‌کند.",
   // Exclude preview status
   "excludes.willExclude": "از پشتیبان‌گیری مستثنی خواهد شد",
   "excludes.matchesAnywhere": "هرجا که ظاهر شود مستثنی خواهد شد",

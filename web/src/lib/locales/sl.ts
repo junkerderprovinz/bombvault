@@ -898,6 +898,7 @@ const sl: Partial<Translations> = {
   "excludes.noMatch": "Posredovano resticu takšno, kot je (ni prepoznana pot vsebnika).",
   "excludes.excludesNothing": "Nosilec te mape ni v varnostni kopiji, zato ta vrstica ne izključi ničesar.",
   "excludes.nameMatchesNothing": "Nič v tej varnostni kopiji nima tega imena, zato ta vrstica ne izključi ničesar.",
+  "excludes.pathMissing": "Ta pot v varnostni kopiji ne obstaja, zato ta vrstica ne izključi ničesar.",
   "excludes.willExclude": "bo izključeno iz varnostne kopije",
   "excludes.matchesAnywhere": "bo izključeno, kjer koli se pojavi",
   "excludes.assistTitle": "Pomočnik za izključitve",

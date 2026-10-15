@@ -1393,6 +1393,7 @@ const pl: Partial<Translations> = {
   "excludes.noMatch": "Przekazywane do restic bez zmian (nierozpoznana ścieżka kontenera).",
   "excludes.excludesNothing": "Wolumin tego folderu nie jest w kopii zapasowej, więc ten wiersz niczego nie wyklucza.",
   "excludes.nameMatchesNothing": "Nic w tej kopii zapasowej nie ma tej nazwy, więc ten wiersz niczego nie wyklucza.",
+  "excludes.pathMissing": "Ta ścieżka nie istnieje w kopii zapasowej, więc ten wiersz niczego nie wyklucza.",
   // Exclude preview status (#38)
   "excludes.willExclude": "zostanie wykluczony z kopii zapasowej",
   "excludes.matchesAnywhere": "zostanie wykluczony wszędzie, gdzie występuje",

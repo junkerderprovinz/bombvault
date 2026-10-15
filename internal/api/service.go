@@ -1688,11 +1688,14 @@ func (s *Service) toContainerPath(host string) (string, bool) {
 // Resolved is the restic --exclude pattern that will actually be used, Status is
 // how it was derived, Matches reports whether it would exclude anything in this
 // container's backup (so the UI can warn on a line that matches nothing).
+// Missing tells a line whose volume is backed up but holds nothing it matches
+// apart from a line whose volume is not in the backup at all.
 type ExcludePreview struct {
 	Raw      string `json:"raw"`
 	Resolved string `json:"resolved"`
 	Status   string `json:"status"` // "basename" | "translated" | "passthrough"
 	Matches  bool   `json:"matches"`
+	Missing  bool   `json:"missing,omitempty"`
 }
 
 // resolveExcludeLine turns one raw user line into a restic --exclude pattern.
@@ -1774,10 +1777,12 @@ func isUnderAny(p string, roots []string) bool {
 // reports, per line, the resolved --exclude pattern and whether it would match
 // anything in this container's backup (effective = the volumes actually backed
 // up). A basename matches when some file or folder in those volumes has that
-// name; a translated path matches only when it is under a backed-up volume; a
-// passthrough is reported as matching nothing. The user's original text
-// round-trips in Raw.
+// name; a translated path matches when it is under a backed-up volume and
+// something there exists; a passthrough is reported as matching nothing. The
+// user's original text round-trips in Raw.
 func (s *Service) previewExcludes(ctx context.Context, raw []string, in model.Inspect, effective []string) []ExcludePreview {
+	ctx, cancel := context.WithTimeout(ctx, excludeSearchBudget)
+	defer cancel()
 	type resolved struct{ line, pattern, status string }
 	var lines []resolved
 	var names []string
@@ -1794,27 +1799,33 @@ func (s *Service) previewExcludes(ctx context.Context, raw []string, in model.In
 	found := basenamesFound(ctx, names, effective)
 	var out []ExcludePreview
 	for _, l := range lines {
-		matches := (l.status == "basename" && found[l.pattern]) || (l.status == "translated" && isUnderAny(l.pattern, effective))
-		out = append(out, ExcludePreview{
-			Raw:      l.line,
-			Resolved: l.pattern,
-			Status:   l.status,
-			Matches:  matches,
-		})
+		p := ExcludePreview{Raw: l.line, Resolved: l.pattern, Status: l.status}
+		switch l.status {
+		case "basename":
+			p.Matches = found[l.pattern]
+			p.Missing = !p.Matches
+		case "translated":
+			if isUnderAny(globLiteralRoot(l.pattern), effective) {
+				p.Matches = excludePathFound(ctx, l.pattern)
+				p.Missing = !p.Matches
+			}
+		}
+		out = append(out, p)
 	}
 	return out
 }
 
-// basenameSearchBudget bounds the search for a bare-name exclude. An appdata
+// excludeSearchBudget bounds the searches behind one preview. An appdata
 // folder can hold millions of files and the editor asks again after each edit.
-const basenameSearchBudget = 2 * time.Second
+// A line the search has not settled when the budget runs out counts as
+// matching: the editor warns about a line that excludes nothing, and that
+// warning must not rest on a search that stopped early.
+const excludeSearchBudget = 2 * time.Second
 
 // basenamesFound reports which of names, restic excludes without a slash,
 // match the name of something in roots. restic tests such a pattern against
 // every component of a path, so the components of the roots themselves count
-// too. A name the search has not settled when the budget runs out counts as
-// found: the editor warns about a line that excludes nothing, and that warning
-// must not rest on a search that stopped early.
+// too.
 func basenamesFound(ctx context.Context, names, roots []string) map[string]bool {
 	found := make(map[string]bool, len(names))
 	for _, n := range names {
@@ -1839,8 +1850,6 @@ func basenamesFound(ctx context.Context, names, roots []string) map[string]bool 
 			}
 		}
 	}
-	ctx, cancel := context.WithTimeout(ctx, basenameSearchBudget)
-	defer cancel()
 	for _, root := range roots {
 		if left == 0 {
 			break
@@ -1864,6 +1873,93 @@ func basenamesFound(ctx context.Context, names, roots []string) map[string]bool 
 		}
 	}
 	return found
+}
+
+// excludePathFound reports whether something on disk matches pattern, an
+// anchored restic exclude made of an escaped container path and the glob the
+// user typed after it. The walk starts at the pattern's literal head, so a
+// plain path costs one stat.
+func excludePathFound(ctx context.Context, pattern string) bool {
+	pat := strings.Split(pattern, "/")
+	root := globLiteralRoot(pattern)
+	if !slices.ContainsFunc(pat, hasGlobMeta) {
+		_, err := os.Lstat(root)
+		return err == nil
+	}
+	deep := slices.Contains(pat, "**")
+	found := false
+	_ = filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		if err != nil {
+			return nil
+		}
+		parts := strings.Split(filepath.ToSlash(p), "/")
+		if globPartsMatch(pat, parts) {
+			found = true
+			return fs.SkipAll
+		}
+		if d.IsDir() && !deep && len(parts) >= len(pat) {
+			return fs.SkipDir
+		}
+		return nil
+	})
+	return found || ctx.Err() != nil
+}
+
+// globLiteralRoot is the leading part of an anchored pattern that holds no
+// glob, with its escapes removed: the folder a search for the pattern starts in.
+func globLiteralRoot(pattern string) string {
+	pat := strings.Split(pattern, "/")
+	n := 0
+	for n < len(pat) && !hasGlobMeta(pat[n]) {
+		n++
+	}
+	var b strings.Builder
+	head := strings.Join(pat[:n], "/")
+	for i := 0; i < len(head); i++ {
+		if head[i] == '\\' && i+1 < len(head) {
+			i++
+		}
+		b.WriteByte(head[i])
+	}
+	return b.String()
+}
+
+// hasGlobMeta reports whether a pattern component holds an unescaped glob
+// character.
+func hasGlobMeta(c string) bool {
+	for i := 0; i < len(c); i++ {
+		switch c[i] {
+		case '\\':
+			i++
+		case '*', '?', '[':
+			return true
+		}
+	}
+	return false
+}
+
+// globPartsMatch matches path components against pattern components the way
+// restic does, where "**" stands for any number of components.
+func globPartsMatch(pat, parts []string) bool {
+	if len(pat) == 0 {
+		return len(parts) == 0
+	}
+	if pat[0] == "**" {
+		for i := 0; i <= len(parts); i++ {
+			if globPartsMatch(pat[1:], parts[i:]) {
+				return true
+			}
+		}
+		return false
+	}
+	if len(parts) == 0 {
+		return false
+	}
+	ok, _ := path.Match(pat[0], parts[0])
+	return ok && globPartsMatch(pat[1:], parts[1:])
 }
 
 // retentionPolicy is the local keep-policy of a domain: its own when it has

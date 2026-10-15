@@ -898,6 +898,7 @@ const ms: Partial<Translations> = {
   "excludes.noMatch": "Dihantar ke restic seadanya (bukan laluan bekas yang dikenali).",
   "excludes.excludesNothing": "Volum folder ini tiada dalam sandaran, jadi baris ini tidak mengecualikan apa-apa.",
   "excludes.nameMatchesNothing": "Tiada apa-apa dalam sandaran ini yang bernama ini, jadi baris ini tidak mengecualikan apa-apa.",
+  "excludes.pathMissing": "Laluan ini tiada dalam sandaran, jadi baris ini tidak mengecualikan apa-apa.",
   // Exclude preview status
   "excludes.willExclude": "akan dikecualikan daripada sandaran",
   "excludes.matchesAnywhere": "akan dikecualikan di mana-mana ia muncul",

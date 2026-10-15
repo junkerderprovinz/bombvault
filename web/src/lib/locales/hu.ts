@@ -1397,6 +1397,7 @@ const hu: Partial<Translations> = {
   "excludes.noMatch": "Változatlanul átadva a resticnek (nem felismert konténer-útvonal).",
   "excludes.excludesNothing": "Ennek a mappának a kötete nincs a biztonsági mentésben, ezért ez a sor semmit sem zár ki.",
   "excludes.nameMatchesNothing": "Ebben a biztonsági mentésben semmi sem viseli ezt a nevet, ezért ez a sor semmit sem zár ki.",
+  "excludes.pathMissing": "Ez az útvonal nem létezik a biztonsági mentésben, ezért ez a sor semmit sem zár ki.",
   // Exclude preview status (#38)
   "excludes.willExclude": "ki lesz zárva a biztonsági mentésből",
   "excludes.matchesAnywhere": "mindenhol ki lesz zárva, ahol előfordul",

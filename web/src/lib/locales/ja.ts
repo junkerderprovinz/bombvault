@@ -1387,6 +1387,7 @@ const ja: Partial<Translations> = {
   "excludes.noMatch": "restic にそのまま渡されます（認識されたコンテナパスではありません）。",
   "excludes.excludesNothing": "このフォルダのボリュームはバックアップに含まれていないため、この行は何も除外しません。",
   "excludes.nameMatchesNothing": "このバックアップにはこの名前のものがないため、この行は何も除外しません。",
+  "excludes.pathMissing": "このパスはバックアップ内に存在しないため、この行は何も除外しません。",
   // Exclude preview status (#38)
   "excludes.willExclude": "バックアップから除外されます",
   "excludes.matchesAnywhere": "出現する場所すべてで除外されます",

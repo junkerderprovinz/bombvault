@@ -1393,6 +1393,7 @@ const ru: Partial<Translations> = {
   "excludes.noMatch": "Передаётся в restic как есть (нераспознанный путь контейнера).",
   "excludes.excludesNothing": "Том этой папки не входит в резервную копию, поэтому эта строка ничего не исключает.",
   "excludes.nameMatchesNothing": "В этой резервной копии нет ничего с таким именем, поэтому эта строка ничего не исключает.",
+  "excludes.pathMissing": "Этого пути нет в резервной копии, поэтому эта строка ничего не исключает.",
   // Exclude preview status (#38)
   "excludes.willExclude": "будет исключён из резервной копии",
   "excludes.matchesAnywhere": "будет исключён везде, где встречается",

@@ -1397,6 +1397,7 @@ const th: Partial<Translations> = {
   "excludes.noMatch": "ส่งให้ restic ตามที่เป็น (ไม่ใช่พาธคอนเทนเนอร์ที่รู้จัก)",
   "excludes.excludesNothing": "วอลุ่มของโฟลเดอร์นี้ไม่ได้อยู่ในข้อมูลสำรอง ดังนั้นบรรทัดนี้จึงไม่ยกเว้นสิ่งใด",
   "excludes.nameMatchesNothing": "ไม่มีสิ่งใดในข้อมูลสำรองนี้ที่มีชื่อนี้ ดังนั้นบรรทัดนี้จึงไม่ยกเว้นอะไรเลย",
+  "excludes.pathMissing": "ไม่มีพาธนี้ในข้อมูลสำรอง ดังนั้นบรรทัดนี้จึงไม่ยกเว้นอะไรเลย",
   // Exclude preview status (#38)
   "excludes.willExclude": "จะถูกยกเว้นจากข้อมูลสำรอง",
   "excludes.matchesAnywhere": "จะถูกยกเว้นทุกที่ที่ปรากฏ",

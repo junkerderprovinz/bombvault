@@ -1396,6 +1396,7 @@ const sv: Partial<Translations> = {
   "excludes.noMatch": "Skickas till restic som det är (ingen igenkänd containersökväg).",
   "excludes.excludesNothing": "Den här mappens volym finns inte i säkerhetskopian, så den här raden utesluter ingenting.",
   "excludes.nameMatchesNothing": "Inget i den här säkerhetskopian har det här namnet, så den här raden utesluter ingenting.",
+  "excludes.pathMissing": "Den här sökvägen finns inte i säkerhetskopian, så den här raden utesluter ingenting.",
   // Exclude preview status (#38)
   "excludes.willExclude": "utesluts från säkerhetskopian",
   "excludes.matchesAnywhere": "utesluts överallt där det förekommer",

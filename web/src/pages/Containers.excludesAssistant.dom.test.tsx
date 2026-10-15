@@ -512,3 +512,41 @@ describe("a bare name that matches nothing", () => {
     expect(screen.queryByText(/volume is not in the backup/)).toBeNull();
   });
 });
+
+describe("a container path whose volume is backed up", () => {
+  function renderWith(row: { matches: boolean; missing?: boolean }) {
+    function Editor() {
+      const { t } = useT();
+      return (
+        <ExcludesEditor
+          name="plex"
+          initial={[]}
+          open
+          t={t}
+          preview={(_name, lines) =>
+            Promise.resolve([{ raw: lines[0], resolved: "/host/user/appdata/plex/Nope", status: "translated", ...row }])
+          }
+        />
+      );
+    }
+    render(
+      <I18nProvider>
+        <ToastProvider>
+          <Editor />
+        </ToastProvider>
+      </I18nProvider>
+    );
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "/config/Nope" } });
+  }
+
+  it("says the path does not exist when nothing is there", async () => {
+    renderWith({ matches: false, missing: true });
+    expect(await screen.findByText(/This path does not exist in the backup/)).toBeTruthy();
+    expect(screen.queryByText(/volume is not in the backup/)).toBeNull();
+  });
+
+  it("still says the volume is not in the backup when that is the reason", async () => {
+    renderWith({ matches: false });
+    expect(await screen.findByText(/volume is not in the backup/)).toBeTruthy();
+  });
+});

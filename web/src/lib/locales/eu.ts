@@ -898,6 +898,7 @@ const eu: Partial<Translations> = {
   "excludes.noMatch": "Restic-i dagoen bezala pasatzen zaio (ez da ezagutzen den edukiontzi-bide bat).",
   "excludes.excludesNothing": "Karpeta honen bolumena ez dago babeskopian, beraz lerro honek ez du ezer baztertzen.",
   "excludes.nameMatchesNothing": "Babeskopia honetan ez dago izen hau duen ezer, beraz lerro honek ez du ezer baztertzen.",
+  "excludes.pathMissing": "Bide hau ez dago babeskopian, beraz lerro honek ez du ezer baztertzen.",
   // Exclude preview status
   "excludes.willExclude": "babeskopiatik baztertuko da",
   "excludes.matchesAnywhere": "agertzen den edonon baztertuko da",

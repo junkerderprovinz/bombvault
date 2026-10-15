@@ -1396,6 +1396,7 @@ const pt: Partial<Translations> = {
   "excludes.noMatch": "Passado ao restic tal como está (não é um caminho de contentor reconhecido).",
   "excludes.excludesNothing": "O volume desta pasta não está no backup, por isso esta linha não exclui nada.",
   "excludes.nameMatchesNothing": "Nada neste backup tem este nome, por isso esta linha não exclui nada.",
+  "excludes.pathMissing": "Este caminho não existe no backup, por isso esta linha não exclui nada.",
   // Exclude preview status (#38)
   "excludes.willExclude": "será excluído do backup",
   "excludes.matchesAnywhere": "será excluído onde quer que apareça",

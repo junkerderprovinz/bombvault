@@ -1393,6 +1393,7 @@ const uk: Partial<Translations> = {
   "excludes.noMatch": "Передається в restic як є (нерозпізнаний шлях контейнера).",
   "excludes.excludesNothing": "Том цієї папки не входить у резервну копію, тож цей рядок нічого не виключає.",
   "excludes.nameMatchesNothing": "У цій резервній копії немає нічого з такою назвою, тож цей рядок нічого не виключає.",
+  "excludes.pathMissing": "Цього шляху немає в резервній копії, тож цей рядок нічого не виключає.",
   // Exclude preview status (#38)
   "excludes.willExclude": "буде виключено з резервної копії",
   "excludes.matchesAnywhere": "буде виключено всюди, де трапляється",

@@ -1397,6 +1397,7 @@ const ar: Partial<Translations> = {
   "excludes.noMatch": "يُمرَّر إلى restic كما هو (ليس مساراً معروفاً للحاوية).",
   "excludes.excludesNothing": "وحدة تخزين هذا المجلد ليست ضمن النسخة الاحتياطية، لذا لا يستبعد هذا السطر أي شيء.",
   "excludes.nameMatchesNothing": "لا يوجد في هذه النسخة الاحتياطية شيء بهذا الاسم، لذا لا يستبعد هذا السطر أي شيء.",
+  "excludes.pathMissing": "هذا المسار غير موجود في النسخة الاحتياطية، لذا لا يستبعد هذا السطر أي شيء.",
   // Exclude preview status (#38)
   "excludes.willExclude": "سيتم استبعاده من النسخة الاحتياطية",
   "excludes.matchesAnywhere": "سيتم استبعاده أينما ظهر",

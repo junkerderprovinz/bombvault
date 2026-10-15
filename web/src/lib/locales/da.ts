@@ -1396,6 +1396,7 @@ const da: Partial<Translations> = {
   "excludes.noMatch": "Sendes til restic som det er (ingen genkendt containersti).",
   "excludes.excludesNothing": "Denne mappes volumen er ikke med i sikkerhedskopien, så denne linje udelukker intet.",
   "excludes.nameMatchesNothing": "Intet i denne sikkerhedskopi har dette navn, så denne linje udelukker intet.",
+  "excludes.pathMissing": "Denne sti findes ikke i sikkerhedskopien, så denne linje udelukker intet.",
   // Exclude preview status (#38)
   "excludes.willExclude": "udelukkes fra sikkerhedskopien",
   "excludes.matchesAnywhere": "udelukkes overalt hvor det forekommer",

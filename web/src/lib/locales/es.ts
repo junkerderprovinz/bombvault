@@ -1394,6 +1394,7 @@ const es: Partial<Translations> = {
   "excludes.noMatch": "Se pasa a restic tal cual (no es una ruta de contenedor reconocida).",
   "excludes.excludesNothing": "El volumen de esta carpeta no está en la copia, por lo que esta línea no excluye nada.",
   "excludes.nameMatchesNothing": "Nada en esta copia tiene este nombre, por lo que esta línea no excluye nada.",
+  "excludes.pathMissing": "Esta ruta no existe en la copia, por lo que esta línea no excluye nada.",
   // Exclude preview status (#38)
   "excludes.willExclude": "se excluirá de la copia de seguridad",
   "excludes.matchesAnywhere": "se excluirá dondequiera que aparezca",

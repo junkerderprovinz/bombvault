@@ -1739,7 +1739,7 @@ export function setContainerExcludes(name: string, excludes: string[]): Promise<
 export function previewContainerExcludes(
   name: string,
   patterns: string[]
-): Promise<{ ok: boolean; preview: { raw: string; resolved: string; status: string; matches: boolean }[] }> {
+): Promise<{ ok: boolean; preview: { raw: string; resolved: string; status: string; matches: boolean; missing?: boolean }[] }> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/excludes/preview`, {
     method: "POST",
     body: JSON.stringify({ patterns }),
