@@ -80,3 +80,22 @@ func TestScrubSecretsKeepsThePunctuationAfterAPath(t *testing.T) {
 		t.Fatalf("scrubSecrets = %q, want %q", got, want)
 	}
 }
+
+func TestScrubSecretsScrubsPathsButNotDatasetNames(t *testing.T) {
+	for _, tc := range []struct{ name, in, want string }{
+		{"zvol dataset", "read tank/vms/testvm-bombvault-vm-20261015010000 failed", "read tank/vms/testvm-bombvault-vm-20261015010000 failed"},
+		{"quoted dataset", `snapshot "tank/appdata/pg" failed`, `snapshot "tank/appdata/pg" failed`},
+		{"dataset in parentheses", "only zvol disks (tank/vms/win11-disk0).", "only zvol disks (tank/vms/win11-disk0)."},
+		{"zvol device path", "only zvol disks (/dev/zvol/tank/vms/win11-disk0).", "only zvol disks ([path])."},
+		{"path at the start", "/mnt/user/backups/config: no such file", "[path]: no such file"},
+		{"path after a colon", "Fatal: unable to open config file: stat /mnt/user/backups/config: no such file", "Fatal: unable to open config file: stat [path]: no such file"},
+		{"repository location", "open rest:https://nas.lan:8000/containers failed", "open rest:https://nas.lan:8000/containers failed"},
+		{"password with a slash", "ftp://user:wJalrXUtnFEMI/K7MDENG@ftp.example/x refused", "[redacted]@ftp.example/x refused"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := scrubSecrets(tc.in); got != tc.want {
+				t.Fatalf("scrubSecrets(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}

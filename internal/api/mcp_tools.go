@@ -493,6 +493,6 @@ func mcpErrorCodeOf(res *mcp.CallToolResult) string {
 // language model provider should not receive it.
 func mcpScrubText(s string) string {
 	s = repoLocationRe.ReplaceAllString(s, "[repository]")
-	s = absPathRe.ReplaceAllString(s, "[path]")
+	s = absPathRe.ReplaceAllString(s, "${1}[path]")
 	return credentialRe.ReplaceAllString(s, "[redacted]@")
 }

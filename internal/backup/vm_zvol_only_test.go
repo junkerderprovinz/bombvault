@@ -1,7 +1,11 @@
 package backup_test
 
 import (
+	"bytes"
 	"errors"
+	"log"
+	"os"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -167,6 +171,22 @@ func TestRestoreOfAZvolOnlyVMWritesTheZvolBackAndDefinesTheVM(t *testing.T) {
 	}
 	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
 		t.Fatalf("run finishes = %v, want [success]", runs.finishes)
+	}
+}
+
+func TestTheRestoreLogSaysHowToRollBackAfterALaterSnapshot(t *testing.T) {
+	var out bytes.Buffer
+	log.SetOutput(&out)
+	t.Cleanup(func() { log.SetOutput(os.Stderr) })
+	host := &fakeZFSHost{volumes: map[string]int64{"tank/vms/win10": 1 << 30}}
+
+	if err := backup.RestoreVM(t.Context(), zvolOnlyRestoreDeps(t, &fakeVM{stateVal: "running"}, &fakeRestic{}, &fakeRuns{}, host)); err != nil {
+		t.Fatal(err)
+	}
+	hint := regexp.MustCompile(`zfs rollback (tank/vms/win10@bombvault-before-restore-[0-9]{14}) undoes the restore while that is the newest snapshot of the zvol; .* zfs rollback -r (\S+) does it and destroys the newer snapshots`)
+	m := hint.FindStringSubmatch(out.String())
+	if m == nil || m[1] != m[2] {
+		t.Fatalf("the log has no rollback hint for a later snapshot:\n%s", out.String())
 	}
 }
 

@@ -1120,6 +1120,7 @@ function RestoreForm({
                   where={where}
                   stopped={leaveStopped}
                   backupFirst={canBackUpFirst && backupFirst}
+                  exists={hasOriginal}
                   plan={plan}
                 />
               )}

@@ -87,55 +87,25 @@ func codedFailEnvelope(err error, code string) map[string]any {
 }
 
 // absPathRe matches absolute unix paths so they can be stripped from any error
-// message that slips through to the API surface. The last character of a match
-// is never the punctuation that closes the sentence or bracket around the path,
-// so "(/dev/zvol/tank/vm)." scrubs to "([path]).".
-var absPathRe = regexp.MustCompile(`(/[^\s:"']*[^\s:"').,;])+`)
+// message that slips through to the API surface. A path begins at a slash that
+// opens a token, so a ZFS dataset such as "tank/vms/disk0" or a port such as
+// "8080/tcp" stays readable. The last character of a match is never the
+// punctuation that closes the sentence or bracket around the path, so
+// "(/dev/zvol/tank/vm)." scrubs to "([path]).". Replace with "${1}[path]".
+var absPathRe = regexp.MustCompile(`(^|[\s"'(\[=:,~])(?:/[^\s:"']*[^\s:"').,;\]])+`)
 
 // credentialRe matches a "user:password@" URL-userinfo segment, e.g. the
-// backupuser:Tr0ub4dor&3@ in "rest:https://backupuser:Tr0ub4dor&3@host:8000/repo"
-// — a syntax the generated deploy recipe documents as valid for restic's
-// rest:/s3: remote backends. absPathRe alone can't catch this: it stops at the
-// first ":", so it never reaches past "user" into the password. The username
-// class covers a fully-numeric username too (e.g. "123456:SuperSecret@host")
-// — an earlier version of this regex required the FIRST character to be a
-// letter, which let a numeric-only username through completely unscrubbed.
-// Requiring the closing "@" and excluding "/" from the password body keeps
-// this from matching ordinary "host:port" text (which has no "@") or a
-// "name/tag" split by "/" from something after it (excluded from the password
-// body) — only a real userinfo segment has a ":"-separated pair immediately
-// followed by "@".
-// See internal/restic/restic.go's identically-reasoned twin (and
-// internal/virshcli/virshcli.go's, for libvirt URIs): this is one of several
-// independent applications of the same defense-in-depth scrub, so an error
-// that reaches this handler without having gone through restic.lastReason
-// first still gets its credentials stripped here.
+// backupuser:Tr0ub4dor&3@ in "ftp://backupuser:Tr0ub4dor&3@host/x". The user
+// name may be empty or all digits. The closing "@" keeps it off a plain
+// "host:port", and the password runs to that "@" across any "/" in it, since
+// a slash inside a word is not scrubbed as a path. internal/restic and
+// internal/virshcli apply the same scrub to their own errors.
 //
-// Known cosmetic limitation, not a security issue: this also matches benign
-// "word:word@word" shapes that merely look like userinfo, e.g. a Docker image
-// digest reference "nginx:1.25@sha256:abc123" scrubs to
-// "[redacted]@sha256:abc123", or an SFTP host reference like "user:1@host".
-// A regex tight enough to exclude that class without risking a false
-// NEGATIVE on a real credential (a numeric-looking password is legal; a
-// scheme/"://" anchor doesn't survive scrubSecrets' ordering below, since
-// absPathRe already strips it) wasn't obvious to construct safely, so this is
-// accepted as a known tradeoff rather than forced.
-//
-// There is also a real, separate false NEGATIVE, pre-existing and independent
-// of the false positive above: a password containing an unencoded "/" is only
-// partially caught. credentialRe's password class excludes "/", and by the
-// time it runs, scrubSecrets' path pass has already consumed the credential's
-// leading "//...@" span as an ordinary path token (see scrubSecrets' doc
-// comment for why paths must run first) — leaving no "@" left for
-// credentialRe to anchor on, so its "[redacted]@" marker never fires at all.
-// Depending on where the "/" falls inside the password, a fragment of the
-// actual secret survives in the clear: e.g.
-// "rest:https://user:wJalrXUtnFEMI/K7MDENG@host:8000/repo" scrubs to
-// "rest:https:[path]:wJalrXUtnFEMI[path]:8000[path]" — the username and the
-// back half of the password vanish as unlabeled path noise, but
-// "wJalrXUtnFEMI" (the front half) is left sitting in the output in plain
-// text. A password with no embedded "/" is unaffected.
-var credentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@"']+@`)
+// It also matches shapes that only look like userinfo, such as the image
+// digest in "nginx:1.25@sha256:abc123", which scrubs to
+// "[redacted]@sha256:abc123". A tighter pattern would risk letting a real
+// password through.
+var credentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s@"']+@`)
 
 // scrubSecrets strips absolute-path-like tokens and then URL-embedded
 // "user:pass@" credentials from s, in that order.
@@ -231,7 +201,7 @@ func scrubKeptLocation(loc string) string {
 // message that are NOT a remote repository location: paths first, then
 // URL-embedded credentials, for the reason the doc comment above gives.
 func scrubOutsideARepoLocation(s string) string {
-	s = absPathRe.ReplaceAllString(s, "[path]")
+	s = absPathRe.ReplaceAllString(s, "${1}[path]")
 	return credentialRe.ReplaceAllString(s, "[redacted]@")
 }
 
@@ -275,23 +245,14 @@ func destinationRefusal(format string, a ...any) error {
 // Both scrubError below and truncateRunErr (service.go — the other place
 // error text is persisted, to runs.error) call this FIRST, before
 // ever touching scrubSecrets, so the two can never independently drift on
-// which shapes are safe to show verbatim. truncateRunErr didn't always do
-// this: an earlier version scrubbed every error unconditionally, on the
-// (false) theory that running the regexes over already-clean text is a
-// harmless no-op. That broke exactly for these sentinels — scrubSecrets'
-// path regex matches ANY slash-containing token, not just a filesystem path —
-// mangling e.g. "host port 8080/tcp is already used by container ..." into
-// "host port 8080[path] is already used ..." and eating a zvol rebase
-// failure's ZFS dataset name the same way, even though scrubError itself had
-// already solved precisely this problem for its own callers.
+// which shapes are safe to show verbatim.
 func scrubBypassMessage(err error) (string, bool) {
 	if sl, ok := err.(*skipListErr); ok { //nolint:errorlint // only a skip list on its own, not one inside another message
 		return sl.msg, true
 	}
 	switch {
 	case errors.Is(err, backup.ErrRestoreConflict):
-		// Already user-safe (IP / host-port / container names, no host paths) and
-		// must bypass the path scrubber, which would mangle "8080/tcp" → "8080[path]".
+		// Already user-safe: IP / host-port / container names, no host paths.
 		return err.Error(), true
 	case errors.Is(err, errRestoreDestination):
 		// The destination path IS the message (see errRestoreDestination).
@@ -306,13 +267,12 @@ func scrubBypassMessage(err error) (string, bool) {
 		// dashboard-tile plugin) — see unraidPlatformMismatchError.
 		return err.Error(), true
 	case errors.Is(err, backup.ErrZFSRefusal):
-		// Built from validated dataset names and reason codes, and the names
-		// contain "/": scrubbed, "cache/appdata" becomes "[path]" and the run
-		// history stops saying which dataset failed.
+		// Built from validated dataset names and reason codes, with the host's
+		// own paths already taken out by zfsHostDetail.
 		return err.Error(), true
 	case errors.Is(err, errZvolRebaseFailed):
-		// Same deal again: the ZFS dataset/pool names ARE the message, and
-		// necessarily contain "/" — see errZvolRebaseFailed.
+		// Same deal again: the ZFS dataset and pool names are the message (see
+		// errZvolRebaseFailed).
 		return err.Error(), true
 	case errors.Is(err, errDBImportFolders):
 		// The data folders an import set aside are what the operator has to act
@@ -3174,10 +3134,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// mergeRegistryAuths (called inside the transaction below) rejects malformed
-	// input with a message the client must get VERBATIM — a rejected registry
-	// host legitimately contains "/", which failEnvelope's path scrubber would
-	// mangle into "[path]". Carried out of the callback so that one shape
-	// survives while every other failure keeps going through failEnvelope.
+	// input with a message the client must get verbatim, rejected registry host
+	// included. Carried out of the callback so that one shape survives while
+	// every other failure keeps going through failEnvelope.
 	var registryInputErr error
 
 	// Whether this save touched detection at all, so the engine judges every
