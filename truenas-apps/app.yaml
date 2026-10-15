@@ -1,4 +1,4 @@
-app_version: 10.0.2
+app_version: 10.0.3
 capabilities:
 - description: BombVault is able to change file ownership arbitrarily
   name: CHOWN
@@ -8,6 +8,8 @@ capabilities:
   name: FOWNER
 - description: BombVault is able to change group ID of processes
   name: SETGID
+- description: BombVault is able to transfer capabilities between processes
+  name: SETPCAP
 - description: BombVault is able to change user ID of processes
   name: SETUID
 categories:
