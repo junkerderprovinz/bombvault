@@ -231,6 +231,7 @@ const sk: Partial<Translations> = {
   "restoreCheck.reason.parentMissing": "Dataset nad ním, {name}, neexistuje. Najprv ho vytvor alebo zvoľ iný názov.",
   "restoreCheck.reason.networkMissing": "Tento server nemá sieť {name}. Zvoľ pre kontajner inú sieť.",
   "restoreCheck.reason.networkGone": "Tento server nemá sieť {name}. Ak ju vytvorila aplikácia, napríklad aplikácia TrueNAS, najprv tú aplikáciu znova nainštaluj a potom obnov jej dáta.",
+  "restoreCheck.reason.networkUnreadable": "Siete na tomto serveri sa nepodarilo načítať: {error}",
   "restoreCheck.space": "Treba {need}, voľné {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nový",

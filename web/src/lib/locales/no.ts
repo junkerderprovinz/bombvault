@@ -190,6 +190,7 @@ const no: Partial<Translations> = {
   "restoreCheck.reason.parentMissing": "Datasettet over det, {name}, finnes ikke. Opprett det først eller velg et annet navn.",
   "restoreCheck.reason.networkMissing": "Denne serveren har ikke nettverket {name}. Velg et nettverk for kontaineren.",
   "restoreCheck.reason.networkGone": "Denne serveren har ikke nettverket {name}. Hvis en app opprettet det, for eksempel en TrueNAS-app, installerer du appen på nytt først og gjenoppretter deretter dataene.",
+  "restoreCheck.reason.networkUnreadable": "Kunne ikke lese nettverkene på denne serveren: {error}",
   "restoreCheck.space": "Trenger {need}, {free} ledig.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "ny",

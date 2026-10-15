@@ -191,6 +191,7 @@ const pl: Partial<Translations> = {
   "restoreCheck.reason.parentMissing": "Zbiór danych nad nim, {name}, nie istnieje. Najpierw go utwórz albo wybierz inną nazwę.",
   "restoreCheck.reason.networkMissing": "Ten serwer nie ma sieci {name}. Wybierz sieć dla kontenera.",
   "restoreCheck.reason.networkGone": "Ten serwer nie ma sieci {name}. Jeśli utworzyła ją aplikacja, na przykład aplikacja TrueNAS, najpierw zainstaluj ją ponownie, a potem przywróć jej dane.",
+  "restoreCheck.reason.networkUnreadable": "Nie udało się odczytać sieci na tym serwerze: {error}",
   "restoreCheck.space": "Potrzeba {need}, wolne {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nowy",

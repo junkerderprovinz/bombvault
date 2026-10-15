@@ -95,6 +95,7 @@ const (
 	reasonParentMissing = "parent-missing"
 	reasonNoNetwork     = "network-missing"
 	reasonNetworkGone   = "network-gone"
+	reasonNetworkUnread = "network-unreadable"
 	reasonGone          = "gone"
 	reasonEmpty         = "empty"
 )
@@ -220,6 +221,11 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 		out.Checks = append(out.Checks,
 			CheckLine{ID: lineSnapshot, Status: lineOK},
 			CheckLine{ID: lineNetwork, Status: lineFail, Reason: reasonNetworkGone, Detail: gone.Name})
+		return out, nil
+	case errors.Is(err, backup.ErrListNetworks):
+		out.Checks = append(out.Checks,
+			CheckLine{ID: lineSnapshot, Status: lineOK},
+			CheckLine{ID: lineNetwork, Status: lineFail, Reason: reasonNetworkUnread, Detail: scrubError(err)})
 		return out, nil
 	case isDestinationRefusal(err):
 		out.Checks = append(out.Checks,

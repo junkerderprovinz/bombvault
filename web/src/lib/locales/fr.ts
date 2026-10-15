@@ -191,6 +191,7 @@ const fr: Partial<Translations> = {
   "restoreCheck.reason.parentMissing": "Le jeu de données au-dessus, {name}, n'existe pas. Créez-le d'abord ou choisissez un autre nom.",
   "restoreCheck.reason.networkMissing": "Ce serveur n'a pas de réseau {name}. Choisissez un réseau pour le conteneur.",
   "restoreCheck.reason.networkGone": "Ce serveur n'a pas de réseau {name}. Si une application l'a créé, par exemple une application TrueNAS, réinstallez d'abord cette application, puis restaurez ses données.",
+  "restoreCheck.reason.networkUnreadable": "Impossible de lire les réseaux de ce serveur : {error}",
   "restoreCheck.space": "Nécessite {need}, {free} libres.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nouveau",

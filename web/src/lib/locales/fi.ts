@@ -191,6 +191,7 @@ const fi: Partial<Translations> = {
   "restoreCheck.reason.parentMissing": "Sen yläpuolella olevaa tietojoukkoa {name} ei ole. Luo se ensin tai valitse toinen nimi.",
   "restoreCheck.reason.networkMissing": "Tällä palvelimella ei ole verkkoa {name}. Valitse kontille verkko.",
   "restoreCheck.reason.networkGone": "Tällä palvelimella ei ole verkkoa {name}. Jos sen loi jokin sovellus, esimerkiksi TrueNAS-sovellus, asenna sovellus ensin uudelleen ja palauta sitten sen tiedot.",
+  "restoreCheck.reason.networkUnreadable": "Tämän palvelimen verkkoja ei voitu lukea: {error}",
   "restoreCheck.space": "Tarvitaan {need}, vapaana {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "uusi",

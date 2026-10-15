@@ -190,6 +190,7 @@ const ro: Partial<Translations> = {
   "restoreCheck.reason.parentMissing": "Setul de date de deasupra, {name}, nu există. Creează-l întâi sau alege alt nume.",
   "restoreCheck.reason.networkMissing": "Acest server nu are rețeaua {name}. Alege o rețea pentru container.",
   "restoreCheck.reason.networkGone": "Acest server nu are rețeaua {name}. Dacă a creat-o o aplicație, de exemplu o aplicație TrueNAS, reinstalează mai întâi aplicația și apoi restaurează-i datele.",
+  "restoreCheck.reason.networkUnreadable": "Rețelele acestui server nu au putut fi citite: {error}",
   "restoreCheck.space": "Necesită {need}, liber {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nou",

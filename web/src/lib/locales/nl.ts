@@ -191,6 +191,7 @@ const nl: Partial<Translations> = {
   "restoreCheck.reason.parentMissing": "De dataset erboven, {name}, bestaat niet. Maak die eerst aan of kies een andere naam.",
   "restoreCheck.reason.networkMissing": "Deze server heeft geen netwerk {name}. Kies een netwerk voor de container.",
   "restoreCheck.reason.networkGone": "Deze server heeft geen netwerk {name}. Als een app het heeft aangemaakt, zoals een TrueNAS-app, installeer die app dan eerst opnieuw en zet daarna de gegevens terug.",
+  "restoreCheck.reason.networkUnreadable": "De netwerken op deze server konden niet worden gelezen: {error}",
   "restoreCheck.space": "Heeft {need} nodig, {free} vrij.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nieuw",

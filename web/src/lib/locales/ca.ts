@@ -231,6 +231,7 @@ const ca: Partial<Translations> = {
   "restoreCheck.reason.parentMissing": "El conjunt de dades superior, {name}, no existeix. Crea'l primer o tria un altre nom.",
   "restoreCheck.reason.networkMissing": "Aquest servidor no té cap xarxa {name}. Tria una xarxa per al contenidor.",
   "restoreCheck.reason.networkGone": "Aquest servidor no té cap xarxa {name}. Si la va crear una aplicació, com ara una aplicació de TrueNAS, reinstal·la primer aquesta aplicació i després restaura'n les dades.",
+  "restoreCheck.reason.networkUnreadable": "No s'han pogut llegir les xarxes d'aquest servidor: {error}",
   "restoreCheck.space": "Necessita {need}, {free} lliures.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nou",

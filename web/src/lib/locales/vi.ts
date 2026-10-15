@@ -191,6 +191,7 @@ const vi: Partial<Translations> = {
   "restoreCheck.reason.parentMissing": "Tập dữ liệu phía trên, {name}, không tồn tại. Hãy tạo nó trước hoặc chọn tên khác.",
   "restoreCheck.reason.networkMissing": "Máy chủ này không có mạng {name}. Hãy chọn một mạng cho container.",
   "restoreCheck.reason.networkGone": "Máy chủ này không có mạng {name}. Nếu mạng này do một ứng dụng tạo ra, chẳng hạn ứng dụng TrueNAS, hãy cài lại ứng dụng đó trước rồi mới khôi phục dữ liệu của nó.",
+  "restoreCheck.reason.networkUnreadable": "Không đọc được các mạng trên máy chủ này: {error}",
   "restoreCheck.space": "Cần {need}, còn trống {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "mới",

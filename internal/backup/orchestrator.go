@@ -50,6 +50,9 @@ var (
 	// It wraps a human-readable list of the conflicts; nothing destructive has
 	// run yet, so the user can free the resources and retry.
 	ErrRestoreConflict = errors.New("restore: ip/port conflict")
+	// ErrListNetworks is returned when the network check cannot read the host's
+	// networks from Docker.
+	ErrListNetworks = errors.New("restore: list networks")
 	// ErrVMNotInstalled is returned by a VM backup when the host no longer defines
 	// the domain (deleted, or a template that was undefined). The scheduled job
 	// treats it as a skip, not a failure, so a leftover schedule entry for a
@@ -1086,7 +1089,7 @@ func CheckRestoreNetwork(ctx context.Context, docker Docker, in model.Inspect) e
 	}
 	have, err := docker.Networks(ctx)
 	if err != nil {
-		return fmt.Errorf("restore: list networks: %w", err)
+		return fmt.Errorf("%w: %w", ErrListNetworks, err)
 	}
 	if slices.Contains(have, name) {
 		return nil

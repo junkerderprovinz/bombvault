@@ -191,6 +191,7 @@ const zh: Partial<Translations> = {
   "restoreCheck.reason.parentMissing": "上一级数据集 {name} 不存在。请先创建它，或换一个名称。",
   "restoreCheck.reason.networkMissing": "此服务器上没有网络 {name}。请为容器选择一个网络。",
   "restoreCheck.reason.networkGone": "此服务器上没有网络 {name}。如果它是由某个应用创建的，例如 TrueNAS 应用，请先重新安装该应用，然后再恢复其数据。",
+  "restoreCheck.reason.networkUnreadable": "无法读取此服务器上的网络：{error}",
   "restoreCheck.space": "需要 {need}，可用 {free}。",
   "restoreCheck.snapshotId": "快照 {id}",
   "restoreCheck.change.added": "新增",

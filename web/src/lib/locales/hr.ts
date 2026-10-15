@@ -231,6 +231,7 @@ const hr: Partial<Translations> = {
   "restoreCheck.reason.parentMissing": "Skup podataka iznad njega, {name}, ne postoji. Najprije ga izradite ili odaberite drugo ime.",
   "restoreCheck.reason.networkMissing": "Ovaj poslužitelj nema mrežu {name}. Odaberite mrežu za kontejner.",
   "restoreCheck.reason.networkGone": "Ovaj poslužitelj nema mrežu {name}. Ako ju je stvorila aplikacija, na primjer aplikacija za TrueNAS, najprije ponovno instalirajte tu aplikaciju, a zatim vratite njezine podatke.",
+  "restoreCheck.reason.networkUnreadable": "Mreže na ovom poslužitelju nije bilo moguće pročitati: {error}",
   "restoreCheck.space": "Treba {need}, slobodno {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "novo",

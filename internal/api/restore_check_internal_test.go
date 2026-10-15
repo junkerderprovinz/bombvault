@@ -65,9 +65,10 @@ type checkDocker struct {
 	live     model.Inspect
 	self     string
 	networks []string
+	netErr   error
 }
 
-func (d *checkDocker) Networks(context.Context) ([]string, error) { return d.networks, nil }
+func (d *checkDocker) Networks(context.Context) ([]string, error) { return d.networks, d.netErr }
 
 func (d *checkDocker) List(context.Context) ([]dockercli.ContainerInfo, error) { return d.list, nil }
 
@@ -648,6 +649,22 @@ func TestCheckRestoreFlagsANetworkTheRestoreWouldRefuse(t *testing.T) {
 	f.docker.networks = append(f.docker.networks, "ix-plex_default")
 	if res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"}); !res.Ready {
 		t.Fatalf("checks = %+v, want ready once the network exists", res.Checks)
+	}
+}
+
+func TestCheckRestoreReportsUnreadableNetworksOnTheNetworkLine(t *testing.T) {
+	f := newCheckFixture(t)
+	backedUpOnGoneNetwork(t, f)
+	f.docker.netErr = errors.New("Cannot connect to the Docker daemon")
+
+	res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"})
+
+	c := lineOf(t, res, lineNetwork)
+	if res.Ready || c.Status != lineFail || c.Reason != reasonNetworkUnread || !strings.Contains(c.Detail, "Cannot connect to the Docker daemon") {
+		t.Fatalf("ready = %v, checks = %+v, want a failed network line with Docker's error", res.Ready, res.Checks)
+	}
+	if s := lineOf(t, res, lineSnapshot); s.Status != lineOK {
+		t.Fatalf("snapshot = %+v, want ok: the snapshot was found", s)
 	}
 }
 
