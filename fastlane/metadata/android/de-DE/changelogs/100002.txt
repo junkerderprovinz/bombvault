@@ -1,0 +1,1 @@
+Die App hat wieder Urlaub gemacht, dein Server hat aufgeräumt: Mit BombVault 10.0.2 steht jeder Schalter brav neben seinem Namen statt quer über die ganze Karte, und Zahlenfelder sind wieder so schmal wie die Zahlen darin.

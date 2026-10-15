@@ -1,0 +1,1 @@
+The app took another holiday while your server tidied up: with BombVault 10.0.2 every control sits politely beside its name instead of sprawling across the card, and number fields are back to the width of the numbers in them.
