@@ -231,6 +231,9 @@ func (s *Service) prepareImportDBDump(ctx context.Context, name, source, snapsho
 			dump:   versionMajor(dump.view.Version),
 		}
 	}
+	if err := checkDataDirAside(dataDir); err != nil {
+		return dbImportPlan{}, err
+	}
 	return dbImportPlan{
 		name:    name,
 		id:      in.ID,
@@ -449,10 +452,10 @@ func (s *Service) freshDataDirFor(ctx context.Context, plan dbImportPlan) (strin
 		return "", s.rollbackImport(ctx, plan, "", fmt.Errorf("read the data folder: %w", err))
 	}
 	kept := plan.dataDir + ".bombvault-before-import-" + time.Now().Format(dbImportStamp)
-	if err := os.Rename(plan.dataDir, kept); err != nil {
-		return "", s.rollbackImport(ctx, plan, "", fmt.Errorf("set the data folder aside: %w", err))
-	}
-	if err := recreateDataDir(plan.dataDir, info, s.dbDumpChownFn()); err != nil {
+	if err := setDataDirAside(plan.dataDir, kept, info, s.dbDumpChownFn()); err != nil {
+		if _, serr := os.Lstat(kept); serr != nil {
+			kept = ""
+		}
 		return "", s.rollbackImport(ctx, plan, kept, err)
 	}
 	log.Printf("api: import database dump into %q: the previous data folder is kept at %s", plan.name, kept) //nolint:gosec // G706: name is %q-quoted
@@ -499,11 +502,8 @@ func (s *Service) rollbackImport(ctx context.Context, plan dbImportPlan, kept st
 			return importRollbackFailure(s.toHostPath(plan.dataDir), s.toHostPath(kept), fmt.Errorf("%w; the container could not be stopped for the rollback: %w", cause, err))
 		}
 		failed := plan.dataDir + ".bombvault-import-failed-" + time.Now().Format(dbImportStamp)
-		if err := os.Rename(plan.dataDir, failed); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return importRollbackFailure(s.toHostPath(plan.dataDir), s.toHostPath(kept), cause)
-		}
-		if err := os.Rename(kept, plan.dataDir); err != nil {
-			return importRollbackFailure(s.toHostPath(failed), s.toHostPath(kept), cause)
+		if freshAt, err := putDataDirBack(plan.dataDir, kept, failed); err != nil {
+			return importRollbackFailure(s.toHostPath(freshAt), s.toHostPath(kept), cause)
 		}
 	}
 	if err := s.docker.Start(ctx, plan.id); err != nil {
