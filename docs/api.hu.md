@@ -73,9 +73,9 @@ A BombVault ezeknek az útvonalaknak a leírását a `/api/v1/openapi.json` cím
 
 A BombVault eszközként jelenhet meg a Home Assistantben, MQTT-felderítéssel. Ehhez a Home Assistantnek kell a saját MQTT-integrációja és egy bróker, például a Mosquitto bővítmény. Saját komponensre nincs szükség.
 
-1. A BombVaultban nyisd meg a **Beállítások, Integrációk** részt, és keresd meg a **Home Assistant** elemet a **Szolgáltatások** kártyán.
+1. A BombVaultban nyisd meg a **Beállítások, Integrációk** részt, és kapcsold be a **Home Assistant** elemet a **Szolgáltatások** kártyán. A bróker mezői alatta jelennek meg.
 2. Add meg a bróker címét és portját, és ha kéri, a felhasználónevet és a jelszót. Kapcsold be a **TLS használata** kapcsolót, ha a bróker TLS-t használ, általában a 8883-as porton; a tanúsítványának érvényesnek kell lennie a megadott címre. Ha módosítod a címet, a portot vagy a felhasználónevet, add meg újra a jelszót: a BombVault a tároltat nem adja tovább másik brókernek vagy felhasználónak.
-3. Kapcsold be a **Csatlakozás a Home Assistanthez** kapcsolót, és kattints a **Mentés** gombra. A kártya mutatja, amikor a kapcsolat felépült.
+3. Kattints a **Mentés** gombra. A sor mutatja, amikor a kapcsolat felépült.
 
 Az eszköz neve BombVault, vagy BombVault a példány nevével zárójelben, és ezek az entitásai vannak:
 

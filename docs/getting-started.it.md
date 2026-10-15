@@ -97,7 +97,9 @@ Hai già usato BombVault? **Ripristina da un backup** nella pagina di benvenuto 
 
 La barra laterale ha cinque voci: **Panoramica**, **Anomalie** (finché il rilevamento delle anomalie è attivo), **Backup**, **Ripristino** e, sotto **Esci**, **Impostazioni**. L'azione principale di una pagina fluttua in basso a destra, e **Altro** raccoglie quelle rare. Sul telefono la barra contiene Panoramica, Backup, Ripristino e Impostazioni, e **Altro** ha il resto.
 
-- **Backup** elenca come elementi ogni container, VM, set di cartelle, la flash, ogni dataset ZFS e l'auto-backup. I riquadri sopra l'elenco scelgono un tipo, e **Filtri**, **Ordina** e **Cerca** restringono la scelta. Ogni elemento ha una pagina propria con tre schede: **Backup**, **Impostazioni** e **Verifica**.
+Le pagine e le impostazioni usano tutta la larghezza della finestra. Una finestra tiene i suoi pulsanti nel piede, con quello che porta avanti a destra. Sul telefono un piede con più di tre pulsanti mantiene l'uscita e l'azione principale e mette gli altri sotto **Altro**.
+
+- **Backup** elenca come elementi ogni container, VM, set di cartelle, la flash, ogni dataset ZFS e l'auto-backup. I riquadri sopra l'elenco scelgono un tipo, e **Filtri**, **Ordina** e **Cerca** restringono la scelta. Ogni elemento ha una pagina propria con tre schede: **Backup**, **Impostazioni** e **Verifica**. Un pulsante indietro a sinistra dell'icona dell'elemento porta all'elenco.
 - **Ripristino** è un'unica pagina per tutto: scegli una sezione, cerca un elemento e scegli un backup. Anche la Procedura guidata di emergenza e le altre sorgenti partono da qui.
 - **Impostazioni** sono quattordici riquadri: Generale, Aspetto, Calendario, Destinazioni, Ripristino, Notifiche, Verifica, Sicurezza, Istanze, Associazione, Integrazioni, App, Sistema e Info. Premi `/` o Ctrl+K per cercare in tutti, anche con i nomi che le pagine avevano nelle versioni precedenti. Trascina i riquadri nel tuo ordine in **Aspetto**.
 - **Destinazioni** e **Istanze** sono riquadri delle impostazioni con pagine proprie. **Mostra anche nella barra laterale** sul loro riquadro le fissa alla barra laterale.

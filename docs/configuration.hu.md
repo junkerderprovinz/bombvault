@@ -31,7 +31,7 @@ Csatold a Docker socketet, a flasht (`/boot`) és a **Host Data** gyökeret (`/m
 
 A ZFS-adatkészletek mentéséhez is ez a mód kell: egy adatkészlet pillanatképét a hoszt csak a konténer indulása után csatolja. Lásd: [ZFS-adatkészletek](zfs-datasets.md).
 
-A helyi tárolók alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre. Ezek alkotják a **Helyi mappa** célt. Ennek oldalán, a **Célok** alatt a **Kapcsolat** kártya szakaszonként módosítja a mappát, és az általa megnyitott ablakban van egy **Helyi / Távoli** kapcsoló: egy szakasz útvonala helyi mappa helyett lehet távoli restic tároló is (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`), ilyenkor a mentés közvetlenül oda megy, külön helyi másolat nélkül; lásd: [Távoli elsődleges tárolók](offsite-recovery.md#remote-primary-repositories).
+A helyi tárolók alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre. Ezek alkotják a **Helyi** célt. Ennek oldalán, a **Célok** alatt a **Kapcsolat** kártya szakaszonként módosítja a mappát, és az általa megnyitott ablakban van egy **Helyi / Távoli** kapcsoló: egy szakasz útvonala helyi mappa helyett lehet távoli restic tároló is (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`), ilyenkor a mentés közvetlenül oda megy, külön helyi másolat nélkül; lásd: [Távoli elsődleges tárolók](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Hosztintegráció-ellenőrzés"
     Az áttekintés **Hosztintegráció** kártyája (a **Testreszabás** alatt adható hozzá) minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat.

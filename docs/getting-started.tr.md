@@ -97,7 +97,9 @@ BombVault'u daha önce kullandın mı? Karşılama sayfasındaki **Yedekten geri
 
 Kenar çubuğunda beş giriş var: **Genel bakış**, **Anormallikler** (anormallik algılama açıkken), **Yedekler**, **Geri yükleme** ve **Oturumu kapat**'ın altında **Ayarlar**. Bir sayfanın ana eylemi sağ altta durur, **Diğer** ise seyrek olanları tutar. Telefonda çubukta Genel bakış, Yedekler, Geri yükleme ve Ayarlar bulunur, gerisi **Diğer**'dedir.
 
-- **Yedekler**, her konteyneri, VM'yi, klasör kümesini, flash sürücüyü, her ZFS veri kümesini ve öz yedeği öge olarak listeler. Listenin üstündeki kutucuklar bir tür seçer; **Filtreler**, **Sırala** ve **Ara** daraltır. Her ögenin kendi sayfası ve üç sekmesi vardır: **Yedekler**, **Ayarlar** ve **Doğrulama**.
+Sayfalar ve ayarlar pencerenin tüm genişliğini kullanır. Bir pencere düğmelerini alt kısmında tutar; ileri giden düğme sağdadır. Telefonda üçten fazla düğmesi olan bir alt kısım çıkış yolunu ve ana eylemi tutar, diğerlerini **Diğer** altına koyar.
+
+- **Yedekler**, her konteyneri, VM'yi, klasör kümesini, flash sürücüyü, her ZFS veri kümesini ve öz yedeği öge olarak listeler. Listenin üstündeki kutucuklar bir tür seçer; **Filtreler**, **Sırala** ve **Ara** daraltır. Her ögenin kendi sayfası ve üç sekmesi vardır: **Yedekler**, **Ayarlar** ve **Doğrulama**. Ögenin simgesinin solundaki bir geri düğmesi listeye götürür.
 - **Geri yükleme** her şey için tek sayfadır: bir bölüm seç, bir öge ara ve bir yedek seç. Acil durum sihirbazı ve diğer kaynaklar da buradan başlar.
 - **Ayarlar** on dört kutucuktur: Genel, Görünüm, Zamanlama, Hedefler, Geri Yükleme, Bildirimler, Doğrulama, Güvenlik, Örnekler, Eşleştirme, Entegrasyonlar, Uygulamalar, Sistem ve Bilgi. Hepsinde aramak için `/` ya da Ctrl+K'ye bas; sayfaların önceki sürümlerdeki adlarıyla da bulunur. Kutucukları **Görünüm** altında kendi sıranda sürükle.
 - **Hedefler** ve **Örnekler**, kendi sayfaları olan ayar kutucuklarıdır. Kutucuklarındaki **Kenar çubuğunda da göster** onları kenar çubuğuna sabitler.

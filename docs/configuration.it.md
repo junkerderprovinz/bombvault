@@ -31,7 +31,7 @@ Monta il socket Docker, il flash (`/boot`) e la radice **Host Data** (`/mnt`) co
 
 Anche i backup dei dataset ZFS hanno bisogno di questa modalità: l'host monta lo snapshot di un dataset solo dopo l'avvio del container. Vedi [Dataset ZFS](zfs-datasets.md).
 
-I repository locali hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, creati al primo backup. Formano la destinazione **Cartella locale**. Nella sua pagina, sotto **Destinazioni**, la scheda **Connessione** cambia la cartella di ogni sezione, e la finestra che apre ha un interruttore **Locale / Remoto**: il percorso di una sezione può essere un remote restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) invece di una cartella locale, con backup direttamente lì e senza copia locale separata; vedi [Repository primari remoti](offsite-recovery.md#remote-primary-repositories).
+I repository locali hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, creati al primo backup. Formano la destinazione **Locale**. Nella sua pagina, sotto **Destinazioni**, la scheda **Connessione** cambia la cartella di ogni sezione, e la finestra che apre ha un interruttore **Locale / Remoto**: il percorso di una sezione può essere un remote restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) invece di una cartella locale, con backup direttamente lì e senza copia locale separata; vedi [Repository primari remoti](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Verifica integrazione host"
     La scheda **Integrazione host** della panoramica (si aggiunge in **Personalizza**) sonda ogni mount e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e segnala eventuali pezzi mancanti.

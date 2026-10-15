@@ -31,7 +31,7 @@ Zamontuj gniazdo Docker, flash (`/boot`) oraz katalog główny **Host Data** (`/
 
 Kopie zbiorów danych ZFS też potrzebują tego trybu: host montuje migawkę zbioru dopiero po starcie kontenera. Zobacz [Zbiory danych ZFS](zfs-datasets.md).
 
-Repozytoria lokalne domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` i są tworzone przy pierwszej kopii. Tworzą miejsce docelowe **Folder lokalny**. Na jego stronie w **Miejsca docelowe** karta **Połączenie** zmienia folder każdej sekcji, a otwierane okno ma przełącznik **Lokalne / Zdalne**: ścieżka sekcji może być zdalnym repozytorium restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) zamiast lokalnego folderu, a kopia trafia wtedy prosto tam, bez osobnej kopii lokalnej; zobacz [Zdalne repozytoria podstawowe](offsite-recovery.md#remote-primary-repositories).
+Repozytoria lokalne domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` i są tworzone przy pierwszej kopii. Tworzą miejsce docelowe **Lokalne**. Na jego stronie w **Miejsca docelowe** karta **Połączenie** zmienia folder każdej sekcji, a otwierane okno ma przełącznik **Lokalne / Zdalne**: ścieżka sekcji może być zdalnym repozytorium restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) zamiast lokalnego folderu, a kopia trafia wtedy prosto tam, bez osobnej kopii lokalnej; zobacz [Zdalne repozytoria podstawowe](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Sprawdzenie integracji z hostem"
     Karta **Integracja z hostem** w przeglądzie (dodasz ją w **Dostosuj**) sonduje każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy.

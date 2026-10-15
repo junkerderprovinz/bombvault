@@ -31,7 +31,7 @@ Připoj Docker socket, flash (`/boot`) a kořen **Host Data** (`/mnt`), jak je z
 
 Zálohy datových sad ZFS tento režim potřebují také: snímek datové sady hostitel připojí až poté, co kontejner nastartoval. Viz [Datové sady ZFS](zfs-datasets.md).
 
-Místní repozitáře mají ve výchozím stavu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` a vytvoří se při první záloze. Tvoří cíl **Místní složka**. Na jeho stránce v **Cíle** karta **Připojení** mění složku každé sekce a okno, které otevře, má přepínač **Místní / Vzdálené**: cesta sekce může být vzdálený restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) místo místní složky a zálohuje se přímo do něj bez samostatné místní kopie; viz [Vzdálené primární repozitáře](offsite-recovery.md#remote-primary-repositories).
+Místní repozitáře mají ve výchozím stavu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` a vytvoří se při první záloze. Tvoří cíl **Místní**. Na jeho stránce v **Cíle** karta **Připojení** mění složku každé sekce a okno, které otevře, má přepínač **Místní / Vzdálené**: cesta sekce může být vzdálený restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) místo místní složky a zálohuje se přímo do něj bez samostatné místní kopie; viz [Vzdálené primární repozitáře](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Kontrola integrace hostitele"
     Karta **Integrace hostitele** v Přehledu (přidáš ji pod **Přizpůsobit**) prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části.

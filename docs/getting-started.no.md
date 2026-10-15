@@ -97,7 +97,9 @@ Har du brukt BombVault før? **Gjenopprett fra en sikkerhetskopi** på velkomsts
 
 Sidefeltet har fem oppføringer: **Oversikt**, **Avvik** (så lenge avviksdeteksjon er på), **Sikkerhetskopier**, **Gjenoppretting** og, under **Logg ut**, **Innstillinger**. Hovedhandlingen på en side flyter nederst til høyre, og **Mer** rommer de sjeldne. På en telefon har linjen Oversikt, Sikkerhetskopier, Gjenoppretting og Innstillinger, og **Mer** har resten.
 
-- **Sikkerhetskopier** lister hver container, VM, mappesett, flashen, hvert ZFS-datasett og auto-sikkerhetskopien som elementer. Fliser over listen velger et slag, og **Filtre**, **Sorter** og **Søk** snevrer den inn. Hvert element har en egen side med tre faner: **Sikkerhetskopier**, **Innstillinger** og **Verifisering**.
+Sider og innstillinger bruker hele bredden av vinduet. Et vindu har knappene sine i bunnen, med den som går videre til høyre. På en telefon beholder en bunn med mer enn tre knapper veien ut og hovedhandlingen og legger resten under **Mer**.
+
+- **Sikkerhetskopier** lister hver container, VM, mappesett, flashen, hvert ZFS-datasett og auto-sikkerhetskopien som elementer. Fliser over listen velger et slag, og **Filtre**, **Sorter** og **Søk** snevrer den inn. Hvert element har en egen side med tre faner: **Sikkerhetskopier**, **Innstillinger** og **Verifisering**. En tilbakeknapp til venstre for ikonet til elementet fører til listen.
 - **Gjenoppretting** er én side for alt: velg et område, søk etter et element og velg en sikkerhetskopi. Nødveiviseren og de andre kildene starter også her.
 - **Innstillinger** er fjorten fliser: Generelt, Utseende, Tidsplan, Mål, Gjenoppretting, Varsler, Verifisering, Sikkerhet, Instanser, Paring, Integrasjoner, Apper, System og Info. Trykk `/` eller Ctrl+K for å søke i alle, også etter navnene sidene hadde i tidligere versjoner. Dra flisene i din egen rekkefølge under **Utseende**.
 - **Mål** og **Instanser** er innstillingsfliser med egne sider. **Vis også i sidefeltet** på flisen deres fester dem til sidefeltet.

@@ -97,7 +97,9 @@ Használtad már a BombVaultot? A **Visszaállítás mentésből** az üdvözlő
 
 Az oldalsávnak öt eleme van: **Áttekintés**, **Anomáliák** (amíg az anomáliafelismerés be van kapcsolva), **Biztonsági mentések**, **Visszaállítás**, és a **Kijelentkezés** alatt a **Beállítások**. Egy oldal fő művelete lebeg a jobb alsó sarokban, a ritka műveleteket a **Több** gyűjti. Telefonon a sáv az Áttekintést, a Biztonsági mentéseket, a Visszaállítást és a Beállításokat tartalmazza, a többit a **Több** adja.
 
-- A **Biztonsági mentések** elemekként listázza az összes konténert, VM-et, mappakészletet, a flasht, minden ZFS-adatkészletet és az Önmentést. A lista feletti csempék fajtát választanak, a **Szűrők**, a **Rendezés** és a **Keresés** szűkít. Minden elemnek saját oldala van három füllel: **Biztonsági mentések**, **Beállítások** és **Ellenőrzés**.
+Az oldalak és a beállítások az ablak teljes szélességét használják. Egy ablak a gombjait a láblécében tartja, az előre vivő gombot jobb oldalon. Telefonon a háromnál több gombos lábléc a kiutat és a fő műveletet megtartja, a többit a **Több** alá teszi.
+
+- A **Biztonsági mentések** elemekként listázza az összes konténert, VM-et, mappakészletet, a flasht, minden ZFS-adatkészletet és az Önmentést. A lista feletti csempék fajtát választanak, a **Szűrők**, a **Rendezés** és a **Keresés** szűkít. Minden elemnek saját oldala van három füllel: **Biztonsági mentések**, **Beállítások** és **Ellenőrzés**. Az elem ikonjától balra lévő visszagomb a listához vezet.
 - A **Visszaállítás** egyetlen oldal mindenhez: válassz szakaszt, keress egy elemet, és válassz egy mentést. A Vészvarázsló és a többi forrás is innen indul.
 - A **Beállítások** tizennégy csempe: Általános, Megjelenés, Ütemezés, Célok, Visszaállítás, Értesítések, Ellenőrzés, Biztonság, Példányok, Párosítás, Integrációk, Alkalmazások, Rendszer és Információ. A `/` vagy a Ctrl+K lenyomásával mindben kereshetsz, a korábbi verziókban használt oldalnevekre is. A csempéket a **Megjelenés** alatt húzhatod saját sorrendbe.
 - A **Célok** és a **Példányok** beállítási csempék, saját oldalakkal. A csempéjükön a **Mutatás az oldalsávban is** kitűzi őket az oldalsávra.

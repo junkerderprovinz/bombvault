@@ -31,7 +31,7 @@ Monter Docker-socketen, flashen (`/boot`) og **Host Data**-roten (`/mnt`) som vi
 
 Sikkerhetskopi av ZFS-datasett trenger også denne modusen: verten monterer øyeblikksbildet av et datasett først etter at containeren har startet. Se [ZFS-datasett](zfs-datasets.md).
 
-Lokale repositorier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, opprettet ved den første sikkerhetskopieringen. De utgjør målet **Lokal mappe**. På siden til det målet under **Mål** endrer kortet **Tilkobling** mappen for hvert område, og vinduet som åpnes, har en **Lokal / Ekstern**-bryter: stien til et område kan være en restic-remote (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) i stedet for en lokal mappe, og da sikkerhetskopieres det rett dit uten egen lokal kopi; se [Eksterne primære arkiver](offsite-recovery.md#remote-primary-repositories).
+Lokale repositorier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, opprettet ved den første sikkerhetskopieringen. De utgjør målet **Lokal**. På siden til det målet under **Mål** endrer kortet **Tilkobling** mappen for hvert område, og vinduet som åpnes, har en **Lokal / Ekstern**-bryter: stien til et område kan være en restic-remote (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) i stedet for en lokal mappe, og da sikkerhetskopieres det rett dit uten egen lokal kopi; se [Eksterne primære arkiver](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Host-integrasjonssjekk"
     Kortet **Host-integrasjon** på oversikten (legg det til under **Tilpass**) sonderer hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer manglende deler.

@@ -31,7 +31,7 @@ Gắn kết Docker socket, flash (`/boot`) và gốc **Host Data** (`/mnt`) như
 
 Sao lưu tập dữ liệu ZFS cũng cần chế độ này: máy chủ chỉ gắn ảnh chụp của một tập dữ liệu sau khi container đã khởi động. Xem [Tập dữ liệu ZFS](zfs-datasets.md).
 
-Các kho cục bộ mặc định nằm ở `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` và được tạo ở lần sao lưu đầu tiên. Chúng tạo thành đích sao lưu **Thư mục cục bộ**. Trên trang của nó trong **Đích sao lưu**, thẻ **Kết nối** đổi thư mục của từng phần, và cửa sổ nó mở ra có công tắc **Cục bộ / Từ xa**: đường dẫn của một phần có thể là một restic remote (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) thay vì thư mục cục bộ, sao lưu thẳng vào đó mà không có bản sao cục bộ riêng; xem [Kho chính từ xa](offsite-recovery.md#remote-primary-repositories).
+Các kho cục bộ mặc định nằm ở `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` và được tạo ở lần sao lưu đầu tiên. Chúng tạo thành đích sao lưu **Cục bộ**. Trên trang của nó trong **Đích sao lưu**, thẻ **Kết nối** đổi thư mục của từng phần, và cửa sổ nó mở ra có công tắc **Cục bộ / Từ xa**: đường dẫn của một phần có thể là một restic remote (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) thay vì thư mục cục bộ, sao lưu thẳng vào đó mà không có bản sao cục bộ riêng; xem [Kho chính từ xa](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Kiểm tra tích hợp máy chủ"
     Thẻ **Tích hợp máy chủ** trên Tổng quan (thêm qua **Tùy chỉnh**) kiểm tra mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu.

@@ -31,7 +31,7 @@ Montera Docker-socketen, flashen (`/boot`) och **Host Data**-roten (`/mnt`) som 
 
 Säkerhetskopior av ZFS-datauppsättningar behöver också det här läget: värden monterar en uppsättnings ögonblicksbild först efter att containern har startat. Se [ZFS-datauppsättningar](zfs-datasets.md).
 
-Lokala repositorier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, skapade vid den första säkerhetskopieringen. De bildar målet **Lokal mapp**. På dess sida under **Mål** ändrar kortet **Anslutning** mappen för varje avsnitt, och fönstret det öppnar har en omkopplare **Lokal / Fjärran**: ett avsnitts sökväg kan vara en restic-fjärr (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) i stället för en lokal mapp, och då säkerhetskopieras det direkt dit utan separat lokal kopia; se [Fjärranslutna primära arkiv](offsite-recovery.md#remote-primary-repositories).
+Lokala repositorier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, skapade vid den första säkerhetskopieringen. De bildar målet **Lokal**. På dess sida under **Mål** ändrar kortet **Anslutning** mappen för varje avsnitt, och fönstret det öppnar har en omkopplare **Lokal / Fjärran**: ett avsnitts sökväg kan vara en restic-fjärr (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) i stället för en lokal mapp, och då säkerhetskopieras det direkt dit utan separat lokal kopia; se [Fjärranslutna primära arkiv](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Värdintegrationskontroll"
     Kortet **Värdintegration** på översikten (lägg till det under **Anpassa**) sonderar varje montering och CLI (Docker-socket, libvirt, restic, qemu-img, rclone) och rapporterar eventuella saknade delar.

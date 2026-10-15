@@ -73,9 +73,9 @@ BombVault cung cấp mô tả các tuyến này tại `/api/v1/openapi.json` (Op
 
 BombVault có thể xuất hiện trong Home Assistant như một thiết bị, nhờ cơ chế khám phá MQTT. Home Assistant cần tích hợp MQTT của nó và một broker, ví dụ tiện ích bổ sung Mosquitto. Không cần thành phần riêng nào.
 
-1. Trong BombVault, mở **Cài đặt, Tích hợp** và tìm **Home Assistant** trong thẻ **Dịch vụ**.
+1. Trong BombVault, mở **Cài đặt, Tích hợp** và bật **Home Assistant** trong thẻ **Dịch vụ**. Các trường cho broker hiện bên dưới nó.
 2. Nhập địa chỉ và cổng của broker, cùng tên người dùng và mật khẩu nếu broker yêu cầu. Bật **Dùng TLS** nếu broker dùng TLS, thường ở cổng 8883; chứng chỉ của broker phải hợp lệ cho địa chỉ bạn nhập. Nếu bạn đổi địa chỉ, cổng hoặc tên người dùng, hãy nhập lại mật khẩu: BombVault không chuyển mật khẩu đã lưu sang broker hay người dùng khác.
-3. Bật **Kết nối với Home Assistant** và bấm **Lưu**. Thẻ sẽ cho biết khi kết nối đã thông.
+3. Bấm **Lưu**. Hàng sẽ cho biết khi kết nối đã thông.
 
 Thiết bị có tên BombVault, hoặc BombVault kèm tên phiên bản chạy trong ngoặc, và có các thực thể sau:
 

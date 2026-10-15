@@ -31,7 +31,7 @@ Docker soketini, flash'ı (`/boot`) ve **Host Data** kökünü (`/mnt`) CA şabl
 
 ZFS veri kümesi yedeklerinin de bu moda ihtiyacı vardır: ana makine bir veri kümesinin anlık görüntüsünü ancak konteyner başladıktan sonra bağlar. Bkz. [ZFS veri kümeleri](zfs-datasets.md).
 
-Yerel depolar varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` yolundadır ve ilk yedeklemede oluşturulur. Bunlar **Yerel klasör** hedefini oluşturur. **Hedefler** altındaki sayfasında **Bağlantı** kartı her bölümün klasörünü değiştirir ve açtığı pencerede bir **Yerel / Uzak** anahtarı bulunur: bir bölümün yolu yerel bir klasör yerine bir restic remote'u (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) olabilir ve ayrı bir yerel kopya olmadan doğrudan ona yedekleme yapar; bkz. [Uzak birincil depolar](offsite-recovery.md#remote-primary-repositories).
+Yerel depolar varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` yolundadır ve ilk yedeklemede oluşturulur. Bunlar **Yerel** hedefini oluşturur. **Hedefler** altındaki sayfasında **Bağlantı** kartı her bölümün klasörünü değiştirir ve açtığı pencerede bir **Yerel / Uzak** anahtarı bulunur: bir bölümün yolu yerel bir klasör yerine bir restic remote'u (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) olabilir ve ayrı bir yerel kopya olmadan doğrudan ona yedekleme yapar; bkz. [Uzak birincil depolar](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Host entegrasyon denetimi"
     Genel bakıştaki **Host Entegrasyonu** kartı (**Özelleştir** altından ekle) her bağlamayı ve CLI'ı (Docker soketi, libvirt, restic, qemu-img, rclone) yoklar ve eksik parçaları bildirir.

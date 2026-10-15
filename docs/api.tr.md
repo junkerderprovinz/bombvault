@@ -73,9 +73,9 @@ BombVault bu yolların açıklamasını `/api/v1/openapi.json` adresinde sunar (
 
 BombVault, MQTT keşfi sayesinde Home Assistant'ta bir cihaz olarak görünebilir. Home Assistant'ın bunun için MQTT entegrasyonuna ve bir aracıya, örneğin Mosquitto eklentisine ihtiyacı vardır. Ayrı bir bileşen gerekmez.
 
-1. BombVault'ta **Ayarlar, Entegrasyonlar** altını aç ve **Hizmetler** kartında **Home Assistant**'ı bul.
+1. BombVault'ta **Ayarlar, Entegrasyonlar** altını aç ve **Hizmetler** kartında **Home Assistant**'ı aç. Broker alanları altında görünür.
 2. Aracının adresini ve bağlantı noktasını, isterse kullanıcı adını ve parolayı gir. Aracı TLS kullanıyorsa, genellikle 8883 numaralı bağlantı noktasında, **TLS kullan** seçeneğini aç; sertifikası girdiğin adres için geçerli olmalı. Adresi, bağlantı noktasını ya da kullanıcı adını değiştirirsen parolayı yeniden gir: BombVault kayıtlı parolayı başka bir aracıya ya da kullanıcıya iletmez.
-3. **Home Assistant'a bağlan** seçeneğini aç ve **Kaydet** düğmesine tıkla. Kart, bağlantı kurulduğunda bunu gösterir.
+3. **Kaydet** düğmesine tıkla. Satır, bağlantı kurulduğunda bunu gösterir.
 
 Cihazın adı BombVault'tur ya da parantez içinde örnek adıyla BombVault'tur ve şu varlıkları vardır:
 

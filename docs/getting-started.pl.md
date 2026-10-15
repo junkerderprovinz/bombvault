@@ -97,7 +97,9 @@ Używasz już BombVault? **Przywróć z kopii zapasowej** na stronie powitalnej 
 
 Pasek boczny ma pięć pozycji: **Przegląd**, **Anomalie** (gdy wykrywanie anomalii jest włączone), **Kopie zapasowe**, **Przywracanie** i, pod **Wyloguj się**, **Ustawienia**. Główna akcja strony unosi się w prawym dolnym rogu, a **Więcej** zawiera te rzadkie. Na telefonie pasek ma Przegląd, Kopie zapasowe, Przywracanie i Ustawienia, a **Więcej** resztę.
 
-- **Kopie zapasowe** wymieniają każdy kontener, maszynę wirtualną, zestaw folderów, nośnik flash, każdy zbiór danych ZFS i autokopię jako elementy. Kafelki nad listą wybierają rodzaj, a **Filtry**, **Sortuj** i **Szukaj** zawężają listę. Każdy element ma własną stronę z trzema kartami: **Kopie zapasowe**, **Ustawienia** i **Weryfikacja**.
+Strony i ustawienia zajmują całą szerokość okna. Okno trzyma swoje przyciski w stopce, a ten, który prowadzi dalej, jest po prawej. Na telefonie stopka z więcej niż trzema przyciskami zostawia drogę wyjścia i główną akcję, a resztę chowa pod **Więcej**.
+
+- **Kopie zapasowe** wymieniają każdy kontener, maszynę wirtualną, zestaw folderów, nośnik flash, każdy zbiór danych ZFS i autokopię jako elementy. Kafelki nad listą wybierają rodzaj, a **Filtry**, **Sortuj** i **Szukaj** zawężają listę. Każdy element ma własną stronę z trzema kartami: **Kopie zapasowe**, **Ustawienia** i **Weryfikacja**. Przycisk wstecz po lewej stronie ikony elementu prowadzi do listy.
 - **Przywracanie** to jedna strona dla wszystkiego: wybierz sekcję, wyszukaj element i wybierz kopię zapasową. Kreator awaryjny i inne źródła zaczynają się tutaj też.
 - **Ustawienia** to czternaście kafelków: Ogólne, Wygląd, Harmonogram, Miejsca docelowe, Przywracanie, Powiadomienia, Weryfikacja, Bezpieczeństwo, Instancje, Parowanie, Integracje, Aplikacje, System i Info. Naciśnij `/` lub Ctrl+K, aby przeszukać je wszystkie, także po nazwach, które strony miały we wcześniejszych wersjach. Przeciągnij kafelki w swoją kolejność w **Wygląd**.
 - **Miejsca docelowe** i **Instancje** to kafelki ustawień z własnymi stronami. **Pokaż także na pasku bocznym** na ich kafelku przypina je do paska bocznego.

@@ -31,7 +31,7 @@ Montez le socket Docker, la flash (`/boot`) et la racine **Host Data** (`/mnt`) 
 
 Les sauvegardes de jeux de données ZFS ont aussi besoin de ce mode : l'hôte ne monte l'instantané d'un jeu de données qu'après le démarrage du conteneur. Voir [Jeux de données ZFS](zfs-datasets.md).
 
-Les dépôts locaux ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, créés à la première sauvegarde. Ils forment la destination **Dossier local**. Sur sa page, sous **Destinations**, la carte **Connexion** change le dossier de chaque section, et la fenêtre qu'elle ouvre a un commutateur **Local / Distant** : le chemin d'une section peut être un remote restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) au lieu d'un dossier local, et la sauvegarde y va alors directement, sans copie locale séparée ; voir [Dépôts primaires distants](offsite-recovery.md#remote-primary-repositories).
+Les dépôts locaux ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, créés à la première sauvegarde. Ils forment la destination **Local**. Sur sa page, sous **Destinations**, la carte **Connexion** change le dossier de chaque section, et la fenêtre qu'elle ouvre a un commutateur **Local / Distant** : le chemin d'une section peut être un remote restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) au lieu d'un dossier local, et la sauvegarde y va alors directement, sans copie locale séparée ; voir [Dépôts primaires distants](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Vérification d'intégration hôte"
     La carte **Intégration hôte** de l'aperçu (à ajouter sous **Personnaliser**) sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante.

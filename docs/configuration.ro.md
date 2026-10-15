@@ -31,7 +31,7 @@ Montează socket-ul Docker, flash-ul (`/boot`) și rădăcina **Host Data** (`/m
 
 Backup-urile seturilor de date ZFS au și ele nevoie de acest mod: gazda montează instantaneul unui set de date abia după ce containerul a pornit. Vezi [Seturi de date ZFS](zfs-datasets.md).
 
-Depozitele locale sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, create la primul backup. Ele formează destinația **Dosar local**. Pe pagina ei de la **Destinații**, cardul **Conexiune** schimbă folderul fiecărei secțiuni, iar fereastra pe care o deschide are un comutator **Local / La distanță**: calea unei secțiuni poate fi un remote restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) în loc de un folder local, iar backupul merge direct acolo, fără o copie locală separată; vezi [Depozite primare la distanță](offsite-recovery.md#remote-primary-repositories).
+Depozitele locale sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, create la primul backup. Ele formează destinația **Local**. Pe pagina ei de la **Destinații**, cardul **Conexiune** schimbă folderul fiecărei secțiuni, iar fereastra pe care o deschide are un comutator **Local / La distanță**: calea unei secțiuni poate fi un remote restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) în loc de un folder local, iar backupul merge direct acolo, fără o copie locală separată; vezi [Depozite primare la distanță](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Verificare integrare gazdă"
     Cardul **Integrare gazdă** din prezentare (îl adaugi la **Personalizează**) sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă.
