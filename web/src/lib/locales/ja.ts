@@ -190,6 +190,7 @@ const ja: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "計測できなかったため、ブロックしません。",
   "restoreCheck.reason.parentMissing": "その上位のデータセット {name} がありません。先に作成するか、別の名前を選んでください。",
   "restoreCheck.reason.networkMissing": "このサーバーにはネットワーク {name} がありません。コンテナ用のネットワークを選んでください。",
+  "restoreCheck.reason.networkGone": "このサーバーにはネットワーク {name} がありません。TrueNAS のアプリなど、アプリが作成したネットワークなら、先にそのアプリを再インストールしてからデータを復元してください。",
   "restoreCheck.space": "必要 {need}、空き {free}。",
   "restoreCheck.snapshotId": "スナップショット {id}",
   "restoreCheck.change.added": "新規",

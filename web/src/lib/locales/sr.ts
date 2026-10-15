@@ -230,6 +230,7 @@ const sr: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Није могло да се измери, па не блокира.",
   "restoreCheck.reason.parentMissing": "Скуп података изнад њега, {name}, не постоји. Прво га направи или изабери друго име.",
   "restoreCheck.reason.networkMissing": "Овај сервер нема мрежу {name}. Изабери мрежу за контејнер.",
+  "restoreCheck.reason.networkGone": "Овај сервер нема мрежу {name}. Ако ју је направила апликација, на пример TrueNAS апликација, прво поново инсталирај ту апликацију, па онда врати њене податке.",
   "restoreCheck.space": "Потребно {need}, слободно {free}.",
   "restoreCheck.snapshotId": "Снимак {id}",
   "restoreCheck.change.added": "ново",

@@ -230,6 +230,7 @@ const bg: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Не можа да се измери, затова не блокира.",
   "restoreCheck.reason.parentMissing": "Наборът от данни над него, {name}, не съществува. Първо го създай или избери друго име.",
   "restoreCheck.reason.networkMissing": "На този сървър няма мрежа {name}. Избери мрежа за контейнера.",
+  "restoreCheck.reason.networkGone": "На този сървър няма мрежа {name}. Ако я е създало приложение, например приложение на TrueNAS, първо преинсталирай приложението и после възстанови данните му.",
   "restoreCheck.space": "Нужни са {need}, свободни {free}.",
   "restoreCheck.snapshotId": "Моментна снимка {id}",
   "restoreCheck.change.added": "нов",

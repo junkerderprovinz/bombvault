@@ -133,6 +133,23 @@ describe("the restore plan", () => {
     });
     expect(screen.getByText(en["restoreCheck.reason.parentMissing"].replace("{name}", "tank/gone"))).toBeTruthy();
   });
+
+  it("says to reinstall the app whose network is gone", () => {
+    show({
+      ok: true,
+      ready: false,
+      checks: [
+        { id: "repository", status: "ok" },
+        { id: "key", status: "ok" },
+        { id: "snapshot", status: "ok" },
+        { id: "network", status: "fail", reason: "network-gone", detail: "ix-webpage_default" },
+      ],
+      plan: null,
+    });
+    expect(
+      screen.getByText(en["restoreCheck.reason.networkGone"].replace("{name}", "ix-webpage_default")),
+    ).toBeTruthy();
+  });
 });
 
 describe("a check still running", () => {

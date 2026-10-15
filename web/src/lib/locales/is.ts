@@ -230,6 +230,7 @@ const is: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Ekki tókst að mæla, svo það hindrar ekki.",
   "restoreCheck.reason.parentMissing": "Gagnasafnið fyrir ofan, {name}, er ekki til. Búðu það fyrst til eða veldu annað nafn.",
   "restoreCheck.reason.networkMissing": "Þessi þjónn hefur ekkert net sem heitir {name}. Veldu net fyrir gáminn.",
+  "restoreCheck.reason.networkGone": "Þessi þjónn hefur ekkert net sem heitir {name}. Ef forrit bjó það til, til dæmis TrueNAS-forrit, settu forritið fyrst upp aftur og endurheimtu svo gögnin þess.",
   "restoreCheck.space": "Þarf {need}, {free} laust.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nýtt",

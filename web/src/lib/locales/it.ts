@@ -190,6 +190,7 @@ const it: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Non misurabile, quindi non blocca.",
   "restoreCheck.reason.parentMissing": "Il dataset superiore, {name}, non esiste. Crealo prima o scegli un altro nome.",
   "restoreCheck.reason.networkMissing": "Questo server non ha nessuna rete {name}. Scegli una rete per il container.",
+  "restoreCheck.reason.networkGone": "Questo server non ha nessuna rete {name}. Se l'ha creata un'app, per esempio un'app di TrueNAS, reinstalla prima quell'app e poi ripristina i suoi dati.",
   "restoreCheck.space": "Servono {need}, {free} liberi.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nuovo",

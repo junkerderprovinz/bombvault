@@ -190,6 +190,7 @@ const da: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Kunne ikke måles, så den blokerer ikke.",
   "restoreCheck.reason.parentMissing": "Datasættet over det, {name}, findes ikke. Opret det først, eller vælg et andet navn.",
   "restoreCheck.reason.networkMissing": "Denne server har ikke netværket {name}. Vælg et netværk til containeren.",
+  "restoreCheck.reason.networkGone": "Denne server har ikke netværket {name}. Hvis en app har oprettet det, for eksempel en TrueNAS-app, så geninstaller appen først og gendan derefter dens data.",
   "restoreCheck.space": "Kræver {need}, {free} ledigt.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "ny",

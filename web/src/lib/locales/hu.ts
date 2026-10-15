@@ -190,6 +190,7 @@ const hu: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Nem sikerült mérni, ezért nem zárol.",
   "restoreCheck.reason.parentMissing": "A fölötte lévő adatkészlet, {name}, nem létezik. Előbb hozd létre, vagy válassz másik nevet.",
   "restoreCheck.reason.networkMissing": "Ezen a szerveren nincs {name} nevű hálózat. Válassz hálózatot a konténernek.",
+  "restoreCheck.reason.networkGone": "Ezen a szerveren nincs {name} nevű hálózat. Ha egy alkalmazás hozta létre, például egy TrueNAS-alkalmazás, előbb telepítsd újra az alkalmazást, aztán állítsd vissza az adatait.",
   "restoreCheck.space": "Kell {need}, szabad {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "új",

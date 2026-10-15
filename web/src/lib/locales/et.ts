@@ -230,6 +230,7 @@ const et: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Ei õnnestunud mõõta, seega ei blokeeri.",
   "restoreCheck.reason.parentMissing": "Selle kohal olevat andmekogumit {name} ei ole olemas. Loo see enne või vali teine nimi.",
   "restoreCheck.reason.networkMissing": "Selles serveris pole võrku {name}. Vali konteinerile võrk.",
+  "restoreCheck.reason.networkGone": "Selles serveris pole võrku {name}. Kui selle lõi mõni rakendus, näiteks TrueNAS-i rakendus, paigalda see rakendus kõigepealt uuesti ja taasta siis selle andmed.",
   "restoreCheck.space": "Vaja {need}, vaba {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "uus",

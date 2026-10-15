@@ -230,6 +230,7 @@ const ms: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Tidak dapat diukur, jadi tidak menghalang.",
   "restoreCheck.reason.parentMissing": "Set data di atasnya, {name}, tidak wujud. Cipta dahulu atau pilih nama lain.",
   "restoreCheck.reason.networkMissing": "Pelayan ini tiada rangkaian {name}. Pilih rangkaian untuk bekas.",
+  "restoreCheck.reason.networkGone": "Pelayan ini tiada rangkaian {name}. Jika rangkaian itu dicipta oleh aplikasi, contohnya aplikasi TrueNAS, pasang semula aplikasi itu dahulu, kemudian pulihkan datanya.",
   "restoreCheck.space": "Perlu {need}, kosong {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "baharu",

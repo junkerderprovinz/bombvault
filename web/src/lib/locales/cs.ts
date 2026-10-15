@@ -190,6 +190,7 @@ const cs: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Nešlo změřit, proto neblokuje.",
   "restoreCheck.reason.parentMissing": "Dataset nad ním, {name}, neexistuje. Nejdřív ho vytvoř, nebo zvol jiný název.",
   "restoreCheck.reason.networkMissing": "Tento server nemá síť {name}. Zvol pro kontejner jinou síť.",
+  "restoreCheck.reason.networkGone": "Tento server nemá síť {name}. Pokud ji vytvořila aplikace, třeba aplikace TrueNAS, nejdřív tu aplikaci znovu nainstaluj a pak obnov její data.",
   "restoreCheck.space": "Potřeba {need}, volno {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nový",

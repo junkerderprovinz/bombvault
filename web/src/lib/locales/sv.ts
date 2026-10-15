@@ -190,6 +190,7 @@ const sv: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Kunde inte mätas, så den blockerar inte.",
   "restoreCheck.reason.parentMissing": "Datasetet ovanför, {name}, finns inte. Skapa det först eller välj ett annat namn.",
   "restoreCheck.reason.networkMissing": "Den här servern har inget nätverk som heter {name}. Välj ett nätverk för containern.",
+  "restoreCheck.reason.networkGone": "Den här servern har inget nätverk som heter {name}. Om en app skapade det, till exempel en TrueNAS-app, installerar du först om appen och återställer sedan dess data.",
   "restoreCheck.space": "Behöver {need}, {free} ledigt.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "ny",

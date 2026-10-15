@@ -230,6 +230,7 @@ const hi: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "मापा नहीं जा सका, इसलिए रोकता नहीं।",
   "restoreCheck.reason.parentMissing": "इसके ऊपर का डेटासेट, {name}, मौजूद नहीं है। पहले उसे बनाएँ या कोई दूसरा नाम चुनें।",
   "restoreCheck.reason.networkMissing": "इस सर्वर पर {name} नाम का कोई नेटवर्क नहीं है। कंटेनर के लिए कोई नेटवर्क चुनें।",
+  "restoreCheck.reason.networkGone": "इस सर्वर पर {name} नाम का कोई नेटवर्क नहीं है। अगर इसे किसी ऐप ने बनाया था, जैसे कोई TrueNAS ऐप, तो पहले उस ऐप को दोबारा इंस्टॉल करें, फिर उसका डेटा रीस्टोर करें।",
   "restoreCheck.space": "{need} चाहिए, {free} खाली।",
   "restoreCheck.snapshotId": "स्नैपशॉट {id}",
   "restoreCheck.change.added": "नई",

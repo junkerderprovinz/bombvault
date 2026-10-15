@@ -190,6 +190,7 @@ const th: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "วัดไม่ได้ จึงไม่บล็อก",
   "restoreCheck.reason.parentMissing": "ชุดข้อมูลที่อยู่เหนือขึ้นไป {name} ไม่มีอยู่ สร้างก่อนหรือเลือกชื่ออื่น",
   "restoreCheck.reason.networkMissing": "เซิร์ฟเวอร์นี้ไม่มีเครือข่าย {name} เลือกเครือข่ายให้คอนเทนเนอร์",
+  "restoreCheck.reason.networkGone": "เซิร์ฟเวอร์นี้ไม่มีเครือข่าย {name} ถ้าแอปเป็นผู้สร้างเครือข่ายนี้ เช่น แอปของ TrueNAS ให้ติดตั้งแอปนั้นใหม่ก่อน แล้วจึงกู้คืนข้อมูลของแอป",
   "restoreCheck.space": "ต้องใช้ {need} ว่าง {free}",
   "restoreCheck.snapshotId": "สแนปช็อต {id}",
   "restoreCheck.change.added": "ใหม่",

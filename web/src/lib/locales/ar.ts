@@ -190,6 +190,7 @@ const ar: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "تعذر القياس، لذا لا يمنع الاستعادة.",
   "restoreCheck.reason.parentMissing": "مجموعة البيانات التي فوقها، {name}، غير موجودة. يجب إنشاؤها أولًا أو اختيار اسم آخر.",
   "restoreCheck.reason.networkMissing": "لا توجد على هذا الخادم شبكة باسم {name}. يجب اختيار شبكة للحاوية.",
+  "restoreCheck.reason.networkGone": "لا توجد على هذا الخادم شبكة باسم {name}. إذا كان تطبيق قد أنشأها، مثل تطبيق TrueNAS، فيجب إعادة تثبيت هذا التطبيق أولًا ثم استعادة بياناته.",
   "restoreCheck.space": "يحتاج {need}، والمتاح {free}.",
   "restoreCheck.snapshotId": "اللقطة {id}",
   "restoreCheck.change.added": "جديد",

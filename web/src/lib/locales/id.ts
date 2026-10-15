@@ -230,6 +230,7 @@ const id: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Tidak bisa diukur, jadi tidak menghalangi.",
   "restoreCheck.reason.parentMissing": "Dataset di atasnya, {name}, tidak ada. Buat dulu atau pilih nama lain.",
   "restoreCheck.reason.networkMissing": "Server ini tidak punya jaringan {name}. Pilih jaringan untuk container.",
+  "restoreCheck.reason.networkGone": "Server ini tidak punya jaringan {name}. Jika jaringan itu dibuat oleh sebuah aplikasi, misalnya aplikasi TrueNAS, instal ulang aplikasi itu dulu, lalu pulihkan datanya.",
   "restoreCheck.space": "Perlu {need}, tersedia {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "baru",

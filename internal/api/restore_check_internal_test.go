@@ -57,13 +57,17 @@ func (e *checkEngine) RestorePreview(ctx context.Context, _ string, st restic.Pr
 	return nil
 }
 
-// checkDocker lists containers with their binds and inspects the live one.
+// checkDocker lists containers with their binds and the host's networks, and
+// inspects the live one.
 type checkDocker struct {
 	dockercli.Docker
-	list []dockercli.ContainerInfo
-	live model.Inspect
-	self string
+	list     []dockercli.ContainerInfo
+	live     model.Inspect
+	self     string
+	networks []string
 }
+
+func (d *checkDocker) Networks(context.Context) ([]string, error) { return d.networks, nil }
 
 func (d *checkDocker) List(context.Context) ([]dockercli.ContainerInfo, error) { return d.list, nil }
 
@@ -600,6 +604,31 @@ func TestCheckRestoreBringsAGoneContainerBackBesideAStoppedOne(t *testing.T) {
 	}
 	if len(res.Plan.Shared) != 1 || !slices.Equal(res.Plan.Shared[0].Containers, []string{"plex-new"}) {
 		t.Fatalf("shared = %+v", res.Plan.Shared)
+	}
+}
+
+func TestCheckRestoreFlagsANetworkTheRestoreWouldRefuse(t *testing.T) {
+	f := newCheckFixture(t)
+	in := model.Inspect{Name: "plex", Config: model.Config{Image: "plexinc/pms:1.40"}}
+	in.HostConfig.NetworkMode = "ix-plex_default"
+	def, err := json.Marshal(containerDefinition{Inspect: in})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.svc.store.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{f.appdata}, Definition: string(def)}); err != nil {
+		t.Fatal(err)
+	}
+	f.docker.networks = []string{"bridge", "host", "none"}
+
+	res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"})
+	c := lineOf(t, res, lineNetwork)
+	if res.Ready || c.Status != lineFail || c.Reason != reasonNetworkGone || c.Detail != "ix-plex_default" {
+		t.Fatalf("ready = %v, checks = %+v, want a failed network line naming ix-plex_default", res.Ready, res.Checks)
+	}
+
+	f.docker.networks = append(f.docker.networks, "ix-plex_default")
+	if res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"}); !res.Ready {
+		t.Fatalf("checks = %+v, want ready once the network exists", res.Checks)
 	}
 }
 

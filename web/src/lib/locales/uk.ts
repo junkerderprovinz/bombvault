@@ -191,6 +191,7 @@ const uk: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Не вдалося виміряти, тому не блокує.",
   "restoreCheck.reason.parentMissing": "Набору даних рівнем вище, {name}, немає. Спершу створіть його або виберіть іншу назву.",
   "restoreCheck.reason.networkMissing": "На цьому сервері немає мережі {name}. Виберіть мережу для контейнера.",
+  "restoreCheck.reason.networkGone": "На цьому сервері немає мережі {name}. Якщо її створив застосунок, наприклад застосунок TrueNAS, спершу перевстановіть цей застосунок, а потім відновіть його дані.",
   "restoreCheck.space": "Потрібно {need}, вільно {free}.",
   "restoreCheck.snapshotId": "Знімок {id}",
   "restoreCheck.change.added": "новий",
