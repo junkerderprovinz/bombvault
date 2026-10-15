@@ -2220,6 +2220,7 @@ const gl: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "o host non lista o conxunto de datos {path}",
   "snapshot.reason.snapdirDisabled": "o acceso ás instantáneas está desactivado para {path}",
   "snapshot.reason.keyNotLoaded": "a chave de {path} non está cargada",
+  "snapshot.reason.repoInContainer": "o repositorio está dentro do propio contedor de BombVault, non nun cartafol montado",
   "snapshot.reason.other": "{path} non se pode ler desde unha instantánea ({code})",
   "zfs.restartPending": "Aínda detidos tras unha instantánea interrompida: {names}",
   "zfs.restartPendingHint": "BombVault detivo estes contedores para unha instantánea e non os puido arrincar de novo. Arríncaos desde a lapela Docker. BombVault tamén o intenta outra vez cando se reinicia.",

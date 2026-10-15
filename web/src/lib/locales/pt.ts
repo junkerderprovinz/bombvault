@@ -1715,6 +1715,7 @@ const pt: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "o host não lista o conjunto de dados {path}",
   "snapshot.reason.snapdirDisabled": "o acesso a instantâneos está desligado para {path}",
   "snapshot.reason.keyNotLoaded": "a chave de {path} não está carregada",
+  "snapshot.reason.repoInContainer": "o repositório está dentro do próprio contentor do BombVault, não numa pasta montada",
   "snapshot.reason.other": "{path} não pode ser lido a partir de um instantâneo ({code})",
   "zfs.restartPending": "Ainda parados depois de um instantâneo interrompido: {names}",
   "zfs.restartPendingHint": "O BombVault parou estes contentores para um instantâneo e não conseguiu arrancá-los de novo. Arranca-os no separador Docker. O BombVault também tenta outra vez quando reinicia.",

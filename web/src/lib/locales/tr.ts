@@ -1715,6 +1715,7 @@ const tr: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "host {path} veri kümesini listelemiyor",
   "snapshot.reason.snapdirDisabled": "{path} için anlık görüntü erişimi kapalı",
   "snapshot.reason.keyNotLoaded": "{path} anahtarı yüklü değil",
+  "snapshot.reason.repoInContainer": "depo, bağlanmış bir klasörde değil, BombVault'un kendi kapsayıcısının içinde yer alıyor",
   "snapshot.reason.other": "{path} bir anlık görüntüden okunamıyor ({code})",
   "zfs.restartPending": "Yarıda kalan anlık görüntüden sonra hâlâ durmuş: {names}",
   "zfs.restartPendingHint": "BombVault bu kapsayıcıları bir anlık görüntü için durdurdu ve yeniden başlatamadı. Onları Docker sekmesinden başlat. BombVault kendi yeniden başlarken de bir kez daha dener.",

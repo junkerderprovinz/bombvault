@@ -16,6 +16,7 @@ const REASON_KEY: Record<string, TranslationKey> = {
   "dataset-unknown": "snapshot.reason.datasetUnknown",
   "snapdir-disabled": "snapshot.reason.snapdirDisabled",
   "key-not-loaded": "snapshot.reason.keyNotLoaded",
+  "repo-in-container": "snapshot.reason.repoInContainer",
 };
 
 /** The window a snapshot backup held the container down, in whole seconds

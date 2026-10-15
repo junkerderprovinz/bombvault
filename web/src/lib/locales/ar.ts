@@ -1716,6 +1716,7 @@ const ar: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "المضيف لا يعرض مجموعة البيانات {path} في قائمته",
   "snapshot.reason.snapdirDisabled": "الوصول إلى اللقطات مطفأ لـ {path}",
   "snapshot.reason.keyNotLoaded": "مفتاح {path} غير محمّل",
+  "snapshot.reason.repoInContainer": "المستودع موجود داخل حاوية BombVault نفسها، لا على مجلد مركّب",
   "snapshot.reason.other": "لا يمكن قراءة {path} من لقطة ({code})",
   "zfs.restartPending": "ما تزال متوقفة بعد لقطة انقطعت: {names}",
   "zfs.restartPendingHint": "أوقف BombVault هذه الحاويات من أجل لقطة ولم يستطع تشغيلها من جديد. يمكن تشغيلها من تبويب Docker. يحاول BombVault مرة أخرى أيضًا عند إعادة تشغيله هو.",

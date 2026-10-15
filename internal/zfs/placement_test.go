@@ -131,6 +131,16 @@ func TestPlaceOnZFSFollowsAnExclusiveShareLinkIntoItsPool(t *testing.T) {
 	}
 }
 
+func TestInOwnLayerTellsTheContainerLayerFromAMount(t *testing.T) {
+	recs := append([]MountRecord{{MountPoint: "/", Root: "/", FSType: "overlay", Source: "overlay"}}, unraidMounts...)
+	if !InOwnLayer(recs, "/mnt/user/bombvault/container") {
+		t.Error("a path under no mount was taken for a mounted one")
+	}
+	if InOwnLayer(recs, "/host/user/user/bombvault/container") {
+		t.Error("a path on the Host Data mapping was taken for the container's own layer")
+	}
+}
+
 func TestPlaceOnZFSIgnoresSnapshotsMountedBelowThePath(t *testing.T) {
 	recs := append(append([]MountRecord(nil), unraidMounts...), MountRecord{
 		MountPoint: "/host/user/cache/appdata/sonarr/.zfs/snapshot/bombvault-20261015000000",

@@ -1715,6 +1715,7 @@ const fr: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "l'hôte ne liste pas le jeu de données {path}",
   "snapshot.reason.snapdirDisabled": "l'accès aux instantanés est désactivé pour {path}",
   "snapshot.reason.keyNotLoaded": "la clé de {path} n'est pas chargée",
+  "snapshot.reason.repoInContainer": "le dépôt se trouve dans le conteneur propre à BombVault, et non dans un dossier monté",
   "snapshot.reason.other": "{path} ne peut pas être lu depuis un instantané ({code})",
   "zfs.restartPending": "Encore arrêtés après un instantané interrompu : {names}",
   "zfs.restartPendingHint": "BombVault a arrêté ces conteneurs pour un instantané et n'a pas pu les redémarrer. Démarrez-les depuis l'onglet Docker. BombVault réessaie aussi à son prochain démarrage.",

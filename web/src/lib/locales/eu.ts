@@ -2220,6 +2220,7 @@ const eu: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "ostalariak ez du {path} datu multzoa zerrendatzen",
   "snapshot.reason.snapdirDisabled": "argazkietarako sarbidea itzalita dago hemen: {path}",
   "snapshot.reason.keyNotLoaded": "{path} elementuaren gakoa ez dago kargatuta",
+  "snapshot.reason.repoInContainer": "biltegia BombVaulten edukiontzi propioaren barruan dago, ez muntatutako karpeta batean",
   "snapshot.reason.other": "{path} ezin da argazki batetik irakurri ({code})",
   "zfs.restartPending": "Eten den argazki baten ondoren oraindik geldirik: {names}",
   "zfs.restartPendingHint": "BombVault-ek edukiontzi hauek argazki baterako gelditu ditu eta ezin izan ditu berriro abiarazi. Abiarazi itzazu Docker fitxatik. BombVault-ek berriro saiatzen da bera abiatzen denean ere.",

@@ -2220,6 +2220,7 @@ const hi: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "होस्ट की सूची में डेटासेट {path} नहीं है",
   "snapshot.reason.snapdirDisabled": "{path} के लिए स्नैपशॉट पहुँच बंद है",
   "snapshot.reason.keyNotLoaded": "{path} की कुंजी लोड नहीं है",
+  "snapshot.reason.repoInContainer": "रिपॉज़िटरी BombVault के अपने कंटेनर के अंदर है, किसी माउंट किए गए फ़ोल्डर में नहीं",
   "snapshot.reason.other": "{path} को स्नैपशॉट से नहीं पढ़ा जा सकता ({code})",
   "zfs.restartPending": "बाधित स्नैपशॉट के बाद अब भी रुके हुए: {names}",
   "zfs.restartPendingHint": "BombVault ने इन कंटेनरों को एक स्नैपशॉट के लिए रोका और फिर से शुरू नहीं कर सका। इन्हें Docker टैब से शुरू करें। BombVault रीस्टार्ट होने पर भी फिर से कोशिश करता है।",

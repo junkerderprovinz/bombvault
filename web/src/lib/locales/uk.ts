@@ -1712,6 +1712,7 @@ const uk: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "хост не показує набір даних {path}",
   "snapshot.reason.snapdirDisabled": "доступ до знімків для {path} вимкнено",
   "snapshot.reason.keyNotLoaded": "ключ для {path} не завантажено",
+  "snapshot.reason.repoInContainer": "репозиторій розташований усередині власного контейнера BombVault, а не в змонтованій папці",
   "snapshot.reason.other": "{path} не можна прочитати зі знімка ({code})",
   "zfs.restartPending": "Після перерваного знімка досі зупинені: {names}",
   "zfs.restartPendingHint": "BombVault зупинив ці контейнери заради знімка і не зміг запустити їх назад. Запустіть їх у вкладці Docker. BombVault пробує ще раз і при власному перезапуску.",

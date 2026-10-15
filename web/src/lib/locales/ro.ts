@@ -1716,6 +1716,7 @@ const ro: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "gazda nu listează setul de date {path}",
   "snapshot.reason.snapdirDisabled": "accesul la instantanee este oprit pentru {path}",
   "snapshot.reason.keyNotLoaded": "cheia pentru {path} nu este încărcată",
+  "snapshot.reason.repoInContainer": "depozitul se află în containerul propriu al BombVault, nu într-un dosar montat",
   "snapshot.reason.other": "{path} nu poate fi citit dintr-un instantaneu ({code})",
   "zfs.restartPending": "Încă oprite după un instantaneu întrerupt: {names}",
   "zfs.restartPendingHint": "BombVault a oprit aceste containere pentru un instantaneu și nu a reușit să le pornească la loc. Pornește-le din fila Docker. BombVault mai încearcă o dată și când repornește.",

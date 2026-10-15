@@ -1715,6 +1715,7 @@ const it: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "l'host non elenca il dataset {path}",
   "snapshot.reason.snapdirDisabled": "l'accesso agli snapshot è disattivato per {path}",
   "snapshot.reason.keyNotLoaded": "la chiave di {path} non è caricata",
+  "snapshot.reason.repoInContainer": "il repository si trova nel container di BombVault stesso, non su una cartella montata",
   "snapshot.reason.other": "{path} non può essere letto da uno snapshot ({code})",
   "zfs.restartPending": "Ancora fermi dopo uno snapshot interrotto: {names}",
   "zfs.restartPendingHint": "BombVault ha fermato questi container per uno snapshot e non è riuscito a riavviarli. Avviali dalla scheda Docker. BombVault ci riprova anche al proprio riavvio.",

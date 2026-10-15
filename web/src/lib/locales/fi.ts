@@ -1715,6 +1715,7 @@ const fi: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "isäntä ei listaa tietojoukkoa {path}",
   "snapshot.reason.snapdirDisabled": "tilannevedosten käyttö on pois päältä kohteelle {path}",
   "snapshot.reason.keyNotLoaded": "kohteen {path} avainta ei ole ladattu",
+  "snapshot.reason.repoInContainer": "arkisto on BombVaultin oman kontin sisällä eikä liitetyssä kansiossa",
   "snapshot.reason.other": "kohdetta {path} ei voi lukea tilannevedoksesta ({code})",
   "zfs.restartPending": "Yhä pysäytettyinä keskeytyneen tilannevedoksen jälkeen: {names}",
   "zfs.restartPendingHint": "BombVault pysäytti nämä kontit tilannevedosta varten eikä saanut niitä käyntiin. Käynnistä ne Docker-välilehdeltä. BombVault yrittää myös uudelleen käynnistyessään.",

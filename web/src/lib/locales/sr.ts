@@ -2204,6 +2204,7 @@ const sr: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "хост не наводи скуп података {path}",
   "snapshot.reason.snapdirDisabled": "приступ снимцима је искључен за {path}",
   "snapshot.reason.keyNotLoaded": "кључ за {path} није учитан",
+  "snapshot.reason.repoInContainer": "спремиште је унутар сопственог контејнера апликације BombVault, а не у монтираној фасцикли",
   "snapshot.reason.other": "{path} се не може прочитати из снимка ({code})",
   "zfs.restartPending": "После прекинутог снимка још заустављени: {names}",
   "zfs.restartPendingHint": "BombVault је ове контејнере зауставио због снимка и није успео поново да их покрене. Покрени их у картици Docker. BombVault покушава поново и када се сам покрене.",

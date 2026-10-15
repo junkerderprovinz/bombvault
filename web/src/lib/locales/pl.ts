@@ -1712,6 +1712,7 @@ const pl: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "host nie wymienia zbioru danych {path}",
   "snapshot.reason.snapdirDisabled": "dostęp do migawek jest wyłączony dla {path}",
   "snapshot.reason.keyNotLoaded": "klucz {path} nie jest wczytany",
+  "snapshot.reason.repoInContainer": "repozytorium znajduje się wewnątrz własnego kontenera BombVault, a nie w zamontowanym folderze",
   "snapshot.reason.other": "{path} nie da się odczytać z migawki ({code})",
   "zfs.restartPending": "Nadal zatrzymane po przerwanej migawce: {names}",
   "zfs.restartPendingHint": "BombVault zatrzymał te kontenery na czas migawki i nie zdołał ich uruchomić z powrotem. Uruchom je na karcie Docker. BombVault próbuje ponownie także przy własnym starcie.",

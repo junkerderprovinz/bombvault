@@ -1716,6 +1716,7 @@ const th: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "โฮสต์ไม่แสดงชุดข้อมูล {path} ในรายการ",
   "snapshot.reason.snapdirDisabled": "การเข้าถึงสแนปช็อตของ {path} ถูกปิดไว้",
   "snapshot.reason.keyNotLoaded": "ยังไม่ได้โหลดกุญแจของ {path}",
+  "snapshot.reason.repoInContainer": "คลังอยู่ภายในคอนเทนเนอร์ของ BombVault เอง ไม่ได้อยู่ในโฟลเดอร์ที่เมานต์ไว้",
   "snapshot.reason.other": "อ่าน {path} จากสแนปช็อตไม่ได้ ({code})",
   "zfs.restartPending": "ยังหยุดอยู่หลังสแนปช็อตถูกขัดจังหวะ: {names}",
   "zfs.restartPendingHint": "BombVault หยุดคอนเทนเนอร์เหล่านี้เพื่อถ่ายสแนปช็อตและเริ่มใหม่ไม่ได้ เริ่มมันจากแท็บ Docker BombVault จะลองอีกครั้งตอนที่ตัวเองเริ่มใหม่ด้วย",

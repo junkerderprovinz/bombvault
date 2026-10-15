@@ -6050,7 +6050,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// A container on ZFS is held down only for a snapshot of its data. Without
 	// a plan it is stopped for the whole backup, and fallback says why when its
 	// data would otherwise have allowed the snapshot.
-	plan, fallback := s.planContainerSnapshot(ctx, settings, tg, in, effective)
+	plan, fallback := s.planContainerSnapshot(ctx, settings, tg, in, effective, repo)
 	readMode := mode
 	readMode.IgnoreInode = s.readViewChanged(tg.ID, plan != nil)
 

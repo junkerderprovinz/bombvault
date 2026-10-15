@@ -1715,6 +1715,7 @@ const he: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "המארח לא מציג את מערך הנתונים {path} ברשימה",
   "snapshot.reason.snapdirDisabled": "הגישה לתצלומים כבויה עבור {path}",
   "snapshot.reason.keyNotLoaded": "המפתח של {path} לא נטען",
+  "snapshot.reason.repoInContainer": "המאגר נמצא בתוך המכולה של BombVault עצמה ולא בתיקייה מחוברת",
   "snapshot.reason.other": "אי אפשר לקרוא את {path} מתצלום ({code})",
   "zfs.restartPending": "עדיין עצורים אחרי תצלום שנקטע: {names}",
   "zfs.restartPendingHint": "BombVault עצר את המכלים האלה לצורך תצלום ולא הצליח להפעיל אותם מחדש. אפשר להפעיל אותם מלשונית Docker. BombVault מנסה שוב גם כשהוא עצמו עולה מחדש.",

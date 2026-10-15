@@ -1706,6 +1706,7 @@ const zh: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "主机没有列出数据集 {path}",
   "snapshot.reason.snapdirDisabled": "{path} 的快照访问已关闭",
   "snapshot.reason.keyNotLoaded": "{path} 的密钥未加载",
+  "snapshot.reason.repoInContainer": "仓库位于 BombVault 自己的容器内，而不是挂载的文件夹上",
   "snapshot.reason.other": "无法从快照中读取 {path} ({code})",
   "zfs.restartPending": "快照中断后仍处于停止：{names}",
   "zfs.restartPendingHint": "BombVault 为快照停掉了这些容器，之后没能重新启动它们。请在 Docker 标签里启动。BombVault 自己重启时也会再试一次。",

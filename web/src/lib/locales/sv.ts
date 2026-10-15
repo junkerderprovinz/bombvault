@@ -1715,6 +1715,7 @@ const sv: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "värden listar inte datauppsättningen {path}",
   "snapshot.reason.snapdirDisabled": "åtkomsten till ögonblicksbilder är avstängd för {path}",
   "snapshot.reason.keyNotLoaded": "nyckeln för {path} är inte inläst",
+  "snapshot.reason.repoInContainer": "arkivet ligger i BombVaults egen container, inte i en monterad mapp",
   "snapshot.reason.other": "{path} går inte att läsa från en ögonblicksbild ({code})",
   "zfs.restartPending": "Fortfarande stoppade efter en avbruten ögonblicksbild: {names}",
   "zfs.restartPendingHint": "BombVault stoppade de här containrarna för en ögonblicksbild och kunde inte starta dem igen. Starta dem från Docker-fliken. BombVault försöker också igen när det själv startar om.",

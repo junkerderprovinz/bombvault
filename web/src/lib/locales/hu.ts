@@ -1716,6 +1716,7 @@ const hu: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "a hoszt nem sorolja fel a(z) {path} adatkészletet",
   "snapshot.reason.snapdirDisabled": "a pillanatképek elérése ki van kapcsolva ehhez: {path}",
   "snapshot.reason.keyNotLoaded": "a(z) {path} kulcsa nincs betöltve",
+  "snapshot.reason.repoInContainer": "a tároló a BombVault saját konténerén belül van, nem csatolt mappán",
   "snapshot.reason.other": "a(z) {path} nem olvasható pillanatképből ({code})",
   "zfs.restartPending": "Megszakadt pillanatkép után még mindig leállítva: {names}",
   "zfs.restartPendingHint": "A BombVault leállította ezeket a konténereket egy pillanatképhez, és nem tudta újraindítani őket. Indítsd el őket a Docker fülön. A BombVault a saját újraindulásakor is megpróbálja.",

@@ -95,6 +95,7 @@ type snapFixture struct {
 	docker *snapViewDocker
 	target store.Target
 	in     model.Inspect
+	repo   string
 }
 
 func newSnapFixture(t *testing.T) *snapFixture {
@@ -137,7 +138,7 @@ func newSnapFixture(t *testing.T) *snapFixture {
 	zfsRealPath = func(p string) string { return p }
 	procDir, viewPIDWait = proc, 50*time.Millisecond
 	snapViewEnter = func(string) error { return nil }
-	return &snapFixture{svc: s, st: st, host: host, docker: docker, target: tg, in: model.Inspect{Running: true}}
+	return &snapFixture{svc: s, st: st, host: host, docker: docker, target: tg, in: model.Inspect{Running: true}, repo: "/host/user/user/bombvault/container"}
 }
 
 func (f *snapFixture) plan(t *testing.T, paths ...string) (*containerSnapPlan, string) {
@@ -146,7 +147,7 @@ func (f *snapFixture) plan(t *testing.T, paths ...string) (*containerSnapPlan, s
 	if err != nil {
 		t.Fatal(err)
 	}
-	return f.svc.planContainerSnapshot(t.Context(), settings, f.target, f.in, paths)
+	return f.svc.planContainerSnapshot(t.Context(), settings, f.target, f.in, paths, f.repo)
 }
 
 func TestSnapNamesNeverHandOutANameInUse(t *testing.T) {
@@ -251,6 +252,8 @@ func TestPlanSaysWhyAContainerOnZFSIsStoppedAsBefore(t *testing.T) {
 			f.host.listErr = &zfs.CmdError{Code: "ssh-unreachable"}
 		}, nil, "zfs-unreachable: ssh-unreachable"},
 		{"snapdir disabled", func(f *snapFixture) { f.host.tree[1].Snapdir = "disabled" }, nil, "snapdir-disabled: cache/appdata"},
+		{"repository in the container's own layer", func(f *snapFixture) { f.repo = "/var/lib/bombvault/repo" }, nil, snapFallbackRepo},
+		{"remote repository", func(f *snapFixture) { f.repo = "s3:https://s3.example.com/bucket"; f.svc.zfs = nil }, nil, snapFallbackNoHost},
 		{"no view", func(f *snapFixture) { f.docker.startErr = errors.New("no such image") }, nil, snapFallbackView},
 		{"view cannot be entered", func(*snapFixture) {
 			snapViewEnter = func(string) error { return errors.New("operation not permitted") }

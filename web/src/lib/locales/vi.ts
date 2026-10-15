@@ -1706,6 +1706,7 @@ const vi: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "máy chủ không liệt kê tập dữ liệu {path}",
   "snapshot.reason.snapdirDisabled": "quyền truy cập ảnh chụp đã tắt cho {path}",
   "snapshot.reason.keyNotLoaded": "khóa của {path} chưa được nạp",
+  "snapshot.reason.repoInContainer": "kho lưu trữ nằm trong container riêng của BombVault, không phải trên thư mục được gắn",
   "snapshot.reason.other": "không thể đọc {path} từ ảnh chụp ({code})",
   "zfs.restartPending": "Vẫn dừng sau một ảnh chụp bị ngắt: {names}",
   "zfs.restartPendingHint": "BombVault đã dừng các container này cho một ảnh chụp và không chạy lại được. Hãy chạy chúng từ tab Docker. BombVault cũng thử lại khi chính nó khởi động lại.",

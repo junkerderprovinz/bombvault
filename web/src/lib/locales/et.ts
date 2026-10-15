@@ -2220,6 +2220,7 @@ const et: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "host ei loetle andmestikku {path}",
   "snapshot.reason.snapdirDisabled": "hetktõmmistele juurdepääs on {path} jaoks välja lülitatud",
   "snapshot.reason.keyNotLoaded": "{path} võti pole laaditud",
+  "snapshot.reason.repoInContainer": "hoidla asub BombVaulti enda konteineris, mitte ühendatud kaustas",
   "snapshot.reason.other": "{path} ei saa hetktõmmisest lugeda ({code})",
   "zfs.restartPending": "Endiselt peatatud pärast katkenud hetktõmmist: {names}",
   "zfs.restartPendingHint": "BombVault peatas need konteinerid hetktõmmise jaoks ega saanud neid uuesti käima. Käivita need Dockeri sakil. BombVault proovib ka ise taaskäivitumisel uuesti.",

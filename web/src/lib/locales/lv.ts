@@ -2220,6 +2220,7 @@ const lv: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "saimniekdators neuzskaita datu kopu {path}",
   "snapshot.reason.snapdirDisabled": "ceļam {path} piekļuve momentuzņēmumiem ir izslēgta",
   "snapshot.reason.keyNotLoaded": "{path} atslēga nav ielādēta",
+  "snapshot.reason.repoInContainer": "krātuve atrodas pašā BombVault konteinerā, nevis pievienotā mapē",
   "snapshot.reason.other": "{path} nevar nolasīt no momentuzņēmuma ({code})",
   "zfs.restartPending": "Joprojām apturēti pēc pārtraukta momentuzņēmuma: {names}",
   "zfs.restartPendingHint": "BombVault apturēja šos konteinerus momentuzņēmumam un nespēja tos palaist atpakaļ. Palaidiet tos Docker cilnē. BombVault mēģina vēlreiz arī tad, kad pats pārstartējas.",

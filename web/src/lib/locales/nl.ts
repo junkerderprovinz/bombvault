@@ -1714,6 +1714,7 @@ const nl: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "de host kent de dataset {path} niet",
   "snapshot.reason.snapdirDisabled": "snapshottoegang is uitgeschakeld voor {path}",
   "snapshot.reason.keyNotLoaded": "de sleutel van {path} is niet geladen",
+  "snapshot.reason.repoInContainer": "de repository staat in de eigen container van BombVault, niet op een gemounte map",
   "snapshot.reason.other": "{path} kan niet uit een snapshot worden gelezen ({code})",
   "zfs.restartPending": "Nog gestopt na een afgebroken snapshot: {names}",
   "zfs.restartPendingHint": "BombVault heeft deze containers voor een snapshot gestopt en kon ze niet meer starten. Start ze via het Docker-tabblad. BombVault probeert het ook opnieuw zodra het zelf herstart.",

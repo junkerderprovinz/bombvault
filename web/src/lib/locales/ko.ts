@@ -1706,6 +1706,7 @@ const ko: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "호스트에 데이터세트 {path}이(가) 없습니다",
   "snapshot.reason.snapdirDisabled": "{path}은(는) 스냅샷 접근이 꺼져 있습니다",
   "snapshot.reason.keyNotLoaded": "{path}의 키가 로드되지 않았습니다",
+  "snapshot.reason.repoInContainer": "저장소가 마운트된 폴더가 아니라 BombVault 자체 컨테이너 안에 있습니다",
   "snapshot.reason.other": "{path}은(는) 스냅샷에서 읽을 수 없습니다 ({code})",
   "zfs.restartPending": "끊긴 스냅샷 뒤로 아직 멈춰 있음: {names}",
   "zfs.restartPendingHint": "BombVault가 스냅샷 때문에 이 컨테이너들을 멈춘 뒤 다시 시작하지 못했습니다. Docker 탭에서 시작하세요. BombVault도 스스로 다시 시작할 때 한 번 더 시도합니다.",

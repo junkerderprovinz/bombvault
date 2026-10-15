@@ -1706,6 +1706,7 @@ const ja: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "ホストにデータセット {path} がありません",
   "snapshot.reason.snapdirDisabled": "{path} ではスナップショットへのアクセスが無効です",
   "snapshot.reason.keyNotLoaded": "{path} のキーが読み込まれていません",
+  "snapshot.reason.repoInContainer": "リポジトリが BombVault 自身のコンテナ内にあり、マウントされたフォルダー上にありません",
   "snapshot.reason.other": "{path} はスナップショットから読み取れません ({code})",
   "zfs.restartPending": "中断されたスナップショットのあと、まだ停止中: {names}",
   "zfs.restartPendingHint": "BombVault はスナップショットのためにこれらのコンテナを止め、起動し直せませんでした。Docker タブから起動してください。BombVault 自身の再起動時にももう一度試します。",

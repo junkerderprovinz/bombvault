@@ -2204,6 +2204,7 @@ const sl: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "gostitelj ne pozna zbirke podatkov {path}",
   "snapshot.reason.snapdirDisabled": "dostop do posnetkov je za {path} izklopljen",
   "snapshot.reason.keyNotLoaded": "ključ za {path} ni naložen",
+  "snapshot.reason.repoInContainer": "repozitorij je znotraj lastnega vsebnika aplikacije BombVault, ne v priklopljeni mapi",
   "snapshot.reason.other": "{path} ni mogoče prebrati iz posnetka ({code})",
   "zfs.restartPending": "Po prekinjenem posnetku še vedno ustavljeni: {names}",
   "zfs.restartPendingHint": "BombVault je te vsebnike ustavil za posnetek in jih ni mogel znova zagnati. Zaženi jih v zavihku Docker. BombVault poskusi znova tudi ob svojem zagonu.",

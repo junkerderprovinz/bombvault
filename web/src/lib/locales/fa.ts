@@ -2220,6 +2220,7 @@ const fa: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "میزبان مجموعه‌داده {path} را فهرست نمی‌کند",
   "snapshot.reason.snapdirDisabled": "دسترسی به عکس‌های لحظه‌ای برای {path} خاموش است",
   "snapshot.reason.keyNotLoaded": "کلید {path} بار نشده است",
+  "snapshot.reason.repoInContainer": "مخزن درون کانتینر خودِ BombVault قرار دارد، نه روی پوشه‌ای سوار شده",
   "snapshot.reason.other": "{path} را نمی‌توان از عکس لحظه‌ای خواند ({code})",
   "zfs.restartPending": "پس از عکس لحظه‌ای نیمه‌کاره هنوز متوقف: {names}",
   "zfs.restartPendingHint": "BombVault این کانتینرها را برای یک عکس لحظه‌ای متوقف کرد و نتوانست دوباره راه بیندازد. آنها را از زبانهٔ Docker راه بینداز. BombVault هنگام راه‌اندازی دوبارهٔ خودش هم یک بار دیگر تلاش می‌کند.",

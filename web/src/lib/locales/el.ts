@@ -1715,6 +1715,7 @@ const el: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "ο host δεν έχει στη λίστα του το σύνολο δεδομένων {path}",
   "snapshot.reason.snapdirDisabled": "η πρόσβαση στα στιγμιότυπα είναι κλειστή για το {path}",
   "snapshot.reason.keyNotLoaded": "το κλειδί του {path} δεν έχει φορτωθεί",
+  "snapshot.reason.repoInContainer": "το αποθετήριο βρίσκεται μέσα στο δικό του κοντέινερ του BombVault, όχι σε προσαρτημένο φάκελο",
   "snapshot.reason.other": "το {path} δεν μπορεί να διαβαστεί από στιγμιότυπο ({code})",
   "zfs.restartPending": "Ακόμη σταματημένα μετά από διακομμένο στιγμιότυπο: {names}",
   "zfs.restartPendingHint": "Το BombVault σταμάτησε αυτά τα κοντέινερ για στιγμιότυπο και δεν μπόρεσε να τα ξεκινήσει ξανά. Ξεκινήστε τα από την καρτέλα Docker. Το BombVault ξαναπροσπαθεί και όταν ξεκινά το ίδιο.",

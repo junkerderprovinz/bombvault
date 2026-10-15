@@ -2220,6 +2220,7 @@ const is: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "hýsillinn listar ekki gagnasafnið {path}",
   "snapshot.reason.snapdirDisabled": "aðgangur að skyndimyndum er slökktur fyrir {path}",
   "snapshot.reason.keyNotLoaded": "lykillinn fyrir {path} er ekki hlaðinn",
+  "snapshot.reason.repoInContainer": "geymslan er inni í sjálfum gámi BombVault, ekki á tengdri möppu",
   "snapshot.reason.other": "ekki er hægt að lesa {path} úr skyndimynd ({code})",
   "zfs.restartPending": "Enn stöðvaðir eftir rofna skyndimynd: {names}",
   "zfs.restartPendingHint": "BombVault stöðvaði þessa gáma fyrir skyndimynd og gat ekki ræst þá aftur. Ræstu þá í Docker-flipanum. BombVault reynir líka aftur þegar það endurræsist sjálft.",

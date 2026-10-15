@@ -2220,6 +2220,7 @@ const sk: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "hostiteľ nepozná dátovú sadu {path}",
   "snapshot.reason.snapdirDisabled": "prístup k snímkam je pre {path} vypnutý",
   "snapshot.reason.keyNotLoaded": "kľúč pre {path} nie je načítaný",
+  "snapshot.reason.repoInContainer": "repozitár leží vo vlastnom kontajneri aplikácie BombVault, nie v pripojenom priečinku",
   "snapshot.reason.other": "{path} sa nedá prečítať zo snímky ({code})",
   "zfs.restartPending": "Po prerušenom snímku stále zastavené: {names}",
   "zfs.restartPendingHint": "BombVault tieto kontajnery zastavil kvôli snímku a nedokázal ich znova spustiť. Spusti ich na karte Docker. BombVault to skúsi znova aj pri svojom reštarte.",

@@ -2220,6 +2220,7 @@ const id: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "host tidak mencantumkan set data {path}",
   "snapshot.reason.snapdirDisabled": "akses snapshot dimatikan untuk {path}",
   "snapshot.reason.keyNotLoaded": "kunci {path} belum dimuat",
+  "snapshot.reason.repoInContainer": "repositori berada di dalam kontainer BombVault sendiri, bukan di folder yang dipasang",
   "snapshot.reason.other": "{path} tidak dapat dibaca dari snapshot ({code})",
   "zfs.restartPending": "Masih berhenti setelah snapshot terputus: {names}",
   "zfs.restartPendingHint": "BombVault menghentikan kontainer ini untuk snapshot dan tidak bisa menjalankannya lagi. Jalankan dari tab Docker. BombVault juga mencoba lagi saat ia sendiri dimulai ulang.",

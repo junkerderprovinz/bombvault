@@ -1715,6 +1715,7 @@ const da: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "hosten kender ikke datasættet {path}",
   "snapshot.reason.snapdirDisabled": "adgang til snapshots er slået fra for {path}",
   "snapshot.reason.keyNotLoaded": "nøglen til {path} er ikke indlæst",
+  "snapshot.reason.repoInContainer": "arkivet ligger inde i BombVaults egen container, ikke på en monteret mappe",
   "snapshot.reason.other": "{path} kan ikke læses fra et snapshot ({code})",
   "zfs.restartPending": "Stadig stoppet efter et afbrudt snapshot: {names}",
   "zfs.restartPendingHint": "BombVault stoppede disse containere til et snapshot og kunne ikke starte dem igen. Start dem fra Docker-fanen. BombVault prøver også igen, når det selv genstarter.",

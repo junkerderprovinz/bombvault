@@ -93,6 +93,13 @@ func inDataset(r MountRecord, p string) string {
 	return strings.Trim(path.Join(r.Root, rel), "/")
 }
 
+// InOwnLayer reports whether p lies in the container's own filesystem rather
+// than on something mounted into it, which another container cannot see.
+func InOwnLayer(recs []MountRecord, p string) bool {
+	m, ok := coveringMount(recs, path.Clean(p))
+	return !ok || m.MountPoint == "/"
+}
+
 // coveringMount returns the mount p is read through: the deepest one at or
 // above it, and of several on one mountpoint the last, which hides the
 // others.

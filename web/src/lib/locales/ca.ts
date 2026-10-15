@@ -2220,6 +2220,7 @@ const ca: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "l'amfitrió no llista el conjunt de dades {path}",
   "snapshot.reason.snapdirDisabled": "l'accés a instantànies està desactivat per a {path}",
   "snapshot.reason.keyNotLoaded": "la clau de {path} no està carregada",
+  "snapshot.reason.repoInContainer": "el repositori és dins del contenidor propi de BombVault, no en una carpeta muntada",
   "snapshot.reason.other": "{path} no es pot llegir des d'una instantània ({code})",
   "zfs.restartPending": "Encara aturats després d'una instantània interrompuda: {names}",
   "zfs.restartPendingHint": "BombVault ha aturat aquests contenidors per a una instantània i no els ha pogut tornar a engegar. Engega'ls des de la pestanya Docker. BombVault també ho torna a provar quan es reinicia.",

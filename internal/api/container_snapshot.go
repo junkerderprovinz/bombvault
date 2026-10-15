@@ -19,6 +19,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
@@ -69,6 +70,7 @@ const (
 	snapFallbackHost        = "zfs-unreachable"
 	snapFallbackView        = "view-unavailable"
 	snapFallbackNotInListed = "dataset-unknown"
+	snapFallbackRepo        = "repo-in-container"
 )
 
 // containerSnapPlan is where a container's data lies on ZFS: what the backup
@@ -94,7 +96,7 @@ func (p *containerSnapPlan) datasets() []string {
 // with data on ZFS is stopped for the whole backup; it is empty when nothing
 // suggested otherwise: the read is switched off, the container is not running,
 // or none of its data is on ZFS.
-func (s *Service) planContainerSnapshot(ctx context.Context, settings store.Settings, tg store.Target, in model.Inspect, paths []string) (*containerSnapPlan, string) {
+func (s *Service) planContainerSnapshot(ctx context.Context, settings store.Settings, tg store.Target, in model.Inspect, paths []string, repo string) (*containerSnapPlan, string) {
 	if !in.Running || len(paths) == 0 || !tg.SnapshotsOnZFS(settings.ContainerSnapshots) {
 		return nil, ""
 	}
@@ -112,6 +114,11 @@ func (s *Service) planContainerSnapshot(ctx context.Context, settings store.Sett
 			return nil, ""
 		}
 		return nil, unplaced.Code + ": " + s.toHostPath(unplaced.Path)
+	}
+	// restic reads the snapshot inside a view that shares only what is mounted
+	// into this container, so a repository in its own layer is not there.
+	if !restic.IsRemoteRepo(repo) && zfs.InOwnLayer(recs, repo) {
+		return nil, snapFallbackRepo
 	}
 
 	if s.zfs == nil {

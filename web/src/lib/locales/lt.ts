@@ -2220,6 +2220,7 @@ const lt: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "pagrindinis kompiuteris nenurodo duomenų rinkinio {path}",
   "snapshot.reason.snapdirDisabled": "prieiga prie momentinių kopijų išjungta: {path}",
   "snapshot.reason.keyNotLoaded": "{path} raktas neįkeltas",
+  "snapshot.reason.repoInContainer": "saugykla yra paties BombVault konteinerio viduje, o ne prijungtame aplanke",
   "snapshot.reason.other": "{path} negalima nuskaityti iš momentinės kopijos ({code})",
   "zfs.restartPending": "Vis dar sustabdyti po nutrūkusios momentinės kopijos: {names}",
   "zfs.restartPendingHint": "BombVault sustabdė šiuos konteinerius momentinei kopijai ir nesugebėjo jų paleisti atgal. Paleisk juos Docker kortelėje. BombVault pabando dar kartą ir pats pasileisdamas iš naujo.",

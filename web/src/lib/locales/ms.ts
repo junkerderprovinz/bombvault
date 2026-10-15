@@ -2220,6 +2220,7 @@ const ms: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "hos tidak menyenaraikan set data {path}",
   "snapshot.reason.snapdirDisabled": "capaian syot kilat dimatikan untuk {path}",
   "snapshot.reason.keyNotLoaded": "kunci {path} belum dimuatkan",
+  "snapshot.reason.repoInContainer": "repositori berada di dalam bekas BombVault sendiri, bukan pada folder yang dilekapkan",
   "snapshot.reason.other": "{path} tidak boleh dibaca daripada syot kilat ({code})",
   "zfs.restartPending": "Masih berhenti selepas syot kilat terputus: {names}",
   "zfs.restartPendingHint": "BombVault menghentikan bekas ini untuk syot kilat dan tidak dapat menjalankannya semula. Jalankan dari tab Docker. BombVault juga mencuba lagi apabila ia sendiri dimulakan semula.",

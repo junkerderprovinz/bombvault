@@ -2220,6 +2220,7 @@ const bg: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "хостът не познава набора от данни {path}",
   "snapshot.reason.snapdirDisabled": "достъпът до снимки е изключен за {path}",
   "snapshot.reason.keyNotLoaded": "ключът на {path} не е зареден",
+  "snapshot.reason.repoInContainer": "хранилището се намира в собствения контейнер на BombVault, а не в монтирана папка",
   "snapshot.reason.other": "{path} не може да се чете от моментна снимка ({code})",
   "zfs.restartPending": "Още спрени след прекъсната моментна снимка: {names}",
   "zfs.restartPendingHint": "BombVault спря тези контейнери за моментна снимка и не успя да ги пусне обратно. Пусни ги от раздела Docker. BombVault опитва пак и когато сам се рестартира.",

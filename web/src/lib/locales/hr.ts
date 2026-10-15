@@ -2220,6 +2220,7 @@ const hr: Partial<Translations> = {
   "snapshot.reason.datasetUnknown": "host ne navodi skup podataka {path}",
   "snapshot.reason.snapdirDisabled": "pristup snimkama isključen je za {path}",
   "snapshot.reason.keyNotLoaded": "ključ za {path} nije učitan",
+  "snapshot.reason.repoInContainer": "repozitorij je unutar vlastitog spremnika aplikacije BombVault, a ne na montiranoj mapi",
   "snapshot.reason.other": "{path} se ne može čitati iz snimke ({code})",
   "zfs.restartPending": "Nakon prekinute snimke još zaustavljeni: {names}",
   "zfs.restartPendingHint": "BombVault je te spremnike zaustavio zbog snimke i nije ih uspio ponovno pokrenuti. Pokrenite ih u kartici Docker. BombVault pokuša ponovno i kad se sam pokrene.",
