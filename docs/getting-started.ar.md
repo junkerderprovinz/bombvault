@@ -6,7 +6,7 @@
 
 | المتطلب | ملاحظات |
 |---|---|
-| **Unraid 6.12+** | الإصدارات الأقدم غير مُختبَرة. Unraid هو الهدف الأساسي، لكن BombVault يعمل أيضًا على مضيف Docker عادي وعلى TrueNAS Scale (يُنظر [مضيف Docker عام](#generic-docker-host)). |
+| **Unraid 6.12+** | الإصدارات الأقدم غير مُختبَرة. Unraid هو الهدف الأساسي، لكن BombVault يعمل أيضًا على مضيف Docker عادي وعلى TrueNAS Scale (يُنظر [مضيف Docker عام](#generic-docker-host) و[TrueNAS SCALE](#truenas)). |
 | **موقع مستودع restic** | مسار محلي (يُنصح به: المصفوفة أو الكاش)، أو SMB، أو NFS، أو أي خلفية rclone. |
 | **مقبس Docker** | يركّبه القالب تلقائياً (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | يركّبه القالب بالكامل تلقائياً (`/boot` إلى `/host/boot`). يشغّل نسخ الفلاش الاحتياطي ويتيح لحاوية مُستعادة أن تظهر من جديد كتطبيق Unraid عادي وقابل للتحرير. |
@@ -34,7 +34,7 @@
 
 ## مضيف Docker عام {#generic-docker-host}
 
-لست على Unraid؟ يعمل BombVault أيضًا كحاوية عادية على أي مضيف Docker (وهذا أيضًا ما يسند دعم الحاويات على TrueNAS Scale، قبل أن يكون له مدخل خاص في كتالوج التطبيقات هناك).
+لست على Unraid؟ يعمل BombVault أيضًا كحاوية عادية على أي مضيف Docker. ولـ TrueNAS SCALE خطوات خاصة به تحت [TrueNAS SCALE](#truenas).
 
 1. احصل من المستودع على الملف [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) الجاهز للتحرير.
 2. ضبط `APP_KEY` (يُنظر أدناه) وتوجيه وحدة Host Data إلى جذر البيانات الحقيقي. تعليقات الملف تشرح الأمرين.
@@ -42,14 +42,54 @@
 
 ما الذي يختلف عن Unraid:
 
-- **لا يوجد قسم Flash.** لا توجد ذاكرة إقلاع لالتقاطها أو استعادتها، لذا لا عمل لقسم Flash هنا. بدلًا من ذلك تعرض **إضافة** في صفحة النسخ الاحتياطية **إعدادات النظام** كاقتراح مجلد: مجموعة مجلدات `/etc` مبدئية تُراجع وتُعدَّل قبل الحفظ.
+- **لا يوجد قسم Flash.** لا توجد ذاكرة إقلاع لالتقاطها أو استعادتها، لذا لا عمل لقسم Flash هنا. بدلًا من ذلك، عندما يصل Host Data إلى `/etc` على المضيف، تعرض **إضافة** في صفحة النسخ الاحتياطية **إعدادات النظام** كاقتراح مجلد: مجموعة مجلدات `/etc` مبدئية تُراجع وتُعدَّل قبل الحفظ.
 - **لا توجد إشعارات Unraid الأصلية.** قنوات الإشعارات الخاصة بـ BombVault (webhook، تنبيهات فشل النسخ خارج الموقع وغيرها) تعمل كالمعتاد؛ ويُتخطّى فقط الإرسال الخاص بنظام إشعارات Unraid، إذ لا وجود لمثل هذا النظام هنا.
 - **نسخ الأجهزة الافتراضية اختياري ويحتاج مضيف libvirtd منفصلًا يمكن بلوغه عبر SSH.** تُراجع الكتلة المعلّقة في ملف compose. المضيف العام لا يحمل في ذاته أي مدير للأجهزة الافتراضية.
 - **لا توجد أداة للوحة Dashboard.** BombVault Widget إضافة لـ Unraid، لذا تُتخطّى هذه الخطوة أيضًا.
 - **العثور على بيانات الحاوية.** من دون اصطلاح `appdata` في Unraid، يُعثر على مجلد بيانات الحاوية من المقاطع الواردة في `DATA_ROOT_SEGMENTS`، ومن وحدات Docker المسمّاة، ومن مجلد العمل لمشروع Compose، ومن التسمية `bombvault.data` (يُنظر [اكتشاف مصادر النسخ الاحتياطي](configuration.md#backup-source-detection)). لا تصل الوحدات المسمّاة والإعداد المسبق `/etc` إلا إلى المسارات داخل تركيب Host Data، لذا يُوجَّه Host Data إلى مجلد أب مشترك يشمل أيضًا جذر بيانات Docker.
 - **`PLATFORM`.** يُضبط على `generic` أو `truenas`. إن تُرك غير مضبوط، يتعرّف BombVault على Unraid من علامته الخاصة على تركيب الفلاش ويعامل أي شيء آخر كمضيف عام، وتُتخطّى الخطوات الخاصة بـ Unraid بدلًا من تجربتها وفشلها.
 
-يسلك **TrueNAS Scale** طريق compose نفسه؛ وقد أُعدّ إدخال للكتالوج في المستودع لكنه لم يُقدَّم بعد. يحتاج نسخ الـ VM الاحتياطي هناك إلى `LIBVIRT_URI`، لأن libvirtd في TrueNAS يستمع على مقبس خاص به (`/run/truenas_libvirt/libvirt-sock`) لا تستطيع متغيرات `LIBVIRT_*` الثلاثة التعبير عنه (يُنظر [الإعدادات](configuration.md)). إلى أي مدى ثبت ذلك: شغّل BombVault نسخه الاحتياطي واستعادته لـ zvol عبر SSH على جهاز TrueNAS Scale حقيقي، وعادت كل استعادة مطابقة بايتًا ببايت، سواء في مكانه أو على zvol كان قد حُذف. أما استعادة VM كاملة هناك (إعادة تعريف النطاق وإقلاعه) والإنتاجية مع حجم كبير من الجيجابايتات فلم تُختبر بعد. يُنصح بتجربة استعادة هناك قبل الاعتماد عليه.
+### TrueNAS SCALE {#truenas}
+
+BombVault ليس في كتالوج تطبيقات TrueNAS بعد، لذا يُثبَّت كتطبيق مخصص: **Apps, Discover Apps**، ثم **Install via YAML** في القائمة بجانب **Custom App**. يضبط ملف YAML أدناه الأشياء نفسها التي يضبطها مدخل الكتالوج في مجلد `truenas-apps` في المستودع. يُستبدل `tank` باسم الـ pool المستخدَم، ويُملأ `APP_KEY` كما يشرح القسم التالي.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # لنسخ الـ VM الاحتياطي:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+ثم يُفتح `https://<truenas-ip>:30528/`. ما ورد تحت [ما الذي يختلف عن Unraid](#generic-docker-host) ينطبق هنا أيضاً، وعلى TrueNAS:
+
+- **الصلاحيات (capabilities).** يحتاج BombVault الصلاحيات الست المذكورة أعلاه. تفشل نسخ الـ VM الاحتياطية من دون `SETPCAP`.
+- **Host Data** مسار مضيف على مجموعة بيانات، هنا `/mnt/tank`، مركَّب على المسار نفسه داخل التطبيق. لهذا يذكره `HOST_SOURCE_ROOT` و`HOST_MOUNT_ROOT` كلاهما. ويمرر `rslave` عمليات التركيب التي يجريها المضيف لاحقاً، وهذا ما تحتاجه نسخ مجموعات بيانات ZFS.
+- **البيانات في ixVolume لا تُنسخ احتياطياً.** التطبيق الذي تخزينه ixVolume يحفظ بياناته تحت `/mnt/.ix-apps`، خارج Host Data. يحفظ BombVault تعريف التطبيق فقط، ويذكر التشغيل المجلدات التي تركها. لكل تطبيق يُراد نسخ بياناته يُختار تخزين **Host Path** على مجموعة بيانات تحت Host Data.
+- **نسخ الـ VM ومجموعات بيانات ZFS** تصل إلى TrueNAS عبر SSH بصفة root. تُفعَّل خدمة SSH تحت **System, Services**، ويُضاف المفتاح العام من **الإعدادات، التكاملات، SSH المضيف** إلى المستخدم root تحت **Credentials, Users**. وتحتاج نسخ الـ VM أيضاً إلى `LIBVIRT_URI` كما في الأعلى، لأن libvirtd في TrueNAS يستمع على مقبس خاص به. وإذا لم يُضبط `LIBVIRT_URI` ولا `LIBVIRT_HOST`، يستخدم BombVault البوابة الافتراضية للتطبيق كمضيف، لأن `host.docker.internal` لا يُحَلّ في تطبيق TrueNAS. يشرح [دليل نسخ الـ VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) التفاصيل، بما فيها الـ VMs على zvols.
+- **النسخة المتماثلة لـ ZFS تستخدم مفتاحاً آخر.** النسخة المتماثلة على خادم ZFS ثانٍ تسجّل الدخول بالمفتاح الذي يعرضه مربع حوار النسخة المتماثلة، لا بمفتاح SSH المضيف. يُضاف ذلك المفتاح على الخادم المستقبِل.
+- **التطبيق المحذوف يعود على خطوتين.** يُعاد تثبيته أولاً في TrueNAS بالاسم نفسه، فيُنشئ ذلك شبكته من جديد، ثم تُستعاد بياناته في BombVault. وحتى ذلك الحين يبلّغ فحص ما قبل الاستعادة عن الشبكة المفقودة، وترفض الاستعادة قبل أن تغيّر أي شيء.
+- **بجانب الأصل** تُنشئ حاوية Docker عادية. تعمل، لكن شاشة Apps في TrueNAS لا تعرضها.
+- **تفريغات قواعد البيانات** تعمل على تركيبات مجموعات البيانات. الاستيراد إلى مجلد بيانات هو نفسه مجموعة بيانات مستقلة ينقل المحتويات القديمة إلى مجلد بجانبه، لذا تحتاج مجموعة البيانات الأعلى إلى مساحة لها.
 
 ## الإعداد المطلوب الوحيد
 

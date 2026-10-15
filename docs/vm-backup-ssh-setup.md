@@ -180,8 +180,8 @@ The steps above (SSH enable, key authorization, networking, per-VM method)
 are written for Unraid, but the same `qemu+ssh://` mechanism works against
 any reachable libvirtd, including TrueNAS Scale, which has shipped libvirt-
 based VMs again since 25.04.2. Five things differ on TrueNAS: the connection
-string needs an explicit override (1) and root SSH needs enabling (2) before
-anything works at all, and three further differences affect what a backup
+string needs an explicit override (1) and BombVault's key goes onto root in
+TrueNAS's own user settings (2) before anything works at all, and three further differences affect what a backup
 actually captures: zvol-backed disks (3), vTPM state (4), and how TrueNAS
 names its libvirt domains (5).
 
@@ -206,18 +206,35 @@ names the target taken from the URI. On TrueNAS a user other than root also
 needs `zfs allow <user> snapshot,destroy,mount <dataset>` for ZFS dataset
 backups; see [ZFS datasets](https://junkerderprovinz.github.io/bombvault/zfs-datasets/#truenas).
 
-### 2. Root SSH is disabled by default since TrueNAS 24.10
+Put the TrueNAS LAN address into the URI. With neither `LIBVIRT_URI` nor
+`LIBVIRT_HOST` set, BombVault takes the app's default gateway as the host,
+because `host.docker.internal` does not resolve in a TrueNAS app, and the boot
+log names the address it picked. That is enough for ZFS dataset backups; VM
+backups still need the URI for the socket.
 
-Step 2 above (authorizing BombVault's public key for `root`) requires root
-SSH login, which TrueNAS Scale turns off out of the box starting with 24.10.
-Either:
+The app needs the `SETPCAP` capability for VM backups, next to `CHOWN`,
+`DAC_OVERRIDE`, `FOWNER`, `SETGID` and `SETUID`. Without it libvirt stops with
+"cannot apply process capabilities". The YAML under
+[TrueNAS SCALE](https://junkerderprovinz.github.io/bombvault/getting-started/#truenas)
+sets all six.
 
-- **System Settings → General → Login As Root with Password**: enable it,
-  then authorize BombVault's public key the same way Step 2 describes, using
-  `<user>` = `root` in the `LIBVIRT_URI` above; or
-- create a sudo-capable admin account (with an API key, per TrueNAS's own
-  account setup) and authorize BombVault's key for that account instead,
-  using its username in place of `root` in `LIBVIRT_URI`.
+### 2. BombVault's key on TrueNAS
+
+Step 2 above writes to Unraid's flash and does not apply here. On TrueNAS:
+
+1. Turn on the SSH service under **System, Services**.
+2. Under **Credentials, Users**, edit **root** and paste BombVault's public key
+   (from **Settings, Integrations, Host SSH**) as its SSH public key. TrueNAS
+   keeps it across reboots and updates.
+
+Fresh installs of TrueNAS 24.10 and newer give root no password, and the key
+login needs none. If you would rather not use root, authorize the key for an admin
+account with sudo and put its name in place of `root` in `LIBVIRT_URI`; ZFS
+dataset backups then need `zfs allow` as described above.
+
+A ZFS replica to a second server logs in with a key of its own, which the
+replica dialog shows. The Host SSH key does not authorize a replica, and the
+replica key does not authorize VM backups.
 
 ### Caveat: direct `virsh` changes are invisible to TrueNAS's middleware
 
@@ -288,8 +305,8 @@ file, so the restored VM boots the restored data:
 1. Before anything is touched, BombVault checks that the run holds an image of
    every zvol disk. A run that lacks one is refused and the VM is left as it is.
 2. An existing zvol gets a snapshot first, `<dataset>@bombvault-before-restore-<time>`.
-   The log names it, and `zfs rollback` to it undoes the restore. Remove it
-   with `zfs destroy` once the restored VM works.
+   The log names it, and `zfs rollback` to it undoes the restore. It stays
+   until you remove it with `zfs destroy` once the restored VM works.
 3. A zvol that no longer exists is created at the size it had when it was
    backed up, and an existing one of another size is set back to that size.
 4. `dd` writes the image onto `/dev/zvol/<dataset>`. With compression on (the
@@ -306,13 +323,20 @@ old backup folder window on the Restore page has no field for this, so it is
 reachable through a direct API call only.** A restore on the same instance
 writes each zvol back onto itself.
 
+**Export as files leaves zvols out.** A VM whose disks are all zvols is
+refused with that reason; restore it from a backup instead. For a VM with
+file disks as well, the export holds the file disks and a note that names the
+zvols it left out.
+
 **Tried on real hardware (TrueNAS SCALE 25.10, ZFS 2.3.4).** The backup and
 restore code ran over SSH against a scratch zvol: three backups, a restore in
 place after the zvol had been overwritten and grown, and a restore onto a zvol
 that had been deleted. Each restore read back with the same SHA-256 as the
 source, the zvol had its old size again, and no snapshot or clone was left
-behind. A whole VM restore on TrueNAS (undefine, write the zvols, define, boot)
-is covered by tests with fakes only.
+behind. On TrueNAS SCALE 25.10 BombVault also backed up a whole VM whose only
+disk is a zvol, running (with the graceful and the live method) and shut off.
+A whole VM restore on TrueNAS (undefine, write the zvols, define, boot) is
+covered by tests with fakes only.
 
 File-backed (Unraid) VM disks are not affected by any of this.
 
@@ -403,7 +427,7 @@ non-fatal treatment NVRAM already gets (a failed read/write only logs a
 warning). Empty-safe: skipped entirely when the domain has no `<tpm>`
 element (`TPMPath == ""`) or SSH capture failed, exactly like NVRAM.
 
-**⚠ Like the zvol mechanism above, this is reasoned from libvirt's and
+**⚠ Unlike the zvol mechanism above, this is reasoned from libvirt's and
 TrueNAS's public documentation and is unit-tested only**: it has never been
 exercised against a real TrueNAS Scale box with a real vTPM-enabled guest.
 NVRAM-only (Unraid) VM backup/restore is completely unaffected: TPM handling
@@ -456,9 +480,9 @@ platform.KindTrueNAS`) before ever preferring the resolved friendly name over
 the raw one. On Unraid the shape-classifier's output is never consulted, so
 a coincidentally-TrueNAS-shaped Unraid VM name displays unchanged.
 
-**⚠ Like the two mechanisms above, this is reasoned from TrueNAS's public
-documentation and is unit-tested only**: the naming schemes have not been
-confirmed against a real TrueNAS 25.10 or 26 box. Unraid is unaffected:
+**The 25.10 scheme was seen on a real TrueNAS SCALE 25.10 box** (see the
+caveat above). The TrueNAS 26 scheme is reasoned from TrueNAS's public
+documentation and is unit-tested only. Unraid is unaffected:
 an ordinary hand-chosen domain name matches neither shape and passes through
 unchanged.
 

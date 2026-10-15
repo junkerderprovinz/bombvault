@@ -7,7 +7,7 @@
 | 变量 | 是否必需 | 描述 |
 |---|---|---|
 | `APP_KEY` | **是** | 用于派生 restic 仓库密码的 32 字节十六进制密钥（64 个十六进制字符）。用 `openssl rand -hex 32` 生成。请妥善保管：丢失它将使加密备份无法恢复。 |
-| `LIBVIRT_HOST` | 虚拟机和 ZFS 数据集需要 | 用于虚拟机备份、通过 SSH 连接的 Unraid 主机（默认 `host.docker.internal`；模板会预填一个 LAN-IP 占位符）。请使用你的 Unraid LAN IP，在自定义 `br0.x` 网络上为必需。 ZFS 数据集备份也使用它（模板字段 **Host SSH: Address**）；占位值 `192.168.x.x` 视为未设置。 |
+| `LIBVIRT_HOST` | 虚拟机和 ZFS 数据集需要 | 用于虚拟机备份、通过 SSH 连接的 Unraid 主机（默认 `host.docker.internal`；模板会预填一个 LAN-IP 占位符）。请使用你的 Unraid LAN IP，在自定义 `br0.x` 网络上为必需。 ZFS 数据集备份也使用它（模板字段 **Host SSH: Address**）；占位值 `192.168.x.x` 视为未设置。如果 `host.docker.internal` 无法解析（例如在 TrueNAS 应用中），而 `LIBVIRT_URI` 也没有指定主机，BombVault 会使用容器的默认网关，并在启动日志中写明它。 |
 | `LIBVIRT_SSH_PORT` | 否 | 用于虚拟机备份的主机 SSH 端口（默认 `22`）。 模板字段 **Host SSH: Port**，ZFS 数据集也使用。 |
 | `LIBVIRT_SSH_USER` | 否 | 用于虚拟机备份的主机上的 SSH 用户（默认 `root`）。 模板字段 **Host SSH: User**，ZFS 数据集也使用。 |
 | `LIBVIRT_URI` | 否 | 完整的 libvirt 连接 URI，将**原样**使用，而不再由上方三个 `LIBVIRT_*` 变量拼接而成（此时这三个变量对连接字符串不再生效）。默认未设置。TrueNAS Scale 上需要用到它，因为其 libvirtd 监听在拼接形式无法表达的非标准套接字上：`qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`。参见 [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) 的 TrueNAS Scale 部分。 如果是 `qemu+ssh://` URI，`LIBVIRT_HOST`、`LIBVIRT_SSH_USER` 和 `LIBVIRT_SSH_PORT` 中未设置的每一项都从中获取，BombVault 自己的 SSH 命令（NVRAM 传输、ZFS 数据集）也是如此。 |
@@ -17,6 +17,7 @@
 | `BIND_HOST` | 否 | WebUI 监听的地址（默认 `0.0.0.0`，即所有接口）。在容器中请保持不设置，因为其发布的端口需要所有接口；`127.0.0.1` 适用于在 Docker 之外运行。健康检查也访问同一地址。 |
 | `TRUSTED_PROXY` | 否 | BombVault 前面反向代理的地址或 CIDR 网段，以逗号分隔（例如 `192.168.20.11` 或 `10.0.0.0/8`）。只有来自这些跳点的 `X-Forwarded-For` 才会被采信，登录限流随后按真实客户端分别计数，而不是把代理后面的所有人放进同一个桶。未设置（默认）表示谁都不信任：无条件采信的标头会让任何调用方自行挑选计数桶。 |
 | `HOST_SOURCE_ROOT` | 否 | 挂载为 **Host Data** 的主机路径（默认 `/mnt`）。BombVault 会将 Docker 报告的绑定挂载来源转换为此挂载下的路径。仅在你挂载了不同的主机根目录时才更改。 |
+| `HOST_MOUNT_ROOT` | 否 | Host Data 在容器内的挂载位置（默认 `/host/user`）。在 TrueNAS 上，Host Data 挂载在与主机相同的路径，因此它和 `HOST_SOURCE_ROOT` 都填写该路径，例如 `/mnt/tank`（参见 [TrueNAS SCALE](getting-started.md#truenas)）。 |
 | `DATA_ROOT_SEGMENTS` | 否 | 以逗号分隔的路径片段名称，用于将绑定挂载来源标记为备份数据（默认为 `appdata`，对应 Unraid 的 `/mnt/user/appdata/<container>` 约定）。当所列片段中的任意一个作为完整路径片段出现在某容器绑定挂载的主机来源中时，该挂载就会被自动选中用于备份，例如 `DATA_ROOT_SEGMENTS=appdata,config` 也会选中类似 `.../config` 的绑定挂载。关于查找容器数据文件夹的其他常驻方式，参见[备份来源检测](#backup-source-detection)。 |
 | `PLATFORM` | 否 | 强制指定 BombVault 认为自己运行在哪个平台上，而不进行自动检测：`unraid`、`generic` 或 `truenas`（默认未设置，会通过在闪存挂载下探测 `dockerMan` 标记来自动检测 Unraid，否则为 `generic`；无法识别的值同样回退为 `generic`，并记录到日志）。请在通用 Docker 主机或 TrueNAS Scale 上显式设置它，而不要依赖仅适用于 Unraid 的自动探测；通用 compose 文件正是这样做的。它会改变 appdata 回退约定、跨实例还原目标的默认值，以及是否会尝试仅适用于 Unraid 的通知/配套插件步骤（参见 `internal/platform`）。 |
 | `BOMBVAULT_SELF_CONTAINER` | 否 | BombVault 容器自身的名称，以便它绝不会备份（从而停止）自己。 |
@@ -28,6 +29,8 @@
 ## 挂载
 
 按 CA 模板所示挂载 Docker 套接字、闪存（`/boot`）和 **Host Data** 根目录（`/mnt`）。备份的*来源*和*目标*都位于 Host Data 之下，且它以 **slave** 方式挂载，因此在容器启动后才挂载的远程共享（例如位于 `/mnt/remotes` 之下）无需重启即可可见。
+
+在 TrueNAS 上，Host Data 是 `/mnt/tank` 这样的数据集路径，绝不是 ixVolume。应用保存在 ixVolume 中的数据位于其外，不会被备份。参见 [TrueNAS SCALE](getting-started.md#truenas)。
 
 ZFS 数据集备份同样需要这种模式：主机要在容器启动之后才挂载数据集的快照。参见 [ZFS 数据集](zfs-datasets.md)。
 

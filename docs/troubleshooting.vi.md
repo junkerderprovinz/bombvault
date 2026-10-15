@@ -33,6 +33,7 @@ Sao lưu VM kết nối libvirt qua SSH, không bao giờ qua một điểm gắ
 - Xác nhận SSH được bật trên máy chủ và khóa công khai của BombVault được ủy quyền trong `/root/.ssh/authorized_keys` (Cài đặt, Tích hợp, SSH máy chủ hiển thị khóa và một nút **Kiểm tra kết nối**).
 - Trên một mạng `br0.x` tùy chỉnh, đặt `LIBVIRT_HOST` thành IP LAN Unraid của bạn (container không thể tiếp cận máy chủ qua `host.docker.internal` ở đó). Bật **Settings, Docker, Host access to custom networks**.
 - Nếu bạn đã đổi cổng SSH của Unraid, đặt `LIBVIRT_SSH_PORT` cho khớp.
+- Trên TrueNAS, đặt `LIBVIRT_URI` với socket libvirt riêng của TrueNAS, cấp capability `SETPCAP` cho ứng dụng và thêm khóa cho root trong **Credentials, Users** (xem [TrueNAS SCALE](getting-started.md#truenas)).
 - Chẩn đoán từng bước đầy đủ (kiểm tra khả năng tiếp cận, định tuyến VLAN, `Permission denied (publickey)`, `Host key verification failed`) nằm trong [hướng dẫn Sao lưu VM qua SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Một snapshot VM trực tiếp đã không chạy
@@ -50,6 +51,8 @@ Nhân bản off-site vốn được thiết kế theo kiểu hết sức có th�
 ## Một lần khôi phục đã hủy trước khi nó bắt đầu
 
 Trước khi bất cứ thứ gì bị dừng hoặc xóa, việc khôi phục chạy một lần kiểm tra xung đột trước khi chạy: nó xác minh rằng IP tĩnh của container và các cổng máy chủ được công bố đều còn trống. Nếu một container khác đã giữ một trong số đó, nó hủy bỏ với một thông báo rõ ràng, khả thi thay vì để lại một lần khôi phục dở dang. Giải phóng cổng hoặc IP xung đột, rồi thử lại.
+
+Nếu mạng của container không tồn tại, chẳng hạn vì ứng dụng TrueNAS của nó đã bị xóa, kiểm tra trước khi khôi phục nêu tên mạng đó và việc khôi phục từ chối trước khi thay đổi bất cứ thứ gì. Cài lại ứng dụng trong TrueNAS với cùng tên, việc này tạo lại mạng, rồi khôi phục dữ liệu của nó.
 
 ## Một bản xuất thô đã thất bại thay vì ghi một tệp
 
@@ -71,7 +74,9 @@ Bản kết xuất thất bại không bao giờ làm hỏng bản sao lưu bao 
 
 Việc nhập sẽ dừng container, dời thư mục dữ liệu của nó sang một bên và để image tạo một thư mục trống vào chỗ đó. Nếu một bước trước khi nhập thất bại, thư mục cũ được đặt trở lại một cách tự động. Nếu chính việc nhập thất bại, container giữ thư mục mới còn thư mục cũ nằm bên cạnh với tên `<thư mục dữ liệu>.bombvault-before-import-<dấu thời gian>`; thông báo lỗi của lần chạy nêu đúng đường dẫn.
 
-Để đặt lại bằng tay: dừng container, đổi tên thư mục dữ liệu hiện tại cho khuất lối, đổi tên thư mục được giữ về tên gốc, rồi khởi động container. Trên Unraid, trình quản lý tệp ở thẻ Shares làm được việc này.
+Một thư mục dữ liệu vốn là một tập dữ liệu riêng, như trên TrueNAS, không thể đổi tên. Khi đó việc nhập để thư mục nguyên chỗ và chuyển nội dung của nó vào thư mục được giữ bên cạnh, nên tập dữ liệu phía trên cần đủ chỗ cho chúng. Việc nhập kiểm tra điều này trước khi dừng container.
+
+Để đặt lại bằng tay: dừng container, đổi tên thư mục dữ liệu hiện tại cho khuất lối, đổi tên thư mục được giữ về tên gốc, rồi khởi động container. Với một tập dữ liệu, hãy chuyển nội dung thay vì đổi tên các thư mục. Trên Unraid, trình quản lý tệp ở thẻ Shares làm được việc này.
 
 ## Sao lưu tập dữ liệu ZFS thất bại hoặc bỏ qua một tập dữ liệu {#zfs-datasets}
 

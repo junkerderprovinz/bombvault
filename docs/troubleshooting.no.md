@@ -33,6 +33,7 @@ VM-sikkerhetskopiering snakker med libvirt over SSH, aldri en montering.
 - Bekreft at SSH er aktivert på hosten og at BombVaults offentlige nøkkel er autorisert i `/root/.ssh/authorized_keys` (Innstillinger, Integrasjoner, Verts-SSH viser nøkkelen og en **Test tilkobling**-knapp).
 - På et egendefinert `br0.x`-nettverk, sett `LIBVIRT_HOST` til din Unraid-LAN-IP (containeren kan ikke nå hosten via `host.docker.internal` der). Aktiver **Settings, Docker, Host access to custom networks**.
 - Hvis du endret Unraids SSH-port, sett `LIBVIRT_SSH_PORT` til å matche.
+- På TrueNAS, sett `LIBVIRT_URI` med TrueNAS sin egen libvirt-socket, gi appen capabilityen `SETPCAP`, og legg nøkkelen til root under **Credentials, Users** (se [TrueNAS SCALE](getting-started.md#truenas)).
 - Full trinn-for-trinn-diagnose (nåbarhetstest, VLAN-ruting, `Permission denied (publickey)`, `Host key verification failed`) finnes i [veiledningen for VM-sikkerhetskopiering over SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Et live-VM-øyeblikksbilde kjørte ikke
@@ -50,6 +51,8 @@ Ekstern replikering er best-effort av design, så en ekstern hikke feiler aldri 
 ## En gjenoppretting avbrøt før den startet
 
 Før noe stoppes eller fjernes, kjører gjenopprettingen en pre-flight konfliktsjekk: den verifiserer at containerens statiske IP og publiserte host-porter er ledige. Hvis en annen container allerede holder en, avbryter den med en tydelig, handlingsrettet melding i stedet for å etterlate en halvferdig gjenoppretting. Frigjør den motstridende porten eller IP-en, og prøv på nytt.
+
+Finnes ikke containerens nettverk, for eksempel fordi TrueNAS-appen ble slettet, nevner sjekken før gjenopprettingen nettverket, og gjenopprettingen avviser før den endrer noe. Installer appen på nytt i TrueNAS under samme navn, noe som oppretter nettverket igjen, og gjenopprett deretter dataene.
 
 ## En vanlig eksport feilet i stedet for å skrive en fil
 
@@ -71,7 +74,9 @@ En mislykket dump velter aldri sikkerhetskopien rundt den; den føres som sin eg
 
 En import stopper containeren, setter datamappen til side og lar imaget lage en tom i stedet. Feiler et steg før selve importen, legges den gamle mappen tilbake av seg selv. Feiler importen, beholder containeren den ferske mappen, og den gamle blir liggende ved siden av som `<datamappe>.bombvault-before-import-<tidsstempel>`; feilmeldingen fra kjøringen nevner den nøyaktige stien.
 
-Slik legger du den tilbake for hånd: stopp containeren, gi den nåværende datamappen et annet navn så den er av veien, gi den bevarte mappen tilbake det opprinnelige navnet, og start containeren. På Unraid gjør filbehandleren under fanen Shares dette.
+En datamappe som er sitt eget datasett, som på TrueNAS, kan ikke få nytt navn. Importen lar da mappen ligge og flytter innholdet til den bevarte mappen ved siden av, så datasettet over trenger plass til det. Importen sjekker det før den stopper containeren.
+
+Slik legger du den tilbake for hånd: stopp containeren, gi den nåværende datamappen et annet navn så den er av veien, gi den bevarte mappen tilbake det opprinnelige navnet, og start containeren. For et datasett flytter du innholdet i stedet for å gi mappene nye navn. På Unraid gjør filbehandleren under fanen Shares dette.
 
 ## En sikkerhetskopi av ZFS-datasett feilet eller hoppet over et datasett {#zfs-datasets}
 

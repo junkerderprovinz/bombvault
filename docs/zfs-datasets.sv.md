@@ -114,7 +114,7 @@ Slå på det i kortet **Replik** på postens flik Inställningar. Där väljer d
 Vilken maskin som helst med ZFS och SSH kan ta emot, till exempel en andra Unraid eller en TrueNAS. BombVault behöver inte köra där.
 
 1. Under **Inställningar, Parkoppling**, välj **Anslut via SSH** i **ZFS-server utan BombVault**, eller **Lägg till ZFS-server** i postens kort **Replik**.
-2. Ange adress, användare och port. Dialogen visar BombVaults publika nyckel. Lägg till den i användarens `~/.ssh/authorized_keys` på servern. På Unraid finns det under **Users, root, SSH keys**. Beroende på **Display Settings** ligger Users i huvudmenyn eller under Settings. Det här är replikanyckeln. Den skiljer sig från nyckeln för SSH-länken till VM och värd, så lägg till den även om den andra redan är godkänd.
+2. Ange adress, användare och port. Dialogen visar BombVaults publika nyckel. Lägg till den i användarens `~/.ssh/authorized_keys` på servern. På Unraid finns det under **Users, root, SSH keys**. Beroende på **Display Settings** ligger Users i huvudmenyn eller under Settings. På TrueNAS redigerar du användaren under **Credentials, Users**. Det här är replikanyckeln. Den skiljer sig från nyckeln för SSH-länken till VM och värd, så lägg till den även om den andra redan är godkänd.
 3. Testa anslutningen. Dialogen listar sedan serverns pooler. Välj en och ange roten, som som standard är `<pool>/bombvault-replica`.
 4. Välj den nya servern i postens kort **Replik**. Servern har då ett eget kort på sidan Instanser, och **Öppna** leder till dess sida.
 
@@ -285,7 +285,8 @@ Varje rad är en montering i containern. Raden för en datauppsättning visar de
 
 ## TrueNAS SCALE {#truenas}
 
-- När `LIBVIRT_URI` är satt (som för VM-säkerhetskopior på TrueNAS) tar BombVault SSH-värd, användare och port för sina zfs-kommandon från URI:n, var och en som inte är satt för sig. Utan VM-säkerhetskopior sätter du i stället `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` och `LIBVIRT_SSH_PORT`. Lägg till variablerna under **Additional Environment Variables**.
+- När `LIBVIRT_URI` är satt (som för VM-säkerhetskopior på TrueNAS) tar BombVault SSH-värd, användare och port för sina zfs-kommandon från URI:n, var och en som inte är satt för sig. Utan VM-säkerhetskopior behöver inget sättas: `host.docker.internal` går inte att slå upp i en TrueNAS-app, så BombVault når värden genom appens standardgateway, som root på port 22. Sätt `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` och `LIBVIRT_SSH_PORT` när du vill ha en annan adress eller användare, i appens `environment`.
+- Lägg till Värd-SSH-nyckeln från **Inställningar, Integrationer, Värd-SSH** hos root under **Credentials, Users**, och slå på SSH-tjänsten under **System, Services**. En [replik](#replica-push) till den här eller en annan TrueNAS behöver dessutom replikanyckeln, som är en annan.
 - En annan användare än root behöver behörighet på postens översta datauppsättning, som sedan täcker varje datauppsättning under den:
 
   ```
@@ -295,4 +296,4 @@ Varje rad är en montering i containern. Raden för en datauppsättning visar de
   Att återställa till en ny datauppsättning kräver dessutom `create` på datauppsättningen ovanför, och att sätta sparade egenskaper kräver behörighet för de egenskaperna.
 
   En SSH-session utan root på TrueNAS har inte `/usr/sbin` i sin sökväg; BombVault anropar då `/usr/sbin/zfs` direkt.
-- Appens **Host Data** måste vara en värdsökväg ovanför datauppsättningarna, till exempel `/mnt/tank`, inte en ixVolume. Med en värdsökväg skickar appen värdens nya monteringar vidare till BombVault (`rslave`), och det behöver åtkomst till ögonblicksbilder.
+- Appens **Host Data** måste vara en värdsökväg ovanför datauppsättningarna, till exempel `/mnt/tank`, inte en ixVolume. Med en värdsökväg skickar appen värdens nya monteringar vidare till BombVault (`rslave`), och det behöver åtkomst till ögonblicksbilder. Se [TrueNAS SCALE](getting-started.md#truenas) för hela uppsättningen av appen.

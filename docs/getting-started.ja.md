@@ -6,7 +6,7 @@
 
 | 要件 | 備考 |
 |---|---|
-| **Unraid 6.12 以上** | それより古いバージョンはテストされていません。Unraid が主な対象ですが、BombVault は通常の Docker ホストや TrueNAS Scale でも動きます（[一般的な Docker ホスト](#generic-docker-host)を参照）。 |
+| **Unraid 6.12 以上** | それより古いバージョンはテストされていません。Unraid が主な対象ですが、BombVault は通常の Docker ホストや TrueNAS Scale でも動きます（[一般的な Docker ホスト](#generic-docker-host)と [TrueNAS SCALE](#truenas) を参照）。 |
 | **restic リポジトリの場所** | ローカルパス（推奨: アレイまたはキャッシュ）、SMB、NFS、または任意の rclone バックエンド。 |
 | **Docker ソケット** | テンプレートによって自動的にマウントされます（`/var/run/docker.sock`）。 |
 | **Unraid フラッシュ**（`/boot`） | テンプレートによって全体が自動的にマウントされます（`/boot` を `/host/boot` へ）。フラッシュバックアップを支え、復元されたコンテナが通常の編集可能な Unraid アプリとして再び現れるようにします。 |
@@ -34,7 +34,7 @@
 
 ## 一般的な Docker ホスト {#generic-docker-host}
 
-Unraid ではない場合。BombVault はどの Docker ホストでも通常のコンテナとして動きます（TrueNAS Scale でのコンテナ対応も、独自のアプリカタログ掲載に先立ってこれで動いています）。
+Unraid ではない場合。BombVault はどの Docker ホストでも通常のコンテナとして動きます。TrueNAS SCALE には [TrueNAS SCALE](#truenas) に専用の手順があります。
 
 1. リポジトリからそのまま編集できる [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) を取得します。
 2. `APP_KEY`（下記参照）を設定し、Host Data ボリュームを実際のデータルートに向けます。どちらもファイル内のコメントが案内します。
@@ -42,14 +42,54 @@ Unraid ではない場合。BombVault はどの Docker ホストでも通常の�
 
 Unraid との違い:
 
-- **フラッシュセクションがありません。** 取り込んだり復元したりする起動 USB が存在しないため、フラッシュセクションはここでは出番がありません。代わりに、バックアップページの **追加** が **システム構成** をフォルダーの候補として提示します。保存前に確認して編集する `/etc` のフォルダーセットの初期案です。
+- **フラッシュセクションがありません。** 取り込んだり復元したりする起動 USB が存在しないため、フラッシュセクションはここでは出番がありません。代わりに、Host Data がホストの `/etc` まで届く場合、バックアップページの **追加** が **システム構成** をフォルダーの候補として提示します。保存前に確認して編集する `/etc` のフォルダーセットの初期案です。
 - **Unraid 独自の通知がありません。** BombVault 自身の通知チャネル（Webhook、オフサイト失敗の警告など）は通常どおり動きます。省かれるのは Unraid 固有の通知システムへの送信だけで、ここにはその仕組みがないからです。
 - **VM のバックアップは任意で、SSH で届く別の libvirtd ホストが必要です。** compose ファイル内のコメントアウトされたブロックを参照してください。一般的な Docker ホスト自体には VM 管理機能はありません。
 - **ダッシュボードウィジェットがありません。** BombVault Widget は Unraid のプラグインなので、その手順も省かれます。
 - **コンテナのデータの見つけ方。** Unraid の `appdata` の慣習がないため、コンテナのデータフォルダーは `DATA_ROOT_SEGMENTS` の区切り、Docker の名前付きボリューム、Compose プロジェクトの作業ディレクトリ、`bombvault.data` ラベルから見つけます（[バックアップ元の自動判定](configuration.md#backup-source-detection)を参照）。名前付きボリュームと `/etc` プリセットが届くのは Host Data マウント内のパスだけなので、Host Data は Docker のデータルートも含む共通の上位ディレクトリに向けてください。
 - **`PLATFORM`。** `generic` または `truenas` に設定します。未設定の場合、BombVault はフラッシュのマウントにある Unraid 独自の目印で Unraid を判別し、それ以外はすべて汎用として扱います。Unraid 専用の手順は、試して失敗する代わりに省かれます。
 
-**TrueNAS Scale** でも同じ compose の方法を使います。カタログのエントリはリポジトリに用意してありますが、まだ提出していません。TrueNAS の libvirtd は独自のソケット（`/run/truenas_libvirt/libvirt-sock`）で待ち受けており、3 つの `LIBVIRT_*` 変数では表せないため、そこでの VM バックアップには `LIBVIRT_URI` が必要です（[設定](configuration.md)を参照）。検証の範囲は次のとおりです。BombVault 自身による zvol のバックアップと復元を、実際の TrueNAS Scale マシンに対して SSH 経由で実行し、元の場所への復元でも削除済みの zvol への復元でも、読み戻した内容はバイト単位まで一致しました。VM 全体の復元（ドメインの再定義と起動）と、数ギガバイト規模でのスループットは未検証です。頼りにする前に、そこで復元を試してください。
+### TrueNAS SCALE {#truenas}
+
+BombVault はまだ TrueNAS のアプリカタログにないため、カスタムアプリとしてインストールします。**Apps, Discover Apps** を開き、**Custom App** の横のメニューから **Install via YAML** を選びます。以下の YAML は、リポジトリの `truenas-apps` フォルダーにあるカタログエントリと同じ内容を設定します。`tank` を自分のプールに置き換え、`APP_KEY` は次の節の説明どおりに入力してください。
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # VM バックアップ用:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+その後 `https://<truenas-ip>:30528/` を開きます。[Unraid との違い](#generic-docker-host)に挙げた点はここでも当てはまり、TrueNAS ではさらに次の点があります:
+
+- **ケーパビリティ。** BombVault には上の 6 つが必要です。`SETPCAP` がないと VM バックアップは失敗します。
+- **Host Data** はデータセット上のホストパス（ここでは `/mnt/tank`）で、アプリ内でも同じパスにマウントされます。そのため `HOST_SOURCE_ROOT` と `HOST_MOUNT_ROOT` の両方にこのパスを指定します。`rslave` はホストが後から行うマウントを渡し、ZFS データセットのバックアップにはこれが必要です。
+- **ixVolume 内のデータはバックアップされません。** ストレージが ixVolume のアプリは、データを Host Data の外にある `/mnt/.ix-apps` の下に置きます。BombVault が保存するのはアプリの定義だけで、実行は対象外にしたフォルダーを示します。データをバックアップしたいアプリにはすべて、Host Data 配下のデータセット上の **Host Path** ストレージを選んでください。
+- **VM と ZFS データセットのバックアップ** は、root として SSH で TrueNAS に接続します。**System, Services** で SSH サービスをオンにし、**設定、連携、ホスト SSH** の公開鍵を **Credentials, Users** で root ユーザーに追加してください。TrueNAS の libvirtd は独自のソケットで待ち受けるため、VM バックアップには上記の `LIBVIRT_URI` も必要です。`LIBVIRT_URI` も `LIBVIRT_HOST` も設定されていない場合、TrueNAS アプリでは `host.docker.internal` が名前解決できないため、BombVault はアプリのデフォルトゲートウェイをホストとして使います。zvol 上の VM も含めた詳細は [VM バックアップガイド](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale)にあります。
+- **ZFS レプリカは別の鍵を使います。** 2 台目の ZFS サーバー上のレプリカは、ホスト SSH の鍵ではなく、レプリカのダイアログに表示される鍵でログインします。その鍵を受け取り側のサーバーに追加してください。
+- **削除したアプリは 2 段階で戻します。** まず TrueNAS で同じ名前のアプリを再インストールします。これでネットワークが再び作成されます。その後 BombVault でデータを復元します。それまでは復元前の確認がネットワークの欠落を報告し、復元は何かを変更する前に拒否されます。
+- **元の隣に** は通常の Docker コンテナを作成します。動作はしますが、TrueNAS の Apps 画面には表示されません。
+- **データベースダンプ** はデータセットのマウント上でも動きます。それ自体がデータセットであるデータフォルダーへの取り込みでは、古い内容が隣のフォルダーに移されるため、上位のデータセットにその分の空きが必要です。
 
 ## 必須設定はひとつだけ
 

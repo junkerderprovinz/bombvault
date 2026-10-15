@@ -33,6 +33,7 @@ Backupul VM comunică cu libvirt prin SSH, niciodată o montare.
 - Confirmă că SSH este activat pe gazdă și că cheia publică a BombVault este autorizată în `/root/.ssh/authorized_keys` (Setări, Integrări, SSH al gazdei arată cheia și un buton **Testează conexiunea**).
 - Pe o rețea `br0.x` personalizată, setează `LIBVIRT_HOST` la IP-ul LAN al Unraid (containerul nu poate ajunge acolo la gazdă prin `host.docker.internal`). Activează **Settings, Docker, Host access to custom networks**.
 - Dacă ai schimbat portul SSH al Unraid, setează `LIBVIRT_SSH_PORT` să corespundă.
+- Pe TrueNAS, setează `LIBVIRT_URI` cu socket-ul libvirt propriu al TrueNAS, dă aplicației capabilitatea `SETPCAP` și adaugă cheia la root, la **Credentials, Users** (vezi [TrueNAS SCALE](getting-started.md#truenas)).
 - Diagnosticul complet pas cu pas (test de accesibilitate, rutare VLAN, `Permission denied (publickey)`, `Host key verification failed`) este în [ghidul de backup VM prin SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Un instantaneu VM live nu a rulat
@@ -50,6 +51,8 @@ Replicarea off-site este best-effort prin concepție, așa că un sughiț off-si
 ## O restaurare s-a oprit înainte de a începe
 
 Înainte ca ceva să fie oprit sau eliminat, restaurarea rulează o verificare de conflicte înainte de zbor: verifică dacă IP-ul static al containerului și porturile publicate ale gazdei sunt libere. Dacă un alt container deține deja unul, se oprește cu un mesaj clar, acționabil, în loc să lase o restaurare pe jumătate terminată. Eliberează portul sau IP-ul în conflict, apoi reîncearcă.
+
+Dacă rețeaua containerului nu există, de exemplu pentru că aplicația lui TrueNAS a fost ștearsă, verificarea înainte de restaurare numește rețeaua, iar restaurarea se oprește înainte să schimbe ceva. Reinstalează aplicația în TrueNAS cu același nume, ceea ce creează din nou rețeaua, apoi restaurează-i datele.
 
 ## Un export în clar a eșuat în loc să scrie un fișier
 
@@ -71,7 +74,9 @@ Un dump eșuat nu duce niciodată la eșec backupul din jurul lui; este consemna
 
 Un import oprește containerul, pune deoparte folderul lui de date și lasă imaginea să creeze unul gol în loc. Dacă eșuează un pas de dinaintea importului propriu-zis, folderul vechi este pus la loc de la sine. Dacă eșuează importul, containerul rămâne cu folderul proaspăt, iar cel vechi stă alături ca `<folder de date>.bombvault-before-import-<marcaj de timp>`; mesajul de eroare al rulării numește calea exactă.
 
-Ca să îl pui la loc manual: oprește containerul, redenumește folderul de date curent ca să îl dai la o parte, redenumește folderul păstrat înapoi la numele original și pornește containerul. Pe Unraid, managerul de fișiere din fila Shares face asta.
+Un folder de date care este un set de date propriu, ca pe TrueNAS, nu poate fi redenumit. Importul lasă atunci folderul pe loc și îi mută conținutul în folderul păstrat de lângă el, așa că setul de date de deasupra are nevoie de loc pentru el. Importul verifică asta înainte să oprească containerul.
+
+Ca să îl pui la loc manual: oprește containerul, redenumește folderul de date curent ca să îl dai la o parte, redenumește folderul păstrat înapoi la numele original și pornește containerul. La un set de date, mută conținutul în loc să redenumești folderele. Pe Unraid, managerul de fișiere din fila Shares face asta.
 
 ## Un backup al unui set de date ZFS a eșuat sau a sărit un set {#zfs-datasets}
 

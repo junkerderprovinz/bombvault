@@ -6,7 +6,7 @@ Ta strona przeprowadzi Cię od świeżej maszyny Unraid do Twojej pierwszej kopi
 
 | Wymaganie | Uwagi |
 |---|---|
-| **Unraid 6.12+** | Wcześniejsze wersje nie są testowane. Unraid jest główną platformą, ale BombVault działa też na zwykłym hoście Dockera i na TrueNAS Scale (zobacz [Zwykły host Dockera](#generic-docker-host)). |
+| **Unraid 6.12+** | Wcześniejsze wersje nie są testowane. Unraid jest główną platformą, ale BombVault działa też na zwykłym hoście Dockera i na TrueNAS Scale (zobacz [Zwykły host Dockera](#generic-docker-host) i [TrueNAS SCALE](#truenas)). |
 | **Lokalizacja repozytorium restic** | Ścieżka lokalna (zalecane: Twoja macierz lub cache), SMB, NFS lub dowolny backend rclone. |
 | **Gniazdo Docker** | Montowane automatycznie przez szablon (`/var/run/docker.sock`). |
 | **Flash Unraid** (`/boot`) | Montowany w całości automatycznie przez szablon (`/boot` do `/host/boot`). Zasila kopię flash i pozwala przywróconemu kontenerowi pojawić się ponownie jako normalna, edytowalna aplikacja Unraid. |
@@ -34,7 +34,7 @@ Najprostsza droga to **Community Applications**.
 
 ## Zwykły host Dockera {#generic-docker-host}
 
-Nie Unraid? BombVault działa też jako zwykły kontener na dowolnym hoście Dockera (na tym opiera się również obsługa kontenerów na TrueNAS Scale, zanim pojawi się tam własny wpis w katalogu aplikacji).
+Nie Unraid? BombVault działa też jako zwykły kontener na dowolnym hoście Dockera. TrueNAS SCALE ma własne kroki w [TrueNAS SCALE](#truenas).
 
 1. Pobierz z repozytorium gotowy do edycji plik [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml).
 2. Ustaw `APP_KEY` (patrz niżej) i skieruj wolumen Host Data na swój prawdziwy katalog danych. Komentarze w pliku prowadzą przez jedno i drugie.
@@ -42,14 +42,54 @@ Nie Unraid? BombVault działa też jako zwykły kontener na dowolnym hoście Doc
 
 Czym różni się to od Unraida:
 
-- **Brak sekcji Flash.** Nie ma pendrive'a rozruchowego do zabezpieczenia ani odtworzenia, więc sekcja Flash nie ma tu nic do roboty. Zamiast tego **Dodaj** na stronie Kopie zapasowe proponuje **Konfiguracja systemu** jako podpowiedź folderu: początkowy zestaw folderów z `/etc`, który przeglądasz i poprawiasz przed zapisaniem.
+- **Brak sekcji Flash.** Nie ma pendrive'a rozruchowego do zabezpieczenia ani odtworzenia, więc sekcja Flash nie ma tu nic do roboty. Zamiast tego, gdy Host Data sięga do `/etc` hosta, **Dodaj** na stronie Kopie zapasowe proponuje **Konfiguracja systemu** jako podpowiedź folderu: początkowy zestaw folderów z `/etc`, który przeglądasz i poprawiasz przed zapisaniem.
 - **Brak natywnych powiadomień Unraida.** Własne kanały powiadomień BombVaulta (webhook, alerty o nieudanej replikacji poza siedzibę i tak dalej) działają normalnie; pomijane jest tylko wysłanie do systemu powiadomień Unraida, bo takiego systemu tutaj nie ma.
 - **Kopia maszyn wirtualnych jest opcjonalna i wymaga osobnego hosta libvirtd dostępnego przez SSH.** Zobacz zakomentowany blok w pliku compose. Zwykły host Dockera sam w sobie nie ma menedżera maszyn wirtualnych.
 - **Brak widżetu na pulpicie.** BombVault Widget to wtyczka Unraida, więc ten krok również jest pomijany.
 - **Odnajdywanie danych kontenera.** Bez konwencji `appdata` z Unraida folder danych kontenera jest odnajdywany na podstawie segmentów w `DATA_ROOT_SEGMENTS`, nazwanych woluminów Dockera, katalogu roboczego projektu Compose i etykiety `bombvault.data` (zobacz [Wykrywanie źródeł kopii zapasowej](configuration.md#backup-source-detection)). Nazwane woluminy i zestaw predefiniowany `/etc` sięgają tylko do ścieżek wewnątrz montowania Host Data, więc skieruj Host Data na wspólny katalog nadrzędny, który obejmuje też katalog danych Dockera.
 - **`PLATFORM`.** Ustaw ją na `generic` albo `truenas`. Gdy nie jest ustawiona, BombVault rozpoznaje Unraid po jego własnym znaczniku na montowaniu flash, a wszystko inne traktuje jako zwykły host, i kroki tylko dla Unraida są pomijane, zamiast być próbowane i kończyć się błędem.
 
-**TrueNAS Scale** idzie tą samą drogą przez compose; wpis do katalogu jest przygotowany w repozytorium, ale jeszcze go nie zgłoszono. Kopia VM wymaga tam `LIBVIRT_URI`, bo libvirtd na TrueNAS nasłuchuje na własnym gnieździe (`/run/truenas_libvirt/libvirt-sock`), którego trzy zmienne `LIBVIRT_*` nie potrafią wyrazić (zobacz [Konfiguracja](configuration.md)). Na ile to sprawdzono: własną kopię i przywracanie zvola w BombVault uruchomiono przez SSH na prawdziwej maszynie z TrueNAS Scale, a każde przywrócenie dało się odczytać bajt w bajt, zarówno na miejscu, jak i na zvolu, który wcześniej usunięto. Przywracanie całej VM (ponowne zdefiniowanie domeny i start) oraz przepustowość przy wielu gigabajtach nie są tam przetestowane. Zanim zaczniesz na tym polegać, przetestuj tam przywracanie.
+### TrueNAS SCALE {#truenas}
+
+BombVault nie jest jeszcze w katalogu aplikacji TrueNAS, więc zainstaluj go jako własną aplikację: **Apps, Discover Apps**, a potem **Install via YAML** w menu obok **Custom App**. Poniższy YAML ustawia to samo co wpis katalogu w folderze `truenas-apps` repozytorium. Zastąp `tank` swoją pulą i uzupełnij `APP_KEY`, jak opisuje następna sekcja.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # Dla kopii VM:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+Następnie otwórz `https://<truenas-ip>:30528/`. To, co wymieniono w [Czym różni się to od Unraida](#generic-docker-host), dotyczy także tego przypadku, a na TrueNAS:
+
+- **Uprawnienia (capabilities).** BombVault potrzebuje sześciu powyższych. Bez `SETPCAP` kopie VM kończą się błędem.
+- **Host Data** to ścieżka hosta na zbiorze danych, tutaj `/mnt/tank`, zamontowana pod tą samą ścieżką wewnątrz aplikacji. Dlatego `HOST_SOURCE_ROOT` i `HOST_MOUNT_ROOT` podają ją obie. `rslave` przekazuje montowania, które host wykonuje później, a tego potrzebują kopie zbiorów danych ZFS.
+- **Dane w ixVolume nie są kopiowane.** Aplikacja, której pamięcią jest ixVolume, trzyma dane pod `/mnt/.ix-apps`, poza Host Data. BombVault zapisuje tylko definicję aplikacji, a przebieg podaje foldery, które pominął. Dla każdej aplikacji, której dane chcesz kopiować, wybierz pamięć **Host Path** na zbiorze danych pod Host Data.
+- **Kopie VM i zbiorów danych ZFS** łączą się z TrueNAS przez SSH jako root. Włącz usługę SSH w **System, Services** i dodaj klucz publiczny z **Ustawienia, Integracje, SSH hosta** do użytkownika root w **Credentials, Users**. Kopie VM potrzebują też `LIBVIRT_URI` jak wyżej, bo libvirtd na TrueNAS nasłuchuje na własnym gnieździe. Gdy nie ustawiono ani `LIBVIRT_URI`, ani `LIBVIRT_HOST`, BombVault używa domyślnej bramy aplikacji jako hosta, bo `host.docker.internal` nie rozwiązuje się w aplikacji TrueNAS. [Poradnik kopii VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) opisuje szczegóły, także dla VM na zvolach.
+- **Replika ZFS używa innego klucza.** Replika na drugim serwerze ZFS loguje się kluczem, który pokazuje okno repliki, a nie kluczem SSH hosta. Dodaj ten klucz na serwerze odbierającym.
+- **Usunięta aplikacja wraca w dwóch krokach.** Najpierw zainstaluj ją ponownie w TrueNAS pod tą samą nazwą, co tworzy na nowo jej sieć, a potem przywróć jej dane w BombVault. Do tego czasu kontrola przed przywracaniem zgłasza brakującą sieć, a przywracanie odmawia, zanim cokolwiek zmieni.
+- **Obok oryginału** tworzy zwykły kontener Dockera. Działa, ale ekran Apps w TrueNAS go nie wymienia.
+- **Zrzuty baz danych** działają na montowaniach zbiorów danych. Import do folderu danych, który jest osobnym zbiorem danych, przenosi starą zawartość do folderu obok, więc nadrzędny zbiór danych potrzebuje na nią miejsca.
 
 ## Jedno wymagane ustawienie
 

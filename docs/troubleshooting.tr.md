@@ -33,6 +33,7 @@ VM yedeklemesi, bir bağlamayla değil, SSH üzerinden libvirt ile konuşur.
 - Host'ta SSH'nin etkin olduğunu ve BombVault'un genel anahtarının `/root/.ssh/authorized_keys` içinde yetkilendirildiğini onayla (Ayarlar, Entegrasyonlar, Ana makine SSH anahtarı ve bir **Bağlantıyı test et** düğmesi gösterir).
 - Özel bir `br0.x` ağında, `LIBVIRT_HOST`'u Unraid LAN IP'ne ayarla (konteyner orada host'a `host.docker.internal` üzerinden ulaşamaz). **Settings, Docker, Host access to custom networks**'ni etkinleştir.
 - Unraid'in SSH portunu değiştirdiysen, eşleşmesi için `LIBVIRT_SSH_PORT`'u ayarla.
+- TrueNAS'ta `LIBVIRT_URI`'yi TrueNAS'ın kendi libvirt soketiyle ayarla, uygulamaya `SETPCAP` yetkisini ver ve anahtarı **Credentials, Users** altında root'a ekle (bkz. [TrueNAS SCALE](getting-started.md#truenas)).
 - Tam adım adım tanılama (ulaşılabilirlik testi, VLAN yönlendirme, `Permission denied (publickey)`, `Host key verification failed`) [SSH üzerinden VM yedekleme kılavuzu](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)'nda yer alır.
 
 ## Bir canlı VM anlık görüntüsü çalışmadı
@@ -50,6 +51,8 @@ Site dışı çoğaltma tasarım gereği en iyi çabayla çalışır, bu yüzden
 ## Bir geri yükleme başlamadan iptal oldu
 
 Herhangi bir şey durdurulmadan ya da kaldırılmadan önce, geri yükleme bir uçuş öncesi çakışma denetimi çalıştırır: konteynerin statik IP'sinin ve yayımlanan host portlarının serbest olduğunu doğrular. Başka bir konteyner zaten birini tutuyorsa, yarım kalmış bir geri yükleme bırakmak yerine açık, uygulanabilir bir mesajla iptal eder. Çakışan portu ya da IP'yi serbest bırak, ardından yeniden dene.
+
+Konteynerin ağı yoksa, örneğin TrueNAS uygulaması silindiği için, geri yüklemeden önceki denetim ağın adını belirtir ve geri yükleme hiçbir şeyi değiştirmeden reddeder. Uygulamayı TrueNAS'ta aynı adla yeniden kur, bu ağı yeniden oluşturur, sonra verisini geri yükle.
 
 ## Bir düz dışa aktarma, dosya yazmak yerine başarısız oldu
 
@@ -71,7 +74,9 @@ Başarısız bir döküm, çevresindeki yedeklemeyi asla düşürmez; kendi baş
 
 İçe aktarma konteyneri durdurur, veri klasörünü kenara alır ve yerine imajın boş bir klasör oluşturmasına izin verir. İçe aktarmanın kendisinden önceki bir adım başarısız olursa eski klasör kendiliğinden geri konur. İçe aktarma başarısız olursa konteyner yeni klasörle kalır, eskisi de yanında `<veri klasörü>.bombvault-before-import-<zaman damgası>` adıyla durur; çalışmanın hata iletisi tam yolu belirtir.
 
-Elle geri koymak için: konteyneri durdur, mevcut veri klasörünün adını değiştirip yoldan çek, saklanan klasörü özgün adına geri döndür ve konteyneri başlat. Unraid'de bunu Shares sekmesindeki dosya yöneticisi yapar.
+TrueNAS'ta olduğu gibi kendisi ayrı bir veri kümesi olan bir veri klasörünün adı değiştirilemez. İçe aktarma o zaman klasörü yerinde bırakır ve içeriğini yanındaki saklanan klasöre taşır, bu yüzden üstteki veri kümesinde onlar için yer olmalıdır. İçe aktarma bunu konteyneri durdurmadan önce denetler.
+
+Elle geri koymak için: konteyneri durdur, mevcut veri klasörünün adını değiştirip yoldan çek, saklanan klasörü özgün adına geri döndür ve konteyneri başlat. Bir veri kümesinde klasörlerin adını değiştirmek yerine içeriği taşı. Unraid'de bunu Shares sekmesindeki dosya yöneticisi yapar.
 
 ## Bir ZFS veri kümesi yedeği başarısız oldu veya bir kümeyi atladı {#zfs-datasets}
 

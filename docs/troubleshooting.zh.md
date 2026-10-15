@@ -33,6 +33,7 @@ BombVault 开箱即用地在端口 `3443` 上提供 HTTPS（自签名证书）�
 - 确认主机上已启用 SSH，且 BombVault 的公钥已在 `/root/.ssh/authorized_keys` 中获得授权（设置，集成，主机 SSH 会显示该密钥和一个**测试连接**按钮）。
 - 在自定义 `br0.x` 网络上，将 `LIBVIRT_HOST` 设置为你的 Unraid LAN IP（在那里容器无法通过 `host.docker.internal` 访问主机）。启用**Settings, Docker, Host access to custom networks**。
 - 如果你更改了 Unraid 的 SSH 端口，请相应设置 `LIBVIRT_SSH_PORT`。
+- 在 TrueNAS 上，请用 TrueNAS 自己的 libvirt 套接字设置 `LIBVIRT_URI`，给应用加上 `SETPCAP` 能力，并在 **Credentials, Users** 下把密钥添加给 root（参见 [TrueNAS SCALE](getting-started.md#truenas)）。
 - 完整的逐步诊断（可达性测试、VLAN 路由、`Permission denied (publickey)`、`Host key verification failed`）位于[通过 SSH 备份虚拟机指南](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)。
 
 ## 一次实时虚拟机快照没有运行
@@ -50,6 +51,8 @@ BombVault 开箱即用地在端口 `3443` 上提供 HTTPS（自签名证书）�
 ## 一次还原在开始前就中止了
 
 在停止或移除任何东西之前，还原会运行一次预检冲突检查：它会验证容器的静态 IP 和已发布的主机端口是否空闲。如果另一个容器已占用其中之一，它会以一条清晰、可操作的消息中止，而不是留下一个只完成一半的还原。释放冲突的端口或 IP，然后重试。
+
+如果容器的网络不存在，例如因为它的 TrueNAS 应用已被删除，还原前的检查会指出该网络，还原会在做出任何更改之前拒绝执行。在 TrueNAS 中以相同名称重新安装该应用，这会重新创建网络，然后再还原它的数据。
 
 ## 一次普通导出失败了，没有写出文件
 
@@ -71,7 +74,9 @@ BombVault 开箱即用地在端口 `3443` 上提供 HTTPS（自签名证书）�
 
 导入会停止容器，把它的数据目录挪到一边，让镜像在原位创建一个空目录。如果失败发生在导入本身之前的某一步，旧目录会自动放回去。如果是导入本身失败，容器会保留新目录，旧的则留在旁边，名为 `<数据目录>.bombvault-before-import-<时间戳>`；该次运行的错误信息会给出确切路径。
 
-手动放回的做法：停止容器，把当前的数据目录改名挪开，把保留的目录改回原名，然后启动容器。在 Unraid 上，Shares 标签页的文件管理器就能做到。
+本身就是一个数据集的数据目录（如在 TrueNAS 上）无法改名。这时导入会把目录留在原处，把其中的内容移到旁边保留的目录中，因此上一级数据集需要有容纳它们的空间。导入会在停止容器之前检查这一点。
+
+手动放回的做法：停止容器，把当前的数据目录改名挪开，把保留的目录改回原名，然后启动容器。对于数据集，请移动其中的内容，而不是给目录改名。在 Unraid 上，Shares 标签页的文件管理器就能做到。
 
 ## ZFS 数据集备份失败或跳过了某个数据集 {#zfs-datasets}
 
