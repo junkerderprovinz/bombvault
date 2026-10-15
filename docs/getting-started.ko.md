@@ -49,7 +49,7 @@ Unraid와 다른 점:
 - **컨테이너 데이터 찾기.** Unraid의 `appdata` 규칙이 없으므로, 컨테이너의 데이터 폴더는 `DATA_ROOT_SEGMENTS`의 구간, Docker 이름 있는 볼륨, Compose 프로젝트의 작업 디렉터리, `bombvault.data` 레이블로 찾습니다([백업 원본 자동 판별](configuration.md#backup-source-detection) 참고). 이름 있는 볼륨과 `/etc` 프리셋은 Host Data 마운트 안의 경로에만 닿으므로, Host Data는 Docker의 데이터 루트까지 포함하는 공통 상위 디렉터리로 지정하세요.
 - **`PLATFORM`.** `generic` 또는 `truenas`로 설정합니다. 설정하지 않으면 BombVault는 플래시 마운트에 있는 Unraid 고유 표식으로 Unraid를 알아보고 그 밖의 경우는 모두 일반 호스트로 취급하며, Unraid 전용 단계는 시도했다 실패하는 대신 건너뜁니다.
 
-**TrueNAS Scale**도 같은 compose 방식을 씁니다. 카탈로그 항목은 저장소에 준비되어 있지만 아직 제출하지 않았습니다. TrueNAS의 libvirtd는 자체 소켓(`/run/truenas_libvirt/libvirt-sock`)에서 대기하는데 세 개의 `LIBVIRT_*` 변수로는 이를 표현할 수 없으므로, 그곳에서 VM을 백업하려면 `LIBVIRT_URI`가 필요합니다([구성](configuration.md) 참고). 지금까지 확인된 범위는 이렇습니다. zvol 백업은 실제 TrueNAS Scale 장비에서 실행 중인 VM에 연결된 zvol을 대상으로 돌렸고, `zfs snapshot`, `zfs send`, restic, `zfs receive`를 한 바퀴 거친 결과가 바이트 단위로 일치했습니다. BombVault가 직접 수행하는 전체 복원은 아직 TrueNAS 하드웨어에서 실행해 보지 않았고, 그 zvol은 희소(sparse) 볼륨이었으므로 수 기가바이트 규모의 처리량은 검증되지 않았습니다. 그곳에서 믿고 쓰기 전에 복원을 시험해 보세요.
+**TrueNAS Scale**도 같은 compose 방식을 씁니다. 카탈로그 항목은 저장소에 준비되어 있지만 아직 제출하지 않았습니다. TrueNAS의 libvirtd는 자체 소켓(`/run/truenas_libvirt/libvirt-sock`)에서 대기하는데 세 개의 `LIBVIRT_*` 변수로는 이를 표현할 수 없으므로, 그곳에서 VM을 백업하려면 `LIBVIRT_URI`가 필요합니다([구성](configuration.md) 참고). 지금까지 확인된 범위는 이렇습니다. BombVault 자체의 zvol 백업과 복원을 실제 TrueNAS Scale 장비에 SSH로 실행했고, 제자리 복원과 삭제된 zvol로의 복원 모두 다시 읽은 내용이 바이트 단위로 일치했습니다. 그곳에서 VM 전체를 복원하는 경우(도메인 재정의와 부팅)와 수 기가바이트 규모의 처리량은 검증되지 않았습니다. 그곳에서 믿고 쓰기 전에 복원을 시험해 보세요.
 
 ## 유일한 필수 설정
 

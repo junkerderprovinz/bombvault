@@ -49,7 +49,7 @@ Unraid との違い:
 - **コンテナのデータの見つけ方。** Unraid の `appdata` の慣習がないため、コンテナのデータフォルダーは `DATA_ROOT_SEGMENTS` の区切り、Docker の名前付きボリューム、Compose プロジェクトの作業ディレクトリ、`bombvault.data` ラベルから見つけます（[バックアップ元の自動判定](configuration.md#backup-source-detection)を参照）。名前付きボリュームと `/etc` プリセットが届くのは Host Data マウント内のパスだけなので、Host Data は Docker のデータルートも含む共通の上位ディレクトリに向けてください。
 - **`PLATFORM`。** `generic` または `truenas` に設定します。未設定の場合、BombVault はフラッシュのマウントにある Unraid 独自の目印で Unraid を判別し、それ以外はすべて汎用として扱います。Unraid 専用の手順は、試して失敗する代わりに省かれます。
 
-**TrueNAS Scale** でも同じ compose の方法を使います。カタログのエントリはリポジトリに用意してありますが、まだ提出していません。TrueNAS の libvirtd は独自のソケット（`/run/truenas_libvirt/libvirt-sock`）で待ち受けており、3 つの `LIBVIRT_*` 変数では表せないため、そこでの VM バックアップには `LIBVIRT_URI` が必要です（[設定](configuration.md)を参照）。検証の範囲は次のとおりです。zvol のバックアップは実際の TrueNAS Scale マシンで、稼働中の VM に接続された zvol に対して実行し、`zfs snapshot`、`zfs send`、restic、`zfs receive` の往復でバイト単位まで一致しました。BombVault 自身による完全な復元は TrueNAS のハードウェア上ではまだ実行しておらず、その zvol はスパースだったため、数ギガバイト規模でのスループットは未検証です。頼りにする前に、そこで復元を試してください。
+**TrueNAS Scale** でも同じ compose の方法を使います。カタログのエントリはリポジトリに用意してありますが、まだ提出していません。TrueNAS の libvirtd は独自のソケット（`/run/truenas_libvirt/libvirt-sock`）で待ち受けており、3 つの `LIBVIRT_*` 変数では表せないため、そこでの VM バックアップには `LIBVIRT_URI` が必要です（[設定](configuration.md)を参照）。検証の範囲は次のとおりです。BombVault 自身による zvol のバックアップと復元を、実際の TrueNAS Scale マシンに対して SSH 経由で実行し、元の場所への復元でも削除済みの zvol への復元でも、読み戻した内容はバイト単位まで一致しました。VM 全体の復元（ドメインの再定義と起動）と、数ギガバイト規模でのスループットは未検証です。頼りにする前に、そこで復元を試してください。
 
 ## 必須設定はひとつだけ
 

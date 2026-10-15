@@ -246,87 +246,71 @@ not from an observed incident.
 
 ### 3. VM disks backed by zvols (raw block devices)
 
-TrueNAS Scale VM disks are commonly **zvols**: ZFS-backed block devices
-(`/dev/zvol/<pool>/<dataset>`), not qcow2 files. BombVault's existing VM disk
-backup (the mechanism described above and throughout this document) assumes
-file-based disk images that restic can back up directly by path; a zvol needs
-a fundamentally different mechanism, since restic cannot back up a raw block
-device the way it backs up a file.
+TrueNAS Scale VM disks are commonly **zvols**: ZFS block devices at
+`/dev/zvol/<pool>/<dataset>`, not qcow2 files. restic cannot back up a block
+device by path the way it backs up a file, so BombVault recognises a zvol disk
+from the domain XML (`<source dev="...">` rather than `<source file="...">`)
+and handles it on its own, over the same SSH connection as every other command
+on this page. The BombVault container needs no ZFS tools.
 
-BombVault detects a block-device-backed disk from the domain XML itself
-(libvirt's own `<source dev="...">` vs `<source file="...">` distinction,
-no guessing), and the backup/restore orchestrators (`BackupVMGraceful`,
-`BackupVMLive`, `RestoreVM`) ARE wired to invoke, for such a disk, ZFS's own
-tools instead of a plain file backup:
+A backup of a zvol:
 
-1. `zfs snapshot <dataset>@<name>`: a point-in-time consistency point, taken
-   over the same SSH connection as every other command on this page (no local
-   ZFS/zvol access inside the BombVault container).
-2. `zfs send <dataset>@<name>`, streamed over that SSH connection straight
-   into the restic backup (no local staging file, however large the zvol).
-3. `zfs destroy <dataset>@<name>`: always run afterward, success or failure;
-   the snapshot is a consistency point, not the backup artifact.
+1. `zfs snapshot <dataset>@bombvault-<time>` fixes a point in time, also while
+   the VM runs.
+2. `zfs clone -o volmode=dev -o readonly=on` makes that snapshot readable as a
+   device. `volmode=dev` keeps the host from scanning the guest's partitions.
+3. `dd` reads the device, and the raw image goes into restic as one file,
+   `/vm-disks/<dataset>.img`, tagged `vm:<name>:zvol:<dev>`. restic cuts it
+   into chunks by content, so blocks that did not change since the last backup
+   are not stored again.
+4. The clone and the snapshot are destroyed afterwards, whether the backup
+   worked or not.
 
-Restoring a zvol is a **separate, defensive path** from restoring a
-file-based disk: `zfs receive` into an EXISTING dataset can destroy live
-data, so a restore always lands on a **freshly-named dataset**
-(`<pool>/<dataset>-bombvault-restore-<timestamp>`), **never** the original.
-Promoting that fresh dataset over the live original (so the VM actually boots
-from the restored data) is a **deliberate, manual, documented follow-up step
-for the operator**: BombVault never automates renaming/overwriting a live
-zvol. After a restore completes, decide independently (per your own ZFS
-layout and running state of the original VM) whether/how to `zfs rename` the
-restored dataset into place, generally after shutting the VM down and
-pointing its domain XML at the new dataset (or renaming the restored dataset
-to the original's name once the original has been renamed aside).
+BombVault does not use `zfs send` for this. Every record of a send stream
+carries the snapshot's GUID and a running checksum, so restic would find
+nothing of the last backup to reuse and store the whole disk again each time.
+Measured on TrueNAS SCALE 25.10 with a 512 MiB zvol holding 200 MiB of data:
+the first backup added 211 MB, a second one with nothing changed 52 KB, and one
+after 1 MiB had changed 3.6 MB. The same zvol through `zfs send` added 214 MB
+on every run.
 
-**Cross-instance restore (fleet mesh / disaster recovery) needs an explicit
-destination pool.** A cross-instance VM restore (restoring onto a different
-BombVault instance than the one that took the backup, the normal
-disaster-recovery case) remaps a file-backed disk onto a chosen destination
-FOLDER on the receiving box. A zvol-backed disk cannot be remapped the same
-way: its `zfs receive` target is a ZFS **dataset**, and the destination folder
-carries no pool information at all. Without an explicit destination pool,
-BombVault refuses the restore up front with a clear error rather than
-attempting `zfs receive` against the SOURCE box's pool name (which almost
-certainly does not exist on the destination) and failing deep inside that
-call. Supply the destination pool via the foreign-restore API's `zvolPool`
-parameter (`POST /api/foreign/restore`): every zvol disk's dataset is then
-rebased onto that pool, keeping the rest of its path (e.g.
-`tank/vms/win10/disk0` restoring onto pool `flashpool` lands under
-`flashpool/vms/win10/disk0-bombvault-restore-<timestamp>`, subject to the same
-manual promote step described above). **The From an old backup folder window on the
-Restore page has no field for this, so it is reachable through a direct API
-call only.** A same-instance restore is unaffected
-either way: it always restores onto its own box's pool, which by definition
-already exists there.
+Each run also writes a small snapshot tagged `vm:<name>` with the domain XML,
+once all disks are in. A VM whose disks are all zvols has no file snapshot, and
+this is the one that lists the run under the VM and makes it restorable.
 
-**Verified on real hardware (TrueNAS SCALE 25.10.0, 2026-08-27).** This
-mechanism was originally written reasoned-only, with no test instance
-available. It has now been exercised against a real zvol
-(`tank/vms/testvm-disk0`) attached to a **running** VM, and every host command
-it issues behaved as designed:
+A restore writes each zvol back in place, as a file disk is written back to its
+file, so the restored VM boots the restored data:
 
-| Step | Result |
-| --- | --- |
-| Detect the zvol from the domain XML | The running domain carries `<source dev='/dev/zvol/tank/vms/testvm-disk0'/>` verbatim. libvirt does **not** rewrite it to the `/dev/zdN` node it symlinks to, so the parser sees the path shape it expects. |
-| `zfs snapshot` on a disk in active use | Succeeded against the running VM's zvol, which is the live-consistency assumption the whole design rests on. |
-| `zfs send` piped into `restic backup --stdin` | Round-tripped **byte-identically**: the stream dumped back out of restic 0.17.3 matched the source at sha256 `d2cd7136…52c93`, with the per-disk identity tag preserved on the snapshot. |
-| `zfs receive` into a fresh restore target | Succeeded, and the received dataset appeared under `/dev/zvol/<target>` as a usable zvol. |
-| `zfs destroy` cleanup | Removed both the snapshot and the restore target cleanly. |
+1. Before anything is touched, BombVault checks that the run holds an image of
+   every zvol disk. A run that lacks one is refused and the VM is left as it is.
+2. An existing zvol gets a snapshot first, `<dataset>@bombvault-before-restore-<time>`.
+   The log names it, and `zfs rollback` to it undoes the restore. Remove it
+   with `zfs destroy` once the restored VM works.
+3. A zvol that no longer exists is created at the size it had when it was
+   backed up, and an existing one of another size is set back to that size.
+4. `dd` writes the image onto `/dev/zvol/<dataset>`. With compression on (the
+   TrueNAS default), the empty parts of the image come back as holes and take
+   no space.
 
-Two things are deliberately still **not** verified. First, a full restore
-driven by BombVault's own Go orchestration: every command it emits is
-confirmed above, but the ordering, error handling and deferred-cleanup logic
-around them are still covered only by unit tests with fakes. Second, a zvol
-holding a large amount of real data. The verified zvol was sparse, so the
-stream was small and the throughput behaviour of a multi-gigabyte send is
-untested. Plan a first real run accordingly, and keep the
-restore-to-a-fresh-dataset step (never onto the live source) that this
-mechanism enforces structurally.
+**A restore onto another instance needs a destination pool.** It moves file
+disks into a destination folder, but a folder names no ZFS pool, so without one
+BombVault refuses the restore before it starts. Pass the pool as the `zvolPool`
+parameter of `POST /api/foreign/restore`: each zvol keeps its path below the
+pool (`tank/vms/win10/disk0` onto `flashpool` becomes
+`flashpool/vms/win10/disk0`), and the domain XML points at it. **The From an
+old backup folder window on the Restore page has no field for this, so it is
+reachable through a direct API call only.** A restore on the same instance
+writes each zvol back onto itself.
 
-File-backed (Unraid) VM disk backup/restore is completely unaffected by any of
-this. It is a wholly separate code path.
+**Tried on real hardware (TrueNAS SCALE 25.10, ZFS 2.3.4).** The backup and
+restore code ran over SSH against a scratch zvol: three backups, a restore in
+place after the zvol had been overwritten and grown, and a restore onto a zvol
+that had been deleted. Each restore read back with the same SHA-256 as the
+source, the zvol had its old size again, and no snapshot or clone was left
+behind. A whole VM restore on TrueNAS (undefine, write the zvols, define, boot)
+is covered by tests with fakes only.
+
+File-backed (Unraid) VM disks are not affected by any of this.
 
 **You cannot attach a TPM to a TrueNAS VM yourself.** TrueNAS SCALE 25.10's VM
 device API accepts only `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` and
@@ -345,24 +329,6 @@ you should keep that guest's recovery key to hand before restoring it.
 NVRAM is unaffected and is captured normally. TrueNAS stores it per domain at
 `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, and the path is named directly
 in the domain XML.
-
-**Now reachable from the real UI/API:** BombVault's service layer
-(`internal/api/service.go`) calls into this mechanism from a live
-backup/restore. `BackupVM` reads a domain's block-device disks and
-constructs the ZFS-over-SSH adapter this mechanism needs; the design gap
-around multiple restic snapshots per VM backup is closed by a shared
-`vmrun:<runID>` correlation tag added to every snapshot ONE backup
-invocation produces (the file-backed snapshot's existing `vm:<name>` tag,
-plus one `vm:<name>:zvol:<dev>` tag per block disk); restore resolves a
-target `Run` row and then asks restic for every snapshot sharing that run's
-`vmrun:` tag, restoring the file-backed snapshot as before and each zvol
-snapshot to its corresponding dataset. Retention is applied once per
-identity tag actually present, reusing restic's existing per-tag `--keep-*`
-policy engine unchanged. A Run predating this tag (or a file-only VM's
-backup, which never gets a `vmrun:` tag since its single snapshot is already
-unambiguous) falls back to exactly the pre-existing single-tag resolution.
-This closes the gap the previous revision of this document described. It is
-still unit-tested only, see the hardware-verification caveat above.
 
 ### 4. vTPM state (Secure-Boot/Windows-11-class guests)
 
