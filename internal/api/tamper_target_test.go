@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -132,5 +133,34 @@ func TestATamperTestOfATargetThatCannotBeProbedRecordsNothing(t *testing.T) {
 	}
 	if rec, env := call("0000"); rec.Code != http.StatusNotFound || env["ok"] != false {
 		t.Errorf("answer for an unknown target = %d %v, want 404", rec.Code, env)
+	}
+}
+
+func TestATamperTestOfASwitchedOffTargetIsRefusedAndLeavesNoTrace(t *testing.T) {
+	var seen []string
+	srv := httptest.NewServer(deleteRecorder(http.StatusOK, &seen))
+	defer srv.Close()
+
+	svc, st := tamperService(t, "", &fakeHostSSH{})
+	target, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Off", Repo: "rest:" + srv.URL, Immutable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := svc.RunTamperTestForTarget(context.Background(), target.ID); !errors.Is(err, errTamperTargetOff) {
+		t.Fatalf("err = %v, want the target named as switched off", err)
+	}
+	if len(seen) != 0 {
+		t.Errorf("probes = %v, want none against a switched-off target", seen)
+	}
+	if _, found, _ := st.LatestTamperTestForTarget("containers", target.ID); found {
+		t.Error("a verdict was recorded for a switched-off target")
+	}
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if slices.ContainsFunc(runs, func(r store.Run) bool { return r.Kind == "tamper" }) {
+		t.Errorf("runs = %+v, want no tamper run", runs)
 	}
 }

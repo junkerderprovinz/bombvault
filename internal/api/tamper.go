@@ -153,9 +153,14 @@ func (s *Service) finishTamperRun(runID, label string, verdict TamperVerdict, er
 	}
 }
 
+// errTamperTargetOff answers a tamper test of a switched-off target.
+var errTamperTargetOff = errors.New("this off-site target is switched off; switch it on to test its delete protection")
+
 // RunTamperTestForTarget is RunTamperTest for one off-site target. The
 // verdict is recorded for that target alone, and the run row and the progress
-// line are the domain's, as for the test of every target at once.
+// line are the domain's, as for the test of every target at once. A
+// switched-off target is refused: its verdict would sit on the location and
+// could raise the protection-lost alert for a copy that takes no backups.
 func (s *Service) RunTamperTestForTarget(ctx context.Context, id string) (verdict TamperVerdict, err error) {
 	target, ok, err := s.store.GetOffsiteTarget(id)
 	if err != nil {
@@ -163,6 +168,9 @@ func (s *Service) RunTamperTestForTarget(ctx context.Context, id string) (verdic
 	}
 	if !ok {
 		return TamperVerdict{}, store.ErrNotOffsiteTarget
+	}
+	if !target.Enabled {
+		return TamperVerdict{}, errTamperTargetOff
 	}
 	domain := target.Domain
 	defer s.lockTamper(domain)()

@@ -495,7 +495,8 @@ func (h *Handler) handleDeleteOffsiteTarget(w http.ResponseWriter, r *http.Reque
 
 // handleTestOffsiteTarget reports whether one off-site target is reachable and
 // initialised, in the same shape as handleTestOffsite, which only probes a
-// domain's primary target.
+// domain's primary target. A switched-off target is probed as well, so it can
+// be checked before it is switched on; the probe only reads.
 func (h *Handler) handleTestOffsiteTarget(w http.ResponseWriter, r *http.Request) {
 	reachable, initialized, err := h.svc.TestOffsiteTarget(r.Context(), r.PathValue("id"))
 	if err != nil {
