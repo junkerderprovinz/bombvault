@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { InfoBubble } from "../../components/InfoBubble";
+import { useEffect, useId, useRef, useState } from "react";
 import { NumberField } from "../../components/NumberField";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { getIdle, setIdle } from "../../lib/api";
 import type { IdleSettings } from "../../lib/api";
 import type { TranslationKey, useT } from "../../lib/i18n";
@@ -19,6 +19,7 @@ const FIELDS: { key: keyof IdleSettings; label: TranslationKey; hint?: Translati
 // backup waits for that.
 export function IdleCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
+  const id = useId();
   const [cfg, setCfg] = useState<IdleSettings | null>(null);
   const [failed, setFailed] = useState(false);
   const cfgRef = useRef<IdleSettings | null>(null);
@@ -77,23 +78,21 @@ export function IdleCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
 
   return (
     <Card title={t("idle.title")} hint={t("idle.hint")} hueIndex={hueIndex}>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <Rows>
         {FIELDS.map(({ key, label, hint, max }) => (
-          <label key={key} className="flex flex-col gap-1">
-            <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-              {t(label)}
-              {hint && <InfoBubble tip={t(hint)} />}
-            </span>
+          <SettingRow key={key} label={t(label)} hint={hint ? t(hint) : undefined} htmlFor={`${id}-${key}`}>
             <NumberField
+              id={`${id}-${key}`}
+              wrapperClassName="w-28"
               min={1}
               max={max}
               value={cfg[key]}
               onChange={(e) => change(key, Math.min(max, Math.max(1, parseInt(e.target.value, 10) || 1)))}
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
             />
-          </label>
+          </SettingRow>
         ))}
-      </div>
+      </Rows>
     </Card>
   );
 }

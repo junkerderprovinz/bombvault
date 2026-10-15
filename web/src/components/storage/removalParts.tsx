@@ -1,5 +1,6 @@
 // What the two ways to remove a storage location show before anything is
 // removed: the sections that are detached, and the backups that are deleted.
+import { useId } from "react";
 import type { DestinationErasure, DestinationRemoval, ErasureSection } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { DOMAIN_LABEL } from "../../lib/storageLocations";
@@ -7,7 +8,7 @@ import { ToggleRow } from "../../pages/settings/shared";
 import { FIELD } from "../destinations/steps";
 import { InfoBubble } from "../InfoBubble";
 import { itemName } from "../placement/NewTargetQuestion";
-import { DomainGlyph } from "./rows";
+import { DomainGlyph, SettingRow } from "./rows";
 
 const HEADING = "text-xs font-semibold uppercase tracking-widest text-carbon-textSub";
 const ROWS = "flex flex-col divide-y divide-carbon-border/60";
@@ -84,6 +85,7 @@ export function ErasureDetails({
   onLastToo: (on: boolean) => void;
 }) {
   const { t } = useT();
+  const typedId = useId();
   return (
     <>
       <div className="flex flex-col gap-2">
@@ -140,10 +142,16 @@ export function ErasureDetails({
         </div>
       )}
       {erasable(erasure) && (
-        <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-          {t("storage.remove.confirmName").replace("{name}", () => name)}
-          <input value={typed} onChange={(e) => onType(e.target.value)} autoComplete="off" spellCheck={false} className={FIELD} />
-        </label>
+        <SettingRow label={t("storage.remove.confirmName").replace("{name}", () => name)} htmlFor={typedId}>
+          <input
+            id={typedId}
+            value={typed}
+            onChange={(e) => onType(e.target.value)}
+            autoComplete="off"
+            spellCheck={false}
+            className={`w-72 max-w-full ${FIELD}`}
+          />
+        </SettingRow>
       )}
     </>
   );

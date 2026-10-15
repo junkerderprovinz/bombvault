@@ -1,8 +1,8 @@
 import type { Settings } from "../../lib/api";
 import { Card, ToggleRow } from "../settings/shared";
 import { FolderBrowser } from "../../components/FolderBrowser";
-import { InfoBubble } from "../../components/InfoBubble";
 import { NumberField } from "../../components/NumberField";
+import { SettingRow } from "../../components/storage/rows";
 import { getSettings, putSettings } from "../../lib/api";
 import { useEffect, useRef, useState } from "react";
 import { useT } from "../../lib/i18n";
@@ -157,12 +157,10 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
             pulseNonce={pulseKeep}
           />
           {keep > 0 ? (
-            <label className="flex flex-col gap-1 max-w-40">
-              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                {t("flash.zipExport.keepN")}
-                <InfoBubble tip={t("flash.zipExport.keepNHint")} />
-              </span>
+            <SettingRow label={t("flash.zipExport.keepN")} hint={t("flash.zipExport.keepNHint")} htmlFor="flash-zip-keep-n">
               <NumberField
+                id="flash-zip-keep-n"
+                wrapperClassName="w-28"
                 min={1}
                 value={keep}
                 onChange={(e) => {
@@ -173,7 +171,7 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
                 }}
                 className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
               />
-            </label>
+            </SettingRow>
           ) : (
             <p className="text-xs text-carbon-textMuted">{t("flash.zipExport.latestNote")}</p>
           )}

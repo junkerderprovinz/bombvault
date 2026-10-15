@@ -2,6 +2,7 @@ import { useState } from "react";
 import { replicateOffsite, testOffsite } from "../../../lib/api";
 import { useOffsiteTargets, type OffsiteDomain } from "../../../lib/useOffsiteTargets";
 import { NumberField } from "../../../components/NumberField";
+import { Rows, SettingRow } from "../../../components/storage/rows";
 import { OffsiteWizard } from "../../../components/OffsiteWizard";
 import { OffsiteLocationInput } from "../../../components/placement/OffsiteLocationInput";
 import { CompressionSelector, saveCompression } from "../../../components/CompressionSelector";
@@ -237,14 +238,15 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
       </div>
 
       <Card title={t("settings.offsiteLimits")} hint={t("settings.limitHint")} hueIndex={nextHue()}>
-        <div className="grid grid-cols-2 gap-3">
+        <Rows>
           {([
             ["offsiteLimitUpload", "settings.limitUpload"],
             ["offsiteLimitDownload", "settings.limitDownload"],
           ] as const).map(([key, label]) => (
-            <label key={key} className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t(label)}</span>
+            <SettingRow key={key} label={t(label)} htmlFor={`offsite-${key}`}>
               <NumberField
+                id={`offsite-${key}`}
+                wrapperClassName="w-28"
                 min={0}
                 value={settings[key]}
                 onChange={(e) => {
@@ -254,9 +256,9 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
                 }}
                 className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
               />
-            </label>
+            </SettingRow>
           ))}
-        </div>
+        </Rows>
       </Card>
     </>
   );

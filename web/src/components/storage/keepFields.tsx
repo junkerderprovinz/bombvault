@@ -6,8 +6,8 @@ import { setAskKeepLess, useAskKeepLess } from "../../lib/keepAsk";
 import { lostByChange, sampleBackups, type KeepCounts, type KeepInput } from "../../lib/keepPlan";
 import { useConfirm } from "../../lib/useConfirm";
 import { ToggleRow } from "../../pages/settings/shared";
-import { InfoBubble } from "../InfoBubble";
 import { NumberSetting } from "./fields";
+import { Rows, SettingRow } from "./rows";
 
 const COUNTS: { label: TranslationKey; tip: TranslationKey }[] = [
   { label: "storage.keep.count.last", tip: "storage.keep.tip.last" },
@@ -30,17 +30,13 @@ export function KeepCountFields({
   const { t } = useT();
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <Rows>
         {COUNTS.map(({ label, tip }, i) => (
-          <div key={label} className="flex min-w-0 flex-col gap-1">
-            <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-              {t(label)}
-              <InfoBubble tip={t(tip)} />
-            </span>
+          <SettingRow key={label} label={t(label)} hint={t(tip)}>
             <NumberSetting label={t(label)} value={counts[i]} disabled={disabled} onCommit={(n) => onCommit(i, n)} />
-          </div>
+          </SettingRow>
         ))}
-      </div>
+      </Rows>
       <p className="text-xs text-carbon-textMuted">{t("storage.keep.zero")}</p>
     </div>
   );

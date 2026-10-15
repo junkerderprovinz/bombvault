@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { InfoBubble } from "../../components/InfoBubble";
 import { NumberField } from "../../components/NumberField";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import type { OffsiteDomain, RetentionKeep, Settings } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
 import { Card, ToggleRow } from "./shared";
@@ -51,23 +52,22 @@ function sharedKeep(s: Settings): RetentionKeep {
 
 /** The five keep rules as number fields, each with its (i). */
 function KeepFields({ keep, onChange, t }: { keep: RetentionKeep; onChange: (k: RetentionKeep) => void; t: T }) {
+  const id = useId();
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    <Rows>
       {RULES.map(([key, label, info]) => (
-        <label key={key} className="flex flex-col gap-1">
-          <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-            {t(label)}
-            <InfoBubble tip={t(info)} />
-          </span>
+        <SettingRow key={key} label={t(label)} hint={t(info)} htmlFor={`${id}-${key}`}>
           <NumberField
+            id={`${id}-${key}`}
+            wrapperClassName="w-28"
             min={0}
             value={keep[key]}
             onChange={(e) => onChange({ ...keep, [key]: Math.max(0, parseInt(e.target.value, 10) || 0) })}
             className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
           />
-        </label>
+        </SettingRow>
       ))}
-    </div>
+    </Rows>
   );
 }
 

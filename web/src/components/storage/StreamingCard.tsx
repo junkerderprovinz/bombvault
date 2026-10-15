@@ -1,12 +1,12 @@
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useT } from "../../lib/i18n";
 import { useStreaming, type StreamingNumberKey, type StreamingState } from "../../lib/useStreaming";
 import { Card, ToggleRow } from "../../pages/settings/shared";
 import { SelectDot } from "../backups/SelectMark";
 import { Button } from "../Button";
 import { DropdownListbox } from "../DropdownListbox";
-import { InfoBubble } from "../InfoBubble";
 import { NumberField } from "../NumberField";
+import { Rows, SettingRow } from "./rows";
 
 const NUMBER_FIELDS: { key: StreamingNumberKey; label: "streaming.threshold" | "streaming.limit" | "streaming.hold"; hint: "streaming.thresholdHint" | "streaming.limitHint" | "streaming.holdHint"; max: number }[] = [
   { key: "thresholdMbit", label: "streaming.threshold", hint: "streaming.thresholdHint", max: 10000 },
@@ -20,6 +20,7 @@ function StreamingFields({ t, state }: { t: ReturnType<typeof useT>["t"]; state:
   const { cfg, candidates, setNumber, toggleServer } = state;
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef<HTMLButtonElement>(null);
+  const id = useId();
   if (!cfg) return null;
 
   const byName = new Map(candidates.map((c) => [c.name, c]));
@@ -27,11 +28,8 @@ function StreamingFields({ t, state }: { t: ReturnType<typeof useT>["t"]; state:
 
   return (
     <>
-      <div className="flex flex-col gap-2">
-        <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-          {t("streaming.servers")}
-          <InfoBubble tip={t("streaming.serversHint")} />
-        </span>
+      <>
+        <SettingRow label={t("streaming.servers")} hint={t("streaming.serversHint")}>
         <div className="inline-block">
           <button
             ref={pickerRef}
@@ -76,6 +74,7 @@ function StreamingFields({ t, state }: { t: ReturnType<typeof useT>["t"]; state:
             </>
           </DropdownListbox>
         </div>
+        </SettingRow>
         {chosen.length === 0 ? (
           <p className="text-xs text-carbon-textMuted">{t("streaming.none")}</p>
         ) : (
@@ -95,25 +94,23 @@ function StreamingFields({ t, state }: { t: ReturnType<typeof useT>["t"]; state:
             ))}
           </div>
         )}
-      </div>
+      </>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <Rows>
         {NUMBER_FIELDS.map(({ key, label, hint, max }) => (
-          <label key={key} className="flex flex-col gap-1">
-            <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-              {t(label)}
-              <InfoBubble tip={t(hint)} />
-            </span>
+          <SettingRow key={key} label={t(label)} hint={t(hint)} htmlFor={`${id}-${key}`}>
             <NumberField
+              id={`${id}-${key}`}
+              wrapperClassName="w-28"
               min={1}
               max={max}
               value={cfg[key]}
               onChange={(e) => setNumber(key, Math.min(max, Math.max(1, parseInt(e.target.value, 10) || 1)))}
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
             />
-          </label>
+          </SettingRow>
         ))}
-      </div>
+      </Rows>
     </>
   );
 }

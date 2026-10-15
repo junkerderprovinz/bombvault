@@ -10,6 +10,7 @@ import { useTestVerdict } from "../../lib/useTestVerdict";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
 import { RemoteFolderBrowser } from "../destinations/RemoteFolderBrowser";
+import { Rows } from "./rows";
 import { DraftField, masked, MoreSettings } from "../destinations/steps";
 import { formFields } from "../destinations/useDestinationDraft";
 import { IconClose } from "../navGlyphs";
@@ -108,22 +109,18 @@ export function ConnectionWindow({ edit, form, onClose }: { edit: LocationEdit; 
         </>
       }
     >
-      <div className="grid gap-3 md:grid-cols-2">
-        {fields.main.map(field)}
-        {browsable && (
-          <div className="md:col-span-2">
-            <RemoteFolderBrowser
-              label={t("storage.folder")}
-              hint={t("storage.add.folderTip")}
-              value={folder}
-              onChange={setDir}
-              provider={provider.id}
-              settings={{ ...stored.values, ...typed }}
-              needsSecret={stored.hidden.some((name) => !typed[name])}
-            />
-          </div>
-        )}
-      </div>
+      <Rows>{fields.main.map(field)}</Rows>
+      {browsable && (
+        <RemoteFolderBrowser
+          label={t("storage.folder")}
+          hint={t("storage.add.folderTip")}
+          value={folder}
+          onChange={setDir}
+          provider={provider.id}
+          settings={{ ...stored.values, ...typed }}
+          needsSecret={stored.hidden.some((name) => !typed[name])}
+        />
+      )}
       {fields.more.length > 0 && <MoreSettings>{fields.more.map(field)}</MoreSettings>}
       <VerdictLine verdict={test.verdict} />
     </InstanceWindow>
