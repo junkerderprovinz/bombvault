@@ -531,8 +531,9 @@ func (s *Service) RecoverContainerRestarts(ctx context.Context) {
 	})
 }
 
-// runIDRecorder keeps the id of the run a backup started, so the service can
-// add to that row afterwards.
+// runIDRecorder keeps the id of the backup run a container backup started, so
+// the service can add to that row afterwards. The database dump starts a run
+// of its own on the same seam.
 type runIDRecorder struct {
 	backup.Runs
 	id string
@@ -540,7 +541,7 @@ type runIDRecorder struct {
 
 func (r *runIDRecorder) Start(targetID, kind string) (string, error) {
 	id, err := r.Runs.Start(targetID, kind)
-	if err == nil {
+	if err == nil && kind == "backup" {
 		r.id = id
 	}
 	return id, err

@@ -543,3 +543,26 @@ func TestRecoverContainerRestartsKeepsAContainerThatStaysDown(t *testing.T) {
 		t.Fatalf("recorded %v, want web alone for the next boot", left)
 	}
 }
+
+type startOnlyRuns struct {
+	backup.Runs
+	n int
+}
+
+func (r *startOnlyRuns) Start(_, kind string) (string, error) {
+	r.n++
+	return kind + "-" + strconv.Itoa(r.n), nil
+}
+
+func TestRunIDRecorderKeepsTheBackupRunAlthoughTheDumpStartsLater(t *testing.T) {
+	r := &runIDRecorder{Runs: &startOnlyRuns{}}
+	if _, err := r.Start("t1", "backup"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.Start("t1", "dbdump"); err != nil {
+		t.Fatal(err)
+	}
+	if r.id != "backup-1" {
+		t.Fatalf("id = %q, want the backup run; the window belongs on it", r.id)
+	}
+}
