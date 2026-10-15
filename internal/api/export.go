@@ -314,48 +314,55 @@ func addToTar(tw *tar.Writer, root, p string) error {
 // persistent domain definition. Restoring needs only tar and `virsh define`.
 // Both files are age-encrypted when export encryption is on. A running VM is
 // exported crash-consistent; shut it off first for a clean image.
-func (s *Service) ExportVM(ctx context.Context, name string) (string, error) {
+//
+// A zvol cannot go into a tar as a file, so the export leaves zvol disks out
+// and returns their device paths; a VM with nothing but zvols is refused.
+func (s *Service) ExportVM(ctx context.Context, name string) (string, []string, error) {
 	// VM names may contain spaces, which validResourceName rejects.
 	if !validVMName(name) {
-		return "", fmt.Errorf("unsafe vm name %q", name)
+		return "", nil, fmt.Errorf("unsafe vm name %q", name)
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return "", fmt.Errorf("read settings: %w", err)
+		return "", nil, fmt.Errorf("read settings: %w", err)
 	}
 	dir, err := s.exportDir(settings)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	recipients, _, err := s.exportRecipients(settings)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	if err := paths.EnsureDir(dir); err != nil {
-		return "", fmt.Errorf("create export dir: %w", err)
+		return "", nil, fmt.Errorf("create export dir: %w", err)
 	}
 	if s.ssh != nil {
 		if err := s.ssh.EnsureKnownHost(ctx); err != nil {
-			return "", fmt.Errorf("export vm: ssh: %w", err)
+			return "", nil, fmt.Errorf("export vm: ssh: %w", err)
 		}
 	}
 	// Disks come from the live XML, the exported definition from the inactive one.
 	liveXML, err := s.virsh.DumpXML(ctx, name)
 	if err != nil {
-		return "", fmt.Errorf("export vm: dumpxml: %w", err)
+		return "", nil, fmt.Errorf("export vm: dumpxml: %w", err)
 	}
 	domain, err := virshcli.ParseDomain(liveXML)
 	if err != nil {
-		return "", fmt.Errorf("export vm: parse domain: %w", err)
+		return "", nil, fmt.Errorf("export vm: parse domain: %w", err)
 	}
-	if len(domain.DiskPaths) == 0 {
-		return "", fmt.Errorf("export vm: no disk paths found for %q", name)
+	zvols := make([]string, 0, len(domain.BlockDisks))
+	for _, bd := range domain.BlockDisks {
+		zvols = append(zvols, bd.Source)
+	}
+	if err := checkVMExportable(name, len(domain.DiskPaths), zvols); err != nil {
+		return "", nil, err
 	}
 	var diskPaths []string
 	for _, hp := range domain.DiskPaths {
 		cp, ok := s.toContainerPath(hp)
 		if !ok {
-			return "", fmt.Errorf("export vm: disk %q is not under the host mount and can't be reached", hp)
+			return "", nil, fmt.Errorf("export vm: disk %q is not under the host mount and can't be reached", hp)
 		}
 		diskPaths = append(diskPaths, cp)
 	}
@@ -364,12 +371,34 @@ func (s *Service) ExportVM(ctx context.Context, name string) (string, error) {
 		defXML = inactive
 	}
 	if _, err := writeExportFile(filepath.Join(dir, name+".xml"), []byte(defXML), recipients); err != nil {
-		return "", fmt.Errorf("export vm: write xml: %w", err)
+		return "", nil, fmt.Errorf("export vm: write xml: %w", err)
 	}
 	if _, err := s.writeTarGz(filepath.Join(dir, name+".tar.gz"), diskPaths, recipients); err != nil {
-		return "", fmt.Errorf("export vm: write tar: %w", err)
+		return "", nil, fmt.Errorf("export vm: write tar: %w", err)
 	}
-	return dir, nil
+	if len(zvols) > 0 {
+		note := zvolsNotExportedNote(name, zvols)
+		if _, err := writeExportFile(filepath.Join(dir, name+"-zvols-not-exported.txt"), []byte(note), recipients); err != nil {
+			return "", nil, fmt.Errorf("export vm: write zvol note: %w", err)
+		}
+	}
+	return dir, zvols, nil
+}
+
+// checkVMExportable refuses a VM with no disk to export. A VM with only zvol
+// disks is backed up fine, so the message says where its data is instead.
+func checkVMExportable(name string, fileDisks int, zvols []string) error {
+	switch {
+	case fileDisks > 0:
+		return nil
+	case len(zvols) > 0:
+		return fmt.Errorf("export vm: %q has only zvol disks (%s). They are included in its backups but cannot be exported as files. Restore the VM from a backup instead", name, strings.Join(zvols, ", "))
+	}
+	return fmt.Errorf("export vm: no disk paths found for %q", name)
+}
+
+func zvolsNotExportedNote(name string, zvols []string) string {
+	return fmt.Sprintf("The zvol disks of %s are not part of this export, since a zvol cannot be written into a tar file. They are included in its backups.\n\n%s\n", name, strings.Join(zvols, "\n"))
 }
 
 // handleExportVM writes a plain tar+xml export of a VM and returns the export
@@ -379,12 +408,16 @@ func (h *Handler) handleExportVM(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	dir, err := h.svc.ExportVM(r.Context(), name)
+	dir, zvols, err := h.svc.ExportVM(r.Context(), name)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"path": dir}))
+	out := map[string]any{"path": dir}
+	if len(zvols) > 0 {
+		out["zvolsNotExported"] = zvols
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(out))
 }
 
 // handleExportContainer writes a plain tar+xml export of a container and returns
