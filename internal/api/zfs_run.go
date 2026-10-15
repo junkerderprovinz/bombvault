@@ -409,6 +409,7 @@ func (s *Service) backupZFSToRepo(ctx context.Context, id string) (_ backup.Summ
 		Excludes:      d.Excludes,
 		SelectionFP:   selectionFingerprint(zfsSelection(d)),
 		Now:           time.Now,
+		ReserveName:   s.snapNames.reserve,
 		Clock:         time.Now,
 		ZFS:           zfsRunHost{h: s.zfs},
 		Restic:        s.placesAdapter(settings, zfsDomain, places, ""),
@@ -646,9 +647,11 @@ func (s *Service) SweepZFSLeftovers(ctx context.Context, id string) (int, error)
 }
 
 // SweepZFSLeftoversOnStartup sweeps every item's tree, even with the domain
-// switched off and the item disabled: a leaked snapshot pins deleted blocks
-// either way. The caller holds the domain lock.
+// switched off and the item disabled, and the datasets container backups
+// snapshotted: a leaked snapshot pins deleted blocks either way. The caller
+// holds the domain lock.
 func (s *Service) SweepZFSLeftoversOnStartup(ctx context.Context) {
+	defer s.sweepContainerSnapshots(ctx)
 	rows, err := s.store.ListZFSDatasets()
 	if err != nil {
 		log.Printf("api: zfs: the startup sweep could not list the items: %v", err)
@@ -677,32 +680,46 @@ func (s *Service) LockDomainForStartupSweep() func() {
 // sweepZFSTree is the sweep itself, without the domain lock: a backup run
 // already holds it.
 func (s *Service) sweepZFSTree(ctx context.Context, d store.ZFSDataset) (int, error) {
+	remaining, err := s.sweepStamps(ctx, d.Dataset)
+	if err != nil {
+		return 0, err
+	}
+	if err := s.store.SetZFSLeftovers(d.ID, remaining, time.Now().Unix()); err != nil {
+		log.Printf("api: zfs: recording the sweep of %s failed: %v", d.Dataset, err)
+	}
+	return remaining, nil
+}
+
+// sweepStamps destroys the BombVault snapshots left on a tree and returns how
+// many survived. A snapshot a run is still reading is no leftover: a dataset
+// backup and a container backup can share a tree.
+func (s *Service) sweepStamps(ctx context.Context, root string) (int, error) {
 	if s.zfs == nil {
 		return 0, errZFSHostMissing
 	}
 	lctx, cancel := context.WithTimeout(ctx, zfsListTimeout)
 	defer cancel()
-	tree, err := s.zfs.Tree(lctx, d.Dataset)
+	tree, err := s.zfs.Tree(lctx, root)
 	if err != nil {
 		return 0, err
 	}
-	snaps, err := s.zfs.Snapshots(lctx, d.Dataset)
+	snaps, err := s.zfs.Snapshots(lctx, root)
 	if err != nil {
 		return 0, err
 	}
 	remaining := 0
 	for _, snap := range zfs.LeakedStamps(tree, snaps) {
-		err := backup.DestroyRecursiveWithRetry(ctx, s.zfs, d.Dataset, snap,
+		if s.snapNames.busy(snap) {
+			continue
+		}
+		err := backup.DestroyRecursiveWithRetry(ctx, s.zfs, root, snap,
 			zfsDestroyBudget, time.Now, sleepFor, s.IsShuttingDown())
 		if err != nil {
 			remaining++
-			log.Printf("api: zfs: %s@%s is still there after the sweep: %v", d.Dataset, snap, err)
+			log.Printf("api: zfs: %s@%s is still there after the sweep: %v", root, snap, err)
 			continue
 		}
-		log.Printf("api: zfs: removed the leftover snapshot %s@%s", d.Dataset, snap)
-	}
-	if err := s.store.SetZFSLeftovers(d.ID, remaining, time.Now().Unix()); err != nil {
-		log.Printf("api: zfs: recording the sweep of %s failed: %v", d.Dataset, err)
+		log.Printf("api: zfs: removed the leftover snapshot %s@%s", root, snap)
 	}
 	return remaining, nil
 }

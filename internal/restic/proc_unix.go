@@ -42,3 +42,8 @@ func configureProcGroup(cmd *exec.Cmd) {
 	}
 	cmd.WaitDelay = resticWaitDelay
 }
+
+// chrootInto starts the command with root as its filesystem root.
+func chrootInto(cmd *exec.Cmd, root string) {
+	cmd.SysProcAttr.Chroot = root
+}

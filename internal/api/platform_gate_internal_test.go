@@ -160,7 +160,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 		s.notifyReceiverIntegrity(context.Background(), notify.Config{Unraid: true}, "repo", "boom")
 	})
 
-	t.Run("updateContainerAfterBackup", func(t *testing.T) {
+	t.Run("checkUpdateAfterBackup", func(t *testing.T) {
 		svc, st := newUpdateTestSvc(t)
 		svc.ssh = failIfCalledSSH{t}
 		svc.SetPlatform(platform.Generic{})
@@ -173,7 +173,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 		}
 		svc.docker = &updateFakeDocker{imageID: "sha256:NEW"}
 		in := model.Inspect{Name: "/plex", Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
-		svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+		updateAfterBackup(svc, "plex", in, tg.ID)
 	})
 }
 

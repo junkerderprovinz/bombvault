@@ -100,6 +100,16 @@ func (h *SSHHost) SnapshotRecursive(ctx context.Context, root, snap string) erro
 	return err
 }
 
+// Snapshot takes one atomic snapshot of exactly the given datasets.
+func (h *SSHHost) Snapshot(ctx context.Context, datasets []string, snap string) error {
+	args, err := SnapshotArgs(datasets, snap)
+	if err != nil {
+		return err
+	}
+	_, err = h.Run(ctx, args)
+	return err
+}
+
 // DestroyRecursive removes a run's snapshot from the whole tree.
 func (h *SSHHost) DestroyRecursive(ctx context.Context, root, snap string) error {
 	args, err := DestroyRecursiveArgs(root, snap)

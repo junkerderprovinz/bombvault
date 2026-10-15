@@ -146,6 +146,10 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       ],
     },
     {
+      title: "settings.containerSnapshotsTitle",
+      rows: [{ key: "settings.containerSnapshots", hint: "settings.containerSnapshotsHint" }],
+    },
+    {
       title: "schedules.updates",
       rows: [
         { key: "settings.updateEveryContainer", hint: "settings.updateEveryContainerHint" },

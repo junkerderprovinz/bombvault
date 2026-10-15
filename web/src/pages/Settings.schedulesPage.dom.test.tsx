@@ -267,6 +267,16 @@ describe("scheduled entries", () => {
     await waitFor(() => expect(putBodies.at(-1)?.updateContainersAfterBackup).toBe(true));
   });
 
+  it("stops containers on ZFS only for a snapshot until switched off", async () => {
+    settingsOnServer = baseSettings({ containersEnabled: true, containerSnapshots: true });
+    await renderPage();
+    const snapshots = card("settings.containerSnapshotsTitle");
+    const toggle = within(snapshots).getByRole("switch", { name: en["settings.containerSnapshots"] });
+    expect(toggle.getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(toggle);
+    await waitFor(() => expect(putBodies.at(-1)?.containerSnapshots).toBe(false));
+  });
+
   it("saves the switch for own plans per entry", async () => {
     await renderPage();
     fireEvent.click(screen.getByRole("switch", { name: en["schedules.perItem"] }));

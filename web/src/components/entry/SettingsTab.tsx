@@ -37,6 +37,7 @@ import { FoldersEditor } from "../containers/FoldersEditor";
 import { HooksEditor } from "../containers/HooksEditor";
 import { StopContainersEditor } from "../containers/StopContainersEditor";
 import { UpdateAfterBackupRow } from "../containers/UpdateAfterBackupRow";
+import { ZFSSnapshotRow } from "../containers/ZFSSnapshotRow";
 import { DatabaseDumpRow } from "../DatabaseDumpRow";
 import { EffectiveScheduleLine } from "../EffectiveScheduleLine";
 import { FileSetDialog } from "../files/FileSetDialog";
@@ -288,6 +289,13 @@ function ContainerCards({
             lastUpdateCheck={container.lastUpdateCheck}
             lastUpdateResult={container.lastUpdateResult}
             databaseWarn={updateWarnKey(container)}
+            t={t}
+          />
+          <ZFSSnapshotRow
+            name={container.name}
+            initial={container.zfsSnapshot ?? true}
+            own={container.zfsSnapshotOwn ?? false}
+            onFollow={onChanged}
             t={t}
           />
           <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} onSaved={onChanged} />

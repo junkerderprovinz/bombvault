@@ -259,6 +259,10 @@ type Settings struct {
 	// UpdateContainersAfterBackup runs the post-backup image update for every
 	// container that has no choice of its own. Off by default.
 	UpdateContainersAfterBackup bool
+	// ContainerSnapshots holds a container on ZFS down only for the snapshot
+	// instant and reads its backup from the snapshot. On by default; a
+	// container that cannot be read that way is stopped as before.
+	ContainerSnapshots bool
 	// PerItemSchedules enables per-container and per-VM schedule overrides. When
 	// on, an included item with a ScheduleCadence is backed up on that cadence
 	// and the rest follow their domain schedule. Off by default.
@@ -336,7 +340,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       export_encrypt_enabled, export_age_recipients,
 		       receiver_enabled,
 		       restart_health_wait, restart_health_timeout_sec,
-		       reconcile_unraid_update_status, update_containers_after_backup,
+		       reconcile_unraid_update_status, update_containers_after_backup, container_snapshots,
 		       per_item_schedules,
 		       cloud_cred_sets,
 		       fleet_enabled, pull_enabled, db_dumps_enabled, instance_name,
@@ -355,7 +359,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	var contImmutable, vmsImmutable, flashImmutable, configImmutable, filesImmutable, zfsImmutable int
 	var flashZipExportEnabled, pruneImageAfterUpdate, digestEnabled int
 	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
-	var restartHealthWait, reconcileUnraidUpdateStatus, updateContainersAfterBackup, perItemSchedules int
+	var restartHealthWait, reconcileUnraidUpdateStatus, updateContainersAfterBackup, containerSnapshots, perItemSchedules int
 	var fleetEnabled, pullEnabled, dbDumpsEnabled, totpEnabled int
 	var anomalyEnabled, anomalyRetentionHold, startTestEnabled, restorePerSection int
 	err := row.Scan(
@@ -381,7 +385,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&exportEncryptEnabled, &s.ExportAgeRecipients,
 		&receiverEnabled,
 		&restartHealthWait, &s.RestartHealthTimeoutSec,
-		&reconcileUnraidUpdateStatus, &updateContainersAfterBackup,
+		&reconcileUnraidUpdateStatus, &updateContainersAfterBackup, &containerSnapshots,
 		&perItemSchedules,
 		&s.CloudCredSets,
 		&fleetEnabled, &pullEnabled, &dbDumpsEnabled, &s.InstanceName,
@@ -430,6 +434,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	s.RestartHealthWait = restartHealthWait != 0
 	s.ReconcileUnraidUpdateStatus = reconcileUnraidUpdateStatus != 0
 	s.UpdateContainersAfterBackup = updateContainersAfterBackup != 0
+	s.ContainerSnapshots = containerSnapshots != 0
 	s.PerItemSchedules = perItemSchedules != 0
 	s.FleetEnabled = fleetEnabled != 0
 	s.PullEnabled = pullEnabled != 0
@@ -578,6 +583,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  restart_health_timeout_sec   = ?,
 		  reconcile_unraid_update_status = ?,
 		  update_containers_after_backup = ?,
+		  container_snapshots          = ?,
 		  per_item_schedules           = ?,
 		  cloud_cred_sets              = ?,
 		  fleet_enabled                = ?,
@@ -635,6 +641,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		boolInt(s.RestartHealthWait), s.RestartHealthTimeoutSec,
 		boolInt(s.ReconcileUnraidUpdateStatus),
 		boolInt(s.UpdateContainersAfterBackup),
+		boolInt(s.ContainerSnapshots),
 		boolInt(s.PerItemSchedules),
 		s.CloudCredSets,
 		boolInt(s.FleetEnabled),

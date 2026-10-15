@@ -40,6 +40,11 @@ export interface Container {
    *  container's own choice rather than Settings' updateContainersAfterBackup. */
   updateAfterBackup?: boolean;
   updateAfterBackupOwn?: boolean;
+  /** Whether a container on ZFS is held down only for a snapshot of its data
+   *  and backed up from it. zfsSnapshotOwn says whether that is its own choice
+   *  rather than Settings' containerSnapshots. */
+  zfsSnapshot?: boolean;
+  zfsSnapshotOwn?: boolean;
   /** How long a scheduled backup waits at most for the app to be idle, in
    *  hours; 0 when it does not wait. */
   idleWaitHours?: number;
@@ -406,6 +411,9 @@ export interface Settings {
   /** The post-backup update for every container without a choice of its own.
    *  Off by default. */
   updateContainersAfterBackup: boolean;
+  /** Reads every container on ZFS without a choice of its own from a snapshot,
+   *  so it is down only while the snapshot is taken. On by default. */
+  containerSnapshots: boolean;
   /** #121: opt into per-item schedule overrides. Off by default, so every item
    *  follows its domain schedule and the UI is unchanged. When on, a container or
    *  VM with a non-empty scheduleCadence runs on its own cadence; an item left
@@ -528,6 +536,12 @@ export interface Run {
   startedViaRevoked?: boolean;
   /** What held a slow backup back, when one thing clearly did. */
   bottleneck?: Bottleneck;
+  /** How long a container backup read from a ZFS snapshot held the container
+   *  down, in milliseconds; null for a backup that read the live data. */
+  snapshotWindowMs?: number | null;
+  /** Why a container with data on ZFS was stopped for its whole backup: a
+   *  reason code, a colon and what it is about. */
+  snapshotFallback?: string;
 }
 
 /** The one resource a slow backup waited on. share is how busy it was, or
@@ -1628,6 +1642,24 @@ export function followUpdateAfterBackup(name: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
     method: "PATCH",
     body: JSON.stringify({ updateAfterBackupDefault: true }),
+  });
+}
+
+/** PATCH /api/containers/{name}: the container's own choice about being read
+ *  from a ZFS snapshot. */
+export function setZFSSnapshot(name: string, zfsSnapshot: boolean): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ zfsSnapshot }),
+  });
+}
+
+/** PATCH /api/containers/{name}: drops that choice, so the container follows
+ *  containerSnapshots again. */
+export function followZFSSnapshot(name: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ zfsSnapshotDefault: true }),
   });
 }
 

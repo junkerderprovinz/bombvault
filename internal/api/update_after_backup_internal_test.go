@@ -14,7 +14,15 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// updateFakeDocker implements the Docker methods updateContainerAfterBackup
+// updateAfterBackup runs the whole update step the way a backup does: the
+// check, then the recreate when it found a newer image.
+func updateAfterBackup(svc *Service, name string, in model.Inspect, targetID string) {
+	if apply := svc.checkUpdateAfterBackup(context.Background(), name, in, targetID); apply != nil {
+		apply()
+	}
+}
+
+// updateFakeDocker implements the Docker methods checkUpdateAfterBackup
 // uses and records the calls; the embedded interface stays nil.
 type updateFakeDocker struct {
 	dockercli.Docker
@@ -87,7 +95,7 @@ func TestUpdateAfterBackup_RecreatesOnNewerImage(t *testing.T) {
 	svc.docker = f
 
 	in := model.Inspect{Name: "/plex", Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
-	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+	updateAfterBackup(svc, "plex", in, tg.ID)
 
 	calls := strings.Join(f.calls, ",")
 	for _, want := range []string{"pull:plex:latest", "imageID:plex:latest", "remove:plex", "createAndStart:/plex"} {
@@ -128,7 +136,7 @@ func TestUpdateAfterBackup_SkipsWhenUpToDate(t *testing.T) {
 	svc.docker = f
 
 	in := model.Inspect{Name: "/plex", Image: "sha256:SAME", Config: model.Config{Image: "plex:latest"}}
-	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+	updateAfterBackup(svc, "plex", in, tg.ID)
 
 	calls := strings.Join(f.calls, ",")
 	if strings.Contains(calls, "remove:") || strings.Contains(calls, "createAndStart:") {
@@ -161,7 +169,7 @@ func TestUpdateAfterBackup_PrunesOldImageWhenEnabled(t *testing.T) {
 	svc.docker = f
 
 	in := model.Inspect{Name: "/plex", Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
-	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+	updateAfterBackup(svc, "plex", in, tg.ID)
 
 	if !strings.Contains(strings.Join(f.calls, ","), "imageRemove:sha256:OLD") {
 		t.Fatalf("prune-after-update must remove the OLD image; calls %v", f.calls)
@@ -193,7 +201,7 @@ func TestUpdateAfterBackup_ReconcilesUnraidStatusOnUpdate(t *testing.T) {
 	svc.docker = &updateFakeDocker{imageID: "sha256:NEW"}
 
 	in := model.Inspect{Name: "/plex", Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
-	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+	updateAfterBackup(svc, "plex", in, tg.ID)
 
 	ref, ok := unraidReconcilePHPRun(ssh.runs)
 	if !ok {
@@ -216,7 +224,7 @@ func TestUpdateAfterBackup_NoReconcileWhenUpToDate(t *testing.T) {
 	svc.docker = &updateFakeDocker{imageID: "sha256:SAME"}
 
 	in := model.Inspect{Name: "/plex", Image: "sha256:SAME", Config: model.Config{Image: "plex:latest"}}
-	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+	updateAfterBackup(svc, "plex", in, tg.ID)
 
 	if _, ok := unraidReconcilePHPRun(ssh.runs); ok {
 		t.Fatalf("no update happened, so the Unraid status must not be reconciled; runs %v", ssh.runs)
@@ -243,7 +251,7 @@ func TestUpdateAfterBackup_ReconcileSkippedWhenDisabled(t *testing.T) {
 	svc.docker = &updateFakeDocker{imageID: "sha256:NEW"}
 
 	in := model.Inspect{Name: "/plex", Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
-	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+	updateAfterBackup(svc, "plex", in, tg.ID)
 
 	if _, ok := unraidReconcilePHPRun(ssh.runs); ok {
 		t.Fatalf("reconcile is disabled, so it must not run; runs %v", ssh.runs)
@@ -262,7 +270,7 @@ func TestUpdateAfterBackup_ReconcileErrorDoesNotFailUpdate(t *testing.T) {
 	svc.docker = &updateFakeDocker{imageID: "sha256:NEW"}
 
 	in := model.Inspect{Name: "/plex", Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
-	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
+	updateAfterBackup(svc, "plex", in, tg.ID)
 
 	runs, err := st.ListRuns(10)
 	if err != nil {
@@ -310,7 +318,7 @@ func TestUpdateAfterBackup_RegistryAuthReachesPull(t *testing.T) {
 	f := &updateFakeDocker{imageID: "sha256:SAME"}
 	svc.docker = f
 	in := model.Inspect{Name: "/tcm", Image: "sha256:SAME", Config: model.Config{Image: "ghcr.io/owner/tcm-ui:latest"}}
-	svc.updateContainerAfterBackup(context.Background(), "tcm", in, tg.ID)
+	updateAfterBackup(svc, "tcm", in, tg.ID)
 	if len(f.pullAuths) != 1 {
 		t.Fatalf("expected exactly one pull, got calls %v", f.calls)
 	}
@@ -326,7 +334,7 @@ func TestUpdateAfterBackup_RegistryAuthReachesPull(t *testing.T) {
 	f2 := &updateFakeDocker{imageID: "sha256:SAME"}
 	svc.docker = f2
 	in2 := model.Inspect{Name: "/plex", Image: "sha256:SAME", Config: model.Config{Image: "plex:latest"}}
-	svc.updateContainerAfterBackup(context.Background(), "plex", in2, tg.ID)
+	updateAfterBackup(svc, "plex", in2, tg.ID)
 	if len(f2.pullAuths) != 1 || f2.pullAuths[0] != "" {
 		t.Fatalf("a Docker Hub ref must NOT receive the ghcr.io credential: %q", f2.pullAuths)
 	}

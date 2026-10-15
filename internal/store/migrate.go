@@ -3187,6 +3187,39 @@ UNION SELECT member_id FROM pull_sources WHERE member_id <> '';`,
 		sql: `ALTER TABLE zfs_replica_servers ADD COLUMN mount_readonly INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE zfs_replica_state ADD COLUMN mount TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		version:          containerSnapshotMigration,
+		name:             "settings_container_snapshots",
+		sql:              `ALTER TABLE settings ADD COLUMN container_snapshots INTEGER NOT NULL DEFAULT 1;`,
+		alreadySatisfied: columnPresent("settings", "container_snapshots"),
+	},
+	{
+		// A container follows the switch in the settings until it has a choice
+		// of its own, the way update_after_backup does.
+		version:          containerSnapshotMigration + 1,
+		name:             "targets_zfs_snapshot",
+		alreadySatisfied: columnPresent("targets", "zfs_snapshot_own"),
+		sql: `ALTER TABLE targets ADD COLUMN zfs_snapshot INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE targets ADD COLUMN zfs_snapshot_own INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		// snapshot_window_ms is NULL for a run that read the live data.
+		version:          containerSnapshotMigration + 2,
+		name:             "runs_snapshot_window",
+		alreadySatisfied: columnPresent("runs", "snapshot_fallback"),
+		sql: `ALTER TABLE runs ADD COLUMN snapshot_window_ms INTEGER;
+ALTER TABLE runs ADD COLUMN snapshot_fallback TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// The datasets a container backup snapshotted, so a sweep finds what a
+		// crash left on them although no ZFS item covers them.
+		version: containerSnapshotMigration + 3,
+		name:    "container_snapshot_datasets",
+		sql: `CREATE TABLE IF NOT EXISTS container_snapshot_datasets (
+  dataset  TEXT    PRIMARY KEY,
+  added_at INTEGER NOT NULL
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3337,6 +3370,10 @@ const formerHomesMigration = 361
 
 // replicaMountMigration numbers the mount setting of the replica servers.
 const replicaMountMigration = 366
+
+// containerSnapshotMigration numbers the snapshot read of containers on ZFS,
+// 380 to 384.
+const containerSnapshotMigration = 380
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

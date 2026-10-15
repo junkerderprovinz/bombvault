@@ -17,3 +17,6 @@ const resticWaitDelay = 10 * time.Second
 func configureProcGroup(cmd *exec.Cmd) {
 	cmd.WaitDelay = resticWaitDelay
 }
+
+// chrootInto has nothing to do on Windows, where no snapshot view exists.
+func chrootInto(*exec.Cmd, string) {}

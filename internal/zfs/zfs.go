@@ -20,6 +20,7 @@ type Host interface {
 	Tree(ctx context.Context, root string) ([]ListEntry, error)
 	List(ctx context.Context) ([]ListEntry, error)
 	SnapshotRecursive(ctx context.Context, root, snap string) error
+	Snapshot(ctx context.Context, datasets []string, snap string) error
 	DestroyRecursive(ctx context.Context, root, snap string) error
 	SnapshotSafety(ctx context.Context, dataset, snap string) error
 	DestroySafety(ctx context.Context, dataset, snap string) error

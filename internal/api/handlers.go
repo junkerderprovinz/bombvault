@@ -637,6 +637,11 @@ type containerView struct {
 	// rather than the switch for every container.
 	UpdateAfterBackup    bool `json:"updateAfterBackup"`
 	UpdateAfterBackupOwn bool `json:"updateAfterBackupOwn"`
+	// ZFSSnapshot is whether the container may be read from a ZFS snapshot,
+	// and ZFSSnapshotOwn whether that is its own choice rather than the
+	// switch for every container.
+	ZFSSnapshot    bool `json:"zfsSnapshot"`
+	ZFSSnapshotOwn bool `json:"zfsSnapshotOwn"`
 	// BackupOrder is the container's explicit manual backup position (#119): a
 	// positive value runs earlier, 0 means unordered (overdue-first tiebreak).
 	BackupOrder int `json:"backupOrder"`
@@ -849,6 +854,7 @@ func (h *Handler) containerViews(r *http.Request, infos []dockercli.ContainerInf
 		}
 		var run *store.Run
 		v.UpdateAfterBackup = settings.UpdateContainersAfterBackup
+		v.ZFSSnapshot = settings.ContainerSnapshots
 		if t, ok := byName[c.Name]; ok {
 			v.AliasConflicts = aliasConflicts.of(t.ID)
 			v.Aliases = formerNames.of(t.ID)
@@ -967,6 +973,8 @@ func (v *containerView) takeStored(t store.Target, settings store.Settings, idle
 	v.Excludes = t.Excludes
 	v.UpdateAfterBackup = t.UpdatesAfterBackup(settings.UpdateContainersAfterBackup)
 	v.UpdateAfterBackupOwn = t.UpdateAfterBackupOwn
+	v.ZFSSnapshot = t.SnapshotsOnZFS(settings.ContainerSnapshots)
+	v.ZFSSnapshotOwn = t.ZFSSnapshotOwn
 	v.LastUpdateCheck = t.LastUpdateCheck
 	v.LastUpdateResult = t.LastUpdateResult
 	v.BackupOrder = t.BackupOrder
@@ -1965,6 +1973,10 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		// follows the switch for every container again.
 		UpdateAfterBackupDefault bool    `json:"updateAfterBackupDefault"`
 		ScheduleCadence          *string `json:"scheduleCadence"`
+		// ZFSSnapshot gives the container its own choice about the snapshot
+		// read; ZFSSnapshotDefault drops it again.
+		ZFSSnapshot        *bool `json:"zfsSnapshot"`
+		ZFSSnapshotDefault bool  `json:"zfsSnapshotDefault"`
 		// DBDumpOff opts the container out of the automatic database dump;
 		// DBDumpEngine names the engine a container that only looks like a
 		// database is dumped with. Pointers like their neighbours: the card
@@ -2050,6 +2062,18 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.UpdateAfterBackupDefault {
 		if err := h.store.FollowUpdateAfterBackup(name); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.ZFSSnapshot != nil {
+		if err := h.store.SetZFSSnapshot(name, *body.ZFSSnapshot); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.ZFSSnapshotDefault {
+		if err := h.store.FollowZFSSnapshot(name); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
@@ -2472,6 +2496,9 @@ type settingsView struct {
 	// container without a choice of its own. A pointer for the reason
 	// DBDumpsEnabled below is one: a body that predates it means keep.
 	UpdateContainersAfterBackup *bool `json:"updateContainersAfterBackup"`
+	// ContainerSnapshots reads every container on ZFS without a choice of its
+	// own from a snapshot. A pointer for the same reason.
+	ContainerSnapshots *bool `json:"containerSnapshots"`
 	// PerItemSchedules opts into per-container/VM schedule overrides (#121). Default
 	// false: the per-domain schedule stays authoritative for every item and the UI
 	// is unchanged. When on, an included item with a non-empty scheduleCadence runs
@@ -2637,6 +2664,7 @@ func toView(s store.Settings) settingsView {
 		WatchdogEnabled:             s.WatchdogEnabled,
 		ReconcileUnraidUpdateStatus: s.ReconcileUnraidUpdateStatus,
 		UpdateContainersAfterBackup: &s.UpdateContainersAfterBackup,
+		ContainerSnapshots:          &s.ContainerSnapshots,
 		ExportEncryptEnabled:        s.ExportEncryptEnabled,
 		ExportAgeRecipients:         s.ExportAgeRecipients,
 		ReceiverEnabled:             s.ReceiverEnabled,
@@ -3257,6 +3285,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.ReconcileUnraidUpdateStatus = v.ReconcileUnraidUpdateStatus
 		if v.UpdateContainersAfterBackup != nil {
 			cur.UpdateContainersAfterBackup = *v.UpdateContainersAfterBackup
+		}
+		if v.ContainerSnapshots != nil {
+			cur.ContainerSnapshots = *v.ContainerSnapshots
 		}
 		cur.ExportEncryptEnabled = v.ExportEncryptEnabled
 		cur.ExportAgeRecipients = strings.TrimSpace(v.ExportAgeRecipients)

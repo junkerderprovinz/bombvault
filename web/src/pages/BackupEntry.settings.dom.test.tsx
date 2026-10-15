@@ -53,6 +53,8 @@ vi.mock("../lib/api", async (importOriginal) => {
     setVMBlockBackup: vi.fn(),
     setUpdateAfterBackup: vi.fn(),
     followUpdateAfterBackup: vi.fn(),
+    setZFSSnapshot: vi.fn(),
+    followZFSSnapshot: vi.fn(),
     putSettings: vi.fn(),
   };
 });
@@ -76,6 +78,7 @@ const patchZFSDataset = vi.mocked(api.patchZFSDataset);
 const setVMBlockBackup = vi.mocked(api.setVMBlockBackup);
 const setUpdateAfterBackup = vi.mocked(api.setUpdateAfterBackup);
 const followUpdateAfterBackup = vi.mocked(api.followUpdateAfterBackup);
+const setZFSSnapshot = vi.mocked(api.setZFSSnapshot);
 const putSettings = vi.mocked(api.putSettings);
 
 const { BackupEntryPage } = await import("./BackupEntry");
@@ -139,7 +142,7 @@ beforeEach(() => {
   vi.mocked(api.getZFSReplica).mockRejectedValue(new Error("no replica"));
   setItemPlacement.mockResolvedValue({ ok: true, placement: PLACEMENT } as never);
   vi.mocked(api.previewItemPlacement).mockResolvedValue({ ok: true, added: [] });
-  for (const call of [setInclude, patchZFSDataset, setVMBlockBackup, setUpdateAfterBackup, followUpdateAfterBackup, putSettings]) {
+  for (const call of [setInclude, patchZFSDataset, setVMBlockBackup, setUpdateAfterBackup, followUpdateAfterBackup, setZFSSnapshot, putSettings]) {
     call.mockResolvedValue({ ok: true } as never);
   }
 });
@@ -354,9 +357,21 @@ describe("a container's switches", () => {
     serveEntries(mocks, { containers: [containerView({ updateAfterBackup: true, updateAfterBackupOwn: false })] });
     await renderSettings("container/immich");
     const container = within(await waitFor(() => card(en["entry.settings.container"])));
-    expect(container.getByRole("switch", { name: en["update.afterBackup"] }).getAttribute("aria-checked")).toBe("true");
-    expect(container.getByText(en["update.followsSchedule"])).toBeTruthy();
-    expect(container.queryByRole("button", { name: en["update.useDefault"] })).toBeNull();
+    const toggle = container.getByRole("switch", { name: en["update.afterBackup"] });
+    expect(toggle.getAttribute("aria-checked")).toBe("true");
+    const update = within(toggle.closest<HTMLElement>(".items-end")!);
+    expect(update.getByText(en["update.followsSchedule"])).toBeTruthy();
+    expect(update.queryByRole("button", { name: en["update.useDefault"] })).toBeNull();
+  });
+
+  it("read a container on ZFS from a snapshot until it chooses otherwise", async () => {
+    serveEntries(mocks, { containers: [containerView({ zfsSnapshot: true, zfsSnapshotOwn: false })] });
+    await renderSettings("container/immich");
+    const container = within(await waitFor(() => card(en["entry.settings.container"])));
+    const toggle = container.getByRole("switch", { name: en["settings.containerSnapshots"] });
+    expect(toggle.getAttribute("aria-checked")).toBe("true");
+    await press(toggle);
+    expect(setZFSSnapshot).toHaveBeenCalledWith("immich", false);
   });
 
   it("keep a choice of their own until it is handed back to the switch", async () => {

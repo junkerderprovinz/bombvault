@@ -23,6 +23,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/compose"
@@ -280,20 +281,22 @@ type BackupDeps struct {
 	// flow never hangs forever on a container that never turns healthy. <=0 uses
 	// defaultHealthTimeout.
 	HealthTimeout time.Duration
-	// WhileDependentsStopped is an optional hook run AFTER a successful backup, with
-	// the backed-up target already restarted and running, but while the stopped
-	// dependents are STILL DOWN — and the dependents are only restarted once it
-	// returns. It exists so a step that RECREATES the target after the backup (the
-	// "update after successful backup" flow, which stops/removes/recreates the
-	// container) completes inside the stop window: otherwise the dependents come
-	// back during the backup and then break against the target while it is torn
-	// down for the recreate (bostafari, #119). Skipped when the backup failed (the
-	// dependents are still restarted unconditionally). The hook is best-effort — it
-	// owns its own error handling and must never panic; the dependent restart in the
-	// deferred unwind runs regardless, so a dependency is never left stopped. Nil in
-	// the zero value: with no hook, the dependents restart immediately after the
-	// backup exactly as before.
-	WhileDependentsStopped func()
+	// UpdateAfterBackup is the "update after successful backup" step. It looks
+	// for a newer image and returns what recreates the container from it, or
+	// nil when there is none. The recreate runs while the dependents are down,
+	// or they break against the target while it is torn down (#119); after a
+	// snapshot read they are stopped once more for it. Skipped when the backup
+	// failed. Both functions own their errors and must not panic.
+	UpdateAfterBackup func() (apply func())
+	// Snapshot, when set, holds the containers down only while it takes a ZFS
+	// snapshot of their data, and the backup is read from that snapshot. Nil
+	// stops them for the whole backup. Used only for a running container.
+	Snapshot ContainerSnapshot
+	// OnWindow receives how long a backup read from a snapshot held the
+	// containers down.
+	OnWindow func(time.Duration)
+	// Clock measures that window; nil is time.Now.
+	Clock func() time.Time
 	// Excludes are restic --exclude patterns for this container's backup
 	// (already resolved to the paths restic stores).
 	Excludes []string
@@ -302,6 +305,23 @@ type BackupDeps struct {
 	Restic    Restic
 	Templates Templates
 	Runs      Runs
+}
+
+// ContainerSnapshot takes the snapshot a container backup reads instead of the
+// live data.
+type ContainerSnapshot interface {
+	// Take snapshots the data while the containers are down and returns what
+	// reads that snapshot at the container's own paths.
+	Take(ctx context.Context) (SnapshotRead, error)
+}
+
+// SnapshotRead backs up from a snapshot exactly as Restic.Backup backs up the
+// live paths, so both land in the repository under the same paths and tags.
+type SnapshotRead interface {
+	Backup(ctx context.Context, repo string, paths, tags []string, excludes ...string) (Summary, error)
+	// Release removes the snapshot and whatever showed it. It is called once,
+	// on a context nothing cancels.
+	Release(ctx context.Context)
 }
 
 // RestoreDeps bundles everything RestoreContainer needs.
@@ -484,7 +504,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		summarySeen bool
 	)
 
-	func() {
+	readLive := func() {
 		// stoppedDeps tracks the dependency containers we actually stopped, so the
 		// restart unwind only starts those (and never spuriously starts a dep when
 		// we bailed before stopping them). The full StopContainer is kept (not just
@@ -539,13 +559,15 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 					targetUp = true
 				}
 			}
-			if backupErr == nil && d.WhileDependentsStopped != nil {
-				d.WhileDependentsStopped()
-				// The hook may have recreated the target (stop/remove/create+start);
-				// re-wait so it is Running before its netns dependents are restarted.
-				if targetUp {
-					if waitErr := d.Docker.WaitRunning(restartCtx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
-						log.Printf("backup: wait container %q running after post-backup step: %v", d.ContainerRef, waitErr)
+			if backupErr == nil && d.UpdateAfterBackup != nil {
+				if apply := d.UpdateAfterBackup(); apply != nil {
+					apply()
+					// The target was recreated; it has to be Running before its netns
+					// dependents are restarted.
+					if targetUp {
+						if waitErr := d.Docker.WaitRunning(restartCtx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
+							log.Printf("backup: wait container %q running after post-backup step: %v", d.ContainerRef, waitErr)
+						}
 					}
 				}
 			}
@@ -604,33 +626,21 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 				return
 			}
 			summarySeen = true
-
-			// Capture and persist the live Unraid template alongside the snapshot.
-			// Templates.Write prepends "my-", so the snapshot copy lands at
-			// "my-<snapshotID>-<ContainerName>.xml" (a single, snapshot-scoped name).
-			//
-			// A genuine "no template" (ok==false, err==nil) is fine — not every
-			// container has an Unraid template. A real I/O error must NOT silently
-			// pass: the snapshot itself is valid, so the backup still succeeds, but
-			// we surface the template-capture failure in the log rather than
-			// pretending a template was never there.
-			xml, ok, readErr := d.Templates.Read(d.FlashTemplatesDir, d.ContainerName)
-			switch {
-			case readErr != nil:
-				log.Printf("backup: capture template for %q failed (snapshot still valid): %v",
-					d.ContainerName, readErr)
-			case ok:
-				snapName := summary.SnapshotID + "-" + d.ContainerName
-				if backupErr = d.Templates.Write(d.SnapshotTemplatesDir, snapName, xml); backupErr != nil {
-					backupErr = fmt.Errorf("backup: persist template: %w", backupErr)
-					return
-				}
+			if backupErr = keepTemplate(d, summary.SnapshotID); backupErr != nil {
+				return
 			}
 		}
 		if d.Committed != nil {
 			d.Committed()
 		}
-	}()
+	}
+
+	fromSnapshot := d.Snapshot != nil && d.WasRunning
+	if fromSnapshot {
+		summary, summarySeen, backupErr = backupFromSnapshot(ctx, d, tags, stopTimeout)
+	} else {
+		readLive()
+	}
 
 	if backupErr != nil {
 		_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(backupErr))
@@ -639,8 +649,9 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 
 	// Post-backup hook runs with the container back up. Best-effort: a failure is
 	// logged but never fails a backup that already succeeded. Skipped when the
-	// container was not running (nothing to exec into).
-	if d.WasRunning && d.PostHook != "" {
+	// container was not running (nothing to exec into), and after a snapshot
+	// read, which ran it as soon as the container was back.
+	if d.WasRunning && d.PostHook != "" && !fromSnapshot {
 		if hookErr := d.Docker.Exec(ctx, d.ContainerRef, []string{"sh", "-c", d.PostHook}); hookErr != nil {
 			log.Printf("backup: post-hook failed (backup is still valid): %v", hookErr)
 		}
@@ -664,6 +675,145 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		return summary, fmt.Errorf("backup: record run finish: %w", err)
 	}
 	return summary, nil
+}
+
+// keepTemplate stores the live Unraid template next to the snapshot it was
+// backed up with. Templates.Write prepends "my-", so the copy lands at
+// "my-<snapshotID>-<ContainerName>.xml". A container without a template is
+// fine; one whose template cannot be read keeps a valid backup and says so in
+// the log.
+func keepTemplate(d BackupDeps, snapshotID string) error {
+	xml, ok, readErr := d.Templates.Read(d.FlashTemplatesDir, d.ContainerName)
+	switch {
+	case readErr != nil:
+		log.Printf("backup: capture template for %q failed (snapshot still valid): %v", d.ContainerName, readErr)
+	case ok:
+		if err := d.Templates.Write(d.SnapshotTemplatesDir, snapshotID+"-"+d.ContainerName, xml); err != nil {
+			return fmt.Errorf("backup: persist template: %w", err)
+		}
+	}
+	return nil
+}
+
+// backupFromSnapshot is the middle of a backup that reads a snapshot: the
+// containers are down only while it is taken, the post-hook runs as soon as
+// they are back, and restic reads the snapshot at the container's own paths
+// afterwards. Whatever happens, the containers that were stopped are started
+// again, and the snapshot is released.
+func backupFromSnapshot(ctx context.Context, d BackupDeps, tags []string, stopTimeout time.Duration) (summary Summary, seen bool, err error) {
+	clock := d.Clock
+	if clock == nil {
+		clock = time.Now
+	}
+	restartCtx := context.WithoutCancel(ctx)
+	keep := func(e error) {
+		if err == nil {
+			err = e
+		}
+	}
+
+	var stoppedDeps []StopContainer
+	var downSince time.Time
+	targetUp, restarted := false, false
+	restart := func() {
+		if restarted {
+			return
+		}
+		restarted = true
+		atStep(d.Step, progress.StepStart)
+		if startErr := d.Docker.Start(restartCtx, d.ContainerRef); startErr != nil {
+			keep(fmt.Errorf("backup: restart container: %w", startErr))
+		} else if waitErr := d.Docker.WaitRunning(restartCtx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
+			keep(fmt.Errorf("backup: wait container running: %w", waitErr))
+		} else {
+			targetUp = true
+		}
+		RestartInOrder(restartCtx, d.Docker, stoppedDeps, d.HealthWait, d.HealthTimeout)
+		if d.OnWindow != nil {
+			d.OnWindow(clock().Sub(downSince))
+		}
+	}
+	defer restart()
+
+	atStep(d.Step, progress.StepStop)
+	downSince = clock()
+	if stopErr := d.Docker.Stop(restartCtx, d.ContainerRef, stopTimeout); stopErr != nil {
+		return Summary{}, false, fmt.Errorf("backup: stop container: %w", stopErr)
+	}
+	for _, dep := range d.StopContainers {
+		if !dep.WasRunning {
+			continue
+		}
+		if stopErr := d.Docker.Stop(restartCtx, dep.ref(), stopTimeout); stopErr != nil {
+			log.Printf("backup: stop dependency %q failed (continuing): %v", dep.Name, stopErr)
+			continue
+		}
+		stoppedDeps = append(stoppedDeps, dep)
+	}
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return Summary{}, false, fmt.Errorf("backup: cancelled while stopping the containers: %w", ctxErr)
+	}
+
+	read, takeErr := d.Snapshot.Take(ctx)
+	restart()
+	if takeErr != nil {
+		keep(fmt.Errorf("backup: snapshot: %w", takeErr))
+		return Summary{}, false, err
+	}
+	release := sync.OnceFunc(func() { read.Release(restartCtx) })
+	defer release()
+
+	if targetUp && d.PostHook != "" {
+		if hookErr := d.Docker.Exec(ctx, d.ContainerRef, []string{"sh", "-c", d.PostHook}); hookErr != nil {
+			log.Printf("backup: post-hook failed (backup is still valid): %v", hookErr)
+		}
+	}
+
+	if len(d.AppdataPaths) > 0 {
+		atStep(d.Step, progress.StepRead)
+		var readErr error
+		if summary, readErr = read.Backup(ctx, d.RepoPath, d.AppdataPaths, tags, d.Excludes...); readErr != nil {
+			return Summary{}, false, readErr
+		}
+		if tplErr := keepTemplate(d, summary.SnapshotID); tplErr != nil {
+			return Summary{}, false, tplErr
+		}
+		seen = true
+	}
+	release()
+	if d.Committed != nil {
+		d.Committed()
+	}
+	if err == nil {
+		updateAfterSnapshot(restartCtx, d, stoppedDeps, stopTimeout)
+	}
+	return summary, seen, err
+}
+
+// updateAfterSnapshot runs the update step of a backup read from a snapshot.
+// The dependents are running again by then, so they go down a second time,
+// but only when there is an image to update to.
+func updateAfterSnapshot(ctx context.Context, d BackupDeps, deps []StopContainer, stopTimeout time.Duration) {
+	if d.UpdateAfterBackup == nil {
+		return
+	}
+	apply := d.UpdateAfterBackup()
+	if apply == nil {
+		return
+	}
+	var stopped []StopContainer
+	for _, dep := range deps {
+		if err := d.Docker.Stop(ctx, dep.ref(), stopTimeout); err != nil {
+			log.Printf("backup: stop dependency %q for the update failed (continuing): %v", dep.Name, err)
+			continue
+		}
+		stopped = append(stopped, dep)
+	}
+	defer RestartInOrder(ctx, d.Docker, stopped, d.HealthWait, d.HealthTimeout)
+	apply()
+	if err := d.Docker.WaitRunning(ctx, d.ContainerRef, runningWaitTimeout); err != nil {
+		log.Printf("backup: wait container %q running after post-backup step: %v", d.ContainerRef, err)
+	}
 }
 
 // atStep tells the caller of a backup which step it has reached.

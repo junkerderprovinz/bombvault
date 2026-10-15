@@ -37,11 +37,18 @@ type Run struct {
 	// Load is how busy the host was during the run, as the api package
 	// writes it. Empty for a run that was not measured.
 	Load string `json:"-"`
+	// SnapshotWindowMS is how long a container backup that read a ZFS snapshot
+	// held the container down, nil for a run that read the live data.
+	SnapshotWindowMS *int64 `json:"snapshotWindowMs"`
+	// SnapshotFallback says why a container that could have been read from a
+	// snapshot was stopped for the whole backup instead: a reason code, a colon
+	// and what it was about.
+	SnapshotFallback string `json:"snapshotFallback"`
 }
 
 // runCols is the column list of every full run query, in the order scanRun
 // reads them.
-const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key, load_summary, source_bytes`
+const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key, load_summary, source_bytes, snapshot_window_ms, snapshot_fallback`
 
 // RunMeta is what a caller knows about a run beyond its target and kind: the
 // pass it belongs to and who asked for it.
@@ -876,16 +883,18 @@ func (r *Repo) RunCountsOfKind(kind string) (map[string]map[string]int, error) {
 
 func scanRun(s scanner) (Run, error) {
 	var run Run
-	var finishedAt, bytes, sourceBytes sql.NullInt64
+	var finishedAt, bytes, sourceBytes, window sql.NullInt64
 	var snapID, errCol sql.NullString
 	err := s.Scan(
 		&run.ID, &run.TargetID, &run.Kind, &run.Status,
 		&run.StartedAt, &finishedAt, &snapID, &bytes, &errCol, &run.Acknowledged, &run.GroupID,
 		&run.StartedVia, &run.StartedViaKey, &run.Load, &sourceBytes,
+		&window, &run.SnapshotFallback,
 	)
 	if err != nil {
 		return Run{}, err
 	}
+	run.SnapshotWindowMS = nullableInt(window)
 	if finishedAt.Valid {
 		run.FinishedAt = &finishedAt.Int64
 	}

@@ -78,6 +78,30 @@ func TestSnapshotRecursiveArgs(t *testing.T) {
 	}
 }
 
+func TestSnapshotArgsTakesExactlyTheGivenDatasets(t *testing.T) {
+	got, err := SnapshotArgs([]string{"cache/appdata/plex", "cache/appdata/plex/db"}, "bombvault-20261015120000")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"zfs", "snapshot", "cache/appdata/plex@bombvault-20261015120000", "cache/appdata/plex/db@bombvault-20261015120000"}
+	if !equalArgs(got, want) {
+		t.Fatalf("SnapshotArgs = %q, want %q", got, want)
+	}
+	for _, bad := range []struct {
+		datasets []string
+		snap     string
+	}{
+		{nil, "bombvault-20261015120000"},
+		{[]string{"cache/appdata"}, "nightly"},
+		{[]string{"cache/appdata", "-r"}, "bombvault-20261015120000"},
+		{[]string{"cache/appdata@x"}, "bombvault-20261015120000"},
+	} {
+		if args, err := SnapshotArgs(bad.datasets, bad.snap); err == nil || args != nil {
+			t.Errorf("SnapshotArgs took %q@%q: %q, %v", bad.datasets, bad.snap, args, err)
+		}
+	}
+}
+
 func TestDestroyRecursiveArgsOnlyBombVaultNames(t *testing.T) {
 	got, err := DestroyRecursiveArgs("cache/appdata", "bombvault-20260917031500")
 	if err != nil {

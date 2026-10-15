@@ -10,12 +10,12 @@ import (
 )
 
 // With "update after successful backup" on, the container is recreated after
-// the backup through the WhileDependentsStopped hook, so its dependents stay
+// the backup through the UpdateAfterBackup step, so its dependents stay
 // down until the recreate is done. Without the hook they restart right after
 // the backup, and a failing hook still leaves no dependent stopped.
 
 // runBackupWithHook backs up a running target that stops deps, with an
-// optional WhileDependentsStopped hook and the given health-wait settings. The
+// optional update step and the given health-wait settings. The
 // Docker calls land in d.log.
 func runBackupWithHook(t *testing.T, d *fakeDocker, deps []backup.StopContainer, hook func(), healthWait bool, timeout time.Duration) {
 	t.Helper()
@@ -23,27 +23,36 @@ func runBackupWithHook(t *testing.T, d *fakeDocker, deps []backup.StopContainer,
 	tpl := &fakeTemplates{readXML: "<xml/>", readOK: true}
 	runs := &fakeRuns{}
 	_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
-		ContainerRef:           "backuptarget",
-		ContainerName:          "BackupTarget",
-		RepoPath:               "/repo",
-		AppdataPaths:           []string{"/host/user/appdata/backuptarget"},
-		StopTimeout:            30 * time.Second,
-		TargetID:               "target-1",
-		WasRunning:             true,
-		StopContainers:         deps,
-		HealthWait:             healthWait,
-		HealthTimeout:          timeout,
-		WhileDependentsStopped: hook,
-		SnapshotTemplatesDir:   "/data/templates",
-		FlashTemplatesDir:      "/boot/templates",
-		Docker:                 d,
-		Restic:                 r,
-		Templates:              tpl,
-		Runs:                   runs,
+		ContainerRef:         "backuptarget",
+		ContainerName:        "BackupTarget",
+		RepoPath:             "/repo",
+		AppdataPaths:         []string{"/host/user/appdata/backuptarget"},
+		StopTimeout:          30 * time.Second,
+		TargetID:             "target-1",
+		WasRunning:           true,
+		StopContainers:       deps,
+		HealthWait:           healthWait,
+		HealthTimeout:        timeout,
+		UpdateAfterBackup:    updateFound(hook),
+		SnapshotTemplatesDir: "/data/templates",
+		FlashTemplatesDir:    "/boot/templates",
+		Docker:               d,
+		Restic:               r,
+		Templates:            tpl,
+		Runs:                 runs,
 	})
 	if err != nil {
 		t.Fatalf("unexpected backup error: %v", err)
 	}
+}
+
+// updateFound is an update step that always finds a newer image and applies
+// it with recreate. A nil recreate means no update step at all.
+func updateFound(recreate func()) func() func() {
+	if recreate == nil {
+		return nil
+	}
+	return func() func() { return recreate }
 }
 
 // recreateTargetHook stops, removes and recreates the target the way the update

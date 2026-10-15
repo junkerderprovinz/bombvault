@@ -55,6 +55,27 @@ func SnapshotRecursiveArgs(root, snap string) ([]string, error) {
 	return []string{zfsBinary, "snapshot", "-r", root + "@" + snap}, nil
 }
 
+// SnapshotArgs snapshots exactly the given datasets of one pool in a single
+// atomic call, without their children. A container backup takes only the
+// datasets its data lies on, since a recursive snapshot of a pool's root
+// would take Docker's own datasets and every zvol with it.
+func SnapshotArgs(datasets []string, snap string) ([]string, error) {
+	if len(datasets) == 0 {
+		return nil, &NameError{Code: "invalid-name", Reason: "no dataset to snapshot"}
+	}
+	if !IsBombVaultSnapshot(snap) {
+		return nil, &NameError{Code: "invalid-name", Reason: "not a BombVault snapshot name: " + snap}
+	}
+	args := []string{zfsBinary, "snapshot"}
+	for _, d := range datasets {
+		if err := ValidateMemberName(d); err != nil {
+			return nil, err
+		}
+		args = append(args, d+"@"+snap)
+	}
+	return args, nil
+}
+
 // DestroyRecursiveArgs removes a run's snapshot from the whole tree. This is
 // the only builder that emits -r for destroy, and it only ever does so with a
 // name IsBombVaultSnapshot accepts and always with an "@", so -r can never

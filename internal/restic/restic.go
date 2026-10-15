@@ -143,6 +143,14 @@ type Mode struct {
 	// repository; empty is restic's default. Only the commands that write
 	// carry it.
 	Compression Compression
+	// Root is the directory restic runs chrooted into: the root of a view in
+	// which a ZFS snapshot sits at the paths a container backup always reads.
+	// Empty runs restic in this container's own filesystem.
+	Root string
+	// IgnoreInode adds --ignore-inode to a backup. A run that reads the data
+	// through another view than its parent did sees other inode numbers for
+	// the same files, and without it restic would read every file again.
+	IgnoreInode bool
 }
 
 // Compression is restic's --compression mode.
@@ -571,6 +579,9 @@ func backupArgs(repo string, tags []string, m Mode, groupBy string, excludes, po
 	// reaches argv here, and the zero value emits nothing.
 	if m.ExcludeCaches {
 		args = append(args, "--exclude-caches")
+	}
+	if m.IgnoreInode {
+		args = append(args, "--ignore-inode")
 	}
 	for _, ex := range excludes {
 		args = append(args, "--exclude", ex)
@@ -1421,6 +1432,14 @@ func (r Restic) runIn(ctx context.Context, dir string, args []string, m Mode) ([
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 	configureProcGroup(cmd)
 	env := r.authEnv(m)
+	if m.Root != "" {
+		// The working directory is resolved inside the new root, where the
+		// one this process has may not exist.
+		chrootInto(cmd, m.Root)
+		if dir == "" {
+			dir = "/"
+		}
+	}
 	if dir != "" {
 		cmd.Dir = dir
 		env = append(env, "PWD="+dir)

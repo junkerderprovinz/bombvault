@@ -155,6 +155,20 @@ func (h *fakeZFSHost) SnapshotRecursive(ctx context.Context, root, snap string) 
 	return nil
 }
 
+func (h *fakeZFSHost) Snapshot(ctx context.Context, datasets []string, snap string) error {
+	h.record("snapshot " + strings.Join(datasets, " ") + "@" + snap)
+	if h.snapshotErr != nil {
+		return h.snapshotErr
+	}
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	h.mu.Lock()
+	h.taken = append(h.taken, snap)
+	h.mu.Unlock()
+	return nil
+}
+
 func (h *fakeZFSHost) DestroyRecursive(_ context.Context, root, snap string) error {
 	h.record("destroy -r " + root + "@" + snap)
 	if h.destroyErr != nil {

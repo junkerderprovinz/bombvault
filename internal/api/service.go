@@ -271,6 +271,11 @@ type Service struct {
 	zfsHostMu   sync.Mutex
 	zfsHostLast *zfsHostListing
 	replica     zfsReplicaRuntime
+	// snapNames names the snapshots runs take, so no two runs pick the same
+	// one and no sweep removes one that is still being read.
+	snapNames snapNames
+	// snapViewOK is set once a snapshot view has been entered on this host.
+	snapViewOK atomic.Bool
 	// rclone runs against the instance's own config file; rcloneConfMu keeps
 	// two edits of that file from dropping each other's remote.
 	rcloneOnce   sync.Once
@@ -6034,13 +6039,20 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// brought back (Part B) by then, they break against the target while it is torn
 	// down for the recreate (bostafari: a dependent fires against a down target,
 	// connection refused). Hand the update to the orchestrator as its
-	// WhileDependentsStopped hook so it runs INSIDE the stop window — the dependents
-	// are restarted only after the recreate. Only for a running, opted-in container;
-	// otherwise nil, so the dependents restart right after the backup (unchanged).
-	var whileDepsStopped func()
+	// UpdateAfterBackup step so the recreate happens while the dependents are
+	// down. Only for a running, opted-in container; otherwise nil, so the
+	// dependents restart right after the backup.
+	var updateStep func() func()
 	if tg.UpdatesAfterBackup(settings.UpdateContainersAfterBackup) && in.Running && !isBeforeRestore(ctx) {
-		whileDepsStopped = func() { s.updateContainerAfterBackup(ctx, name, in, tg.ID) }
+		updateStep = func() func() { return s.checkUpdateAfterBackup(ctx, name, in, tg.ID) }
 	}
+
+	// A container on ZFS is held down only for a snapshot of its data. Without
+	// a plan it is stopped for the whole backup, and fallback says why when its
+	// data would otherwise have allowed the snapshot.
+	plan, fallback := s.planContainerSnapshot(ctx, settings, tg, in, effective)
+	readMode := mode
+	readMode.IgnoreInode = s.readViewChanged(tg.ID, plan != nil)
 
 	pkey := "container:" + name
 	// Healthchecks /start ping: deferred to here, past every pre-flight early-return,
@@ -6071,24 +6083,38 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		Excludes: excludes,
 		Caches:   enabledKeys(tg.ExcludeCaches),
 	})
+	readerTags := withTags(s.directTags(settings, "containers", repo), beforeRestoreTags(ctx))
+	reader := func(root string) backup.Restic {
+		m := readMode
+		m.Root = root
+		return &resticAdapter{engine: step.engine, mode: m, selectionFP: selectionFP, extraTags: readerTags}
+	}
+	var snapshot backup.ContainerSnapshot
+	if plan != nil {
+		snapshot = &containerSnapshot{svc: s, plan: plan, read: reader}
+	}
+	var window *time.Duration
+	runs := &runIDRecorder{Runs: runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name}}
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
-		ContainerRef:           name,
-		FormerNames:            aliasOldNames(aliases),
-		ContainerName:          name,
-		RepoPath:               repo,
-		AppdataPaths:           effective,
-		UnreachableData:        s.dataOutsideHostMount(in),
-		StopTimeout:            30 * time.Second,
-		TargetID:               tg.ID,
-		SnapshotTemplatesDir:   filepath.Join(s.cfg.DataDir, "templates"),
-		FlashTemplatesDir:      s.cfg.FlashTemplatesDir,
-		WasRunning:             in.Running,
-		PreHook:                tg.PreHook,
-		PostHook:               tg.PostHook,
-		StopContainers:         deps,
-		HealthWait:             settings.RestartHealthWait,
-		HealthTimeout:          time.Duration(settings.RestartHealthTimeoutSec) * time.Second,
-		WhileDependentsStopped: whileDepsStopped,
+		ContainerRef:         name,
+		FormerNames:          aliasOldNames(aliases),
+		ContainerName:        name,
+		RepoPath:             repo,
+		AppdataPaths:         effective,
+		UnreachableData:      s.dataOutsideHostMount(in),
+		StopTimeout:          30 * time.Second,
+		TargetID:             tg.ID,
+		SnapshotTemplatesDir: filepath.Join(s.cfg.DataDir, "templates"),
+		FlashTemplatesDir:    s.cfg.FlashTemplatesDir,
+		WasRunning:           in.Running,
+		PreHook:              tg.PreHook,
+		PostHook:             tg.PostHook,
+		StopContainers:       deps,
+		HealthWait:           settings.RestartHealthWait,
+		HealthTimeout:        time.Duration(settings.RestartHealthTimeoutSec) * time.Second,
+		UpdateAfterBackup:    updateStep,
+		Snapshot:             snapshot,
+		OnWindow:             func(w time.Duration) { window = &w },
 		// User-owned exclude patterns stay first; the selection-derived tail
 		// enforces the stored exclusion branches strictly below an included
 		// root on the argv (review finding WR-01, gap closure per the
@@ -6101,15 +6127,16 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		// --, positionals after) — never through a shell.
 		Excludes:     excludes,
 		Docker:       s.docker,
-		Restic:       &resticAdapter{engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: withTags(s.directTags(settings, "containers", repo), beforeRestoreTags(ctx))},
+		Restic:       reader(""),
 		Templates:    templatesAdapter{},
-		Runs:         runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name},
+		Runs:         runs,
 		DBDump:       dumpPlan,
 		DBDumper:     dumper,
 		OnDBDumpDone: func(o backup.DBDumpOutcome) { dumpOutcome = o },
 		Committed:    func() { s.commitBackup(pkey, startedAt) },
 		Step:         s.backupStep(pkey),
 	})
+	s.recordSnapshotRead(runs.id, window, fallback)
 	s.progEnd(pkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "container", name, "container:"+name, err == nil, sum, err)
 	// After the backup's own outcome is known, so the dump's message can say
@@ -6132,10 +6159,10 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		log.Printf("api: backup: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
 	// #52: the optional post-backup image update already ran, if enabled, as the
-	// orchestrator's WhileDependentsStopped hook (above) — inside the stop window,
-	// so a recreate of the target completes BEFORE its dependents are restarted
-	// (#119). The backup + fresh snapshot are its safety net; any failure there is
-	// logged + recorded as a failed "update" run, but never fails the backup.
+	// orchestrator's UpdateAfterBackup step (above), with the dependents down,
+	// so a recreate of the target completes before they are restarted (#119).
+	// The fresh backup is its safety net; a failure there is logged and
+	// recorded as a failed "update" run, but never fails the backup.
 	// This container's compose stack, if it has one and if this is a SINGLE
 	// backup rather than one item of a round.
 	// -------------------------------------------------------------------------
@@ -6170,13 +6197,14 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	return sum, nil
 }
 
-// updateContainerAfterBackup implements the per-container "update after backup"
-// opt-in (#52): pull the container's image and, only if a newer image actually
-// arrived, recreate the container from its live inspect (which then resolves to
-// the new image). Recorded as its own "update" run so the recreate is visible
-// in Run History. Best-effort: a failure here never fails the backup — the fresh
-// snapshot lets the user roll back a bad update.
-func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, in model.Inspect, targetID string) {
+// checkUpdateAfterBackup is the first half of the per-container "update after
+// backup" opt-in (#52): it pulls the container's image and, only if a newer
+// image actually arrived, returns the step that recreates the container from
+// its live inspect (which then resolves to the new image). The recreate is
+// recorded as its own "update" run so it is visible in Run History.
+// Best-effort: a failure here never fails the backup, and the fresh snapshot
+// lets the user roll back a bad update.
+func (s *Service) checkUpdateAfterBackup(ctx context.Context, name string, in model.Inspect, targetID string) func() {
 	ref := in.Config.Image
 	if ref == "" {
 		ref = in.Image
@@ -6191,13 +6219,13 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		// the server log (#95). The backup itself already succeeded.
 		log.Printf("api: update-after-backup: pull %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		s.recordUpdateFailure(name, targetID, fmt.Errorf("pull image: %w", err))
-		return
+		return nil
 	}
 	newID, err := s.docker.ImageID(ctx, ref)
 	if err != nil {
 		log.Printf("api: update-after-backup: resolve image id for %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		s.recordUpdateFailure(name, targetID, fmt.Errorf("resolve image id: %w", err))
-		return
+		return nil
 	}
 	// Nothing newer arrived → no recreate, and deliberately still NO run record
 	// (44 "nothing happened" rows a night would drown Run History). The check DID
@@ -6205,8 +6233,14 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 	// date" instead of leaving it indistinguishable from "never reached".
 	if newID == "" || newID == in.Image {
 		s.setUpdateCheck(name, "up-to-date")
-		return
+		return nil
 	}
+	return func() { s.applyUpdateAfterBackup(ctx, name, in, targetID, ref) }
+}
+
+// applyUpdateAfterBackup recreates the container from the newer image the
+// check pulled, as its own "update" run.
+func (s *Service) applyUpdateAfterBackup(ctx context.Context, name string, in model.Inspect, targetID, ref string) {
 	// context.Background(), not ctx: an "update" run is a side effect of the
 	// container backup, not one of the five domain steps a "Backup Everything"
 	// pass groups (see runGroupKey's doc comment) — deliberately excluded here,
@@ -10986,6 +11020,9 @@ func configuredStateLabels(t store.Target) []string {
 	}
 	if t.UpdateAfterBackupOwn {
 		labels = append(labels, "update-after-backup")
+	}
+	if t.ZFSSnapshotOwn {
+		labels = append(labels, "zfs-snapshot")
 	}
 	return labels
 }

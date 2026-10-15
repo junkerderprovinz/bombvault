@@ -6,6 +6,7 @@ import { useT } from "../../lib/i18n";
 import { formatClockTime, formatDuration, formatRecent } from "../../lib/reltime";
 import { runKindLabel } from "../../lib/runKind";
 import { dataOutsideHost, RunReasonText } from "../../lib/runReason";
+import { snapshotFallbackText, snapshotWindowText } from "../../lib/snapshotRead";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
 import { AnomalyWindow } from "../anomalies/AnomalyWindow";
 import { Badge } from "../Badge";
@@ -83,7 +84,18 @@ export function EntryRuns({
                       {t("run.statusCancelled")}
                     </Badge>
                   )}
+                  {run.snapshotWindowMs != null && (
+                    <Badge tone="active" size="small">
+                      {t("run.snapshot")}
+                    </Badge>
+                  )}
                 </span>
+                {run.snapshotWindowMs != null && (
+                  <span className="text-xs text-carbon-textMuted">{snapshotWindowText(t, run.snapshotWindowMs)}</span>
+                )}
+                {run.snapshotFallback && (
+                  <span className="text-xs text-carbon-textMuted">{snapshotFallbackText(t, run.snapshotFallback)}</span>
+                )}
                 {run.status === "success" && dataOutsideHost(run.error) && (
                   <span className="text-xs text-statusWarn"><RunReasonText reason={run.error} t={t} /></span>
                 )}

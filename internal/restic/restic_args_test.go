@@ -538,6 +538,18 @@ func TestBackupArgsExcludeCaches(t *testing.T) {
 	})
 }
 
+func TestBackupArgsIgnoreInodeOnlyWhenAsked(t *testing.T) {
+	got := BackupArgs("/repo", []string{"/src"}, []string{"container:plex"}, Mode{Encrypted: true, IgnoreInode: true}, "logs")
+	want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault", "--tag", "container:plex",
+		"--ignore-inode", "--exclude", "logs", "--", "/src"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+	if got := BackupArgs("/repo", []string{"/src"}, nil, Mode{Encrypted: true}); slices.Contains(got, "--ignore-inode") {
+		t.Fatalf("an ordinary backup carries --ignore-inode: %v", got)
+	}
+}
+
 // TestBackupArgsHasNoGroupBy pins that the path-based backup builder leaves
 // grouping at restic's default. Every container, VM, flash, config and folder
 // snapshot is grouped by host and paths; a --group-by host,tags here would put

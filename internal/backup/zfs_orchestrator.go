@@ -137,10 +137,14 @@ type ZFSBackupDeps struct {
 	// travels on the run's summary like every other item's.
 	SelectionFP string
 	// Now names the snapshot; Clock measures durations and the destroy budget.
-	Now    func() time.Time
-	Clock  func() time.Time
-	ZFS    ZFSSnapshotter
-	Restic ZFSRestic
+	Now func() time.Time
+	// ReserveName, when set, names the snapshot instead of Now alone: it
+	// returns a name no other run is using and the function that frees it
+	// once the snapshot is gone.
+	ReserveName func(now time.Time) (string, func())
+	Clock       func() time.Time
+	ZFS         ZFSSnapshotter
+	Restic      ZFSRestic
 	// Visible waits until the member's snapshot mount has reached the container
 	// and returns a *ZFSRefusal when it never does.
 	Visible     func(ctx context.Context, dataset, snap, snapDir string) error
@@ -205,6 +209,11 @@ func BackupZFSItem(ctx context.Context, d ZFSBackupDeps) (Summary, error) {
 	}
 
 	snap := zfs.SnapshotName(d.Now())
+	if d.ReserveName != nil {
+		var free func()
+		snap, free = d.ReserveName(d.Now())
+		defer free()
+	}
 	snapErr := d.ZFS.SnapshotRecursive(ctx, d.Root, snap)
 
 	// The apps come back on a context nothing can cancel, so a user cancel or a

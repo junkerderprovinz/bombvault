@@ -1537,6 +1537,9 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	if v.UpdateContainersAfterBackup != nil {
 		out.UpdateContainersAfterBackup = *v.UpdateContainersAfterBackup
 	}
+	if v.ContainerSnapshots != nil {
+		out.ContainerSnapshots = *v.ContainerSnapshots
+	}
 	out.ExportEncryptEnabled = v.ExportEncryptEnabled
 	out.ExportAgeRecipients = strings.TrimSpace(v.ExportAgeRecipients)
 	out.ReceiverEnabled = v.ReceiverEnabled

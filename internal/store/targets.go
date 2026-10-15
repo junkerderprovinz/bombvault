@@ -86,6 +86,12 @@ type Target struct {
 	// a lookalike is not dumped while a curated image dumps by its own
 	// recognition. Owned by SetDBDumpEngine (never reset by Upsert).
 	DBDumpEngine string
+	// ZFSSnapshot is this container's own choice about being read from a ZFS
+	// snapshot instead of being stopped for the whole backup. It counts only
+	// while ZFSSnapshotOwn is set; otherwise Settings.ContainerSnapshots
+	// decides. Owned by SetZFSSnapshot (never reset by Upsert).
+	ZFSSnapshot    bool
+	ZFSSnapshotOwn bool
 }
 
 // ContainerOrder pairs a container name with its explicit backup order (#119).
@@ -182,7 +188,7 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 // GetTargetByContainer returns the target for the named container.
 func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, update_after_backup_own, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, update_after_backup_own, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine, zfs_snapshot, zfs_snapshot_own
 		FROM targets WHERE container_name = ?`, name)
 	return scanTarget(row)
 }
@@ -191,7 +197,7 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 // alias's target_id resolves to the entry's current name.
 func (r *Repo) GetTargetByID(id string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, update_after_backup_own, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, update_after_backup_own, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine, zfs_snapshot, zfs_snapshot_own
 		FROM targets WHERE id = ?`, id)
 	return scanTarget(row)
 }
@@ -199,7 +205,7 @@ func (r *Repo) GetTargetByID(id string) (Target, error) {
 // ListTargets returns all known targets.
 func (r *Repo) ListTargets() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, update_after_backup_own, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, update_after_backup_own, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine, zfs_snapshot, zfs_snapshot_own
 		FROM targets ORDER BY container_name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
@@ -241,7 +247,7 @@ func (r *Repo) ListTargetsScheduleOrder() ([]Target, error) {
 	// there is and drifts to the end of the queue for good — quietly, since the
 	// ordering is a preference rather than an error.
 	rows, err := r.db.Query(`
-		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.exclude_caches, t.update_after_backup, t.update_after_backup_own, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence, t.repo, t.repo_chosen, t.db_dump_off, t.db_dump_engine
+		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.exclude_caches, t.update_after_backup, t.update_after_backup_own, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence, t.repo, t.repo_chosen, t.db_dump_off, t.db_dump_engine, t.zfs_snapshot, t.zfs_snapshot_own
 		FROM targets t
 		LEFT JOIN (
 			SELECT target_id, MAX(finished_at) AS last_ok
@@ -337,6 +343,45 @@ func (r *Repo) FollowUpdateAfterBackup(containerName string) error {
 		`UPDATE targets SET update_after_backup = 0, update_after_backup_own = 0 WHERE container_name = ?`,
 		containerName); err != nil {
 		return fmt.Errorf("FollowUpdateAfterBackup: %w", err)
+	}
+	return nil
+}
+
+// SnapshotsOnZFS reports whether this container may be read from a ZFS
+// snapshot: its own choice when it has one, else everyContainer.
+func (t Target) SnapshotsOnZFS(everyContainer bool) bool {
+	if t.ZFSSnapshotOwn {
+		return t.ZFSSnapshot
+	}
+	return everyContainer
+}
+
+// SetZFSSnapshot gives a container its own choice about the snapshot read,
+// creating the target row if it does not exist yet.
+func (r *Repo) SetZFSSnapshot(containerName string, on bool) error {
+	const set = `UPDATE targets SET zfs_snapshot = ?, zfs_snapshot_own = 1 WHERE container_name = ?`
+	res, err := r.db.Exec(set, boolInt(on), containerName)
+	if err != nil {
+		return fmt.Errorf("SetZFSSnapshot: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n > 0 {
+		return nil
+	}
+	if _, err := r.UpsertTarget(Target{ContainerName: containerName}); err != nil {
+		return fmt.Errorf("SetZFSSnapshot create target: %w", err)
+	}
+	if _, err := r.db.Exec(set, boolInt(on), containerName); err != nil {
+		return fmt.Errorf("SetZFSSnapshot: %w", err)
+	}
+	return nil
+}
+
+// FollowZFSSnapshot drops a container's own choice about the snapshot read.
+func (r *Repo) FollowZFSSnapshot(containerName string) error {
+	if _, err := r.db.Exec(
+		`UPDATE targets SET zfs_snapshot = 1, zfs_snapshot_own = 0 WHERE container_name = ?`,
+		containerName); err != nil {
+		return fmt.Errorf("FollowZFSSnapshot: %w", err)
 	}
 	return nil
 }
@@ -746,8 +791,8 @@ type scanner interface {
 func scanTarget(s scanner) (Target, error) {
 	var t Target
 	var pathsJSON, selJSON, stopJSON, exJSON, ecJSON string
-	var include, updateAfter, updateAfterOwn, dbDumpOff int
-	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &ecJSON, &updateAfter, &updateAfterOwn, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence, &t.Repo, &t.RepoChosen, &dbDumpOff, &t.DBDumpEngine)
+	var include, updateAfter, updateAfterOwn, dbDumpOff, zfsSnapshot, zfsSnapshotOwn int
+	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &ecJSON, &updateAfter, &updateAfterOwn, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence, &t.Repo, &t.RepoChosen, &dbDumpOff, &t.DBDumpEngine, &zfsSnapshot, &zfsSnapshotOwn)
 	if err != nil {
 		return Target{}, fmt.Errorf("scanTarget: %w", err)
 	}
@@ -772,6 +817,8 @@ func scanTarget(s scanner) (Target, error) {
 	t.UpdateAfterBackup = updateAfter != 0
 	t.UpdateAfterBackupOwn = updateAfterOwn != 0
 	t.DBDumpOff = dbDumpOff != 0
+	t.ZFSSnapshot = zfsSnapshot != 0
+	t.ZFSSnapshotOwn = zfsSnapshotOwn != 0
 	return t, nil
 }
 
