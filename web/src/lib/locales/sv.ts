@@ -2355,6 +2355,7 @@ const sv: Partial<Translations> = {
   "mdns.hint": "Annonserar BombVault i det lokala nätverket via mDNS, så att en webbläsare når den som bombvault.local och tjänstebläddrare listar den. I Dockers standardnätverk bridge stannar annonseringen inne i Docker; den når LAN:et via br0, macvlan eller värdens nätverk.",
   "mdns.enable": "Annonsera i det lokala nätverket",
   "mdns.statusOn": "Annonserad som {url}",
+  "mdns.statusHostOnly": "Annonseras bara inne i Docker. I ett bridge-nätverk går bombvault.local inte att nå från ditt LAN.",
   "mdns.statusStarting": "Kontrollerar att namnet är ledigt i nätverket",
   "mdns.statusError": "Inte annonserad: {error}",
   "mdns.statusOff": "Av",

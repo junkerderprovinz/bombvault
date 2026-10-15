@@ -29,4 +29,12 @@ describe("MdnsRow", () => {
     await waitFor(() => expect(setMdns).toHaveBeenCalledWith(false));
     expect(await screen.findByText(en["mdns.statusOff"])).toBeTruthy();
   });
+
+  it("says the announcement stays inside Docker instead of showing an address nobody reaches", async () => {
+    getMdns.mockResolvedValue({ ok: true, enabled: true, running: true, hostOnly: true, url: "", instance: "BombVault", error: "" });
+    render(<MdnsRow />);
+
+    expect(await screen.findByText(en["mdns.statusHostOnly"])).toBeTruthy();
+    expect(screen.queryByText(/bombvault\.local:/)).toBeNull();
+  });
 });

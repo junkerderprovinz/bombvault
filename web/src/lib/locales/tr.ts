@@ -2355,6 +2355,7 @@ const tr: Partial<Translations> = {
   "mdns.hint": "BombVault'u mDNS ile yerel ağda duyurur; böylece tarayıcı ona bombvault.local adıyla ulaşır ve hizmet tarayıcıları onu listeler. Docker'ın varsayılan bridge ağında duyuru Docker içinde kalır; br0, macvlan ya da ana makine ağıyla yerel ağa ulaşır.",
   "mdns.enable": "Yerel ağda duyur",
   "mdns.statusOn": "{url} olarak duyuruldu",
+  "mdns.statusHostOnly": "Yalnızca Docker içinde duyuruldu. Bridge ağında bombvault.local adresine yerel ağından ulaşılamaz.",
   "mdns.statusStarting": "Adın ağda boş olup olmadığı denetleniyor",
   "mdns.statusError": "Duyurulmadı: {error}",
   "mdns.statusOff": "Kapalı",

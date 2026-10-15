@@ -2883,6 +2883,7 @@ const sk: Partial<Translations> = {
   "mdns.hint": "Ohlasuje BombVault v miestnej sieti cez mDNS, takže ho prehliadač nájde ako bombvault.local a prehliadače služieb ho vypíšu. V predvolenej sieti bridge v Dockeri ohlásenie zostane vo vnútri Dockera; do miestnej siete sa dostane cez br0, macvlan alebo sieť hostiteľa.",
   "mdns.enable": "Ohlasovať v miestnej sieti",
   "mdns.statusOn": "Ohlásené ako {url}",
+  "mdns.statusHostOnly": "Ohlásené len vo vnútri Dockera. V sieti bridge nie je bombvault.local z tvojej miestnej siete dostupné.",
   "mdns.statusStarting": "Overujem, či je názov v sieti voľný",
   "mdns.statusError": "Neohlásené: {error}",
   "mdns.statusOff": "Vypnuté",

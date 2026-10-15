@@ -2346,6 +2346,7 @@ const vi: Partial<Translations> = {
   "mdns.hint": "Quảng bá BombVault trên mạng cục bộ qua mDNS, để trình duyệt vào được bằng tên bombvault.local và các trình duyệt dịch vụ liệt kê nó. Trong mạng bridge mặc định của Docker, lời quảng bá chỉ ở bên trong Docker; nó tới được mạng LAN qua br0, macvlan hoặc mạng của máy chủ.",
   "mdns.enable": "Quảng bá trên mạng cục bộ",
   "mdns.statusOn": "Đã quảng bá là {url}",
+  "mdns.statusHostOnly": "Chỉ quảng bá bên trong Docker. Trên mạng bridge, không thể vào bombvault.local từ mạng LAN của bạn.",
   "mdns.statusStarting": "Đang kiểm tra tên còn trống trên mạng",
   "mdns.statusError": "Chưa quảng bá: {error}",
   "mdns.statusOff": "Tắt",

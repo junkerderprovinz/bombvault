@@ -2883,6 +2883,7 @@ const et: Partial<Translations> = {
   "mdns.hint": "Teatab BombVaulti mDNS-i kaudu kohalikus võrgus, nii et brauser jõuab selleni nimega bombvault.local ja teenuste sirvijad näitavad seda. Dockeri vaikimisi bridge-võrgus jääb teade Dockeri sisse; kohalikku võrku jõuab see br0, macvlani või hosti võrgu kaudu.",
   "mdns.enable": "Teata kohalikus võrgus",
   "mdns.statusOn": "Teatatud kui {url}",
+  "mdns.statusHostOnly": "Teatatud ainult Dockeri sees. Bridge-võrgus pole bombvault.local sinu kohalikust võrgust kättesaadav.",
   "mdns.statusStarting": "Kontrollin, kas nimi on võrgus vaba",
   "mdns.statusError": "Pole teatatud: {error}",
   "mdns.statusOff": "Väljas",

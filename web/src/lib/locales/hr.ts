@@ -2883,6 +2883,7 @@ const hr: Partial<Translations> = {
   "mdns.hint": "Najavljuje BombVault na lokalnoj mreži preko mDNS-a, tako da ga preglednik dohvati kao bombvault.local, a preglednici usluga ga prikažu. U zadanoj bridge mreži Dockera najava ostaje unutar Dockera; do lokalne mreže stiže preko br0, macvlana ili mreže domaćina.",
   "mdns.enable": "Najavljuj na lokalnoj mreži",
   "mdns.statusOn": "Najavljeno kao {url}",
+  "mdns.statusHostOnly": "Najavljeno samo unutar Dockera. U bridge mreži bombvault.local nije dostupan iz vaše lokalne mreže.",
   "mdns.statusStarting": "Provjera je li naziv slobodan na mreži",
   "mdns.statusError": "Nije najavljeno: {error}",
   "mdns.statusOff": "Isključeno",

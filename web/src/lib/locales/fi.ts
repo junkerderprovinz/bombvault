@@ -2355,6 +2355,7 @@ const fi: Partial<Translations> = {
   "mdns.hint": "Ilmoittaa BombVaultin lähiverkossa mDNS:n kautta, jotta selain löytää sen nimellä bombvault.local ja palveluselaimet listaavat sen. Dockerin oletus-bridge-verkossa ilmoitus jää Dockerin sisälle; lähiverkkoon se ulottuu br0:n, macvlanin tai isännän verkon kautta.",
   "mdns.enable": "Ilmoita lähiverkossa",
   "mdns.statusOn": "Ilmoitettu osoitteella {url}",
+  "mdns.statusHostOnly": "Ilmoitettu vain Dockerin sisällä. Bridge-verkossa bombvault.local ei näy lähiverkkoosi.",
   "mdns.statusStarting": "Tarkistetaan, onko nimi vapaana verkossa",
   "mdns.statusError": "Ei ilmoitettu: {error}",
   "mdns.statusOff": "Pois",

@@ -150,6 +150,21 @@ func (c *Client) Networks(ctx context.Context) ([]string, error) {
 	return names, nil
 }
 
+// NetworkDrivers names the driver of a network, which tells a Docker bridge,
+// whose traffic stays on the host, from macvlan or ipvlan, which reach the LAN.
+type NetworkDrivers interface {
+	NetworkDriver(ctx context.Context, name string) (string, error)
+}
+
+// NetworkDriver returns the driver of the network name, "bridge" for example.
+func (c *Client) NetworkDriver(ctx context.Context, name string) (string, error) {
+	n, err := c.api.NetworkInspect(ctx, name, network.InspectOptions{})
+	if err != nil {
+		return "", fmt.Errorf("dockercli: inspect network: %w", err)
+	}
+	return n.Driver, nil
+}
+
 // Inspect returns the captured inspect subset for a container by name or ID.
 func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error) {
 	resp, err := c.api.ContainerInspect(ctx, name)

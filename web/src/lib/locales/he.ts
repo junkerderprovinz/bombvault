@@ -2355,6 +2355,7 @@ const he: Partial<Translations> = {
   "mdns.hint": "מכריז על BombVault ברשת המקומית דרך mDNS, כך שדפדפן מגיע אליו בשם bombvault.local ודפדפני שירותים מציגים אותו. ברשת ה-bridge ברירת המחדל של Docker ההכרזה נשארת בתוך Docker; היא מגיעה לרשת המקומית דרך br0, macvlan או רשת המארח.",
   "mdns.enable": "הכרז ברשת המקומית",
   "mdns.statusOn": "מוכרז בתור {url}",
+  "mdns.statusHostOnly": "מוכרז רק בתוך Docker. ברשת bridge אי אפשר להגיע ל-bombvault.local מהרשת המקומית שלך.",
   "mdns.statusStarting": "בודק שהשם פנוי ברשת",
   "mdns.statusError": "לא מוכרז: {error}",
   "mdns.statusOff": "כבוי",

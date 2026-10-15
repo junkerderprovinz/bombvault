@@ -2883,6 +2883,7 @@ const eu: Partial<Translations> = {
   "mdns.hint": "BombVault sare lokalean iragartzen du mDNS bidez, nabigatzaile batek bombvault.local gisa irits dadin eta zerbitzu-arakatzaileek zerrendan erakuts dezaten. Docker-en bridge sare lehenetsian iragarpena Docker barruan gelditzen da; sare lokalera br0, macvlan edo ostalariaren sarearen bidez iristen da.",
   "mdns.enable": "Iragarri sare lokalean",
   "mdns.statusOn": "{url} gisa iragarrita",
+  "mdns.statusHostOnly": "Docker barruan bakarrik iragarrita. Bridge sare batean, bombvault.local ezin da zure sare lokaletik iritsi.",
   "mdns.statusStarting": "Izena sarean libre dagoen egiaztatzen",
   "mdns.statusError": "Iragarri gabe: {error}",
   "mdns.statusOff": "Itzalita",

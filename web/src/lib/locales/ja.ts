@@ -2346,6 +2346,7 @@ const ja: Partial<Translations> = {
   "mdns.hint": "mDNS でローカルネットワークに BombVault を告知します。ブラウザーから bombvault.local で開け、サービスブラウザーにも表示されます。Docker の既定の bridge ネットワークでは告知は Docker 内にとどまり、br0、macvlan、ホストネットワークなら LAN に届きます。",
   "mdns.enable": "ローカルネットワークに告知",
   "mdns.statusOn": "{url} として告知中",
+  "mdns.statusHostOnly": "Docker 内でのみ告知中です。bridge ネットワークでは、LAN から bombvault.local に届きません。",
   "mdns.statusStarting": "ネットワーク上で名前が空いているか確認中",
   "mdns.statusError": "告知していません: {error}",
   "mdns.statusOff": "オフ",

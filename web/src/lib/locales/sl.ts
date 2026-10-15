@@ -2867,6 +2867,7 @@ const sl: Partial<Translations> = {
   "mdns.hint": "Oznani BombVault v lokalnem omrežju prek mDNS, da ga brskalnik doseže kot bombvault.local in ga brskalniki storitev prikažejo. V privzetem omrežju bridge v Dockerju oznanilo ostane znotraj Dockerja; do lokalnega omrežja pride prek br0, macvlan ali omrežja gostitelja.",
   "mdns.enable": "Oznanjaj v lokalnem omrežju",
   "mdns.statusOn": "Oznanjeno kot {url}",
+  "mdns.statusHostOnly": "Oznanjeno samo znotraj Dockerja. V omrežju bridge bombvault.local iz tvojega lokalnega omrežja ni dosegljiv.",
   "mdns.statusStarting": "Preverjanje, ali je ime v omrežju prosto",
   "mdns.statusError": "Ni oznanjeno: {error}",
   "mdns.statusOff": "Izklopljeno",

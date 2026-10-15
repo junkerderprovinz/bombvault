@@ -2352,6 +2352,7 @@ const ru: Partial<Translations> = {
   "mdns.hint": "Объявляет BombVault в локальной сети через mDNS, чтобы браузер открывал его как bombvault.local, а обозреватели сервисов его показывали. В стандартной сети bridge Docker объявление остаётся внутри Docker; в локальную сеть оно попадает через br0, macvlan или сеть хоста.",
   "mdns.enable": "Объявлять в локальной сети",
   "mdns.statusOn": "Объявлен как {url}",
+  "mdns.statusHostOnly": "Объявлен только внутри Docker. В сети bridge адрес bombvault.local недоступен из вашей локальной сети.",
   "mdns.statusStarting": "Проверка, свободно ли имя в сети",
   "mdns.statusError": "Не объявлен: {error}",
   "mdns.statusOff": "Выключено",

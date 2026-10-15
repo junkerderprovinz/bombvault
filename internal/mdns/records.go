@@ -4,8 +4,11 @@
 package mdns
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"net/netip"
+	"slices"
 	"strings"
 
 	"golang.org/x/net/dns/dnsmessage"
@@ -230,11 +233,109 @@ func (z zone) probe() ([]byte, error) {
 		{Name: z.instance, Type: dnsmessage.TypeALL, Class: dnsmessage.ClassINET | cacheFlush},
 		{Name: z.host, Type: dnsmessage.TypeALL, Class: dnsmessage.ClassINET | cacheFlush},
 	}
-	authority := append([]dnsmessage.Resource{z.srv(false), z.txt(false)}, z.a(false)...)
-	for i := range authority {
-		authority[i].Header.Class &^= cacheFlush
+	return build(dnsmessage.Header{}, questions, nil, z.claim(), nil)
+}
+
+// claim is what a probe says the zone's names will hold.
+func (z zone) claim() []dnsmessage.Resource {
+	out := append([]dnsmessage.Resource{z.srv(false), z.txt(false)}, z.a(false)...)
+	for i := range out {
+		out[i].Header.Class &^= cacheFlush
 	}
-	return build(dnsmessage.Header{}, questions, nil, authority, nil)
+	return out
+}
+
+// tiebreak compares the zone's claim with another probe for the same names,
+// for two responders that probe at once and so never answer each other (RFC
+// 6762 section 8.2). The sign is negative when the zone's records sort first
+// and lose, zero when both claim the same, which is a responder hearing its
+// own probe. ok is false when msg is not a probe for any of the zone's names.
+func (z zone) tiebreak(msg []byte) (sign int, ok bool) {
+	var p dnsmessage.Parser
+	h, err := p.Start(msg)
+	if err != nil || h.Response {
+		return 0, false
+	}
+	if p.SkipAllQuestions() != nil || p.SkipAllAnswers() != nil {
+		return 0, false
+	}
+	theirs, err := p.AllAuthorities()
+	if err != nil {
+		return 0, false
+	}
+	ours := z.claim()
+	for _, name := range []dnsmessage.Name{z.instance, z.host} {
+		them := named(theirs, name)
+		if len(them) == 0 {
+			continue
+		}
+		ok = true
+		if c := compareRecords(named(ours, name), them); c != 0 {
+			return c, true
+		}
+	}
+	return 0, ok
+}
+
+func named(rs []dnsmessage.Resource, name dnsmessage.Name) []dnsmessage.Resource {
+	var out []dnsmessage.Resource
+	for _, r := range rs {
+		if sameName(r.Header.Name, name) {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
+// compareRecords orders two sets of records for one name the way RFC 6762
+// section 8.2 does: each set sorted by class, type and data, then compared
+// pair by pair, a set that runs out first sorting first.
+func compareRecords(a, b []dnsmessage.Resource) int {
+	key := func(r dnsmessage.Resource) []byte {
+		k := binary.BigEndian.AppendUint16(nil, uint16(r.Header.Class&^cacheFlush))
+		k = binary.BigEndian.AppendUint16(k, uint16(r.Header.Type))
+		return append(k, rdata(r.Body)...)
+	}
+	sorted := func(rs []dnsmessage.Resource) [][]byte {
+		out := make([][]byte, 0, len(rs))
+		for _, r := range rs {
+			out = append(out, key(r))
+		}
+		slices.SortFunc(out, bytes.Compare)
+		return out
+	}
+	return slices.CompareFunc(sorted(a), sorted(b), bytes.Compare)
+}
+
+// rdata spells a record's data as it goes on the wire, uncompressed, for the
+// record types a zone holds.
+func rdata(body dnsmessage.ResourceBody) []byte {
+	switch b := body.(type) {
+	case *dnsmessage.AResource:
+		return b.A[:]
+	case *dnsmessage.SRVResource:
+		out := binary.BigEndian.AppendUint16(nil, b.Priority)
+		out = binary.BigEndian.AppendUint16(out, b.Weight)
+		out = binary.BigEndian.AppendUint16(out, b.Port)
+		return append(out, wireName(b.Target)...)
+	case *dnsmessage.TXTResource:
+		var out []byte
+		for _, s := range b.TXT {
+			out = append(append(out, byte(len(s))), s...) //nolint:gosec // G115: a TXT string from the wire came with a length byte, and the zone's own are short
+		}
+		return out
+	case *dnsmessage.PTRResource:
+		return wireName(b.PTR)
+	}
+	return []byte(body.GoString())
+}
+
+func wireName(n dnsmessage.Name) []byte {
+	var out []byte
+	for _, label := range strings.Split(strings.TrimSuffix(n.String(), "."), ".") {
+		out = append(append(out, byte(len(label))), label...) //nolint:gosec // G115: dnsmessage keeps a whole name, and so each label, within 255 bytes
+	}
+	return append(out, 0)
 }
 
 // conflicts reports whether msg is a response from somebody else that

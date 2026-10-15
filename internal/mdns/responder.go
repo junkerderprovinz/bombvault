@@ -234,14 +234,39 @@ func (r *Responder) read() {
 		}
 		msg := buf[:n]
 		if r.probing.Load() {
-			z, zErr := r.zone(nil)
-			if zErr == nil && z.conflicts(msg) {
+			if r.lostClaim(msg, cm) {
 				r.conflict.Store(true)
 			}
 			continue
 		}
 		r.handle(msg, cm, src)
 	}
+}
+
+// lostClaim reports whether msg, heard while probing, shows the names taken:
+// somebody answers for them, or another responder probes for them at the
+// same time and wins the tiebreak. The responder's own probe comes back too,
+// on whichever interface it went out, and loses to nobody.
+func (r *Responder) lostClaim(msg []byte, cm *ipv4.ControlMessage) bool {
+	for _, ifc := range r.ifaces {
+		z, err := r.zone(ifc.addrs)
+		if err != nil {
+			return false
+		}
+		if sign, ok := z.tiebreak(msg); ok && sign == 0 {
+			return false
+		}
+	}
+	ifc, _ := r.ifaceOf(cm)
+	z, err := r.zone(ifc.addrs)
+	if err != nil {
+		return false
+	}
+	if z.conflicts(msg) {
+		return true
+	}
+	sign, ok := z.tiebreak(msg)
+	return ok && sign < 0
 }
 
 func (r *Responder) handle(msg []byte, cm *ipv4.ControlMessage, src net.Addr) {

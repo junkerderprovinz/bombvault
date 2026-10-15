@@ -2352,6 +2352,7 @@ const pl: Partial<Translations> = {
   "mdns.hint": "Ogłasza BombVault w sieci lokalnej przez mDNS, dzięki czemu przeglądarka otwiera go jako bombvault.local, a przeglądarki usług go pokazują. W domyślnej sieci bridge Dockera ogłoszenie zostaje wewnątrz Dockera; do sieci lokalnej dociera przez br0, macvlan lub sieć hosta.",
   "mdns.enable": "Ogłaszaj w sieci lokalnej",
   "mdns.statusOn": "Ogłoszono jako {url}",
+  "mdns.statusHostOnly": "Ogłoszono tylko wewnątrz Dockera. W sieci bridge bombvault.local nie jest osiągalny z Twojej sieci lokalnej.",
   "mdns.statusStarting": "Sprawdzanie, czy nazwa jest wolna w sieci",
   "mdns.statusError": "Nie ogłoszono: {error}",
   "mdns.statusOff": "Wyłączone",

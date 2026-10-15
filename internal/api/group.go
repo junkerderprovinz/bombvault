@@ -15,6 +15,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/discovery"
@@ -35,6 +36,7 @@ const relayConnectPath = "/relay/connect"
 func (s *Service) buildGroup() {
 	s.groupOnce.Do(func() {
 		s.groupMgr = group.NewManager(s.servePeer)
+		s.groupMgr.Stranger = s.strangerProof
 		s.relaySrv = relay.NewServer()
 		s.relaySrv.Admit = func(key string) bool { return s.relayServe.Load() && s.groupMgr.AdmitsRelayKey(key) }
 		// Behind a trusted reverse proxy the relay counts failed handshakes
@@ -59,6 +61,7 @@ func (s *Service) relayServer() *relay.Server {
 // local network. It runs once at boot.
 func (s *Service) StartGroup() {
 	s.applyGroup()
+	s.noteMemberAddresses()
 	s.pairing().Start()
 	go s.renewDepositsLoop()
 }
@@ -232,7 +235,8 @@ type peerRoute struct {
 // ZFS item here, asking this instance to be Receiver or Fetcher with the
 // answer and the withdrawal that go with it, what runs here and how it looks
 // for the Android app, a session for a phone of the group and the pages it
-// opens away from home, and the bare hello a blind probe gets.
+// opens away from home, the word that a member leaves the group, and the bare
+// hello a blind probe gets.
 // Settings, secrets and the phrase are not among them; a member holds the key
 // to every backup already, so a session for its phone adds no reach the group
 // did not have. A function rather than a variable, since the session route
@@ -257,6 +261,7 @@ func peerRoutes() []peerRoute {
 		{"GET /api/group/peer/display-prefs", (*Service).handlePeerDisplayPrefs},
 		{"POST /api/group/peer/session", (*Service).handlePeerSession},
 		{"POST /api/group/peer/page", (*Service).handlePeerPage},
+		{"POST /api/group/peer/leave", (*Service).handlePeerLeave},
 		{"GET " + group.ProbePath, (*Service).handlePeerHello},
 	}
 }
@@ -309,6 +314,10 @@ func (s *Service) callMember(ctx context.Context, memberID, method, path string,
 	if errors.Is(err, group.ErrNotMember) {
 		return errMemberGone
 	}
+	if left, ok := errors.AsType[*group.LeftError](err); ok {
+		s.dropFormerMember(left)
+		return errMemberGone
+	}
 	if err != nil {
 		log.Printf("group: %s %s to member %q: %v", method, path, memberID, err)
 		return errMemberSilent
@@ -343,6 +352,68 @@ func (s *Service) harvestDirectURL(memberID string, raw []byte) {
 	}
 	if json.Unmarshal(raw, &hint) == nil && hint.DirectURL != "" {
 		s.pairing().NoteAddress(memberID, hint.DirectURL)
+		if err := s.store.SetFleetPeerMemberURL(memberID, hint.DirectURL); err != nil {
+			log.Printf("group: keep the address of member %q: %v", memberID, err)
+		}
+	}
+}
+
+// noteMemberAddresses hands the group the direct address each member last
+// gave, which it would otherwise only learn again from the member. A member
+// that left the group while this instance was down can then still be asked,
+// and say so.
+func (s *Service) noteMemberAddresses() {
+	peers, err := s.store.ListFleetPeers()
+	if err != nil {
+		log.Printf("group: %v", err)
+		return
+	}
+	for _, p := range peers {
+		if p.MemberID != "" && p.MemberURL != "" {
+			s.pairing().NoteAddress(p.MemberID, p.MemberURL)
+		}
+	}
+}
+
+// strangerProof is this instance's signed word, to a caller from a group it
+// is not in, that it is no member of that group.
+func (s *Service) strangerProof(caller, challenge string) []byte {
+	signer, err := s.nextDepositSigner()
+	if err != nil {
+		log.Printf("group: sign an answer to %q: %v", caller, err)
+		return nil
+	}
+	b, err := json.Marshal(signer.prove(keydeposit.ProofNotMember, caller, []byte(challenge), nil))
+	if err != nil {
+		return nil
+	}
+	return b
+}
+
+// dropFormerMember takes a member off this instance's lists, as its leave
+// would have, once its answer proves under the key pinned for it that it is
+// in this group no more. Without a pinned key the answer proves nothing:
+// anybody at the address could have sent it.
+func (s *Service) dropFormerMember(left *group.LeftError) {
+	var p peerProof
+	if json.Unmarshal(left.Statement, &p) != nil {
+		return
+	}
+	key, found, err := s.store.MemberKey(left.MemberID)
+	if err != nil || !found || !bytes.Equal(key, p.Key) {
+		return
+	}
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		return
+	}
+	claim := keydeposit.Claim{Action: keydeposit.ProofNotMember, OwnerID: left.MemberID, KeeperID: g.InstanceID, Counter: p.Counter, Deposit: []byte(left.Challenge)}
+	if !keydeposit.Proven(key, p.Proof, claim) || s.store.AdvanceMemberCounter(left.MemberID, p.Counter) != nil {
+		return
+	}
+	s.pairing().Forget(left.MemberID)
+	if err := s.store.DropMemberFleetPeers(left.MemberID); err != nil {
+		log.Printf("group: drop the row of former member %q: %v", left.MemberID, err)
 	}
 }
 
@@ -612,6 +683,9 @@ func (h *Handler) groupViewNow() (groupView, error) {
 
 func (h *Handler) ownAddresses() []string {
 	out := append([]string{}, mdns.Addresses()...)
+	if h.announcedOnHostOnly() {
+		return out
+	}
 	h.mdns.mu.Lock()
 	defer h.mdns.mu.Unlock()
 	if h.mdns.responder != nil {
@@ -760,19 +834,79 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 	h.writeGroupView(w)
 }
 
-// handleGroupLeave forgets the group secret. Receivers, pull sources and
-// Fleet rows stay, and pair again once this instance joins the group again.
+// handleGroupLeave tells the members in reach that this instance leaves,
+// forgets the group secret and drops the members' Fleet rows. Receivers and
+// pull sources stay, and pair again once this instance joins the group again.
 // DELETE /api/group
-func (h *Handler) handleGroupLeave(w http.ResponseWriter, _ *http.Request) {
+func (h *Handler) handleGroupLeave(w http.ResponseWriter, r *http.Request) {
+	h.svc.tellMembersLeaving(r.Context())
 	err := h.storeGroupSecret(nil)
 	if err == nil {
 		err = h.store.ForgetMemberKeys()
+	}
+	if err == nil {
+		err = h.store.DropMemberFleetPeers("")
 	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	h.writeGroupView(w)
+}
+
+// leaveNoticeTimeout bounds telling the members about a leave, so a member out
+// of reach holds the page up only briefly.
+const leaveNoticeTimeout = 5 * time.Second
+
+// tellMembersLeaving lets every instance in reach know that this one leaves
+// the group, so each takes it off its list at once. A member that does not
+// hear keeps the row until a person removes it.
+func (s *Service) tellMembersLeaving(ctx context.Context) {
+	ctx, cancel := context.WithTimeout(ctx, leaveNoticeTimeout)
+	defer cancel()
+	var wg sync.WaitGroup
+	for _, m := range s.pairing().Members() {
+		if m.Kind != "" {
+			continue
+		}
+		proof, err := s.signCall(keydeposit.ProofLeave, m.ID, nil)
+		if err != nil {
+			log.Printf("group: sign the leave for member %q: %v", m.ID, err)
+			continue
+		}
+		wg.Go(func() {
+			_ = s.callMember(ctx, m.ID, http.MethodPost, "/api/group/peer/leave", proof, nil) //nolint:errcheck // callMember logs what went wrong, and the leave goes ahead anyway
+		})
+	}
+	wg.Wait()
+}
+
+// handlePeerLeave takes a member that leaves the group off this instance's
+// lists: its Fleet row goes, and the group keeps it out of the members until
+// its relay connection and announces are gone. Anybody in the group can name
+// any member, so the call has to carry the member's own signature.
+// POST /api/group/peer/leave
+func (s *Service) handlePeerLeave(w http.ResponseWriter, r *http.Request) {
+	var proof peerProof
+	if err := json.NewDecoder(io.LimitReader(r.Body, peerRoleBodyMax)).Decode(&proof); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "malformed leave"})
+		return
+	}
+	sender, ok := s.roleAsker(r)
+	if !ok {
+		refuseUnnamedPeer(w)
+		return
+	}
+	if err := s.verifyMember(r.Context(), sender, keydeposit.ProofLeave, nil, proof); err != nil {
+		writeJSON(w, http.StatusForbidden, failEnvelope(err))
+		return
+	}
+	s.pairing().Forget(sender)
+	if err := s.store.DropMemberFleetPeers(sender); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
 // handleGroupRelay changes how this instance reaches members elsewhere and

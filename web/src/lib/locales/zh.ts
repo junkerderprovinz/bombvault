@@ -2346,6 +2346,7 @@ const zh: Partial<Translations> = {
   "mdns.hint": "通过 mDNS 在局域网中广播 BombVault，这样浏览器可以用 bombvault.local 打开它，服务浏览器也能列出它。在 Docker 默认的 bridge 网络中，广播只停留在 Docker 内部；使用 br0、macvlan 或主机网络时，它能到达局域网。",
   "mdns.enable": "在局域网中广播",
   "mdns.statusOn": "已广播为 {url}",
+  "mdns.statusHostOnly": "仅在 Docker 内部广播。在 bridge 网络中，无法从你的局域网访问 bombvault.local。",
   "mdns.statusStarting": "正在检查名称在网络中是否可用",
   "mdns.statusError": "未广播：{error}",
   "mdns.statusOff": "关闭",

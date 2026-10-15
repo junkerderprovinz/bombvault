@@ -2355,6 +2355,7 @@ const el: Partial<Translations> = {
   "mdns.hint": "Ανακοινώνει το BombVault στο τοπικό δίκτυο μέσω mDNS, ώστε ένας φυλλομετρητής να το βρίσκει ως bombvault.local και οι περιηγητές υπηρεσιών να το εμφανίζουν. Στο προεπιλεγμένο δίκτυο bridge του Docker η ανακοίνωση μένει μέσα στο Docker· φτάνει στο τοπικό δίκτυο μέσω br0, macvlan ή του δικτύου του host.",
   "mdns.enable": "Ανακοίνωση στο τοπικό δίκτυο",
   "mdns.statusOn": "Ανακοινώθηκε ως {url}",
+  "mdns.statusHostOnly": "Ανακοινώνεται μόνο μέσα στο Docker. Σε δίκτυο bridge το bombvault.local δεν είναι προσβάσιμο από το τοπικό σας δίκτυο.",
   "mdns.statusStarting": "Έλεγχος ότι το όνομα είναι ελεύθερο στο δίκτυο",
   "mdns.statusError": "Δεν ανακοινώθηκε: {error}",
   "mdns.statusOff": "Ανενεργό",

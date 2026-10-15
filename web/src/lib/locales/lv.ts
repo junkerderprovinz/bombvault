@@ -2883,6 +2883,7 @@ const lv: Partial<Translations> = {
   "mdns.hint": "Izziņo BombVault lokālajā tīklā ar mDNS, lai pārlūks to sasniegtu kā bombvault.local un pakalpojumu pārlūki to parādītu. Docker noklusējuma bridge tīklā paziņojums paliek Docker iekšpusē; lokālo tīklu tas sasniedz caur br0, macvlan vai resursdatora tīklu.",
   "mdns.enable": "Izziņot lokālajā tīklā",
   "mdns.statusOn": "Izziņots kā {url}",
+  "mdns.statusHostOnly": "Izziņots tikai Docker iekšpusē. Bridge tīklā bombvault.local no jūsu lokālā tīkla nav sasniedzams.",
   "mdns.statusStarting": "Pārbauda, vai nosaukums tīklā ir brīvs",
   "mdns.statusError": "Nav izziņots: {error}",
   "mdns.statusOff": "Izslēgts",
