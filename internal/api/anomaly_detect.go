@@ -236,11 +236,6 @@ type itemInput struct {
 	// newer runs are judged now, so two runs coalesced into one pass are both
 	// seen.
 	EvaluateFrom int64
-	// WholeCopies is set for an item that stores part of its data in full on
-	// every backup. A zfs send stream carries the snapshot's guid and a
-	// running checksum in every record, so restic finds nothing of the last
-	// stream to reuse and stores a zvol whole each time.
-	WholeCopies bool
 }
 
 // finding is one raised event or condition, in the shape a row is written from.
@@ -350,7 +345,7 @@ func detectNewData(in itemInput, p sensParams) ([]finding, baseline) {
 		samples := newDataSamples(rows, isSample, i)
 		lastGood := lastBackupWithData(rows[:i])
 		switch {
-		case !in.WholeCopies && rewroteMostOfTheSource(run, lastGood, ceiling):
+		case rewroteMostOfTheSource(run, lastGood, ceiling):
 			found = append(found, rewriteFinding(run, lastGood, len(samples)))
 		case freshUpload(run) && allFilesNew(run):
 			found = append(found, fullUploadFinding(run, len(samples)))
