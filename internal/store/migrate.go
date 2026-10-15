@@ -3248,6 +3248,18 @@ ALTER TABLE runs ADD COLUMN snapshot_fallback TEXT NOT NULL DEFAULT '';`,
   added_at INTEGER NOT NULL
 );`,
 	},
+	{
+		// When BombVault itself last changed what a series backs up, such as
+		// the data folder a database import kept and its removal.
+		version: anomalyRebaseMigration,
+		name:    "anomaly_rebases",
+		sql: `CREATE TABLE IF NOT EXISTS anomaly_rebases (
+  scope_kind TEXT    NOT NULL,
+  scope_id   TEXT    NOT NULL,
+  at         INTEGER NOT NULL,
+  PRIMARY KEY (scope_kind, scope_id)
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3409,6 +3421,10 @@ const drillSubjectMigration = 370
 // containerSnapshotMigration numbers the snapshot read of containers on ZFS,
 // 380 to 384.
 const containerSnapshotMigration = 380
+
+// anomalyRebaseMigration numbers the series whose source BombVault changed
+// itself.
+const anomalyRebaseMigration = 390
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

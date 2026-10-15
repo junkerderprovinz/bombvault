@@ -824,10 +824,15 @@ func (e *anomalyEngine) readSeries(sc anomalyScope, ref anomalyItemRef, p *anoma
 	if err != nil {
 		return itemInput{}, store.ScopeState{}, err
 	}
+	changedAt, err := e.svc.store.AnomalyRebaseAt(sc.Kind, sc.ID)
+	if err != nil {
+		return itemInput{}, store.ScopeState{}, err
+	}
 	return itemInput{
 		Kind: series, Domain: ref.Domain, Series: rows, NewData: window,
 		Open: openByMetric(state.Open), Expectations: byFamily(expectations),
 		Sens:         resolveSensitivity(p.prefs[ref.TargetID].Sensitivity, p.settings.AnomalySensitivity),
+		ChangedAt:    changedAt,
 		EvaluateFrom: from,
 	}, state, nil
 }
@@ -887,6 +892,10 @@ func (e *anomalyEngine) readDataset(sc anomalyScope, ref anomalyItemRef, p *anom
 	if err != nil {
 		return itemInput{}, store.ScopeState{}, err
 	}
+	changedAt, err := e.svc.store.AnomalyRebaseAt(sc.Kind, sc.ID)
+	if err != nil {
+		return itemInput{}, store.ScopeState{}, err
+	}
 
 	all := datasetRuns(members, treeRuns)
 	rows := all[:min(len(all), anomalySeriesRuns)]
@@ -904,6 +913,7 @@ func (e *anomalyEngine) readDataset(sc anomalyScope, ref anomalyItemRef, p *anom
 		Kind: seriesDataset, Domain: ref.Domain, Series: rows, NewData: window,
 		Open: openByMetric(state.Open), Expectations: byFamily(expectations),
 		Sens:         resolveSensitivity(p.prefs[ref.TargetID].Sensitivity, p.settings.AnomalySensitivity),
+		ChangedAt:    changedAt,
 		EvaluateFrom: from,
 	}, state, nil
 }

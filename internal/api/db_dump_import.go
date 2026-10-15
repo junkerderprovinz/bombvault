@@ -345,6 +345,15 @@ func (s *Service) importDBDump(ctx context.Context, plan dbImportPlan, key strin
 	*stopped = s.stopImportDependents(ctx, plan.name)
 	var note string
 	kept, err := s.freshDataDirFor(ctx, plan)
+	if kept != "" {
+		// The database is new and its old folder sits beside it, whatever the
+		// import itself does from here on.
+		var also []store.AnomalyScopeKey
+		if tg, tErr := s.store.GetTargetByContainer(plan.name); tErr == nil {
+			also = []store.AnomalyScopeKey{{Kind: anomalyScopeItem, ID: tg.ID}, {Kind: anomalyScopeDump, ID: tg.ID}}
+		}
+		defer s.rebaseAnomaliesFor([]string{s.toHostPath(plan.dataDir), s.toHostPath(kept)}, also...)
+	}
 	if err == nil {
 		note, err = s.feedDBImport(ctx, plan, kept, key, startedAt)
 	}
@@ -538,6 +547,7 @@ func (s *Service) RemoveKeptDataDir(ctx context.Context, name, stamp string) (st
 	if err := os.RemoveAll(kept); err != nil {
 		return "", fmt.Errorf("remove the kept data folder: %w", err)
 	}
+	s.rebaseAnomaliesFor([]string{s.toHostPath(kept)})
 	log.Printf("api: import database dump into %q: removed the kept data folder %s", name, kept) //nolint:gosec // G706: name is %q-quoted
 	return s.toHostPath(kept), nil
 }
