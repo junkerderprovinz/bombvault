@@ -60,7 +60,7 @@ type DomainInfo struct {
 	// BlockDisks are writable disks backed by a raw block device, such as a
 	// TrueNAS zvol at /dev/zvol/<pool>/<dataset>, and never appear in
 	// DiskPaths, Disks or DiskDevice. restic cannot read a block device by
-	// path, so these go through a ZFS snapshot and zfs send instead (see
+	// path, so each is read from a ZFS snapshot as a raw image instead (see
 	// BackupZvolDisk in internal/backup and zvol.go).
 	BlockDisks []DiskRef
 }

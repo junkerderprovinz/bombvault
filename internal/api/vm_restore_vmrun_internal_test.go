@@ -11,6 +11,7 @@ package api
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -34,16 +35,16 @@ func vmrunGroupSnaps(runTag, mainID, vdbID, vdcID string) []restic.Snapshot {
 	return []restic.Snapshot{
 		{ID: mainID, Tags: []string{"vm:mixedvm", "p2", runTag}, Paths: []string{mixedvmDisk}},
 		{ID: vdbID, Tags: []string{"vm:mixedvm:zvol:vdb", "p2", runTag},
-			Paths: []string{"/vm-disks/tank/vms/mixedvm/disk1@bombvault-20260101000000"}},
+			Paths: []string{"/vm-disks/tank/vms/mixedvm/disk1.img"}, Summary: &restic.SnapshotSummary{TotalBytesProcessed: 1 << 30}},
 		{ID: vdcID, Tags: []string{"vm:mixedvm:zvol:vdc", "p2", runTag},
-			Paths: []string{"/vm-disks/tank/vms/mixedvm/disk2@bombvault-20260101000000"}},
+			Paths: []string{"/vm-disks/tank/vms/mixedvm/disk2.img"}, Summary: &restic.SnapshotSummary{TotalBytesProcessed: 2 << 30}},
 	}
 }
 
 func blockDisksByDataset(bds []backup.VMRestoreBlockDisk) map[string]backup.VMRestoreBlockDisk {
 	out := make(map[string]backup.VMRestoreBlockDisk, len(bds))
 	for _, bd := range bds {
-		out[bd.SourceDataset] = bd
+		out[bd.Dataset] = bd
 	}
 	return out
 }
@@ -80,11 +81,11 @@ func TestPrepareRestoreVMResolvesVmrunGroupForAllThreeDisks(t *testing.T) {
 	}
 	byDataset := blockDisksByDataset(plan.blockDisks)
 	vdb, ok := byDataset["tank/vms/mixedvm/disk1"]
-	if !ok || vdb.SnapshotID != "1111111111111111" || vdb.StdinPath != "/vm-disks/tank/vms/mixedvm/disk1@bombvault-20260101000000" {
+	if !ok || vdb.SnapshotID != "1111111111111111" || vdb.StdinPath != "/vm-disks/tank/vms/mixedvm/disk1.img" {
 		t.Fatalf("vdb disk resolution = %+v, want snapshot 1111111111111111 with its recorded stdin path", vdb)
 	}
 	vdc, ok := byDataset["tank/vms/mixedvm/disk2"]
-	if !ok || vdc.SnapshotID != "2222222222222222" || vdc.StdinPath != "/vm-disks/tank/vms/mixedvm/disk2@bombvault-20260101000000" {
+	if !ok || vdc.SnapshotID != "2222222222222222" || vdc.StdinPath != "/vm-disks/tank/vms/mixedvm/disk2.img" {
 		t.Fatalf("vdc disk resolution = %+v, want snapshot 2222222222222222 with its recorded stdin path", vdc)
 	}
 }
@@ -140,61 +141,39 @@ func TestPrepareRestoreVMLatestPicksNewestRunsGroupNotOlder(t *testing.T) {
 	}
 }
 
-// Without a "vmrun:" tag the main snapshot comes from the plain "vm:"+name
-// tag, and each zvol disk keeps only its SourceDataset: no snapshot is guessed.
-func TestPrepareRestoreVMFallsBackWhenNoVmrunTag(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{
-		{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2"}, Paths: []string{mixedvmDisk}}, // no vmrun: tag
-	}}
-	s, ref, tg := vmrunRestoreTarget(t, eng)
-
-	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, tagIdentity("vm:mixedvm"), "", "")
-	if err != nil {
-		t.Fatalf("prepareRestoreVMForTarget: %v", err)
-	}
-	if plan.snapshotID != "deadbeef12345678" {
-		t.Fatalf("main snapshotID = %q, want the plain vm:mixedvm tag's snapshot (unchanged fallback)", plan.snapshotID)
-	}
-	if len(plan.blockDisks) != 2 {
-		t.Fatalf("blockDisks = %+v, want 2 entries (SourceDataset still resolved from the domain XML)", plan.blockDisks)
-	}
-	for _, bd := range plan.blockDisks {
-		if bd.SourceDataset == "" {
-			t.Fatalf("blockDisk %+v: SourceDataset must still be resolved from the domain XML in the fallback", bd)
-		}
-		if bd.SnapshotID != "" || bd.StdinPath != "" {
-			t.Fatalf("blockDisk %+v: SnapshotID/StdinPath must stay at zero value with no vmrun: group", bd)
-		}
+// A run that holds no image of a zvol disk, because it has no run tag or its
+// zvol backup failed, is refused before anything is touched rather than
+// restored without that disk.
+func TestPrepareRestoreVMRefusesARunWithoutAZvolImage(t *testing.T) {
+	for name, snaps := range map[string][]restic.Snapshot{
+		"no run tag": {
+			{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2"}, Paths: []string{mixedvmDisk}},
+		},
+		"zvol backups missing": {
+			{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2", "vmrun:run-partial"}, Paths: []string{mixedvmDisk}},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			s, ref, tg := vmrunRestoreTarget(t, &foreignRecordingEngine{snaps: snaps})
+			_, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, tagIdentity("vm:mixedvm"), "", "")
+			if err == nil || !strings.Contains(err.Error(), "holds no image of the zvol disk") {
+				t.Fatalf("err = %v, want the missing image named", err)
+			}
+		})
 	}
 }
 
-// The main snapshot carries a "vmrun:" tag but the zvol backups of that run all
-// failed, so the group holds only the main snapshot. The zvol disks then
-// resolve as if there were no tag, and RestoreZvolDisk fails instead of
-// restoring a guessed snapshot.
-func TestPrepareRestoreVMSingleSnapshotVmrunGroupFallsBackForZvolDisks(t *testing.T) {
-	const runTag = "vmrun:run-partial"
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{
-		{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2", runTag}, Paths: []string{mixedvmDisk}},
-	}}
+// Each zvol is given back the size it had, read from its snapshot.
+func TestPrepareRestoreVMTakesEachZvolSizeFromItsImage(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: vmrunGroupSnaps("vmrun:r", "deadbeef12345678", "1111111111111111", "2222222222222222")}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
 
 	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, tagIdentity("vm:mixedvm"), "", "")
 	if err != nil {
-		t.Fatalf("prepareRestoreVMForTarget: %v", err)
+		t.Fatal(err)
 	}
-	if plan.snapshotID != "deadbeef12345678" {
-		t.Fatalf("main snapshotID = %q, want the file-backed snapshot's id", plan.snapshotID)
-	}
-	if len(plan.blockDisks) != 2 {
-		t.Fatalf("blockDisks = %+v, want 2 entries (SourceDataset still resolved from the domain XML)", plan.blockDisks)
-	}
-	for _, bd := range plan.blockDisks {
-		if bd.SourceDataset == "" {
-			t.Fatalf("blockDisk %+v: SourceDataset must still be resolved from the domain XML", bd)
-		}
-		if bd.SnapshotID != "" || bd.StdinPath != "" {
-			t.Fatalf("blockDisk %+v: SnapshotID/StdinPath must stay at zero value when the vmrun: group has no matching zvol member, as without a tag", bd)
-		}
+	byDataset := blockDisksByDataset(plan.blockDisks)
+	if byDataset["tank/vms/mixedvm/disk1"].Size != 1<<30 || byDataset["tank/vms/mixedvm/disk2"].Size != 2<<30 {
+		t.Fatalf("block disks = %+v, want each at the size of its image", plan.blockDisks)
 	}
 }

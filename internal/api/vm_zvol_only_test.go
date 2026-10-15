@@ -139,7 +139,8 @@ func TestAZvolOnlyVMListsItsBackupsAndRestoresTheZvol(t *testing.T) {
 	zvolPath, zvolTags, _ := strings.Cut(eng.stdinBackups[0], ":")
 	domainPath, domainTags, _ := strings.Cut(eng.stdinBackups[1], ":")
 	eng.snaps = []restic.Snapshot{
-		{ID: "1111111111111111", Time: "2026-10-15T12:00:00Z", Tags: strings.Split(zvolTags, ","), Paths: []string{zvolPath}},
+		{ID: "1111111111111111", Time: "2026-10-15T12:00:00Z", Tags: strings.Split(zvolTags, ","), Paths: []string{zvolPath},
+			Summary: &restic.SnapshotSummary{TotalBytesProcessed: 1 << 30}},
 		{ID: "deadbeef12345678", Time: "2026-10-15T12:00:05Z", Tags: strings.Split(domainTags, ","), Paths: []string{domainPath}},
 	}
 	seedVMsRepoConfig(t, root)

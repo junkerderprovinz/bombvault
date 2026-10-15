@@ -17,7 +17,7 @@ func zvolOnlyDeps(t *testing.T, vm *fakeVM, r *fakeRestic, runs *fakeRuns, zr *f
 	d.DiskPaths = nil
 	d.NVRAMPath = ""
 	d.BlockDisks = []backup.VMBlockDisk{{Dataset: "tank/vms/win10", Dev: "vda"}}
-	d.ZFSHost = &fakeZFSHost{streamSendData: []byte("zvol stream bytes")}
+	d.ZFSHost = &fakeZFSHost{readData: []byte("zvol stream bytes")}
 	d.ZvolRestic = zr
 	d.DomainXML = zvolOnlyDomainXML
 	d.RunTag = "vmrun:run-1"
@@ -128,41 +128,68 @@ func TestAZvolOnlyVMWhoseDiskFailedLeavesNoRunSnapshot(t *testing.T) {
 	}
 }
 
-func TestRestoreOfAZvolOnlyVMReceivesTheZvolAndDefinesTheVM(t *testing.T) {
-	vm := &fakeVM{stateVal: "running"}
-	r := &fakeRestic{}
-	runs := &fakeRuns{}
-	host := &fakeZFSHost{}
-	zr := &fakeZvolRestic{dumpData: []byte("zvol stream bytes")}
-
+func zvolOnlyRestoreDeps(t *testing.T, vm *fakeVM, r *fakeRestic, runs *fakeRuns, host *fakeZFSHost) backup.VMRestoreDeps {
+	t.Helper()
 	d := sampleVMRestoreDeps(t, vm, r, runs)
 	d.DiskPaths = nil
 	d.NVRAMPath = ""
 	d.BlockDisks = []backup.VMRestoreBlockDisk{{
-		SourceDataset: "tank/vms/win10",
-		SnapshotID:    "zvolsnapid1234",
-		StdinPath:     "/vm-disks/tank/vms/win10@bombvault-20261015120000",
+		Dataset:    "tank/vms/win10",
+		Size:       1 << 30,
+		SnapshotID: "zvolsnapid1234",
+		StdinPath:  "/vm-disks/tank/vms/win10.img",
 	}}
 	d.ZFSHost = host
-	d.ZvolRestic = zr
+	d.ZvolRestic = &fakeZvolRestic{dumpData: []byte("raw disk image")}
+	return d
+}
 
-	if err := backup.RestoreVM(t.Context(), d); err != nil {
+func TestRestoreOfAZvolOnlyVMWritesTheZvolBackAndDefinesTheVM(t *testing.T) {
+	vm := &fakeVM{stateVal: "running"}
+	r := &fakeRestic{}
+	runs := &fakeRuns{}
+	host := &fakeZFSHost{volumes: map[string]int64{"tank/vms/win10": 1 << 30}}
+
+	if err := backup.RestoreVM(t.Context(), zvolOnlyRestoreDeps(t, vm, r, runs, host)); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
 	if vmContains(r.log, "restore:") || vmContains(r.log, "restoreSubtree:") {
 		t.Fatalf("a file restore ran for a VM without file disks: %v", r.log)
 	}
-	if !vmContains(r.log, "verify:/repo/vms:deadbeef12345678") {
-		t.Fatalf("the run snapshot was not checked before the VM was touched: %v", r.log)
+	if !vmContains(r.log, "verify:/repo/vms:deadbeef12345678") || !vmContains(r.log, "verify:/repo/vms:zvolsnapid1234") {
+		t.Fatalf("verified %v, want the run and the zvol image checked", r.log)
 	}
-	if string(host.streamReceiveData) != "zvol stream bytes" || !strings.HasPrefix(host.streamReceiveTarget, "tank/vms/win10-bombvault-restore-") {
-		t.Fatalf("received %q into %q, want the zvol stream in a fresh dataset", host.streamReceiveData, host.streamReceiveTarget)
+	if got := string(host.written["tank/vms/win10"]); got != "raw disk image" {
+		t.Fatalf("wrote %q onto the zvol, want the image", got)
 	}
 	if !vmContains(vm.log, "define:") || !vmContains(vm.log, "start:win10") {
 		t.Fatalf("vm calls = %v, want the VM defined and started", vm.log)
 	}
 	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
 		t.Fatalf("run finishes = %v, want [success]", runs.finishes)
+	}
+}
+
+func TestARestoreWithoutTheImageOfAZvolLeavesTheVMAlone(t *testing.T) {
+	for name, broken := range map[string]func(*backup.VMRestoreDeps, *fakeRestic){
+		"no image":         func(d *backup.VMRestoreDeps, _ *fakeRestic) { d.BlockDisks[0].SnapshotID = "" },
+		"no size":          func(d *backup.VMRestoreDeps, _ *fakeRestic) { d.BlockDisks[0].Size = 0 },
+		"image unreadable": func(_ *backup.VMRestoreDeps, r *fakeRestic) { r.verifyErr = errors.New("snapshot not found") },
+	} {
+		t.Run(name, func(t *testing.T) {
+			vm := &fakeVM{stateVal: "running"}
+			r := &fakeRestic{}
+			host := &fakeZFSHost{volumes: map[string]int64{"tank/vms/win10": 1 << 30}}
+			d := zvolOnlyRestoreDeps(t, vm, r, &fakeRuns{}, host)
+			broken(&d, r)
+
+			if err := backup.RestoreVM(t.Context(), d); err == nil {
+				t.Fatal("want the restore refused")
+			}
+			if vmContains(vm.log, "destroy:win10") || vmContains(vm.log, "undefine:win10") || len(host.log) != 0 {
+				t.Fatalf("vm calls %v, host calls %v; want nothing touched", vm.log, host.log)
+			}
+		})
 	}
 }
 

@@ -106,11 +106,8 @@ type ResticEngine interface {
 	// names a different snapshot every run.
 	BackupDir(ctx context.Context, repo, dir string, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
 	ImportDir(ctx context.Context, repo, dir string, tags []string, at time.Time, mode restic.Mode) (restic.Summary, error)
-	// BackupStdin backs up the ENTIRE content of rd as a single synthetic file
-	// recorded under path, tagged with tags — the zvol VM disk backup path
-	// (v8.0.0 VM service-layer integration, Task 2): a `zfs send` stream piped
-	// straight into `restic backup --stdin`, no local staging file. See
-	// backup.ZvolRestic's doc comment (resticZvolAdapter below satisfies it).
+	// BackupStdin backs up all of rd as one file recorded under path, such as
+	// the raw image of a zvol read over SSH.
 	BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string, mode restic.Mode) (restic.Summary, error)
 	// BackupFromCommand backs up the stdout of command as the single file
 	// stdinPath. It also returns what command wrote to stderr, which is where a
@@ -125,9 +122,8 @@ type ResticEngine interface {
 	// RestoreVerify restores the given files of a snapshot into target and
 	// reads each one back against its content hashes. The restore probe uses it.
 	RestoreVerify(ctx context.Context, repo, snapshotID string, files []string, target string, mode restic.Mode) error
-	// DumpRaw streams the synthetic file at path, from the given snapshot, into
-	// w — the restore-side counterpart of BackupStdin, feeding a `zfs receive`
-	// over SSH (see backup.ZvolRestic's doc comment).
+	// DumpRaw writes the file at path in snapshotID to w, the counterpart of
+	// BackupStdin.
 	DumpRaw(ctx context.Context, repo, snapshotID, path string, w io.Writer, mode restic.Mode) error
 	// DumpZip streams a snapshot subtree (rooted at subfolder) as a zip into w
 	// (flash restore — a non-destructive zip download; the live /boot is never
@@ -247,11 +243,10 @@ type HostSSH interface {
 	// known_hosts. Also confirms key auth.
 	EnsureKnownHost(ctx context.Context) error
 	// StreamCommand starts a command on the host over SSH and streams its
-	// stdout (never buffered) — the zvol VM disk backup path's `zfs send`
-	// (v8.0.0 VM service-layer integration, Task 2; see sshZFSHost below).
+	// stdout, such as the raw read of a zvol.
 	StreamCommand(ctx context.Context, args ...string) (io.ReadCloser, func() error, error)
 	// RunWithStdin runs a command on the host over SSH with its stdin fed from
-	// rd, streamed — the zvol VM disk restore path's `zfs receive`.
+	// rd, such as the write of a zvol's image back onto it.
 	RunWithStdin(ctx context.Context, rd io.Reader, args ...string) error
 }
 
@@ -11922,32 +11917,97 @@ func (r startedRunsAdapter) Finish(runID, status string, sum backup.Summary, err
 	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
 }
 
-// sshZFSHost adapts HostSSH's semantic Run/StreamCommand/RunWithStdin SSH
-// surface into backup.ZFSHost by shelling the zfs command lines
-// virshcli.ZFSSnapshotArgs/ZFSSnapshotDestroyArgs/ZFSSendArgs/ZFSReceiveArgs
-// build — mirrors how virshcli itself shells virsh commands over the same
-// transport rather than requiring a local ZFS toolchain in the container
-// (v8.0.0 VM service-layer integration, Task 2).
+// sshZFSHost runs the zvol commands on the host over SSH, as virsh is run, so
+// the container needs no zfs tools.
 type sshZFSHost struct{ ssh HostSSH }
 
 var _ backup.ZFSHost = sshZFSHost{}
+
+// zvolDeviceWait bounds how long the /dev link of a new zvol may take to
+// appear.
+const zvolDeviceWait = 30 * time.Second
 
 func (h sshZFSHost) SnapshotCreate(ctx context.Context, dataset, snapName string) error {
 	_, err := h.ssh.Run(ctx, virshcli.ZFSSnapshotArgs(dataset, snapName)...)
 	return err
 }
 
-func (h sshZFSHost) SnapshotDestroy(ctx context.Context, dataset, snapName string) error {
-	_, err := h.ssh.Run(ctx, virshcli.ZFSSnapshotDestroyArgs(dataset, snapName)...)
+func (h sshZFSHost) Clone(ctx context.Context, snapshot, clone string) error {
+	_, err := h.ssh.Run(ctx, virshcli.ZFSCloneArgs(snapshot, clone)...)
 	return err
 }
 
-func (h sshZFSHost) StreamSend(ctx context.Context, dataset, snapName string) (io.ReadCloser, func() error, error) {
-	return h.ssh.StreamCommand(ctx, virshcli.ZFSSendArgs(dataset, snapName)...)
+func (h sshZFSHost) Destroy(ctx context.Context, name string) error {
+	_, err := h.ssh.Run(ctx, virshcli.ZFSDestroyArgs(name)...)
+	return err
 }
 
-func (h sshZFSHost) StreamReceive(ctx context.Context, rd io.Reader, targetDataset string) error {
-	return h.ssh.RunWithStdin(ctx, rd, virshcli.ZFSReceiveArgs(targetDataset)...)
+func (h sshZFSHost) VolSize(ctx context.Context, dataset string) (int64, bool, error) {
+	pool, _, _ := strings.Cut(dataset, "/")
+	out, err := h.ssh.Run(ctx, virshcli.ZFSListVolumesArgs(pool)...)
+	if err != nil {
+		return 0, false, err
+	}
+	for line := range strings.Lines(out) {
+		name, size, ok := strings.Cut(strings.TrimSpace(line), "	")
+		if !ok || name != dataset {
+			continue
+		}
+		n, err := strconv.ParseInt(size, 10, 64)
+		if err != nil {
+			return 0, false, fmt.Errorf("size of %s: %w", dataset, err)
+		}
+		return n, true, nil
+	}
+	return 0, false, nil
+}
+
+func (h sshZFSHost) CreateVolume(ctx context.Context, dataset string, size int64) error {
+	_, err := h.ssh.Run(ctx, virshcli.ZFSCreateVolumeArgs(dataset, size)...)
+	return err
+}
+
+func (h sshZFSHost) SetVolSize(ctx context.Context, dataset string, size int64) error {
+	_, err := h.ssh.Run(ctx, virshcli.ZFSSetVolSizeArgs(dataset, size)...)
+	return err
+}
+
+func (h sshZFSHost) ReadVolume(ctx context.Context, dataset string) (io.ReadCloser, func() error, error) {
+	dev := virshcli.ZvolDevPath(dataset)
+	if err := h.awaitDevice(ctx, dev); err != nil {
+		return nil, nil, err
+	}
+	return h.ssh.StreamCommand(ctx, virshcli.ReadDeviceArgs(dev)...)
+}
+
+func (h sshZFSHost) WriteVolume(ctx context.Context, rd io.Reader, dataset string) error {
+	dev := virshcli.ZvolDevPath(dataset)
+	if err := h.awaitDevice(ctx, dev); err != nil {
+		return err
+	}
+	return h.ssh.RunWithStdin(ctx, rd, virshcli.WriteDeviceArgs(dev)...)
+}
+
+// awaitDevice waits until udev is done with a zvol that may have just been
+// created. Until then the /dev link can be missing, and a clone destroyed
+// while udev still probes it fails with "dataset is busy". The settle is
+// best effort, since the device check after it is what counts.
+func (h sshZFSHost) awaitDevice(ctx context.Context, dev string) error {
+	_, _ = h.ssh.Run(ctx, virshcli.UdevSettleArgs()...)
+	deadline := time.Now().Add(zvolDeviceWait)
+	for {
+		if _, err := h.ssh.Run(ctx, virshcli.BlockDeviceExistsArgs(dev)...); err == nil {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("%s did not appear on the host", dev)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(200 * time.Millisecond):
+		}
+	}
 }
 
 // resticZvolAdapter wraps a ResticEngine + Mode to satisfy backup.ZvolRestic
@@ -12787,11 +12847,7 @@ type vmRestorePlan struct {
 	// state → boot after restore, the historical behaviour).
 	wasRunning *bool
 	preDefine  func(context.Context) error
-	// blockDisks are the domain's block-device-backed (zvol) disks to restore,
-	// each entry's SourceDataset resolved from the domain XML — SnapshotID/
-	// StdinPath are left unset here; see prepareRestoreVMForTarget's own
-	// comment for why (Task 3's job). Empty for a VM with only file-backed
-	// disks (v8.0.0 VM service-layer integration, Task 2).
+	// blockDisks are the zvol disks, each with the image it is written from.
 	blockDisks []backup.VMRestoreBlockDisk
 	// images are the disks of a changed-block snapshot and where each goes.
 	images []backup.VMRestoreImage
@@ -12875,20 +12931,11 @@ func (s *Service) prepareRestoreVMIn(ctx context.Context, ref repoRef, name, sna
 // (#122). An empty destBase restores each disk to the definition's path, from
 // wherever the snapshot holds it.
 //
-// destZvolPool is the separate remap a block-device (zvol) disk needs: destBase
-// is a filesystem path under the host mount and carries no ZFS pool
-// information at all, so it cannot rebase a zvol's `zfs receive` target the
-// way it rebases a file-backed disk's path. When destBase is non-empty (a
-// cross-instance restore) and the domain has recognizable zvol disks,
-// destZvolPool must be supplied: every such disk's dataset is rebased onto it
-// via virshcli.RebaseZvolDatasetPool, so `zfs receive` lands on the
-// destination box's pool rather than the source box's. An empty destZvolPool
-// on a cross-instance restore with zvol disks refuses here, before any
-// restic/SSH work starts (a destination pool cannot be guessed from destBase),
-// rather than silently attempting `zfs receive` against the source pool's name
-// and failing deep inside that call once the restore is already underway.
-// Ignored (never validated) for a same-instance restore or a VM with no zvol
-// disks; a same-instance zvol restore derives its target from SourceDataset.
+// destZvolPool is where the zvol disks go on a cross-instance restore, since
+// destBase is a folder and names no pool. Each zvol keeps its path below the
+// pool and the domain XML is pointed at it. Such a restore without a pool is
+// refused here, before anything is touched. A same-instance restore writes
+// each zvol back onto itself and ignores it.
 func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.VMTarget, id entryIdentity, destBase, destZvolPool string) (vmRestorePlan, error) {
 	explicitID := snapshotID != "latest" && snapshotID != ""
 
@@ -13049,17 +13096,8 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	// libvirt uses the real var store (boot entries preserved).
 	domainXML = virshcli.EnsureNVRAMTemplate(domainXML)
 
-	// Re-derive the TPM path and block-device (zvol) disk list from the
-	// (possibly remapped) domain XML — NOT persisted separately in
-	// vmDefinition (see its TPMBytes field's doc comment) — mirroring how
-	// BackupVM derives them at backup time via the same virshcli.ParseDomain
-	// call. Neither is affected by the destBase remap above: RewriteDiskSources
-	// only rewrites <source file=...> (file-backed disks); a <tpm> element and
-	// a <source dev=...> (block-device disk) are left untouched either way
-	// (v8.0.0 VM service-layer integration, Task 2). A zvol disk's DATASET
-	// (as opposed to the XML's device path, which stays the source box's for
-	// the operator's own reference) is rebased separately, below — see the
-	// "CROSS-INSTANCE zvol rebase" block after the SSH guard.
+	// The TPM path and the zvol disks come from the domain XML, as they do at
+	// backup time. Each zvol is written back from its own image in the run.
 	var tpmPath string
 	var vmRestoreBlockDisks []backup.VMRestoreBlockDisk
 	if parsed, perr := virshcli.ParseDomain(domainXML); perr == nil {
@@ -13067,90 +13105,47 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		for _, bd := range parsed.BlockDisks {
 			dataset, ok := virshcli.ZvolDatasetFromDevPath(bd.Source)
 			if !ok {
-				log.Printf("api: RestoreVM: WARN block-device disk %q (%s) is not a recognizable ZFS zvol for %q — it will not be restored", bd.Dev, bd.Source, name) //nolint:gosec // G706: name is %q-quoted
+				log.Printf("api: RestoreVM: WARN block-device disk %q (%s) is not a recognizable ZFS zvol for %q, so it is not restored", bd.Dev, bd.Source, name) //nolint:gosec // G706: name is %q-quoted
 				continue
 			}
-			rbd := backup.VMRestoreBlockDisk{SourceDataset: dataset}
-			// Resolve THIS disk's own restic snapshot from the vmrun: group
-			// above (v8.0.0 VM service-layer integration, Task 3): its
-			// identity tag is "vm:"+name+":zvol:"+bd.Dev (see
-			// VMBlockDisk.Dev's doc comment, internal/backup/
-			// vm_orchestrator.go) — find the group member carrying that
-			// EXACT tag and take its snapshot id plus the one path it
-			// recorded, which IS the exact StdinPath BackupZvolDisk gave
-			// restic (BackupStdin backs up exactly one synthetic file per
-			// invocation — see ZvolStdinPath — so Paths always has exactly
-			// one entry when set at all).
-			//
-			// Left at zero value — the PERMANENT fallback (see vmRunTag's
-			// doc comment above), not just "old backups" — when there is no
-			// group at all, or no member carries this disk's tag (bd.Dev
-			// empty never happens from the real BackupVM caller, see
-			// VMBlockDisk.Dev's doc comment): RestoreZvolDisk then fails
-			// loudly on the empty snapshot id rather than silently skipping
-			// the disk, EXACTLY as it did before this task.
-			if bd.Dev != "" {
-				if gs, ok := vmrunGroupSnapshot(vmrunGroup, "vm:"+name+":zvol:"+bd.Dev); ok && len(gs.Paths) > 0 {
-					rbd.SnapshotID = gs.ID
-					rbd.StdinPath = gs.Paths[0]
-				}
+			disk, err := s.zvolRestoreDisk(ctx, ref, vmrunGroup, "vm:"+name+":zvol:"+bd.Dev, dataset)
+			if err != nil {
+				return vmRestorePlan{}, err
 			}
-			vmRestoreBlockDisks = append(vmRestoreBlockDisks, rbd)
+			vmRestoreBlockDisks = append(vmRestoreBlockDisks, disk)
 		}
 	} else {
-		log.Printf("api: RestoreVM: WARN could not re-parse domain xml for %q (%v) — TPM state and any zvol disks will not be restored", name, perr) //nolint:gosec // G706: name is %q-quoted
+		log.Printf("api: RestoreVM: WARN could not re-parse domain xml for %q (%v), so TPM state and any zvol disks are not restored", name, perr) //nolint:gosec // G706: name is %q-quoted
 	}
 	if len(diskPaths) == 0 && len(vmRestoreBlockDisks) == 0 {
 		return vmRestorePlan{}, errors.New("no restorable disk paths found in this backup")
 	}
 
-	// Mirrors BackupVM's own "zvol backup requires SSH" guard: RestoreZvolDisk
-	// calls ZFSHost.StreamReceive, which sshZFSHost forwards straight onto
-	// s.ssh — a nil HostSSH there is a nil interface method call, i.e. an
-	// unrecovered PANIC (not a clean error) deep inside the async restore
-	// goroutine (StartRestoreVM), which crashes the whole process rather than
-	// just failing this one restore. Caught here, before a plan is ever
-	// returned, exactly like the backup-side check in BackupVM.
+	// Without SSH the zvol commands would call a nil HostSSH inside the
+	// restore goroutine and take the whole process down.
 	if len(vmRestoreBlockDisks) > 0 && s.ssh == nil {
 		return vmRestorePlan{}, fmt.Errorf("restore vm: %q has block-device (zvol) disks but no SSH host connection is configured, and zvol restore requires SSH", name)
 	}
 
-	// CROSS-INSTANCE zvol rebase: destBase remaps a FILE-backed disk onto the
-	// destination's FILESYSTEM PATH, but that path carries no ZFS pool
-	// information — RestoreZvolDisk would otherwise always derive its `zfs
-	// receive` target from SourceDataset (the SOURCE box's pool, re-derived
-	// unchanged from the domain XML above), which almost certainly does not
-	// exist on the destination box under that name, and fail deep inside a
-	// `zfs receive` call once the restore is already underway. REFUSE here,
-	// before any restic/SSH work starts, when destZvolPool wasn't supplied;
-	// when it was, rebase every zvol disk's dataset onto it now so the plan's
-	// blockDisks already carry the correct destination target.
-	//
-	// destZvolPool is trimmed before the emptiness check so a whitespace-only
-	// value ("   ", e.g. a stray space pasted into a direct API call) hits
-	// THIS clear refusal rather than slipping through to
-	// RebaseZvolDatasetPool's own less-actionable error below (it trims
-	// internally too, so a whitespace-only pool reads there as empty and
-	// fails the "no segment past its own pool" check instead of naming the
-	// real problem).
+	// destBase carries no ZFS pool, so a restore onto another instance needs
+	// the destination pool named. The zvols are written there and the domain
+	// is pointed at them.
 	if destBase != "" && len(vmRestoreBlockDisks) > 0 {
 		if strings.TrimSpace(destZvolPool) == "" {
-			// The web UI has NO field for zvolPool yet (Recovery page — see
-			// this repo's tracked follow-up); an operator hitting this
-			// through the UI has no in-app way to act on this error, so the
-			// message spells out the only path that currently exists: a
-			// direct API call. Keep this in sync with
-			// docs/vm-backup-ssh-setup.md's TrueNAS section, which carries
-			// the same guidance for someone reading ahead of time.
+			// The web UI has no field for it yet, so the message names the API
+			// call; docs/vm-backup-ssh-setup.md's TrueNAS section says the same.
 			return vmRestorePlan{}, fmt.Errorf("restore vm: %q has %d TrueNAS zvol-backed disk(s) and this is a cross-instance restore, but no destination ZFS pool was specified, and the destination pool cannot be inferred from the chosen destination folder. There is no web UI field for this yet: call POST /api/foreign/restore directly with its zvolPool parameter set to the destination pool name (see docs/vm-backup-ssh-setup.md's TrueNAS section), or restore this VM on the instance it was backed up from", name, len(vmRestoreBlockDisks))
 		}
-		for i := range vmRestoreBlockDisks {
-			rebased, ok := virshcli.RebaseZvolDatasetPool(vmRestoreBlockDisks[i].SourceDataset, destZvolPool)
+		devRemap := make(map[string]string, len(vmRestoreBlockDisks))
+		for i, bd := range vmRestoreBlockDisks {
+			rebased, ok := virshcli.RebaseZvolDatasetPool(bd.Dataset, destZvolPool)
 			if !ok {
-				return vmRestorePlan{}, &zvolRebaseErr{msg: fmt.Sprintf("restore vm: %q: cannot rebase zvol dataset %q onto destination pool %q", name, vmRestoreBlockDisks[i].SourceDataset, destZvolPool)}
+				return vmRestorePlan{}, &zvolRebaseErr{msg: fmt.Sprintf("restore vm: %q: cannot rebase zvol dataset %q onto destination pool %q", name, bd.Dataset, destZvolPool)}
 			}
-			vmRestoreBlockDisks[i].RestoreBaseDataset = rebased
+			devRemap[virshcli.ZvolDevPath(bd.Dataset)] = virshcli.ZvolDevPath(rebased)
+			vmRestoreBlockDisks[i].Dataset = rebased
 		}
+		domainXML = virshcli.RewriteBlockSources(domainXML, devRemap)
 	}
 
 	// preDefine writes the captured NVRAM/TPM state back to the host over SSH
@@ -13199,6 +13194,31 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		blockDisks:   vmRestoreBlockDisks,
 		images:       images,
 	}, nil
+}
+
+// zvolRestoreDisk finds the image of one zvol disk in a run's group of
+// snapshots. A restore refuses a run that lacks one before anything is
+// touched, rather than taking the VM down and failing on that disk.
+func (s *Service) zvolRestoreDisk(ctx context.Context, ref repoRef, group []restic.Snapshot, tag, dataset string) (backup.VMRestoreBlockDisk, error) {
+	snap, ok := vmrunGroupSnapshot(group, tag)
+	if !ok || len(snap.Paths) == 0 {
+		return backup.VMRestoreBlockDisk{}, fmt.Errorf("this backup holds no image of the zvol disk %s, so it cannot be restored; pick another backup", dataset)
+	}
+	disk := backup.VMRestoreBlockDisk{Dataset: dataset, SnapshotID: snap.ID, StdinPath: snap.Paths[0]}
+	if snap.Summary != nil {
+		disk.Size = int64(snap.Summary.TotalBytesProcessed) //nolint:gosec // G115: a zvol is far below 8 EiB
+	} else {
+		// A snapshot written by restic before 0.17 carries no summary.
+		_, size, err := s.engine.StatsRestoreSize(ctx, ref.repo, snap.ID, ref.mode)
+		if err != nil {
+			return backup.VMRestoreBlockDisk{}, fmt.Errorf("restore vm: size of the zvol disk %s: %w", dataset, err)
+		}
+		disk.Size = size
+	}
+	if disk.Size <= 0 {
+		return backup.VMRestoreBlockDisk{}, fmt.Errorf("the image of the zvol disk %s in this backup is empty, so it cannot be restored; pick another backup", dataset)
+	}
+	return disk, nil
 }
 
 // snapshotDiskSources returns the path the snapshot holds each disk under: the

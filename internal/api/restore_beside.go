@@ -524,7 +524,7 @@ func (s *Service) prepareRestoreVMBeside(ctx context.Context, name, snapshotID, 
 		return vmRestorePlan{}, err
 	}
 	if len(plan.blockDisks) > 0 {
-		return vmRestorePlan{}, destinationRefusal("%s has a disk on the ZFS volume %s, and a copy of that cannot be put into a folder next to the original", name, plan.blockDisks[0].SourceDataset)
+		return vmRestorePlan{}, destinationRefusal("%s has a disk on the ZFS volume %s, and a copy of that cannot be put into a folder next to the original", name, plan.blockDisks[0].Dataset)
 	}
 	inPlace := plan.restoreDirs
 	if len(inPlace) == 0 {

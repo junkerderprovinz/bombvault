@@ -619,8 +619,8 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		// ZFS pool a TrueNAS zvol-backed disk needs (destBase carries no ZFS pool
 		// information — see prepareRestoreVMForTarget's destZvolPool doc comment);
 		// prepareRestoreVMForTarget refuses cleanly if the VM has zvol disks and
-		// zvolPool was left empty, rather than attempting `zfs receive` against the
-		// source box's pool name on this host.
+		// zvolPool was left empty, rather than writing the zvols to the source
+		// box's pool name on this host.
 		destBase, err := s.foreignVMDestBase(targetSubPath)
 		if err != nil {
 			return "", nil, nil, err
