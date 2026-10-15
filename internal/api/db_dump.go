@@ -26,6 +26,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -1181,8 +1182,9 @@ func (s *sealOnFirstWrite) Close() error {
 	return s.w.Close()
 }
 
-// A saved dump belongs to Unraid's nobody:users like everything else on a
-// share, so it opens over SMB without a detour through the console.
+// On Unraid a saved dump belongs to nobody:users like everything else on a
+// share, so it opens over SMB without a detour through the console. Other
+// hosts have no such convention and keep the owner of this process.
 const (
 	dbDumpFileUID  = 99
 	dbDumpFileGID  = 100
@@ -1259,7 +1261,7 @@ func (s *Service) giveToShareUser(dir string) error {
 	if err := d.Chmod(dbDumpDirMode); err != nil {
 		return err
 	}
-	if err := s.dbDumpChownFn()(d, dbDumpFileUID, dbDumpFileGID); err != nil {
+	if err := s.chownToShareUser(d); err != nil {
 		log.Printf("api: save database dump: %s keeps this process's ownership: %v", dir, err) //nolint:gosec // G706: a folder under the host mount the user picked
 	}
 	return nil
@@ -1355,7 +1357,7 @@ func (s *Service) saveDBDump(ctx context.Context, plan dbDumpSavePlan, key strin
 	if err != nil {
 		return 0, err
 	}
-	if cErr := s.dbDumpChownFn()(f, dbDumpFileUID, dbDumpFileGID); cErr != nil {
+	if cErr := s.chownToShareUser(f); cErr != nil {
 		log.Printf("api: save database dump: %s keeps this process's ownership: %v", filepath.Base(partial), cErr) //nolint:gosec // G706: a name this process built
 	}
 
@@ -1446,4 +1448,13 @@ func (s *Service) finishSaveDBDumpRun(runID, snapshotID string, written int64, s
 	if err := (runsAdapter{st: s.store, ctx: context.Background()}).Finish(runID, "success", backup.Summary{SnapshotID: snapshotID, Bytes: written}, ""); err != nil {
 		log.Printf("api: save database dump: record the run result failed: %v", err)
 	}
+}
+
+// chownToShareUser hands a file BombVault wrote to the Unraid share user. It
+// does nothing elsewhere, where uid 99 is an arbitrary account.
+func (s *Service) chownToShareUser(f *os.File) error {
+	if s.platformFn().Kind() != platform.KindUnraid {
+		return nil
+	}
+	return s.dbDumpChownFn()(f, dbDumpFileUID, dbDumpFileGID)
 }
