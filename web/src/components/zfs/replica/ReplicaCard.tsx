@@ -76,7 +76,7 @@ function MemberState({ member, replica, running, t }: { member: ZFSReplicaMember
 export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) {
   const { t } = useT();
   const { push } = useToast();
-  const { replica, reload, running, shownName, busy, replicate, offered } = useReplicateNow(itemId, name);
+  const { replica, reload, running, shownName } = useReplicateNow(itemId, name);
   const { servers, reload: reloadServers } = useReplicaServers();
   const group = useGroup();
   const [draft, setDraft] = useState<ZFSReplicaPatch>({});
@@ -318,19 +318,6 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
             .replace("{sent}", () => humanBytes(view.lastBytes))
             .replace("{took}", () => formatDuration(view.lastSeconds))}
         </p>
-      )}
-
-      {offered && (
-        <div className="flex justify-end">
-          <Button
-            label={t("zfs.replica.replicateNow")}
-            labelKey="zfs.replica.replicateNow"
-            tone="accent"
-            onClick={() => void replicate()}
-            disabled={busy}
-            busy={busy}
-          />
-        </div>
       )}
 
       {adding && (

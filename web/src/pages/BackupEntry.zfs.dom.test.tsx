@@ -411,6 +411,86 @@ describe("the replica action of a ZFS entry", () => {
     await corner().findByRole("button", { name: en["containers.backupNow"] });
     expect(corner().queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
   });
+
+  it.each(["refused", "off", "revoked"] as const)("is absent while a paired instance is %s", async (peerState) => {
+    vi.mocked(api.getZFSReplica).mockResolvedValue(replica({ target: { kind: "peer", id: "peer-1" }, state: "never", peerState }));
+    await renderPage();
+    await corner().findByRole("button", { name: en["containers.backupNow"] });
+    expect(corner().queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+  });
+
+  it("is there for a paired instance that allowed the replica", async () => {
+    vi.mocked(api.getZFSReplica).mockResolvedValue(replica({ target: { kind: "peer", id: "peer-1" }, peerState: "allowed" }));
+    await renderPage();
+    expect(await corner().findByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeTruthy();
+  });
+
+  it("is absent while ZFS backups are off", async () => {
+    vi.mocked(api.getZFSReplica).mockResolvedValue(replica({ state: "waiting" }));
+    await renderPage();
+    await corner().findByRole("button", { name: en["containers.backupNow"] });
+    expect(corner().queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+  });
+
+  describe("while something else has the replica", () => {
+    const streams: { onmessage: ((ev: MessageEvent<string>) => void) | null }[] = [];
+    class Stream {
+      onmessage: ((ev: MessageEvent<string>) => void) | null = null;
+      constructor() {
+        streams.push(this);
+      }
+      close() {}
+    }
+    const frame = (key: string, active: boolean) =>
+      act(() => {
+        const data = JSON.stringify({ key, phase: "replicate", percent: 10, active });
+        streams.at(-1)?.onmessage?.({ data } as MessageEvent<string>);
+      });
+
+    beforeEach(() => {
+      streams.length = 0;
+      vi.stubGlobal("EventSource", Stream);
+      vi.mocked(api.getZFSReplica).mockResolvedValue(replica());
+    });
+
+    it("holds the action while the replica runs", async () => {
+      await renderPage();
+      await corner().findByRole("button", { name: en["zfs.replica.replicateNow"] });
+      await frame(`zfs-replica:${ZFS_ID}`, true);
+      expect((corner().getByRole("button", { name: en["zfs.replica.replicateNow"] }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it("holds the action while a bring back has the replica", async () => {
+      await renderPage();
+      await corner().findByRole("button", { name: en["zfs.replica.replicateNow"] });
+      await frame(`zfs-replica-restore:${ZFS_ID}`, true);
+      expect((corner().getByRole("button", { name: en["zfs.replica.replicateNow"] }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it("says the replica is up to date once a started run ends", async () => {
+      vi.mocked(api.runZFSReplica).mockResolvedValue({ ok: true, runId: "r1" });
+      await renderPage();
+      await press(await corner().findByRole("button", { name: en["zfs.replica.replicateNow"] }));
+      await frame(`zfs-replica:${ZFS_ID}`, true);
+      await frame(`zfs-replica:${ZFS_ID}`, false);
+      await waitFor(() =>
+        expect(pushed).toContainEqual({ message: en["zfs.replica.upToDate"].replace("{name}", "tank/appdata"), severity: "success" }),
+      );
+    });
+
+    it("names the first replica once a first run ends", async () => {
+      vi.mocked(api.getZFSReplica).mockResolvedValue(replica({ state: "never" }));
+      vi.mocked(api.runZFSReplica).mockResolvedValue({ ok: true, runId: "r1" });
+      await renderPage();
+      const button = await corner().findByRole("button", { name: en["zfs.replica.replicateNow"] });
+      vi.mocked(api.getZFSReplica).mockResolvedValue(replica({ state: "running" }));
+      await press(button);
+      await frame(`zfs-replica:${ZFS_ID}`, true);
+      vi.mocked(api.getZFSReplica).mockResolvedValue(replica());
+      await frame(`zfs-replica:${ZFS_ID}`, false);
+      await waitFor(() => expect(pushed.some((p) => p.severity === "success" && p.message.startsWith("tank/appdata: first replica to"))).toBe(true));
+    });
+  });
 });
 
 describe("removing a ZFS entry", () => {

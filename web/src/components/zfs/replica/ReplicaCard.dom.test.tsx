@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The card where a ZFS item picks its replica. It has to say plainly where the
-// replica stands, send exactly the rule someone set, and never offer a run to
-// a paired instance that has not allowed it.
+// replica stands and send exactly the rule someone set. Starting a run belongs
+// to the entry page, not to the card.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { I18nProvider, de, en } from "../../../lib/i18n";
@@ -13,7 +13,6 @@ import { group, replica, server } from "./replica.testsupport";
 let current: ZFSReplica;
 let progress: ProgressMap = {};
 const patches: ZFSReplicaPatch[] = [];
-let runs = 0;
 // What a PATCH answers. The store keeps the change either way, as the server
 // does when only the request to a paired instance fails.
 let patchAnswer: { ok: boolean; code?: string } = { ok: true };
@@ -29,10 +28,6 @@ vi.mock("../../../lib/api", async (importOriginal) => {
       patches.push(patch);
       current = { ...current, ...patch };
       return Promise.resolve(patchAnswer);
-    },
-    runZFSReplica: () => {
-      runs += 1;
-      return Promise.resolve({ ok: true, runId: "r1" });
     },
   };
 });
@@ -55,7 +50,6 @@ beforeEach(() => {
   current = replica();
   progress = {};
   patches.length = 0;
-  runs = 0;
   patchAnswer = { ok: true };
   localStorage.clear();
 });
@@ -99,12 +93,10 @@ describe("replica card", () => {
     expect(screen.getByText("to backup/bombvault-replica/tower/cache/appdata")).toBeTruthy();
   });
 
-  it("shows a run in progress and holds the button until it ends", async () => {
+  it("shows a run in progress", async () => {
     progress = { "zfs-replica:zfs1": { phase: "replicate", percent: 10, active: true, lastSeen: Date.now() } };
     renderCard();
     expect(await screen.findAllByText(en["zfs.replica.state.running"])).not.toHaveLength(0);
-    const button = screen.getByRole("button", { name: en["zfs.replica.replicateNow"] }) as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
   });
 
   it("puts the reason of a failed dataset in its own words", async () => {
@@ -123,7 +115,6 @@ describe("replica card", () => {
     renderCard();
     expect(await screen.findByText("Waiting for tower-2 to allow it")).toBeTruthy();
     expect(screen.getByText(en["zfs.replica.peer.askedText"].replace("{peer}", "tower-2"))).toBeTruthy();
-    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
     // The rule here is only what the receiving instance is offered.
     expect(screen.getByRole("radiogroup", { name: "Suggested to tower-2" })).toBeTruthy();
     expect(screen.queryByRole("radiogroup", { name: en["zfs.replica.keepTarget"] })).toBeNull();
@@ -136,12 +127,11 @@ describe("replica card", () => {
     expect(await screen.findByText(de["zfs.replica.peer.allowedText"].replaceAll("{peer}", "tower-2"))).toBeTruthy();
   });
 
-  it("runs to a paired instance that allowed it and leaves the keep rule to it", async () => {
+  it("leaves the keep rule to a paired instance that allowed it", async () => {
     current = replica({ target: { kind: "peer", id: "peer-1" }, peerState: "allowed" });
     renderCard();
     expect(await screen.findByText(en["zfs.replica.peer.allowedText"].replace("{peer}", "tower-2"))).toBeTruthy();
     expect(screen.getByText("Replicated 2 hours ago")).toBeTruthy();
-    expect(screen.getByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeTruthy();
     expect(screen.queryByRole("radiogroup", { name: "Suggested to tower-2" })).toBeNull();
     expect(screen.getByRole("radiogroup", { name: en["zfs.replica.when"] })).toBeTruthy();
   });
@@ -158,12 +148,11 @@ describe("replica card", () => {
     expect(screen.getByText("+31.0 MB in the last run")).toBeTruthy();
   });
 
-  it("says a paired instance declined and offers neither a run nor a new request", async () => {
+  it("says a paired instance declined and offers no new request", async () => {
     current = replica({ target: { kind: "peer", id: "peer-1" }, state: "never", peerState: "refused" });
     renderCard();
     expect(await screen.findByText("Declined by tower-2")).toBeTruthy();
     expect(screen.getByText(en["zfs.replica.peer.refusedText"].replace("{peer}", "tower-2"))).toBeTruthy();
-    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
     expect(screen.queryByRole("button", { name: en["zfs.replica.peer.askAgain"] })).toBeNull();
   });
 
@@ -172,7 +161,6 @@ describe("replica card", () => {
     renderCard();
     expect(await screen.findByText("Receiving is switched off on tower-2")).toBeTruthy();
     expect(screen.getByText(en["zfs.replica.peer.offText"].replace("{peer}", "tower-2"))).toBeTruthy();
-    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
   });
 
   it("says in German when the paired instance has receiving switched off", async () => {
@@ -197,7 +185,6 @@ describe("replica card", () => {
     renderCard();
     expect(await screen.findByText("Access revoked by tower-2")).toBeTruthy();
     expect(screen.getByText(en["zfs.replica.peer.revokedText"].replace("{peer}", "tower-2"))).toBeTruthy();
-    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.peer.askAgain"] }));
     await waitFor(() => expect(patches).toEqual([{ target: { kind: "peer", id: "peer-1" } }]));
     expect(await screen.findByText("Request sent to tower-2.")).toBeTruthy();
@@ -250,12 +237,6 @@ describe("replica card", () => {
     expect(await screen.findByText("Request sent to tower-2.")).toBeTruthy();
   });
 
-  it("starts a run on request", async () => {
-    renderCard();
-    fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.replicateNow"] }));
-    await waitFor(() => expect(runs).toBe(1));
-  });
-
   it("shows what the server holds after a change it stored but answered with a refusal", async () => {
     patchAnswer = { ok: false, code: "peer-unreachable" };
     renderCard();
@@ -303,20 +284,18 @@ describe("replica card", () => {
     expect(screen.queryByRole("tab", { name: en["cadence.everyN"] })).toBeNull();
   });
 
-  it("says why the replica waits and offers no run while ZFS backups are off", async () => {
+  it("says why the replica waits while ZFS backups are off", async () => {
     current = replica({ state: "waiting" });
     renderCard();
     expect(await screen.findByText(en["zfs.replica.state.waiting"])).toBeTruthy();
     expect(screen.getByLabelText(en["zfs.code.domain-off"])).toBeTruthy();
     expect(screen.queryByText(/Waiting for/)).toBeNull();
-    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
   });
 
   it("names a switched-off server as the reason the replica waits", async () => {
     current = replica({ target: { kind: "server", id: "off" }, state: "waiting" });
     renderCard();
     expect(await screen.findByLabelText(en["zfs.code.server-disabled"])).toBeTruthy();
-    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
   });
 
   it("gives the reason the server names for a waiting replica", async () => {
@@ -325,11 +304,10 @@ describe("replica card", () => {
     expect(await screen.findByLabelText(en["zfs.code.server-disabled"])).toBeTruthy();
   });
 
-  it("holds the run button while a bring back has the replica", async () => {
-    progress = { "zfs-replica-restore:zfs1": { phase: "replicate", percent: 10, active: true, lastSeen: Date.now() } };
+  it("leaves starting a run to the entry page", async () => {
     renderCard();
-    const button = (await screen.findByRole("button", { name: en["zfs.replica.replicateNow"] })) as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
+    await screen.findByRole("combobox", { name: en["zfs.replica.target"] });
+    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
   });
 
   it("explains in the When bubble that an entry without a place only sends the replica", async () => {
@@ -349,7 +327,6 @@ describe("replica card", () => {
     renderCard();
     await screen.findByRole("combobox", { name: en["zfs.replica.target"] });
     expect(screen.queryByText(en["zfs.replica.members"])).toBeNull();
-    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
   });
 
   it("says how each copy was mounted on a server that mounts", async () => {
