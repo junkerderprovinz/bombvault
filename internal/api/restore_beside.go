@@ -519,12 +519,16 @@ type vmBeside struct {
 // folders next to the ones they live in. It builds on the plan of the restore
 // in place, taken as a plan only, since nothing here talks to libvirt.
 func (s *Service) prepareRestoreVMBeside(ctx context.Context, name, snapshotID, source string) (vmRestorePlan, error) {
+	// No backup of such a VM can go next to it, so this comes before the
+	// backup is looked at and has nothing to say about which one was picked.
+	if tg, err := s.store.GetVMTargetByName(name); err == nil {
+		if dataset, ok := firstZvolOf(tg.Definition); ok {
+			return vmRestorePlan{}, destinationRefusal("%s has a disk on the ZFS volume %s, and a copy of that cannot be put into a folder next to the original. Replace the original instead.", name, dataset)
+		}
+	}
 	plan, err := s.prepareRestoreVM(planOnly(ctx), name, snapshotID, true, source)
 	if err != nil {
 		return vmRestorePlan{}, err
-	}
-	if len(plan.blockDisks) > 0 {
-		return vmRestorePlan{}, destinationRefusal("%s has a disk on the ZFS volume %s, and a copy of that cannot be put into a folder next to the original", name, plan.blockDisks[0].Dataset)
 	}
 	inPlace := plan.restoreDirs
 	if len(inPlace) == 0 {
