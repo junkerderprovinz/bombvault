@@ -1,11 +1,63 @@
 package config_test
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 )
+
+// TestMain makes host.docker.internal resolve so the tests do not depend on
+// the DNS and routing of the machine they run on.
+func TestMain(m *testing.M) {
+	restore := config.StubHostProbe(func(string) ([]string, error) { return []string{"172.17.0.1"}, nil }, "")
+	code := m.Run()
+	restore()
+	os.Exit(code)
+}
+
+func TestLoadUsesDefaultGatewayWhenHostNameDoesNotResolve(t *testing.T) {
+	routes := filepath.Join(t.TempDir(), "route")
+	table := strings.Join([]string{
+		"Iface Destination Gateway Flags RefCnt Use Metric Mask MTU Window IRTT",
+		"eth0 00000000 010011AC 0003 0 0 0 00000000 0 0 0",
+		"eth0 000011AC 00000000 0001 0 0 0 0000FFFF 0 0 0",
+	}, "\n")
+	if err := os.WriteFile(routes, []byte(table), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	defer config.StubHostProbe(func(string) ([]string, error) { return nil, errors.New("no such host") }, routes)()
+	key := strings.Repeat("a", 64)
+
+	c, err := config.Load(map[string]string{"APP_KEY": key})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.LibvirtHost != "172.17.0.1" {
+		t.Errorf("LibvirtHost = %q, want the gateway 172.17.0.1", c.LibvirtHost)
+	}
+	c, err = config.Load(map[string]string{"APP_KEY": key, "LIBVIRT_HOST": "10.0.0.5"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.LibvirtHost != "10.0.0.5" {
+		t.Errorf("LibvirtHost = %q, an explicit value must win", c.LibvirtHost)
+	}
+}
+
+func TestLoadKeepsHostNameWhenNoGatewayIsKnown(t *testing.T) {
+	defer config.StubHostProbe(func(string) ([]string, error) { return nil, errors.New("no such host") }, filepath.Join(t.TempDir(), "missing"))()
+	c, err := config.Load(map[string]string{"APP_KEY": strings.Repeat("a", 64)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.LibvirtHost != "host.docker.internal" {
+		t.Errorf("LibvirtHost = %q, want host.docker.internal", c.LibvirtHost)
+	}
+}
 
 func TestLoadValidatesAppKey(t *testing.T) {
 	_, err := config.Load(map[string]string{"APP_KEY": "short"})

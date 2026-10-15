@@ -92,7 +92,7 @@ func Load(env map[string]string) (Config, error) {
 		// libvirt is reached over SSH, not through a mounted socket. A
 		// variable the deployment did not set falls back to the URI's own
 		// target, which on TrueNAS is the only one that works.
-		LibvirtHost:               stringOr(libvirtHost, stringOr(uriHost, "host.docker.internal")),
+		LibvirtHost:               stringOr(libvirtHost, stringOr(uriHost, defaultHostName())),
 		LibvirtSSHUser:            stringOr(env["LIBVIRT_SSH_USER"], stringOr(uriUser, "root")),
 		LibvirtSSHPort:            stringOr(env["LIBVIRT_SSH_PORT"], stringOr(uriPort, "22")),
 		LibvirtURI:                env["LIBVIRT_URI"],
@@ -117,6 +117,52 @@ func Load(env map[string]string) (Config, error) {
 		log.Printf("config: SSH target taken from LIBVIRT_URI: %s@%s:%s", c.LibvirtSSHUser, c.LibvirtHost, c.LibvirtSSHPort)
 	}
 	return c, nil
+}
+
+// dockerHostName is the name Docker Desktop and the Unraid template give the
+// host. TrueNAS apps do not get it.
+const dockerHostName = "host.docker.internal"
+
+var (
+	lookupHost = net.LookupHost
+	routeFile  = "/proc/net/route"
+)
+
+// defaultHostName is the host to reach over SSH when nothing names one. It
+// prefers host.docker.internal and falls back to the container's default
+// gateway, which is the Docker host on a bridge network.
+func defaultHostName() string {
+	if _, err := lookupHost(dockerHostName); err == nil {
+		return dockerHostName
+	}
+	gw := defaultGateway(routeFile)
+	if gw == "" {
+		return dockerHostName
+	}
+	log.Printf("config: %s does not resolve and LIBVIRT_HOST is unset, using the default gateway %s as the host", dockerHostName, gw)
+	return gw
+}
+
+// defaultGateway returns the gateway of the default route in a /proc/net/route
+// table, or "" when there is none.
+func defaultGateway(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	for _, line := range strings.Split(string(data), "\n")[1:] {
+		f := strings.Fields(line)
+		if len(f) < 3 || f[1] != "00000000" {
+			continue
+		}
+		raw, err := strconv.ParseUint(f[2], 16, 32)
+		if err != nil || raw == 0 {
+			continue
+		}
+		// The kernel prints the address as a little-endian hex word.
+		return net.IPv4(byte(raw), byte(raw>>8), byte(raw>>16), byte(raw>>24)).String()
+	}
+	return ""
 }
 
 // libvirtHostPlaceholder is the value the Unraid template ships for
