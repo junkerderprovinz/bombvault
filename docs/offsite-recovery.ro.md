@@ -124,6 +124,8 @@ Aceasta este calea mai bună decât montarea partajării pe Unraid: restic nu re
 
 Pornește protecția împotriva ștergerii pentru o destinație off-site ca ransomware-ul sau o gazdă compromisă să nu poată șterge sau rescrie copiile tale. Partea îndepărtată (un `restic/rest-server` care rulează în modul `--append-only`) o **impune**. BombVault doar o **verifică** și nu arată niciodată verde pe baza unei simple afirmații de configurare. Un folder de pe acest server nu poate refuza ștergerea, pentru că cine controlează BombVault controlează și folderul, așa că destinațiile locale nu oferă comutatorul.
 
+Comutatorul ține de destinație: o secțiune care copiază acolo îl preia de la destinație, așa că pornește-l pe pagina destinației, la **Destinații**. Verificarea programată **Verifică protecția la ștergere** rulează doar cât timp o secțiune copiază către o destinație cu comutatorul pornit. Cealaltă parte trebuie pornită cu `--append-only`; cu imaginea `restic/rest-server`, pe TrueNAS ca pe orice alt host Docker, asta intră în variabila `OPTIONS`.
+
 Cea mai rapidă cale spre o copie append-only este un BombVault împerecheat cu un [server receptor](#receiving-server): el rulează rest-server-ul pentru tine, în mod append-only.
 
 !!! note "O ștergere reușită sub `/locks/` este de așteptat"
@@ -135,6 +137,8 @@ Cea mai rapidă cale spre o copie append-only este un BombVault împerecheat cu 
 ## Test de manipulare
 
 BombVault dovedește periodic garanția append-only încercând efectiv o ștergere în depozitul off-site, țintită la un obiect inexistent. **Testează acum protecția împotriva ștergerii** pe pagina unei destinații îl rulează la cerere, iar **Verifică protecția la ștergere** la **Setări, Verificare, Verificări automate** îl rulează după un program.
+
+O copie oprită nu este testată, iar destinația spune asta. Testul de conexiune merge în continuare, pentru că doar citește, deci o copie poate fi verificată înainte să fie pornită.
 
 - **Refuzat** înseamnă protejat.
 - **Acceptat** înseamnă neprotejat.

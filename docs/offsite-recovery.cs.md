@@ -124,6 +124,8 @@ To je lepší cesta než připojit sdílenou složku na Unraidu: restic nedoporu
 
 Zapni ochranu proti smazání pro cíl mimo lokalitu, aby ransomware nebo napadený hostitel nemohl smazat ani přepsat tvé zálohy. Druhá strana (`restic/rest-server` běžící v režimu `--append-only`) ji **vynucuje**. BombVault ji jen **ověřuje** a nikdy neukáže zelenou jen na tvrzení v konfiguraci. Složka na tomto serveru mazání odmítnout nemůže, protože kdo ovládá BombVault, ovládá i tu složku, takže místní cíle přepínač nenabízejí.
 
+Přepínač patří cíli: sekce, která do něj kopíruje, ho přebírá od cíle, takže ho zapni na stránce cíle v části **Cíle**. Plánovaná **Kontrola ochrany proti smazání** běží jen tehdy, když některá sekce kopíruje do cíle se zapnutým přepínačem. Druhá strana musí běžet s `--append-only`; u image `restic/rest-server`, na TrueNAS stejně jako na jakémkoli jiném hostiteli Dockeru, to patří do proměnné `OPTIONS`.
+
 Nejrychlejší cesta ke kopii append-only je spárovaný BombVault s [přijímacím serverem](#receiving-server): rest-server za tebe provozuje v režimu append-only.
 
 !!! note "Úspěšné smazání v `/locks/` je očekávané"
@@ -135,6 +137,8 @@ Nejrychlejší cesta ke kopii append-only je spárovaný BombVault s [přijímac
 ## Test odolnosti proti manipulaci
 
 BombVault pravidelně dokazuje záruku append-only tím, že se skutečně pokusí o smazání v repozitáři mimo lokalitu, zaměřené na neexistující objekt. **Otestovat ochranu proti smazání hned** na stránce cíle ho spustí na požádání a **Kontrola ochrany proti smazání** v **Nastavení, Ověření, Automatické kontroly** ho spouští podle plánu.
+
+Vypnutá kopie se netestuje a cíl to uvádí. Test připojení u ní funguje dál, protože jen čte, takže kopii lze ověřit dřív, než ji zapneš.
 
 - **Odmítnuto** znamená chráněno.
 - **Přijato** znamená nechráněno.

@@ -124,6 +124,8 @@ Tämä on parempi tie kuin jaon liittäminen Unraidiin: restic neuvoo olemaan pi
 
 Kytke poistosuoja päälle etäkohteelle, jotta kiristysohjelma tai kaapattu isäntä ei voi poistaa tai kirjoittaa uudelleen varmuuskopioitasi. Vastapuoli (`restic/rest-server` tilassa `--append-only`) **panee sen täytäntöön**. BombVault vain **varmentaa** sen eikä koskaan näytä vihreää pelkän kokoonpanoväitteen perusteella. Tämän palvelimen kansio ei voi kieltäytyä poistosta, koska se, joka hallitsee BombVaultia, hallitsee myös kansiota, joten paikalliset kohteet eivät tarjoa kytkintä.
 
+Kytkin kuuluu kohteelle: osio, joka kopioi sinne, saa sen kohteelta, joten kytke se päälle kohteen sivulla kohdassa **Kohteet**. Ajastettu **Tarkista poistosuoja** ajetaan vain, kun jokin osio kopioi kohteeseen, jossa kytkin on päällä. Toisen pään on käynnistyttävä valinnalla `--append-only`; `restic/rest-server`-imagessa se laitetaan TrueNASissa kuten missä tahansa muussa Docker-isännässä muuttujaan `OPTIONS`.
+
 Nopein tie append-only-kopioon on pariliitetty BombVault, jolla on [vastaanottopalvelin](#receiving-server): se ajaa rest-serverin puolestasi append-only-tilassa.
 
 !!! note "Onnistunut poisto polussa `/locks/` on odotettua"
@@ -135,6 +137,8 @@ Nopein tie append-only-kopioon on pariliitetty BombVault, jolla on [vastaanottop
 ## Peukalointitesti
 
 BombVault todistaa ajoittain append-only-takeen yrittämällä oikeasti poistoa etärepoa vastaan, kohdistettuna olemattomaan objektiin. **Testaa poistosuoja nyt** kohteen sivulla ajaa sen pyynnöstä, ja **Tarkista poistosuoja** kohdassa **Asetukset, Tarkistus, Automaattiset tarkistukset** ajaa sen aikataulun mukaan.
+
+Pois päältä olevaa kopiota ei testata, ja kohde kertoo sen. Yhteystesti toimii silti, koska se vain lukee, joten kopion voi tarkistaa ennen kuin sen ottaa käyttöön.
 
 - **Torjuttu** tarkoittaa suojattua.
 - **Hyväksytty** tarkoittaa ei-suojattua.

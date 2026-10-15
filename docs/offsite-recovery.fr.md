@@ -124,6 +124,8 @@ C'est une meilleure voie que de monter le partage sur Unraid : restic déconseil
 
 Activez la protection contre la suppression pour une destination hors site afin qu'un ransomware, ou un hôte compromis, ne puisse ni supprimer ni réécrire vos sauvegardes. L'autre côté (un `restic/rest-server` en mode `--append-only`) **l'impose**. BombVault ne fait que la **vérifier** et n'affiche jamais de vert sur une simple déclaration de configuration. Un dossier de ce serveur ne peut pas refuser la suppression, car quiconque contrôle BombVault contrôle aussi le dossier, donc les destinations locales ne proposent pas l'interrupteur.
 
+L'interrupteur appartient à la destination : une section qui y copie le prend de la destination, il s'active donc sur la page de la destination, sous **Destinations**. La vérification planifiée **Vérifier la protection contre la suppression** ne tourne que tant qu'une section copie vers une destination dont l'interrupteur est activé. L'autre côté doit être lancé avec `--append-only` ; avec l'image `restic/rest-server`, sur TrueNAS comme sur tout autre hôte Docker, cela va dans la variable `OPTIONS`.
+
 La voie la plus rapide vers une copie append-only est un BombVault appairé avec un [serveur récepteur](#receiving-server) : il exécute le rest-server pour vous, en mode append-only.
 
 !!! note "Une suppression réussie sous `/locks/` est attendue"
@@ -135,6 +137,8 @@ La voie la plus rapide vers une copie append-only est un BombVault appairé avec
 ## Test de sabotage
 
 BombVault prouve périodiquement la garantie append-only en tentant réellement une suppression contre le dépôt hors site, visant un objet inexistant. **Tester la protection contre la suppression maintenant** sur la page d'une destination la lance à la demande, et **Vérifier la protection contre la suppression** sous **Paramètres, Vérification, Contrôles automatiques** la lance selon un planning.
+
+Une copie désactivée n'est pas testée, et la destination l'indique. Le test de connexion fonctionne toujours, car il ne fait que lire : une copie peut donc être vérifiée avant d'être activée.
 
 - **Refusé** signifie protégé.
 - **Accepté** signifie non protégé.

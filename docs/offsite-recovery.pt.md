@@ -124,6 +124,8 @@ Este é o melhor caminho do que montar a partilha no Unraid: o restic desaconsel
 
 Liga a proteção contra eliminação num destino externo para que o ransomware, ou um host comprometido, não possa apagar nem reescrever os teus backups. O outro lado (um `restic/rest-server` a correr em modo `--append-only`) **impõe-na**. O BombVault apenas a **verifica** e nunca mostra verde só por uma afirmação de configuração. Uma pasta neste servidor não consegue recusar a eliminação, porque quem controla o BombVault controla também a pasta, por isso os destinos locais não oferecem o interruptor.
 
+O interruptor pertence ao destino: uma secção que copia para lá recebe-o do destino, por isso liga-o na página do destino, em **Destinos**. A verificação agendada **Verificar proteção contra eliminação** só corre enquanto uma secção copia para um destino com o interruptor ligado. O outro lado tem de arrancar com `--append-only`; com a imagem `restic/rest-server`, no TrueNAS como em qualquer outro host Docker, isso vai na variável `OPTIONS`.
+
 O caminho mais rápido para uma cópia append-only é um BombVault emparelhado com um [servidor recetor](#receiving-server): ele executa o rest-server por ti, em modo append-only.
 
 !!! note "Uma eliminação bem-sucedida em `/locks/` é esperada"
@@ -135,6 +137,8 @@ O caminho mais rápido para uma cópia append-only é um BombVault emparelhado c
 ## Teste de adulteração
 
 O BombVault prova periodicamente a garantia append-only tentando de facto uma eliminação contra o repo externo, dirigida a um objeto inexistente. **Testar agora a proteção contra eliminação** na página de um destino corre-o a pedido, e **Verificar proteção contra eliminação** em **Definições, Verificação, Verificações automáticas** corre-o num agendamento.
+
+Uma cópia desligada não é testada, e o destino indica-o. O teste de ligação continua a funcionar, porque só lê, por isso uma cópia pode ser verificada antes de ser ligada.
 
 - **Recusada** significa protegido.
 - **Aceite** significa sem proteção.

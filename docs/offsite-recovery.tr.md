@@ -124,6 +124,8 @@ Bu, paylaşımı Unraid'e bağlamaktan daha iyi yoldur: restic bir depoyu bağla
 
 Fidye yazılımı ya da ele geçirilmiş bir host yedeklerini silemesin veya yeniden yazamasın diye bir site dışı hedef için silmeye karşı korumayı aç. Karşı taraf (`--append-only` kipinde çalışan bir `restic/rest-server`) bunu **uygular**. BombVault yalnızca **doğrular** ve yalnızca bir yapılandırma iddiasıyla asla yeşil göstermez. Bu sunucudaki bir klasör silmeyi reddedemez, çünkü BombVault'u kontrol eden klasörü de kontrol eder; bu yüzden yerel hedefler anahtarı sunmaz.
 
+Anahtar hedefe aittir: oraya kopyalayan bir bölüm onu hedeften alır, bu yüzden **Hedefler** altında hedefin sayfasında açılır. Zamanlanmış **Silme korumasını denetle**, yalnızca bir bölüm anahtarı açık bir hedefe kopyaladığı sürece çalışır. Karşı taraf `--append-only` ile başlatılmalıdır; `restic/rest-server` imajında, TrueNAS'ta da diğer her Docker ana makinesinde olduğu gibi, bu `OPTIONS` değişkenine yazılır.
+
 Append-only bir kopyaya en hızlı yol, bir [alıcı sunucu](#receiving-server) olan eşleştirilmiş bir BombVault'tur: rest-server'ı senin için append-only kipinde çalıştırır.
 
 !!! note "`/locks/` altında başarılı bir silme beklenen davranıştır"
@@ -135,6 +137,8 @@ Append-only bir kopyaya en hızlı yol, bir [alıcı sunucu](#receiving-server) 
 ## Kurcalama testi
 
 BombVault, append-only garantisini site dışı depoya, var olmayan bir nesneye yönelik gerçekten bir silme denemesi yaparak düzenli olarak kanıtlar. Bir hedefin sayfasındaki **Silmeye karşı korumayı şimdi sına** onu istek üzerine, **Ayarlar, Doğrulama, Otomatik denetimler** altındaki **Silme korumasını denetle** ise bir zamanlamayla çalıştırır.
+
+Kapalı bir kopya sınanmaz ve hedef bunu belirtir. Bağlantı testi yalnızca okuduğu için yine çalışır, böylece bir kopya açılmadan önce denetlenebilir.
 
 - **Reddedildi**, korunuyor demektir.
 - **Kabul edildi**, korunmuyor demektir.

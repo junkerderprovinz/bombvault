@@ -124,6 +124,8 @@ Det här är den bättre vägen än att montera resursen på Unraid: restic avr�
 
 Slå på raderingsskydd för ett off-site-mål så att ransomware, eller en komprometterad värd, inte kan radera eller skriva över dina säkerhetskopior. Den bortre sidan (en `restic/rest-server` i läget `--append-only`) **upprätthåller** det. BombVault **verifierar** det bara och visar aldrig grönt på ett konfigurationspåstående ensamt. En mapp på den här servern kan inte vägra radering, eftersom den som styr BombVault styr också mappen, så lokala mål erbjuder inte reglaget.
 
+Reglaget hör till målet: en sektion som kopierar dit tar det från målet, så slå på det på målets sida under **Mål**. Den schemalagda **Kontrollera raderingsskydd** körs bara så länge en sektion kopierar till ett mål där reglaget är på. Andra sidan måste startas med `--append-only`; med avbilden `restic/rest-server`, på TrueNAS som på vilken annan Docker-värd som helst, läggs det i variabeln `OPTIONS`.
+
 Snabbaste vägen till en append-only-kopia är en parkopplad BombVault med en [mottagarserver](#receiving-server): den kör rest-servern åt dig, i append-only-läge.
 
 !!! note "En lyckad radering under `/locks/` är väntad"
@@ -135,6 +137,8 @@ Snabbaste vägen till en append-only-kopia är en parkopplad BombVault med en [m
 ## Manipulationstest
 
 BombVault bevisar med jämna mellanrum append-only-garantin genom att faktiskt försöka radera i off-site-arkivet, riktat mot ett obefintligt objekt. **Testa skyddet mot radering nu** på ett måls sida kör det på begäran, och **Kontrollera raderingsskydd** under **Inställningar, Verifiering, Automatiska kontroller** kör det enligt ett schema.
+
+En kopia som är avstängd testas inte, och målet säger det. Anslutningstestet fungerar fortfarande, eftersom det bara läser, så en kopia kan kontrolleras innan den slås på.
 
 - **Nekat** betyder skyddat.
 - **Accepterat** betyder oskyddat.

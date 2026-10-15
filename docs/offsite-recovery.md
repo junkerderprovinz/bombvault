@@ -124,6 +124,8 @@ This is the better route than mounting the share on Unraid: restic advises again
 
 Switch on delete protection for an off-site storage location so ransomware, or a compromised host, cannot delete or rewrite your backups. The far side (a `restic/rest-server` running in `--append-only` mode) **enforces** it. BombVault only ever **verifies** it and never shows green on a configuration claim alone. A folder on this server cannot refuse deletion, because whoever controls BombVault controls the folder too, so local locations do not offer the switch.
 
+The switch belongs to the storage location: a section that copies there takes it from the location, so turn it on from the location's page under **Storage locations**. The scheduled **Check delete protection** runs only while a section copies to a location with the switch on. The far side has to be started with `--append-only`; with the `restic/rest-server` image, on TrueNAS as on any other Docker host, that goes into the `OPTIONS` variable.
+
 The fastest way to an append-only copy is a paired BombVault with a [receiving server](#receiving-server): it runs the rest-server for you, in append-only mode.
 
 !!! note "A successful delete under `/locks/` is expected"
@@ -135,6 +137,8 @@ The fastest way to an append-only copy is a paired BombVault with a [receiving s
 ## Tamper test
 
 BombVault periodically proves the append-only guarantee by actually attempting a delete against the off-site repo, aimed at a non-existent object. **Test delete protection now** on a location's page runs it on demand, and **Check delete protection** under **Settings, Verify, Automatic checks** runs it on a schedule.
+
+A copy that is switched off is not tested, and the location says so. The connection test still runs on it, because it only reads, so a copy can be checked before it is switched on.
 
 - **Refused** means protected.
 - **Accepted** means not protected.
