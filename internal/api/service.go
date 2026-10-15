@@ -2664,12 +2664,8 @@ func (s *Service) notifyMCPKeyChange(ctx context.Context, event string, k store.
 	}()
 }
 
-// offsiteTargetsFor returns a domain's ENABLED off-site destinations from the
-// store, in stable per-domain order (sort_order, then created_at). It is the
-// plural successor to the single-repo Settings.*Offsite* columns: a backfilled
-// single-off-site install yields a one-element slice, an unconfigured domain an
-// empty one. A missing store (used by pure-settings unit tests) or a query error
-// falls back to empty so callers apply their Settings fallback.
+// offsiteTargetsFor returns a domain's enabled off-site targets in store order.
+// A missing store or a failed read yields none.
 func (s *Service) offsiteTargetsFor(domain string) []store.OffsiteTarget {
 	out, err := s.enabledOffsiteTargets(domain)
 	if err != nil {
@@ -2698,27 +2694,33 @@ func (s *Service) enabledOffsiteTargets(domain string) ([]store.OffsiteTarget, e
 	return out, nil
 }
 
-// offsiteReplicationTargets is the destination set copyToOffsite replicates a
-// domain to: the domain's enabled off-site targets, or — when no target row
-// exists (a fresh install configured only through the legacy Settings columns, or
-// one configured after the stage-1 backfill ran) — a single target synthesized
-// from those Settings columns. This keeps N=1 byte-identical whether or not the
-// row was backfilled.
+// offsiteReplicationTargets is the domain's enabled off-site targets, or the
+// one target its off-site setting describes while the domain has no target row
+// at all.
 func (s *Service) offsiteReplicationTargets(domain string, settings store.Settings) []store.OffsiteTarget {
-	return orSettingsOffsiteTarget(s.offsiteTargetsFor(domain), domain, settings)
+	return s.orSettingsOffsiteTarget(s.offsiteTargetsFor(domain), domain, settings)
 }
 
-// orSettingsOffsiteTarget is targets, or when there are none, the one target
-// the legacy Settings columns configure, if any.
-func orSettingsOffsiteTarget(targets []store.OffsiteTarget, domain string, settings store.Settings) []store.OffsiteTarget {
-	if len(targets) > 0 {
+// orSettingsOffsiteTarget is targets, or when the domain has no target row at
+// all, the one target its off-site setting describes. A switched-off row keeps
+// the setting from counting: the setting stays filled while its target is off,
+// and the copy (readPlacement) does not go there either.
+func (s *Service) orSettingsOffsiteTarget(targets []store.OffsiteTarget, domain string, settings store.Settings) []store.OffsiteTarget {
+	if len(targets) > 0 || s.hasOffsiteTargetRows(domain) {
 		return targets
 	}
-	loc := offsiteRepoFromSettings(domain, settings)
-	if loc == "" {
-		return nil
+	return legacyTargets(domain, settings)
+}
+
+// hasOffsiteTargetRows reports whether domain has a target row, switched on or
+// off. A list that cannot be read answers no, which leaves the setting to
+// count, as readPlacement does.
+func (s *Service) hasOffsiteTargetRows(domain string) bool {
+	if s.store == nil {
+		return false
 	}
-	return []store.OffsiteTarget{settingsOffsiteTarget(domain, settings, loc)}
+	rows, err := s.store.OffsiteTargetsForDomain(domain)
+	return err == nil && len(rows) > 0
 }
 
 // settingsOffsiteTarget synthesizes the one off-site target the stage-1 backfill
@@ -2809,15 +2811,13 @@ func (s *Service) aggregateReplicationCurrency(domain string) (at int64, ok bool
 	return at, true
 }
 
-// offsiteRepoFor returns the configured off-site repo location for a domain, or
-// "" when none is set. It is a thin wrapper over the first enabled off-site
-// target, falling back to the legacy Settings column when no target row exists so
-// nothing regresses (N=1: the backfilled target's Repo equals that column).
+// offsiteRepoFor returns the location of the domain's first off-site target
+// in use, or "" when it has none.
 func (s *Service) offsiteRepoFor(domain string, settings store.Settings) string {
-	if ts := s.offsiteTargetsFor(domain); len(ts) > 0 {
+	if ts := s.offsiteReplicationTargets(domain, settings); len(ts) > 0 {
 		return ts[0].Repo
 	}
-	return offsiteRepoFromSettings(domain, settings)
+	return ""
 }
 
 // offsiteRepoFromSettings reads the legacy single-repo off-site location straight
@@ -11618,7 +11618,7 @@ func (s *Service) backupPlaces(settings store.Settings, domain string, repos []s
 	if err != nil {
 		return nil, fmt.Errorf("the off-site target list could not be read: %w", err)
 	}
-	for _, t := range orSettingsOffsiteTarget(targets, domain, settings) {
+	for _, t := range s.orSettingsOffsiteTarget(targets, domain, settings) {
 		repo, err := s.resolveRepo(t.Repo)
 		if err != nil {
 			return nil, fmt.Errorf("off-site target %q could not be resolved: %w", t.Name, err)
