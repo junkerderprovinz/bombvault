@@ -20,6 +20,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -225,10 +226,35 @@ func NewManager(serve relay.Handler) *Manager {
 			// key and signed with the peer-auth key, so the channel does not
 			// rely on TLS for either secrecy or authenticity.
 			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // G402: see the comment above
+				DialContext:         (&net.Dialer{Timeout: directDialTimeout}).DialContext,
+				TLSHandshakeTimeout: directDialTimeout,
+				TLSClientConfig:     &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // G402: see the comment above
 			},
 		},
 	}
+}
+
+// directDialTimeout bounds connecting to a member's direct address, and
+// separately the TLS handshake after it. A LAN connects in milliseconds and a
+// slow WAN link in a few hundred, so five seconds still covers one lost SYN
+// (sent again after one second on Linux, three on Windows) and a slow name
+// lookup, while an address that drops packets fails well inside a call.
+const directDialTimeout = 5 * time.Second
+
+// directContext bounds the direct attempts of one call. A member that is on
+// the relay as well keeps half of the call's time for the relay, so an
+// address that accepts and then never answers cannot use up the fallback;
+// half of the usual 15 seconds is still far more than a direct answer takes
+// over a slow link. A member with no relay route gets the whole call.
+func directContext(ctx context.Context, relayed bool) (context.Context, context.CancelFunc) {
+	budget := relay.CallTimeout
+	if deadline, ok := ctx.Deadline(); ok {
+		budget = min(budget, time.Until(deadline))
+	}
+	if relayed {
+		budget /= 2
+	}
+	return context.WithTimeout(ctx, budget)
 }
 
 // Start begins listening for members on the local network and keeps the
@@ -529,6 +555,9 @@ func (m *Manager) Call(ctx context.Context, memberID, method, path string, body 
 		return 0, nil, ErrNotMember
 	}
 	call := relay.ProxyCall{Method: method, Path: path, Body: body, Sender: self}
+	relayed := c != nil && slices.ContainsFunc(c.Siblings(), func(s relay.Sibling) bool { return s.InstanceID == memberID })
+	dctx, cancel := directContext(ctx, relayed)
+	defer cancel()
 
 	var directErr error
 	tried := map[string]bool{}
@@ -537,7 +566,7 @@ func (m *Manager) Call(ctx context.Context, memberID, method, path string, body 
 			continue
 		}
 		tried[p.URL] = true
-		res, err := m.callDirect(ctx, k, self, p, call)
+		res, err := m.callDirect(dctx, k, self, p, call)
 		if err == nil {
 			m.ConfirmAddress(memberID, p.URL, p.Name, p.Version)
 			return res.Status, res.Body, nil
@@ -545,7 +574,7 @@ func (m *Manager) Call(ctx context.Context, memberID, method, path string, body 
 		directErr = err
 	}
 	if addr, ok := m.knownAddress(memberID); ok && !tried[addr] {
-		res, err := m.callDirect(ctx, k, self, discovery.Peer{ID: memberID, URL: addr}, call)
+		res, err := m.callDirect(dctx, k, self, discovery.Peer{ID: memberID, URL: addr}, call)
 		if err == nil {
 			m.ConfirmAddress(memberID, addr, "", "")
 			return res.Status, res.Body, nil
