@@ -297,6 +297,10 @@ type BackupDeps struct {
 	OnWindow func(time.Duration)
 	// Clock measures that window; nil is time.Now.
 	Clock func() time.Time
+	// Restarts remembers the containers the backup holds down, so a process
+	// that dies before starting them again does it at its next start. Nil
+	// remembers nothing.
+	Restarts RestartMarker
 	// Excludes are restic --exclude patterns for this container's backup
 	// (already resolved to the paths restic stores).
 	Excludes []string
@@ -305,6 +309,59 @@ type BackupDeps struct {
 	Restic    Restic
 	Templates Templates
 	Runs      Runs
+}
+
+// RestartMarker records which containers are down for a backup.
+type RestartMarker interface {
+	Mark(names []string) error
+	Clear(names []string) error
+}
+
+// markDown records the containers about to go down. A failed record costs
+// only the restart after a crash, not the backup.
+func markDown(d BackupDeps, down []StopContainer) {
+	if d.Restarts == nil || len(down) == 0 {
+		return
+	}
+	names := make([]string, len(down))
+	for i, c := range down {
+		names[i] = c.Name
+	}
+	if err := d.Restarts.Mark(names); err != nil {
+		log.Printf("backup: recording the containers about to stop failed: %v", err)
+	}
+}
+
+// clearRunning drops the record of every container in down that runs again.
+// One that did not come back stays recorded and is started at the next boot.
+func clearRunning(ctx context.Context, d BackupDeps, down []StopContainer) {
+	if d.Restarts == nil || len(down) == 0 {
+		return
+	}
+	var up []string
+	for _, c := range down {
+		if h, err := d.Docker.Health(ctx, c.ref()); err == nil && h.Running {
+			up = append(up, c.Name)
+		}
+	}
+	if err := d.Restarts.Clear(up); err != nil {
+		log.Printf("backup: clearing the record of the restarted containers failed: %v", err)
+	}
+}
+
+// goingDown lists the containers a backup stops: the target when it runs,
+// then every running dependency.
+func goingDown(d BackupDeps) []StopContainer {
+	var down []StopContainer
+	if d.WasRunning {
+		down = append(down, StopContainer{Name: d.ContainerName, ID: d.ContainerRef})
+	}
+	for _, dep := range d.StopContainers {
+		if dep.WasRunning {
+			down = append(down, dep)
+		}
+	}
+	return down
 }
 
 // ContainerSnapshot takes the snapshot a container backup reads instead of the
@@ -527,6 +584,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// defer below fails or panics. It is the "never leave a dep stopped" guard.
 		defer func() {
 			RestartInOrder(restartCtx, d.Docker, stoppedDeps, d.HealthWait, d.HealthTimeout)
+			clearRunning(restartCtx, d, goingDown(d))
 		}()
 
 		// Registered SECOND, so it runs FIRST on unwind. Order matters: bring the
@@ -581,6 +639,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		stops := d.WasRunning || slices.ContainsFunc(d.StopContainers, func(c StopContainer) bool { return c.WasRunning })
 		if stops {
 			atStep(d.Step, progress.StepStop)
+			markDown(d, goingDown(d))
 		}
 		if d.WasRunning {
 			if backupErr = d.Docker.Stop(restartCtx, d.ContainerRef, stopTimeout); backupErr != nil {
@@ -732,10 +791,12 @@ func backupFromSnapshot(ctx context.Context, d BackupDeps, tags []string, stopTi
 		if d.OnWindow != nil {
 			d.OnWindow(clock().Sub(downSince))
 		}
+		clearRunning(restartCtx, d, goingDown(d))
 	}
 	defer restart()
 
 	atStep(d.Step, progress.StepStop)
+	markDown(d, goingDown(d))
 	downSince = clock()
 	if stopErr := d.Docker.Stop(restartCtx, d.ContainerRef, stopTimeout); stopErr != nil {
 		return Summary{}, false, fmt.Errorf("backup: stop container: %w", stopErr)
@@ -801,6 +862,7 @@ func updateAfterSnapshot(ctx context.Context, d BackupDeps, deps []StopContainer
 	if apply == nil {
 		return
 	}
+	markDown(d, deps)
 	var stopped []StopContainer
 	for _, dep := range deps {
 		if err := d.Docker.Stop(ctx, dep.ref(), stopTimeout); err != nil {
@@ -809,7 +871,10 @@ func updateAfterSnapshot(ctx context.Context, d BackupDeps, deps []StopContainer
 		}
 		stopped = append(stopped, dep)
 	}
-	defer RestartInOrder(ctx, d.Docker, stopped, d.HealthWait, d.HealthTimeout)
+	defer func() {
+		RestartInOrder(ctx, d.Docker, stopped, d.HealthWait, d.HealthTimeout)
+		clearRunning(ctx, d, deps)
+	}()
 	apply()
 	if err := d.Docker.WaitRunning(ctx, d.ContainerRef, runningWaitTimeout); err != nil {
 		log.Printf("backup: wait container %q running after post-backup step: %v", d.ContainerRef, err)

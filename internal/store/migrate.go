@@ -3220,6 +3220,16 @@ ALTER TABLE runs ADD COLUMN snapshot_fallback TEXT NOT NULL DEFAULT '';`,
   added_at INTEGER NOT NULL
 );`,
 	},
+	{
+		// The containers a backup holds down, so a process that dies before
+		// starting them again does it at boot.
+		version: containerSnapshotMigration + 4,
+		name:    "container_restart_pending",
+		sql: `CREATE TABLE IF NOT EXISTS container_restart_pending (
+  name     TEXT    PRIMARY KEY,
+  added_at INTEGER NOT NULL
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,

@@ -495,3 +495,50 @@ func TestRecordSnapshotReadKeepsTheFallbackReason(t *testing.T) {
 		t.Fatalf("run %+v, err %v", run, err)
 	}
 }
+
+func restartFixture(t *testing.T, dock *zfsFakeDocker) (*Service, *store.Repo) {
+	t.Helper()
+	st := newTestStore(t)
+	s := &Service{store: st, docker: dock, repoMu: map[string]*sync.Mutex{"containers": {}}}
+	return s, st
+}
+
+func TestRecoverContainerRestartsStartsWhatABackupLeftStopped(t *testing.T) {
+	dock := newZFSFakeDocker("db", "web")
+	dock.containers["db"].running = false
+	dock.containers["web"].running = false
+	s, st := restartFixture(t, dock)
+	messages := zfsCaptureNotifications(t, s)
+	if err := st.MarkContainersStopped([]string{"web", "db", "gone"}, 1); err != nil {
+		t.Fatal(err)
+	}
+
+	s.RecoverContainerRestarts(context.Background())
+
+	if !dock.containers["db"].running || !dock.containers["web"].running {
+		t.Fatalf("calls = %v, want both containers running", dock.recorded())
+	}
+	if left, _ := st.ListContainersStopped(); len(left) != 0 {
+		t.Fatalf("still recorded: %v; a started or vanished container is forgotten", left)
+	}
+	if !zfsAnyMessageContains(messages(), "2 containers") {
+		t.Fatalf("notifications = %v, want one naming how many came back", messages())
+	}
+}
+
+func TestRecoverContainerRestartsKeepsAContainerThatStaysDown(t *testing.T) {
+	dock := newZFSFakeDocker("db", "web")
+	dock.containers["db"].running = false
+	dock.containers["web"].running = false
+	dock.containers["web"].startLeavesDown = true
+	s, st := restartFixture(t, dock)
+	if err := st.MarkContainersStopped([]string{"db", "web"}, 1); err != nil {
+		t.Fatal(err)
+	}
+
+	s.RecoverContainerRestarts(context.Background())
+
+	if left, _ := st.ListContainersStopped(); !slices.Equal(left, []string{"web"}) {
+		t.Fatalf("recorded %v, want web alone for the next boot", left)
+	}
+}

@@ -560,10 +560,11 @@ func run() error {
 	} else {
 		log.Printf("scheduler: could not read settings: %v", sErr)
 	}
-	// Containers a dataset snapshot left stopped come back before anything else:
+	// Containers a backup or a dataset snapshot left stopped come back before anything else:
 	// this is Docker only and fast, and a user's applications being down outranks
 	// the rest of the boot.
 	svc.RecoverZFSRestarts(context.Background())
+	svc.RecoverContainerRestarts(context.Background())
 	// The sweep talks to the host over SSH, where one call can take half a
 	// minute, so it runs in the background: the image health check would restart
 	// the container in the middle of a boot that waits for it. Holding the domain

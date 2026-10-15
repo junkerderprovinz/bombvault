@@ -6115,6 +6115,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		UpdateAfterBackup:    updateStep,
 		Snapshot:             snapshot,
 		OnWindow:             func(w time.Duration) { window = &w },
+		Restarts:             containerRestarts{st: s.store},
 		// User-owned exclude patterns stay first; the selection-derived tail
 		// enforces the stored exclusion branches strictly below an included
 		// root on the argv (review finding WR-01, gap closure per the

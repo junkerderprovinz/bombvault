@@ -456,6 +456,69 @@ func (s *Service) readViewChanged(targetID string, fromSnapshot bool) bool {
 	return found && last != fromSnapshot
 }
 
+// containerRestarts keeps the containers a backup holds down in the database.
+type containerRestarts struct{ st *store.Repo }
+
+func (r containerRestarts) Mark(names []string) error {
+	return r.st.MarkContainersStopped(names, time.Now().Unix())
+}
+
+func (r containerRestarts) Clear(names []string) error { return r.st.ClearContainersStopped(names) }
+
+// RecoverContainerRestarts starts the containers a backup left stopped when
+// BombVault stopped in the middle of it. It runs at boot before the HTTP
+// server and the scheduler, like RecoverZFSRestarts. A container that is gone
+// is forgotten; one that does not start stays recorded for the next boot.
+func (s *Service) RecoverContainerRestarts(ctx context.Context) {
+	names, err := s.store.ListContainersStopped()
+	if err != nil {
+		log.Printf("api: could not read which containers a backup left stopped: %v", err)
+		return
+	}
+	if len(names) == 0 {
+		return
+	}
+	var deps []backup.StopContainer
+	var gone []string
+	for _, name := range names {
+		in, err := s.inspectNamed(ctx, name)
+		if err != nil {
+			log.Printf("api: %q was left stopped by a backup and cannot be inspected, forgetting it: %v", name, err) //nolint:gosec // G706: %q-quoted
+			gone = append(gone, name)
+			continue
+		}
+		log.Printf("api: starting %q again, an interrupted backup left it stopped", name) //nolint:gosec // G706: %q-quoted
+		deps = append(deps, backup.StopContainer{
+			Name:       name,
+			ID:         in.ID,
+			WasRunning: true,
+			Service:    composeService(in.Config.Labels),
+			DependsOn:  parseDependsOn(in.Config.Labels),
+		})
+	}
+	backup.RestartInOrder(ctx, s.docker, deps, false, 0)
+
+	started := 0
+	running := gone
+	for _, dep := range deps {
+		if in, err := s.docker.Inspect(ctx, dep.ID); err == nil && in.Running {
+			running = append(running, dep.Name)
+			started++
+		}
+	}
+	if err := s.store.ClearContainersStopped(running); err != nil {
+		log.Printf("api: clearing the record of the restarted containers failed: %v", err)
+	}
+	if started == 0 {
+		return
+	}
+	s.notifyZFSUnsuppressed(notify.Event{
+		Title:   "BombVault",
+		Message: strconv.Itoa(started) + " containers were left stopped by an interrupted backup and have been started again",
+		OK:      true,
+	})
+}
+
 // runIDRecorder keeps the id of the run a backup started, so the service can
 // add to that row afterwards.
 type runIDRecorder struct {

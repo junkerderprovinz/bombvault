@@ -51,22 +51,52 @@ func (r *Repo) RemoveContainerSnapshotDataset(dataset string) error {
 	return nil
 }
 
+// MarkContainersStopped remembers containers a backup is about to stop.
+func (r *Repo) MarkContainersStopped(names []string, at int64) error {
+	for _, n := range names {
+		if _, err := r.db.Exec(`INSERT INTO container_restart_pending (name, added_at) VALUES (?, ?)
+			ON CONFLICT (name) DO NOTHING`, n, at); err != nil {
+			return fmt.Errorf("MarkContainersStopped: %w", err)
+		}
+	}
+	return nil
+}
+
+// ClearContainersStopped forgets containers that run again.
+func (r *Repo) ClearContainersStopped(names []string) error {
+	for _, n := range names {
+		if _, err := r.db.Exec(`DELETE FROM container_restart_pending WHERE name = ?`, n); err != nil {
+			return fmt.Errorf("ClearContainersStopped: %w", err)
+		}
+	}
+	return nil
+}
+
+// ListContainersStopped returns the containers a backup left stopped.
+func (r *Repo) ListContainersStopped() ([]string, error) {
+	return r.listStrings(`SELECT name FROM container_restart_pending ORDER BY added_at, name`, "ListContainersStopped")
+}
+
 // ListContainerSnapshotDatasets returns the datasets a sweep still has to look
 // at, oldest first.
 func (r *Repo) ListContainerSnapshotDatasets() ([]string, error) {
-	rows, err := r.db.Query(`SELECT dataset FROM container_snapshot_datasets ORDER BY added_at, dataset`)
+	return r.listStrings(`SELECT dataset FROM container_snapshot_datasets ORDER BY added_at, dataset`, "ListContainerSnapshotDatasets")
+}
+
+func (r *Repo) listStrings(query, op string) ([]string, error) {
+	rows, err := r.db.Query(query)
 	if err != nil {
-		return nil, fmt.Errorf("ListContainerSnapshotDatasets: %w", err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
 
 	var out []string
 	for rows.Next() {
-		var d string
-		if err := rows.Scan(&d); err != nil {
-			return nil, fmt.Errorf("ListContainerSnapshotDatasets: %w", err)
+		var s string
+		if err := rows.Scan(&s); err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
 		}
-		out = append(out, d)
+		out = append(out, s)
 	}
 	return out, rows.Err()
 }
