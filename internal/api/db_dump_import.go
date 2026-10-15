@@ -189,9 +189,9 @@ func (s *Service) StartImportDBDump(ctx context.Context, name, source, snapshotI
 		ictx, cancel := context.WithTimeout(bctx, restoreTimeout)
 		defer cancel()
 		runID = s.beginDBDumpRun(name, "dbimport", "import database dump")
-		pctx, startedAt := s.progBegin(ictx, rkey, "restore")
+		pctx, startedAt := s.progBeginStage(ictx, rkey, "restore", "dbimport")
 		note, ierr := s.importDBDump(pctx, plan, rkey, startedAt, &stopped)
-		s.progEnd(rkey, "restore", ierr == nil, startedAt)
+		s.progEndStage(rkey, "restore", "dbimport", ierr == nil, startedAt)
 		s.finishDBImportRun(runID, plan.dump.ID, note, ierr)
 		if ierr != nil {
 			log.Printf("api: import database dump into %q failed: %s", name, shareableRunError("dbimport", ierr.Error())) //nolint:gosec // G706: name is %q-quoted

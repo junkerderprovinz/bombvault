@@ -48,6 +48,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     zfsHostDatasets: vi.fn(),
     listSnapshotFiles: vi.fn(),
     listDbDumps: vi.fn(),
+    importDbDump: vi.fn(),
     listFlashPlugins: vi.fn(),
     listRuns: vi.fn(),
     getTimelineDeletePreview: vi.fn(),
@@ -93,9 +94,20 @@ window.matchMedia = ((query: string) => ({
   dispatchEvent: () => false,
 })) as unknown as typeof window.matchMedia;
 
+const streams: NoopEventSource[] = [];
+
 class NoopEventSource {
-  onmessage: unknown = null;
+  onmessage: ((ev: MessageEvent<string>) => void) | null = null;
+  constructor() {
+    streams.push(this);
+  }
   close() {}
+}
+
+function progress(frame: Record<string, unknown>) {
+  act(() => {
+    streams.at(-1)?.onmessage?.({ data: JSON.stringify(frame) } as MessageEvent<string>);
+  });
 }
 
 // Three backups: today, yesterday and three days ago.
@@ -206,6 +218,7 @@ async function typeAndConfirm(name: string) {
 beforeEach(() => {
   openFindings = [];
   onClose.mockClear();
+  streams.length = 0;
   vi.stubGlobal("EventSource", NoopEventSource);
   checkRestore.mockImplementation(async (req) => ({
     ok: true,
@@ -324,6 +337,45 @@ describe("a container", () => {
     await press(within(dialog()).getByRole("tab", { name: en["dbdump.listTitle"] }));
     expect(within(dialog()).queryByRole("radiogroup")).toBeNull();
     expect(vi.mocked(api.listDbDumps)).toHaveBeenCalledWith("immich", "local");
+  });
+
+  it("keeps the result of an import and the kept copy it left in the dump list", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const container = containerView({ dbTier: "curated", dbEngine: "postgres" });
+    vi.mocked(api.listDbDumps).mockResolvedValue({
+      ok: true,
+      dumps: [{ id: "d1", time: RUNS[0].time, engine: "postgres", version: "16.4", databases: [], bytes: 10, damaged: false }],
+    } as never);
+    const kept = "/mnt/tank/appdata/pg.bombvault-before-import-20261015-224138";
+    const imported = backupRun("import-1", 0, {
+      kind: "dbimport",
+      target: "immich",
+      error: `database imported; the previous data folder was kept: ${kept}`,
+    });
+    vi.mocked(api.importDbDump).mockImplementation(async () => {
+      listRuns.mockResolvedValue({ ok: true, runs: [imported] });
+      return { ok: true, started: true };
+    });
+    await open(entryOf("container", { detail: { kind: "container", container, installed: [container], linkCandidates: [] } }));
+    await press(within(dialog()).getByRole("tab", { name: en["dbdump.listTitle"] }));
+    await press(await within(dialog()).findByRole("button", { name: en["dbdump.import"] }));
+    await press(within(question()).getByRole("button", { name: en["dbdump.import"] }));
+
+    const frame = { key: "container:immich", phase: "restore", stage: "dbimport", percent: 0, startedAt: 1 };
+    progress({ ...frame, active: true });
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    progress({ ...frame, percent: 100, active: false });
+    await act(() => vi.advanceTimersByTimeAsync(10_000));
+
+    expect(within(dialog()).getByText(en["dbdump.keptIncluded"])).toBeTruthy();
+    expect(within(dialog()).getByRole("button", { name: en["dbdump.removeKept"] })).toBeTruthy();
+  });
+
+  it("shows the restore of the container that runs already in place of the form", async () => {
+    await open(entryOf("container"));
+    progress({ key: "container:immich", phase: "restore", percent: 40, active: true, startedAt: 1 });
+    expect(within(dialog()).queryByRole("radiogroup")).toBeNull();
+    expect(within(dialog()).getByText(en["restore.started"])).toBeTruthy();
   });
 
   it("marks the backup a database dump belongs to, at a copy of it too", async () => {

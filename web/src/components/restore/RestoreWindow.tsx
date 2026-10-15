@@ -576,7 +576,9 @@ function RestoreForm({
   const progress = useProgress();
   const prog = progress[progressKey];
   const running = anyActive(progress);
-  const own = isPending || (prog?.active === true && prog.phase === "restore");
+  // A database import or a saved dump reports as a restore with its stage on
+  // it. It belongs to the dump list, which has to stay up to show its result.
+  const own = isPending || (prog?.active === true && prog.phase === "restore" && prog.stage === undefined);
   const blockedByOther = running.active && !own;
   const shown = own || state.phase !== "idle";
 
