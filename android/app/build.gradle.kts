@@ -75,7 +75,7 @@ dependencies {
     // The relay is a WebSocket, which the platform has no client for.
     implementation("com.squareup.okhttp3:okhttp:5.5.0")
     // Ed25519, which the members of a group sign with, from Android 10 on.
-    implementation("org.bouncycastle:bcprov-jdk18on:1.80")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.86")
 
     testImplementation("junit:junit:4.13.2")
     // Android's own org.json is a stub outside a device.
