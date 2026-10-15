@@ -849,6 +849,7 @@ const fa: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "خارج از محل تأیید شده",
+  "drill.restored": "{name}، اسنپ‌شات {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "دلیل:",

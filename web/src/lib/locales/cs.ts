@@ -1379,6 +1379,7 @@ const cs: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "ověřeno mimo lokalitu",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Chráněno",

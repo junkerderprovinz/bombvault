@@ -1382,6 +1382,7 @@ const th: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "ตรวจสอบนอกสถานที่แล้ว",
+  "drill.restored": "{name}, สแนปช็อต {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "ได้รับการป้องกัน",

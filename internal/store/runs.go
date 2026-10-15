@@ -34,6 +34,9 @@ type Run struct {
 	// StartedViaKey is the mcp_keys.id of the MCP key or API token behind the
 	// run, so the Activity log can name it even after it is revoked.
 	StartedViaKey string `json:"startedViaKey"`
+	// Subject names what a run on a whole domain worked on, such as the
+	// container a DR drill restored. Empty for every other run.
+	Subject string `json:"subject"`
 	// Load is how busy the host was during the run, as the api package
 	// writes it. Empty for a run that was not measured.
 	Load string `json:"-"`
@@ -41,7 +44,7 @@ type Run struct {
 
 // runCols is the column list of every full run query, in the order scanRun
 // reads them.
-const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key, load_summary, source_bytes`
+const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key, load_summary, source_bytes, subject`
 
 // RunMeta is what a caller knows about a run beyond its target and kind: the
 // pass it belongs to and who asked for it.
@@ -49,6 +52,7 @@ type RunMeta struct {
 	GroupID       string
 	StartedVia    string
 	StartedViaKey string
+	Subject       string
 }
 
 // StartRunWith records the beginning of a run with its group and origin and
@@ -57,9 +61,9 @@ type RunMeta struct {
 func (r *Repo) StartRunWith(targetID, kind string, meta RunMeta) (string, error) {
 	id := newID()
 	_, err := r.db.Exec(`
-		INSERT INTO runs (id, target_id, kind, status, started_at, group_id, started_via, started_via_key)
-		VALUES (?, ?, ?, 'running', ?, ?, ?, ?)`,
-		id, targetID, kind, time.Now().Unix(), meta.GroupID, meta.StartedVia, meta.StartedViaKey,
+		INSERT INTO runs (id, target_id, kind, status, started_at, group_id, started_via, started_via_key, subject)
+		VALUES (?, ?, ?, 'running', ?, ?, ?, ?, ?)`,
+		id, targetID, kind, time.Now().Unix(), meta.GroupID, meta.StartedVia, meta.StartedViaKey, meta.Subject,
 	)
 	if err != nil {
 		return "", fmt.Errorf("StartRunWith: %w", err)
@@ -881,7 +885,7 @@ func scanRun(s scanner) (Run, error) {
 	err := s.Scan(
 		&run.ID, &run.TargetID, &run.Kind, &run.Status,
 		&run.StartedAt, &finishedAt, &snapID, &bytes, &errCol, &run.Acknowledged, &run.GroupID,
-		&run.StartedVia, &run.StartedViaKey, &run.Load, &sourceBytes,
+		&run.StartedVia, &run.StartedViaKey, &run.Load, &sourceBytes, &run.Subject,
 	)
 	if err != nil {
 		return Run{}, err

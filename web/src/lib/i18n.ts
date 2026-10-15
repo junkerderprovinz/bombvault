@@ -948,6 +948,7 @@ export const en = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "off-site verified",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels (#30)
   "drill.failReasonPrefix": "reason:",
@@ -5793,6 +5794,7 @@ export const de: Translations = {
 
   // DR-Test-Steuerung (echte Off-site-Wiederherstellung) + Off-site-Badge
   "drill.offsiteVerified": "Off-site verifiziert",
+  "drill.restored": "{name}, Snapshot {snapshot}",
 
   // Drill reason + check labels (#30)
   "drill.failReasonPrefix": "Grund:",

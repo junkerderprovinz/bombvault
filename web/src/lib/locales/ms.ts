@@ -849,6 +849,7 @@ const ms: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "luar tapak disahkan",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "sebab:",

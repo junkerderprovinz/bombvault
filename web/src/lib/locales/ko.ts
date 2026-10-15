@@ -1364,6 +1364,7 @@ const ko: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "오프사이트 검증됨",
+  "drill.restored": "{name}, 스냅샷 {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "보호됨",

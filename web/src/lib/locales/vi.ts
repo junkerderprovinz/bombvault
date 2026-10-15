@@ -1372,6 +1372,7 @@ const vi: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "đã xác minh off-site",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Được bảo vệ",

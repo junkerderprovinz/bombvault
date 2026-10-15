@@ -849,6 +849,7 @@ const ca: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "extern verificat",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "motiu:",

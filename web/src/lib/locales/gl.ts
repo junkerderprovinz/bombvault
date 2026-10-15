@@ -849,6 +849,7 @@ const gl: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "externa verificada",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "motivo:",

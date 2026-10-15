@@ -849,6 +849,7 @@ const eu: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "kanpokoa egiaztatuta",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "arrazoia:",

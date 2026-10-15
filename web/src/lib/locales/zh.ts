@@ -1372,6 +1372,7 @@ const zh: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "异地已验证",
+  "drill.restored": "{name}，快照 {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "已受保护",

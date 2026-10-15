@@ -849,6 +849,7 @@ const id: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "off-site terverifikasi",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "alasan:",

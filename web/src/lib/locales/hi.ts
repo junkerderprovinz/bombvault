@@ -849,6 +849,7 @@ const hi: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "ऑफ़-साइट सत्यापित",
+  "drill.restored": "{name}, स्नैपशॉट {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "कारण:",

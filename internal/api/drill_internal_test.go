@@ -58,13 +58,13 @@ func TestTheContainersDrillRestoresTheDumpOfAContainerWithOnlyDumps(t *testing.T
 		{ID: "dump1", Time: "2026-09-27T03:00:00Z", Tags: []string{"dbdump:nextcloud-db", "p1"}},
 		{ID: "dump2", Time: "2026-09-28T03:00:00Z", Tags: []string{"dbdump:nextcloud-db", "p1"}},
 	}
-	id, err := s.pickDRSnapshot(context.Background(), "containers", settings, "repo", restic.Mode{})
+	id, _, err := s.pickDRSnapshot(context.Background(), "containers", settings, "repo", restic.Mode{})
 	if err != nil || id != "dump2" {
 		t.Fatalf("pickDRSnapshot = %q, %v, want the newest dump of the container", id, err)
 	}
 
 	eng.snaps = append(eng.snaps, restic.Snapshot{ID: "volumes", Time: "2026-09-26T03:00:00Z", Tags: []string{"container:nextcloud-db"}})
-	if id, err = s.pickDRSnapshot(context.Background(), "containers", settings, "repo", restic.Mode{}); err != nil || id != "volumes" {
+	if id, _, err = s.pickDRSnapshot(context.Background(), "containers", settings, "repo", restic.Mode{}); err != nil || id != "volumes" {
 		t.Fatalf("pickDRSnapshot = %q, %v, want the container's own snapshot while it has one", id, err)
 	}
 }
@@ -106,9 +106,9 @@ func TestTheContainersDrillSkipsANewerContainerWithoutASnapshot(t *testing.T) {
 	}
 	s, settings := drillTargetFixture(t, snaps, "ix-kuma-uptime-kuma-1", "ix-webpage-1", "plex")
 
-	id, err := s.pickDRSnapshot(context.Background(), "containers", settings, "repo", restic.Mode{})
-	if err != nil || id != "webpage" {
-		t.Fatalf("pickDRSnapshot = %q, %v, want the newest container that has a snapshot", id, err)
+	id, item, err := s.pickDRSnapshot(context.Background(), "containers", settings, "repo", restic.Mode{})
+	if err != nil || id != "webpage" || item != "ix-webpage-1" {
+		t.Fatalf("pickDRSnapshot = %q, %q, %v, want the newest container that has a snapshot", id, item, err)
 	}
 }
 
@@ -117,7 +117,7 @@ func TestThePinnedDrillTargetFailsWithoutASnapshot(t *testing.T) {
 	s, settings := drillTargetFixture(t, snaps, "ix-kuma-uptime-kuma-1", "ix-webpage-1")
 	settings.DRDrillTarget = "ix-kuma-uptime-kuma-1"
 
-	_, err := s.pickDRSnapshot(context.Background(), "containers", settings, "repo", restic.Mode{})
+	_, _, err := s.pickDRSnapshot(context.Background(), "containers", settings, "repo", restic.Mode{})
 	if err == nil || !strings.Contains(err.Error(), `"ix-kuma-uptime-kuma-1"`) {
 		t.Fatalf("pickDRSnapshot err = %v, want the pinned target named", err)
 	}
@@ -127,7 +127,7 @@ func TestTheContainersDrillFailsWhenNoBackedUpContainerHasASnapshot(t *testing.T
 	snaps := []restic.Snapshot{{ID: "gone", Time: "2026-10-14T03:00:00Z", Tags: []string{"container:removed-app"}}}
 	s, settings := drillTargetFixture(t, snaps, "ix-kuma-uptime-kuma-1")
 
-	if id, err := s.pickDRSnapshot(context.Background(), "containers", settings, "repo", restic.Mode{}); err == nil {
+	if id, _, err := s.pickDRSnapshot(context.Background(), "containers", settings, "repo", restic.Mode{}); err == nil {
 		t.Fatalf("pickDRSnapshot = %q, want an error", id)
 	}
 }

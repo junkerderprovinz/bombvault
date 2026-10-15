@@ -1366,6 +1366,7 @@ const ru: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "внешняя копия проверена",
+  "drill.restored": "{name}, снимок {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Защищено",

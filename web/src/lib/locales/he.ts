@@ -1373,6 +1373,7 @@ const he: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "אומת מחוץ לאתר",
+  "drill.restored": "{name}, תמונת מצב {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "מוגן",

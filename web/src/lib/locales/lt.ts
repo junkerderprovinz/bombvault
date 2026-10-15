@@ -849,6 +849,7 @@ const lt: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "nuotolinė saugykla patikrinta",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "priežastis:",

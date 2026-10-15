@@ -3027,6 +3027,9 @@ type DomainStatusEntry struct {
 	LastReplicationOK  bool  `json:"lastReplicationOK"`
 	LastDRDrillAt      int64 `json:"lastDrDrillAt"`
 	LastDRDrillOK      bool  `json:"lastDrDrillOK"`
+	// LastDRDrillItem and LastDRDrillSnapshot name what that drill restored.
+	LastDRDrillItem     string `json:"lastDrDrillItem"`
+	LastDRDrillSnapshot string `json:"lastDrDrillSnapshot"`
 	// LastOffsiteSubsetAt / LastOffsiteSubsetOK stamp the latest OFF-SITE SUBSET
 	// drill (`restic check --read-data-subset` against the off-site repo) — the
 	// cheaper integrity check every domain (including VMs, since v8.0.0) can run
@@ -3459,11 +3462,11 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		lastReplicationAt, lastReplicationOK := s.aggregateReplicationCurrency(d.name)
 		var lastDRDrillAt int64
 		var lastDRDrillOK bool
-		var drDetail string
+		var drDetail, drItem, drSnapshot string
 		if dr, found, drErr := s.store.LatestRestoreDrillKind(d.name, "offsite", "dr"); drErr == nil && found {
 			lastDRDrillAt = dr.At
 			lastDRDrillOK = dr.OK
-			drDetail = dr.Detail
+			drDetail, drItem, drSnapshot = dr.Detail, dr.Item, dr.SnapshotID
 		}
 		// The latest OFF-SITE SUBSET drill (integrity check against the off-site
 		// repo) drives the dashboard's "off-site verified" badge (#63). It is the
@@ -3550,6 +3553,8 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastReplicationOK:     lastReplicationOK,
 			LastDRDrillAt:         lastDRDrillAt,
 			LastDRDrillOK:         lastDRDrillOK,
+			LastDRDrillItem:       drItem,
+			LastDRDrillSnapshot:   drSnapshot,
 			LastOffsiteSubsetAt:   lastOffsiteSubsetAt,
 			LastOffsiteSubsetOK:   lastOffsiteSubsetOK,
 			OffsiteDrillScheduled: settings.DrillsEnabled && settings.OffsiteDrillsEnabled && offsiteConfigured,
@@ -16673,7 +16678,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	// can be written and never read back, so the drill could not pass.
 	mode := s.offsiteModeForTarget(settings, target)
 	listCtx, listCancel := context.WithTimeout(drillCtx, drillSnapshotTimeout)
-	snapID, err := s.pickDRSnapshot(listCtx, domain, settings, repo, mode)
+	snapID, item, err := s.pickDRSnapshot(listCtx, domain, settings, repo, mode)
 	listCancel()
 	if err != nil {
 		return store.RestoreDrill{}, err
@@ -16692,11 +16697,13 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 		return store.RestoreDrill{}, drillErr
 	}
 	drill = store.RestoreDrill{
-		Domain: domain,
-		Source: source,
-		At:     time.Now().Unix(),
-		OK:     drillErr == nil,
-		Kind:   "dr",
+		Domain:     domain,
+		Source:     source,
+		At:         time.Now().Unix(),
+		OK:         drillErr == nil,
+		Kind:       "dr",
+		Item:       item,
+		SnapshotID: shortID(snapID),
 	}
 	if drillErr != nil {
 		drill.Detail = scrubError(drillErr)
@@ -16711,14 +16718,15 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	// dashboard Activity Log/Run History (the restore_drills row above stays the
 	// badge/scorecard source of truth). Kind "drdrill" — distinct from the local
 	// subset drill's "drill" — so the log names the off-site DR restore check.
-	s.recordDomainRun(domain, "drdrill", drill.OK, drill.Detail)
+	s.recordDomainRunOf(domain, "drdrill", drill.OK, drill.Detail, drill.Item, drill.SnapshotID)
 	if drillErr != nil {
 		s.notifyDrillFailure(ctx, domain, source, drill.Detail)
 	}
 	return drill, drillErr
 }
 
-// pickDRSnapshot resolves the newest off-site snapshot to drill for a domain.
+// pickDRSnapshot resolves the newest off-site snapshot to drill for a domain,
+// and the item it holds.
 // containers: the DRDrillTarget container, scoped to its container:<name> tag,
 // or to its database dumps when those are all it has. With no target pinned it
 // takes the most recently backed-up container that has such a snapshot in this
@@ -16731,19 +16739,24 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 // takes the newest snapshot carrying a zfs: tag, because a member's tree root
 // is its dataset root and any member proves the repo restorable. An empty repo
 // or a target with no off-site snapshot yields a clear error.
-func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (string, error) {
+func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (id, item string, err error) {
 	all, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	if len(all) == 0 {
-		return "", errors.New("no off-site backups to drill yet")
+		return "", "", errors.New("no off-site backups to drill yet")
 	}
 	switch domain {
 	case "flash", "files":
-		return newestSnapshot(all).ID, nil
+		newest := newestSnapshot(all)
+		return newest.ID, taggedName(newest.Tags, "fileset:"), nil
 	case zfsDomain:
-		return newestZFSMemberSnapshot(all)
+		newest, err := newestZFSMemberSnapshot(all)
+		if err != nil {
+			return "", "", err
+		}
+		return newest.ID, taggedName(newest.Tags, "zfs:"), nil
 	case "containers", "vms":
 		pinned, tagPfx, noun := settings.DRDrillTarget, "container:", "container"
 		newest := s.backedUpContainersNewestFirst
@@ -16754,10 +16767,10 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 		candidates := []string{pinned}
 		if pinned == "" {
 			if candidates, err = newest(); err != nil {
-				return "", err
+				return "", "", err
 			}
 			if len(candidates) == 0 {
-				return "", fmt.Errorf("no backed-up %s to drill", noun)
+				return "", "", fmt.Errorf("no backed-up %s to drill", noun)
 			}
 		}
 		for _, name := range candidates {
@@ -16768,35 +16781,42 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 				scoped = snapshotsTagged(all, dbDumpIdentity(name))
 			}
 			if len(scoped) > 0 {
-				return newestSnapshot(scoped).ID, nil
+				return newestSnapshot(scoped).ID, name, nil
 			}
 		}
 		if pinned != "" {
-			return "", fmt.Errorf("no off-site snapshot for drill target %q", pinned)
+			return "", "", fmt.Errorf("no off-site snapshot for drill target %q", pinned)
 		}
-		return "", fmt.Errorf("no backed-up %s has an off-site snapshot to drill", noun)
+		return "", "", fmt.Errorf("no backed-up %s has an off-site snapshot to drill", noun)
 	default:
-		return "", fmt.Errorf("unknown domain %q", domain)
+		return "", "", fmt.Errorf("unknown domain %q", domain)
 	}
+}
+
+// taggedName is the value of the first tag that starts with prefix, or "".
+func taggedName(tags []string, prefix string) string {
+	for _, t := range tags {
+		if rest, ok := strings.CutPrefix(t, prefix); ok && rest != "" {
+			return rest
+		}
+	}
+	return ""
 }
 
 // newestZFSMemberSnapshot picks the newest member snapshot of the ZFS domain.
 // A repository shared with another domain also holds snapshots this drill must
 // not restore, so the tag decides rather than the timestamp alone.
-func newestZFSMemberSnapshot(all []restic.Snapshot) (string, error) {
+func newestZFSMemberSnapshot(all []restic.Snapshot) (restic.Snapshot, error) {
 	var scoped []restic.Snapshot
 	for _, snap := range all {
-		for _, t := range snap.Tags {
-			if rest, ok := strings.CutPrefix(t, "zfs:"); ok && rest != "" {
-				scoped = append(scoped, snap)
-				break
-			}
+		if taggedName(snap.Tags, "zfs:") != "" {
+			scoped = append(scoped, snap)
 		}
 	}
 	if len(scoped) == 0 {
-		return "", errNothingToDrill
+		return restic.Snapshot{}, errNothingToDrill
 	}
-	return newestSnapshot(scoped).ID, nil
+	return newestSnapshot(scoped), nil
 }
 
 // newestSnapshot returns the snapshot with the latest Time (RFC3339 sorts
@@ -17112,9 +17132,15 @@ func domainRunTargetID(domain string) string {
 // detail is bounded to the same cap as truncateRunErr. Best-effort: a store
 // error is logged and never fails the check that already ran.
 func (s *Service) recordDomainRun(domain, kind string, ok bool, detail string) {
-	// A drill or tamper row is never started through a tool, so a caller's
-	// context here would put the wrong name in the audit trail.
-	runID, err := s.startRun(context.Background(), domainRunTargetID(domain), kind)
+	s.recordDomainRunOf(domain, kind, ok, detail, "", "")
+}
+
+// recordDomainRunOf is recordDomainRun for a check that worked on one item of
+// the domain and one snapshot of it, which the run row names.
+func (s *Service) recordDomainRunOf(domain, kind string, ok bool, detail, subject, snapshotID string) {
+	// A drill or tamper row is never started through a tool, so the origin a
+	// caller's context carries would put the wrong name in the audit trail.
+	runID, err := s.startRun(withRunSubject(context.Background(), subject), domainRunTargetID(domain), kind)
 	if err != nil {
 		log.Printf("api: %s %s: could not start run record (continuing): %v", kind, domain, err) //nolint:gosec // G706: kind and domain are fixed literals
 		return
@@ -17127,7 +17153,7 @@ func (s *Service) recordDomainRun(domain, kind string, ok bool, detail string) {
 	if len(detail) > maxDetail {
 		detail = detail[:maxDetail]
 	}
-	if err := s.store.FinishRun(runID, status, "", 0, detail); err != nil {
+	if err := s.store.FinishRun(runID, status, snapshotID, 0, detail); err != nil {
 		log.Printf("api: %s %s: could not finish run record: %v", kind, domain, err) //nolint:gosec // G706: kind and domain are fixed literals
 	}
 }

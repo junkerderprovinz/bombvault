@@ -849,6 +849,7 @@ const sk: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "externé overené",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "dôvod:",

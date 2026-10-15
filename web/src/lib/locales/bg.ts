@@ -849,6 +849,7 @@ const bg: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "проверено извън обекта",
+  "drill.restored": "{name}, моментна снимка {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "причина:",

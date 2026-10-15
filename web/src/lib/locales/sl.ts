@@ -849,6 +849,7 @@ const sl: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "zunanja kopija preverjena",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels (#30)
   "drill.failReasonPrefix": "razlog:",

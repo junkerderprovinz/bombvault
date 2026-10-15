@@ -849,6 +849,7 @@ const et: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "väline kontrollitud",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "põhjus:",

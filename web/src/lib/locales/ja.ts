@@ -1364,6 +1364,7 @@ const ja: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "オフサイト検証済み",
+  "drill.restored": "{name}、スナップショット {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "保護済み",

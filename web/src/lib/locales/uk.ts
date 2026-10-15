@@ -1378,6 +1378,7 @@ const uk: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "зовнішнє місце призначення перевірено",
+  "drill.restored": "{name}, знімок {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Захищено",

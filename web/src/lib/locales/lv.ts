@@ -849,6 +849,7 @@ const lv: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "attālinātā pārbaudīta",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "iemesls:",

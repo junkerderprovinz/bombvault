@@ -526,6 +526,9 @@ export interface Run {
    *  it is purged from the list. */
   startedViaLabel?: string;
   startedViaRevoked?: boolean;
+  /** What a run on a whole domain worked on, such as the container a DR
+   *  drill restored. */
+  subject?: string;
   /** What held a slow backup back, when one thing clearly did. */
   bottleneck?: Bottleneck;
 }
@@ -574,6 +577,8 @@ export interface DomainStatus {
   lastReplicationOK: boolean; // whether that replication succeeded
   lastDrDrillAt: number; // unix seconds of the last off-site DR drill; 0 = never
   lastDrDrillOK: boolean; // whether that DR drill passed
+  lastDrDrillItem?: string; // what that DR drill restored, "" where the domain has no items
+  lastDrDrillSnapshot?: string; // the short id of the snapshot it restored
   // Latest OFF-SITE SUBSET drill (integrity check against the off-site repo) —
   // the only off-site drill VMs can run. Drives the "off-site verified" badge (#63).
   lastOffsiteSubsetAt: number; // unix seconds; 0 = never
@@ -605,6 +610,10 @@ export interface RestoreDrill {
   // off-site sandbox restore). Distinguishes an off-site DR check from a local
   // subset integrity check (which can also run against the off-site repo).
   kind: string;
+  /** What a DR drill restored: the item, "" where the domain has none, and
+   *  the short id of its snapshot. */
+  item?: string;
+  snapshotId?: string;
 }
 
 /** The "Backup Everything" pass used to ride along here as its own

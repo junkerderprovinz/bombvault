@@ -4212,7 +4212,11 @@ func (h *Handler) runViews(runs []store.Run) []runView {
 	keys := h.mcpKeysBehind(runs)
 	views := make([]runView, 0, len(runs))
 	for _, r := range runs {
-		v := runView{Run: r, Target: scrubRepoLocation(name[r.TargetID]), Domain: domain[r.TargetID], Bottleneck: runBottleneck(r.Load)}
+		target := name[r.TargetID]
+		if target == "" {
+			target = r.Subject
+		}
+		v := runView{Run: r, Target: scrubRepoLocation(target), Domain: domain[r.TargetID], Bottleneck: runBottleneck(r.Load)}
 		if key, ok := keys[r.StartedViaKey]; ok {
 			v.StartedViaLabel = scrubRepoLocation(key.Label)
 			v.StartedViaRevoked = key.RevokedAt > 0
