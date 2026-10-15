@@ -607,24 +607,43 @@ func TestCheckRestoreBringsAGoneContainerBackBesideAStoppedOne(t *testing.T) {
 	}
 }
 
-func TestCheckRestoreFlagsANetworkTheRestoreWouldRefuse(t *testing.T) {
-	f := newCheckFixture(t)
-	in := model.Inspect{Name: "plex", Config: model.Config{Image: "plexinc/pms:1.40"}}
-	in.HostConfig.NetworkMode = "ix-plex_default"
-	def, err := json.Marshal(containerDefinition{Inspect: in})
+// backedUpOnGoneNetwork puts plex's saved definition on ix-plex_default, a
+// network this host lacks.
+func backedUpOnGoneNetwork(t *testing.T, f *checkFixture) {
+	t.Helper()
+	tg, err := f.svc.store.GetTargetByContainer("plex")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.svc.store.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{f.appdata}, Definition: string(def)}); err != nil {
+	var def containerDefinition
+	if err := json.Unmarshal([]byte(tg.Definition), &def); err != nil {
+		t.Fatal(err)
+	}
+	def.Inspect.HostConfig.NetworkMode = "ix-plex_default"
+	raw, err := json.Marshal(def)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tg.Definition = string(raw)
+	if _, err := f.svc.store.UpsertTarget(tg); err != nil {
 		t.Fatal(err)
 	}
 	f.docker.networks = []string{"bridge", "host", "none"}
+}
 
-	res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"})
+func assertNetworkGone(t *testing.T, res RestoreCheck) {
+	t.Helper()
 	c := lineOf(t, res, lineNetwork)
 	if res.Ready || c.Status != lineFail || c.Reason != reasonNetworkGone || c.Detail != "ix-plex_default" {
 		t.Fatalf("ready = %v, checks = %+v, want a failed network line naming ix-plex_default", res.Ready, res.Checks)
 	}
+}
+
+func TestCheckRestoreFlagsANetworkTheRestoreWouldRefuse(t *testing.T) {
+	f := newCheckFixture(t)
+	backedUpOnGoneNetwork(t, f)
+
+	assertNetworkGone(t, f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"}))
 
 	f.docker.networks = append(f.docker.networks, "ix-plex_default")
 	if res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"}); !res.Ready {

@@ -389,6 +389,9 @@ func (s *Service) restoreCheckScope(ctx context.Context, req RestoreCheckRequest
 			if err != nil {
 				return restoreScope{}, err
 			}
+			if err := backup.CheckRestoreNetwork(ctx, s.docker, plan.inspect); err != nil {
+				return restoreScope{}, err
+			}
 			return besideContainerScope(plan, req.Name), nil
 		}
 		plan, err := s.prepareRestore(ctx, req.Name, req.SnapshotID, true, req.Source)
