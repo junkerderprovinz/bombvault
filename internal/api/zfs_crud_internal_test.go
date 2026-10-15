@@ -855,3 +855,47 @@ func TestZFSSafetySnapshotsAnswerNamesEveryFieldTheListReads(t *testing.T) {
 		}
 	}
 }
+
+func TestCreateZFSDatasetsAllowsAChildTheParentExcludes(t *testing.T) {
+	s, st, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	parent, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: zfsRoot, Enabled: true, ExcludedChildren: []string{zfsChild}})
+	if err != nil {
+		t.Fatalf("create parent: %v", err)
+	}
+
+	got := s.CreateZFSDatasets(context.Background(), []ZFSCreateItem{
+		{Dataset: zfsChild},
+		{Dataset: zfsChild + "/deeper"},
+	})
+	if got[0].Code != "ok" {
+		t.Errorf("excluded child = %q, want ok", got[0].Code)
+	}
+	if got[1].Code != "overlaps-item" {
+		t.Errorf("a dataset below the child item = %q, want overlaps-item", got[1].Code)
+	}
+	if other, ok := s.zfsOverlappingItem(parent); ok {
+		t.Errorf("parent run sees an overlap with %q", other)
+	}
+}
+
+func TestPatchZFSDatasetRefusesToUnexcludeAChildWithItsOwnItem(t *testing.T) {
+	s, st, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	parent, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: zfsRoot, Enabled: true, ExcludedChildren: []string{zfsChild}})
+	if err != nil {
+		t.Fatalf("create parent: %v", err)
+	}
+	child := zfsSeedItem(t, st, zfsChild)
+
+	none := []string{}
+	err = s.PatchZFSDataset(context.Background(), parent.ID, ZFSDatasetPatch{ExcludedChildren: &none})
+	if code, _ := zfsRefusalCode(err); code != "overlaps-item" {
+		t.Fatalf("un-exclude = %v, want overlaps-item", err)
+	}
+
+	if err := st.DeleteZFSDataset(child.ID); err != nil {
+		t.Fatalf("delete child: %v", err)
+	}
+	if err := s.PatchZFSDataset(context.Background(), parent.ID, ZFSDatasetPatch{ExcludedChildren: &none}); err != nil {
+		t.Errorf("un-exclude without a child item: %v", err)
+	}
+}

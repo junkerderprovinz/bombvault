@@ -142,7 +142,7 @@ func (s *Service) zfsOverlappingItem(d store.ZFSDataset) (string, bool) {
 		if other.ID == d.ID {
 			continue
 		}
-		if zfs.DescendantOf(d.Dataset, other.Dataset) || zfs.DescendantOf(other.Dataset, d.Dataset) {
+		if zfsItemsOverlap(d, other) {
 			return other.Dataset, true
 		}
 	}
