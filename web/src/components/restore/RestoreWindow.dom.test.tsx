@@ -13,6 +13,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { AnomalyView, RestoreCheckRequest, Run, TimelinePlace, ZFSRestorePoint } from "../../lib/api";
 import type { Entry, EntryDetail } from "../../lib/entry";
 import { I18nProvider, en } from "../../lib/i18n";
+import { formatRecent } from "../../lib/reltime";
 import {
   BOX,
   CONFIG,
@@ -698,6 +699,9 @@ describe("a ZFS entry", () => {
     ).toBeTruthy();
     expect(screen.getByText(en["zfs.restore.started"].replace("{target}", "/mnt/tank/appdata"))).toBeTruthy();
     expect(screen.getByRole("button", { name: en["common.copy"] })).toBeTruthy();
+    expect(
+      screen.getByText(en["zfs.restore.safetyTakenAt"].replace("{time}", formatRecent(Date.UTC(2026, 0, 1, 12) / 1000, "en")))
+    ).toBeTruthy();
   });
 
   it("shows the stored properties and sets them only when asked", async () => {

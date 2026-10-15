@@ -40,7 +40,10 @@ export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdi
   const { location, can, save, busy } = edit;
   const { immutable, testable, lastTamper } = location.protection;
   const local = location.backend === "local";
-  const targets = location.sections.flatMap((section) => (section.use === "copy" && section.targetId ? [section.targetId] : []));
+  const copies = location.sections.filter((section) => section.use === "copy" && section.targetId);
+  // The server refuses to test a switched-off copy: its verdict would stand
+  // for backups that no longer go there.
+  const targets = copies.flatMap((section) => (section.enabled && section.targetId ? [section.targetId] : []));
   const tamper = useTestVerdict(location.id, t("offsite.tamperError"));
   const takesCopies = location.object === "destination" || location.object === "target";
   const keepsAll = !location.retention || Object.values(location.retention).every((n) => n <= 0);
@@ -85,28 +88,32 @@ export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdi
           </SettingRow>
         )}
 
-        {immutable && testable && targets.length > 0 && (
+        {immutable && testable && copies.length > 0 && (
           <SettingRow
             label={t("storage.lock.test")}
             hint={t("storage.lock.testHint")}
             note={
-              lastTamper &&
-              t(lastTamper.protected ? "storage.lock.lastRefused" : "storage.lock.lastOpen").replace(
-                "{when}",
-                relativeTime(t, lastTamper.at)
-              )
+              targets.length === 0
+                ? t("storage.lock.testOff")
+                : lastTamper &&
+                  t(lastTamper.protected ? "storage.lock.lastRefused" : "storage.lock.lastOpen").replace(
+                    "{when}",
+                    relativeTime(t, lastTamper.at)
+                  )
             }
           >
-            <div className="flex flex-col items-end gap-1.5">
-              <VerdictLine verdict={tamper.verdict} />
-              <TestButton
-                label={t("storage.lock.testNow")}
-                labelKey="storage.lock.testNow"
-                words="check"
-                test={tamper}
-                onClick={() => void tamper.run(test)}
-              />
-            </div>
+            {targets.length > 0 && (
+              <div className="flex flex-col items-end gap-1.5">
+                <VerdictLine verdict={tamper.verdict} />
+                <TestButton
+                  label={t("storage.lock.testNow")}
+                  labelKey="storage.lock.testNow"
+                  words="check"
+                  test={tamper}
+                  onClick={() => void tamper.run(test)}
+                />
+              </div>
+            )}
           </SettingRow>
         )}
       </Rows>
