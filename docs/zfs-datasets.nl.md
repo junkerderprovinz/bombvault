@@ -114,7 +114,7 @@ Zet het aan in de kaart **Replica** op het tabblad Instellingen van het item. Da
 Elke machine met ZFS en SSH kan ontvangen, bijvoorbeeld een tweede Unraid of een TrueNAS. BombVault hoeft daar niet te draaien.
 
 1. Kies onder **Instellingen, Koppeling** bij **ZFS-server zonder BombVault** voor **Verbinden via SSH**, of kies **ZFS-server toevoegen** in de kaart **Replica** van het item.
-2. Voer adres, gebruiker en poort in. Het venster toont de publieke sleutel van BombVault. Voeg die toe aan de `~/.ssh/authorized_keys` van de gebruiker op de server. Op Unraid staat dat onder **Users, root, SSH keys**. Afhankelijk van **Display Settings** staat Users in het koptekstmenu of onder Settings.
+2. Voer adres, gebruiker en poort in. Het venster toont de publieke sleutel van BombVault. Voeg die toe aan de `~/.ssh/authorized_keys` van de gebruiker op de server. Op Unraid staat dat onder **Users, root, SSH keys**. Afhankelijk van **Display Settings** staat Users in het koptekstmenu of onder Settings. Dit is de replicasleutel. Hij verschilt van de sleutel van de SSH-verbinding voor VM's en host, voeg hem dus ook toe als die al is geautoriseerd.
 3. Test de verbinding. Het venster toont dan de pools van de server. Kies er een en stel de root in, die standaard `<pool>/bombvault-replica` is.
 4. Kies de nieuwe server in de kaart **Replica** van het item. De server heeft dan een eigen kaart op de pagina Instanties, en **Openen** leidt naar zijn pagina.
 

@@ -126,10 +126,9 @@ func (s *Service) createZFSDataset(ctx context.Context, item ZFSCreateItem, rows
 	if err := zfsValidateRootName(item.Dataset); err != nil {
 		return store.ZFSDataset{}, err
 	}
+	candidate := store.ZFSDataset{Dataset: item.Dataset, ExcludedChildren: item.ExcludedChildren}
 	for _, other := range rows {
-		if other.Dataset == item.Dataset ||
-			zfs.DescendantOf(item.Dataset, other.Dataset) ||
-			zfs.DescendantOf(other.Dataset, item.Dataset) {
+		if zfsItemsOverlap(candidate, other) {
 			return store.ZFSDataset{}, zfsRefuse("overlaps-item", other.Dataset)
 		}
 	}
@@ -189,6 +188,9 @@ func (s *Service) PatchZFSDataset(ctx context.Context, id string, p ZFSDatasetPa
 	}
 	if p.ExcludedChildren != nil {
 		if vErr := zfsValidateExcludedChildren(d.Dataset, *p.ExcludedChildren); vErr != nil {
+			return vErr
+		}
+		if vErr := s.zfsValidateUnexclude(d, *p.ExcludedChildren); vErr != nil {
 			return vErr
 		}
 	}
@@ -653,6 +655,48 @@ func zfsValidateExcludedChildren(root string, names []string) error {
 		}
 		if err := zfs.ValidateDatasetName(name); err != nil {
 			return zfsRefuse("invalid-exclude", name)
+		}
+	}
+	return nil
+}
+
+// zfsExcludesDataset reports whether the item leaves name out of its tree.
+func zfsExcludesDataset(d store.ZFSDataset, name string) bool {
+	for _, ex := range d.ExcludedChildren {
+		if name == ex || zfs.DescendantOf(name, ex) {
+			return true
+		}
+	}
+	return false
+}
+
+// zfsItemsOverlap reports whether two items would snapshot the same dataset.
+// A tree below another item's root is its own item when that item leaves it
+// out.
+func zfsItemsOverlap(a, b store.ZFSDataset) bool {
+	switch {
+	case a.Dataset == b.Dataset:
+		return true
+	case zfs.DescendantOf(b.Dataset, a.Dataset):
+		return !zfsExcludesDataset(a, b.Dataset)
+	case zfs.DescendantOf(a.Dataset, b.Dataset):
+		return !zfsExcludesDataset(b, a.Dataset)
+	}
+	return false
+}
+
+// zfsValidateUnexclude refuses a new exclusion list that takes a dataset back
+// while another item has it as its root.
+func (s *Service) zfsValidateUnexclude(d store.ZFSDataset, names []string) error {
+	rows, err := s.store.ListZFSDatasets()
+	if err != nil {
+		return err
+	}
+	updated := d
+	updated.ExcludedChildren = names
+	for _, other := range rows {
+		if other.ID != d.ID && !zfsItemsOverlap(d, other) && zfsItemsOverlap(updated, other) {
+			return zfsRefuse("overlaps-item", other.Dataset)
 		}
 	}
 	return nil

@@ -246,7 +246,7 @@ func (s *Service) DiscoverZFSHost(ctx context.Context, fresh bool) ZFSDiscoverRe
 			switch {
 			case d.Dataset == e.Name:
 				entry.ManagedID = d.ID
-			case zfs.DescendantOf(e.Name, d.Dataset):
+			case zfs.DescendantOf(e.Name, d.Dataset) && !zfsExcludesDataset(d, e.Name):
 				entry.CoveredBy = d.ID
 			}
 		}

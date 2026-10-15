@@ -114,7 +114,7 @@ Bật nó trong thẻ **Bản nhân bản** ở tab Cài đặt của mục. Ở
 Bất kỳ máy nào có ZFS và SSH đều nhận được, ví dụ một Unraid thứ hai hoặc TrueNAS. BombVault không cần chạy ở đó.
 
 1. Dưới **Cài đặt, Ghép nối**, chọn **Kết nối qua SSH** trong **Máy chủ ZFS không có BombVault**, hoặc **Thêm máy chủ ZFS** trong thẻ **Bản nhân bản** của mục.
-2. Nhập địa chỉ, người dùng và cổng. Hộp thoại hiện khóa công khai của BombVault. Thêm nó vào `~/.ssh/authorized_keys` của người dùng trên máy chủ. Trên Unraid nó nằm ở **Users, root, SSH keys**. Tùy theo **Display Settings**, Users nằm trong menu tiêu đề hoặc trong Settings.
+2. Nhập địa chỉ, người dùng và cổng. Hộp thoại hiện khóa công khai của BombVault. Thêm nó vào `~/.ssh/authorized_keys` của người dùng trên máy chủ. Trên Unraid nó nằm ở **Users, root, SSH keys**. Tùy theo **Display Settings**, Users nằm trong menu tiêu đề hoặc trong Settings. Đây là khóa của bản sao. Nó khác với khóa của liên kết SSH cho VM và máy chủ, nên hãy thêm nó ngay cả khi khóa kia đã được cấp quyền.
 3. Thử kết nối. Hộp thoại sau đó liệt kê các pool của máy chủ. Chọn một pool và đặt gốc, mặc định là `<pool>/bombvault-replica`.
 4. Chọn máy chủ mới trong thẻ **Bản nhân bản** của mục. Máy chủ khi đó có thẻ riêng trên trang Phiên bản, và **Mở** dẫn tới trang của nó.
 
