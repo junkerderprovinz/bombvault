@@ -116,6 +116,11 @@ func (in *instance) do(t *testing.T, method, path string, body any) (int, map[st
 		rd = bytes.NewReader(nil)
 	}
 	r := httptest.NewRequest(method, path, rd)
+	// httptest names example.com as the host, which the auth gate learns as
+	// this instance's direct address. Members would then try every call over
+	// the internet first, and a slow answer from there uses up the time the
+	// relay call after it needs.
+	r.Host = "localhost"
 	r.Header.Set("Content-Type", "application/json")
 	if in.session != "" {
 		// Every instance in these tests runs with HTTPOnly: true, so this is
@@ -776,6 +781,23 @@ func TestTheGroupViewListsTheAddressesTheInstanceFoundForItself(t *testing.T) {
 	for _, a := range list {
 		if s, _ := a.(string); s == "" || strings.HasPrefix(s, "127.") || strings.HasPrefix(s, "169.254.") {
 			t.Errorf("an address of its own: %v", a)
+		}
+	}
+}
+
+// The instances in these tests reach each other only through the relay the
+// test started. A direct address learned from a test request would send every
+// peer call to that host first.
+func TestPairedTestInstancesHaveNoDirectAddressOutsideTheTest(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, a, b)
+	askForRole(t, a, b, store.RoleFetcher, "containers")
+	for _, in := range []*instance{a, b} {
+		for _, m := range in.svc.pairing().Members() {
+			if strings.Contains(m.Address, "example.com") {
+				t.Fatalf("%s calls %s at %q first", in.svc.selfDirectURL(), m.Name, m.Address)
+			}
 		}
 	}
 }
