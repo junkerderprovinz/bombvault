@@ -157,6 +157,7 @@ const ca: Partial<Translations> = {
   "snapshots.recreate": "Recrea des de la configuració desada",
   "snapshots.recreateConfirm": "Vols recrear aquest contenidor a partir de la seva configuració desada? Es crea i s'inicia a partir de la definició desada (imatge, entorn, ports, volums).",
   "snapshots.configOnlyHint": "Còpia només de configuració: la definició del contenidor està desada, però no té carpetes de dades per fer còpia. Si elimines el contenidor, apareix a «No instal·lat», des d'on el pots recrear amb aquesta configuració.",
+  "snapshots.outsideHostHint": "Només es desa la definició d'aquest contenidor. Les seves dades són fora de Host Data, que BombVault no pot llegir. A TrueNAS, les dades de l'emmagatzematge ixVolume són a /mnt/.ix-apps i no s'hi pot accedir; dona a l'aplicació una ruta del host per a les seves dades.",
 
   // Snapshot tags + compare
   "snapshot.addTag": "Afegeix etiqueta",
@@ -885,6 +886,7 @@ const ca: Partial<Translations> = {
   "stophook.remove": "Elimina {name}",
   "export.exportedTo": "Exportat a:",
   "backup.configOnly": "Només configuració, sense carpetes de dades (definició desada per recrear)",
+  "backup.outsideHost": "Definició desada, però les dades són fora de Host Data i no s'han copiat",
 
   // Per-container exclude patterns
   "excludes.title": "Patrons d'exclusió",
@@ -1022,6 +1024,7 @@ const ca: Partial<Translations> = {
   "runReason.dbimportRollback": "la importació ha fallat i les dades anteriors no s'han pogut tornar al seu lloc",
   "runReason.dbimportFailed": "l'eina d'importació ha informat d'un error",
   "runReason.dbimportKeptOld": "s'ha conservat la carpeta de dades anterior",
+  "runReason.dataOutsideHost": "les dades són fora de Host Data i no s'han copiat",
   "runReason.dbimportErrors": "one={n} error, s'ha conservat la carpeta de dades anterior|other={n} errors, s'ha conservat la carpeta de dades anterior",
   "runReason.dbimportAppsDown": "one=aquesta aplicació no s'ha pogut tornar a iniciar: {apps}|many=aquestes aplicacions no s'han pogut tornar a iniciar: {apps}|other=aquestes aplicacions no s'han pogut tornar a iniciar: {apps}",
   "runReason.dbimportAppsStopped": "one=aquesta aplicació queda aturada fins que es resolgui la carpeta de dades: {apps}|many=aquestes aplicacions queden aturades fins que es resolgui la carpeta de dades: {apps}|other=aquestes aplicacions queden aturades fins que es resolgui la carpeta de dades: {apps}",

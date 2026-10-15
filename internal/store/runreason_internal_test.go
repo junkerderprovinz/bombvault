@@ -46,6 +46,7 @@ func namedReasons() map[string]string {
 		"ReasonDBImportPrepare":      ReasonDBImportPrepare,
 		"ReasonDBImportRollback":     ReasonDBImportRollback,
 		"ReasonDBImportFailed":       ReasonDBImportFailed,
+		"NoteDataOutsideHost":        NoteDataOutsideHost,
 		"NoteDBImportKeptOld":        NoteDBImportKeptOld,
 		"NoteDBImportErrors":         NoteDBImportErrors,
 		"ImportTailAppsDown":         ImportTailAppsDown,

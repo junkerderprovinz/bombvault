@@ -157,6 +157,7 @@ const sk: Partial<Translations> = {
   "snapshots.recreate": "Znova vytvoriť z uloženej konfigurácie",
   "snapshots.recreateConfirm": "Znova vytvoriť tento kontajner z jeho uloženej konfigurácie? Vytvorí sa a spustí podľa uloženej definície (obraz, prostredie, porty, zväzky).",
   "snapshots.configOnlyHint": "Záloha iba konfigurácie: definícia kontajnera je uložená, ale nemá dátové priečinky na zálohovanie. Ak kontajner odstrániš, objaví sa v časti „Nenainštalovaný“, odkiaľ ho môžeš znova vytvoriť z tejto konfigurácie.",
+  "snapshots.outsideHostHint": "Ukladá sa iba definícia tohto kontajnera. Jeho dáta sú mimo Host Data, ktoré BombVault nemôže čítať. V TrueNAS sú dáta na úložisku ixVolume v /mnt/.ix-apps a sú nedostupné; daj aplikácii radšej cestu na hostiteľovi pre jej dáta.",
 
   // Snapshot tags + compare
   "snapshot.addTag": "Pridať značku",
@@ -885,6 +886,7 @@ const sk: Partial<Translations> = {
   "stophook.remove": "Odstrániť {name}",
   "export.exportedTo": "Exportované do:",
   "backup.configOnly": "Iba konfigurácia, bez dátových priečinkov (definícia uložená na opätovné vytvorenie)",
+  "backup.outsideHost": "Definícia je uložená, ale dáta sú mimo Host Data a neboli zálohované",
 
   // Per-container exclude patterns
   "excludes.title": "Vzory vylúčenia",
@@ -1022,6 +1024,7 @@ const sk: Partial<Translations> = {
   "runReason.dbimportRollback": "import zlyhal a staré dáta sa nepodarilo vrátiť späť",
   "runReason.dbimportFailed": "nástroj na import ohlásil chybu",
   "runReason.dbimportKeptOld": "predchádzajúci priečinok s dátami zostal zachovaný",
+  "runReason.dataOutsideHost": "dáta sú mimo Host Data a neboli zálohované",
   "runReason.dbimportErrors": "one={n} chyba, predchádzajúci priečinok s dátami zostal zachovaný|few={n} chyby, predchádzajúci priečinok s dátami zostal zachovaný|many={n} chyby, predchádzajúci priečinok s dátami zostal zachovaný|other={n} chýb, predchádzajúci priečinok s dátami zostal zachovaný",
   "runReason.dbimportAppsDown": "one=túto aplikáciu sa nepodarilo znova spustiť: {apps}|few=tieto aplikácie sa nepodarilo znova spustiť: {apps}|many=tieto aplikácie sa nepodarilo znova spustiť: {apps}|other=tieto aplikácie sa nepodarilo znova spustiť: {apps}",
   "runReason.dbimportAppsStopped": "one=táto aplikácia zostane zastavená, kým sa nevyrieši priečinok s dátami: {apps}|few=tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}|many=tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}|other=tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}",

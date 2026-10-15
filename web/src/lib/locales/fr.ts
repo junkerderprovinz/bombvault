@@ -539,6 +539,7 @@ const fr: Partial<Translations> = {
   "snapshots.recreate": "Recréer depuis la config enregistrée",
   "snapshots.recreateConfirm": "Recréer ce conteneur à partir de sa configuration enregistrée ? Il est créé et démarré depuis la définition stockée.",
   "snapshots.configOnlyHint": "Sauvegarde config seule : la définition du conteneur est enregistrée, mais il n'a pas de dossiers de données à sauvegarder. Si vous le supprimez, il apparaît dans « Non installé », où vous pouvez le recréer depuis cette config.",
+  "snapshots.outsideHostHint": "Seule la définition de ce conteneur est enregistrée. Ses données sont hors de Host Data, que BombVault ne peut pas lire. Sous TrueNAS, les données du stockage ixVolume se trouvent dans /mnt/.ix-apps et sont inaccessibles ; donne plutôt à l'application un chemin de l'hôte pour ses données.",
 
   // File-level restore
   "files.restored": "Restauré",
@@ -866,6 +867,7 @@ const fr: Partial<Translations> = {
   "stophook.remove": "Supprimer {name}",
   "export.exportedTo": "Exporté vers :",
   "backup.configOnly": "Configuration uniquement, aucun dossier de données (définition enregistrée pour recréation)",
+  "backup.outsideHost": "Définition enregistrée, mais les données sont hors de Host Data et n'ont pas été sauvegardées",
 
   // Backups — delete all
   "snapshots.deleteAll": "Supprimer toutes les sauvegardes",
@@ -1032,6 +1034,7 @@ const fr: Partial<Translations> = {
   "runReason.dbimportRollback": "l'import a échoué et les anciennes données n'ont pas pu être remises en place",
   "runReason.dbimportFailed": "l'outil d'import a signalé une erreur",
   "runReason.dbimportKeptOld": "le dossier de données précédent a été conservé",
+  "runReason.dataOutsideHost": "les données sont hors de Host Data et n'ont pas été sauvegardées",
   "runReason.dbimportErrors": "one={n} erreur, le dossier de données précédent a été conservé|other={n} erreurs, le dossier de données précédent a été conservé",
   "runReason.dbimportAppsDown": "one=cette application n'a pas pu redémarrer : {apps}|many=ces applications n'ont pas pu redémarrer : {apps}|other=ces applications n'ont pas pu redémarrer : {apps}",
   "runReason.dbimportAppsStopped": "one=cette application reste arrêtée tant que le dossier de données n'est pas réglé : {apps}|many=ces applications restent arrêtées tant que le dossier de données n'est pas réglé : {apps}|other=ces applications restent arrêtées tant que le dossier de données n'est pas réglé : {apps}",

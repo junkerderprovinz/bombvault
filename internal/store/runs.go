@@ -330,6 +330,11 @@ const (
 	// exactly when the dump's own run could not be started.
 	NoteDBDumpNotRecorded = "database dump skipped: its run could not be recorded"
 
+	// NoteDataOutsideHost names after ": " the data folders of a container that
+	// BombVault cannot reach through Host Data, so its backup holds the
+	// definition only.
+	NoteDataOutsideHost = "data folders outside Host Data were not backed up"
+
 	NoteDBImportKeptOld = "database imported; the previous data folder was kept"
 	NoteDBImportErrors  = "database imported with errors"
 )
@@ -1556,6 +1561,9 @@ type RunBrief struct {
 	Kind      string `json:"kind"`
 	Status    string `json:"status"`
 	StartedAt int64  `json:"startedAt"`
+	// Note is what a successful run recorded beside its success, empty for
+	// every other run.
+	Note string `json:"note"`
 }
 
 // recentRunsQuery reads the newest runs of each target and kind off
@@ -1563,9 +1571,10 @@ type RunBrief struct {
 // those. A window over the bare table would read every run there is.
 func recentRunsQuery(series string) string {
 	return `
-	SELECT target_id, id, kind, status, started_at
+	SELECT target_id, id, kind, status, started_at, note
 	FROM (
 		SELECT r.target_id, r.id, r.kind, r.status, r.started_at,
+		       CASE WHEN r.status = 'success' THEN COALESCE(r.error, '') ELSE '' END AS note,
 		       row_number() OVER (PARTITION BY r.target_id ORDER BY r.started_at DESC, r.rowid DESC) AS rank
 		FROM (` + series + `) AS series
 		JOIN runs AS r ON r.rowid IN (
@@ -1608,7 +1617,7 @@ func (r *Repo) recentRuns(op, query string, args ...any) (map[string][]RunBrief,
 	for rows.Next() {
 		var target string
 		var run RunBrief
-		if sErr := rows.Scan(&target, &run.ID, &run.Kind, &run.Status, &run.StartedAt); sErr != nil {
+		if sErr := rows.Scan(&target, &run.ID, &run.Kind, &run.Status, &run.StartedAt, &run.Note); sErr != nil {
 			return nil, fmt.Errorf("%s: %w", op, sErr)
 		}
 		out[target] = append(out[target], run)

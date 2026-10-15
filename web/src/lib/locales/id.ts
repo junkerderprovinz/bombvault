@@ -157,6 +157,7 @@ const id: Partial<Translations> = {
   "snapshots.recreate": "Buat ulang dari konfigurasi tersimpan",
   "snapshots.recreateConfirm": "Buat ulang container ini dari konfigurasi tersimpannya? Container dibuat dan dijalankan dari definisi yang tersimpan (image, environment, port, volume).",
   "snapshots.configOnlyHint": "Cadangan hanya konfigurasi: definisi container tersimpan, tetapi tidak ada folder data untuk dicadangkan. Jika Anda menghapus container, ia muncul di bawah \"Tidak terpasang\", tempat Anda dapat membuatnya ulang dari konfigurasi ini.",
+  "snapshots.outsideHostHint": "Hanya definisi kontainer ini yang disimpan. Datanya berada di luar Host Data, yang tidak dapat dibaca BombVault. Di TrueNAS, data pada penyimpanan ixVolume berada di /mnt/.ix-apps dan tidak dapat dijangkau; berikan aplikasi path host untuk datanya.",
 
   // Snapshot tags + compare
   "snapshot.addTag": "Tambah tag",
@@ -885,6 +886,7 @@ const id: Partial<Translations> = {
   "stophook.remove": "Hapus {name}",
   "export.exportedTo": "Diekspor ke:",
   "backup.configOnly": "Hanya konfigurasi, tanpa folder data (definisi disimpan untuk pembuatan ulang)",
+  "backup.outsideHost": "Definisi disimpan, tetapi data berada di luar Host Data dan tidak dicadangkan",
 
   // Per-container exclude patterns
   "excludes.title": "Pola pengecualian",
@@ -1022,6 +1024,7 @@ const id: Partial<Translations> = {
   "runReason.dbimportRollback": "impor gagal dan data lama tidak bisa dikembalikan ke tempatnya",
   "runReason.dbimportFailed": "alat impor melaporkan sebuah kesalahan",
   "runReason.dbimportKeptOld": "folder data sebelumnya disimpan",
+  "runReason.dataOutsideHost": "data berada di luar Host Data dan tidak dicadangkan",
   "runReason.dbimportErrors": "{n} kesalahan, folder data sebelumnya disimpan",
   "runReason.dbimportAppsDown": "aplikasi berikut tidak bisa dinyalakan lagi: {apps}",
   "runReason.dbimportAppsStopped": "aplikasi berikut tetap berhenti sampai folder data dibereskan: {apps}",

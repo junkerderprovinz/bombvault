@@ -4,6 +4,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isOwnReason,
+  dataOutsideHost,
   isWarningNote,
   runReason,
   runReasonParts,
@@ -229,6 +230,22 @@ describe("RunReasonText", () => {
   it("renders a reason without a detail as bare text", () => {
     const parts = children(RunReasonText({ reason: "database dump failed: no progress", t }));
     expect(parts).toEqual(["runReason.dbdumpStalled"]);
+  });
+});
+
+describe("data outside Host Data", () => {
+  const note = "data folders outside Host Data were not backed up: /mnt/.ix-apps/app_mounts/nc/data";
+
+  it("is a warning on a successful run", () => {
+    expect(isWarningNote(note)).toBe(true);
+    expect(dataOutsideHost(note)).toBe(true);
+    expect(dataOutsideHost("database dump covers one database only")).toBe(false);
+  });
+
+  it("is translated up to the paths", () => {
+    const parts = runReasonParts(note, t);
+    expect(parts.head).toBe("runReason.dataOutsideHost");
+    expect(parts.detail).toBe("/mnt/.ix-apps/app_mounts/nc/data");
   });
 });
 

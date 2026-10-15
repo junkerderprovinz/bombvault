@@ -157,6 +157,7 @@ const et: Partial<Translations> = {
   "snapshots.recreate": "Loo uuesti salvestatud seadistusest",
   "snapshots.recreateConfirm": "Kas luua see konteiner uuesti tema salvestatud seadistusest? See luuakse ja käivitatakse salvestatud definitsiooni järgi (tõmmis, keskkond, pordid, kettad).",
   "snapshots.configOnlyHint": "Ainult seadistuse varundus: konteineri definitsioon on salvestatud, kuid tal pole andmekaustu varundamiseks. Kui kustutad konteineri, ilmub see jaotisesse „Pole paigaldatud”, kust saad selle sellest seadistusest uuesti luua.",
+  "snapshots.outsideHostHint": "Salvestatud on ainult selle konteineri definitsioon. Selle andmed asuvad väljaspool Host Datat, mida BombVault ei saa lugeda. TrueNAS-is asuvad ixVolume'i salvestusruumi andmed asukohas /mnt/.ix-apps ja need pole kättesaadavad; anna rakendusele selle andmete jaoks hosti tee.",
 
   // Snapshot tags + compare
   "snapshot.addTag": "Lisa silt",
@@ -885,6 +886,7 @@ const et: Partial<Translations> = {
   "stophook.remove": "Eemalda {name}",
   "export.exportedTo": "Eksporditud asukohta:",
   "backup.configOnly": "Ainult seadistus, andmekaustu pole (definitsioon salvestatud uuestiloomiseks)",
+  "backup.outsideHost": "Definitsioon salvestatud, kuid andmed asuvad väljaspool Host Datat ega ole varundatud",
 
   // Per-container exclude patterns
   "excludes.title": "Väljajätumustrid",
@@ -1022,6 +1024,7 @@ const et: Partial<Translations> = {
   "runReason.dbimportRollback": "import ebaõnnestus ja vanu andmeid ei saanud tagasi panna",
   "runReason.dbimportFailed": "imporditööriist teatas veast",
   "runReason.dbimportKeptOld": "varasem andmekaust jäeti alles",
+  "runReason.dataOutsideHost": "andmed asuvad väljaspool Host Datat ega ole varundatud",
   "runReason.dbimportErrors": "{n} viga, varasem andmekaust jäeti alles",
   "runReason.dbimportAppsDown": "one=seda rakendust ei õnnestunud uuesti käivitada: {apps}|other=neid rakendusi ei õnnestunud uuesti käivitada: {apps}",
   "runReason.dbimportAppsStopped": "one=see rakendus jääb peatatuks, kuni andmekaust on korda tehtud: {apps}|other=need rakendused jäävad peatatuks, kuni andmekaust on korda tehtud: {apps}",

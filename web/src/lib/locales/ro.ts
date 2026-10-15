@@ -536,6 +536,7 @@ const ro: Partial<Translations> = {
   "snapshots.recreate": "Recreează din configurația salvată",
   "snapshots.recreateConfirm": "Recreezi acest container din configurația salvată? Este creat și pornit din definiția stocată.",
   "snapshots.configOnlyHint": "Copie de rezervă doar cu configurația: definiția containerului este salvată, dar nu are foldere de date pentru snapshot. Dacă îl ștergi, apare la „Neinstalat“, de unde îl poți recrea din această configurație.",
+  "snapshots.outsideHostHint": "Se salvează doar definiția acestui container. Datele lui sunt în afara Host Data, pe care BombVault nu o poate citi. Pe TrueNAS, datele din stocarea ixVolume se află în /mnt/.ix-apps și nu pot fi accesate; dă în schimb aplicației o cale a gazdei pentru datele ei.",
 
   // File-level restore
   "files.restored": "Restaurat",
@@ -863,6 +864,7 @@ const ro: Partial<Translations> = {
   "stophook.remove": "Elimină {name}",
   "export.exportedTo": "Exportat în:",
   "backup.configOnly": "Doar configurație, fără foldere de date (definiția salvată pentru recreare)",
+  "backup.outsideHost": "Definiția a fost salvată, dar datele sunt în afara Host Data și nu au fost salvate",
 
   // Encryption-key recovery kit
   "recovery.title": "Kit de recuperare",
@@ -1030,6 +1032,7 @@ const ro: Partial<Translations> = {
   "runReason.dbimportRollback": "importul a eșuat și datele vechi nu au putut fi puse la loc",
   "runReason.dbimportFailed": "instrumentul de import a raportat o eroare",
   "runReason.dbimportKeptOld": "dosarul de date anterior a fost păstrat",
+  "runReason.dataOutsideHost": "datele sunt în afara Host Data și nu au fost salvate",
   "runReason.dbimportErrors": "one={n} eroare, dosarul de date anterior a fost păstrat|few={n} erori, dosarul de date anterior a fost păstrat|other={n} de erori, dosarul de date anterior a fost păstrat",
   "runReason.dbimportAppsDown": "one=această aplicație nu a putut fi pornită din nou: {apps}|few=aceste aplicații nu au putut fi pornite din nou: {apps}|other=aceste aplicații nu au putut fi pornite din nou: {apps}",
   "runReason.dbimportAppsStopped": "one=această aplicație rămâne oprită până se rezolvă folderul de date: {apps}|few=aceste aplicații rămân oprite până se rezolvă folderul de date: {apps}|other=aceste aplicații rămân oprite până se rezolvă folderul de date: {apps}",

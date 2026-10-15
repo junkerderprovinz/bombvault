@@ -539,6 +539,7 @@ const da: Partial<Translations> = {
   "snapshots.recreate": "Genskab fra gemt konfiguration",
   "snapshots.recreateConfirm": "Genskab denne container fra dens gemte konfiguration? Den oprettes og startes ud fra den gemte definition.",
   "snapshots.configOnlyHint": "Kun-konfiguration-sikkerhedskopi: containerens definition er gemt, men den har ingen datamapper at tage snapshot af. Sletter du containeren, vises den under \"Ikke installeret\", hvor du kan genskabe den fra denne konfiguration.",
+  "snapshots.outsideHostHint": "Kun denne containers definition er gemt. Dens data ligger uden for Host Data, som BombVault ikke kan læse. På TrueNAS ligger data på ixVolume-lager under /mnt/.ix-apps og kan ikke nås; giv appen en værtssti til dens data i stedet.",
 
   // File-level restore
   "files.restored": "Gendannet",
@@ -866,6 +867,7 @@ const da: Partial<Translations> = {
   "stophook.remove": "Fjern {name}",
   "export.exportedTo": "Eksporteret til:",
   "backup.configOnly": "Kun konfiguration: ingen datamapper (definition gemt til genskabelse)",
+  "backup.outsideHost": "Definitionen er gemt, men dataene ligger uden for Host Data og blev ikke sikkerhedskopieret",
 
   // Backups extra (delete all + diff)
   "snapshots.deleteAll": "Slet alle sikkerhedskopier",
@@ -1040,6 +1042,7 @@ const da: Partial<Translations> = {
   "runReason.dbimportRollback": "importen mislykkedes, og de gamle data kunne ikke lægges tilbage",
   "runReason.dbimportFailed": "importværktøjet meldte en fejl",
   "runReason.dbimportKeptOld": "den tidligere datamappe blev beholdt",
+  "runReason.dataOutsideHost": "dataene ligger uden for Host Data og blev ikke sikkerhedskopieret",
   "runReason.dbimportErrors": "{n} fejl, den tidligere datamappe blev beholdt",
   "runReason.dbimportAppsDown": "one=denne app kunne ikke startes igen: {apps}|other=disse apps kunne ikke startes igen: {apps}",
   "runReason.dbimportAppsStopped": "one=denne app forbliver stoppet, indtil datamappen er bragt i orden: {apps}|other=disse apps forbliver stoppet, indtil datamappen er bragt i orden: {apps}",

@@ -3,6 +3,7 @@
 // list is filtered and ordered.
 
 import type { BackupItem } from "./api";
+import { isWarningNote } from "./runReason";
 import { ENTRY_KIND, ENTRY_LIST_PATH, entryListPath, entryPath, progressKey, type EntryKind } from "./backupEntry";
 import type { ProgressState } from "./progress";
 
@@ -170,7 +171,7 @@ export function runStrip(item: BackupItem, hasAnomaly: (runId: string) => boolea
     .slice(0, STRIP_LENGTH)
     .map((run): RunTone => {
       if (hasAnomaly(run.id)) return "warn";
-      if (run.status === "success") return "ok";
+      if (run.status === "success") return isWarningNote(run.note) ? "warn" : "ok";
       return run.status === "failed" ? "fail" : "none";
     })
     .reverse();

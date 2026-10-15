@@ -539,6 +539,7 @@ const es: Partial<Translations> = {
   "snapshots.recreate": "Recrear desde la config guardada",
   "snapshots.recreateConfirm": "¿Recrear este contenedor desde su configuración guardada? Se crea y se inicia a partir de la definición almacenada.",
   "snapshots.configOnlyHint": "Copia solo de configuración: la definición del contenedor está guardada, pero no tiene carpetas de datos que respaldar. Si lo eliminas, aparece en \"No instalado\", donde puedes recrearlo desde esta configuración.",
+  "snapshots.outsideHostHint": "Solo se guarda la definición de este contenedor. Sus datos están fuera de Host Data, que BombVault no puede leer. En TrueNAS, los datos del almacenamiento ixVolume están en /mnt/.ix-apps y no son accesibles; da a la aplicación una ruta del host para sus datos.",
 
   // File-level restore
   "files.restored": "Restaurado",
@@ -874,6 +875,7 @@ const es: Partial<Translations> = {
   "stophook.remove": "Eliminar {name}",
   "export.exportedTo": "Exportado a:",
   "backup.configOnly": "Solo configuración, sin carpetas de datos (definición guardada para recrear)",
+  "backup.outsideHost": "Definición guardada, pero los datos están fuera de Host Data y no se copiaron",
 
   // Backups — delete all
   "snapshots.deleteAll": "Eliminar todas las copias",
@@ -1038,6 +1040,7 @@ const es: Partial<Translations> = {
   "runReason.dbimportRollback": "la importación falló y los datos anteriores no se pudieron devolver a su sitio",
   "runReason.dbimportFailed": "la herramienta de importación informó de un error",
   "runReason.dbimportKeptOld": "se conservó la carpeta de datos anterior",
+  "runReason.dataOutsideHost": "los datos están fuera de Host Data y no se copiaron",
   "runReason.dbimportErrors": "one={n} error, se conservó la carpeta de datos anterior|other={n} errores, se conservó la carpeta de datos anterior",
   "runReason.dbimportAppsDown": "one=esta aplicación no se pudo volver a iniciar: {apps}|many=estas aplicaciones no se pudieron volver a iniciar: {apps}|other=estas aplicaciones no se pudieron volver a iniciar: {apps}",
   "runReason.dbimportAppsStopped": "one=esta aplicación sigue detenida hasta que se resuelva la carpeta de datos: {apps}|many=estas aplicaciones siguen detenidas hasta que se resuelva la carpeta de datos: {apps}|other=estas aplicaciones siguen detenidas hasta que se resuelva la carpeta de datos: {apps}",

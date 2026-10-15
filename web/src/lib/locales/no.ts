@@ -536,6 +536,7 @@ const no: Partial<Translations> = {
   "snapshots.recreate": "Gjenopprett fra lagret konfig",
   "snapshots.recreateConfirm": "Gjenopprette denne containeren fra dens lagrede konfigurasjon? Den opprettes og startes fra den lagrede definisjonen.",
   "snapshots.configOnlyHint": "Kun-konfig-sikkerhetskopi: containerens definisjon er lagret, men den har ingen datamapper å ta øyeblikksbilde av. Sletter du den, vises den under \"Ikke installert\", der du kan gjenopprette den fra denne konfigurasjonen.",
+  "snapshots.outsideHostHint": "Bare definisjonen til denne containeren lagres. Dataene ligger utenfor Host Data, som BombVault ikke kan lese. På TrueNAS ligger data på ixVolume-lagring under /mnt/.ix-apps og er utilgjengelige; gi heller appen en vertssti til dataene sine.",
 
   // File-level restore
   "files.restored": "Gjenopprettet",
@@ -863,6 +864,7 @@ const no: Partial<Translations> = {
   "stophook.remove": "Fjern {name}",
   "export.exportedTo": "Eksportert til:",
   "backup.configOnly": "Kun konfigurasjon, ingen datamapper (definisjon lagret for gjenoppretting)",
+  "backup.outsideHost": "Definisjonen er lagret, men dataene ligger utenfor Host Data og ble ikke sikkerhetskopiert",
 
   // Backups (delete all)
   "snapshots.deleteAll": "Slett alle sikkerhetskopier",
@@ -1029,6 +1031,7 @@ const no: Partial<Translations> = {
   "runReason.dbimportRollback": "importen mislyktes og de gamle dataene kunne ikke legges tilbake",
   "runReason.dbimportFailed": "importverktøyet meldte en feil",
   "runReason.dbimportKeptOld": "den forrige datamappen ble beholdt",
+  "runReason.dataOutsideHost": "dataene ligger utenfor Host Data og ble ikke sikkerhetskopiert",
   "runReason.dbimportErrors": "{n} feil, den forrige datamappen ble beholdt",
   "runReason.dbimportAppsDown": "one=denne appen kunne ikke startes igjen: {apps}|other=disse appene kunne ikke startes igjen: {apps}",
   "runReason.dbimportAppsStopped": "one=denne appen forblir stoppet til datamappen er ordnet: {apps}|other=disse appene forblir stoppet til datamappen er ordnet: {apps}",

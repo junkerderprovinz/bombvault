@@ -157,6 +157,7 @@ const is: Partial<Translations> = {
   "snapshots.recreate": "Endurgera úr vistaðri stillingu",
   "snapshots.recreateConfirm": "Endurgera þennan gám úr vistaðri stillingu hans? Hann er búinn til og ræstur samkvæmt vistuðu skilgreiningunni (ímynd, umhverfi, gáttir, gagnahirslur).",
   "snapshots.configOnlyHint": "Afrit sem er aðeins stilling: skilgreining gámsins er vistuð, en hann hefur enga gagnamöppu til að afrita. Ef þú eyðir gáminum birtist hann undir „Ekki uppsettur“, þaðan sem þú getur endurgert hann úr þessari stillingu.",
+  "snapshots.outsideHostHint": "Aðeins skilgreining þessa íláts er vistuð. Gögn þess eru utan Host Data, sem BombVault getur ekki lesið. Á TrueNAS eru gögn á ixVolume-geymslu undir /mnt/.ix-apps og eru utan seilingar; gefðu forritinu frekar vélarslóð fyrir gögnin sín.",
 
   // Snapshot tags + compare
   "snapshot.addTag": "Bæta við merki",
@@ -885,6 +886,7 @@ const is: Partial<Translations> = {
   "stophook.remove": "Fjarlægja {name}",
   "export.exportedTo": "Flutt út í:",
   "backup.configOnly": "Aðeins stilling, engar gagnamöppur (skilgreining vistuð til endurgerðar)",
+  "backup.outsideHost": "Skilgreiningin er vistuð en gögnin eru utan Host Data og voru ekki afrituð",
 
   // Per-container exclude patterns
   "excludes.title": "Undanskilningarmynstur",
@@ -1022,6 +1024,7 @@ const is: Partial<Translations> = {
   "runReason.dbimportRollback": "innflutningurinn brást og ekki tókst að koma gömlu gögnunum á sinn stað",
   "runReason.dbimportFailed": "innflutningstólið tilkynnti villu",
   "runReason.dbimportKeptOld": "fyrri gagnamöppunni var haldið",
+  "runReason.dataOutsideHost": "gögnin eru utan Host Data og voru ekki afrituð",
   "runReason.dbimportErrors": "one={n} villa, fyrri gagnamöppunni var haldið|other={n} villur, fyrri gagnamöppunni var haldið",
   "runReason.dbimportAppsDown": "one=ekki tókst að ræsa þetta forrit aftur: {apps}|other=ekki tókst að ræsa þessi forrit aftur: {apps}",
   "runReason.dbimportAppsStopped": "one=þetta forrit verður áfram stöðvað þar til gengið hefur verið frá gagnamöppunni: {apps}|other=þessi forrit verða áfram stöðvuð þar til gengið hefur verið frá gagnamöppunni: {apps}",

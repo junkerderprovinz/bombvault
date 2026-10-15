@@ -47,6 +47,16 @@ export const RESTORED_WITHOUT_RUNTIME = "restored without the GPU or runtime the
  *  ": " and the containers. Keep in step with NoteRestoredWithoutLinks. */
 export const RESTORED_WITHOUT_LINKS = "restored without links to containers that are not running";
 
+/** The note of a container backup whose data folders sit outside Host Data,
+ *  followed by ": " and their host paths. Keep in step with NoteDataOutsideHost. */
+export const DATA_OUTSIDE_HOST = "data folders outside Host Data were not backed up";
+
+/** Whether a run's note says the container's data was out of reach. */
+export function dataOutsideHost(raw: string | null | undefined): boolean {
+  const text = raw?.trim() ?? "";
+  return text === DATA_OUTSIDE_HOST || text.startsWith(DATA_OUTSIDE_HOST + ": ");
+}
+
 /** Whether a restore failed because this host lacks the GPU or runtime of the
  *  container. */
 export function isRuntimeRefusal(raw: string | null | undefined): boolean {
@@ -96,6 +106,7 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   "database import failed before it started, the old data is back in place": "runReason.dbimportPrepare",
   "database import failed and the old data could not be put back": "runReason.dbimportRollback",
   "database import failed: the import tool reported an error": "runReason.dbimportFailed",
+  [DATA_OUTSIDE_HOST]: "runReason.dataOutsideHost",
   "database imported; the previous data folder was kept": "runReason.dbimportKeptOld",
   "database imported with errors": "runReason.dbimportErrors",
   [RESTORE_NO_RUNTIME]: "runReason.restoreNoRuntime",
@@ -166,6 +177,7 @@ const WARNING_NOTES = [
   "database dump covers one database only",
   "database dump skipped: its run could not be recorded",
   "database imported with errors",
+  DATA_OUTSIDE_HOST,
 ];
 
 /** Whether a note of a successful run reports something worth acting on. */

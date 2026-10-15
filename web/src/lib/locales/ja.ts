@@ -538,6 +538,7 @@ const ja: Partial<Translations> = {
   "snapshots.recreate": "保存した設定から再作成",
   "snapshots.recreateConfirm": "このコンテナを保存した設定から再作成しますか？保存された定義から作成して起動します。",
   "snapshots.configOnlyHint": "設定のみのバックアップ: コンテナの定義は保存されていますが、バックアップするデータフォルダはありません。削除すると「未インストール」に表示され、この設定から再作成できます。",
+  "snapshots.outsideHostHint": "保存されるのはこのコンテナーの定義だけです。データは Host Data の外にあり、BombVault は読み取れません。TrueNAS では ixVolume ストレージのデータが /mnt/.ix-apps 以下にあり、アクセスできません。代わりに、アプリのデータにホストのパスを指定してください。",
 
   "files.restored": "復元しました",
   "files.restoreConfirm": "選択したファイルをそれぞれの元の場所に復元しますか？既存のファイルは上書きされます。",
@@ -857,6 +858,7 @@ const ja: Partial<Translations> = {
   "stophook.remove": "{name} を削除",
   "export.exportedTo": "エクスポート先:",
   "backup.configOnly": "設定のみ、データフォルダなし (再作成用に定義を保存しました)",
+  "backup.outsideHost": "定義は保存されましたが、データは Host Data の外にあり、バックアップされていません",
 
   // Backups — delete all
   "snapshots.deleteAll": "バックアップをすべて削除",
@@ -1023,6 +1025,7 @@ const ja: Partial<Translations> = {
   "runReason.dbimportRollback": "インポートが失敗し、以前のデータを元に戻せませんでした",
   "runReason.dbimportFailed": "インポートツールがエラーを報告しました",
   "runReason.dbimportKeptOld": "以前のデータフォルダーを残しました",
+  "runReason.dataOutsideHost": "データは Host Data の外にあり、バックアップされていません",
   "runReason.dbimportErrors": "エラー {n} 件、以前のデータフォルダーを残しました",
   "runReason.dbimportAppsDown": "次のアプリを再び起動できませんでした: {apps}",
   "runReason.dbimportAppsStopped": "データフォルダーが片付くまで、次のアプリは停止したままです: {apps}",

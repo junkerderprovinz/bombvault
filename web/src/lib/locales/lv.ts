@@ -157,6 +157,7 @@ const lv: Partial<Translations> = {
   "snapshots.recreate": "Izveidot no jauna no saglabātās konfigurācijas",
   "snapshots.recreateConfirm": "Izveidot šo konteineru no jauna, izmantojot tā saglabāto konfigurāciju? Tas tiek izveidots un palaists atbilstoši saglabātajai definīcijai (attēls, vide, porti, sējumi).",
   "snapshots.configOnlyHint": "Rezerves kopija tikai ar konfigurāciju: konteinera definīcija ir saglabāta, taču tai nav datu mapju, ko kopēt. Ja izdzēsīsiet konteineru, tas parādīsies sadaļā „Nav instalēts”, no kurienes to varēsiet izveidot no jauna, izmantojot šo konfigurāciju.",
+  "snapshots.outsideHostHint": "Tiek saglabāta tikai šī konteinera definīcija. Tā dati atrodas ārpus Host Data, ko BombVault nevar nolasīt. Sistēmā TrueNAS ixVolume krātuves dati atrodas mapē /mnt/.ix-apps un nav pieejami; tā vietā norādi lietotnei resursdatora ceļu tās datiem.",
 
   // Snapshot tags + compare
   "snapshot.addTag": "Pievienot birku",
@@ -885,6 +886,7 @@ const lv: Partial<Translations> = {
   "stophook.remove": "Noņemt {name}",
   "export.exportedTo": "Eksportēts uz:",
   "backup.configOnly": "Tikai konfigurācija, bez datu mapēm (definīcija saglabāta atkārtotai izveidei)",
+  "backup.outsideHost": "Definīcija saglabāta, bet dati atrodas ārpus Host Data, un tiem nav izveidota rezerves kopija",
 
   // Per-container exclude patterns
   "excludes.title": "Izslēgšanas modeļi",
@@ -1022,6 +1024,7 @@ const lv: Partial<Translations> = {
   "runReason.dbimportRollback": "imports neizdevās, un vecos datus neizdevās likt atpakaļ",
   "runReason.dbimportFailed": "importa rīks ziņoja par kļūdu",
   "runReason.dbimportKeptOld": "iepriekšējā datu mape tika paturēta",
+  "runReason.dataOutsideHost": "dati atrodas ārpus Host Data, un tiem nav izveidota rezerves kopija",
   "runReason.dbimportErrors": "zero={n} kļūdu, iepriekšējā datu mape tika paturēta|one={n} kļūda, iepriekšējā datu mape tika paturēta|other={n} kļūdas, iepriekšējā datu mape tika paturēta",
   "runReason.dbimportAppsDown": "zero=šīs lietotnes neizdevās atkal palaist: {apps}|one=šo lietotni neizdevās atkal palaist: {apps}|other=šīs lietotnes neizdevās atkal palaist: {apps}",
   "runReason.dbimportAppsStopped": "zero=šīs lietotnes paliek apturētas, līdz datu mape būs sakārtota: {apps}|one=šī lietotne paliek apturēta, līdz datu mape būs sakārtota: {apps}|other=šīs lietotnes paliek apturētas, līdz datu mape būs sakārtota: {apps}",

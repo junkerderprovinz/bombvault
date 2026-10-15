@@ -539,6 +539,7 @@ const tr: Partial<Translations> = {
   "snapshots.recreate": "Kayıtlı yapılandırmadan yeniden oluştur",
   "snapshots.recreateConfirm": "Bu konteyner kayıtlı yapılandırmasından yeniden oluşturulsun mu? Saklanan tanımdan oluşturulup başlatılır.",
   "snapshots.configOnlyHint": "Yalnızca yapılandırma yedeği: konteynerin tanımı kaydedilir, ancak yedeklenecek veri klasörü yoktur. Silersen \"Yüklü değil\" altında görünür ve bu yapılandırmadan yeniden oluşturabilirsin.",
+  "snapshots.outsideHostHint": "Yalnızca bu kapsayıcının tanımı kaydedilir. Verileri, BombVault'un okuyamadığı Host Data dışındadır. TrueNAS'ta ixVolume depolamasındaki veriler /mnt/.ix-apps altındadır ve erişilemez; bunun yerine uygulamaya verileri için bir ana makine yolu ver.",
 
   // File-level restore
   "files.restored": "Geri yüklendi",
@@ -866,6 +867,7 @@ const tr: Partial<Translations> = {
   "stophook.remove": "{name} kaldır",
   "export.exportedTo": "Şuraya aktarıldı:",
   "backup.configOnly": "Yalnızca yapılandırma, veri klasörü yok (tanım yeniden oluşturma için kaydedildi)",
+  "backup.outsideHost": "Tanım kaydedildi, ancak veriler Host Data dışında ve yedeklenmedi",
 
   // Backups — delete all
   "snapshots.deleteAll": "Tüm yedekleri sil",
@@ -1040,6 +1042,7 @@ const tr: Partial<Translations> = {
   "runReason.dbimportRollback": "içe aktarma başarısız oldu ve eski veriler yerine konulamadı",
   "runReason.dbimportFailed": "içe aktarma aracı bir hata bildirdi",
   "runReason.dbimportKeptOld": "önceki veri klasörü korundu",
+  "runReason.dataOutsideHost": "veriler Host Data dışında ve yedeklenmedi",
   "runReason.dbimportErrors": "{n} hata, önceki veri klasörü korundu",
   "runReason.dbimportAppsDown": "one=şu uygulama yeniden başlatılamadı: {apps}|other=şu uygulamalar yeniden başlatılamadı: {apps}",
   "runReason.dbimportAppsStopped": "one=veri klasörü düzene girene kadar şu uygulama durdurulmuş kalır: {apps}|other=veri klasörü düzene girene kadar şu uygulamalar durdurulmuş kalır: {apps}",

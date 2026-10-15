@@ -157,6 +157,7 @@ const sl: Partial<Translations> = {
   "snapshots.recreate": "Ponovno ustvari iz shranjene konfiguracije",
   "snapshots.recreateConfirm": "Ponovno ustvarim ta vsebnik iz njegove shranjene konfiguracije? Ustvari in zažene se iz shranjene definicije (slika, okolje, vrata, nosilci).",
   "snapshots.configOnlyHint": "Varnostna kopija samo konfiguracije: definicija vsebnika je shranjena, vendar nima podatkovnih map za varnostno kopijo. Če vsebnik izbrišeš, se prikaže pod \"Ni nameščeno\", kjer ga lahko ponovno ustvariš iz te konfiguracije.",
+  "snapshots.outsideHostHint": "Shrani se samo definicija tega vsebnika. Njegovi podatki so zunaj Host Data, ki ga BombVault ne more brati. V TrueNAS so podatki v shrambi ixVolume v /mnt/.ix-apps in niso dosegljivi; aplikaciji raje določi pot gostitelja za njene podatke.",
 
   // Snapshot tags + compare (diff)
   "snapshot.addTag": "Dodaj oznako",
@@ -885,6 +886,7 @@ const sl: Partial<Translations> = {
   "stophook.remove": "Odstrani {name}",
   "export.exportedTo": "Izvoženo v:",
   "backup.configOnly": "Samo konfiguracija, brez podatkovnih map (definicija shranjena za ponovno izdelavo)",
+  "backup.outsideHost": "Definicija je shranjena, vendar so podatki zunaj Host Data in niso bili varnostno kopirani",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Vzorci za izključitev",
@@ -1020,6 +1022,7 @@ const sl: Partial<Translations> = {
   "runReason.dbimportRollback": "uvoz ni uspel in starih podatkov ni bilo mogoče vrniti na mesto",
   "runReason.dbimportFailed": "orodje za uvoz je javilo napako",
   "runReason.dbimportKeptOld": "prejšnja mapa s podatki je bila ohranjena",
+  "runReason.dataOutsideHost": "podatki so zunaj Host Data in niso bili varnostno kopirani",
   "runReason.dbimportErrors": "one={n} napaka, prejšnja mapa s podatki je bila ohranjena|two={n} napaki, prejšnja mapa s podatki je bila ohranjena|few={n} napake, prejšnja mapa s podatki je bila ohranjena|other={n} napak, prejšnja mapa s podatki je bila ohranjena",
   "runReason.dbimportAppsDown": "one=te aplikacije ni bilo mogoče znova zagnati: {apps}|two=teh dveh aplikacij ni bilo mogoče znova zagnati: {apps}|few=teh aplikacij ni bilo mogoče znova zagnati: {apps}|other=teh aplikacij ni bilo mogoče znova zagnati: {apps}",
   "runReason.dbimportAppsStopped": "one=ta aplikacija ostane ustavljena, dokler mapa s podatki ni urejena: {apps}|two=ti dve aplikaciji ostaneta ustavljeni, dokler mapa s podatki ni urejena: {apps}|few=te aplikacije ostanejo ustavljene, dokler mapa s podatki ni urejena: {apps}|other=te aplikacije ostanejo ustavljene, dokler mapa s podatki ni urejena: {apps}",

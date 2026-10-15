@@ -539,6 +539,7 @@ const cs: Partial<Translations> = {
   "snapshots.recreate": "Znovu vytvořit z uložené konfigurace",
   "snapshots.recreateConfirm": "Znovu vytvořit tento kontejner z uložené konfigurace? Bude vytvořen a spuštěn z uložené definice.",
   "snapshots.configOnlyHint": "Záloha jen konfigurace: definice kontejneru je uložena, ale nemá žádné datové složky k zálohování. Když kontejner smažeš, objeví se v sekci „Nenainstalováno“, kde ho z této konfigurace znovu vytvoříš.",
+  "snapshots.outsideHostHint": "Uložena je jen definice tohoto kontejneru. Jeho data jsou mimo Host Data, které BombVault nemůže číst. V TrueNAS jsou data na úložišti ixVolume pod /mnt/.ix-apps a jsou nedostupná; dej aplikaci místo toho cestu na hostiteli pro její data.",
   "files.restored": "Obnoveno",
   "files.restoreConfirm": "Obnovit vybrané soubory do jejich původních umístění? Stávající soubory budou přepsány.",
   "files.selectHint": "Zaškrtni soubory a složky k obnovení a poté zvol cíl.",
@@ -864,6 +865,7 @@ const cs: Partial<Translations> = {
   "stophook.remove": "Odebrat {name}",
   "export.exportedTo": "Exportováno do:",
   "backup.configOnly": "Pouze konfigurace: žádné datové složky (definice uložena pro obnovení)",
+  "backup.outsideHost": "Definice uložena, ale data jsou mimo Host Data a nebyla zálohována",
 
   // Backups — delete all
   "snapshots.deleteAll": "Smazat všechny zálohy",
@@ -1038,6 +1040,7 @@ const cs: Partial<Translations> = {
   "runReason.dbimportRollback": "import selhal a stará data se nepodařilo vrátit zpět",
   "runReason.dbimportFailed": "nástroj pro import ohlásil chybu",
   "runReason.dbimportKeptOld": "předchozí složka s daty byla ponechána",
+  "runReason.dataOutsideHost": "data jsou mimo Host Data a nebyla zálohována",
   "runReason.dbimportErrors": "one={n} chyba, předchozí složka s daty byla ponechána|few={n} chyby, předchozí složka s daty byla ponechána|many={n} chyby, předchozí složka s daty byla ponechána|other={n} chyb, předchozí složka s daty byla ponechána",
   "runReason.dbimportAppsDown": "one=tuto aplikaci se nepodařilo znovu spustit: {apps}|few=tyto aplikace se nepodařilo znovu spustit: {apps}|many=tyto aplikace se nepodařilo znovu spustit: {apps}|other=tyto aplikace se nepodařilo znovu spustit: {apps}",
   "runReason.dbimportAppsStopped": "one=tato aplikace zůstane zastavená, dokud se nevyřeší složka s daty: {apps}|few=tyto aplikace zůstanou zastavené, dokud se nevyřeší složka s daty: {apps}|many=tyto aplikace zůstanou zastavené, dokud se nevyřeší složka s daty: {apps}|other=tyto aplikace zůstanou zastavené, dokud se nevyřeší složka s daty: {apps}",

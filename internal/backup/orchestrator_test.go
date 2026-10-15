@@ -542,6 +542,20 @@ func TestBackupContainerFinishCarriesMeasuredSummary(t *testing.T) {
 			t.Fatalf("summary = %+v, want no snapshot and no measurement where restic never ran", got.sum)
 		}
 	})
+
+	t.Run("data outside Host Data is named in the note of a successful run", func(t *testing.T) {
+		runs := &fakeRuns{}
+		d := deps(&fakeRestic{summary: measured}, runs, nil)
+		d.UnreachableData = []string{"/mnt/.ix-apps/app_mounts/nc/data", "/mnt/pool2/nc"}
+		if _, err := backup.BackupContainer(t.Context(), d); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		got := runs.finishOf(t, "run-1")
+		want := "data folders outside Host Data were not backed up: /mnt/.ix-apps/app_mounts/nc/data, /mnt/pool2/nc"
+		if got.status != "success" || got.note != want {
+			t.Fatalf("finish = %+v, want a success noting %q", got, want)
+		}
+	})
 }
 
 func TestBackupStopsAndRestartsDependencies(t *testing.T) {

@@ -157,6 +157,7 @@ const hr: Partial<Translations> = {
   "snapshots.recreate": "Ponovno stvori iz spremljene konfiguracije",
   "snapshots.recreateConfirm": "Ponovno stvoriti ovaj kontejner iz njegove spremljene konfiguracije? Stvara se i pokreće prema spremljenoj definiciji (slika, okruženje, ulazi, volumeni).",
   "snapshots.configOnlyHint": "Sigurnosna kopija samo konfiguracije: definicija kontejnera je spremljena, ali nema mape podataka za snimku. Ako izbrišete kontejner, pojavljuje se pod „Nije instaliran”, odakle ga možete ponovno stvoriti iz ove konfiguracije.",
+  "snapshots.outsideHostHint": "Sprema se samo definicija ovog spremnika. Njegovi su podaci izvan Host Data, koji BombVault ne može čitati. Na TrueNAS-u se podaci na ixVolume pohrani nalaze u /mnt/.ix-apps i nedostupni su; umjesto toga aplikaciji daj putanju na hostu za njezine podatke.",
 
   // Snapshot tags + compare
   "snapshot.addTag": "Dodaj oznaku",
@@ -885,6 +886,7 @@ const hr: Partial<Translations> = {
   "stophook.remove": "Ukloni {name}",
   "export.exportedTo": "Izvezeno u:",
   "backup.configOnly": "Samo konfiguracija, bez mapa s podacima (definicija spremljena za ponovno stvaranje)",
+  "backup.outsideHost": "Definicija je spremljena, ali podaci su izvan Host Data i nisu sigurnosno kopirani",
 
   // Per-container exclude patterns
   "excludes.title": "Obrasci izuzimanja",
@@ -1022,6 +1024,7 @@ const hr: Partial<Translations> = {
   "runReason.dbimportRollback": "uvoz nije uspio i stare podatke nije bilo moguće vratiti na mjesto",
   "runReason.dbimportFailed": "alat za uvoz prijavio je pogrešku",
   "runReason.dbimportKeptOld": "prethodna mapa s podacima je zadržana",
+  "runReason.dataOutsideHost": "podaci su izvan Host Data i nisu sigurnosno kopirani",
   "runReason.dbimportErrors": "one={n} pogreška, prethodna mapa s podacima je zadržana|few={n} pogreške, prethodna mapa s podacima je zadržana|other={n} pogrešaka, prethodna mapa s podacima je zadržana",
   "runReason.dbimportAppsDown": "one=ovu aplikaciju nije bilo moguće ponovno pokrenuti: {apps}|few=ove aplikacije nije bilo moguće ponovno pokrenuti: {apps}|other=ove aplikacije nije bilo moguće ponovno pokrenuti: {apps}",
   "runReason.dbimportAppsStopped": "one=ova aplikacija ostaje zaustavljena dok se ne riješi mapa s podacima: {apps}|few=ove aplikacije ostaju zaustavljene dok se ne riješi mapa s podacima: {apps}|other=ove aplikacije ostaju zaustavljene dok se ne riješi mapa s podacima: {apps}",

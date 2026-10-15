@@ -215,6 +215,9 @@ type BackupDeps struct {
 	RepoPath string
 	// AppdataPaths are the paths included in the backup.
 	AppdataPaths []string
+	// UnreachableData are host paths of the container's data folders that sit
+	// outside the Host Data mount. They are not backed up, and the run says so.
+	UnreachableData []string
 	// StopTimeout is how long to wait for a graceful stop before SIGKILL.
 	StopTimeout time.Duration
 	// TargetID is the run-recording target id.
@@ -646,6 +649,14 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	recorded := Summary{}
 	if summarySeen {
 		recorded = summary
+	}
+	if len(d.UnreachableData) > 0 {
+		outside := store.NoteDataOutsideHost + ": " + strings.Join(d.UnreachableData, ", ")
+		if dumpNote == "" {
+			dumpNote = outside
+		} else {
+			dumpNote += "; " + outside
+		}
 	}
 	if err := d.Runs.Finish(runID, statusSuccess, recorded, dumpNote); err != nil {
 		return summary, fmt.Errorf("backup: record run finish: %w", err)
