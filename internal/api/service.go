@@ -7032,6 +7032,13 @@ func writeDef(dir, fn string, enc []byte) error {
 // shortcut genuinely cannot see: something outside BombVault chmod'ing a file
 // restrictive without touching its directory.
 func makeRepoReadable(repo, stampDir string) {
+	// Without a data directory there is nowhere to keep a stamp, and a relative
+	// one would land in the working directory, so every pass walks everything.
+	if stampDir == "" {
+		clean := true
+		relaxTree(repo, time.Time{}, &clean)
+		return
+	}
 	stamp := permStampPath(stampDir, repo)
 	var cutoff time.Time
 	if fi, err := os.Stat(stamp); err == nil && time.Since(fi.ModTime()) < fullSweepAfter {

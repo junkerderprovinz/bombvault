@@ -187,4 +187,19 @@ func TestMakeRepoReadableScopesToChangedDirectories(t *testing.T) {
 				"first one had marked it as done", got)
 		}
 	})
+
+	t.Run("without a data directory it walks everything and writes no stamp", func(t *testing.T) {
+		repo, _, dirA, _ := newRepo(t)
+		pack := write(t, dirA, "pack")
+		t.Chdir(t.TempDir())
+
+		makeRepoReadable(repo, "")
+
+		if got := perm(t, pack); got&0o044 != 0o044 {
+			t.Errorf("perm %o: the tree was not relaxed", got)
+		}
+		if _, err := os.Stat("perms"); !os.IsNotExist(err) {
+			t.Errorf("a stamp directory appeared in the working directory: %v", err)
+		}
+	})
 }
