@@ -17,3 +17,12 @@ func SetThawRetryForTest(d time.Duration) func() {
 	thawRetryDelay = d
 	return func() { thawRetryDelay = prev }
 }
+
+// SetDestroyRetryDelayForTest shortens the wait between attempts at
+// destroying a backup's snapshot or clone and returns a function that
+// restores it.
+func SetDestroyRetryDelayForTest(d time.Duration) func() {
+	prev := destroyRetryDelay
+	destroyRetryDelay = d
+	return func() { destroyRetryDelay = prev }
+}

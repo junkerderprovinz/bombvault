@@ -76,9 +76,10 @@ func TestRestoreVMRestoresEachDiskFromItsOwnSnapshot(t *testing.T) {
 			t.Fatalf("stdinBackups[%d] = %q: no zvol identity tag found", i, entry)
 		}
 		snaps = append(snaps, restic.Snapshot{
-			ID:    "zvolSnap" + strconv.Itoa(i+1),
-			Tags:  []string{tag, "p2", runTag},
-			Paths: []string{path},
+			ID:      "zvolSnap" + strconv.Itoa(i+1),
+			Tags:    []string{tag, "p2", runTag},
+			Paths:   []string{path},
+			Summary: &restic.SnapshotSummary{TotalBytesProcessed: 1 << 30},
 		})
 	}
 	eng.snaps = snaps
@@ -145,10 +146,9 @@ func TestRestoreVMFileOnlyUsesSingleSnapshot(t *testing.T) {
 	}
 }
 
-// A mixed VM backed up before the vmrun: tag existed restores its file disk from
-// the plain "vm:"+name tag. RestoreZvolDisk still runs for each zvol disk, but
-// with an empty snapshot ID instead of a guessed one.
-func TestRestoreVMMixedDiskHistoricalRunFallsBackWithoutInventingSnapshots(t *testing.T) {
+// A run that holds no image of the zvol disks is refused before the VM or any
+// disk is touched.
+func TestRestoreVMOfARunWithoutItsZvolImagesTouchesNothing(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("drives BackupVM/RestoreVM with a real OS temp dir as HostMountRoot: paths.Within needs a leading /")
 	}
@@ -157,23 +157,13 @@ func TestRestoreVMMixedDiskHistoricalRunFallsBackWithoutInventingSnapshots(t *te
 	if _, err := svc.BackupVM(context.Background(), "mixedvm"); err != nil {
 		t.Fatalf("BackupVM: %v", err)
 	}
-
-	// Only the file-backed snapshot is listed, without a vmrun: tag.
 	eng.snaps = []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2"}, Paths: eng.lastPaths}}
 	seedVMsRepoConfig(t, root)
 
-	if err := svc.RestoreVM(context.Background(), "mixedvm", "latest", true, "", true); err != nil {
-		t.Fatalf("RestoreVM: %v", err)
+	if err := svc.RestoreVM(context.Background(), "mixedvm", "latest", true, "", true); err == nil {
+		t.Fatal("want the restore refused")
 	}
-	if len(eng.restored) != 1 || !strings.Contains(eng.restored[0], ":deadbeef12345678:") {
-		t.Fatalf("restored = %v, want exactly one RestorePath call against deadbeef12345678 (unchanged fallback)", eng.restored)
-	}
-	if len(eng.dumpRawCalls) != 2 {
-		t.Fatalf("dumpRawCalls = %v, want 2 (RestoreZvolDisk still runs per disk)", eng.dumpRawCalls)
-	}
-	for _, call := range eng.dumpRawCalls {
-		if !strings.HasPrefix(call, ":") {
-			t.Fatalf("dumpRawCalls entry %q: want an empty snapshot id (no vmrun: group to resolve from), got an invented one", call)
-		}
+	if len(eng.restored) != 0 || len(eng.dumpRawCalls) != 0 {
+		t.Fatalf("restored %v, dumped %v; want nothing", eng.restored, eng.dumpRawCalls)
 	}
 }

@@ -49,7 +49,7 @@
 - **查找容器的数据。** 没有 Unraid 的 `appdata` 约定时，容器的数据文件夹通过 `DATA_ROOT_SEGMENTS` 中的片段、Docker 命名卷、Compose 项目的工作目录以及 `bombvault.data` 标签来查找（参见[备份来源的自动识别](configuration.md#backup-source-detection)）。命名卷和 `/etc` 预设只能触及 Host Data 挂载内的路径，因此请把 Host Data 指向一个同时涵盖 Docker 数据根目录的共同上级目录。
 - **`PLATFORM`。** 设为 `generic` 或 `truenas`。不设置时，BombVault 会根据闪存挂载上 Unraid 自己的标记识别 Unraid，其他情况一律按通用主机处理，仅限 Unraid 的步骤会直接跳过，而不是尝试后失败。
 
-**TrueNAS Scale** 走的是同样的 compose 路线；目录条目已在仓库中准备好，但尚未提交。在那里备份虚拟机需要 `LIBVIRT_URI`，因为 TrueNAS 的 libvirtd 监听的是它自己的套接字（`/run/truenas_libvirt/libvirt-sock`），三个 `LIBVIRT_*` 变量无法表达这一点（参见[配置](configuration.md)）。目前验证到的程度：zvol 备份曾在一台真实的 TrueNAS Scale 机器上、针对挂接在运行中虚拟机上的 zvol 执行，`zfs snapshot`、`zfs send`、restic 和 `zfs receive` 走完一个来回后逐字节一致。由 BombVault 自身完成的完整还原尚未在 TrueNAS 硬件上运行过，而且那个 zvol 是稀疏的，因此数 GB 规模下的吞吐量尚未测试。在依赖它之前，请先在那里测试一次还原。
+**TrueNAS Scale** 走的是同样的 compose 路线；目录条目已在仓库中准备好，但尚未提交。在那里备份虚拟机需要 `LIBVIRT_URI`，因为 TrueNAS 的 libvirtd 监听的是它自己的套接字（`/run/truenas_libvirt/libvirt-sock`），三个 `LIBVIRT_*` 变量无法表达这一点（参见[配置](configuration.md)）。目前验证到的程度：BombVault 自身的 zvol 备份与还原已通过 SSH 在一台真实的 TrueNAS Scale 机器上运行，无论原地还原还是还原到已删除的 zvol，读回的内容都逐字节一致。在那里还原整台虚拟机（重新定义域并启动）以及数 GB 规模下的吞吐量尚未测试。在依赖它之前，请先在那里测试一次还原。
 
 ## 唯一必需的设置
 

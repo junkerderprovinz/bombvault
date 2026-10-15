@@ -616,12 +616,8 @@ func dumpArchiveArgs(repo, format, snapshotID, subfolder string, m Mode) []strin
 // handling exactly; the only difference is --stdin[-filename] replacing the
 // "-- <paths>" positional list, since stdin content has no path of its own.
 //
-// Used for content with no on-disk path to hand restic — e.g. a zvol's
-// `zfs send` stream (internal/backup/vm_orchestrator.go's zvol-aware VM disk
-// backup path, v8.0.0 TrueNAS platform expansion Task 10). path should be a
-// stable, collision-free absolute identifier for the content (e.g. derived
-// from the zvol's dataset + snapshot name), NOT a real filesystem path — it
-// is never read from disk, only recorded as the snapshot's path metadata.
+// It is for content with no file to hand restic, such as the raw image of a
+// zvol. path is only recorded as the file's name in the snapshot, never read.
 func BackupStdinArgs(repo, path string, tags []string, m Mode) []string {
 	args := repoFlag(repo)
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
@@ -1492,7 +1488,7 @@ func runBuffered(ctx context.Context, cmd *exec.Cmd, args []string) ([]byte, err
 }
 
 // runWithStdin runs restic with its stdin wired to rd (for `backup --stdin`,
-// e.g. Task 10's zvol `zfs send` stream), capturing stdout into a buffer.
+// such as the raw image of a zvol), capturing stdout into a buffer.
 // Mirrors runBuffered exactly, except the command's INPUT is a stream rather
 // than local files reachable by path — there was no prior "stream INTO
 // restic" execution helper in this file to reuse (runToWriter/DumpZip only
@@ -2503,19 +2499,9 @@ func (r Restic) dumpArchive(ctx context.Context, args []string, w io.Writer, m M
 // style (cmd wired straight to a reader, no local staging file), but in the
 // opposite direction of DumpZip (streams INTO restic, not out of it).
 //
-// Used by the zvol VM-disk backup path (internal/backup/vm_orchestrator.go,
-// v8.0.0 TrueNAS platform expansion Task 10) to pipe a `zfs send` stream
-// straight into a backup with no local staging file.
-//
-// This method's OWN mechanism (restic reading a backup from stdin, and
-// DumpRaw reading it back byte-identically) is verified locally against a
-// real restic 0.17.3 binary — see TestBackupStdinRoundtrip. The upstream half
-// is no longer unverified either: on 2026-08-27 a real `zfs send` stream, taken
-// from a zvol attached to a RUNNING VM on a TrueNAS SCALE 25.10.0 box, was
-// piped through this exact path and dumped back byte-identically (sha256
-// d2cd7136…52c93 on both sides), with the per-disk identity tag preserved on
-// the snapshot. See internal/virshcli/zvol.go's package doc comment for the
-// full measurement and the two paths that remain unverified.
+// The zvol disks of a VM go in this way, their raw image read over SSH with no
+// staging file. TestBackupStdinRoundtrip checks that DumpRaw gives the bytes
+// back unchanged.
 func (r Restic) BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string, m Mode) (Summary, error) {
 	args := BackupStdinArgs(repo, path, tags, m)
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; path/tags are internal values (a zvol dataset/snapshot identifier), never raw user input

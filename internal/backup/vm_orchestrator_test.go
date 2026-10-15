@@ -864,7 +864,7 @@ func TestRunTagEmptyIsByteIdenticalZvolBackup(t *testing.T) {
 	vm := &fakeVM{active: true, stateVal: "shut off"}
 	r := &fakeRestic{summary: backup.Summary{SnapshotID: "fileSnap1234"}}
 	runs := &fakeRuns{}
-	host := &fakeZFSHost{streamSendData: []byte("zvol stream bytes")}
+	host := &fakeZFSHost{readData: []byte("zvol stream bytes")}
 	zr := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "zvolSnap5678"}}
 
 	d := sampleVMBackupDeps(t, vm, r, runs) // RunTag left unset
@@ -911,7 +911,7 @@ func TestRunTagSetAppearsOnAllBackupCalls(t *testing.T) {
 	vm := &fakeVM{active: true, stateVal: "shut off"}
 	r := &fakeRestic{summary: backup.Summary{SnapshotID: "fileSnap1234"}}
 	runs := &fakeRuns{}
-	host := &fakeZFSHost{streamSendData: []byte("zvol stream bytes")}
+	host := &fakeZFSHost{readData: []byte("zvol stream bytes")}
 	zr := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "zvolSnap"}}
 
 	d := sampleVMBackupDeps(t, vm, r, runs)
@@ -987,7 +987,7 @@ func TestVMBlockDiskDevGivesDistinctIdentityTag(t *testing.T) {
 	vm := &fakeVM{active: true, stateVal: "shut off"}
 	r := &fakeRestic{summary: backup.Summary{SnapshotID: "fileSnap1234"}}
 	runs := &fakeRuns{}
-	host := &fakeZFSHost{streamSendData: []byte("zvol stream bytes")}
+	host := &fakeZFSHost{readData: []byte("zvol stream bytes")}
 	zr := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "zvolSnap"}}
 
 	d := sampleVMBackupDeps(t, vm, r, runs)
@@ -1038,14 +1038,16 @@ func TestRunTagSetHasNoEffectOnRestoreCalls(t *testing.T) {
 	d.RunTag = "vmrun:run-42"
 	d.BlockDisks = []backup.VMRestoreBlockDisk{
 		{
-			SourceDataset: "tank/vms/win10/disk1",
-			SnapshotID:    "zvolsnapid1",
-			StdinPath:     "/vm-disks/tank/vms/win10/disk1@bombvault-20260816120000",
+			Dataset:    "tank/vms/win10/disk1",
+			Size:       1 << 30,
+			SnapshotID: "zvolsnapid1",
+			StdinPath:  "/vm-disks/tank/vms/win10/disk1.img",
 		},
 		{
-			SourceDataset: "tank/vms/win10/disk2",
-			SnapshotID:    "zvolsnapid2",
-			StdinPath:     "/vm-disks/tank/vms/win10/disk2@bombvault-20260816120000",
+			Dataset:    "tank/vms/win10/disk2",
+			Size:       1 << 30,
+			SnapshotID: "zvolsnapid2",
+			StdinPath:  "/vm-disks/tank/vms/win10/disk2.img",
 		},
 	}
 	d.ZFSHost = host
@@ -1064,54 +1066,13 @@ func TestRunTagSetHasNoEffectOnRestoreCalls(t *testing.T) {
 
 	// Both zvol disk restores must have happened, each dumping ITS OWN
 	// snapshot id/path — untouched by RunTag (DumpTo takes no tags either).
-	if !vmContains(zr.log, "dumpTo:/repo/vms:zvolsnapid1:/vm-disks/tank/vms/win10/disk1@bombvault-20260816120000") {
+	if !vmContains(zr.log, "dumpTo:/repo/vms:zvolsnapid1:/vm-disks/tank/vms/win10/disk1.img") {
 		t.Fatalf("disk1 restic dump not invoked: %v", zr.log)
 	}
-	if !vmContains(zr.log, "dumpTo:/repo/vms:zvolsnapid2:/vm-disks/tank/vms/win10/disk2@bombvault-20260816120000") {
+	if !vmContains(zr.log, "dumpTo:/repo/vms:zvolsnapid2:/vm-disks/tank/vms/win10/disk2.img") {
 		t.Fatalf("disk2 restic dump not invoked: %v", zr.log)
 	}
 	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
 		t.Fatalf("run finishes = %v, want [success]", runs.finishes)
-	}
-}
-
-// TestRestoreVMBlockDiskRestoreBaseDatasetReachesZFSReceiveTarget is the
-// end-to-end wiring proof for the cross-instance zvol restore fix: a
-// VMRestoreBlockDisk carrying a RestoreBaseDataset (what
-// internal/api/service.go's prepareRestoreVMForTarget sets after rebasing the
-// source dataset's pool onto an explicit destination pool via
-// virshcli.RebaseZvolDatasetPool) must have that value — not SourceDataset —
-// actually reach the fake ZFS host's StreamReceive target through the full
-// RestoreVM -> restoreBlockDisksAndLog -> RestoreZvolDisk call chain.
-// Complements vm_zvol_test.go's RestoreZvolDisk-level tests by proving the
-// value is actually threaded from VMRestoreDeps.BlockDisks all the way down.
-func TestRestoreVMBlockDiskRestoreBaseDatasetReachesZFSReceiveTarget(t *testing.T) {
-	vm := &fakeVM{stateVal: "running"}
-	r := &fakeRestic{}
-	runs := &fakeRuns{}
-	host := &fakeZFSHost{}
-	zr := &fakeZvolRestic{dumpData: []byte("restored zvol bytes")}
-
-	d := sampleVMRestoreDeps(t, vm, r, runs)
-	d.BlockDisks = []backup.VMRestoreBlockDisk{
-		{
-			SourceDataset:      "tank/vms/win10/disk1",
-			RestoreBaseDataset: "flashpool/vms/win10/disk1", // rebased onto the DESTINATION pool
-			SnapshotID:         "zvolsnapid1",
-			StdinPath:          "/vm-disks/tank/vms/win10/disk1@bombvault-20260816120000",
-		},
-	}
-	d.ZFSHost = host
-	d.ZvolRestic = zr
-
-	if err := backup.RestoreVM(t.Context(), d); err != nil {
-		t.Fatalf("unexpected: %v", err)
-	}
-
-	if !strings.HasPrefix(host.streamReceiveTarget, "flashpool/vms/win10/disk1-bombvault-restore-") {
-		t.Fatalf("StreamReceive target = %q, want it derived from RestoreBaseDataset (flashpool/vms/win10/disk1), not SourceDataset", host.streamReceiveTarget)
-	}
-	if strings.HasPrefix(host.streamReceiveTarget, "tank/") {
-		t.Fatalf("StreamReceive target = %q targeted the SOURCE pool — the exact wrong-pool bug this fix closes", host.streamReceiveTarget)
 	}
 }

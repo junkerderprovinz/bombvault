@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -19,7 +18,7 @@ func TestBackupVMGracefulInvokesZvolPathForBlockDisks(t *testing.T) {
 	vm := &fakeVM{active: true, stateVal: "shut off"}
 	r := &fakeRestic{summary: backup.Summary{SnapshotID: "fileSnap1234", Bytes: 1024}}
 	runs := &fakeRuns{}
-	host := &fakeZFSHost{streamSendData: []byte("zvol stream bytes")}
+	host := &fakeZFSHost{readData: []byte("raw disk image")}
 	zr := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "zvolSnap5678", Bytes: 2048}}
 
 	d := sampleVMBackupDeps(t, vm, r, runs)
@@ -36,20 +35,13 @@ func TestBackupVMGracefulInvokesZvolPathForBlockDisks(t *testing.T) {
 		t.Fatalf("summary.SnapshotID = %q, want the file-backup snapshot id unchanged", sum.SnapshotID)
 	}
 
-	if !vmContains(host.log, "snapshotCreate:tank/vms/win10/disk1@") {
-		t.Fatalf("zfs snapshot was never created for the block disk; host.log = %v", host.log)
+	for _, want := range []string{"snapshot:tank/vms/win10/disk1@", "read:tank/vms/win10/disk1-", "destroy:tank/vms/win10/disk1@"} {
+		if !vmContains(host.log, want) {
+			t.Fatalf("host calls %v, want one starting %q", host.log, want)
+		}
 	}
-	if !vmContains(host.log, "streamSend:tank/vms/win10/disk1@") {
-		t.Fatalf("zfs send was never started for the block disk; host.log = %v", host.log)
-	}
-	if !vmContains(host.log, "snapshotDestroy:tank/vms/win10/disk1@") {
-		t.Fatalf("zfs snapshot was never cleaned up for the block disk; host.log = %v", host.log)
-	}
-	if len(zr.log) == 0 {
-		t.Fatalf("restic BackupStdin was never invoked for the block disk")
-	}
-	if string(zr.capturedStdin) != "zvol stream bytes" {
-		t.Fatalf("restic BackupStdin received %q, want the zfs send stream bytes", zr.capturedStdin)
+	if string(zr.capturedStdin) != "raw disk image" {
+		t.Fatalf("restic read %q, want the disk image", zr.capturedStdin)
 	}
 
 	if !vmContains(r.log, "backup:/repo/vms") {
@@ -130,7 +122,7 @@ func TestBackupVMGracefulRecordsZvolDisksInRunSummary(t *testing.T) {
 		vm := &fakeVM{active: true, stateVal: "shut off"}
 		r := &fakeRestic{summary: file}
 		runs := &fakeRuns{}
-		host := &fakeZFSHost{streamSendData: []byte("zvol stream bytes")}
+		host := &fakeZFSHost{readData: []byte("zvol stream bytes")}
 		zr := &fakeZvolRestic{backupSummary: zvol}
 
 		d := sampleVMBackupDeps(t, vm, r, runs)
@@ -217,11 +209,20 @@ func (f *fakeSelectiveZFSHost) SnapshotCreate(_ context.Context, dataset, _ stri
 	}
 	return nil
 }
-func (f *fakeSelectiveZFSHost) SnapshotDestroy(context.Context, string, string) error { return nil }
-func (f *fakeSelectiveZFSHost) StreamSend(_ context.Context, _, _ string) (io.ReadCloser, func() error, error) {
+func (f *fakeSelectiveZFSHost) Snapshots(context.Context, string) ([]backup.ZFSSnapshot, error) {
+	return nil, nil
+}
+func (f *fakeSelectiveZFSHost) Clone(context.Context, string, string) error { return nil }
+func (f *fakeSelectiveZFSHost) Destroy(context.Context, string) error       { return nil }
+func (f *fakeSelectiveZFSHost) VolSize(context.Context, string) (int64, bool, error) {
+	return 0, false, nil
+}
+func (f *fakeSelectiveZFSHost) CreateVolume(context.Context, string, int64) error { return nil }
+func (f *fakeSelectiveZFSHost) SetVolSize(context.Context, string, int64) error   { return nil }
+func (f *fakeSelectiveZFSHost) ReadVolume(context.Context, string) (io.ReadCloser, func() error, error) {
 	return io.NopCloser(bytes.NewReader(nil)), func() error { return nil }, nil
 }
-func (f *fakeSelectiveZFSHost) StreamReceive(_ context.Context, rd io.Reader, _ string) error {
+func (f *fakeSelectiveZFSHost) WriteVolume(_ context.Context, rd io.Reader, _ string) error {
 	_, _ = io.ReadAll(rd)
 	return nil
 }
@@ -235,9 +236,10 @@ func TestRestoreVMInvokesZvolPathForBlockDisks(t *testing.T) {
 
 	d := sampleVMRestoreDeps(t, vm, r, runs)
 	d.BlockDisks = []backup.VMRestoreBlockDisk{{
-		SourceDataset: "tank/vms/win10/disk1",
-		SnapshotID:    "zvolsnapid1234",
-		StdinPath:     "/vm-disks/tank/vms/win10/disk1@bombvault-20260816120000",
+		Dataset:    "tank/vms/win10/disk1",
+		Size:       1 << 30,
+		SnapshotID: "zvolsnapid1234",
+		StdinPath:  "/vm-disks/tank/vms/win10/disk1.img",
 	}}
 	d.ZFSHost = host
 	d.ZvolRestic = zr
@@ -246,20 +248,11 @@ func TestRestoreVMInvokesZvolPathForBlockDisks(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !vmContains(zr.log, "dumpTo:/repo/vms:zvolsnapid1234:/vm-disks/tank/vms/win10/disk1@bombvault-20260816120000") {
+	if !vmContains(zr.log, "dumpTo:/repo/vms:zvolsnapid1234:/vm-disks/tank/vms/win10/disk1.img") {
 		t.Fatalf("restic dump was never invoked for the block disk; zr.log = %v", zr.log)
 	}
-	if host.streamReceiveTarget == "" {
-		t.Fatal("zfs receive was never invoked for the block disk")
-	}
-	if host.streamReceiveTarget == d.BlockDisks[0].SourceDataset {
-		t.Fatalf("zfs receive targeted the live source dataset %q", host.streamReceiveTarget)
-	}
-	if !strings.HasPrefix(host.streamReceiveTarget, d.BlockDisks[0].SourceDataset+"-bombvault-restore-") {
-		t.Fatalf("zfs receive target %q does not carry the expected fresh-dataset marker", host.streamReceiveTarget)
-	}
-	if string(host.streamReceiveData) != "restored zvol bytes" {
-		t.Fatalf("zfs receive stdin = %q, want the restic dump bytes", host.streamReceiveData)
+	if got := string(host.written["tank/vms/win10/disk1"]); got != "restored zvol bytes" {
+		t.Fatalf("wrote %q onto the zvol, want the restic dump", got)
 	}
 
 	if !vmContains(r.log, "restore:/repo/vms") {
@@ -299,14 +292,15 @@ func TestRestoreVMZvolFailureAbortsBeforeDefine(t *testing.T) {
 	vm := &fakeVM{stateVal: "running"}
 	r := &fakeRestic{}
 	runs := &fakeRuns{}
-	host := &fakeZFSHost{streamReceiveErr: errors.New("zfs: receive failed")}
+	host := &fakeZFSHost{writeErr: errors.New("dd: no space left on device")}
 	zr := &fakeZvolRestic{dumpData: []byte("data")}
 
 	d := sampleVMRestoreDeps(t, vm, r, runs)
 	d.BlockDisks = []backup.VMRestoreBlockDisk{{
-		SourceDataset: "tank/vms/win10/disk1",
-		SnapshotID:    "zvolsnapid1234",
-		StdinPath:     "/vm-disks/tank/vms/win10/disk1@bombvault-20260816120000",
+		Dataset:    "tank/vms/win10/disk1",
+		Size:       1 << 30,
+		SnapshotID: "zvolsnapid1234",
+		StdinPath:  "/vm-disks/tank/vms/win10/disk1.img",
 	}}
 	d.ZFSHost = host
 	d.ZvolRestic = zr

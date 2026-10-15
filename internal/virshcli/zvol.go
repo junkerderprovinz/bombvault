@@ -1,8 +1,8 @@
 // On TrueNAS SCALE 25.10 libvirt keeps <source dev='/dev/zvol/<pool>/<dataset>'/>
 // as written rather than resolving it to /dev/zdN, so ZvolDatasetFromDevPath
 // sees the path it parses. zfs snapshot works on a zvol that a running VM is
-// using, and a zfs send stream survives restic backup --stdin and restic dump
-// byte for byte.
+// using, a clone of that snapshot shows up as a device to read, and the raw
+// image survives restic backup --stdin and restic dump byte for byte.
 //
 // TrueNAS needs LIBVIRT_URI to name its own socket,
 // /run/truenas_libvirt/libvirt-sock; see docs/vm-backup-ssh-setup.md.
@@ -10,9 +10,8 @@
 package virshcli
 
 import (
-	"fmt"
+	"strconv"
 	"strings"
-	"time"
 )
 
 // zvolDevPrefix starts the device node of a zvol: /dev/zvol/<pool>/<dataset>.
@@ -83,45 +82,69 @@ func ZFSSnapshotArgs(dataset, snapName string) []string {
 	return []string{"zfs", "snapshot", dataset + "@" + snapName}
 }
 
-// ZFSSnapshotDestroyArgs returns the argv for `zfs destroy <dataset>@<snapName>`.
-// The snapshot only exists for the backup, so the caller destroys it in a
-// defer whether or not the backup succeeded.
-func ZFSSnapshotDestroyArgs(dataset, snapName string) []string {
-	return []string{"zfs", "destroy", dataset + "@" + snapName}
+// ZFSSnapshotClonesArgs returns the argv that lists the snapshots of dataset,
+// one "name<TAB>clones" line each, where clones is "-" or a comma separated
+// list of the datasets cloned from that snapshot.
+func ZFSSnapshotClonesArgs(dataset string) []string {
+	return []string{"zfs", "get", "-H", "-d", "1", "-t", "snapshot", "-o", "name,value", "clones", dataset}
 }
 
-// ZFSSendArgs returns the argv for `zfs send <dataset>@<snapName>`. The caller
-// pipes its stdout over SSH straight into restic's stdin.
-func ZFSSendArgs(dataset, snapName string) []string {
-	return []string{"zfs", "send", dataset + "@" + snapName}
+// ZFSDestroyArgs returns the argv for `zfs destroy <name>`, for the snapshot
+// and the clone a backup takes only to read the zvol.
+func ZFSDestroyArgs(name string) []string {
+	return []string{"zfs", "destroy", name}
 }
 
-// ZFSReceiveArgs returns the argv for `zfs receive <targetDataset>`. Receiving
-// into an existing dataset can destroy live data, so targetDataset must be a
-// new name from RestoreZvolTargetDataset, never the source dataset.
-func ZFSReceiveArgs(targetDataset string) []string {
-	return []string{"zfs", "receive", targetDataset}
+// ZFSCloneArgs returns the argv that clones snapshot into clone as a read-only
+// device. volmode=dev keeps the host from scanning the guest's partitions on
+// it, which could otherwise activate the guest's own LVM volumes.
+func ZFSCloneArgs(snapshot, clone string) []string {
+	return []string{"zfs", "clone", "-o", "volmode=dev", "-o", "readonly=on", snapshot, clone}
 }
 
-// zvolRestoreSuffix marks a dataset created by a restore, so the operator can
-// tell it from their own before renaming it into place.
-const zvolRestoreSuffix = "-bombvault-restore-"
-
-// RestoreZvolTargetDataset returns a new dataset name for a zvol restore,
-// "<dataset>-bombvault-restore-<unix-nanoseconds>". It never equals dataset,
-// so a receive into it cannot overwrite the live source; moving the data over
-// the original zvol is left to the operator. Nanoseconds keep repeated
-// restores of the same dataset apart.
-func RestoreZvolTargetDataset(dataset string, now time.Time) string {
-	return fmt.Sprintf("%s%s%d", dataset, zvolRestoreSuffix, now.UnixNano())
+// ZFSListVolumesArgs returns the argv that lists every zvol of pool with its
+// size in bytes, one "name<TAB>volsize" line each. Listing the pool rather
+// than the zvol tells a missing zvol from a failed command.
+func ZFSListVolumesArgs(pool string) []string {
+	return []string{"zfs", "list", "-H", "-p", "-t", "volume", "-o", "name,volsize", "-r", pool}
 }
 
-// zvolSnapshotPrefix marks snapshots BombVault takes, so one left behind by an
-// interrupted backup is not mistaken for a user's.
-const zvolSnapshotPrefix = "bombvault-"
+// ZFSCreateVolumeArgs returns the argv that creates a zvol of size bytes,
+// with any missing parent datasets.
+func ZFSCreateVolumeArgs(dataset string, size int64) []string {
+	return []string{"zfs", "create", "-p", "-V", strconv.FormatInt(size, 10), dataset}
+}
 
-// ZvolSnapshotName returns the snapshot name for a backup taken at now. ZFS
-// snapshot names may not contain ':', so the time is written as plain digits.
-func ZvolSnapshotName(now time.Time) string {
-	return zvolSnapshotPrefix + now.UTC().Format("20060102150405")
+// ZFSSetVolSizeArgs returns the argv that resizes a zvol to size bytes.
+func ZFSSetVolSizeArgs(dataset string, size int64) []string {
+	return []string{"zfs", "set", "volsize=" + strconv.FormatInt(size, 10), dataset}
+}
+
+// ZvolDevPath is the device node of a zvol.
+func ZvolDevPath(dataset string) string {
+	return zvolDevPrefix + dataset
+}
+
+// UdevSettleArgs returns the argv that waits for udev to finish with new
+// devices. A clone destroyed while udev still probes its device fails with
+// "dataset is busy".
+func UdevSettleArgs() []string {
+	return []string{"udevadm", "settle"}
+}
+
+// BlockDeviceExistsArgs returns the argv that succeeds once dev is a block
+// device. udev creates the /dev/zvol link a moment after zfs returns.
+func BlockDeviceExistsArgs(dev string) []string {
+	return []string{"test", "-b", dev}
+}
+
+// ReadDeviceArgs returns the argv that writes the whole of dev to stdout.
+func ReadDeviceArgs(dev string) []string {
+	return []string{"dd", "if=" + dev, "bs=1M", "status=none"}
+}
+
+// WriteDeviceArgs returns the argv that writes stdin onto dev and flushes it.
+// fullblock keeps dd writing whole blocks from a pipe that delivers less.
+func WriteDeviceArgs(dev string) []string {
+	return []string{"dd", "of=" + dev, "bs=1M", "iflag=fullblock", "conv=fsync", "status=none"}
 }

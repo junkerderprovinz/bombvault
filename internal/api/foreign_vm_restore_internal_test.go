@@ -244,6 +244,16 @@ const vmZvolDomainXML = `<domain type='kvm'><name>zvolvm</name>` +
 	`<devices><disk type='file' device='disk'><source file='/mnt/pool/domains/zvolvm/zvolvm.qcow2'/><target dev='vda'/></disk>` +
 	`<disk type='block' device='disk'><source dev='/dev/zvol/tank/vms/zvolvm/disk1'/><target dev='vdb'/></disk></devices></domain>`
 
+// zvolvmRun is one backup run of vmZvolDomainXML: the file disks and the
+// image of its zvol, tied together by the run tag.
+func zvolvmRun() []restic.Snapshot {
+	return []restic.Snapshot{
+		{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm", "vmrun:r1"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}},
+		{ID: "1111111111111111", Tags: []string{"vm:zvolvm:zvol:vdb", "vmrun:r1"}, Paths: []string{"/vm-disks/tank/vms/zvolvm/disk1.img"},
+			Summary: &restic.SnapshotSummary{TotalBytesProcessed: 1 << 30}},
+	}
+}
+
 // TestPrepareRestoreVMRefusesBlockDisksWithoutSSH is a regression test (v8.0.0
 // VM service-layer integration, Task 2 code-quality fixup): a stored domain
 // whose XML carries a block-device (zvol) disk must refuse the restore with a
@@ -257,7 +267,7 @@ const vmZvolDomainXML = `<domain type='kvm'><name>zvolvm</name>` +
 // vmRestoreSvc never sets it (mirrors a fresh/DR instance, or SSH removed
 // from Settings after the original backup).
 func TestPrepareRestoreVMRefusesBlockDisksWithoutSSH(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}}}}
+	eng := &foreignRecordingEngine{snaps: zvolvmRun()}
 	s := vmRestoreSvc(t, eng)
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)
@@ -297,7 +307,7 @@ func TestPrepareRestoreVMRefusesBlockDisksWithoutSSH(t *testing.T) {
 // TestPrepareRestoreVMCrossInstanceZvolRefusesWithoutDestPool pins the
 // EARLY-CLEAR-REFUSAL half of the fix: see this section's header comment.
 func TestPrepareRestoreVMCrossInstanceZvolRefusesWithoutDestPool(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}}}}
+	eng := &foreignRecordingEngine{snaps: zvolvmRun()}
 	s := vmRestoreSvc(t, eng)
 	s.ssh = &fakeHostSSH{}
 	repoDir := filepath.Join(t.TempDir(), "repo")
@@ -339,7 +349,7 @@ func TestPrepareRestoreVMCrossInstanceZvolRefusesWithoutDestPool(t *testing.T) {
 // actionable error instead. It must hit the SAME early-refusal message as a
 // truly empty destZvolPool.
 func TestPrepareRestoreVMCrossInstanceZvolRefusesWithWhitespaceOnlyDestPool(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}}}}
+	eng := &foreignRecordingEngine{snaps: zvolvmRun()}
 	s := vmRestoreSvc(t, eng)
 	s.ssh = &fakeHostSSH{}
 	repoDir := filepath.Join(t.TempDir(), "repo")
@@ -368,7 +378,7 @@ func TestPrepareRestoreVMCrossInstanceZvolRefusesWithWhitespaceOnlyDestPool(t *t
 // disk's dataset is rebased onto it, ready for RestoreZvolDisk to `zfs
 // receive` into the DESTINATION pool instead of the source box's.
 func TestPrepareRestoreVMCrossInstanceZvolRebasesOntoDestPool(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}}}}
+	eng := &foreignRecordingEngine{snaps: zvolvmRun()}
 	s := vmRestoreSvc(t, eng)
 	s.ssh = &fakeHostSSH{}
 	repoDir := filepath.Join(t.TempDir(), "repo")
@@ -386,12 +396,11 @@ func TestPrepareRestoreVMCrossInstanceZvolRebasesOntoDestPool(t *testing.T) {
 	if len(plan.blockDisks) != 1 {
 		t.Fatalf("blockDisks = %+v, want 1 entry", plan.blockDisks)
 	}
-	bd := plan.blockDisks[0]
-	if bd.SourceDataset != "tank/vms/zvolvm/disk1" {
-		t.Fatalf("SourceDataset = %q, want the ORIGINAL source dataset left unchanged (still used for logging)", bd.SourceDataset)
+	if bd := plan.blockDisks[0]; bd.Dataset != "flashpool/vms/zvolvm/disk1" || bd.Size != 1<<30 {
+		t.Fatalf("block disk = %+v, want it written to the destination pool at its backed up size", bd)
 	}
-	if bd.RestoreBaseDataset != "flashpool/vms/zvolvm/disk1" {
-		t.Fatalf("RestoreBaseDataset = %q, want it rebased onto the destination pool flashpool", bd.RestoreBaseDataset)
+	if !strings.Contains(plan.domainXML, "<source dev='/dev/zvol/flashpool/vms/zvolvm/disk1'/>") || strings.Contains(plan.domainXML, "/dev/zvol/tank/") {
+		t.Fatalf("domain XML = %s, want the VM pointed at the restored zvol", plan.domainXML)
 	}
 }
 
@@ -402,7 +411,7 @@ func TestPrepareRestoreVMCrossInstanceZvolRebasesOntoDestPool(t *testing.T) {
 // RestoreZvolDisk falls back to SourceDataset exactly as it did before this
 // task (the pre-existing, already-correct same-instance behavior).
 func TestPrepareRestoreVMSameInstanceZvolUnaffectedByDestPoolCheck(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}}}}
+	eng := &foreignRecordingEngine{snaps: zvolvmRun()}
 	s := vmRestoreSvc(t, eng)
 	s.ssh = &fakeHostSSH{}
 	repoDir := filepath.Join(t.TempDir(), "repo")
@@ -416,11 +425,11 @@ func TestPrepareRestoreVMSameInstanceZvolUnaffectedByDestPoolCheck(t *testing.T)
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
-	if len(plan.blockDisks) != 1 || plan.blockDisks[0].RestoreBaseDataset != "" {
-		t.Fatalf("blockDisks = %+v, want RestoreBaseDataset empty for a same-instance restore", plan.blockDisks)
+	if len(plan.blockDisks) != 1 || plan.blockDisks[0].Dataset != "tank/vms/zvolvm/disk1" {
+		t.Fatalf("blockDisks = %+v, want the zvol written back onto itself", plan.blockDisks)
 	}
-	if plan.blockDisks[0].SourceDataset != "tank/vms/zvolvm/disk1" {
-		t.Fatalf("SourceDataset = %q, want it resolved from the domain XML unchanged", plan.blockDisks[0].SourceDataset)
+	if !strings.Contains(plan.domainXML, "/dev/zvol/tank/vms/zvolvm/disk1") {
+		t.Fatalf("domain XML = %s, want it left on the original zvol", plan.domainXML)
 	}
 }
 
@@ -440,7 +449,7 @@ func TestPrepareRestoreVMSameInstanceZvolUnaffectedByDestPoolCheck(t *testing.T)
 // ZvolRefusesWithoutDestPool nor its whitespace-only sibling exercises this
 // branch — both stop at the earlier, simpler "no pool at all" refusal.
 func TestPrepareRestoreVMCrossInstanceZvolRebaseFailureBypassesScrubber(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}}}}
+	eng := &foreignRecordingEngine{snaps: zvolvmRun()}
 	s := vmRestoreSvc(t, eng)
 	s.ssh = &fakeHostSSH{}
 	repoDir := filepath.Join(t.TempDir(), "repo")
