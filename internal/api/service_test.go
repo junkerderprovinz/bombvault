@@ -9270,3 +9270,29 @@ func TestDeleteBackupsDumpOnlyRefusedBeforeAnyLock(t *testing.T) {
 		t.Fatalf("a refused delete must not drop the container target: %v", err)
 	}
 }
+
+// A DR drill against an off-site copy that is not set up has nothing to
+// restore. It must refuse and leave no green row behind, for every source form.
+func TestRunDRDrillRefusesWithoutOffsite(t *testing.T) {
+	for _, domain := range []string{"containers", "flash", "files", "zfs"} {
+		for _, source := range []string{"offsite", "local", "offsite:nope"} {
+			t.Run(domain+"/"+source, func(t *testing.T) {
+				eng := &fakeResticEngine{snaps: []restic.Snapshot{
+					{ID: "aaaa1111bbbb2222", Time: "2026-06-01T00:00:00Z", Tags: []string{"zfs:tank/a", "container:plex"}},
+				}}
+				svc, st := drDrillService(t, eng, domain, "", "")
+				drill, err := svc.RunRestoreDrill(context.Background(), domain, source, "dr", false)
+				if err == nil || drill.OK {
+					t.Fatalf("want a refusal, got drill %+v err %v", drill, err)
+				}
+				if len(eng.restored) != 0 {
+					t.Errorf("restored %v, want nothing touched", eng.restored)
+				}
+				rows, dErr := st.ListRestoreDrills(domain, "offsite", 10)
+				if dErr == nil && len(rows) != 0 {
+					t.Errorf("recorded %d drill rows, want none", len(rows))
+				}
+			})
+		}
+	}
+}
