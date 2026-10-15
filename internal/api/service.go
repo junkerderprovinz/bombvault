@@ -12625,6 +12625,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		BlockDisks:       vmBlockDisks,
 		ZFSHost:          sshZFSHost{ssh: s.ssh},
 		ZvolRestic:       &resticZvolAdapter{engine: step.engine, mode: mode, extraTags: withTags(s.directTags(settings, "vms", repo), beforeRestoreTags(ctx))},
+		DomainXML:        defXML,
 	}
 	// With changed-block backups on, a running VM with qcow2 disks is read
 	// through the libvirt backup API instead; anything else keeps the method.
@@ -12947,9 +12948,6 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		}
 	}
 	diskPaths := def.DiskPaths
-	if len(diskPaths) == 0 {
-		return vmRestorePlan{}, errors.New("no restorable disk paths found in this backup")
-	}
 	// A changed-block snapshot holds each disk as segments, not as a file at
 	// its path, so its disks are matched through the manifest instead.
 	var blockManifest *backup.BlocksManifest
@@ -13101,6 +13099,9 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		}
 	} else {
 		log.Printf("api: RestoreVM: WARN could not re-parse domain xml for %q (%v) — TPM state and any zvol disks will not be restored", name, perr) //nolint:gosec // G706: name is %q-quoted
+	}
+	if len(diskPaths) == 0 && len(vmRestoreBlockDisks) == 0 {
+		return vmRestorePlan{}, errors.New("no restorable disk paths found in this backup")
 	}
 
 	// Mirrors BackupVM's own "zvol backup requires SSH" guard: RestoreZvolDisk

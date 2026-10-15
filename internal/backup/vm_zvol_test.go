@@ -66,6 +66,10 @@ type fakeZvolRestic struct {
 	capturedStdin []byte
 	capturedPath  string
 	capturedTags  []string
+	// stdinByPath keeps what each call read, and summaryByPath, when it names
+	// a path, answers that call in place of backupSummary.
+	stdinByPath   map[string][]byte
+	summaryByPath map[string]backup.Summary
 
 	dumpErr  error
 	dumpData []byte
@@ -77,8 +81,15 @@ func (r *fakeZvolRestic) BackupStdin(_ context.Context, repo string, rd io.Reade
 	r.capturedTags = tags
 	data, _ := io.ReadAll(rd)
 	r.capturedStdin = data
+	if r.stdinByPath == nil {
+		r.stdinByPath = map[string][]byte{}
+	}
+	r.stdinByPath[path] = data
 	if r.backupErr != nil {
 		return backup.Summary{}, r.backupErr
+	}
+	if sum, ok := r.summaryByPath[path]; ok {
+		return sum, nil
 	}
 	return r.backupSummary, nil
 }

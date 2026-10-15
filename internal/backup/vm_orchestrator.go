@@ -201,6 +201,11 @@ type VMBackupDeps struct {
 	// doc comments below) — required only when BlockDisks is non-empty.
 	ZFSHost    ZFSHost
 	ZvolRestic ZvolRestic
+	// DomainXML is the domain definition. A VM whose disks are all zvols has
+	// no file snapshot, so its run stores this under the VM's own tags
+	// instead: the snapshot every listing, restore and retention of the VM
+	// finds the run by.
+	DomainXML string
 
 	VM     VM
 	Restic Restic
@@ -487,16 +492,24 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 			}
 		}
 
-		// Block-device-backed (zvol) disks, if any, go through the SEPARATE
-		// zvol mechanism (see backupBlockDisksAndLog) — file-backed disks
-		// above are completely untouched by this. A no-op when d.BlockDisks
-		// is empty (every VM in production today).
+		// restic cannot read a block device by path, so zvol disks go
+		// through zfs send.
 		disks, zErr := backupBlockDisksAndLog(ctx, d, "vm backup")
 		if zErr != nil {
 			backupErr = zErr
 			return
 		}
-		summary = withBlockDisks(summary, disks, len(paths) > 0, len(d.BlockDisks))
+		// Written after the disks, so a run whose disks failed leaves nothing
+		// behind that looks like a backup of the VM.
+		if len(paths) == 0 {
+			if summary, backupErr = backupDomainXML(ctx, d, tags); backupErr != nil {
+				backupErr = fmt.Errorf("vm backup: %w", backupErr)
+				return
+			}
+		}
+		if len(d.BlockDisks) > 0 {
+			summary = summary.Plus(disks)
+		}
 	}()
 
 	return summary, backupErr
@@ -553,7 +566,12 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 		if zErr != nil {
 			return Summary{}, zErr
 		}
-		return disks, nil
+		tags := withRunTag(withFormerNames([]string{"vm:" + d.Name, "p2", "live"}, d.FormerNames), d.RunTag)
+		summary, err := backupDomainXML(ctx, d, tags)
+		if err != nil {
+			return Summary{}, fmt.Errorf("vm live backup: %w", err)
+		}
+		return summary.Plus(disks), nil
 	}
 	if len(commitDevs) == 0 {
 		return Summary{}, fmt.Errorf("vm live backup: no writable disk to snapshot/commit. Use the graceful method for this VM")
@@ -608,30 +626,33 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 		return Summary{}, fmt.Errorf("vm live backup: restic: %w", backupErr)
 	}
 
-	// Block-device-backed (zvol) disks, if any, are entirely separate from
-	// the qemu external-snapshot/blockcommit dance above (ParseDomain already
-	// excludes them via SkipSnapshotDevs — they can never be a
-	// SnapshotCreateDiskOnly/BlockCommitActivePivot target) — see
-	// backupBlockDisksAndLog. A no-op when d.BlockDisks is empty (every VM in
-	// production today).
+	// zvol disks get no overlay (ParseDomain lists them in SkipSnapshotDevs);
+	// a ZFS snapshot holds them still for zfs send instead.
 	disks, zErr := backupBlockDisksAndLog(ctx, d, "vm live backup")
 	if zErr != nil {
 		return Summary{}, zErr
 	}
-	return withBlockDisks(summary, disks, true, len(d.BlockDisks)), nil
+	if len(d.BlockDisks) > 0 {
+		summary = summary.Plus(disks)
+	}
+	return summary, nil
 }
 
-// withBlockDisks adds the zvol disks' summary to the file disks' one. With no
-// file snapshot the zvol summary stands alone, since an unmeasured empty
-// summary would otherwise mark the whole run as unmeasured.
-func withBlockDisks(files, disks Summary, hadFiles bool, blockDisks int) Summary {
-	switch {
-	case blockDisks == 0:
-		return files
-	case !hadFiles:
-		return disks
+// VMDomainStdinPath is where the run snapshot of a VM without file disks keeps
+// the domain XML.
+func VMDomainStdinPath(name string) string {
+	return "/vm-domains/" + name + ".xml"
+}
+
+// backupDomainXML writes the run snapshot of a VM without file disks. The
+// zvol snapshots carry tags of their own, so without it nothing under
+// vm:<name> would show that the run happened.
+func backupDomainXML(ctx context.Context, d VMBackupDeps, tags []string) (Summary, error) {
+	sum, err := d.ZvolRestic.BackupStdin(ctx, d.RepoPath, strings.NewReader(d.DomainXML), VMDomainStdinPath(d.Name), tags)
+	if err != nil {
+		return Summary{}, fmt.Errorf("domain definition: %w", err)
 	}
-	return files.Plus(disks)
+	return sum, nil
 }
 
 // waitShutOff polls the VM state until it reaches "shut off". On timeout it
@@ -717,7 +738,7 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	if d.TPMPath != "" {
 		allPaths = append(allPaths, d.TPMPath)
 	}
-	if len(allPaths) == 0 {
+	if len(allPaths) == 0 && len(d.BlockDisks) == 0 {
 		return fmt.Errorf("vm restore: no paths to restore (unsafe)")
 	}
 	for _, p := range allPaths {
@@ -770,7 +791,7 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 				return fmt.Errorf("vm restore: restic restore: %w", err)
 			}
 		}
-	} else {
+	} else if len(allPaths) > 0 {
 		// Same-instance restore: restore each file's PARENT directory back to its own
 		// location (deduplicated). restic restores only the snapshot's files in that
 		// dir and never deletes existing siblings.
@@ -1154,9 +1175,6 @@ func backupBlockDisksAndLog(ctx context.Context, d VMBackupDeps, logPrefix strin
 				firstErr = fmt.Errorf("%s: zvol disk %q: %w", logPrefix, bd.Dataset, err)
 			}
 			continue
-		}
-		if total.SnapshotID == "" {
-			total.SnapshotID = sum.SnapshotID
 		}
 		total = total.Plus(sum)
 		log.Printf("%s: zvol disk %q: backed up as restic snapshot %s (%d bytes), tags %v", logPrefix, bd.Dataset, sum.SnapshotID, sum.Bytes, tags)
