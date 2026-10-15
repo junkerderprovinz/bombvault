@@ -72,6 +72,9 @@ func (sc anomalyScope) String() string { return sc.Kind + ":" + sc.ID }
 type anomalyItemRef struct {
 	TargetID, Domain, Name string
 	Scheduled              bool
+	// WholeCopies marks an item that stores part of its data in full on every
+	// backup, as a VM does with its zvol disks.
+	WholeCopies bool
 }
 
 // anomalyScopeResult is what the last pass learned about one series, kept so
@@ -825,7 +828,7 @@ func (e *anomalyEngine) readSeries(sc anomalyScope, ref anomalyItemRef, p *anoma
 		return itemInput{}, store.ScopeState{}, err
 	}
 	return itemInput{
-		Kind: series, Domain: ref.Domain, Series: rows, NewData: window,
+		Kind: series, Domain: ref.Domain, Series: rows, NewData: window, WholeCopies: ref.WholeCopies,
 		Open: openByMetric(state.Open), Expectations: byFamily(expectations),
 		Sens:         resolveSensitivity(p.prefs[ref.TargetID].Sensitivity, p.settings.AnomalySensitivity),
 		EvaluateFrom: from,
@@ -1478,7 +1481,8 @@ func (s *Service) readAnomalyItems(settings store.Settings) (map[string]anomalyI
 	for _, vm := range vms {
 		out[vm.ID] = anomalyItemRef{
 			TargetID: vm.ID, Domain: anomalyDomainVM, Name: vm.Name,
-			Scheduled: settings.VMsEnabled && vm.IncludeInSchedule,
+			Scheduled:   settings.VMsEnabled && vm.IncludeInSchedule,
+			WholeCopies: len(zvolDevsOf(vm.Definition)) > 0,
 		}
 	}
 	sets, err := s.store.ListFileSets()
