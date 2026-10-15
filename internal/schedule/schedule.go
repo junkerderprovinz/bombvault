@@ -1032,6 +1032,12 @@ func (s *Scheduler) offsiteOff(domain string) bool {
 	return s.offsiteInUse != nil && !s.offsiteInUse(domain)
 }
 
+// targetsOffReason is the log reason for an off-site job left out because
+// every off-site target of domain is switched off.
+func targetsOffReason(domain string) string {
+	return "every off-site target of " + domain + " is switched off"
+}
+
 // SetDigestJob wires the weekly digest. digestFn sends one app-wide summary per
 // fire. Call before Reload.
 func (s *Scheduler) SetDigestJob(digestFn func() error) {
@@ -1158,6 +1164,10 @@ type domainSpec struct {
 	off     bool
 	fn      func()
 	lastRun LastRunFunc // nil for domains without everyN support
+	// skip, when set, is asked at each fire and names why the fire has
+	// nothing to do, or returns "". A skipped fire is logged with that reason
+	// and fn does not run.
+	skip func() string
 }
 
 // Reload registers all entries from settings, replacing earlier ones, so it can
@@ -1404,12 +1414,15 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 			cadence: cadence,
 			name:    domain + "-offsite",
 			off:     !enabled,
+			skip: func() string {
+				if s.offsiteOff(domain) {
+					return targetsOffReason(domain)
+				}
+				return ""
+			},
 			fn: func() {
 				if s.replicateOffFn == nil {
 					log.Printf("schedule: %s-offsite job skipped, off-site not wired (SetOffsiteJob)", domain)
-					return
-				}
-				if s.offsiteOff(domain) {
 					return
 				}
 				if err := s.replicateOffFn(domain); err != nil {
@@ -1440,6 +1453,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				attempted := 0
 				for _, tk := range tasks {
 					if tk.source == "offsite" && s.offsiteOff(tk.domain) {
+						log.Printf("schedule: drills job: %s/%s(%s) skipped: %s", tk.domain, tk.source, tk.kind, targetsOffReason(tk.domain))
 						continue
 					}
 					attempted++
@@ -1469,6 +1483,14 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 		domains = append(domains, domainSpec{
 			cadence: settings.TamperTestSchedule,
 			name:    "tamper",
+			skip: func() string {
+				for _, dom := range tamperDomains {
+					if !s.offsiteOff(dom) {
+						return ""
+					}
+				}
+				return "every off-site target of the sections with delete protection is switched off"
+			},
 			fn: func() {
 				if s.tamperFn == nil {
 					log.Print("schedule: tamper job skipped, tamper test not wired (SetTamperJob)")
@@ -1477,6 +1499,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				attempted := 0
 				for _, dom := range tamperDomains {
 					if s.offsiteOff(dom) {
+						log.Printf("schedule: tamper job: %s skipped: %s", dom, targetsOffReason(dom))
 						continue
 					}
 					attempted++
@@ -1602,6 +1625,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 
 		domainName := d.name
 		jobFn := d.fn
+		skip := d.skip
 
 		// An everyN cadence is a daily trigger plus a due-gate, so without a
 		// last-run query the job would run every day. The API rejects everyN for
@@ -1638,6 +1662,12 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 		}
 
 		id, err := s.c.AddFunc(cad.Spec, func() {
+			if skip != nil {
+				if why := skip(); why != "" {
+					log.Printf("schedule: %s job skipped: %s", domainName, why)
+					return
+				}
+			}
 			log.Printf("schedule: running %s job", domainName)
 			jobFn()
 		})

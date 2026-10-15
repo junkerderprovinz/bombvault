@@ -1,6 +1,9 @@
 package schedule
 
 import (
+	"bytes"
+	"log"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -89,5 +92,57 @@ func TestTheOffsiteScheduleSkipsADomainWhoseTargetsAreAllOff(t *testing.T) {
 		if (copies > 0) != inUse {
 			t.Errorf("target in use %v: %d copies", inUse, copies)
 		}
+	}
+}
+
+// captureLog sends the standard logger into a buffer for the rest of the test.
+func captureLog(t *testing.T) *bytes.Buffer {
+	t.Helper()
+	var buf bytes.Buffer
+	prev, flags := log.Writer(), log.Flags()
+	log.SetOutput(&buf)
+	log.SetFlags(0)
+	t.Cleanup(func() { log.SetOutput(prev); log.SetFlags(flags) })
+	return &buf
+}
+
+func TestAnOffsiteFireWithEveryTargetOffIsLoggedAsSkippedWithItsReason(t *testing.T) {
+	sc := newOffsiteScheduler(false, newFakeJobRuns())
+	sc.SetOffsiteJob(func(string) error { return nil })
+	out := captureLog(t)
+
+	fireJob(t, sc, store.Settings{ContainersEnabled: true, ContainersOffsiteSchedule: "daily 02:00"}, "offsite")
+
+	got := out.String()
+	if strings.Contains(got, "running containers-offsite job") {
+		t.Errorf("log = %q, want no running line for a fire that copies nothing", got)
+	}
+	if !strings.Contains(got, "containers-offsite job skipped: every off-site target of containers is switched off") {
+		t.Errorf("log = %q, want the skip and its reason", got)
+	}
+}
+
+func TestATamperFireWithEveryTargetOffIsLoggedAsSkippedWithItsReason(t *testing.T) {
+	sc := newOffsiteScheduler(false, newFakeJobRuns())
+	sc.SetTamperJob(func(string) error { return nil })
+	out := captureLog(t)
+
+	fireJob(t, sc, store.Settings{ContainersOffsiteImmutable: true, TamperTestSchedule: "daily 04:00"}, "tamper")
+
+	got := out.String()
+	if strings.Contains(got, "running tamper job") || !strings.Contains(got, "tamper job skipped: every off-site target") {
+		t.Errorf("log = %q, want the skip and its reason instead of a running line", got)
+	}
+}
+
+func TestADrillLeftOutForItsTargetsIsLoggedWithTheReason(t *testing.T) {
+	sc := newOffsiteScheduler(false, newFakeJobRuns())
+	sc.SetDrillJob(func(string, string, string) error { return nil })
+	out := captureLog(t)
+
+	fireJob(t, sc, drillSettings, "drill")
+
+	if got := out.String(); !strings.Contains(got, "drills job: containers/offsite(dr) skipped: every off-site target of containers is switched off") {
+		t.Errorf("log = %q, want the left-out drill named with its reason", got)
 	}
 }
