@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -22,6 +23,21 @@ func TestEnsureRepoRefusesARepositoryItsKeyDoesNotOpen(t *testing.T) {
 	}
 	if slices.Contains(f.eng.ensured, loc) {
 		t.Fatal("a repository the key does not open was initialised over")
+	}
+}
+
+func TestEnsureRepoDoesNotInitialiseAHostThatDoesNotAnswer(t *testing.T) {
+	f := newPlacementFixture(t)
+	loc := "rest:http://192.168.98.2:8000/nas/containers/"
+	f.eng.opens[loc] = false
+	f.eng.openErr[loc] = errors.New("restic cat failed: Fatal: unable to open config file: Head \"http://192.168.98.2:8000/nas/containers/config\": " +
+		"dial tcp 192.168.98.2:8000: i/o timeout\nIs there a repository at the following location?")
+	err := f.svc.EnsureRepo(context.Background(), loc, restic.Mode{Encrypted: true, Password: "pw"})
+	if err == nil || !strings.Contains(err.Error(), "could not reach") {
+		t.Fatalf("EnsureRepo = %v, want the unreachable refusal", err)
+	}
+	if slices.Contains(f.eng.ensured, loc) {
+		t.Fatal("a repository was initialised at a host that did not answer")
 	}
 }
 
