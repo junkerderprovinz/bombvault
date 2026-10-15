@@ -890,3 +890,77 @@ func TestAMemberKnownOnlyByItsAddressKeepsTheNameItsRowHas(t *testing.T) {
 		}
 	}
 }
+
+// b leaves while a is down, so a never hears it. a, started again, still
+// knows where b took direct calls and asks there; b's answer in its own name
+// takes it off a's list.
+func TestAMemberThatLeftWhileTheOtherWasDownIsDroppedOnceItSaysSo(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, a, b)
+	bDirect := httptest.NewTLSServer(b.router)
+	t.Cleanup(bDirect.Close)
+	if code, out := b.do(t, http.MethodPut, "/api/group/address", map[string]any{"url": bDirect.URL}); code != http.StatusOK || out["active"] != true {
+		t.Fatalf("set b's address: %d %v", code, out)
+	}
+	if err := a.svc.RunFleetPolls(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	rows, err := a.st.ListFleetPeers()
+	if err != nil || len(rows) != 1 || rows[0].MemberURL != bDirect.URL {
+		t.Fatalf("a's rows after a poll = %+v, %v; want b with its address", rows, err)
+	}
+
+	a.svc.StopGroup()
+	if code, _ := b.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK {
+		t.Fatalf("leave: %d", code)
+	}
+	restarted := NewService(a.svc.cfg, a.st, nil, nil, a.engine)
+	t.Cleanup(restarted.StopGroup)
+	restarted.applyGroup()
+	restarted.noteMemberAddresses()
+	if err := restarted.RunFleetPolls(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if rows, err := a.st.ListFleetPeers(); err != nil || len(rows) != 0 {
+		t.Fatalf("a's rows once b said it left = %+v, %v; want none", rows, err)
+	}
+}
+
+func TestAWordThatAMemberLeftCountsOnlyUnderItsOwnKey(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, a, b)
+	if err := a.svc.RunFleetPolls(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if _, found, err := a.st.MemberKey(b.id(t)); err != nil || !found {
+		t.Fatalf("a poll left b's key unpinned: %v", err)
+	}
+	const challenge = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	signedBy := func(seed []byte, over string) []byte {
+		p := depositSigner{id: b.id(t), seed: seed, counter: time.Now().UnixMilli()}.prove(keydeposit.ProofNotMember, a.id(t), []byte(over), nil)
+		raw, err := json.Marshal(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return raw
+	}
+	bSeed, err := b.svc.depositSeed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, statement := range map[string][]byte{
+		"another key":       signedBy(bytes.Repeat([]byte{7}, 32), challenge),
+		"another challenge": signedBy(bSeed, strings.Repeat("f", 64)),
+	} {
+		a.svc.dropFormerMember(&group.LeftError{MemberID: b.id(t), Challenge: challenge, Statement: statement})
+		if rows, _ := a.st.ListFleetPeers(); len(rows) != 1 {
+			t.Fatalf("a word signed with %s dropped b's row", name)
+		}
+	}
+	a.svc.dropFormerMember(&group.LeftError{MemberID: b.id(t), Challenge: challenge, Statement: signedBy(bSeed, challenge)})
+	if rows, _ := a.st.ListFleetPeers(); len(rows) != 0 {
+		t.Fatalf("b's own word over the challenge left its row: %+v", rows)
+	}
+}

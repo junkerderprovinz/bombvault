@@ -37,6 +37,8 @@ type FleetPeer struct {
 	// Kind is what the member said it is: empty for a BombVault instance,
 	// "android" for the app, which has no scorecard to poll.
 	Kind string
+	// MemberURL is where the member last said it takes direct calls.
+	MemberURL string
 }
 
 // NeedsPairing reports whether the row predates pairing and has no member to
@@ -44,7 +46,7 @@ type FleetPeer struct {
 func (p FleetPeer) NeedsPairing() bool { return p.MemberID == "" }
 
 const fleetPeerCols = `id, member_id, name, url, enabled, last_poll_at, last_poll_ok, last_poll_error,
-	last_poll_instance_name, last_poll_version, last_poll_domains_json, created_at, sort_order, kind`
+	last_poll_instance_name, last_poll_version, last_poll_domains_json, created_at, sort_order, kind, member_url`
 
 // CreateFleetPeer inserts a new fleet peer and returns the stored row. An
 // empty ID is assigned and a zero CreatedAt is set to now.
@@ -57,9 +59,9 @@ func (r *Repo) CreateFleetPeer(p FleetPeer) (FleetPeer, error) {
 	}
 	_, err := r.db.Exec(`
 		INSERT INTO fleet_peers (`+fleetPeerCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		p.ID, p.MemberID, p.Name, p.URL, boolInt(p.Enabled), p.LastPollAt, nullBool(p.LastPollOK), p.LastPollError,
-		p.LastPollInstanceName, p.LastPollVersion, p.LastPollDomainsJSON, p.CreatedAt, p.SortOrder, p.Kind,
+		p.LastPollInstanceName, p.LastPollVersion, p.LastPollDomainsJSON, p.CreatedAt, p.SortOrder, p.Kind, p.MemberURL,
 	)
 	if err != nil {
 		return FleetPeer{}, fmt.Errorf("CreateFleetPeer: %w", err)
@@ -152,6 +154,15 @@ func (r *Repo) DeleteFleetPeer(id string) error {
 	return nil
 }
 
+// SetFleetPeerMemberURL keeps url as where the member last said it takes
+// direct calls.
+func (r *Repo) SetFleetPeerMemberURL(memberID, url string) error {
+	if _, err := r.db.Exec(`UPDATE fleet_peers SET member_url = ? WHERE member_id = ? AND member_id != '' AND member_url != ?`, url, memberID, url); err != nil {
+		return fmt.Errorf("SetFleetPeerMemberURL: %w", err)
+	}
+	return nil
+}
+
 // DropMemberFleetPeers removes the rows of group members, the one of memberID
 // or, with an empty memberID, every one. A row from before pairing that a
 // member took over keeps its address and waits for pairing again, as it did
@@ -159,7 +170,7 @@ func (r *Repo) DeleteFleetPeer(id string) error {
 func (r *Repo) DropMemberFleetPeers(memberID string) error {
 	err := r.inTx(func(tx *sql.Tx) error {
 		match := `member_id != '' AND (? = '' OR member_id = ?)`
-		if _, err := tx.Exec(`UPDATE fleet_peers SET member_id = '', kind = '' WHERE url != '' AND `+match, memberID, memberID); err != nil {
+		if _, err := tx.Exec(`UPDATE fleet_peers SET member_id = '', kind = '', member_url = '' WHERE url != '' AND `+match, memberID, memberID); err != nil {
 			return err
 		}
 		_, err := tx.Exec(`DELETE FROM fleet_peers WHERE `+match, memberID, memberID)
@@ -176,7 +187,7 @@ func scanFleetPeer(s scanner) (FleetPeer, error) {
 	var enabled int
 	err := s.Scan(
 		&p.ID, &p.MemberID, &p.Name, &p.URL, &enabled, &p.LastPollAt, &p.LastPollOK, &p.LastPollError,
-		&p.LastPollInstanceName, &p.LastPollVersion, &p.LastPollDomainsJSON, &p.CreatedAt, &p.SortOrder, &p.Kind,
+		&p.LastPollInstanceName, &p.LastPollVersion, &p.LastPollDomainsJSON, &p.CreatedAt, &p.SortOrder, &p.Kind, &p.MemberURL,
 	)
 	if err != nil {
 		return FleetPeer{}, fmt.Errorf("scanFleetPeer: %w", err)

@@ -94,6 +94,19 @@ type Member struct {
 // in this group.
 var ErrNotMember = errors.New("group: no such member is reachable")
 
+// LeftError is the answer of a member that says, in its own name, that it is
+// not in this group any more. Statement is its signed word over Challenge,
+// for whoever holds the member's key to check.
+type LeftError struct {
+	MemberID  string
+	Challenge string
+	Statement []byte
+}
+
+func (e *LeftError) Error() string {
+	return "group: " + e.MemberID + " answered that it is not in this group"
+}
+
 // directPath is the route a member answers direct calls on.
 const directPath = "/api/group/call"
 
@@ -193,6 +206,12 @@ const departGrace = time.Minute
 // Manager keeps this instance's side of the group running: the discovery
 // announce, the relay connection and the direct transport.
 type Manager struct {
+	// Stranger, when set, signs what this instance answers, while it is in no
+	// group, a direct call addressed to it: its word, in its own name, that it
+	// is no member, covering the caller and the call's signature so it cannot
+	// be played back to anybody else. Set it before Start.
+	Stranger func(caller, challenge string) []byte
+
 	serve   relay.Handler
 	replay  *relay.ReplayGuard
 	disc    *discovery.Service
@@ -988,6 +1007,9 @@ func (m *Manager) callDirect(ctx context.Context, k *keys, self string, p discov
 	if err != nil {
 		return relay.ProxyResult{}, err
 	}
+	if resp.StatusCode == http.StatusGone && p.ID != ProbeTarget {
+		return relay.ProxyResult{}, &LeftError{MemberID: p.ID, Challenge: req.Header.Get(headerSignature), Statement: raw}
+	}
 	if resp.StatusCode != http.StatusOK {
 		return relay.ProxyResult{}, fmt.Errorf("group: %s refused the direct call with HTTP %d", p.Name, resp.StatusCode)
 	}
@@ -1001,6 +1023,30 @@ func (m *Manager) callDirect(ctx context.Context, k *keys, self string, p discov
 	}
 	return res, err
 }
+
+// answerAsStranger answers a call that names this instance, while it is in no
+// group, with the Stranger statement, so a former member can drop it from its
+// lists. An instance in another group stays silent: it cannot tell a caller
+// from that group apart from one of its own whose call was tampered with on
+// the way, and its word would let whoever tampered remove a real member.
+func (m *Manager) answerAsStranger(w http.ResponseWriter, r *http.Request, self string) bool {
+	sender, sig := r.Header.Get(headerPeer), r.Header.Get(headerSignature)
+	if m.Stranger == nil || self == "" || r.Header.Get(headerTarget) != self || sender == "" || len(sender) > maxSenderBytes || len(sig) != 2*sha256.Size {
+		return false
+	}
+	proof := m.Stranger(sender, sig)
+	if proof == nil {
+		return false
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusGone)
+	_, _ = w.Write(proof)
+	return true
+}
+
+// maxSenderBytes bounds the caller id a Stranger statement signs. Instance ids
+// are 32 hex digits.
+const maxSenderBytes = 128
 
 // directSignature binds a direct call's sender, time and exact body to the
 // peer-auth key.
@@ -1021,11 +1067,20 @@ func (m *Manager) ServeDirect(w http.ResponseWriter, r *http.Request) {
 	m.mu.Lock()
 	k, self := m.keys, m.cfg.InstanceID
 	m.mu.Unlock()
+	addr := relay.RequestAddr(r)
 	if k == nil {
-		http.NotFound(w, r)
+		if m.limiter.Blocked(addr) {
+			http.NotFound(w, r)
+			return
+		}
+		// Signing an answer costs a write, so every call counts against the
+		// caller's address the way a bad signature does.
+		m.limiter.Fail(addr)
+		if !m.answerAsStranger(w, r, self) {
+			http.NotFound(w, r)
+		}
 		return
 	}
-	addr := relay.RequestAddr(r)
 	if m.limiter.Blocked(addr) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return

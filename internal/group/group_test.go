@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -1138,5 +1139,43 @@ func TestAMemberCalledAtItsAddressKeepsTheNameTheRelayGaveIt(t *testing.T) {
 	got := a.Members()
 	if len(got) != 1 || got[0].Relay || got[0].Name != "Attic" {
 		t.Fatalf("members once b is off the relay = %+v, want b by its address under its name", got)
+	}
+}
+
+func TestAnInstanceInNoGroupSaysSoInItsOwnName(t *testing.T) {
+	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
+	b := NewManager(echo)
+	var mu sync.Mutex
+	var caller, challenge string
+	b.Stranger = func(c, ch string) []byte {
+		mu.Lock()
+		defer mu.Unlock()
+		caller, challenge = c, ch
+		return []byte(`{"signed":true}`)
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, b.ServeDirect)
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+	t.Cleanup(b.Close)
+	b.Apply(Config{InstanceID: "id-b"})
+	a.NoteAddress("id-b", srv.URL)
+
+	_, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
+	left, ok := errors.AsType[*LeftError](err)
+	if !ok || left.MemberID != "id-b" || string(left.Statement) != `{"signed":true}` {
+		t.Fatalf("Call = %v, want b's signed word that it left", err)
+	}
+	mu.Lock()
+	gotCaller, gotChallenge := caller, challenge
+	mu.Unlock()
+	if gotCaller != "id-a" || gotChallenge == "" || gotChallenge != left.Challenge {
+		t.Fatalf("b signed for caller %q over %q, want id-a over the call's signature %q", gotCaller, gotChallenge, left.Challenge)
+	}
+
+	b.Apply(Config{Secret: []byte("another group 01"), InstanceID: "id-b", Mode: ModeOff})
+	_, _, err = a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
+	if _, ok := errors.AsType[*LeftError](err); ok || err == nil {
+		t.Fatalf("Call to b in another group = %v, want a plain refusal", err)
 	}
 }

@@ -172,7 +172,7 @@ func TestDroppingMemberRowsLeavesRowsNobodyPairedAndUnpairsATakenOverOne(t *test
 	}
 	tower := mk(store.FleetPeer{MemberID: "member-a", Name: "tower", Enabled: true})
 	phone := mk(store.FleetPeer{MemberID: "member-b", Name: "phone", Kind: "android", Enabled: true})
-	takenOver := mk(store.FleetPeer{MemberID: "member-c", Name: "attic", URL: "https://192.168.1.9:3443", Enabled: true})
+	takenOver := mk(store.FleetPeer{MemberID: "member-c", Name: "attic", URL: "https://192.168.1.9:3443", MemberURL: "https://192.168.1.9:3443", Enabled: true})
 	unpaired := mk(store.FleetPeer{Name: "barn", URL: "https://192.168.1.10:3443", Enabled: true})
 
 	byID := func() map[string]store.FleetPeer {
@@ -203,7 +203,7 @@ func TestDroppingMemberRowsLeavesRowsNobodyPairedAndUnpairsATakenOverOne(t *test
 	if _, ok := got[phone]; ok || len(got) != 2 {
 		t.Fatalf("rows after dropping every member = %+v, want the phone gone", got)
 	}
-	if p := got[takenOver]; !p.NeedsPairing() || p.URL != "https://192.168.1.9:3443" || p.Name != "attic" {
+	if p := got[takenOver]; !p.NeedsPairing() || p.URL != "https://192.168.1.9:3443" || p.MemberURL != "" || p.Name != "attic" {
 		t.Fatalf("the row a member took over = %+v, want it back to waiting for pairing", p)
 	}
 	if p := got[unpaired]; !p.NeedsPairing() || p.Name != "barn" {

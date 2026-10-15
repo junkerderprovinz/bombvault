@@ -36,6 +36,7 @@ const relayConnectPath = "/relay/connect"
 func (s *Service) buildGroup() {
 	s.groupOnce.Do(func() {
 		s.groupMgr = group.NewManager(s.servePeer)
+		s.groupMgr.Stranger = s.strangerProof
 		s.relaySrv = relay.NewServer()
 		s.relaySrv.Admit = func(key string) bool { return s.relayServe.Load() && s.groupMgr.AdmitsRelayKey(key) }
 		// Behind a trusted reverse proxy the relay counts failed handshakes
@@ -60,6 +61,7 @@ func (s *Service) relayServer() *relay.Server {
 // local network. It runs once at boot.
 func (s *Service) StartGroup() {
 	s.applyGroup()
+	s.noteMemberAddresses()
 	s.pairing().Start()
 	go s.renewDepositsLoop()
 }
@@ -312,6 +314,10 @@ func (s *Service) callMember(ctx context.Context, memberID, method, path string,
 	if errors.Is(err, group.ErrNotMember) {
 		return errMemberGone
 	}
+	if left, ok := errors.AsType[*group.LeftError](err); ok {
+		s.dropFormerMember(left)
+		return errMemberGone
+	}
 	if err != nil {
 		log.Printf("group: %s %s to member %q: %v", method, path, memberID, err)
 		return errMemberSilent
@@ -346,6 +352,68 @@ func (s *Service) harvestDirectURL(memberID string, raw []byte) {
 	}
 	if json.Unmarshal(raw, &hint) == nil && hint.DirectURL != "" {
 		s.pairing().NoteAddress(memberID, hint.DirectURL)
+		if err := s.store.SetFleetPeerMemberURL(memberID, hint.DirectURL); err != nil {
+			log.Printf("group: keep the address of member %q: %v", memberID, err)
+		}
+	}
+}
+
+// noteMemberAddresses hands the group the direct address each member last
+// gave, which it would otherwise only learn again from the member. A member
+// that left the group while this instance was down can then still be asked,
+// and say so.
+func (s *Service) noteMemberAddresses() {
+	peers, err := s.store.ListFleetPeers()
+	if err != nil {
+		log.Printf("group: %v", err)
+		return
+	}
+	for _, p := range peers {
+		if p.MemberID != "" && p.MemberURL != "" {
+			s.pairing().NoteAddress(p.MemberID, p.MemberURL)
+		}
+	}
+}
+
+// strangerProof is this instance's signed word, to a caller from a group it
+// is not in, that it is no member of that group.
+func (s *Service) strangerProof(caller, challenge string) []byte {
+	signer, err := s.nextDepositSigner()
+	if err != nil {
+		log.Printf("group: sign an answer to %q: %v", caller, err)
+		return nil
+	}
+	b, err := json.Marshal(signer.prove(keydeposit.ProofNotMember, caller, []byte(challenge), nil))
+	if err != nil {
+		return nil
+	}
+	return b
+}
+
+// dropFormerMember takes a member off this instance's lists, as its leave
+// would have, once its answer proves under the key pinned for it that it is
+// in this group no more. Without a pinned key the answer proves nothing:
+// anybody at the address could have sent it.
+func (s *Service) dropFormerMember(left *group.LeftError) {
+	var p peerProof
+	if json.Unmarshal(left.Statement, &p) != nil {
+		return
+	}
+	key, found, err := s.store.MemberKey(left.MemberID)
+	if err != nil || !found || !bytes.Equal(key, p.Key) {
+		return
+	}
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		return
+	}
+	claim := keydeposit.Claim{Action: keydeposit.ProofNotMember, OwnerID: left.MemberID, KeeperID: g.InstanceID, Counter: p.Counter, Deposit: []byte(left.Challenge)}
+	if !keydeposit.Proven(key, p.Proof, claim) || s.store.AdvanceMemberCounter(left.MemberID, p.Counter) != nil {
+		return
+	}
+	s.pairing().Forget(left.MemberID)
+	if err := s.store.DropMemberFleetPeers(left.MemberID); err != nil {
+		log.Printf("group: drop the row of former member %q: %v", left.MemberID, err)
 	}
 }
 
