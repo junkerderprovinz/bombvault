@@ -31,7 +31,7 @@ CA 템플릿에 표시된 대로 Docker 소켓, 플래시(`/boot`), **Host Data*
 
 ZFS 데이터세트 백업에도 이 모드가 필요합니다. 호스트는 컨테이너가 시작된 뒤에야 데이터세트의 스냅샷을 마운트하기 때문입니다. [ZFS 데이터세트](zfs-datasets.md)를 참고하세요.
 
-로컬 저장소는 기본적으로 `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`이며 첫 백업 시 생성됩니다. 이들이 대상 **로컬**을 이룹니다. 그 페이지의 **대상** 아래에서 **연결** 카드가 섹션별 폴더를 바꾸고, 여기서 열리는 창에는 **로컬 / 원격** 스위치가 있습니다. 섹션의 경로는 로컬 폴더 대신 restic 원격(`s3:...`, `rest:...`, `sftp:...`, `rclone:...`)이 될 수 있으며, 별도의 로컬 사본 없이 그곳으로 바로 백업합니다. [원격 기본 저장소](offsite-recovery.md#remote-primary-repositories)를 참고하세요.
+로컬 저장소는 기본적으로 `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`이며 첫 백업 시 생성됩니다. 이들이 **로컬** 대상을 이룹니다. 그 페이지의 **대상** 아래에서 **연결** 카드가 섹션별 폴더를 바꾸고, 여기서 열리는 창에는 **로컬 / 원격** 스위치가 있습니다. 섹션의 경로는 로컬 폴더 대신 restic 원격(`s3:...`, `rest:...`, `sftp:...`, `rclone:...`)이 될 수 있으며, 별도의 로컬 사본 없이 그곳으로 바로 백업합니다. [원격 기본 저장소](offsite-recovery.md#remote-primary-repositories)를 참고하세요.
 
 !!! note "호스트 통합 확인"
     개요의 **호스트 통합** 카드(**사용자 지정**에서 추가)는 모든 마운트와 CLI(Docker 소켓, libvirt, restic, qemu-img, rclone)를 검사하고 누락된 부분을 보고합니다.

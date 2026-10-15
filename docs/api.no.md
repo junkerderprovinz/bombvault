@@ -73,9 +73,9 @@ BombVault leverer en beskrivelse av disse rutene på `/api/v1/openapi.json` (Ope
 
 BombVault kan dukke opp i Home Assistant som en enhet, via MQTT-discovery. Home Assistant trenger MQTT-integrasjonen sin og en megler, for eksempel Mosquitto-tillegget. Ingen egen komponent trengs.
 
-1. Åpne **Innstillinger, Integrasjoner** i BombVault og finn **Home Assistant** i kortet **Tjenester**.
+1. Åpne **Innstillinger, Integrasjoner** i BombVault og slå på **Home Assistant** i kortet **Tjenester**. Feltene for megleren vises under.
 2. Skriv inn adressen og porten til megleren, og brukernavn og passord hvis den ber om det. Slå på **Bruk TLS** hvis megleren bruker TLS, som regel på port 8883; sertifikatet må være gyldig for adressen du skrev inn. Endrer du adressen, porten eller brukernavnet, må du skrive inn passordet på nytt: BombVault gir ikke det lagrede videre til en annen megler eller bruker.
-3. Slå på **Koble til Home Assistant** og klikk **Lagre**. Kortet viser når tilkoblingen er oppe.
+3. Klikk **Lagre**. Raden viser når tilkoblingen er oppe.
 
 Enheten heter BombVault, eller BombVault med instansnavnet i parentes, og har disse entitetene:
 

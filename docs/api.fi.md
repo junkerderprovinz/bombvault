@@ -73,9 +73,9 @@ BombVault tarjoaa näiden reittien kuvauksen osoitteessa `/api/v1/openapi.json` 
 
 BombVault voi näkyä Home Assistantissa laitteena MQTT-löydön kautta. Home Assistant tarvitsee MQTT-integraationsa ja välittäjän, esimerkiksi Mosquitto-lisäosan. Omaa komponenttia ei tarvita.
 
-1. Avaa BombVaultissa **Asetukset, Integraatiot** ja etsi **Home Assistant** **Palvelut**-kortista.
+1. Avaa BombVaultissa **Asetukset, Integraatiot** ja kytke **Home Assistant** päälle **Palvelut**-kortissa. Välittäjän kentät tulevat sen alle.
 2. Anna välittäjän osoite ja portti sekä käyttäjänimi ja salasana, jos se niitä pyytää. Kytke **Käytä TLS:ää** päälle, jos välittäjä käyttää TLS:ää, yleensä portissa 8883; sen varmenteen on oltava voimassa antamallesi osoitteelle. Jos muutat osoitetta, porttia tai käyttäjänimeä, anna salasana uudelleen: BombVault ei anna tallennettua salasanaa toiselle välittäjälle tai käyttäjälle.
-3. Kytke **Yhdistä Home Assistantiin** päälle ja napsauta **Tallenna**. Kortti näyttää, kun yhteys on muodostettu.
+3. Napsauta **Tallenna**. Rivi näyttää, kun yhteys on muodostettu.
 
 Laitteen nimi on BombVault tai BombVault, jonka perässä on instanssin nimi suluissa, ja sillä on nämä entiteetit:
 

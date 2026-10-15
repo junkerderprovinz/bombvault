@@ -73,9 +73,9 @@ BombVault 在 `/api/v1/openapi.json` 提供这些路由的说明（OpenAPI 3.1�
 
 BombVault 可以通过 MQTT 发现，以设备的形式出现在 Home Assistant 中。Home Assistant 需要启用它的 MQTT 集成，并有一个代理，例如 Mosquitto 加载项。不需要任何专用组件。
 
-1. 在 BombVault 中打开**设置、集成**，并在**服务**卡片中找到 **Home Assistant**。
+1. 在 BombVault 中打开**设置、集成**，并在**服务**卡片中打开 **Home Assistant**。Broker 的字段会出现在它下面。
 2. 输入代理的地址和端口；如果代理要求，再输入用户名和密码。如果代理使用 TLS（通常在端口 8883），就打开 **使用 TLS**；它的证书必须对你输入的地址有效。如果你改了地址、端口或用户名，请重新输入密码：BombVault 不会把已保存的密码交给另一个代理或另一个用户。
-3. 打开 **连接到 Home Assistant** 并点击 **保存**。连接建立后，卡片会显示出来。
+3. 点击 **保存**。连接建立后，该行会显示出来。
 
 设备名为 BombVault，或在括号中带上实例名称的 BombVault，包含以下实体：
 

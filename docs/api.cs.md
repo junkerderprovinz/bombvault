@@ -73,9 +73,9 @@ BombVault poskytuje popis těchto cest na `/api/v1/openapi.json` (OpenAPI 3.1). 
 
 BombVault se může v Home Assistant objevit jako zařízení díky zjišťování MQTT. Home Assistant k tomu potřebuje svou integraci MQTT a broker, třeba doplněk Mosquitto. Žádná vlastní komponenta není potřeba.
 
-1. V BombVault otevři **Nastavení, Integrace** a najdi **Home Assistant** v kartě **Služby**.
+1. V BombVault otevři **Nastavení, Integrace** a zapni **Home Assistant** v kartě **Služby**. Pod ním se objeví pole pro broker.
 2. Zadej adresu a port brokeru, a pokud je vyžaduje, i uživatelské jméno a heslo. Zapni **Použít TLS**, pokud broker používá TLS, obvykle na portu 8883; jeho certifikát musí platit pro zadanou adresu. Když změníš adresu, port nebo uživatelské jméno, zadej heslo znovu: BombVault uložené heslo jinému brokeru ani uživateli nepředá.
-3. Zapni **Připojit k Home Assistant** a klikni na **Uložit**. Karta ukáže, až spojení naběhne.
+3. Klikni na **Uložit**. Řádek ukáže, až spojení naběhne.
 
 Zařízení se jmenuje BombVault, případně BombVault s názvem instance v závorce, a má tyto entity:
 

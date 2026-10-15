@@ -97,7 +97,9 @@ Template cũng gắn kết Docker socket, flash (`/boot`) và gốc **Host Data*
 
 Thanh bên có năm mục: **Tổng quan**, **Bất thường** (khi bật phát hiện bất thường), **Bản sao lưu**, **Khôi phục** và, bên dưới **Đăng xuất**, **Cài đặt**. Hành động chính của một trang nổi ở dưới cùng bên phải, còn **Thêm** chứa những hành động hiếm dùng. Trên điện thoại, thanh chứa Tổng quan, Bản sao lưu, Khôi phục và Cài đặt, còn **Thêm** có phần còn lại.
 
-- **Bản sao lưu** liệt kê mọi container, VM, bộ thư mục, ổ flash, mọi tập dữ liệu ZFS và mục tự sao lưu. Các ô phía trên danh sách chọn một loại, còn **Bộ lọc**, **Sắp xếp** và **Tìm kiếm** thu hẹp danh sách. Mỗi mục có một trang riêng với ba tab: **Bản sao lưu**, **Cài đặt** và **Xác minh**.
+Các trang và phần cài đặt dùng toàn bộ chiều rộng cửa sổ. Một cửa sổ giữ các nút của nó ở chân, nút đi tiếp nằm bên phải. Trên điện thoại, một chân có hơn ba nút giữ lại lối thoát và hành động chính, còn các nút khác nằm dưới **Thêm**.
+
+- **Bản sao lưu** liệt kê mọi container, VM, bộ thư mục, ổ flash, mọi tập dữ liệu ZFS và mục tự sao lưu. Các ô phía trên danh sách chọn một loại, còn **Bộ lọc**, **Sắp xếp** và **Tìm kiếm** thu hẹp danh sách. Mỗi mục có một trang riêng với ba tab: **Bản sao lưu**, **Cài đặt** và **Xác minh**. Một nút quay lại ở bên trái biểu tượng của mục dẫn về danh sách.
 - **Khôi phục** là một trang cho mọi thứ: chọn một phần, tìm một mục và chọn một bản sao lưu. Trình hướng dẫn khẩn cấp và các nguồn khác cũng bắt đầu từ đây.
 - **Cài đặt** gồm mười bốn ô: Chung, Giao diện, Lịch trình, Đích sao lưu, Khôi phục, Thông báo, Xác minh, Bảo mật, Phiên bản, Ghép nối, Tích hợp, Ứng dụng, Hệ thống và Thông tin. Nhấn `/` hoặc Ctrl+K để tìm trong tất cả, kể cả theo tên mà các trang từng có ở các phiên bản trước. Kéo các ô vào thứ tự riêng của bạn trong **Giao diện**. Khi một cột ô bên cạnh trang sẽ làm trang quá hẹp, như trong cửa sổ rộng khoảng 1200 pixel, các ô trở thành một dải phía trên trang và cuộn ngang được. Điện thoại hiển thị cùng dải đó.
 - **Đích sao lưu** và **Phiên bản** là các ô cài đặt có trang riêng. **Hiện cả trong thanh bên** trên ô của chúng ghim chúng vào thanh bên.

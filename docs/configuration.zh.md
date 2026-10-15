@@ -31,7 +31,7 @@
 
 ZFS 数据集备份同样需要这种模式：主机要在容器启动之后才挂载数据集的快照。参见 [ZFS 数据集](zfs-datasets.md)。
 
-本地仓库默认位于 `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`，并在首次备份时创建。它们构成名为**本地**的目标。在**目标**下它自己的页面上，**连接**卡片可以更改每个分区的文件夹，打开的窗口里有一个**本地 / 远程**开关：分区的路径可以是 restic 远程（`s3:...`、`rest:...`、`sftp:...`、`rclone:...`）而不是本地文件夹，直接备份到那里而没有单独的本地副本；参见[远程主仓库](offsite-recovery.md#remote-primary-repositories)。
+本地仓库默认位于 `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`，并在首次备份时创建。它们构成**本地**这个目标。在**目标**下它自己的页面上，**连接**卡片可以更改每个分区的文件夹，打开的窗口里有一个**本地 / 远程**开关：分区的路径可以是 restic 远程（`s3:...`、`rest:...`、`sftp:...`、`rclone:...`）而不是本地文件夹，直接备份到那里而没有单独的本地副本；参见[远程主仓库](offsite-recovery.md#remote-primary-repositories)。
 
 !!! note "主机集成检查"
     概览上的**主机集成**卡片（通过**自定义**添加）会探测每个挂载和 CLI（Docker 套接字、libvirt、restic、qemu-img、rclone）并报告任何缺失的部分。

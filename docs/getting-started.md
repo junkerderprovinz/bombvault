@@ -97,7 +97,9 @@ Used BombVault before? **Restore from a backup** on the welcome page opens the R
 
 The sidebar has five entries: **Overview**, **Anomalies** (while anomaly detection is on), **Backups**, **Restore** and, below **Sign out**, **Settings**. A page's main action floats at the bottom right, and **More** holds the rare ones. On a phone the bar holds Overview, Backups, Restore and Settings, and **More** has the rest.
 
-- **Backups** lists every container, VM, folder set, the flash drive, every ZFS dataset and the self-backup as entries. Tiles above the list pick a kind, and **Filters**, **Sort** and **Search** narrow it down. Every entry has a page of its own with three tabs: **Backups**, **Settings** and **Verify**.
+Pages and settings use the whole width of the window. A window keeps its buttons in its foot, with the one that goes forward on the right. On a phone, a foot with more than three buttons keeps the way out and the main action and puts the others under **More**.
+
+- **Backups** lists every container, VM, folder set, the flash drive, every ZFS dataset and the self-backup as entries. Tiles above the list pick a kind, and **Filters**, **Sort** and **Search** narrow it down. Every entry has a page of its own with three tabs: **Backups**, **Settings** and **Verify**. A back button left of the entry's icon leads to the list.
 - **Restore** is one page for everything: pick a section, search for an entry and choose a backup. The Emergency wizard and the other sources start here too.
 - **Settings** are fourteen tiles: General, Look, Schedule, Storage locations, Restore, Notifications, Verify, Security, Instances, Pairing, Integrations, Apps, System and Info. Press `/` or Ctrl+K to search them all, also by the names pages had in earlier versions. Drag the tiles into your own order under **Look**. Where a column of tiles beside the page would squeeze it, as in a window about 1200 pixels wide, the tiles become a strip above the page that scrolls sideways. A phone shows the same strip.
 - **Storage locations** and **Instances** are settings tiles with pages of their own. **Also show in the sidebar** on their tile pins them to the sidebar.
