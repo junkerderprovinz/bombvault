@@ -164,7 +164,7 @@ export function DatabaseDumpRow({
   const coverageLine = coverageKey(coverage);
 
   return (
-    // bv-convention-exception: setting-row-beside-label -- the engine picker has no caption of its own, it sits in the right-aligned status column under the switch.
+    // bv-convention-exception: setting-row-beside-label: the engine picker has no caption of its own, it sits in the right-aligned status column under the switch.
     <div className="flex min-w-0 max-w-full flex-col items-end gap-1">
       {confirmDialog}
       <ToggleRow

@@ -147,7 +147,7 @@ export function ZFSConnectionStatus({ foot }: { foot?: HTMLElement | null } = {}
             </p>
           )}
 
-          {/* bv-convention-exception: setting-row-beside-label -- the public key is a long read-only string with its copy button, it needs the card width. */}
+          {/* bv-convention-exception: setting-row-beside-label: the public key is a long read-only string with its copy button, it needs the card width. */}
           {needsKey && publicKey && (
             <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
               <span className="text-xs text-carbon-textMuted">{tLtr(t, "vm.ssh.publicKey")}</span>

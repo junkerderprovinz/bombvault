@@ -118,7 +118,7 @@ export function OffsiteLocationInput({
   }
 
   return (
-    // bv-convention-exception: setting-row-beside-label -- the field has no caption of its own, the caller's row names it and this box only stacks the input with its notes.
+    // bv-convention-exception: setting-row-beside-label: the field has no caption of its own, the caller's row names it and this box only stacks the input with its notes.
     <div className="flex flex-col gap-2">
       {dialog}
       {following !== undefined && !typing ? (

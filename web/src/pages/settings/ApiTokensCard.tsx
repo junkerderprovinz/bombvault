@@ -308,7 +308,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
           {tokens.map((k) => (
             <li key={k.id} className="glim-tile flex flex-col gap-3 rounded-card p-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                {/* bv-convention-exception: setting-row-beside-label -- the rename input replaces the token name in its list tile, it is not a labelled field */}
+                {/* bv-convention-exception: setting-row-beside-label: the rename input replaces the token name in its list tile, it is not a labelled field */}
                 <div className="flex min-w-0 flex-col gap-1">
                   <div className="flex min-w-0 items-center gap-2 max-md:flex-wrap">
                     {renaming === k.id ? (

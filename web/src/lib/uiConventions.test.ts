@@ -791,7 +791,7 @@ ruleTester.run("setting-row-beside-label", rules["setting-row-beside-label"], {
     `<div className="flex flex-col gap-4"><span>{t("a")}</span><NumberField value={n} /></div>`,
     // The escape hatch, with a reason.
     `
-      {/* bv-convention-exception: setting-row-beside-label -- the sign-in
+      {/* bv-convention-exception: setting-row-beside-label: the sign-in
           form is a page of its own and keeps the label above the field. */}
       <label className="flex flex-col gap-1"><span>{t("a")}</span><input type="text" /></label>
     `,

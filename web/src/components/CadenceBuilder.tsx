@@ -378,7 +378,7 @@ function CronEditor({
   const fires = valid ? nextCronFires(trimmed, 3) : null;
 
   return (
-    // bv-convention-exception: setting-row-beside-label -- the cron label already stands beside its input in the row below, this box stacks that row with its notes.
+    // bv-convention-exception: setting-row-beside-label: the cron label already stands beside its input in the row below, this box stacks that row with its notes.
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-3">
         <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.cronExpr")}</label>

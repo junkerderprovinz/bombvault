@@ -101,7 +101,7 @@ export function PathModeSwitch({
       </SettingRow>
 
       {remoteMode ? (
-        // bv-convention-exception: setting-row-beside-label -- the URL input has no caption of its own, the row above names it.
+        // bv-convention-exception: setting-row-beside-label: the URL input has no caption of its own, the row above names it.
         <div className="flex flex-col gap-1.5">
           {/* Pinned LTR like FolderBrowser's path field, or a leading `/` or
               `:` lands at the wrong edge in ar and he. */}

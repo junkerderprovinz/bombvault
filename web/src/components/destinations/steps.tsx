@@ -215,7 +215,7 @@ export function FolderBody({ draft }: { draft: DestinationDraftState }) {
   return (
     <>
       {draft.browsable && (
-        // bv-convention-exception: setting-row-beside-label -- this is a folder browser, its new-folder input belongs to the list it extends.
+        // bv-convention-exception: setting-row-beside-label: this is a folder browser, its new-folder input belongs to the list it extends.
         <div className="flex flex-col gap-1 rounded-card bg-carbon-surface p-2">
           <div className="flex flex-wrap items-center gap-1 px-2 py-1 text-xs text-carbon-textMuted" dir="ltr">
             <button type="button" className="text-carbon-textSub hover:text-carbon-text" onClick={() => void draft.loadFolders([])}>
