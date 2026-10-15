@@ -1328,6 +1328,9 @@ export const en = {
   "dbdump.importStops":
     "one=BombVault also stops {apps} for the import and starts it again afterwards. A failure once the import has begun leaves the old data set aside and the app stopped.|other=BombVault also stops these apps for the import: {apps}. It starts them again afterwards. A failure once the import has begun leaves the old data set aside and the apps stopped.",
   "dbdump.importDone": "Database imported.",
+  "dbdump.keptIncluded": "The copy sits next to the data folder, so any backup or replica of the folder or dataset above it includes the copy too. Remove it once the database works.",
+  "dbdump.removeKept": "Remove copy",
+  "dbdump.keptRemoved": "The copy is removed.",
   "dbdump.importRefused.busy": "Another backup or restore is running. Try again when it has finished.",
   "dbdump.importRefused.notRunning": "Start the container first; the import needs the running server.",
   "dbdump.importRefused.engineMismatch": "This dump comes from a different database type than the container runs.",
@@ -6071,6 +6074,9 @@ export const de: Translations = {
   "dbdump.importStops":
     "one=Während des Imports stoppt BombVault auch {apps} und startet die App danach wieder. Scheitert der Import, nachdem er begonnen hat, bleiben die alten Daten zur Seite geschoben und die App gestoppt.|other=Während des Imports stoppt BombVault auch diese Apps: {apps}. Danach startet es sie wieder. Scheitert der Import, nachdem er begonnen hat, bleiben die alten Daten zur Seite geschoben und die Apps gestoppt.",
   "dbdump.importDone": "Datenbank importiert.",
+  "dbdump.keptIncluded": "Die Kopie liegt neben dem Datenordner. Jede Sicherung und jedes Replikat des Ordners oder Datasets darüber nimmt sie mit. Entfern sie, sobald die Datenbank läuft.",
+  "dbdump.removeKept": "Kopie entfernen",
+  "dbdump.keptRemoved": "Die Kopie ist entfernt.",
   "dbdump.importRefused.busy": "Es läuft gerade eine andere Sicherung oder eine Wiederherstellung. Versuche es danach noch einmal.",
   "dbdump.importRefused.notRunning": "Starte den Container zuerst; der Import braucht den laufenden Server.",
   "dbdump.importRefused.engineMismatch": "Dieser Dump stammt aus einem anderen Datenbanktyp, als der Container betreibt.",

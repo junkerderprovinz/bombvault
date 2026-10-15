@@ -13,6 +13,7 @@ const importDbDump = vi.fn(() => Promise.resolve({ ok: true, started: true }));
 const saveDbDumpTo = vi.fn(() => Promise.resolve({ ok: true, started: true, target: "/host/user/dumps/pg.sql" }));
 const deleteSnapshot = vi.fn(() => Promise.resolve({ ok: true }));
 const listRuns = vi.fn(() => Promise.resolve({ ok: true, runs: [] as unknown[] }));
+const removeKeptDataDir = vi.fn((): Promise<unknown> => Promise.resolve({ ok: true, removed: "/x" }));
 const passing = [
   { id: "repository", status: "ok" },
   { id: "key", status: "ok" },
@@ -32,6 +33,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     deleteSnapshot: (...a: unknown[]) => deleteSnapshot(...(a as [])),
     listRuns: (...a: unknown[]) => listRuns(...(a as [])),
     checkRestore: (...a: unknown[]) => checkRestore(...(a as [])),
+    removeKeptDataDir: (...a: unknown[]) => removeKeptDataDir(...(a as [])),
   };
 });
 
@@ -314,6 +316,31 @@ describe("the database dump list", () => {
     const line = await screen.findByText(en["runReason.dbimportKeptOld"], { exact: false }, { timeout: 4000 });
     expect(line.className).toContain("statusOk");
     expect(line.querySelector('bdi[dir="ltr"]')?.textContent).toBe(kept);
+  });
+
+  it("says the kept folder rides along in the backups above it and removes it on request", async () => {
+    const kept = "/mnt/tank/appdata/pg.bombvault-before-import-20261015-194119";
+    recordAfterStart(importRun("success", `database imported; the previous data folder was kept: ${kept}`));
+    renderList();
+    await confirmImport();
+
+    expect(await screen.findByText(en["dbdump.keptIncluded"], {}, { timeout: 4000 })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: en["dbdump.removeKept"] }));
+    expect(await screen.findByText(en["dbdump.keptRemoved"])).toBeTruthy();
+    expect(removeKeptDataDir).toHaveBeenCalledWith("immich_postgres", "20261015-194119");
+  });
+
+  it("keeps the remove button when the server refuses", async () => {
+    removeKeptDataDir.mockResolvedValueOnce({ ok: false, error: "a backup or restore is already running" });
+    recordAfterStart(
+      importRun("success", "database imported; the previous data folder was kept: /mnt/pg.bombvault-before-import-20261015-194119")
+    );
+    renderList();
+    await confirmImport();
+
+    fireEvent.click(await screen.findByRole("button", { name: en["dbdump.removeKept"] }, { timeout: 4000 }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("a backup or restore is already running", "fail"));
+    expect(screen.getByRole("button", { name: en["dbdump.removeKept"] })).toBeTruthy();
   });
 
   it("reports an import that finished with errors as a warning", async () => {

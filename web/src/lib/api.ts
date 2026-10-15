@@ -1744,6 +1744,13 @@ export function importDbDump(
   return fetchJSON(`${path}${srcParam(source)}`, { method: "POST" });
 }
 
+/** DELETE /api/containers/{name}/dbimport-kept/{stamp}: remove the data folder
+ *  an import kept, named by the time stamp at the end of its name. */
+export function removeKeptDataDir(name: string, stamp: string): Promise<OkEnvelope & { removed?: string }> {
+  const path = `/api/containers/${encodeURIComponent(name)}/dbimport-kept/${encodeURIComponent(stamp)}`;
+  return fetchJSON(path, { method: "DELETE" });
+}
+
 /** PATCH /api/containers/{name} — set this container's restic --exclude patterns. */
 export function setContainerExcludes(name: string, excludes: string[]): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {

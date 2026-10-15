@@ -10,6 +10,7 @@ import {
   dumpLeftRunning,
   dumpRuns,
   dumpWasCancelled,
+  keptStampOf,
   ENGINE_NAMES,
   importRefusedKey,
   introDatabases,
@@ -201,5 +202,22 @@ describe("dumpRuns", () => {
   it("waits for an engine before it dumps a container that only looks like a database", () => {
     expect(dumpRuns(db({ dbTier: "lookalike" }))).toBe(false);
     expect(dumpRuns(db({ dbTier: "lookalike", dbDumpEngine: "postgres" }))).toBe(true);
+  });
+});
+
+describe("keptStampOf", () => {
+  it("reads the time stamp of the kept data folder off an import's note", () => {
+    const kept = "/mnt/tank/appdata/pg.bombvault-before-import-20261015-194119";
+    expect(keptStampOf(`database imported; the previous data folder was kept: ${kept}`)).toBe("20261015-194119");
+    expect(keptStampOf(`database imported; the previous data folder was kept: ${kept}; could not start these apps again: app`)).toBe(
+      "20261015-194119"
+    );
+    expect(keptStampOf(`database imported with errors: 2, the previous data folder is kept at ${kept}`)).toBe("20261015-194119");
+  });
+
+  it("finds none in a note that names no kept folder", () => {
+    expect(keptStampOf("")).toBeNull();
+    expect(keptStampOf(undefined)).toBeNull();
+    expect(keptStampOf("database imported; the previous data folder was kept: /mnt/x.bombvault-before-import-2026")).toBeNull();
   });
 });
