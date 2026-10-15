@@ -858,6 +858,7 @@ const ro: Partial<Translations> = {
   "notify.unraid": "Notificări Unraid",
   "notify.unraidHint": "Trimite către sistemul de notificări al Unraid (care poate redirecționa către Pushover, e-mail, Discord, …). Funcționează prin conexiunea SSH din Setări, Integrări, SSH al gazdei, deci cheia trebuie autorizată acolo, dar libvirt/VMs nu sunt necesare (ignoră un rezultat „libvirt not reachable” dacă nu faci backup pentru VMs). Pentru verificare, folosește „Trimite test” de mai jos.",
   "notify.unraidPlatformMismatch": "BombVault a detectat această gazdă ca fiind \"{platform}\", nu Unraid. Notificările Unraid rămân dezactivate chiar dacă această opțiune este activată. Dacă aceasta este într-adevăr o gazdă Unraid, verifică dacă /boot al gazdei este montat (bind-mount) la /host/boot în interiorul containerului (vezi șablonul Unraid al BombVault) și repornește containerul.",
+  "notify.unraidOffOnTrueNAS": "Această gazdă rulează TrueNAS, așa că notificările Unraid rămân dezactivate chiar dacă această opțiune este activată.",
   "notify.test": "Trimite test",
   "notify.anomaliesWhere": "Ce anomalii trimit o notificare stabilești la „{page}”.",
   "stophook.title": "Oprește alte containere",
@@ -1397,6 +1398,8 @@ const ro: Partial<Translations> = {
   "excludes.error": "Excluderile nu au putut fi salvate",
   "excludes.noMatch": "Transmis către restic ca atare (cale de container nerecunoscută).",
   "excludes.excludesNothing": "Volumul acestui folder nu este în backup, așa că această linie nu exclude nimic.",
+  "excludes.nameMatchesNothing": "Nimic din acest backup nu are acest nume, așa că această linie nu exclude nimic.",
+  "excludes.pathMissing": "Această cale nu există în backup, așa că această linie nu exclude nimic.",
   // Exclude preview status (#38)
   "excludes.willExclude": "va fi exclus din backup",
   "excludes.matchesAnywhere": "va fi exclus oriunde apare",

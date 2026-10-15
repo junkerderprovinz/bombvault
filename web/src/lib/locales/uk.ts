@@ -858,6 +858,7 @@ const uk: Partial<Translations> = {
   "notify.unraid": "Сповіщення Unraid",
   "notify.unraidHint": "Надсилати у власну систему сповіщень Unraid (яка може пересилати в Pushover, e-mail, Discord, …). Працює через SSH-з'єднання з Налаштування, Інтеграції, SSH хоста, тож ключ має бути авторизований там — але libvirt/VMs не потрібні (проігноруйте результат «libvirt not reachable», якщо ви не робите резервні копії VMs). Щоб перевірити, натисніть «Надіслати тест» нижче.",
   "notify.unraidPlatformMismatch": "BombVault визначив цей хост як \"{platform}\", а не як Unraid — сповіщення Unraid залишаються вимкненими, навіть якщо цю опцію увімкнено. Якщо це справді хост Unraid, перевірте, що /boot хоста змонтовано (bind-mount) до /host/boot всередині контейнера (див. шаблон Unraid для BombVault), і перезапустіть контейнер.",
+  "notify.unraidOffOnTrueNAS": "Цей хост працює на TrueNAS, тому сповіщення Unraid залишаються вимкненими, навіть якщо цю опцію увімкнено.",
   "notify.test": "Надіслати тест",
   "notify.anomaliesWhere": "Які аномалії надсилають сповіщення, ви обираєте у розділі «{page}».",
   "stophook.title": "Зупинити інші контейнери",
@@ -1393,6 +1394,8 @@ const uk: Partial<Translations> = {
   "excludes.error": "Не вдалося зберегти виключення",
   "excludes.noMatch": "Передається в restic як є (нерозпізнаний шлях контейнера).",
   "excludes.excludesNothing": "Том цієї папки не входить у резервну копію, тож цей рядок нічого не виключає.",
+  "excludes.nameMatchesNothing": "У цій резервній копії немає нічого з такою назвою, тож цей рядок нічого не виключає.",
+  "excludes.pathMissing": "Цього шляху немає в резервній копії, тож цей рядок нічого не виключає.",
   // Exclude preview status (#38)
   "excludes.willExclude": "буде виключено з резервної копії",
   "excludes.matchesAnywhere": "буде виключено всюди, де трапляється",

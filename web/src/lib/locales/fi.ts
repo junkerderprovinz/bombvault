@@ -861,6 +861,7 @@ const fi: Partial<Translations> = {
   "notify.unraid": "Unraid-ilmoitukset",
   "notify.unraidHint": "Lähetä Unraidin omaan ilmoitusjärjestelmään (joka voi välittää Pushoveriin, sähköpostiin, Discordiin, …). Toimii Asetukset, Integraatiot, Palvelimen SSH -kohdan SSH-yhteyden kautta, joten avain on valtuutettava siellä, mutta libvirt/VMs eivät ole pakollisia (ohita ”libvirt not reachable” -tulos, jos et varmuuskopioi VMs). Tarkista se alla olevalla ”Lähetä testi” -painikkeella.",
   "notify.unraidPlatformMismatch": "BombVault tunnisti tämän isännän tyypiksi \"{platform}\", ei Unraidiksi. Unraid-ilmoitukset pysyvät pois päältä, vaikka tämä on päällä. Jos kyseessä on oikeasti Unraid-isäntä, tarkista, että isännän /boot on bind-mountattu kontin sisällä kohteeseen /host/boot (katso BombVaultin Unraid-mallipohja), ja käynnistä kontti uudelleen.",
+  "notify.unraidOffOnTrueNAS": "Tämä isäntä käyttää TrueNASia, joten Unraid-ilmoitukset pysyvät pois päältä, vaikka tämä asetus on päällä.",
   "notify.test": "Lähetä testi",
   "notify.anomaliesWhere": "Mitkä poikkeamat lähettävät ilmoituksen, valitset kohdassa {page}.",
   "stophook.title": "Pysäytä muut säiliöt",
@@ -1396,6 +1397,8 @@ const fi: Partial<Translations> = {
   "excludes.error": "Poissulkemisia ei voitu tallentaa",
   "excludes.noMatch": "Välitetään resticille sellaisenaan (ei tunnistettu kontin polku).",
   "excludes.excludesNothing": "Tämän kansion taltio ei ole varmuuskopiossa, joten tämä rivi ei sulje pois mitään.",
+  "excludes.nameMatchesNothing": "Mikään tässä varmuuskopiossa ei ole tämänniminen, joten tämä rivi ei sulje pois mitään.",
+  "excludes.pathMissing": "Tätä polkua ei ole varmuuskopiossa, joten tämä rivi ei sulje pois mitään.",
   // Exclude preview status (#38)
   "excludes.willExclude": "suljetaan pois varmuuskopiosta",
   "excludes.matchesAnywhere": "suljetaan pois kaikkialta, missä se esiintyy",

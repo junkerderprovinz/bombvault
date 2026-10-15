@@ -861,6 +861,7 @@ const ar: Partial<Translations> = {
   "notify.unraid": "إشعارات Unraid",
   "notify.unraidHint": "الإرسال إلى نظام إشعارات Unraid نفسه (الذي يمكنه إعادة التوجيه إلى Pushover والبريد الإلكتروني وDiscord، …). يعمل عبر اتصال SSH من الإعدادات، التكاملات، SSH المضيف، لذا يجب أن يكون المفتاح مُصرّحًا به هناك، لكن libvirt/VMs غير مطلوبة (يمكن تجاهل نتيجة «libvirt not reachable» إذا لم تُنسخ VMs احتياطيًا). للتحقق، يُستخدم «إرسال اختبار» بالأسفل.",
   "notify.unraidPlatformMismatch": "اكتشف BombVault أن هذا المضيف هو \"{platform}\"، وليس Unraid، لذا تظل إشعارات Unraid متوقفة حتى مع تفعيل هذا الخيار. إذا كان هذا فعلاً مضيف Unraid، يجب التحقق من أن /boot الخاص بالمضيف مربوط (bind-mounted) بالمسار /host/boot داخل الحاوية (كما في قالب BombVault لـ Unraid)، ثم إعادة تشغيل الحاوية.",
+  "notify.unraidOffOnTrueNAS": "يعمل هذا المضيف بنظام TrueNAS، لذا تظل إشعارات Unraid متوقفة حتى مع تفعيل هذا الخيار.",
   "notify.test": "إرسال اختبار",
   "notify.anomaliesWhere": "يُحدَّد ضمن «{page}» أي الحالات الشاذة ترسل إشعارًا.",
   "stophook.title": "إيقاف حاويات أخرى",
@@ -1397,6 +1398,8 @@ const ar: Partial<Translations> = {
   "excludes.error": "تعذّر حفظ الاستبعادات",
   "excludes.noMatch": "يُمرَّر إلى restic كما هو (ليس مساراً معروفاً للحاوية).",
   "excludes.excludesNothing": "وحدة تخزين هذا المجلد ليست ضمن النسخة الاحتياطية، لذا لا يستبعد هذا السطر أي شيء.",
+  "excludes.nameMatchesNothing": "لا يوجد في هذه النسخة الاحتياطية شيء بهذا الاسم، لذا لا يستبعد هذا السطر أي شيء.",
+  "excludes.pathMissing": "هذا المسار غير موجود في النسخة الاحتياطية، لذا لا يستبعد هذا السطر أي شيء.",
   // Exclude preview status (#38)
   "excludes.willExclude": "سيتم استبعاده من النسخة الاحتياطية",
   "excludes.matchesAnywhere": "سيتم استبعاده أينما ظهر",

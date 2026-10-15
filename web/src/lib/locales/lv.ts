@@ -804,6 +804,7 @@ const lv: Partial<Translations> = {
   "notify.unraid": "Unraid paziņojumi",
   "notify.unraidHint": "Sūta uz Unraid pašas paziņojumu sistēmu (kas var pārsūtīt uz Pushover, e-pastu, Discord, …). Darbojas caur SSH savienojumu no Iestatījumi, Integrācijas, Resursdatora SSH, tāpēc atslēgai tur jābūt autorizētai, bet libvirt/VM nav nepieciešami (ignorējiet rezultātu „libvirt not reachable”, ja nedublējat VM). Izmantojiet zemāk Sūtīt testu, lai pārbaudītu.",
   "notify.unraidPlatformMismatch": "BombVault noteica šo saimniekdatoru kā „{platform}”, nevis Unraid. Unraid paziņojumi paliek izslēgti pat ja šis slēdzis ir ieslēgts. Ja tas tiešām ir Unraid saimniekdators, pārbaudiet, vai saimniekdatora /boot ir piesaistīts pie /host/boot konteinera iekšpusē (skatiet BombVault Unraid veidni), un restartējiet konteineru.",
+  "notify.unraidOffOnTrueNAS": "Šis saimniekdators darbojas ar TrueNAS, tāpēc Unraid paziņojumi paliek izslēgti pat tad, ja šis slēdzis ir ieslēgts.",
   "notify.smtp": "E-pasts (SMTP)",
   "notify.smtpHost": "SMTP saimniekdators",
   "notify.smtpPort": "Ports",
@@ -898,6 +899,8 @@ const lv: Partial<Translations> = {
   "excludes.error": "Neizdevās saglabāt izslēgšanas",
   "excludes.noMatch": "Tiek nodots restic nemainīts (nav atpazīts konteinera ceļš).",
   "excludes.excludesNothing": "Šīs mapes sējums nav rezerves kopijā, tāpēc šī rinda neko neizslēdz.",
+  "excludes.nameMatchesNothing": "Šajā rezerves kopijā nekam nav šāda nosaukuma, tāpēc šī rinda neko neizslēdz.",
+  "excludes.pathMissing": "Šis ceļš rezerves kopijā nepastāv, tāpēc šī rinda neko neizslēdz.",
   // Exclude preview status
   "excludes.willExclude": "tiks izslēgts no rezerves kopijas",
   "excludes.matchesAnywhere": "tiks izslēgts jebkur, kur tas parādās",

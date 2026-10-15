@@ -804,6 +804,7 @@ const fa: Partial<Translations> = {
   "notify.unraid": "اعلان‌های Unraid",
   "notify.unraidHint": "به سیستم اعلان خود Unraid ارسال می‌کند (که می‌تواند به Pushover، ایمیل، Discord، … بازارسال کند). از طریق اتصال SSH بخش تنظیمات، یکپارچه‌سازی‌ها، SSH میزبان اجرا می‌شود، پس کلید باید آنجا مجاز شده باشد، اما libvirt/ماشین‌های مجازی لازم نیستند (اگر از ماشین مجازی پشتیبان نمی‌گیری، نتیجه «libvirt not reachable» را نادیده بگیر). برای بررسی از دکمه ارسال آزمایش زیر استفاده کن.",
   "notify.unraidPlatformMismatch": "BombVault این میزبان را «{platform}» تشخیص داده، نه Unraid. اعلان‌های Unraid حتی با فعال بودن این گزینه، خاموش می‌مانند. اگر این واقعاً یک میزبان Unraid است، بررسی کن /boot میزبان به /host/boot داخل کانتینر متصل شده باشد (به قالب Unraid مخصوص BombVault مراجعه کن) و کانتینر را دوباره راه‌اندازی کن.",
+  "notify.unraidOffOnTrueNAS": "این میزبان TrueNAS اجرا می‌کند، بنابراین اعلان‌های Unraid حتی با فعال بودن این گزینه خاموش می‌مانند.",
   "notify.smtp": "ایمیل (SMTP)",
   "notify.smtpHost": "میزبان SMTP",
   "notify.smtpPort": "پورت",
@@ -898,6 +899,8 @@ const fa: Partial<Translations> = {
   "excludes.error": "ذخیره مستثنی‌ها ناموفق بود",
   "excludes.noMatch": "بدون تغییر به restic منتقل می‌شود (مسیر شناخته‌شده کانتینر نیست).",
   "excludes.excludesNothing": "volume این پوشه در پشتیبان‌گیری نیست، پس این خط چیزی را مستثنی نمی‌کند.",
+  "excludes.nameMatchesNothing": "هیچ چیزی در این پشتیبان این نام را ندارد، پس این خط چیزی را مستثنی نمی‌کند.",
+  "excludes.pathMissing": "این مسیر در پشتیبان وجود ندارد، پس این خط چیزی را مستثنی نمی‌کند.",
   // Exclude preview status
   "excludes.willExclude": "از پشتیبان‌گیری مستثنی خواهد شد",
   "excludes.matchesAnywhere": "هرجا که ظاهر شود مستثنی خواهد شد",

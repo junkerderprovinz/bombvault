@@ -1,6 +1,9 @@
 package api
 
 import (
+	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -41,34 +44,115 @@ func TestResolveExcludeLine(t *testing.T) {
 	}
 }
 
-func TestPreviewExcludes(t *testing.T) {
-	s := excludeSvc()
-	in := model.Inspect{Mounts: []model.Mount{
+// mountedExcludeSvc maps /mnt to a temp folder holding the plex appdata
+// (Transcode/Cache, Logs/a.log, Logs/b.log) and a folder whose name holds glob
+// characters.
+func mountedExcludeSvc(t *testing.T) (s *Service, in model.Inspect, effective []string) {
+	t.Helper()
+	root := filepath.ToSlash(t.TempDir())
+	for _, dir := range []string{"user/appdata/plex/Transcode/Cache", "user/appdata/plex/Logs", "user/appdata/Plex [Media]/Cache"} {
+		if err := os.MkdirAll(filepath.Join(root, dir), 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, f := range []string{"user/appdata/plex/Logs/a.log", "user/appdata/plex/Logs/b.log"} {
+		if err := os.WriteFile(filepath.Join(root, f), []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	s = &Service{cfg: config.Config{HostSourceRoot: "/mnt", HostMountRoot: root}}
+	in = model.Inspect{Mounts: []model.Mount{
 		{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
-		{Type: "bind", Source: "/mnt/user/media", Destination: "/media"},
+		{Type: "bind", Source: "/mnt/user/appdata/Plex [Media]", Destination: "/media"},
+		{Type: "bind", Source: "/mnt/user/other", Destination: "/other"},
 	}}
-	// Only the /config volume is actually backed up.
-	effective := []string{"/host/user/user/appdata/plex"}
+	effective = []string{root + "/user/appdata/plex", root + "/user/appdata/Plex [Media]"}
+	return s, in, effective
+}
 
-	raw := []string{
-		"/config/Transcode/Cache", // translated, volume backed up
-		"/media/movies/tmp",       // translated, volume not backed up
-		".git",                    // basename
-		"   ",                     // blank, dropped
+func TestPreviewExcludesChecksAContainerPathOnDisk(t *testing.T) {
+	s, in, effective := mountedExcludeSvc(t)
+	cases := []struct {
+		line          string
+		matches, gone bool
+	}{
+		{"/config/Transcode/Cache", true, false},
+		{"/config/Transcode", true, false},
+		{"/config/Transcode/Nope", false, true},
+		{"/config/Logs/*.log", true, false},
+		{"/config/Logs/*.txt", false, true},
+		{"/config/**/Cache", true, false},
+		{"/config/**/Nope", false, true},
+		{"/media/Cache", true, false},
+		{"/media/Nope", false, true},
+		{"/media/C*", true, false},
+		{"/other/anything", false, false},
 	}
-	got := s.previewExcludes(raw, in, effective)
-	if len(got) != 3 {
-		t.Fatalf("expected 3 previews (blank dropped), got %d: %+v", len(got), got)
+	for _, tc := range cases {
+		t.Run(tc.line, func(t *testing.T) {
+			got := s.previewExcludes(context.Background(), []string{tc.line}, in, effective)
+			if len(got) != 1 || got[0].Status != "translated" || got[0].Matches != tc.matches || got[0].Missing != tc.gone {
+				t.Fatalf("preview of %q = %+v, want matches=%v missing=%v", tc.line, got, tc.matches, tc.gone)
+			}
+		})
 	}
+}
 
-	if got[0].Status != "translated" || !got[0].Matches ||
-		got[0].Resolved != "/host/user/user/appdata/plex/Transcode/Cache" {
-		t.Fatalf("config line should be a matching translation: %+v", got[0])
+func TestPreviewExcludesDoesNotCallAPathMissingWhenTheSearchCannotFinish(t *testing.T) {
+	s, in, effective := mountedExcludeSvc(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	got := s.previewExcludes(ctx, []string{"/config/**/Nope"}, in, effective)
+	if len(got) != 1 || !got[0].Matches || got[0].Missing {
+		t.Fatalf("preview = %+v, want a match assumed when the search stopped early", got)
 	}
-	if got[1].Status != "translated" || got[1].Matches {
-		t.Fatalf("media line should not match (volume not backed up): %+v", got[1])
+}
+
+// bareNameVolume is a backed-up volume holding plex/.git/config and
+// plex/logs/server.log.
+func bareNameVolume(t *testing.T) string {
+	t.Helper()
+	root := filepath.Join(t.TempDir(), "plex")
+	for _, dir := range []string{filepath.Join(root, ".git"), filepath.Join(root, "logs")} {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			t.Fatal(err)
+		}
 	}
-	if got[2].Status != "basename" || !got[2].Matches || got[2].Raw != ".git" {
-		t.Fatalf("basename line should match at any depth: %+v", got[2])
+	for _, f := range []string{filepath.Join(root, ".git", "config"), filepath.Join(root, "logs", "server.log")} {
+		if err := os.WriteFile(f, []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return root
+}
+
+func TestPreviewExcludesMatchesABareNameOnlyWhenTheVolumeHasIt(t *testing.T) {
+	effective := []string{bareNameVolume(t)}
+	cases := []struct {
+		line string
+		want bool
+	}{
+		{".git", true},
+		{"*.log", true},
+		{"server.log", true},
+		{"nomatch.zzz", false},
+		{"*.zzz", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.line, func(t *testing.T) {
+			got := excludeSvc().previewExcludes(context.Background(), []string{tc.line}, model.Inspect{}, effective)
+			if len(got) != 1 || got[0].Status != "basename" || got[0].Matches != tc.want {
+				t.Fatalf("preview of %q = %+v, want basename with matches=%v", tc.line, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestPreviewExcludesDoesNotWarnWhenTheSearchCannotFinish(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	got := excludeSvc().previewExcludes(ctx, []string{"nomatch.zzz"}, model.Inspect{}, []string{bareNameVolume(t)})
+	if len(got) != 1 || !got[0].Matches {
+		t.Fatalf("preview = %+v, want a match assumed when the search stopped early", got)
 	}
 }

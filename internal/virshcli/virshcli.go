@@ -34,7 +34,7 @@ func (c *Client) baseArgs(args ...string) []string {
 
 // absPathRe strips absolute paths from error messages so host paths do not
 // leak to the caller, as restic's lastReason does.
-var absPathRe = regexp.MustCompile(`(/[^\s:'"]+)+`)
+var absPathRe = regexp.MustCompile(`(/[^\s:'"]*[^\s:'").,;])+`)
 
 // credentialRe matches a "user:password@" URL userinfo segment. It is the
 // same scrub internal/restic applies to its errors (its credentialRe comment

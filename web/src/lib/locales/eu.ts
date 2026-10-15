@@ -804,6 +804,7 @@ const eu: Partial<Translations> = {
   "notify.unraid": "Unraid-en jakinarazpenak",
   "notify.unraidHint": "Unraid-en bere jakinarazpen-sistemara bidaltzen du (Pushover, posta elektronikoa, Discord, … helburura birbidal dezakeena). Ezarpenak, Integrazioak, Ostalariaren SSH-ko SSH konexioaren bidez exekutatzen da, beraz gakoak han baimenduta egon behar du, baina libvirt/MB ez dira beharrezkoak (ez ikusi «libvirt not reachable» emaitza MBrik babesten ez baduzu). Erabili beheko Bidali proba egiaztatzeko.",
   "notify.unraidPlatformMismatch": "BombVaultek ostalari hau «{platform}» gisa detektatu du, ez Unraid gisa. Unraid-en jakinarazpenak itzalita jarraitzen dute etengailu hau piztuta egon arren. Hau benetan Unraid ostalari bat bada, egiaztatu ostalariaren /boot edukiontziaren barruko /host/boot-era lotuta dagoela (ikusi BombVaulten Unraid txantiloia) eta berrabiarazi edukiontzia.",
+  "notify.unraidOffOnTrueNAS": "Ostalari honek TrueNAS erabiltzen du, beraz Unraid-en jakinarazpenak itzalita jarraitzen dute etengailu hau piztuta egon arren.",
   "notify.smtp": "Posta elektronikoa (SMTP)",
   "notify.smtpHost": "SMTP ostalaria",
   "notify.smtpPort": "Ataka",
@@ -898,6 +899,8 @@ const eu: Partial<Translations> = {
   "excludes.error": "Ezin izan dira baztertzeak gorde",
   "excludes.noMatch": "Restic-i dagoen bezala pasatzen zaio (ez da ezagutzen den edukiontzi-bide bat).",
   "excludes.excludesNothing": "Karpeta honen bolumena ez dago babeskopian, beraz lerro honek ez du ezer baztertzen.",
+  "excludes.nameMatchesNothing": "Babeskopia honetan ez dago izen hau duen ezer, beraz lerro honek ez du ezer baztertzen.",
+  "excludes.pathMissing": "Bide hau ez dago babeskopian, beraz lerro honek ez du ezer baztertzen.",
   // Exclude preview status
   "excludes.willExclude": "babeskopiatik baztertuko da",
   "excludes.matchesAnywhere": "agertzen den edonon baztertuko da",

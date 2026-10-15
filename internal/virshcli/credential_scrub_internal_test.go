@@ -58,3 +58,10 @@ func TestLastReasonScrubsAPasswordWithoutAUserName(t *testing.T) {
 		t.Fatalf("lastReason leaked a password with no user name, got %q", got)
 	}
 }
+
+func TestLastReasonKeepsThePunctuationAfterAPath(t *testing.T) {
+	got := lastReason("error: cannot access storage file (/mnt/user/domains/vm/vdisk1.img).")
+	if want := "error: cannot access storage file ([path])."; got != want {
+		t.Fatalf("lastReason = %q, want %q", got, want)
+	}
+}

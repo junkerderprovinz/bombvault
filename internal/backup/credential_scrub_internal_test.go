@@ -104,3 +104,17 @@ func TestTruncateErrKeepsZFSRefusalNames(t *testing.T) {
 		t.Fatalf("truncateErr must still scrub a path in an ordinary error, got %q", got)
 	}
 }
+
+func TestTruncateErrKeepsThePunctuationAfterAPath(t *testing.T) {
+	got := truncateErr(errors.New("cannot stage the archive (/mnt/user/appdata/plex/db.sqlite), skipping."))
+	if want := "cannot stage the archive ([path]), skipping."; got != want {
+		t.Fatalf("truncateErr = %q, want %q", got, want)
+	}
+}
+
+func TestZFSHostDetailKeepsThePunctuationAfterAPath(t *testing.T) {
+	got := zfsHostDetail(errors.New("cannot mount 'cache/appdata' (/mnt/cache/appdata)."))
+	if want := "cannot mount 'cache/appdata' ([path])."; got != want {
+		t.Fatalf("zfsHostDetail = %q, want %q", got, want)
+	}
+}

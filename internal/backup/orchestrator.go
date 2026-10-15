@@ -1142,7 +1142,7 @@ func publishedHostPorts(in model.Inspect) map[string]bool {
 // duplicate, matching how the api and restic packages already each keep
 // their own copy.
 var (
-	runErrPathRe       = regexp.MustCompile(`(/[^\s:"']+)+`)
+	runErrPathRe       = regexp.MustCompile(`(/[^\s:"']*[^\s:"').,;])+`)
 	runErrCredentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@"']+@`)
 )
 

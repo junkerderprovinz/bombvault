@@ -861,6 +861,7 @@ const es: Partial<Translations> = {
   "notify.unraid": "Notificaciones de Unraid",
   "notify.unraidHint": "Enviar al sistema de notificaciones del propio Unraid (que puede reenviar a Pushover, correo, Discord, …). Funciona a través de la conexión SSH de Ajustes, Integraciones, SSH del host, por lo que la clave debe estar autorizada allí, pero libvirt/VMs no son necesarios (ignora un resultado «libvirt not reachable» si no haces copia de seguridad de VMs). Para comprobarlo, usa «Enviar prueba» abajo.",
   "notify.unraidPlatformMismatch": "BombVault detectó este host como \"{platform}\", no como Unraid. Las notificaciones de Unraid permanecen desactivadas aunque esta opción esté activada. Si este es realmente un host Unraid, comprueba que el /boot del host esté montado (bind-mount) en /host/boot dentro del contenedor (consulta la plantilla de Unraid de BombVault) y reinicia el contenedor.",
+  "notify.unraidOffOnTrueNAS": "Este host usa TrueNAS, así que las notificaciones de Unraid permanecen desactivadas aunque esta opción esté activada.",
   "notify.smtp": "Correo (SMTP)",
   "notify.smtpHost": "Host SMTP",
   "notify.smtpPort": "Puerto",
@@ -1394,6 +1395,8 @@ const es: Partial<Translations> = {
   "excludes.error": "No se pudieron guardar las exclusiones",
   "excludes.noMatch": "Se pasa a restic tal cual (no es una ruta de contenedor reconocida).",
   "excludes.excludesNothing": "El volumen de esta carpeta no está en la copia, por lo que esta línea no excluye nada.",
+  "excludes.nameMatchesNothing": "Nada en esta copia tiene este nombre, por lo que esta línea no excluye nada.",
+  "excludes.pathMissing": "Esta ruta no existe en la copia, por lo que esta línea no excluye nada.",
   // Exclude preview status (#38)
   "excludes.willExclude": "se excluirá de la copia de seguridad",
   "excludes.matchesAnywhere": "se excluirá dondequiera que aparezca",

@@ -73,3 +73,10 @@ func TestScrubSecretsPreservesHostname(t *testing.T) {
 		t.Fatalf("scrubSecrets destroyed the hostname an operator needs to diagnose which off-site target failed, got %q", got)
 	}
 }
+
+func TestScrubSecretsKeepsThePunctuationAfterAPath(t *testing.T) {
+	got := scrubSecrets("Fatal: unable to open config file (/mnt/user/backups/config). Is there a repository?")
+	if want := "Fatal: unable to open config file ([path]). Is there a repository?"; got != want {
+		t.Fatalf("scrubSecrets = %q, want %q", got, want)
+	}
+}

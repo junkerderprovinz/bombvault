@@ -481,3 +481,72 @@ describe("an editor given its own preview", () => {
     expect(screen.getByTitle("/mnt/tank/appdata/cache")).toBeTruthy();
   });
 });
+
+describe("a bare name that matches nothing", () => {
+  it("says no file or folder has that name", async () => {
+    function NoMatch() {
+      const { t } = useT();
+      return (
+        <ExcludesEditor
+          name="plex"
+          initial={[]}
+          open
+          t={t}
+          preview={(_name, lines) =>
+            Promise.resolve([{ raw: lines[0], resolved: lines[0], status: "basename", matches: false }])
+          }
+        />
+      );
+    }
+
+    render(
+      <I18nProvider>
+        <ToastProvider>
+          <NoMatch />
+        </ToastProvider>
+      </I18nProvider>
+    );
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "nomatch.zzz" } });
+
+    expect(await screen.findByText(/Nothing in this backup has this name/)).toBeTruthy();
+    expect(screen.queryByText(/volume is not in the backup/)).toBeNull();
+  });
+});
+
+describe("a container path whose volume is backed up", () => {
+  function renderWith(row: { matches: boolean; missing?: boolean }) {
+    function Editor() {
+      const { t } = useT();
+      return (
+        <ExcludesEditor
+          name="plex"
+          initial={[]}
+          open
+          t={t}
+          preview={(_name, lines) =>
+            Promise.resolve([{ raw: lines[0], resolved: "/host/user/appdata/plex/Nope", status: "translated", ...row }])
+          }
+        />
+      );
+    }
+    render(
+      <I18nProvider>
+        <ToastProvider>
+          <Editor />
+        </ToastProvider>
+      </I18nProvider>
+    );
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "/config/Nope" } });
+  }
+
+  it("says the path does not exist when nothing is there", async () => {
+    renderWith({ matches: false, missing: true });
+    expect(await screen.findByText(/This path does not exist in the backup/)).toBeTruthy();
+    expect(screen.queryByText(/volume is not in the backup/)).toBeNull();
+  });
+
+  it("still says the volume is not in the backup when that is the reason", async () => {
+    renderWith({ matches: false });
+    expect(await screen.findByText(/volume is not in the backup/)).toBeTruthy();
+  });
+});

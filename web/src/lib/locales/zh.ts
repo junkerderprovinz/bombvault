@@ -852,6 +852,7 @@ const zh: Partial<Translations> = {
   "notify.unraid": "Unraid 通知",
   "notify.unraidHint": "发送到 Unraid 自带的通知系统（可转发到 Pushover、邮件、Discord、…）。它通过 设置、集成、主机 SSH 中的 SSH 连接运行，因此密钥必须在那里获得授权，但不需要 libvirt/VMs（如果你不备份 VMs，请忽略“libvirt not reachable”结果）。使用下方的“发送测试”进行检查。",
   "notify.unraidPlatformMismatch": "BombVault 检测到该主机是 “{platform}”，而不是 Unraid。即使此选项已开启，Unraid 通知仍会保持关闭状态。如果这确实是 Unraid 主机，请检查主机的 /boot 是否已绑定挂载（bind-mount）到容器内的 /host/boot（参见 BombVault 的 Unraid 模板），然后重启容器。",
+  "notify.unraidOffOnTrueNAS": "该主机运行的是 TrueNAS，因此即使开启此选项，Unraid 通知仍会保持关闭。",
   "notify.test": "发送测试",
   "notify.anomaliesWhere": "哪些异常会发送通知，你可以在“{page}”中选择。",
   "stophook.title": "停止其他容器",
@@ -1387,6 +1388,8 @@ const zh: Partial<Translations> = {
   "excludes.error": "无法保存排除项",
   "excludes.noMatch": "按原样传递给 restic（不是可识别的容器路径）。",
   "excludes.excludesNothing": "此文件夹的卷不在备份中，因此此行不会排除任何内容。",
+  "excludes.nameMatchesNothing": "此备份中没有任何内容使用这个名称，因此此行不会排除任何内容。",
+  "excludes.pathMissing": "备份中不存在此路径，因此此行不会排除任何内容。",
   // Exclude preview status (#38)
   "excludes.willExclude": "将从备份中排除",
   "excludes.matchesAnywhere": "将在其出现的任何位置被排除",

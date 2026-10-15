@@ -804,6 +804,7 @@ const bg: Partial<Translations> = {
   "notify.unraid": "Известия на Unraid",
   "notify.unraidHint": "Изпраща до собствената система за известия на Unraid (която може да препраща към Pushover, имейл, Discord, …). Работи през SSH връзката от Настройки, Интеграции, SSH към хоста, затова ключът трябва да е упълномощен там — но libvirt/ВМ не са задължителни (пренебрегни резултат „libvirt not reachable“, ако не архивираш ВМ). Използвай Изпрати тест по-долу, за да провериш.",
   "notify.unraidPlatformMismatch": "BombVault засече този хост като „{platform}“, не като Unraid — известията на Unraid остават изключени дори при включен този превключвател. Ако това наистина е Unraid хост, провери дали /boot на хоста е свързан към /host/boot вътре в контейнера (виж шаблона на BombVault за Unraid) и рестартирай контейнера.",
+  "notify.unraidOffOnTrueNAS": "Този хост работи с TrueNAS, затова известията на Unraid остават изключени дори при включен този превключвател.",
   "notify.smtp": "Имейл (SMTP)",
   "notify.smtpHost": "SMTP хост",
   "notify.smtpPort": "Порт",
@@ -898,6 +899,8 @@ const bg: Partial<Translations> = {
   "excludes.error": "Изключванията не можаха да бъдат запазени",
   "excludes.noMatch": "Предава се на restic непроменено (не е разпознат път в контейнера).",
   "excludes.excludesNothing": "Томът на тази папка не е в архивирането, така че този ред не изключва нищо.",
+  "excludes.nameMatchesNothing": "Нищо в това архивиране няма това име, така че този ред не изключва нищо.",
+  "excludes.pathMissing": "Този път не съществува в архивирането, така че този ред не изключва нищо.",
   // Exclude preview status
   "excludes.willExclude": "ще бъде изключено от архивирането",
   "excludes.matchesAnywhere": "ще бъде изключено навсякъде, където се появи",

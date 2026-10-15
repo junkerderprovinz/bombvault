@@ -804,6 +804,7 @@ const ms: Partial<Translations> = {
   "notify.unraid": "Pemberitahuan Unraid",
   "notify.unraidHint": "Menghantar ke sistem pemberitahuan Unraid sendiri (yang boleh meneruskan ke Pushover, e-mel, Discord, …). Berjalan melalui sambungan SSH daripada Tetapan, Integrasi, SSH hos, jadi kunci mesti dibenarkan di sana, tetapi libvirt/VM tidak diperlukan (abaikan keputusan \"libvirt not reachable\" jika anda tidak menyandarkan VM). Gunakan Hantar ujian di bawah untuk menyemak.",
   "notify.unraidPlatformMismatch": "BombVault mengesan hos ini sebagai \"{platform}\", bukan Unraid. Pemberitahuan Unraid kekal mati walaupun suis ini dihidupkan. Jika ini sebenarnya hos Unraid, semak sama ada /boot hos telah bind-mount ke /host/boot di dalam bekas (lihat templat Unraid BombVault) dan mulakan semula bekas.",
+  "notify.unraidOffOnTrueNAS": "Hos ini menjalankan TrueNAS, jadi pemberitahuan Unraid kekal mati walaupun suis ini dihidupkan.",
   "notify.smtp": "E-mel (SMTP)",
   "notify.smtpHost": "Hos SMTP",
   "notify.smtpPort": "Port",
@@ -898,6 +899,8 @@ const ms: Partial<Translations> = {
   "excludes.error": "Pengecualian gagal disimpan",
   "excludes.noMatch": "Dihantar ke restic seadanya (bukan laluan bekas yang dikenali).",
   "excludes.excludesNothing": "Volum folder ini tiada dalam sandaran, jadi baris ini tidak mengecualikan apa-apa.",
+  "excludes.nameMatchesNothing": "Tiada apa-apa dalam sandaran ini yang bernama ini, jadi baris ini tidak mengecualikan apa-apa.",
+  "excludes.pathMissing": "Laluan ini tiada dalam sandaran, jadi baris ini tidak mengecualikan apa-apa.",
   // Exclude preview status
   "excludes.willExclude": "akan dikecualikan daripada sandaran",
   "excludes.matchesAnywhere": "akan dikecualikan di mana-mana ia muncul",

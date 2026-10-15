@@ -861,6 +861,7 @@ const it: Partial<Translations> = {
   "notify.unraid": "Notifiche Unraid",
   "notify.unraidHint": "Invia al sistema di notifiche di Unraid (che può inoltrare a Pushover, email, Discord, …). Funziona tramite la connessione SSH da Impostazioni, Integrazioni, SSH dell'host, quindi la chiave deve essere autorizzata lì, ma libvirt/VMs non sono necessari (ignora un risultato «libvirt not reachable» se non esegui il backup delle VMs). Per verificare, usa «Invia test» qui sotto.",
   "notify.unraidPlatformMismatch": "BombVault ha rilevato questo host come \"{platform}\", non come Unraid. Le notifiche Unraid restano disattivate anche con questa opzione attiva. Se questo È davvero un host Unraid, verifica che il /boot dell'host sia montato (bind-mount) su /host/boot all'interno del container (vedi il template Unraid di BombVault) e riavvia il container.",
+  "notify.unraidOffOnTrueNAS": "Questo host usa TrueNAS, quindi le notifiche Unraid restano disattivate anche con questa opzione attiva.",
   "notify.test": "Invia test",
   "notify.anomaliesWhere": "Quali anomalie inviano una notifica lo decidi in {page}.",
   "stophook.title": "Arresta altri container",
@@ -1396,6 +1397,8 @@ const it: Partial<Translations> = {
   "excludes.error": "Impossibile salvare le esclusioni",
   "excludes.noMatch": "Passato a restic così com'è (non è un percorso del contenitore riconosciuto).",
   "excludes.excludesNothing": "Il volume di questa cartella non è nel backup, quindi questa riga non esclude nulla.",
+  "excludes.nameMatchesNothing": "Nulla in questo backup ha questo nome, quindi questa riga non esclude nulla.",
+  "excludes.pathMissing": "Questo percorso non esiste nel backup, quindi questa riga non esclude nulla.",
   // Exclude preview status (#38)
   "excludes.willExclude": "sarà escluso dal backup",
   "excludes.matchesAnywhere": "sarà escluso ovunque compaia",

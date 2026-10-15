@@ -804,6 +804,7 @@ const is: Partial<Translations> = {
   "notify.unraid": "Unraid-tilkynningar",
   "notify.unraidHint": "Sendir í eigið tilkynningakerfi Unraid (sem getur áframsent á Pushover, tölvupóst, Discord, …). Keyrir í gegnum SSH-tenginguna úr Stillingar, Tengingar, SSH á hýsil, svo lykillinn verður að vera heimilaður þar, en libvirt/sýndarvélar eru ekki nauðsynlegar (hunsaðu niðurstöðu „libvirt not reachable“ ef þú afritar ekki sýndarvélar). Notaðu Senda próf hér að neðan til að athuga.",
   "notify.unraidPlatformMismatch": "BombVault greindi þennan hýsil sem „{platform}“, ekki Unraid. Unraid-tilkynningar eru áfram slökktar jafnvel þótt kveikt sé á þessum rofa. Ef þetta er Unraid-hýsill, athugaðu hvort /boot hýsilsins sé bind-tengt við /host/boot inni í gáminum (sjá Unraid-sniðmát BombVault) og endurræstu gáminn.",
+  "notify.unraidOffOnTrueNAS": "Þessi hýsill keyrir TrueNAS, svo Unraid-tilkynningar eru áfram slökktar jafnvel þótt kveikt sé á þessu.",
   "notify.smtp": "Tölvupóstur (SMTP)",
   "notify.smtpHost": "SMTP-hýsill",
   "notify.smtpPort": "Gátt",
@@ -898,6 +899,8 @@ const is: Partial<Translations> = {
   "excludes.error": "Ekki tókst að vista undanskilningana",
   "excludes.noMatch": "Er skilað óbreyttu til restic (ekki þekkt slóð gáms).",
   "excludes.excludesNothing": "Gagnahirsla þessarar möppu er ekki í afrituninni, svo þessi lína útilokar ekkert.",
+  "excludes.nameMatchesNothing": "Ekkert í þessari afritun ber þetta nafn, svo þessi lína útilokar ekkert.",
+  "excludes.pathMissing": "Þessi slóð er ekki til í afrituninni, svo þessi lína útilokar ekkert.",
   // Exclude preview status
   "excludes.willExclude": "verður útilokað úr afrituninni",
   "excludes.matchesAnywhere": "verður útilokað hvar sem það birtist",

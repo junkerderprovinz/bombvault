@@ -804,6 +804,7 @@ const et: Partial<Translations> = {
   "notify.unraid": "Unraidi teavitused",
   "notify.unraidHint": "Saadab Unraidi enda teavitussüsteemi (mis võib edastada Pushoverile, e-postile, Discordile, …). Töötab SSH-ühenduse kaudu jaotisest Seaded, Integratsioonid, Hosti SSH, seega peab võti olema seal lubatud, kuid libvirt/VM-id pole vajalikud (ignoreeri „libvirt not reachable” tulemust, kui VM-e ei varunda). Kasuta kontrollimiseks allpool Saada test.",
   "notify.unraidPlatformMismatch": "BombVault tuvastas selle hosti kui „{platform}”, mitte Unraidi. Unraidi teavitused jäävad väljas isegi selle lülitiga sees. Kui see on Unraidi host, kontrolli, et hosti /boot oleks konteineris seotud kausta /host/boot külge (vaata BombVaulti Unraidi malli), ja käivita konteiner uuesti.",
+  "notify.unraidOffOnTrueNAS": "See host kasutab TrueNAS-i, seega jäävad Unraidi teavitused välja ka selle lülitiga sees.",
   "notify.smtp": "E-post (SMTP)",
   "notify.smtpHost": "SMTP host",
   "notify.smtpPort": "Port",
@@ -898,6 +899,8 @@ const et: Partial<Translations> = {
   "excludes.error": "Väljajätte ei õnnestunud salvestada",
   "excludes.noMatch": "Antakse restic'ule edasi muutmata kujul (pole tuntud konteineri rada).",
   "excludes.excludesNothing": "Selle kausta köide pole varunduses, seega see rida ei jäta midagi välja.",
+  "excludes.nameMatchesNothing": "Selles varunduses pole midagi selle nimega, seega see rida ei jäta midagi välja.",
+  "excludes.pathMissing": "Seda teed varunduses pole, seega see rida ei jäta midagi välja.",
   // Exclude preview status
   "excludes.willExclude": "jäetakse varundusest välja",
   "excludes.matchesAnywhere": "jäetakse välja kõikjal, kus see esineb",

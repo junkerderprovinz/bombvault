@@ -852,6 +852,7 @@ const ko: Partial<Translations> = {
   "notify.unraid": "Unraid 알림",
   "notify.unraidHint": "Unraid 자체 알림 시스템으로 전송합니다(Pushover, 이메일, Discord, … 로 전달 가능). 설정, 연동, 호스트 SSH의 SSH 연결을 통해 실행되므로 키가 그곳에서 승인되어 있어야 합니다. 하지만 libvirt/VMs는 필요하지 않습니다(VMs를 백업하지 않는다면 “libvirt not reachable” 결과는 무시하세요). 확인하려면 아래의 “테스트 보내기”를 사용하세요.",
   "notify.unraidPlatformMismatch": "BombVault가 이 호스트를 Unraid가 아닌 \"{platform}\"(으)로 감지했습니다. 이 옵션이 켜져 있어도 Unraid 알림은 꺼진 상태로 유지됩니다. 실제로 Unraid 호스트라면 호스트의 /boot가 컨테이너 내부의 /host/boot에 바인드 마운트되어 있는지 확인하고(BombVault Unraid 템플릿 참고) 컨테이너를 다시 시작하세요.",
+  "notify.unraidOffOnTrueNAS": "이 호스트는 TrueNAS에서 실행되므로 이 옵션을 켜도 Unraid 알림은 꺼진 상태로 유지됩니다.",
   "notify.test": "테스트 보내기",
   "notify.anomaliesWhere": "어떤 이상 징후에 알림을 보낼지는 {page}에서 정합니다.",
   "stophook.title": "다른 컨테이너 중지",
@@ -1387,6 +1388,8 @@ const ko: Partial<Translations> = {
   "excludes.error": "제외를 저장할 수 없습니다",
   "excludes.noMatch": "restic에 그대로 전달됩니다(인식된 컨테이너 경로 아님).",
   "excludes.excludesNothing": "이 폴더의 볼륨이 백업에 없으므로 이 줄은 아무것도 제외하지 않습니다.",
+  "excludes.nameMatchesNothing": "이 백업에는 이 이름을 가진 항목이 없으므로 이 줄은 아무것도 제외하지 않습니다.",
+  "excludes.pathMissing": "이 경로는 백업에 없으므로 이 줄은 아무것도 제외하지 않습니다.",
   // Exclude preview status (#38)
   "excludes.willExclude": "백업에서 제외됩니다",
   "excludes.matchesAnywhere": "나타나는 모든 위치에서 제외됩니다",

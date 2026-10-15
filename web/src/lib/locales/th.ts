@@ -861,6 +861,7 @@ const th: Partial<Translations> = {
   "notify.unraid": "การแจ้งเตือน Unraid",
   "notify.unraidHint": "ส่งไปยังระบบแจ้งเตือนของ Unraid เอง (ซึ่งสามารถส่งต่อไปยัง Pushover อีเมล Discord, …) ทำงานผ่านการเชื่อมต่อ SSH จาก การตั้งค่า, การเชื่อมต่อ, SSH ของโฮสต์ ดังนั้นต้องอนุญาตคีย์ที่นั่น แต่ไม่จำเป็นต้องมี libvirt/VMs (ให้เพิกเฉยต่อผลลัพธ์ “libvirt not reachable” หากคุณไม่ได้สำรองข้อมูล VMs) ตรวจสอบได้โดยใช้ “ส่งทดสอบ” ด้านล่าง",
   "notify.unraidPlatformMismatch": "BombVault ตรวจพบว่าโฮสต์นี้เป็น \"{platform}\" ไม่ใช่ Unraid การแจ้งเตือน Unraid จึงยังคงปิดอยู่แม้ว่าตัวเลือกนี้จะเปิดใช้งาน หากนี่เป็นโฮสต์ Unraid จริง ให้ตรวจสอบว่า /boot ของโฮสต์ถูก bind-mount ไปยัง /host/boot ภายในคอนเทนเนอร์แล้ว (ดูเทมเพลต Unraid ของ BombVault) แล้วรีสตาร์ทคอนเทนเนอร์",
+  "notify.unraidOffOnTrueNAS": "โฮสต์นี้ใช้ TrueNAS การแจ้งเตือนของ Unraid จึงยังคงปิดอยู่แม้จะเปิดตัวเลือกนี้ไว้",
   "notify.test": "ส่งทดสอบ",
   "notify.anomaliesWhere": "คุณเลือกได้ที่ {page} ว่าความผิดปกติใดจะส่งการแจ้งเตือน",
   "stophook.title": "หยุดคอนเทนเนอร์อื่น",
@@ -1397,6 +1398,8 @@ const th: Partial<Translations> = {
   "excludes.error": "ไม่สามารถบันทึกการยกเว้นได้",
   "excludes.noMatch": "ส่งให้ restic ตามที่เป็น (ไม่ใช่พาธคอนเทนเนอร์ที่รู้จัก)",
   "excludes.excludesNothing": "วอลุ่มของโฟลเดอร์นี้ไม่ได้อยู่ในข้อมูลสำรอง ดังนั้นบรรทัดนี้จึงไม่ยกเว้นสิ่งใด",
+  "excludes.nameMatchesNothing": "ไม่มีสิ่งใดในข้อมูลสำรองนี้ที่มีชื่อนี้ ดังนั้นบรรทัดนี้จึงไม่ยกเว้นอะไรเลย",
+  "excludes.pathMissing": "ไม่มีพาธนี้ในข้อมูลสำรอง ดังนั้นบรรทัดนี้จึงไม่ยกเว้นอะไรเลย",
   // Exclude preview status (#38)
   "excludes.willExclude": "จะถูกยกเว้นจากข้อมูลสำรอง",
   "excludes.matchesAnywhere": "จะถูกยกเว้นทุกที่ที่ปรากฏ",

@@ -861,6 +861,7 @@ const da: Partial<Translations> = {
   "notify.unraid": "Unraid-notifikationer",
   "notify.unraidHint": "Send til Unraids eget notifikationssystem (som kan videresende til Pushover, e-mail, Discord, …). Kører via SSH-forbindelsen fra Indstillinger, Integrationer, Værts-SSH, så nøglen skal være godkendt der, men libvirt/VMs er ikke påkrævet (ignorér et „libvirt not reachable”-resultat, hvis du ikke sikkerhedskopierer VMs). Tjek det med „Send test” nedenfor.",
   "notify.unraidPlatformMismatch": "BombVault har registreret denne vært som \"{platform}\", ikke Unraid. Unraid-notifikationer forbliver slået fra, selvom denne indstilling er slået til. Hvis dette rent faktisk er en Unraid-vært, så tjek at værtens /boot er bind-mountet til /host/boot inde i containeren (se BombVault Unraid-skabelonen), og genstart containeren.",
+  "notify.unraidOffOnTrueNAS": "Denne vært kører TrueNAS, så Unraid-notifikationer forbliver slået fra, selvom denne indstilling er slået til.",
   "notify.test": "Send test",
   "notify.anomaliesWhere": "Hvilke anomalier der sender en notifikation, vælger du under {page}.",
   "stophook.title": "Stop andre containere",
@@ -1396,6 +1397,8 @@ const da: Partial<Translations> = {
   "excludes.error": "Kunne ikke gemme udelukkelserne",
   "excludes.noMatch": "Sendes til restic som det er (ingen genkendt containersti).",
   "excludes.excludesNothing": "Denne mappes volumen er ikke med i sikkerhedskopien, så denne linje udelukker intet.",
+  "excludes.nameMatchesNothing": "Intet i denne sikkerhedskopi har dette navn, så denne linje udelukker intet.",
+  "excludes.pathMissing": "Denne sti findes ikke i sikkerhedskopien, så denne linje udelukker intet.",
   // Exclude preview status (#38)
   "excludes.willExclude": "udelukkes fra sikkerhedskopien",
   "excludes.matchesAnywhere": "udelukkes overalt hvor det forekommer",

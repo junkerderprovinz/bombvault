@@ -804,6 +804,7 @@ const hr: Partial<Translations> = {
   "notify.unraid": "Unraid obavijesti",
   "notify.unraidHint": "Šalje vlastitom sustavu obavijesti Unraida (koji može proslijediti na Pushover, e-poštu, Discord, …). Izvršava se putem SSH veze iz Postavke, Integracije, SSH domaćina, pa ključ tamo mora biti ovlašten, ali libvirt/VM-ovi nisu potrebni (zanemarite rezultat „libvirt not reachable” ako ne izrađujete sigurnosnu kopiju VM-ova). Koristite Pošalji test u nastavku za provjeru.",
   "notify.unraidPlatformMismatch": "BombVault je otkrio ovaj host kao „{platform}”, a ne kao Unraid. Unraid obavijesti ostaju isključene čak i uz ovaj prekidač uključen. Ako je ovo doista Unraid host, provjerite je li hostov /boot montiran na /host/boot unutar kontejnera (pogledajte BombVaultov Unraid predložak) i ponovno pokrenite kontejner.",
+  "notify.unraidOffOnTrueNAS": "Ovaj host radi na TrueNAS-u, pa Unraid obavijesti ostaju isključene čak i uz uključen ovaj prekidač.",
   "notify.smtp": "E-pošta (SMTP)",
   "notify.smtpHost": "SMTP host",
   "notify.smtpPort": "Port",
@@ -898,6 +899,8 @@ const hr: Partial<Translations> = {
   "excludes.error": "Izuzimanja se nisu mogla spremiti",
   "excludes.noMatch": "Prosljeđuje se resticu nepromijenjeno (nije prepoznata putanja kontejnera).",
   "excludes.excludesNothing": "Volumen ove mape nije u sigurnosnoj kopiji, pa ovaj redak ništa ne izuzima.",
+  "excludes.nameMatchesNothing": "Ništa u ovoj sigurnosnoj kopiji nema ovaj naziv, pa ovaj redak ništa ne izuzima.",
+  "excludes.pathMissing": "Ova putanja ne postoji u sigurnosnoj kopiji, pa ovaj redak ništa ne izuzima.",
   // Exclude preview status
   "excludes.willExclude": "bit će izuzeto iz sigurnosne kopije",
   "excludes.matchesAnywhere": "bit će izuzeto gdje god se pojavi",

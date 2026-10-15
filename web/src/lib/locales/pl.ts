@@ -855,6 +855,7 @@ const pl: Partial<Translations> = {
   "notify.unraid": "Powiadomienia Unraid",
   "notify.unraidHint": "Wyślij do własnego systemu powiadomień Unraida (który może przekazywać do Pushover, e-mail, Discord, …). Działa przez połączenie SSH z Ustawienia, Integracje, SSH hosta, więc klucz musi być tam autoryzowany, ale libvirt/VMs nie są wymagane (zignoruj wynik „libvirt not reachable”, jeśli nie tworzysz kopii zapasowych VMs). Aby sprawdzić, użyj poniżej „Wyślij test”.",
   "notify.unraidPlatformMismatch": "BombVault wykrył ten host jako \"{platform}\", a nie jako Unraid. Powiadomienia Unraid pozostają wyłączone, mimo że ta opcja jest włączona. Jeśli to naprawdę jest host Unraid, sprawdź, czy /boot hosta jest zamontowane (bind-mount) do /host/boot wewnątrz kontenera (zobacz szablon Unraid BombVault), a następnie zrestartuj kontener.",
+  "notify.unraidOffOnTrueNAS": "Ten host działa na TrueNAS, więc powiadomienia Unraid pozostają wyłączone, nawet gdy ta opcja jest włączona.",
   "notify.test": "Wyślij test",
   "notify.anomaliesWhere": "To, które anomalie wysyłają powiadomienie, ustawiasz w sekcji „{page}”.",
   "stophook.title": "Zatrzymaj inne kontenery",
@@ -1393,6 +1394,8 @@ const pl: Partial<Translations> = {
   "excludes.error": "Nie udało się zapisać wykluczeń",
   "excludes.noMatch": "Przekazywane do restic bez zmian (nierozpoznana ścieżka kontenera).",
   "excludes.excludesNothing": "Wolumin tego folderu nie jest w kopii zapasowej, więc ten wiersz niczego nie wyklucza.",
+  "excludes.nameMatchesNothing": "Nic w tej kopii zapasowej nie ma tej nazwy, więc ten wiersz niczego nie wyklucza.",
+  "excludes.pathMissing": "Ta ścieżka nie istnieje w kopii zapasowej, więc ten wiersz niczego nie wyklucza.",
   // Exclude preview status (#38)
   "excludes.willExclude": "zostanie wykluczony z kopii zapasowej",
   "excludes.matchesAnywhere": "zostanie wykluczony wszędzie, gdzie występuje",

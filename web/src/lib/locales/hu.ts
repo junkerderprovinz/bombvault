@@ -861,6 +861,7 @@ const hu: Partial<Translations> = {
   "notify.unraid": "Unraid-értesítések",
   "notify.unraidHint": "Küldés az Unraid saját értesítési rendszerébe (amely továbbíthat Pushoverre, e-mailre, Discordra, …). A Beállítások, Integrációk, Gazdagép SSH SSH-kapcsolatán keresztül fut, ezért a kulcsot ott engedélyezni kell, de a libvirt/VMs nem szükséges (hagyd figyelmen kívül a „libvirt not reachable” eredményt, ha nem mentesz VMs-t). Az ellenőrzéshez használd a lenti „Teszt küldése” gombot.",
   "notify.unraidPlatformMismatch": "A BombVault ezt a hosztot \"{platform}\" típusúnak érzékelte, nem Unraidnek. Az Unraid-értesítések így kikapcsolva maradnak, még ha ez a kapcsoló be is van kapcsolva. Ha ez valóban Unraid hoszt, ellenőrizd, hogy a host /boot útvonala be van-e kötve (bind-mount) a konténeren belül a /host/boot alá (lásd a BombVault Unraid sablonját), majd indítsd újra a konténert.",
+  "notify.unraidOffOnTrueNAS": "Ez a hoszt TrueNAS-t futtat, ezért az Unraid-értesítések kikapcsolva maradnak, még ha ez a beállítás be is van kapcsolva.",
   "notify.test": "Teszt küldése",
   "notify.anomaliesWhere": "Hogy mely anomáliák küldenek értesítést, itt állíthatod be: {page}.",
   "stophook.title": "Más konténerek leállítása",
@@ -1397,6 +1398,8 @@ const hu: Partial<Translations> = {
   "excludes.error": "A kizárásokat nem sikerült menteni",
   "excludes.noMatch": "Változatlanul átadva a resticnek (nem felismert konténer-útvonal).",
   "excludes.excludesNothing": "Ennek a mappának a kötete nincs a biztonsági mentésben, ezért ez a sor semmit sem zár ki.",
+  "excludes.nameMatchesNothing": "Ebben a biztonsági mentésben semmi sem viseli ezt a nevet, ezért ez a sor semmit sem zár ki.",
+  "excludes.pathMissing": "Ez az útvonal nem létezik a biztonsági mentésben, ezért ez a sor semmit sem zár ki.",
   // Exclude preview status (#38)
   "excludes.willExclude": "ki lesz zárva a biztonsági mentésből",
   "excludes.matchesAnywhere": "mindenhol ki lesz zárva, ahol előfordul",
