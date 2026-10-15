@@ -152,3 +152,25 @@ func TestScrubRepoLocationRemovesAPasswordWithoutAUserName(t *testing.T) {
 		t.Fatalf("scrubRepoLocation = %q, want the password gone and the location kept", got)
 	}
 }
+
+func TestScrubSecretsKeepsHTTPURLs(t *testing.T) {
+	got := scrubSecrets(`dial http://ntfy.lan:8080/alerts failed, see /config/bombvault.sqlite`)
+	if !strings.Contains(got, "http://ntfy.lan:8080/alerts") {
+		t.Fatalf("URL was mangled, got %q", got)
+	}
+	if strings.Contains(got, "/config") {
+		t.Fatalf("file path survived, got %q", got)
+	}
+}
+
+func TestScrubSecretsRedactsHTTPURLUserinfoAndQuery(t *testing.T) {
+	got := scrubSecrets(`Post "https://bob:hunter2@hooks.example.com/x?token=abc123": refused`)
+	for _, leak := range []string{"bob", "hunter2", "abc123"} {
+		if strings.Contains(got, leak) {
+			t.Fatalf("leaked %q in %q", leak, got)
+		}
+	}
+	if !strings.Contains(got, "hooks.example.com/x") {
+		t.Fatalf("host and path should stay, got %q", got)
+	}
+}
