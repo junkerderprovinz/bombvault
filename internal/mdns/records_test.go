@@ -199,3 +199,57 @@ func TestAnotherAnswerForOurNamesIsAConflict(t *testing.T) {
 		t.Fatal("an unrelated service counts as a conflict")
 	}
 }
+
+func TestOfTwoProbesForOneNameTheLaterRecordsWin(t *testing.T) {
+	ours := testZone(t)
+	theirs := testZone(t)
+	theirs.addrs = []netip.Addr{netip.MustParseAddr("192.168.1.30")}
+	probeOf := func(z zone) []byte {
+		t.Helper()
+		msg, err := z.probe()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return msg
+	}
+
+	if sign, ok := ours.tiebreak(probeOf(theirs)); !ok || sign >= 0 {
+		t.Fatalf("192.168.1.20 against a probe from 192.168.1.30: sign %d, ok %v; want it to lose", sign, ok)
+	}
+	if sign, ok := theirs.tiebreak(probeOf(ours)); !ok || sign <= 0 {
+		t.Fatalf("192.168.1.30 against a probe from 192.168.1.20: sign %d, ok %v; want it to win", sign, ok)
+	}
+	if sign, ok := ours.tiebreak(probeOf(ours)); !ok || sign != 0 {
+		t.Fatalf("a zone against its own probe: sign %d, ok %v; want a tie", sign, ok)
+	}
+
+	other := testZone(t)
+	other.svc.Host, other.svc.Instance = "nas", "NAS"
+	var err error
+	if other.names, err = other.svc.names(); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := ours.tiebreak(probeOf(other)); ok {
+		t.Fatal("a probe for other names counts in the tiebreak")
+	}
+	announce, err := theirs.announcement(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := ours.tiebreak(announce); ok {
+		t.Fatal("an announcement counts as a probe")
+	}
+}
+
+func TestTwoInstancesOnOneHostAreToldApartByTheirPort(t *testing.T) {
+	ours := testZone(t)
+	sameHostOtherPort := testZone(t)
+	sameHostOtherPort.svc.Port = 3444
+	msg, err := sameHostOtherPort.probe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sign, ok := ours.tiebreak(msg); !ok || sign >= 0 {
+		t.Fatalf("port 3443 against a probe for port 3444 on the same address: sign %d, ok %v; want the lower port to lose", sign, ok)
+	}
+}

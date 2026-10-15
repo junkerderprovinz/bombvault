@@ -4,6 +4,8 @@ import (
 	"net"
 	"net/netip"
 	"testing"
+
+	"golang.org/x/net/ipv4"
 )
 
 // RFC 6762 section 11: a query from outside the link it came in on gets no
@@ -49,6 +51,41 @@ func TestTheAddressesAHostAnnouncesAreIPv4AndNeitherLoopbackNorLinkLocal(t *test
 		ip, err := netip.ParseAddr(a)
 		if err != nil || !ip.Is4() || ip.IsLoopback() || ip.IsLinkLocalUnicast() {
 			t.Errorf("an address the host would show: %q", a)
+		}
+	}
+}
+
+func TestAProbingResponderGivesWayOnlyToAProbeThatWins(t *testing.T) {
+	svc := Service{Instance: "BombVault", Host: "bombvault", Type: "_https._tcp", Subtype: "_bombvault", Port: 3443}
+	r := &Responder{svc: svc, ifaces: []iface{
+		{ifi: net.Interface{Index: 1, Name: "eth0"}, addrs: []netip.Addr{netip.MustParseAddr("192.168.1.20")}},
+		{ifi: net.Interface{Index: 2, Name: "eth1"}, addrs: []netip.Addr{netip.MustParseAddr("10.0.0.20")}},
+	}}
+	probeFrom := func(addr string) []byte {
+		t.Helper()
+		z, err := r.zone([]netip.Addr{netip.MustParseAddr(addr)})
+		if err != nil {
+			t.Fatal(err)
+		}
+		msg, err := z.probe()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return msg
+	}
+	on := func(index int) *ipv4.ControlMessage { return &ipv4.ControlMessage{IfIndex: index} }
+
+	if !r.lostClaim(probeFrom("192.168.1.30"), on(1)) {
+		t.Fatal("a probe for the same names from a later address did not win")
+	}
+	if r.lostClaim(probeFrom("192.168.1.10"), on(1)) {
+		t.Fatal("a probe for the same names from an earlier address won")
+	}
+	for _, own := range []string{"192.168.1.20", "10.0.0.20"} {
+		for _, index := range []int{1, 2, 0} {
+			if r.lostClaim(probeFrom(own), on(index)) {
+				t.Fatalf("the responder's own probe from %s, heard on interface %d, took its names", own, index)
+			}
 		}
 	}
 }
