@@ -62,22 +62,29 @@ func main() {
 	}
 }
 
-// healthcheck is the Docker HEALTHCHECK probe. It
-// asks the engine's own /api/health endpoint (open, LAN trust model) whether it is
-// serving and returns 0 on HTTP 200, non-zero otherwise, so an auto-heal tool
-// (e.g. Autoheal / willfarrell) can restart a container whose engine has wedged.
-// It reuses this binary, so the image needs no shell or curl. BIND_HOST, PORT and
-// HTTPS_PORT come from the environment (the Dockerfile sets both ports).
+// healthcheck is the Docker HEALTHCHECK probe. It asks the engine's own
+// /api/health endpoint (open, LAN trust model) whether it is serving and
+// returns 0 on HTTP 200, non-zero otherwise, so an auto-heal tool (e.g.
+// Autoheal / willfarrell) can restart a container whose engine has wedged. It
+// reuses this binary, so the image needs no shell or curl.
+//
+// It probes only the listener the server opens, as config.Load reads the same
+// variables: plain HTTP on PORT with HTTP_ONLY, HTTPS on HTTPS_PORT otherwise.
+// The TrueNAS app gives both ports one number, and a plain request to the TLS
+// listener there would log a handshake error on every probe.
 func healthcheck() int {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
+	host := healthcheckHost(os.Getenv("BIND_HOST"))
+	if strings.EqualFold(os.Getenv("HTTP_ONLY"), "true") {
+		return healthcheckAt("http://" + net.JoinHostPort(host, envOr("PORT", "3000")) + "/api/health")
 	}
-	httpsPort := os.Getenv("HTTPS_PORT")
-	if httpsPort == "" {
-		httpsPort = "3443"
+	return healthcheckAt("https://" + net.JoinHostPort(host, envOr("HTTPS_PORT", "3443")) + "/api/health")
+}
+
+func envOr(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
 	}
-	return healthcheckAt(healthcheckHost(os.Getenv("BIND_HOST")), port, httpsPort)
+	return def
 }
 
 // healthcheckHost is where the probe finds the WebUI: loopback when it listens on
@@ -89,25 +96,18 @@ func healthcheckHost(bind string) string {
 	return bind
 }
 
-// healthcheckAt is the testable core: it tries HTTP first, then HTTPS (the local
-// cert is self-signed, so verification is skipped; this is a liveness probe on
-// the container's own address, not a trust boundary), and returns 0 as soon as
-// /api/health answers 200.
-func healthcheckAt(host, port, httpsPort string) int {
+// healthcheckAt returns 0 when url answers 200. The local certificate is
+// self-signed, so verification is skipped: this is a liveness probe on the
+// container's own address, not a trust boundary.
+func healthcheckAt(url string) int {
 	client := &http.Client{
 		Timeout: 4 * time.Second,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // G402: loopback self-signed cert; liveness probe, not a trust boundary
 		},
 	}
-	for _, url := range []string{
-		"http://" + net.JoinHostPort(host, port) + "/api/health",
-		"https://" + net.JoinHostPort(host, httpsPort) + "/api/health",
-	} {
-		resp, err := client.Get(url) //nolint:gosec // G107: the container's own listen address from its environment, not user input
-		if err != nil {
-			continue
-		}
+	resp, err := client.Get(url) //nolint:gosec // G107: the container's own listen address from its environment, not user input
+	if err == nil {
 		_ = resp.Body.Close()
 		if resp.StatusCode == http.StatusOK {
 			return 0
