@@ -1,14 +1,14 @@
 import type { SaveState } from "./shared";
 import { Card } from "../settings/shared";
-import { InfoBubble } from "../../components/InfoBubble";
 import { RevealInput } from "../../components/RevealInput";
 import { getCloud, setCloud } from "../../lib/api";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useReveal } from "../../lib/useReveal";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { pushSaveWarnings } from "../../lib/placementCodes";
 import { SelectField } from "../../components/SelectField";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { STORAGE_CLASSES } from "../../lib/storageClasses";
 
 // CloudCard stores the encrypted credentials for off-site restic backends (S3
@@ -25,6 +25,7 @@ export function CloudCard({
    *  inside its own step card. */
   nested?: boolean;
 }) {
+  const uid = useId();
   const { push } = useToast();
   const [c, setC] = useState({ s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
   const [secretSet, setSecretSet] = useState(false);
@@ -109,7 +110,7 @@ export function CloudCard({
 
   const inputCls =
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus-well";
-  const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
+  const textCls = `${inputCls} w-72 max-w-full`;
 
   return (
     <Card title={t("cloud.title")} hint={t("cloud.hint")} hueIndex={hueIndex} nested={nested}>
@@ -117,39 +118,46 @@ export function CloudCard({
           has to be visible. */}
       {loadErr && <span className="text-xs text-statusFail">{t("settings.notLoadedNoSave")}</span>}
 
-      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-        <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>
-        <label className={fieldCls}>AWS_ACCESS_KEY_ID
-          <input value={c.s3KeyId} onChange={(e) => set("s3KeyId", e.target.value)} spellCheck={false} dir="ltr" className={`${inputCls} text-start`} /></label>
-        <label className={fieldCls}>AWS_SECRET_ACCESS_KEY
-          <RevealInput {...revealS3Secret} value={c.s3Secret} onChange={(e) => set("s3Secret", e.target.value)} spellCheck={false}
-            placeholder={secretSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
-        <label className={fieldCls}>AWS_DEFAULT_REGION
-          <input value={c.s3Region} onChange={(e) => set("s3Region", e.target.value)} spellCheck={false} placeholder="us-east-1" className={inputCls} /></label>
-        <label className={fieldCls}>
-          <span className="flex items-center gap-1">
-            {t("cloud.storageClass.label")}
-            <InfoBubble tip={t("cloud.storageClass.hint")} />
-          </span>
-          <SelectField
-            value={c.s3StorageClass}
-            onChange={(v) => setImmediate("s3StorageClass", v)}
-            label={t("cloud.storageClass.label")}
-            options={[
-              { value: "", label: t("cloud.storageClass.default") },
-              ...STORAGE_CLASSES.map((sc) => ({ value: sc, label: sc })),
-            ]}
-            className={inputCls}
-          /></label>
+      <div className="rounded-card bg-carbon-surface2 p-3">
+        <span className="mb-2 block text-xs font-semibold text-carbon-textSub">Amazon S3</span>
+        <Rows>
+          <SettingRow label="AWS_ACCESS_KEY_ID" htmlFor={`${uid}-s3-key`}>
+            <input id={`${uid}-s3-key`} value={c.s3KeyId} onChange={(e) => set("s3KeyId", e.target.value)} spellCheck={false} dir="ltr" className={`${textCls} text-start`} />
+          </SettingRow>
+          <SettingRow label="AWS_SECRET_ACCESS_KEY" htmlFor={`${uid}-s3-secret`}>
+            <RevealInput {...revealS3Secret} id={`${uid}-s3-secret`} value={c.s3Secret} onChange={(e) => set("s3Secret", e.target.value)} spellCheck={false}
+              placeholder={secretSet ? t("cloud.secretSet") : ""} wrapperClassName="w-72 max-w-full" className={inputCls} />
+          </SettingRow>
+          <SettingRow label="AWS_DEFAULT_REGION" htmlFor={`${uid}-s3-region`}>
+            <input id={`${uid}-s3-region`} value={c.s3Region} onChange={(e) => set("s3Region", e.target.value)} spellCheck={false} placeholder="us-east-1" className={textCls} />
+          </SettingRow>
+          <SettingRow label={t("cloud.storageClass.label")} hint={t("cloud.storageClass.hint")} htmlFor={`${uid}-s3-class`}>
+            <SelectField
+              id={`${uid}-s3-class`}
+              value={c.s3StorageClass}
+              onChange={(v) => setImmediate("s3StorageClass", v)}
+              label={t("cloud.storageClass.label")}
+              options={[
+                { value: "", label: t("cloud.storageClass.default") },
+                ...STORAGE_CLASSES.map((sc) => ({ value: sc, label: sc })),
+              ]}
+              className={inputCls}
+            />
+          </SettingRow>
+        </Rows>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-        <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>
-        <label className={fieldCls}>RESTIC_REST_USERNAME
-          <input value={c.restUser} onChange={(e) => set("restUser", e.target.value)} spellCheck={false} dir="ltr" className={`${inputCls} text-start`} /></label>
-        <label className={fieldCls}>RESTIC_REST_PASSWORD
-          <RevealInput {...revealRestPassword} value={c.restPassword} onChange={(e) => set("restPassword", e.target.value)} spellCheck={false}
-            placeholder={pwSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
+      <div className="rounded-card bg-carbon-surface2 p-3">
+        <span className="mb-2 block text-xs font-semibold text-carbon-textSub">restic REST server</span>
+        <Rows>
+          <SettingRow label="RESTIC_REST_USERNAME" htmlFor={`${uid}-rest-user`}>
+            <input id={`${uid}-rest-user`} value={c.restUser} onChange={(e) => set("restUser", e.target.value)} spellCheck={false} dir="ltr" className={`${textCls} text-start`} />
+          </SettingRow>
+          <SettingRow label="RESTIC_REST_PASSWORD" htmlFor={`${uid}-rest-password`}>
+            <RevealInput {...revealRestPassword} id={`${uid}-rest-password`} value={c.restPassword} onChange={(e) => set("restPassword", e.target.value)} spellCheck={false}
+              placeholder={pwSet ? t("cloud.secretSet") : ""} wrapperClassName="w-72 max-w-full" className={inputCls} />
+          </SettingRow>
+        </Rows>
       </div>
     </Card>
   );

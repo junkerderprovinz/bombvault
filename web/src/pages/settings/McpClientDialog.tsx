@@ -4,6 +4,7 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { IconCheck, IconCopy, IconDownload } from "../../components/navGlyphs";
 import { RevealInput } from "../../components/RevealInput";
 import { Selector } from "../../components/Selector";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import type { McpKeyView, McpOAuthView } from "../../lib/api";
 import type { TranslationKey } from "../../lib/i18n";
@@ -299,19 +300,19 @@ export function McpClientDialog({
     if (created) {
       content = (
         <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-3 py-2.5">
-          <p className="text-sm font-medium text-carbon-text">{t("mcp.newKeyTitle")}</p>
-          <p className="text-sm text-carbon-textSub">{t("mcp.showOnce")}</p>
-          <RevealInput
-            visible={keyVisible}
-            onToggleVisible={() => setKeyVisible((v) => !v)}
-            showLabel={t("common.showValue")}
-            hideLabel={t("common.hideValue")}
-            value={created.key}
-            readOnly
-            aria-label={t("mcp.newKeyTitle")}
-            wrapperClassName="w-full"
-            className="rounded-control bg-carbon-surface px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
-          />
+          <SettingRow label={t("mcp.newKeyTitle")} note={t("mcp.showOnce")}>
+            <RevealInput
+              visible={keyVisible}
+              onToggleVisible={() => setKeyVisible((v) => !v)}
+              showLabel={t("common.showValue")}
+              hideLabel={t("common.hideValue")}
+              value={created.key}
+              readOnly
+              aria-label={t("mcp.newKeyTitle")}
+              wrapperClassName="w-80 max-w-full"
+              className="rounded-control bg-carbon-surface px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
+            />
+          </SettingRow>
           <Button
             label={t("mcp.copyKey")}
             labelKey="mcp.copyKey"
@@ -343,29 +344,27 @@ export function McpClientDialog({
           )}
           {mode === "new" && canMint && (
             <>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="bv-mcp-dialog-label" className="text-xs text-carbon-textSub">
-                  {t("mcp.labelLabel")}
-                </label>
-                <input
-                  key={shake}
-                  id="bv-mcp-dialog-label"
-                  value={label}
-                  maxLength={64}
-                  placeholder={t("mcp.labelPlaceholder")}
-                  onChange={(e) => setLabel(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void create();
-                  }}
-                  className={`w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus${
-                    shake ? " glim-shake" : ""
-                  }`}
-                />
-              </div>
-              <span className="flex items-center gap-1.5">
-                <Toggle label={t("mcp.allowStart")} checked={allowStart} onChange={setAllowStart} />
-                <InfoBubble tip={allowStartHint} />
-              </span>
+              <Rows>
+                <SettingRow label={t("mcp.labelLabel")} htmlFor="bv-mcp-dialog-label">
+                  <input
+                    key={shake}
+                    id="bv-mcp-dialog-label"
+                    value={label}
+                    maxLength={64}
+                    placeholder={t("mcp.labelPlaceholder")}
+                    onChange={(e) => setLabel(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void create();
+                    }}
+                    className={`w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus${
+                      shake ? " glim-shake" : ""
+                    }`}
+                  />
+                </SettingRow>
+                <SettingRow label={t("mcp.allowStart")} hint={allowStartHint}>
+                  <Toggle hideLabel label={t("mcp.allowStart")} checked={allowStart} onChange={setAllowStart} />
+                </SettingRow>
+              </Rows>
               <Button
                 label={t("mcp.createKey")}
                 labelKey="mcp.createKey"

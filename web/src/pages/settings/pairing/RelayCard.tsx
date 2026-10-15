@@ -230,11 +230,8 @@ export function RelayCard({
     );
 
   const address = (placeholder: string) => (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor="relay-address" className="inline-flex items-center gap-1.5 text-sm font-medium text-carbon-text">
-        {t("relay.addressLabel")}
-        <InfoBubble tip={t("relay.addressTip")} />
-      </label>
+    <div className="flex flex-col gap-3">
+      <SettingRow label={t("relay.addressLabel")} hint={t("relay.addressTip")} htmlFor="relay-address">
       <input
         id="relay-address"
         type="url"
@@ -244,8 +241,9 @@ export function RelayCard({
         autoComplete="off"
         placeholder={placeholder}
         dir="ltr"
-        className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 text-start glim-field-focus"
+        className="w-72 max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 text-start glim-field-focus"
       />
+      </SettingRow>
       {urlError && <p className="text-caption text-statusFail">{urlError}</p>}
       {!urlError && PLAINTEXT_RELAY.test(url.trim()) && (
         <p className="rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">

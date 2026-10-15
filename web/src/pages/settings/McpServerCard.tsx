@@ -487,21 +487,19 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
           failed reload must not hide it. The open setup dialog shows it itself. */}
       {fresh !== null && dialog === null && (
         <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-3 py-2.5">
-          <p className="flex items-center gap-1.5 text-sm font-medium text-carbon-text">
-            {t("mcp.newKeyTitle")}
-            <InfoBubble tip={t("mcp.showOnce")} />
-          </p>
-          <RevealInput
-            visible={keyVisible}
-            onToggleVisible={() => setKeyVisible((v) => !v)}
-            showLabel={t("common.showValue")}
-            hideLabel={t("common.hideValue")}
-            value={fresh.key}
-            readOnly
-            aria-label={t("mcp.newKeyTitle")}
-            wrapperClassName="w-full"
-            className="rounded-control bg-carbon-surface px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
-          />
+          <SettingRow label={t("mcp.newKeyTitle")} hint={t("mcp.showOnce")}>
+            <RevealInput
+              visible={keyVisible}
+              onToggleVisible={() => setKeyVisible((v) => !v)}
+              showLabel={t("common.showValue")}
+              hideLabel={t("common.hideValue")}
+              value={fresh.key}
+              readOnly
+              aria-label={t("mcp.newKeyTitle")}
+              wrapperClassName="w-80 max-w-full"
+              className="rounded-control bg-carbon-surface px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
+            />
+          </SettingRow>
           <div className="flex items-center gap-3">
             <Button
               label={t("mcp.copyKey")}

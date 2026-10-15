@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { ConfirmPrompt } from "../../components/ConfirmPrompt";
-import { InfoBubble } from "../../components/InfoBubble";
 import { RevealInput } from "../../components/RevealInput";
 import { Toggle } from "../../components/Toggle";
 import { IconInfo } from "../../components/glyphs";
@@ -272,21 +271,19 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
           failed reload must not hide it. */}
       {fresh !== null && (
         <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-3 py-2.5">
-          <p className="flex items-center gap-1.5 text-sm font-medium text-carbon-text">
-            {t("api.newTokenTitle")}
-            <InfoBubble tip={t("mcp.showOnce")} />
-          </p>
-          <RevealInput
-            visible={keyVisible}
-            onToggleVisible={() => setKeyVisible((v) => !v)}
-            showLabel={t("common.showValue")}
-            hideLabel={t("common.hideValue")}
-            value={fresh.key}
-            readOnly
-            aria-label={t("api.newTokenTitle")}
-            wrapperClassName="w-full"
-            className="rounded-control bg-carbon-surface px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
-          />
+          <SettingRow label={t("api.newTokenTitle")} hint={t("mcp.showOnce")}>
+            <RevealInput
+              visible={keyVisible}
+              onToggleVisible={() => setKeyVisible((v) => !v)}
+              showLabel={t("common.showValue")}
+              hideLabel={t("common.hideValue")}
+              value={fresh.key}
+              readOnly
+              aria-label={t("api.newTokenTitle")}
+              wrapperClassName="w-80 max-w-full"
+              className="rounded-control bg-carbon-surface px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
+            />
+          </SettingRow>
           <div className="flex items-center gap-3">
             <Button
               label={t("api.copyToken")}
@@ -311,6 +308,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
           {tokens.map((k) => (
             <li key={k.id} className="glim-tile flex flex-col gap-3 rounded-card p-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
+                {/* bv-convention-exception: setting-row-beside-label -- the rename input replaces the token name in its list tile, it is not a labelled field */}
                 <div className="flex min-w-0 flex-col gap-1">
                   <div className="flex min-w-0 items-center gap-2 max-md:flex-wrap">
                     {renaming === k.id ? (

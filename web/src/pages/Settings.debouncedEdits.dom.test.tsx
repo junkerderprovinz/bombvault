@@ -329,8 +329,7 @@ describe("the yearly off-site retention rule", () => {
     await renderPage();
     await gotoPage("storage");
 
-    const label = screen.getAllByText(en["settings.retentionYearly"])[0].closest("label");
-    const input = label?.querySelector("input") as HTMLInputElement;
+    const input = screen.getAllByLabelText(en["settings.retentionYearly"])[0] as HTMLInputElement;
     expect(input.value).toBe("0");
     await act(async () => {
       fireEvent.change(input, { target: { value: "3" } });

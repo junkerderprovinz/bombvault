@@ -4,6 +4,7 @@
 // and when nobody has come after a minute it offers the two ways on, in the
 // same two windows. Who is in the group stands in the card below it.
 import { useEffect, useState, type ReactNode } from "react";
+import { SettingRow } from "../../../components/storage/rows";
 import { Card, useOpenPasswordField } from "../shared";
 import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
@@ -159,10 +160,7 @@ function CantFindIt({ onProbe, busy, t, shake }: { onProbe: (url: string) => voi
             </>
           }
         >
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="pairing-cant-find" className="text-xs text-carbon-textSub">
-              {t("pairing.cantFindLabel")}
-            </label>
+          <SettingRow label={t("pairing.cantFindLabel")} htmlFor="pairing-cant-find">
             <input
               id="pairing-cant-find"
               type="url"
@@ -172,9 +170,9 @@ function CantFindIt({ onProbe, busy, t, shake }: { onProbe: (url: string) => voi
               autoComplete="off"
               placeholder="https://192.168.2.20:3443"
               dir="ltr"
-              className="rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus"
+              className="w-72 max-w-full rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus"
             />
-          </div>
+          </SettingRow>
         </InstanceWindow>
       )}
     </div>
@@ -384,10 +382,7 @@ export function PhraseCard({
   );
 
   const passwordPrompt = (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor="pairing-password" className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-        {t("pairing.passwordLabel")}
-      </label>
+    <SettingRow label={t("pairing.passwordLabel")} htmlFor="pairing-password">
       <RevealInput
         {...reveal}
         id="pairing-password"
@@ -397,10 +392,10 @@ export function PhraseCard({
           if (e.key === "Enter" && password !== "") void show();
         }}
         autoComplete="current-password"
-        wrapperClassName="w-full"
+        wrapperClassName="w-72 max-w-full"
         className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
       />
-    </div>
+    </SettingRow>
   );
 
   const openWords = () => {

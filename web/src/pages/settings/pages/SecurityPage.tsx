@@ -6,6 +6,7 @@ import { EncryptionCard } from "../EncryptionCard";
 import { PhonePairingCard } from "../PhonePairingCard";
 import { Button } from "../../../components/Button";
 import { RevealInput } from "../../../components/RevealInput";
+import { Rows, SettingRow } from "../../../components/storage/rows";
 import { useReveal } from "../../../lib/useReveal";
 import { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
@@ -101,10 +102,8 @@ export function SecurityPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">
-              {authEnabled ? t("auth.changePassword") : t("auth.setPassword")}
-            </label>
+          <Rows>
+          <SettingRow label={authEnabled ? t("auth.changePassword") : t("auth.setPassword")} htmlFor={LOGIN_PASSWORD_FIELD}>
             <RevealInput
               {...revealPwNew}
               id={LOGIN_PASSWORD_FIELD}
@@ -112,28 +111,27 @@ export function SecurityPage() {
               onChange={(e) => setPwNew(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
-              wrapperClassName="w-full"
+              wrapperClassName="w-72 max-w-full"
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">
-              {t("auth.confirmPassword")}
-            </label>
+          </SettingRow>
+          <SettingRow label={t("auth.confirmPassword")} htmlFor="bv-password-confirm">
             <RevealInput
               {...revealPwConfirm}
+              id="bv-password-confirm"
               value={pwConfirm}
               onChange={(e) => setPwConfirm(e.target.value)}
               autoComplete="new-password"
               placeholder="••••••••"
-              wrapperClassName="w-full"
+              wrapperClassName="w-72 max-w-full"
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
-            {/* The rule, stated before it is broken rather than after. */}
-            <span className="text-xs text-carbon-textSub">
-              {t("auth.passwordMinHint", minPasswordLen)}
-            </span>
-          </div>
+          </SettingRow>
+          </Rows>
+          {/* The rule, stated before it is broken rather than after. */}
+          <span className="text-xs text-carbon-textSub">
+            {t("auth.passwordMinHint", minPasswordLen)}
+          </span>
 
           <div className="flex items-center gap-3 pt-1">
             <Button

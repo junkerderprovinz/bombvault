@@ -11,6 +11,7 @@ import {
 } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
+import { SettingRow } from "../../components/storage/rows";
 import { Card } from "./shared";
 
 // PasskeyCard lets the operator sign in with a key on a phone, laptop or
@@ -188,16 +189,15 @@ export function PasskeyCard({
 
       {adding && (
         <div className="flex flex-col gap-2">
-          <label htmlFor="bv-passkey-name" className="text-xs text-carbon-textSub">
-            {t("auth.passkeyNameLabel")}
-          </label>
+          <SettingRow label={t("auth.passkeyNameLabel")} htmlFor="bv-passkey-name">
           <input
             id="bv-passkey-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t("auth.passkeyNamePlaceholder")}
-            className="w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
+            className="w-72 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
           />
+          </SettingRow>
           <div className="flex items-center gap-3">
             <Button
               label={t("common.cancel")}

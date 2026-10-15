@@ -1,11 +1,14 @@
 import { Link } from "react-router-dom";
 
-import { LabelledSelect } from "../../components/SelectField";
+import { SelectField } from "../../components/SelectField";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { ANOMALY_NOTIFY_LABEL, ANOMALY_SENSITIVITY_LABEL } from "../../lib/anomalies";
 import type { AnomalySummary, Settings } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
 import { Card, ToggleRow } from "./shared";
 import { formatNumber } from "../../lib/numberFormat";
+
+const SELECT = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 type AnomalyFieldKey = "anomalyEnabled" | "anomalyRetentionHold" | "anomalySensitivity" | "anomalyNotifyMin";
 
@@ -52,36 +55,38 @@ export function AnomalyCard({
 
       {on && (
         <>
-          <div className="flex flex-wrap items-start gap-4">
-            <LabelledSelect
-              label={t("anomaly.settings.sensitivity")}
-              hint={t("anomaly.settings.sensitivityHint")}
-              value={settings.anomalySensitivity}
-              onChange={(next: string) => save("anomalySensitivity", next)}
-              options={Object.entries(ANOMALY_SENSITIVITY_LABEL).map(([value, key]) => ({ value, label: t(key) }))}
-            />
-            <div className="flex flex-col gap-1">
-              <LabelledSelect
+          <Rows>
+            <SettingRow label={t("anomaly.settings.sensitivity")} hint={t("anomaly.settings.sensitivityHint")}>
+              <SelectField
+                label={t("anomaly.settings.sensitivity")}
+                value={settings.anomalySensitivity}
+                onChange={(next: string) => save("anomalySensitivity", next)}
+                options={Object.entries(ANOMALY_SENSITIVITY_LABEL).map(([value, key]) => ({ value, label: t(key) }))}
+                className={SELECT}
+              />
+            </SettingRow>
+            <SettingRow label={t("anomaly.settings.notifyMin")} hint={t("anomaly.settings.notifyHint")}>
+              <SelectField
                 label={t("anomaly.settings.notifyMin")}
-                hint={t("anomaly.settings.notifyHint")}
                 value={settings.anomalyNotifyMin}
                 onChange={(next: string) => save("anomalyNotifyMin", next)}
                 options={Object.entries(ANOMALY_NOTIFY_LABEL).map(([value, key]) => ({ value, label: t(key) }))}
+                className={SELECT}
               />
-              {summary?.notifyMuted && (
-                <p className="text-xs text-statusWarn">
-                  {t("anomaly.settings.notifyMuted")}{" "}
-                  {/* A hash link, because the settings page switches tabs on
-                      hashchange and a router navigation does not fire one. */}
-                  {/* An inline box's padding does not move the lines, so it
-                      only widens the target. */}
-                  <a href="#notifications" className="text-accentText hover:underline pointer-coarse:py-1.5">
-                    {t("anomaly.settings.openNotifications")}
-                  </a>
-                </p>
-              )}
-            </div>
-          </div>
+            </SettingRow>
+          </Rows>
+          {summary?.notifyMuted && (
+            <p className="text-xs text-statusWarn">
+              {t("anomaly.settings.notifyMuted")}{" "}
+              {/* A hash link, because the settings page switches tabs on
+                  hashchange and a router navigation does not fire one. */}
+              {/* An inline box's padding does not move the lines, so it
+                  only widens the target. */}
+              <a href="#notifications" className="text-accentText hover:underline pointer-coarse:py-1.5">
+                {t("anomaly.settings.openNotifications")}
+              </a>
+            </p>
+          )}
 
           <ToggleRow
             label={t("anomaly.settings.holdToggle")}

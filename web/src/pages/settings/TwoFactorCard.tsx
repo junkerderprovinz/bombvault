@@ -6,6 +6,7 @@ import { confirmTOTP, disableTOTP, setupTOTP, explainedError } from "../../lib/a
 import { copyText } from "../../lib/clipboard";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
+import { SettingRow } from "../../components/storage/rows";
 import { Card } from "./shared";
 
 type Step =
@@ -155,10 +156,7 @@ export function TwoFactorCard({
               />
             </div>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="bv-totp-confirm" className="text-xs text-carbon-textSub">
-              {t("auth.confirmCode")}
-            </label>
+          <SettingRow label={t("auth.confirmCode")} htmlFor="bv-totp-confirm">
             <input
               id="bv-totp-confirm"
               value={code}
@@ -168,7 +166,7 @@ export function TwoFactorCard({
               placeholder="000000"
               className="w-40 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm tracking-[0.35em] text-carbon-text glim-field-focus"
             />
-          </div>
+          </SettingRow>
           <div className="flex items-center gap-3">
             <Button
               label={t("common.cancel")}
@@ -242,9 +240,7 @@ export function TwoFactorCard({
             />
           ) : (
             <div className="flex flex-col gap-2">
-              <label htmlFor="bv-totp-disable" className="text-xs text-carbon-textSub">
-                {t("auth.disableCodePrompt")}
-              </label>
+              <SettingRow label={t("auth.disableCodePrompt")} htmlFor="bv-totp-disable">
               <input
                 id="bv-totp-disable"
                 value={code}
@@ -254,6 +250,7 @@ export function TwoFactorCard({
                 placeholder="000000"
                 className="w-40 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm tracking-[0.35em] text-carbon-text glim-field-focus"
               />
+              </SettingRow>
               <div className="flex items-center gap-3">
                 <Button
                   label={t("common.cancel")}

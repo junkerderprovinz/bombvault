@@ -5,6 +5,7 @@ import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
 import { Toggle } from "../../components/Toggle";
 import { CompressionSelector } from "../../components/CompressionSelector";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
 import { createRepo, deleteRepo, listOffsiteTargets, listRepos, updateRepo, type Compression, type NamedRepo } from "../../lib/api";
@@ -281,11 +282,9 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
           </div>
         ))}
 
-        <div className="flex items-end gap-2 flex-wrap pt-1">
-          <div className="flex flex-col gap-1 flex-1 min-w-[10rem]">
-            <label className="text-xs text-carbon-textSub" htmlFor="repo-name">
-              {t("repos.name")}
-            </label>
+        <div className="flex flex-col gap-2 pt-1">
+          <Rows>
+          <SettingRow label={t("repos.name")} htmlFor="repo-name">
             <input
               id="repo-name"
               ref={nameRef}
@@ -293,14 +292,10 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t("repos.namePlaceholder")}
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+              className="w-72 max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
-          </div>
-          <div className="flex flex-col gap-1 flex-[2] min-w-[min(14rem,100%)]">
-            <label className="flex items-center gap-1 text-xs text-carbon-textSub" htmlFor="repo-location">
-              {t("repos.location")}
-              <InfoBubble tip={t("repos.locationHint")} />
-            </label>
+          </SettingRow>
+          <SettingRow label={t("repos.location")} hint={t("repos.locationHint")} htmlFor="repo-location">
             <input
               id="repo-location"
               type="text"
@@ -309,17 +304,20 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
               placeholder={t("repos.locationPlaceholder")}
               dir="ltr"
               spellCheck={false}
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
+              className="w-72 max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
+            />
+          </SettingRow>
+          </Rows>
+          <div className="flex justify-end">
+            <Button
+              key={shake}
+              label={t("repos.add")}
+              labelKey="repos.add"
+              tone="accent"
+              onClick={() => void add()}
+              disabled={busy || name.trim() === "" || repo.trim() === ""}
             />
           </div>
-          <Button
-            key={shake}
-            label={t("repos.add")}
-            labelKey="repos.add"
-            tone="accent"
-            onClick={() => void add()}
-            disabled={busy || name.trim() === "" || repo.trim() === ""}
-          />
         </div>
       </div>
     </Card>
