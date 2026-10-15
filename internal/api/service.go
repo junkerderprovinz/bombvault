@@ -2805,14 +2805,39 @@ func (s *Service) aggregateReplicationCurrency(domain string) (at int64, ok bool
 }
 
 // offsiteRepoFor returns the configured off-site repo location for a domain, or
-// "" when none is set. It is a thin wrapper over the first enabled off-site
-// target, falling back to the legacy Settings column when no target row exists so
-// nothing regresses (N=1: the backfilled target's Repo equals that column).
+// "" when none is set. It is the first enabled off-site target, falling back to
+// the legacy Settings column only when no target row exists (N=1: the backfilled
+// target's Repo equals that column). Creating a target writes that column too,
+// so a domain whose targets are all switched off still has it set, and the copy
+// itself does not fall back to it.
 func (s *Service) offsiteRepoFor(domain string, settings store.Settings) string {
-	if ts := s.offsiteTargetsFor(domain); len(ts) > 0 {
-		return ts[0].Repo
+	if s.store == nil {
+		return offsiteRepoFromSettings(domain, settings)
+	}
+	rows, err := s.store.OffsiteTargetsForDomain(domain)
+	if err != nil {
+		log.Printf("api: offsite %s: list targets failed (falling back to settings): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return offsiteRepoFromSettings(domain, settings)
+	}
+	for _, t := range rows {
+		if t.Enabled {
+			return t.Repo
+		}
+	}
+	if len(rows) > 0 {
+		return ""
 	}
 	return offsiteRepoFromSettings(domain, settings)
+}
+
+// noOffsiteRepoErr says why a domain has no off-site repo to copy to.
+func (s *Service) noOffsiteRepoErr(domain string) error {
+	if s.store != nil {
+		if rows, err := s.store.OffsiteTargetsForDomain(domain); err == nil && len(rows) > 0 {
+			return errOffsiteTargetsOff
+		}
+	}
+	return errNoOffsiteRepo
 }
 
 // offsiteRepoFromSettings reads the legacy single-repo off-site location straight
@@ -4939,7 +4964,7 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 		return fmt.Errorf("read settings: %w", err)
 	}
 	if s.offsiteRepoFor(domain, settings) == "" {
-		return errNoOffsiteRepo
+		return s.noOffsiteRepoErr(domain)
 	}
 	if err := s.requireOwnLocation(settings, domain); err != nil {
 		return err
@@ -4967,7 +4992,7 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 		return err
 	}
 	if s.offsiteRepoFor(domain, settings) == "" {
-		return errNoOffsiteRepo
+		return s.noOffsiteRepoErr(domain)
 	}
 	unlock, ok := s.tryLockDomainFor(domain, "replicate")
 	if !ok {
