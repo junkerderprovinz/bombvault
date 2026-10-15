@@ -2433,7 +2433,7 @@ func TestFileSetCRUDRoundTrip(t *testing.T) {
 // on Unraid (the default when no Platform is injected), which already has
 // the dedicated flash domain for this purpose.
 func TestFileSetPresetHostConfig(t *testing.T) {
-	h, _, svc, _ := newFilesTestRouter(t, &fakeResticEngine{})
+	h, _, svc, dir := newFilesTestRouter(t, &fakeResticEngine{})
 
 	// Default (no SetPlatform call) is Unraid — matches platformFn()'s documented
 	// nil-safe fallback, so the preset must not be offered.
@@ -2446,6 +2446,14 @@ func TestFileSetPresetHostConfig(t *testing.T) {
 	}
 
 	svc.SetPlatform(platform.Generic{})
+	w, m = doJSON(t, h, http.MethodGet, "/api/files/sets/preset", "")
+	if m["offered"] != false {
+		t.Fatalf("preset must not be offered while the host mount has no etc folder, got %v", m)
+	}
+
+	if err := os.MkdirAll(filepath.Join(dir, "etc"), 0o750); err != nil {
+		t.Fatal(err)
+	}
 	w, m = doJSON(t, h, http.MethodGet, "/api/files/sets/preset", "")
 	if w.Code != http.StatusOK || m["ok"] != true {
 		t.Fatalf("preset (generic) request failed: %d %v", w.Code, m)
@@ -2471,6 +2479,9 @@ func TestFileSetPresetHostConfig(t *testing.T) {
 func TestFileSetPresetHostConfigCreatable(t *testing.T) {
 	h, _, svc, dir := newFilesTestRouter(t, &fakeResticEngine{})
 	svc.SetPlatform(platform.Generic{})
+	if err := os.MkdirAll(filepath.Join(dir, "etc"), 0o750); err != nil {
+		t.Fatalf("seed preset source dir: %v", err)
+	}
 
 	w, m := doJSON(t, h, http.MethodGet, "/api/files/sets/preset", "")
 	if w.Code != http.StatusOK || m["offered"] != true {
@@ -2478,10 +2489,6 @@ func TestFileSetPresetHostConfigCreatable(t *testing.T) {
 	}
 	name, _ := m["name"].(string)
 	path, _ := m["path"].(string)
-
-	if err := os.MkdirAll(filepath.Join(dir, path), 0o750); err != nil {
-		t.Fatalf("seed preset source dir: %v", err)
-	}
 
 	body := fmt.Sprintf(`{"name":%q,"path":%q,"excludes":[]}`, name, path)
 	w, m = doJSON(t, h, http.MethodPost, "/api/files/sets", body)

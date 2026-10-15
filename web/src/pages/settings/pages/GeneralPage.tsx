@@ -12,6 +12,7 @@ export function GeneralPage() {
     toggleDbDumps,
     domainToggleBusy,
     domainToggleShake,
+    platformKind,
   } = useSettings();
 
   const nextHue = hueCounter();
@@ -42,16 +43,20 @@ export function GeneralPage() {
           pulseNonce={fieldPulse.vmsEnabled}
           hueIndex={1}
         />
-        <ToggleRow
-          label={t("settings.flashEnabled")}
-          hint={tLtr(t, "settings.flashEnabledHint")}
-          checked={settings.flashEnabled}
-          onChange={(v) => void toggleDomainEnabled("flashEnabled", v)}
-          disabled={domainToggleBusy.flashEnabled}
-          shakeNonce={domainToggleShake.flashEnabled}
-          pulseNonce={fieldPulse.flashEnabled}
-          hueIndex={2}
-        />
+        {/* The flash backup reads the Unraid boot drive. A host that already
+            has it switched on keeps the row, so it can still be turned off. */}
+        {(platformKind === "unraid" || settings.flashEnabled) && (
+          <ToggleRow
+            label={t("settings.flashEnabled")}
+            hint={tLtr(t, "settings.flashEnabledHint")}
+            checked={settings.flashEnabled}
+            onChange={(v) => void toggleDomainEnabled("flashEnabled", v)}
+            disabled={domainToggleBusy.flashEnabled}
+            shakeNonce={domainToggleShake.flashEnabled}
+            pulseNonce={fieldPulse.flashEnabled}
+            hueIndex={2}
+          />
+        )}
         <ToggleRow
           label={t("settings.filesEnabled")}
           hint={t("settings.filesEnabledHint")}

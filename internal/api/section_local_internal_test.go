@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -394,4 +395,13 @@ func itemRow(t *testing.T, f *placementFixture, key string) map[string]any {
 	}
 	t.Fatalf("no item %s in %v", key, items)
 	return nil
+}
+
+func TestFlashBackupIsRefusedOffUnraid(t *testing.T) {
+	f, _, _, _ := flashScene(t)
+	f.svc.SetPlatform(platform.TrueNAS{})
+	started, err := f.svc.StartBackupFlash(context.Background())
+	if started || !errors.Is(err, errUnraidPlatformMismatch) {
+		t.Fatalf("StartBackupFlash = %v, %v, want a refusal that says the flash backup is Unraid only", started, err)
+	}
 }

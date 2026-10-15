@@ -6509,6 +6509,9 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 // "flash". Shares batchActive; returns (false, nil) if a backup is already
 // running, or (false, err) if the flash domain is already busy with another op.
 func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
+	if s.platformFn().Kind() != platform.KindUnraid {
+		return false, s.unraidPlatformMismatchError("the flash backup")
+	}
 	if err := s.refuseNoPlace("flash", ""); err != nil {
 		return false, err
 	}
