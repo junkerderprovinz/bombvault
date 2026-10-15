@@ -7,7 +7,7 @@
 | 変数 | 必須 | 説明 |
 |---|---|---|
 | `APP_KEY` | **はい** | restic リポジトリのパスワードを導出するために使う 32 バイトの 16 進シークレット（16 進数 64 文字）。`openssl rand -hex 32` で生成します。これを安全に保管してください: 失うと暗号化されたバックアップは復元不能になります。 |
-| `LIBVIRT_HOST` | VM と ZFS データセットに必要 | VM バックアップのために SSH で到達する Unraid ホスト（デフォルト `host.docker.internal`。テンプレートは LAN-IP のプレースホルダーをあらかじめ入力します）。Unraid の LAN IP を使ってください。カスタムの `br0.x` ネットワークでは必須です。 ZFS データセットのバックアップでも使われます（テンプレート項目 **Host SSH: Address**）。プレースホルダー `192.168.x.x` は未設定として扱われます。 |
+| `LIBVIRT_HOST` | VM と ZFS データセットに必要 | VM バックアップのために SSH で到達する Unraid ホスト（デフォルト `host.docker.internal`。テンプレートは LAN-IP のプレースホルダーをあらかじめ入力します）。Unraid の LAN IP を使ってください。カスタムの `br0.x` ネットワークでは必須です。 ZFS データセットのバックアップでも使われます（テンプレート項目 **Host SSH: Address**）。プレースホルダー `192.168.x.x` は未設定として扱われます。TrueNAS アプリのように `host.docker.internal` が名前解決できず、`LIBVIRT_URI` にもホストがない場合、BombVault はコンテナのデフォルトゲートウェイを使い、起動ログにそのアドレスを表示します。 |
 | `LIBVIRT_SSH_PORT` | いいえ | VM バックアップのためのホスト SSH ポート（デフォルト `22`）。 テンプレート項目 **Host SSH: Port**。ZFS データセットでも使われます。 |
 | `LIBVIRT_SSH_USER` | いいえ | VM バックアップのためのホスト上の SSH ユーザー（デフォルト `root`）。 テンプレート項目 **Host SSH: User**。ZFS データセットでも使われます。 |
 | `LIBVIRT_URI` | いいえ | 完全な libvirt 接続 URI。上記 3 つの `LIBVIRT_*` 変数から組み立てる代わりに、これを**そのまま**使用します（設定するとそれらは接続文字列には使われなくなります）。デフォルトは未設定です。TrueNAS Scale では必須です。TrueNAS の libvirtd は非標準のソケットで待ち受けており、組み立て式の URI ではそれを表現できません: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`。詳細は [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) の TrueNAS Scale の節を参照してください。 `qemu+ssh://` の URI なら、`LIBVIRT_HOST`・`LIBVIRT_SSH_USER`・`LIBVIRT_SSH_PORT` のうち未設定のものはそれぞれこの URI から取られ、BombVault 自身の SSH コマンド（NVRAM の転送、ZFS データセット）にも使われます。 |
@@ -17,6 +17,7 @@
 | `BIND_HOST` | いいえ | WebUI が待ち受けるアドレス（デフォルト `0.0.0.0`、すべてのインターフェース）。コンテナでは設定しないでください。公開ポートにはすべてのインターフェースが必要です。`127.0.0.1` は Docker の外で動かす場合向けです。ヘルスチェックも同じアドレスに問い合わせます。 |
 | `TRUSTED_PROXY` | いいえ | BombVault の前段にあるリバースプロキシのアドレスまたは CIDR 範囲をカンマ区切りで指定します（例: `192.168.20.11`、`10.0.0.0/8`）。それらのホップからのみ `X-Forwarded-For` を信頼し、ログイン制限は失敗を実際のクライアントごとに数えるようになります。指定しない場合（既定）は誰も信頼しません。無条件に信頼するヘッダーは、呼び出し側が自分でカウンターを選べてしまうためです。 |
 | `HOST_SOURCE_ROOT` | いいえ | **Host Data** としてマウントされるホストパス（デフォルト `/mnt`）。BombVault は Docker が報告するバインドマウントのソースを、このマウント配下のパスに変換します。別のホストルートをマウントした場合のみ変更してください。 |
+| `HOST_MOUNT_ROOT` | いいえ | コンテナ内で Host Data がマウントされる場所（デフォルト `/host/user`）。TrueNAS では Host Data はホスト上と同じパスにマウントされるため、これと `HOST_SOURCE_ROOT` の両方にそのパス（たとえば `/mnt/tank`）を指定します（[TrueNAS SCALE](getting-started.md#truenas)を参照）。 |
 | `DATA_ROOT_SEGMENTS` | いいえ | バインドマウントのソースをバックアップ対象データとして扱うためのパスセグメント名のカンマ区切りリスト（デフォルト `appdata`。Unraid の `/mnt/user/appdata/<container>` という慣習に一致します）。列挙したセグメントのいずれかが、コンテナのバインドマウントのホストソースの完全なパスセグメントとして現れる場合、そのバインドマウントは自動的にバックアップ対象として選択されます。たとえば `DATA_ROOT_SEGMENTS=appdata,config` と設定すると、`.../config` のバインドも対象になります。コンテナのデータフォルダーを見つけるための、その他の常時有効な方法については[バックアップソースの検出](#backup-source-detection)を参照してください。 |
 | `PLATFORM` | いいえ | BombVault が自動検出する代わりに、自身がどのプラットフォームで動作しているとみなすかを強制します: `unraid`、`generic`、`truenas` のいずれか（デフォルトは未設定。フラッシュマウント配下の `dockerMan` マーカーを探して Unraid を自動検出し、見つからなければ `generic` になります。認識できない値を指定した場合も `generic` にフォールバックし、ログに記録されます）。汎用の Docker ホストや TrueNAS Scale では、Unraid 専用の自動検出に頼らず明示的に設定してください（汎用の compose ファイルはこれを行っています）。appdata フォールバックの慣習、インスタンス間の復元先のデフォルト、そして Unraid 専用の通知・コンパニオンプラグイン処理を試みるかどうかが変わります（`internal/platform` を参照）。 |
 | `BOMBVAULT_SELF_CONTAINER` | いいえ | BombVault コンテナ自身の名前。これにより自分自身をバックアップ（したがって停止）しません。 |
@@ -28,6 +29,8 @@
 ## マウント
 
 CA テンプレートに示されているとおり、Docker ソケット、フラッシュ（`/boot`）、そして **Host Data** ルート（`/mnt`）をマウントします。バックアップの*ソース*と*デスティネーション*はどちらも Host Data の配下に存在し、それは **slave** でマウントされます。そのため、コンテナ起動後にマウントされるリモート共有（たとえば `/mnt/remotes` の配下）が、再起動なしで見えるようになります。
+
+TrueNAS では、Host Data は `/mnt/tank` のようなデータセットのパスであり、ixVolume にはしません。アプリが ixVolume に置いたデータはその外にあり、バックアップされません。[TrueNAS SCALE](getting-started.md#truenas)を参照してください。
 
 ZFS データセットのバックアップにもこのモードが必要です。ホストはコンテナの起動後にデータセットのスナップショットをマウントするためです。[ZFS データセット](zfs-datasets.md)を参照してください。
 

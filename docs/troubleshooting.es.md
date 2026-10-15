@@ -33,6 +33,7 @@ La copia de VM habla con libvirt por SSH, nunca con un montaje.
 - Confirma que SSH está habilitado en el host y que la clave pública de BombVault está autorizada en `/root/.ssh/authorized_keys` (Ajustes, Integraciones, SSH del host muestra la clave y un botón **Probar conexión**).
 - En una red `br0.x` personalizada, establece `LIBVIRT_HOST` a la IP LAN de tu Unraid (el contenedor no puede alcanzar el host mediante `host.docker.internal` ahí). Habilita **Settings, Docker, Host access to custom networks**.
 - Si cambiaste el puerto SSH de Unraid, establece `LIBVIRT_SSH_PORT` para que coincida.
+- En TrueNAS, define `LIBVIRT_URI` con el socket libvirt propio de TrueNAS, da a la aplicación la capacidad `SETPCAP` y añade la clave a root en **Credentials, Users** (consulta [TrueNAS SCALE](getting-started.md#truenas)).
 - El diagnóstico paso a paso completo (prueba de accesibilidad, enrutamiento VLAN, `Permission denied (publickey)`, `Host key verification failed`) está en la [guía de copia de VM por SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Una instantánea de VM en vivo no se ejecutó
@@ -50,6 +51,8 @@ La replicación externa es de mejor esfuerzo por diseño, de modo que un contrat
 ## Una restauración se abortó antes de empezar
 
 Antes de detener o eliminar nada, la restauración ejecuta una comprobación de conflictos previa al arranque: verifica que la IP estática del contenedor y los puertos publicados del host estén libres. Si otro contenedor ya ocupa uno, aborta con un mensaje claro y accionable en lugar de dejar una restauración a medias. Libera el puerto o la IP en conflicto y vuelve a intentarlo.
+
+Si la red del contenedor no existe, por ejemplo porque se borró su aplicación de TrueNAS, la comprobación antes de restaurar nombra la red y la restauración se detiene antes de cambiar nada. Reinstala la aplicación en TrueNAS con el mismo nombre, lo que vuelve a crear la red, y luego restaura sus datos.
 
 ## Una exportación sencilla falló en lugar de escribir un archivo
 
@@ -71,7 +74,9 @@ Un volcado fallido nunca hace fallar la copia que lo rodea; queda registrado com
 
 Una importación para el contenedor, aparta su carpeta de datos y deja que la imagen cree una vacía en su lugar. Si falla un paso previo a la importación en sí, la carpeta antigua se devuelve sola. Si falla la importación, el contenedor se queda con la carpeta nueva y la antigua permanece al lado como `<carpeta de datos>.bombvault-before-import-<marca de tiempo>`; el mensaje de error de la ejecución nombra la ruta exacta.
 
-Para devolverla a mano: para el contenedor, renombra la carpeta de datos actual para quitarla de en medio, renombra la carpeta guardada a su nombre original y arranca el contenedor. En Unraid, el gestor de archivos de la pestaña Shares hace esto.
+Una carpeta de datos que es un conjunto de datos propio, como en TrueNAS, no se puede renombrar. Entonces la importación deja la carpeta en su sitio y mueve su contenido a la carpeta guardada junto a ella, así que el conjunto de datos de arriba necesita espacio para él. La importación lo comprueba antes de parar el contenedor.
+
+Para devolverla a mano: para el contenedor, renombra la carpeta de datos actual para quitarla de en medio, renombra la carpeta guardada a su nombre original y arranca el contenedor. Con un conjunto de datos, mueve el contenido en lugar de renombrar las carpetas. En Unraid, el gestor de archivos de la pestaña Shares hace esto.
 
 ## Una copia de un conjunto de datos ZFS falló u omitió un conjunto {#zfs-datasets}
 

@@ -33,6 +33,7 @@ Kopia VM komunikuje się z libvirt przez SSH, nigdy przez montaż.
 - Potwierdź, że SSH jest włączone na hoście, a klucz publiczny BombVault jest autoryzowany w `/root/.ssh/authorized_keys` (Ustawienia, Integracje, SSH hosta pokazuje klucz oraz przycisk **Testuj połączenie**).
 - W niestandardowej sieci `br0.x` ustaw `LIBVIRT_HOST` na swoje IP Unraid w LAN (kontener nie może tam dotrzeć do hosta przez `host.docker.internal`). Włącz **Settings, Docker, Host access to custom networks**.
 - Jeśli zmieniłeś port SSH Unraid, ustaw `LIBVIRT_SSH_PORT`, aby pasował.
+- Na TrueNAS ustaw `LIBVIRT_URI` z własnym gniazdem libvirt TrueNAS, nadaj aplikacji uprawnienie `SETPCAP` i dodaj klucz do roota w **Credentials, Users** (zobacz [TrueNAS SCALE](getting-started.md#truenas)).
 - Pełna diagnoza krok po kroku (test osiągalności, routing VLAN, `Permission denied (publickey)`, `Host key verification failed`) znajduje się w [przewodniku Kopia VM przez SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Migawka VM na żywo nie została uruchomiona
@@ -50,6 +51,8 @@ Replikacja poza siedzibą jest z założenia best-effort, więc potknięcie poza
 ## Przywracanie przerwane, zanim się zaczęło
 
 Zanim cokolwiek zostanie zatrzymane lub usunięte, przywracanie uruchamia kontrolę konfliktów przed startem: weryfikuje, czy statyczny IP kontenera oraz opublikowane porty hosta są wolne. Jeśli inny kontener już jeden z nich zajmuje, przerywa działanie z czytelnym, praktycznym komunikatem zamiast pozostawiać niedokończone przywracanie. Zwolnij konfliktujący port lub IP, a następnie ponów.
+
+Jeśli sieć kontenera nie istnieje, na przykład dlatego, że usunięto jego aplikację TrueNAS, kontrola przed przywracaniem podaje tę sieć, a przywracanie odmawia, zanim cokolwiek zmieni. Zainstaluj aplikację ponownie w TrueNAS pod tą samą nazwą, co tworzy sieć na nowo, a potem przywróć jej dane.
 
 ## Jawny eksport zawiódł zamiast zapisać plik
 
@@ -71,7 +74,9 @@ Nieudany zrzut nigdy nie przewraca kopii, w której powstał; zapisuje się jako
 
 Import zatrzymuje kontener, odsuwa jego folder danych na bok i pozwala obrazowi utworzyć w tym miejscu pusty. Jeśli zawiedzie krok przed samym importem, stary folder wraca na miejsce samoczynnie. Jeśli zawiedzie import, kontener zostaje z nowym folderem, a stary leży obok jako `<folder danych>.bombvault-before-import-<znacznik czasu>`; komunikat błędu przebiegu podaje dokładną ścieżkę.
 
-Ręczne przywrócenie: zatrzymaj kontener, zmień nazwę bieżącego folderu danych, żeby zszedł z drogi, przywróć zachowanemu folderowi pierwotną nazwę i uruchom kontener. Na Unraidzie robi to menedżer plików w zakładce Shares.
+Folderowi danych, który jest osobnym zbiorem danych, jak na TrueNAS, nie da się zmienić nazwy. Import zostawia wtedy folder na miejscu i przenosi jego zawartość do zachowanego folderu obok, więc nadrzędny zbiór danych potrzebuje na nią miejsca. Import sprawdza to, zanim zatrzyma kontener.
+
+Ręczne przywrócenie: zatrzymaj kontener, zmień nazwę bieżącego folderu danych, żeby zszedł z drogi, przywróć zachowanemu folderowi pierwotną nazwę i uruchom kontener. W przypadku zbioru danych przenieś zawartość zamiast zmieniać nazwy folderów. Na Unraidzie robi to menedżer plików w zakładce Shares.
 
 ## Kopia zbioru danych ZFS się nie udała albo pominęła zbiór {#zfs-datasets}
 

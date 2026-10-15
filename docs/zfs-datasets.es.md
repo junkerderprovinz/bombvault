@@ -114,7 +114,7 @@ Actívala en la tarjeta **Réplica** de la pestaña Ajustes del elemento. Allí 
 Cualquier máquina con ZFS y SSH puede recibir, por ejemplo un segundo Unraid o un TrueNAS. BombVault no tiene por qué ejecutarse allí.
 
 1. En **Ajustes, Emparejamiento**, elige **Conectar por SSH** en **Servidor ZFS sin BombVault**, o **Añadir servidor ZFS** en la tarjeta **Réplica** del elemento.
-2. Introduce dirección, usuario y puerto. El diálogo muestra la clave pública de BombVault. Añádela al `~/.ssh/authorized_keys` del usuario en el servidor. En Unraid está en **Users, root, SSH keys**. Según **Display Settings**, Users aparece en el menú superior o en Settings. Esta es la clave de la réplica. Es distinta de la clave del enlace SSH de las VM y del host, así que añádela aunque esa ya esté autorizada.
+2. Introduce dirección, usuario y puerto. El diálogo muestra la clave pública de BombVault. Añádela al `~/.ssh/authorized_keys` del usuario en el servidor. En Unraid está en **Users, root, SSH keys**. Según **Display Settings**, Users aparece en el menú superior o en Settings. En TrueNAS, edita el usuario en **Credentials, Users**. Esta es la clave de la réplica. Es distinta de la clave del enlace SSH de las VM y del host, así que añádela aunque esa ya esté autorizada.
 3. Prueba la conexión. El diálogo enumera entonces los pools del servidor. Elige uno y define la raíz, que por defecto es `<pool>/bombvault-replica`.
 4. Elige el servidor nuevo en la tarjeta **Réplica** del elemento. El servidor tiene entonces una tarjeta propia en la página Instancias, y **Abrir** lleva a su página.
 
@@ -285,7 +285,8 @@ Cada línea es un montaje dentro del contenedor. La línea de un conjunto de dat
 
 ## TrueNAS SCALE {#truenas}
 
-- Cuando `LIBVIRT_URI` está definida (como para las copias de VM en TrueNAS), BombVault toma de la URI el host, el usuario y el puerto SSH de sus comandos zfs, cada uno que no esté definido por separado. Sin copias de VM, define en su lugar `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` y `LIBVIRT_SSH_PORT`. Añade las variables en **Additional Environment Variables**.
+- Cuando `LIBVIRT_URI` está definida (como para las copias de VM en TrueNAS), BombVault toma de la URI el host, el usuario y el puerto SSH de sus comandos zfs, cada uno que no esté definido por separado. Sin copias de VM no hay que definir nada: `host.docker.internal` no se resuelve en una app de TrueNAS, así que BombVault llega al host a través de la puerta de enlace predeterminada de la app, como root en el puerto 22. Define `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` y `LIBVIRT_SSH_PORT` cuando quieras otra dirección u otro usuario, en el `environment` de la app.
+- Añade la clave SSH del host de **Ajustes, Integraciones, SSH del host** a root en **Credentials, Users**, y activa el servicio SSH en **System, Services**. Una [réplica](#replica-push) hacia este u otro TrueNAS necesita además la clave de la réplica, que es otra distinta.
 - Un usuario que no sea root necesita permiso en el conjunto de datos superior del elemento, que cubre entonces todos los conjuntos de datos que tiene debajo:
 
   ```
@@ -295,4 +296,4 @@ Cada línea es un montaje dentro del contenedor. La línea de un conjunto de dat
   Restaurar en un conjunto de datos nuevo necesita además `create` en el conjunto de datos superior, y aplicar propiedades guardadas necesita permiso para esas propiedades.
 
   Una sesión SSH sin root en TrueNAS no tiene `/usr/sbin` en su ruta; BombVault llama entonces a `/usr/sbin/zfs` directamente.
-- El **Host Data** de la app tiene que ser una ruta del host por encima de los conjuntos de datos, por ejemplo `/mnt/tank`, no un ixVolume. Con una ruta del host, la app pasa a BombVault los montajes nuevos del host (`rslave`), que es lo que necesita el acceso a instantáneas.
+- El **Host Data** de la app tiene que ser una ruta del host por encima de los conjuntos de datos, por ejemplo `/mnt/tank`, no un ixVolume. Con una ruta del host, la app pasa a BombVault los montajes nuevos del host (`rslave`), que es lo que necesita el acceso a instantáneas. Consulta [TrueNAS SCALE](getting-started.md#truenas) para la configuración completa de la app.

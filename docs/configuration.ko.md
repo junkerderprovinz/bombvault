@@ -7,7 +7,7 @@
 | 변수 | 필수 | 설명 |
 |---|---|---|
 | `APP_KEY` | **예** | restic 저장소 비밀번호를 파생하는 데 사용되는 32바이트 16진수 비밀 값(64개의 16진수 문자). `openssl rand -hex 32`로 생성하세요. 안전하게 보관하세요: 잃어버리면 암호화된 백업을 복구할 수 없게 됩니다. |
-| `LIBVIRT_HOST` | VM 및 ZFS 데이터세트용 | VM 백업을 위해 SSH로 도달하는 Unraid 호스트(기본값 `host.docker.internal`; 템플릿이 LAN IP 자리 표시자를 미리 채웁니다). Unraid LAN IP를 사용하세요. 사용자 지정 `br0.x` 네트워크에서는 필수입니다. ZFS 데이터세트 백업에도 쓰입니다(템플릿 필드 **Host SSH: Address**). 자리 표시자 `192.168.x.x`는 설정되지 않은 것으로 봅니다. |
+| `LIBVIRT_HOST` | VM 및 ZFS 데이터세트용 | VM 백업을 위해 SSH로 도달하는 Unraid 호스트(기본값 `host.docker.internal`; 템플릿이 LAN IP 자리 표시자를 미리 채웁니다). Unraid LAN IP를 사용하세요. 사용자 지정 `br0.x` 네트워크에서는 필수입니다. ZFS 데이터세트 백업에도 쓰입니다(템플릿 필드 **Host SSH: Address**). 자리 표시자 `192.168.x.x`는 설정되지 않은 것으로 봅니다. TrueNAS 앱처럼 `host.docker.internal`이 확인되지 않고 `LIBVIRT_URI`에도 호스트가 없으면, BombVault는 컨테이너의 기본 게이트웨이를 사용하며 부팅 로그에 그 주소를 표시합니다. |
 | `LIBVIRT_SSH_PORT` | 아니요 | VM 백업용 호스트 SSH 포트(기본값 `22`). 템플릿 필드 **Host SSH: Port**, ZFS 데이터세트에도 쓰입니다. |
 | `LIBVIRT_SSH_USER` | 아니요 | VM 백업용 호스트의 SSH 사용자(기본값 `root`). 템플릿 필드 **Host SSH: User**, ZFS 데이터세트에도 쓰입니다. |
 | `LIBVIRT_URI` | 아니요 | 전체 libvirt 연결 URI입니다. 위의 세 `LIBVIRT_*` 변수로 조합하는 대신 이 값을 **그대로** 사용합니다(이 경우 위 변수들은 연결 문자열 생성에 쓰이지 않습니다). 기본값은 설정되지 않음입니다. TrueNAS Scale에서 필요합니다. 이곳의 libvirtd는 조합 방식으로는 표현할 수 없는 비표준 소켓에서 대기합니다. 예: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. TrueNAS Scale 섹션은 [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)를 참고하세요. `qemu+ssh://` URI이면 `LIBVIRT_HOST`, `LIBVIRT_SSH_USER`, `LIBVIRT_SSH_PORT` 중 설정되지 않은 것은 각각 여기서 가져오며, BombVault 자체의 SSH 명령(NVRAM 전송, ZFS 데이터세트)에도 적용됩니다. |
@@ -17,6 +17,7 @@
 | `BIND_HOST` | 아니요 | WebUI가 수신 대기하는 주소(기본값 `0.0.0.0`, 모든 인터페이스). 컨테이너에서는 설정하지 않음: 게시된 포트에 모든 인터페이스가 필요함. `127.0.0.1`은 Docker 밖에서 실행할 때 적합함. 헬스체크도 같은 주소에 요청함. |
 | `TRUSTED_PROXY` | 아니요 | BombVault 앞에 있는 리버스 프록시의 주소 또는 CIDR 범위를 쉼표로 구분해 지정합니다(예: `192.168.20.11` 또는 `10.0.0.0/8`). 이 홉에서 온 요청에 대해서만 `X-Forwarded-For`를 신뢰하며, 그때 로그인 제한은 프록시 뒤의 모두를 한 통에 담는 대신 실제 클라이언트별로 실패를 셉니다. 설정하지 않으면(기본값) 아무도 신뢰하지 않습니다. 무조건 신뢰하는 헤더는 누구나 자기 계수기를 고르게 만들기 때문입니다. |
 | `HOST_SOURCE_ROOT` | 아니요 | **Host Data**로 마운트되는 호스트 경로(기본값 `/mnt`). BombVault는 Docker가 보고하는 바인드 마운트 소스를 이 마운트 아래의 경로로 변환합니다. 다른 호스트 루트를 마운트한 경우에만 변경하세요. |
+| `HOST_MOUNT_ROOT` | 아니요 | 컨테이너 안에서 Host Data가 마운트되는 위치(기본값 `/host/user`). TrueNAS에서는 Host Data가 호스트와 같은 경로에 마운트되므로, 이 변수와 `HOST_SOURCE_ROOT` 모두 그 경로(예: `/mnt/tank`)를 가리킵니다([TrueNAS SCALE](getting-started.md#truenas) 참고). |
 | `DATA_ROOT_SEGMENTS` | 아니요 | 바인드 마운트 소스를 백업 데이터로 표시하는, 쉼표로 구분한 경로 세그먼트 이름 목록입니다(기본값 `appdata`, Unraid의 `/mnt/user/appdata/<container>` 규칙과 일치). 나열된 세그먼트 중 하나라도 호스트 소스의 전체 경로 세그먼트로 나타나면 해당 컨테이너의 바인드 마운트가 백업 대상으로 자동 선택됩니다. 예를 들어 `DATA_ROOT_SEGMENTS=appdata,config`는 `.../config` 바인드도 함께 포함시킵니다. 컨테이너의 데이터 폴더를 찾는 그 밖의 상시 활성 방식은 [백업 소스 감지](#backup-source-detection)를 참고하세요. |
 | `PLATFORM` | 아니요 | 자동 감지 대신 BombVault가 자신이 실행 중이라고 판단할 플랫폼을 강제로 지정합니다: `unraid`, `generic`, `truenas` 중 하나입니다(기본값은 설정되지 않음입니다. 플래시 마운트 아래의 `dockerMan` 표시를 찾아 Unraid를 자동 감지하고, 찾지 못하면 `generic`으로 처리합니다. 인식되지 않는 값도 `generic`으로 대체되며 이때 로그가 남습니다). 일반 Docker 호스트나 TrueNAS Scale에서는 Unraid 전용 자동 감지에 의존하지 말고 명시적으로 설정하세요. 일반용 compose 파일이 이렇게 되어 있습니다. 이 값은 appdata 대체 규칙, 인스턴스 간 복원 대상 기본값, Unraid 전용 알림/컴패니언 플러그인 단계 시도 여부를 바꿉니다(`internal/platform` 참고). |
 | `BOMBVAULT_SELF_CONTAINER` | 아니요 | BombVault 컨테이너 자체의 이름으로, 자기 자신을 절대 백업(따라서 중지)하지 않도록 합니다. |
@@ -28,6 +29,8 @@
 ## 마운트
 
 CA 템플릿에 표시된 대로 Docker 소켓, 플래시(`/boot`), **Host Data** 루트(`/mnt`)를 마운트하세요. 백업 *소스*와 *대상*은 모두 Host Data 아래에 있으며, **slave**로 마운트되므로 컨테이너 시작 후에 마운트되는 원격 공유(예: `/mnt/remotes` 아래)가 재시작 없이 보이게 됩니다.
+
+TrueNAS에서 Host Data는 `/mnt/tank` 같은 데이터세트 경로이며, ixVolume이어서는 안 됩니다. 앱이 ixVolume에 두는 데이터는 그 바깥에 있어 백업되지 않습니다. [TrueNAS SCALE](getting-started.md#truenas)을 참고하세요.
 
 ZFS 데이터세트 백업에도 이 모드가 필요합니다. 호스트는 컨테이너가 시작된 뒤에야 데이터세트의 스냅샷을 마운트하기 때문입니다. [ZFS 데이터세트](zfs-datasets.md)를 참고하세요.
 

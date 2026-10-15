@@ -6,7 +6,7 @@ Deze pagina leidt je van een verse Unraid-machine naar je eerste back-up.
 
 | Vereiste | Opmerkingen |
 |---|---|
-| **Unraid 6.12+** | Eerdere versies zijn niet getest. Unraid is het hoofddoel, maar BombVault draait ook op een gewone Docker-host en op TrueNAS Scale (zie [Generieke Docker-host](#generic-docker-host)). |
+| **Unraid 6.12+** | Eerdere versies zijn niet getest. Unraid is het hoofddoel, maar BombVault draait ook op een gewone Docker-host en op TrueNAS Scale (zie [Generieke Docker-host](#generic-docker-host) en [TrueNAS SCALE](#truenas)). |
 | **Locatie restic-repo** | Een lokaal pad (aanbevolen: je array of cache), SMB, NFS, of elke rclone-backend. |
 | **Docker-socket** | Automatisch gemount door de template (`/var/run/docker.sock`). |
 | **Unraid-flash** (`/boot`) | In zijn geheel automatisch gemount door de template (`/boot` naar `/host/boot`). Maakt flash-back-up mogelijk en laat een herstelde container weer verschijnen als een normale, bewerkbare Unraid-app. |
@@ -34,7 +34,7 @@ De makkelijkste weg is **Community Applications**.
 
 ## Generieke Docker-host {#generic-docker-host}
 
-Geen Unraid? BombVault draait ook als gewone container op elke Docker-host (dat is ook waar de containerondersteuning op TrueNAS Scale op rust, vooruitlopend op een eigen vermelding in de app-catalogus daar).
+Geen Unraid? BombVault draait ook als gewone container op elke Docker-host. TrueNAS SCALE heeft eigen stappen onder [TrueNAS SCALE](#truenas).
 
 1. Haal het kant-en-klaar te bewerken bestand [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) uit de repository.
 2. Stel `APP_KEY` in (zie hieronder) en richt het Host Data-volume op je echte datawortel. De opmerkingen in het bestand lopen beide door.
@@ -42,14 +42,54 @@ Geen Unraid? BombVault draait ook als gewone container op elke Docker-host (dat 
 
 Wat er anders is dan bij Unraid:
 
-- **Geen onderdeel Flash.** Er is geen opstart-USB om vast te leggen of terug te zetten, dus het onderdeel Flash heeft hier niets te doen. In plaats daarvan biedt **Toevoegen** op de pagina Back-ups **Systeemconfiguratie** aan als mapsuggestie: een eerste mappenset met `/etc` die je nakijkt en aanpast voor je opslaat.
+- **Geen onderdeel Flash.** Er is geen opstart-USB om vast te leggen of terug te zetten, dus het onderdeel Flash heeft hier niets te doen. In plaats daarvan biedt **Toevoegen** op de pagina Back-ups, als Host Data de `/etc` van de host bereikt, **Systeemconfiguratie** aan als mapsuggestie: een eerste mappenset met `/etc` die je nakijkt en aanpast voor je opslaat.
 - **Geen Unraid-eigen meldingen.** BombVaults eigen meldingskanalen (webhook, waarschuwingen bij mislukte off-site en dergelijke) werken gewoon; alleen de Unraid-specifieke melding aan diens eigen meldingssysteem blijft achterwege, omdat zo'n systeem hier niet bestaat.
 - **Back-up van virtuele machines is optioneel en vraagt een aparte libvirtd-host die via SSH bereikbaar is.** Zie het uitgecommentarieerde blok in het compose-bestand. Een generieke Docker-host heeft zelf geen VM-beheer.
 - **Geen dashboardwidget.** De BombVault Widget is een Unraid-plugin, dus die stap vervalt ook.
 - **De data van een container vinden.** Zonder de `appdata`-conventie van Unraid wordt de datamap van een container gevonden via de segmenten in `DATA_ROOT_SEGMENTS`, benoemde Docker-volumes, de werkmap van een Compose-project en het label `bombvault.data` (zie [Herkenning van de back-upbronnen](configuration.md#backup-source-detection)). Benoemde volumes en de `/etc`-voorinstelling bereiken alleen paden binnen de Host Data-mount, dus richt Host Data op een gemeenschappelijke bovenliggende map die ook de dataroot van Docker omvat.
 - **`PLATFORM`.** Zet het op `generic` of `truenas`. Zonder waarde herkent BombVault Unraid aan diens eigen markering op de flash-mount en behandelt het al het andere als generiek, en worden de stappen die alleen voor Unraid zijn overgeslagen in plaats van geprobeerd en mislukt.
 
-**TrueNAS Scale** volgt dezelfde compose-route; een catalogusvermelding is in de repository voorbereid, maar nog niet ingediend. VM-back-up heeft daar `LIBVIRT_URI` nodig, omdat de libvirtd van TrueNAS op een eigen socket luistert (`/run/truenas_libvirt/libvirt-sock`) die de drie `LIBVIRT_*`-variabelen niet kunnen uitdrukken (zie [Configuratie](configuration.md)). Hoe ver dit bewezen is: de eigen zvol-back-up en het herstel van BombVault zijn via SSH uitgevoerd op een echte TrueNAS Scale-machine, en elk herstel las byte voor byte terug, zowel op zijn plaats als op een zvol die eerst was verwijderd. Het herstel van een hele VM daar (domein opnieuw gedefinieerd en gestart) en de doorvoer bij vele gigabytes zijn niet getest. Test daar een herstel voordat je erop vertrouwt.
+### TrueNAS SCALE {#truenas}
+
+BombVault staat nog niet in de app-catalogus van TrueNAS, dus installeer het als eigen app: **Apps, Discover Apps**, dan **Install via YAML** in het menu naast **Custom App**. De YAML hieronder stelt hetzelfde in als de catalogusvermelding in de map `truenas-apps` van de repository. Vervang `tank` door je pool en vul `APP_KEY` in zoals de volgende sectie beschrijft.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # Voor VM-back-ups:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+Open daarna `https://<truenas-ip>:30528/`. Wat onder [Wat er anders is dan bij Unraid](#generic-docker-host) staat, geldt hier ook, en op TrueNAS:
+
+- **Capabilities.** BombVault heeft de zes hierboven nodig. VM-back-ups mislukken zonder `SETPCAP`.
+- **Host Data** is een hostpad op een dataset, hier `/mnt/tank`, gemount op hetzelfde pad in de app. Daarom noemen `HOST_SOURCE_ROOT` en `HOST_MOUNT_ROOT` allebei dat pad. `rslave` geeft de mounts door die de host later maakt, en die hebben back-ups van ZFS-datasets nodig.
+- **Data in een ixVolume wordt niet geback-upt.** Een app waarvan de opslag een ixVolume is, bewaart zijn data onder `/mnt/.ix-apps`, buiten Host Data. BombVault bewaart dan alleen de definitie van de app, en de run noemt de mappen die hij heeft weggelaten. Kies voor elke app waarvan je de data wilt back-uppen **Host Path**-opslag op een dataset onder Host Data.
+- **Back-ups van VM's en ZFS-datasets** bereiken TrueNAS via SSH als root. Zet de SSH-service aan onder **System, Services** en voeg de publieke sleutel uit **Instellingen, Integraties, Host-SSH** toe aan de gebruiker root onder **Credentials, Users**. VM-back-ups hebben daarnaast `LIBVIRT_URI` nodig zoals hierboven, omdat de libvirtd van TrueNAS op een eigen socket luistert. Als `LIBVIRT_URI` en `LIBVIRT_HOST` allebei niet zijn ingesteld, gebruikt BombVault de standaardgateway van de app als host, omdat `host.docker.internal` in een TrueNAS-app niet resolvet. De [VM-back-upgids](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) beschrijft de details, ook voor VM's op zvols.
+- **Een ZFS-replica gebruikt een andere sleutel.** Een replica op een tweede ZFS-server logt in met de sleutel die het replicavenster toont, niet met de Host-SSH-sleutel. Voeg die toe op de ontvangende server.
+- **Een verwijderde app komt in twee stappen terug.** Installeer hem eerst opnieuw in TrueNAS onder dezelfde naam, wat zijn netwerk weer aanmaakt, en herstel daarna zijn data in BombVault. Tot dan meldt de controle vóór het herstel het ontbrekende netwerk, en het herstel weigert voordat het iets wijzigt.
+- **Naast het origineel** maakt een gewone Docker-container aan. Die draait, maar het scherm Apps van TrueNAS toont hem niet.
+- **Databasedumps** werken op dataset-mounts. Een import in een datamap die een eigen dataset is, verplaatst de oude inhoud naar een map ernaast, dus de dataset erboven heeft daar ruimte voor nodig.
 
 ## De ene vereiste instelling
 

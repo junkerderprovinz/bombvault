@@ -33,6 +33,7 @@ VM-back-up praat met libvirt via SSH, nooit een mount.
 - Bevestig dat SSH is ingeschakeld op de host en dat BombVaults publieke sleutel geautoriseerd is in `/root/.ssh/authorized_keys` (Instellingen, Integraties, Host-SSH toont de sleutel en een knop **Verbinding testen**).
 - Stel op een custom `br0.x`-netwerk `LIBVIRT_HOST` in op je Unraid LAN-IP (de container kan de host daar niet via `host.docker.internal` bereiken). Schakel **Settings, Docker, Host access to custom networks** in.
 - Als je de SSH-poort van Unraid hebt gewijzigd, stel `LIBVIRT_SSH_PORT` overeenkomstig in.
+- Stel op TrueNAS `LIBVIRT_URI` in met de eigen libvirt-socket van TrueNAS, geef de app de capability `SETPCAP` en voeg de sleutel toe aan root onder **Credentials, Users** (zie [TrueNAS SCALE](getting-started.md#truenas)).
 - Volledige stap-voor-stap-diagnose (bereikbaarheidstest, VLAN-routing, `Permission denied (publickey)`, `Host key verification failed`) staat in de [VM-back-up-via-SSH-gids](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Een live VM-snapshot is niet gedraaid
@@ -50,6 +51,8 @@ Off-site replicatie is opzettelijk best-effort, dus een off-site hapering laat d
 ## Een herstel brak af voordat het begon
 
 Voordat er iets wordt gestopt of verwijderd, draait herstel een pre-flight conflictcontrole: het verifieert dat het statische IP en de gepubliceerde hostpoorten van de container vrij zijn. Als een andere container er al een vasthoudt, breekt het af met een duidelijke, bruikbare melding in plaats van een half afgemaakt herstel achter te laten. Maak de conflicterende poort of IP vrij en probeer opnieuw.
+
+Als het netwerk van de container niet bestaat, bijvoorbeeld omdat zijn TrueNAS-app is verwijderd, noemt de controle vóór het herstel het netwerk en weigert het herstel voordat het iets wijzigt. Installeer de app opnieuw in TrueNAS onder dezelfde naam, wat het netwerk weer aanmaakt, en herstel daarna zijn data.
 
 ## Een platte export mislukte in plaats van een bestand te schrijven
 
@@ -71,7 +74,9 @@ Een mislukte dump laat de back-up eromheen nooit mislukken; hij wordt als een ei
 
 Een import stopt de container, zet zijn datamap opzij en laat de image er een lege voor in de plaats maken. Mislukt een stap vóór de import zelf, dan wordt de oude map vanzelf teruggezet. Mislukt de import, dan houdt de container de verse map en blijft de oude ernaast staan als `<datamap>.bombvault-before-import-<tijdstempel>`; de foutmelding van de run noemt het exacte pad.
 
-Met de hand terugzetten: stop de container, hernoem de huidige datamap uit de weg, hernoem de bewaarde map terug naar de oorspronkelijke naam en start de container. Op Unraid doet de bestandsbeheerder op het tabblad Shares dit.
+Een datamap die een eigen dataset is, zoals op TrueNAS, kan niet worden hernoemd. De import laat de map dan op zijn plaats en verplaatst de inhoud naar de bewaarde map ernaast, dus de dataset erboven heeft daar ruimte voor nodig. De import controleert dat voordat hij de container stopt.
+
+Met de hand terugzetten: stop de container, hernoem de huidige datamap uit de weg, hernoem de bewaarde map terug naar de oorspronkelijke naam en start de container. Bij een dataset verplaats je de inhoud in plaats van de mappen te hernoemen. Op Unraid doet de bestandsbeheerder op het tabblad Shares dit.
 
 ## Een back-up van een ZFS-dataset mislukte of sloeg een dataset over {#zfs-datasets}
 

@@ -33,6 +33,7 @@ O backup de VM comunica com o libvirt por SSH, nunca por uma montagem.
 - Confirma que o SSH está ativado no host e que a chave pública do BombVault está autorizada em `/root/.ssh/authorized_keys` (Definições, Integrações, SSH do anfitrião mostra a chave e um botão **Testar ligação**).
 - Numa rede `br0.x` personalizada, define `LIBVIRT_HOST` para o IP LAN do teu Unraid (o container não consegue alcançar o host via `host.docker.internal` aí). Ativa **Settings, Docker, Host access to custom networks**.
 - Se alteraste a porta SSH do Unraid, define `LIBVIRT_SSH_PORT` para corresponder.
+- No TrueNAS, define `LIBVIRT_URI` com o socket libvirt próprio do TrueNAS, dá à app a capability `SETPCAP` e adiciona a chave ao root em **Credentials, Users** (consulta [TrueNAS SCALE](getting-started.md#truenas)).
 - O diagnóstico completo passo a passo (teste de alcance, encaminhamento de VLAN, `Permission denied (publickey)`, `Host key verification failed`) está no [guia de backup de VM por SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Um instantâneo a quente de VM não correu
@@ -50,6 +51,8 @@ A replicação externa é de melhor esforço por conceção, por isso um percal�
 ## Um restauro abortou antes de começar
 
 Antes de qualquer coisa ser parada ou removida, o restauro corre uma verificação de conflitos pré-voo: verifica que o IP estático do container e as portas do host publicadas estão livres. Se outro container já detém uma, aborta com uma mensagem clara e acionável em vez de deixar um restauro a meio. Liberta a porta ou o IP em conflito, e depois reexperimente.
+
+Se a rede do container não existir, por exemplo porque a sua app do TrueNAS foi apagada, a verificação antes do restauro indica a rede e o restauro para antes de alterar o que quer que seja. Reinstala a app no TrueNAS com o mesmo nome, o que volta a criar a rede, e depois restaura os seus dados.
 
 ## Uma exportação simples falhou em vez de escrever um ficheiro
 
@@ -71,7 +74,9 @@ Um dump falhado nunca faz falhar o backup à volta dele; fica registado como uma
 
 Uma importação para o container, põe a pasta de dados de lado e deixa a imagem criar uma vazia no lugar. Se falhar um passo antes da importação em si, a pasta antiga volta sozinha ao sítio. Se falhar a importação, o container fica com a pasta nova e a antiga permanece ao lado como `<pasta de dados>.bombvault-before-import-<data e hora>`; a mensagem de erro da execução indica o caminho exato.
 
-Para a repor à mão: para o container, muda o nome da pasta de dados atual para a tirar do caminho, muda o nome da pasta guardada de volta ao original e arranca o container. No Unraid, o gestor de ficheiros no separador Shares faz isto.
+Uma pasta de dados que é um conjunto de dados próprio, como no TrueNAS, não pode mudar de nome. A importação deixa então a pasta no lugar e move o seu conteúdo para a pasta guardada ao lado, por isso o conjunto de dados acima precisa de espaço para ele. A importação verifica isso antes de parar o container.
+
+Para a repor à mão: para o container, muda o nome da pasta de dados atual para a tirar do caminho, muda o nome da pasta guardada de volta ao original e arranca o container. Num conjunto de dados, move o conteúdo em vez de mudar o nome das pastas. No Unraid, o gestor de ficheiros no separador Shares faz isto.
 
 ## Uma cópia de um conjunto de dados ZFS falhou ou ignorou um conjunto {#zfs-datasets}
 

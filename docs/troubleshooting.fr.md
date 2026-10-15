@@ -33,6 +33,7 @@ La sauvegarde de VM dialogue avec libvirt via SSH, jamais un montage.
 - Confirmez que SSH est activé sur l'hôte et que la clé publique de BombVault est autorisée dans `/root/.ssh/authorized_keys` (Paramètres, Intégrations, SSH de l'hôte affiche la clé et un bouton **Tester la connexion**).
 - Sur un réseau `br0.x` personnalisé, réglez `LIBVIRT_HOST` sur l'IP LAN de votre Unraid (le conteneur ne peut pas y atteindre l'hôte via `host.docker.internal`). Activez **Settings, Docker, Host access to custom networks**.
 - Si vous avez changé le port SSH d'Unraid, réglez `LIBVIRT_SSH_PORT` en conséquence.
+- Sur TrueNAS, définissez `LIBVIRT_URI` avec le socket libvirt propre à TrueNAS, donnez à l'application la capacité `SETPCAP` et ajoutez la clé à root sous **Credentials, Users** (voir [TrueNAS SCALE](getting-started.md#truenas)).
 - Le diagnostic complet pas à pas (test d'accessibilité, routage VLAN, `Permission denied (publickey)`, `Host key verification failed`) se trouve dans le [guide de sauvegarde de VM via SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Un instantané de VM à chaud ne s'est pas exécuté
@@ -50,6 +51,8 @@ La réplication hors site est au mieux par conception, de sorte qu'un accroc hor
 ## Une restauration s'est interrompue avant de démarrer
 
 Avant que quoi que ce soit ne soit arrêté ou supprimé, la restauration exécute une vérification de conflit avant lancement : elle vérifie que l'IP statique du conteneur et les ports hôtes publiés sont libres. Si un autre conteneur en détient déjà un, elle s'interrompt avec un message clair et actionnable au lieu de laisser une restauration à moitié faite. Libérez le port ou l'IP en conflit, puis réessayez.
+
+Si le réseau du conteneur n'existe pas, par exemple parce que son application TrueNAS a été supprimée, le contrôle avant la restauration nomme le réseau et la restauration s'arrête avant de modifier quoi que ce soit. Réinstallez l'application dans TrueNAS sous le même nom, ce qui recrée le réseau, puis restaurez ses données.
 
 ## Un export en clair a échoué au lieu d'écrire un fichier
 
@@ -71,7 +74,9 @@ Un dump en échec ne fait jamais échouer la sauvegarde qui l'entoure ; il est e
 
 Un import arrête le conteneur, met son dossier de données de côté et laisse l'image en créer un vide à sa place. Si une étape avant l'import lui-même échoue, l'ancien dossier est remis en place tout seul. Si c'est l'import qui échoue, le conteneur garde le dossier neuf et l'ancien reste à côté sous le nom `<dossier de données>.bombvault-before-import-<horodatage>` ; le message d'erreur de l'exécution donne le chemin exact.
 
-Pour le remettre à la main : arrêtez le conteneur, renommez le dossier de données actuel pour le dégager, renommez le dossier conservé sous son nom d'origine, puis démarrez le conteneur. Sur Unraid, le gestionnaire de fichiers de l'onglet Shares fait cela.
+Un dossier de données qui est lui-même un jeu de données, comme sur TrueNAS, ne peut pas être renommé. L'import laisse alors le dossier en place et déplace son contenu dans le dossier conservé à côté : le jeu de données au-dessus doit donc avoir la place pour le recevoir. L'import le vérifie avant d'arrêter le conteneur.
+
+Pour le remettre à la main : arrêtez le conteneur, renommez le dossier de données actuel pour le dégager, renommez le dossier conservé sous son nom d'origine, puis démarrez le conteneur. Pour un jeu de données, déplacez le contenu au lieu de renommer les dossiers. Sur Unraid, le gestionnaire de fichiers de l'onglet Shares fait cela.
 
 ## Une sauvegarde de jeu de données ZFS a échoué ou a ignoré un jeu {#zfs-datasets}
 

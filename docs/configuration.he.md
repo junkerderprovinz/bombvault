@@ -7,7 +7,7 @@
 | משתנה | נדרש | תיאור |
 |---|---|---|
 | `APP_KEY` | **כן** | סוד hex באורך 32 בתים (64 תווי hex) המשמש לגזירת סיסמת מאגר ה-restic. יש ליצור עם `openssl rand -hex 32`. יש לשמור עליו: אובדנו הופך את הגיבויים המוצפנים לבלתי ניתנים לשחזור. |
-| `LIBVIRT_HOST` | ל-VMs | מארח Unraid שאליו מגיעים דרך SSH לגיבוי VM (ברירת מחדל `host.docker.internal`; התבנית ממלאה מראש placeholder של LAN-IP). יש להשתמש בכתובת ה-LAN IP של שרת ה-Unraid, נדרש ברשת `br0.x` מותאמת אישית. משמש גם לגיבוי מערכי נתונים של ZFS (שדה התבנית **Host SSH: Address**); ערך מציין המקום `192.168.x.x` נחשב כלא מוגדר. |
+| `LIBVIRT_HOST` | ל-VMs | מארח Unraid שאליו מגיעים דרך SSH לגיבוי VM (ברירת מחדל `host.docker.internal`; התבנית ממלאה מראש placeholder של LAN-IP). יש להשתמש בכתובת ה-LAN IP של שרת ה-Unraid, נדרש ברשת `br0.x` מותאמת אישית. משמש גם לגיבוי מערכי נתונים של ZFS (שדה התבנית **Host SSH: Address**); ערך מציין המקום `192.168.x.x` נחשב כלא מוגדר. כש-`host.docker.internal` אינו נפתר, כמו באפליקציית TrueNAS, וגם `LIBVIRT_URI` אינו מציין מארח, BombVault משתמשת בשער ברירת המחדל של ה-container, ויומן האתחול מציין אותו. |
 | `LIBVIRT_SSH_PORT` | לא | פורט ה-SSH של המארח לגיבוי VM (ברירת מחדל `22`). שדה התבנית **Host SSH: Port**, גם עבור מערכי נתונים של ZFS. |
 | `LIBVIRT_SSH_USER` | לא | משתמש ה-SSH במארח לגיבוי VM (ברירת מחדל `root`). שדה התבנית **Host SSH: User**, גם עבור מערכי נתונים של ZFS. |
 | `LIBVIRT_URI` | לא | URI מלא לחיבור libvirt, בשימוש **כלשונו** במקום בניית URI משלושת משתני `LIBVIRT_*` שלעיל (שבמקרה זה מתעלמים מהם לצורך מחרוזת החיבור). ברירת המחדל אינה מוגדרת. נדרש ב-TrueNAS Scale, שבו ה-libvirtd מאזין ל-socket לא סטנדרטי שצורת המחרוזת הבנויה אינה יכולה לבטא: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. פרטים בפרק על TrueNAS Scale ב-[docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). אם זו כתובת `qemu+ssh://`, כל אחד מ-`LIBVIRT_HOST`, `LIBVIRT_SSH_USER` ו-`LIBVIRT_SSH_PORT` שאינו מוגדר נלקח ממנה, גם עבור פקודות ה-SSH של BombVault עצמו (העברת NVRAM, מערכי נתונים של ZFS). |
@@ -17,6 +17,7 @@
 | `BIND_HOST` | לא | הכתובת שעליה ה-WebUI מאזין (ברירת מחדל `0.0.0.0`, כל הממשקים). יש להשאיר אותה לא מוגדרת בקונטיינר, שהפורטים המפורסמים שלו צריכים את כל הממשקים; `127.0.0.1` מתאים להרצה מחוץ ל-Docker. ה-healthcheck פונה לאותה כתובת. |
 | `TRUSTED_PROXY` | לא | כתובות או טווחי CIDR מופרדים בפסיקים של ה-reverse proxy שלפני BombVault (למשל `192.168.20.11` או `10.0.0.0/8`). רק מהקפיצות האלה מאמינים לכותרת `X-Forwarded-For`, ואז בלם ההתחברות סופר כשלונות לפי לקוח אמיתי במקום לזרוק את כל מי שמאחורי ה-proxy לדלי אחד. ללא הגדרה (ברירת המחדל) לא מאמינים לאיש: כותרת שמאמינים לה ללא תנאי הייתה מאפשרת לכל פונה לבחור לעצמו דלי. |
 | `HOST_SOURCE_ROOT` | לא | נתיב המארח המעוגן כ**Host Data** (ברירת מחדל `/mnt`). BombVault מתרגמת את מקורות ה-bind-mount ש-Docker מדווח עליהם לנתיבים תחת עיגון זה. יש לשנות רק אם עיגנת שורש מארח שונה. |
+| `HOST_MOUNT_ROOT` | לא | המקום שבו Host Data מעוגן בתוך ה-container (ברירת מחדל `/host/user`). ב-TrueNAS ‏Host Data מעוגן בנתיב המארח שלו עצמו, ולכן גם המשתנה הזה וגם `HOST_SOURCE_ROOT` מציינים את הנתיב הזה, למשל `/mnt/tank` (פרטים ב[TrueNAS SCALE](getting-started.md#truenas)). |
 | `DATA_ROOT_SEGMENTS` | לא | שמות מקטעי-נתיב, מופרדים בפסיקים, שמסמנים מקור bind-mount כנתוני גיבוי (ברירת מחדל `appdata`, בהתאם למוסכמת Unraid `/mnt/user/appdata/<container>`). עיגון bind-mount של ה-container נבחר אוטומטית לגיבוי כאשר כל אחד מהמקטעים המפורטים מופיע כמקטע נתיב מלא במקור המארח שלו; לדוגמה, קביעת `DATA_ROOT_SEGMENTS=appdata,config` תופסת גם עיגון `.../config`. פרטים ב[זיהוי מקור הגיבוי](#backup-source-detection) לדרכים הנוספות, הפעילות תמיד, שבהן מאותרת תיקיית הנתונים של ה-container. |
 | `PLATFORM` | לא | כופה על BombVault להתייחס לפלטפורמה מסוימת כאילו היא רצה עליה, במקום לזהות אוטומטית: `unraid`, `generic` או `truenas` (ברירת המחדל אינה מוגדרת; מזהה Unraid אוטומטית בבדיקת קיומו של סימן ה-`dockerMan` תחת עיגון ה-flash, אחרת `generic`; גם ערך לא מזוהה חוזר ל-`generic`, עם רישום ביומן). יש לקבוע אותו במפורש במארח Docker כללי או ב-TrueNAS Scale במקום להסתמך על הבדיקה האוטומטית הייחודית ל-Unraid. קובץ ה-compose הכללי עושה זאת. משנה את מוסכמת ה-fallback ל-appdata, את ברירות המחדל של יעד השחזור בין מופעים, ואת השאלה האם שלבי ההתראה/תוסף-הלוואי הייחודיים ל-Unraid מנוסים כלל (פרטים ב-`internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | לא | שם ה-container של BombVault עצמה, כך שהיא לעולם אינה מגבה (ולכן עוצרת) את עצמה. |
@@ -28,6 +29,8 @@
 ## עיגונים
 
 יש לעגן את ה-Docker socket, את ה-flash (`/boot`) ואת שורש **Host Data** (`/mnt`) כפי שמוצג בתבנית ה-CA. *מקורות* הגיבוי וגם *היעדים* חיים תחת Host Data, והוא מעוגן **slave** כך ששיתוף מרוחק שמתעגן לאחר שה-container מתחיל (למשל תחת `/mnt/remotes`) הופך גלוי ללא הפעלה מחדש.
+
+ב-TrueNAS ‏Host Data הוא נתיב של מערך נתונים, כמו `/mnt/tank`, ולעולם לא ixVolume. נתונים שאפליקציה שומרת ב-ixVolume נמצאים מחוץ לו ואינם מגובים. פרטים ב[TrueNAS SCALE](getting-started.md#truenas).
 
 גם גיבוי מערכי נתונים של ZFS צריך את המצב הזה: המארח מעגן את התצלום של מערך נתונים רק אחרי שהקונטיינר עלה. פרטים ב[מערכי נתונים של ZFS](zfs-datasets.md).
 

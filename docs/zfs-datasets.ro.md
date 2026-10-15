@@ -114,7 +114,7 @@ Pornește-o în cardul **Replică** din fila Setări a elementului. Acolo alegi 
 Orice mașină cu ZFS și SSH poate primi, de exemplu un al doilea Unraid sau un TrueNAS. BombVault nu trebuie să ruleze acolo.
 
 1. La **Setări, Împerechere**, alege **Conectează prin SSH** în **Server ZFS fără BombVault**, sau **Adaugă server ZFS** în cardul **Replică** al elementului.
-2. Introdu adresa, utilizatorul și portul. Dialogul arată cheia publică a lui BombVault. Adaugă-o în `~/.ssh/authorized_keys` al utilizatorului pe server. Pe Unraid se află la **Users, root, SSH keys**. În funcție de **Display Settings**, Users este în meniul din antet sau la Settings. Aceasta este cheia replicii. Este diferită de cheia conexiunii SSH pentru VM-uri și gazdă, așa că adaug-o chiar dacă cealaltă este deja autorizată.
+2. Introdu adresa, utilizatorul și portul. Dialogul arată cheia publică a lui BombVault. Adaugă-o în `~/.ssh/authorized_keys` al utilizatorului pe server. Pe Unraid se află la **Users, root, SSH keys**. În funcție de **Display Settings**, Users este în meniul din antet sau la Settings. Pe TrueNAS, editează utilizatorul la **Credentials, Users**. Aceasta este cheia replicii. Este diferită de cheia conexiunii SSH pentru VM-uri și gazdă, așa că adaug-o chiar dacă cealaltă este deja autorizată.
 3. Testează conexiunea. Dialogul listează apoi pool-urile serverului. Alege unul și setează rădăcina, care implicit este `<pool>/bombvault-replica`.
 4. Alege noul server în cardul **Replică** al elementului. Serverul are apoi un card propriu pe pagina Instanțe, iar **Deschide** duce la pagina lui.
 
@@ -285,7 +285,8 @@ Fiecare linie este o montare în container. Linia unui set de date arată calea 
 
 ## TrueNAS SCALE {#truenas}
 
-- Când `LIBVIRT_URI` este setat (ca pentru backupurile VM pe TrueNAS), BombVault ia din URI gazda, utilizatorul și portul SSH pentru comenzile lui zfs, pe fiecare care nu e setat separat. Fără backupuri VM, setează în schimb `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` și `LIBVIRT_SSH_PORT`. Adaugă variabilele în **Additional Environment Variables**.
+- Când `LIBVIRT_URI` este setat (ca pentru backupurile VM pe TrueNAS), BombVault ia din URI gazda, utilizatorul și portul SSH pentru comenzile lui zfs, pe fiecare care nu e setat separat. Fără backupuri VM nu trebuie setat nimic: `host.docker.internal` nu se rezolvă într-o aplicație TrueNAS, așa că BombVault ajunge la gazdă prin gateway-ul implicit al aplicației, ca root pe portul 22. Setează `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` și `LIBVIRT_SSH_PORT` când vrei altă adresă sau alt utilizator, în `environment` al aplicației.
+- Adaugă cheia SSH a gazdei din **Setări, Integrări, SSH al gazdei** la root, la **Credentials, Users**, și pornește serviciul SSH la **System, Services**. O [replică](#replica-push) către acest TrueNAS sau altul are nevoie și de cheia replicii, care este alta.
 - Un utilizator altul decât root are nevoie de permisiune pe setul de date de sus al elementului, care o acoperă apoi pe a fiecărui set de date de sub el:
 
   ```
@@ -295,4 +296,4 @@ Fiecare linie este o montare în container. Linia unui set de date arată calea 
   Restaurarea într-un set de date nou are nevoie în plus de `create` pe setul de date de deasupra, iar setarea proprietăților salvate are nevoie de drepturi pentru acele proprietăți.
 
   O sesiune SSH fără root pe TrueNAS nu are `/usr/sbin` în cale; BombVault apelează atunci direct `/usr/sbin/zfs`.
-- **Host Data** al aplicației trebuie să fie o cale a gazdei deasupra seturilor de date, de exemplu `/mnt/tank`, nu un ixVolume. Cu o cale a gazdei, aplicația transmite montările noi ale gazdei către BombVault (`rslave`), iar de asta are nevoie accesul la instantanee.
+- **Host Data** al aplicației trebuie să fie o cale a gazdei deasupra seturilor de date, de exemplu `/mnt/tank`, nu un ixVolume. Cu o cale a gazdei, aplicația transmite montările noi ale gazdei către BombVault (`rslave`), iar de asta are nevoie accesul la instantanee. Vezi [TrueNAS SCALE](getting-started.md#truenas) pentru configurarea completă a aplicației.

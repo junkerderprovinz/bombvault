@@ -33,6 +33,7 @@ Il backup delle VM comunica con libvirt via SSH, mai un mount.
 - Conferma che SSH sia abilitato sull'host e che la chiave pubblica di BombVault sia autorizzata in `/root/.ssh/authorized_keys` (Impostazioni, Integrazioni, SSH dell'host mostra la chiave e un pulsante **Prova connessione**).
 - Su una rete `br0.x` personalizzata, imposta `LIBVIRT_HOST` sull'IP LAN del tuo Unraid (lì il container non può raggiungere l'host tramite `host.docker.internal`). Abilita **Settings, Docker, Host access to custom networks**.
 - Se hai cambiato la porta SSH di Unraid, imposta `LIBVIRT_SSH_PORT` di conseguenza.
+- Su TrueNAS, imposta `LIBVIRT_URI` con il socket libvirt proprio di TrueNAS, dai all'app la capability `SETPCAP` e aggiungi la chiave a root in **Credentials, Users** (vedi [TrueNAS SCALE](getting-started.md#truenas)).
 - La diagnosi completa passo passo (test di raggiungibilità, routing VLAN, `Permission denied (publickey)`, `Host key verification failed`) è nella [guida al backup delle VM via SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Uno snapshot a caldo di una VM non è stato eseguito
@@ -50,6 +51,8 @@ La replica off-site è best-effort per progettazione, così un intoppo off-site 
 ## Un ripristino si è interrotto prima di iniziare
 
 Prima che qualcosa venga fermato o rimosso, il ripristino esegue una verifica dei conflitti pre-volo: verifica che l'IP statico del container e le porte host pubblicate siano liberi. Se un altro container ne detiene già uno, si interrompe con un messaggio chiaro e utilizzabile invece di lasciare un ripristino a metà. Libera la porta o l'IP in conflitto, poi riprova.
+
+Se la rete del container non esiste, per esempio perché la sua app TrueNAS è stata eliminata, il controllo prima del ripristino nomina la rete e il ripristino si ferma prima di cambiare qualsiasi cosa. Reinstalla l'app in TrueNAS con lo stesso nome, così la rete viene ricreata, poi ripristina i suoi dati.
 
 ## Un'esportazione in chiaro è fallita invece di scrivere un file
 
@@ -71,7 +74,9 @@ Un dump fallito non fa mai fallire il backup che lo circonda: viene registrato c
 
 Un import ferma il container, sposta di lato la sua cartella dati e lascia che l'immagine ne crei una vuota al suo posto. Se fallisce un passo prima dell'import vero e proprio, la vecchia cartella torna al suo posto da sola. Se fallisce l'import, il container tiene la cartella nuova e quella vecchia resta accanto come `<cartella dati>.bombvault-before-import-<data e ora>`; il messaggio di errore dell'esecuzione indica il percorso esatto.
 
-Per rimetterla a mano: ferma il container, rinomina la cartella dati attuale per toglierla di mezzo, rinomina la cartella conservata al nome originale e avvia il container. Su Unraid lo fa il gestore file nella scheda Shares.
+Una cartella dati che è un dataset a sé, come su TrueNAS, non si può rinominare. L'import allora lascia la cartella al suo posto e ne sposta il contenuto nella cartella conservata accanto, quindi il dataset superiore deve avere spazio per accoglierlo. L'import lo controlla prima di fermare il container.
+
+Per rimetterla a mano: ferma il container, rinomina la cartella dati attuale per toglierla di mezzo, rinomina la cartella conservata al nome originale e avvia il container. Con un dataset, sposta il contenuto invece di rinominare le cartelle. Su Unraid lo fa il gestore file nella scheda Shares.
 
 ## Un backup di un dataset ZFS è fallito o ha saltato un dataset {#zfs-datasets}
 

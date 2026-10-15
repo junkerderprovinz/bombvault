@@ -114,7 +114,7 @@ Schalte sie in der Karte **Replik** im Reiter Einstellungen des Eintrags ein. Do
 Jede Maschine mit ZFS und SSH kann empfangen, zum Beispiel ein zweiter Unraid oder ein TrueNAS. BombVault muss dort nicht laufen.
 
 1. Wähl unter **Einstellungen, Kopplung** bei **ZFS-Server ohne BombVault** den Knopf **Per SSH verbinden**, oder **ZFS-Server hinzufügen** in der Karte **Replik** des Eintrags.
-2. Trag Adresse, Benutzer und Port ein. Das Fenster zeigt den öffentlichen Schlüssel von BombVault. Häng ihn auf dem Server an die Datei `~/.ssh/authorized_keys` des Benutzers. Auf einem Unraid geht das unter **Benutzer, root, SSH-Schlüssel**. Je nach **Anzeigeeinstellungen** liegt Benutzer oben in der Menüleiste oder unter Einstellungen. Das ist der Replikat-Schlüssel. Er ist ein anderer als der Schlüssel der SSH-Verbindung für VMs und Host, trag ihn also auch dann ein, wenn dieser schon freigegeben ist.
+2. Trag Adresse, Benutzer und Port ein. Das Fenster zeigt den öffentlichen Schlüssel von BombVault. Häng ihn auf dem Server an die Datei `~/.ssh/authorized_keys` des Benutzers. Auf einem Unraid geht das unter **Benutzer, root, SSH-Schlüssel**. Je nach **Anzeigeeinstellungen** liegt Benutzer oben in der Menüleiste oder unter Einstellungen. Auf TrueNAS bearbeitest du den Benutzer unter **Credentials, Users**. Das ist der Replikat-Schlüssel. Er ist ein anderer als der Schlüssel der SSH-Verbindung für VMs und Host, trag ihn also auch dann ein, wenn dieser schon freigegeben ist.
 3. Teste die Verbindung. Das Fenster listet dann die Pools des Servers auf. Wähl einen aus und setz die Wurzel, die standardmäßig `<pool>/bombvault-replica` heißt.
 4. Wähl den neuen Server in der Karte **Replik** des Eintrags. Der Server bekommt dann eine eigene Karte auf der Seite Instanzen, und **Öffnen** führt zu seiner Seite.
 
@@ -285,7 +285,8 @@ Jede Zeile ist ein Mount im Container. Die Zeile eines Datasets zeigt seinen Pfa
 
 ## TrueNAS SCALE {#truenas}
 
-- Ist `LIBVIRT_URI` gesetzt (wie für VM-Backups unter TrueNAS), nimmt BombVault SSH-Host, Benutzer und Port für seine zfs-Befehle aus der URI, jeden Wert, der nicht eigens gesetzt ist. Ohne VM-Backups setze stattdessen `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` und `LIBVIRT_SSH_PORT`. Trag die Variablen unter **Additional Environment Variables** ein.
+- Ist `LIBVIRT_URI` gesetzt (wie für VM-Backups unter TrueNAS), nimmt BombVault SSH-Host, Benutzer und Port für seine zfs-Befehle aus der URI, jeden Wert, der nicht eigens gesetzt ist. Ohne VM-Backups muss nichts gesetzt werden: `host.docker.internal` löst in einer TrueNAS-App nicht auf, also erreicht BombVault den Host über das Standard-Gateway der App, als root auf Port 22. Setze `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` und `LIBVIRT_SSH_PORT`, wenn du eine andere Adresse oder einen anderen Benutzer willst, im `environment` der App.
+- Füge den Host-SSH-Schlüssel aus **Einstellungen, Anbindungen, Host-SSH** unter **Credentials, Users** bei root hinzu und schalte den SSH-Dienst unter **System, Services** ein. Eine [Replik](#replica-push) auf dieses oder ein anderes TrueNAS braucht zusätzlich den Replikat-Schlüssel, und der ist ein anderer.
 - Ein anderer Benutzer als root braucht Rechte auf dem obersten Dataset des Eintrags, die dann jedes Dataset darunter abdecken:
 
   ```
@@ -295,4 +296,4 @@ Jede Zeile ist ein Mount im Container. Die Zeile eines Datasets zeigt seinen Pfa
   Eine Wiederherstellung in ein neues Dataset braucht zusätzlich `create` auf dem Dataset darüber, und das Setzen gespeicherter Eigenschaften braucht die Rechte für diese Eigenschaften.
 
   Eine SSH-Sitzung ohne root hat unter TrueNAS `/usr/sbin` nicht im Pfad; BombVault ruft dann direkt `/usr/sbin/zfs` auf.
-- **Host Data** der App muss ein Host-Pfad oberhalb der Datasets sein, zum Beispiel `/mnt/tank`, kein ixVolume. Mit einem Host-Pfad reicht die App neue Mounts des Hosts an BombVault weiter (`rslave`), und das braucht der Snapshot-Zugriff.
+- **Host Data** der App muss ein Host-Pfad oberhalb der Datasets sein, zum Beispiel `/mnt/tank`, kein ixVolume. Mit einem Host-Pfad reicht die App neue Mounts des Hosts an BombVault weiter (`rslave`), und das braucht der Snapshot-Zugriff. Die ganze Einrichtung der App steht unter [TrueNAS SCALE](getting-started.md#truenas).

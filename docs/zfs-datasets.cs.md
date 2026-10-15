@@ -114,7 +114,7 @@ Zapneš ji na kartě **Replika** na záložce Nastavení položky. Tam vybereš,
 Přijímat může každý stroj se ZFS a SSH, například druhý Unraid nebo TrueNAS. BombVault tam běžet nemusí.
 
 1. V **Nastavení, Párování** zvol **Připojit přes SSH** v **Server ZFS bez BombVault**, nebo **Přidat server ZFS** na kartě **Replika** položky.
-2. Zadej adresu, uživatele a port. Dialog ukáže veřejný klíč BombVaultu. Přidej ho do `~/.ssh/authorized_keys` uživatele na serveru. V Unraidu je to v **Users, root, SSH keys**. Podle **Display Settings** je Users v horním menu nebo v Settings. Toto je klíč repliky. Liší se od klíče spojení SSH pro virtuální stroje a hostitele, takže ho přidejte, i když je ten druhý už povolený.
+2. Zadej adresu, uživatele a port. Dialog ukáže veřejný klíč BombVaultu. Přidej ho do `~/.ssh/authorized_keys` uživatele na serveru. V Unraidu je to v **Users, root, SSH keys**. Podle **Display Settings** je Users v horním menu nebo v Settings. Na TrueNAS uprav uživatele v **Credentials, Users**. Toto je klíč repliky. Liší se od klíče spojení SSH pro virtuální stroje a hostitele, takže ho přidejte, i když je ten druhý už povolený.
 3. Otestuj spojení. Dialog pak vypíše pooly serveru. Vyber jeden a nastav kořen, který je ve výchozím stavu `<pool>/bombvault-replica`.
 4. Vyber nový server na kartě **Replika** položky. Server pak má na stránce Instance vlastní kartu a **Otevřít** vede na jeho stránku.
 
@@ -285,7 +285,8 @@ Každý řádek je jedno připojení uvnitř kontejneru. Řádek datové sady uk
 
 ## TrueNAS SCALE {#truenas}
 
-- Když je nastavena `LIBVIRT_URI` (jako pro zálohy VM na TrueNAS), BombVault vezme hostitele, uživatele a port SSH pro své příkazy zfs z URI, každý, který není nastaven samostatně. Bez záloh VM nastav místo toho `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` a `LIBVIRT_SSH_PORT`. Proměnné přidej v **Additional Environment Variables**.
+- Když je nastavena `LIBVIRT_URI` (jako pro zálohy VM na TrueNAS), BombVault vezme hostitele, uživatele a port SSH pro své příkazy zfs z URI, každý, který není nastaven samostatně. Bez záloh VM není třeba nic nastavovat: `host.docker.internal` se v aplikaci TrueNAS nepřeloží, takže BombVault dosáhne na hostitele přes výchozí bránu aplikace, jako root na portu 22. `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` a `LIBVIRT_SSH_PORT` nastav, když chceš jinou adresu nebo uživatele, v `environment` aplikace.
+- Přidej klíč SSH k hostiteli z **Nastavení, Integrace, SSH k hostiteli** uživateli root v **Credentials, Users** a zapni službu SSH v **System, Services**. [Replika](#replica-push) na tento nebo jiný TrueNAS potřebuje navíc klíč repliky, který je jiný.
 - Uživatel jiný než root potřebuje oprávnění k nejvyšší datové sadě položky, která pak pokrývají každou datovou sadu pod ní:
 
   ```
@@ -295,4 +296,4 @@ Každý řádek je jedno připojení uvnitř kontejneru. Řádek datové sady uk
   Obnova do nové datové sady navíc potřebuje `create` na nadřazené datové sadě a nastavení uložených vlastností potřebuje oprávnění k těmto vlastnostem.
 
   Relace SSH bez roota na TrueNAS nemá v cestě `/usr/sbin`; BombVault pak volá přímo `/usr/sbin/zfs`.
-- **Host Data** aplikace musí být cesta hostitele nad datovými sadami, například `/mnt/tank`, ne ixVolume. S cestou hostitele předává aplikace nová připojení hostitele do BombVaultu (`rslave`), a to přístup ke snímkům potřebuje.
+- **Host Data** aplikace musí být cesta hostitele nad datovými sadami, například `/mnt/tank`, ne ixVolume. S cestou hostitele předává aplikace nová připojení hostitele do BombVaultu (`rslave`), a to přístup ke snímkům potřebuje. Celé nastavení aplikace popisuje [TrueNAS SCALE](getting-started.md#truenas).

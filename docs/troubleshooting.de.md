@@ -33,6 +33,7 @@ Das VM-Backup spricht über SSH mit libvirt, nie über einen Mount.
 - Bestätige, dass SSH auf dem Host aktiviert ist und BombVaults öffentlicher Schlüssel in `/root/.ssh/authorized_keys` autorisiert ist (Einstellungen, Anbindungen, Host-SSH zeigt den Schlüssel und einen Knopf **Verbindung testen**).
 - Setze in einem benutzerdefinierten `br0.x`-Netzwerk `LIBVIRT_HOST` auf deine Unraid-LAN-IP (der Container kann den Host dort nicht über `host.docker.internal` erreichen). Aktiviere **Settings, Docker, Host access to custom networks**.
 - Wenn du Unraids SSH-Port geändert hast, setze `LIBVIRT_SSH_PORT` passend.
+- Setze auf TrueNAS `LIBVIRT_URI` mit dem eigenen libvirt-Socket von TrueNAS, gib der App die Capability `SETPCAP` und füge den Schlüssel unter **Credentials, Users** bei root hinzu (siehe [TrueNAS SCALE](getting-started.md#truenas)).
 - Die vollständige Schritt-für-Schritt-Diagnose (Erreichbarkeitstest, VLAN-Routing, `Permission denied (publickey)`, `Host key verification failed`) steht in der [Anleitung zum VM-Backup über SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Ein Live-VM-Snapshot lief nicht
@@ -50,6 +51,8 @@ Off-site-Kopien sind absichtlich Best-Effort, sodass ein Off-site-Aussetzer die 
 ## Eine Wiederherstellung brach ab, bevor sie startete
 
 Bevor irgendetwas gestoppt oder entfernt wird, führt die Wiederherstellung eine Vorab-Konfliktprüfung durch: Sie prüft, ob die statische IP des Containers und die veröffentlichten Host-Ports frei sind. Belegt ein anderer Container einen davon bereits, bricht sie mit einer klaren Meldung ab, statt eine halbfertige Wiederherstellung zu hinterlassen. Gib den belegten Port oder die IP frei und versuche es erneut.
+
+Gibt es das Netzwerk des Containers nicht, etwa weil seine TrueNAS-App gelöscht wurde, nennt die Prüfung vor der Wiederherstellung das Netzwerk, und die Wiederherstellung bricht ab, bevor sie etwas ändert. Installiere die App in TrueNAS unter demselben Namen neu, das legt das Netzwerk wieder an, und stelle dann ihre Daten wieder her.
 
 ## Ein schlichter Export schlug fehl, statt eine Datei zu schreiben
 
@@ -71,7 +74,9 @@ Ein fehlgeschlagener Dump lässt nie die Sicherung drumherum scheitern; er wird 
 
 Ein Import stoppt den Container, schiebt seinen Datenordner zur Seite und lässt das Image einen leeren an dessen Stelle anlegen. Scheitert ein Schritt vor dem eigentlichen Import, legt BombVault den alten Ordner von selbst zurück. Scheitert der Import, behält der Container den frischen Ordner, und der alte bleibt als `<Datenordner>.bombvault-before-import-<Zeitstempel>` daneben liegen; die Fehlermeldung des Laufs nennt den genauen Pfad.
 
-Von Hand zurücklegen: Container stoppen, den aktuellen Datenordner aus dem Weg umbenennen, den aufbewahrten Ordner auf den ursprünglichen Namen zurück umbenennen und den Container starten. Auf Unraid erledigt das der Dateimanager im Tab Shares.
+Ein Datenordner, der ein eigenes Dataset ist, wie auf TrueNAS, lässt sich nicht umbenennen. Der Import lässt den Ordner dann an seinem Platz und verschiebt seinen Inhalt in den aufbewahrten Ordner daneben, das Dataset darüber braucht also Platz dafür. Das prüft der Import, bevor er den Container stoppt.
+
+Von Hand zurücklegen: Container stoppen, den aktuellen Datenordner aus dem Weg umbenennen, den aufbewahrten Ordner auf den ursprünglichen Namen zurück umbenennen und den Container starten. Bei einem Dataset verschiebst du den Inhalt, statt die Ordner umzubenennen. Auf Unraid erledigt das der Dateimanager im Tab Shares.
 
 ## Eine ZFS-Dataset-Sicherung schlug fehl oder hat ein Dataset übersprungen {#zfs-datasets}
 

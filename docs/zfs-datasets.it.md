@@ -114,7 +114,7 @@ Attivala nella scheda **Replica** nella scheda Impostazioni dell'elemento. Lì s
 Qualsiasi macchina con ZFS e SSH può ricevere, per esempio un secondo Unraid o un TrueNAS. BombVault non deve girare lì.
 
 1. In **Impostazioni, Associazione** scegli **Collega via SSH** in **Server ZFS senza BombVault**, oppure **Aggiungi server ZFS** nella scheda **Replica** dell'elemento.
-2. Inserisci indirizzo, utente e porta. La finestra mostra la chiave pubblica di BombVault. Aggiungila al file `~/.ssh/authorized_keys` dell'utente sul server. Su Unraid si trova in **Users, root, SSH keys**. A seconda di **Display Settings**, Users è nel menu dell'intestazione o in Settings. Questa è la chiave della replica. È diversa dalla chiave del collegamento SSH per le VM e l'host, quindi aggiungila anche se quella è già autorizzata.
+2. Inserisci indirizzo, utente e porta. La finestra mostra la chiave pubblica di BombVault. Aggiungila al file `~/.ssh/authorized_keys` dell'utente sul server. Su Unraid si trova in **Users, root, SSH keys**. A seconda di **Display Settings**, Users è nel menu dell'intestazione o in Settings. Su TrueNAS, modifica l'utente in **Credentials, Users**. Questa è la chiave della replica. È diversa dalla chiave del collegamento SSH per le VM e l'host, quindi aggiungila anche se quella è già autorizzata.
 3. Prova la connessione. La finestra elenca poi i pool del server. Scegline uno e imposta la radice, che di default è `<pool>/bombvault-replica`.
 4. Scegli il nuovo server nella scheda **Replica** dell'elemento. Il server ha poi una scheda propria nella pagina Istanze, e **Apri** porta alla sua pagina.
 
@@ -285,7 +285,8 @@ Ogni riga è un mount dentro il container. La riga di un dataset mostra il suo p
 
 ## TrueNAS SCALE {#truenas}
 
-- Quando `LIBVIRT_URI` è impostata (come per i backup delle VM su TrueNAS), BombVault prende dall'URI l'host, l'utente e la porta SSH per i suoi comandi zfs, ciascuno di quelli non impostati separatamente. Senza backup delle VM, imposta invece `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` e `LIBVIRT_SSH_PORT`. Aggiungi le variabili in **Additional Environment Variables**.
+- Quando `LIBVIRT_URI` è impostata (come per i backup delle VM su TrueNAS), BombVault prende dall'URI l'host, l'utente e la porta SSH per i suoi comandi zfs, ciascuno di quelli non impostati separatamente. Senza backup delle VM non serve impostare nulla: `host.docker.internal` non si risolve in un'app TrueNAS, quindi BombVault raggiunge l'host tramite il gateway predefinito dell'app, come root sulla porta 22. Imposta `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` e `LIBVIRT_SSH_PORT` quando vuoi un altro indirizzo o un altro utente, nell'`environment` dell'app.
+- Aggiungi la chiave SSH dell'host da **Impostazioni, Integrazioni, SSH dell'host** a root in **Credentials, Users**, e attiva il servizio SSH in **System, Services**. Una [replica](#replica-push) verso questo o un altro TrueNAS richiede anche la chiave della replica, che è diversa.
 - Un utente diverso da root ha bisogno di permessi sul dataset superiore dell'elemento, che coprono poi ogni dataset sotto di esso:
 
   ```
@@ -295,4 +296,4 @@ Ogni riga è un mount dentro il container. La riga di un dataset mostra il suo p
   Il ripristino in un nuovo dataset richiede anche `create` sul dataset superiore, e impostare le proprietà salvate richiede i permessi per quelle proprietà.
 
   Una sessione SSH non root su TrueNAS non ha `/usr/sbin` nel suo percorso; BombVault chiama allora direttamente `/usr/sbin/zfs`.
-- L'**Host Data** dell'app deve essere un percorso dell'host sopra i dataset, per esempio `/mnt/tank`, non un ixVolume. Con un percorso dell'host, l'app passa a BombVault i nuovi mount dell'host (`rslave`), ed è ciò che serve all'accesso agli snapshot.
+- L'**Host Data** dell'app deve essere un percorso dell'host sopra i dataset, per esempio `/mnt/tank`, non un ixVolume. Con un percorso dell'host, l'app passa a BombVault i nuovi mount dell'host (`rslave`), ed è ciò che serve all'accesso agli snapshot. Vedi [TrueNAS SCALE](getting-started.md#truenas) per la configurazione completa dell'app.

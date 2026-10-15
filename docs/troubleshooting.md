@@ -33,6 +33,7 @@ VM backup talks to libvirt over SSH, never a mount.
 - Confirm SSH is enabled on the host and BombVault's public key is authorized in `/root/.ssh/authorized_keys` (Settings, Integrations, Host SSH shows the key and a **Test connection** button).
 - On a custom `br0.x` network, set `LIBVIRT_HOST` to your Unraid LAN IP (the container cannot reach the host via `host.docker.internal` there). Enable **Settings, Docker, Host access to custom networks**.
 - If you changed Unraid's SSH port, set `LIBVIRT_SSH_PORT` to match.
+- On TrueNAS, set `LIBVIRT_URI` with TrueNAS's own libvirt socket, give the app the `SETPCAP` capability and add the key to root under **Credentials, Users** (see [TrueNAS SCALE](getting-started.md#truenas)).
 - Full step-by-step diagnosis (reachability test, VLAN routing, `Permission denied (publickey)`, `Host key verification failed`) is in the [VM backup over SSH guide](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## A live VM snapshot did not run
@@ -50,6 +51,8 @@ Off-site replication is best-effort by design, so an off-site hiccup never fails
 ## A restore aborted before it started
 
 Before anything is stopped or removed, restore runs a pre-flight conflict check: it verifies the container's static IP and published host ports are free. If another container already holds one, it aborts with a clear, actionable message instead of leaving a half-finished restore. Free the conflicting port or IP, then retry.
+
+If the container's network does not exist, for example because its TrueNAS app was deleted, the restore check names the network and the restore refuses before it changes anything. Reinstall the app in TrueNAS under the same name, which creates the network again, then restore its data.
 
 ## A plain export failed instead of writing a file
 
@@ -71,7 +74,9 @@ A failed dump never fails the backup around it; it is recorded as its own failed
 
 An import stops the container, moves its data folder aside and lets the image create an empty one in its place. If a step before the import itself fails, the old folder is put back automatically. If the import fails, the container keeps the fresh folder and the old one stays beside it as `<data folder>.bombvault-before-import-<timestamp>`; the run's error message names the exact path.
 
-To put it back by hand: stop the container, rename the current data folder out of the way, rename the kept folder back to the original name, and start the container. On Unraid, the file manager does this from the Shares tab.
+A data folder that is a dataset of its own, as on TrueNAS, cannot be renamed. The import then leaves the folder in place and moves its contents into the kept folder next to it, so the dataset above needs room for them. The import checks that before it stops the container.
+
+To put it back by hand: stop the container, rename the current data folder out of the way, rename the kept folder back to the original name, and start the container. For a dataset, move the contents instead of renaming the folders. On Unraid, the file manager does this from the Shares tab.
 
 ## A ZFS dataset backup failed or skipped a dataset {#zfs-datasets}
 

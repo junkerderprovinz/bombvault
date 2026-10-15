@@ -6,7 +6,7 @@
 
 | 요구 사항 | 참고 |
 |---|---|
-| **Unraid 6.12+** | 이전 버전은 테스트되지 않았습니다. Unraid가 주 대상이지만, BombVault는 일반 Docker 호스트와 TrueNAS Scale에서도 실행됩니다([일반 Docker 호스트](#generic-docker-host) 참고). |
+| **Unraid 6.12+** | 이전 버전은 테스트되지 않았습니다. Unraid가 주 대상이지만, BombVault는 일반 Docker 호스트와 TrueNAS Scale에서도 실행됩니다([일반 Docker 호스트](#generic-docker-host) 및 [TrueNAS SCALE](#truenas) 참고). |
 | **Restic 저장소 위치** | 로컬 경로(권장: 배열 또는 캐시), SMB, NFS, 또는 모든 rclone 백엔드. |
 | **Docker 소켓** | 템플릿이 자동으로 마운트합니다(`/var/run/docker.sock`). |
 | **Unraid 플래시** (`/boot`) | 템플릿이 전체를 자동으로 마운트합니다(`/boot`을 `/host/boot`로). 플래시 백업을 구동하고, 복원된 컨테이너가 정상적이고 편집 가능한 Unraid 앱으로 다시 나타나게 합니다. |
@@ -34,7 +34,7 @@
 
 ## 일반 Docker 호스트 {#generic-docker-host}
 
-Unraid가 아니라면? BombVault는 어떤 Docker 호스트에서도 평범한 컨테이너로 돌아갑니다(TrueNAS Scale의 컨테이너 지원도, 그쪽 앱 카탈로그에 자체 항목이 생기기 전까지는 이것으로 굴러갑니다).
+Unraid가 아니라면? BombVault는 어떤 Docker 호스트에서도 평범한 컨테이너로 돌아갑니다. TrueNAS SCALE용 절차는 [TrueNAS SCALE](#truenas)에 따로 있습니다.
 
 1. 저장소에서 바로 편집할 수 있는 [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml)을 가져옵니다.
 2. `APP_KEY`(아래 참조)를 설정하고 Host Data 볼륨을 실제 데이터 루트로 지정합니다. 파일의 주석이 둘 다 안내합니다.
@@ -42,14 +42,54 @@ Unraid가 아니라면? BombVault는 어떤 Docker 호스트에서도 평범한 
 
 Unraid와 다른 점:
 
-- **플래시 섹션이 없습니다.** 담거나 되살릴 부팅 USB가 없으므로 플래시 섹션은 여기서 할 일이 없습니다. 대신 백업 페이지의 **추가**가 **시스템 구성**을 폴더 제안으로 보여 줍니다. 저장 전에 살펴보고 손질하는 `/etc` 폴더 세트의 시작 묶음입니다.
+- **플래시 섹션이 없습니다.** 담거나 되살릴 부팅 USB가 없으므로 플래시 섹션은 여기서 할 일이 없습니다. 대신 Host Data가 호스트의 `/etc`까지 닿으면 백업 페이지의 **추가**가 **시스템 구성**을 폴더 제안으로 보여 줍니다. 저장 전에 살펴보고 손질하는 `/etc` 폴더 세트의 시작 묶음입니다.
 - **Unraid 자체 알림이 없습니다.** BombVault 자신의 알림 채널(웹훅, 원격지 실패 경고 등)은 평소대로 동작합니다. 빠지는 것은 Unraid 고유 알림 시스템으로 보내는 것뿐이며, 여기에는 그런 시스템이 없기 때문입니다.
 - **VM 백업은 선택 사항이며 SSH로 닿는 별도의 libvirtd 호스트가 필요합니다.** compose 파일의 주석 처리된 블록을 보십시오. 일반 Docker 호스트 자체에는 VM 관리자가 들어 있지 않습니다.
 - **대시보드 위젯이 없습니다.** BombVault Widget은 Unraid 플러그인이므로 그 단계도 건너뜁니다.
 - **컨테이너 데이터 찾기.** Unraid의 `appdata` 규칙이 없으므로, 컨테이너의 데이터 폴더는 `DATA_ROOT_SEGMENTS`의 구간, Docker 이름 있는 볼륨, Compose 프로젝트의 작업 디렉터리, `bombvault.data` 레이블로 찾습니다([백업 원본 자동 판별](configuration.md#backup-source-detection) 참고). 이름 있는 볼륨과 `/etc` 프리셋은 Host Data 마운트 안의 경로에만 닿으므로, Host Data는 Docker의 데이터 루트까지 포함하는 공통 상위 디렉터리로 지정하세요.
 - **`PLATFORM`.** `generic` 또는 `truenas`로 설정합니다. 설정하지 않으면 BombVault는 플래시 마운트에 있는 Unraid 고유 표식으로 Unraid를 알아보고 그 밖의 경우는 모두 일반 호스트로 취급하며, Unraid 전용 단계는 시도했다 실패하는 대신 건너뜁니다.
 
-**TrueNAS Scale**도 같은 compose 방식을 씁니다. 카탈로그 항목은 저장소에 준비되어 있지만 아직 제출하지 않았습니다. TrueNAS의 libvirtd는 자체 소켓(`/run/truenas_libvirt/libvirt-sock`)에서 대기하는데 세 개의 `LIBVIRT_*` 변수로는 이를 표현할 수 없으므로, 그곳에서 VM을 백업하려면 `LIBVIRT_URI`가 필요합니다([구성](configuration.md) 참고). 지금까지 확인된 범위는 이렇습니다. BombVault 자체의 zvol 백업과 복원을 실제 TrueNAS Scale 장비에 SSH로 실행했고, 제자리 복원과 삭제된 zvol로의 복원 모두 다시 읽은 내용이 바이트 단위로 일치했습니다. 그곳에서 VM 전체를 복원하는 경우(도메인 재정의와 부팅)와 수 기가바이트 규모의 처리량은 검증되지 않았습니다. 그곳에서 믿고 쓰기 전에 복원을 시험해 보세요.
+### TrueNAS SCALE {#truenas}
+
+BombVault는 아직 TrueNAS 앱 카탈로그에 없으므로 사용자 지정 앱으로 설치합니다. **Apps, Discover Apps**를 연 다음, **Custom App** 옆 메뉴에서 **Install via YAML**을 고릅니다. 아래 YAML은 저장소의 `truenas-apps` 폴더에 있는 카탈로그 항목과 같은 내용을 설정합니다. `tank`를 자신의 풀로 바꾸고, `APP_KEY`는 다음 섹션의 설명대로 채우세요.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # VM 백업용:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+그런 다음 `https://<truenas-ip>:30528/`을 엽니다. [Unraid와 다른 점](#generic-docker-host)에 나온 내용은 여기에도 해당하며, TrueNAS에서는 다음이 더 있습니다.
+
+- **기능(capabilities).** BombVault에는 위의 여섯 가지가 필요합니다. `SETPCAP`이 없으면 VM 백업이 실패합니다.
+- **Host Data**는 데이터세트 위의 호스트 경로(여기서는 `/mnt/tank`)이며, 앱 안에서도 같은 경로에 마운트됩니다. 그래서 `HOST_SOURCE_ROOT`와 `HOST_MOUNT_ROOT` 모두 이 경로를 가리킵니다. `rslave`는 호스트가 나중에 만드는 마운트를 전달하며, ZFS 데이터세트 백업에는 이것이 필요합니다.
+- **ixVolume 안의 데이터는 백업되지 않습니다.** 저장소가 ixVolume인 앱은 데이터를 Host Data 바깥인 `/mnt/.ix-apps` 아래에 둡니다. BombVault는 앱의 정의만 저장하고, 실행은 제외한 폴더를 알려 줍니다. 데이터를 백업하려는 모든 앱에는 Host Data 아래 데이터세트의 **Host Path** 저장소를 고르세요.
+- **VM 및 ZFS 데이터세트 백업**은 root로 SSH를 통해 TrueNAS에 접속합니다. **System, Services**에서 SSH 서비스를 켜고, **설정, 연동, 호스트 SSH**의 공개 키를 **Credentials, Users**에서 root 사용자에 추가하세요. TrueNAS의 libvirtd는 자체 소켓에서 대기하므로 VM 백업에는 위와 같이 `LIBVIRT_URI`도 필요합니다. `LIBVIRT_URI`와 `LIBVIRT_HOST`가 모두 설정되지 않으면, TrueNAS 앱에서는 `host.docker.internal`이 확인되지 않으므로 BombVault는 앱의 기본 게이트웨이를 호스트로 사용합니다. zvol 위의 VM을 포함한 자세한 내용은 [VM 백업 가이드](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale)에 있습니다.
+- **ZFS 복제본은 다른 키를 씁니다.** 두 번째 ZFS 서버의 복제본은 호스트 SSH 키가 아니라 복제본 대화 상자에 표시되는 키로 로그인합니다. 그 키를 받는 쪽 서버에 추가하세요.
+- **삭제한 앱은 두 단계로 되살립니다.** 먼저 TrueNAS에서 같은 이름으로 앱을 다시 설치해 네트워크를 다시 만든 다음, BombVault에서 데이터를 복원합니다. 그 전까지는 복원 전 확인이 없는 네트워크를 보고하고, 복원은 아무것도 바꾸기 전에 거부됩니다.
+- **원본 옆에**는 일반 Docker 컨테이너를 만듭니다. 실행은 되지만 TrueNAS Apps 화면에는 나타나지 않습니다.
+- **데이터베이스 덤프**는 데이터세트 마운트에서도 동작합니다. 그 자체가 데이터세트인 데이터 폴더로 가져오면 예전 내용이 옆 폴더로 옮겨지므로, 상위 데이터세트에 그만큼의 공간이 필요합니다.
 
 ## 유일한 필수 설정
 

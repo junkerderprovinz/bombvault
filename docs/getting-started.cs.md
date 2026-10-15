@@ -6,7 +6,7 @@ Tato stránka tě provede od čerstvého stroje s Unraidem až k tvé první zá
 
 | Požadavek | Poznámky |
 |---|---|
-| **Unraid 6.12+** | Starší verze nejsou testovány. Unraid je hlavní platforma, ale BombVault běží i na obyčejném hostiteli Dockeru a na TrueNAS Scale (viz [Obecný hostitel Dockeru](#generic-docker-host)). |
+| **Unraid 6.12+** | Starší verze nejsou testovány. Unraid je hlavní platforma, ale BombVault běží i na obyčejném hostiteli Dockeru a na TrueNAS Scale (viz [Obecný hostitel Dockeru](#generic-docker-host) a [TrueNAS SCALE](#truenas)). |
 | **Umístění restic repozitáře** | Místní cesta (doporučeno: tvoje pole nebo cache), SMB, NFS nebo libovolný rclone backend. |
 | **Docker socket** | Připojen šablonou automaticky (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | Připojen celý šablonou automaticky (`/boot` na `/host/boot`). Pohání zálohu flashe a umožňuje obnovenému kontejneru znovu se objevit jako běžná, editovatelná aplikace Unraidu. |
@@ -34,7 +34,7 @@ Nejsnazší cestou je **Community Applications**.
 
 ## Obecný hostitel Dockeru {#generic-docker-host}
 
-Nemáš Unraid? BombVault běží i jako prostý kontejner na libovolném hostiteli Dockeru (na tom stojí také podpora kontejnerů na TrueNAS Scale, ještě před vlastní položkou v tamním katalogu aplikací).
+Nemáš Unraid? BombVault běží i jako prostý kontejner na libovolném hostiteli Dockeru. TrueNAS SCALE má vlastní kroky v [TrueNAS SCALE](#truenas).
 
 1. Stáhni si z repozitáře soubor [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml), připravený k úpravám.
 2. Nastav `APP_KEY` (viz níže) a nasměruj svazek Host Data na svůj skutečný kořen dat. Komentáře v souboru provedou obojím.
@@ -42,14 +42,54 @@ Nemáš Unraid? BombVault běží i jako prostý kontejner na libovolném hostit
 
 V čem se to liší od Unraidu:
 
-- **Žádná sekce Flash.** Není tu žádný zaváděcí USB disk, který by se dal zachytit nebo obnovit, sekce Flash tedy nemá co dělat. Místo toho nabízí **Přidat** na stránce Zálohy jako návrh složky **Konfigurace systému**: výchozí sadu složek `/etc`, kterou si před uložením projdeš a upravíš.
+- **Žádná sekce Flash.** Není tu žádný zaváděcí USB disk, který by se dal zachytit nebo obnovit, sekce Flash tedy nemá co dělat. Místo toho, když Host Data sahá do `/etc` hostitele, nabízí **Přidat** na stránce Zálohy jako návrh složky **Konfigurace systému**: výchozí sadu složek `/etc`, kterou si před uložením projdeš a upravíš.
 - **Žádná nativní oznámení Unraidu.** Vlastní oznamovací kanály BombVaultu (webhook, upozornění na selhání mimo lokalitu a podobně) fungují normálně; vynechává se jen odeslání do oznamovacího systému Unraidu, protože takový systém tu není.
 - **Záloha virtuálních strojů je volitelná a potřebuje samostatného hostitele libvirtd dostupného přes SSH.** Viz zakomentovaný blok v souboru compose. Obecný hostitel Dockeru sám o sobě žádného správce virtuálních strojů nemá.
 - **Žádný widget na dashboardu.** BombVault Widget je plugin pro Unraid, takže i tento krok odpadá.
 - **Jak se najdou data kontejneru.** Bez konvence `appdata` z Unraidu se datová složka kontejneru najde podle segmentů v `DATA_ROOT_SEGMENTS`, pojmenovaných svazků Dockeru, pracovního adresáře projektu Compose a štítku `bombvault.data` (viz [Rozpoznávání zdrojů zálohy](configuration.md#backup-source-detection)). Pojmenované svazky i přednastavení `/etc` dosáhnou jen na cesty uvnitř připojení Host Data, takže nasměruj Host Data na společného předka, který pokrývá i kořen dat Dockeru.
 - **`PLATFORM`.** Nastav ji na `generic` nebo `truenas`. Když ji nenastavíš, BombVault rozpozná Unraid podle jeho vlastní značky na připojení flash a cokoli jiného bere jako obecného hostitele, a kroky jen pro Unraid se přeskočí, místo aby se zkoušely a selhávaly.
 
-**TrueNAS Scale** jde stejnou cestou přes compose; položka katalogu je v repozitáři připravená, ale zatím nebyla odeslána. Záloha VM tam potřebuje `LIBVIRT_URI`, protože libvirtd na TrueNAS naslouchá na vlastním socketu (`/run/truenas_libvirt/libvirt-sock`), který tři proměnné `LIBVIRT_*` nedokážou vyjádřit (viz [Konfigurace](configuration.md)). Nakolik je to ověřené: vlastní záloha a obnova zvolu v BombVaultu proběhla přes SSH na skutečném stroji s TrueNAS Scale a každá obnova se přečetla zpět bajt po bajtu beze změny, na místě i na zvol, který byl předtím smazán. Obnova celé VM tam (znovu definovaná doména a start) a propustnost při mnoha gigabajtech otestované nejsou. Než se na to spolehneš, vyzkoušej tam obnovu.
+### TrueNAS SCALE {#truenas}
+
+BombVault zatím není v katalogu aplikací TrueNAS, takže ho nainstaluj jako vlastní aplikaci: **Apps, Discover Apps** a pak **Install via YAML** v nabídce vedle **Custom App**. YAML níže nastavuje totéž co položka katalogu ve složce `truenas-apps` v repozitáři. Nahraď `tank` svým poolem a vyplň `APP_KEY`, jak popisuje další oddíl.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # Pro zálohy VM:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+Pak otevři `https://<truenas-ip>:30528/`. Co je uvedeno v [V čem se to liší od Unraidu](#generic-docker-host), platí i tady, a na TrueNAS navíc:
+
+- **Capabilities.** BombVault potřebuje šest výše uvedených. Bez `SETPCAP` zálohy VM selžou.
+- **Host Data** je cesta hostitele na datové sadě, zde `/mnt/tank`, připojená pod stejnou cestou uvnitř aplikace. Proto ji uvádějí `HOST_SOURCE_ROOT` i `HOST_MOUNT_ROOT`. `rslave` předává připojení, která hostitel vytvoří později, a ta potřebují zálohy datových sad ZFS.
+- **Data v ixVolume se nezálohují.** Aplikace, jejímž úložištěm je ixVolume, drží data pod `/mnt/.ix-apps`, mimo Host Data. BombVault uloží jen definici aplikace a běh uvede složky, které vynechal. Pro každou aplikaci, jejíž data chceš zálohovat, zvol úložiště **Host Path** na datové sadě pod Host Data.
+- **Zálohy VM a datových sad ZFS** se k TrueNAS připojují přes SSH jako root. Zapni službu SSH v **System, Services** a přidej veřejný klíč z **Nastavení, Integrace, SSH k hostiteli** uživateli root v **Credentials, Users**. Zálohy VM navíc potřebují `LIBVIRT_URI` jako výše, protože libvirtd na TrueNAS naslouchá na vlastním socketu. Když není nastavena `LIBVIRT_URI` ani `LIBVIRT_HOST`, BombVault použije jako hostitele výchozí bránu aplikace, protože `host.docker.internal` se v aplikaci TrueNAS nepřeloží. Podrobnosti, včetně VM na zvolech, popisuje [průvodce zálohou VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale).
+- **Replika ZFS používá jiný klíč.** Replika na druhém serveru ZFS se přihlašuje klíčem, který ukazuje dialog repliky, ne klíčem SSH k hostiteli. Ten přidej na přijímajícím serveru.
+- **Smazaná aplikace se vrací ve dvou krocích.** Nejdřív ji v TrueNAS znovu nainstaluj pod stejným názvem, čímž se znovu vytvoří její síť, a pak obnov její data v BombVaultu. Do té doby kontrola před obnovou hlásí chybějící síť a obnova odmítne dřív, než cokoli změní.
+- **Vedle originálu** vytvoří prostý kontejner Dockeru. Běží, ale obrazovka Apps v TrueNAS ho neukazuje.
+- **Dumpy databází** fungují na připojeních datových sad. Import do datové složky, která je samostatnou datovou sadou, přesune starý obsah do složky vedle ní, takže nadřazená datová sada pro něj potřebuje místo.
 
 ## Jediné povinné nastavení
 
