@@ -20,6 +20,7 @@ import (
 
 	"filippo.io/age"
 
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -662,4 +663,45 @@ func TestSaveDBDumpToPathContainedAndExclusive(t *testing.T) {
 			t.Errorf("run status = %q, want failed", run.Status)
 		}
 	})
+}
+
+func TestSaveDBDumpToPathOwnerPerPlatform(t *testing.T) {
+	payload := []byte("-- dump\nSELECT 1;\n")
+	cases := []struct {
+		name  string
+		plat  platform.Platform
+		owned bool
+	}{
+		{"unraid hands the dump and its new folders to nobody:users", platform.Unraid{}, true},
+		{"truenas keeps the owner of the process", platform.TrueNAS{}, false},
+		{"a generic host keeps the owner of the process", platform.Generic{}, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			svc, _ := downloadFixture(t, payload)
+			svc.SetPlatform(tc.plat)
+			if err := os.MkdirAll(filepath.Join(svc.cfg.HostMountRoot, "user"), 0o750); err != nil {
+				t.Fatal(err)
+			}
+			var chowned int
+			svc.dbDumpChown = func(*os.File, int, int) error {
+				chowned++
+				return nil
+			}
+
+			if _, _, err := svc.StartSaveDBDumpToPath(context.Background(), "pg", "local", "3f9c2a1be0d4aaaa", "user/exports/pg", false); err != nil {
+				t.Fatal(err)
+			}
+			waitForDetachedRun(t, svc)
+
+			// Two new folders and the dump itself.
+			want := 0
+			if tc.owned {
+				want = 3
+			}
+			if chowned != want {
+				t.Errorf("chown calls = %d, want %d", chowned, want)
+			}
+		})
+	}
 }
