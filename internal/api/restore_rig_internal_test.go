@@ -107,6 +107,10 @@ func (d *rigDocker) InspectName(_ context.Context, name string) (string, error) 
 
 func (d *rigDocker) Self(context.Context) (string, error) { return "", nil }
 
+// Networks lists br0, the one network the rig's containers use, so a restore
+// check finds the network of a container that is gone.
+func (d *rigDocker) Networks(context.Context) ([]string, error) { return []string{"br0"}, nil }
+
 func (d *rigDocker) Stop(_ context.Context, name string, _ time.Duration) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
