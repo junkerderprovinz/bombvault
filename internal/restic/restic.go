@@ -2023,49 +2023,23 @@ func statusPercent(line []byte) (float64, bool) {
 
 // reasonPathRe matches absolute-path-like tokens so they can be stripped from a
 // surfaced restic error (defense-in-depth: repo/appdata paths must not leak).
-// Closing punctuation after a path stays in the sentence.
-var reasonPathRe = regexp.MustCompile(`(/[^\s:"']*[^\s:"').,;])+`)
+// A path begins at a slash that opens a token, so a ZFS dataset such as
+// "tank/vms/disk0" stays readable, and closing punctuation after a path stays
+// in the sentence. Replace with "${1}[path]".
+var reasonPathRe = regexp.MustCompile(`(^|[\s"'(\[=:,~])(?:/[^\s:"']*[^\s:"').,;\]])+`)
 
 // credentialRe matches a "user:password@" URL-userinfo segment, e.g. the
-// backupuser:Tr0ub4dor&3@ in "rest:https://backupuser:Tr0ub4dor&3@host:8000/repo"
-// — a syntax the generated deploy recipe documents as valid for restic's
-// rest:/s3: remote backends. reasonPathRe alone can't catch this: it stops at
-// the first ":", so it never reaches past "user" into the password. The
-// username class covers a fully-numeric username too (e.g.
-// "123456:SuperSecret@host") — an earlier version of this regex required the
-// FIRST character to be a letter, which let a numeric-only username through
-// completely unscrubbed. Requiring the closing "@" and excluding "/" from the
-// password body keeps this from matching ordinary "host:port" text (which has
-// no "@") or a "name/tag" split by "/" from something after it (excluded from
-// the password body) — only a real userinfo segment has a ":"-separated pair
-// immediately followed by "@".
-// See internal/api/handlers.go's identically-reasoned twin (and
-// internal/virshcli/virshcli.go's, for libvirt URIs): this is one of several
-// independent applications of the same defense-in-depth scrub.
+// backupuser:Tr0ub4dor&3@ in "ftp://backupuser:Tr0ub4dor&3@host/x". The user
+// name may be empty or all digits. The closing "@" keeps it off a plain
+// "host:port", and the password runs to that "@" across any "/" in it, since
+// a slash inside a word is not scrubbed as a path. internal/api and
+// internal/virshcli apply the same scrub to their own errors.
 //
-// Known cosmetic limitation, not a security issue: this also matches benign
-// "word:word@word" shapes that merely look like userinfo, e.g. a Docker image
-// digest reference "nginx:1.25@sha256:abc123" scrubs to
-// "[redacted]@sha256:abc123". A regex tight enough to exclude that class
-// without risking a false NEGATIVE on a real credential wasn't obvious to
-// construct safely, so this is accepted as a known tradeoff rather than
-// forced.
-//
-// There is also a real, separate false NEGATIVE, pre-existing and independent
-// of the false positive above: a password containing an unencoded "/" is only
-// partially caught. credentialRe's password class excludes "/", and by the
-// time it runs, scrubSecrets' path pass has already consumed the credential's
-// leading "//...@" span as an ordinary path token (see scrubSecrets' doc
-// comment for why paths must run first) — leaving no "@" left for
-// credentialRe to anchor on, so its "[redacted]@" marker never fires at all.
-// Depending on where the "/" falls inside the password, a fragment of the
-// actual secret survives in the clear: e.g.
-// "rest:https://user:wJalrXUtnFEMI/K7MDENG@host:8000/repo" scrubs to
-// "rest:https:[path]:wJalrXUtnFEMI[path]:8000[path]" — the username and the
-// back half of the password vanish as unlabeled path noise, but
-// "wJalrXUtnFEMI" (the front half) is left sitting in the output in plain
-// text. A password with no embedded "/" is unaffected.
-var credentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@"']+@`)
+// It also matches shapes that only look like userinfo, such as the image
+// digest in "nginx:1.25@sha256:abc123", which scrubs to
+// "[redacted]@sha256:abc123". A tighter pattern would risk letting a real
+// password through.
+var credentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s@"']+@`)
 
 // scrubSecrets strips absolute-path-like tokens and then URL-embedded
 // "user:pass@" credentials from s, in that order.
@@ -2100,7 +2074,7 @@ func scrubSecrets(s string) string {
 // message that are NOT a remote repository location: paths first, then
 // URL-embedded credentials, for the reason the doc comment above gives.
 func scrubOutsideARepoLocation(s string) string {
-	s = reasonPathRe.ReplaceAllString(s, "[path]")
+	s = reasonPathRe.ReplaceAllString(s, "${1}[path]")
 	return credentialRe.ReplaceAllString(s, "[redacted]@")
 }
 
@@ -2127,17 +2101,11 @@ var repoLocationRe = regexp.MustCompile(`\b(?:rclone|sftp|rest|s3|b2|azure|gs|sw
 // repoUserinfoRe matches the "user:password@" of a remote repository location,
 // anchored to the location's own structure instead of to generic word shapes.
 //
-// credentialRe cannot do this job here, and the difference is a real leak rather
-// than a nicety. Its password body excludes "/", because outside a repo location
-// it has nothing to anchor on and a greedy body would swallow half a sentence.
-// That was survivable only because reasonPathRe ran FIRST and chewed the rest of
-// the password into path noise - the doc comment on scrubSecrets records exactly
-// that, and records that it leaves the front half ("wJalrXUtnFEMI") sitting in
-// the output. Stop path-scrubbing inside the location, and that same password
-// would now survive WHOLE. So the exemption below has to bring its own scrubber,
-// and this one can be greedy safely: it is bounded by the scheme on the left and
-// by the "@" on the right, and its body excludes whitespace and quotes, so it
-// can never cross out of the location it started in.
+// credentialRe cannot do this job here: it would take the scheme and the "//"
+// along with the userinfo and leave "[redacted]@host", which no longer says
+// what kind of repository failed. This one is bounded by the scheme on the
+// left and by the "@" on the right, and its body excludes whitespace and
+// quotes, so it can never cross out of the location it started in.
 var repoUserinfoRe = regexp.MustCompile(`\b(rclone|sftp|rest|s3|b2|azure|gs|swift):((?:[A-Za-z0-9+.-]+:)?//)?[^@\s"']*@`)
 
 // lastReason returns the most informative line of stderr, with absolute paths

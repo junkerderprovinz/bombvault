@@ -988,12 +988,7 @@ func (e *platformMismatchErr) Is(target error) bool { return target == errUnraid
 // errZvolRebaseFailed is the scrubber-bypass sentinel a rebase-failure error
 // from prepareRestoreVMForTarget's cross-instance zvol rebase loop satisfies
 // via Is, matched by handlers.go's scrubError. The dataset/pool names ARE
-// the message — RebaseZvolDatasetPool's own doc comment names them as the
-// whole point of this error path — and a ZFS dataset name is "<pool>/<rest>",
-// so it necessarily contains "/" characters handlers.go's absPathRe would
-// otherwise mistake for a filesystem path and mangle (e.g. turning
-// `dataset "tank/vm-disk1"` into `dataset "tank[path]"`, destroying exactly
-// the information the message exists to convey). Same bypass pattern as
+// the message, so it reaches the operator verbatim. Same bypass pattern as
 // errRestoreDestination/errUnraidPlatformMismatch, for the identical reason.
 var errZvolRebaseFailed = errors.New("zvol dataset rebase failed")
 
@@ -9624,8 +9619,8 @@ func (s *Service) refName(r domainRepoRef) string {
 
 // scrubSafeName makes an operator's free-text repository name safe to show:
 // a password the name holds is taken out, and a slash, which the error
-// scrubber would turn into "[path]", becomes a middle dot, so "NAS/cold" still
-// reads as the name the operator typed.
+// scrubber takes for a path when it opens a word, becomes a middle dot, so
+// "NAS /cold" still reads as the name the operator typed.
 func scrubSafeName(name string) string {
 	name = scrubRepoLocation(strings.TrimSpace(name))
 	if !strings.ContainsAny(name, `/\`) {
@@ -10197,19 +10192,8 @@ func (s *Service) concludeFileSetRestore(runID, rkey, snapshotID string, rerr er
 // runs.error, protects all three downstream readers at once and doesn't rely
 // on finding every current AND FUTURE non-restic call site individually.
 //
-// An earlier version of this function scrubbed EVERYTHING unconditionally,
-// including the sentinel-tagged errors above, on the theory that running the
-// scrub regexes over already-clean text is a harmless no-op. That was false
-// for exactly these sentinels: scrubSecrets' path regex matches ANY
-// slash-containing token, not just a filesystem path, so routing them through
-// unconditionally silently mangled the very content scrubError's bypasses
-// exist to protect — e.g. turning "host port 8080/tcp is already used by
-// container ..." into "host port 8080[path] is already used ..." and eating
-// a zvol rebase failure's ZFS dataset name the same way — even though the
-// SAME underlying error survives intact when it goes through scrubError
-// instead. Checking scrubBypassMessage first closes that gap without
-// reimplementing scrubError's bypass logic a second, independently-drifting
-// time.
+// The sentinels scrubError lets through are checked first, so a message reads
+// the same in the run history as in the response that refused it.
 func truncateRunErr(err error) string {
 	if err == nil {
 		return ""
@@ -17238,10 +17222,6 @@ func (s *Service) reposThatExist(repos []domainRepoRef, notYet string) ([]domain
 // shortRepoName names a repository in a message without printing a full host
 // path: the LAST segment, or the remote's scheme, is what a reader recognises,
 // and the error scrubber would redact the whole path anyway.
-//
-// Deliberately slash-free. scrubError's absolute-path regex redacts any
-// slash-led token, so "folder backups/cold" would arrive as "folder
-// backups[path]" - which is why this returns one segment and not two.
 func shortRepoName(repo string) string {
 	if restic.IsRemoteRepo(repo) {
 		if i := strings.IndexByte(repo, ':'); i > 0 {

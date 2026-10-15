@@ -1129,21 +1129,15 @@ func publishedHostPorts(in model.Inspect) map[string]bool {
 
 // runErrPathRe and runErrCredentialRe are this package's own copy of the
 // path/credential scrub applied by internal/restic/restic.go and
-// internal/api/handlers.go (see restic.go's credentialRe doc comment for the
-// full reasoning behind the shape of these two and why the path regex must
-// run first — including the known Docker-digest-style false-positive
-// tradeoff and the known unencoded-"/"-in-password false-negative tradeoff,
-// both of which apply equally to this copy). Duplicated rather than
-// imported: this package is dependency-injected and deliberately imports
-// ONLY the Docker/Restic/Templates/Runs interfaces defined here, never the
-// concrete restic/dockercli adapters (see the package doc comment above) — a
-// real dependency on internal/restic just to reuse a two-line regex would
-// break that isolation for something this small and stable to just
-// duplicate, matching how the api and restic packages already each keep
-// their own copy.
+// internal/api/handlers.go; restic.go's doc comments give the reasoning
+// behind their shape. Duplicated rather than imported: this package is
+// dependency-injected and imports only the Docker/Restic/Templates/Runs
+// interfaces defined here, never the concrete restic/dockercli adapters (see
+// the package doc comment above), and a two-line regex is not worth breaking
+// that for. runErrPathRe is replaced with "${1}[path]".
 var (
-	runErrPathRe       = regexp.MustCompile(`(/[^\s:"']*[^\s:"').,;])+`)
-	runErrCredentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@"']+@`)
+	runErrPathRe       = regexp.MustCompile(`(^|[\s"'(\[=:,~])(?:/[^\s:"']*[^\s:"').,;\]])+`)
+	runErrCredentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s@"']+@`)
 )
 
 // scrubRunErr strips absolute-path-like tokens and then URL-embedded
@@ -1203,7 +1197,7 @@ func scrubRunErr(s string) string {
 // scrubRunErrOutsideARepoLocation is the original scrubbing, applied to the
 // parts of a message that are NOT a remote repository location.
 func scrubRunErrOutsideARepoLocation(s string) string {
-	s = runErrPathRe.ReplaceAllString(s, "[path]")
+	s = runErrPathRe.ReplaceAllString(s, "${1}[path]")
 	return runErrCredentialRe.ReplaceAllString(s, "[redacted]@")
 }
 
@@ -1212,11 +1206,9 @@ func scrubRunErrOutsideARepoLocation(s string) string {
 //
 // checkRestoreConflicts' message ("host port 8080/tcp is already used by
 // container ...") holds IP addresses, host ports and container names, never a
-// host filesystem path, and runErrPathRe matches every slash-containing token, so
-// scrubbing it mangles "8080/tcp" into "8080[path]" and destroys exactly the
-// information the message exists to convey. A ZFSRefusal is built from validated
-// dataset names and reason codes for the same reason: scrubbed, "cache/appdata"
-// becomes "[path]" and the run history no longer says which dataset failed.
+// host filesystem path. A ZFSRefusal is built from validated dataset names and
+// reason codes, with the host's own paths already taken out, and the run
+// history has to say which dataset failed.
 //
 // This mirrors internal/api/handlers.go's scrubBypassMessage, which the api
 // package's own copy of truncateRunErr consults for the identical reason.
