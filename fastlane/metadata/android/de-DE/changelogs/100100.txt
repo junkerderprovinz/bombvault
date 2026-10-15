@@ -1,0 +1,1 @@
+Deine Container machen jetzt ein Nickerchen statt Winterschlaf: BombVault 10.1.0 hält einen Container auf ZFS nur so lange an, bis der Snapshot steht, und sichert dann daraus. VMs auf zvols sichert er jetzt auch. Die App hat zugeschaut und kein einziges Mal geblinzelt.

@@ -1,0 +1,1 @@
+Your containers get a power nap instead of a long sleep: BombVault 10.1.0 stops a container on ZFS just long enough to take a snapshot, then backs it up from there. It also backs up VMs on zvols now. The app watched the whole thing and didn't blink once.

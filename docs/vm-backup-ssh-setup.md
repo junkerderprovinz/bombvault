@@ -337,8 +337,9 @@ that had been deleted. Each restore read back with the same SHA-256 as the
 source, the zvol had its old size again, and no snapshot or clone was left
 behind. On TrueNAS SCALE 25.10 BombVault also backed up a whole VM whose only
 disk is a zvol, running (with the graceful and the live method) and shut off.
-A whole VM restore on TrueNAS (undefine, write the zvols, define, boot) is
-covered by tests with fakes only.
+A whole VM restore on TrueNAS (undefine, write the zvols, define, boot) ran
+there as well: the zvol read back with the source's checksum and the VM
+started.
 
 File-backed (Unraid) VM disks are not affected by any of this.
 
