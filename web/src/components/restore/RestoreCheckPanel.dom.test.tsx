@@ -133,6 +133,39 @@ describe("the restore plan", () => {
     });
     expect(screen.getByText(en["restoreCheck.reason.parentMissing"].replace("{name}", "tank/gone"))).toBeTruthy();
   });
+
+  it("says to reinstall the app whose network is gone", () => {
+    show({
+      ok: true,
+      ready: false,
+      checks: [
+        { id: "repository", status: "ok" },
+        { id: "key", status: "ok" },
+        { id: "snapshot", status: "ok" },
+        { id: "network", status: "fail", reason: "network-gone", detail: "ix-webpage_default" },
+      ],
+      plan: null,
+    });
+    expect(
+      screen.getByText(en["restoreCheck.reason.networkGone"].replace("{name}", "ix-webpage_default")),
+    ).toBeTruthy();
+  });
+
+  it("says the networks could not be read and shows Docker's error", () => {
+    const error = "restore: list networks: Cannot connect to the Docker daemon";
+    show({
+      ok: true,
+      ready: false,
+      checks: [
+        { id: "repository", status: "ok" },
+        { id: "key", status: "ok" },
+        { id: "snapshot", status: "ok" },
+        { id: "network", status: "fail", reason: "network-unreadable", detail: error },
+      ],
+      plan: null,
+    });
+    expect(screen.getByText(en["restoreCheck.reason.networkUnreadable"].replace("{error}", error))).toBeTruthy();
+  });
 });
 
 describe("a check still running", () => {

@@ -230,6 +230,8 @@ const sl: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Ni bilo mogoče izmeriti, zato ne blokira.",
   "restoreCheck.reason.parentMissing": "Nabor podatkov nad njim, {name}, ne obstaja. Najprej ga ustvari ali izberi drugo ime.",
   "restoreCheck.reason.networkMissing": "Ta strežnik nima omrežja {name}. Izberi omrežje za vsebnik.",
+  "restoreCheck.reason.networkGone": "Ta strežnik nima omrežja {name}. Če ga je ustvarila aplikacija, na primer aplikacija TrueNAS, najprej znova namesti to aplikacijo in nato obnovi njene podatke.",
+  "restoreCheck.reason.networkUnreadable": "Omrežij na tem strežniku ni bilo mogoče prebrati: {error}",
   "restoreCheck.space": "Potrebuje {need}, prosto {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "novo",

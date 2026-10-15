@@ -230,6 +230,8 @@ const eu: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Ezin izan da neurtu, beraz ez du blokeatzen.",
   "restoreCheck.reason.parentMissing": "Gaineko datu multzoa, {name}, ez dago. Sortu lehenik edo aukeratu beste izen bat.",
   "restoreCheck.reason.networkMissing": "Zerbitzari honek ez du {name} sarerik. Aukeratu sare bat edukiontzirako.",
+  "restoreCheck.reason.networkGone": "Zerbitzari honek ez du {name} sarerik. Aplikazio batek sortu bazuen, TrueNAS aplikazio batek adibidez, berrinstalatu lehenik aplikazio hori eta gero leheneratu haren datuak.",
+  "restoreCheck.reason.networkUnreadable": "Ezin izan dira zerbitzari honetako sareak irakurri: {error}",
   "restoreCheck.space": "{need} behar da, {free} libre.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "berria",

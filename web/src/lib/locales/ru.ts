@@ -190,6 +190,8 @@ const ru: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Не удалось измерить, поэтому не блокирует.",
   "restoreCheck.reason.parentMissing": "Набора данных уровнем выше, {name}, нет. Сначала создайте его или выберите другое имя.",
   "restoreCheck.reason.networkMissing": "На этом сервере нет сети {name}. Выберите сеть для контейнера.",
+  "restoreCheck.reason.networkGone": "На этом сервере нет сети {name}. Если её создало приложение, например приложение TrueNAS, сначала переустановите это приложение, а затем восстановите его данные.",
+  "restoreCheck.reason.networkUnreadable": "Не удалось прочитать сети на этом сервере: {error}",
   "restoreCheck.space": "Нужно {need}, свободно {free}.",
   "restoreCheck.snapshotId": "Снимок {id}",
   "restoreCheck.change.added": "новый",

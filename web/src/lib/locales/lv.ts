@@ -230,6 +230,8 @@ const lv: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Neizdevās izmērīt, tāpēc nebloķē.",
   "restoreCheck.reason.parentMissing": "Augstākā datu kopa {name} nepastāv. Vispirms to izveidojiet vai izvēlieties citu nosaukumu.",
   "restoreCheck.reason.networkMissing": "Šajā serverī nav tīkla {name}. Izvēlieties tīklu konteineram.",
+  "restoreCheck.reason.networkGone": "Šajā serverī nav tīkla {name}. Ja to izveidoja kāda lietotne, piemēram, TrueNAS lietotne, vispirms pārinstalējiet šo lietotni un pēc tam atjaunojiet tās datus.",
+  "restoreCheck.reason.networkUnreadable": "Neizdevās nolasīt šī servera tīklus: {error}",
   "restoreCheck.space": "Vajag {need}, brīvs {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "jauns",

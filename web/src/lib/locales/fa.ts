@@ -230,6 +230,8 @@ const fa: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "اندازه‌گیری نشد، پس مانع نمی‌شود.",
   "restoreCheck.reason.parentMissing": "مجموعه‌داده بالای آن، {name}، وجود ندارد. اول آن را بساز یا نام دیگری انتخاب کن.",
   "restoreCheck.reason.networkMissing": "این سرور شبکه‌ای به نام {name} ندارد. یک شبکه برای کانتینر انتخاب کن.",
+  "restoreCheck.reason.networkGone": "این سرور شبکه‌ای به نام {name} ندارد. اگر برنامه‌ای آن را ساخته، مثلاً یک برنامهٔ TrueNAS، اول همان برنامه را دوباره نصب کن و بعد داده‌هایش را بازیابی کن.",
+  "restoreCheck.reason.networkUnreadable": "شبکه‌های این سرور خوانده نشد: {error}",
   "restoreCheck.space": "به {need} نیاز دارد، {free} آزاد است.",
   "restoreCheck.snapshotId": "اسنپ‌شات {id}",
   "restoreCheck.change.added": "جدید",

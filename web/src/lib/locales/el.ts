@@ -190,6 +190,8 @@ const el: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Δεν μετρήθηκε, οπότε δεν μπλοκάρει.",
   "restoreCheck.reason.parentMissing": "Το σύνολο δεδομένων από πάνω, {name}, δεν υπάρχει. Δημιουργήστε το πρώτα ή διαλέξτε άλλο όνομα.",
   "restoreCheck.reason.networkMissing": "Αυτός ο διακομιστής δεν έχει δίκτυο {name}. Διαλέξτε ένα δίκτυο για το container.",
+  "restoreCheck.reason.networkGone": "Αυτός ο διακομιστής δεν έχει δίκτυο {name}. Αν το δημιούργησε μια εφαρμογή, για παράδειγμα μια εφαρμογή TrueNAS, εγκαταστήστε πρώτα ξανά την εφαρμογή και μετά επαναφέρετε τα δεδομένα της.",
+  "restoreCheck.reason.networkUnreadable": "Δεν ήταν δυνατή η ανάγνωση των δικτύων αυτού του διακομιστή: {error}",
   "restoreCheck.space": "Χρειάζεται {need}, ελεύθερα {free}.",
   "restoreCheck.snapshotId": "Στιγμιότυπο {id}",
   "restoreCheck.change.added": "νέο",

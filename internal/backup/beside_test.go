@@ -100,6 +100,29 @@ func TestRestoreContainerBesideRefusesATakenNameBeforeItWritesAnything(t *testin
 	}
 }
 
+func TestRestoreContainerBesideRefusesACopyWhoseNetworkIsGone(t *testing.T) {
+	docker, restic, runs := &fakeDocker{networks: []string{"bridge", "host", "none"}}, &fakeRestic{}, &fakeRuns{}
+	d := besideDeps(docker, restic, runs)
+	d.Copy.HostConfig.NetworkMode = "ix-plex_default"
+	d.MakeDirs = func() error {
+		t.Error("the copy's folders were made for a network that is gone")
+		return nil
+	}
+
+	err := backup.RestoreContainerBeside(context.Background(), d)
+
+	var gone *backup.NetworkGoneError
+	if !errors.As(err, &gone) || gone.Name != "ix-plex_default" || !strings.Contains(err.Error(), "reinstall") {
+		t.Fatalf("err = %v, want the refusal that names the network and says to reinstall the app", err)
+	}
+	if len(restic.log) != 0 || docker.createdName != "" || slices.Contains(docker.log, "pull:"+d.Copy.Config.Image) {
+		t.Fatalf("a refused restore did something: restic=%v docker=%v", restic.log, docker.log)
+	}
+	if f := runs.finishOf(t, "run-1"); f.status != "failed" {
+		t.Fatalf("run = %+v, want failed", f)
+	}
+}
+
 func TestRestoreContainerBesideRefusesTheOriginalsOwnName(t *testing.T) {
 	docker, restic, runs := &fakeDocker{}, &fakeRestic{}, &fakeRuns{}
 	d := besideDeps(docker, restic, runs)

@@ -57,13 +57,18 @@ func (e *checkEngine) RestorePreview(ctx context.Context, _ string, st restic.Pr
 	return nil
 }
 
-// checkDocker lists containers with their binds and inspects the live one.
+// checkDocker lists containers with their binds and the host's networks, and
+// inspects the live one.
 type checkDocker struct {
 	dockercli.Docker
-	list []dockercli.ContainerInfo
-	live model.Inspect
-	self string
+	list     []dockercli.ContainerInfo
+	live     model.Inspect
+	self     string
+	networks []string
+	netErr   error
 }
+
+func (d *checkDocker) Networks(context.Context) ([]string, error) { return d.networks, d.netErr }
 
 func (d *checkDocker) List(context.Context) ([]dockercli.ContainerInfo, error) { return d.list, nil }
 
@@ -600,6 +605,66 @@ func TestCheckRestoreBringsAGoneContainerBackBesideAStoppedOne(t *testing.T) {
 	}
 	if len(res.Plan.Shared) != 1 || !slices.Equal(res.Plan.Shared[0].Containers, []string{"plex-new"}) {
 		t.Fatalf("shared = %+v", res.Plan.Shared)
+	}
+}
+
+// backedUpOnGoneNetwork puts plex's saved definition on ix-plex_default, a
+// network this host lacks.
+func backedUpOnGoneNetwork(t *testing.T, f *checkFixture) {
+	t.Helper()
+	tg, err := f.svc.store.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var def containerDefinition
+	if err := json.Unmarshal([]byte(tg.Definition), &def); err != nil {
+		t.Fatal(err)
+	}
+	def.Inspect.HostConfig.NetworkMode = "ix-plex_default"
+	raw, err := json.Marshal(def)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tg.Definition = string(raw)
+	if _, err := f.svc.store.UpsertTarget(tg); err != nil {
+		t.Fatal(err)
+	}
+	f.docker.networks = []string{"bridge", "host", "none"}
+}
+
+func assertNetworkGone(t *testing.T, res RestoreCheck) {
+	t.Helper()
+	c := lineOf(t, res, lineNetwork)
+	if res.Ready || c.Status != lineFail || c.Reason != reasonNetworkGone || c.Detail != "ix-plex_default" {
+		t.Fatalf("ready = %v, checks = %+v, want a failed network line naming ix-plex_default", res.Ready, res.Checks)
+	}
+}
+
+func TestCheckRestoreFlagsANetworkTheRestoreWouldRefuse(t *testing.T) {
+	f := newCheckFixture(t)
+	backedUpOnGoneNetwork(t, f)
+
+	assertNetworkGone(t, f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"}))
+
+	f.docker.networks = append(f.docker.networks, "ix-plex_default")
+	if res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"}); !res.Ready {
+		t.Fatalf("checks = %+v, want ready once the network exists", res.Checks)
+	}
+}
+
+func TestCheckRestoreReportsUnreadableNetworksOnTheNetworkLine(t *testing.T) {
+	f := newCheckFixture(t)
+	backedUpOnGoneNetwork(t, f)
+	f.docker.netErr = errors.New("Cannot connect to the Docker daemon")
+
+	res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"})
+
+	c := lineOf(t, res, lineNetwork)
+	if res.Ready || c.Status != lineFail || c.Reason != reasonNetworkUnread || !strings.Contains(c.Detail, "Cannot connect to the Docker daemon") {
+		t.Fatalf("ready = %v, checks = %+v, want a failed network line with Docker's error", res.Ready, res.Checks)
+	}
+	if s := lineOf(t, res, lineSnapshot); s.Status != lineOK {
+		t.Fatalf("snapshot = %+v, want ok: the snapshot was found", s)
 	}
 }
 

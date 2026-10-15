@@ -69,6 +69,9 @@ function lineText(c: CheckLine, t: T): string {
   }
   if (c.reason === "parent-missing") return t("restoreCheck.reason.parentMissing").replace("{name}", c.detail ?? "");
   if (c.reason === "network-missing") return t("restoreCheck.reason.networkMissing").replace("{name}", c.detail ?? "");
+  if (c.reason === "network-gone") return t("restoreCheck.reason.networkGone").replace("{name}", c.detail ?? "");
+  if (c.reason === "network-unreadable")
+    return t("restoreCheck.reason.networkUnreadable").replace("{error}", c.detail ?? "");
   if (c.detail)
     return c.id === "snapshot" && c.status === "ok" ? t("restoreCheck.snapshotId").replace("{id}", c.detail) : c.detail;
   return c.reason && REASON[c.reason] ? t(REASON[c.reason]) : "";

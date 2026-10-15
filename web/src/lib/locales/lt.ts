@@ -230,6 +230,8 @@ const lt: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Nepavyko išmatuoti, todėl neblokuoja.",
   "restoreCheck.reason.parentMissing": "Aukščiau esančio duomenų rinkinio {name} nėra. Pirmiausia jį sukurk arba pasirink kitą pavadinimą.",
   "restoreCheck.reason.networkMissing": "Šiame serveryje nėra tinklo {name}. Pasirink tinklą konteineriui.",
+  "restoreCheck.reason.networkGone": "Šiame serveryje nėra tinklo {name}. Jei jį sukūrė programa, pavyzdžiui, TrueNAS programa, pirmiausia iš naujo įdiek tą programą, o tada atkurk jos duomenis.",
+  "restoreCheck.reason.networkUnreadable": "Nepavyko nuskaityti šio serverio tinklų: {error}",
   "restoreCheck.space": "Reikia {need}, laisva {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "naujas",

@@ -7,6 +7,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"database/sql"
@@ -16518,13 +16519,14 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 }
 
 // pickDRSnapshot resolves the newest off-site snapshot to drill for a domain.
-// containers: the DRDrillTarget container (or, when unset, the most recently
-// backed-up container), scoped to its container:<name> tag, or to its database
-// dumps when those are all it has. vms: the
-// DRDrillTargetVM VM (or, when unset, the most recently backed-up VM), scoped to
-// its vm:<name> tag — same pattern as containers. flash: the newest snapshot
+// containers: the DRDrillTarget container, scoped to its container:<name> tag,
+// or to its database dumps when those are all it has. With no target pinned it
+// takes the most recently backed-up container that has such a snapshot in this
+// repo, since a successful run can write none, for example when every data
+// folder of the container lies outside Host Data. vms: the same with
+// DRDrillTargetVM and the vm:<name> tag. flash: the newest snapshot
 // outright (flash is a single whole-USB image, no per-item scoping). files
-// follows the flash path: the newest snapshot in the files repo outright — a
+// follows the flash path: the newest snapshot in the files repo outright, as a
 // file-set restore is sandbox-cheap and any set proves the repo restorable. zfs
 // takes the newest snapshot carrying a zfs: tag, because a member's tree root
 // is its dataset root and any member proves the repo restorable. An empty repo
@@ -16543,34 +16545,36 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 	case zfsDomain:
 		return newestZFSMemberSnapshot(all)
 	case "containers", "vms":
-		var (
-			target string
-			tagPfx string
-		)
-		if domain == "containers" {
-			target, tagPfx = settings.DRDrillTarget, "container:"
-			if target == "" {
-				target, err = s.newestBackedUpContainer()
+		pinned, tagPfx, noun := settings.DRDrillTarget, "container:", "container"
+		newest := s.backedUpContainersNewestFirst
+		if domain == "vms" {
+			pinned, tagPfx, noun = settings.DRDrillTargetVM, "vm:", "VM"
+			newest = s.backedUpVMsNewestFirst
+		}
+		candidates := []string{pinned}
+		if pinned == "" {
+			if candidates, err = newest(); err != nil {
+				return "", err
 			}
-		} else {
-			target, tagPfx = settings.DRDrillTargetVM, "vm:"
-			if target == "" {
-				target, err = s.newestBackedUpVM()
+			if len(candidates) == 0 {
+				return "", fmt.Errorf("no backed-up %s to drill", noun)
 			}
 		}
-		if err != nil {
-			return "", err
+		for _, name := range candidates {
+			scoped := snapshotsTagged(all, tagPfx+name)
+			if len(scoped) == 0 && domain == "containers" {
+				// A container without appdata paths leaves its database dumps and
+				// nothing else.
+				scoped = snapshotsTagged(all, dbDumpIdentity(name))
+			}
+			if len(scoped) > 0 {
+				return newestSnapshot(scoped).ID, nil
+			}
 		}
-		scoped := snapshotsTagged(all, tagPfx+target)
-		if len(scoped) == 0 && domain == "containers" {
-			// A container without appdata paths leaves its database dumps and
-			// nothing else.
-			scoped = snapshotsTagged(all, dbDumpIdentity(target))
+		if pinned != "" {
+			return "", fmt.Errorf("no off-site snapshot for drill target %q", pinned)
 		}
-		if len(scoped) == 0 {
-			return "", fmt.Errorf("no off-site snapshot for drill target %q", target)
-		}
-		return newestSnapshot(scoped).ID, nil
+		return "", fmt.Errorf("no backed-up %s has an off-site snapshot to drill", noun)
 	default:
 		return "", fmt.Errorf("unknown domain %q", domain)
 	}
@@ -16607,62 +16611,61 @@ func newestSnapshot(snaps []restic.Snapshot) restic.Snapshot {
 	return best
 }
 
-// newestBackedUpContainer returns the container name with the most recent
-// successful backup run — the default DR-drill target when none is pinned.
-func (s *Service) newestBackedUpContainer() (string, error) {
+// backedUpContainersNewestFirst returns the names of the containers with a
+// successful backup run, the most recent first: the default DR-drill targets
+// when none is pinned.
+func (s *Service) backedUpContainersNewestFirst() ([]string, error) {
 	targets, err := s.store.ListTargets()
 	if err != nil {
-		return "", fmt.Errorf("list targets: %w", err)
+		return nil, fmt.Errorf("list targets: %w", err)
 	}
-	best := ""
-	var bestAt int64
-	for _, t := range targets {
-		run, rErr := s.store.LastSuccessfulBackup(t.ID)
-		if rErr != nil {
-			return "", rErr
-		}
-		if run == nil || run.FinishedAt == nil {
-			continue
-		}
-		if *run.FinishedAt >= bestAt {
-			bestAt = *run.FinishedAt
-			best = t.ContainerName
-		}
+	items := make([]drillCandidate, len(targets))
+	for i, t := range targets {
+		items[i] = drillCandidate{id: t.ID, name: t.ContainerName}
 	}
-	if best == "" {
-		return "", errors.New("no backed-up container to drill")
-	}
-	return best, nil
+	return s.byNewestBackup(items)
 }
 
-// newestBackedUpVM returns the VM name with the most recent successful backup
-// run — the default DR-drill target when none is pinned. Mirrors
-// newestBackedUpContainer exactly (VM runs share the same runs table/column,
-// see migration 5 runs_relax_fk).
-func (s *Service) newestBackedUpVM() (string, error) {
+// backedUpVMsNewestFirst is backedUpContainersNewestFirst for VMs, whose runs
+// share the runs table (see migration 5 runs_relax_fk).
+func (s *Service) backedUpVMsNewestFirst() ([]string, error) {
 	targets, err := s.store.ListVMTargets()
 	if err != nil {
-		return "", fmt.Errorf("list VM targets: %w", err)
+		return nil, fmt.Errorf("list VM targets: %w", err)
 	}
-	best := ""
-	var bestAt int64
-	for _, t := range targets {
-		run, rErr := s.store.LastSuccessfulBackup(t.ID)
-		if rErr != nil {
-			return "", rErr
+	items := make([]drillCandidate, len(targets))
+	for i, t := range targets {
+		items[i] = drillCandidate{id: t.ID, name: t.Name}
+	}
+	return s.byNewestBackup(items)
+}
+
+type drillCandidate struct {
+	id, name string
+	at       int64
+}
+
+// byNewestBackup returns the names of items ordered by their last successful
+// backup, newest first, leaving out the ones that never had one.
+func (s *Service) byNewestBackup(items []drillCandidate) ([]string, error) {
+	backedUp := items[:0]
+	for _, it := range items {
+		run, err := s.store.LastSuccessfulBackup(it.id)
+		if err != nil {
+			return nil, err
 		}
 		if run == nil || run.FinishedAt == nil {
 			continue
 		}
-		if *run.FinishedAt >= bestAt {
-			bestAt = *run.FinishedAt
-			best = t.Name
-		}
+		it.at = *run.FinishedAt
+		backedUp = append(backedUp, it)
 	}
-	if best == "" {
-		return "", errors.New("no backed-up VM to drill")
+	slices.SortStableFunc(backedUp, func(a, b drillCandidate) int { return cmp.Compare(b.at, a.at) })
+	names := make([]string, len(backedUp))
+	for i, it := range backedUp {
+		names[i] = it.name
 	}
-	return best, nil
+	return names, nil
 }
 
 // sandboxRestoreVerify restores the whole snapshot tree into a fresh

@@ -94,6 +94,8 @@ const (
 	reasonRefused       = "refused"
 	reasonParentMissing = "parent-missing"
 	reasonNoNetwork     = "network-missing"
+	reasonNetworkGone   = "network-gone"
+	reasonNetworkUnread = "network-unreadable"
 	reasonGone          = "gone"
 	reasonEmpty         = "empty"
 )
@@ -201,6 +203,7 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 	}
 
 	scope, err := s.restoreCheckScope(planOnly(ctx), req)
+	var gone *backup.NetworkGoneError
 	switch {
 	case ctx.Err() != nil:
 		return RestoreCheck{}, ctx.Err()
@@ -213,6 +216,16 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 		out.Checks = append(out.Checks,
 			CheckLine{ID: lineSnapshot, Status: lineOK},
 			CheckLine{ID: lineNetwork, Status: lineFail, Reason: reasonNoNetwork, Detail: missingNetworkName(err)})
+		return out, nil
+	case errors.As(err, &gone):
+		out.Checks = append(out.Checks,
+			CheckLine{ID: lineSnapshot, Status: lineOK},
+			CheckLine{ID: lineNetwork, Status: lineFail, Reason: reasonNetworkGone, Detail: gone.Name})
+		return out, nil
+	case errors.Is(err, backup.ErrListNetworks):
+		out.Checks = append(out.Checks,
+			CheckLine{ID: lineSnapshot, Status: lineOK},
+			CheckLine{ID: lineNetwork, Status: lineFail, Reason: reasonNetworkUnread, Detail: scrubError(err)})
 		return out, nil
 	case isDestinationRefusal(err):
 		out.Checks = append(out.Checks,
@@ -382,6 +395,9 @@ func (s *Service) restoreCheckScope(ctx context.Context, req RestoreCheckRequest
 			if err != nil {
 				return restoreScope{}, err
 			}
+			if err := backup.CheckRestoreNetwork(ctx, s.docker, plan.inspect); err != nil {
+				return restoreScope{}, err
+			}
 			return besideContainerScope(plan, req.Name), nil
 		}
 		plan, err := s.prepareRestore(ctx, req.Name, req.SnapshotID, true, req.Source)
@@ -389,6 +405,9 @@ func (s *Service) restoreCheckScope(ctx context.Context, req RestoreCheckRequest
 			return restoreScope{}, err
 		}
 		if err := s.guardRecreateOverRunning(ctx, req.Name, plan); err != nil {
+			return restoreScope{}, err
+		}
+		if err := backup.CheckRestoreNetwork(ctx, s.docker, plan.inspect); err != nil {
 			return restoreScope{}, err
 		}
 		return containerScope(plan, req.Name), nil

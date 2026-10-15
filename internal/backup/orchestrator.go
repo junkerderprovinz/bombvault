@@ -50,6 +50,9 @@ var (
 	// It wraps a human-readable list of the conflicts; nothing destructive has
 	// run yet, so the user can free the resources and retry.
 	ErrRestoreConflict = errors.New("restore: ip/port conflict")
+	// ErrListNetworks is returned when the network check cannot read the host's
+	// networks from Docker.
+	ErrListNetworks = errors.New("restore: list networks")
 	// ErrVMNotInstalled is returned by a VM backup when the host no longer defines
 	// the domain (deleted, or a template that was undefined). The scheduled job
 	// treats it as a skip, not a failure, so a leftover schedule entry for a
@@ -934,7 +937,7 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 	if err := checkRestoreConflicts(ctx, d); err != nil {
 		return err
 	}
-	if err := checkRestoreNetwork(ctx, d); err != nil {
+	if err := CheckRestoreNetwork(ctx, d.Docker, d.Inspect); err != nil {
 		return err
 	}
 
@@ -1063,27 +1066,35 @@ func checkRestoreConflicts(ctx context.Context, d RestoreDeps) error {
 	return nil
 }
 
-// checkRestoreNetwork refuses a restore whose primary user-defined network is
-// gone from the host, before anything is stopped or removed. BombVault does not
-// create the network itself: its driver, subnet and the labels the tool that
-// owned it expects are not part of the saved definition, and a network made with
-// guesses would clash with that tool the next time it runs. A TrueNAS app, for
-// one, drops its compose network when the app is deleted and makes it again on
-// reinstall.
-func checkRestoreNetwork(ctx context.Context, d RestoreDeps) error {
-	name := userDefinedNetwork(d.Inspect.HostConfig.NetworkMode)
+// NetworkGoneError refuses a restore whose primary user-defined network is
+// gone from the host.
+type NetworkGoneError struct{ Name string }
+
+func (e *NetworkGoneError) Error() string {
+	return fmt.Sprintf("restore: network %q does not exist on this host. "+
+		"If an app or compose project created it, such as a TrueNAS app, reinstall that app first so the network exists, then restore its data", e.Name)
+}
+
+// CheckRestoreNetwork refuses a restore of in whose primary user-defined
+// network is gone from the host, before anything is stopped or removed.
+// BombVault does not create the network itself: its driver, subnet and the
+// labels the tool that owned it expects are not part of the saved definition,
+// and a network made with guesses would clash with that tool the next time it
+// runs. A TrueNAS app, for one, drops its compose network when the app is
+// deleted and makes it again on reinstall.
+func CheckRestoreNetwork(ctx context.Context, docker Docker, in model.Inspect) error {
+	name := userDefinedNetwork(in.HostConfig.NetworkMode)
 	if name == "" {
 		return nil
 	}
-	have, err := d.Docker.Networks(ctx)
+	have, err := docker.Networks(ctx)
 	if err != nil {
-		return fmt.Errorf("restore: list networks: %w", err)
+		return fmt.Errorf("%w: %w", ErrListNetworks, err)
 	}
 	if slices.Contains(have, name) {
 		return nil
 	}
-	return fmt.Errorf("restore: network %q does not exist on this host. "+
-		"If an app or compose project created it, such as a TrueNAS app, reinstall that app first so the network exists, then restore its data", name)
+	return &NetworkGoneError{Name: name}
 }
 
 // userDefinedNetwork returns the network a container's network mode names, or

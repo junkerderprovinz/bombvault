@@ -190,6 +190,8 @@ const tr: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Ölçülemedi, bu yüzden engellemiyor.",
   "restoreCheck.reason.parentMissing": "Üstündeki veri kümesi {name} yok. Önce onu oluştur ya da başka bir ad seç.",
   "restoreCheck.reason.networkMissing": "Bu sunucuda {name} adlı bir ağ yok. Konteyner için bir ağ seç.",
+  "restoreCheck.reason.networkGone": "Bu sunucuda {name} adlı bir ağ yok. Ağı bir uygulama oluşturduysa, örneğin bir TrueNAS uygulaması, önce o uygulamayı yeniden kur, sonra verilerini geri yükle.",
+  "restoreCheck.reason.networkUnreadable": "Bu sunucudaki ağlar okunamadı: {error}",
   "restoreCheck.space": "{need} gerekiyor, {free} boş.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "yeni",

@@ -190,6 +190,8 @@ const ko: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "측정하지 못해 막지 않습니다.",
   "restoreCheck.reason.parentMissing": "상위 데이터세트 {name}이(가) 없습니다. 먼저 만들거나 다른 이름을 고르세요.",
   "restoreCheck.reason.networkMissing": "이 서버에는 {name} 네트워크가 없습니다. 컨테이너에 사용할 네트워크를 고르세요.",
+  "restoreCheck.reason.networkGone": "이 서버에는 {name} 네트워크가 없습니다. TrueNAS 앱처럼 앱이 만든 네트워크라면 먼저 그 앱을 다시 설치한 뒤 데이터를 복원하세요.",
+  "restoreCheck.reason.networkUnreadable": "이 서버의 네트워크를 읽을 수 없습니다: {error}",
   "restoreCheck.space": "필요 {need}, 여유 {free}.",
   "restoreCheck.snapshotId": "스냅샷 {id}",
   "restoreCheck.change.added": "새 파일",

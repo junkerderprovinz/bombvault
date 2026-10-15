@@ -230,6 +230,8 @@ const gl: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "Non se puido medir, así que non bloquea.",
   "restoreCheck.reason.parentMissing": "O conxunto de datos superior, {name}, non existe. Créao primeiro ou escolle outro nome.",
   "restoreCheck.reason.networkMissing": "Este servidor non ten ningunha rede {name}. Escolle unha rede para o contedor.",
+  "restoreCheck.reason.networkGone": "Este servidor non ten ningunha rede {name}. Se a creou unha aplicación, como unha aplicación de TrueNAS, reinstala primeiro esa aplicación e despois restaura os seus datos.",
+  "restoreCheck.reason.networkUnreadable": "Non se puideron ler as redes deste servidor: {error}",
   "restoreCheck.space": "Precisa {need}, {free} libres.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "novo",

@@ -190,6 +190,8 @@ const he: Partial<Translations> = {
   "restoreCheck.reason.unmeasured": "לא ניתן היה למדוד, ולכן לא חוסם.",
   "restoreCheck.reason.parentMissing": "מאגר הנתונים שמעליו, {name}, לא קיים. יש ליצור אותו קודם או לבחור שם אחר.",
   "restoreCheck.reason.networkMissing": "בשרת הזה אין רשת בשם {name}. יש לבחור רשת עבור הקונטיינר.",
+  "restoreCheck.reason.networkGone": "בשרת הזה אין רשת בשם {name}. אם אפליקציה יצרה אותה, למשל אפליקציית TrueNAS, יש להתקין קודם את האפליקציה מחדש ורק אז לשחזר את הנתונים שלה.",
+  "restoreCheck.reason.networkUnreadable": "לא ניתן היה לקרוא את הרשתות בשרת הזה: {error}",
   "restoreCheck.space": "נדרש {need}, פנוי {free}.",
   "restoreCheck.snapshotId": "תמונת מצב {id}",
   "restoreCheck.change.added": "חדש",
