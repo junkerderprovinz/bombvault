@@ -189,6 +189,10 @@ const ko: Partial<Translations> = {
   "restoreCheck.reason.nothing": "이 복원은 파일을 쓰지 않습니다.",
   "restoreCheck.reason.unmeasured": "측정하지 못해 막지 않습니다.",
   "restoreCheck.reason.parentMissing": "상위 데이터세트 {name}이(가) 없습니다. 먼저 만들거나 다른 이름을 고르세요.",
+  "restoreCheck.zvol.title": "ZFS 볼륨",
+  "restoreCheck.zvol.titleHint": "ZFS 볼륨에 있는 VM 디스크는 볼륨 전체에 쓰이는 하나의 이미지로 복원되므로 파일 목록이 아닌 여기에 표시됩니다.",
+  "restoreCheck.zvol.safety": "BombVault가 먼저 스냅샷 {name}을(를) 만들어 지금 있는 내용을 남겨 둡니다.",
+  "restoreCheck.reason.poolMissing": "이 서버에는 ZFS 풀 {name}이(가) 없어 볼륨을 만들 수 없습니다.",
   "restoreCheck.reason.networkMissing": "이 서버에는 {name} 네트워크가 없습니다. 컨테이너에 사용할 네트워크를 고르세요.",
   "restoreCheck.reason.networkGone": "이 서버에는 {name} 네트워크가 없습니다. TrueNAS 앱처럼 앱이 만든 네트워크라면 먼저 그 앱을 다시 설치한 뒤 데이터를 복원하세요.",
   "restoreCheck.reason.networkUnreadable": "이 서버의 네트워크를 읽을 수 없습니다: {error}",
@@ -1106,6 +1110,9 @@ const ko: Partial<Translations> = {
   "dbdump.importNoVersion": "이 덤프에는 데이터베이스 버전이 기록되어 있지 않습니다. 서버가 읽지 못하면 가져오기는 실패합니다.",
   "dbdump.importStops": "가져오는 동안 BombVault는 다음 앱도 중지합니다: {apps}. 끝나면 다시 시작합니다. 가져오기가 시작된 뒤에 실패하면 이전 데이터는 옆에 치워진 채로 남고 앱도 중지된 상태로 남습니다.",
   "dbdump.importDone": "데이터베이스를 가져왔습니다.",
+  "dbdump.keptIncluded": "이 사본은 데이터 폴더 옆에 있어서 그 위 폴더나 데이터세트의 모든 백업과 복제본에 함께 들어갑니다. 데이터베이스가 잘 동작하면 지우세요.",
+  "dbdump.removeKept": "사본 제거",
+  "dbdump.keptRemoved": "사본을 제거했습니다.",
   "dbdump.importRefused.busy": "다른 백업이나 복원이 실행 중입니다. 끝난 뒤에 다시 시도하세요.",
   "dbdump.importRefused.notRunning": "컨테이너를 먼저 시작하세요. 가져오기에는 실행 중인 서버가 필요합니다.",
   "dbdump.importRefused.engineMismatch": "이 덤프는 컨테이너가 돌리는 것과 다른 종류의 데이터베이스에서 나온 것입니다.",
@@ -1364,6 +1371,7 @@ const ko: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "오프사이트 검증됨",
+  "drill.restored": "{name}, 스냅샷 {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "보호됨",

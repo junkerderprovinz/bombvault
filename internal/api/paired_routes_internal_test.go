@@ -446,6 +446,7 @@ var pairedRefused = []string{
 	"DELETE /api/containers/{name}",
 	"DELETE /api/containers/{name}/alias/{old}",
 	"DELETE /api/containers/{name}/backups",
+	"DELETE /api/containers/{name}/dbimport-kept/{stamp}",
 	"DELETE /api/files/sets/{id}",
 	"DELETE /api/files/sets/{id}/backups",
 	"DELETE /api/items/{domain}/{name}/offsite/{target}/removal",

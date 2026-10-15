@@ -189,6 +189,10 @@ const fr: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Cette restauration n'écrit aucun fichier.",
   "restoreCheck.reason.unmeasured": "Impossible à mesurer, donc ne bloque pas.",
   "restoreCheck.reason.parentMissing": "Le jeu de données au-dessus, {name}, n'existe pas. Créez-le d'abord ou choisissez un autre nom.",
+  "restoreCheck.zvol.title": "Volumes ZFS",
+  "restoreCheck.zvol.titleHint": "Un disque de VM sur un volume ZFS revient sous forme d'une seule image écrite sur tout le volume, c'est pourquoi il figure ici et non dans la liste des fichiers.",
+  "restoreCheck.zvol.safety": "BombVault prend d'abord le snapshot {name}, qui garde ce qui s'y trouve maintenant.",
+  "restoreCheck.reason.poolMissing": "Ce serveur n'a pas de pool ZFS {name}, le volume ne peut donc pas être créé.",
   "restoreCheck.reason.networkMissing": "Ce serveur n'a pas de réseau {name}. Choisissez un réseau pour le conteneur.",
   "restoreCheck.reason.networkGone": "Ce serveur n'a pas de réseau {name}. Si une application l'a créé, par exemple une application TrueNAS, réinstallez d'abord cette application, puis restaurez ses données.",
   "restoreCheck.reason.networkUnreadable": "Impossible de lire les réseaux de ce serveur : {error}",
@@ -1115,6 +1119,9 @@ const fr: Partial<Translations> = {
   "dbdump.importNoVersion": "Cet export n'indique pas la version de sa base. L'import échoue si le serveur ne sait pas le lire.",
   "dbdump.importStops": "one=Pendant l'import, BombVault arrête aussi {apps} et la redémarre ensuite. Si l'import échoue une fois commencé, les anciennes données restent de côté et l'application arrêtée.|many=Pendant l'import, BombVault arrête aussi ces applications : {apps}. Il les redémarre ensuite. Si l'import échoue une fois commencé, les anciennes données restent de côté et les applications arrêtées.|other=Pendant l'import, BombVault arrête aussi ces applications : {apps}. Il les redémarre ensuite. Si l'import échoue une fois commencé, les anciennes données restent de côté et les applications arrêtées.",
   "dbdump.importDone": "Base de données importée.",
+  "dbdump.keptIncluded": "La copie se trouve à côté du dossier de données, donc toute sauvegarde ou réplique du dossier ou du jeu de données au-dessus l'inclut. Supprimez-la dès que la base de données fonctionne.",
+  "dbdump.removeKept": "Supprimer la copie",
+  "dbdump.keptRemoved": "La copie est supprimée.",
   "dbdump.importRefused.busy": "Une autre sauvegarde ou restauration est en cours. Réessayez une fois qu'elle est terminée.",
   "dbdump.importRefused.notRunning": "Démarrez d'abord le conteneur ; l'import a besoin du serveur en marche.",
   "dbdump.importRefused.engineMismatch": "Cet export vient d'un autre type de base que celui que fait tourner le conteneur.",
@@ -1373,6 +1380,7 @@ const fr: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "vérifié hors site",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Protégé",

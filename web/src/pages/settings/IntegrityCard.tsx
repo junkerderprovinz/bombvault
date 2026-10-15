@@ -30,7 +30,7 @@ import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useOwnLogin } from "../../lib/useOwnLogin";
 import { useTipBubble } from "../../lib/useTipBubble";
-import { CHECK_LABEL, canDrill, sectionsOf, type Check, type Section } from "../overview/protectionChecks";
+import { CHECK_LABEL, canDrill, drilledText, sectionsOf, type Check, type Section } from "../overview/protectionChecks";
 import { TONE_DOT } from "../overview/ProtectionCard";
 import { Card } from "./shared";
 
@@ -186,7 +186,10 @@ export function IntegrityCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
         else push(r.detail ? `${say("integrity.guardFailed")} ${r.detail}` : say("integrity.guardFailed"), "fail");
       } else if (action === "drill") {
         const r = await runDrill(domain, "offsite", "dr");
-        if (r.ok && r.drill?.ok) push(say("integrity.trialPassed"), "success");
+        if (r.ok && r.drill?.ok) {
+          const drilled = drilledText(t, r.drill.item, r.drill.snapshotId);
+          push(drilled ? `${say("integrity.trialPassed")} (${drilled})` : say("integrity.trialPassed"), "success");
+        }
         else push(r.drill?.detail || r.error || t("verify.failed"), "fail");
       } else {
         const r =

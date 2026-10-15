@@ -189,6 +189,10 @@ const sv: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Den här återställningen skriver inga filer.",
   "restoreCheck.reason.unmeasured": "Kunde inte mätas, så den blockerar inte.",
   "restoreCheck.reason.parentMissing": "Datasetet ovanför, {name}, finns inte. Skapa det först eller välj ett annat namn.",
+  "restoreCheck.zvol.title": "ZFS-volymer",
+  "restoreCheck.zvol.titleHint": "En VM-disk på en ZFS-volym kommer tillbaka som en enda avbild som skrivs över hela volymen, därför står den här och inte i fillistan.",
+  "restoreCheck.zvol.safety": "BombVault tar först snapshotten {name}, som behåller det som finns där nu.",
+  "restoreCheck.reason.poolMissing": "Den här servern har ingen ZFS-pool {name}, så volymen kan inte skapas.",
   "restoreCheck.reason.networkMissing": "Den här servern har inget nätverk som heter {name}. Välj ett nätverk för containern.",
   "restoreCheck.reason.networkGone": "Den här servern har inget nätverk som heter {name}. Om en app skapade det, till exempel en TrueNAS-app, installerar du först om appen och återställer sedan dess data.",
   "restoreCheck.reason.networkUnreadable": "Det gick inte att läsa nätverken på den här servern: {error}",
@@ -1123,6 +1127,9 @@ const sv: Partial<Translations> = {
   "dbdump.importNoVersion": "Den här dumpen anger inte sin databasversion. Importen misslyckas om servern inte kan läsa den.",
   "dbdump.importStops": "one=Under importen stoppar BombVault även {apps} och startar den igen efteråt. Misslyckas importen efter att den har börjat blir den gamla datan liggande vid sidan om och appen stoppad.|other=Under importen stoppar BombVault även de här apparna: {apps}. Efteråt startas de igen. Misslyckas importen efter att den har börjat blir den gamla datan liggande vid sidan om och apparna stoppade.",
   "dbdump.importDone": "Databasen är importerad.",
+  "dbdump.keptIncluded": "Kopian ligger bredvid datamappen, så varje säkerhetskopia eller replik av mappen eller datasetet ovanför tar med den. Ta bort den när databasen fungerar.",
+  "dbdump.removeKept": "Ta bort kopian",
+  "dbdump.keptRemoved": "Kopian är borttagen.",
   "dbdump.importRefused.busy": "En annan säkerhetskopiering eller återställning pågår. Försök igen när den är klar.",
   "dbdump.importRefused.notRunning": "Starta behållaren först; importen behöver servern igång.",
   "dbdump.importRefused.engineMismatch": "Den här dumpen kommer från en annan databastyp än den behållaren kör.",
@@ -1381,6 +1388,7 @@ const sv: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "off-site verifierad",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Skyddad",

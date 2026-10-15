@@ -229,6 +229,10 @@ const lv: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Šī atjaunošana neraksta nevienu failu.",
   "restoreCheck.reason.unmeasured": "Neizdevās izmērīt, tāpēc nebloķē.",
   "restoreCheck.reason.parentMissing": "Augstākā datu kopa {name} nepastāv. Vispirms to izveidojiet vai izvēlieties citu nosaukumu.",
+  "restoreCheck.zvol.title": "ZFS sējumi",
+  "restoreCheck.zvol.titleHint": "VM disks ZFS sējumā tiek atjaunots kā viens attēls, kas ierakstīts pāri visam sējumam, tāpēc tas ir redzams šeit, nevis failu sarakstā.",
+  "restoreCheck.zvol.safety": "BombVault vispirms izveido snapshot {name}, kas saglabā pašreizējo stāvokli.",
+  "restoreCheck.reason.poolMissing": "Šim serverim nav ZFS pūla {name}, tāpēc sējumu nevar izveidot.",
   "restoreCheck.reason.networkMissing": "Šajā serverī nav tīkla {name}. Izvēlieties tīklu konteineram.",
   "restoreCheck.reason.networkGone": "Šajā serverī nav tīkla {name}. Ja to izveidoja kāda lietotne, piemēram, TrueNAS lietotne, vispirms pārinstalējiet šo lietotni un pēc tam atjaunojiet tās datus.",
   "restoreCheck.reason.networkUnreadable": "Neizdevās nolasīt šī servera tīklus: {error}",
@@ -849,6 +853,7 @@ const lv: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "attālinātā pārbaudīta",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "iemesls:",
@@ -1107,6 +1112,9 @@ const lv: Partial<Translations> = {
   "dbdump.importNoVersion": "Šī izgāztuve nefiksē savas datubāzes versiju. Imports neizdosies, ja serveris to nespēs nolasīt.",
   "dbdump.importStops": "zero=Importēšanas laikā BombVault aptur arī šīs lietotnes: {apps}. Pēc tam tās atkal palaiž. Ja imports neizdodas pēc tam, kad jau sācies, vecie dati paliek nolikti malā, bet lietotnes apturētas.|one=Importēšanas laikā BombVault aptur arī {apps} un pēc tam to atkal palaiž. Ja imports neizdodas pēc tam, kad jau sācies, vecie dati paliek nolikti malā, bet lietotne apturēta.|other=Importēšanas laikā BombVault aptur arī šīs lietotnes: {apps}. Pēc tam tās atkal palaiž. Ja imports neizdodas pēc tam, kad jau sācies, vecie dati paliek nolikti malā, bet lietotnes apturētas.",
   "dbdump.importDone": "Datubāze importēta.",
+  "dbdump.keptIncluded": "Kopija atrodas blakus datu mapei, tāpēc to ietver katra augstākās mapes vai datu kopas dublējumkopija vai replika. Noņemiet to, kad datubāze darbojas.",
+  "dbdump.removeKept": "Noņemt kopiju",
+  "dbdump.keptRemoved": "Kopija ir noņemta.",
   "dbdump.importRefused.busy": "Pašlaik notiek cits dublējums vai atjaunošana. Mēģiniet vēlreiz, kad tas būs beidzies.",
   "dbdump.importRefused.notRunning": "Vispirms palaidiet konteineru; importam vajadzīgs strādājošs serveris.",
   "dbdump.importRefused.engineMismatch": "Šī izgāztuve nāk no cita datubāzes veida, nekā darbina konteiners.",

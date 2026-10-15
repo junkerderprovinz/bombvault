@@ -1837,6 +1837,21 @@ func (h *Handler) handleImportDBDump(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// handleRemoveKeptDataDir deletes the previous data folder an import kept.
+// DELETE /api/containers/{name}/dbimport-kept/{stamp}
+func (h *Handler) handleRemoveKeptDataDir(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	removed, err := h.svc.RemoveKeptDataDir(r.Context(), name, r.PathValue("stamp"))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"removed": removed}))
+}
+
 // importRefusalEnvelope answers a refused import: the reason id the page turns
 // into a sentence, plus the two major versions a version mismatch names.
 func importRefusalEnvelope(err error) map[string]any {
@@ -4212,7 +4227,11 @@ func (h *Handler) runViews(runs []store.Run) []runView {
 	keys := h.mcpKeysBehind(runs)
 	views := make([]runView, 0, len(runs))
 	for _, r := range runs {
-		v := runView{Run: r, Target: scrubRepoLocation(name[r.TargetID]), Domain: domain[r.TargetID], Bottleneck: runBottleneck(r.Load)}
+		target := name[r.TargetID]
+		if target == "" {
+			target = r.Subject
+		}
+		v := runView{Run: r, Target: scrubRepoLocation(target), Domain: domain[r.TargetID], Bottleneck: runBottleneck(r.Load)}
 		if key, ok := keys[r.StartedViaKey]; ok {
 			v.StartedViaLabel = scrubRepoLocation(key.Label)
 			v.StartedViaRevoked = key.RevokedAt > 0

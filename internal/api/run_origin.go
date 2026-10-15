@@ -36,17 +36,29 @@ func runOriginFromContext(ctx context.Context) RunOrigin {
 	return o
 }
 
+// runSubjectKey carries what a run on a whole domain works on, such as the
+// container a DR drill restores, into the row startRunWith opens.
+type runSubjectKey struct{}
+
+func withRunSubject(ctx context.Context, subject string) context.Context {
+	return context.WithValue(ctx, runSubjectKey{}, subject)
+}
+
 // startRunWith opens a run row with the "Backup Everything" group and the run
 // origin in the same INSERT, so no run can exist without the audit trail that
 // explains it. It takes the store rather than a Service because runsAdapter is
 // built with a nil one at the bookkeeping-only call sites.
 func startRunWith(ctx context.Context, st *store.Repo, targetID, kind string) (string, error) {
 	o := runOriginFromContext(ctx)
-	return st.StartRunWith(targetID, kind, store.RunMeta{
+	meta := store.RunMeta{
 		GroupID:       runGroupFromContext(ctx),
 		StartedVia:    o.Via,
 		StartedViaKey: o.KeyID,
-	})
+	}
+	if ctx != nil {
+		meta.Subject, _ = ctx.Value(runSubjectKey{}).(string)
+	}
+	return st.StartRunWith(targetID, kind, meta)
 }
 
 func (s *Service) startRun(ctx context.Context, targetID, kind string) (string, error) {

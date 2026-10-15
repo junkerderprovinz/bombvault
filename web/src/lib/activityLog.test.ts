@@ -425,6 +425,26 @@ describe("buildLogLines DR drill and skipped tamper", () => {
     expect(lines[0].text).toContain("error=boom");
   });
 
+  it("names the container and the snapshot a DR drill restored", () => {
+    const run = makeRun({ id: "r-drdrill-o", kind: "drdrill", targetId: "containers", target: "plex", subject: "plex", snapshotId: "cccc3333" });
+    const [line] = buildLogLines([run], {}, [], resolveName, 5_000_000);
+    expect(line.domain).toBe("containers");
+    expect(line.text).toContain("activityLog.lineDRDrillSuccess");
+    expect(line.text).toContain("(drill.restored name=plex snapshot=cccc3333)");
+  });
+
+  it("names only the snapshot of a DR drill on a section without items", () => {
+    const run = makeRun({ id: "r-drdrill-fl", kind: "drdrill", targetId: "flash", target: "Unraid flash", snapshotId: "dddd4444" });
+    const [line] = buildLogLines([run], {}, [], resolveName, 5_000_000);
+    expect(line.text).toContain("(restoreCheck.snapshotId id=dddd4444)");
+  });
+
+  it("leaves a DR drill recorded without a snapshot as it was", () => {
+    const run = makeRun({ id: "r-drdrill-old", kind: "drdrill", targetId: "containers", target: "", snapshotId: "" });
+    const [line] = buildLogLines([run], {}, [], resolveName, 5_000_000);
+    expect(line.text).not.toContain("(");
+  });
+
   it("renders a skipped tamper run as a neutral info line carrying the reason", () => {
     const run = makeRun({
       id: "r-tamper-s",

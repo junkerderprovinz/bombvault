@@ -229,6 +229,10 @@ const sk: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Táto obnova nezapisuje žiadne súbory.",
   "restoreCheck.reason.unmeasured": "Nedalo sa zmerať, preto neblokuje.",
   "restoreCheck.reason.parentMissing": "Dataset nad ním, {name}, neexistuje. Najprv ho vytvor alebo zvoľ iný názov.",
+  "restoreCheck.zvol.title": "Zväzky ZFS",
+  "restoreCheck.zvol.titleHint": "Disk VM na zväzku ZFS sa vracia ako jeden obraz zapísaný cez celý zväzok, preto je uvedený tu, a nie v zozname súborov.",
+  "restoreCheck.zvol.safety": "BombVault najprv vytvorí snapshot {name}, ktorý zachová súčasný stav.",
+  "restoreCheck.reason.poolMissing": "Tento server nemá pool ZFS {name}, takže zväzok sa nedá vytvoriť.",
   "restoreCheck.reason.networkMissing": "Tento server nemá sieť {name}. Zvoľ pre kontajner inú sieť.",
   "restoreCheck.reason.networkGone": "Tento server nemá sieť {name}. Ak ju vytvorila aplikácia, napríklad aplikácia TrueNAS, najprv tú aplikáciu znova nainštaluj a potom obnov jej dáta.",
   "restoreCheck.reason.networkUnreadable": "Siete na tomto serveri sa nepodarilo načítať: {error}",
@@ -849,6 +853,7 @@ const sk: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "externé overené",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "dôvod:",
@@ -1107,6 +1112,9 @@ const sk: Partial<Translations> = {
   "dbdump.importNoVersion": "Tento výpis neuvádza verziu svojej databázy. Import zlyhá, ak ho server nedokáže prečítať.",
   "dbdump.importStops": "one=Počas importu BombVault zastaví aj {apps} a potom ju znova spustí. Ak import zlyhá až po tom, čo sa začal, staré dáta ostanú odložené a aplikácia zastavená.|few=Počas importu BombVault zastaví aj tieto aplikácie: {apps}. Potom ich znova spustí. Ak import zlyhá až po tom, čo sa začal, staré dáta ostanú odložené a aplikácie zastavené.|many=Počas importu BombVault zastaví aj tieto aplikácie: {apps}. Potom ich znova spustí. Ak import zlyhá až po tom, čo sa začal, staré dáta ostanú odložené a aplikácie zastavené.|other=Počas importu BombVault zastaví aj tieto aplikácie: {apps}. Potom ich znova spustí. Ak import zlyhá až po tom, čo sa začal, staré dáta ostanú odložené a aplikácie zastavené.",
   "dbdump.importDone": "Databáza naimportovaná.",
+  "dbdump.keptIncluded": "Kópia leží vedľa priečinka s dátami, takže ju zahrnie každá záloha alebo replika priečinka či datasetu nad ním. Odstráň ju, keď databáza funguje.",
+  "dbdump.removeKept": "Odstrániť kópiu",
+  "dbdump.keptRemoved": "Kópia je odstránená.",
   "dbdump.importRefused.busy": "Práve beží iná záloha alebo obnova. Skús to znova, keď skončí.",
   "dbdump.importRefused.notRunning": "Najprv spusti kontajner; import potrebuje bežiaci server.",
   "dbdump.importRefused.engineMismatch": "Tento výpis pochádza z iného typu databázy, než aký kontajner prevádzkuje.",

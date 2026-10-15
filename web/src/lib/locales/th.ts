@@ -189,6 +189,10 @@ const th: Partial<Translations> = {
   "restoreCheck.reason.nothing": "การกู้คืนนี้ไม่เขียนไฟล์ใด",
   "restoreCheck.reason.unmeasured": "วัดไม่ได้ จึงไม่บล็อก",
   "restoreCheck.reason.parentMissing": "ชุดข้อมูลที่อยู่เหนือขึ้นไป {name} ไม่มีอยู่ สร้างก่อนหรือเลือกชื่ออื่น",
+  "restoreCheck.zvol.title": "วอลุ่ม ZFS",
+  "restoreCheck.zvol.titleHint": "ดิสก์ VM บนวอลุ่ม ZFS จะกลับมาเป็นอิมเมจเดียวที่เขียนทับทั้งวอลุ่ม จึงแสดงที่นี่แทนที่จะอยู่ในรายการไฟล์",
+  "restoreCheck.zvol.safety": "BombVault จะสร้างสแนปช็อต {name} ก่อน ซึ่งเก็บสิ่งที่มีอยู่ตอนนี้ไว้",
+  "restoreCheck.reason.poolMissing": "เซิร์ฟเวอร์นี้ไม่มีพูล ZFS {name} จึงสร้างวอลุ่มไม่ได้",
   "restoreCheck.reason.networkMissing": "เซิร์ฟเวอร์นี้ไม่มีเครือข่าย {name} เลือกเครือข่ายให้คอนเทนเนอร์",
   "restoreCheck.reason.networkGone": "เซิร์ฟเวอร์นี้ไม่มีเครือข่าย {name} ถ้าแอปเป็นผู้สร้างเครือข่ายนี้ เช่น แอปของ TrueNAS ให้ติดตั้งแอปนั้นใหม่ก่อน แล้วจึงกู้คืนข้อมูลของแอป",
   "restoreCheck.reason.networkUnreadable": "อ่านเครือข่ายบนเซิร์ฟเวอร์นี้ไม่ได้: {error}",
@@ -1124,6 +1128,9 @@ const th: Partial<Translations> = {
   "dbdump.importNoVersion": "ดัมป์นี้ไม่ได้บันทึกรุ่นของฐานข้อมูลไว้ หากเซิร์ฟเวอร์อ่านไม่ได้ การนำเข้าจะล้มเหลว",
   "dbdump.importStops": "ระหว่างนำเข้า BombVault จะหยุดแอปเหล่านี้ด้วย: {apps} แล้วเริ่มใหม่อีกครั้งเมื่อเสร็จ ถ้าการนำเข้าล้มเหลวหลังจากเริ่มไปแล้ว ข้อมูลเดิมจะถูกวางไว้ข้าง ๆ และแอปจะยังหยุดอยู่",
   "dbdump.importDone": "นำเข้าฐานข้อมูลแล้ว",
+  "dbdump.keptIncluded": "สำเนานี้อยู่ข้างโฟลเดอร์ข้อมูล การสำรองหรือรีพลิกาของโฟลเดอร์หรือชุดข้อมูลที่อยู่เหนือขึ้นไปจึงรวมสำเนานี้ไว้ด้วย ลบออกเมื่อฐานข้อมูลทำงานได้แล้ว",
+  "dbdump.removeKept": "ลบสำเนา",
+  "dbdump.keptRemoved": "ลบสำเนาแล้ว",
   "dbdump.importRefused.busy": "มีการสำรองข้อมูลหรือการกู้คืนอื่นกำลังทำงานอยู่ ลองอีกครั้งเมื่อเสร็จแล้ว",
   "dbdump.importRefused.notRunning": "เริ่มคอนเทนเนอร์ก่อน การนำเข้าต้องใช้เซิร์ฟเวอร์ที่กำลังทำงาน",
   "dbdump.importRefused.engineMismatch": "ดัมป์นี้มาจากฐานข้อมูลคนละชนิดกับที่คอนเทนเนอร์นี้รันอยู่",
@@ -1382,6 +1389,7 @@ const th: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "ตรวจสอบนอกสถานที่แล้ว",
+  "drill.restored": "{name}, สแนปช็อต {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "ได้รับการป้องกัน",

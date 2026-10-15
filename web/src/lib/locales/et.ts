@@ -229,6 +229,10 @@ const et: Partial<Translations> = {
   "restoreCheck.reason.nothing": "See taastamine ei kirjuta ühtegi faili.",
   "restoreCheck.reason.unmeasured": "Ei õnnestunud mõõta, seega ei blokeeri.",
   "restoreCheck.reason.parentMissing": "Selle kohal olevat andmekogumit {name} ei ole olemas. Loo see enne või vali teine nimi.",
+  "restoreCheck.zvol.title": "ZFS-köited",
+  "restoreCheck.zvol.titleHint": "ZFS-köitel olev VM-i ketas taastatakse ühe tõmmisena, mis kirjutatakse üle kogu köite, seepärast on see siin, mitte failide loendis.",
+  "restoreCheck.zvol.safety": "BombVault teeb enne snapshoti {name}, mis hoiab alles praeguse seisu.",
+  "restoreCheck.reason.poolMissing": "Selles serveris pole ZFS-kogumit {name}, nii et köidet ei saa luua.",
   "restoreCheck.reason.networkMissing": "Selles serveris pole võrku {name}. Vali konteinerile võrk.",
   "restoreCheck.reason.networkGone": "Selles serveris pole võrku {name}. Kui selle lõi mõni rakendus, näiteks TrueNAS-i rakendus, paigalda see rakendus kõigepealt uuesti ja taasta siis selle andmed.",
   "restoreCheck.reason.networkUnreadable": "Selle serveri võrke ei õnnestunud lugeda: {error}",
@@ -849,6 +853,7 @@ const et: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "väline kontrollitud",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "põhjus:",
@@ -1107,6 +1112,9 @@ const et: Partial<Translations> = {
   "dbdump.importNoVersion": "See tõmmis ei märgi oma andmebaasi versiooni. Import ebaõnnestub, kui server seda lugeda ei suuda.",
   "dbdump.importStops": "one=Importimise ajaks peatab BombVault ka rakenduse {apps} ja käivitab selle pärast uuesti. Kui import ebaõnnestub pärast alustamist, jäävad vanad andmed kõrvale ja rakendus peatatuks.|other=Importimise ajaks peatab BombVault ka need rakendused: {apps}. Pärast käivitatakse need uuesti. Kui import ebaõnnestub pärast alustamist, jäävad vanad andmed kõrvale ja rakendused peatatuks.",
   "dbdump.importDone": "Andmebaas imporditud.",
+  "dbdump.keptIncluded": "Koopia asub andmekausta kõrval, nii et iga varukoopia või replika selle kohal olevast kaustast või andmekogumist sisaldab ka seda. Eemalda see, kui andmebaas töötab.",
+  "dbdump.removeKept": "Eemalda koopia",
+  "dbdump.keptRemoved": "Koopia on eemaldatud.",
   "dbdump.importRefused.busy": "Parasjagu käib teine varundus või taaste. Proovi uuesti, kui see on lõppenud.",
   "dbdump.importRefused.notRunning": "Käivita kõigepealt konteiner; import vajab töötavat serverit.",
   "dbdump.importRefused.engineMismatch": "See tõmmis pärineb teist tüüpi andmebaasist kui see, mida konteiner käitab.",

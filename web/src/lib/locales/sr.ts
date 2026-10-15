@@ -229,6 +229,10 @@ const sr: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Ово враћање не уписује ниједну датотеку.",
   "restoreCheck.reason.unmeasured": "Није могло да се измери, па не блокира.",
   "restoreCheck.reason.parentMissing": "Скуп података изнад њега, {name}, не постоји. Прво га направи или изабери друго име.",
+  "restoreCheck.zvol.title": "ZFS волумени",
+  "restoreCheck.zvol.titleHint": "Диск VM-а на ZFS волумену враћа се као једна слика уписана преко целог волумена, па је наведен овде, а не на списку датотека.",
+  "restoreCheck.zvol.safety": "BombVault прво прави снимак {name}, који чува оно што је сада ту.",
+  "restoreCheck.reason.poolMissing": "Овај сервер нема ZFS пул {name}, па волумен не може да се направи.",
   "restoreCheck.reason.networkMissing": "Овај сервер нема мрежу {name}. Изабери мрежу за контејнер.",
   "restoreCheck.reason.networkGone": "Овај сервер нема мрежу {name}. Ако ју је направила апликација, на пример TrueNAS апликација, прво поново инсталирај ту апликацију, па онда врати њене податке.",
   "restoreCheck.reason.networkUnreadable": "Мреже на овом серверу нису могле да се прочитају: {error}",
@@ -849,6 +853,7 @@ const sr: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "спољна копија проверена",
+  "drill.restored": "{name}, снимак {snapshot}",
 
   // Drill reason + check labels (#30)
   "drill.failReasonPrefix": "разлог:",
@@ -1105,6 +1110,9 @@ const sr: Partial<Translations> = {
   "dbdump.importNoVersion": "Овај извод не бележи верзију своје базе података. Увоз не успева ако сервер не може да га прочита.",
   "dbdump.importStops": "one=Током увоза BombVault зауставља и {apps} и после је поново покреће. Ако увоз не успе пошто је већ почео, стари подаци остају по страни, а апликација заустављена.|few=Током увоза BombVault зауставља и ове апликације: {apps}. После их поново покреће. Ако увоз не успе пошто је већ почео, стари подаци остају по страни, а апликације заустављене.|other=Током увоза BombVault зауставља и ове апликације: {apps}. После их поново покреће. Ако увоз не успе пошто је већ почео, стари подаци остају по страни, а апликације заустављене.",
   "dbdump.importDone": "База података је увезена.",
+  "dbdump.keptIncluded": "Копија стоји поред фасцикле са подацима, па је укључује свака резервна копија или реплика фасцикле или скупа података изнад ње. Уклони је кад база података проради.",
+  "dbdump.removeKept": "Уклони копију",
+  "dbdump.keptRemoved": "Копија је уклоњена.",
   "dbdump.importRefused.busy": "Управо траје друга резервна копија или враћање. Покушај поново када се заврши.",
   "dbdump.importRefused.notRunning": "Прво покрени контејнер; увозу треба сервер у раду.",
   "dbdump.importRefused.engineMismatch": "Овај извод долази из друге врсте базе података од оне коју контејнер покреће.",

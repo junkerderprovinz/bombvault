@@ -189,6 +189,10 @@ const el: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Αυτή η επαναφορά δεν γράφει αρχεία.",
   "restoreCheck.reason.unmeasured": "Δεν μετρήθηκε, οπότε δεν μπλοκάρει.",
   "restoreCheck.reason.parentMissing": "Το σύνολο δεδομένων από πάνω, {name}, δεν υπάρχει. Δημιουργήστε το πρώτα ή διαλέξτε άλλο όνομα.",
+  "restoreCheck.zvol.title": "Τόμοι ZFS",
+  "restoreCheck.zvol.titleHint": "Ένας δίσκος VM σε τόμο ZFS επιστρέφει ως μία εικόνα που γράφεται πάνω σε όλο τον τόμο, γι' αυτό εμφανίζεται εδώ και όχι στη λίστα αρχείων.",
+  "restoreCheck.zvol.safety": "Το BombVault παίρνει πρώτα το στιγμιότυπο {name}, που κρατά ό,τι υπάρχει τώρα.",
+  "restoreCheck.reason.poolMissing": "Αυτός ο διακομιστής δεν έχει ZFS pool {name}, οπότε ο τόμος δεν μπορεί να δημιουργηθεί.",
   "restoreCheck.reason.networkMissing": "Αυτός ο διακομιστής δεν έχει δίκτυο {name}. Διαλέξτε ένα δίκτυο για το container.",
   "restoreCheck.reason.networkGone": "Αυτός ο διακομιστής δεν έχει δίκτυο {name}. Αν το δημιούργησε μια εφαρμογή, για παράδειγμα μια εφαρμογή TrueNAS, εγκαταστήστε πρώτα ξανά την εφαρμογή και μετά επαναφέρετε τα δεδομένα της.",
   "restoreCheck.reason.networkUnreadable": "Δεν ήταν δυνατή η ανάγνωση των δικτύων αυτού του διακομιστή: {error}",
@@ -1123,6 +1127,9 @@ const el: Partial<Translations> = {
   "dbdump.importNoVersion": "Αυτό το αντίγραφο δεν καταγράφει την έκδοση της βάσης του. Η εισαγωγή αποτυγχάνει αν ο διακομιστής δεν μπορεί να το διαβάσει.",
   "dbdump.importStops": "one=Κατά την εισαγωγή το BombVault σταματά επίσης την {apps} και μετά την ξεκινά ξανά. Αν η εισαγωγή αποτύχει αφού έχει ξεκινήσει, τα παλιά δεδομένα μένουν στην άκρη και η εφαρμογή σταματημένη.|other=Κατά την εισαγωγή το BombVault σταματά επίσης αυτές τις εφαρμογές: {apps}. Μετά τις ξεκινά ξανά. Αν η εισαγωγή αποτύχει αφού έχει ξεκινήσει, τα παλιά δεδομένα μένουν στην άκρη και οι εφαρμογές σταματημένες.",
   "dbdump.importDone": "Η βάση δεδομένων εισήχθη.",
+  "dbdump.keptIncluded": "Το αντίγραφο βρίσκεται δίπλα στον φάκελο δεδομένων, οπότε κάθε αντίγραφο ασφαλείας ή ρέπλικα του φακέλου ή του συνόλου δεδομένων από πάνω το περιλαμβάνει. Αφαιρέστε το μόλις η βάση δεδομένων λειτουργεί.",
+  "dbdump.removeKept": "Αφαίρεση αντιγράφου",
+  "dbdump.keptRemoved": "Το αντίγραφο αφαιρέθηκε.",
   "dbdump.importRefused.busy": "Τρέχει ήδη άλλο αντίγραφο ασφαλείας ή επαναφορά. Δοκιμάστε ξανά μόλις τελειώσει.",
   "dbdump.importRefused.notRunning": "Ξεκινήστε πρώτα το κοντέινερ· η εισαγωγή χρειάζεται τον διακομιστή σε λειτουργία.",
   "dbdump.importRefused.engineMismatch": "Αυτό το αντίγραφο προέρχεται από άλλον τύπο βάσης από αυτόν που τρέχει το κοντέινερ.",
@@ -1381,6 +1388,7 @@ const el: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "επαληθευμένο εκτός τόπου",
+  "drill.restored": "{name}, στιγμιότυπο {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Προστατευμένο",

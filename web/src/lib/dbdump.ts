@@ -66,6 +66,14 @@ export function importHadErrors(note: string | null | undefined): boolean {
   return (note ?? "").startsWith("database imported with errors");
 }
 
+const KEPT_STAMP = /\.bombvault-before-import-(\d{8}-\d{6})(?=$|[;,\s])/;
+
+/** The time stamp that names the data folder an import kept, read off its
+ *  note, or null when the note names none. */
+export function keptStampOf(note: string | null | undefined): string | null {
+  return KEPT_STAMP.exec(note ?? "")?.[1] ?? null;
+}
+
 /** The refusal ids POST /dbdumps/{id}/import answers with, one sentence each. */
 const IMPORT_REFUSED: Record<string, TranslationKey> = {
   busy: "dbdump.importRefused.busy",

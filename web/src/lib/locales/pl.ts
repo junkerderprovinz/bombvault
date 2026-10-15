@@ -189,6 +189,10 @@ const pl: Partial<Translations> = {
   "restoreCheck.reason.nothing": "To przywracanie nie zapisuje żadnych plików.",
   "restoreCheck.reason.unmeasured": "Nie dało się zmierzyć, więc nie blokuje.",
   "restoreCheck.reason.parentMissing": "Zbiór danych nad nim, {name}, nie istnieje. Najpierw go utwórz albo wybierz inną nazwę.",
+  "restoreCheck.zvol.title": "Wolumeny ZFS",
+  "restoreCheck.zvol.titleHint": "Dysk VM na woluminie ZFS wraca jako jeden obraz zapisany na całym woluminie, dlatego jest wymieniony tutaj, a nie na liście plików.",
+  "restoreCheck.zvol.safety": "BombVault najpierw robi snapshot {name}, który zachowuje obecny stan.",
+  "restoreCheck.reason.poolMissing": "Ten serwer nie ma puli ZFS {name}, więc nie można utworzyć woluminu.",
   "restoreCheck.reason.networkMissing": "Ten serwer nie ma sieci {name}. Wybierz sieć dla kontenera.",
   "restoreCheck.reason.networkGone": "Ten serwer nie ma sieci {name}. Jeśli utworzyła ją aplikacja, na przykład aplikacja TrueNAS, najpierw zainstaluj ją ponownie, a potem przywróć jej dane.",
   "restoreCheck.reason.networkUnreadable": "Nie udało się odczytać sieci na tym serwerze: {error}",
@@ -1109,6 +1113,9 @@ const pl: Partial<Translations> = {
   "dbdump.importNoVersion": "Ten zrzut nie zapisuje wersji swojej bazy danych. Import się nie uda, jeśli serwer nie zdoła go odczytać.",
   "dbdump.importStops": "one=Na czas importu BombVault zatrzymuje też {apps} i potem uruchamia ją ponownie. Jeśli import zawiedzie już po rozpoczęciu, stare dane zostają odstawione, a aplikacja zatrzymana.|few=Na czas importu BombVault zatrzymuje też te aplikacje: {apps}. Potem uruchamia je ponownie. Jeśli import zawiedzie już po rozpoczęciu, stare dane zostają odstawione, a aplikacje zatrzymane.|many=Na czas importu BombVault zatrzymuje też te aplikacje: {apps}. Potem uruchamia je ponownie. Jeśli import zawiedzie już po rozpoczęciu, stare dane zostają odstawione, a aplikacje zatrzymane.|other=Na czas importu BombVault zatrzymuje też te aplikacje: {apps}. Potem uruchamia je ponownie. Jeśli import zawiedzie już po rozpoczęciu, stare dane zostają odstawione, a aplikacje zatrzymane.",
   "dbdump.importDone": "Baza danych zaimportowana.",
+  "dbdump.keptIncluded": "Kopia leży obok folderu z danymi, więc obejmuje ją każda kopia zapasowa lub replika folderu albo zbioru danych nad nim. Usuń ją, gdy baza danych działa.",
+  "dbdump.removeKept": "Usuń kopię",
+  "dbdump.keptRemoved": "Kopia została usunięta.",
   "dbdump.importRefused.busy": "Trwa już inna kopia zapasowa albo przywracanie. Spróbuj ponownie, gdy się zakończy.",
   "dbdump.importRefused.notRunning": "Najpierw uruchom kontener; import potrzebuje działającego serwera.",
   "dbdump.importRefused.engineMismatch": "Ten zrzut pochodzi z innego typu bazy danych niż ten, który uruchamia kontener.",
@@ -1366,6 +1373,7 @@ const pl: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "zweryfikowano poza siedzibą",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Chronione",

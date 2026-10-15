@@ -229,6 +229,10 @@ const lt: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Šis atkūrimas nerašo jokių failų.",
   "restoreCheck.reason.unmeasured": "Nepavyko išmatuoti, todėl neblokuoja.",
   "restoreCheck.reason.parentMissing": "Aukščiau esančio duomenų rinkinio {name} nėra. Pirmiausia jį sukurk arba pasirink kitą pavadinimą.",
+  "restoreCheck.zvol.title": "ZFS tomai",
+  "restoreCheck.zvol.titleHint": "VM diskas ZFS tome grąžinamas kaip vienas atvaizdas, įrašomas per visą tomą, todėl jis rodomas čia, o ne failų sąraše.",
+  "restoreCheck.zvol.safety": "BombVault pirmiausia padaro snapshot {name}, kuris išsaugo tai, kas yra dabar.",
+  "restoreCheck.reason.poolMissing": "Šiame serveryje nėra ZFS pool {name}, todėl tomo sukurti negalima.",
   "restoreCheck.reason.networkMissing": "Šiame serveryje nėra tinklo {name}. Pasirink tinklą konteineriui.",
   "restoreCheck.reason.networkGone": "Šiame serveryje nėra tinklo {name}. Jei jį sukūrė programa, pavyzdžiui, TrueNAS programa, pirmiausia iš naujo įdiek tą programą, o tada atkurk jos duomenis.",
   "restoreCheck.reason.networkUnreadable": "Nepavyko nuskaityti šio serverio tinklų: {error}",
@@ -849,6 +853,7 @@ const lt: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "nuotolinė saugykla patikrinta",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "priežastis:",
@@ -1107,6 +1112,9 @@ const lt: Partial<Translations> = {
   "dbdump.importNoVersion": "Ši išklotinė neužrašo savo duomenų bazės versijos. Importas nepavyks, jei serveris jos nesugebės perskaityti.",
   "dbdump.importStops": "one=Importo metu BombVault taip pat sustabdo {apps} ir po to vėl ją paleidžia. Jei importas nepavyksta jau prasidėjęs, seni duomenys lieka nuošalyje, o programa sustabdyta.|few=Importo metu BombVault taip pat sustabdo šias programas: {apps}. Po to vėl jas paleidžia. Jei importas nepavyksta jau prasidėjęs, seni duomenys lieka nuošalyje, o programos sustabdytos.|many=Importo metu BombVault taip pat sustabdo šias programas: {apps}. Po to vėl jas paleidžia. Jei importas nepavyksta jau prasidėjęs, seni duomenys lieka nuošalyje, o programos sustabdytos.|other=Importo metu BombVault taip pat sustabdo šias programas: {apps}. Po to vėl jas paleidžia. Jei importas nepavyksta jau prasidėjęs, seni duomenys lieka nuošalyje, o programos sustabdytos.",
   "dbdump.importDone": "Duomenų bazė importuota.",
+  "dbdump.keptIncluded": "Kopija yra šalia duomenų aplanko, todėl ją įtraukia kiekviena virš jo esančio aplanko ar duomenų rinkinio atsarginė kopija ar replika. Pašalink ją, kai duomenų bazė veikia.",
+  "dbdump.removeKept": "Pašalinti kopiją",
+  "dbdump.keptRemoved": "Kopija pašalinta.",
   "dbdump.importRefused.busy": "Šiuo metu vyksta kita atsarginė kopija ar atkūrimas. Pabandyk dar kartą, kai baigsis.",
   "dbdump.importRefused.notRunning": "Pirma paleisk konteinerį; importui reikia veikiančio serverio.",
   "dbdump.importRefused.engineMismatch": "Ši išklotinė yra iš kitokio tipo duomenų bazės, nei paleidžia konteineris.",

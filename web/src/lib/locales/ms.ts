@@ -229,6 +229,10 @@ const ms: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Pemulihan ini tidak menulis sebarang fail.",
   "restoreCheck.reason.unmeasured": "Tidak dapat diukur, jadi tidak menghalang.",
   "restoreCheck.reason.parentMissing": "Set data di atasnya, {name}, tidak wujud. Cipta dahulu atau pilih nama lain.",
+  "restoreCheck.zvol.title": "Volum ZFS",
+  "restoreCheck.zvol.titleHint": "Cakera VM pada volum ZFS dipulihkan sebagai satu imej yang ditulis ke seluruh volum, jadi ia disenaraikan di sini dan bukan dalam senarai fail.",
+  "restoreCheck.zvol.safety": "BombVault mengambil snapshot {name} dahulu, yang menyimpan apa yang ada sekarang.",
+  "restoreCheck.reason.poolMissing": "Pelayan ini tiada pool ZFS {name}, jadi volum tidak dapat dicipta.",
   "restoreCheck.reason.networkMissing": "Pelayan ini tiada rangkaian {name}. Pilih rangkaian untuk bekas.",
   "restoreCheck.reason.networkGone": "Pelayan ini tiada rangkaian {name}. Jika rangkaian itu dicipta oleh aplikasi, contohnya aplikasi TrueNAS, pasang semula aplikasi itu dahulu, kemudian pulihkan datanya.",
   "restoreCheck.reason.networkUnreadable": "Rangkaian pada pelayan ini tidak dapat dibaca: {error}",
@@ -849,6 +853,7 @@ const ms: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "luar tapak disahkan",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "sebab:",
@@ -1107,6 +1112,9 @@ const ms: Partial<Translations> = {
   "dbdump.importNoVersion": "Dump ini tidak merekodkan versi pangkalan datanya. Import akan gagal jika pelayan tidak dapat membacanya.",
   "dbdump.importStops": "Semasa import, BombVault juga menghentikan aplikasi berikut: {apps}. Selepas itu ia dimulakan semula. Jika import gagal selepas bermula, data lama kekal diketepikan dan aplikasi kekal berhenti.",
   "dbdump.importDone": "Pangkalan data telah diimport.",
+  "dbdump.keptIncluded": "Salinan ini terletak di sebelah folder data, jadi setiap sandaran atau replika folder atau set data di atasnya turut memuatkannya. Buang salinan ini apabila pangkalan data berfungsi.",
+  "dbdump.removeKept": "Buang salinan",
+  "dbdump.keptRemoved": "Salinan telah dibuang.",
   "dbdump.importRefused.busy": "Ada sandaran atau pemulihan lain sedang berjalan. Cuba lagi selepas ia selesai.",
   "dbdump.importRefused.notRunning": "Mulakan bekas dahulu; import memerlukan pelayan yang berjalan.",
   "dbdump.importRefused.engineMismatch": "Dump ini datang daripada jenis pangkalan data yang berlainan daripada yang dijalankan bekas.",

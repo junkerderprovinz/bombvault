@@ -189,6 +189,10 @@ const cs: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Tato obnova nezapisuje žádné soubory.",
   "restoreCheck.reason.unmeasured": "Nešlo změřit, proto neblokuje.",
   "restoreCheck.reason.parentMissing": "Dataset nad ním, {name}, neexistuje. Nejdřív ho vytvoř, nebo zvol jiný název.",
+  "restoreCheck.zvol.title": "Svazky ZFS",
+  "restoreCheck.zvol.titleHint": "Disk VM na svazku ZFS se vrací jako jeden obraz zapsaný přes celý svazek, proto je uveden tady, a ne v seznamu souborů.",
+  "restoreCheck.zvol.safety": "BombVault nejdřív pořídí snapshot {name}, který zachová současný stav.",
+  "restoreCheck.reason.poolMissing": "Tento server nemá pool ZFS {name}, takže svazek nejde vytvořit.",
   "restoreCheck.reason.networkMissing": "Tento server nemá síť {name}. Zvol pro kontejner jinou síť.",
   "restoreCheck.reason.networkGone": "Tento server nemá síť {name}. Pokud ji vytvořila aplikace, třeba aplikace TrueNAS, nejdřív tu aplikaci znovu nainstaluj a pak obnov její data.",
   "restoreCheck.reason.networkUnreadable": "Sítě na tomto serveru se nepodařilo načíst: {error}",
@@ -1121,6 +1125,9 @@ const cs: Partial<Translations> = {
   "dbdump.importNoVersion": "Tento výpis neuvádí verzi své databáze. Import selže, pokud ho server nedokáže přečíst.",
   "dbdump.importStops": "one=Během importu BombVault zastaví i {apps} a potom ji zase spustí. Když import selže poté, co už začal, stará data zůstanou odložená a aplikace zastavená.|few=Během importu BombVault zastaví i tyto aplikace: {apps}. Potom je zase spustí. Když import selže poté, co už začal, stará data zůstanou odložená a aplikace zastavené.|many=Během importu BombVault zastaví i tyto aplikace: {apps}. Potom je zase spustí. Když import selže poté, co už začal, stará data zůstanou odložená a aplikace zastavené.|other=Během importu BombVault zastaví i tyto aplikace: {apps}. Potom je zase spustí. Když import selže poté, co už začal, stará data zůstanou odložená a aplikace zastavené.",
   "dbdump.importDone": "Databáze naimportována.",
+  "dbdump.keptIncluded": "Kopie leží vedle složky s daty, takže ji zahrne každá záloha nebo replika složky či datasetu nad ní. Odstraň ji, jakmile databáze funguje.",
+  "dbdump.removeKept": "Odstranit kopii",
+  "dbdump.keptRemoved": "Kopie je odstraněna.",
   "dbdump.importRefused.busy": "Právě běží jiná záloha nebo obnova. Zkus to znovu, až doběhne.",
   "dbdump.importRefused.notRunning": "Nejprve spusť kontejner; import potřebuje běžící server.",
   "dbdump.importRefused.engineMismatch": "Tento výpis pochází z jiného typu databáze, než jaký kontejner provozuje.",
@@ -1379,6 +1386,7 @@ const cs: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "ověřeno mimo lokalitu",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Chráněno",

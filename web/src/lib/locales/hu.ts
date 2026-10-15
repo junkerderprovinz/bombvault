@@ -189,6 +189,10 @@ const hu: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Ez a visszaállítás nem ír fájlt.",
   "restoreCheck.reason.unmeasured": "Nem sikerült mérni, ezért nem zárol.",
   "restoreCheck.reason.parentMissing": "A fölötte lévő adatkészlet, {name}, nem létezik. Előbb hozd létre, vagy válassz másik nevet.",
+  "restoreCheck.zvol.title": "ZFS kötetek",
+  "restoreCheck.zvol.titleHint": "A ZFS köteten lévő VM-lemez egyetlen képként, az egész kötetre írva tér vissza, ezért itt szerepel, nem a fájllistában.",
+  "restoreCheck.zvol.safety": "A BombVault előbb elkészíti a(z) {name} snapshotot, amely megőrzi a mostani állapotot.",
+  "restoreCheck.reason.poolMissing": "Ezen a szerveren nincs {name} nevű ZFS pool, így a kötet nem hozható létre.",
   "restoreCheck.reason.networkMissing": "Ezen a szerveren nincs {name} nevű hálózat. Válassz hálózatot a konténernek.",
   "restoreCheck.reason.networkGone": "Ezen a szerveren nincs {name} nevű hálózat. Ha egy alkalmazás hozta létre, például egy TrueNAS-alkalmazás, előbb telepítsd újra az alkalmazást, aztán állítsd vissza az adatait.",
   "restoreCheck.reason.networkUnreadable": "Nem sikerült beolvasni a szerver hálózatait: {error}",
@@ -1116,6 +1120,9 @@ const hu: Partial<Translations> = {
   "dbdump.importNoVersion": "Ez a mentés nem rögzíti az adatbázisa verzióját. Az importálás meghiúsul, ha a kiszolgáló nem tudja olvasni.",
   "dbdump.importStops": "one=Az importálás idejére a BombVault a(z) {apps} alkalmazást is leállítja, utána pedig újraindítja. Ha az importálás a megkezdése után hiúsul meg, a régi adatok félretéve maradnak, az alkalmazás pedig leállítva.|other=Az importálás idejére a BombVault ezeket az alkalmazásokat is leállítja: {apps}. Utána újraindítja őket. Ha az importálás a megkezdése után hiúsul meg, a régi adatok félretéve maradnak, az alkalmazások pedig leállítva.",
   "dbdump.importDone": "Az adatbázis importálva.",
+  "dbdump.keptIncluded": "A másolat az adatmappa mellett van, ezért a fölötte lévő mappa vagy adatkészlet minden mentése és replikája tartalmazza. Töröld, amint az adatbázis működik.",
+  "dbdump.removeKept": "Másolat törlése",
+  "dbdump.keptRemoved": "A másolat törölve.",
   "dbdump.importRefused.busy": "Épp másik biztonsági mentés vagy visszaállítás fut. Próbáld újra, ha befejeződött.",
   "dbdump.importRefused.notRunning": "Előbb indítsd el a konténert; az importáláshoz futó kiszolgáló kell.",
   "dbdump.importRefused.engineMismatch": "Ez a mentés más adatbázistípusból származik, mint amit a konténer futtat.",
@@ -1374,6 +1381,7 @@ const hu: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "telephelyen kívül ellenőrizve",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Védett",

@@ -189,6 +189,10 @@ const ar: Partial<Translations> = {
   "restoreCheck.reason.nothing": "هذه الاستعادة لا تكتب أي ملفات.",
   "restoreCheck.reason.unmeasured": "تعذر القياس، لذا لا يمنع الاستعادة.",
   "restoreCheck.reason.parentMissing": "مجموعة البيانات التي فوقها، {name}، غير موجودة. يجب إنشاؤها أولًا أو اختيار اسم آخر.",
+  "restoreCheck.zvol.title": "وحدات تخزين ZFS",
+  "restoreCheck.zvol.titleHint": "يعود قرص الآلة الافتراضية الموجود على وحدة تخزين ZFS كصورة واحدة تُكتب فوق وحدة التخزين كلها، لذلك يظهر هنا لا في قائمة الملفات.",
+  "restoreCheck.zvol.safety": "يأخذ BombVault أولًا اللقطة {name}، التي تحفظ ما هو موجود الآن.",
+  "restoreCheck.reason.poolMissing": "لا يوجد على هذا الخادم تجمّع ZFS باسم {name}، لذلك لا يمكن إنشاء وحدة التخزين.",
   "restoreCheck.reason.networkMissing": "لا توجد على هذا الخادم شبكة باسم {name}. يجب اختيار شبكة للحاوية.",
   "restoreCheck.reason.networkGone": "لا توجد على هذا الخادم شبكة باسم {name}. إذا كان تطبيق قد أنشأها، مثل تطبيق TrueNAS، فيجب إعادة تثبيت هذا التطبيق أولًا ثم استعادة بياناته.",
   "restoreCheck.reason.networkUnreadable": "تعذّرت قراءة الشبكات على هذا الخادم: {error}",
@@ -1124,6 +1128,9 @@ const ar: Partial<Translations> = {
   "dbdump.importNoVersion": "لا تسجّل هذه النسخة إصدار قاعدة البيانات. سيفشل الاستيراد إذا لم يستطع الخادم قراءتها.",
   "dbdump.importStops": "zero=أثناء الاستيراد يوقف BombVault أيضاً هذه التطبيقات: {apps}. ثم يشغّلها من جديد بعد ذلك. إذا فشل الاستيراد بعد أن بدأ، تبقى البيانات القديمة جانباً وتبقى التطبيقات متوقفة.|one=أثناء الاستيراد يوقف BombVault أيضاً {apps} ثم يشغّله من جديد بعد ذلك. إذا فشل الاستيراد بعد أن بدأ، تبقى البيانات القديمة جانباً ويبقى التطبيق متوقفاً.|two=أثناء الاستيراد يوقف BombVault أيضاً هذين التطبيقين: {apps}. ثم يشغّلهما من جديد بعد ذلك. إذا فشل الاستيراد بعد أن بدأ، تبقى البيانات القديمة جانباً ويبقى التطبيقان متوقفين.|few=أثناء الاستيراد يوقف BombVault أيضاً هذه التطبيقات: {apps}. ثم يشغّلها من جديد بعد ذلك. إذا فشل الاستيراد بعد أن بدأ، تبقى البيانات القديمة جانباً وتبقى التطبيقات متوقفة.|many=أثناء الاستيراد يوقف BombVault أيضاً هذه التطبيقات: {apps}. ثم يشغّلها من جديد بعد ذلك. إذا فشل الاستيراد بعد أن بدأ، تبقى البيانات القديمة جانباً وتبقى التطبيقات متوقفة.|other=أثناء الاستيراد يوقف BombVault أيضاً هذه التطبيقات: {apps}. ثم يشغّلها من جديد بعد ذلك. إذا فشل الاستيراد بعد أن بدأ، تبقى البيانات القديمة جانباً وتبقى التطبيقات متوقفة.",
   "dbdump.importDone": "تم استيراد قاعدة البيانات.",
+  "dbdump.keptIncluded": "تقع النسخة بجوار مجلد البيانات، لذلك تشملها أي نسخة احتياطية أو نسخة مكررة للمجلد أو مجموعة البيانات التي فوقه. احذفها حين تعمل قاعدة البيانات.",
+  "dbdump.removeKept": "إزالة النسخة",
+  "dbdump.keptRemoved": "أُزيلت النسخة.",
   "dbdump.importRefused.busy": "يجري الآن نسخ احتياطي أو استعادة أخرى. حاول مرة أخرى بعد انتهائها.",
   "dbdump.importRefused.notRunning": "يجب تشغيل الحاوية أولاً؛ يحتاج الاستيراد إلى الخادم وهو يعمل.",
   "dbdump.importRefused.engineMismatch": "هذه النسخة من نوع قاعدة بيانات غير الذي تشغّله الحاوية.",
@@ -1382,6 +1389,7 @@ const ar: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "مُتحقَّق منه خارج الموقع",
+  "drill.restored": "{name}، اللقطة {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "محمي",

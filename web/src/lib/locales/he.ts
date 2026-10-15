@@ -189,6 +189,10 @@ const he: Partial<Translations> = {
   "restoreCheck.reason.nothing": "השחזור הזה לא כותב קבצים.",
   "restoreCheck.reason.unmeasured": "לא ניתן היה למדוד, ולכן לא חוסם.",
   "restoreCheck.reason.parentMissing": "מאגר הנתונים שמעליו, {name}, לא קיים. יש ליצור אותו קודם או לבחור שם אחר.",
+  "restoreCheck.zvol.title": "אמצעי אחסון ZFS",
+  "restoreCheck.zvol.titleHint": "דיסק VM שנמצא על אמצעי אחסון ZFS חוזר כתמונה אחת שנכתבת על כל אמצעי האחסון, ולכן הוא מופיע כאן ולא ברשימת הקבצים.",
+  "restoreCheck.zvol.safety": "BombVault יוצר קודם את תמונת המצב {name}, ששומרת את מה שיש עכשיו.",
+  "restoreCheck.reason.poolMissing": "בשרת הזה אין מאגר ZFS בשם {name}, ולכן אי אפשר ליצור את אמצעי האחסון.",
   "restoreCheck.reason.networkMissing": "בשרת הזה אין רשת בשם {name}. יש לבחור רשת עבור הקונטיינר.",
   "restoreCheck.reason.networkGone": "בשרת הזה אין רשת בשם {name}. אם אפליקציה יצרה אותה, למשל אפליקציית TrueNAS, יש להתקין קודם את האפליקציה מחדש ורק אז לשחזר את הנתונים שלה.",
   "restoreCheck.reason.networkUnreadable": "לא ניתן היה לקרוא את הרשתות בשרת הזה: {error}",
@@ -1115,6 +1119,9 @@ const he: Partial<Translations> = {
   "dbdump.importNoVersion": "הגיבוי הזה אינו מתעד את גרסת מסד הנתונים שלו. הייבוא ייכשל אם השרת לא יוכל לקרוא אותו.",
   "dbdump.importStops": "one=במהלך הייבוא BombVault עוצר גם את {apps} ומפעיל אותו מחדש לאחר מכן. אם הייבוא נכשל אחרי שהתחיל, הנתונים הישנים נשארים בצד והיישום עצור.|two=במהלך הייבוא BombVault עוצר גם את שני היישומים האלה: {apps}. לאחר מכן הוא מפעיל אותם מחדש. אם הייבוא נכשל אחרי שהתחיל, הנתונים הישנים נשארים בצד והיישומים עצורים.|other=במהלך הייבוא BombVault עוצר גם את היישומים האלה: {apps}. לאחר מכן הוא מפעיל אותם מחדש. אם הייבוא נכשל אחרי שהתחיל, הנתונים הישנים נשארים בצד והיישומים עצורים.",
   "dbdump.importDone": "מסד הנתונים יובא.",
+  "dbdump.keptIncluded": "העותק נמצא ליד תיקיית הנתונים, ולכן כל גיבוי או רפליקה של התיקייה או של מאגר הנתונים שמעליה כוללים אותו. יש להסיר אותו כשמסד הנתונים עובד.",
+  "dbdump.removeKept": "הסרת העותק",
+  "dbdump.keptRemoved": "העותק הוסר.",
   "dbdump.importRefused.busy": "מתבצעים כעת גיבוי או שחזור אחרים. אפשר לנסות שוב כשיסתיימו.",
   "dbdump.importRefused.notRunning": "יש להפעיל קודם את המכולה; הייבוא זקוק לשרת פעיל.",
   "dbdump.importRefused.engineMismatch": "הגיבוי הזה מגיע מסוג מסד נתונים אחר מזה שהמכולה מריצה.",
@@ -1373,6 +1380,7 @@ const he: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "אומת מחוץ לאתר",
+  "drill.restored": "{name}, תמונת מצב {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "מוגן",

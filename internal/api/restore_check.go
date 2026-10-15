@@ -93,6 +93,7 @@ const (
 	reasonShort         = "short"
 	reasonRefused       = "refused"
 	reasonParentMissing = "parent-missing"
+	reasonNoPool        = "pool-missing"
 	reasonNoNetwork     = "network-missing"
 	reasonNetworkGone   = "network-gone"
 	reasonNetworkUnread = "network-unreadable"
@@ -158,6 +159,9 @@ type restoreScope struct {
 	// segments. restic has no dry run for that, so the plan names each file
 	// and counts it at the most it can take.
 	images []backup.VMRestoreImage
+	// zvols are the zvol disks a VM restore writes whole, which no dry run
+	// covers.
+	zvols []backup.VMRestoreBlockDisk
 	// beside is where a restore next to the original puts its copy.
 	beside *BesidePlan
 	// extraFiles are small files the restore writes itself, as container paths.
@@ -244,7 +248,7 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 	if err != nil {
 		return RestoreCheck{}, err
 	}
-	out.Checks = append(out.Checks, s.spaceLine(scope, measured, plan.Partial || plan.Error != ""))
+	out.Checks = append(out.Checks, s.spaceLine(scope, measured, plan.Zvols, plan.Partial || plan.Error != ""))
 	if !scope.download {
 		s.definitionChanges(ctx, scope, &plan)
 		plan.Shared = s.sharedFolders(ctx, scope)
@@ -508,7 +512,7 @@ func containerScope(plan containerRestorePlan, name string) restoreScope {
 // vmScope mirrors backup.RestoreVM, which restores the folder of each disk.
 // The NVRAM and TPM state travel over SSH and have no dry run.
 func vmScope(plan vmRestorePlan, name string) restoreScope {
-	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: true, vmName: name, vmXML: plan.domainXML}
+	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: true, vmName: name, vmXML: plan.domainXML, zvols: plan.blockDisks}
 	if len(plan.images) > 0 {
 		sc.images = plan.images
 		for _, img := range plan.images {

@@ -229,6 +229,10 @@ const hr: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Ovo vraćanje ne zapisuje nijednu datoteku.",
   "restoreCheck.reason.unmeasured": "Nije se moglo izmjeriti, pa ne blokira.",
   "restoreCheck.reason.parentMissing": "Skup podataka iznad njega, {name}, ne postoji. Najprije ga izradite ili odaberite drugo ime.",
+  "restoreCheck.zvol.title": "ZFS volumeni",
+  "restoreCheck.zvol.titleHint": "Disk VM-a na ZFS volumenu vraća se kao jedna slika zapisana preko cijelog volumena, pa je naveden ovdje, a ne na popisu datoteka.",
+  "restoreCheck.zvol.safety": "BombVault najprije snima snapshot {name}, koji čuva ono što je sada tamo.",
+  "restoreCheck.reason.poolMissing": "Ovaj poslužitelj nema ZFS pool {name}, pa se volumen ne može izraditi.",
   "restoreCheck.reason.networkMissing": "Ovaj poslužitelj nema mrežu {name}. Odaberite mrežu za kontejner.",
   "restoreCheck.reason.networkGone": "Ovaj poslužitelj nema mrežu {name}. Ako ju je stvorila aplikacija, na primjer aplikacija za TrueNAS, najprije ponovno instalirajte tu aplikaciju, a zatim vratite njezine podatke.",
   "restoreCheck.reason.networkUnreadable": "Mreže na ovom poslužitelju nije bilo moguće pročitati: {error}",
@@ -849,6 +853,7 @@ const hr: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "provjereno izvan lokacije",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "razlog:",
@@ -1107,6 +1112,9 @@ const hr: Partial<Translations> = {
   "dbdump.importNoVersion": "Ovaj ispis ne bilježi verziju svoje baze podataka. Uvoz ne uspijeva ako ga poslužitelj ne može pročitati.",
   "dbdump.importStops": "one=Tijekom uvoza BombVault zaustavlja i {apps} te je nakon toga ponovno pokreće. Ako uvoz zakaže nakon što je započeo, stari podaci ostaju sa strane, a aplikacija zaustavljena.|few=Tijekom uvoza BombVault zaustavlja i ove aplikacije: {apps}. Nakon toga ih ponovno pokreće. Ako uvoz zakaže nakon što je započeo, stari podaci ostaju sa strane, a aplikacije zaustavljene.|other=Tijekom uvoza BombVault zaustavlja i ove aplikacije: {apps}. Nakon toga ih ponovno pokreće. Ako uvoz zakaže nakon što je započeo, stari podaci ostaju sa strane, a aplikacije zaustavljene.",
   "dbdump.importDone": "Baza podataka uvezena.",
+  "dbdump.keptIncluded": "Kopija se nalazi pored mape s podacima, pa je uključuje svaka sigurnosna kopija ili replika mape ili skupa podataka iznad nje. Uklonite je kad baza podataka proradi.",
+  "dbdump.removeKept": "Ukloni kopiju",
+  "dbdump.keptRemoved": "Kopija je uklonjena.",
   "dbdump.importRefused.busy": "Upravo traje druga sigurnosna kopija ili vraćanje. Pokušajte ponovno kad završi.",
   "dbdump.importRefused.notRunning": "Prvo pokrenite kontejner; uvoz treba poslužitelj u radu.",
   "dbdump.importRefused.engineMismatch": "Ovaj ispis dolazi iz druge vrste baze podataka od one koju kontejner pokreće.",

@@ -455,11 +455,18 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
   }
 
   if (run.kind === "drdrill") {
+    // The drill names what it restored, which older rows lack.
+    const drilled = !run.snapshotId
+      ? ""
+      : run.subject
+        ? resolveName("drill.restored", { name: run.subject, snapshot: run.snapshotId })
+        : resolveName("restoreCheck.snapshotId", { id: run.snapshotId });
+    const what = drilled ? `${domainText} (${drilled})` : domainText;
     return run.status === "success"
-      ? { status: "success", text: resolveName("activityLog.lineDRDrillSuccess", { domain: domainText }) }
+      ? { status: "success", text: resolveName("activityLog.lineDRDrillSuccess", { domain: what }) }
       : run.status === "failed"
-        ? { status: "failed", text: resolveName("activityLog.lineDRDrillFailed", { domain: domainText, error: reasonText(run.error, resolveName) }) }
-        : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
+        ? { status: "failed", text: resolveName("activityLog.lineDRDrillFailed", { domain: what, error: reasonText(run.error, resolveName) }) }
+        : { status: "info", text: resolveName("activityLog.lineOther", { name: what, kind: run.kind, status: run.status }) };
   }
 
   if (run.kind === "tamper") {

@@ -189,6 +189,10 @@ const it: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Questo ripristino non scrive file.",
   "restoreCheck.reason.unmeasured": "Non misurabile, quindi non blocca.",
   "restoreCheck.reason.parentMissing": "Il dataset superiore, {name}, non esiste. Crealo prima o scegli un altro nome.",
+  "restoreCheck.zvol.title": "Volumi ZFS",
+  "restoreCheck.zvol.titleHint": "Un disco di VM su un volume ZFS torna come un'unica immagine scritta sull'intero volume, perciò compare qui e non nell'elenco dei file.",
+  "restoreCheck.zvol.safety": "BombVault scatta prima lo snapshot {name}, che conserva ciò che c'è ora.",
+  "restoreCheck.reason.poolMissing": "Questo server non ha un pool ZFS {name}, quindi il volume non può essere creato.",
   "restoreCheck.reason.networkMissing": "Questo server non ha nessuna rete {name}. Scegli una rete per il container.",
   "restoreCheck.reason.networkGone": "Questo server non ha nessuna rete {name}. Se l'ha creata un'app, per esempio un'app di TrueNAS, reinstalla prima quell'app e poi ripristina i suoi dati.",
   "restoreCheck.reason.networkUnreadable": "Impossibile leggere le reti di questo server: {error}",
@@ -1105,6 +1109,9 @@ const it: Partial<Translations> = {
   "dbdump.importNoVersion": "Questo dump non registra la versione del suo database. L'importazione fallisce se il server non riesce a leggerlo.",
   "dbdump.importStops": "one=Durante l'importazione BombVault ferma anche {apps} e poi la riavvia. Se l'importazione fallisce dopo essere iniziata, i vecchi dati restano da parte e l'applicazione ferma.|many=Durante l'importazione BombVault ferma anche queste applicazioni: {apps}. Poi le riavvia. Se l'importazione fallisce dopo essere iniziata, i vecchi dati restano da parte e le applicazioni ferme.|other=Durante l'importazione BombVault ferma anche queste applicazioni: {apps}. Poi le riavvia. Se l'importazione fallisce dopo essere iniziata, i vecchi dati restano da parte e le applicazioni ferme.",
   "dbdump.importDone": "Database importato.",
+  "dbdump.keptIncluded": "La copia si trova accanto alla cartella dati, quindi ogni backup o replica della cartella o del dataset superiore la include. Rimuovila quando il database funziona.",
+  "dbdump.removeKept": "Rimuovi copia",
+  "dbdump.keptRemoved": "Copia rimossa.",
   "dbdump.importRefused.busy": "È in corso un altro backup o ripristino. Riprova quando sarà finito.",
   "dbdump.importRefused.notRunning": "Avvia prima il contenitore; l'importazione ha bisogno del server in esecuzione.",
   "dbdump.importRefused.engineMismatch": "Questo dump proviene da un tipo di database diverso da quello che il contenitore esegue.",
@@ -1373,6 +1380,7 @@ const it: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "verificato off-site",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Protetto",

@@ -229,6 +229,10 @@ const eu: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Leheneratze honek ez du fitxategirik idazten.",
   "restoreCheck.reason.unmeasured": "Ezin izan da neurtu, beraz ez du blokeatzen.",
   "restoreCheck.reason.parentMissing": "Gaineko datu multzoa, {name}, ez dago. Sortu lehenik edo aukeratu beste izen bat.",
+  "restoreCheck.zvol.title": "ZFS bolumenak",
+  "restoreCheck.zvol.titleHint": "ZFS bolumen bateko VM diskoa irudi bakar gisa itzultzen da, bolumen osoaren gainean idatzita; horregatik agertzen da hemen eta ez fitxategien zerrendan.",
+  "restoreCheck.zvol.safety": "BombVault-ek lehenik {name} snapshota egiten du, orain dagoena gordetzen duena.",
+  "restoreCheck.reason.poolMissing": "Zerbitzari honek ez du {name} ZFS pool-ik, beraz ezin da bolumena sortu.",
   "restoreCheck.reason.networkMissing": "Zerbitzari honek ez du {name} sarerik. Aukeratu sare bat edukiontzirako.",
   "restoreCheck.reason.networkGone": "Zerbitzari honek ez du {name} sarerik. Aplikazio batek sortu bazuen, TrueNAS aplikazio batek adibidez, berrinstalatu lehenik aplikazio hori eta gero leheneratu haren datuak.",
   "restoreCheck.reason.networkUnreadable": "Ezin izan dira zerbitzari honetako sareak irakurri: {error}",
@@ -849,6 +853,7 @@ const eu: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "kanpokoa egiaztatuta",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "arrazoia:",
@@ -1107,6 +1112,9 @@ const eu: Partial<Translations> = {
   "dbdump.importNoVersion": "Iraulketa honek ez du bere datu-basearen bertsioa jasotzen. Inportazioak huts egingo du zerbitzariak irakurri ezin badu.",
   "dbdump.importStops": "one=Inportatzen duen bitartean, BombVault-ek {apps} ere gelditzen du eta gero berriro abiarazten. Inportazioak hasi ondoren huts egiten badu, datu zaharrak alde batera geratzen dira eta aplikazioa geldituta.|other=Inportatzen duen bitartean, BombVault-ek aplikazio hauek ere gelditzen ditu: {apps}. Gero berriro abiarazten ditu. Inportazioak hasi ondoren huts egiten badu, datu zaharrak alde batera geratzen dira eta aplikazioak geldituta.",
   "dbdump.importDone": "Datu-basea inportatu da.",
+  "dbdump.keptIncluded": "Kopia datu-karpetaren ondoan dago, beraz goiko karpetaren edo datu multzoaren babeskopia edo erreplika orok barne hartzen du. Kendu datu-basea ondo dabilenean.",
+  "dbdump.removeKept": "Kendu kopia",
+  "dbdump.keptRemoved": "Kopia kendu da.",
   "dbdump.importRefused.busy": "Beste babeskopia edo leheneratze bat martxan dago. Saiatu berriro amaitzean.",
   "dbdump.importRefused.notRunning": "Abiarazi edukiontzia lehenik; inportazioak zerbitzaria martxan behar du.",
   "dbdump.importRefused.engineMismatch": "Iraulketa hau edukiontziak darabilena ez den beste datu-base mota batetik dator.",

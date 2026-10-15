@@ -109,6 +109,13 @@ func ZFSListVolumesArgs(pool string) []string {
 	return []string{"zfs", "list", "-H", "-p", "-t", "volume", "-o", "name,volsize", "-r", pool}
 }
 
+// ZFSListSpaceArgs returns the argv that lists every filesystem and zvol on
+// the host, one "name<TAB>type<TAB>available" line each in bytes,
+// so a restore can tell where a zvol goes and how much room ZFS has there.
+func ZFSListSpaceArgs() []string {
+	return []string{"zfs", "list", "-H", "-p", "-t", "filesystem,volume", "-o", "name,type,available"}
+}
+
 // ZFSCreateVolumeArgs returns the argv that creates a zvol of size bytes,
 // with any missing parent datasets.
 func ZFSCreateVolumeArgs(dataset string, size int64) []string {

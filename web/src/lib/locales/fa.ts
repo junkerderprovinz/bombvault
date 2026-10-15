@@ -229,6 +229,10 @@ const fa: Partial<Translations> = {
   "restoreCheck.reason.nothing": "این بازیابی هیچ فایلی نمی‌نویسد.",
   "restoreCheck.reason.unmeasured": "اندازه‌گیری نشد، پس مانع نمی‌شود.",
   "restoreCheck.reason.parentMissing": "مجموعه‌داده بالای آن، {name}، وجود ندارد. اول آن را بساز یا نام دیگری انتخاب کن.",
+  "restoreCheck.zvol.title": "حجم‌های ZFS",
+  "restoreCheck.zvol.titleHint": "دیسک VM روی یک حجم ZFS به‌صورت یک تصویر که روی کل حجم نوشته می‌شود برمی‌گردد، برای همین اینجا آمده و نه در فهرست فایل‌ها.",
+  "restoreCheck.zvol.safety": "BombVault اول اسنپ‌شات {name} را می‌گیرد که آنچه الان هست را نگه می‌دارد.",
+  "restoreCheck.reason.poolMissing": "این سرور استخر ZFS با نام {name} ندارد، پس حجم ساخته نمی‌شود.",
   "restoreCheck.reason.networkMissing": "این سرور شبکه‌ای به نام {name} ندارد. یک شبکه برای کانتینر انتخاب کن.",
   "restoreCheck.reason.networkGone": "این سرور شبکه‌ای به نام {name} ندارد. اگر برنامه‌ای آن را ساخته، مثلاً یک برنامهٔ TrueNAS، اول همان برنامه را دوباره نصب کن و بعد داده‌هایش را بازیابی کن.",
   "restoreCheck.reason.networkUnreadable": "شبکه‌های این سرور خوانده نشد: {error}",
@@ -849,6 +853,7 @@ const fa: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "خارج از محل تأیید شده",
+  "drill.restored": "{name}، اسنپ‌شات {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "دلیل:",
@@ -1107,6 +1112,9 @@ const fa: Partial<Translations> = {
   "dbdump.importNoVersion": "این برون‌ریز نسخهٔ پایگاه دادهٔ خود را ثبت نمی‌کند. اگر سرور نتواند آن را بخواند، درون‌ریزی شکست می‌خورد.",
   "dbdump.importStops": "one=BombVault هنگام درون‌ریزی {apps} را هم متوقف می‌کند و پس از آن دوباره راه‌اندازی‌اش می‌کند. اگر درون‌ریزی پس از آغاز شکست بخورد، داده‌های قبلی کنار گذاشته می‌مانند و برنامه متوقف.|other=BombVault هنگام درون‌ریزی این برنامه‌ها را هم متوقف می‌کند: {apps}. پس از آن دوباره راه‌اندازی‌شان می‌کند. اگر درون‌ریزی پس از آغاز شکست بخورد، داده‌های قبلی کنار گذاشته می‌مانند و برنامه‌ها متوقف.",
   "dbdump.importDone": "پایگاه داده درون‌ریزی شد.",
+  "dbdump.keptIncluded": "این نسخه کنار پوشه داده است، پس هر پشتیبان یا نسخه تکثیری از پوشه یا مجموعه‌داده بالای آن، آن را هم در بر می‌گیرد. وقتی پایگاه داده کار کرد، آن را حذف کن.",
+  "dbdump.removeKept": "حذف نسخه",
+  "dbdump.keptRemoved": "نسخه حذف شد.",
   "dbdump.importRefused.busy": "پشتیبان‌گیری یا بازگردانی دیگری در جریان است. پس از پایان آن دوباره تلاش کن.",
   "dbdump.importRefused.notRunning": "نخست کانتینر را راه بینداز؛ درون‌ریزی به سرورِ در حال اجرا نیاز دارد.",
   "dbdump.importRefused.engineMismatch": "این برون‌ریز از نوع پایگاه دادهٔ دیگری است، نه آنچه کانتینر اجرا می‌کند.",

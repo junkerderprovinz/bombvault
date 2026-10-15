@@ -286,6 +286,10 @@ export const en = {
   "restoreCheck.reason.nothing": "This restore writes no files.",
   "restoreCheck.reason.unmeasured": "Could not be measured, so it does not block.",
   "restoreCheck.reason.parentMissing": "The dataset above it, {name}, does not exist. Create it first or choose another name.",
+  "restoreCheck.zvol.title": "ZFS volumes",
+  "restoreCheck.zvol.titleHint": "A VM disk on a ZFS volume comes back as one image written over the whole volume, so it shows up here and not in the file list.",
+  "restoreCheck.zvol.safety": "BombVault first takes the snapshot {name}, which keeps what is there now.",
+  "restoreCheck.reason.poolMissing": "This server has no ZFS pool {name}, so the volume cannot be created.",
   "restoreCheck.reason.networkMissing": "This server has no network {name}. Choose a network for the container.",
   "restoreCheck.reason.networkGone": "This server has no network {name}. If an app created it, such as a TrueNAS app, reinstall that app first and then restore its data.",
   "restoreCheck.reason.networkUnreadable": "Could not read the networks on this server: {error}",
@@ -948,6 +952,7 @@ export const en = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "off-site verified",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels (#30)
   "drill.failReasonPrefix": "reason:",
@@ -1323,6 +1328,9 @@ export const en = {
   "dbdump.importStops":
     "one=BombVault also stops {apps} for the import and starts it again afterwards. A failure once the import has begun leaves the old data set aside and the app stopped.|other=BombVault also stops these apps for the import: {apps}. It starts them again afterwards. A failure once the import has begun leaves the old data set aside and the apps stopped.",
   "dbdump.importDone": "Database imported.",
+  "dbdump.keptIncluded": "The copy sits next to the data folder, so any backup or replica of the folder or dataset above it includes the copy too. Remove it once the database works.",
+  "dbdump.removeKept": "Remove copy",
+  "dbdump.keptRemoved": "The copy is removed.",
   "dbdump.importRefused.busy": "Another backup or restore is running. Try again when it has finished.",
   "dbdump.importRefused.notRunning": "Start the container first; the import needs the running server.",
   "dbdump.importRefused.engineMismatch": "This dump comes from a different database type than the container runs.",
@@ -5172,6 +5180,10 @@ export const de: Translations = {
   "restoreCheck.reason.nothing": "Diese Wiederherstellung schreibt keine Dateien.",
   "restoreCheck.reason.unmeasured": "Ließ sich nicht messen, sperrt deshalb nicht.",
   "restoreCheck.reason.parentMissing": "Das Dataset darüber, {name}, gibt es nicht. Leg es zuerst an oder wähl einen anderen Namen.",
+  "restoreCheck.zvol.title": "ZFS-Volumes",
+  "restoreCheck.zvol.titleHint": "Eine VM-Platte auf einem ZFS-Volume kommt als ein Abbild zurück, das über das ganze Volume geschrieben wird. Deshalb steht sie hier und nicht in der Dateiliste.",
+  "restoreCheck.zvol.safety": "BombVault legt vorher den Snapshot {name} an, der den jetzigen Stand behält.",
+  "restoreCheck.reason.poolMissing": "Dieser Server hat keinen ZFS-Pool {name}, also kann das Volume nicht angelegt werden.",
   "restoreCheck.reason.networkMissing": "Das Netzwerk {name} gibt es auf diesem Server nicht. Wähl ein Netzwerk für den Container.",
   "restoreCheck.reason.networkGone": "Das Netzwerk {name} gibt es auf diesem Server nicht. Wenn eine App es angelegt hat, etwa eine TrueNAS-App, installier diese App zuerst neu und stell dann ihre Daten wieder her.",
   "restoreCheck.reason.networkUnreadable": "Die Netzwerke auf diesem Server ließen sich nicht lesen: {error}",
@@ -5794,6 +5806,7 @@ export const de: Translations = {
 
   // DR-Test-Steuerung (echte Off-site-Wiederherstellung) + Off-site-Badge
   "drill.offsiteVerified": "Off-site verifiziert",
+  "drill.restored": "{name}, Snapshot {snapshot}",
 
   // Drill reason + check labels (#30)
   "drill.failReasonPrefix": "Grund:",
@@ -6062,6 +6075,9 @@ export const de: Translations = {
   "dbdump.importStops":
     "one=Während des Imports stoppt BombVault auch {apps} und startet die App danach wieder. Scheitert der Import, nachdem er begonnen hat, bleiben die alten Daten zur Seite geschoben und die App gestoppt.|other=Während des Imports stoppt BombVault auch diese Apps: {apps}. Danach startet es sie wieder. Scheitert der Import, nachdem er begonnen hat, bleiben die alten Daten zur Seite geschoben und die Apps gestoppt.",
   "dbdump.importDone": "Datenbank importiert.",
+  "dbdump.keptIncluded": "Die Kopie liegt neben dem Datenordner. Jede Sicherung und jedes Replikat des Ordners oder Datasets darüber nimmt sie mit. Entfern sie, sobald die Datenbank läuft.",
+  "dbdump.removeKept": "Kopie entfernen",
+  "dbdump.keptRemoved": "Die Kopie ist entfernt.",
   "dbdump.importRefused.busy": "Es läuft gerade eine andere Sicherung oder eine Wiederherstellung. Versuche es danach noch einmal.",
   "dbdump.importRefused.notRunning": "Starte den Container zuerst; der Import braucht den laufenden Server.",
   "dbdump.importRefused.engineMismatch": "Dieser Dump stammt aus einem anderen Datenbanktyp, als der Container betreibt.",

@@ -229,6 +229,10 @@ const ca: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Aquesta restauració no escriu cap fitxer.",
   "restoreCheck.reason.unmeasured": "No s'ha pogut mesurar, així que no bloqueja.",
   "restoreCheck.reason.parentMissing": "El conjunt de dades superior, {name}, no existeix. Crea'l primer o tria un altre nom.",
+  "restoreCheck.zvol.title": "Volums ZFS",
+  "restoreCheck.zvol.titleHint": "Un disc de VM en un volum ZFS es torna com una sola imatge escrita sobre tot el volum, per això surt aquí i no a la llista de fitxers.",
+  "restoreCheck.zvol.safety": "Primer BombVault fa el snapshot {name}, que conserva el que hi ha ara.",
+  "restoreCheck.reason.poolMissing": "Aquest servidor no té cap pool ZFS {name}, així que el volum no es pot crear.",
   "restoreCheck.reason.networkMissing": "Aquest servidor no té cap xarxa {name}. Tria una xarxa per al contenidor.",
   "restoreCheck.reason.networkGone": "Aquest servidor no té cap xarxa {name}. Si la va crear una aplicació, com ara una aplicació de TrueNAS, reinstal·la primer aquesta aplicació i després restaura'n les dades.",
   "restoreCheck.reason.networkUnreadable": "No s'han pogut llegir les xarxes d'aquest servidor: {error}",
@@ -849,6 +853,7 @@ const ca: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "extern verificat",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "motiu:",
@@ -1107,6 +1112,9 @@ const ca: Partial<Translations> = {
   "dbdump.importNoVersion": "Aquest bolcat no registra la versió de la seva base de dades. La importació falla si el servidor no la pot llegir.",
   "dbdump.importStops": "one=Mentre importa, BombVault també atura {apps} i després la torna a iniciar. Si la importació falla un cop començada, les dades antigues queden a part i l'aplicació aturada.|many=Mentre importa, BombVault també atura aquestes aplicacions: {apps}. Després les torna a iniciar. Si la importació falla un cop començada, les dades antigues queden a part i les aplicacions aturades.|other=Mentre importa, BombVault també atura aquestes aplicacions: {apps}. Després les torna a iniciar. Si la importació falla un cop començada, les dades antigues queden a part i les aplicacions aturades.",
   "dbdump.importDone": "Base de dades importada.",
+  "dbdump.keptIncluded": "La còpia és al costat de la carpeta de dades, així que qualsevol còpia de seguretat o rèplica de la carpeta o del conjunt de dades superior també la inclou. Elimina-la quan la base de dades funcioni.",
+  "dbdump.removeKept": "Elimina la còpia",
+  "dbdump.keptRemoved": "S'ha eliminat la còpia.",
   "dbdump.importRefused.busy": "Hi ha una altra còpia o restauració en marxa. Torna-ho a provar quan hagi acabat.",
   "dbdump.importRefused.notRunning": "Engega primer el contenidor; la importació necessita el servidor en marxa.",
   "dbdump.importRefused.engineMismatch": "Aquest bolcat ve d'un tipus de base de dades diferent del que fa servir el contenidor.",
