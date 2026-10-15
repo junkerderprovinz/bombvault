@@ -271,7 +271,7 @@ func scrubBypassMessage(err error) (string, bool) {
 		// own paths already taken out by zfsHostDetail.
 		return err.Error(), true
 	case errors.Is(err, errZvolRebaseFailed):
-		// Same deal again: the ZFS dataset/pool names ARE the message (see
+		// Same deal again: the ZFS dataset and pool names are the message (see
 		// errZvolRebaseFailed).
 		return err.Error(), true
 	case errors.Is(err, errDBImportFolders):

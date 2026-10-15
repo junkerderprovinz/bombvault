@@ -2102,8 +2102,8 @@ var repoLocationRe = regexp.MustCompile(`\b(?:rclone|sftp|rest|s3|b2|azure|gs|sw
 // anchored to the location's own structure instead of to generic word shapes.
 //
 // credentialRe cannot do this job here: it would take the scheme and the "//"
-// along with the userinfo and leave "[redacted]@host", which no longer says
-// what kind of repository failed. This one is bounded by the scheme on the
+// along with the userinfo and leave "[redacted]@host", which hides what kind
+// of repository failed. This one is bounded by the scheme on the
 // left and by the "@" on the right, and its body excludes whitespace and
 // quotes, so it can never cross out of the location it started in.
 var repoUserinfoRe = regexp.MustCompile(`\b(rclone|sftp|rest|s3|b2|azure|gs|swift):((?:[A-Za-z0-9+.-]+:)?//)?[^@\s"']*@`)

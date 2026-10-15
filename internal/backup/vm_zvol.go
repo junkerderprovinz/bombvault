@@ -309,7 +309,7 @@ func restoreBlockDisksAndLog(ctx context.Context, d VMRestoreDeps) error {
 			Restic:     d.ZvolRestic,
 		})
 		if safety != "" {
-			// zfs rollback refuses a snapshot that is no longer the newest, and
+			// zfs rollback refuses any snapshot but the newest without -r, and
 			// the next restore of the same disk takes a newer one.
 			log.Printf("vm restore: zvol disk %q: its contents from before the restore are kept in %s. zfs rollback %s undoes the restore while that is the newest snapshot of the zvol; once a newer one exists, such as the next restore's, zfs rollback -r %s does it and destroys the newer snapshots", bd.Dataset, safety, safety, safety)
 		}
