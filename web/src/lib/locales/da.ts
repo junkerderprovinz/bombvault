@@ -189,6 +189,10 @@ const da: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Denne gendannelse skriver ingen filer.",
   "restoreCheck.reason.unmeasured": "Kunne ikke måles, så den blokerer ikke.",
   "restoreCheck.reason.parentMissing": "Datasættet over det, {name}, findes ikke. Opret det først, eller vælg et andet navn.",
+  "restoreCheck.zvol.title": "ZFS-volumener",
+  "restoreCheck.zvol.titleHint": "En VM-disk på et ZFS-volumen kommer tilbage som ét billede, der skrives hen over hele volumenet, så den står her og ikke i fillisten.",
+  "restoreCheck.zvol.safety": "BombVault tager først snapshottet {name}, som gemmer det, der er der nu.",
+  "restoreCheck.reason.poolMissing": "Denne server har ingen ZFS-pool {name}, så volumenet kan ikke oprettes.",
   "restoreCheck.reason.networkMissing": "Denne server har ikke netværket {name}. Vælg et netværk til containeren.",
   "restoreCheck.reason.networkGone": "Denne server har ikke netværket {name}. Hvis en app har oprettet det, for eksempel en TrueNAS-app, så geninstaller appen først og gendan derefter dens data.",
   "restoreCheck.reason.networkUnreadable": "Netværkene på denne server kunne ikke læses: {error}",
@@ -1123,6 +1127,9 @@ const da: Partial<Translations> = {
   "dbdump.importNoVersion": "Dette dump noterer ikke sin databaseversion. Importen fejler, hvis serveren ikke kan læse den.",
   "dbdump.importStops": "one=Under importen stopper BombVault også {apps} og starter den igen bagefter. Hvis importen mislykkes, efter den er gået i gang, bliver de gamle data liggende til side, og appen forbliver stoppet.|other=Under importen stopper BombVault også disse apps: {apps}. Bagefter startes de igen. Hvis importen mislykkes, efter den er gået i gang, bliver de gamle data liggende til side, og apperne forbliver stoppet.",
   "dbdump.importDone": "Databasen er importeret.",
+  "dbdump.keptIncluded": "Kopien ligger ved siden af datamappen, så enhver backup eller replika af mappen eller datasættet ovenover tager den med. Fjern den, når databasen virker.",
+  "dbdump.removeKept": "Fjern kopi",
+  "dbdump.keptRemoved": "Kopien er fjernet.",
   "dbdump.importRefused.busy": "En anden sikkerhedskopiering eller gendannelse kører. Prøv igen, når den er færdig.",
   "dbdump.importRefused.notRunning": "Start containeren først; importen skal bruge den kørende server.",
   "dbdump.importRefused.engineMismatch": "Dette dump kommer fra en anden databasetype, end containeren kører.",
@@ -1381,6 +1388,7 @@ const da: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "off-site verificeret",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Beskyttet",
@@ -2355,6 +2363,7 @@ const da: Partial<Translations> = {
   "mdns.hint": "Annoncerer BombVault på det lokale netværk via mDNS, så en browser når den som bombvault.local, og tjenestebrowsere viser den. I Dockers standard-bridge-netværk bliver annonceringen inde i Docker; den når LAN'et via br0, macvlan eller værtens netværk.",
   "mdns.enable": "Annoncér på det lokale netværk",
   "mdns.statusOn": "Annonceret som {url}",
+  "mdns.statusHostOnly": "Kun annonceret inde i Docker. På et bridge-netværk kan bombvault.local ikke nås fra dit LAN.",
   "mdns.statusStarting": "Tjekker, at navnet er ledigt på netværket",
   "mdns.statusError": "Ikke annonceret: {error}",
   "mdns.statusOff": "Fra",
@@ -4179,6 +4188,10 @@ const da: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "VM'en lukkes ned, og dens diske erstattes med denne sikkerhedskopi.",
   "restoreWindow.says.vmStarts": "Bagefter starter den igen.",
   "restoreWindow.says.vmOff": "Bagefter forbliver den slukket.",
+  "restoreWindow.says.createContainer": "Containeren oprettes fra denne sikkerhedskopi.",
+  "restoreWindow.says.createdContainerStarts": "Bagefter starter den.",
+  "restoreWindow.says.createVM": "VM'en oprettes fra denne sikkerhedskopi.",
+  "restoreWindow.says.createdVMStarts": "Bagefter starter den.",
   "restoreWindow.says.backupFirst": "Først sikkerhedskopierer BombVault den nuværende tilstand, så du kan gå tilbage.",
   "restoreWindow.says.replaceFiles": "Filerne på det oprindelige sted erstattes med denne sikkerhedskopi.",
   "restoreWindow.says.replaceDataset": "Filer fra denne sikkerhedskopi skrives ind i datasættet. Filer med samme navn overskrives, andre filer bliver.",

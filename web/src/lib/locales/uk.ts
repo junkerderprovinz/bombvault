@@ -190,6 +190,10 @@ const uk: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Це відновлення не записує файлів.",
   "restoreCheck.reason.unmeasured": "Не вдалося виміряти, тому не блокує.",
   "restoreCheck.reason.parentMissing": "Набору даних рівнем вище, {name}, немає. Спершу створіть його або виберіть іншу назву.",
+  "restoreCheck.zvol.title": "Томи ZFS",
+  "restoreCheck.zvol.titleHint": "Диск ВМ на томі ZFS повертається одним образом, записаним поверх усього тому, тому він показаний тут, а не в списку файлів.",
+  "restoreCheck.zvol.safety": "Спершу BombVault робить знімок {name}, який зберігає те, що є зараз.",
+  "restoreCheck.reason.poolMissing": "На цьому сервері немає пулу ZFS {name}, тож том не можна створити.",
   "restoreCheck.reason.networkMissing": "На цьому сервері немає мережі {name}. Виберіть мережу для контейнера.",
   "restoreCheck.reason.networkGone": "На цьому сервері немає мережі {name}. Якщо її створив застосунок, наприклад застосунок TrueNAS, спершу перевстановіть цей застосунок, а потім відновіть його дані.",
   "restoreCheck.reason.networkUnreadable": "Не вдалося прочитати мережі на цьому сервері: {error}",
@@ -1120,6 +1124,9 @@ const uk: Partial<Translations> = {
   "dbdump.importNoVersion": "Цей дамп не записує версію своєї бази даних. Імпорт не вдасться, якщо сервер не зможе його прочитати.",
   "dbdump.importStops": "one=На час імпорту BombVault зупиняє й {apps}, а потім запускає його знову. Якщо імпорт не вдався вже після початку, старі дані лишаються відкладеними, а застосунок зупиненим.|few=На час імпорту BombVault зупиняє й ці застосунки: {apps}. Потім запускає їх знову. Якщо імпорт не вдався вже після початку, старі дані лишаються відкладеними, а застосунки зупиненими.|many=На час імпорту BombVault зупиняє й ці застосунки: {apps}. Потім запускає їх знову. Якщо імпорт не вдався вже після початку, старі дані лишаються відкладеними, а застосунки зупиненими.|other=На час імпорту BombVault зупиняє й ці застосунки: {apps}. Потім запускає їх знову. Якщо імпорт не вдався вже після початку, старі дані лишаються відкладеними, а застосунки зупиненими.",
   "dbdump.importDone": "Базу даних імпортовано.",
+  "dbdump.keptIncluded": "Копія лежить поруч із текою даних, тож будь-яка резервна копія чи репліка теки або набору даних рівнем вище містить її. Видаліть її, коли база даних запрацює.",
+  "dbdump.removeKept": "Видалити копію",
+  "dbdump.keptRemoved": "Копію видалено.",
   "dbdump.importRefused.busy": "Зараз триває інше резервне копіювання або відновлення. Спробуйте ще раз, коли воно завершиться.",
   "dbdump.importRefused.notRunning": "Спершу запустіть контейнер; імпорту потрібен працюючий сервер.",
   "dbdump.importRefused.engineMismatch": "Цей дамп знято з бази даних іншого типу, ніж той, що працює в контейнері.",
@@ -1378,6 +1385,7 @@ const uk: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "зовнішнє місце призначення перевірено",
+  "drill.restored": "{name}, знімок {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Захищено",
@@ -2352,6 +2360,7 @@ const uk: Partial<Translations> = {
   "mdns.hint": "Оголошує BombVault у локальній мережі через mDNS, щоб браузер відкривав його як bombvault.local, а оглядачі сервісів його показували. У стандартній мережі bridge Docker оголошення лишається всередині Docker; у локальну мережу воно потрапляє через br0, macvlan або мережу хоста.",
   "mdns.enable": "Оголошувати в локальній мережі",
   "mdns.statusOn": "Оголошено як {url}",
+  "mdns.statusHostOnly": "Оголошено лише всередині Docker. У мережі bridge адреса bombvault.local недоступна з вашої локальної мережі.",
   "mdns.statusStarting": "Перевірка, чи ім'я вільне в мережі",
   "mdns.statusError": "Не оголошено: {error}",
   "mdns.statusOff": "Вимкнено",
@@ -4176,6 +4185,10 @@ const uk: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "Віртуальна машина вимикається, а її диски замінюються цією копією.",
   "restoreWindow.says.vmStarts": "Після цього вона знову запускається.",
   "restoreWindow.says.vmOff": "Після цього вона залишається вимкненою.",
+  "restoreWindow.says.createContainer": "Контейнер створюється з цієї копії.",
+  "restoreWindow.says.createdContainerStarts": "Після цього він запускається.",
+  "restoreWindow.says.createVM": "Віртуальна машина створюється з цієї копії.",
+  "restoreWindow.says.createdVMStarts": "Після цього вона запускається.",
   "restoreWindow.says.backupFirst": "Спершу BombVault копіює поточний стан, щоб ви могли повернутися.",
   "restoreWindow.says.replaceFiles": "Файли в початковому місці замінюються цією копією.",
   "restoreWindow.says.replaceDataset": "Файли з цієї копії записуються в набір даних. Файли з тією самою назвою перезаписуються, інші лишаються.",

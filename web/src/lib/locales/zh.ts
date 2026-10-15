@@ -189,6 +189,10 @@ const zh: Partial<Translations> = {
   "restoreCheck.reason.nothing": "此恢复不写入任何文件。",
   "restoreCheck.reason.unmeasured": "无法测量，因此不阻止。",
   "restoreCheck.reason.parentMissing": "上一级数据集 {name} 不存在。请先创建它，或换一个名称。",
+  "restoreCheck.zvol.title": "ZFS 卷",
+  "restoreCheck.zvol.titleHint": "ZFS 卷上的虚拟机磁盘会作为一个镜像整体写回整个卷，所以显示在这里，而不在文件列表中。",
+  "restoreCheck.zvol.safety": "BombVault 会先创建快照 {name}，保留现在的内容。",
+  "restoreCheck.reason.poolMissing": "此服务器上没有 ZFS 池 {name}，因此无法创建该卷。",
   "restoreCheck.reason.networkMissing": "此服务器上没有网络 {name}。请为容器选择一个网络。",
   "restoreCheck.reason.networkGone": "此服务器上没有网络 {name}。如果它是由某个应用创建的，例如 TrueNAS 应用，请先重新安装该应用，然后再恢复其数据。",
   "restoreCheck.reason.networkUnreadable": "无法读取此服务器上的网络：{error}",
@@ -1114,6 +1118,9 @@ const zh: Partial<Translations> = {
   "dbdump.importNoVersion": "这份转储没有记录它的数据库版本。若服务器读不了它，导入就会失败。",
   "dbdump.importStops": "导入期间，BombVault 也会停止以下应用：{apps}。完成后会重新启动它们。如果导入开始之后失败，旧数据会留在一旁，这些应用也会保持停止。",
   "dbdump.importDone": "数据库已导入。",
+  "dbdump.keptIncluded": "这个副本位于数据文件夹旁边，所以上一级文件夹或数据集的每次备份或副本都会包含它。数据库正常运行后请删除它。",
+  "dbdump.removeKept": "删除副本",
+  "dbdump.keptRemoved": "副本已删除。",
   "dbdump.importRefused.busy": "另一个备份或恢复正在进行。等它结束后再试。",
   "dbdump.importRefused.notRunning": "请先启动容器；导入需要运行中的服务器。",
   "dbdump.importRefused.engineMismatch": "这份转储来自与该容器所运行的不同类型的数据库。",
@@ -1372,6 +1379,7 @@ const zh: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "异地已验证",
+  "drill.restored": "{name}，快照 {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "已受保护",
@@ -2346,6 +2354,7 @@ const zh: Partial<Translations> = {
   "mdns.hint": "通过 mDNS 在局域网中广播 BombVault，这样浏览器可以用 bombvault.local 打开它，服务浏览器也能列出它。在 Docker 默认的 bridge 网络中，广播只停留在 Docker 内部；使用 br0、macvlan 或主机网络时，它能到达局域网。",
   "mdns.enable": "在局域网中广播",
   "mdns.statusOn": "已广播为 {url}",
+  "mdns.statusHostOnly": "仅在 Docker 内部广播。在 bridge 网络中，无法从你的局域网访问 bombvault.local。",
   "mdns.statusStarting": "正在检查名称在网络中是否可用",
   "mdns.statusError": "未广播：{error}",
   "mdns.statusOff": "关闭",
@@ -4170,6 +4179,10 @@ const zh: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "虚拟机会被关机，其磁盘会被这次备份替换。",
   "restoreWindow.says.vmStarts": "之后它会重新启动。",
   "restoreWindow.says.vmOff": "之后它保持关机。",
+  "restoreWindow.says.createContainer": "容器会从这次备份创建。",
+  "restoreWindow.says.createdContainerStarts": "之后它会启动。",
+  "restoreWindow.says.createVM": "虚拟机会从这次备份创建。",
+  "restoreWindow.says.createdVMStarts": "之后它会启动。",
   "restoreWindow.says.backupFirst": "BombVault 会先备份当前状态，方便你退回。",
   "restoreWindow.says.replaceFiles": "原位置的文件会被这次备份替换。",
   "restoreWindow.says.replaceDataset": "这次备份中的文件会写入数据集。同名文件会被覆盖，其他文件保留。",

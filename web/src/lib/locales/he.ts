@@ -189,6 +189,10 @@ const he: Partial<Translations> = {
   "restoreCheck.reason.nothing": "השחזור הזה לא כותב קבצים.",
   "restoreCheck.reason.unmeasured": "לא ניתן היה למדוד, ולכן לא חוסם.",
   "restoreCheck.reason.parentMissing": "מאגר הנתונים שמעליו, {name}, לא קיים. יש ליצור אותו קודם או לבחור שם אחר.",
+  "restoreCheck.zvol.title": "אמצעי אחסון ZFS",
+  "restoreCheck.zvol.titleHint": "דיסק VM שנמצא על אמצעי אחסון ZFS חוזר כתמונה אחת שנכתבת על כל אמצעי האחסון, ולכן הוא מופיע כאן ולא ברשימת הקבצים.",
+  "restoreCheck.zvol.safety": "BombVault יוצר קודם את תמונת המצב {name}, ששומרת את מה שיש עכשיו.",
+  "restoreCheck.reason.poolMissing": "בשרת הזה אין מאגר ZFS בשם {name}, ולכן אי אפשר ליצור את אמצעי האחסון.",
   "restoreCheck.reason.networkMissing": "בשרת הזה אין רשת בשם {name}. יש לבחור רשת עבור הקונטיינר.",
   "restoreCheck.reason.networkGone": "בשרת הזה אין רשת בשם {name}. אם אפליקציה יצרה אותה, למשל אפליקציית TrueNAS, יש להתקין קודם את האפליקציה מחדש ורק אז לשחזר את הנתונים שלה.",
   "restoreCheck.reason.networkUnreadable": "לא ניתן היה לקרוא את הרשתות בשרת הזה: {error}",
@@ -1115,6 +1119,9 @@ const he: Partial<Translations> = {
   "dbdump.importNoVersion": "הגיבוי הזה אינו מתעד את גרסת מסד הנתונים שלו. הייבוא ייכשל אם השרת לא יוכל לקרוא אותו.",
   "dbdump.importStops": "one=במהלך הייבוא BombVault עוצר גם את {apps} ומפעיל אותו מחדש לאחר מכן. אם הייבוא נכשל אחרי שהתחיל, הנתונים הישנים נשארים בצד והיישום עצור.|two=במהלך הייבוא BombVault עוצר גם את שני היישומים האלה: {apps}. לאחר מכן הוא מפעיל אותם מחדש. אם הייבוא נכשל אחרי שהתחיל, הנתונים הישנים נשארים בצד והיישומים עצורים.|other=במהלך הייבוא BombVault עוצר גם את היישומים האלה: {apps}. לאחר מכן הוא מפעיל אותם מחדש. אם הייבוא נכשל אחרי שהתחיל, הנתונים הישנים נשארים בצד והיישומים עצורים.",
   "dbdump.importDone": "מסד הנתונים יובא.",
+  "dbdump.keptIncluded": "העותק נמצא ליד תיקיית הנתונים, ולכן כל גיבוי או רפליקה של התיקייה או של מאגר הנתונים שמעליה כוללים אותו. יש להסיר אותו כשמסד הנתונים עובד.",
+  "dbdump.removeKept": "הסרת העותק",
+  "dbdump.keptRemoved": "העותק הוסר.",
   "dbdump.importRefused.busy": "מתבצעים כעת גיבוי או שחזור אחרים. אפשר לנסות שוב כשיסתיימו.",
   "dbdump.importRefused.notRunning": "יש להפעיל קודם את המכולה; הייבוא זקוק לשרת פעיל.",
   "dbdump.importRefused.engineMismatch": "הגיבוי הזה מגיע מסוג מסד נתונים אחר מזה שהמכולה מריצה.",
@@ -1373,6 +1380,7 @@ const he: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "אומת מחוץ לאתר",
+  "drill.restored": "{name}, תמונת מצב {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "מוגן",
@@ -2355,6 +2363,7 @@ const he: Partial<Translations> = {
   "mdns.hint": "מכריז על BombVault ברשת המקומית דרך mDNS, כך שדפדפן מגיע אליו בשם bombvault.local ודפדפני שירותים מציגים אותו. ברשת ה-bridge ברירת המחדל של Docker ההכרזה נשארת בתוך Docker; היא מגיעה לרשת המקומית דרך br0, macvlan או רשת המארח.",
   "mdns.enable": "הכרז ברשת המקומית",
   "mdns.statusOn": "מוכרז בתור {url}",
+  "mdns.statusHostOnly": "מוכרז רק בתוך Docker. ברשת bridge אי אפשר להגיע ל-bombvault.local מהרשת המקומית שלך.",
   "mdns.statusStarting": "בודק שהשם פנוי ברשת",
   "mdns.statusError": "לא מוכרז: {error}",
   "mdns.statusOff": "כבוי",
@@ -4179,6 +4188,10 @@ const he: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "ה-VM כבה והדיסקים שלו מוחלפים בגיבוי הזה.",
   "restoreWindow.says.vmStarts": "אחר כך הוא מופעל שוב.",
   "restoreWindow.says.vmOff": "אחר כך הוא נשאר כבוי.",
+  "restoreWindow.says.createContainer": "הקונטיינר נוצר מהגיבוי הזה.",
+  "restoreWindow.says.createdContainerStarts": "אחר כך הוא מופעל.",
+  "restoreWindow.says.createVM": "ה-VM נוצר מהגיבוי הזה.",
+  "restoreWindow.says.createdVMStarts": "אחר כך הוא מופעל.",
   "restoreWindow.says.backupFirst": "קודם BombVault מגבה את המצב הנוכחי, כדי שאפשר יהיה לחזור אחורה.",
   "restoreWindow.says.replaceFiles": "הקבצים במקום המקורי מוחלפים בגיבוי הזה.",
   "restoreWindow.says.replaceDataset": "קבצים מהגיבוי הזה נכתבים אל מערך הנתונים. קבצים בשם זהה נדרסים, האחרים נשארים.",

@@ -189,6 +189,10 @@ const nl: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Dit herstel schrijft geen bestanden.",
   "restoreCheck.reason.unmeasured": "Kon niet worden gemeten, dus blokkeert niet.",
   "restoreCheck.reason.parentMissing": "De dataset erboven, {name}, bestaat niet. Maak die eerst aan of kies een andere naam.",
+  "restoreCheck.zvol.title": "ZFS-volumes",
+  "restoreCheck.zvol.titleHint": "Een VM-schijf op een ZFS-volume komt terug als één image die over het hele volume wordt geschreven, daarom staat die hier en niet in de bestandenlijst.",
+  "restoreCheck.zvol.safety": "BombVault maakt eerst de snapshot {name}, die bewaart wat er nu staat.",
+  "restoreCheck.reason.poolMissing": "Deze server heeft geen ZFS-pool {name}, dus het volume kan niet worden aangemaakt.",
   "restoreCheck.reason.networkMissing": "Deze server heeft geen netwerk {name}. Kies een netwerk voor de container.",
   "restoreCheck.reason.networkGone": "Deze server heeft geen netwerk {name}. Als een app het heeft aangemaakt, zoals een TrueNAS-app, installeer die app dan eerst opnieuw en zet daarna de gegevens terug.",
   "restoreCheck.reason.networkUnreadable": "De netwerken op deze server konden niet worden gelezen: {error}",
@@ -1111,6 +1115,9 @@ const nl: Partial<Translations> = {
   "dbdump.importNoVersion": "Deze dump legt zijn databaseversie niet vast. Het importeren mislukt als de server hem niet kan lezen.",
   "dbdump.importStops": "one=Tijdens het importeren stopt BombVault ook {apps} en start die daarna weer. Mislukt het importeren nadat het begonnen is, dan blijven de oude gegevens apart staan en blijft de app gestopt.|other=Tijdens het importeren stopt BombVault ook deze apps: {apps}. Daarna starten ze weer. Mislukt het importeren nadat het begonnen is, dan blijven de oude gegevens apart staan en blijven de apps gestopt.",
   "dbdump.importDone": "Database geïmporteerd.",
+  "dbdump.keptIncluded": "De kopie staat naast de gegevensmap, dus elke back-up of replica van de map of dataset erboven neemt hem mee. Verwijder hem zodra de database werkt.",
+  "dbdump.removeKept": "Kopie verwijderen",
+  "dbdump.keptRemoved": "De kopie is verwijderd.",
   "dbdump.importRefused.busy": "Er loopt al een andere back-up of herstelactie. Probeer het opnieuw zodra die klaar is.",
   "dbdump.importRefused.notRunning": "Start eerst de container; het importeren heeft de draaiende server nodig.",
   "dbdump.importRefused.engineMismatch": "Deze dump komt uit een ander databasetype dan de container draait.",
@@ -1368,6 +1375,7 @@ const nl: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "off-site geverifieerd",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Beschermd",
@@ -2354,6 +2362,7 @@ const nl: Partial<Translations> = {
   "mdns.hint": "Maakt BombVault via mDNS bekend op het lokale netwerk, zodat een browser het bereikt als bombvault.local en servicebrowsers het tonen. In Dockers standaard bridge-netwerk blijft de aankondiging binnen Docker; via br0, macvlan of het hostnetwerk bereikt ze het LAN.",
   "mdns.enable": "Bekendmaken op het lokale netwerk",
   "mdns.statusOn": "Bekendgemaakt als {url}",
+  "mdns.statusHostOnly": "Alleen binnen Docker bekendgemaakt. In een bridge-netwerk is bombvault.local niet bereikbaar vanaf je LAN.",
   "mdns.statusStarting": "Controleren of de naam vrij is op het netwerk",
   "mdns.statusError": "Niet bekendgemaakt: {error}",
   "mdns.statusOff": "Uit",
@@ -4178,6 +4187,10 @@ const nl: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "De VM wordt afgesloten en haar schijven worden vervangen door deze back-up.",
   "restoreWindow.says.vmStarts": "Daarna start ze weer.",
   "restoreWindow.says.vmOff": "Daarna blijft ze uit.",
+  "restoreWindow.says.createContainer": "De container wordt aangemaakt uit deze back-up.",
+  "restoreWindow.says.createdContainerStarts": "Daarna start hij.",
+  "restoreWindow.says.createVM": "De VM wordt aangemaakt uit deze back-up.",
+  "restoreWindow.says.createdVMStarts": "Daarna start ze.",
   "restoreWindow.says.backupFirst": "Eerst maakt BombVault een back-up van de huidige staat, zodat je terug kunt.",
   "restoreWindow.says.replaceFiles": "De bestanden op de oorspronkelijke plek worden vervangen door deze back-up.",
   "restoreWindow.says.replaceDataset": "Bestanden uit deze back-up worden in de dataset geschreven. Bestanden met dezelfde naam worden overschreven, andere blijven staan.",

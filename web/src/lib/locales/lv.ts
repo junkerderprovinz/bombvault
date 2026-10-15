@@ -229,6 +229,10 @@ const lv: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Šī atjaunošana neraksta nevienu failu.",
   "restoreCheck.reason.unmeasured": "Neizdevās izmērīt, tāpēc nebloķē.",
   "restoreCheck.reason.parentMissing": "Augstākā datu kopa {name} nepastāv. Vispirms to izveidojiet vai izvēlieties citu nosaukumu.",
+  "restoreCheck.zvol.title": "ZFS sējumi",
+  "restoreCheck.zvol.titleHint": "VM disks ZFS sējumā tiek atjaunots kā viens attēls, kas ierakstīts pāri visam sējumam, tāpēc tas ir redzams šeit, nevis failu sarakstā.",
+  "restoreCheck.zvol.safety": "BombVault vispirms izveido snapshot {name}, kas saglabā pašreizējo stāvokli.",
+  "restoreCheck.reason.poolMissing": "Šim serverim nav ZFS pūla {name}, tāpēc sējumu nevar izveidot.",
   "restoreCheck.reason.networkMissing": "Šajā serverī nav tīkla {name}. Izvēlieties tīklu konteineram.",
   "restoreCheck.reason.networkGone": "Šajā serverī nav tīkla {name}. Ja to izveidoja kāda lietotne, piemēram, TrueNAS lietotne, vispirms pārinstalējiet šo lietotni un pēc tam atjaunojiet tās datus.",
   "restoreCheck.reason.networkUnreadable": "Neizdevās nolasīt šī servera tīklus: {error}",
@@ -849,6 +853,7 @@ const lv: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "attālinātā pārbaudīta",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "iemesls:",
@@ -1107,6 +1112,9 @@ const lv: Partial<Translations> = {
   "dbdump.importNoVersion": "Šī izgāztuve nefiksē savas datubāzes versiju. Imports neizdosies, ja serveris to nespēs nolasīt.",
   "dbdump.importStops": "zero=Importēšanas laikā BombVault aptur arī šīs lietotnes: {apps}. Pēc tam tās atkal palaiž. Ja imports neizdodas pēc tam, kad jau sācies, vecie dati paliek nolikti malā, bet lietotnes apturētas.|one=Importēšanas laikā BombVault aptur arī {apps} un pēc tam to atkal palaiž. Ja imports neizdodas pēc tam, kad jau sācies, vecie dati paliek nolikti malā, bet lietotne apturēta.|other=Importēšanas laikā BombVault aptur arī šīs lietotnes: {apps}. Pēc tam tās atkal palaiž. Ja imports neizdodas pēc tam, kad jau sācies, vecie dati paliek nolikti malā, bet lietotnes apturētas.",
   "dbdump.importDone": "Datubāze importēta.",
+  "dbdump.keptIncluded": "Kopija atrodas blakus datu mapei, tāpēc to ietver katra augstākās mapes vai datu kopas dublējumkopija vai replika. Noņemiet to, kad datubāze darbojas.",
+  "dbdump.removeKept": "Noņemt kopiju",
+  "dbdump.keptRemoved": "Kopija ir noņemta.",
   "dbdump.importRefused.busy": "Pašlaik notiek cits dublējums vai atjaunošana. Mēģiniet vēlreiz, kad tas būs beidzies.",
   "dbdump.importRefused.notRunning": "Vispirms palaidiet konteineru; importam vajadzīgs strādājošs serveris.",
   "dbdump.importRefused.engineMismatch": "Šī izgāztuve nāk no cita datubāzes veida, nekā darbina konteiners.",
@@ -2883,6 +2891,7 @@ const lv: Partial<Translations> = {
   "mdns.hint": "Izziņo BombVault lokālajā tīklā ar mDNS, lai pārlūks to sasniegtu kā bombvault.local un pakalpojumu pārlūki to parādītu. Docker noklusējuma bridge tīklā paziņojums paliek Docker iekšpusē; lokālo tīklu tas sasniedz caur br0, macvlan vai resursdatora tīklu.",
   "mdns.enable": "Izziņot lokālajā tīklā",
   "mdns.statusOn": "Izziņots kā {url}",
+  "mdns.statusHostOnly": "Izziņots tikai Docker iekšpusē. Bridge tīklā bombvault.local no jūsu lokālā tīkla nav sasniedzams.",
   "mdns.statusStarting": "Pārbauda, vai nosaukums tīklā ir brīvs",
   "mdns.statusError": "Nav izziņots: {error}",
   "mdns.statusOff": "Izslēgts",
@@ -4189,6 +4198,10 @@ const lv: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "VM tiek izslēgta, un tās diski tiek aizstāti ar šo kopiju.",
   "restoreWindow.says.vmStarts": "Pēc tam tā atkal tiek palaista.",
   "restoreWindow.says.vmOff": "Pēc tam tā paliek izslēgta.",
+  "restoreWindow.says.createContainer": "Konteiners tiek izveidots no šīs kopijas.",
+  "restoreWindow.says.createdContainerStarts": "Pēc tam tas tiek palaists.",
+  "restoreWindow.says.createVM": "VM tiek izveidota no šīs kopijas.",
+  "restoreWindow.says.createdVMStarts": "Pēc tam tā tiek palaista.",
   "restoreWindow.says.backupFirst": "Vispirms BombVault nokopē pašreizējo stāvokli, tāpēc varat atgriezties.",
   "restoreWindow.says.replaceFiles": "Faili sākotnējā vietā tiek aizstāti ar šo kopiju.",
   "restoreWindow.says.replaceDataset": "Faili no šīs kopijas tiek ierakstīti datu kopā. Vienādi nosauktie faili tiek pārrakstīti, pārējie paliek.",

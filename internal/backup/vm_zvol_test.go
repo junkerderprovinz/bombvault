@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -261,6 +263,29 @@ func TestABackupRemovesWhatAnInterruptedOneLeftOnItsZvol(t *testing.T) {
 	}
 	if len(host.log) < len(want) || !slices.Equal(host.log[:len(want)], want) {
 		t.Fatalf("host calls %v, want them to start with %v", host.log, want)
+	}
+}
+
+func TestTheLeftoverSweepLogsTheCloneAndTheSnapshotItRemoves(t *testing.T) {
+	t.Cleanup(backup.SetDestroyRetryDelayForTest(0))
+	var out bytes.Buffer
+	log.SetOutput(&out)
+	t.Cleanup(func() { log.SetOutput(os.Stderr) })
+	const ds = "tank/vms/truenasvm/disk0"
+	host := &fakeZFSHost{snapshots: []backup.ZFSSnapshot{
+		{Name: ds + "@bombvault-vm-20261015010000", Clones: []string{ds + "-bombvault-vm-20261015010000"}},
+	}}
+
+	if _, err := backup.BackupZvolDisk(t.Context(), sampleBackupZvolDeps(host, &fakeZvolRestic{})); err != nil {
+		t.Fatal(err)
+	}
+	for _, removed := range []string{
+		"removed the clone " + ds + "-bombvault-vm-20261015010000 ",
+		"removed " + ds + "@bombvault-vm-20261015010000 ",
+	} {
+		if !strings.Contains(out.String(), removed) {
+			t.Errorf("the log does not say %q:\n%s", removed, out.String())
+		}
 	}
 }
 

@@ -3187,6 +3187,24 @@ UNION SELECT member_id FROM pull_sources WHERE member_id <> '';`,
 		sql: `ALTER TABLE zfs_replica_servers ADD COLUMN mount_readonly INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE zfs_replica_state ADD COLUMN mount TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// Where each member last said it takes direct calls, so an instance
+		// that restarted can still ask a member that left the group meanwhile.
+		version:          memberURLMigration,
+		name:             "fleet_peers_member_url",
+		alreadySatisfied: columnPresent("fleet_peers", "member_url"),
+		sql:              `ALTER TABLE fleet_peers ADD COLUMN member_url TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// What a DR drill restored, on its own row and on the run row the
+		// activity log shows. Earlier drills keep both empty.
+		version:          drillSubjectMigration,
+		name:             "drill_subject",
+		alreadySatisfied: columnPresent("runs", "subject"),
+		sql: `ALTER TABLE restore_drills ADD COLUMN item TEXT NOT NULL DEFAULT '';
+ALTER TABLE restore_drills ADD COLUMN snapshot_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE runs ADD COLUMN subject TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3337,6 +3355,13 @@ const formerHomesMigration = 361
 
 // replicaMountMigration numbers the mount setting of the replica servers.
 const replicaMountMigration = 366
+
+// memberURLMigration numbers the direct address kept with a member's Fleet row.
+const memberURLMigration = 367
+
+// drillSubjectMigration numbers the columns that name what a DR drill
+// restored.
+const drillSubjectMigration = 370
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

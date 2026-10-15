@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/mdns"
 )
 
@@ -19,10 +20,51 @@ import (
 // mdnsStartTimeout bounds the probing, which takes about a second per name.
 const mdnsStartTimeout = 20 * time.Second
 
+// dockerAskTimeout bounds asking Docker which networks this container is on.
+const dockerAskTimeout = 5 * time.Second
+
+// bridgedOnly reports whether every network this container is on is a Docker
+// bridge, from which multicast never reaches the LAN. known is false when
+// Docker cannot say: outside a container, without the socket, or for a
+// container that shares another one's network.
+func (s *Service) bridgedOnly(ctx context.Context) (bridged, known bool) {
+	drivers, ok := s.docker.(dockercli.NetworkDrivers)
+	if !ok {
+		return false, false
+	}
+	name := s.selfContainerName(ctx)
+	if name == "" {
+		return false, false
+	}
+	in, err := s.docker.Inspect(ctx, name)
+	if err != nil {
+		return false, false
+	}
+	if in.HostConfig.NetworkMode == "host" {
+		return false, true
+	}
+	if len(in.Networks) == 0 {
+		return false, false
+	}
+	for _, n := range in.Networks {
+		driver, err := drivers.NetworkDriver(ctx, n.Name)
+		if err != nil {
+			return false, false
+		}
+		if driver != "bridge" {
+			return false, true
+		}
+	}
+	return true, true
+}
+
 type mdnsState struct {
 	mu        sync.Mutex
 	responder *mdns.Responder
 	err       string
+	// onHost is set once Docker has said that every network of this
+	// container is a bridge, so no announcement reaches the LAN.
+	onHost, onHostKnown bool
 }
 
 func (h *Handler) mdnsService() mdns.Service {
@@ -80,21 +122,45 @@ func (h *Handler) stopMDNS() {
 	}
 }
 
+// announcedOnHostOnly reports whether the announcement cannot reach the LAN,
+// as in a Docker bridge network, where bombvault.local resolves nowhere a
+// browser is. Until Docker answers it says no, and the address is shown.
+func (h *Handler) announcedOnHostOnly() bool {
+	h.mdns.mu.Lock()
+	onHost, known := h.mdns.onHost, h.mdns.onHostKnown
+	h.mdns.mu.Unlock()
+	if known {
+		return onHost
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), dockerAskTimeout)
+	defer cancel()
+	onHost, known = h.svc.bridgedOnly(ctx)
+	if known {
+		h.mdns.mu.Lock()
+		h.mdns.onHost, h.mdns.onHostKnown = onHost, true
+		h.mdns.mu.Unlock()
+	}
+	return onHost
+}
+
 func (h *Handler) mdnsView() map[string]any {
 	on, err := h.store.MDNSEnabled()
 	if err != nil {
 		log.Printf("mdns: read the switch: %v", err)
 	}
+	onHost := h.announcedOnHostOnly()
 	h.mdns.mu.Lock()
 	defer h.mdns.mu.Unlock()
-	view := map[string]any{"enabled": on, "running": h.mdns.responder != nil, "error": h.mdns.err, "url": "", "instance": ""}
+	view := map[string]any{"enabled": on, "running": h.mdns.responder != nil, "error": h.mdns.err, "url": "", "instance": "", "hostOnly": onHost}
 	if h.mdns.responder != nil {
 		svc := h.mdns.responder.Service()
 		scheme := "https"
 		if svc.Type == "_http._tcp" {
 			scheme = "http"
 		}
-		view["url"] = scheme + "://" + svc.Host + ".local:" + strconv.Itoa(int(svc.Port)) + "/"
+		if !onHost {
+			view["url"] = scheme + "://" + svc.Host + ".local:" + strconv.Itoa(int(svc.Port)) + "/"
+		}
 		view["instance"] = svc.Instance
 	}
 	return view

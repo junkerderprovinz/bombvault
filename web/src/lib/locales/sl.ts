@@ -229,6 +229,10 @@ const sl: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Ta obnovitev ne zapiše nobene datoteke.",
   "restoreCheck.reason.unmeasured": "Ni bilo mogoče izmeriti, zato ne blokira.",
   "restoreCheck.reason.parentMissing": "Nabor podatkov nad njim, {name}, ne obstaja. Najprej ga ustvari ali izberi drugo ime.",
+  "restoreCheck.zvol.title": "Nosilci ZFS",
+  "restoreCheck.zvol.titleHint": "Disk VM na nosilcu ZFS se vrne kot ena slika, zapisana čez celoten nosilec, zato je naveden tukaj in ne na seznamu datotek.",
+  "restoreCheck.zvol.safety": "BombVault najprej naredi snapshot {name}, ki ohrani trenutno stanje.",
+  "restoreCheck.reason.poolMissing": "Ta strežnik nima bazena ZFS {name}, zato nosilca ni mogoče ustvariti.",
   "restoreCheck.reason.networkMissing": "Ta strežnik nima omrežja {name}. Izberi omrežje za vsebnik.",
   "restoreCheck.reason.networkGone": "Ta strežnik nima omrežja {name}. Če ga je ustvarila aplikacija, na primer aplikacija TrueNAS, najprej znova namesti to aplikacijo in nato obnovi njene podatke.",
   "restoreCheck.reason.networkUnreadable": "Omrežij na tem strežniku ni bilo mogoče prebrati: {error}",
@@ -849,6 +853,7 @@ const sl: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "zunanja kopija preverjena",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels (#30)
   "drill.failReasonPrefix": "razlog:",
@@ -1105,6 +1110,9 @@ const sl: Partial<Translations> = {
   "dbdump.importNoVersion": "Ta izvoz ne zabeleži različice svoje baze podatkov. Uvoz spodleti, če ga strežnik ne zna prebrati.",
   "dbdump.importStops": "one=Med uvozom BombVault ustavi tudi {apps} in jo nato znova zažene. Če uvoz spodleti, potem ko se je že začel, stari podatki ostanejo na strani, aplikacija pa ustavljena.|two=Med uvozom BombVault ustavi tudi ti dve aplikaciji: {apps}. Nato ju znova zažene. Če uvoz spodleti, potem ko se je že začel, stari podatki ostanejo na strani, aplikaciji pa ustavljeni.|few=Med uvozom BombVault ustavi tudi te aplikacije: {apps}. Nato jih znova zažene. Če uvoz spodleti, potem ko se je že začel, stari podatki ostanejo na strani, aplikacije pa ustavljene.|other=Med uvozom BombVault ustavi tudi te aplikacije: {apps}. Nato jih znova zažene. Če uvoz spodleti, potem ko se je že začel, stari podatki ostanejo na strani, aplikacije pa ustavljene.",
   "dbdump.importDone": "Baza podatkov je uvožena.",
+  "dbdump.keptIncluded": "Kopija je poleg mape s podatki, zato jo vključi vsaka varnostna kopija ali replika mape ali nabora podatkov nad njo. Odstrani jo, ko baza podatkov deluje.",
+  "dbdump.removeKept": "Odstrani kopijo",
+  "dbdump.keptRemoved": "Kopija je odstranjena.",
   "dbdump.importRefused.busy": "Trenutno teče druga varnostna kopija ali obnovitev. Poskusi znova, ko se konča.",
   "dbdump.importRefused.notRunning": "Najprej zaženi vsebnik; uvoz potrebuje delujoč strežnik.",
   "dbdump.importRefused.engineMismatch": "Ta izvoz prihaja iz druge vrste baze podatkov, kot jo poganja vsebnik.",
@@ -2867,6 +2875,7 @@ const sl: Partial<Translations> = {
   "mdns.hint": "Oznani BombVault v lokalnem omrežju prek mDNS, da ga brskalnik doseže kot bombvault.local in ga brskalniki storitev prikažejo. V privzetem omrežju bridge v Dockerju oznanilo ostane znotraj Dockerja; do lokalnega omrežja pride prek br0, macvlan ali omrežja gostitelja.",
   "mdns.enable": "Oznanjaj v lokalnem omrežju",
   "mdns.statusOn": "Oznanjeno kot {url}",
+  "mdns.statusHostOnly": "Oznanjeno samo znotraj Dockerja. V omrežju bridge bombvault.local iz tvojega lokalnega omrežja ni dosegljiv.",
   "mdns.statusStarting": "Preverjanje, ali je ime v omrežju prosto",
   "mdns.statusError": "Ni oznanjeno: {error}",
   "mdns.statusOff": "Izklopljeno",
@@ -4173,6 +4182,10 @@ const sl: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "VM se zaustavi, njegovi diski pa se zamenjajo s to kopijo.",
   "restoreWindow.says.vmStarts": "Potem se VM spet zažene.",
   "restoreWindow.says.vmOff": "Potem VM ostane izklopljen.",
+  "restoreWindow.says.createContainer": "Vsebnik se ustvari iz te kopije.",
+  "restoreWindow.says.createdContainerStarts": "Potem se vsebnik zažene.",
+  "restoreWindow.says.createVM": "VM se ustvari iz te kopije.",
+  "restoreWindow.says.createdVMStarts": "Potem se VM zažene.",
   "restoreWindow.says.backupFirst": "BombVault najprej varnostno kopira trenutno stanje, da se lahko vrneš.",
   "restoreWindow.says.replaceFiles": "Datoteke na izvirnem mestu se zamenjajo s to kopijo.",
   "restoreWindow.says.replaceDataset": "Datoteke iz te kopije se zapišejo v nabor podatkov. Datoteke z enakim imenom se prepišejo, druge ostanejo.",

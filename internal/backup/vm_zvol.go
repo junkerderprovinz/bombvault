@@ -178,8 +178,11 @@ func sweepZvolLeftovers(ctx context.Context, host ZFSHost, dataset string) {
 			log.Printf("zvol backup: %s is left from an earlier backup but kept, since %s was cloned from it", snap.Name, strings.Join(foreign, ", "))
 			continue
 		}
-		if len(snap.Clones) > 0 && !destroyOrLog(cleanup, host, ours) {
-			continue
+		if len(snap.Clones) > 0 {
+			if !destroyOrLog(cleanup, host, ours) {
+				continue
+			}
+			log.Printf("zvol backup: removed the clone %s left by an earlier backup that did not finish", ours)
 		}
 		if destroyOrLog(cleanup, host, snap.Name) {
 			log.Printf("zvol backup: removed %s left by an earlier backup that did not finish", snap.Name)
@@ -241,6 +244,10 @@ type RestoreZvolDeps struct {
 	Restic ZvolRestic
 }
 
+// ZvolSafetySnapshotPrefix starts the name of the snapshot RestoreZvolDisk
+// takes of an existing zvol before it writes over it.
+const ZvolSafetySnapshotPrefix = "bombvault-before-restore-"
+
 // RestoreZvolDisk writes a zvol's image back onto the zvol, as a file disk
 // is restored onto its file, so the redefined VM boots the restored data. An
 // existing zvol is first snapshotted, and the returned snapshot name is how
@@ -253,7 +260,7 @@ func RestoreZvolDisk(ctx context.Context, d RestoreZvolDeps) (string, error) {
 	}
 	var safety string
 	if exists {
-		snapName := "bombvault-before-restore-" + time.Now().UTC().Format("20060102150405")
+		snapName := ZvolSafetySnapshotPrefix + time.Now().UTC().Format("20060102150405")
 		if err := d.Host.SnapshotCreate(ctx, d.Dataset, snapName); err != nil {
 			return "", fmt.Errorf("zvol restore: snapshot %s before writing to it: %w", d.Dataset, err)
 		}
@@ -306,7 +313,9 @@ func restoreBlockDisksAndLog(ctx context.Context, d VMRestoreDeps) error {
 			Restic:     d.ZvolRestic,
 		})
 		if safety != "" {
-			log.Printf("vm restore: zvol disk %q: its contents from before the restore are kept in %s; zfs rollback %s undoes the restore", bd.Dataset, safety, safety)
+			// zfs rollback refuses any snapshot but the newest without -r, and
+			// the next restore of the same disk takes a newer one.
+			log.Printf("vm restore: zvol disk %q: its contents from before the restore are kept in %s. zfs rollback %s undoes the restore while that is the newest snapshot of the zvol; once a newer one exists, such as the next restore's, zfs rollback -r %s does it and destroys the newer snapshots", bd.Dataset, safety, safety, safety)
 		}
 		if err != nil {
 			log.Printf("vm restore: zvol disk %q: %v", bd.Dataset, err)

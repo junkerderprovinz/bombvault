@@ -365,6 +365,14 @@ describe("a container", () => {
     expect(restore).toHaveBeenCalledWith("pihole", NEWEST, true, "local", false, false, {});
   });
 
+  it("says one that is gone is created from the backup", async () => {
+    const gone = containerView({ name: "pihole", installed: false, state: "" });
+    await open(entryOf("container", { item: PIHOLE, detail: { kind: "container", container: gone, installed: [], linkCandidates: [] } }));
+    expect(await within(dialog()).findByText(new RegExp(en["restoreWindow.says.createContainer"]))).toBeTruthy();
+    expect(within(dialog()).queryByText(new RegExp(en["restoreWindow.says.replaceContainer"]))).toBeNull();
+    expect(within(dialog()).queryByText(/starts again/)).toBeNull();
+  });
+
   it("takes the backup from the storage location that was asked for", async () => {
     const timeline = timelineState("containers", [{ ...BOX, state: "read" }]);
     timeline.rows[0].places.push({ place: BOX.place, snapshotIds: ["copy"], tags: [] });
@@ -452,6 +460,13 @@ describe("the backup row", () => {
 });
 
 describe("a VM", () => {
+  it("says one that is gone is created from the backup", async () => {
+    await open(entryOf("vm", { item: { ...WIN11, installed: false } }));
+    expect(await within(dialog()).findByText(new RegExp(en["restoreWindow.says.createVM"]))).toBeTruthy();
+    expect(within(dialog()).queryByText(new RegExp(en["restoreWindow.says.replaceVM"]))).toBeNull();
+    expect(within(dialog()).queryByText(/starts again/)).toBeNull();
+  });
+
   it("comes back next to the original or over it, as a whole", async () => {
     await open(entryOf("vm"));
     expect(target("beside")?.getAttribute("aria-checked")).toBe("true");

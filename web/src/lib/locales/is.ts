@@ -229,6 +229,10 @@ const is: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Þessi endurheimt skrifar engar skrár.",
   "restoreCheck.reason.unmeasured": "Ekki tókst að mæla, svo það hindrar ekki.",
   "restoreCheck.reason.parentMissing": "Gagnasafnið fyrir ofan, {name}, er ekki til. Búðu það fyrst til eða veldu annað nafn.",
+  "restoreCheck.zvol.title": "ZFS-bindi",
+  "restoreCheck.zvol.titleHint": "VM-diskur á ZFS-bindi kemur til baka sem ein mynd sem er skrifuð yfir allt bindið, þess vegna er hann hér en ekki í skráalistanum.",
+  "restoreCheck.zvol.safety": "BombVault tekur fyrst snapshot {name}, sem geymir það sem er þar núna.",
+  "restoreCheck.reason.poolMissing": "Þessi þjónn er ekki með ZFS-pool {name}, svo ekki er hægt að búa til bindið.",
   "restoreCheck.reason.networkMissing": "Þessi þjónn hefur ekkert net sem heitir {name}. Veldu net fyrir gáminn.",
   "restoreCheck.reason.networkGone": "Þessi þjónn hefur ekkert net sem heitir {name}. Ef forrit bjó það til, til dæmis TrueNAS-forrit, settu forritið fyrst upp aftur og endurheimtu svo gögnin þess.",
   "restoreCheck.reason.networkUnreadable": "Ekki tókst að lesa netin á þessum þjóni: {error}",
@@ -849,6 +853,7 @@ const is: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "fjarlægt staðfest",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "ástæða:",
@@ -1107,6 +1112,9 @@ const is: Partial<Translations> = {
   "dbdump.importNoVersion": "Þetta afrit skráir ekki útgáfu gagnagrunnsins. Innflutningurinn mistekst ef þjónninn getur ekki lesið það.",
   "dbdump.importStops": "one=Á meðan innflutningurinn stendur yfir stöðvar BombVault líka {apps} og ræsir það svo aftur. Ef innflutningurinn mistekst eftir að hann er hafinn verða gömlu gögnin áfram til hliðar og forritið stöðvað.|other=Á meðan innflutningurinn stendur yfir stöðvar BombVault líka þessi forrit: {apps}. Á eftir eru þau ræst aftur. Ef innflutningurinn mistekst eftir að hann er hafinn verða gömlu gögnin áfram til hliðar og forritin stöðvuð.",
   "dbdump.importDone": "Gagnagrunnurinn var fluttur inn.",
+  "dbdump.keptIncluded": "Afritið liggur við hliðina á gagnamöppunni, svo hvert öryggisafrit eða eftirmynd af möppunni eða gagnasafninu fyrir ofan tekur það með. Fjarlægðu það þegar gagnagrunnurinn virkar.",
+  "dbdump.removeKept": "Fjarlægja afrit",
+  "dbdump.keptRemoved": "Afritið hefur verið fjarlægt.",
   "dbdump.importRefused.busy": "Önnur afritun eða endurheimt er í gangi. Reyndu aftur þegar henni lýkur.",
   "dbdump.importRefused.notRunning": "Ræstu gáminn fyrst; innflutningurinn þarf þjóninn í gangi.",
   "dbdump.importRefused.engineMismatch": "Þetta afrit kemur úr annarri gerð gagnagrunns en gámurinn keyrir.",
@@ -2883,6 +2891,7 @@ const is: Partial<Translations> = {
   "mdns.hint": "Kynnir BombVault á staðarnetinu með mDNS, svo vafri nái í það sem bombvault.local og þjónustuvafrar birti það. Í sjálfgefnu bridge-neti Docker helst tilkynningin innan Docker; hún nær út á staðarnetið um br0, macvlan eða net hýsilsins.",
   "mdns.enable": "Kynna á staðarnetinu",
   "mdns.statusOn": "Kynnt sem {url}",
+  "mdns.statusHostOnly": "Aðeins kynnt innan Docker. Á bridge-neti næst ekki í bombvault.local af staðarnetinu þínu.",
   "mdns.statusStarting": "Athuga hvort heitið sé laust á netinu",
   "mdns.statusError": "Ekki kynnt: {error}",
   "mdns.statusOff": "Slökkt",
@@ -4189,6 +4198,10 @@ const is: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "Sýndarvélin er slökkt og diskum hennar skipt út fyrir þetta afrit.",
   "restoreWindow.says.vmStarts": "Á eftir fer hún aftur í gang.",
   "restoreWindow.says.vmOff": "Á eftir helst hún slökkt.",
+  "restoreWindow.says.createContainer": "Gámurinn er búinn til úr þessu afriti.",
+  "restoreWindow.says.createdContainerStarts": "Á eftir fer hann í gang.",
+  "restoreWindow.says.createVM": "Sýndarvélin er búin til úr þessu afriti.",
+  "restoreWindow.says.createdVMStarts": "Á eftir fer hún í gang.",
   "restoreWindow.says.backupFirst": "Áður tekur BombVault afrit af núverandi stöðu, svo þú getir snúið til baka.",
   "restoreWindow.says.replaceFiles": "Skrám á upprunalega staðnum er skipt út fyrir þetta afrit.",
   "restoreWindow.says.replaceDataset": "Skrár úr þessu afriti eru skrifaðar í gagnasafnið. Skrár með sama nafni eru yfirskrifaðar, aðrar skrár haldast.",

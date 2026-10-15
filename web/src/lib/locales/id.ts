@@ -229,6 +229,10 @@ const id: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Pemulihan ini tidak menulis berkas.",
   "restoreCheck.reason.unmeasured": "Tidak bisa diukur, jadi tidak menghalangi.",
   "restoreCheck.reason.parentMissing": "Dataset di atasnya, {name}, tidak ada. Buat dulu atau pilih nama lain.",
+  "restoreCheck.zvol.title": "Volume ZFS",
+  "restoreCheck.zvol.titleHint": "Disk VM di volume ZFS kembali sebagai satu image yang ditulis ke seluruh volume, jadi muncul di sini dan bukan di daftar file.",
+  "restoreCheck.zvol.safety": "BombVault lebih dulu mengambil snapshot {name}, yang menyimpan isi saat ini.",
+  "restoreCheck.reason.poolMissing": "Server ini tidak punya pool ZFS {name}, jadi volume tidak bisa dibuat.",
   "restoreCheck.reason.networkMissing": "Server ini tidak punya jaringan {name}. Pilih jaringan untuk container.",
   "restoreCheck.reason.networkGone": "Server ini tidak punya jaringan {name}. Jika jaringan itu dibuat oleh sebuah aplikasi, misalnya aplikasi TrueNAS, instal ulang aplikasi itu dulu, lalu pulihkan datanya.",
   "restoreCheck.reason.networkUnreadable": "Jaringan di server ini tidak dapat dibaca: {error}",
@@ -849,6 +853,7 @@ const id: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "off-site terverifikasi",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "alasan:",
@@ -1107,6 +1112,9 @@ const id: Partial<Translations> = {
   "dbdump.importNoVersion": "Dump ini tidak mencatat versi basis datanya. Impor gagal bila server tidak bisa membacanya.",
   "dbdump.importStops": "Selama impor, BombVault juga menghentikan aplikasi berikut: {apps}. Sesudahnya aplikasi itu dinyalakan lagi. Kalau impor gagal setelah dimulai, data lama tetap disisihkan dan aplikasinya tetap berhenti.",
   "dbdump.importDone": "Basis data diimpor.",
+  "dbdump.keptIncluded": "Salinan ini ada di samping folder data, jadi setiap cadangan atau replika dari folder atau dataset di atasnya ikut memuatnya. Hapus setelah database berjalan baik.",
+  "dbdump.removeKept": "Hapus salinan",
+  "dbdump.keptRemoved": "Salinan sudah dihapus.",
   "dbdump.importRefused.busy": "Ada pencadangan atau pemulihan lain yang berjalan. Coba lagi setelah selesai.",
   "dbdump.importRefused.notRunning": "Jalankan kontainer dulu; impor butuh server yang berjalan.",
   "dbdump.importRefused.engineMismatch": "Dump ini berasal dari jenis basis data yang berbeda dari yang dijalankan kontainer.",
@@ -2883,6 +2891,7 @@ const id: Partial<Translations> = {
   "mdns.hint": "Mengumumkan BombVault di jaringan lokal lewat mDNS, sehingga browser menjangkaunya sebagai bombvault.local dan browser layanan mencantumkannya. Di jaringan bridge bawaan Docker, pengumuman tetap di dalam Docker; pengumuman sampai ke LAN lewat br0, macvlan, atau jaringan host.",
   "mdns.enable": "Umumkan di jaringan lokal",
   "mdns.statusOn": "Diumumkan sebagai {url}",
+  "mdns.statusHostOnly": "Hanya diumumkan di dalam Docker. Di jaringan bridge, bombvault.local tidak bisa dijangkau dari LAN Anda.",
   "mdns.statusStarting": "Memeriksa apakah nama masih bebas di jaringan",
   "mdns.statusError": "Tidak diumumkan: {error}",
   "mdns.statusOff": "Mati",
@@ -4189,6 +4198,10 @@ const id: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "VM dimatikan dan disknya diganti dengan cadangan ini.",
   "restoreWindow.says.vmStarts": "Setelah itu berjalan lagi.",
   "restoreWindow.says.vmOff": "Setelah itu tetap mati.",
+  "restoreWindow.says.createContainer": "Container dibuat dari cadangan ini.",
+  "restoreWindow.says.createdContainerStarts": "Setelah itu berjalan.",
+  "restoreWindow.says.createVM": "VM dibuat dari cadangan ini.",
+  "restoreWindow.says.createdVMStarts": "Setelah itu berjalan.",
   "restoreWindow.says.backupFirst": "Sebelumnya BombVault mencadangkan kondisi saat ini, sehingga Anda bisa kembali.",
   "restoreWindow.says.replaceFiles": "File di lokasi asli diganti dengan cadangan ini.",
   "restoreWindow.says.replaceDataset": "File dari cadangan ini ditulis ke dataset. File dengan nama sama ditimpa, file lain tetap.",

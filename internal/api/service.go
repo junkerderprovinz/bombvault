@@ -988,12 +988,7 @@ func (e *platformMismatchErr) Is(target error) bool { return target == errUnraid
 // errZvolRebaseFailed is the scrubber-bypass sentinel a rebase-failure error
 // from prepareRestoreVMForTarget's cross-instance zvol rebase loop satisfies
 // via Is, matched by handlers.go's scrubError. The dataset/pool names ARE
-// the message — RebaseZvolDatasetPool's own doc comment names them as the
-// whole point of this error path — and a ZFS dataset name is "<pool>/<rest>",
-// so it necessarily contains "/" characters handlers.go's absPathRe would
-// otherwise mistake for a filesystem path and mangle (e.g. turning
-// `dataset "tank/vm-disk1"` into `dataset "tank[path]"`, destroying exactly
-// the information the message exists to convey). Same bypass pattern as
+// the message, so it reaches the operator verbatim. Same bypass pattern as
 // errRestoreDestination/errUnraidPlatformMismatch, for the identical reason.
 var errZvolRebaseFailed = errors.New("zvol dataset rebase failed")
 
@@ -2664,12 +2659,8 @@ func (s *Service) notifyMCPKeyChange(ctx context.Context, event string, k store.
 	}()
 }
 
-// offsiteTargetsFor returns a domain's ENABLED off-site destinations from the
-// store, in stable per-domain order (sort_order, then created_at). It is the
-// plural successor to the single-repo Settings.*Offsite* columns: a backfilled
-// single-off-site install yields a one-element slice, an unconfigured domain an
-// empty one. A missing store (used by pure-settings unit tests) or a query error
-// falls back to empty so callers apply their Settings fallback.
+// offsiteTargetsFor returns a domain's enabled off-site targets in store order.
+// A missing store or a failed read yields none.
 func (s *Service) offsiteTargetsFor(domain string) []store.OffsiteTarget {
 	out, err := s.enabledOffsiteTargets(domain)
 	if err != nil {
@@ -2698,27 +2689,33 @@ func (s *Service) enabledOffsiteTargets(domain string) ([]store.OffsiteTarget, e
 	return out, nil
 }
 
-// offsiteReplicationTargets is the destination set copyToOffsite replicates a
-// domain to: the domain's enabled off-site targets, or — when no target row
-// exists (a fresh install configured only through the legacy Settings columns, or
-// one configured after the stage-1 backfill ran) — a single target synthesized
-// from those Settings columns. This keeps N=1 byte-identical whether or not the
-// row was backfilled.
+// offsiteReplicationTargets is the domain's enabled off-site targets, or the
+// one target its off-site setting describes while the domain has no target row
+// at all.
 func (s *Service) offsiteReplicationTargets(domain string, settings store.Settings) []store.OffsiteTarget {
-	return orSettingsOffsiteTarget(s.offsiteTargetsFor(domain), domain, settings)
+	return s.orSettingsOffsiteTarget(s.offsiteTargetsFor(domain), domain, settings)
 }
 
-// orSettingsOffsiteTarget is targets, or when there are none, the one target
-// the legacy Settings columns configure, if any.
-func orSettingsOffsiteTarget(targets []store.OffsiteTarget, domain string, settings store.Settings) []store.OffsiteTarget {
-	if len(targets) > 0 {
+// orSettingsOffsiteTarget is targets, or when the domain has no target row at
+// all, the one target its off-site setting describes. A switched-off row keeps
+// the setting from counting: the setting stays filled while its target is off,
+// and the copy (readPlacement) does not go there either.
+func (s *Service) orSettingsOffsiteTarget(targets []store.OffsiteTarget, domain string, settings store.Settings) []store.OffsiteTarget {
+	if len(targets) > 0 || s.hasOffsiteTargetRows(domain) {
 		return targets
 	}
-	loc := offsiteRepoFromSettings(domain, settings)
-	if loc == "" {
-		return nil
+	return legacyTargets(domain, settings)
+}
+
+// hasOffsiteTargetRows reports whether domain has a target row, switched on or
+// off. A list that cannot be read answers no, which leaves the setting to
+// count, as readPlacement does.
+func (s *Service) hasOffsiteTargetRows(domain string) bool {
+	if s.store == nil {
+		return false
 	}
-	return []store.OffsiteTarget{settingsOffsiteTarget(domain, settings, loc)}
+	rows, err := s.store.OffsiteTargetsForDomain(domain)
+	return err == nil && len(rows) > 0
 }
 
 // settingsOffsiteTarget synthesizes the one off-site target the stage-1 backfill
@@ -2809,15 +2806,32 @@ func (s *Service) aggregateReplicationCurrency(domain string) (at int64, ok bool
 	return at, true
 }
 
-// offsiteRepoFor returns the configured off-site repo location for a domain, or
-// "" when none is set. It is a thin wrapper over the first enabled off-site
-// target, falling back to the legacy Settings column when no target row exists so
-// nothing regresses (N=1: the backfilled target's Repo equals that column).
+// offsiteRepoFor returns the location of the domain's first off-site target
+// in use, or "" when it has none.
 func (s *Service) offsiteRepoFor(domain string, settings store.Settings) string {
-	if ts := s.offsiteTargetsFor(domain); len(ts) > 0 {
+	if ts := s.offsiteReplicationTargets(domain, settings); len(ts) > 0 {
 		return ts[0].Repo
 	}
-	return offsiteRepoFromSettings(domain, settings)
+	return ""
+}
+
+// OffsiteInUse reports whether domain has an off-site target to copy to, by
+// the rule the copy itself goes by. Settings that cannot be read answer yes, so
+// the job that asks runs and reports the error itself.
+func (s *Service) OffsiteInUse(domain string) bool {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return true
+	}
+	return s.offsiteRepoFor(domain, settings) != ""
+}
+
+// noOffsiteRepoErr says why a domain has no off-site repo to copy to.
+func (s *Service) noOffsiteRepoErr(domain string) error {
+	if s.hasOffsiteTargetRows(domain) {
+		return errOffsiteTargetsOff
+	}
+	return errNoOffsiteRepo
 }
 
 // offsiteRepoFromSettings reads the legacy single-repo off-site location straight
@@ -3024,6 +3038,9 @@ type DomainStatusEntry struct {
 	LastReplicationOK  bool  `json:"lastReplicationOK"`
 	LastDRDrillAt      int64 `json:"lastDrDrillAt"`
 	LastDRDrillOK      bool  `json:"lastDrDrillOK"`
+	// LastDRDrillItem and LastDRDrillSnapshot name what that drill restored.
+	LastDRDrillItem     string `json:"lastDrDrillItem"`
+	LastDRDrillSnapshot string `json:"lastDrDrillSnapshot"`
 	// LastOffsiteSubsetAt / LastOffsiteSubsetOK stamp the latest OFF-SITE SUBSET
 	// drill (`restic check --read-data-subset` against the off-site repo) — the
 	// cheaper integrity check every domain (including VMs, since v8.0.0) can run
@@ -3456,11 +3473,11 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		lastReplicationAt, lastReplicationOK := s.aggregateReplicationCurrency(d.name)
 		var lastDRDrillAt int64
 		var lastDRDrillOK bool
-		var drDetail string
+		var drDetail, drItem, drSnapshot string
 		if dr, found, drErr := s.store.LatestRestoreDrillKind(d.name, "offsite", "dr"); drErr == nil && found {
 			lastDRDrillAt = dr.At
 			lastDRDrillOK = dr.OK
-			drDetail = dr.Detail
+			drDetail, drItem, drSnapshot = dr.Detail, dr.Item, dr.SnapshotID
 		}
 		// The latest OFF-SITE SUBSET drill (integrity check against the off-site
 		// repo) drives the dashboard's "off-site verified" badge (#63). It is the
@@ -3547,6 +3564,8 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastReplicationOK:     lastReplicationOK,
 			LastDRDrillAt:         lastDRDrillAt,
 			LastDRDrillOK:         lastDRDrillOK,
+			LastDRDrillItem:       drItem,
+			LastDRDrillSnapshot:   drSnapshot,
 			LastOffsiteSubsetAt:   lastOffsiteSubsetAt,
 			LastOffsiteSubsetOK:   lastOffsiteSubsetOK,
 			OffsiteDrillScheduled: settings.DrillsEnabled && settings.OffsiteDrillsEnabled && offsiteConfigured,
@@ -4944,7 +4963,7 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 		return fmt.Errorf("read settings: %w", err)
 	}
 	if s.offsiteRepoFor(domain, settings) == "" {
-		return errNoOffsiteRepo
+		return s.noOffsiteRepoErr(domain)
 	}
 	if err := s.requireOwnLocation(settings, domain); err != nil {
 		return err
@@ -4972,7 +4991,7 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 		return err
 	}
 	if s.offsiteRepoFor(domain, settings) == "" {
-		return errNoOffsiteRepo
+		return s.noOffsiteRepoErr(domain)
 	}
 	unlock, ok := s.tryLockDomainFor(domain, "replicate")
 	if !ok {
@@ -5068,7 +5087,7 @@ func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, in
 	}
 	loc := s.offsiteRepoFor(domain, settings)
 	if loc == "" {
-		return false, false, errNoOffsiteRepo
+		return false, false, s.noOffsiteRepoErr(domain)
 	}
 	repo, err := s.resolveRepo(loc)
 	if err != nil {
@@ -9624,8 +9643,8 @@ func (s *Service) refName(r domainRepoRef) string {
 
 // scrubSafeName makes an operator's free-text repository name safe to show:
 // a password the name holds is taken out, and a slash, which the error
-// scrubber would turn into "[path]", becomes a middle dot, so "NAS/cold" still
-// reads as the name the operator typed.
+// scrubber takes for a path when it opens a word, becomes a middle dot, so
+// "NAS /cold" still reads as the name the operator typed.
 func scrubSafeName(name string) string {
 	name = scrubRepoLocation(strings.TrimSpace(name))
 	if !strings.ContainsAny(name, `/\`) {
@@ -10197,19 +10216,8 @@ func (s *Service) concludeFileSetRestore(runID, rkey, snapshotID string, rerr er
 // runs.error, protects all three downstream readers at once and doesn't rely
 // on finding every current AND FUTURE non-restic call site individually.
 //
-// An earlier version of this function scrubbed EVERYTHING unconditionally,
-// including the sentinel-tagged errors above, on the theory that running the
-// scrub regexes over already-clean text is a harmless no-op. That was false
-// for exactly these sentinels: scrubSecrets' path regex matches ANY
-// slash-containing token, not just a filesystem path, so routing them through
-// unconditionally silently mangled the very content scrubError's bypasses
-// exist to protect — e.g. turning "host port 8080/tcp is already used by
-// container ..." into "host port 8080[path] is already used ..." and eating
-// a zvol rebase failure's ZFS dataset name the same way — even though the
-// SAME underlying error survives intact when it goes through scrubError
-// instead. Checking scrubBypassMessage first closes that gap without
-// reimplementing scrubError's bypass logic a second, independently-drifting
-// time.
+// The sentinels scrubError lets through are checked first, so a message reads
+// the same in the run history as in the response that refused it.
 func truncateRunErr(err error) string {
 	if err == nil {
 		return ""
@@ -11618,7 +11626,7 @@ func (s *Service) backupPlaces(settings store.Settings, domain string, repos []s
 	if err != nil {
 		return nil, fmt.Errorf("the off-site target list could not be read: %w", err)
 	}
-	for _, t := range orSettingsOffsiteTarget(targets, domain, settings) {
+	for _, t := range s.orSettingsOffsiteTarget(targets, domain, settings) {
 		repo, err := s.resolveRepo(t.Repo)
 		if err != nil {
 			return nil, fmt.Errorf("off-site target %q could not be resolved: %w", t.Name, err)
@@ -12143,6 +12151,33 @@ func (h sshZFSHost) VolSize(ctx context.Context, dataset string) (int64, bool, e
 		return n, true, nil
 	}
 	return 0, false, nil
+}
+
+// zfsSpace is how much room ZFS has for a dataset and whether it is a zvol.
+type zfsSpace struct {
+	volume    bool
+	available int64
+}
+
+// Space reads every filesystem and zvol on the host by name.
+func (h sshZFSHost) Space(ctx context.Context) (map[string]zfsSpace, error) {
+	out, err := h.ssh.Run(ctx, virshcli.ZFSListSpaceArgs()...)
+	if err != nil {
+		return nil, err
+	}
+	space := map[string]zfsSpace{}
+	for line := range strings.Lines(out) {
+		f := strings.Split(strings.TrimSpace(line), "\t")
+		if len(f) != 3 {
+			continue
+		}
+		avail, err := strconv.ParseInt(f[2], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("available space of %s: %w", f[0], err)
+		}
+		space[f[0]] = zfsSpace{volume: f[1] == "volume", available: avail}
+	}
+	return space, nil
 }
 
 func (h sshZFSHost) CreateVolume(ctx context.Context, dataset string, size int64) error {
@@ -16681,7 +16716,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	// can be written and never read back, so the drill could not pass.
 	mode := s.offsiteModeForTarget(settings, target)
 	listCtx, listCancel := context.WithTimeout(drillCtx, drillSnapshotTimeout)
-	snapID, err := s.pickDRSnapshot(listCtx, domain, settings, repo, mode)
+	snapID, item, err := s.pickDRSnapshot(listCtx, domain, settings, repo, mode)
 	listCancel()
 	if err != nil {
 		return store.RestoreDrill{}, err
@@ -16700,11 +16735,13 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 		return store.RestoreDrill{}, drillErr
 	}
 	drill = store.RestoreDrill{
-		Domain: domain,
-		Source: source,
-		At:     time.Now().Unix(),
-		OK:     drillErr == nil,
-		Kind:   "dr",
+		Domain:     domain,
+		Source:     source,
+		At:         time.Now().Unix(),
+		OK:         drillErr == nil,
+		Kind:       "dr",
+		Item:       item,
+		SnapshotID: shortID(snapID),
 	}
 	if drillErr != nil {
 		drill.Detail = scrubError(drillErr)
@@ -16719,14 +16756,15 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	// dashboard Activity Log/Run History (the restore_drills row above stays the
 	// badge/scorecard source of truth). Kind "drdrill" — distinct from the local
 	// subset drill's "drill" — so the log names the off-site DR restore check.
-	s.recordDomainRun(domain, "drdrill", drill.OK, drill.Detail)
+	s.recordDomainRunOf(domain, "drdrill", drill.OK, drill.Detail, drill.Item, drill.SnapshotID)
 	if drillErr != nil {
 		s.notifyDrillFailure(ctx, domain, source, drill.Detail)
 	}
 	return drill, drillErr
 }
 
-// pickDRSnapshot resolves the newest off-site snapshot to drill for a domain.
+// pickDRSnapshot resolves the newest off-site snapshot to drill for a domain,
+// and the item it holds.
 // containers: the DRDrillTarget container, scoped to its container:<name> tag,
 // or to its database dumps when those are all it has. With no target pinned it
 // takes the most recently backed-up container that has such a snapshot in this
@@ -16739,19 +16777,24 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 // takes the newest snapshot carrying a zfs: tag, because a member's tree root
 // is its dataset root and any member proves the repo restorable. An empty repo
 // or a target with no off-site snapshot yields a clear error.
-func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (string, error) {
+func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (id, item string, err error) {
 	all, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	if len(all) == 0 {
-		return "", errors.New("no off-site backups to drill yet")
+		return "", "", errors.New("no off-site backups to drill yet")
 	}
 	switch domain {
 	case "flash", "files":
-		return newestSnapshot(all).ID, nil
+		newest := newestSnapshot(all)
+		return newest.ID, taggedName(newest.Tags, "fileset:"), nil
 	case zfsDomain:
-		return newestZFSMemberSnapshot(all)
+		newest, err := newestZFSMemberSnapshot(all)
+		if err != nil {
+			return "", "", err
+		}
+		return newest.ID, taggedName(newest.Tags, "zfs:"), nil
 	case "containers", "vms":
 		pinned, tagPfx, noun := settings.DRDrillTarget, "container:", "container"
 		newest := s.backedUpContainersNewestFirst
@@ -16762,10 +16805,10 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 		candidates := []string{pinned}
 		if pinned == "" {
 			if candidates, err = newest(); err != nil {
-				return "", err
+				return "", "", err
 			}
 			if len(candidates) == 0 {
-				return "", fmt.Errorf("no backed-up %s to drill", noun)
+				return "", "", fmt.Errorf("no backed-up %s to drill", noun)
 			}
 		}
 		for _, name := range candidates {
@@ -16776,35 +16819,42 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 				scoped = snapshotsTagged(all, dbDumpIdentity(name))
 			}
 			if len(scoped) > 0 {
-				return newestSnapshot(scoped).ID, nil
+				return newestSnapshot(scoped).ID, name, nil
 			}
 		}
 		if pinned != "" {
-			return "", fmt.Errorf("no off-site snapshot for drill target %q", pinned)
+			return "", "", fmt.Errorf("no off-site snapshot for drill target %q", pinned)
 		}
-		return "", fmt.Errorf("no backed-up %s has an off-site snapshot to drill", noun)
+		return "", "", fmt.Errorf("no backed-up %s has an off-site snapshot to drill", noun)
 	default:
-		return "", fmt.Errorf("unknown domain %q", domain)
+		return "", "", fmt.Errorf("unknown domain %q", domain)
 	}
+}
+
+// taggedName is the value of the first tag that starts with prefix, or "".
+func taggedName(tags []string, prefix string) string {
+	for _, t := range tags {
+		if rest, ok := strings.CutPrefix(t, prefix); ok && rest != "" {
+			return rest
+		}
+	}
+	return ""
 }
 
 // newestZFSMemberSnapshot picks the newest member snapshot of the ZFS domain.
 // A repository shared with another domain also holds snapshots this drill must
 // not restore, so the tag decides rather than the timestamp alone.
-func newestZFSMemberSnapshot(all []restic.Snapshot) (string, error) {
+func newestZFSMemberSnapshot(all []restic.Snapshot) (restic.Snapshot, error) {
 	var scoped []restic.Snapshot
 	for _, snap := range all {
-		for _, t := range snap.Tags {
-			if rest, ok := strings.CutPrefix(t, "zfs:"); ok && rest != "" {
-				scoped = append(scoped, snap)
-				break
-			}
+		if taggedName(snap.Tags, "zfs:") != "" {
+			scoped = append(scoped, snap)
 		}
 	}
 	if len(scoped) == 0 {
-		return "", errNothingToDrill
+		return restic.Snapshot{}, errNothingToDrill
 	}
-	return newestSnapshot(scoped).ID, nil
+	return newestSnapshot(scoped), nil
 }
 
 // newestSnapshot returns the snapshot with the latest Time (RFC3339 sorts
@@ -17120,9 +17170,15 @@ func domainRunTargetID(domain string) string {
 // detail is bounded to the same cap as truncateRunErr. Best-effort: a store
 // error is logged and never fails the check that already ran.
 func (s *Service) recordDomainRun(domain, kind string, ok bool, detail string) {
-	// A drill or tamper row is never started through a tool, so a caller's
-	// context here would put the wrong name in the audit trail.
-	runID, err := s.startRun(context.Background(), domainRunTargetID(domain), kind)
+	s.recordDomainRunOf(domain, kind, ok, detail, "", "")
+}
+
+// recordDomainRunOf is recordDomainRun for a check that worked on one item of
+// the domain and one snapshot of it, which the run row names.
+func (s *Service) recordDomainRunOf(domain, kind string, ok bool, detail, subject, snapshotID string) {
+	// A drill or tamper row is never started through a tool, so the origin a
+	// caller's context carries would put the wrong name in the audit trail.
+	runID, err := s.startRun(withRunSubject(context.Background(), subject), domainRunTargetID(domain), kind)
 	if err != nil {
 		log.Printf("api: %s %s: could not start run record (continuing): %v", kind, domain, err) //nolint:gosec // G706: kind and domain are fixed literals
 		return
@@ -17135,7 +17191,7 @@ func (s *Service) recordDomainRun(domain, kind string, ok bool, detail string) {
 	if len(detail) > maxDetail {
 		detail = detail[:maxDetail]
 	}
-	if err := s.store.FinishRun(runID, status, "", 0, detail); err != nil {
+	if err := s.store.FinishRun(runID, status, snapshotID, 0, detail); err != nil {
 		log.Printf("api: %s %s: could not finish run record: %v", kind, domain, err) //nolint:gosec // G706: kind and domain are fixed literals
 	}
 }
@@ -17238,10 +17294,6 @@ func (s *Service) reposThatExist(repos []domainRepoRef, notYet string) ([]domain
 // shortRepoName names a repository in a message without printing a full host
 // path: the LAST segment, or the remote's scheme, is what a reader recognises,
 // and the error scrubber would redact the whole path anyway.
-//
-// Deliberately slash-free. scrubError's absolute-path regex redacts any
-// slash-led token, so "folder backups/cold" would arrive as "folder
-// backups[path]" - which is why this returns one segment and not two.
 func shortRepoName(repo string) string {
 	if restic.IsRemoteRepo(repo) {
 		if i := strings.IndexByte(repo, ':'); i > 0 {

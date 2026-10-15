@@ -57,6 +57,56 @@ func TestScrubSecretsLeavesTheSentenceAroundAPath(t *testing.T) {
 			want: `post to https://hooks.example.com/x?[redacted], then retry`,
 		},
 		{
+			name: "zfs dataset in a restore refusal",
+			in:   `this backup holds no image of the zvol disk tank/vms/testvm, so it cannot be restored; pick another backup`,
+			want: `this backup holds no image of the zvol disk tank/vms/testvm, so it cannot be restored; pick another backup`,
+		},
+		{
+			name: "quoted zfs dataset",
+			in:   `rebase dataset "tank/vms/zvolvm/disk1" onto pool "flash"`,
+			want: `rebase dataset "tank/vms/zvolvm/disk1" onto pool "flash"`,
+		},
+		{
+			name: "zfs dataset in parentheses",
+			in:   `has only zvol disks (tank/vms/win11-disk0).`,
+			want: `has only zvol disks (tank/vms/win11-disk0).`,
+		},
+		{
+			name: "host port",
+			in:   `host port 8080/tcp is already used`,
+			want: `host port 8080/tcp is already used`,
+		},
+		{
+			name: "path after an equals sign",
+			in:   `mount failed: source=/mnt/user/appdata/plex`,
+			want: `mount failed: source=[path]`,
+		},
+		{
+			name: "path after a colon",
+			in:   `dial unix:///var/run/docker.sock: connection refused`,
+			want: `dial unix:[path]: connection refused`,
+		},
+		{
+			name: "path in brackets",
+			in:   `skipped [/mnt/user/isos]`,
+			want: `skipped [[path]]`,
+		},
+		{
+			name: "path at the start",
+			in:   `/mnt/user/appdata/plex: no such file or directory`,
+			want: `[path]: no such file or directory`,
+		},
+		{
+			name: "dataset next to a path",
+			in:   `tank/appdata is mounted at /mnt/tank/appdata.`,
+			want: `tank/appdata is mounted at [path].`,
+		},
+		{
+			name: "password with a slash in a url",
+			in:   `connect ftp://backupuser:wJalrXUtnFEMI/K7MDENG@ftp.example/x failed`,
+			want: `connect [redacted]@ftp.example/x failed`,
+		},
+		{
 			name: "url with a path keeps it",
 			in:   `dial http://ntfy.lan:8080/alerts failed, see /config/bombvault.sqlite`,
 			want: `dial http://ntfy.lan:8080/alerts failed, see [path]`,
@@ -71,9 +121,9 @@ func TestScrubSecretsLeavesTheSentenceAroundAPath(t *testing.T) {
 	}
 }
 
-func TestScrubErrorKeepsTheZvolExportRefusalReadable(t *testing.T) {
-	err := checkVMExportable("win11", 0, []string{"/dev/zvol/tank/vms/win11-disk0"})
-	want := `export vm: "win11" has only zvol disks ([path]). They are included in its backups but cannot be exported as files. Restore the VM from a backup instead`
+func TestTheZvolExportRefusalNamesTheDatasets(t *testing.T) {
+	err := checkVMExportable("win11", 0, []string{"/dev/zvol/tank/vms/win11-disk0", "/dev/zvol/tank/vms/win11-disk1"})
+	want := `export vm: "win11" has only zvol disks (tank/vms/win11-disk0, tank/vms/win11-disk1). They are included in its backups but cannot be exported as files. Restore the VM from a backup instead.`
 	if got := scrubError(err); got != want {
 		t.Fatalf("scrubError = %q, want %q", got, want)
 	}

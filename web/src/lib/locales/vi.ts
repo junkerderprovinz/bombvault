@@ -189,6 +189,10 @@ const vi: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Lần khôi phục này không ghi tệp nào.",
   "restoreCheck.reason.unmeasured": "Không đo được nên không chặn.",
   "restoreCheck.reason.parentMissing": "Tập dữ liệu phía trên, {name}, không tồn tại. Hãy tạo nó trước hoặc chọn tên khác.",
+  "restoreCheck.zvol.title": "Volume ZFS",
+  "restoreCheck.zvol.titleHint": "Đĩa VM trên một volume ZFS được trả về dưới dạng một ảnh duy nhất ghi đè lên toàn bộ volume, nên nó được liệt kê ở đây chứ không nằm trong danh sách tệp.",
+  "restoreCheck.zvol.safety": "BombVault chụp snapshot {name} trước, để giữ lại những gì đang có.",
+  "restoreCheck.reason.poolMissing": "Máy chủ này không có pool ZFS {name}, nên không thể tạo volume.",
   "restoreCheck.reason.networkMissing": "Máy chủ này không có mạng {name}. Hãy chọn một mạng cho container.",
   "restoreCheck.reason.networkGone": "Máy chủ này không có mạng {name}. Nếu mạng này do một ứng dụng tạo ra, chẳng hạn ứng dụng TrueNAS, hãy cài lại ứng dụng đó trước rồi mới khôi phục dữ liệu của nó.",
   "restoreCheck.reason.networkUnreadable": "Không đọc được các mạng trên máy chủ này: {error}",
@@ -1114,6 +1118,9 @@ const vi: Partial<Translations> = {
   "dbdump.importNoVersion": "Bản kết xuất này không ghi lại phiên bản cơ sở dữ liệu. Việc nhập sẽ thất bại nếu máy chủ không đọc được nó.",
   "dbdump.importStops": "Trong lúc nhập, BombVault cũng dừng các ứng dụng sau: {apps}. Sau đó sẽ khởi động lại. Nếu việc nhập thất bại sau khi đã bắt đầu, dữ liệu cũ vẫn nằm ở chỗ khác và các ứng dụng vẫn dừng.",
   "dbdump.importDone": "Đã nhập cơ sở dữ liệu.",
+  "dbdump.keptIncluded": "Bản sao nằm cạnh thư mục dữ liệu, nên mọi bản sao lưu hoặc bản nhân bản của thư mục hay tập dữ liệu phía trên đều chứa nó. Hãy xóa nó khi cơ sở dữ liệu đã chạy ổn.",
+  "dbdump.removeKept": "Xóa bản sao",
+  "dbdump.keptRemoved": "Đã xóa bản sao.",
   "dbdump.importRefused.busy": "Đang có một lần sao lưu hoặc khôi phục khác chạy. Hãy thử lại khi nó xong.",
   "dbdump.importRefused.notRunning": "Hãy khởi động vùng chứa trước; việc nhập cần máy chủ đang chạy.",
   "dbdump.importRefused.engineMismatch": "Bản kết xuất này đến từ loại cơ sở dữ liệu khác với loại vùng chứa đang chạy.",
@@ -1372,6 +1379,7 @@ const vi: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "đã xác minh off-site",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Được bảo vệ",
@@ -2346,6 +2354,7 @@ const vi: Partial<Translations> = {
   "mdns.hint": "Quảng bá BombVault trên mạng cục bộ qua mDNS, để trình duyệt vào được bằng tên bombvault.local và các trình duyệt dịch vụ liệt kê nó. Trong mạng bridge mặc định của Docker, lời quảng bá chỉ ở bên trong Docker; nó tới được mạng LAN qua br0, macvlan hoặc mạng của máy chủ.",
   "mdns.enable": "Quảng bá trên mạng cục bộ",
   "mdns.statusOn": "Đã quảng bá là {url}",
+  "mdns.statusHostOnly": "Chỉ quảng bá bên trong Docker. Trên mạng bridge, không thể vào bombvault.local từ mạng LAN của bạn.",
   "mdns.statusStarting": "Đang kiểm tra tên còn trống trên mạng",
   "mdns.statusError": "Chưa quảng bá: {error}",
   "mdns.statusOff": "Tắt",
@@ -4170,6 +4179,10 @@ const vi: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "VM bị tắt và các ổ đĩa của nó được thay bằng bản sao lưu này.",
   "restoreWindow.says.vmStarts": "Sau đó nó chạy lại.",
   "restoreWindow.says.vmOff": "Sau đó nó vẫn tắt.",
+  "restoreWindow.says.createContainer": "Container được tạo từ bản sao lưu này.",
+  "restoreWindow.says.createdContainerStarts": "Sau đó nó chạy.",
+  "restoreWindow.says.createVM": "VM được tạo từ bản sao lưu này.",
+  "restoreWindow.says.createdVMStarts": "Sau đó nó chạy.",
   "restoreWindow.says.backupFirst": "BombVault sao lưu trạng thái hiện tại trước, để bạn quay lại được.",
   "restoreWindow.says.replaceFiles": "Các tệp ở vị trí gốc được thay bằng bản sao lưu này.",
   "restoreWindow.says.replaceDataset": "Các tệp từ bản sao lưu này được ghi vào tập dữ liệu. Tệp cùng tên bị ghi đè, các tệp khác được giữ.",

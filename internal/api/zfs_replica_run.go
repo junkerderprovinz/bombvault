@@ -414,8 +414,8 @@ func (s *Service) finishZFSReplicaRun(ctx context.Context, d store.ZFSDataset, r
 	case ctx.Err() != nil:
 		status, msg = "cancelled", "cancelled"
 	default:
-		// The dataset names are the message, and the run error scrubber
-		// would turn each of them into [path].
+		// The dataset names are the message, so it goes out as a refusal
+		// the run error scrubber passes untouched.
 		status = "failed"
 		msg = truncateRunErr(&backup.ZFSRefusal{Detail: zfsRefusalSentence("replica", d.Dataset, &backup.ZFSRefusal{
 			Code: zfsReplicaCode(runErr), Detail: zfsDetail(zfsReplicaDetail(runErr)),

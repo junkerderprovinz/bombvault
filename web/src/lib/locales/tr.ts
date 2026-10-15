@@ -189,6 +189,10 @@ const tr: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Bu geri yükleme hiç dosya yazmaz.",
   "restoreCheck.reason.unmeasured": "Ölçülemedi, bu yüzden engellemiyor.",
   "restoreCheck.reason.parentMissing": "Üstündeki veri kümesi {name} yok. Önce onu oluştur ya da başka bir ad seç.",
+  "restoreCheck.zvol.title": "ZFS birimleri",
+  "restoreCheck.zvol.titleHint": "ZFS biriminde duran bir VM diski, tüm birimin üzerine yazılan tek bir imaj olarak geri gelir; bu yüzden dosya listesinde değil burada görünür.",
+  "restoreCheck.zvol.safety": "BombVault önce {name} snapshot'ını alır; bu, şu an orada olanı saklar.",
+  "restoreCheck.reason.poolMissing": "Bu sunucuda {name} adlı ZFS havuzu yok, bu yüzden birim oluşturulamaz.",
   "restoreCheck.reason.networkMissing": "Bu sunucuda {name} adlı bir ağ yok. Konteyner için bir ağ seç.",
   "restoreCheck.reason.networkGone": "Bu sunucuda {name} adlı bir ağ yok. Ağı bir uygulama oluşturduysa, örneğin bir TrueNAS uygulaması, önce o uygulamayı yeniden kur, sonra verilerini geri yükle.",
   "restoreCheck.reason.networkUnreadable": "Bu sunucudaki ağlar okunamadı: {error}",
@@ -1123,6 +1127,9 @@ const tr: Partial<Translations> = {
   "dbdump.importNoVersion": "Bu döküm veritabanı sürümünü kaydetmiyor. Sunucu okuyamazsa aktarma başarısız olur.",
   "dbdump.importStops": "one=Aktarma sürerken BombVault {apps} uygulamasını da durdurur, sonra yeniden başlatır. Aktarma başladıktan sonra başarısız olursa eski veriler kenarda kalır, uygulama da durdurulmuş.|other=Aktarma sürerken BombVault şu uygulamaları da durdurur: {apps}. Ardından onları yeniden başlatır. Aktarma başladıktan sonra başarısız olursa eski veriler kenarda kalır, uygulamalar da durdurulmuş.",
   "dbdump.importDone": "Veritabanı aktarıldı.",
+  "dbdump.keptIncluded": "Kopya veri klasörünün yanında durur, bu yüzden üstündeki klasörün ya da veri kümesinin her yedeği veya replikası onu da içerir. Veritabanı çalışınca onu kaldır.",
+  "dbdump.removeKept": "Kopyayı kaldır",
+  "dbdump.keptRemoved": "Kopya kaldırıldı.",
   "dbdump.importRefused.busy": "Başka bir yedekleme veya geri yükleme sürüyor. Bitince yeniden dene.",
   "dbdump.importRefused.notRunning": "Önce kapsayıcıyı başlat; aktarma çalışan sunucuya ihtiyaç duyar.",
   "dbdump.importRefused.engineMismatch": "Bu döküm, kapsayıcının çalıştırdığından başka türde bir veritabanından geliyor.",
@@ -1381,6 +1388,7 @@ const tr: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "site dışı doğrulandı",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Korumalı",
@@ -2355,6 +2363,7 @@ const tr: Partial<Translations> = {
   "mdns.hint": "BombVault'u mDNS ile yerel ağda duyurur; böylece tarayıcı ona bombvault.local adıyla ulaşır ve hizmet tarayıcıları onu listeler. Docker'ın varsayılan bridge ağında duyuru Docker içinde kalır; br0, macvlan ya da ana makine ağıyla yerel ağa ulaşır.",
   "mdns.enable": "Yerel ağda duyur",
   "mdns.statusOn": "{url} olarak duyuruldu",
+  "mdns.statusHostOnly": "Yalnızca Docker içinde duyuruldu. Bridge ağında bombvault.local adresine yerel ağından ulaşılamaz.",
   "mdns.statusStarting": "Adın ağda boş olup olmadığı denetleniyor",
   "mdns.statusError": "Duyurulmadı: {error}",
   "mdns.statusOff": "Kapalı",
@@ -4179,6 +4188,10 @@ const tr: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "VM kapatılır ve diskleri bu yedekle değiştirilir.",
   "restoreWindow.says.vmStarts": "Sonra yeniden başlar.",
   "restoreWindow.says.vmOff": "Sonra kapalı kalır.",
+  "restoreWindow.says.createContainer": "Konteyner bu yedekten oluşturulur.",
+  "restoreWindow.says.createdContainerStarts": "Sonra başlar.",
+  "restoreWindow.says.createVM": "VM bu yedekten oluşturulur.",
+  "restoreWindow.says.createdVMStarts": "Sonra başlar.",
   "restoreWindow.says.backupFirst": "Önce BombVault mevcut durumu yedekler, böylece geri dönebilirsin.",
   "restoreWindow.says.replaceFiles": "Orijinal konumdaki dosyalar bu yedekle değiştirilir.",
   "restoreWindow.says.replaceDataset": "Bu yedekteki dosyalar veri kümesine yazılır. Aynı adlı dosyaların üzerine yazılır, diğer dosyalar kalır.",

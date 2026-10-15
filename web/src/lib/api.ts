@@ -526,6 +526,9 @@ export interface Run {
    *  it is purged from the list. */
   startedViaLabel?: string;
   startedViaRevoked?: boolean;
+  /** What a run on a whole domain worked on, such as the container a DR
+   *  drill restored. */
+  subject?: string;
   /** What held a slow backup back, when one thing clearly did. */
   bottleneck?: Bottleneck;
 }
@@ -574,6 +577,8 @@ export interface DomainStatus {
   lastReplicationOK: boolean; // whether that replication succeeded
   lastDrDrillAt: number; // unix seconds of the last off-site DR drill; 0 = never
   lastDrDrillOK: boolean; // whether that DR drill passed
+  lastDrDrillItem?: string; // what that DR drill restored, "" where the domain has no items
+  lastDrDrillSnapshot?: string; // the short id of the snapshot it restored
   // Latest OFF-SITE SUBSET drill (integrity check against the off-site repo) —
   // the only off-site drill VMs can run. Drives the "off-site verified" badge (#63).
   lastOffsiteSubsetAt: number; // unix seconds; 0 = never
@@ -605,6 +610,10 @@ export interface RestoreDrill {
   // off-site sandbox restore). Distinguishes an off-site DR check from a local
   // subset integrity check (which can also run against the off-site repo).
   kind: string;
+  /** What a DR drill restored: the item, "" where the domain has none, and
+   *  the short id of its snapshot. */
+  item?: string;
+  snapshotId?: string;
 }
 
 /** The "Backup Everything" pass used to ride along here as its own
@@ -1182,6 +1191,21 @@ export interface RestorePlan {
   /** Set when the check asked for a backup first and the restore replaces
    *  the original. */
   backupFirst?: BackupFirstPlan;
+  /** The VM disks on ZFS volumes, which the restore writes whole. */
+  zvols?: PlanZvol[];
+}
+
+/** A zvol a VM restore writes whole. change is "changed" for one it
+ *  replaces, "added" for one it creates and "" when the host could not be
+ *  read. safety starts the name of the snapshot taken before a replaced zvol
+ *  is written. */
+export interface PlanZvol {
+  dataset: string;
+  size: number;
+  change: "" | "added" | "changed";
+  safety?: string;
+  free: number;
+  noPool?: boolean;
 }
 
 /** What becomes of the backup before a restore: "ok" when it will be taken,
@@ -1718,6 +1742,13 @@ export function importDbDump(
 ): Promise<OkEnvelope & { started?: boolean; server?: string; dump?: string }> {
   const path = `/api/containers/${encodeURIComponent(name)}/dbdumps/${encodeURIComponent(id)}/import`;
   return fetchJSON(`${path}${srcParam(source)}`, { method: "POST" });
+}
+
+/** DELETE /api/containers/{name}/dbimport-kept/{stamp}: remove the data folder
+ *  an import kept, named by the time stamp at the end of its name. */
+export function removeKeptDataDir(name: string, stamp: string): Promise<OkEnvelope & { removed?: string }> {
+  const path = `/api/containers/${encodeURIComponent(name)}/dbimport-kept/${encodeURIComponent(stamp)}`;
+  return fetchJSON(path, { method: "DELETE" });
 }
 
 /** PATCH /api/containers/{name} — set this container's restic --exclude patterns. */
@@ -8139,10 +8170,12 @@ export function setHomeAssistant(body: {
 }
 
 /** The mDNS announcement: whether it is switched on, whether it runs, and
- *  the address it announces. */
+ *  the address it announces. hostOnly is set on a Docker bridge network,
+ *  where the announcement never reaches the LAN and url stays empty. */
 export interface MdnsState extends OkEnvelope {
   enabled: boolean;
   running: boolean;
+  hostOnly: boolean;
   url: string;
   instance: string;
   error: string;

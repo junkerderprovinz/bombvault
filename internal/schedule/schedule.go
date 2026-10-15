@@ -720,6 +720,9 @@ type Scheduler struct {
 	pullFn            func() error
 	fleetFn           func() error
 	everythingFn      func() error
+	// offsiteInUse reports whether a domain has an off-site target to copy to;
+	// see SetOffsiteInUse.
+	offsiteInUse func(domain string) bool
 
 	// idleHold takes a scheduled container that has to wait for its app to be
 	// idle out of the run; see SetIdleHold.
@@ -1013,6 +1016,20 @@ func (s *Scheduler) SetDrillJob(drillFn func(domain, source, kind string) error)
 // each domain whose off-site repo is flagged immutable. Call before Reload.
 func (s *Scheduler) SetTamperJob(tamperFn func(domain string) error) {
 	s.tamperFn = tamperFn
+}
+
+// SetOffsiteInUse wires the check whether a domain has an off-site target in
+// use. It is asked when a job fires rather than at Reload, because switching a
+// target off does not reload the schedule. Without it every planned off-site
+// job runs.
+func (s *Scheduler) SetOffsiteInUse(inUse func(domain string) bool) {
+	s.offsiteInUse = inUse
+}
+
+// offsiteOff reports whether every off-site target of domain is switched off,
+// so an off-site job for it has nothing to work on.
+func (s *Scheduler) offsiteOff(domain string) bool {
+	return s.offsiteInUse != nil && !s.offsiteInUse(domain)
 }
 
 // SetDigestJob wires the weekly digest. digestFn sends one app-wide summary per
@@ -1392,6 +1409,9 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					log.Printf("schedule: %s-offsite job skipped, off-site not wired (SetOffsiteJob)", domain)
 					return
 				}
+				if s.offsiteOff(domain) {
+					return
+				}
 				if err := s.replicateOffFn(domain); err != nil {
 					log.Printf("schedule: %s-offsite job: %v", domain, err)
 				}
@@ -1417,16 +1437,21 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					log.Print("schedule: drills job skipped, drills not wired (SetDrillJob)")
 					return
 				}
-				if len(tasks) == 0 {
+				attempted := 0
+				for _, tk := range tasks {
+					if tk.source == "offsite" && s.offsiteOff(tk.domain) {
+						continue
+					}
+					attempted++
+					if err := s.drillFn(tk.domain, tk.source, tk.kind); err != nil {
+						log.Printf("schedule: drills job: %s/%s(%s): %v", tk.domain, tk.source, tk.kind, err)
+					}
+				}
+				if attempted == 0 {
 					// Nothing was attempted. Recording a run here would hold off
 					// the first real pass for a whole everyN interval once a
 					// domain is switched on.
 					return
-				}
-				for _, tk := range tasks {
-					if err := s.drillFn(tk.domain, tk.source, tk.kind); err != nil {
-						log.Printf("schedule: drills job: %s/%s(%s): %v", tk.domain, tk.source, tk.kind, err)
-					}
 				}
 				// The pass counts as a run once every task was attempted, whatever
 				// the verdicts. A drill costs the same whether it passes or fails
@@ -1449,15 +1474,22 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					log.Print("schedule: tamper job skipped, tamper test not wired (SetTamperJob)")
 					return
 				}
+				attempted := 0
 				for _, dom := range tamperDomains {
+					if s.offsiteOff(dom) {
+						continue
+					}
+					attempted++
 					if err := s.tamperFn(dom); err != nil {
 						log.Printf("schedule: tamper job: %s: %v", dom, err)
 					}
 				}
 				// As with drills, a sweep counts as a run whatever the verdicts,
 				// or an unreachable backend would be probed every night. tamperFn
-				// records each verdict, and tamperDomains is never empty here.
-				s.recordJobRun(store.ScheduleJobTamper)
+				// records each verdict.
+				if attempted > 0 {
+					s.recordJobRun(store.ScheduleJobTamper)
+				}
 			},
 			lastRun: s.jobLastRun(store.ScheduleJobTamper),
 		})

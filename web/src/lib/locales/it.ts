@@ -189,6 +189,10 @@ const it: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Questo ripristino non scrive file.",
   "restoreCheck.reason.unmeasured": "Non misurabile, quindi non blocca.",
   "restoreCheck.reason.parentMissing": "Il dataset superiore, {name}, non esiste. Crealo prima o scegli un altro nome.",
+  "restoreCheck.zvol.title": "Volumi ZFS",
+  "restoreCheck.zvol.titleHint": "Un disco di VM su un volume ZFS torna come un'unica immagine scritta sull'intero volume, perciò compare qui e non nell'elenco dei file.",
+  "restoreCheck.zvol.safety": "BombVault scatta prima lo snapshot {name}, che conserva ciò che c'è ora.",
+  "restoreCheck.reason.poolMissing": "Questo server non ha un pool ZFS {name}, quindi il volume non può essere creato.",
   "restoreCheck.reason.networkMissing": "Questo server non ha nessuna rete {name}. Scegli una rete per il container.",
   "restoreCheck.reason.networkGone": "Questo server non ha nessuna rete {name}. Se l'ha creata un'app, per esempio un'app di TrueNAS, reinstalla prima quell'app e poi ripristina i suoi dati.",
   "restoreCheck.reason.networkUnreadable": "Impossibile leggere le reti di questo server: {error}",
@@ -1105,6 +1109,9 @@ const it: Partial<Translations> = {
   "dbdump.importNoVersion": "Questo dump non registra la versione del suo database. L'importazione fallisce se il server non riesce a leggerlo.",
   "dbdump.importStops": "one=Durante l'importazione BombVault ferma anche {apps} e poi la riavvia. Se l'importazione fallisce dopo essere iniziata, i vecchi dati restano da parte e l'applicazione ferma.|many=Durante l'importazione BombVault ferma anche queste applicazioni: {apps}. Poi le riavvia. Se l'importazione fallisce dopo essere iniziata, i vecchi dati restano da parte e le applicazioni ferme.|other=Durante l'importazione BombVault ferma anche queste applicazioni: {apps}. Poi le riavvia. Se l'importazione fallisce dopo essere iniziata, i vecchi dati restano da parte e le applicazioni ferme.",
   "dbdump.importDone": "Database importato.",
+  "dbdump.keptIncluded": "La copia si trova accanto alla cartella dati, quindi ogni backup o replica della cartella o del dataset superiore la include. Rimuovila quando il database funziona.",
+  "dbdump.removeKept": "Rimuovi copia",
+  "dbdump.keptRemoved": "Copia rimossa.",
   "dbdump.importRefused.busy": "È in corso un altro backup o ripristino. Riprova quando sarà finito.",
   "dbdump.importRefused.notRunning": "Avvia prima il contenitore; l'importazione ha bisogno del server in esecuzione.",
   "dbdump.importRefused.engineMismatch": "Questo dump proviene da un tipo di database diverso da quello che il contenitore esegue.",
@@ -1373,6 +1380,7 @@ const it: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "verificato off-site",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Protetto",
@@ -2355,6 +2363,7 @@ const it: Partial<Translations> = {
   "mdns.hint": "Annuncia BombVault sulla rete locale tramite mDNS, così un browser lo raggiunge come bombvault.local e i browser di servizi lo elencano. Nella rete bridge predefinita di Docker l'annuncio resta dentro Docker; raggiunge la LAN con br0, macvlan o la rete dell'host.",
   "mdns.enable": "Annuncia sulla rete locale",
   "mdns.statusOn": "Annunciato come {url}",
+  "mdns.statusHostOnly": "Annunciato solo dentro Docker. In una rete bridge, bombvault.local non è raggiungibile dalla tua LAN.",
   "mdns.statusStarting": "Verifico che il nome sia libero in rete",
   "mdns.statusError": "Non annunciato: {error}",
   "mdns.statusOff": "Spento",
@@ -4179,6 +4188,10 @@ const it: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "La VM viene spenta e i suoi dischi sostituiti con questo backup.",
   "restoreWindow.says.vmStarts": "Poi riparte.",
   "restoreWindow.says.vmOff": "Poi resta spenta.",
+  "restoreWindow.says.createContainer": "Il container viene creato da questo backup.",
+  "restoreWindow.says.createdContainerStarts": "Poi parte.",
+  "restoreWindow.says.createVM": "La VM viene creata da questo backup.",
+  "restoreWindow.says.createdVMStarts": "Poi parte.",
   "restoreWindow.says.backupFirst": "Prima BombVault fa il backup dello stato attuale, così puoi tornare indietro.",
   "restoreWindow.says.replaceFiles": "I file nella posizione originale vengono sostituiti con questo backup.",
   "restoreWindow.says.replaceDataset": "I file di questo backup vengono scritti nel dataset. I file con lo stesso nome vengono sovrascritti, gli altri restano.",

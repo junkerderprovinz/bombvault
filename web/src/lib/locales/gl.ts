@@ -229,6 +229,10 @@ const gl: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Esta restauración non escribe ficheiros.",
   "restoreCheck.reason.unmeasured": "Non se puido medir, así que non bloquea.",
   "restoreCheck.reason.parentMissing": "O conxunto de datos superior, {name}, non existe. Créao primeiro ou escolle outro nome.",
+  "restoreCheck.zvol.title": "Volumes ZFS",
+  "restoreCheck.zvol.titleHint": "Un disco de VM nun volume ZFS volve como unha soa imaxe escrita sobre todo o volume, por iso aparece aquí e non na lista de ficheiros.",
+  "restoreCheck.zvol.safety": "BombVault fai primeiro o snapshot {name}, que garda o que hai agora.",
+  "restoreCheck.reason.poolMissing": "Este servidor non ten ningún pool ZFS {name}, así que non se pode crear o volume.",
   "restoreCheck.reason.networkMissing": "Este servidor non ten ningunha rede {name}. Escolle unha rede para o contedor.",
   "restoreCheck.reason.networkGone": "Este servidor non ten ningunha rede {name}. Se a creou unha aplicación, como unha aplicación de TrueNAS, reinstala primeiro esa aplicación e despois restaura os seus datos.",
   "restoreCheck.reason.networkUnreadable": "Non se puideron ler as redes deste servidor: {error}",
@@ -849,6 +853,7 @@ const gl: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "externa verificada",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "motivo:",
@@ -1107,6 +1112,9 @@ const gl: Partial<Translations> = {
   "dbdump.importNoVersion": "Este volcado non rexistra a versión da súa base de datos. A importación falla se o servidor non a pode ler.",
   "dbdump.importStops": "one=Mentres importa, BombVault tamén detén {apps} e despois volve inicialo. Se a importación falla despois de comezar, os datos antigos quedan á parte e a aplicación detida.|other=Mentres importa, BombVault tamén detén estas aplicacións: {apps}. Despois volve inicialas. Se a importación falla despois de comezar, os datos antigos quedan á parte e as aplicacións detidas.",
   "dbdump.importDone": "Base de datos importada.",
+  "dbdump.keptIncluded": "A copia está xunto ao cartafol de datos, así que calquera copia de seguranza ou réplica do cartafol ou do conxunto de datos superior a inclúe. Elimínaa cando a base de datos funcione.",
+  "dbdump.removeKept": "Eliminar copia",
+  "dbdump.keptRemoved": "Copia eliminada.",
   "dbdump.importRefused.busy": "Hai outra copia ou restauración en marcha. Téntao de novo cando remate.",
   "dbdump.importRefused.notRunning": "Arrinca primeiro o contedor; a importación precisa o servidor en marcha.",
   "dbdump.importRefused.engineMismatch": "Este volcado vén dun tipo de base de datos distinto do que executa o contedor.",
@@ -2883,6 +2891,7 @@ const gl: Partial<Translations> = {
   "mdns.hint": "Anuncia BombVault na rede local por mDNS, para que un navegador chegue a el como bombvault.local e os exploradores de servizos o amosen. Na rede bridge predeterminada de Docker o anuncio queda dentro de Docker; chega á rede local con br0, macvlan ou a rede do host.",
   "mdns.enable": "Anunciar na rede local",
   "mdns.statusOn": "Anunciado como {url}",
+  "mdns.statusHostOnly": "Anunciado só dentro de Docker. Nunha rede bridge, bombvault.local non é accesible desde a túa rede local.",
   "mdns.statusStarting": "Comprobando que o nome está libre na rede",
   "mdns.statusError": "Sen anunciar: {error}",
   "mdns.statusOff": "Desactivado",
@@ -4189,6 +4198,10 @@ const gl: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "A MV apágase e os seus discos substitúense por esta copia.",
   "restoreWindow.says.vmStarts": "Despois volve iniciarse.",
   "restoreWindow.says.vmOff": "Despois queda apagada.",
+  "restoreWindow.says.createContainer": "O contedor créase a partir desta copia.",
+  "restoreWindow.says.createdContainerStarts": "Despois iníciase.",
+  "restoreWindow.says.createVM": "A MV créase a partir desta copia.",
+  "restoreWindow.says.createdVMStarts": "Despois iníciase.",
   "restoreWindow.says.backupFirst": "BombVault fai antes unha copia do estado actual, para que poidas volver atrás.",
   "restoreWindow.says.replaceFiles": "Os ficheiros do lugar orixinal substitúense por esta copia.",
   "restoreWindow.says.replaceDataset": "Os ficheiros desta copia escríbense no conxunto de datos. Os ficheiros co mesmo nome sobrescríbense e os demais quedan.",

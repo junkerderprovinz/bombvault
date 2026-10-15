@@ -20,7 +20,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -94,6 +93,19 @@ type Member struct {
 // ErrNotMember is returned for a call to an instance that is not reachable
 // in this group.
 var ErrNotMember = errors.New("group: no such member is reachable")
+
+// LeftError is the answer of a member that says, in its own name, that it is
+// not in this group any more. Statement is its signed word over Challenge,
+// for whoever holds the member's key to check.
+type LeftError struct {
+	MemberID  string
+	Challenge string
+	Statement []byte
+}
+
+func (e *LeftError) Error() string {
+	return "group: " + e.MemberID + " answered that it is not in this group"
+}
 
 // directPath is the route a member answers direct calls on.
 const directPath = "/api/group/call"
@@ -179,9 +191,27 @@ type remoteAddr struct {
 // answering.
 const addrTTL = 5 * time.Minute
 
+// directRetry is how long Call leaves a direct address alone after a call to
+// it failed, as long as the relay reaches the member instead. Without it every
+// call to a member behind a dead address waits out the dial timeout before
+// the relay gets its turn. The refresh keeps probing the address meanwhile and
+// puts it back to use as soon as it answers.
+const directRetry = addrTTL
+
+// departGrace is how long a member that said it left stays out of Members:
+// long enough for its relay connection to close and its last multicast
+// announce to age out, either of which would otherwise list it again.
+const departGrace = time.Minute
+
 // Manager keeps this instance's side of the group running: the discovery
 // announce, the relay connection and the direct transport.
 type Manager struct {
+	// Stranger, when set, signs what this instance answers, while it is in no
+	// group, a direct call addressed to it: its word, in its own name, that it
+	// is no member, covering the caller and the call's signature so it cannot
+	// be played back to anybody else. Set it before Start.
+	Stranger func(caller, challenge string) []byte
+
 	serve   relay.Handler
 	replay  *relay.ReplayGuard
 	disc    *discovery.Service
@@ -197,6 +227,10 @@ type Manager struct {
 
 	addrMu sync.Mutex
 	addrs  map[string]*remoteAddr
+	// failed holds when a call to a direct address last failed, by address.
+	failed map[string]time.Time
+	// departed holds when a member said it left, by id.
+	departed map[string]time.Time
 
 	sweepMu   sync.Mutex
 	lastSweep time.Time
@@ -209,13 +243,15 @@ type Manager struct {
 // in no group until Apply is called with a secret.
 func NewManager(serve relay.Handler) *Manager {
 	return &Manager{
-		serve:   serve,
-		replay:  relay.NewReplayGuard(),
-		disc:    discovery.New(),
-		limiter: relay.NewLimiter(),
-		slots:   make(chan struct{}, maxDirectCalls),
-		addrs:   map[string]*remoteAddr{},
-		stop:    make(chan struct{}),
+		serve:    serve,
+		replay:   relay.NewReplayGuard(),
+		disc:     discovery.New(),
+		limiter:  relay.NewLimiter(),
+		slots:    make(chan struct{}, maxDirectCalls),
+		addrs:    map[string]*remoteAddr{},
+		failed:   map[string]time.Time{},
+		departed: map[string]time.Time{},
+		stop:     make(chan struct{}),
 		hc: &http.Client{
 			Timeout: relay.CallTimeout,
 			CheckRedirect: func(*http.Request, []*http.Request) error {
@@ -316,6 +352,8 @@ func (m *Manager) Apply(cfg Config) {
 		// group must not carry over and skip the new one's first sweep.
 		m.addrMu.Lock()
 		m.addrs = map[string]*remoteAddr{}
+		m.failed = map[string]time.Time{}
+		m.departed = map[string]time.Time{}
 		m.addrMu.Unlock()
 		m.sweepMu.Lock()
 		m.lastSweep = time.Time{}
@@ -436,8 +474,12 @@ func (m *Manager) Members() []Member {
 		}
 		byID[id] = &Member{ID: id, Name: a.name, Version: a.version, Direct: true, Address: a.url}
 	}
+	gone := m.departedNow()
 	out := make([]Member, 0, len(byID))
 	for id, mem := range byID {
+		if gone[id] {
+			continue
+		}
 		if mem.Address == "" {
 			mem.Address, _ = m.knownAddress(id)
 		}
@@ -449,6 +491,34 @@ func (m *Manager) Members() []Member {
 		}
 		return out[i].ID < out[j].ID
 	})
+	return out
+}
+
+// Forget drops every address on record for memberID and keeps it out of
+// Members for departGrace. It is for a member that said it left the group.
+func (m *Manager) Forget(memberID string) {
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	if a := m.addrs[memberID]; a != nil {
+		delete(m.failed, a.url)
+	}
+	delete(m.addrs, memberID)
+	m.departed[memberID] = time.Now()
+}
+
+// departedNow lists the members that left within departGrace and drops the
+// older ones.
+func (m *Manager) departedNow() map[string]bool {
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	out := map[string]bool{}
+	for id, at := range m.departed {
+		if time.Since(at) < departGrace {
+			out[id] = true
+		} else {
+			delete(m.departed, id)
+		}
+	}
 	return out
 }
 
@@ -520,6 +590,41 @@ func (m *Manager) knownAddress(memberID string) (string, bool) {
 	return a.url, true
 }
 
+// directFailed records that a call to url got no answer. A call whose
+// caller gave up says nothing about the address and is not recorded.
+func (m *Manager) directFailed(ctx context.Context, url string) {
+	if ctx.Err() != nil {
+		return
+	}
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	m.failed[url] = time.Now()
+}
+
+func (m *Manager) directAnswered(url string) {
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	delete(m.failed, url)
+}
+
+// directDown reports whether a call to url failed within directRetry.
+func (m *Manager) directDown(url string) bool {
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	at, ok := m.failed[url]
+	return ok && time.Since(at) < directRetry
+}
+
+// stillDown restarts directRetry for url when it is down already, so an
+// address the refresh finds dead stays out of the way of calls.
+func (m *Manager) stillDown(url string) {
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	if _, ok := m.failed[url]; ok {
+		m.failed[url] = time.Now()
+	}
+}
+
 func (m *Manager) confirmedDirect(memberID string) bool {
 	m.addrMu.Lock()
 	defer m.addrMu.Unlock()
@@ -546,7 +651,11 @@ func (m *Manager) confirmedAddresses() map[string]remoteAddr {
 // this network is asked directly first; a member reachable only through an
 // address the exchange or the sweep found is asked directly next; if neither
 // answers and the member is on the relay too, the relay carries the call
-// instead. An error means no answer came.
+// instead. A direct address that failed recently is skipped while the relay
+// reaches the member. An error means no answer came.
+//
+// The routes are tried one after another rather than raced, since a call can
+// change something on the member and must not arrive twice.
 func (m *Manager) Call(ctx context.Context, memberID, method, path string, body []byte) (int, []byte, error) {
 	m.mu.Lock()
 	k, c, self := m.keys, m.client, m.cfg.InstanceID
@@ -555,9 +664,19 @@ func (m *Manager) Call(ctx context.Context, memberID, method, path string, body 
 		return 0, nil, ErrNotMember
 	}
 	call := relay.ProxyCall{Method: method, Path: path, Body: body, Sender: self}
-	relayed := c != nil && slices.ContainsFunc(c.Siblings(), func(s relay.Sibling) bool { return s.InstanceID == memberID })
+	var sib relay.Sibling
+	relayed := false
+	if c != nil {
+		for _, s := range c.Siblings() {
+			if s.InstanceID == memberID {
+				sib, relayed = s, true
+				break
+			}
+		}
+	}
 	dctx, cancel := directContext(ctx, relayed)
 	defer cancel()
+	skip := func(url string) bool { return relayed && m.directDown(url) }
 
 	var directErr error
 	tried := map[string]bool{}
@@ -566,19 +685,24 @@ func (m *Manager) Call(ctx context.Context, memberID, method, path string, body 
 			continue
 		}
 		tried[p.URL] = true
+		if skip(p.URL) {
+			continue
+		}
 		res, err := m.callDirect(dctx, k, self, p, call)
 		if err == nil {
 			m.ConfirmAddress(memberID, p.URL, p.Name, p.Version)
 			return res.Status, res.Body, nil
 		}
+		m.directFailed(ctx, p.URL)
 		directErr = err
 	}
-	if addr, ok := m.knownAddress(memberID); ok && !tried[addr] {
+	if addr, ok := m.knownAddress(memberID); ok && !tried[addr] && !skip(addr) {
 		res, err := m.callDirect(dctx, k, self, discovery.Peer{ID: memberID, URL: addr}, call)
 		if err == nil {
-			m.ConfirmAddress(memberID, addr, "", "")
+			m.ConfirmAddress(memberID, addr, sib.Name, sib.Version)
 			return res.Status, res.Body, nil
 		}
+		m.directFailed(ctx, addr)
 		directErr = err
 	}
 	if c != nil {
@@ -687,7 +811,8 @@ func (m *Manager) keepAlive() {
 }
 
 // refresh probes every member address on record, which confirms the ones that
-// still answer, and then starts a sweep if one is due.
+// still answer and puts a failed one back to use, and then starts a sweep if
+// one is due.
 func (m *Manager) refresh(ctx context.Context) {
 	m.mu.Lock()
 	active := m.keys != nil
@@ -697,7 +822,9 @@ func (m *Manager) refresh(ctx context.Context) {
 	}
 	for _, url := range m.knownURLs() {
 		cctx, cancel := context.WithTimeout(ctx, sweepTimeout)
-		_, _ = m.Probe(cctx, url)
+		if _, err := m.Probe(cctx, url); err != nil {
+			m.stillDown(url)
+		}
 		cancel()
 	}
 	m.MaybeSweep()
@@ -880,6 +1007,9 @@ func (m *Manager) callDirect(ctx context.Context, k *keys, self string, p discov
 	if err != nil {
 		return relay.ProxyResult{}, err
 	}
+	if resp.StatusCode == http.StatusGone && p.ID != ProbeTarget {
+		return relay.ProxyResult{}, &LeftError{MemberID: p.ID, Challenge: req.Header.Get(headerSignature), Statement: raw}
+	}
 	if resp.StatusCode != http.StatusOK {
 		return relay.ProxyResult{}, fmt.Errorf("group: %s refused the direct call with HTTP %d", p.Name, resp.StatusCode)
 	}
@@ -887,8 +1017,36 @@ func (m *Manager) callDirect(ctx context.Context, k *keys, self string, p discov
 	if err := json.Unmarshal(raw, &out); err != nil || out.RequestID != id {
 		return relay.ProxyResult{}, fmt.Errorf("group: %s answered unreadably", p.Name)
 	}
-	return relay.OpenResult(k.frameKey, id, out.Sealed)
+	res, err := relay.OpenResult(k.frameKey, id, out.Sealed)
+	if err == nil {
+		m.directAnswered(p.URL)
+	}
+	return res, err
 }
+
+// answerAsStranger answers a call that names this instance, while it is in no
+// group, with the Stranger statement, so a former member can drop it from its
+// lists. An instance in another group stays silent: it cannot tell a caller
+// from that group apart from one of its own whose call was tampered with on
+// the way, and its word would let whoever tampered remove a real member.
+func (m *Manager) answerAsStranger(w http.ResponseWriter, r *http.Request, self string) bool {
+	sender, sig := r.Header.Get(headerPeer), r.Header.Get(headerSignature)
+	if m.Stranger == nil || self == "" || r.Header.Get(headerTarget) != self || sender == "" || len(sender) > maxSenderBytes || len(sig) != 2*sha256.Size {
+		return false
+	}
+	proof := m.Stranger(sender, sig)
+	if proof == nil {
+		return false
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusGone)
+	_, _ = w.Write(proof)
+	return true
+}
+
+// maxSenderBytes bounds the caller id a Stranger statement signs. Instance ids
+// are 32 hex digits.
+const maxSenderBytes = 128
 
 // directSignature binds a direct call's sender, time and exact body to the
 // peer-auth key.
@@ -909,11 +1067,20 @@ func (m *Manager) ServeDirect(w http.ResponseWriter, r *http.Request) {
 	m.mu.Lock()
 	k, self := m.keys, m.cfg.InstanceID
 	m.mu.Unlock()
+	addr := relay.RequestAddr(r)
 	if k == nil {
-		http.NotFound(w, r)
+		if m.limiter.Blocked(addr) {
+			http.NotFound(w, r)
+			return
+		}
+		// Signing an answer costs a write, so every call counts against the
+		// caller's address the way a bad signature does.
+		m.limiter.Fail(addr)
+		if !m.answerAsStranger(w, r, self) {
+			http.NotFound(w, r)
+		}
 		return
 	}
-	addr := relay.RequestAddr(r)
 	if m.limiter.Blocked(addr) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return

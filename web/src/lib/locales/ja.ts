@@ -189,6 +189,10 @@ const ja: Partial<Translations> = {
   "restoreCheck.reason.nothing": "この復元はファイルを書き込みません。",
   "restoreCheck.reason.unmeasured": "計測できなかったため、ブロックしません。",
   "restoreCheck.reason.parentMissing": "その上位のデータセット {name} がありません。先に作成するか、別の名前を選んでください。",
+  "restoreCheck.zvol.title": "ZFS ボリューム",
+  "restoreCheck.zvol.titleHint": "ZFS ボリューム上の VM ディスクは、ボリューム全体に書き込まれる 1 つのイメージとして戻るため、ファイル一覧ではなくここに表示されます。",
+  "restoreCheck.zvol.safety": "BombVault は先にスナップショット {name} を作成し、今ある内容を残します。",
+  "restoreCheck.reason.poolMissing": "このサーバーには ZFS プール {name} がないため、ボリュームを作成できません。",
   "restoreCheck.reason.networkMissing": "このサーバーにはネットワーク {name} がありません。コンテナ用のネットワークを選んでください。",
   "restoreCheck.reason.networkGone": "このサーバーにはネットワーク {name} がありません。TrueNAS のアプリなど、アプリが作成したネットワークなら、先にそのアプリを再インストールしてからデータを復元してください。",
   "restoreCheck.reason.networkUnreadable": "このサーバーのネットワークを読み取れませんでした: {error}",
@@ -1106,6 +1110,9 @@ const ja: Partial<Translations> = {
   "dbdump.importNoVersion": "このダンプはデータベースのバージョンを記録していません。サーバーが読めない場合、取り込みは失敗します。",
   "dbdump.importStops": "取り込みの間、BombVault は次のアプリも停止します: {apps}。終わったら再び起動します。取り込みが始まったあとで失敗した場合は、元のデータは脇に置かれたままで、アプリも停止したままになります。",
   "dbdump.importDone": "データベースを取り込みました。",
+  "dbdump.keptIncluded": "このコピーはデータフォルダーの隣にあるため、その上のフォルダーやデータセットのバックアップやレプリカにも含まれます。データベースが動いたら削除してください。",
+  "dbdump.removeKept": "コピーを削除",
+  "dbdump.keptRemoved": "コピーを削除しました。",
   "dbdump.importRefused.busy": "別のバックアップか復元が実行中です。終わってからもう一度試してください。",
   "dbdump.importRefused.notRunning": "先にコンテナを起動してください。取り込みには稼働中のサーバーが必要です。",
   "dbdump.importRefused.engineMismatch": "このダンプは、コンテナが動かしているものとは別の種類のデータベースのものです。",
@@ -1364,6 +1371,7 @@ const ja: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "オフサイト検証済み",
+  "drill.restored": "{name}、スナップショット {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "保護済み",
@@ -2346,6 +2354,7 @@ const ja: Partial<Translations> = {
   "mdns.hint": "mDNS でローカルネットワークに BombVault を告知します。ブラウザーから bombvault.local で開け、サービスブラウザーにも表示されます。Docker の既定の bridge ネットワークでは告知は Docker 内にとどまり、br0、macvlan、ホストネットワークなら LAN に届きます。",
   "mdns.enable": "ローカルネットワークに告知",
   "mdns.statusOn": "{url} として告知中",
+  "mdns.statusHostOnly": "Docker 内でのみ告知中です。bridge ネットワークでは、LAN から bombvault.local に届きません。",
   "mdns.statusStarting": "ネットワーク上で名前が空いているか確認中",
   "mdns.statusError": "告知していません: {error}",
   "mdns.statusOff": "オフ",
@@ -4170,6 +4179,10 @@ const ja: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "VM をシャットダウンし、ディスクをこのバックアップで置き換えます。",
   "restoreWindow.says.vmStarts": "そのあと、再び起動します。",
   "restoreWindow.says.vmOff": "そのあと、電源は切れたままです。",
+  "restoreWindow.says.createContainer": "このバックアップからコンテナを作成します。",
+  "restoreWindow.says.createdContainerStarts": "そのあと起動します。",
+  "restoreWindow.says.createVM": "このバックアップから VM を作成します。",
+  "restoreWindow.says.createdVMStarts": "そのあと起動します。",
   "restoreWindow.says.backupFirst": "先に BombVault が現在の状態をバックアップするので、元に戻せます。",
   "restoreWindow.says.replaceFiles": "元の場所のファイルを、このバックアップで置き換えます。",
   "restoreWindow.says.replaceDataset": "このバックアップのファイルがデータセットに書き込まれます。同名のファイルは上書きされ、ほかのファイルはそのままです。",

@@ -37,6 +37,14 @@ const (
 	dbImportStopTimeout = 30 * time.Second
 	dbImportStderrTail  = 64 << 10
 	dbImportStamp       = "20060102-150405"
+	// dbImportKept follows the data folder's own name in the name of the
+	// folder an import keeps the previous data in.
+	dbImportKept = ".bombvault-before-import-"
+)
+
+var (
+	errBadKeptStamp = errors.New("not the time stamp of a kept data folder")
+	errKeptGone     = errors.New("this kept data folder is not there any more")
 )
 
 // dbImportReadyEvery and dbImportReadyFor bound the wait for the freshly
@@ -451,7 +459,7 @@ func (s *Service) freshDataDirFor(ctx context.Context, plan dbImportPlan) (strin
 	if err != nil {
 		return "", s.rollbackImport(ctx, plan, "", fmt.Errorf("read the data folder: %w", err))
 	}
-	kept := plan.dataDir + ".bombvault-before-import-" + time.Now().Format(dbImportStamp)
+	kept := plan.dataDir + dbImportKept + time.Now().Format(dbImportStamp)
 	if err := setDataDirAside(plan.dataDir, kept, info, s.dbDumpChownFn()); err != nil {
 		if _, serr := os.Lstat(kept); serr != nil {
 			kept = ""
@@ -489,6 +497,49 @@ func recreateDataDir(dir string, old os.FileInfo, chown func(*os.File, int, int)
 		return nil
 	}
 	return chown(d, uid, gid)
+}
+
+// RemoveKeptDataDir deletes the folder an import of name kept the previous
+// data in, named by the time stamp at its end. It sits next to the data
+// folder, so whatever backs up or replicates the folder above takes it along
+// until it is gone. It returns the folder as the host names it.
+func (s *Service) RemoveKeptDataDir(ctx context.Context, name, stamp string) (string, error) {
+	if t, err := time.Parse(dbImportStamp, stamp); err != nil || t.Format(dbImportStamp) != stamp {
+		return "", errBadKeptStamp
+	}
+	in, err := s.inspectNamed(ctx, name)
+	if err != nil {
+		return "", err
+	}
+	engine, err := s.importEngineFor(name, in)
+	if err != nil {
+		return "", err
+	}
+	dataDir, ok := s.databaseDataDir(in, engine)
+	if !ok {
+		return "", refuseImport(importRefusedNoDataMount, "the data folder of %q cannot be reached under the host mount", name)
+	}
+	// A running import may still need the folder to put the data back.
+	unlock, ok := s.tryLockDomainFor("containers", "restore")
+	if !ok {
+		return "", errDomainBusy
+	}
+	defer unlock()
+	kept := dataDir + dbImportKept + stamp
+	info, err := os.Lstat(kept)
+	switch {
+	case errors.Is(err, os.ErrNotExist):
+		return "", errKeptGone
+	case err != nil:
+		return "", err
+	case !info.IsDir():
+		return "", fmt.Errorf("%s is not a folder", s.toHostPath(kept))
+	}
+	if err := os.RemoveAll(kept); err != nil {
+		return "", fmt.Errorf("remove the kept data folder: %w", err)
+	}
+	log.Printf("api: import database dump into %q: removed the kept data folder %s", name, kept) //nolint:gosec // G706: name is %q-quoted
+	return s.toHostPath(kept), nil
 }
 
 // rollbackImport puts the container back the way it was after a step before the

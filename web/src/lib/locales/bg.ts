@@ -229,6 +229,10 @@ const bg: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Това възстановяване не записва файлове.",
   "restoreCheck.reason.unmeasured": "Не можа да се измери, затова не блокира.",
   "restoreCheck.reason.parentMissing": "Наборът от данни над него, {name}, не съществува. Първо го създай или избери друго име.",
+  "restoreCheck.zvol.title": "ZFS томове",
+  "restoreCheck.zvol.titleHint": "Диск на виртуална машина върху ZFS том се връща като едно копие, записано върху целия том, затова е изброен тук, а не в списъка с файлове.",
+  "restoreCheck.zvol.safety": "BombVault първо прави моментната снимка {name}, която пази това, което има сега.",
+  "restoreCheck.reason.poolMissing": "Този сървър няма ZFS пул {name}, затова томът не може да бъде създаден.",
   "restoreCheck.reason.networkMissing": "На този сървър няма мрежа {name}. Избери мрежа за контейнера.",
   "restoreCheck.reason.networkGone": "На този сървър няма мрежа {name}. Ако я е създало приложение, например приложение на TrueNAS, първо преинсталирай приложението и после възстанови данните му.",
   "restoreCheck.reason.networkUnreadable": "Мрежите на този сървър не можаха да бъдат прочетени: {error}",
@@ -849,6 +853,7 @@ const bg: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "проверено извън обекта",
+  "drill.restored": "{name}, моментна снимка {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "причина:",
@@ -1107,6 +1112,9 @@ const bg: Partial<Translations> = {
   "dbdump.importNoVersion": "Този дъмп не записва версията на базата данни. Импортът се проваля, ако сървърът не може да я прочете.",
   "dbdump.importStops": "one=Докато импортира, BombVault спира и {apps} и след това го стартира отново. Ако импортирането се провали, след като вече е започнало, старите данни остават настрана, а приложението спряно.|other=Докато импортира, BombVault спира и тези приложения: {apps}. След това ги стартира отново. Ако импортирането се провали, след като вече е започнало, старите данни остават настрана, а приложенията спрени.",
   "dbdump.importDone": "Базата данни е импортирана.",
+  "dbdump.keptIncluded": "Копието стои до папката с данни, затова всяко резервно копие или реплика на папката или набора от данни над нея го включва. Премахни го, щом базата данни работи.",
+  "dbdump.removeKept": "Премахни копието",
+  "dbdump.keptRemoved": "Копието е премахнато.",
   "dbdump.importRefused.busy": "В момента тече друго архивиране или възстановяване. Опитай пак, когато приключи.",
   "dbdump.importRefused.notRunning": "Първо стартирай контейнера; импортът се нуждае от работещия сървър.",
   "dbdump.importRefused.engineMismatch": "Този дъмп идва от друг тип база данни от този, който контейнерът работи.",
@@ -2883,6 +2891,7 @@ const bg: Partial<Translations> = {
   "mdns.hint": "Обявява BombVault в локалната мрежа чрез mDNS, така че браузърът да го отвори като bombvault.local, а браузърите на услуги да го покажат. В стандартната bridge мрежа на Docker обявяването остава вътре в Docker; през br0, macvlan или мрежата на хоста стига до локалната мрежа.",
   "mdns.enable": "Обявявай в локалната мрежа",
   "mdns.statusOn": "Обявен като {url}",
+  "mdns.statusHostOnly": "Обявен само вътре в Docker. В bridge мрежа bombvault.local не е достъпен от локалната ти мрежа.",
   "mdns.statusStarting": "Проверка дали името е свободно в мрежата",
   "mdns.statusError": "Не е обявен: {error}",
   "mdns.statusOff": "Изключено",
@@ -4189,6 +4198,10 @@ const bg: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "ВМ се изключва и дисковете ѝ се заменят с това архивиране.",
   "restoreWindow.says.vmStarts": "След това стартира отново.",
   "restoreWindow.says.vmOff": "След това остава изключена.",
+  "restoreWindow.says.createContainer": "Контейнерът се създава от това архивиране.",
+  "restoreWindow.says.createdContainerStarts": "След това стартира.",
+  "restoreWindow.says.createVM": "ВМ се създава от това архивиране.",
+  "restoreWindow.says.createdVMStarts": "След това стартира.",
   "restoreWindow.says.backupFirst": "Преди това BombVault архивира сегашното състояние, за да можеш да се върнеш.",
   "restoreWindow.says.replaceFiles": "Файловете на оригиналното място се заменят с това архивиране.",
   "restoreWindow.says.replaceDataset": "Файлове от това архивиране се записват в набора данни. Файлове със същото име се презаписват, останалите си стоят.",

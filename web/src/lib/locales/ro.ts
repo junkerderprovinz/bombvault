@@ -188,6 +188,10 @@ const ro: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Această restaurare nu scrie fișiere.",
   "restoreCheck.reason.unmeasured": "Nu a putut fi măsurat, așa că nu blochează.",
   "restoreCheck.reason.parentMissing": "Setul de date de deasupra, {name}, nu există. Creează-l întâi sau alege alt nume.",
+  "restoreCheck.zvol.title": "Volume ZFS",
+  "restoreCheck.zvol.titleHint": "Un disc de VM pe un volum ZFS revine ca o singură imagine scrisă peste tot volumul, de aceea apare aici și nu în lista de fișiere.",
+  "restoreCheck.zvol.safety": "BombVault face mai întâi snapshot-ul {name}, care păstrează ce există acum.",
+  "restoreCheck.reason.poolMissing": "Acest server nu are pool-ul ZFS {name}, deci volumul nu poate fi creat.",
   "restoreCheck.reason.networkMissing": "Acest server nu are rețeaua {name}. Alege o rețea pentru container.",
   "restoreCheck.reason.networkGone": "Acest server nu are rețeaua {name}. Dacă a creat-o o aplicație, de exemplu o aplicație TrueNAS, reinstalează mai întâi aplicația și apoi restaurează-i datele.",
   "restoreCheck.reason.networkUnreadable": "Rețelele acestui server nu au putut fi citite: {error}",
@@ -1113,6 +1117,9 @@ const ro: Partial<Translations> = {
   "dbdump.importNoVersion": "Această copie nu consemnează versiunea bazei sale de date. Importul eșuează dacă serverul nu o poate citi.",
   "dbdump.importStops": "one=Pe durata importului, BombVault oprește și {apps} și o pornește din nou după aceea. Dacă importul eșuează după ce a început, datele vechi rămân puse deoparte, iar aplicația oprită.|few=Pe durata importului, BombVault oprește și aceste aplicații: {apps}. După aceea le pornește din nou. Dacă importul eșuează după ce a început, datele vechi rămân puse deoparte, iar aplicațiile oprite.|other=Pe durata importului, BombVault oprește și aceste aplicații: {apps}. După aceea le pornește din nou. Dacă importul eșuează după ce a început, datele vechi rămân puse deoparte, iar aplicațiile oprite.",
   "dbdump.importDone": "Baza de date a fost importată.",
+  "dbdump.keptIncluded": "Copia stă lângă dosarul de date, deci orice backup sau replică a dosarului ori a setului de date de deasupra o include. Șterge-o după ce baza de date funcționează.",
+  "dbdump.removeKept": "Șterge copia",
+  "dbdump.keptRemoved": "Copia a fost ștearsă.",
   "dbdump.importRefused.busy": "Rulează deja altă copie de rezervă sau restaurare. Încearcă din nou după ce se termină.",
   "dbdump.importRefused.notRunning": "Pornește mai întâi containerul; importul are nevoie de serverul pornit.",
   "dbdump.importRefused.engineMismatch": "Această copie vine dintr-un alt tip de bază de date decât cel pe care îl rulează containerul.",
@@ -1370,6 +1377,7 @@ const ro: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "verificat off-site",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Protejat",
@@ -2356,6 +2364,7 @@ const ro: Partial<Translations> = {
   "mdns.hint": "Anunță BombVault în rețeaua locală prin mDNS, ca un browser să ajungă la el ca bombvault.local și browserele de servicii să îl afișeze. În rețeaua bridge implicită a Docker anunțul rămâne în Docker; ajunge în rețeaua locală prin br0, macvlan sau rețeaua gazdei.",
   "mdns.enable": "Anunță în rețeaua locală",
   "mdns.statusOn": "Anunțat ca {url}",
+  "mdns.statusHostOnly": "Anunțat doar în interiorul Docker. Într-o rețea bridge, bombvault.local nu poate fi accesat din rețeaua ta locală.",
   "mdns.statusStarting": "Se verifică dacă numele e liber în rețea",
   "mdns.statusError": "Neanunțat: {error}",
   "mdns.statusOff": "Oprit",
@@ -4180,6 +4189,10 @@ const ro: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "VM-ul este oprit, iar discurile lui sunt înlocuite cu această copie.",
   "restoreWindow.says.vmStarts": "După aceea pornește din nou.",
   "restoreWindow.says.vmOff": "După aceea rămâne oprită.",
+  "restoreWindow.says.createContainer": "Containerul este creat din această copie.",
+  "restoreWindow.says.createdContainerStarts": "După aceea pornește.",
+  "restoreWindow.says.createVM": "VM-ul este creat din această copie.",
+  "restoreWindow.says.createdVMStarts": "După aceea pornește.",
   "restoreWindow.says.backupFirst": "BombVault face mai întâi o copie a stării actuale, ca să poți reveni.",
   "restoreWindow.says.replaceFiles": "Fișierele de la locul original sunt înlocuite cu această copie.",
   "restoreWindow.says.replaceDataset": "Fișierele din această copie sunt scrise în setul de date. Fișierele cu același nume sunt suprascrise, celelalte rămân.",

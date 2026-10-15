@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -996,5 +997,185 @@ func TestADirectAddressThatDropsPacketsFailsFastWithoutARelay(t *testing.T) {
 	}
 	if took := time.Since(start); took > directDialTimeout+2*time.Second {
 		t.Fatalf("Call took %v to give up on an unroutable address, want about %v", took, directDialTimeout)
+	}
+}
+
+// switchListener hands connections to the server while it answers and
+// otherwise holds them without a word, the way a firewall that starts
+// dropping packets looks from the caller's side once TLS is involved.
+type switchListener struct {
+	net.Listener
+	silent atomic.Bool
+	mu     sync.Mutex
+	held   []net.Conn
+}
+
+func (l *switchListener) Accept() (net.Conn, error) {
+	for {
+		c, err := l.Listener.Accept()
+		if err != nil || !l.silent.Load() {
+			return c, err
+		}
+		l.mu.Lock()
+		l.held = append(l.held, c)
+		l.mu.Unlock()
+	}
+}
+
+func (l *switchListener) Close() error {
+	l.mu.Lock()
+	for _, c := range l.held {
+		_ = c.Close()
+	}
+	l.mu.Unlock()
+	return l.Listener.Close()
+}
+
+func TestADirectAddressThatStoppedAnsweringCostsOnlyTheFirstCall(t *testing.T) {
+	a, b := relayPair(t, echo)
+	var direct atomic.Int32
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, func(w http.ResponseWriter, r *http.Request) {
+		direct.Add(1)
+		b.ServeDirect(w, r)
+	})
+	srv := httptest.NewUnstartedServer(mux)
+	ln := &switchListener{Listener: srv.Listener}
+	ln.silent.Store(true)
+	srv.Listener = ln
+	srv.StartTLS()
+	t.Cleanup(srv.Close)
+	a.NoteAddress("id-b", srv.URL)
+
+	call := func() time.Duration {
+		t.Helper()
+		ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+		defer cancel()
+		start := time.Now()
+		status, _, err := a.Call(ctx, "id-b", http.MethodGet, "/api/group/peer/status", nil)
+		if err != nil || status != http.StatusOK {
+			t.Fatalf("Call = %d %v, want an answer", status, err)
+		}
+		return time.Since(start)
+	}
+	t.Logf("first call over a silent address: %v", call())
+	for i := range 3 {
+		if took := call(); took > time.Second {
+			t.Fatalf("call %d after the direct address failed took %v, want the relay at once", i+2, took)
+		} else {
+			t.Logf("call %d: %v", i+2, took)
+		}
+	}
+	if n := direct.Load(); n != 0 {
+		t.Fatalf("%d calls reached the silent address's handler", n)
+	}
+
+	ln.silent.Store(false)
+	a.refresh(context.Background())
+	direct.Store(0)
+	call()
+	if direct.Load() == 0 {
+		t.Fatal("the address answers again, but the next call still went through the relay")
+	}
+}
+
+// Without a relay the address is the only route, so one that failed a call
+// is still tried on the next.
+func TestWithoutARelayAFailedAddressIsTriedAgainOnTheNextCall(t *testing.T) {
+	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
+	_, pb := member(t, "id-b", "Attic", testSecret, echo)
+	a.NoteAddress("id-b", pb.URL)
+	a.directFailed(context.Background(), pb.URL)
+
+	status, body, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
+	if err != nil || status != http.StatusOK || string(body) != "GET /api/group/peer/status " {
+		t.Fatalf("Call = %d %q %v, want the address that failed before", status, body, err)
+	}
+}
+
+func TestAMemberThatSaidItLeftStaysOutOfTheListUntilItsRoutesAgeOut(t *testing.T) {
+	a, _ := relayPair(t, echo)
+	_, pc := member(t, "id-c", "Barn", testSecret, echo)
+	a.disc.Observe(pc)
+	a.ConfirmAddress("id-b", "https://192.0.2.1:3443", "Attic", "9.9.9")
+
+	a.Forget("id-b")
+	a.Forget("id-c")
+	if got := a.Members(); len(got) != 0 {
+		t.Fatalf("members right after both said they left = %+v, want nobody", got)
+	}
+	if _, ok := a.knownAddress("id-b"); ok {
+		t.Fatal("the address of a member that left is still on record")
+	}
+
+	a.addrMu.Lock()
+	a.departed["id-b"] = time.Now().Add(-departGrace)
+	a.addrMu.Unlock()
+	if got := a.Members(); len(got) != 1 || got[0].ID != "id-b" || !got[0].Relay {
+		t.Fatalf("members once the grace ran out = %+v, want b back through the relay", got)
+	}
+}
+
+func TestAMemberCalledAtItsAddressKeepsTheNameTheRelayGaveIt(t *testing.T) {
+	a, b := relayPair(t, echo)
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, b.ServeDirect)
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+	a.NoteAddress("id-b", srv.URL)
+	if _, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil); err != nil {
+		t.Fatal(err)
+	}
+
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOff})
+	onRelay := func() bool {
+		got := a.Members()
+		return len(got) > 0 && got[0].Relay
+	}
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) && onRelay() {
+		time.Sleep(20 * time.Millisecond)
+	}
+	got := a.Members()
+	if len(got) != 1 || got[0].Relay || got[0].Name != "Attic" {
+		t.Fatalf("members once b is off the relay = %+v, want b by its address under its name", got)
+	}
+}
+
+func TestAnInstanceInNoGroupSaysSoInItsOwnName(t *testing.T) {
+	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
+	b := NewManager(echo)
+	var mu sync.Mutex
+	var caller, challenge string
+	b.Stranger = func(c, ch string) []byte {
+		mu.Lock()
+		defer mu.Unlock()
+		caller, challenge = c, ch
+		return []byte(`{"signed":true}`)
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, b.ServeDirect)
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+	t.Cleanup(b.Close)
+	b.Apply(Config{InstanceID: "id-b"})
+	a.NoteAddress("id-b", srv.URL)
+
+	_, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
+	left, ok := errors.AsType[*LeftError](err)
+	if !ok || left.MemberID != "id-b" || string(left.Statement) != `{"signed":true}` {
+		t.Fatalf("Call = %v, want b's signed word that it left", err)
+	}
+	mu.Lock()
+	gotCaller, gotChallenge := caller, challenge
+	mu.Unlock()
+	if gotCaller != "id-a" || gotChallenge == "" || gotChallenge != left.Challenge {
+		t.Fatalf("b signed for caller %q over %q, want id-a over the call's signature %q", gotCaller, gotChallenge, left.Challenge)
+	}
+
+	b.Apply(Config{Secret: []byte("another group 01"), InstanceID: "id-b", Mode: ModeOff})
+	_, _, err = a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
+	if _, ok := errors.AsType[*LeftError](err); ok || err == nil {
+		t.Fatalf("Call to b in another group = %v, want a plain refusal", err)
 	}
 }

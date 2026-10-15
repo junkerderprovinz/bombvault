@@ -229,6 +229,10 @@ const hi: Partial<Translations> = {
   "restoreCheck.reason.nothing": "यह रीस्टोर कोई फ़ाइल नहीं लिखता।",
   "restoreCheck.reason.unmeasured": "मापा नहीं जा सका, इसलिए रोकता नहीं।",
   "restoreCheck.reason.parentMissing": "इसके ऊपर का डेटासेट, {name}, मौजूद नहीं है। पहले उसे बनाएँ या कोई दूसरा नाम चुनें।",
+  "restoreCheck.zvol.title": "ZFS वॉल्यूम",
+  "restoreCheck.zvol.titleHint": "ZFS वॉल्यूम पर रखी VM डिस्क एक ही इमेज के रूप में पूरे वॉल्यूम पर लिखी जाकर लौटती है, इसलिए वह यहाँ दिखती है, फ़ाइल सूची में नहीं।",
+  "restoreCheck.zvol.safety": "BombVault पहले स्नैपशॉट {name} लेता है, जो अभी मौजूद चीज़ों को रखता है।",
+  "restoreCheck.reason.poolMissing": "इस सर्वर पर ZFS पूल {name} नहीं है, इसलिए वॉल्यूम नहीं बनाया जा सकता।",
   "restoreCheck.reason.networkMissing": "इस सर्वर पर {name} नाम का कोई नेटवर्क नहीं है। कंटेनर के लिए कोई नेटवर्क चुनें।",
   "restoreCheck.reason.networkGone": "इस सर्वर पर {name} नाम का कोई नेटवर्क नहीं है। अगर इसे किसी ऐप ने बनाया था, जैसे कोई TrueNAS ऐप, तो पहले उस ऐप को दोबारा इंस्टॉल करें, फिर उसका डेटा रीस्टोर करें।",
   "restoreCheck.reason.networkUnreadable": "इस सर्वर के नेटवर्क पढ़े नहीं जा सके: {error}",
@@ -849,6 +853,7 @@ const hi: Partial<Translations> = {
 
   // DR drill controls
   "drill.offsiteVerified": "ऑफ़-साइट सत्यापित",
+  "drill.restored": "{name}, स्नैपशॉट {snapshot}",
 
   // Drill reason + check labels
   "drill.failReasonPrefix": "कारण:",
@@ -1107,6 +1112,9 @@ const hi: Partial<Translations> = {
   "dbdump.importNoVersion": "यह डंप अपने डेटाबेस का संस्करण दर्ज नहीं करता। यदि सर्वर इसे पढ़ न सका तो आयात विफल होगा।",
   "dbdump.importStops": "one=आयात के दौरान BombVault {apps} को भी रोकता है और बाद में उसे फिर से शुरू करता है। अगर आयात शुरू होने के बाद विफल हो, तो पुराना डेटा किनारे पड़ा रहता है और ऐप रुका रहता है।|other=आयात के दौरान BombVault इन ऐप्स को भी रोकता है: {apps}। बाद में वह उन्हें फिर से शुरू करता है। अगर आयात शुरू होने के बाद विफल हो, तो पुराना डेटा किनारे पड़ा रहता है और ऐप्स रुके रहते हैं।",
   "dbdump.importDone": "डेटाबेस आयात हो गया।",
+  "dbdump.keptIncluded": "यह कॉपी डेटा फ़ोल्डर के बगल में है, इसलिए उसके ऊपर के फ़ोल्डर या डेटासेट का हर बैकअप या रेप्लिका इसे भी शामिल करता है। डेटाबेस ठीक चलने लगे तो इसे हटा दें।",
+  "dbdump.removeKept": "कॉपी हटाएँ",
+  "dbdump.keptRemoved": "कॉपी हटा दी गई।",
   "dbdump.importRefused.busy": "कोई दूसरा बैकअप या पुनर्स्थापन चल रहा है। उसके पूरा होने पर फिर कोशिश करें।",
   "dbdump.importRefused.notRunning": "पहले कंटेनर शुरू करें; आयात को चलता हुआ सर्वर चाहिए।",
   "dbdump.importRefused.engineMismatch": "यह डंप उस प्रकार के डेटाबेस का नहीं है जो यह कंटेनर चलाता है।",
@@ -2883,6 +2891,7 @@ const hi: Partial<Translations> = {
   "mdns.hint": "mDNS के ज़रिए लोकल नेटवर्क पर BombVault की घोषणा करता है, ताकि ब्राउज़र उसे bombvault.local नाम से खोल सके और सर्विस ब्राउज़र उसे दिखाएँ। Docker के डिफ़ॉल्ट bridge नेटवर्क में घोषणा Docker के भीतर ही रहती है; br0, macvlan या होस्ट नेटवर्क पर यह LAN तक पहुँचती है।",
   "mdns.enable": "लोकल नेटवर्क पर घोषणा करें",
   "mdns.statusOn": "{url} के रूप में घोषित",
+  "mdns.statusHostOnly": "केवल Docker के अंदर घोषित। bridge नेटवर्क पर bombvault.local आपके लोकल नेटवर्क से नहीं खुलता।",
   "mdns.statusStarting": "जाँच रहा है कि नाम नेटवर्क पर खाली है",
   "mdns.statusError": "घोषित नहीं: {error}",
   "mdns.statusOff": "बंद",
@@ -4189,6 +4198,10 @@ const hi: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "VM बंद कर दिया जाता है और उसकी डिस्क इस बैकअप से बदल दी जाती हैं।",
   "restoreWindow.says.vmStarts": "इसके बाद यह फिर शुरू हो जाता है।",
   "restoreWindow.says.vmOff": "इसके बाद यह बंद रहता है।",
+  "restoreWindow.says.createContainer": "कंटेनर इस बैकअप से बनाया जाता है।",
+  "restoreWindow.says.createdContainerStarts": "इसके बाद यह शुरू हो जाता है।",
+  "restoreWindow.says.createVM": "VM इस बैकअप से बनाया जाता है।",
+  "restoreWindow.says.createdVMStarts": "इसके बाद यह शुरू हो जाता है।",
   "restoreWindow.says.backupFirst": "BombVault पहले मौजूदा स्थिति का बैकअप लेता है, ताकि आप वापस जा सकें।",
   "restoreWindow.says.replaceFiles": "ओरिजिनल जगह की फ़ाइलें इस बैकअप से बदल दी जाती हैं।",
   "restoreWindow.says.replaceDataset": "इस बैकअप की फ़ाइलें डेटासेट में लिखी जाती हैं। एक ही नाम की फ़ाइलें ओवरराइट होती हैं, बाकी रहती हैं।",

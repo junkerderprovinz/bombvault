@@ -189,6 +189,10 @@ const es: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Esta restauración no escribe archivos.",
   "restoreCheck.reason.unmeasured": "No se pudo medir, así que no bloquea.",
   "restoreCheck.reason.parentMissing": "El conjunto de datos superior, {name}, no existe. Créalo primero o elige otro nombre.",
+  "restoreCheck.zvol.title": "Volúmenes ZFS",
+  "restoreCheck.zvol.titleHint": "Un disco de VM en un volumen ZFS vuelve como una sola imagen escrita sobre todo el volumen, por eso aparece aquí y no en la lista de archivos.",
+  "restoreCheck.zvol.safety": "BombVault toma primero el snapshot {name}, que conserva lo que hay ahora.",
+  "restoreCheck.reason.poolMissing": "Este servidor no tiene ningún pool ZFS {name}, así que no se puede crear el volumen.",
   "restoreCheck.reason.networkMissing": "Este servidor no tiene ninguna red {name}. Elige una red para el contenedor.",
   "restoreCheck.reason.networkGone": "Este servidor no tiene ninguna red {name}. Si la creó una aplicación, como una app de TrueNAS, reinstala primero esa aplicación y luego restaura sus datos.",
   "restoreCheck.reason.networkUnreadable": "No se pudieron leer las redes de este servidor: {error}",
@@ -1121,6 +1125,9 @@ const es: Partial<Translations> = {
   "dbdump.importNoVersion": "Este volcado no registra la versión de su base de datos. La importación falla si el servidor no puede leerlo.",
   "dbdump.importStops": "one=Mientras importa, BombVault también detiene {apps} y después la vuelve a iniciar. Si la importación falla una vez empezada, los datos antiguos se quedan apartados y la aplicación detenida.|many=Mientras importa, BombVault también detiene estas aplicaciones: {apps}. Después las vuelve a iniciar. Si la importación falla una vez empezada, los datos antiguos se quedan apartados y las aplicaciones detenidas.|other=Mientras importa, BombVault también detiene estas aplicaciones: {apps}. Después las vuelve a iniciar. Si la importación falla una vez empezada, los datos antiguos se quedan apartados y las aplicaciones detenidas.",
   "dbdump.importDone": "Base de datos importada.",
+  "dbdump.keptIncluded": "La copia está junto a la carpeta de datos, así que cualquier copia de seguridad o réplica de la carpeta o del conjunto de datos superior la incluye. Elimínala cuando la base de datos funcione.",
+  "dbdump.removeKept": "Eliminar copia",
+  "dbdump.keptRemoved": "Copia eliminada.",
   "dbdump.importRefused.busy": "Hay otra copia de seguridad o restauración en marcha. Vuelve a intentarlo cuando termine.",
   "dbdump.importRefused.notRunning": "Arranca antes el contenedor; la importación necesita el servidor en marcha.",
   "dbdump.importRefused.engineMismatch": "Este volcado viene de un tipo de base de datos distinto del que ejecuta el contenedor.",
@@ -1379,6 +1386,7 @@ const es: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "externo verificado",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Protegido",
@@ -2353,6 +2361,7 @@ const es: Partial<Translations> = {
   "mdns.hint": "Anuncia BombVault en la red local por mDNS, para que un navegador llegue a él como bombvault.local y los exploradores de servicios lo muestren. En la red bridge predeterminada de Docker el anuncio se queda dentro de Docker; llega a la red local con br0, macvlan o la red del host.",
   "mdns.enable": "Anunciar en la red local",
   "mdns.statusOn": "Anunciado como {url}",
+  "mdns.statusHostOnly": "Anunciado solo dentro de Docker. En una red bridge, bombvault.local no es accesible desde tu red local.",
   "mdns.statusStarting": "Comprobando que el nombre está libre en la red",
   "mdns.statusError": "Sin anunciar: {error}",
   "mdns.statusOff": "Desactivado",
@@ -4177,6 +4186,10 @@ const es: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "La VM se apaga y sus discos se reemplazan por esta copia.",
   "restoreWindow.says.vmStarts": "Después arranca de nuevo.",
   "restoreWindow.says.vmOff": "Después se queda apagada.",
+  "restoreWindow.says.createContainer": "El contenedor se crea a partir de esta copia.",
+  "restoreWindow.says.createdContainerStarts": "Después arranca.",
+  "restoreWindow.says.createVM": "La VM se crea a partir de esta copia.",
+  "restoreWindow.says.createdVMStarts": "Después arranca.",
   "restoreWindow.says.backupFirst": "Antes, BombVault copia el estado actual, así puedes volver atrás.",
   "restoreWindow.says.replaceFiles": "Los archivos del lugar original se reemplazan por esta copia.",
   "restoreWindow.says.replaceDataset": "Los archivos de esta copia se escriben en el conjunto de datos. Los archivos con el mismo nombre se sobrescriben, los demás se quedan.",

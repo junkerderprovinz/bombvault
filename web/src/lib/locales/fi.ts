@@ -189,6 +189,10 @@ const fi: Partial<Translations> = {
   "restoreCheck.reason.nothing": "Tämä palautus ei kirjoita tiedostoja.",
   "restoreCheck.reason.unmeasured": "Ei voitu mitata, joten ei estä.",
   "restoreCheck.reason.parentMissing": "Sen yläpuolella olevaa tietojoukkoa {name} ei ole. Luo se ensin tai valitse toinen nimi.",
+  "restoreCheck.zvol.title": "ZFS-taltiot",
+  "restoreCheck.zvol.titleHint": "ZFS-taltiolla oleva VM-levy palautetaan yhtenä levykuvana koko taltion päälle, joten se näkyy tässä eikä tiedostoluettelossa.",
+  "restoreCheck.zvol.safety": "BombVault ottaa ensin snapshotin {name}, joka säilyttää nykyisen tilan.",
+  "restoreCheck.reason.poolMissing": "Tällä palvelimella ei ole ZFS-poolia {name}, joten taltiota ei voi luoda.",
   "restoreCheck.reason.networkMissing": "Tällä palvelimella ei ole verkkoa {name}. Valitse kontille verkko.",
   "restoreCheck.reason.networkGone": "Tällä palvelimella ei ole verkkoa {name}. Jos sen loi jokin sovellus, esimerkiksi TrueNAS-sovellus, asenna sovellus ensin uudelleen ja palauta sitten sen tiedot.",
   "restoreCheck.reason.networkUnreadable": "Tämän palvelimen verkkoja ei voitu lukea: {error}",
@@ -1123,6 +1127,9 @@ const fi: Partial<Translations> = {
   "dbdump.importNoVersion": "Tämä vedos ei kirjaa tietokantansa versiota. Tuonti epäonnistuu, jos palvelin ei osaa lukea sitä.",
   "dbdump.importStops": "one=Tuonnin ajaksi BombVault pysäyttää myös sovelluksen {apps} ja käynnistää sen jälkeenpäin uudelleen. Jos tuonti epäonnistuu käynnistyttyään, vanhat tiedot jäävät sivuun ja sovellus pysäytetyksi.|other=Tuonnin ajaksi BombVault pysäyttää myös nämä sovellukset: {apps}. Sen jälkeen ne käynnistetään uudelleen. Jos tuonti epäonnistuu käynnistyttyään, vanhat tiedot jäävät sivuun ja sovellukset pysäytetyiksi.",
   "dbdump.importDone": "Tietokanta tuotu.",
+  "dbdump.keptIncluded": "Kopio on datakansion vieressä, joten jokainen sen yläpuolisen kansion tai tietojoukon varmuuskopio tai replika sisältää myös sen. Poista se, kun tietokanta toimii.",
+  "dbdump.removeKept": "Poista kopio",
+  "dbdump.keptRemoved": "Kopio on poistettu.",
   "dbdump.importRefused.busy": "Toinen varmuuskopiointi tai palautus on käynnissä. Yritä uudelleen, kun se on valmis.",
   "dbdump.importRefused.notRunning": "Käynnistä kontti ensin; tuonti tarvitsee käynnissä olevan palvelimen.",
   "dbdump.importRefused.engineMismatch": "Tämä vedos on eri tietokantatyypistä kuin mitä kontti ajaa.",
@@ -1381,6 +1388,7 @@ const fi: Partial<Translations> = {
 
   // DR drill controls (real off-site restore) + the off-site restorability badge
   "drill.offsiteVerified": "etäkopio vahvistettu",
+  "drill.restored": "{name}, snapshot {snapshot}",
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Suojattu",
@@ -2355,6 +2363,7 @@ const fi: Partial<Translations> = {
   "mdns.hint": "Ilmoittaa BombVaultin lähiverkossa mDNS:n kautta, jotta selain löytää sen nimellä bombvault.local ja palveluselaimet listaavat sen. Dockerin oletus-bridge-verkossa ilmoitus jää Dockerin sisälle; lähiverkkoon se ulottuu br0:n, macvlanin tai isännän verkon kautta.",
   "mdns.enable": "Ilmoita lähiverkossa",
   "mdns.statusOn": "Ilmoitettu osoitteella {url}",
+  "mdns.statusHostOnly": "Ilmoitettu vain Dockerin sisällä. Bridge-verkossa bombvault.local ei näy lähiverkkoosi.",
   "mdns.statusStarting": "Tarkistetaan, onko nimi vapaana verkossa",
   "mdns.statusError": "Ei ilmoitettu: {error}",
   "mdns.statusOff": "Pois",
@@ -4179,6 +4188,10 @@ const fi: Partial<Translations> = {
   "restoreWindow.says.replaceVM": "VM sammutetaan ja sen levyt korvataan tällä varmuuskopiolla.",
   "restoreWindow.says.vmStarts": "Sen jälkeen se käynnistyy uudelleen.",
   "restoreWindow.says.vmOff": "Sen jälkeen se pysyy sammutettuna.",
+  "restoreWindow.says.createContainer": "Kontti luodaan tästä varmuuskopiosta.",
+  "restoreWindow.says.createdContainerStarts": "Sen jälkeen se käynnistyy.",
+  "restoreWindow.says.createVM": "VM luodaan tästä varmuuskopiosta.",
+  "restoreWindow.says.createdVMStarts": "Sen jälkeen se käynnistyy.",
   "restoreWindow.says.backupFirst": "BombVault varmuuskopioi ensin nykytilan, jotta voit palata takaisin.",
   "restoreWindow.says.replaceFiles": "Alkuperäisen sijainnin tiedostot korvataan tällä varmuuskopiolla.",
   "restoreWindow.says.replaceDataset": "Tämän varmuuskopion tiedostot kirjoitetaan tietojoukkoon. Samannimiset tiedostot ylikirjoitetaan, muut säilyvät.",
