@@ -1,10 +1,6 @@
 package virshcli
 
-import (
-	"strings"
-	"testing"
-	"time"
-)
+import "testing"
 
 func TestZvolDatasetFromDevPath(t *testing.T) {
 	cases := []struct {
@@ -106,6 +102,7 @@ func TestZvolHostCommands(t *testing.T) {
 	cases := []struct {
 		got, want []string
 	}{
+		{ZFSSnapshotClonesArgs("tank/vms/a"), []string{"zfs", "get", "-H", "-d", "1", "-t", "snapshot", "-o", "name,value", "clones", "tank/vms/a"}},
 		{ZFSDestroyArgs("tank/vm-disk1@bombvault-20260816120000"), []string{"zfs", "destroy", "tank/vm-disk1@bombvault-20260816120000"}},
 		{ZFSCloneArgs("tank/vm-disk1@s", "tank/vm-disk1-s"), []string{"zfs", "clone", "-o", "volmode=dev", "-o", "readonly=on", "tank/vm-disk1@s", "tank/vm-disk1-s"}},
 		{ZFSListVolumesArgs("tank"), []string{"zfs", "list", "-H", "-p", "-t", "volume", "-o", "name,volsize", "-r", "tank"}},
@@ -118,17 +115,6 @@ func TestZvolHostCommands(t *testing.T) {
 		if !equalStrings(c.got, c.want) {
 			t.Errorf("argv = %v, want %v", c.got, c.want)
 		}
-	}
-}
-
-func TestZvolSnapshotNameIsDeterministicPerInstant(t *testing.T) {
-	now := time.Date(2026, 8, 16, 12, 0, 0, 0, time.UTC)
-	got := ZvolSnapshotName(now)
-	if !strings.HasPrefix(got, "bombvault-") {
-		t.Fatalf("ZvolSnapshotName = %q, want a bombvault- prefixed name", got)
-	}
-	if ZvolSnapshotName(now) != got {
-		t.Fatalf("ZvolSnapshotName must be a pure function of its input time")
 	}
 }
 

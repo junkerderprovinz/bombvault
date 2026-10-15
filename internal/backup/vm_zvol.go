@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"regexp"
+	"slices"
+	"strings"
+	"sync"
 	"time"
 )
 
@@ -13,6 +17,8 @@ import (
 // no zfs tools of its own.
 type ZFSHost interface {
 	SnapshotCreate(ctx context.Context, dataset, snapName string) error
+	// Snapshots lists the snapshots of dataset with the clones made of each.
+	Snapshots(ctx context.Context, dataset string) ([]ZFSSnapshot, error)
 	// Clone makes a read-only zvol clone of snapshot named clone.
 	Clone(ctx context.Context, snapshot, clone string) error
 	// Destroy destroys a zvol, a clone or a snapshot by its full name.
@@ -27,6 +33,13 @@ type ZFSHost interface {
 	ReadVolume(ctx context.Context, dataset string) (io.ReadCloser, func() error, error)
 	// WriteVolume writes rd onto a zvol from its first byte.
 	WriteVolume(ctx context.Context, rd io.Reader, dataset string) error
+}
+
+// ZFSSnapshot is one snapshot of a dataset, by full name, with the full names
+// of the datasets cloned from it.
+type ZFSSnapshot struct {
+	Name   string
+	Clones []string
 }
 
 // ZvolRestic is the part of restic the zvol disks need: a backup read from a
@@ -63,6 +76,10 @@ type BackupZvolDeps struct {
 // clone and the snapshot are destroyed whether or not the backup worked.
 func BackupZvolDisk(ctx context.Context, d BackupZvolDeps) (Summary, error) {
 	snapshot := d.Dataset + "@" + d.SnapName
+	readingZvols.Store(snapshot, struct{}{})
+	defer readingZvols.Delete(snapshot)
+	sweepZvolLeftovers(ctx, d.Host, d.Dataset)
+
 	if err := d.Host.SnapshotCreate(ctx, d.Dataset, d.SnapName); err != nil {
 		return Summary{}, fmt.Errorf("zvol backup: snapshot: %w", err)
 	}
@@ -106,23 +123,68 @@ var (
 
 // destroyOrLog destroys name and only logs a failure: the backup itself is
 // already in the repository, and a leftover snapshot or clone loses no data.
-func destroyOrLog(ctx context.Context, host ZFSHost, name string) {
+// It reports whether name is gone.
+func destroyOrLog(ctx context.Context, host ZFSHost, name string) bool {
 	var err error
 	for attempt := range destroyAttempts {
 		if attempt > 0 {
 			time.Sleep(destroyRetryDelay)
 		}
 		if err = host.Destroy(ctx, name); err == nil {
-			return
+			return true
 		}
 	}
 	log.Printf("zvol backup: could not destroy %s, remove it by hand with zfs destroy: %v", name, err)
+	return false
 }
 
 // zvolSnapshotName names the snapshot a backup taken at now reads from. ZFS
-// snapshot names may not contain ':', so the time is plain digits.
+// snapshot names may not contain ':', so the time is plain digits. The ZFS
+// datasets take bombvault-<time> snapshots, recursive ones that can reach a
+// zvol too, so the VM backup's carry a prefix of their own and neither sweep
+// can take the other's.
 func zvolSnapshotName(now time.Time) string {
-	return "bombvault-" + now.UTC().Format("20060102150405")
+	return "bombvault-vm-" + now.UTC().Format("20060102150405")
+}
+
+// zvolSnapshotRe matches the snapshot names zvolSnapshotName gives, and
+// nothing else, such as a safety snapshot taken before a restore.
+var zvolSnapshotRe = regexp.MustCompile(`^bombvault-vm-[0-9]{14}$`)
+
+// readingZvols holds the full snapshot names of the zvol backups running in
+// this process, which a sweep leaves alone.
+var readingZvols sync.Map
+
+// sweepZvolLeftovers destroys the snapshot and clone a backup of dataset left
+// behind when the process stopped halfway through it. It takes only names
+// BombVault gives, and keeps a snapshot something else was cloned from.
+func sweepZvolLeftovers(ctx context.Context, host ZFSHost, dataset string) {
+	snaps, err := host.Snapshots(ctx, dataset)
+	if err != nil {
+		log.Printf("zvol backup: could not look for snapshots an earlier backup left on %s; remove any %s@bombvault-vm-<time> and its clone by hand: %v", dataset, dataset, err)
+		return
+	}
+	cleanup := context.WithoutCancel(ctx)
+	for _, snap := range snaps {
+		name, ok := strings.CutPrefix(snap.Name, dataset+"@")
+		if !ok || !zvolSnapshotRe.MatchString(name) {
+			continue
+		}
+		if _, running := readingZvols.Load(snap.Name); running {
+			continue
+		}
+		ours := dataset + "-" + name
+		if foreign := slices.DeleteFunc(slices.Clone(snap.Clones), func(c string) bool { return c == ours }); len(foreign) > 0 {
+			log.Printf("zvol backup: %s is left from an earlier backup but kept, since %s was cloned from it", snap.Name, strings.Join(foreign, ", "))
+			continue
+		}
+		if len(snap.Clones) > 0 && !destroyOrLog(cleanup, host, ours) {
+			continue
+		}
+		if destroyOrLog(cleanup, host, snap.Name) {
+			log.Printf("zvol backup: removed %s left by an earlier backup that did not finish", snap.Name)
+		}
+	}
 }
 
 // backupBlockDisksAndLog backs up every zvol of d. All of them share one

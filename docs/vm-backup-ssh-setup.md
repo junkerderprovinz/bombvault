@@ -255,8 +255,8 @@ on this page. The BombVault container needs no ZFS tools.
 
 A backup of a zvol:
 
-1. `zfs snapshot <dataset>@bombvault-<time>` fixes a point in time, also while
-   the VM runs.
+1. `zfs snapshot <dataset>@bombvault-vm-<time>` fixes a point in time, also
+   while the VM runs.
 2. `zfs clone -o volmode=dev -o readonly=on` makes that snapshot readable as a
    device. `volmode=dev` keeps the host from scanning the guest's partitions.
 3. `dd` reads the device, and the raw image goes into restic as one file,
@@ -264,7 +264,11 @@ A backup of a zvol:
    into chunks by content, so blocks that did not change since the last backup
    are not stored again.
 4. The clone and the snapshot are destroyed afterwards, whether the backup
-   worked or not.
+   worked or not. If BombVault stopped in the middle of a backup, the next
+   backup of that zvol removes the `bombvault-vm-<time>` snapshot and its
+   `<dataset>-bombvault-vm-<time>` clone first. It leaves every other snapshot
+   alone, and keeps one that something else was cloned from; the log names
+   what it removed or kept.
 
 BombVault does not use `zfs send` for this. Every record of a send stream
 carries the snapshot's GUID and a running checksum, so restic would find

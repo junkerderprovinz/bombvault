@@ -12,7 +12,6 @@ package virshcli
 import (
 	"strconv"
 	"strings"
-	"time"
 )
 
 // zvolDevPrefix starts the device node of a zvol: /dev/zvol/<pool>/<dataset>.
@@ -83,6 +82,13 @@ func ZFSSnapshotArgs(dataset, snapName string) []string {
 	return []string{"zfs", "snapshot", dataset + "@" + snapName}
 }
 
+// ZFSSnapshotClonesArgs returns the argv that lists the snapshots of dataset,
+// one "name<TAB>clones" line each, where clones is "-" or a comma separated
+// list of the datasets cloned from that snapshot.
+func ZFSSnapshotClonesArgs(dataset string) []string {
+	return []string{"zfs", "get", "-H", "-d", "1", "-t", "snapshot", "-o", "name,value", "clones", dataset}
+}
+
 // ZFSDestroyArgs returns the argv for `zfs destroy <name>`, for the snapshot
 // and the clone a backup takes only to read the zvol.
 func ZFSDestroyArgs(name string) []string {
@@ -141,14 +147,4 @@ func ReadDeviceArgs(dev string) []string {
 // fullblock keeps dd writing whole blocks from a pipe that delivers less.
 func WriteDeviceArgs(dev string) []string {
 	return []string{"dd", "of=" + dev, "bs=1M", "iflag=fullblock", "conv=fsync", "status=none"}
-}
-
-// zvolSnapshotPrefix marks snapshots BombVault takes, so one left behind by an
-// interrupted backup is not mistaken for a user's.
-const zvolSnapshotPrefix = "bombvault-"
-
-// ZvolSnapshotName returns the snapshot name for a backup taken at now. ZFS
-// snapshot names may not contain ':', so the time is written as plain digits.
-func ZvolSnapshotName(now time.Time) string {
-	return zvolSnapshotPrefix + now.UTC().Format("20060102150405")
 }

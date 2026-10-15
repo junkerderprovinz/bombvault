@@ -209,6 +209,9 @@ func (f *fakeSelectiveZFSHost) SnapshotCreate(_ context.Context, dataset, _ stri
 	}
 	return nil
 }
+func (f *fakeSelectiveZFSHost) Snapshots(context.Context, string) ([]backup.ZFSSnapshot, error) {
+	return nil, nil
+}
 func (f *fakeSelectiveZFSHost) Clone(context.Context, string, string) error { return nil }
 func (f *fakeSelectiveZFSHost) Destroy(context.Context, string) error       { return nil }
 func (f *fakeSelectiveZFSHost) VolSize(context.Context, string) (int64, bool, error) {

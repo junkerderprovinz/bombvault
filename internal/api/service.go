@@ -11932,6 +11932,26 @@ func (h sshZFSHost) SnapshotCreate(ctx context.Context, dataset, snapName string
 	return err
 }
 
+func (h sshZFSHost) Snapshots(ctx context.Context, dataset string) ([]backup.ZFSSnapshot, error) {
+	out, err := h.ssh.Run(ctx, virshcli.ZFSSnapshotClonesArgs(dataset)...)
+	if err != nil {
+		return nil, err
+	}
+	var snaps []backup.ZFSSnapshot
+	for line := range strings.Lines(out) {
+		name, clones, ok := strings.Cut(strings.TrimSpace(line), "\t")
+		if !ok {
+			continue
+		}
+		snap := backup.ZFSSnapshot{Name: name}
+		if clones != "-" && clones != "" {
+			snap.Clones = strings.Split(clones, ",")
+		}
+		snaps = append(snaps, snap)
+	}
+	return snaps, nil
+}
+
 func (h sshZFSHost) Clone(ctx context.Context, snapshot, clone string) error {
 	_, err := h.ssh.Run(ctx, virshcli.ZFSCloneArgs(snapshot, clone)...)
 	return err
@@ -11949,7 +11969,7 @@ func (h sshZFSHost) VolSize(ctx context.Context, dataset string) (int64, bool, e
 		return 0, false, err
 	}
 	for line := range strings.Lines(out) {
-		name, size, ok := strings.Cut(strings.TrimSpace(line), "	")
+		name, size, ok := strings.Cut(strings.TrimSpace(line), "\t")
 		if !ok || name != dataset {
 			continue
 		}

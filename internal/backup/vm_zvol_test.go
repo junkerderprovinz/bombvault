@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -28,11 +29,21 @@ type fakeZFSHost struct {
 	readData []byte
 	volumes  map[string]int64
 	written  map[string][]byte
+
+	snapshots    []backup.ZFSSnapshot
+	snapshotsErr error
+	// onRead runs while a backup reads its clone.
+	onRead func()
 }
 
 func (f *fakeZFSHost) SnapshotCreate(_ context.Context, dataset, snapName string) error {
 	f.log = append(f.log, "snapshot:"+dataset+"@"+snapName)
 	return f.snapshotCreateErr
+}
+
+func (f *fakeZFSHost) Snapshots(_ context.Context, dataset string) ([]backup.ZFSSnapshot, error) {
+	f.log = append(f.log, "snapshots:"+dataset)
+	return f.snapshots, f.snapshotsErr
 }
 
 func (f *fakeZFSHost) Clone(_ context.Context, snapshot, clone string) error {
@@ -63,6 +74,9 @@ func (f *fakeZFSHost) SetVolSize(_ context.Context, dataset string, size int64) 
 
 func (f *fakeZFSHost) ReadVolume(_ context.Context, dataset string) (io.ReadCloser, func() error, error) {
 	f.log = append(f.log, "read:"+dataset)
+	if f.onRead != nil {
+		f.onRead()
+	}
 	if f.readErr != nil {
 		return nil, nil, f.readErr
 	}
@@ -150,6 +164,7 @@ func TestAZvolIsBackedUpAsTheRawImageOfASnapshotClone(t *testing.T) {
 		t.Fatalf("summary = %+v, want restic's", sum)
 	}
 	want := []string{
+		"snapshots:tank/vms/truenasvm/disk0",
 		"snapshot:tank/vms/truenasvm/disk0@bombvault-20260816120000",
 		"clone:tank/vms/truenasvm/disk0@bombvault-20260816120000->tank/vms/truenasvm/disk0-bombvault-20260816120000",
 		"read:tank/vms/truenasvm/disk0-bombvault-20260816120000",
@@ -217,6 +232,70 @@ func TestAZvolBackupThatCannotRemoveItsCloneStillSucceeds(t *testing.T) {
 	}
 	if tries < 2 {
 		t.Fatalf("the clone was tried %d times, want it tried again after udev let go of it", tries)
+	}
+}
+
+func TestABackupRemovesWhatAnInterruptedOneLeftOnItsZvol(t *testing.T) {
+	t.Cleanup(backup.SetDestroyRetryDelayForTest(0))
+	const ds = "tank/vms/truenasvm/disk0"
+	host := &fakeZFSHost{snapshots: []backup.ZFSSnapshot{
+		{Name: ds + "@bombvault-vm-20261015010000", Clones: []string{ds + "-bombvault-vm-20261015010000"}},
+		{Name: ds + "@bombvault-vm-20261015020000"},
+		{Name: ds + "@bombvault-before-restore-20261015010000"},
+		{Name: ds + "@bombvault-20261015010000"},
+		{Name: ds + "@bombvault-vm-2026101503000"},
+		{Name: ds + "@mine"},
+		{Name: ds + "@bombvault-vm-20261015040000", Clones: []string{"tank/vms/mytest"}},
+		{Name: ds + "1@bombvault-vm-20261015050000"},
+	}}
+
+	if _, err := backup.BackupZvolDisk(t.Context(), sampleBackupZvolDeps(host, &fakeZvolRestic{})); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"snapshots:" + ds,
+		"destroy:" + ds + "-bombvault-vm-20261015010000",
+		"destroy:" + ds + "@bombvault-vm-20261015010000",
+		"destroy:" + ds + "@bombvault-vm-20261015020000",
+		"snapshot:" + ds + "@bombvault-20260816120000",
+	}
+	if len(host.log) < len(want) || !slices.Equal(host.log[:len(want)], want) {
+		t.Fatalf("host calls %v, want them to start with %v", host.log, want)
+	}
+}
+
+func TestABackupLeavesTheZvolSnapshotOfAnotherRunningBackup(t *testing.T) {
+	const ds = "tank/vms/truenasvm/disk0"
+	running := ds + "@bombvault-20260816120000"
+	second := &fakeZFSHost{snapshots: []backup.ZFSSnapshot{{Name: running, Clones: []string{ds + "-bombvault-20260816120000"}}}}
+	first := &fakeZFSHost{onRead: func() {
+		d := sampleBackupZvolDeps(second, &fakeZvolRestic{})
+		d.SnapName = "bombvault-vm-20260816120500"
+		if _, err := backup.BackupZvolDisk(t.Context(), d); err != nil {
+			t.Error(err)
+		}
+	}}
+	deps := sampleBackupZvolDeps(first, &fakeZvolRestic{})
+	deps.SnapName = "bombvault-vm-20260816120000"
+	running = ds + "@" + deps.SnapName
+	second.snapshots[0] = backup.ZFSSnapshot{Name: running, Clones: []string{ds + "-" + deps.SnapName}}
+
+	if _, err := backup.BackupZvolDisk(t.Context(), deps); err != nil {
+		t.Fatal(err)
+	}
+	for _, call := range second.log {
+		if strings.Contains(call, deps.SnapName) {
+			t.Fatalf("the second backup touched the first one's %s", call)
+		}
+	}
+}
+
+func TestABackupWhoseLeftoverCheckFailsStillRuns(t *testing.T) {
+	host := &fakeZFSHost{snapshotsErr: errors.New("ssh: connection reset")}
+	r := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "abc123"}}
+
+	if sum, err := backup.BackupZvolDisk(t.Context(), sampleBackupZvolDeps(host, r)); err != nil || sum.SnapshotID != "abc123" {
+		t.Fatalf("got %+v, %v; want the backup to go on", sum, err)
 	}
 }
 
