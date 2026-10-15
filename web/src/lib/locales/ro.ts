@@ -2356,6 +2356,7 @@ const ro: Partial<Translations> = {
   "mdns.hint": "Anunță BombVault în rețeaua locală prin mDNS, ca un browser să ajungă la el ca bombvault.local și browserele de servicii să îl afișeze. În rețeaua bridge implicită a Docker anunțul rămâne în Docker; ajunge în rețeaua locală prin br0, macvlan sau rețeaua gazdei.",
   "mdns.enable": "Anunță în rețeaua locală",
   "mdns.statusOn": "Anunțat ca {url}",
+  "mdns.statusHostOnly": "Anunțat doar în interiorul Docker. Într-o rețea bridge, bombvault.local nu poate fi accesat din rețeaua ta locală.",
   "mdns.statusStarting": "Se verifică dacă numele e liber în rețea",
   "mdns.statusError": "Neanunțat: {error}",
   "mdns.statusOff": "Oprit",

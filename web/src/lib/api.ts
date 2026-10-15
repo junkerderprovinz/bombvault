@@ -8139,10 +8139,12 @@ export function setHomeAssistant(body: {
 }
 
 /** The mDNS announcement: whether it is switched on, whether it runs, and
- *  the address it announces. */
+ *  the address it announces. hostOnly is set on a Docker bridge network,
+ *  where the announcement never reaches the LAN and url stays empty. */
 export interface MdnsState extends OkEnvelope {
   enabled: boolean;
   running: boolean;
+  hostOnly: boolean;
   url: string;
   instance: string;
   error: string;

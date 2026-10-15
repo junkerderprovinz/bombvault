@@ -2356,6 +2356,7 @@ const hu: Partial<Translations> = {
   "mdns.hint": "mDNS-sel bejelenti a BombVaultot a helyi hálózaton, így a böngésző bombvault.local néven eléri, a szolgáltatásböngészők pedig listázzák. A Docker alapértelmezett bridge hálózatában a bejelentés a Dockeren belül marad; br0-n, macvlanon vagy a gazdagép hálózatán eléri a helyi hálózatot.",
   "mdns.enable": "Bejelentés a helyi hálózaton",
   "mdns.statusOn": "Bejelentve ezen a címen: {url}",
+  "mdns.statusHostOnly": "Csak a Dockeren belül bejelentve. Bridge hálózatban a bombvault.local nem érhető el a helyi hálózatodról.",
   "mdns.statusStarting": "Annak ellenőrzése, hogy a név szabad-e a hálózaton",
   "mdns.statusError": "Nincs bejelentve: {error}",
   "mdns.statusOff": "Ki",

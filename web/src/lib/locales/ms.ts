@@ -2883,6 +2883,7 @@ const ms: Partial<Translations> = {
   "mdns.hint": "Mengumumkan BombVault dalam rangkaian setempat melalui mDNS, supaya pelayar mencapainya sebagai bombvault.local dan pelayar perkhidmatan menyenaraikannya. Dalam rangkaian bridge lalai Docker, pengumuman kekal di dalam Docker; ia sampai ke LAN melalui br0, macvlan atau rangkaian hos.",
   "mdns.enable": "Umumkan dalam rangkaian setempat",
   "mdns.statusOn": "Diumumkan sebagai {url}",
+  "mdns.statusHostOnly": "Diumumkan di dalam Docker sahaja. Dalam rangkaian bridge, bombvault.local tidak dapat dicapai dari LAN anda.",
   "mdns.statusStarting": "Menyemak sama ada nama itu bebas dalam rangkaian",
   "mdns.statusError": "Tidak diumumkan: {error}",
   "mdns.statusOff": "Mati",

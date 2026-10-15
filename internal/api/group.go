@@ -683,6 +683,9 @@ func (h *Handler) groupViewNow() (groupView, error) {
 
 func (h *Handler) ownAddresses() []string {
 	out := append([]string{}, mdns.Addresses()...)
+	if h.announcedOnHostOnly() {
+		return out
+	}
 	h.mdns.mu.Lock()
 	defer h.mdns.mu.Unlock()
 	if h.mdns.responder != nil {

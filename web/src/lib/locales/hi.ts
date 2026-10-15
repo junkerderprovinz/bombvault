@@ -2883,6 +2883,7 @@ const hi: Partial<Translations> = {
   "mdns.hint": "mDNS के ज़रिए लोकल नेटवर्क पर BombVault की घोषणा करता है, ताकि ब्राउज़र उसे bombvault.local नाम से खोल सके और सर्विस ब्राउज़र उसे दिखाएँ। Docker के डिफ़ॉल्ट bridge नेटवर्क में घोषणा Docker के भीतर ही रहती है; br0, macvlan या होस्ट नेटवर्क पर यह LAN तक पहुँचती है।",
   "mdns.enable": "लोकल नेटवर्क पर घोषणा करें",
   "mdns.statusOn": "{url} के रूप में घोषित",
+  "mdns.statusHostOnly": "केवल Docker के अंदर घोषित। bridge नेटवर्क पर bombvault.local आपके लोकल नेटवर्क से नहीं खुलता।",
   "mdns.statusStarting": "जाँच रहा है कि नाम नेटवर्क पर खाली है",
   "mdns.statusError": "घोषित नहीं: {error}",
   "mdns.statusOff": "बंद",

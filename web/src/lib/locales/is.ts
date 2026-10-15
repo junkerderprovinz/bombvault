@@ -2883,6 +2883,7 @@ const is: Partial<Translations> = {
   "mdns.hint": "Kynnir BombVault á staðarnetinu með mDNS, svo vafri nái í það sem bombvault.local og þjónustuvafrar birti það. Í sjálfgefnu bridge-neti Docker helst tilkynningin innan Docker; hún nær út á staðarnetið um br0, macvlan eða net hýsilsins.",
   "mdns.enable": "Kynna á staðarnetinu",
   "mdns.statusOn": "Kynnt sem {url}",
+  "mdns.statusHostOnly": "Aðeins kynnt innan Docker. Á bridge-neti næst ekki í bombvault.local af staðarnetinu þínu.",
   "mdns.statusStarting": "Athuga hvort heitið sé laust á netinu",
   "mdns.statusError": "Ekki kynnt: {error}",
   "mdns.statusOff": "Slökkt",

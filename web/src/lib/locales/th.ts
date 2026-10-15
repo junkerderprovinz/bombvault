@@ -2356,6 +2356,7 @@ const th: Partial<Translations> = {
   "mdns.hint": "ประกาศ BombVault ในเครือข่ายภายในผ่าน mDNS เพื่อให้เบราว์เซอร์เข้าถึงได้ด้วยชื่อ bombvault.local และเครื่องมือค้นหาบริการแสดงรายการได้ ในเครือข่าย bridge เริ่มต้นของ Docker การประกาศจะอยู่ภายใน Docker เท่านั้น ส่วน br0, macvlan หรือเครือข่ายของโฮสต์จะไปถึง LAN",
   "mdns.enable": "ประกาศในเครือข่ายภายใน",
   "mdns.statusOn": "ประกาศเป็น {url}",
+  "mdns.statusHostOnly": "ประกาศเฉพาะภายใน Docker บนเครือข่าย bridge จะเข้าถึง bombvault.local จาก LAN ของคุณไม่ได้",
   "mdns.statusStarting": "กำลังตรวจว่าชื่อว่างอยู่ในเครือข่าย",
   "mdns.statusError": "ไม่ได้ประกาศ: {error}",
   "mdns.statusOff": "ปิด",

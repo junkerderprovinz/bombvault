@@ -2354,6 +2354,7 @@ const nl: Partial<Translations> = {
   "mdns.hint": "Maakt BombVault via mDNS bekend op het lokale netwerk, zodat een browser het bereikt als bombvault.local en servicebrowsers het tonen. In Dockers standaard bridge-netwerk blijft de aankondiging binnen Docker; via br0, macvlan of het hostnetwerk bereikt ze het LAN.",
   "mdns.enable": "Bekendmaken op het lokale netwerk",
   "mdns.statusOn": "Bekendgemaakt als {url}",
+  "mdns.statusHostOnly": "Alleen binnen Docker bekendgemaakt. In een bridge-netwerk is bombvault.local niet bereikbaar vanaf je LAN.",
   "mdns.statusStarting": "Controleren of de naam vrij is op het netwerk",
   "mdns.statusError": "Niet bekendgemaakt: {error}",
   "mdns.statusOff": "Uit",

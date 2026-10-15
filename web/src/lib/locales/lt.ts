@@ -2883,6 +2883,7 @@ const lt: Partial<Translations> = {
   "mdns.hint": "Per mDNS paskelbia BombVault vietiniame tinkle, kad naršyklė jį pasiektų kaip bombvault.local, o paslaugų naršyklės jį rodytų. Numatytajame Docker bridge tinkle skelbimas lieka Docker viduje; į vietinį tinklą jis pasiekia per br0, macvlan arba kompiuterio tinklą.",
   "mdns.enable": "Skelbti vietiniame tinkle",
   "mdns.statusOn": "Paskelbta kaip {url}",
+  "mdns.statusHostOnly": "Paskelbta tik Docker viduje. Bridge tinkle bombvault.local iš tavo vietinio tinklo nepasiekiamas.",
   "mdns.statusStarting": "Tikrinama, ar vardas tinkle laisvas",
   "mdns.statusError": "Nepaskelbta: {error}",
   "mdns.statusOff": "Išjungta",
