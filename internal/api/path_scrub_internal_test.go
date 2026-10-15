@@ -121,9 +121,9 @@ func TestScrubSecretsLeavesTheSentenceAroundAPath(t *testing.T) {
 	}
 }
 
-func TestScrubErrorKeepsTheZvolExportRefusalReadable(t *testing.T) {
-	err := checkVMExportable("win11", 0, []string{"/dev/zvol/tank/vms/win11-disk0"})
-	want := `export vm: "win11" has only zvol disks ([path]). They are included in its backups but cannot be exported as files. Restore the VM from a backup instead`
+func TestTheZvolExportRefusalNamesTheDatasets(t *testing.T) {
+	err := checkVMExportable("win11", 0, []string{"/dev/zvol/tank/vms/win11-disk0", "/dev/zvol/tank/vms/win11-disk1"})
+	want := `export vm: "win11" has only zvol disks (tank/vms/win11-disk0, tank/vms/win11-disk1). They are included in its backups but cannot be exported as files. Restore the VM from a backup instead.`
 	if got := scrubError(err); got != want {
 		t.Fatalf("scrubError = %q, want %q", got, want)
 	}

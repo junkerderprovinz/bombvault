@@ -99,7 +99,7 @@ func TestExportVMWithOnlyZvolDisksSaysWhereTheDataIs(t *testing.T) {
 	if err == nil {
 		t.Fatal("ExportVM: want an error for a zvol-only VM")
 	}
-	for _, want := range []string{"/dev/zvol/tank/vms/testvm", "included in its backups", "cannot be exported as files"} {
+	for _, want := range []string{"(tank/vms/testvm)", "included in its backups", "cannot be exported as files"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Fatalf("error %q lacks %q", err, want)
 		}

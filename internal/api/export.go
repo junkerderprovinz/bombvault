@@ -386,13 +386,20 @@ func (s *Service) ExportVM(ctx context.Context, name string) (string, []string, 
 }
 
 // checkVMExportable refuses a VM with no disk to export. A VM with only zvol
-// disks is backed up fine, so the message says where its data is instead.
+// disks is backed up fine, so the message names their datasets instead.
 func checkVMExportable(name string, fileDisks int, zvols []string) error {
 	switch {
 	case fileDisks > 0:
 		return nil
 	case len(zvols) > 0:
-		return fmt.Errorf("export vm: %q has only zvol disks (%s). They are included in its backups but cannot be exported as files. Restore the VM from a backup instead", name, strings.Join(zvols, ", "))
+		datasets := make([]string, 0, len(zvols))
+		for _, dev := range zvols {
+			if ds, ok := virshcli.ZvolDatasetFromDevPath(dev); ok {
+				dev = ds
+			}
+			datasets = append(datasets, dev)
+		}
+		return fmt.Errorf("export vm: %q has only zvol disks (%s). They are included in its backups but cannot be exported as files. Restore the VM from a backup instead.", name, strings.Join(datasets, ", ")) //nolint:staticcheck // ST1005: shown as written, as sentences
 	}
 	return fmt.Errorf("export vm: no disk paths found for %q", name)
 }
