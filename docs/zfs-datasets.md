@@ -116,7 +116,7 @@ Switch it on in the **Replica** card on the entry's Settings tab. There you pick
 Any machine with ZFS and SSH can receive, for example a second Unraid or a TrueNAS. BombVault does not have to run there.
 
 1. Under **Settings, Pairing**, choose **Connect over SSH** in **ZFS server without BombVault**, or **Add ZFS server** in the entry's **Replica** card.
-2. Enter address, user and port. The dialog shows BombVault's public key. Add it to the user's `~/.ssh/authorized_keys` on the server. On Unraid that is under **Users, root, SSH keys**. Depending on **Display Settings**, Users sits in the header menu or under Settings. This is the replica key. It differs from the key of the VM and host SSH link, so add it even if that one is already authorised.
+2. Enter address, user and port. The dialog shows BombVault's public key. Add it to the user's `~/.ssh/authorized_keys` on the server. On Unraid that is under **Users, root, SSH keys**. Depending on **Display Settings**, Users sits in the header menu or under Settings. On TrueNAS, edit the user under **Credentials, Users**. This is the replica key. It differs from the key of the VM and host SSH link, so add it even if that one is already authorised.
 3. Test the connection. The dialog then lists the pools of the server. Pick one and set the root, which defaults to `<pool>/bombvault-replica`.
 4. Pick the new server in the **Replica** card of the entry. The server then has a card of its own on the Instances page, and **Open** leads to its page.
 
@@ -287,7 +287,8 @@ Each line is one mount inside the container. The line of a dataset shows its pat
 
 ## TrueNAS SCALE {#truenas}
 
-- When `LIBVIRT_URI` is set (as for VM backups on TrueNAS), BombVault takes the SSH host, user and port for its zfs commands from the URI, each one that is not set on its own. Without VM backups, set `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` and `LIBVIRT_SSH_PORT` instead. Add the variables under **Additional Environment Variables**.
+- When `LIBVIRT_URI` is set (as for VM backups on TrueNAS), BombVault takes the SSH host, user and port for its zfs commands from the URI, each one that is not set on its own. Without VM backups nothing has to be set: `host.docker.internal` does not resolve in a TrueNAS app, so BombVault reaches the host through the app's default gateway, as root on port 22. Set `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` and `LIBVIRT_SSH_PORT` when you want another address or user, in the app's `environment`.
+- Add the Host SSH key from **Settings, Integrations, Host SSH** to root under **Credentials, Users**, and turn on the SSH service under **System, Services**. A [replica](#replica-push) to this or another TrueNAS needs the replica key as well, which is a different one.
 - A user other than root needs permission on the entry's top dataset, which then covers every dataset below it:
 
   ```
@@ -297,4 +298,4 @@ Each line is one mount inside the container. The line of a dataset shows its pat
   Restoring into a new dataset also needs `create` on the dataset above it, and setting stored properties needs permission for those properties.
 
   A non-root SSH session on TrueNAS does not have `/usr/sbin` in its path; BombVault then calls `/usr/sbin/zfs` directly.
-- The app's **Host Data** must be a host path above the datasets, for example `/mnt/tank`, not an ixVolume. With a host path the app passes the host's new mounts on to BombVault (`rslave`), which snapshot access needs.
+- The app's **Host Data** must be a host path above the datasets, for example `/mnt/tank`, not an ixVolume. With a host path the app passes the host's new mounts on to BombVault (`rslave`), which snapshot access needs. See [TrueNAS SCALE](getting-started.md#truenas) for the whole app setup.

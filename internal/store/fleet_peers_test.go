@@ -155,3 +155,58 @@ func TestAFleetPeerKeepsTheKindOfMemberItIs(t *testing.T) {
 		t.Fatalf("kind after a rename = %q (err %v), want android", back.Kind, err)
 	}
 }
+
+func TestDroppingMemberRowsLeavesRowsNobodyPairedAndUnpairsATakenOverOne(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	mk := func(p store.FleetPeer) string {
+		t.Helper()
+		p, err := r.CreateFleetPeer(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return p.ID
+	}
+	tower := mk(store.FleetPeer{MemberID: "member-a", Name: "tower", Enabled: true})
+	phone := mk(store.FleetPeer{MemberID: "member-b", Name: "phone", Kind: "android", Enabled: true})
+	takenOver := mk(store.FleetPeer{MemberID: "member-c", Name: "attic", URL: "https://192.168.1.9:3443", MemberURL: "https://192.168.1.9:3443", Enabled: true})
+	unpaired := mk(store.FleetPeer{Name: "barn", URL: "https://192.168.1.10:3443", Enabled: true})
+
+	byID := func() map[string]store.FleetPeer {
+		t.Helper()
+		all, err := r.ListFleetPeers()
+		if err != nil {
+			t.Fatal(err)
+		}
+		out := map[string]store.FleetPeer{}
+		for _, p := range all {
+			out[p.ID] = p
+		}
+		return out
+	}
+
+	if err := r.DropMemberFleetPeers("member-a"); err != nil {
+		t.Fatal(err)
+	}
+	got := byID()
+	if _, ok := got[tower]; ok || len(got) != 3 {
+		t.Fatalf("rows after dropping one member = %+v, want only tower gone", got)
+	}
+
+	if err := r.DropMemberFleetPeers(""); err != nil {
+		t.Fatal(err)
+	}
+	got = byID()
+	if _, ok := got[phone]; ok || len(got) != 2 {
+		t.Fatalf("rows after dropping every member = %+v, want the phone gone", got)
+	}
+	if p := got[takenOver]; !p.NeedsPairing() || p.URL != "https://192.168.1.9:3443" || p.MemberURL != "" || p.Name != "attic" {
+		t.Fatalf("the row a member took over = %+v, want it back to waiting for pairing", p)
+	}
+	if p := got[unpaired]; !p.NeedsPairing() || p.Name != "barn" {
+		t.Fatalf("the row nobody paired = %+v, want it untouched", p)
+	}
+}

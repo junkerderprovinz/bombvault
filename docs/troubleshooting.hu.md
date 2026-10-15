@@ -33,6 +33,7 @@ A VM-mentés SSH-n keresztül kommunikál a libvirttel, soha nem egy csatoláson
 - Ellenőrizd, hogy az SSH engedélyezve van-e a hoszton, és a BombVault nyilvános kulcsa engedélyezve van-e a `/root/.ssh/authorized_keys` fájlban (a Beállítások, Integrációk, Gazdagép SSH mutatja a kulcsot és egy **Kapcsolat tesztelése** gombot).
 - Egy egyéni `br0.x` hálózaton állítsd a `LIBVIRT_HOST`-ot az Unraid LAN IP-jére (a konténer ott nem éri el a hosztot a `host.docker.internal`-on keresztül). Engedélyezd a **Settings, Docker, Host access to custom networks** opciót.
 - Ha megváltoztattad az Unraid SSH-portját, állítsd be a `LIBVIRT_SSH_PORT`-ot, hogy egyezzen.
+- TrueNAS-on állítsd be a `LIBVIRT_URI`-t a TrueNAS saját libvirt-socketjével, add meg az alkalmazásnak a `SETPCAP` capabilityt, és add hozzá a kulcsot a roothoz a **Credentials, Users** alatt (lásd: [TrueNAS SCALE](getting-started.md#truenas)).
 - A teljes, lépésről lépésre diagnózis (elérhetőségi teszt, VLAN-útválasztás, `Permission denied (publickey)`, `Host key verification failed`) a [VM-mentés SSH-n keresztül útmutatóban](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) található.
 
 ## Egy élő VM-pillanatkép nem futott le
@@ -50,6 +51,8 @@ A telephelyen kívüli replikáció szándékosan legjobb szándék szerinti, í
 ## Egy visszaállítás megszakadt, mielőtt elindult volna
 
 Mielőtt bármit is leállítanának vagy eltávolítanának, a visszaállítás lefuttat egy előzetes ütközésellenőrzést: ellenőrzi, hogy a konténer statikus IP-je és a közzétett hoszt-portjai szabadok-e. Ha egy másik konténer már foglal egyet, világos, cselekvésre késztető üzenettel megszakad, ahelyett hogy félig kész visszaállítást hagyna hátra. Szabadítsd fel az ütköző portot vagy IP-t, majd próbáld újra.
+
+Ha a konténer hálózata nem létezik, például mert a TrueNAS-alkalmazását törölték, a visszaállítás előtti ellenőrzés megnevezi a hálózatot, és a visszaállítás elutasítja a futást, mielőtt bármit megváltoztatna. Telepítsd újra az alkalmazást a TrueNAS-ban ugyanazzal a névvel, ami újra létrehozza a hálózatot, majd állítsd vissza az adatait.
 
 ## Egy egyszerű export meghiúsult ahelyett, hogy fájlt írt volna
 
@@ -71,7 +74,9 @@ A sikertelen dump sosem buktatja el a körülötte futó mentést; saját sikert
 
 Az import leállítja a konténert, félreteszi az adatmappáját, és hagyja, hogy a képfájl a helyére egy üreset hozzon létre. Ha az import előtti lépések egyike hiúsul meg, a régi mappa magától visszakerül. Ha maga az import bukik el, a konténernél marad a friss mappa, a régi pedig mellette marad `<adatmappa>.bombvault-before-import-<időbélyeg>` néven; a futás hibaüzenete megnevezi a pontos elérési utat.
 
-Kézi visszaállítás: állítsd le a konténert, nevezd át az aktuális adatmappát az útból, nevezd vissza a megőrzött mappát az eredeti nevére, majd indítsd el a konténert. Unraidon ezt a Shares fül fájlkezelője elvégzi.
+Egy önálló adatkészletet alkotó adatmappa, mint TrueNAS-on, nem nevezhető át. Az import ilyenkor a helyén hagyja a mappát, és a tartalmát a mellette lévő megőrzött mappába helyezi át, ezért a fölötte lévő adatkészletnek helyre van szüksége hozzá. Az import ezt ellenőrzi, mielőtt leállítja a konténert.
+
+Kézi visszaállítás: állítsd le a konténert, nevezd át az aktuális adatmappát az útból, nevezd vissza a megőrzött mappát az eredeti nevére, majd indítsd el a konténert. Adatkészletnél a mappák átnevezése helyett a tartalmat helyezd át. Unraidon ezt a Shares fül fájlkezelője elvégzi.
 
 ## Egy ZFS-adatkészlet mentése hibára futott vagy kihagyott egy adatkészletet {#zfs-datasets}
 

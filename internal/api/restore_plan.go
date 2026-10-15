@@ -66,6 +66,22 @@ type RestorePlan struct {
 	// BackupFirst is set when the restore backs up the current state before
 	// it replaces it.
 	BackupFirst *BackupFirstPlan `json:"backupFirst,omitempty"`
+	// Zvols are the VM disks on ZFS volumes, which the restore writes whole.
+	Zvols []PlanZvol `json:"zvols,omitempty"`
+}
+
+// PlanZvol is a zvol a VM restore writes whole. Change is "changed" for a zvol
+// it replaces, "added" for one it creates and empty when the host could not
+// be read. Safety starts the name of the snapshot taken before a replaced
+// zvol is written. Free is the room ZFS has for the zvol, -1 when unknown, and
+// NoPool says the pool it belongs on is not on this server.
+type PlanZvol struct {
+	Dataset string `json:"dataset"`
+	Size    int64  `json:"size"`
+	Change  string `json:"change"`
+	Safety  string `json:"safety,omitempty"`
+	Free    int64  `json:"free"`
+	NoPool  bool   `json:"noPool,omitempty"`
 }
 
 // PlanFile is one host path of the plan and how the restore changes it.
@@ -196,7 +212,44 @@ func (s *Service) previewRestore(ctx context.Context, sc restoreScope) (RestoreP
 		plan.Added++
 		add(s.toHostPath(f), changeAdded)
 	}
+	if len(sc.zvols) > 0 {
+		plan.Zvols = s.planZvols(ctx, sc.zvols)
+	}
 	return plan, need, nil
+}
+
+// planZvols reads from the host whether each zvol is there to be replaced and
+// how much room ZFS has for it. A zvol that is not there yet is created with
+// its parents, so the room is that of its nearest existing ancestor.
+func (s *Service) planZvols(ctx context.Context, disks []backup.VMRestoreBlockDisk) []PlanZvol {
+	var space map[string]zfsSpace
+	if s.ssh != nil {
+		space, _ = sshZFSHost{ssh: s.ssh}.Space(ctx)
+	}
+	out := make([]PlanZvol, len(disks))
+	for i, d := range disks {
+		z := PlanZvol{Dataset: d.Dataset, Size: d.Size, Free: -1}
+		if space != nil {
+			placeZvol(&z, space)
+		}
+		out[i] = z
+	}
+	return out
+}
+
+func placeZvol(z *PlanZvol, space map[string]zfsSpace) {
+	if own, ok := space[z.Dataset]; ok && own.volume {
+		z.Change, z.Safety, z.Free = changeChanged, z.Dataset+"@"+backup.ZvolSafetySnapshotPrefix, own.available
+		return
+	}
+	z.Change = changeAdded
+	for p := path.Dir(z.Dataset); p != "."; p = path.Dir(p) {
+		if parent, ok := space[p]; ok {
+			z.Free = parent.available
+			return
+		}
+	}
+	z.NoPool = true
 }
 
 // blockImageCeiling is the most a rebuilt disk image takes beside the one it
@@ -211,10 +264,11 @@ func blockImageCeiling(d backup.BlocksDisk) int64 {
 }
 
 // spaceLine compares what the restore writes with the free space of each
-// volume it writes to. A measured shortfall fails even when the dry run
-// stopped early, since the real need is only larger; an incomplete
-// measurement that fits proves nothing and is left grey.
-func (s *Service) spaceLine(sc restoreScope, need map[string]int64, incomplete bool) CheckLine {
+// volume it writes to, and each zvol's size with the room ZFS has for it. A
+// measured shortfall fails even when the dry run stopped early, since the real
+// need is only larger; an incomplete measurement that fits proves nothing and
+// is left grey.
+func (s *Service) spaceLine(sc restoreScope, need map[string]int64, zvols []PlanZvol, incomplete bool) CheckLine {
 	line := CheckLine{ID: lineSpace}
 	switch {
 	case sc.download:
@@ -226,9 +280,23 @@ func (s *Service) spaceLine(sc restoreScope, need map[string]int64, incomplete b
 			return line
 		}
 		need = map[string]int64{sc.fixedAt: sc.fixedNeed}
-	case len(sc.steps) == 0 && len(sc.images) == 0:
+	case len(sc.steps) == 0 && len(sc.images) == 0 && len(zvols) == 0:
 		line.Status, line.Reason = lineSkip, reasonNothing
 		return line
+	}
+	// zfs create reserves the whole size of a new zvol, so one that does not
+	// fit is refused. A replaced zvol is left to the rule for disk images
+	// below: zeros that compress away can make it fit after all.
+	for _, z := range zvols {
+		switch {
+		case z.NoPool:
+			line.Status, line.Reason, line.Detail = lineFail, reasonNoPool, zvolPool(z.Dataset)
+			return line
+		case z.Change == changeAdded && z.Size > z.Free:
+			line.Status, line.Reason, line.Detail = lineFail, reasonShort, z.Dataset
+			line.Need, line.Free = z.Size, z.Free
+			return line
+		}
 	}
 	type volume struct{ need, free int64 }
 	volumes := map[string]*volume{}
@@ -267,10 +335,25 @@ func (s *Service) spaceLine(sc restoreScope, need map[string]int64, incomplete b
 			line.Need, line.Free = v.need, v.free
 		}
 	}
+	for _, z := range zvols {
+		if z.Free < 0 || z.Size > z.Free {
+			line.Status, line.Reason, line.Need, line.Free = lineSkip, reasonUnmeasured, 0, 0
+			return line
+		}
+		if z.Size > line.Need || line.Free == 0 {
+			line.Need, line.Free = z.Size, z.Free
+		}
+	}
 	if incomplete {
 		line.Status, line.Reason = lineSkip, reasonUnmeasured
 	}
 	return line
+}
+
+// zvolPool is the pool a zvol belongs on, the first part of its name.
+func zvolPool(dataset string) string {
+	pool, _, _ := strings.Cut(dataset, "/")
+	return pool
 }
 
 // definitionChanges compares the container or VM definition the restore

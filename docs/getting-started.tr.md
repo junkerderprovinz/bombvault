@@ -6,7 +6,7 @@ Bu sayfa seni sıfırdan bir Unraid makinesinden ilk yedeğine kadar götürür.
 
 | Gereksinim | Notlar |
 |---|---|
-| **Unraid 6.12+** | Daha eski sürümler test edilmemiştir. Asıl hedef Unraid'dir, ama BombVault sade bir Docker ana makinesinde ve TrueNAS Scale üzerinde de çalışır (bkz. [Genel Docker ana makinesi](#generic-docker-host)). |
+| **Unraid 6.12+** | Daha eski sürümler test edilmemiştir. Asıl hedef Unraid'dir, ama BombVault sade bir Docker ana makinesinde ve TrueNAS Scale üzerinde de çalışır (bkz. [Genel Docker ana makinesi](#generic-docker-host) ve [TrueNAS SCALE](#truenas)). |
 | **Restic depo konumu** | Yerel bir yol (önerilen: dizin ya da önbelleğin), SMB, NFS veya herhangi bir rclone arka ucu. |
 | **Docker soketi** | Şablon tarafından otomatik olarak bağlanır (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | Şablon tarafından tümüyle otomatik bağlanır (`/boot` -> `/host/boot`). Flash yedeklemesini besler ve geri yüklenen bir konteynerin normal, düzenlenebilir bir Unraid uygulaması olarak yeniden görünmesini sağlar. |
@@ -34,7 +34,7 @@ En kolay yol **Community Applications**'tır.
 
 ## Genel Docker ana makinesi {#generic-docker-host}
 
-Unraid değil mi? BombVault herhangi bir Docker ana makinesinde sıradan bir kapsayıcı olarak da çalışır (TrueNAS Scale üzerindeki kapsayıcı desteği de, oradaki uygulama kataloğunda kendi kaydı olana dek buna dayanır).
+Unraid değil mi? BombVault herhangi bir Docker ana makinesinde sıradan bir kapsayıcı olarak da çalışır. TrueNAS SCALE'in kendi adımları [TrueNAS SCALE](#truenas) altında.
 
 1. Depodan, düzenlemeye hazır [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) dosyasını al.
 2. `APP_KEY` değerini ayarla (aşağıya bak) ve Host Data birimini gerçek veri köküne yönelt. Dosyadaki yorumlar ikisini de adım adım anlatıyor.
@@ -42,14 +42,54 @@ Unraid değil mi? BombVault herhangi bir Docker ana makinesinde sıradan bir kap
 
 Unraid'e göre neler değişiyor:
 
-- **Flash bölümü yok.** Yakalanacak ya da geri yüklenecek bir açılış USB'si bulunmadığından, Flash bölümünün burada yapacağı bir şey yok. Onun yerine Yedekler sayfasındaki **Ekle**, bir klasör önerisi olarak **Sistem yapılandırması**'nı sunar: kaydetmeden önce gözden geçirip düzenlediğin, `/etc` ile başlayan bir klasör kümesi.
+- **Flash bölümü yok.** Yakalanacak ya da geri yüklenecek bir açılış USB'si bulunmadığından, Flash bölümünün burada yapacağı bir şey yok. Onun yerine, Host Data ana makinenin `/etc` klasörüne ulaşıyorsa Yedekler sayfasındaki **Ekle**, bir klasör önerisi olarak **Sistem yapılandırması**'nı sunar: kaydetmeden önce gözden geçirip düzenlediğin, `/etc` ile başlayan bir klasör kümesi.
 - **Unraid'e özgü bildirimler yok.** BombVault'un kendi bildirim kanalları (webhook, saha dışı başarısızlık uyarıları ve benzeri) her zamanki gibi çalışır; yalnızca Unraid'in kendi bildirim sistemine gönderim atlanır, çünkü burada öyle bir sistem yoktur.
 - **VM yedeklemesi isteğe bağlıdır ve SSH ile erişilebilen ayrı bir libvirtd ana makinesi gerektirir.** compose dosyasındaki yorum satırına alınmış bloğa bak. Genel bir Docker ana makinesinin kendisinde VM yönetimi yoktur.
 - **Dashboard widget'ı yok.** BombVault Widget bir Unraid eklentisidir, bu yüzden bu adım da atlanır.
 - **Bir konteynerin verisini bulma.** Unraid'in `appdata` geleneği olmadan bir konteynerin veri klasörü `DATA_ROOT_SEGMENTS` içindeki parçalardan, Docker adlandırılmış birimlerinden, bir Compose projesinin çalışma dizininden ve `bombvault.data` etiketinden bulunur (bkz. [Yedekleme kaynaklarının belirlenmesi](configuration.md#backup-source-detection)). Adlandırılmış birimler ve `/etc` hazır ayarı yalnızca Host Data bağlamasının içindeki yollara ulaşır, bu yüzden Host Data'yı Docker'ın veri kökünü de kapsayan ortak bir üst dizine yönelt.
 - **`PLATFORM`.** `generic` ya da `truenas` olarak ayarla. Ayarlanmazsa BombVault, Unraid'i flash bağlamasındaki kendi işaretinden tanır ve geri kalan her şeyi genel kabul eder; Unraid'e özgü adımlar denenip başarısız olmak yerine atlanır.
 
-**TrueNAS Scale** aynı compose yolunu izler; bir katalog girdisi depoda hazırlanmıştır ama henüz gönderilmemiştir. Orada VM yedeklemesi `LIBVIRT_URI` gerektirir, çünkü TrueNAS'ın libvirtd'si üç `LIBVIRT_*` değişkeninin ifade edemediği kendine ait bir sokette (`/run/truenas_libvirt/libvirt-sock`) dinler (bkz. [Yapılandırma](configuration.md)). Bunun ne kadar kanıtlandığı: zvol yedeklemesi gerçek bir TrueNAS Scale makinesinde, çalışan bir VM'e bağlı bir zvol üzerinde çalıştırıldı ve `zfs snapshot`, `zfs send`, restic ve `zfs receive` onu bayt bayt gidiş dönüş aktardı. BombVault'un kendisinin yürüttüğü eksiksiz bir geri yükleme henüz TrueNAS donanımında çalıştırılmadı ve o zvol seyrekti (sparse), bu yüzden çok gigabaytlık verilerde aktarım hızı test edilmedi. Ona güvenmeden önce orada bir geri yüklemeyi dene.
+### TrueNAS SCALE {#truenas}
+
+BombVault henüz TrueNAS uygulama kataloğunda yok, bu yüzden onu özel bir uygulama olarak kur: **Apps, Discover Apps**, ardından **Custom App** yanındaki menüde **Install via YAML**. Aşağıdaki YAML, deponun `truenas-apps` klasöründeki katalog girdisiyle aynı ayarları yapar. `tank` yerine kendi havuzunu yaz ve `APP_KEY` değerini sonraki bölümde anlatıldığı gibi doldur.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # VM yedekleri için:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+Ardından `https://<truenas-ip>:30528/` adresini aç. [Unraid'e göre neler değişiyor](#generic-docker-host) altında sayılanlar burada da geçerlidir, TrueNAS'ta ayrıca:
+
+- **Yetkiler (capabilities).** BombVault yukarıdaki altı yetkinin hepsine ihtiyaç duyar. `SETPCAP` olmadan VM yedekleri başarısız olur.
+- **Host Data** bir veri kümesi üzerindeki ana makine yoludur, burada `/mnt/tank`, ve uygulamanın içinde aynı yola bağlanır. `HOST_SOURCE_ROOT` ve `HOST_MOUNT_ROOT` ikisinin de onu göstermesinin nedeni budur. `rslave`, ana makinenin sonradan yaptığı bağlamaları iletir; ZFS veri kümesi yedeklerinin ihtiyacı da budur.
+- **ixVolume içindeki veri yedeklenmez.** Depolaması ixVolume olan bir uygulama verisini Host Data dışında, `/mnt/.ix-apps` altında tutar. BombVault yalnızca uygulamanın tanımını kaydeder ve çalışma dışarıda bıraktığı klasörleri belirtir. Verisinin yedeklenmesini istediğin her uygulama için Host Data altındaki bir veri kümesinde **Host Path** depolamasını seç.
+- **VM ve ZFS veri kümesi yedekleri** TrueNAS'a SSH üzerinden root olarak ulaşır. **System, Services** altında SSH hizmetini aç ve **Ayarlar, Entegrasyonlar, Ana makine SSH** içindeki genel anahtarı **Credentials, Users** altında root kullanıcısına ekle. VM yedekleri ayrıca yukarıdaki gibi `LIBVIRT_URI` gerektirir, çünkü TrueNAS'ın libvirtd'si kendine ait bir sokette dinler. Ne `LIBVIRT_URI` ne de `LIBVIRT_HOST` ayarlıysa BombVault ana makine olarak uygulamanın varsayılan ağ geçidini kullanır, çünkü bir TrueNAS uygulamasında `host.docker.internal` çözümlenmez. Ayrıntıları, zvol üzerindeki VM'ler dahil, [VM yedekleme kılavuzu](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) anlatır.
+- **Bir ZFS replikası başka bir anahtar kullanır.** İkinci bir ZFS sunucusundaki replika, Ana makine SSH anahtarıyla değil, replika penceresinin gösterdiği anahtarla oturum açar. Bu anahtarı alıcı sunucuya ekle.
+- **Silinmiş bir uygulama iki adımda geri gelir.** Önce onu TrueNAS'ta aynı adla yeniden kur, bu ağını yeniden oluşturur, sonra verisini BombVault'ta geri yükle. O zamana kadar geri yüklemeden önceki denetim eksik ağı bildirir ve geri yükleme hiçbir şeyi değiştirmeden reddeder.
+- **Orijinalin yanına** sıradan bir Docker kapsayıcısı oluşturur. Çalışır, ama TrueNAS Apps ekranı onu listelemez.
+- **Veritabanı dökümleri** veri kümesi bağlamalarında çalışır. Kendisi ayrı bir veri kümesi olan bir veri klasörüne içe aktarma, eski içeriği yanındaki bir klasöre taşır, bu yüzden üstteki veri kümesinde onlar için yer olmalıdır.
 
 ## Gereken tek ayar
 

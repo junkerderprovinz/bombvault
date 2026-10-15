@@ -11,11 +11,12 @@ import {
   deleteSnapshot,
   importDbDump,
   listDbDumps,
+  removeKeptDataDir,
   saveDbDumpTo,
   type DBDumpView,
 } from "../../lib/api";
 import { useBackupWatch } from "../../lib/backupWatch";
-import { ENGINE_NAMES, importRefusedKey } from "../../lib/dbdump";
+import { ENGINE_NAMES, importRefusedKey, keptStampOf } from "../../lib/dbdump";
 import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { useProgress } from "../../lib/progress";
@@ -171,6 +172,7 @@ function DumpRow({
   });
 
   const importNote = importState.phase === "success" ? importState.note : undefined;
+  const keptStamp = keptStampOf(importNote);
   const engineName = dump.engine ? ENGINE_NAMES[dump.engine] : "";
   // Without the engine the import has no tool to pick and the server refuses
   // it, so the row offers everything else and says only that this is a database.
@@ -384,8 +386,47 @@ function DumpRow({
           t={t}
         />
       )}
+      {keptStamp && <KeptCopy key={keptStamp} containerName={containerName} stamp={keptStamp} t={t} />}
       {confirmDialog}
       {ownLogin.dialog}
+    </div>
+  );
+}
+
+/** KeptCopy says that the data folder an import kept is taken along by
+ *  whatever backs up the folder above it, and removes it on request. */
+function KeptCopy({ containerName, stamp, t }: { containerName: string; stamp: string; t: T }) {
+  const { push } = useToast();
+  const [state, setState] = useState<"kept" | "removing" | "removed">("kept");
+
+  async function remove() {
+    setState("removing");
+    try {
+      const res = await removeKeptDataDir(containerName, stamp);
+      if (res.ok) {
+        setState("removed");
+        return;
+      }
+      push(res.error ?? t("common.deleteFailed"), "fail");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
+    }
+    setState("kept");
+  }
+
+  if (state === "removed") return <p className="text-xs text-carbon-textMuted">{t("dbdump.keptRemoved")}</p>;
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs text-carbon-textSub">
+      <span className="min-w-0 flex-1">{t("dbdump.keptIncluded")}</span>
+      <Button
+        label={t("dbdump.removeKept")}
+        labelKey="dbdump.removeKept"
+        glyph={<IconTrash />}
+        tone="subtle"
+        onClick={() => void remove()}
+        busy={state === "removing"}
+        disabled={state === "removing"}
+      />
     </div>
   );
 }

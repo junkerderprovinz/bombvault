@@ -417,7 +417,7 @@ func memberFailure(m ZFSMemberResult) string { return m.Dataset + " [" + m.Outco
 // zfsHostPathRe finds the paths in host output. Only a slash that starts a
 // token begins one, since the slash inside a word belongs to a dataset name
 // such as cache/appdata/plex, which the user needs to see.
-var zfsHostPathRe = regexp.MustCompile(`(^|[\s'"=(,])(?:/[^\s:"']+)+`)
+var zfsHostPathRe = regexp.MustCompile(`(^|[\s'"=(,])(?:/[^\s:"']*[^\s:"').,;])+`)
 
 // zfsHostDetail makes what the host wrote fit for a refusal, which passes the
 // run row's scrubber untouched: the host's paths, credentials and control

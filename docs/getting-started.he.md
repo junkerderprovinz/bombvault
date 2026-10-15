@@ -6,7 +6,7 @@
 
 | דרישה | הערות |
 |---|---|
-| **Unraid 6.12+** | גרסאות קודמות אינן נבדקות. ‏Unraid הוא היעד העיקרי, אבל BombVault רצה גם על מארח Docker רגיל ועל TrueNAS Scale (פרטים ב[מארח Docker כללי](#generic-docker-host)). |
+| **Unraid 6.12+** | גרסאות קודמות אינן נבדקות. ‏Unraid הוא היעד העיקרי, אבל BombVault רצה גם על מארח Docker רגיל ועל TrueNAS Scale (פרטים ב[מארח Docker כללי](#generic-docker-host) וב[TrueNAS SCALE](#truenas)). |
 | **מיקום מאגר restic** | נתיב מקומי (מומלץ: המערך או הזיכרון המטמון), SMB, NFS, או כל backend של rclone. |
 | **Docker socket** | מעוגן על ידי התבנית אוטומטית (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | מעוגן במלואו על ידי התבנית אוטומטית (`/boot` אל `/host/boot`). מפעיל את גיבוי ה-flash ומאפשר ל-container משוחזר להופיע מחדש כאפליקציית Unraid רגילה וניתנת לעריכה. |
@@ -34,7 +34,7 @@
 
 ## מארח Docker כללי {#generic-docker-host}
 
-לא Unraid? BombVault רץ גם כמכולה רגילה על כל מארח Docker (זה גם מה שנושא את התמיכה במכולות ב-TrueNAS Scale, עוד לפני רשומה משלו בקטלוג היישומים שם).
+לא Unraid? BombVault רץ גם כמכולה רגילה על כל מארח Docker. ל-TrueNAS SCALE יש שלבים משלו תחת [TrueNAS SCALE](#truenas).
 
 1. יש להוריד מהמאגר את הקובץ [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml), מוכן לעריכה.
 2. יש להגדיר את `APP_KEY` (פרטים בהמשך) ולכוון את כרך Host Data אל שורש הנתונים האמיתי. ההערות בקובץ מלוות את שניהם.
@@ -42,14 +42,54 @@
 
 מה שונה לעומת Unraid:
 
-- **אין תחום Flash.** אין כונן אתחול שיש ללכוד או לשחזר, ולכן לתחום Flash אין כאן מה לעשות. במקומו **הוספה** בדף גיבויים מציעה את **תצורת המערכת** כהצעת תיקיות: אוסף התחלתי של תיקיות `/etc` שסוקרים ועורכים לפני השמירה.
+- **אין תחום Flash.** אין כונן אתחול שיש ללכוד או לשחזר, ולכן לתחום Flash אין כאן מה לעשות. במקומו, כש-Host Data מגיע אל `/etc` של המארח, **הוספה** בדף גיבויים מציעה את **תצורת המערכת** כהצעת תיקיות: אוסף התחלתי של תיקיות `/etc` שסוקרים ועורכים לפני השמירה.
 - **אין התראות מובנות של Unraid.** ערוצי ההתראות של BombVault עצמו (webhook, התראות על כשל מחוץ לאתר וכדומה) פועלים כרגיל; מדולג רק המשלוח הייעודי למערכת ההתראות של Unraid, מכיוון שמערכת כזו אינה קיימת כאן.
 - **גיבוי מכונות וירטואליות הוא רשות ודורש מארח libvirtd נפרד הנגיש דרך SSH.** פרטים בקטע המסומן כהערה בקובץ compose. למארח Docker כללי אין בעצמו מנהל מכונות וירטואליות.
 - **אין widget ל-Dashboard.** ‏BombVault Widget הוא תוסף של Unraid, ולכן גם השלב הזה מדולג.
 - **איתור הנתונים של container.** בלי מוסכמת ה-`appdata` של Unraid, תיקיית הנתונים של container מאותרת לפי המקטעים שב-`DATA_ROOT_SEGMENTS`, לפי volumes בעלי שם של Docker, לפי תיקיית העבודה של פרויקט Compose ולפי התווית `bombvault.data` (פרטים ב[זיהוי מקורות הגיבוי](configuration.md#backup-source-detection)). ‏volumes בעלי שם וערכת ה-`/etc` מגיעים רק לנתיבים בתוך העיגון של Host Data, ולכן כוון את Host Data לתיקיית אב משותפת שמכסה גם את תיקיית הנתונים הראשית של Docker.
 - **‏`PLATFORM`.** יש להגדיר אותו ל-`generic` או ל-`truenas`. כשהוא לא מוגדר, BombVault מזהה את Unraid לפי הסמן שלו בעיגון ה-flash ומתייחסת לכל השאר כאל מארח כללי, והשלבים הייחודיים ל-Unraid מדולגים במקום לנסות אותם ולהיכשל.
 
-‏**TrueNAS Scale** הולך באותה דרך של compose; רשומת קטלוג הוכנה במאגר אבל עדיין לא הוגשה. גיבוי VM שם צריך את `LIBVIRT_URI`, כי ה-libvirtd של TrueNAS מאזין על socket משלו (`/run/truenas_libvirt/libvirt-sock`) ששלושת משתני ה-`LIBVIRT_*` לא יכולים לבטא (פרטים ב[הגדרות](configuration.md)). עד כמה זה הוכח: גיבוי ה-zvol הורץ על מכונת TrueNAS Scale אמיתית, על zvol שמחובר ל-VM רצה, ו-`zfs snapshot`, ‏`zfs send`, ‏restic ו-`zfs receive` העבירו אותו הלוך ושוב זהה בית אחר בית. שחזור מלא שמבצעת BombVault עצמה עדיין לא הורץ על חומרת TrueNAS, וה-zvol ההוא היה דליל (sparse), ולכן קצב ההעברה בהיקף של הרבה גיגה-בתים לא נבדק. יש לבדוק שם שחזור לפני שסומכים עליו.
+### TrueNAS SCALE {#truenas}
+
+‏BombVault עדיין לא נמצאת בקטלוג האפליקציות של TrueNAS, ולכן מתקינים אותה כאפליקציה מותאמת אישית: **Apps, Discover Apps**, ואז **Install via YAML** בתפריט שליד **Custom App**. קובץ ה-YAML שלהלן מגדיר את אותם דברים כמו רשומת הקטלוג בתיקייה `truenas-apps` של המאגר. יש להחליף את `tank` בשם ה-pool ולמלא את `APP_KEY` כפי שמתואר בסעיף הבא.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # לגיבויי VM:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+לאחר מכן יש לפתוח את `https://<truenas-ip>:30528/`. מה שמפורט תחת [מה שונה לעומת Unraid](#generic-docker-host) חל גם כאן, וב-TrueNAS בנוסף:
+
+- **הרשאות (capabilities).** ‏BombVault צריכה את כל השש שלמעלה. בלי `SETPCAP` גיבויי VM נכשלים.
+- ‏**Host Data** הוא נתיב מארח על מערך נתונים, כאן `/mnt/tank`, המעוגן באותו נתיב בתוך האפליקציה. לכן גם `HOST_SOURCE_ROOT` וגם `HOST_MOUNT_ROOT` מציינים אותו. ‏`rslave` מעביר הלאה את העיגונים שהמארח יוצר מאוחר יותר, וגיבויי מערכי נתונים של ZFS צריכים אותם.
+- **נתונים ב-ixVolume אינם מגובים.** אפליקציה שהאחסון שלה הוא ixVolume שומרת את הנתונים שלה תחת `/mnt/.ix-apps`, מחוץ ל-Host Data. ‏BombVault שומרת רק את הגדרת האפליקציה, וההרצה מציינת את התיקיות שהושארו בחוץ. לכל אפליקציה שאת הנתונים שלה רוצים לגבות יש לבחור אחסון **Host Path** על מערך נתונים מתחת ל-Host Data.
+- **גיבויי VM ומערכי נתונים של ZFS** מגיעים ל-TrueNAS דרך SSH כ-root. יש להפעיל את שירות ה-SSH תחת **System, Services**, ולהוסיף את המפתח הציבורי מ**הגדרות, אינטגרציות, SSH למארח** למשתמש root תחת **Credentials, Users**. גיבויי VM צריכים גם את `LIBVIRT_URI` כמו למעלה, כי ה-libvirtd של TrueNAS מאזין על socket משלו. כשלא `LIBVIRT_URI` ולא `LIBVIRT_HOST` מוגדרים, BombVault משתמשת בשער ברירת המחדל של האפליקציה כמארח, כי `host.docker.internal` אינו נפתר באפליקציית TrueNAS. ה[מדריך לגיבוי VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) מפרט את הפרטים, כולל VMs על zvols.
+- **רפליקת ZFS משתמשת במפתח אחר.** רפליקה בשרת ZFS שני מתחברת עם המפתח שחלון הרפליקה מציג, לא עם מפתח ה-SSH למארח. יש להוסיף את המפתח הזה בשרת המקבל.
+- **אפליקציה שנמחקה חוזרת בשני שלבים.** קודם יש להתקין אותה מחדש ב-TrueNAS באותו שם, מה שיוצר מחדש את הרשת שלה, ואז לשחזר את הנתונים שלה ב-BombVault. עד אז הבדיקה לפני השחזור מדווחת על הרשת החסרה, והשחזור מסרב לפני שהוא משנה משהו.
+- **לצד המקור** יוצר container רגיל של Docker. הוא רץ, אבל מסך Apps של TrueNAS אינו מציג אותו.
+- **דאמפים של מסדי נתונים** עובדים על עיגונים של מערכי נתונים. ייבוא לתיקיית נתונים שהיא בעצמה מערך נתונים נפרד מעביר את התוכן הישן לתיקייה לידה, ולכן מערך הנתונים שמעליה צריך מקום עבורו.
 
 ## ההגדרה הנדרשת היחידה
 

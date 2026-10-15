@@ -1,10 +1,6 @@
 package virshcli
 
-import (
-	"strings"
-	"testing"
-	"time"
-)
+import "testing"
 
 func TestZvolDatasetFromDevPath(t *testing.T) {
 	cases := []struct {
@@ -102,65 +98,23 @@ func TestZFSSnapshotArgs(t *testing.T) {
 	}
 }
 
-func TestZFSSnapshotDestroyArgs(t *testing.T) {
-	got := ZFSSnapshotDestroyArgs("tank/vm-disk1", "bombvault-20260816120000")
-	want := []string{"zfs", "destroy", "tank/vm-disk1@bombvault-20260816120000"}
-	if !equalStrings(got, want) {
-		t.Fatalf("ZFSSnapshotDestroyArgs = %v, want %v", got, want)
+func TestZvolHostCommands(t *testing.T) {
+	cases := []struct {
+		got, want []string
+	}{
+		{ZFSSnapshotClonesArgs("tank/vms/a"), []string{"zfs", "get", "-H", "-d", "1", "-t", "snapshot", "-o", "name,value", "clones", "tank/vms/a"}},
+		{ZFSDestroyArgs("tank/vm-disk1@bombvault-20260816120000"), []string{"zfs", "destroy", "tank/vm-disk1@bombvault-20260816120000"}},
+		{ZFSCloneArgs("tank/vm-disk1@s", "tank/vm-disk1-s"), []string{"zfs", "clone", "-o", "volmode=dev", "-o", "readonly=on", "tank/vm-disk1@s", "tank/vm-disk1-s"}},
+		{ZFSListVolumesArgs("tank"), []string{"zfs", "list", "-H", "-p", "-t", "volume", "-o", "name,volsize", "-r", "tank"}},
+		{ZFSCreateVolumeArgs("tank/vms/a", 1<<30), []string{"zfs", "create", "-p", "-V", "1073741824", "tank/vms/a"}},
+		{ZFSSetVolSizeArgs("tank/vms/a", 1<<30), []string{"zfs", "set", "volsize=1073741824", "tank/vms/a"}},
+		{ReadDeviceArgs(ZvolDevPath("tank/vms/a")), []string{"dd", "if=/dev/zvol/tank/vms/a", "bs=1M", "status=none"}},
+		{WriteDeviceArgs(ZvolDevPath("tank/vms/a")), []string{"dd", "of=/dev/zvol/tank/vms/a", "bs=1M", "iflag=fullblock", "conv=fsync", "status=none"}},
 	}
-}
-
-func TestZFSSendArgs(t *testing.T) {
-	got := ZFSSendArgs("tank/vm-disk1", "bombvault-20260816120000")
-	want := []string{"zfs", "send", "tank/vm-disk1@bombvault-20260816120000"}
-	if !equalStrings(got, want) {
-		t.Fatalf("ZFSSendArgs = %v, want %v", got, want)
-	}
-}
-
-func TestZFSReceiveArgs(t *testing.T) {
-	got := ZFSReceiveArgs("tank/vm-disk1-bombvault-restore-1755345600000000000")
-	want := []string{"zfs", "receive", "tank/vm-disk1-bombvault-restore-1755345600000000000"}
-	if !equalStrings(got, want) {
-		t.Fatalf("ZFSReceiveArgs = %v, want %v", got, want)
-	}
-}
-
-// zfs receive into an existing dataset can destroy live data, so the target
-// must never be the source.
-func TestRestoreZvolTargetDatasetNeverEqualsSource(t *testing.T) {
-	sources := []string{"tank/vm-disk1", "tank/vms/win10/disk0", "pool2/data"}
-	now := time.Date(2026, 8, 16, 12, 0, 0, 0, time.UTC)
-	for _, src := range sources {
-		got := RestoreZvolTargetDataset(src, now)
-		if got == src {
-			t.Fatalf("RestoreZvolTargetDataset(%q) = %q, MUST NEVER equal the source dataset", src, got)
+	for _, c := range cases {
+		if !equalStrings(c.got, c.want) {
+			t.Errorf("argv = %v, want %v", c.got, c.want)
 		}
-		if !strings.HasPrefix(got, src+"-bombvault-restore-") {
-			t.Fatalf("RestoreZvolTargetDataset(%q) = %q, want prefix %q", src, got, src+"-bombvault-restore-")
-		}
-	}
-}
-
-func TestRestoreZvolTargetDatasetDistinctAcrossTime(t *testing.T) {
-	src := "tank/vm-disk1"
-	t1 := time.Date(2026, 8, 16, 12, 0, 0, 0, time.UTC)
-	t2 := time.Date(2026, 8, 16, 12, 0, 1, 0, time.UTC)
-	a := RestoreZvolTargetDataset(src, t1)
-	b := RestoreZvolTargetDataset(src, t2)
-	if a == b {
-		t.Fatalf("RestoreZvolTargetDataset produced the same target %q for two different times", a)
-	}
-}
-
-func TestZvolSnapshotNameIsDeterministicPerInstant(t *testing.T) {
-	now := time.Date(2026, 8, 16, 12, 0, 0, 0, time.UTC)
-	got := ZvolSnapshotName(now)
-	if !strings.HasPrefix(got, "bombvault-") {
-		t.Fatalf("ZvolSnapshotName = %q, want a bombvault- prefixed name", got)
-	}
-	if ZvolSnapshotName(now) != got {
-		t.Fatalf("ZvolSnapshotName must be a pure function of its input time")
 	}
 }
 

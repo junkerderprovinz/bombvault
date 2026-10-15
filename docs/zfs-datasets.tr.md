@@ -114,7 +114,7 @@ Bunu ögenin Ayarlar sekmesindeki **Replika** kartında aç. Orada replikanın n
 ZFS ve SSH olan her makine alabilir, örneğin ikinci bir Unraid veya bir TrueNAS. BombVault'un orada çalışması gerekmez.
 
 1. **Ayarlar, Eşleştirme** altında **BombVault olmayan ZFS sunucusu** içinde **SSH ile bağlan**'ı ya da ögenin **Replika** kartında **ZFS sunucusu ekle**'yi seç.
-2. Adresi, kullanıcıyı ve portu gir. Pencere BombVault'un genel anahtarını gösterir. Onu sunucuda kullanıcının `~/.ssh/authorized_keys` dosyasına ekle. Unraid'de bu **Users, root, SSH keys** altındadır. **Display Settings** ayarına göre Users üst menüde ya da Settings altında yer alır. Bu, kopya anahtarıdır. VM'ler ve ana makine için kullanılan SSH bağlantısının anahtarından farklıdır, o zaten yetkilendirilmiş olsa bile bunu da ekleyin.
+2. Adresi, kullanıcıyı ve portu gir. Pencere BombVault'un genel anahtarını gösterir. Onu sunucuda kullanıcının `~/.ssh/authorized_keys` dosyasına ekle. Unraid'de bu **Users, root, SSH keys** altındadır. **Display Settings** ayarına göre Users üst menüde ya da Settings altında yer alır. TrueNAS'ta kullanıcıyı **Credentials, Users** altında düzenle. Bu, kopya anahtarıdır. VM'ler ve ana makine için kullanılan SSH bağlantısının anahtarından farklıdır, o zaten yetkilendirilmiş olsa bile bunu da ekleyin.
 3. Bağlantıyı sına. Pencere ardından sunucunun havuzlarını listeler. Birini seç ve varsayılanı `<pool>/bombvault-replica` olan kökü belirle.
 4. Yeni sunucuyu ögenin **Replika** kartında seç. Sunucunun o zaman Örnekler sayfasında kendi kartı olur ve **Aç** onun sayfasına götürür.
 
@@ -285,7 +285,8 @@ Her satır konteynerin içindeki bir bağlamadır. Bir veri kümesinin satırı,
 
 ## TrueNAS SCALE {#truenas}
 
-- `LIBVIRT_URI` ayarlandığında (TrueNAS'taki VM yedeklerinde olduğu gibi) BombVault, zfs komutları için SSH ana makinesi, kullanıcı ve porttan ayrıca ayarlanmamış olanları URI'den alır. VM yedekleri olmadan bunun yerine `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` ve `LIBVIRT_SSH_PORT` ayarla. Değişkenleri **Additional Environment Variables** altında ekle.
+- `LIBVIRT_URI` ayarlandığında (TrueNAS'taki VM yedeklerinde olduğu gibi) BombVault, zfs komutları için SSH ana makinesi, kullanıcı ve porttan ayrıca ayarlanmamış olanları URI'den alır. VM yedekleri olmadan hiçbir şey ayarlaman gerekmez: bir TrueNAS uygulamasında `host.docker.internal` çözümlenmez, bu yüzden BombVault ana makineye uygulamanın varsayılan ağ geçidi üzerinden, root olarak 22 numaralı porttan ulaşır. Başka bir adres ya da kullanıcı istiyorsan `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` ve `LIBVIRT_SSH_PORT` değerlerini uygulamanın `environment` bölümünde ayarla.
+- **Ayarlar, Entegrasyonlar, Ana makine SSH** içindeki Ana makine SSH anahtarını **Credentials, Users** altında root'a ekle ve **System, Services** altında SSH hizmetini aç. Bu ya da başka bir TrueNAS'a giden bir [replika](#replica-push) ayrıca replika anahtarına ihtiyaç duyar, o farklı bir anahtardır.
 - Root dışında bir kullanıcı ögenin en üstteki veri kümesi üzerinde izne ihtiyaç duyar; bu, altındaki her veri kümesini kapsar:
 
   ```
@@ -295,4 +296,4 @@ Her satır konteynerin içindeki bir bağlamadır. Bir veri kümesinin satırı,
   Yeni bir veri kümesine geri yükleme ayrıca üstteki veri kümesinde `create` izni gerektirir; saklanan özellikleri ayarlamak da o özellikler için izin gerektirir.
 
   TrueNAS'ta root olmayan bir SSH oturumunun yolunda `/usr/sbin` yoktur; BombVault o durumda doğrudan `/usr/sbin/zfs` çağırır.
-- Uygulamanın **Host Data** değeri veri kümelerinin üstünde bir ana makine yolu olmalıdır, örneğin `/mnt/tank`; ixVolume olmamalıdır. Bir ana makine yoluyla uygulama, ana makinenin yeni bağlamalarını BombVault'a iletir (`rslave`); anlık görüntü erişiminin ihtiyaç duyduğu da budur.
+- Uygulamanın **Host Data** değeri veri kümelerinin üstünde bir ana makine yolu olmalıdır, örneğin `/mnt/tank`; ixVolume olmamalıdır. Bir ana makine yoluyla uygulama, ana makinenin yeni bağlamalarını BombVault'a iletir (`rslave`); anlık görüntü erişiminin ihtiyaç duyduğu da budur. Uygulamanın tüm kurulumu için bkz. [TrueNAS SCALE](getting-started.md#truenas).

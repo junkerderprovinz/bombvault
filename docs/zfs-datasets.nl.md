@@ -114,7 +114,7 @@ Zet het aan in de kaart **Replica** op het tabblad Instellingen van het item. Da
 Elke machine met ZFS en SSH kan ontvangen, bijvoorbeeld een tweede Unraid of een TrueNAS. BombVault hoeft daar niet te draaien.
 
 1. Kies onder **Instellingen, Koppeling** bij **ZFS-server zonder BombVault** voor **Verbinden via SSH**, of kies **ZFS-server toevoegen** in de kaart **Replica** van het item.
-2. Voer adres, gebruiker en poort in. Het venster toont de publieke sleutel van BombVault. Voeg die toe aan de `~/.ssh/authorized_keys` van de gebruiker op de server. Op Unraid staat dat onder **Users, root, SSH keys**. Afhankelijk van **Display Settings** staat Users in het koptekstmenu of onder Settings. Dit is de replicasleutel. Hij verschilt van de sleutel van de SSH-verbinding voor VM's en host, voeg hem dus ook toe als die al is geautoriseerd.
+2. Voer adres, gebruiker en poort in. Het venster toont de publieke sleutel van BombVault. Voeg die toe aan de `~/.ssh/authorized_keys` van de gebruiker op de server. Op Unraid staat dat onder **Users, root, SSH keys**. Afhankelijk van **Display Settings** staat Users in het koptekstmenu of onder Settings. Op TrueNAS bewerk je de gebruiker onder **Credentials, Users**. Dit is de replicasleutel. Hij verschilt van de sleutel van de SSH-verbinding voor VM's en host, voeg hem dus ook toe als die al is geautoriseerd.
 3. Test de verbinding. Het venster toont dan de pools van de server. Kies er een en stel de root in, die standaard `<pool>/bombvault-replica` is.
 4. Kies de nieuwe server in de kaart **Replica** van het item. De server heeft dan een eigen kaart op de pagina Instanties, en **Openen** leidt naar zijn pagina.
 
@@ -285,7 +285,8 @@ Elke regel is een mount in de container. De regel van een dataset toont zijn pad
 
 ## TrueNAS SCALE {#truenas}
 
-- Als `LIBVIRT_URI` is ingesteld (zoals voor VM-back-ups op TrueNAS), haalt BombVault de SSH-host, gebruiker en poort voor zijn zfs-commando's uit de URI, elk die niet apart is ingesteld. Zonder VM-back-ups stel je in plaats daarvan `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` en `LIBVIRT_SSH_PORT` in. Voeg de variabelen toe onder **Additional Environment Variables**.
+- Als `LIBVIRT_URI` is ingesteld (zoals voor VM-back-ups op TrueNAS), haalt BombVault de SSH-host, gebruiker en poort voor zijn zfs-commando's uit de URI, elk die niet apart is ingesteld. Zonder VM-back-ups hoeft er niets te worden ingesteld: `host.docker.internal` resolvet niet in een TrueNAS-app, dus bereikt BombVault de host via de standaardgateway van de app, als root op poort 22. Stel `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` en `LIBVIRT_SSH_PORT` in als je een ander adres of een andere gebruiker wilt, in de `environment` van de app.
+- Voeg de Host-SSH-sleutel uit **Instellingen, Integraties, Host-SSH** toe aan root onder **Credentials, Users** en zet de SSH-service aan onder **System, Services**. Een [replica](#replica-push) naar deze of een andere TrueNAS heeft daarnaast de replicasleutel nodig, en dat is een andere.
 - Een andere gebruiker dan root heeft rechten nodig op de bovenste dataset van het item, die dan elke dataset eronder dekken:
 
   ```
@@ -295,4 +296,4 @@ Elke regel is een mount in de container. De regel van een dataset toont zijn pad
   Terugzetten in een nieuwe dataset heeft daarnaast `create` nodig op de dataset erboven, en bewaarde eigenschappen instellen heeft rechten op die eigenschappen nodig.
 
   Een SSH-sessie zonder root heeft op TrueNAS `/usr/sbin` niet in het pad; BombVault roept dan direct `/usr/sbin/zfs` aan.
-- **Host Data** van de app moet een hostpad boven de datasets zijn, bijvoorbeeld `/mnt/tank`, geen ixVolume. Met een hostpad geeft de app nieuwe mounts van de host door aan BombVault (`rslave`), en dat heeft snapshottoegang nodig.
+- **Host Data** van de app moet een hostpad boven de datasets zijn, bijvoorbeeld `/mnt/tank`, geen ixVolume. Met een hostpad geeft de app nieuwe mounts van de host door aan BombVault (`rslave`), en dat heeft snapshottoegang nodig. Zie [TrueNAS SCALE](getting-started.md#truenas) voor de hele inrichting van de app.

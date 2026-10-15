@@ -33,6 +33,7 @@ VM-varmuuskopiointi keskustelee libvirtin kanssa SSH:n yli, ei koskaan liitoksen
 - Vahvista, että SSH on käytössä isännällä ja BombVaultin julkinen avain on valtuutettu tiedostossa `/root/.ssh/authorized_keys` (Asetukset, Integraatiot, Palvelimen SSH näyttää avaimen ja **Testaa yhteys** -painikkeen).
 - Mukautetussa `br0.x`-verkossa aseta `LIBVIRT_HOST` Unraidin LAN-IP-osoitteeseesi (kontti ei voi tavoittaa isäntää `host.docker.internal`-nimellä siellä). Ota käyttöön **Settings, Docker, Host access to custom networks**.
 - Jos vaihdoit Unraidin SSH-porttia, aseta `LIBVIRT_SSH_PORT` vastaamaan.
+- TrueNASissa aseta `LIBVIRT_URI` TrueNASin omalla libvirt-soketilla, anna sovellukselle `SETPCAP`-capability ja lisää avain root-käyttäjälle kohdassa **Credentials, Users** (katso [TrueNAS SCALE](getting-started.md#truenas)).
 - Täydellinen vaihe vaiheelta -diagnoosi (tavoitettavuustesti, VLAN-reititys, `Permission denied (publickey)`, `Host key verification failed`) on [VM-varmuuskopiointi SSH:n yli -oppaassa](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Live-VM-tilannevedos ei ajautunut
@@ -50,6 +51,8 @@ Etäreplikointi on suunnitellusti parhaan yrityksen mukaista, joten etäsijainni
 ## Palautus keskeytyi ennen kuin se alkoi
 
 Ennen kuin mitään pysäytetään tai poistetaan, palautus ajaa esitarkastuksen ristiriidoista: se varmistaa, että kontin kiinteä IP ja julkaistut isäntäportit ovat vapaana. Jos toinen kontti jo pitää yhtä hallussaan, se keskeyttää selkeällä, toimintakelpoisella viestillä sen sijaan että jättäisi puolivalmiin palautuksen. Vapauta ristiriitainen portti tai IP ja yritä sitten uudelleen.
+
+Jos kontin verkkoa ei ole olemassa, esimerkiksi koska sen TrueNAS-sovellus poistettiin, tarkistus ennen palautusta nimeää verkon, ja palautus kieltäytyy ennen kuin muuttaa mitään. Asenna sovellus TrueNASiin uudelleen samalla nimellä, jolloin verkko luodaan uudelleen, ja palauta sitten sen data.
 
 ## Selkokielinen vienti epäonnistui tiedoston kirjoittamisen sijaan
 
@@ -71,7 +74,9 @@ Epäonnistunut vedos ei koskaan kaada ympärillään olevaa varmuuskopiota; se k
 
 Tuonti pysäyttää kontin, siirtää sen datakansion sivuun ja antaa levykuvan luoda tilalle tyhjän. Jos jokin vaihe ennen varsinaista tuontia epäonnistuu, vanha kansio palautetaan itsestään. Jos tuonti epäonnistuu, kontille jää tuore kansio ja vanha jää sen viereen nimellä `<datakansio>.bombvault-before-import-<aikaleima>`; ajon virheilmoitus kertoo tarkan polun.
 
-Käsin palautus: pysäytä kontti, nimeä nykyinen datakansio pois tieltä, nimeä säilytetty kansio takaisin alkuperäiselle nimelleen ja käynnistä kontti. Unraidissa tämän hoitaa Shares-välilehden tiedostonhallinta.
+Datakansiota, joka on oma tietojoukkonsa, kuten TrueNASissa, ei voi nimetä uudelleen. Tuonti jättää silloin kansion paikalleen ja siirtää sen sisällön viereiseen säilytettyyn kansioon, joten yläpuolisessa tietojoukossa on oltava sille tilaa. Tuonti tarkistaa tämän ennen kuin pysäyttää kontin.
+
+Käsin palautus: pysäytä kontti, nimeä nykyinen datakansio pois tieltä, nimeä säilytetty kansio takaisin alkuperäiselle nimelleen ja käynnistä kontti. Tietojoukon kohdalla siirrä sisältö kansioiden uudelleennimeämisen sijaan. Unraidissa tämän hoitaa Shares-välilehden tiedostonhallinta.
 
 ## ZFS-tietojoukon varmuuskopio epäonnistui tai ohitti tietojoukon {#zfs-datasets}
 

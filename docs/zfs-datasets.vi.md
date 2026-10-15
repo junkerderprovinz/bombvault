@@ -114,7 +114,7 @@ Bật nó trong thẻ **Bản nhân bản** ở tab Cài đặt của mục. Ở
 Bất kỳ máy nào có ZFS và SSH đều nhận được, ví dụ một Unraid thứ hai hoặc TrueNAS. BombVault không cần chạy ở đó.
 
 1. Dưới **Cài đặt, Ghép nối**, chọn **Kết nối qua SSH** trong **Máy chủ ZFS không có BombVault**, hoặc **Thêm máy chủ ZFS** trong thẻ **Bản nhân bản** của mục.
-2. Nhập địa chỉ, người dùng và cổng. Hộp thoại hiện khóa công khai của BombVault. Thêm nó vào `~/.ssh/authorized_keys` của người dùng trên máy chủ. Trên Unraid nó nằm ở **Users, root, SSH keys**. Tùy theo **Display Settings**, Users nằm trong menu tiêu đề hoặc trong Settings. Đây là khóa của bản sao. Nó khác với khóa của liên kết SSH cho VM và máy chủ, nên hãy thêm nó ngay cả khi khóa kia đã được cấp quyền.
+2. Nhập địa chỉ, người dùng và cổng. Hộp thoại hiện khóa công khai của BombVault. Thêm nó vào `~/.ssh/authorized_keys` của người dùng trên máy chủ. Trên Unraid nó nằm ở **Users, root, SSH keys**. Tùy theo **Display Settings**, Users nằm trong menu tiêu đề hoặc trong Settings. Trên TrueNAS, sửa người dùng trong **Credentials, Users**. Đây là khóa của bản sao. Nó khác với khóa của liên kết SSH cho VM và máy chủ, nên hãy thêm nó ngay cả khi khóa kia đã được cấp quyền.
 3. Thử kết nối. Hộp thoại sau đó liệt kê các pool của máy chủ. Chọn một pool và đặt gốc, mặc định là `<pool>/bombvault-replica`.
 4. Chọn máy chủ mới trong thẻ **Bản nhân bản** của mục. Máy chủ khi đó có thẻ riêng trên trang Phiên bản, và **Mở** dẫn tới trang của nó.
 
@@ -285,7 +285,8 @@ Mỗi dòng là một lần gắn kết bên trong container. Dòng của một 
 
 ## TrueNAS SCALE {#truenas}
 
-- Khi `LIBVIRT_URI` được đặt (như cho sao lưu VM trên TrueNAS), BombVault lấy từ URI máy chủ, người dùng và cổng SSH cho các lệnh zfs của nó, với mỗi giá trị chưa được đặt riêng. Nếu không sao lưu VM, hãy đặt `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` và `LIBVIRT_SSH_PORT` thay thế. Thêm các biến trong **Additional Environment Variables**.
+- Khi `LIBVIRT_URI` được đặt (như cho sao lưu VM trên TrueNAS), BombVault lấy từ URI máy chủ, người dùng và cổng SSH cho các lệnh zfs của nó, với mỗi giá trị chưa được đặt riêng. Nếu không sao lưu VM thì không cần đặt gì: `host.docker.internal` không phân giải được trong một ứng dụng TrueNAS, nên BombVault tiếp cận máy chủ qua cổng mặc định (default gateway) của ứng dụng, với quyền root trên cổng 22. Đặt `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` và `LIBVIRT_SSH_PORT` trong `environment` của ứng dụng khi bạn muốn một địa chỉ hoặc người dùng khác.
+- Thêm khóa SSH máy chủ từ **Cài đặt, Tích hợp, SSH máy chủ** cho root trong **Credentials, Users**, và bật dịch vụ SSH trong **System, Services**. Một [bản sao](#replica-push) tới TrueNAS này hoặc một TrueNAS khác cũng cần khóa của bản sao, là một khóa khác.
 - Một người dùng không phải root cần quyền trên tập dữ liệu trên cùng của mục, khi đó bao gồm mọi tập dữ liệu bên dưới:
 
   ```
@@ -295,4 +296,4 @@ Mỗi dòng là một lần gắn kết bên trong container. Dòng của một 
   Khôi phục vào một tập dữ liệu mới còn cần quyền `create` trên tập dữ liệu phía trên, và đặt các thuộc tính đã lưu cần quyền đối với các thuộc tính đó.
 
   Phiên SSH không phải root trên TrueNAS không có `/usr/sbin` trong đường dẫn; khi đó BombVault gọi trực tiếp `/usr/sbin/zfs`.
-- **Host Data** của ứng dụng phải là một đường dẫn máy chủ nằm trên các tập dữ liệu, ví dụ `/mnt/tank`, không phải ixVolume. Với đường dẫn máy chủ, ứng dụng chuyển các lần gắn kết mới của máy chủ tới BombVault (`rslave`), và đó chính là điều quyền truy cập ảnh chụp cần.
+- **Host Data** của ứng dụng phải là một đường dẫn máy chủ nằm trên các tập dữ liệu, ví dụ `/mnt/tank`, không phải ixVolume. Với đường dẫn máy chủ, ứng dụng chuyển các lần gắn kết mới của máy chủ tới BombVault (`rslave`), và đó chính là điều quyền truy cập ảnh chụp cần. Xem [TrueNAS SCALE](getting-started.md#truenas) cho toàn bộ phần thiết lập ứng dụng.

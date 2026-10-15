@@ -40,6 +40,15 @@ export function canDrill(domain: string): boolean {
   return DRILL_DOMAINS.has(domain);
 }
 
+/** What a trial restore restored: the item and the short id of its snapshot,
+ *  the snapshot alone where the section has no items, "" for a drill recorded
+ *  without them. */
+export function drilledText(t: (key: TranslationKey) => string, item: string | undefined, snapshot: string | undefined): string {
+  if (!snapshot) return "";
+  if (!item) return t("restoreCheck.snapshotId").replace("{id}", snapshot);
+  return t("drill.restored").replace("{name}", item).replace("{snapshot}", snapshot);
+}
+
 function localCheck(d: DomainStatus, tally: Tally): Verdict {
   if (tally.total === 0) return ["neutral", "overview.check.localNothing"];
   if (d.status === "never") return ["neutral", "overview.check.localNever"];

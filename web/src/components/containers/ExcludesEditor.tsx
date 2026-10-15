@@ -50,7 +50,7 @@ function liveSourceKey(reason: "no-snapshot" | "requested" | "not-in-snapshot"):
   return "excludes.assistSourceLive";
 }
 
-export type ExcludePreviewRow = { raw: string; resolved: string; status: string; matches: boolean };
+export type ExcludePreviewRow = { raw: string; resolved: string; status: string; matches: boolean; missing?: boolean };
 
 // How a caller resolves candidate lines. Each domain has its own endpoint and
 // its own answer shape, so the adapter rather than the raw call is the prop.
@@ -280,7 +280,11 @@ export function ExcludesEditor({
                 : t("excludes.willExclude")
               : row.status === "passthrough"
                 ? t("excludes.noMatch")
-                : t("excludes.excludesNothing");
+                : row.status === "basename"
+                  ? t("excludes.nameMatchesNothing")
+                  : row.missing
+                    ? t("excludes.pathMissing")
+                    : t("excludes.excludesNothing");
             return (
               <div
                 key={i}

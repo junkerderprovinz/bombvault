@@ -114,7 +114,7 @@ Activez-la dans la carte **Réplique** de l'onglet Paramètres de l'élément. V
 N'importe quelle machine avec ZFS et SSH peut recevoir, par exemple un second Unraid ou un TrueNAS. BombVault n'a pas besoin d'y tourner.
 
 1. Sous **Paramètres, Appairage**, choisissez **Connecter via SSH** dans **Serveur ZFS sans BombVault**, ou **Ajouter un serveur ZFS** dans la carte **Réplique** de l'élément.
-2. Saisissez l'adresse, l'utilisateur et le port. La boîte de dialogue affiche la clé publique de BombVault. Ajoutez-la au fichier `~/.ssh/authorized_keys` de l'utilisateur sur le serveur. Sur Unraid, cela se trouve sous **Users, root, SSH keys**. Selon **Display Settings**, Users figure dans le menu d'en-tête ou sous Settings. Il s'agit de la clé du réplica. Elle diffère de la clé de la liaison SSH pour les VM et l'hôte, ajoutez-la donc même si celle-là est déjà autorisée.
+2. Saisissez l'adresse, l'utilisateur et le port. La boîte de dialogue affiche la clé publique de BombVault. Ajoutez-la au fichier `~/.ssh/authorized_keys` de l'utilisateur sur le serveur. Sur Unraid, cela se trouve sous **Users, root, SSH keys**. Selon **Display Settings**, Users figure dans le menu d'en-tête ou sous Settings. Sur TrueNAS, modifiez l'utilisateur sous **Credentials, Users**. Il s'agit de la clé du réplica. Elle diffère de la clé de la liaison SSH pour les VM et l'hôte, ajoutez-la donc même si celle-là est déjà autorisée.
 3. Testez la connexion. La boîte de dialogue liste ensuite les pools du serveur. Choisissez-en un et réglez la racine, qui vaut par défaut `<pool>/bombvault-replica`.
 4. Choisissez le nouveau serveur dans la carte **Réplique** de l'élément. Le serveur a alors sa propre carte sur la page Instances, et **Ouvrir** mène à sa page.
 
@@ -285,7 +285,8 @@ Chaque ligne est un montage dans le conteneur. La ligne d'un jeu de données mon
 
 ## TrueNAS SCALE {#truenas}
 
-- Quand `LIBVIRT_URI` est défini (comme pour les sauvegardes de VM sous TrueNAS), BombVault prend dans l'URI l'hôte, l'utilisateur et le port SSH de ses commandes zfs, chacun de ceux qui ne sont pas définis séparément. Sans sauvegardes de VM, définissez plutôt `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` et `LIBVIRT_SSH_PORT`. Ajoutez les variables sous **Additional Environment Variables**.
+- Quand `LIBVIRT_URI` est défini (comme pour les sauvegardes de VM sous TrueNAS), BombVault prend dans l'URI l'hôte, l'utilisateur et le port SSH de ses commandes zfs, chacun de ceux qui ne sont pas définis séparément. Sans sauvegardes de VM, rien n'est à définir : `host.docker.internal` ne se résout pas dans une application TrueNAS, BombVault atteint donc l'hôte via la passerelle par défaut de l'application, en tant que root sur le port 22. Définissez `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` et `LIBVIRT_SSH_PORT` si vous voulez une autre adresse ou un autre utilisateur, dans l'`environment` de l'application.
+- Ajoutez la clé SSH de l'hôte de **Paramètres, Intégrations, SSH de l'hôte** à root sous **Credentials, Users**, et activez le service SSH sous **System, Services**. Un [réplica](#replica-push) vers ce TrueNAS ou un autre a aussi besoin de la clé du réplica, qui est différente.
 - Un utilisateur autre que root a besoin d'une permission sur le jeu de données supérieur de l'élément, qui couvre alors tous les jeux de données en dessous :
 
   ```
@@ -295,4 +296,4 @@ Chaque ligne est un montage dans le conteneur. La ligne d'un jeu de données mon
   Une restauration dans un nouveau jeu de données demande en plus `create` sur le jeu de données parent, et appliquer des propriétés enregistrées demande les droits sur ces propriétés.
 
   Une session SSH non root sous TrueNAS n'a pas `/usr/sbin` dans son chemin ; BombVault appelle alors `/usr/sbin/zfs` directement.
-- Le **Host Data** de l'application doit être un chemin d'hôte situé au-dessus des jeux de données, par exemple `/mnt/tank`, et non un ixVolume. Avec un chemin d'hôte, l'application transmet à BombVault les nouveaux montages de l'hôte (`rslave`), ce dont l'accès aux instantanés a besoin.
+- Le **Host Data** de l'application doit être un chemin d'hôte situé au-dessus des jeux de données, par exemple `/mnt/tank`, et non un ixVolume. Avec un chemin d'hôte, l'application transmet à BombVault les nouveaux montages de l'hôte (`rslave`), ce dont l'accès aux instantanés a besoin. Voir [TrueNAS SCALE](getting-started.md#truenas) pour toute la configuration de l'application.

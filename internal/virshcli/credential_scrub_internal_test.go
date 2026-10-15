@@ -58,3 +58,27 @@ func TestLastReasonScrubsAPasswordWithoutAUserName(t *testing.T) {
 		t.Fatalf("lastReason leaked a password with no user name, got %q", got)
 	}
 }
+
+func TestLastReasonKeepsThePunctuationAfterAPath(t *testing.T) {
+	got := lastReason("error: cannot access storage file (/mnt/user/domains/vm/vdisk1.img).")
+	if want := "error: cannot access storage file ([path])."; got != want {
+		t.Fatalf("lastReason = %q, want %q", got, want)
+	}
+}
+
+func TestLastReasonScrubsPathsButNotDatasetNames(t *testing.T) {
+	for _, tc := range []struct{ name, in, want string }{
+		{"zvol dataset", "error: cannot use zvol tank/vms/testvm", "error: cannot use zvol tank/vms/testvm"},
+		{"quoted zvol device", "error: Cannot access storage file '/dev/zvol/tank/vms/testvm': No such file", "error: Cannot access storage file '[path]': No such file"},
+		{"zvol device in parentheses", "error: cannot open disk (/dev/zvol/tank/vms/testvm).", "error: cannot open disk ([path])."},
+		{"path after an equals sign", "error: unsupported configuration: path=/mnt/user/domains/vm", "error: unsupported configuration: path=[path]"},
+		{"libvirt uri", "error: failed to connect to qemu+ssh://root@tower/system", "error: failed to connect to qemu+ssh:[path]"},
+		{"password with a slash", "error: failed to connect to qemu+ssh://root:pa/ss@tower/system", "error: failed to connect to [redacted]@tower/system"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := lastReason(tc.in); got != tc.want {
+				t.Fatalf("lastReason(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}

@@ -138,17 +138,17 @@ func TestPickDRSnapshotZFSNothingToDrill(t *testing.T) {
 	eng := s.engine.(*zfsFakeEngine)
 	eng.snaps = []restic.Snapshot{{ID: "aaa", Tags: []string{"fileset:docs"}}}
 
-	if _, err := s.pickDRSnapshot(context.Background(), zfsDomain, settings, "repo", restic.Mode{}); err == nil {
+	if _, _, err := s.pickDRSnapshot(context.Background(), zfsDomain, settings, "repo", restic.Mode{}); err == nil {
 		t.Fatal("a repository without a zfs: snapshot must not offer a drill target")
 	}
 
 	eng.snaps = append(eng.snaps, restic.Snapshot{ID: "bbb", Tags: []string{"zfs:cache/appdata"}})
-	id, err := s.pickDRSnapshot(context.Background(), zfsDomain, settings, "repo", restic.Mode{})
+	id, item, err := s.pickDRSnapshot(context.Background(), zfsDomain, settings, "repo", restic.Mode{})
 	if err != nil {
 		t.Fatalf("pickDRSnapshot: %v", err)
 	}
-	if id != "bbb" {
-		t.Fatalf("picked %q, want the zfs-tagged snapshot", id)
+	if id != "bbb" || item != "cache/appdata" {
+		t.Fatalf("picked %q of %q, want the zfs-tagged snapshot of cache/appdata", id, item)
 	}
 }
 

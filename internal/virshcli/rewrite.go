@@ -7,6 +7,8 @@ var (
 	// splitting the tag so only the path is rewritten (quote style preserved).
 	// Groups: 1=`<source file=`, 2=quote, 3=path, 4=quote.
 	diskSourceFileRe = regexp.MustCompile(`(<source\s+file=)(['"])([^'"]*)(['"])`)
+	// diskSourceDevRe is diskSourceFileRe for a block device, <source dev='PATH'/>.
+	diskSourceDevRe = regexp.MustCompile(`(<source\s+dev=)(['"])([^'"]*)(['"])`)
 	// nvramInnerRe captures the path inside a <nvram ...>PATH</nvram> element
 	// (groups: 1=open tag, 2=path, 3=close tag). A self-closing or empty
 	// <nvram> has no path and does not match.
@@ -19,11 +21,21 @@ var (
 // backup recorded; other sources, such as a cdrom ISO or a disk not being
 // restored, stay as they are.
 func RewriteDiskSources(domainXML string, remap map[string]string) string {
+	return rewriteSources(diskSourceFileRe, domainXML, remap)
+}
+
+// RewriteBlockSources is RewriteDiskSources for block-device disks, so a VM
+// whose zvols were restored onto another pool boots from them.
+func RewriteBlockSources(domainXML string, remap map[string]string) string {
+	return rewriteSources(diskSourceDevRe, domainXML, remap)
+}
+
+func rewriteSources(re *regexp.Regexp, domainXML string, remap map[string]string) string {
 	if len(remap) == 0 {
 		return domainXML
 	}
-	return diskSourceFileRe.ReplaceAllStringFunc(domainXML, func(m string) string {
-		sub := diskSourceFileRe.FindStringSubmatch(m)
+	return re.ReplaceAllStringFunc(domainXML, func(m string) string {
+		sub := re.FindStringSubmatch(m)
 		if nw, ok := remap[sub[3]]; ok {
 			return sub[1] + sub[2] + nw + sub[4]
 		}

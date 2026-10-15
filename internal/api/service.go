@@ -7,6 +7,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"database/sql"
@@ -106,11 +107,8 @@ type ResticEngine interface {
 	// names a different snapshot every run.
 	BackupDir(ctx context.Context, repo, dir string, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
 	ImportDir(ctx context.Context, repo, dir string, tags []string, at time.Time, mode restic.Mode) (restic.Summary, error)
-	// BackupStdin backs up the ENTIRE content of rd as a single synthetic file
-	// recorded under path, tagged with tags — the zvol VM disk backup path
-	// (v8.0.0 VM service-layer integration, Task 2): a `zfs send` stream piped
-	// straight into `restic backup --stdin`, no local staging file. See
-	// backup.ZvolRestic's doc comment (resticZvolAdapter below satisfies it).
+	// BackupStdin backs up all of rd as one file recorded under path, such as
+	// the raw image of a zvol read over SSH.
 	BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string, mode restic.Mode) (restic.Summary, error)
 	// BackupFromCommand backs up the stdout of command as the single file
 	// stdinPath. It also returns what command wrote to stderr, which is where a
@@ -125,9 +123,8 @@ type ResticEngine interface {
 	// RestoreVerify restores the given files of a snapshot into target and
 	// reads each one back against its content hashes. The restore probe uses it.
 	RestoreVerify(ctx context.Context, repo, snapshotID string, files []string, target string, mode restic.Mode) error
-	// DumpRaw streams the synthetic file at path, from the given snapshot, into
-	// w — the restore-side counterpart of BackupStdin, feeding a `zfs receive`
-	// over SSH (see backup.ZvolRestic's doc comment).
+	// DumpRaw writes the file at path in snapshotID to w, the counterpart of
+	// BackupStdin.
 	DumpRaw(ctx context.Context, repo, snapshotID, path string, w io.Writer, mode restic.Mode) error
 	// DumpZip streams a snapshot subtree (rooted at subfolder) as a zip into w
 	// (flash restore — a non-destructive zip download; the live /boot is never
@@ -247,11 +244,10 @@ type HostSSH interface {
 	// known_hosts. Also confirms key auth.
 	EnsureKnownHost(ctx context.Context) error
 	// StreamCommand starts a command on the host over SSH and streams its
-	// stdout (never buffered) — the zvol VM disk backup path's `zfs send`
-	// (v8.0.0 VM service-layer integration, Task 2; see sshZFSHost below).
+	// stdout, such as the raw read of a zvol.
 	StreamCommand(ctx context.Context, args ...string) (io.ReadCloser, func() error, error)
 	// RunWithStdin runs a command on the host over SSH with its stdin fed from
-	// rd, streamed — the zvol VM disk restore path's `zfs receive`.
+	// rd, such as the write of a zvol's image back onto it.
 	RunWithStdin(ctx context.Context, rd io.Reader, args ...string) error
 }
 
@@ -947,6 +943,10 @@ func (s *Service) unraidGate(unraidWanted bool) bool {
 // underlying gate does not just trust the toggle instead.
 func (s *Service) warnUnraidPlatformMismatch() {
 	s.platformMismatchOnce.Do(func() {
+		if s.platformFn().Kind() == platform.KindTrueNAS {
+			log.Printf("platform: notify.Config.Unraid is enabled but this host runs TrueNAS, so the Unraid-only host features stay disabled")
+			return
+		}
 		log.Printf("platform: notify.Config.Unraid is enabled but BombVault detected platform=%q (not %q) — "+
 			"Unraid-only host features (webGUI notifications, the update-status reconcile, the dashboard-tile "+
 			"plugin) stay disabled. If this IS an Unraid host, verify the host's /boot is bind-mounted to "+
@@ -956,35 +956,25 @@ func (s *Service) warnUnraidPlatformMismatch() {
 	})
 }
 
-// unraidPlatformMismatchError builds the user-facing refusal for a
-// request-scoped, Unraid-only action (TestNotify's Unraid channel, the
-// dashboard-tile plugin's install/remove — see runDashPluginCmd) attempted
-// while platform detection did not resolve to Unraid. feature names the
-// specific thing being refused (e.g. "the Unraid notification channel").
+// unraidPlatformMismatchError builds the refusal for an Unraid-only action
+// (the Unraid notification test, the dashboard plugin, the flash backup) on a
+// host that did not resolve to Unraid. feature names what is refused.
 //
-// Unlike unraidGate's best-effort background paths (which log
-// warnUnraidPlatformMismatch instead — nobody is waiting on those), these
-// are explicit, synchronous user actions: the caller must see the reason
-// immediately in the response, including the same actionable /host/boot
-// hint, not go dig through the container log for it.
-//
-// Returns a *platformMismatchErr (not a plain fmt.Errorf) so the message
-// bypasses handlers.go's scrubError: that scrubber strips every absolute
-// path from an error before it reaches the client (defense-in-depth against
-// leaking a repo path or secret), which would otherwise reduce this whole
-// hint to "the ... is only available on Unraid hosts (BombVault detected
-// platform=\"generic\" — if this IS an Unraid host, verify the host's
-// [path] is bind-mounted to [path] inside the container ...)" — useless.
-// /boot and /host/boot are BombVault's own fixed, publicly-documented mount
-// points (see the Unraid template), never a repo path or secret, so this is
-// the same bypass errRestoreDestination/errRepoPathGuidance (handlers.go,
-// repo_path.go) already use for the identical reason.
+// A generic host may be Unraid without the /boot mount, so its refusal says
+// how to mount it. The message is a *platformMismatchErr so scrubError keeps
+// /boot and /host/boot, which are BombVault's own documented mount points.
+// TrueNAS is only ever set by the PLATFORM override, never detected, so it
+// gets no mount advice.
 func (s *Service) unraidPlatformMismatchError(feature string) error {
+	kind := s.platformFn().Kind()
+	if kind == platform.KindTrueNAS {
+		return &platformMismatchErr{msg: feature + " is only available on Unraid hosts, and this one runs TrueNAS."}
+	}
 	return &platformMismatchErr{msg: fmt.Sprintf(
-		"%s is only available on Unraid hosts (BombVault detected platform=%q). "+
-			"If this is an Unraid host, verify the host's /boot is bind-mounted to /host/boot "+
-			"inside the container, see the BombVault Unraid template, and restart the container)",
-		feature, s.platformFn().Kind())}
+		"%s is only available on Unraid hosts, and BombVault detected platform=%q. "+
+			"If this is an Unraid host, bind-mount the host's /boot to /host/boot "+
+			"inside the container as the BombVault Unraid template does, and restart the container.",
+		feature, kind)}
 }
 
 // errUnraidPlatformMismatch is the scrubber-bypass sentinel unraidPlatformMismatchError's
@@ -1003,12 +993,7 @@ func (e *platformMismatchErr) Is(target error) bool { return target == errUnraid
 // errZvolRebaseFailed is the scrubber-bypass sentinel a rebase-failure error
 // from prepareRestoreVMForTarget's cross-instance zvol rebase loop satisfies
 // via Is, matched by handlers.go's scrubError. The dataset/pool names ARE
-// the message — RebaseZvolDatasetPool's own doc comment names them as the
-// whole point of this error path — and a ZFS dataset name is "<pool>/<rest>",
-// so it necessarily contains "/" characters handlers.go's absPathRe would
-// otherwise mistake for a filesystem path and mangle (e.g. turning
-// `dataset "tank/vm-disk1"` into `dataset "tank[path]"`, destroying exactly
-// the information the message exists to convey). Same bypass pattern as
+// the message, so it reaches the operator verbatim. Same bypass pattern as
 // errRestoreDestination/errUnraidPlatformMismatch, for the identical reason.
 var errZvolRebaseFailed = errors.New("zvol dataset rebase failed")
 
@@ -1699,11 +1684,14 @@ func (s *Service) toContainerPath(host string) (string, bool) {
 // Resolved is the restic --exclude pattern that will actually be used, Status is
 // how it was derived, Matches reports whether it would exclude anything in this
 // container's backup (so the UI can warn on a line that matches nothing).
+// Missing tells a line whose volume is backed up but holds nothing it matches
+// apart from a line whose volume is not in the backup at all.
 type ExcludePreview struct {
 	Raw      string `json:"raw"`
 	Resolved string `json:"resolved"`
 	Status   string `json:"status"` // "basename" | "translated" | "passthrough"
 	Matches  bool   `json:"matches"`
+	Missing  bool   `json:"missing,omitempty"`
 }
 
 // resolveExcludeLine turns one raw user line into a restic --exclude pattern.
@@ -1784,25 +1772,190 @@ func isUnderAny(p string, roots []string) bool {
 // previewExcludes resolves each non-empty raw line against the live inspect and
 // reports, per line, the resolved --exclude pattern and whether it would match
 // anything in this container's backup (effective = the volumes actually backed
-// up). A basename matches at any depth; a translated path matches only when it
-// is under a backed-up volume; a passthrough is reported as matching nothing.
-// The user's original text round-trips in Raw.
-func (s *Service) previewExcludes(raw []string, in model.Inspect, effective []string) []ExcludePreview {
-	var out []ExcludePreview
+// up). A basename matches when some file or folder in those volumes has that
+// name; a translated path matches when it is under a backed-up volume and
+// something there exists; a passthrough is reported as matching nothing. The
+// user's original text round-trips in Raw.
+func (s *Service) previewExcludes(ctx context.Context, raw []string, in model.Inspect, effective []string) []ExcludePreview {
+	ctx, cancel := context.WithTimeout(ctx, excludeSearchBudget)
+	defer cancel()
+	type resolved struct{ line, pattern, status string }
+	var lines []resolved
+	var names []string
 	for _, line := range raw {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
 		pattern, status := s.resolveExcludeLine(line, in)
-		matches := status == "basename" || (status == "translated" && isUnderAny(pattern, effective))
-		out = append(out, ExcludePreview{
-			Raw:      line,
-			Resolved: pattern,
-			Status:   status,
-			Matches:  matches,
-		})
+		lines = append(lines, resolved{line, pattern, status})
+		if status == "basename" {
+			names = append(names, pattern)
+		}
+	}
+	found := basenamesFound(ctx, names, effective)
+	var out []ExcludePreview
+	for _, l := range lines {
+		p := ExcludePreview{Raw: l.line, Resolved: l.pattern, Status: l.status}
+		switch l.status {
+		case "basename":
+			p.Matches = found[l.pattern]
+			p.Missing = !p.Matches
+		case "translated":
+			if isUnderAny(globLiteralRoot(l.pattern), effective) {
+				p.Matches = excludePathFound(ctx, l.pattern)
+				p.Missing = !p.Matches
+			}
+		}
+		out = append(out, p)
 	}
 	return out
+}
+
+// excludeSearchBudget bounds the searches behind one preview. An appdata
+// folder can hold millions of files and the editor asks again after each edit.
+// A line the search has not settled when the budget runs out counts as
+// matching: the editor warns about a line that excludes nothing, and that
+// warning must not rest on a search that stopped early.
+const excludeSearchBudget = 2 * time.Second
+
+// basenamesFound reports which of names, restic excludes without a slash,
+// match the name of something in roots. restic tests such a pattern against
+// every component of a path, so the components of the roots themselves count
+// too.
+func basenamesFound(ctx context.Context, names, roots []string) map[string]bool {
+	found := make(map[string]bool, len(names))
+	for _, n := range names {
+		found[n] = false
+	}
+	left := len(found)
+	check := func(component string) {
+		for _, n := range names {
+			if found[n] {
+				continue
+			}
+			if ok, _ := path.Match(n, component); ok {
+				found[n] = true
+				left--
+			}
+		}
+	}
+	for _, root := range roots {
+		for _, c := range strings.Split(filepath.ToSlash(root), "/") {
+			if c != "" {
+				check(c)
+			}
+		}
+	}
+	for _, root := range roots {
+		if left == 0 {
+			break
+		}
+		_ = filepath.WalkDir(root, func(_ string, d fs.DirEntry, err error) error {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			if err == nil {
+				check(d.Name())
+			}
+			if left == 0 {
+				return fs.SkipAll
+			}
+			return nil
+		})
+	}
+	if ctx.Err() != nil {
+		for _, n := range names {
+			found[n] = true
+		}
+	}
+	return found
+}
+
+// excludePathFound reports whether something on disk matches pattern, an
+// anchored restic exclude made of an escaped container path and the glob the
+// user typed after it. The walk starts at the pattern's literal head, so a
+// plain path costs one stat.
+func excludePathFound(ctx context.Context, pattern string) bool {
+	pat := strings.Split(pattern, "/")
+	root := globLiteralRoot(pattern)
+	if !slices.ContainsFunc(pat, hasGlobMeta) {
+		_, err := os.Lstat(root)
+		return err == nil
+	}
+	deep := slices.Contains(pat, "**")
+	found := false
+	_ = filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		if err != nil {
+			return nil
+		}
+		parts := strings.Split(filepath.ToSlash(p), "/")
+		if globPartsMatch(pat, parts) {
+			found = true
+			return fs.SkipAll
+		}
+		if d.IsDir() && !deep && len(parts) >= len(pat) {
+			return fs.SkipDir
+		}
+		return nil
+	})
+	return found || ctx.Err() != nil
+}
+
+// globLiteralRoot is the leading part of an anchored pattern that holds no
+// glob, with its escapes removed: the folder a search for the pattern starts in.
+func globLiteralRoot(pattern string) string {
+	pat := strings.Split(pattern, "/")
+	n := 0
+	for n < len(pat) && !hasGlobMeta(pat[n]) {
+		n++
+	}
+	var b strings.Builder
+	head := strings.Join(pat[:n], "/")
+	for i := 0; i < len(head); i++ {
+		if head[i] == '\\' && i+1 < len(head) {
+			i++
+		}
+		b.WriteByte(head[i])
+	}
+	return b.String()
+}
+
+// hasGlobMeta reports whether a pattern component holds an unescaped glob
+// character.
+func hasGlobMeta(c string) bool {
+	for i := 0; i < len(c); i++ {
+		switch c[i] {
+		case '\\':
+			i++
+		case '*', '?', '[':
+			return true
+		}
+	}
+	return false
+}
+
+// globPartsMatch matches path components against pattern components the way
+// restic does, where "**" stands for any number of components.
+func globPartsMatch(pat, parts []string) bool {
+	if len(pat) == 0 {
+		return len(parts) == 0
+	}
+	if pat[0] == "**" {
+		for i := 0; i <= len(parts); i++ {
+			if globPartsMatch(pat[1:], parts[i:]) {
+				return true
+			}
+		}
+		return false
+	}
+	if len(parts) == 0 {
+		return false
+	}
+	ok, _ := path.Match(pat[0], parts[0])
+	return ok && globPartsMatch(pat[1:], parts[1:])
 }
 
 // retentionPolicy is the local keep-policy of a domain: its own when it has
@@ -2511,12 +2664,8 @@ func (s *Service) notifyMCPKeyChange(ctx context.Context, event string, k store.
 	}()
 }
 
-// offsiteTargetsFor returns a domain's ENABLED off-site destinations from the
-// store, in stable per-domain order (sort_order, then created_at). It is the
-// plural successor to the single-repo Settings.*Offsite* columns: a backfilled
-// single-off-site install yields a one-element slice, an unconfigured domain an
-// empty one. A missing store (used by pure-settings unit tests) or a query error
-// falls back to empty so callers apply their Settings fallback.
+// offsiteTargetsFor returns a domain's enabled off-site targets in store order.
+// A missing store or a failed read yields none.
 func (s *Service) offsiteTargetsFor(domain string) []store.OffsiteTarget {
 	out, err := s.enabledOffsiteTargets(domain)
 	if err != nil {
@@ -2545,27 +2694,33 @@ func (s *Service) enabledOffsiteTargets(domain string) ([]store.OffsiteTarget, e
 	return out, nil
 }
 
-// offsiteReplicationTargets is the destination set copyToOffsite replicates a
-// domain to: the domain's enabled off-site targets, or — when no target row
-// exists (a fresh install configured only through the legacy Settings columns, or
-// one configured after the stage-1 backfill ran) — a single target synthesized
-// from those Settings columns. This keeps N=1 byte-identical whether or not the
-// row was backfilled.
+// offsiteReplicationTargets is the domain's enabled off-site targets, or the
+// one target its off-site setting describes while the domain has no target row
+// at all.
 func (s *Service) offsiteReplicationTargets(domain string, settings store.Settings) []store.OffsiteTarget {
-	return orSettingsOffsiteTarget(s.offsiteTargetsFor(domain), domain, settings)
+	return s.orSettingsOffsiteTarget(s.offsiteTargetsFor(domain), domain, settings)
 }
 
-// orSettingsOffsiteTarget is targets, or when there are none, the one target
-// the legacy Settings columns configure, if any.
-func orSettingsOffsiteTarget(targets []store.OffsiteTarget, domain string, settings store.Settings) []store.OffsiteTarget {
-	if len(targets) > 0 {
+// orSettingsOffsiteTarget is targets, or when the domain has no target row at
+// all, the one target its off-site setting describes. A switched-off row keeps
+// the setting from counting: the setting stays filled while its target is off,
+// and the copy (readPlacement) does not go there either.
+func (s *Service) orSettingsOffsiteTarget(targets []store.OffsiteTarget, domain string, settings store.Settings) []store.OffsiteTarget {
+	if len(targets) > 0 || s.hasOffsiteTargetRows(domain) {
 		return targets
 	}
-	loc := offsiteRepoFromSettings(domain, settings)
-	if loc == "" {
-		return nil
+	return legacyTargets(domain, settings)
+}
+
+// hasOffsiteTargetRows reports whether domain has a target row, switched on or
+// off. A list that cannot be read answers no, which leaves the setting to
+// count, as readPlacement does.
+func (s *Service) hasOffsiteTargetRows(domain string) bool {
+	if s.store == nil {
+		return false
 	}
-	return []store.OffsiteTarget{settingsOffsiteTarget(domain, settings, loc)}
+	rows, err := s.store.OffsiteTargetsForDomain(domain)
+	return err == nil && len(rows) > 0
 }
 
 // settingsOffsiteTarget synthesizes the one off-site target the stage-1 backfill
@@ -2656,15 +2811,32 @@ func (s *Service) aggregateReplicationCurrency(domain string) (at int64, ok bool
 	return at, true
 }
 
-// offsiteRepoFor returns the configured off-site repo location for a domain, or
-// "" when none is set. It is a thin wrapper over the first enabled off-site
-// target, falling back to the legacy Settings column when no target row exists so
-// nothing regresses (N=1: the backfilled target's Repo equals that column).
+// offsiteRepoFor returns the location of the domain's first off-site target
+// in use, or "" when it has none.
 func (s *Service) offsiteRepoFor(domain string, settings store.Settings) string {
-	if ts := s.offsiteTargetsFor(domain); len(ts) > 0 {
+	if ts := s.offsiteReplicationTargets(domain, settings); len(ts) > 0 {
 		return ts[0].Repo
 	}
-	return offsiteRepoFromSettings(domain, settings)
+	return ""
+}
+
+// OffsiteInUse reports whether domain has an off-site target to copy to, by
+// the rule the copy itself goes by. Settings that cannot be read answer yes, so
+// the job that asks runs and reports the error itself.
+func (s *Service) OffsiteInUse(domain string) bool {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return true
+	}
+	return s.offsiteRepoFor(domain, settings) != ""
+}
+
+// noOffsiteRepoErr says why a domain has no off-site repo to copy to.
+func (s *Service) noOffsiteRepoErr(domain string) error {
+	if s.hasOffsiteTargetRows(domain) {
+		return errOffsiteTargetsOff
+	}
+	return errNoOffsiteRepo
 }
 
 // offsiteRepoFromSettings reads the legacy single-repo off-site location straight
@@ -2871,6 +3043,9 @@ type DomainStatusEntry struct {
 	LastReplicationOK  bool  `json:"lastReplicationOK"`
 	LastDRDrillAt      int64 `json:"lastDrDrillAt"`
 	LastDRDrillOK      bool  `json:"lastDrDrillOK"`
+	// LastDRDrillItem and LastDRDrillSnapshot name what that drill restored.
+	LastDRDrillItem     string `json:"lastDrDrillItem"`
+	LastDRDrillSnapshot string `json:"lastDrDrillSnapshot"`
 	// LastOffsiteSubsetAt / LastOffsiteSubsetOK stamp the latest OFF-SITE SUBSET
 	// drill (`restic check --read-data-subset` against the off-site repo) — the
 	// cheaper integrity check every domain (including VMs, since v8.0.0) can run
@@ -3303,11 +3478,11 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		lastReplicationAt, lastReplicationOK := s.aggregateReplicationCurrency(d.name)
 		var lastDRDrillAt int64
 		var lastDRDrillOK bool
-		var drDetail string
+		var drDetail, drItem, drSnapshot string
 		if dr, found, drErr := s.store.LatestRestoreDrillKind(d.name, "offsite", "dr"); drErr == nil && found {
 			lastDRDrillAt = dr.At
 			lastDRDrillOK = dr.OK
-			drDetail = dr.Detail
+			drDetail, drItem, drSnapshot = dr.Detail, dr.Item, dr.SnapshotID
 		}
 		// The latest OFF-SITE SUBSET drill (integrity check against the off-site
 		// repo) drives the dashboard's "off-site verified" badge (#63). It is the
@@ -3394,6 +3569,8 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastReplicationOK:     lastReplicationOK,
 			LastDRDrillAt:         lastDRDrillAt,
 			LastDRDrillOK:         lastDRDrillOK,
+			LastDRDrillItem:       drItem,
+			LastDRDrillSnapshot:   drSnapshot,
 			LastOffsiteSubsetAt:   lastOffsiteSubsetAt,
 			LastOffsiteSubsetOK:   lastOffsiteSubsetOK,
 			OffsiteDrillScheduled: settings.DrillsEnabled && settings.OffsiteDrillsEnabled && offsiteConfigured,
@@ -4791,7 +4968,7 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 		return fmt.Errorf("read settings: %w", err)
 	}
 	if s.offsiteRepoFor(domain, settings) == "" {
-		return errNoOffsiteRepo
+		return s.noOffsiteRepoErr(domain)
 	}
 	if err := s.requireOwnLocation(settings, domain); err != nil {
 		return err
@@ -4819,7 +4996,7 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 		return err
 	}
 	if s.offsiteRepoFor(domain, settings) == "" {
-		return errNoOffsiteRepo
+		return s.noOffsiteRepoErr(domain)
 	}
 	unlock, ok := s.tryLockDomainFor(domain, "replicate")
 	if !ok {
@@ -4915,7 +5092,7 @@ func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, in
 	}
 	loc := s.offsiteRepoFor(domain, settings)
 	if loc == "" {
-		return false, false, errNoOffsiteRepo
+		return false, false, s.noOffsiteRepoErr(domain)
 	}
 	repo, err := s.resolveRepo(loc)
 	if err != nil {
@@ -9501,8 +9678,8 @@ func (s *Service) refName(r domainRepoRef) string {
 
 // scrubSafeName makes an operator's free-text repository name safe to show:
 // a password the name holds is taken out, and a slash, which the error
-// scrubber would turn into "[path]", becomes a middle dot, so "NAS/cold" still
-// reads as the name the operator typed.
+// scrubber takes for a path when it opens a word, becomes a middle dot, so
+// "NAS /cold" still reads as the name the operator typed.
 func scrubSafeName(name string) string {
 	name = scrubRepoLocation(strings.TrimSpace(name))
 	if !strings.ContainsAny(name, `/\`) {
@@ -10074,19 +10251,8 @@ func (s *Service) concludeFileSetRestore(runID, rkey, snapshotID string, rerr er
 // runs.error, protects all three downstream readers at once and doesn't rely
 // on finding every current AND FUTURE non-restic call site individually.
 //
-// An earlier version of this function scrubbed EVERYTHING unconditionally,
-// including the sentinel-tagged errors above, on the theory that running the
-// scrub regexes over already-clean text is a harmless no-op. That was false
-// for exactly these sentinels: scrubSecrets' path regex matches ANY
-// slash-containing token, not just a filesystem path, so routing them through
-// unconditionally silently mangled the very content scrubError's bypasses
-// exist to protect — e.g. turning "host port 8080/tcp is already used by
-// container ..." into "host port 8080[path] is already used ..." and eating
-// a zvol rebase failure's ZFS dataset name the same way — even though the
-// SAME underlying error survives intact when it goes through scrubError
-// instead. Checking scrubBypassMessage first closes that gap without
-// reimplementing scrubError's bypass logic a second, independently-drifting
-// time.
+// The sentinels scrubError lets through are checked first, so a message reads
+// the same in the run history as in the response that refused it.
 func truncateRunErr(err error) string {
 	if err == nil {
 		return ""
@@ -11498,7 +11664,7 @@ func (s *Service) backupPlaces(settings store.Settings, domain string, repos []s
 	if err != nil {
 		return nil, fmt.Errorf("the off-site target list could not be read: %w", err)
 	}
-	for _, t := range orSettingsOffsiteTarget(targets, domain, settings) {
+	for _, t := range s.orSettingsOffsiteTarget(targets, domain, settings) {
 		repo, err := s.resolveRepo(t.Repo)
 		if err != nil {
 			return nil, fmt.Errorf("off-site target %q could not be resolved: %w", t.Name, err)
@@ -11960,32 +12126,144 @@ func (r startedRunsAdapter) Finish(runID, status string, sum backup.Summary, err
 	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
 }
 
-// sshZFSHost adapts HostSSH's semantic Run/StreamCommand/RunWithStdin SSH
-// surface into backup.ZFSHost by shelling the zfs command lines
-// virshcli.ZFSSnapshotArgs/ZFSSnapshotDestroyArgs/ZFSSendArgs/ZFSReceiveArgs
-// build — mirrors how virshcli itself shells virsh commands over the same
-// transport rather than requiring a local ZFS toolchain in the container
-// (v8.0.0 VM service-layer integration, Task 2).
+// sshZFSHost runs the zvol commands on the host over SSH, as virsh is run, so
+// the container needs no zfs tools.
 type sshZFSHost struct{ ssh HostSSH }
 
 var _ backup.ZFSHost = sshZFSHost{}
+
+// zvolDeviceWait bounds how long the /dev link of a new zvol may take to
+// appear.
+const zvolDeviceWait = 30 * time.Second
 
 func (h sshZFSHost) SnapshotCreate(ctx context.Context, dataset, snapName string) error {
 	_, err := h.ssh.Run(ctx, virshcli.ZFSSnapshotArgs(dataset, snapName)...)
 	return err
 }
 
-func (h sshZFSHost) SnapshotDestroy(ctx context.Context, dataset, snapName string) error {
-	_, err := h.ssh.Run(ctx, virshcli.ZFSSnapshotDestroyArgs(dataset, snapName)...)
+func (h sshZFSHost) Snapshots(ctx context.Context, dataset string) ([]backup.ZFSSnapshot, error) {
+	out, err := h.ssh.Run(ctx, virshcli.ZFSSnapshotClonesArgs(dataset)...)
+	if err != nil {
+		return nil, err
+	}
+	var snaps []backup.ZFSSnapshot
+	for line := range strings.Lines(out) {
+		name, clones, ok := strings.Cut(strings.TrimSpace(line), "\t")
+		if !ok {
+			continue
+		}
+		snap := backup.ZFSSnapshot{Name: name}
+		if clones != "-" && clones != "" {
+			snap.Clones = strings.Split(clones, ",")
+		}
+		snaps = append(snaps, snap)
+	}
+	return snaps, nil
+}
+
+func (h sshZFSHost) Clone(ctx context.Context, snapshot, clone string) error {
+	_, err := h.ssh.Run(ctx, virshcli.ZFSCloneArgs(snapshot, clone)...)
 	return err
 }
 
-func (h sshZFSHost) StreamSend(ctx context.Context, dataset, snapName string) (io.ReadCloser, func() error, error) {
-	return h.ssh.StreamCommand(ctx, virshcli.ZFSSendArgs(dataset, snapName)...)
+func (h sshZFSHost) Destroy(ctx context.Context, name string) error {
+	_, err := h.ssh.Run(ctx, virshcli.ZFSDestroyArgs(name)...)
+	return err
 }
 
-func (h sshZFSHost) StreamReceive(ctx context.Context, rd io.Reader, targetDataset string) error {
-	return h.ssh.RunWithStdin(ctx, rd, virshcli.ZFSReceiveArgs(targetDataset)...)
+func (h sshZFSHost) VolSize(ctx context.Context, dataset string) (int64, bool, error) {
+	pool, _, _ := strings.Cut(dataset, "/")
+	out, err := h.ssh.Run(ctx, virshcli.ZFSListVolumesArgs(pool)...)
+	if err != nil {
+		return 0, false, err
+	}
+	for line := range strings.Lines(out) {
+		name, size, ok := strings.Cut(strings.TrimSpace(line), "\t")
+		if !ok || name != dataset {
+			continue
+		}
+		n, err := strconv.ParseInt(size, 10, 64)
+		if err != nil {
+			return 0, false, fmt.Errorf("size of %s: %w", dataset, err)
+		}
+		return n, true, nil
+	}
+	return 0, false, nil
+}
+
+// zfsSpace is how much room ZFS has for a dataset and whether it is a zvol.
+type zfsSpace struct {
+	volume    bool
+	available int64
+}
+
+// Space reads every filesystem and zvol on the host by name.
+func (h sshZFSHost) Space(ctx context.Context) (map[string]zfsSpace, error) {
+	out, err := h.ssh.Run(ctx, virshcli.ZFSListSpaceArgs()...)
+	if err != nil {
+		return nil, err
+	}
+	space := map[string]zfsSpace{}
+	for line := range strings.Lines(out) {
+		f := strings.Split(strings.TrimSpace(line), "\t")
+		if len(f) != 3 {
+			continue
+		}
+		avail, err := strconv.ParseInt(f[2], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("available space of %s: %w", f[0], err)
+		}
+		space[f[0]] = zfsSpace{volume: f[1] == "volume", available: avail}
+	}
+	return space, nil
+}
+
+func (h sshZFSHost) CreateVolume(ctx context.Context, dataset string, size int64) error {
+	_, err := h.ssh.Run(ctx, virshcli.ZFSCreateVolumeArgs(dataset, size)...)
+	return err
+}
+
+func (h sshZFSHost) SetVolSize(ctx context.Context, dataset string, size int64) error {
+	_, err := h.ssh.Run(ctx, virshcli.ZFSSetVolSizeArgs(dataset, size)...)
+	return err
+}
+
+func (h sshZFSHost) ReadVolume(ctx context.Context, dataset string) (io.ReadCloser, func() error, error) {
+	dev := virshcli.ZvolDevPath(dataset)
+	if err := h.awaitDevice(ctx, dev); err != nil {
+		return nil, nil, err
+	}
+	return h.ssh.StreamCommand(ctx, virshcli.ReadDeviceArgs(dev)...)
+}
+
+func (h sshZFSHost) WriteVolume(ctx context.Context, rd io.Reader, dataset string) error {
+	dev := virshcli.ZvolDevPath(dataset)
+	if err := h.awaitDevice(ctx, dev); err != nil {
+		return err
+	}
+	return h.ssh.RunWithStdin(ctx, rd, virshcli.WriteDeviceArgs(dev)...)
+}
+
+// awaitDevice waits until udev is done with a zvol that may have just been
+// created. Until then the /dev link can be missing, and a clone destroyed
+// while udev still probes it fails with "dataset is busy". The settle is
+// best effort, since the device check after it is what counts.
+func (h sshZFSHost) awaitDevice(ctx context.Context, dev string) error {
+	_, _ = h.ssh.Run(ctx, virshcli.UdevSettleArgs()...)
+	deadline := time.Now().Add(zvolDeviceWait)
+	for {
+		if _, err := h.ssh.Run(ctx, virshcli.BlockDeviceExistsArgs(dev)...); err == nil {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("%s did not appear on the host", dev)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(200 * time.Millisecond):
+		}
+	}
 }
 
 // resticZvolAdapter wraps a ResticEngine + Mode to satisfy backup.ZvolRestic
@@ -12663,6 +12941,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		BlockDisks:       vmBlockDisks,
 		ZFSHost:          sshZFSHost{ssh: s.ssh},
 		ZvolRestic:       &resticZvolAdapter{engine: step.engine, mode: mode, extraTags: withTags(s.directTags(settings, "vms", repo), beforeRestoreTags(ctx))},
+		DomainXML:        defXML,
 	}
 	// With changed-block backups on, a running VM with qcow2 disks is read
 	// through the libvirt backup API instead; anything else keeps the method.
@@ -12824,11 +13103,7 @@ type vmRestorePlan struct {
 	// state → boot after restore, the historical behaviour).
 	wasRunning *bool
 	preDefine  func(context.Context) error
-	// blockDisks are the domain's block-device-backed (zvol) disks to restore,
-	// each entry's SourceDataset resolved from the domain XML — SnapshotID/
-	// StdinPath are left unset here; see prepareRestoreVMForTarget's own
-	// comment for why (Task 3's job). Empty for a VM with only file-backed
-	// disks (v8.0.0 VM service-layer integration, Task 2).
+	// blockDisks are the zvol disks, each with the image it is written from.
 	blockDisks []backup.VMRestoreBlockDisk
 	// images are the disks of a changed-block snapshot and where each goes.
 	images []backup.VMRestoreImage
@@ -12912,20 +13187,11 @@ func (s *Service) prepareRestoreVMIn(ctx context.Context, ref repoRef, name, sna
 // (#122). An empty destBase restores each disk to the definition's path, from
 // wherever the snapshot holds it.
 //
-// destZvolPool is the separate remap a block-device (zvol) disk needs: destBase
-// is a filesystem path under the host mount and carries no ZFS pool
-// information at all, so it cannot rebase a zvol's `zfs receive` target the
-// way it rebases a file-backed disk's path. When destBase is non-empty (a
-// cross-instance restore) and the domain has recognizable zvol disks,
-// destZvolPool must be supplied: every such disk's dataset is rebased onto it
-// via virshcli.RebaseZvolDatasetPool, so `zfs receive` lands on the
-// destination box's pool rather than the source box's. An empty destZvolPool
-// on a cross-instance restore with zvol disks refuses here, before any
-// restic/SSH work starts (a destination pool cannot be guessed from destBase),
-// rather than silently attempting `zfs receive` against the source pool's name
-// and failing deep inside that call once the restore is already underway.
-// Ignored (never validated) for a same-instance restore or a VM with no zvol
-// disks; a same-instance zvol restore derives its target from SourceDataset.
+// destZvolPool is where the zvol disks go on a cross-instance restore, since
+// destBase is a folder and names no pool. Each zvol keeps its path below the
+// pool and the domain XML is pointed at it. Such a restore without a pool is
+// refused here, before anything is touched. A same-instance restore writes
+// each zvol back onto itself and ignores it.
 func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.VMTarget, id entryIdentity, destBase, destZvolPool string) (vmRestorePlan, error) {
 	explicitID := snapshotID != "latest" && snapshotID != ""
 
@@ -12985,9 +13251,6 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		}
 	}
 	diskPaths := def.DiskPaths
-	if len(diskPaths) == 0 {
-		return vmRestorePlan{}, errors.New("no restorable disk paths found in this backup")
-	}
 	// A changed-block snapshot holds each disk as segments, not as a file at
 	// its path, so its disks are matched through the manifest instead.
 	var blockManifest *backup.BlocksManifest
@@ -13089,17 +13352,8 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	// libvirt uses the real var store (boot entries preserved).
 	domainXML = virshcli.EnsureNVRAMTemplate(domainXML)
 
-	// Re-derive the TPM path and block-device (zvol) disk list from the
-	// (possibly remapped) domain XML — NOT persisted separately in
-	// vmDefinition (see its TPMBytes field's doc comment) — mirroring how
-	// BackupVM derives them at backup time via the same virshcli.ParseDomain
-	// call. Neither is affected by the destBase remap above: RewriteDiskSources
-	// only rewrites <source file=...> (file-backed disks); a <tpm> element and
-	// a <source dev=...> (block-device disk) are left untouched either way
-	// (v8.0.0 VM service-layer integration, Task 2). A zvol disk's DATASET
-	// (as opposed to the XML's device path, which stays the source box's for
-	// the operator's own reference) is rebased separately, below — see the
-	// "CROSS-INSTANCE zvol rebase" block after the SSH guard.
+	// The TPM path and the zvol disks come from the domain XML, as they do at
+	// backup time. Each zvol is written back from its own image in the run.
 	var tpmPath string
 	var vmRestoreBlockDisks []backup.VMRestoreBlockDisk
 	if parsed, perr := virshcli.ParseDomain(domainXML); perr == nil {
@@ -13107,87 +13361,47 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		for _, bd := range parsed.BlockDisks {
 			dataset, ok := virshcli.ZvolDatasetFromDevPath(bd.Source)
 			if !ok {
-				log.Printf("api: RestoreVM: WARN block-device disk %q (%s) is not a recognizable ZFS zvol for %q — it will not be restored", bd.Dev, bd.Source, name) //nolint:gosec // G706: name is %q-quoted
+				log.Printf("api: RestoreVM: WARN block-device disk %q (%s) is not a recognizable ZFS zvol for %q, so it is not restored", bd.Dev, bd.Source, name) //nolint:gosec // G706: name is %q-quoted
 				continue
 			}
-			rbd := backup.VMRestoreBlockDisk{SourceDataset: dataset}
-			// Resolve THIS disk's own restic snapshot from the vmrun: group
-			// above (v8.0.0 VM service-layer integration, Task 3): its
-			// identity tag is "vm:"+name+":zvol:"+bd.Dev (see
-			// VMBlockDisk.Dev's doc comment, internal/backup/
-			// vm_orchestrator.go) — find the group member carrying that
-			// EXACT tag and take its snapshot id plus the one path it
-			// recorded, which IS the exact StdinPath BackupZvolDisk gave
-			// restic (BackupStdin backs up exactly one synthetic file per
-			// invocation — see ZvolStdinPath — so Paths always has exactly
-			// one entry when set at all).
-			//
-			// Left at zero value — the PERMANENT fallback (see vmRunTag's
-			// doc comment above), not just "old backups" — when there is no
-			// group at all, or no member carries this disk's tag (bd.Dev
-			// empty never happens from the real BackupVM caller, see
-			// VMBlockDisk.Dev's doc comment): RestoreZvolDisk then fails
-			// loudly on the empty snapshot id rather than silently skipping
-			// the disk, EXACTLY as it did before this task.
-			if bd.Dev != "" {
-				if gs, ok := vmrunGroupSnapshot(vmrunGroup, "vm:"+name+":zvol:"+bd.Dev); ok && len(gs.Paths) > 0 {
-					rbd.SnapshotID = gs.ID
-					rbd.StdinPath = gs.Paths[0]
-				}
+			disk, err := s.zvolRestoreDisk(ctx, ref, vmrunGroup, "vm:"+name+":zvol:"+bd.Dev, dataset)
+			if err != nil {
+				return vmRestorePlan{}, err
 			}
-			vmRestoreBlockDisks = append(vmRestoreBlockDisks, rbd)
+			vmRestoreBlockDisks = append(vmRestoreBlockDisks, disk)
 		}
 	} else {
-		log.Printf("api: RestoreVM: WARN could not re-parse domain xml for %q (%v) — TPM state and any zvol disks will not be restored", name, perr) //nolint:gosec // G706: name is %q-quoted
+		log.Printf("api: RestoreVM: WARN could not re-parse domain xml for %q (%v), so TPM state and any zvol disks are not restored", name, perr) //nolint:gosec // G706: name is %q-quoted
+	}
+	if len(diskPaths) == 0 && len(vmRestoreBlockDisks) == 0 {
+		return vmRestorePlan{}, errors.New("no restorable disk paths found in this backup")
 	}
 
-	// Mirrors BackupVM's own "zvol backup requires SSH" guard: RestoreZvolDisk
-	// calls ZFSHost.StreamReceive, which sshZFSHost forwards straight onto
-	// s.ssh — a nil HostSSH there is a nil interface method call, i.e. an
-	// unrecovered PANIC (not a clean error) deep inside the async restore
-	// goroutine (StartRestoreVM), which crashes the whole process rather than
-	// just failing this one restore. Caught here, before a plan is ever
-	// returned, exactly like the backup-side check in BackupVM.
+	// Without SSH the zvol commands would call a nil HostSSH inside the
+	// restore goroutine and take the whole process down.
 	if len(vmRestoreBlockDisks) > 0 && s.ssh == nil {
 		return vmRestorePlan{}, fmt.Errorf("restore vm: %q has block-device (zvol) disks but no SSH host connection is configured, and zvol restore requires SSH", name)
 	}
 
-	// CROSS-INSTANCE zvol rebase: destBase remaps a FILE-backed disk onto the
-	// destination's FILESYSTEM PATH, but that path carries no ZFS pool
-	// information — RestoreZvolDisk would otherwise always derive its `zfs
-	// receive` target from SourceDataset (the SOURCE box's pool, re-derived
-	// unchanged from the domain XML above), which almost certainly does not
-	// exist on the destination box under that name, and fail deep inside a
-	// `zfs receive` call once the restore is already underway. REFUSE here,
-	// before any restic/SSH work starts, when destZvolPool wasn't supplied;
-	// when it was, rebase every zvol disk's dataset onto it now so the plan's
-	// blockDisks already carry the correct destination target.
-	//
-	// destZvolPool is trimmed before the emptiness check so a whitespace-only
-	// value ("   ", e.g. a stray space pasted into a direct API call) hits
-	// THIS clear refusal rather than slipping through to
-	// RebaseZvolDatasetPool's own less-actionable error below (it trims
-	// internally too, so a whitespace-only pool reads there as empty and
-	// fails the "no segment past its own pool" check instead of naming the
-	// real problem).
+	// destBase carries no ZFS pool, so a restore onto another instance needs
+	// the destination pool named. The zvols are written there and the domain
+	// is pointed at them.
 	if destBase != "" && len(vmRestoreBlockDisks) > 0 {
 		if strings.TrimSpace(destZvolPool) == "" {
-			// The web UI has NO field for zvolPool yet (Recovery page — see
-			// this repo's tracked follow-up); an operator hitting this
-			// through the UI has no in-app way to act on this error, so the
-			// message spells out the only path that currently exists: a
-			// direct API call. Keep this in sync with
-			// docs/vm-backup-ssh-setup.md's TrueNAS section, which carries
-			// the same guidance for someone reading ahead of time.
+			// The web UI has no field for it yet, so the message names the API
+			// call; docs/vm-backup-ssh-setup.md's TrueNAS section says the same.
 			return vmRestorePlan{}, fmt.Errorf("restore vm: %q has %d TrueNAS zvol-backed disk(s) and this is a cross-instance restore, but no destination ZFS pool was specified, and the destination pool cannot be inferred from the chosen destination folder. There is no web UI field for this yet: call POST /api/foreign/restore directly with its zvolPool parameter set to the destination pool name (see docs/vm-backup-ssh-setup.md's TrueNAS section), or restore this VM on the instance it was backed up from", name, len(vmRestoreBlockDisks))
 		}
-		for i := range vmRestoreBlockDisks {
-			rebased, ok := virshcli.RebaseZvolDatasetPool(vmRestoreBlockDisks[i].SourceDataset, destZvolPool)
+		devRemap := make(map[string]string, len(vmRestoreBlockDisks))
+		for i, bd := range vmRestoreBlockDisks {
+			rebased, ok := virshcli.RebaseZvolDatasetPool(bd.Dataset, destZvolPool)
 			if !ok {
-				return vmRestorePlan{}, &zvolRebaseErr{msg: fmt.Sprintf("restore vm: %q: cannot rebase zvol dataset %q onto destination pool %q", name, vmRestoreBlockDisks[i].SourceDataset, destZvolPool)}
+				return vmRestorePlan{}, &zvolRebaseErr{msg: fmt.Sprintf("restore vm: %q: cannot rebase zvol dataset %q onto destination pool %q", name, bd.Dataset, destZvolPool)}
 			}
-			vmRestoreBlockDisks[i].RestoreBaseDataset = rebased
+			devRemap[virshcli.ZvolDevPath(bd.Dataset)] = virshcli.ZvolDevPath(rebased)
+			vmRestoreBlockDisks[i].Dataset = rebased
 		}
+		domainXML = virshcli.RewriteBlockSources(domainXML, devRemap)
 	}
 
 	// preDefine writes the captured NVRAM/TPM state back to the host over SSH
@@ -13236,6 +13450,31 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		blockDisks:   vmRestoreBlockDisks,
 		images:       images,
 	}, nil
+}
+
+// zvolRestoreDisk finds the image of one zvol disk in a run's group of
+// snapshots. A restore refuses a run that lacks one before anything is
+// touched, rather than taking the VM down and failing on that disk.
+func (s *Service) zvolRestoreDisk(ctx context.Context, ref repoRef, group []restic.Snapshot, tag, dataset string) (backup.VMRestoreBlockDisk, error) {
+	snap, ok := vmrunGroupSnapshot(group, tag)
+	if !ok || len(snap.Paths) == 0 {
+		return backup.VMRestoreBlockDisk{}, fmt.Errorf("this backup holds no image of the zvol disk %s, so it cannot be restored; pick another backup", dataset)
+	}
+	disk := backup.VMRestoreBlockDisk{Dataset: dataset, SnapshotID: snap.ID, StdinPath: snap.Paths[0]}
+	if snap.Summary != nil {
+		disk.Size = int64(snap.Summary.TotalBytesProcessed) //nolint:gosec // G115: a zvol is far below 8 EiB
+	} else {
+		// A snapshot written by restic before 0.17 carries no summary.
+		_, size, err := s.engine.StatsRestoreSize(ctx, ref.repo, snap.ID, ref.mode)
+		if err != nil {
+			return backup.VMRestoreBlockDisk{}, fmt.Errorf("restore vm: size of the zvol disk %s: %w", dataset, err)
+		}
+		disk.Size = size
+	}
+	if disk.Size <= 0 {
+		return backup.VMRestoreBlockDisk{}, fmt.Errorf("the image of the zvol disk %s in this backup is empty, so it cannot be restored; pick another backup", dataset)
+	}
+	return disk, nil
 }
 
 // snapshotDiskSources returns the path the snapshot holds each disk under: the
@@ -13791,6 +14030,11 @@ var _ backup.FlashRestic = (*resticAdapter)(nil)
 // flash repo via restic. Fails with a clear message if the flash directory is
 // not mounted (the /boot → /host/boot mount is required for this domain).
 func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr error) {
+	// The schedule and the everything run call this without going through
+	// StartBackupFlash, so the platform check has to live here as well.
+	if s.platformFn().Kind() != platform.KindUnraid {
+		return backup.Summary{}, s.unraidPlatformMismatchError("the flash backup")
+	}
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
@@ -16012,7 +16256,7 @@ func (s *Service) PreviewExcludes(ctx context.Context, name string, candidate []
 		return nil, fmt.Errorf("inspect container: %w", err)
 	}
 	effective := s.effectiveBackupPaths(name, in)
-	return s.previewExcludes(candidate, in, effective), nil
+	return s.previewExcludes(ctx, candidate, in, effective), nil
 }
 
 // CheckDomain verifies the integrity of a domain's restic repo (restic check).
@@ -16510,7 +16754,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	// can be written and never read back, so the drill could not pass.
 	mode := s.offsiteModeForTarget(settings, target)
 	listCtx, listCancel := context.WithTimeout(drillCtx, drillSnapshotTimeout)
-	snapID, err := s.pickDRSnapshot(listCtx, domain, settings, repo, mode)
+	snapID, item, err := s.pickDRSnapshot(listCtx, domain, settings, repo, mode)
 	listCancel()
 	if err != nil {
 		return store.RestoreDrill{}, err
@@ -16529,11 +16773,13 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 		return store.RestoreDrill{}, drillErr
 	}
 	drill = store.RestoreDrill{
-		Domain: domain,
-		Source: source,
-		At:     time.Now().Unix(),
-		OK:     drillErr == nil,
-		Kind:   "dr",
+		Domain:     domain,
+		Source:     source,
+		At:         time.Now().Unix(),
+		OK:         drillErr == nil,
+		Kind:       "dr",
+		Item:       item,
+		SnapshotID: shortID(snapID),
 	}
 	if drillErr != nil {
 		drill.Detail = scrubError(drillErr)
@@ -16548,89 +16794,105 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	// dashboard Activity Log/Run History (the restore_drills row above stays the
 	// badge/scorecard source of truth). Kind "drdrill" — distinct from the local
 	// subset drill's "drill" — so the log names the off-site DR restore check.
-	s.recordDomainRun(domain, "drdrill", drill.OK, drill.Detail)
+	s.recordDomainRunOf(domain, "drdrill", drill.OK, drill.Detail, drill.Item, drill.SnapshotID)
 	if drillErr != nil {
 		s.notifyDrillFailure(ctx, domain, source, drill.Detail)
 	}
 	return drill, drillErr
 }
 
-// pickDRSnapshot resolves the newest off-site snapshot to drill for a domain.
-// containers: the DRDrillTarget container (or, when unset, the most recently
-// backed-up container), scoped to its container:<name> tag, or to its database
-// dumps when those are all it has. vms: the
-// DRDrillTargetVM VM (or, when unset, the most recently backed-up VM), scoped to
-// its vm:<name> tag — same pattern as containers. flash: the newest snapshot
+// pickDRSnapshot resolves the newest off-site snapshot to drill for a domain,
+// and the item it holds.
+// containers: the DRDrillTarget container, scoped to its container:<name> tag,
+// or to its database dumps when those are all it has. With no target pinned it
+// takes the most recently backed-up container that has such a snapshot in this
+// repo, since a successful run can write none, for example when every data
+// folder of the container lies outside Host Data. vms: the same with
+// DRDrillTargetVM and the vm:<name> tag. flash: the newest snapshot
 // outright (flash is a single whole-USB image, no per-item scoping). files
-// follows the flash path: the newest snapshot in the files repo outright — a
+// follows the flash path: the newest snapshot in the files repo outright, as a
 // file-set restore is sandbox-cheap and any set proves the repo restorable. zfs
 // takes the newest snapshot carrying a zfs: tag, because a member's tree root
 // is its dataset root and any member proves the repo restorable. An empty repo
 // or a target with no off-site snapshot yields a clear error.
-func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (string, error) {
+func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (id, item string, err error) {
 	all, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	if len(all) == 0 {
-		return "", errors.New("no off-site backups to drill yet")
+		return "", "", errors.New("no off-site backups to drill yet")
 	}
 	switch domain {
 	case "flash", "files":
-		return newestSnapshot(all).ID, nil
+		newest := newestSnapshot(all)
+		return newest.ID, taggedName(newest.Tags, "fileset:"), nil
 	case zfsDomain:
-		return newestZFSMemberSnapshot(all)
-	case "containers", "vms":
-		var (
-			target string
-			tagPfx string
-		)
-		if domain == "containers" {
-			target, tagPfx = settings.DRDrillTarget, "container:"
-			if target == "" {
-				target, err = s.newestBackedUpContainer()
-			}
-		} else {
-			target, tagPfx = settings.DRDrillTargetVM, "vm:"
-			if target == "" {
-				target, err = s.newestBackedUpVM()
-			}
-		}
+		newest, err := newestZFSMemberSnapshot(all)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
-		scoped := snapshotsTagged(all, tagPfx+target)
-		if len(scoped) == 0 && domain == "containers" {
-			// A container without appdata paths leaves its database dumps and
-			// nothing else.
-			scoped = snapshotsTagged(all, dbDumpIdentity(target))
+		return newest.ID, taggedName(newest.Tags, "zfs:"), nil
+	case "containers", "vms":
+		pinned, tagPfx, noun := settings.DRDrillTarget, "container:", "container"
+		newest := s.backedUpContainersNewestFirst
+		if domain == "vms" {
+			pinned, tagPfx, noun = settings.DRDrillTargetVM, "vm:", "VM"
+			newest = s.backedUpVMsNewestFirst
 		}
-		if len(scoped) == 0 {
-			return "", fmt.Errorf("no off-site snapshot for drill target %q", target)
+		candidates := []string{pinned}
+		if pinned == "" {
+			if candidates, err = newest(); err != nil {
+				return "", "", err
+			}
+			if len(candidates) == 0 {
+				return "", "", fmt.Errorf("no backed-up %s to drill", noun)
+			}
 		}
-		return newestSnapshot(scoped).ID, nil
+		for _, name := range candidates {
+			scoped := snapshotsTagged(all, tagPfx+name)
+			if len(scoped) == 0 && domain == "containers" {
+				// A container without appdata paths leaves its database dumps and
+				// nothing else.
+				scoped = snapshotsTagged(all, dbDumpIdentity(name))
+			}
+			if len(scoped) > 0 {
+				return newestSnapshot(scoped).ID, name, nil
+			}
+		}
+		if pinned != "" {
+			return "", "", fmt.Errorf("no off-site snapshot for drill target %q", pinned)
+		}
+		return "", "", fmt.Errorf("no backed-up %s has an off-site snapshot to drill", noun)
 	default:
-		return "", fmt.Errorf("unknown domain %q", domain)
+		return "", "", fmt.Errorf("unknown domain %q", domain)
 	}
+}
+
+// taggedName is the value of the first tag that starts with prefix, or "".
+func taggedName(tags []string, prefix string) string {
+	for _, t := range tags {
+		if rest, ok := strings.CutPrefix(t, prefix); ok && rest != "" {
+			return rest
+		}
+	}
+	return ""
 }
 
 // newestZFSMemberSnapshot picks the newest member snapshot of the ZFS domain.
 // A repository shared with another domain also holds snapshots this drill must
 // not restore, so the tag decides rather than the timestamp alone.
-func newestZFSMemberSnapshot(all []restic.Snapshot) (string, error) {
+func newestZFSMemberSnapshot(all []restic.Snapshot) (restic.Snapshot, error) {
 	var scoped []restic.Snapshot
 	for _, snap := range all {
-		for _, t := range snap.Tags {
-			if rest, ok := strings.CutPrefix(t, "zfs:"); ok && rest != "" {
-				scoped = append(scoped, snap)
-				break
-			}
+		if taggedName(snap.Tags, "zfs:") != "" {
+			scoped = append(scoped, snap)
 		}
 	}
 	if len(scoped) == 0 {
-		return "", errNothingToDrill
+		return restic.Snapshot{}, errNothingToDrill
 	}
-	return newestSnapshot(scoped).ID, nil
+	return newestSnapshot(scoped), nil
 }
 
 // newestSnapshot returns the snapshot with the latest Time (RFC3339 sorts
@@ -16645,62 +16907,61 @@ func newestSnapshot(snaps []restic.Snapshot) restic.Snapshot {
 	return best
 }
 
-// newestBackedUpContainer returns the container name with the most recent
-// successful backup run — the default DR-drill target when none is pinned.
-func (s *Service) newestBackedUpContainer() (string, error) {
+// backedUpContainersNewestFirst returns the names of the containers with a
+// successful backup run, the most recent first: the default DR-drill targets
+// when none is pinned.
+func (s *Service) backedUpContainersNewestFirst() ([]string, error) {
 	targets, err := s.store.ListTargets()
 	if err != nil {
-		return "", fmt.Errorf("list targets: %w", err)
+		return nil, fmt.Errorf("list targets: %w", err)
 	}
-	best := ""
-	var bestAt int64
-	for _, t := range targets {
-		run, rErr := s.store.LastSuccessfulBackup(t.ID)
-		if rErr != nil {
-			return "", rErr
-		}
-		if run == nil || run.FinishedAt == nil {
-			continue
-		}
-		if *run.FinishedAt >= bestAt {
-			bestAt = *run.FinishedAt
-			best = t.ContainerName
-		}
+	items := make([]drillCandidate, len(targets))
+	for i, t := range targets {
+		items[i] = drillCandidate{id: t.ID, name: t.ContainerName}
 	}
-	if best == "" {
-		return "", errors.New("no backed-up container to drill")
-	}
-	return best, nil
+	return s.byNewestBackup(items)
 }
 
-// newestBackedUpVM returns the VM name with the most recent successful backup
-// run — the default DR-drill target when none is pinned. Mirrors
-// newestBackedUpContainer exactly (VM runs share the same runs table/column,
-// see migration 5 runs_relax_fk).
-func (s *Service) newestBackedUpVM() (string, error) {
+// backedUpVMsNewestFirst is backedUpContainersNewestFirst for VMs, whose runs
+// share the runs table (see migration 5 runs_relax_fk).
+func (s *Service) backedUpVMsNewestFirst() ([]string, error) {
 	targets, err := s.store.ListVMTargets()
 	if err != nil {
-		return "", fmt.Errorf("list VM targets: %w", err)
+		return nil, fmt.Errorf("list VM targets: %w", err)
 	}
-	best := ""
-	var bestAt int64
-	for _, t := range targets {
-		run, rErr := s.store.LastSuccessfulBackup(t.ID)
-		if rErr != nil {
-			return "", rErr
+	items := make([]drillCandidate, len(targets))
+	for i, t := range targets {
+		items[i] = drillCandidate{id: t.ID, name: t.Name}
+	}
+	return s.byNewestBackup(items)
+}
+
+type drillCandidate struct {
+	id, name string
+	at       int64
+}
+
+// byNewestBackup returns the names of items ordered by their last successful
+// backup, newest first, leaving out the ones that never had one.
+func (s *Service) byNewestBackup(items []drillCandidate) ([]string, error) {
+	backedUp := items[:0]
+	for _, it := range items {
+		run, err := s.store.LastSuccessfulBackup(it.id)
+		if err != nil {
+			return nil, err
 		}
 		if run == nil || run.FinishedAt == nil {
 			continue
 		}
-		if *run.FinishedAt >= bestAt {
-			bestAt = *run.FinishedAt
-			best = t.Name
-		}
+		it.at = *run.FinishedAt
+		backedUp = append(backedUp, it)
 	}
-	if best == "" {
-		return "", errors.New("no backed-up VM to drill")
+	slices.SortStableFunc(backedUp, func(a, b drillCandidate) int { return cmp.Compare(b.at, a.at) })
+	names := make([]string, len(backedUp))
+	for i, it := range backedUp {
+		names[i] = it.name
 	}
-	return best, nil
+	return names, nil
 }
 
 // sandboxRestoreVerify restores the whole snapshot tree into a fresh
@@ -16947,9 +17208,15 @@ func domainRunTargetID(domain string) string {
 // detail is bounded to the same cap as truncateRunErr. Best-effort: a store
 // error is logged and never fails the check that already ran.
 func (s *Service) recordDomainRun(domain, kind string, ok bool, detail string) {
-	// A drill or tamper row is never started through a tool, so a caller's
-	// context here would put the wrong name in the audit trail.
-	runID, err := s.startRun(context.Background(), domainRunTargetID(domain), kind)
+	s.recordDomainRunOf(domain, kind, ok, detail, "", "")
+}
+
+// recordDomainRunOf is recordDomainRun for a check that worked on one item of
+// the domain and one snapshot of it, which the run row names.
+func (s *Service) recordDomainRunOf(domain, kind string, ok bool, detail, subject, snapshotID string) {
+	// A drill or tamper row is never started through a tool, so the origin a
+	// caller's context carries would put the wrong name in the audit trail.
+	runID, err := s.startRun(withRunSubject(context.Background(), subject), domainRunTargetID(domain), kind)
 	if err != nil {
 		log.Printf("api: %s %s: could not start run record (continuing): %v", kind, domain, err) //nolint:gosec // G706: kind and domain are fixed literals
 		return
@@ -16962,7 +17229,7 @@ func (s *Service) recordDomainRun(domain, kind string, ok bool, detail string) {
 	if len(detail) > maxDetail {
 		detail = detail[:maxDetail]
 	}
-	if err := s.store.FinishRun(runID, status, "", 0, detail); err != nil {
+	if err := s.store.FinishRun(runID, status, snapshotID, 0, detail); err != nil {
 		log.Printf("api: %s %s: could not finish run record: %v", kind, domain, err) //nolint:gosec // G706: kind and domain are fixed literals
 	}
 }
@@ -17065,10 +17332,6 @@ func (s *Service) reposThatExist(repos []domainRepoRef, notYet string) ([]domain
 // shortRepoName names a repository in a message without printing a full host
 // path: the LAST segment, or the remote's scheme, is what a reader recognises,
 // and the error scrubber would redact the whole path anyway.
-//
-// Deliberately slash-free. scrubError's absolute-path regex redacts any
-// slash-led token, so "folder backups/cold" would arrive as "folder
-// backups[path]" - which is why this returns one segment and not two.
 func shortRepoName(repo string) string {
 	if restic.IsRemoteRepo(repo) {
 		if i := strings.IndexByte(repo, ':'); i > 0 {

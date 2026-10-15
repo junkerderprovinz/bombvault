@@ -93,7 +93,10 @@ const (
 	reasonShort         = "short"
 	reasonRefused       = "refused"
 	reasonParentMissing = "parent-missing"
+	reasonNoPool        = "pool-missing"
 	reasonNoNetwork     = "network-missing"
+	reasonNetworkGone   = "network-gone"
+	reasonNetworkUnread = "network-unreadable"
 	reasonGone          = "gone"
 	reasonEmpty         = "empty"
 )
@@ -156,6 +159,9 @@ type restoreScope struct {
 	// segments. restic has no dry run for that, so the plan names each file
 	// and counts it at the most it can take.
 	images []backup.VMRestoreImage
+	// zvols are the zvol disks a VM restore writes whole, which no dry run
+	// covers.
+	zvols []backup.VMRestoreBlockDisk
 	// beside is where a restore next to the original puts its copy.
 	beside *BesidePlan
 	// extraFiles are small files the restore writes itself, as container paths.
@@ -201,6 +207,7 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 	}
 
 	scope, err := s.restoreCheckScope(planOnly(ctx), req)
+	var gone *backup.NetworkGoneError
 	switch {
 	case ctx.Err() != nil:
 		return RestoreCheck{}, ctx.Err()
@@ -213,6 +220,16 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 		out.Checks = append(out.Checks,
 			CheckLine{ID: lineSnapshot, Status: lineOK},
 			CheckLine{ID: lineNetwork, Status: lineFail, Reason: reasonNoNetwork, Detail: missingNetworkName(err)})
+		return out, nil
+	case errors.As(err, &gone):
+		out.Checks = append(out.Checks,
+			CheckLine{ID: lineSnapshot, Status: lineOK},
+			CheckLine{ID: lineNetwork, Status: lineFail, Reason: reasonNetworkGone, Detail: gone.Name})
+		return out, nil
+	case errors.Is(err, backup.ErrListNetworks):
+		out.Checks = append(out.Checks,
+			CheckLine{ID: lineSnapshot, Status: lineOK},
+			CheckLine{ID: lineNetwork, Status: lineFail, Reason: reasonNetworkUnread, Detail: scrubError(err)})
 		return out, nil
 	case isDestinationRefusal(err):
 		out.Checks = append(out.Checks,
@@ -231,7 +248,7 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 	if err != nil {
 		return RestoreCheck{}, err
 	}
-	out.Checks = append(out.Checks, s.spaceLine(scope, measured, plan.Partial || plan.Error != ""))
+	out.Checks = append(out.Checks, s.spaceLine(scope, measured, plan.Zvols, plan.Partial || plan.Error != ""))
 	if !scope.download {
 		s.definitionChanges(ctx, scope, &plan)
 		plan.Shared = s.sharedFolders(ctx, scope)
@@ -382,6 +399,9 @@ func (s *Service) restoreCheckScope(ctx context.Context, req RestoreCheckRequest
 			if err != nil {
 				return restoreScope{}, err
 			}
+			if err := backup.CheckRestoreNetwork(ctx, s.docker, plan.inspect); err != nil {
+				return restoreScope{}, err
+			}
 			return besideContainerScope(plan, req.Name), nil
 		}
 		plan, err := s.prepareRestore(ctx, req.Name, req.SnapshotID, true, req.Source)
@@ -389,6 +409,9 @@ func (s *Service) restoreCheckScope(ctx context.Context, req RestoreCheckRequest
 			return restoreScope{}, err
 		}
 		if err := s.guardRecreateOverRunning(ctx, req.Name, plan); err != nil {
+			return restoreScope{}, err
+		}
+		if err := backup.CheckRestoreNetwork(ctx, s.docker, plan.inspect); err != nil {
 			return restoreScope{}, err
 		}
 		return containerScope(plan, req.Name), nil
@@ -489,7 +512,7 @@ func containerScope(plan containerRestorePlan, name string) restoreScope {
 // vmScope mirrors backup.RestoreVM, which restores the folder of each disk.
 // The NVRAM and TPM state travel over SSH and have no dry run.
 func vmScope(plan vmRestorePlan, name string) restoreScope {
-	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: true, vmName: name, vmXML: plan.domainXML}
+	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: true, vmName: name, vmXML: plan.domainXML, zvols: plan.blockDisks}
 	if len(plan.images) > 0 {
 		sc.images = plan.images
 		for _, img := range plan.images {

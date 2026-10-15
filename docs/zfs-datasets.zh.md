@@ -114,7 +114,7 @@ BombVault 每次备份都会保存每个数据集在本地设置的 ZFS 属性�
 任何装有 ZFS 和 SSH 的机器都可以接收，例如第二台 Unraid 或 TrueNAS。BombVault 不必在那里运行。
 
 1. 在**设置、配对**下，选择**没有 BombVault 的 ZFS 服务器**中的**通过 SSH 连接**，或条目**副本**卡片中的**添加 ZFS 服务器**。
-2. 输入地址、用户和端口。对话框会显示 BombVault 的公钥。把它加入服务器上该用户的 `~/.ssh/authorized_keys`。在 Unraid 上，它位于 **Users, root, SSH keys**。根据 **Display Settings**，Users 位于页眉菜单或 Settings 下。 这是副本密钥。它与虚拟机和主机 SSH 连接所用的密钥不同，即使那个密钥已经授权，也请添加这一个。
+2. 输入地址、用户和端口。对话框会显示 BombVault 的公钥。把它加入服务器上该用户的 `~/.ssh/authorized_keys`。在 Unraid 上，它位于 **Users, root, SSH keys**。根据 **Display Settings**，Users 位于页眉菜单或 Settings 下。在 TrueNAS 上，请在 **Credentials, Users** 下编辑该用户。 这是副本密钥。它与虚拟机和主机 SSH 连接所用的密钥不同，即使那个密钥已经授权，也请添加这一个。
 3. 测试连接。对话框随后列出服务器的存储池。选择一个并设置根路径，默认是 `<pool>/bombvault-replica`。
 4. 在条目的**副本**卡片中选择新服务器。该服务器随后在实例页面上有自己的卡片，**打开**会通向它的页面。
 
@@ -285,7 +285,8 @@ docker exec BombVault grep zfs /proc/self/mountinfo
 
 ## TrueNAS SCALE {#truenas}
 
-- 设置了 `LIBVIRT_URI` 时（与 TrueNAS 上的虚拟机备份相同），BombVault 会从 URI 中获取其 zfs 命令所用的 SSH 主机、用户和端口中未单独设置的项。如果不做虚拟机备份，请改为设置 `LIBVIRT_HOST`、`LIBVIRT_SSH_USER` 和 `LIBVIRT_SSH_PORT`。在 **Additional Environment Variables** 下添加这些变量。
+- 设置了 `LIBVIRT_URI` 时（与 TrueNAS 上的虚拟机备份相同），BombVault 会从 URI 中获取其 zfs 命令所用的 SSH 主机、用户和端口中未单独设置的项。如果不做虚拟机备份，则无需设置任何内容：`host.docker.internal` 在 TrueNAS 应用中无法解析，因此 BombVault 会通过应用的默认网关，以 root 身份经端口 22 连接主机。想用其他地址或用户时，在应用的 `environment` 中设置 `LIBVIRT_HOST`、`LIBVIRT_SSH_USER` 和 `LIBVIRT_SSH_PORT`。
+- 在 **Credentials, Users** 下把**设置、集成、主机 SSH** 中的主机 SSH 密钥添加给 root，并在 **System, Services** 下开启 SSH 服务。发往这台或另一台 TrueNAS 的[副本](#replica-push)还需要副本密钥，那是另一把密钥。
 - 非 root 的用户需要在条目的顶层数据集上拥有权限，这随后涵盖其下的每个数据集：
 
   ```
@@ -295,4 +296,4 @@ docker exec BombVault grep zfs /proc/self/mountinfo
   还原到新数据集还需要对上级数据集拥有 `create` 权限，设置保存的属性则需要这些属性的权限。
 
   在 TrueNAS 上，非 root 的 SSH 会话路径中没有 `/usr/sbin`；这时 BombVault 会直接调用 `/usr/sbin/zfs`。
-- 应用的 **Host Data** 必须是数据集之上的主机路径，例如 `/mnt/tank`，而不是 ixVolume。使用主机路径时，应用会把主机的新挂载传给 BombVault（`rslave`），而快照访问需要的正是这一点。
+- 应用的 **Host Data** 必须是数据集之上的主机路径，例如 `/mnt/tank`，而不是 ixVolume。使用主机路径时，应用会把主机的新挂载传给 BombVault（`rslave`），而快照访问需要的正是这一点。完整的应用设置参见 [TrueNAS SCALE](getting-started.md#truenas)。

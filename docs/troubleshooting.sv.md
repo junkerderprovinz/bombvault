@@ -33,6 +33,7 @@ VM-säkerhetskopiering pratar med libvirt över SSH, aldrig en montering.
 - Bekräfta att SSH är aktiverat på värden och att BombVaults publika nyckel är auktoriserad i `/root/.ssh/authorized_keys` (Inställningar, Integrationer, Värd-SSH visar nyckeln och en **Testa anslutning**-knapp).
 - På ett anpassat `br0.x`-nätverk, sätt `LIBVIRT_HOST` till din Unraid-LAN-IP (containern kan inte nå värden via `host.docker.internal` där). Aktivera **Settings, Docker, Host access to custom networks**.
 - Om du ändrade Unraids SSH-port, sätt `LIBVIRT_SSH_PORT` att matcha.
+- På TrueNAS, sätt `LIBVIRT_URI` med TrueNAS egen libvirt-socket, ge appen capabilityn `SETPCAP` och lägg till nyckeln hos root under **Credentials, Users** (se [TrueNAS SCALE](getting-started.md#truenas)).
 - Fullständig steg-för-steg-diagnos (nåbarhetstest, VLAN-routning, `Permission denied (publickey)`, `Host key verification failed`) finns i [guiden för VM-säkerhetskopiering över SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## En live-VM-ögonblicksbild kördes inte
@@ -50,6 +51,8 @@ Off-site-replikering är best-effort av design, så ett off-site-hickande får a
 ## En återställning avbröts innan den startade
 
 Innan något stoppas eller tas bort kör återställningen en konfliktkontroll före körning: den verifierar att containerns statiska IP och publicerade värdportar är lediga. Om en annan container redan håller en av dem avbryter den med ett tydligt, åtgärdbart meddelande istället för att lämna en halvfärdig återställning. Frigör den konfliktande porten eller IP:n och försök igen.
+
+Om containerns nätverk inte finns, till exempel för att dess TrueNAS-app togs bort, nämner kontrollen före återställningen nätverket, och återställningen vägrar innan den ändrar något. Installera om appen i TrueNAS under samma namn, vilket skapar nätverket igen, och återställ sedan dess data.
 
 ## En vanlig export misslyckades istället för att skriva en fil
 
@@ -71,7 +74,9 @@ En misslyckad dump fäller aldrig säkerhetskopian omkring den; den bokförs som
 
 En import stoppar containern, flyttar undan dess datamapp och låter avbilden skapa en tom i stället. Misslyckas ett steg före själva importen läggs den gamla mappen tillbaka av sig själv. Misslyckas importen behåller containern den färska mappen, och den gamla ligger kvar bredvid som `<datamapp>.bombvault-before-import-<tidsstämpel>`; körningens felmeddelande namnger den exakta sökvägen.
 
-Så lägger du tillbaka den för hand: stoppa containern, byt namn på den nuvarande datamappen så att den är ur vägen, byt tillbaka den bevarade mappen till det ursprungliga namnet och starta containern. På Unraid gör filhanteraren under fliken Shares detta.
+En datamapp som är en egen datauppsättning, som på TrueNAS, går inte att byta namn på. Importen låter då mappen ligga kvar och flyttar dess innehåll till den bevarade mappen bredvid, så datauppsättningen ovanför behöver plats för det. Importen kontrollerar det innan den stoppar containern.
+
+Så lägger du tillbaka den för hand: stoppa containern, byt namn på den nuvarande datamappen så att den är ur vägen, byt tillbaka den bevarade mappen till det ursprungliga namnet och starta containern. För en datauppsättning flyttar du innehållet i stället för att byta namn på mapparna. På Unraid gör filhanteraren under fliken Shares detta.
 
 ## En säkerhetskopia av en ZFS-datauppsättning misslyckades eller hoppade över en uppsättning {#zfs-datasets}
 

@@ -6,7 +6,7 @@ Trang này dẫn bạn đi từ một máy Unraid mới tinh đến bản sao l�
 
 | Yêu cầu | Ghi chú |
 |---|---|
-| **Unraid 6.12+** | Các phiên bản cũ hơn chưa được kiểm thử. Unraid là mục tiêu chính, nhưng BombVault cũng chạy trên một máy chủ Docker thông thường và trên TrueNAS Scale (xem [Máy chủ Docker thông thường](#generic-docker-host)). |
+| **Unraid 6.12+** | Các phiên bản cũ hơn chưa được kiểm thử. Unraid là mục tiêu chính, nhưng BombVault cũng chạy trên một máy chủ Docker thông thường và trên TrueNAS Scale (xem [Máy chủ Docker thông thường](#generic-docker-host) và [TrueNAS SCALE](#truenas)). |
 | **Vị trí kho restic** | Một đường dẫn cục bộ (khuyến nghị: mảng hoặc cache của bạn), SMB, NFS, hoặc bất kỳ backend rclone nào. |
 | **Docker socket** | Được template gắn kết tự động (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | Được template gắn kết toàn bộ tự động (`/boot` tới `/host/boot`). Nó cấp năng lượng cho việc sao lưu flash và cho phép một container đã khôi phục xuất hiện lại như một ứng dụng Unraid bình thường, có thể chỉnh sửa. |
@@ -34,7 +34,7 @@ Cách dễ nhất là qua **Community Applications**.
 
 ## Máy chủ Docker thông thường {#generic-docker-host}
 
-Không dùng Unraid? BombVault cũng chạy như một container bình thường trên bất kỳ máy chủ Docker nào (đây cũng là nền cho hỗ trợ container trên TrueNAS Scale, trước khi có mục riêng trong danh mục ứng dụng ở đó).
+Không dùng Unraid? BombVault cũng chạy như một container bình thường trên bất kỳ máy chủ Docker nào. TrueNAS SCALE có các bước riêng trong [TrueNAS SCALE](#truenas).
 
 1. Lấy tệp [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) đã sẵn sàng chỉnh sửa từ kho mã.
 2. Đặt `APP_KEY` (xem bên dưới) và trỏ volume Host Data tới gốc dữ liệu thật của bạn. Các ghi chú trong tệp hướng dẫn cả hai.
@@ -42,14 +42,54 @@ Không dùng Unraid? BombVault cũng chạy như một container bình thường
 
 Khác gì so với Unraid:
 
-- **Không có phần Flash.** Không có USB khởi động để thu giữ hay khôi phục, nên phần Flash ở đây không có việc gì làm. Thay vào đó, **Thêm** trên trang Bản sao lưu đưa ra **Cấu hình hệ thống** làm gợi ý thư mục: một bộ thư mục `/etc` khởi đầu để bạn xem lại và sửa trước khi lưu.
+- **Không có phần Flash.** Không có USB khởi động để thu giữ hay khôi phục, nên phần Flash ở đây không có việc gì làm. Thay vào đó, khi Host Data tới được `/etc` của máy chủ, **Thêm** trên trang Bản sao lưu đưa ra **Cấu hình hệ thống** làm gợi ý thư mục: một bộ thư mục `/etc` khởi đầu để bạn xem lại và sửa trước khi lưu.
 - **Không có thông báo gốc của Unraid.** Các kênh thông báo riêng của BombVault (webhook, cảnh báo hỏng bản sao ngoại vi và những thứ tương tự) vẫn chạy bình thường; chỉ việc đẩy sang hệ thống thông báo riêng của Unraid là được bỏ qua, vì ở đây không có hệ thống đó.
 - **Sao lưu VM là tùy chọn và cần một máy chủ libvirtd riêng, tới được qua SSH.** Xem khối bị chú thích trong tệp compose. Bản thân một máy chủ Docker thông thường không có sẵn trình quản lý VM.
 - **Không có widget bảng điều khiển.** BombVault Widget là một plugin Unraid, nên bước đó cũng được bỏ qua.
 - **Tìm dữ liệu của một container.** Không có quy ước `appdata` của Unraid, thư mục dữ liệu của một container được tìm từ các đoạn trong `DATA_ROOT_SEGMENTS`, volume có tên của Docker, thư mục làm việc của một dự án Compose và nhãn `bombvault.data` (xem [Nhận diện nguồn sao lưu](configuration.md#backup-source-detection)). Volume có tên và bộ định sẵn `/etc` chỉ tới được các đường dẫn bên trong điểm gắn Host Data, nên hãy trỏ Host Data tới một thư mục cha chung bao gồm cả thư mục gốc dữ liệu của Docker.
 - **`PLATFORM`.** Đặt thành `generic` hoặc `truenas`. Nếu để trống, BombVault nhận ra Unraid nhờ dấu hiệu riêng của Unraid trên điểm gắn flash và coi mọi trường hợp khác là máy chủ thông thường, và các bước chỉ dành cho Unraid được bỏ qua thay vì thử rồi thất bại.
 
-**TrueNAS Scale** đi theo cùng con đường compose; một mục danh mục đã được chuẩn bị trong kho mã nhưng chưa được gửi. Sao lưu VM ở đó cần `LIBVIRT_URI`, vì libvirtd của TrueNAS lắng nghe trên một socket riêng (`/run/truenas_libvirt/libvirt-sock`) mà ba biến `LIBVIRT_*` không thể biểu diễn (xem [Cấu hình](configuration.md)). Mức độ đã được chứng minh: bản sao lưu zvol đã được chạy trên một máy TrueNAS Scale thật, trên một zvol gắn với một VM đang chạy, và `zfs snapshot`, `zfs send`, restic và `zfs receive` đã đi trọn một vòng khớp từng byte. Một lần khôi phục đầy đủ do chính BombVault thực hiện vẫn chưa được chạy trên phần cứng TrueNAS, và zvol đó là loại thưa (sparse), nên thông lượng ở mức nhiều gigabyte chưa được kiểm thử. Hãy thử khôi phục ở đó trước khi dựa vào nó.
+### TrueNAS SCALE {#truenas}
+
+BombVault chưa có trong danh mục ứng dụng của TrueNAS, nên hãy cài nó như một ứng dụng tùy chỉnh: **Apps, Discover Apps**, rồi chọn **Install via YAML** trong menu bên cạnh **Custom App**. YAML dưới đây đặt những thứ giống như mục danh mục trong thư mục `truenas-apps` của kho mã. Thay `tank` bằng pool của bạn và điền `APP_KEY` như phần tiếp theo mô tả.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # Cho sao lưu VM:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+Sau đó mở `https://<truenas-ip>:30528/`. Những gì liệt kê trong [Khác gì so với Unraid](#generic-docker-host) cũng áp dụng ở đây, và trên TrueNAS còn có:
+
+- **Capabilities.** BombVault cần cả sáu capability ở trên. Sao lưu VM sẽ thất bại nếu thiếu `SETPCAP`.
+- **Host Data** là một đường dẫn máy chủ trên một tập dữ liệu, ở đây là `/mnt/tank`, được gắn kết tại cùng đường dẫn bên trong ứng dụng. Vì vậy `HOST_SOURCE_ROOT` và `HOST_MOUNT_ROOT` đều nêu đường dẫn này. `rslave` chuyển tiếp các lần gắn kết mà máy chủ tạo sau đó, điều mà sao lưu tập dữ liệu ZFS cần.
+- **Dữ liệu trong ixVolume không được sao lưu.** Một ứng dụng dùng ixVolume làm nơi lưu trữ sẽ giữ dữ liệu dưới `/mnt/.ix-apps`, bên ngoài Host Data. BombVault chỉ lưu định nghĩa của ứng dụng, và lần chạy nêu tên các thư mục đã bị bỏ ra. Với mọi ứng dụng mà bạn muốn sao lưu dữ liệu, hãy chọn kiểu lưu trữ **Host Path** trên một tập dữ liệu nằm dưới Host Data.
+- **Sao lưu VM và tập dữ liệu ZFS** kết nối tới TrueNAS qua SSH với quyền root. Bật dịch vụ SSH trong **System, Services**, và thêm khóa công khai từ **Cài đặt, Tích hợp, SSH máy chủ** cho người dùng root trong **Credentials, Users**. Sao lưu VM còn cần `LIBVIRT_URI` như ở trên, vì libvirtd của TrueNAS lắng nghe trên một socket riêng. Khi cả `LIBVIRT_URI` lẫn `LIBVIRT_HOST` đều chưa được đặt, BombVault dùng cổng mặc định (default gateway) của ứng dụng làm máy chủ, vì `host.docker.internal` không phân giải được trong một ứng dụng TrueNAS. [Hướng dẫn sao lưu VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) trình bày chi tiết, kể cả VM trên zvol.
+- **Bản sao ZFS dùng một khóa khác.** Một bản sao trên máy chủ ZFS thứ hai đăng nhập bằng khóa mà hộp thoại bản sao hiển thị, không phải khóa SSH máy chủ. Hãy thêm khóa đó trên máy chủ nhận.
+- **Một ứng dụng đã xóa được đưa lại qua hai bước.** Trước tiên cài lại nó trong TrueNAS với cùng tên, việc này tạo lại mạng của nó, rồi khôi phục dữ liệu của nó trong BombVault. Cho tới lúc đó, kiểm tra trước khi khôi phục báo mạng bị thiếu, và việc khôi phục từ chối trước khi thay đổi bất cứ thứ gì.
+- **Bên cạnh bản gốc** tạo một container Docker thông thường. Nó chạy được, nhưng màn hình Apps của TrueNAS không liệt kê nó.
+- **Bản kết xuất cơ sở dữ liệu** hoạt động trên các điểm gắn kết tập dữ liệu. Khi nhập vào một thư mục dữ liệu vốn là một tập dữ liệu riêng, nội dung cũ được chuyển vào một thư mục bên cạnh, nên tập dữ liệu phía trên cần đủ chỗ cho chúng.
 
 ## Cài đặt bắt buộc duy nhất
 

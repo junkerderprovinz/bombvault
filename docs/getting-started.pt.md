@@ -6,7 +6,7 @@ Esta página acompanha-o desde uma máquina Unraid acabada de instalar até ao s
 
 | Requisito | Notas |
 |---|---|
-| **Unraid 6.12+** | Versões anteriores não são testadas. O Unraid é o alvo principal, mas o BombVault também corre num host Docker simples e no TrueNAS Scale (consulta [Host Docker genérico](#generic-docker-host)). |
+| **Unraid 6.12+** | Versões anteriores não são testadas. O Unraid é o alvo principal, mas o BombVault também corre num host Docker simples e no TrueNAS Scale (consulta [Host Docker genérico](#generic-docker-host) e [TrueNAS SCALE](#truenas)). |
 | **Localização do repo restic** | Um caminho local (recomendado: o seu array ou cache), SMB, NFS, ou qualquer backend rclone. |
 | **Socket Docker** | Montado automaticamente pelo template (`/var/run/docker.sock`). |
 | **Flash do Unraid** (`/boot`) | Montada por inteiro pelo template automaticamente (`/boot` para `/host/boot`). Alimenta o backup do flash e permite que um container restaurado reapareça como uma aplicação Unraid normal e editável. |
@@ -34,7 +34,7 @@ O caminho mais fácil são as **Community Applications**.
 
 ## Anfitrião Docker genérico {#generic-docker-host}
 
-Não estás no Unraid? O BombVault também corre como contentor simples em qualquer anfitrião Docker (é também o que sustenta o suporte a contentores no TrueNAS Scale, antes de ter uma entrada própria no catálogo de aplicações).
+Não estás no Unraid? O BombVault também corre como contentor simples em qualquer anfitrião Docker. O TrueNAS SCALE tem os seus próprios passos em [TrueNAS SCALE](#truenas).
 
 1. Vai buscar ao repositório o ficheiro [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml), pronto a editar.
 2. Define o `APP_KEY` (ver abaixo) e aponta o volume Host Data para a tua raiz de dados real. Os comentários do ficheiro explicam as duas coisas.
@@ -42,14 +42,54 @@ Não estás no Unraid? O BombVault também corre como contentor simples em qualq
 
 O que muda face ao Unraid:
 
-- **Não há secção Flash.** Não existe pen de arranque para capturar ou repor, por isso a secção Flash não tem aqui nada que fazer. Em vez disso, **Adicionar** na página Backups oferece **Configuração do sistema** como sugestão de pasta: um conjunto de pastas inicial com `/etc` que revês e editas antes de guardar.
+- **Não há secção Flash.** Não existe pen de arranque para capturar ou repor, por isso a secção Flash não tem aqui nada que fazer. Em vez disso, quando o Host Data alcança o `/etc` do anfitrião, **Adicionar** na página Backups oferece **Configuração do sistema** como sugestão de pasta: um conjunto de pastas inicial com `/etc` que revês e editas antes de guardar.
 - **Não há notificações nativas do Unraid.** Os canais de notificação próprios do BombVault (webhook, alertas de falha fora do local, etc.) funcionam normalmente; só é omitido o envio específico para o sistema de notificações do Unraid, já que aqui esse sistema não existe.
 - **O backup de máquinas virtuais é opcional e precisa de um anfitrião libvirtd separado, alcançável por SSH.** Vê o bloco comentado no ficheiro compose. Um anfitrião Docker genérico não traz gestor de máquinas virtuais.
 - **Sem widget no painel.** O BombVault Widget é um plugin do Unraid, por isso esse passo também é omitido.
 - **Encontrar os dados de um container.** Sem a convenção `appdata` do Unraid, a pasta de dados de um container é encontrada a partir dos segmentos em `DATA_ROOT_SEGMENTS`, dos volumes com nome do Docker, do diretório de trabalho de um projeto Compose e da etiqueta `bombvault.data` (consulta [Deteção das fontes de backup](configuration.md#backup-source-detection)). Os volumes com nome e a predefinição `/etc` só alcançam caminhos dentro da montagem Host Data, por isso aponta o Host Data para uma pasta ascendente comum que abranja também a raiz de dados do Docker.
 - **`PLATFORM`.** Define-a como `generic` ou `truenas`. Se não for definida, o BombVault deteta o Unraid pelo seu próprio marcador na montagem do flash e trata tudo o resto como genérico, e os passos exclusivos do Unraid são omitidos em vez de serem tentados e falharem.
 
-O **TrueNAS Scale** segue o mesmo caminho com compose; há uma entrada de catálogo preparada no repositório, mas ainda não submetida. Aí o backup de VMs precisa de `LIBVIRT_URI`, porque o libvirtd do TrueNAS escuta num socket próprio (`/run/truenas_libvirt/libvirt-sock`) que as três variáveis `LIBVIRT_*` não conseguem exprimir (consulta [Configuração](configuration.md)). Até onde isto está comprovado: o backup de zvol foi executado numa máquina TrueNAS Scale real, num zvol ligado a uma VM em execução, e `zfs snapshot`, `zfs send`, restic e `zfs receive` fizeram a ida e volta byte a byte. Um restauro completo conduzido pelo próprio BombVault ainda não foi executado em hardware TrueNAS, e esse zvol era esparso, por isso o débito com muitos gigabytes não está testado. Testa aí um restauro antes de confiares nele.
+### TrueNAS SCALE {#truenas}
+
+O BombVault ainda não está no catálogo de aplicações do TrueNAS, por isso instala-o como aplicação personalizada: **Apps, Discover Apps** e depois **Install via YAML** no menu ao lado de **Custom App**. O YAML abaixo define o mesmo que a entrada de catálogo na pasta `truenas-apps` do repositório. Substitui `tank` pelo teu pool e preenche `APP_KEY` como explica a secção seguinte.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # Para backups de VM:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+Depois abre `https://<truenas-ip>:30528/`. O que está em [O que muda face ao Unraid](#generic-docker-host) vale também aqui, e no TrueNAS:
+
+- **Capabilities.** O BombVault precisa das seis acima. Sem `SETPCAP`, os backups de VM falham.
+- **Host Data** é um caminho do anfitrião num conjunto de dados, aqui `/mnt/tank`, montado no mesmo caminho dentro da aplicação. É por isso que `HOST_SOURCE_ROOT` e `HOST_MOUNT_ROOT` o indicam ambas. `rslave` passa as montagens que o anfitrião faz mais tarde, de que os backups de conjuntos de dados ZFS precisam.
+- **Os dados num ixVolume não entram no backup.** Uma aplicação cujo armazenamento é um ixVolume guarda os seus dados em `/mnt/.ix-apps`, fora do Host Data. O BombVault guarda só a definição da aplicação, e a execução indica as pastas que deixou de fora. Para cada aplicação cujos dados queiras no backup, escolhe armazenamento **Host Path** num conjunto de dados abaixo do Host Data.
+- **Os backups de VM e de conjuntos de dados ZFS** chegam ao TrueNAS por SSH como root. Ativa o serviço SSH em **System, Services** e adiciona a chave pública de **Definições, Integrações, SSH do anfitrião** ao utilizador root em **Credentials, Users**. Os backups de VM precisam também de `LIBVIRT_URI` como acima, porque o libvirtd do TrueNAS escuta num socket próprio. Sem `LIBVIRT_URI` nem `LIBVIRT_HOST` definidos, o BombVault usa como anfitrião o gateway predefinido da aplicação, já que `host.docker.internal` não resolve numa aplicação do TrueNAS. O [guia de backup de VMs](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) cobre os pormenores, incluindo VMs em zvols.
+- **Uma réplica ZFS usa outra chave.** Uma réplica num segundo servidor ZFS entra com a chave que a caixa de diálogo da réplica mostra, e não com a chave SSH do anfitrião. Adiciona essa no servidor que recebe.
+- **Uma aplicação apagada volta em dois passos.** Primeiro reinstala-a no TrueNAS com o mesmo nome, o que volta a criar a sua rede, e depois restaura os seus dados no BombVault. Até lá, a verificação antes do restauro indica a rede em falta, e o restauro para antes de alterar o que quer que seja.
+- **Um restauro Ao lado do original** cria um container Docker simples. Funciona, mas o ecrã Apps do TrueNAS não o mostra.
+- **Os dumps de bases de dados** funcionam em montagens de conjuntos de dados. Uma importação para uma pasta de dados que é um conjunto de dados próprio move o conteúdo antigo para uma pasta ao lado, por isso o conjunto de dados acima precisa de espaço para ele.
 
 ## A única definição obrigatória
 

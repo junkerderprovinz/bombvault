@@ -326,6 +326,7 @@ const offsiteSourcePrefix = "offsite:"
 
 var (
 	errNoOffsiteRepo        = errors.New("no off-site repo configured for this domain")
+	errOffsiteTargetsOff    = errors.New("every off-site target of this domain is switched off")
 	errUnknownOffsiteTarget = errors.New("no such off-site target in this domain")
 )
 
@@ -361,8 +362,9 @@ func validOffsiteTargetID(id string) bool {
 }
 
 // offsiteTargetForSource resolves the destination a source addresses. Bare
-// "offsite" is the first enabled target; "offsite:<id>" is that row among all of
-// the domain's targets, switched off or not, and nothing else.
+// "offsite" is the first enabled target, or the one the off-site setting
+// describes while the domain has no target row; "offsite:<id>" is that row
+// among all of the domain's targets, switched off or not, and nothing else.
 func (s *Service) offsiteTargetForSource(settings store.Settings, domain, source string) (store.OffsiteTarget, error) {
 	if !isOffsiteSource(source) {
 		return store.OffsiteTarget{}, errNoOffsiteRepo
@@ -377,15 +379,10 @@ func (s *Service) offsiteTargetForSource(settings store.Settings, domain, source
 		}
 		return t, nil
 	}
-	if targets := s.offsiteTargetsFor(domain); len(targets) > 0 {
+	if targets := s.offsiteReplicationTargets(domain, settings); len(targets) > 0 {
 		return targets[0], nil
 	}
-	// No target row: the one target the settings columns describe.
-	loc := offsiteRepoFromSettings(domain, settings)
-	if loc == "" {
-		return store.OffsiteTarget{}, errNoOffsiteRepo
-	}
-	return settingsOffsiteTarget(domain, settings, loc), nil
+	return store.OffsiteTarget{}, s.noOffsiteRepoErr(domain)
 }
 
 // offsiteSourceImmutable reports whether the destination a source addresses is

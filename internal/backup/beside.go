@@ -84,6 +84,9 @@ func runContainerBeside(ctx context.Context, d BesideContainerDeps) error {
 	if live != "" {
 		return fmt.Errorf("%w: a container named %q already exists", ErrBesideTaken, name)
 	}
+	if err := CheckRestoreNetwork(ctx, d.Docker, d.Copy); err != nil {
+		return err
+	}
 	if len(d.Dirs) > 0 {
 		if err := d.Restic.VerifySnapshot(ctx, d.RepoPath, d.SnapshotID); err != nil {
 			return fmt.Errorf("restore: snapshot preflight: %w", err)

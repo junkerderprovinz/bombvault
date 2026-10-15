@@ -22,6 +22,11 @@ type RestoreDrill struct {
 	// repository going bad is a finding of its own rather than a gap in the
 	// domain's history. Empty for a local drill and for a domain-wide one.
 	OffsiteTargetID string `json:"offsiteTargetId"`
+	// Item and SnapshotID name what a DR drill restored: the container, VM,
+	// file set or dataset, and the short id of its snapshot. Item is empty
+	// where the domain has no items, as for the flash drive.
+	Item       string `json:"item"`
+	SnapshotID string `json:"snapshotId"`
 }
 
 // DrillKey is one series of restore drills: a domain and source, optionally one
@@ -38,9 +43,9 @@ func (r *Repo) AddRestoreDrill(d RestoreDrill) error {
 		d.Kind = "subset"
 	}
 	_, err := r.db.Exec(`
-		INSERT INTO restore_drills (domain, source, at, ok, detail, kind, offsite_target_id)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		d.Domain, d.Source, d.At, boolInt(d.OK), d.Detail, d.Kind, d.OffsiteTargetID,
+		INSERT INTO restore_drills (domain, source, at, ok, detail, kind, offsite_target_id, item, snapshot_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		d.Domain, d.Source, d.At, boolInt(d.OK), d.Detail, d.Kind, d.OffsiteTargetID, d.Item, d.SnapshotID,
 	)
 	if err != nil {
 		return fmt.Errorf("AddRestoreDrill: %w", err)
@@ -53,7 +58,7 @@ func (r *Repo) AddRestoreDrill(d RestoreDrill) error {
 // has been recorded yet.
 func (r *Repo) LatestRestoreDrill(domain, source string) (RestoreDrill, bool, error) {
 	row := r.db.QueryRow(`
-		SELECT domain, source, at, ok, detail, kind, offsite_target_id
+		SELECT domain, source, at, ok, detail, kind, offsite_target_id, item, snapshot_id
 		FROM restore_drills
 		WHERE domain = ? AND source = ?
 		ORDER BY at DESC
@@ -74,7 +79,7 @@ func (r *Repo) LatestRestoreDrill(domain, source string) (RestoreDrill, bool, er
 // recorded.
 func (r *Repo) LatestRestoreDrillKind(domain, source, kind string) (RestoreDrill, bool, error) {
 	row := r.db.QueryRow(`
-		SELECT domain, source, at, ok, detail, kind, offsite_target_id
+		SELECT domain, source, at, ok, detail, kind, offsite_target_id, item, snapshot_id
 		FROM restore_drills
 		WHERE domain = ? AND source = ? AND kind = ?
 		ORDER BY at DESC
@@ -96,7 +101,7 @@ func (r *Repo) ListRestoreDrills(domain, source string, limit int) ([]RestoreDri
 		limit = defaultRestoreDrillLimit
 	}
 	rows, err := r.db.Query(`
-		SELECT domain, source, at, ok, detail, kind, offsite_target_id
+		SELECT domain, source, at, ok, detail, kind, offsite_target_id, item, snapshot_id
 		FROM restore_drills
 		WHERE domain = ? AND source = ?
 		ORDER BY at DESC
@@ -151,7 +156,7 @@ func (r *Repo) ListRestoreDrillsKind(domain, source, targetID, kind string, limi
 		limit = defaultRestoreDrillLimit
 	}
 	rows, err := r.db.Query(`
-		SELECT domain, source, at, ok, detail, kind, offsite_target_id
+		SELECT domain, source, at, ok, detail, kind, offsite_target_id, item, snapshot_id
 		FROM restore_drills
 		WHERE domain = ? AND source = ? AND offsite_target_id = ? AND kind = ?
 		ORDER BY at DESC, rowid DESC
@@ -175,7 +180,7 @@ func (r *Repo) ListRestoreDrillsKind(domain, source, targetID, kind string, limi
 func scanRestoreDrill(s scanner) (RestoreDrill, error) {
 	var d RestoreDrill
 	var ok int
-	if err := s.Scan(&d.Domain, &d.Source, &d.At, &ok, &d.Detail, &d.Kind, &d.OffsiteTargetID); err != nil {
+	if err := s.Scan(&d.Domain, &d.Source, &d.At, &ok, &d.Detail, &d.Kind, &d.OffsiteTargetID, &d.Item, &d.SnapshotID); err != nil {
 		return RestoreDrill{}, err
 	}
 	d.OK = ok != 0

@@ -6,7 +6,7 @@ Această pagină te conduce de la o stație Unraid nouă până la primul tău b
 
 | Cerință | Note |
 |---|---|
-| **Unraid 6.12+** | Versiunile mai vechi nu sunt testate. Unraid este ținta principală, dar BombVault rulează și pe o gazdă Docker obișnuită și pe TrueNAS Scale (vezi [Gazdă Docker generică](#generic-docker-host)). |
+| **Unraid 6.12+** | Versiunile mai vechi nu sunt testate. Unraid este ținta principală, dar BombVault rulează și pe o gazdă Docker obișnuită și pe TrueNAS Scale (vezi [Gazdă Docker generică](#generic-docker-host) și [TrueNAS SCALE](#truenas)). |
 | **Locația depozitului restic** | O cale locală (recomandat: array-ul sau cache-ul tău), SMB, NFS sau orice backend rclone. |
 | **Socket Docker** | Montat automat de șablon (`/var/run/docker.sock`). |
 | **Flash Unraid** (`/boot`) | Montat integral de șablon, automat (`/boot` la `/host/boot`). Alimentează backupul flash și permite ca un container restaurat să reapară ca o aplicație Unraid normală, editabilă. |
@@ -34,7 +34,7 @@ Calea cea mai simplă este prin **Community Applications**.
 
 ## Gazdă Docker generică {#generic-docker-host}
 
-Nu ești pe Unraid? BombVault rulează și ca un container obișnuit pe orice gazdă Docker (tot pe asta se sprijină și suportul pentru containere pe TrueNAS Scale, până la o intrare proprie în catalogul de aplicații de acolo).
+Nu ești pe Unraid? BombVault rulează și ca un container obișnuit pe orice gazdă Docker. TrueNAS SCALE are pașii lui proprii la [TrueNAS SCALE](#truenas).
 
 1. Ia din depozit fișierul [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml), gata de editat.
 2. Setează `APP_KEY` (vezi mai jos) și îndreaptă volumul Host Data către rădăcina ta reală de date: comentariile din fișier le parcurg pe amândouă.
@@ -42,14 +42,54 @@ Nu ești pe Unraid? BombVault rulează și ca un container obișnuit pe orice ga
 
 Ce este diferit față de Unraid:
 
-- **Nu există secțiunea Flash.** Nu există un stick de pornire de capturat sau de restaurat, așa că secțiunea Flash nu are ce face aici. În schimb, **Adaugă** de pe pagina Copii de rezervă oferă **Configurația sistemului** ca sugestie de folder: un set inițial de foldere `/etc` pe care îl revizuiești înainte de salvare.
+- **Nu există secțiunea Flash.** Nu există un stick de pornire de capturat sau de restaurat, așa că secțiunea Flash nu are ce face aici. În schimb, când Host Data ajunge la `/etc` al gazdei, **Adaugă** de pe pagina Copii de rezervă oferă **Configurația sistemului** ca sugestie de folder: un set inițial de foldere `/etc` pe care îl revizuiești înainte de salvare.
 - **Nu există notificări native Unraid.** Canalele proprii de notificare ale BombVault (webhook, alerte de eșec în afara sediului și așa mai departe) funcționează ca de obicei; se omite doar trimiterea specifică sistemului de notificări al Unraid, întrucât aici nu există un asemenea sistem.
 - **Copierea mașinilor virtuale este opțională și are nevoie de o gazdă libvirtd separată, accesibilă prin SSH.** Vezi blocul comentat din fișierul compose. O gazdă Docker generică nu vine cu niciun administrator de mașini virtuale.
 - **Nu există widget pentru panou.** BombVault Widget este un plugin Unraid, așa că și acest pas este omis.
 - **Găsirea datelor unui container.** Fără convenția `appdata` a Unraid, folderul de date al unui container este găsit pornind de la segmentele din `DATA_ROOT_SEGMENTS`, volumele Docker cu nume, directorul de lucru al unui proiect Compose și eticheta `bombvault.data` (vezi [Detectarea surselor de copie de rezervă](configuration.md#backup-source-detection)). Volumele cu nume și presetarea `/etc` ajung doar la căi din interiorul montării Host Data, așa că îndreaptă Host Data către un director părinte comun care acoperă și rădăcina de date a Docker.
 - **`PLATFORM`.** Seteaz-o la `generic` sau `truenas`. Dacă nu este setată, BombVault recunoaște Unraid după propriul marcaj de pe montarea flash și tratează orice altceva ca generic, iar pașii specifici Unraid sunt omiși în loc să fie încercați și să eșueze.
 
-**TrueNAS Scale** urmează aceeași cale cu compose; o intrare de catalog este pregătită în depozit, dar încă netrimisă. Acolo backupul VM are nevoie de `LIBVIRT_URI`, pentru că libvirtd-ul din TrueNAS ascultă pe un socket propriu (`/run/truenas_libvirt/libvirt-sock`) pe care cele trei variabile `LIBVIRT_*` nu îl pot exprima (vezi [Configurare](configuration.md)). Cât de departe s-a verificat: backupul de zvol a fost rulat pe o stație TrueNAS Scale reală, pe un zvol atașat unui VM pornit, iar `zfs snapshot`, `zfs send`, restic și `zfs receive` l-au dus și l-au adus înapoi identic, octet cu octet. O restaurare completă condusă chiar de BombVault nu a fost încă rulată pe hardware TrueNAS, iar acel zvol era sparse, așa că debitul la mulți gigaocteți nu este testat. Testează acolo o restaurare înainte să te bazezi pe ea.
+### TrueNAS SCALE {#truenas}
+
+BombVault nu este încă în catalogul de aplicații TrueNAS, așa că instalează-l ca aplicație personalizată: **Apps, Discover Apps**, apoi **Install via YAML** din meniul de lângă **Custom App**. YAML-ul de mai jos setează aceleași lucruri ca intrarea de catalog din folderul `truenas-apps` al depozitului. Înlocuiește `tank` cu pool-ul tău și completează `APP_KEY` așa cum descrie secțiunea următoare.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # Pentru backupurile VM:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+Apoi deschide `https://<truenas-ip>:30528/`. Ce este enumerat la [Ce este diferit față de Unraid](#generic-docker-host) se aplică și aici, iar pe TrueNAS:
+
+- **Capabilități.** BombVault are nevoie de cele șase de mai sus. Fără `SETPCAP`, backupurile VM eșuează.
+- **Host Data** este o cale a gazdei pe un set de date, aici `/mnt/tank`, montată la aceeași cale în aplicație. De aceea `HOST_SOURCE_ROOT` și `HOST_MOUNT_ROOT` o numesc amândouă. `rslave` transmite montările pe care gazda le face mai târziu, de care au nevoie backupurile seturilor de date ZFS.
+- **Datele dintr-un ixVolume nu intră în copie.** O aplicație al cărei spațiu de stocare este un ixVolume își ține datele sub `/mnt/.ix-apps`, în afara Host Data. BombVault salvează doar definiția aplicației, iar rularea numește folderele pe care le-a lăsat deoparte. Pentru fiecare aplicație ale cărei date vrei să le copiezi, alege stocare **Host Path** pe un set de date de sub Host Data.
+- **Backupurile VM și ale seturilor de date ZFS** ajung la TrueNAS prin SSH ca root. Pornește serviciul SSH la **System, Services** și adaugă cheia publică din **Setări, Integrări, SSH al gazdei** la utilizatorul root, la **Credentials, Users**. Backupurile VM au nevoie și de `LIBVIRT_URI` ca mai sus, pentru că libvirtd-ul din TrueNAS ascultă pe un socket propriu. Dacă nu este setat nici `LIBVIRT_URI`, nici `LIBVIRT_HOST`, BombVault folosește ca gazdă gateway-ul implicit al aplicației, pentru că `host.docker.internal` nu se rezolvă într-o aplicație TrueNAS. [Ghidul de backup VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) acoperă detaliile, inclusiv VM-urile pe zvol-uri.
+- **O replică ZFS folosește altă cheie.** O replică pe un al doilea server ZFS se conectează cu cheia pe care o arată dialogul replicii, nu cu cheia SSH a gazdei. Adaug-o pe aceea pe serverul care primește.
+- **O aplicație ștearsă revine în doi pași.** Reinstaleaz-o mai întâi în TrueNAS cu același nume, ceea ce îi creează din nou rețeaua, apoi restaurează-i datele în BombVault. Până atunci, verificarea înainte de restaurare raportează rețeaua lipsă, iar restaurarea se oprește înainte să schimbe ceva.
+- **O restaurare Lângă original** creează un container Docker obișnuit. Rulează, dar ecranul Apps din TrueNAS nu îl afișează.
+- **Dumpurile bazelor de date** funcționează pe montări de seturi de date. Un import într-un folder de date care este un set de date propriu mută conținutul vechi într-un folder de lângă el, așa că setul de date de deasupra are nevoie de loc pentru el.
 
 ## Singura setare obligatorie
 

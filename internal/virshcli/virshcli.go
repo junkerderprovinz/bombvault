@@ -33,14 +33,16 @@ func (c *Client) baseArgs(args ...string) []string {
 }
 
 // absPathRe strips absolute paths from error messages so host paths do not
-// leak to the caller, as restic's lastReason does.
-var absPathRe = regexp.MustCompile(`(/[^\s:'"]+)+`)
+// leak to the caller, as restic's lastReason does. A path begins at a slash
+// that opens a token, so a zvol dataset name stays readable. Replace with
+// "${1}[path]".
+var absPathRe = regexp.MustCompile(`(^|[\s"'(\[=:,~])(?:/[^\s:"']*[^\s:"').,;\]])+`)
 
 // credentialRe matches a "user:password@" URL userinfo segment. It is the
 // same scrub internal/restic applies to its errors (its credentialRe comment
 // covers the trade-offs). A libvirt URI rarely carries a password, so this is
 // defence in depth.
-var credentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@"']+@`)
+var credentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s@"']+@`)
 
 // run executes virsh and returns its trimmed stdout. On failure it logs the
 // full stderr and returns only the scrubbed last line of it.
@@ -75,7 +77,7 @@ func lastReason(stderr string) string {
 	lines := strings.Split(strings.TrimSpace(stderr), "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
 		if l := strings.TrimSpace(lines[i]); l != "" {
-			l = absPathRe.ReplaceAllString(l, "[path]")
+			l = absPathRe.ReplaceAllString(l, "${1}[path]")
 			return credentialRe.ReplaceAllString(l, "[redacted]@")
 		}
 	}

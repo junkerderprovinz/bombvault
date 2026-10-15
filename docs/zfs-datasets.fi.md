@@ -114,7 +114,7 @@ Kytke se päälle merkinnän Asetukset-välilehden kortissa **Replika**. Siellä
 Mikä tahansa kone, jossa on ZFS ja SSH, voi vastaanottaa, esimerkiksi toinen Unraid tai TrueNAS. BombVaultin ei tarvitse toimia siellä.
 
 1. Valitse kohdassa **Asetukset, Pariliitos** **Yhdistä SSH:n kautta** kohdassa **ZFS-palvelin ilman BombVaultia**, tai **Lisää ZFS-palvelin** merkinnän **Replika**-kortissa.
-2. Anna osoite, käyttäjä ja portti. Ikkuna näyttää BombVaultin julkisen avaimen. Lisää se käyttäjän tiedostoon `~/.ssh/authorized_keys` palvelimella. Unraidissa se on kohdassa **Users, root, SSH keys**. Asetuksesta **Display Settings** riippuen Users on ylävalikossa tai kohdassa Settings. Tämä on replikan avain. Se on eri kuin virtuaalikoneiden ja isännän SSH-yhteyden avain, joten lisää se, vaikka se toinen olisi jo hyväksytty.
+2. Anna osoite, käyttäjä ja portti. Ikkuna näyttää BombVaultin julkisen avaimen. Lisää se käyttäjän tiedostoon `~/.ssh/authorized_keys` palvelimella. Unraidissa se on kohdassa **Users, root, SSH keys**. Asetuksesta **Display Settings** riippuen Users on ylävalikossa tai kohdassa Settings. TrueNASissa muokkaa käyttäjää kohdassa **Credentials, Users**. Tämä on replikan avain. Se on eri kuin virtuaalikoneiden ja isännän SSH-yhteyden avain, joten lisää se, vaikka se toinen olisi jo hyväksytty.
 3. Testaa yhteys. Ikkuna luettelee sitten palvelimen poolit. Valitse yksi ja aseta juuri, jonka oletus on `<pool>/bombvault-replica`.
 4. Valitse uusi palvelin merkinnän **Replika**-kortissa. Palvelimella on sen jälkeen oma korttinsa Ilmentymät-sivulla, ja **Avaa** vie sen sivulle.
 
@@ -285,7 +285,8 @@ Jokainen rivi on yksi liitos kontin sisällä. Tietojoukon rivi näyttää sen p
 
 ## TrueNAS SCALE {#truenas}
 
-- Kun `LIBVIRT_URI` on asetettu (kuten virtuaalikoneiden varmuuskopioita varten TrueNASissa), BombVault ottaa zfs-komentojensa SSH-isännän, käyttäjän ja portin URI:sta, jokaisen, jota ei ole asetettu erikseen. Ilman virtuaalikoneiden varmuuskopioita aseta sen sijaan `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` ja `LIBVIRT_SSH_PORT`. Lisää muuttujat kohtaan **Additional Environment Variables**.
+- Kun `LIBVIRT_URI` on asetettu (kuten virtuaalikoneiden varmuuskopioita varten TrueNASissa), BombVault ottaa zfs-komentojensa SSH-isännän, käyttäjän ja portin URI:sta, jokaisen, jota ei ole asetettu erikseen. Ilman virtuaalikoneiden varmuuskopioita mitään ei tarvitse asettaa: `host.docker.internal` ei ratkea TrueNAS-sovelluksessa, joten BombVault tavoittaa isännän sovelluksen oletusyhdyskäytävän kautta, root-käyttäjänä portissa 22. Aseta `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` ja `LIBVIRT_SSH_PORT` sovelluksen `environment`-osaan, kun haluat toisen osoitteen tai käyttäjän.
+- Lisää Palvelimen SSH -avain kohdasta **Asetukset, Integraatiot, Palvelimen SSH** root-käyttäjälle kohdassa **Credentials, Users** ja ota SSH-palvelu käyttöön kohdassa **System, Services**. [Replika](#replica-push) tähän tai toiseen TrueNASiin tarvitsee lisäksi replikan avaimen, joka on eri avain.
 - Muu käyttäjä kuin root tarvitsee oikeuden merkinnän ylimmälle tietojoukolle, joka kattaa silloin jokaisen sen alapuolisen tietojoukon:
 
   ```
@@ -295,4 +296,4 @@ Jokainen rivi on yksi liitos kontin sisällä. Tietojoukon rivi näyttää sen p
   Palautus uuteen tietojoukkoon tarvitsee lisäksi `create`-oikeuden yläpuoliseen tietojoukkoon, ja tallennettujen ominaisuuksien asettaminen tarvitsee oikeudet niihin ominaisuuksiin.
 
   TrueNASissa SSH-istunnolla ilman root-oikeuksia ei ole polussaan hakemistoa `/usr/sbin`; BombVault kutsuu silloin suoraan `/usr/sbin/zfs`.
-- Sovelluksen **Host Data** -polun on oltava isäntäpolku tietojoukkojen yläpuolella, esimerkiksi `/mnt/tank`, ei ixVolume. Isäntäpolun kanssa sovellus välittää isännän uudet liitokset BombVaultille (`rslave`), ja sitä pääsy tilannevedoksiin tarvitsee.
+- Sovelluksen **Host Data** -polun on oltava isäntäpolku tietojoukkojen yläpuolella, esimerkiksi `/mnt/tank`, ei ixVolume. Isäntäpolun kanssa sovellus välittää isännän uudet liitokset BombVaultille (`rslave`), ja sitä pääsy tilannevedoksiin tarvitsee. Koko sovelluksen asennus on kuvattu kohdassa [TrueNAS SCALE](getting-started.md#truenas).

@@ -114,7 +114,7 @@ BombVault는 백업할 때마다 각 데이터세트에 로컬로 설정된 ZFS 
 ZFS와 SSH가 있는 컴퓨터라면 어디든 받을 수 있습니다. 예를 들어 두 번째 Unraid나 TrueNAS입니다. 그곳에서 BombVault가 실행될 필요는 없습니다.
 
 1. **설정, 페어링**의 **BombVault 없는 ZFS 서버**에서 **SSH로 연결**을 고르거나, 항목의 **복제본** 카드에서 **ZFS 서버 추가**를 고릅니다.
-2. 주소, 사용자, 포트를 입력합니다. 대화 상자에 BombVault의 공개 키가 표시됩니다. 이를 서버에 있는 그 사용자의 `~/.ssh/authorized_keys`에 추가합니다. Unraid에서는 **Users, root, SSH keys**에 있습니다. **Display Settings**에 따라 Users는 헤더 메뉴 또는 Settings 아래에 있습니다. 이것은 복제본용 키입니다. VM 및 호스트 SSH 연결의 키와는 다르므로, 그 키가 이미 허용되어 있어도 이 키를 추가하세요.
+2. 주소, 사용자, 포트를 입력합니다. 대화 상자에 BombVault의 공개 키가 표시됩니다. 이를 서버에 있는 그 사용자의 `~/.ssh/authorized_keys`에 추가합니다. Unraid에서는 **Users, root, SSH keys**에 있습니다. **Display Settings**에 따라 Users는 헤더 메뉴 또는 Settings 아래에 있습니다. TrueNAS에서는 **Credentials, Users**에서 사용자를 편집합니다. 이것은 복제본용 키입니다. VM 및 호스트 SSH 연결의 키와는 다르므로, 그 키가 이미 허용되어 있어도 이 키를 추가하세요.
 3. 연결을 테스트합니다. 그러면 대화 상자에 서버의 풀이 나열됩니다. 하나를 고르고 루트를 정합니다. 기본값은 `<pool>/bombvault-replica`입니다.
 4. 항목의 **복제본** 카드에서 새 서버를 고릅니다. 그러면 서버에 인스턴스 페이지의 전용 카드가 생기고, **열기**를 누르면 그 페이지로 이동합니다.
 
@@ -285,7 +285,8 @@ docker exec BombVault grep zfs /proc/self/mountinfo
 
 ## TrueNAS SCALE {#truenas}
 
-- `LIBVIRT_URI`가 설정되어 있으면(TrueNAS의 VM 백업처럼), BombVault는 zfs 명령에 쓸 SSH 호스트, 사용자, 포트 중 따로 설정되지 않은 것을 URI에서 가져옵니다. VM 백업을 쓰지 않는다면 대신 `LIBVIRT_HOST`, `LIBVIRT_SSH_USER`, `LIBVIRT_SSH_PORT`를 설정하세요. 변수는 **Additional Environment Variables**에 추가합니다.
+- `LIBVIRT_URI`가 설정되어 있으면(TrueNAS의 VM 백업처럼), BombVault는 zfs 명령에 쓸 SSH 호스트, 사용자, 포트 중 따로 설정되지 않은 것을 URI에서 가져옵니다. VM 백업을 쓰지 않는다면 아무것도 설정할 필요가 없습니다. TrueNAS 앱에서는 `host.docker.internal`이 확인되지 않으므로, BombVault는 앱의 기본 게이트웨이를 통해 root로 포트 22에서 호스트에 접속합니다. 다른 주소나 사용자를 쓰려면 앱의 `environment`에서 `LIBVIRT_HOST`, `LIBVIRT_SSH_USER`, `LIBVIRT_SSH_PORT`를 설정하세요.
+- **설정, 연동, 호스트 SSH**의 호스트 SSH 키를 **Credentials, Users**에서 root에 추가하고, **System, Services**에서 SSH 서비스를 켜세요. 이 TrueNAS나 다른 TrueNAS로의 [복제본](#replica-push)에는 그와 다른 키인 복제본용 키도 필요합니다.
 - root가 아닌 사용자는 항목의 최상위 데이터세트에 대한 권한이 필요하며, 이 권한이 그 아래 모든 데이터세트에 적용됩니다.
 
   ```
@@ -295,4 +296,4 @@ docker exec BombVault grep zfs /proc/self/mountinfo
   새 데이터세트로 복원하려면 상위 데이터세트에 `create` 권한도 필요하고, 저장된 속성을 설정하려면 해당 속성에 대한 권한이 필요합니다.
 
   TrueNAS에서 root가 아닌 SSH 세션은 경로에 `/usr/sbin`이 없습니다. 이때 BombVault는 `/usr/sbin/zfs`를 직접 호출합니다.
-- 앱의 **Host Data**는 ixVolume이 아니라 데이터세트보다 위에 있는 호스트 경로(예: `/mnt/tank`)여야 합니다. 호스트 경로를 쓰면 앱이 호스트의 새 마운트를 BombVault에 전달하며(`rslave`), 스냅샷 접근에는 이것이 필요합니다.
+- 앱의 **Host Data**는 ixVolume이 아니라 데이터세트보다 위에 있는 호스트 경로(예: `/mnt/tank`)여야 합니다. 호스트 경로를 쓰면 앱이 호스트의 새 마운트를 BombVault에 전달하며(`rslave`), 스냅샷 접근에는 이것이 필요합니다. 앱 설정 전체는 [TrueNAS SCALE](getting-started.md#truenas)을 참고하세요.

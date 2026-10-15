@@ -133,6 +133,80 @@ describe("the restore plan", () => {
     });
     expect(screen.getByText(en["restoreCheck.reason.parentMissing"].replace("{name}", "tank/gone"))).toBeTruthy();
   });
+
+  it("says to reinstall the app whose network is gone", () => {
+    show({
+      ok: true,
+      ready: false,
+      checks: [
+        { id: "repository", status: "ok" },
+        { id: "key", status: "ok" },
+        { id: "snapshot", status: "ok" },
+        { id: "network", status: "fail", reason: "network-gone", detail: "ix-webpage_default" },
+      ],
+      plan: null,
+    });
+    expect(
+      screen.getByText(en["restoreCheck.reason.networkGone"].replace("{name}", "ix-webpage_default")),
+    ).toBeTruthy();
+  });
+
+  it("says the networks could not be read and shows Docker's error", () => {
+    const error = "restore: list networks: Cannot connect to the Docker daemon";
+    show({
+      ok: true,
+      ready: false,
+      checks: [
+        { id: "repository", status: "ok" },
+        { id: "key", status: "ok" },
+        { id: "snapshot", status: "ok" },
+        { id: "network", status: "fail", reason: "network-unreadable", detail: error },
+      ],
+      plan: null,
+    });
+    expect(screen.getByText(en["restoreCheck.reason.networkUnreadable"].replace("{error}", error))).toBeTruthy();
+  });
+
+  it("lists the zvol a VM restore writes whole and the snapshot it takes first", () => {
+    show({
+      ok: true,
+      ready: true,
+      checks: [...checks.slice(0, 3), { id: "space", status: "ok", need: 1073741824, free: 54760833024 }],
+      plan: {
+        inPlace: true,
+        added: 0,
+        changed: 0,
+        unchanged: 0,
+        extra: 0,
+        files: [],
+        listCapped: false,
+        partial: false,
+        missing: false,
+        definition: [],
+        shared: [],
+        zvols: [
+          { dataset: "tank/vms/testvm", size: 1073741824, change: "changed", safety: "tank/vms/testvm@bombvault-before-restore-", free: 54760833024 },
+        ],
+      },
+    });
+    expect(screen.getByText(en["restoreCheck.zvol.title"])).toBeTruthy();
+    expect(screen.getByText("tank/vms/testvm")).toBeTruthy();
+    expect(screen.getByText(en["restoreCheck.change.changed"])).toBeTruthy();
+    expect(
+      screen.getByText(en["restoreCheck.zvol.safety"].replace("{name}", "tank/vms/testvm@bombvault-before-restore-…")),
+    ).toBeTruthy();
+    expect(screen.queryByText(en["restoreCheck.reason.nothing"])).toBeNull();
+  });
+
+  it("says the pool a zvol belongs on is missing", () => {
+    show({
+      ok: true,
+      ready: false,
+      checks: [...checks.slice(0, 3), { id: "space", status: "fail", reason: "pool-missing", detail: "tank" }],
+      plan: null,
+    });
+    expect(screen.getByText(en["restoreCheck.reason.poolMissing"].replace("{name}", "tank"))).toBeTruthy();
+  });
 });
 
 describe("a check still running", () => {

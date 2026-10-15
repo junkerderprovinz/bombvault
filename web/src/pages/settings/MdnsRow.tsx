@@ -37,7 +37,8 @@ export function MdnsRow() {
   }
 
   let status = t("mdns.statusOff");
-  if (state?.running) status = t("mdns.statusOn").replace("{url}", state.url);
+  if (state?.running && state.hostOnly) status = t("mdns.statusHostOnly");
+  else if (state?.running) status = t("mdns.statusOn").replace("{url}", state.url);
   else if (state?.enabled && state.error) status = t("mdns.statusError").replace("{error}", state.error);
   else if (state?.enabled) status = t("mdns.statusStarting");
 

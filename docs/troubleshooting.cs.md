@@ -33,6 +33,7 @@ Záloha VM komunikuje s libvirt přes SSH, nikdy přes připojení.
 - Potvrď, že SSH je povoleno na hostiteli a veřejný klíč BombVaultu je autorizovaný v `/root/.ssh/authorized_keys` (Nastavení, Integrace, SSH k hostiteli zobrazuje klíč a tlačítko **Otestovat připojení**).
 - Na vlastní síti `br0.x` nastav `LIBVIRT_HOST` na svou LAN IP Unraidu (kontejner tam nemůže dosáhnout na hostitele přes `host.docker.internal`). Povol **Settings, Docker, Host access to custom networks**.
 - Pokud jsi změnil SSH port Unraidu, nastav `LIBVIRT_SSH_PORT`, aby odpovídal.
+- Na TrueNAS nastav `LIBVIRT_URI` s vlastním socketem libvirt z TrueNAS, dej aplikaci capability `SETPCAP` a přidej klíč uživateli root v **Credentials, Users** (viz [TrueNAS SCALE](getting-started.md#truenas)).
 - Kompletní krok za krokem diagnóza (test dosažitelnosti, směrování VLAN, `Permission denied (publickey)`, `Host key verification failed`) je v [průvodci Záloha VM přes SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 ## Živý snímek VM neproběhl
@@ -50,6 +51,8 @@ Replikace mimo lokalitu je na základě nejlepší snahy záměrně, takže zád
 ## Obnova se přerušila dříve, než začala
 
 Než se cokoli zastaví nebo odebere, obnova spustí předletovou kontrolu konfliktů: ověří, že statická IP kontejneru a publikované hostitelské porty jsou volné. Pokud je jeden z nich již držen jiným kontejnerem, přeruší se s jasnou, akceschopnou zprávou místo toho, aby zanechala napůl dokončenou obnovu. Uvolni konfliktní port nebo IP, poté opakuj.
+
+Pokud síť kontejneru neexistuje, například protože byla smazána jeho aplikace TrueNAS, kontrola před obnovou tu síť uvede a obnova odmítne dřív, než cokoli změní. Nainstaluj aplikaci v TrueNAS znovu pod stejným názvem, čímž se síť znovu vytvoří, a pak obnov její data.
 
 ## Prostý export selhal místo zapsání souboru
 
@@ -71,7 +74,9 @@ Neúspěšný dump nikdy nepoloží zálohu kolem sebe; zapíše se jako vlastn�
 
 Import zastaví kontejner, odsune jeho datovou složku stranou a nechá image vytvořit na jejím místě prázdnou. Selže-li krok před samotným importem, stará složka se vrátí sama. Selže-li import, kontejner si nechá čerstvou složku a stará zůstane vedle jako `<datová složka>.bombvault-before-import-<časová značka>`; chybová hláška běhu uvádí přesnou cestu.
 
-Ruční návrat: zastav kontejner, přejmenuj současnou datovou složku stranou, přejmenuj zachovanou složku zpět na původní název a kontejner spusť. Na Unraidu to zvládne správce souborů na kartě Shares.
+Datovou složku, která je samostatnou datovou sadou, jako na TrueNAS, nejde přejmenovat. Import pak složku nechá na místě a její obsah přesune do zachované složky vedle ní, takže nadřazená datová sada pro něj potřebuje místo. Import to ověří dřív, než kontejner zastaví.
+
+Ruční návrat: zastav kontejner, přejmenuj současnou datovou složku stranou, přejmenuj zachovanou složku zpět na původní název a kontejner spusť. U datové sady místo přejmenování složek přesuň obsah. Na Unraidu to zvládne správce souborů na kartě Shares.
 
 ## Záloha datové sady ZFS selhala nebo nějakou sadu přeskočila {#zfs-datasets}
 

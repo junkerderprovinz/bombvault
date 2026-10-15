@@ -11,7 +11,7 @@ import { entryTarget, protection, type Protection } from "../../lib/backupList";
 import type { TranslationKey, useT } from "../../lib/i18n";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { TONE_DOT } from "./ProtectionCard";
-import { VERDICT, canDrill, type CheckTone, type Section } from "./protectionChecks";
+import { VERDICT, canDrill, drilledText, type CheckTone, type Section } from "./protectionChecks";
 import type { TrialRestore } from "./useTrialRestore";
 
 type T = ReturnType<typeof useT>["t"];
@@ -103,6 +103,7 @@ export function ProtectionWindow({
   const refused = trial.refused[status.domain];
   const drillable = status.offsiteConfigured && canDrill(status.domain);
   const drillFailed = status.lastDrDrillAt > 0 && !status.lastDrDrillOK;
+  const drilled = status.lastDrDrillAt > 0 ? drilledText(t, status.lastDrDrillItem, status.lastDrDrillSnapshot) : "";
 
   const lines: Line[] = [
     ...checks.map((c) => ({
@@ -156,7 +157,7 @@ export function ProtectionWindow({
         ))}
       </ul>
 
-      {(status.lastVerified > 0 || status.lastOffsiteSubsetAt > 0 || status.lastStartTest) && (
+      {(status.lastVerified > 0 || status.lastOffsiteSubsetAt > 0 || status.lastStartTest || drilled) && (
         <div className="flex flex-wrap gap-1.5">
           {status.lastVerified > 0 && (
             <Badge tone={status.lastVerifiedOK ? "ok" : "fail"} wrap title={status.verifiedDetail || undefined}>
@@ -166,6 +167,11 @@ export function ProtectionWindow({
           {status.lastOffsiteSubsetAt > 0 && (
             <Badge tone={status.lastOffsiteSubsetOK ? "ok" : "fail"} wrap>
               {t("drill.offsiteVerified")} · {relativeTime(t, status.lastOffsiteSubsetAt)}
+            </Badge>
+          )}
+          {drilled && (
+            <Badge tone={status.lastDrDrillOK ? "ok" : "fail"} wrap>
+              {t("verify.trialRestore")} · {drilled}
             </Badge>
           )}
           {status.lastStartTest && (

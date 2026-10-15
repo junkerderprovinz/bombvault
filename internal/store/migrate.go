@@ -3188,6 +3188,24 @@ UNION SELECT member_id FROM pull_sources WHERE member_id <> '';`,
 ALTER TABLE zfs_replica_state ADD COLUMN mount TEXT NOT NULL DEFAULT '';`,
 	},
 	{
+		// Where each member last said it takes direct calls, so an instance
+		// that restarted can still ask a member that left the group meanwhile.
+		version:          memberURLMigration,
+		name:             "fleet_peers_member_url",
+		alreadySatisfied: columnPresent("fleet_peers", "member_url"),
+		sql:              `ALTER TABLE fleet_peers ADD COLUMN member_url TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// What a DR drill restored, on its own row and on the run row the
+		// activity log shows. Earlier drills keep both empty.
+		version:          drillSubjectMigration,
+		name:             "drill_subject",
+		alreadySatisfied: columnPresent("runs", "subject"),
+		sql: `ALTER TABLE restore_drills ADD COLUMN item TEXT NOT NULL DEFAULT '';
+ALTER TABLE restore_drills ADD COLUMN snapshot_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE runs ADD COLUMN subject TEXT NOT NULL DEFAULT '';`,
+	},
+	{
 		version:          containerSnapshotMigration,
 		name:             "settings_container_snapshots",
 		sql:              `ALTER TABLE settings ADD COLUMN container_snapshots INTEGER NOT NULL DEFAULT 1;`,
@@ -3380,6 +3398,13 @@ const formerHomesMigration = 361
 
 // replicaMountMigration numbers the mount setting of the replica servers.
 const replicaMountMigration = 366
+
+// memberURLMigration numbers the direct address kept with a member's Fleet row.
+const memberURLMigration = 367
+
+// drillSubjectMigration numbers the columns that name what a DR drill
+// restored.
+const drillSubjectMigration = 370
 
 // containerSnapshotMigration numbers the snapshot read of containers on ZFS,
 // 380 to 384.

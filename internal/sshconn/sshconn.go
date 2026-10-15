@@ -308,8 +308,8 @@ func (c *Conn) WriteFile(ctx context.Context, path string, data []byte) error {
 }
 
 // StreamCommand starts a command on the host over SSH and returns its stdout
-// as a stream, for output too large for Run to buffer, such as a `zfs send` of
-// a zvol VM disk piped into restic. The caller must call wait exactly once
+// as a stream, for output too large for Run to buffer, such as the raw image
+// of a zvol VM disk piped into restic. The caller must call wait exactly once
 // after reading, whether reading succeeded or not, to reap ssh and get its
 // exit status.
 func (c *Conn) StreamCommand(ctx context.Context, args ...string) (io.ReadCloser, func() error, error) {
@@ -338,7 +338,7 @@ func (c *Conn) StreamCommand(ctx context.Context, args ...string) (io.ReadCloser
 const stdinWaitDelay = 5 * time.Second
 
 // RunWithStdin runs a command on the host over SSH with stdin streamed from rd,
-// such as a restic dump piped into `zfs receive`. It is the restore-side
+// such as a restic dump written back onto a zvol. It is the restore-side
 // counterpart of StreamCommand and blocks until the remote command exits.
 func (c *Conn) RunWithStdin(ctx context.Context, rd io.Reader, args ...string) error {
 	cmd := exec.CommandContext(ctx, sshBinary, c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted

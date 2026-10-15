@@ -114,7 +114,7 @@ Kapcsold be az elem Beállítások lapján a **Replika** kártyán. Ott választ
 Bármely gép fogadhat, amelyen van ZFS és SSH, például egy második Unraid vagy egy TrueNAS. A BombVaultnak nem kell ott futnia.
 
 1. A **Beállítások, Párosítás** alatt válaszd a **ZFS-kiszolgáló BombVault nélkül** részben a **Csatlakozás SSH-n át** gombot, vagy az elem **Replika** kártyáján a **ZFS-kiszolgáló hozzáadása** gombot.
-2. Add meg a címet, a felhasználót és a portot. A párbeszédablak megmutatja a BombVault nyilvános kulcsát. Add hozzá a felhasználó `~/.ssh/authorized_keys` fájljához a kiszolgálón. Unraidon ez a **Users, root, SSH keys** alatt van. A **Display Settings** beállításától függően a Users a fejléc menüjében vagy a Settings alatt található. Ez a replika kulcsa. Más, mint a virtuális gépek és a gazdagép SSH-kapcsolatának kulcsa, ezért akkor is add hozzá, ha az már engedélyezett.
+2. Add meg a címet, a felhasználót és a portot. A párbeszédablak megmutatja a BombVault nyilvános kulcsát. Add hozzá a felhasználó `~/.ssh/authorized_keys` fájljához a kiszolgálón. Unraidon ez a **Users, root, SSH keys** alatt van. A **Display Settings** beállításától függően a Users a fejléc menüjében vagy a Settings alatt található. TrueNAS-on a felhasználót a **Credentials, Users** alatt szerkeszd. Ez a replika kulcsa. Más, mint a virtuális gépek és a gazdagép SSH-kapcsolatának kulcsa, ezért akkor is add hozzá, ha az már engedélyezett.
 3. Teszteld a kapcsolatot. A párbeszédablak ezután felsorolja a kiszolgáló poolait. Válassz egyet, és add meg a gyökeret, amelynek alapértéke `<pool>/bombvault-replica`.
 4. Válaszd ki az új kiszolgálót az elem **Replika** kártyáján. A kiszolgálónak ezután saját kártyája van a Példányok oldalon, és a **Megnyitás** az oldalára visz.
 
@@ -285,7 +285,8 @@ Minden sor egy csatolás a konténerben. Egy adatkészlet sora mutatja az útvon
 
 ## TrueNAS SCALE {#truenas}
 
-- Ha a `LIBVIRT_URI` be van állítva (mint a VM-mentésekhez TrueNAS-on), a BombVault a zfs-parancsaihoz az SSH-gazdát, a felhasználót és a portot az URI-ból veszi, mindegyiket, amely nincs külön beállítva. VM-mentések nélkül helyette állítsd be a `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` és `LIBVIRT_SSH_PORT` változókat. A változókat az **Additional Environment Variables** alatt add hozzá.
+- Ha a `LIBVIRT_URI` be van állítva (mint a VM-mentésekhez TrueNAS-on), a BombVault a zfs-parancsaihoz az SSH-gazdát, a felhasználót és a portot az URI-ból veszi, mindegyiket, amely nincs külön beállítva. VM-mentések nélkül semmit sem kell beállítani: a `host.docker.internal` egy TrueNAS-alkalmazásban nem oldható fel, ezért a BombVault az alkalmazás alapértelmezett átjáróján át éri el a gazdát, rootként a 22-es porton. A `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` és `LIBVIRT_SSH_PORT` változókat akkor állítsd be az alkalmazás `environment` részében, ha másik címet vagy felhasználót szeretnél.
+- Add hozzá a Gazdagép SSH kulcsát a **Beállítások, Integrációk, Gazdagép SSH** helyről a roothoz a **Credentials, Users** alatt, és kapcsold be az SSH szolgáltatást a **System, Services** alatt. Egy [replikához](#replica-push) erre vagy egy másik TrueNAS-ra a replika kulcsa is kell, amely egy másik kulcs.
 - A roottól eltérő felhasználónak jogosultság kell az elem legfelső adatkészletére, amely aztán minden alatta lévő adatkészletet lefed:
 
   ```
@@ -295,4 +296,4 @@ Minden sor egy csatolás a konténerben. Egy adatkészlet sora mutatja az útvon
   Az új adatkészletbe való visszaállításhoz kell még a `create` jog a fölötte lévő adatkészleten, a tárolt tulajdonságok beállításához pedig az adott tulajdonságokra vonatkozó jog.
 
   TrueNAS-on egy nem root SSH-munkamenet útvonalában nincs benne a `/usr/sbin`; a BombVault ilyenkor közvetlenül a `/usr/sbin/zfs` parancsot hívja.
-- Az alkalmazás **Host Data** értékének az adatkészletek feletti gazdaútvonalnak kell lennie, például `/mnt/tank`, nem ixVolume-nak. Gazdaútvonallal az alkalmazás továbbadja a gazda új csatolásait a BombVaultnak (`rslave`), és erre van szüksége a pillanatkép-hozzáférésnek.
+- Az alkalmazás **Host Data** értékének az adatkészletek feletti gazdaútvonalnak kell lennie, például `/mnt/tank`, nem ixVolume-nak. Gazdaútvonallal az alkalmazás továbbadja a gazda új csatolásait a BombVaultnak (`rslave`), és erre van szüksége a pillanatkép-hozzáférésnek. A teljes alkalmazásbeállítást a [TrueNAS SCALE](getting-started.md#truenas) írja le.

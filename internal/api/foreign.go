@@ -229,12 +229,6 @@ func (s *Service) OpenForeign(ctx context.Context, location, foreignKey string, 
 	case s.engine.RepoOpens(ctx, repo, plainMode):
 		mode = plainMode
 	default:
-		// Deliberately "BombVault or restic", not "BombVault/restic" ([584]): the
-		// scrubber that runs over every error on its way out redacts absolute paths
-		// with absPathRe, which cannot tell a filesystem path from a slash inside a
-		// word. It turned this sentence into "not a BombVault[path] repository" for
-		// every user who ever saw it, which is how it came back from the forum. The
-		// redaction is right; the slash was ours to remove.
 		return "", ForeignInventory{}, errors.New("could not open the repository: wrong APP_KEY, or the location is not a BombVault or restic repository")
 	}
 
@@ -619,8 +613,8 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		// ZFS pool a TrueNAS zvol-backed disk needs (destBase carries no ZFS pool
 		// information — see prepareRestoreVMForTarget's destZvolPool doc comment);
 		// prepareRestoreVMForTarget refuses cleanly if the VM has zvol disks and
-		// zvolPool was left empty, rather than attempting `zfs receive` against the
-		// source box's pool name on this host.
+		// zvolPool was left empty, rather than writing the zvols to the source
+		// box's pool name on this host.
 		destBase, err := s.foreignVMDestBase(targetSubPath)
 		if err != nil {
 			return "", nil, nil, err

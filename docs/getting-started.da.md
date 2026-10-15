@@ -6,7 +6,7 @@ Denne side fører dig fra en frisk Unraid-boks til din første sikkerhedskopi.
 
 | Krav | Bemærkninger |
 |---|---|
-| **Unraid 6.12+** | Tidligere versioner er ikke testet. Unraid er hovedmålet, men BombVault kører også på en almindelig Docker-vært og på TrueNAS Scale (se [Generisk Docker-vært](#generic-docker-host)). |
+| **Unraid 6.12+** | Tidligere versioner er ikke testet. Unraid er hovedmålet, men BombVault kører også på en almindelig Docker-vært og på TrueNAS Scale (se [Generisk Docker-vært](#generic-docker-host) og [TrueNAS SCALE](#truenas)). |
 | **Restic-repo-placering** | En lokal sti (anbefalet: dit array eller cache), SMB, NFS eller en hvilken som helst rclone-backend. |
 | **Docker-socket** | Monteres automatisk af skabelonen (`/var/run/docker.sock`). |
 | **Unraid-flash** (`/boot`) | Monteres i sin helhed automatisk af skabelonen (`/boot` til `/host/boot`). Driver flash-sikkerhedskopiering og lader en gendannet container dukke op igen som en normal, redigerbar Unraid-app. |
@@ -34,7 +34,7 @@ Den nemmeste vej er **Community Applications**.
 
 ## Generisk Docker-vært {#generic-docker-host}
 
-Ikke Unraid? BombVault kører også som almindelig container på enhver Docker-vært (det er også det, der bærer containerunderstøttelsen på TrueNAS Scale, forud for en egen post i dens app-katalog).
+Ikke Unraid? BombVault kører også som almindelig container på enhver Docker-vært. TrueNAS SCALE har sine egne trin under [TrueNAS SCALE](#truenas).
 
 1. Hent den redigeringsklare [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) fra arkivet.
 2. Sæt `APP_KEY` (se nedenfor) og peg Host Data-diskenheden på din rigtige datarod. Kommentarerne i filen gennemgår begge dele.
@@ -42,14 +42,54 @@ Ikke Unraid? BombVault kører også som almindelig container på enhver Docker-v
 
 Hvad der er anderledes end på Unraid:
 
-- **Intet Flash-område.** Der er ingen boot-USB at indfange eller genskabe, så Flash-området har intet at lave her. I stedet tilbyder **Tilføj** på siden Sikkerhedskopier **Systemkonfiguration** som mappeforslag: et mappesæt med `/etc` til at begynde med, som du gennemgår og retter, før du gemmer.
+- **Intet Flash-område.** Der er ingen boot-USB at indfange eller genskabe, så Flash-området har intet at lave her. I stedet tilbyder **Tilføj** på siden Sikkerhedskopier, når Host Data når værtens `/etc`, **Systemkonfiguration** som mappeforslag: et mappesæt med `/etc` til at begynde med, som du gennemgår og retter, før du gemmer.
 - **Ingen Unraid-egne meddelelser.** BombVaults egne meddelelseskanaler (webhook, advarsler om mislykket off-site og lignende) virker som sædvanlig; kun den Unraid-specifikke besked til dens eget meddelelsessystem udelades, da et sådant system ikke findes her.
 - **Sikkerhedskopiering af virtuelle maskiner er valgfri og kræver en separat libvirtd-vært, der kan nås over SSH.** Se den udkommenterede blok i compose-filen. En generisk Docker-vært har ingen indbygget VM-styring.
 - **Ingen dashboard-widget.** BombVault Widget er et Unraid-plugin, så det trin springes også over.
 - **At finde en containers data.** Uden Unraids `appdata`-konvention findes en containers datamappe ud fra segmenterne i `DATA_ROOT_SEGMENTS`, navngivne Docker-volumener, et Compose-projekts arbejdsmappe og labelen `bombvault.data` (se [Genkendelse af sikkerhedskopiernes kilder](configuration.md#backup-source-detection)). Navngivne volumener og `/etc`-forudindstillingen når kun stier inden for Host Data-monteringen, så peg Host Data på en fælles overordnet mappe, der også dækker Dockers datarod.
 - **`PLATFORM`.** Sæt den til `generic` eller `truenas`. Uden værdi genkender BombVault Unraid på dets egen markør på flash-monteringen og behandler alt andet som generisk, og de trin, der kun gælder Unraid, springes over i stedet for at blive forsøgt og fejle.
 
-**TrueNAS Scale** følger den samme compose-vej; en katalogpost er forberedt i repositoriet, men endnu ikke indsendt. VM-sikkerhedskopiering kræver dér `LIBVIRT_URI`, fordi TrueNAS' libvirtd lytter på sin egen socket (`/run/truenas_libvirt/libvirt-sock`), som de tre `LIBVIRT_*`-variabler ikke kan udtrykke (se [Konfiguration](configuration.md)). Så langt er det afprøvet: zvol-sikkerhedskopien blev kørt mod en rigtig TrueNAS Scale-boks, på en zvol tilsluttet en kørende VM, og `zfs snapshot`, `zfs send`, restic og `zfs receive` førte den frem og tilbage byte for byte. En komplet gendannelse styret af BombVault selv er endnu ikke kørt på TrueNAS-hardware, og den zvol var tyndt allokeret, så gennemstrømningen ved mange gigabyte er ikke testet. Test en gendannelse dér, før du stoler på den.
+### TrueNAS SCALE {#truenas}
+
+BombVault er ikke i TrueNAS' app-katalog endnu, så installér den som en brugerdefineret app: **Apps, Discover Apps**, derefter **Install via YAML** i menuen ved siden af **Custom App**. YAML'en nedenfor sætter det samme som katalogposten i repositoriets mappe `truenas-apps`. Erstat `tank` med din pool, og udfyld `APP_KEY`, som det næste afsnit beskriver.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # Til VM-sikkerhedskopier:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+Åbn derefter `https://<truenas-ip>:30528/`. Det, der står under [Hvad der er anderledes end på Unraid](#generic-docker-host), gælder også her, og på TrueNAS:
+
+- **Capabilities.** BombVault skal have de seks ovenfor. VM-sikkerhedskopier fejler uden `SETPCAP`.
+- **Host Data** er en værtssti på et datasæt, her `/mnt/tank`, monteret på samme sti inde i appen. Derfor angiver `HOST_SOURCE_ROOT` og `HOST_MOUNT_ROOT` begge den sti. `rslave` sender de monteringer videre, som værten laver senere, og dem kræver sikkerhedskopier af ZFS-datasæt.
+- **Data i et ixVolume sikkerhedskopieres ikke.** En app, hvis lager er et ixVolume, gemmer sine data under `/mnt/.ix-apps`, uden for Host Data. BombVault gemmer så kun appens definition, og kørslen nævner de mapper, den udelod. Vælg **Host Path**-lager på et datasæt under Host Data for hver app, hvis data du vil have sikkerhedskopieret.
+- **Sikkerhedskopier af VM'er og ZFS-datasæt** når TrueNAS over SSH som root. Slå SSH-tjenesten til under **System, Services**, og føj den offentlige nøgle fra **Indstillinger, Integrationer, Værts-SSH** til brugeren root under **Credentials, Users**. VM-sikkerhedskopier kræver desuden `LIBVIRT_URI` som ovenfor, fordi TrueNAS' libvirtd lytter på sin egen socket. Er hverken `LIBVIRT_URI` eller `LIBVIRT_HOST` sat, bruger BombVault appens standardgateway som vært, da `host.docker.internal` ikke kan slås op i en TrueNAS-app. [VM backup-guiden](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) dækker detaljerne, også VM'er på zvols.
+- **En ZFS-replika bruger en anden nøgle.** En replika på en anden ZFS-server logger ind med den nøgle, som replikadialogen viser, ikke med Værts-SSH-nøglen. Tilføj den på den modtagende server.
+- **En slettet app kommer tilbage i to trin.** Geninstallér den først i TrueNAS under samme navn, hvilket opretter dens netværk igen, og gendan derefter dens data i BombVault. Indtil da melder tjekket før gendannelsen det manglende netværk, og gendannelsen afviser, før den ændrer noget.
+- **Ved siden af originalen** opretter en almindelig Docker-container. Den kører, men TrueNAS' skærm Apps viser den ikke.
+- **Databasedumps** virker på datasæt-monteringer. En import til en datamappe, der er sit eget datasæt, flytter det gamle indhold til en mappe ved siden af, så datasættet ovenover skal have plads til det.
 
 ## Den ene påkrævede indstilling
 

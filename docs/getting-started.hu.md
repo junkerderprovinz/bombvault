@@ -6,7 +6,7 @@ Ez az oldal végigvezet egy friss Unraid-géptől az első mentésedig.
 
 | Követelmény | Megjegyzések |
 |---|---|
-| **Unraid 6.12+** | A korábbi verziók nincsenek tesztelve. Az Unraid a fő platform, de a BombVault sima Docker-gazdagépen és TrueNAS Scale-en is fut (lásd: [Általános Docker-gazdagép](#generic-docker-host)). |
+| **Unraid 6.12+** | A korábbi verziók nincsenek tesztelve. Az Unraid a fő platform, de a BombVault sima Docker-gazdagépen és TrueNAS Scale-en is fut (lásd: [Általános Docker-gazdagép](#generic-docker-host) és [TrueNAS SCALE](#truenas)). |
 | **Restic tároló helye** | Helyi útvonal (ajánlott: a tömböd vagy a gyorsítótárad), SMB, NFS vagy bármely rclone backend. |
 | **Docker socket** | A sablon automatikusan csatolja (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | A sablon automatikusan, teljes egészében csatolja (`/boot` a `/host/boot` alá). Ez teszi lehetővé a flash-mentést, és azt, hogy egy visszaállított konténer normál, szerkeszthető Unraid-alkalmazásként jelenjen meg újra. |
@@ -34,7 +34,7 @@ A legegyszerűbb út a **Community Applications**.
 
 ## Általános Docker-gazdagép {#generic-docker-host}
 
-Nem Unraid? A BombVault sima konténerként is fut bármelyik Docker-gazdagépen (ez hordozza a TrueNAS Scale konténertámogatását is, még az ottani alkalmazáskatalógus saját bejegyzése előtt).
+Nem Unraid? A BombVault sima konténerként is fut bármelyik Docker-gazdagépen. A TrueNAS SCALE saját lépései a [TrueNAS SCALE](#truenas) alatt találhatók.
 
 1. Töltsd le a tárolóból a szerkesztésre kész [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) fájlt.
 2. Állítsd be az `APP_KEY` értékét (lásd lent), és irányítsd a Host Data kötetet a valódi adatgyökeredre. A fájl megjegyzései mindkettőt végigvezetik.
@@ -42,14 +42,54 @@ Nem Unraid? A BombVault sima konténerként is fut bármelyik Docker-gazdagépen
 
 Miben más ez, mint az Unraid:
 
-- **Nincs Flash szakasz.** Nincs indító pendrive, amit el kellene menteni vagy vissza kellene állítani, így a Flash szakasznak itt nincs dolga. Helyette a **Biztonsági mentések** oldalon a **Hozzáadás** felkínálja a **Rendszerkonfiguráció** mappajavaslatot: egy induló `/etc` mappakészletet, amit mentés előtt átnézel és szerkesztesz.
+- **Nincs Flash szakasz.** Nincs indító pendrive, amit el kellene menteni vagy vissza kellene állítani, így a Flash szakasznak itt nincs dolga. Helyette, ha a Host Data eléri a gazdagép `/etc` mappáját, a **Biztonsági mentések** oldalon a **Hozzáadás** felkínálja a **Rendszerkonfiguráció** mappajavaslatot: egy induló `/etc` mappakészletet, amit mentés előtt átnézel és szerkesztesz.
 - **Nincsenek Unraid-natív értesítések.** A BombVault saját értesítési csatornái (webhook, külső telephelyi hiba riasztásai és így tovább) a szokott módon működnek; csak az Unraid saját értesítési rendszerébe küldés marad el, mert ilyen rendszer itt nincs.
 - **A virtuális gépek mentése választható, és külön, SSH-n elérhető libvirtd gazdagépet igényel.** Lásd a compose fájl kikommentezett blokkját. Egy általános Docker-gazdagépben magában nincs virtuálisgép-kezelő.
 - **Nincs irányítópult-widget.** A BombVault Widget egy Unraid-bővítmény, így ez a lépés is kimarad.
 - **Egy konténer adatainak megtalálása.** Az Unraid `appdata` konvenciója nélkül a konténer adatmappáját a `DATA_ROOT_SEGMENTS` szegmensei, a Docker elnevezett kötetei, egy Compose-projekt munkakönyvtára és a `bombvault.data` címke alapján találja meg (lásd: [A mentési források felismerése](configuration.md#backup-source-detection)). Az elnevezett kötetek és az `/etc` előbeállítás csak a Host Data csatoláson belüli útvonalakat érik el, ezért a Host Data egy olyan közös szülőkönyvtárra mutasson, amely a Docker adatgyökerét is lefedi.
 - **`PLATFORM`.** Állítsd `generic` vagy `truenas` értékre. Ha nincs beállítva, a BombVault az Unraidet a flash-csatoláson lévő saját jelölője alapján ismeri fel, minden mást általánosként kezel, és a csak Unraidre vonatkozó lépéseket kihagyja, ahelyett hogy megpróbálná és elbukna rajtuk.
 
-A **TrueNAS Scale** ugyanezt a compose-utat járja; egy katalógusbejegyzés elő van készítve a repóban, de még nincs beküldve. A VM-mentéshez ott `LIBVIRT_URI` kell, mert a TrueNAS libvirtd-je saját socketen figyel (`/run/truenas_libvirt/libvirt-sock`), amelyet a három `LIBVIRT_*` változó nem tud kifejezni (lásd: [Konfiguráció](configuration.md)). Mennyire bizonyított ez: a zvol-mentést egy valódi TrueNAS Scale gépen futtattuk, egy futó VM-hez csatolt zvolon, és a `zfs snapshot`, a `zfs send`, a restic és a `zfs receive` bájtra pontosan oda-vissza vitte. A BombVault által vezérelt teljes visszaállítás TrueNAS hardveren még nem futott, és az a zvol ritka (sparse) volt, így a sok gigabájtos áteresztőképesség nincs tesztelve. Mielőtt ráhagyatkoznál, próbálj ki ott egy visszaállítást.
+### TrueNAS SCALE {#truenas}
+
+A BombVault még nincs benne a TrueNAS alkalmazáskatalógusában, ezért egyéni alkalmazásként telepítsd: **Apps, Discover Apps**, majd **Install via YAML** a **Custom App** melletti menüben. Az alábbi YAML ugyanazt állítja be, mint a repó `truenas-apps` mappájában lévő katalógusbejegyzés. Cseréld a `tank` nevet a saját poolodra, és töltsd ki az `APP_KEY` értékét a következő szakasz szerint.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # VM-mentésekhez:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+Ezután nyisd meg a `https://<truenas-ip>:30528/` címet. Ami a [Miben más ez, mint az Unraid](#generic-docker-host) alatt szerepel, itt is érvényes, TrueNAS-on pedig még:
+
+- **Capabilityk.** A BombVaultnak a fenti hatra van szüksége. `SETPCAP` nélkül a VM-mentések meghiúsulnak.
+- **Host Data** egy adatkészleten lévő hoszt-útvonal, itt `/mnt/tank`, az alkalmazáson belül ugyanazon az útvonalon csatolva. Ezért adja meg a `HOST_SOURCE_ROOT` és a `HOST_MOUNT_ROOT` is. Az `rslave` továbbadja a hoszt később létrehozott csatolásait, amelyekre a ZFS-adatkészletek mentésének szüksége van.
+- **Az ixVolume-ban lévő adatok nem kerülnek mentésre.** Az az alkalmazás, amelynek tárolója ixVolume, a `/mnt/.ix-apps` alatt tartja az adatait, a Host Data-n kívül. A BombVault csak az alkalmazás definícióját menti, és a futás megnevezi a kihagyott mappákat. Minden alkalmazáshoz, amelynek adatait menteni szeretnéd, válassz **Host Path** tárolót egy Host Data alatti adatkészleten.
+- **A VM- és ZFS-adatkészlet-mentések** SSH-n keresztül, rootként érik el a TrueNAS-t. Kapcsold be az SSH szolgáltatást a **System, Services** alatt, és add hozzá a nyilvános kulcsot a **Beállítások, Integrációk, Gazdagép SSH** helyről a root felhasználóhoz a **Credentials, Users** alatt. A VM-mentésekhez a fenti `LIBVIRT_URI` is kell, mert a TrueNAS libvirtd-je saját socketen figyel. Ha sem a `LIBVIRT_URI`, sem a `LIBVIRT_HOST` nincs beállítva, a BombVault az alkalmazás alapértelmezett átjáróját használja hosztként, mert a `host.docker.internal` egy TrueNAS-alkalmazásban nem oldható fel. A részleteket, a zvolokon lévő VM-eket is beleértve, a [VM-mentési útmutató](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) írja le.
+- **A ZFS-replika másik kulcsot használ.** A második ZFS-kiszolgálón lévő replika azzal a kulccsal jelentkezik be, amelyet a replika párbeszédablaka mutat, nem a Gazdagép SSH kulcsával. Azt a fogadó kiszolgálón add hozzá.
+- **Egy törölt alkalmazás két lépésben tér vissza.** Előbb telepítsd újra a TrueNAS-ban ugyanazzal a névvel, ami újra létrehozza a hálózatát, majd állítsd vissza az adatait a BombVaultban. Addig a visszaállítás előtti ellenőrzés jelzi a hiányzó hálózatot, és a visszaállítás elutasítja a futást, mielőtt bármit megváltoztatna.
+- **Az eredeti mellé** egy sima Docker-konténert hoz létre. Fut, de a TrueNAS Apps képernyője nem listázza.
+- **Az adatbázis-dumpok** adatkészlet-csatolásokon működnek. Egy importálás olyan adatmappába, amely önálló adatkészlet, a régi tartalmat egy mellette lévő mappába helyezi át, ezért a fölötte lévő adatkészletnek helyre van szüksége hozzá.
 
 ## Az egyetlen kötelező beállítás
 

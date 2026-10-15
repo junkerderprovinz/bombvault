@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { tallyEntries } from "../../lib/protectionTally";
 import { domain, item } from "./overview.testsupport";
-import { domainChecks, sectionsOf, worstTone, type Check, type CheckKey } from "./protectionChecks";
+import { en } from "../../lib/i18n";
+import { domainChecks, drilledText, sectionsOf, worstTone, type Check, type CheckKey } from "./protectionChecks";
 
 const calm = { copying: false, drilling: false };
 const one = tallyEntries([item()]);
@@ -174,5 +175,21 @@ describe("sectionsOf", () => {
     expect(section.checks.find((c) => c.key === "offsite")!.tone).toBe("run");
     expect(section.checks.find((c) => c.key === "drill")!.tone).toBe("run");
     expect(section.tone).toBe("run");
+  });
+});
+
+describe("drilledText", () => {
+  const t = (key: keyof typeof en) => en[key];
+
+  it("names the item and the snapshot a trial restore restored", () => {
+    expect(drilledText(t, "plex", "cccc3333")).toBe("plex, snapshot cccc3333");
+  });
+
+  it("names the snapshot alone for a section without items", () => {
+    expect(drilledText(t, "", "dddd4444")).toBe("Snapshot dddd4444");
+  });
+
+  it("says nothing for a drill recorded without a snapshot", () => {
+    expect(drilledText(t, "plex", "")).toBe("");
   });
 });

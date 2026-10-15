@@ -6,7 +6,7 @@ Tämä sivu opastaa sinut tuoreesta Unraid-laatikosta ensimmäiseen varmuuskopio
 
 | Vaatimus | Huomiot |
 |---|---|
-| **Unraid 6.12+** | Aiempia versioita ei ole testattu. Unraid on pääalusta, mutta BombVault toimii myös tavallisella Docker-isännällä ja TrueNAS Scalella (katso [Yleinen Docker-isäntä](#generic-docker-host)). |
+| **Unraid 6.12+** | Aiempia versioita ei ole testattu. Unraid on pääalusta, mutta BombVault toimii myös tavallisella Docker-isännällä ja TrueNAS Scalella (katso [Yleinen Docker-isäntä](#generic-docker-host) ja [TrueNAS SCALE](#truenas)). |
 | **Restic-repon sijainti** | Paikallinen polku (suositus: array tai cache), SMB, NFS tai mikä tahansa rclone-taustajärjestelmä. |
 | **Docker-soketti** | Malli liittää automaattisesti (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | Malli liittää kokonaan automaattisesti (`/boot` kohteeseen `/host/boot`). Mahdollistaa flash-varmuuskopioinnin ja sen, että palautettu kontti ilmestyy takaisin normaalina, muokattavana Unraid-sovelluksena. |
@@ -34,7 +34,7 @@ Helpoin reitti on **Community Applications**.
 
 ## Yleinen Docker-isäntä {#generic-docker-host}
 
-Ei Unraidia? BombVault toimii myös tavallisena konttina millä tahansa Docker-isännällä (tämä kannattelee myös TrueNAS Scalen konttituen, ennen kuin sillä on oma merkintänsä sikäläisessä sovelluskatalogissa).
+Ei Unraidia? BombVault toimii myös tavallisena konttina millä tahansa Docker-isännällä. TrueNAS SCALEn omat vaiheet ovat kohdassa [TrueNAS SCALE](#truenas).
 
 1. Nouda arkistosta valmiiksi muokattava [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml).
 2. Aseta `APP_KEY` (katso alta) ja osoita Host Data -taltio todelliseen datajuureesi. Tiedoston kommentit käyvät läpi molemmat.
@@ -42,14 +42,54 @@ Ei Unraidia? BombVault toimii myös tavallisena konttina millä tahansa Docker-i
 
 Mikä poikkeaa Unraidista:
 
-- **Ei Flash-osiota.** Käynnistys-USB:tä ei ole talteen otettavaksi tai palautettavaksi, joten Flash-osiolla ei ole täällä tehtävää. Sen sijaan Varmuuskopiot-sivun **Lisää** tarjoaa kansioehdotuksena **Järjestelmän asetukset**: aloittavan `/etc`-kansiojoukon, jonka käyt läpi ja muokkaat ennen tallennusta.
+- **Ei Flash-osiota.** Käynnistys-USB:tä ei ole talteen otettavaksi tai palautettavaksi, joten Flash-osiolla ei ole täällä tehtävää. Sen sijaan, kun Host Data ulottuu isännän `/etc`-kansioon, Varmuuskopiot-sivun **Lisää** tarjoaa kansioehdotuksena **Järjestelmän asetukset**: aloittavan `/etc`-kansiojoukon, jonka käyt läpi ja muokkaat ennen tallennusta.
 - **Ei Unraidin omia ilmoituksia.** BombVaultin omat ilmoituskanavat (webhook, off-site-epäonnistumisen varoitukset ja niin edelleen) toimivat tavalliseen tapaan; pois jää vain Unraid-kohtainen lähetys sen omaan ilmoitusjärjestelmään, koska sellaista järjestelmää ei täällä ole.
 - **Virtuaalikoneiden varmuuskopiointi on valinnaista ja vaatii erillisen, SSH:n yli tavoitettavan libvirtd-isännän.** Katso compose-tiedoston kommentoitu lohko. Yleisessä Docker-isännässä ei ole omaa virtuaalikoneiden hallintaa.
 - **Ei kojelautawidgetiä.** BombVault Widget on Unraid-laajennus, joten tämäkin vaihe jää pois.
 - **Kontin datan löytäminen.** Ilman Unraidin `appdata`-käytäntöä kontin datakansio löydetään `DATA_ROOT_SEGMENTS`-muuttujan segmenttien, Dockerin nimettyjen taltioiden, Compose-projektin työhakemiston ja `bombvault.data`-tunnisteen perusteella (katso [Varmuuskopion lähteiden tunnistus](configuration.md#backup-source-detection)). Nimetyt taltiot ja `/etc`-esiasetus yltävät vain Host Data -liitoksen sisällä oleviin polkuihin, joten osoita Host Data yhteiseen ylähakemistoon, joka kattaa myös Dockerin datajuuren.
 - **`PLATFORM`.** Aseta arvoksi `generic` tai `truenas`. Jos sitä ei aseteta, BombVault tunnistaa Unraidin sen omasta merkistä flash-liitoksessa ja käsittelee kaiken muun yleisenä, ja vain Unraidia koskevat vaiheet ohitetaan sen sijaan, että niitä yritettäisiin ja ne epäonnistuisivat.
 
-**TrueNAS Scale** kulkee samaa compose-reittiä; luettelomerkintä on valmisteltu repoon, mutta sitä ei ole vielä lähetetty. Virtuaalikoneiden varmuuskopiointi vaatii siellä `LIBVIRT_URI`-muuttujan, koska TrueNASin libvirtd kuuntelee omaa sokettiaan (`/run/truenas_libvirt/libvirt-sock`), jota kolme `LIBVIRT_*`-muuttujaa eivät pysty ilmaisemaan (katso [Asetukset](configuration.md)). Kuinka pitkälle tämä on todennettu: zvol-varmuuskopio ajettiin oikealla TrueNAS Scale -laitteella zvolille, joka oli liitetty käynnissä olevaan virtuaalikoneeseen, ja `zfs snapshot`, `zfs send`, restic ja `zfs receive` veivät sen edestakaisin tavu tavulta muuttumattomana. Täyttä BombVaultin itsensä ohjaamaa palautusta ei ole vielä ajettu TrueNAS-laitteistolla, ja tuo zvol oli harva (sparse), joten läpäisyä monen gigatavun kokoluokassa ei ole testattu. Testaa palautus siellä ennen kuin luotat siihen.
+### TrueNAS SCALE {#truenas}
+
+BombVault ei ole vielä TrueNASin sovelluskatalogissa, joten asenna se mukautettuna sovelluksena: **Apps, Discover Apps** ja sitten **Install via YAML** valikosta **Custom App** -kohdan vierestä. Alla oleva YAML asettaa samat asiat kuin repon `truenas-apps`-kansion luettelomerkintä. Korvaa `tank` omalla poolillasi ja täytä `APP_KEY` seuraavan osion ohjeiden mukaan.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # Virtuaalikoneiden varmuuskopioita varten:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+Avaa sitten `https://<truenas-ip>:30528/`. Se, mitä kohdassa [Mikä poikkeaa Unraidista](#generic-docker-host) luetellaan, pätee myös tässä, ja TrueNASissa lisäksi:
+
+- **Capabilityt.** BombVault tarvitsee yllä olevat kuusi. Ilman `SETPCAP`ia virtuaalikoneiden varmuuskopiot epäonnistuvat.
+- **Host Data** on isäntäpolku tietojoukossa, tässä `/mnt/tank`, ja se liitetään samaan polkuun sovelluksen sisällä. Siksi `HOST_SOURCE_ROOT` ja `HOST_MOUNT_ROOT` nimeävät molemmat sen. `rslave` välittää liitokset, jotka isäntä tekee myöhemmin, ja niitä ZFS-tietojoukkojen varmuuskopiot tarvitsevat.
+- **ixVolumessa olevaa dataa ei varmuuskopioida.** Sovellus, jonka tallennustila on ixVolume, pitää datansa polussa `/mnt/.ix-apps`, Host Datan ulkopuolella. BombVault tallentaa vain sovelluksen määrityksen, ja ajo nimeää pois jättämänsä kansiot. Valitse jokaiselle sovellukselle, jonka datan haluat varmuuskopioida, **Host Path** -tallennustila Host Datan alla olevassa tietojoukossa.
+- **Virtuaalikoneiden ja ZFS-tietojoukkojen varmuuskopiot** ottavat yhteyden TrueNASiin SSH:n yli root-käyttäjänä. Ota SSH-palvelu käyttöön kohdassa **System, Services** ja lisää julkinen avain kohdasta **Asetukset, Integraatiot, Palvelimen SSH** root-käyttäjälle kohdassa **Credentials, Users**. Virtuaalikoneiden varmuuskopiot tarvitsevat lisäksi `LIBVIRT_URI`n kuten yllä, koska TrueNASin libvirtd kuuntelee omaa sokettiaan. Kun kumpaakaan `LIBVIRT_URI`- tai `LIBVIRT_HOST`-muuttujaa ei ole asetettu, BombVault käyttää isäntänä sovelluksen oletusyhdyskäytävää, koska `host.docker.internal` ei ratkea TrueNAS-sovelluksessa. [VM-varmuuskopiointiopas](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) kertoo yksityiskohdat, myös zvoleilla olevista virtuaalikoneista.
+- **ZFS-replika käyttää eri avainta.** Toisella ZFS-palvelimella oleva replika kirjautuu avaimella, jonka replikaikkuna näyttää, ei Palvelimen SSH -avaimella. Lisää se vastaanottavalle palvelimelle.
+- **Poistettu sovellus palaa kahdessa vaiheessa.** Asenna se ensin TrueNASiin uudelleen samalla nimellä, jolloin sen verkko luodaan uudelleen, ja palauta sitten sen data BombVaultissa. Siihen asti tarkistus ennen palautusta ilmoittaa puuttuvasta verkosta, ja palautus kieltäytyy ennen kuin muuttaa mitään.
+- **Alkuperäisen viereen** luo tavallisen Docker-kontin. Se toimii, mutta TrueNASin Apps-näkymä ei listaa sitä.
+- **Tietokantavedokset** toimivat tietojoukkoliitoksissa. Tuonti datakansioon, joka on oma tietojoukkonsa, siirtää vanhan sisällön sen viereiseen kansioon, joten yläpuolisessa tietojoukossa on oltava sille tilaa.
 
 ## Ainoa vaadittu asetus
 

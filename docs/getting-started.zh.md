@@ -6,7 +6,7 @@
 
 | 要求 | 说明 |
 |---|---|
-| **Unraid 6.12+** | 更早的版本未经测试。Unraid 是主要目标，但 BombVault 也能在普通 Docker 主机和 TrueNAS Scale 上运行（参见[通用 Docker 主机](#generic-docker-host)）。 |
+| **Unraid 6.12+** | 更早的版本未经测试。Unraid 是主要目标，但 BombVault 也能在普通 Docker 主机和 TrueNAS Scale 上运行（参见[通用 Docker 主机](#generic-docker-host)和 [TrueNAS SCALE](#truenas)）。 |
 | **restic 仓库位置** | 本地路径（推荐：你的阵列或缓存）、SMB、NFS，或任意 rclone 后端。 |
 | **Docker 套接字** | 由模板自动挂载（`/var/run/docker.sock`）。 |
 | **Unraid 闪存**（`/boot`） | 由模板自动整体挂载（`/boot` 到 `/host/boot`）。它驱动闪存备份，并让已还原的容器以正常、可编辑的 Unraid 应用形式重新出现。 |
@@ -34,7 +34,7 @@
 
 ## 通用 Docker 主机 {#generic-docker-host}
 
-不是 Unraid？BombVault 也能在任意 Docker 主机上以普通容器运行（TrueNAS Scale 上的容器支持，在它拥有自己的应用目录条目之前，也是靠这个跑起来的）。
+不是 Unraid？BombVault 也能在任意 Docker 主机上以普通容器运行。TrueNAS SCALE 有自己的步骤，见 [TrueNAS SCALE](#truenas)。
 
 1. 从仓库取得可直接编辑的 [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml)。
 2. 设置 `APP_KEY`（见下文），并把 Host Data 卷指向你真正的数据根目录。文件里的注释会把这两件事都讲清楚。
@@ -42,14 +42,54 @@
 
 与 Unraid 的不同之处：
 
-- **没有闪存分区。** 这里没有要采集或还原的启动 U 盘，所以闪存分区无事可做。作为替代，备份页面上的**添加**会提供**系统配置**作为文件夹建议：一份起步的 `/etc` 文件夹集，保存前由你审阅和修改。
+- **没有闪存分区。** 这里没有要采集或还原的启动 U 盘，所以闪存分区无事可做。作为替代，当 Host Data 能触及主机的 `/etc` 时，备份页面上的**添加**会提供**系统配置**作为文件夹建议：一份起步的 `/etc` 文件夹集，保存前由你审阅和修改。
 - **没有 Unraid 原生通知。** BombVault 自己的通知渠道（Webhook、异地失败告警等）照常工作；略过的只是向 Unraid 自身通知系统的推送，因为这里根本没有那套系统。
 - **虚拟机备份是可选的，且需要一台通过 SSH 可达的独立 libvirtd 主机。** 见 compose 文件里被注释掉的那段。通用 Docker 主机本身并不自带虚拟机管理。
 - **没有仪表板小组件。** BombVault Widget 是一个 Unraid 插件，所以这一步也会跳过。
 - **查找容器的数据。** 没有 Unraid 的 `appdata` 约定时，容器的数据文件夹通过 `DATA_ROOT_SEGMENTS` 中的片段、Docker 命名卷、Compose 项目的工作目录以及 `bombvault.data` 标签来查找（参见[备份来源的自动识别](configuration.md#backup-source-detection)）。命名卷和 `/etc` 预设只能触及 Host Data 挂载内的路径，因此请把 Host Data 指向一个同时涵盖 Docker 数据根目录的共同上级目录。
 - **`PLATFORM`。** 设为 `generic` 或 `truenas`。不设置时，BombVault 会根据闪存挂载上 Unraid 自己的标记识别 Unraid，其他情况一律按通用主机处理，仅限 Unraid 的步骤会直接跳过，而不是尝试后失败。
 
-**TrueNAS Scale** 走的是同样的 compose 路线；目录条目已在仓库中准备好，但尚未提交。在那里备份虚拟机需要 `LIBVIRT_URI`，因为 TrueNAS 的 libvirtd 监听的是它自己的套接字（`/run/truenas_libvirt/libvirt-sock`），三个 `LIBVIRT_*` 变量无法表达这一点（参见[配置](configuration.md)）。目前验证到的程度：zvol 备份曾在一台真实的 TrueNAS Scale 机器上、针对挂接在运行中虚拟机上的 zvol 执行，`zfs snapshot`、`zfs send`、restic 和 `zfs receive` 走完一个来回后逐字节一致。由 BombVault 自身完成的完整还原尚未在 TrueNAS 硬件上运行过，而且那个 zvol 是稀疏的，因此数 GB 规模下的吞吐量尚未测试。在依赖它之前，请先在那里测试一次还原。
+### TrueNAS SCALE {#truenas}
+
+BombVault 尚未进入 TrueNAS 应用目录，所以请把它作为自定义应用安装：打开 **Apps, Discover Apps**，然后在 **Custom App** 旁边的菜单中选择 **Install via YAML**。下面的 YAML 与仓库 `truenas-apps` 文件夹中的目录条目设置的内容相同。把 `tank` 换成你的存储池，并按下一节的说明填写 `APP_KEY`。
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # 用于虚拟机备份：
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+然后打开 `https://<truenas-ip>:30528/`。[与 Unraid 的不同之处](#generic-docker-host)中列出的内容在这里同样适用，此外在 TrueNAS 上还有：
+
+- **能力（capabilities）。** BombVault 需要上面这六项。缺少 `SETPCAP` 时虚拟机备份会失败。
+- **Host Data** 是数据集上的主机路径，这里是 `/mnt/tank`，在应用内挂载到相同路径。因此 `HOST_SOURCE_ROOT` 和 `HOST_MOUNT_ROOT` 都填写它。`rslave` 会把主机之后建立的挂载传递进来，ZFS 数据集备份需要这一点。
+- **ixVolume 中的数据不会被备份。** 存储为 ixVolume 的应用把数据放在 `/mnt/.ix-apps` 下，位于 Host Data 之外。BombVault 只保存该应用的定义，运行记录会列出被排除的文件夹。对每个需要备份数据的应用，请选择 Host Data 之下某个数据集上的 **Host Path** 存储。
+- **虚拟机和 ZFS 数据集备份**以 root 身份通过 SSH 连接 TrueNAS。在 **System, Services** 下开启 SSH 服务，并在 **Credentials, Users** 下把**设置、集成、主机 SSH** 中的公钥添加给 root 用户。虚拟机备份还需要上面的 `LIBVIRT_URI`，因为 TrueNAS 的 libvirtd 监听的是它自己的套接字。如果 `LIBVIRT_URI` 和 `LIBVIRT_HOST` 都未设置，BombVault 会把应用的默认网关当作主机，因为 `host.docker.internal` 在 TrueNAS 应用中无法解析。细节（包括位于 zvol 上的虚拟机）见[虚拟机备份指南](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale)。
+- **ZFS 副本使用另一把密钥。** 第二台 ZFS 服务器上的副本使用副本对话框中显示的密钥登录，而不是主机 SSH 密钥。请在接收端服务器上添加那一把。
+- **已删除的应用分两步找回。** 先在 TrueNAS 中以相同名称重新安装它，这会重新创建它的网络，然后在 BombVault 中还原它的数据。在此之前，还原前的检查会报告缺少的网络，还原会在做出任何更改之前拒绝执行。
+- **放在原件旁边**会创建一个普通的 Docker 容器。它能运行，但 TrueNAS 的 Apps 页面不会列出它。
+- **数据库转储**在数据集挂载上可用。导入到本身就是一个数据集的数据目录时，旧内容会被移到旁边的一个文件夹中，因此上一级数据集需要有容纳它们的空间。
 
 ## 唯一必需的设置
 

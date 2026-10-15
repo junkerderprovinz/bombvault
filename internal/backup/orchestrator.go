@@ -51,6 +51,9 @@ var (
 	// It wraps a human-readable list of the conflicts; nothing destructive has
 	// run yet, so the user can free the resources and retry.
 	ErrRestoreConflict = errors.New("restore: ip/port conflict")
+	// ErrListNetworks is returned when the network check cannot read the host's
+	// networks from Docker.
+	ErrListNetworks = errors.New("restore: list networks")
 	// ErrVMNotInstalled is returned by a VM backup when the host no longer defines
 	// the domain (deleted, or a template that was undefined). The scheduled job
 	// treats it as a skip, not a failure, so a leftover schedule entry for a
@@ -1149,7 +1152,7 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 	if err := checkRestoreConflicts(ctx, d); err != nil {
 		return err
 	}
-	if err := checkRestoreNetwork(ctx, d); err != nil {
+	if err := CheckRestoreNetwork(ctx, d.Docker, d.Inspect); err != nil {
 		return err
 	}
 
@@ -1278,27 +1281,35 @@ func checkRestoreConflicts(ctx context.Context, d RestoreDeps) error {
 	return nil
 }
 
-// checkRestoreNetwork refuses a restore whose primary user-defined network is
-// gone from the host, before anything is stopped or removed. BombVault does not
-// create the network itself: its driver, subnet and the labels the tool that
-// owned it expects are not part of the saved definition, and a network made with
-// guesses would clash with that tool the next time it runs. A TrueNAS app, for
-// one, drops its compose network when the app is deleted and makes it again on
-// reinstall.
-func checkRestoreNetwork(ctx context.Context, d RestoreDeps) error {
-	name := userDefinedNetwork(d.Inspect.HostConfig.NetworkMode)
+// NetworkGoneError refuses a restore whose primary user-defined network is
+// gone from the host.
+type NetworkGoneError struct{ Name string }
+
+func (e *NetworkGoneError) Error() string {
+	return fmt.Sprintf("restore: network %q does not exist on this host. "+
+		"If an app or compose project created it, such as a TrueNAS app, reinstall that app first so the network exists, then restore its data", e.Name)
+}
+
+// CheckRestoreNetwork refuses a restore of in whose primary user-defined
+// network is gone from the host, before anything is stopped or removed.
+// BombVault does not create the network itself: its driver, subnet and the
+// labels the tool that owned it expects are not part of the saved definition,
+// and a network made with guesses would clash with that tool the next time it
+// runs. A TrueNAS app, for one, drops its compose network when the app is
+// deleted and makes it again on reinstall.
+func CheckRestoreNetwork(ctx context.Context, docker Docker, in model.Inspect) error {
+	name := userDefinedNetwork(in.HostConfig.NetworkMode)
 	if name == "" {
 		return nil
 	}
-	have, err := d.Docker.Networks(ctx)
+	have, err := docker.Networks(ctx)
 	if err != nil {
-		return fmt.Errorf("restore: list networks: %w", err)
+		return fmt.Errorf("%w: %w", ErrListNetworks, err)
 	}
 	if slices.Contains(have, name) {
 		return nil
 	}
-	return fmt.Errorf("restore: network %q does not exist on this host. "+
-		"If an app or compose project created it, such as a TrueNAS app, reinstall that app first so the network exists, then restore its data", name)
+	return &NetworkGoneError{Name: name}
 }
 
 // userDefinedNetwork returns the network a container's network mode names, or
@@ -1333,21 +1344,15 @@ func publishedHostPorts(in model.Inspect) map[string]bool {
 
 // runErrPathRe and runErrCredentialRe are this package's own copy of the
 // path/credential scrub applied by internal/restic/restic.go and
-// internal/api/handlers.go (see restic.go's credentialRe doc comment for the
-// full reasoning behind the shape of these two and why the path regex must
-// run first — including the known Docker-digest-style false-positive
-// tradeoff and the known unencoded-"/"-in-password false-negative tradeoff,
-// both of which apply equally to this copy). Duplicated rather than
-// imported: this package is dependency-injected and deliberately imports
-// ONLY the Docker/Restic/Templates/Runs interfaces defined here, never the
-// concrete restic/dockercli adapters (see the package doc comment above) — a
-// real dependency on internal/restic just to reuse a two-line regex would
-// break that isolation for something this small and stable to just
-// duplicate, matching how the api and restic packages already each keep
-// their own copy.
+// internal/api/handlers.go; restic.go's doc comments give the reasoning
+// behind their shape. Duplicated rather than imported: this package is
+// dependency-injected and imports only the Docker/Restic/Templates/Runs
+// interfaces defined here, never the concrete restic/dockercli adapters (see
+// the package doc comment above), and a two-line regex is not worth breaking
+// that for. runErrPathRe is replaced with "${1}[path]".
 var (
-	runErrPathRe       = regexp.MustCompile(`(/[^\s:"']+)+`)
-	runErrCredentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@"']+@`)
+	runErrPathRe       = regexp.MustCompile(`(^|[\s"'(\[=:,~])(?:/[^\s:"']*[^\s:"').,;\]])+`)
+	runErrCredentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s@"']+@`)
 )
 
 // scrubRunErr strips absolute-path-like tokens and then URL-embedded
@@ -1407,7 +1412,7 @@ func scrubRunErr(s string) string {
 // scrubRunErrOutsideARepoLocation is the original scrubbing, applied to the
 // parts of a message that are NOT a remote repository location.
 func scrubRunErrOutsideARepoLocation(s string) string {
-	s = runErrPathRe.ReplaceAllString(s, "[path]")
+	s = runErrPathRe.ReplaceAllString(s, "${1}[path]")
 	return runErrCredentialRe.ReplaceAllString(s, "[redacted]@")
 }
 
@@ -1416,11 +1421,9 @@ func scrubRunErrOutsideARepoLocation(s string) string {
 //
 // checkRestoreConflicts' message ("host port 8080/tcp is already used by
 // container ...") holds IP addresses, host ports and container names, never a
-// host filesystem path, and runErrPathRe matches every slash-containing token, so
-// scrubbing it mangles "8080/tcp" into "8080[path]" and destroys exactly the
-// information the message exists to convey. A ZFSRefusal is built from validated
-// dataset names and reason codes for the same reason: scrubbed, "cache/appdata"
-// becomes "[path]" and the run history no longer says which dataset failed.
+// host filesystem path. A ZFSRefusal is built from validated dataset names and
+// reason codes, with the host's own paths already taken out, and the run
+// history has to say which dataset failed.
 //
 // This mirrors internal/api/handlers.go's scrubBypassMessage, which the api
 // package's own copy of truncateRunErr consults for the identical reason.

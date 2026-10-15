@@ -4,7 +4,7 @@
 // The caller owns the check (useRestoreCheck) and gates its Start button on it.
 
 import { useState } from "react";
-import type { CheckLine, DefinitionChange, PlanChange, RestorePlan } from "../../lib/api";
+import type { CheckLine, DefinitionChange, PlanChange, PlanZvol, RestorePlan } from "../../lib/api";
 import type { TranslationKey, useT } from "../../lib/i18n";
 import { humanBytes } from "../../lib/forecast";
 import { CHECK_LINE_LABEL, type RestoreCheck } from "../../lib/useRestoreCheck";
@@ -68,7 +68,11 @@ function lineText(c: CheckLine, t: T): string {
       .replace("{free}", humanBytes(c.free ?? 0));
   }
   if (c.reason === "parent-missing") return t("restoreCheck.reason.parentMissing").replace("{name}", c.detail ?? "");
+  if (c.reason === "pool-missing") return t("restoreCheck.reason.poolMissing").replace("{name}", c.detail ?? "");
   if (c.reason === "network-missing") return t("restoreCheck.reason.networkMissing").replace("{name}", c.detail ?? "");
+  if (c.reason === "network-gone") return t("restoreCheck.reason.networkGone").replace("{name}", c.detail ?? "");
+  if (c.reason === "network-unreadable")
+    return t("restoreCheck.reason.networkUnreadable").replace("{error}", c.detail ?? "");
   if (c.detail)
     return c.id === "snapshot" && c.status === "ok" ? t("restoreCheck.snapshotId").replace("{id}", c.detail) : c.detail;
   return c.reason && REASON[c.reason] ? t(REASON[c.reason]) : "";
@@ -224,6 +228,7 @@ function PlanView({ plan, t }: { plan: RestorePlan; t: T }) {
           )}
         </div>
       )}
+      {plan.zvols && plan.zvols.length > 0 && <ZvolList zvols={plan.zvols} t={t} />}
       {plan.missing && <p className="text-sm text-carbon-text">{t("restoreCheck.def.missing")}</p>}
       {plan.definition.length > 0 && (
         <div className="flex flex-col gap-1">
@@ -266,6 +271,36 @@ function PlanView({ plan, t }: { plan: RestorePlan; t: T }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/** The zvols a VM restore writes whole, which no file list shows. */
+function ZvolList({ zvols, t }: { zvols: PlanZvol[]; t: T }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <h5 className="text-sm font-semibold text-carbon-text">{t("restoreCheck.zvol.title")}</h5>
+        <InfoBubble tip={t("restoreCheck.zvol.titleHint")} />
+      </div>
+      <ul className="flex flex-col gap-1.5 text-caption">
+        {zvols.map((z) => (
+          <li key={z.dataset} className="flex flex-col gap-0.5">
+            <span className="flex flex-wrap items-baseline gap-x-2">
+              <span className="min-w-0 break-all font-mono text-carbon-text" dir="ltr">
+                {z.dataset}
+              </span>
+              <span className="text-carbon-textMuted">{humanBytes(z.size)}</span>
+              {z.change && <span className="text-carbon-textMuted">{t(CHANGE_LABEL[z.change])}</span>}
+            </span>
+            {z.safety && (
+              <span className="wrap-break-word text-carbon-textMuted">
+                {t("restoreCheck.zvol.safety").replace("{name}", `${z.safety}…`)}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

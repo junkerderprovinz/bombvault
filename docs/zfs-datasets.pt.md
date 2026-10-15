@@ -114,7 +114,7 @@ Ativa-a no cartão **Réplica** do separador Definições da entrada. Aí escolh
 Qualquer máquina com ZFS e SSH pode receber, por exemplo um segundo Unraid ou um TrueNAS. O BombVault não tem de correr lá.
 
 1. Em **Definições, Emparelhamento**, escolhe **Ligar por SSH** em **Servidor ZFS sem BombVault**, ou **Adicionar servidor ZFS** no cartão **Réplica** da entrada.
-2. Indica o endereço, o utilizador e a porta. A caixa de diálogo mostra a chave pública do BombVault. Adiciona-a ao `~/.ssh/authorized_keys` do utilizador no servidor. No Unraid fica em **Users, root, SSH keys**. Conforme **Display Settings**, Users fica no menu do cabeçalho ou em Settings. Esta é a chave da réplica. É diferente da chave da ligação SSH das VMs e do anfitrião, por isso adicione-a mesmo que essa já esteja autorizada.
+2. Indica o endereço, o utilizador e a porta. A caixa de diálogo mostra a chave pública do BombVault. Adiciona-a ao `~/.ssh/authorized_keys` do utilizador no servidor. No Unraid fica em **Users, root, SSH keys**. Conforme **Display Settings**, Users fica no menu do cabeçalho ou em Settings. No TrueNAS, edita o utilizador em **Credentials, Users**. Esta é a chave da réplica. É diferente da chave da ligação SSH das VMs e do anfitrião, por isso adicione-a mesmo que essa já esteja autorizada.
 3. Testa a ligação. A caixa de diálogo lista então os pools do servidor. Escolhe um e define a raiz, que por predefinição é `<pool>/bombvault-replica`.
 4. Escolhe o novo servidor no cartão **Réplica** da entrada. O servidor tem então um cartão próprio na página Instâncias, e **Abrir** leva à sua página.
 
@@ -285,7 +285,8 @@ Cada linha é uma montagem dentro do contentor. A linha de um conjunto de dados 
 
 ## TrueNAS SCALE {#truenas}
 
-- Quando `LIBVIRT_URI` está definido (como para os backups de VM no TrueNAS), o BombVault vai buscar ao URI o anfitrião, o utilizador e a porta SSH dos seus comandos zfs, cada um que não esteja definido à parte. Sem backups de VM, define antes `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` e `LIBVIRT_SSH_PORT`. Adiciona as variáveis em **Additional Environment Variables**.
+- Quando `LIBVIRT_URI` está definido (como para os backups de VM no TrueNAS), o BombVault vai buscar ao URI o anfitrião, o utilizador e a porta SSH dos seus comandos zfs, cada um que não esteja definido à parte. Sem backups de VM não é preciso definir nada: `host.docker.internal` não resolve numa app do TrueNAS, por isso o BombVault chega ao anfitrião pelo gateway predefinido da app, como root na porta 22. Define `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` e `LIBVIRT_SSH_PORT` quando quiseres outro endereço ou outro utilizador, no `environment` da app.
+- Adiciona a chave SSH do anfitrião de **Definições, Integrações, SSH do anfitrião** ao root em **Credentials, Users**, e ativa o serviço SSH em **System, Services**. Uma [réplica](#replica-push) para este ou outro TrueNAS precisa também da chave da réplica, que é outra.
 - Um utilizador que não seja root precisa de permissão no conjunto de dados de topo da entrada, que cobre então todos os conjuntos de dados abaixo dele:
 
   ```
@@ -295,4 +296,4 @@ Cada linha é uma montagem dentro do contentor. A linha de um conjunto de dados 
   Restaurar num conjunto de dados novo precisa também de `create` no conjunto de dados acima, e definir propriedades guardadas precisa de permissão para essas propriedades.
 
   Uma sessão SSH sem root no TrueNAS não tem `/usr/sbin` no caminho; o BombVault chama então `/usr/sbin/zfs` diretamente.
-- O **Host Data** da app tem de ser um caminho do anfitrião acima dos conjuntos de dados, por exemplo `/mnt/tank`, e não um ixVolume. Com um caminho do anfitrião, a app passa ao BombVault as montagens novas do anfitrião (`rslave`), que é o que o acesso aos instantâneos precisa.
+- O **Host Data** da app tem de ser um caminho do anfitrião acima dos conjuntos de dados, por exemplo `/mnt/tank`, e não um ixVolume. Com um caminho do anfitrião, a app passa ao BombVault as montagens novas do anfitrião (`rslave`), que é o que o acesso aos instantâneos precisa. Consulta [TrueNAS SCALE](getting-started.md#truenas) para a configuração completa da app.

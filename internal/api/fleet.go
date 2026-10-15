@@ -48,8 +48,10 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 	}
 	for _, m := range s.pairing().Members() {
 		if i, ok := known[m.ID]; ok {
-			if rows[i].Name != m.Name || (m.Kind != "" && rows[i].Kind != m.Kind) {
-				rows[i].Name = m.Name
+			if (m.Name != "" && rows[i].Name != m.Name) || (m.Kind != "" && rows[i].Kind != m.Kind) {
+				if m.Name != "" {
+					rows[i].Name = m.Name
+				}
 				if m.Kind != "" {
 					rows[i].Kind = m.Kind
 				}
@@ -111,6 +113,12 @@ func (s *Service) pollAndRecordFleetPeer(ctx context.Context, p store.FleetPeer)
 		err = s.memberPresent(p.MemberID)
 	default:
 		err = s.callMember(ctx, p.MemberID, http.MethodGet, "/api/group/peer/status", nil, &resp)
+		if err == nil {
+			// The key pinned while the member is here is what its word that it
+			// left the group is checked against later. A member too old to sign
+			// has none.
+			_, _ = s.memberKey(ctx, p.MemberID) //nolint:errcheck // see above
+		}
 	}
 
 	ok := sql.NullBool{Valid: true, Bool: err == nil}

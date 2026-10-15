@@ -5,6 +5,10 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log"
+	"os"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -12,50 +16,86 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 )
 
-// fakeZFSHost records the ZFS calls of BackupZvolDisk and RestoreZvolDisk.
-// These tests check the order of operations and the cleanup, not how a real
-// zfs send or receive behaves on TrueNAS.
+// fakeZFSHost records the host commands of a zvol backup and restore and
+// keeps the zvols that exist with their sizes.
 type fakeZFSHost struct {
 	log []string
 
-	snapshotCreateErr  error
-	snapshotDestroyErr error
+	snapshotCreateErr error
+	cloneErr          error
+	destroyErr        error
+	readErr           error
+	readWait          error // what the wait func of ReadVolume returns
+	writeErr          error
 
-	streamSendErr  error
-	streamSendData []byte
-	streamSendWait error // returned by the wait() func StreamSend hands back
+	readData []byte
+	volumes  map[string]int64
+	written  map[string][]byte
 
-	streamReceiveErr    error
-	streamReceiveData   []byte
-	streamReceiveTarget string
+	snapshots    []backup.ZFSSnapshot
+	snapshotsErr error
+	// onRead runs while a backup reads its clone.
+	onRead func()
 }
 
 func (f *fakeZFSHost) SnapshotCreate(_ context.Context, dataset, snapName string) error {
-	f.log = append(f.log, "snapshotCreate:"+dataset+"@"+snapName)
+	f.log = append(f.log, "snapshot:"+dataset+"@"+snapName)
 	return f.snapshotCreateErr
 }
 
-func (f *fakeZFSHost) SnapshotDestroy(_ context.Context, dataset, snapName string) error {
-	f.log = append(f.log, "snapshotDestroy:"+dataset+"@"+snapName)
-	return f.snapshotDestroyErr
+func (f *fakeZFSHost) Snapshots(_ context.Context, dataset string) ([]backup.ZFSSnapshot, error) {
+	f.log = append(f.log, "snapshots:"+dataset)
+	return f.snapshots, f.snapshotsErr
 }
 
-func (f *fakeZFSHost) StreamSend(_ context.Context, dataset, snapName string) (io.ReadCloser, func() error, error) {
-	f.log = append(f.log, "streamSend:"+dataset+"@"+snapName)
-	if f.streamSendErr != nil {
-		return nil, nil, f.streamSendErr
+func (f *fakeZFSHost) Clone(_ context.Context, snapshot, clone string) error {
+	f.log = append(f.log, "clone:"+snapshot+"->"+clone)
+	return f.cloneErr
+}
+
+func (f *fakeZFSHost) Destroy(_ context.Context, name string) error {
+	f.log = append(f.log, "destroy:"+name)
+	return f.destroyErr
+}
+
+func (f *fakeZFSHost) VolSize(_ context.Context, dataset string) (int64, bool, error) {
+	f.log = append(f.log, "volsize:"+dataset)
+	size, ok := f.volumes[dataset]
+	return size, ok, nil
+}
+
+func (f *fakeZFSHost) CreateVolume(_ context.Context, dataset string, size int64) error {
+	f.log = append(f.log, "create:"+dataset+":"+strconv.FormatInt(size, 10))
+	return nil
+}
+
+func (f *fakeZFSHost) SetVolSize(_ context.Context, dataset string, size int64) error {
+	f.log = append(f.log, "resize:"+dataset+":"+strconv.FormatInt(size, 10))
+	return nil
+}
+
+func (f *fakeZFSHost) ReadVolume(_ context.Context, dataset string) (io.ReadCloser, func() error, error) {
+	f.log = append(f.log, "read:"+dataset)
+	if f.onRead != nil {
+		f.onRead()
 	}
-	rc := io.NopCloser(bytes.NewReader(f.streamSendData))
-	wait := func() error { return f.streamSendWait }
-	return rc, wait, nil
+	if f.readErr != nil {
+		return nil, nil, f.readErr
+	}
+	return io.NopCloser(bytes.NewReader(f.readData)), func() error { return f.readWait }, nil
 }
 
-func (f *fakeZFSHost) StreamReceive(_ context.Context, rd io.Reader, targetDataset string) error {
-	f.log = append(f.log, "streamReceive:"+targetDataset)
-	f.streamReceiveTarget = targetDataset
+func (f *fakeZFSHost) WriteVolume(_ context.Context, rd io.Reader, dataset string) error {
+	f.log = append(f.log, "write:"+dataset)
+	if f.writeErr != nil {
+		return f.writeErr
+	}
 	data, _ := io.ReadAll(rd)
-	f.streamReceiveData = data
-	return f.streamReceiveErr
+	if f.written == nil {
+		f.written = map[string][]byte{}
+	}
+	f.written[dataset] = data
+	return nil
 }
 
 type fakeZvolRestic struct {
@@ -66,6 +106,10 @@ type fakeZvolRestic struct {
 	capturedStdin []byte
 	capturedPath  string
 	capturedTags  []string
+	// stdinByPath keeps what each call read, and summaryByPath, when it names
+	// a path, answers that call in place of backupSummary.
+	stdinByPath   map[string][]byte
+	summaryByPath map[string]backup.Summary
 
 	dumpErr  error
 	dumpData []byte
@@ -77,8 +121,15 @@ func (r *fakeZvolRestic) BackupStdin(_ context.Context, repo string, rd io.Reade
 	r.capturedTags = tags
 	data, _ := io.ReadAll(rd)
 	r.capturedStdin = data
+	if r.stdinByPath == nil {
+		r.stdinByPath = map[string][]byte{}
+	}
+	r.stdinByPath[path] = data
 	if r.backupErr != nil {
 		return backup.Summary{}, r.backupErr
+	}
+	if sum, ok := r.summaryByPath[path]; ok {
+		return sum, nil
 	}
 	return r.backupSummary, nil
 }
@@ -94,7 +145,6 @@ func (r *fakeZvolRestic) DumpTo(_ context.Context, repo, snapshotID, path string
 
 func sampleBackupZvolDeps(host *fakeZFSHost, r *fakeZvolRestic) backup.BackupZvolDeps {
 	return backup.BackupZvolDeps{
-		Name:     "truenasvm",
 		Dataset:  "tank/vms/truenasvm/disk0",
 		SnapName: "bombvault-20260816120000",
 		RepoPath: "/repo/vms",
@@ -104,274 +154,274 @@ func sampleBackupZvolDeps(host *fakeZFSHost, r *fakeZvolRestic) backup.BackupZvo
 	}
 }
 
-// TestBackupZvolDiskHappyPath checks the sequence: snapshot, zfs send into
-// restic backup --stdin, destroy.
-func TestBackupZvolDiskHappyPath(t *testing.T) {
-	host := &fakeZFSHost{streamSendData: []byte("fake zfs send stream bytes")}
+func TestAZvolIsBackedUpAsTheRawImageOfASnapshotClone(t *testing.T) {
+	host := &fakeZFSHost{readData: []byte("raw disk image")}
 	r := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "abc123", Bytes: 42}}
 
-	sum, err := backup.BackupZvolDisk(context.Background(), sampleBackupZvolDeps(host, r))
+	sum, err := backup.BackupZvolDisk(t.Context(), sampleBackupZvolDeps(host, r))
 	if err != nil {
 		t.Fatalf("BackupZvolDisk: %v", err)
 	}
 	if sum.SnapshotID != "abc123" || sum.Bytes != 42 {
-		t.Fatalf("summary = %+v, want the restic summary passed through", sum)
+		t.Fatalf("summary = %+v, want restic's", sum)
 	}
-
-	wantOrder := []string{
-		"snapshotCreate:tank/vms/truenasvm/disk0@bombvault-20260816120000",
-		"streamSend:tank/vms/truenasvm/disk0@bombvault-20260816120000",
-		"snapshotDestroy:tank/vms/truenasvm/disk0@bombvault-20260816120000",
+	want := []string{
+		"snapshots:tank/vms/truenasvm/disk0",
+		"snapshot:tank/vms/truenasvm/disk0@bombvault-20260816120000",
+		"clone:tank/vms/truenasvm/disk0@bombvault-20260816120000->tank/vms/truenasvm/disk0-bombvault-20260816120000",
+		"read:tank/vms/truenasvm/disk0-bombvault-20260816120000",
+		"destroy:tank/vms/truenasvm/disk0-bombvault-20260816120000",
+		"destroy:tank/vms/truenasvm/disk0@bombvault-20260816120000",
 	}
-	if len(host.log) != len(wantOrder) {
-		t.Fatalf("host.log = %v, want %v", host.log, wantOrder)
+	if strings.Join(host.log, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("host calls\n%s\nwant\n%s", strings.Join(host.log, "\n"), strings.Join(want, "\n"))
 	}
-	for i, want := range wantOrder {
-		if host.log[i] != want {
-			t.Fatalf("host.log[%d] = %q, want %q (full log: %v)", i, host.log[i], want, host.log)
-		}
+	if string(r.capturedStdin) != "raw disk image" {
+		t.Fatalf("restic read %q, want the clone's contents", r.capturedStdin)
 	}
-
-	if string(r.capturedStdin) != "fake zfs send stream bytes" {
-		t.Fatalf("restic BackupStdin received %q, want the zfs send stream bytes", r.capturedStdin)
-	}
-	if r.capturedTags == nil || r.capturedTags[0] != "vm:truenasvm" {
-		t.Fatalf("restic BackupStdin tags = %v, want [vm:truenasvm]", r.capturedTags)
-	}
-	wantPath := "/vm-disks/tank/vms/truenasvm/disk0@bombvault-20260816120000"
-	if r.capturedPath != wantPath {
-		t.Fatalf("restic BackupStdin path = %q, want %q", r.capturedPath, wantPath)
+	if r.capturedPath != "/vm-disks/tank/vms/truenasvm/disk0.img" {
+		t.Fatalf("image path = %q, want one that is the same on every backup", r.capturedPath)
 	}
 }
 
-// TestBackupZvolDiskAlwaysDestroysSnapshotOnBackupFailure checks that the
-// snapshot, only a consistency point, goes even when the restic backup fails.
-func TestBackupZvolDiskAlwaysDestroysSnapshotOnBackupFailure(t *testing.T) {
-	host := &fakeZFSHost{streamSendData: []byte("stream")}
-	r := &fakeZvolRestic{backupErr: errors.New("restic: repository locked")}
-
-	_, err := backup.BackupZvolDisk(context.Background(), sampleBackupZvolDeps(host, r))
-	if err == nil {
-		t.Fatal("expected an error from the failed restic backup")
+func TestAZvolBackupCleansUpWhateverItCreated(t *testing.T) {
+	const snap = "destroy:tank/vms/truenasvm/disk0@bombvault-20260816120000"
+	const clone = "destroy:tank/vms/truenasvm/disk0-bombvault-20260816120000"
+	cases := []struct {
+		name      string
+		host      *fakeZFSHost
+		restic    *fakeZvolRestic
+		destroyed []string
+	}{
+		{"snapshot fails", &fakeZFSHost{snapshotCreateErr: errors.New("no such dataset")}, &fakeZvolRestic{}, nil},
+		{"clone fails", &fakeZFSHost{cloneErr: errors.New("out of space")}, &fakeZvolRestic{}, []string{snap}},
+		{"read does not start", &fakeZFSHost{readErr: errors.New("no device")}, &fakeZvolRestic{}, []string{clone, snap}},
+		{"read dies halfway", &fakeZFSHost{readWait: errors.New("dd: input/output error")}, &fakeZvolRestic{}, []string{clone, snap}},
+		{"restic fails", &fakeZFSHost{}, &fakeZvolRestic{backupErr: errors.New("repository locked")}, []string{clone, snap}},
 	}
-	if !vmContains(host.log, "snapshotDestroy:") {
-		t.Fatalf("snapshot destroy was not attempted after a backup failure; host.log = %v", host.log)
-	}
-}
-
-// TestBackupZvolDiskAlwaysDestroysSnapshotOnStreamFailure fails zfs send
-// before restic runs.
-func TestBackupZvolDiskAlwaysDestroysSnapshotOnStreamFailure(t *testing.T) {
-	host := &fakeZFSHost{streamSendErr: errors.New("ssh: connection refused")}
-	r := &fakeZvolRestic{}
-
-	_, err := backup.BackupZvolDisk(context.Background(), sampleBackupZvolDeps(host, r))
-	if err == nil {
-		t.Fatal("expected an error from the failed zfs send stream")
-	}
-	if !vmContains(host.log, "snapshotDestroy:") {
-		t.Fatalf("snapshot destroy was not attempted after a stream-start failure; host.log = %v", host.log)
-	}
-	if len(r.log) != 0 {
-		t.Fatalf("restic must never be called when the stream never started; r.log = %v", r.log)
-	}
-}
-
-func TestBackupZvolDiskSnapshotCreateFailureIsFatalAndSkipsRestic(t *testing.T) {
-	host := &fakeZFSHost{snapshotCreateErr: errors.New("dataset does not exist")}
-	r := &fakeZvolRestic{}
-
-	_, err := backup.BackupZvolDisk(context.Background(), sampleBackupZvolDeps(host, r))
-	if err == nil {
-		t.Fatal("expected an error when the snapshot could not be created")
-	}
-	if len(r.log) != 0 {
-		t.Fatalf("restic must never be called when the snapshot could not be created; r.log = %v", r.log)
-	}
-	if vmContains(host.log, "snapshotDestroy:") {
-		t.Fatalf("nothing to destroy when the snapshot was never created; host.log = %v", host.log)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if _, err := backup.BackupZvolDisk(t.Context(), sampleBackupZvolDeps(c.host, c.restic)); err == nil {
+				t.Fatal("want an error")
+			}
+			var destroyed []string
+			for _, call := range c.host.log {
+				if strings.HasPrefix(call, "destroy:") {
+					destroyed = append(destroyed, call)
+				}
+			}
+			if strings.Join(destroyed, ",") != strings.Join(c.destroyed, ",") {
+				t.Fatalf("destroyed %v, want %v", destroyed, c.destroyed)
+			}
+		})
 	}
 }
 
-// TestBackupZvolDiskDestroyFailureDoesNotMaskBackupSuccess checks that a failed
-// destroy does not fail the backup: a leftover snapshot is untidy, not data
-// loss.
-func TestBackupZvolDiskDestroyFailureDoesNotMaskBackupSuccess(t *testing.T) {
-	host := &fakeZFSHost{
-		streamSendData:     []byte("stream"),
-		snapshotDestroyErr: errors.New("dataset busy"),
-	}
+func TestAZvolBackupThatCannotRemoveItsCloneStillSucceeds(t *testing.T) {
+	t.Cleanup(backup.SetDestroyRetryDelayForTest(0))
+	host := &fakeZFSHost{destroyErr: errors.New("dataset is busy")}
 	r := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "abc123"}}
 
-	sum, err := backup.BackupZvolDisk(context.Background(), sampleBackupZvolDeps(host, r))
-	if err != nil {
-		t.Fatalf("a snapshot-destroy failure must not fail the backup: %v", err)
+	sum, err := backup.BackupZvolDisk(t.Context(), sampleBackupZvolDeps(host, r))
+	if err != nil || sum.SnapshotID != "abc123" {
+		t.Fatalf("got %+v, %v; want the backup despite the leftover clone", sum, err)
 	}
-	if sum.SnapshotID != "abc123" {
-		t.Fatalf("summary = %+v, want the successful restic summary", sum)
+	var tries int
+	for _, call := range host.log {
+		if call == "destroy:tank/vms/truenasvm/disk0-bombvault-20260816120000" {
+			tries++
+		}
 	}
-	if !vmContains(host.log, "snapshotDestroy:") {
-		t.Fatalf("snapshot destroy must still be attempted even though it fails; host.log = %v", host.log)
+	if tries < 2 {
+		t.Fatalf("the clone was tried %d times, want it tried again after udev let go of it", tries)
+	}
+}
+
+func TestABackupRemovesWhatAnInterruptedOneLeftOnItsZvol(t *testing.T) {
+	t.Cleanup(backup.SetDestroyRetryDelayForTest(0))
+	const ds = "tank/vms/truenasvm/disk0"
+	host := &fakeZFSHost{snapshots: []backup.ZFSSnapshot{
+		{Name: ds + "@bombvault-vm-20261015010000", Clones: []string{ds + "-bombvault-vm-20261015010000"}},
+		{Name: ds + "@bombvault-vm-20261015020000"},
+		{Name: ds + "@bombvault-before-restore-20261015010000"},
+		{Name: ds + "@bombvault-20261015010000"},
+		{Name: ds + "@bombvault-vm-2026101503000"},
+		{Name: ds + "@mine"},
+		{Name: ds + "@bombvault-vm-20261015040000", Clones: []string{"tank/vms/mytest"}},
+		{Name: ds + "1@bombvault-vm-20261015050000"},
+	}}
+
+	if _, err := backup.BackupZvolDisk(t.Context(), sampleBackupZvolDeps(host, &fakeZvolRestic{})); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"snapshots:" + ds,
+		"destroy:" + ds + "-bombvault-vm-20261015010000",
+		"destroy:" + ds + "@bombvault-vm-20261015010000",
+		"destroy:" + ds + "@bombvault-vm-20261015020000",
+		"snapshot:" + ds + "@bombvault-20260816120000",
+	}
+	if len(host.log) < len(want) || !slices.Equal(host.log[:len(want)], want) {
+		t.Fatalf("host calls %v, want them to start with %v", host.log, want)
+	}
+}
+
+func TestTheLeftoverSweepLogsTheCloneAndTheSnapshotItRemoves(t *testing.T) {
+	t.Cleanup(backup.SetDestroyRetryDelayForTest(0))
+	var out bytes.Buffer
+	log.SetOutput(&out)
+	t.Cleanup(func() { log.SetOutput(os.Stderr) })
+	const ds = "tank/vms/truenasvm/disk0"
+	host := &fakeZFSHost{snapshots: []backup.ZFSSnapshot{
+		{Name: ds + "@bombvault-vm-20261015010000", Clones: []string{ds + "-bombvault-vm-20261015010000"}},
+	}}
+
+	if _, err := backup.BackupZvolDisk(t.Context(), sampleBackupZvolDeps(host, &fakeZvolRestic{})); err != nil {
+		t.Fatal(err)
+	}
+	for _, removed := range []string{
+		"removed the clone " + ds + "-bombvault-vm-20261015010000 ",
+		"removed " + ds + "@bombvault-vm-20261015010000 ",
+	} {
+		if !strings.Contains(out.String(), removed) {
+			t.Errorf("the log does not say %q:\n%s", removed, out.String())
+		}
+	}
+}
+
+func TestABackupLeavesTheZvolSnapshotOfAnotherRunningBackup(t *testing.T) {
+	const ds = "tank/vms/truenasvm/disk0"
+	running := ds + "@bombvault-20260816120000"
+	second := &fakeZFSHost{snapshots: []backup.ZFSSnapshot{{Name: running, Clones: []string{ds + "-bombvault-20260816120000"}}}}
+	first := &fakeZFSHost{onRead: func() {
+		d := sampleBackupZvolDeps(second, &fakeZvolRestic{})
+		d.SnapName = "bombvault-vm-20260816120500"
+		if _, err := backup.BackupZvolDisk(t.Context(), d); err != nil {
+			t.Error(err)
+		}
+	}}
+	deps := sampleBackupZvolDeps(first, &fakeZvolRestic{})
+	deps.SnapName = "bombvault-vm-20260816120000"
+	running = ds + "@" + deps.SnapName
+	second.snapshots[0] = backup.ZFSSnapshot{Name: running, Clones: []string{ds + "-" + deps.SnapName}}
+
+	if _, err := backup.BackupZvolDisk(t.Context(), deps); err != nil {
+		t.Fatal(err)
+	}
+	for _, call := range second.log {
+		if strings.Contains(call, deps.SnapName) {
+			t.Fatalf("the second backup touched the first one's %s", call)
+		}
+	}
+}
+
+func TestABackupWhoseLeftoverCheckFailsStillRuns(t *testing.T) {
+	host := &fakeZFSHost{snapshotsErr: errors.New("ssh: connection reset")}
+	r := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "abc123"}}
+
+	if sum, err := backup.BackupZvolDisk(t.Context(), sampleBackupZvolDeps(host, r)); err != nil || sum.SnapshotID != "abc123" {
+		t.Fatalf("got %+v, %v; want the backup to go on", sum, err)
 	}
 }
 
 func sampleRestoreZvolDeps(host *fakeZFSHost, r *fakeZvolRestic) backup.RestoreZvolDeps {
 	return backup.RestoreZvolDeps{
-		SourceDataset: "tank/vms/truenasvm/disk0",
-		RepoPath:      "/repo/vms",
-		SnapshotID:    "abc123def456",
-		StdinPath:     "/vm-disks/tank/vms/truenasvm/disk0@bombvault-20260816120000",
-		Host:          host,
-		Restic:        r,
+		Dataset:    "tank/vms/truenasvm/disk0",
+		Size:       1 << 30,
+		RepoPath:   "/repo/vms",
+		SnapshotID: "abc123def456",
+		StdinPath:  "/vm-disks/tank/vms/truenasvm/disk0.img",
+		Host:       host,
+		Restic:     r,
 	}
 }
 
-// TestRestoreZvolDiskNeverTargetsSourceDataset checks the dataset the host
-// received into. zfs receive into an existing dataset can destroy live data,
-// so it must never be the source.
-func TestRestoreZvolDiskNeverTargetsSourceDataset(t *testing.T) {
-	host := &fakeZFSHost{}
-	r := &fakeZvolRestic{dumpData: []byte("restic dump bytes")}
+func TestAZvolIsRestoredOntoItselfAfterASafetySnapshot(t *testing.T) {
+	host := &fakeZFSHost{volumes: map[string]int64{"tank/vms/truenasvm/disk0": 1 << 30}}
+	r := &fakeZvolRestic{dumpData: []byte("raw disk image")}
 
-	deps := sampleRestoreZvolDeps(host, r)
-	target, err := backup.RestoreZvolDisk(context.Background(), deps)
+	safety, err := backup.RestoreZvolDisk(t.Context(), sampleRestoreZvolDeps(host, r))
 	if err != nil {
 		t.Fatalf("RestoreZvolDisk: %v", err)
 	}
-	if target == deps.SourceDataset {
-		t.Fatalf("RestoreZvolDisk returned the source dataset %q as the restore target", target)
+	if !strings.HasPrefix(safety, "tank/vms/truenasvm/disk0@bombvault-before-restore-") {
+		t.Fatalf("safety snapshot = %q", safety)
 	}
-	if host.streamReceiveTarget != target {
-		t.Fatalf("RestoreZvolDisk returned target %q but issued `zfs receive` against %q", target, host.streamReceiveTarget)
+	if got := string(host.written["tank/vms/truenasvm/disk0"]); got != "raw disk image" {
+		t.Fatalf("wrote %q onto the zvol, want the image", got)
 	}
-	if host.streamReceiveTarget == deps.SourceDataset {
-		t.Fatalf("the actual StreamReceive call targeted the live source dataset %q", deps.SourceDataset)
+	snapAt, writeAt := -1, -1
+	for i, call := range host.log {
+		switch {
+		case strings.HasPrefix(call, "snapshot:tank/vms/truenasvm/disk0@bombvault-before-restore-"):
+			snapAt = i
+		case call == "write:tank/vms/truenasvm/disk0":
+			writeAt = i
+		case strings.HasPrefix(call, "resize:"), strings.HasPrefix(call, "create:"):
+			t.Fatalf("%s for a zvol of the right size", call)
+		}
 	}
-	if !strings.HasPrefix(target, deps.SourceDataset+"-bombvault-restore-") {
-		t.Fatalf("target dataset %q does not carry the expected bombvault-restore marker", target)
-	}
-
-	if string(host.streamReceiveData) != "restic dump bytes" {
-		t.Fatalf("zfs receive stdin = %q, want the restic dump bytes", host.streamReceiveData)
+	if snapAt < 0 || writeAt < snapAt {
+		t.Fatalf("host calls %v, want the snapshot before the write", host.log)
 	}
 }
 
-// TestRestoreZvolDiskUsesRestoreBaseDatasetWhenSet covers a restore onto
-// another instance, where prepareRestoreVMForTarget rebases the dataset onto
-// the destination pool because the source pool does not exist there.
-func TestRestoreZvolDiskUsesRestoreBaseDatasetWhenSet(t *testing.T) {
+func TestARestoreGivesTheZvolItsSizeBack(t *testing.T) {
+	host := &fakeZFSHost{volumes: map[string]int64{"tank/vms/truenasvm/disk0": 2 << 30}}
+	if _, err := backup.RestoreZvolDisk(t.Context(), sampleRestoreZvolDeps(host, &fakeZvolRestic{})); err != nil {
+		t.Fatal(err)
+	}
+	if !vmContains(host.log, "resize:tank/vms/truenasvm/disk0:1073741824") {
+		t.Fatalf("host calls %v, want a resize to the backed up size", host.log)
+	}
+}
+
+func TestARestoreCreatesAZvolThatIsGone(t *testing.T) {
 	host := &fakeZFSHost{}
-	r := &fakeZvolRestic{dumpData: []byte("restic dump bytes")}
+	r := &fakeZvolRestic{dumpData: []byte("raw disk image")}
 
-	deps := sampleRestoreZvolDeps(host, r)
-	deps.RestoreBaseDataset = "flashpool/vms/truenasvm/disk0"
-
-	target, err := backup.RestoreZvolDisk(context.Background(), deps)
+	safety, err := backup.RestoreZvolDisk(t.Context(), sampleRestoreZvolDeps(host, r))
 	if err != nil {
-		t.Fatalf("RestoreZvolDisk: %v", err)
+		t.Fatal(err)
 	}
-	if !strings.HasPrefix(target, deps.RestoreBaseDataset+"-bombvault-restore-") {
-		t.Fatalf("target dataset %q must be derived from RestoreBaseDataset %q, not SourceDataset %q", target, deps.RestoreBaseDataset, deps.SourceDataset)
+	if safety != "" {
+		t.Fatalf("safety snapshot %q of a zvol that did not exist", safety)
 	}
-	if strings.HasPrefix(target, deps.SourceDataset+"-bombvault-restore-") {
-		t.Fatalf("target dataset %q was derived from the source dataset %q; the cross-instance rebase did not take effect", target, deps.SourceDataset)
-	}
-	if host.streamReceiveTarget != target {
-		t.Fatalf("RestoreZvolDisk returned target %q but issued `zfs receive` against %q", target, host.streamReceiveTarget)
-	}
-	if strings.HasPrefix(host.streamReceiveTarget, "tank/") {
-		t.Fatalf("the actual StreamReceive call targeted the source pool %q instead of the destination pool", host.streamReceiveTarget)
+	if !vmContains(host.log, "create:tank/vms/truenasvm/disk0:1073741824") || string(host.written["tank/vms/truenasvm/disk0"]) != "raw disk image" {
+		t.Fatalf("host calls %v, want the zvol created and written", host.log)
 	}
 }
 
-func TestRestoreZvolDiskFallsBackToSourceDatasetWhenRestoreBaseDatasetEmpty(t *testing.T) {
-	host := &fakeZFSHost{}
-	r := &fakeZvolRestic{dumpData: []byte("restic dump bytes")}
-
-	deps := sampleRestoreZvolDeps(host, r)
-	deps.RestoreBaseDataset = "" // restore on the same instance
-
-	target, err := backup.RestoreZvolDisk(context.Background(), deps)
-	if err != nil {
-		t.Fatalf("RestoreZvolDisk: %v", err)
-	}
-	if !strings.HasPrefix(target, deps.SourceDataset+"-bombvault-restore-") {
-		t.Fatalf("target dataset %q must fall back to SourceDataset %q when RestoreBaseDataset is empty", target, deps.SourceDataset)
-	}
-}
-
-func TestRestoreZvolDiskPropagatesDumpFailure(t *testing.T) {
-	host := &fakeZFSHost{}
-	r := &fakeZvolRestic{dumpErr: errors.New("restic: snapshot not found")}
-
-	_, err := backup.RestoreZvolDisk(context.Background(), sampleRestoreZvolDeps(host, r))
-	if err == nil {
-		t.Fatal("expected an error when restic dump fails")
+func TestAZvolRestoreReportsAFailedDumpOrWrite(t *testing.T) {
+	for name, c := range map[string]struct {
+		host   *fakeZFSHost
+		restic *fakeZvolRestic
+	}{
+		"dump":  {&fakeZFSHost{}, &fakeZvolRestic{dumpErr: errors.New("snapshot not found")}},
+		"write": {&fakeZFSHost{writeErr: errors.New("no space left on device")}, &fakeZvolRestic{dumpData: []byte("x")}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := backup.RestoreZvolDisk(t.Context(), sampleRestoreZvolDeps(c.host, c.restic)); err == nil {
+				t.Fatal("want an error")
+			}
+		})
 	}
 }
 
-func TestRestoreZvolDiskPropagatesReceiveFailure(t *testing.T) {
-	host := &fakeZFSHost{streamReceiveErr: errors.New("zfs: receive failed: dataset already exists")}
-	r := &fakeZvolRestic{dumpData: []byte("data")}
-
-	_, err := backup.RestoreZvolDisk(context.Background(), sampleRestoreZvolDeps(host, r))
-	if err == nil {
-		t.Fatal("expected an error when zfs receive fails")
-	}
-}
-
-// TestRestoreZvolDiskReceiveNeverBlocksForeverOnEarlyFailure has StreamReceive
-// fail without reading its input; the goroutine writing restic's dump into the
-// pipe must not hang.
-func TestRestoreZvolDiskReceiveNeverBlocksForeverOnEarlyFailure(t *testing.T) {
-	host := &earlyFailZFSHost{err: errors.New("ssh: connection refused")}
-	r := &fakeZvolRestic{dumpData: bytes.Repeat([]byte("x"), 1<<20)} // 1 MiB: bigger than a pipe's implicit buffering
+// A write that fails before reading anything must not leave the dump blocked
+// on the pipe.
+func TestAZvolWriteThatFailsEarlyDoesNotHangTheRestore(t *testing.T) {
+	host := &fakeZFSHost{writeErr: errors.New("ssh: connection refused")}
+	r := &fakeZvolRestic{dumpData: bytes.Repeat([]byte("x"), 1<<20)}
 
 	done := make(chan struct{})
 	go func() {
-		_, _ = backup.RestoreZvolDisk(context.Background(), backup.RestoreZvolDeps{
-			SourceDataset: "tank/d", RepoPath: "/repo", SnapshotID: "abc123", StdinPath: "/p",
-			Host: host, Restic: r,
-		})
+		_, _ = backup.RestoreZvolDisk(context.Background(), sampleRestoreZvolDeps(host, r))
 		close(done)
 	}()
 	select {
 	case <-done:
 	case <-time.After(5 * time.Second):
-		t.Fatal("RestoreZvolDisk hung: the DumpTo writer goroutine was never unblocked after StreamReceive failed early")
-	}
-}
-
-// earlyFailZFSHost's StreamReceive fails without reading rd, like an SSH
-// connection that never accepted stdin.
-type earlyFailZFSHost struct{ err error }
-
-func (h *earlyFailZFSHost) SnapshotCreate(context.Context, string, string) error  { return nil }
-func (h *earlyFailZFSHost) SnapshotDestroy(context.Context, string, string) error { return nil }
-func (h *earlyFailZFSHost) StreamSend(context.Context, string, string) (io.ReadCloser, func() error, error) {
-	return nil, nil, nil
-}
-func (h *earlyFailZFSHost) StreamReceive(_ context.Context, _ io.Reader, _ string) error {
-	return h.err
-}
-
-// TestRestoreZvolDiskDistinctAcrossRepeatedCalls checks that two restores of
-// the same dataset, such as a retry, land on two different new datasets.
-func TestRestoreZvolDiskDistinctAcrossRepeatedCalls(t *testing.T) {
-	host := &fakeZFSHost{}
-	r := &fakeZvolRestic{dumpData: []byte("data")}
-	deps := sampleRestoreZvolDeps(host, r)
-
-	first, err := backup.RestoreZvolDisk(context.Background(), deps)
-	if err != nil {
-		t.Fatalf("first RestoreZvolDisk: %v", err)
-	}
-	time.Sleep(time.Millisecond) // ensure the nanosecond clock advances
-	second, err := backup.RestoreZvolDisk(context.Background(), deps)
-	if err != nil {
-		t.Fatalf("second RestoreZvolDisk: %v", err)
-	}
-	if first == second {
-		t.Fatalf("two restore calls produced the same target dataset %q", first)
+		t.Fatal("RestoreZvolDisk hung after the write failed")
 	}
 }

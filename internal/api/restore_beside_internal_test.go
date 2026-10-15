@@ -312,6 +312,18 @@ func TestCheckRestoreBesideRefusesATakenContainerName(t *testing.T) {
 	}
 }
 
+func TestCheckRestoreBesideFlagsANetworkTheCopyWouldNeed(t *testing.T) {
+	f, _ := newBesideCheckFixture(t)
+	backedUpOnGoneNetwork(t, f)
+
+	assertNetworkGone(t, f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111", Target: targetBeside}))
+
+	f.docker.networks = append(f.docker.networks, "ix-plex_default")
+	if res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111", Target: targetBeside}); !res.Ready {
+		t.Fatalf("checks = %+v, want ready once the network exists", res.Checks)
+	}
+}
+
 func TestCheckRestoreBesideBlocksWhenTheCopyDoesNotFit(t *testing.T) {
 	f, _ := newBesideCheckFixture(t)
 	f.free = 120

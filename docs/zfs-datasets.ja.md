@@ -114,7 +114,7 @@ BombVault はバックアップのたびに、各データセットでローカ�
 ZFS と SSH があるマシンなら、どれでも受け取れます。たとえば 2 台目の Unraid や TrueNAS です。そこで BombVault が動いている必要はありません。
 
 1. **設定、ペアリング** の **BombVault のない ZFS サーバー** で **SSH で接続** を選ぶか、項目の **レプリカ** カードで **ZFS サーバーを追加** を選びます。
-2. アドレス、ユーザー、ポートを入力します。ダイアログに BombVault の公開鍵が表示されます。これをサーバー上のそのユーザーの `~/.ssh/authorized_keys` に追加します。Unraid では **Users, root, SSH keys** にあります。**Display Settings** の設定により、Users はヘッダーメニューか Settings の下に表示されます。 これはレプリカ用の鍵です。VM とホストの SSH 接続の鍵とは別なので、そちらを登録済みでもこの鍵を追加してください。
+2. アドレス、ユーザー、ポートを入力します。ダイアログに BombVault の公開鍵が表示されます。これをサーバー上のそのユーザーの `~/.ssh/authorized_keys` に追加します。Unraid では **Users, root, SSH keys** にあります。**Display Settings** の設定により、Users はヘッダーメニューか Settings の下に表示されます。TrueNAS では **Credentials, Users** でユーザーを編集します。 これはレプリカ用の鍵です。VM とホストの SSH 接続の鍵とは別なので、そちらを登録済みでもこの鍵を追加してください。
 3. 接続をテストします。ダイアログにサーバーのプールが一覧表示されます。1 つ選び、ルートを設定します。既定値は `<pool>/bombvault-replica` です。
 4. 項目の **レプリカ** カードで、新しいサーバーを選びます。サーバーにはインスタンスページに専用のカードができ、**開く** からそのページへ移動できます。
 
@@ -285,7 +285,8 @@ docker exec BombVault grep zfs /proc/self/mountinfo
 
 ## TrueNAS SCALE {#truenas}
 
-- `LIBVIRT_URI` が設定されている場合（TrueNAS での VM バックアップと同じく）、BombVault は zfs コマンド用の SSH ホスト、ユーザー、ポートのうち個別に設定されていないものを URI から取ります。VM バックアップを使わない場合は、代わりに `LIBVIRT_HOST`、`LIBVIRT_SSH_USER`、`LIBVIRT_SSH_PORT` を設定してください。変数は **Additional Environment Variables** に追加します。
+- `LIBVIRT_URI` が設定されている場合（TrueNAS での VM バックアップと同じく）、BombVault は zfs コマンド用の SSH ホスト、ユーザー、ポートのうち個別に設定されていないものを URI から取ります。VM バックアップを使わない場合は何も設定する必要はありません。TrueNAS アプリでは `host.docker.internal` が名前解決できないため、BombVault はアプリのデフォルトゲートウェイ経由で、root としてポート 22 でホストに接続します。別のアドレスやユーザーを使いたい場合は、アプリの `environment` で `LIBVIRT_HOST`、`LIBVIRT_SSH_USER`、`LIBVIRT_SSH_PORT` を設定してください。
+- **設定、連携、ホスト SSH** のホスト SSH 鍵を **Credentials, Users** で root に追加し、**System, Services** で SSH サービスをオンにしてください。この TrueNAS や別の TrueNAS への[レプリカ](#replica-push)には、別の鍵であるレプリカ用の鍵も必要です。
 - root 以外のユーザーには、項目の最上位データセットに対する権限が必要です。これでその下のすべてのデータセットが対象になります:
 
   ```
@@ -295,4 +296,4 @@ docker exec BombVault grep zfs /proc/self/mountinfo
   新しいデータセットへの復元には、上位のデータセットに対する `create` も必要です。保存されたプロパティを設定するには、それらのプロパティに対する権限が必要です。
 
   TrueNAS の root 以外の SSH セッションでは、パスに `/usr/sbin` が含まれません。その場合 BombVault は `/usr/sbin/zfs` を直接呼び出します。
-- アプリの **Host Data** は、ixVolume ではなく、データセットより上のホストパス（たとえば `/mnt/tank`）である必要があります。ホストパスであれば、アプリはホストの新しいマウントを BombVault に渡し（`rslave`）、スナップショットへのアクセスにはこれが必要です。
+- アプリの **Host Data** は、ixVolume ではなく、データセットより上のホストパス（たとえば `/mnt/tank`）である必要があります。ホストパスであれば、アプリはホストの新しいマウントを BombVault に渡し（`rslave`）、スナップショットへのアクセスにはこれが必要です。アプリ全体のセットアップは [TrueNAS SCALE](getting-started.md#truenas)を参照してください。

@@ -6,7 +6,7 @@ Denne siden tar deg fra en ny Unraid-boks til din første sikkerhetskopi.
 
 | Krav | Merknader |
 |---|---|
-| **Unraid 6.12+** | Tidligere versjoner er ikke testet. Unraid er hovedmålet, men BombVault kjører også på en vanlig Docker-vert og på TrueNAS Scale (se [Generisk Docker-vert](#generic-docker-host)). |
+| **Unraid 6.12+** | Tidligere versjoner er ikke testet. Unraid er hovedmålet, men BombVault kjører også på en vanlig Docker-vert og på TrueNAS Scale (se [Generisk Docker-vert](#generic-docker-host) og [TrueNAS SCALE](#truenas)). |
 | **Plassering for restic-repo** | En lokal sti (anbefalt: array-et eller cachen din), SMB, NFS eller en hvilken som helst rclone-backend. |
 | **Docker-socket** | Monteres automatisk av malen (`/var/run/docker.sock`). |
 | **Unraid-flash** (`/boot`) | Monteres i sin helhet automatisk av malen (`/boot` til `/host/boot`). Driver flash-sikkerhetskopiering og lar en gjenopprettet container dukke opp igjen som en normal, redigerbar Unraid-app. |
@@ -34,7 +34,7 @@ Den enkleste veien er **Community Applications**.
 
 ## Generisk Docker-vert {#generic-docker-host}
 
-Ikke Unraid? BombVault kjører også som en vanlig container på hvilken som helst Docker-vert (det er også det som bærer containerstøtten på TrueNAS Scale, i påvente av en egen oppføring i app-katalogen der).
+Ikke Unraid? BombVault kjører også som en vanlig container på hvilken som helst Docker-vert. TrueNAS SCALE har egne trinn under [TrueNAS SCALE](#truenas).
 
 1. Hent den redigeringsklare [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) fra arkivet.
 2. Sett `APP_KEY` (se nedenfor) og pek Host Data-volumet mot din virkelige datarot. Kommentarene i filen går gjennom begge deler.
@@ -42,14 +42,54 @@ Ikke Unraid? BombVault kjører også som en vanlig container på hvilken som hel
 
 Hva som er annerledes enn på Unraid:
 
-- **Ikke noe Flash-område.** Det finnes ingen oppstarts-USB å fange inn eller gjenopprette, så Flash-området har ingenting å gjøre her. I stedet tilbyr **Legg til** på siden Sikkerhetskopier **Systemkonfigurasjon** som mappeforslag: et mappesett med `/etc` å begynne med, som du går gjennom og redigerer før du lagrer.
+- **Ikke noe Flash-område.** Det finnes ingen oppstarts-USB å fange inn eller gjenopprette, så Flash-området har ingenting å gjøre her. I stedet tilbyr **Legg til** på siden Sikkerhetskopier, når Host Data når vertens `/etc`, **Systemkonfigurasjon** som mappeforslag: et mappesett med `/etc` å begynne med, som du går gjennom og redigerer før du lagrer.
 - **Ingen Unraid-egne varsler.** BombVaults egne varselkanaler (webhook, varsler om mislykket off-site og lignende) virker som vanlig; bare den Unraid-spesifikke meldingen til dens eget varselsystem utelates, siden et slikt system ikke finnes her.
 - **Sikkerhetskopiering av virtuelle maskiner er valgfri og trenger en egen libvirtd-vert som er nåbar over SSH.** Se den utkommenterte blokken i compose-filen. En generisk Docker-vert har ingen innebygd VM-håndtering.
 - **Ingen dashboard-widget.** BombVault Widget er en Unraid-plugin, så det trinnet hoppes også over.
 - **Finne dataene til en container.** Uten Unraids `appdata`-konvensjon finnes datamappen til en container ut fra segmentene i `DATA_ROOT_SEGMENTS`, navngitte Docker-volumer, arbeidskatalogen til et Compose-prosjekt og etiketten `bombvault.data` (se [Gjenkjenning av sikkerhetskopiens kilder](configuration.md#backup-source-detection)). Navngitte volumer og `/etc`-forhåndsinnstillingen når bare stier innenfor Host Data-monteringen, så pek Host Data mot en felles overordnet mappe som også dekker datarotkatalogen til Docker.
 - **`PLATFORM`.** Sett den til `generic` eller `truenas`. Uten verdi kjenner BombVault igjen Unraid på dens egen markør på flash-monteringen og behandler alt annet som generisk, og trinnene som bare gjelder Unraid, hoppes over i stedet for å bli forsøkt og feile.
 
-**TrueNAS Scale** følger den samme compose-veien; en katalogoppføring er forberedt i arkivet, men ikke sendt inn ennå. VM-sikkerhetskopiering krever der `LIBVIRT_URI`, fordi libvirtd i TrueNAS lytter på sin egen socket (`/run/truenas_libvirt/libvirt-sock`) som de tre `LIBVIRT_*`-variablene ikke kan uttrykke (se [Konfigurasjon](configuration.md)). Så langt er dette bevist: zvol-sikkerhetskopien ble kjørt mot en ekte TrueNAS Scale-boks, på en zvol koblet til en kjørende VM, og `zfs snapshot`, `zfs send`, restic og `zfs receive` tok den fram og tilbake byte for byte. En fullstendig gjenoppretting styrt av BombVault selv er ennå ikke kjørt på TrueNAS-maskinvare, og den zvol-en var tynt allokert, så gjennomstrømningen ved mange gigabyte er ikke testet. Test en gjenoppretting der før du stoler på den.
+### TrueNAS SCALE {#truenas}
+
+BombVault er ikke i app-katalogen til TrueNAS ennå, så installer den som en egendefinert app: **Apps, Discover Apps**, deretter **Install via YAML** i menyen ved siden av **Custom App**. YAML-en nedenfor setter det samme som katalogoppføringen i mappen `truenas-apps` i arkivet. Bytt ut `tank` med poolen din, og fyll inn `APP_KEY` slik neste avsnitt beskriver.
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    hostname: bombvault
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    environment:
+      APP_KEY: ""
+      PLATFORM: truenas
+      HOST_SOURCE_ROOT: /mnt/tank
+      HOST_MOUNT_ROOT: /mnt/tank
+      # For VM-sikkerhetskopier:
+      # LIBVIRT_URI: qemu+ssh://root@<truenas-ip>/system?socket=/run/truenas_libvirt/libvirt-sock
+    volumes:
+      - /mnt/tank/apps/bombvault:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /mnt/tank
+        target: /mnt/tank
+        bind:
+          propagation: rslave
+    ports:
+      - "30528:3443"
+```
+
+Åpne deretter `https://<truenas-ip>:30528/`. Det som står under [Hva som er annerledes enn på Unraid](#generic-docker-host), gjelder også her, og på TrueNAS:
+
+- **Capabilities.** BombVault trenger de seks ovenfor. VM-sikkerhetskopier feiler uten `SETPCAP`.
+- **Host Data** er en vertssti på et datasett, her `/mnt/tank`, montert på samme sti inne i appen. Derfor angir `HOST_SOURCE_ROOT` og `HOST_MOUNT_ROOT` begge den stien. `rslave` sender videre monteringene verten lager senere, og dem trenger sikkerhetskopier av ZFS-datasett.
+- **Data i et ixVolume blir ikke sikkerhetskopiert.** En app som har et ixVolume som lagring, lagrer dataene sine under `/mnt/.ix-apps`, utenfor Host Data. BombVault lagrer da bare definisjonen av appen, og kjøringen nevner mappene den utelot. Velg **Host Path**-lagring på et datasett under Host Data for hver app der du vil ha dataene sikkerhetskopiert.
+- **Sikkerhetskopier av VM-er og ZFS-datasett** når TrueNAS over SSH som root. Slå på SSH-tjenesten under **System, Services**, og legg den offentlige nøkkelen fra **Innstillinger, Integrasjoner, Verts-SSH** til brukeren root under **Credentials, Users**. VM-sikkerhetskopier krever i tillegg `LIBVIRT_URI` som ovenfor, fordi libvirtd i TrueNAS lytter på sin egen socket. Er verken `LIBVIRT_URI` eller `LIBVIRT_HOST` satt, bruker BombVault appens standard-gateway som vert, siden `host.docker.internal` ikke kan slås opp i en TrueNAS-app. [Veiledningen for VM-sikkerhetskopiering](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) går gjennom detaljene, også VM-er på zvols.
+- **En ZFS-replika bruker en annen nøkkel.** En replika på en annen ZFS-server logger inn med nøkkelen som replikadialogen viser, ikke med Verts-SSH-nøkkelen. Legg den til på serveren som tar imot.
+- **En slettet app kommer tilbake i to trinn.** Installer den på nytt i TrueNAS under samme navn først, noe som oppretter nettverket dens igjen, og gjenopprett deretter dataene i BombVault. Fram til da melder sjekken før gjenopprettingen det manglende nettverket, og gjenopprettingen avviser før den endrer noe.
+- **Ved siden av originalen** oppretter en vanlig Docker-container. Den kjører, men skjermen Apps i TrueNAS viser den ikke.
+- **Databasedumper** fungerer på datasett-monteringer. En import til en datamappe som er sitt eget datasett, flytter det gamle innholdet til en mappe ved siden av, så datasettet over trenger plass til det.
 
 ## Den ene påkrevde innstillingen
 
