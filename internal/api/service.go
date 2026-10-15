@@ -2815,6 +2815,17 @@ func (s *Service) offsiteRepoFor(domain string, settings store.Settings) string 
 	return ""
 }
 
+// OffsiteInUse reports whether domain has an off-site target to copy to, by
+// the rule the copy itself goes by. Settings that cannot be read answer yes, so
+// the job that asks runs and reports the error itself.
+func (s *Service) OffsiteInUse(domain string) bool {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return true
+	}
+	return s.offsiteRepoFor(domain, settings) != ""
+}
+
 // noOffsiteRepoErr says why a domain has no off-site repo to copy to.
 func (s *Service) noOffsiteRepoErr(domain string) error {
 	if s.hasOffsiteTargetRows(domain) {
