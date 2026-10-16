@@ -864,17 +864,15 @@ func (h *Handler) handleGroupLeave(w http.ResponseWriter, r *http.Request) {
 // of reach holds the page up only briefly.
 const leaveNoticeTimeout = 5 * time.Second
 
-// tellMembersLeaving lets every instance in reach know that this one leaves
-// the group, so each takes it off its list at once. A member that does not
-// hear keeps the row until a person removes it.
+// tellMembersLeaving lets every instance and phone in reach know that this one
+// leaves the group, so each takes it off its list at once. An instance that
+// does not hear asks again later and is told then; a phone too old to take
+// the word keeps the server until a person removes it.
 func (s *Service) tellMembersLeaving(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(ctx, leaveNoticeTimeout)
 	defer cancel()
 	var wg sync.WaitGroup
 	for _, m := range s.pairing().Members() {
-		if m.Kind != "" {
-			continue
-		}
 		proof, err := s.signCall(keydeposit.ProofLeave, m.ID, nil)
 		if err != nil {
 			log.Printf("group: sign the leave for member %q: %v", m.ID, err)
