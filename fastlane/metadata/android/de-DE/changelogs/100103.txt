@@ -1,0 +1,1 @@
+Die App selbst ist unverändert. Dein Server führt jetzt ordentlich Tagebuch: Nach einem Update zeigt BombVault 10.1.3 eine Karte für jedes übersprungene Release, und jede Neuerung bekommt ihren grünen Punkt.
