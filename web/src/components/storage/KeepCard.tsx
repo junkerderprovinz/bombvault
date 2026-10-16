@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { RetentionKeep } from "../../lib/api";
+import type { RetentionKeep, StorageLocationSection } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { setAskKeepLess, useAskKeepLess } from "../../lib/keepAsk";
 import { KEEP_PRESETS, presetOf, type KeepCounts, type KeepPreset } from "../../lib/keepPlan";
@@ -76,6 +76,12 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
     if (!(await save({ retention: retentionKeep(next) }))) revert();
   }
 
+  // Going back to the location's rule can keep less, as a changed count can.
+  async function followLocation(section: StorageLocationSection) {
+    if (asks && !(await less.agreed(keepCounts(section.retention), stored, location.name))) return;
+    follow(section, "retention");
+  }
+
   function pick(mode: Mode) {
     setCustom(mode === "custom");
     if (mode !== "custom") void apply([...KEEP_PRESETS[mode]]);
@@ -121,7 +127,7 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
           location={location}
           setting="retention"
           describe={(section) => keepSummary(t, section.retention)}
-          onFollow={follow}
+          onFollow={(section) => void followLocation(section)}
           busy={busy}
         />
         {editable && asks && (

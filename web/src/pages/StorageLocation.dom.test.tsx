@@ -397,6 +397,20 @@ describe("a destination", () => {
     expect(await screen.findByText("Back to the storage location’s rules")).toBeTruthy();
   });
 
+  it("asks before a section that keeps more goes back to the location's rule", async () => {
+    stage(location({ sections: [section({ domain: "flash", targetId: "t-flash", retention: { ...LONG, keepYearly: 6 }, own: ["retention"] })] }));
+    await renderPage("destination:box");
+
+    const reset = () => within(card("How long to keep")).getByRole("button", { name: "Reset to the storage location" });
+    await click(reset());
+    await click(within(screen.getByRole("dialog")).getByRole("button", { name: "Back" }));
+    expect(updateOffsiteTarget).not.toHaveBeenCalled();
+
+    await click(reset());
+    await click(within(screen.getByRole("dialog")).getByRole("button", { name: "Save anyway" }));
+    expect(updateOffsiteTarget).toHaveBeenCalledWith("t-flash", target(), undefined, ["retention"]);
+  });
+
   it("offers the primary copy no way back on a setting other than its keep rules", async () => {
     await renderPage("destination:box");
 
