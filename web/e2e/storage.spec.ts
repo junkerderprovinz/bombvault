@@ -273,7 +273,7 @@ test.describe("on the desktop", () => {
     await page.goto(locationUrl(STORAGE_BOX.id));
     const rules = page.getByText("Eigene Regeln: Wie lange aufheben, Kompression und Kopieren");
     await expect(rules).toBeVisible();
-    await page.getByRole("button", { name: "Regeln ändern" }).first().click();
+    await sectionRow(page, "Flash").getByRole("button", { name: "Regeln ändern" }).click();
     const window = page.getByRole("dialog", { name: "Regeln für Flash" });
     await expect(window.getByText("rclone:storagebox:bombvault/flash")).toBeVisible();
 
@@ -314,17 +314,18 @@ test.describe("on the desktop", () => {
     await expect(page.getByRole("switch", { name: "Vor dem Verkürzen nachfragen" })).not.toBeChecked();
   });
 
-  test("a section with a value of its own goes back to the location's, the primary copy cannot", async ({ page }) => {
+  test("a section with a value of its own goes back to the location's, the primary copy only for its keep rules", async ({ page }) => {
     const staged = await stageStorage(page, 1280);
     await page.goto(locationUrl(STORAGE_BOX.id));
-    const reset = page.getByRole("button", { name: "Auf den Speicherort zurücksetzen" });
     // Flash holds retention, compression and limits. Containers is the primary
-    // copy and holds all four without a way back.
-    await expect(reset).toHaveCount(3);
-    await reset.first().click();
+    // copy and holds all four, but goes back only for retention.
+    await expect(page.getByRole("button", { name: "Auf den Speicherort zurücksetzen" })).toHaveCount(4);
+    const keep = page.locator('[data-search-card="Wie lange aufheben"] li');
+    await expect(keep).toHaveCount(2);
+    await keep.filter({ hasText: "Flash" }).getByRole("button", { name: "Auf den Speicherort zurücksetzen" }).click();
     await expect.poll(() => staged.writes.length).toBe(1);
     expect(staged.writes[0]).toMatchObject({ method: "PUT", path: "/api/offsite/targets/t-box-flash" });
-    expect((staged.writes[0].body as { follow: string[] }).follow).toHaveLength(1);
+    expect((staged.writes[0].body as { follow: string[] }).follow).toEqual(["retention"]);
   });
 
   test("a folder on this host has no copies or credentials, and no switch for delete protection", async ({ page }) => {
@@ -511,8 +512,8 @@ test.describe("on the desktop", () => {
   test("the settings tile keeps only the cards without a place on the storage pages", async ({ page }) => {
     await stageStorage(page, 1280);
     await page.goto("/settings/storage");
-    await expect(page.getByRole("heading", { name: "Off-site-Aufbewahrung" })).toBeAttached();
-    for (const moved of ["Backup-Pfade", "Vorgaben für Speicherorte", "Speicherorte", "Streaming", "Lokale Aufbewahrung"]) {
+    await expect(page.getByRole("heading", { name: "Wie lange aufheben", exact: true })).toBeAttached();
+    for (const moved of ["Backup-Pfade", "Vorgaben für Speicherorte", "Speicherorte", "Streaming", "Lokale Aufbewahrung", "Off-site-Aufbewahrung"]) {
       await expect(page.getByRole("heading", { name: moved, exact: true })).toHaveCount(0);
     }
     await page.getByRole("button", { name: "Öffnen" }).click();
