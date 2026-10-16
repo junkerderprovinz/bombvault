@@ -866,6 +866,7 @@ const tr: Partial<Translations> = {
   "notify.unraid": "Unraid bildirimleri",
   "notify.unraidHint": "Unraid'in kendi bildirim sistemine gönderir (Pushover, e-posta, Discord, … iletebilir). Ayarlar, Entegrasyonlar, Ana makine SSH bölümündeki SSH bağlantısı üzerinden çalışır, bu nedenle anahtarın orada yetkilendirilmiş olması gerekir, ancak libvirt/VMs gerekli değildir (VMs yedeklemiyorsan “libvirt not reachable” sonucunu yok say). Kontrol etmek için aşağıdaki “Test gönder” düğmesini kullan.",
   "notify.unraidPlatformMismatch": "BombVault bu ana makineyi Unraid değil, \"{platform}\" olarak algıladı. Bu seçenek açık olsa bile Unraid bildirimleri kapalı kalır. Bu gerçekten bir Unraid ana makinesiyse, ana makinenin /boot yolunun container içinde /host/boot konumuna bind-mount edildiğini kontrol et (BombVault Unraid şablonuna bak) ve container'ı yeniden başlat.",
+  "notify.unraidOffOnPlatformSetting": "PLATFORM bu ana makineyi \"{platform}\" olarak ayarlıyor, bu yüzden bu seçenek açık olsa bile Unraid bildirimleri kapalı kalır.",
   "notify.unraidOffOnTrueNAS": "Bu ana makine TrueNAS çalıştırıyor, bu yüzden bu seçenek açık olsa bile Unraid bildirimleri kapalı kalır.",
   "notify.test": "Test gönder",
   "notify.anomaliesWhere": "Hangi anormalliklerin bildirim göndereceğini “{page}” bölümünden seçersin.",

@@ -809,6 +809,7 @@ const hi: Partial<Translations> = {
   "notify.unraid": "Unraid सूचनाएँ",
   "notify.unraidHint": "Unraid के अपने सूचना सिस्टम को भेजें (जो Pushover, ईमेल, Discord, … को आगे भेज सकता है)। यह सेटिंग्स, इंटीग्रेशन, होस्ट SSH के SSH कनेक्शन पर चलता है, इसलिए वहाँ कुंजी अधिकृत होनी चाहिए, लेकिन libvirt/VM ज़रूरी नहीं हैं (अगर आप VM का बैकअप नहीं लेते तो \"libvirt not reachable\" परिणाम को नज़रअंदाज़ करें)। जाँचने के लिए नीचे दिए Send test का उपयोग करें।",
   "notify.unraidPlatformMismatch": "BombVault ने इस होस्ट को \"{platform}\" के रूप में पहचाना है, Unraid के रूप में नहीं। यह स्विच चालू होने पर भी Unraid सूचनाएँ बंद रहती हैं। अगर यह वाकई एक Unraid होस्ट है, तो जाँचें कि होस्ट का /boot कंटेनर के अंदर /host/boot से बाइंड-माउंट है (BombVault Unraid टेम्पलेट देखें) और कंटेनर को फिर से शुरू करें।",
+  "notify.unraidOffOnPlatformSetting": "PLATFORM इस होस्ट को \"{platform}\" पर सेट करता है, इसलिए यह विकल्प चालू होने पर भी Unraid सूचनाएँ बंद रहती हैं।",
   "notify.unraidOffOnTrueNAS": "यह होस्ट TrueNAS चलाता है, इसलिए यह विकल्प चालू होने पर भी Unraid सूचनाएँ बंद रहती हैं।",
   "notify.smtp": "ईमेल (SMTP)",
   "notify.smtpHost": "SMTP होस्ट",

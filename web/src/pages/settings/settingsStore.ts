@@ -99,6 +99,8 @@ export function useSettingsStore() {
   // defaults to "unraid" like the Go side's platformFn(), so NotifyCard's
   // mismatch banner does not flash on before this loads.
   const [platformKind, setPlatformKind] = useState<string>("unraid");
+  // Whether PLATFORM chose platformKind, from "platformSet" next to it.
+  const [platformSet, setPlatformSet] = useState(false);
   // Which read failed: the first one, or the one after an import.
   const [loadError, setLoadError] = useState<"load" | "import" | null>(null);
 
@@ -168,6 +170,7 @@ export function useSettingsStore() {
           installSettings(res.settings);
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
           if (res.platform) setPlatformKind(res.platform);
+          setPlatformSet(res.platformSet === true);
         } else {
           setLoadError("load");
         }
@@ -506,6 +509,7 @@ export function useSettingsStore() {
           installSettings(fresh.settings);
           if (fresh.hostMountRoot) setHostMountRoot(fresh.hostMountRoot);
           if (fresh.platform) setPlatformKind(fresh.platform);
+          setPlatformSet(fresh.platformSet === true);
         } else {
           setLoadError("import");
         }
@@ -585,6 +589,7 @@ export function useSettingsStore() {
     loadSettings,
     hostMountRoot,
     platformKind,
+    platformSet,
     confirmDialog,
     allTargets,
     fieldDirects,

@@ -63,6 +63,7 @@ const emptyNotify: NotifyConfig = {
 export function NotifyCard({
   t,
   platformKind,
+  platformSet = false,
   hueIndex,
   channelsHueIndex,
   healthchecksHueIndex,
@@ -74,6 +75,9 @@ export function NotifyCard({
   // The detected or overridden platform kind ("unraid" | "generic" |
   // "truenas"). The mismatch banner below the Unraid toggle reads it.
   platformKind: string;
+  // Whether the PLATFORM override chose platformKind. Then there was no
+  // detection to correct and the banner leaves out the mount advice.
+  platformSet?: boolean;
   hueIndex?: number;
   channelsHueIndex?: number;
   healthchecksHueIndex?: number;
@@ -272,12 +276,15 @@ export function NotifyCard({
           backend (unraidGate) sends nothing. Usually an Unraid host whose
           container lacks the template's /boot -> /host/boot mount. Without
           this banner only "Send test" would reveal it. TrueNAS is only ever
-          set explicitly, so there is no mount to suggest there. */}
+          set explicitly, and neither it nor a platform set with PLATFORM has
+          a mount to suggest. */}
       {cfg.unraid && platformKind !== "unraid" && (
         <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
           {platformKind === "truenas"
             ? t("notify.unraidOffOnTrueNAS")
-            : tLtr(t, "notify.unraidPlatformMismatch").replace("{platform}", platformKind)}
+            : platformSet
+              ? t("notify.unraidOffOnPlatformSetting").replace("{platform}", platformKind)
+              : tLtr(t, "notify.unraidPlatformMismatch").replace("{platform}", platformKind)}
         </div>
       )}
 

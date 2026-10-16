@@ -449,6 +449,8 @@ export interface GetSettingsResponse {
    *  e.g. to gate a new folder set's "Host system config" preset (offered only
    *  off Unraid, which already has the dedicated flash domain for this). */
   platform: string;
+  /** True when the PLATFORM override chose the platform instead of detection. */
+  platformSet?: boolean;
   /** The clock the server reads every schedule on, and its offset from UTC. */
   scheduleZone?: ScheduleZone;
   /** Present only on the graceful failure envelope ({ok:false} at HTTP 200). */
