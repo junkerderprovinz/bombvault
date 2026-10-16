@@ -1,9 +1,8 @@
 // @vitest-environment jsdom
 // The window of what is new: a button of the Version card that counts what is
 // left, and one card per release since the one the browser saw before, each
-// with its notes behind a button and its changes under their pages, the way
-// there, what was seen greyed, and the one button that marks the lot as seen
-// or new.
+// with its notes and its changes under their pages, the way there, what was
+// seen greyed, and the one button that marks the lot as seen or new.
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -23,7 +22,6 @@ const showAll = `${en["whatsNew.showAll"]} · ${CHANGES.length}`;
 const line = (id: string) => document.querySelector<HTMLElement>(`[data-change="${id}"]`)!;
 const card = (version: string) => document.querySelector<HTMLElement>(`[data-release="${version}"]`)!;
 const cards = () => [...document.querySelectorAll<HTMLElement>("[data-release]")].map((el) => el.dataset.release);
-const notesButton = (version: string) => within(card(version)).getByRole("button", { name: en["whatsNew.notesTab"] });
 const unplaced = CHANGES.filter((change) => !placed(change));
 
 function Where() {
@@ -104,14 +102,12 @@ describe("the cards", () => {
     expect(card(QUIET).querySelectorAll("[data-change]")).toHaveLength(0);
   });
 
-  it("open the notes of the newest release and keep the others behind their button", async () => {
+  it("show the notes of every release under the version on their badge", async () => {
     await renderWindow();
-    expect(await within(card(NEWEST)).findByText("One list.")).toBeTruthy();
-    expect(notesButton(NEWEST).getAttribute("aria-expanded")).toBe("true");
-    expect(notesButton(QUIET).getAttribute("aria-expanded")).toBe("false");
-    expect(within(card(QUIET)).queryByText("One list.")).toBeNull();
-    await press(notesButton(QUIET));
-    expect(await within(card(QUIET)).findByText("One list.")).toBeTruthy();
+    for (const version of [NEWEST, QUIET]) {
+      expect(within(card(version)).getByRole("heading", { level: 2, name: version })).toBeTruthy();
+      expect(await within(card(version)).findByText("One list.")).toBeTruthy();
+    }
   });
 
   it("fall back to the list's releases when the server does not answer", async () => {

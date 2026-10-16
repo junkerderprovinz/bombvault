@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { IconEye, IconEyeOff, IconForward } from "../../components/glyphs";
+import { IconEye, IconForward } from "../../components/glyphs";
 import { IconCheck, IconClose } from "../../components/navGlyphs";
 import { ReleaseNotes, releasePage } from "../../components/ReleaseNotes";
 import { useT } from "../../lib/i18n";
 import { CHANGES, placed, RELEASES, type Change } from "../../lib/whatsNew";
 import { markSeen, newer, openWhatsNew, releaseOf, useWhatsNew, useWhatsNewOpen } from "../../lib/whatsNewStore";
 import { InstanceWindow } from "../instances/InstanceWindow";
+import { Card } from "./shared";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -98,49 +99,37 @@ function ChangeRow({ change, seen, absent, describedBy, onGo }: { change: Change
   );
 }
 
-/** One release: its version, its notes behind a button, and its changes. The
- *  newest card starts with its notes open. */
-function ReleaseCard({ version, first, onGo }: { version: string; first: boolean; onGo: (to: string) => void }) {
+/** One release as a card of its own: its version on the badge, its notes,
+ *  and its changes. */
+function ReleaseCard({ version, hueIndex, onGo }: { version: string; hueIndex: number; onGo: (to: string) => void }) {
   const { t } = useT();
   const { seen, absent } = useWhatsNew();
-  const [notes, setNotes] = useState(first);
   const id = useId();
   const changes = CHANGES.filter((change) => change.since === version);
 
   return (
-    <section aria-labelledby={`${id}-v`} data-release={version} className="flex flex-col gap-3 rounded-card border border-carbon-border p-3 sm:p-4">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h3 id={`${id}-v`} className="text-base font-semibold text-carbon-text tabular-nums">
-          {version}
-        </h3>
-        <Button
-          label={t("whatsNew.notesTab")}
-          labelKey="whatsNew.notesTab"
-          glyph={notes ? <IconEyeOff /> : <IconEye />}
-          ariaExpanded={notes}
-          onClick={() => setNotes((was) => !was)}
-          className="ms-auto glim-btn-wrap"
-        />
-      </div>
-      {notes && <ReleaseNotes version={`v${version}`} />}
-      {byPage(t, changes).map((page) => (
-        <div key={page.name} className="flex flex-col gap-1.5">
-          <h4 className="glim-eyebrow">{page.name}</h4>
-          <ul className="flex flex-col gap-1.5">
-            {page.changes.map((change) => (
-              <ChangeRow
-                key={change.id}
-                change={change}
-                seen={seen.has(change.id)}
-                absent={absent.has(change.id)}
-                describedBy={`${id}-${change.id}`}
-                onGo={onGo}
-              />
-            ))}
-          </ul>
-        </div>
-      ))}
-    </section>
+    <div data-release={version}>
+      <Card title={version} hueIndex={hueIndex}>
+        <ReleaseNotes version={`v${version}`} />
+        {byPage(t, changes).map((page) => (
+          <div key={page.name} className="flex flex-col gap-1.5">
+            <h4 className="glim-eyebrow">{page.name}</h4>
+            <ul className="flex flex-col gap-1.5">
+              {page.changes.map((change) => (
+                <ChangeRow
+                  key={change.id}
+                  change={change}
+                  seen={seen.has(change.id)}
+                  absent={absent.has(change.id)}
+                  describedBy={`${id}-${change.id}`}
+                  onGo={onGo}
+                />
+              ))}
+            </ul>
+          </div>
+        ))}
+      </Card>
+    </div>
   );
 }
 
@@ -205,7 +194,7 @@ export function WhatsNewWindow({ version, onClose }: { version: string | null; o
           </div>
         )}
         {releases.length > 0 ? (
-          releases.map((release, i) => <ReleaseCard key={release} version={release} first={i === 0} onGo={go} />)
+          releases.map((release, i) => <ReleaseCard key={release} version={release} hueIndex={i} onGo={go} />)
         ) : (
           <ReleaseNotes version={version} />
         )}
