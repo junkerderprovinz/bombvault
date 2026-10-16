@@ -47,26 +47,26 @@ saying ransomware is welcome to knock.
 
 <!-- download-buttons: written by scripts/gen_download_buttons.py -->
 <p align="center">
-  <a href="https://unraid.net/community/apps?q=bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(0,0,841.9,245.3))" alt="Install from Unraid&#x27;s Community Applications" width="160" height="46.618"></a>
+  <a href="https://unraid.net/community/apps?q=bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(0,0,841.9,245.3))" alt="Install from Unraid&#x27;s Community Applications" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(866,0,841.9,245.3))" alt="Run it with Docker" width="160" height="46.618"></a>
+  <a href="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/deploy/docker-compose.generic.yml"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(866,0,841.9,245.3))" alt="Download the docker-compose file" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://junkerderprovinz.github.io/bombvault/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(1732,0,841.9,245.3))" alt="Read the documentation" width="160" height="46.618"></a>
+  <a href="https://junkerderprovinz.github.io/bombvault/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(1732,0,841.9,245.3))" alt="Read the documentation" width="160" height="46.618"></a>
 </p>
 <br>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(2598,0,841.9,245.3))" alt="On Google Play soon" width="160" height="46.618">
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(2598,0,841.9,245.3))" alt="On Google Play soon" width="160" height="46.618">
   &nbsp;
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(3464,0,841.9,245.3))" alt="On F-Droid soon" width="160" height="46.618">
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(3464,0,841.9,245.3))" alt="On F-Droid soon" width="160" height="46.618">
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(4330,0,841.9,245.3))" alt="Download the Android app" width="160" height="46.618"></a>
+  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(4330,0,841.9,245.3))" alt="Download the Android app" width="160" height="46.618"></a>
   <br><sub>Always downloads the latest build</sub>
 </p>
 <br>
 <p align="center">
-  <a href="https://github.com/junkerderprovinz/parleyport"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(5196,0,841.9,245.3))" alt="Get ParleyPort, the relay for KnightLoader and BombVault" width="160" height="46.618"></a>
+  <a href="https://github.com/junkerderprovinz/parleyport"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(5196,0,841.9,245.3))" alt="Get ParleyPort, the relay for KnightLoader and BombVault" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault-widget"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(6062,0,841.9,245.3))" alt="Get the BombVault Widget for the Unraid dashboard" width="160" height="46.618"></a>
+  <a href="https://github.com/junkerderprovinz/bombvault-widget"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(6062,0,841.9,245.3))" alt="Get the BombVault Widget for the Unraid dashboard" width="160" height="46.618"></a>
 </p>
 <!-- /download-buttons -->
 
@@ -84,11 +84,11 @@ If it has earned a place on your server or computer, toss a coin to your knight:
 
 <!-- give-buttons: written by scripts/gen_download_buttons.py -->
 <p align="center">
-  <a href="https://buymeacoffee.com/junkerderprovinz"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(6928,0,841.9,245.3))" alt="Buy me a coffee" width="160" height="46.618"></a>
+  <a href="https://buymeacoffee.com/junkerderprovinz"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(6928,0,841.9,245.3))" alt="Buy me a coffee" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(7794,0,841.9,245.3))" alt="PayPal" width="160" height="46.618"></a>
+  <a href="https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(7794,0,841.9,245.3))" alt="PayPal" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://junkerderprovinz.github.io/junkerderprovinz/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(8660,0,841.9,245.3))" alt="Donate with crypto" width="160" height="46.618"></a>
+  <a href="https://junkerderprovinz.github.io/junkerderprovinz/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(8660,0,841.9,245.3))" alt="Donate with crypto" width="160" height="46.618"></a>
 </p>
 <!-- /give-buttons -->
 
@@ -216,15 +216,18 @@ On Unraid, install **BombVault** from [Community Applications](https://unraid.ne
 
 On any other Docker host or on TrueNAS Scale, take [`deploy/docker-compose.generic.yml`](deploy/docker-compose.generic.yml), set `APP_KEY` and the Host Data volume, and run `docker compose up -d`. VM and ZFS backups reach the host over SSH, so BombVault's public key has to be added there once. [Getting started](https://junkerderprovinz.github.io/bombvault/getting-started/) and [Configuration](https://junkerderprovinz.github.io/bombvault/configuration/) cover the template, the mounts, every variable and the SSH setup.
 
+- **Synology:** in Container Manager, create a project from the compose file (DSM 7.2 or newer).
+- **Proxmox:** run it in a VM or an LXC container that has Docker.
+
 ### Android app
 
 <!-- app-buttons: written by scripts/gen_download_buttons.py -->
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(2598,0,841.9,245.3))" alt="On Google Play soon" width="160" height="46.618">
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(2598,0,841.9,245.3))" alt="On Google Play soon" width="160" height="46.618">
   &nbsp;
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(3464,0,841.9,245.3))" alt="On F-Droid soon" width="160" height="46.618">
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(3464,0,841.9,245.3))" alt="On F-Droid soon" width="160" height="46.618">
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(4330,0,841.9,245.3))" alt="Download the Android app" width="160" height="46.618"></a>
+  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(4330,0,841.9,245.3))" alt="Download the Android app" width="160" height="46.618"></a>
   <br><sub>Always downloads the latest build</sub>
 </p>
 <!-- /app-buttons -->
@@ -268,10 +271,10 @@ If it has earned a place on your server or computer, toss a coin to your knight:
 
 <!-- give-buttons: written by scripts/gen_download_buttons.py -->
 <p align="center">
-  <a href="https://buymeacoffee.com/junkerderprovinz"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(6928,0,841.9,245.3))" alt="Buy me a coffee" width="160" height="46.618"></a>
+  <a href="https://buymeacoffee.com/junkerderprovinz"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(6928,0,841.9,245.3))" alt="Buy me a coffee" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(7794,0,841.9,245.3))" alt="PayPal" width="160" height="46.618"></a>
+  <a href="https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(7794,0,841.9,245.3))" alt="PayPal" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://junkerderprovinz.github.io/junkerderprovinz/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=339b197223f4#svgView(viewBox(8660,0,841.9,245.3))" alt="Donate with crypto" width="160" height="46.618"></a>
+  <a href="https://junkerderprovinz.github.io/junkerderprovinz/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=fe07e1465559#svgView(viewBox(8660,0,841.9,245.3))" alt="Donate with crypto" width="160" height="46.618"></a>
 </p>
 <!-- /give-buttons -->

@@ -11,7 +11,7 @@ BUTTONS = {
     "unraid": "https://unraid.net/community/apps?q=bombvault",
     # A browser cannot download an image, so this opens the package page, which
     # carries the pull command and every tag.
-    "docker": "https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault",
+    "compose": "https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/deploy/docker-compose.generic.yml",
     "docs": "https://junkerderprovinz.github.io/bombvault/",
     # Neither listing is public yet, so both buttons are drawn without a link.
     # The README's call for testers leads to the closed test meanwhile.
