@@ -183,12 +183,3 @@ func latestReleaseNoteVersion(dir string) (string, error) {
 		strconv.Itoa(best[0]), strconv.Itoa(best[1]), strconv.Itoa(best[2]),
 	}, "."), nil
 }
-
-func newer(a, b [3]int) bool {
-	for i := 0; i < 3; i++ {
-		if a[i] != b[i] {
-			return a[i] > b[i]
-		}
-	}
-	return false
-}

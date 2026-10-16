@@ -17,12 +17,13 @@ import (
 var pairedRoutes = map[string]bool{
 	// Signing out, and what the shell of every page reads. The settings answer
 	// a paired session with every location and hook scrubbed.
-	"POST /api/logout":       true,
-	"GET /api/settings":      true,
-	"GET /api/display-prefs": true,
-	"PUT /api/display-prefs": true,
-	"GET /api/release-notes": true,
-	"GET /api/versions":      true,
+	"POST /api/logout":                true,
+	"GET /api/settings":               true,
+	"GET /api/display-prefs":          true,
+	"PUT /api/display-prefs":          true,
+	"GET /api/release-notes":          true,
+	"GET /api/release-notes/versions": true,
+	"GET /api/versions":               true,
 
 	// The overview.
 	"GET /api/status":           true,

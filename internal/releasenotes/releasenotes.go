@@ -7,6 +7,8 @@ package releasenotes
 import (
 	"embed"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -38,4 +40,55 @@ func Notes(version string) (string, bool) {
 		return "", false
 	}
 	return strings.TrimSpace(string(b)), true
+}
+
+// Between returns the tags of the embedded notes newer than from and not newer
+// than to, newest first. An empty bound leaves that side open.
+func Between(from, to string) []string {
+	lo, hasLo := parse(Tag(from))
+	hi, hasHi := parse(Tag(to))
+	entries, err := notesFS.ReadDir("notes")
+	if err != nil {
+		return nil
+	}
+	type note struct {
+		tag string
+		n   [3]int
+	}
+	var notes []note
+	for _, e := range entries {
+		tag := strings.TrimSuffix(e.Name(), ".md")
+		n, ok := parse(tag)
+		if !ok || (hasLo && !newer(n, lo)) || (hasHi && newer(n, hi)) {
+			continue
+		}
+		notes = append(notes, note{tag, n})
+	}
+	sort.Slice(notes, func(i, j int) bool { return newer(notes[i].n, notes[j].n) })
+	tags := make([]string, len(notes))
+	for i, n := range notes {
+		tags[i] = n.tag
+	}
+	return tags
+}
+
+func parse(tag string) ([3]int, bool) {
+	var n [3]int
+	m := verRe.FindString(tag)
+	if m == "" {
+		return n, false
+	}
+	for i, part := range strings.SplitN(m, ".", 3) {
+		n[i], _ = strconv.Atoi(part)
+	}
+	return n, true
+}
+
+func newer(a, b [3]int) bool {
+	for i := range a {
+		if a[i] != b[i] {
+			return a[i] > b[i]
+		}
+	}
+	return false
 }

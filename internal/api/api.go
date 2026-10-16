@@ -329,6 +329,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/notify", h.handleSetNotify)
 	mux.HandleFunc("POST /api/notify/test", h.handleTestNotify)
 	mux.HandleFunc("GET /api/release-notes", h.handleReleaseNotes)
+	mux.HandleFunc("GET /api/release-notes/versions", h.handleReleaseVersions)
 	mux.HandleFunc("GET /api/schedule/next", h.handleScheduleNext)
 	mux.HandleFunc("GET /api/schedule/waiting", h.handleScheduleWaiting)
 	mux.HandleFunc("POST /api/check/{domain}", h.handleCheck)

@@ -4096,6 +4096,15 @@ func (h *Handler) handleReleaseNotes(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// handleReleaseVersions serves GET /api/release-notes/versions?from=vX.Y.Z: the
+// tags of every release after from up to the running one, newest first, so the
+// What's new window can show a card for each release an update skipped.
+func (h *Handler) handleReleaseVersions(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"versions": releasenotes.Between(r.URL.Query().Get("from"), Version),
+	}))
+}
+
 // runSpikeAndCache executes the host-integration probes and stores the result
 // so the dashboard can render it instantly. The probes are read-only.
 func (h *Handler) runSpikeAndCache() (any, bool) {

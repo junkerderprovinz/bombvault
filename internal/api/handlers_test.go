@@ -4046,6 +4046,19 @@ func TestReleaseNotesHandler(t *testing.T) {
 	}
 }
 
+func TestReleaseVersionsListsWhatAnUpdateSkipped(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	prev := api.Version
+	api.Version = "v8.12.1+main.abc1"
+	defer func() { api.Version = prev }()
+
+	_, m := doJSON(t, h, http.MethodGet, "/api/release-notes/versions?from=v8.10.0", "")
+	got, _ := m["versions"].([]any)
+	if m["ok"] != true || len(got) != 3 || got[0] != "v8.12.1" || got[2] != "v8.11.0" {
+		t.Fatalf("versions after v8.10.0 up to v8.12.1 = %v", m)
+	}
+}
+
 // TestMountsExcluded pins the mounts endpoint's exclusions contract (the read
 // side of INTEG-04): stored "!-prefixed entries render in a top-level excluded
 // array in HOST form and never leak into custom as stale Exists:false phantom

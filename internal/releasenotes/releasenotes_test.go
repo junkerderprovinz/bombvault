@@ -81,3 +81,14 @@ func TestEveryEmbeddedNoteHasASource(t *testing.T) {
 		}
 	}
 }
+
+func TestBetweenListsNewestFirstWithinBounds(t *testing.T) {
+	got := Between("v8.9.0", "v8.12.1+main.abc1")
+	want := []string{"v8.12.1", "v8.12.0", "v8.11.0", "v8.10.0"}
+	if strings.Join(got, " ") != strings.Join(want, " ") {
+		t.Errorf("Between = %v, want %v", got, want)
+	}
+	if got := Between("v10.1.0", "dev"); len(got) == 0 || got[0] == "v10.1.0" {
+		t.Errorf("an open upper bound should list the newer notes, got %v", got)
+	}
+}
