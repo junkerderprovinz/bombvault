@@ -987,3 +987,77 @@ func TestAnInstanceThatCannotOpenItsPhraseDoesNotSayItLeft(t *testing.T) {
 		t.Fatal("b, out of the group, gave no word")
 	}
 }
+
+// a finds b on the network, never polls it, and is down while b leaves. a,
+// started again, asks b by itself and drops its row once b says it left.
+func TestAMemberThatLeftWhileTheOtherWasDownIsDroppedWithoutAPoll(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, a, b)
+	bDirect := httptest.NewTLSServer(b.router)
+	t.Cleanup(bDirect.Close)
+	if code, out := b.do(t, http.MethodPut, "/api/group/address", map[string]any{"url": bDirect.URL}); code != http.StatusOK || out["active"] != true {
+		t.Fatalf("set b's address: %d %v", code, out)
+	}
+	if _, err := a.svc.pairing().Probe(context.Background(), bDirect.URL); err != nil {
+		t.Fatal(err)
+	}
+	// The key b's word is checked against, pinned the first time b signs a
+	// call or a page asks for its scorecard.
+	if _, err := a.svc.memberKey(context.Background(), b.id(t)); err != nil {
+		t.Fatal(err)
+	}
+	if code, _ := a.do(t, http.MethodGet, "/api/fleet/peers", nil); code != http.StatusOK {
+		t.Fatalf("list: %d", code)
+	}
+	rows, err := a.st.ListFleetPeers()
+	if err != nil || len(rows) != 1 || rows[0].MemberURL != bDirect.URL {
+		t.Fatalf("a's rows once it found b = %+v, %v; want b with the address it answered on", rows, err)
+	}
+
+	a.svc.StopGroup()
+	if code, _ := b.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK {
+		t.Fatalf("leave: %d", code)
+	}
+	restarted := NewService(a.svc.cfg, a.st, nil, nil, a.engine)
+	t.Cleanup(restarted.StopGroup)
+	restarted.applyGroup()
+	restarted.noteMemberAddresses()
+	restarted.askAbsentMembers(context.Background())
+	if rows, err := a.st.ListFleetPeers(); err != nil || len(rows) != 0 {
+		t.Fatalf("a's rows once b said it left = %+v, %v; want none", rows, err)
+	}
+}
+
+func TestPollingAMemberThatLeftSaysItsRowIsGone(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, a, b)
+	bDirect := httptest.NewTLSServer(b.router)
+	t.Cleanup(bDirect.Close)
+	if code, out := b.do(t, http.MethodPut, "/api/group/address", map[string]any{"url": bDirect.URL}); code != http.StatusOK || out["active"] != true {
+		t.Fatalf("set b's address: %d %v", code, out)
+	}
+	if err := a.svc.RunFleetPolls(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	rows, err := a.st.ListFleetPeers()
+	if err != nil || len(rows) != 1 || rows[0].LastPollOK.Bool != true {
+		t.Fatalf("a's rows after a poll = %+v, %v; want b polled", rows, err)
+	}
+
+	a.svc.StopGroup()
+	if code, _ := b.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK {
+		t.Fatalf("leave: %d", code)
+	}
+	restarted := NewService(a.svc.cfg, a.st, nil, nil, a.engine)
+	t.Cleanup(restarted.StopGroup)
+	restarted.applyGroup()
+	restarted.noteMemberAddresses()
+	a.h = NewHandler(a.svc.cfg, a.st, nil, restarted, nil, nil)
+	a.router = a.h.Router()
+	_, out := a.do(t, http.MethodPost, "/api/fleet/peers/"+rows[0].ID+"/poll", nil)
+	if out["ok"] != false || out["peer"] != nil || out["code"] != "memberLeft" {
+		t.Fatalf("the poll of a member that left answered %v", out)
+	}
+}
