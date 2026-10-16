@@ -1,18 +1,15 @@
-// What is new in the running release, as the green dots on the pages show it.
-// The next release replaces the list and the release it names.
+// What each release brought, as the green dots on the pages show it. A browser
+// that last saw an older release gets the dots of everything that came after.
 
 import type { TranslationKey } from "./i18n";
-
-/** The release the list describes. A browser that last saw an older one gets
- *  the dots. */
-export const WHATS_NEW_RELEASE = "10.0.0";
 
 /** A step on the way to a change: the path a link leads to, the name a row
  *  carries in data-new-way, or a tab of the strip inside the element that
  *  carries `within` there. */
 export type WayStep = string | { within: string; tab: string };
 
-export interface Change {
+/** A change on a page, marked on its element and on the way there. */
+interface Placed {
   /** The value of data-new on the element the change is about. */
   id: string;
   /** The route of the page that element is on. */
@@ -32,115 +29,208 @@ export interface Change {
   text: TranslationKey;
 }
 
+/** A change no page shows, such as how a backup behaves. Its dot stands in the
+ *  list only. */
+interface Unplaced {
+  id: string;
+  page?: undefined;
+  text: TranslationKey;
+}
+
+export interface Release {
+  version: string;
+  changes: (Placed | Unplaced)[];
+}
+
+export type Change = (Placed | Unplaced) & { since: string };
+export type PlacedChange = Placed & { since: string };
+
+export function placed(change: Change): change is PlacedChange {
+  return change.page !== undefined;
+}
+
 const ENTRY = "/backups/:kind/:id";
 const LOCATION = "/storage/:id";
 const TO_STORAGE: WayStep[] = ["/settings", "/settings/storage", "/storage"];
 
-export const CHANGES: Change[] = [
-  { id: "overview-head", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], text: "whatsNew.overviewHead" },
-  { id: "overview-customize", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], wide: true, text: "whatsNew.overviewCustomize" },
-  { id: "overview-decline", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], text: "whatsNew.overviewDecline" },
-  { id: "overview-instances", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], app: true, text: "whatsNew.overviewInstances" },
+/** Every release that brought something new, newest first. */
+export const RELEASES: Release[] = [
+  {
+    version: "10.1.3",
+    changes: [
+      { id: "whats-new-cards", text: "whatsNew.releaseCards" },
+      { id: "widget-domains", text: "whatsNew.widgetDomains" },
+    ],
+  },
+  {
+    version: "10.1.2",
+    changes: [
+      {
+        id: "location-remove",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "location"],
+        text: "whatsNew.locationRemove",
+      },
+    ],
+  },
+  {
+    version: "10.1.1",
+    changes: [
+      {
+        id: "location-rules",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "location"],
+        text: "whatsNew.locationRules",
+      },
+      {
+        id: "settings-retention",
+        page: "/settings/storage",
+        where: ["nav.settings", "storage.title"],
+        way: ["/settings", "/settings/storage"],
+        text: "whatsNew.settingsRetention",
+      },
+    ],
+  },
+  {
+    version: "10.1.0",
+    changes: [
+      {
+        id: "schedule-snapshot",
+        page: "/settings/schedules",
+        where: ["nav.settings", "settings.schedule"],
+        way: ["/settings", "/settings/schedules"],
+        text: "whatsNew.scheduleSnapshot",
+      },
+      { id: "containers-restart", text: "whatsNew.containersRestart" },
+      { id: "zvol-vms", text: "whatsNew.zvolVms" },
+      { id: "zfs-replicate-now", page: ENTRY, go: "/backups", where: ["backups.title", "whatsNew.page.entry"], way: ["/backups", "entry"], text: "whatsNew.zfsReplicateNow" },
+      { id: "zfs-replicate-all", page: "/backups", where: ["backups.title"], way: ["/backups"], wide: true, text: "whatsNew.zfsReplicateAll" },
+      { id: "zfs-replica-only", text: "whatsNew.zfsReplicaOnly" },
+      {
+        id: "zfs-server-mount",
+        page: "/instances/zfs/:id",
+        go: "/instances",
+        where: ["instances.title", "zfs.replica.servers.title"],
+        way: ["/settings", "/settings/instances", "/instances", "zfs-server"],
+        text: "whatsNew.zfsServerMount",
+      },
+    ],
+  },
+  {
+    version: "10.0.0",
+    changes: [
+      { id: "overview-head", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], text: "whatsNew.overviewHead" },
+      { id: "overview-customize", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], wide: true, text: "whatsNew.overviewCustomize" },
+      { id: "overview-decline", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], text: "whatsNew.overviewDecline" },
+      { id: "overview-instances", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], app: true, text: "whatsNew.overviewInstances" },
 
-  { id: "backups-tiles", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsTiles" },
-  { id: "backups-bar", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsBar" },
-  { id: "backups-row", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsRow" },
-  { id: "backups-actions", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsActions" },
+      { id: "backups-tiles", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsTiles" },
+      { id: "backups-bar", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsBar" },
+      { id: "backups-row", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsRow" },
+      { id: "backups-actions", page: "/backups", where: ["backups.title"], way: ["/backups"], text: "whatsNew.backupsActions" },
 
-  { id: "entry-page", page: ENTRY, go: "/backups", where: ["backups.title", "whatsNew.page.entry"], way: ["/backups", "entry"], text: "whatsNew.entryPage" },
-  { id: "entry-menu", page: ENTRY, go: "/backups", where: ["backups.title", "whatsNew.page.entry"], way: ["/backups", "entry"], text: "whatsNew.entryActions" },
-  {
-    id: "entry-defaults",
-    page: ENTRY,
-    go: "/backups",
-    where: ["backups.title", "whatsNew.page.entry"],
-    way: ["/backups", "entry", { within: "entry-tabs", tab: "settings" }],
-    text: "whatsNew.entryDefaults",
-  },
+      { id: "entry-page", page: ENTRY, go: "/backups", where: ["backups.title", "whatsNew.page.entry"], way: ["/backups", "entry"], text: "whatsNew.entryPage" },
+      { id: "entry-menu", page: ENTRY, go: "/backups", where: ["backups.title", "whatsNew.page.entry"], way: ["/backups", "entry"], text: "whatsNew.entryActions" },
+      {
+        id: "entry-defaults",
+        page: ENTRY,
+        go: "/backups",
+        where: ["backups.title", "whatsNew.page.entry"],
+        way: ["/backups", "entry", { within: "entry-tabs", tab: "settings" }],
+        text: "whatsNew.entryDefaults",
+      },
 
-  { id: "restore-tiles", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreTiles" },
-  { id: "restore-where", page: "/restore", where: ["nav.restore"], way: ["/restore", "restore-window"], text: "whatsNew.restoreWhere" },
-  { id: "restore-many", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreMany" },
-  { id: "restore-emergency", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreEmergency" },
+      { id: "restore-tiles", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreTiles" },
+      { id: "restore-where", page: "/restore", where: ["nav.restore"], way: ["/restore", "restore-window"], text: "whatsNew.restoreWhere" },
+      { id: "restore-many", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreMany" },
+      { id: "restore-emergency", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreEmergency" },
 
-  { id: "anomalies-tiles", page: "/anomalies", where: ["nav.anomalies"], way: ["/anomalies"], text: "whatsNew.anomaliesTiles" },
-  { id: "anomalies-rings", page: "/anomalies", where: ["nav.anomalies"], way: ["/anomalies"], text: "whatsNew.anomaliesRings" },
+      { id: "anomalies-tiles", page: "/anomalies", where: ["nav.anomalies"], way: ["/anomalies"], text: "whatsNew.anomaliesTiles" },
+      { id: "anomalies-rings", page: "/anomalies", where: ["nav.anomalies"], way: ["/anomalies"], text: "whatsNew.anomaliesRings" },
 
-  { id: "storage-list", page: "/storage", where: ["storage.title"], way: TO_STORAGE, text: "whatsNew.storageList" },
-  { id: "storage-flow", page: "/storage", where: ["storage.title"], way: TO_STORAGE, text: "whatsNew.storageFlow" },
-  {
-    id: "location-keep",
-    page: LOCATION,
-    go: "/storage",
-    where: ["storage.title", "whatsNew.page.location"],
-    way: [...TO_STORAGE, "location"],
-    text: "whatsNew.locationKeep",
-  },
-  {
-    id: "location-move",
-    page: LOCATION,
-    go: "/storage",
-    where: ["storage.title", "whatsNew.page.location"],
-    way: [...TO_STORAGE, "location"],
-    text: "whatsNew.locationMove",
-  },
+      { id: "storage-list", page: "/storage", where: ["storage.title"], way: TO_STORAGE, text: "whatsNew.storageList" },
+      { id: "storage-flow", page: "/storage", where: ["storage.title"], way: TO_STORAGE, text: "whatsNew.storageFlow" },
+      {
+        id: "location-keep",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "location"],
+        text: "whatsNew.locationKeep",
+      },
+      {
+        id: "location-move",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "location"],
+        text: "whatsNew.locationMove",
+      },
 
-  {
-    id: "instances-pair",
-    page: "/instances",
-    where: ["instances.title"],
-    way: ["/settings", "/settings/instances", "/instances"],
-    text: "whatsNew.instancesPair",
-  },
-  {
-    id: "instances-phones",
-    page: "/instances",
-    where: ["instances.title"],
-    way: ["/settings", "/settings/instances", "/instances"],
-    text: "whatsNew.instancesPhones",
-  },
+      {
+        id: "instances-pair",
+        page: "/instances",
+        where: ["instances.title"],
+        way: ["/settings", "/settings/instances", "/instances"],
+        text: "whatsNew.instancesPair",
+      },
+      {
+        id: "instances-phones",
+        page: "/instances",
+        where: ["instances.title"],
+        way: ["/settings", "/settings/instances", "/instances"],
+        text: "whatsNew.instancesPhones",
+      },
 
-  { id: "settings-tiles", page: "/settings/:page?", go: "/settings", where: ["nav.settings"], way: ["/settings"], text: "whatsNew.settingsTiles" },
-  {
-    id: "settings-pin",
-    page: "/settings/storage",
-    where: ["nav.settings", "storage.title"],
-    way: ["/settings", "/settings/storage"],
-    text: "whatsNew.settingsPin",
-  },
-  {
-    id: "settings-week",
-    page: "/settings/schedules",
-    where: ["nav.settings", "settings.schedule"],
-    way: ["/settings", "/settings/schedules"],
-    text: "whatsNew.settingsWeek",
-  },
-  {
-    id: "pairing-steps",
-    page: "/settings/pairing",
-    where: ["nav.settings", "pairing.title"],
-    way: ["/settings", "/settings/pairing"],
-    text: "whatsNew.pairingSteps",
-  },
-  {
-    id: "settings-version",
-    page: "/settings/info",
-    where: ["nav.settings", "activityLog.glyphInfo"],
-    way: ["/settings", "/settings/info"],
-    text: "whatsNew.settingsVersion",
-  },
-  {
-    id: "settings-manual",
-    page: "/settings/info",
-    where: ["nav.settings", "activityLog.glyphInfo"],
-    way: ["/settings", "/settings/info"],
-    text: "whatsNew.settingsManual",
-  },
-  {
-    id: "look-glyphs",
-    page: "/settings/look",
-    where: ["nav.settings", "settings.tab.look"],
-    way: ["/settings", "/settings/look"],
-    text: "whatsNew.lookGlyphs",
+      { id: "settings-tiles", page: "/settings/:page?", go: "/settings", where: ["nav.settings"], way: ["/settings"], text: "whatsNew.settingsTiles" },
+      {
+        id: "settings-pin",
+        page: "/settings/storage",
+        where: ["nav.settings", "storage.title"],
+        way: ["/settings", "/settings/storage"],
+        text: "whatsNew.settingsPin",
+      },
+      {
+        id: "settings-week",
+        page: "/settings/schedules",
+        where: ["nav.settings", "settings.schedule"],
+        way: ["/settings", "/settings/schedules"],
+        text: "whatsNew.settingsWeek",
+      },
+      {
+        id: "pairing-steps",
+        page: "/settings/pairing",
+        where: ["nav.settings", "pairing.title"],
+        way: ["/settings", "/settings/pairing"],
+        text: "whatsNew.pairingSteps",
+      },
+      {
+        id: "settings-version",
+        page: "/settings/info",
+        where: ["nav.settings", "activityLog.glyphInfo"],
+        way: ["/settings", "/settings/info"],
+        text: "whatsNew.settingsVersion",
+      },
+      {
+        id: "settings-manual",
+        page: "/settings/info",
+        where: ["nav.settings", "activityLog.glyphInfo"],
+        way: ["/settings", "/settings/info"],
+        text: "whatsNew.settingsManual",
+      },
+      {
+        id: "look-glyphs",
+        page: "/settings/look",
+        where: ["nav.settings", "settings.tab.look"],
+        way: ["/settings", "/settings/look"],
+        text: "whatsNew.lookGlyphs",
+      },
+    ],
   },
 ];
+
+export const CHANGES: Change[] = RELEASES.flatMap((release) => release.changes.map((change) => ({ ...change, since: release.version })));

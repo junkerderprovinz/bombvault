@@ -345,7 +345,7 @@ export function SchedulesPage() {
       )}
 
       {settings.containersEnabled && (
-        <Card title={t("settings.containerSnapshotsTitle")} hueIndex={nextHue()}>
+        <Card title={t("settings.containerSnapshotsTitle")} hueIndex={nextHue()} newId="schedule-snapshot">
           <ToggleRow
             label={t("settings.containerSnapshots")}
             hint={t("settings.containerSnapshotsHint")}

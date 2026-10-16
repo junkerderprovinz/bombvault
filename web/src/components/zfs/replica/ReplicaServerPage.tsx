@@ -203,13 +203,15 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
           onChange={(next) => void setEnabled(next)}
           disabled={enabledBusy}
         />
-        <ToggleRow
-          label={t("zfs.replica.server.mount")}
-          hint={t("zfs.replica.server.mountHint")}
-          checked={server.mountReadOnly}
-          onChange={(next) => void setMountReadOnly(next)}
-          disabled={mountBusy}
-        />
+        <div data-new="zfs-server-mount">
+          <ToggleRow
+            label={t("zfs.replica.server.mount")}
+            hint={t("zfs.replica.server.mountHint")}
+            checked={server.mountReadOnly}
+            onChange={(next) => void setMountReadOnly(next)}
+            disabled={mountBusy}
+          />
+        </div>
         <VerdictLine verdict={check.verdict} />
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Button

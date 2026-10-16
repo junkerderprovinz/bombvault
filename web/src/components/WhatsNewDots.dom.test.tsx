@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AttentionContext } from "../lib/attention";
 import { I18nProvider, en } from "../lib/i18n";
-import { CHANGES, WHATS_NEW_RELEASE } from "../lib/whatsNew";
+import { CHANGES, placed } from "../lib/whatsNew";
 import { beginWhatsNew, markAbsent, markSeen } from "../lib/whatsNewStore";
 
 let desktop = true;
@@ -22,7 +22,7 @@ const { WhatsNewDots } = await import("./WhatsNewDots");
 const change = (id: string) => CHANGES.find((c) => c.id === id)!;
 const text = (id: string) => en[change(id).text];
 const ON_OVERVIEW = CHANGES.filter((c) => c.page === "/dashboard").map((c) => c.id);
-const ON_BACKUPS = CHANGES.filter((c) => c.way[0] === "/backups").map((c) => c.id);
+const ON_BACKUPS = CHANGES.filter(placed).filter((c) => c.way[0] === "/backups").map((c) => c.id);
 
 function Shell({ fresh = false, loaded = true, children }: { fresh?: boolean; loaded?: boolean; children: ReactNode }) {
   const base = useContext(AttentionContext);
@@ -191,7 +191,7 @@ describe("a change elsewhere", () => {
     await renderAt("/dashboard", overview);
     await press(wayDots().find((dot) => dot.getAttribute("aria-label")?.includes(text("backups-tiles")))!);
     expect(screen.getByTestId("where").textContent).toBe("/backups");
-    expect(JSON.parse(localStorage.getItem(`bv-whats-new@${WHATS_NEW_RELEASE}`)!).seen).toEqual([]);
+    expect(JSON.parse(localStorage.getItem("bv-whats-new")!).seen).toEqual([]);
   });
 
   it("has no dot on the link to the page that is open", async () => {
@@ -280,7 +280,7 @@ describe("a change elsewhere", () => {
         </li>
       </ul>
     );
-    const row = wayDots().find((dot) => dot.getAttribute("aria-label")?.startsWith(en["whatsNew.way"].split("|other=")[1].replace("{n}", "2")));
+    const row = wayDots().find((dot) => dot.getAttribute("aria-label")?.startsWith(en["whatsNew.way"].split("|other=")[1].replace("{n}", String(CHANGES.filter(placed).filter((c) => c.way.includes("location")).length))));
     expect(row!.getAttribute("aria-label")).toContain(text("location-keep"));
     await press(row!);
     expect(screen.getByTestId("where").textContent).toBe("/storage/box");
@@ -352,7 +352,7 @@ describe("where nothing is new", () => {
 });
 
 describe("a change its page has nothing for", () => {
-  const absent = () => (JSON.parse(localStorage.getItem(`bv-whats-new@${WHATS_NEW_RELEASE}`)!) as { absent: string[] }).absent;
+  const absent = () => (JSON.parse(localStorage.getItem("bv-whats-new")!) as { absent: string[] }).absent;
   const toOverview = () => wayDots().find((dot) => dot.getAttribute("aria-label")?.includes(text("overview-head")));
   const wait = (ms: number) => act(async () => void vi.advanceTimersByTime(ms));
 

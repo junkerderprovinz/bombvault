@@ -181,7 +181,7 @@ export function RulesCard({ edit, hueIndex }: { edit: LocationEdit; hueIndex: nu
   const moved = sections.find((section) => section.domain === moving);
 
   return (
-    <Card title={t("storage.rules.title")} hint={t("storage.rules.hint")} hueIndex={hueIndex}>
+    <Card title={t("storage.rules.title")} hint={t("storage.rules.hint")} hueIndex={hueIndex} newId="location-rules">
       {sections.length > 0 && (
         <Rows>
           {sections.map((section) => {

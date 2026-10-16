@@ -1,153 +1,213 @@
-import { useId } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { IconEye, IconForward, IconInfo } from "../../components/glyphs";
+import { IconEye, IconEyeOff, IconForward } from "../../components/glyphs";
 import { IconCheck, IconClose } from "../../components/navGlyphs";
 import { ReleaseNotes, releasePage } from "../../components/ReleaseNotes";
-import { Selector, selectorTabId } from "../../components/Selector";
 import { useT } from "../../lib/i18n";
-import { CHANGES, WHATS_NEW_RELEASE, type Change } from "../../lib/whatsNew";
-import { markSeen, openWhatsNew, useWhatsNew, useWhatsNewOpen, type NewsTab } from "../../lib/whatsNewStore";
+import { CHANGES, placed, RELEASES, type Change } from "../../lib/whatsNew";
+import { markSeen, newer, openWhatsNew, releaseOf, useWhatsNew, useWhatsNewOpen } from "../../lib/whatsNewStore";
 import { InstanceWindow } from "../instances/InstanceWindow";
 
-const ALL = CHANGES.map((change) => change.id);
+type T = ReturnType<typeof useT>["t"];
 
-/** The changes of each page together, in the order the list names the pages. */
-function byPage(t: ReturnType<typeof useT>["t"]): { name: string; changes: Change[] }[] {
+/** The changes of a release page by page, in the order the list names the
+ *  pages. Those no page shows come first. */
+function byPage(t: T, changes: Change[]): { name: string; changes: Change[] }[] {
   const pages: { name: string; changes: Change[] }[] = [];
-  for (const change of CHANGES) {
-    const name = change.where.map((key) => t(key)).join(" › ");
+  for (const change of changes) {
+    const name = placed(change) ? change.where.map((key) => t(key)).join(" › ") : t("whatsNew.page.none");
     const page = pages.find((p) => p.name === name);
     if (page) page.changes.push(change);
-    else pages.push({ name, changes: [change] });
+    else if (placed(change)) pages.push({ name, changes: [change] });
+    else pages.unshift({ name, changes: [change] });
   }
   return pages;
 }
 
 /**
- * WhatsNewWindow is what the last update brought, on two tabs: the release
- * notes of the running version, and the list of changes page by page with the
- * way to each. On the list one button marks everything as seen while
- * something is left, which also hides the dots, and shows everything again
- * once nothing is. It counts what it would mark. `version` is the running
- * release tag, null in a build without one.
+ * The releases the window shows a card for, newest first: every release since
+ * the one this browser saw before the last update, any release with a change
+ * still unseen, and the running one. The server knows the releases that
+ * brought nothing for the list; without its answer the list's own releases
+ * stand in.
  */
-export function WhatsNewWindow({
-  tab,
-  version,
-  onTab,
-  onClose,
-}: {
-  tab: NewsTab;
-  version: string | null;
-  onTab: (tab: NewsTab) => void;
-  onClose: () => void;
-}) {
+function releasesShown(running: string | null, from: string | null, unseen: Change[], fetched: string[] | null): string[] {
+  const shown = new Set<string>(unseen.map((change) => change.since));
+  if (running) shown.add(running);
+  const since = fetched ?? (from ? RELEASES.map((r) => r.version).filter((v) => newer(v, from) && (!running || !newer(v, running))) : []);
+  for (const version of since) shown.add(version);
+  return [...shown].sort((a, b) => (newer(a, b) ? -1 : newer(b, a) ? 1 : 0));
+}
+
+function useReleasesSince(from: string | null): string[] | null {
+  const [fetched, setFetched] = useState<{ from: string; versions: string[] } | null>(null);
+  useEffect(() => {
+    if (!from) return;
+    let active = true;
+    fetch(`/api/release-notes/versions?from=v${encodeURIComponent(from)}`, { headers: { Accept: "application/json" } })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((data: { ok?: boolean; versions?: string[] }) => {
+        if (active && data.ok && Array.isArray(data.versions)) {
+          setFetched({ from, versions: data.versions.map((tag) => tag.replace(/^v/, "")) });
+        }
+      })
+      .catch(() => {
+        // The list's own releases stand in.
+      });
+    return () => {
+      active = false;
+    };
+  }, [from]);
+  return fetched && fetched.from === from ? fetched.versions : null;
+}
+
+function ChangeRow({ change, seen, absent, describedBy, onGo }: { change: Change; seen: boolean; absent: boolean; describedBy: string; onGo: (to: string) => void }) {
+  const { t } = useT();
+  return (
+    <li
+      data-change={change.id}
+      data-seen={seen || undefined}
+      data-absent={absent || undefined}
+      className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control bg-carbon-surface2 px-3 py-2.5"
+    >
+      <i aria-hidden="true" className={`glim-new-dot glim-new-dot-still${seen ? " glim-new-dot-seen" : ""}`} />
+      {/* A seen change is greyed in its words, which keep their contrast, and
+          an unseen one says so to a screen reader. */}
+      <span
+        id={describedBy}
+        className={`flex min-w-0 flex-[1_1_9rem] flex-col gap-0.5 text-sm wrap-break-word ${seen ? "text-carbon-textSub" : "text-carbon-text"}`}
+      >
+        {!seen && <span className="sr-only">{t("whatsNew.title")}: </span>}
+        {t(change.text)}
+        {absent && <span className="text-xs text-carbon-textSub">{t("whatsNew.absent")}</span>}
+      </span>
+      {placed(change) && (
+        <Button
+          label={t("whatsNew.go")}
+          labelKey="whatsNew.go"
+          glyph={<IconForward />}
+          ariaDescribedBy={describedBy}
+          onClick={() => onGo(change.go ?? change.page)}
+          className="ms-auto glim-btn-wrap"
+        />
+      )}
+    </li>
+  );
+}
+
+/** One release: its version, its notes behind a button, and its changes. The
+ *  newest card starts with its notes open. */
+function ReleaseCard({ version, first, onGo }: { version: string; first: boolean; onGo: (to: string) => void }) {
+  const { t } = useT();
+  const { seen, absent } = useWhatsNew();
+  const [notes, setNotes] = useState(first);
+  const id = useId();
+  const changes = CHANGES.filter((change) => change.since === version);
+
+  return (
+    <section aria-labelledby={`${id}-v`} data-release={version} className="flex flex-col gap-3 rounded-card border border-carbon-border p-3 sm:p-4">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h3 id={`${id}-v`} className="text-base font-semibold text-carbon-text tabular-nums">
+          {version}
+        </h3>
+        <Button
+          label={t("whatsNew.notesTab")}
+          labelKey="whatsNew.notesTab"
+          glyph={notes ? <IconEyeOff /> : <IconEye />}
+          ariaExpanded={notes}
+          onClick={() => setNotes((was) => !was)}
+          className="ms-auto glim-btn-wrap"
+        />
+      </div>
+      {notes && <ReleaseNotes version={`v${version}`} />}
+      {byPage(t, changes).map((page) => (
+        <div key={page.name} className="flex flex-col gap-1.5">
+          <h4 className="glim-eyebrow">{page.name}</h4>
+          <ul className="flex flex-col gap-1.5">
+            {page.changes.map((change) => (
+              <ChangeRow
+                key={change.id}
+                change={change}
+                seen={seen.has(change.id)}
+                absent={absent.has(change.id)}
+                describedBy={`${id}-${change.id}`}
+                onGo={onGo}
+              />
+            ))}
+          </ul>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+/**
+ * WhatsNewWindow is what the updates brought, one card per release since the
+ * one this browser saw before. One button marks every listed change as seen
+ * while something is left, which also hides the dots, and shows them all
+ * again once nothing is. A change no page shows counts as seen once the
+ * window that listed it closes. `version` is the running release tag, null
+ * in a build without one.
+ */
+export function WhatsNewWindow({ version, onClose }: { version: string | null; onClose: () => void }) {
   const { t } = useT();
   const navigate = useNavigate();
-  const { seen, absent, unseen } = useWhatsNew();
-  const left = unseen.length > 0;
-  const listed = CHANGES.length > 0;
-  const shown = listed ? tab : "notes";
-  const release = version?.replace(/^v/, "") || WHATS_NEW_RELEASE;
-  const panelId = useId();
+  const { seen, unseen, from } = useWhatsNew();
+  const running = releaseOf(version ?? "");
+  const fetched = useReleasesSince(from);
+  const releases = useMemo(() => releasesShown(running, from, unseen, fetched), [running, from, unseen, fetched]);
+  const listed = CHANGES.filter((change) => releases.includes(change.since));
+  const left = listed.filter((change) => !seen.has(change.id));
+
+  const close = () => {
+    const read = left.filter((change) => !placed(change)).map((change) => change.id);
+    if (read.length > 0) markSeen(read);
+    onClose();
+  };
+  const go = (to: string) => {
+    close();
+    navigate(to, { replace: true });
+  };
+
+  const title =
+    from && running && newer(running, from)
+      ? t("whatsNew.windowTitleSince").replace("{version}", from)
+      : t("whatsNew.windowTitle").replace("{version}", running ?? RELEASES[0]?.version ?? "");
 
   return (
     <InstanceWindow
-      title={t("whatsNew.windowTitle").replace("{version}", release)}
+      title={title}
       hint={t("whatsNew.hint")}
-      onClose={onClose}
+      onClose={close}
       footer={
         <>
           <Badge as="a" href={releasePage(version)} target="_blank" rel="noopener noreferrer" tone="neutral" size="large" className="me-auto">
             {t("whatsnew.viewOnGitHub")}
           </Badge>
-          <Button label={t("common.close")} labelKey="common.close" glyph={<IconClose />} tone="accent" onClick={onClose} />
+          <Button label={t("common.close")} labelKey="common.close" glyph={<IconClose />} tone="accent" onClick={close} />
         </>
       }
     >
-      {listed && (
-        <Selector
-          items={[
-            { id: "notes", label: t("whatsNew.notesTab") },
-            { id: "changes", label: left ? `${t("whatsNew.changesTab")} · ${unseen.length}` : t("whatsNew.changesTab") },
-          ]}
-          label={t("whatsNew.windowTitle").replace("{version}", release)}
-          select="one"
-          active={shown}
-          onChange={(id) => onTab(id as NewsTab)}
-          panelId={panelId}
-          fit
-          buttonHeight
-        />
-      )}
-      <div
-        id={panelId}
-        role={listed ? "tabpanel" : undefined}
-        aria-labelledby={listed ? selectorTabId(panelId, shown) : undefined}
-        className="flex flex-col gap-6"
-      >
-        {shown === "notes" ? (
-          <ReleaseNotes version={version} />
+      <div className="flex flex-col gap-4">
+        {listed.length > 0 && (
+          <div className="flex justify-end">
+            <Button
+              label={`${t(left.length > 0 ? "whatsNew.markAll" : "whatsNew.showAll")} · ${left.length > 0 ? left.length : listed.length}`}
+              labelKey={left.length > 0 ? "whatsNew.markAll" : "whatsNew.showAll"}
+              glyph={left.length > 0 ? <IconCheck /> : <IconEye />}
+              tone="neutral"
+              onClick={() => markSeen(listed.map((change) => change.id), left.length > 0)}
+              className="glim-btn-wrap"
+            />
+          </div>
+        )}
+        {releases.length > 0 ? (
+          releases.map((release, i) => <ReleaseCard key={release} version={release} first={i === 0} onGo={go} />)
         ) : (
-          <>
-            <div className="flex justify-end">
-              <Button
-                label={`${t(left ? "whatsNew.markAll" : "whatsNew.showAll")} · ${left ? unseen.length : CHANGES.length}`}
-                labelKey={left ? "whatsNew.markAll" : "whatsNew.showAll"}
-                glyph={left ? <IconCheck /> : <IconEye />}
-                tone="neutral"
-                onClick={() => markSeen(ALL, left)}
-                className="glim-btn-wrap"
-              />
-            </div>
-            {byPage(t).map((page) => (
-              <section key={page.name} className="flex flex-col gap-1.5">
-                <h3 className="glim-eyebrow">{page.name}</h3>
-                <ul className="flex flex-col gap-1.5">
-                  {page.changes.map((change) => {
-                    const done = seen.has(change.id);
-                    const away = absent.has(change.id);
-                    const textId = `${panelId}-${change.id}`;
-                    return (
-                      <li
-                        key={change.id}
-                        data-change={change.id}
-                        data-seen={done || undefined}
-                        data-absent={away || undefined}
-                        className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control bg-carbon-surface2 px-3 py-2.5"
-                      >
-                        <i aria-hidden="true" className={`glim-new-dot glim-new-dot-still${done ? " glim-new-dot-seen" : ""}`} />
-                        {/* A seen change is greyed in its words, which keep their
-                            contrast, and an unseen one says so to a screen reader. */}
-                        <span
-                          id={textId}
-                          className={`flex min-w-0 flex-[1_1_9rem] flex-col gap-0.5 text-sm wrap-break-word ${done ? "text-carbon-textSub" : "text-carbon-text"}`}
-                        >
-                          {!done && <span className="sr-only">{t("whatsNew.title")}: </span>}
-                          {t(change.text)}
-                          {away && <span className="text-xs text-carbon-textSub">{t("whatsNew.absent")}</span>}
-                        </span>
-                        <Button
-                          label={t("whatsNew.go")}
-                          labelKey="whatsNew.go"
-                          glyph={<IconForward />}
-                          ariaDescribedBy={textId}
-                          onClick={() => {
-                            onClose();
-                            navigate(change.go ?? change.page, { replace: true });
-                          }}
-                          className="ms-auto glim-btn-wrap"
-                        />
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            ))}
-          </>
+          <ReleaseNotes version={version} />
         )}
       </div>
     </InstanceWindow>
@@ -157,31 +217,24 @@ export function WhatsNewWindow({
 /** WhatsNewHost draws the window wherever it was opened from, once in the
  *  app's layout. */
 export function WhatsNewHost({ version }: { version: string | null }) {
-  const tab = useWhatsNewOpen();
-  if (!tab) return null;
-  return <WhatsNewWindow tab={tab} version={version} onTab={openWhatsNew} onClose={() => openWhatsNew(null)} />;
+  if (!useWhatsNewOpen()) return null;
+  return <WhatsNewWindow version={version} onClose={() => openWhatsNew(false)} />;
 }
 
 /**
- * WhatsNewButton stands in the Version card and opens the window: on the list
- * of changes while one is left unseen, on the release notes after that. It
- * counts what is still unseen, and its dot goes grey once nothing is. A
- * release without a list opens its notes.
+ * WhatsNewButton stands in the Version card and opens the window. It counts
+ * what is still unseen, and its dot goes grey once nothing is.
  */
 export function WhatsNewButton() {
   const { t } = useT();
-  const { unseen } = useWhatsNew();
-  if (CHANGES.length === 0) {
-    return <Button label={t("whatsNew.notesTab")} labelKey="whatsNew.notesTab" glyph={<IconInfo />} onClick={() => openWhatsNew("notes")} />;
-  }
-  const left = unseen.length;
+  const left = useWhatsNew().unseen.length;
   return (
     <Button
       label={left > 0 ? `${t("whatsNew.title")} · ${left}` : t("whatsNew.title")}
       labelKey={null}
       glyph={<i aria-hidden="true" className={`glim-new-dot glim-new-dot-still${left > 0 ? "" : " glim-new-dot-seen"}`} />}
       keepLabel
-      onClick={() => openWhatsNew(left > 0 ? "changes" : "notes")}
+      onClick={() => openWhatsNew(true)}
     />
   );
 }

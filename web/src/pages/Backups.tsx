@@ -556,13 +556,15 @@ export function Backups() {
             )
           )}
           {isDesktop && onZFS && replicas.available && (
-            <PageAction
-              label={t("zfs.replica.replicateAll")}
-              glyph={<IconSync />}
-              onClick={() => void replicas.start()}
-              disabled={replicas.busy || actions.busy || running.active}
-              title={busyTitle}
-            />
+            <span data-new="zfs-replicate-all" className="flex">
+              <PageAction
+                label={t("zfs.replica.replicateAll")}
+                glyph={<IconSync />}
+                onClick={() => void replicas.start()}
+                disabled={replicas.busy || actions.busy || running.active}
+                title={busyTitle}
+              />
+            </span>
           )}
           {addWith && (
             <PageAction

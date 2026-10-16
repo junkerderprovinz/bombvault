@@ -8,9 +8,12 @@ import { describe, expect, it } from "vitest";
 import { ENTRY_TABS } from "./entry";
 import { en } from "./i18n";
 import { destinations } from "./navModel";
-import { CHANGES, WHATS_NEW_RELEASE } from "./whatsNew";
+import { CHANGES, placed, RELEASES } from "./whatsNew";
+import { newer } from "./whatsNewStore";
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
+const NOTES = join(SRC, "..", "..", ".github", "release-notes");
+const PLACED = CHANGES.filter(placed);
 
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -32,17 +35,34 @@ const LINKED = found(/\bto[=:]\s*\{?[`"](\/[^`"$]*)[`"]/g);
 const SETTINGS_PAGES = found(/\{ id: "(\w+)", label: "[\w.]+", icon:/g);
 
 describe("what is new", () => {
-  it("names a release", () => {
-    expect(WHATS_NEW_RELEASE).toMatch(/^\d+\.\d+\.\d+$/);
+  it("names each release once, newest first", () => {
+    const versions = RELEASES.map((release) => release.version);
+    for (const version of versions) expect(version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(versions.every((version, i) => i === 0 || newer(versions[i - 1], version))).toBe(true);
   });
 
-  it("marks every change on an element a page really carries", () => {
-    const missing = CHANGES.map((change) => change.id).filter((id) => !MARKED.has(id));
+  // Every release from 10.1.0 on gets a dot for each new feature its notes
+  // list under Added.
+  it("gives every feature a release adds a change of its own", () => {
+    const short: string[] = [];
+    for (const name of readdirSync(NOTES)) {
+      const version = /^v(\d+\.\d+\.\d+)\.md$/.exec(name)?.[1];
+      if (!version || newer("10.1.0", version)) continue;
+      const added = /^## .*Added\s*\n([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(readFileSync(join(NOTES, name), "utf8"))?.[1] ?? "";
+      const features = added.split("\n").filter((l) => l.startsWith("- ")).length;
+      const changes = CHANGES.filter((change) => change.since === version).length;
+      if (changes < features) short.push(`${version}: ${features} added, ${changes} listed`);
+    }
+    expect(short).toEqual([]);
+  });
+
+  it("marks every change with a page on an element that page really carries", () => {
+    const missing = PLACED.map((change) => change.id).filter((id) => !MARKED.has(id));
     expect(missing).toEqual([]);
   });
 
   it("leaves no mark in a page that no change stands behind", () => {
-    const known = new Set(CHANGES.map((change) => change.id));
+    const known = new Set(PLACED.map((change) => change.id));
     expect([...MARKED].filter((id) => !known.has(id))).toEqual([]);
   });
 
@@ -56,7 +76,7 @@ describe("what is new", () => {
     const reachable = (path: string) =>
       rail.has(path) || LINKED.has(path) || (path.startsWith("/settings/") && SETTINGS_PAGES.has(path.slice("/settings/".length)));
     const broken: string[] = [];
-    for (const change of CHANGES) {
+    for (const change of PLACED) {
       expect(change.way.length, change.id).toBeGreaterThan(0);
       for (const step of change.way) {
         if (typeof step !== "string") {
@@ -73,17 +93,15 @@ describe("what is new", () => {
 
   it("starts every way in the navigation", () => {
     const rail = new Set(destinations(null, { storage: true, instances: true }).map((d) => d.to));
-    expect(CHANGES.filter((change) => !rail.has(change.way[0] as string)).map((change) => change.id)).toEqual([]);
+    expect(PLACED.filter((change) => !rail.has(change.way[0] as string)).map((change) => change.id)).toEqual([]);
   });
 
   it("sends the list to an address that names no single entry", () => {
-    expect(CHANGES.filter((change) => (change.go ?? change.page).includes(":")).map((change) => change.id)).toEqual([]);
+    expect(PLACED.filter((change) => (change.go ?? change.page).includes(":")).map((change) => change.id)).toEqual([]);
   });
 
-  it("says each change in a sentence and names its page", () => {
-    for (const change of CHANGES) {
-      expect(en[change.text], change.id).toMatch(/\.$/);
-      expect(change.where.length, change.id).toBeGreaterThan(0);
-    }
+  it("says each change in a sentence and names the page of one that has a page", () => {
+    for (const change of CHANGES) expect(en[change.text], change.id).toMatch(/\.$/);
+    for (const change of PLACED) expect(change.where.length, change.id).toBeGreaterThan(0);
   });
 });

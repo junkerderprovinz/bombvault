@@ -1,46 +1,65 @@
 // @vitest-environment jsdom
-// What a browser has seen of the release's changes: kept per release, new only
-// to a browser that comes from an older one, and never lost to a later patch.
+// What a browser has seen of the changes: new to a browser that comes from a
+// release before theirs, and never lost to a later update.
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { CHANGES, WHATS_NEW_RELEASE } from "./whatsNew";
-import { beginWhatsNew, markAbsent, markSeen, useWhatsNew } from "./whatsNewStore";
+import { CHANGES } from "./whatsNew";
+import { beginWhatsNew, markAbsent, markSeen, newer, useWhatsNew } from "./whatsNewStore";
 
-const KEY = `bv-whats-new@${WHATS_NEW_RELEASE}`;
+const KEY = "bv-whats-new";
 const [FIRST, SECOND] = CHANGES.map((change) => change.id);
-const stored = () => JSON.parse(localStorage.getItem(KEY) ?? "null") as { seen: string[]; absent: string[] } | null;
+const OLDEST = CHANGES.reduce((min, change) => (newer(min, change.since) ? change.since : min), CHANGES[0].since);
+const NEWEST = CHANGES.reduce((max, change) => (newer(change.since, max) ? change.since : max), CHANGES[0].since);
+const stored = () => JSON.parse(localStorage.getItem(KEY) ?? "null") as { seen: string[]; absent: string[]; from?: string } | null;
 
 beforeEach(() => localStorage.clear());
 afterEach(cleanup);
 
 describe("an update", () => {
-  it("makes every change new when it comes from a release before this one", () => {
+  it("makes every change new when it comes from a release before all of them", () => {
     beginWhatsNew("v9.9.1");
-    expect(stored()).toEqual({ seen: [], absent: [] });
+    expect(stored()).toEqual({ seen: [], absent: [], from: "9.9.1" });
   });
 
   it("reads the release out of a build's version", () => {
     beginWhatsNew("v9.9.1+main.fcc0544");
-    expect(stored()).toEqual({ seen: [], absent: [] });
+    expect(stored()?.from).toBe("9.9.1");
   });
 
-  it.each([`v${WHATS_NEW_RELEASE}`, "v99.0.0", "dev"])("stores nothing when it comes from %s", (previous) => {
-    beginWhatsNew(previous);
+  it("makes only the changes of later releases new", () => {
+    beginWhatsNew(`v${OLDEST}`);
+    const { result } = renderHook(() => useWhatsNew());
+    expect(result.current.unseen.length).toBeGreaterThan(0);
+    expect(result.current.unseen.every((change) => newer(change.since, OLDEST))).toBe(true);
+  });
+
+  it("makes nothing new when it comes from the newest release or a later one", () => {
+    beginWhatsNew(`v${NEWEST}`);
+    expect(renderHook(() => useWhatsNew()).result.current.unseen).toEqual([]);
+    beginWhatsNew("v99.0.0");
+    expect(renderHook(() => useWhatsNew()).result.current.unseen).toEqual([]);
+  });
+
+  it("stores nothing for a build without a release", () => {
+    beginWhatsNew("dev");
     expect(stored()).toBeNull();
   });
 
-  it("leaves what was seen when a later update comes from an older release again", () => {
+  it("keeps what an earlier release left unseen", () => {
     beginWhatsNew("v9.9.1");
     markSeen([FIRST]);
-    beginWhatsNew("v9.9.1");
-    expect(stored()).toEqual({ seen: [FIRST], absent: [] });
+    beginWhatsNew(`v${NEWEST}`);
+    expect(stored()?.seen).toEqual([FIRST]);
+    expect(renderHook(() => useWhatsNew()).result.current.unseen).toHaveLength(CHANGES.length - 1);
   });
 
-  it("drops what an earlier release kept", () => {
-    localStorage.setItem("bv-whats-new@9.0.0", JSON.stringify({ seen: ["old"] }));
+  it("takes over the slot of an older release and drops it", () => {
+    localStorage.setItem("bv-whats-new@10.0.0", JSON.stringify({ seen: [FIRST] }));
     localStorage.setItem("bv-theme", "dark");
-    beginWhatsNew("v9.9.1");
-    expect(localStorage.getItem("bv-whats-new@9.0.0")).toBeNull();
+    expect([...renderHook(() => useWhatsNew()).result.current.seen]).toEqual([FIRST]);
+    beginWhatsNew(`v${NEWEST}`);
+    expect(stored()?.seen).toEqual([FIRST]);
+    expect(localStorage.getItem("bv-whats-new@10.0.0")).toBeNull();
     expect(localStorage.getItem("bv-theme")).toBe("dark");
   });
 });
@@ -126,7 +145,7 @@ describe("a change its page has nothing for", () => {
     beginWhatsNew("v9.9.1");
     markAbsent([FIRST, SECOND]);
     markSeen([FIRST]);
-    expect(stored()).toMatchObject({ seen: [FIRST], absent: [SECOND] });
+    expect(stored()).toMatchObject({ seen: [FIRST], absent: [SECOND], from: "9.9.1" });
     markSeen([FIRST, SECOND], false);
     expect(stored()).toMatchObject({ seen: [], absent: [] });
   });

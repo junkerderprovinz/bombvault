@@ -13,7 +13,7 @@ import { AttentionContext } from "../lib/attention";
 import { useT } from "../lib/i18n";
 import { useIsDesktop } from "../lib/useMediaQuery";
 import { useTipBubble } from "../lib/useTipBubble";
-import type { Change, WayStep } from "../lib/whatsNew";
+import { placed, type PlacedChange, type WayStep } from "../lib/whatsNew";
 import { markAbsent, markSeen, useWhatsNew } from "../lib/whatsNewStore";
 
 /** How long a page may take to draw a change or the way to it before the
@@ -25,7 +25,7 @@ interface Spot {
   x: number;
   y: number;
   /** The changes behind it: the one it marks, or those it leads to. */
-  changes: Change[];
+  changes: PlacedChange[];
   /** The link, row or tab a dot on the way stands on. */
   way?: HTMLElement;
 }
@@ -86,7 +86,7 @@ function pressed(way: HTMLElement): HTMLElement {
   return way.querySelector<HTMLElement>("a[href]") ?? way.querySelector<HTMLElement>("button") ?? way;
 }
 
-function find(unseen: Change[], absent: ReadonlySet<string>, pathname: string): Found {
+function find(unseen: PlacedChange[], absent: ReadonlySet<string>, pathname: string): Found {
   // A window over the page hides the marks of everything behind it.
   const windows = document.querySelectorAll('[aria-modal="true"]');
   const front = windows[windows.length - 1];
@@ -100,7 +100,7 @@ function find(unseen: Change[], absent: ReadonlySet<string>, pathname: string): 
   };
 
   const found: Found = { spots: [], met: [], lacking: [] };
-  const ways = new Map<HTMLElement, Change[]>();
+  const ways = new Map<HTMLElement, PlacedChange[]>();
   for (const change of unseen) {
     const onPage = matchPath(change.page, pathname) !== null;
     const el = first(`[data-new="${change.id}"]`);
@@ -173,7 +173,7 @@ export function WhatsNewDots() {
   const isDesktop = useIsDesktop();
   const { unseen, absent } = useWhatsNew();
   const marked = useMemo(
-    () => unseen.filter((change) => (isDesktop || !change.wide) && (!change.app || inApp())),
+    () => unseen.filter(placed).filter((change) => (isDesktop || !change.wide) && (!change.app || inApp())),
     [isDesktop, unseen]
   );
   const [spots, setSpots] = useState<Spot[]>([]);

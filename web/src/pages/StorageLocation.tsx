@@ -141,7 +141,7 @@ function Location({ location, records }: { location: StorageLocation; records: L
               />
             )}
             {actions.length > 0 && (
-              <span ref={moreButton} className="flex">
+              <span ref={moreButton} data-new="location-remove" className="flex">
                 <Button label={t("nav.more")} labelKey="nav.more" glyph={<IconMore />} tone="neutral" onClick={() => setMenuOpen((was) => !was)} />
               </span>
             )}

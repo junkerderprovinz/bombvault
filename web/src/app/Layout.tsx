@@ -243,7 +243,7 @@ export function Layout() {
             /* ignore */
           }
           beginWhatsNew(last);
-          openWhatsNew("notes");
+          openWhatsNew(true);
         }
       })
       .catch(() => {

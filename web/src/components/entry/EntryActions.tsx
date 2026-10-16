@@ -175,13 +175,15 @@ function ReplicateAction({ id, dataset }: { id: string; dataset: string }) {
   const { offered, busy, replicate } = useReplicateNow(id, dataset);
   if (!offered) return null;
   return (
-    <PageAction
-      label={t("zfs.replica.replicateNow")}
-      glyph={<IconSync />}
-      onClick={() => void replicate()}
-      disabled={busy}
-      busy={busy}
-    />
+    <span data-new="zfs-replicate-now" className="flex">
+      <PageAction
+        label={t("zfs.replica.replicateNow")}
+        glyph={<IconSync />}
+        onClick={() => void replicate()}
+        disabled={busy}
+        busy={busy}
+      />
+    </span>
   );
 }
 

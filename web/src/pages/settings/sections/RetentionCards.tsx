@@ -14,7 +14,7 @@ export function RetentionCards({ nextHue }: { nextHue: () => number }) {
 
   return (
     <div id="retention" className="flex scroll-mt-6 flex-col gap-6 md:gap-10">
-      <Card title={t("storage.keep.title")} hueIndex={nextHue()}>
+      <Card title={t("storage.keep.title")} hueIndex={nextHue()} newId="settings-retention">
         <p className="text-sm text-carbon-textSub">{t("settings.retentionWhere")}</p>
         <Link
           to="/storage"
