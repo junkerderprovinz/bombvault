@@ -28,8 +28,8 @@ func TestConfigureProcGroup_KillsOnCancel(t *testing.T) {
 
 	cancel()
 
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
+	done := make(chan struct{})
+	go func() { _ = cmd.Wait(); close(done) }()
 
 	select {
 	case <-done:
@@ -86,8 +86,8 @@ func TestConfigureProcGroup_SendsSIGTERMNotSIGKILL(t *testing.T) {
 	waitFor(ready, "the shells never installed their traps", 2*time.Second)
 	cancel()
 
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
+	done := make(chan struct{})
+	go func() { _ = cmd.Wait(); close(done) }()
 	select {
 	case <-done:
 	case <-time.After(5 * time.Second):
