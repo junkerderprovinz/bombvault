@@ -7352,10 +7352,10 @@ export function previewLocationRemoval(id: string): Promise<OkEnvelope & { remov
 /** POST /api/storage/locations/{id}/removal: removes a storage location that
  *  sections still use and leaves the data there. `expect` is the preview that
  *  was shown; when the sections changed since, the answer has code "stale" and
- *  carries them as they are. A folder needs `home`, the folder its sections
- *  move to: without one the code is "home-needed", with the folder they are in
- *  "home-same", and a folder a settings save would refuse comes back with that
- *  save's error. */
+ *  carries them as they are, or nothing when they have to be read again. A
+ *  folder needs `home`, the folder its sections move to: without one the code
+ *  is "home-needed", with the folder they are in "home-same", and a folder a
+ *  settings save would refuse comes back with that save's error. */
 export function removeLocation(
   id: string,
   expect: LocationRemoval,
@@ -7421,11 +7421,11 @@ export function previewLocationErasure(id: string): Promise<OkEnvelope & { erasu
  *  location in the background and removes it once they are gone. `expect` is
  *  `erasure.removal` as it was shown and `lastCopies` the identities of the
  *  entries that may lose their only backup. A refusal carries the code "stale"
- *  with `removal` or `erasure`, or "last-copies" or "nothing-to-erase" with
- *  `erasure`, each as it stands, "domain-busy" while a section is being backed
- *  up, "move-running" while a section moves to or from here, a SecretsRefusal
- *  code like the preview, or one of the refusals removeLocation gives a
- *  folder's `home`. */
+ *  with `removal`, `erasure` or neither, or "last-copies" or
+ *  "nothing-to-erase" with `erasure`, each as it stands, "domain-busy" while a
+ *  section is being backed up, "move-running" while a section moves to or from
+ *  here, a SecretsRefusal code like the preview, or one of the refusals
+ *  removeLocation gives a folder's `home`. */
 export function eraseLocation(
   id: string,
   expect: LocationRemoval,

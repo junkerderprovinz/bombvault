@@ -532,6 +532,23 @@ describe("removing a named repository", () => {
     expect(rows[1].textContent).toContain("The section's default points here");
     expect(rows[1].textContent).not.toContain("back up here");
   });
+
+  it("names the repository's sections by their section alone in the deletion", async () => {
+    previewLocationRemoval.mockResolvedValue({ ok: true, removal: FOLLOW });
+    previewLocationErasure.mockResolvedValue({
+      ok: true,
+      erasure: { ...ERASURE, removal: FOLLOW, sections: [repo({ use: "repo", targetId: "", repoId: "r1", repo: "/mnt/user/media-repo" })], lastCopies: [], key: "erase:r1" },
+    });
+    await renderPage(REPO);
+    const dialog = await openRemoval("Media repo");
+    await click(within(dialog).getAllByRole("radio")[1]);
+    await act(async () => {});
+
+    const row = within(within(dialog).getAllByRole("list")[0]).getByRole("listitem");
+    expect(row.textContent).toContain("Containers");
+    expect(row.textContent).not.toContain("direct repository");
+    expect(within(row).queryByLabelText(/left this repository behind/)).toBeNull();
+  });
 });
 
 describe("removing the folder the sections keep their backups in", () => {
@@ -608,13 +625,44 @@ describe("removing the folder the sections keep their backups in", () => {
     expect(screen.queryByText("the list")).toBeNull();
   });
 
+  it("reads the sections again when the server finds them changed without sending them", async () => {
+    removeLocation.mockResolvedValueOnce({ ok: false, code: "stale", error: "stale" });
+    await renderPage(FOLDER);
+    const dialog = await openRemoval("Local");
+
+    await click(action(dialog, "Remove storage location"));
+    await act(async () => {});
+
+    expect(within(dialog).getByText("The numbers changed since they were shown. Check them again.")).toBeTruthy();
+    expect(previewLocationRemoval).toHaveBeenCalledTimes(2);
+    expect(within(dialog).getByDisplayValue("user/vault")).toBeTruthy();
+  });
+
+  it("reads the deletion again when the server finds it changed without sending it", async () => {
+    eraseLocation.mockResolvedValueOnce({ ok: false, code: "stale", error: "stale" });
+    previewLocationErasure.mockResolvedValue({ ok: true, erasure: { ...ERASURE, removal: MOVE, lastCopies: [] } });
+    await renderPage(FOLDER);
+    const dialog = await openRemoval("Local");
+    await click(within(dialog).getAllByRole("radio")[1]);
+    await act(async () => {});
+    await act(async () => {
+      fireEvent.change(within(dialog).getByLabelText("Type Local to confirm"), { target: { value: "Local" } });
+    });
+
+    await click(action(dialog, "Remove and delete"));
+    await act(async () => {});
+
+    expect(previewLocationErasure).toHaveBeenCalledTimes(2);
+  });
+
   it("deletes the backups there with the folder and marks no home as left behind", async () => {
     const homes: LocationErasure = {
       ...ERASURE,
       removal: MOVE,
       sections: [
         repo({ use: "home", targetId: "", repo: "user/backups/containers" }),
-        repo({ domain: "vms", use: "home", targetId: "", repo: "user/backups/vms", backups: 6, entries: 1 }),
+        // An empty folder still moves, so it is listed too.
+        repo({ domain: "vms", use: "home", targetId: "", repo: "user/backups/vms", backups: 0, entries: 0 }),
       ],
       lastCopies: [],
       key: "erase:9c1e",

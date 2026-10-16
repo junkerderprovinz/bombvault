@@ -189,6 +189,7 @@ export function RemovalWindow({
     setBusy(false);
     if (!res.ok) {
       if (res.removal) setRemoval(res.removal);
+      else if (res.code === "stale") setRemovalReads((n) => n + 1);
       setProblem(placementErrorText(t, lang, res, "settings.error"));
       return;
     }
@@ -205,7 +206,7 @@ export function RemovalWindow({
       setProblem(refusalSentence(t, res.code) ?? placementErrorText(t, lang, res, "settings.error"));
       setLastToo(false);
       if (res.erasure) setErasure(res.erasure);
-      else if (res.removal) {
+      else if (res.removal || res.code === "stale") {
         // The sections changed, so what would be deleted has to be read again.
         setErasure(null);
         setReadings((n) => n + 1);
