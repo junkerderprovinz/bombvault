@@ -164,3 +164,39 @@ func TestATamperTestOfASwitchedOffTargetIsRefusedAndLeavesNoTrace(t *testing.T) 
 		t.Errorf("runs = %+v, want no tamper run", runs)
 	}
 }
+
+func TestTheScheduledTamperTestProbesEverySwitchedOnAppendOnlyTargetAndNoOther(t *testing.T) {
+	var refusing, accepting, off []string
+	guarded := httptest.NewServer(deleteRecorder(http.StatusForbidden, &refusing))
+	defer guarded.Close()
+	plain := httptest.NewServer(deleteRecorder(http.StatusOK, &accepting))
+	defer plain.Close()
+	idle := httptest.NewServer(deleteRecorder(http.StatusForbidden, &off))
+	defer idle.Close()
+
+	svc, st := tamperService(t, "", &fakeHostSSH{})
+	if _, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "Plain", Repo: "rest:" + plain.URL, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	extra, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "Guarded", Repo: "rest:" + guarded.URL, Enabled: true, Immutable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "Idle", Repo: "rest:" + idle.URL, Immutable: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := svc.AppendOnlyDomains(); !slices.Equal(got, []string{"vms"}) {
+		t.Fatalf("append-only domains = %v, want vms for its additional target", got)
+	}
+	v, err := svc.RunScheduledTamperTest(context.Background(), "vms")
+	if err != nil || !v.Testable || !v.Protected {
+		t.Fatalf("verdict = %+v, %v; want the append-only target protected", v, err)
+	}
+	if len(refusing) != 2 || len(accepting) != 0 || len(off) != 0 {
+		t.Fatalf("probes: %d append-only, %d plain, %d switched off; want 2, 0, 0", len(refusing), len(accepting), len(off))
+	}
+	if got, found, _ := st.LatestTamperTestForTarget("vms", extra.ID); !found || !got.Protected {
+		t.Errorf("verdict of the append-only target = %+v, found=%v", got, found)
+	}
+}

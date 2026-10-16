@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { listOffsiteTargets, type OffsiteTarget } from "../../../lib/api";
+import { tamperPlanned } from "../../../lib/tamperSchedule";
+import { subscribeOffsiteTargets } from "../../../lib/useOffsiteTargets";
 import { RestoreChecksSection } from "../RestoreChecksSection";
 import { AnomalyCard } from "../AnomalyCard";
 import { useAnomalySummary } from "../../../lib/useAnomalies";
@@ -28,16 +31,16 @@ export function IntegrityPage() {
   const [, setAnomalySaveState] = useState<SaveState>("idle");
   const [, setAnomalySaveError] = useState<string | null>(null);
 
-  // Mirrors immutableOffsiteDomains in internal/schedule/schedule.go: the
-  // scheduler only wires the tamper test when an off-site repo is set and
-  // flagged immutable (#109).
-  const tamperScheduleActive =
-    (settings.containersOffsite !== "" && settings.containersOffsiteImmutable) ||
-    (settings.vmsOffsite !== "" && settings.vmsOffsiteImmutable) ||
-    (settings.flashOffsite !== "" && settings.flashOffsiteImmutable) ||
-    (settings.configOffsite !== "" && settings.configOffsiteImmutable) ||
-    (settings.filesOffsite !== "" && settings.filesOffsiteImmutable) ||
-    (settings.zfsOffsite !== "" && settings.zfsOffsiteImmutable);
+  const [targets, setTargets] = useState<OffsiteTarget[]>([]);
+  useEffect(() => {
+    const load = () =>
+      void listOffsiteTargets()
+        .then((r) => setTargets(r.ok ? (r.targets ?? []) : []))
+        .catch(() => setTargets([]));
+    load();
+    return subscribeOffsiteTargets(load);
+  }, []);
+  const tamperScheduleActive = tamperPlanned(settings, targets);
 
   const nextHue = hueCounter();
 

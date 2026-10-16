@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"slices"
 	"strings"
@@ -326,7 +327,19 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
+	h.replanAfterTargetChange()
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
+}
+
+// replanAfterTargetChange reloads the schedule, which plans the tamper job
+// from the append-only targets. The save stands either way.
+func (h *Handler) replanAfterTargetChange() {
+	if h.scheduler == nil {
+		return
+	}
+	if err := h.reloadScheduler(); err != nil {
+		log.Printf("api: off-site target saved, but the schedule could not be reloaded: %v", err)
+	}
 }
 
 // handleUpdateOffsiteTarget replaces the target named in the path, keeping its
@@ -435,6 +448,7 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
+	h.replanAfterTargetChange()
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"target":   offsiteTargetToView(stored),
 		"warnings": h.svc.targetSaveWarnings(r.Context(), existing, stored),
@@ -497,6 +511,7 @@ func (h *Handler) handleDeleteOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		placementFail(w, errTargetInUse, map[string]any{"use": targetUseView(use)})
 		return
 	}
+	h.replanAfterTargetChange()
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 

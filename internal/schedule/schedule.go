@@ -723,6 +723,9 @@ type Scheduler struct {
 	// offsiteInUse reports whether a domain has an off-site target to copy to;
 	// see SetOffsiteInUse.
 	offsiteInUse func(domain string) bool
+	// appendOnlyDomains lists the domains with a switched-on append-only
+	// off-site target; see SetAppendOnlyDomains.
+	appendOnlyDomains func() []string
 
 	// idleHold takes a scheduled container that has to wait for its app to be
 	// idle out of the run; see SetIdleHold.
@@ -1013,9 +1016,25 @@ func (s *Scheduler) SetDrillJob(drillFn func(domain, source, kind string) error)
 }
 
 // SetTamperJob wires the scheduled off-site tamper tests. tamperFn is called for
-// each domain whose off-site repo is flagged immutable. Call before Reload.
+// each domain with a switched-on append-only target. Call before Reload.
 func (s *Scheduler) SetTamperJob(tamperFn func(domain string) error) {
 	s.tamperFn = tamperFn
+}
+
+// SetAppendOnlyDomains wires the list of domains with a switched-on off-site
+// target flagged append-only, primary or additional. Reload plans the tamper
+// job for them as well as for the off-site settings' flags, and the job asks
+// again when it fires. Without it the settings' flags alone decide.
+func (s *Scheduler) SetAppendOnlyDomains(list func() []string) {
+	s.appendOnlyDomains = list
+}
+
+// tamperDomains is what a tamper sweep probes when it fires.
+func (s *Scheduler) tamperDomains(settings store.Settings) []string {
+	if s.appendOnlyDomains != nil {
+		return s.appendOnlyDomains()
+	}
+	return slices.DeleteFunc(immutableOffsiteDomains(settings), s.offsiteOff)
 }
 
 // SetOffsiteInUse wires the check whether a domain has an off-site target in
@@ -1479,30 +1498,26 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 		})
 	}
 
-	if tamperDomains := immutableOffsiteDomains(settings); len(tamperDomains) > 0 {
+	// A primary switched off keeps its flag in the settings and its job
+	// planned; an additional target is planned while it is on, and saving one
+	// reloads the schedule.
+	if len(immutableOffsiteDomains(settings)) > 0 || (s.appendOnlyDomains != nil && len(s.appendOnlyDomains()) > 0) {
 		domains = append(domains, domainSpec{
 			cadence: settings.TamperTestSchedule,
 			name:    "tamper",
 			skip: func() string {
-				for _, dom := range tamperDomains {
-					if !s.offsiteOff(dom) {
-						return ""
-					}
+				if len(s.tamperDomains(settings)) == 0 {
+					return "no switched-on off-site target has delete protection"
 				}
-				return "every off-site target of the sections with delete protection is switched off"
+				return ""
 			},
 			fn: func() {
 				if s.tamperFn == nil {
 					log.Print("schedule: tamper job skipped, tamper test not wired (SetTamperJob)")
 					return
 				}
-				attempted := 0
-				for _, dom := range tamperDomains {
-					if s.offsiteOff(dom) {
-						log.Printf("schedule: tamper job: %s skipped: %s", dom, targetsOffReason(dom))
-						continue
-					}
-					attempted++
+				doms := s.tamperDomains(settings)
+				for _, dom := range doms {
 					if err := s.tamperFn(dom); err != nil {
 						log.Printf("schedule: tamper job: %s: %v", dom, err)
 					}
@@ -1510,7 +1525,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				// As with drills, a sweep counts as a run whatever the verdicts,
 				// or an unreachable backend would be probed every night. tamperFn
 				// records each verdict.
-				if attempted > 0 {
+				if len(doms) > 0 {
 					s.recordJobRun(store.ScheduleJobTamper)
 				}
 			},

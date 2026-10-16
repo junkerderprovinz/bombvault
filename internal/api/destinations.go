@@ -805,6 +805,7 @@ func (h *Handler) handleDeleteDestination(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	h.replanAfterTargetChange()
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
@@ -848,6 +849,7 @@ func (h *Handler) handleDestinationForDomain(w http.ResponseWriter, r *http.Requ
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	h.replanAfterTargetChange()
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored), "created": created}))
 }
 

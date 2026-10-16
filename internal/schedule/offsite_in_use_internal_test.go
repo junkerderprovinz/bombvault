@@ -3,6 +3,7 @@ package schedule
 import (
 	"bytes"
 	"log"
+	"slices"
 	"strings"
 	"testing"
 
@@ -130,7 +131,7 @@ func TestATamperFireWithEveryTargetOffIsLoggedAsSkippedWithItsReason(t *testing.
 	fireJob(t, sc, store.Settings{ContainersOffsiteImmutable: true, TamperTestSchedule: "daily 04:00"}, "tamper")
 
 	got := out.String()
-	if strings.Contains(got, "running tamper job") || !strings.Contains(got, "tamper job skipped: every off-site target") {
+	if strings.Contains(got, "running tamper job") || !strings.Contains(got, "tamper job skipped: no switched-on off-site target has delete protection") {
 		t.Errorf("log = %q, want the skip and its reason instead of a running line", got)
 	}
 }
@@ -144,5 +145,32 @@ func TestADrillLeftOutForItsTargetsIsLoggedWithTheReason(t *testing.T) {
 
 	if got := out.String(); !strings.Contains(got, "drills job: containers/offsite(dr) skipped: every off-site target of containers is switched off") {
 		t.Errorf("log = %q, want the left-out drill named with its reason", got)
+	}
+}
+
+func TestTheTamperJobIsPlannedForASectionWhoseOnlyAppendOnlyCopyIsAnAdditionalTarget(t *testing.T) {
+	sc := newOffsiteScheduler(true, newFakeJobRuns())
+	sc.SetAppendOnlyDomains(func() []string { return []string{"vms"} })
+	var tested []string
+	sc.SetTamperJob(func(domain string) error { tested = append(tested, domain); return nil })
+
+	// No off-site settings carry the flag, only the target does.
+	fireJob(t, sc, store.Settings{VMsEnabled: true, TamperTestSchedule: "daily 04:00"}, "tamper")
+
+	if !slices.Equal(tested, []string{"vms"}) {
+		t.Fatalf("tamper test ran for %v, want vms", tested)
+	}
+}
+
+func TestNoTamperJobIsPlannedWithoutAnAppendOnlyTarget(t *testing.T) {
+	sc := newOffsiteScheduler(true, newFakeJobRuns())
+	sc.SetAppendOnlyDomains(func() []string { return nil })
+	if err := sc.Reload(store.Settings{VMsEnabled: true, TamperTestSchedule: "daily 04:00"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range sc.entries {
+		if e.job == "tamper" {
+			t.Fatal("a tamper job was planned with nothing append-only to test")
+		}
 	}
 }
